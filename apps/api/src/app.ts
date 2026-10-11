@@ -20,6 +20,7 @@ import {
   SYNC_BATCH_MAX_BYTES,
 } from './http/requestBodyLimits.js';
 import { isAllowedOrigin } from './http/originPolicy.js';
+import { clientAddress } from './http/requestMetadata.js';
 import { principal, type ApiContext, type ApiEnvironment } from './http/request.js';
 import {
   formatMlflowError,
@@ -482,6 +483,7 @@ export function createApplication(options: ApplicationOptions) {
     }
     await next();
   });
+  app.use('/api/*', clientAddress(config.trustedProxyHops));
   app.use('/api/*', authentication(auth, jobTokens));
   app.use('/api/*', jobTokenGuard(database));
   const health = async () => {

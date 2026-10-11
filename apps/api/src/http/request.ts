@@ -5,7 +5,7 @@ import { DomainError } from '../domain/errors.js';
 import { uuidSchema } from '../domain/validation.js';
 
 export interface ApiEnvironment {
-  Variables: { principal: Principal | null };
+  Variables: { principal: Principal | null; clientAddress: string | null };
 }
 export type ApiContext = Context<ApiEnvironment>;
 
