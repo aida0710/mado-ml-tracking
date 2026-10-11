@@ -14,6 +14,7 @@ import {
 } from '@mmt/contracts';
 import { executionRuntimeSchema, runtimeKindSchema } from './runtimeValidation.js';
 import { codeSourceSchema } from './codeSourceValidation.js';
+import { reportedPathSchema } from './reportedPathValidation.js';
 export { codeSourceSchema } from './codeSourceValidation.js';
 
 export const uuidSchema = z.uuid();
@@ -310,11 +311,20 @@ export const pluginDatasetSchema = z.strictObject({
 });
 // A worker reports at most this many parallel jobs; larger values are a misconfiguration.
 const MAX_WORKER_PARALLEL_JOBS = 1000;
-// Self-reported by the worker host for display only; never used for authorization.
+// The ~/.ssh of a worker host rarely holds more; the candidates are only offered.
+export const MAX_WORKER_SSH_FILE_PATHS = 50;
+// Self-reported by the worker host for display only; never used for authorization. sshFiles are
+// paths on the worker's host, never the files' contents, offered for a computer's key paths.
 export const workerInfoSchema = z.strictObject({
   version: z.string().trim().min(1).max(200).optional(),
   hostname: z.string().trim().min(1).max(255).optional(),
   parallelJobs: z.number().int().min(1).max(MAX_WORKER_PARALLEL_JOBS).optional(),
+  sshFiles: z
+    .strictObject({
+      keyPaths: z.array(reportedPathSchema).max(MAX_WORKER_SSH_FILE_PATHS),
+      knownHostsPaths: z.array(reportedPathSchema).max(MAX_WORKER_SSH_FILE_PATHS),
+    })
+    .optional(),
 });
 export const workerResumeSchema = z.strictObject({
   workerId: z.string().min(1).max(200),

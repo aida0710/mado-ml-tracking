@@ -345,7 +345,7 @@ installがすること:
 - `~/.config/systemd/user/mado-tracking-worker@.service` を書き、`systemctl --user daemon-reload` → `enable --now mado-tracking-worker@<worker-id>.service`。
 - state directoryの既定は、手で起動していたworkerと同じ `~/.local/state/mado-tracking-worker/<sha256(worker-id)の先頭16桁>`。手動起動から移るときも実行中Jobのjournalを引き継ぐ。別の場所なら `--state-dir`。
 - worker IDは英数字・`.`・`_`・`-`の64文字まで（systemdのinstance名とファイル名に使うため）。
-- `--target-ids`（env fileの`MMT_WORKER_TARGET_IDS`）は省略できるが、全体設定の「コンピュータ」の「接続を確認」（target checks）をclaimするのは`MMT_WORKER_TARGET_IDS`にそのtargetを含むworkerだけ。未設定のworkerは確認をclaimしない（[worker手順](worker.md)の「Compute targetの接続を確認する」）。
+- `--target-ids`（env fileの`MMT_WORKER_TARGET_IDS`）は省略できる。全体設定の「コンピュータ」の接続確認（target checks）は、workerを指定した依頼ならそのworkerが、指定の無い依頼なら`MMT_WORKER_TARGET_IDS`にそのtargetを含むworkerがclaimする（[worker手順](worker.md)の「Compute targetの接続を確認する」）。
 
 system unitにする場合は root で `--systemd-system --service-user <account>`。env fileは `/etc/mado-tracking-worker/<id>.env`（root、600）、stateは `/var/lib/mado-tracking-worker/<id>`（service userの所有、700）。手で置く場合の雛形は `deploy/worker/mado-tracking-worker@.service` と `deploy/worker/worker.env.example`。
 

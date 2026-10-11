@@ -1,0 +1,51 @@
+/* Adding and editing an ssh or local computer in two steps (NewComputerDialog, ComputerEditDialog). */
+
+/* Where the check stands, with the button that checks again beside it. */
+.target-check-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.target-check-bar > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+.target-check-bar > .button {
+  flex: none;
+  margin-top: 12px;
+}
+.target-check-status .form-details {
+  margin-top: 0;
+}
+
+/* A worker per line; a site with many worker hosts scrolls inside the list. */
+.check-worker-picker {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+/* Several checkboxes under a legend (runtimes, GPUs). */
+.checkbox-list {
+  border: 0;
+  margin: 0 0 12px;
+  padding: 0;
+  min-width: 0;
+}
+.checkbox-list legend {
+  padding: 0;
+  margin-bottom: 2px;
+  font-size: 12px;
+}
+.checkbox-list .checkbox-field {
+  padding: 4px 0;
+}
+
+@media (width < 640px) {
+  .target-check-bar {
+    flex-direction: column;
+    gap: 0;
+  }
+  .target-check-bar > .button {
+    margin-top: 0;
+  }
+}

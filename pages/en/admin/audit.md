@@ -56,6 +56,7 @@ Records are listed newest first. Load older ones with **さらに読む** (Load 
 | `token.create`, `token.revoke` | Name, kind, scopes, expiry, owner type |
 | `service_account.create`, `service_account.update` | Role and status before and after |
 | `compute_target.create`, `compute_target.update` | Name, kind, visibility, changed fields. A visibility change also records `visibility` with `from` and `to`. |
+| `compute_target.check`, `compute_target.directory_listing` | The worker asked (`workerTokenId`, `workerId`; null for a check that names no worker), `checkId` or `listingId`, and `path` for a directory read. Requests refused for lack of permission have the denied outcome |
 | `storage.backend.create`, `storage.backend.update`, `storage.backend.test`, `storage.settings.update` | |
 | `notification.channel.create`, `update`, `test` | Name, kind, variable names, number of recipients |
 | `notification.rule.create`, `update` | |

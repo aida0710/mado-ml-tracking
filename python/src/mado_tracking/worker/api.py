@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import logging
-import socket
 from collections.abc import Sequence
-from importlib import metadata
 from pathlib import Path
 from typing import Any
 
@@ -17,26 +15,17 @@ from ..http import request_async
 from .artifact_transfer import ArtifactTransferApi
 from .contracts import WorkerJob
 from .job_responses import InvalidWorkerJob, parse_worker_job_response
+from .target_check_claims import ClaimedTargetCheck, parse_claimed_target_check
+from .worker_info import WorkerInfo
 
 LEASE_REJECTED_STATUSES = {401, 403, 404, 409, 410}
 # Output declarations answer 403/404/409 for the declared Model, Dataset or scope; only these mean
 # the lease itself is gone (the other job routes treat every such status as a lost lease).
 OUTPUT_LEASE_REJECTED_STATUSES = {401, 410}
 INVALID_LEASE_CODE = "invalid_lease"
+# The API's answer to a body its strict schema does not know (a field of a newer worker).
+UNKNOWN_FIELD_STATUS = 422
 LOGGER = logging.getLogger(__name__)
-# The distribution name in pyproject.toml; its version is what operators compare across hosts.
-DISTRIBUTION_NAME = "mado-tracking"
-
-
-def worker_info() -> dict[str, str]:
-    """Describe this worker host for the API's worker list; display only, never authorization."""
-    info = {"hostname": socket.gethostname()}
-    try:
-        info["version"] = metadata.version(DISTRIBUTION_NAME)
-    except metadata.PackageNotFoundError:
-        # A source checkout without installation has no version to report.
-        pass
-    return info
 
 
 class WorkerApi(ArtifactTransferApi):
@@ -47,9 +36,10 @@ class WorkerApi(ArtifactTransferApi):
         token: str,
         transport: httpx.AsyncBaseTransport | None = None,
         upload_state_store: UploadStateStore | None = None,
+        ssh_directories: Sequence[Path] = (),
     ):
         super().__init__(url=url, token=token, transport=transport, upload_state_store=upload_state_store)
-        self.worker_info = worker_info()
+        self.worker_info = WorkerInfo(ssh_directories=ssh_directories)
 
     async def request(
         self, path: str, payload: dict[str, Any], *, retryable: bool = True, leased: bool = False
@@ -69,18 +59,34 @@ class WorkerApi(ArtifactTransferApi):
             raise ConfigurationError("Worker API returned a non-object response")
         return response_body
 
+    async def request_with_worker_info(
+        self, path: str, payload: dict[str, Any], *, retryable: bool
+    ) -> dict[str, Any]:
+        """Send a claim or resume with workerInfo; an API from before sshFiles refuses it with 422."""
+        worker_info = self.worker_info.payload()
+        try:
+            return await self.request(path, {**payload, "workerInfo": worker_info}, retryable=retryable)
+        except ApiError as error:
+            if error.status_code != UNKNOWN_FIELD_STATUS or "sshFiles" not in worker_info:
+                raise
+        self.worker_info.stop_reporting_ssh_files()
+        LOGGER.warning(
+            "The API does not take SSH files in workerInfo; the Web cannot assign computer checks "
+            "to this worker until the API is upgraded"
+        )
+        # A 422 accepted nothing, so sending the request again cannot claim a second Job.
+        return await self.request(
+            path, {**payload, "workerInfo": self.worker_info.payload()}, retryable=retryable
+        )
+
     async def claim(
         self, worker_id: str, target_ids: Sequence[str], *, active_job_ids: Sequence[str] = ()
     ) -> WorkerJob | InvalidWorkerJob | None:
         # A lost claim response is recovered through resume; replay could claim another job.
-        payload: dict[str, Any] = {
-            "workerId": worker_id,
-            "activeJobIds": list(active_job_ids),
-            "workerInfo": self.worker_info,
-        }
+        payload: dict[str, Any] = {"workerId": worker_id, "activeJobIds": list(active_job_ids)}
         if target_ids:
             payload["targetIds"] = list(target_ids)
-        response = await self.request("worker/claim", payload, retryable=False)
+        response = await self.request_with_worker_info("worker/claim", payload, retryable=False)
         if "item" not in response or response["item"] is not None and not isinstance(response["item"], dict):
             raise ConfigurationError("Worker claim response must contain item or null")
         return (
@@ -90,10 +96,10 @@ class WorkerApi(ArtifactTransferApi):
         )
 
     async def resume(self, worker_id: str, target_ids: Sequence[str]) -> list[WorkerJob | InvalidWorkerJob]:
-        payload: dict[str, Any] = {"workerId": worker_id, "workerInfo": self.worker_info}
+        payload: dict[str, Any] = {"workerId": worker_id}
         if target_ids:
             payload["targetIds"] = list(target_ids)
-        response = await self.request("worker/resume", payload)
+        response = await self.request_with_worker_info("worker/resume", payload, retryable=True)
         items = response.get("items")
         if not isinstance(items, list):
             raise ConfigurationError("Worker resume response must contain items")
@@ -110,30 +116,32 @@ class WorkerApi(ArtifactTransferApi):
                 )
         return jobs
 
-    async def claim_target_check(self, worker_id: str, target_ids: Sequence[str]) -> dict[str, Any] | None:
-        """Claim a queued connection check for one of this worker's targets (resent claims are safe)."""
-        response = await self.request(
-            "worker/target-checks/claim", {"workerId": worker_id, "targetIds": list(target_ids)}
-        )
-        claimed = response.get("item")
-        if claimed is None:
-            return None
-        if (
-            not isinstance(claimed, dict)
-            or not isinstance(claimed.get("leaseId"), str)
-            or not isinstance(claimed.get("check"), dict)
-            or not isinstance(claimed.get("target"), dict)
-            or claimed["target"].get("id") not in target_ids
-        ):
-            raise ConfigurationError("Target check claim response is invalid")
-        return claimed
+    async def claim_target_check(
+        self,
+        worker_id: str,
+        target_ids: Sequence[str],
+        *,
+        kinds: Sequence[str] | None,
+        active_check_ids: Sequence[str] = (),
+    ) -> ClaimedTargetCheck | None:
+        """Claim a connection check or directory listing (a resent claim returns the same lease).
+
+        `kinds=None` claims in the form of APIs from before directory listings, which know neither
+        kinds nor activeCheckIds.
+        """
+        payload: dict[str, Any] = {"workerId": worker_id, "targetIds": list(target_ids)}
+        if kinds is not None:
+            payload["kinds"] = list(kinds)
+            payload["activeCheckIds"] = list(active_check_ids)
+        response = await self.request("worker/target-checks/claim", payload)
+        return parse_claimed_target_check(response.get("item"), worker_id=worker_id, target_ids=target_ids)
 
     async def complete_target_check(
-        self, claimed: dict[str, Any], *, status: str, result: dict[str, Any]
+        self, claimed: ClaimedTargetCheck, *, status: str, result: dict[str, Any]
     ) -> None:
         await self.request(
-            f"worker/target-checks/{claimed['check']['id']}/complete",
-            {"leaseId": claimed["leaseId"], "status": status, "result": result},
+            f"worker/target-checks/{claimed.check_id}/complete",
+            {"leaseId": claimed.lease_id, "status": status, "result": result},
             leased=True,
         )
 

@@ -17,7 +17,7 @@ export const computeText = {
   workerVersion: 'バージョン',
   workerHostname: 'ホスト名',
   workerToken: 'トークン',
-  workerTargets: '対象target',
+  workerTargets: '対象のコンピュータ',
   workerAllTargets: 'すべて',
   workerLastSeen: '最終応答',
   workerActiveJobs: '担当Job数',
@@ -28,13 +28,13 @@ export const computeText = {
   datasetCacheMaxGiB: 'データセットのcache上限（GiB）',
   datasetTransfer: 'データセットの転送',
   datasetTransferRelay: 'workerが中継する',
-  datasetTransferDirect: 'targetがAPIから直接取得する',
+  datasetTransferDirect: 'コンピュータがAPIから直接取得する',
   checkTarget: '接続を確認',
   targetCheck: '接続確認',
   targetCheckHint:
-    'targetを担当するworker（MMT_WORKER_TARGET_IDSに含むもの）がSSHで確認します。APIサーバーはtargetへ接続しません',
+    '前回このコンピュータを確かめたworker（まだ無ければ、MMT_WORKER_TARGET_IDSにこのコンピュータを含むworker）が、SSHで確認します。APIサーバーはコンピュータへ接続しません',
   targetCheckHintLocal:
-    'targetを担当するworker（MMT_WORKER_TARGET_IDSに含むもの）が、自分のホスト上でコマンドを起動して確認します',
+    '前回このコンピュータを確かめたworker（まだ無ければ、MMT_WORKER_TARGET_IDSにこのコンピュータを含むworker）が、自分のホスト上でコマンドを起動して確認します',
   targetCheckLocalConnection: 'コマンドの起動',
   targetLocationLocal: 'workerのホスト上',
   targetCheckNone: 'まだ接続確認をしていません',
@@ -47,7 +47,7 @@ export const computeText = {
   targetCheckDetail: '詳細',
   targetCheckAction: '対処',
   targetCheckNoWorker:
-    '5分以内にclaimしたworkerがありません。MMT_WORKER_TARGET_IDSにこのtargetを含むworkerが動いているか確認してください',
+    '5分以内に確認を受け取ったworkerがありません。前回このコンピュータを確かめたworker（まだ無ければ、MMT_WORKER_TARGET_IDSにこのコンピュータを含むworker）が動いているか確認してください',
   targetCheckClaimTimeout: 'workerから結果が届きませんでした。workerのログを確認してください',
   targetCheckFreeSpace: '作業ディレクトリの空き',
   detectedGpus: '検出したGPU',
@@ -58,10 +58,10 @@ export const computeText = {
   noDetectedGpus: 'nvidia-smiはGPUを報告しませんでした',
   targetCheckCandidates: '設定の候補',
   targetCheckCandidatesHint:
-    '確認結果から選んだ値です。保存するまでtargetの設定は変わりません',
+    '確認結果から選んだ値です。保存するまでコンピュータの設定は変わりません',
   targetCheckCurrent: '現在',
   saveTargetCandidates: '選んだ候補を保存',
-  targetCheckCandidatesSaved: 'targetの設定を保存しました',
+  targetCheckCandidatesSaved: 'コンピュータの設定を保存しました',
   // Sites: their connection, accounts and job shell are set here; the launcher makes their keys.
   siteExecutor: 'Site（ランチャーかmado-tracking submitで投入）',
   submissionMode: '投入方式',
@@ -131,7 +131,7 @@ export const targetCheckCodeHints = {
   ssh_failed: 'host・port・username、鍵とknown_hostsの登録を確認してください',
   ssh_configuration:
     'workerホストに鍵かknown_hostsのファイルが無いか、鍵の権限が600ではありません（mado-tracking-worker doctorで確認できます）',
-  connection_failed: 'workerがこのtargetのコマンドを起動できませんでした',
+  connection_failed: 'workerがこのコンピュータのコマンドを起動できませんでした',
   probe_failed: '確認用スクリプトが動きませんでした。Python 3.11以上を指定してください',
   python_missing: 'pythonExecutableのパスにPythonがありません',
   python_too_old: 'Python 3.11以上をpythonExecutableに指定してください',
@@ -147,6 +147,7 @@ export const targetCheckCodeHints = {
   nvidia_smi_missing: 'GPUを使う場合はNVIDIAドライバとnvidia-smiを導入してください',
   nvidia_smi_failed: 'nvidia-smiが失敗しました。ドライバの状態を確認してください',
   work_directory_not_writable: 'SSHユーザーが書き込めるディレクトリを指定してください',
+  work_directory_not_set: '作業ディレクトリはまだ設定されていません（接続後の設定で選びます）',
   api_unreachable:
-    'targetからworkerのMMT_API_URLへ届きません。Jobの記録に必要なので経路とURLを確認してください',
+    'コンピュータからworkerのMMT_API_URLへ届きません。Jobの記録に必要なので経路とURLを確認してください',
 } satisfies Record<TargetCheckItemCode, string>;

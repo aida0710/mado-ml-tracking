@@ -1,4 +1,4 @@
-import type { WorkerPresence } from '@mmt/contracts';
+import type { WorkerPresence, WorkerSshFiles } from '@mmt/contracts';
 import { rows, type Connection } from '../db/database.js';
 import {
   workerOfflineSql,
@@ -17,6 +17,7 @@ export interface WorkerPresenceTouch {
   version?: string;
   hostname?: string;
   parallelJobs?: number;
+  sshFiles?: WorkerSshFiles;
 }
 
 // Upserts on claim/resume. An unchanged worker is rewritten only after the write interval, and
@@ -27,20 +28,22 @@ export async function touchWorker(
   presence: WorkerPresenceTouch,
 ): Promise<void> {
   await connection.query(
-    `INSERT INTO workers(project_id,token_id,worker_id,version,hostname,target_ids,parallel_jobs)
-    VALUES($1,$2,$3,$4,$5,$6::uuid[],$7)
+    `INSERT INTO workers(project_id,token_id,worker_id,version,hostname,target_ids,parallel_jobs,ssh_files)
+    VALUES($1,$2,$3,$4,$5,$6::uuid[],$7,$8::jsonb)
     ON CONFLICT (token_id,worker_id) DO UPDATE SET
       version=COALESCE(EXCLUDED.version,workers.version),
       hostname=COALESCE(EXCLUDED.hostname,workers.hostname),
       target_ids=EXCLUDED.target_ids,
       parallel_jobs=COALESCE(EXCLUDED.parallel_jobs,workers.parallel_jobs),
+      ssh_files=COALESCE(EXCLUDED.ssh_files,workers.ssh_files),
       started_at=CASE WHEN ${workerOfflineSql('workers')} THEN now() ELSE workers.started_at END,
       last_seen_at=now()
     WHERE ${workerPresenceWriteDueSql('workers')}
       OR EXCLUDED.target_ids IS DISTINCT FROM workers.target_ids
       OR COALESCE(EXCLUDED.version,workers.version) IS DISTINCT FROM workers.version
       OR COALESCE(EXCLUDED.hostname,workers.hostname) IS DISTINCT FROM workers.hostname
-      OR COALESCE(EXCLUDED.parallel_jobs,workers.parallel_jobs) IS DISTINCT FROM workers.parallel_jobs`,
+      OR COALESCE(EXCLUDED.parallel_jobs,workers.parallel_jobs) IS DISTINCT FROM workers.parallel_jobs
+      OR COALESCE(EXCLUDED.ssh_files,workers.ssh_files) IS DISTINCT FROM workers.ssh_files`,
     [
       presence.projectId,
       presence.tokenId,
@@ -49,6 +52,7 @@ export async function touchWorker(
       presence.hostname ?? null,
       presence.targetIds,
       presence.parallelJobs ?? null,
+      presence.sshFiles ? JSON.stringify(presence.sshFiles) : null,
     ],
   );
 }

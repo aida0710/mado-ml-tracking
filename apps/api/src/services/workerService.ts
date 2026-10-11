@@ -118,7 +118,7 @@ export class WorkerService {
       );
       if (active) {
         if (request.targetIds && !request.targetIds.includes(active.targetId))
-          conflict('Workerには指定target以外の未完了Jobがあります');
+          conflict('Workerには指定したコンピュータ以外の未完了Jobがあります');
         if (await this.localExecutorDisabled(connection, active.targetId))
           conflict('未完了のlocal Jobがありますがlocal executorは無効です');
         return this.jobs.getWorkerJob(connection, active);

@@ -1,5 +1,5 @@
-// Browser check of Projects against the isolated mock API (tests/browserApi.mjs): the sidebar's
-// 「プロジェクト管理」, 「全体設定」 and 「全体管理」 groups, the Project switcher (keyboard, filter, staying inside
+// Browser check of Projects against the isolated mock API (tests/browserApi.mjs): the Project
+// sidebar's 「プロジェクト管理」 group (全体設定 and 全体管理 only on their own pages), the Project switcher (keyboard, filter, staying inside
 // the window, the narrow project bar, both themes, Japanese input in its filter, presses inside it),
 // creating a Private Project with members (Enter in the member search, the focus after a pick),
 // adding a member from the Project settings, 全体管理 → プロジェクト (archive with its 409, archived rows, restore, purge confirmed by name),
@@ -95,24 +95,14 @@ try {
   const dialog = () => page.getByRole('dialog');
   const mainProject = api.state.project;
 
-  console.log('Projects: the sidebar groups Project management, 全体設定 and 全体管理');
+  console.log('Projects: a Project sidebar ends with Project management, without 全体設定 or 全体管理');
   await page.goto(`${base}/projects/${mainProject.id}/experiments`);
   const sidebar = page.locator('.navigation-sidebar');
   await sidebar.getByRole('group', { name: 'プロジェクト管理' }).waitFor();
-  const settingsGroup = sidebar.getByRole('group', { name: '全体設定', exact: true });
-  assert.deepEqual(await settingsGroup.getByRole('link').allInnerTexts(), [
-    'アカウント',
-    'コンピュータ',
-  ]);
-  const adminGroup = sidebar.getByRole('group', { name: '全体管理', exact: true });
-  assert.deepEqual(await adminGroup.getByRole('link').allInnerTexts(), [
-    'プロジェクト',
-    'ユーザー',
-    'ストレージ',
-    'ランチャー',
-    '監査ログ',
-  ]);
   await sidebar.getByRole('link', { name: 'プロジェクト設定', exact: true }).waitFor();
+  // 全体設定 opens from the user menu, not from a Project's sidebar.
+  assert.equal(await sidebar.getByRole('group', { name: '全体設定', exact: true }).count(), 0);
+  assert.equal(await sidebar.getByRole('group', { name: '全体管理', exact: true }).count(), 0);
 
   console.log('Projects: the switcher opens on the open Project and moves with the keys');
   await projectSwitcherButton(page).focus();

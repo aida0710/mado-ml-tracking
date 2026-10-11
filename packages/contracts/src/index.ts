@@ -775,7 +775,8 @@ export interface ApiError {
   code?: string;
   issues?: unknown;
 }
-export type { TargetCheck, TargetCheckFailureReason, TargetCheckGpu, TargetCheckItem, TargetCheckItemCode, TargetCheckItemName, TargetCheckItemStatus, TargetCheckResult, TargetCheckStatus, WorkerTargetCheck, WorkerTargetCheckClaim, WorkerTargetCheckComplete } from './targetChecks.js';
+export type { TargetCheck, TargetCheckDirectory, TargetCheckDirectorySource, TargetCheckFailureReason, TargetCheckGpu, TargetCheckHost, TargetCheckItem, TargetCheckItemCode, TargetCheckItemName, TargetCheckItemStatus, TargetCheckKind, TargetCheckPython, TargetCheckRequest, TargetCheckResult, TargetCheckResultV1, TargetCheckResultV2, TargetCheckStatus, TargetCheckWorker, TargetCheckWorkerPresence, TargetDirectoryEntry, TargetDirectoryListing, TargetDirectoryListingOutcome, TargetDirectoryListingRequest, TargetDirectoryListingResult, WorkerSshFiles, WorkerTargetCheck, WorkerTargetCheckClaim, WorkerTargetCheckComplete } from './targetChecks.js';
+export { MAX_TARGET_PATH_LENGTH, TARGET_CHECK_KINDS } from './targetChecks.js';
 export type {
   SavedView,
   SavedViewColumn,

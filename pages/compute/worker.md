@@ -5,7 +5,7 @@ description: Jobを実行するworkerをworkerのマシンに入れ、systemdで
 
 # workerの導入と常駐
 
-workerは、API serverからJobを受け取り、Compute targetへSSHで接続してコードを実行するプロセスです。実行中のログ、メトリクス、出力ファイルをAPI serverへ送り、終わったらJobの結果を報告します。
+workerは、API serverからJobを受け取り、コンピュータへSSHで接続してコードを実行するプロセスです。実行中のログ、メトリクス、出力ファイルをAPI serverへ送り、終わったらJobの結果を報告します。
 
 workerはAPI serverとは別のマシンに置けます。SSHの秘密鍵はworkerのマシンだけに置き、API serverには持たせません。導入、更新、状態の確認は、workerのマシンで`mado-tracking-worker`コマンドを使って行います。
 
@@ -24,7 +24,7 @@ API server ← worker（SSH鍵・known_hosts・worker token） → Compute targe
 - Linux（Ubuntuで確認しています）
 - Python 3.11以上、`venv`、`pip`、OpenSSH client、Git
 - workerのマシンからAPI serverへ届くこと
-- Compute targetからもAPI serverへ届くこと。実行中のコードがメトリクスを記録するためです。SSHの接続先でworkerのマシンの`127.0.0.1`を指定しても、そのAPIには届きません
+- コンピュータからもAPI serverへ届くこと。実行中のコードがメトリクスを記録するためです。SSHの接続先でworkerのマシンの`127.0.0.1`を指定しても、そのAPIには届きません
 
 Ubuntuでは次のコマンドで入れられます。
 
@@ -84,19 +84,19 @@ loginctl enable-linger "$USER"
 | --- | --- | --- |
 | `--api-url` | `https://tracking.example.internal` | API serverのURL |
 | `--worker-id` | `gpu-host-1` | workerの名前。再起動や更新の後も同じ値を使います。英数字、`.`、`_`、`-`で64文字まで |
-| `--target-ids` | targetのID | このworkerが担当するCompute targetのID。複数あればカンマで区切ります |
+| `--target-ids` | コンピュータのID | このworkerが担当するコンピュータのID。複数あればカンマで区切ります。省略すると、tokenとAPIの設定で許可されたすべてのコンピュータのJobを処理します |
 | `--token-file` | `/path/to/token` | tokenをファイルから読むとき。省略するとターミナルで入力します |
 | `--state-dir` | | 実行中のJobの記録を置くディレクトリ。通常は省略します |
 
 実行すると、tokenの入力を求められます。入力した文字は表示されません。tokenをコマンドの引数に書かないでください。
 
-`--target-ids`は省略できますが、省略したworkerは［接続を確認］を受け取りません（[Compute target](/compute/targets#check-the-connection)）。targetのIDは、Webにログインしたブラウザで`https://tracking.example.internal/api/targets`（WebのURLの後ろに`/api/targets`）を開くと、各targetの`id`として表示されます。
+`--target-ids`は省略できます。コンピュータを足す前にworkerを入れるときは、省略してかまいません。省略したworkerも、［コンピュータを追加］の［接続に使うworker］で選べば、接続確認とディレクトリの読み取りを受け取ります（[SSH・Localのコンピュータ](/compute/targets#step-1-connection)）。workerを選んでいない確認（以前の画面やAPIから頼んだもの）を受け取るのは、`--target-ids`にそのコンピュータを含むworkerだけです。コンピュータのIDは、Webにログインしたブラウザで`https://tracking.example.internal/api/targets`（WebのURLの後ろに`/api/targets`）を開くと、各コンピュータの`id`として表示されます。
 
 `loginctl enable-linger`は、ログアウトした後もuserのunitを動かし続けるための設定です。
 
 `install`が行うことは次のとおりです。
 
-- `~/.config/mado-tracking-worker/<worker-id>.env`を権限600で書きます。API URL、worker ID、target、state directory、tokenが入ります。
+- `~/.config/mado-tracking-worker/<worker-id>.env`を権限600で書きます。API URL、worker ID、コンピュータ、state directory、tokenが入ります。
 - `~/.config/systemd/user/mado-tracking-worker@.service`を書き、`mado-tracking-worker@<worker-id>.service`を有効にして起動します。
 - state directoryは`~/.local/state/mado-tracking-worker/`の下に作ります。手でworkerを起動していた場合も同じ場所を使うので、実行中のJobの記録を引き継ぎます。
 
@@ -119,9 +119,9 @@ journalctl --user -u mado-tracking-worker@gpu-host-1 -f
 | `status` | unitの状態、workerのlock、保持しているJob。止まっていれば終了コード3 |
 | `journalctl` | workerのログ |
 
-最後に、WebのComputeの［Workers］に、workerのバージョンとホスト名が「オンライン」で表示されることを確かめます。
+最後に、WebのComputeの［Workers］に、workerのバージョンとホスト名が「オンライン」で表示されることを確かめます。全体管理者は、全体設定の「コンピュータ」の［コンピュータを追加］を開くと、［接続に使うworker］にこのworkerが出ることも確かめられます。
 
-## 4. 更新する
+## 4. 更新する {#upgrade}
 
 ```bash
 git -C ~/mado-ml-tracking pull
@@ -137,6 +137,8 @@ git -C ~/mado-ml-tracking pull
 - `pip`が失敗したら、再起動しません。
 - unitが止まっているのに、手で起動したworkerがstate directoryを使っている場合は、何もせずに止まります。
 
+SSH鍵の候補の報告と、コンピュータのディレクトリの読み取りは、新しい版のworkerで入りました。古い版のworkerは［コンピュータを追加］の［接続に使うworker］に出ないので、更新してください。古い版のままでも、Jobの処理と、`--target-ids`で担当するコンピュータの接続確認はこれまでどおり行います。
+
 ### tokenを差し替える
 
 期限が近づいたら新しいtokenを発行し、ファイルに保存して`install`をもう一度実行します。
@@ -151,6 +153,26 @@ rm ~/worker-token
 ```
 
 古いtokenは、Projectの［Projectのtoken一覧］で失効させます。Service Accountを［無効化］すると、そのService Accountのtokenは次の要求からすべて使えなくなります。
+
+## SSH鍵の候補を報告する {#ssh-key-candidates}
+
+workerは、自分のマシンにあるSSHの秘密鍵とknown_hostsのパスを、API serverへ報告します。報告したパスは、［コンピュータを追加］の［SSH鍵のパス］［known_hostsのパス］の候補に出ます（[SSH・Localのコンピュータ](/compute/targets#step-1-connection)）。
+
+- 報告するのはパスだけです。鍵とknown_hostsの中身や指紋は読まず、送りません。
+- 探すのは`~/.ssh`の直下です。環境変数`MMT_WORKER_SSH_DIR`にディレクトリを指定すると、その直下も探します。
+- 秘密鍵の候補は、名前が`id_*`・`*.pem`・`*.key`のファイルと、所有者だけが読めるファイル（権限600など）です。`.pub`、`known_hosts*`、`authorized_keys*`、`config`などは除きます。known_hostsの候補は、名前が`known_hosts`で始まるファイルです。
+- それぞれ50件までです。60秒ごとに探し直すので、鍵を足すと1分ほどで候補に出ます。
+
+鍵を`~/.ssh`以外に置くときは、`install`で書いた設定ファイルに`MMT_WORKER_SSH_DIR`の行を足して、workerを再起動します。`/srv/mmt-keys`は、鍵を置いたディレクトリに置き換えてください。
+
+```bash
+echo 'MMT_WORKER_SSH_DIR=/srv/mmt-keys' >> ~/.config/mado-tracking-worker/gpu-host-1.env
+systemctl --user restart mado-tracking-worker@gpu-host-1
+```
+
+system unitでは`/etc/mado-tracking-worker/<worker-id>.env`に足し、`sudo systemctl restart mado-tracking-worker@<worker-id>`で再起動します。`install`をもう一度実行すると設定ファイルを書き直すので、この行は足し直してください。
+
+Docker Composeの`MMT_WORKER_SSH_DIR`は意味が違い、コンテナの`~/.ssh`へmountするホストのディレクトリを指します（[Docker Composeで動かす](#docker-compose)）。
 
 ## 手で起動して試す
 
@@ -168,9 +190,9 @@ export MMT_API_TOKEN
 
 `--once`を付けると、Jobを1件処理して終了します。同じstate directoryでworkerを2つ起動すると、後から起動した方を拒否します。
 
-## Docker Composeで動かす
+## Docker Composeで動かす {#docker-compose}
 
-SSHのtargetだけを使うworkerは、リポジトリのDocker Composeでも動かせます。
+SSHのコンピュータだけを使うworkerは、リポジトリのDocker Composeでも動かせます。
 
 ```bash
 docker compose --profile worker up -d worker
@@ -178,7 +200,7 @@ docker compose --profile worker run --rm worker doctor
 ```
 
 - token: `./var/worker-token`（`MMT_WORKER_TOKEN_FILE`で変更）をDocker secretとして渡します。
-- 鍵とknown_hosts: `./var/worker-ssh`（`MMT_WORKER_SSH_DIR`）をコンテナの`/home/worker/.ssh`へ読み取り専用でmountします。targetの［SSH鍵のパス］［known_hostsのパス］は、コンテナ内のパスで登録します。
+- 鍵とknown_hosts: `./var/worker-ssh`（`MMT_WORKER_SSH_DIR`）をコンテナの`/home/worker/.ssh`へ読み取り専用でmountします。コンピュータの［SSH鍵のパス］［known_hostsのパス］は、コンテナ内のパスで登録します。workerが報告する候補も、コンテナ内のパス（`/home/worker/.ssh/...`）で出ます。
 - state: volume`worker-state`です。消すと実行中のJobを引き継げなくなります。
 
 ## 実行コードにはJob限定tokenを渡す
@@ -239,7 +261,7 @@ SDKを入れていないコンテナでは、出力を`/mmt/outputs`に書き、
 
 ## 接続が切れたとき、止めたとき
 
-- workerとtargetのSSHが切れても、targetの上でコードは動き続けます。workerは再接続して同じJobに戻り、続きのログを送ります。同じJobを二重に起動することはありません。
+- workerとコンピュータのSSHが切れても、コンピュータの上でコードは動き続けます。workerは再接続して同じJobに戻り、続きのログを送ります。同じJobを二重に起動することはありません。
 - workerを再起動しても、state directoryの記録から実行中のJobを引き継ぎます。state directoryを消さないでください。
 - Jobを止めるのは、Jobsの［停止を要求］だけです。workerは実行中のプロセスにSIGTERMを送り、10秒で終わらなければSIGKILLで止めてから、Jobを「中止」で終えます。
 - Jobのheartbeatが60秒途絶えると、Jobsに「応答なし」を表示します。Jobの状態とGPUの予約は変えません。workerのマシンで状態を確かめてから、停止や再実行を手で行ってください。

@@ -111,7 +111,11 @@ await context.route(
       if (settings?.accountMode === 'shared' && settings.launcherId) requestKey(target.id, null);
       return reply(target, 201);
     }
-    if (parts[0] === 'targets' && parts.length >= 2 && parts[1] !== 'overview') {
+    if (
+      parts[0] === 'targets' &&
+      parts.length >= 2 &&
+      !['overview', 'check-workers'].includes(parts[1])
+    ) {
       const target = api.state.targets.find((item) => item.id === parts[1]);
       const [, , resource, key] = parts;
       if (!resource && method === 'PATCH') {
@@ -259,7 +263,8 @@ await dialog().getByRole('button', { name: '閉じる', exact: true }).last().cl
 console.log('Site computers: a global administrator adds a public Slurm site from its template');
 await page.goto(computersPage);
 await page.getByRole('button', { name: 'コンピュータを追加', exact: true }).click();
-await select('Executor', 'site');
+// An ssh or local computer is added in two steps; a site keeps its one form.
+await dialog().getByRole('radio', { name: /^Site/ }).check();
 // Private unless chosen otherwise; the administrator opens this one to everyone.
 assert.equal(await visibilityChoice('Private').isChecked(), true);
 await visibilityChoice('Public').check();

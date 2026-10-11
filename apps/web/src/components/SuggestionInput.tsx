@@ -9,7 +9,9 @@ import { isComposingKey } from '../lib/imeComposition';
  * A text field that offers candidates under itself as it is typed (an ARIA combobox). ↑↓ move
  * through the candidates, Enter or Tab takes the highlighted one, Esc hides the list without
  * closing the dialog around the field, and a click takes a candidate too. `suggest` decides where
- * the candidates come from; its note (for example that the path does not exist) shows below.
+ * the candidates come from; its note (for example that the path does not exist) shows below, and
+ * a candidate's detail (a Python's version) beside it. With `offerWhenEmpty` the list opens on an
+ * empty field too; a new `refreshKey` looks the typed value up again.
  */
 export function SuggestionInput({
   id,
@@ -20,6 +22,9 @@ export function SuggestionInput({
   readOnly,
   placeholder,
   maxLength,
+  offerWhenEmpty,
+  refreshKey,
+  describedBy,
 }: {
   id: string;
   value: string;
@@ -29,10 +34,17 @@ export function SuggestionInput({
   readOnly?: boolean;
   placeholder?: string;
   maxLength?: number;
+  offerWhenEmpty?: boolean;
+  refreshKey?: string | number;
+  /** The id of a hint about the field, read with it. */
+  describedBy?: string;
 }) {
   const listId = useId();
   const noteId = useId();
-  const suggestions = useFieldSuggestions(readOnly ? '' : value, suggest);
+  const suggestions = useFieldSuggestions(readOnly ? '' : value, readOnly ? undefined : suggest, {
+    offerWhenEmpty,
+    refreshKey,
+  });
   const candidates = remainingSuggestions(suggestions.items, value);
   const [isListWanted, setIsListWanted] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -86,7 +98,10 @@ export function SuggestionInput({
         aria-expanded={isListShown}
         aria-controls={listId}
         aria-activedescendant={activeCandidate ? optionId(activeIndex) : undefined}
-        aria-describedby={suggestions.note ? noteId : undefined}
+        aria-describedby={
+          [describedBy, suggestions.note ? noteId : undefined].filter(Boolean).join(' ') ||
+          undefined
+        }
         autoComplete="off"
         spellCheck={false}
         value={value}
@@ -115,7 +130,10 @@ export function SuggestionInput({
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => take(candidate)}
             >
-              {candidate}
+              <span className="suggestion-value">{candidate}</span>
+              {suggestions.details?.[candidate] && (
+                <span className="suggestion-detail">{suggestions.details[candidate]}</span>
+              )}
             </li>
           ))}
       </ul>

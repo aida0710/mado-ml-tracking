@@ -192,7 +192,8 @@ const visibilityChoice = (dialog, name) => dialog.getByRole('radio', { name, exa
 async function addPublicSite(page, site) {
   await page.getByRole('button', { name: 'コンピュータを追加', exact: true }).click();
   const dialog = openDialog(page);
-  await dialog.getByLabel('Executor').selectOption('site');
+  // ssh and local computers are added in two steps; a site keeps its one form.
+  await dialog.getByRole('radio', { name: /^Site/ }).check();
   // Private unless chosen otherwise; these serve everyone.
   assert.equal(await visibilityChoice(dialog, 'Private').isChecked(), true);
   await visibilityChoice(dialog, 'Public').check();

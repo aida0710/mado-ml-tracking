@@ -109,6 +109,10 @@ const PATH_PARAMETERS: Record<string, { description: string; schema: JsonSchema 
   shellId: { description: 'job shellのバージョンのID', schema: { type: 'string', format: 'uuid' } },
   keyId: { description: '鍵（SiteKey）のID', schema: { type: 'string', format: 'uuid' } },
   checkId: { description: '接続確認のID', schema: { type: 'string', format: 'uuid' } },
+  listingId: {
+    description: 'ディレクトリの読み取りのID',
+    schema: { type: 'string', format: 'uuid' },
+  },
   alias: { description: 'alias名', schema: { type: 'string', minLength: 1, maxLength: 200 } },
   group: { description: 'SSO group名', schema: { type: 'string', minLength: 1, maxLength: 256 } },
   name: {

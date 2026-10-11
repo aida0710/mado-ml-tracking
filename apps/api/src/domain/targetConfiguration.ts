@@ -39,23 +39,28 @@ export function validateTargetConfiguration(
       '手動投入・array・待ち行列の上限時間はsiteだけの設定です',
       'site_only_setting',
     );
-  if (!target.host || !target.username || !target.workDirectory || !target.pythonExecutable)
-    throw new DomainError(
-      422,
-      'host・username・workDirectory・pythonExecutableが必要です',
-      'target_connection_required',
-    );
   if (target.executor === 'local' && !allowLocalExecutor)
     throw new DomainError(
       422,
       'Local executorにはdevelopment modeでの明示許可が必要です',
       'local_executor_disabled',
     );
+  // A local target runs on the worker's own host, so it has no address or account of its own.
+  if (target.executor === 'ssh' && (!target.host || !target.username))
+    throw new DomainError(422, 'SSHのhostとusernameが必要です', 'target_connection_required');
   if (target.executor === 'ssh' && (!target.sshKeyPath || !target.knownHostsPath))
     throw new DomainError(
       422,
-      'SSH targetには鍵とknown_hostsのパスが必要です',
+      'SSHのコンピュータには鍵とknown_hostsのパスが必要です',
       'ssh_config_required',
+    );
+  // A computer is added disabled with its connection, checked, and then set up (its work directory
+  // and Python come from the check); only an enabled one takes Jobs and needs them.
+  if (target.enabled && (!target.workDirectory || !target.pythonExecutable))
+    throw new DomainError(
+      422,
+      '有効にするには作業ディレクトリとPython実行パスが必要です',
+      'target_setup_incomplete',
     );
 }
 

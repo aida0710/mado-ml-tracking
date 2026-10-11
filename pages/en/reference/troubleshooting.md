@@ -129,7 +129,8 @@ journalctl --user -u mado-tracking-worker@gpu-host-1 -f
 
 - If `doctor` reports a token scope error, check that the Service Account token has `read`, `worker:execute`, and `artifacts:write`.
 - If the token returns 401, check whether it expired or the Service Account is disabled. Replace the token with `mado-tracking-worker install --token-file`.
-- Connection checks of a Compute target are done only by workers whose `MMT_WORKER_TARGET_IDS` includes that target.
+- A Compute target's connection check is done by the worker chosen in **接続に使うworker** (Worker used for the connection) under **コンピュータを追加** or **再確認**. Checks that name no worker are done only by workers whose `MMT_WORKER_TARGET_IDS` includes that target.
+- If a worker is not offered in **接続に使うworker**, check that it is online and up to date (`mado-tracking-worker upgrade`) ([Compute targets](/en/compute/targets#step-1-connection)).
 
 See [Worker](/en/compute/worker) for details.
 

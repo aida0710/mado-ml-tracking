@@ -8,6 +8,8 @@ export interface SelectOption {
 /** Candidates that complete what is typed in a text field, and an optional note about the value. */
 export interface FieldSuggestions {
   items: string[];
+  /** A short fact shown beside a candidate, keyed by the candidate (a Python's version). */
+  details?: Record<string, string>;
   /** Shown under the field, for example that the typed path does not exist. */
   note?: string;
 }
@@ -43,4 +45,10 @@ export interface FormField {
   readOnly?: boolean;
   /** Offers candidates under a text field as it is typed. */
   suggest?: SuggestFieldValues;
+  /** Opens the candidates on an empty field too (a short list worth seeing before typing). */
+  offerSuggestionsWhenEmpty?: boolean;
+  /** A new value looks the field's value up again (candidates that arrived later). */
+  suggestionsRefreshKey?: string | number;
+  /** A line under the field about what to enter, read with the field. */
+  hint?: string;
 }
