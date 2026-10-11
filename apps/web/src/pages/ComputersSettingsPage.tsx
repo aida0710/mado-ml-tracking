@@ -72,7 +72,11 @@ export function ComputersSettingsPage() {
       {dialog && (
         <TargetDialog
           target={dialog.mode === 'edit' ? dialog.target : undefined}
-          onClose={() => setDialog(null)}
+          onClose={() => {
+            setDialog(null);
+            // Step 1 of adding a computer (and a re-check) saves before the dialog is finished.
+            computers.reload();
+          }}
           onSaved={(saved) => {
             setDialog(null);
             // A saved computer opens its details, where a site's key and job shell are.

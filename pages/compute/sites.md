@@ -15,7 +15,7 @@ siteは誰でも足せます。足した人が、そのコンピュータの所�
 
 | 誰が | 足せるもの |
 | --- | --- |
-| 全体管理者 | site。SSH・Localも足せます（[Compute target](/compute/targets)） |
+| 全体管理者 | site。SSH・Localも足せます（[SSH・Localのコンピュータ](/compute/targets)） |
 | 研究者 | siteだけ |
 
 誰のJobが動くかは、コンピュータごとの公開範囲で決まります（[コンピュータと公開範囲](/compute/computers#visibility)）。
@@ -29,7 +29,7 @@ Jobを作る画面の実行先には、自分が使えるコンピュータだ�
 
 ## コンピュータを足す {#add-a-computer}
 
-1. 右上のユーザーメニューの［全体設定］から、サイドバーの［コンピュータ］を開き（`/settings/computers`）、［コンピュータを追加］を押します。全体管理者は［Executor］で「Site」を選びます。研究者のダイアログはsite用だけです。
+1. 右上のユーザーメニューの［全体設定］から、サイドバーの［コンピュータ］を開き（`/settings/computers`）、［コンピュータを追加］を押します。全体管理者は［種類］で「Site」を選びます。研究者のダイアログはsite用だけです。
 2. ［公開範囲］を選びます。既定のPrivateでは、自分と自分が作ったService AccountのJobだけが動きます。ほかの人にも使ってもらうならPublicにします。
 3. 投入方式を選びます。
    - 自動: ランチャーがSSHでsiteに入って投入します。ランチャーと、接続先（host、port、経由するホスト、known_hosts）を入れます。known_hostsは、`ssh-keyscan`の出力をホスト鍵の指紋で確かめてから貼ります。

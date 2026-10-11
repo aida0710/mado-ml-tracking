@@ -59,6 +59,7 @@ import { ModelAutomationService } from './services/modelAutomationService.js';
 import { LineageService } from './services/lineageService.js';
 import { TargetService } from './services/targetService.js';
 import { TargetCheckService } from './services/targetCheckService.js';
+import { TargetDirectoryListingService } from './services/targetDirectoryListingService.js';
 import { targetCheckRoutes } from './routes/targetCheckRoutes.js';
 import { JobService } from './services/jobService.js';
 import { JobTokenService } from './services/jobTokenService.js';
@@ -286,6 +287,7 @@ export function createApplication(options: ApplicationOptions) {
   });
   const targets = new TargetService(database, config);
   const targetChecks = new TargetCheckService(database, config);
+  const targetDirectoryListings = new TargetDirectoryListingService(database);
   const jobTokens = new JobTokenService(database);
   const imagePlatforms =
     config.imagePlatformCheck === 'enforce'
@@ -537,7 +539,7 @@ export function createApplication(options: ApplicationOptions) {
   app.route('/api/launcher', launcherRuntimeRoutes({ launchers, submissions: siteSubmissions }));
   app.route('/api/worker', workerRoutes(worker));
   app.route('/api', manualSubmissionRoutes(siteSubmissions));
-  app.route('/api', targetCheckRoutes(targetChecks));
+  app.route('/api', targetCheckRoutes(targetChecks, targetDirectoryListings));
   app.route('/api', workerPresenceRoutes(worker));
   app.route('/api/tokens', tokenRoutes(tokens));
   app.route('/api/mlflow/projects/:p', mlflowInformationRoutes(database, config.mlflowMultipart));

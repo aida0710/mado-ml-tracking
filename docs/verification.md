@@ -394,6 +394,30 @@ node apps/web/tests/browser-site-computers.mjs
 
 2026-10-11に通過しました（mockのAPIです。実際のlauncherが鍵を作る流れはAPIとPythonのテストで確かめます）。
 
+## ssh・localのコンピュータの2段の追加をブラウザで確認する
+
+`apps/web/tests/browser-computer-setup.mjs`は、mockのAPI（`tests/browserApi.mjs`と`tests/computerSetupMock.mjs`）で全体設定の「コンピュータ」（`/settings/computers`）の追加・編集を確かめます。mockのworkerは1台で、接続確認は次の読み込みで終わり、`/home/mmt/`・`/large/`だけを読めます。確認する項目は次のとおりです。
+
+- 1段目「接続」: 種類の既定がSSH・公開範囲の既定がPrivate、オンラインのworkerが1台なら選ばれていること、SSH鍵とknown_hostsのパスがworkerの報告したパスから補完されること
+- ［接続を確認して次へ］で、無効・作業ディレクトリとPythonが空のまま登録し（`POST /targets`）、選んだworkerを付けて確認を頼む（`POST /targets/:id/checks`の`worker`）こと
+- 2段目「接続後の設定」が確認の結果で埋まること（Python、CPUと「確認の結果: x86_64」、動いたRuntime、見つかったGPUの全部、同時実行数＝GPUの数）。GPUの選択を外すと手入力の欄と同時実行数が追い、手入力のIDも残ること
+- 作業ディレクトリを`/`で終わるところまで入力すると、workerにそのディレクトリを読ませ（`POST /targets/:id/directory-listings`のパスとworker）、中身から補完し、隠しディレクトリは`.`を打つまで出ないこと。Pythonは確認の候補から選べること
+- ［保存］が接続後の設定の項目だけを送り、有効にすること（`PATCH /targets/:id`）
+- 編集のダイアログは「接続」「接続後の設定」をタブで切り替えられ、［再確認］で新しい確認を頼むこと。変えた接続は確認の前に接続の項目だけ保存すること
+- workerが確認を受け取らないと理由が出て、［確認せずに次へ］で手で入力して保存できること
+- オンラインのworkerが無いと案内が出て、［接続を確認して次へ］が押せないこと
+- 390px幅で横にスクロールしないこと
+
+```bash
+(cd apps/web && MMT_WEB_API_PROXY_TARGET=http://127.0.0.1:47339 npx vite --port 47330 --strictPort --host 127.0.0.1) &
+MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
+MMT_WEB_URL=http://127.0.0.1:47330 \
+MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/computer-setup/mock \
+node apps/web/tests/browser-computer-setup.mjs
+```
+
+2026-10-11に通過しました（mockのAPIです。実際のworkerがSSHで確かめる流れは、APIの`target-setup-checks.integration.test.ts`、Pythonの`test_target_discovery.py`・`test_directory_listing.py`・`test_target_check_runner.py`と、確認用環境で確かめます）。`browser-containers.mjs`（Localのコンピュータを2段で足す）、`browser-site-computers.mjs`（種類にSiteを選ぶと1枚の欄）、`browser-workbench.mjs`（編集のタブ）も新しいダイアログに合わせました。
+
 ## Webで足すコンピュータ（site）を実APIでブラウザ確認する
 
 `apps/web/tests/browser-site-computers-api.mjs`は、`mmt_test`の一時schemaを使う開発モード（`AUTH_MODE=development`）のAPI（47140）を自分で起動し、実際の記録を作って全体設定の「コンピュータ」（`/settings/computers`）・Jobs画面・全体管理の「ランチャー」（`/settings/launchers`）を確かめます。終わるとschemaを消します。WebはViteを47141で起動しておきます。APIをTypeScriptのソースから起動するので`tsx`で実行します。

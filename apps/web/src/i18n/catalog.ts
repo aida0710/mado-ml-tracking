@@ -30,6 +30,7 @@ import { jobsText } from './jobs';
 import { hooksText } from './hooks';
 import { siteComputersText } from './siteComputers';
 import { computersText, computersTextTemplates } from './computers';
+import { computerSetupText, computerSetupTextTemplates } from './computerSetup';
 import { launchersText } from './launchers';
 import { shellText } from './shell';
 import { projectsText, projectsTextTemplates } from './projects';
@@ -76,6 +77,7 @@ export const textTemplates = {
   ...artifactPreviewsTextTemplates,
   ...projectsTextTemplates,
   ...computersTextTemplates,
+  ...computerSetupTextTemplates,
   runCount: (count: number) => `${count} runs`,
   revokeTokenConfirm: (tokenName: string) =>
     `「${tokenName}」を失効させます。このAPI tokenを使うクライアントは、以後APIへ接続できなくなります。`,
@@ -114,6 +116,7 @@ export const text = {
   ...hooksText,
   ...siteComputersText,
   ...computersText,
+  ...computerSetupText,
   ...launchersText,
   ...shellText,
   ...projectsText,
@@ -267,8 +270,8 @@ export const text = {
   pythonSourceError: 'Pythonの実行にはコードのソースが必要です。',
   emptyCommandError: '実行コマンドの先頭に実行ファイルを指定してください。',
   runtimeKindsError: '対応Runtimeを1つ以上選択してください。',
-  runtimeTargetError: '選択したコードバージョンのRuntimeに対応する有効なCompute targetが必要です。',
-  noCompatibleTargets: 'このRuntimeに対応するCompute targetがありません。',
+  runtimeTargetError: '選択したコードバージョンのRuntimeに対応する有効なコンピュータが必要です。',
+  noCompatibleTargets: 'このRuntimeに対応するコンピュータがありません。',
   gitSource: 'Git',
   inlineSource: 'Inline',
   artifactSource: 'Artifact',
@@ -332,7 +335,7 @@ export const text = {
   executor: 'Executor',
   ssh: 'SSH',
   local: 'Local（開発専用）',
-  noTargets: 'Compute targetはまだありません',
+  noTargets: 'コンピュータはまだありません',
   newPlugin: 'Pluginを登録',
   baseUrl: '接続先URL',
   tokenEnv: 'トークンを参照する環境変数名',
@@ -421,7 +424,7 @@ export const text = {
   automationFamiliesError: 'コードバージョンが対応する対象モデル系列を1つ以上選択してください。',
   automationCodeError: '対象モデル系列と実行種別に対応するコードバージョンを選択してください。',
   automationReferenceError: 'このプロジェクトの実験と入力データセットバージョンを選択してください。',
-  gpuSelectionError: '選択したCompute targetのGPU IDを指定してください。',
+  gpuSelectionError: '選択したコンピュータのGPU IDを指定してください。',
   maxAttemptsError: '最大試行回数は1〜100の整数で指定してください。',
   automationFixedSettings:
     '作成後は有効・無効のみ変更できます。設定を変える場合は新しいルールを作成してください。',

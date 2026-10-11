@@ -273,7 +273,10 @@ try {
   console.log('Workbench: computer edit/toggle with failure, plugin preset/edit/toggle/manifest');
   await page.goto(new URL('/settings/computers', projectBase).href);
   await page.getByRole('button', { name: 'コンピュータを編集', exact: true }).click();
+  // An ssh computer is edited in two tabs, 接続 and 接続後の設定, saved together.
+  await page.getByRole('tab', { name: '接続後の設定', exact: true }).click();
   assert.equal(await dialog().getByLabel('GPU ID（1行に1件）').inputValue(), '0\n1');
+  await page.getByRole('tab', { name: '接続', exact: true }).click();
   await fill('名前', 'Edited Compute');
   controls.failTarget = true;
   await dialog().getByRole('button', { name: '保存', exact: true }).click();

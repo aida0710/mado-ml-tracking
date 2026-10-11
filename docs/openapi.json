@@ -23418,6 +23418,7 @@
               "site_only_setting",
               "target_connection_required",
               "ssh_config_required",
+              "target_setup_incomplete",
               "local_executor_disabled",
               "site_settings_invalid",
               "site_launcher_invalid",
@@ -23968,6 +23969,7 @@
               "site_only_setting",
               "target_connection_required",
               "ssh_config_required",
+              "target_setup_incomplete",
               "local_executor_disabled",
               "site_settings_invalid",
               "site_launcher_invalid",
@@ -26192,13 +26194,107 @@
         }
       }
     },
+    "/api/targets/check-workers": {
+      "get": {
+        "operationId": "getTargetsCheckWorkers",
+        "tags": [
+          "execution"
+        ],
+        "summary": "接続確認を頼めるworker（オンラインで、SSHの候補ファイルを報告しているもの）",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "admin"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "globalAdmin"
+        },
+        "x-mmt-job-token": "forbidden",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TargetCheckWorkerPresence"
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "insufficient_scope",
+              "admin_required",
+              "job_token_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/targets/{id}/checks": {
       "post": {
         "operationId": "postTargetsByIdChecks",
         "tags": [
           "execution"
         ],
-        "summary": "コンピュータの接続確認を依頼",
+        "summary": "コンピュータの接続確認を依頼（workerを指定できる）",
         "security": [
           {
             "sessionCookie": []
@@ -26225,6 +26321,38 @@
             }
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "worker": {
+                    "type": "object",
+                    "properties": {
+                      "tokenId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "workerId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      }
+                    },
+                    "required": [
+                      "tokenId",
+                      "workerId"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "作成した",
@@ -26232,6 +26360,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TargetCheck"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "要求を読めない",
+            "x-mmt-error-codes": [
+              "invalid_json"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -26283,10 +26424,24 @@
               }
             }
           },
+          "413": {
+            "description": "大きすぎる",
+            "x-mmt-error-codes": [
+              "body_too_large"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "422": {
             "description": "入力が不正",
             "x-mmt-error-codes": [
               "site_check_unsupported",
+              "target_check_worker_unavailable",
               "invalid_request",
               "invalid_reference"
             ],
@@ -26404,6 +26559,324 @@
           "422": {
             "description": "入力が不正",
             "x-mmt-error-codes": [
+              "invalid_request"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/targets/{id}/directory-listings": {
+      "post": {
+        "operationId": "postTargetsByIdDirectoryListings",
+        "tags": [
+          "execution"
+        ],
+        "summary": "コンピュータのディレクトリの子を、指定したworkerに読ませる（同じパスを待っていればそれを返す）",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "admin"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "globalAdmin"
+        },
+        "x-mmt-job-token": "forbidden",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "対象のID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  },
+                  "worker": {
+                    "type": "object",
+                    "properties": {
+                      "tokenId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "workerId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      }
+                    },
+                    "required": [
+                      "tokenId",
+                      "workerId"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "path",
+                  "worker"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetDirectoryListing"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "作成した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetDirectoryListing"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "要求を読めない",
+            "x-mmt-error-codes": [
+              "invalid_json"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "invalid_origin",
+              "insufficient_scope",
+              "admin_required",
+              "job_token_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "現在の状態と衝突する",
+            "x-mmt-error-codes": [
+              "directory_listing_limit",
+              "already_exists"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "大きすぎる",
+            "x-mmt-error-codes": [
+              "body_too_large"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "site_check_unsupported",
+              "target_check_worker_unavailable",
+              "invalid_request",
+              "invalid_reference"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/targets/{id}/directory-listings/{listingId}": {
+      "get": {
+        "operationId": "getTargetsByIdDirectoryListingsByListingId",
+        "tags": [
+          "execution"
+        ],
+        "summary": "ディレクトリの読み取りの結果",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "admin"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "globalAdmin"
+        },
+        "x-mmt-job-token": "forbidden",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "対象のID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "listingId",
+            "in": "path",
+            "required": true,
+            "description": "ディレクトリの読み取りのID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetDirectoryListing"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "insufficient_scope",
+              "admin_required",
+              "job_token_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "site_check_unsupported",
               "invalid_request"
             ],
             "content": {
@@ -26716,6 +27189,34 @@
                         "type": "integer",
                         "minimum": 1,
                         "maximum": 1000
+                      },
+                      "sshFiles": {
+                        "type": "object",
+                        "properties": {
+                          "keyPaths": {
+                            "maxItems": 50,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 1024
+                            }
+                          },
+                          "knownHostsPaths": {
+                            "maxItems": 50,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 1024
+                            }
+                          }
+                        },
+                        "required": [
+                          "keyPaths",
+                          "knownHostsPaths"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "additionalProperties": false
@@ -26925,6 +27426,34 @@
                         "type": "integer",
                         "minimum": 1,
                         "maximum": 1000
+                      },
+                      "sshFiles": {
+                        "type": "object",
+                        "properties": {
+                          "keyPaths": {
+                            "maxItems": 50,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 1024
+                            }
+                          },
+                          "knownHostsPaths": {
+                            "maxItems": 50,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 1024
+                            }
+                          }
+                        },
+                        "required": [
+                          "keyPaths",
+                          "knownHostsPaths"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "additionalProperties": false
@@ -28107,7 +28636,7 @@
         "tags": [
           "worker"
         ],
-        "summary": "接続確認を1件受け取る",
+        "summary": "接続確認・ディレクトリの読み取りを1件受け取る",
         "security": [
           {
             "sessionCookie": []
@@ -28136,8 +28665,31 @@
                     "maxLength": 200
                   },
                   "targetIds": {
-                    "minItems": 1,
+                    "default": [],
                     "maxItems": 1000,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "kinds": {
+                    "default": [
+                      "connection"
+                    ],
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "connection",
+                        "directory_listing"
+                      ]
+                    }
+                  },
+                  "activeCheckIds": {
+                    "default": [],
+                    "maxItems": 16,
                     "type": "array",
                     "items": {
                       "type": "string",
@@ -28146,8 +28698,7 @@
                   }
                 },
                 "required": [
-                  "workerId",
-                  "targetIds"
+                  "workerId"
                 ],
                 "additionalProperties": false
               }
@@ -28289,7 +28840,7 @@
         "tags": [
           "worker"
         ],
-        "summary": "接続確認の結果を報告",
+        "summary": "接続確認・ディレクトリの読み取りの結果を報告",
         "security": [
           {
             "sessionCookie": []
@@ -28335,170 +28886,558 @@
                     ]
                   },
                   "result": {
-                    "type": "object",
-                    "properties": {
-                      "version": {
-                        "type": "number",
-                        "const": 1
-                      },
-                      "items": {
-                        "minItems": 1,
-                        "maxItems": 11,
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "name": {
-                              "type": "string",
-                              "enum": [
-                                "connection",
-                                "python",
-                                "venv",
-                                "pip",
-                                "git",
-                                "docker",
-                                "apptainer",
-                                "singularity",
-                                "gpu",
-                                "work_directory",
-                                "api"
-                              ]
-                            },
-                            "status": {
-                              "type": "string",
-                              "enum": [
-                                "ok",
-                                "ng",
-                                "unavailable",
-                                "skipped"
-                              ]
-                            },
-                            "code": {
-                              "anyOf": [
-                                {
+                    "anyOf": [
+                      {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "items": {
+                                "minItems": 1,
+                                "maxItems": 11,
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "name": {
+                                      "type": "string",
+                                      "enum": [
+                                        "connection",
+                                        "python",
+                                        "venv",
+                                        "pip",
+                                        "git",
+                                        "docker",
+                                        "apptainer",
+                                        "singularity",
+                                        "gpu",
+                                        "work_directory",
+                                        "api"
+                                      ]
+                                    },
+                                    "status": {
+                                      "type": "string",
+                                      "enum": [
+                                        "ok",
+                                        "ng",
+                                        "unavailable",
+                                        "skipped"
+                                      ]
+                                    },
+                                    "code": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "ssh_failed",
+                                            "ssh_configuration",
+                                            "probe_failed",
+                                            "python_missing",
+                                            "python_too_old",
+                                            "venv_missing",
+                                            "pip_missing",
+                                            "git_missing",
+                                            "docker_missing",
+                                            "docker_socket_denied",
+                                            "docker_daemon_unreachable",
+                                            "container_cli_missing",
+                                            "container_flags_missing",
+                                            "nvidia_smi_missing",
+                                            "nvidia_smi_failed",
+                                            "work_directory_not_writable",
+                                            "work_directory_not_set",
+                                            "api_unreachable",
+                                            "connection_failed"
+                                          ]
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    },
+                                    "detail": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "maxLength": 200
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "name",
+                                    "status",
+                                    "code",
+                                    "detail"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "gpus": {
+                                "anyOf": [
+                                  {
+                                    "maxItems": 64,
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "index": {
+                                          "type": "string",
+                                          "pattern": "^\\d{1,3}$"
+                                        },
+                                        "uuid": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 200
+                                        },
+                                        "name": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 200
+                                        },
+                                        "memoryTotalMiB": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 9007199254740991
+                                        }
+                                      },
+                                      "required": [
+                                        "index",
+                                        "uuid",
+                                        "name",
+                                        "memoryTotalMiB"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "runtimeKinds": {
+                                "type": "array",
+                                "items": {
                                   "type": "string",
                                   "enum": [
-                                    "ssh_failed",
-                                    "ssh_configuration",
-                                    "probe_failed",
-                                    "python_missing",
-                                    "python_too_old",
-                                    "venv_missing",
-                                    "pip_missing",
-                                    "git_missing",
-                                    "docker_missing",
-                                    "docker_socket_denied",
-                                    "docker_daemon_unreachable",
-                                    "container_cli_missing",
-                                    "container_flags_missing",
-                                    "nvidia_smi_missing",
-                                    "nvidia_smi_failed",
-                                    "work_directory_not_writable",
-                                    "api_unreachable",
-                                    "connection_failed"
+                                    "python",
+                                    "docker",
+                                    "singularity",
+                                    "apptainer"
                                   ]
-                                },
-                                {
-                                  "type": "null"
                                 }
-                              ]
+                              },
+                              "workDirectoryFreeBytes": {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
                             },
-                            "detail": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "maxLength": 200
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
+                            "required": [
+                              "version",
+                              "items",
+                              "gpus",
+                              "runtimeKinds",
+                              "workDirectoryFreeBytes"
+                            ],
+                            "additionalProperties": false
                           },
-                          "required": [
-                            "name",
-                            "status",
-                            "code",
-                            "detail"
-                          ],
-                          "additionalProperties": false
-                        }
-                      },
-                      "gpus": {
-                        "anyOf": [
                           {
-                            "maxItems": 64,
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 2
+                              },
+                              "items": {
+                                "minItems": 1,
+                                "maxItems": 11,
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "name": {
+                                      "type": "string",
+                                      "enum": [
+                                        "connection",
+                                        "python",
+                                        "venv",
+                                        "pip",
+                                        "git",
+                                        "docker",
+                                        "apptainer",
+                                        "singularity",
+                                        "gpu",
+                                        "work_directory",
+                                        "api"
+                                      ]
+                                    },
+                                    "status": {
+                                      "type": "string",
+                                      "enum": [
+                                        "ok",
+                                        "ng",
+                                        "unavailable",
+                                        "skipped"
+                                      ]
+                                    },
+                                    "code": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "ssh_failed",
+                                            "ssh_configuration",
+                                            "probe_failed",
+                                            "python_missing",
+                                            "python_too_old",
+                                            "venv_missing",
+                                            "pip_missing",
+                                            "git_missing",
+                                            "docker_missing",
+                                            "docker_socket_denied",
+                                            "docker_daemon_unreachable",
+                                            "container_cli_missing",
+                                            "container_flags_missing",
+                                            "nvidia_smi_missing",
+                                            "nvidia_smi_failed",
+                                            "work_directory_not_writable",
+                                            "work_directory_not_set",
+                                            "api_unreachable",
+                                            "connection_failed"
+                                          ]
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    },
+                                    "detail": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "maxLength": 200
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "name",
+                                    "status",
+                                    "code",
+                                    "detail"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "gpus": {
+                                "anyOf": [
+                                  {
+                                    "maxItems": 64,
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "index": {
+                                          "type": "string",
+                                          "pattern": "^\\d{1,3}$"
+                                        },
+                                        "uuid": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 200
+                                        },
+                                        "name": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 200
+                                        },
+                                        "memoryTotalMiB": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 9007199254740991
+                                        }
+                                      },
+                                      "required": [
+                                        "index",
+                                        "uuid",
+                                        "name",
+                                        "memoryTotalMiB"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "runtimeKinds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "python",
+                                    "docker",
+                                    "singularity",
+                                    "apptainer"
+                                  ]
+                                }
+                              },
+                              "workDirectoryFreeBytes": {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "host": {
+                                "type": "object",
+                                "properties": {
+                                  "machine": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 200
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "cpuArch": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "amd64",
+                                          "arm64"
+                                        ]
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "cpuCount": {
+                                    "anyOf": [
+                                      {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 9007199254740991
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "memoryTotalBytes": {
+                                    "anyOf": [
+                                      {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "homeDirectory": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 1024
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "machine",
+                                  "cpuArch",
+                                  "cpuCount",
+                                  "memoryTotalBytes",
+                                  "homeDirectory"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "pythons": {
+                                "maxItems": 20,
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "path": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 1024
+                                    },
+                                    "version": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "pattern": "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "path",
+                                    "version"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "directories": {
+                                "maxItems": 40,
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "path": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 1024
+                                    },
+                                    "source": {
+                                      "type": "string",
+                                      "enum": [
+                                        "home",
+                                        "home_child",
+                                        "mount"
+                                      ]
+                                    },
+                                    "writable": {
+                                      "type": "boolean"
+                                    },
+                                    "freeBytes": {
+                                      "anyOf": [
+                                        {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 9007199254740991
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "path",
+                                    "source",
+                                    "writable",
+                                    "freeBytes"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "items",
+                              "gpus",
+                              "runtimeKinds",
+                              "workDirectoryFreeBytes",
+                              "host",
+                              "pythons",
+                              "directories"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "path": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1024
+                          },
+                          "outcome": {
+                            "type": "string",
+                            "enum": [
+                              "ok",
+                              "missing",
+                              "not_directory",
+                              "denied",
+                              "unreachable"
+                            ]
+                          },
+                          "entries": {
+                            "maxItems": 200,
                             "type": "array",
                             "items": {
                               "type": "object",
                               "properties": {
-                                "index": {
-                                  "type": "string",
-                                  "pattern": "^\\d{1,3}$"
-                                },
-                                "uuid": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 200
-                                },
                                 "name": {
                                   "type": "string",
                                   "minLength": 1,
-                                  "maxLength": 200
+                                  "maxLength": 255
                                 },
-                                "memoryTotalMiB": {
-                                  "type": "integer",
-                                  "minimum": 0,
-                                  "maximum": 9007199254740991
+                                "kind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "directory",
+                                    "file"
+                                  ]
+                                },
+                                "executable": {
+                                  "type": "boolean"
                                 }
                               },
                               "required": [
-                                "index",
-                                "uuid",
                                 "name",
-                                "memoryTotalMiB"
+                                "kind",
+                                "executable"
                               ],
                               "additionalProperties": false
                             }
                           },
-                          {
-                            "type": "null"
+                          "truncated": {
+                            "type": "boolean"
                           }
-                        ]
-                      },
-                      "runtimeKinds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "enum": [
-                            "python",
-                            "docker",
-                            "singularity",
-                            "apptainer"
-                          ]
-                        }
-                      },
-                      "workDirectoryFreeBytes": {
-                        "anyOf": [
-                          {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 9007199254740991
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
+                        },
+                        "required": [
+                          "path",
+                          "outcome",
+                          "entries",
+                          "truncated"
+                        ],
+                        "additionalProperties": false
                       }
-                    },
-                    "required": [
-                      "version",
-                      "items",
-                      "gpus",
-                      "runtimeKinds",
-                      "workDirectoryFreeBytes"
-                    ],
-                    "additionalProperties": false
+                    ]
                   }
                 },
                 "required": [
@@ -28517,7 +29456,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TargetCheck"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/TargetCheck"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TargetDirectoryListing"
+                    }
+                  ]
                 }
               }
             }
@@ -28600,6 +29546,7 @@
             "x-mmt-error-codes": [
               "target_check_result_too_large",
               "target_check_secret_in_result",
+              "target_check_result_kind",
               "invalid_request",
               "invalid_reference"
             ],
@@ -59058,6 +60005,16 @@
               "null"
             ]
           },
+          "assignedWorker": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetCheckWorker"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "result": {
             "anyOf": [
               {
@@ -59115,11 +60072,50 @@
           "requestedBy",
           "status",
           "workerId",
+          "assignedWorker",
           "result",
           "failureReason",
           "createdAt",
           "claimedAt",
           "finishedAt"
+        ],
+        "additionalProperties": false
+      },
+      "TargetCheckDirectory": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "home",
+              "home_child",
+              "mount"
+            ]
+          },
+          "writable": {
+            "type": "boolean"
+          },
+          "freeBytes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "path",
+          "source",
+          "writable",
+          "freeBytes"
         ],
         "additionalProperties": false
       },
@@ -59146,6 +60142,69 @@
           "uuid",
           "name",
           "memoryTotalMiB"
+        ],
+        "additionalProperties": false
+      },
+      "TargetCheckHost": {
+        "type": "object",
+        "properties": {
+          "machine": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cpuArch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "amd64",
+                  "arm64"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cpuCount": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "memoryTotalBytes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "homeDirectory": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "machine",
+          "cpuArch",
+          "cpuCount",
+          "memoryTotalBytes",
+          "homeDirectory"
         ],
         "additionalProperties": false
       },
@@ -59198,6 +60257,7 @@
                   "nvidia_smi_missing",
                   "nvidia_smi_failed",
                   "work_directory_not_writable",
+                  "work_directory_not_set",
                   "api_unreachable",
                   "connection_failed"
                 ]
@@ -59222,50 +60282,322 @@
         ],
         "additionalProperties": false
       },
-      "TargetCheckResult": {
+      "TargetCheckPython": {
         "type": "object",
         "properties": {
+          "path": {
+            "type": "string"
+          },
           "version": {
-            "type": "number",
-            "const": 1
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TargetCheckItem"
-            }
-          },
-          "gpus": {
-            "anyOf": [
-              {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "path",
+          "version"
+        ],
+        "additionalProperties": false
+      },
+      "TargetCheckResult": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "items": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/TargetCheckGpu"
+                  "$ref": "#/components/schemas/TargetCheckItem"
                 }
+              },
+              "gpus": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/TargetCheckGpu"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "runtimeKinds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "python",
+                    "docker",
+                    "singularity",
+                    "apptainer"
+                  ]
+                }
+              },
+              "workDirectoryFreeBytes": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "version",
+              "items",
+              "gpus",
+              "runtimeKinds",
+              "workDirectoryFreeBytes"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 2
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TargetCheckItem"
+                }
+              },
+              "gpus": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/TargetCheckGpu"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "runtimeKinds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "python",
+                    "docker",
+                    "singularity",
+                    "apptainer"
+                  ]
+                }
+              },
+              "workDirectoryFreeBytes": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "host": {
+                "$ref": "#/components/schemas/TargetCheckHost"
+              },
+              "pythons": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TargetCheckPython"
+                }
+              },
+              "directories": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TargetCheckDirectory"
+                }
+              }
+            },
+            "required": [
+              "version",
+              "items",
+              "gpus",
+              "runtimeKinds",
+              "workDirectoryFreeBytes",
+              "host",
+              "pythons",
+              "directories"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "TargetCheckWorker": {
+        "type": "object",
+        "properties": {
+          "tokenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workerId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tokenId",
+          "workerId"
+        ],
+        "additionalProperties": false
+      },
+      "TargetCheckWorkerPresence": {
+        "type": "object",
+        "properties": {
+          "tokenId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tokenName": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workerId": {
+            "type": "string"
+          },
+          "hostname": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sshFiles": {
+            "$ref": "#/components/schemas/WorkerSshFiles"
+          }
+        },
+        "required": [
+          "tokenId",
+          "tokenName",
+          "projectId",
+          "workerId",
+          "hostname",
+          "version",
+          "lastSeenAt",
+          "sshFiles"
+        ],
+        "additionalProperties": false
+      },
+      "TargetDirectoryEntry": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "directory",
+              "file"
+            ]
+          },
+          "executable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "executable"
+        ],
+        "additionalProperties": false
+      },
+      "TargetDirectoryListing": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "path": {
+            "type": "string"
+          },
+          "assignedWorker": {
+            "$ref": "#/components/schemas/TargetCheckWorker"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "claimed",
+              "finished",
+              "failed"
+            ]
+          },
+          "workerId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetDirectoryListingResult"
               },
               {
                 "type": "null"
               }
             ]
           },
-          "runtimeKinds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "python",
-                "docker",
-                "singularity",
-                "apptainer"
-              ]
-            }
-          },
-          "workDirectoryFreeBytes": {
+          "failureReason": {
             "anyOf": [
               {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
+                "type": "string",
+                "enum": [
+                  "no_worker",
+                  "claim_timeout"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"
@@ -59274,11 +60606,50 @@
           }
         },
         "required": [
-          "version",
-          "items",
-          "gpus",
-          "runtimeKinds",
-          "workDirectoryFreeBytes"
+          "id",
+          "targetId",
+          "path",
+          "assignedWorker",
+          "status",
+          "workerId",
+          "result",
+          "failureReason",
+          "createdAt",
+          "finishedAt"
+        ],
+        "additionalProperties": false
+      },
+      "TargetDirectoryListingResult": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "missing",
+              "not_directory",
+              "denied",
+              "unreachable"
+            ]
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TargetDirectoryEntry"
+            }
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "outcome",
+          "entries",
+          "truncated"
         ],
         "additionalProperties": false
       },
@@ -59800,6 +61171,28 @@
         ],
         "additionalProperties": false
       },
+      "WorkerSshFiles": {
+        "type": "object",
+        "properties": {
+          "keyPaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "knownHostsPaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "keyPaths",
+          "knownHostsPaths"
+        ],
+        "additionalProperties": false
+      },
       "WorkerTargetCheck": {
         "type": "object",
         "properties": {
@@ -59812,12 +61205,27 @@
           },
           "target": {
             "$ref": "#/components/schemas/ComputeTarget"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "connection",
+              "directory_listing"
+            ]
+          },
+          "directoryPath": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
           "check",
           "leaseId",
-          "target"
+          "target",
+          "kind",
+          "directoryPath"
         ],
         "additionalProperties": false
       }

@@ -8,6 +8,7 @@ const finishedCheck: TargetCheck = {
   requestedBy: 'user-1',
   status: 'finished',
   workerId: 'host-1',
+  assignedWorker: null,
   failureReason: null,
   createdAt: '2026-10-08T00:00:00.000Z',
   claimedAt: '2026-10-08T00:00:01.000Z',

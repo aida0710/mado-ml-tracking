@@ -49,7 +49,7 @@ mado ML Trackingは、機械学習の実験とモデルを管理するWebアプ�
 | Experiment・Run | 1回の学習・推論・評価の記録。params、メトリクス、ログ、system metrics、Artifact |
 | モデルとバージョン | モデル系列、alias、生成元Run、重みのArtifact。バージョンは不変です |
 | Taskとコードバージョン | 実行するコード（Gitのcommit、単体のコード、コンテナ）と起動コマンド |
-| Job・Compute target | workerが実行する要求と、その実行先（SSH、GPU、Docker、Singularity/Apptainer） |
+| Job・コンピュータ | workerが実行する要求と、その実行先（SSH、GPU、Docker、Singularity/Apptainer） |
 | データセットバージョン | 推論・評価の入力や、Runの出力として登録するデータ |
 | Artifact | 重み、音声、画像、表などのファイル。ファイルシステムかS3互換ストレージに保存します |
 

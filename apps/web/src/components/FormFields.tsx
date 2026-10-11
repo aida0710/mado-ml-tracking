@@ -19,6 +19,7 @@ export function FormFields({
         .filter((field) => !field.visible || field.visible(values))
         .map((field) => {
           const id = `${idPrefix}-${field.name}`;
+          const hintId = field.hint ? `${id}-hint` : undefined;
           const value = getFieldValue(values, field.name);
           const change = (next: string | string[]) => onChange({ ...values, [field.name]: next });
           if (field.type === 'checkbox')
@@ -47,6 +48,7 @@ export function FormFields({
                 <textarea
                   id={id}
                   value={value}
+                  aria-describedby={hintId}
                   rows={4}
                   required={field.required}
                   maxLength={field.maxLength}
@@ -85,6 +87,9 @@ export function FormFields({
                   readOnly={field.readOnly}
                   placeholder={field.placeholder}
                   maxLength={field.maxLength}
+                  offerWhenEmpty={field.offerSuggestionsWhenEmpty}
+                  refreshKey={field.suggestionsRefreshKey}
+                  describedBy={hintId}
                 />
               ) : (
                 <input
@@ -99,8 +104,14 @@ export function FormFields({
                   max={field.max}
                   maxLength={field.maxLength}
                   placeholder={field.placeholder}
+                  aria-describedby={hintId}
                   onChange={(event) => change(event.target.value)}
                 />
+              )}
+              {field.hint && (
+                <p id={hintId} className="field-hint">
+                  {field.hint}
+                </p>
               )}
             </div>
           );

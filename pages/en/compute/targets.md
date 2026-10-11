@@ -1,6 +1,6 @@
 ---
 title: Compute targets
-description: Register GPU machines that run Jobs as Compute targets. SSH settings, GPU selection, preparing Docker, Singularity and Apptainer, and connection checks run by the worker.
+description: Register GPU machines that run Jobs as Compute targets. Adding them in two steps (connection, then settings after connecting), GPU selection, preparing Docker, Singularity and Apptainer, and connection checks run by the worker.
 ---
 
 # Compute targets
@@ -92,11 +92,22 @@ ssh-keygen -lf ~/.ssh/mmt_known_hosts
 
 Compare the fingerprint from the last command with the output of `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` on the target. The worker never accepts unknown or changed host keys (`StrictHostKeyChecking=yes`).
 
+Keys and known_hosts files in `~/.ssh` are offered as candidates for the key and known_hosts paths when you register the target. To keep them elsewhere, set the worker's `MMT_WORKER_SSH_DIR` to that directory ([Report SSH key candidates](/en/compute/worker#ssh-key-candidates)).
+
 ## Register the target {#register-a-target}
 
-![The コンピュータを追加 (Add a computer) dialog for an SSH target](/images/compute-target-dialog.png)
-
 Only global administrators can add SSH and Local targets. Whoever adds a target becomes its owner, and the owner and global administrators can change it. Researchers can add only external computers (sites) themselves ([External computers (sites)](/en/compute/sites)).
+
+The **コンピュータを追加** (Add a computer) dialog has two steps.
+
+1. **接続** (Connection): enter the destination and choose the worker that checks it. **接続を確認して次へ** (Check the connection and continue) has that worker log in to the target and look around.
+2. **接続後の設定** (Settings after connecting): opens with Python, the CPU architecture, runtimes, GPUs, and concurrent Jobs filled in from the check. Choose a working directory, adjust the values, and save.
+
+Start a worker first ([Install and run the worker](/en/compute/worker)). Step 1 offers only workers that are online.
+
+### Step 1: Connection {#step-1-connection}
+
+![Step 1, 接続 (Connection), of コンピュータを追加: the SSH destination and the worker used for the connection](/images/compute-target-dialog.png)
 
 1. Click **全体設定** (Global settings) in the user menu at the top right, and open **コンピュータ** (Computers) in the sidebar (`/settings/computers`).
 2. Press **コンピュータを追加** (Add a computer).
@@ -105,22 +116,83 @@ Only global administrators can add SSH and Local targets. Whoever adds a target 
 | Field | Example | Meaning |
 | --- | --- | --- |
 | **名前** (Name) | `gpu-host-1` | Shown on screen and in Task choices |
-| **Executor** | SSH | Normally SSH. Local (development only) appears only in development mode. Site is for external computers ([External computers (sites)](/en/compute/sites)) |
+| **種類** (Kind) | SSH | Normally SSH (the default). Local (development only) appears only in development mode. Choosing Site switches to the one-screen form for sites ([External computers (sites)](/en/compute/sites)) |
 | **公開範囲** (Visibility) | Public | With Private (the default), only Jobs of the owner and of the Service Accounts the owner created run. Choose Public to run Jobs from any Project ([Visibility](/en/compute/computers#visibility)) |
 | **Host**, **Port** | `gpu-host-1.example.internal`, `22` | SSH destination of the target |
 | **SSHユーザー** (SSH user) | `mmt` | User to connect as |
-| **SSH鍵のパス** (SSH key path) | `/home/worker/.ssh/mmt_worker_ed25519` | Path of the private key on the worker machine |
-| **known_hostsのパス** (known_hosts path) | `/home/worker/.ssh/mmt_known_hosts` | Path of known_hosts on the worker machine |
-| **作業ディレクトリ** (Working directory) | `/data/mmt-jobs` | Where Job files go on the target. The SSH user must be able to write here |
-| **Python実行パス** (Python executable) | `python3` | Python 3.11 or later on the target |
-| **対応Runtime** (Runtimes) | Python, Docker | Runtimes this target can run |
-| **GPU ID（1行に1件）** (GPU IDs, one per line) | `0`<br>`1` | GPU numbers Jobs may use. Empty for a CPU-only target |
-| **同時実行数** (Concurrent Jobs) | `2` | Maximum Jobs running at once |
+| **SSH鍵のパス** (SSH key path) | `/home/worker/.ssh/mmt_worker_ed25519` | Path of the private key on the worker machine. Files on the chosen worker's machine are offered as candidates |
+| **known_hostsのパス** (known_hosts path) | `/home/worker/.ssh/mmt_known_hosts` | Path of known_hosts on the worker machine, with candidates as for the key |
+| **接続に使うworker** (Worker used for the connection) | `lab-worker-1` | The worker that checks the connection. When only one worker is online, it is already chosen |
+
+4. Press **接続を確認して次へ** (Check the connection and continue). The computer is registered, disabled, and the chosen worker is asked to check it.
+5. The dialog shows "workerが確認を始めるのを待っています…" (Waiting for the worker to start the check) and then "workerが接続を確認しています…" (The worker is checking the connection). When the worker gets into the target, step 2 opens by itself.
+
+A Local computer has no SSH fields from Host to the known_hosts path. The chosen worker checks by starting commands on its own host.
+
+#### Candidates for the key and known_hosts paths
+
+- The candidates are the files the chosen worker found directly in `~/.ssh` and `MMT_WORKER_SSH_DIR` on its machine. The worker reports only the paths, never the contents of keys or known_hosts ([Report SSH key candidates](/en/compute/worker#ssh-key-candidates)).
+- Typing narrows the candidates. You can also type a path that is not offered.
+- No candidates appear until a worker is chosen.
+
+#### The worker used for the connection
+
+- Only workers that are online (answered within the last 120 seconds) and report SSH key candidates are listed. The computer does not need to be in the worker's `MMT_WORKER_TARGET_IDS`.
+- Reporting key candidates and reading directories in step 2 are done only by new versions of the worker. If a running worker is not listed, update it with `mado-tracking-worker upgrade` ([Upgrade](/en/compute/worker#upgrade)). Older workers still process Jobs and pick up checks of the targets they handle.
+- With no worker online, the dialog says "接続を確かめられるworkerがオンラインにありません。" (No worker that can check the connection is online) and **接続を確認して次へ** is disabled. Start a worker and press **workerを読み直す** (Reload workers), or go on by hand with **確認せずに次へ** (Continue without checking).
+- Only global administrators can choose a worker.
+
+#### When the connection cannot be checked
+
+Step 1 stays open and shows the reason.
+
+| Message | Cause and fix |
+| --- | --- |
+| 選んだworkerが確認を受け取りませんでした (The chosen worker did not pick up the check) | The worker did not pick up the check within 5 minutes. Check that the worker is running |
+| workerから結果が届きませんでした (No result arrived from the worker) | The worker stopped during the check. Check the worker log |
+| 接続を確認できませんでした (The connection could not be checked) | The result of each item is shown. If the SSH connection is NG, follow the **対処** (Fix) column, correct the connection fields, and press **接続を確認して次へ** again ([When the check does not finish](#when-the-check-does-not-finish)) |
+
+To go on without fixing the connection, press **確認せずに次へ** (Continue without checking). Step 2 then opens without candidates, so type the working directory and the Python executable yourself.
+
+With either button, the computer is already registered, disabled, once step 1 is done. It stays in the list if you close the dialog, and you can finish it later with **コンピュータを編集** (Edit the computer).
+
+### Step 2: Settings after connecting {#step-2-settings}
+
+![Step 2, 接続後の設定 (Settings after connecting): values filled in from the check, and completion from the contents of /data/ read by the worker](/images/compute-target-setup.png)
+
+The check result is shown at the top: 接続を確認しました (Connection checked), with the CPU architecture, cores, and memory. Open **確認の詳細** (Check details) to see the result of each item.
+
+| Field | Example | Meaning |
+| --- | --- | --- |
+| **作業ディレクトリ** (Working directory) | `/data/mmt-jobs` | Where Job files and the dataset cache go on the target. The SSH user must be able to write here. Not filled in automatically: choose a candidate or type it |
+| **Python実行パス** (Python executable) | `/usr/bin/python3` | Python 3.11 or later on the target. A Python 3.11 or later found by the check is filled in |
+| **CPUアーキテクチャ** (CPU architecture) | amd64 | Filled in from the check (`x86_64` is amd64, `aarch64` is arm64). Choose again if the check reported an unknown value |
+| **対応Runtime** (Runtimes) | Python, Docker | Runtimes this target can run. The ones that worked in the check are selected |
+| **GPU（見つかったもの）** (GPUs found) | `0`, `1` | GPUs found by the check, all checked |
+| **GPU ID（1行に1件）** (GPU IDs, one per line) | `0`<br>`1` | GPU numbers Jobs may use. The checked GPUs are filled in. Empty for a CPU-only target |
+| **同時実行数** (Concurrent Jobs) | `2` | Maximum Jobs running at once. Defaults to the number of selected GPUs (1 without GPUs) |
 | **データセットの転送** (Dataset transfer) | Relayed by the worker | How input datasets are fetched (below) |
 | **データセットのcache上限（GiB）** (Dataset cache limit) | `100` | Limit of the dataset cache on the target |
+| **有効** (Enabled) | On | When enabled, Jobs start running on this computer |
 
-4. Press **保存** (Save). The target appears in the list, and its details open below it.
-5. Check the target with **接続を確認** (Check connection), described below.
+Every value can be changed. **保存** (Save) saves these settings and enables the computer when **有効** is on; the target's details open below the list. **戻る** (Back) returns to step 1.
+
+Saving with **有効** off keeps the computer disabled. The working directory and Python executable may then be empty; both are required to enable it.
+
+#### Completing the working directory and Python paths
+
+- The working directory offers the places the check found (the home directory, mounts such as `/data`, whichever of `/work`, `/scratch`, and similar exist, and directories directly under the home directory), with whether each is writable and its free space. The Python executable offers the Pythons the check found, with their versions. Both narrow as you type.
+- For a place not offered, type a path ending in `/`, such as `/data/`. The worker reads that directory and its entries become candidates; the Python executable also offers executable files. Hidden directories appear once you type the `.`.
+- The worker takes a few seconds to pick up the read. Meanwhile "workerがディレクトリを読んでいます…" (The worker is reading the directory) is shown. If it cannot be read, the reason appears under the field, such as "このディレクトリはありません" (No such directory), "このディレクトリは読めません（権限がありません）" (Permission denied), or "workerが接続できませんでした" (The worker could not connect).
+- Directories read are remembered only while the dialog is open. Only names and kinds are read, never file contents.
+
+#### Choosing GPUs
+
+![The lower part of step 2: GPUs found, the GPU IDs typed by hand, and concurrent Jobs](/images/compute-target-setup-gpus.png)
+
+GPUs found by the check are listed with checkboxes. Clear the ones Jobs must not use. The checked GPUs fill **GPU ID（1行に1件）**, and **同時実行数** follows the number of selected GPUs until you change it yourself.
+
+When the machine that was checked is not the one Jobs run on, such as when you connect to a login node to submit jobs, the listed GPUs may not be those of the machine that runs the Jobs. Then type the GPU numbers of that machine in **GPU ID（1行に1件）**.
 
 Connection details such as the destination and key paths are shown only to the owner and global administrators.
 
@@ -146,35 +218,46 @@ Downloaded datasets are cached in `.mmt-cache/datasets/` under the working direc
 
 In the list under コンピュータ in the global settings, press **コンピュータを編集** (Edit the computer). The owner and global administrators can change a target. While queued or running Jobs reference the target, the destination, runtimes, GPUs, and dataset settings cannot be changed; save after the Jobs end.
 
+For SSH and Local, the editor shows the two steps of adding as the tabs **接続** (Connection) and **接続後の設定** (Settings after connecting). **保存** (Save) saves the changes on both tabs together.
+
+- **再確認** (Check again) has the worker chosen in **接続に使うworker** check the connection again and refreshes the candidates for the working directory, Python, CPU architecture, and GPUs. Values already entered do not change.
+- If you changed the connection fields, **再確認** saves only the connection settings before the check ("保存していない接続の変更は、確認の前に保存します。", Unsaved connection changes are saved before the check).
+- **接続に使うworker** starts with the worker used for the last check, if it is online.
+- The working directory and Python executable complete as in step 2 of adding.
+
 Pressing **無効にする** (Disable) in the list, or clearing **有効** (Enabled) in the editor, removes the target from new assignments. The worker keeps managing running Jobs.
 
-## Check the connection
+## Check the connection {#check-the-connection}
 
 ![Connection check results (the sample Local computer)](/images/compute-target-check.png)
 
-Before the first Job, use **接続を確認** under コンピュータ in the global settings to check that the target is ready. The worker that handles the target runs the check with its own SSH key. The owner and global administrators can run checks.
+Besides **接続を確認して次へ** in step 1 of adding and **再確認** in the editor, you can check a target from its details under コンピュータ in the global settings, for example after changing its settings or when Jobs fail. The worker runs the check with its own SSH key; the API server never connects to targets. The owner and global administrators can run checks.
 
-1. In the list under コンピュータ in the global settings, press **接続を確認** on the target's row. The target's details and the **接続確認** (Connection check) panel open below the list.
+1. In the list under コンピュータ in the global settings, press **接続を確認** (Check connection) on the target's row. The target's details and the **接続確認** (Connection check) panel open below the list.
 2. Press **接続を確認** at the top right of the panel. The status changes when a worker picks up the check.
 3. Read the result of each item. Failing items show a fix in the **対処** (Fix) column.
+
+**接続を確認** in the details asks the worker used for the last check again. For a target whose last check named no worker, the worker that handles the target (with the target's ID in `MMT_WORKER_TARGET_IDS`) checks it.
 
 | Item | What is checked |
 | --- | --- |
 | SSH connection | The key and known_hosts work |
-| Python | The Python executable is 3.11 or later |
+| Python | The Python executable is 3.11 or later. Before one is entered (step 1 of adding), a Python 3.11 or later found on the target is used |
 | venv, pip | A per-Job venv can be created and packages installed |
 | git | Git sources can be fetched |
 | Docker | The CLI exists and the daemon is reachable; permission problems and a stopped daemon are reported separately |
 | Apptainer, Singularity | The CLI exists and supports the required options |
 | GPU (nvidia-smi) | Index, name, and memory of GPUs reported by `nvidia-smi` |
-| Working directory | Writable by the SSH user, and free space |
+| Working directory | Writable by the SSH user, and free space. Before one is entered (step 1 of adding), it is **未確認** (Not checked) |
 | API reachability | The target reaches the API server |
 
 For a Local target, the first item is コマンドの起動 (Starting a command) instead of SSH接続 (SSH connection).
 
-**OK** means usable, **NG** means Jobs will fail as is, and **なし** (none) means an optional tool such as a runtime or Git is not installed.
+**OK** means usable, **NG** means Jobs will fail as is, **なし** (none) means an optional tool such as a runtime or Git is not installed, and **未確認** (Not checked) means the item was not checked.
 
-GPUs and runtimes found by the check are offered in **設定の候補** (Suggested settings). The target's GPU IDs and runtimes change only when you select candidates and press **選んだ候補を保存** (Save selected).
+For the candidates of step 2, the check also looks at the machine (CPU architecture, cores, memory, home directory), Pythons, and working directory candidates. The **マシン** (Machine) row of the details shows the CPU architecture, cores, and memory.
+
+GPUs and runtimes found by the check are offered in **設定の候補** (Suggested settings) in the details. The target's GPU IDs and runtimes change only when you select candidates and press **選んだ候補を保存** (Save selected). You can also change them in the editor.
 
 The check leaves nothing on the target, not even the working directory.
 
@@ -182,12 +265,13 @@ The check leaves nothing on the target, not even the working directory.
 
 | Message | Cause and fix |
 | --- | --- |
-| No worker claimed the check within 5 minutes | No worker handles this target. Check that the target ID is in the worker's `MMT_WORKER_TARGET_IDS` (`--target-ids` of `install`) |
+| The chosen worker did not pick up the check, or no worker claimed the check within 5 minutes | The worker asked to check is not running. Check that it is online under **Workers** on a Project's Compute page. For a check that named no worker, also check that the target ID is in the worker's `MMT_WORKER_TARGET_IDS` (`--target-ids` of `install`) |
 | No result arrived from the worker | The worker stopped during the check. Check the worker log |
 | SSH connection NG (key permissions) | The key or known_hosts is missing on the worker machine, or the key is not mode 600. Run `mado-tracking-worker doctor` on the worker machine |
+| SSH connection NG (cannot connect) | Check the host, port, and SSH user, that the public key is in the target's `~/.ssh/authorized_keys`, and that known_hosts has the target's host key |
 | API reachability NG | The target cannot reach the worker's `MMT_API_URL`, which Jobs need for logging. Check the route and URL |
 
-A worker without `MMT_WORKER_TARGET_IDS` still processes Jobs but never picks up connection checks.
+A worker without `MMT_WORKER_TARGET_IDS` still picks up checks and directory reads when it is chosen in **接続に使うworker**. Checks that name no worker (asked from older screens or the API) are picked up only by workers whose `MMT_WORKER_TARGET_IDS` includes the target.
 
 ## Workers
 
@@ -201,5 +285,6 @@ A Project's **Compute** page shows the computers you can use in the Project (rea
 | View a Project's Compute page and its workers | viewer or higher |
 | Add SSH and Local targets | Global administrator |
 | Change a target or its visibility, enable or disable it, run connection checks | Owner or global administrator |
+| Choose a worker in **接続に使うworker** when adding or editing (including key candidates and directory reads) | Global administrator |
 | Run Jobs on a target | Public: everyone. Private: the owner and the Service Accounts the owner created |
 | Register or change external computers (sites) | Anyone can add one; the owner or a global administrator changes it ([External computers (sites)](/en/compute/sites)) |

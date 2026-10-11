@@ -1,12 +1,19 @@
-import type { ComputeTarget, ComputeTargetDetails, TargetCheckItemName } from '@mmt/contracts';
-import { text } from '../i18n/catalog';
+import type {
+  ComputeTarget,
+  ComputeTargetDetails,
+  TargetCheckHost,
+  TargetCheckItemName,
+} from '@mmt/contracts';
+import { text, textTemplates } from '../i18n/catalog';
+import { formatBytes } from './format';
 import {
   computeTargetExecutorLabels,
   submissionModeBadgeLabels,
   targetCheckItemLabels,
 } from '../i18n/compute';
 
-const NO_LOCATION = '—';
+// Shown where a computer has nothing to tell (no connection, no facts from its check).
+const NO_VALUE = '—';
 
 /**
  * Where a target runs Jobs, for the Compute table. A local target runs on the worker's own host,
@@ -20,17 +27,19 @@ export function formatTargetLocation(
   if (target.executor === 'local') return text.targetLocationLocal;
   if (target.executor === 'site') {
     const connection = target.site?.connection;
-    if (!connection) return NO_LOCATION;
+    if (!connection) return NO_VALUE;
     const account = target.site?.accountMode === 'shared' ? `${target.site.sharedAccount}@` : '';
     return `${account}${connection.host}:${connection.port}`;
   }
-  return target.host ? `${target.username}@${target.host}:${target.port}` : NO_LOCATION;
+  return target.host ? `${target.username}@${target.host}:${target.port}` : NO_VALUE;
 }
 
 /** A target in a select: the name and where it runs. */
 export function targetChoiceLabel(
   target: Pick<ComputeTarget, 'name' | 'executor' | 'host' | 'submissionMode'>,
 ): string {
+  // A local target runs on the worker's host and may have no host of its own.
+  if (target.executor === 'local') return `${target.name} · ${text.targetLocationLocal}`;
   if (target.executor !== 'site') return `${target.name} · ${target.host}`;
   const mode = submissionModeBadgeLabels[target.submissionMode];
   return `${target.name} · ${computeTargetExecutorLabels.site}（${mode}）`;
@@ -57,4 +66,14 @@ export function targetCheckItemLabel(
 ): string {
   if (name === 'connection' && executor === 'local') return text.targetCheckLocalConnection;
   return targetCheckItemLabels[name];
+}
+
+/** The machine a check reached in one line: `uname -m`, cores and memory, as far as it told. */
+export function formatCheckedHost(host: TargetCheckHost): string {
+  const facts = [
+    host.machine,
+    host.cpuCount === null ? null : textTemplates.cpuCount(host.cpuCount),
+    host.memoryTotalBytes === null ? null : formatBytes(host.memoryTotalBytes),
+  ].filter((fact) => fact !== null);
+  return facts.length ? textTemplates.hostFactsSummary(facts) : NO_VALUE;
 }

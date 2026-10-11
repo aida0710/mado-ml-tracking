@@ -172,16 +172,20 @@ try {
   await page.goto(base + '/settings/computers');
   await page.getByRole('button', { name: 'コンピュータを追加', exact: true }).click();
   await fill('名前', 'Container target');
-  await select('Executor', 'local');
-  await fill('Host', 'localhost');
-  await fill('SSHユーザー', 'test');
+  // Step 1「接続」: a local computer has no SSH fields; the only online worker checks it.
+  await dialog().getByRole('radio', { name: /^Local/ }).check();
+  assert.equal(await dialog().getByLabel('Host').count(), 0);
+  await dialog().getByRole('button', { name: '接続を確認して次へ', exact: true }).click();
+  // Step 2「接続後の設定」is filled in from the check: every runtime that worked, both GPUs.
+  await dialog().getByTestId('computer-setup-step').waitFor();
   await fill('作業ディレクトリ', '/test/container-work');
-  await select('対応Runtime', ['python', 'docker', 'singularity', 'apptainer']);
-  await fill('GPU ID（1行に1件）', '0\n1');
+  assert.deepEqual(await dialog().getByLabel('GPU ID（1行に1件）').inputValue(), '0\n1');
   await clickSave();
   await waitClosed();
   const containerTarget = api.state.targets.find((target) => target.name === 'Container target');
   assert.deepEqual(containerTarget.runtimeKinds, ['python', 'docker', 'singularity', 'apptainer']);
+  assert.deepEqual(containerTarget.gpuIds, ['0', '1']);
+  assert.equal(containerTarget.enabled, true);
   // Whoever adds a computer owns it, private unless chosen otherwise; its owner runs Jobs on it.
   assert.equal(containerTarget.ownerUserId, api.state.user.id);
   assert.equal(containerTarget.visibility, 'private');

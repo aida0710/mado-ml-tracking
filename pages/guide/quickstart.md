@@ -143,7 +143,7 @@ Run名を押すとRunの詳細が開き、メトリクス、Artifact、ログ、
 
 ### 準備: workerと実行するコード
 
-1. GPUのあるホスト（CPUだけでもかまいません）へworkerを導入し、全体設定の「コンピュータ」でCompute targetとして登録します。手順は[workerの導入](/compute/worker)と[Compute target](/compute/targets)にあります。SSH・Localを足せるのは全体管理者です。既定のPrivateでは足した人のJobだけが動くので、ほかの人が自動実行ルールを作るならPublicにします（[コンピュータと公開範囲](/compute/computers)）。
+1. GPUのあるホスト（CPUだけでもかまいません）へworkerを導入し、全体設定の「コンピュータ」でコンピュータとして登録します。手順は[workerの導入](/compute/worker)と[SSH・Localのコンピュータ](/compute/targets)にあります。SSH・Localを足せるのは全体管理者です。既定のPrivateでは足した人のJobだけが動くので、ほかの人が自動実行ルールを作るならPublicにします（[コンピュータと公開範囲](/compute/computers)）。
 2. 推論と評価のコードを、［Code］でコードバージョンとして登録します。実行種別（推論、評価）と、対応するモデル系列（例: `whisper`）を指定します。手順は[Taskとコードバージョン](/models/tasks)にあります。CPUだけで動く推論と評価の例（`inference.py`、`evaluation.py`）が、SDKを入れた仮想環境の`share/mado-tracking/examples/`（手順4の例では`~/.venvs/mmt/share/mado-tracking/examples/`）にあります。
 3. 評価に使う正解データを、データセットバージョンとして登録します（[データセット](/data/datasets)）。
 
@@ -159,7 +159,7 @@ Run名を押すとRunの詳細が開き、メトリクス、Artifact、ログ、
 | 実行種別 | 推論 | 評価 |
 | Experiments | `whisper-small-finetune` | `whisper-small-finetune` |
 | コードバージョン | 推論のコードバージョン | 評価のコードバージョン |
-| Compute target | 準備の1で登録したもの | 同じもの |
+| コンピュータ | 準備の1で登録したもの | 同じもの |
 | 入力データセットバージョン | なし | 準備の3の正解データ |
 
 評価のルールは、推論Runの出力を上流の出力として受け取ります。ルールは作成後に有効・無効だけを変えられます。設定を変えるときは新しいルールを作ります。

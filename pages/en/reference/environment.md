@@ -125,12 +125,13 @@ Settings of `mado-tracking-worker`. When installed with `install`, they are writ
 | `MMT_API_TOKEN` | None (required) | Service Account token |
 | `MMT_API_TOKEN_FILE` | None | File to read the token from (for containers). `MMT_API_TOKEN` wins if set |
 | `MMT_WORKER_ID` | None (required) | Worker ID. Keep the same value across restarts |
-| `MMT_WORKER_TARGET_IDS` | None (all allowed) | Compute target IDs to serve (comma-separated) |
+| `MMT_WORKER_TARGET_IDS` | None (all allowed) | Compute target IDs to serve (comma-separated). Connection checks for which the worker is chosen in **接続に使うworker** are picked up regardless |
+| `MMT_WORKER_SSH_DIR` | None | A directory searched, besides `~/.ssh`, for SSH key and known_hosts candidates. Only paths are reported ([Report SSH key candidates](/en/compute/worker#ssh-key-candidates)) |
 | `MMT_WORKER_STATE_DIR` | `~/.local/state/mado-tracking-worker/<hash of the ID>` | Directory for the journal of running Jobs |
 | `MMT_WORKER_MAX_OUTPUT_FILES` | `10000` | Limit of output files collected from one Job. 1 to 1000000 |
 | `MMT_ALLOW_LOCAL_EXECUTOR` | None | `true` enables the local executor (development; the API must allow it too) |
 
-With Docker Compose, `MMT_WORKER_TOKEN_FILE`, `MMT_WORKER_SSH_DIR`, `MMT_WORKER_UID`, `MMT_WORKER_GID`, and `MMT_WORKER_API_URL` are also used ([Worker](/en/compute/worker)).
+With Docker Compose, `MMT_WORKER_TOKEN_FILE`, `MMT_WORKER_SSH_DIR`, `MMT_WORKER_UID`, `MMT_WORKER_GID`, and `MMT_WORKER_API_URL` are also used ([Worker](/en/compute/worker#docker-compose)). Compose's `MMT_WORKER_SSH_DIR` is the host directory mounted at the container's `~/.ssh`.
 
 ## Python SDK
 

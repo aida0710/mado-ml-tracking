@@ -1,28 +1,30 @@
 """Diagnose a compute target over the worker's own transport before any Job runs there.
 
-The worker sends one fixed probe script to the target's Python, reads back raw facts as JSON,
-and turns them into the API's TargetCheckResult. Values are only what the target reported:
-a missing tool is reported as missing, never filled with a guessed version or GPU.
+The worker discovers the machine (target_discovery.py), sends one fixed probe script to the
+target's Python, reads back raw facts as JSON, and turns them into the API's TargetCheckResult.
+Values are only what the target reported: a missing tool is reported as missing, never filled
+with a guessed version or GPU.
 """
 
 from __future__ import annotations
 
 import json
-import re
 from typing import Any
 
 from ..errors import ConfigurationError, TransportError
 from ..security import SecretMasker
 from .sif_container import REQUIRED_SIF_FLAGS
+from .target_check_claims import RESULT_VERSION
+from .target_check_report import fit_result_size, sanitize_result
+from .target_discovery import TargetDiscovery, discover_target
 from .transport import CommandTransport, create_target_transport
 
 # The host runner and SDK need the same Python as pyproject.toml's requires-python.
 MINIMUM_TARGET_PYTHON = (3, 11)
 # The probe runs several short commands (nvidia-smi, docker, the API request) on the target.
 PROBE_TIMEOUT_SECONDS = 90.0
-# Matches the API's limit (apps/api/src/domain/targetCheckValidation.ts).
-MAX_DETAIL_LENGTH = 200
-CONTROL_CHARACTERS = re.compile(r"[\x00-\x1f\x7f]")
+# What the probe checks for writing while a computer has no work directory yet; the shell's home.
+HOME_DIRECTORY = "~"
 # `--nv` is needed only by GPU Jobs, but a check should tell whether GPU containers can run.
 CONTAINER_EXEC_FLAGS = sorted(REQUIRED_SIF_FLAGS | {"--nv"})
 CONTAINER_KINDS = ("apptainer", "singularity")
@@ -159,15 +161,29 @@ def item(name: str, status: str, code: str | None = None, detail: str | None = N
     return {"name": name, "status": status, "code": code, "detail": detail}
 
 
-def failed_result(name: str, code: str) -> dict[str, Any]:
-    """A result for a check that stopped before the target could report anything."""
+def failed_facts(name: str, code: str) -> dict[str, Any]:
+    """The facts of a check that stopped before the target could report its tools."""
     return {
-        "version": 1,
         "items": [item(name, "ng", code)],
         "gpus": None,
         "runtimeKinds": [],
         "workDirectoryFreeBytes": None,
     }
+
+
+def version_2_result(facts: dict[str, Any], discovery: TargetDiscovery) -> dict[str, Any]:
+    return {
+        "version": RESULT_VERSION,
+        **facts,
+        "host": discovery.host,
+        "pythons": discovery.pythons,
+        "directories": discovery.directories,
+    }
+
+
+def failed_result(name: str, code: str) -> dict[str, Any]:
+    """A result for a check that stopped before the target could report anything."""
+    return version_2_result(failed_facts(name, code), TargetDiscovery())
 
 
 def parse_gpu_rows(rows: list[str]) -> list[dict[str, Any]]:
@@ -226,10 +242,19 @@ def gpu_item(
     return item("gpu", "ok", detail=str(len(gpus))), gpus
 
 
-def build_result(
+def work_directory_item(facts: dict[str, Any], *, target: dict[str, Any]) -> dict[str, Any]:
+    if not target.get("workDirectory"):
+        # The computer is being set up; its directory candidates are offered instead.
+        return item("work_directory", "skipped", "work_directory_not_set")
+    if facts.get("writable"):
+        return item("work_directory", "ok")
+    return item("work_directory", "ng", "work_directory_not_writable")
+
+
+def build_facts(
     identity: tuple[list[int], str], facts: dict[str, Any], *, target: dict[str, Any]
 ) -> dict[str, Any]:
-    """Turn the probe's raw facts into a TargetCheckResult."""
+    """Turn the probe's raw facts into the items, GPUs and runtimes of a TargetCheckResult."""
     python = python_item(identity)
     venv = item("venv", "ok") if facts.get("venv") else item("venv", "ng", "venv_missing")
     pip_facts = facts.get("pip") or {}
@@ -254,11 +279,7 @@ def build_result(
     }
     gpu, gpus = gpu_item(facts.get("nvidia") or {}, gpus_expected=bool(target.get("gpuIds")))
     work_facts = facts.get("workDirectory") or {}
-    work_directory = (
-        item("work_directory", "ok")
-        if work_facts.get("writable")
-        else item("work_directory", "ng", "work_directory_not_writable")
-    )
+    work_directory = work_directory_item(work_facts, target=target)
     api_facts = facts.get("api") or {}
     status = api_facts.get("status")
     api = (
@@ -272,9 +293,8 @@ def build_result(
     if docker["status"] == "ok":
         runtime_kinds.append("docker")
     runtime_kinds += [kind for kind in ("singularity", "apptainer") if containers[kind]["status"] == "ok"]
-    free_bytes = work_facts.get("freeBytes")
+    free_bytes = work_facts.get("freeBytes") if target.get("workDirectory") else None
     return {
-        "version": 1,
         "items": [
             item("connection", "ok"),
             python,
@@ -292,35 +312,6 @@ def build_result(
         "runtimeKinds": runtime_kinds,
         "workDirectoryFreeBytes": free_bytes if isinstance(free_bytes, int) and free_bytes >= 0 else None,
     }
-
-
-def sanitize_text(value: str | None, *, masker: SecretMasker, secret_paths: list[str]) -> str | None:
-    """Keep a short single-line fact; drop anything that names the target's key files."""
-    if value is None:
-        return None
-    text = CONTROL_CHARACTERS.sub(" ", masker.mask(str(value))).strip()[:MAX_DETAIL_LENGTH]
-    if not text or any(path in text for path in secret_paths):
-        return None
-    return text
-
-
-def sanitize_result(
-    result: dict[str, Any], *, target: dict[str, Any], masker: SecretMasker
-) -> dict[str, Any]:
-    secret_paths = [path for path in (target.get("sshKeyPath"), target.get("knownHostsPath")) if path]
-
-    def clean(value: str | None) -> str | None:
-        return sanitize_text(value, masker=masker, secret_paths=secret_paths)
-
-    items = [{**entry, "detail": clean(entry["detail"])} for entry in result["items"]]
-    gpus = result["gpus"]
-    if gpus is not None:
-        gpus = [
-            {**gpu, "uuid": uuid, "name": name}
-            for gpu in gpus
-            if (uuid := clean(gpu["uuid"])) is not None and (name := clean(gpu["name"])) is not None
-        ]
-    return {**result, "items": items, "gpus": gpus}
 
 
 def parse_identity(raw: bytes) -> tuple[list[int], str]:
@@ -348,13 +339,22 @@ def parse_facts(raw: bytes) -> dict[str, Any]:
     return facts
 
 
+def choose_python(pythons: list[dict[str, Any]]) -> str | None:
+    """For a computer without a Python yet: the first discovered 3.11+, else the first that answered."""
+    answered = [python for python in pythons if python["version"] is not None]
+    for python in answered:
+        if tuple(int(part) for part in python["version"].split(".")[:2]) >= MINIMUM_TARGET_PYTHON:
+            return str(python["path"])
+    return str(answered[0]["path"]) if answered else None
+
+
 async def probe_target(
     target: dict[str, Any], *, transport: CommandTransport, health_url: str, masker: SecretMasker
 ) -> dict[str, Any]:
-    """Probe in three steps so the first failing step names the problem.
+    """Probe in steps so the first failing step names the problem.
 
     Transport error text can carry ssh's stderr (key paths, host names), so failures are
-    reported as codes only.
+    reported as codes only. A failed discovery only leaves the setup candidates empty.
     """
     try:
         await transport.run(["true"])
@@ -362,11 +362,20 @@ async def probe_target(
         return failed_result(
             "connection", "ssh_failed" if target["executor"] == "ssh" else "connection_failed"
         )
-    python_executable = target["pythonExecutable"]
+    discovery = await discover_target(transport)
+
+    def report(facts: dict[str, Any]) -> dict[str, Any]:
+        result = version_2_result(facts, discovery)
+        return fit_result_size(sanitize_result(result, target=target, masker=masker))
+
+    python_executable = target.get("pythonExecutable") or choose_python(discovery.pythons)
+    if not python_executable:
+        return report(with_connection(failed_facts("python", "python_missing")))
     try:
         identity = parse_identity(await transport.run([python_executable, "-c", PYTHON_IDENTITY]))
     except (TransportError, TimeoutError):
-        return with_connection(failed_result("python", "python_missing"))
+        return report(with_connection(failed_facts("python", "python_missing")))
+    work_directory = target.get("workDirectory") or discovery.host["homeDirectory"] or HOME_DIRECTORY
     try:
         facts = parse_facts(
             await transport.run(
@@ -374,7 +383,7 @@ async def probe_target(
                     python_executable,
                     "-c",
                     PROBE_SCRIPT,
-                    target["workDirectory"],
+                    work_directory,
                     health_url,
                     json.dumps(CONTAINER_EXEC_FLAGS),
                 ],
@@ -383,14 +392,14 @@ async def probe_target(
         )
     except (TransportError, TimeoutError):
         # The interpreter answered but could not run the probe (often a very old Python).
-        result = with_connection(failed_result("python", "probe_failed"))
-        result["items"][1]["detail"] = python_item(identity)["detail"]
-        return sanitize_result(result, target=target, masker=masker)
-    return sanitize_result(build_result(identity, facts, target=target), target=target, masker=masker)
+        failed = with_connection(failed_facts("python", "probe_failed"))
+        failed["items"][1]["detail"] = python_item(identity)["detail"]
+        return report(failed)
+    return report(build_facts(identity, facts, target=target))
 
 
-def with_connection(result: dict[str, Any]) -> dict[str, Any]:
-    return {**result, "items": [item("connection", "ok"), *result["items"]]}
+def with_connection(facts: dict[str, Any]) -> dict[str, Any]:
+    return {**facts, "items": [item("connection", "ok"), *facts["items"]]}
 
 
 async def check_target(

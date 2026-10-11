@@ -110,7 +110,7 @@ loginctl enable-linger "$USER"
 | --- | --- |
 | `--api-url`（必須） | API serverのURL |
 | `--worker-id`（必須） | workerのID。英数字と`.` `_` `-`の64文字まで。再起動や更新をまたいで同じ値を使う |
-| `--target-ids` | 担当するCompute targetのID（カンマ区切り）。省略すると許可されたすべて |
+| `--target-ids` | 担当するコンピュータのID（カンマ区切り）。省略すると許可されたすべて |
 | `--state-dir` | 実行中のJobの記録（journal）を置くディレクトリ。入れ直しても同じ場所を使う |
 | `--token-file` | tokenを読むファイル |
 | `--python` | workerの仮想環境のPython（既定は実行中のPython） |

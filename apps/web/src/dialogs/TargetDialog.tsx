@@ -8,6 +8,8 @@ import { Dialog } from '../components/Dialog';
 import { ErrorNotice } from '../components/Feedback';
 import { QueryDialog } from '../components/QueryDialog';
 import { TargetFields } from '../components/TargetFields';
+import { ComputerEditDialog } from './ComputerEditDialog';
+import { NewComputerDialog } from './NewComputerDialog';
 import { canAddSshOrLocalTarget } from '../lib/permissions';
 import { text } from '../i18n/catalog';
 
@@ -19,7 +21,8 @@ async function loadTargetChoices(signal: AbortSignal) {
 
 /**
  * Adds or edits a computer and chooses its visibility. Whoever adds one owns it: a global
- * administrator adds ssh, local and site targets, a researcher sites.
+ * administrator adds ssh, local and site targets (ssh and local in two steps, NewComputerDialog),
+ * a researcher sites.
  */
 export function TargetDialog({
   onClose,
@@ -30,24 +33,42 @@ export function TargetDialog({
   onSaved: (target: ComputeTargetDetails) => void;
   target?: ComputeTargetDetails;
 }) {
+  const { user } = useAuth();
   const choices = useQuery('target-dialog-choices', loadTargetChoices);
   const title = target ? text.editTarget : text.newTarget;
   return (
     <QueryDialog title={title} onClose={onClose} query={choices}>
-      {({ auth, launchers }) => (
-        <TargetForm
-          title={title}
-          target={target}
-          auth={auth}
-          launchers={launchers}
-          onClose={onClose}
-          onSaved={onSaved}
-        />
-      )}
+      {({ auth, launchers }) => {
+        // ssh and local computers are set up in two parts from a worker's check; sites in one form.
+        if (target && target.executor !== 'site')
+          return (
+            <ComputerEditDialog auth={auth} target={target} onClose={onClose} onSaved={onSaved} />
+          );
+        if (!target && canAddSshOrLocalTarget(user))
+          return (
+            <NewComputerDialog
+              auth={auth}
+              launchers={launchers}
+              onClose={onClose}
+              onSaved={onSaved}
+            />
+          );
+        return (
+          <TargetForm
+            title={title}
+            target={target}
+            auth={auth}
+            launchers={launchers}
+            onClose={onClose}
+            onSaved={onSaved}
+          />
+        );
+      }}
     </QueryDialog>
   );
 }
 
+/** A site's form, in one step; also the form of a researcher who adds one. */
 function TargetForm({
   title,
   target,

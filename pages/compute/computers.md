@@ -11,8 +11,8 @@ description: Jobを動かすコンピュータ（SSH・Local・site）を全体�
 
 | 種類 | 内容 | 手順 |
 | --- | --- | --- |
-| SSH | workerがSSHで入って動かすGPUマシン | [Compute target](/compute/targets) |
-| Local | workerのホストそのもの。開発モードでだけ使えます | [Compute target](/compute/targets) |
+| SSH | workerがSSHで入って動かすGPUマシン | [SSH・Localのコンピュータ](/compute/targets) |
+| Local | workerのホストそのもの。開発モードでだけ使えます | [SSH・Localのコンピュータ](/compute/targets) |
 | Site | スパコン、研究室のGPUサーバー、自分のPC。ランチャーか`mado-tracking submit`で投入します | [外部のコンピュータ（site）](/compute/sites) |
 
 コンピュータはProjectに属しません。全体設定の「コンピュータ」でまとめて足し、コンピュータごとの公開範囲（PublicかPrivate）で、誰のJobが動くかを決めます。
@@ -51,10 +51,12 @@ description: Jobを動かすコンピュータ（SSH・Local・site）を全体�
 | ほかの人（研究者） | Siteだけ |
 
 1. 全体設定の「コンピュータ」で、［コンピュータを追加］を押します。
-2. 名前を入れ、［公開範囲］を選びます。既定はPrivateです。全体管理者は［Executor］で種類も選びます。
-3. 種類ごとの項目を入れて［保存］を押します。SSH・Localは[Compute target](/compute/targets#register-a-target)、siteは[外部のコンピュータ（site）](/compute/sites#add-a-computer)の手順です。
+2. 名前を入れ、［公開範囲］を選びます。既定はPrivateです。全体管理者は［種類］も選びます（SSH・Site。開発モードではLocalも）。
+3. 種類ごとの項目を入れて保存します。
+   - SSH・Localは2段で足します。1段目「接続」で接続先と接続に使うworkerを選んで［接続を確認して次へ］を押し、2段目「接続後の設定」で作業ディレクトリなどを確かめて［保存］を押します。手順は[SSH・Localのコンピュータ](/compute/targets#register-a-target)です。
+   - siteは1枚の画面で項目を入れて［保存］を押します。手順は[外部のコンピュータ（site）](/compute/sites#add-a-computer)です。
 
-保存すると、そのコンピュータの詳細が一覧の下に開きます。
+保存すると、そのコンピュータの詳細が一覧の下に開きます。SSH・Localは、1段目を終えた時点で無効のまま一覧に入り、2段目で［有効］にして保存すると使えるようになります。
 
 ## 公開範囲 {#visibility}
 
