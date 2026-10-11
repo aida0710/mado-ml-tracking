@@ -69,7 +69,7 @@ export function ComputerOverviewTable({
         },
         {
           key: 'visibility',
-          priority: 'primary',
+          priority: 'secondary',
           header: text.computerVisibility,
           render: (target) => <VisibilityLabel visibility={target.visibility} />,
         },
@@ -84,9 +84,10 @@ export function ComputerOverviewTable({
             />
           ),
         },
+        // On a phone the row shows whether one may use the computer; visibility is in its details.
         {
           key: 'usable',
-          priority: 'secondary',
+          priority: 'primary',
           header: text.computerUsable,
           render: (target) => (target.usable ? text.computerUsableYes : text.computerUsableNo),
         },
@@ -121,7 +122,7 @@ export function ComputerOverviewTable({
                           data-testid={`target-check-${target.id}`}
                           onClick={() => onOpen(target)}
                         >
-                          {text.checkTarget}
+                          {text.checkTargetOpen}
                         </button>
                       )}
                     </div>

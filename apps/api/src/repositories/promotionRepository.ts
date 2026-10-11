@@ -88,10 +88,13 @@ export async function listPromotionPolicies(
   connection: Connection,
   filter: { projectId: string; modelId?: string },
 ): Promise<PromotionPolicy[]> {
+  // The list names the run-as user, so the page tells a person from a Service Account by name.
   return rows<PromotionPolicy>(
     connection,
-    `SELECT * FROM model_promotion_policies WHERE project_id=$1 AND ($2::uuid IS NULL OR model_id=$2)
-    ORDER BY created_at DESC,id DESC`,
+    `SELECT p.*,u.kind AS run_as_kind,u.display_name AS run_as_name
+    FROM model_promotion_policies p JOIN users u ON u.id=p.run_as_user_id
+    WHERE p.project_id=$1 AND ($2::uuid IS NULL OR p.model_id=$2)
+    ORDER BY p.created_at DESC,p.id DESC`,
     [filter.projectId, filter.modelId ?? null],
   );
 }

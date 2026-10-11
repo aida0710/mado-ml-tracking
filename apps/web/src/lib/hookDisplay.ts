@@ -1,5 +1,6 @@
 import type { Hook, HookExecution, HookFilter } from '@mmt/contracts';
-export { hookWebhookPath } from '@mmt/contracts';
+import { hookWebhookPath } from '@mmt/contracts';
+import { clientApiUrl } from './clientApiUrl';
 import type { ExecutionCatalog } from '../types/executionCatalog';
 import { formatClockDuration } from './clockDuration';
 import { jobGpuSummary } from './jobDisplay';
@@ -10,6 +11,13 @@ import {
   hooksTextTemplates,
 } from '../i18n/hooks';
 import { jobsTextTemplates } from '../i18n/jobs';
+
+export { hookWebhookPath };
+
+/** The address a sender posts a webhook to: this page's address (it forwards /api) and the path. */
+export function hookWebhookUrl(hookId: string, origin: string): string {
+  return `${clientApiUrl(origin)}${hookWebhookPath(hookId)}`;
+}
 
 /** What came of one start: queued, failed, waiting for a Run, or skipped with its reason. */
 export function hookExecutionOutcome(execution: Pick<HookExecution, 'status' | 'reason'>): string {

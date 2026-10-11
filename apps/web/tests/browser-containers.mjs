@@ -31,6 +31,14 @@ const clickSave = async () => {
   else await dialog().getByRole('button', { name: '保存', exact: true }).click();
 };
 const waitClosed = () => page.getByRole('dialog').waitFor({ state: 'hidden' });
+// Checks options of a checkbox list (FormField type 'checkboxes') by their labels.
+const check = async (legend, labels) => {
+  for (const label of labels)
+    await dialog()
+      .getByRole('group', { name: new RegExp(legend) })
+      .getByRole('checkbox', { name: label, exact: true })
+      .check();
+};
 const codePosts = () =>
   api.state.calls.filter(
     (call) =>
@@ -42,7 +50,7 @@ const image = 'registry.example.com/team/infer@sha256:' + 'a'.repeat(64);
 async function fillCodeCommand() {
   await fill(commandLabel, '["python", "/app/infer.py"]');
   await fill(modelFamilies, 'test-family');
-  await select('対応する実行種別', 'inference');
+  await check('対応する実行種別', ['推論']);
 }
 async function openNewVersion() {
   await page.getByRole('button', { name: 'バージョンを作成', exact: true }).click();
@@ -58,7 +66,7 @@ try {
   assert.equal(await dialog().getByLabel('依存パッケージ（1行に1件）').count(), 0);
   await fill('Docker image（digest固定）', 'image:latest');
   await fillCodeCommand();
-  await select('対応する実行種別', ['inference', 'evaluation']);
+  await check('対応する実行種別', ['推論', '評価']);
   await clickSave();
   await dialog()
     .getByRole('alert')
@@ -210,18 +218,16 @@ try {
     'Python-only target is selectable for Docker',
   );
   await select('Compute target', containerTarget.id);
-  await select('GPU ID · CPUのみ', '1');
+  const gpuOne = () => dialog().getByRole('checkbox', { name: '1', exact: true });
+  await gpuOne().check();
   await dialog().getByRole('button', { name: '戻る', exact: true }).click();
   await select('コードバージョン', singularityVersion.id);
   await dialog().getByRole('button', { name: '次へ', exact: true }).click();
-  assert.equal(await dialog().getByLabel('Compute target').inputValue(), '');
-  assert.deepEqual(
-    await dialog()
-      .getByLabel('GPU ID · CPUのみ')
-      .evaluate((input) => Array.from(input.selectedOptions, (option) => option.value)),
-    [],
-  );
-  await select('Compute target', containerTarget.id);
+  // The container target runs Singularity too, so the computer and its GPU stay chosen; a choice
+  // is dropped (and said so) only when it no longer fits (lib/launchFormChanges).
+  assert.equal(await dialog().getByLabel('Compute target').inputValue(), containerTarget.id);
+  assert.equal(await gpuOne().isChecked(), true);
+  await gpuOne().uncheck();
   await dialog().getByRole('button', { name: '次へ', exact: true }).click();
   await dialog().getByText(storedSif.sha256, { exact: true }).waitFor();
   await dialog().getByRole('button', { name: 'ジョブを起動', exact: true }).click();
@@ -237,7 +243,7 @@ try {
   await page.getByRole('tab', { name: '自動実行ルール', exact: true }).click();
   await page.getByRole('button', { name: '自動実行ルールを作成', exact: true }).click();
   await fill('名前', 'Evaluate uploaded models');
-  await select('対象モデル系列', 'test-family');
+  await check('対象モデル系列', ['test-family']);
   await select('実行種別', 'evaluation');
   await select('Experiments', api.state.experiments[0].id);
   await select('コードバージョン', dockerVersion.id);
@@ -249,8 +255,11 @@ try {
     0,
   );
   await select('Compute target', containerTarget.id);
-  await select('GPU ID · CPUのみ', '0');
-  await select('入力データセットバージョン', api.state.datasetVersions[0].id);
+  await check('GPU ID', ['0']);
+  const [datasetVersion] = api.state.datasetVersions;
+  await check('入力データセットバージョン', [
+    `${datasetVersion.namespace}/${datasetVersion.name} / ${datasetVersion.version}`,
+  ]);
   await fill('パラメータ（JSON）', '{"batch_size":4}');
   await fill('タグ（JSON）', '{"suite":"regression"}');
   api.state.failNextAutomation = true;
@@ -331,7 +340,7 @@ try {
     'No model weights',
   ])
     await page.getByText(label, { exact: true }).waitFor();
-  for (const label of ['起動結果', 'Runの状態', 'Jobの状態'])
+  for (const label of ['起動結果', 'Run・Jobの状態'])
     assert.equal(await page.getByRole('columnheader', { name: label, exact: true }).count(), 1);
   assert.equal(
     await page.getByRole('link', { name: 'Runを開く', exact: true }).getAttribute('href'),

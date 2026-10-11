@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import type { CodeSource, ExecutionRuntime, LogEntry, MetricPoint, Run } from '../index.js';
+import type {
+  CodeSource,
+  ExecutionRuntime,
+  LogEntry,
+  MetricPoint,
+  Run,
+  RunLogList,
+} from '../index.js';
 import type { ExecutionSnapshot, TaskOutputModel } from '../experimentTasks.js';
 import {
   idSchema,
@@ -85,6 +92,10 @@ export const logEntrySchema = namedContractSchema(
     message: z.string(),
   }),
 );
+export const runLogListSchema = namedContractSchema(
+  'RunLogList',
+  z.strictObject({ items: z.array(logEntrySchema), totalCount: z.number().int() }),
+);
 export const runSchema = namedContractSchema(
   'Run',
   z.strictObject({
@@ -148,4 +159,5 @@ type _TaskOutputModel = Expect<
 >;
 type _MetricPoint = Expect<MutuallyAssignable<z.infer<typeof metricPointSchema>, MetricPoint>>;
 type _LogEntry = Expect<MutuallyAssignable<z.infer<typeof logEntrySchema>, LogEntry>>;
+type _RunLogList = Expect<MutuallyAssignable<z.infer<typeof runLogListSchema>, RunLogList>>;
 type _Run = Expect<MutuallyAssignable<z.infer<typeof runSchema>, Run>>;

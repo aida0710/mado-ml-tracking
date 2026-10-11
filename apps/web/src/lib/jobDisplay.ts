@@ -71,3 +71,13 @@ export function formatAutoRetries(flags: Pick<Job, 'retryOnFailure' | 'retryOnTi
   ].filter(Boolean);
   return retries.join(' / ') || text.none;
 }
+
+/**
+ * "attempt / maxAttempts". maxAttempts bounds the automatic retries only, so a Job a person
+ * retried past it says so instead of showing more attempts than the limit.
+ */
+export function jobAttemptLabel(job: Pick<Job, 'attempt' | 'maxAttempts'>): string {
+  return job.attempt <= job.maxAttempts
+    ? jobsTextTemplates.attempt(job.attempt, job.maxAttempts)
+    : jobsTextTemplates.attemptPastLimit(job.attempt, job.maxAttempts);
+}

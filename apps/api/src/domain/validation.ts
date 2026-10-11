@@ -5,6 +5,8 @@ import {
   CPU_ARCHES,
   DATASET_TRANSFER_MODES,
   DEFAULT_DATASET_CACHE_MAX_BYTES,
+  DEFAULT_JOB_ATTEMPTS,
+  MAX_JOB_ATTEMPTS,
   MAX_JOB_GPU_COUNT,
   MAX_JOB_WALLTIME_SECONDS,
   MAX_QUEUE_TIMEOUT_SECONDS,
@@ -190,9 +192,6 @@ export const gpuIdsSchema = z
   .array(z.string().min(1).max(100))
   .max(128)
   .refine((values) => new Set(values).size === values.length);
-// Explicit retries remain bounded, and the default matches the existing worker policy.
-const MAX_JOB_ATTEMPTS = 100;
-export const DEFAULT_JOB_ATTEMPTS = 3;
 export const maxAttemptsSchema = z
   .number()
   .int()
@@ -246,6 +245,9 @@ export const targetSchema = z.strictObject({
   // Private unless chosen: a new computer serves its owner until they open it to everyone.
   visibility: z.enum(COMPUTE_TARGET_VISIBILITIES).default('private'),
 });
+// GET /projects/:p/jobs: a Run's Jobs (its retries make new Runs, so usually one). Other query
+// values are ignored, as they were before the list took any.
+export const jobListQuerySchema = z.object({ runId: uuidSchema.optional() });
 // gpuCount, retryOnFailure and retryOnTimeout are for site Jobs (validateSiteJobOptions).
 export const jobCreateSchema = z.strictObject({
   runId: uuidSchema,
@@ -257,6 +259,11 @@ export const jobCreateSchema = z.strictObject({
   retryOnFailure: z.boolean().default(false),
   retryOnTimeout: z.boolean().default(false),
   allowChildJobs: z.boolean().default(false),
+});
+// A Run and its Job in one request, so a refused Job leaves no queued Run behind.
+export const jobLaunchSchema = z.strictObject({
+  run: runCreateSchema,
+  job: jobCreateSchema.omit({ runId: true }),
 });
 export const targetPatchSchema = targetSchema.partial().extend({
   runtimeKinds: targetSchema.shape.runtimeKinds.removeDefault().optional(),
@@ -353,6 +360,7 @@ export type CodeVersionCreate = z.infer<typeof codeVersionSchema>;
 export type ModelVersionCreate = z.infer<typeof modelVersionSchema>;
 export type DatasetVersionCreate = z.infer<typeof datasetVersionSchema>;
 export type JobCreate = z.infer<typeof jobCreateSchema>;
+export type JobLaunch = z.infer<typeof jobLaunchSchema>;
 export type TargetCreate = z.infer<typeof targetSchema>;
 export type TargetPatch = z.infer<typeof targetPatchSchema>;
 export type PluginPatch = z.infer<typeof pluginPatchSchema>;

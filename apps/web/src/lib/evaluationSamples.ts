@@ -1,28 +1,27 @@
-// Evaluation sample tables (jsonl / csv with audio, reference, prediction, score columns):
-// parsing, audio path resolution, sorting, and paging. Broken rows are counted, never repaired.
+// Evaluation sample tables (jsonl / csv / tsv with audio, reference, prediction, score columns):
+// reading the rows, audio path resolution, sorting, and paging. Broken rows are counted, never repaired.
 
+import { parseTabularText, type TabularRowErrorReason, type TabularText, type TabularTextFormat } from './tabularText';
+import { diffCharacters, type TextDiffSegment } from './textDiff';
 import { isUuid } from './uuid';
 
 export const EVALUATION_SAMPLES_PAGE_SIZE = 50;
 export const EVALUATION_SAMPLE_COLUMNS = ['audio', 'reference', 'prediction', 'score'] as const;
+type EvaluationSampleColumn = (typeof EVALUATION_SAMPLE_COLUMNS)[number];
 /** Cross-run references: mmt-artifact://runs/<runId>/<path>. */
 export const ARTIFACT_REFERENCE_SCHEME = 'mmt-artifact://';
 
-export type EvaluationSampleFormat = 'jsonl' | 'csv';
-export type EvaluationSampleErrorReason =
-  | 'invalid_json'
-  | 'not_object'
-  | 'column_count'
-  | 'unterminated_quote'
-  | 'invalid_text'
-  | 'invalid_score';
+export type EvaluationSampleErrorReason = TabularRowErrorReason | 'invalid_audio' | 'invalid_text' | 'invalid_score';
 
 export interface EvaluationSample {
   /** 1-based line in the file where the row starts. */
   line: number;
   audio: string | null;
+  /** Numbers and booleans (a duration, a count, a yes/no judgement) are shown as their text. */
   reference: string | null;
   prediction: string | null;
+  /** Both were strings in the file, so a character diff between them means something. */
+  isTextPair: boolean;
   score: number | null;
 }
 export interface EvaluationSampleError {
@@ -35,24 +34,24 @@ export interface EvaluationSampleTable {
   errors: EvaluationSampleError[];
 }
 
-export function evaluationSampleFormat(path: string, mimeType: string): EvaluationSampleFormat | null {
-  const essence = mimeType.split(';')[0]!.trim().toLowerCase();
-  const lowerPath = path.toLowerCase();
-  if (essence === 'application/x-ndjson' || /\.(jsonl|ndjson)$/.test(lowerPath)) return 'jsonl';
-  if (essence === 'text/csv' || lowerPath.endsWith('.csv')) return 'csv';
-  return null;
-}
-
 /** A table is shown as evaluation samples when it has audio, or both reference and prediction. */
 export function isEvaluationSampleTable(columns: readonly string[]): boolean {
   return columns.includes('audio') || (columns.includes('reference') && columns.includes('prediction'));
 }
 
-type RowResult = { sample: EvaluationSample } | { reason: EvaluationSampleErrorReason };
+type SampleResult = { sample: EvaluationSample } | { reason: EvaluationSampleErrorReason };
 
-function readText(value: unknown): string | null | undefined {
-  if (value === undefined || value === null) return null;
+function readAudio(value: unknown): string | null | undefined {
+  if (value === undefined || value === null || value === '') return null;
   return typeof value === 'string' ? value : undefined;
+}
+
+/** Objects and arrays have no single text to compare; they make the row unreadable. */
+function readComparedText(value: unknown): string | null | undefined {
+  if (value === undefined || value === null) return null;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return undefined;
 }
 
 function readScore(value: unknown): number | null | undefined {
@@ -61,115 +60,47 @@ function readScore(value: unknown): number | null | undefined {
   return typeof score === 'number' && Number.isFinite(score) ? score : undefined;
 }
 
-function toSample(line: number, record: Record<string, unknown>): RowResult {
-  const audio = readText(record.audio);
-  const reference = readText(record.reference);
-  const prediction = readText(record.prediction);
-  if (audio === undefined || reference === undefined || prediction === undefined)
-    return { reason: 'invalid_text' };
-  const score = readScore(record.score);
+function toSample(line: number, valueOf: (column: EvaluationSampleColumn) => unknown): SampleResult {
+  const audio = readAudio(valueOf('audio'));
+  if (audio === undefined) return { reason: 'invalid_audio' };
+  const rawReference = valueOf('reference');
+  const rawPrediction = valueOf('prediction');
+  const reference = readComparedText(rawReference);
+  const prediction = readComparedText(rawPrediction);
+  if (reference === undefined || prediction === undefined) return { reason: 'invalid_text' };
+  const score = readScore(valueOf('score'));
   if (score === undefined) return { reason: 'invalid_score' };
-  return { sample: { line, audio: audio || null, reference, prediction, score } };
+  const isTextPair = typeof rawReference === 'string' && typeof rawPrediction === 'string';
+  return { sample: { line, audio, reference, prediction, isTextPair, score } };
 }
 
-function collect(rows: Array<{ line: number; result: RowResult }>, columns: string[]): EvaluationSampleTable {
-  const table: EvaluationSampleTable = { columns, samples: [], errors: [] };
-  for (const { line, result } of rows)
-    if ('sample' in result) table.samples.push(result.sample);
-    else table.errors.push({ line, reason: result.reason });
-  return table;
-}
-
-function parseJsonLines(content: string): EvaluationSampleTable {
-  const columns = new Set<string>();
-  const rows: Array<{ line: number; result: RowResult }> = [];
-  content.split(/\r?\n/).forEach((source, index) => {
-    if (source.trim() === '') return;
-    const line = index + 1;
-    let value: unknown;
-    try {
-      value = JSON.parse(source);
-    } catch {
-      rows.push({ line, result: { reason: 'invalid_json' } });
-      return;
-    }
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-      rows.push({ line, result: { reason: 'not_object' } });
-      return;
-    }
-    for (const key of Object.keys(value)) columns.add(key);
-    rows.push({ line, result: toSample(line, value as Record<string, unknown>) });
-  });
-  return collect(rows, [...columns]);
-}
-
-interface CsvRecord {
-  line: number;
-  fields: string[];
-  unterminated: boolean;
-}
-
-/** RFC 4180 records. Quoted fields may span lines; `line` is where each record starts. */
-function readCsvRecords(content: string): CsvRecord[] {
-  const records: CsvRecord[] = [];
-  let fields: string[] = [];
-  let field = '';
-  let quoted = false;
-  let line = 1;
-  let recordLine = 1;
-  const endRecord = () => {
-    fields.push(field);
-    if (!(fields.length === 1 && fields[0] === '')) records.push({ line: recordLine, fields, unterminated: false });
-    fields = [];
-    field = '';
-    recordLine = line;
-  };
-  for (let index = 0; index < content.length; index += 1) {
-    const character = content[index]!;
-    if (quoted) {
-      if (character === '"' && content[index + 1] === '"') {
-        field += '"';
-        index += 1;
-      } else if (character === '"') quoted = false;
-      else {
-        if (character === '\n') line += 1;
-        field += character;
-      }
-    } else if (character === '"' && field === '') quoted = true;
-    else if (character === ',') {
-      fields.push(field);
-      field = '';
-    } else if (character === '\n' || character === '\r') {
-      if (character === '\r' && content[index + 1] === '\n') index += 1;
-      line += 1;
-      endRecord();
-    } else field += character;
+/** The rows of a table already read from its file, as evaluation samples. */
+export function toEvaluationSamples(table: TabularText): EvaluationSampleTable {
+  const samples: EvaluationSample[] = [];
+  const errors: EvaluationSampleError[] = [...table.errors];
+  // A CSV header may repeat a name; the first column of that name is read.
+  const columnIndexes = new Map(EVALUATION_SAMPLE_COLUMNS.map((column) => [column, table.columns.indexOf(column)]));
+  for (const record of table.records) {
+    const valueOf = (column: EvaluationSampleColumn) => {
+      const index = columnIndexes.get(column)!;
+      return index < 0 ? undefined : record.cells[index];
+    };
+    const result = toSample(record.line, valueOf);
+    if ('sample' in result) samples.push(result.sample);
+    else errors.push({ line: record.line, reason: result.reason });
   }
-  if (quoted) records.push({ line: recordLine, fields: [...fields, field], unterminated: true });
-  else if (field !== '' || fields.length > 0) endRecord();
-  return records;
+  errors.sort((left, right) => left.line - right.line);
+  return { columns: table.columns, samples, errors };
 }
 
-function parseCsv(content: string): EvaluationSampleTable {
-  const [header, ...records] = readCsvRecords(content);
-  if (!header) return { columns: [], samples: [], errors: [] };
-  const columns = header.fields.map((name) => name.trim());
-  return collect(
-    records.map((record) => ({
-      line: record.line,
-      result: record.unterminated
-        ? { reason: 'unterminated_quote' }
-        : record.fields.length !== columns.length
-          ? { reason: 'column_count' }
-          : toSample(record.line, Object.fromEntries(columns.map((name, index) => [name, record.fields[index]]))),
-    })),
-    columns,
-  );
+export function parseEvaluationSamples(content: string, format: TabularTextFormat): EvaluationSampleTable {
+  return toEvaluationSamples(parseTabularText(content, format));
 }
 
-export function parseEvaluationSamples(content: string, format: EvaluationSampleFormat): EvaluationSampleTable {
-  const withoutBom = content.startsWith('﻿') ? content.slice(1) : content;
-  return format === 'jsonl' ? parseJsonLines(withoutBom) : parseCsv(withoutBom);
+/** The character diff of reference against prediction; null unless both were strings in the file. */
+export function sampleTextDiff(sample: EvaluationSample): TextDiffSegment[] | null {
+  if (!sample.isTextPair || sample.reference === null || sample.prediction === null) return null;
+  return diffCharacters(sample.reference, sample.prediction);
 }
 
 export type EvaluationSampleOrder = 'line' | 'score_asc' | 'score_desc';

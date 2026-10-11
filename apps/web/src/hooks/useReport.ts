@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ReportDetail, ReportUpdate } from '@mmt/contracts';
 import { isReportRevisionConflict, reportsApi } from '../api/reports';
 import { formatErrorMessage } from '../lib/errorMessage';
+import { reportRevisionChanges } from '../lib/reportRevisionChanges';
 import { useQuery } from './useQuery';
 
 /**
@@ -26,6 +27,17 @@ export function useReportRevisions(projectId: string, reportId: string, currentR
   return useQuery(currentRevision === undefined ? null : `${projectId}:report-revisions:${reportId}:${currentRevision}`, (signal) =>
     reportsApi.revisions(projectId, reportId, signal),
   );
+}
+
+/** What `revision` changed from the revision before it; null reads nothing. */
+export function useReportRevisionChanges(projectId: string, reportId: string, revision: number | null) {
+  return useQuery(revision === null ? null : `${projectId}:report-revision-changes:${reportId}:${revision}`, async (signal) => {
+    const [previous, current] = await Promise.all([
+      reportsApi.get(projectId, reportId, { revision: revision! - 1, signal }),
+      reportsApi.get(projectId, reportId, { revision: revision!, signal }),
+    ]);
+    return reportRevisionChanges(previous.revision, current.revision);
+  });
 }
 
 export type ReportSaveOutcome =

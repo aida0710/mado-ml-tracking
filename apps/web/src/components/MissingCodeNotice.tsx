@@ -8,6 +8,8 @@ function describeMissingCode(reason: MissingCodeReason): string {
   if (reason.kind === 'no_code_versions') return text.codeCandidatesNone;
   if (reason.kind === 'no_task_type')
     return modelsTextTemplates.codeCandidatesNoTaskType(text[reason.taskType]);
+  if (reason.kind === 'no_common_family')
+    return modelsTextTemplates.codeCandidatesNoCommonFamily(reason.families);
   const missing = modelsTextTemplates.codeCandidatesNoFamily(reason.family);
   return reason.caseVariants.length
     ? `${missing}${modelsTextTemplates.codeCandidatesCaseVariant(reason.family, reason.caseVariants)}`

@@ -1,8 +1,10 @@
 import type { ChartLine } from '../../lib/metricSeries';
+import { SeriesSwatch } from './SeriesSwatch';
 import { text } from '../../i18n/catalog';
 
 /**
  * The series of a chart as buttons: a click hides or shows one, hovering highlights it in the plot.
+ * Each shows its line's color and pattern, so the lines are told apart without color vision too.
  */
 export function ChartLegend({
   lines,
@@ -32,11 +34,7 @@ export function ChartLegend({
           onFocus={() => onHighlight(line.id)}
           onBlur={() => onHighlight(null)}
         >
-          <span
-            className={`chart-legend-swatch ${line.kind}`}
-            style={{ background: line.color }}
-            aria-hidden="true"
-          />
+          <SeriesSwatch color={line.color} dashPattern={line.dashPattern} kind={line.kind} />
           <span className="chart-legend-label">
             {line.label}
             {line.kind === 'group' && text.chartGroupSuffix}

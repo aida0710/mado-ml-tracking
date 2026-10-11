@@ -4,8 +4,15 @@ import { ResponsiveTable } from './ResponsiveTable';
 import { JobStatusBadges } from './JobStatusBadges';
 import { isResumableStatus } from '../lib/checkpointResume';
 import { formatDate } from '../lib/format';
-import { isActiveJob, jobArrayMemberLabel, jobGpuSummary, shortId } from '../lib/jobDisplay';
+import {
+  isActiveJob,
+  jobArrayMemberLabel,
+  jobAttemptLabel,
+  jobGpuSummary,
+  shortId,
+} from '../lib/jobDisplay';
 import { text } from '../i18n/catalog';
+import { jobsTextTemplates } from '../i18n/jobs';
 
 export type JobAction = 'cancel' | 'retry' | 'resumeLatest';
 
@@ -25,7 +32,10 @@ function JobLocation({ job }: { job: Pick<JobListItem, 'runnerHost' | 'scheduler
   );
 }
 
-/** What started the Job besides a person: a hook, a driver Job (parent), or an array it belongs to. */
+/**
+ * What started the Job besides a person: a Sweep trial, an automation rule, a hook, a driver Job
+ * (parent), or an array it belongs to.
+ */
 function JobOrigin({
   job,
   projectId,
@@ -40,10 +50,21 @@ function JobOrigin({
   onSelectArray: (arrayGroupId: string) => void;
 }) {
   const arrayMember = jobArrayMemberLabel(job);
-  const { hookId, parentJobId, arrayGroupId } = job;
-  if (!hookId && !parentJobId && !(arrayGroupId && arrayMember)) return <>—</>;
+  const { hookId, parentJobId, arrayGroupId, sweepTrial, automationRule } = job;
+  if (!hookId && !parentJobId && !(arrayGroupId && arrayMember) && !sweepTrial && !automationRule)
+    return <>—</>;
   return (
     <span className="job-cell-lines">
+      {sweepTrial && (
+        <Link to={`/projects/${projectId}/sweeps/${sweepTrial.sweepId}`}>
+          {jobsTextTemplates.jobSweepTrialOrigin(sweepTrial.sweepName, sweepTrial.trialIndex)}
+        </Link>
+      )}
+      {automationRule && (
+        <span title={automationRule.ruleId}>
+          {jobsTextTemplates.jobAutomationOrigin(automationRule.ruleName)}
+        </span>
+      )}
       {hookId && (
         <Link to={`/projects/${projectId}/hooks?hook=${hookId}`} title={hookId}>
           {text.jobHook}: {hooks.find((hook) => hook.id === hookId)?.name ?? shortId(hookId)}
@@ -192,7 +213,7 @@ export function JobsTable({
           priority: 'secondary',
           header: text.attempt,
           className: 'mono nowrap',
-          render: (job) => `${job.attempt} / ${job.maxAttempts}`,
+          render: (job) => jobAttemptLabel(job),
         },
         {
           key: 'created',
@@ -221,11 +242,16 @@ export function JobsTable({
                 <button className="button small" onClick={() => onAction(job.id, 'retry')}>
                   {text.retryJob}
                 </button>
-                {isResumableStatus(job.status) && !job.sweepEarlyStopped && (
-                  <button className="button small" onClick={() => onAction(job.id, 'resumeLatest')}>
-                    {text.checkpointResumeLatest}
-                  </button>
-                )}
+                {isResumableStatus(job.status) &&
+                  job.hasResumeCheckpoint &&
+                  !job.sweepEarlyStopped && (
+                    <button
+                      className="button small"
+                      onClick={() => onAction(job.id, 'resumeLatest')}
+                    >
+                      {text.checkpointResumeLatest}
+                    </button>
+                  )}
               </span>
             ),
         },

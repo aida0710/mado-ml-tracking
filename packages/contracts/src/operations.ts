@@ -19,6 +19,9 @@ export type OperationsAlertResolution = 'recovered' | 'inactive';
 
 export type OperationsAlertState = 'open' | 'all';
 
+/** The most alerts one list request returns; the header bell asks for this many. */
+export const OPERATIONS_ALERT_MAX_PAGE_SIZE = 200;
+
 /**
  * One occurrence of a watched condition, from detection to resolution. subjectId is the Job id,
  * `<token id>:<worker id>` for a worker, or the plugin connection id. detail is a snapshot taken

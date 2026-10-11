@@ -40,7 +40,8 @@ export function targetChoiceLabel(
 ): string {
   // A local target runs on the worker's host and may have no host of its own.
   if (target.executor === 'local') return `${target.name} · ${text.targetLocationLocal}`;
-  if (target.executor !== 'site') return `${target.name} · ${target.host}`;
+  // The host is hidden from those who may not manage the computer; then the name stands alone.
+  if (target.executor !== 'site') return target.host ? `${target.name} · ${target.host}` : target.name;
   const mode = submissionModeBadgeLabels[target.submissionMode];
   return `${target.name} · ${computeTargetExecutorLabels.site}（${mode}）`;
 }

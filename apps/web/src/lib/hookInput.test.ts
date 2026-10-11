@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import type { DatasetVersion, ModelVersion } from '@mmt/contracts';
+import type { DatasetVersion, Hook, HookJobTemplate, ModelVersion } from '@mmt/contracts';
 import type { HookCatalog } from '../types/hooks';
 import type { FormValues } from '../types/form';
 import { computeTarget, executionCatalog, siteTarget } from '../../tests/fixtures/execution';
 import {
   INHERIT_MODEL_VERSION,
   buildHookInput,
+  copyHookValues,
   createHookValues,
   hookFilterFields,
   updateHookValues,
@@ -210,5 +211,60 @@ describe('フックの作成の入力', () => {
         catalog,
       }).datasetPartitionVersionId,
     ).toBe('');
+  });
+});
+
+describe('フックの複製', () => {
+  // A hook as the API returns it, with every template field filled in.
+  const asStoredHook = (input: ReturnType<typeof buildHookInput>): Hook => ({
+    id: 'hook',
+    projectId: 'project',
+    name: input.name,
+    enabled: false,
+    trigger: input.trigger,
+    filter: input.filter ?? {},
+    template: {
+      modelVersionId: null,
+      inheritModelVersion: false,
+      inputDatasetVersionIds: [],
+      inheritOutputDatasets: false,
+      parameters: {},
+      tags: {},
+      gpuIds: [],
+      gpuCount: 0,
+      walltimeSeconds: null,
+      arraySize: null,
+      datasetPartitionVersionId: null,
+      maxAttempts: 1,
+      retryOnFailure: false,
+      retryOnTimeout: false,
+      allowChildJobs: false,
+      ...input.template,
+    } as HookJobTemplate,
+    checkpointMode: input.checkpointMode ?? 'every',
+    checkpointEvery: input.checkpointEvery ?? null,
+    concurrency: input.concurrency ?? 'queue',
+    maxStartsPerHour: input.maxStartsPerHour ?? 60,
+    webhookSignature: input.webhookSignature ?? null,
+    createdBy: 'user',
+    runAsUserId: 'user',
+    createdAt: '2026-10-11T00:00:00Z',
+  });
+
+  it('複製の入力は、名前のほかは元のフックと同じ作成内容になる', () => {
+    for (const original of [values, siteValues]) {
+      const input = buildHookInput(original, catalog);
+      const copied = buildHookInput(copyHookValues(asStoredHook(input), 'copy'), catalog);
+      expect(copied).toEqual({ ...input, name: 'copy' });
+    }
+  });
+
+  it('webhookのフックは署名の形式も写す', () => {
+    const webhook = buildHookInput(
+      { ...values, trigger: 'webhook', webhookSignature: 'mmt' },
+      catalog,
+    );
+    const copied = buildHookInput(copyHookValues(asStoredHook(webhook), 'copy'), catalog);
+    expect(copied.webhookSignature).toBe('mmt');
   });
 });

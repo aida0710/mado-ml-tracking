@@ -19,10 +19,11 @@ import {
   type TimeRange,
 } from '../../lib/audioTimeline';
 import { ErrorNotice, Loading } from '../Feedback';
-import { text } from '../../i18n/catalog';
+import { text, textTemplates } from '../../i18n/catalog';
 import { artifactsTextTemplates } from '../../i18n/artifacts';
 import { AudioPreviewOverview } from './AudioPreviewOverview';
 import { AudioSpectrogram } from './AudioSpectrogram';
+import { AudioTimeAxis } from './AudioTimeAxis';
 import { AudioWaveform } from './AudioWaveform';
 
 const WAVEFORM_HEIGHT = 88;
@@ -283,11 +284,18 @@ export function AudioArtifactViewer({
         )}
         {info && <div className="audio-playhead" style={{ left: percent(playback.currentTime) }} />}
       </div>
+      {/* Outside the timeline, so the ruler adds nothing to what a touch on the waveform does. */}
+      {info && <AudioTimeAxis range={range} />}
       {analysis.status === 'error' && (
         <ErrorNotice
           message={analysis.reason === 'decode' ? text.audioDecodeError : analysis.reason === 'analysis' ? text.audioAnalysisError : text.audioFetchError}
           retry={retry}
         />
+      )}
+      {info && visibleRange && (
+        <span className="mono muted audio-visible-range">
+          {textTemplates.audioVisibleRange(formatAudioTime(visibleRange.startSeconds), formatAudioTime(visibleRange.endSeconds))}
+        </span>
       )}
       {info && visibleRange && (
         <input

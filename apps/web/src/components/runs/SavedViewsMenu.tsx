@@ -15,6 +15,7 @@ import {
   type SavedViewActor,
 } from '../../lib/savedViewPermissions';
 import { text, textTemplates } from '../../i18n/catalog';
+import { detailsPopoverHandlers } from '../../lib/detailsPopover';
 
 type MenuDialog = 'saveAs' | 'rename' | 'delete' | null;
 
@@ -84,7 +85,7 @@ export function SavedViewsMenu({
   const canChange = activeView ? canChangeSavedView(activeView, actor) : false;
   return (
     <div className="saved-views-bar">
-      <details className="saved-views-menu" ref={menuRef}>
+      <details className="saved-views-menu" ref={menuRef} {...detailsPopoverHandlers}>
         <summary>
           <Bookmark size={14} />
           {activeView ? textTemplates.savedViewCurrent(activeView.name) : text.savedViewDefault}

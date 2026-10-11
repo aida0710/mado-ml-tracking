@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ModelAutomationRule } from '@mmt/contracts';
 import type { ExecutionCatalog } from '../types/executionCatalog';
-import { automationApi } from '../api/automation';
+import { AUTOMATION_EXECUTION_PAGE_MAX, automationApi } from '../api/automation';
 import { useQuery } from '../hooks/useQuery';
 import { FormFields } from './FormFields';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -29,9 +29,16 @@ export function AutomationManualApply({
   onApplied: () => void;
 }) {
   const isChained = rule.trigger === 'upstream_run_finished';
-  const executions = useQuery(
-    isChained ? `${projectId}:automation-executions:manual-apply` : null,
-    (signal) => automationApi.executions(projectId, signal),
+  // Only the upstream rule's executions can offer a Run, so the API is asked for those alone.
+  const upstreamRuleId = isChained ? rule.upstreamRuleId : null;
+  const upstreamExecutions = useQuery(
+    upstreamRuleId ? `${projectId}:automation-executions:${upstreamRuleId}:manual-apply` : null,
+    (signal) =>
+      automationApi.executionPage(
+        projectId,
+        { filter: { ruleId: upstreamRuleId! }, limit: AUTOMATION_EXECUTION_PAGE_MAX },
+        signal,
+      ),
   );
   const [values, setValues] = useState<Record<string, string>>({ target: '' });
   const [isConfirming, setIsConfirming] = useState(false);
@@ -40,17 +47,17 @@ export function AutomationManualApply({
   const options = isChained
     ? manualUpstreamRunOptions({
         rule,
-        executions: executions.value ?? [],
+        executions: upstreamExecutions.value?.items ?? [],
         versionLabel: (id) => versionOptions.find((option) => option.value === id)?.label ?? id,
       })
     : manualVersionOptions(rule, registry);
   const selectedId = getFieldValue(values, 'target');
   const selectedLabel = options.find((option) => option.value === selectedId)?.label ?? selectedId;
-  const isLoading = isChained && executions.loading && !executions.value;
+  const isLoading = isChained && upstreamExecutions.loading && !upstreamExecutions.value;
   return (
     <section className="automation-manual-apply">
       <h4>{automationText.applyToVersion}</h4>
-      <ErrorNotice message={executions.error} retry={executions.reload} />
+      <ErrorNotice message={upstreamExecutions.error} retry={upstreamExecutions.reload} />
       {!isLoading && !options.length ? (
         <p className="muted">
           {isChained ? automationText.applyNoUpstreamRuns : automationText.applyNoVersions}

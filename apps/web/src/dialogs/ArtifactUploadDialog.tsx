@@ -1,21 +1,27 @@
 import { useState, type DragEvent } from 'react';
 import type { Artifact } from '@mmt/contracts';
-import { FolderUp, Upload } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { Dialog } from '../components/Dialog';
 import { ErrorNotice } from '../components/Feedback';
+import { FolderPickerButton } from '../components/FolderPickerButton';
 import { ResumableUploadList } from '../components/ResumableUploadList';
 import { UploadQueuePanel } from '../components/UploadQueuePanel';
 import { useArtifactUploadQueue } from '../hooks/useArtifactUploadQueue';
 import { useUploadResume, type SelectedFileResume } from '../hooks/useUploadResume';
+import { useArtifactAtPath, type ArtifactAtPath } from '../hooks/useArtifactAtPath';
 import { sourcesFromDataTransfer, sourcesFromFileList, type UploadSource } from '../lib/droppedFiles';
-import { formatBytes } from '../lib/format';
+import { formatBytes, formatDate } from '../lib/format';
 import { joinArtifactPath } from '../lib/uploadPlan';
 import { text, textTemplates } from '../i18n/catalog';
+
+// Saved paths listed before the start, so a folder's layout can be checked without reading all.
+const PLANNED_PATH_EXAMPLE_COUNT = 3;
 
 /**
  * Uploads Artifacts with progress, pause, cancel, and resume. `multiple` adds several files,
  * folders, and a destination folder; without it the dialog takes one file and closes on its
- * Artifact, as the code version form expects.
+ * Artifact, as the code version form expects. `initialFolder` is the folder open behind the
+ * dialog, where new files go unless the path is changed.
  */
 export function ArtifactUploadDialog({
   projectId,
@@ -24,6 +30,7 @@ export function ArtifactUploadDialog({
   onSaved,
   accept,
   multiple = false,
+  initialFolder = '',
 }: {
   projectId: string;
   runId: string | null;
@@ -32,9 +39,10 @@ export function ArtifactUploadDialog({
   onSaved: (artifact: Artifact) => void;
   accept?: string;
   multiple?: boolean;
+  initialFolder?: string;
 }) {
   const [sources, setSources] = useState<UploadSource[]>([]);
-  const [destination, setDestination] = useState('');
+  const [destination, setDestination] = useState(initialFolder);
   const [singlePath, setSinglePath] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const queue = useArtifactUploadQueue({ projectId, runId, onCompleted: onSaved });
@@ -50,12 +58,19 @@ export function ArtifactUploadDialog({
   const singleArtifactPath = joinArtifactPath('', singlePath);
   const { selectedFileResume } = resume;
   const resumeMatch = selectedFileResume.status === 'matched' ? selectedFileResume.match : null;
+  const artifactAtPath = useArtifactAtPath({
+    projectId,
+    runId,
+    path: singleArtifactPath,
+    file: sources.length === 1 && !resumeMatch ? sources[0]!.file : null,
+  });
+  const plannedPaths = sources.map((source) => joinArtifactPath(destination, source.relativePath));
 
   function select(selected: UploadSource[]) {
     const accepted = multiple ? selected : selected.slice(0, 1);
     setSources(accepted);
     const first = accepted[0];
-    setSinglePath(first ? first.relativePath : '');
+    setSinglePath(first ? joinArtifactPath(initialFolder, first.relativePath) : '');
   }
   async function drop(event: DragEvent<HTMLElement>) {
     event.preventDefault();
@@ -114,22 +129,7 @@ export function ArtifactUploadDialog({
                 }}
               />
             </label>
-            {multiple && (
-              <label className="button">
-                <FolderUp size={15} />
-                {text.uploadChooseFolder}
-                <input
-                  type="file"
-                  className="sr-only"
-                  // React has no typed prop for the non-standard folder picker attribute.
-                  ref={(input) => input?.setAttribute('webkitdirectory', '')}
-                  onChange={(event) => {
-                    select(sourcesFromFileList(event.target.files));
-                    event.target.value = '';
-                  }}
-                />
-              </label>
-            )}
+            {multiple && <FolderPickerButton label={text.uploadChooseFolder} onChoose={select} />}
           </div>
         </div>
         {sources.length === 1 && (
@@ -143,6 +143,7 @@ export function ArtifactUploadDialog({
               path={singleArtifactPath}
               onRestorePath={(path) => setSinglePath(path)}
             />
+            {artifactAtPath && <ArtifactAtPathNotice found={artifactAtPath} />}
           </div>
         )}
         {sources.length > 1 && (
@@ -155,6 +156,12 @@ export function ArtifactUploadDialog({
               <input value={destination} onChange={(event) => setDestination(event.target.value)} />
               <small className="muted">{text.uploadDestinationHint}</small>
             </label>
+            <p className="muted upload-planned-paths" data-testid="upload-planned-paths">
+              {textTemplates.uploadPlannedPaths(
+                plannedPaths.slice(0, PLANNED_PATH_EXAMPLE_COUNT),
+                Math.max(0, plannedPaths.length - PLANNED_PATH_EXAMPLE_COUNT),
+              )}
+            </p>
           </>
         )}
         <ResumableUploadList
@@ -217,5 +224,15 @@ function SelectedFileResumeNotice({
         {text.uploadRestoreResumePath}
       </button>
     </div>
+  );
+}
+
+/** Under the path field: a file is already stored there, so this upload becomes its new version. */
+function ArtifactAtPathNotice({ found }: { found: ArtifactAtPath }) {
+  return (
+    <p className="notice upload-resume-notice" data-testid="upload-path-exists">
+      {textTemplates.uploadPathExists(formatDate(found.existing.createdAt))}
+      {found.isSameContent && ` ${text.uploadPathSameContent}`}
+    </p>
   );
 }

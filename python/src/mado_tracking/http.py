@@ -12,6 +12,7 @@ import httpx
 
 from .errors import ApiError
 from .security import SecretMasker
+from .settings import API_URL_HINT
 
 # Short retries cover temporary API failures without concealing a persistent outage.
 DEFAULT_ATTEMPTS = 4
@@ -19,6 +20,9 @@ BACKOFF_INITIAL_SECONDS = 0.25
 BACKOFF_MAX_SECONDS = 5.0
 REQUEST_TIMEOUT_SECONDS = 30.0
 RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
+# The API answers every unknown path with a JSON error. A 404 without one came from something else,
+# usually because MMT_API_URL points at a page of the web app or at another server.
+NOT_FOUND_STATUS = 404
 
 
 def retry_delay(attempt: int, response: httpx.Response | None = None) -> float:
@@ -41,8 +45,12 @@ def check_response(response: httpx.Response, masker: SecretMasker) -> None:
         error_body = {}
     message = error_body.get("error") if isinstance(error_body, dict) else None
     code = error_body.get("code") if isinstance(error_body, dict) else None
+    if not message:
+        message = f"API request failed ({response.status_code})"
+        if response.status_code == NOT_FOUND_STATUS:
+            message += f"; the address did not answer as the mado ML Tracking API: {API_URL_HINT}"
     raise ApiError(
-        masker.mask(str(message or f"API request failed ({response.status_code})")),
+        masker.mask(str(message)),
         status_code=response.status_code,
         code=str(code) if code else None,
     )

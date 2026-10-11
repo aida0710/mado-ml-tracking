@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
+  MAX_RUN_LOG_TAIL,
   RUN_COMPARISON_MAX_METRIC_KEYS,
   RUN_COMPARISON_MAX_RUNS,
   RUN_COMPARISON_MIN_RUNS,
@@ -10,7 +11,10 @@ import type { RunService } from '../services/runService.js';
 import type { LineageService } from '../services/lineageService.js';
 import type { RunComparisonService } from '../services/runComparisonService.js';
 import type { RunExportService } from '../services/runExportService.js';
-import { CSV_CONTENT_TYPE, csvAttachmentDisposition } from '../domain/csvEncoding.js';
+import { CSV_CONTENT_TYPE } from '../domain/csvEncoding.js';
+import { LOG_FILE_CONTENT_TYPE } from '../domain/runLogFile.js';
+import { attachmentDisposition } from '../http/attachmentDisposition.js';
+import { textStream } from '../http/textStream.js';
 import {
   logBatchSchema,
   metricBatchSchema,
@@ -27,6 +31,11 @@ export const runQuerySchema = z.strictObject({
   status: runStatusSchema.optional(),
   q: z.string().max(200).optional(),
   limit: z.coerce.number().int().min(1).max(1000).default(200),
+});
+
+// Without tail every line comes back (a download); a screen polls the latest lines only.
+export const runLogQuerySchema = z.strictObject({
+  tail: z.coerce.number().int().min(1).max(MAX_RUN_LOG_TAIL).optional(),
 });
 
 // MLflow accepts metric keys up to 250 characters, longer than native metric names.
@@ -97,7 +106,7 @@ export function runRoutes(services: {
     });
     return context.body(exported.csv, 200, {
       'Content-Type': CSV_CONTENT_TYPE,
-      'Content-Disposition': csvAttachmentDisposition(exported.fileName),
+      'Content-Disposition': attachmentDisposition(exported.fileName),
     });
   });
   routes.post('/:p/runs/search/export.csv', async (context) => {
@@ -112,25 +121,9 @@ export function runRoutes(services: {
       uuidParam(context, 'p'),
       conditions,
     );
-    const iterator = exported.chunks[Symbol.asyncIterator]();
-    const encoder = new TextEncoder();
-    // highWaterMark 0: nothing is read from the DB until the client asks for the next chunk.
-    const body = new ReadableStream<Uint8Array>(
-      {
-        async pull(controller) {
-          const next = await iterator.next();
-          if (next.done) controller.close();
-          else controller.enqueue(encoder.encode(next.value));
-        },
-        async cancel() {
-          await iterator.return?.();
-        },
-      },
-      { highWaterMark: 0 },
-    );
-    return context.body(body, 200, {
+    return context.body(textStream(exported.chunks), 200, {
       'Content-Type': CSV_CONTENT_TYPE,
-      'Content-Disposition': csvAttachmentDisposition(exported.fileName),
+      'Content-Disposition': attachmentDisposition(exported.fileName),
       [RUN_EXPORT_TRUNCATED_HEADER]: String(exported.truncated),
     });
   });
@@ -183,11 +176,26 @@ export function runRoutes(services: {
     });
     return context.body(null, 204);
   });
-  routes.get('/:p/runs/:r/logs', async (context) =>
-    context.json({
-      items: await runs.logs(principal(context), uuidParam(context, 'p'), uuidParam(context, 'r')),
-    }),
-  );
+  routes.get('/:p/runs/:r/logs', async (context) => {
+    const { tail } = parse(runLogQuerySchema, context.req.query());
+    return context.json(
+      await runs.logs(principal(context), uuidParam(context, 'p'), {
+        runId: uuidParam(context, 'r'),
+        tail,
+      }),
+    );
+  });
+  routes.get('/:p/runs/:r/logs/download', async (context) => {
+    const file = await runs.logFile(
+      principal(context),
+      uuidParam(context, 'p'),
+      uuidParam(context, 'r'),
+    );
+    return context.body(textStream(file.chunks), 200, {
+      'Content-Type': LOG_FILE_CONTENT_TYPE,
+      'Content-Disposition': attachmentDisposition(file.fileName),
+    });
+  });
   routes.post('/:p/runs/:r/logs', async (context) => {
     const input = await jsonBody(context, logBatchSchema);
     await runs.addLogs(principal(context), uuidParam(context, 'p'), {

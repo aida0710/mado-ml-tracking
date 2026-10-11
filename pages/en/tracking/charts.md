@@ -28,6 +28,8 @@ Recorded metrics are drawn as line charts by step on these pages:
 - Click a legend item to hide or show that line; すべて表示 (Show all) brings hidden lines back. Hovering a legend item highlights its line
 - Drag across the chart to zoom into that range; ズームを戻す (Reset zoom) returns to the full range
 - Hover a line to see the values of each Run at that position
+- Lines differ in both color and line style (solid, dashed, dotted, dash-dot). Colors and styles are assigned over all the Runs on the page, so a Run has the same color and style in every chart, even where another Run did not log that chart's metric. Up to eight Runs get colors and styles in an order that keeps them easy to tell apart, and the legend shows the same style. With nine or more Runs, only the color differs. In a chart of several metrics, the color tells the Run and the line style tells the metric (a chart of a single Run gives each metric its own color)
+- With the keyboard, Tab to the chart and use ← and → to move the position whose values are shown (Home and End jump to the ends). + zooms in around that position and - zooms out. Esc hides the values. Keys pressed with Ctrl, Cmd, or Alt are left to the browser (page zoom, back and forward). A screen reader reads each line's latest value with its minimum and maximum
 - Resumed Runs show a 再開 (resumed) marker ([Run resume](/en/tracking/sdk#resume))
 
 Long series are downsampled on the server before drawing. Each series has at most 1,000 points, fewer when many lines are overlaid. Downsampling draws the mean of each interval and keeps its minimum and maximum, so short spikes remain visible with 範囲（最小〜最大）を表示 (Show range). Zooming in fetches finer data for that range. NaN and infinite values are not drawn.

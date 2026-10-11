@@ -17,6 +17,7 @@ import { Tabs } from '../Tabs';
 import { ParallelCoordinatesChart } from './ParallelCoordinatesChart';
 import { ParameterImportanceTable } from './ParameterImportanceTable';
 import { ParamScatterChart } from './ParamScatterChart';
+import { detailsPopoverHandlers } from '../../lib/detailsPopover';
 
 type AnalysisTab = 'parallel' | 'importance' | 'scatter';
 // The selected-Run list under the chart stays short; the page's own list shows them all.
@@ -111,7 +112,7 @@ export function RunAnalysisPanel({ projectId, runSet, onSelectionChange }: RunAn
           </select>
         </label>
         {params.length > 0 && (
-          <details className="column-menu analysis-axis-menu">
+          <details className="column-menu analysis-axis-menu" {...detailsPopoverHandlers}>
             <summary>
               {text.analysisAxes} {textTemplates.analysisAxisCount(paramAxisKeys.length, params.length)}
             </summary>

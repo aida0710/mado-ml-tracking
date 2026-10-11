@@ -60,6 +60,7 @@ const addProject = ({ name, visibility = 'public', role = 'editor' }) => {
     createdAt: '2026-10-09T00:00:00Z',
     archivedAt: null,
     memberCount: 2,
+    adminNames: ['青木 研究員'],
     runCount: 0,
   };
   projects.projects.push(project);
@@ -291,7 +292,7 @@ try {
   await visionRow().waitFor({ state: 'detached' });
   assert.equal(projects.projects.some((project) => project.id === vision.id), false);
 
-  console.log('Projects: archiving from the Project settings sends the user to another Project');
+  console.log('Projects: archiving from the Project settings says so on the Project list');
   await page.goto(`${base}/projects/${tts.id}/settings`);
   await page.getByRole('heading', { name: 'プロジェクト設定', exact: true }).waitFor();
   // A viewer neither changes the visibility nor archives.
@@ -329,9 +330,13 @@ try {
   await memberDialog.getByRole('button', { name: 'キャンセル', exact: true }).click();
   await memberDialog.waitFor({ state: 'detached' });
   await page.getByRole('button', { name: 'アーカイブ', exact: true }).click();
+  // The confirmation says what stops besides the data that stays.
+  await dialog().getByText(/止まるもの: このプロジェクトに限定したAPI token/).waitFor();
   await dialog().getByRole('button', { name: 'アーカイブ', exact: true }).click();
-  await page.waitForURL((url) => /\/projects\/[^/]+\/experiments$/.test(url.pathname));
-  assert.ok(!page.url().includes(mainProject.id));
+  // No other Project opens by itself: the list says what happened.
+  await page.waitForURL(`${base}/`);
+  await page.getByText(`「${mainProject.name}」をアーカイブしました`, { exact: false }).waitFor();
+  await page.getByRole('heading', { name: '参加しているプロジェクト' }).waitFor();
 
   console.log('Projects: the filesystem root offers server directories as it is typed');
   await page.goto(`${base}/settings/storage`);

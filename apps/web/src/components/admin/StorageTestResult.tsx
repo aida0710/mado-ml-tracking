@@ -10,15 +10,24 @@ const stepLabels: Record<string, string> = {
   delete: text.storageTestStepDelete,
 };
 
-/** Shows each step of a connection test with OK/NG and the API's short error. */
+export function hasStorageTestPassed(result: StorageTestResultValue): boolean {
+  return result.steps.every((step) => step.ok);
+}
+
+/**
+ * Shows each step of a connection test with OK/NG and the API's short error. A failure leads on
+ * to changing the backend (`onEdit`, when the screen may change it).
+ */
 export function StorageTestResult({
   backendName,
   result,
+  onEdit,
 }: {
   backendName: string;
   result: StorageTestResultValue;
+  onEdit?: () => void;
 }) {
-  const passed = result.steps.every((step) => step.ok);
+  const passed = hasStorageTestPassed(result);
   return (
     <section className="storage-test-result" aria-live="polite">
       <h3>
@@ -41,6 +50,14 @@ export function StorageTestResult({
           </li>
         ))}
       </ol>
+      {!passed && onEdit && (
+        <div className="storage-test-fix">
+          <p className="muted">{text.storageTestFailedFix}</p>
+          <button type="button" className="button small" onClick={onEdit}>
+            {text.storageEditAfterFailure}
+          </button>
+        </div>
+      )}
     </section>
   );
 }

@@ -4,6 +4,7 @@ import { CodeVersionNameLink } from './CodeVersionNameLink';
 import { DetailsList } from './JsonDetails';
 import { LineageGraph } from './LineageGraph';
 import { ModelVersionArtifactLink } from './ModelVersionArtifactLink';
+import { ModelVersionNameLink } from './ModelVersionNameLink';
 import { StatusBadge } from './StatusBadge';
 import { formatDate } from '../lib/format';
 import { buildModelVersionLineage, LINEAGE_RESULT_RUN_LIMIT } from '../lib/modelVersionLineage';
@@ -70,9 +71,7 @@ export function ModelVersionSummary({
               text.parents,
               version.parentModelVersionIds.length
                 ? version.parentModelVersionIds.map((id) => (
-                    <Link key={id} className="version-link mono" to={`${base}/models?version=${id}`}>
-                      {id}
-                    </Link>
+                    <ModelVersionNameLink key={id} projectId={projectId} versionId={id} />
                   ))
                 : '—',
             ],

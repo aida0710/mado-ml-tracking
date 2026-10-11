@@ -187,6 +187,25 @@
   color: var(--muted);
   overflow-wrap: anywhere;
 }
+/* After a failed test: how to fix it, next to the button that opens the backend. */
+.storage-test-fix {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 8px;
+}
+.storage-test-fix p {
+  margin: 0;
+}
+/* The S3 settings most backends keep, folded under the ones every backend needs. */
+.storage-advanced {
+  margin-top: 12px;
+}
+.storage-advanced summary {
+  cursor: pointer;
+  margin-bottom: 8px;
+}
 .admin-projects-filter {
   margin-bottom: 8px;
 }
@@ -216,6 +235,22 @@
   gap: 2px;
 }
 .user-admin .muted {
+  font-size: 11px;
+}
+/* The signed-in administrator's own row, which the actions affect at once. */
+.user-self-tag {
+  display: inline-block;
+  margin-left: 8px;
+  white-space: nowrap;
+  border-radius: var(--radius-pill);
+  padding: 1px 8px;
+  background: var(--accent-tint);
+  color: var(--link);
+  font-size: 10px;
+  font-weight: 600;
+}
+.user-locked-reason {
+  flex-basis: 100%;
   font-size: 11px;
 }
 .user-actions {

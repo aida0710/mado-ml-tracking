@@ -20,6 +20,9 @@ The audit log is kept indefinitely and cannot be deleted or changed. Neither the
 
 Records are listed newest first. Load older ones with **さらに読む** (Load more) at the bottom.
 
+- すべての結果 (All outcomes) above the list narrows it to refusals (拒否) or failures (失敗). A refused or failed record is also marked in red next to its action, so it shows in the row on a phone too.
+- **全体管理** → **監査ログ** hides sign-ins, sign-outs, and the identity provider's syncs by default. Clear ログイン・ログアウトの記録を隠す (Hide sign-in records) to show them.
+
 | Column | Content |
 | --- | --- |
 | 日時 (Time) | When it was recorded |
@@ -80,6 +83,7 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" \
 | `action` | `auth.oidc.denied` |
 | `actorUserId` | The ID of the user who acted |
 | `outcome` | `success`, `denied`, `failed` |
+| `hideSignIns` | `true` leaves out sign-ins, sign-outs, and the identity provider's syncs and rechecks (`auth.login`, `auth.logout`, `auth.oidc.sync`, `auth.oidc.recheck`) |
 | `projectId` (global list only) | A Project ID |
 
 The global records (`GET /api/audit-events`) can be read only by a global administrator signed in from a browser. API tokens get 403 `session_required`, even a global administrator's. Open the URL in the browser where you are signed in as a global administrator:

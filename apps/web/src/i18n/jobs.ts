@@ -29,7 +29,8 @@ export const jobsText = {
   gpuCount: 'GPU数',
   walltime: '制限時間（HH:MM:SS・任意）',
   walltimeShort: '制限時間',
-  walltimePlaceholder: '12:00:00',
+  // A bare 12:00:00 read as the value already set; empty means the site's default.
+  walltimePlaceholder: '空欄ならsiteの既定（例: 12:00:00）',
   walltimeUnset: 'siteの既定',
   jobRetryOnFailure: '失敗したら最初から再実行する',
   jobRetryOnTimeout: '時間切れなら最新のcheckpointから再実行する',
@@ -64,6 +65,32 @@ export const jobsText = {
   jobRetryConfirm: '再実行する',
   jobRetryEffect:
     '元のRunとJobはそのまま残ります。同じ設定で新しいRunとJobを作って実行し、作ったRunの画面へ移ります。',
+  logsSearch: 'ログを検索',
+  logsSearchPlaceholder: '探す語（例: Error）',
+  logsOrder: '並び順',
+  logsOldestFirst: '古い順',
+  logsNewestFirst: '新しい順',
+  logsJumpToLatest: '最新へ',
+  logsDownload: 'ダウンロード',
+  logsReadAll: 'すべての行を読み込む',
+  logsUpdatesPaused: '読み込んだ時点の行です。自動では更新しません。',
+  logsReadNewLines: '新しい行を読み込む',
+  logsFollowLatest: '自動で更新する表示に戻る',
+  logsNoMatch: '条件に合う行はありません',
+  jobDetailClose: '詳細を閉じる',
+  runOpenJob: 'Jobを見る',
+  launchClearedCodeVersion:
+    '選んでいたコードバージョンは、実行種別・モデルバージョンに合わないので外しました。選び直してください。',
+  launchClearedTarget:
+    '選んでいたコンピュータは、このコードバージョンのRuntimeを使えないので外しました。選び直してください。',
+  launchClearedGpus: 'コンピュータを変えたので、選んでいたGPUを外しました。',
+  launchGpuChoice: 'GPU（選ばなければCPUのみ）',
+  launchFromTaskHint:
+    '同じコード・パラメータ・コンピュータで何度も流すときは、Taskにしておくと既定値を入れたまま起動できます。',
+  launchOpenTasks: 'Tasksを開く',
+  // maxAttempts bounds the automatic retries only (JobService.retry lets a person go past it).
+  maxAttemptsHint:
+    '自動の再実行はこの回数までです。Jobsの［新しいRunで再実行］で人が流し直す分は数えません。',
 } as const;
 
 export const jobPhaseLabels: Record<JobPhase, string> = {
@@ -92,6 +119,20 @@ export const jobsTextTemplates = {
     `制限時間は${maxDays}日以内を、HH:MM:SSの形で指定してください。`,
   jobActionTarget: (job: { runName: string; createdByName: string; targetName: string }) =>
     `Run「${job.runName}」　作成者: ${job.createdByName}　実行先: ${job.targetName}`,
+  logsShowingLatest: (shown: number, total: number) =>
+    `最新の${shown.toLocaleString('ja-JP')}行を表示しています（全${total.toLocaleString('ja-JP')}行）。検索とレベルの絞り込みも、この範囲が対象です。ダウンロードはすべての行です。`,
+  logsMatchCount: (count: number) => `${count.toLocaleString('ja-JP')}行が一致`,
+  // One read returns at most this many lines; older ones are in the download.
+  logsReadLatestLines: (count: number) => `最新の${count.toLocaleString('ja-JP')}行まで読み込む`,
+  attempt: (attempt: number, maxAttempts: number) => `${attempt} / ${maxAttempts}`,
+  // A person retried past maxAttempts, which bounds the automatic retries only.
+  attemptPastLimit: (attempt: number, maxAttempts: number) =>
+    `${attempt}（自動の再試行は${maxAttempts}回目まで）`,
+  jobSweepTrialOrigin: (sweepName: string, trialIndex: number) =>
+    `Sweep: ${sweepName} #${trialIndex}`,
+  jobAutomationOrigin: (ruleName: string) => `自動実行: ${ruleName}`,
+  launchCodesHidden: (kindLabel: string, hiddenCount: number) =>
+    `実行種別「${kindLabel}」とモデルバージョンに合うコードバージョンだけを選べます（合わないもの ${hiddenCount}件）。ほかのコードを使うときは、先に実行種別を変えてください。`,
 };
 
 export const logLevelLabels: Record<LogEntry['level'], string> = {

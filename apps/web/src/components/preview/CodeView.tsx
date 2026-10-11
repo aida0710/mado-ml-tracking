@@ -1,13 +1,10 @@
-import { useId, useMemo } from 'react';
-import { CODE_LANGUAGES, highlightCode, type CodeLanguage } from '@mado/design-system/code';
-import { useCodeLanguage, type CodeLanguageChoice } from '../../hooks/useCodeLanguage';
-import { text, textTemplates } from '../../i18n/catalog';
+import { useMemo } from 'react';
+import { highlightCode } from '@mado/design-system/code';
+import { useCodeLanguage } from '../../hooks/useCodeLanguage';
+import { PreviewFormatSelect, TABLE_PREVIEW_FORMAT } from './PreviewFormatSelect';
 
-function formatName(language: CodeLanguage) {
-  if (language === 'plaintext') return text.codeFormatText;
-  if (language === 'log') return text.codeFormatLog;
-  return CODE_LANGUAGES.find((item) => item.id === language)?.name ?? language;
-}
+/** The format a text is colored as, and the user's pick (useCodeLanguage). */
+export type CodeLanguageState = ReturnType<typeof useCodeLanguage>;
 
 /**
  * A text preview colored by its format (@mado/design-system/code). The format is detected from the
@@ -23,27 +20,33 @@ export function CodeView({
   fileName?: string | null;
   mimeType?: string | null;
 }) {
-  const selectId = useId();
   const code = useCodeLanguage({ fileName, mimeType, text: content });
+  return <FormattedCode content={content} code={code} />;
+}
+
+/**
+ * The text colored as `code` says, under its format select. With `onShowTable` the select also
+ * offers 「表」, for a file the preview can draw as a table.
+ */
+export function FormattedCode({
+  content,
+  code,
+  onShowTable,
+}: {
+  content: string;
+  code: CodeLanguageState;
+  onShowTable?: () => void;
+}) {
   const html = useMemo(() => highlightCode(content, code.language), [content, code.language]);
   return (
     <div className="code-preview">
       <div className="code-preview-toolbar">
-        <label className="code-format" htmlFor={selectId}>
-          {text.codeFormat}
-          <select
-            id={selectId}
-            value={code.choice}
-            onChange={(event) => code.setChoice(event.target.value as CodeLanguageChoice)}
-          >
-            <option value="auto">{textTemplates.codeFormatAuto(formatName(code.detected))}</option>
-            {CODE_LANGUAGES.map((language) => (
-              <option key={language.id} value={language.id}>
-                {formatName(language.id)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <PreviewFormatSelect
+          value={code.choice}
+          detected={code.detected}
+          offersTable={Boolean(onShowTable)}
+          onChange={(format) => (format === TABLE_PREVIEW_FORMAT ? onShowTable?.() : code.setChoice(format))}
+        />
       </div>
       {/* highlightCode escapes the text; the only markup it adds is the spans for the colors. */}
       <pre className="code-view">

@@ -27,7 +27,7 @@ MLflowの全機能を提供するサーバーではありません。対応し�
 python3 -m pip install 'mlflow>=3,<4'
 export MLFLOW_TRACKING_URI='https://tracking.example.internal/api/mlflow/projects/PROJECT_ID'
 export MLFLOW_REGISTRY_URI="$MLFLOW_TRACKING_URI"
-read -r -s -p 'API token: ' MLFLOW_TRACKING_TOKEN
+printf 'API token: '; read -r -s MLFLOW_TRACKING_TOKEN; echo
 export MLFLOW_TRACKING_TOKEN
 ```
 
@@ -56,7 +56,15 @@ with mlflow.start_run(run_name="hello"):
     mlflow.log_metric("loss", 0.5, step=1)
 ```
 
-401が返る場合はtokenの値か期限、403の場合はscopeかProjectの役割を確認します。
+うまくいかないときは、エラー文に直す所が書いてあります。
+
+| エラー | 直す所 |
+| --- | --- |
+| `ENDPOINT_NOT_FOUND: MLFLOW_TRACKING_URIにProjectのIDが入っていません` | `MLFLOW_TRACKING_URI`をサイトや`/api/mlflow`で止めず、`/api/mlflow/projects/<ProjectのID>`まで入れる |
+| `UNAUTHENTICATED: API tokenが送られていません` | `MLFLOW_TRACKING_TOKEN`（Basic認証なら`MLFLOW_TRACKING_PASSWORD`）にtokenを入れる |
+| `UNAUTHENTICATED`（tokenが無効または失効） | tokenの値か期限を確かめ、必要なら発行し直す |
+| `PERMISSION_DENIED: API tokenのscopeが不足しています` | 足りないscopeが書いてある。用途「SDK・MLflow 3から記録する」でtokenを発行し直す |
+| `PERMISSION_DENIED: API tokenのprojectが一致しません` | tokenがどのProject用かが書いてある。URIのProject IDか、使うtokenを合わせる |
 
 ## Basic認証で接続する
 
@@ -65,7 +73,7 @@ with mlflow.start_run(run_name="hello"):
 ```bash
 export MLFLOW_TRACKING_URI='https://tracking.example.internal/api/mlflow/projects/PROJECT_ID'
 export MLFLOW_TRACKING_USERNAME=mado
-read -r -s -p 'API token: ' MLFLOW_TRACKING_PASSWORD
+printf 'API token: '; read -r -s MLFLOW_TRACKING_PASSWORD; echo
 export MLFLOW_TRACKING_PASSWORD
 ```
 

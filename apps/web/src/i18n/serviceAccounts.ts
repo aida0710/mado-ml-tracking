@@ -1,4 +1,5 @@
-import type { TokenScope } from '@mmt/contracts';
+import { TOKEN_PURPOSE_LABELS, type TokenScope } from '@mmt/contracts';
+import type { TokenPurposeOption } from '../lib/tokenPurposes';
 
 // Service Accounts, the Project token list and the token dialog on the settings page.
 export const serviceAccountsText = {
@@ -12,6 +13,8 @@ export const serviceAccountsText = {
   serviceAccountActive: '有効',
   serviceAccountDisabled: '無効',
   serviceAccountRoleMissing: 'Roleなし',
+  serviceAccountRoleHint:
+    'workerとしてJobを実行させるならAdmin（worker:executeにはAdminが要ります）、SDKやCIからRunを記録するならEditor、読むだけならViewerにします。',
   disableServiceAccount: '無効化',
   enableServiceAccount: '有効化',
   issueToken: 'API tokenを発行',
@@ -34,7 +37,35 @@ export const serviceAccountsText = {
   tokenAuthentication: '認証方式',
   tokenAuthenticationBearer: 'Bearer（MLflow・Mado SDKの既定）',
   tokenAuthenticationBasic: 'Basic（ユーザー名とパスワードを使うツール。passwordにtoken）',
+  tokenNameHint: 'どこで使うか分かる名前にします（例: laptop-notebook）。',
+  tokenPurpose: '用途',
+  tokenPurposeHint: '用途を選ぶと、必要なscopeが選ばれます。scopeを変えると「scopeを自分で選ぶ」になります。',
+  tokenPurposeRequired: '用途を選ぶか、scopeを1つ以上選んでください',
+  copyIssuedToken: 'tokenをコピー',
+  copyTokenUsage: '設定例をコピー',
+  tokenUsageEnvironment: '環境変数（Python SDKとMLflow 3の両方）',
+  tokenUsageHint:
+    '設定例にtokenは入っていません。端末に貼り付けて実行すると「API token:」と聞かれるので、［tokenをコピー］でコピーしたtokenを貼り付けます。画面には表示されず、shellの履歴にも残りません。',
 } as const;
+
+// The purposes the token dialog offers, each with what the token can then do. The purposes' names
+// are in contracts because the API names them too when a token lacks a scope.
+export const tokenPurposeLabels: Record<TokenPurposeOption, { label: string; hint: string }> = {
+  recording: {
+    label: TOKEN_PURPOSE_LABELS.recording,
+    hint: 'Runの記録、モデル・データセットの登録、Artifactの保存。使われていないデータセットのバージョンも削除でき、Project adminのtokenならArtifactも削除できます',
+  },
+  jobSubmission: {
+    label: TOKEN_PURPOSE_LABELS.jobSubmission,
+    hint: '手動投入のコンピュータで、待っているJobを取り出して投入する',
+  },
+  worker: {
+    label: TOKEN_PURPOSE_LABELS.worker,
+    hint: 'Jobを受け取って実行し、出力を保存する',
+  },
+  readOnly: { label: TOKEN_PURPOSE_LABELS.readOnly, hint: 'Runやモデルを読むだけ。記録はできません' },
+  custom: { label: 'scopeを自分で選ぶ', hint: '下のscopeを1つずつ選びます' },
+};
 
 // One line per scope, shown next to the scope in the token dialog.
 export const tokenScopeLabels: Record<TokenScope, string> = {

@@ -3,10 +3,8 @@ import { NOTIFICATION_EVENT_TYPES, NOTIFICATION_RECIPIENTS_MAX } from '@mmt/cont
 import { runKindSchema, uuidSchema } from './validation.js';
 
 // Matches the notification_channels CHECK; the prefix keeps channels away from unrelated secrets.
-const environmentNameSchema = z
-  .string()
-  .regex(/^MMT_NOTIFICATION_[A-Z0-9_]+$/)
-  .max(200);
+export const NOTIFICATION_ENVIRONMENT_NAME_PATTERN = /^MMT_NOTIFICATION_[A-Z0-9_]+$/;
+const environmentNameSchema = z.string().regex(NOTIFICATION_ENVIRONMENT_NAME_PATTERN).max(200);
 // A rule may narrow to many experiments, but a filter is not a listing.
 const MAX_FILTER_EXPERIMENTS = 100;
 // Deliveries are a recent-history view, not an export.

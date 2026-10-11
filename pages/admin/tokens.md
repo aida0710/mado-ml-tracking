@@ -40,23 +40,37 @@ tokenで操作するときは、scopeに加えて、所有者の現在の実効R
 ## 個人のAPI tokenを発行する
 
 1. ユーザーメニューの［アカウント］を開き、「自分のAPI token」の右上の［API tokenを発行］を押します。対象のプロジェクトを選んで［次へ］を押します。［プロジェクト設定］の同じボタンからも発行できます。
-2. 名前、scope、有効期限を選んで［保存］を押します。
+2. 名前、用途、有効期限を選んで［保存］を押します。用途を選ぶと必要なscopeにチェックが入ります。scopeのチェックを変えると、用途は「scopeを自分で選ぶ」になります。
 
 | 項目 | 入力値の例 |
 | --- | --- |
 | 名前 | `laptop-notebook`（どこで使うか分かる名前） |
-| Scope | Runを記録するなら`read`と`runs:write`、Artifactも保存するなら`artifacts:write` |
+| 用途 | SDKやMLflowでRunを記録するなら「SDK・MLflow 3から記録する」（既定。`read`、`runs:write`、`registry:write`、`artifacts:write`） |
 | 有効期限 | `90日` |
 
-3. 表示されたtokenを［コピー］して、安全な場所に保存します。閉じると二度と表示されません。
+選べる用途は次のとおりです。Roleで持てないscopeを含む用途は表示されません。
 
-画面から発行したtokenは、そのProjectに限定されます。SDKやMLflow 3から使う場合は、［プロジェクト設定］（または実験の画面の［SDKで記録］）の「SDK・MLflow 3から接続」の［このProject用のAPI tokenを発行］からも発行できます。発行後に、環境変数の設定例が表示されます。
+| 用途 | scope |
+| --- | --- |
+| SDK・MLflow 3から記録する | `read`、`runs:write`、`registry:write`、`artifacts:write` |
+| コマンドからJobを投入する | `read`、`jobs:write` |
+| workerとしてJobを実行する（Service Accountだけ） | `read`、`worker:execute`、`artifacts:write` |
+| 読み取りだけ | `read` |
+| scopeを自分で選ぶ | チェックしたもの |
 
-ターミナルでは、tokenをコマンドの引数やファイルに書かず、入力して環境変数に入れます。
+「SDK・MLflow 3から記録する」のtokenは、記録のほかに、どこからも使われていないデータセットのバージョンを削除できます。Project adminのtokenなら、Artifactも削除できます（画面で削除できる条件と同じです）。
+
+3. 表示されたtokenを［tokenをコピー］でコピーして、安全な場所に保存します。閉じると二度と表示されません。
+
+画面から発行したtokenは、そのProjectに限定されます。［プロジェクト設定］（または実験の画面の［SDKで記録］）の「SDK・MLflow 3から接続」の［このProject用のAPI tokenを発行］も、同じ画面を開きます。
+
+発行した画面の「設定例」は、Python SDKとMLflow 3の環境変数をまとめたものです。tokenは入っていません。［設定例をコピー］で写してターミナルに貼り付けると`API token:`と聞かれるので、コピーしたtokenを貼り付けます。
+
+ターミナルでは、tokenをコマンドの引数やファイルに書かず、入力して環境変数に入れます。次の例はbashとzsh（macOSの既定）のどちらでも動きます。
 
 ```sh
 export MMT_API_URL=https://tracking.example.com
-read -rsp 'API token: ' MMT_API_TOKEN
+printf 'API token: '; read -r -s MMT_API_TOKEN; echo
 export MMT_API_TOKEN
 ```
 
@@ -89,7 +103,7 @@ ProjectのAdminがブラウザで操作します（API tokenからは作れま�
 | 説明 | `GPUサーバー1台目のworker` |
 | Role | workerなら`Admin`、自動実行の所有者なら`Admin`、読み取りだけのCIなら`Viewer` |
 
-3. 作成した行の［API tokenを発行］を押し、名前、scope、有効期限を選んで保存します。表示されたtokenを控えます。
+3. 作成した行の［API tokenを発行］を押し、名前、用途、有効期限を選んで保存します。RoleがAdminのService Accountでは、用途は「workerとしてJobを実行する」から始まります。表示されたtokenを控えます。
 
 ![Service Accountのtoken発行](/images/admin-token-dialog.png)
 
@@ -143,7 +157,7 @@ workerはJobを実行するたびに、そのJobだけで使えるtoken（`mmtj_
 
 ```sh
 export MLFLOW_TRACKING_USERNAME=token
-read -rsp 'API token: ' MLFLOW_TRACKING_PASSWORD
+printf 'API token: '; read -r -s MLFLOW_TRACKING_PASSWORD; echo
 export MLFLOW_TRACKING_PASSWORD
 ```
 

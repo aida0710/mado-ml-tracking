@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import type { Experiment, TokenScope } from '@mmt/contracts';
+import { TOKEN_PURPOSE_SCOPES, type Experiment } from '@mmt/contracts';
 import { CodeSnippet } from './CodeSnippet';
 import { CopyableValue } from './CopyableValue';
 import { ProjectTokenButton } from './ProjectTokenButton';
@@ -11,15 +11,6 @@ import {
   type MlflowConnectionSnippets,
 } from '../lib/tokenUsageSnippet';
 import { text } from '../i18n/catalog';
-
-// What both SDKs need to record Runs, register models and upload Artifacts (docs/mlflow.md).
-// runs:write does not imply read, and both look the experiment up before writing.
-const RECORDING_TOKEN_SCOPES: TokenScope[] = [
-  'read',
-  'runs:write',
-  'registry:write',
-  'artifacts:write',
-];
 
 type RecordingClient = 'sdk' | 'mlflow';
 
@@ -47,7 +38,7 @@ export function RecordingConnectionGuide({
         <h2 id={headingId}>{text.recordingConnection}</h2>
         <ProjectTokenButton
           label={text.recordingConnectionIssueToken}
-          scopes={RECORDING_TOKEN_SCOPES}
+          scopes={TOKEN_PURPOSE_SCOPES.recording}
           onCreated={onTokenCreated}
         />
       </div>

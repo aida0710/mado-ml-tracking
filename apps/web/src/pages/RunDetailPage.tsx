@@ -15,6 +15,8 @@ import { EXECUTION_POLL_MS, useQuery } from '../hooks/useQuery';
 import { PageHeader } from '../components/PageHeader';
 import { Resource } from '../components/Feedback';
 import { RunStatusBadge } from '../components/runs/RunStatusBadge';
+import { RunBreadcrumb } from '../components/runs/RunBreadcrumb';
+import { CopyableValue } from '../components/CopyableValue';
 import { ChartPanelGrid } from '../components/charts/ChartPanelGrid';
 import { RunResumeTimeline } from '../components/RunResumeTimeline';
 import { RunDescriptionEditor } from '../components/RunDescriptionEditor';
@@ -22,7 +24,7 @@ import { CommentThread } from '../components/comments/CommentThread';
 import { RunMediaPanel } from '../components/media/RunMediaPanel';
 import { Tabs } from '../components/Tabs';
 import { RunLogs } from '../components/RunLogs';
-import { RunArtifacts } from '../components/RunArtifacts';
+import { RunArtifacts, RUN_ARTIFACT_PREFIX_PARAMETER } from '../components/RunArtifacts';
 import { RunExecutionSnapshot } from '../components/RunExecutionSnapshot';
 import { RunOutputModels } from '../components/RunOutputModels';
 import { RunCheckpointList } from '../components/RunCheckpointList';
@@ -49,10 +51,13 @@ import {
 import { getRunChartKeys } from '../lib/runChartKeys';
 import { useChartPanelLayout } from '../hooks/useChartPanelLayout';
 import { useRunResumeEvents } from '../hooks/useRunResumeEvents';
+import { useRunJob } from '../hooks/useRunJob';
+import { useRunLogs } from '../hooks/useRunLogs';
 import { getRunParameters } from '../lib/runParameters';
 import { creatorName } from '../lib/creatorName';
 import { getResumeCheckpointRecord } from '../lib/checkpointResume';
 import { canControlJob } from '../lib/permissions';
+import { isTerminalRun } from '../lib/runOutputRegistrationState';
 import { text, textTemplates } from '../i18n/catalog';
 import { systemMetricCategoryLabels, systemMetricUnitLabels } from '../i18n/runs';
 
@@ -92,11 +97,18 @@ export function RunDetailPage() {
     EXECUTION_POLL_MS,
   );
   const resumeEvents = useRunResumeEvents(project.id, runId, run.value?.status);
-  const logs = useQuery(
-    tab === 'logs' ? `${runId}:logs` : null,
-    (signal) => trackingApi.logs(project.id, runId, signal),
-    EXECUTION_POLL_MS,
-  );
+  const logs = useRunLogs({
+    projectId: project.id,
+    run: run.value,
+    enabled: tab === 'logs',
+    isLive: Boolean(run.value && !isTerminalRun(run.value)),
+  });
+  // A Run with code gets a Job when it is launched, so its Job is looked up whatever its status
+  // ([Jobを見る]). A queued one without a Job can be launched; once one exists, launching again
+  // is refused.
+  const runsCode = Boolean(run.value?.codeVersionId);
+  const awaitsJob = run.value?.status === 'queued' && runsCode;
+  const runJob = useRunJob({ projectId: project.id, runId, enabled: runsCode });
   // The artifacts tab pages by folder itself; only the execution snapshot needs every file.
   const [artifactRevision, setArtifactRevision] = useState(0);
   const artifacts = useQuery(
@@ -107,7 +119,8 @@ export function RunDetailPage() {
   function reload() {
     run.reload();
     resumeEvents.reload();
-    logs.reload();
+    logs.lines.reload();
+    runJob.reload();
     artifacts.reload();
     setArtifactRevision((value) => value + 1);
   }
@@ -119,21 +132,17 @@ export function RunDetailPage() {
           <>
             <PageHeader
               title={item.name}
-              eyebrow={
-                <>
-                  <Link to={`${base}/experiments?experiment=${item.experimentId}`}>
-                    {text.experiments}
-                  </Link>
-                  <span className="breadcrumb-separator">/</span>
-                  {text.runs}
-                </>
-              }
+              eyebrow={<RunBreadcrumb run={item} />}
               description={
                 <>
                   <RunStatusBadge run={item} />
-                  <span className="mono">{item.id}</span>
+                  <CopyableValue label={text.runIdLabel} value={item.id} />
                   <span>{text[item.kind]}</span>
-                  <span>{item.executionMode === 'test' ? text.testMode : text.runMode}</span>
+                  <span>
+                    {textTemplates.runExecutionMode(
+                      item.executionMode === 'test' ? text.testMode : text.runMode,
+                    )}
+                  </span>
                   {item.taskId && <Link to={`${base}/tasks?id=${item.taskId}`}>{text.taskRevision}: {item.taskRevision}</Link>}
                   <span>{formatDuration(item.startedAt, item.endedAt)}</span>
                   <ResumedFromCheckpoint run={item} />
@@ -146,13 +155,18 @@ export function RunDetailPage() {
                       <button className="button" onClick={() => setDialog('edit')}>
                         {text.editRun}
                       </button>
-                      {item.status === 'queued' && item.codeVersionId && (
+                      {awaitsJob && runJob.value === null && (
                         <button className="button primary" onClick={() => setDialog('launch')}>
                           <Play size={15} />
                           {text.launch}
                         </button>
                       )}
                     </>
+                  )}
+                  {runJob.value && (
+                    <Link className="button" to={`${base}/jobs?job=${runJob.value.id}`}>
+                      {text.runOpenJob}
+                    </Link>
                   )}
                   <button className="icon-button" onClick={reload} aria-label={text.refresh}>
                     <RefreshCw size={17} />
@@ -184,9 +198,7 @@ export function RunDetailPage() {
               )}
               {tab === 'systemMetrics' && <RunSystemMetricCharts key={item.id} run={item} />}
               {tab === 'media' && <RunMediaPanel projectId={project.id} runId={runId} />}
-              {tab === 'logs' && (
-                <Resource query={logs}>{(entries) => <RunLogs entries={entries} />}</Resource>
-              )}
+              {tab === 'logs' && <RunLogs logs={logs} />}
               {tab === 'executionSnapshot' && <Resource query={artifacts}>
                 {(files) => <RunExecutionSnapshot run={item} artifacts={files} />}
               </Resource>}
@@ -335,6 +347,7 @@ export function RunDetailPage() {
           projectId={project.id}
           runId={runId}
           multiple
+          initialFolder={params.get(RUN_ARTIFACT_PREFIX_PARAMETER) ?? ''}
           onClose={() => setDialog(null)}
           onSaved={() => {
             artifacts.reload();

@@ -10,7 +10,6 @@ export const mediaText = {
   mediaCount: '件数',
   mediaStepRange: 'step の範囲',
   mediaNoKeys: 'このRunにはstepごとのメディアが記録されていません。log_image・log_audio・log_table などで記録すると表示されます。',
-  mediaStep: 'step',
   mediaStepSlider: '表示するstep',
   mediaPreviousStep: '前のstep',
   mediaNextStep: '次のstep',
@@ -19,16 +18,17 @@ export const mediaText = {
   mediaTruncated: '記録が多いため、最初の10,000件だけを表示しています。',
   mediaCompareKey: '比較するキー',
   mediaCompareSteps: '比較するstep',
-  mediaCompareStepsPlaceholder: '例: 0, 500, 1000（空欄なら各Runの最新step）',
+  mediaCompareLatestCommon: '全Runに共通する最新のstep',
   mediaCompareLatest: '各Runの最新step',
-  mediaCompareApply: '表示',
+  mediaCompareNoStepsHint: 'どのstepも選ばないと、各Runの最新stepを1列に並べます。',
+  mediaCompareNoCommonStep: '全Runに共通するstepが無いため、既定では各Runの最新stepを1列に並べます。',
   mediaCompareGrid: 'Run × step のメディア',
   mediaCompareMissing: 'なし',
-  mediaCompareNoKeys: '選んだRunにはstepごとのメディアが記録されていません。',
+  mediaCompareNoKeys:
+    '選んだRunにはstepごとのメディアが記録されていません。log_audio・log_image などでstepを付けて記録したものが対象です。Runに保存したArtifactのファイルは［Artifacts］タブで並べられます。',
   mediaCompareHint:
     '矢印キーでセルを移動します。音声は同時に1つだけ鳴り、別のセルへ移ると同じ再生位置から続けて再生します。',
   mediaCompareNoSelection: 'セルを選ぶと、ここに表示します。',
-  mediaCompareStepsInvalid: 'stepは0以上の整数をカンマ区切りで入力してください。',
   mediaRun: 'Run',
   mediaTablePagination: '表のページ',
   mediaCellPlay: '再生',
@@ -60,6 +60,9 @@ export const mediaCellErrorLabels: Record<MediaTableCellFailure, string> = {
 // Text that embeds values; merged into catalog's textTemplates.
 export const mediaTextTemplates = {
   mediaStepPosition: (step: number, index: number, count: number) => `step ${step}（${index} / ${count}）`,
+  mediaStepLabel: (step: number) => `step ${step}`,
+  /** Beside a step that not every compared Run recorded. */
+  mediaStepRunCoverage: (runCount: number, totalRuns: number) => `${runCount}/${totalRuns} Run`,
   mediaStepRangeValue: (minStep: number, maxStep: number) => (minStep === maxStep ? `${minStep}` : `${minStep}〜${maxStep}`),
   mediaItemCount: (count: number) => `${count}件`,
   mediaCompareRecordedSteps: (count: number, minStep: number, maxStep: number) =>
@@ -68,7 +71,7 @@ export const mediaTextTemplates = {
   mediaCompareTooManyRuns: (maximum: number) => `メディアの比較は最初の${maximum}件のRunだけを表示しています。`,
   mediaCompareTooManySteps: (maximum: number) => `比較できるstepは${maximum}個までです。`,
   mediaCompareFirstOfMany: (count: number) => `このstepには${count}件あります。最初の1件を表示しています。`,
-  mediaCompareCell: (runLabel: string, step: number, state: string) => `${runLabel}、step ${step}、${state}`,
+  mediaCompareCell: (runLabel: string, stepLabel: string, state: string) => `${runLabel}、${stepLabel}、${state}`,
   mediaTableRowCount: (count: number) => `${count}行`,
   mediaTableErrorCells: (count: number) => `表示できないセル ${count}件`,
   mediaTablePage: (page: number, pageCount: number) => `${page} / ${pageCount}ページ`,

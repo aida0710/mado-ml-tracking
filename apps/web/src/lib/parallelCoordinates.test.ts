@@ -8,9 +8,12 @@ import {
   numericValue,
   parallelPlotWidth,
   rampColor,
+  rampStops,
   selectRowIndexes,
   type AxisDefinition,
 } from './parallelCoordinates';
+import { contrastRatio, parseHexColor } from './colorContrast';
+import { CHART_BACKGROUND_COLORS } from './seriesColors';
 
 const numericAxis: AxisDefinition = { key: 'params.lr', label: 'lr', kind: 'numeric' };
 const categoricalAxis: AxisDefinition = {
@@ -113,10 +116,18 @@ describe('軸の並べ替えと色', () => {
   });
 
   it('色は単色の明暗で、明るい背景では値が大きいほど濃く、欠損は灰色になる', () => {
-    expect(rampColor(0, 'light')).toBe('#86b6ef');
+    expect(rampColor(0, 'light')).toBe('#3987e5');
     expect(rampColor(1, 'light')).toBe('#0d366b');
     expect(rampColor(1, 'dark')).toBe('#cde2fb');
     expect(rampColor(null, 'light')).toBe('#9a9a96');
+  });
+
+  it('値のある線の色は、ライトとダークの背景に対してどれも3:1以上ある', () => {
+    for (const theme of ['light', 'dark'] as const) {
+      const background = parseHexColor(CHART_BACKGROUND_COLORS[theme]);
+      for (const color of rampStops(theme))
+        expect(contrastRatio(parseHexColor(color), background)).toBeGreaterThanOrEqual(3);
+    }
   });
 });
 

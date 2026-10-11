@@ -12,3 +12,44 @@
     flex-wrap: wrap;
   }
 }
+/* The dataset's namespace, description and archive state under its name. */
+.dataset-summary {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.dataset-summary p {
+  margin: 0;
+}
+.dataset-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.dataset-archived-filter {
+  margin-bottom: 8px;
+}
+.dataset-name-cell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.section-heading h2 .report-badge {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+/* The Runs that used a version, under its details. */
+.dataset-version-usage .section-heading {
+  margin-top: 16px;
+}
+.dataset-version-runs {
+  margin: 0;
+  padding-left: 18px;
+}
+.dataset-version-runs li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 2px 0;
+}

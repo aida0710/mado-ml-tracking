@@ -17,8 +17,10 @@ import { FormDialog } from '../components/FormDialog';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { DatasetVersionDialog, type DatasetVersionSource } from '../dialogs/DatasetVersionDialog';
 import { DatasetFiles } from '../components/DatasetFiles';
+import { DatasetActionsMenu } from '../components/DatasetActionsMenu';
+import { DatasetVersionUsage } from '../components/DatasetVersionUsage';
 import { datasetVersionLabel } from '../lib/datasetVersionLabel';
-import { formatBytes } from '../lib/format';
+import { formatBytes, shortRunId } from '../lib/format';
 import { getFieldValue } from '../lib/formValues';
 import { text, textTemplates } from '../i18n/catalog';
 
@@ -26,8 +28,15 @@ export function DatasetsPage() {
   const { project, canEdit, isProjectAdmin } = useProject();
   const [dialog, setDialog] = useState<'dataset' | DatasetVersionSource | null>(null);
   const [versionToDelete, setVersionToDelete] = useState<DatasetVersion | null>(null);
+  const [includeArchived, setIncludeArchived] = useState(false);
+  // What the last archive or unarchive did, shown while that dataset stays open.
+  const [archiveChange, setArchiveChange] = useState<Dataset | null>(null);
   const registry = useRegistry(`${project.id}:datasets`, {
-    list: (signal) => registryApi.datasets(project.id, signal),
+    // Archived datasets last, so the one opened by default is still in use.
+    list: async (signal) =>
+      (await registryApi.datasets(project.id, signal)).sort(
+        (left, right) => Number(left.archivedAt !== null) - Number(right.archivedAt !== null),
+      ),
     versions: (id, signal) => registryApi.datasetVersions(project.id, id, signal),
     parentId: (version) => version.datasetId,
   });
@@ -59,32 +68,49 @@ export function DatasetsPage() {
       <Resource query={registry.list}>
         {(items) => (
           <RegistryLayout
+            selectedKey={registry.selected?.id}
             list={
-              <ResponsiveTable
-                rows={items}
-                rowKey={(item) => item.id}
-                selectedKey={registry.selected?.id}
-                columns={[
-                  {
-                    key: 'name',
-                    header: text.name,
-                    priority: 'primary',
-                    render: (item) => (
-                      <button className="link-button" onClick={() => registry.selectItem(item.id)}>
-                        {item.name}
-                      </button>
-                    ),
-                  },
-                  { key: 'namespace', header: text.namespace, priority: 'secondary', render: (item) => item.namespace },
-                  {
-                    key: 'version',
-                    header: text.latestVersion,
-                    priority: 'primary',
-                    render: (item) => item.latestVersion ?? '—',
-                    className: 'mono break-word',
-                  },
-                ]}
-              />
+              <>
+                <label className="checkbox-field dataset-archived-filter">
+                  <input
+                    type="checkbox"
+                    checked={includeArchived}
+                    onChange={(event) => setIncludeArchived(event.target.checked)}
+                  />
+                  {text.datasetIncludeArchived}
+                </label>
+                <ResponsiveTable
+                  // An archived dataset opened from a link stays listed while it is shown.
+                  rows={items.filter(
+                    (item) => includeArchived || !item.archivedAt || item.id === registry.selected?.id,
+                  )}
+                  rowKey={(item) => item.id}
+                  selectedKey={registry.selected?.id}
+                  columns={[
+                    {
+                      key: 'name',
+                      header: text.name,
+                      priority: 'primary',
+                      render: (item) => (
+                        <span className="dataset-name-cell">
+                          <button className="link-button" onClick={() => registry.selectItem(item.id)}>
+                            {item.name}
+                          </button>
+                          {item.archivedAt && <span className="report-badge">{text.datasetArchived}</span>}
+                        </span>
+                      ),
+                    },
+                    { key: 'namespace', header: text.namespace, priority: 'secondary', render: (item) => item.namespace },
+                    {
+                      key: 'version',
+                      header: text.latestVersion,
+                      priority: 'primary',
+                      render: (item) => item.latestVersion ?? '—',
+                      className: 'mono break-word',
+                    },
+                  ]}
+                />
+              </>
             }
           >
             <ErrorNotice
@@ -94,7 +120,12 @@ export function DatasetsPage() {
             {registry.selected ? (
               <>
                 <div className="section-heading">
-                  <h2>{registry.selected.name}</h2>
+                  <h2>
+                    {registry.selected.name}
+                    {registry.selected.archivedAt && (
+                      <span className="report-badge">{text.datasetArchived}</span>
+                    )}
+                  </h2>
                   {canEdit && (
                     <div className="section-heading-actions">
                       <button className="button small" onClick={() => setDialog('folder')}>
@@ -103,60 +134,86 @@ export function DatasetsPage() {
                       <button className="button small" onClick={() => setDialog('reference')}>
                         {text.newVersion}
                       </button>
+                      <DatasetActionsMenu
+                        dataset={registry.selected}
+                        onChanged={(updated) => {
+                          // Archiving moves the dataset to the end of the list, which would open
+                          // another one where none was chosen in the URL.
+                          registry.pinSelectedItem();
+                          if ((updated.archivedAt === null) !== (registry.selected?.archivedAt === null))
+                            setArchiveChange(updated);
+                          registry.reload();
+                        }}
+                      />
                     </div>
                   )}
                 </div>
+                {archiveChange?.id === registry.selected.id && (
+                  <p className="notice" role="status" data-testid="dataset-archive-change">
+                    {archiveChange.archivedAt
+                      ? textTemplates.datasetArchivedDone(archiveChange.name)
+                      : textTemplates.datasetUnarchivedDone(archiveChange.name)}
+                  </p>
+                )}
+                <DatasetSummary dataset={registry.selected} />
                 <Resource query={registry.versions}>
                   {(versions) => (
                     <>
-                      <ResponsiveTable
-                        rows={versions}
-                        rowKey={(version) => version.id}
-                        selectedKey={registry.selectedVersion?.id}
-                        columns={[
-                          {
-                            key: 'version',
-                            header: text.version,
-                            priority: 'primary',
-                            render: (version) => (
-                              <button
-                                className="link-button mono"
-                                onClick={() => registry.selectVersion(version.id)}
-                              >
-                                {version.version}
-                              </button>
-                            ),
-                          },
-                          {
-                            key: 'content',
-                            header: text.datasetContentKind,
-                            priority: 'primary',
-                            render: (version) =>
-                              version.contentKind === 'artifacts'
-                                ? textTemplates.datasetContentArtifacts(
-                                    version.fileCount ?? 0,
-                                    formatBytes(version.totalSize ?? 0),
-                                  )
-                                : text.datasetContentReference,
-                          },
-                          {
-                            key: 'uri',
-                            header: text.uri,
-                            priority: 'secondary',
-                            render: (version) => (
-                              <span className="mono break-word">{version.uri}</span>
-                            ),
-                          },
-                          {
-                            key: 'digest',
-                            header: text.digest,
-                            priority: 'secondary',
-                            render: (version) => (
-                              <span className="mono break-word">{version.digest}</span>
-                            ),
-                          },
-                        ]}
-                      />
+                      {versions.length === 0 && (
+                        <p className="muted" data-testid="dataset-no-versions">
+                          {canEdit ? text.datasetNoVersionsEditor : text.datasetNoVersions}
+                        </p>
+                      )}
+                      {versions.length > 0 && (
+                        <ResponsiveTable
+                          rows={versions}
+                          rowKey={(version) => version.id}
+                          selectedKey={registry.selectedVersion?.id}
+                          columns={[
+                            {
+                              key: 'version',
+                              header: text.version,
+                              priority: 'primary',
+                              render: (version) => (
+                                <button
+                                  className="link-button mono"
+                                  onClick={() => registry.selectVersion(version.id)}
+                                >
+                                  {version.version}
+                                </button>
+                              ),
+                            },
+                            {
+                              key: 'content',
+                              header: text.datasetContentKind,
+                              priority: 'primary',
+                              render: (version) =>
+                                version.contentKind === 'artifacts'
+                                  ? textTemplates.datasetContentArtifacts(
+                                      version.fileCount ?? 0,
+                                      formatBytes(version.totalSize ?? 0),
+                                    )
+                                  : text.datasetContentReference,
+                            },
+                            {
+                              key: 'uri',
+                              header: text.uri,
+                              priority: 'secondary',
+                              render: (version) => (
+                                <span className="mono break-word">{version.uri}</span>
+                              ),
+                            },
+                            {
+                              key: 'digest',
+                              header: text.digest,
+                              priority: 'secondary',
+                              render: (version) => (
+                                <span className="mono break-word">{version.digest}</span>
+                              ),
+                            },
+                          ]}
+                        />
+                      )}
                       {registry.selectedVersion && (
                         <div className="version-detail">
                           {canEdit && (
@@ -195,6 +252,7 @@ export function DatasetsPage() {
                               ],
                             ]}
                           />
+                          <DatasetVersionUsage version={registry.selectedVersion} />
                           <h3>{text.datasetFiles}</h3>
                           {registry.selectedVersion.contentKind === 'artifacts' ? (
                             <DatasetFiles
@@ -285,8 +343,22 @@ export function DatasetsPage() {
   );
 }
 
-// Run ids are UUIDs; the first block stands in until the Run's name is loaded.
-const SHORT_RUN_ID_LENGTH = 8;
+/** Under the dataset's name: its namespace and description, which the list does not show. */
+function DatasetSummary({ dataset }: { dataset: Dataset }) {
+  return (
+    <div className="dataset-summary" data-testid="dataset-summary">
+      {dataset.namespace && (
+        <p className="mono muted">
+          {text.namespace}: {dataset.namespace}
+        </p>
+      )}
+      <p className={dataset.description ? 'dataset-description' : 'muted'}>
+        {dataset.description || text.datasetNoDescription}
+      </p>
+      {dataset.archivedAt && <p className="notice">{text.datasetArchivedNotice}</p>}
+    </div>
+  );
+}
 
 /** The parents by version name (with the dataset's name when it is another dataset). */
 function ParentVersionLinks({
@@ -327,7 +399,7 @@ function SourceRunLink({ projectId, runId }: { projectId: string; runId: string 
   const run = useQuery(`${projectId}:run:${runId}`, (signal) => trackingApi.run(projectId, runId, signal));
   return (
     <Link to={`/projects/${projectId}/runs/${runId}`}>
-      {run.value?.name ?? runId.slice(0, SHORT_RUN_ID_LENGTH)}
+      {run.value?.name ?? shortRunId(runId)}
     </Link>
   );
 }

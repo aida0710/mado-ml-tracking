@@ -109,7 +109,7 @@ try {
   // The tab draws one panel per category of the Run's system metrics (browser-charts.mjs checks
   // them); this Run has none among its latest metrics.
   await page.getByRole('tab', { name: 'System metrics' }).click();
-  await page.getByText('システムメトリクスはまだありません。', { exact: true }).waitFor();
+  await page.getByText(/^システムメトリクスはまだありません。.*system_metrics=True/).waitFor();
   await page.getByRole('tab', { name: 'Artifacts', exact: true }).click();
   await page.getByText('Browser test artifact', { exact: true }).waitFor();
   await page.getByRole('button', { name: 'Artifactをアップロード' }).click();
@@ -360,19 +360,16 @@ try {
   await dialog.getByRole('button', { name: '次へ', exact: true }).click();
   await dialog.getByLabel('Compute target').selectOption(api.state.targets[0].id);
   await dialog.getByRole('button', { name: '次へ', exact: true }).click();
+  // The Run and its Job are made together: a refused Job leaves no queued Run, and the retry
+  // makes exactly one.
+  const runsBeforeLaunch = api.state.runs.length;
   api.state.failNextJob = true;
   await dialog.getByRole('button', { name: 'ジョブを起動', exact: true }).click();
   await dialog.getByRole('alert').waitFor();
-  const runPostsBeforeRetry = api.state.calls.filter(
-    (call) => call.method === 'POST' && call.path.endsWith('/runs'),
-  ).length;
+  assert.equal(api.state.runs.length, runsBeforeLaunch, 'a refused Job left a queued Run behind');
   await dialog.getByRole('button', { name: 'ジョブを起動', exact: true }).click();
   await dialog.waitFor({ state: 'hidden' });
-  assert.equal(
-    api.state.calls.filter((call) => call.method === 'POST' && call.path.endsWith('/runs')).length,
-    runPostsBeforeRetry,
-    'enqueue retry created a duplicate Run',
-  );
+  assert.equal(api.state.runs.length, runsBeforeLaunch + 1, 'the launch did not make one Run');
   assert.equal(api.state.jobs[0].gpuIds.length, 0, 'CPU selection must remain empty');
   await page.getByRole('button', { name: '停止を要求', exact: true }).click();
   await page.getByRole('dialog', { name: 'Jobの停止' }).getByRole('button', { name: '停止する', exact: true }).click();

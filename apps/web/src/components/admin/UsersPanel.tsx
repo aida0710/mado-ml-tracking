@@ -3,6 +3,9 @@ import type { AdminUser, AdminUserQuery } from '@mmt/contracts';
 import { Plus, RefreshCw } from 'lucide-react';
 import { adminUsersApi } from '../../api/adminUsers';
 import { useAdminUsers } from '../../hooks/useAdminUsers';
+import { useAuth } from '../../hooks/useAuth';
+import { useQuery } from '../../hooks/useQuery';
+import { findLastActiveGlobalAdminId } from '../../lib/globalAdminGuard';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { Dialog } from '../Dialog';
 import { Resource } from '../Feedback';
@@ -17,14 +20,17 @@ interface PendingAction {
   action: UserAction;
 }
 
-// Each action is one confirmation: its title, message, button and the API call it makes.
-function confirmation({ user, action }: PendingAction) {
+// Each action is one confirmation: its title, message, button and the API call it makes. Acting
+// on oneself says so, since it signs the administrator out or takes 全体管理 away at once.
+function confirmation({ user, action }: PendingAction, isSelf: boolean) {
   const name = user.displayName;
   switch (action) {
     case 'disable':
       return {
         title: text.userDisableTitle,
-        message: textTemplates.userDisableConfirm(name),
+        message: isSelf
+          ? textTemplates.userDisableSelfConfirm(name)
+          : textTemplates.userDisableConfirm(name),
         confirmLabel: text.userDisable,
         destructive: true,
         run: () => adminUsersApi.update(user.id, { status: 'disabled' }),
@@ -48,7 +54,9 @@ function confirmation({ user, action }: PendingAction) {
     case 'removeAdmin':
       return {
         title: text.userRemoveAdminTitle,
-        message: textTemplates.userRemoveAdminConfirm(name),
+        message: isSelf
+          ? textTemplates.userRemoveAdminSelfConfirm(name)
+          : textTemplates.userRemoveAdminConfirm(name),
         confirmLabel: text.userRemoveAdmin,
         destructive: true,
         run: () => adminUsersApi.update(user.id, { isAdmin: false }),
@@ -66,12 +74,18 @@ function confirmation({ user, action }: PendingAction) {
 
 /** The admin "users" section: search, local account creation, disabling and password resets. */
 export function UsersPanel() {
+  const { user: signedInUser } = useAuth();
   const { users, filter, setFilter } = useAdminUsers();
+  // Unfiltered, so the last global administrator is known whatever the table is narrowed to.
+  const activePeople = useQuery('admin-users:active-people', (signal) =>
+    adminUsersApi.list({ status: 'active', kind: 'human' }, signal),
+  );
   const [searchText, setSearchText] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null);
-  const pending = pendingAction && confirmation(pendingAction);
+  const pending =
+    pendingAction && confirmation(pendingAction, pendingAction.user.id === signedInUser.id);
   return (
     <section className="admin-users">
       <SettingsPageHeader
@@ -121,7 +135,12 @@ export function UsersPanel() {
       </form>
       <Resource query={users}>
         {(items) => (
-          <UsersTable users={items} onAction={(user, action) => setPendingAction({ user, action })} />
+          <UsersTable
+            users={items}
+            currentUserId={signedInUser.id}
+            lastActiveAdminId={findLastActiveGlobalAdminId(activePeople.value)}
+            onAction={(user, action) => setPendingAction({ user, action })}
+          />
         )}
       </Resource>
       {isCreating && (
@@ -140,6 +159,7 @@ export function UsersPanel() {
           onConfirmed={() => {
             setPendingAction(null);
             users.reload();
+            activePeople.reload();
           }}
           onClose={() => setPendingAction(null)}
         />

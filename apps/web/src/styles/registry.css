@@ -23,16 +23,75 @@
 .automation-enabled {
   color: var(--link);
 }
+/* The links wrap inside their cell instead of widening the table past the page. */
 .automation-links {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  min-width: 150px;
+}
+.automation-links > a {
   white-space: nowrap;
 }
+.automation-outcome {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* A failure reason under the outcome: two lines, the rest in the tooltip and the opened Job. */
 .automation-error {
-  display: block;
-  min-width: 160px;
+  display: -webkit-box;
   max-width: 260px;
+  overflow: hidden;
   overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 12px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.automation-version {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.automation-statuses {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  white-space: nowrap;
+}
+.automation-history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+}
+.automation-history-filters .field {
+  flex: 1 1 220px;
+  max-width: 360px;
+}
+/* A reason in the history row: a readable width and three lines; the whole text is its tooltip,
+   and an automatic promotion's criteria are listed in full in the policy's decision history. */
+td.alias-reason {
+  min-width: 14em;
+}
+td.alias-reason > span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+/* The alias history's long header wraps, so a phone keeps the column and the row's toggle. */
+th.alias-version-change {
+  white-space: normal;
+  /* Breaks at the spaces around the arrow, never inside バージョン. */
+  word-break: keep-all;
+}
+.inline-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
 }
 .automation-rule-detail {
   margin-top: 24px;
@@ -151,6 +210,11 @@
   margin-top: 8px;
 }
 /* Hooks: the one-time webhook secret and a hook's start form. */
+.hook-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .dialog > .hook-webhook-values {
   margin: 0 22px;
 }
@@ -261,6 +325,8 @@
     border-left: 0;
     border-top: 1px solid var(--border);
     padding: 22px 0 0;
+    /* A choice in the list scrolls the detail up to just under the fixed header and project bar. */
+    scroll-margin-top: var(--chrome-height);
   }
 }
 /* The design system gives labels 150px; the longest ones (入力データセットバージョン: 13 characters at
@@ -293,4 +359,18 @@
    .field-hint, which forms.css (loaded later) gives no margin. */
 .field-hint.missing-code-notice {
   margin: -6px 0 14px;
+}
+/* Lineage: the notice that only the part around one node is shown, and a relation's two ends. */
+.notice.lineage-focus-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+.lineage-relation-end {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  overflow-wrap: anywhere;
 }

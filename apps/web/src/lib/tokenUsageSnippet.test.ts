@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   buildMlflowConnectionSnippets,
   buildTokenUsageSnippet,
@@ -6,47 +6,45 @@ import {
 } from './tokenUsageSnippet';
 
 const PROJECT_ID = '0b5c7a52-6b8e-4d7a-9a58-1f7d1c2b3a4e';
-const TOKEN = 'mmt_AbC-123_xyz';
 
-describe('tokenの設定例', () => {
-  it('Bearerでは MLflow と Mado SDK の両方へ同じtokenとProjectのURLを設定する', () => {
+describe('tokenを発行した直後の設定例', () => {
+  it('tokenを含まず、read -s で1回だけ受け取って Mado SDK と MLflow の両方へ渡す', () => {
     expect(
       buildTokenUsageSnippet({
         origin: 'https://mmt.example.test/',
         projectId: PROJECT_ID,
-        token: TOKEN,
         authentication: 'bearer',
       }),
     ).toBe(
       [
-        `export MLFLOW_TRACKING_URI=https://mmt.example.test/api/mlflow/projects/${PROJECT_ID}`,
-        `export MLFLOW_TRACKING_TOKEN=${TOKEN}`,
         'export MMT_API_URL=https://mmt.example.test',
         `export MMT_PROJECT_ID=${PROJECT_ID}`,
-        `export MMT_API_TOKEN=${TOKEN}`,
+        "printf 'API token: '; read -r -s MMT_API_TOKEN; echo",
+        'export MMT_API_TOKEN',
+        `export MLFLOW_TRACKING_URI=https://mmt.example.test/api/mlflow/projects/${PROJECT_ID}`,
+        `export MLFLOW_REGISTRY_URI=https://mmt.example.test/api/mlflow/projects/${PROJECT_ID}`,
+        'export MLFLOW_TRACKING_TOKEN="$MMT_API_TOKEN"',
         '',
       ].join('\n'),
     );
   });
 
-  it('Basicでは password に token を入れ、MLFLOW_TRACKING_TOKEN は出さない', () => {
+  it('Basicでは password に同じtokenを渡し、MLFLOW_TRACKING_TOKEN は出さない', () => {
     const snippet = buildTokenUsageSnippet({
       origin: 'http://127.0.0.1:5182',
       projectId: PROJECT_ID,
-      token: TOKEN,
       authentication: 'basic',
     });
     expect(snippet).toContain('export MLFLOW_TRACKING_USERNAME=mado\n');
-    expect(snippet).toContain(`export MLFLOW_TRACKING_PASSWORD=${TOKEN}\n`);
+    expect(snippet).toContain('export MLFLOW_TRACKING_PASSWORD="$MMT_API_TOKEN"\n');
     expect(snippet).not.toContain('MLFLOW_TRACKING_TOKEN');
-    expect(snippet).toContain(`export MMT_API_TOKEN=${TOKEN}\n`);
+    expect(snippet.match(/read -r -s/g)).toHaveLength(1);
   });
 
   it('shellで特別な意味を持つ文字を含む値は single quote で囲む', () => {
     const snippet = buildTokenUsageSnippet({
       origin: 'http://host',
       projectId: "it's",
-      token: TOKEN,
       authentication: 'bearer',
     });
     expect(snippet).toContain(`export MMT_PROJECT_ID='it'\\''s'`);
@@ -81,7 +79,7 @@ describe('MLflow 3の接続案内', () => {
       projectId: PROJECT_ID,
     });
     expect(snippets.bearerEnvironment).toContain(
-      "read -r -s -p 'API token: ' MLFLOW_TRACKING_TOKEN\nexport MLFLOW_TRACKING_TOKEN\n",
+      "printf 'API token: '; read -r -s MLFLOW_TRACKING_TOKEN; echo\nexport MLFLOW_TRACKING_TOKEN\n",
     );
     expect(snippets.bearerEnvironment).not.toMatch(/MLFLOW_TRACKING_TOKEN=/);
   });
@@ -93,7 +91,7 @@ describe('MLflow 3の接続案内', () => {
     });
     expect(basicEnvironment).toContain('export MLFLOW_TRACKING_USERNAME=mado\n');
     expect(basicEnvironment).toContain(
-      "read -r -s -p 'API token: ' MLFLOW_TRACKING_PASSWORD\nexport MLFLOW_TRACKING_PASSWORD\n",
+      "printf 'API token: '; read -r -s MLFLOW_TRACKING_PASSWORD; echo\nexport MLFLOW_TRACKING_PASSWORD\n",
     );
     expect(basicEnvironment).not.toContain('MLFLOW_TRACKING_TOKEN');
   });
@@ -106,26 +104,6 @@ describe('MLflow 3の接続案内', () => {
     expect(python).toContain('import mlflow');
     expect(python).not.toContain('http://host');
     expect(python).not.toMatch(/token/i);
-  });
-
-  it('設定例を作るときにtokenをconsoleへ出さない', () => {
-    const logged: unknown[] = [];
-    const record = (...values: unknown[]) => void logged.push(...values);
-    const spies = (['log', 'info', 'warn', 'error', 'debug'] as const).map((method) =>
-      vi.spyOn(console, method).mockImplementation(record),
-    );
-    try {
-      buildTokenUsageSnippet({
-        origin: 'http://host',
-        projectId: PROJECT_ID,
-        token: TOKEN,
-        authentication: 'basic',
-      });
-      buildMlflowConnectionSnippets({ origin: 'http://host', projectId: PROJECT_ID });
-    } finally {
-      spies.forEach((spy) => spy.mockRestore());
-    }
-    expect(JSON.stringify(logged)).not.toContain(TOKEN);
   });
 });
 

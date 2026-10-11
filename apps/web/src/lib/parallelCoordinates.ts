@@ -210,10 +210,11 @@ export function parallelPlotWidth({
   return Math.max(availableWidth, neededWidth);
 }
 
-// Single-hue blue ramp (dataviz reference palette, steps 250 to 700). Light-on-dark reverses it so
-// the best values stay the most visible against either surface.
-const LIGHT_RAMP = ['#86b6ef', '#5598e7', '#2a78d6', '#1c5cab', '#104281', '#0d366b'];
-const DARK_RAMP = ['#184f95', '#256abf', '#3987e5', '#6da7ec', '#9ec5f4', '#cde2fb'];
+// Single-hue blue ramp (dataviz reference palette). Light-on-dark reverses it so the best values
+// stay the most visible against either surface. Each end stops at the step that still keeps the 3:1
+// WCAG asks of lines against the chart background (step 400 on white, 500 on the dark theme).
+const LIGHT_RAMP = ['#3987e5', '#2a78d6', '#256abf', '#1c5cab', '#104281', '#0d366b'];
+const DARK_RAMP = ['#256abf', '#3987e5', '#5598e7', '#6da7ec', '#9ec5f4', '#cde2fb'];
 export const MISSING_COLOR_VALUE = '#9a9a96';
 
 /** The line color for a normalized color value; null (no value) is a neutral gray. */

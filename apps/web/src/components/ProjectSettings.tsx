@@ -31,11 +31,12 @@ function describeImpact(impact: ProjectSettingsImpact): string {
 }
 
 /**
- * The Project's description, visibility and storage; only a Project admin changes them. Changing
+ * The Project's description, visibility and storage; only a Project admin changes them, and
+ * everyone else is told whom to ask (`adminNames`, unknown while the members load). Changing
  * who may open the Project or where new Artifacts go is confirmed first, since one click on
  * 保存 for the description would otherwise carry it along unnoticed.
  */
-export function ProjectSettings() {
+export function ProjectSettings({ adminNames }: { adminNames: readonly string[] | undefined }) {
   const { project, isProjectAdmin, reloadProjects } = useProject();
   const [description, setDescription] = useState(project.description);
   const [visibility, setVisibility] = useState<ProjectVisibility>(project.visibility);
@@ -55,6 +56,11 @@ export function ProjectSettings() {
   return (
     <section className="settings-section project-settings">
       <h2>{text.project}</h2>
+      {!isProjectAdmin && (
+        <p className="muted">
+          {textTemplates.projectSettingsAdminOnly((adminNames ?? []).join('、'))}
+        </p>
+      )}
       <Resource query={backends}>
         {(choices) => (
           <form

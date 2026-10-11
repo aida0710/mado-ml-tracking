@@ -4,7 +4,11 @@ import { useMutation } from '../hooks/useMutation';
 import { ErrorNotice } from './Feedback';
 import { text } from '../i18n/catalog';
 
-export function CopyButton({ value }: { value: string }) {
+/**
+ * Copies `value`. `label` names what is copied where a dialog has more than one copy button
+ * (the token itself and the settings example); without it the button reads "コピー".
+ */
+export function CopyButton({ value, label = text.copy }: { value: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   const mutation = useMutation();
   return (
@@ -22,7 +26,7 @@ export function CopyButton({ value }: { value: string }) {
         }
       >
         <Copy size={13} />
-        {copied ? text.copied : text.copy}
+        {copied ? text.copied : label}
       </button>
       <ErrorNotice message={mutation.error} />
     </>

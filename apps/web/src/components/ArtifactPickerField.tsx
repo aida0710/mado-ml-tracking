@@ -3,7 +3,7 @@ import type { Artifact } from '@mmt/contracts';
 import { Upload } from 'lucide-react';
 import { useArtifactChoices } from '../hooks/useArtifactChoices';
 import { formatBytes, formatDate } from '../lib/format';
-import { isComposingKey } from '../lib/imeComposition';
+import { isEnterOutsideComposition } from '../lib/imeComposition';
 import { ErrorNotice } from './Feedback';
 import { text } from '../i18n/catalog';
 
@@ -65,7 +65,7 @@ export function ArtifactPickerField({
     onSelect(null);
   };
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key !== 'Enter' || isComposingKey(event)) return;
+    if (!isEnterOutsideComposition(event)) return;
     // Inside a dialog form, Enter would submit before an Artifact is picked.
     event.preventDefault();
     const onlyMatch = choices.artifacts.length === 1 ? choices.artifacts[0] : undefined;

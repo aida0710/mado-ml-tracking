@@ -1,22 +1,13 @@
-import type { Model, ModelAutomationRule, PromotionPolicy, ServiceAccount } from '@mmt/contracts';
+import type { Model, ModelAutomationRule, PromotionPolicy } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { summarizeCriterion } from '../lib/promotionPolicyInput';
+import { automationOwnerLabel } from '../lib/automationOwner';
 import { text } from '../i18n/catalog';
-
-// The run-as user is the creator until a Project admin moves it to a Service Account.
-function ownerLabel(policy: PromotionPolicy, serviceAccounts: ServiceAccount[]): string {
-  if (policy.runAsUserId === policy.createdBy) return text.promotionPolicyOwnerCreator;
-  return (
-    serviceAccounts.find((account) => account.id === policy.runAsUserId)?.name ??
-    text.promotionPolicyOwnerServiceAccount
-  );
-}
 
 export function PromotionPolicyTable({
   policies,
   models,
   rules,
-  serviceAccounts,
   selectedPolicyId,
   canManage,
   pending,
@@ -27,8 +18,6 @@ export function PromotionPolicyTable({
   policies: PromotionPolicy[];
   models: Model[];
   rules: ModelAutomationRule[];
-  /** Names the Service Account owners; empty for users who cannot list the accounts. */
-  serviceAccounts: ServiceAccount[];
   selectedPolicyId: string;
   canManage: boolean;
   pending: boolean;
@@ -94,7 +83,8 @@ export function PromotionPolicyTable({
         },
         {
           key: 'criteria',
-          priority: 'secondary',
+          // Long metric names would push the actions past the right edge; read in the opened row.
+          priority: 'detail',
           header: text.promotionCriteria,
           render: (policy) => (
             <ul className="promotion-criterion-results">
@@ -117,14 +107,15 @@ export function PromotionPolicyTable({
           key: 'owner',
           priority: 'secondary',
           header: text.promotionPolicyOwner,
-          render: (policy) => ownerLabel(policy, serviceAccounts),
+          // The run-as user, by name: a person until moved to a Service Account.
+          render: (policy) => automationOwnerLabel(policy),
         },
         ...(canManage
           ? [
               {
                 key: 'actions',
                 priority: 'secondary' as const,
-                header: text.details,
+                header: text.actions,
                 render: (policy: PromotionPolicy) => (
                   <div className="access-actions">
                     <button

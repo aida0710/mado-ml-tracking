@@ -6,6 +6,7 @@ import {
   createCriterionDraft,
   createPromotionPolicyDraft,
   getCriterionThresholdMeaning,
+  missingEvaluationRuleReason,
   parseCriterionThreshold,
   summarizeCriterion,
   updatePromotionPolicyDraft,
@@ -143,6 +144,26 @@ describe('昇格policyの入力', () => {
     expect(() => build(draftWith({ baselineAlias: '' }))).toThrow(
       text.promotionBaselineAliasRequired,
     );
+  });
+});
+
+describe('評価ルールを選べない理由', () => {
+  const model = models.find((item) => item.family === 'Qwen3')!;
+  it('系列の評価ルールが無効になっているだけなら、有効にすればよいと分かる理由を返す', () => {
+    expect(
+      missingEvaluationRuleReason([{ ...evaluationRule, enabled: false }], model),
+    ).toBe('disabled');
+  });
+  it('系列の評価ルールが無ければ、作る必要があると分かる理由を返す', () => {
+    expect(
+      missingEvaluationRuleReason(
+        [
+          { ...evaluationRule, kind: 'inference', enabled: false },
+          { ...evaluationRule, modelFamilies: ['Whisper'], enabled: false },
+        ],
+        model,
+      ),
+    ).toBe('none');
   });
 });
 

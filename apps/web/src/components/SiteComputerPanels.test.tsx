@@ -22,7 +22,7 @@ const OWNER_SUBMITS_NOTE =
 const someoneElse: ManualSiteOwnership = { kind: 'someoneElse', ownerName: 'Alice' };
 // The setup of `mado-tracking submit` points it at the address the page was opened with.
 const PAGE_ORIGIN = 'https://mmt.example.test';
-const SUBMIT_ENVIRONMENT = `export MMT_API_URL=${PAGE_ORIGIN}\nread -r -s -p &#x27;API token: &#x27; MMT_API_TOKEN`;
+const SUBMIT_ENVIRONMENT = `export MMT_API_URL=${PAGE_ORIGIN}\nprintf &#x27;API token: &#x27;; read -r -s MMT_API_TOKEN; echo`;
 const SUBMIT_TOKEN_WHERE =
   'API tokenは、Jobを作ったプロジェクトの［プロジェクト設定］→「自分のAPI token」の［API tokenを発行］で、readとjobs:writeを選んで発行します。';
 

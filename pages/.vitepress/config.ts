@@ -37,6 +37,8 @@ const jaSidebar = [
     { text: "SSH・Localのコンピュータ", link: "/compute/targets" },
     { text: "外部のコンピュータ（site）", link: "/compute/sites" },
     { text: "workerの導入", link: "/compute/worker" },
+    { text: "Jobsの画面", link: "/compute/jobs" },
+    { text: "フック", link: "/compute/hooks" },
   ] },
   { text: "データと保存先", items: [
     { text: "Artifacts", link: "/data/artifacts" },
@@ -93,6 +95,8 @@ const enSidebar = [
     { text: "Compute targets", link: "/en/compute/targets" },
     { text: "External computers (sites)", link: "/en/compute/sites" },
     { text: "Install a worker", link: "/en/compute/worker" },
+    { text: "The Jobs page", link: "/en/compute/jobs" },
+    { text: "Hooks", link: "/en/compute/hooks" },
   ] },
   { text: "Data and storage", items: [
     { text: "Artifacts", link: "/en/data/artifacts" },

@@ -63,7 +63,16 @@ export function AuditEventsTable({
             priority: 'primary',
             header: accessText.auditAction,
             className: 'audit-label',
-            render: (event) => <span title={event.action}>{auditActionLabel(event.action)}</span>,
+            // A refusal or failure is marked beside the action, so it shows in the row on a phone
+            // too, where the outcome column moves into the opened row.
+            render: (event) => (
+              <span title={event.action}>
+                {auditActionLabel(event.action)}
+                {event.outcome !== 'success' && (
+                  <span className="audit-outcome-tag">{outcomeLabels[event.outcome]}</span>
+                )}
+              </span>
+            ),
           },
           {
             key: 'outcome',

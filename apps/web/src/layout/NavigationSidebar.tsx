@@ -21,7 +21,12 @@ export function NavigationSidebar({
   const isRail = navigation.mode === 'rail';
   const toggleLabel = isRail ? text.expandNavigation : text.collapseNavigation;
   return (
-    <aside className="navigation-sidebar" data-collapsed={isRail ? 'true' : 'false'}>
+    <aside
+      className="navigation-sidebar"
+      data-collapsed={isRail ? 'true' : 'false'}
+      // Named, so it is told apart from the Experiments sidebar, another <aside> on the same page.
+      aria-label={text.navigationSidebar}
+    >
       <div className="navigation-sidebar-scroll">
         {!isRail && children}
         {navigation.groups.length > 0 && (

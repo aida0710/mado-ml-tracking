@@ -1,7 +1,9 @@
 // Run list, server-side Run search, and its paging. native-run-search owns the entries.
 // Chart panels on the Run pages, system metrics and resumed segments: chart-panels-and-pages-web.
 export const runsText = {
-  queryHint: "名前、または metrics.loss < 0.1 AND params.batch_size = '32'",
+  // Short enough to read whole in the search box; the full grammar is in the error messages.
+  queryHint: '名前、または metrics.loss < 0.1',
+  searchWithSuggestion: 'この式で検索',
   filterEmpty: '検索式を入力してください。',
   firstPage: '最初のページ',
   mediaTab: 'Media',
@@ -39,13 +41,33 @@ export const runsText = {
   chartGroupingKey: 'グループ化するキー',
   chartTarget: '図にするRun',
   chartGroupingAppliesToAll: 'すべての図で、グループごとの平均と範囲を描きます。',
-  systemMetricsEmpty: 'システムメトリクスはまだありません。',
+  systemMetricsEmpty:
+    'システムメトリクスはまだありません。SDKでは start_run(..., system_metrics=True)、MLflow 3では mlflow.start_run(log_system_metrics=True) で、CPU・GPU・メモリの使用量を記録します。',
   resumeTimeline: '実行区間',
   resumeSegmentRunning: '実行中',
   resumeSegmentStart: '開始',
   resumeSegmentEnd: '終了',
   resumeSegmentFirstStep: '最初のstep',
   resumeSegmentEndStatus: '終了状態',
+  // Where nothing is recorded yet: the next step instead of "no match".
+  runsNoneInExperiment:
+    'この実験にはまだRunがありません。［SDKで記録］の例を学習コードに入れて実行すると、Runが作られてここに並びます。',
+  runsNoneInProject:
+    'このプロジェクトにはまだRunがありません。［SDKで記録］の例を学習コードに入れて実行すると、Runが作られてここに並びます。',
+  runsNoneForViewer:
+    'まだRunがありません。Runを記録できるのは、このプロジェクトのEditor以上のメンバーです。',
+  experimentsNoneYet:
+    'まだ実験がありません。実験は、同じ目的のRunをまとめる単位です（例: whisper-small-finetune）。［最初の実験を作成］で作るか、SDKのexperiment_name・MLflowのset_experimentに名前を渡すと、記録を始めたときに作られます。',
+  experimentsNoneForViewer: 'まだ実験がありません。',
+  experimentSidebarEmpty: 'まだ実験がありません。右上の［＋］で作成します。',
+  experimentSidebarNoMatch: '一致する実験はありません。',
+  newFirstExperiment: '最初の実験を作成',
+  experimentNameHint: '同じ目的のRunをまとめる名前にします（例: whisper-small-finetune）。',
+  experimentNameTaken: '同じ名前の実験が既にあります。',
+  openExistingExperiment: 'その実験を開く',
+  runIdLabel: 'Run ID',
+  manualRunNotice:
+    '画面から作ったRunは「待機中」で始まり、そのままでは進みません。コードバージョンを選んでおくと、作成後にRunの詳細の［ジョブを起動］で実行できます。学習コードからmetricsを記録するときは、このフォームは使わずに［SDKで記録］の例を使います（Runは記録を始めたときに作られます）。',
 } as const;
 
 /** Panel titles of the system metrics tab, by category. */
@@ -72,8 +94,28 @@ export const systemMetricUnitLabels = {
 
 // Text that embeds values; merged into catalog's textTemplates.
 export const runsTextTemplates = {
+  runExecutionMode: (mode: string) => `実行モード: ${mode}`,
   filterUnexpectedAt: (position: number) =>
     `検索式の${position}文字目を確認してください。metrics / params / tags などの比較をANDでつなげ、文字列は引用符で囲みます（例: metrics.loss < 0.1 AND params.lr = '0.01'）。`,
+  // A comparison that does not suit its field: what the field holds, and the comparison fixed.
+  filterStringOperator: ({
+    field,
+    operator,
+    example,
+  }: {
+    field: string;
+    operator: string;
+    example: string;
+  }) =>
+    `${field}は文字列として比べるので「${operator}」は使えません。使えるのは = != LIKE ILIKE です（例: ${example}）。大小で比べられるのはmetricsだけです。`,
+  filterQuoteValue: (field: string, example: string) =>
+    `${field}の値は文字列なので、引用符で囲みます（例: ${example}）。`,
+  filterNumberOperator: (field: string, operator: string) =>
+    `${field}は数値として比べるので「${operator}」は使えません。= != > >= < <= を使います（例: ${field} < 0.1）。`,
+  filterNumberValue: (field: string) =>
+    `${field}の値は数値で書きます。引用符は付けません（例: ${field} < 0.1）。`,
+  filterSuggestion: (searchText: string, suggestion: string) =>
+    `「${searchText}」はRun名として探しました。メトリクスやパラメータで絞り込むときは、${suggestion} のように metrics. や params. を付けます。`,
   metricAscending: (name: string) => `${name}（昇順）`,
   metricDescending: (name: string) => `${name}（降順）`,
   pageNumber: (page: number) => `${page}ページ目`,

@@ -39,8 +39,14 @@
   box-shadow: var(--shadow-popover);
 }
 .operations-alert-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   padding: 12px 14px;
   border-bottom: 1px solid var(--border);
+}
+.operations-alert-heading .muted {
+  font-size: 11px;
 }
 .operations-alert-empty,
 .operations-alert-popover > .notice {
@@ -67,6 +73,11 @@
 .operations-alert-popover a:focus-visible {
   background: var(--surface-hover);
   text-decoration: none;
+}
+/* Alerts of every Project share the list, so each names its Project above the kind. */
+.operations-alert-project {
+  color: var(--muted);
+  font-size: 11px;
 }
 .operations-alert-kind {
   color: var(--error);

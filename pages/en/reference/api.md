@@ -25,7 +25,7 @@ See [API tokens and Service Accounts](/en/admin/tokens) for issuing tokens and s
 
 ```sh
 export MMT_API_URL=https://tracking.example.com
-read -rsp 'API token: ' MMT_API_TOKEN
+printf 'API token: '; read -r -s MMT_API_TOKEN; echo
 export MMT_API_TOKEN
 
 curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" "$MMT_API_URL/api/projects"
@@ -50,7 +50,7 @@ Some operations work only with a browser session; with an API token they return 
 Errors have this shape. `error` is a human-readable message; `code` is for programs. Use `code` in your checks.
 
 ```json
-{"error": "API tokenのscopeが不足しています", "code": "insufficient_scope"}
+{"error": "API tokenのscopeが不足しています。この操作にはruns:writeが要ります。［プロジェクト設定］の［API tokenを発行］で用途「SDK・MLflow 3から記録する」を選び、tokenを発行し直してください", "code": "insufficient_scope"}
 ```
 
 | Status | Common `code` | Meaning |
@@ -58,8 +58,8 @@ Errors have this shape. `error` is a human-readable message; `code` is for progr
 | 400 | `invalid_cursor`, `invalid_parameter_value` | Invalid search condition or cursor |
 | 401 | `authentication_required`, `invalid_token` | Not signed in; token invalid, revoked, or expired |
 | 401 | `identity_sync_required` | An SSO user has not signed in from a browser for 7 days ([Authentik (SSO)](/en/admin/sso)) |
-| 403 | `insufficient_scope` | The token lacks a scope |
-| 403 | `project_forbidden` | Insufficient Project role, or a Project other than the token's |
+| 403 | `insufficient_scope` | The token lacks a scope (`error` names the missing scope and where to issue a new token) |
+| 403 | `project_forbidden` | Insufficient Project role, or a Project other than the token's (`error` names the token's Project) |
 | 403 | `session_required` | Only available with a browser session |
 | 403 | `job_token_forbidden` | Not allowed for Job tokens |
 | 403 | `job_owner_required` | Stopping or retrying a Job someone else created (only its creator or a Project Admin) |

@@ -13,6 +13,18 @@
   gap: 8px;
   align-items: end;
 }
+/* On a phone the five parts of a criterion take three lines: the metric alone, then two per line. */
+@media (width < 640px) {
+  .promotion-criterion-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .promotion-criterion-row > :first-child {
+    grid-column: 1 / -1;
+  }
+  .promotion-criterion-row > .field-action {
+    justify-self: end;
+  }
+}
 .promotion-criterion-results {
   margin: 0;
   padding: 0;

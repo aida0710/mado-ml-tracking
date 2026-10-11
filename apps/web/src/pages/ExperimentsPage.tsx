@@ -24,9 +24,12 @@ import { SavedViewsMenu } from '../components/runs/SavedViewsMenu';
 import { getRunColumnNames } from '../components/runs/runColumnNames';
 import { RunListCharts } from '../components/charts/RunListCharts';
 import { RunDialog } from '../dialogs/RunDialog';
+import { ExperimentDialog } from '../dialogs/ExperimentDialog';
 import { getFieldValue } from '../lib/formValues';
 import { downloadBlob } from '../lib/fileDownload';
 import { runSortOrderBy, toRunSearchConditions } from '../lib/runFilter';
+import { recordedRunCount } from '../lib/experimentList';
+import { runListEmptyMessage } from '../lib/runListEmptyMessage';
 import { getRunChartKeys } from '../lib/runChartKeys';
 import {
   defaultRunColumns,
@@ -67,7 +70,8 @@ export function ExperimentsPage() {
     .filter(Boolean);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [dialog, setDialog] = useState<'experiment' | 'run' | 'tag' | null>(null);
-  const [isRecordingGuideOpen, setIsRecordingGuideOpen] = useState(false);
+  // null until the guide's button is pressed; until then the guide follows whether Runs exist.
+  const [recordingGuideChoice, setRecordingGuideChoice] = useState<boolean | null>(null);
   const mutation = useMutation();
   const csvExport = useMutation();
   const [isExportTruncated, setIsExportTruncated] = useState(false);
@@ -85,7 +89,7 @@ export function ExperimentsPage() {
     limit: RUNS_PER_PAGE,
     ...(cursor ? { cursor } : {}),
   };
-  const runs = useRunSearch(project.id, search);
+  const { runs, filterRejection } = useRunSearch(project.id, search);
   const { limit: _limit, cursor: _cursor, ...searchConditions } = search;
   async function exportSearchCsv() {
     setIsExportTruncated(false);
@@ -98,6 +102,10 @@ export function ExperimentsPage() {
     setIsExportTruncated(exported.truncated);
   }
   const experiment = experiments.value?.find((item) => item.id === experimentId);
+  // With nothing recorded yet, recording from the SDKs is the next step, so the guide starts open.
+  const isRecordingGuideOpen =
+    recordingGuideChoice ?? recordedRunCount(experiments.value, experimentId) === 0;
+  const hasNoExperiments = experiments.value?.length === 0;
   const shownRuns = runs.value?.items ?? [];
   const { metricNames, parameterNames } = getRunColumnNames(shownRuns);
   const savedView = useRunListSavedView({
@@ -170,13 +178,20 @@ export function ExperimentsPage() {
                 type="button"
                 className="button"
                 aria-expanded={isRecordingGuideOpen}
-                onClick={() => setIsRecordingGuideOpen((isOpen) => !isOpen)}
+                onClick={() => setRecordingGuideChoice(!isRecordingGuideOpen)}
               >
                 <Terminal size={15} />
                 {text.recordingGuideToggle}
               </button>
-              {canEdit && (
-                <button className="button primary" onClick={() => setDialog('run')}>
+              {/* A Run needs an Experiment, so a Project without one starts by creating it. */}
+              {canEdit && hasNoExperiments && (
+                <button className="button primary" onClick={() => setDialog('experiment')}>
+                  <Plus size={15} />
+                  {text.newFirstExperiment}
+                </button>
+              )}
+              {canEdit && experiments.value && !hasNoExperiments && (
+                <button className="button" onClick={() => setDialog('run')}>
                   <Plus size={15} />
                   {text.newRun}
                 </button>
@@ -220,6 +235,7 @@ export function ExperimentsPage() {
           metricNames={metricNames}
           columnNames={columnNames}
           isColumnVisible={isColumnVisible}
+          filterRejection={filterRejection}
           onSearch={(value) => updateParams({ q: value })}
           onStatusChange={(value) => updateParams({ status: value })}
           onKindsChange={(value) => updateParams({ [RUN_LIST_PARAMS.kinds]: formatRunKinds(value) })}
@@ -273,6 +289,12 @@ export function ExperimentsPage() {
                 onColumnsChange={savedView.setColumns}
                 selectedIds={selectedIds}
                 onSelectedIdsChange={setSelectedIds}
+                empty={runListEmptyMessage({
+                  isNarrowed: Boolean(searchText || status || kinds.length || cursorHistory.length),
+                  experimentCount: experiments.value?.length,
+                  isExperimentChosen: Boolean(experiment),
+                  canEdit,
+                })}
               />
               <RunPagination
                 pageNumber={cursorHistory.length + 1}
@@ -290,23 +312,18 @@ export function ExperimentsPage() {
         </Resource>
       </section>
       {dialog === 'experiment' && (
-        <FormDialog
-          title={text.newExperiment}
-          fields={[
-            { name: 'name', label: text.name, required: true },
-            { name: 'description', label: text.description, type: 'textarea' },
-          ]}
+        <ExperimentDialog
+          projectId={project.id}
+          experiments={experiments.value}
           onClose={() => setDialog(null)}
-          onSubmit={(values) =>
-            trackingApi.createExperiment(project.id, {
-              name: getFieldValue(values, 'name'),
-              description: getFieldValue(values, 'description'),
-            })
-          }
-          onSaved={(saved) => {
+          onCreated={(created) => {
             setDialog(null);
             reload();
-            updateParams({ experiment: saved.id });
+            updateParams({ experiment: created.id });
+          }}
+          onOpenExisting={(existing) => {
+            setDialog(null);
+            updateParams({ experiment: existing.id });
           }}
         />
       )}

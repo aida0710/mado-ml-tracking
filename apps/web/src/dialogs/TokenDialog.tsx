@@ -1,21 +1,26 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { Project, ProjectRole, ServiceAccount, TokenScope, TokenSummary } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
-import { FormDialog } from '../components/FormDialog';
 import { Dialog } from '../components/Dialog';
-import { CopyButton } from '../components/CopyButton';
-import { TokenUsageSnippet } from '../components/TokenUsageSnippet';
-import { getFieldValue, getSelectedValues } from '../lib/formValues';
+import { ErrorNotice } from '../components/Feedback';
+import { TokenPurposeFields } from '../components/TokenPurposeFields';
+import { IssuedTokenDialog } from './IssuedTokenDialog';
+import { useMutation } from '../hooks/useMutation';
 import { scopesAllowedForRole } from '../lib/tokenScopes';
+import {
+  initialTokenScopeChoice,
+  purposesForOwner,
+  type TokenOwnerKind,
+  type TokenScopeChoice,
+} from '../lib/tokenPurposes';
 import { text } from '../i18n/catalog';
-import { serviceAccountsTextTemplates, tokenScopeLabels } from '../i18n/serviceAccounts';
+import { serviceAccountsTextTemplates } from '../i18n/serviceAccounts';
 
 // The API caps lifetimes at MMT_TOKEN_MAX_LIFETIME_DAYS (365 by default); 90 days is offered first
 // so a forgotten token does not stay valid for a whole year.
 const TOKEN_EXPIRY_PRESET_DAYS = [7, 30, 90, 365];
 const DEFAULT_TOKEN_EXPIRY_DAYS = 90;
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
-const DEFAULT_TOKEN_SCOPES: TokenScope[] = ['read'];
 
 type IssuedToken = { token: string; item: TokenSummary };
 export type TokenRequest = { name: string; scopes: TokenScope[]; expiresAt: string };
@@ -27,20 +32,21 @@ export interface ServiceAccountTokenOwner {
 }
 
 /**
- * Issues a token for the signed-in user, or for a Service Account when `owner` is set.
- * The scopes on offer stop at the owner's Project role, as the API does; `initialScopes` above
- * that role are left unselected rather than offered.
+ * Issues a token for the signed-in user, or for a Service Account when `owner` is set, and then
+ * shows it once. Every button that issues a token opens this dialog: one chooses what the token is
+ * for and the scopes follow (`initialScopes` lets a guide choose for them). The scopes on offer
+ * stop at the owner's Project role, as the API does.
  */
 export function TokenDialog({
   project,
   owner,
-  initialScopes = DEFAULT_TOKEN_SCOPES,
+  initialScopes,
   onClose,
   onCreated,
 }: {
   project: Project;
   owner?: ServiceAccountTokenOwner;
-  initialScopes?: TokenScope[];
+  initialScopes?: readonly TokenScope[];
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -51,74 +57,122 @@ export function TokenDialog({
     : text.newToken;
   if (token)
     return (
-      <Dialog title={title} onClose={onClose}>
-        <p className="notice">{text.tokenOnce}</p>
-        <label className="field">
-          <span>{text.issuedTokenValue}</span>
-          <input
-            className="mono"
-            readOnly
-            value={token}
-            autoComplete="off"
-            spellCheck={false}
-            onFocus={(event) => event.target.select()}
-          />
-        </label>
-        <TokenUsageSnippet projectId={project.id} token={token} />
-        <footer>
-          <CopyButton value={token} />
-          <button className="button primary" onClick={onClose}>
-            {text.close}
-          </button>
-        </footer>
-      </Dialog>
+      <IssuedTokenDialog title={title} projectId={project.id} token={token} onClose={onClose} />
     );
   const ownerRole: ProjectRole = serviceAccount ? (serviceAccount.role ?? 'viewer') : project.role;
-  const allowedScopes = scopesAllowedForRole(ownerRole);
   return (
-    <FormDialog
+    <TokenIssueForm
       title={title}
+      owner={{ role: ownerRole, isServiceAccount: Boolean(serviceAccount) }}
+      initialScopes={initialScopes}
+      issue={(request) =>
+        owner
+          ? owner.issue(request)
+          : administrationApi.createToken({ ...request, kind: 'personal', projectId: project.id })
+      }
       onClose={onClose}
-      fields={[
-        { name: 'name', label: text.name, required: true },
-        {
-          name: 'scopes',
-          label: text.scopes,
-          type: 'multiselect',
-          required: true,
-          defaultValue: initialScopes.filter((scope) => allowedScopes.includes(scope)),
-          options: allowedScopes.map((scope) => ({
-            value: scope,
-            label: tokenScopeLabels[scope],
-          })),
-        },
-        {
-          name: 'expiryDays',
-          label: text.expiry,
-          type: 'select',
-          defaultValue: String(DEFAULT_TOKEN_EXPIRY_DAYS),
-          options: TOKEN_EXPIRY_PRESET_DAYS.map((days) => ({
-            value: String(days),
-            label: serviceAccountsTextTemplates.tokenExpiryDays(days),
-          })),
-        },
-      ]}
-      onSubmit={(values) => {
-        const scopes = getSelectedValues(values, 'scopes') as TokenScope[];
-        if (!scopes.length) throw new Error(text.tokenScopesError);
-        const expiryDays = Number(getFieldValue(values, 'expiryDays'));
-        const body: TokenRequest = {
-          name: getFieldValue(values, 'name'),
-          scopes,
-          expiresAt: new Date(Date.now() + expiryDays * DAY_MILLISECONDS).toISOString(),
-        };
-        if (owner) return owner.issue(body);
-        return administrationApi.createToken({ ...body, kind: 'personal', projectId: project.id });
-      }}
-      onSaved={(created) => {
-        setToken(created.token);
+      onIssued={(issued) => {
+        setToken(issued.token);
         onCreated();
       }}
     />
+  );
+}
+
+function TokenIssueForm({
+  title,
+  owner,
+  initialScopes,
+  issue,
+  onClose,
+  onIssued,
+}: {
+  title: string;
+  owner: TokenOwnerKind;
+  initialScopes?: readonly TokenScope[];
+  issue: (request: TokenRequest) => Promise<IssuedToken>;
+  onClose: () => void;
+  onIssued: (issued: IssuedToken) => void;
+}) {
+  const nameId = useId();
+  const expiryId = useId();
+  const [name, setName] = useState('');
+  const [expiryDays, setExpiryDays] = useState(DEFAULT_TOKEN_EXPIRY_DAYS);
+  const [scopeChoice, setScopeChoice] = useState<TokenScopeChoice>(() =>
+    initialTokenScopeChoice({ owner, initialScopes }),
+  );
+  const mutation = useMutation();
+  async function submit() {
+    if (!scopeChoice.scopes.length) throw new Error(text.tokenPurposeRequired);
+    return issue({
+      name: name.trim(),
+      scopes: scopeChoice.scopes,
+      expiresAt: new Date(Date.now() + expiryDays * DAY_MILLISECONDS).toISOString(),
+    });
+  }
+  return (
+    <Dialog title={title} onClose={onClose} busy={mutation.pending}>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          void mutation.run(submit).then((issued) => {
+            if (issued) onIssued(issued);
+          });
+        }}
+      >
+        <fieldset disabled={mutation.pending}>
+          <div className="form-fields">
+            <div className="field">
+              <label htmlFor={nameId}>
+                {text.name}
+                <span className="required" aria-hidden="true">
+                  {' '}
+                  *
+                </span>
+              </label>
+              <input
+                id={nameId}
+                value={name}
+                required
+                aria-describedby={`${nameId}-hint`}
+                onChange={(event) => setName(event.target.value)}
+              />
+              <p id={`${nameId}-hint`} className="field-hint">
+                {text.tokenNameHint}
+              </p>
+            </div>
+            <TokenPurposeFields
+              purposes={purposesForOwner(owner)}
+              allowedScopes={scopesAllowedForRole(owner.role)}
+              value={scopeChoice}
+              onChange={setScopeChoice}
+            />
+            <div className="field">
+              <label htmlFor={expiryId}>{text.expiry}</label>
+              <select
+                id={expiryId}
+                value={expiryDays}
+                onChange={(event) => setExpiryDays(Number(event.target.value))}
+              >
+                {TOKEN_EXPIRY_PRESET_DAYS.map((days) => (
+                  <option key={days} value={days}>
+                    {serviceAccountsTextTemplates.tokenExpiryDays(days)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </fieldset>
+        <ErrorNotice message={mutation.error} />
+        <footer>
+          <button type="button" className="button" onClick={onClose} disabled={mutation.pending}>
+            {text.cancel}
+          </button>
+          <button className="button primary" disabled={mutation.pending}>
+            {mutation.pending ? text.loading : text.save}
+          </button>
+        </footer>
+      </form>
+    </Dialog>
   );
 }

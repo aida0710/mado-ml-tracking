@@ -30,22 +30,28 @@ The Project is ready when its Experiments page opens. The creator becomes an Adm
 
 ## 2. Create an experiment
 
-Press ［＋］ (実験を作成, Create experiment) on the left of ［Experiments］, enter `whisper-small-finetune` as the name, and press ［保存］ (Save).
+In a Project without experiments, the Experiments page shows ［最初の実験を作成］ (Create the first experiment) at the top right. Press it, enter `whisper-small-finetune` as the name, and press ［保存］ (Save). Later experiments are created with ［＋］ (実験を作成, Create experiment) at the right end of the "Experiments" heading of the experiment list on the left.
 
-Select the experiment in the list on the left, and its `ID` appears below the name. The Python SDK uses this experiment ID, so note it. The Project ID is the part of the browser URL after `/projects/`.
+The new experiment is selected, and its `実験ID` (experiment ID) appears below the name with ［コピー］ (Copy). For an experiment without Runs, the "SDK・MLflow 3から接続" (Connect from the SDK and MLflow 3) guide is already open: it lists the environment variables and code examples with the IDs of this Project and experiment, each with ［コピー］ (Copy). After closing it, ［SDKで記録］ (Record with the SDK) beside the heading opens it again.
+
+［Runを作成］ (Create Run) beside the heading creates a Run on the screen to run as a Job with a code version. It is not for recording from training code: the SDKs and MLflow create the Run when they start recording.
 
 ## 3. Issue an API token
 
 The SDKs record with an API token instead of your sign-in password.
 
-1. Open ［プロジェクト設定］ (Project settings) in the sidebar and press ［このProject用のAPI tokenを発行］ (Issue an API token for this Project) under "MLflow 3から接続" (Connect from MLflow 3).
+1. In "SDK・MLflow 3から接続" (Connect from the SDK and MLflow 3), opened with ［SDKで記録］ (Record with the SDK) on the experiment page or in ［プロジェクト設定］ (Project settings), press ［このProject用のAPI tokenを発行］ (Issue an API token for this Project).
 2. Enter a name that tells its purpose, such as `laptop-sdk`.
-3. The scopes `read`, `runs:write`, `registry:write`, and `artifacts:write` are already selected. Keep them.
+3. The purpose "SDK・MLflow 3から記録する" (Record from the SDK and MLflow 3) is chosen, and the scopes `read`, `runs:write`, `registry:write`, and `artifacts:write` are checked. Keep them.
 4. Choose the expiry and press ［保存］ (Save).
 
-![The API token dialog with name, scopes, and expiry](/images/guide-token-dialog.png)
+［API tokenを発行］ (Issue API token) under "自分のAPI token" (My API tokens) in the Project settings, or on ［アカウント］ (Account), opens the same dialog, also starting from the recording purpose.
 
-The token value is shown only once. Copy it before closing the dialog and store it somewhere safe, such as a password manager. The token works only for the Project it was issued in.
+![The API token dialog with name, purpose, scopes, and expiry](/images/guide-token-dialog.png)
+
+The token value is shown only once. Copy it with ［tokenをコピー］ (Copy token) before closing the dialog and store it somewhere safe, such as a password manager. The token works only for the Project it was issued in.
+
+The "設定例" (Settings example) in the same dialog holds the environment variables of steps 4 and 5 without the token. Copy it with ［設定例をコピー］ (Copy settings example) and paste it into a terminal; it asks for `API token:`, where you paste the token you copied.
 
 ## 4. Record with the Python SDK
 
@@ -61,21 +67,22 @@ Set the endpoint and the token as environment variables. Enter the token without
 
 ```sh
 export MMT_API_URL=https://tracking.example.com
-read -r -s -p 'API token: ' MMT_API_TOKEN
+export MMT_PROJECT_ID=<Project ID>
+export MMT_EXPERIMENT_ID=<experiment ID>
+printf 'API token: '; read -r -s MMT_API_TOKEN; echo
 export MMT_API_TOKEN
 ```
 
-Save the following as `train_sdk.py`. Replace `PROJECT_ID` and `EXPERIMENT_ID` with the values you noted in steps 1 and 2.
+"環境変数（tokenは実行時に入力）" (Environment variables, the token entered when run) under ［SDKで記録］ (Record with the SDK) on the experiment page holds exactly this, with the URL and both IDs filled in. Copy it with ［コピー］ (Copy) and paste it.
+
+Save the following as `train_sdk.py`. `start_run` uses `MMT_PROJECT_ID` and `MMT_EXPERIMENT_ID`.
 
 ```python
 import math
 
 from mado_tracking import start_run
 
-PROJECT_ID = "<Project ID>"
-EXPERIMENT_ID = "<experiment ID>"
-
-with start_run(project_id=PROJECT_ID, experiment_id=EXPERIMENT_ID, name="lr-1e-4") as run:
+with start_run(name="lr-1e-4") as run:
     run.log_params({"learning_rate": 1e-4, "batch_size": 16})
     for step in range(50):
         loss = 2.0 * math.exp(-step / 15) + 0.1
@@ -89,11 +96,13 @@ with start_run(project_id=PROJECT_ID, experiment_id=EXPERIMENT_ID, name="lr-1e-4
 
 The Run is recorded when `Run: <Run ID>` appears. Leaving the `with` block finishes the Run; leaving it with an exception marks the Run as failed.
 
+You can also choose the experiment by name instead of its ID. Pass it as `start_run(experiment_name="whisper-small-finetune", name="lr-1e-4")` to record into the experiment of that name, created when it does not exist yet (like MLflow's `set_experiment`).
+
 For more on the SDK (system metrics, resuming a Run, recording offline and sending later), see [Python SDK](/en/tracking/sdk).
 
 ## 5. Record with the MLflow 3 SDK
 
-If your training code already records with MLflow, changing the endpoint is enough to record to the same Project. "MLflow 3から接続" (Connect from MLflow 3) on ［プロジェクト設定］ (Project settings) shows the Project's `MLFLOW_TRACKING_URI` and an example configuration.
+If your training code already records with MLflow, changing the endpoint is enough to record to the same Project. The ［MLflow 3］ tab of "SDK・MLflow 3から接続" (Connect from the SDK and MLflow 3), in ［プロジェクト設定］ (Project settings) or under ［SDKで記録］ (Record with the SDK) on the experiment page, shows the Project's `MLFLOW_TRACKING_URI` and an example configuration.
 
 ![The MLFLOW_TRACKING_URI and the example environment variables](/images/guide-mlflow-connection.png)
 
@@ -101,7 +110,7 @@ If your training code already records with MLflow, changing the endpoint is enou
 ~/.venvs/mmt/bin/pip install 'mlflow>=3,<4'
 export MLFLOW_TRACKING_URI=https://tracking.example.com/api/mlflow/projects/<Project ID>
 export MLFLOW_REGISTRY_URI="$MLFLOW_TRACKING_URI"
-read -r -s -p 'API token: ' MLFLOW_TRACKING_TOKEN
+printf 'API token: '; read -r -s MLFLOW_TRACKING_TOKEN; echo
 export MLFLOW_TRACKING_TOKEN
 ```
 
@@ -133,7 +142,7 @@ Select the experiment in ［Experiments］ to list the recorded Runs with the la
 
 ![The whisper-small-finetune list with two Runs](/images/guide-quickstart-runs.png)
 
-Press ［図を表示］ (Show charts) to chart the metrics of the listed Runs. The `train.loss` of the two Runs is overlaid, and the parallel coordinates beside the charts (below them on narrower screens) show how params relate to results.
+Press ［図を表示］ (Show charts) to chart the metrics of the listed Runs. The `train.loss` of the two Runs is overlaid, and the parallel coordinates below the charts show how params relate to results. A value logged once (such as a final evaluation) shows as a dot instead of a line.
 
 ![The train.loss of two Runs overlaid, and parallel coordinates](/images/guide-quickstart-chart.png)
 

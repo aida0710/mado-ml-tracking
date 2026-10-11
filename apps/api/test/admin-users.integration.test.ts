@@ -373,7 +373,18 @@ describe.skipIf(!testDatabaseUrl)('全体管理者のユーザー管理（独立
       }),
       200,
     );
-    expect(disabled).toMatchObject({ kind: 'service', status: 'disabled' });
+    // The Project is named so administrators can tell what disabling the account stops.
+    expect(disabled).toMatchObject({
+      kind: 'service',
+      status: 'disabled',
+      serviceAccountProject: { id: expect.any(String), name: expect.any(String) },
+    });
+    expect(basePath).toBe(`/api/projects/${disabled.serviceAccountProject!.id}`);
+    const people = await entity<{ items: AdminUser[] }>(
+      await adminRequest(administrator.cookie, '/users?kind=human'),
+      200,
+    );
+    for (const person of people.items) expect(person.serviceAccountProject).toBeNull();
     const listed = await entity<{ items: ServiceAccount[] }>(
       await request(harness.app, `${basePath}/service-accounts`, { cookie: administrator.cookie }),
       200,

@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import { apiErrorSchema, jsonValueSchema } from '@mmt/contracts/schemas';
+import { DATASET_FOLDER_UPLOAD_FOLDER_PATTERN } from '@mmt/contracts';
 import { SESSION_COOKIE } from '../authMiddleware.js';
 import { MAX_JSON_BODY_BYTES } from '../requestBodyLimits.js';
 import { JsonSchemaComponents, type JsonSchema } from './jsonSchemaComponents.js';
@@ -118,6 +119,10 @@ const PATH_PARAMETERS: Record<string, { description: string; schema: JsonSchema 
   name: {
     description: '保存先の名前',
     schema: { type: 'string', pattern: '^[a-z0-9][a-z0-9-]{0,62}$' },
+  },
+  folder: {
+    description: 'フォルダのアップロードのフォルダ（開始時刻 2026-10-08T14-19-08-955Z の形）',
+    schema: { type: 'string', pattern: DATASET_FOLDER_UPLOAD_FOLDER_PATTERN },
   },
 };
 

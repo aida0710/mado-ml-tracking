@@ -9,7 +9,8 @@ import { isGlobalAdmin } from '../lib/permissions';
 import { splitProjectList } from '../lib/projectListSections';
 import { projectHomePath } from '../layout/navigationLinks';
 import { settingsSectionPath } from '../layout/settingsSections';
-import { text } from '../i18n/catalog';
+import { useUnreachableProjectReason } from '../hooks/useUnreachableProjectReason';
+import { text, textTemplates } from '../i18n/catalog';
 
 function ProjectTable({ projects, empty }: { projects: Project[]; empty?: string }) {
   return (
@@ -48,20 +49,26 @@ function ProjectTable({ projects, empty }: { projects: Project[]; empty?: string
 }
 
 /**
- * What "/" shows when no Project opens by itself (lib/lastOpenedProject), or when the URL names a
- * Project the user cannot open: their own Projects, the public ones they may enter, and creation.
- * Nothing here is entered without a click, so a first login does not land in someone else's work.
+ * What "/" shows when no Project opens by itself (lib/lastOpenedProject), right after archiving a
+ * Project, or when the URL names a Project the user cannot open (saying whether it was archived):
+ * their own Projects, the public ones they may enter, and creation. Nothing here is entered
+ * without a click, so a first login does not land in someone else's work.
  */
 export function ProjectListPage({
   projects,
-  isUnreachable,
+  unreachableProjectId,
+  archivedProjectName,
   onCreateProject,
 }: {
   projects: Project[];
-  isUnreachable: boolean;
+  /** The Project the URL named but the user cannot open. */
+  unreachableProjectId?: string;
+  /** The Project the user has just archived from its settings. */
+  archivedProjectName: string | null;
   onCreateProject?: () => void;
 }) {
   const { user } = useAuth();
+  const unreachableReason = useUnreachableProjectReason(unreachableProjectId);
   const { memberProjects, publicProjects } = splitProjectList(projects);
   return (
     <main id="content" className="page project-list-page">
@@ -76,7 +83,18 @@ export function ProjectListPage({
           )
         }
       />
-      {isUnreachable && <p className="notice error">{text.projectNotAccessible}</p>}
+      {archivedProjectName && (
+        <p className="notice success" role="status">
+          {textTemplates.projectArchived(archivedProjectName)}
+        </p>
+      )}
+      {unreachableReason && (
+        <p className="notice error">
+          {unreachableReason === 'archived'
+            ? text.projectArchivedNotAccessible
+            : text.projectNotAccessible}
+        </p>
+      )}
       <section className="settings-section">
         <div className="section-heading">
           <h2>{text.projectListMine}</h2>

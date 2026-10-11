@@ -14,6 +14,7 @@ import {
   type ProjectMemberSource,
 } from '../lib/projectMemberSources';
 import { findLastProjectAdminGrant } from '../lib/projectAdminGrants';
+import { PROJECT_SETTINGS_SECTION_IDS } from '../lib/projectSettingsSections';
 import { text } from '../i18n/catalog';
 import { projectAccessTextTemplates } from '../i18n/projectAccess';
 
@@ -24,7 +25,10 @@ const VISIBILITY_NOTES: Record<ProjectVisibility, string> = {
   private: text.projectMembersPrivateNote,
 };
 
-/** Everyone with a Project role, where that role comes from, and direct grants for admins. */
+/**
+ * Everyone with a Project role, where that role comes from, and direct grants for admins. Service
+ * Accounts are listed too but changed in their own section, where their tokens are.
+ */
 export function ProjectMembers({
   projectMembers,
 }: {
@@ -36,6 +40,9 @@ export function ProjectMembers({
   const lastAdminGrant = findLastProjectAdminGrant(members.value ?? []);
   const isLastAdmin = (member: ProjectMember) =>
     lastAdminGrant?.kind === 'member' && lastAdminGrant.userId === member.user.id;
+  // A public Project lets every person in as editor, so a weaker grant is not what they get.
+  const isPublicEditor = (member: ProjectMember) =>
+    project.visibility === 'public' && member.user.kind === 'human' && member.role === 'viewer';
   const [editing, setEditing] = useState<ProjectMember | 'new' | null>(null);
   const [removing, setRemoving] = useState<ProjectMember | null>(null);
   // The signed-in user's own role may have changed, which decides what the shell shows.
@@ -67,6 +74,11 @@ export function ProjectMembers({
                 render: (member) => (
                   <span className="member-name">
                     {member.user.displayName}
+                    {member.user.kind === 'service' && (
+                      <span className="user-status" title={text.memberServiceAccountHint}>
+                        {text.memberServiceAccount}
+                      </span>
+                    )}
                     {member.user.status === 'disabled' && (
                       <span className="user-status disabled" title={text.memberDisabledHint}>
                         {text.memberDisabled}
@@ -85,7 +97,14 @@ export function ProjectMembers({
                 key: 'role',
                 priority: 'primary',
                 header: text.effectiveRole,
-                render: (member) => text[member.role],
+                render: (member) =>
+                  isPublicEditor(member) ? (
+                    <span title={text.memberPublicRoleHint}>
+                      {projectAccessTextTemplates.memberPublicRole(text.editor)}
+                    </span>
+                  ) : (
+                    text[member.role]
+                  ),
               },
               {
                 key: 'sources',
@@ -108,7 +127,14 @@ export function ProjectMembers({
                       priority: 'secondary' as const,
                       header: text.actions,
                       render: (member: ProjectMember) =>
-                        hasDirectGrant(member) ? (
+                        member.user.kind === 'service' ? (
+                          <a
+                            className="muted"
+                            href={`#${PROJECT_SETTINGS_SECTION_IDS.serviceAccounts}`}
+                          >
+                            {text.memberServiceAccountManaged}
+                          </a>
+                        ) : hasDirectGrant(member) ? (
                           <AccessGrantActions
                             isLastAdmin={isLastAdmin(member)}
                             onEdit={() => setEditing(member)}

@@ -12,7 +12,7 @@ import type {
 } from '../components/charts/chartProps';
 import { keepPlottablePoints, type ChartScale } from './chartScale';
 import { smoothValues } from './chartSmoothing';
-import { distinctSeriesColors } from './seriesColors';
+import { distinctSeriesStyles, metricKeyDashPattern, type ChartTheme } from './seriesColors';
 
 export const isSystemMetric = (name: string) =>
   /^(system[./]|gpu[./]|cpu[./]|memory[./])/.test(name);
@@ -47,10 +47,12 @@ export function runChartSeries(
 }
 
 /**
- * The lines of a panel with one or more metric keys. With several keys each line is a Run (or
- * group) and key pair: named by the key alone when the panel draws one Run, since repeating its
- * name would hide what tells the lines apart, and key first otherwise so a long Run name is what
- * the legend shortens. With one key a line keeps the Run id so its color matches other charts.
+ * The lines of a panel with one or more metric keys. With one key a line is its Run, styled like
+ * the Run in every other chart. With several keys each line is a Run (or group) and key pair. When
+ * the panel draws one Run, the lines are its keys: named by the key alone, since repeating the
+ * Run's name would hide what tells them apart, and each styled on its own. Otherwise a line takes
+ * its Run's color and the key's line pattern, and is named key first so a long Run name is what
+ * the legend shortens.
  */
 export function seriesForMetricKeys(
   keys: readonly string[],
@@ -59,12 +61,18 @@ export function seriesForMetricKeys(
   const linesByKey = keys.map((key) => ({ key, lines: linesOfKey(key) }));
   if (keys.length <= 1) return linesByKey.flatMap(({ lines }) => lines);
   const sourceCount = new Set(linesByKey.flatMap(({ lines }) => lines.map((line) => line.id))).size;
-  return linesByKey.flatMap(({ key, lines }) =>
-    lines.map((line) => ({
-      ...line,
-      id: `${line.id}/${key}`,
-      label: sourceCount === 1 ? key : `${key} · ${line.label}`,
-    })),
+  return linesByKey.flatMap(({ key, lines }, keyIndex) =>
+    lines.map((line): MetricsChartSeries => {
+      const id = `${line.id}/${key}`;
+      if (sourceCount === 1) return { ...line, id, label: key };
+      return {
+        ...line,
+        id,
+        label: `${key} · ${line.label}`,
+        styleId: line.styleId ?? line.id,
+        dashPattern: metricKeyDashPattern(keyIndex),
+      };
+    }),
   );
 }
 
@@ -133,17 +141,39 @@ export function nearestPointIndex(points: readonly { x: number }[], x: number): 
   return x < minX || x > maxX ? null : nearestIndex;
 }
 
-/** A series ready to draw: its color, the points the axes can place, and the smoothed values. */
+/**
+ * A series ready to draw: its color and line pattern, the points the axes can place, and the
+ * smoothed values.
+ */
 export interface ChartLine {
   id: string;
   label: string;
   kind: MetricsChartSeries['kind'];
   color: string;
+  /** stroke-dasharray, or null for a solid line. */
+  dashPattern: string | null;
   points: MetricsChartPoint[];
   /** One per point; NaN where the value is not finite. Equal to the values without smoothing. */
   smoothedValues: number[];
   /** Points left out because the log axis cannot place them. */
   excludedCount: number;
+}
+
+const styleIdOf = (series: MetricsChartSeries) => series.styleId ?? series.id;
+
+/**
+ * The ids whose order styles the lines: the page's (`styleIds`) when they hold every line's style
+ * id, so a Run is styled the same in each chart of the page; otherwise the chart's own, as for
+ * group lines and the metric keys of one Run, which the page's Runs do not name.
+ */
+function lineStyleIds(
+  series: readonly MetricsChartSeries[],
+  styleIds: readonly string[] | undefined,
+): readonly string[] {
+  const ownIds = series.map(styleIdOf);
+  if (!styleIds) return ownIds;
+  const pageIds = new Set(styleIds);
+  return ownIds.every((id) => pageIds.has(id)) ? styleIds : ownIds;
 }
 
 /**
@@ -152,16 +182,25 @@ export interface ChartLine {
  */
 export function prepareChartLines(
   series: readonly MetricsChartSeries[],
-  options: { xScale: ChartScale; yScale: ChartScale; smoothing: ChartSmoothing },
+  options: {
+    xScale: ChartScale;
+    yScale: ChartScale;
+    smoothing: ChartSmoothing;
+    theme: ChartTheme;
+    /** MetricsChartProps.styleIds. */
+    styleIds?: readonly string[];
+  },
 ): ChartLine[] {
-  const colors = distinctSeriesColors(series.map((item) => item.id));
+  const styles = distinctSeriesStyles(lineStyleIds(series, options.styleIds), options.theme);
   return series.map((item) => {
     const { points, excludedCount } = keepPlottablePoints(item.points, options);
+    const style = styles.get(styleIdOf(item))!;
     return {
       id: item.id,
       label: item.label,
       kind: item.kind,
-      color: item.color ?? colors.get(item.id)!,
+      color: item.color ?? style.color,
+      dashPattern: item.dashPattern === undefined ? style.dashPattern : item.dashPattern,
       points,
       smoothedValues: smoothValues(
         points.map((point) => point.value),
@@ -177,6 +216,7 @@ export interface ChartValueAtX {
   id: string;
   label: string;
   color: string;
+  dashPattern: string | null;
   value: number;
   /** The unsmoothed value, given when smoothing changed it. */
   rawValue?: number;
@@ -202,6 +242,7 @@ export function valuesAtX(
         id: line.id,
         label: line.label,
         color: line.color,
+        dashPattern: line.dashPattern,
         value,
         ...(rawValue === value ? {} : { rawValue }),
       },

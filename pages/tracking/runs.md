@@ -69,7 +69,7 @@ tags.dataset = 'training-v1' AND attributes.status = 'finished'
 - metricsは各Runの最新の値で比べます
 - 状態は`finished`・`failed`などの名前でも、MLflowの`FINISHED`・`FAILED`でも指定できます
 
-［すべての実験］を選んでから検索すると、Project内の全Experimentが対象になります。検索式が読めないときは、何文字目を確認すればよいかが検索欄の下に表示されます。
+［すべての実験］を選んでから検索すると、Project内の全Experimentが対象になります。検索式が読めないときは、何文字目を確認すればよいかが検索欄の下に表示されます。paramsを`>`で比べたときや、paramsの値を引用符で囲み忘れたときは、直した式（`params.batch_size = '16'`など）が表示されます。`loss < 0.2`のように`metrics.`を付け忘れた比較はRun名として探し、検索欄の下に`metrics.loss < 0.2`と［この式で検索］を出します。
 
 Pythonからも同じ検索式を使えます。
 

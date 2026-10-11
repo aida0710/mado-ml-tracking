@@ -6,7 +6,7 @@ APIの詳細は[api-contract.md](api-contract.md)の「フックとドライバ�
 
 ## フックを作る
 
-フックはProjectのeditorが作り、所有者（作成時は作った人）として動きます。所有者がProjectのeditorでなくなると、起動は`skipped`（`owner_access_revoked`）になります。設定は作成後に変えられません（有効・無効と所有者だけを変えられます）。変えたいときは新しいフックを作り、古いものを無効にします。
+フックはProjectのeditorが作り、所有者（作成時は作った人）として動きます。所有者がProjectのeditorでなくなると、起動は`skipped`（`owner_access_revoked`）になります。設定は作成後に変えられません（有効・無効と所有者だけを変えられます）。変えたいときは新しいフックを作り、古いものを無効にします。Webのフックの詳細の［複製して新しく作る］は、今の設定を写した作成画面を開きます（`lib/hookInput.ts`の`copyHookValues`。webhookのフックの複製は新しい受け口と秘密鍵になる）。受け口は、画面ではこのページのURLにpathを付けた完全なURL（`lib/hookDisplay.ts`の`hookWebhookUrl`）で出します。
 
 ```bash
 curl -sS -X POST "$MMT_API_URL/api/projects/$PROJECT_ID/hooks" \

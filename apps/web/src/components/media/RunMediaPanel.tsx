@@ -30,6 +30,8 @@ function KeyList({
           key: 'key',
           header: text.mediaKey,
           priority: 'primary',
+          // A long key wraps, so the step range and count stay in the narrow left column.
+          className: 'media-key-cell',
           render: (summary) => (
             <button type="button" className="link-button" onClick={() => onSelect(summary.key)}>
               {summary.key}

@@ -283,6 +283,22 @@ describe.skipIf(!testDatabaseUrl)('全履歴のRun検索（独立PostgreSQL）',
     expect(((await unknown.json()) as { code: string }).code).toBe('invalid_parameter_value');
   });
 
+  it('型に合わない比較は400で、使える比較と直した式を返す', async () => {
+    const messageOf = async (filter: string) => {
+      const response = await searchRuns({ filter });
+      expect(response.status, filter).toBe(400);
+      return ((await response.json()) as { error: string }).error;
+    };
+    const paramsComparison = await messageOf('params.learning_rate > 0.00005');
+    expect(paramsComparison).toContain('params.learning_rateは文字列として比べる');
+    expect(paramsComparison).toContain('= != LIKE ILIKE');
+    expect(await messageOf('metrics.train.loss < 0.2 and params.batch_size = 16')).toContain(
+      "params.batch_size = '16'",
+    );
+    expect(await messageOf("metrics.loss < '0.2'")).toContain('metrics.lossの値は数値で書きます');
+    expect(await messageOf("metrics.loss LIKE '0.%'")).toContain('= != > >= < <=');
+  });
+
   it('検索・単体取得・比較のRunに作成者の表示名が付く', async () => {
     const run = await createRun({ name: 'named' });
     const other = await createRun({ name: 'other' });

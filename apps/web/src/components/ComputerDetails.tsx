@@ -6,10 +6,14 @@ import { DetailsList } from './JsonDetails';
 import { SiteComputerDetails } from './SiteComputerDetails';
 import { TargetCheckPanel } from './TargetCheckPanel';
 import { WorkerSetupGuide } from './WorkerSetupGuide';
+import { WorkerCoverageBadge } from './WorkerCoverage';
+import { useAllWorkers } from '../hooks/useAllWorkers';
 import { formatTargetGpus, formatTargetLocation } from '../lib/computeTargetDisplay';
-import { canManageTarget } from '../lib/permissions';
+import { canManageTarget, isGlobalAdmin } from '../lib/permissions';
+import { checkWorkerCoverage, jobWorkerCoverage } from '../lib/workerCoverage';
 import { text, textTemplates } from '../i18n/catalog';
 import { runtimeLabels } from '../i18n/runtime';
+import { workerCoverageText } from '../i18n/workerCoverage';
 
 /**
  * A computer's details below 全体設定 → コンピュータ, for those who may use or manage it: a site's
@@ -26,9 +30,23 @@ export function ComputerDetails({
   user: Pick<User, 'id' | 'isAdmin'>;
   onTargetChanged: () => void;
 }) {
+  // Only global administrators list every Project's workers; others read who runs the worker.
+  const workers = useAllWorkers(target.executor !== 'site' && isGlobalAdmin(user));
   if (target.executor === 'site')
     return <SiteComputerDetails target={target} user={user} onTargetChanged={onTargetChanged} />;
   const canManage = canManageTarget(user, target);
+  // Every Project's workers: one of them answering does not mean this Project's Jobs start.
+  const workerEntry: Array<[string, ReactNode]> = workers.value
+    ? [
+        [
+          workerCoverageText.workerCoverageAnyProject,
+          <>
+            <WorkerCoverageBadge coverage={jobWorkerCoverage(target, workers.value)} />{' '}
+            <span className="muted">{workerCoverageText.workerCoverageAnyProjectHint}</span>
+          </>,
+        ],
+      ]
+    : [];
   // In place of the worker setup, those who may not manage the computer read who sets it up.
   const workerSetUpByEntry: Array<[string, ReactNode]> = canManage
     ? []
@@ -54,13 +72,18 @@ export function ComputerDetails({
             [text.runtimeKinds, target.runtimeKinds.map((kind) => runtimeLabels[kind]).join(', ')],
             [text.gpuIds, formatTargetGpus(target)],
             [text.maxConcurrentJobs, String(target.maxConcurrentJobs)],
+            ...workerEntry,
             ...workerSetUpByEntry,
           ]}
         />
       </section>
       {canManage && (
         <>
-          <TargetCheckPanel target={target} onTargetSaved={onTargetChanged} />
+          <TargetCheckPanel
+            target={target}
+            checkCoverage={workers.value && checkWorkerCoverage(target, workers.value)}
+            onTargetSaved={onTargetChanged}
+          />
           <WorkerSetupGuide targetId={target.id} />
         </>
       )}

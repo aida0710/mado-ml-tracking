@@ -142,6 +142,35 @@ describe.skipIf(!testDatabaseUrl)('合格時のalias自動切替と保護alias�
     );
   }
 
+  it('policyの一覧は実行ユーザーの名前と種類を返し、Service Accountへ移すとそちらの名前になる', async () => {
+    const fixture = await promotionFixture(harness);
+    const rule = await fixture.registerEvaluationRule('Evaluation A');
+    const policy = await fixture.createPolicy(rule, {});
+    const listOwner = async () => {
+      const list = await entity<{ items: PromotionPolicy[] }>(
+        await request(harness.app, `${fixture.basePath}/promotion-policies`, {
+          cookie: fixture.viewer.cookie,
+        }),
+        200,
+      );
+      const [listed] = list.items;
+      return { runAsKind: listed!.runAsKind, runAsName: listed!.runAsName };
+    };
+    const creatorName = await harness.database.query<{ display_name: string }>(
+      'SELECT display_name FROM users WHERE id=$1',
+      [fixture.administrator.userId],
+    );
+    expect(await listOwner()).toEqual({
+      runAsKind: 'human',
+      runAsName: creatorName.rows[0]!.display_name,
+    });
+    const account = await serviceAccount(fixture, { name: 'promotion-bot', role: 'admin' });
+    expect(
+      (await transferOwner(fixture, { policyId: policy.id, serviceAccountId: account.id })).status,
+    ).toBe(200);
+    expect(await listOwner()).toEqual({ runAsKind: 'service', runAsName: 'promotion-bot' });
+  });
+
   it('autoPromoteのpolicyで合格すると対象aliasが切り替わり、alias eventにsource=promotion_policyと判定IDが残る', async () => {
     const fixture = await promotionFixture(harness);
     const rule = await fixture.registerEvaluationRule('Evaluation A');

@@ -75,7 +75,7 @@ try {
   assert.match(sdkEnvironment, new RegExp(`^export MMT_API_URL=${base}\n`));
   assert.match(sdkEnvironment, new RegExp(`export MMT_PROJECT_ID=${projectId}\n`));
   assert.doesNotMatch(sdkEnvironment, /MMT_EXPERIMENT_ID/);
-  assert.match(sdkEnvironment, /read -r -s -p 'API token: ' MMT_API_TOKEN/);
+  assert.match(sdkEnvironment, /printf 'API token: '; read -r -s MMT_API_TOKEN; echo/);
   // Without a chosen Experiment the example names one, which start_run creates when absent.
   assert.match(
     await copySnippet(page, guide, 'Pythonの例'),
@@ -92,7 +92,7 @@ try {
   assert.equal(await copyValueOf(page, guide, 'MLFLOW_TRACKING_URI'), trackingUri);
   const mlflowEnvironment = await copySnippet(page, guide, '環境変数');
   assert.match(mlflowEnvironment, new RegExp(`export MLFLOW_REGISTRY_URI=${trackingUri}\n`));
-  assert.match(mlflowEnvironment, /read -r -s -p 'API token: ' MLFLOW_TRACKING_TOKEN/);
+  assert.match(mlflowEnvironment, /printf 'API token: '; read -r -s MLFLOW_TRACKING_TOKEN; echo/);
   assert.match(await copySnippet(page, guide, 'Pythonの例'), /set_experiment\("my-experiment"\)/);
   const more = guide.locator('details.connection-more');
   assert.equal(await more.getByText('MLFLOW_TRACKING_USERNAME=mado').isVisible(), false);
@@ -104,10 +104,15 @@ try {
   await guide.getByRole('button', { name: 'このProject用のAPI tokenを発行' }).click();
   const dialog = page.getByRole('dialog');
   await dialog.waitFor();
+  // The guide's button opens the dialog with the recording purpose and its scopes checked.
+  assert.equal(
+    await dialog.getByRole('radio', { name: 'SDK・MLflow 3から記録する' }).isChecked(),
+    true,
+  );
   const selected = await dialog
-    .locator('select[multiple] option:checked, input[type=checkbox]:checked')
+    .locator('.checkbox-list input[type=checkbox]:checked')
     .evaluateAll((elements) =>
-      elements.map((element) => element.value || element.getAttribute('value')),
+      elements.map((element) => element.closest('label').textContent.split(' — ')[0].trim()),
     );
   assert.deepEqual(selected.sort(), RECORDING_SCOPES);
   await dialog.getByLabel('名前').fill('recording-sdk');

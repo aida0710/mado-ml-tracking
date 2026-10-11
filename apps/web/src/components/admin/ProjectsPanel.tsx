@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
 import type { AdminProject } from '@mmt/contracts';
-import { administrationApi } from '../../api/administration';
 import { adminProjectsApi } from '../../api/adminProjects';
 import { useAdminProjects } from '../../hooks/useAdminProjects';
-import { explainProjectLifecycleConflict } from '../../lib/projectLifecycleConflict';
 import { projectHomePath } from '../../layout/navigationLinks';
+import { filterProjects } from '../../lib/projectFilter';
 import { ProjectCreateDialog } from '../../dialogs/ProjectCreateDialog';
+import { ProjectArchiveDialog } from '../../dialogs/ProjectArchiveDialog';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { Resource } from '../Feedback';
 import { SettingsPageHeader } from '../SettingsPageHeader';
@@ -21,13 +21,14 @@ interface PendingAction {
 }
 
 /**
- * The admin "projects" section: every Project, creating one, archiving, and, with archived ones
- * shown, restoring or purging them.
+ * The admin "projects" section: every Project (narrowed by name), creating one, archiving, and,
+ * with archived ones shown, restoring or purging them.
  */
 export function ProjectsPanel() {
   const navigate = useNavigate();
   const { projects, includeArchived, setIncludeArchived } = useAdminProjects();
   const [isCreating, setIsCreating] = useState(false);
+  const [query, setQuery] = useState('');
   const [pending, setPending] = useState<PendingAction | null>(null);
   const finishAction = () => {
     setPending(null);
@@ -58,31 +59,34 @@ export function ProjectsPanel() {
         />
         {text.projectIncludeArchived}
       </label>
+      <input
+        type="search"
+        className="admin-projects-search"
+        value={query}
+        aria-label={text.projectSwitcherFilter}
+        placeholder={text.projectSwitcherFilter}
+        onChange={(event) => setQuery(event.target.value)}
+      />
       <Resource query={projects}>
         {(items) => (
           <AdminProjectsTable
-            projects={items}
+            projects={filterProjects(items, query)}
             onAction={(project, action) => setPending({ project, action })}
           />
         )}
       </Resource>
       {isCreating && (
         <ProjectCreateDialog
+          existingNames={projects.value?.map((project) => project.name) ?? []}
           onClose={() => setIsCreating(false)}
           // The Project screens load the list again, so the new Project is there when it opens.
           onCreated={(project) => navigate(projectHomePath(project.id))}
         />
       )}
       {pending?.action === 'archive' && (
-        <ConfirmDialog
-          title={text.projectArchiveTitle}
-          message={textTemplates.projectArchiveConfirm(pending.project.name)}
-          confirmLabel={text.projectArchive}
-          destructive
-          onConfirm={() =>
-            explainProjectLifecycleConflict(administrationApi.archiveProject(pending.project.id))
-          }
-          onConfirmed={finishAction}
+        <ProjectArchiveDialog
+          project={pending.project}
+          onArchived={finishAction}
           onClose={() => setPending(null)}
         />
       )}

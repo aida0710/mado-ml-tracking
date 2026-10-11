@@ -30,6 +30,13 @@ export function settingsSectionPath(section: SettingsSection): string {
   return `${SETTINGS_PATH}/${section}`;
 }
 
+/** 全体設定 → コンピュータ with one computer's details open (ComputersSettingsPage reads `computer`). */
+export const COMPUTER_DETAILS_PARAM = 'computer';
+
+export function computerDetailsPath(targetId: string): string {
+  return `${settingsSectionPath('computers')}?${new URLSearchParams({ [COMPUTER_DETAILS_PARAM]: targetId })}`;
+}
+
 /** Local accounts change their password here; it belongs to the account section. */
 export const PASSWORD_CHANGE_PATH = `${settingsSectionPath('account')}/password`;
 

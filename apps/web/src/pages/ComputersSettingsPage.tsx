@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
 import type { ComputeTargetDetails } from '@mmt/contracts';
 import { useAuth } from '../hooks/useAuth';
@@ -9,6 +10,7 @@ import { ComputerDetails } from '../components/ComputerDetails';
 import { ErrorNotice, Resource } from '../components/Feedback';
 import { TargetDialog } from '../dialogs/TargetDialog';
 import { canAddTarget } from '../lib/permissions';
+import { COMPUTER_DETAILS_PARAM } from '../layout/settingsSections';
 import { text } from '../i18n/catalog';
 
 type TargetDialogState = { mode: 'create' } | { mode: 'edit'; target: ComputeTargetDetails };
@@ -22,7 +24,11 @@ export function ComputersSettingsPage() {
   const { user } = useAuth();
   const computers = useComputers();
   const [dialog, setDialog] = useState<TargetDialogState | null>(null);
-  const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
+  // The open computer is in the URL, so other screens link to its details (computerDetailsPath).
+  const [params, setParams] = useSearchParams();
+  const selectedTargetId = params.get(COMPUTER_DETAILS_PARAM);
+  const setSelectedTargetId = (targetId: string) =>
+    setParams({ [COMPUTER_DETAILS_PARAM]: targetId });
   const selectedTarget = computers.findDetails(selectedTargetId);
   const openEditor = (targetId: string) => {
     const target = computers.findDetails(targetId);

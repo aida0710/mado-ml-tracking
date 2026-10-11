@@ -22,7 +22,7 @@ Plugin UI components and arbitrary JavaScript are never run in the browser. The 
 | Register a plugin, change its URL or token variable name, enable or disable it | Global administrators |
 | Check the connection, search and import datasets, resend events, view capacity metrics | Project Admins |
 
-Plugins are registered per Project. Register the plugin in each Project that uses it.
+Plugins are registered per Project. Register the plugin in each Project that uses it. In a Project without plugins, **Plugins** tells a Project Admin that global administrators register them.
 
 ## Run the Mado plugin
 
@@ -98,7 +98,11 @@ Restart the API after the change.
 
 3. Click **接続を確認** (Check connection) and check that the plugin version and capabilities are shown.
 
-Changing the URL or the token variable name clears the checked information; click **接続を確認** again. If the API process has no such variable, the error is `plugin_token_unavailable`.
+Changing the URL or the token variable name clears the checked information; click **接続を確認** again.
+
+API serverの設定 (API server setting) in the plugin's details tells whether the API process has the token variable (never its value). Without it, the screen shows 未設定 (not set) with which variable to set where, and **接続を確認** and **イベントを再送** (Retry events) are disabled. Set it in the API server's `.env`, restart the API, and click **接続を確認**. Called through the API, the error is `plugin_token_unavailable` and names the variable.
+
+**データセットを検索** (Search datasets) works once **接続を確認** has succeeded.
 
 Requests to plugins use a Bearer token, accept responses up to 1 MiB, and time out after 5 seconds. Only global administrators can register service URLs.
 
@@ -107,7 +111,7 @@ Requests to plugins use a Bearer token, accept responses up to 1 MiB, and time o
 1. Type a search term in **データセットを検索** (Search datasets) under **Plugins**.
 2. Pick a version from the results and click **インポート** (Import).
 
-The imported version appears in **Datasets** as a DatasetVersion that keeps Mado's external ID. Importing the same version again returns the same DatasetVersion. When used as a Run input, the Run records which Mado version it used. See [Datasets](/en/data/datasets) for datasets.
+The imported version appears in **Datasets** (also reached from 取り込んだデータセットを見る (See imported datasets) in the plugin's details) as a DatasetVersion that keeps Mado's external ID. Importing the same version again returns the same DatasetVersion. When used as a Run input, the Run records which Mado version it used. See [Datasets](/en/data/datasets) for datasets.
 
 ## Lineage delivery and resending
 

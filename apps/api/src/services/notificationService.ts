@@ -16,10 +16,11 @@ import {
 import type { Principal } from '../auth/principal.js';
 import { first, rows, transaction, type Connection, type Database } from '../db/database.js';
 import { DomainError, notFound } from '../domain/errors.js';
-import type {
-  NotificationChannelCreateInput,
-  NotificationChannelPatchInput,
-  NotificationRuleCreateInput,
+import {
+  NOTIFICATION_ENVIRONMENT_NAME_PATTERN,
+  type NotificationChannelCreateInput,
+  type NotificationChannelPatchInput,
+  type NotificationRuleCreateInput,
 } from '../domain/notificationValidation.js';
 import type { RequestMetadata } from '../http/requestMetadata.js';
 import { writeAuditEvent } from '../repositories/auditRepository.js';
@@ -77,6 +78,18 @@ export class NotificationService {
       `SELECT ${CHANNEL_COLUMNS} FROM notification_channels ORDER BY project_id NULLS FIRST,name`,
     );
     return channels.map((channel) => this.present(channel));
+  }
+
+  /**
+   * Names of the API server's variables a channel may refer to (MMT_NOTIFICATION_*) that hold a
+   * value, so an administrator picks one instead of typing it. Values are never returned.
+   */
+  listEnvironmentNames(principal: Principal): string[] {
+    requireGlobalAdmin(principal);
+    return Object.entries(this.options.environment)
+      .filter(([name, value]) => NOTIFICATION_ENVIRONMENT_NAME_PATTERN.test(name) && value)
+      .map(([name]) => name)
+      .sort();
   }
 
   /** Channels a Project's rules may use: global ones and the Project's own. */

@@ -27,7 +27,7 @@ This is not a server with every MLflow feature. Check the [supported features](#
 python3 -m pip install 'mlflow>=3,<4'
 export MLFLOW_TRACKING_URI='https://tracking.example.internal/api/mlflow/projects/PROJECT_ID'
 export MLFLOW_REGISTRY_URI="$MLFLOW_TRACKING_URI"
-read -r -s -p 'API token: ' MLFLOW_TRACKING_TOKEN
+printf 'API token: '; read -r -s MLFLOW_TRACKING_TOKEN; echo
 export MLFLOW_TRACKING_TOKEN
 ```
 
@@ -56,7 +56,15 @@ with mlflow.start_run(run_name="hello"):
     mlflow.log_metric("loss", 0.5, step=1)
 ```
 
-A 401 means the token value or expiry is wrong; a 403 means a missing scope or Project role.
+When it fails, the error message says what to fix.
+
+| Error | What to fix |
+| --- | --- |
+| `ENDPOINT_NOT_FOUND: MLFLOW_TRACKING_URIにProjectのIDが入っていません` (no Project ID in the URI) | Do not stop `MLFLOW_TRACKING_URI` at the site or at `/api/mlflow`; include `/api/mlflow/projects/<Project ID>` |
+| `UNAUTHENTICATED: API tokenが送られていません` (no token sent) | Put the token in `MLFLOW_TRACKING_TOKEN` (`MLFLOW_TRACKING_PASSWORD` for Basic authentication) |
+| `UNAUTHENTICATED` (the token is invalid or revoked) | Check the token's value and expiry, and issue a new one if needed |
+| `PERMISSION_DENIED: API tokenのscopeが不足しています` (missing scope) | The message names the missing scope. Issue a token with the purpose "SDK・MLflow 3から記録する" (Record from the SDK and MLflow 3) |
+| `PERMISSION_DENIED: API tokenのprojectが一致しません` (another Project) | The message names the token's Project. Match the Project ID in the URI or the token you use |
 
 ## Connect with Basic authentication
 
@@ -65,7 +73,7 @@ Internal tools that only accept a user name and password can use Basic authentic
 ```bash
 export MLFLOW_TRACKING_URI='https://tracking.example.internal/api/mlflow/projects/PROJECT_ID'
 export MLFLOW_TRACKING_USERNAME=mado
-read -r -s -p 'API token: ' MLFLOW_TRACKING_PASSWORD
+printf 'API token: '; read -r -s MLFLOW_TRACKING_PASSWORD; echo
 export MLFLOW_TRACKING_PASSWORD
 ```
 

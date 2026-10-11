@@ -5,6 +5,23 @@
   width: min(1280px, calc(100vw - 32px));
 }
 
+/* The dialog itself takes the focus on a touch screen (useModalDialog); it is not a control, so it
+   shows no focus ring. Tab moves on to its controls, which do. */
+.dialog:focus {
+  outline: none;
+}
+
+/* A long form (Run, Sweep, Job, hook, Task) keeps 保存 and キャンセル in view while its fields
+   scroll, as the header keeps the title; on a phone and at 200% zoom they were a long scroll away.
+   The padding keeps the buttons off the dialog's bottom edge while the footer sticks. */
+.dialog footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  padding-bottom: 12px;
+  background: var(--background);
+}
+
 /* A radio list with one bordered line per choice (storage backend, Project visibility). */
 .choice-picker {
   border: 0;
@@ -163,10 +180,28 @@
   border-left: 3px solid var(--warning);
   color: var(--text);
 }
+/* A notice that what was entered or saved will not work yet (a variable the server lacks). */
+.notice.warning {
+  border-left-color: var(--warning);
+}
 @media (width < 900px) {
   .suggestion-list li {
     min-height: var(--tap-target);
     display: flex;
     align-items: center;
+  }
+}
+
+/* The filter box above a long checkbox list (CheckboxList). */
+.checkbox-list-filter {
+  display: block;
+  width: 100%;
+  margin: 4px 0;
+}
+
+@media (width < 640px) {
+  /* Like every other dialog, the code workspace fills a phone's screen. */
+  .dialog.workspace-dialog.fullscreen-on-narrow {
+    width: 100vw;
   }
 }

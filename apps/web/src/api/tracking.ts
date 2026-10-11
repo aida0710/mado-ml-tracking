@@ -5,11 +5,11 @@ import type {
   ArtifactTree,
   Experiment,
   LineageGraph,
-  LogEntry,
   MetricPoint,
   Run,
   RunComparison,
   RunComparisonRequest,
+  RunLogList,
   RunSearchPage,
   RunSearchRequest,
 } from '@mmt/contracts';
@@ -195,8 +195,22 @@ export const trackingApi = {
     request<Run>(runPath(projectId, runId), jsonRequest('PATCH', body)),
   metrics: (projectId: string, runId: string, signal?: AbortSignal) =>
     requestItems<MetricPoint>(`${runPath(projectId, runId)}/metrics`, signal),
-  logs: (projectId: string, runId: string, signal?: AbortSignal) =>
-    requestItems<LogEntry>(`${runPath(projectId, runId)}/logs`, signal),
+  /** The Run's lines, oldest first; with `tail` only that many of the latest (RunLogList). */
+  logs: async (
+    projectId: string,
+    runId: string,
+    query: { tail?: number; signal?: AbortSignal } = {},
+  ): Promise<RunLogList> => {
+    const search = query.tail ? `?${new URLSearchParams({ tail: String(query.tail) })}` : '';
+    const page = await request<RunLogList>(`${runPath(projectId, runId)}/logs${search}`, {
+      signal: query.signal,
+    });
+    if (!Array.isArray(page.items) || typeof page.totalCount !== 'number')
+      throw invalidResponseError();
+    return page;
+  },
+  /** A GET link the browser downloads with the session cookie: every line, as `<Run name>.log`. */
+  runLogFileUrl: (projectId: string, runId: string) => `/api${runPath(projectId, runId)}/logs/download`,
   /** Every latest Artifact of a Run, following all pages. Browsers page with runArtifactPage. */
   artifacts: async (projectId: string, runId: string, signal?: AbortSignal) => {
     const items: Artifact[] = [];

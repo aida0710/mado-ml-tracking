@@ -6,6 +6,7 @@ import type {
   MetricComparison,
   MetricValueSource,
   Model,
+  ModelAutomationRule,
   ModelVersion,
 } from '@mmt/contracts';
 import type { useEvaluationComparison } from '../hooks/useEvaluationComparison';
@@ -23,6 +24,9 @@ import { evaluationTextTemplates } from '../i18n/evaluation';
 import { ResponsiveTable } from './ResponsiveTable';
 import { Resource } from './Feedback';
 import { DetailsList } from './JsonDetails';
+import { RunNameLink } from './RunNameLink';
+import { CodeVersionNameLink } from './CodeVersionNameLink';
+import { DatasetVersionNameLinks } from './DatasetVersionNameLinks';
 
 const statusMessages: Record<Exclude<EvaluationComparisonStatus, 'ok'>, string> = {
   baseline_missing: text.comparisonBaselineMissing,
@@ -35,24 +39,22 @@ const sourceLabels: Record<MetricValueSource, string> = {
   run_latest: text.metricSourceRunLatest,
 };
 
-function RunLink({ projectId, runId }: { projectId: string; runId: string | null }) {
-  if (!runId) return <>—</>;
-  return (
-    <Link className="mono" to={`/projects/${projectId}/runs/${runId}`}>
-      {runId}
-    </Link>
-  );
+function OptionalRunLink({ projectId, runId }: { projectId: string; runId: string | null }) {
+  return runId ? <RunNameLink projectId={projectId} runId={runId} /> : <>—</>;
 }
 
 function ComparisonConditions({
   projectId,
   comparison,
   versionLabel,
+  rules,
 }: {
   projectId: string;
   comparison: EvaluationComparison;
   versionLabel: (versionId: string) => string;
+  rules: readonly ModelAutomationRule[];
 }) {
+  const rule = rules.find((item) => item.id === comparison.evaluationRuleId);
   return (
     <DetailsList
       entries={[
@@ -71,29 +73,32 @@ function ComparisonConditions({
         ],
         [
           text.referenceDatasets,
-          comparison.referenceDatasetVersionIds.length
-            ? comparison.referenceDatasetVersionIds.map((id) => (
-                <span className="mono version-link" key={id}>
-                  {id}
-                </span>
-              ))
-            : text.noReferenceDatasets,
+          comparison.referenceDatasetVersionIds.length ? (
+            <DatasetVersionNameLinks
+              projectId={projectId}
+              versionIds={comparison.referenceDatasetVersionIds}
+            />
+          ) : (
+            text.noReferenceDatasets
+          ),
         ],
         [
           text.evaluationCodeVersion,
-          <span className="mono">{comparison.codeVersionId ?? '—'}</span>,
+          comparison.codeVersionId ? (
+            <CodeVersionNameLink projectId={projectId} codeVersionId={comparison.codeVersionId} />
+          ) : (
+            '—'
+          ),
         ],
-        [
-          text.evaluationRule,
-          <span className="mono">{comparison.evaluationRuleId ?? text.none}</span>,
-        ],
+        // A rule removed since keeps its id: the name cannot be looked up any more.
+        [text.evaluationRule, rule?.name ?? comparison.evaluationRuleId ?? text.none],
         [
           text.candidateEvaluationRun,
-          <RunLink projectId={projectId} runId={comparison.candidateRunId} />,
+          <OptionalRunLink projectId={projectId} runId={comparison.candidateRunId} />,
         ],
         [
           text.baselineEvaluationRun,
-          <RunLink projectId={projectId} runId={comparison.baselineRunId} />,
+          <OptionalRunLink projectId={projectId} runId={comparison.baselineRunId} />,
         ],
       ]}
     />
@@ -118,7 +123,14 @@ function MetricComparisonTable({ metrics }: { metrics: MetricComparison[] }) {
       rowKey={(metric) => metric.key}
       empty={text.noComparedMetrics}
       columns={[
-        { key: 'name', priority: 'primary', header: text.metricName, render: (metric) => metric.key },
+        // Long metric names wrap, so a phone still shows the delta and the row's toggle.
+        {
+          key: 'name',
+          priority: 'primary',
+          header: text.metricName,
+          className: 'break-word',
+          render: (metric) => metric.key,
+        },
         {
           key: 'candidate',
           priority: 'primary',
@@ -168,6 +180,7 @@ export function EvaluationComparisonPanel({
   versionLabel,
   baseline,
   evaluationComparison,
+  rules,
 }: {
   projectId: string;
   model: Pick<Model, 'aliases'>;
@@ -177,6 +190,8 @@ export function EvaluationComparisonPanel({
   baseline: EvaluationBaseline;
   // From useEvaluationComparison on the page, so that the page's reload refreshes it.
   evaluationComparison: ReturnType<typeof useEvaluationComparison>;
+  /** Names the evaluation rule of the comparison. */
+  rules: readonly ModelAutomationRule[];
 }) {
   const { comparison } = evaluationComparison;
   const selectId = useId();
@@ -249,6 +264,7 @@ export function EvaluationComparisonPanel({
               projectId={projectId}
               comparison={value}
               versionLabel={versionLabel}
+              rules={rules}
             />
             <MetricComparisonTable
               metrics={value.metrics.filter((metric) => !isSystemMetricKey(metric.key))}

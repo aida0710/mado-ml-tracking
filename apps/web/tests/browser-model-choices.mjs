@@ -368,7 +368,8 @@ try {
     console.log('Models: the default code version shows by its name, also for a viewer');
     await page.getByRole('link', { name: 'v1', exact: true }).waitFor();
     await page.goto(`${base}/projects/${api.state.project.id}/models?id=${model.id}&version=${api.state.modelVersions[0].id}`);
-    await page.getByRole('link', { name: 'UI検証コード / v1', exact: true }).waitFor();
+    // The version's own default code, not the family's code versions listed under the Model.
+    await page.locator('.version-detail').getByRole('link', { name: 'UI検証コード / v1', exact: true }).waitFor();
     await screenshot('04-registry-default-code-by-name', { fullPage: true });
     await context.close();
   }
@@ -483,7 +484,8 @@ try {
     api.state.project.role = 'viewer';
     const { context, page } = await openPage({ choices });
     await page.goto(`${base}/projects/${api.state.project.id}/models?id=${model.id}`);
-    await page.getByRole('link', { name: 'UI検証コード / v1', exact: true }).waitFor();
+    // The version's own default code, not the family's code versions listed under the Model.
+    await page.locator('.version-detail').getByRole('link', { name: 'UI検証コード / v1', exact: true }).waitFor();
     assert.equal(await page.getByRole('button', { name: 'バージョンを作成', exact: true }).count(), 0);
     await context.close();
   }

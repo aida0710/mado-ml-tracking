@@ -37,11 +37,11 @@ export function TaskFields({ values, catalog, targets, onChange, isEditing = fal
     { name: 'codeVersionId', label: text.codeVersion, type: 'select', required: true,
       options: withEmptyOption(options.codes.filter((option) => compatibleCodes.some((item) => item.id === option.value))),
       visible: () => !launchOnly },
-    { name: 'inputDatasetVersionIds', label: text.inputDatasets, type: 'multiselect', options: options.datasets },
+    { name: 'inputDatasetVersionIds', label: text.inputDatasets, type: 'checkboxes', options: options.datasets },
     { name: 'targetId', label: text.target, type: 'select', required: launchOnly,
       options: withEmptyOption(targets.filter((item) => code && isTargetCompatible(item, code)).map((item) => ({ value: item.id, label: item.name }))) },
     // A target without GPUs gets a note in place of an empty list (rendered between the field groups).
-    { name: 'gpuIds', label: text.gpuIds, type: 'multiselect',
+    { name: 'gpuIds', label: text.gpuIds, type: 'checkboxes',
       options: target?.gpuIds.map((id) => ({ value: id, label: id })) ?? [], visible: () => hasGpus },
     { name: 'gpuCount', label: text.gpuCount, type: 'number', min: 0, max: MAX_JOB_GPU_COUNT,
       visible: () => isSite },
@@ -51,7 +51,7 @@ export function TaskFields({ values, catalog, targets, onChange, isEditing = fal
   ];
   // Said under the code version list when it offers nothing, so an empty list is not a dead end.
   const missingCode = !launchOnly && !compatibleCodes.length
-    ? explainMissingCodeCandidates({ codeVersions: catalog.codeVersions, taskType: kind || undefined, family: model?.family })
+    ? explainMissingCodeCandidates({ codeVersions: catalog.codeVersions, taskType: kind || undefined, families: model ? [model.family] : [] })
     : null;
   const codeIndex = fields.findIndex((field) => field.name === 'codeVersionId') + 1;
   const gpuIndex = fields.findIndex((field) => field.name === 'gpuIds');

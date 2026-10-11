@@ -30,7 +30,34 @@ export function planDirectorySuggestions(
   };
 }
 
+/**
+ * Top-level directories of the operating system (the Linux filesystem hierarchy). Artifacts must
+ * not go there, and listing them first buries the disks meant for data (/srv, /mnt, /home, ...).
+ * Typing one of these paths in full still works; it is only not offered.
+ */
+const SYSTEM_DIRECTORY_NAMES: ReadonlySet<string> = new Set([
+  'bin',
+  'boot',
+  'cdrom',
+  'dev',
+  'etc',
+  'lib',
+  'lib32',
+  'lib64',
+  'libx32',
+  'lost+found',
+  'proc',
+  'root',
+  'run',
+  'sbin',
+  'snap',
+  'sys',
+  'tmp',
+  'usr',
+]);
+
 export function isSuggestedName(name: string, plan: DirectorySuggestionPlan): boolean {
+  if (plan.listedDirectory === '/' && SYSTEM_DIRECTORY_NAMES.has(name)) return false;
   return name.startsWith(plan.namePrefix) && (plan.includesHidden || !name.startsWith('.'));
 }
 

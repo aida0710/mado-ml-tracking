@@ -26,13 +26,16 @@ import './styles/layout.css';
 import './styles/productLogo.css';
 import './styles/tables.css';
 import './styles/registry.css';
+import './styles/jobs.css';
 import './styles/artifacts.css';
 import './styles/artifactBrowser.css';
 import './styles/audio.css';
+import './styles/artifactPreviews.css';
 import './styles/forms.css';
 import './styles/workbench.css';
 import './styles/narrowModelScreens.css';
 import './styles/admin.css';
+import './styles/settingsGuidance.css';
 import './styles/projectAccess.css';
 import './styles/promotion.css';
 import './styles/uploads.css';
@@ -55,6 +58,7 @@ import './styles/responsiveManagement.css';
 import './styles/siteComputers.css';
 import './styles/computerSetup.css';
 import './styles/tabs.css';
+import './styles/tapTargets.css';
 
 // The login screen and everything else start in the stored theme, or the operating system's.
 document.documentElement.dataset.theme = initialTheme();

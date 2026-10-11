@@ -34,6 +34,8 @@ export interface FormField {
     | 'textarea'
     | 'select'
     | 'multiselect'
+    /** Several values as a list of checkboxes (no Ctrl-click); long lists get a filter box. */
+    | 'checkboxes'
     | 'datetime-local'
     | 'checkbox';
   required?: boolean;
@@ -53,4 +55,6 @@ export interface FormField {
   suggestionsRefreshKey?: string | number;
   /** A line under the field about what to enter, read with the field. */
   hint?: string;
+  /** Shown by a 'checkboxes' field that has no options, in place of the empty list. */
+  emptyText?: string;
 }

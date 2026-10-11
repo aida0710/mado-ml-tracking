@@ -1,4 +1,8 @@
-import type { Artifact } from '@mmt/contracts';
+import {
+  datasetFolderUploadPrefix,
+  type Artifact,
+  type DatasetFolderUploadDiscard,
+} from '@mmt/contracts';
 import type { Principal } from '../auth/principal.js';
 import { rows, transaction, type Connection, type Database } from '../db/database.js';
 import { DomainError, notFound } from '../domain/errors.js';
@@ -8,6 +12,8 @@ import {
   type ArtifactReferenceKind,
 } from '../repositories/artifactReferenceRepository.js';
 import { writeAuditEvent } from '../repositories/auditRepository.js';
+import { findRunlessArtifactIdsBelow } from '../repositories/datasetFolderUploadRepository.js';
+import { assertProjectReference } from '../repositories/registryRepository.js';
 import { requireProject } from './accessService.js';
 import { auditActor, NO_REQUEST_METADATA, recordDenial } from './auditService.js';
 
@@ -156,6 +162,64 @@ export class ArtifactDeletionService {
           },
         });
         return deleted!;
+      }),
+    );
+  }
+
+  /**
+   * Discards a folder upload that stopped before its version: every stored file below its prefix
+   * that nothing references. A file a version (or anything else) started to use is kept, so a
+   * person still uploading the same folder loses no file a version already lists.
+   */
+  async deleteDatasetFolderUpload(
+    principal: Principal,
+    location: { projectId: string; datasetId: string; folder: string },
+    request: RequestMetadata = NO_REQUEST_METADATA,
+  ): Promise<DatasetFolderUploadDiscard> {
+    const draft = {
+      ...auditActor(principal),
+      action: 'dataset.folder_upload.delete',
+      resourceType: 'dataset',
+      resourceId: location.datasetId,
+      projectId: location.projectId,
+      ...request,
+    };
+    return recordDenial(this.database, draft, () =>
+      transaction(this.database, async (connection) => {
+        await requireProject(connection, principal, {
+          projectId: location.projectId,
+          ...ARTIFACT_DELETE_PERMISSION,
+        });
+        const datasetId = await assertProjectReference(connection, {
+          table: 'datasets',
+          projectId: location.projectId,
+          id: location.datasetId,
+        });
+        const stored = await findRunlessArtifactIdsBelow(connection, {
+          projectId: location.projectId,
+          prefix: datasetFolderUploadPrefix({ datasetId, folder: location.folder }),
+        });
+        const locked = await lockLiveArtifacts(connection, {
+          projectId: location.projectId,
+          artifactIds: stored,
+        });
+        const references = await findArtifactReferences(connection, {
+          projectId: location.projectId,
+          artifactIds: locked.map((artifact) => artifact.id),
+        });
+        const deleted = await markArtifactsDeleted(connection, {
+          projectId: location.projectId,
+          artifactIds: locked.filter((artifact) => !references.has(artifact.id)).map(({ id }) => id),
+          deletedBy: principal.user.id,
+          origin: 'native',
+        });
+        const result = { deletedFileCount: deleted.length, keptFileCount: references.size };
+        await writeAuditEvent(connection, {
+          ...draft,
+          outcome: 'success',
+          details: { folder: location.folder, ...result },
+        });
+        return result;
       }),
     );
   }

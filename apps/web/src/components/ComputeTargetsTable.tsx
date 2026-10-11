@@ -1,22 +1,30 @@
-import type { ComputeTargetDetails, User } from '@mmt/contracts';
+import type { ComputeTargetDetails, User, WorkerPresence } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
+import { WorkerCoverageBadge } from './WorkerCoverage';
 import { ComputeTargetKind } from './ComputeTargetKind';
 import { ComputeTargetState } from './ComputeTargetState';
 import { VisibilityLabel } from './VisibilityLabel';
 import { formatTargetGpus, formatTargetLocation } from '../lib/computeTargetDisplay';
 import { targetOwnerLabel } from '../lib/siteComputerDisplay';
+import { jobWorkerCoverage } from '../lib/workerCoverage';
 import { text } from '../i18n/catalog';
 import { runtimeLabels } from '../i18n/runtime';
+import { workerCoverageText } from '../i18n/workerCoverage';
 
 /**
  * The computers one may run Jobs on, for the Project's Compute page: read only, since adding and
  * managing them is in 全体設定 → コンピュータ. Where one is reached shows only for its managers.
+ * Beside the state, whether a worker of the Project takes the computer's Jobs: an enabled computer
+ * without one takes Jobs that never start.
  */
 export function ComputeTargetsTable({
   targets,
+  workers,
   user,
 }: {
   targets: ComputeTargetDetails[];
+  /** The Project's workers; undefined while they load. */
+  workers: WorkerPresence[] | undefined;
   user: Pick<User, 'id'>;
 }) {
   return (
@@ -76,6 +84,13 @@ export function ComputeTargetsTable({
           priority: 'primary',
           header: text.computerState,
           render: (target) => <ComputeTargetState enabled={target.enabled} />,
+        },
+        {
+          key: 'workers',
+          priority: 'primary',
+          header: workerCoverageText.workerCoverageColumn,
+          render: (target) =>
+            workers ? <WorkerCoverageBadge coverage={jobWorkerCoverage(target, workers)} /> : '—',
         },
       ]}
     />

@@ -16,3 +16,14 @@ export function splitProjectList(projects: readonly Project[]): {
     ),
   };
 }
+
+/**
+ * The Project switcher's order: the user's own Projects first, then those reached only because
+ * they are public or the user is a global administrator, each group in the API's order.
+ */
+export function memberProjectsFirst(projects: readonly Project[]): Project[] {
+  return [
+    ...projects.filter((project) => project.isMember),
+    ...projects.filter((project) => !project.isMember),
+  ];
+}

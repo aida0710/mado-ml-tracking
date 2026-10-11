@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ArrowDown,
   ArrowLeft,
@@ -30,6 +30,7 @@ import {
 import { groupChartSeries, runChartSeries, seriesForMetricKeys } from '../../lib/metricSeries';
 import { chartValueUnit } from '../../lib/systemMetricKeys';
 import { text } from '../../i18n/catalog';
+import { detailsPopoverHandlers } from '../../lib/detailsPopover';
 
 /** Height of one grid row; a panel spans PANEL_HEIGHTS rows. */
 export const CHART_ROW_HEIGHT_PX = 150;
@@ -102,7 +103,13 @@ export function ChartPanel({
     live,
   });
   const query = ownFetch ? own : shared!;
-  const data = query.value?.[planId];
+  // While a zoomed range loads, the chart keeps drawing the lines it had: in place of a loading
+  // line it would be unmounted and forget its zoom, with no way to reset it.
+  const lastDrawn = useRef<{ planId: string; data: ChartPlanData } | null>(null);
+  const fetched = query.value?.[planId];
+  if (fetched) lastDrawn.current = { planId, data: fetched };
+  const data =
+    fetched ?? (query.loading && lastDrawn.current?.planId === planId ? lastDrawn.current.data : undefined);
   const title = config.title || config.metricKeys.join(', ');
   const chartHeight = config.layout.h * CHART_ROW_HEIGHT_PX - PANEL_CHROME_PX;
   const currentWidth = (Object.keys(PANEL_WIDTHS) as PanelWidth[]).find(
@@ -116,7 +123,7 @@ export function ChartPanel({
         <h3 title={title}>{title}</h3>
         <div className="chart-panel-actions">
           {placement && (
-            <details className="chart-panel-placement">
+            <details className="chart-panel-placement" {...detailsPopoverHandlers}>
               <summary className="icon-button" aria-label={text.chartLayoutActions} title={text.chartLayoutActions}>
                 <Move size={15} />
               </summary>
@@ -190,6 +197,7 @@ export function ChartPanel({
       ) : (
         <MetricsChart
           series={toChartSeries(data, config.metricKeys, runLabels, valueScale)}
+          styleIds={runIds}
           xAxis={config.xAxis}
           xScale={view.xScale}
           yScale={config.yScale}

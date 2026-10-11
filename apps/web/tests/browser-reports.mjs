@@ -186,7 +186,7 @@ try {
   await dialog.getByText('保存ビュー', { exact: true }).click();
   await dialog.getByRole('combobox', { name: '保存ビュー' }).selectOption(savedView.id);
   await dialog.getByRole('checkbox', { name: 'Metrics: loss' }).check();
-  await dialog.getByRole('checkbox', { name: 'Parameters: lr' }).check();
+  await dialog.getByRole('checkbox', { name: 'パラメータ: lr' }).check();
   await dialog.getByRole('button', { name: '反映' }).click();
   await dialog.waitFor({ state: 'detached' });
 

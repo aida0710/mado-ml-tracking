@@ -47,6 +47,7 @@ export function AliasProtectionSettings({ models }: { models: Model[] }) {
         )}
       </div>
       <p className="muted">{text.aliasProtectionsHint}</p>
+      {!canManage && <p className="muted">{text.aliasProtectionsAdminOnly}</p>}
       <Resource query={protections}>
         {(items) => (
           <ResponsiveTable
