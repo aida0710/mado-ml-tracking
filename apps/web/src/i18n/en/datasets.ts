@@ -1,3 +1,4 @@
+import { formatEnglishCount } from '../formatEnglishCount';
 export const datasetsText = {
   datasetVersionFromFolder: "Create from a folder",
   datasetVersionOptional: "Version (leave blank to auto-number)",
@@ -11,7 +12,7 @@ export const datasetsText = {
   datasetFolderCreateWithoutUnfinished: "Create version without remaining files",
   datasetContentKind: "Files",
   datasetContentReference: "Reference (URI)",
-  datasetFiles: "File",
+  datasetFiles: "Files",
   datasetFileCount: "File count",
   datasetTotalSize: "Total size",
   datasetFilesReferenceOnly: "This version is registered as a URI reference and has no file manifest.",
@@ -19,9 +20,15 @@ export const datasetsText = {
 };
 
 export const datasetsTextTemplates = {
-  datasetFolderSelected: (count: number, size: string) => `${count} files (${size})`,
-  datasetFolderUnfinished: (unfinished: number, stored: number) =>
-    `${unfinished} files have not been uploaded, so the version has not been created. Retry uploading them or create the version without them.` +
-    (stored > 0 ? `Closing leaves ${stored} uploaded files as artifacts without a version or run.` : ''),
-  datasetContentArtifacts: (count: number, size: string) => `${count} artifacts · ${size}`,
+  datasetFolderSelected: (count: number, size: string) => `${formatEnglishCount(count, 'file')} (${size})`,
+  datasetFolderUnfinished: (unfinished: number, stored: number) => {
+    const filePronoun = unfinished === 1 ? 'it' : 'them';
+    const unfinishedFileMessage =
+      `${formatEnglishCount(unfinished, 'file')} ${unfinished === 1 ? 'has' : 'have'} not been uploaded, so the version has not been created.` +
+      ` Retry uploading ${filePronoun} or create the version without ${filePronoun}.`;
+    if (stored <= 0) return unfinishedFileMessage;
+    const artifactNoun = stored === 1 ? 'an artifact' : 'artifacts';
+    return `${unfinishedFileMessage} Closing leaves ${formatEnglishCount(stored, 'uploaded file')} as ${artifactNoun} without a version or run.`;
+  },
+  datasetContentArtifacts: (count: number, size: string) => `${formatEnglishCount(count, 'artifact')} · ${size}`,
 };

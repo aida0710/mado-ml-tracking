@@ -1,3 +1,4 @@
+import { formatEnglishCount } from '../formatEnglishCount';
 import type { RunMediaKind } from '@mmt/contracts';
 import type { MediaTableCellFailure } from "../../lib/mediaTableCells";
 import { artifactReferenceErrorLabels, artifactsText } from './artifacts';
@@ -16,7 +17,7 @@ export const mediaText = {
   mediaStepHint: "Use arrow keys to move between recorded steps, and Home/End to jump to the first/last step.",
   mediaCaption: "Description",
   mediaTruncated: "Only the first 10,000 records are shown.",
-  mediaCompareKey: "Keys to compare",
+  mediaCompareKey: "Key to compare",
   mediaCompareSteps: "Steps to compare",
   mediaCompareStepsPlaceholder: "e.g. 0, 500, 1000 (blank uses each run's latest step)",
   mediaCompareLatest: "Latest step of each run",
@@ -58,17 +59,17 @@ export const mediaCellErrorLabels: Record<MediaTableCellFailure, string> = {
 
 // Text that embeds values; merged into catalog's textTemplates.
 export const mediaTextTemplates = {
-  mediaStepPosition: (step: number, index: number, count: number) => `step ${step}（${index} / ${count}）`,
-  mediaStepRangeValue: (minStep: number, maxStep: number) => (minStep === maxStep ? `${minStep}` : `${minStep}〜${maxStep}`),
-  mediaItemCount: (count: number) => `${count} items`,
+  mediaStepPosition: (step: number, index: number, count: number) => `step ${step} (${index} / ${count})`,
+  mediaStepRangeValue: (minStep: number, maxStep: number) => (minStep === maxStep ? `${minStep}` : `${minStep}–${maxStep}`),
+  mediaItemCount: (count: number) => formatEnglishCount(count, 'item'),
   mediaCompareRecordedSteps: (count: number, minStep: number, maxStep: number) =>
     `Recorded steps: ${count} (${minStep}–${maxStep})`,
-  mediaCompareEvenly: (count: number) => `${count} equal columns`,
+  mediaCompareEvenly: (count: number) => count === 1 ? '1 column' : formatEnglishCount(count, 'equal column'),
   mediaCompareTooManyRuns: (maximum: number) => `Media comparison shows only the first ${maximum} runs.`,
   mediaCompareTooManySteps: (maximum: number) => `At most ${maximum} steps can be compared.`,
   mediaCompareFirstOfMany: (count: number) => `This step has ${count} entries. Showing the first one.`,
-  mediaCompareCell: (runLabel: string, step: number, state: string) => `${runLabel}、step ${step}、${state}`,
-  mediaTableRowCount: (count: number) => `${count} rows`,
-  mediaTableErrorCells: (count: number) => `${count} cells could not be displayed`,
+  mediaCompareCell: (runLabel: string, step: number, state: string) => `${runLabel}, step ${step}, ${state}`,
+  mediaTableRowCount: (count: number) => formatEnglishCount(count, 'row'),
+  mediaTableErrorCells: (count: number) => `${formatEnglishCount(count, 'cell')} could not be displayed`,
   mediaTablePage: (page: number, pageCount: number) => `Page ${page} / ${pageCount}`,
 };

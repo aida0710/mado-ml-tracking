@@ -7,13 +7,16 @@ import {
   SWEEP_DISTRIBUTIONS,
   createSearchSpaceRow,
   type SearchSpaceRow,
+  type SweepConfigError,
   type SearchSpaceRowKind,
   type SweepDistribution,
 } from '../../lib/sweepConfig';
 import { searchSpaceRowKindLabels } from '../../i18n/sweeps';
+import { formatErrorMessage } from '../../lib/errorMessage';
 import { text, textTemplates } from '../../i18n/catalog';
 
 type EditorMode = 'rows' | 'json';
+type JsonError = { kind: 'syntax' } | { kind: 'conversion'; failure: SweepConfigError };
 const JSON_INDENT = 2;
 
 /**
@@ -38,12 +41,12 @@ export function SearchSpaceEditor({
   createRowId: () => string;
   onRowsChange: (rows: SearchSpaceRow[]) => void;
   currentWandbConfig: () => Record<string, unknown> | null;
-  onLoadWandbConfig: (config: unknown) => string | null;
+  onLoadWandbConfig: (config: unknown) => SweepConfigError | null;
 }) {
   useLocale();
   const [mode, setMode] = useState<EditorMode>('rows');
   const [json, setJson] = useState('');
-  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [jsonError, setJsonError] = useState<JsonError | null>(null);
   const changeRow = (id: string, change: Partial<SearchSpaceRow>) =>
     onRowsChange(rows.map((row) => (row.id === id ? { ...row, ...change } : row)));
 
@@ -58,12 +61,12 @@ export function SearchSpaceEditor({
     try {
       config = JSON.parse(json);
     } catch {
-      setJsonError(text.jsonError);
+      setJsonError({ kind: 'syntax' });
       return;
     }
-    const error = onLoadWandbConfig(config);
-    setJsonError(error);
-    if (!error) setMode('rows');
+    const failure = onLoadWandbConfig(config);
+    setJsonError(failure ? { kind: 'conversion', failure } : null);
+    if (!failure) setMode('rows');
   }
 
   return (
@@ -80,7 +83,7 @@ export function SearchSpaceEditor({
           <p className="muted">{text.sweepJsonHint}</p>
           <textarea aria-label={text.sweepEditorJson} className="mono" rows={14} value={json}
             onChange={(event) => setJson(event.target.value)} />
-          {jsonError && <p className="sweep-field-error" role="alert">{jsonError}</p>}
+          {jsonError && <p className="sweep-field-error" role="alert">{jsonError.kind === 'syntax' ? text.jsonError : formatErrorMessage(jsonError.failure)}</p>}
           <button type="button" className="button small" onClick={loadJson}>{text.sweepJsonLoad}</button>
         </div>
       ) : (

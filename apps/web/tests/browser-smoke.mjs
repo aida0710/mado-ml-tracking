@@ -358,7 +358,7 @@ try {
   await dialog.getByLabel('モデルバージョン', { exact: true }).selectOption(api.state.modelVersions[0].id);
   await dialog.getByLabel('コードバージョン').selectOption(api.state.codeVersions[0].id);
   await dialog.getByRole('button', { name: '次へ', exact: true }).click();
-  await dialog.getByLabel('Compute target').selectOption(api.state.targets[0].id);
+  await dialog.getByLabel('コンピュータ').selectOption(api.state.targets[0].id);
   await dialog.getByRole('button', { name: '次へ', exact: true }).click();
   api.state.failNextJob = true;
   await dialog.getByRole('button', { name: 'ジョブを起動', exact: true }).click();

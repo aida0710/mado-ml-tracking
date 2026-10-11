@@ -10,11 +10,15 @@
 
 文言や日付を描画するコンポーネントは`useLocale()`で変更を購読します。翻訳を含む`useMemo`は`useLocalizedMemo`にします。値だけの計算やAPI取得は言語に依存させません。日付・数値には`getIntlLocale()`を使い、利用者が入力した名前・説明・ログの内容は翻訳しません。
 
+通知は、件数・バージョン・結果などを保持して描画時に翻訳します。エラーは元の`RequestError`や`LocalizedError`を保持し、`formatErrorMessage`を描画時に呼びます。翻訳した文字列を状態に保存すると、後から言語を変えても元の表示が残ります。英語の件数には`formatEnglishCount`を使い、1件のときの名詞・動詞・代名詞も合わせます。
+
 `i18n/locale.ts`が`mmt.locale`に選択を保存します。辞書と初期言語は`i18n/*.test.ts`、切り替え中の入力保持・別タブ同期・モバイル表示は`tests/browser-i18n.mjs`で確認します。
 
 ## スタイルシート
 
 フォント、色・影・角丸・書体の変数、要素の既定、共通の部品（ボタン、入力欄、ダイアログ、タブ、表、状態バッジ、ページの見出し）、画面の枠（上部バー、サイドバー、ドロワー、ログイン画面）はMadoと共有するデザインシステム（`@mado/design-system`、[aida0710/mado-design-systems](https://github.com/aida0710/mado-design-systems)）にあり、`apps/web/src/main.tsx`が日本語のNoto Sans JPとあわせて最初に読み込みます。ファイルの分け方と決まり、バージョンの上げ方は[リポジトリのREADME](https://github.com/aida0710/mado-design-systems#readme)にあります。依存はGitHub Releaseのtarball（`apps/web/package.json`）で、バージョンを上げるときはそのURLを替えて`npm install`します。Madoも同じclass名を使うので、両方の見た目を変えるときはそのリポジトリを直してバージョンを上げ、このアプリだけの見た目は下の領域のファイルで上書きします。
+
+ログインヘッダーの変更は[共有デザインのPR #1](https://github.com/aida0710/mado-design-systems/pull/1)でレビュー中です。現在は0.5.2のコミット`4e7259949cb9f8d1baa63799f154d05b06a17449`のHTTPS tarballを両アプリで固定しています。Gitを含まないWebビルド用コンテナでもインストールできます。Release公開後は同じ版のRelease tarballへ変更します。`LoginHeader`はロゴと`LanguagePicker`を共有の`.login-header`で並べ、ログインと初回パスワード変更の両画面から使います。
 
 そのあと、`apps/web/src/styles/`に置いた領域別のファイルを次の順に読み込みます。
 
@@ -40,11 +44,14 @@
 ## エラー文言の層
 
 - `api/*.ts`（APIクライアント）は`i18n`を読み込みません。失敗は`RequestError`（status、code、サーバーのerror文字列`serverMessage`）で返します。`api/i18nIndependence.test.ts`がAPIクライアントのi18n importを検出します。
-- 画面に出す文言への変換は`lib/errorMessage.ts`の`formatErrorMessage`が行い、`useMutation`と`useQuery`がこれを使います。それ以外のcodeはサーバーの文字列をそのまま表示します。Webが文言を持つcodeは、APIの応答本文が無い次の場合だけです。
+- 画面に出す文言への変換は`lib/errorMessage.ts`の`formatErrorMessage`が行い、`useMutation`と`useQuery`が描画時にこれを使います。Webが文言を持つcodeを現在の言語で表示し、未知のcodeのサーバー文字列はそのまま表示します。
   - `network_error`: APIへ接続できなかった
   - `invalid_response`: 応答の形が契約と違う（`invalidResponseError()`で投げる）
   - `artifact_too_large`: uploadの413。前段proxyがHTMLで拒否した場合も同じ文言にする
   - `artifact_content_unavailable`: Artifactの中身を取得できなかった（raw bytesの取得でAPIのエラー本文が無い）
+  - `internal_error`・`database_unavailable`・`plugin_request_failed`・`plugin_disabled`: リクエスト、データベース、Pluginの共通の失敗
+  - `upload_not_open`・`upload_expired`・`artifact_save_failed`・`part_checksum_mismatch`・`run_deleted`・`body_too_large`: アップロード、Run、サイズ制限の失敗。`run_deleted`はArtifact登録以外にも使うため、特定の操作だけを指す文言にしません。
+  - `sweep_space_invalid`: `lib/sweepSpaceError.ts`がAPIの既知の全文だけを照合して翻訳します。parameter名・値は原文のまま埋め込み、未知の制約はサーバーの説明を保ちます。API側の探索空間エラーを変えるときは照合と日英辞書も確認します。
 
 ## 権限判定
 

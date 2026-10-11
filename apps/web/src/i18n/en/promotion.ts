@@ -12,7 +12,7 @@ import type { CriterionThresholdMeaning } from "../../lib/promotionPolicyInput";
 // Labels shared with the evaluation comparison (baselineAlias, evaluationRule, referenceDatasets,
 // evaluationCodeVersion, baselineVersion) come from i18n/evaluation.ts.
 export const promotionText = {
-  promotionPolicies: "Promotion policy",
+  promotionPolicies: "Promotion policies",
   newPromotionPolicy: "Create promotion policy",
   promotionPoliciesEmpty: "No promotion policies yet",
   promotionModel: "Target model",
@@ -24,7 +24,7 @@ export const promotionText = {
   promotionEvaluationConditions: "Evaluation settings (from the rule)",
   promotionCriteria: "Pass criteria",
   promotionCriteriaHint: "All criteria must pass.",
-  promotionCriterionMetric: "Metrics",
+  promotionCriterionMetric: "Metric",
   promotionCriterionDirection: "Better direction",
   promotionCriterionMode: "Value to compare",
   promotionCriterionThreshold: "Threshold",
@@ -63,7 +63,7 @@ export const promotionText = {
   promotionCriterionThresholdInvalid: "Thresholds must be finite numbers.",
   // Owner (run-as user) of a policy and its transfer to a Service Account.
   promotionPolicyOwner: "Execution user",
-  promotionPolicyOwnerCreator: "Created by",
+  promotionPolicyOwnerCreator: "Creator",
   promotionPolicyOwnerServiceAccount: "Service account",
   promotionTransferOwner: "Transfer ownership",
   promotionTransferOwnerTarget: "Destination service account",
@@ -73,7 +73,7 @@ export const promotionText = {
     "No service accounts are available for transfer. Create one with the admin role in project settings first.",
   promotionTransferOwnerRequired: "Select a destination service account.",
   // Promotion dialog (assigning an alias with its reason and evidence).
-  promote: "Promotion",
+  promote: "Promote",
   promotionDialogTitle: "Assign alias (promote)",
   promotionEvidence: "Supporting decision",
   promotionEvidenceNone: "Not specified",
@@ -167,7 +167,7 @@ export const promotionTextTemplates = {
     `This alias is protected (${aliasProtectionRoleLabels[role]}${requirePassedEvaluation ? "; passing decision required" : ''}).`,
   protectedAliasRoleMissing: (role: ModelAliasProtectionRole) =>
     `Changing this alias requires ${aliasProtectionRoleLabels[role]} permissions.`,
-  evidenceOption: (policyName: string, createdAt: string) => `${policyName}（${createdAt}）`,
+  evidenceOption: (policyName: string, createdAt: string) => `${policyName} (${createdAt})`,
   transferOwnerConfirm: (policyName: string) =>
     `Switch “${policyName}”'s decisions and automatic promotions to use the selected service account's permissions?`,
   removeAliasProtectionConfirm: (alias: string, scope: string) =>
@@ -175,7 +175,7 @@ export const promotionTextTemplates = {
   criteriaTooMany: (max: number) => `At most ${max} pass criteria are allowed.`,
   criterionSubject: (metric: string, mode: PromotionCriterionMode) =>
     mode === 'absolute' ? metric : `${promotionModeLabels[mode]} of ${metric}`,
-  ruleOption: (ruleName: string, codeVersion: string) => `${ruleName}（${codeVersion}）`,
+  ruleOption: (ruleName: string, codeVersion: string) => `${ruleName} (${codeVersion})`,
   reevaluationSequence: (sequence: number) => `Re-evaluation ${sequence - 1}`,
   baselineMovedDetail: (judgedAgainst: string | null, current: string | null) =>
     `Baseline at decision: ${judgedAgainst ?? "None"} / Current baseline: ${current ?? "None"}`,

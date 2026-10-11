@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { setLocale } from './locale';
 import { text, textTemplates } from './catalog';
+import { computeTextTemplates } from './compute';
+import { projectAccessTextTemplates } from './projectAccess';
 import { localizeMessage } from './messageTranslations';
 import { formatDate, formatCompactNumber } from '../lib/format';
 import { formatRelativeTime } from '../lib/relativeTime';
@@ -46,6 +48,19 @@ describe('English and Japanese catalogs', () => {
     setLocale('en');
     expect(localizeMessage(captured)).toBe(text.unexpectedError);
     expect(localizeMessage('custom service detail')).toBe('custom service detail');
+  });
+
+  it('uses singular nouns and matching verbs when one item remains', () => {
+    setLocale('en');
+    expect(textTemplates.uploadSelectedCount(1, '512 B')).toBe('1 file (512 B)');
+    expect(textTemplates.uploadSelectedCount(2, '1 KB')).toBe('2 files (1 KB)');
+    expect(textTemplates.chartLogExcluded(1)).toBe('1 non-positive point is omitted from the logarithmic axis.');
+    expect(textTemplates.datasetFolderUnfinished(1, 1)).toContain('1 file has not been uploaded');
+    expect(textTemplates.datasetFolderUnfinished(1, 1)).toContain('without it. Closing leaves 1 uploaded file as an artifact');
+    expect(textTemplates.datasetFolderUnfinished(2, 0)).toContain('Retry uploading them');
+    expect(textTemplates.analysisRunCount(1, 1)).toBe('Calculated from 1 run (excluding 1 run without objective values)');
+    expect(computeTextTemplates.queueTimeoutError(1, 30)).toBe('Specify a queue timeout between 1 minute and 30 days in HH:MM:SS format.');
+    expect(projectAccessTextTemplates.removeMemberConfirm('試験（A）、B〜C', true)).toContain('“試験（A）、B〜C”? Roles');
   });
 
   it('formats dates, large values and elapsed time in the selected language', () => {

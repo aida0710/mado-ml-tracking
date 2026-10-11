@@ -1,3 +1,4 @@
+import { formatEnglishCount } from '../formatEnglishCount';
 import { accessText } from './access';
 import { artifactsText } from './artifacts';
 import { artifactPreviewsText, artifactPreviewsTextTemplates } from './artifactPreviews';
@@ -78,7 +79,7 @@ export const textTemplates = {
   ...projectsTextTemplates,
   ...computersTextTemplates,
   ...computerSetupTextTemplates,
-  runCount: (count: number) => `${count} runs`,
+  runCount: (count: number) => formatEnglishCount(count, 'run'),
   revokeTokenConfirm: (tokenName: string) =>
     `Revoke “${tokenName}”? Clients using this API token will no longer be able to connect.`,
 };
@@ -245,8 +246,8 @@ export const text = {
   weightsUri: "Weights URI",
   artifactId: 'Artifact ID',
   defaultCode: "Default code version",
-  metadata: 'Metadata（JSON）',
-  schema: 'Schema（JSON）',
+  metadata: 'Metadata (JSON)',
+  schema: 'Schema (JSON)',
   namespace: 'Namespace',
   uri: "URI",
   source: 'Source',
@@ -307,7 +308,7 @@ export const text = {
   launchSetup: "Execution settings",
   launchResources: "Execution computer",
   launchReview: "Review",
-  target: 'Compute target',
+  target: "Computer",
   gpuIds: 'GPU ID',
   gpuIdsPerLine: "GPU IDs (one per line)",
   cpuOnly: "CPU only",
@@ -401,7 +402,7 @@ export const text = {
   running: "Running",
   finished: "Completed",
   failed: "Failed",
-  canceled: "Cancel",
+  canceled: "Canceled",
   logsLevel: "Level",
   tokenScopesError: "Select at least one scope",
   automationRules: "Automation rules",

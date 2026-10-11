@@ -6,7 +6,8 @@ import { RequestError } from '../api/http';
 import { trackingApi } from '../api/tracking';
 import { canDigest, sha256Hex } from '../lib/blobDigest';
 import type { UploadSource } from '../lib/droppedFiles';
-import { formatErrorMessage } from '../lib/errorMessage';
+import { LocalizedError } from '../lib/localizedError';
+import type { UploadFailure } from '../types/uploadFailure';
 import {
   canRetry,
   choosePartSize,
@@ -64,7 +65,7 @@ export interface UploadItem {
   resumedBytes: number;
   bytesPerSecond: number | null;
   remainingSeconds: number | null;
-  error: string | null;
+  error: UploadFailure | null;
   artifact: Artifact | null;
 }
 
@@ -89,7 +90,7 @@ interface UploadJob {
   samples: TransferSample[];
   /** Replaced on every start, so requests of a paused or canceled attempt change nothing. */
   controller: AbortController;
-  error: string | null;
+  error: UploadFailure | null;
   artifact: Artifact | null;
 }
 
@@ -137,7 +138,7 @@ export function useArtifactUploadQueue({
       }
       job.controller.abort();
       job.status = 'failed';
-      job.error = formatErrorMessage(failure);
+      job.error = { kind: 'request', cause: failure };
       job.pendingParts = [];
       job.inFlightParts.clear();
       render();
@@ -175,7 +176,10 @@ export function useArtifactUploadQueue({
           : null;
         removeResumeRecord(session.id);
         job.session = null;
-        if (!artifact) throw new Error(`${text.uploadVerificationFailed} (${current.error ?? current.status})`);
+        if (!artifact) {
+          const reason = current.error ?? current.status;
+          throw new LocalizedError(() => `${text.uploadVerificationFailed} (${reason})`);
+        }
         finishCompleted(job, artifact);
       } catch (failure) {
         if (!signal.aborted) failJob(job, failure);
@@ -400,7 +404,7 @@ export function useArtifactUploadQueue({
       } catch (failure) {
         // A session that already closed keeps nothing; anything else expires with the session.
         if (!(failure instanceof RequestError && failure.code === 'upload_not_open')) {
-          job.error = `${text.uploadCancelNotSent}: ${formatErrorMessage(failure)}`;
+          job.error = { kind: 'cancel', cause: failure };
           render();
         }
       }

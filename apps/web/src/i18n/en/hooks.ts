@@ -1,3 +1,4 @@
+import { formatEnglishCount } from '../formatEnglishCount';
 import {
   HOOK_WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS,
   MAX_JOB_CHAIN_DEPTH,
@@ -102,12 +103,12 @@ export const hookCheckpointModeLabels: Record<HookCheckpointMode, string> = {
 
 export const hookConcurrencyLabels: Record<HookConcurrency, string> = {
   queue: "Launch all",
-  skip_if_running: "Wait for the previous job to finish",
+  skip_if_running: "Skip events while a previous job is running",
 };
 
 export const hookWebhookSignatureLabels: Record<HookWebhookSignature, string> = {
-  github: 'GitHub（X-Hub-Signature-256）',
-  mmt: 'MMT（X-MMT-Signature）',
+  github: 'GitHub (X-Hub-Signature-256)',
+  mmt: 'MMT (X-MMT-Signature)',
 };
 
 // How the sender signs each delivery, shown next to the secret right after creation.
@@ -161,7 +162,7 @@ export const hooksTextTemplates = {
   hookMaxStartsError: (max: number) =>
     `Maximum launches per hour must be an integer from 1 to ${max}.`,
   hookPayloadTooLarge: (maxKiB: number) => `Payload must not exceed ${maxKiB}KiB.`,
-  hookCheckpointEveryK: (every: number) => `Every ${every} checkpoints`,
+  hookCheckpointEveryK: (every: number) => every === 1 ? 'Every checkpoint' : `Every ${formatEnglishCount(every, 'checkpoint')}`,
   hookStarted: (outcome: string) =>
     `Launch accepted (${outcome}). Check execution history for the outcome.`,
 };

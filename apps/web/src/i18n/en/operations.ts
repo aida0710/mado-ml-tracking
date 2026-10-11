@@ -1,3 +1,4 @@
+import { formatEnglishCount } from '../formatEnglishCount';
 import type { OperationsAlertKind } from '@mmt/contracts';
 
 // The operations alert badge in the header and the plugin delivery status.
@@ -24,5 +25,5 @@ export const operationsAlertKindLabels: Record<OperationsAlertKind, string> = {
 };
 
 export const operationsTextTemplates = {
-  operationsAlertCount: (count: number) => `${count} operations alerts`,
+  operationsAlertCount: (count: number) => formatEnglishCount(count, 'operations alert'),
 };

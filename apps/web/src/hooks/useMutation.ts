@@ -1,9 +1,11 @@
+import { useLocale } from '../i18n/useLocale';
 import { useEffect, useRef, useState } from 'react';
 import { formatErrorMessage } from '../lib/errorMessage';
 
 export function useMutation() {
+  useLocale();
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [failure, setFailure] = useState<{ cause: unknown } | null>(null);
   const isMounted = useRef(true);
   const isRunning = useRef(false);
   useEffect(() => {
@@ -16,16 +18,21 @@ export function useMutation() {
     if (isRunning.current) return undefined;
     isRunning.current = true;
     setPending(true);
-    setError(null);
+    setFailure(null);
     try {
       return await operation();
     } catch (failure) {
-      if (isMounted.current) setError(formatErrorMessage(failure));
+      if (isMounted.current) setFailure({ cause: failure });
       return undefined;
     } finally {
       isRunning.current = false;
       if (isMounted.current) setPending(false);
     }
   }
-  return { run, pending, error, clearError: () => setError(null) };
+  return {
+    run,
+    pending,
+    error: failure ? formatErrorMessage(failure.cause) : null,
+    clearError: () => setFailure(null),
+  };
 }

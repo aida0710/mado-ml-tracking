@@ -36,17 +36,13 @@ export function SiteJobShellPanel({
   );
   const [shownId, setShownId] = useState<string | null>(null);
   const [isEditing, setEditing] = useState(false);
-  const [savedNotice, setSavedNotice] = useState<string | null>(null);
+  const [savedNotice, setSavedNotice] = useState<{ isUnchanged: boolean; version: number } | null>(null);
   // The API lists versions newest first, and the newest one is what later submissions use.
   const current = versions.value?.[0];
   const finishEditing = (saved: SiteJobShell) => {
     setEditing(false);
     setShownId(null);
-    setSavedNotice(
-      saved.id === current?.id
-        ? text.jobShellUnchanged
-        : siteComputersTextTemplates.jobShellSaved(saved.version),
-    );
+    setSavedNotice({ isUnchanged: saved.id === current?.id, version: saved.version });
     versions.reload();
     onSaved();
   };
@@ -69,7 +65,9 @@ export function SiteJobShellPanel({
       </div>
       {savedNotice && (
         <p className="notice success" role="status">
-          {savedNotice}
+          {savedNotice.isUnchanged
+            ? text.jobShellUnchanged
+            : siteComputersTextTemplates.jobShellSaved(savedNotice.version)}
         </p>
       )}
       <Resource query={versions}>

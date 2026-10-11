@@ -42,7 +42,7 @@ export const workbenchText = {
   repositoryReloadRequired: "Git URL or commit changed. Load the new Git files.",
   pinnedCommitError: "Specify a complete 40- or 64-character Git commit hash.",
   gitUrlError: "Specify an HTTPS or SSH Git URL without embedded credentials.",
-  files: "File",
+  files: "Files",
   showFileList: "Open file list",
   hideFileList: "Close file list",
   newFile: "Add file",

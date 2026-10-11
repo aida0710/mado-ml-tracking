@@ -23,7 +23,7 @@ export const savedViewsText = {
   savedViewUnsupportedVersion:
     "This view uses a newer format and cannot be opened here. Showing the default view.",
   savedViewInvalid: "Could not read this view. Showing the default view.",
-  savedViewShared: "Share",
+  savedViewShared: "Shared",
   runDescriptionColumn: "Description",
   runColumnResize: "Resize column",
   runColumnMove: "Move column (Alt+←/→)",

@@ -40,7 +40,7 @@ export function useRunListSavedView({
   const [customColumns, setCustomColumns] = useState<SavedViewColumn[] | null>(null);
   const [activeView, setActiveView] = useState<SavedView | null>(null);
   const [viewChartPanels, setViewChartPanels] = useState<ChartPanelLayout | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [noticeReason, setNoticeReason] = useState<SavedViewUnavailableReason | null>(null);
   // The view a save just put into the URL. The router applies the URL after the state, so until
   // then the URL still names the previous view (or none) and must not be followed.
   const savedViewIdRef = useRef<string | null>(null);
@@ -80,10 +80,10 @@ export function useRunListSavedView({
       savedViewIdRef.current = null;
     }
     if (opened.status === 'ready' && activeView?.id !== opened.view.id) {
-      setNotice(null);
+      setNoticeReason(null);
       applyView(opened.view, opened.state);
     } else if (opened.status === 'unavailable') {
-      setNotice(unavailableViewNotice[opened.reason]);
+      setNoticeReason(opened.reason);
       leaveView();
       setParams(new URLSearchParams(), { replace: true });
     } else if (opened.status === 'none' && activeView) {
@@ -93,7 +93,7 @@ export function useRunListSavedView({
 
   /** Opens a view, or the default display for null. Opening the open view drops its changes. */
   function openView(id: string | null) {
-    setNotice(null);
+    setNoticeReason(null);
     if (id && id === activeView?.id) {
       applyView(activeView, activeView.state);
       return;
@@ -120,7 +120,7 @@ export function useRunListSavedView({
     views,
     openError: opened.status === 'error' ? opened.message : null,
     activeView,
-    notice,
+    notice: noticeReason ? unavailableViewNotice[noticeReason] : null,
     columns,
     setColumns: setCustomColumns,
     isChanged,

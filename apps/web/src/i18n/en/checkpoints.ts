@@ -1,3 +1,4 @@
+import { formatEnglishCount } from '../formatEnglishCount';
 import type { RunCheckpointSource } from '@mmt/contracts';
 
 // Run checkpoints and resuming training from one: the Run tab, the resume dialog and the Jobs page.
@@ -29,7 +30,7 @@ export const checkpointsTextTemplates = {
   checkpointResumedFromStep: (step: number) => `Resumed from checkpoint at step ${step}`,
   checkpointResumeMessage: (step: number) =>
     `Resume training as a new run from the checkpoint at step ${step}?`,
-  checkpointFileCount: (count: number) => `${count} files`,
+  checkpointFileCount: (count: number) => formatEnglishCount(count, 'file'),
 };
 
 export const checkpointSourceLabels: Record<RunCheckpointSource, string> = {

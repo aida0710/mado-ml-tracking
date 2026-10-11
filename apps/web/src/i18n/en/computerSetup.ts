@@ -1,3 +1,4 @@
+import { formatEnglishCount } from '../formatEnglishCount';
 import type { TargetDirectoryListingOutcome } from '@mmt/contracts';
 
 // Adding and editing an ssh or local computer in two steps: 1「接続」(how a worker reaches it)
@@ -56,15 +57,15 @@ export const computerSetupText = {
 
 export const computerSetupTextTemplates = {
   checkWorkerLabel: (workerId: string, hostname: string | null) =>
-    hostname ? `${workerId}（${hostname}）` : workerId,
+    hostname ? `${workerId} (${hostname})` : workerId,
   checkWorkerSource: (tokenName: string) => `token: ${tokenName}`,
   cpuArchDetected: (machine: string) => `Detected: ${machine}`,
   cpuArchUnknown: (machine: string) =>
     `The detected architecture is ${machine}. Select the matching architecture.`,
   hostFactsSummary: (facts: string[]) => facts.join(' · '),
-  cpuCount: (count: number) => `${count} cores`,
+  cpuCount: (count: number) => formatEnglishCount(count, 'core'),
   directoryFree: (free: string) => `${free} free`,
-  gpuOption: (index: string, name: string, memory: string) => `${index}: ${name}（${memory}）`,
+  gpuOption: (index: string, name: string, memory: string) => `${index}: ${name} (${memory})`,
 };
 
 export const directoryListingOutcomeNotes = {

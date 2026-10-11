@@ -4,6 +4,7 @@ import type {
   NotificationChannel,
   NotificationDelivery,
   NotificationRule,
+  NotificationTestResult,
   RunKind,
 } from '@mmt/contracts';
 import { NOTIFICATION_EVENT_TYPES } from '@mmt/contracts';
@@ -64,19 +65,13 @@ function ChannelSection({ settings, projectId }: { settings: Settings; projectId
   const canEditChannels = isGlobalAdmin(user);
   const [editing, setEditing] = useState<NotificationChannel | 'new' | null>(null);
   const test = useMutation();
-  const [testMessage, setTestMessage] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<NotificationTestResult | null>(null);
   const runTest = (channel: NotificationChannel) =>
     void test
       .run(() => settings.testChannel(channel.id))
       .then((result) => {
         if (!result) return;
-        setTestMessage(
-          result.delivered
-            ? text.notificationTestDelivered
-            : `${textTemplates.notificationTestError(
-                describeNotificationError(result.error ?? ''),
-              )} ${text.notificationTestNotInHistory}`,
-        );
+        setTestResult(result);
       });
   return (
     <>
@@ -93,9 +88,13 @@ function ChannelSection({ settings, projectId }: { settings: Settings; projectId
           {text.notificationChannelHint} {text.notificationEmailHint}
         </p>
       )}
-      {testMessage && (
+      {testResult && (
         <div className="notice" role="status">
-          {testMessage}
+          {testResult.delivered
+            ? text.notificationTestDelivered
+            : `${textTemplates.notificationTestError(
+                describeNotificationError(testResult.error ?? ''),
+              )} ${text.notificationTestNotInHistory}`}
         </div>
       )}
       <ErrorNotice message={test.error} />

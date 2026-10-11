@@ -38,7 +38,7 @@ export const storageText = {
   storageTest: "Connection test",
   storageTestResult: "Connection test results",
   storageTestOk: 'OK',
-  storageTestNg: 'NG',
+  storageTestNg: "Failed",
   storageTestPassed: "All stages succeeded",
   storageTestFailed: "Some stages failed",
   storageTestStepPut: "Write",

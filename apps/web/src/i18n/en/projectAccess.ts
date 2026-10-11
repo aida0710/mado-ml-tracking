@@ -36,9 +36,7 @@ export const projectAccessTextTemplates = {
   memberSourceGroup: (group: string) => `group ${group}`,
   removeMemberConfirm: (displayName: string, keepsGroupRole: boolean) =>
     `Remove direct permissions from “${displayName}”?` +
-    (keepsGroupRole
-      ? "Roles granted by groups are kept."
-      : "This user will lose access to this project."),
+    (keepsGroupRole ? ' Roles granted by groups are kept.' : ' This user will lose access to this project.'),
   groupBindingExists: (group: string, role: string) =>
     `Group “${group}” already has the ${role} role. Use “Change” in the list to update it.`,
   removeGroupBindingConfirm: (group: string) =>

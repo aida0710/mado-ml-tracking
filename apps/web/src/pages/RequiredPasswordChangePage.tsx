@@ -3,7 +3,7 @@ import { authApi } from '../api/auth';
 import { useMutation } from '../hooks/useMutation';
 import { PasswordChangeForm } from '../components/PasswordChangeForm';
 import { ErrorNotice } from '../components/Feedback';
-import { ProductLogo } from '../components/ProductLogo';
+import { LoginHeader } from '../components/LoginHeader';
 import { text } from '../i18n/catalog';
 
 /**
@@ -17,9 +17,7 @@ export function RequiredPasswordChangePage({ onChanged }: { onChanged: () => voi
   return (
     <div className="login-page">
       <main className="login-card">
-        <div className="login-mark">
-          <ProductLogo />
-        </div>
+        <LoginHeader />
         <h1>{text.changePasswordTitle}</h1>
         <PasswordChangeForm isRequired onChanged={onChanged} />
         <ErrorNotice message={logout.error} />

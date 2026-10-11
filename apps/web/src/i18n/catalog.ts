@@ -81,7 +81,7 @@ export const textTemplates = mergeTranslations([
   computersTextTemplates,
   computerSetupTextTemplates,
   localized({
-    runCount: (count: number) => `${count} runs`,
+    runCount: (count: number) => `${count.toLocaleString('ja-JP')}件のRun`,
     revokeTokenConfirm: (tokenName: string) =>
       `「${tokenName}」を失効させます。このAPI tokenを使うクライアントは、以後APIへ接続できなくなります。`
   } as const, english.textTemplates),
@@ -310,7 +310,7 @@ export const text = mergeTranslations([
     launchSetup: '実行内容',
     launchResources: '実行先',
     launchReview: '確認',
-    target: 'Compute target',
+    target: "コンピュータ",
     gpuIds: 'GPU ID',
     gpuIdsPerLine: 'GPU ID（1行に1件）',
     cpuOnly: 'CPUのみ',

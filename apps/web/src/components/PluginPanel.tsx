@@ -16,6 +16,11 @@ import { PluginOutboxStatus } from './PluginOutboxStatus';
 import { usePluginOutboxSummary } from '../hooks/usePluginOutboxSummary';
 import { text } from '../i18n/catalog';
 
+type PluginSuccess =
+  | { kind: 'checked' }
+  | { kind: 'queued'; count: number }
+  | { kind: 'imported'; name: string; version: string };
+
 export function PluginPanel({
   plugin,
   onChanged,
@@ -31,12 +36,12 @@ export function PluginPanel({
   const [datasets, setDatasets] = useState<PluginDataset[] | null>(null);
   const [manifest, setManifest] = useState<PluginManifest | null>(plugin.manifest);
   useEffect(() => setManifest(plugin.manifest), [plugin.manifest]);
-  const [success, setSuccess] = useState('');
+  const [success, setSuccess] = useState<PluginSuccess | null>(null);
   const mutation = useMutation();
   const canManage = isProjectAdmin || user.isAdmin;
   const outbox = usePluginOutboxSummary(project.id, canManage ? plugin.id : null);
   async function runPluginOperation(operation: () => Promise<void>) {
-    setSuccess('');
+    setSuccess(null);
     return mutation.run(operation);
   }
   return (
@@ -52,7 +57,7 @@ export function PluginPanel({
                 void runPluginOperation(async () => {
                   const checked = await administrationApi.checkPlugin(project.id, plugin.id);
                   setManifest(checked);
-                  setSuccess(text.checked);
+                  setSuccess({ kind: 'checked' });
                   onChanged();
                 })
               }
@@ -65,7 +70,7 @@ export function PluginPanel({
               onClick={() =>
                 void runPluginOperation(async () => {
                   const retried = await administrationApi.retryEvents(project.id, plugin.id);
-                  setSuccess(`${text.queuedEvents}: ${retried.queued}`);
+                  setSuccess({ kind: 'queued', count: retried.queued });
                   outbox.reload();
                 })
               }
@@ -97,7 +102,9 @@ export function PluginPanel({
       <ErrorNotice message={mutation.error} />
       {success && (
         <p className="notice success" role="status">
-          {success}
+          {success.kind === 'checked' ? text.checked
+            : success.kind === 'queued' ? `${text.queuedEvents}: ${success.count}`
+            : `${text.success}: ${success.name} / ${success.version}`}
         </p>
       )}
       {(isProjectAdmin || user.isAdmin) && plugin.enabled && manifest?.capabilities.includes('storage:metrics') && (
@@ -109,7 +116,7 @@ export function PluginPanel({
             className="plugin-search"
             onSubmit={(event) => {
               event.preventDefault();
-              setSuccess('');
+              setSuccess(null);
               setDatasets(null);
               void runPluginOperation(async () => {
                 const found = await administrationApi.searchDatasets(project.id, plugin.id, query);
@@ -177,7 +184,7 @@ export function PluginPanel({
                               plugin.id,
                               dataset,
                             );
-                            setSuccess(`${text.success}: ${imported.name} / ${imported.version}`);
+                            setSuccess({ kind: 'imported', name: imported.name, version: imported.version });
                             onChanged();
                           })
                         }
@@ -206,7 +213,7 @@ export function PluginPanel({
               setManifest(savedPlugin.manifest);
               setDatasets(null);
               setQuery('');
-              setSuccess('');
+              setSuccess(null);
               mutation.clearError();
             }
             setShowEdit(false);

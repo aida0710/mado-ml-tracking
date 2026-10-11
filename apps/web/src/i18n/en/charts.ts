@@ -1,3 +1,4 @@
+import { formatEnglishCount } from '../formatEnglishCount';
 export const chartsText = {
   chartNoData: "No values to display",
   chartSmoothing: "Smoothing",
@@ -27,7 +28,7 @@ export const chartsText = {
 // Text that embeds values; merged into catalog's textTemplates.
 export const chartsTextTemplates = {
   chartLogExcluded: (count: number) =>
-    `${count} non-positive points are omitted from the logarithmic axis.`,
+    `${formatEnglishCount(count, 'non-positive point')} ${count === 1 ? 'is' : 'are'} omitted from the logarithmic axis.`,
   chartTooltipMore: (count: number) => `${count} more`,
   chartAriaLabel: (seriesCount: number) => `Metric chart (${seriesCount} series)`,
   chartResumeMarkerOf: (runLabel: string) => `Resume ${runLabel}`,

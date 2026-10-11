@@ -5,7 +5,7 @@ export const shellText = {
   expandNavigation: "Expand sidebar",
   resizeNavigation: "Sidebar width",
   navigationGroupTracking: "Tracking",
-  navigationGroupModels: "Model",
+  navigationGroupModels: "Models",
   navigationGroupData: "Data",
   navigationGroupExecution: "Execution",
   navigationGroupProjectManagement: "Project management",

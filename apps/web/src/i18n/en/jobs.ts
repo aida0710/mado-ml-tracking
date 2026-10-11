@@ -23,7 +23,7 @@ export const jobsText = {
   runnerHost: "Runner host",
   jobSiteJobShell: "Job shell version",
   parentJob: "Parent job",
-  jobHook: "Hooks",
+  jobHook: "Hook",
   jobArray: 'array',
   jobChainDepth: "Chain depth",
   gpuCount: "GPU count",
