@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ComputeTarget, TargetCheckItem } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { targetCheckItemLabel } from '../lib/computeTargetDisplay';
@@ -20,6 +21,7 @@ export function TargetCheckItemsTable({
   items: TargetCheckItem[];
   executor: ComputeTarget['executor'];
 }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={items}

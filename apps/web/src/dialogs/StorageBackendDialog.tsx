@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { StorageBackend } from '@mmt/contracts';
 import type { FieldSuggestions, FormField, FormValues } from '../types/form';
@@ -33,6 +34,7 @@ export function StorageBackendDialog({
   onClose: () => void;
   onSaved: (backend: StorageBackend) => void;
 }) {
+  useLocale();
   const [values, setValues] = useState(() =>
     backend ? updateStorageBackendValues(backend) : createStorageBackendValues(),
   );

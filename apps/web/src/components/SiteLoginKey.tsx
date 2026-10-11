@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { KeyRound } from 'lucide-react';
 import type { SiteKey } from '@mmt/contracts';
@@ -31,6 +32,7 @@ export function SiteLoginKey({
   accountName: string;
   onRequested: () => void;
 }) {
+  useLocale();
   const [isConfirming, setConfirming] = useState(false);
   const mutation = useMutation();
   const rotate = () => siteComputersApi.rotateKey(targetId, { personal });

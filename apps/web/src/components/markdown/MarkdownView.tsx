@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { ReactNode } from 'react';
 import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -16,6 +17,7 @@ const REMARK_PLUGINS = [remarkGfm];
 const keepUrl = (url: string) => url;
 
 function MarkdownLink({ href, children }: { href: string; children: ReactNode }) {
+  useLocale();
   const safeHref = getSafeLinkHref(href);
   if (safeHref === null)
     return (
@@ -35,6 +37,7 @@ function MarkdownLink({ href, children }: { href: string; children: ReactNode })
 }
 
 function MarkdownImage({ src, alt }: { src: string; alt: string }) {
+  useLocale();
   const display = getMarkdownImageDisplay(src, window.location.origin);
   if (display.kind === 'image') return <img src={display.src} alt={alt} loading="lazy" />;
   const label = alt || src;
@@ -69,6 +72,7 @@ const MARKDOWN_COMPONENTS: Components = {
  * open only for safe schemes, and only Artifact images from this server are loaded.
  */
 export function MarkdownView({ source }: { source: string }) {
+  useLocale();
   return (
     <div className="markdown-view">
       <Markdown

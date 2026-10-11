@@ -1,4 +1,6 @@
-import { Fragment, useMemo, useState } from 'react';
+import { useLocalizedMemo } from '../../i18n/useLocalizedMemo';
+import { useLocale } from '../../i18n/useLocale';
+import { Fragment, useState } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { AudioLines } from 'lucide-react';
 import { trackingApi } from '../../api/tracking';
@@ -30,6 +32,7 @@ type RunArtifactIndex = Map<string, Map<string, Artifact> | 'unavailable'>;
 
 /** Artifacts of the Runs referenced on the current page, keyed by Run and then by path. */
 function useRunArtifactIndex(projectId: string, runIds: string[]) {
+  useLocale();
   const key = runIds.length ? `${projectId}:evaluation-audio:${runIds.join(',')}` : null;
   return useQuery(key, async (signal) => {
     const entries = await Promise.all(
@@ -49,6 +52,7 @@ function useRunArtifactIndex(projectId: string, runIds: string[]) {
 }
 
 function DiffText({ segments, hidden }: { segments: TextDiffSegment[]; hidden: 'insert' | 'delete' }) {
+  useLocale();
   return (
     <>
       {segments
@@ -90,9 +94,9 @@ function lookupSampleAudio(
 }
 
 const sampleAudioMessages = {
-  lookup_error: text.evaluationAudioLookupError,
-  run_unavailable: text.evaluationAudioRunUnavailable,
-  not_found: text.evaluationAudioNotFound,
+  get lookup_error() { return text.evaluationAudioLookupError },
+  get run_unavailable() { return text.evaluationAudioRunUnavailable },
+  get not_found() { return text.evaluationAudioNotFound },
 } as const;
 
 function AudioCell({
@@ -106,6 +110,7 @@ function AudioCell({
   expanded: boolean;
   onToggle: () => void;
 }) {
+  useLocale();
   if (audio.kind === 'none') return <span className="muted">—</span>;
   if (audio.kind === 'pending') return <span className="muted">{text.loading}</span>;
   if (audio.kind === 'reference_error')
@@ -138,11 +143,12 @@ function AudioCell({
 }
 
 export function EvaluationSamplesTable({ artifact, table }: { artifact: Artifact; table: EvaluationSampleTable }) {
+  useLocale();
   const [order, setOrder] = useState<EvaluationSampleOrder>('line');
   const [page, setPage] = useState(0);
   const [highlightDiff, setHighlightDiff] = useState(true);
   const [expandedLine, setExpandedLine] = useState<number | null>(null);
-  const sorted = useMemo(() => sortEvaluationSamples(table.samples, order), [table.samples, order]);
+  const sorted = useLocalizedMemo(() => sortEvaluationSamples(table.samples, order), [table.samples, order]);
   const current = paginate(sorted, page);
   const references = current.items.map((sample) =>
     sample.audio

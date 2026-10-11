@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { SweepMethod } from '@mmt/contracts';
@@ -39,6 +40,7 @@ export function SearchSpaceEditor({
   currentWandbConfig: () => Record<string, unknown> | null;
   onLoadWandbConfig: (config: unknown) => string | null;
 }) {
+  useLocale();
   const [mode, setMode] = useState<EditorMode>('rows');
   const [json, setJson] = useState('');
   const [jsonError, setJsonError] = useState<string | null>(null);
@@ -101,6 +103,7 @@ export function SearchSpaceEditor({
 }
 
 function GridCombinationCount({ count }: { count: number }) {
+  useLocale();
   return count > MAX_GRID_COMBINATIONS ? (
     <p className="sweep-field-error" role="alert" data-testid="sweep-grid-count">
       {textTemplates.sweepGridTooMany(count, MAX_GRID_COMBINATIONS)}
@@ -121,6 +124,7 @@ function SearchSpaceRowFields({
   onChange: (change: Partial<SearchSpaceRow>) => void;
   onRemove: () => void;
 }) {
+  useLocale();
   const label = row.name || text.sweepParameterName;
   return (
     <div className={`sweep-space-row${error ? ' invalid' : ''}`} data-testid="sweep-space-row">

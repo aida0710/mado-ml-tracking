@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -13,6 +14,7 @@ const AVATAR_INITIALS_LENGTH = 2;
  * 全体設定.
  */
 export function UserMenu() {
+  useLocale();
   const auth = useAuth();
   const menuId = useId();
   const { container, isOpen, toggle } = usePopover();

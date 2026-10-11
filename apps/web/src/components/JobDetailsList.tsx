@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { ComputeTarget, Hook, JobListItem } from '@mmt/contracts';
@@ -95,6 +96,7 @@ export function JobDetailsList({
   onSelectJob: (jobId: string) => void;
   onSelectArray: (arrayGroupId: string) => void;
 }) {
+  useLocale();
   return (
     <DetailsList
       entries={[

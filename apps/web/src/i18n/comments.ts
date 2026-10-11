@@ -1,5 +1,7 @@
+import * as english from './en/comments';
+import { localized } from './localized';
 // Run descriptions, Markdown editing and comment threads (Run, model version and report pages).
-export const commentsText = {
+export const commentsText = localized({
   markdownWrite: '編集',
   markdownPreview: 'プレビュー',
   markdownPreviewEmpty: 'プレビューする内容がありません',
@@ -25,11 +27,11 @@ export const commentsText = {
   commentEdited: '編集済み',
   commentBodyRequired: '本文を入力してください',
   commentActions: 'コメントの操作',
-} as const;
+} as const, english.commentsText);
 
 // Text that embeds values; merged into catalog's textTemplates.
-export const commentsTextTemplates = {
+export const commentsTextTemplates = localized({
   markdownRemaining: (remaining: number) =>
     remaining >= 0 ? `残り ${remaining} 文字` : `${-remaining} 文字超過しています`,
   commentEditedAt: (editedAt: string) => `編集済み（${editedAt}）`,
-};
+}, english.commentsTextTemplates);

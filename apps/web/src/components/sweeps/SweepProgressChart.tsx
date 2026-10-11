@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import {
   CartesianGrid,
   ComposedChart,
@@ -21,6 +22,7 @@ const CHART_HEIGHT = 280;
 
 /** Objective per trial as dots, with the best so far as a step line (x is the trial index). */
 export function SweepProgressChart({ trials, objective }: { trials: SweepTrial[]; objective: SweepObjective }) {
+  useLocale();
   const points = objectiveProgress(trials, objective.goal);
   if (!points.length) return <Empty>{text.sweepNoBestTrial}</Empty>;
   return (

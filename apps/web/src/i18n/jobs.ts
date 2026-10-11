@@ -1,3 +1,5 @@
+import * as english from './en/jobs';
+import { localized } from './localized';
 import {
   MAX_JOB_ARRAY_SIZE,
   MAX_JOB_GPU_COUNT,
@@ -7,7 +9,7 @@ import {
 } from '@mmt/contracts';
 
 // Jobs list and Run logs, with the site Job details (phase, scheduler, array, origin).
-export const jobsText = {
+export const jobsText = localized({
   jobColumn: 'Job',
   jobRunColumn: 'Run',
   jobActions: '操作',
@@ -50,24 +52,24 @@ export const jobsText = {
   gpuCountError: `GPU数は0〜${MAX_JOB_GPU_COUNT}の整数で指定してください。`,
   arraySizeError: `arrayの個数は1〜${MAX_JOB_ARRAY_SIZE}の整数で指定してください。`,
   siteGpuIdsError: 'siteではGPU IDではなくGPU数を指定してください。',
-} as const;
+} as const, english.jobsText);
 
-export const jobPhaseLabels: Record<JobPhase, string> = {
+export const jobPhaseLabels: Record<JobPhase, string> = localized({
   waiting_manual: '手動投入待ち',
   submitting: '投入中',
   submitted: '待ち行列',
   waiting_resources: '準備・GPU待ち',
   running: '実行中',
-};
+}, english.jobPhaseLabels);
 
-export const jobEndReasonLabels: Record<JobEndReason, string> = {
+export const jobEndReasonLabels: Record<JobEndReason, string> = localized({
   timed_out: '時間切れ',
   queue_timeout: '待ち行列の上限',
   submit_failed: '投入失敗',
-};
+}, english.jobEndReasonLabels);
 
 // Text that embeds values.
-export const jobsTextTemplates = {
+export const jobsTextTemplates = localized({
   gpuCount: (count: number) => `GPU ×${count}`,
   arrayMember: (index: number, size: number) => `${index} / ${size}`,
   arraySize: (size: number) => `array ×${size}`,
@@ -76,10 +78,10 @@ export const jobsTextTemplates = {
   jobArrayState: (stateLabel: string, count: number) => `${stateLabel} ${count}`,
   walltimeError: (maxDays: number) =>
     `制限時間は${maxDays}日以内を、HH:MM:SSの形で指定してください。`,
-};
+}, english.jobsTextTemplates);
 
-export const logLevelLabels: Record<LogEntry['level'], string> = {
+export const logLevelLabels: Record<LogEntry['level'], string> = localized({
   info: '情報',
   warning: '警告',
   error: 'エラー',
-};
+}, english.logLevelLabels);

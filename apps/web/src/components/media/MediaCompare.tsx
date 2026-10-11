@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState, type FormEvent } from 'react';
 import { MEDIA_COMPARE_MAX_RUNS, MEDIA_COMPARE_MAX_STEPS } from '@mmt/contracts';
 import { useMediaCompare } from '../../hooks/useMediaCompare';
@@ -18,6 +19,7 @@ const EVENLY_SPACED_COLUMNS = 8;
  * The key and steps stay in the URL so a link opens the same grid.
  */
 export function MediaCompare({ projectId, runIds }: MediaCompareProps) {
+  useLocale();
   const { chosenKey, steps, setKeyAndSteps, setSteps } = useMediaLocation();
   const [stepsInput, setStepsInput] = useState(() => steps.join(', '));
   const [stepsError, setStepsError] = useState<string | null>(null);

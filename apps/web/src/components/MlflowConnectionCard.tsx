@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { TokenScope } from '@mmt/contracts';
 import { CopyButton } from './CopyButton';
@@ -20,6 +21,7 @@ const MLFLOW_TOKEN_SCOPES: TokenScope[] = [
  * opened with, because the Web server forwards /api to the API.
  */
 export function MlflowConnectionCard({ onTokenCreated }: { onTokenCreated: () => void }) {
+  useLocale();
   const { project, canEdit } = useProject();
   const [showTokenDialog, setShowTokenDialog] = useState(false);
   const snippets = buildMlflowConnectionSnippets({
@@ -60,6 +62,7 @@ export function MlflowConnectionCard({ onTokenCreated }: { onTokenCreated: () =>
 }
 
 function ConnectionValue({ name, value }: { name: string; value: string }) {
+  useLocale();
   return (
     <div>
       <dt className="mono">{name}</dt>
@@ -72,6 +75,7 @@ function ConnectionValue({ name, value }: { name: string; value: string }) {
 }
 
 function CodeSnippet({ label, code }: { label: string; code: string }) {
+  useLocale();
   return (
     <div className="mlflow-connection-snippet">
       <div className="mlflow-connection-snippet-heading">

@@ -1,3 +1,5 @@
+import * as english from './en/hooks';
+import { localized } from './localized';
 import {
   HOOK_WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS,
   MAX_JOB_CHAIN_DEPTH,
@@ -13,7 +15,7 @@ import {
 const SECONDS_PER_MINUTE = 60;
 
 // The Hooks screen: the list, the create dialog, a hook's settings, manual starts and executions.
-export const hooksText = {
+export const hooksText = localized({
   hooks: 'Hooks',
   hookList: 'フック',
   hookExecutions: '実行履歴',
@@ -82,49 +84,49 @@ export const hooksText = {
   hookPartitionError:
     'arrayで分ける入力データセットバージョンは、arrayの個数を指定したうえで、ファイルを持つバージョンから選択してください。',
   hookSignatureError: '署名の形式を選択してください。',
-} as const;
+} as const, english.hooksText);
 
-export const hookTriggerLabels: Record<HookTrigger, string> = {
+export const hookTriggerLabels: Record<HookTrigger, string> = localized({
   manual: '手動・起動API',
   model_registered: 'モデルバージョンの登録',
   run_finished: 'Runの終了',
   array_finished: 'arrayの終了',
   checkpoint_saved: 'checkpointの保存',
   webhook: '外部webhook',
-};
+}, english.hookTriggerLabels);
 
-export const hookCheckpointModeLabels: Record<HookCheckpointMode, string> = {
+export const hookCheckpointModeLabels: Record<HookCheckpointMode, string> = localized({
   every: '毎回',
   every_k: 'k個ごと',
   latest: '最新だけ（評価中に増えた分は最新の1つにまとめる）',
   skip_if_running: '実行中なら飛ばす',
-};
+}, english.hookCheckpointModeLabels);
 
-export const hookConcurrencyLabels: Record<HookConcurrency, string> = {
+export const hookConcurrencyLabels: Record<HookConcurrency, string> = localized({
   queue: 'すべて起動する',
   skip_if_running: '前のJobが終わるまで起動しない',
-};
+}, english.hookConcurrencyLabels);
 
-export const hookWebhookSignatureLabels: Record<HookWebhookSignature, string> = {
+export const hookWebhookSignatureLabels: Record<HookWebhookSignature, string> = localized({
   github: 'GitHub（X-Hub-Signature-256）',
   mmt: 'MMT（X-MMT-Signature）',
-};
+}, english.hookWebhookSignatureLabels);
 
 // How the sender signs each delivery, shown next to the secret right after creation.
-export const hookWebhookSignatureHints: Record<HookWebhookSignature, string> = {
+export const hookWebhookSignatureHints: Record<HookWebhookSignature, string> = localized({
   github:
     'GitHubのWebhookでは、Content typeをapplication/jsonにし、この秘密鍵をSecretに設定します。X-GitHub-Deliveryが同じ再送は1回として扱います。',
   mmt: `送信元は、X-MMT-Signature: t=<unix秒>,v1=<HMAC-SHA256(秘密鍵, "<t>.<本文>")の16進>と、重複判定に使うX-MMT-Deliveryを付けて送ります。時刻のずれは${HOOK_WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS / SECONDS_PER_MINUTE}分まで受け付けます。`,
-};
+}, english.hookWebhookSignatureHints);
 
-export const hookExecutionStatusLabels: Record<HookExecutionStatus, string> = {
+export const hookExecutionStatusLabels: Record<HookExecutionStatus, string> = localized({
   pending: 'Runの終了待ち',
   queued: 'Jobを登録',
   skipped: '起動せず',
   failed: '起動に失敗',
-};
+}, english.hookExecutionStatusLabels);
 
-export const hookSkipReasonLabels: Record<HookSkipReason, string> = {
+export const hookSkipReasonLabels: Record<HookSkipReason, string> = localized({
   loop_detected: '同じ連鎖でこのフックが起動済み',
   chain_too_deep: `連鎖の深さが上限（${MAX_JOB_CHAIN_DEPTH}段）を超える`,
   rate_limited: '1時間あたりの起動回数の上限',
@@ -134,19 +136,19 @@ export const hookSkipReasonLabels: Record<HookSkipReason, string> = {
   source_run_unsuccessful: 'きっかけのRunが失敗・停止',
   source_run_timeout: 'Runの終了待ちの期限切れ',
   hook_disabled: 'フックが無効',
-};
+}, english.hookSkipReasonLabels);
 
-export const hookExecutionSubjectLabels: Record<HookExecutionSubject, string> = {
+export const hookExecutionSubjectLabels: Record<HookExecutionSubject, string> = localized({
   manual: '手動',
   model_version: 'モデルバージョン',
   run: 'Run',
   array_group: 'array',
   checkpoint: 'checkpoint',
   webhook: 'webhook',
-};
+}, english.hookExecutionSubjectLabels);
 
 // Text that embeds values.
-export const hooksTextTemplates = {
+export const hooksTextTemplates = localized({
   hookSkipped: (reason: string) => `起動せず（${reason}）`,
   hookTransferConfirm: (hookName: string, accountName: string) =>
     `「${hookName}」の所有者を ${accountName} に移します。以後のフックの起動はこのService Accountの権限で行います。`,
@@ -164,4 +166,4 @@ export const hooksTextTemplates = {
   hookCheckpointEveryK: (every: number) => `${every}個ごと`,
   hookStarted: (outcome: string) =>
     `起動を受け付けました（${outcome}）。その後の結果は実行履歴で確認できます。`,
-};
+}, english.hooksTextTemplates);

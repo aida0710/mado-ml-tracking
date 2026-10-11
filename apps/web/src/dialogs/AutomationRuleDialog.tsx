@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ModelAutomationRule } from '@mmt/contracts';
 import type { AutomationCatalog } from '../types/modelAutomation';
 import { useAutomationRuleForm } from '../hooks/useAutomationRuleForm';
@@ -18,6 +19,7 @@ export function AutomationRuleDialog({
   onClose: () => void;
   onSaved: (rule: ModelAutomationRule) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const form = useAutomationRuleForm({ projectId: project.id, catalog, initialFamilies });
   return (

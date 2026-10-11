@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { RefreshCw } from 'lucide-react';
 import { trackingApi } from '../api/tracking';
 import { useProject } from '../hooks/useProject';
@@ -8,6 +9,7 @@ import { LineageGraph } from '../components/LineageGraph';
 import { text } from '../i18n/catalog';
 
 export function LineagePage() {
+  useLocale();
   const { project } = useProject();
   const graph = useQuery(`${project.id}:lineage`, (signal) =>
     trackingApi.lineage(project.id, signal),

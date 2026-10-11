@@ -1,7 +1,9 @@
+import * as english from './en/uploads';
+import { localized } from './localized';
 // Artifact upload dialog and queue: progress, pause, cancel, resume. web-resumable-upload-manager owns the entries.
 import type { UploadItemStatus } from '../hooks/useArtifactUploadQueue';
 
-export const uploadsText = {
+export const uploadsText = localized({
   uploadChooseFiles: 'ファイルを選ぶ',
   uploadChooseFolder: 'フォルダを選ぶ',
   uploadDropHint: 'ここにファイルやフォルダをドロップできます',
@@ -22,9 +24,9 @@ export const uploadsText = {
   uploadDiscardSession: '破棄',
   uploadExpires: '期限',
   uploadInProgressNotice: 'アップロード中は閉じられません。一時停止か取消をしてから閉じてください。',
-} as const;
+} as const, english.uploadsText);
 
-export const uploadStatusLabels: Record<UploadItemStatus, string> = {
+export const uploadStatusLabels: Record<UploadItemStatus, string> = localized({
   queued: '待機中',
   preparing: '準備中',
   uploading: '送信中',
@@ -33,13 +35,13 @@ export const uploadStatusLabels: Record<UploadItemStatus, string> = {
   failed: '失敗',
   canceled: '取消済み',
   completed: '完了',
-};
+}, english.uploadStatusLabels);
 
 // Text that embeds values; merged into catalog's textTemplates.
-export const uploadsTextTemplates = {
+export const uploadsTextTemplates = localized({
   uploadSelectedCount: (count: number, totalSize: string) => `${count}件（${totalSize}）`,
   uploadTransferRate: (rate: string) => `${rate}/秒`,
   uploadRemainingTime: (duration: string) => `残り ${duration}`,
   uploadResumedBytes: (size: string) => `前回の続きから（${size} は送信済み）`,
   uploadProgressSummary: (done: number, total: number) => `${done} / ${total} 件完了`,
-};
+}, english.uploadsTextTemplates);

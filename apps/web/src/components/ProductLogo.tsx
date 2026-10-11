@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
@@ -5,6 +6,7 @@ import { text } from '../i18n/catalog';
  * 形はブラウザのタブのアイコン（public/favicon.svg）と同じ。色と大きさは styles/productLogo.css の .product-mark。
  */
 export function TrackingMark() {
+  useLocale();
   return (
     <svg className="product-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path className="product-mark-layer" d="M3 12.25L12 16.75L21 12.25" />
@@ -18,11 +20,12 @@ export function TrackingMark() {
  * 製品のロゴ。印と「mado ML Tracking」を並べる。mado の各製品と同じく、前の mado は通常の太さ、
  * 製品の部分は太字にする。上部バー・ドロワー・ログイン画面で同じ組み方にそろえる。
  */
-export function ProductLogo() {
+export function ProductLogo({ compact = false }: { compact?: boolean }) {
+  useLocale();
   return (
     <span className="product-logo">
       <TrackingMark />
-      <span>
+      <span className={compact ? 'sr-only' : undefined}>
         <span className="product-prefix">{text.appNamePrefix}</span>{' '}
         <strong>{text.appNameProduct}</strong>
       </span>

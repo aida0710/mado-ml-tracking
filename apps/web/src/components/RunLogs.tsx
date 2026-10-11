@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { LogEntry } from '@mmt/contracts';
 import { Empty } from './Feedback';
@@ -6,6 +7,7 @@ import { text } from '../i18n/catalog';
 import { logLevelLabels } from '../i18n/jobs';
 
 export function RunLogs({ entries }: { entries: LogEntry[] }) {
+  useLocale();
   const [level, setLevel] = useState('');
   return (
     <>

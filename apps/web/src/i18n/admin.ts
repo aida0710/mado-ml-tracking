@@ -1,6 +1,8 @@
+import * as english from './en/admin';
+import { localized } from './localized';
 // 全体設定 (/settings/<section>): its two sidebar groups, the 全体管理 sections, the user menu and
 // the account page.
-export const adminText = {
+export const adminText = localized({
   globalSettings: '全体設定',
   administration: '全体管理',
   settingsSectionComputers: 'コンピュータ',
@@ -61,9 +63,9 @@ export const adminText = {
   accountTokens: '自分のAPI token',
   accountTokenProject: 'プロジェクト',
   accountTokenAllProjects: 'すべて',
-} as const;
+} as const, english.adminText);
 
-export const adminTextTemplates = {
+export const adminTextTemplates = localized({
   userDisableConfirm: (name: string) =>
     `「${name}」を無効化します。ログイン中のsessionは直ちに終了し、API tokenも使えなくなります。`,
   userEnableConfirm: (name: string) =>
@@ -73,4 +75,4 @@ export const adminTextTemplates = {
   userResetPasswordConfirm: (name: string) =>
     `「${name}」のパスワードを一時パスワードに置き換え、ログイン中のsessionを終了します。`,
   groupsSyncedAt: (date: string) => `最終同期 ${date}`,
-};
+}, english.adminTextTemplates);

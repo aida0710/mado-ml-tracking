@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId, useRef, useState, type ReactNode } from 'react';
 import type { ComputeTarget, Experiment, ExperimentTask, Sweep, SweepMethod, SweepObjective } from '@mmt/contracts';
 import { sweepsApi } from '../../api/sweeps';
@@ -52,6 +53,7 @@ export function CreateSweepDialog({
   onClose: () => void;
   onCreated: (sweep: Sweep) => void;
 }) {
+  useLocale();
   const nextRowId = useRef(0);
   const createRowId = () => `row-${nextRowId.current++}`;
   const [form, setForm] = useState<SweepFormValues>(() => initialSweepForm(tasks[0]?.id ?? '', createRowId));
@@ -233,6 +235,7 @@ export function CreateSweepDialog({
 }
 
 function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
+  useLocale();
   return (
     <label className={`field${error ? ' invalid' : ''}`}>
       <span>{label}</span>
@@ -255,6 +258,7 @@ function IntegerField({
   errors: Partial<Record<SweepFormField, string>>;
   onChange: (values: Partial<SweepFormValues>) => void;
 }) {
+  useLocale();
   return (
     <Field label={label} error={errors[field]}>
       <input value={form[field]} className="mono" inputMode="numeric"

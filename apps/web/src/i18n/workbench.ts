@@ -1,4 +1,6 @@
-export const workbenchText = {
+import * as english from './en/workbench';
+import { localized } from './localized';
+export const workbenchText = localized({
   latestTaskRuns: '最新の実行',
   olderTaskRuns: '古い実行',
   tasks: 'Tasks',
@@ -101,10 +103,10 @@ export const workbenchText = {
   outputRegistrationSkipped: '学習コードが登録したバージョンを使用',
   outputRegistrationFailed: '出力モデルの登録に失敗しました',
   outputRegistrationLoadError: '出力モデルの登録結果を取得できませんでした',
-} as const;
+} as const, english.workbenchText);
 
 // Keys are the stable codes the API stores in RunOutputRegistration.error.
-export const outputRegistrationErrorLabels: Record<string, string> = {
+export const outputRegistrationErrorLabels: Record<string, string> = localized({
   model_not_found: '登録先のモデルが見つかりません',
   model_deleted: '登録先のモデルは削除されています',
   model_family_mismatch: '同じ名前のモデルが別の系列で既にあります',
@@ -113,10 +115,10 @@ export const outputRegistrationErrorLabels: Record<string, string> = {
   version_conflict: '同じバージョン名のバージョンが既にあります',
   creator_access_revoked: 'Runの作成者がこのプロジェクトの権限を失っています',
   registration_failed: '登録中にエラーが発生しました',
-};
+}, english.outputRegistrationErrorLabels);
 
 // Text that embeds values.
-export const workbenchTextTemplates = {
+export const workbenchTextTemplates = localized({
   taskLaunchRegistration: (modelLabel: string) =>
     `成功すると「${modelLabel}」にモデルバージョンを登録します。その系列を対象にした自動実行ルールがあれば、登録したバージョンで推論・評価が続けて自動で動きます。`,
-};
+}, english.workbenchTextTemplates);

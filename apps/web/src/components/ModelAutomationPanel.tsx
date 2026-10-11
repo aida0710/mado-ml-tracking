@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Plus, RefreshCw } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useProject } from '../hooks/useProject';
@@ -20,6 +21,7 @@ export function ModelAutomationPanel({
   view: 'rules' | 'history';
   initialFamily?: string;
 }) {
+  useLocale();
   const { project } = useProject();
   const { user } = useAuth();
   const canManage = canManageAutomationRules(project.role, user.isAdmin);

@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { Comment } from '@mmt/contracts';
 import { MarkdownView } from '../markdown/MarkdownView';
@@ -22,6 +23,7 @@ export function CommentItem({
   onEdit?: (body: string) => Promise<unknown>;
   onDelete?: () => Promise<unknown>;
 }) {
+  useLocale();
   const [isEditing, setIsEditing] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   return (

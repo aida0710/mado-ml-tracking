@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ComputeTargetDetails, User } from '@mmt/contracts';
 import { ManualSubmissionGuide } from './ManualSubmissionNotice';
 import { SiteJobShellPanel } from './SiteJobShellPanel';
@@ -23,6 +24,7 @@ export function SiteComputerDetails({
   user: Pick<User, 'id' | 'isAdmin'>;
   onTargetChanged: () => void;
 }) {
+  useLocale();
   const canManage = canManageTarget(user, target);
   const isAutomatic = target.submissionMode === 'automatic';
   return (

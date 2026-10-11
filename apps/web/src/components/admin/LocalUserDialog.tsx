@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { AdminUser } from '@mmt/contracts';
 import { adminUsersApi } from '../../api/adminUsers';
@@ -19,6 +20,7 @@ export function LocalUserDialog({
   onCreated: (user: AdminUser) => void;
   onClose: () => void;
 }) {
+  useLocale();
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { Artifact } from '@mmt/contracts';
@@ -29,6 +30,7 @@ export function RunArtifacts({
   /** Increment to reload after an upload. */
   revision: number;
 }) {
+  useLocale();
   const [params, setParams] = useSearchParams();
   const prefix = params.get(PREFIX_PARAMETER) ?? '';
   // Counts deletions made here, so the folder and the open file reload after each one.
@@ -93,6 +95,7 @@ export function RunArtifacts({
 
 /** Preview of the latest upload, with earlier uploads to the same path under the details. */
 function ArtifactDetails({ latest, onDeleted }: { latest: Artifact; onDeleted: () => void }) {
+  useLocale();
   const { isProjectAdmin } = useProject();
   const [shown, setShown] = useState(latest);
   const versions = useArtifactVersions(latest);

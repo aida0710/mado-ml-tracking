@@ -47,7 +47,7 @@ function apiClient(request) {
 
 // --- Sessions -----------------------------------------------------------------------------------
 async function signIn(email, displayName) {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1100 } });
   const page = await context.newPage();
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto(base);

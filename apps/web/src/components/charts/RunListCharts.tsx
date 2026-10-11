@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId, useMemo, useState } from 'react';
 import type { Run, RunGroupBy, RunSearchRequest } from '@mmt/contracts';
 import { ChartPanelGrid, type ChartLayoutChange } from './ChartPanelGrid';
@@ -31,6 +32,7 @@ export function RunListCharts({
   selectedIds: string[];
   pageRuns: readonly Run[];
 }) {
+  useLocale();
   const id = useId();
   const [target, setTarget] = useState<ChartTarget>('top');
   const conditionsKey = JSON.stringify(conditions);

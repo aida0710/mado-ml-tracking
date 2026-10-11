@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { PluginConnection, PluginDataset, PluginManifest } from '@mmt/contracts';
@@ -22,6 +23,7 @@ export function PluginPanel({
   plugin: PluginConnection;
   onChanged: () => void;
 }) {
+  useLocale();
   const { project, isProjectAdmin } = useProject();
   const { user } = useAuth();
   const [showEdit, setShowEdit] = useState(false);

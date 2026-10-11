@@ -1,8 +1,10 @@
+import * as english from './en/computers';
+import { localized } from './localized';
 import type { ComputeTargetVisibility } from '@mmt/contracts';
 
 // 全体設定 → コンピュータ (/settings/computers): every computer with its visibility and state, and
 // the read-only list of the computers one may use on the Project's Compute page.
-export const computersText = {
+export const computersText = localized({
   computersHint:
     'すべてのコンピュータが出ます。自分が使えないもの（他の人のPrivate）は、名前・種類・所有者・公開範囲・状態だけを出します。',
   noComputers: 'コンピュータはまだありません',
@@ -31,14 +33,14 @@ export const computersText = {
   projectComputersHint:
     'このプロジェクトで自分が使えるコンピュータです。追加・設定・job shell・鍵は、全体設定の「コンピュータ」で扱います。',
   openComputerSettings: '全体設定の「コンピュータ」を開く',
-} as const;
+} as const, english.computersText);
 
 // Text that embeds values.
-export const computersTextTemplates = {
+export const computersTextTemplates = localized({
   computerLauncherSeen: (name: string, lastSeen: string) => `${name}（最終応答 ${lastSeen}）`,
-};
+}, english.computersTextTemplates);
 
-export const computerVisibilityHints = {
-  public: computersText.computerVisibilityPublicHint,
-  private: computersText.computerVisibilityPrivateHint,
-} satisfies Record<ComputeTargetVisibility, string>;
+export const computerVisibilityHints = localized({
+  get public() { return computersText.computerVisibilityPublicHint; },
+  get private() { return computersText.computerVisibilityPrivateHint; },
+} satisfies Record<ComputeTargetVisibility, string>, english.computerVisibilityHints);

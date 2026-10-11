@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ComputeTargetDetails, User } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { ComputeTargetKind } from './ComputeTargetKind';
@@ -19,6 +20,7 @@ export function ComputeTargetsTable({
   targets: ComputeTargetDetails[];
   user: Pick<User, 'id'>;
 }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={targets}

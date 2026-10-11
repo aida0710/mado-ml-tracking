@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import type { ProjectGroupBinding, ProjectRole } from '@mmt/contracts';
 import { Dialog } from '../components/Dialog';
@@ -28,6 +29,7 @@ export function GroupBindingDialog({
   onSaved: () => void;
   onClose: () => void;
 }) {
+  useLocale();
   const groupInputId = useId();
   const candidatesId = useId();
   const [group, setGroup] = useState(binding?.group ?? '');

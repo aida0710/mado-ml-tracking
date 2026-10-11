@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { PluginConnection } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
 import { usePluginForm } from '../hooks/usePluginForm';
@@ -9,6 +10,7 @@ import { text } from '../i18n/catalog';
 export function PluginDialog({ plugin, onClose, onSaved }: {
   plugin?: PluginConnection; onClose: () => void; onSaved: (plugin: PluginConnection) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const form = usePluginForm({ projectId: project.id, plugin });
   return <Dialog title={plugin ? text.editPlugin : text.newPlugin} onClose={onClose} busy={form.pending}>

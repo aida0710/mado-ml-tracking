@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { PrometheusSample } from '../lib/prometheus';
 import { formatBytes, formatCompactNumber } from '../lib/format';
 import { text } from '../i18n/catalog';
@@ -9,6 +10,7 @@ export function StorageMetricValue({
   sample: PrometheusSample | undefined;
   unit?: 'bytes' | 'count' | 'seconds';
 }) {
+  useLocale();
   if (!sample) return <span title={text.notMeasured}>—</span>;
   if (!Number.isFinite(sample.value) || sample.value < 0)
     return <span title={sample.rawValue}>—</span>;

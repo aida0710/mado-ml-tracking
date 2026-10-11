@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { ChartPanelLayout, SavedView, SavedViewColumn, SavedViewState } from '@mmt/contracts';
@@ -12,9 +13,9 @@ import { RUN_LIST_PARAMS, runListParamsForView, type RunListConditions } from '.
 import { text } from '../i18n/catalog';
 
 const unavailableViewNotice: Record<SavedViewUnavailableReason, string> = {
-  not_found: text.savedViewNotFound,
-  unsupported_version: text.savedViewUnsupportedVersion,
-  invalid: text.savedViewInvalid,
+  get not_found() { return text.savedViewNotFound },
+  get unsupported_version() { return text.savedViewUnsupportedVersion },
+  get invalid() { return text.savedViewInvalid },
 };
 
 /**
@@ -32,6 +33,7 @@ export function useRunListSavedView({
   /** Shown while the user has not arranged the columns; follows the Runs on the page. */
   defaultColumns: SavedViewColumn[];
 }) {
+  useLocale();
   const [params, setParams] = useSearchParams();
   const viewId = params.get(RUN_LIST_PARAMS.view) ?? '';
   const { views, opened } = useSavedViews(projectId, 'runs', viewId);

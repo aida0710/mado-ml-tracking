@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { Artifact, Run } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
@@ -12,6 +13,7 @@ const SOURCE_SNAPSHOT_PATHS = ['.mmt/source.zip', '.mmt/source-manifest.json'];
 export function RunExecutionSnapshot({ run, artifacts, taskName }: {
   run: Run; artifacts?: Artifact[]; taskName?: string | null;
 }) {
+  useLocale();
   const base = `/projects/${run.projectId}`;
   const snapshot = run.executionSnapshot;
   const snapshotArtifacts = artifacts?.filter((artifact) => SOURCE_SNAPSHOT_PATHS.includes(artifact.path));

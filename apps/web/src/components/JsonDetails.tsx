@@ -1,10 +1,13 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { formatValue } from '../lib/format';
 
 export function JsonDetails({ value }: { value: unknown }) {
+  useLocale();
   return <pre className="json-view">{JSON.stringify(value, null, 2)}</pre>;
 }
 export function DetailsList({ entries }: { entries: Array<[string, ReactNode]> }) {
+  useLocale();
   return (
     <dl className="details-list">
       {entries.map(([label, value]) => (
@@ -17,6 +20,7 @@ export function DetailsList({ entries }: { entries: Array<[string, ReactNode]> }
   );
 }
 export function KeyValues({ values }: { values: Record<string, unknown> }) {
+  useLocale();
   return (
     <DetailsList
       entries={Object.entries(values).map(([label, value]) => [

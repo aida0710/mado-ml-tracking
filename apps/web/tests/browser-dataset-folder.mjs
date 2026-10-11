@@ -107,7 +107,7 @@ try {
   await writeFile(path.join(folder, 'train', 'tone-copy.wav'), sineWave());
   await writeFile(path.join(folder, 'manifest.jsonl'), '{"audio":"train/tone.wav","text":"テスト"}\n');
 
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1000 } });
   const page = await context.newPage();
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));

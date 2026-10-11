@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { MAX_JOB_GPU_COUNT, type Job, type Run, type RunKind } from '@mmt/contracts';
@@ -56,6 +57,7 @@ export function LaunchDialog({
   onClose: () => void;
   onSaved: (job: Job) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const catalog = useExecutionCatalog(project.id);
   const targets = useProjectTargets(project.id);

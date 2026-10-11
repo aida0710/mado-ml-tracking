@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { RUN_NOTE_TAG, type Run, type SavedViewColumn } from '@mmt/contracts';
@@ -96,6 +97,7 @@ function runColumn(key: string): RunColumn | null {
  * popover is fixed to the viewport because the table's scroll area would clip it.
  */
 function RunDescriptionCell({ description }: { description: string }) {
+  useLocale();
   const [popoverPosition, setPopoverPosition] = useState<CSSProperties | null>(null);
   if (!description.trim()) return null;
   const open = (cell: HTMLElement) => {
@@ -140,6 +142,7 @@ export function RunTable({
   selectedIds: string[];
   onSelectedIdsChange: (ids: string[]) => void;
 }) {
+  useLocale();
   const [draggedKey, setDraggedKey] = useState<string | null>(null);
   // While the pointer drags a border the width lives here, so the list commits one change.
   const [resizing, setResizing] = useState<{ key: string; startX: number; startWidth: number; width: number } | null>(null);

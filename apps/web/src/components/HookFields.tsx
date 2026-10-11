@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import {
   HOOK_CHECKPOINT_MODES,
   HOOK_CONCURRENCY_MODES,
@@ -52,6 +53,7 @@ export function HookFields({
   catalog: HookCatalog;
   onChange: (values: FormValues) => void;
 }) {
+  useLocale();
   const choices = catalog.registry;
   const options = buildCatalogOptions(choices);
   const trigger = getFieldValue(values, 'trigger') as HookTrigger;

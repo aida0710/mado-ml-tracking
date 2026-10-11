@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { AdminProject } from '@mmt/contracts';
 import { ResponsiveTable } from '../ResponsiveTable';
@@ -19,6 +20,7 @@ export function AdminProjectsTable({
   projects: AdminProject[];
   onAction: (project: AdminProject, action: AdminProjectAction) => void;
 }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={projects}

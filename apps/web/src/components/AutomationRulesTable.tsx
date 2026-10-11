@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { ModelAutomationRule } from '@mmt/contracts';
 import type { AutomationCatalog } from '../types/modelAutomation';
@@ -25,6 +26,7 @@ export function AutomationRulesTable({
   onSelect: (id: string) => void;
   onSetEnabled: (id: string, enabled: boolean) => void;
 }) {
+  useLocale();
   const codeOptions = catalog ? buildCatalogOptions(catalog.registry).codes : [];
   return (
     <ResponsiveTable

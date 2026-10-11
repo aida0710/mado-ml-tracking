@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { ModelRegistryState } from '../types/modelRegistry';
 import { ResponsiveTable } from './ResponsiveTable';
@@ -29,6 +30,7 @@ export function ModelRegistryPanel({
   onAssignAlias: () => void;
   onRemoveAlias: (assignment: { alias: string; version: string }) => void;
 }) {
+  useLocale();
   const base = `/projects/${projectId}`;
   const versionLabel = (versionId: string) =>
     registry.versions.value?.find((version) => version.id === versionId)?.version ?? versionId;

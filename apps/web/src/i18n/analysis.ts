@@ -1,8 +1,10 @@
+import * as english from './en/analysis';
+import { localized } from './localized';
 import type { ImportanceUnavailableReason, ParameterExclusionReason, ParameterImportanceResult } from '@mmt/contracts';
 
 // Exploring a set of Runs: parallel coordinates, parameter importance and the param scatter plot,
 // shared by the Run list, Compare and Sweep pages.
-export const analysisText = {
+export const analysisText = localized({
   analysisTitle: '探索結果の分析',
   analysisParallel: '平行座標',
   analysisImportance: 'パラメータ重要度',
@@ -42,33 +44,33 @@ export const analysisText = {
   analysisScatterNoPoints: '両方の軸に値のあるRunがありません',
   analysisScatterHint: '点をクリックするとRunの詳細を開きます。',
   analysisRunName: 'Run',
-} as const;
+} as const, english.analysisText);
 
 // Text that embeds values; merged into catalog's textTemplates.
-export const analysisTextTemplates = {
+export const analysisTextTemplates = localized({
   analysisSelectionCount: (selected: number, total: number) => `${total} 件中 ${selected} 件`,
   analysisRunCount: (runCount: number, skipped: number) =>
     skipped > 0 ? `${runCount} 件のRunで計算（目的の値が無い ${skipped} 件を除外）` : `${runCount} 件のRunで計算`,
   analysisOutOfBagR2: (r2: string) => `モデルの当てはまり（out-of-bag R²）: ${r2}`,
   analysisAxisCount: (shown: number, total: number) => `${shown} / ${total}`,
   analysisMoreSelectedRuns: (count: number) => `ほか ${count} 件`,
-};
+}, english.analysisTextTemplates);
 
-export const importanceUnavailableReasonLabels: Record<ImportanceUnavailableReason, string> = {
+export const importanceUnavailableReasonLabels: Record<ImportanceUnavailableReason, string> = localized({
   too_few_runs: '目的の値があるRunが5件未満のため、重要度は計算していません。相関だけを表示しています。',
-};
+}, english.importanceUnavailableReasonLabels);
 
-export const parameterExclusionReasonLabels: Record<ParameterExclusionReason, string> = {
+export const parameterExclusionReasonLabels: Record<ParameterExclusionReason, string> = localized({
   high_cardinality: '値の種類が多すぎる（50種類を超える）カテゴリ',
   no_values: '値のあるRunが無い',
-};
+}, english.parameterExclusionReasonLabels);
 
-export const importanceTargetSourceLabels: Record<ParameterImportanceResult['targetSource'], string> = {
+export const importanceTargetSourceLabels: Record<ParameterImportanceResult['targetSource'], string> = localized({
   latest_metric: 'metricの最新値',
   sweep_objective: 'Sweep試行の集約済みの目的値',
-};
+}, english.importanceTargetSourceLabels);
 
-export const analysisParamKindLabels = {
+export const analysisParamKindLabels = localized({
   numeric: '数値',
   categorical: 'カテゴリ',
-} as const;
+} as const, english.analysisParamKindLabels);

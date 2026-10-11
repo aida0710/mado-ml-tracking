@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Plus, RefreshCw } from 'lucide-react';
 import { registryApi } from '../api/registry';
@@ -20,6 +21,7 @@ import { text } from '../i18n/catalog';
 import { modelsTextTemplates } from '../i18n/models';
 
 export function ModelsPage() {
+  useLocale();
   const { project, canEdit } = useProject();
   const [dialog, setDialog] = useState<'model' | 'version' | 'alias' | null>(null);
   const [view, setView] = useState<

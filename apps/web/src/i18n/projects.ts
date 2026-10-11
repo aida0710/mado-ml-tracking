@@ -1,5 +1,7 @@
+import * as english from './en/projects';
+import { localized } from './localized';
 // Projects themselves: the switcher, creation, visibility, archiving and the admin Project list.
-export const projectsText = {
+export const projectsText = localized({
   projectSwitcherPlaceholder: 'プロジェクトを選択',
   projectSwitcherFilter: 'プロジェクトを絞り込み',
   projectDescriptionOptional: '説明（任意）',
@@ -36,10 +38,10 @@ export const projectsText = {
   projectPurge: '完全に削除',
   projectPurgeTitle: 'プロジェクトを完全に削除',
   projectPurgeNameLabel: '確認のため、プロジェクト名を入力してください',
-} as const;
+} as const, english.projectsText);
 
 // Text that embeds values.
-export const projectsTextTemplates = {
+export const projectsTextTemplates = localized({
   projectArchiveConfirm: (name: string) =>
     `「${name}」をアーカイブします。Run・モデル・Artifactのデータは残り、全体管理の「プロジェクト」から元に戻せます。`,
   projectRestoreConfirm: (name: string) =>
@@ -49,4 +51,4 @@ export const projectsTextTemplates = {
   projectMemberRole: (displayName: string) => `${displayName}のRole`,
   projectMemberRemove: (displayName: string) => `${displayName}を外す`,
   projectArchivedAt: (date: string) => `アーカイブ ${date}`,
-};
+}, english.projectsTextTemplates);

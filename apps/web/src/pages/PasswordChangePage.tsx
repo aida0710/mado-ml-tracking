@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { PasswordChangeForm } from '../components/PasswordChangeForm';
@@ -11,6 +12,7 @@ import { text } from '../i18n/catalog';
  * SSO users change theirs in the IdP, so they are sent to their account instead.
  */
 export function PasswordChangePage() {
+  useLocale();
   const auth = useAuth();
   if (!canChangeOwnPassword(auth.user))
     return <Navigate replace to={settingsSectionPath('account')} />;

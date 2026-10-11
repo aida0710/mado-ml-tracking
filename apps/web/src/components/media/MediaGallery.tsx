@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { ArtifactMediaInfo, RunMedia } from '@mmt/contracts';
 import { useExclusiveAudio } from '../../hooks/useExclusiveAudio';
 import { formatAudioTime } from '../../lib/audioTimeline';
@@ -9,6 +10,7 @@ import { MediaTableView } from './MediaTableView';
 import { text } from '../../i18n/catalog';
 
 function MediaInfoLine({ info }: { info: ArtifactMediaInfo }) {
+  useLocale();
   return (
     <p className="muted mono media-info">
       {[
@@ -22,6 +24,7 @@ function MediaInfoLine({ info }: { info: ArtifactMediaInfo }) {
 }
 
 function Caption({ media }: { media: RunMedia }) {
+  useLocale();
   if (!media.caption) return null;
   return (
     <p className="media-caption">
@@ -37,6 +40,7 @@ function Caption({ media }: { media: RunMedia }) {
  * unmounts, which is how moving the step slider stops the previous step's audio.
  */
 export function MediaGallery({ projectId, items }: { projectId: string; items: readonly RunMedia[] }) {
+  useLocale();
   const audio = useExclusiveAudio();
   const images = items.filter((item) => item.kind === 'image');
   const others = items.filter((item) => item.kind !== 'image');

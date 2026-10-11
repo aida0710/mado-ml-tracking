@@ -1,7 +1,9 @@
+import * as english from './en/models';
+import { localized } from './localized';
 import type { ModelAliasEventSource } from '@mmt/contracts';
 
 // Model registry labels: alias assignment, removal and alias history.
-export const modelsText = {
+export const modelsText = localized({
   aliasReason: '理由',
   aliasReasonPlaceholder: '例: 評価でWERが改善したため',
   removeAlias: 'Aliasを解除',
@@ -46,28 +48,28 @@ export const modelsText = {
   runDownstream: 'このRunから起動したRun',
   runDownstreamEmpty: 'このRunから起動したRunはありません',
   loadMore: 'さらに読み込む',
-} as const;
+} as const, english.modelsText);
 
 // The sign of candidate − baseline; better or worse depends on the metric and is not shown.
-export const deltaSignLabels = {
+export const deltaSignLabels = localized({
   positive: '＋（基準より大きい）',
   negative: '－（基準より小さい）',
   zero: '±0（同じ）',
-} as const;
+} as const, english.deltaSignLabels);
 
-export const modelAliasSourceLabels: Record<ModelAliasEventSource, string> = {
+export const modelAliasSourceLabels: Record<ModelAliasEventSource, string> = localized({
   web: 'Web',
   api: 'API',
   mlflow: 'MLflow',
   promotion_policy: '昇格policy',
   version_deleted: 'バージョンの削除',
   model_deleted: 'モデルの削除',
-};
+}, english.modelAliasSourceLabels);
 
 // Text that embeds values.
-export const modelsTextTemplates = {
+export const modelsTextTemplates = localized({
   baselineValue: (alias: string) => `基準バージョン（${alias}）`,
   automaticByRule: (ruleName: string) => `自動評価（${ruleName}）`,
   removeAliasConfirm: (alias: string, version: string) =>
     `Alias「${alias}」（バージョン ${version}）を解除します。解除したことは履歴に残ります。`,
-};
+}, english.modelsTextTemplates);

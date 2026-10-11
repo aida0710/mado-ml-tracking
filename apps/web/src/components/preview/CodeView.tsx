@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId, useMemo } from 'react';
 import { CODE_LANGUAGES, highlightCode, type CodeLanguage } from '@mado/design-system/code';
 import { useCodeLanguage, type CodeLanguageChoice } from '../../hooks/useCodeLanguage';
@@ -23,6 +24,7 @@ export function CodeView({
   fileName?: string | null;
   mimeType?: string | null;
 }) {
+  useLocale();
   const selectId = useId();
   const code = useCodeLanguage({ fileName, mimeType, text: content });
   const html = useMemo(() => highlightCode(content, code.language), [content, code.language]);

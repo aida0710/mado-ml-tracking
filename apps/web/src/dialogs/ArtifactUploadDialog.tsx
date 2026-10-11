@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState, type DragEvent } from 'react';
 import type { Artifact, ArtifactUpload } from '@mmt/contracts';
 import { FolderUp, Trash2, Upload } from 'lucide-react';
@@ -32,6 +33,7 @@ export function ArtifactUploadDialog({
   accept?: string;
   multiple?: boolean;
 }) {
+  useLocale();
   const [sources, setSources] = useState<UploadSource[]>([]);
   const [destination, setDestination] = useState('');
   const [singlePath, setSinglePath] = useState('');
@@ -167,6 +169,7 @@ function ResumableSessions({
   sessions: ArtifactUpload[];
   onDiscard: (uploadId: string) => Promise<void>;
 }) {
+  useLocale();
   const mutation = useMutation();
   if (sessions.length === 0) return null;
   return (

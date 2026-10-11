@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { useRunDownstream } from '../hooks/useRunDownstream';
 import { ResponsiveTable } from './ResponsiveTable';
@@ -9,6 +10,7 @@ import { automationText } from '../i18n/automation';
 
 /** The Runs a Run started, such as the inference and evaluation that followed a training Run. */
 export function RunDownstream({ projectId, runId }: { projectId: string; runId: string }) {
+  useLocale();
   const downstream = useRunDownstream(projectId, runId);
   const base = `/projects/${projectId}`;
   return (

@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId, useMemo, useRef, useState } from 'react';
 import { FileText, LayoutGrid } from 'lucide-react';
 import {
@@ -49,6 +50,7 @@ export function ReportEditor({
   /** Discards the edit and reads the current revision. */
   onReloadLatest: () => void;
 }) {
+  useLocale();
   const id = useId();
   const base = document.revision;
   const [title, setTitle] = useState(base.title);

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ComputeTargetOverview, User } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { ComputeTargetKind } from './ComputeTargetKind';
@@ -31,6 +32,7 @@ export function ComputerOverviewTable({
   onEdit: (target: ComputeTargetOverview) => void;
   onToggleEnabled: (target: ComputeTargetOverview) => void;
 }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={targets}

@@ -1,5 +1,7 @@
+import * as english from './en/shell';
+import { localized } from './localized';
 // The app frame shared by every screen: the navigation sidebar and drawer, and the responsive table.
-export const shellText = {
+export const shellText = localized({
   openNavigation: 'メニューを開く',
   closeNavigation: 'メニューを閉じる',
   collapseNavigation: 'サイドバーをアイコンだけにする',
@@ -12,4 +14,4 @@ export const shellText = {
   navigationGroupProjectManagement: 'プロジェクト管理',
   showRowDetails: '詳細を表示',
   hideRowDetails: '詳細を閉じる',
-} as const;
+} as const, english.shellText);

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import type {
@@ -25,17 +26,18 @@ import { Resource } from './Feedback';
 import { DetailsList } from './JsonDetails';
 
 const statusMessages: Record<Exclude<EvaluationComparisonStatus, 'ok'>, string> = {
-  baseline_missing: text.comparisonBaselineMissing,
-  baseline_not_evaluated: text.comparisonBaselineNotEvaluated,
-  candidate_not_evaluated: text.comparisonCandidateNotEvaluated,
+  get baseline_missing() { return text.comparisonBaselineMissing },
+  get baseline_not_evaluated() { return text.comparisonBaselineNotEvaluated },
+  get candidate_not_evaluated() { return text.comparisonCandidateNotEvaluated },
 };
 
 const sourceLabels: Record<MetricValueSource, string> = {
-  dataset_context: text.metricSourceDatasetContext,
-  run_latest: text.metricSourceRunLatest,
+  get dataset_context() { return text.metricSourceDatasetContext },
+  get run_latest() { return text.metricSourceRunLatest },
 };
 
 function RunLink({ projectId, runId }: { projectId: string; runId: string | null }) {
+  useLocale();
   if (!runId) return <>—</>;
   return (
     <Link className="mono" to={`/projects/${projectId}/runs/${runId}`}>
@@ -53,6 +55,7 @@ function ComparisonConditions({
   comparison: EvaluationComparison;
   versionLabel: (versionId: string) => string;
 }) {
+  useLocale();
   return (
     <DetailsList
       entries={[
@@ -100,7 +103,7 @@ function ComparisonConditions({
   );
 }
 
-const metricValueLabels = { notFinite: text.metricNotFinite };
+const metricValueLabels = { get notFinite() { return text.metricNotFinite } };
 
 function describeSources(source: MetricComparison['source']): string {
   const labels = [source.candidate, source.baseline].map((value) =>
@@ -112,6 +115,7 @@ function describeSources(source: MetricComparison['source']): string {
 // Differences are shown without good/bad colouring: whether higher is better is defined by
 // promotion policies, not by this panel.
 function MetricComparisonTable({ metrics }: { metrics: MetricComparison[] }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={metrics}
@@ -178,6 +182,7 @@ export function EvaluationComparisonPanel({
   // From useEvaluationComparison on the page, so that the page's reload refreshes it.
   evaluationComparison: ReturnType<typeof useEvaluationComparison>;
 }) {
+  useLocale();
   const { comparison } = evaluationComparison;
   const selectId = useId();
   const aliasNames = Object.keys(model.aliases).sort();

@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { PointerEvent } from 'react';
 import { text } from '../../i18n/catalog';
 import { artifactsTextTemplates } from '../../i18n/artifacts';
@@ -26,6 +27,7 @@ export function AudioPreviewOverview({
   currentTime: number;
   onSeek: (seconds: number) => void;
 }) {
+  useLocale();
   const range = { startSeconds: 0, endSeconds: waveform.durationSeconds };
   const seekToPointer = (event: PointerEvent<HTMLDivElement>) => {
     const box = event.currentTarget.getBoundingClientRect();

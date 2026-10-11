@@ -15,7 +15,7 @@ const browser = await chromium.launch({
   executablePath: process.env.MMT_CHROMIUM_PATH,
   args: ['--no-sandbox'],
 });
-const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
+const page = await browser.newPage({ locale: 'ja-JP', viewport: { width: 1440, height: 960 } });
 const errors = [];
 page.on('pageerror', (error) => errors.push(error.message));
 const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;

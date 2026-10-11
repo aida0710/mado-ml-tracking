@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId, useState } from 'react';
 import { REPORT_RUN_SET_MAX_RUN_IDS, type ReportRunSet, type RunMediaKind } from '@mmt/contracts';
 import { useRunCandidates, useRunSetSources, useRunsWithMediaKind } from '../../hooks/useReportBlockData';
@@ -8,10 +9,10 @@ import { text, textTemplates } from '../../i18n/catalog';
 type RunSetSource = 'runIds' | 'savedViewId' | 'search' | 'sweepId';
 
 const sourceLabels: Record<RunSetSource, string> = {
-  runIds: text.reportRunSetSelected,
-  savedViewId: text.reportRunSetSavedView,
-  search: text.reportRunSetSearch,
-  sweepId: text.reportRunSetSweep,
+  get runIds() { return text.reportRunSetSelected },
+  get savedViewId() { return text.reportRunSetSavedView },
+  get search() { return text.reportRunSetSearch },
+  get sweepId() { return text.reportRunSetSweep },
 };
 
 function sourceOf(runSet: ReportRunSet): RunSetSource {
@@ -44,6 +45,7 @@ export function RunSetPicker({
   runSet: ReportRunSet;
   onChange: (runSet: ReportRunSet) => void;
 }) {
+  useLocale();
   const id = useId();
   const source = sourceOf(runSet);
   const { savedViews, sweeps } = useRunSetSources(projectId);
@@ -141,6 +143,7 @@ export function RunChecklist({
   mediaKind?: RunMediaKind;
   onChange: (runIds: string[]) => void;
 }) {
+  useLocale();
   const [name, setName] = useState('');
   const candidates = useRunCandidates(projectId, name);
   const withMedia = useRunsWithMediaKind(projectId, candidates.value?.items.map((run) => run.id) ?? [], mediaKind);

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ProjectMember, ProjectRole, UserSearchResult } from '@mmt/contracts';
 import { Dialog } from '../components/Dialog';
@@ -22,6 +23,7 @@ export function MemberDialog({
   onSaved: () => void;
   onClose: () => void;
 }) {
+  useLocale();
   const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(
     member ? member.user : null,
   );

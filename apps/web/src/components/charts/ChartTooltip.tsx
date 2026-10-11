@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { formatNumber } from '../../lib/format';
 import type { ChartValueAtX } from '../../lib/metricSeries';
 import { textTemplates } from '../../i18n/catalog';
@@ -18,6 +19,7 @@ export function ChartTooltip({
   /** Pixels from the top-left of the chart; `alignRight` puts the box left of the pointer. */
   position: { left: number; top: number; alignRight: boolean };
 }) {
+  useLocale();
   return (
     <div
       className="chart-tooltip"

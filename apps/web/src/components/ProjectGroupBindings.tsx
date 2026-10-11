@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ProjectGroupBinding } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
@@ -12,6 +13,7 @@ import { projectAccessTextTemplates } from '../i18n/projectAccess';
 
 /** Roles granted to Authentik groups. `onChanged` lets the member list show the new roles. */
 export function ProjectGroupBindings({ onChanged }: { onChanged: () => void }) {
+  useLocale();
   const { project, isProjectAdmin, reloadProjects } = useProject();
   const { bindings, saveGroupBinding, removeGroupBinding } = useProjectGroupBindings(project.id);
   const [editing, setEditing] = useState<ProjectGroupBinding | 'new' | null>(null);
@@ -118,6 +120,7 @@ export function ProjectGroupBindings({ onChanged }: { onChanged: () => void }) {
 function GroupBindingEditor(
   props: Omit<Parameters<typeof GroupBindingDialog>[0], 'groupNameCandidates'>,
 ) {
+  useLocale();
   const groupNameCandidates = useGroupNameCandidates();
   return <GroupBindingDialog {...props} groupNameCandidates={groupNameCandidates} />;
 }

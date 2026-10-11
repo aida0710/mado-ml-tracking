@@ -13,7 +13,7 @@ const browser = await chromium.launch({
   ...(process.env.MMT_CHROMIUM_PATH ? { executablePath: process.env.MMT_CHROMIUM_PATH } : {}),
   args: ['--no-sandbox'],
 });
-const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
+const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 960 } });
 const api = createBrowserApi();
 await context.route((url) => url.pathname.startsWith('/api/'), api.route);
 const page = await context.newPage();
@@ -209,7 +209,7 @@ try {
   await storageMetrics.getByRole('heading', { name: 'UI検証ストレージ', exact: true }).waitFor();
   // formatBytes shows one decimal (lib/format.ts): 3221225472 bytes is '3.0 GiB'.
   await storageMetrics.getByText('3.0 GiB', { exact: true }).waitFor();
-  assert.equal(await storageMetrics.getByText('1.2M', { exact: true }).count(), 1);
+  assert.equal(await storageMetrics.getByText('120万', { exact: true }).count(), 1);
   assert.deepEqual(
     await storageMetrics
       .locator('tr')

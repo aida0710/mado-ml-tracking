@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { StorageBackend, StorageTestResult as StorageTestResultValue } from '@mmt/contracts';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -16,6 +17,7 @@ type BackendDialog = { mode: 'create' } | { mode: 'edit'; backend: StorageBacken
 
 /** The admin "storage" section: backends, their connection tests and the default for new Projects. */
 export function StorageBackendsPanel() {
+  useLocale();
   const storage = useStorageBackends();
   const [dialog, setDialog] = useState<BackendDialog | null>(null);
   const [defaultCandidate, setDefaultCandidate] = useState<StorageBackend | null>(null);

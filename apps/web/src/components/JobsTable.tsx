@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { ComputeTarget, Hook, JobListItem } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
@@ -11,6 +12,7 @@ export type JobAction = 'cancel' | 'retry' | 'resumeLatest';
 
 /** Where a site Job runs: the runner's host and the scheduler's job ID, once reported. */
 function JobLocation({ job }: { job: Pick<JobListItem, 'runnerHost' | 'schedulerJobId'> }) {
+  useLocale();
   if (!job.runnerHost && !job.schedulerJobId) return <>—</>;
   return (
     <span className="job-cell-lines">
@@ -39,6 +41,7 @@ function JobOrigin({
   onSelectJob: (jobId: string) => void;
   onSelectArray: (arrayGroupId: string) => void;
 }) {
+  useLocale();
   const arrayMember = jobArrayMemberLabel(job);
   const { hookId, parentJobId, arrayGroupId } = job;
   if (!hookId && !parentJobId && !(arrayGroupId && arrayMember)) return <>—</>;
@@ -90,6 +93,7 @@ export function JobsTable({
   onSelectArray: (arrayGroupId: string) => void;
   onAction: (jobId: string, action: JobAction) => void;
 }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={jobs}

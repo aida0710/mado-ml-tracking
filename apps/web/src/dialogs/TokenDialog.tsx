@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ProjectRole, ServiceAccount, TokenScope, TokenSummary } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
@@ -43,6 +44,7 @@ export function TokenDialog({
   onClose: () => void;
   onCreated: () => void;
 }) {
+  useLocale();
   const serviceAccount = owner?.serviceAccount;
   const { project } = useProject();
   const [token, setToken] = useState<string | null>(null);

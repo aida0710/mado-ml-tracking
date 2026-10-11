@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState, type ReactNode } from 'react';
 import { Dialog } from './Dialog';
 import { FormFields } from './FormFields';
@@ -26,6 +27,7 @@ export function FormDialog<T>({
   /** A note under the fields that depends on what is entered (for example the chosen kind). */
   notice?: (values: FormValues) => ReactNode;
 }) {
+  useLocale();
   const [values, setValues] = useState(() => createInitialValues(fields));
   const mutation = useMutation();
   return (

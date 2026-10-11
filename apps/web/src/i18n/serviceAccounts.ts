@@ -1,7 +1,9 @@
+import * as english from './en/serviceAccounts';
+import { localized } from './localized';
 import type { TokenScope } from '@mmt/contracts';
 
 // Service Accounts, the Project token list and the token dialog on the settings page.
-export const serviceAccountsText = {
+export const serviceAccountsText = localized({
   serviceAccounts: 'Service Accounts',
   serviceAccountsDescription:
     '人に紐付かないアカウントです。workerや自動実行のtokenをここで発行すると、発行した人がProjectを離れても動き続けます。',
@@ -34,10 +36,10 @@ export const serviceAccountsText = {
   tokenAuthentication: '認証方式',
   tokenAuthenticationBearer: 'Bearer（MLflow・Mado SDKの既定）',
   tokenAuthenticationBasic: 'Basic（ユーザー名とパスワードを使うツール。passwordにtoken）',
-} as const;
+} as const, english.serviceAccountsText);
 
 // One line per scope, shown next to the scope in the token dialog.
-export const tokenScopeLabels: Record<TokenScope, string> = {
+export const tokenScopeLabels: Record<TokenScope, string> = localized({
   read: 'read — 読み取り',
   'runs:write': 'runs:write — Runの作成と記録',
   'registry:write': 'registry:write — モデル・データセットの登録',
@@ -45,12 +47,12 @@ export const tokenScopeLabels: Record<TokenScope, string> = {
   'jobs:write': 'jobs:write — Jobの起動と取り消し',
   'worker:execute': 'worker:execute — workerとしてJobを実行',
   admin: 'admin — Projectの管理',
-};
+}, english.tokenScopeLabels);
 
 // Text that embeds values.
-export const serviceAccountsTextTemplates = {
+export const serviceAccountsTextTemplates = localized({
   tokenExpiryDays: (days: number) => `${days}日`,
   serviceAccountTokenTitle: (name: string) => `${name} のtokenを発行`,
   disableServiceAccountConfirm: (name: string) =>
     `「${name}」を無効化します。このService Accountのtokenはすべて、次の要求から使えなくなります。`,
-};
+}, english.serviceAccountsTextTemplates);

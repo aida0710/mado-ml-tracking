@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Pause, Play, Square } from 'lucide-react';
@@ -28,6 +29,7 @@ const STATUS_BADGE_CLASSES: Record<SweepStatus, string> = {
 };
 
 export function SweepStatusBadge({ status }: { status: SweepStatus }) {
+  useLocale();
   return (
     <span className={`status-badge ${STATUS_BADGE_CLASSES[status]}`}>
       <span aria-hidden="true">●</span>
@@ -53,6 +55,7 @@ export function SweepSummary({
   canControl: boolean;
   onChanged: () => void;
 }) {
+  useLocale();
   const [dialog, setDialog] = useState<SweepDialog>(null);
   const [cancelRunningTrials, setCancelRunningTrials] = useState(false);
   const mutation = useMutation();

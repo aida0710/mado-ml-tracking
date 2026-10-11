@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -20,6 +21,7 @@ import { text } from '../i18n/catalog';
  * refuse; opening the URL directly shows why instead of a 403 that retrying cannot fix.
  */
 export function PluginsPage() {
+  useLocale();
   const { project } = useProject();
   const { user } = useAuth();
   if (!canManagePlugins(project.role, isGlobalAdmin(user)))
@@ -33,6 +35,7 @@ export function PluginsPage() {
 }
 
 function PluginConnections() {
+  useLocale();
   const { project } = useProject();
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();

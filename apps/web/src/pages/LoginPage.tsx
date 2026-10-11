@@ -1,3 +1,5 @@
+import { LanguagePicker } from '../components/LanguagePicker';
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { AuthConfig } from '@mmt/contracts';
 import { authApi } from '../api/auth';
@@ -10,6 +12,7 @@ import { rememberAuthReturnPath } from '../lib/authReturnPath';
 import { loginMethods } from '../lib/loginMethods';
 
 function DevelopmentLoginForm({ onLogin }: { onLogin: () => void }) {
+  useLocale();
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const mutation = useMutation();
@@ -54,6 +57,7 @@ function DevelopmentLoginForm({ onLogin }: { onLogin: () => void }) {
 // The same card as Mado's login: the app name, what it is, then the ways to sign in. hybrid shows
 // SSO first and the local account form below the separator.
 export function LoginPage({ config, onLogin }: { config: AuthConfig; onLogin: () => void }) {
+  useLocale();
   const methods = loginMethods(config);
   return (
     <div className="login-page">
@@ -61,6 +65,7 @@ export function LoginPage({ config, onLogin }: { config: AuthConfig; onLogin: ()
         <div className="login-mark">
           <ProductLogo />
         </div>
+        <LanguagePicker />
         <p className="login-eyebrow">{text.loginEyebrow}</p>
         <h1>{text.loginTitle}</h1>
         {methods.development && <DevelopmentLoginForm onLogin={onLogin} />}
