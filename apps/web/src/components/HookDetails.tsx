@@ -31,6 +31,7 @@ import {
   hooksTextTemplates,
 } from '../i18n/hooks';
 import { submissionModeBadgeLabels } from '../i18n/compute';
+import { useComputerNames } from '../hooks/useComputerNames';
 
 type Entry = [string, ReactNode];
 
@@ -63,7 +64,12 @@ function triggerEntries(hook: Hook, catalog: HookCatalog | undefined): Entry[] {
 }
 
 /** The Job each start creates, with names in place of ids where the catalog has them. */
-function templateEntries(hook: Hook, catalog: HookCatalog | undefined, base: string): Entry[] {
+function templateEntries({ hook, catalog, base, computerName }: {
+  hook: Hook;
+  catalog: HookCatalog | undefined;
+  base: string;
+  computerName: (targetId: string) => string;
+}): Entry[] {
   const template = hook.template;
   const options = catalog ? buildCatalogOptions(catalog.registry) : undefined;
   const label = (list: 'experiments' | 'models' | 'codes' | 'datasets', id: string) =>
@@ -109,7 +115,7 @@ function templateEntries(hook: Hook, catalog: HookCatalog | undefined, base: str
     [
       text.target,
       <span className="badge-group">
-        {target?.name ?? template.targetId}
+        {computerName(template.targetId)}
         {isManualSite(target) && (
           <span className="status-badge status-attention">{submissionModeBadgeLabels.manual}</span>
         )}
@@ -152,6 +158,7 @@ export function HookDetails({
   onOwnerTransferred: () => void;
 }) {
   useLocale();
+  const computerName = useComputerNames(catalog?.targets);
   const base = `/projects/${projectId}`;
   return (
     <section className="automation-rule-detail" data-testid="hook-details">
@@ -172,7 +179,7 @@ export function HookDetails({
       <DetailsList
         entries={[
           ...triggerEntries(hook, catalog),
-          ...templateEntries(hook, catalog, base),
+          ...templateEntries({ hook, catalog, base, computerName }),
           [text.hookConcurrency, hookConcurrencyLabels[hook.concurrency]],
           [text.hookMaxStartsPerHour, hook.maxStartsPerHour],
           [text.hookOwner, <span title={text.hookOwnerHint}>{automationOwnerLabel(hook)}</span>],

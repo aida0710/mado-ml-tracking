@@ -11,6 +11,7 @@ import { buildCatalogOptions, formatCodeVersionName } from '../lib/catalogOption
 import { formatClockDuration } from '../lib/clockDuration';
 import { isSiteTarget } from '../lib/siteExecutionInput';
 import { text } from '../i18n/catalog';
+import { useComputerNames } from '../hooks/useComputerNames';
 
 function OutputModelDetails({ outputModel, catalog, base }: {
   outputModel: TaskOutputModel; catalog: ExecutionCatalog; base: string;
@@ -43,6 +44,7 @@ export function TaskDetails({ task, catalog, targets }: {
   task: ExperimentTask; catalog: ExecutionCatalog; targets: ComputeTarget[];
 }) {
   useLocale();
+  const computerName = useComputerNames(targets);
   const base = `/projects/${task.projectId}`;
   const code = catalog.codeVersions.find((item) => item.id === task.codeVersionId);
   const options = buildCatalogOptions(catalog);
@@ -63,7 +65,7 @@ export function TaskDetails({ task, catalog, targets }: {
       [text.inputDatasets, task.inputDatasetVersionIds.length
         ? task.inputDatasetVersionIds.map((id) => <Link key={id} className="version-link" to={`${base}/datasets?version=${id}`}>{optionLabel(options.datasets, id)}</Link>)
         : null],
-      [text.target, target?.name ?? task.targetId],
+      [text.target, task.targetId ? computerName(task.targetId) : null],
       ...resourceEntries,
     ]} />
     {hasOutputModel(task.kind) && <section data-testid="task-output-model-details">

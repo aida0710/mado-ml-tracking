@@ -44,7 +44,7 @@ export async function requireCheckWorker(
   if (!(await isCheckWorker(connection, worker)))
     throw new DomainError(
       422,
-      '選んだworkerはオンラインでないか、接続確認を受けられない版です',
+      '選んだworkerはオンラインでないか、接続確認を受けられないバージョンです',
       'target_check_worker_unavailable',
     );
 }
