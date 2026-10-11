@@ -1,9 +1,11 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { computerDetailsPath } from '../layout/settingsSections';
 import { formatDateTimeSeconds } from '../lib/format';
 import type { WorkerCoverage } from '../lib/workerCoverage';
 import { workerCoverageLabel } from '../lib/workerCoverageDisplay';
 import { workerCoverageText, workerCoverageTextTemplates } from '../i18n/workerCoverage';
+import { joinSentences } from '../i18n/textJoining';
 
 // Online is the green Job badge, a missing worker the red one; a site needs no worker.
 const coverageBadgeClass: Record<WorkerCoverage['state'], string> = {
@@ -15,6 +17,7 @@ const coverageBadgeClass: Record<WorkerCoverage['state'], string> = {
 
 /** A computer's worker state in a list, with the last answer of workers that went quiet. */
 export function WorkerCoverageBadge({ coverage }: { coverage: WorkerCoverage }) {
+  useLocale();
   return (
     <span className="badge-group">
       <span className={`status-badge ${coverageBadgeClass[coverage.state]}`}>
@@ -46,17 +49,17 @@ export function WorkerMissingNotice({
   coverage: WorkerCoverage;
   consequence: string;
 }) {
+  useLocale();
   if (coverage.state !== 'none' && coverage.state !== 'offline') return null;
   return (
     <div className="notice error worker-missing" role="status">
       <p>
-        {coverage.state === 'none'
-          ? workerCoverageTextTemplates.targetWorkerNone(target.name)
-          : workerCoverageTextTemplates.targetWorkerOffline(
-              target.name,
-              formatDateTimeSeconds(coverage.lastSeenAt),
-            )}
-        {consequence}
+        {joinSentences([
+          coverage.state === 'none'
+            ? workerCoverageTextTemplates.targetWorkerNone(target.name)
+            : workerCoverageTextTemplates.targetWorkerOffline(target.name, formatDateTimeSeconds(coverage.lastSeenAt)),
+          consequence,
+        ])}
       </p>
       <p>
         <Link to={computerDetailsPath(target.id)}>{workerCoverageText.workerCoverageSetupLink}</Link>

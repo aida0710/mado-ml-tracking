@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { lazy, Suspense, useState } from 'react';
 import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import type { useCodeWorkspace } from '../hooks/useCodeWorkspace';
@@ -17,6 +18,7 @@ export function CodeWorkspaceEditor({ editor, isGit, disabled, sampleId, onSampl
   sampleId: CodeSample['id']; onSampleChange: (id: CodeSample['id']) => void;
   onApplySample: () => void;
 }) {
+  useLocale();
   // Below --bp-md the file list folds away so that Monaco keeps the dialog's full width.
   const isNarrow = useMediaQuery(narrowerThan('md'));
   const [isFileListOpen, setFileListOpen] = useState(false);

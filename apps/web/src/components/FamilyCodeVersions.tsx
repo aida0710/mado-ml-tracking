@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { useFamilyCodeVersions } from '../hooks/useFamilyCodeVersions';
 import { formatCodeVersionName } from '../lib/catalogOptions';
@@ -10,6 +11,7 @@ import { text } from '../i18n/catalog';
  * model is visible before a Task or a rule has to offer it.
  */
 export function FamilyCodeVersions({ projectId, family }: { projectId: string; family: string }) {
+  useLocale();
   const { items, error, reload } = useFamilyCodeVersions(projectId, family);
   const codes = `/projects/${projectId}/codes`;
   return (

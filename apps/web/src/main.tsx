@@ -1,3 +1,4 @@
+import { initializeLocale } from './i18n/locale';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
@@ -62,6 +63,7 @@ import './styles/tapTargets.css';
 
 // The login screen and everything else start in the stored theme, or the operating system's.
 document.documentElement.dataset.theme = initialTheme();
+initializeLocale();
 
 // Keep the existing route tree while enabling blocked SPA navigation.
 const router = createBrowserRouter([{

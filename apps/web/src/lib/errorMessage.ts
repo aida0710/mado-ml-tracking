@@ -6,26 +6,55 @@ import {
   RequestError,
 } from '../api/http';
 import { text } from '../i18n/catalog';
+import { errorText } from '../i18n/errors';
+import { getLocale } from '../i18n/locale';
+import { localizeMessage } from '../i18n/messageTranslations';
+import { LocalizedError } from './localizedError';
+import { formatSweepSpaceError } from './sweepSpaceError';
 
-// Codes whose text the Web owns. Every other API code already carries a server message for people.
-const requestErrorText: Record<string, (failure: RequestError) => string> = {
+// Codes whose text the Web owns, shown in the display language whatever the server sent.
+const webOwnedErrorText: Record<string, (failure: RequestError) => string | null> = {
   [NETWORK_ERROR_CODE]: () => text.requestError,
   [INVALID_RESPONSE_CODE]: () => text.invalidResponse,
-  // Same text whether the API or a front proxy refused, so the limit reads the same everywhere.
+  // A front proxy and the API must describe this upload limit in the same way.
   [ARTIFACT_TOO_LARGE_CODE]: () => text.artifactTooLarge,
   [ARTIFACT_CONTENT_UNAVAILABLE_CODE]: (failure) => `${text.contentError} (${failure.status})`,
+  // Only the API's known sentences are matched; parameter names and values stay verbatim.
+  sweep_space_invalid: (failure) => formatSweepSpaceError(failure.serverMessage ?? ''),
 };
 
-/** Turns any thrown value into the message shown on screen. */
+/*
+ * API codes whose server message is Japanese and names the operation (削除済みのRunは編集できません).
+ * The Japanese screen keeps that more specific message; the English screen, which cannot show it,
+ * uses this general translation of the code instead.
+ */
+const serverMessageTranslations: Record<string, keyof typeof errorText> = {
+  internal_error: 'internalError',
+  database_unavailable: 'databaseUnavailable',
+  plugin_request_failed: 'pluginRequestFailed',
+  plugin_disabled: 'pluginDisabled',
+  upload_not_open: 'uploadNotOpen',
+  upload_expired: 'uploadExpired',
+  artifact_save_failed: 'artifactSaveFailed',
+  part_checksum_mismatch: 'partChecksumMismatch',
+  run_deleted: 'runDeleted',
+  body_too_large: 'bodyTooLarge',
+};
+
+/** Turns the original failure into text for the current display language. */
 export function formatErrorMessage(failure: unknown): string {
   if (failure instanceof RequestError) return formatRequestError(failure);
-  if (failure instanceof Error) return failure.message;
-  return String(failure);
+  if (failure instanceof LocalizedError) return failure.getLocalizedMessage();
+  if (failure instanceof Error) return localizeMessage(failure.message);
+  return localizeMessage(String(failure));
 }
 
 function formatRequestError(failure: RequestError): string {
-  const knownText = failure.code ? requestErrorText[failure.code] : undefined;
-  if (knownText) return knownText(failure);
+  const webOwnedText = failure.code ? webOwnedErrorText[failure.code]?.(failure) : undefined;
+  if (webOwnedText) return webOwnedText;
+  const translationKey = failure.code ? serverMessageTranslations[failure.code] : undefined;
+  const isServerMessageInDisplayLanguage = getLocale() === 'ja' && Boolean(failure.serverMessage);
+  if (translationKey && !isServerMessageInDisplayLanguage) return errorText[translationKey];
   if (failure.serverMessage) return failure.serverMessage;
   return `${text.requestError} (${failure.status})`;
 }

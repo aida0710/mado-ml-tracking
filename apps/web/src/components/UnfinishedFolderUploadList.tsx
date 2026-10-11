@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -26,6 +27,7 @@ export function UnfinishedFolderUploadList({
   onContinue: (upload: UnfinishedFolderUpload, sources: UploadSource[]) => void;
   onDiscard: (upload: UnfinishedFolderUpload) => Promise<void>;
 }) {
+  useLocale();
   const [discarding, setDiscarding] = useState<UnfinishedFolderUpload | null>(null);
   if (uploads.length === 0) return null;
   return (

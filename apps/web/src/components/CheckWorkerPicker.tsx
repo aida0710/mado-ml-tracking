@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { RefreshCw } from 'lucide-react';
 import type { ComputeTarget, TargetCheckWorker, TargetCheckWorkerPresence } from '@mmt/contracts';
 import { OptionPicker } from './OptionPicker';
@@ -23,6 +24,7 @@ export function CheckWorkerPicker({
   onReload: () => void;
   executor: ComputeTarget['executor'];
 }) {
+  useLocale();
   if (!workers.length)
     return (
       <div className="notice check-worker-none">

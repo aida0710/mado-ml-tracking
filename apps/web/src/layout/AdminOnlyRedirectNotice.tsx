@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useLocation } from 'react-router-dom';
 import { settingsShellText } from '../i18n/settingsShell';
 
@@ -15,6 +16,7 @@ function isAdminOnlyRedirect(state: unknown): state is AdminOnlyRedirectState {
  * state belongs to that one navigation, so the notice is gone once the user moves on.
  */
 export function AdminOnlyRedirectNotice() {
+  useLocale();
   const location = useLocation();
   if (!isAdminOnlyRedirect(location.state)) return null;
   return (

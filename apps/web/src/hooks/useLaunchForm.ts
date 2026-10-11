@@ -8,6 +8,7 @@ import {
   launchChoices,
   type LaunchCandidates,
 } from '../lib/launchFormValues';
+import { useFailureMessage } from './useFailureMessage';
 
 /** The launch form's steps: what to run, where it runs, and a review before starting. */
 export const LAUNCH_STEPS = ['setup', 'resources', 'review'] as const;
@@ -27,7 +28,7 @@ export function useLaunchForm<Target extends ComputeTarget>({
   const [step, setStep] = useState<LaunchStep>('setup');
   const [values, setValues] = useState<FormValues>(() => initialLaunchValues(existingRun));
   const [clearedChoices, setClearedChoices] = useState<ClearedLaunchChoice[]>([]);
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const validation = useFailureMessage();
   const stepIndex = LAUNCH_STEPS.indexOf(step);
   return {
     values,
@@ -37,12 +38,13 @@ export function useLaunchForm<Target extends ComputeTarget>({
       const change = changeLaunchValues({ previous: values, next, candidates });
       setValues(change.values);
       setClearedChoices(change.cleared);
-      setValidationError(null);
+      validation.clearFailure();
     },
     step,
     goForward: () => setStep(LAUNCH_STEPS[stepIndex + 1] ?? step),
     goBack: () => setStep(LAUNCH_STEPS[stepIndex - 1] ?? step),
-    validationError,
-    setValidationError,
+    validationError: validation.message,
+    setValidationFailure: validation.setFailure,
+    clearValidationFailure: validation.clearFailure,
   };
 }

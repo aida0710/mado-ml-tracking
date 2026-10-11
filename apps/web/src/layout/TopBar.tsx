@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { LogOut, Moon, Sun } from 'lucide-react';
 import { authApi } from '../api/auth';
@@ -8,6 +9,7 @@ import type { Navigation } from '../hooks/useNavigation';
 import { narrowerThan } from '../lib/breakpoints';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { ErrorNotice } from '../components/Feedback';
+import { LanguagePicker } from '../components/LanguagePicker';
 import { UserMenu } from '../components/UserMenu';
 import { ProductLogo } from '../components/ProductLogo';
 import { OperationsAlertBadge } from '../components/OperationsAlertBadge';
@@ -15,11 +17,12 @@ import { text } from '../i18n/catalog';
 import { NavigationDrawer } from './NavigationDrawer';
 
 /**
- * The header: the app name, theme, the signed-in user and logout. The screen navigation sits in
- * the sidebar or the rail; below --bp-md this header opens it in the drawer. Below --bp-xs the
- * buttons leave no room for the app name, so only its mark shows.
+ * The header: the app name, display language, theme, the signed-in user and logout. The screen
+ * navigation sits in the sidebar or the rail; below --bp-md this header opens it in the drawer.
+ * Below --bp-xs the buttons leave no room for the app name, so only its mark shows.
  */
 export function TopBar({ projectId, navigation }: { projectId?: string; navigation: Navigation }) {
+  useLocale();
   const auth = useAuth();
   const theme = useTheme();
   const mutation = useMutation();
@@ -37,6 +40,7 @@ export function TopBar({ projectId, navigation }: { projectId?: string; navigati
           <ProductLogo isNameVisuallyHidden={isAppNameVisuallyHidden} />
         </Link>
         <div className="topbar-actions">
+          <LanguagePicker />
           <OperationsAlertBadge openProjectId={projectId} />
           <button
             className="icon-button"

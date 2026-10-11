@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import type { ProjectGroupBinding, ProjectRole } from '@mmt/contracts';
 import { Dialog } from '../components/Dialog';
@@ -7,6 +8,7 @@ import { useMutation } from '../hooks/useMutation';
 import { findExistingGroupBinding } from '../lib/groupBindingInput';
 import { text } from '../i18n/catalog';
 import { projectAccessTextTemplates } from '../i18n/projectAccess';
+import { LocalizedError } from '../lib/localizedError';
 
 /**
  * Grants a role to an Authentik group, or changes the role of an existing binding.
@@ -28,6 +30,7 @@ export function GroupBindingDialog({
   onSaved: () => void;
   onClose: () => void;
 }) {
+  useLocale();
   const groupInputId = useId();
   const candidatesId = useId();
   const [group, setGroup] = useState(binding?.group ?? '');
@@ -46,7 +49,7 @@ export function GroupBindingDialog({
             .run(async () => {
               const existing = binding ? undefined : findExistingGroupBinding(existingBindings, group);
               if (existing)
-                throw new Error(
+                throw new LocalizedError(() =>
                   projectAccessTextTemplates.groupBindingExists(existing.group, text[existing.role]),
                 );
               await onSave(group.trim(), role);

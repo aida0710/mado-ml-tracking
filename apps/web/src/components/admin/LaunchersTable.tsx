@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { Launcher } from '@mmt/contracts';
 import { ResponsiveTable } from '../ResponsiveTable';
 import { formatDate } from '../../lib/format';
@@ -13,6 +14,7 @@ export function LaunchersTable({
   onRotateToken: (launcher: Launcher) => void;
   onRevoke: (launcher: Launcher) => void;
 }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={launchers}

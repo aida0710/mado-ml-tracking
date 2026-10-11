@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { RefreshCw, Settings } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -16,6 +17,7 @@ import { text } from '../i18n/catalog';
  * and managing computers is in 全体設定 → コンピュータ, which this page links to.
  */
 export function ComputePage() {
+  useLocale();
   const { user } = useAuth();
   const { project } = useProject();
   const targets = useProjectTargets(project.id);

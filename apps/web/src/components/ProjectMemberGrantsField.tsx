@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ProjectRole } from '@mmt/contracts';
 import { useAuth } from '../hooks/useAuth';
 import {
@@ -22,6 +23,7 @@ export function ProjectMemberGrantsField({
   drafts: MemberGrantDraft[];
   onChange: (drafts: MemberGrantDraft[]) => void;
 }) {
+  useLocale();
   const { user: creator } = useAuth();
   const excludedUserIds = [creator.id, ...drafts.map((draft) => draft.user.id)];
   return (

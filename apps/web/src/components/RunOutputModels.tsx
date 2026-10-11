@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { Run } from '@mmt/contracts';
 import { useRunOutputRegistration } from '../hooks/useRunOutputRegistration';
@@ -6,12 +7,14 @@ import { text } from '../i18n/catalog';
 import { outputRegistrationErrorLabels } from '../i18n/workbench';
 
 function VersionLink({ projectId, id }: { projectId: string; id: string }) {
+  useLocale();
   return <Link className="version-link mono" to={`/projects/${projectId}/models?version=${id}`}>{id}</Link>;
 }
 
 export function RunOutputRegistrationStatus({ projectId, state }: {
   projectId: string; state: RunOutputRegistrationState;
 }) {
+  useLocale();
   switch (state.kind) {
     case 'none': return null;
     case 'pending': return <p className="muted" data-testid="output-registration-pending">{text.outputRegistrationPending}</p>;
@@ -28,6 +31,7 @@ export function RunOutputRegistrationStatus({ projectId, state }: {
 
 // Run.outputModelVersionIds is derived by the API in registration order.
 export function RunOutputModels({ run }: { run: Run }) {
+  useLocale();
   const registration = useRunOutputRegistration(run);
   const { state } = registration;
   // The registration line already links its version, so the plain list leaves it out.

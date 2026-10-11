@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ComputeTargetDetails, SitePersonalSettings } from '@mmt/contracts';
 import { siteComputersApi } from '../api/siteComputers';
@@ -30,6 +31,7 @@ export function SitePersonalSettingsPanel({
   target: ComputeTargetDetails;
   userId: string;
 }) {
+  useLocale();
   const scope = personalSettingsScope(target);
   return (
     <section className="site-computer-section" aria-label={text.sitePersonalTitle}>
@@ -52,6 +54,7 @@ function SavedPersonalSettings({
   scope: Exclude<PersonalSettingsScope, 'none'>;
   userId: string;
 }) {
+  useLocale();
   const settings = useQueryPolledWhileActive(
     `site-personal-settings:${target.id}`,
     (signal) => siteComputersApi.myPersonalSettings(target.id, signal),
@@ -88,6 +91,7 @@ function PersonalSettingsForm({
   userId: string;
   onChanged: () => void;
 }) {
+  useLocale();
   const [values, setValues] = useState<FormValues>(() => personalSettingsFormValues(item));
   const [isSaved, setSaved] = useState(false);
   const [isDeleting, setDeleting] = useState(false);

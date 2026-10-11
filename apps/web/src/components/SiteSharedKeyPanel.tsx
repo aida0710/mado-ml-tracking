@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ComputeTargetDetails } from '@mmt/contracts';
 import { siteComputersApi } from '../api/siteComputers';
 import { useQueryPolledWhileActive } from '../hooks/useQueryPolledWhileActive';
@@ -18,6 +19,7 @@ export function SiteSharedKeyPanel({
   target: ComputeTargetDetails;
   userId: string;
 }) {
+  useLocale();
   const keys = useQueryPolledWhileActive(
     `site-keys:${target.id}`,
     (signal) => siteComputersApi.keys(target.id, signal),

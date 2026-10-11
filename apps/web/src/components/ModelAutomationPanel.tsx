@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Plus, RefreshCw } from 'lucide-react';
 import type { AutomationExecutionFilter } from '../api/automation';
 import { useAuth } from '../hooks/useAuth';
@@ -30,6 +31,7 @@ export function ModelAutomationPanel({
   /** Opens the history tab narrowed to one rule. */
   onShowRuleHistory: (ruleId: string) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const { user } = useAuth();
   const canManage = canManageAutomationRules(project.role, user.isAdmin);

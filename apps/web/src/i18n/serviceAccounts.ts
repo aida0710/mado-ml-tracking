@@ -1,8 +1,10 @@
+import * as english from './en/serviceAccounts';
+import { localized } from './localized';
 import { TOKEN_PURPOSE_LABELS, type TokenScope } from '@mmt/contracts';
 import type { TokenPurposeOption } from '../lib/tokenPurposes';
 
 // Service Accounts, the Project token list and the token dialog on the settings page.
-export const serviceAccountsText = {
+export const serviceAccountsText = localized({
   serviceAccounts: 'Service Accounts',
   serviceAccountsDescription:
     '人に紐付かないアカウントです。workerや自動実行のtokenをここで発行すると、発行した人がProjectを離れても動き続けます。',
@@ -46,11 +48,11 @@ export const serviceAccountsText = {
   tokenUsageEnvironment: '環境変数（Python SDKとMLflow 3の両方）',
   tokenUsageHint:
     '設定例にtokenは入っていません。端末に貼り付けて実行すると「API token:」と聞かれるので、［tokenをコピー］でコピーしたtokenを貼り付けます。画面には表示されず、shellの履歴にも残りません。',
-} as const;
+} as const, english.serviceAccountsText);
 
 // The purposes the token dialog offers, each with what the token can then do. The purposes' names
 // are in contracts because the API names them too when a token lacks a scope.
-export const tokenPurposeLabels: Record<TokenPurposeOption, { label: string; hint: string }> = {
+export const tokenPurposeLabels: Record<TokenPurposeOption, { label: string; hint: string }> = localized({
   recording: {
     label: TOKEN_PURPOSE_LABELS.recording,
     hint: 'Runの記録、モデル・データセットの登録、Artifactの保存。使われていないデータセットのバージョンも削除でき、Project adminのtokenならArtifactも削除できます',
@@ -65,10 +67,10 @@ export const tokenPurposeLabels: Record<TokenPurposeOption, { label: string; hin
   },
   readOnly: { label: TOKEN_PURPOSE_LABELS.readOnly, hint: 'Runやモデルを読むだけ。記録はできません' },
   custom: { label: 'scopeを自分で選ぶ', hint: '下のscopeを1つずつ選びます' },
-};
+}, english.tokenPurposeLabels);
 
 // One line per scope, shown next to the scope in the token dialog.
-export const tokenScopeLabels: Record<TokenScope, string> = {
+export const tokenScopeLabels: Record<TokenScope, string> = localized({
   read: 'read — 読み取り',
   'runs:write': 'runs:write — Runの作成と記録',
   'registry:write': 'registry:write — モデル・データセットの登録',
@@ -76,12 +78,12 @@ export const tokenScopeLabels: Record<TokenScope, string> = {
   'jobs:write': 'jobs:write — Jobの起動と取り消し',
   'worker:execute': 'worker:execute — workerとしてJobを実行',
   admin: 'admin — Projectの管理',
-};
+}, english.tokenScopeLabels);
 
 // Text that embeds values.
-export const serviceAccountsTextTemplates = {
+export const serviceAccountsTextTemplates = localized({
   tokenExpiryDays: (days: number) => `${days}日`,
   serviceAccountTokenTitle: (name: string) => `${name} のtokenを発行`,
   disableServiceAccountConfirm: (name: string) =>
     `「${name}」を無効化します。このService Accountのtokenはすべて、次の要求から使えなくなります。`,
-};
+}, english.serviceAccountsTextTemplates);

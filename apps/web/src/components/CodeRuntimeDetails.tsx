@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { CodeVersion } from '@mmt/contracts';
 import type { ReactNode } from 'react';
 import { DetailsList } from './JsonDetails';
@@ -5,6 +6,7 @@ import { runtimeLabels } from '../i18n/runtime';
 import { text } from '../i18n/catalog';
 
 export function CodeRuntimeDetails({ version }: { version: CodeVersion }) {
+  useLocale();
   const runtime = version.runtime;
   const entries: Array<[string, ReactNode]> = [[text.runtime, runtimeLabels[runtime.kind]]];
   if (runtime.kind === 'docker')

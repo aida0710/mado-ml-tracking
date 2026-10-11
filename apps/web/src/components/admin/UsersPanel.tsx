@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { AdminUser, AdminUserQuery } from '@mmt/contracts';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -74,6 +75,7 @@ function confirmation({ user, action }: PendingAction, isSelf: boolean) {
 
 /** The admin "users" section: search, local account creation, disabling and password resets. */
 export function UsersPanel() {
+  useLocale();
   const { user: signedInUser } = useAuth();
   const { users, filter, setFilter } = useAdminUsers();
   // Unfiltered, so the last global administrator is known whatever the table is narrowed to.

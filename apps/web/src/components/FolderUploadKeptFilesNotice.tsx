@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { datasetFolderUploadPrefix } from '@mmt/contracts';
 import type { FolderUploadDiscardWithKeptFiles } from '../hooks/useDatasetFolderUploads';
@@ -18,9 +19,10 @@ export function FolderUploadKeptFilesNotice({
   datasetId: string;
   discard: FolderUploadDiscardWithKeptFiles;
 }) {
+  useLocale();
   const prefix = datasetFolderUploadPrefix({ datasetId, folder: discard.upload.folder });
   return (
-    <div className="notice folder-upload-kept-files" role="status" data-testid="folder-upload-kept-files">
+    <div className="notice action-notice folder-upload-kept-files" role="status" data-testid="folder-upload-kept-files">
       <span>
         {textTemplates.datasetFolderDiscardKeptFiles(formatDate(discard.upload.startedAt), discard.keptFileCount)}
       </span>

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import {
   PROMOTION_FIRST_RELEASE_REASON,
@@ -31,6 +32,7 @@ const decisionBadgeClass: Record<PromotionDecision, string> = {
 };
 
 export function DecisionBadge({ evaluation }: { evaluation: PromotionEvaluation }) {
+  useLocale();
   return (
     <>
       <span className={`status-badge ${decisionBadgeClass[evaluation.decision]}`}>
@@ -55,14 +57,15 @@ const criterionOutcomeClass: Record<PromotionCriterionOutcome, string> = {
   insufficient: 'promotion-criterion-failed',
 };
 const criterionOutcomeLabel: Record<PromotionCriterionOutcome, string> = {
-  passed: text.promotionCriterionPassed,
-  failed: text.promotionCriterionFailed,
-  insufficient: text.promotionCriterionInsufficient,
+  get passed() { return text.promotionCriterionPassed },
+  get failed() { return text.promotionCriterionFailed },
+  get insufficient() { return text.promotionCriterionInsufficient },
 };
 
 // A criterion that passed without comparing (no baseline version on a first release) is not shown
 // in the passed color: nothing was measured against its threshold.
 function CriterionOutcome({ result }: { result: PromotionCriterionResult }) {
+  useLocale();
   if (result.outcome === 'passed' && result.observed === null)
     return <span className="muted">{text.promotionCriterionNotCompared}</span>;
   return (
@@ -81,6 +84,7 @@ function formatComparedValue(result: PromotionCriterionResult): string {
 }
 
 export function CriterionResults({ results }: { results: PromotionCriterionResult[] }) {
+  useLocale();
   return (
     <ul className="promotion-criterion-results">
       {results.map((result, index) => (
@@ -122,6 +126,7 @@ function VersionLink({
   versionId: string | null;
   versionLabel: (id: string) => string;
 }) {
+  useLocale();
   if (!versionId) return <>—</>;
   return (
     <Link className="mono" to={`/projects/${projectId}/models?version=${versionId}`}>
@@ -139,6 +144,7 @@ function RunLink({
   runId: string | null;
   label: string;
 }) {
+  useLocale();
   return (
     <div>
       <span className="muted">{label} </span>
@@ -165,6 +171,7 @@ export function PromotionEvaluationTable({
   onReevaluate: (evaluationId: string) => void;
   empty: string;
 }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={evaluations}

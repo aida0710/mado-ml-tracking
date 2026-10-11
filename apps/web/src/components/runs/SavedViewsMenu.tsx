@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useRef, useState } from 'react';
 import { Bookmark, Check, Link2, Pencil, Save, Trash2 } from 'lucide-react';
 import type { SavedView, SavedViewState } from '@mmt/contracts';
@@ -47,6 +48,7 @@ export function SavedViewsMenu({
   onSaved: (view: SavedView) => void;
   onDeleted: (view: SavedView) => void;
 }) {
+  useLocale();
   const menuRef = useRef<HTMLDetailsElement>(null);
   const [dialog, setDialog] = useState<MenuDialog>(null);
   const [isUrlCopied, setIsUrlCopied] = useState(false);

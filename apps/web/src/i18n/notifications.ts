@@ -1,3 +1,5 @@
+import * as english from './en/notifications';
+import { localized } from './localized';
 import type {
   NotificationChannelKind,
   NotificationDeliveryStatus,
@@ -5,7 +7,7 @@ import type {
 } from '@mmt/contracts';
 
 // Notification channels, rules and the delivery history in the Project settings.
-export const notificationsText = {
+export const notificationsText = localized({
   notifications: '通知',
   notificationsDescription:
     'Runの失敗などをSlack、Webhook、メールへ通知します。通知先は全体管理者が登録し、どのイベントを送るかはProject adminがルールで決めます。',
@@ -70,15 +72,15 @@ export const notificationsText = {
   notificationDeliveryAttempts: '試行回数',
   notificationDeliveryError: '失敗の理由',
   notificationDeliveryCreatedAt: '発生日時',
-} as const;
+} as const, english.notificationsText);
 
-export const notificationChannelKindLabels: Record<NotificationChannelKind, string> = {
+export const notificationChannelKindLabels: Record<NotificationChannelKind, string> = localized({
   slack_webhook: 'Slack（Incoming Webhook）',
   webhook: 'Webhook（署名付き）',
   email: 'メール',
-};
+}, english.notificationChannelKindLabels);
 
-export const notificationEventTypeLabels: Record<NotificationEventType, string> = {
+export const notificationEventTypeLabels: Record<NotificationEventType, string> = localized({
   'run.failed': 'Runの失敗',
   'run.canceled': 'Runの中止',
   'run.finished': 'Runの完了',
@@ -87,17 +89,17 @@ export const notificationEventTypeLabels: Record<NotificationEventType, string> 
   'job.heartbeat_recovered': 'Jobのheartbeat復旧',
   'worker.offline': 'workerの停止',
   'plugin.delivery_stalled': 'Plugin送信の滞留',
-};
+}, english.notificationEventTypeLabels);
 
-export const notificationDeliveryStatusLabels: Record<NotificationDeliveryStatus, string> = {
+export const notificationDeliveryStatusLabels: Record<NotificationDeliveryStatus, string> = localized({
   pending: '送信待ち',
   sending: '送信中',
   delivered: '送信済み',
   failed: '失敗',
-};
+}, english.notificationDeliveryStatusLabels);
 
 // Failure codes stored by the API (packages/platform notification senders and the dispatcher).
-export const notificationErrorLabels: Record<string, string> = {
+export const notificationErrorLabels: Record<string, string> = localized({
   notification_channel_unconfigured:
     'API serverに、通知先が参照する環境変数（URLまたは署名の鍵）が設定されていません',
   notification_channel_disabled: '通知先が無効になっています',
@@ -113,9 +115,9 @@ export const notificationErrorLabels: Record<string, string> = {
   notification_delivery_failed: '送信中に予期しないエラーが発生しました',
   notification_dispatch_failed: '送信中に予期しないエラーが発生しました',
   sender_unavailable: 'API serverにこの種類の送信設定がありません',
-};
+}, english.notificationErrorLabels);
 
-export const notificationsTextTemplates = {
+export const notificationsTextTemplates = localized({
   notificationEnvironmentMissing: (names: string) =>
     `API serverに ${names} がありません。このままでも保存できますが、送信はできません。API serverの.envに設定し、API serverを再起動してください。`,
   notificationChannelSavedUnconfigured: (name: string) =>
@@ -129,4 +131,4 @@ export const notificationsTextTemplates = {
   notificationErrorHttp: (status: string) => `送信先がHTTP ${status}を返しました`,
   notificationErrorSmtp: (reply: string) => `SMTPサーバーが${reply}を返しました`,
   notificationErrorUnknown: (code: string) => `送信に失敗しました（${code}）`,
-};
+}, english.notificationsTextTemplates);

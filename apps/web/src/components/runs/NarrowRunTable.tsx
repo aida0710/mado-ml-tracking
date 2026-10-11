@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { Run, SavedViewColumn } from '@mmt/contracts';
 import { ResponsiveTableView, type ResponsiveTableColumn } from '../ResponsiveTable';
 import {
@@ -29,6 +30,7 @@ export function NarrowRunTable({
   columns: SavedViewColumn[];
   selection: RunListSelection;
 }) {
+  useLocale();
   const tableColumns: ResponsiveTableColumn<Run>[] = [
     {
       key: 'select',

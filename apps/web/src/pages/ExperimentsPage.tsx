@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChartLine, Plus, RefreshCw, Terminal } from 'lucide-react';
@@ -57,6 +58,7 @@ const CURSOR_HISTORY_PARAM = 'cursors';
 const CURSOR_SEPARATOR = ',';
 
 export function ExperimentsPage() {
+  useLocale();
   const { project, canEdit } = useProject();
   const { user } = useAuth();
   const navigate = useNavigate();

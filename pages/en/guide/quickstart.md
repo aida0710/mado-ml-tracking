@@ -170,7 +170,7 @@ Under "自動実行ルール" (Automation rules) in ［Models］, press ［自�
 | 実行種別 (Run kind) | 推論 (Inference) | 評価 (Evaluation) |
 | Experiments | `whisper-small-finetune` | `whisper-small-finetune` |
 | コードバージョン (Code version) | The inference code version | The evaluation code version |
-| Compute target | The one registered in preparation step 1 | The same one |
+| コンピュータ (Computer) | The one registered in preparation step 1 | The same one |
 | 入力データセットバージョン (Input dataset versions) | None | The reference data from preparation step 3 |
 
 The evaluation rule receives the outputs of the inference Run as upstream outputs. After creation, a rule can only be enabled or disabled. To change its settings, create a new rule.

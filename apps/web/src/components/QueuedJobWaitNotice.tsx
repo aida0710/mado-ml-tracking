@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { WorkerCoverageBadge, WorkerMissingNotice } from './WorkerCoverage';
 import { computerDetailsPath } from '../layout/settingsSections';
@@ -15,6 +16,7 @@ export function QueuedJobWaitNotice({
   wait: QueuedJobWait | null;
   target: { id: string; name: string } | undefined;
 }) {
+  useLocale();
   if (!wait || !target) return null;
   if (wait.kind === 'notTaken')
     return (
@@ -41,6 +43,7 @@ export function QueuedJobWaitNotice({
  * waits for Jobs that cannot start. Each links to the computer's details.
  */
 export function WorkerlessJobsNotice({ groups }: { groups: WorkerlessJobGroup[] }) {
+  useLocale();
   if (!groups.length) return null;
   return (
     <section

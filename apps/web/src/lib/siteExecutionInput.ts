@@ -15,6 +15,7 @@ import { validateTargetGpuIds } from './runtimeValidation';
 import { text } from '../i18n/catalog';
 import { computeTextTemplates } from '../i18n/compute';
 import { jobsTextTemplates } from '../i18n/jobs';
+import { LocalizedError } from './localizedError';
 
 const SECONDS_PER_MINUTE = 60;
 const SECONDS_PER_DAY = 24 * 60 * 60;
@@ -39,7 +40,7 @@ export function parseGpuCount(value: string): number {
 export function parseWalltime(value: string): number | null {
   const seconds = parseClockDuration(value);
   if (seconds !== null && (seconds <= 0 || seconds > MAX_JOB_WALLTIME_SECONDS))
-    throw new Error(jobsTextTemplates.walltimeError(MAX_JOB_WALLTIME_SECONDS / SECONDS_PER_DAY));
+    throw new LocalizedError(() => jobsTextTemplates.walltimeError(MAX_JOB_WALLTIME_SECONDS / SECONDS_PER_DAY));
   return seconds;
 }
 
@@ -50,7 +51,7 @@ export function parseQueueTimeout(value: string): number | null {
     seconds !== null &&
     (seconds < MIN_QUEUE_TIMEOUT_SECONDS || seconds > MAX_QUEUE_TIMEOUT_SECONDS)
   )
-    throw new Error(
+    throw new LocalizedError(() =>
       computeTextTemplates.queueTimeoutError(
         MIN_QUEUE_TIMEOUT_SECONDS / SECONDS_PER_MINUTE,
         MAX_QUEUE_TIMEOUT_SECONDS / SECONDS_PER_DAY,

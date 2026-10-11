@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Play, Plus, RefreshCw } from 'lucide-react';
@@ -23,6 +24,7 @@ type TaskDialog = { kind: 'create' } | { kind: 'edit'; task: ExperimentTask } |
   { kind: 'launch'; task: ExperimentTask; mode: ExecutionMode };
 
 export function TasksPage() {
+  useLocale();
   const { project, canEdit } = useProject();
   const [params, setParams] = useSearchParams();
   const experimentId = params.get('experiment') ?? '';

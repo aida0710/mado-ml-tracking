@@ -7,7 +7,7 @@ description: Start inference and evaluation automatically when a model version i
 
 ![Automation rules and rule details](/images/models-automation-rules.png)
 
-An automation rule starts inference and evaluation Jobs whenever a model version is registered. A rule pins the code version, dataset versions, Compute target, and parameters, so every version is evaluated under the same conditions.
+An automation rule starts inference and evaluation Jobs whenever a model version is registered. A rule pins the code version, dataset versions, computer, and parameters, so every version is evaluated under the same conditions.
 
 ## When to use it
 
@@ -45,7 +45,7 @@ Only Project admins create rules. API tokens also need the `admin` scope.
 | Run kind | Inference, evaluation, or data processing |
 | Experiments | The Experiment that records the Runs |
 | Code version | A code version that supports the families and the run kind |
-| Compute target, GPU ID | Where to run. Without a GPU the Job runs on CPU only |
+| Computer, GPU ID | Where to run. Without a GPU the Job runs on CPU only |
 | Input dataset versions | Data given to every version, such as the evaluation references |
 | Parameters, tags | JSON. Tags starting with `automation.` or `mmt.` are reserved for the server |
 | **最大試行回数** (Maximum attempts) | 1 to 100. Two or more retries failed Runs automatically. Default 1. It limits automatic retries only; retries by people in Jobs do not count |

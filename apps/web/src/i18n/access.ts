@@ -1,5 +1,7 @@
+import * as english from './en/access';
+import { localized } from './localized';
 // Sign-in, password change and audit log labels.
-export const accessText = {
+export const accessText = localized({
   username: 'ユーザー名',
   password: 'パスワード',
   localLogin: 'ローカルアカウントでログイン',
@@ -38,11 +40,11 @@ export const accessText = {
   auditProject: 'Project',
   auditProjectNone: '—（Projectに属さない）',
   auditActorUnknown: '不明なユーザー',
-} as const;
+} as const, english.accessText);
 
 // Audit actions recorded by the API (docs/api-contract.md「監査ログ」と各機能の「監査」).
 // An action without a label is shown by its raw name, so a new action stays readable.
-export const auditActionLabels: Record<string, string> = {
+export const auditActionLabels: Record<string, string> = localized({
   'auth.login': 'ログイン',
   'auth.logout': 'ログアウト',
   'auth.password.change': 'パスワードの変更',
@@ -114,4 +116,4 @@ export const auditActionLabels: Record<string, string> = {
   'promotion.evaluation.reevaluate': '昇格判定のやり直し',
   'model_alias.protection.set': 'aliasの保護の設定',
   'model_alias.protection.delete': 'aliasの保護の解除',
-};
+}, english.auditActionLabels);

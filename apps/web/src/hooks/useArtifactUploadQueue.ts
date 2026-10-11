@@ -1,11 +1,13 @@
+import { useLocale } from '../i18n/useLocale';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Artifact, ArtifactUpload, ArtifactUploadDetail, ArtifactUploadListItem } from '@mmt/contracts';
 import { artifactUploadsApi } from '../api/artifactUploads';
-import { NETWORK_ERROR_CODE, RequestError } from '../api/http';
+import { RequestError } from '../api/http';
 import { trackingApi } from '../api/tracking';
 import { canDigest, sha256Hex } from '../lib/blobDigest';
 import type { UploadSource } from '../lib/droppedFiles';
-import { formatErrorMessage } from '../lib/errorMessage';
+import { LocalizedError } from '../lib/localizedError';
+import type { UploadFailure } from '../types/uploadFailure';
 import {
   canRetry,
   choosePartSize,
@@ -23,12 +25,12 @@ import {
   type TransferSample,
   type UploadMethod,
 } from '../lib/uploadPlan';
+import { explainUploadFailure } from '../lib/uploadFailure';
 import { blockerFromFailure, isSessionUnusable } from '../lib/uploadResumeBlocker';
 import { createPartDigestReader, inspectSessionForFile } from '../lib/uploadResumeMatch';
 import { findResumeRecord, removeResumeRecord, saveResumeRecord } from '../lib/uploadResumeStore';
 import { useQuery } from './useQuery';
 import { text } from '../i18n/catalog';
-import { resumeBlockerNextSteps, resumeBlockerReasons } from '../i18n/uploads';
 
 /**
  * Requests in flight across the whole queue. Browsers allow six connections per origin over
@@ -74,7 +76,7 @@ export interface UploadItem {
   remainingSeconds: number | null;
   /** Set while a failed request waits to be sent again; the rate and time left are unknown then. */
   retry: UploadRetry | null;
-  error: string | null;
+  error: UploadFailure | null;
   artifact: Artifact | null;
 }
 
@@ -103,7 +105,7 @@ interface UploadJob {
   /** Replaced on every start, so requests of a paused or canceled attempt change nothing. */
   controller: AbortController;
   retry: UploadRetry | null;
-  error: string | null;
+  error: UploadFailure | null;
   artifact: Artifact | null;
 }
 
@@ -116,6 +118,7 @@ export function useArtifactUploadQueue({
   runId: string | null;
   onCompleted: (artifact: Artifact) => void;
 }) {
+  useLocale();
   const jobsRef = useRef<UploadJob[]>([]);
   const activeRequestsRef = useRef(0);
   const nextJobNumberRef = useRef(1);
@@ -156,13 +159,10 @@ export function useArtifactUploadQueue({
       job.controller.abort();
       job.status = 'failed';
       job.retry = null;
-      job.error = blocker
-        ? `${resumeBlockerReasons[blocker]}${startsOver ? text.uploadRestartFromQueue : resumeBlockerNextSteps[blocker]}`
-        : isNetworkLoss(failure)
-          ? job.method === 'multipart'
-            ? text.uploadNetworkLostResume
-            : text.uploadNetworkLostResend
-          : formatErrorMessage(failure);
+      job.error = {
+        kind: 'request',
+        cause: explainUploadFailure({ failure, blocker, startsOver, method: job.method }),
+      };
       job.pendingParts = [];
       job.inFlightParts.clear();
       render();
@@ -200,7 +200,10 @@ export function useArtifactUploadQueue({
           : null;
         removeResumeRecord(session.id);
         job.session = null;
-        if (!artifact) throw new Error(`${text.uploadVerificationFailed} (${current.error ?? current.status})`);
+        if (!artifact) {
+          const reason = current.error ?? current.status;
+          throw new LocalizedError(() => `${text.uploadVerificationFailed} (${reason})`);
+        }
         finishCompleted(job, artifact);
       } catch (failure) {
         if (!signal.aborted) failJob(job, failure);
@@ -454,7 +457,7 @@ export function useArtifactUploadQueue({
       } catch (failure) {
         // A session that already closed keeps nothing; anything else expires with the session.
         if (!(failure instanceof RequestError && failure.code === 'upload_not_open')) {
-          job.error = `${text.uploadCancelNotSent}: ${formatErrorMessage(failure)}`;
+          job.error = { kind: 'cancel', cause: failure };
           render();
         }
       }
@@ -601,11 +604,6 @@ async function findResumableSession({
     if (inspection.blocker && isSessionUnusable(inspection.blocker)) removeResumeRecord(uploadId);
   }
   return null;
-}
-
-/** A dropped connection, as opposed to an answer from the server. */
-function isNetworkLoss(failure: unknown): boolean {
-  return failure instanceof RequestError && failure.code === NETWORK_ERROR_CODE;
 }
 
 async function retrying<T>(

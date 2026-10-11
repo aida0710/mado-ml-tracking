@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { Artifact } from '@mmt/contracts';
 import { FormFields } from './FormFields';
 import { ModelFamilyListHints } from './ModelFamilyListHints';
@@ -24,6 +25,7 @@ export function CodeVersionFields({
   onUpload: (purpose: ArtifactUploadPurpose) => void;
   workspaceEnabled?: boolean;
 }) {
+  useLocale();
   const runtimeKind = getFieldValue(values, 'runtimeKind');
   const isContainer = runtimeKind !== 'python';
   const isSif = runtimeKind === 'singularity' || runtimeKind === 'apptainer';

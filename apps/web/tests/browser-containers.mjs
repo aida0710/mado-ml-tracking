@@ -10,7 +10,7 @@ const browser = await chromium.launch({
   ...(process.env.MMT_CHROMIUM_PATH ? { executablePath: process.env.MMT_CHROMIUM_PATH } : {}),
   args: ['--no-sandbox'],
 });
-const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
+const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 960 } });
 const api = createBrowserApi();
 api.state.loggedIn = true;
 await context.route((url) => url.pathname.startsWith('/api/'), api.route);
@@ -210,14 +210,14 @@ try {
   await select('コードバージョン', dockerVersion.id);
   await dialog().getByRole('button', { name: '次へ', exact: true }).click();
   const targetOptions = await dialog()
-    .getByLabel('Compute target')
+    .getByLabel('コンピュータ')
     .locator('option')
     .evaluateAll((options) => options.map((option) => option.value));
   assert.ok(
     !targetOptions.includes(api.state.targets[0].id),
     'Python-only target is selectable for Docker',
   );
-  await select('Compute target', containerTarget.id);
+  await select('コンピュータ', containerTarget.id);
   const gpuOne = () => dialog().getByRole('checkbox', { name: '1', exact: true });
   await gpuOne().check();
   await dialog().getByRole('button', { name: '戻る', exact: true }).click();
@@ -225,7 +225,7 @@ try {
   await dialog().getByRole('button', { name: '次へ', exact: true }).click();
   // The container target runs Singularity too, so the computer and its GPU stay chosen; a choice
   // is dropped (and said so) only when it no longer fits (lib/launchFormChanges).
-  assert.equal(await dialog().getByLabel('Compute target').inputValue(), containerTarget.id);
+  assert.equal(await dialog().getByLabel('コンピュータ').inputValue(), containerTarget.id);
   assert.equal(await gpuOne().isChecked(), true);
   await gpuOne().uncheck();
   await dialog().getByRole('button', { name: '次へ', exact: true }).click();
@@ -249,12 +249,12 @@ try {
   await select('コードバージョン', dockerVersion.id);
   assert.equal(
     await dialog()
-      .getByLabel('Compute target')
+      .getByLabel('コンピュータ')
       .locator('option[value="' + api.state.targets[0].id + '"]')
       .count(),
     0,
   );
-  await select('Compute target', containerTarget.id);
+  await select('コンピュータ', containerTarget.id);
   await check('GPU ID', ['0']);
   const [datasetVersion] = api.state.datasetVersions;
   await check('入力データセットバージョン', [

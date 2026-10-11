@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { RotateCcw } from 'lucide-react';
 import type { UploadItem } from '../hooks/useArtifactUploadQueue';
 import type { DatasetFolderEntry } from '../lib/datasetFolder';
@@ -27,6 +28,7 @@ export function FolderUploadProgress({
   onCancel: (id: string) => void;
   onRetryFailed: () => void;
 }) {
+  useLocale();
   if (entries.length === 0) return null;
   const summary = summarizeFolderUpload(entries, items);
   return (

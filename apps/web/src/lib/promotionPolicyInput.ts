@@ -10,7 +10,9 @@ import {
   type PromotionPolicyCreate,
 } from '@mmt/contracts';
 import { promotionTextTemplates } from '../i18n/promotion';
+import { memoizePerIntlLocale } from '../i18n/intlFormatterCache';
 import { text } from '../i18n/catalog';
+import { LocalizedError } from './localizedError';
 
 export const PROMOTION_DIRECTIONS: PromotionCriterionDirection[] = ['higher', 'lower'];
 export const PROMOTION_MODES: PromotionCriterionMode[] = ['absolute', 'delta', 'relative_delta'];
@@ -151,7 +153,7 @@ export function buildPromotionPolicyInput({
     throw new Error(text.promotionEvaluationRuleRequired);
   if (!draft.criteria.length) throw new Error(text.promotionCriteriaRequired);
   if (draft.criteria.length > PROMOTION_CRITERIA_MAX)
-    throw new Error(promotionTextTemplates.criteriaTooMany(PROMOTION_CRITERIA_MAX));
+    throw new LocalizedError(() => promotionTextTemplates.criteriaTooMany(PROMOTION_CRITERIA_MAX));
   return {
     name,
     enabled: draft.enabled,
@@ -183,23 +185,29 @@ export function getCriterionThresholdMeaning(
   return improves ? 'improvement_required' : 'regression_allowed';
 }
 
-const PERCENT_FORMAT = new Intl.NumberFormat('ja-JP', {
-  style: 'percent',
-  maximumFractionDigits: 4,
-  signDisplay: 'exceptZero',
-});
-const THRESHOLD_FORMAT = new Intl.NumberFormat('ja-JP', {
-  maximumFractionDigits: 6,
-  signDisplay: 'exceptZero',
-});
+const getPercentFormat = memoizePerIntlLocale(
+  (intlLocale) =>
+    new Intl.NumberFormat(intlLocale, {
+      style: 'percent',
+      maximumFractionDigits: 4,
+      signDisplay: 'exceptZero',
+    }),
+);
+const getThresholdFormat = memoizePerIntlLocale(
+  (intlLocale) =>
+    new Intl.NumberFormat(intlLocale, {
+      maximumFractionDigits: 6,
+      signDisplay: 'exceptZero',
+    }),
+);
 
 /** relative_delta thresholds are ratios, shown as percentages. */
 export function formatCriterionThreshold(
   criterion: Pick<PromotionCriterion, 'mode' | 'threshold'>,
 ): string {
-  if (criterion.mode === 'relative_delta') return PERCENT_FORMAT.format(criterion.threshold);
   if (criterion.mode === 'absolute') return String(criterion.threshold);
-  return THRESHOLD_FORMAT.format(criterion.threshold);
+  const thresholdFormat = criterion.mode === 'relative_delta' ? getPercentFormat() : getThresholdFormat();
+  return thresholdFormat.format(criterion.threshold);
 }
 
 /** One-line summary such as "werの基準との差 ≤ -0.01". */

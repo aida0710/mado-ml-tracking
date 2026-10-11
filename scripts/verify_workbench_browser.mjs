@@ -133,7 +133,7 @@ async function createTask({ name, codeVersionId, targetId, kind = 'processing', 
   await field('実行種別').selectOption(kind);
   if (modelVersionId) await field('モデルバージョン').selectOption(modelVersionId);
   await field('コードバージョン').selectOption(codeVersionId);
-  await field('Compute target').selectOption(targetId);
+  await field('コンピュータ').selectOption(targetId);
   const task = await saveEntity({ method: 'POST', resource: `${projectApi}/tasks`,
     click: () => dialog().getByRole('button', { name: '保存', exact: true }).click() });
   await page.getByRole('dialog').waitFor({ state: 'hidden' });

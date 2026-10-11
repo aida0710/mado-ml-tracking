@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { RefreshCw } from 'lucide-react';
 import { administrationApi } from '../api/administration';
 import { useProject } from '../hooks/useProject';
@@ -18,10 +19,10 @@ type StorageMeasurementFields = Pick<
   'bytes' | 'objects' | 'ageSeconds' | 'failures'
 >;
 const metricColumnDefinitions = {
-  bytes: { label: text.capacity, unit: 'bytes' },
-  objects: { label: text.objects, unit: 'count' },
-  ageSeconds: { label: text.collectionAge, unit: 'seconds' },
-  failures: { label: text.collectionFailures, unit: 'count' },
+  bytes: { get label() { return text.capacity }, unit: 'bytes' },
+  objects: { get label() { return text.objects }, unit: 'count' },
+  ageSeconds: { get label() { return text.collectionAge }, unit: 'seconds' },
+  failures: { get label() { return text.collectionFailures }, unit: 'count' },
 } as const;
 
 function createStorageMetricColumns<T extends StorageMeasurementFields>(
@@ -40,6 +41,7 @@ function createStorageMetricColumns<T extends StorageMeasurementFields>(
 }
 
 function ConnectionStorageMetrics({ connection }: { connection: StorageConnectionMetrics }) {
+  useLocale();
   const prefixes = connection.buckets.flatMap((bucket) =>
     bucket.prefixes.map((prefix) => ({ ...prefix, bucket: bucket.bucket })),
   );
@@ -112,6 +114,7 @@ function ConnectionStorageMetrics({ connection }: { connection: StorageConnectio
 }
 
 export function PluginStorageMetrics({ pluginId }: { pluginId: string }) {
+  useLocale();
   const { project } = useProject();
   const metrics = useQuery(`${project.id}:plugin:${pluginId}:metrics`, (signal) =>
     administrationApi.pluginMetrics(project.id, pluginId, signal),

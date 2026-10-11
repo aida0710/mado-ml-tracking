@@ -1,5 +1,6 @@
 import { parseStringMap } from './formValues';
 import { automationText } from '../i18n/automation';
+import { LocalizedError } from './localizedError';
 
 // Mirrors RESERVED_RUN_TAG_PREFIXES in the API (domain/reservedRunTags.ts): the server sets these
 // tags on the Runs it starts (automation rules, hooks, arrays), so a request may not carry them.
@@ -11,6 +12,6 @@ export function parseUserRunTags(value: string): Record<string, string> {
   const reserved = Object.keys(tags).find((key) =>
     RESERVED_TAG_PREFIXES.some((prefix) => key.startsWith(prefix)),
   );
-  if (reserved !== undefined) throw new Error(automationText.reservedTag(reserved));
+  if (reserved !== undefined) throw new LocalizedError(() => automationText.reservedTag(reserved));
   return tags;
 }

@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useEffect, useState, type PointerEvent } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { Pause, Play, Repeat, X, ZoomIn, ZoomOut } from 'lucide-react';
@@ -35,6 +36,7 @@ const DRAG_THRESHOLD_PX = 4;
 const KEYBOARD_SEEK_SECONDS = 1;
 
 function useDeviceColumns(element: HTMLElement | null): number {
+  useLocale();
   const [columns, setColumns] = useState(0);
   useEffect(() => {
     if (!element) return;
@@ -49,12 +51,13 @@ function useDeviceColumns(element: HTMLElement | null): number {
 }
 
 const serverPreviewNotices: Record<Exclude<ServerAudioPreviewState['status'], 'ready'>, string> = {
-  none: text.audioAnalysisSkipped,
-  pending: text.audioServerPreviewPending,
-  failed: text.audioServerPreviewFailed,
+  get none() { return text.audioAnalysisSkipped },
+  get pending() { return text.audioServerPreviewPending },
+  get failed() { return text.audioServerPreviewFailed },
 };
 
 function AudioMetaList({ summary }: { summary: AudioMediaSummary }) {
+  useLocale();
   return (
     <dl className="audio-meta">
       <dt>{text.audioSampleRate}</dt>
@@ -80,6 +83,7 @@ export function AudioArtifactViewer({
   onPlay?: () => void;
   onAudioElement?: (element: HTMLAudioElement | null) => void;
 }) {
+  useLocale();
   const url = trackingApi.artifactUrl(artifact.projectId, artifact.id);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [timeline, setTimeline] = useState<HTMLDivElement | null>(null);

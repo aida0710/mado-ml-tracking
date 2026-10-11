@@ -1,6 +1,7 @@
 import { HOOK_PAYLOAD_MAX_BYTES, type HookTriggerRequest } from '@mmt/contracts';
 import { parseJsonObject } from './formValues';
 import { hooksTextTemplates } from '../i18n/hooks';
+import { LocalizedError } from './localizedError';
 
 // 16 random bytes keep keys apart without crypto.randomUUID, which plain-http origins lack.
 const START_KEY_BYTES = 16;
@@ -26,6 +27,6 @@ export function buildHookStartRequest(payload: string, idempotencyKey: string): 
   if (!payload.trim()) return { idempotencyKey };
   const parsed = parseJsonObject(payload);
   if (new TextEncoder().encode(JSON.stringify(parsed)).length > HOOK_PAYLOAD_MAX_BYTES)
-    throw new Error(hooksTextTemplates.hookPayloadTooLarge(HOOK_PAYLOAD_MAX_BYTES / BYTES_PER_KIB));
+    throw new LocalizedError(() => hooksTextTemplates.hookPayloadTooLarge(HOOK_PAYLOAD_MAX_BYTES / BYTES_PER_KIB));
   return { payload: parsed, idempotencyKey };
 }

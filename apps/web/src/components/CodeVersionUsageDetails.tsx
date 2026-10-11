@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { CodeVersion } from '@mmt/contracts';
@@ -15,6 +16,7 @@ export function CodeVersionUsageDetails({
   projectId: string;
   version: CodeVersion;
 }) {
+  useLocale();
   const { usage, loading, error, reload } = useCodeVersionUsage(projectId, version);
   const base = `/projects/${projectId}`;
   const listOrNone = (items: ReactNode[], none: string) =>

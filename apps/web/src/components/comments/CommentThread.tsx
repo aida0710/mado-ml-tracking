@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { Comment } from '@mmt/contracts';
 import type { CommentThreadProps } from '../charts/chartProps';
@@ -20,6 +21,7 @@ import { text } from '../../i18n/catalog';
  * reads only. Placed by the pages (RunDetailPage, ModelVersionPage, ReportPage).
  */
 export function CommentThread({ projectId, targetType, targetId }: CommentThreadProps) {
+  useLocale();
   const { user } = useAuth();
   const { project } = useProject();
   const comments = useComments(projectId, { targetType, targetId });

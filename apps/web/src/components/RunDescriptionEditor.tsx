@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Pencil } from 'lucide-react';
 import { RUN_NOTE_MAX_LENGTH, RUN_NOTE_TAG } from '@mmt/contracts';
@@ -17,6 +18,7 @@ import { text } from '../i18n/catalog';
  * written from an MLflow client shows here and one saved here is what MLflow reads.
  */
 export function RunDescriptionEditor({ projectId, run }: RunDescriptionEditorProps) {
+  useLocale();
   const { canEdit } = useProject();
   const runContent = run.tags[RUN_NOTE_TAG] ?? '';
   // What this screen saved, remembered against the tag value it replaced. Once the page reads the
@@ -65,6 +67,7 @@ function RunDescriptionForm({
   onSaved: (content: string) => void;
   onClose: () => void;
 }) {
+  useLocale();
   const [draft, setDraft] = useState(initialContent);
   const mutation = useMutation();
   const isOverLimit = draft.length > RUN_NOTE_MAX_LENGTH;

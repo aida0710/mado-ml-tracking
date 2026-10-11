@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Download } from 'lucide-react';
 import type { Artifact } from '@mmt/contracts';
@@ -25,6 +26,7 @@ export function ArtifactDetailsPanel({
   latest: Artifact;
   onDeleted: (artifact: Artifact) => void;
 }) {
+  useLocale();
   const { isProjectAdmin } = useProject();
   const [shown, setShown] = useState(latest);
   const versions = useArtifactVersions(latest);

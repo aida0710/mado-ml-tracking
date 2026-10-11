@@ -8,7 +8,7 @@ import { EXECUTION_POLL_MS, useQuery, type QueryState } from './useQuery';
 const FILTER_REJECTED_STATUS = 400;
 const FILTER_REJECTED_CODE = 'invalid_parameter_value';
 
-type RunSearchOutcome = { page: RunSearchPage } | { rejection: string };
+type RunSearchOutcome = { page: RunSearchPage } | { rejection: RequestError };
 
 /**
  * One page of the server-side Run search, refreshed while Runs are executing. A filter the API
@@ -30,7 +30,7 @@ export function useRunSearch(
           failure.status === FILTER_REJECTED_STATUS &&
           failure.code === FILTER_REJECTED_CODE
         )
-          return { rejection: formatErrorMessage(failure) };
+          return { rejection: failure };
         throw failure;
       }
     },
@@ -39,6 +39,7 @@ export function useRunSearch(
   const result = outcome.value;
   return {
     runs: { ...outcome, value: result && 'page' in result ? result.page : undefined },
-    filterRejection: result && 'rejection' in result ? result.rejection : null,
+    // Put into words on each render (useQuery follows the display language), not when it arrived.
+    filterRejection: result && 'rejection' in result ? formatErrorMessage(result.rejection) : null,
   };
 }

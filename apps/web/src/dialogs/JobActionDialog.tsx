@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useRef } from 'react';
 import type { JobListItem } from '@mmt/contracts';
 import { executionApi } from '../api/execution';
@@ -30,6 +31,7 @@ export function JobActionDialog({
   onClose: () => void;
   onDone: (retryRunId: string | null) => void;
 }) {
+  useLocale();
   const retryRunId = useRef<string | null>(null);
   const isCancel = action === 'cancel';
   const effect = isCancel

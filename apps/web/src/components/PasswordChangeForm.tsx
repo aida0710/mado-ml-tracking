@@ -1,9 +1,11 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { authApi } from '../api/auth';
 import { useMutation } from '../hooks/useMutation';
 import { ErrorNotice } from './Feedback';
 import { text } from '../i18n/catalog';
 import { changePasswordErrorMessage } from '../lib/authErrorMessages';
+import { LocalizedError } from '../lib/localizedError';
 
 /** Changes the signed-in local user's password; the API keeps this session and ends the others. */
 export function PasswordChangeForm({
@@ -13,6 +15,7 @@ export function PasswordChangeForm({
   isRequired?: boolean;
   onChanged?: () => void;
 }) {
+  useLocale();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
@@ -27,7 +30,7 @@ export function PasswordChangeForm({
           try {
             await authApi.changePassword({ currentPassword, newPassword });
           } catch (error) {
-            throw new Error(changePasswordErrorMessage(error));
+            throw new LocalizedError(() => changePasswordErrorMessage(error));
           }
           setCurrentPassword('');
           setNewPassword('');

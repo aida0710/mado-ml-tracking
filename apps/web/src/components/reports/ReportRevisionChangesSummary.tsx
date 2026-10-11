@@ -1,11 +1,13 @@
+import { useLocale } from '../../i18n/useLocale';
 import { Resource } from '../Feedback';
 import { useReportRevisionChanges } from '../../hooks/useReport';
 import { hasRevisionChanges, type BlockTypeCount } from '../../lib/reportRevisionChanges';
 import { reportBlockTypeLabels } from '../../i18n/reports';
 import { text, textTemplates } from '../../i18n/catalog';
+import { formatList } from '../../i18n/textJoining';
 
 const blockCountsLabel = (counts: readonly BlockTypeCount[]) =>
-  counts.map(({ type, count }) => textTemplates.reportBlockCount(reportBlockTypeLabels[type], count)).join('、');
+  formatList(counts.map(({ type, count }) => textTemplates.reportBlockCount(reportBlockTypeLabels[type], count)));
 
 /** What a revision changed from the one before it: the title, and blocks added, removed, edited or moved. */
 export function ReportRevisionChangesSummary({
@@ -20,6 +22,7 @@ export function ReportRevisionChangesSummary({
   /** Lets the button that opens the summary point at it (aria-controls). */
   id: string;
 }) {
+  useLocale();
   const changes = useReportRevisionChanges(projectId, reportId, revision);
   return (
     <div id={id} className="report-history-changes">

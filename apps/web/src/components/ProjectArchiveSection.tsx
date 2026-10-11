@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Archive } from 'lucide-react';
@@ -12,6 +13,7 @@ import { text } from '../i18n/catalog';
  * instead of another Project opening unannounced.
  */
 export function ProjectArchiveSection() {
+  useLocale();
   const { project, reloadProjects } = useProject();
   const navigate = useNavigate();
   const [isConfirming, setIsConfirming] = useState(false);

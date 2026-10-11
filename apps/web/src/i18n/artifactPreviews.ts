@@ -1,6 +1,8 @@
+import * as english from './en/artifactPreviews';
+import { localized } from './localized';
 // Previews of Artifacts: server-generated audio previews, the format of text previews, the table
 // view of CSV / TSV / jsonl, the head of large text, and the image size toggle.
-export const artifactPreviewsText = {
+export const artifactPreviewsText = localized({
   audioServerPreviewPending: '64MiBを超えるため、サーバーで波形とスペクトログラムを生成しています。再生はできます。',
   audioServerPreviewFailed: 'サーバーでの波形とスペクトログラムの生成に失敗しました。再生はできます。',
   audioServerPreviewNote: 'サーバーで生成した全体の波形とスペクトログラム（線形）です。拡大・チャンネル選択・melは使えません。',
@@ -12,9 +14,9 @@ export const artifactPreviewsText = {
   // Image previews: fitted to the preview by default, or drawn pixel for pixel.
   imageShowActualSize: '原寸で表示',
   imageFitToFrame: '枠に合わせる',
-};
+}, english.artifactPreviewsText);
 
-export const artifactPreviewsTextTemplates = {
+export const artifactPreviewsTextTemplates = localized({
   codeFormatAuto: (format: string) => `自動（${format}）`,
   // A text file over the preview limit shows only its head; the download is next to this note.
   previewTextHead: (shownSize: string, totalSize: string) =>
@@ -28,4 +30,4 @@ export const artifactPreviewsTextTemplates = {
   imageSize: (width: number, height: number) =>
     `${width.toLocaleString('ja-JP')} × ${height.toLocaleString('ja-JP')} px`,
   audioVisibleRange: (start: string, end: string) => `表示範囲 ${start}–${end}`,
-};
+}, english.artifactPreviewsTextTemplates);

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import { Pencil } from 'lucide-react';
 import type { SiteJobShell, SiteJobShellSummary } from '@mmt/contracts';
@@ -29,22 +30,19 @@ export function SiteJobShellPanel({
   /** A new version became the current one. */
   onSaved: () => void;
 }) {
+  useLocale();
   const versions = useQuery(`site-job-shells:${targetId}`, (signal) =>
     siteComputersApi.jobShells(targetId, signal),
   );
   const [shownId, setShownId] = useState<string | null>(null);
   const [isEditing, setEditing] = useState(false);
-  const [savedNotice, setSavedNotice] = useState<string | null>(null);
+  const [savedNotice, setSavedNotice] = useState<{ isUnchanged: boolean; version: number } | null>(null);
   // The API lists versions newest first, and the newest one is what later submissions use.
   const current = versions.value?.[0];
   const finishEditing = (saved: SiteJobShell) => {
     setEditing(false);
     setShownId(null);
-    setSavedNotice(
-      saved.id === current?.id
-        ? text.jobShellUnchanged
-        : siteComputersTextTemplates.jobShellSaved(saved.version),
-    );
+    setSavedNotice({ isUnchanged: saved.id === current?.id, version: saved.version });
     versions.reload();
     onSaved();
   };
@@ -67,7 +65,9 @@ export function SiteJobShellPanel({
       </div>
       {savedNotice && (
         <p className="notice success" role="status">
-          {savedNotice}
+          {savedNotice.isUnchanged
+            ? text.jobShellUnchanged
+            : siteComputersTextTemplates.jobShellSaved(savedNotice.version)}
         </p>
       )}
       <Resource query={versions}>
@@ -123,6 +123,7 @@ function JobShellContent({
   isCurrent: boolean;
   onShowCurrent: () => void;
 }) {
+  useLocale();
   const shell = useQuery(`site-job-shell:${summary.id}`, (signal) =>
     siteComputersApi.jobShell(targetId, summary.id, signal),
   );
@@ -157,6 +158,7 @@ function JobShellEditForm({
   onSaved: (saved: SiteJobShell) => void;
   onCancel: () => void;
 }) {
+  useLocale();
   const current = useQuery(currentId ? `site-job-shell:${currentId}` : null, (signal) =>
     siteComputersApi.jobShell(targetId, currentId!, signal),
   );
@@ -184,6 +186,7 @@ function JobShellDraft({
   onSaved: (saved: SiteJobShell) => void;
   onCancel: () => void;
 }) {
+  useLocale();
   const templateSelectId = useId();
   const [content, setContent] = useState(initialContent);
   const [templateKey, setTemplateKey] = useState('');
@@ -261,6 +264,7 @@ function JobShellHistory({
   shownId: string | null;
   onShow: (id: string) => void;
 }) {
+  useLocale();
   return (
     <div className="job-shell-history">
       <h4>{text.jobShellHistory}</h4>

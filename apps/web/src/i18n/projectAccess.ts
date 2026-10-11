@@ -1,5 +1,7 @@
+import * as english from './en/projectAccess';
+import { localized } from './localized';
 // Project members, Authentik group bindings and the user picker on the settings page.
-export const projectAccessText = {
+export const projectAccessText = localized({
   addMember: 'メンバーを追加',
   editMember: 'メンバーを編集',
   removeMember: 'メンバーの直接付与を外す',
@@ -43,10 +45,10 @@ export const projectAccessText = {
   groupName: 'group名',
   groupNameHint: '候補はログインしたユーザーのgroupです。候補にないgroup名も入力できます。',
   grantedAt: '付与日時',
-} as const;
+} as const, english.projectAccessText);
 
 // Text that embeds values.
-export const projectAccessTextTemplates = {
+export const projectAccessTextTemplates = localized({
   memberSourceGroup: (group: string) => `group ${group}`,
   memberPublicRole: (role: string) => `${role}（Public）`,
   removeMemberConfirm: (removal: { displayName: string; keepsGroupRole: boolean; isSelf: boolean }) =>
@@ -63,4 +65,4 @@ export const projectAccessTextTemplates = {
     `group「${group}」は${role}で登録済みです。Roleを変えるときは一覧の「変更」を使ってください。`,
   removeGroupBindingConfirm: (group: string) =>
     `group「${group}」への付与を外します。このgroupだけでRoleを得ていたユーザーは、このProjectを使えなくなります。`,
-};
+}, english.projectAccessTextTemplates);

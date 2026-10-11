@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId, useState } from 'react';
 import {
   REPORT_RUN_TABLE_MAX_ROWS,
@@ -32,7 +33,7 @@ const EMBED_TYPES: EmbedType[] = [
   'media_table',
 ];
 // Run list columns besides metrics and params; the name is always shown (components/runs/RunTable).
-const RUN_TABLE_BASE_COLUMNS: Array<[string, string]> = [
+const getRunTableBaseColumns = (): Array<[string, string]> => [
   ['status', text.status],
   ['created', text.created],
   ['duration', text.duration],
@@ -56,6 +57,7 @@ export function EmbedPicker({
   onApply: (block: ReportEmbedBlock) => void;
   onClose: () => void;
 }) {
+  useLocale();
   const id = useId();
   const [block, setBlock] = useState<ReportEmbedBlock>(initial);
   const problem = reportBlockProblem(block);
@@ -136,6 +138,7 @@ function EmbedFields({
   block: ReportEmbedBlock;
   onChange: (block: ReportEmbedBlock) => void;
 }) {
+  useLocale();
   if (block.type === 'media') return <MediaEmbedFields projectId={projectId} block={block} onChange={onChange} />;
   if (block.type === 'media_table') return <MediaTableFields projectId={projectId} block={block} onChange={onChange} />;
   return <RunSetFields projectId={projectId} block={block} onChange={onChange} />;
@@ -153,6 +156,7 @@ function RunSetFields({
   block: RunSetBlock;
   onChange: (block: ReportEmbedBlock) => void;
 }) {
+  useLocale();
   const [isEditingChart, setEditingChart] = useState(false);
   const hasRuns = reportBlockProblem(block) !== 'runSetEmpty';
   const names = useRunSetFieldNames(projectId, hasRuns ? block.runSet : null);
@@ -256,7 +260,7 @@ function RunSetFields({
       );
     case 'run_table': {
       const columns: Array<[string, string]> = [
-        ...RUN_TABLE_BASE_COLUMNS,
+        ...getRunTableBaseColumns(),
         ...metricNames.map((name): [string, string] => [metricFieldKey(name), `${text.metrics}: ${name}`]),
         ...parameterNames.map((name): [string, string] => [paramFieldKey(name), `${text.parameters}: ${name}`]),
       ];
@@ -310,6 +314,7 @@ function MediaTableFields({
   block: Extract<ReportEmbedBlock, { type: 'media_table' }>;
   onChange: (block: ReportEmbedBlock) => void;
 }) {
+  useLocale();
   const tables = useRunTableMedia(projectId, block.runId);
   return (
     <>

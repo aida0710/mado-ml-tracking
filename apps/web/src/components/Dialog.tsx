@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { useModalDialog } from '../hooks/useModalDialog';
@@ -43,6 +44,7 @@ export function Dialog({
   fullScreenOnNarrow?: boolean;
   className?: string;
 }) {
+  useLocale();
   const titleId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
   useModalDialog(dialogRef);

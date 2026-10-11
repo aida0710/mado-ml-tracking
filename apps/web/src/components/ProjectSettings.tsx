@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ArtifactBackend, ProjectPatch, ProjectVisibility } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
@@ -14,10 +15,11 @@ import {
   type ProjectSettingsImpact,
 } from '../lib/projectSettingsChanges';
 import { text, textTemplates } from '../i18n/catalog';
+import { formatList } from '../i18n/textJoining';
 
 const VISIBILITY_CHANGE_NOTICES: Record<ProjectVisibility, string> = {
-  public: text.projectBecomesPublic,
-  private: text.projectBecomesPrivate,
+  get public() { return text.projectBecomesPublic; },
+  get private() { return text.projectBecomesPrivate; },
 };
 
 function describeImpact(impact: ProjectSettingsImpact): string {
@@ -37,6 +39,7 @@ function describeImpact(impact: ProjectSettingsImpact): string {
  * 保存 for the description would otherwise carry it along unnoticed.
  */
 export function ProjectSettings({ adminNames }: { adminNames: readonly string[] | undefined }) {
+  useLocale();
   const { project, isProjectAdmin, reloadProjects } = useProject();
   const [description, setDescription] = useState(project.description);
   const [visibility, setVisibility] = useState<ProjectVisibility>(project.visibility);
@@ -58,7 +61,7 @@ export function ProjectSettings({ adminNames }: { adminNames: readonly string[] 
       <h2>{text.project}</h2>
       {!isProjectAdmin && (
         <p className="muted">
-          {textTemplates.projectSettingsAdminOnly((adminNames ?? []).join('、'))}
+          {textTemplates.projectSettingsAdminOnly(formatList(adminNames ?? []))}
         </p>
       )}
       <Resource query={backends}>

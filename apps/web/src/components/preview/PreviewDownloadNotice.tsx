@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { Artifact } from '@mmt/contracts';
 import { Download } from 'lucide-react';
 import { trackingApi } from '../../api/tracking';
@@ -8,6 +9,7 @@ import { text } from '../../i18n/catalog';
  * the Artifacts list has no download column, so the preview must offer it.
  */
 export function PreviewDownloadNotice({ artifact, message }: { artifact: Artifact; message: string }) {
+  useLocale();
   return (
     <div className="notice preview-download-notice">
       <span>{message}</span>

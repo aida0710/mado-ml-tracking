@@ -1,3 +1,5 @@
+import { useLocalizedMemo } from '../../i18n/useLocalizedMemo';
+import { useLocale } from '../../i18n/useLocale';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { RunAnalysisPanelProps } from '../charts/chartProps';
@@ -35,6 +37,7 @@ function targetFieldKey(target: AnalysisTarget): string {
 
 /** Parallel coordinates, parameter importance and a scatter plot over one set of Runs. */
 export function RunAnalysisPanel({ projectId, runSet, onSelectionChange }: RunAnalysisPanelOptions) {
+  useLocale();
   const navigate = useNavigate();
   const [tab, setTab] = useState<AnalysisTab>('parallel');
   const [chosenTarget, setChosenTarget] = useState<AnalysisTarget | null>(null);
@@ -49,7 +52,7 @@ export function RunAnalysisPanel({ projectId, runSet, onSelectionChange }: RunAn
   const tableValue = table.value;
   const rows = useMemo(() => (tableValue ? analysisRows(tableValue) : []), [tableValue]);
   const params = useMemo(() => (tableValue ? paramFields(tableValue) : []), [tableValue]);
-  const metrics = useMemo(
+  const metrics = useLocalizedMemo(
     () => (tableValue ? metricFields(tableValue, text.analysisSweepObjective) : []),
     [tableValue],
   );

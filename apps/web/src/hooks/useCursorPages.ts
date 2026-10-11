@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { formatErrorMessage } from '../lib/errorMessage';
+import { useFailureMessage } from './useFailureMessage';
 
 export interface CursorPage<T> {
   items: T[];
@@ -28,7 +28,7 @@ export function useCursorPages<T>(
   const [items, setItems] = useState<T[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { message: error, setFailure, clearFailure } = useFailureMessage();
   const [revision, setRevision] = useState(0);
   // Aborts the in-flight page when the key changes or the list is reloaded.
   const controllerRef = useRef<AbortController | null>(null);
@@ -38,18 +38,18 @@ export function useCursorPages<T>(
     const controller = new AbortController();
     controllerRef.current = controller;
     setLoading(true);
-    setError(null);
+    clearFailure();
     try {
       const page = await loaderRef.current(cursor, controller.signal);
       if (controller.signal.aborted) return;
       setItems((previous) => (cursor ? [...previous, ...page.items] : page.items));
       setNextCursor(page.nextCursor ?? null);
     } catch (failure) {
-      if (!controller.signal.aborted) setError(formatErrorMessage(failure));
+      if (!controller.signal.aborted) setFailure(failure);
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
-  }, []);
+  }, [clearFailure, setFailure]);
 
   useEffect(() => {
     setItems([]);

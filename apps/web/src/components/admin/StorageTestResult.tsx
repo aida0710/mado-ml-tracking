@@ -1,13 +1,14 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { StorageTestResult as StorageTestResultValue } from '@mmt/contracts';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { text } from '../../i18n/catalog';
 
 // The API names the steps; names it adds later are shown as sent.
 const stepLabels: Record<string, string> = {
-  put: text.storageTestStepPut,
-  get: text.storageTestStepGet,
-  range: text.storageTestStepRange,
-  delete: text.storageTestStepDelete,
+  get put() { return text.storageTestStepPut },
+  get get() { return text.storageTestStepGet },
+  get range() { return text.storageTestStepRange },
+  get delete() { return text.storageTestStepDelete },
 };
 
 export function hasStorageTestPassed(result: StorageTestResultValue): boolean {
@@ -27,6 +28,7 @@ export function StorageTestResult({
   result: StorageTestResultValue;
   onEdit?: () => void;
 }) {
+  useLocale();
   const passed = hasStorageTestPassed(result);
   return (
     <section className="storage-test-result" aria-live="polite">

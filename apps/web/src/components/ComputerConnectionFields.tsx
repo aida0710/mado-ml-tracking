@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import type { ComputeTarget, TargetCheckWorker, TargetCheckWorkerPresence } from '@mmt/contracts';
 import type { FieldSuggestions, FormField, FormValues } from '../types/form';
@@ -44,6 +45,7 @@ export function ComputerConnectionFields({
   onWorkerChange: (worker: TargetCheckWorker) => void;
   onReloadWorkers: () => void;
 }) {
+  useLocale();
   const executor = getFieldValue(values, 'executor') === 'local' ? 'local' : 'ssh';
   const isSsh = executor === 'ssh';
   const sshFiles = findCheckWorker(workers, worker)?.sshFiles;

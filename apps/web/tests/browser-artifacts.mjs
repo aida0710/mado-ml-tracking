@@ -21,7 +21,7 @@ const browser = await chromium.launch({
   // Loop and switch checks press play from scripts, not from a user gesture.
   args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'],
 });
-const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1000 } });
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
 const fixtureDirectory = new URL('./fixtures/audio/', import.meta.url);

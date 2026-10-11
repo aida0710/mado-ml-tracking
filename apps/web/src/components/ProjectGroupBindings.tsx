@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ProjectGroupBinding } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
@@ -23,6 +24,7 @@ export function ProjectGroupBindings({
 }: {
   projectMembers: ReturnType<typeof useProjectMembers>;
 }) {
+  useLocale();
   const { project, isProjectAdmin, reloadProjects } = useProject();
   const { bindings, saveGroupBinding, removeGroupBinding } = useProjectGroupBindings(project.id);
   const [editing, setEditing] = useState<ProjectGroupBinding | 'new' | null>(null);
@@ -137,6 +139,7 @@ export function ProjectGroupBindings({
 function GroupBindingEditor(
   props: Omit<Parameters<typeof GroupBindingDialog>[0], 'groupNameCandidates'>,
 ) {
+  useLocale();
   const groupNameCandidates = useGroupNameCandidates();
   return <GroupBindingDialog {...props} groupNameCandidates={groupNameCandidates} />;
 }

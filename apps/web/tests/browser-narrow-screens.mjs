@@ -87,7 +87,7 @@ async function routeApi(route) {
 }
 
 async function openPhone(viewport) {
-  const context = await browser.newContext({ viewport, isMobile: true, hasTouch: true });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport, isMobile: true, hasTouch: true });
   await context.route((url) => url.pathname.startsWith('/api/'), routeApi);
   const page = await context.newPage();
   const pageErrors = [];
@@ -188,7 +188,7 @@ try {
   await phone.context.close();
 
   console.log('Browser check: wide screens keep the app name and every Run column');
-  const desktop = await browser.newContext({ viewport: DESKTOP });
+  const desktop = await browser.newContext({ locale: 'ja-JP', viewport: DESKTOP });
   await desktop.route((url) => url.pathname.startsWith('/api/'), routeApi);
   page = await desktop.newPage();
   await page.goto(`${projectBase}/experiments`);

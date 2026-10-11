@@ -1,5 +1,6 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
-import type { NotificationChannel, NotificationChannelKind } from '@mmt/contracts';
+import type { NotificationChannel, NotificationChannelKind, NotificationTestResult } from '@mmt/contracts';
 import { notificationsApi } from '../../api/notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { useMutation } from '../../hooks/useMutation';
@@ -19,6 +20,7 @@ import { ErrorNotice, Resource } from '../Feedback';
 import { FormDialog } from '../FormDialog';
 import { text, textTemplates } from '../../i18n/catalog';
 import { notificationChannelKindLabels } from '../../i18n/notifications';
+import { formatList, joinSentences } from '../../i18n/textJoining';
 
 /**
  * The channels a Project's rules may use. Only global administrators add and change them (as in
@@ -31,6 +33,7 @@ export function NotificationChannelSection({
   settings: NotificationSettingsState;
   projectId: string;
 }) {
+  useLocale();
   const { user } = useAuth();
   const canEditChannels = isGlobalAdmin(user);
   // The API refuses the names to anyone else, so only administrators ask for them.
@@ -41,19 +44,13 @@ export function NotificationChannelSection({
   const [editing, setEditing] = useState<NotificationChannel | 'new' | null>(null);
   const [savedUnconfigured, setSavedUnconfigured] = useState<string | null>(null);
   const test = useMutation();
-  const [testMessage, setTestMessage] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<NotificationTestResult | null>(null);
   const runTest = (channel: NotificationChannel) =>
     void test
       .run(() => settings.testChannel(channel.id))
       .then((result) => {
         if (!result) return;
-        setTestMessage(
-          result.delivered
-            ? text.notificationTestDelivered
-            : `${textTemplates.notificationTestError(
-                describeNotificationError(result.error ?? ''),
-              )} ${text.notificationTestNotInHistory}`,
-        );
+        setTestResult(result);
       });
   return (
     <>
@@ -67,7 +64,7 @@ export function NotificationChannelSection({
       </div>
       <p className="muted">
         {canEditChannels
-          ? `${text.notificationChannelHint}${text.notificationEmailHint}`
+          ? joinSentences([text.notificationChannelHint, text.notificationEmailHint])
           : text.notificationChannelsAdminOnly}
       </p>
       {savedUnconfigured && (
@@ -75,9 +72,13 @@ export function NotificationChannelSection({
           {textTemplates.notificationChannelSavedUnconfigured(savedUnconfigured)}
         </div>
       )}
-      {testMessage && (
+      {testResult && (
         <div className="notice" role="status">
-          {testMessage}
+          {testResult.delivered
+            ? text.notificationTestDelivered
+            : `${textTemplates.notificationTestError(
+                describeNotificationError(testResult.error ?? ''),
+              )} ${text.notificationTestNotInHistory}`}
         </div>
       )}
       <ErrorNotice message={test.error} />
@@ -187,10 +188,11 @@ export function NotificationChannelSection({
 }
 
 function MissingEnvironmentNotice({ names }: { names: string[] }) {
+  useLocale();
   if (!names.length) return null;
   return (
     <p className="notice warning" role="status">
-      {textTemplates.notificationEnvironmentMissing(names.join('、'))}
+      {textTemplates.notificationEnvironmentMissing(formatList(names))}
     </p>
   );
 }

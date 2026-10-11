@@ -13,7 +13,7 @@ const browser = await chromium.launch({
   ...(process.env.MMT_CHROMIUM_PATH ? { executablePath: process.env.MMT_CHROMIUM_PATH } : {}),
   args: ['--no-sandbox'],
 });
-const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1000 } });
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
 // Matches RUN_ARTIFACT_PAGE_SIZE in hooks/useRunArtifacts.ts.

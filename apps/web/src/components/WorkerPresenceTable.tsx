@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ComputeTarget, WorkerPresence } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { formatDate } from '../lib/format';
@@ -10,6 +11,7 @@ const workerStatusBadgeClass: Record<WorkerPresence['status'], string> = {
 };
 
 function WorkerStatusBadge({ status }: { status: WorkerPresence['status'] }) {
+  useLocale();
   return (
     <span
       className={`status-badge ${workerStatusBadgeClass[status]}`}
@@ -28,6 +30,7 @@ export function WorkerPresenceTable({
   workers: WorkerPresence[];
   targets: ComputeTarget[];
 }) {
+  useLocale();
   const targetName = (id: string) => targets.find((target) => target.id === id)?.name ?? id;
   return (
     <ResponsiveTable

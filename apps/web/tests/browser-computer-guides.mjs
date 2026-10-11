@@ -35,7 +35,7 @@ const browser = await chromium.launch({
 const pageErrors = [];
 
 async function signIn(email, displayName, viewport = DESKTOP) {
-  const context = await browser.newContext({ viewport });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport });
   await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: base });
   const login = await context.request.post(`${base}/api/auth/dev-login`, {
     headers: { Origin: base },
@@ -219,7 +219,7 @@ try {
   await launch.getByLabel('実行種別').selectOption('training');
   await launch.getByLabel('コードバージョン').selectOption(codeVersion.id);
   await launch.getByRole('button', { name: '次へ', exact: true }).click();
-  await launch.getByLabel('Compute target').selectOption(site.id);
+  await launch.getByLabel('コンピュータ').selectOption(site.id);
   await launch.getByRole('button', { name: '次へ', exact: true }).click();
   await launch.getByText('このコンピュータは手動投入です。', { exact: false }).waitFor();
   await launch.getByText(`mado-tracking submit --site ${site.id}`, { exact: true }).waitFor();

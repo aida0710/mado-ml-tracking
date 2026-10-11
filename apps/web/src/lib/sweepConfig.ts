@@ -6,6 +6,8 @@ import type {
   SweepParameterValue,
 } from '@mmt/contracts';
 import { text, textTemplates } from '../i18n/catalog';
+import { errorText, errorTextTemplates } from '../i18n/errors';
+import { LocalizedError } from './localizedError';
 
 /**
  * The three forms of a sweep's search settings: the W&B sweep config pasted as JSON, the editor
@@ -20,7 +22,7 @@ export type SweepSearchSettings = Pick<
 >;
 
 /** A config the screen cannot convert; the message names the key or parameter. */
-export class SweepConfigError extends Error {
+export class SweepConfigError extends LocalizedError {
   override name = 'SweepConfigError';
 }
 
@@ -47,6 +49,7 @@ const METRIC_KEYS = ['aggregation', 'goal', 'name'];
 const EARLY_TERMINATE_KEYS = ['eta', 'max_iter', 'min_iter', 'type'];
 
 type JsonRecord = Record<string, unknown>;
+type SweepConfigLocation = string | { parameterName: string };
 
 const isRecord = (value: unknown): value is JsonRecord =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -55,26 +58,30 @@ const isNumber = (value: unknown): value is number =>
 const isParameterValue = (value: unknown): value is SweepParameterValue =>
   typeof value === 'string' || typeof value === 'boolean' || isNumber(value);
 
-function rejectUnknownKeys(where: string, record: JsonRecord, allowed: string[]): void {
+function rejectUnknownKeys(where: SweepConfigLocation, record: JsonRecord, allowed: string[]): void {
   const unknown = Object.keys(record).filter((key) => !allowed.includes(key)).sort();
   if (unknown.length)
-    throw new SweepConfigError(textTemplates.sweepConfigUnsupportedKeys(where, unknown, allowed));
+    throw new SweepConfigError(() => textTemplates.sweepConfigUnsupportedKeys(
+      typeof where === 'string' ? where : errorTextTemplates.sweepParameterLocation(where.parameterName),
+      unknown,
+      allowed,
+    ));
 }
 
 function positiveInteger(key: string, value: unknown): number {
   if (!isNumber(value) || !Number.isInteger(value) || value < 1)
-    throw new SweepConfigError(textTemplates.sweepConfigPositiveInteger(key));
+    throw new SweepConfigError(() => textTemplates.sweepConfigPositiveInteger(key));
   return value;
 }
 
 function oneOf<T extends string>(key: string, value: unknown, allowed: readonly T[]): T {
-  if (!allowed.includes(value as T)) throw new SweepConfigError(textTemplates.sweepConfigOneOf(key, allowed));
+  if (!allowed.includes(value as T)) throw new SweepConfigError(() => textTemplates.sweepConfigOneOf(key, allowed));
   return value as T;
 }
 
 /** Converts a W&B sweep config (already parsed from JSON) into the API's search settings. */
 export function convertWandbSweepConfig(config: unknown): SweepSearchSettings {
-  if (!isRecord(config)) throw new SweepConfigError(textTemplates.sweepConfigNotObject('sweep config'));
+  if (!isRecord(config)) throw new SweepConfigError(() => textTemplates.sweepConfigNotObject('sweep config'));
   rejectUnknownKeys('sweep config', config, CONFIG_KEYS);
   const settings: SweepSearchSettings = {
     method: oneOf('method', config.method, SWEEP_METHODS),
@@ -88,10 +95,10 @@ export function convertWandbSweepConfig(config: unknown): SweepSearchSettings {
 }
 
 function convertMetric(metric: unknown): SweepSearchSettings['objective'] {
-  if (!isRecord(metric)) throw new SweepConfigError(textTemplates.sweepConfigNotObject('metric'));
+  if (!isRecord(metric)) throw new SweepConfigError(() => textTemplates.sweepConfigNotObject('metric'));
   rejectUnknownKeys('metric', metric, METRIC_KEYS);
   if (typeof metric.name !== 'string' || !metric.name.trim())
-    throw new SweepConfigError(textTemplates.sweepConfigNonEmptyString('metric.name'));
+    throw new SweepConfigError(() => textTemplates.sweepConfigNonEmptyString('metric.name'));
   const objective: SweepSearchSettings['objective'] = {
     metric: metric.name,
     goal: oneOf('metric.goal', metric.goal, METRIC_GOALS),
@@ -104,45 +111,45 @@ function convertMetric(metric: unknown): SweepSearchSettings['objective'] {
 
 function convertParameters(parameters: unknown): Record<string, SweepParameterDefinition> {
   if (!isRecord(parameters) || Object.keys(parameters).length === 0)
-    throw new SweepConfigError(textTemplates.sweepConfigNotObject('parameters'));
+    throw new SweepConfigError(() => textTemplates.sweepConfigNotObject('parameters'));
   return Object.fromEntries(
     Object.entries(parameters).map(([name, definition]) => {
-      if (!name) throw new SweepConfigError(textTemplates.sweepConfigParameterName());
+      if (!name) throw new SweepConfigError(() => textTemplates.sweepConfigParameterName());
       return [name, convertParameter(name, definition)];
     }),
   );
 }
 
 function convertParameter(name: string, definition: unknown): SweepParameterDefinition {
-  if (!isRecord(definition)) throw new SweepConfigError(textTemplates.sweepConfigNotObject(`parameter「${name}」`));
-  if ('parameters' in definition) throw new SweepConfigError(textTemplates.sweepConfigParameterNested(name));
-  const where = `parameter「${name}」`;
+  if (!isRecord(definition)) throw new SweepConfigError(() => textTemplates.sweepConfigNotObject(errorTextTemplates.sweepParameterLocation(name)));
+  if ('parameters' in definition) throw new SweepConfigError(() => textTemplates.sweepConfigParameterNested(name));
+  const where = { parameterName: name };
   const distribution = definition.distribution;
   if (distribution === 'categorical' || (distribution === undefined && 'values' in definition)) {
     rejectUnknownKeys(where, definition, ['distribution', 'values']);
     const values = definition.values;
     if (!Array.isArray(values) || !values.every(isParameterValue))
-      throw new SweepConfigError(textTemplates.sweepConfigParameterValues(name));
+      throw new SweepConfigError(() => textTemplates.sweepConfigParameterValues(name));
     return { values: [...values] };
   }
   if (distribution === 'constant' || (distribution === undefined && 'value' in definition)) {
     rejectUnknownKeys(where, definition, ['distribution', 'value']);
     if (!isParameterValue(definition.value))
-      throw new SweepConfigError(textTemplates.sweepConfigParameterValue(name));
+      throw new SweepConfigError(() => textTemplates.sweepConfigParameterValue(name));
     return { value: definition.value };
   }
   if (distribution === 'log_uniform')
-    throw new SweepConfigError(textTemplates.sweepConfigParameterLogUniform(name));
+    throw new SweepConfigError(() => textTemplates.sweepConfigParameterLogUniform(name));
   const wandbDistribution = distribution ?? inferredDistribution(name, definition);
   if (typeof wandbDistribution !== 'string' || !(wandbDistribution in WANDB_DISTRIBUTIONS))
-    throw new SweepConfigError(textTemplates.sweepConfigParameterDistribution(name, String(wandbDistribution)));
+    throw new SweepConfigError(() => textTemplates.sweepConfigParameterDistribution(name, String(wandbDistribution)));
   const apiDistribution = WANDB_DISTRIBUTIONS[wandbDistribution as keyof typeof WANDB_DISTRIBUTIONS];
   rejectUnknownKeys(where, definition, ['distribution', 'max', 'min', ...(apiDistribution === 'q_uniform' ? ['q'] : [])]);
   const { min, max } = definition;
   if (!isNumber(min) || !isNumber(max))
-    throw new SweepConfigError(textTemplates.sweepConfigParameterNumbers(name, 'min・max'));
+    throw new SweepConfigError(() => textTemplates.sweepConfigParameterNumbers(name, errorText.sweepRangeFields));
   if (!('q' in definition)) return { distribution: apiDistribution, min, max };
-  if (!isNumber(definition.q)) throw new SweepConfigError(textTemplates.sweepConfigParameterNumbers(name, 'q'));
+  if (!isNumber(definition.q)) throw new SweepConfigError(() => textTemplates.sweepConfigParameterNumbers(name, 'q'));
   return { distribution: apiDistribution, min, max, q: definition.q };
 }
 
@@ -152,12 +159,12 @@ function convertParameter(name: string, definition: unknown): SweepParameterDefi
  */
 function inferredDistribution(name: string, definition: JsonRecord): string {
   if (!('min' in definition) || !('max' in definition))
-    throw new SweepConfigError(textTemplates.sweepConfigParameterShape(name));
+    throw new SweepConfigError(() => textTemplates.sweepConfigParameterShape(name));
   return Number.isInteger(definition.min) && Number.isInteger(definition.max) ? 'int_uniform' : 'uniform';
 }
 
 function convertEarlyTerminate(earlyTerminate: unknown): SweepEarlyStopping {
-  if (!isRecord(earlyTerminate)) throw new SweepConfigError(textTemplates.sweepConfigNotObject('early_terminate'));
+  if (!isRecord(earlyTerminate)) throw new SweepConfigError(() => textTemplates.sweepConfigNotObject('early_terminate'));
   rejectUnknownKeys('early_terminate', earlyTerminate, EARLY_TERMINATE_KEYS);
   oneOf('early_terminate.type', earlyTerminate.type, ['hyperband']);
   const stopping: SweepEarlyStopping = {
