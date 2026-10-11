@@ -86,7 +86,7 @@ try {
   await getRequiredField(ruleDialog, '実行種別').selectOption('evaluation');
   await getRequiredField(ruleDialog, 'Experiments').selectOption(verified.experimentId);
   await getRequiredField(ruleDialog, 'コードバージョン').selectOption(codeVersion.id);
-  await getRequiredField(ruleDialog, 'Compute target').selectOption(verified.targetId);
+  await getRequiredField(ruleDialog, 'コンピュータ').selectOption(verified.targetId);
   await ruleDialog.getByLabel('入力データセットバージョン', { exact: true }).selectOption(verified.inputDatasetVersionId);
   await ruleDialog.getByLabel('有効', { exact: true }).uncheck();
   const [ruleResponse] = await Promise.all([

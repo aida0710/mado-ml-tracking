@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useNavigate } from 'react-router-dom';
 import type { JobRetryRequest, RunCheckpoint } from '@mmt/contracts';
 import { executionApi } from '../api/execution';
@@ -21,6 +22,7 @@ export function ResumeDialog({
   checkpoint?: Pick<RunCheckpoint, 'id' | 'step'>;
   onClose: () => void;
 }) {
+  useLocale();
   const navigate = useNavigate();
   const mutation = useMutation();
   const retryRequest: JobRetryRequest = checkpoint

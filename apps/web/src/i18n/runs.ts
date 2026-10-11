@@ -1,6 +1,8 @@
+import * as english from './en/runs';
+import { localized } from './localized';
 // Run list, server-side Run search, and its paging. native-run-search owns the entries.
 // Chart panels on the Run pages, system metrics and resumed segments: chart-panels-and-pages-web.
-export const runsText = {
+export const runsText = localized({
   // Short enough to read whole in the search box; the full grammar is in the error messages.
   queryHint: '名前、または metrics.loss < 0.1',
   searchWithSuggestion: 'この式で検索',
@@ -68,20 +70,20 @@ export const runsText = {
   runIdLabel: 'Run ID',
   manualRunNotice:
     '画面から作ったRunは「待機中」で始まり、そのままでは進みません。コードバージョンを選んでおくと、作成後にRunの詳細の［ジョブを起動］で実行できます。学習コードからmetricsを記録するときは、このフォームは使わずに［SDKで記録］の例を使います（Runは記録を始めたときに作られます）。',
-} as const;
+} as const, english.runsText);
 
 /** Panel titles of the system metrics tab, by category. */
-export const systemMetricCategoryLabels = {
+export const systemMetricCategoryLabels = localized({
   cpu: 'CPU',
   memory: 'メモリ',
   disk: 'ディスク',
   network: 'ネットワーク',
   gpu: 'GPU',
   other: 'その他',
-} as const;
+} as const, english.systemMetricCategoryLabels);
 
 /** Units of the system metrics panels. MLflow megabytes are drawn in bytes. */
-export const systemMetricUnitLabels = {
+export const systemMetricUnitLabels = localized({
   percent: '%',
   bytes: 'bytes',
   bytes_per_second: 'bytes/秒',
@@ -90,10 +92,10 @@ export const systemMetricUnitLabels = {
   celsius: '℃',
   watts: 'W',
   value: '値',
-} as const;
+} as const, english.systemMetricUnitLabels);
 
 // Text that embeds values; merged into catalog's textTemplates.
-export const runsTextTemplates = {
+export const runsTextTemplates = localized({
   runExecutionMode: (mode: string) => `実行モード: ${mode}`,
   filterUnexpectedAt: (position: number) =>
     `検索式の${position}文字目を確認してください。metrics / params / tags などの比較をANDでつなげ、文字列は引用符で囲みます（例: metrics.loss < 0.1 AND params.lr = '0.01'）。`,
@@ -125,4 +127,4 @@ export const runsTextTemplates = {
   systemMetricPanelTitle: (category: string, unit: string, gpuIndex: number | null) =>
     gpuIndex === null ? `${category}（${unit}）` : `${category} ${gpuIndex}（${unit}）`,
   resumeSegmentLabel: (index: number) => (index === 0 ? '最初の実行' : `再開 ${index}`),
-};
+}, english.runsTextTemplates);

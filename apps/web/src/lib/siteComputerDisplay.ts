@@ -1,6 +1,7 @@
 import type { ComputeTarget, Launcher, SiteConnectionCheck, SiteKey } from '@mmt/contracts';
 import type { SelectOption } from '../types/form';
 import { text } from '../i18n/catalog';
+import { formatNote } from '../i18n/textJoining';
 
 // Enough of a SHA-256 to tell versions apart in a table; the full value is in the title.
 const SHORT_SHA256_LENGTH = 12;
@@ -26,7 +27,7 @@ export function launcherOptions(
   launchers: readonly Launcher[],
   selectedId: string,
 ): SelectOption[] {
-  const revoked = (name: string) => `${name}（${text.launcherRevoked}）`;
+  const revoked = (name: string) => `${name}${formatNote(text.launcherRevoked)}`;
   const options = launchers
     .filter((launcher) => launcher.revokedAt === null || launcher.id === selectedId)
     .map((launcher) => ({

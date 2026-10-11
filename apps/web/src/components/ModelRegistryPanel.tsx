@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import type { ProjectRole } from '@mmt/contracts';
@@ -42,6 +43,7 @@ export function ModelRegistryPanel({
   onAssignAlias: () => void;
   onRemoveAlias: (assignment: { alias: string; version: string }) => void;
 }) {
+  useLocale();
   // Fetched again whenever the panel opens, so a protection added on its tab shows here.
   const protections = useModelAliasProtections(projectId, registry.selected?.id ?? null);
   const protectionOf = (alias: string) =>

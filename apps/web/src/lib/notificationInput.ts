@@ -17,6 +17,7 @@ import {
   splitLines,
   type FormValues,
 } from './formValues';
+import { formatList } from '../i18n/textJoining';
 
 /** The channel scope field: every Project, or only the Project being edited. */
 export type NotificationChannelScope = 'global' | 'project';
@@ -90,7 +91,7 @@ export function describeRuleFilter(
   const parts = [
     filter.runKinds?.length
       ? notificationsTextTemplates.notificationRuleFilterRunKinds(
-          filter.runKinds.map(runKindLabel).join('、'),
+          formatList(filter.runKinds.map(runKindLabel)),
         )
       : null,
     filter.experimentIds?.length

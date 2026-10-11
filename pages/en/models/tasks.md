@@ -20,7 +20,7 @@ A Task stores what to run: which code, with which model and data, and where. Tas
 
 1. Prepare a computer (Compute target) to run on: add one under コンピュータ (Computers) in the global settings, or pick one you can use. See [Computers and visibility](/en/compute/computers) and [Compute targets](/en/compute/targets).
 2. Register code in Code and create a version.
-3. Create a Task in Tasks, select the Experiment, code version, and Compute target, and save.
+3. Create a Task in Tasks, select the Experiment, code version, and computer, and save.
 4. Check with **テスト実行** (Test run), then launch with **通常実行** (Run).
 5. Check metrics, logs, the exit status, and Artifacts in the Run.
 
@@ -93,8 +93,8 @@ The Compute target must list the runtime ([Compute targets](/en/compute/targets)
 | Model version | The input model version (the base of a fine-tuning, the version to run inference with). Optional |
 | Code version | Only code versions that support the run kind and model family can be selected |
 | Input dataset versions | Dataset versions the worker fetches before running. Optional |
-| Compute target | Only targets you can use and that support the code version's runtime can be selected. A Private target can be used only by its owner and the Service Accounts the owner created. A Sweep created from this Task offers only such computers too ([Sweeps](/en/tracking/sweeps)) |
-| GPU ID | GPUs registered on the target. Without a GPU the Job runs on CPU only |
+| Computer | Only computers you can use and that support the code version's runtime can be selected. A Private computer can be used only by its owner and the Service Accounts the owner created. A Sweep created from this Task offers only such computers too ([Sweeps](/en/tracking/sweeps)) |
+| GPU ID | GPUs registered on the computer. Without a GPU the Job runs on CPU only |
 | Parameters, tags | JSON, for example `{"epochs": 8}` |
 
 3. Select the new Task and check that the saved settings are shown on the right.

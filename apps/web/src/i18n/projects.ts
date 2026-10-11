@@ -1,5 +1,7 @@
+import * as english from './en/projects';
+import { localized } from './localized';
 // Projects themselves: the switcher, creation, visibility, archiving and the admin Project list.
-export const projectsText = {
+export const projectsText = localized({
   projectSwitcherPlaceholder: 'プロジェクトを選択',
   projectSwitcherFilter: 'プロジェクトを絞り込み',
   projectSwitcherNotMember: '参加していない',
@@ -60,10 +62,10 @@ export const projectsText = {
   projectArchivedNotAccessible:
     'このプロジェクトはアーカイブされています。使うときは、全体管理者に全体管理の「プロジェクト」から元に戻すよう依頼してください。',
   projectSettingsContents: 'プロジェクト設定の目次',
-} as const;
+} as const, english.projectsText);
 
 // Text that embeds values.
-export const projectsTextTemplates = {
+export const projectsTextTemplates = localized({
   projectArchiveConfirm: (name: string) =>
     `「${name}」をアーカイブします。Run・モデル・Artifactのデータは残り、全体管理の「プロジェクト」から元に戻せます。`,
   projectArchiveStops: (usableTokenCount: number | undefined) =>
@@ -88,4 +90,4 @@ export const projectsTextTemplates = {
       : '変更できるのはこのプロジェクトのAdminです。変更が必要なときはAdminに依頼してください。',
   projectStorageChange: (from: string, to: string) =>
     `Artifactの保存先を「${from}」から「${to}」に変えます。既存のArtifactは「${from}」に残り、これから保存する分だけが「${to}」に入ります。`,
-};
+}, english.projectsTextTemplates);

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { Dataset, DatasetVersion } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
 import { useExecutionCatalog } from '../hooks/useExecutionCatalog';
@@ -29,6 +30,7 @@ export function DatasetVersionDialog({
   onClose: () => void;
   onSaved: (version: DatasetVersion) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const catalog = useExecutionCatalog(project.id);
   const title = `${dataset.name} · ${source === 'folder' ? text.datasetVersionFromFolder : text.newVersion}`;

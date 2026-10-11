@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { Model, ModelVersion } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
 import { useModelVersionForm } from '../hooks/useModelVersionForm';
@@ -33,6 +34,7 @@ export function ModelVersionDialog({
   onClose: () => void;
   onSaved: (version: ModelVersion) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const form = useModelVersionForm({ projectId: project.id, model });
   const { draft } = form;
@@ -141,7 +143,7 @@ export function ModelVersionDialog({
               )}
             </LabeledField>
             {pastedWeightsUri && !draft.weightsArtifact && (
-              <p className="notice" role="status">
+              <p className="notice action-notice" role="status">
                 <span>{text.weightsUriIsArtifact}</span>
                 <button
                   type="button"

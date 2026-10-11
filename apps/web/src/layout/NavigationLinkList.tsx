@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { NavLink } from 'react-router-dom';
 import { text } from '../i18n/catalog';
@@ -15,6 +16,7 @@ export function NavigationLinkList({
   groups: NavigationGroup[];
   showsTitles?: boolean;
 }) {
+  useLocale();
   const idPrefix = useId();
   return (
     <nav aria-label={text.navigation}>

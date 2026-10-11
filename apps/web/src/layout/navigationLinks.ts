@@ -28,11 +28,11 @@ type ProjectScreen =
 // The fourteen Project screens in the groups the sidebar and the drawer show, in display order.
 // The 全体設定 screens have groups of their own, shown only away from a Project.
 const SCREEN_GROUPS: { label: string; screens: ProjectScreen[] }[] = [
-  { label: text.navigationGroupTracking, screens: ['experiments', 'sweeps', 'reports'] },
-  { label: text.navigationGroupModels, screens: ['models', 'tasks', 'codes'] },
-  { label: text.navigationGroupData, screens: ['datasets', 'artifacts', 'lineage'] },
-  { label: text.navigationGroupExecution, screens: ['jobs', 'hooks', 'compute'] },
-  { label: text.navigationGroupProjectManagement, screens: ['plugins', 'settings'] },
+  { get label() { return text.navigationGroupTracking }, screens: ['experiments', 'sweeps', 'reports'] },
+  { get label() { return text.navigationGroupModels }, screens: ['models', 'tasks', 'codes'] },
+  { get label() { return text.navigationGroupData }, screens: ['datasets', 'artifacts', 'lineage'] },
+  { get label() { return text.navigationGroupExecution }, screens: ['jobs', 'hooks', 'compute'] },
+  { get label() { return text.navigationGroupProjectManagement }, screens: ['plugins', 'settings'] },
 ];
 
 /** A Project screen, or a 全体設定 screen (including the 全体管理 ones). */

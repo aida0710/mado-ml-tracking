@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { NotificationChannel, NotificationRule, RunKind } from '@mmt/contracts';
 import { NOTIFICATION_EVENT_TYPES } from '@mmt/contracts';
@@ -17,6 +18,7 @@ import {
   notificationChannelKindLabels,
   notificationEventTypeLabels,
 } from '../../i18n/notifications';
+import { formatList } from '../../i18n/textJoining';
 
 const RUN_KINDS: RunKind[] = ['training', 'finetuning', 'inference', 'evaluation', 'processing'];
 const runKindLabel = (kind: RunKind) => text[kind];
@@ -26,6 +28,7 @@ const runKindLabel = (kind: RunKind) => text[kind];
  * adds, so without one the button stays disabled and says whom to ask.
  */
 export function NotificationRuleSection({ settings }: { settings: NotificationSettingsState }) {
+  useLocale();
   const { user } = useAuth();
   const [isCreating, setIsCreating] = useState(false);
   const toggle = useMutation();
@@ -76,7 +79,7 @@ export function NotificationRuleSection({ settings }: { settings: NotificationSe
                 priority: 'secondary',
                 header: text.notificationRuleEvents,
                 render: (rule) =>
-                  rule.eventTypes.map((type) => notificationEventTypeLabels[type]).join('、'),
+                  formatList(rule.eventTypes.map((type) => notificationEventTypeLabels[type])),
               },
               {
                 key: 'filter',

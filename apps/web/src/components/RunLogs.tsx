@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { ArrowDownToLine, Download } from 'lucide-react';
 import { MAX_RUN_LOG_TAIL, type LogEntry, type RunLogList } from '@mmt/contracts';
@@ -25,6 +26,7 @@ const LOG_LEVELS = ['info', 'warning', 'error'] as const;
  * [最新へ] returns to it. The download always holds every line.
  */
 export function RunLogs({ logs }: { logs: RunLogsState }) {
+  useLocale();
   const [filter, setFilter] = useState<LogViewFilter>({ level: '', search: '' });
   const [order, setOrder] = useState<LogOrder>('oldestFirst');
   const changeFilter = (next: Partial<LogViewFilter>) =>
@@ -94,6 +96,7 @@ function LogLines({
   order: LogOrder;
   logs: RunLogsState;
 }) {
+  useLocale();
   const view = useRef<HTMLDivElement>(null);
   // Starts at the newest line; scrolling away stops following until [最新へ].
   const followsLatest = useRef(true);
@@ -173,6 +176,7 @@ function LogLines({
 }
 
 function LogLine({ entry }: { entry: LogEntry }) {
+  useLocale();
   return (
     <div className={`log-entry log-${entry.level}`}>
       <time dateTime={entry.timestamp}>{formatDateTimeSeconds(entry.timestamp)}</time>

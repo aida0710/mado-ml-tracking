@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId, useState } from 'react';
 import type { AdminProject } from '@mmt/contracts';
 import { adminProjectsApi } from '../../api/adminProjects';
@@ -21,6 +22,7 @@ export function ProjectPurgeDialog({
   onPurged: () => void;
   onClose: () => void;
 }) {
+  useLocale();
   const nameInputId = useId();
   const [typedName, setTypedName] = useState('');
   const mutation = useMutation();

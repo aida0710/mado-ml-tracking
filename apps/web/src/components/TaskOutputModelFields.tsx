@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { CodeVersion } from '@mmt/contracts';
 import type { ExecutionCatalog } from '../types/executionCatalog';
 import type { FormField, FormValues } from '../types/form';
@@ -16,6 +17,7 @@ export function TaskOutputModelFields({ values, catalog, code, onChange }: {
   values: FormValues; catalog: ExecutionCatalog; code: CodeVersion | undefined;
   onChange: (values: FormValues) => void;
 }) {
+  useLocale();
   const models = getOutputModelCandidates(catalog.models, code);
   const family = getOutputModelFamily(values, catalog.models);
   const codeOptions = buildCatalogOptions({ ...catalog, codeVersions: getDefaultCodeCandidates(catalog.codeVersions, family) }).codes;

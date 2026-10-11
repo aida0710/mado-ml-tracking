@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { StorageBackendPicker } from './StorageBackendPicker';
 import type { StorageBackendChoice } from '../hooks/useStorageBackends';
@@ -19,6 +20,7 @@ export function NewProjectStorageField({
   value: string;
   onChange: (backend: string) => void;
 }) {
+  useLocale();
   // Fixed at the first render, so choosing the default again does not fold the list away.
   const [isOpenAtStart] = useState(value !== defaultBackend);
   const picker = (

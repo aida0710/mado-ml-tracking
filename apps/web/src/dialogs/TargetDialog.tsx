@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { AuthConfig, ComputeTargetDetails, Launcher } from '@mmt/contracts';
 import { authApi } from '../api/auth';
 import { launchersApi } from '../api/launchers';
@@ -33,6 +34,7 @@ export function TargetDialog({
   onSaved: (target: ComputeTargetDetails) => void;
   target?: ComputeTargetDetails;
 }) {
+  useLocale();
   const { user } = useAuth();
   const choices = useQuery('target-dialog-choices', loadTargetChoices);
   const title = target ? text.editTarget : text.newTarget;
@@ -84,6 +86,7 @@ function TargetForm({
   onClose: () => void;
   onSaved: (target: ComputeTargetDetails) => void;
 }) {
+  useLocale();
   const { user } = useAuth();
   const canAddSshOrLocal = canAddSshOrLocalTarget(user);
   const form = useTargetForm({ target, canAddSshOrLocal });

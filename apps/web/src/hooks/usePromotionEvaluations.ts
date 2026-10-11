@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PromotionEvaluation } from '@mmt/contracts';
 import { promotionApi } from '../api/promotion';
-import { formatErrorMessage } from '../lib/errorMessage';
 import { useMutation } from './useMutation';
+import { useFailureMessage } from './useFailureMessage';
 
 export interface PromotionEvaluationsState {
   items: PromotionEvaluation[];
@@ -24,7 +24,7 @@ export function usePromotionEvaluations(
   const [items, setItems] = useState<PromotionEvaluation[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { message: error, setFailure, clearFailure } = useFailureMessage();
   const [revision, setRevision] = useState(0);
   const mutation = useMutation();
   // Aborts the in-flight page when the policy changes or the history is reloaded.
@@ -37,7 +37,7 @@ export function usePromotionEvaluations(
       const controller = new AbortController();
       controllerRef.current = controller;
       setLoading(true);
-      setError(null);
+      clearFailure();
       try {
         const page = await promotionApi.evaluations(projectId, {
           policyId,
@@ -48,12 +48,12 @@ export function usePromotionEvaluations(
         setItems((previous) => (cursor ? [...previous, ...page.items] : page.items));
         setNextCursor(page.nextCursor);
       } catch (failure) {
-        if (!controller.signal.aborted) setError(formatErrorMessage(failure));
+        if (!controller.signal.aborted) setFailure(failure);
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
     },
-    [projectId, policyId],
+    [projectId, policyId, clearFailure, setFailure],
   );
 
   useEffect(() => {

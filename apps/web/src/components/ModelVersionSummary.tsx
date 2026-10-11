@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { AutomatedRunSummary, ModelVersionDetail, Run } from '@mmt/contracts';
 import { CodeVersionNameLink } from './CodeVersionNameLink';
@@ -22,6 +23,7 @@ export function ModelVersionSummary({
   sourceRun: Run | undefined;
   resultRuns: AutomatedRunSummary[];
 }) {
+  useLocale();
   const { model, version, aliases } = detail;
   const base = `/projects/${projectId}`;
   const lineage = buildModelVersionLineage({

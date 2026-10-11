@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useMemo, useState, type ReactNode } from 'react';
 import type { ArtifactUploadListItem } from '@mmt/contracts';
 import { FileSearch, Play, RotateCcw, Trash2 } from 'lucide-react';
@@ -14,6 +15,7 @@ import {
 import { findResumeRecordByUploadId } from '../lib/uploadResumeStore';
 import { text, textTemplates } from '../i18n/catalog';
 import { resumeBlockerNextSteps, resumeBlockerReasons } from '../i18n/uploads';
+import { joinSentences } from '../i18n/textJoining';
 
 /**
  * Unfinished uploads of this Run, each with a way to continue it: choosing the file again sends
@@ -31,6 +33,7 @@ export function ResumableUploadList({
   onStartOver: (session: ArtifactUploadListItem, source: UploadSource) => void;
   onDiscard: (uploadId: string) => Promise<void>;
 }) {
+  useLocale();
   if (sessions.length === 0) return null;
   return (
     <section className="upload-resumable" aria-label={text.uploadResumableSessions}>
@@ -62,6 +65,7 @@ function ResumableUploadRow({
   onStartOver: (session: ArtifactUploadListItem, source: UploadSource) => void;
   onDiscard: (uploadId: string) => Promise<void>;
 }) {
+  useLocale();
   // The file the check refused, kept so [最初から送る] needs no second pick.
   const [refused, setRefused] = useState<{ blocker: ResumeBlocker; source: UploadSource } | null>(null);
   const check = useMutation();
@@ -100,8 +104,7 @@ function ResumableUploadRow({
       {blocker && (
         // Announced when a pick was refused; an expired row says it from the start, quietly.
         <p className="upload-queue-error" role={refused ? 'alert' : undefined}>
-          {resumeBlockerReasons[blocker]}
-          {resumeBlockerNextSteps[blocker]}
+          {joinSentences([resumeBlockerReasons[blocker], resumeBlockerNextSteps[blocker]])}
         </p>
       )}
       {check.pending && <p className="muted" role="status">{text.uploadResumeChecking}</p>}
@@ -141,9 +144,9 @@ function ResumableUploadRow({
 type RowPicker = 'continue' | 'chooseAgain' | 'startOver';
 
 const PICKER_LABELS: Record<RowPicker, string> = {
-  continue: text.uploadContinue,
-  chooseAgain: text.uploadChooseAgain,
-  startOver: text.uploadStartOver,
+  get continue() { return text.uploadContinue; },
+  get chooseAgain() { return text.uploadChooseAgain; },
+  get startOver() { return text.uploadStartOver; },
 };
 const PICKER_ICONS: Record<RowPicker, ReactNode> = {
   continue: <Play size={14} />,
@@ -171,6 +174,7 @@ function FilePickerButton({
   disabled: boolean;
   onPick: (source: UploadSource) => void;
 }) {
+  useLocale();
   return (
     <label className="button small" aria-disabled={disabled}>
       {icon}

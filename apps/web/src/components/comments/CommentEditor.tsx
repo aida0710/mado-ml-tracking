@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { COMMENT_MAX_LENGTH } from '@mmt/contracts';
 import { MarkdownEditor } from '../markdown/MarkdownEditor';
@@ -26,6 +27,7 @@ export function CommentEditor({
   onSubmit: (body: string) => Promise<unknown>;
   onCancel?: () => void;
 }) {
+  useLocale();
   const [body, setBody] = useState(initialBody);
   const [showsRequired, setShowsRequired] = useState(false);
   const mutation = useMutation();

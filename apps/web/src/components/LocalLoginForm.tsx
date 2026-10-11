@@ -1,11 +1,14 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { authApi } from '../api/auth';
 import { useMutation } from '../hooks/useMutation';
 import { ErrorNotice } from './Feedback';
 import { text } from '../i18n/catalog';
 import { localLoginErrorMessage } from '../lib/authErrorMessages';
+import { LocalizedError } from '../lib/localizedError';
 
 export function LocalLoginForm({ onLogin }: { onLogin: () => void }) {
+  useLocale();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const mutation = useMutation();
@@ -18,7 +21,7 @@ export function LocalLoginForm({ onLogin }: { onLogin: () => void }) {
             await authApi.localLogin({ username, password });
           } catch (error) {
             setPassword('');
-            throw new Error(localLoginErrorMessage(error));
+            throw new LocalizedError(() => localLoginErrorMessage(error));
           }
           onLogin();
         });

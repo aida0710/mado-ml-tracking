@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { Project } from '@mmt/contracts';
 import type { QueryState } from '../hooks/useQuery';
@@ -17,6 +18,7 @@ export function AccountTokenDialog({
   onClose: () => void;
   onCreated: () => void;
 }) {
+  useLocale();
   const [projectId, setProjectId] = useState<string | null>(null);
   const [project, setProject] = useState<Project | null>(null);
   if (project) return <TokenDialog project={project} onClose={onClose} onCreated={onCreated} />;

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import type { Artifact } from '@mmt/contracts';
@@ -22,6 +23,7 @@ export function ArtifactActionsMenu({
   isReferenced: boolean | null;
   onDeleted: () => void;
 }) {
+  useLocale();
   const menuId = useId();
   const reasonId = useId();
   const popover = usePopover();

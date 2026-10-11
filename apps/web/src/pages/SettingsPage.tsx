@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { useProject } from '../hooks/useProject';
 import { useAuditEvents } from '../hooks/useAuditEvents';
@@ -27,6 +28,7 @@ import { text } from '../i18n/catalog';
  * and 全体管理.
  */
 export function SettingsPage() {
+  useLocale();
   const { project, isProjectAdmin } = useProject();
   // The API refuses non-administrators, so they never request the log.
   const audit = useAuditEvents(isProjectAdmin ? { projectId: project.id } : null);

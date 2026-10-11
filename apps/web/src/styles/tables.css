@@ -232,6 +232,11 @@
     margin-left: auto;
   }
 }
+/* English column names may wrap at their spaces, so a wide table (Jobs) narrows before it
+   scrolls. Japanese ones stay on one line: they would break between any two characters. */
+:lang(en) .responsive-table th:not(.nowrap) {
+  white-space: normal;
+}
 /* Action buttons of a row opened by ResponsiveTable wrap under the secondary columns. */
 .responsive-table-details dd :is(.access-actions, .user-actions, .storage-row-actions) {
   flex-wrap: wrap;

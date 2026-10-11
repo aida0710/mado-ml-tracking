@@ -22,8 +22,9 @@ export interface ProjectSettingsSection {
 
 const ids = PROJECT_SETTINGS_SECTION_IDS;
 // The page's parts in display order. Admin-only parts are shown to Project admins alone, as each
-// part decides for itself (Service Accounts, notifications, the audit log and archiving).
-const SECTIONS: (ProjectSettingsSection & { isAdminOnly: boolean })[] = [
+// part decides for itself (Service Accounts, notifications, the audit log and archiving). Built on
+// each call so the labels follow the display language.
+const getSections = (): (ProjectSettingsSection & { isAdminOnly: boolean })[] => [
   { id: ids.project, label: text.project, isAdminOnly: false },
   { id: ids.usage, label: text.artifactUsage, isAdminOnly: false },
   { id: ids.connection, label: text.recordingConnection, isAdminOnly: false },
@@ -38,7 +39,7 @@ const SECTIONS: (ProjectSettingsSection & { isAdminOnly: boolean })[] = [
 
 /** The parts of the Project settings page this user sees, for its contents. */
 export function projectSettingsSections(isProjectAdmin: boolean): ProjectSettingsSection[] {
-  return SECTIONS.filter((section) => isProjectAdmin || !section.isAdminOnly).map(
+  return getSections().filter((section) => isProjectAdmin || !section.isAdminOnly).map(
     ({ id, label }) => ({ id, label }),
   );
 }

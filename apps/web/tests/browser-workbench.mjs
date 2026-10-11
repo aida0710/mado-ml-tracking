@@ -7,7 +7,7 @@ if (!modulePath) throw new Error('Set MMT_PLAYWRIGHT_MODULE to an installed Play
 const { chromium } = await import(pathToFileURL(modulePath).href);
 const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'],
   ...(process.env.MMT_CHROMIUM_PATH ? { executablePath: process.env.MMT_CHROMIUM_PATH } : {}) });
-const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
+const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 960 } });
 const api = createBrowserApi();
 // Repeat quick switches to catch model events arriving with the previous file's listener.
 const RAPID_FILE_SWITCH_COUNT = 3;
@@ -230,7 +230,7 @@ try {
   await page.getByRole('button', { name: 'Taskを作成', exact: true }).click();
   await fill('名前', 'Browser Task');
   await dialog().getByLabel('コードバージョン').selectOption(smoke.id);
-  await dialog().getByLabel('Compute target').selectOption(api.state.targets[0].id);
+  await dialog().getByLabel('コンピュータ').selectOption(api.state.targets[0].id);
   // No GPU is checked until one is chosen: the Task runs on the CPU.
   assert.equal(
     await dialog().getByRole('group', { name: 'GPU ID' }).getByRole('checkbox', { checked: true }).count(),

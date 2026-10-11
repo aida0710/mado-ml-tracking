@@ -1,8 +1,10 @@
+import * as english from './en/reports';
+import { localized } from './localized';
 import type { ReportBlockType, ReportEmbedMode } from '@mmt/contracts';
 import type { ReportBlockProblem } from '../lib/reportBlocks';
 
 // Shared reports: the list, the report page with its embeds, the editor and the revision history.
-export const reportsText = {
+export const reportsText = localized({
   reports: 'Reports',
   reportNew: 'レポートを作成',
   reportNone: 'レポートはまだありません',
@@ -96,9 +98,9 @@ export const reportsText = {
   reportMediaTableNone: 'このRunに表はありません',
   reportRunNoneWithTable: '表を記録したRunはありません',
   reportTitleRequired: '題名を入力してください',
-} as const;
+} as const, english.reportsText);
 
-export const reportBlockTypeLabels: Record<ReportBlockType, string> = {
+export const reportBlockTypeLabels: Record<ReportBlockType, string> = localized({
   markdown: '文章',
   chart: 'メトリクスの図',
   parallel_coordinates: '平行座標',
@@ -107,14 +109,14 @@ export const reportBlockTypeLabels: Record<ReportBlockType, string> = {
   run_table: 'Run一覧',
   media: 'メディアの比較',
   media_table: 'メディアの表',
-};
+}, english.reportBlockTypeLabels);
 
-export const reportEmbedModeLabels: Record<ReportEmbedMode, string> = {
-  live: reportsText.reportModeLive,
-  snapshot: reportsText.reportModeSnapshot,
-};
+export const reportEmbedModeLabels: Record<ReportEmbedMode, string> = localized({
+  get live() { return reportsText.reportModeLive; },
+  get snapshot() { return reportsText.reportModeSnapshot; },
+}, english.reportEmbedModeLabels);
 
-export const reportBlockProblemLabels: Record<ReportBlockProblem, string> = {
+export const reportBlockProblemLabels: Record<ReportBlockProblem, string> = localized({
   runSetEmpty: '対象のRunを選んでください',
   chartMetricsEmpty: '図の設定でメトリクスを選んでください',
   parallelMetricEmpty: '最後の軸にするメトリクスを選んでください',
@@ -125,10 +127,10 @@ export const reportBlockProblemLabels: Record<ReportBlockProblem, string> = {
   mediaRunsEmpty: '比べるRunを選んでください',
   mediaKeyEmpty: 'メディアのキーを選んでください',
   mediaTableEmpty: 'Runと表を選んでください',
-};
+}, english.reportBlockProblemLabels);
 
 // Text that embeds values; merged into catalog's textTemplates.
-export const reportsTextTemplates = {
+export const reportsTextTemplates = localized({
   reportRevisionLabel: (revision: number) => `バージョン ${revision}`,
   reportInsertBelow: (position: number) => `ここに追加（${position}番目のブロックの下）`,
   reportUpdatedSummary: (revision: number, author: string, updatedAt: string) =>
@@ -148,4 +150,4 @@ export const reportsTextTemplates = {
   reportMediaTableOption: (key: string, step: number) => `${key}（step ${step}）`,
   reportMediaRunsWithoutKey: (runNames: string) => `このキーのメディアが無いRun: ${runNames}`,
   reportMediaTableSource: (runName: string, key: string, step: number) => `${runName} · ${key}（step ${step}）`,
-};
+}, english.reportsTextTemplates);

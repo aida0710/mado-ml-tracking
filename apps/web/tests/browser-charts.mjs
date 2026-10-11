@@ -154,7 +154,7 @@ function groupsResponse(body) {
 
 const seriesRequests = [];
 const groupRequests = [];
-const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1000 } });
 await context.route(
   (url) => url.pathname.startsWith('/api/'),
   async (route) => {

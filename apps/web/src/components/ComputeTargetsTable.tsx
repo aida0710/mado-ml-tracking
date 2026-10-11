@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ComputeTargetDetails, User, WorkerPresence } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { WorkerCoverageBadge } from './WorkerCoverage';
@@ -27,6 +28,7 @@ export function ComputeTargetsTable({
   workers: WorkerPresence[] | undefined;
   user: Pick<User, 'id'>;
 }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={targets}

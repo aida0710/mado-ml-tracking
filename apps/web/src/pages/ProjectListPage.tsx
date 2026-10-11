@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import type { Project } from '@mmt/contracts';
@@ -13,6 +14,7 @@ import { useUnreachableProjectReason } from '../hooks/useUnreachableProjectReaso
 import { text, textTemplates } from '../i18n/catalog';
 
 function ProjectTable({ projects, empty }: { projects: Project[]; empty?: string }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={projects}
@@ -67,6 +69,7 @@ export function ProjectListPage({
   archivedProjectName: string | null;
   onCreateProject?: () => void;
 }) {
+  useLocale();
   const { user } = useAuth();
   const unreachableReason = useUnreachableProjectReason(unreachableProjectId);
   const { memberProjects, publicProjects } = splitProjectList(projects);

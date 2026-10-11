@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { PluginOutboxSummary } from '@mmt/contracts';
 import type { QueryState } from '../hooks/useQuery';
 import { formatDate } from '../lib/format';
@@ -7,6 +8,7 @@ import { text } from '../i18n/catalog';
 
 /** Undelivered plugin events: counts, the oldest one, and the latest failure code. */
 export function PluginOutboxStatus({ summary }: { summary: QueryState<PluginOutboxSummary> }) {
+  useLocale();
   return (
     <section className="plugin-outbox" data-testid="plugin-outbox">
       <h3>{text.pluginOutbox}</h3>

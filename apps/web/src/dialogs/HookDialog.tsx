@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { Hook, HookCreated } from '@mmt/contracts';
 import type { HookCatalog } from '../types/hooks';
@@ -14,6 +15,7 @@ import { hookWebhookSignatureHints, hooksTextTemplates } from '../i18n/hooks';
 
 /** One value of the new webhook, with a copy button. */
 function WebhookValue({ label, value }: { label: string; value: string }) {
+  useLocale();
   return (
     <div className="field">
       <span>{label}</span>
@@ -27,6 +29,7 @@ function WebhookValue({ label, value }: { label: string; value: string }) {
  * is shown here once, next to the path the sender posts to.
  */
 function WebhookCreated({ created, onClose }: { created: HookCreated; onClose: () => void }) {
+  useLocale();
   const signature = created.hook.webhookSignature;
   return (
     <Dialog title={text.hookWebhookCreated} onClose={onClose}>
@@ -70,6 +73,7 @@ export function HookDialog({
   onCreated: (hook: Hook) => void;
   onClose: () => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const form = useHookForm({
     projectId: project.id,

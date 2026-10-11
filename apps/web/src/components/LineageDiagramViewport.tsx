@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Maximize2, ZoomIn, ZoomOut } from 'lucide-react';
 import { useDragToScroll } from '../hooks/useDragToScroll';
@@ -20,6 +21,7 @@ export function LineageDiagramViewport({
   projectId: string;
   fitOnOpen: boolean;
 }) {
+  useLocale();
   const viewport = useElementWidth();
   const dragHandlers = useDragToScroll<HTMLDivElement>();
   // null until the reader zooms: the default follows the viewport width as it is measured.

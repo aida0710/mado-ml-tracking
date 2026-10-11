@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId, useMemo, useState, type KeyboardEvent } from 'react';
 import { CartesianGrid, ComposedChart, Line, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import type { MetricXRange } from '@mmt/contracts';
@@ -51,6 +52,7 @@ export function MetricsChart({
   height = DEFAULT_CHART_HEIGHT,
   onZoom,
 }: MetricsChartProps) {
+  useLocale();
   const [hiddenIds, setHiddenIds] = useState<ReadonlySet<string>>(new Set());
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [zoomRange, setZoomRange] = useState<MetricXRange | null>(null);

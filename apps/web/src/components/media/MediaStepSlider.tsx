@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { stepIndexAfterKey } from '../../lib/mediaSteps';
 import { text, textTemplates } from '../../i18n/catalog';
@@ -16,6 +17,7 @@ export function MediaStepSlider({
   step: number;
   onStepChange: (step: number) => void;
 }) {
+  useLocale();
   const index = Math.max(0, steps.indexOf(step));
   const moveTo = (nextIndex: number) => {
     const next = steps[nextIndex];

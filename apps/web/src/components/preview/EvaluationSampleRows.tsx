@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { Fragment } from 'react';
 import { sampleTextDiff } from '../../lib/evaluationSamples';
 import { formatValue } from '../../lib/format';
@@ -15,6 +16,7 @@ export function EvaluationSampleRows({
   expandedLine,
   onToggleExpanded,
 }: EvaluationSampleListProps) {
+  useLocale();
   return (
     <div className="table-scroll">
       <table className="evaluation-samples-table">

@@ -8,6 +8,7 @@ import {
 } from '../lib/datasetFolderResume';
 import type { UploadSource } from '../lib/droppedFiles';
 import { formatErrorMessage } from '../lib/errorMessage';
+import { useLocale } from '../i18n/useLocale';
 
 /** The stopped attempt a chosen folder continues, with what it already holds of the folder. */
 export interface FolderContinuation {
@@ -21,7 +22,7 @@ type ContinuationCheck =
   | { status: 'idle' }
   | { status: 'checking' }
   | { status: 'ready'; continuation: FolderContinuation | null }
-  | { status: 'failed'; error: string };
+  | { status: 'failed'; failure: unknown };
 
 /**
  * Decides whether the chosen folder continues a stopped attempt. Choosing a folder compares it
@@ -39,6 +40,7 @@ export function useFolderContinuation({
   uploads: UnfinishedFolderUpload[];
   loadStoredFiles: (folder: string) => Promise<StoredFolderFile[]>;
 }) {
+  useLocale();
   // Both belong to one selection of files, so choosing another folder forgets them.
   const [chosenFolder, setChosenFolder] = useState<{ sources: UploadSource[]; folder: string } | null>(null);
   const [declinedSources, setDeclinedSources] = useState<UploadSource[] | null>(null);
@@ -82,7 +84,7 @@ export function useFolderContinuation({
         setCheck({ status: 'ready', continuation: best ?? null });
       },
       (failure: unknown) => {
-        if (isCurrent) setCheck({ status: 'failed', error: formatErrorMessage(failure) });
+        if (isCurrent) setCheck({ status: 'failed', failure });
       },
     );
     return () => {
@@ -94,7 +96,8 @@ export function useFolderContinuation({
   return {
     continuation: check.status === 'ready' ? check.continuation : null,
     isChecking: check.status === 'checking',
-    error: check.status === 'failed' ? check.error : null,
+    // Put into words here, so a later change of display language reaches the message.
+    error: check.status === 'failed' ? formatErrorMessage(check.failure) : null,
     /** Continues this attempt with the folder chosen from its row. */
     continueUpload: (upload: UnfinishedFolderUpload, chosen: UploadSource[]) => {
       setDeclinedSources(null);

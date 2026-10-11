@@ -1,6 +1,8 @@
+import * as english from './en/admin';
+import { localized } from './localized';
 // 全体設定 (/settings/<section>): its two sidebar groups, the 全体管理 sections, the user menu and
 // the account page.
-export const adminText = {
+export const adminText = localized({
   globalSettings: '全体設定',
   administration: '全体管理',
   settingsSectionComputers: 'コンピュータ',
@@ -44,11 +46,10 @@ export const adminText = {
   userIsYou: 'あなた',
   userLastAdminLocked:
     '最後の全体管理者なので、無効化も管理者を外すこともできません。先にほかの人を全体管理者にしてください。',
-  userServiceAccountOf: 'Project',
   localLoginDisabledNotice:
     '今のAPI serverの設定（AUTH_MODE）では、ローカルアカウントでログインできません。作成はできますが、ログインできるのはAUTH_MODEをlocalかhybridにしたときです。',
   initialPassword: '初回パスワード',
-  initialPasswordHint: '12文字以上。初回ログインで変更を求めます。',
+  initialPasswordHint: "UTF-8で12〜1024バイト。初回ログイン時に変更が必要です。",
   generatePassword: '生成',
   emailOptional: 'メールアドレス（任意）',
   makeGlobalAdmin: '全体管理者にする',
@@ -68,9 +69,9 @@ export const adminText = {
   accountTokenProject: 'プロジェクト',
   accountTokenAllProjects: 'すべて',
   accountTokenNoProjects: 'API tokenを発行するには、プロジェクトを作成するか参加してください。',
-} as const;
+} as const, english.adminText);
 
-export const adminTextTemplates = {
+export const adminTextTemplates = localized({
   userDisableConfirm: (name: string) =>
     `「${name}」を無効化します。ログイン中のsessionは直ちに終了し、API tokenも使えなくなります。`,
   userEnableConfirm: (name: string) =>
@@ -85,4 +86,4 @@ export const adminTextTemplates = {
   userResetPasswordConfirm: (name: string) =>
     `「${name}」のパスワードを一時パスワードに置き換え、ログイン中のsessionを終了します。`,
   groupsSyncedAt: (date: string) => `最終同期 ${date}`,
-};
+}, english.adminTextTemplates);

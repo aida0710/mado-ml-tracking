@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { Artifact, DatasetVersion } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
@@ -17,6 +18,7 @@ import { text } from '../i18n/catalog';
  * below it; on a narrow screen the preview takes the tree's place until going back.
  */
 export function DatasetFiles({ version }: { version: DatasetVersion }) {
+  useLocale();
   const [prefix, setPrefix] = useState('');
   const [chosen, setChosen] = useState<Artifact>();
   const { tree, files } = useDatasetFiles(
@@ -68,6 +70,7 @@ export function DatasetFiles({ version }: { version: DatasetVersion }) {
 
 /** The tree entry carries the dataset path; the preview needs the stored Artifact itself. */
 function DatasetFilePreview({ entry }: { entry: Artifact }) {
+  useLocale();
   const artifact = useQuery(`${entry.projectId}:artifact:${entry.id}`, (signal) =>
     trackingApi.artifact(entry.projectId, entry.id, signal),
   );

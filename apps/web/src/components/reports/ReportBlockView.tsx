@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { Component, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pin, Radio } from 'lucide-react';
@@ -39,6 +40,7 @@ export interface ReportBlockViewProps {
 
 /** One block of a report: Markdown, or an embed drawn by the same components as the other pages. */
 export function ReportBlockView({ projectId, block, snapshot, snapshotState, preview = false }: ReportBlockViewProps) {
+  useLocale();
   if (block.type === 'markdown')
     return (
       <div className="report-markdown">
@@ -76,6 +78,7 @@ export function ReportBlockView({ projectId, block, snapshot, snapshotState, pre
 
 /** The Run and step of an embedded table; a snapshot's table rows alone do not say which they are. */
 function MediaTableSource({ projectId, block }: { projectId: string; block: Extract<ReportEmbedBlock, { type: 'media_table' }> }) {
+  useLocale();
   const source = useMediaTableSource(projectId, block);
   if (!source) return null;
   return (
@@ -86,6 +89,7 @@ function MediaTableSource({ projectId, block }: { projectId: string; block: Extr
 }
 
 function EmbedModeMark({ block, snapshot }: { block: ReportEmbedBlock; snapshot: ReportBlockSnapshot | undefined }) {
+  useLocale();
   if (block.mode === 'live')
     return (
       <span className="report-mode-mark live">
@@ -102,6 +106,7 @@ function EmbedModeMark({ block, snapshot }: { block: ReportEmbedBlock; snapshot:
 }
 
 function LiveEmbed({ projectId, block }: { projectId: string; block: Exclude<ReportEmbedBlock, { type: 'media_table' }> }) {
+  useLocale();
   const data = useLiveBlockData(projectId, block);
   if (data.error)
     return (
@@ -116,6 +121,7 @@ function LiveEmbed({ projectId, block }: { projectId: string; block: Exclude<Rep
 
 /** Draws stored or current data. Data of another type (a block edited since) is not drawn. */
 function EmbedContent({ projectId, block, data }: { projectId: string; block: ReportEmbedBlock; data: ReportSnapshotData }) {
+  useLocale();
   const navigate = useNavigate();
   const runPath = (runId: string) => `/projects/${encodeURIComponent(projectId)}/runs/${encodeURIComponent(runId)}`;
   if (block.type !== data.type) return <Empty>{text.reportSnapshotMissing}</Empty>;
@@ -194,6 +200,7 @@ function EmbedContent({ projectId, block, data }: { projectId: string; block: Re
 
 /** The first page of a table as it was stored; the cells still point at immutable Artifacts. */
 function SnapshotMediaTable({ projectId, page }: { projectId: string; page: MediaTablePage }) {
+  useLocale();
   const exclusiveAudio = useExclusiveAudio();
   return (
     <div className="media-table">

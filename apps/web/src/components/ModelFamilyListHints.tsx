@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Plus } from 'lucide-react';
 import { useModelFamilies } from '../hooks/useModelFamilies';
 import { useProject } from '../hooks/useProject';
@@ -18,6 +19,7 @@ export function ModelFamilyListHints({
   value: string;
   onChange: (value: string) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const { families } = useModelFamilies(project.id);
   const names = families.map((family) => family.name);

@@ -28,6 +28,7 @@ import { getFieldValue, parseChoice, splitLines } from './formValues';
 import { formatSiteVariables, parseSiteVariables } from './siteVariables';
 import { text } from '../i18n/catalog';
 import { siteComputersTextTemplates } from '../i18n/siteComputers';
+import { LocalizedError } from './localizedError';
 
 /** Every global setting of a site; the job shell is saved on its own, as a new version. */
 export type SiteSettingsValues = Omit<SiteSettings, 'jobShell'>;
@@ -65,10 +66,23 @@ export function siteSettingsFormValues(site: SiteSettings | null): FormValues {
   };
 }
 
-function parseIntegerInRange(value: string, label: string, min: number, max: number): number {
+/** The fields read with parseIntegerInRange; the error names the field in the current language. */
+type IntegerFieldLabel = 'sitePort' | 'maxActiveSubmissions' | 'cancelGraceSeconds' | 'maxOutputFiles';
+
+function parseIntegerInRange({
+  value,
+  label,
+  min,
+  max,
+}: {
+  value: string;
+  label: IntegerFieldLabel;
+  min: number;
+  max: number;
+}): number {
   const number = Number(value.trim());
   if (!value.trim() || !Number.isSafeInteger(number) || number < min || number > max)
-    throw new Error(siteComputersTextTemplates.siteNumberRangeError(label, min, max));
+    throw new LocalizedError(() => siteComputersTextTemplates.siteNumberRangeError(text[label], min, max));
   return number;
 }
 
@@ -120,7 +134,7 @@ function parseKnownHosts(value: string): string {
     throw new Error(text.siteKnownHostsLineError);
   const stored = `${knownHosts}\n`;
   if (new TextEncoder().encode(stored).length > MAX_KNOWN_HOSTS_BYTES)
-    throw new Error(
+    throw new LocalizedError(() =>
       siteComputersTextTemplates.siteKnownHostsTooLarge(MAX_KNOWN_HOSTS_BYTES / BYTES_PER_KIB),
     );
   return stored;
@@ -133,12 +147,12 @@ function parseConnection(values: FormValues): SiteConnection {
   const jumpHosts = splitLines(getFieldValue(values, 'siteJumpHosts'));
   const invalidJumpHost = jumpHosts.find((jumpHost) => !SITE_JUMP_HOST_PATTERN.test(jumpHost));
   if (invalidJumpHost !== undefined)
-    throw new Error(siteComputersTextTemplates.siteJumpHostError(invalidJumpHost));
+    throw new LocalizedError(() => siteComputersTextTemplates.siteJumpHostError(invalidJumpHost));
   if (jumpHosts.length > MAX_SITE_JUMP_HOSTS)
-    throw new Error(siteComputersTextTemplates.siteJumpHostsTooMany(MAX_SITE_JUMP_HOSTS));
+    throw new LocalizedError(() => siteComputersTextTemplates.siteJumpHostsTooMany(MAX_SITE_JUMP_HOSTS));
   return {
     host,
-    port: parseIntegerInRange(getFieldValue(values, 'sitePort'), text.sitePort, 1, MAX_PORT),
+    port: parseIntegerInRange({ value: getFieldValue(values, 'sitePort'), label: 'sitePort', min: 1, max: MAX_PORT }),
     jumpHosts,
     knownHosts: parseKnownHosts(getFieldValue(values, 'siteKnownHosts')),
   };
@@ -180,23 +194,23 @@ export function buildSiteSettingsInput(values: FormValues): SiteSettingsValues {
     gpuAssignment,
     leaseGpuIds: gpuAssignment === 'lease' ? splitLines(getFieldValue(values, 'leaseGpuIds')) : [],
     variables: parseSiteVariables(getFieldValue(values, 'siteVariables')),
-    maxActiveSubmissions: parseIntegerInRange(
-      getFieldValue(values, 'maxActiveSubmissions'),
-      text.maxActiveSubmissions,
-      1,
-      SITE_CLAIM_MAX_SUBMISSIONS,
-    ),
-    cancelGraceSeconds: parseIntegerInRange(
-      getFieldValue(values, 'cancelGraceSeconds'),
-      text.cancelGraceSeconds,
-      1,
-      MAX_SITE_CANCEL_GRACE_SECONDS,
-    ),
-    maxOutputFiles: parseIntegerInRange(
-      getFieldValue(values, 'maxOutputFiles'),
-      text.maxOutputFiles,
-      1,
-      MAX_SITE_MAX_OUTPUT_FILES,
-    ),
+    maxActiveSubmissions: parseIntegerInRange({
+      value: getFieldValue(values, 'maxActiveSubmissions'),
+      label: 'maxActiveSubmissions',
+      min: 1,
+      max: SITE_CLAIM_MAX_SUBMISSIONS,
+    }),
+    cancelGraceSeconds: parseIntegerInRange({
+      value: getFieldValue(values, 'cancelGraceSeconds'),
+      label: 'cancelGraceSeconds',
+      min: 1,
+      max: MAX_SITE_CANCEL_GRACE_SECONDS,
+    }),
+    maxOutputFiles: parseIntegerInRange({
+      value: getFieldValue(values, 'maxOutputFiles'),
+      label: 'maxOutputFiles',
+      min: 1,
+      max: MAX_SITE_MAX_OUTPUT_FILES,
+    }),
   };
 }

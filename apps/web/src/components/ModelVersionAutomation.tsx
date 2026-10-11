@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ModelAutomationExecutionPage, ModelAutomationRule } from '@mmt/contracts';
 import type { QueryState } from '../hooks/useQuery';
 import { useAuth } from '../hooks/useAuth';
@@ -21,6 +22,7 @@ export function ModelVersionAutomation({
   executions: QueryState<ModelAutomationExecutionPage>;
   rules: ModelAutomationRule[];
 }) {
+  useLocale();
   const { project } = useProject();
   const { user } = useAuth();
   const canRerun = canManageAutomationRules(project.role, user.isAdmin);

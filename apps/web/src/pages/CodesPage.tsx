@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Plus, RefreshCw } from 'lucide-react';
 import { registryApi } from '../api/registry';
@@ -20,6 +21,7 @@ import { runtimeLabels } from '../i18n/runtime';
 import { codeSourceText } from '../i18n/codeSource';
 
 export function CodesPage() {
+  useLocale();
   const { project, canEdit } = useProject();
   const [dialog, setDialog] = useState<'code' | 'version' | null>(null);
   const registry = useRegistry(`${project.id}:codes`, {

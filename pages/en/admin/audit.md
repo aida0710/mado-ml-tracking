@@ -26,7 +26,7 @@ Records are listed newest first. Load older ones with **さらに読む** (Load 
 | Column | Content |
 | --- | --- |
 | 日時 (Time) | When it was recorded |
-| 操作者 (Actor) | The display name of the user. Operations with an API token show the token owner's name followed by "(API token)". Records not made by a user, such as failed logins and refused SSO logins, show システム (System) |
+| 操作者 (Performed by) | The display name of the user. Operations with an API token show the token owner's name followed by "(API token)". Records not made by a user, such as failed logins and refused SSO logins, show システム (System) |
 | 操作 (Action) | The kind of operation, such as issuing an API token |
 | 結果 (Outcome) | 成功 (success), 拒否 (denied), or 失敗 (failed) |
 | 対象 (Resource) | The target, such as `api_token/<ID>` |

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { Artifact } from '@mmt/contracts';
 import { artifactMediaKind } from '../lib/artifactMediaKind';
 import { tabularTextFormat } from '../lib/tabularText';
@@ -12,6 +13,7 @@ import { VideoPreview } from './preview/VideoPreview';
 
 /** Chooses the preview for an Artifact's media kind; each kind lives in components/preview/. */
 export function ArtifactPreview({ artifact }: { artifact: Artifact }) {
+  useLocale();
   const mediaKind = artifactMediaKind(artifact.mimeType);
   const tableFormat = tabularTextFormat(artifact.path, artifact.mimeType);
   if (mediaKind === 'text' && tableFormat) return <TabularTextPreview artifact={artifact} format={tableFormat} />;

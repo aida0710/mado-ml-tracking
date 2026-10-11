@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ServiceAccount } from '@mmt/contracts';
 import { accessApi } from '../api/access';
@@ -29,6 +30,7 @@ export function ServiceAccountOwnerTransfer({
   transfer: (serviceAccountId: string) => Promise<unknown>;
   onTransferred: () => void;
 }) {
+  useLocale();
   const accounts = useQuery(`${projectId}:service-accounts:owner-transfer`, (signal) =>
     accessApi.serviceAccounts(projectId, signal),
   );

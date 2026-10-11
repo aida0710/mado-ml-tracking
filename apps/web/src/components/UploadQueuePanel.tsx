@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { RotateCcw } from 'lucide-react';
 import type { UploadItem } from '../hooks/useArtifactUploadQueue';
 import { UploadQueueRow } from './UploadQueueRow';
@@ -20,6 +21,7 @@ export function UploadQueuePanel({
   onCancel: (id: string) => void;
   onRetryFailed: () => void;
 }) {
+  useLocale();
   if (items.length === 0) return null;
   const completedCount = items.filter((item) => item.status === 'completed').length;
   const hasFailed = items.some((item) => item.status === 'failed');

@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 /**
  * How the Run list draws its cells, shared by the wide table (WideRunTable) and the narrow one
  * (NarrowRunTable): the selection checkboxes, the name, and each column the saved view chose.
@@ -112,6 +113,7 @@ export function shownRunColumns(columns: readonly SavedViewColumn[]): ShownRunCo
  * popover is fixed to the viewport because the table's scroll area would clip it.
  */
 function RunDescriptionCell({ description }: { description: string }) {
+  useLocale();
   const [popoverPosition, setPopoverPosition] = useState<CSSProperties | null>(null);
   if (!description.trim()) return null;
   const open = (cell: HTMLElement) => {
@@ -139,6 +141,7 @@ function RunDescriptionCell({ description }: { description: string }) {
 
 /** The header checkbox: selects or clears every Run shown on this page. */
 export function ShownRunsCheckbox({ selection }: { selection: RunListSelection }) {
+  useLocale();
   return (
     <label className="run-select-target">
       <input
@@ -152,6 +155,7 @@ export function ShownRunsCheckbox({ selection }: { selection: RunListSelection }
 }
 
 export function RunSelectCheckbox({ run, selection }: { run: Run; selection: RunListSelection }) {
+  useLocale();
   return (
     <label className="run-select-target">
       <input
@@ -165,6 +169,7 @@ export function RunSelectCheckbox({ run, selection }: { run: Run; selection: Run
 }
 
 export function RunNameCell({ projectId, run }: { projectId: string; run: Run }) {
+  useLocale();
   return (
     <Link className="run-name" title={run.name} to={`/projects/${projectId}/runs/${run.id}`}>
       {run.name}

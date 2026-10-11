@@ -129,7 +129,7 @@ const browser = await chromium.launch({
   executablePath: process.env.MMT_CHROMIUM_PATH,
   args: ['--no-sandbox'],
 });
-const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
+const page = await browser.newPage({ locale: 'ja-JP', viewport: { width: 1440, height: 960 } });
 const pageErrors = [];
 page.on('pageerror', (error) => pageErrors.push(error.message));
 const dialog = () => page.getByRole('dialog');
@@ -419,7 +419,7 @@ try {
     await dialog().getByLabel('実行種別', { exact: false }).selectOption('inference');
     await dialog().getByLabel('Experiments', { exact: false }).selectOption(ids.experimentId);
     await dialog().getByLabel('コードバージョン', { exact: false }).selectOption(ids.inferenceCodeVersionId);
-    await dialog().getByLabel('Compute target', { exact: false }).selectOption(ids.targetId);
+    await dialog().getByLabel('コンピュータ', { exact: false }).selectOption(ids.targetId);
     await dialog().getByLabel('パラメータ（JSON）', { exact: false }).fill(JSON.stringify({ outputDatasetId: ids.outputDatasetId }));
     await dialog().getByRole('button', { name: '作成', exact: true }).click();
     await dialog().waitFor({ state: 'hidden' });
@@ -431,7 +431,7 @@ try {
     await dialog().getByLabel('実行種別', { exact: false }).selectOption('evaluation');
     await dialog().getByLabel('Experiments', { exact: false }).selectOption(ids.experimentId);
     await dialog().getByLabel('コードバージョン', { exact: false }).selectOption(ids.evaluationCodeVersionId);
-    await dialog().getByLabel('Compute target', { exact: false }).selectOption(ids.targetId);
+    await dialog().getByLabel('コンピュータ', { exact: false }).selectOption(ids.targetId);
     await dialog().getByRole('group', { name: /入力データセットバージョン/ }).getByRole('checkbox', { name: 'verification/Browser reference lengths / v1', exact: true }).check();
     await dialog().getByRole('button', { name: '作成', exact: true }).click();
     await dialog().waitFor({ state: 'hidden' });
@@ -467,7 +467,7 @@ try {
     await dialog().getByLabel('Experiments', { exact: false }).selectOption(ids.experimentId);
     await dialog().getByLabel('実行種別', { exact: false }).selectOption('training');
     await dialog().getByLabel('コードバージョン', { exact: false }).selectOption(ids.trainingCodeVersionId);
-    await dialog().getByLabel('Compute target', { exact: false }).selectOption(ids.targetId);
+    await dialog().getByLabel('コンピュータ', { exact: false }).selectOption(ids.targetId);
     const output = dialog().getByTestId('task-output-model');
     await output.getByLabel('成功時にモデルバージョンを登録').check();
     await output.getByLabel('登録先のモデル', { exact: false }).selectOption(modelId);

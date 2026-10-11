@@ -1,5 +1,7 @@
+import * as english from './en/storage';
+import { localized } from './localized';
 // Artifact storage backends: the admin table, the backend dialog and the connection test.
-export const storageText = {
+export const storageText = localized({
   newStorageBackend: '保存先を追加',
   editStorageBackend: '保存先を変更',
   storageBackendKind: '種類',
@@ -57,7 +59,7 @@ export const storageText = {
   storageRootPathHint:
     'API serverのディレクトリです。データ用のディスク（/srv、/mnt、/homeなど）の下を指定します。空欄で選ぶと候補が出ます（/procや/usrなどシステムのディレクトリは出しません）。',
   storageAdvancedSettings: '詳細設定（署名・TLS・Checksum・Multipart）',
-  storageTestFailedFix: '［変更］で設定を直し、もう一度［接続テスト］を押してください。',
+  storageTestFailedFix: '［設定を変更］で設定を直し、もう一度［接続テスト］を押してください。',
   storageEditAfterFailure: '設定を変更',
   storageMakeDefaultTestFirst:
     '既定にする前に接続テストを行い、失敗したときは既定にしません。',
@@ -67,9 +69,9 @@ export const storageText = {
   newProjectStorageOthers: 'ほかの保存先を選ぶ',
   newProjectStorageHint:
     '保存先は全体管理者が用意したものです。どこに保存されるかは全体管理者に確かめてください。あとから［プロジェクト設定］で変えられます（それまでのArtifactは元の保存先に残ります）。',
-} as const;
+} as const, english.storageText);
 
-export const storageTextTemplates = {
+export const storageTextTemplates = localized({
   newProjectStorageDefault: (backend: string) =>
     `既定の保存先「${backend}」に保存します。迷ったらこのままにします。`,
   storageDirectoryMissing: (path: string) =>
@@ -82,4 +84,4 @@ export const storageTextTemplates = {
     `partサイズは${minimumMib}〜${maximumMib} MiBの整数で指定してください`,
   storageMakeDefaultConfirm: (name: string) =>
     `新しいプロジェクトの既定の保存先を「${name}」にします。既存のArtifactは移動しません。`,
-};
+}, english.storageTextTemplates);

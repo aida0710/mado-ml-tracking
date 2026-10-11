@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { SweepObjective, SweepTrial, SweepTrialState } from '@mmt/contracts';
@@ -6,6 +7,7 @@ import { sortTrials, trialParameterNames, type SweepTrialOrder } from '../../lib
 import { ResponsiveTable, type ResponsiveTableColumn } from '../ResponsiveTable';
 import { sweepTrialStateLabels } from '../../i18n/sweeps';
 import { text, textTemplates } from '../../i18n/catalog';
+import { formatNote } from '../../i18n/textJoining';
 
 // early_stopped gets its own color so it is not read as a user cancel.
 const TRIAL_BADGE_CLASSES: Record<SweepTrialState, string> = {
@@ -21,6 +23,7 @@ const TRIAL_BADGE_CLASSES: Record<SweepTrialState, string> = {
 const formatParameter = (value: unknown) => (typeof value === 'number' ? formatNumber(value) : formatValue(value));
 
 function SweepTrialStateBadge({ trial }: { trial: SweepTrial }) {
+  useLocale();
   return (
     <span className={`status-badge ${TRIAL_BADGE_CLASSES[trial.state]}`}
       title={trial.stopReason ? textTemplates.sweepEarlyStoppedReason(trial.stopReason) : undefined}>
@@ -65,7 +68,7 @@ export function sweepTrialColumns({
     ...parameterColumns,
     {
       key: 'objective',
-      header: `${text.sweepObjectiveValue}（${objective.metric}）`,
+      header: `${text.sweepObjectiveValue}${formatNote(objective.metric)}`,
       className: 'mono',
       priority: 'primary',
       render: (trial) => (
@@ -108,6 +111,7 @@ export function SweepTrialsTable({
   objective,
   bestTrialId,
 }: SweepTrialTableInput) {
+  useLocale();
   const [order, setOrder] = useState<SweepTrialOrder>('trial_index');
   return (
     <div className="sweep-trials" data-testid="sweep-trials">

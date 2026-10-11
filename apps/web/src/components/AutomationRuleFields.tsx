@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { MAX_JOB_ATTEMPTS } from '@mmt/contracts';
 import type { AutomationCatalog, AutomationKind } from '../types/modelAutomation';
 import type { FormField, FormValues } from '../types/form';
@@ -27,6 +28,7 @@ export function AutomationRuleFields({
   catalog: AutomationCatalog;
   onChange: (values: FormValues) => void;
 }) {
+  useLocale();
   const choices = catalog.registry;
   const options = buildCatalogOptions(choices);
   const modelFamilies = getSelectedValues(values, 'modelFamilies');

@@ -1,4 +1,4 @@
-// Time left of an upload in Japanese units: 47秒, 1分5秒, 2時間3分.
+// Time left of an upload in the display language: 47秒, 1分5秒, 2時間3分 in Japanese.
 import { textTemplates } from '../i18n/catalog';
 
 const SECONDS_PER_MINUTE = 60;

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import type { ReportDetail, ReportUpdate } from '@mmt/contracts';
 import { isReportRevisionConflict, reportsApi } from '../api/reports';
-import { formatErrorMessage } from '../lib/errorMessage';
 import { reportRevisionChanges } from '../lib/reportRevisionChanges';
 import { useQuery } from './useQuery';
+import { useFailureMessage } from './useFailureMessage';
 
 /**
  * One revision of a report (the current one when `revision` is undefined) and the snapshots stored
@@ -51,12 +51,12 @@ export type ReportSaveOutcome =
  */
 export function useReportSave(projectId: string, reportId: string) {
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { message: error, setFailure, clearFailure } = useFailureMessage();
   const [hasConflict, setHasConflict] = useState(false);
 
   async function run(operation: () => Promise<ReportDetail>): Promise<ReportSaveOutcome> {
     setPending(true);
-    setError(null);
+    clearFailure();
     setHasConflict(false);
     try {
       return { kind: 'saved', document: await operation() };
@@ -65,7 +65,7 @@ export function useReportSave(projectId: string, reportId: string) {
         setHasConflict(true);
         return { kind: 'conflict' };
       }
-      setError(formatErrorMessage(failure));
+      setFailure(failure);
       return { kind: 'failed' };
     } finally {
       setPending(false);

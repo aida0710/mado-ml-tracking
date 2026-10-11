@@ -250,7 +250,7 @@ try {
       const disableSource = dialog.getByRole('checkbox', { name: `作成したら「${inferRule.name}」を無効にする` });
       assert.equal(await disableSource.isChecked(), true);
       // Disabling the source stops the rule that follows it; the dialog says so.
-      await dialog.getByText(`「${evaluateRule.name}」は「上流rule」に元のルールを選んでいます`, { exact: false }).waitFor();
+      await dialog.getByText(`「${evaluateRule.name}」は［上流rule］に元のルールを選んでいます`, { exact: false }).waitFor();
       await screenshot(`02-rule-copy-dialog-${suffix}`, { fullPage: true });
       await dialog.getByLabel('名前').fill('登録時に推論（v2のコード）');
       await dialog.getByRole('button', { name: '作成', exact: true }).click();

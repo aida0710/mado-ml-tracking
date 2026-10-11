@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { Project, ProjectVisibility } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
@@ -30,6 +31,7 @@ export function ProjectCreateDialog({
   onClose: () => void;
   onCreated: (project: Project) => void;
 }) {
+  useLocale();
   const backends = useStorageBackendChoices();
   return (
     <QueryDialog title={text.newProject} onClose={onClose} query={backends}>
@@ -59,6 +61,7 @@ function ProjectCreateForm({
   onClose: () => void;
   onCreated: (project: Project) => void;
 }) {
+  useLocale();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<ProjectVisibility>(DEFAULT_PROJECT_VISIBILITY);

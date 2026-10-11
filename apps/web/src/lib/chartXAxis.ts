@@ -1,22 +1,18 @@
 import type { ChartXAxis } from '@mmt/contracts';
-import { formatNumber } from './format';
+import { formatCompactNumber, formatNumber } from './format';
 
 const SECONDS_PER_MINUTE = 60;
 const SECONDS_PER_HOUR = 3600;
 const SECONDS_PER_DAY = 86400;
-// Steps up to this many digits read well in full; longer ones use the compact 1.2M form.
+// Steps up to this many digits read well in full; longer ones use the compact form of the display
+// language (1.2M or 120万), the same as the table cells on the screen.
 const FULL_STEP_TICK_LIMIT = 100_000;
-
-const compactStepFormat = new Intl.NumberFormat('en-US', {
-  notation: 'compact',
-  maximumSignificantDigits: 4,
-});
 
 /** Tick text for an x value: an integer step, an elapsed time like 1h23m, or a local date-time. */
 export function formatXTick(xAxis: ChartXAxis, value: number): string {
   if (xAxis.kind === 'step') {
     const step = Math.round(value);
-    return Math.abs(step) < FULL_STEP_TICK_LIMIT ? String(step) : compactStepFormat.format(step);
+    return Math.abs(step) < FULL_STEP_TICK_LIMIT ? String(step) : formatCompactNumber(step);
   }
   if (xAxis.kind === 'relative_time') return formatElapsedSeconds(value);
   if (xAxis.kind === 'wall_time') return formatWallTime(value, false);

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { PluginConnection, PluginManifest } from '@mmt/contracts';
@@ -16,6 +17,9 @@ import { usePluginOutboxSummary } from '../hooks/usePluginOutboxSummary';
 import { text } from '../i18n/catalog';
 import { pluginsText, pluginsTextTemplates } from '../i18n/plugins';
 
+// Kept as values and put into words when drawn, so a later change of display language applies.
+type ConnectionSuccess = { kind: 'checked' } | { kind: 'queued'; count: number };
+
 /**
  * One plugin connection: whether the API server can reach it, its manifest, delivery state and
  * dataset search. Calls to the plugin wait for the server's token variable; without it the
@@ -28,6 +32,7 @@ export function PluginPanel({
   plugin: PluginConnection;
   onChanged: () => void;
 }) {
+  useLocale();
   const { project, isProjectAdmin } = useProject();
   const { user } = useAuth();
   const [showEdit, setShowEdit] = useState(false);
@@ -35,13 +40,13 @@ export function PluginPanel({
   useEffect(() => setManifest(plugin.manifest), [plugin.manifest]);
   // A new endpoint or secret reference starts the dataset search over.
   const [searchKey, setSearchKey] = useState(() => getPluginConnectionKey(plugin));
-  const [success, setSuccess] = useState('');
+  const [success, setSuccess] = useState<ConnectionSuccess | null>(null);
   const connection = useMutation();
   const canManage = isProjectAdmin || user.isAdmin;
   const canCall = plugin.enabled && plugin.tokenConfigured;
   const outbox = usePluginOutboxSummary(project.id, canManage ? plugin.id : null);
   async function runConnectionOperation(operation: () => Promise<void>) {
-    setSuccess('');
+    setSuccess(null);
     return connection.run(operation);
   }
   return (
@@ -57,7 +62,7 @@ export function PluginPanel({
                 void runConnectionOperation(async () => {
                   const checked = await administrationApi.checkPlugin(project.id, plugin.id);
                   setManifest(checked);
-                  setSuccess(text.checked);
+                  setSuccess({ kind: 'checked' });
                   onChanged();
                 })
               }
@@ -70,7 +75,7 @@ export function PluginPanel({
               onClick={() =>
                 void runConnectionOperation(async () => {
                   const retried = await administrationApi.retryEvents(project.id, plugin.id);
-                  setSuccess(`${text.queuedEvents}: ${retried.queued}`);
+                  setSuccess({ kind: 'queued', count: retried.queued });
                   outbox.reload();
                 })
               }
@@ -88,7 +93,7 @@ export function PluginPanel({
       <ErrorNotice message={connection.error} />
       {success && (
         <p className="notice success" role="status">
-          {success}
+          {success.kind === 'checked' ? text.checked : `${text.queuedEvents}: ${success.count}`}
         </p>
       )}
       <DetailsList
@@ -164,7 +169,7 @@ export function PluginPanel({
             if (getPluginConnectionKey(savedPlugin) !== getPluginConnectionKey(plugin)) {
               setManifest(savedPlugin.manifest);
               setSearchKey(getPluginConnectionKey(savedPlugin));
-              setSuccess('');
+              setSuccess(null);
               connection.clearError();
             }
             setShowEdit(false);

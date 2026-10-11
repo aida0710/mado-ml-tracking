@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Navigate, useParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import type {
@@ -36,6 +37,7 @@ import { evaluationTextTemplates } from '../i18n/evaluation';
  * promote it from the promotion check; everything else is read-only apart from the comments.
  */
 export function ModelVersionPage() {
+  useLocale();
   const { project, canEdit } = useProject();
   const { modelId = '', versionId = '' } = useParams();
   const { detail, sourceRun, rules, executions } = useModelVersionDetail(project.id, versionId);
@@ -141,6 +143,7 @@ function ModelVersionContent({
   canPromote: boolean;
   onPromoted: () => void;
 }) {
+  useLocale();
   const { results, baseline, promotionEvaluations } = evaluations;
   const resultRuns = results.value?.items ?? [];
   const evaluationRuns = resultRuns.filter((run) => run.kind === 'evaluation');

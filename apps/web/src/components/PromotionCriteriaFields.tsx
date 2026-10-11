@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { PromotionCriterionDirection, PromotionCriterionMode } from '@mmt/contracts';
@@ -17,17 +18,19 @@ import {
 import type { SuggestFieldValues } from '../types/form';
 import { SuggestionInput } from './SuggestionInput';
 import { text } from '../i18n/catalog';
+import { formatNote } from '../i18n/textJoining';
 
 // Spells out the typed row, e.g. "werの基準との差 ≤ -0.01（改善が必要）", so the threshold's sign
 // is read the way the API will apply it. Nothing is shown until metric and threshold are valid.
 function CriterionPreview({ draft }: { draft: PromotionCriterionDraft }) {
+  useLocale();
   const parsed = previewCriterion(draft);
   if (!parsed) return null;
   const meaning = getCriterionThresholdMeaning(parsed);
   return (
     <p className="muted promotion-criterion-preview">
       <span className="mono">{summarizeCriterion(parsed)}</span>
-      {meaning && `（${criterionThresholdMeaningLabels[meaning]}）`}
+      {meaning && formatNote(criterionThresholdMeaningLabels[meaning])}
     </p>
   );
 }
@@ -51,6 +54,7 @@ function CriterionRow({
   onChange: (changes: Partial<PromotionCriterionDraft>) => void;
   onRemove: () => void;
 }) {
+  useLocale();
   const id = useId();
   return (
     <div>
@@ -143,6 +147,7 @@ export function PromotionCriteriaFields({
   onAdd: () => void;
   onRemove: (key: string) => void;
 }) {
+  useLocale();
   return (
     <fieldset className="promotion-criteria">
       <legend>{text.promotionCriteria}</legend>

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useMemo, type ReactNode } from 'react';
 import type { LineageGraph as Graph } from '@mmt/contracts';
 import { narrowerThan } from '../lib/breakpoints';
@@ -13,6 +14,7 @@ import { text } from '../i18n/catalog';
  * first, so the relations table leads (open) and the diagram follows, fitted to the width.
  */
 export function LineageGraph({ graph, projectId }: { graph: Graph; projectId: string }) {
+  useLocale();
   const isNarrow = useMediaQuery(narrowerThan('md'));
   const layout = useMemo(() => layoutLineage(graph), [graph]);
   if (!graph.nodes.length) return <Empty>{text.graphEmpty}</Empty>;
@@ -34,6 +36,7 @@ export function LineageGraphLayout({
   diagram: ReactNode;
   relations: ReactNode;
 }) {
+  useLocale();
   return (
     <div className={isNarrow ? 'lineage-graph narrow' : 'lineage-graph'}>
       <div className="lineage-legend">{text.graphLegend}</div>

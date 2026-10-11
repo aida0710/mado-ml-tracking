@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useArtifactUsage } from '../hooks/useArtifactUsage';
 import { formatBytes } from '../lib/format';
 import { Resource } from './Feedback';
@@ -6,6 +7,7 @@ import { text, textTemplates } from '../i18n/catalog';
 
 /** Stored Artifacts of the Project per backend, with what deletion and old versions hold. */
 export function ArtifactUsageSummary({ projectId }: { projectId: string }) {
+  useLocale();
   const usage = useArtifactUsage(projectId);
   return (
     <section className="settings-section artifact-usage">

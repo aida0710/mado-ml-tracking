@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { CodeSnippet } from './CodeSnippet';
 import { buildWorkerSetupSnippets } from '../lib/workerSetupSnippets';
@@ -8,6 +9,7 @@ import { text } from '../i18n/catalog';
  * computer's ID filled in, so nobody looks the ID up in /api/targets.
  */
 export function WorkerSetupGuide({ targetId }: { targetId: string }) {
+  useLocale();
   const headingId = useId();
   const snippets = buildWorkerSetupSnippets({ origin: window.location.origin, targetId });
   return (

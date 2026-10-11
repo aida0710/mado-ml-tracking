@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import {
   CartesianGrid,
   ComposedChart,
@@ -25,6 +26,7 @@ const CHART_HEIGHT = 280;
  * title names it for a screen reader.
  */
 export function SweepProgressChart({ trials, objective }: { trials: SweepTrial[]; objective: SweepObjective }) {
+  useLocale();
   const points = objectiveProgress(trials, objective.goal);
   if (!points.length) return <Empty>{text.sweepNoBestTrial}</Empty>;
   return (

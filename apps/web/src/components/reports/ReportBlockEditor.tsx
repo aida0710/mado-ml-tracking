@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { ArrowDown, ArrowUp, Settings2, Trash2 } from 'lucide-react';
 import { REPORT_MARKDOWN_MAX_LENGTH, type ReportBlock, type ReportBlockSnapshot } from '@mmt/contracts';
@@ -36,6 +37,7 @@ export function ReportBlockEditor({
   onRemove: () => void;
   onRefreshRequestedChange: (isRequested: boolean) => void;
 }) {
+  useLocale();
   const [isPicking, setPicking] = useState(false);
   const problem = reportBlockProblem(block);
   // A refreshed snapshot is captured on save; until then the preview shows the current data.

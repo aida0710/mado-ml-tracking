@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import type {
@@ -29,17 +30,18 @@ import { CodeVersionNameLink } from './CodeVersionNameLink';
 import { DatasetVersionNameLinks } from './DatasetVersionNameLinks';
 
 const statusMessages: Record<Exclude<EvaluationComparisonStatus, 'ok'>, string> = {
-  baseline_missing: text.comparisonBaselineMissing,
-  baseline_not_evaluated: text.comparisonBaselineNotEvaluated,
-  candidate_not_evaluated: text.comparisonCandidateNotEvaluated,
+  get baseline_missing() { return text.comparisonBaselineMissing },
+  get baseline_not_evaluated() { return text.comparisonBaselineNotEvaluated },
+  get candidate_not_evaluated() { return text.comparisonCandidateNotEvaluated },
 };
 
 const sourceLabels: Record<MetricValueSource, string> = {
-  dataset_context: text.metricSourceDatasetContext,
-  run_latest: text.metricSourceRunLatest,
+  get dataset_context() { return text.metricSourceDatasetContext },
+  get run_latest() { return text.metricSourceRunLatest },
 };
 
 function OptionalRunLink({ projectId, runId }: { projectId: string; runId: string | null }) {
+  useLocale();
   return runId ? <RunNameLink projectId={projectId} runId={runId} /> : <>—</>;
 }
 
@@ -54,6 +56,7 @@ function ComparisonConditions({
   versionLabel: (versionId: string) => string;
   rules: readonly ModelAutomationRule[];
 }) {
+  useLocale();
   const rule = rules.find((item) => item.id === comparison.evaluationRuleId);
   return (
     <DetailsList
@@ -105,7 +108,7 @@ function ComparisonConditions({
   );
 }
 
-const metricValueLabels = { notFinite: text.metricNotFinite };
+const metricValueLabels = { get notFinite() { return text.metricNotFinite } };
 
 function describeSources(source: MetricComparison['source']): string {
   const labels = [source.candidate, source.baseline].map((value) =>
@@ -117,6 +120,7 @@ function describeSources(source: MetricComparison['source']): string {
 // Differences are shown without good/bad colouring: whether higher is better is defined by
 // promotion policies, not by this panel.
 function MetricComparisonTable({ metrics }: { metrics: MetricComparison[] }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={metrics}
@@ -193,6 +197,7 @@ export function EvaluationComparisonPanel({
   /** Names the evaluation rule of the comparison. */
   rules: readonly ModelAutomationRule[];
 }) {
+  useLocale();
   const { comparison } = evaluationComparison;
   const selectId = useId();
   const aliasNames = Object.keys(model.aliases).sort();

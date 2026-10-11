@@ -28,7 +28,7 @@ const browser = await chromium.launch({
   args: ['--no-sandbox'],
   ...(process.env.MMT_CHROMIUM_PATH ? { executablePath: process.env.MMT_CHROMIUM_PATH } : {}),
 });
-const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
+const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1100 } });
 await context.route((url) => url.pathname.startsWith('/api/'), api.route);
 const page = await context.newPage();
 const pageErrors = [];

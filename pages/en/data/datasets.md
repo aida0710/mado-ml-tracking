@@ -160,7 +160,7 @@ In Docker, Singularity, and Apptainer, the contents are at `/mmt/datasets/<versi
 
 ### Transfer and cache
 
-Set **データセットの転送** (Dataset transfer) and **データセットのcache上限（GiB）** (Dataset cache limit, GiB) when editing a Compute target.
+Set **データセットの転送** (Dataset transfer) and **データセットのcache上限（GiB）** (Dataset cache limit, GiB) when editing a computer.
 
 | Dataset transfer | What it does |
 | --- | --- |

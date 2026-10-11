@@ -1,6 +1,8 @@
+import * as english from './en/connection';
+import { localized } from './localized';
 // The guide to recording from the Mado Python SDK and the MLflow 3 SDK, on the Project settings
 // page and the Experiments page.
-export const connectionText = {
+export const connectionText = localized({
   recordingConnection: 'SDK・MLflow 3から接続',
   recordingConnectionIssueToken: 'このProject用のAPI tokenを発行',
   recordingGuideToggle: 'SDKで記録',
@@ -19,4 +21,4 @@ export const connectionText = {
   mlflowConnectionServiceAccountHint:
     '長期の自動処理やworkerには、Service Accountのtokenを使ってください。SSOユーザーのtokenは、グループの確認から7日を過ぎると止まります。',
   mlflowConnectionBasic: 'Basic認証（ユーザー名とパスワードを使うツール。passwordにtoken）',
-} as const;
+} as const, english.connectionText);

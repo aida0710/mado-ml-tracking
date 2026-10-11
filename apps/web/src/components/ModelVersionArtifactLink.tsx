@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { ModelVersion } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
@@ -15,6 +16,7 @@ export function ModelVersionArtifactLink({
   projectId: string;
   version: Pick<ModelVersion, 'id' | 'modelId' | 'artifactId'>;
 }) {
+  useLocale();
   const artifactId = version.artifactId;
   const artifact = useQuery(artifactId ? `${projectId}:artifact:${artifactId}` : null, (signal) =>
     trackingApi.artifact(projectId, artifactId!, signal),

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { ModelVersion } from '@mmt/contracts';
@@ -25,6 +26,7 @@ export function ModelVersionsTable({
   aliases: Record<string, string>;
   selectedVersionId?: string;
 }) {
+  useLocale();
   const [shownCount, setShownCount] = useState(INITIAL_VERSION_ROWS);
   // A version chosen further down (from a link) stays in the list.
   const selectedIndex = versions.findIndex((version) => version.id === selectedVersionId);

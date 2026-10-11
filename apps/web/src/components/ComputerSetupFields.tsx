@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import {
   CPU_ARCHES,
   type CpuArch,
@@ -56,6 +57,7 @@ export function ComputerSetupFields({
   concurrencyFollowsGpus: boolean;
   onConcurrencyEdited: () => void;
 }) {
+  useLocale();
   const change = (next: FormValues) => {
     if (getFieldValue(next, 'maxConcurrentJobs') !== getFieldValue(values, 'maxConcurrentJobs'))
       onConcurrencyEdited();

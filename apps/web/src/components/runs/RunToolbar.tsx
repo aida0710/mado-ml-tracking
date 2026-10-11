@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useEffect, useState } from 'react';
 import { Columns3, Download, Search } from 'lucide-react';
 import type { RunKind, RunStatus } from '@mmt/contracts';
@@ -12,6 +13,7 @@ import { suggestRunFilter } from '../../lib/runFilterSuggestion';
 import { RUN_KINDS } from '../../lib/runListUrl';
 import { text, textTemplates } from '../../i18n/catalog';
 import { detailsPopoverHandlers } from '../../lib/detailsPopover';
+import { joinLabels } from '../../i18n/textJoining';
 
 const runStatuses: RunStatus[] = ['queued', 'running', 'finished', 'failed', 'canceled'];
 // The select chooses one kind; a view saved through the API with several keeps them as one choice.
@@ -52,11 +54,14 @@ export function RunToolbar({
   /** Exports every Run of the current search, not only the shown page. */
   onExportCsv: () => void;
 }) {
+  useLocale();
   const [searchInput, setSearchInput] = useState(searchText);
-  const [syntaxError, setSyntaxError] = useState<string | null>(null);
+  // The filter the last search refused; its message is put into words on each render, so it
+  // follows a change of display language.
+  const [rejectedFilter, setRejectedFilter] = useState<string | null>(null);
   useEffect(() => {
     setSearchInput(searchText);
-    setSyntaxError(null);
+    setRejectedFilter(null);
   }, [searchText]);
   const kindValue = kinds.join(KIND_OPTION_SEPARATOR);
   const sortedMetric = parseMetricRunSort(sort);
@@ -66,15 +71,17 @@ export function RunToolbar({
       ? [sortedMetric.key, ...metricNames]
       : metricNames;
 
+  const syntaxError = rejectedFilter === null ? null : findRunFilterSyntaxError(rejectedFilter);
   const filterError = syntaxError ?? filterRejection;
   // A comparison searched as a Run name, such as `loss < 0.2`, most likely meant a metric.
   const suggestedFilter = suggestRunFilter(searchText);
 
   function submitSearch(input = searchInput) {
     const conditions = toRunSearchConditions(input);
-    const error = 'filter' in conditions ? findRunFilterSyntaxError(conditions.filter) : null;
-    setSyntaxError(error);
-    if (!error) onSearch(input.trim());
+    const filter = 'filter' in conditions ? conditions.filter : null;
+    const isRefused = filter !== null && findRunFilterSyntaxError(filter) !== null;
+    setRejectedFilter(isRefused ? filter : null);
+    if (!isRefused) onSearch(input.trim());
   }
 
   return (
@@ -129,7 +136,7 @@ export function RunToolbar({
           >
             <option value="">{text.allKinds}</option>
             {kinds.length > 1 && (
-              <option value={kindValue}>{kinds.map((kind) => text[kind]).join('・')}</option>
+              <option value={kindValue}>{joinLabels(kinds.map((kind) => text[kind]))}</option>
             )}
             {RUN_KINDS.map((value) => (
               <option key={value} value={value}>
@@ -188,7 +195,7 @@ export function RunToolbar({
       </div>
       <ErrorNotice message={filterError} />
       {suggestedFilter && !filterError && (
-        <p className="notice" role="status">
+        <p className="notice action-notice" role="status">
           {textTemplates.filterSuggestion(searchText, suggestedFilter)}{' '}
           <button
             type="button"

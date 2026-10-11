@@ -1,7 +1,9 @@
+import * as english from './en/operations';
+import { localized } from './localized';
 import type { OperationsAlertKind } from '@mmt/contracts';
 
 // The operations alert badge in the header and the plugin delivery status.
-export const operationsText = {
+export const operationsText = localized({
   operationsAlerts: '運用アラート',
   operationsAlertsNone: '開いている運用アラートはありません',
   operationsAlertsLoadFailed: '運用アラートを読み込めませんでした',
@@ -18,17 +20,17 @@ export const operationsText = {
   pluginOutboxLastDelivered: '最終送信',
   pluginOutboxStalled:
     '送信が滞留しています（15分以上未送信、または5回以上失敗）。Pluginの状態を確認し、復旧後に「イベントを再送」を押してください。',
-} as const;
+} as const, english.operationsText);
 
-export const operationsAlertKindLabels: Record<OperationsAlertKind, string> = {
+export const operationsAlertKindLabels: Record<OperationsAlertKind, string> = localized({
   'job.heartbeat_stale': 'Jobのheartbeat途絶',
   'worker.offline': 'workerの停止',
   'plugin.delivery_stalled': 'Plugin送信の滞留',
-};
+}, english.operationsAlertKindLabels);
 
-export const operationsTextTemplates = {
+export const operationsTextTemplates = localized({
   operationsAlertCount: (count: number) => `運用アラート ${count}件`,
   // The bell got as many alerts as one request returns, so more may be open.
   operationsAlertCountAtLeast: (count: number) => `運用アラート ${count}件以上`,
   operationsAlertBadgeAtLeast: (count: number) => `${count}+`,
-};
+}, english.operationsTextTemplates);

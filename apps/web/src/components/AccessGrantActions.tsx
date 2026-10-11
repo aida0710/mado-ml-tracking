@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
@@ -13,6 +14,7 @@ export function AccessGrantActions({
   onEdit: () => void;
   onRemove: () => void;
 }) {
+  useLocale();
   return (
     <div className="access-actions">
       <button className="button small" disabled={isLastAdmin} onClick={onEdit}>

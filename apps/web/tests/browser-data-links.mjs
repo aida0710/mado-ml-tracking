@@ -81,7 +81,7 @@ try {
     port: API_PORT,
     serverOptions: serverTimeouts(config).serverOptions,
   });
-  const context = await browser.newContext({ viewport: DESKTOP });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport: DESKTOP });
   const page = await context.newPage();
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));

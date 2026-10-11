@@ -1,3 +1,5 @@
+import * as english from './en/promotion';
+import { localized } from './localized';
 import type {
   ModelAliasProtectionRole,
   PromotionCriterionDirection,
@@ -12,7 +14,7 @@ import type { KnownAliasSource } from '../lib/aliasChoices';
 // Promotion policies (pass/fail criteria for a candidate version) and their evaluation history.
 // Labels shared with the evaluation comparison (baselineAlias, evaluationRule, referenceDatasets,
 // evaluationCodeVersion, baselineVersion) come from i18n/evaluation.ts.
-export const promotionText = {
+export const promotionText = localized({
   promotionPolicies: '昇格policy',
   newPromotionPolicy: '昇格policyを作成',
   promotionPoliciesEmpty: '昇格policyはまだありません',
@@ -128,17 +130,17 @@ export const promotionText = {
   promotionCriterionNotCompared: '比較なし',
   promotionCheckBaselineMoved:
     'この判定のあと、基準aliasが別のバージョンへ移りました。今の基準バージョンとは比べていないため、根拠には選んでいません。',
-} as const;
+} as const, english.promotionText);
 
-export const promotionDecisionLabels: Record<PromotionDecision, string> = {
+export const promotionDecisionLabels: Record<PromotionDecision, string> = localized({
   passed: '合格',
   failed: '不合格',
   insufficient: '判定不能',
   skipped: '判定せず',
-};
+}, english.promotionDecisionLabels);
 
 // Why a criterion could not compare its values (PromotionCriterionResult.reason).
-export const promotionCriterionReasonLabels: Record<PromotionCriterionReason, string> = {
+export const promotionCriterionReasonLabels: Record<PromotionCriterionReason, string> = localized({
   candidate_metric_missing: '候補に値がありません',
   candidate_metric_not_finite: '候補の値がNaN/∞です',
   baseline_metric_missing: '基準に値がありません',
@@ -146,41 +148,41 @@ export const promotionCriterionReasonLabels: Record<PromotionCriterionReason, st
   baseline_zero: '基準が0のため相対差を計算できません',
   baseline_missing: '基準バージョンがないため比べていません',
   baseline_not_evaluated: '基準バージョンに評価がありません',
-};
+}, english.promotionCriterionReasonLabels);
 
-export const promotionDirectionLabels: Record<PromotionCriterionDirection, string> = {
+export const promotionDirectionLabels: Record<PromotionCriterionDirection, string> = localized({
   higher: '大きいほど良い',
   lower: '小さいほど良い',
-};
+}, english.promotionDirectionLabels);
 
-export const promotionModeLabels: Record<PromotionCriterionMode, string> = {
+export const promotionModeLabels: Record<PromotionCriterionMode, string> = localized({
   absolute: '候補の値',
   delta: '基準との差',
   relative_delta: '基準との相対差',
-};
+}, english.promotionModeLabels);
 
-export const promotionMissingBaselineLabels: Record<PromotionMissingBaseline, string> = {
+export const promotionMissingBaselineLabels: Record<PromotionMissingBaseline, string> = localized({
   pass: '合格にする（初回の登録）',
   fail: '不合格にする',
-};
+}, english.promotionMissingBaselineLabels);
 
-export const criterionThresholdMeaningLabels: Record<CriterionThresholdMeaning, string> = {
+export const criterionThresholdMeaningLabels: Record<CriterionThresholdMeaning, string> = localized({
   improvement_required: '改善が必要',
   no_regression: '悪化しなければよい',
   regression_allowed: 'この幅までの悪化を許容',
-};
+}, english.criterionThresholdMeaningLabels);
 
 // Where an offered alias name is already used (lib/aliasChoices.ts).
-export const knownAliasSourceLabels: Record<KnownAliasSource, string> = {
+export const knownAliasSourceLabels: Record<KnownAliasSource, string> = localized({
   model: 'モデルで使用中',
   policy: '昇格policy',
   protection: '保護alias',
-};
+}, english.knownAliasSourceLabels);
 
-export const aliasProtectionRoleLabels: Record<ModelAliasProtectionRole, string> = {
+export const aliasProtectionRoleLabels: Record<ModelAliasProtectionRole, string> = localized({
   editor: 'editor以上',
   admin: 'adminのみ',
-};
+}, english.aliasProtectionRoleLabels);
 
 // How a sentence names the role a change needs (「…にはProject adminの権限が必要です」).
 const aliasProtectionRoleNeeded: Record<ModelAliasProtectionRole, string> = {
@@ -189,7 +191,7 @@ const aliasProtectionRoleNeeded: Record<ModelAliasProtectionRole, string> = {
 };
 
 // Text that embeds values.
-export const promotionTextTemplates = {
+export const promotionTextTemplates = localized({
   protectedAliasNotice: (role: ModelAliasProtectionRole, requirePassedEvaluation: boolean) =>
     `このaliasは保護されています（${aliasProtectionRoleLabels[role]}${
       requirePassedEvaluation ? '・合格判定が必須' : ''
@@ -217,4 +219,4 @@ export const promotionTextTemplates = {
   aliasNew: (alias: string) => `「${alias}」はまだ使われていない新しいAliasです。`,
   aliasCaseVariant: (variants: readonly string[]) =>
     `「${variants.join('」「')}」が既にあります。大文字・小文字だけが違っても別のAliasになります。`,
-};
+}, english.promotionTextTemplates);

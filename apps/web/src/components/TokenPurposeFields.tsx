@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { TokenScope } from '@mmt/contracts';
 import { CheckboxList } from './CheckboxList';
 import { OptionPicker } from './OptionPicker';
@@ -28,6 +29,7 @@ export function TokenPurposeFields({
   value: TokenScopeChoice;
   onChange: (value: TokenScopeChoice) => void;
 }) {
+  useLocale();
   return (
     <>
       <OptionPicker

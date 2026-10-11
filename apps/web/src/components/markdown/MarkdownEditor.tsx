@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId, useState } from 'react';
 import { Tabs } from '../Tabs';
 import { MarkdownView } from './MarkdownView';
@@ -26,6 +27,7 @@ export function MarkdownEditor({
   rows?: number;
   autoFocus?: boolean;
 }) {
+  useLocale();
   const id = useId();
   const [tab, setTab] = useState<MarkdownEditorTab>('write');
   // Counts UTF-16 code units, the same unit the API's length check uses.

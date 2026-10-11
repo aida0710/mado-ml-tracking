@@ -1,3 +1,5 @@
+import * as english from './en/compute';
+import { localized } from './localized';
 import type {
   ComputeTarget,
   CpuArch,
@@ -8,7 +10,7 @@ import type {
 } from '@mmt/contracts';
 
 // Worker presence, Job heartbeat and target connection check labels on the Compute and Jobs pages.
-export const computeText = {
+export const computeText = localized({
   workers: 'Workers',
   workerId: 'Worker ID',
   workerStatus: '接続状態',
@@ -83,31 +85,31 @@ export const computeText = {
   supportsArrayBadge: 'array対応',
   siteRuntimeKindsError:
     'siteの対応RuntimeはDocker・Singularity・Apptainerから1つ以上選択してください。',
-};
+}, english.computeText);
 
 // Text that embeds values.
-export const computeTextTemplates = {
+export const computeTextTemplates = localized({
   queueTimeoutError: (minMinutes: number, maxDays: number) =>
     `待ち行列の上限時間は${minMinutes}分から${maxDays}日までを、HH:MM:SSの形で指定してください。`,
-};
+}, english.computeTextTemplates);
 
-export const computeTargetExecutorLabels: Record<ComputeTarget['executor'], string> = {
+export const computeTargetExecutorLabels: Record<ComputeTarget['executor'], string> = localized({
   ssh: 'SSH',
   local: 'Local',
   site: 'Site',
-};
+}, english.computeTargetExecutorLabels);
 
-export const submissionModeBadgeLabels: Record<SiteSubmissionMode, string> = {
-  automatic: computeText.submissionAutomaticBadge,
-  manual: computeText.submissionManualBadge,
-};
+export const submissionModeBadgeLabels: Record<SiteSubmissionMode, string> = localized({
+  get automatic() { return computeText.submissionAutomaticBadge; },
+  get manual() { return computeText.submissionManualBadge; },
+}, english.submissionModeBadgeLabels);
 
-export const cpuArchLabels: Record<CpuArch, string> = {
+export const cpuArchLabels: Record<CpuArch, string> = localized({
   amd64: 'amd64（x86_64）',
   arm64: 'arm64（AArch64）',
-};
+}, english.cpuArchLabels);
 
-export const targetCheckItemLabels = {
+export const targetCheckItemLabels = localized({
   connection: 'SSH接続',
   python: 'Python',
   venv: 'venv',
@@ -119,17 +121,17 @@ export const targetCheckItemLabels = {
   gpu: 'GPU（nvidia-smi）',
   work_directory: '作業ディレクトリ',
   api: 'APIへの到達',
-} satisfies Record<TargetCheckItemName, string>;
+} satisfies Record<TargetCheckItemName, string>, english.targetCheckItemLabels);
 
-export const targetCheckOutcomeLabels = {
+export const targetCheckOutcomeLabels = localized({
   ok: 'OK',
   ng: 'NG',
   unavailable: 'なし',
   skipped: '未確認',
-} satisfies Record<TargetCheckItemStatus, string>;
+} satisfies Record<TargetCheckItemStatus, string>, english.targetCheckOutcomeLabels);
 
 // One short fix per reason code; shown next to the failing item.
-export const targetCheckCodeHints = {
+export const targetCheckCodeHints = localized({
   ssh_failed: 'host・port・username、鍵とknown_hostsの登録を確認してください',
   ssh_configuration:
     'workerホストに鍵かknown_hostsのファイルが無いか、鍵の権限が600ではありません（mado-tracking-worker doctorで確認できます）',
@@ -152,4 +154,4 @@ export const targetCheckCodeHints = {
   work_directory_not_set: '作業ディレクトリはまだ設定されていません（接続後の設定で選びます）',
   api_unreachable:
     'コンピュータからworkerのMMT_API_URLへ届きません。Jobの記録に必要なので経路とURLを確認してください',
-} satisfies Record<TargetCheckItemCode, string>;
+} satisfies Record<TargetCheckItemCode, string>, english.targetCheckCodeHints);
