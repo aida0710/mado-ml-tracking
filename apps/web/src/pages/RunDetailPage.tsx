@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Play, RefreshCw, Upload } from 'lucide-react';
@@ -66,17 +67,18 @@ const tabs = [
 ] as const;
 type RunTab = (typeof tabs)[number];
 const tabLabels: Record<RunTab, string> = {
-  metrics: text.metrics,
-  media: text.mediaTab,
-  artifacts: text.artifacts,
-  checkpoints: text.checkpoints,
-  systemMetrics: text.systemMetrics,
-  logs: text.logs,
-  details: text.details,
-  executionSnapshot: text.executionSnapshot,
+  get metrics() { return text.metrics },
+  get media() { return text.mediaTab },
+  get artifacts() { return text.artifacts },
+  get checkpoints() { return text.checkpoints },
+  get systemMetrics() { return text.systemMetrics },
+  get logs() { return text.logs },
+  get details() { return text.details },
+  get executionSnapshot() { return text.executionSnapshot },
 };
 
 export function RunDetailPage() {
+  useLocale();
   const { project, canEdit } = useProject();
   const { runId = '' } = useParams();
   const [params, setParams] = useSearchParams();
@@ -340,6 +342,7 @@ export function RunDetailPage() {
 
 /** For a Run that continues from a checkpoint: the step it starts from and the Run that saved it. */
 function ResumedFromCheckpoint({ run }: { run: Run }) {
+  useLocale();
   const resume = getResumeCheckpointRecord(run);
   if (!resume) return null;
   return (
@@ -374,6 +377,7 @@ function RunMetricCharts({
   run: Run;
   resumeEvents: RunResumeEventPage | undefined;
 }) {
+  useLocale();
   const metricKeys = useMemo(() => getRunChartKeys([run]).metricKeys, [run]);
   const defaultLayout = useMemo(
     () => createDefaultLayout(metricKeys, (index) => `default-${index}`),
@@ -406,6 +410,7 @@ function RunMetricCharts({
  * follow the Run's metrics; changes last while the tab is open.
  */
 function RunSystemMetricCharts({ run }: { run: Run }) {
+  useLocale();
   const metricKeys = useMemo(
     () => Object.keys(run.latestMetrics).filter(isSystemMetricKey).sort(),
     [run.latestMetrics],

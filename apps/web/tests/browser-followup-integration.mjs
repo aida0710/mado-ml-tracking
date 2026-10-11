@@ -39,7 +39,7 @@ async function takeScreenshot(page, name) {
 }
 
 try {
-  const adminContext = await browser.newContext({
+  const adminContext = await browser.newContext({ locale: 'ja-JP',
     viewport: { width: 1440, height: 960 },
     extraHTTPHeaders: { Origin: base },
   });
@@ -63,7 +63,7 @@ try {
   assert.ok(metricBounds.x + metricBounds.width < 1440, 'real metrics are off screen');
   await takeScreenshot(adminPage, 'runs-real-light');
 
-  const projectAdminContext = await browser.newContext({
+  const projectAdminContext = await browser.newContext({ locale: 'ja-JP',
     viewport: { width: 1440, height: 960 },
     extraHTTPHeaders: { Origin: base },
   });

@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useCallback, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { MediaCompareGrid as MediaCompareGridData, RunMedia } from '@mmt/contracts';
 import { AudioLines, Film, Table2 } from 'lucide-react';
@@ -38,6 +39,7 @@ function firstFilledCell(table: CompareTable): GridPosition {
 }
 
 function CellSummary({ projectId, media }: { projectId: string; media: RunMedia | null }) {
+  useLocale();
   if (!media) return <span className="muted">{text.mediaCompareMissing}</span>;
   switch (media.kind) {
     case 'image':
@@ -67,6 +69,7 @@ function CellSummary({ projectId, media }: { projectId: string; media: RunMedia 
  * The position is applied once the new file's duration is known, so a shorter file starts over.
  */
 function useAudioHandoff() {
+  useLocale();
   const currentAudio = useRef<HTMLAudioElement | null>(null);
   const pendingHandoff = useRef<PlaybackHandoff | null>(null);
   const attachAudio = useCallback((element: HTMLAudioElement | null) => {
@@ -96,6 +99,7 @@ function useAudioHandoff() {
  * It only displays the data it is given, so a report can show a grid fixed when it was made.
  */
 export function MediaCompareGrid(props: MediaCompareGridProps) {
+  useLocale();
   const isNarrow = useMediaQuery(narrowerThan('md'));
   return <MediaCompareGridView {...props} isNarrow={isNarrow} />;
 }
@@ -110,6 +114,7 @@ export function MediaCompareGridView({
   runLabels,
   isNarrow,
 }: MediaCompareGridProps & { isNarrow: boolean }) {
+  useLocale();
   const table = useMemo(() => compareTableOf(grid), [grid]);
   const [selected, setSelected] = useState<GridPosition>(() => firstFilledCell(table));
   const cellButtons = useRef(new Map<string, HTMLButtonElement>());
@@ -232,6 +237,7 @@ export function MediaCompareGridView({
 
 /** One Run's steps on a narrow screen, laid out as a wrapping row of cells under the Run's name. */
 function RunStack({ label, children }: { label: string; children: ReactNode }) {
+  useLocale();
   return (
     <section className="media-compare-run" aria-label={label}>
       <h5>{label}</h5>
@@ -255,6 +261,7 @@ function SelectedCellDetail({
   count: number;
   attachAudio: (element: HTMLAudioElement | null) => void;
 }) {
+  useLocale();
   return (
     <section className="media-compare-detail" aria-live="polite">
       {runLabel !== undefined && step !== undefined && (

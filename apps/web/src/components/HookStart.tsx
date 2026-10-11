@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { Hook, HookExecution, HookTriggerRequest } from '@mmt/contracts';
 import { hooksApi } from '../api/hooks';
@@ -24,6 +25,7 @@ export function HookStart({
   projectId: string;
   onStarted: () => void;
 }) {
+  useLocale();
   const [values, setValues] = useState<FormValues>({ payload: '' });
   const [validationError, setValidationError] = useState<string | null>(null);
   const [request, setRequest] = useState<HookTriggerRequest | null>(null);

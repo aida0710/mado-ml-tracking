@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { AdminUser, AdminUserQuery } from '@mmt/contracts';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -66,6 +67,7 @@ function confirmation({ user, action }: PendingAction) {
 
 /** The admin "users" section: search, local account creation, disabling and password resets. */
 export function UsersPanel() {
+  useLocale();
   const { users, filter, setFilter } = useAdminUsers();
   const [searchText, setSearchText] = useState('');
   const [isCreating, setIsCreating] = useState(false);

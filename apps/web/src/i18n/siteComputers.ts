@@ -1,3 +1,5 @@
+import * as english from './en/siteComputers';
+import { localized } from './localized';
 import type {
   SiteAccountMode,
   SiteConnectionCheckStatus,
@@ -8,7 +10,7 @@ import type { JobShellTemplateKey } from '../lib/jobShellTemplates';
 
 // Computers added on the Web: the site settings of the target dialog, the owner in the lists, and
 // a site's details (job shell, keys and checks, personal settings, submit).
-export const siteComputersText = {
+export const siteComputersText = localized({
   siteSubmissionSection: '投入と接続',
   siteExecutionSection: 'siteでの実行',
   siteAdvancedSettings: '詳細',
@@ -135,10 +137,10 @@ export const siteComputersText = {
     '--allで受け取るのは、使ったtokenのProjectのJobです。複数のProjectのJobを受け取るときは、Projectごとに、そのProjectのtokenで--watch --allを動かします。',
   manualGuideToken:
     '実行する前に、MMT_API_URLと、jobs:writeを持つ本人のAPI token（MMT_API_TOKEN）を設定します。',
-} as const;
+} as const, english.siteComputersText);
 
 // Text that embeds values.
-export const siteComputersTextTemplates = {
+export const siteComputersTextTemplates = localized({
   // Someone else's manual computer may be their PC (they take everyone's Jobs) or, for example, a
   // supercomputer each requester submits to with their own account.
   manualGuideOwnerSubmits: (owner: string) =>
@@ -161,34 +163,34 @@ export const siteComputersTextTemplates = {
     `ランチャーが作った公開鍵です。共用アカウント（${account}）の~/.ssh/authorized_keysに1行で追加してください。秘密鍵はランチャーのホストから出ません。`,
   sitePersonalKeyHint: (account: string) =>
     `ランチャーがあなた用に作った公開鍵です。あなたのアカウント（${account}）の~/.ssh/authorized_keysに1行で追加してください。秘密鍵はランチャーのホストから出ません。`,
-};
+}, english.siteComputersTextTemplates);
 
-export const siteAccountModeLabels = {
+export const siteAccountModeLabels = localized({
   shared: '共用のアカウント（全員のJobを1つのアカウントで投入します）',
   personal: '本人のアカウント（各自が「自分の設定」に書いたアカウントで投入します）',
-} satisfies Record<SiteAccountMode, string>;
+} satisfies Record<SiteAccountMode, string>, english.siteAccountModeLabels);
 
-export const siteGpuAssignmentLabels = {
+export const siteGpuAssignmentLabels = localized({
   scheduler: 'スケジューラが割り当てる',
   lease: 'runnerがホストの空いたGPUから選ぶ（スケジューラが無いホスト）',
-} satisfies Record<SiteGpuAssignment, string>;
+} satisfies Record<SiteGpuAssignment, string>, english.siteGpuAssignmentLabels);
 
-export const jobShellTemplateLabels = {
+export const jobShellTemplateLabels = localized({
   pbs: 'PBS Professional（ABCI 3.0の例）',
   slurm: 'Slurm（共用アカウントの例）',
   'grid-engine': 'Grid Engine（TSUBAME4.0の例）',
   'fujitsu-tcs': 'Fujitsu TCS（富岳の例）',
   'direct-docker': 'スケジューラなしのGPUホスト（Docker）',
   'direct-apptainer': 'スケジューラなしのGPUホスト（Apptainer）',
-} satisfies Record<JobShellTemplateKey, string>;
+} satisfies Record<JobShellTemplateKey, string>, english.jobShellTemplateLabels);
 
-export const siteKeyStatusLabels = {
+export const siteKeyStatusLabels = localized({
   requested: '作成待ち',
   ready: '作成済み',
-} satisfies Record<SiteKeyStatus, string>;
+} satisfies Record<SiteKeyStatus, string>, english.siteKeyStatusLabels);
 
-export const siteConnectionCheckStatusLabels = {
+export const siteConnectionCheckStatusLabels = localized({
   queued: '確認中',
   succeeded: '成功',
   failed: '失敗',
-} satisfies Record<SiteConnectionCheckStatus, string>;
+} satisfies Record<SiteConnectionCheckStatus, string>, english.siteConnectionCheckStatusLabels);

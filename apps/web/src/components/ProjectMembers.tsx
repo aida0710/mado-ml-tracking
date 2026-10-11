@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ProjectMember, ProjectVisibility } from '@mmt/contracts';
 import type { useProjectMembers } from '../hooks/useProjectMembers';
@@ -17,8 +18,8 @@ import { projectAccessTextTemplates } from '../i18n/projectAccess';
 // Public Projects let everyone in as editors without listing them, so the list says who is not
 // shown.
 const VISIBILITY_NOTES: Record<ProjectVisibility, string> = {
-  public: text.projectMembersPublicNote,
-  private: text.projectMembersPrivateNote,
+  get public() { return text.projectMembersPublicNote },
+  get private() { return text.projectMembersPrivateNote },
 };
 
 /** Everyone with a Project role, where that role comes from, and direct grants for admins. */
@@ -27,6 +28,7 @@ export function ProjectMembers({
 }: {
   projectMembers: ReturnType<typeof useProjectMembers>;
 }) {
+  useLocale();
   const { project, isProjectAdmin, reloadProjects } = useProject();
   const { members, saveMember, removeMember } = projectMembers;
   const [editing, setEditing] = useState<ProjectMember | 'new' | null>(null);

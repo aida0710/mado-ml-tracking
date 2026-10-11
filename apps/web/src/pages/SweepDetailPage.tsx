@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link, useParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import type { MetricSeries, SweepTrial } from '@mmt/contracts';
@@ -19,6 +20,7 @@ import { sweepAggregationLabels, sweepGoalLabels, sweepMethodLabels } from '../i
 import { text, textTemplates } from '../i18n/catalog';
 
 export function SweepDetailPage() {
+  useLocale();
   const { sweepId = '' } = useParams();
   const { project } = useProject();
   const auth = useAuth();
@@ -75,6 +77,7 @@ export function SweepDetailPage() {
 
 /** The objective metric of each trial Run by step, overlaid in one chart. */
 function TrialObjectiveHistory({ projectId, detail }: { projectId: string; detail: SweepDetail }) {
+  useLocale();
   const { series, shownTrials, totalTrials } = useTrialObjectiveSeries(projectId, detail);
   return (
     <>

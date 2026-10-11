@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { runMediaApi } from '../../api/runMedia';
@@ -13,6 +14,7 @@ import { text, textTemplates } from '../../i18n/catalog';
  * resolves media cells to Artifacts. MLflow and native tables share the format, so they look the same.
  */
 export function MediaTableView({ projectId, runId, mediaId }: { projectId: string; runId: string; mediaId: string }) {
+  useLocale();
   const [page, setPage] = useState(0);
   const exclusiveAudio = useExclusiveAudio();
   const table = useQuery(`${projectId}:media-table:${runId}:${mediaId}:${page}`, (signal) =>

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { text } from '../i18n/catalog';
@@ -18,6 +19,7 @@ export function NavigationSidebar({
   navigation: Navigation;
   children?: ReactNode;
 }) {
+  useLocale();
   const isRail = navigation.mode === 'rail';
   const toggleLabel = isRail ? text.expandNavigation : text.collapseNavigation;
   return (

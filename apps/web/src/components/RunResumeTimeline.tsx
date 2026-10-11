@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { RunSegment } from '@mmt/contracts';
 import { StatusBadge } from './StatusBadge';
 import { formatDate, formatDuration } from '../lib/format';
@@ -8,6 +9,7 @@ import { text, textTemplates } from '../i18n/catalog';
  * status and first step of each. A Run that was never resumed has one segment and shows nothing.
  */
 export function RunResumeTimeline({ segments, now }: { segments: RunSegment[]; now: number }) {
+  useLocale();
   if (segments.length < 2) return null;
   const startedAt = Date.parse(segments[0]!.startedAt);
   const endOf = (segment: RunSegment) => (segment.endedAt ? Date.parse(segment.endedAt) : now);

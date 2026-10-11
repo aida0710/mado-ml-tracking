@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type {
   NotificationChannel,
@@ -40,6 +41,7 @@ type Settings = ReturnType<typeof useNotificationSettings>;
  * admins; channel editing is limited to global administrators as in the API.
  */
 export function NotificationSettings() {
+  useLocale();
   const { project, isProjectAdmin } = useProject();
   const settings = useNotificationSettings(isProjectAdmin ? project.id : null);
   if (!isProjectAdmin) return null;
@@ -57,6 +59,7 @@ export function NotificationSettings() {
 }
 
 function ChannelSection({ settings, projectId }: { settings: Settings; projectId: string }) {
+  useLocale();
   const { user } = useAuth();
   const canEditChannels = isGlobalAdmin(user);
   const [editing, setEditing] = useState<NotificationChannel | 'new' | null>(null);
@@ -261,6 +264,7 @@ function channelFields(channel?: NotificationChannel): FormField[] {
 }
 
 function RuleSection({ settings }: { settings: Settings }) {
+  useLocale();
   const [isCreating, setIsCreating] = useState(false);
   const toggle = useMutation();
   const channelName = (channelId: string) =>
@@ -391,6 +395,7 @@ function ruleFields(settings: Settings): FormField[] {
 }
 
 function DeliverySection({ settings }: { settings: Settings }) {
+  useLocale();
   return (
     <>
       <div className="section-heading">

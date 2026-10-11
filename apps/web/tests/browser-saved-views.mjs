@@ -26,7 +26,7 @@ const pages = [];
 
 async function signIn(email, displayName) {
   // A fresh context per user: nothing from the other user's localStorage can leak into the view.
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1100 } });
   const page = await context.newPage();
   pages.push(page);
   page.on('pageerror', (error) => errors.push(error.message));

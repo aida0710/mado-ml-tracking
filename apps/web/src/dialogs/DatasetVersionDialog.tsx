@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState, type DragEvent } from 'react';
 import type { Dataset, DatasetVersion } from '@mmt/contracts';
 import { FolderUp } from 'lucide-react';
@@ -39,6 +40,7 @@ export function DatasetVersionDialog({
   onClose: () => void;
   onSaved: (version: DatasetVersion) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const catalog = useExecutionCatalog(project.id);
   const title = `${dataset.name} · ${source === 'folder' ? text.datasetVersionFromFolder : text.newVersion}`;
@@ -109,6 +111,7 @@ function FolderVersionDialog({
   onClose: () => void;
   onSaved: (version: DatasetVersion) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const fields: FormField[] = [
     { name: 'version', label: text.datasetVersionOptional },

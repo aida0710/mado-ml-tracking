@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { LineageGraph } from '@mmt/contracts';
 import { lineageRelationLabels, text } from '../i18n/catalog';
 
@@ -9,6 +10,7 @@ export function LineageRelationsTable({
   graph: LineageGraph;
   initiallyOpen: boolean;
 }) {
+  useLocale();
   const labelById = new Map(graph.nodes.map((node) => [node.id, node.label]));
   return (
     <details className="graph-relations" open={initiallyOpen}>

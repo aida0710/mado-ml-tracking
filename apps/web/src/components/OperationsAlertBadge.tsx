@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell } from 'lucide-react';
@@ -10,6 +11,7 @@ import { text, textTemplates } from '../i18n/catalog';
 
 /** The header bell: open operations alerts of the Project, listed in a popover on click. */
 export function OperationsAlertBadge({ projectId }: { projectId: string }) {
+  useLocale();
   const alerts = useOperationsAlerts(projectId);
   const popoverId = useId();
   const { container, isOpen, toggle } = usePopover();

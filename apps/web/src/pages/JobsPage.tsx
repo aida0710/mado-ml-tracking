@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Play, RefreshCw } from 'lucide-react';
@@ -33,6 +34,7 @@ import { jobsTextTemplates } from '../i18n/jobs';
 const STATUS_FILTERS = ['queued', 'claimed', 'running', 'finished', 'failed', 'canceled'] as const;
 
 export function JobsPage() {
+  useLocale();
   const { project, canEdit } = useProject();
   const { user } = useAuth();
   const navigate = useNavigate();

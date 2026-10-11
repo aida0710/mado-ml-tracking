@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ModelAutomationRule } from '@mmt/contracts';
 import type { ExecutionCatalog } from '../types/executionCatalog';
@@ -28,6 +29,7 @@ export function AutomationManualApply({
   registry: ExecutionCatalog;
   onApplied: () => void;
 }) {
+  useLocale();
   const isChained = rule.trigger === 'upstream_run_finished';
   const executions = useQuery(
     isChained ? `${projectId}:automation-executions:manual-apply` : null,

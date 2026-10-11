@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { Artifact } from '@mmt/contracts';
 import { artifactMediaKind } from '../lib/artifactMediaKind';
 import { evaluationSampleFormat } from '../lib/evaluationSamples';
@@ -11,6 +12,7 @@ import { VideoPreview } from './preview/VideoPreview';
 
 /** Chooses the preview for an Artifact's media kind; each kind lives in components/preview/. */
 export function ArtifactPreview({ artifact }: { artifact: Artifact }) {
+  useLocale();
   const mediaKind = artifactMediaKind(artifact.mimeType);
   const tableFormat = evaluationSampleFormat(artifact.path, artifact.mimeType);
   if (mediaKind === 'text' && tableFormat) return <EvaluationSamplesPreview artifact={artifact} format={tableFormat} />;

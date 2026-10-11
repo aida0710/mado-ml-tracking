@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { Model, ModelVersion } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
 import { useExecutionCatalog } from '../hooks/useExecutionCatalog';
@@ -22,6 +23,7 @@ export function ModelVersionDialog({
   onClose: () => void;
   onSaved: (version: ModelVersion) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const catalog = useExecutionCatalog(project.id);
   return (

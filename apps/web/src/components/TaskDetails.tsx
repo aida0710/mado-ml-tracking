@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { ComputeTarget, ExperimentTask, TaskOutputModel } from '@mmt/contracts';
@@ -14,6 +15,7 @@ import { text } from '../i18n/catalog';
 function OutputModelDetails({ outputModel, catalog, base }: {
   outputModel: TaskOutputModel; catalog: ExecutionCatalog; base: string;
 }) {
+  useLocale();
   const defaultCode = catalog.codeVersions.find((item) => item.id === outputModel.defaultCodeVersionId);
   return <DetailsList entries={[
     [text.outputModelTarget, outputModel.createModel
@@ -33,6 +35,7 @@ const optionLabel = (options: SelectOption[], id: string) =>
 export function TaskDetails({ task, catalog, targets }: {
   task: ExperimentTask; catalog: ExecutionCatalog; targets: ComputeTarget[];
 }) {
+  useLocale();
   const base = `/projects/${task.projectId}`;
   const code = catalog.codeVersions.find((item) => item.id === task.codeVersionId);
   const options = buildCatalogOptions(catalog);

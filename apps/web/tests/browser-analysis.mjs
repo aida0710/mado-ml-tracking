@@ -139,7 +139,7 @@ async function routeApi(page) {
 }
 
 async function openHarness(query) {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ComputeTargetDetails, User } from '@mmt/contracts';
 import { ComputeTargetKind } from './ComputeTargetKind';
 import { DetailsList } from './JsonDetails';
@@ -22,6 +23,7 @@ export function ComputerDetails({
   user: Pick<User, 'id' | 'isAdmin'>;
   onTargetChanged: () => void;
 }) {
+  useLocale();
   if (target.executor === 'site')
     return <SiteComputerDetails target={target} user={user} onTargetChanged={onTargetChanged} />;
   return (

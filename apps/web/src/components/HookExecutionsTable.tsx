@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { Hook, HookExecution } from '@mmt/contracts';
 import { ResponsiveTable, type ResponsiveTableColumn } from './ResponsiveTable';
@@ -10,6 +11,7 @@ import { hookExecutionSubjectLabels } from '../i18n/hooks';
 
 /** The event a start came from, linked to its page where there is one. */
 function ExecutionSubject({ execution, base }: { execution: HookExecution; base: string }) {
+  useLocale();
   const label = hookExecutionSubjectLabels[execution.subjectKind];
   const id = execution.subjectId;
   if (!id) return <>{label}</>;
@@ -29,6 +31,7 @@ function ExecutionSubject({ execution, base }: { execution: HookExecution; base:
 
 /** What the start created or waits for. */
 function ExecutionLinks({ execution, base }: { execution: HookExecution; base: string }) {
+  useLocale();
   const { runId, jobId, arrayGroupId, waitingRunId } = execution;
   if (!runId && !jobId && !arrayGroupId && !waitingRunId) return <>—</>;
   return (
@@ -56,6 +59,7 @@ export function HookExecutionsTable({
   projectId: string;
   showHook: boolean;
 }) {
+  useLocale();
   const base = `/projects/${projectId}`;
   const hookColumns: ResponsiveTableColumn<HookExecution>[] = showHook
     ? [

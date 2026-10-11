@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { SweepObjective, SweepTrial, SweepTrialState } from '@mmt/contracts';
@@ -21,6 +22,7 @@ const TRIAL_BADGE_CLASSES: Record<SweepTrialState, string> = {
 const formatParameter = (value: unknown) => (typeof value === 'number' ? formatNumber(value) : formatValue(value));
 
 function SweepTrialStateBadge({ trial }: { trial: SweepTrial }) {
+  useLocale();
   return (
     <span className={`status-badge ${TRIAL_BADGE_CLASSES[trial.state]}`}
       title={trial.stopReason ? textTemplates.sweepEarlyStoppedReason(trial.stopReason) : undefined}>
@@ -108,6 +110,7 @@ export function SweepTrialsTable({
   objective,
   bestTrialId,
 }: SweepTrialTableInput) {
+  useLocale();
   const [order, setOrder] = useState<SweepTrialOrder>('trial_index');
   return (
     <div className="sweep-trials" data-testid="sweep-trials">

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import type { Artifact } from '@mmt/contracts';
@@ -17,6 +18,7 @@ export function ArtifactActionsMenu({
   artifact: Artifact;
   onDeleted: () => void;
 }) {
+  useLocale();
   const menuId = useId();
   const popover = usePopover();
   const [isConfirming, setIsConfirming] = useState(false);

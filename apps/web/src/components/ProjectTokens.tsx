@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { TokenSummary } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
@@ -15,6 +16,7 @@ import { text, textTemplates } from '../i18n/catalog';
  * `projectTokens` is shared with the Service Account section so issuing a key shows up here.
  */
 export function ProjectTokens({ projectTokens }: { projectTokens: QueryState<TokenSummary[]> }) {
+  useLocale();
   const { project, isProjectAdmin } = useProject();
   const personalTokens = useQuery('personal-tokens', administrationApi.tokens);
   const [showCreate, setShowCreate] = useState(false);

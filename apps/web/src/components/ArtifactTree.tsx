@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { Artifact, ArtifactTree as ArtifactTreeLevel } from '@mmt/contracts';
 import { Download, File, Folder } from 'lucide-react';
 import { ResponsiveTable } from './ResponsiveTable';
@@ -33,6 +34,7 @@ export function ArtifactTree({
   loadingFiles: boolean;
   onLoadMoreFiles: () => void;
 }) {
+  useLocale();
   const breadcrumbs = artifactBreadcrumbs(tree.prefix);
   const rows = artifactDirectoryRows(tree, files);
   return (

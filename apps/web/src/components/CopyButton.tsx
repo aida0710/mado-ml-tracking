@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Copy } from 'lucide-react';
 import { useMutation } from '../hooks/useMutation';
@@ -5,6 +6,7 @@ import { ErrorNotice } from './Feedback';
 import { text } from '../i18n/catalog';
 
 export function CopyButton({ value }: { value: string }) {
+  useLocale();
   const [copied, setCopied] = useState(false);
   const mutation = useMutation();
   return (

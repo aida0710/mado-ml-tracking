@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId, useState } from 'react';
 import type { RunGroupBy } from '@mmt/contracts';
 import { Dialog } from '../Dialog';
@@ -37,6 +38,7 @@ export function ChartPanelEditor({
   onSave: (draft: ChartPanelDraft) => void;
   onClose: () => void;
 }) {
+  useLocale();
   const id = useId();
   const [panel, setPanel] = useState(initial.panel);
   const [view, setView] = useState(initial.view);

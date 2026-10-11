@@ -1,7 +1,9 @@
+import * as english from './en/artifacts';
+import { localized } from './localized';
 // Artifact browser, preview, size limit, audio viewer, evaluation samples, and Artifact comparison labels.
 import type { EvaluationSampleErrorReason, ArtifactReferenceError } from '../lib/evaluationSamples';
 
-export const artifactsText = {
+export const artifactsText = localized({
   artifactTooLarge: 'Artifactが上限サイズを超えています。管理者に上限を確認してください。',
   audioPlay: '再生',
   audioPause: '一時停止',
@@ -72,9 +74,9 @@ export const artifactsText = {
   artifactNoCatalogResults: '条件に合うArtifactはありません',
   artifactNoRun: 'Runなし',
   artifactBackToList: 'ファイル一覧へ戻る',
-} as const;
+} as const, english.artifactsText);
 
-export const artifactsTextTemplates = {
+export const artifactsTextTemplates = localized({
   artifactFolder: (name: string) => `フォルダ ${name}`,
   artifactDirectorySummary: (fileCount: number, size: string) =>
     `${fileCount.toLocaleString('ja-JP')}件 · ${size}`,
@@ -85,18 +87,18 @@ export const artifactsTextTemplates = {
   evaluationBrokenRowCount: (count: number) => `読み取れない行 ${count.toLocaleString('ja-JP')}件`,
   evaluationLine: (line: number) => `${line}行目`,
   evaluationPage: (page: number, pageCount: number) => `${page} / ${pageCount}ページ`,
-};
+}, english.artifactsTextTemplates);
 
-export const evaluationSampleErrorLabels: Record<EvaluationSampleErrorReason, string> = {
+export const evaluationSampleErrorLabels: Record<EvaluationSampleErrorReason, string> = localized({
   invalid_json: 'JSONとして読み取れません',
   not_object: 'JSONオブジェクトではありません',
   column_count: '列数がヘッダーと一致しません',
   unterminated_quote: '引用符が閉じていません',
   invalid_text: 'audio・reference・predictionが文字列ではありません',
   invalid_score: 'scoreが数値ではありません',
-};
+}, english.evaluationSampleErrorLabels);
 
-export const artifactReferenceErrorLabels: Record<ArtifactReferenceError, string> = {
+export const artifactReferenceErrorLabels: Record<ArtifactReferenceError, string> = localized({
   empty: 'パスが空です',
   absolute_path: '絶対パスは使えません。Runの保存パスを書いてください',
   parent_path: '「..」でRunの外は指せません',
@@ -104,4 +106,4 @@ export const artifactReferenceErrorLabels: Record<ArtifactReferenceError, string
   invalid_run_reference: 'mmt-artifact://runs/<Run ID>/<保存パス> の形式で書いてください',
   other_project: '別のプロジェクトのArtifactは参照できません',
   no_table_run: 'Runに属さない表では、相対パスを解決できません',
-};
+}, english.artifactReferenceErrorLabels);

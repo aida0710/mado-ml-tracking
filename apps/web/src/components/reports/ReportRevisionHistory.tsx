@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { ReportRevisionSummary } from '@mmt/contracts';
 import { Resource } from '../Feedback';
 import { useReportRevisions } from '../../hooks/useReport';
@@ -24,6 +25,7 @@ export function ReportRevisionHistory({
   /** Absent when the reader may not edit. */
   onRestore?: (revision: ReportRevisionSummary) => void;
 }) {
+  useLocale();
   const revisions = useReportRevisions(projectId, reportId, currentRevision);
   return (
     <section className="report-history" aria-label={text.reportHistory}>

@@ -1,17 +1,19 @@
+import { getIntlLocale } from '../i18n/locale';
+
 export const formatDate = (value: string | null) =>
   value
-    ? new Intl.DateTimeFormat('ja-JP', { dateStyle: 'short', timeStyle: 'short' }).format(
+    ? new Intl.DateTimeFormat(getIntlLocale(), { dateStyle: 'short', timeStyle: 'short' }).format(
         new Date(value),
       )
     : '—';
 export const formatNumber = (value: number) =>
-  new Intl.NumberFormat('en-US', { maximumSignificantDigits: 6 }).format(value);
+  new Intl.NumberFormat(getIntlLocale(), { maximumSignificantDigits: 6 }).format(value);
 // Table cells use four significant digits; their tooltip retains the original value.
 const TABLE_SIGNIFICANT_DIGITS = 4;
 // Scientific notation keeps very small parameters within a table cell.
 const SCIENTIFIC_NOTATION_THRESHOLD = 0.0001;
 export const formatCompactNumber = (value: number) =>
-  new Intl.NumberFormat('en-US', {
+  new Intl.NumberFormat(getIntlLocale(), {
     maximumSignificantDigits: TABLE_SIGNIFICANT_DIGITS,
     notation:
       value !== 0 && Math.abs(value) < SCIENTIFIC_NOTATION_THRESHOLD ? 'scientific' : 'compact',

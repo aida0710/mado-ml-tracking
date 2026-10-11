@@ -1,3 +1,5 @@
+import { LanguagePicker } from '../components/LanguagePicker';
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { LogOut, Moon, Sun } from 'lucide-react';
 import { authApi } from '../api/auth';
@@ -11,14 +13,18 @@ import { ProductLogo } from '../components/ProductLogo';
 import { OperationsAlertBadge } from '../components/OperationsAlertBadge';
 import { text } from '../i18n/catalog';
 import { NavigationDrawer } from './NavigationDrawer';
+import { useMediaQuery } from '../lib/useMediaQuery';
+import { narrowerThan } from '../lib/breakpoints';
 
 /**
  * The header: the app name, theme, the signed-in user and logout. The screen navigation sits in
  * the sidebar or the rail; below --bp-md this header opens it in the drawer.
  */
 export function TopBar({ projectId, navigation }: { projectId?: string; navigation: Navigation }) {
+  useLocale();
   const auth = useAuth();
   const theme = useTheme();
+  const compact = useMediaQuery(narrowerThan('sm'));
   const mutation = useMutation();
   return (
     <>
@@ -30,9 +36,10 @@ export function TopBar({ projectId, navigation }: { projectId?: string; navigati
           <NavigationDrawer groups={navigation.groups} />
         )}
         <Link to="/" className="brand">
-          <ProductLogo />
+          <ProductLogo compact={compact} />
         </Link>
         <div className="topbar-actions">
+          <LanguagePicker />
           {projectId && <OperationsAlertBadge projectId={projectId} />}
           <button
             className="icon-button"

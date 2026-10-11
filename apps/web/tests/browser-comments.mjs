@@ -24,7 +24,7 @@ const browser = await chromium.launch({
 const errors = [];
 
 async function signIn(email, displayName) {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1100 } });
   const page = await context.newPage();
   page.on('pageerror', (error) => errors.push(error.message));
   // A dialog would mean injected script ran (alert/confirm from the Markdown below).

@@ -2,6 +2,16 @@
 
 `apps/web`の画面を変更するときの置き場所と層の分け方です。画面の文言は`apps/web/src/i18n/`に集め、画面（`pages/`、`components/`、`layout/`）、状態管理のhook（`hooks/`）、APIクライアント（`api/`）、純粋なロジック（`lib/`）を分けます。
 
+## 表示言語
+
+既存のブラウザテストは日本語の操作を確認するため、ブラウザの`locale`を`ja-JP`に指定します。`tests/browser-i18n.mjs`は英語で起動し、言語の切り替えと入力内容の維持を確認します。
+
+日本語の辞書は`i18n/*.ts`、英語の辞書は同名の`i18n/en/*.ts`です。`localized`で各辞書を結び、`catalog.ts`は`mergeTranslations`でまとめます。辞書を通常のオブジェクト展開でまとめると、読み込み時の言語で固定されるため使いません。別の辞書を参照するラベルもgetterで読みます。
+
+文言や日付を描画するコンポーネントは`useLocale()`で変更を購読します。翻訳を含む`useMemo`は`useLocalizedMemo`にします。値だけの計算やAPI取得は言語に依存させません。日付・数値には`getIntlLocale()`を使い、利用者が入力した名前・説明・ログの内容は翻訳しません。
+
+`i18n/locale.ts`が`mmt.locale`に選択を保存します。辞書と初期言語は`i18n/*.test.ts`、切り替え中の入力保持・別タブ同期・モバイル表示は`tests/browser-i18n.mjs`で確認します。
+
 ## スタイルシート
 
 フォント、色・影・角丸・書体の変数、要素の既定、共通の部品（ボタン、入力欄、ダイアログ、タブ、表、状態バッジ、ページの見出し）、画面の枠（上部バー、サイドバー、ドロワー、ログイン画面）はMadoと共有するデザインシステム（`@mado/design-system`、[aida0710/mado-design-systems](https://github.com/aida0710/mado-design-systems)）にあり、`apps/web/src/main.tsx`が日本語のNoto Sans JPとあわせて最初に読み込みます。ファイルの分け方と決まり、バージョンの上げ方は[リポジトリのREADME](https://github.com/aida0710/mado-design-systems#readme)にあります。依存はGitHub Releaseのtarball（`apps/web/package.json`）で、バージョンを上げるときはそのURLを替えて`npm install`します。Madoも同じclass名を使うので、両方の見た目を変えるときはそのリポジトリを直してバージョンを上げ、このアプリだけの見た目は下の領域のファイルで上書きします。

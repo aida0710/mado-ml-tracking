@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import type { FormField, FormValues } from '../types/form';
 import { getFieldValue, getSelectedValues } from '../lib/formValues';
@@ -12,6 +13,7 @@ export function FormFields({
   values: FormValues;
   onChange: (values: FormValues) => void;
 }) {
+  useLocale();
   const idPrefix = useId();
   return (
     <div className="form-fields">

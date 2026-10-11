@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { MAX_JOB_GPU_COUNT, type ComputeTarget, type RunKind } from '@mmt/contracts';
 import type { ExecutionCatalog } from '../types/executionCatalog';
 import type { FormField, FormValues } from '../types/form';
@@ -15,6 +16,7 @@ export function TaskFields({ values, catalog, targets, onChange, isEditing = fal
   values: FormValues; catalog: ExecutionCatalog; targets: ComputeTarget[];
   onChange: (values: FormValues) => void; isEditing?: boolean; launchOnly?: boolean;
 }) {
+  useLocale();
   const options = buildCatalogOptions(catalog);
   const kind = getFieldValue(values, 'kind') as RunKind;
   const model = catalog.modelVersions.find((item) => item.id === values.modelVersionId);

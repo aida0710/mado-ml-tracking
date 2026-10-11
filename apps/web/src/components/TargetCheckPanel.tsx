@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { PlugZap } from 'lucide-react';
 import type {
@@ -37,6 +38,7 @@ export function TargetCheckPanel({
   target: ComputeTarget;
   onTargetSaved: () => void;
 }) {
+  useLocale();
   const check = useTargetCheck(target.id);
   const { checks, latest } = check;
   // The worker chosen for the last check checks again; without one, the worker in charge does.
@@ -80,6 +82,7 @@ function TargetCheckDetails({
   target: ComputeTarget;
   onTargetSaved: () => void;
 }) {
+  useLocale();
   const candidates = detectedCandidates(check);
   return (
     <>
@@ -139,6 +142,7 @@ function TargetCheckDetails({
 }
 
 function DetectedGpus({ gpus }: { gpus: TargetCheckGpu[] }) {
+  useLocale();
   return (
     <>
       <h3>{text.detectedGpus}</h3>
@@ -185,6 +189,7 @@ function TargetCandidateEditor({
   detected: TargetCandidates;
   onSaved: () => void;
 }) {
+  useLocale();
   const mutation = useMutation();
   const [selected, setSelected] = useState<TargetCandidates>(detected);
   const [isSaved, setSaved] = useState(false);

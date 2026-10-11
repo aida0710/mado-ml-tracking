@@ -10,7 +10,7 @@ const browser = await chromium.launch({
   ...(process.env.MMT_CHROMIUM_PATH ? { executablePath: process.env.MMT_CHROMIUM_PATH } : {}),
   args: ['--no-sandbox'],
 });
-const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
+const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 960 } });
 const api = createBrowserApi();
 api.state.loggedIn = true;
 await context.route((url) => url.pathname.startsWith('/api/'), api.route);

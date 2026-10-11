@@ -1,13 +1,14 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { StorageTestResult as StorageTestResultValue } from '@mmt/contracts';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { text } from '../../i18n/catalog';
 
 // The API names the steps; names it adds later are shown as sent.
 const stepLabels: Record<string, string> = {
-  put: text.storageTestStepPut,
-  get: text.storageTestStepGet,
-  range: text.storageTestStepRange,
-  delete: text.storageTestStepDelete,
+  get put() { return text.storageTestStepPut },
+  get get() { return text.storageTestStepGet },
+  get range() { return text.storageTestStepRange },
+  get delete() { return text.storageTestStepDelete },
 };
 
 /** Shows each step of a connection test with OK/NG and the API's short error. */
@@ -18,6 +19,7 @@ export function StorageTestResult({
   backendName: string;
   result: StorageTestResultValue;
 }) {
+  useLocale();
   const passed = result.steps.every((step) => step.ok);
   return (
     <section className="storage-test-result" aria-live="polite">

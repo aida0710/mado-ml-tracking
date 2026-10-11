@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Pause, Play, RotateCcw, X } from 'lucide-react';
 import type { UploadItem } from '../hooks/useArtifactUploadQueue';
 import { CopyButton } from './CopyButton';
@@ -28,6 +29,7 @@ export function UploadQueuePanel({
   onCancel: (id: string) => void;
   onRetryFailed: () => void;
 }) {
+  useLocale();
   if (items.length === 0) return null;
   const completedCount = items.filter((item) => item.status === 'completed').length;
   const hasFailed = items.some((item) => item.status === 'failed');
@@ -63,6 +65,7 @@ function UploadQueueRow({
   onResume: (id: string) => void;
   onCancel: (id: string) => void;
 }) {
+  useLocale();
   const canPause = item.method === 'multipart' && ['queued', 'preparing', 'uploading'].includes(item.status);
   const canResume = item.status === 'paused' || item.status === 'failed';
   const canCancel = !['verifying', 'completed', 'canceled'].includes(item.status);

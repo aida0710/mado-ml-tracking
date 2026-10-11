@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useRef, useState } from 'react';
 import type { CodeVersion } from '@mmt/contracts';
 import type { FormValues } from '../types/form';
@@ -16,6 +17,7 @@ export function useCodeVersionWorkspace({ projectId, codeId, initialVersion, ver
   projectId: string; codeId: string; initialVersion?: CodeVersion; versions: CodeVersion[];
   onNavigationDiscard: () => void;
 }) {
+  useLocale();
   const [baseVersion, setBaseVersion] = useState(initialVersion);
   const [sampleId, setSampleId] = useState<CodeSample['id']>('smoke');
   const [sampleError, setSampleError] = useState<string | null>(null);

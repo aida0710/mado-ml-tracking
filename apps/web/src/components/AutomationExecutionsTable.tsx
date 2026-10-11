@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { ModelAutomationExecution, ModelAutomationRule } from '@mmt/contracts';
@@ -32,6 +33,7 @@ function RuleCell({
   execution: ModelAutomationExecution;
   ruleName: string;
 }) {
+  useLocale();
   return (
     <span>
       {ruleName}
@@ -60,6 +62,7 @@ function ModelVersionLink({
   modelVersionId: string;
   catalog?: ExecutionCatalog;
 }) {
+  useLocale();
   const version = catalog?.modelVersions.find((item) => item.id === modelVersionId);
   const label = catalog
     ? (buildCatalogOptions(catalog).models.find((option) => option.value === modelVersionId)
@@ -92,6 +95,7 @@ export function AutomationExecutionsTable({
   variant?: 'project' | 'version';
   onRerun?: () => void;
 }) {
+  useLocale();
   const base = `/projects/${projectId}`;
   const rows = groupAutomationPipelines(executions, rules);
   const column = (render: (execution: ModelAutomationExecution) => ReactNode) =>

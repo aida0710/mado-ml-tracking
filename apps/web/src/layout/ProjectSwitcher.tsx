@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import {
   useEffect,
   useId,
@@ -42,6 +43,7 @@ export function ProjectSwitcher({
   project?: Project;
   onCreateProject?: () => void;
 }) {
+  useLocale();
   const navigate = useNavigate();
   const idPrefix = useId();
   const labelId = `${idPrefix}-label`;
@@ -221,6 +223,7 @@ export function ProjectSwitcher({
 
 /** One row: a Project with its visibility and the user's role (checked when open), or creation. */
 function SwitcherEntryContent({ entry, isCurrent }: { entry: SwitcherEntry; isCurrent: boolean }) {
+  useLocale();
   if (entry.kind === 'create')
     return (
       <>

@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { RefreshCw } from 'lucide-react';
 import { useAuditEvents } from '../../hooks/useAuditEvents';
 import { AuditEventLog } from '../AuditEventLog';
@@ -9,6 +10,7 @@ import { text } from '../../i18n/catalog';
  * administration and storage changes, which no Project's settings page shows.
  */
 export function AuditEventsPanel() {
+  useLocale();
   const audit = useAuditEvents('global');
   return (
     <section className="admin-audit">

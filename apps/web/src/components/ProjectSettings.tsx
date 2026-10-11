@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ArtifactBackend, ProjectPatch, ProjectVisibility } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
@@ -11,6 +12,7 @@ import { text } from '../i18n/catalog';
 
 /** The Project's description, visibility and storage; only a Project admin changes them. */
 export function ProjectSettings() {
+  useLocale();
   const { project, isProjectAdmin, reloadProjects } = useProject();
   const [description, setDescription] = useState(project.description);
   const [visibility, setVisibility] = useState<ProjectVisibility>(project.visibility);

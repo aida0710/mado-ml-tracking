@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { Model, ModelAutomationRule, PromotionPolicy, ServiceAccount } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { summarizeCriterion } from '../lib/promotionPolicyInput';
@@ -36,6 +37,7 @@ export function PromotionPolicyTable({
   onSetEnabled: (id: string, enabled: boolean) => void;
   onTransferOwner: (policy: PromotionPolicy) => void;
 }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={policies}

@@ -1,5 +1,7 @@
+import * as english from './en/storage';
+import { localized } from './localized';
 // Artifact storage backends: the admin table, the backend dialog and the connection test.
-export const storageText = {
+export const storageText = localized({
   newStorageBackend: '保存先を追加',
   editStorageBackend: '保存先を変更',
   storageBackendKind: '種類',
@@ -54,9 +56,9 @@ export const storageText = {
   storageCaBundleError: 'CA証明書はPEM形式（-----BEGIN CERTIFICATE-----）で貼り付けてください',
   storageSecretRequired: 'Access key IDを指定するときはSecret access keyも入力してください',
   storageDirectoryTruncated: '候補が多いため一部だけを表示しています。続けて入力すると絞り込めます。',
-} as const;
+} as const, english.storageText);
 
-export const storageTextTemplates = {
+export const storageTextTemplates = localized({
   storageDirectoryMissing: (path: string) =>
     `${path} はサーバにまだありません。接続テストか最初の保存のときに作成します。`,
   storageDirectoryNotDirectory: (path: string) =>
@@ -67,4 +69,4 @@ export const storageTextTemplates = {
     `partサイズは${minimumMib}〜${maximumMib} MiBの整数で指定してください`,
   storageMakeDefaultConfirm: (name: string) =>
     `新しいプロジェクトの既定の保存先を「${name}」にします。既存のArtifactは移動しません。`,
-};
+}, english.storageTextTemplates);

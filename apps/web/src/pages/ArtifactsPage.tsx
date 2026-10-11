@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { RefreshCw, Search } from 'lucide-react';
@@ -24,7 +25,7 @@ import { text } from '../i18n/catalog';
 const RUN_FILTER_OPTION_LIMIT = 200;
 // Run ids are UUIDs; the first block identifies a Run whose name is not loaded.
 const SHORT_RUN_ID_LENGTH = 8;
-const mimeTypeOptions = [
+const getMimeTypeOptions = () => [
   ['', text.artifactMimeAll],
   ['audio/*', text.artifactMimeAudio],
   ['image/*', text.artifactMimeImage],
@@ -38,6 +39,7 @@ const mimeTypeOptions = [
  * narrow screen shows the results or the chosen file's preview, one at a time.
  */
 export function ArtifactsPage() {
+  useLocale();
   const { project } = useProject();
   const [params, setParams] = useSearchParams();
   const filter: ProjectArtifactFilter = {
@@ -120,7 +122,7 @@ export function ArtifactsPage() {
             value={filter.mimeType}
             onChange={(event) => updateParams({ mimeType: event.target.value })}
           >
-            {mimeTypeOptions.map(([value, label]) => (
+            {getMimeTypeOptions().map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
               </option>

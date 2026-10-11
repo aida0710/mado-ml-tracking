@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useEffect, useState } from 'react';
 import { Columns3, Download, Search } from 'lucide-react';
 import type { RunKind, RunStatus } from '@mmt/contracts';
@@ -47,6 +48,7 @@ export function RunToolbar({
   /** Exports every Run of the current search, not only the shown page. */
   onExportCsv: () => void;
 }) {
+  useLocale();
   const [searchInput, setSearchInput] = useState(searchText);
   const [syntaxError, setSyntaxError] = useState<string | null>(null);
   useEffect(() => {

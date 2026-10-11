@@ -84,7 +84,7 @@ const browser = await chromium.launch({
 });
 const pageErrors = [];
 try {
-  const context = await browser.newContext({ viewport: WIDE });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport: WIDE });
   await context.route((url) => url.pathname.startsWith('/api/'), routeApi);
   const page = await context.newPage();
   page.on('pageerror', (error) => pageErrors.push(error.message));

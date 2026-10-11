@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ModelAutomationExecution, ModelAutomationRule } from '@mmt/contracts';
 import { automationApi } from '../api/automation';
@@ -18,6 +19,7 @@ export function AutomationRerunButton({
   projectId: string;
   onRerun: () => void;
 }) {
+  useLocale();
   const [isConfirming, setIsConfirming] = useState(false);
   return (
     <>

@@ -1,9 +1,11 @@
+import * as english from './en/media';
+import { localized } from './localized';
 // Media recorded per step: the Run media tab, the step comparison, and media tables. run-media-web owns the entries.
 import type { RunMediaKind } from '@mmt/contracts';
 import type { MediaTableCellFailure } from '../lib/mediaTableCells';
 import { artifactReferenceErrorLabels, artifactsText } from './artifacts';
 
-export const mediaText = {
+export const mediaText = localized({
   mediaKeys: 'メディアのキー',
   mediaKey: 'キー',
   mediaKind: '種類',
@@ -36,29 +38,29 @@ export const mediaText = {
   mediaCellWaveform: '波形',
   mediaCellOpen: '開く',
   mediaCellClose: '閉じる',
-} as const;
+} as const, english.mediaText);
 
-export const mediaKindLabels: Record<RunMediaKind, string> = {
+export const mediaKindLabels: Record<RunMediaKind, string> = localized({
   audio: '音声',
   image: '画像',
   video: '動画',
   table: '表',
-};
+}, english.mediaKindLabels);
 
 // The reference rules are the evaluation sample tables' (lib/evaluationSamples.ts), so their wording is reused.
-export const mediaCellErrorLabels: Record<MediaTableCellFailure, string> = {
-  empty: artifactReferenceErrorLabels.empty,
-  absolute_path: artifactReferenceErrorLabels.absolute_path,
-  parent_path: artifactReferenceErrorLabels.parent_path,
-  unsupported_scheme: artifactReferenceErrorLabels.unsupported_scheme,
-  invalid_run_reference: artifactReferenceErrorLabels.invalid_run_reference,
-  other_project: artifactReferenceErrorLabels.other_project,
-  not_found: artifactsText.evaluationAudioNotFound,
+export const mediaCellErrorLabels: Record<MediaTableCellFailure, string> = localized({
+  get empty() { return artifactReferenceErrorLabels.empty; },
+  get absolute_path() { return artifactReferenceErrorLabels.absolute_path; },
+  get parent_path() { return artifactReferenceErrorLabels.parent_path; },
+  get unsupported_scheme() { return artifactReferenceErrorLabels.unsupported_scheme; },
+  get invalid_run_reference() { return artifactReferenceErrorLabels.invalid_run_reference; },
+  get other_project() { return artifactReferenceErrorLabels.other_project; },
+  get not_found() { return artifactsText.evaluationAudioNotFound; },
   unresolved: 'Artifactに解決できませんでした',
-};
+}, english.mediaCellErrorLabels);
 
 // Text that embeds values; merged into catalog's textTemplates.
-export const mediaTextTemplates = {
+export const mediaTextTemplates = localized({
   mediaStepPosition: (step: number, index: number, count: number) => `step ${step}（${index} / ${count}）`,
   mediaStepRangeValue: (minStep: number, maxStep: number) => (minStep === maxStep ? `${minStep}` : `${minStep}〜${maxStep}`),
   mediaItemCount: (count: number) => `${count}件`,
@@ -72,4 +74,4 @@ export const mediaTextTemplates = {
   mediaTableRowCount: (count: number) => `${count}行`,
   mediaTableErrorCells: (count: number) => `表示できないセル ${count}件`,
   mediaTablePage: (page: number, pageCount: number) => `${page} / ${pageCount}ページ`,
-};
+}, english.mediaTextTemplates);

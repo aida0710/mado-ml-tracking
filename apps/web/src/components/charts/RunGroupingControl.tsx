@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId } from 'react';
 import type { RunGroupBy } from '@mmt/contracts';
 import { text } from '../../i18n/catalog';
@@ -5,10 +6,10 @@ import { text } from '../../i18n/catalog';
 type GroupingKind = RunGroupBy['kind'] | 'none';
 
 const groupingLabels: Record<GroupingKind, string> = {
-  none: text.chartGroupingNone,
-  tag: text.chartGroupingTag,
-  param: text.chartGroupingParam,
-  experiment: text.chartGroupingExperiment,
+  get none() { return text.chartGroupingNone },
+  get tag() { return text.chartGroupingTag },
+  get param() { return text.chartGroupingParam },
+  get experiment() { return text.chartGroupingExperiment },
 };
 
 /**
@@ -26,6 +27,7 @@ export function RunGroupingControl({
   paramKeys: readonly string[];
   onChange: (value: RunGroupBy | undefined) => void;
 }) {
+  useLocale();
   const id = useId();
   const kind: GroupingKind = value?.kind ?? 'none';
   const suggestions = kind === 'tag' ? tagKeys : kind === 'param' ? paramKeys : [];

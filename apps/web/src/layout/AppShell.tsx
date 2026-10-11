@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { Navigate, Outlet, useNavigate, useParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
@@ -19,6 +20,7 @@ import { NavigationSidebar } from './NavigationSidebar';
 import { projectHomePath } from './navigationLinks';
 
 export function AppShell() {
+  useLocale();
   const { projectId } = useParams();
   const auth = useAuth();
   const navigate = useNavigate();
@@ -113,6 +115,7 @@ function NoOpenProject({
   hasProjects: boolean;
   onCreateProject?: () => void;
 }) {
+  useLocale();
   return (
     <main id="content" className="page">
       <PageHeader

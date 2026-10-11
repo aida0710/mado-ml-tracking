@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { AdminUser } from '@mmt/contracts';
 import { ResponsiveTable } from '../ResponsiveTable';
 import { formatDate } from '../../lib/format';
@@ -17,11 +18,11 @@ function availableActions(user: AdminUser): UserAction[] {
 }
 
 const actionLabels: Record<UserAction, string> = {
-  makeAdmin: text.userMakeAdmin,
-  removeAdmin: text.userRemoveAdmin,
-  resetPassword: text.userResetPassword,
-  disable: text.userDisable,
-  enable: text.userEnable,
+  get makeAdmin() { return text.userMakeAdmin },
+  get removeAdmin() { return text.userRemoveAdmin },
+  get resetPassword() { return text.userResetPassword },
+  get disable() { return text.userDisable },
+  get enable() { return text.userEnable },
 };
 
 export function UsersTable({
@@ -31,6 +32,7 @@ export function UsersTable({
   users: AdminUser[];
   onAction: (user: AdminUser, action: UserAction) => void;
 }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={users}

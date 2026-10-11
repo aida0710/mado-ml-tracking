@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Artifact, ArtifactUpload, ArtifactUploadDetail } from '@mmt/contracts';
 import { artifactUploadsApi } from '../api/artifactUploads';
@@ -101,6 +102,7 @@ export function useArtifactUploadQueue({
   runId: string | null;
   onCompleted: (artifact: Artifact) => void;
 }) {
+  useLocale();
   const jobsRef = useRef<UploadJob[]>([]);
   const activeRequestsRef = useRef(0);
   const nextJobNumberRef = useRef(1);

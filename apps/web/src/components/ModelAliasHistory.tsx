@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ModelAliasEvent } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { ErrorNotice } from './Feedback';
@@ -17,6 +18,7 @@ const versionLabel = (version: string | null) => version ?? modelsText.aliasUnas
 
 /** Append-only alias changes of one Model, newest first. */
 export function ModelAliasHistory({ history }: { history: ModelAliasHistoryState }) {
+  useLocale();
   return (
     <>
       <h3>{modelsText.aliasHistory}</h3>

@@ -138,7 +138,7 @@ async function withToken(token, method, endpoint, body) {
 }
 
 async function signIn(email, displayName) {
-  const context = await browser.newContext({ viewport: DESKTOP });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport: DESKTOP });
   const page = await context.newPage();
   page.on('pageerror', (error) => pageErrors.push(`${email}: ${error.message}`));
   page.on('console', (message) => {

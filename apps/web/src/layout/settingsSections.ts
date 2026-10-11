@@ -17,13 +17,13 @@ export type SettingsSection = GeneralSettingsSection | AdminSection;
 export const DEFAULT_SETTINGS_SECTION: GeneralSettingsSection = 'account';
 
 export const SETTINGS_SECTION_LABELS: Record<SettingsSection, string> = {
-  account: text.account,
-  computers: text.settingsSectionComputers,
-  projects: text.adminSectionProjects,
-  users: text.adminSectionUsers,
-  storage: text.adminSectionStorage,
-  launchers: text.adminSectionLaunchers,
-  audit: text.adminSectionAudit,
+  get account() { return text.account },
+  get computers() { return text.settingsSectionComputers },
+  get projects() { return text.adminSectionProjects },
+  get users() { return text.adminSectionUsers },
+  get storage() { return text.adminSectionStorage },
+  get launchers() { return text.adminSectionLaunchers },
+  get audit() { return text.adminSectionAudit },
 };
 
 export function settingsSectionPath(section: SettingsSection): string {

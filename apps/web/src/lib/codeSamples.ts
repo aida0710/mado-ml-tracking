@@ -162,14 +162,14 @@ const sampleDefaults = {
   entrypoint: ['python', 'main.py'], testEntrypoint, families: ['linear'],
 };
 export const CODE_SAMPLES: CodeSample[] = [
-  { ...sampleDefaults, id: 'smoke', label: text.smokeSample, requirements: [], taskTypes: ['processing'],
+  { ...sampleDefaults, id: 'smoke', get label() { return text.smokeSample }, requirements: [], taskTypes: ['processing'],
     files: { 'main.py': `${calculation}\n\nif __name__ == "__main__":\n    print(calculate(3.0))\n`, 'test_smoke.py': smokeTest } },
-  { ...sampleDefaults, id: 'sdk', label: text.sdkSample, requirements: [], taskTypes: ['processing'],
+  { ...sampleDefaults, id: 'sdk', get label() { return text.sdkSample }, requirements: [], taskTypes: ['processing'],
     files: { 'main.py': sdkMain, 'test_smoke.py': smokeTest } },
-  { ...sampleDefaults, id: 'mlflow', label: text.mlflowSample, requirements: ['mlflow>=3,<4'], taskTypes: ['processing'],
+  { ...sampleDefaults, id: 'mlflow', get label() { return text.mlflowSample }, requirements: ['mlflow>=3,<4'], taskTypes: ['processing'],
     files: { 'main.py': mlflowMain, 'test_smoke.py': smokeTest } },
-  { ...sampleDefaults, id: 'inference', label: text.inferenceSample, requirements: [], taskTypes: ['inference'],
+  { ...sampleDefaults, id: 'inference', get label() { return text.inferenceSample }, requirements: [], taskTypes: ['inference'],
     files: { 'main.py': inferenceMain, 'test_inference.py': inferenceTest } },
-  { ...sampleDefaults, id: 'training', label: text.trainingSample, requirements: [], taskTypes: ['training'],
+  { ...sampleDefaults, id: 'training', get label() { return text.trainingSample }, requirements: [], taskTypes: ['training'],
     files: { 'main.py': trainingMain, 'test_training.py': trainingTest } },
 ];

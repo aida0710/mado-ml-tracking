@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId, useMemo, useState, type PointerEvent } from 'react';
 import {
   CartesianGrid,
@@ -57,6 +58,7 @@ export function MetricsChart({
   height = DEFAULT_CHART_HEIGHT,
   onZoom,
 }: MetricsChartProps) {
+  useLocale();
   const [hiddenIds, setHiddenIds] = useState<ReadonlySet<string>>(new Set());
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [zoomRange, setZoomRange] = useState<MetricXRange | null>(null);
@@ -256,6 +258,7 @@ function ChartPlotLayer({
   onHover: (hover: HoverPosition | null) => void;
   onZoom: (range: MetricXRange) => void;
 }) {
+  useLocale();
   const clipPathId = `chart-clip-${useId().replace(/[^a-zA-Z0-9-]/g, '')}`;
   const xScaleFunction = useXAxisScale();
   const yScaleFunction = useYAxisScale();

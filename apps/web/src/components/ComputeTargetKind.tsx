@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ComputeTarget } from '@mmt/contracts';
 import { text } from '../i18n/catalog';
 import { computeTargetExecutorLabels, submissionModeBadgeLabels } from '../i18n/compute';
@@ -8,6 +9,7 @@ export function ComputeTargetKind({
 }: {
   target: Pick<ComputeTarget, 'executor' | 'cpuArch' | 'submissionMode' | 'supportsArray'>;
 }) {
+  useLocale();
   return (
     <span className="badge-group">
       {computeTargetExecutorLabels[target.executor]}

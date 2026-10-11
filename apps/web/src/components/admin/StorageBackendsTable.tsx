@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { StorageBackend } from '@mmt/contracts';
 import { Lock } from 'lucide-react';
 import { ResponsiveTable } from '../ResponsiveTable';
@@ -20,6 +21,7 @@ export function StorageBackendsTable({
   onEdit: (backend: StorageBackend) => void;
   onMakeDefault: (backend: StorageBackend) => void;
 }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={backends}

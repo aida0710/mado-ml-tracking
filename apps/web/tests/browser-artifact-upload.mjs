@@ -159,7 +159,7 @@ try {
   await writeFile(path.join(folder, 'audio', 'a.wav'), randomBytes(4096));
   await writeRandomFile(path.join(folder, 'audio', 'deep', 'features.bin'), 9 * MIB);
 
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1000 } });
   const page = await context.newPage();
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -290,7 +290,7 @@ try {
   results.beforeUnload = true;
 
   // 6. A viewer sees no upload button.
-  const viewerContext = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const viewerContext = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1000 } });
   const viewerPage = await viewerContext.newPage();
   const viewer = await devLogin(viewerPage, 'viewer@localhost', '閲覧者');
   await apiPost(`/projects/${project.id}/members/${viewer.id}`, { role: 'viewer' }, 'put');

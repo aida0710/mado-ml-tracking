@@ -1,6 +1,8 @@
+import * as english from './en/runs';
+import { localized } from './localized';
 // Run list, server-side Run search, and its paging. native-run-search owns the entries.
 // Chart panels on the Run pages, system metrics and resumed segments: chart-panels-and-pages-web.
-export const runsText = {
+export const runsText = localized({
   queryHint: "名前、または metrics.loss < 0.1 AND params.batch_size = '32'",
   filterEmpty: '検索式を入力してください。',
   firstPage: '最初のページ',
@@ -46,20 +48,20 @@ export const runsText = {
   resumeSegmentEnd: '終了',
   resumeSegmentFirstStep: '最初のstep',
   resumeSegmentEndStatus: '終了状態',
-} as const;
+} as const, english.runsText);
 
 /** Panel titles of the system metrics tab, by category. */
-export const systemMetricCategoryLabels = {
+export const systemMetricCategoryLabels = localized({
   cpu: 'CPU',
   memory: 'メモリ',
   disk: 'ディスク',
   network: 'ネットワーク',
   gpu: 'GPU',
   other: 'その他',
-} as const;
+} as const, english.systemMetricCategoryLabels);
 
 /** Units of the system metrics panels. MLflow megabytes are drawn in bytes. */
-export const systemMetricUnitLabels = {
+export const systemMetricUnitLabels = localized({
   percent: '%',
   bytes: 'bytes',
   bytes_per_second: 'bytes/秒',
@@ -68,10 +70,10 @@ export const systemMetricUnitLabels = {
   celsius: '℃',
   watts: 'W',
   value: '値',
-} as const;
+} as const, english.systemMetricUnitLabels);
 
 // Text that embeds values; merged into catalog's textTemplates.
-export const runsTextTemplates = {
+export const runsTextTemplates = localized({
   filterUnexpectedAt: (position: number) =>
     `検索式の${position}文字目を確認してください。metrics / params / tags などの比較をANDでつなげ、文字列は引用符で囲みます（例: metrics.loss < 0.1 AND params.lr = '0.01'）。`,
   metricAscending: (name: string) => `${name}（昇順）`,
@@ -83,4 +85,4 @@ export const runsTextTemplates = {
   systemMetricPanelTitle: (category: string, unit: string, gpuIndex: number | null) =>
     gpuIndex === null ? `${category}（${unit}）` : `${category} ${gpuIndex}（${unit}）`,
   resumeSegmentLabel: (index: number) => (index === 0 ? '最初の実行' : `再開 ${index}`),
-};
+}, english.runsTextTemplates);

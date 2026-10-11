@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { authApi } from '../api/auth';
 import { useMutation } from '../hooks/useMutation';
@@ -13,6 +14,7 @@ export function PasswordChangeForm({
   isRequired?: boolean;
   onChanged?: () => void;
 }) {
+  useLocale();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');

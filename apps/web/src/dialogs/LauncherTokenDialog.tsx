@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import type { LauncherCreated } from '@mmt/contracts';
 import { Dialog } from '../components/Dialog';
@@ -17,6 +18,7 @@ export function LauncherTokenDialog({
   issued: LauncherCreated;
   onClose: () => void;
 }) {
+  useLocale();
   const tokenId = useId();
   const config = buildLauncherConfigExample({
     apiUrl: window.location.origin,

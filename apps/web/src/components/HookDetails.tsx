@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { Hook } from '@mmt/contracts';
@@ -138,6 +139,7 @@ export function HookDetails({
   onStarted: () => void;
   onOwnerTransferred: () => void;
 }) {
+  useLocale();
   const base = `/projects/${projectId}`;
   return (
     <section className="automation-rule-detail" data-testid="hook-details">

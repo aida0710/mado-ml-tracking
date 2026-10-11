@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId, useState, type MouseEvent, type ReactNode } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Empty } from './Feedback';
@@ -46,6 +47,7 @@ function rowClassName({ isClickable, isSelected }: { isClickable: boolean; isSel
  * and a button on each row opens the secondary ones beneath it.
  */
 export function ResponsiveTable<T>(props: ResponsiveTableProps<T>) {
+  useLocale();
   const isNarrow = useMediaQuery(narrowerThan('md'));
   return <ResponsiveTableView {...props} isNarrow={isNarrow} />;
 }
@@ -61,6 +63,7 @@ export function ResponsiveTableView<T>({
   label,
   isNarrow,
 }: ResponsiveTableProps<T> & { isNarrow: boolean }) {
+  useLocale();
   const detailIdPrefix = useId();
   const [openRowKeys, setOpenRowKeys] = useState<ReadonlySet<string>>(new Set());
   if (!rows.length) return <Empty>{empty}</Empty>;

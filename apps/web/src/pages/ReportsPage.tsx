@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -17,6 +18,7 @@ const SHOW_ARCHIVED_PARAM = 'archived';
 
 /** The Project's shared reports. Editors create one here and continue in its editor. */
 export function ReportsPage() {
+  useLocale();
   const { project, canEdit } = useProject();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();

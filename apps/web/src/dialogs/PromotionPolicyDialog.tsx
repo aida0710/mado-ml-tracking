@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId, type ReactNode } from 'react';
 import type {
   Model,
@@ -29,6 +30,7 @@ function Field({
   required?: boolean;
   children: (id: string) => ReactNode;
 }) {
+  useLocale();
   const id = useId();
   return (
     <div className="field">
@@ -54,6 +56,7 @@ function EvaluationConditions({
   rule: ModelAutomationRule;
   catalog: ExecutionCatalog;
 }) {
+  useLocale();
   const options = buildCatalogOptions(catalog);
   const labelOf = (items: { value: string; label: string }[], id: string) =>
     items.find((item) => item.value === id)?.label ?? id;
@@ -97,6 +100,7 @@ export function PromotionPolicyDialog({
   onClose: () => void;
   onSaved: (policy: PromotionPolicy) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const form = usePromotionPolicyForm({ projectId: project.id, models, rules, initialModelId });
   const { draft } = form;

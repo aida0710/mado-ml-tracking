@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useRef, useState } from 'react';
 import { text } from '../i18n/catalog';
 import { NAVIGATION_WIDTH } from '../lib/navigationWidth';
@@ -15,6 +16,7 @@ export function NavigationResizeHandle({
   onResize: (width: number) => void;
   onReset: () => void;
 }) {
+  useLocale();
   const dragStart = useRef<{ pointerX: number; width: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const endDrag = () => {

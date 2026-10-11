@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { Artifact } from '@mmt/contracts';
 import { trackingApi } from '../../api/tracking';
 import { useQuery } from '../../hooks/useQuery';
@@ -10,10 +11,12 @@ export const TEXT_PREVIEW_MAX_BYTES = 1024 * 1024;
 
 /** The text colored by its format, detected from the artifact's path, media type and content. */
 export function TextContent({ artifact, content }: { artifact: Artifact; content: string }) {
+  useLocale();
   return <CodeView content={content} fileName={artifact.path} mimeType={artifact.mimeType} />;
 }
 
 export function TextPreview({ artifact }: { artifact: Artifact }) {
+  useLocale();
   const canPreview = artifact.size <= TEXT_PREVIEW_MAX_BYTES;
   const content = useQuery(canPreview ? `${artifact.id}:text` : null, (signal) =>
     trackingApi.artifactText(artifact.projectId, artifact.id, signal),

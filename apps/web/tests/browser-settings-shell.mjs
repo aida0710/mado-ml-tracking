@@ -33,7 +33,7 @@ const browser = await chromium.launch({
 const pageErrors = [];
 
 async function openPage(viewport) {
-  const context = await browser.newContext({ viewport });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport });
   await context.route((url) => url.pathname.startsWith('/api/'), api.route);
   const page = await context.newPage();
   page.on('pageerror', (error) => pageErrors.push(error.message));

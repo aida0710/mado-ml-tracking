@@ -1,5 +1,7 @@
+import * as english from './en/artifactLifecycle';
+import { localized } from './localized';
 // Artifact deletion (the file menu in the Run browser) and the usage table in Project settings.
-export const artifactLifecycleText = {
+export const artifactLifecycleText = localized({
   artifactActions: 'ファイルの操作',
   artifactDelete: '削除',
   artifactDeleteTitle: 'Artifactを削除',
@@ -10,12 +12,12 @@ export const artifactLifecycleText = {
   artifactUsageBytes: '容量',
   artifactUsagePendingDeletion: '削除待ち',
   artifactUsageOldVersions: '参照されていない古いバージョン',
-};
+}, english.artifactLifecycleText);
 
-export const artifactLifecycleTextTemplates = {
+export const artifactLifecycleTextTemplates = localized({
   artifactDeleteConfirm: (path: string) =>
     `「${path}」を削除します。一覧と取得からはすぐに消え、元に戻せません。同じパスに前のバージョンがあれば、それが表示されるようになります。`,
   artifactUsageNote: (graceDays: number) =>
     `削除したArtifactの実ファイルは${graceDays}日後に回収します。古いバージョンは自動では削除しません。`,
   artifactUsageFiles: (count: number, size: string) => `${count}件 · ${size}`,
-};
+}, english.artifactLifecycleTextTemplates);

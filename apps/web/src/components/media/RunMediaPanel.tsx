@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useMemo } from 'react';
 import type { RunMediaKeySummary } from '@mmt/contracts';
 import { useMediaLocation } from '../../hooks/useMediaLocation';
@@ -20,6 +21,7 @@ function KeyList({
   selectedKey: string;
   onSelect: (key: string) => void;
 }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={keys}
@@ -62,6 +64,7 @@ function KeyList({
  * step stay in the URL, so a link or a reload opens the same media.
  */
 export function RunMediaPanel({ projectId, runId }: RunMediaPanelProps) {
+  useLocale();
   const { chosenKey, requestedStep, setKey, setStep } = useMediaLocation();
   const { keys: keysQuery, selectedKey, items } = useRunMedia({ projectId, runId, chosenKey });
   const groups = useMemo(() => (items.value ? groupMediaByStep(items.value.items) : null), [items.value]);

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { CopyButton } from './CopyButton';
 import {
   manualSubmitCommand,
@@ -18,6 +19,7 @@ export function ManualSubmitCommand({
   targetId: string;
   options?: ManualSubmitOptions;
 }) {
+  useLocale();
   const command = manualSubmitCommand(targetId, options);
   return (
     <div className="copyable-value">
@@ -33,6 +35,7 @@ export function ManualSubmitCommand({
  * (their PC, say) the owner submits the Jobs. A global site has no owner to mention.
  */
 function ManualSiteOwnerNote({ ownership }: { ownership: ManualSiteOwnership }) {
+  useLocale();
   if (ownership.kind === 'own') return <p className="muted">{text.manualGuideAllScope}</p>;
   if (ownership.kind === 'someoneElse')
     return (
@@ -53,6 +56,7 @@ export function WaitingJobSubmission({
   targetId: string;
   ownership: ManualSiteOwnership;
 }) {
+  useLocale();
   return (
     <>
       <ManualSubmitCommand targetId={targetId} />
@@ -78,6 +82,7 @@ export function WaitingJobNotice({
   /** The viewer created the Job's Run. */
   isRequester: boolean;
 }) {
+  useLocale();
   return (
     <div className="notice manual-submission">
       <p>{isRequester ? text.manualSubmissionOwnHint : text.manualSubmissionHint}</p>
@@ -91,6 +96,7 @@ export function WaitingJobNotice({
  * tracking cannot submit them itself, so the Jobs page says so above the list.
  */
 export function ManualSubmissionNotice({ groups }: { groups: ManualSubmissionGroup[] }) {
+  useLocale();
   if (!groups.length) return null;
   return (
     <section className="notice manual-submission" aria-label={text.manualSubmissionTitle}>
@@ -120,6 +126,7 @@ export function ManualSubmissionGuide({
   targetId: string;
   ownership: ManualSiteOwnership;
 }) {
+  useLocale();
   const commands: Array<{ label: string; options: ManualSubmitOptions }> = [
     { label: text.manualGuideOnce, options: {} },
     { label: text.manualGuideWatch, options: { watch: true } },
