@@ -14,6 +14,9 @@ export type ProjectRole = 'viewer' | 'editor' | 'admin';
  */
 export type ProjectVisibility = 'public' | 'private';
 export type RunKind = 'inference' | 'evaluation' | 'training' | 'finetuning' | 'processing';
+export * from './datasetUsage.js';
+export * from './preprocessingReports.js';
+export * from './workflows.js';
 export type RunStatus = 'queued' | 'running' | 'finished' | 'failed' | 'canceled';
 export type JobStatus = RunStatus | 'claimed';
 // Immutable backend name: 'filesystem' and 's3' from the environment, or one stored in the DB.

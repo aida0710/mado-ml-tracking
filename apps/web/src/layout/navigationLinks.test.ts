@@ -74,7 +74,7 @@ describe('navigationLinks', () => {
       { screen: 'settings', to: '/projects/p1/settings', label: text.settings },
     ]);
     // Every Project screen appears exactly once across the groups.
-    expect(new Set(paths(groups.flatMap((group) => group.links))).size).toBe(14);
+    expect(new Set(paths(groups.flatMap((group) => group.links))).size).toBe(15);
   });
 
   it('全体管理の項目名は ユーザー・ストレージ・ランチャー・監査ログ など各画面の見出しと同じ', () => {

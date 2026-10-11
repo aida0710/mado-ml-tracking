@@ -25,6 +25,7 @@ const referenceLabels: Record<ArtifactReferenceKind, string> = {
   code_version: 'CodeVersion',
   dataset_version: 'DatasetVersion',
   checkpoint: '保持中のcheckpoint',
+  preprocessing_report: '前処理のレポート',
 };
 
 function artifactInUse(kinds: ArtifactReferenceKind[]): never {
@@ -209,7 +210,9 @@ export class ArtifactDeletionService {
         });
         const deleted = await markArtifactsDeleted(connection, {
           projectId: location.projectId,
-          artifactIds: locked.filter((artifact) => !references.has(artifact.id)).map(({ id }) => id),
+          artifactIds: locked
+            .filter((artifact) => !references.has(artifact.id))
+            .map(({ id }) => id),
           deletedBy: principal.user.id,
           origin: 'native',
         });

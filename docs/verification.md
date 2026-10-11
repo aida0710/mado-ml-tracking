@@ -252,6 +252,34 @@ HTTP fixtureはMadoのprotocol・metrics・Dataset importを確認するため�
 
 実Authentik、SSH/GPU、実S3、実SIF runtime、本番Madoへの接続はこの結果に含みません。
 
+## 前処理・学習・評価のワークフローを確認する
+
+専用のテストDBを指定し、独立したAPIとCPU workerを起動します。Taskの設定、10件の入力データ、3ステップのワークフローを用意します。
+
+```bash
+MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55483/mmt_test \
+node_modules/.bin/tsx scripts/serve_workflow_verification.ts
+```
+
+APIの起動表示を待ち、別のターミナルでWebを起動します。
+
+```bash
+MMT_WEB_API_PROXY_TARGET=http://127.0.0.1:47160 \
+npm run dev -w @mmt/web -- --host 127.0.0.1 --port 47161 --strictPort
+```
+
+さらに別のターミナルで、ブラウザの確認を実行します。
+
+```bash
+MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
+MMT_CHROMIUM_PATH=/path/to/chromium \
+node scripts/verify_workflow_browser.mjs
+```
+
+前処理で10件から8件を残し、その8件を学習して、出力モデルを評価する実ジョブを確認します。画面からの定義作成・実行、新しいバージョンの保存、品質条件による後続Jobの停止、390px幅の表示も確認します。結果と画面は`artifacts/workflows/<JSTの日付>/`へ保存します。
+
+終了時はAPIをCtrl+Cで停止します。workerとテスト用schemaを終了・削除し、検証用tokenを保存した`var/workflow-verification/worker-settings.json`も消します。このファイルの内容は記録へ転記しません。
+
 ## Run検索をブラウザで確認する
 
 Experiments画面のサーバー側検索、cursorのページ送り、metricでの並べ替え、送信前の構文エラー、APIの400の表示を確かめます。スクリプトは`mmt_test`の一時schemaを使う独立したAPI（47100）を自分で起動し、80件のRunを用意します。WebはViteを47101で起動しておきます。

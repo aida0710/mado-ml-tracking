@@ -33,6 +33,7 @@ import './styles/artifactBrowser.css';
 import './styles/audio.css';
 import './styles/artifactPreviews.css';
 import './styles/forms.css';
+import './styles/workflows.css';
 import './styles/workbench.css';
 import './styles/narrowModelScreens.css';
 import './styles/admin.css';

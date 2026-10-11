@@ -13,7 +13,8 @@ export type DatasetVersionReferenceKind =
   | 'hook'
   | 'jobPartition'
   | 'outputDeclaration'
-  | 'mlflowDataset';
+  | 'mlflowDataset'
+  | 'workflowVersion';
 
 export type DatasetVersionReferenceCounts = Record<DatasetVersionReferenceKind, number>;
 
@@ -28,6 +29,7 @@ const REFERENCE_LABELS: Record<DatasetVersionReferenceKind, string> = {
   jobPartition: 'Jobの分割の入力',
   outputDeclaration: 'Runの出力の宣言',
   mlflowDataset: 'MLflowの記録',
+  workflowVersion: 'ワークフローの入力',
 };
 
 /**

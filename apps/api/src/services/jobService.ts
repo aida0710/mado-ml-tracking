@@ -410,6 +410,17 @@ export class JobService {
       const previousJob = await findJob(connection, { projectId, id: jobId, lock: true });
       const previousRun = await findRun(connection, { projectId, id: previousJob.runId });
       assertControlsJob({ role, userId: principal.user.id }, previousRun);
+      const workflowStep = await first(
+        connection,
+        'SELECT id FROM workflow_step_runs WHERE run_id=$1 AND NOT reused',
+        [previousRun.id],
+      );
+      if (workflowStep)
+        throw new DomainError(
+          409,
+          'ワークフローの実行画面から再処理してください',
+          'workflow_retry_required',
+        );
       const existingRetry = await first<Job>(
         connection,
         `SELECT ${jobColumns()} FROM jobs WHERE retry_of_job_id=$1`,

@@ -30,6 +30,7 @@ import { reportsText, reportsTextTemplates } from './reports';
 import { savedViewsText, savedViewsTextTemplates } from './savedViews';
 import { jobsText } from './jobs';
 import { hooksText } from './hooks';
+import { workflowsText } from './workflows';
 import { siteComputersText } from './siteComputers';
 import { computersText, computersTextTemplates } from './computers';
 import { computerSetupText, computerSetupTextTemplates } from './computerSetup';
@@ -118,6 +119,7 @@ export const text = mergeTranslations([
   savedViewsText,
   jobsText,
   hooksText,
+  workflowsText,
   siteComputersText,
   computersText,
   computerSetupText,

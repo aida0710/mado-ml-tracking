@@ -43,6 +43,11 @@ def build_execution_specification(
         context["inputCheckpoint"] = resume_checkpoint_document(job.input_checkpoint)
     if job.trigger_payload is not None:
         context["triggerPayload"] = job.trigger_payload
+    environment = job.run.get("environment", {})
+    if isinstance(environment.get("datasetUsage"), list):
+        context["datasetUsage"] = environment["datasetUsage"]
+    if isinstance(environment.get("workflow"), dict):
+        context["workflow"] = environment["workflow"]
     return {
         "jobId": job.id,
         "leaseId": job.lease_id,

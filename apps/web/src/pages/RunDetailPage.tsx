@@ -30,6 +30,7 @@ import { RunExecutionSnapshot } from '../components/RunExecutionSnapshot';
 import { RunOutputModels } from '../components/RunOutputModels';
 import { RunCheckpointList } from '../components/RunCheckpointList';
 import { RunDownstream } from '../components/RunDownstream';
+import { RunWorkflowContext } from '../components/workflows/RunWorkflowContext';
 import { DetailsList, KeyValues } from '../components/JsonDetails';
 import { FormDialog } from '../components/FormDialog';
 import { ArtifactUploadDialog } from '../dialogs/ArtifactUploadDialog';
@@ -145,7 +146,11 @@ export function RunDetailPage() {
                       item.executionMode === 'test' ? text.testMode : text.runMode,
                     )}
                   </span>
-                  {item.taskId && <Link to={`${base}/tasks?id=${item.taskId}`}>{text.taskRevision}: {item.taskRevision}</Link>}
+                  {item.taskId && (
+                    <Link to={`${base}/tasks?id=${item.taskId}`}>
+                      {text.taskRevision}: {item.taskRevision}
+                    </Link>
+                  )}
                   <span>{formatDuration(item.startedAt, item.endedAt)}</span>
                   <ResumedFromCheckpoint run={item} />
                 </>
@@ -201,9 +206,11 @@ export function RunDetailPage() {
               {tab === 'systemMetrics' && <RunSystemMetricCharts key={item.id} run={item} />}
               {tab === 'media' && <RunMediaPanel projectId={project.id} runId={runId} />}
               {tab === 'logs' && <RunLogs logs={logs} />}
-              {tab === 'executionSnapshot' && <Resource query={artifacts}>
-                {(files) => <RunExecutionSnapshot run={item} artifacts={files} />}
-              </Resource>}
+              {tab === 'executionSnapshot' && (
+                <Resource query={artifacts}>
+                  {(files) => <RunExecutionSnapshot run={item} artifacts={files} />}
+                </Resource>
+              )}
               {tab === 'artifacts' && (
                 <>
                   {canEdit && (
@@ -220,11 +227,14 @@ export function RunDetailPage() {
               {tab === 'checkpoints' && (
                 <RunCheckpointList
                   run={item}
-                  canRetryJob={canControlJob(project.role, user.id, item)}
+                  canRetryJob={
+                    canControlJob(project.role, user.id, item) && !item.tags['mmt.workflowId']
+                  }
                 />
               )}
               {tab === 'details' && (
                 <div className="details-grid">
+                  <RunWorkflowContext run={item} canEdit={canEdit} />
                   <RunDescriptionEditor projectId={project.id} run={item} />
                   <section>
                     <h2>{text.details}</h2>

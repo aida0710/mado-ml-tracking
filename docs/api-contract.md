@@ -770,3 +770,18 @@ OperationsAlert `{id,projectId,kind:'job.heartbeat_stale'|'worker.offline'|'plug
 ## ローカル検証
 
 親担当は独立PostgreSQL containerとポート55483、API4182、Web5182を使う。既存Mado DB等を変更しない。テストDB URLは親が`artifacts/coordination/2026-10-08/environment.json`に認証情報を含めず案内する。migrationは担当が作成しrootが適用する。Web表示は実APIのseedデータを使い、API失敗をダミーデータで隠さない。
+
+## 前処理・学習のワークフロー
+
+- `GET /projects/:p/workflows` → `{items:Workflow[]}`。`POST /projects/:p/workflows`（editor＋registry:write、name/description/steps）→201 WorkflowDetail。stepsにはkey/name/taskId/expectedTaskRevision/inputs/modelFromStepKey/qualityGatesを指定する。Taskの現在の設定を不変のWorkflowVersionに固定する。Taskが更新済みなら409 `task_revision_conflict`。
+- `GET /projects/:p/workflows/:id` → WorkflowDetail（workflow/versions）。`POST /projects/:p/workflows/:id/versions`（editor＋registry:write、expectedRevision/steps）→201 WorkflowVersion。ワークフローが更新済みなら409 `workflow_revision_conflict`。
+- 入力は`{source:{kind:'dataset',datasetVersionId}|{kind:'step',stepKey,datasetName:string|null},role:'input'|'training'|'validation'|'test',weight:number,selection:JsonObject}`。weightは正の有限数。stepの参照は前のステップだけ。datasetNameがnullなら出力をすべて使う。inputsが空ならデータ入力も空。モデルは固定したTaskのmodelVersionIdまたはmodelFromStepKeyの出力を一つ使う。品質条件は`{metric,operator:'gte'|'lte'|'eq',threshold:number}`。未記録・非有限の値では条件を満たさない。
+- `POST /projects/:p/workflows/:id/launch`（editor＋runs:write/jobs:write、revision/idempotencyKey/resumeFromExecutionId?）→201 WorkflowExecution。同じ利用者とキーの再送は同じ実行を返す。異なる設定の同一キーは409 `workflow_launch_mismatch`。再開元は同じバージョンのfailed/canceledに限り、違う場合は409 `workflow_resume_invalid`。成功した先頭のステップのRunと出力を再利用し、未完了ステップから新しいRun/Jobを作る。
+- `GET /projects/:p/workflows/:id/executions`（limit/cursor）→WorkflowExecutionPage。`GET /projects/:p/workflow-executions/:id` →WorkflowExecution（ステップの状態、Run/Job、用途、出力、品質値、レポート）。`POST /projects/:p/workflow-executions/:id/cancel`（editor＋jobs:write/runs:write、所有者またはadmin）→WorkflowExecution。所有者でなければ403 `workflow_control_forbidden`。実行中のJobが終わるまでcanceling、終了後はcanceled。
+- `GET /projects/:p/runs/:r/dataset-usage` →RunDatasetUsage `{items:DatasetUsage[]}`。ワークフローの実行時に解決した入力の用途・重み・抽出条件。通常のRunでは空。ワークフローのRunのparameters/environmentは編集できず409 `workflow_run_fixed`。ステップ単体のJob retryは409 `workflow_retry_required`。
+- `GET /projects/:p/runs/:r/preprocessing-report` → `{report:PreprocessingReport|null}`。`PUT /projects/:p/runs/:r/preprocessing-report`（editor＋runs:write、Job tokenは自分のRunのみ）→PreprocessingReport。inputCount/outputCount/excludedCount/failedCount、任意のinputDurationSeconds/outputDurationSeconds、exclusions/failures（reason/count）、metrics、sampleArtifactIds、metadataを保存する。理由の合計は除外/失敗の各件数と一致し、その合計は入力以下。分割により出力が入力を超えてもよい。processing以外は422 `preprocessing_run_kind`、自分のRunの未削除Artifact以外のサンプルは422 `preprocessing_samples_invalid`。終了後の変更は409 `run_finalized`。同じ内容の再送は終了後も元のレポートを返し、revisionとメトリクス履歴を増やさない。
+- 集計メトリクスは`preprocessing.*`で記録し、この名前空間は独自metricsに使えない。retained_input_ratioは(入力−除外−失敗)/入力で、0件なら未定義。品質判定は最新レポートを使い、以前の時間や比率の値は補わない。サンプルはArtifactReferencesの任意のpreprocessingReports配列にRun名とIDを返し、参照中は削除を拒否する。
+
+実行手順とSDKの例は[ワークフロー](workflows.md)を参照。
+
+workerの`datasets.path`出力は、保存したArtifactのファイル一覧を持つDatasetVersionとして登録する。URIは`mmt-dataset://<versionId>`、digestはmanifestから計算する。pathの場合のdigest入力は互換性のため受け付け、実際のdigestは保存済みArtifactから決める。外部uri出力は指定されたuri/digestを保存する。親データセットバージョンには元のRunの入力を保存する。
