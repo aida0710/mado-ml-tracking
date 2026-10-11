@@ -22,6 +22,8 @@ services:
       HOST: 0.0.0.0
       PORT: 4182
       AUTH_MODE: oidc
+      # The web nginx appends the client to X-Forwarded-For; add 1 for each proxy in front of it.
+      MMT_TRUSTED_PROXY_HOPS: ${MMT_TRUSTED_PROXY_HOPS:-1}
       MMT_DATABASE_URL: postgresql://mmt:${MMT_POSTGRES_PASSWORD:?Set MMT_POSTGRES_PASSWORD}@postgres:5432/mmt
       ARTIFACT_FILESYSTEM_ROOT: /app/var/artifacts
     depends_on:
@@ -46,7 +48,7 @@ services:
         condition: service_healthy
     volumes:
       - artifacts:/app/var/artifacts
-      # Holds one downloaded source file at a time; it needs room for the largest Artifact.
+      # Holds one downloaded source file at a time, up to MMT_PREVIEW_MAX_SOURCE_BYTES (10 GiB).
       - preview-work:/app/var/preview-work
     # Lets the Artifact being processed finish its current step before the container stops.
     stop_grace_period: 30s

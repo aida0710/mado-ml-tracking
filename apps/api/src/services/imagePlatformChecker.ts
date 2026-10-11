@@ -3,6 +3,8 @@ import { DomainError } from '../domain/errors.js';
 
 // Docker Hub serves images named without a registry (ubuntu, pytorch/pytorch).
 const DOCKER_HUB_REGISTRY = 'registry-1.docker.io';
+// Names people write for Docker Hub; requests go to DOCKER_HUB_REGISTRY.
+const DOCKER_HUB_ALIASES = new Set(['docker.io', 'index.docker.io', DOCKER_HUB_REGISTRY]);
 const MANIFEST_MEDIA_TYPES = [
   'application/vnd.oci.image.index.v1+json',
   'application/vnd.docker.distribution.manifest.list.v2+json',
@@ -28,6 +30,13 @@ export interface ImagePlatformChecker {
 /** MMT_IMAGE_PLATFORM_CHECK=off: images are not looked up. */
 export const NO_IMAGE_PLATFORM_CHECK: ImagePlatformChecker = { assertRunsOn: async () => undefined };
 
+/** MMT_REGISTRY_*: a read-only login that is sent only to its own registry. */
+export interface RegistryCredentials {
+  registry: string;
+  username: string;
+  password: string;
+}
+
 interface ImageReference {
   registry: string;
   repository: string;
@@ -39,9 +48,14 @@ export function parseImageReference(image: string): ImageReference {
   const withoutTag = name.replace(/:[^/:]+$/, '');
   const [first, ...rest] = withoutTag.split('/');
   const hasRegistry = rest.length > 0 && (first!.includes('.') || first!.includes(':') || first === 'localhost');
-  if (hasRegistry) return { registry: first!, repository: rest.join('/'), digest };
+  if (hasRegistry) return { registry: normalizeRegistryHost(first!), repository: rest.join('/'), digest };
   const repository = rest.length ? withoutTag : `library/${withoutTag}`;
   return { registry: DOCKER_HUB_REGISTRY, repository, digest };
+}
+
+export function normalizeRegistryHost(host: string): string {
+  const lowered = host.toLowerCase();
+  return DOCKER_HUB_ALIASES.has(lowered) ? DOCKER_HUB_REGISTRY : lowered;
 }
 
 function unavailable(): never {
@@ -63,14 +77,15 @@ function bearerChallenge(header: string | null): Record<string, string> | null {
 /**
  * Reads an image's platforms from its registry (Docker Registry HTTP API v2): the platforms of an
  * index, or the os and architecture of a single manifest's config. Registries that ask for a
- * token (Docker Hub, Forgejo, GHCR) get one, with MMT_REGISTRY_USERNAME/PASSWORD when set.
+ * token (Docker Hub, Forgejo, GHCR) get one. The image name, and so the registry, is chosen by
+ * project editors, so MMT_REGISTRY_USERNAME/PASSWORD go only to MMT_REGISTRY_HOST.
  */
 export class RegistryImagePlatformChecker implements ImagePlatformChecker {
   private readonly cache = new Map<string, ImagePlatform[]>();
   private readonly fetcher: typeof fetch;
-  private readonly credentials: { username: string; password: string } | null;
+  private readonly credentials: RegistryCredentials | null;
   constructor(options: {
-    credentials: { username: string; password: string } | null;
+    credentials: RegistryCredentials | null;
     fetcher?: typeof fetch;
   }) {
     this.credentials = options.credentials;
@@ -128,16 +143,28 @@ export class RegistryImagePlatformChecker implements ImagePlatformChecker {
     }
   }
 
+  /** The login for this registry, or null for every other one (they are asked anonymously). */
+  private basicFor(reference: ImageReference): string | null {
+    if (!this.credentials || this.credentials.registry !== reference.registry) return null;
+    const { username, password } = this.credentials;
+    return `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
+  }
+
   // Basic for registries that ask for it; otherwise the token service the challenge names.
   private async authorize(response: Response, reference: ImageReference): Promise<string | null> {
     const challenge = response.headers.get('www-authenticate');
-    const basic = this.credentials
-      ? `Basic ${Buffer.from(`${this.credentials.username}:${this.credentials.password}`).toString('base64')}`
-      : null;
+    const basic = this.basicFor(reference);
     if (challenge && /^Basic\s/i.test(challenge)) return basic;
     const bearer = bearerChallenge(challenge);
     if (!bearer) return null;
-    const tokenUrl = new URL(bearer.realm!);
+    let tokenUrl: URL;
+    try {
+      tokenUrl = new URL(bearer.realm!);
+    } catch {
+      unavailable();
+    }
+    // Registries are read over https only; a token service must not downgrade that.
+    if (tokenUrl.protocol !== 'https:') unavailable();
     if (bearer.service) tokenUrl.searchParams.set('service', bearer.service);
     tokenUrl.searchParams.set('scope', bearer.scope ?? `repository:${reference.repository}:pull`);
     const tokenResponse = await this.request(tokenUrl.toString(), basic ? { Authorization: basic } : {});

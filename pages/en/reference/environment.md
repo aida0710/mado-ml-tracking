@@ -24,7 +24,8 @@ Restart the API after changing values. If a value is malformed or a setting is m
 | `PORT` | `4182` | Port the API listens on |
 | `MMT_PUBLIC_URL` | `http://127.0.0.1:4182` | The URL users open. The SSO callback is built from it |
 | `MMT_WEB_ORIGIN` | `http://127.0.0.1:5182` | Origin of the web UI. Also used for links in notifications |
-| `MMT_ALLOW_PRIVATE_ORIGINS` | `false` | `true` also allows origins with LAN/VPN private IPs and localhost |
+| `MMT_ALLOW_PRIVATE_ORIGINS` | `false` | `true` also allows origins with LAN/VPN private IPs and localhost. For development; keep `false` on a server |
+| `MMT_TRUSTED_PROXY_HOPS` | `0` (`1` in compose) | Proxies in front of the API that append the client to `X-Forwarded-For`. Used for login rate limits and the client address in audit events. `2` when another proxy sits in front of compose's `web` |
 | `MMT_ALLOW_SEED` | `false` | Allows loading sample data. Only with `AUTH_MODE=development` |
 | `MMT_ALLOW_LOCAL_EXECUTOR` | `false` | Allows the local executor. Only with `AUTH_MODE=development` |
 | `DEVELOPMENT_ADMIN_EMAIL` | `admin@localhost` | Email that becomes a global administrator with the development login |
@@ -114,7 +115,8 @@ Settings of the worker that renders previews of long audio and video (`npm run p
 | `MMT_PREVIEW_FFPROBE_PATH` | `ffprobe` | Path of ffprobe |
 | `MMT_PREVIEW_POLL_INTERVAL_MS` | `5000` | Interval for looking for Artifacts to process |
 | `MMT_PREVIEW_TOOL_TIMEOUT_MS` | `1800000` (30 minutes) | Limit of one ffmpeg or ffprobe run. Up to 40 minutes |
-| `MMT_PREVIEW_WORK_DIR` | The OS temporary directory | Where content is placed temporarily. Needs room for the largest Artifact |
+| `MMT_PREVIEW_WORK_DIR` | The OS temporary directory | Where content is placed temporarily. Needs room for `MMT_PREVIEW_MAX_SOURCE_BYTES` |
+| `MMT_PREVIEW_MAX_SOURCE_BYTES` | `10737418240` (10 GiB) | Larger Artifacts get no preview (`skipped`, `source_too_large`) |
 
 ## Worker
 

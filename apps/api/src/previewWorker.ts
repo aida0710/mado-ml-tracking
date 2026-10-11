@@ -25,6 +25,7 @@ const processor = new ArtifactPreviewProcessor({
     timeoutMs: config.toolTimeoutMs,
   },
   workDirectory: config.workDirectory,
+  maxSourceBytes: config.maxSourceBytes,
 });
 
 const shutdownSignal = new AbortController();

@@ -101,4 +101,5 @@ Job tokenは動いているJobにしか無いので、200の確認は小さいJo
 
 - MLflowのmultipart upload（`MLFLOW_ENABLE_PROXY_MULTIPART_UPLOAD=true`）は使えません。部品のPUTが`Authorization`を持たないためです。サイトで動かすコードでは、既定（無効）のままにします。
 - 大きな出力も、今はこのhostnameとAPIを通ります（署名付きURLでの直接のuploadは、[設計案](../../docs/design/external-execution.md)の後の段階です）。
+- edgeは`X-Forwarded-For`を接続元で置き換え、内側の`web`のnginxがその右に足します。edgeを通すときは、APIの`MMT_TRUSTED_PROXY_HOPS`を`2`にします。
 - 内側の`web`のnginxは`X-Forwarded-Proto`を`http`に書き換えます。APIがこの値を使うのはMLflowのmultipartの部品URLだけで、それは公開していないので影響はありません。
