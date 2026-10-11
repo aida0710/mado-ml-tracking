@@ -21,12 +21,11 @@ const optionalSshPath = z.preprocess(
     .optional(),
 );
 
-// Same default as Mado: the identity, display name and email claims the login needs.
-const DEFAULT_OIDC_SCOPES = 'openid profile email';
+// offline_access lets an SSO session refresh short-lived access tokens without another login.
+const DEFAULT_OIDC_SCOPES = 'openid profile email offline_access';
 
-// Idle and absolute limits keep the previous 12-hour session while ending unattended browsers after 8 hours.
-const DEFAULT_SESSION_IDLE_SECONDS = 8 * 60 * 60;
-const DEFAULT_SESSION_ABSOLUTE_SECONDS = 12 * 60 * 60;
+// Keep a login for one week, including time away from the browser.
+const DEFAULT_SESSION_LIFETIME_SECONDS = 7 * 24 * 60 * 60;
 // Shorter sessions than these would expire while an operator is still reading a run.
 const MIN_SESSION_IDLE_SECONDS = 5 * 60;
 const MIN_SESSION_ABSOLUTE_SECONDS = 60 * 60;
@@ -71,12 +70,12 @@ const environmentSchema = z.object({
     .number()
     .int()
     .min(MIN_SESSION_IDLE_SECONDS)
-    .default(DEFAULT_SESSION_IDLE_SECONDS),
+    .default(DEFAULT_SESSION_LIFETIME_SECONDS),
   AUTH_SESSION_ABSOLUTE_SECONDS: z.coerce
     .number()
     .int()
     .min(MIN_SESSION_ABSOLUTE_SECONDS)
-    .default(DEFAULT_SESSION_ABSOLUTE_SECONDS),
+    .default(DEFAULT_SESSION_LIFETIME_SECONDS),
   MMT_PUBLIC_URL: z.url().default('http://127.0.0.1:4182'),
   MMT_WEB_ORIGIN: z.url().default('http://127.0.0.1:5182'),
   MMT_ALLOW_PRIVATE_ORIGINS: z.enum(['true', 'false']).default('false'),

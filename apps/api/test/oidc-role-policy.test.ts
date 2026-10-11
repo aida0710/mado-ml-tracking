@@ -153,11 +153,11 @@ describe('OIDCの起動設定', () => {
     ).toThrow(/OIDC_ADMIN_GROUP disagrees/);
   });
 
-  it('自動連携は既定で無効、scopeは既定でopenid profile email、openidの無いscopeは拒否する', () => {
+  it('自動連携は既定で無効、refresh tokenを要求し、openidの無いscopeは拒否する', () => {
     const config = loadConfig(oidcEnvironment);
     expect(config.oidc).toMatchObject({
       autoLinkVerifiedEmail: false,
-      scopes: 'openid profile email',
+      scopes: 'openid profile email offline_access',
       rolePolicy: { roleMapping: { 'mmt-admins': 'admin' }, defaultRole: 'user' },
     });
     expect(() => loadConfig({ ...oidcEnvironment, OIDC_SCOPES: 'profile email' })).toThrow(

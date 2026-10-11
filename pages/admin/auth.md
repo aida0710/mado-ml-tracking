@@ -26,7 +26,7 @@ Authentik側の設定と、groupで権限を決める方法は[Authentik（SSO�
 - `hybrid`: SSOのボタンと、その下に「またはローカルアカウント」のユーザー名・パスワード欄
 - `local`: ユーザー名・パスワード欄だけ
 
-ログインのsessionは、操作しないまま`AUTH_SESSION_IDLE_SECONDS`（既定28800秒＝8時間）が過ぎるか、ログインから`AUTH_SESSION_ABSOLUTE_SECONDS`（既定43200秒＝12時間）が過ぎた時点の早い方で切れます。idleがabsoluteより長い設定では、APIが起動しません。
+ログインのsessionは、操作しないまま`AUTH_SESSION_IDLE_SECONDS`が過ぎるか、ログインから`AUTH_SESSION_ABSOLUTE_SECONDS`が過ぎた時点の早い方で切れます。どちらも既定604800秒（7日）なので、操作しない期間を含め、ログインから7日保持します。idleがabsoluteより長い設定では、APIが起動しません。
 
 ## 初期管理者を作る
 
