@@ -1,0 +1,15 @@
+# Optional: a host directory for filesystem storage added from the Web (全体設定 → 全体管理 →
+# ストレージ). It is shown inside the API and preview containers at the same path, so a root
+# directory reads the same on the host and on the screen. Enable it in .env:
+#   COMPOSE_FILE=compose.yml:compose.filesystem-storage.yml   (add compose.override.yml if you use one)
+#   MMT_FILESYSTEM_STORAGE_DIR=/srv/mmt/storage
+# Create the directory first and let uid 1000 (the containers' node user) write to it; a missing
+# directory would be created by Docker as root, which the containers cannot write.
+services:
+  api:
+    volumes:
+      - ${MMT_FILESYSTEM_STORAGE_DIR:?Set MMT_FILESYSTEM_STORAGE_DIR}:${MMT_FILESYSTEM_STORAGE_DIR}
+  # Builds previews from the same files, so it sees the same directory.
+  preview:
+    volumes:
+      - ${MMT_FILESYSTEM_STORAGE_DIR:?Set MMT_FILESYSTEM_STORAGE_DIR}:${MMT_FILESYSTEM_STORAGE_DIR}
