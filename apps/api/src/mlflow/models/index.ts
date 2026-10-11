@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { Database } from '../../db/database.js';
+import type { ArtifactService } from '../../services/artifactService.js';
 import type { RegistryService } from '../../services/registryService.js';
 import type { ApiEnvironment } from '../../http/request.js';
 import { LoggedModelService } from './loggedModelService.js';
@@ -12,10 +13,11 @@ import { registeredModelRoutes } from './registeredModelRoutes.js';
 export function mlflowModelRoutes(options: {
   database: Database;
   registry: RegistryService;
+  artifacts: ArtifactService;
 }): Hono<ApiEnvironment> {
   const logged = new LoggedModelService(options.database);
   const models = new RegisteredModelService(options.database);
-  const versions = new ModelVersionService(options.database, options.registry);
+  const versions = new ModelVersionService(options.database, options.registry, options.artifacts);
   const routes = new Hono<ApiEnvironment>();
   routes.route('/', loggedModelRoutes(logged));
   routes.route('/', registeredModelRoutes(models));

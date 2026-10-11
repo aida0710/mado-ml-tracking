@@ -8,7 +8,7 @@ import type {
 import type { FormValues } from '../types/form';
 import { getFieldValue, getSelectedValues, parseJsonObject } from './formValues';
 import { parseUserRunTags } from './reservedRunTags';
-import { parseMaxAttempts } from './executionValidation';
+import { meetsCodeRequirement, parseMaxAttempts } from './executionValidation';
 import { validateTargetGpuIds, validateTargetRuntime } from './runtimeValidation';
 import { text } from '../i18n/catalog';
 import { automationText } from '../i18n/automation';
@@ -37,10 +37,7 @@ export function isAutomationCodeCompatible({
   kind: AutomationKind;
   modelFamilies: string[];
 }): boolean {
-  return (
-    code.taskTypes.includes(kind) &&
-    modelFamilies.every((family) => code.supportedModelFamilies.includes(family))
-  );
+  return meetsCodeRequirement(code, { taskType: kind, families: modelFamilies });
 }
 export function createAutomationValues(modelFamilies: string[] = []): FormValues {
   return {

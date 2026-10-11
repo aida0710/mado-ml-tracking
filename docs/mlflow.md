@@ -20,7 +20,7 @@ Authentikのログインはブラウザでの操作に使います。Pythonの�
 
 学習を実行するマシンのターミナルで設定します。`PROJECT_ID`は記録先ProjectのUUIDへ置き換えてください。`http://localhost:5182`は手元の開発環境のURLです。別の配置ではそのWeb/APIのURLに変更します。
 
-Webの設定画面「MLflow 3から接続」に、このProjectの`MLFLOW_TRACKING_URI`／`MLFLOW_REGISTRY_URI`と、コピーできる設定例があります。「このProject用のtokenを発行」は、read・runs:write・registry:write・artifacts:write を選んだ状態でtokenの作成画面を開きます（viewerには表示しません）。
+Webの設定画面と実験の画面（［SDKで記録］）の「SDK・MLflow 3から接続」の［MLflow 3］に、このProjectの`MLFLOW_TRACKING_URI`／`MLFLOW_REGISTRY_URI`と、コピーできる設定例があります（実験の画面では`set_experiment`にその実験の名前が入ります）。「このProject用のtokenを発行」は、read・runs:write・registry:write・artifacts:write を選んだ状態でtokenの作成画面を開きます（viewerには表示しません）。
 
 ```bash
 python -m pip install 'mlflow>=3,<4'
@@ -49,6 +49,8 @@ with mlflow.start_run(run_name="learning-rate-2e-5"):
     Path("predictions.json").write_text('{"text": "sample"}')
     mlflow.log_artifact("predictions.json", artifact_path="evaluation")
 ```
+
+SDKが`set_experiment()`の前に使うExperiment `0`は、ProjectのDefault Experimentです。最初のRunかLogged Modelを`0`に記録したときに作られます（`apps/api/src/mlflow/defaultExperiment.ts`）。それより前の読み出しはMLflowと同じく失敗せず、`get_experiment("0")`は空のDefault（IDは`0`、作成日時はProjectの作成日時）を返し、`search_runs()`・`search_logged_models()`は0件を返します。読み出しではDefaultを作りません。作られた後のDefaultのIDはほかのExperimentと同じUUIDで、`0`もそのDefaultを指します。
 
 メトリクスはstepとtimestampを保存します。最新値は到着順ではなくstepとtimestampで決まり、履歴は`MlflowClient.get_metric_history()`で取得します。同じparamには同じ値を再送できます。違う値で上書きするとエラーになります。条件を変えた実験には新しいRunを使ってください。
 
@@ -143,6 +145,14 @@ client.create_registered_model("qwen3", tags={"mmt.model_family": "qwen3"})
 
 複数ファイルを使うモデルは、`MLmodel`のflavorが示す保存済みディレクトリをモデル本体として扱います。この場合のモデルバージョンは`MLmodel`と一式のArtifactを保持します。推論コードでは`mlflow.pyfunc.load_model()`でバージョンを読み込んでください。単一の重みファイルを読むコードには`mmt.weights_path`を明示します。Hugging Face・TensorFlowなどの実モデルでの確認は別途必要です。
 
+`mlflow.<flavor>.save_model()`で保存したディレクトリを`mlflow.log_artifacts(dir, "model")`でRunに上げたモデルも、`mlflow.register_model("runs:/<Run>/model", "名前")`で登録できます。SDKはそのディレクトリに`MLmodel`があることを確かめてから、`source`をRunのArtifactの場所（`mlflow-artifacts:/runs/<Run>/artifacts/model`）、`run_id`をそのRunにして`model-versions/create`を送ります。APIは登録のときにディレクトリの`MLmodel`を保存先から読み、Logged Modelと同じくflavorの記述（`pickled_model`・`model_data`など）からモデル本体を決めます（`apps/api/src/mlflow/models/runModelMetadata.ts`）。`MLmodel`が64 KiBを超える・YAMLとして読めないときは、既定のファイル名（`model.pkl`・`model.skops`・`data/model.pth`・`data/model.pt2`など）から探します。保存先から`MLmodel`を読み出せないときは、推測で本体を選ばずに登録を断ります。生成元のRunはバージョンの生成元Runとして保存し、Modelsの画面からRunと重みのArtifactへたどれます。
+
+MLflowのサーバー（3.0.0・3.17.0で確認）との違いは次の3つです。
+
+- 返す`source`は、登録時に固定した一式の場所（`mlflow-artifacts:/model-versions/<バージョンのID>/artifacts`）です。MLflowは送られた`source`をそのまま返します。バージョンの中身を固定するための違いで、`models:/名前/バージョン`の読み込みは同じに動きます。
+- `source`が`runs:/<Run>/…`で`run_id`を省いた`create_model_version`も受け付け、`source`のRunを生成元Runにします。MLflow 3.17のサーバーは`INVALID_PARAMETER_VALUE`で断り、3.0.0は`run_id`を空のまま保存します。
+- `MLmodel`の無いディレクトリは登録できません（`INVALID_STATE`）。MLflowのサーバーは中身を確かめずに登録します。`register_model()`はSDKが先に`MLmodel`の有無を確かめるので、この違いは`create_model_version`を直接呼んだときだけ出ます。
+
 ## モデルを評価する
 
 `mlflow.models.evaluate`の結果はRunとLogged Modelの両方に記録されます。登録モデルの自動評価ルールから起動したJobでも、評価コードはそのまま使えます。
@@ -231,7 +241,7 @@ export MLFLOW_TRACKING_PASSWORD
 - passwordにローカルアカウントのパスワードを入れても通りません（401）。
 - 失効・scope・Projectの権限の確認はBearerと同じです。Job限定token（`mmtj_`）をpasswordにしても、Job tokenの許可表がそのまま効きます。
 - tokenを発行した直後の画面に、Bearer／Basicそれぞれの環境変数の設定例が出ます。
-- 設定画面「MLflow 3から接続」の折りたたみにも、Basic認証の設定例があります。
+- 「SDK・MLflow 3から接続」の［MLflow 3］の折りたたみにも、Basic認証の設定例があります。
 
 ## autologを使う
 
@@ -273,6 +283,8 @@ JobのRunに追加したSDKのparamsは記録用の`recordedParameters`へ保存
 | 音声Artifact（wav・flac） | 対応 | Content-Typeの保持、Range要求の206、nativeのinline表示 |
 | `log_image(key=, step=)`・`log_table`（画像列）のmedia索引 | 対応 | `scripts/mlflow3_checks/media_steps.py`。3 stepの画像がstep順に3件・thumbnail付きで並び、表の画像セルがArtifactに解決される（3.0.0はkeyに`/`を含めない） |
 | 自作pyfunc・複数ファイルのモデル | 対応 | alias経由の読み込みと予測値の一致、`download_artifacts("models:/名前@alias")`で全ファイルのhashが一致 |
+| `save_model()`＋`log_artifacts()`のモデルの`register_model("runs:/…")` | 対応 | 2026-10-11に3.0.0と3.17.0で確認。scikit-learn（3.17は`model.skops`、3.0は`model.pkl`）とPyTorch（3.17は`data/model.pt2`、3.0は`data/model.pth`）を登録し、`load_model("models:/名前/1")`の予測が保存前と一致。Runの直下に上げたモデル（`runs:/<Run>/`）も同じ |
+| 最初のRunの前のDefault Experiment（`0`） | 対応 | 2026-10-11に3.0.0と3.17.0で確認。`mlflow.search_runs()`・`search_logged_models()`が0件、`get_experiment("0")`が空のDefault。最初のRunの後はそのRunを返す |
 | `mlflow.search_runs`のpandas出力 | 対応 | `run_id`・`params.*`・`metrics.*`・`tags.*`・`status`の列 |
 | 登録モデル・バージョンの検索 | 対応 | 2026-10-11に3.0.0（mlflow-skinny）と3.17.0で確認。SDKがprompt除外の条件を付ける`search_registered_models()`、`tag.`・`tags.`・`attribute.`、`timestamp`の並び替え。1001件のバージョンで`MlflowClient.search_model_versions()`が1000件と続きのページの印、`mlflow.search_model_versions()`が1001件を返す。`version_number`の条件（`'5'`も）と並び替え。MLflowが断る`max_results`（登録モデル1001、バージョン200001、Run・Experiment 50001）は同じく`INVALID_PARAMETER_VALUE` |
 | `View run`・`View experiment`のリンク | 対応 | 2026-10-11に3.0.0と3.17.0が表示したリンクをブラウザで開き、Runの画面・Experimentsの画面へ移ること、未ログインならログインの後にRunの画面へ移ることを確認 |

@@ -6,6 +6,7 @@ import { ResponsiveTable } from './ResponsiveTable';
 import { RegistryLayout } from './RegistryLayout';
 import { Empty, ErrorNotice, Resource } from './Feedback';
 import { DetailsList, JsonDetails } from './JsonDetails';
+import { CodeVersionNameLink } from './CodeVersionNameLink';
 import { ModelAliasHistory } from './ModelAliasHistory';
 import { ModelVersionArtifactLink } from './ModelVersionArtifactLink';
 import { RunNameLink } from './RunNameLink';
@@ -265,12 +266,10 @@ export function ModelRegistryPanel({
                             [
                               text.defaultCode,
                               registry.selectedVersion.defaultCodeVersionId ? (
-                                <Link
-                                  className="mono"
-                                  to={`${base}/codes?version=${registry.selectedVersion.defaultCodeVersionId}`}
-                                >
-                                  {registry.selectedVersion.defaultCodeVersionId}
-                                </Link>
+                                <CodeVersionNameLink
+                                  projectId={projectId}
+                                  codeVersionId={registry.selectedVersion.defaultCodeVersionId}
+                                />
                               ) : null,
                             ],
                           ]}

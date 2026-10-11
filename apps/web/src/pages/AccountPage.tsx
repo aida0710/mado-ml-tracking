@@ -7,6 +7,7 @@ import { DataTable } from '../components/DataTable';
 import { Resource } from '../components/Feedback';
 import { PasswordChangeForm } from '../components/PasswordChangeForm';
 import { SettingsPageHeader } from '../components/SettingsPageHeader';
+import { AccountTokenDialog } from '../dialogs/AccountTokenDialog';
 import { formatDate } from '../lib/format';
 import { isSsoUser, userAuthSourceLabels } from '../lib/adminUserDisplay';
 import { canChangeOwnPassword } from '../lib/permissions';
@@ -123,7 +124,8 @@ function AccountTokens({
  * API tokens.
  */
 export function AccountPage() {
-  const { account, tokens, projectNames } = useAccount();
+  const { account, tokens, projects, projectNames } = useAccount();
+  const [isTokenDialogOpen, setIsTokenDialogOpen] = useState(false);
   const [revokingToken, setRevokingToken] = useState<TokenSummary | null>(null);
   return (
     <>
@@ -140,7 +142,12 @@ export function AccountPage() {
               </section>
             )}
             <section className="account-section">
-              <h2>{text.accountTokens}</h2>
+              <div className="section-heading">
+                <h2>{text.accountTokens}</h2>
+                <button className="button small" onClick={() => setIsTokenDialogOpen(true)}>
+                  {text.newToken}
+                </button>
+              </div>
               <Resource query={tokens}>
                 {(items) => (
                   <AccountTokens
@@ -154,6 +161,13 @@ export function AccountPage() {
           </div>
         )}
       </Resource>
+      {isTokenDialogOpen && (
+        <AccountTokenDialog
+          projects={projects}
+          onClose={() => setIsTokenDialogOpen(false)}
+          onCreated={tokens.reload}
+        />
+      )}
       {revokingToken && (
         <ConfirmDialog
           title={text.revokeToken}

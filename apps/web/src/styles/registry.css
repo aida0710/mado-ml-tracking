@@ -157,7 +157,7 @@
 .hook-start {
   margin-top: 20px;
 }
-/* A value to paste elsewhere (a command, a webhook secret) with its copy button. */
+/* A value to paste elsewhere (an ID, a command, a webhook secret) with its copy button. */
 .copyable-value {
   display: flex;
   flex-wrap: wrap;
@@ -171,6 +171,15 @@
   border: 1px solid var(--border);
   font-family: var(--mono);
   overflow-wrap: anywhere;
+}
+.copyable-value-label {
+  color: var(--muted);
+  font-size: 12px;
+}
+/* Under a page title or in a details list the value sits in a line with its own spacing. */
+.page-description .copyable-value,
+.details-list .copyable-value {
+  margin-top: 0;
 }
 .lineage-legend {
   color: var(--muted);
@@ -266,4 +275,22 @@
   .dialog > .hook-webhook-values {
     margin: 0 16px;
   }
+}
+
+/* Under a code version's family list: letter-case warnings and the families to add. */
+.model-family-hints {
+  display: grid;
+  gap: 6px;
+  margin: -6px 0 14px;
+}
+.model-family-choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+/* Why a code version list is empty, under the list and apart from the next field. Qualified by
+   .field-hint, which forms.css (loaded later) gives no margin. */
+.field-hint.missing-code-notice {
+  margin: -6px 0 14px;
 }

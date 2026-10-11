@@ -6,7 +6,11 @@ export async function registeredVersionFixture(harness: Harness, sourceKind: 'ru
   const fixture = await artifactFixture(harness);
   fixture.app.route(
     '/api/mlflow/projects/:p',
-    mlflowModelRoutes({ database: harness.database, registry: harness.services.registry }),
+    mlflowModelRoutes({
+      database: harness.database,
+      registry: harness.services.registry,
+      artifacts: harness.services.artifacts,
+    }),
   );
   const model = sourceKind === 'model' ? await fixture.loggedModel() : null;
   const sourceRoot = model?.root ?? fixture.runRoot;

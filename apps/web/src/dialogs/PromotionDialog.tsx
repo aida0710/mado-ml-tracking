@@ -7,6 +7,7 @@ import { FormFields } from '../components/FormFields';
 import { useMutation } from '../hooks/useMutation';
 import { useProject } from '../hooks/useProject';
 import { usePromotionChoices } from '../hooks/usePromotionChoices';
+import { collectKnownAliases, suggestAliasNames } from '../lib/aliasChoices';
 import { formatDate } from '../lib/format';
 import { getFieldValue, type FormValues } from '../lib/formValues';
 import {
@@ -69,8 +70,23 @@ export function PromotionDialog({
   const roleMissing = !meetsProtectionRole(project.role, protection);
   const policyName = (policyId: string) =>
     policies.find((policy: PromotionPolicy) => policy.id === policyId)?.name ?? policyId;
+  // The Model's aliases and the ones its policies and protections name, so a slip such as
+  // `producton` shows as a new alias before it is created.
+  const knownAliases = collectKnownAliases({
+    models: [model],
+    modelId: model.id,
+    policies,
+    protections: choices.protections.value ?? [],
+  });
   const fields: FormField[] = [
-    { name: 'alias', label: text.alias, required: true },
+    {
+      name: 'alias',
+      label: text.alias,
+      required: true,
+      suggest: async (value) => suggestAliasNames(value, knownAliases),
+      offerSuggestionsWhenEmpty: true,
+      suggestionsRefreshKey: [...knownAliases.keys()].join('\n'),
+    },
     {
       name: 'version',
       label: text.version,

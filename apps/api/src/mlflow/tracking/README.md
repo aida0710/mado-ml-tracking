@@ -5,7 +5,9 @@
 SDKのREST pathには`/api/2.0/mlflow`が含まれる。
 
 ExperimentとRunはnativeのUUIDをIDとして返す。既定Experiment ID `0`は、Project内のnative
-`Default` Experimentへの入口として扱う。Run作成時にDefaultが未作成なら登録する。
+`Default` Experimentへの入口として扱う（`../defaultExperiment.ts`）。Run・Logged Model作成時に
+Defaultが未作成なら登録する。未作成のうちの読み出しは失敗させず、`get_experiment("0")`は
+空のDefault（ID `0`）、Run・Logged Modelの検索は0件を返す。読み出しではDefaultを作らない。
 空のアプリに対する`set_experiment("名称")`の登録・取得に対応する。
 引数なしの`set_experiment()`と空文字の名称は公式SDK自身の検証で拒否される。
 

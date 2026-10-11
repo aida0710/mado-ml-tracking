@@ -4,6 +4,7 @@ import type {
   ModelAutomationExecution,
   ModelAutomationExecutionPage,
   ModelAutomationRule,
+  RuleMetricKeys,
 } from '@mmt/contracts';
 import type { CreateAutomationRule } from './inputs';
 import {
@@ -29,6 +30,9 @@ export const automationApi = {
       `${rulesPath(projectId)}/${encodeId(ruleId)}`,
       jsonRequest('PATCH', { enabled }),
     ),
+  // Metric keys the rule's Runs (or, before it has any, its code version's Runs) recorded.
+  ruleMetricKeys: (projectId: string, ruleId: string, signal?: AbortSignal) =>
+    request<RuleMetricKeys>(`${rulesPath(projectId)}/${encodeId(ruleId)}/metric-keys`, { signal }),
   // Applies a rule to an existing version (or upstream Run) by hand; Project admin only.
   createExecution: (projectId: string, ruleId: string, body: CreateAutomationExecution) =>
     request<ModelAutomationExecution>(

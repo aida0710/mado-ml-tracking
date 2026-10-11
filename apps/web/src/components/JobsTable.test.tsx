@@ -1,10 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import type { Hook, JobListItem } from '@mmt/contracts';
 import { JobsTable } from './JobsTable';
 import { ManualSubmissionNotice } from './ManualSubmissionNotice';
 import { computeTarget, queuedJob, siteTarget } from '../../tests/fixtures/execution';
+
+afterEach(() => vi.unstubAllGlobals());
 
 const listItem = (overrides: Partial<JobListItem>): JobListItem => ({
   ...queuedJob,
@@ -94,6 +96,8 @@ describe('Jobsの一覧', () => {
   });
 
   it('手動投入を待つsiteごとに、本人が実行するコマンドを表示する', () => {
+    // The setup below the commands points `mado-tracking submit` at this page's address.
+    vi.stubGlobal('window', { location: { origin: 'https://mmt.example.test' } });
     const html = renderToStaticMarkup(
       <ManualSubmissionNotice
         groups={[

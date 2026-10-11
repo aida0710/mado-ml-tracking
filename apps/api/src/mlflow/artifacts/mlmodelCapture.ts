@@ -1,4 +1,5 @@
-import { Transform, type TransformCallback } from 'node:stream';
+import { Transform, Writable, type Readable, type TransformCallback } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import { parseDocument } from 'yaml';
 import type { Connection } from '../../db/database.js';
 
@@ -34,6 +35,21 @@ export class MlmodelCapture extends Transform {
       return null;
     }
   }
+}
+
+/**
+ * Parses an MLmodel that is already stored. An oversized file yields null without being read,
+ * the same rule as the capture during upload.
+ */
+export async function readStoredMlmodel(file: {
+  size: number;
+  open: () => Promise<Readable>;
+}): Promise<Record<string, unknown> | null> {
+  if (file.size > MAX_MLMODEL_METADATA_BYTES) return null;
+  const capture = new MlmodelCapture();
+  const discard = new Writable({ write: (_chunk, _encoding, callback) => callback() });
+  await pipeline(await file.open(), capture, discard);
+  return capture.metadata();
 }
 
 /** Stores the parsed MLmodel on the Logged Model; null removes metadata an earlier MLmodel left. */

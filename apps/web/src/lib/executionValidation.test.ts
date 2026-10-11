@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { CodeVersion, ModelVersion } from '@mmt/contracts';
-import { isCodeCompatible, validateCodeCompatibility } from './executionValidation';
+import {
+  isCodeCompatible,
+  meetsCodeRequirement,
+  validateCodeCompatibility,
+} from './executionValidation';
 
 const code = {
   runtime: { kind: 'python' },
@@ -16,5 +20,14 @@ describe('実行するコードの互換性', () => {
       validateCodeCompatibility(code, 'inference', { family: 'Qwen2' } as ModelVersion),
     ).toThrow();
     expect(isCodeCompatible(code, 'finetuning', { family: 'Qwen3' } as ModelVersion)).toBe(false);
+  });
+  it('複数のモデル系列（フック・自動実行）は、すべてに対応しているときだけ満たす', () => {
+    expect(meetsCodeRequirement(code, { taskType: 'inference', families: ['Qwen3'] })).toBe(true);
+    expect(meetsCodeRequirement(code, { taskType: 'inference', families: ['Qwen3', 'Qwen2'] })).toBe(
+      false,
+    );
+    // Nothing to check: a default code of a model version without a kind, or no model chosen.
+    expect(meetsCodeRequirement(code, {})).toBe(true);
+    expect(meetsCodeRequirement(code, { families: ['qwen3'] })).toBe(false);
   });
 });

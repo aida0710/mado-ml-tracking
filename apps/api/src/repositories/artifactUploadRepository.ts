@@ -26,6 +26,10 @@ export const artifactUploadColumns = `id,project_id,run_id,path,backend,storage_
   error,owner_kind,owner_id,
   finalizer_attempts,expires_at,created_at,updated_at`;
 
+/** Added to a SELECT from artifact_uploads: the bytes stored so far, for the session list. */
+export const receivedBytesColumn = `(SELECT coalesce(sum(part.size),0)::float8
+  FROM artifact_upload_parts part WHERE part.upload_id=artifact_uploads.id) AS received_bytes`;
+
 export async function findArtifactUpload(
   connection: Connection,
   reference: { projectId: string; id: string; lock?: boolean },

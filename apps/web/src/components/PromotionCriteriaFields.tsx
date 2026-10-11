@@ -14,6 +14,8 @@ import {
   promotionDirectionLabels,
   promotionModeLabels,
 } from '../i18n/promotion';
+import type { SuggestFieldValues } from '../types/form';
+import { SuggestionInput } from './SuggestionInput';
 import { text } from '../i18n/catalog';
 
 // Spells out the typed row, e.g. "werの基準との差 ≤ -0.01（改善が必要）", so the threshold's sign
@@ -30,14 +32,22 @@ function CriterionPreview({ draft }: { draft: PromotionCriterionDraft }) {
   );
 }
 
+/** Candidates for a criterion's metric name, and when to look the typed name up again. */
+export interface MetricSuggestions {
+  suggest: SuggestFieldValues;
+  refreshKey: string;
+}
+
 function CriterionRow({
   criterion,
   canRemove,
+  metricSuggestions,
   onChange,
   onRemove,
 }: {
   criterion: PromotionCriterionDraft;
   canRemove: boolean;
+  metricSuggestions: MetricSuggestions;
   onChange: (changes: Partial<PromotionCriterionDraft>) => void;
   onRemove: () => void;
 }) {
@@ -47,13 +57,15 @@ function CriterionRow({
       <div className="promotion-criterion-row">
         <div className="field">
           <label htmlFor={`${id}-metric`}>{text.promotionCriterionMetric}</label>
-          <input
+          <SuggestionInput
             id={`${id}-metric`}
-            className="mono"
             value={criterion.metric}
             required
             placeholder="wer"
-            onChange={(event) => onChange({ metric: event.target.value })}
+            suggest={metricSuggestions.suggest}
+            offerWhenEmpty
+            refreshKey={metricSuggestions.refreshKey}
+            onChange={(metric) => onChange({ metric })}
           />
         </div>
         <div className="field">
@@ -112,14 +124,21 @@ function CriterionRow({
   );
 }
 
-/** Editable list of pass/fail criteria. Every criterion must hold for a pass. */
+/**
+ * Editable list of pass/fail criteria. Every criterion must hold for a pass. Metric names are
+ * offered from what the evaluation Runs recorded; `metricHint` says where they come from.
+ */
 export function PromotionCriteriaFields({
   criteria,
+  metricSuggestions,
+  metricHint,
   onChange,
   onAdd,
   onRemove,
 }: {
   criteria: PromotionCriterionDraft[];
+  metricSuggestions: MetricSuggestions;
+  metricHint: string;
   onChange: (key: string, changes: Partial<PromotionCriterionDraft>) => void;
   onAdd: () => void;
   onRemove: (key: string) => void;
@@ -128,10 +147,12 @@ export function PromotionCriteriaFields({
     <fieldset className="promotion-criteria">
       <legend>{text.promotionCriteria}</legend>
       <p className="muted">{text.promotionCriteriaHint}</p>
+      <p className="field-hint">{metricHint}</p>
       {criteria.map((criterion) => (
         <CriterionRow
           key={criterion.key}
           criterion={criterion}
+          metricSuggestions={metricSuggestions}
           canRemove={criteria.length > 1}
           onChange={(changes) => onChange(criterion.key, changes)}
           onRemove={() => onRemove(criterion.key)}

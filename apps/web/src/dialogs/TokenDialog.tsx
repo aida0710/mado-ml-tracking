@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import type { ProjectRole, ServiceAccount, TokenScope, TokenSummary } from '@mmt/contracts';
+import type { Project, ProjectRole, ServiceAccount, TokenScope, TokenSummary } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
-import { useProject } from '../hooks/useProject';
 import { FormDialog } from '../components/FormDialog';
 import { Dialog } from '../components/Dialog';
 import { CopyButton } from '../components/CopyButton';
@@ -33,18 +32,19 @@ export interface ServiceAccountTokenOwner {
  * that role are left unselected rather than offered.
  */
 export function TokenDialog({
+  project,
   owner,
   initialScopes = DEFAULT_TOKEN_SCOPES,
   onClose,
   onCreated,
 }: {
+  project: Project;
   owner?: ServiceAccountTokenOwner;
   initialScopes?: TokenScope[];
   onClose: () => void;
   onCreated: () => void;
 }) {
   const serviceAccount = owner?.serviceAccount;
-  const { project } = useProject();
   const [token, setToken] = useState<string | null>(null);
   const title = serviceAccount
     ? serviceAccountsTextTemplates.serviceAccountTokenTitle(serviceAccount.name)

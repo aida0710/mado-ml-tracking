@@ -24,11 +24,11 @@ export function useCodeVersionForm({ projectId, codeId, initialVersion }: {
     values.runtimeKind === 'singularity' ||
     values.runtimeKind === 'apptainer' ||
     values.sourceKind === 'artifact';
-  const artifacts = useProjectArtifacts(
+  const artifacts = useProjectArtifacts({
     projectId,
-    needsArtifacts,
-    getFieldValue(values, 'artifactSearch').trim(),
-  );
+    enabled: needsArtifacts,
+    search: getFieldValue(values, 'artifactSearch').trim(),
+  });
   const mutation = useMutation();
   const sourceArtifactIds = [getFieldValue(values, 'sifArtifactId'), getFieldValue(values, 'sourceArtifactId')].filter(Boolean);
   const savedArtifacts = useQuery(needsArtifacts && sourceArtifactIds.length ? `${projectId}:code-artifacts:${sourceArtifactIds.join(',')}` : null,

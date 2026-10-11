@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import type { Model, ModelAliasProtection, ModelAliasProtectionRole } from '@mmt/contracts';
 import { registryApi } from '../api/registry';
+import { useAliasSuggestions } from '../hooks/useAliasSuggestions';
 import { useAuth } from '../hooks/useAuth';
 import { useProject } from '../hooks/useProject';
 import { useQuery } from '../hooks/useQuery';
@@ -27,6 +28,8 @@ export function AliasProtectionSettings({ models }: { models: Model[] }) {
     registryApi.aliasProtections(project.id, null, signal),
   );
   const [editing, setEditing] = useState<ModelAliasProtection | 'new' | null>(null);
+  // Any Model's aliases: the scope is chosen in the same form, and a name is protected per Model.
+  const aliases = useAliasSuggestions({ projectId: project.id, models, modelId: null });
   const [removing, setRemoving] = useState<ModelAliasProtection | null>(null);
   const scopeLabel = (modelId: string | null) =>
     modelId === null
@@ -133,6 +136,9 @@ export function AliasProtectionSettings({ models }: { models: Model[] }) {
               required: true,
               defaultValue: editing === 'new' ? '' : editing.alias,
               readOnly: editing !== 'new',
+              suggest: aliases.suggest,
+              offerSuggestionsWhenEmpty: true,
+              suggestionsRefreshKey: aliases.refreshKey,
             },
             {
               name: 'requiredRole',

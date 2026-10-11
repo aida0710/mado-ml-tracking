@@ -1,12 +1,14 @@
 import type {
   Code,
   CodeVersion,
+  CodeVersionDetail,
   Dataset,
   DatasetVersion,
   Model,
   ModelAliasEventPage,
   ModelAliasProtection,
   ModelAliasProtectionRole,
+  ModelFamilySummary,
   ModelVersion,
   ModelVersionDetail,
   ModelVersionEvaluationSummary,
@@ -59,6 +61,9 @@ export const registryApi = {
     requestItems<Model>(registryPath(projectId, 'models'), signal),
   createModel: (projectId: string, body: { name: string; family: string; description?: string }) =>
     request<Model>(registryPath(projectId, 'models'), jsonRequest('POST', body)),
+  // Families the Project's Models and code versions use, sorted with letter-case variants together.
+  modelFamilies: (projectId: string, signal?: AbortSignal) =>
+    requestItems<ModelFamilySummary>(registryPath(projectId, 'model-families'), signal),
   modelVersions: (projectId: string, id: string, signal?: AbortSignal) =>
     requestItems<ModelVersion>(`${registryPath(projectId, 'models', id)}/versions`, signal),
   createModelVersion: (projectId: string, id: string, body: CreateModelVersion) =>
@@ -153,6 +158,8 @@ export const registryApi = {
     request<Code>(registryPath(projectId, 'codes'), jsonRequest('POST', body)),
   codeVersions: (projectId: string, id: string, signal?: AbortSignal) =>
     requestItems<CodeVersion>(`${registryPath(projectId, 'codes', id)}/versions`, signal),
+  codeVersionDetail: (projectId: string, versionId: string, signal?: AbortSignal) =>
+    request<CodeVersionDetail>(registryPath(projectId, 'code-versions', versionId), { signal }),
   createCodeVersion: (projectId: string, id: string, body: CreateCodeVersion) =>
     request<CodeVersion>(
       `${registryPath(projectId, 'codes', id)}/versions`,

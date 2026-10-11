@@ -59,6 +59,29 @@ export function findResumeRecord(target: Omit<UploadResumeRecord, 'uploadId'>): 
   );
 }
 
+/** Sessions this browser started for a file with the same name, size and time, under any path. */
+export function findUploadIdsRecordedForFile(
+  target: Pick<UploadResumeRecord, 'projectId' | 'runId' | 'name' | 'size' | 'lastModified'>,
+): Set<string> {
+  return new Set(
+    readRecords()
+      .filter(
+        (record) =>
+          record.projectId === target.projectId &&
+          record.runId === target.runId &&
+          record.name === target.name &&
+          record.size === target.size &&
+          record.lastModified === target.lastModified,
+      )
+      .map((record) => record.uploadId),
+  );
+}
+
+/** The file this browser was sending in the session, to tell the person which file to choose. */
+export function findResumeRecordByUploadId(uploadId: string): UploadResumeRecord | null {
+  return readRecords().find((record) => record.uploadId === uploadId) ?? null;
+}
+
 export function saveResumeRecord(record: UploadResumeRecord) {
   writeRecords([...readRecords().filter((item) => item.uploadId !== record.uploadId), record]);
 }

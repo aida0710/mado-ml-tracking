@@ -4,7 +4,7 @@ import type { SiteKey } from '@mmt/contracts';
 import { siteComputersApi } from '../api/siteComputers';
 import { useMutation } from '../hooks/useMutation';
 import { ConfirmDialog } from './ConfirmDialog';
-import { CopyButton } from './CopyButton';
+import { CopyableValue } from './CopyableValue';
 import { ErrorNotice } from './Feedback';
 import { DetailsList } from './JsonDetails';
 import { formatDate } from '../lib/format';
@@ -52,10 +52,7 @@ export function SiteLoginKey({
       {siteKey?.publicKey ? (
         <>
           <p>{keyHint}</p>
-          <div className="copyable-value">
-            <code>{siteKey.publicKey}</code>
-            <CopyButton value={siteKey.publicKey} />
-          </div>
+          <CopyableValue value={siteKey.publicKey} />
           <DetailsList
             entries={[
               [

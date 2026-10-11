@@ -5,7 +5,12 @@ import { conflict, notFound } from '../../domain/errors.js';
 import { assertProjectReference, findRun } from '../../repositories/registryRepository.js';
 import { requireModelsRead, requireModelsWrite } from './access.js';
 import { mutateLoggedModel } from './modelMutation.js';
-import { modelExperimentId } from './experimentReference.js';
+import {
+  createDefaultExperiment,
+  DEFAULT_EXPERIMENT_ID,
+  resolveExperimentId,
+  searchableExperimentIds,
+} from '../defaultExperiment.js';
 import { findLoggedModel, loggedModelMetrics } from './modelRepository.js';
 import { loggedModelProtocol } from './protocol.js';
 import { loggedModelArtifacts } from './modelArtifactRepository.js';
@@ -21,14 +26,9 @@ export class LoggedModelService {
   async create(principal: Principal, projectId: string, input: CreateLoggedModel) {
     const model = await transaction(this.database, async (connection) => {
       await requireModelsWrite(connection, { principal, projectId });
-      if (input.experiment_id === '0') {
-        // Match Tracking's create-run flow for a new Project with no Default Experiment yet.
-        await connection.query(
-          "INSERT INTO experiments(project_id,name) VALUES($1,'Default') ON CONFLICT(project_id,name) DO NOTHING",
-          [projectId],
-        );
-      }
-      const experimentId = await modelExperimentId(connection, {
+      if (input.experiment_id === DEFAULT_EXPERIMENT_ID)
+        await createDefaultExperiment(connection, projectId);
+      const experimentId = await resolveExperimentId(connection, {
         projectId,
         id: input.experiment_id,
       });
@@ -188,12 +188,12 @@ export class LoggedModelService {
 
   async search(principal: Principal, projectId: string, input: SearchLoggedModels) {
     await requireModelsRead(this.database, { principal, projectId });
-    const experimentIds: string[] = [];
-    for (const experimentId of new Set(input.experiment_ids)) {
-      const id = await modelExperimentId(this.database, { projectId, id: experimentId });
-      experimentIds.push(id);
+    const experimentIds = await searchableExperimentIds(this.database, {
+      projectId,
+      ids: input.experiment_ids,
+    });
+    for (const id of experimentIds)
       await assertProjectReference(this.database, { table: 'experiments', projectId, id });
-    }
     const page = requestedPage({
       query: {
         kind: 'logged-model',

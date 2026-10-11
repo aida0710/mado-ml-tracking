@@ -1,4 +1,6 @@
-import { CopyButton } from './CopyButton';
+import type { ReactNode } from 'react';
+import { CopyableValue } from './CopyableValue';
+import { SubmitCliSetup } from './SubmitCliSetup';
 import {
   manualSubmitCommand,
   OWNER_SUBMIT_OPTIONS,
@@ -18,13 +20,7 @@ export function ManualSubmitCommand({
   targetId: string;
   options?: ManualSubmitOptions;
 }) {
-  const command = manualSubmitCommand(targetId, options);
-  return (
-    <div className="copyable-value">
-      <code>{command}</code>
-      <CopyButton value={command} />
-    </div>
-  );
+  return <CopyableValue value={manualSubmitCommand(targetId, options)} />;
 }
 
 /**
@@ -72,16 +68,34 @@ export function WaitingJobNotice({
   targetId,
   ownership,
   isRequester,
+  tokenButton,
 }: {
   targetId: string;
   ownership: ManualSiteOwnership;
   /** The viewer created the Job's Run. */
   isRequester: boolean;
+  /** Issues the token `mado-tracking submit` needs, where a Project is open. */
+  tokenButton?: ReactNode;
 }) {
   return (
     <div className="notice manual-submission">
       <p>{isRequester ? text.manualSubmissionOwnHint : text.manualSubmissionHint}</p>
       <WaitingJobSubmission targetId={targetId} ownership={ownership} />
+      <SubmitCliSetup tokenButton={tokenButton} />
+    </div>
+  );
+}
+
+/**
+ * Said before launching on a manual site: the Job will wait for its requester's
+ * `mado-tracking submit`, so the review step shows the command and its setup up front.
+ */
+export function LaunchManualSubmissionNotice({ targetId }: { targetId: string }) {
+  return (
+    <div className="notice manual-submission">
+      <p>{text.launchManualSubmissionNotice}</p>
+      <ManualSubmitCommand targetId={targetId} />
+      <SubmitCliSetup />
     </div>
   );
 }
@@ -90,7 +104,14 @@ export function WaitingJobNotice({
  * Jobs of manual sites wait until their requester runs `mado-tracking submit` on the site;
  * tracking cannot submit them itself, so the Jobs page says so above the list.
  */
-export function ManualSubmissionNotice({ groups }: { groups: ManualSubmissionGroup[] }) {
+export function ManualSubmissionNotice({
+  groups,
+  tokenButton,
+}: {
+  groups: ManualSubmissionGroup[];
+  /** Issues the token `mado-tracking submit` needs, where a Project is open. */
+  tokenButton?: ReactNode;
+}) {
   if (!groups.length) return null;
   return (
     <section className="notice manual-submission" aria-label={text.manualSubmissionTitle}>
@@ -104,6 +125,7 @@ export function ManualSubmissionNotice({ groups }: { groups: ManualSubmissionGro
           </li>
         ))}
       </ul>
+      <SubmitCliSetup tokenButton={tokenButton} />
     </section>
   );
 }
@@ -111,7 +133,8 @@ export function ManualSubmissionNotice({ groups }: { groups: ManualSubmissionGro
 /**
  * How a manual site's Jobs are submitted, in its details: once on a login node, by waiting on a
  * PC that is the computer itself, and for its owner, everyone's Jobs (`--all`) of the token's
- * Project. Others are told that the owner may submit them instead.
+ * Project. Others are told that the owner may submit them instead. What to set up before the
+ * first command follows.
  */
 export function ManualSubmissionGuide({
   targetId,
@@ -140,7 +163,7 @@ export function ManualSubmissionGuide({
         ))}
       </ul>
       <ManualSiteOwnerNote ownership={ownership} />
-      <p className="muted">{text.manualGuideToken}</p>
+      <SubmitCliSetup />
     </section>
   );
 }

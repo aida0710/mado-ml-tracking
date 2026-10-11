@@ -71,42 +71,46 @@ function RunDescriptionForm({
   const unsaved = useUnsavedChanges(draft !== initialContent, mutation.pending, {
     onNavigationDiscard: onClose,
   });
+  // The confirmation is a sibling of the form: inside it, the dialog's buttons and events would
+  // reach the form's submit and save the draft the person is about to discard.
   return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault();
-        // The API would answer 422; stopping here keeps the draft and says why.
-        if (isOverLimit) return;
-        void mutation.run(() => save(draft)).then((note) => {
-          if (note) onSaved(note.content);
-        });
-      }}
-    >
-      <MarkdownEditor
-        label={text.runDescription}
-        value={draft}
-        onChange={setDraft}
-        maxLength={RUN_NOTE_MAX_LENGTH}
-        placeholder={text.runDescriptionPlaceholder}
-        autoFocus
-      />
-      <ErrorNotice message={mutation.error} />
-      <div className="comment-editor-actions">
-        <button
-          type="button"
-          className="button small"
-          disabled={mutation.pending}
-          onClick={() => unsaved.requestAction(onClose)}
-        >
-          {text.cancel}
-        </button>
-        <button className="button small primary" disabled={mutation.pending || isOverLimit}>
-          {mutation.pending ? text.loading : text.save}
-        </button>
-      </div>
+    <>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          // The API would answer 422; stopping here keeps the draft and says why.
+          if (isOverLimit) return;
+          void mutation.run(() => save(draft)).then((note) => {
+            if (note) onSaved(note.content);
+          });
+        }}
+      >
+        <MarkdownEditor
+          label={text.runDescription}
+          value={draft}
+          onChange={setDraft}
+          maxLength={RUN_NOTE_MAX_LENGTH}
+          placeholder={text.runDescriptionPlaceholder}
+          autoFocus
+        />
+        <ErrorNotice message={mutation.error} />
+        <div className="comment-editor-actions">
+          <button
+            type="button"
+            className="button small"
+            disabled={mutation.pending}
+            onClick={() => unsaved.requestAction(onClose)}
+          >
+            {text.cancel}
+          </button>
+          <button className="button small primary" disabled={mutation.pending || isOverLimit}>
+            {mutation.pending ? text.loading : text.save}
+          </button>
+        </div>
+      </form>
       {unsaved.confirmingDiscard && (
         <UnsavedChangesDialog onDiscard={unsaved.discard} onKeepEditing={unsaved.keepEditing} />
       )}
-    </form>
+    </>
   );
 }

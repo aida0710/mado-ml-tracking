@@ -19,6 +19,7 @@ import {
   ARTIFACT_CONTENT_UNAVAILABLE_CODE,
   encodeId,
   invalidResponseError,
+  isNotFoundError,
   NETWORK_ERROR_CODE,
   jsonRequest,
   projectPath,
@@ -223,7 +224,7 @@ export const trackingApi = {
   },
   projectArtifacts: async (
     projectId: string,
-    query: { limit: number; query?: string },
+    query: Pick<ProjectArtifactPageQuery, 'limit' | 'query' | 'runId' | 'versions'>,
     signal?: AbortSignal,
   ) => (await projectArtifactPage(projectId, query, signal)).items,
   projectArtifactPage,
@@ -240,6 +241,15 @@ export const trackingApi = {
   },
   artifact: (projectId: string, artifactId: string, signal?: AbortSignal) =>
     request<Artifact>(`${projectPath(projectId)}/artifacts/${encodeId(artifactId)}`, { signal }),
+  /** null when the Project has no Artifact with the id (deleted, another Project's, mistyped). */
+  findArtifact: async (projectId: string, artifactId: string, signal?: AbortSignal) => {
+    try {
+      return await trackingApi.artifact(projectId, artifactId, signal);
+    } catch (error) {
+      if (isNotFoundError(error)) return null;
+      throw error;
+    }
+  },
   lineage: (projectId: string, signal?: AbortSignal) =>
     request<LineageGraph>(`${projectPath(projectId)}/lineage`, { signal }),
 };

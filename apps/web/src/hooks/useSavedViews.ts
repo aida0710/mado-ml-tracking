@@ -1,6 +1,6 @@
 import type { SavedView, SavedViewPage, SavedViewState } from '@mmt/contracts';
 import { savedViewsApi } from '../api/savedViews';
-import { RequestError } from '../api/http';
+import { isNotFoundError } from '../api/http';
 import { parseSavedViewState } from '../lib/savedViewState';
 import { useQuery } from './useQuery';
 
@@ -29,7 +29,7 @@ async function openSavedView(
       : { status: 'unavailable', reason: parsed.reason };
   } catch (failure) {
     // Another user's private view answers 404 like a deleted one, so the two read the same.
-    if (failure instanceof RequestError && failure.status === 404)
+    if (isNotFoundError(failure))
       return { status: 'unavailable', reason: 'not_found' };
     throw failure;
   }

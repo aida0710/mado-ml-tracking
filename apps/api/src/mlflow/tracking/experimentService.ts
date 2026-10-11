@@ -2,29 +2,21 @@ import type { Principal } from '../../auth/principal.js';
 import { first, rows, transaction, type Connection, type Database } from '../../db/database.js';
 import { DomainError, conflict, notFound } from '../../domain/errors.js';
 import { requireProject } from '../../services/accessService.js';
+import {
+  DEFAULT_EXPERIMENT_ID,
+  DEFAULT_EXPERIMENT_NAME,
+  findDefaultExperimentId,
+  resolveExperimentId,
+} from '../defaultExperiment.js';
 import { compileSearch, nextPageToken, pageOffset } from './trackingSearch.js';
 import type { KeyValue, SearchPage, TrackingExperiment, TrackingSearch } from './trackingTypes.js';
 import { invalidParameter, unsupported } from './trackingValidation.js';
 
-export async function resolveExperimentId(
-  connection: Connection,
-  projectId: string,
-  id: string,
-): Promise<string> {
-  if (id !== '0') return id;
-  const experiment = await first<{ id: string }>(
-    connection,
-    "SELECT id FROM experiments WHERE project_id=$1 AND name='Default'",
-    [projectId],
-  );
-  if (!experiment) notFound('Default Experiment');
-  return experiment.id;
-}
 export async function findTrackingExperiment(
   connection: Connection,
   reference: { projectId: string; id: string; lock?: boolean },
 ): Promise<TrackingExperiment> {
-  const id = await resolveExperimentId(connection, reference.projectId, reference.id);
+  const id = await resolveExperimentId(connection, reference);
   const experiment = await first<TrackingExperiment>(
     connection,
     `SELECT * FROM experiments WHERE project_id=$1 AND id=$2 ${reference.lock ? 'FOR UPDATE' : ''}`,
@@ -32,6 +24,35 @@ export async function findTrackingExperiment(
   );
   if (!experiment) notFound('Experiment');
   return experiment;
+}
+
+/**
+ * get_experiment("0") before anything was recorded in the Default: MLflow always has it, so the
+ * answer is an empty Default under the id the client asked for, dated with the Project. A read
+ * does not create it; the first Run or Logged Model in "0" does.
+ */
+async function unrecordedDefaultExperiment(
+  connection: Connection,
+  projectId: string,
+): Promise<TrackingExperiment> {
+  const project = await first<{ createdAt: string }>(
+    connection,
+    'SELECT created_at FROM projects WHERE id=$1',
+    [projectId],
+  );
+  if (!project) notFound('Project');
+  return {
+    id: DEFAULT_EXPERIMENT_ID,
+    projectId,
+    name: DEFAULT_EXPERIMENT_NAME,
+    description: '',
+    runCount: 0,
+    createdAt: project.createdAt,
+    updatedAt: project.createdAt,
+    lifecycleStage: 'active',
+    tags: {},
+    artifactLocation: null,
+  };
 }
 
 export class ExperimentService {
@@ -68,6 +89,8 @@ export class ExperimentService {
   }
   async get(principal: Principal, projectId: string, id: string): Promise<TrackingExperiment> {
     await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
+    if (id === DEFAULT_EXPERIMENT_ID && !(await findDefaultExperimentId(this.database, projectId)))
+      return unrecordedDefaultExperiment(this.database, projectId);
     return findTrackingExperiment(this.database, { projectId, id });
   }
   async getByName(

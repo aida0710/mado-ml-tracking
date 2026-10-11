@@ -9,7 +9,17 @@ from typing import Any, BinaryIO, Literal, cast
 
 import httpx
 
-from . import aliases, automation, driver, evaluation, exports, hooks, job_arrays, service_accounts
+from . import (
+    aliases,
+    automation,
+    driver,
+    evaluation,
+    experiments,
+    exports,
+    hooks,
+    job_arrays,
+    service_accounts,
+)
 from .api_paths import path_id
 from .artifact_downloads import download_resumable_sync
 from .code_version import build_code_version_payload
@@ -18,6 +28,7 @@ from .errors import ApiError, ConfigurationError
 from .execution_runtime import ExecutionRuntime
 from .execution_snapshot import ExecutionMode, validate_execution_mode
 from .experiment_tasks import ExperimentTasksClient
+from .experiments import EXPERIMENT_ID_VARIABLE, experiment_id_for_new_run, validate_experiment_choice
 from .http import REQUEST_TIMEOUT_SECONDS, request_sync
 from .pagination import iterate_cursor_pages
 from .run_search_request import build_run_search_body
@@ -32,6 +43,11 @@ RESUME_MODES: tuple[ResumeMode, ...] = ("never", "allow", "must")
 # Values of MMT_SYSTEM_METRICS that turn off system metrics requested in code.
 SYSTEM_METRICS_DISABLED_VALUES = frozenset({"0", "false", "no", "off"})
 
+MISSING_RUN_TARGET_MESSAGE = "experiment_id (or experiment_name) and name are required to create a Run"
+MISSING_RESUMED_RUN_TARGET_MESSAGE = (
+    "experiment_id (or experiment_name) and name are required when resume='allow' creates the Run"
+)
+
 # Mirrors POST /projects/:p/runs/search: limit defaults to 100 and is capped at 500.
 RUN_SEARCH_DEFAULT_PAGE_SIZE = 100
 RUN_SEARCH_MAX_PAGE_SIZE = 500
@@ -44,6 +60,8 @@ class Client(ExperimentTasksClient):
     and ``aliases.set_model_alias(client, ...)`` are the same call with the same documentation.
     """
 
+    find_experiment = experiments.find_experiment
+    ensure_experiment = experiments.ensure_experiment
     set_model_alias = aliases.set_model_alias
     delete_model_alias = aliases.delete_model_alias
     list_alias_events = aliases.list_alias_events
@@ -198,6 +216,7 @@ class Client(ExperimentTasksClient):
         *,
         project_id: str | None = None,
         experiment_id: str | None = None,
+        experiment_name: str | None = None,
         name: str | None = None,
         kind: str = "training",
         run_id: str | None = None,
@@ -209,16 +228,20 @@ class Client(ExperimentTasksClient):
     ) -> Run:
         """Create and start a Run, resume one by run_id, or use the worker's Run (MMT_RUN_ID).
 
+        The new Run goes into experiment_id, or the Experiment named experiment_name (created when
+        it does not exist, like MLflow's set_experiment), or MMT_EXPERIMENT_ID.
         resume: 'never' creates a new Run, 'must' reopens run_id and fails when it does not exist,
         'allow' reopens run_id or creates a Run with that ID. mode (else MMT_MODE): 'online' writes
         to the API, 'offline' to the local spool, 'auto' to the API until it becomes unreachable.
         system_metrics=True records `system.*` metrics every system_metrics_interval seconds.
         """
         run_mode = resolve_mode(mode, os.environ)
+        validate_experiment_choice(experiment_id, experiment_name)
         if run_mode == "offline":
             return start_run_offline(
                 project_id=project_id,
                 experiment_id=experiment_id,
+                experiment_name=experiment_name,
                 name=name,
                 kind=kind,
                 run_id=run_id,
@@ -239,6 +262,7 @@ class Client(ExperimentTasksClient):
                 resume=resume,
                 run_mode=run_mode,
                 experiment_id=experiment_id,
+                experiment_name=experiment_name,
                 name=name,
                 kind=kind,
                 attributes=attributes,
@@ -249,6 +273,7 @@ class Client(ExperimentTasksClient):
             run = self._create_started_run(
                 project_id,
                 experiment_id=experiment_id,
+                experiment_name=experiment_name,
                 name=name,
                 kind=kind,
                 run_mode=run_mode,
@@ -263,14 +288,28 @@ class Client(ExperimentTasksClient):
         project_id: str,
         *,
         experiment_id: str | None,
+        experiment_name: str | None,
         name: str | None,
         kind: str,
         run_mode: RunMode,
         attributes: Mapping[str, Any],
     ) -> Run:
-        experiment_id = experiment_id or os.environ.get("MMT_EXPERIMENT_ID")
-        if not experiment_id or not name:
-            raise ConfigurationError("experiment_id and name are required to create a Run")
+        if not name:
+            raise ConfigurationError(MISSING_RUN_TARGET_MESSAGE)
+        try:
+            experiment_id = experiment_id_for_new_run(
+                self, project_id, experiment_id=experiment_id, experiment_name=experiment_name
+            )
+        except ApiError as error:
+            # Recording offline needs the Experiment's ID, which only the API knows for a name.
+            if run_mode == "auto" and is_api_unreachable(error):
+                raise ConfigurationError(
+                    "The API is unreachable, so experiment_name cannot be looked up; "
+                    "pass experiment_id to record offline"
+                ) from error
+            raise
+        if not experiment_id:
+            raise ConfigurationError(MISSING_RUN_TARGET_MESSAGE)
         try:
             run = self.create_run(project_id, experiment_id=experiment_id, name=name, kind=kind, **attributes)
         except ApiError as error:
@@ -301,6 +340,7 @@ class Client(ExperimentTasksClient):
         resume: ResumeMode,
         run_mode: RunMode,
         experiment_id: str | None,
+        experiment_name: str | None,
         name: str | None,
         kind: str,
         attributes: Mapping[str, Any],
@@ -331,7 +371,13 @@ class Client(ExperimentTasksClient):
                     f"Run {run_id} does not exist; resume='must' needs an existing Run"
                 ) from None
             entity = self._create_run_with_id(
-                project_id, run_id, experiment_id=experiment_id, name=name, kind=kind, attributes=attributes
+                project_id,
+                run_id,
+                experiment_id=experiment_id,
+                experiment_name=experiment_name,
+                name=name,
+                kind=kind,
+                attributes=attributes,
             )
             last_steps: dict[str, int] = {}
         else:
@@ -351,18 +397,21 @@ class Client(ExperimentTasksClient):
         run_id: str,
         *,
         experiment_id: str | None,
+        experiment_name: str | None,
         name: str | None,
         kind: str,
         attributes: Mapping[str, Any],
     ) -> dict[str, Any]:
         """PUT /sync/runs/:runId is the only way to create a Run under a client-chosen ID."""
-        experiment_id = experiment_id or os.environ.get("MMT_EXPERIMENT_ID")
-        if not experiment_id or not name:
-            raise ConfigurationError(
-                "experiment_id and name are required when resume='allow' creates the Run"
-            )
+        if not name:
+            raise ConfigurationError(MISSING_RESUMED_RUN_TARGET_MESSAGE)
         if unsupported := sorted(set(attributes) - OFFLINE_RUN_ATTRIBUTES):
             raise ConfigurationError(f"resume='allow' cannot create a Run with {', '.join(unsupported)}")
+        experiment_id = experiment_id_for_new_run(
+            self, project_id, experiment_id=experiment_id, experiment_name=experiment_name
+        )
+        if not experiment_id:
+            raise ConfigurationError(MISSING_RESUMED_RUN_TARGET_MESSAGE)
         return self.request(
             "PUT",
             self.project_path(project_id, f"sync/runs/{path_id(run_id)}"),
@@ -705,6 +754,7 @@ def start_run_offline(
     *,
     project_id: str | None = None,
     experiment_id: str | None = None,
+    experiment_name: str | None = None,
     name: str | None = None,
     kind: str = "training",
     run_id: str | None = None,
@@ -723,9 +773,15 @@ def start_run_offline(
     validate_resume(resume, run_id)
     if resume != "never":
         raise ConfigurationError("An offline Run cannot be resumed; resume it online, then log offline")
-    experiment_id = experiment_id or os.environ.get("MMT_EXPERIMENT_ID")
+    validate_experiment_choice(experiment_id, experiment_name)
+    if experiment_name is not None:
+        # Only the API knows which Experiment a name means, and offline nothing contacts it.
+        raise ConfigurationError(
+            "experiment_name needs the API; an offline Run takes experiment_id or MMT_EXPERIMENT_ID"
+        )
+    experiment_id = experiment_id or os.environ.get(EXPERIMENT_ID_VARIABLE)
     if not experiment_id or not name:
-        raise ConfigurationError("experiment_id and name are required to create a Run")
+        raise ConfigurationError(MISSING_RUN_TARGET_MESSAGE)
     run = start_offline_run(
         project_id=project_id,
         experiment_id=experiment_id,

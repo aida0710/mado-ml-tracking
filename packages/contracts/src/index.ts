@@ -31,6 +31,12 @@ export type {
   RunDownstreamPage,
 } from './modelVersionEvaluations.js';
 export { MODEL_VERSION_RESULT_RUN_KINDS } from './modelVersionEvaluations.js';
+export type {
+  CodeVersionDetail,
+  ModelFamilySummary,
+  RuleMetricKeys,
+  RuleMetricKeySource,
+} from './registryLookups.js';
 export type { ExecutionMode, ExecutionSnapshot, ExperimentTask, TaskExecution, TaskRunPage, RepositoryFiles } from './experimentTasks.js';
 export type { RunOutputRegistration, TaskOutputModel } from './experimentTasks.js';
 export type { AuditActorType, AuditEvent, AuditEventPage, AuditOutcome } from './audit.js';
@@ -44,7 +50,7 @@ export type {
   MetricValueStatus,
 } from './evaluation.js';
 export { DEFAULT_BASELINE_ALIAS } from './evaluation.js';
-export type { ArtifactUpload, ArtifactUploadCreate, ArtifactUploadDetail, ArtifactUploadPart, ArtifactUploadStatus } from './artifactUploads.js';
+export type { ArtifactUpload, ArtifactUploadCreate, ArtifactUploadDetail, ArtifactUploadListItem, ArtifactUploadPart, ArtifactUploadStatus } from './artifactUploads.js';
 export type { RunSearchPage, RunSearchRequest } from './runSearch.js';
 export type { ArtifactDirectoryEntry, ArtifactListVersions, ArtifactPage, ArtifactTree } from './artifactListing.js';
 export type { ArtifactBackendUsage, ArtifactUsage } from './artifactUsage.js';
@@ -441,6 +447,8 @@ export interface Model {
   family: string;
   description: string;
   latestVersion: string | null;
+  /** The version the API gives the next version registered without one (ModelVersionCreate). */
+  nextVersion?: string;
   aliases: Record<string, string>;
   createdAt: string;
 }

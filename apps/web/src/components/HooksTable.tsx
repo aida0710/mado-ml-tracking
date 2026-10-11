@@ -2,6 +2,7 @@ import type { ComputeTarget, Hook } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { automationOwnerLabel } from '../lib/automationOwner';
 import { formatDate } from '../lib/format';
+import { isManualSite } from '../lib/manualSubmission';
 import { text } from '../i18n/catalog';
 import { hookTriggerLabels } from '../i18n/hooks';
 import { submissionModeBadgeLabels } from '../i18n/compute';
@@ -12,7 +13,7 @@ function HookTarget({ hook, targets }: { hook: Hook; targets: ComputeTarget[] })
   return (
     <span className="badge-group">
       {target.name}
-      {target.executor === 'site' && target.submissionMode === 'manual' && (
+      {isManualSite(target) && (
         <span className="status-badge status-attention">{submissionModeBadgeLabels.manual}</span>
       )}
     </span>

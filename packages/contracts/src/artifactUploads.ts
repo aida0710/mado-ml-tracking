@@ -43,6 +43,12 @@ export interface ArtifactUploadDetail extends ArtifactUpload {
   receivedParts: ArtifactUploadPart[];
 }
 
+/** One row of the session list: how much is already stored, so a client can offer to continue. */
+export interface ArtifactUploadListItem extends ArtifactUpload {
+  /** Sum of the received parts' sizes. */
+  receivedBytes: number;
+}
+
 export interface ArtifactUploadCreate {
   path: string;
   runId?: string;

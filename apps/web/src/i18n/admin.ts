@@ -61,6 +61,7 @@ export const adminText = {
   accountTokens: '自分のAPI token',
   accountTokenProject: 'プロジェクト',
   accountTokenAllProjects: 'すべて',
+  accountTokenNoProjects: 'API tokenを発行するには、プロジェクトを作成するか参加してください。',
 } as const;
 
 export const adminTextTemplates = {

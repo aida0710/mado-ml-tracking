@@ -1,4 +1,4 @@
-import type { ComputeTargetDetails, Job, User } from '@mmt/contracts';
+import type { ComputeTarget, ComputeTargetDetails, Job, User } from '@mmt/contracts';
 import { isTargetOwner } from './permissions';
 
 /**
@@ -20,6 +20,11 @@ export interface ManualSubmissionGroup {
   waitingJobs: number;
   ownership: ManualSiteOwnership;
 }
+
+/** A site whose Jobs wait until their requester runs `mado-tracking submit` on it. */
+export const isManualSite = (
+  target: Pick<ComputeTarget, 'executor' | 'submissionMode'> | undefined,
+): boolean => target?.executor === 'site' && target.submissionMode === 'manual';
 
 export const isWaitingManualSubmission = (job: Pick<Job, 'status' | 'phase'>): boolean =>
   job.status === 'queued' && job.phase === 'waiting_manual';

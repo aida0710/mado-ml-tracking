@@ -204,6 +204,7 @@ mado-tracking sync DIR --dry-run      # 送る予定の件数だけ表示（API�
 mado-tracking sync --project-id P --prune   # Project Pの分だけ送り、送り終えたRunのspoolを消す
 ```
 
+- **実験の名前**: `start_run(experiment_name="...")`は、その名前（大文字小文字を区別する完全一致）の有効な実験に記録し、無ければ`POST /projects/:p/experiments`で作る（MLflowの`set_experiment`と同じ。作る競合で409なら読み直して相手の実験を使う。削除した実験と同じ名前なら`ConfigurationError`）。`experiment_id`と同時には渡せない。引数は`MMT_EXPERIMENT_ID`より優先する。オフラインでは名前を解決できないので`ConfigurationError`。`Client.find_experiment`・`ensure_experiment`も使える。
 - **再開**: `start_run(run_id=, resume='never'|'allow'|'must')`。既定の`'never'`は従来どおり新しいRunを作る（`run_id`だけを渡すと`ConfigurationError`）。`'must'`は`POST /projects/:p/runs/:r/resume`で終わったRunをrunningへ戻し、Runが無ければ`ConfigurationError`。`'allow'`はRunが無ければ`PUT /projects/:p/sync/runs/:runId`でそのIDのRunを作る（`experiment_id`と`name`が要る。指定できる属性は`parameters`・`tags`・`parent_run_id`）。再開ごとにAPIへ再開イベントが残り、Runの区間（segments）として表示される。
 - **stepの続き（挙動の変更）**: 再開したRunでは、`log_metrics`の`step`を省略するとkeyごとに前回の最大step+1を使う（初めてのkeyは0）。`run.last_step(key)`で今の最大stepを読める。新しく作ったRunで`step`を省略した場合は、従来どおり0のまま。
 - **workerのRunは再開しない**: `MMT_RUN_ID`か`MMT_JOB_ID`がある環境での`resume`と、Jobが付いたRun（API の409 `run_finalized`）は`ConfigurationError`。Jobのcheckpointからretryし、`run.resume_checkpoint()`で続ける（「学習の途中再開（checkpoint）」）。

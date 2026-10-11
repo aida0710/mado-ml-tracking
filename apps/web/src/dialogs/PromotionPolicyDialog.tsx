@@ -1,4 +1,3 @@
-import { useId, type ReactNode } from 'react';
 import type {
   Model,
   ModelAutomationRule,
@@ -6,45 +5,24 @@ import type {
   PromotionPolicy,
 } from '@mmt/contracts';
 import type { ExecutionCatalog } from '../types/executionCatalog';
+import { useAliasSuggestions } from '../hooks/useAliasSuggestions';
 import { usePromotionPolicyForm } from '../hooks/usePromotionPolicyForm';
+import { useRuleMetricKeys } from '../hooks/useRuleMetricKeys';
 import { useProject } from '../hooks/useProject';
 import { Dialog } from '../components/Dialog';
 import { ErrorNotice } from '../components/Feedback';
 import { DetailsList } from '../components/JsonDetails';
+import { LabeledField } from '../components/LabeledField';
 import { PromotionCriteriaFields } from '../components/PromotionCriteriaFields';
+import { SuggestionInput } from '../components/SuggestionInput';
 import { buildCatalogOptions, withEmptyOption } from '../lib/catalogOptions';
+import { describeMetricKeySource, suggestMetricKeys } from '../lib/metricKeyChoices';
 import {
   PROMOTION_MISSING_BASELINE_CHOICES,
   isEvaluationRuleEligible,
 } from '../lib/promotionPolicyInput';
 import { promotionMissingBaselineLabels, promotionTextTemplates } from '../i18n/promotion';
 import { text } from '../i18n/catalog';
-
-function Field({
-  label,
-  required = false,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  children: (id: string) => ReactNode;
-}) {
-  const id = useId();
-  return (
-    <div className="field">
-      <label htmlFor={id}>
-        {label}
-        {required && (
-          <span className="required" aria-hidden="true">
-            {' '}
-            *
-          </span>
-        )}
-      </label>
-      {children(id)}
-    </div>
-  );
-}
 
 // The rule's fixed inputs and code version are the evaluation conditions; they are shown, not edited.
 function EvaluationConditions({
@@ -104,6 +82,23 @@ export function PromotionPolicyDialog({
   const eligibleRules = model ? rules.filter((rule) => isEvaluationRuleEligible(rule, model)) : [];
   const selectedRule = eligibleRules.find((rule) => rule.id === draft.evaluationRuleId);
   const codeOptions = buildCatalogOptions(catalog).codes;
+  const aliases = useAliasSuggestions({
+    projectId: project.id,
+    models,
+    modelId: draft.modelId || null,
+  });
+  const recordedMetrics = useRuleMetricKeys(project.id, selectedRule?.id ?? '');
+  const metricSuggestions = {
+    suggest: async (value: string) => suggestMetricKeys(value, recordedMetrics.value),
+    refreshKey: recordedMetrics.value?.items.join('\n') ?? '',
+  };
+  const metricHint = !selectedRule
+    ? text.promotionMetricKeysChooseRule
+    : recordedMetrics.error
+      ? text.promotionMetricKeysLoadFailed
+      : recordedMetrics.value
+        ? describeMetricKeySource(recordedMetrics.value)
+        : text.loading;
   return (
     <Dialog title={text.newPromotionPolicy} onClose={onClose} busy={form.pending} wide>
       <form
@@ -115,7 +110,7 @@ export function PromotionPolicyDialog({
         }}
       >
         <fieldset disabled={form.pending}>
-          <Field label={text.name} required>
+          <LabeledField label={text.name} required>
             {(id) => (
               <input
                 id={id}
@@ -124,8 +119,8 @@ export function PromotionPolicyDialog({
                 onChange={(event) => form.changeDraft({ name: event.target.value })}
               />
             )}
-          </Field>
-          <Field label={text.promotionModel} required>
+          </LabeledField>
+          <LabeledField label={text.promotionModel} required>
             {(id) => (
               <select
                 id={id}
@@ -145,30 +140,39 @@ export function PromotionPolicyDialog({
                 ))}
               </select>
             )}
-          </Field>
-          <Field label={text.promotionTargetAlias} required>
+          </LabeledField>
+          <LabeledField label={text.promotionTargetAlias} required>
             {(id) => (
-              <input
+              <SuggestionInput
                 id={id}
-                className="mono"
                 value={draft.targetAlias}
                 required
-                onChange={(event) => form.changeDraft({ targetAlias: event.target.value })}
+                suggest={aliases.suggest}
+                offerWhenEmpty
+                refreshKey={aliases.refreshKey}
+                onChange={(targetAlias) => form.changeDraft({ targetAlias })}
               />
             )}
-          </Field>
-          <Field label={text.baselineAlias} required>
+          </LabeledField>
+          <LabeledField label={text.baselineAlias} required>
             {(id) => (
-              <input
+              <SuggestionInput
                 id={id}
-                className="mono"
                 value={draft.baselineAlias}
                 required
-                onChange={(event) => form.changeDraft({ baselineAlias: event.target.value })}
+                suggest={aliases.suggest}
+                offerWhenEmpty
+                refreshKey={aliases.refreshKey}
+                onChange={(baselineAlias) => form.changeDraft({ baselineAlias })}
               />
             )}
-          </Field>
-          <Field label={text.evaluationRule} required>
+          </LabeledField>
+          {aliases.error && (
+            <p className="field-hint" role="status">
+              {text.aliasChoicesLoadFailed}
+            </p>
+          )}
+          <LabeledField label={text.evaluationRule} required>
             {(id) => (
               <select
                 id={id}
@@ -192,7 +196,7 @@ export function PromotionPolicyDialog({
                 ))}
               </select>
             )}
-          </Field>
+          </LabeledField>
           <p className="muted">
             {model && !eligibleRules.length
               ? text.promotionEvaluationRulesEmpty
@@ -201,11 +205,13 @@ export function PromotionPolicyDialog({
           {selectedRule && <EvaluationConditions rule={selectedRule} catalog={catalog} />}
           <PromotionCriteriaFields
             criteria={draft.criteria}
+            metricSuggestions={metricSuggestions}
+            metricHint={metricHint}
             onChange={form.changeCriterion}
             onAdd={form.addCriterion}
             onRemove={form.removeCriterion}
           />
-          <Field label={text.promotionMissingBaseline}>
+          <LabeledField label={text.promotionMissingBaseline}>
             {(id) => (
               <select
                 id={id}
@@ -223,7 +229,7 @@ export function PromotionPolicyDialog({
                 ))}
               </select>
             )}
-          </Field>
+          </LabeledField>
           <label className="checkbox-field">
             <input
               type="checkbox"

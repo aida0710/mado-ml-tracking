@@ -7776,6 +7776,398 @@
         }
       }
     },
+    "/api/projects/{p}/model-families": {
+      "get": {
+        "operationId": "getProjectsByPModelFamilies",
+        "tags": [
+          "registry"
+        ],
+        "summary": "Projectで使っているモデル系列（モデルとコードバージョンの件数つき）",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "read"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "project",
+          "role": "viewer",
+          "scope": "read"
+        },
+        "x-mmt-job-token": "read",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ModelFamilySummary"
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "insufficient_scope",
+              "project_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "見つからない（他Projectのものを含む）",
+            "x-mmt-error-codes": [
+              "not_found"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "invalid_request"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{p}/code-versions/{id}": {
+      "get": {
+        "operationId": "getProjectsByPCodeVersionsById",
+        "tags": [
+          "registry"
+        ],
+        "summary": "CodeVersionとそのCode（名前で表示するため）",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "read"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "project",
+          "role": "viewer",
+          "scope": "read"
+        },
+        "x-mmt-job-token": "read",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "対象のID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeVersionDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "insufficient_scope",
+              "project_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "見つからない（他Projectのものを含む）",
+            "x-mmt-error-codes": [
+              "not_found"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "invalid_request"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{p}/automation-rules/{id}/metric-keys": {
+      "get": {
+        "operationId": "getProjectsByPAutomationRulesByIdMetricKeys",
+        "tags": [
+          "automation"
+        ],
+        "summary": "ruleの評価Run（無ければ同じコードバージョンのRun）が記録した指標名",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "read"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "project",
+          "role": "viewer",
+          "scope": "read"
+        },
+        "x-mmt-job-token": "read",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "対象のID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleMetricKeys"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "insufficient_scope",
+              "project_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "見つからない（他Projectのものを含む）",
+            "x-mmt-error-codes": [
+              "not_found"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "invalid_request"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{p}/model-versions/{id}/evaluations": {
       "get": {
         "operationId": "getProjectsByPModelVersionsByIdEvaluations",
@@ -21526,7 +21918,7 @@
                     "items": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/ArtifactUpload"
+                        "$ref": "#/components/schemas/ArtifactUploadListItem"
                       }
                     }
                   },
@@ -49758,6 +50150,125 @@
         ],
         "additionalProperties": false
       },
+      "ArtifactUploadListItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "runId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "backend": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "expectedSize": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "expectedSha256": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "partSize": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "partCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "verifying",
+              "completed",
+              "aborted",
+              "expired",
+              "failed"
+            ]
+          },
+          "artifactId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "receivedBytes": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "id",
+          "projectId",
+          "runId",
+          "path",
+          "backend",
+          "mimeType",
+          "expectedSize",
+          "expectedSha256",
+          "partSize",
+          "partCount",
+          "status",
+          "artifactId",
+          "error",
+          "expiresAt",
+          "createdAt",
+          "updatedAt",
+          "receivedBytes"
+        ],
+        "additionalProperties": false
+      },
       "ArtifactUploadPart": {
         "type": "object",
         "properties": {
@@ -50593,6 +51104,22 @@
           "supportedModelFamilies",
           "taskTypes",
           "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "CodeVersionDetail": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/Code"
+          },
+          "version": {
+            "$ref": "#/components/schemas/CodeVersion"
+          }
+        },
+        "required": [
+          "code",
+          "version"
         ],
         "additionalProperties": false
       },
@@ -54351,6 +54878,9 @@
               "null"
             ]
           },
+          "nextVersion": {
+            "type": "string"
+          },
           "aliases": {
             "type": "object",
             "propertyNames": {
@@ -54973,6 +55503,30 @@
           "createdBy",
           "runAsUserId",
           "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "ModelFamilySummary": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "modelCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "codeVersionCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "name",
+          "modelCount",
+          "codeVersionCount"
         ],
         "additionalProperties": false
       },
@@ -57286,6 +57840,30 @@
           "commit",
           "files",
           "omittedPaths"
+        ],
+        "additionalProperties": false
+      },
+      "RuleMetricKeys": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "rule_runs",
+              "code_version_runs",
+              "none"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "source"
         ],
         "additionalProperties": false
       },

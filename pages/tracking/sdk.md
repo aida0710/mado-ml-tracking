@@ -47,14 +47,14 @@ py -3 -m venv .venv
 
 ## 接続先とtokenを設定する
 
-SDKは環境変数から接続先とAPI tokenを読みます。tokenは［プロジェクト設定］の「MLflow 3から接続」にある［このProject用のAPI tokenを発行］から作れます。記録には`read`と`runs:write`、Artifactを送るなら`artifacts:write`のscopeが必要です。このボタンはこれらを選んだ状態で発行画面を開きます（[API token](/admin/tokens)）。
+SDKは環境変数から接続先とAPI tokenを読みます。［Experiments］で実験を選び、見出しの右の［SDKで記録］を押すと、このProjectと実験のIDを入れた下の環境変数の例が開き、［コピー］で写せます（［プロジェクト設定］の同じ「SDK・MLflow 3から接続」には、実験のIDを除いた例があります）。tokenはそこにある［このProject用のAPI tokenを発行］から作れます。記録には`read`と`runs:write`、Artifactを送るなら`artifacts:write`のscopeが必要です。このボタンはこれらを選んだ状態で発行画面を開きます（[API token](/admin/tokens)）。
 
 | 環境変数 | 入力する値 | 例 |
 | --- | --- | --- |
 | `MMT_API_URL` | WebのURL（`/api`まででもよい） | `https://tracking.example.internal` |
 | `MMT_API_TOKEN` | API token | 画面で発行した値 |
-| `MMT_PROJECT_ID` | 記録先ProjectのID | `/projects/<ID>/...`のURLに含まれるUUID |
-| `MMT_EXPERIMENT_ID` | 記録先ExperimentのID | Experimentの画面の見出しの下に出る`ID` |
+| `MMT_PROJECT_ID` | 記録先ProjectのID | ［SDKで記録］の`プロジェクトID` |
+| `MMT_EXPERIMENT_ID` | 記録先ExperimentのID | 実験の見出しの下と［SDKで記録］の`実験ID` |
 
 tokenは画面に表示しない形で入力し、ソースコードやGitで管理するファイルには書かないでください。
 
@@ -80,6 +80,7 @@ with mado_tracking.start_run(name="lr-0.05", parameters={"learning_rate": 0.05, 
 ```
 
 - `start_run`は`MMT_PROJECT_ID`と`MMT_EXPERIMENT_ID`を使います。引数の`project_id=`・`experiment_id=`で指定することもできます
+- 実験はIDの代わりに`experiment_name="whisper-small-finetune"`のように名前でも指定できます。その名前の実験が無ければ作ります（MLflowの`set_experiment`と同じ）。作るには`runs:write`が要り、削除した実験と同じ名前は使えません。`experiment_id`と一緒には渡せず、オフライン記録（`mode="offline"`）ではIDが要ります
 - `kind=`で実行種別（`training`・`finetuning`・`inference`・`evaluation`・`processing`）を指定します。省略すると`training`です
 - `with`を抜けるとRunは完了になります。途中で例外が起きた場合は、エラーをLogsに残して失敗になります
 - metricsの値はNaNや無限大を受け付けません。新しいRunで`step`を省略すると0で記録します

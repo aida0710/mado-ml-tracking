@@ -3,11 +3,13 @@ import type { ExecutionCatalog } from '../types/executionCatalog';
 import type { FormField, FormValues } from '../types/form';
 import { getFieldValue } from '../lib/formValues';
 import { buildCatalogOptions, withEmptyOption } from '../lib/catalogOptions';
+import { explainMissingCodeCandidates } from '../lib/codeCandidateReason';
 import { isCodeCompatible, RUN_KINDS } from '../lib/executionValidation';
 import { isTargetCompatible } from '../lib/runtimeValidation';
 import { isSiteTarget } from '../lib/siteExecutionInput';
 import { hasOutputModel } from '../lib/taskInput';
 import { FormFields } from './FormFields';
+import { MissingCodeNotice } from './MissingCodeNotice';
 import { TaskOutputModelFields } from './TaskOutputModelFields';
 import { text } from '../i18n/catalog';
 
@@ -47,9 +49,16 @@ export function TaskFields({ values, catalog, targets, onChange, isEditing = fal
     { name: 'parameters', label: launchOnly ? text.taskParameterOverrides : text.parametersJson, type: 'textarea' },
     { name: 'tags', label: text.tagsJson, type: 'textarea', visible: () => !launchOnly },
   ];
+  // Said under the code version list when it offers nothing, so an empty list is not a dead end.
+  const missingCode = !launchOnly && !compatibleCodes.length
+    ? explainMissingCodeCandidates({ codeVersions: catalog.codeVersions, taskType: kind || undefined, family: model?.family })
+    : null;
+  const codeIndex = fields.findIndex((field) => field.name === 'codeVersionId') + 1;
   const gpuIndex = fields.findIndex((field) => field.name === 'gpuIds');
   return <>
-    <FormFields fields={fields.slice(0, gpuIndex)} values={values} onChange={onChange} />
+    <FormFields fields={fields.slice(0, codeIndex)} values={values} onChange={onChange} />
+    {missingCode && <MissingCodeNotice reason={missingCode} />}
+    <FormFields fields={fields.slice(codeIndex, gpuIndex)} values={values} onChange={onChange} />
     {!hasGpus && !isSite && <div className="field">
       <span>{text.gpuIds}</span>
       <p className="muted field-note">{target ? text.gpuNoneOnTarget : text.gpuSelectTargetFirst}</p>
