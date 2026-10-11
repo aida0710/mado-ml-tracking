@@ -14,7 +14,12 @@ import type { RunCompletionService } from '../../services/runCompletionService.j
 import type { RegistryService } from '../../services/registryService.js';
 import { assertRunRecordsWritable, type RunService } from '../../services/runService.js';
 import { logDatasetInputs } from './datasetInputs.js';
-import { findTrackingExperiment, resolveExperimentId } from './experimentService.js';
+import { findTrackingExperiment } from './experimentService.js';
+import {
+  createDefaultExperiment,
+  DEFAULT_EXPERIMENT_ID,
+  searchableExperimentIds,
+} from '../defaultExperiment.js';
 import { logRunModels } from './runModels.js';
 import { appendTrackingMetrics, metricHistory } from './trackingMetrics.js';
 import { isTrackingResume, resolveTrackingLifecycle } from './trackingLifecycle.js';
@@ -76,12 +81,8 @@ export class RunTrackingService {
         role: 'editor',
         scope: 'runs:write',
       });
-      if (input.experiment_id === '0') {
-        await connection.query(
-          "INSERT INTO experiments(project_id,name) VALUES($1,'Default') ON CONFLICT(project_id,name) DO NOTHING",
-          [projectId],
-        );
-      }
+      if (input.experiment_id === DEFAULT_EXPERIMENT_ID)
+        await createDefaultExperiment(connection, projectId);
       const experiment = await findTrackingExperiment(connection, {
         projectId,
         id: input.experiment_id,
@@ -153,12 +154,12 @@ export class RunTrackingService {
     input: TrackingSearch & { experiment_ids: string[]; run_view_type: number },
   ) {
     return this.read(principal, projectId, async (connection) => {
-      const experimentIds: string[] = [];
-      for (const id of [...new Set(input.experiment_ids)]) {
-        const experimentId = await resolveExperimentId(connection, projectId, id);
+      const experimentIds = await searchableExperimentIds(connection, {
+        projectId,
+        ids: input.experiment_ids,
+      });
+      for (const experimentId of experimentIds)
         await findTrackingExperiment(connection, { projectId, id: experimentId });
-        experimentIds.push(experimentId);
-      }
       const query = {
         entity: 'run',
         projectId,

@@ -7,7 +7,7 @@ import { useModelAliasHistory } from '../hooks/useModelAliasHistory';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
 import { StandaloneArtifactUpload } from '../components/StandaloneArtifactUpload';
-import { FormDialog } from '../components/FormDialog';
+import { ModelCreateDialog } from '../dialogs/ModelCreateDialog';
 import { ModelVersionDialog } from '../dialogs/ModelVersionDialog';
 import { ModelAutomationPanel } from '../components/ModelAutomationPanel';
 import { ModelRegistryPanel } from '../components/ModelRegistryPanel';
@@ -15,7 +15,6 @@ import { PromotionPolicyPanel } from '../components/PromotionPolicyPanel';
 import { AliasProtectionSettings } from '../components/AliasProtectionSettings';
 import { PromotionDialog } from '../dialogs/PromotionDialog';
 import { Tabs } from '../components/Tabs';
-import { getFieldValue } from '../lib/formValues';
 import { text } from '../i18n/catalog';
 import { modelsTextTemplates } from '../i18n/models';
 
@@ -95,21 +94,9 @@ export function ModelsPage() {
         )}
       </div>
       {dialog === 'model' && (
-        <FormDialog
-          title={text.newModel}
+        <ModelCreateDialog
+          projectId={project.id}
           onClose={() => setDialog(null)}
-          fields={[
-            { name: 'name', label: text.name, required: true },
-            { name: 'family', label: text.family, required: true },
-            { name: 'description', label: text.description, type: 'textarea' },
-          ]}
-          onSubmit={(values) =>
-            registryApi.createModel(project.id, {
-              name: getFieldValue(values, 'name'),
-              family: getFieldValue(values, 'family'),
-              description: getFieldValue(values, 'description'),
-            })
-          }
           onSaved={(model) => {
             setDialog(null);
             registry.reload();

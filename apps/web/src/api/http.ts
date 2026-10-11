@@ -38,6 +38,13 @@ export function invalidResponseError(status = 200): RequestError {
   return new RequestError({ status, code: INVALID_RESPONSE_CODE });
 }
 
+const HTTP_NOT_FOUND = 404;
+
+/** Whether the API answered 404: the thing is gone, belongs elsewhere, or is hidden from the user. */
+export function isNotFoundError(failure: unknown): boolean {
+  return failure instanceof RequestError && failure.status === HTTP_NOT_FOUND;
+}
+
 export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   let response: Response;
   try {

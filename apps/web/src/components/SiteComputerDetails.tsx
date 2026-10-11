@@ -1,4 +1,5 @@
 import type { ComputeTargetDetails, User } from '@mmt/contracts';
+import { CopyableValue } from './CopyableValue';
 import { ManualSubmissionGuide } from './ManualSubmissionNotice';
 import { SiteJobShellPanel } from './SiteJobShellPanel';
 import { SitePersonalSettingsPanel } from './SitePersonalSettingsPanel';
@@ -7,6 +8,7 @@ import { SiteSharedKeyPanel } from './SiteSharedKeyPanel';
 import { manualSiteOwnership } from '../lib/manualSubmission';
 import { canManageTarget } from '../lib/permissions';
 import { personalSettingsScope } from '../lib/sitePersonalSettingsInput';
+import { text } from '../i18n/catalog';
 
 /**
  * A site's details below 全体設定 → コンピュータ. Everyone who may use it reads its job shell, keeps
@@ -30,6 +32,7 @@ export function SiteComputerDetails({
       <div className="section-heading">
         <h2>{target.name}</h2>
       </div>
+      <CopyableValue label={text.computerId} value={target.id} />
       {!isAutomatic && (
         <ManualSubmissionGuide targetId={target.id} ownership={manualSiteOwnership(target, user)} />
       )}

@@ -1,8 +1,6 @@
 import type { Readable } from 'node:stream';
-import { Writable } from 'node:stream';
-import { pipeline } from 'node:stream/promises';
 import { setTimeout as delay } from 'node:timers/promises';
-import type { Artifact, User } from '@mmt/contracts';
+import type { User } from '@mmt/contracts';
 import type { ArtifactStores } from '@mmt/platform';
 import { first, transaction, type Connection, type Database } from '../../db/database.js';
 import { DomainError } from '../../domain/errors.js';
@@ -17,11 +15,7 @@ import {
   requireNonconflictingArtifactPath,
 } from './artifactPathRepository.js';
 import type { ArtifactAccess, ArtifactLocation, ArtifactOwner } from './artifactTypes.js';
-import {
-  MAX_MLMODEL_METADATA_BYTES,
-  MlmodelCapture,
-  saveLoggedModelMlmodel,
-} from './mlmodelCapture.js';
+import { readStoredMlmodel, saveLoggedModelMlmodel } from './mlmodelCapture.js';
 import { partEtag } from './multipartProtocol.js';
 import { MultipartUploadUnsupportedError } from './multipartUnsupported.js';
 import type { CheckpointService } from '../../services/checkpointService.js';
@@ -176,25 +170,14 @@ export class MlflowMultipartUploadService {
       await saveLoggedModelMlmodel(connection, {
         projectId: upload.projectId,
         id: owner.id,
-        metadata: await this.readMlmodel(upload, artifact),
+        metadata: await readStoredMlmodel({
+          size: artifact.size,
+          open: async () =>
+            (await this.options.stores.read({ backend: upload.backend, key: upload.storageKey }))
+              .body,
+        }),
       });
   };
-
-  private async readMlmodel(
-    upload: ArtifactUploadRecord,
-    artifact: Artifact,
-  ): Promise<Record<string, unknown> | null> {
-    // Same rule as single PUTs: an oversized MLmodel is stored without captured metadata.
-    if (artifact.size > MAX_MLMODEL_METADATA_BYTES) return null;
-    const content = await this.options.stores.read({
-      backend: upload.backend,
-      key: upload.storageKey,
-    });
-    const capture = new MlmodelCapture();
-    const discard = new Writable({ write: (_chunk, _encoding, callback) => callback() });
-    await pipeline(content.body, capture, discard);
-    return capture.metadata();
-  }
 
   private async waitUntilRegistered(projectId: string, uploadId: string): Promise<void> {
     const deadline = Date.now() + this.options.finalizeWaitMs;

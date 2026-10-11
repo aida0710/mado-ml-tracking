@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
+  LaunchManualSubmissionNotice,
   ManualSubmissionGuide,
   ManualSubmissionNotice,
   WaitingJobNotice,
@@ -19,8 +20,16 @@ const ALL_SCOPE_NOTE = '--allで受け取るのは、使ったtokenのProjectの
 const OWNER_SUBMITS_NOTE =
   'このコンピュータはAliceさんのコンピュータです。所有者が--watch --allで待ち受けているコンピュータ（所有者のPCなど）では、所有者の側で投入されます。';
 const someoneElse: ManualSiteOwnership = { kind: 'someoneElse', ownerName: 'Alice' };
+// The setup of `mado-tracking submit` points it at the address the page was opened with.
+const PAGE_ORIGIN = 'https://mmt.example.test';
+const SUBMIT_ENVIRONMENT = `export MMT_API_URL=${PAGE_ORIGIN}\nread -r -s -p &#x27;API token: &#x27; MMT_API_TOKEN`;
+const SUBMIT_TOKEN_WHERE =
+  'API tokenは、Jobを作ったプロジェクトの［プロジェクト設定］→「自分のAPI token」の［API tokenを発行］で、readとjobs:writeを選んで発行します。';
 
 describe('手動投入の案内', () => {
+  beforeEach(() => vi.stubGlobal('window', { location: { origin: PAGE_ORIGIN } }));
+  afterEach(() => vi.unstubAllGlobals());
+
   it('コンピュータの詳細: 1回の投入とPCでの待ち受けを出し、--allとその範囲は所有者にだけ出す', () => {
     const global = renderToStaticMarkup(
       <ManualSubmissionGuide targetId="pc" ownership={{ kind: 'global' }} />,
@@ -42,6 +51,23 @@ describe('手動投入の案内', () => {
     expect(html).not.toContain('--all</code>');
     expect(html).toContain(OWNER_SUBMITS_NOTE);
     expect(html).not.toContain(ALL_SCOPE_NOTE);
+  });
+
+  it('コンピュータの詳細: 初めての投入に要るコマンドの入れ方・接続先のURL・tokenを作る画面とscopeを出し、tokenの値は出さない', () => {
+    const html = renderToStaticMarkup(
+      <ManualSubmissionGuide targetId="pc" ownership={{ kind: 'global' }} />,
+    );
+    expect(html).toContain('pip install &#x27;mado-tracking @ git+https://github.com/aida0710/mado-ml-tracking.git#subdirectory=python&#x27;');
+    expect(html).toContain(SUBMIT_ENVIRONMENT);
+    expect(html).toContain(SUBMIT_TOKEN_WHERE);
+    expect(html).not.toMatch(/MMT_API_TOKEN=/);
+  });
+
+  it('Jobを起動する確認の段: 手動投入で待つことと、そのコンピュータで実行するコマンドと準備を先に出す', () => {
+    const html = renderToStaticMarkup(<LaunchManualSubmissionNotice targetId="pc" />);
+    expect(html).toContain('このコンピュータは手動投入です。');
+    expect(html).toContain('mado-tracking submit --site pc</code>');
+    expect(html).toContain(SUBMIT_ENVIRONMENT);
   });
 
   it('待っているJobには本人のコマンドを出し、所有者には--allとその範囲、ほかの人のコンピュータでは補足も出す', () => {
@@ -77,6 +103,16 @@ describe('手動投入の案内', () => {
     expect(requested).toContain('mado-tracking submit --site pc</code>');
     expect(requested).toContain(OWNER_SUBMITS_NOTE);
     expect(notice(someoneElse, false)).toContain(OWNER_SUBMITS_NOTE);
+    const withButton = renderToStaticMarkup(
+      <WaitingJobNotice
+        targetId="pc"
+        ownership={{ kind: 'global' }}
+        isRequester
+        tokenButton={<button>投入用のAPI tokenを発行</button>}
+      />,
+    );
+    expect(withButton).toContain('<button>投入用のAPI tokenを発行</button>');
+    expect(withButton).toContain(SUBMIT_ENVIRONMENT);
   });
 
   it('Jobsの上の案内: 所有者のコンピュータにだけ--allを出し、ほかの人のコンピュータではコマンドと補足を出す', () => {

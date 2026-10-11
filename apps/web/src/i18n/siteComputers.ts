@@ -133,8 +133,13 @@ export const siteComputersText = {
     '所有者: Publicにしたコンピュータで、ほかの人のJobも待ち受けて投入する（あなたのアカウントで動きます）',
   manualGuideAllScope:
     '--allで受け取るのは、使ったtokenのProjectのJobです。複数のProjectのJobを受け取るときは、Projectごとに、そのProjectのtokenで--watch --allを動かします。',
-  manualGuideToken:
-    '実行する前に、MMT_API_URLと、jobs:writeを持つ本人のAPI token（MMT_API_TOKEN）を設定します。',
+  // Set up once on a manual site before `mado-tracking submit`.
+  submitSetupTitle: '初めて投入するとき（コマンドの導入・接続先・API token）',
+  submitSetupInstall: 'mado-trackingを入れてPATHに足す（Python 3.11以上）',
+  submitSetupToken:
+    'API tokenは、Jobを作ったプロジェクトの［プロジェクト設定］→「自分のAPI token」の［API tokenを発行］で、readとjobs:writeを選んで発行します。',
+  submitSetupIssueToken: '投入用のAPI tokenを発行',
+  submitSetupEnvironment: '接続先とAPI token（tokenは実行時に入力）',
 } as const;
 
 // Text that embeds values.

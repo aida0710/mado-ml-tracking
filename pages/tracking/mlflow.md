@@ -5,7 +5,7 @@ description: 公式のMLflow 3 SDKをMLFLOW_TRACKING_URIとAPI tokenで接続す
 
 # MLflow 3から記録する
 
-![［プロジェクト設定］の「MLflow 3から接続」](/images/tracking-mlflow-connection.png)
+![［プロジェクト設定］の「SDK・MLflow 3から接続」](/images/tracking-mlflow-connection.png)
 
 公式の`mlflow` Python SDK（MLflow 3）から、mado ML TrackingのProjectへ記録できます。接続先とtokenを環境変数で指定するだけで、既存のMLflowのコードを変えずに使えます。記録したRun・metrics・Artifact・登録モデルは、画面から記録したものと同じデータとして扱います。
 
@@ -19,7 +19,7 @@ MLflowの全機能を提供するサーバーではありません。対応し�
 
 ## 接続する
 
-1. ［プロジェクト設定］を開き、「MLflow 3から接続」を確認します。`MLFLOW_TRACKING_URI`と`MLFLOW_REGISTRY_URI`には同じURL（`https://<サーバー>/api/mlflow/projects/<ProjectのID>`）が表示されます
+1. ［プロジェクト設定］を開き、「SDK・MLflow 3から接続」の［MLflow 3］を確認します（実験の画面の［SDKで記録］からも開けます。そこでは`set_experiment`の例に開いている実験の名前が入ります）。`MLFLOW_TRACKING_URI`と`MLFLOW_REGISTRY_URI`には同じURL（`https://<サーバー>/api/mlflow/projects/<ProjectのID>`）が表示されます
 2. ［このProject用のAPI tokenを発行］を選びます。scopeに`read`・`runs:write`・`registry:write`・`artifacts:write`が選ばれた状態で発行画面が開くので、名前と期限を入力して発行します。tokenはこのときだけ表示されるので控えておきます（ボタンはeditor以上にだけ表示されます）
 3. 学習を実行するマシンのターミナルで、MLflowをインストールして環境変数を設定します
 
@@ -139,6 +139,18 @@ loaded = mlflow.pyfunc.load_model("models:/regression@candidate")
 - 読み込みには`models:/名前/バージョン`か`models:/名前@alias`を使います
 - 入力Dataset、生成元のRun、登録したバージョンの関係は［Lineage］に表示します
 
+`save_model()`で保存したディレクトリを`log_artifacts()`でRunに上げた場合も、そのまま登録できます。
+
+```python
+mlflow.sklearn.save_model(model, "saved")
+with mlflow.start_run() as run:
+    mlflow.log_artifacts("saved", "model")
+version = mlflow.register_model(f"runs:/{run.info.run_id}/model", "regression")
+```
+
+- 登録のときにディレクトリの`MLmodel`を読み、そこに書かれたファイルをモデル本体（Modelsの画面の重み）にします。生成元のRunもバージョンに結び付きます
+- 戻り値の`source`は、登録時に固定したファイル一式の場所（`mlflow-artifacts:/model-versions/…`）です。MLflowのサーバーと違い、指定した`runs:/…`ではありません
+
 登録をきっかけに推論・評価を自動で動かすには、登録モデルのtag `mmt.model_family`に系列名を指定し、その系列の自動実行ルールをProjectに用意します。
 
 ```python
@@ -167,6 +179,8 @@ MLflow 3.0.0（scikit-learn 1.6.1）と3.17.0（scikit-learn 1.9.1）で動作�
 | `log_table`・`log_image`・`log_dict`・`log_text`・`log_figure` | 対応 |
 | wav・flacの音声Artifact | 対応 |
 | 自作のpyfuncモデル、複数ファイルのモデル | 対応 |
+| `save_model()`で保存し`log_artifacts()`で上げたモデルの`register_model("runs:/…")` | 対応 |
+| 最初のRunの前の`mlflow.search_runs()`・`get_experiment("0")` | 対応（0件、空のDefault Experimentを返します） |
 | `mlflow.search_runs`のpandas出力 | 対応 |
 | 登録モデル・バージョンの検索（`search_registered_models`、`search_model_versions`） | 対応（1回に返すのは最大1000件。下の説明を参照） |
 | SDKが表示する`View run`・`View experiment`のリンク | 対応（このアプリの画面が開きます） |

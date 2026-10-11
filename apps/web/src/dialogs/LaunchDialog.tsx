@@ -11,6 +11,7 @@ import type { FormField } from '../types/form';
 import { CodeRuntimeDetails } from '../components/CodeRuntimeDetails';
 import { ErrorNotice, Resource } from '../components/Feedback';
 import { DetailsList } from '../components/JsonDetails';
+import { LaunchManualSubmissionNotice } from '../components/ManualSubmissionNotice';
 import { buildCatalogOptions, withEmptyOption } from '../lib/catalogOptions';
 import {
   getFieldValue,
@@ -29,6 +30,7 @@ import { isTargetCompatible, validateTargetRuntime } from '../lib/runtimeValidat
 import { buildJobRequest, isSiteTarget } from '../lib/siteExecutionInput';
 import { targetChoiceLabel } from '../lib/computeTargetDisplay';
 import { formatAutoRetries } from '../lib/jobDisplay';
+import { isManualSite } from '../lib/manualSubmission';
 import { text } from '../i18n/catalog';
 import { jobsTextTemplates } from '../i18n/jobs';
 
@@ -330,6 +332,9 @@ export function LaunchDialog({
                           [text.maxAttempts, getFieldValue(values, 'maxAttempts')],
                         ]}
                       />
+                    )}
+                    {stage === 2 && target && isManualSite(target) && (
+                      <LaunchManualSubmissionNotice targetId={target.id} />
                     )}
                     {stage === 2 && selectedCode && <CodeRuntimeDetails version={selectedCode} />}
                   </fieldset>

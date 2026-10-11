@@ -138,7 +138,11 @@ export function SuggestionInput({
           ))}
       </ul>
       {suggestions.note && (
-        <p id={noteId} className="suggestion-note" aria-live="polite">
+        <p
+          id={noteId}
+          className={`suggestion-note${suggestions.noteTone === 'warning' ? ' warning' : ''}`}
+          aria-live="polite"
+        >
           {suggestions.note}
         </p>
       )}

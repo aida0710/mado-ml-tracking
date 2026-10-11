@@ -12,6 +12,8 @@ export interface FieldSuggestions {
   details?: Record<string, string>;
   /** Shown under the field, for example that the typed path does not exist. */
   note?: string;
+  /** warning: the note points at a likely mistake (a name that differs only in letter case). */
+  noteTone?: 'warning';
 }
 
 /**

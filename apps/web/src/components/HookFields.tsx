@@ -18,6 +18,7 @@ import { buildCatalogOptions, withEmptyOption } from '../lib/catalogOptions';
 import { MAX_JOB_ATTEMPTS, RUN_KINDS } from '../lib/executionValidation';
 import { isTargetCompatible } from '../lib/runtimeValidation';
 import { isSiteTarget } from '../lib/siteExecutionInput';
+import { isManualSite } from '../lib/manualSubmission';
 import { targetChoiceLabel } from '../lib/computeTargetDisplay';
 import {
   HOOK_RUN_END_STATUSES,
@@ -293,7 +294,7 @@ export function HookFields({
       <h3 className="form-section-heading">{text.hookTemplate}</h3>
       {usesRegisteredModelVersion(trigger) && <p className="muted">{text.hookRegisteredModelVersion}</p>}
       <FormFields fields={templateFields} values={values} onChange={onChange} />
-      {isSite && target?.submissionMode === 'manual' && (
+      {isManualSite(target) && (
         <p className="notice">{text.hookManualSiteNotice}</p>
       )}
       {code && <CodeRuntimeDetails version={code} />}

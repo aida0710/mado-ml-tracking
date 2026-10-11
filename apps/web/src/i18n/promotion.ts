@@ -7,6 +7,7 @@ import type {
   PromotionMissingBaseline,
 } from '@mmt/contracts';
 import type { CriterionThresholdMeaning } from '../lib/promotionPolicyInput';
+import type { KnownAliasSource } from '../lib/aliasChoices';
 
 // Promotion policies (pass/fail criteria for a candidate version) and their evaluation history.
 // Labels shared with the evaluation comparison (baselineAlias, evaluationRule, referenceDatasets,
@@ -29,6 +30,15 @@ export const promotionText = {
   promotionCriterionMode: '比べる値',
   promotionCriterionThreshold: '閾値',
   promotionRelativeDeltaHint: '相対差は比率で入力します（0.05 = 5%）。',
+  // Metric names come from what the rule's evaluation Runs recorded (RuleMetricKeys.source).
+  promotionMetricKeysChooseRule: '評価ルールを選ぶと、評価Runに記録済みの指標名が候補に出ます。',
+  promotionMetricKeysFromRule: 'この評価ルールの評価Runに記録された指標名を候補に出しています。',
+  promotionMetricKeysFromCodeVersion:
+    'この評価ルールの評価Runはまだ無いため、同じ評価コードバージョンのRunに記録された指標名を候補に出しています。',
+  promotionMetricKeysNone:
+    '評価Runに記録された指標名はまだありません。評価コードが記録する名前をそのまま入力してください。',
+  promotionMetricKeysLoadFailed: '記録済みの指標名を読み込めませんでした。指標名はそのまま入力できます。',
+  aliasChoicesLoadFailed: '既存のAliasを読み込めませんでした。Alias名はそのまま入力できます。',
   promotionAddCriterion: '基準を追加',
   promotionRemoveCriterion: '基準を削除',
   promotionMissingBaseline: '基準aliasが未設定のとき',
@@ -156,6 +166,13 @@ export const criterionThresholdMeaningLabels: Record<CriterionThresholdMeaning, 
   regression_allowed: 'この幅までの悪化を許容',
 };
 
+// Where an offered alias name is already used (lib/aliasChoices.ts).
+export const knownAliasSourceLabels: Record<KnownAliasSource, string> = {
+  model: 'モデルで使用中',
+  policy: '昇格policy',
+  protection: '保護alias',
+};
+
 export const aliasProtectionRoleLabels: Record<ModelAliasProtectionRole, string> = {
   editor: 'editor以上',
   admin: 'adminのみ',
@@ -191,4 +208,9 @@ export const promotionTextTemplates = {
   reevaluationSequence: (sequence: number) => `再判定 ${sequence - 1}回目`,
   baselineMovedDetail: (judgedAgainst: string | null, current: string | null) =>
     `判定時の基準バージョン: ${judgedAgainst ?? 'なし'} / 今の基準バージョン: ${current ?? 'なし'}`,
+  metricNotRecorded: (metric: string) =>
+    `「${metric}」は評価Runに記録されていません。判定のときに値が無く、不合格になります。`,
+  aliasNew: (alias: string) => `「${alias}」はまだ使われていない新しいAliasです。`,
+  aliasCaseVariant: (variants: readonly string[]) =>
+    `「${variants.join('」「')}」が既にあります。大文字・小文字だけが違っても別のAliasになります。`,
 };

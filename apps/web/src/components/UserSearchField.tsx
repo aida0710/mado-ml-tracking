@@ -85,7 +85,7 @@ export function UserSearchField({
           <p className="muted">{text.userSearchNoResults}</p>
         ) : (
           users.length > 0 && (
-            <ul className="user-picker-results">
+            <ul className="picker-results">
               {users.map((user) => {
                 const unavailableReason = unavailableUsers.get(user.id);
                 return (

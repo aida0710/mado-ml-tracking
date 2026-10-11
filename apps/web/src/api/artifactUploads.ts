@@ -4,6 +4,7 @@ import type {
   ArtifactUpload,
   ArtifactUploadCreate,
   ArtifactUploadDetail,
+  ArtifactUploadListItem,
   ArtifactUploadPart,
   ArtifactUploadStatus,
 } from '@mmt/contracts';
@@ -91,7 +92,7 @@ function responseError(status: number, payload: unknown): RequestError {
 
 export const artifactUploadsApi = {
   list: (projectId: string, status: ArtifactUploadStatus, signal?: AbortSignal) =>
-    requestItems<ArtifactUpload>(`${uploadsPath(projectId)}?${new URLSearchParams({ status })}`, signal),
+    requestItems<ArtifactUploadListItem>(`${uploadsPath(projectId)}?${new URLSearchParams({ status })}`, signal),
   get: (projectId: string, uploadId: string, signal?: AbortSignal) =>
     request<ArtifactUploadDetail>(uploadPath(projectId, uploadId), { signal }),
   create: (projectId: string, body: ArtifactUploadCreate, signal?: AbortSignal) =>

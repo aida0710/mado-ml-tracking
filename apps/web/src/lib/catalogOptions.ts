@@ -3,6 +3,11 @@ import type { SelectOption } from '../types/form';
 import { runtimeLabels } from '../i18n/runtime';
 import { text } from '../i18n/catalog';
 
+/** How screens name a code version: "code name / version". */
+export function formatCodeVersionName(codeName: string, version: string): string {
+  return `${codeName} / ${version}`;
+}
+
 export function buildCatalogOptions(catalog: ExecutionCatalog) {
   return {
     experiments: catalog.experiments.map((item) => ({ value: item.id, label: item.name })),
@@ -12,7 +17,7 @@ export function buildCatalogOptions(catalog: ExecutionCatalog) {
     })),
     codes: catalog.codeVersions.map((item) => ({
       value: item.id,
-      label: `${catalog.codes.find((code) => code.id === item.codeId)?.name ?? item.codeId} / ${item.version} · ${runtimeLabels[item.runtime.kind]}`,
+      label: `${formatCodeVersionName(catalog.codes.find((code) => code.id === item.codeId)?.name ?? item.codeId, item.version)} · ${runtimeLabels[item.runtime.kind]}`,
     })),
     datasets: catalog.datasetVersions.map((item) => ({
       value: item.id,
