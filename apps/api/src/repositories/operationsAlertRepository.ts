@@ -170,7 +170,7 @@ export async function listWorkerSilences(connection: Connection): Promise<Worker
 }
 
 // The LEFT JOIN keeps plugins with an empty backlog, so their open alert resolves as recovered.
-const PLUGIN_BACKLOG_SELECT = `SELECT p.id AS plugin_id,p.project_id,p.name AS plugin_name,p.enabled,
+const PLUGIN_BACKLOG_SELECT = `SELECT p.id AS plugin_id,p.project_id,p.name AS plugin_name,(p.enabled AND p.kind='mado' AND p.config IS NOT NULL AND NOT p.migration_pending) AS enabled,
     count(o.id) FILTER (WHERE o.status='pending')::int AS pending,
     count(o.id) FILTER (WHERE o.status='sending')::int AS sending,
     min(o.created_at) FILTER (WHERE o.status='pending') AS oldest_pending_at,
@@ -181,7 +181,10 @@ const PLUGIN_BACKLOG_SELECT = `SELECT p.id AS plugin_id,p.project_id,p.name AS p
   FROM plugin_connections p LEFT JOIN plugin_outbox o ON o.plugin_id=p.id AND o.status<>'delivered'`;
 
 export async function listEnabledPluginBacklogs(connection: Connection): Promise<PluginBacklog[]> {
-  return rows<PluginBacklog>(connection, `${PLUGIN_BACKLOG_SELECT} WHERE p.enabled GROUP BY p.id`);
+  return rows<PluginBacklog>(
+    connection,
+    `${PLUGIN_BACKLOG_SELECT} WHERE p.enabled AND p.kind='mado' AND p.config IS NOT NULL AND NOT p.migration_pending GROUP BY p.id`,
+  );
 }
 
 /** undefined when the plugin does not belong to the Project. */

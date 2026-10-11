@@ -1,141 +1,60 @@
 ---
-title: Plugins and Mado integration
-description: How plugins connect external services, and how to set up the Mado plugin to use Mado datasets as Run inputs and send lineage to Mado.
+title: Mado integration
+description: Configure the built-in Mado integration, import fixed dataset versions, send Run lineage, and migrate existing connections.
 ---
 
-# Plugins and Mado integration
+# Mado integration
 
-A plugin is an HTTP service that runs separately from this application. It never connects to this application's database; it only talks through a fixed HTTP API. The first plugin is the Mado plugin, which integrates with Mado.
+Mado is built into mado ML Tracking and updated with the application. New Projects start unconfigured and disabled. The application works without Mado settings and makes no Mado requests until you configure it and choose an operation.
 
-With the Mado plugin you can:
+## Configure a Project
 
-- Search Mado datasets and import a fixed version as a DatasetVersion in this application
-- Send Run starts, finishes, failures, and cancellations, with their input and output dataset versions, to Mado as OpenLineage
-- View the storage capacity metrics of Mado
+1. Set `MMT_PLUGIN_SECRET_KEY` on the API server. Generate a dedicated key with `openssl rand -base64 32`, save it in the private `.env`, and retain it across restarts. Use a separate key from storage credentials, and back it up with the DB.
+2. In Mado Service Accounts, issue separate `lineage:read`, `lineage:write`, and optional `metrics:read` keys. Limit read access to the search namespaces and write access to the job and input/output namespaces. Capacity metrics apply to the entire storage system.
+3. A global administrator opens the Project's Integrations page and saves the API URL, Web URL, OpenLineage URL, namespaces, job namespace, StorageSystem identifier, and keys. The URLs can point to separate entry points. Saving a new connection leaves it disabled.
+4. Check the connection, then enable it. Checking reads the catalog and optional capacity metrics, even while disabled. It can use a read key before the write key is configured and never sends a fabricated Run. Verify the write key with a controlled real Run.
 
-Plugin UI components and arbitrary JavaScript are never run in the browser. The screens are the same for every plugin.
+Mado must provide `/api/mado/lineage/catalog`, `datasets/:id`, and `versions/:id`. See its `docs/model-tracking-api.md`. Tracking uses authenticated Mado APIs, never the Registry directly.
 
-## Roles
-
-| Operation | Who |
+| Operation | Permission |
 | --- | --- |
-| Register a plugin, change its URL or token variable name, enable or disable it | Global administrators |
-| Check the connection, search and import datasets, resend events, view capacity metrics | Project Admins |
+| Save connection settings and keys, enable/disable, complete migration | Global administrator |
+| Check, search, import, read capacity, retry delivery | Project admin |
+| Open an imported version in Mado | Project read access |
 
-Plugins are registered per Project. Register the plugin in each Project that uses it. In a Project without plugins, **Plugins** tells a Project Admin that global administrators register them.
+Keys are encrypted with AES-256-GCM. Responses contain only whether each key is configured. Leaving a key field blank preserves the saved value; the capacity key can be explicitly removed. If the encryption key is lost, restore it or re-enter every saved connection key.
 
-## Run the Mado plugin
+## Datasets and Runs
 
-The Mado plugin lives in a separate repository (`mado-model-tracking-plugin-mado`) and needs Node.js 22.12 or later. On Ubuntu, install Node.js 22 with:
+Importing sends a fixed version ID. The API fetches that version from Mado again and validates its identity, namespace, URI and digest. Concurrent imports return the same immutable DatasetVersion. Existing versions and external references are retained.
 
-```sh
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt-get install -y nodejs
-node --version
-```
+Enabled connections provide “Import from Mado” and “View in Mado” actions. The latter verifies the connection referenced by the selected version and opens `/lineage?mode=versions&versionId=…&node=…`. Mado applies the person's own login and permissions.
 
-Install the dependencies in the plugin repository and prepare `.env`:
+Run state changes and delivery records are saved in one transaction. The exact OpenLineage body, hash, destination and configuration revision are pinned. Retries use the same body. Imported identities are retained for their original connection; local output names include the Project ID.
 
-```sh
-npm ci
-cp .env.example .env
-chmod 600 .env
-```
+Disabling stops new imports, deliveries and delivery records. An already claimed request can finish. Re-enabling resumes existing pending records and does not backfill Runs from the disabled period. Imported versions and delivery history remain.
 
-### Issue keys in Mado
+API/Web/OpenLineage destinations cannot be changed once a connection has version references or delivery history. Create a separately named connection for another Mado instance. Key and namespace changes advance the revision and discard stale search/check results.
 
-In Mado's Settings → Access → Service Accounts, issue a separate key for each use.
+A response or DB update can be lost after successful delivery. The operator-supplied Mado Registry must treat an identical retried event as the same Run and versions. A duplicate acknowledgment from the Mado entry point does not verify the actual Registry's database behavior.
 
-| Key scope | Used for | Plugin `.env` |
-| --- | --- | --- |
-| `lineage:read` | Searching datasets and versions | `MADO_READ_TOKEN` |
-| `lineage:write` | Sending lineage | `MADO_LINEAGE_TOKEN` |
-| `metrics:read` (optional) | Capacity metrics | `MADO_METRICS_TOKEN` |
+## Migrate a legacy bridge
 
-Limit the `lineage:read` and `lineage:write` keys to the namespaces you use. Capacity metrics cover the whole storage, so do not set a namespace for that key.
+Migration 059 preserves connection UUIDs, enabled flags, external references, pending records and event IDs. Only a connection whose saved manifest ID is `mado` is classified for migration. Delivery and imports remain stopped while migration is pending. Other legacy plugins are retained for renaming or disabling. Multiple connections are not merged.
 
-### Plugin `.env`
-
-| Variable | Value | Example |
-| --- | --- | --- |
-| `MMT_PLUGIN_TOKEN` | A dedicated secret this application uses to connect to the plugin. Different from the Mado keys | Generate with `openssl rand -hex 32` |
-| `MADO_BASE_URL` | Origin of the Mado UI and API | `https://mado.example.com/` |
-| `MADO_LINEAGE_URL` | Origin of the OpenLineage API. Optional if the same | `https://mado-api.example.com/` |
-| `MADO_NAMESPACES` | Namespaces to search, comma-separated | `speech` |
-| `MADO_JOB_NAMESPACE` | Namespace where this application's experiments are registered in Mado | `mado-model-tracking` |
-| `MADO_STORAGE_SYSTEM_KEY` | StorageSystem identifier for outputs created in this application | `mado-model-tracking` |
-| `PLUGIN_LEDGER_DIRECTORY` | Where records of delivered events are kept. Use a persistent volume | `./var/events` |
-| `HOST`, `PORT` | Listening address and port | `127.0.0.1`, `4190` |
-
-Start the plugin:
+1. Back up the DB and the bridge's `PLUGIN_LEDGER_DIRECTORY`. Let in-flight bridge requests finish before updating Tracking.
+2. Save the actual Mado settings and keys on the existing connection. The bridge's old base URL is not the Mado API URL. Saving settings does not resume delivery.
+3. Check the connection and import legacy ledger hashes with the command below. Only matching event IDs and exact body hashes are marked delivered. A mismatch, unknown event or active delivery rejects its whole batch.
+4. After verifying the destination and receipt import, choose “Complete migration”. The existing enabled flag is retained. You can disable first and use a controlled real Run to validate writes before enabling.
+5. Stop the bridge after confirming the built-in connection works, and revoke its bridge key. `MMT_MADO_PLUGIN_TOKEN` and the bridge's `MMT_PLUGIN_TOKEN` are no longer needed.
 
 ```sh
-npm start
+# MMT_API_TOKEN: a global administrator's admin-scope token, stored only in the private file.
+# MMT_API_URL: Tracking API origin, for example http://127.0.0.1:4182.
+node --env-file=/path/to/private.env node_modules/tsx/dist/cli.mjs \
+  scripts/import_plugin_receipts.ts <project-id> <plugin-id> /path/to/legacy/ledger
 ```
 
-### Put the same secret on the API server
+The script reads only digests from `<event-id>.json`, sends batches of at most 1000, and leaves the ledger unchanged. Completed batches remain saved if a later batch fails. Preserve the original settings used to construct legacy payloads, including the producer and property order, so their hashes match.
 
-Put the same value as the plugin's `MMT_PLUGIN_TOKEN` in the API server's `.env`. You can choose any variable name and give that name when registering the plugin. The value is never stored in the database.
-
-```sh
-# API server .env
-MMT_MADO_PLUGIN_TOKEN=<same value as the plugin's MMT_PLUGIN_TOKEN>
-```
-
-Restart the API after the change.
-
-## Register the plugin (global administrators)
-
-1. Open the Project's **Plugins** and click **Pluginを登録** (Register plugin).
-2. Enter the following and save.
-
-| Field | Example |
-| --- | --- |
-| Name | `Mado` |
-| Service URL | `http://127.0.0.1:4190`; use the service name for another container (`http://mado-plugin:4190`) |
-| Variable name holding the token | `MMT_MADO_PLUGIN_TOKEN` (uppercase letters, digits, `_`) |
-| Enabled | Selected |
-
-3. Click **接続を確認** (Check connection) and check that the plugin version and capabilities are shown.
-
-Changing the URL or the token variable name clears the checked information; click **接続を確認** again.
-
-API serverの設定 (API server setting) in the plugin's details tells whether the API process has the token variable (never its value). Without it, the screen shows 未設定 (not set) with which variable to set where, and **接続を確認** and **イベントを再送** (Retry events) are disabled. Set it in the API server's `.env`, restart the API, and click **接続を確認**. Called through the API, the error is `plugin_token_unavailable` and names the variable.
-
-**データセットを検索** (Search datasets) works once **接続を確認** has succeeded.
-
-Requests to plugins use a Bearer token, accept responses up to 1 MiB, and time out after 5 seconds. Only global administrators can register service URLs.
-
-## Import Mado datasets (Project Admins)
-
-1. Type a search term in **データセットを検索** (Search datasets) under **Plugins**.
-2. Pick a version from the results and click **インポート** (Import).
-
-The imported version appears in **Datasets** (also reached from 取り込んだデータセットを見る (See imported datasets) in the plugin's details) as a DatasetVersion that keeps Mado's external ID. Importing the same version again returns the same DatasetVersion. When used as a Run input, the Run records which Mado version it used. See [Datasets](/en/data/datasets) for datasets.
-
-## Lineage delivery and resending
-
-When a Run's state changes, an event is queued in the same transaction as the change. A stopped plugin never fails a Run. Failed deliveries are retried at increasing intervals.
-
-- Events: `run.started`, `run.finished`, `run.failed`, `run.canceled`, with the Run and its input and output DatasetVersions.
-- If an output DatasetVersion is registered to a finished Run later, a completion event including that output is sent again.
-- The plugin treats resends of the same event ID as duplicates.
-
-**イベントの送信状況** (Event delivery status) under **Plugins** shows the number of undelivered events, the oldest undelivered, the most attempts, the last error, and the last delivery. After fixing the plugin, click **イベントを再送** (Resend events) to resend immediately without waiting.
-
-An undelivered event older than 15 minutes, or one that failed 5 or more times, opens the operations alert Plugin delivery stalled ([Notifications and operations alerts](/en/admin/notifications)).
-
-While a plugin is disabled, deliveries stop and no new events are queued. Undelivered events queued before disabling remain and are sent after re-enabling. Run changes that happened while the plugin was disabled are not sent later.
-
-## Write your own plugin
-
-A plugin is a service with the following HTTP API (plugin protocol 1.0), authenticated with a Bearer token.
-
-| Method and path | Content |
-| --- | --- |
-| `GET /manifest` | `id`, `name`, `version`, `protocolVersion: "1.0"`, `capabilities` |
-| `POST /datasets/search` | Receives `{query}` and returns `{items: PluginDataset[]}` |
-| `POST /events` | Receives a Run event and returns `{accepted: true}` |
-| `GET /metrics` | Only with the `storage:metrics` capability. Prometheus text format |
-
-`PluginDataset` has `externalId`, `namespace`, `name`, `version`, `uri`, `digest`, `schema`, and `metadata`. Do not return datasets without versions. Remove duplicate events by ID, and do not return `accepted` for an event you could not process.
+A matching receipt can recover a delivery whose 60-second lease has expired. A delivery with an active lease returns 409.

@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   Artifact,
@@ -10,11 +10,13 @@ import type {
   Run,
   WorkerJob,
 } from '@mmt/contracts';
-import type { ArtifactStores, PluginClient } from '@mmt/platform';
+import type { ArtifactStores } from '@mmt/platform';
 import { createApplication } from '../src/app.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 import { executionFixture, referenceDigest } from './fixtures.js';
 import { seedDemo } from '../src/seed/demoSeed.js';
+import type { BuiltinPluginClient } from '../src/plugins/mado/madoPlugin.js';
+import { MADO_CREDENTIALS_FIXTURE, madoClientStub, madoPluginInput } from './pluginFixtures.js';
 
 describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL）', () => {
   let harness: Harness;
@@ -190,7 +192,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
     }
   });
 
-  it('Project管理者はサーバーのsecret参照を登録できず、全体管理者が登録したpluginを利用できる', async () => {
+  it('Project管理者はMado接続を登録できず、全体管理者が登録した接続を確認できる', async () => {
     const fixture = await executionFixture(harness);
     const project = await entity<Project>(
       await request(harness.app, '/api/projects', {
@@ -199,38 +201,18 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
         body: { name: 'Member-owned Project' },
       }),
     );
-    const manifest = {
-      id: 'approved-plugin',
-      name: 'Approved',
-      version: '1.0',
-      protocolVersion: '1.0' as const,
-      capabilities: ['events'],
-    };
-    const clientFactory = vi.fn((): PluginClient => ({
-      manifest: async () => manifest,
-      metrics: async () => ({ prometheus: '' }),
-      searchDatasets: async () => ({ items: [] }),
-      sendEvent: async () => undefined,
-    }));
+    const clientFactory = vi.fn((): BuiltinPluginClient => madoClientStub());
     const { app } = createApplication({
       config: harness.config,
       database: harness.database,
       stores: harness.stores,
-      environment: {
-        OIDC_CLIENT_SECRET: 'private-fixture',
-        MMT_TEST_PLUGIN_TOKEN: 'approved-fixture',
-      },
       pluginClientFactory: clientFactory,
     });
     const basePath = `/api/projects/${project.id}/plugins`;
     const rejected = await request(app, basePath, {
       method: 'POST',
       cookie: fixture.outsider.cookie,
-      body: {
-        name: 'Unapproved destination',
-        baseUrl: 'http://127.0.0.1:4999',
-        tokenEnv: 'OIDC_CLIENT_SECRET',
-      },
+      body: madoPluginInput({ name: 'Unapproved destination' }),
     });
     expect(rejected.status).toBe(403);
     expect((await rejected.json()).code).toBe('admin_required');
@@ -239,11 +221,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
       await request(app, basePath, {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: {
-          name: 'Approved destination',
-          baseUrl: 'http://127.0.0.1:4999',
-          tokenEnv: 'MMT_TEST_PLUGIN_TOKEN',
-        },
+        body: madoPluginInput({ name: 'Approved destination' }),
       }),
     );
     await entity(
@@ -254,10 +232,14 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
       200,
     );
     expect(clientFactory).toHaveBeenCalledOnce();
-    expect(clientFactory).toHaveBeenCalledWith({
-      baseUrl: 'http://127.0.0.1:4999',
-      token: 'approved-fixture',
-    });
+    expect(clientFactory).toHaveBeenCalledWith(expect.objectContaining({
+      config: madoPluginInput().config,
+      credentials: expect.objectContaining({
+        readToken: MADO_CREDENTIALS_FIXTURE.readToken,
+        lineageToken: MADO_CREDENTIALS_FIXTURE.lineageToken,
+      }),
+      pluginId: approved.id,
+    }));
   });
 
   it('完了後に登録した出力DatasetVersionもoutboxへ保存し、保存失敗ならバージョンとRunの変更を戻す', async () => {
@@ -266,11 +248,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
       await request(harness.app, `${fixture.basePath}/plugins`, {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: {
-          name: 'Lineage',
-          baseUrl: 'http://127.0.0.1:4999',
-          tokenEnv: 'MMT_TEST_PLUGIN_TOKEN',
-        },
+        body: madoPluginInput({ name: 'Lineage' }),
       }),
     );
     const run = await fixture.newRun();
@@ -351,39 +329,25 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
 
   it('plugin障害でもRunは完了し、DB outboxから同じeventを再送できる', async () => {
     const fixture = await executionFixture(harness);
-    const delivered: PluginEvent[] = [];
+    const delivered: string[] = [];
     let isUnavailable = true;
-    const client: PluginClient = {
-      manifest: async () => ({
-        id: 'test-plugin',
-        name: 'Test',
-        version: '1.0',
-        protocolVersion: '1.0',
-        capabilities: ['events', 'datasets'],
-      }),
-      metrics: async () => ({ prometheus: '' }),
-      searchDatasets: async () => ({ items: [] }),
-      sendEvent: async (event) => {
+    const client = madoClientStub({
+      sendPayload: async (payload) => {
         if (isUnavailable) throw new Error('Unavailable');
-        delivered.push(event);
+        delivered.push(payload);
       },
-    };
+    });
     const application = createApplication({
       config: harness.config,
       database: harness.database,
       stores: harness.stores,
-      environment: { MMT_TEST_PLUGIN_TOKEN: 'mock-plugin-secret' },
       pluginClientFactory: () => client,
     });
     const plugin = await entity<PluginConnection>(
       await request(application.app, `${fixture.basePath}/plugins`, {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: {
-          name: 'Test plugin',
-          baseUrl: 'http://127.0.0.1:4999',
-          tokenEnv: 'MMT_TEST_PLUGIN_TOKEN',
-        },
+        body: madoPluginInput({ name: 'Test plugin' }),
       }),
     );
     expect(
@@ -427,7 +391,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
     );
     expect(stored.status).toBe('finished');
     const pending = await harness.database.query(
-      'SELECT event_id,status,attempts,last_error FROM plugin_outbox ORDER BY created_at',
+      'SELECT event_id,status,attempts,last_error,payload FROM plugin_outbox ORDER BY created_at',
     );
     expect(pending.rows).toHaveLength(2);
     expect(
@@ -447,11 +411,10 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
       application.outbox.dispatchBatch(),
     ]);
     expect(sent.reduce((sum, count) => sum + count, 0)).toBe(2);
-    expect(new Set(delivered.map((event) => event.id)).size).toBe(2);
-    expect(delivered.map((event) => event.type).sort()).toEqual(['run.finished', 'run.started']);
-    expect(delivered.map((event) => event.id).sort()).toEqual(
-      pending.rows.map((record) => record.event_id).sort(),
-    );
+    expect(new Set(delivered).size).toBe(2);
+    expect(delivered.map((payload) => JSON.parse(payload).eventType).sort()).toEqual(['COMPLETE', 'START']);
+    expect(delivered.sort()).toEqual(pending.rows.map((record) => record.payload).sort());
+    expect(delivered.every((payload) => JSON.parse(payload).run.runId === run.id)).toBe(true);
   });
 
   it('outbox保存が失敗したらRun完了とGPU解放もrollbackし、再送完了はeventを重複させない', async () => {
@@ -460,11 +423,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
       await request(harness.app, `${fixture.basePath}/plugins`, {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: {
-          name: 'Atomic plugin',
-          baseUrl: 'http://127.0.0.1:4999',
-          tokenEnv: 'MMT_TEST_PLUGIN_TOKEN',
-        },
+        body: madoPluginInput({ name: 'Atomic plugin' }),
       }),
     );
     const run = await fixture.newRun();
@@ -533,105 +492,62 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
     ).toHaveLength(0);
   });
 
-  it('plugin dataset importは同じ外部バージョンを重複させず、変更されたdigestを拒否する', async () => {
+  it('固定Madoバージョンを再取得して並行取り込みを1件にし、変更されたdigestを拒否する', async () => {
     const fixture = await executionFixture(harness);
-    const plugin = await entity<PluginConnection>(
-      await request(harness.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: {
-          name: 'Import plugin',
-          baseUrl: 'http://127.0.0.1:4999',
-          tokenEnv: 'MMT_TEST_PLUGIN_TOKEN',
-        },
-      }),
-    );
     const dataset = {
-      externalId: 'remote-version',
-      namespace: 'remote',
-      name: 'Corpus',
-      version: 'v1',
-      uri: 's3://example/corpus',
-      digest: 'sha256:original',
-      schema: {},
-      metadata: {},
+      externalId: randomUUID(), namespace: 'remote', name: 'Corpus', version: 'v1',
+      uri: 's3://example/corpus', digest: referenceDigest('original'), schema: {}, metadata: {},
     };
-    const importDataset = (digest = dataset.digest) =>
-      request(harness.app, `${fixture.basePath}/plugins/${plugin.id}/datasets/import`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: { dataset: { ...dataset, digest } },
-      });
-    const imports = await Promise.all(
-      [importDataset(), importDataset()].map(async (response) =>
-        entity<DatasetVersion>(await response),
-      ),
-    );
-    expect(imports[0]!.id).toBe(imports[1]!.id);
-    expect(imports[0]!.externalRef?.pluginId).toBe(plugin.id);
-    expect((await importDataset('sha256:changed')).status).toBe(409);
-    expect(
-      (await harness.database.query('SELECT count(*)::int AS count FROM dataset_versions')).rows[0]
-        .count,
-    ).toBe(1);
-  });
-
-  it('storage:metricsに対応するpluginだけmetricsを返し、editorには公開しない', async () => {
-    const fixture = await executionFixture(harness);
-    let supportsMetrics = true;
+    let externalDataset = dataset;
+    const datasetVersion = vi.fn(async (_externalId: string) => externalDataset);
     const application = createApplication({
-      config: harness.config,
-      database: harness.database,
-      stores: harness.stores,
-      environment: { MMT_TEST_PLUGIN_TOKEN: 'mock-plugin-secret' },
-      pluginClientFactory: () => ({
-        manifest: async () => ({
-          id: 'storage',
-          name: 'Storage',
-          version: '1',
-          protocolVersion: '1.0',
-          capabilities: supportsMetrics ? ['storage:metrics'] : [],
-        }),
-        metrics: async () => ({ prometheus: 'storage_bytes 12\n' }),
-        searchDatasets: async () => ({ items: [] }),
-        sendEvent: async () => undefined,
-      }),
+      config: harness.config, database: harness.database, stores: harness.stores,
+      pluginClientFactory: () => madoClientStub({ datasetVersion }),
     });
     const plugin = await entity<PluginConnection>(
       await request(application.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: {
-          name: 'Storage',
-          baseUrl: 'http://127.0.0.1:4999',
-          tokenEnv: 'MMT_TEST_PLUGIN_TOKEN',
-        },
+        method: 'POST', cookie: fixture.administrator.cookie,
+        body: madoPluginInput({ name: 'Import Mado' }),
+      }),
+    );
+    const importDataset = () => request(application.app, `${fixture.basePath}/plugins/${plugin.id}/datasets/import`, {
+      method: 'POST', cookie: fixture.administrator.cookie,
+      body: { externalId: dataset.externalId, expectedRevision: plugin.configRevision },
+    });
+    const imports = await Promise.all(
+      [importDataset(), importDataset()].map(async (response) => entity<DatasetVersion>(await response)),
+    );
+    expect(imports[0]!.id).toBe(imports[1]!.id);
+    expect(imports[0]!.externalRef?.pluginId).toBe(plugin.id);
+    expect(datasetVersion).toHaveBeenCalledWith(dataset.externalId);
+    externalDataset = { ...dataset, digest: referenceDigest('changed') };
+    expect((await importDataset()).status).toBe(409);
+    expect((await harness.database.query('SELECT count(*)::int AS count FROM dataset_versions')).rows[0].count).toBe(1);
+  });
+
+  it('容量取得キーを設定したMadoだけmetricsを返し、editorには公開しない', async () => {
+    const fixture = await executionFixture(harness);
+    const application = createApplication({
+      config: harness.config, database: harness.database, stores: harness.stores,
+      pluginClientFactory: () => madoClientStub({ metrics: async () => ({ prometheus: 'storage_bytes 12\n' }) }),
+    });
+    const plugin = await entity<PluginConnection>(
+      await request(application.app, `${fixture.basePath}/plugins`, {
+        method: 'POST', cookie: fixture.administrator.cookie,
+        body: madoPluginInput({ name: 'Storage', credentials: { ...MADO_CREDENTIALS_FIXTURE, metricsToken: 'fixture-metrics-key' } }),
       }),
     );
     const endpoint = `${fixture.basePath}/plugins/${plugin.id}/metrics`;
-    expect(
-      (
-        await request(application.app, endpoint, {
-          cookie: fixture.editor.cookie,
-        })
-      ).status,
-    ).toBe(403);
-    expect(
-      await entity(
-        await request(application.app, endpoint, {
-          cookie: fixture.administrator.cookie,
-        }),
-        200,
-      ),
-    ).toEqual({ prometheus: 'storage_bytes 12\n' });
-    supportsMetrics = false;
-    expect(
-      (
-        await request(application.app, endpoint, {
-          cookie: fixture.administrator.cookie,
-        })
-      ).status,
-    ).toBe(422);
+    expect((await request(application.app, endpoint, { cookie: fixture.editor.cookie })).status).toBe(403);
+    expect(await entity(await request(application.app, endpoint, { cookie: fixture.administrator.cookie }), 200))
+      .toEqual({ prometheus: 'storage_bytes 12\n' });
+    await entity(
+      await request(application.app, `${fixture.basePath}/plugins/${plugin.id}`, {
+        method: 'PATCH', cookie: fixture.administrator.cookie,
+        body: { credentials: { metricsToken: null }, expectedRevision: plugin.configRevision },
+      }), 200,
+    );
+    expect((await request(application.app, endpoint, { cookie: fixture.administrator.cookie })).status).toBe(422);
   });
 
   it('opt-in seedは実際のCPU metricsと音声をstore.putで保存し、二回目は重複しない', async () => {

@@ -35,7 +35,7 @@ Global administrators manage application-wide settings. Most of their pages open
 - The global audit log (**全体管理** → **監査ログ** (Audit log))
 - Adding SSH and Local computers, and changing the settings and visibility of every computer (コンピュータ in the global settings; see [Computers and visibility](/en/compute/computers)). They still cannot run Jobs on other people's Private computers. Researchers can add sites too
 - Creating, changing, and testing notification channels ([Notifications and operations alerts](/en/admin/notifications))
-- Registering and changing plugins ([Plugins and Mado integration](/en/admin/plugins))
+- Configuring and enabling built-in Mado connections ([Mado integration](/en/admin/plugins))
 
 Whether an SSO user is a global administrator is decided by Authentik groups ([Authentik (SSO)](/en/admin/sso)). For local accounts, use **管理者にする** (Make administrator) and **管理者を外す** (Remove administrator) in **全体管理** → **ユーザー**.
 

@@ -2,7 +2,10 @@ import { z } from 'zod';
 import type { AuthMode } from '@mmt/contracts';
 import { createOidcRolePolicy, type OidcRolePolicy } from './domain/oidcRolePolicy.js';
 import { parseSecretKey, type SecretKey } from './security/secretEncryption.js';
-import { normalizeRegistryHost, type RegistryCredentials } from './services/imagePlatformChecker.js';
+import {
+  normalizeRegistryHost,
+  type RegistryCredentials,
+} from './services/imagePlatformChecker.js';
 import { DEFAULT_CHECKPOINT_KEEP_COUNT } from '@mmt/contracts';
 import { parseSmtpSettings, type SmtpSettings } from '@mmt/platform';
 
@@ -143,6 +146,8 @@ const environmentSchema = z.object({
     .default(DEFAULT_UPLOAD_FINALIZE_WAIT_MS),
   // base64 of 32 bytes. Without it, storage backends that need a secret cannot be created.
   MMT_STORAGE_SECRET_KEY: optionalSetting,
+  // A separate key isolates integration credentials from storage secrets.
+  MMT_PLUGIN_SECRET_KEY: optionalSetting,
   // base64 of 32 bytes. Without it, webhook hooks cannot be created (their secrets are encrypted).
   MMT_HOOK_SECRET_KEY: optionalSetting,
   // enforce: a site Job's docker image must be built for the site's CPU (registry manifest).
@@ -157,11 +162,7 @@ const environmentSchema = z.object({
     .min(1)
     .max(3650)
     .default(DEFAULT_TOKEN_MAX_LIFETIME_DAYS),
-  MMT_CHECKPOINT_KEEP_COUNT: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .default(DEFAULT_CHECKPOINT_KEEP_COUNT),
+  MMT_CHECKPOINT_KEEP_COUNT: z.coerce.number().int().min(1).default(DEFAULT_CHECKPOINT_KEEP_COUNT),
   MMT_CSV_EXPORT_MAX_ROWS: z.coerce.number().int().positive().default(DEFAULT_CSV_EXPORT_MAX_ROWS),
   MMT_REPORT_SNAPSHOT_MAX_BYTES: z.coerce
     .number()
@@ -216,6 +217,7 @@ export interface ApiConfig {
   uploadFinalizeWaitMs: number;
   // Encrypts storage backend secrets in the DB; null when MMT_STORAGE_SECRET_KEY is unset.
   storageSecretKey: SecretKey | null;
+  pluginSecretKey: SecretKey | null;
   // Encrypts webhook hook secrets; null when MMT_HOOK_SECRET_KEY is unset.
   hookSecretKey: SecretKey | null;
   // Whether a site Job's image is checked against the site's CPU before it is queued.
@@ -271,6 +273,14 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
       throw new Error('MMT_STORAGE_SECRET_KEY must be base64 of 32 bytes');
     }
   }
+  let pluginSecretKey: SecretKey | null = null;
+  if (settings.MMT_PLUGIN_SECRET_KEY) {
+    try {
+      pluginSecretKey = parseSecretKey(settings.MMT_PLUGIN_SECRET_KEY);
+    } catch {
+      throw new Error('MMT_PLUGIN_SECRET_KEY must be base64 of 32 bytes');
+    }
+  }
   let hookSecretKey: SecretKey | null = null;
   if (settings.MMT_HOOK_SECRET_KEY) {
     try {
@@ -279,9 +289,15 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
       throw new Error('MMT_HOOK_SECRET_KEY must be base64 of 32 bytes');
     }
   }
-  const registrySettings = [settings.MMT_REGISTRY_HOST, settings.MMT_REGISTRY_USERNAME, settings.MMT_REGISTRY_PASSWORD];
+  const registrySettings = [
+    settings.MMT_REGISTRY_HOST,
+    settings.MMT_REGISTRY_USERNAME,
+    settings.MMT_REGISTRY_PASSWORD,
+  ];
   if (registrySettings.some(Boolean) && !registrySettings.every(Boolean))
-    throw new Error('MMT_REGISTRY_HOST, MMT_REGISTRY_USERNAME and MMT_REGISTRY_PASSWORD must be set together');
+    throw new Error(
+      'MMT_REGISTRY_HOST, MMT_REGISTRY_USERNAME and MMT_REGISTRY_PASSWORD must be set together',
+    );
   let oidc: ApiConfig['oidc'] = null;
   // local mode ignores OIDC_* so a leftover SSO setting cannot open a second login path.
   if (settings.AUTH_MODE === 'oidc' || settings.AUTH_MODE === 'hybrid') {
@@ -372,6 +388,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
     },
     uploadFinalizeWaitMs: settings.MMT_UPLOAD_FINALIZE_WAIT_MS,
     storageSecretKey,
+    pluginSecretKey,
     hookSecretKey,
     imagePlatformCheck: settings.MMT_IMAGE_PLATFORM_CHECK,
     registryCredentials:

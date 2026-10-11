@@ -1,22 +1,46 @@
-// The Plugins screen: what a plugin is for, whether the API server can reach it, and where its
-// imports go. The older plugin labels (Check connection, Search datasets, ...) stay in catalog.ts.
 export const pluginsText = {
-  pluginsAbout:
-    "A plugin is a service that runs separately from this application. Registering the Mado plugin lets you search Mado datasets, import them as run inputs, and send run records to Mado.",
-  pluginsEmptyForProjectAdmin:
-    "No plugins are registered for this project. Global administrators register plugins. To use Mado datasets as run inputs, ask a global administrator to register the Mado plugin.",
-  pluginsEmptyForGlobalAdmin:
-    "No plugins are registered for this project. Register one with “Register plugin”. Plugins are registered per project.",
-  pluginTokenStatus: "API server setting",
-  pluginTokenConfigured: "Configured",
-  pluginTokenMissing: "Not configured (variable missing on the API server)",
-  pluginSearchNeedsCheck: "You can search datasets after “Check connection” succeeds.",
-  pluginOpenDatasets: "View imported datasets",
-  madoPluginPresetHint:
-    "The connection URL is the URL the Mado plugin listens on (http://127.0.0.1:4190 on the same machine). The environment variable is the one in the API server's .env that holds the same value as the plugin's MMT_PLUGIN_TOKEN.",
+  pluginsAbout: 'Mado integration is built in. Configure and enable it for this project to import datasets and send run records to Mado.',
+  configuration: 'Configuration',
+  configured: 'Configured',
+  notConfigured: 'Not configured',
+  migrationPending: 'Migration pending',
+  unsupported: 'Unsupported',
+  madoAddConnection: 'Add Mado connection',
+  madoNewConnection: 'New Mado connection',
+  legacyEnabledState: 'Previous enabled state',
+  madoNotConfigured: 'Mado is not configured and is disabled. Save its connection settings and check the connection before enabling it.',
+  madoAskAdmin: 'Mado is not configured and is disabled. Ask a global administrator to configure the connection.',
+  madoMigrationPending: 'This Mado connection awaits migration. Save the actual Mado destinations and keys. Transfer the old delivery records and check the connection, then choose “Complete migration” to resume delivery.',
+  unsupportedConnection: 'This connection is not a built-in integration. It is stopped while its existing data and records are retained. Contact a global administrator about migration.',
+  madoCredentialsMissing: 'Configure the Mado read and write keys. If saved keys cannot be used, check the encryption key for credential storage.',
+  secretStorageUnavailable: 'The API server needs MMT_PLUGIN_SECRET_KEY to save and use integration keys. Contact a global administrator.',
+  credentialConfigured: 'Configured',
+  credentialMissing: 'Not configured',
+  madoSettings: 'Mado connection settings',
+  madoApiUrl: 'Mado API URL',
+  madoWebUrl: 'Mado Web URL',
+  madoLineageUrl: 'OpenLineage URL',
+  madoLineageUrlHint: 'The destination base URL. Leave blank to use Mado API URL.',
+  madoNamespaces: 'Allowed namespaces',
+  madoNamespacesHint: 'Enter one namespace per line or separate them with commas. Allow the same namespaces on the Mado keys.',
+  madoJobNamespace: 'Run namespace',
+  madoStorageSystemKey: 'Storage system identifier',
+  madoReadToken: 'Read key (lineage:read)',
+  madoLineageToken: 'Write key (lineage:write)',
+  madoMetricsToken: 'Capacity key (metrics:read, optional)',
+  madoRemoveMetricsToken: 'Remove the capacity key',
+  savedCredentialHint: 'Already configured. Leave blank to keep the current key.',
+  readCredentialHint: 'Used to check the connection and search datasets. Set it before enabling the integration.',
+  writeCredentialHint: 'Used to send run records. Set it before enabling the integration.',
+  optionalCredentialHint: 'Set this key to show capacity metrics.',
+  madoSavedSecretsHint: 'Keys are stored encrypted. Leaving a key blank keeps its current value.',
+  madoInitialDisabledHint: 'The initial connection is saved disabled. Check the connection before enabling it. Keys are stored encrypted.',
+  enableIntegration: 'Enable integration',
+  disableIntegration: 'Disable integration',
+  completeMigration: 'Complete migration',
+  madoCheckHint: 'You can check the connection while disabled. The check reads datasets and capacity metrics; it does not send runs.',
+  pluginSearchNeedsCheck: 'You can search datasets after “Check connection” succeeds.',
+  pluginOpenDatasets: 'View imported datasets',
+  madoImport: 'Import from Mado',
+  madoOpenVersion: 'View in Mado',
 } as const;
-
-export const pluginsTextTemplates = {
-  pluginTokenMissingNotice: (name: string) =>
-    `The API server does not have the environment variable ${name}. Set ${name} in the API server's .env to the same value as the plugin's MMT_PLUGIN_TOKEN, restart the API server, and then press “Check connection”.`,
-};

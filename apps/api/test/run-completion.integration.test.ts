@@ -12,6 +12,7 @@ import { RunService } from '../src/services/runService.js';
 import { RunOutputDeclarationService } from '../src/services/runOutputDeclarationService.js';
 import { WorkerService } from '../src/services/workerService.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
+import { madoPluginInput } from './pluginFixtures.js';
 import { executionFixture, referenceDigest } from './fixtures.js';
 
 interface RecordedCompletion {
@@ -85,11 +86,7 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
       await request(harness.app, `${fixture.basePath}/plugins`, {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: {
-          name: 'Lineage',
-          baseUrl: 'http://127.0.0.1:4999',
-          tokenEnv: 'MMT_TEST_PLUGIN_TOKEN',
-        },
+        body: madoPluginInput({ name: 'Lineage' }),
       }),
     );
     const editor = await sessionPrincipal(fixture.editor.cookie);

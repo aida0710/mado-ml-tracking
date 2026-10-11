@@ -16,6 +16,7 @@ import { transaction } from '../src/db/database.js';
 import { migrate } from '../src/db/migrate.js';
 import { reserveModelVersion } from '../src/repositories/modelVersionNumbering.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
+import { madoPluginInput } from './pluginFixtures.js';
 import { applyMigrationsBefore } from './migrationFixtures.js';
 import { executionFixture, projectFixture, referenceDigest } from './fixtures.js';
 import { modelFixture, type VersionResponse } from './mlflow-models-fixtures.js';
@@ -894,11 +895,7 @@ describe.skipIf(!testDatabaseUrl)('出力モデル登録とバージョンの自
       await request(harness.app, `${fixture.basePath}/plugins`, {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: {
-          name: 'Lineage',
-          baseUrl: 'http://127.0.0.1:4999',
-          tokenEnv: 'MMT_TEST_PLUGIN_TOKEN',
-        },
+        body: madoPluginInput({ name: 'Lineage' }),
       }),
     );
     const run = await createRun(fixture, 'finetuning');

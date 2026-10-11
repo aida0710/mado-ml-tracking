@@ -268,31 +268,6 @@ try {
   await page.getByRole('link', { name: 'SDK v2の通常実行', exact: true }).waitFor();
   await page.screenshot({ path: `${artifactDirectory}/task-history.png` });
 
-  await page.goto(`${projectBase}/plugins`);
-  await page.getByRole('button', { name: 'Pluginを登録', exact: true }).click();
-  await dialog().getByRole('button', { name: 'Madoの設定例を使う', exact: true }).click();
-  await field('名前').fill('Mado接続の検証（fixture）');
-  await field('接続先URL').fill('http://127.0.0.1:4195');
-  await field('トークンを参照する環境変数名').fill('MMT_WORKBENCH_PLUGIN_TOKEN');
-  const plugin = await saveEntity({ method: 'POST', resource: `${projectApi}/plugins`,
-    click: () => dialog().getByRole('button', { name: '保存', exact: true }).click() });
-  await page.getByRole('dialog').waitFor({ state: 'hidden' });
-  await page.getByRole('button', { name: '接続を確認', exact: true }).click();
-  await page.getByText('接続を確認しました', { exact: true }).waitFor();
-  await page.getByTestId('plugin-toggle').click();
-  await page.getByRole('button', { name: 'Pluginを有効にする', exact: true }).click();
-  await page.getByRole('button', { name: 'Pluginを編集', exact: true }).click();
-  await field('名前').fill('Mado HTTP fixture');
-  await saveEntity({ method: 'PATCH', resource: `${projectApi}/plugins/${plugin.id}`,
-    click: () => dialog().getByRole('button', { name: '保存', exact: true }).click() });
-  await page.getByRole('dialog').waitFor({ state: 'hidden' });
-  await page.getByRole('button', { name: '検索', exact: true }).click();
-  await page.getByRole('button', { name: 'インポート', exact: true }).click();
-  await page.getByText('workbench-fixture/CPUサンプルの入力', { exact: true }).waitFor();
-  await page.getByRole('heading', { name: 'Local fixture', exact: true }).waitFor();
-  await page.getByRole('cell', { name: 'samples', exact: true }).waitFor();
-  await page.screenshot({ path: `${artifactDirectory}/plugin-manager.png` });
-
   const git = await createCode({ name: 'Gitサンプル', sample: 'smoke', sourceKind: 'git' });
   const gitTask = await createTask({ name: 'Gitのスモークテスト', codeVersionId: git.version.id, targetId: target.id });
   const gitTest = await executeTask({ task: gitTask, mode: 'test', name: 'Git commitと編集差分のテスト' });
@@ -333,14 +308,13 @@ try {
   assert.deepEqual(editorRequests, []);
   Object.assign(summary, {
     origin: base, sdkCodeId: sdk.code.id, sdkCodeVersionIds: [sdk.version.id, secondCode.id],
-    taskId: task.id, taskRevision: task.revision, gitTaskId: gitTask.id, pluginId: plugin.id,
+    taskId: task.id, taskRevision: task.revision, gitTaskId: gitTask.id,
     trainingTaskId: trainingTask.id, inferenceTaskId: inferenceTask.id, modelVersionId,
     runIds: [firstTest.id, firstRun.id, secondTest.id, secondRun.id, gitTest.id,
       trainingTest.id, trainingRun.id, inferenceRun.id],
     checks: ['Compute creation, edit and enable toggle', 'real Monaco input and saved files',
       'standalone sample, test and real SDK metrics', 'Task editor saves and selects a new code version',
       'previous Task revisions retain their code', 'Run execution snapshot and worker source ZIP',
-      'plugin preset, registration, manifest, metrics, edit, toggle and dataset import',
       'real Git preview, saved edits and worker test',
       'training sample registers a model used by a separate inference Task',
       'LAN Origin', 'no remote editor CDN or browser exceptions'],

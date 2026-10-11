@@ -6,8 +6,8 @@ import { localized } from './localized';
 export const errorText = localized({
   internalError: "リクエストの処理に失敗しました",
   databaseUnavailable: "データベースに接続できません",
-  pluginRequestFailed: "Pluginとの通信に失敗しました",
-  pluginDisabled: "Pluginは無効です",
+  pluginRequestFailed: "連携先との通信に失敗しました",
+  pluginDisabled: "連携は無効です",
   uploadNotOpen: "このアップロードはデータを受け付けていません",
   uploadExpired: "アップロードの有効期限が切れています",
   artifactSaveFailed: "Artifactを保存できませんでした",

@@ -1,5 +1,6 @@
 // Isolated browser-test API. This module is never imported by production code.
 import { createHash } from 'node:crypto';
+import { routeBuiltinPlugins } from './builtinPluginMock.mjs';
 import { listProjectArtifacts, listRunArtifacts, runArtifactTree } from './artifactListingMock.mjs';
 import { createProjectAdministration } from './projectAdministrationMock.mjs';
 import { createComputerSetup } from './computerSetupMock.mjs';
@@ -292,20 +293,22 @@ export function createBrowserApi() {
   const plugin = {
     id: id(),
     projectId: project.id,
-    name: 'UI検証Plugin',
-    baseUrl: 'http://test.invalid',
-    tokenEnv: 'UI_TEST_PLUGIN_TOKEN',
-    tokenConfigured: true,
-    enabled: true,
-    manifest: null,
+    name: 'Mado',
+    kind: 'mado',
+    config: {apiUrl: 'http://test.invalid', webUrl: 'https://mado.example.invalid', lineageUrl: 'http://test.invalid', namespaces: ['test'], jobNamespace: 'mado-model-tracking', storageSystemKey: 'mado-model-tracking'},
+    configRevision: 1,
+    configurationStatus: 'ready',
+    credentialsConfigured: {readToken: true, lineageToken: true, metricsToken: true},
+    secretStorageAvailable: true,
+    baseUrl: '', tokenEnv: '', tokenConfigured: true, enabled: true, manifest: null,
     createdAt: now,
   };
   const manifest = {
-    id: 'test-plugin',
+    id: 'mado',
     name: plugin.name,
     version: '1.0.0',
     protocolVersion: '1.0',
-    capabilities: ['datasets.search', 'datasets.import', 'storage:metrics'],
+    capabilities: ['datasets:search', 'lineage:publish', 'storage:metrics'],
   };
   const artifact = {
     id: id(),
@@ -820,65 +823,8 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
         return reply({ run, job });
       }
     }
-    if (resource === 'plugins') {
-      if (project.role !== 'admin') return reply({ error: 'Project admin required' }, 403);
-      if (!key && method === 'GET') return list(state.plugins);
-      if (!key && method === 'POST') {
-        if (!user.isAdmin) return reply({ error: 'Global admin required' }, 403);
-        // The API server of the mock has the variable only when its name says so.
-        const plugin = {
-          id: id(),
-          projectId: project.id,
-          manifest: null,
-          tokenConfigured: !String(body.tokenEnv ?? '').includes('MISSING'),
-          ...body,
-          createdAt: now,
-        };
-        state.plugins.push(plugin);
-        return reply(plugin);
-      }
-      if (subresource === 'check') {
-        item(state.plugins, key).manifest = manifest;
-        return reply(manifest);
-      }
-      if (subresource === 'metrics') {
-        if (!item(state.plugins, key).manifest?.capabilities.includes('storage:metrics'))
-          return reply({ error: 'Unsupported capability' }, 422);
-        if (state.metricsGate) await state.metricsGate;
-        if (state.failPluginMetrics)
-          return reply({ error: 'UI verification: metrics unavailable' }, 502);
-        return reply({ prometheus: state.prometheus });
-      }
-      if (subresource === 'events') return reply({ queued: 2 });
-      if (subresource === 'outbox')
-        return reply({
-          pending: 0,
-          sending: 0,
-          oldestPendingAt: null,
-          maxAttempts: 0,
-          lastError: null,
-          lastDeliveredAt: null,
-          stalled: false,
-        });
-      if (subresource === 'datasets' && parts[3] === 'search')
-        return list([
-          {
-            externalId: 'browser-test-external',
-            namespace: 'test',
-            name: 'UI検索データ',
-            version: 'v1',
-            uri: 'file:///test/import',
-            digest: 'import-digest',
-            schema: {},
-            metadata: {},
-          },
-        ]);
-      if (subresource === 'datasets' && parts[3] === 'import') {
-        const imported = { ...datasetVersion, id: id(), ...body.dataset };
-        state.datasetVersions.push(imported);
-        return reply(imported);
-      }
-    }
+    if (resource === 'plugins')
+      return routeBuiltinPlugins({state, request: {method, key, subresource, parts, body}, reply, id, now, project, user, datasetVersion, manifest});
     // Also said in the test's own output: a screen calling an API the mock lacks fails only checks
     // that watch the console, and the missing route is easier to find here.
     console.warn(`[browserApi] 501 Unhandled test API: ${method} ${path}`);

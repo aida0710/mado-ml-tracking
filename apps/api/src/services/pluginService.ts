@@ -1,146 +1,99 @@
+import { createHash } from 'node:crypto';
 import type {
-  Dataset,
-  DatasetVersion,
-  PluginConnection,
-  PluginDataset,
+  PluginCreate,
+  PluginEvent,
   PluginManifest,
   PluginOutboxSummary,
+  PluginPatch,
 } from '@mmt/contracts';
-import { createPluginClient, type PluginClient } from '@mmt/platform';
+import { MadoApiError } from '@mmt/platform';
 import type { Principal } from '../auth/principal.js';
-import { first, rows, transaction, type Connection, type Database } from '../db/database.js';
+import { first, transaction, type Database } from '../db/database.js';
 import { conflict, DomainError, notFound } from '../domain/errors.js';
 import { isPluginDeliveryStalled } from '../domain/operationsAlerts.js';
 import { findPluginBacklog } from '../repositories/operationsAlertRepository.js';
-import { datasetVersionSelect } from '../repositories/registryRepository.js';
+import { builtinPlugins, type PluginClientFactory } from '../plugins/builtinPlugins.js';
+import type { PluginConnectionRecord } from '../plugins/pluginConnection.js';
+import type { SecretKey } from '../security/secretEncryption.js';
+import { PluginConnections } from './pluginConnections.js';
+import { importPluginDataset } from './pluginDatasetImport.js';
+import { importPluginDeliveryReceipts } from './pluginEventMigration.js';
 import { requireGlobalAdmin, requireProject } from './accessService.js';
-import type { PluginPatch } from '../domain/validation.js';
 import type { RegistryService } from './registryService.js';
 
-export type PluginClientFactory = typeof createPluginClient;
+export type { PluginClientFactory } from '../plugins/builtinPlugins.js';
+export interface PluginDeliveryPayload {
+  event: PluginEvent;
+  payload: string;
+  payloadHash: string;
+  destinationUrl: string;
+}
 
-/** A plugin_connections row; whether its token variable is set is read from the environment. */
-type PluginConnectionRow = Omit<PluginConnection, 'tokenConfigured'>;
-
+/** Project authorization and domain operations of the application's compiled-in plugins. */
 export class PluginService {
   private readonly database: Database;
   private readonly registry: RegistryService;
-  private readonly environment: NodeJS.ProcessEnv;
+  private readonly connections: PluginConnections;
   private readonly clientFactory: PluginClientFactory;
-
   constructor(options: {
     database: Database;
     registry: RegistryService;
-    environment?: NodeJS.ProcessEnv;
+    secretKey?: SecretKey | null;
     clientFactory?: PluginClientFactory;
   }) {
     this.database = options.database;
     this.registry = options.registry;
-    this.environment = options.environment ?? process.env;
-    this.clientFactory = options.clientFactory ?? createPluginClient;
+    this.connections = new PluginConnections(options.database, options.secretKey ?? null);
+    this.clientFactory = options.clientFactory ?? builtinPlugins.mado.createClient;
   }
 
-  async list(principal: Principal, projectId: string): Promise<PluginConnection[]> {
-    await requireProject(this.database, principal, {
-      projectId,
-      role: 'admin',
-      scope: 'admin',
-    });
-    const connections = await rows<PluginConnectionRow>(
-      this.database,
-      'SELECT * FROM plugin_connections WHERE project_id=$1 ORDER BY created_at DESC',
-      [projectId],
-    );
-    return connections.map((plugin) => this.present(plugin));
+  list(principal: Principal, projectId: string) {
+    return this.connections.list(principal, projectId);
   }
-
-  async create(
+  availability(principal: Principal, projectId: string) {
+    return this.connections.availability(principal, projectId);
+  }
+  create(principal: Principal, projectId: string, input: PluginCreate) {
+    return this.connections.create(principal, projectId, input);
+  }
+  patch(
     principal: Principal,
     projectId: string,
-    input: {
-      name: string;
-      baseUrl: string;
-      tokenEnv: string;
-      enabled: boolean;
-    },
-  ): Promise<PluginConnection> {
-    // Only the server administrator may choose where a server-side secret is sent.
-    requireGlobalAdmin(principal);
-    await requireProject(this.database, principal, {
-      projectId,
-      role: 'admin',
-      scope: 'admin',
-    });
-    const created = (await first<PluginConnectionRow>(
-      this.database,
-      'INSERT INTO plugin_connections(project_id,name,base_url,token_env,enabled) VALUES($1,$2,$3,$4,$5) RETURNING *',
-      [projectId, input.name, input.baseUrl.replace(/\/$/, ''), input.tokenEnv, input.enabled],
-    ))!;
-    return this.present(created);
+    request: { pluginId: string; input: PluginPatch },
+  ) {
+    return this.connections.patch(principal, projectId, request);
   }
 
   async check(principal: Principal, projectId: string, pluginId: string): Promise<PluginManifest> {
-    const plugin = await this.authorizedConnection(principal, {
+    const plugin = await this.connections.authorize(principal, {
       projectId,
       pluginId,
+      allowDisabled: true,
+      allowMigration: true,
     });
     const manifest = await this.callPlugin(() => this.client(plugin).manifest());
     const saved = await first(
       this.database,
-      `UPDATE plugin_connections SET manifest=$2 WHERE id=$1 AND project_id=$3 AND enabled
-      AND base_url=$4 AND token_env=$5 RETURNING id`,
-      [plugin.id, JSON.stringify(manifest), projectId, plugin.baseUrl, plugin.tokenEnv],
+      'UPDATE plugin_connections SET manifest=$2::jsonb WHERE id=$1 AND project_id=$3 AND config_revision=$4 RETURNING id',
+      [plugin.id, JSON.stringify(manifest), projectId, plugin.configRevision],
     );
-    if (!saved) conflict('Pluginの接続設定が変更されています。再確認してください');
+    if (!saved) conflict('連携の接続設定が変更されています。再確認してください');
     return manifest;
-  }
-
-  async patch(
-    principal: Principal,
-    projectId: string,
-    request: { pluginId: string; input: PluginPatch },
-  ): Promise<PluginConnection> {
-    requireGlobalAdmin(principal);
-    return transaction(this.database, async (connection) => {
-      await requireProject(connection, principal, { projectId, role: 'admin', scope: 'admin' });
-      const plugin = await first<PluginConnectionRow>(
-        connection,
-        'SELECT * FROM plugin_connections WHERE project_id=$1 AND id=$2 FOR UPDATE',
-        [projectId, request.pluginId],
-      );
-      if (!plugin) notFound('Plugin');
-      const updated = { ...plugin, ...request.input };
-      updated.baseUrl = updated.baseUrl.replace(/\/$/, '');
-      const manifest =
-        plugin.baseUrl !== updated.baseUrl || plugin.tokenEnv !== updated.tokenEnv
-          ? null
-          : plugin.manifest;
-      const saved = (await first<PluginConnectionRow>(
-        connection,
-        'UPDATE plugin_connections SET name=$2,base_url=$3,token_env=$4,enabled=$5,manifest=$6::jsonb WHERE id=$1 RETURNING *',
-        [
-          plugin.id,
-          updated.name,
-          updated.baseUrl,
-          updated.tokenEnv,
-          updated.enabled,
-          manifest ? JSON.stringify(manifest) : null,
-        ],
-      ))!;
-      return this.present(saved);
-    });
   }
 
   async search(
     principal: Principal,
     projectId: string,
-    request: { pluginId: string; query: string },
-  ): Promise<{ items: PluginDataset[] }> {
-    const plugin = await this.authorizedConnection(principal, {
+    request: { pluginId: string; query: string; expectedRevision?: number },
+  ) {
+    const plugin = await this.connections.authorize(principal, {
       projectId,
       pluginId: request.pluginId,
     });
-    return this.callPlugin(() => this.client(plugin).searchDatasets(request.query));
+    await this.connections.assertRevision(plugin, request.expectedRevision);
+    const datasets = await this.callPlugin(() => this.client(plugin).searchDatasets(request.query));
+    await this.connections.assertRevision(plugin);
+    return datasets;
   }
 
   async metrics(
@@ -148,76 +101,44 @@ export class PluginService {
     projectId: string,
     pluginId: string,
   ): Promise<{ prometheus: string }> {
-    const plugin = await this.authorizedConnection(principal, {
-      projectId,
-      pluginId,
-    });
-    const client = this.client(plugin);
-    const manifest = plugin.manifest ?? (await this.callPlugin(() => client.manifest()));
-    if (!manifest.capabilities.includes('storage:metrics'))
-      throw new DomainError(
-        422,
-        'Pluginはstorage:metricsに対応していません',
-        'plugin_capability_unsupported',
-      );
-    return this.callPlugin(() => client.metrics());
+    const plugin = await this.connections.authorize(principal, { projectId, pluginId });
+    if (!plugin.credentialsConfigured.metricsToken)
+      throw new DomainError(422, '容量取得用のキーは未設定です', 'plugin_capability_unsupported');
+    const metrics = await this.callPlugin(() => this.client(plugin).metrics());
+    await this.connections.assertRevision(plugin);
+    return metrics;
   }
 
   async importDataset(
     principal: Principal,
     projectId: string,
-    request: { pluginId: string; dataset: PluginDataset },
-  ): Promise<DatasetVersion> {
+    request: { pluginId: string; externalId: string; expectedRevision: number },
+  ) {
     return transaction(this.database, async (connection) => {
-      await this.authorizedConnection(
+      const plugin = await this.connections.authorize(
         principal,
-        { projectId, pluginId: request.pluginId, lock: true },
+        { projectId, pluginId: request.pluginId, lock: 'share' },
         connection,
       );
-      // Serialize imports of the same remote version, including first-time dataset creation.
-      await connection.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
-        JSON.stringify([projectId, request.dataset.namespace, request.dataset.name]),
-      ]);
-      const imported = request.dataset;
-      let dataset = await first<Dataset>(
-        connection,
-        'SELECT * FROM datasets WHERE project_id=$1 AND namespace=$2 AND name=$3',
-        [projectId, imported.namespace, imported.name],
+      if (plugin.configRevision !== request.expectedRevision)
+        conflict('連携設定が変更されています。検索し直してください');
+      // The server resolves the immutable version itself; browser-supplied URI/digest are never trusted.
+      const imported = await this.callPlugin(() =>
+        this.client(plugin).datasetVersion(request.externalId),
       );
-      dataset ??= (await first<Dataset>(
-        connection,
-        'INSERT INTO datasets(project_id,name,namespace,description) VALUES($1,$2,$3,$4) RETURNING *',
-        [projectId, imported.name, imported.namespace, 'Pluginから取り込んだデータセット'],
-      ))!;
-      const existing = await first<DatasetVersion>(
-        connection,
-        `${datasetVersionSelect} WHERE v.dataset_id=$1 AND v.version=$2`,
-        [dataset.id, imported.version],
-      );
-      if (existing) {
-        if (
-          existing.externalRef?.pluginId !== request.pluginId ||
-          existing.externalRef.externalId !== imported.externalId ||
-          existing.digest !== imported.digest ||
-          existing.uri !== imported.uri
-        )
-          conflict('既存のDatasetVersionとpluginのバージョンが一致しません');
-        return existing;
-      }
-      return this.registry.insertDatasetVersion(connection, projectId, {
-        datasetId: dataset.id,
-        input: {
-          ...imported,
-          sourceRunId: null,
-          parentDatasetVersionIds: [],
-          externalRef: {
-            pluginId: request.pluginId,
-            externalId: imported.externalId,
-            namespace: imported.namespace,
-            name: imported.name,
-            version: imported.version,
-          },
-        },
+      if (
+        imported.externalId !== request.externalId ||
+        !plugin.config!.namespaces.includes(imported.namespace)
+      )
+        throw new DomainError(
+          422,
+          'MadoのバージョンまたはNamespaceが一致しません',
+          'plugin_dataset_identity_mismatch',
+        );
+      return importPluginDataset(connection, this.registry, {
+        projectId,
+        pluginId: plugin.id,
+        dataset: imported,
       });
     });
   }
@@ -228,7 +149,11 @@ export class PluginService {
     pluginId: string,
   ): Promise<{ queued: number }> {
     return transaction(this.database, async (connection) => {
-      await this.authorizedConnection(principal, { projectId, pluginId, lock: true }, connection);
+      await this.connections.authorize(
+        principal,
+        { projectId, pluginId, lock: 'share' },
+        connection,
+      );
       const queued = await connection.query(
         "UPDATE plugin_outbox SET next_attempt_at=now(),last_error=NULL WHERE plugin_id=$1 AND status='pending' RETURNING id",
         [pluginId],
@@ -237,7 +162,64 @@ export class PluginService {
     });
   }
 
-  // Disabled plugins are included: their backlog is what an administrator checks before enabling.
+  async completeMigration(
+    principal: Principal,
+    projectId: string,
+    request: { pluginId: string; expectedRevision: number },
+  ) {
+    requireGlobalAdmin(principal);
+    return transaction(this.database, async (connection) => {
+      const plugin = await this.connections.authorize(
+        principal,
+        {
+          projectId,
+          pluginId: request.pluginId,
+          lock: 'update',
+          allowDisabled: true,
+          allowMigration: true,
+        },
+        connection,
+      );
+      if (plugin.configRevision !== request.expectedRevision)
+        conflict('連携設定が変更されています');
+      if (!plugin.migrationPending) return this.connections.present(plugin);
+      if (!plugin.manifest || !this.connections.credentials.hasRequiredCredentials(plugin))
+        throw new DomainError(
+          422,
+          '接続キーを設定し、接続確認を完了してから移行してください',
+          'plugin_migration_check_required',
+        );
+      const migrated = (await first<PluginConnectionRecord>(
+        connection,
+        'UPDATE plugin_connections SET migration_pending=false,config_revision=config_revision+1 WHERE id=$1 RETURNING *',
+        [plugin.id],
+      ))!;
+      return this.connections.present(migrated);
+    });
+  }
+
+  async importReceipts(
+    principal: Principal,
+    projectId: string,
+    request: { pluginId: string; receipts: { eventId: string; payloadHash: string }[] },
+  ) {
+    requireGlobalAdmin(principal);
+    return transaction(this.database, async (connection) => {
+      await this.connections.authorize(
+        principal,
+        {
+          projectId,
+          pluginId: request.pluginId,
+          lock: 'share',
+          allowDisabled: true,
+          allowMigration: true,
+        },
+        connection,
+      );
+      return importPluginDeliveryReceipts(connection, request);
+    });
+  }
+
   async outboxSummary(
     principal: Principal,
     projectId: string,
@@ -245,7 +227,7 @@ export class PluginService {
   ): Promise<PluginOutboxSummary> {
     await requireProject(this.database, principal, { projectId, role: 'admin', scope: 'admin' });
     const backlog = await findPluginBacklog(this.database, { projectId, pluginId });
-    if (!backlog) notFound('Plugin');
+    if (!backlog) notFound('連携');
     return {
       pending: backlog.pending,
       sending: backlog.sending,
@@ -257,40 +239,32 @@ export class PluginService {
     };
   }
 
-  client(plugin: Pick<PluginConnection, 'baseUrl' | 'tokenEnv'>): PluginClient {
-    const token = this.environment[plugin.tokenEnv];
-    if (!token)
+  client(
+    plugin: PluginConnectionRecord,
+    requiredCredential: 'readToken' | 'lineageToken' = 'readToken',
+  ) {
+    if (plugin.kind !== 'mado' || !plugin.config)
+      throw new DomainError(422, 'Mado連携の設定が必要です', 'plugin_migration_required');
+    const credentials = this.connections.credentials.read(plugin);
+    if (!credentials[requiredCredential])
+      throw new DomainError(503, '必要なMado接続キーが未設定です', 'plugin_token_unavailable');
+    return this.clientFactory({ config: plugin.config, credentials, pluginId: plugin.id });
+  }
+
+  async sendDelivery(
+    plugin: PluginConnectionRecord,
+    delivery: PluginDeliveryPayload,
+  ): Promise<void> {
+    if (
+      delivery.destinationUrl !== plugin.config?.lineageUrl ||
+      createHash('sha256').update(delivery.payload).digest('hex') !== delivery.payloadHash
+    )
       throw new DomainError(
-        503,
-        `Pluginのtoken環境変数 ${plugin.tokenEnv} がAPI serverに設定されていません。API serverの.envに設定し、API serverを再起動してください`,
-        'plugin_token_unavailable',
+        409,
+        '連携の送信先または内容が一致しません',
+        'plugin_delivery_identity_mismatch',
       );
-    return this.clientFactory({ baseUrl: plugin.baseUrl, token });
-  }
-
-  // Only whether the variable holds a value is shown; the value never leaves the server.
-  private present(plugin: PluginConnectionRow): PluginConnection {
-    return { ...plugin, tokenConfigured: Boolean(this.environment[plugin.tokenEnv]) };
-  }
-
-  private async authorizedConnection(
-    principal: Principal,
-    reference: { projectId: string; pluginId: string; lock?: boolean },
-    connection: Connection = this.database,
-  ): Promise<PluginConnection> {
-    await requireProject(connection, principal, {
-      projectId: reference.projectId,
-      role: 'admin',
-      scope: 'admin',
-    });
-    const plugin = await first<PluginConnection>(
-      connection,
-      `SELECT * FROM plugin_connections WHERE project_id=$1 AND id=$2 ${reference.lock ? 'FOR SHARE' : ''}`,
-      [reference.projectId, reference.pluginId],
-    );
-    if (!plugin) notFound('Plugin');
-    if (!plugin.enabled) throw new DomainError(422, 'Pluginは無効です', 'plugin_disabled');
-    return plugin;
+    await this.client(plugin, 'lineageToken').sendPayload(delivery.payload);
   }
 
   private async callPlugin<T>(operation: () => Promise<T>): Promise<T> {
@@ -298,7 +272,9 @@ export class PluginService {
       return await operation();
     } catch (error) {
       if (error instanceof DomainError) throw error;
-      throw new DomainError(502, 'Pluginとの通信に失敗しました', 'plugin_request_failed');
+      if (error instanceof MadoApiError && error.status === 404)
+        throw new DomainError(404, 'Madoのバージョンを参照できません', 'plugin_dataset_not_found');
+      throw new DomainError(502, 'Madoとの通信に失敗しました', 'plugin_request_failed');
     }
   }
 }
