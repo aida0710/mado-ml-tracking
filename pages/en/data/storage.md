@@ -60,6 +60,8 @@ To add S3-compatible storage:
 
 To add a file system, set **種類** (Kind) to Filesystem and enter an absolute path on the API server in **ルートディレクトリ** (Root directory), for example `/srv/mmt/artifacts`. Paths containing `..` are rejected. When you run several API servers, use a persistent volume that every server can see at the same path.
 
+With Docker Compose the API server runs inside a container and does not see the host's directories as they are. Set `MMT_FILESYSTEM_STORAGE_DIR` in `.env` to a host directory and add `compose.filesystem-storage.yml` to `COMPOSE_FILE`; the directory then appears at the same path inside the container. Use a path under it as the root directory. See [Installation](/en/guide/install#store-artifacts-in-a-host-directory) for the steps.
+
 ### Root directory suggestions
 
 As you type in **ルートディレクトリ** (Root directory), directories on the API server are suggested.

@@ -179,6 +179,26 @@ Open `MMT_PUBLIC_URL` in a browser and check that the sign-in screen appears. Wi
 
 The MLflow endpoint is separate for each Project. The Project URL is shown under "MLflow 3から接続" (Connect from MLflow 3) in プロジェクト設定 (Project settings).
 
+## Store Artifacts in a host directory
+
+The compose `api` runs inside a container and does not see the host's directories as they are. By default, Artifacts go to the Docker volume `artifacts`. To keep them on a large disk or shared storage (NFS, Lustre and so on), use `compose.filesystem-storage.yml`: the host directory set in `MMT_FILESYSTEM_STORAGE_DIR` appears at the same path inside the `api` and `preview` containers.
+
+Create the directory first and let the containers' user (`node`, uid 1000) write to it. If it does not exist, Docker creates it owned by root and the containers cannot write to it.
+
+```sh
+sudo mkdir -p /srv/mmt/storage
+sudo chown 1000:1000 /srv/mmt/storage
+```
+
+Add the following to `.env`. If you also use `compose.override.yml`, list it in `COMPOSE_FILE` too (setting `COMPOSE_FILE` stops `compose.override.yml` from being read automatically).
+
+```sh
+COMPOSE_FILE=compose.yml:compose.override.yml:compose.filesystem-storage.yml
+MMT_FILESYSTEM_STORAGE_DIR=/srv/mmt/storage
+```
+
+After `docker compose up -d`, add a storage under 全体設定 (Global settings) → 全体管理 (Global administration) → **ストレージ** (Storage) and use a path below this directory, for example `/srv/mmt/storage/artifacts`, as the root directory ([Storage](/en/data/storage)).
+
 ## Install workers
 
 To run training, inference, and evaluation Jobs, install a worker on a worker host with GPUs. The API server does not SSH into worker hosts. Install the worker on the worker host with the `mado-tracking-worker` command and keep it running with systemd. See [Install a worker](/en/compute/worker).
