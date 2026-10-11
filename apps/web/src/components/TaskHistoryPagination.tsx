@@ -1,9 +1,11 @@
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 export function TaskHistoryPagination({ cursor, nextCursor, loading, onChange }: {
   cursor: string; nextCursor: string | null; loading: boolean;
   onChange: (cursor: string | null) => void;
 }) {
+  useLocale();
   return <nav className="section-actions" aria-label={text.taskHistory}>
     <button className="button small" disabled={loading || !cursor} data-testid="task-history-latest"
       onClick={() => onChange(null)}>{text.latestTaskRuns}</button>

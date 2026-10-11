@@ -1,6 +1,7 @@
 import type { Model, ModelAliasProtection, PromotionPolicy } from '@mmt/contracts';
 import type { FieldSuggestions } from '../types/form';
 import { knownAliasSourceLabels, promotionTextTemplates } from '../i18n/promotion';
+import { joinLabels } from '../i18n/textJoining';
 
 /** Where an alias name is already used: a Model's alias, a promotion policy, a protection. */
 export type KnownAliasSource = 'model' | 'policy' | 'protection';
@@ -55,7 +56,7 @@ export function suggestAliasNames(
   const details = Object.fromEntries(
     items.map((alias) => [
       alias,
-      (known.get(alias) ?? []).map((source) => knownAliasSourceLabels[source]).join('・'),
+      joinLabels((known.get(alias) ?? []).map((source) => knownAliasSourceLabels[source])),
     ]),
   );
   if (!typed || known.has(typed)) return { items, details };

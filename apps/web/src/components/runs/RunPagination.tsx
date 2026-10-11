@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 /** Cursor paging: the total is unknown, so it shows the page number and the way back. */
@@ -18,6 +19,7 @@ export function RunPagination({
   onPrevious: () => void;
   onNext: () => void;
 }) {
+  useLocale();
   const isFirstPage = pageNumber === 1;
   return (
     <div className="table-footer">

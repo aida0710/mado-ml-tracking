@@ -1,12 +1,13 @@
+import { useLocale } from '../i18n/useLocale';
 import type { AuditEvent } from '@mmt/contracts';
 import type { AuditEventFilter } from '../api/audit';
 import { accessText } from '../i18n/access';
 
 const OUTCOMES: AuditEvent['outcome'][] = ['success', 'denied', 'failed'];
 const outcomeLabels: Record<AuditEvent['outcome'], string> = {
-  success: accessText.auditOutcomeSuccess,
-  denied: accessText.auditOutcomeDenied,
-  failed: accessText.auditOutcomeFailed,
+  get success() { return accessText.auditOutcomeSuccess; },
+  get denied() { return accessText.auditOutcomeDenied; },
+  get failed() { return accessText.auditOutcomeFailed; },
 };
 
 /**
@@ -23,6 +24,7 @@ export function AuditEventFilters({
   /** Sign-ins belong to no Project, so only the global log has them to hide. */
   offersSignIns: boolean;
 }) {
+  useLocale();
   return (
     <div className="audit-filters">
       <select

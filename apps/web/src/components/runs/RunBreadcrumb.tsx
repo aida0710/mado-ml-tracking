@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { Run } from '@mmt/contracts';
 import { trackingApi } from '../../api/tracking';
@@ -9,6 +10,7 @@ import { text } from '../../i18n/catalog';
  * comes from the Project's Experiment list; until it arrives the second link reads "Runs".
  */
 export function RunBreadcrumb({ run }: { run: Pick<Run, 'projectId' | 'experimentId'> }) {
+  useLocale();
   const experiments = useQuery(`${run.projectId}:experiments`, (signal) =>
     trackingApi.experiments(run.projectId, signal),
   );

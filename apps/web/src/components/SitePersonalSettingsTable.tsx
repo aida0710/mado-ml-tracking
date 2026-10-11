@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { RefreshCw } from 'lucide-react';
 import type { SitePersonalSettings } from '@mmt/contracts';
 import { siteComputersApi } from '../api/siteComputers';
@@ -13,6 +14,7 @@ const NOT_SET = '—';
 
 /** Everyone's settings for a site, for its owner and global administrators. */
 export function SitePersonalSettingsTable({ targetId }: { targetId: string }) {
+  useLocale();
   const settings = useQuery(`site-personal-settings-list:${targetId}`, (signal) =>
     siteComputersApi.personalSettings(targetId, signal),
   );
@@ -30,6 +32,7 @@ export function SitePersonalSettingsTable({ targetId }: { targetId: string }) {
 }
 
 export function SitePersonalSettingsList({ items }: { items: SitePersonalSettings[] }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={items}

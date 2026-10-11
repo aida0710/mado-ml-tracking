@@ -1,8 +1,10 @@
+import { useLocale } from '../i18n/useLocale';
 import { Pause, Play, X } from 'lucide-react';
 import type { UploadItem } from '../hooks/useArtifactUploadQueue';
 import { CopyButton } from './CopyButton';
 import { formatBytes } from '../lib/format';
 import { formatRemainingTime } from '../lib/remainingTime';
+import { formatUploadFailure } from '../lib/uploadFailure';
 import { text, textTemplates } from '../i18n/catalog';
 import { uploadStatusLabels } from '../i18n/uploads';
 
@@ -26,6 +28,7 @@ export function UploadQueueRow({
   onResume: (id: string) => void;
   onCancel: (id: string) => void;
 }) {
+  useLocale();
   const canPause = item.method === 'multipart' && ['queued', 'preparing', 'uploading'].includes(item.status);
   const canResume = item.status === 'paused' || item.status === 'failed';
   const canCancel = !['verifying', 'completed', 'canceled'].includes(item.status);
@@ -54,7 +57,7 @@ export function UploadQueueRow({
           {textTemplates.uploadRetrying(item.retry.attempt, item.retry.maxAttempts)}
         </p>
       )}
-      {item.error && <p className="upload-queue-error" role="alert">{item.error}</p>}
+      {item.error && <p className="upload-queue-error" role="alert">{formatUploadFailure(item.error)}</p>}
       {showArtifactReference && item.artifact && (
         <div className="upload-queue-artifact">
           <span className="mono">artifact://{item.artifact.id}</span>

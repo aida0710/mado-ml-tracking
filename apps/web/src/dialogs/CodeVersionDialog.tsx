@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { Code, CodeVersion } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
 import { useCodeVersionWorkspace } from '../hooks/useCodeVersionWorkspace';
@@ -13,6 +14,7 @@ export function CodeVersionDialog({ code, initialVersion, versions = [], onClose
   code: Code; initialVersion?: CodeVersion; versions?: CodeVersion[];
   onClose: () => void; onSaved: (version: CodeVersion) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const workspace = useCodeVersionWorkspace({ projectId: project.id, codeId: code.id, initialVersion, versions, onNavigationDiscard: onClose });
   const { form, editor, sourceKind, baseVersion, sampleId, setSampleId, sampleError, isDirty, busy,

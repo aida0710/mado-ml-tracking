@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { Model, ModelVersion, PromotionPolicy } from '@mmt/contracts';
 import { MAX_MODEL_ALIAS_REASON_LENGTH, registryApi } from '../api/registry';
@@ -38,6 +39,7 @@ export function PromotionDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const [values, setValues] = useState<FormValues>({
     alias: initial.alias ?? '',

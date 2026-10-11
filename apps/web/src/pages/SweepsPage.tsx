@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -21,6 +22,7 @@ import { text, textTemplates } from '../i18n/catalog';
 const STATUS_FILTERS = Object.keys(sweepStatusLabels) as SweepStatus[];
 
 export function SweepsPage() {
+  useLocale();
   const { project, canEdit } = useProject();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -126,6 +128,7 @@ function CreateSweepDialogLoader({
   onClose: () => void;
   onCreated: (sweep: Sweep) => void;
 }) {
+  useLocale();
   const experiments = useQuery(`${projectId}:sweep-experiments`, (signal) => trackingApi.experiments(projectId, signal));
   const targets = useProjectTargets(projectId);
   return (

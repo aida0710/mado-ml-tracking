@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { formatErrorMessage } from '../lib/errorMessage';
+import { useFailureMessage } from './useFailureMessage';
 
 export function useMutation() {
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { message, setFailure, clearFailure } = useFailureMessage();
   const isMounted = useRef(true);
   const isRunning = useRef(false);
   useEffect(() => {
@@ -16,16 +16,21 @@ export function useMutation() {
     if (isRunning.current) return undefined;
     isRunning.current = true;
     setPending(true);
-    setError(null);
+    clearFailure();
     try {
       return await operation();
     } catch (failure) {
-      if (isMounted.current) setError(formatErrorMessage(failure));
+      if (isMounted.current) setFailure(failure);
       return undefined;
     } finally {
       isRunning.current = false;
       if (isMounted.current) setPending(false);
     }
   }
-  return { run, pending, error, clearError: () => setError(null) };
+  return {
+    run,
+    pending,
+    error: message,
+    clearError: clearFailure,
+  };
 }

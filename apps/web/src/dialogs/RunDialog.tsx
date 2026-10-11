@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { Run, RunKind } from '@mmt/contracts';
 import { useExecutionCatalog } from '../hooks/useExecutionCatalog';
 import { useProject } from '../hooks/useProject';
@@ -24,6 +25,7 @@ export function RunDialog({
   onClose: () => void;
   onSaved: (run: Run) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const catalog = useExecutionCatalog(project.id);
   return (

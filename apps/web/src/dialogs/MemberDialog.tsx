@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useLocale } from '../i18n/useLocale';
+import { useLocalizedMemo } from '../i18n/useLocalizedMemo';
+import { useState } from 'react';
 import type { ProjectMember, ProjectRole, UserSearchResult } from '@mmt/contracts';
 import { Dialog } from '../components/Dialog';
 import { ErrorNotice } from '../components/Feedback';
@@ -29,12 +31,13 @@ export function MemberDialog({
   onSaved: () => void;
   onClose: () => void;
 }) {
+  useLocale();
   const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(
     member ? member.user : null,
   );
   // A new member starts as in the creation dialog, so the two ways of adding agree.
   const [role, setRole] = useState<ProjectRole>(member?.directRole ?? DEFAULT_MEMBER_GRANT_ROLE);
-  const alreadyAdded = useMemo(
+  const alreadyAdded = useLocalizedMemo(
     () =>
       new Map(
         existingMembers.flatMap((existing) =>

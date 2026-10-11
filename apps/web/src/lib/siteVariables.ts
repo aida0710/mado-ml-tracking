@@ -1,5 +1,6 @@
 import { MAX_SITE_VARIABLES, SITE_VARIABLE_NAME_PATTERN } from '@mmt/contracts';
 import { siteComputersTextTemplates } from '../i18n/siteComputers';
+import { LocalizedError } from './localizedError';
 
 const NAME_VALUE_SEPARATOR = '=';
 
@@ -15,12 +16,12 @@ export function parseSiteVariables(lines: string): Record<string, string> {
     const separator = entry.indexOf(NAME_VALUE_SEPARATOR);
     const name = entry.slice(0, Math.max(separator, 0)).trim();
     if (separator < 0 || !SITE_VARIABLE_NAME_PATTERN.test(name))
-      throw new Error(siteComputersTextTemplates.siteVariableLineError(entry));
-    if (variables.has(name)) throw new Error(siteComputersTextTemplates.siteVariableDuplicate(name));
+      throw new LocalizedError(() => siteComputersTextTemplates.siteVariableLineError(entry));
+    if (variables.has(name)) throw new LocalizedError(() => siteComputersTextTemplates.siteVariableDuplicate(name));
     variables.set(name, entry.slice(separator + 1).trim());
   }
   if (variables.size > MAX_SITE_VARIABLES)
-    throw new Error(siteComputersTextTemplates.siteVariablesTooMany(MAX_SITE_VARIABLES));
+    throw new LocalizedError(() => siteComputersTextTemplates.siteVariablesTooMany(MAX_SITE_VARIABLES));
   // fromEntries defines own properties, so even a name like __proto__ stays a plain entry.
   return Object.fromEntries(variables);
 }

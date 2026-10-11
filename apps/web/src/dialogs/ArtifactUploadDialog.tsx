@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState, type DragEvent } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { Upload } from 'lucide-react';
@@ -41,6 +42,7 @@ export function ArtifactUploadDialog({
   multiple?: boolean;
   initialFolder?: string;
 }) {
+  useLocale();
   const [sources, setSources] = useState<UploadSource[]>([]);
   const [destination, setDestination] = useState(initialFolder);
   const [singlePath, setSinglePath] = useState('');
@@ -207,6 +209,7 @@ function SelectedFileResumeNotice({
   path: string;
   onRestorePath: (path: string) => void;
 }) {
+  useLocale();
   if (resume.status === 'checking')
     return <p className="muted upload-resume-notice" role="status">{text.uploadResumeChecking}</p>;
   if (resume.status !== 'matched') return null;
@@ -229,6 +232,7 @@ function SelectedFileResumeNotice({
 
 /** Under the path field: a file is already stored there, so this upload becomes its new version. */
 function ArtifactAtPathNotice({ found }: { found: ArtifactAtPath }) {
+  useLocale();
   return (
     <p className="notice upload-resume-notice" data-testid="upload-path-exists">
       {textTemplates.uploadPathExists(formatDate(found.existing.createdAt))}

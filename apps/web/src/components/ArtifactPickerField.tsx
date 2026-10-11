@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useEffect, useId, type KeyboardEvent } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { Upload } from 'lucide-react';
@@ -8,6 +9,7 @@ import { ErrorNotice } from './Feedback';
 import { text } from '../i18n/catalog';
 
 function ArtifactSummary({ artifact }: { artifact: Artifact }) {
+  useLocale();
   return (
     <span className="artifact-choice">
       <span className="mono break-word">{artifact.path}</span>
@@ -50,6 +52,7 @@ export function ArtifactPickerField({
   onSelect: (artifact: Artifact | null) => void;
   onRequestUpload: () => void;
 }) {
+  useLocale();
   const inputId = useId();
   const hintId = useId();
   const resultsId = useId();

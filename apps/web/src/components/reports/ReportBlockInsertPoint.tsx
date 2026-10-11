@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { FileText, LayoutGrid, Plus } from 'lucide-react';
 import { text, textTemplates } from '../../i18n/catalog';
@@ -16,6 +17,7 @@ export function ReportBlockInsertPoint({
   onAddMarkdown: () => void;
   onAddEmbed: () => void;
 }) {
+  useLocale();
   const [isOpen, setOpen] = useState(false);
   if (!isOpen)
     return (

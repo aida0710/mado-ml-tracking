@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Copy } from 'lucide-react';
 import { useMutation } from '../hooks/useMutation';
@@ -9,6 +10,7 @@ import { text } from '../i18n/catalog';
  * (the token itself and the settings example); without it the button reads "コピー".
  */
 export function CopyButton({ value, label = text.copy }: { value: string; label?: string }) {
+  useLocale();
   const [copied, setCopied] = useState(false);
   const mutation = useMutation();
   return (

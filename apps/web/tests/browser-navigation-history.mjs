@@ -7,7 +7,7 @@ if (!modulePath) throw new Error('Set MMT_PLAYWRIGHT_MODULE to an installed Play
 const { chromium } = await import(pathToFileURL(modulePath).href);
 const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'],
   ...(process.env.MMT_CHROMIUM_PATH ? { executablePath: process.env.MMT_CHROMIUM_PATH } : {}) });
-const context = await browser.newContext();
+const context = await browser.newContext({ locale: 'ja-JP' });
 const api = createBrowserApi();
 api.state.loggedIn = true;
 api.state.codeVersions[0].source = { kind: 'inline', files: { 'main.py': 'print("original")\n' } };

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import type { ComputeTarget } from '@mmt/contracts';
 import { DetailsList } from './JsonDetails';
@@ -35,6 +36,7 @@ export function LaunchReview<Target extends ComputeTarget>({
   choices: LaunchChoices<Target>;
   options: ReturnType<typeof buildCatalogOptions>;
 }) {
+  useLocale();
   const chosenDatasets = getSelectedValues(values, 'inputDatasetVersionIds');
   return (
     <DetailsList

@@ -35,6 +35,7 @@ import { formatClockDuration } from './clockDuration';
 import { parseUserRunTags } from './reservedRunTags';
 import { text } from '../i18n/catalog';
 import { hooksTextTemplates } from '../i18n/hooks';
+import { LocalizedError } from './localizedError';
 
 /** The model version select's value for "the triggering Run's version"; real values are uuids. */
 export const INHERIT_MODEL_VERSION = 'inherit';
@@ -305,9 +306,9 @@ function buildTemplate(values: FormValues, catalog: HookCatalog): HookJobTemplat
   };
 }
 
-function parseBoundedInteger(value: string, max: number, message: string): number {
+function parseBoundedInteger(value: string, max: number, describeTooLarge: () => string): number {
   const number = parsePositiveInteger(value);
-  if (number > max) throw new Error(message);
+  if (number > max) throw new LocalizedError(describeTooLarge);
   return number;
 }
 
@@ -322,7 +323,7 @@ function buildStartRules(values: FormValues, trigger: HookTrigger): Omit<HookCre
     maxStartsPerHour: parseBoundedInteger(
       getFieldValue(values, 'maxStartsPerHour'),
       MAX_HOOK_MAX_STARTS_PER_HOUR,
-      hooksTextTemplates.hookMaxStartsError(MAX_HOOK_MAX_STARTS_PER_HOUR),
+      () => hooksTextTemplates.hookMaxStartsError(MAX_HOOK_MAX_STARTS_PER_HOUR),
     ),
   };
   if (trigger === 'checkpoint_saved') {
@@ -336,7 +337,7 @@ function buildStartRules(values: FormValues, trigger: HookTrigger): Omit<HookCre
       rules.checkpointEvery = parseBoundedInteger(
         getFieldValue(values, 'checkpointEvery'),
         MAX_HOOK_CHECKPOINT_EVERY,
-        hooksTextTemplates.hookCheckpointEveryError(MAX_HOOK_CHECKPOINT_EVERY),
+        () => hooksTextTemplates.hookCheckpointEveryError(MAX_HOOK_CHECKPOINT_EVERY),
       );
   }
   if (trigger === 'webhook')

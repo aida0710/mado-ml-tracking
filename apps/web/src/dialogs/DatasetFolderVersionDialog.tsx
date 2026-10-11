@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState, type DragEvent } from 'react';
 import type { Dataset, DatasetVersion } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
@@ -11,7 +12,6 @@ import { FormFields } from '../components/FormFields';
 import { FolderUploadKeptFilesNotice } from '../components/FolderUploadKeptFilesNotice';
 import { FolderUploadProgress } from '../components/FolderUploadProgress';
 import { UnfinishedFolderUploadList } from '../components/UnfinishedFolderUploadList';
-import { formatErrorMessage } from '../lib/errorMessage';
 import { sourcesFromDataTransfer, type UploadSource } from '../lib/droppedFiles';
 import { formatBytes, formatDate } from '../lib/format';
 import {
@@ -23,6 +23,7 @@ import {
 } from '../lib/formValues';
 import type { FormField, SelectOption } from '../types/form';
 import { text, textTemplates } from '../i18n/catalog';
+import { useFailureMessage } from '../hooks/useFailureMessage';
 
 /**
  * Uploads a folder and creates a version of its files. A folder upload that stopped earlier is
@@ -44,6 +45,7 @@ export function DatasetFolderVersionDialog({
   onClose: () => void;
   onSaved: (version: DatasetVersion) => void;
 }) {
+  useLocale();
   const { project, isProjectAdmin } = useProject();
   const fields: FormField[] = [
     { name: 'version', label: text.datasetVersionOptional },
@@ -60,7 +62,7 @@ export function DatasetFolderVersionDialog({
   ];
   const [values, setValues] = useState(() => createInitialValues(fields));
   const [sources, setSources] = useState<UploadSource[]>([]);
-  const [formError, setFormError] = useState<string | null>(null);
+  const formFailure = useFailureMessage();
   const [isDragging, setIsDragging] = useState(false);
   const folder = useDatasetFolderVersion({ projectId: project.id, dataset, onCreated: onSaved });
   const { queue } = folder;
@@ -85,10 +87,10 @@ export function DatasetFolderVersionDialog({
     try {
       metadata = parseJsonObject(getFieldValue(values, 'metadata'));
     } catch (failure) {
-      setFormError(formatErrorMessage(failure));
+      formFailure.setFailure(failure);
       return;
     }
-    setFormError(null);
+    formFailure.clearFailure();
     const continued = continuation.continuation;
     folder.start(
       sources,
@@ -164,7 +166,7 @@ export function DatasetFolderVersionDialog({
             onStartNew={continuation.startNew}
           />
         )}
-        <ErrorNotice message={formError ?? continuation.error} />
+        <ErrorNotice message={formFailure.message ?? continuation.error} />
         {folder.matching && (
           <div className="notice upload-resume-notice" data-testid="folder-upload-matching">
             <span role="status">
@@ -234,6 +236,7 @@ function ContinuationNotice({
   continuation: FolderContinuation | null;
   onStartNew: () => void;
 }) {
+  useLocale();
   if (isChecking)
     return (
       <p className="muted upload-resume-notice" role="status">

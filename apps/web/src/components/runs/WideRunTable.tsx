@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
 import type { Run, SavedViewColumn } from '@mmt/contracts';
 import { useColumnHeaderWidths } from '../../hooks/useColumnHeaderWidths';
@@ -41,6 +42,7 @@ export function WideRunTable({
   onColumnsChange: (columns: SavedViewColumn[]) => void;
   selection: RunListSelection;
 }) {
+  useLocale();
   const [draggedKey, setDraggedKey] = useState<string | null>(null);
   const tableRef = useRef<HTMLTableElement>(null);
   const headerWidths = useColumnHeaderWidths(tableRef);

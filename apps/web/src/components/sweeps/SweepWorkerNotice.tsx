@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { Sweep } from '@mmt/contracts';
 import { tasksApi } from '../../api/tasks';
 import { useProjectTargets } from '../../hooks/useProjectTargets';
@@ -13,12 +14,14 @@ import { workerCoverageText } from '../../i18n/workerCoverage';
  * state stays "running" and its trials "queued" without telling why.
  */
 export function SweepWorkerNotice({ projectId, sweep }: { projectId: string; sweep: Sweep }) {
+  useLocale();
   // Workers are read (and polled) only while trials wait.
   if (!isSweepActive(sweep) || sweep.trialCounts.queued === 0) return null;
   return <WaitingTrialsWorkerNotice projectId={projectId} sweep={sweep} />;
 }
 
 function WaitingTrialsWorkerNotice({ projectId, sweep }: { projectId: string; sweep: Sweep }) {
+  useLocale();
   const tasks = useQuery(`${projectId}:sweep-tasks`, (signal) =>
     tasksApi.list(projectId, undefined, signal),
   );

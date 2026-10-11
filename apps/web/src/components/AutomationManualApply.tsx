@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ModelAutomationRule } from '@mmt/contracts';
 import type { ExecutionCatalog } from '../types/executionCatalog';
@@ -15,6 +16,7 @@ import {
   manualVersionOptions,
 } from '../lib/automationManualExecution';
 import { automationText } from '../i18n/automation';
+import { LocalizedError } from '../lib/localizedError';
 
 /** Lets a Project admin run a rule on a version (or upstream Run) registered before the rule. */
 export function AutomationManualApply({
@@ -28,6 +30,7 @@ export function AutomationManualApply({
   registry: ExecutionCatalog;
   onApplied: () => void;
 }) {
+  useLocale();
   const isChained = rule.trigger === 'upstream_run_finished';
   // Only the upstream rule's executions can offer a Run, so the API is asked for those alone.
   const upstreamRuleId = isChained ? rule.upstreamRuleId : null;
@@ -96,7 +99,7 @@ export function AutomationManualApply({
             automationApi
               .createExecution(projectId, rule.id, manualExecutionRequest(rule, selectedId))
               .catch((failure: unknown) => {
-                throw new Error(manualExecutionErrorMessage(failure));
+                throw new LocalizedError(() => manualExecutionErrorMessage(failure));
               })
           }
           onConfirmed={() => {

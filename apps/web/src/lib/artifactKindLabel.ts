@@ -2,10 +2,10 @@
 import { text } from '../i18n/catalog';
 
 const TOP_LEVEL_LABELS: Record<string, string> = {
-  audio: text.artifactMimeAudio,
-  image: text.artifactMimeImage,
-  video: text.artifactMimeVideo,
-  text: text.artifactMimeText,
+  get audio() { return text.artifactMimeAudio; },
+  get image() { return text.artifactMimeImage; },
+  get video() { return text.artifactMimeVideo; },
+  get text() { return text.artifactMimeText; },
 };
 
 /** `audio/wav; codecs=1` → `音声 · wav`; types without a word of their own keep the subtype. */

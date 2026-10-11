@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { CodeSource } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
 import { CodeFilesViewer } from './CodeFilesViewer';
@@ -17,6 +18,7 @@ export function CodeSourceDetails({
   projectId: string;
   source: CodeSource;
 }) {
+  useLocale();
   if (source.kind === 'inline')
     return (
       <>

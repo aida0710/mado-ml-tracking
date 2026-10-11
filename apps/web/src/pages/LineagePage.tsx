@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useSearchParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import { trackingApi } from '../api/tracking';
@@ -14,6 +15,7 @@ import { lineageText, lineageTextTemplates } from '../i18n/lineage';
 const FOCUS_DEPTH = 2;
 
 export function LineagePage() {
+  useLocale();
   const { project } = useProject();
   const [params, setParams] = useSearchParams();
   const focusId = params.get(LINEAGE_FOCUS_PARAMETER);

@@ -1,27 +1,29 @@
+import * as english from './en/automation';
+import { localized } from './localized';
 import type { ModelAutomationExecution, ModelAutomationRule } from '@mmt/contracts';
 import type { AutomationSkipReason } from '../lib/automationSkipReason';
 import { text } from './catalog';
 
-export const automationOutcomeLabels: Record<ModelAutomationExecution['status'], string> = {
+export const automationOutcomeLabels: Record<ModelAutomationExecution['status'], string> = localized({
   pending: '学習完了待ち',
-  queued: text.automationQueued,
-  failed: text.automationFailed,
-  skipped: text.automationSkipped,
-};
+  get queued() { return text.automationQueued; },
+  get failed() { return text.automationFailed; },
+  get skipped() { return text.automationSkipped; },
+}, english.automationOutcomeLabels);
 
-export const automationSkipReasonLabels: Record<AutomationSkipReason, string> = {
+export const automationSkipReasonLabels: Record<AutomationSkipReason, string> = localized({
   source_run_unsuccessful: '起動せず（学習Runが失敗・停止）',
   source_run_timeout: '起動せず（学習完了待ちの期限切れ）',
   upstream_unsuccessful: '起動せず（上流のRunが失敗・停止）',
   upstream_outputs_missing: '起動せず（上流のRunに出力データセットなし）',
-};
+}, english.automationSkipReasonLabels);
 
-export const automationTriggerLabels: Record<ModelAutomationRule['trigger'], string> = {
+export const automationTriggerLabels: Record<ModelAutomationRule['trigger'], string> = localized({
   model_registered: 'モデル登録',
   upstream_run_finished: '上流ruleの成功',
-};
+}, english.automationTriggerLabels);
 
-export const automationText = {
+export const automationText = localized({
   sourceRun: '学習Runを開く',
   triggerRun: '上流のRunを開く',
   pendingHint: '学習Runが成功すると、その時点で有効なルールで起動します。',
@@ -72,7 +74,7 @@ export const automationText = {
   sourceRuleLeftEnabled: (rules: { copyName: string; sourceName: string }) =>
     `「${rules.copyName}」は作成しましたが、元の「${rules.sourceName}」を無効にできませんでした。今は両方が有効で、同じバージョンに両方のルールがJobを登録します。一覧で「${rules.sourceName}」の［無効にする］を押してください。`,
   downstreamFollowsSource: (names: readonly string[]) =>
-    `「${names.join('」「')}」は「上流rule」に元のルールを選んでいます。元のルールを無効にすると動かなくなるため、新しいルールを上流にするには、それらも同じ操作で作り直してください。`,
+    `「${names.join('」「')}」は［上流rule］に元のルールを選んでいます。元のルールを無効にすると動かなくなるため、新しいルールを上流にするには、それらも同じ操作で作り直してください。`,
   downstreamRules: 'このルールの後に動くルール',
   noDownstreamRules: 'なし',
   showRuleHistory: 'このルールの実行履歴を見る',
@@ -89,4 +91,4 @@ export const automationText = {
   historyShownCount: (count: number) => `新しい順に${count}件を表示しています。`,
   transferNoAccounts:
     'ほかに移管できるService Accountがありません。移管先はプロジェクト設定でrole adminの有効なService Accountとして作成します。',
-};
+}, english.automationText);

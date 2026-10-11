@@ -1,8 +1,9 @@
+import { useLocale } from '../i18n/useLocale';
 import { authApi } from '../api/auth';
 import { useMutation } from '../hooks/useMutation';
 import { PasswordChangeForm } from '../components/PasswordChangeForm';
 import { ErrorNotice } from '../components/Feedback';
-import { ProductLogo } from '../components/ProductLogo';
+import { LoginHeader } from '../components/LoginHeader';
 import { text } from '../i18n/catalog';
 
 /**
@@ -11,13 +12,12 @@ import { text } from '../i18n/catalog';
  * A voluntary change is PasswordChangePage in 全体設定.
  */
 export function RequiredPasswordChangePage({ onChanged }: { onChanged: () => void }) {
+  useLocale();
   const logout = useMutation();
   return (
     <div className="login-page">
       <main className="login-card">
-        <div className="login-mark">
-          <ProductLogo />
-        </div>
+        <LoginHeader />
         <h1>{text.changePasswordTitle}</h1>
         <PasswordChangeForm isRequired onChanged={onChanged} />
         <ErrorNotice message={logout.error} />

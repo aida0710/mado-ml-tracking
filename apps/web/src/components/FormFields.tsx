@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import type { FormField, FormValues } from '../types/form';
 import { getFieldValue, getSelectedValues, toggleValue } from '../lib/formValues';
@@ -6,6 +7,7 @@ import { CheckboxList } from './CheckboxList';
 import { text } from '../i18n/catalog';
 
 function RequiredMark() {
+  useLocale();
   return (
     <span className="required" aria-hidden="true">
       {' '}
@@ -23,6 +25,7 @@ export function FormFields({
   values: FormValues;
   onChange: (values: FormValues) => void;
 }) {
+  useLocale();
   const idPrefix = useId();
   return (
     <div className="form-fields">

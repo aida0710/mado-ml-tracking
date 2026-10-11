@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import type { UserSearchResult } from '@mmt/contracts';
 import { useUserSearch } from '../hooks/useUserSearch';
@@ -33,6 +34,7 @@ export function UserSearchField({
   autoFocus?: boolean;
   onPick: (user: UserSearchResult) => void;
 }) {
+  useLocale();
   const inputId = useId();
   const resultsId = useId();
   const inputRef = useRef<HTMLInputElement>(null);

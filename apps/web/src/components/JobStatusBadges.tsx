@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { JobListItem } from '@mmt/contracts';
 import { StatusBadge } from './StatusBadge';
 import { isJobUnresponsive } from '../lib/jobLiveness';
@@ -16,6 +17,7 @@ export function JobStatusBadges({
     'status' | 'phase' | 'endReason' | 'heartbeatStale' | 'cancelRequested' | 'sweepEarlyStopped'
   >;
 }) {
+  useLocale();
   const detail = jobDetailBadge(job);
   return (
     <span className="badge-group">

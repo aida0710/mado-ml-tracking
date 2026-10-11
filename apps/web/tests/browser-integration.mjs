@@ -15,7 +15,7 @@ const browser = await chromium.launch({
   executablePath: process.env.MMT_CHROMIUM_PATH,
   args: ['--no-sandbox'],
 });
-const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
+const page = await browser.newPage({ locale: 'ja-JP', viewport: { width: 1440, height: 960 } });
 const errors = [];
 page.on('pageerror', (error) => errors.push(error.message));
 const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
@@ -179,7 +179,7 @@ try {
   await select('コードバージョン', codeVersion.id);
   await select('入力データセットバージョン', [datasetVersion.id]);
   await page.getByRole('dialog').getByRole('button', { name: '次へ', exact: true }).click();
-  await select('Compute target', localTarget.id);
+  await select('コンピュータ', localTarget.id);
   await page.getByRole('dialog').getByRole('button', { name: '次へ', exact: true }).click();
   await submit('ジョブを起動');
   await page.getByRole('button', { name: '停止を要求', exact: true }).click();

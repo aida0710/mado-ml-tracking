@@ -138,7 +138,7 @@ async function withToken(token, method, endpoint, body) {
 }
 
 async function signIn(email, displayName) {
-  const context = await browser.newContext({ viewport: DESKTOP });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport: DESKTOP });
   const page = await context.newPage();
   page.on('pageerror', (error) => pageErrors.push(`${email}: ${error.message}`));
   page.on('console', (message) => {
@@ -222,7 +222,7 @@ async function openTargetChoices(page, { project, runName }) {
   await dialog.getByLabel('実行種別').selectOption('training');
   await dialog.getByLabel('コードバージョン').selectOption(project.codeVersion.id);
   await dialog.getByRole('button', { name: '次へ', exact: true }).click();
-  const targetSelect = dialog.getByLabel('Compute target');
+  const targetSelect = dialog.getByLabel('コンピュータ');
   await targetSelect.waitFor();
   const choices = await targetSelect.locator('option').allTextContents();
   return { dialog, targetSelect, choices };

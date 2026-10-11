@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { Artifact, ArtifactReferences, Dataset } from '@mmt/contracts';
 import { folderOfUploadPath } from '../lib/datasetFolderResume';
@@ -28,6 +29,7 @@ export function ArtifactOwnerCell({
   areReferencesChecked: boolean;
   datasets: ReadonlyMap<string, Dataset>;
 }) {
+  useLocale();
   const base = `/projects/${encodeURIComponent(artifact.projectId)}`;
   if (artifact.runId)
     return (

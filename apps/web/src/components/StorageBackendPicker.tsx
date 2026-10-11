@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { StorageBackendChoice } from '../hooks/useStorageBackends';
 import { text } from '../i18n/catalog';
 
@@ -19,6 +20,7 @@ export function StorageBackendPicker({
   value: string;
   onChange: (backend: string) => void;
 }) {
+  useLocale();
   const listed =
     choices.some((choice) => choice.name === value) || !value
       ? choices

@@ -23,7 +23,7 @@ const browser = await chromium.launch({
 });
 
 async function openPage(role, path) {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 960 } });
   await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: base });
   const api = createBrowserApi();
   api.state.loggedIn = true;

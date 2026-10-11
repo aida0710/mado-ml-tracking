@@ -1,6 +1,8 @@
+import * as english from './en/datasets';
+import { localized } from './localized';
 // Dataset version content: the folder upload in the version dialog and the version's file list.
 
-export const datasetsText = {
+export const datasetsText = localized({
   datasetVersionFromFolder: 'フォルダから作る',
   datasetVersionOptional: 'バージョン（空なら自動採番）',
   datasetFolderHint:
@@ -54,9 +56,9 @@ export const datasetsText = {
   datasetVersionDelete: 'このバージョンを削除',
   datasetVersionDeleteTitle: 'データセットのバージョンを削除',
   datasetVersionDeleteConfirm: '削除する',
-};
+}, english.datasetsText);
 
-export const datasetsTextTemplates = {
+export const datasetsTextTemplates = localized({
   datasetFolderSelected: (count: number, size: string) => `${count}件のファイル（${size}）`,
   datasetFolderStartedAt: (startedAt: string) => `${startedAt} に始めたアップロード`,
   datasetFolderStoredFiles: (count: number, size: string) => `保存済み ${count}件（${size}）`,
@@ -107,4 +109,4 @@ export const datasetsTextTemplates = {
   datasetVersionNoInputRuns: (version: string) => `バージョン「${version}」を入力にしたRunはまだありません。`,
   datasetVersionDeleteMessage: (version: string) =>
     `バージョン「${version}」を削除します。Runの入力・出力、ほかのバージョン、Taskなどから使われているときは削除できません。URIの先のデータとArtifactは消えません。`,
-};
+}, english.datasetsTextTemplates);

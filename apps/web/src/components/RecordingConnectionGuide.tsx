@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import { TOKEN_PURPOSE_SCOPES, type Experiment } from '@mmt/contracts';
 import { CodeSnippet } from './CodeSnippet';
@@ -27,6 +28,7 @@ export function RecordingConnectionGuide({
   experiment?: Pick<Experiment, 'id' | 'name'>;
   onTokenCreated?: () => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const [client, setClient] = useState<RecordingClient>('sdk');
   const headingId = useId();
@@ -86,6 +88,7 @@ function SdkRecordingSnippets({
   snippets: SdkConnectionSnippets;
   hasExperiment: boolean;
 }) {
+  useLocale();
   return (
     <>
       <CodeSnippet label={text.recordingSdkInstall} code={snippets.install} />
@@ -99,6 +102,7 @@ function SdkRecordingSnippets({
 }
 
 function MlflowRecordingSnippets({ snippets }: { snippets: MlflowConnectionSnippets }) {
+  useLocale();
   return (
     <>
       <dl className="connection-values">
@@ -126,6 +130,7 @@ function ConnectionValue({
   /** `name` is an environment variable, set in the code font. */
   isVariable?: boolean;
 }) {
+  useLocale();
   return (
     <div>
       <dt className={isVariable ? 'mono' : undefined}>{name}</dt>

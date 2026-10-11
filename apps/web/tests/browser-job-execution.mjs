@@ -41,7 +41,7 @@ const browser = await chromium.launch({
 const pageErrors = [];
 
 async function signIn(email, displayName, viewport = DESKTOP) {
-  const context = await browser.newContext({ viewport, acceptDownloads: true });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport, acceptDownloads: true });
   const login = await context.request.post(`${base}/api/auth/dev-login`, {
     headers: { Origin: base },
     data: { email, displayName },
@@ -223,7 +223,7 @@ try {
   await page.goto(`${projectBase}/runs/${run.id}`);
   await page.getByRole('link', { name: 'Jobを見る', exact: true }).waitFor();
   await page.goto(`${projectBase}/jobs`);
-  await page.getByText('2（自動の再試行は1回目まで）', { exact: true }).waitFor();
+  await page.getByText('2（自動の再実行は1回目まで）', { exact: true }).waitFor();
 
   console.log('Launch: the computer is marked, and a refused Job leaves no Run');
   await page.getByRole('button', { name: 'ジョブを起動', exact: true }).click();
@@ -233,7 +233,7 @@ try {
   await launch.getByLabel('実行種別').selectOption('training');
   await launch.getByLabel('コードバージョン').selectOption(codeVersion.id);
   await launch.getByRole('button', { name: '次へ', exact: true }).click();
-  const targetSelect = launch.getByLabel('Compute target');
+  const targetSelect = launch.getByLabel('コンピュータ');
   const targetLabel = await targetSelect
     .locator(`option[value="${gpuHost.id}"]`)
     .innerText();

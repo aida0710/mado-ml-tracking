@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import {
   GRAPH_NODE_HEIGHT,
@@ -14,12 +15,12 @@ const NODE_LABEL_MAX_LENGTH = 28;
 
 // Run nodes carry a RunStatus; other strings are shown as they are.
 const runStatusLabels: Record<string, string> = {
-  queued: text.queued,
-  claimed: text.claimed,
-  running: text.running,
-  finished: text.finished,
-  failed: text.failed,
-  canceled: text.canceled,
+  get queued() { return text.queued },
+  get claimed() { return text.claimed },
+  get running() { return text.running },
+  get finished() { return text.finished },
+  get failed() { return text.failed },
+  get canceled() { return text.canceled },
 };
 const runStatusLabel = (status: string) => runStatusLabels[status] ?? status;
 
@@ -50,6 +51,7 @@ export function LineageDiagram({
   projectId: string;
   zoom: number;
 }) {
+  useLocale();
   return (
     <svg
       width={layout.width * zoom}

@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId } from 'react';
 import type { ChartSmoothing, ChartXAxis } from '@mmt/contracts';
 import type { ChartDisplaySettings } from './chartProps';
@@ -10,16 +11,16 @@ const SMOOTHING_WEIGHT_STEP = 0.01;
 const DEFAULT_SMOOTHING_WEIGHT = 0.6;
 
 const smoothingLabels: Record<ChartSmoothing['kind'], string> = {
-  none: text.chartSmoothingNone,
-  ema: text.chartSmoothingEma,
-  gaussian: text.chartSmoothingGaussian,
-  running_average: text.chartSmoothingRunningAverage,
+  get none() { return text.chartSmoothingNone },
+  get ema() { return text.chartSmoothingEma },
+  get gaussian() { return text.chartSmoothingGaussian },
+  get running_average() { return text.chartSmoothingRunningAverage },
 };
 const xAxisLabels: Record<ChartXAxis['kind'], string> = {
-  step: text.chartXAxisStep,
-  relative_time: text.chartXAxisRelativeTime,
-  wall_time: text.chartXAxisWallTime,
-  metric: text.chartXAxisMetric,
+  get step() { return text.chartXAxisStep },
+  get relative_time() { return text.chartXAxisRelativeTime },
+  get wall_time() { return text.chartXAxisWallTime },
+  get metric() { return text.chartXAxisMetric },
 };
 
 const ALL_X_AXIS_KINDS = Object.keys(xAxisLabels) as ChartXAxis['kind'][];
@@ -39,6 +40,7 @@ export function ChartControls({
   xAxisKinds?: readonly ChartXAxis['kind'][];
   onChange: (settings: ChartDisplaySettings) => void;
 }) {
+  useLocale();
   const idPrefix = useId();
   const { xAxis, smoothing } = settings;
   const change = (patch: Partial<ChartDisplaySettings>) => onChange({ ...settings, ...patch });
@@ -155,6 +157,7 @@ function ChartToggle({
   checked: boolean;
   onChange: (checked: boolean) => void;
 }) {
+  useLocale();
   return (
     <label className="checkbox-field chart-toggle">
       <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />

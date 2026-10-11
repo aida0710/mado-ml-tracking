@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -25,6 +26,7 @@ interface PendingAction {
  * with archived ones shown, restoring or purging them.
  */
 export function ProjectsPanel() {
+  useLocale();
   const navigate = useNavigate();
   const { projects, includeArchived, setIncludeArchived } = useAdminProjects();
   const [isCreating, setIsCreating] = useState(false);

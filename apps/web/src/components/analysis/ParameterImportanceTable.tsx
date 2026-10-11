@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { ParameterImportanceEntry, ParameterImportanceResult } from '@mmt/contracts';
 import { text, textTemplates } from '../../i18n/catalog';
@@ -9,6 +10,7 @@ import {
 } from '../../i18n/analysis';
 import { formatCompactNumber } from '../../lib/format';
 import { Empty } from '../Feedback';
+import { formatNote } from '../../i18n/textJoining';
 
 export type ImportanceMethod = 'impurity' | 'permutation';
 type SortColumn = 'param' | 'importance' | 'correlation' | 'coverage';
@@ -48,6 +50,7 @@ function formatOptional(value: number | null): string {
 
 /** Parameter importance as returned by the API, with the method and sort chosen on screen. */
 export function ParameterImportanceTable({ result }: { result: ParameterImportanceResult }) {
+  useLocale();
   const [method, setMethod] = useState<ImportanceMethod>('impurity');
   // null keeps the API order: most important first (by |correlation| while importance is null).
   const [sort, setSort] = useState<{ column: SortColumn; descending: boolean } | null>(null);
@@ -71,7 +74,7 @@ export function ParameterImportanceTable({ result }: { result: ParameterImportan
     <div className="importance-table">
       <div className="importance-summary">
         <span>
-          {text.analysisTarget}: <strong>{result.targetMetric}</strong>（{importanceTargetSourceLabels[result.targetSource]}）
+          {text.analysisTarget}: <strong>{result.targetMetric}</strong>{formatNote(importanceTargetSourceLabels[result.targetSource])}
         </span>
         <span>{textTemplates.analysisRunCount(result.runCount, result.skippedRunCount)}</span>
         {result.outOfBagR2 !== null && (
@@ -155,6 +158,7 @@ export function ParameterImportanceTable({ result }: { result: ParameterImportan
 
 /** A bar from the center: right and blue for positive, left and red for negative. */
 function CorrelationCell({ correlation }: { correlation: number | null }) {
+  useLocale();
   if (correlation === null) return <span className="importance-value">—</span>;
   const width = Math.min(1, Math.abs(correlation)) * (PERCENT / 2);
   return (

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Plus, RefreshCw } from 'lucide-react';
 import type { PromotionPolicy } from '@mmt/contracts';
@@ -20,6 +21,7 @@ import { text } from '../i18n/catalog';
 
 /** The "昇格policy" tab of the Models page: policies and the decision history of the selected one. */
 export function PromotionPolicyPanel({ initialModelId }: { initialModelId: string }) {
+  useLocale();
   const { project } = useProject();
   const { user } = useAuth();
   const canManage = canManagePromotionPolicies(project.role, user.isAdmin);

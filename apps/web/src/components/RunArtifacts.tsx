@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { Artifact } from '@mmt/contracts';
@@ -27,6 +28,7 @@ export function RunArtifacts({
   /** Increment to reload after an upload. */
   revision: number;
 }) {
+  useLocale();
   const [params, setParams] = useSearchParams();
   const prefix = params.get(RUN_ARTIFACT_PREFIX_PARAMETER) ?? '';
   // Counts deletions made here, so the folder and the open file reload after each one.

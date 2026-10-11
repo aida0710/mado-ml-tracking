@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ModelVersionDetail, PromotionEvaluation, PromotionPolicy } from '@mmt/contracts';
 import type { usePromotionChoices } from '../hooks/usePromotionChoices';
@@ -11,8 +12,8 @@ import { promotionTextTemplates } from '../i18n/promotion';
 // Notes on a pass that an autoPromote policy did not turn into an alias change.
 const automaticPromotionNotes: Partial<Record<NonNullable<PromotionEvaluation['reason']>, string>> =
   {
-    baseline_changed: text.promotionCheckBaselineChanged,
-    promotion_denied: text.promotionCheckPromotionDenied,
+    get baseline_changed() { return text.promotionCheckBaselineChanged },
+    get promotion_denied() { return text.promotionCheckPromotionDenied },
   };
 
 function latestDecision(
@@ -46,6 +47,7 @@ export function PromotionCheckCard({
   choices: ReturnType<typeof usePromotionChoices>;
   onPromoted: () => void;
 }) {
+  useLocale();
   const versionId = detail.version.id;
   const [promoting, setPromoting] = useState<{ alias: string; evaluationId?: string } | null>(null);
   return (

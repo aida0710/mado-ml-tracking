@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useMemo } from 'react';
 import { highlightCode } from '@mado/design-system/code';
 import { useCodeLanguage } from '../../hooks/useCodeLanguage';
@@ -20,6 +21,7 @@ export function CodeView({
   fileName?: string | null;
   mimeType?: string | null;
 }) {
+  useLocale();
   const code = useCodeLanguage({ fileName, mimeType, text: content });
   return <FormattedCode content={content} code={code} />;
 }
@@ -37,6 +39,7 @@ export function FormattedCode({
   code: CodeLanguageState;
   onShowTable?: () => void;
 }) {
+  useLocale();
   const html = useMemo(() => highlightCode(content, code.language), [content, code.language]);
   return (
     <div className="code-preview">

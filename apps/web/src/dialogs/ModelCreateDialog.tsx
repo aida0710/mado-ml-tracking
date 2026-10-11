@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { Model } from '@mmt/contracts';
 import { registryApi } from '../api/registry';
 import { FormDialog } from '../components/FormDialog';
@@ -15,6 +16,7 @@ export function ModelCreateDialog({
   onClose: () => void;
   onSaved: (model: Model) => void;
 }) {
+  useLocale();
   const families = useModelFamilies(projectId);
   return (
     <FormDialog

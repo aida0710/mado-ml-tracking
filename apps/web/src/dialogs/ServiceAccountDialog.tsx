@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ProjectRole, ServiceAccount, ServiceAccountCreate } from '@mmt/contracts';
 import { FormDialog } from '../components/FormDialog';
 import { getFieldValue } from '../lib/formValues';
@@ -20,6 +21,7 @@ export function ServiceAccountDialog({
   onSaved: () => void;
   onClose: () => void;
 }) {
+  useLocale();
   return (
     <FormDialog
       title={serviceAccount ? text.editServiceAccount : text.newServiceAccount}

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { RefreshCw, Search } from 'lucide-react';
@@ -26,7 +27,7 @@ import { artifactsTextTemplates } from '../i18n/artifacts';
 
 // Recent Runs offered in the Run filter; older Runs are reached from their own page's link.
 const RUN_FILTER_OPTION_LIMIT = 200;
-const mimeTypeOptions = [
+const getMimeTypeOptions = () => [
   ['', text.artifactMimeAll],
   ['audio/*', text.artifactMimeAudio],
   ['image/*', text.artifactMimeImage],
@@ -40,6 +41,7 @@ const mimeTypeOptions = [
  * narrow screen shows the results or the chosen file's preview, one at a time.
  */
 export function ArtifactsPage() {
+  useLocale();
   const { project } = useProject();
   const [params, setParams] = useSearchParams();
   const filter: ProjectArtifactFilter = {
@@ -140,7 +142,7 @@ export function ArtifactsPage() {
             value={filter.mimeType}
             onChange={(event) => updateParams({ mimeType: event.target.value })}
           >
-            {mimeTypeOptions.map(([value, label]) => (
+            {getMimeTypeOptions().map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
               </option>

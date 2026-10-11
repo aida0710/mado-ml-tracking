@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import type { ComputeTargetDetails, User } from '@mmt/contracts';
 import { ComputeTargetKind } from './ComputeTargetKind';
@@ -30,6 +31,7 @@ export function ComputerDetails({
   user: Pick<User, 'id' | 'isAdmin'>;
   onTargetChanged: () => void;
 }) {
+  useLocale();
   // Only global administrators list every Project's workers; others read who runs the worker.
   const workers = useAllWorkers(target.executor !== 'site' && isGlobalAdmin(user));
   if (target.executor === 'site')

@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { NotificationDelivery } from '@mmt/contracts';
 import type { NotificationSettingsState } from '../../hooks/useNotificationSettings';
 import { formatDate } from '../../lib/format';
@@ -13,6 +14,7 @@ export function NotificationDeliverySection({
 }: {
   settings: NotificationSettingsState;
 }) {
+  useLocale();
   return (
     <>
       <div className="section-heading">

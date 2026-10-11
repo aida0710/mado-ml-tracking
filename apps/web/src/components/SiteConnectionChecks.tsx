@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { PlugZap } from 'lucide-react';
 import type { SiteConnectionCheck, SiteConnectionCheckStatus } from '@mmt/contracts';
 import { siteComputersApi } from '../api/siteComputers';
@@ -34,6 +35,7 @@ export function SiteConnectionChecks({
   /** The launcher has made the account's key; until then the API refuses a check. */
   isKeyReady: boolean;
 }) {
+  useLocale();
   const mutation = useMutation();
   // A global administrator may be sent other people's checks too; only this account's are shown.
   const accountChecks = (checks: SiteConnectionCheck[]) =>
@@ -73,6 +75,7 @@ export function SiteConnectionChecks({
 }
 
 export function SiteConnectionCheckList({ checks }: { checks: SiteConnectionCheck[] }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={checks}

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
@@ -11,6 +12,7 @@ export function ComputeTargetState({
   enabled: boolean;
   launcherStatus?: string | null;
 }) {
+  useLocale();
   return (
     <span className="badge-group">
       <span className={`status-badge ${enabled ? 'status-finished' : 'status-queued'}`}>

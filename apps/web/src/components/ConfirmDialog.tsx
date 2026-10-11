@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { Dialog } from './Dialog';
 import { ErrorNotice } from './Feedback';
@@ -22,6 +23,7 @@ export function ConfirmDialog({
   onConfirmed: () => void;
   onClose: () => void;
 }) {
+  useLocale();
   const mutation = useMutation();
   return (
     <Dialog title={title} onClose={onClose} busy={mutation.pending} fullScreenOnNarrow={false}>

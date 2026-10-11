@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { Dialog } from '../components/Dialog';
 import { CopyButton } from '../components/CopyButton';
@@ -19,6 +20,7 @@ export function IssuedTokenDialog({
   token: string;
   onClose: () => void;
 }) {
+  useLocale();
   const valueId = useId();
   return (
     <Dialog title={title} onClose={onClose}>

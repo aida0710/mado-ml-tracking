@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { Artifact } from '@mmt/contracts';
 import { fetchArtifactTextHead } from '../../api/artifactTextHead';
 import { trackingApi } from '../../api/tracking';
@@ -7,6 +8,7 @@ import { Resource } from '../Feedback';
 import { textTemplates } from '../../i18n/catalog';
 import { CodeView } from './CodeView';
 import { PreviewDownloadNotice } from './PreviewDownloadNotice';
+import { joinSentences } from '../../i18n/textJoining';
 
 /**
  * Text previews are colored on the main thread; 1MiB stays well under a second. Larger files show
@@ -23,15 +25,17 @@ function isTextHeadOnly(artifact: Artifact): boolean {
  * download beside it. Nothing when the whole file is shown and there is no reason to give.
  */
 export function TextHeadNotice({ artifact, reason }: { artifact: Artifact; reason?: string }) {
+  useLocale();
   const headMessage = isTextHeadOnly(artifact)
     ? textTemplates.previewTextHead(formatBytes(TEXT_PREVIEW_MAX_BYTES), formatBytes(artifact.size))
     : '';
   if (!reason && !headMessage) return null;
-  return <PreviewDownloadNotice artifact={artifact} message={`${reason ?? ''}${headMessage}`} />;
+  return <PreviewDownloadNotice artifact={artifact} message={joinSentences([reason ?? '', headMessage])} />;
 }
 
 /** The text colored by its format; over TEXT_PREVIEW_MAX_BYTES only the head is read (a Range request). */
 export function TextPreview({ artifact, reason }: { artifact: Artifact; reason?: string }) {
+  useLocale();
   const headOnly = isTextHeadOnly(artifact);
   const content = useQuery(`${artifact.id}:${headOnly ? 'text-head' : 'text'}`, (signal) =>
     headOnly

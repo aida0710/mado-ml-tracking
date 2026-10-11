@@ -5,8 +5,8 @@ import {
   automationApi,
   type AutomationExecutionFilter,
 } from '../api/automation';
-import { formatErrorMessage } from '../lib/errorMessage';
 import { EXECUTION_POLL_MS, useQuery } from './useQuery';
+import { useFailureMessage } from './useFailureMessage';
 
 export interface AutomationHistoryState {
   items: ModelAutomationExecution[];
@@ -44,14 +44,14 @@ export function useAutomationHistory({
   const filterKey = `${filter.ruleId ?? ''}:${filter.modelVersionId ?? ''}`;
   const [loaded, setLoaded] = useState<LoadedPages | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  const loadMoreFailure = useFailureMessage();
   // Changing the filter drops the older pages, so coming back to a filter shows its newest page
   // again, polled, not the list as it stood when it was left.
   const [shownFilterKey, setShownFilterKey] = useState(filterKey);
   if (shownFilterKey !== filterKey) {
     setShownFilterKey(filterKey);
     setLoaded(null);
-    setLoadMoreError(null);
+    loadMoreFailure.clearFailure();
   }
   // A page that arrives after the filter changed still carries the filter it was read with.
   const pages = loaded?.filterKey === filterKey ? loaded : null;
@@ -71,7 +71,7 @@ export function useAutomationHistory({
   async function loadMore() {
     if (!nextCursor || loadingMore) return;
     setLoadingMore(true);
-    setLoadMoreError(null);
+    loadMoreFailure.clearFailure();
     try {
       const page = await automationApi.executionPage(projectId, {
         filter,
@@ -80,7 +80,7 @@ export function useAutomationHistory({
       });
       setLoaded({ filterKey, items: [...items, ...page.items], nextCursor: page.nextCursor });
     } catch (failure) {
-      setLoadMoreError(formatErrorMessage(failure));
+      loadMoreFailure.setFailure(failure);
     } finally {
       setLoadingMore(false);
     }
@@ -91,11 +91,11 @@ export function useAutomationHistory({
     loading: !pages && newestPage.loading && !newestPage.value,
     loadingMore,
     hasMore: nextCursor !== null,
-    error: loadMoreError ?? (pages ? null : newestPage.error),
+    error: loadMoreFailure.message ?? (pages ? null : newestPage.error),
     loadMore: () => void loadMore(),
     reload: () => {
       setLoaded(null);
-      setLoadMoreError(null);
+      loadMoreFailure.clearFailure();
       newestPage.reload();
     },
   };

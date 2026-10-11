@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { Account, TokenSummary } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
@@ -14,6 +15,7 @@ import { canChangeOwnPassword } from '../lib/permissions';
 import { text, textTemplates } from '../i18n/catalog';
 
 function AccountProfile({ account }: { account: Account }) {
+  useLocale();
   const { user } = account;
   return (
     <section className="account-section">
@@ -47,6 +49,7 @@ function AccountProfile({ account }: { account: Account }) {
 }
 
 function AccountGroups({ account }: { account: Account }) {
+  useLocale();
   return (
     <section className="account-section">
       <h2>{text.accountGroups}</h2>
@@ -79,6 +82,7 @@ function AccountTokens({
   projectNames: Map<string, string>;
   onRevoke: (token: TokenSummary) => void;
 }) {
+  useLocale();
   return (
     <DataTable
       items={tokens}
@@ -124,6 +128,7 @@ function AccountTokens({
  * API tokens.
  */
 export function AccountPage() {
+  useLocale();
   const { account, tokens, projects, projectNames } = useAccount();
   const [isTokenDialogOpen, setIsTokenDialogOpen] = useState(false);
   const [revokingToken, setRevokingToken] = useState<TokenSummary | null>(null);

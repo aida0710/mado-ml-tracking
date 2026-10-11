@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useRef, useState } from 'react';
 import type { CodeVersion } from '@mmt/contracts';
 import type { FormValues } from '../types/form';
@@ -11,14 +12,16 @@ import { useCodeVersionForm } from './useCodeVersionForm';
 import { useCodeWorkspace } from './useCodeWorkspace';
 import { useUnsavedChanges } from './useUnsavedChanges';
 import { text } from '../i18n/catalog';
+import { useFailureMessage } from './useFailureMessage';
 
 export function useCodeVersionWorkspace({ projectId, codeId, initialVersion, versions, onNavigationDiscard }: {
   projectId: string; codeId: string; initialVersion?: CodeVersion; versions: CodeVersion[];
   onNavigationDiscard: () => void;
 }) {
+  useLocale();
   const [baseVersion, setBaseVersion] = useState(initialVersion);
   const [sampleId, setSampleId] = useState<CodeSample['id']>('smoke');
-  const [sampleError, setSampleError] = useState<string | null>(null);
+  const sampleFailure = useFailureMessage();
   const form = useCodeVersionForm({ projectId, codeId, initialVersion });
   const sourceKind = getFieldValue(form.values, 'sourceKind');
   const editor = useCodeWorkspace({ projectId, initialSource: initialVersion?.source,
@@ -33,7 +36,7 @@ export function useCodeVersionWorkspace({ projectId, codeId, initialVersion, ver
 
   function changeValues(next: FormValues) {
     form.changeValues(next);
-    setSampleError(null);
+    sampleFailure.clearFailure();
     if (next.sourceKind === 'inline' && sourceKind === 'git')
       editor.setWorkspace((previous) => ({ ...previous, baseFiles: {}, deletedFiles: [], omittedPaths: [], loadedRepository: null }));
   }
@@ -44,7 +47,7 @@ export function useCodeVersionWorkspace({ projectId, codeId, initialVersion, ver
       form.replaceValues(values);
       editor.replaceWorkspace(selected?.source);
       setBaseVersion(selected);
-      setSampleError(null);
+      sampleFailure.clearFailure();
       initialSignature.current = getWorkspaceSignature(values, createCodeWorkspace(selected?.source));
     });
   }
@@ -54,7 +57,7 @@ export function useCodeVersionWorkspace({ projectId, codeId, initialVersion, ver
       url: repository?.url ?? '', commit: repository?.commit ?? '' });
   }
   function applySample() {
-    setSampleError(null);
+    sampleFailure.clearFailure();
     const sample = CODE_SAMPLES.find((item) => item.id === sampleId)!;
     try {
       if (Object.keys(sample.files).some((path) => Object.hasOwn(editor.workspace.files, path)))
@@ -66,8 +69,8 @@ export function useCodeVersionWorkspace({ projectId, codeId, initialVersion, ver
       form.changeValues({ ...form.values, entrypoint: JSON.stringify(sample.entrypoint),
         testEntrypoint: JSON.stringify(sample.testEntrypoint), requirements: sample.requirements.join('\n'),
         families: sample.families.join('\n'), taskTypes: sample.taskTypes });
-    } catch (error) { setSampleError(error instanceof Error ? error.message : String(error)); }
+    } catch (error) { sampleFailure.setFailure(error); }
   }
-  return { form, editor, sourceKind, baseVersion, sampleId, setSampleId, sampleError,
+  return { form, editor, sourceKind, baseVersion, sampleId, setSampleId, sampleError: sampleFailure.message,
     isDirty, busy, unsaved, repositoryMode, changeValues, selectBaseVersion, changeRepositoryMode, applySample };
 }

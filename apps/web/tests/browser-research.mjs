@@ -89,7 +89,7 @@ async function waitUntil(condition, message) {
 }
 
 async function signIn() {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1100 } });
   // The same development user that recorded the data, so the private state matches.
   const login = await context.request.post(`${base}/api/auth/dev-login`, { headers: { Origin: base }, data: {} });
   assert.equal(login.ok(), true, `dev-login: ${login.status()}`);

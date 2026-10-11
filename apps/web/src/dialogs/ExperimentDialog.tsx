@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { Experiment } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
 import { FormDialog } from '../components/FormDialog';
@@ -23,6 +24,7 @@ export function ExperimentDialog({
   onCreated: (experiment: Experiment) => void;
   onOpenExisting: (experiment: Experiment) => void;
 }) {
+  useLocale();
   return (
     <FormDialog
       title={text.newExperiment}

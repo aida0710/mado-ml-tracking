@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { Maximize2, Minimize2 } from 'lucide-react';
@@ -18,6 +19,7 @@ interface ImageSize {
  * the image) to the actual size: a wide spectrogram or a panorama is unreadable when shrunk.
  */
 export function ImagePreview({ artifact }: { artifact: Artifact }) {
+  useLocale();
   const [failed, setFailed] = useState(false);
   const [scale, setScale] = useState<ImageScale>('fit');
   const [naturalSize, setNaturalSize] = useState<ImageSize | null>(null);

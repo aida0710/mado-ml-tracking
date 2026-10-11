@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { ModelAutomationRule } from '@mmt/contracts';
@@ -46,6 +47,7 @@ export function AutomationRuleDetails({
   onShowHistory: () => void;
   onApplied: () => void;
 }) {
+  useLocale();
   const options = catalog ? buildCatalogOptions(catalog.registry) : undefined;
   const code = catalog?.registry.codeVersions.find((version) => version.id === rule.codeVersionId);
   const base = `/projects/${projectId}`;

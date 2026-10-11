@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { Run, RunCheckpoint, RunCheckpointArtifact } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
@@ -20,6 +21,7 @@ import { text, textTemplates } from '../i18n/catalog';
  * `canRetryJob`: whether the signed-in user may retry the Run's Job (lib/permissions canControlJob).
  */
 export function RunCheckpointList({ run, canRetryJob }: { run: Run; canRetryJob: boolean }) {
+  useLocale();
   const [includeHidden, setIncludeHidden] = useState(false);
   const [resumeTarget, setResumeTarget] = useState<RunCheckpoint | null>(null);
   const checkpoints = useRunCheckpoints({ projectId: run.projectId, runId: run.id, includeHidden });
@@ -146,6 +148,7 @@ function CheckpointArtifactLinks({
   projectId: string;
   artifacts: RunCheckpointArtifact[];
 }) {
+  useLocale();
   const links = artifacts.map((artifact) => (
     <a
       key={artifact.id}

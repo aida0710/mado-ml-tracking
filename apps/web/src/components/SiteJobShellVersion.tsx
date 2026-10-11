@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { siteComputersApi } from '../api/siteComputers';
 import { useQuery } from '../hooks/useQuery';
 import { Resource } from './Feedback';
@@ -9,6 +10,7 @@ import { siteComputersTextTemplates } from '../i18n/siteComputers';
  * never change, so it shows exactly what ran even after the site's job shell was edited.
  */
 export function SiteJobShellVersion({ targetId, jobShellId }: { targetId: string; jobShellId: string }) {
+  useLocale();
   const shell = useQuery(`site-job-shell:${jobShellId}`, (signal) =>
     siteComputersApi.jobShell(targetId, jobShellId, signal),
   );

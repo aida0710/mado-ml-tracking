@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { JobStatus } from '@mmt/contracts';
 import { sweepTrialStateLabels } from '../i18n/sweeps';
 import { text } from '../i18n/catalog';
@@ -7,6 +8,7 @@ import { text } from '../i18n/catalog';
  * color, so it is not read as a cancel by a person.
  */
 export function StatusBadge({ status, earlyStopped = false }: { status: JobStatus; earlyStopped?: boolean }) {
+  useLocale();
   if (earlyStopped && status === 'canceled')
     return (
       <span className="status-badge status-early-stopped">

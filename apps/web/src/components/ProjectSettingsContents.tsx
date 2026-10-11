@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ProjectSettingsSection } from '../lib/projectSettingsSections';
 import { text } from '../i18n/catalog';
 
@@ -6,6 +7,7 @@ import { text } from '../i18n/catalog';
  * audit log is one tap away instead of several screens of scrolling (on a phone above all).
  */
 export function ProjectSettingsContents({ sections }: { sections: ProjectSettingsSection[] }) {
+  useLocale();
   return (
     <nav className="settings-contents" aria-label={text.projectSettingsContents}>
       <ul>

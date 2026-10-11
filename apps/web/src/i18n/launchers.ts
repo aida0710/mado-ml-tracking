@@ -1,5 +1,7 @@
+import * as english from './en/launchers';
+import { localized } from './localized';
 // The launchers section of the global administration: registering launchers and their tokens.
-export const launchersText = {
+export const launchersText = localized({
   launchers: 'ランチャー',
   launchersDescription:
     'ランチャーは、自動投入のコンピュータへSSHで入ってJobを投入します。ランチャーごとにtokenを1本発行し、ランチャーのホストのtoken_fileに置きます。コンピュータ・鍵・job shellの設定は、ランチャーがWebから読みます。',
@@ -34,14 +36,14 @@ export const launchersText = {
   launcherConfigPollComment: '設定を読み、投入を受け取る間隔（秒）',
   launcherConfigRegistryComment:
     '任意: 全siteで共通の、imageをpullするためのtoken（JSON {"username": ..., "password": ...}、mode 600）',
-} as const;
+} as const, english.launchersText);
 
 // Text that embeds values.
-export const launchersTextTemplates = {
+export const launchersTextTemplates = localized({
   launcherTokenTitle: (name: string) => `ランチャー「${name}」のtoken`,
   launcherRotateConfirm: (name: string) =>
     `「${name}」の今のtokenを失効させ、新しいtokenを発行します。ランチャーのtoken_fileを新しいtokenに置き換えるまで、このランチャーは投入できません。`,
   launcherRevokeConfirm: (name: string) =>
     `「${name}」とそのtokenを失効させます。このランチャーを選んだコンピュータのJobは、別のランチャーを選ぶまで投入されません。`,
   launcherConfigHeader: (name: string) => `mado-tracking-launcher「${name}」の設定`,
-};
+}, english.launchersTextTemplates);

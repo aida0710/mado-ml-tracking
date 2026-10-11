@@ -1,5 +1,7 @@
+import * as english from './en/evaluation';
+import { localized } from './localized';
 // Evaluation comparison panel. evaluation-baseline-comparison owns the entries.
-export const evaluationText = {
+export const evaluationText = localized({
   evaluationComparison: '基準バージョンとの評価比較',
   baselineAlias: '基準alias',
   baselineVersion: '基準バージョン',
@@ -28,11 +30,11 @@ export const evaluationText = {
   baselineChoiceAliasGroup: 'aliasで選ぶ',
   baselineChoiceVersionGroup: 'バージョンを直接選ぶ',
   baselineIsCandidate: '基準がこのバージョン自身なので、差はすべて0になります。別のバージョンを選んでください。',
-} as const;
+} as const, english.evaluationText);
 
-export const evaluationTextTemplates = {
+export const evaluationTextTemplates = localized({
   versionLabel: (version: string) => `バージョン ${version}`,
   baselineAliasOption: (alias: string, versionLabel: string) => `${alias}（${versionLabel}）`,
   baselineFallbackHint: (alias: string) =>
     `${alias} はこのバージョンを指しているため、直前に登録されたバージョンを基準にしています。`,
-};
+}, english.evaluationTextTemplates);

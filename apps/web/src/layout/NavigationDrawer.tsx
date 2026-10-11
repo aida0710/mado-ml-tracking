@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useEffect, useId, useRef, useState, type MouseEvent } from 'react';
 import { Menu, X } from 'lucide-react';
 import { text } from '../i18n/catalog';
@@ -11,6 +12,7 @@ import { ProductLogo } from '../components/ProductLogo';
  * a tap outside it or on a link closes it too.
  */
 export function NavigationDrawer({ groups }: { groups: NavigationGroup[] }) {
+  useLocale();
   const drawerId = useId();
   const drawerRef = useRef<HTMLDialogElement>(null);
   const [isOpen, setIsOpen] = useState(false);

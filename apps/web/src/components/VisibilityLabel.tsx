@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ComputeTargetVisibility, ProjectVisibility } from '@mmt/contracts';
 import { Lock } from 'lucide-react';
 import { text } from '../i18n/catalog';
@@ -14,6 +15,7 @@ export function VisibilityLabel({
   visibility: ProjectVisibility | ComputeTargetVisibility;
   iconOnly?: boolean;
 }) {
+  useLocale();
   const name = text[visibility];
   return (
     <span className="visibility-label" title={iconOnly ? name : undefined}>

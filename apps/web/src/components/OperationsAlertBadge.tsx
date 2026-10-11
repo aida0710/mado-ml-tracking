@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell } from 'lucide-react';
@@ -25,6 +26,7 @@ function bellLabel(count: number, mayHaveMore: boolean): string {
  * Project's alerts come first.
  */
 export function OperationsAlertBadge({ openProjectId }: { openProjectId?: string }) {
+  useLocale();
   const alerts = useOperationsAlerts();
   const popoverId = useId();
   const { container, isOpen, toggle } = usePopover();

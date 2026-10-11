@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { DatasetVersion, JobStatus } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
@@ -12,6 +13,7 @@ import { text, textTemplates } from '../i18n/catalog';
  * Read from the Project's lineage, the same relations the Lineage page draws.
  */
 export function DatasetVersionUsage({ version }: { version: DatasetVersion }) {
+  useLocale();
   const base = `/projects/${encodeURIComponent(version.projectId)}`;
   const lineage = useQuery(`${version.projectId}:lineage`, (signal) =>
     trackingApi.lineage(version.projectId, signal),

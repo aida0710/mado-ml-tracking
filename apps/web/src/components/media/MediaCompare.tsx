@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { MEDIA_COMPARE_MAX_RUNS } from '@mmt/contracts';
 import { useMediaCompare } from '../../hooks/useMediaCompare';
 import { useMediaLocation } from '../../hooks/useMediaLocation';
@@ -9,6 +10,7 @@ import { MediaStepChecklist } from './MediaStepChecklist';
 import { mediaKindLabels } from '../../i18n/media';
 import { text, textTemplates } from '../../i18n/catalog';
 import type { MediaCompareProps } from '../charts/chartProps';
+import { formatNote } from '../../i18n/textJoining';
 
 // Columns for the "evenly spaced" shortcut: enough to follow training, few enough to fit a screen.
 const EVENLY_SPACED_COLUMNS = 8;
@@ -19,6 +21,7 @@ const EVENLY_SPACED_COLUMNS = 8;
  * chosen from the recorded ones. The key and steps stay in the URL so a link opens the same grid.
  */
 export function MediaCompare({ projectId, runIds }: MediaCompareProps) {
+  useLocale();
   const { chosenKey, steps, setComparedKey, setSteps } = useMediaLocation();
   const comparedRunIds = runIds.slice(0, MEDIA_COMPARE_MAX_RUNS);
   const { choices, selectedKey, stepsByRun, shownSteps, grid } = useMediaCompare({
@@ -46,7 +49,7 @@ export function MediaCompare({ projectId, runIds }: MediaCompareProps) {
                 <select value={selectedKey} onChange={(event) => setComparedKey(event.target.value)}>
                   {keys.map((summary) => (
                     <option key={summary.key} value={summary.key}>
-                      {summary.key}（{mediaKindLabels[summary.kind]}）
+                      {summary.key}{formatNote(mediaKindLabels[summary.kind])}
                     </option>
                   ))}
                 </select>

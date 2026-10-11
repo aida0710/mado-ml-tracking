@@ -58,7 +58,7 @@ function seriesOf(runId, key, index) {
 }
 
 async function openPage({ viewport = DESKTOP, theme = 'light', isMobile = false } = {}) {
-  const context = await browser.newContext({ viewport, isMobile, hasTouch: isMobile });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport, isMobile, hasTouch: isMobile });
   await context.addInitScript((value) => localStorage.setItem('mmt.theme', value), theme);
   await context.route(
     (url) => url.pathname.startsWith('/api/'),

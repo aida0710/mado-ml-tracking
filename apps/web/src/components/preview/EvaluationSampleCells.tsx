@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { Fragment } from 'react';
 import { AudioLines } from 'lucide-react';
 import { trackingApi } from '../../api/tracking';
@@ -21,9 +22,9 @@ export interface EvaluationSampleListProps {
 }
 
 const sampleAudioMessages = {
-  lookup_error: text.evaluationAudioLookupError,
-  run_unavailable: text.evaluationAudioRunUnavailable,
-  not_found: text.evaluationAudioNotFound,
+  get lookup_error() { return text.evaluationAudioLookupError },
+  get run_unavailable() { return text.evaluationAudioRunUnavailable },
+  get not_found() { return text.evaluationAudioNotFound },
 } as const;
 
 /** The player of the sample's audio and the button that opens its waveform, or why there is none. */
@@ -38,6 +39,7 @@ export function SampleAudioCell({
   expanded: boolean;
   onToggle: () => void;
 }) {
+  useLocale();
   if (audio.kind === 'none') return <span className="muted">—</span>;
   if (audio.kind === 'pending') return <span className="muted">{text.loading}</span>;
   if (audio.kind === 'reference_error')
@@ -82,6 +84,7 @@ export function SampleComparedText({
   segments: TextDiffSegment[] | null;
   hidden: 'insert' | 'delete';
 }) {
+  useLocale();
   if (!segments) return <>{value ?? '—'}</>;
   return (
     <>
