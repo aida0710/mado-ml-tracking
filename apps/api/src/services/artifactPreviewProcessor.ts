@@ -34,7 +34,10 @@ interface PreviewFile {
 
 /** Why a preview ended without a file; stored in artifact_previews.error. */
 type PreviewFailure =
-  | { status: 'skipped'; error: 'ffmpeg_unavailable' | 'no_audio_stream' | 'no_video_stream' }
+  | {
+      status: 'skipped';
+      error: 'ffmpeg_unavailable' | 'no_audio_stream' | 'no_video_stream' | 'source_too_large';
+    }
   | { status: 'failed'; error: 'probe_failed' | 'render_failed' | 'render_timeout' };
 
 /** Lost claims are not errors: the newer claim owns the row, so this result is discarded. */
@@ -71,6 +74,8 @@ export class ArtifactPreviewProcessor {
       tools: PreviewTools;
       /** Parent of the per-job temp directories; it needs room for the largest source file. */
       workDirectory: string;
+      /** Larger sources are skipped without being downloaded into workDirectory. */
+      maxSourceBytes: number;
     },
   ) {}
 
@@ -89,6 +94,10 @@ export class ArtifactPreviewProcessor {
   }
 
   private async process(job: PreviewJob, sourcePath: string): Promise<void> {
+    if (job.artifact.size > this.options.maxSourceBytes) {
+      await this.finishAll(job, { status: 'skipped', error: 'source_too_large' });
+      return;
+    }
     try {
       await this.download(job.artifact, sourcePath);
     } catch (error) {

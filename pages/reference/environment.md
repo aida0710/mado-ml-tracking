@@ -24,7 +24,8 @@ chmod 600 .env
 | `PORT` | `4182` | APIが待ち受けるポート |
 | `MMT_PUBLIC_URL` | `http://127.0.0.1:4182` | 利用者が開くURL。SSOのcallbackもこのURLから作る |
 | `MMT_WEB_ORIGIN` | `http://127.0.0.1:5182` | 画面のorigin。通知のリンクにも使う |
-| `MMT_ALLOW_PRIVATE_ORIGINS` | `false` | `true`にすると、LAN・VPNのprivate IPとlocalhostのoriginも許可する |
+| `MMT_ALLOW_PRIVATE_ORIGINS` | `false` | `true`にすると、LAN・VPNのprivate IPとlocalhostのoriginも許可する。開発用。サーバでは`false`のままにする |
+| `MMT_TRUSTED_PROXY_HOPS` | `0`（composeでは`1`） | APIの前にあり、`X-Forwarded-For`に接続元を足すproxyの数。ログインの回数制限と監査の接続元に使う。composeの`web`の前にもう1段proxyを置くなら`2` |
 | `MMT_ALLOW_SEED` | `false` | 見本データの投入を許す。`AUTH_MODE=development`のときだけ効く |
 | `MMT_ALLOW_LOCAL_EXECUTOR` | `false` | local executorを許す。`AUTH_MODE=development`のときだけ効く |
 | `DEVELOPMENT_ADMIN_EMAIL` | `admin@localhost` | 開発用ログインで全体管理者になるメールアドレス |
@@ -114,7 +115,8 @@ openssl rand -base64 32
 | `MMT_PREVIEW_FFPROBE_PATH` | `ffprobe` | ffprobeのパス |
 | `MMT_PREVIEW_POLL_INTERVAL_MS` | `5000` | 処理するArtifactを探す間隔 |
 | `MMT_PREVIEW_TOOL_TIMEOUT_MS` | `1800000`（30分） | ffmpeg・ffprobeの1回の上限。最大40分 |
-| `MMT_PREVIEW_WORK_DIR` | OSの一時ディレクトリ | 本体を一時的に置く場所。最大のArtifactが入る空きが要る |
+| `MMT_PREVIEW_WORK_DIR` | OSの一時ディレクトリ | 本体を一時的に置く場所。`MMT_PREVIEW_MAX_SOURCE_BYTES`の大きさが入る空きが要る |
+| `MMT_PREVIEW_MAX_SOURCE_BYTES` | `10737418240`（10 GiB） | これより大きいArtifactはpreviewを作らない（`skipped`、`source_too_large`） |
 
 ## worker
 

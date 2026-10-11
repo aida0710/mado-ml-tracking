@@ -182,7 +182,9 @@ callbackで断ったときは、利用者には理由を区別せず401を返し
 
 ### 接続元とメンバーの登録
 
-LAN/VPNから使う場合は`MMT_ALLOW_PRIVATE_ORIGINS=true`を設定します。CORS、ログイン/logout、sessionの変更操作で同じ判定を使い、HTTP(S)のIPv4 private・loopback・link-local・CGNAT、IPv6 ULA・loopback・link-localとlocalhostを許可します。設定省略時はfalseです。DNS名で使う場合は`MMT_WEB_ORIGIN`と`MMT_PUBLIC_URL`へ実際のURLを設定してください。Originが欠落/nullの場合や、許可されていないpublic IP・DNS名は拒否します。Bearer API tokenは従来どおりOriginなしで使えます。
+開発環境をLAN/VPNから使う場合は`MMT_ALLOW_PRIVATE_ORIGINS=true`を設定します。サーバでは`MMT_WEB_ORIGIN`・`MMT_PUBLIC_URL`を実際のURLにして`false`のままにします（`.env.example`の`true`は開発用です）。CORS、ログイン/logout、sessionの変更操作で同じ判定を使い、HTTP(S)のIPv4 private・loopback・link-local・CGNAT、IPv6 ULA・loopback・link-localとlocalhostを許可します。設定省略時はfalseです。DNS名で使う場合は`MMT_WEB_ORIGIN`と`MMT_PUBLIC_URL`へ実際のURLを設定してください。Originが欠落/nullの場合や、許可されていないpublic IP・DNS名は拒否します。Bearer API tokenは従来どおりOriginなしで使えます。
+
+ログインの回数制限と監査の接続元は、`MMT_TRUSTED_PROXY_HOPS`段のproxyが`X-Forwarded-For`の右端に足した値から読みます（それより左はclientが書けるので読みません）。composeでは`web`のnginxが足すので既定`1`、その前にTLSのproxyを置くなら`2`にします。`0`ではsocketの接続元だけを使います。
 
 開発Webはport5182でLANから接続できます。`/api`はloopbackのAPI4182へproxyします。Authentikのcallbackは`MMT_PUBLIC_URL`の固定URLを使うので、SSOで使うURLはProviderにも完全一致で登録します。
 
@@ -289,7 +291,7 @@ DBとArtifactsは同時点でバックアップします。DBだけのrestoreで
 
 - compose: `docker compose up -d preview`（`Dockerfile.preview`、ffmpeg入り）。DBとArtifact保存先（`artifacts` volume、S3の環境変数）をAPIと共有します。DB由来の保存先を使う場合は`MMT_STORAGE_SECRET_KEY`をAPIと同じ値で`.env`に入れます。
 - compose以外: ffmpeg/ffprobeを入れたホストで`npm run preview-worker -w @mmt/api`。systemdで動かす場合もAPIと同じ`.env`を読みます。
-- 設定: `MMT_PREVIEW_FFMPEG_PATH`／`MMT_PREVIEW_FFPROBE_PATH`（既定`ffmpeg`／`ffprobe`）、`MMT_PREVIEW_POLL_INTERVAL_MS`（既定5000）、`MMT_PREVIEW_TOOL_TIMEOUT_MS`（1回のffprobe/ffmpegの上限。既定30分、最大40分）、`MMT_PREVIEW_WORK_DIR`（本体を一時的に置く場所。最大のArtifactが入る空きが要る。既定はOSの一時ディレクトリ、composeでは`preview-work` volume）。
+- 設定: `MMT_PREVIEW_FFMPEG_PATH`／`MMT_PREVIEW_FFPROBE_PATH`（既定`ffmpeg`／`ffprobe`）、`MMT_PREVIEW_POLL_INTERVAL_MS`（既定5000）、`MMT_PREVIEW_TOOL_TIMEOUT_MS`（1回のffprobe/ffmpegの上限。既定30分、最大40分）、`MMT_PREVIEW_WORK_DIR`（本体を一時的に置く場所。`MMT_PREVIEW_MAX_SOURCE_BYTES`が入る空きが要る。既定はOSの一時ディレクトリ、composeでは`preview-work` volume）、`MMT_PREVIEW_MAX_SOURCE_BYTES`（これより大きいArtifactは取り寄せず`skipped`・`source_too_large`。既定10 GiB）。
 - 複数台を同時に動かせます（`FOR UPDATE SKIP LOCKED`）。停止（SIGTERM）は処理中のArtifactを終えてから抜けます。composeの`stop_grace_period`は30秒なので、長い処理の途中で止めた行は2時間後に別のworkerが引き継ぎます。
 - 状態の確認: `SELECT kind,status,error,count(*) FROM artifact_previews GROUP BY 1,2,3;`。`ffmpeg_unavailable`が増えたらworkerのffmpegを確認します。`failed`の`storage_failed`・`source_unreadable`は保存先の障害、`probe_failed`・`render_failed`はファイル側の問題です。
 - ログ: `artifact_preview_worker_started`、`artifact_preview_worker_failed`、`artifact_preview_source_unreadable`、`artifact_preview_store_failed`、`artifact_preview_enqueue_failed`（API側）。ffmpegの出力と保存先のパスは出しません。
@@ -388,7 +390,7 @@ siteの考え方と手順は[sites.md](sites.md)、フックは[hooks.md](hooks.
 - runner用の公開hostname: LANの外の計算ノードが報告するhostnameは、画面やSSOと分けて、Job tokenの要求と署名付きwebhookだけを通す（[deploy/edge](../deploy/edge/README.md)）。
 - Forgejo（ジョブのgit repoとcontainer registry）: `docker compose --profile forge up -d forgejo`。`SECRET_KEY`は先に作ったファイル（`MMT_FORGEJO_SECRET_KEY_FILE`）から読む。鍵が無いとForgejoは公開されている既定値を使うので、必ず作り、backupにも含める（[deploy/forgejo](../deploy/forgejo/README.md)）。公式のbase imageは[images/base](../images/base/README.md)。
 - `MMT_HOOK_SECRET_KEY`（base64の32 byte、`openssl rand -base64 32`）: webhookのフックのsecretを暗号化する。無いとwebhookのフックを作れない。鍵を替えると、それまでのwebhookのフックは503 `hook_secret_key_missing`になるので、作り直して送り手のsecretも替える。
-- `MMT_IMAGE_PLATFORM_CHECK=enforce`: dockerのimageがtargetの`cpuArch`向けかをregistryで確かめてからJobを保存する。registryに届かないと503で保存できないので、registryの止まる時間帯がある環境では`off`（既定）のままにする。非公開のimageには`MMT_REGISTRY_USERNAME`・`MMT_REGISTRY_PASSWORD`（読み取りだけの利用者）を置く。
+- `MMT_IMAGE_PLATFORM_CHECK=enforce`: dockerのimageがtargetの`cpuArch`向けかをregistryで確かめてからJobを保存する。registryに届かないと503で保存できないので、registryの止まる時間帯がある環境では`off`（既定）のままにする。非公開のimageには`MMT_REGISTRY_HOST`・`MMT_REGISTRY_USERNAME`・`MMT_REGISTRY_PASSWORD`（読み取りだけの利用者）を置く。imageの名前はProjectの編集者が決めるので、ログイン情報は`MMT_REGISTRY_HOST`のregistryにだけ送り、ほかのregistryには匿名で問い合わせる。
 - API serverの中で、siteのJobの期限（待ち行列の上限、15分届かない投入の結果）を30秒ごと、フックの待ちの期限（7日）と終わったarrayを10分ごとに確かめる。複数のAPI processがあっても1つだけが動く。別に動かすprocessは無い。
 
 ## Run終端の後処理が失敗したとき

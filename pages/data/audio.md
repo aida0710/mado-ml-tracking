@@ -80,7 +80,7 @@ preview workerは、APIとは別のプロセスで動きます。ffmpegとffprob
 docker compose up -d preview
 ```
 
-preview workerには、APIと同じデータベースの接続先（`MMT_DATABASE_URL`）、保存先の環境変数（`ARTIFACT_FILESYSTEM_ROOT`、`S3_*`）、`MMT_STORAGE_SECRET_KEY`を設定します。作業用の一時ディレクトリ（`MMT_PREVIEW_WORK_DIR`）には、扱う最大のArtifactが入る空き容量が必要です。ffmpegの1回の処理は既定で30分（`MMT_PREVIEW_TOOL_TIMEOUT_MS`）を超えると打ち切ります。
+preview workerには、APIと同じデータベースの接続先（`MMT_DATABASE_URL`）、保存先の環境変数（`ARTIFACT_FILESYSTEM_ROOT`、`S3_*`）、`MMT_STORAGE_SECRET_KEY`を設定します。作業用の一時ディレクトリ（`MMT_PREVIEW_WORK_DIR`）には本体を丸ごと置くので、`MMT_PREVIEW_MAX_SOURCE_BYTES`（既定10 GiB）が入る空き容量が必要です。これより大きいArtifactはpreviewを作りません。ffmpegの1回の処理は既定で30分（`MMT_PREVIEW_TOOL_TIMEOUT_MS`）を超えると打ち切ります。
 
 ## 関連するページ
 

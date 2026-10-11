@@ -572,7 +572,7 @@ runnerはsiteの計算ノードでJob token（`mmtj_`）を使って報告する
 
 ### imageのCPU照合
 
-- `MMT_IMAGE_PLATFORM_CHECK=enforce`（既定`off`）では、dockerのimageを使うJob・Task・自動実行rule・フック・子Jobを保存するとき、registry（Docker Registry HTTP API v2、https）からimageのmanifestを読み、`linux/<target.cpuArch>`を含むかを確かめる。含まなければ422 `image_platform_mismatch`、registryに届かない・読めなければ503 `image_registry_unavailable`。Docker Hubなどtokenを求めるregistryには自動でtokenを取り、非公開のimageには`MMT_REGISTRY_USERNAME`・`MMT_REGISTRY_PASSWORD`を使う。imageはdigestで固定なので、結果はprocessの中で使い回す。Apptainer/Singularityしかないsiteでも、runnerがdockerのimageを`apptainer pull --arch`でSIFへ変えるので、同じ照合が当てはまる。
+- `MMT_IMAGE_PLATFORM_CHECK=enforce`（既定`off`）では、dockerのimageを使うJob・Task・自動実行rule・フック・子Jobを保存するとき、registry（Docker Registry HTTP API v2、https）からimageのmanifestを読み、`linux/<target.cpuArch>`を含むかを確かめる。含まなければ422 `image_platform_mismatch`、registryに届かない・読めなければ503 `image_registry_unavailable`。Docker Hubなどtokenを求めるregistryには自動でtokenを取り、非公開のimageには`MMT_REGISTRY_USERNAME`・`MMT_REGISTRY_PASSWORD`を使い、`MMT_REGISTRY_HOST`のregistry（とそのregistryが示すtoken発行先）にだけ送る（3つとも設定するか、どれも設定しない）。token発行先はhttpsに限る。imageはdigestで固定なので、結果はprocessの中で使い回す。Apptainer/Singularityしかないsiteでも、runnerがdockerのimageを`apptainer pull --arch`でSIFへ変えるので、同じ照合が当てはまる。
 
 ## フックとドライバー
 
@@ -686,7 +686,7 @@ DatasetVersionは`contentKind`を持つ。`reference`は従来どおりクライ
 - media情報: workerはffprobeで読んだ先頭の音声streamを`artifact_media_info`に`source='ffprobe'`で入れる。ヘッダー由来の行（`source='header'`）があれば上書きしない。長さが読めない、値が範囲外（sample rateが768kHz超、チャンネル数1024超、長さ31日超など）、音声streamが無い（動画のみ、MP3のカバー画像はvideoとして扱わない）ときは入れない。
 - `GET /projects/:p/artifacts/:a/previews` → `{items:ArtifactPreview[]}`（`{artifactId,kind,status,previewArtifactId:string|null,error:string|null,attempts,updatedAt}`、kind順）。viewer+`read`。previewの不要なArtifactは`items:[]`。別ProjectのArtifactは404 `not_found`。生成物の中身は通常の`GET /projects/:p/artifacts/:id/content`で読む。
 - Webの音声viewerは64MiBを超えるファイルでpreviewが`ready`なら、peaks JSONとスペクトログラム画像で全体を表示し、クリックでその位置へ移動する（拡大・チャンネル選択・melは使えない）。再生は従来どおりRangeのstream。生成中は5秒ごとに状態を読み直す。
-- preview workerの設定: `MMT_DATABASE_URL`、保存先の環境変数（`ARTIFACT_FILESYSTEM_ROOT`、`S3_*`）、DB由来の保存先がある場合は`MMT_STORAGE_SECRET_KEY`をAPIと同じ値で渡す。`MMT_PREVIEW_FFMPEG_PATH`／`MMT_PREVIEW_FFPROBE_PATH`（既定`ffmpeg`／`ffprobe`）、`MMT_PREVIEW_POLL_INTERVAL_MS`（既定5000）、`MMT_PREVIEW_TOOL_TIMEOUT_MS`（ffprobe/ffmpeg 1回の上限。既定30分、最大40分）、`MMT_PREVIEW_WORK_DIR`（一時ディレクトリの親。最大のArtifactが入る容量が要る。既定はOSの一時ディレクトリ）。起動は`npm run preview-worker -w @mmt/api`。
+- preview workerの設定: `MMT_DATABASE_URL`、保存先の環境変数（`ARTIFACT_FILESYSTEM_ROOT`、`S3_*`）、DB由来の保存先がある場合は`MMT_STORAGE_SECRET_KEY`をAPIと同じ値で渡す。`MMT_PREVIEW_FFMPEG_PATH`／`MMT_PREVIEW_FFPROBE_PATH`（既定`ffmpeg`／`ffprobe`）、`MMT_PREVIEW_POLL_INTERVAL_MS`（既定5000）、`MMT_PREVIEW_TOOL_TIMEOUT_MS`（ffprobe/ffmpeg 1回の上限。既定30分、最大40分）、`MMT_PREVIEW_WORK_DIR`（一時ディレクトリの親。`MMT_PREVIEW_MAX_SOURCE_BYTES`が入る容量が要る。既定はOSの一時ディレクトリ）、`MMT_PREVIEW_MAX_SOURCE_BYTES`（これより大きいArtifactは取り寄せず`skipped`・error`source_too_large`。既定10 GiB）。起動は`npm run preview-worker -w @mmt/api`。
 - この機能より前に登録したArtifactは対象にならない（backfillは未実装）。
 ## 全体管理: プロジェクト
 
