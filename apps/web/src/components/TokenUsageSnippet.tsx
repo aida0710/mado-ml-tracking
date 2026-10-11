@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import { CodeSnippet } from './CodeSnippet';
 import { buildTokenUsageSnippet, type TokenAuthentication } from '../lib/tokenUsageSnippet';
@@ -8,6 +9,7 @@ import { text } from '../i18n/catalog';
  * example holds no token; running it asks for one, which is pasted from the dialog.
  */
 export function TokenUsageSnippet({ projectId }: { projectId: string }) {
+  useLocale();
   const authenticationId = useId();
   const [authentication, setAuthentication] = useState<TokenAuthentication>('bearer');
   const snippet = buildTokenUsageSnippet({

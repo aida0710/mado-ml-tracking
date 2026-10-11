@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { text } from '../i18n/catalog';
 
@@ -14,6 +15,7 @@ export function JobShellEditor({
   onChange: (content: string) => void;
   required?: boolean;
 }) {
+  useLocale();
   const id = useId();
   return (
     <div className="field">

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { Project } from '@mmt/contracts';
 import { text } from '../i18n/catalog';
 import { ProjectSwitcher } from './ProjectSwitcher';
@@ -19,6 +20,7 @@ export function ProjectBar({
   /** Offered at the end of the switcher to those who may create a Project. */
   onCreateProject?: () => void;
 }) {
+  useLocale();
   return (
     <div className={placement === 'sidebar' ? 'sidebar-project' : 'projectbar'}>
       <ProjectSwitcher projects={projects} project={project} onCreateProject={onCreateProject} />

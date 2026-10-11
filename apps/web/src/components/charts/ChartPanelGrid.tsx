@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId, useState, type CSSProperties, type ReactNode } from 'react';
 import { Plus, RotateCcw } from 'lucide-react';
 import type { ChartPanelLayout, ChartXAxis } from '@mmt/contracts';
@@ -65,6 +66,7 @@ export function ChartPanelGrid({
   /** Shown without panels; by default it tells whether the Runs have metrics at all. */
   emptyMessage?: string;
 }) {
+  useLocale();
   const [isAdding, setIsAdding] = useState(false);
   const headingId = useId();
   const shared = useChartPanelData({

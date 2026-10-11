@@ -1,8 +1,10 @@
+import * as english from './en/computerSetup';
+import { localized } from './localized';
 import type { TargetDirectoryListingOutcome } from '@mmt/contracts';
 
 // Adding and editing an ssh or local computer in two steps: 1「接続」(how a worker reaches it)
 // and 2「接続後の設定」(what its Jobs use), filled in from a worker's connection check.
-export const computerSetupText = {
+export const computerSetupText = localized({
   setupStepConnection: '接続',
   setupStepSettings: '接続後の設定',
   computerKindLegend: '種類',
@@ -52,9 +54,9 @@ export const computerSetupText = {
   maxConcurrentJobsHint: '既定は選んだGPUの数です（GPUが無ければ1）。',
   enabledHint: '有効にすると、このコンピュータでJobが動き始めます。',
   hostFacts: 'マシン',
-} as const;
+} as const, english.computerSetupText);
 
-export const computerSetupTextTemplates = {
+export const computerSetupTextTemplates = localized({
   checkWorkerLabel: (workerId: string, hostname: string | null) =>
     hostname ? `${workerId}（${hostname}）` : workerId,
   checkWorkerSource: (tokenName: string) => `token: ${tokenName}`,
@@ -65,12 +67,12 @@ export const computerSetupTextTemplates = {
   cpuCount: (count: number) => `${count}コア`,
   directoryFree: (free: string) => `空き ${free}`,
   gpuOption: (index: string, name: string, memory: string) => `${index}: ${name}（${memory}）`,
-};
+}, english.computerSetupTextTemplates);
 
-export const directoryListingOutcomeNotes = {
+export const directoryListingOutcomeNotes = localized({
   ok: '',
   missing: 'このディレクトリはありません',
   not_directory: 'ディレクトリではありません',
   denied: 'このディレクトリは読めません（権限がありません）',
   unreachable: 'workerが接続できませんでした',
-} satisfies Record<TargetDirectoryListingOutcome, string>;
+} satisfies Record<TargetDirectoryListingOutcome, string>, english.directoryListingOutcomeNotes);

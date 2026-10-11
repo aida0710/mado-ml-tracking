@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { Plus, RefreshCw } from 'lucide-react';
 import type { Launcher, LauncherCreated } from '@mmt/contracts';
@@ -23,6 +24,7 @@ type LauncherAction = { kind: 'rotate' | 'revoke'; launcher: Launcher };
  * them. A new token is shown once, with an example launcher.toml.
  */
 export function LaunchersPanel() {
+  useLocale();
   const launchers = useQuery('launchers', launchersApi.list);
   const [isCreating, setCreating] = useState(false);
   const [action, setAction] = useState<LauncherAction | null>(null);

@@ -19,7 +19,7 @@ const browser = await chromium.launch({
   ...(process.env.MMT_CHROMIUM_PATH ? { executablePath: process.env.MMT_CHROMIUM_PATH } : {}),
   args: ['--no-sandbox'],
 });
-const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1000 } });
 const api = createBrowserApi();
 api.state.loggedIn = true;
 const now = '2026-10-10T00:00:00Z';

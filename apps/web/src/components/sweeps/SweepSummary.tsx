@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Pause, Play, Square } from 'lucide-react';
@@ -17,6 +18,7 @@ import {
   sweepTrialStateLabels,
 } from '../../i18n/sweeps';
 import { text, textTemplates } from '../../i18n/catalog';
+import { formatNote } from '../../i18n/textJoining';
 
 // Reuses the Job status colors: a paused sweep reads like waiting work.
 const STATUS_BADGE_CLASSES: Record<SweepStatus, string> = {
@@ -28,6 +30,7 @@ const STATUS_BADGE_CLASSES: Record<SweepStatus, string> = {
 };
 
 export function SweepStatusBadge({ status }: { status: SweepStatus }) {
+  useLocale();
   return (
     <span className={`status-badge ${STATUS_BADGE_CLASSES[status]}`}>
       <span aria-hidden="true">●</span>
@@ -53,6 +56,7 @@ export function SweepSummary({
   canControl: boolean;
   onChanged: () => void;
 }) {
+  useLocale();
   const [dialog, setDialog] = useState<SweepDialog>(null);
   const [cancelRunningTrials, setCancelRunningTrials] = useState(false);
   const mutation = useMutation();
@@ -119,7 +123,7 @@ export function SweepSummary({
           <>
             <DetailsList entries={[
               [text.sweepTrialIndex, <Link to={`/projects/${projectId}/runs/${best.runId}`}>{textTemplates.sweepTrialRunName(best.trialIndex)}</Link>],
-              [`${sweep.objective.metric}（${sweepGoalLabels[sweep.objective.goal]}）`,
+              [`${sweep.objective.metric}${formatNote(sweepGoalLabels[sweep.objective.goal])}`,
                 <span className="mono">{best.objectiveValue === null ? '—' : formatNumber(best.objectiveValue)}</span>],
             ]} />
             <KeyValues values={best.parameters} />

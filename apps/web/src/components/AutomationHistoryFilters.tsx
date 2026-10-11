@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ModelAutomationRule } from '@mmt/contracts';
 import type { AutomationExecutionFilter } from '../api/automation';
 import type { ExecutionCatalog } from '../types/executionCatalog';
@@ -17,6 +18,7 @@ export function AutomationHistoryFilters({
   catalog?: ExecutionCatalog;
   onChange: (filter: AutomationExecutionFilter) => void;
 }) {
+  useLocale();
   const versionOptions = catalog ? buildCatalogOptions(catalog).models : [];
   return (
     <div className="automation-history-filters">

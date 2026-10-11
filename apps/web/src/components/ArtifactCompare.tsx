@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { Artifact, Run } from '@mmt/contracts';
 import { ArrowRightLeft } from 'lucide-react';
@@ -29,6 +30,7 @@ function findCommonPaths(artifactsByRun: Artifact[][]): CommonArtifactPath[] {
 }
 
 function ComparedAudio({ runs, entry }: { runs: Run[]; entry: CommonArtifactPath }) {
+  useLocale();
   const players = useRef(new Map<string, HTMLAudioElement>());
   const [lastPlayedRunId, setLastPlayedRunId] = useState<string | null>(null);
   const pauseOthers = (runId: string) => {
@@ -77,6 +79,7 @@ function ComparedAudio({ runs, entry }: { runs: Run[]; entry: CommonArtifactPath
 }
 
 export function ArtifactCompare({ projectId, runs }: { projectId: string; runs: Run[] }) {
+  useLocale();
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const artifacts = useQuery(`${projectId}:compare-artifacts:${runs.map((run) => run.id).join(',')}`, (signal) =>
     Promise.all(runs.map((run) => trackingApi.artifacts(projectId, run.id, signal))),

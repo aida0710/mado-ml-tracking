@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useRef, useState } from 'react';
 import {
   ArrowDown,
@@ -39,11 +40,11 @@ const PANEL_CHROME_PX = 110;
 const DEFAULT_VIEW_SETTINGS: ChartPanelViewSettings = { xScale: 'linear', showRaw: true };
 
 const widthLabels: Record<PanelWidth, string> = {
-  third: text.chartWidthThird,
-  half: text.chartWidthHalf,
-  full: text.chartWidthFull,
+  get third() { return text.chartWidthThird },
+  get half() { return text.chartWidthHalf },
+  get full() { return text.chartWidthFull },
 };
-const moveButtons: Array<[PanelMoveDirection, string, typeof ArrowUp]> = [
+const getMoveButtons = (): Array<[PanelMoveDirection, string, typeof ArrowUp]> => [
   ['up', text.moveChartUp, ArrowUp],
   ['down', text.moveChartDown, ArrowDown],
   ['left', text.moveChartLeft, ArrowLeft],
@@ -90,6 +91,7 @@ export function ChartPanel({
   valueScale,
   placement,
 }: ChartPanelViewProps) {
+  useLocale();
   const [view, setView] = useState(DEFAULT_VIEW_SETTINGS);
   const [zoom, setZoom] = useState<MetricXRange | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -129,7 +131,7 @@ export function ChartPanel({
               </summary>
               <div className="chart-placement-menu">
                 <div className="chart-move-buttons">
-                  {moveButtons.map(([direction, label, Icon]) => (
+                  {getMoveButtons().map(([direction, label, Icon]) => (
                     <button
                       key={direction}
                       type="button"

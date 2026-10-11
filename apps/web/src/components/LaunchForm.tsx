@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { ComputeTargetDetails, Job, Run, WorkerPresence } from '@mmt/contracts';
 import { FormFields } from './FormFields';
@@ -21,15 +22,15 @@ import { text } from '../i18n/catalog';
 import { workerCoverageText } from '../i18n/workerCoverage';
 
 const clearedChoiceNotices: Record<ClearedLaunchChoice, string> = {
-  codeVersion: text.launchClearedCodeVersion,
-  target: text.launchClearedTarget,
-  gpus: text.launchClearedGpus,
+  get codeVersion() { return text.launchClearedCodeVersion; },
+  get target() { return text.launchClearedTarget; },
+  get gpus() { return text.launchClearedGpus; },
 };
 
 const stepLabels: Record<LaunchStep, string> = {
-  setup: text.launchSetup,
-  resources: text.launchResources,
-  review: text.launchReview,
+  get setup() { return text.launchSetup; },
+  get resources() { return text.launchResources; },
+  get review() { return text.launchReview; },
 };
 
 /**
@@ -56,6 +57,7 @@ export function LaunchForm({
   onClose: () => void;
   onSaved: (job: Job) => void;
 }) {
+  useLocale();
   const form = useLaunchForm({
     existingRun,
     candidates: {
@@ -97,11 +99,11 @@ export function LaunchForm({
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        form.setValidationError(null);
+        form.clearValidationFailure();
         try {
           submit();
         } catch (error) {
-          form.setValidationError((error as Error).message);
+          form.setValidationFailure(error);
         }
       }}
     >

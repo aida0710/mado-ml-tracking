@@ -192,7 +192,7 @@ try {
   await copyFile(checkpoint, copiedCheckpoint);
   await utimes(copiedCheckpoint, new Date('2026-10-01T00:00:00Z'), new Date('2026-10-01T00:00:00Z'));
 
-  const context = await browser.newContext({ viewport: DESKTOP });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport: DESKTOP });
   const page = await context.newPage();
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -294,7 +294,7 @@ try {
   const copyPath = 'checkpoints/step-15000/model.bin';
   await interruptUpload(page, parts, { openDialog: openUploadDialog, filePath: checkpoint, artifactPath: copyPath });
   const copySession = await sessionAt(copyPath);
-  const otherContext = await browser.newContext({ viewport: DESKTOP });
+  const otherContext = await browser.newContext({ locale: 'ja-JP', viewport: DESKTOP });
   await otherContext.addInitScript(() => Object.defineProperty(globalThis.crypto, 'subtle', { value: undefined }));
   const otherPage = await otherContext.newPage();
   otherPage.on('pageerror', (error) => pageErrors.push(error.message));
@@ -352,7 +352,7 @@ try {
   results.goneStartsOver = { path: gonePath };
 
   // 6. The editor's role is lowered to viewer while the dialog is open.
-  const editorContext = await browser.newContext({ viewport: DESKTOP });
+  const editorContext = await browser.newContext({ locale: 'ja-JP', viewport: DESKTOP });
   const editorPage = await editorContext.newPage();
   editorPage.on('pageerror', (error) => pageErrors.push(error.message));
   editorPage.on('dialog', (dialog) => void dialog.accept());

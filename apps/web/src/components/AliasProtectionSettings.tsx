@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import type { Model, ModelAliasProtection, ModelAliasProtectionRole } from '@mmt/contracts';
@@ -21,6 +22,7 @@ const PROJECT_SCOPE = '';
 
 /** The "保護alias" tab of the Models page: who may change which alias by hand. */
 export function AliasProtectionSettings({ models }: { models: Model[] }) {
+  useLocale();
   const { project } = useProject();
   const { user } = useAuth();
   const canManage = canManageAliasProtections(project.role, user.isAdmin);

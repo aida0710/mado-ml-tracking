@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatErrorMessage } from '../lib/errorMessage';
 
@@ -15,6 +16,7 @@ export function useQuery<T>(
   loader: (signal: AbortSignal) => Promise<T>,
   pollMs?: number,
 ): QueryState<T> {
+  useLocale();
   const loaderRef = useRef(loader);
   loaderRef.current = loader;
   const [revision, setRevision] = useState(0);
@@ -22,13 +24,13 @@ export function useQuery<T>(
     key: string | null;
     value?: T;
     loading: boolean;
-    error: string | null;
-  }>({ key: null, loading: true, error: null });
+    failure: { cause: unknown } | null;
+  }>({ key: null, loading: true, failure: null });
   const reload = useCallback(() => setRevision((value) => value + 1), []);
 
   useEffect(() => {
     if (!key) {
-      setState({ key, loading: false, error: null });
+      setState({ key, loading: false, failure: null });
       return;
     }
     const controller = new AbortController();
@@ -36,19 +38,19 @@ export function useQuery<T>(
       key,
       value: previous.key === key ? previous.value : undefined,
       loading: true,
-      error: null,
+      failure: null,
     }));
     let timer: ReturnType<typeof setTimeout> | undefined;
     async function load() {
       try {
         const value = await loaderRef.current(controller.signal);
-        if (!controller.signal.aborted) setState({ key, value, loading: false, error: null });
+        if (!controller.signal.aborted) setState({ key, value, loading: false, failure: null });
       } catch (error) {
         if (!controller.signal.aborted)
           setState({
             key,
             loading: false,
-            error: formatErrorMessage(error),
+            failure: { cause: error },
           });
       }
       if (!controller.signal.aborted && pollMs) timer = setTimeout(load, pollMs);
@@ -62,7 +64,7 @@ export function useQuery<T>(
   return {
     value: state.key === key ? state.value : undefined,
     loading: state.key !== key || state.loading,
-    error: state.key === key ? state.error : null,
+    error: state.key === key && state.failure ? formatErrorMessage(state.failure.cause) : null,
     reload,
   };
 }

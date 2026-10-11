@@ -1,7 +1,9 @@
+import * as english from './en/checkpoints';
+import { localized } from './localized';
 import type { RunCheckpointSource } from '@mmt/contracts';
 
 // Run checkpoints and resuming training from one: the Run tab, the resume dialog and the Jobs page.
-export const checkpointsText = {
+export const checkpointsText = localized({
   checkpoints: 'Checkpoint',
   checkpointEmpty:
     'このRunのcheckpointはまだありません。SDKの run.log_checkpoint(ディレクトリ, step=…) で保存すると、ここから続きの学習を始められます。',
@@ -24,17 +26,17 @@ export const checkpointsText = {
   checkpointResumedBadge: '再開',
   checkpointResumedBadgeHint: 'checkpointから再開したRunのJobです',
   checkpointSourceRun: '元のRun',
-} as const;
+} as const, english.checkpointsText);
 
 // Text that embeds values; merged into catalog's textTemplates.
-export const checkpointsTextTemplates = {
+export const checkpointsTextTemplates = localized({
   checkpointResumedFromStep: (step: number) => `step ${step} のcheckpointから再開`,
   checkpointResumeMessage: (step: number) =>
     `step ${step} のcheckpointから、新しいRunとして学習を再開します。`,
   checkpointFileCount: (count: number) => `${count} ファイル`,
-};
+}, english.checkpointsTextTemplates);
 
-export const checkpointSourceLabels: Record<RunCheckpointSource, string> = {
+export const checkpointSourceLabels: Record<RunCheckpointSource, string> = localized({
   native: 'SDK',
   mlflow: 'MLflow',
-};
+}, english.checkpointSourceLabels);

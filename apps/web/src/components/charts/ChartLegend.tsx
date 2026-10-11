@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { ChartLine } from '../../lib/metricSeries';
 import { SeriesSwatch } from './SeriesSwatch';
 import { text } from '../../i18n/catalog';
@@ -19,6 +20,7 @@ export function ChartLegend({
   onHighlight: (id: string | null) => void;
   onShowAll: () => void;
 }) {
+  useLocale();
   return (
     <div className="chart-legend" role="group" aria-label={text.chartLegend}>
       {lines.map((line) => (

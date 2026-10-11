@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -10,6 +11,7 @@ import { settingsShellTextTemplates } from '../i18n/settingsShell';
  * opened directly.
  */
 export function SettingsReturnLink() {
+  useLocale();
   // Read once: moving between 全体設定 sections keeps the same way back.
   const [screen] = useState(readSettingsReturnScreen);
   if (!screen) return null;

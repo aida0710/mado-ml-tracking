@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId, useState } from 'react';
 import type { ReportRevisionSummary } from '@mmt/contracts';
 import { CopyButton } from '../CopyButton';
@@ -6,6 +7,7 @@ import { ReportRevisionChangesSummary } from './ReportRevisionChangesSummary';
 import { useReportRevisions } from '../../hooks/useReport';
 import { formatDate } from '../../lib/format';
 import { text, textTemplates } from '../../i18n/catalog';
+import { joinLabels } from '../../i18n/textJoining';
 
 /**
  * Revisions of a report, newest first. A past revision opens read-only; restoring copies it into a
@@ -31,6 +33,7 @@ export function ReportRevisionHistory({
   /** The link that opens a revision, for sending it to someone. */
   revisionUrl: (revision: number) => string;
 }) {
+  useLocale();
   const revisions = useReportRevisions(projectId, reportId, currentRevision);
   const changesIdPrefix = useId();
   // One summary at a time: each one reads two revisions.
@@ -51,7 +54,7 @@ export function ReportRevisionHistory({
                     {item.revision === currentRevision && <span className="report-badge">{text.reportHistoryCurrent}</span>}
                   </div>
                   <div className="muted">
-                    {item.createdBy.displayName}・{formatDate(item.createdAt)}
+                    {joinLabels([item.createdBy.displayName, formatDate(item.createdAt)])}
                   </div>
                   {item.message && <p className="report-history-message">{item.message}</p>}
                   {item.restoredFromRevision !== null && (

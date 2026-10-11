@@ -166,7 +166,7 @@ try {
   const corpus = path.join(fileDirectory, 'speech-corpus');
   await writeCorpus(corpus);
 
-  const context = await browser.newContext({ viewport: DESKTOP });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport: DESKTOP });
   const page = await context.newPage();
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -318,7 +318,7 @@ try {
   await interruptFolderUpload();
   await page.reload();
   releaseLaterParts();
-  const editorContext = await browser.newContext({ viewport: DESKTOP });
+  const editorContext = await browser.newContext({ locale: 'ja-JP', viewport: DESKTOP });
   const editorPage = await editorContext.newPage();
   const editor = await devLogin(editorPage, 'editor@example.test', '検証editor');
   await api(`/projects/${project.id}/members/${editor.id}`, { method: 'put', body: { role: 'editor' } });

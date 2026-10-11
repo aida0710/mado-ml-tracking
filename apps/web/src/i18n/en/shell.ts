@@ -1,0 +1,15 @@
+export const shellText = {
+  openNavigation: "Open menu",
+  closeNavigation: "Close menu",
+  collapseNavigation: "Show sidebar icons only",
+  expandNavigation: "Expand sidebar",
+  resizeNavigation: "Sidebar width",
+  navigationSidebar: "Sidebar",
+  navigationGroupTracking: "Tracking",
+  navigationGroupModels: "Models",
+  navigationGroupData: "Data",
+  navigationGroupExecution: "Execution",
+  navigationGroupProjectManagement: "Project management",
+  showRowDetails: "Show details",
+  hideRowDetails: "Hide details",
+} as const;

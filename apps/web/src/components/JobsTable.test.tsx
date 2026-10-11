@@ -120,10 +120,10 @@ describe('Jobsの一覧', () => {
     expect(without).toContain('新しいRunで再実行');
   });
 
-  it('人が最大試行回数を超えて再実行したJobは、上限が自動の再試行のものだと示す', () => {
+  it('人が最大試行回数を超えて再実行したJobは、上限が自動の再実行のものだと示す', () => {
     expect(render([listItem({ attempt: 2, maxAttempts: 3 })])).toContain('2 / 3');
     expect(render([listItem({ attempt: 2, maxAttempts: 1 })])).toContain(
-      '2（自動の再試行は1回目まで）',
+      '2（自動の再実行は1回目まで）',
     );
   });
 

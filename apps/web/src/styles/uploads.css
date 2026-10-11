@@ -194,13 +194,8 @@ p.upload-resume-notice.muted {
   color: var(--warning);
   font-size: 12px;
 }
-/* After a discard that kept files: the reason, then (below it on a phone) the link to those files. */
+/* After a discard that kept files: the reason, then (below it on a phone, .action-notice) the link
+   to those files. */
 .notice.folder-upload-kept-files {
   margin: 0;
-}
-@media (width < 640px) {
-  .notice.folder-upload-kept-files {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 }

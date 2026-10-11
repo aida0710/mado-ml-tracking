@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import type { Experiment } from '@mmt/contracts';
@@ -18,6 +19,7 @@ export function ExperimentSidebar({
   onSelect: (experimentId: string) => void;
   onCreate: () => void;
 }) {
+  useLocale();
   const [experimentSearch, setExperimentSearch] = useState('');
   return (
     <aside className="experiment-sidebar">

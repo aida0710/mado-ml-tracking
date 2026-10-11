@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import type { Dataset } from '@mmt/contracts';
@@ -19,6 +20,7 @@ export function DatasetActionsMenu({
   dataset: Dataset;
   onChanged: (dataset: Dataset) => void;
 }) {
+  useLocale();
   const menuId = useId();
   const popover = usePopover();
   const [dialog, setDialog] = useState<'description' | 'archive' | 'unarchive' | null>(null);

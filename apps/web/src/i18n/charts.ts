@@ -1,5 +1,7 @@
+import * as english from './en/charts';
+import { localized } from './localized';
 // Metric chart, its controls, legend and tooltip. metrics-chart-core-web owns the entries.
-export const chartsText = {
+export const chartsText = localized({
   chartNoData: '表示できる値がありません',
   chartSmoothing: '平滑化',
   chartSmoothingNone: 'なし',
@@ -25,16 +27,16 @@ export const chartsText = {
   chartKeyboardRoleDescription: '図',
   chartResumeMarker: '再開',
   chartGroupSuffix: '（平均）',
-} as const;
+} as const, english.chartsText);
 
 // Text that embeds values; merged into catalog's textTemplates.
-export const chartsTextTemplates = {
+export const chartsTextTemplates = localized({
   chartLogExcluded: (count: number) =>
     `対数軸に置けない0以下の値 ${count} 点を描いていません。`,
   chartTooltipMore: (count: number) => `ほか ${count} 件`,
   chartAriaLabel: (seriesCount: number) => `メトリクスの図（${seriesCount} 系列）`,
   chartLineSummary: (line: { label: string; latest: string; latestAt: string; min: string; max: string }) =>
-    `${line.label}: 最新 ${line.latest}（${line.latestAt}）、最小 ${line.min}、最大 ${line.max}`,
-  chartLineSummaryMore: (count: number) => `ほか ${count} 系列`,
+    `${line.label}: 最新 ${line.latest}（${line.latestAt}）、最小 ${line.min}、最大 ${line.max}。`,
+  chartLineSummaryMore: (count: number) => `ほか ${count} 系列。`,
   chartResumeMarkerOf: (runLabel: string) => `${runLabel} を再開`,
-};
+}, english.chartsTextTemplates);

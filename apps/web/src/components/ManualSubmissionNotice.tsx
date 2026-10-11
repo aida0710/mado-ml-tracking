@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { CopyableValue } from './CopyableValue';
 import { SubmitCliSetup } from './SubmitCliSetup';
@@ -20,6 +21,7 @@ export function ManualSubmitCommand({
   targetId: string;
   options?: ManualSubmitOptions;
 }) {
+  useLocale();
   return <CopyableValue value={manualSubmitCommand(targetId, options)} />;
 }
 
@@ -29,6 +31,7 @@ export function ManualSubmitCommand({
  * (their PC, say) the owner submits the Jobs. A global site has no owner to mention.
  */
 function ManualSiteOwnerNote({ ownership }: { ownership: ManualSiteOwnership }) {
+  useLocale();
   if (ownership.kind === 'own') return <p className="muted">{text.manualGuideAllScope}</p>;
   if (ownership.kind === 'someoneElse')
     return (
@@ -49,6 +52,7 @@ export function WaitingJobSubmission({
   targetId: string;
   ownership: ManualSiteOwnership;
 }) {
+  useLocale();
   return (
     <>
       <ManualSubmitCommand targetId={targetId} />
@@ -77,6 +81,7 @@ export function WaitingJobNotice({
   /** Issues the token `mado-tracking submit` needs, where a Project is open. */
   tokenButton?: ReactNode;
 }) {
+  useLocale();
   return (
     <div className="notice manual-submission">
       <p>{isRequester ? text.manualSubmissionOwnHint : text.manualSubmissionHint}</p>
@@ -91,6 +96,7 @@ export function WaitingJobNotice({
  * `mado-tracking submit`, so the review step shows the command and its setup up front.
  */
 export function LaunchManualSubmissionNotice({ targetId }: { targetId: string }) {
+  useLocale();
   return (
     <div className="notice manual-submission">
       <p>{text.launchManualSubmissionNotice}</p>
@@ -112,6 +118,7 @@ export function ManualSubmissionNotice({
   /** Issues the token `mado-tracking submit` needs, where a Project is open. */
   tokenButton?: ReactNode;
 }) {
+  useLocale();
   if (!groups.length) return null;
   return (
     <section className="notice manual-submission" aria-label={text.manualSubmissionTitle}>
@@ -143,6 +150,7 @@ export function ManualSubmissionGuide({
   targetId: string;
   ownership: ManualSiteOwnership;
 }) {
+  useLocale();
   const commands: Array<{ label: string; options: ManualSubmitOptions }> = [
     { label: text.manualGuideOnce, options: {} },
     { label: text.manualGuideWatch, options: { watch: true } },

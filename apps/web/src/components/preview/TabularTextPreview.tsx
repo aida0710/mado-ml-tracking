@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useMemo, useState } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { trackingApi } from '../../api/tracking';
@@ -32,6 +33,7 @@ function LoadedTabularText({
   content: string;
   format: TabularTextFormat;
 }) {
+  useLocale();
   const parsed = useMemo(() => parseTabularText(content, format), [content, format]);
   const evaluation = useMemo(
     () => (isEvaluationSampleTable(parsed.columns) ? toEvaluationSamples(parsed) : null),
@@ -73,6 +75,7 @@ function LoadedTabularText({
  * the text and back.
  */
 export function TabularTextPreview({ artifact, format }: { artifact: Artifact; format: TabularTextFormat }) {
+  useLocale();
   const canParse = artifact.size <= TABULAR_TEXT_MAX_BYTES;
   const content = useQuery(canParse ? `${artifact.id}:text` : null, (signal) =>
     trackingApi.artifactText(artifact.projectId, artifact.id, signal),

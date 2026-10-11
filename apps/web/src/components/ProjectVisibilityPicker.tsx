@@ -1,10 +1,11 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ProjectVisibility } from '@mmt/contracts';
 import { VisibilityPicker } from './VisibilityPicker';
 import { text } from '../i18n/catalog';
 
 const PROJECT_VISIBILITY_HINTS: Record<ProjectVisibility, string> = {
-  public: text.projectVisibilityPublicHint,
-  private: text.projectVisibilityPrivateHint,
+  get public() { return text.projectVisibilityPublicHint },
+  get private() { return text.projectVisibilityPrivateHint },
 };
 
 /** Chooses who may open a Project, with what each choice means under its name. */
@@ -17,6 +18,7 @@ export function ProjectVisibilityPicker({
   value: ProjectVisibility;
   onChange: (visibility: ProjectVisibility) => void;
 }) {
+  useLocale();
   return (
     <VisibilityPicker
       name={name}

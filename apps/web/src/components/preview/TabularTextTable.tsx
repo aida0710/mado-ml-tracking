@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useMemo, useState, type ReactNode } from 'react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import type { TabularText } from '../../lib/tabularText';
@@ -13,6 +14,7 @@ import { text, textTemplates } from '../../i18n/catalog';
 import { BrokenRowCount, BrokenRowsDetails } from './BrokenRowsDetails';
 
 function SortIcon({ sort, column }: { sort: TabularSort | null; column: number }) {
+  useLocale();
   if (sort?.column !== column) return null;
   return sort.direction === 'ascending' ? <ArrowUp size={12} aria-hidden="true" /> : <ArrowDown size={12} aria-hidden="true" />;
 }
@@ -33,6 +35,7 @@ export function TabularTextTable({
   /** The ［表示形式］ select, to switch this file to text. */
   formatSelect: ReactNode;
 }) {
+  useLocale();
   const rows = useMemo(() => toTabularRows(table), [table]);
   const numericColumns = useMemo(() => table.columns.map((_, column) => isNumericColumn(rows, column)), [rows, table.columns]);
   const [sort, setSort] = useState<TabularSort | null>(null);

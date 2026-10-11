@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import { PlugZap } from 'lucide-react';
 import type { AuthConfig, ComputeTargetDetails, ComputeTargetExecutor } from '@mmt/contracts';
@@ -37,6 +38,7 @@ export function ComputerEditDialog({
   onClose: () => void;
   onSaved: (target: ComputeTargetDetails) => void;
 }) {
+  useLocale();
   const panelId = useId();
   const form = useTargetForm({ target, canAddSshOrLocal: true });
   // The computer as saved: a re-check saves a changed connection before the worker reads it.

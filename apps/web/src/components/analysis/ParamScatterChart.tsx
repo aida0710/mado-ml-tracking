@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { CartesianGrid, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from 'recharts';
 import { text } from '../../i18n/catalog';
@@ -53,6 +54,7 @@ function FieldSelect({
   allowNone?: boolean;
   onChange: (key: string) => void;
 }) {
+  useLocale();
   return (
     <label className="chart-selector">
       <span>{label}</span>
@@ -78,6 +80,7 @@ export function ParamScatterChart({
   onRunClick,
   height = DEFAULT_HEIGHT,
 }: ParamScatterChartProps) {
+  useLocale();
   const theme = useDocumentTheme();
   const numericFields = fields.filter((field) => field.kind === 'numeric');
   const pick = (preferred: string | undefined, fallbackIndex: number) =>

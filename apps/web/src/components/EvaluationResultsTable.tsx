@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { AutomatedRunSummary, ModelAutomationRule } from '@mmt/contracts';
 import { ResponsiveTable, type ResponsiveTableColumn } from './ResponsiveTable';
@@ -9,7 +10,7 @@ import { text } from '../i18n/catalog';
 import { automationText } from '../i18n/automation';
 import { deltaSignLabels, modelsTextTemplates } from '../i18n/models';
 
-const metricValueLabels = { notFinite: text.metricNotFinite };
+const metricValueLabels = { get notFinite() { return text.metricNotFinite } };
 
 function formatSummaryValue(value: MetricValueAt | null): string {
   return value ? formatMetricValue(value.value, 'present', metricValueLabels) : '—';
@@ -23,6 +24,7 @@ function formatRunMetric(run: AutomatedRunSummary, metric: string): string {
 
 // Automatic evaluations are the ones promotion policies judge, so the mark names the rule.
 function OriginBadge({ run, ruleName }: { run: AutomatedRunSummary; ruleName: string | null }) {
+  useLocale();
   return run.automatic ? (
     <span className="evaluation-origin evaluation-origin-automatic">
       {ruleName ? modelsTextTemplates.automaticByRule(ruleName) : text.evaluationAutomatic}
@@ -41,6 +43,7 @@ function MetricSummaryTable({
   summary: EvaluationSummary;
   baselineLabel: string | null;
 }) {
+  useLocale();
   const runLink = (value: MetricValueAt | null) =>
     value ? (
       <Link className="mono" to={`/projects/${projectId}/runs/${value.runId}`}>
@@ -118,6 +121,7 @@ export function EvaluationResultsTable({
   summary: EvaluationSummary;
   baselineLabel: string | null;
 }) {
+  useLocale();
   const ruleName = (run: AutomatedRunSummary) =>
     rules.find((rule) => rule.id === run.ruleId)?.name ?? null;
   const metricColumns: ResponsiveTableColumn<AutomatedRunSummary>[] = summary.metricKeys.map((metric) => ({

@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /** A labelled select of names for an embed setting; the empty value means "not chosen". */
@@ -14,6 +15,7 @@ export function NameSelect({
   noneLabel?: string;
   onChange: (value: string) => void;
 }) {
+  useLocale();
   return (
     <label className="field">
       <span>{label}</span>

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState, type ReactNode } from 'react';
 import type { Dataset, DatasetVersion } from '@mmt/contracts';
 import { Link } from 'react-router-dom';
@@ -25,6 +26,7 @@ import { getFieldValue } from '../lib/formValues';
 import { text, textTemplates } from '../i18n/catalog';
 
 export function DatasetsPage() {
+  useLocale();
   const { project, canEdit, isProjectAdmin } = useProject();
   const [dialog, setDialog] = useState<'dataset' | DatasetVersionSource | null>(null);
   const [versionToDelete, setVersionToDelete] = useState<DatasetVersion | null>(null);
@@ -345,6 +347,7 @@ export function DatasetsPage() {
 
 /** Under the dataset's name: its namespace and description, which the list does not show. */
 function DatasetSummary({ dataset }: { dataset: Dataset }) {
+  useLocale();
   return (
     <div className="dataset-summary" data-testid="dataset-summary">
       {dataset.namespace && (
@@ -370,6 +373,7 @@ function ParentVersionLinks({
   loadedVersions: DatasetVersion[];
   datasets: Dataset[];
 }) {
+  useLocale();
   const { project } = useProject();
   const parents = useDatasetVersionsById({
     projectId: project.id,
@@ -396,6 +400,7 @@ function ParentVersionLinks({
 }
 
 function SourceRunLink({ projectId, runId }: { projectId: string; runId: string }) {
+  useLocale();
   const run = useQuery(`${projectId}:run:${runId}`, (signal) => trackingApi.run(projectId, runId, signal));
   return (
     <Link to={`/projects/${projectId}/runs/${runId}`}>

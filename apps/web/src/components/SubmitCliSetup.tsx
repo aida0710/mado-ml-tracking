@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { CodeSnippet } from './CodeSnippet';
 import { buildSubmitCliSetupSnippets } from '../lib/submitCliSetup';
@@ -9,6 +10,7 @@ import { text } from '../i18n/catalog';
  * Project is open, `tokenButton` issues the token right here; elsewhere the text says where.
  */
 export function SubmitCliSetup({ tokenButton }: { tokenButton?: ReactNode }) {
+  useLocale();
   const snippets = buildSubmitCliSetupSnippets(window.location.origin);
   return (
     <details className="connection-more submit-cli-setup">

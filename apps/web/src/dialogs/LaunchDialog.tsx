@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { Job, Run } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
 import { useProjectTargets } from '../hooks/useProjectTargets';
@@ -22,6 +23,7 @@ export function LaunchDialog({
   onClose: () => void;
   onSaved: (job: Job) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const catalog = useExecutionCatalog(project.id);
   const targets = useProjectTargets(project.id);

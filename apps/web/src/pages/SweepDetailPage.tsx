@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link, useParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import type { MetricSeries, SweepTrial } from '@mmt/contracts';
@@ -18,8 +19,10 @@ import type { MetricsChartProps } from '../components/charts/chartProps';
 import { RunAnalysisPanel } from '../components/analysis/RunAnalysisPanel';
 import { sweepAggregationLabels, sweepGoalLabels, sweepMethodLabels } from '../i18n/sweeps';
 import { text, textTemplates } from '../i18n/catalog';
+import { formatNote, joinLabels } from '../i18n/textJoining';
 
 export function SweepDetailPage() {
+  useLocale();
   const { sweepId = '' } = useParams();
   const { project } = useProject();
   const auth = useAuth();
@@ -46,10 +49,10 @@ export function SweepDetailPage() {
                 <h2>{text.sweepDefinition}</h2>
                 <DetailsList entries={[
                   [text.sweepMethod, sweepMethodLabels[sweep.method]],
-                  [text.sweepObjective, `${sweep.objective.metric}・${sweepGoalLabels[sweep.objective.goal]}・${sweepAggregationLabels[sweep.objective.aggregation]}`],
+                  [text.sweepObjective, joinLabels([sweep.objective.metric, sweepGoalLabels[sweep.objective.goal], sweepAggregationLabels[sweep.objective.aggregation]])],
                   [text.sweepParallelism, sweep.parallelism],
                   [text.sweepEarlyStopping, sweep.earlyStopping
-                    ? `hyperband（min_iter ${sweep.earlyStopping.minIter}, eta ${sweep.earlyStopping.eta}${sweep.earlyStopping.maxIter ? `, max_iter ${sweep.earlyStopping.maxIter}` : ''}）`
+                    ? `hyperband${formatNote(`min_iter ${sweep.earlyStopping.minIter}, eta ${sweep.earlyStopping.eta}${sweep.earlyStopping.maxIter ? `, max_iter ${sweep.earlyStopping.maxIter}` : ''}`)}`
                     : text.sweepEarlyStoppingNone],
                   [text.sweepTaskRevision, <Link to={`/projects/${project.id}/tasks?id=${sweep.taskId}`}>{sweep.taskRevision}</Link>],
                   [text.sweepSeedValue, <span className="mono">{sweep.seed}</span>],
@@ -77,6 +80,7 @@ export function SweepDetailPage() {
 
 /** The objective metric of each trial Run by step, overlaid in one chart. */
 function TrialObjectiveHistory({ projectId, detail }: { projectId: string; detail: SweepDetail }) {
+  useLocale();
   const { series, shownTrials, totalTrials } = useTrialObjectiveSeries(projectId, detail);
   return (
     <>

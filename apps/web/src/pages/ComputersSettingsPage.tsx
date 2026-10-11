@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -21,6 +22,7 @@ type TargetDialogState = { mode: 'create' } | { mode: 'edit'; target: ComputeTar
  * or manage opens its details below the list.
  */
 export function ComputersSettingsPage() {
+  useLocale();
   const { user } = useAuth();
   const computers = useComputers();
   const [dialog, setDialog] = useState<TargetDialogState | null>(null);

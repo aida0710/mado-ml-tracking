@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { PromotionPolicy, ServiceAccount } from '@mmt/contracts';
 import { promotionApi } from '../api/promotion';
@@ -26,6 +27,7 @@ export function PromotionOwnerDialog({
   onClose: () => void;
   onSaved: (policy: PromotionPolicy) => void;
 }) {
+  useLocale();
   const candidates = serviceAccounts.filter(
     (account) => account.status === 'active' && account.role === 'admin',
   );

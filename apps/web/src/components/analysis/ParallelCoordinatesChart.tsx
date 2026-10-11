@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { text, textTemplates } from '../../i18n/catalog';
@@ -100,6 +101,7 @@ export function ParallelCoordinatesChart({
   onSelectionChange,
   height = DEFAULT_HEIGHT,
 }: ParallelCoordinatesChartProps) {
+  useLocale();
   const theme = useDocumentTheme();
   const isNarrow = useMediaQuery(narrowerThan('md'));
   const { ref: containerRef, width: availableWidth } = useElementWidth();
@@ -379,6 +381,7 @@ function AxisGraphic({
   onPointerMove: (event: ReactPointerEvent<SVGRectElement>) => void;
   onPointerUp: () => void;
 }) {
+  useLocale();
   const brushTop = brush ? yOf(layout, Math.max(brush.from, brush.to)) : 0;
   const brushBottom = brush ? yOf(layout, Math.min(brush.from, brush.to)) : 0;
   return (
@@ -426,6 +429,7 @@ function AxisGraphic({
 }
 
 function ColorLegend({ theme }: { theme: 'light' | 'dark' }) {
+  useLocale();
   return (
     <span className="parallel-color-legend">
       <span>{text.analysisColorLow}</span>

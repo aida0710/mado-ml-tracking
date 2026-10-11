@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Archive, ArchiveRestore, History, Pencil, RefreshCw } from 'lucide-react';
@@ -29,6 +30,7 @@ export interface ReportPageLocationState {
  * revision read-only. Editors edit the current revision in place.
  */
 export function ReportPage() {
+  useLocale();
   const { reportId = '' } = useParams();
   const { project, canEdit, isProjectAdmin } = useProject();
   const { user } = useAuth();

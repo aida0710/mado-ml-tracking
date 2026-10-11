@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useEffect, useState } from 'react';
 import type { MediaTableColumn } from '@mmt/contracts';
 import { AudioLines, Maximize2, Pause, Play, X } from 'lucide-react';
@@ -18,6 +19,7 @@ export interface CellPlayback {
 }
 
 function AudioCell({ projectId, media, playback }: { projectId: string; media: ResolvedMediaCell; playback: CellPlayback }) {
+  useLocale();
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -80,6 +82,7 @@ function AudioCell({ projectId, media, playback }: { projectId: string; media: R
 }
 
 function ImageCell({ projectId, media }: { projectId: string; media: ResolvedMediaCell }) {
+  useLocale();
   const [expanded, setExpanded] = useState(false);
   const thumbnailId = media.thumbnailArtifactId ?? media.artifactId;
   return (
@@ -103,6 +106,7 @@ function ImageCell({ projectId, media }: { projectId: string; media: ResolvedMed
 }
 
 function VideoCell({ projectId, media }: { projectId: string; media: ResolvedMediaCell }) {
+  useLocale();
   const [expanded, setExpanded] = useState(false);
   return (
     <div className="media-cell-video">
@@ -127,6 +131,7 @@ export function MediaCell({
   value: unknown;
   playback: CellPlayback;
 }) {
+  useLocale();
   const cell = describeTableCell(column, value);
   switch (cell.kind) {
     case 'empty':

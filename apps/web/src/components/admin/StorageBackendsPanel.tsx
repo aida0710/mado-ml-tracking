@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { StorageBackend, StorageTestResult as StorageTestResultValue } from '@mmt/contracts';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -11,6 +12,7 @@ import { SettingsPageHeader } from '../SettingsPageHeader';
 import { StorageBackendsTable } from './StorageBackendsTable';
 import { hasStorageTestPassed, StorageTestResult } from './StorageTestResult';
 import { text, textTemplates } from '../../i18n/catalog';
+import { joinSentences } from '../../i18n/textJoining';
 
 type BackendDialog = { mode: 'create' } | { mode: 'edit'; backend: StorageBackend };
 
@@ -19,6 +21,7 @@ type BackendDialog = { mode: 'create' } | { mode: 'edit'; backend: StorageBacken
  * Saving a backend tests it, and a backend becomes the default only after passing a test.
  */
 export function StorageBackendsPanel() {
+  useLocale();
   const storage = useStorageBackends();
   // Only a backend saved from the screen can be edited there (not one defined by variables).
   const editableBackend = (name: string, edit: (backend: StorageBackend) => void) => {
@@ -99,10 +102,10 @@ export function StorageBackendsPanel() {
       {defaultCandidate && (
         <ConfirmDialog
           title={text.storageMakeDefaultTitle}
-          message={
-            textTemplates.storageMakeDefaultConfirm(defaultCandidate.name) +
-            text.storageMakeDefaultTestFirst
-          }
+          message={joinSentences([
+            textTemplates.storageMakeDefaultConfirm(defaultCandidate.name),
+            text.storageMakeDefaultTestFirst,
+          ])}
           confirmLabel={text.storageMakeDefault}
           onConfirm={() => makeDefaultAfterTest(defaultCandidate)}
           onConfirmed={() => {

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from './useQuery';
 import { text } from '../i18n/catalog';
@@ -17,6 +18,7 @@ export function useRegistry<T extends RegistryItem, V extends RegistryVersion>(
   key: string,
   loaders: RegistryLoaders<T, V>,
 ) {
+  useLocale();
   const [params, setParams] = useSearchParams();
   const requestedVersionId = params.get('version') ?? '';
   const requestedId = params.get('id') ?? '';

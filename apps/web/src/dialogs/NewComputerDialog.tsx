@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { PlugZap } from 'lucide-react';
 import type {
@@ -42,6 +43,7 @@ export function NewComputerDialog({
   onClose: () => void;
   onSaved: (target: ComputeTargetDetails) => void;
 }) {
+  useLocale();
   const form = useTargetForm({ canAddSshOrLocal: true });
   const choice = useCheckWorkerChoice(null);
   const steps = useNewComputerSteps({

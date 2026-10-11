@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId, useRef, useState, type ReactNode } from 'react';
 import type { ComputeTarget, Experiment, ExperimentTask, Sweep, SweepMethod, SweepObjective } from '@mmt/contracts';
 import { sweepsApi } from '../../api/sweeps';
@@ -31,6 +32,7 @@ import { ErrorNotice } from '../Feedback';
 import { SearchSpaceEditor } from './SearchSpaceEditor';
 import { sweepAggregationLabels, sweepGoalLabels, sweepMethodLabels } from '../../i18n/sweeps';
 import { text, textTemplates } from '../../i18n/catalog';
+import { formatNote } from '../../i18n/textJoining';
 
 // The API names the offending parameter in this 422's message (domain/sweeps/searchSpace.ts).
 const SPACE_INVALID_CODE = 'sweep_space_invalid';
@@ -38,7 +40,7 @@ const SPACE_INVALID_CODE = 'sweep_space_invalid';
 /** A 422 about the search space: shown on the row it names, or above the rows. */
 interface SpaceError {
   rowId: string | null;
-  message: string;
+  failure: RequestError;
 }
 
 export function CreateSweepDialog({
@@ -56,6 +58,7 @@ export function CreateSweepDialog({
   onClose: () => void;
   onCreated: (sweep: Sweep) => void;
 }) {
+  useLocale();
   const nextRowId = useRef(0);
   const createRowId = () => `row-${nextRowId.current++}`;
   const [form, setForm] = useState<SweepFormValues>(() => initialSweepForm(tasks[0]?.id ?? '', createRowId));
@@ -83,7 +86,7 @@ export function CreateSweepDialog({
   const fieldErrors = isSubmitted ? validation.fieldErrors : {};
   const rowErrors = {
     ...(isSubmitted ? validation.rowErrors : {}),
-    ...(spaceError?.rowId ? { [spaceError.rowId]: spaceError.message } : {}),
+    ...(spaceError?.rowId ? { [spaceError.rowId]: formatErrorMessage(spaceError.failure) } : {}),
   };
   const gridCombinations = countGridCombinations(rowsToSearchSpace(form.rows, form.method).searchSpace);
   // A grid stops once every combination ran, whatever maxTrials says; said before it is created.
@@ -101,13 +104,13 @@ export function CreateSweepDialog({
     if ('rows' in values || 'method' in values) setSpaceError(null);
   }
 
-  function loadWandbConfig(config: unknown): string | null {
+  function loadWandbConfig(config: unknown): SweepConfigError | null {
     try {
       const settings = convertWandbSweepConfig(config);
       change(applySearchSettings(form, settings, createRowId));
       return null;
     } catch (error) {
-      if (error instanceof SweepConfigError) return error.message;
+      if (error instanceof SweepConfigError) return error;
       throw error;
     }
   }
@@ -123,8 +126,9 @@ export function CreateSweepDialog({
         return await sweepsApi.create(projectId, input);
       } catch (error) {
         if (!(error instanceof RequestError) || error.code !== SPACE_INVALID_CODE) throw error;
-        const message = formatErrorMessage(error);
-        setSpaceError({ rowId: rowIdForSpaceError(message, form.rows), message });
+        // The API's original parameter name still identifies the row after localization.
+        const rowId = rowIdForSpaceError(error.serverMessage ?? error.message, form.rows);
+        setSpaceError({ rowId, failure: error });
         return undefined;
       }
     });
@@ -152,7 +156,7 @@ export function CreateSweepDialog({
             <p className="muted sweep-task-pin">
               {text.sweepTaskRevision} {task.revision}: {text.sweepTaskRevisionPinned}
               <br />
-              {text.sweepExperiment}: {experiment?.name ?? task.experimentId}（{text.sweepExperimentHint}）
+              {text.sweepExperiment}: {experiment?.name ?? task.experimentId}{formatNote(text.sweepExperimentHint)}
             </p>
           )}
           <div className="sweep-form-grid">
@@ -245,7 +249,7 @@ export function CreateSweepDialog({
               )}
             </div>
           </fieldset>
-          {spaceError && !spaceError.rowId && <p className="sweep-field-error" role="alert">{spaceError.message}</p>}
+          {spaceError && !spaceError.rowId && <p className="sweep-field-error" role="alert">{formatErrorMessage(spaceError.failure)}</p>}
           {isSubmitted && validation.searchSpaceError && (
             <p className="sweep-field-error" role="alert">{validation.searchSpaceError}</p>
           )}
@@ -286,6 +290,7 @@ function Field({
   hint?: string;
   children: ReactNode;
 }) {
+  useLocale();
   return (
     <label className={`field${error ? ' invalid' : ''}`}>
       <span>{label}</span>
@@ -309,6 +314,7 @@ function IntegerField({
   errors: Partial<Record<SweepFormField, string>>;
   onChange: (values: Partial<SweepFormValues>) => void;
 }) {
+  useLocale();
   return (
     <Field label={label} error={errors[field]}>
       <input value={form[field]} className="mono" inputMode="numeric"

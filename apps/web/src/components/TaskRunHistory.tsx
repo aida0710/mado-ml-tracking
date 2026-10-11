@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { Run } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
@@ -6,6 +7,7 @@ import { formatDate } from '../lib/format';
 import { text } from '../i18n/catalog';
 
 export function TaskRunHistory({ runs, projectId }: { runs: Run[]; projectId: string }) {
+  useLocale();
   return <ResponsiveTable rows={runs} rowKey={(run) => run.id} empty={text.noTaskRuns} columns={[
     { key: 'name', priority: 'primary', header: text.runName, render: (run) => <Link to={`/projects/${projectId}/runs/${run.id}`}>{run.name}</Link> },
     { key: 'revision', priority: 'secondary', header: text.taskRevision, render: (run) => run.taskRevision ?? '—' },

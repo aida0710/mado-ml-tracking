@@ -1,6 +1,7 @@
 import { MAX_JOB_SHELL_BYTES } from '@mmt/contracts';
 import { text } from '../i18n/catalog';
 import { siteComputersTextTemplates } from '../i18n/siteComputers';
+import { LocalizedError } from './localizedError';
 
 const BYTES_PER_MIB = 1024 ** 2;
 
@@ -11,6 +12,6 @@ const BYTES_PER_MIB = 1024 ** 2;
 export function parseJobShellContent(content: string): string {
   if (!content.trim()) throw new Error(text.jobShellRequired);
   if (new TextEncoder().encode(content).length > MAX_JOB_SHELL_BYTES)
-    throw new Error(siteComputersTextTemplates.jobShellTooLarge(MAX_JOB_SHELL_BYTES / BYTES_PER_MIB));
+    throw new LocalizedError(() => siteComputersTextTemplates.jobShellTooLarge(MAX_JOB_SHELL_BYTES / BYTES_PER_MIB));
   return content;
 }

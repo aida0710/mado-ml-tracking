@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { UserSearchResult } from '@mmt/contracts';
 import { UserSearchField } from './UserSearchField';
 import { UserSummary } from './UserSummary';
@@ -21,6 +22,7 @@ export function UserPicker({
   selectedUser: UserSearchResult | null;
   onSelect: (user: UserSearchResult | null) => void;
 }) {
+  useLocale();
   if (selectedUser)
     return (
       <div className="field">

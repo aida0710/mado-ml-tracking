@@ -6,26 +6,43 @@ import {
   RequestError,
 } from '../api/http';
 import { text } from '../i18n/catalog';
+import { errorText } from '../i18n/errors';
+import { localizeMessage } from '../i18n/messageTranslations';
+import { LocalizedError } from './localizedError';
+import { formatSweepSpaceError } from './sweepSpaceError';
 
-// Codes whose text the Web owns. Every other API code already carries a server message for people.
-const requestErrorText: Record<string, (failure: RequestError) => string> = {
+// Only unambiguous application-owned codes replace the server's original explanation.
+const requestErrorText: Record<string, (failure: RequestError) => string | null> = {
   [NETWORK_ERROR_CODE]: () => text.requestError,
   [INVALID_RESPONSE_CODE]: () => text.invalidResponse,
-  // Same text whether the API or a front proxy refused, so the limit reads the same everywhere.
+  // A front proxy and the API must describe this upload limit in the same way.
   [ARTIFACT_TOO_LARGE_CODE]: () => text.artifactTooLarge,
   [ARTIFACT_CONTENT_UNAVAILABLE_CODE]: (failure) => `${text.contentError} (${failure.status})`,
+  internal_error: () => errorText.internalError,
+  database_unavailable: () => errorText.databaseUnavailable,
+  plugin_request_failed: () => errorText.pluginRequestFailed,
+  plugin_disabled: () => errorText.pluginDisabled,
+  upload_not_open: () => errorText.uploadNotOpen,
+  upload_expired: () => errorText.uploadExpired,
+  artifact_save_failed: () => errorText.artifactSaveFailed,
+  part_checksum_mismatch: () => errorText.partChecksumMismatch,
+  run_deleted: () => errorText.runArchived,
+  body_too_large: () => errorText.bodyTooLarge,
+  sweep_space_invalid: (failure) => formatSweepSpaceError(failure.serverMessage ?? ''),
 };
 
-/** Turns any thrown value into the message shown on screen. */
+/** Turns the original failure into text for the current display language. */
 export function formatErrorMessage(failure: unknown): string {
   if (failure instanceof RequestError) return formatRequestError(failure);
-  if (failure instanceof Error) return failure.message;
-  return String(failure);
+  if (failure instanceof LocalizedError) return failure.getLocalizedMessage();
+  if (failure instanceof Error) return localizeMessage(failure.message);
+  return localizeMessage(String(failure));
 }
 
 function formatRequestError(failure: RequestError): string {
-  const knownText = failure.code ? requestErrorText[failure.code] : undefined;
-  if (knownText) return knownText(failure);
+  const describe = failure.code ? requestErrorText[failure.code] : undefined;
+  const knownMessage = describe?.(failure);
+  if (knownMessage) return knownMessage;
   if (failure.serverMessage) return failure.serverMessage;
   return `${text.requestError} (${failure.status})`;
 }

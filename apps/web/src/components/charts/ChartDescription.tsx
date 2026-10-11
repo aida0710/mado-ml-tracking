@@ -1,9 +1,11 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { ChartXAxis } from '@mmt/contracts';
 import { summarizeChartLines } from '../../lib/chartSummary';
 import { formatXValue } from '../../lib/chartXAxis';
 import { formatNumber } from '../../lib/format';
 import type { ChartLine } from '../../lib/metricSeries';
 import { text, textTemplates } from '../../i18n/catalog';
+import { joinSentences } from '../../i18n/textJoining';
 
 // A Run list draws up to 200 lines; a screen reader hears this many and the count of the rest.
 const SUMMARIZED_LINE_COUNT = 5;
@@ -24,6 +26,7 @@ export function ChartDescription({
   summaryId: string;
   keyboardHintId: string;
 }) {
+  useLocale();
   const summaries = summarizeChartLines(lines);
   const sentences = summaries.slice(0, SUMMARIZED_LINE_COUNT).map((summary) =>
     textTemplates.chartLineSummary({
@@ -38,7 +41,7 @@ export function ChartDescription({
     sentences.push(textTemplates.chartLineSummaryMore(summaries.length - SUMMARIZED_LINE_COUNT));
   return (
     <div className="sr-only">
-      <p id={summaryId}>{sentences.join('。')}</p>
+      <p id={summaryId}>{joinSentences(sentences)}</p>
       <p id={keyboardHintId}>{text.chartKeyboardHint}</p>
     </div>
   );

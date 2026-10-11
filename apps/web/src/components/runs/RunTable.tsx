@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import type { ReactNode } from 'react';
 import type { Run, SavedViewColumn } from '@mmt/contracts';
 import { Empty } from '../Feedback';
@@ -39,6 +40,7 @@ export function RunTable({
   /** Shown instead of the table when the page has no Runs: why, and what to do next. */
   empty?: ReactNode;
 }) {
+  useLocale();
   const isPhone = useMediaQuery(narrowerThan('sm'));
   if (!runs.length) return <Empty>{empty}</Empty>;
 

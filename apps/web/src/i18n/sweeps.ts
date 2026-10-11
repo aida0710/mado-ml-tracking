@@ -1,3 +1,5 @@
+import * as english from './en/sweeps';
+import { localized } from './localized';
 import type {
   SweepMethod,
   SweepObjective,
@@ -8,7 +10,7 @@ import type {
 import type { SearchSpaceRowKind } from '../lib/sweepConfig';
 
 // Sweeps: the list, the create dialog with its search space editor, and the detail page.
-export const sweepsText = {
+export const sweepsText = localized({
   sweeps: 'Sweeps',
   sweepNew: 'Sweepを作成',
   sweepNone: 'Sweepはまだありません',
@@ -94,13 +96,13 @@ export const sweepsText = {
   sweepDefinition: '定義',
   sweepSeedValue: 'Seed',
   sweepTaskRevision: 'Taskの改訂番号',
-} as const;
+} as const, english.sweepsText);
 
 // Text that embeds values; merged into catalog's textTemplates.
-export const sweepsTextTemplates = {
+export const sweepsTextTemplates = localized({
   sweepTrialProgress: (created: number, maxTrials: number) => `${created} / ${maxTrials}`,
   sweepGridEndsEarly: (combinations: number, maxTrials: number) =>
-    `gridの組み合わせが${combinations}通りなので、最大試行数${maxTrials}に届く前に終わります`,
+    `gridの組み合わせが${combinations}通りなので、最大試行数${maxTrials}に届く前に終わります。`,
   sweepGridFewerThanMaxTrials: (combinations: number) =>
     `gridの組み合わせは${combinations}通りです。試行は${combinations}回で終わります。`,
   sweepTargetTaskDefault: (targetName: string) => `Taskの既定（${targetName}）`,
@@ -135,17 +137,17 @@ export const sweepsTextTemplates = {
   sweepConfigParameterShape: (name: string) =>
     `parameter「${name}」にはvalues、value、またはminとmaxが必要です`,
   sweepConfigParameterName: () => 'parameter名は空でない文字列にしてください',
-};
+}, english.sweepsTextTemplates);
 
-export const sweepStatusLabels: Record<SweepStatus, string> = {
+export const sweepStatusLabels: Record<SweepStatus, string> = localized({
   running: '実行中',
   paused: '一時停止',
   finished: '完了',
   canceled: '中止',
   failed: '失敗',
-};
+}, english.sweepStatusLabels);
 
-export const sweepStatusReasonLabels: Record<SweepStatusReason, string> = {
+export const sweepStatusReasonLabels: Record<SweepStatusReason, string> = localized({
   user_requested: '利用者の操作',
   task_revision_changed: 'Taskが改訂された',
   owner_forbidden: '作成者がProjectのeditorではなくなった',
@@ -153,36 +155,36 @@ export const sweepStatusReasonLabels: Record<SweepStatusReason, string> = {
   max_trials_reached: '最大試行数に達した',
   search_space_exhausted: 'gridの組み合わせを使い切った',
   suggestion_failed: '次の試行を提案できなかった',
-};
+}, english.sweepStatusReasonLabels);
 
-export const sweepTrialStateLabels: Record<SweepTrialState, string> = {
+export const sweepTrialStateLabels: Record<SweepTrialState, string> = localized({
   queued: '待機中',
   running: '実行中',
   finished: '完了',
   failed: '失敗',
   canceled: '中止',
   early_stopped: '早期打ち切り',
-};
+}, english.sweepTrialStateLabels);
 
-export const sweepMethodLabels: Record<SweepMethod, string> = {
+export const sweepMethodLabels: Record<SweepMethod, string> = localized({
   grid: 'grid',
   random: 'random',
   bayes: 'bayes',
-};
+}, english.sweepMethodLabels);
 
-export const sweepGoalLabels: Record<SweepObjective['goal'], string> = {
+export const sweepGoalLabels: Record<SweepObjective['goal'], string> = localized({
   minimize: '最小化',
   maximize: '最大化',
-};
+}, english.sweepGoalLabels);
 
-export const sweepAggregationLabels: Record<SweepObjective['aggregation'], string> = {
+export const sweepAggregationLabels: Record<SweepObjective['aggregation'], string> = localized({
   last: '最後の値（last）',
   min: '最小値（min）',
   max: '最大値（max）',
-};
+}, english.sweepAggregationLabels);
 
-export const searchSpaceRowKindLabels: Record<SearchSpaceRowKind, string> = {
+export const searchSpaceRowKindLabels: Record<SearchSpaceRowKind, string> = localized({
   values: '値の列挙',
   range: '範囲',
   constant: '定数',
-};
+}, english.searchSpaceRowKindLabels);

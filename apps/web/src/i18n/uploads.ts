@@ -1,8 +1,10 @@
+import * as english from './en/uploads';
+import { localized } from './localized';
 // Artifact upload dialog and queue: progress, pause, cancel, resume. web-resumable-upload-manager owns the entries.
 import type { UploadItemStatus } from '../hooks/useArtifactUploadQueue';
 import type { ResumeBlocker } from '../lib/uploadResumeBlocker';
 
-export const uploadsText = {
+export const uploadsText = localized({
   uploadChooseFiles: 'ファイルを選ぶ',
   uploadChooseFolder: 'フォルダを選ぶ',
   uploadDropHint: 'ここにファイルやフォルダをドロップできます',
@@ -35,9 +37,9 @@ export const uploadsText = {
   uploadNetworkLostResume: '通信が切れました。回線を確かめてから［再開］を押すと、続きから送ります。',
   uploadPathSameContent: '中身も同じなので、送らなくても構いません。',
   uploadNetworkLostResend: '通信が切れました。回線を確かめてから［再開］を押すと、送り直します。',
-} as const;
+} as const, english.uploadsText);
 
-export const uploadStatusLabels: Record<UploadItemStatus, string> = {
+export const uploadStatusLabels: Record<UploadItemStatus, string> = localized({
   queued: '待機中',
   preparing: '準備中',
   uploading: '送信中',
@@ -46,10 +48,10 @@ export const uploadStatusLabels: Record<UploadItemStatus, string> = {
   failed: '失敗',
   canceled: '取消済み',
   completed: '完了',
-};
+}, english.uploadStatusLabels);
 
 /** What stopped an unfinished upload from continuing. */
-export const resumeBlockerReasons: Record<ResumeBlocker, string> = {
+export const resumeBlockerReasons: Record<ResumeBlocker, string> = localized({
   expired: '期限（7日）が切れたため、送信済みの部分は使えません。',
   gone: 'このアップロードはサーバーに残っていません（破棄されたか、期限切れで消えました）。',
   permissionLost: 'このプロジェクトにArtifactを追加する権限がなくなりました。',
@@ -57,10 +59,10 @@ export const resumeBlockerReasons: Record<ResumeBlocker, string> = {
   runDeleted: 'このRunは削除されたため、Artifactを追加できません。',
   sizeDiffers: '選んだファイルは、途中のアップロードとサイズが違います。',
   contentDiffers: '選んだファイルは、送信済みの部分と中身が一致しません。別のファイルのようです。',
-};
+}, english.resumeBlockerReasons);
 
 /** What the person can do next, next to the buttons of the unfinished upload's row. */
-export const resumeBlockerNextSteps: Record<ResumeBlocker, string> = {
+export const resumeBlockerNextSteps: Record<ResumeBlocker, string> = localized({
   expired: '［最初から送る］で、同じ保存パスへ送り直せます。',
   gone: '［最初から送る］で、同じ保存パスへ送り直せます。',
   permissionLost: 'プロジェクトの管理者に Editor 以上の権限を頼んでください。期限までに権限が戻れば、続きから送れます。',
@@ -68,10 +70,10 @@ export const resumeBlockerNextSteps: Record<ResumeBlocker, string> = {
   runDeleted: '別のRunへ送ってください。',
   sizeDiffers: '同じファイルを選び直してください。',
   contentDiffers: '同じファイルを選び直してください。このファイルを新しく送るときは、上の［ファイルを選ぶ］から選んでください。',
-};
+}, english.resumeBlockerNextSteps);
 
 // Text that embeds values; merged into catalog's textTemplates.
-export const uploadsTextTemplates = {
+export const uploadsTextTemplates = localized({
   uploadSelectedCount: (count: number, totalSize: string) => `${count}件（${totalSize}）`,
   uploadTransferRate: (rate: string) => `${rate}/秒`,
   uploadRemainingTime: (duration: string) => `残り ${duration}`,
@@ -89,4 +91,4 @@ export const uploadsTextTemplates = {
   uploadSessionReceived: (sent: string, total: string) => `${sent} / ${total} 送信済み`,
   uploadResumeMatched: (sent: string, total: string) =>
     `前回の続きから送ります（${sent} / ${total} 送信済み）。保存パスは前回と同じものに合わせました。`,
-};
+}, english.uploadsTextTemplates);

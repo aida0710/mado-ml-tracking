@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ComputeTarget, Hook } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { automationOwnerLabel } from '../lib/automationOwner';
@@ -8,6 +9,7 @@ import { hookTriggerLabels } from '../i18n/hooks';
 import { submissionModeBadgeLabels } from '../i18n/compute';
 
 function HookTarget({ hook, targets }: { hook: Hook; targets: ComputeTarget[] }) {
+  useLocale();
   const target = targets.find((item) => item.id === hook.template.targetId);
   if (!target) return <>{hook.template.targetId}</>;
   return (
@@ -38,6 +40,7 @@ export function HooksTable({
   onSelect: (hookId: string) => void;
   onToggle: (hook: Hook) => void;
 }) {
+  useLocale();
   return (
     <ResponsiveTable
       rows={hooks}

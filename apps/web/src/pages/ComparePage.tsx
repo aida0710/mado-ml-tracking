@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Download } from 'lucide-react';
@@ -41,21 +42,22 @@ const TAB_PARAM = 'tab';
 const compareTabs = ['details', 'artifacts', 'media', 'analysis'] as const;
 type CompareTab = (typeof compareTabs)[number];
 const compareTabLabels: Record<CompareTab, string> = {
-  details: text.details,
-  artifacts: text.artifacts,
-  media: text.mediaTab,
-  analysis: text.analysisTab,
+  get details() { return text.details },
+  get artifacts() { return text.artifacts },
+  get media() { return text.mediaTab },
+  get analysis() { return text.analysisTab },
 };
 
 const rowGroupLabels: Record<ComparisonTableRow['group'], string> = {
-  modelVersion: text.comparisonModelVersion,
-  datasetVersions: text.comparisonDatasetVersions,
-  params: text.parameters,
-  metrics: text.metrics,
-  tags: text.tags,
+  get modelVersion() { return text.comparisonModelVersion },
+  get datasetVersions() { return text.comparisonDatasetVersions },
+  get params() { return text.parameters },
+  get metrics() { return text.metrics },
+  get tags() { return text.tags },
 };
 
 export function ComparePage() {
+  useLocale();
   const { project } = useProject();
   const [params, setParams] = useSearchParams();
   const [onlyDifferences, setOnlyDifferences] = useState(false);
@@ -152,6 +154,7 @@ function ComparisonDetails({
   onOnlyDifferencesChange: (onlyDifferences: boolean) => void;
   onBaselineChange: (runId: string | null) => void;
 }) {
+  useLocale();
   const { runs, baselineRunId } = comparison;
   const rows = filterComparisonRows(buildComparisonTableRows(comparison), onlyDifferences);
   return (
@@ -225,6 +228,7 @@ function ComparisonDetails({
 }
 
 function StatusRow({ runs }: { runs: Run[] }) {
+  useLocale();
   return (
     <tr>
       <th>{text.status}</th>
@@ -239,6 +243,7 @@ function StatusRow({ runs }: { runs: Run[] }) {
 
 /** Every compared Run drawn over each other, panel by panel; Runs can be grouped per panel. */
 function ComparisonCharts({ projectId, runs }: { projectId: string; runs: Run[] }) {
+  useLocale();
   const keys = useMemo(() => getRunChartKeys(runs), [runs]);
   const defaultLayout = useMemo(
     () => createDefaultLayout(keys.metricKeys, (index) => `default-${index}`),

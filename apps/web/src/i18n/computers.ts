@@ -1,8 +1,10 @@
+import * as english from './en/computers';
+import { localized } from './localized';
 import type { ComputeTargetVisibility } from '@mmt/contracts';
 
 // 全体設定 → コンピュータ (/settings/computers): every computer with its visibility and state, and
 // the read-only list of the computers one may use on the Project's Compute page.
-export const computersText = {
+export const computersText = localized({
   computersHint:
     'すべてのコンピュータが出ます。自分が使えないもの（他の人のPrivate）は、名前・種類・所有者・公開範囲・状態だけを出します。',
   noComputers: 'コンピュータはまだありません',
@@ -42,18 +44,18 @@ export const computersText = {
   workerSetupService: 'systemdで常駐させる（worker IDはこのマシンのホスト名）',
   workerSetupEnvironment: 'systemdを使わずに動かす（環境変数）',
   workerSetupEnvironmentCommands: '環境変数（tokenは実行時に入力）とworkerの起動',
-} as const;
+} as const, english.computersText);
 
 // Text that embeds values.
-export const computersTextTemplates = {
+export const computersTextTemplates = localized({
   computerLauncherSeen: (name: string, lastSeen: string) => `${name}（最終応答 ${lastSeen}）`,
   // The「workerの設定」row for those who may not manage the computer. Without an owner (a computer
   // from before owners), only global administrators manage it.
   workerSetUpBy: (ownerName: string | null) =>
     ownerName ? `所有者（${ownerName}さん）か全体管理者が設定します。` : '全体管理者が設定します。',
-};
+}, english.computersTextTemplates);
 
-export const computerVisibilityHints = {
-  public: computersText.computerVisibilityPublicHint,
-  private: computersText.computerVisibilityPrivateHint,
-} satisfies Record<ComputeTargetVisibility, string>;
+export const computerVisibilityHints = localized({
+  get public() { return computersText.computerVisibilityPublicHint; },
+  get private() { return computersText.computerVisibilityPrivateHint; },
+} satisfies Record<ComputeTargetVisibility, string>, english.computerVisibilityHints);

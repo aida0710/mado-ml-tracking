@@ -1,7 +1,9 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { formatValue } from '../lib/format';
 
 export function JsonDetails({ value }: { value: unknown }) {
+  useLocale();
   // tabIndex: a long value scrolls, which the keyboard reaches only with focus.
   return (
     <pre className="json-view" tabIndex={0}>
@@ -10,6 +12,7 @@ export function JsonDetails({ value }: { value: unknown }) {
   );
 }
 export function DetailsList({ entries }: { entries: Array<[string, ReactNode]> }) {
+  useLocale();
   return (
     <dl className="details-list">
       {entries.map(([label, value]) => (
@@ -22,6 +25,7 @@ export function DetailsList({ entries }: { entries: Array<[string, ReactNode]> }
   );
 }
 export function KeyValues({ values }: { values: Record<string, unknown> }) {
+  useLocale();
   return (
     <DetailsList
       entries={Object.entries(values).map(([label, value]) => [

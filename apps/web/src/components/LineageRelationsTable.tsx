@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { LineageGraph, LineageNode } from '@mmt/contracts';
 import { lineageNodeUrl } from '../lib/lineageLayout';
@@ -16,6 +17,7 @@ export function LineageRelationsTable({
   projectId: string;
   initiallyOpen: boolean;
 }) {
+  useLocale();
   const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
   return (
     <details className="graph-relations" open={initiallyOpen}>
@@ -51,6 +53,7 @@ export function LineageRelationsTable({
 }
 
 function RelationEnd({ node, id, projectId }: { node: LineageNode | undefined; id: string; projectId: string }) {
+  useLocale();
   if (!node) return <span className="mono">{id}</span>;
   return (
     <span className="lineage-relation-end">

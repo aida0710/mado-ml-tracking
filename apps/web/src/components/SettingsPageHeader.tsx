@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { PageHeader } from './PageHeader';
 import {
@@ -21,6 +22,7 @@ export function SettingsPageHeader({
   title?: string;
   actions?: ReactNode;
 }) {
+  useLocale();
   return (
     <PageHeader
       eyebrow={isAdminSection(section) ? text.administration : text.globalSettings}

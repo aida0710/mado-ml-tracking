@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useEffect, useState } from 'react';
 import { MEDIA_COMPARE_MAX_RUNS, type ReportMediaBlock } from '@mmt/contracts';
 import { useMediaCompareChoices } from '../../hooks/useMediaCompare';
@@ -8,6 +9,7 @@ import { MediaStepChecklist } from '../media/MediaStepChecklist';
 import { NameSelect } from './NameSelect';
 import { RunChecklist } from './RunSetPicker';
 import { text, textTemplates } from '../../i18n/catalog';
+import { formatList } from '../../i18n/textJoining';
 
 /**
  * The settings of a media comparison embed: its Runs, the key and the steps. Choosing a key (or
@@ -23,6 +25,7 @@ export function MediaEmbedFields({
   block: ReportMediaBlock;
   onChange: (block: ReportMediaBlock) => void;
 }) {
+  useLocale();
   const { choices, selectedKey, stepsByRun } = useMediaCompareChoices({
     projectId,
     runIds: block.runIds,
@@ -75,7 +78,7 @@ export function MediaEmbedFields({
           )}
           <ErrorNotice message={block.key ? stepsByRun.error : null} retry={stepsByRun.reload} />
           {runsWithoutKey.length > 0 && (
-            <p className="muted report-media-runs-without-key">{textTemplates.reportMediaRunsWithoutKey(runsWithoutKey.join('、'))}</p>
+            <p className="muted report-media-runs-without-key">{textTemplates.reportMediaRunsWithoutKey(formatList(runsWithoutKey))}</p>
           )}
           {/* Shown once the default steps are in, so a tick made meanwhile is not overwritten. */}
           {recordedSteps && !isAwaitingDefaultSteps && (

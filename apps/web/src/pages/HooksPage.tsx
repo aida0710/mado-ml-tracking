@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -28,6 +29,7 @@ type HooksView = 'hooks' | 'executions';
  * executions of every hook or of one. `hook` in the URL is the chosen hook in both views.
  */
 export function HooksPage() {
+  useLocale();
   const { project } = useProject();
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();

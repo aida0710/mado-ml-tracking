@@ -1,3 +1,5 @@
+import * as english from './en/jobs';
+import { localized } from './localized';
 import {
   MAX_JOB_ARRAY_SIZE,
   MAX_JOB_GPU_COUNT,
@@ -7,7 +9,7 @@ import {
 } from '@mmt/contracts';
 
 // Jobs list and Run logs, with the site Job details (phase, scheduler, array, origin).
-export const jobsText = {
+export const jobsText = localized({
   jobColumn: 'Job',
   jobRunColumn: 'Run',
   jobActions: '操作',
@@ -91,24 +93,24 @@ export const jobsText = {
   // maxAttempts bounds the automatic retries only (JobService.retry lets a person go past it).
   maxAttemptsHint:
     '自動の再実行はこの回数までです。Jobsの［新しいRunで再実行］で人が流し直す分は数えません。',
-} as const;
+} as const, english.jobsText);
 
-export const jobPhaseLabels: Record<JobPhase, string> = {
+export const jobPhaseLabels: Record<JobPhase, string> = localized({
   waiting_manual: '手動投入待ち',
   submitting: '投入中',
   submitted: '待ち行列',
   waiting_resources: '準備・GPU待ち',
   running: '実行中',
-};
+}, english.jobPhaseLabels);
 
-export const jobEndReasonLabels: Record<JobEndReason, string> = {
+export const jobEndReasonLabels: Record<JobEndReason, string> = localized({
   timed_out: '時間切れ',
   queue_timeout: '待ち行列の上限',
   submit_failed: '投入失敗',
-};
+}, english.jobEndReasonLabels);
 
 // Text that embeds values.
-export const jobsTextTemplates = {
+export const jobsTextTemplates = localized({
   gpuCount: (count: number) => `GPU ×${count}`,
   arrayMember: (index: number, size: number) => `${index} / ${size}`,
   arraySize: (size: number) => `array ×${size}`,
@@ -127,16 +129,16 @@ export const jobsTextTemplates = {
   attempt: (attempt: number, maxAttempts: number) => `${attempt} / ${maxAttempts}`,
   // A person retried past maxAttempts, which bounds the automatic retries only.
   attemptPastLimit: (attempt: number, maxAttempts: number) =>
-    `${attempt}（自動の再試行は${maxAttempts}回目まで）`,
+    `${attempt}（自動の再実行は${maxAttempts}回目まで）`,
   jobSweepTrialOrigin: (sweepName: string, trialIndex: number) =>
     `Sweep: ${sweepName} #${trialIndex}`,
   jobAutomationOrigin: (ruleName: string) => `自動実行: ${ruleName}`,
   launchCodesHidden: (kindLabel: string, hiddenCount: number) =>
     `実行種別「${kindLabel}」とモデルバージョンに合うコードバージョンだけを選べます（合わないもの ${hiddenCount}件）。ほかのコードを使うときは、先に実行種別を変えてください。`,
-};
+}, english.jobsTextTemplates);
 
-export const logLevelLabels: Record<LogEntry['level'], string> = {
+export const logLevelLabels: Record<LogEntry['level'], string> = localized({
   info: '情報',
   warning: '警告',
   error: 'エラー',
-};
+}, english.logLevelLabels);

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import {
   CPU_ARCHES,
@@ -55,6 +56,7 @@ export function TargetFields({
   /** The kind of computer being added (the two-step dialog's), shown after the name. */
   kindPicker?: ReactNode;
 }) {
+  useLocale();
   const isNew = !target;
   const isSite = getFieldValue(values, 'executor') === 'site';
   const isSsh = getFieldValue(values, 'executor') === 'ssh';

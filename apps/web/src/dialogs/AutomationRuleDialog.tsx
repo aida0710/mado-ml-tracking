@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ModelAutomationRule } from '@mmt/contracts';
 import type { AutomationCatalog } from '../types/modelAutomation';
@@ -37,6 +38,7 @@ export function AutomationRuleDialog({
   onClose: () => void;
   onSaved: (saved: SavedAutomationRule) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const form = useAutomationRuleForm({
     projectId: project.id,

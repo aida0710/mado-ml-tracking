@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ComputeTarget, TargetCheck } from '@mmt/contracts';
 import { TargetCheckItemsTable } from './TargetCheckItemsTable';
 import { formatCheckedHost } from '../lib/computeTargetDisplay';
@@ -16,6 +17,7 @@ export function TargetCheckStatus({
   check: TargetCheck | undefined;
   executor: ComputeTarget['executor'];
 }) {
+  useLocale();
   if (!check) return null;
   if (isCheckInProgress(check))
     return (

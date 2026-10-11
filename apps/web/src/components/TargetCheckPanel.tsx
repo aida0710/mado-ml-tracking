@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { PlugZap } from 'lucide-react';
 import type {
@@ -27,6 +28,7 @@ import { isWorkerMissing, type WorkerCoverage } from '../lib/workerCoverage';
 import { text } from '../i18n/catalog';
 import { runtimeLabels } from '../i18n/runtime';
 import { workerCoverageText } from '../i18n/workerCoverage';
+import { formatNote } from '../i18n/textJoining';
 
 /**
  * The connection check of an ssh or local target, which a worker runs. A site is reached only by
@@ -42,6 +44,7 @@ export function TargetCheckPanel({
   checkCoverage?: WorkerCoverage;
   onTargetSaved: () => void;
 }) {
+  useLocale();
   const check = useTargetCheck(target.id);
   const { checks, latest } = check;
   // The worker chosen for the last check checks again; without one, the worker in charge does.
@@ -91,6 +94,7 @@ function TargetCheckDetails({
   target: ComputeTarget;
   onTargetSaved: () => void;
 }) {
+  useLocale();
   const candidates = detectedCandidates(check);
   return (
     <>
@@ -150,6 +154,7 @@ function TargetCheckDetails({
 }
 
 function DetectedGpus({ gpus }: { gpus: TargetCheckGpu[] }) {
+  useLocale();
   return (
     <>
       <h3>{text.detectedGpus}</h3>
@@ -196,6 +201,7 @@ function TargetCandidateEditor({
   detected: TargetCandidates;
   onSaved: () => void;
 }) {
+  useLocale();
   const mutation = useMutation();
   const [selected, setSelected] = useState<TargetCandidates>(detected);
   const [isSaved, setSaved] = useState(false);
@@ -227,14 +233,14 @@ function TargetCandidateEditor({
       <p className="muted">{text.targetCheckCandidatesHint}</p>
       <ErrorNotice message={mutation.error} />
       <CheckboxList
-        legend={`${text.gpuIds}（${text.targetCheckCurrent}: ${currentGpus}）`}
+        legend={`${text.gpuIds}${formatNote(`${text.targetCheckCurrent}: ${currentGpus}`)}`}
         options={detected.gpuIds.map((gpuId) => ({ value: gpuId, label: gpuId }))}
         selected={selected.gpuIds}
         onToggle={(gpuId) => toggle('gpuIds', gpuId)}
         empty={text.noDetectedGpus}
       />
       <CheckboxList
-        legend={`${text.runtimeKinds}（${text.targetCheckCurrent}: ${currentRuntimes}）`}
+        legend={`${text.runtimeKinds}${formatNote(`${text.targetCheckCurrent}: ${currentRuntimes}`)}`}
         options={detected.runtimeKinds.map((kind) => ({ value: kind, label: runtimeLabels[kind] }))}
         selected={selected.runtimeKinds}
         onToggle={(kind) => toggle('runtimeKinds', kind as ExecutionRuntimeKind)}

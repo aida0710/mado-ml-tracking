@@ -33,7 +33,7 @@ const pageErrors = [];
 
 /** Opens `path(api)` of the mocked Project after `prepare(api.state)` shapes the data. */
 async function openPage({ path, prepare = () => {}, viewport = DESKTOP, role = 'admin' }) {
-  const context = await browser.newContext({ viewport });
+  const context = await browser.newContext({ locale: 'ja-JP', viewport });
   await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: base });
   const api = createBrowserApi();
   api.state.loggedIn = true;

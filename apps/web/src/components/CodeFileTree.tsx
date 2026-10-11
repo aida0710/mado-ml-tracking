@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { File, Folder } from 'lucide-react';
 import { text } from '../i18n/catalog';
 
@@ -7,6 +8,7 @@ const FILE_TREE_INDENT_PX = 14;
 export function CodeFileTree({ paths, activePath, onSelect }: {
   paths: string[]; activePath: string; onSelect: (path: string) => void;
 }) {
+  useLocale();
   const directories = new Set<string>();
   return (
     <nav className="code-file-tree" aria-label={text.files}>

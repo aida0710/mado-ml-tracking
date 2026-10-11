@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useRef, useState } from 'react';
 import type { ComputeTarget, ExperimentTask } from '@mmt/contracts';
 import type { ExecutionCatalog } from '../types/executionCatalog';
@@ -16,6 +17,7 @@ export function TaskEditDialog({ task, experimentId, catalog, targets, onClose, 
   task?: ExperimentTask; experimentId?: string; catalog: ExecutionCatalog; targets: ComputeTarget[];
   onClose: () => void; onSaved: (task: ExperimentTask) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const form = useTaskForm({ projectId: project.id, task, experimentId, catalog, targets });
   const initialValues = useRef(JSON.stringify(form.values));

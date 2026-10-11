@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useMemo, type ReactNode } from 'react';
 import { MEDIA_COMPARE_MAX_STEPS } from '@mmt/contracts';
 import { stepCoverage, withStepToggled } from '../../lib/mediaCompareSteps';
@@ -26,6 +27,7 @@ export function MediaStepChecklist({
   /** What an empty choice means, read with the group. */
   hint?: string;
 }) {
+  useLocale();
   const coverage = useMemo(() => stepCoverage(stepsByRun), [stepsByRun]);
   const recordingRunCount = stepsByRun.filter((steps) => steps.length > 0).length;
   const isFull = selected.length >= MEDIA_COMPARE_MAX_STEPS;

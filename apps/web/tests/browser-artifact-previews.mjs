@@ -187,8 +187,8 @@ try {
   await migrate(database);
   server = serve({ fetch: application.app.fetch, hostname: '127.0.0.1', port: API_PORT });
 
-  const desktopContext = await browser.newContext({ viewport: DESKTOP });
-  const mobileContext = await browser.newContext({ viewport: MOBILE, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  const desktopContext = await browser.newContext({ locale: 'ja-JP', viewport: DESKTOP });
+  const mobileContext = await browser.newContext({ locale: 'ja-JP', viewport: MOBILE, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   const desktop = await desktopContext.newPage();
   const mobile = await mobileContext.newPage();
   const pageErrors = [];

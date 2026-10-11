@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ComputeTarget, ExperimentTask, ExecutionMode, TaskExecution } from '@mmt/contracts';
 import type { ExecutionCatalog } from '../types/executionCatalog';
 import { useProject } from '../hooks/useProject';
@@ -14,6 +15,7 @@ export function TaskLaunchDialog({ task, initialMode, catalog, targets, onClose,
   task: ExperimentTask; initialMode: ExecutionMode; catalog: ExecutionCatalog; targets: ComputeTarget[];
   onClose: () => void; onSaved: (execution: TaskExecution) => void;
 }) {
+  useLocale();
   const { project } = useProject();
   const form = useTaskLaunchForm({ projectId: project.id, task, initialMode, catalog, targets });
   const { mode } = form;

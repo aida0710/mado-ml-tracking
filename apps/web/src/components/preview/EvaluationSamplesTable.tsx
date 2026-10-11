@@ -1,4 +1,6 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useLocalizedMemo } from '../../i18n/useLocalizedMemo';
+import { useLocale } from '../../i18n/useLocale';
+import { useState, type ReactNode } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { useEvaluationSampleAudio } from '../../hooks/useEvaluationSampleAudio';
 import { narrowerThan } from '../../lib/breakpoints';
@@ -30,12 +32,13 @@ export function EvaluationSamplesTable({
   /** The ［表示形式］ select, to switch this file to text. */
   formatSelect: ReactNode;
 }) {
+  useLocale();
   const isPhone = useMediaQuery(narrowerThan('sm'));
   const [order, setOrder] = useState<EvaluationSampleOrder>('line');
   const [page, setPage] = useState(0);
   const [highlightDiff, setHighlightDiff] = useState(true);
   const [expandedLine, setExpandedLine] = useState<number | null>(null);
-  const sorted = useMemo(() => sortEvaluationSamples(table.samples, order), [table.samples, order]);
+  const sorted = useLocalizedMemo(() => sortEvaluationSamples(table.samples, order), [table.samples, order]);
   const current = paginate(sorted, page);
   const sampleAudio = useEvaluationSampleAudio(artifact, current.items);
   const changePage = (next: number) => {

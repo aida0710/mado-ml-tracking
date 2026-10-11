@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ServiceAccount } from '@mmt/contracts';
 import { useMutation } from '../hooks/useMutation';
@@ -17,6 +18,7 @@ import { serviceAccountsTextTemplates } from '../i18n/serviceAccounts';
  * admins manage them, so the section is hidden from everyone else.
  */
 export function ProjectServiceAccounts({ access }: { access: ServiceAccountsState }) {
+  useLocale();
   const { project, isProjectAdmin } = useProject();
   const [editing, setEditing] = useState<ServiceAccount | 'new' | null>(null);
   const [issuingFor, setIssuingFor] = useState<ServiceAccount | null>(null);
@@ -172,6 +174,7 @@ function EnableButton({
   onEnable: () => Promise<unknown>;
   onEnabled: () => void;
 }) {
+  useLocale();
   const mutation = useMutation();
   return (
     <>

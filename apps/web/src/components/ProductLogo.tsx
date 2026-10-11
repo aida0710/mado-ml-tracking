@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
@@ -5,6 +6,7 @@ import { text } from '../i18n/catalog';
  * 形はブラウザのタブのアイコン（public/favicon.svg）と同じ。色と大きさは styles/productLogo.css の .product-mark。
  */
 export function TrackingMark() {
+  useLocale();
   return (
     <svg className="product-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path className="product-mark-layer" d="M3 12.25L12 16.75L21 12.25" />
@@ -20,6 +22,7 @@ export function TrackingMark() {
  * isNameVisuallyHidden では印だけを見せ、名前は読み上げとリンクの名前に残す（--bp-xs 未満の上部バー）。
  */
 export function ProductLogo({ isNameVisuallyHidden = false }: { isNameVisuallyHidden?: boolean }) {
+  useLocale();
   return (
     <span className="product-logo">
       <TrackingMark />

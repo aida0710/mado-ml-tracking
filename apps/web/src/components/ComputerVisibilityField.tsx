@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ComputeTarget } from '@mmt/contracts';
 import type { FormValues } from '../types/form';
 import { VisibilityPicker } from './VisibilityPicker';
@@ -19,6 +20,7 @@ export function ComputerVisibilityField({
   /** The computer being edited; a new one when absent. */
   target?: Pick<ComputeTarget, 'ownerUserId'>;
 }) {
+  useLocale();
   if (target && target.ownerUserId === null)
     return <p className="muted">{text.ownerlessComputerVisibilityNotice}</p>;
   return (

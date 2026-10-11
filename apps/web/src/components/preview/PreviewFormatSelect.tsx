@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useId } from 'react';
 import { CODE_LANGUAGES, type CodeLanguage } from '@mado/design-system/code';
 import type { CodeLanguageChoice } from '../../hooks/useCodeLanguage';
@@ -28,6 +29,7 @@ export function PreviewFormatSelect({
   offersTable: boolean;
   onChange: (format: PreviewFormat) => void;
 }) {
+  useLocale();
   const selectId = useId();
   return (
     <label className="code-format" htmlFor={selectId}>

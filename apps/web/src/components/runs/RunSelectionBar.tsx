@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { useNavigate } from 'react-router-dom';
 import { text, textTemplates } from '../../i18n/catalog';
 
@@ -14,6 +15,7 @@ export function RunSelectionBar({
   onAddTag: () => void;
   onClear: () => void;
 }) {
+  useLocale();
   const navigate = useNavigate();
   if (!selectedIds.length) return null;
   return (

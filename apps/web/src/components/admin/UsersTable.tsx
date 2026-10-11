@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { AdminUser } from '@mmt/contracts';
 import { ResponsiveTable } from '../ResponsiveTable';
@@ -19,11 +20,11 @@ function availableActions(user: AdminUser): UserAction[] {
 }
 
 const actionLabels: Record<UserAction, string> = {
-  makeAdmin: text.userMakeAdmin,
-  removeAdmin: text.userRemoveAdmin,
-  resetPassword: text.userResetPassword,
-  disable: text.userDisable,
-  enable: text.userEnable,
+  get makeAdmin() { return text.userMakeAdmin },
+  get removeAdmin() { return text.userRemoveAdmin },
+  get resetPassword() { return text.userResetPassword },
+  get disable() { return text.userDisable },
+  get enable() { return text.userEnable },
 };
 
 // What the API refuses for the last active global administrator (409).
@@ -46,6 +47,7 @@ export function UsersTable({
   lastActiveAdminId: string | null;
   onAction: (user: AdminUser, action: UserAction) => void;
 }) {
+  useLocale();
   const isLocked = (user: AdminUser, action: UserAction) =>
     user.id === lastActiveAdminId && LAST_ADMIN_LOCKED_ACTIONS.includes(action);
   return (
@@ -141,6 +143,7 @@ export function UsersTable({
 
 /** Which Project a Service Account works for, leading to that Project's Service Accounts. */
 function ServiceAccountOrigin({ user }: { user: AdminUser }) {
+  useLocale();
   const project = user.serviceAccountProject;
   if (!project) return <span className="muted">{text.userServiceAccount}</span>;
   const settingsPath = `/projects/${encodeURIComponent(project.id)}/settings`;

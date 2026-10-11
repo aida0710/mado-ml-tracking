@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { ComputeTarget, Hook } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
@@ -8,6 +9,7 @@ import { text } from '../i18n/catalog';
 import { jobsTextTemplates } from '../i18n/jobs';
 
 function ArrayStates({ counts }: { counts: JobArraySummary['counts'] }) {
+  useLocale();
   return (
     <span className="badge-group">
       {JOB_ARRAY_STATE_ORDER.map((status) => {
@@ -40,6 +42,7 @@ export function JobArraysTable({
   onSelectArray: (arrayGroupId: string) => void;
   onSelectJob: (jobId: string) => void;
 }) {
+  useLocale();
   return (
     <section className="job-arrays">
       <h2>{text.jobArrays}</h2>

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { ModelAutomationExecution, ModelAutomationRule } from '@mmt/contracts';
@@ -27,6 +28,7 @@ function outcomeLabel(execution: ModelAutomationExecution): string {
 
 /** The outcome, with the reason a rule failed under it, so no separate error column is needed. */
 function OutcomeCell({ execution }: { execution: ModelAutomationExecution }) {
+  useLocale();
   return (
     <span className="automation-outcome">
       <span title={execution.status === 'pending' ? automationText.pendingHint : undefined}>
@@ -43,6 +45,7 @@ function OutcomeCell({ execution }: { execution: ModelAutomationExecution }) {
 
 /** The started Run's and Job's states in one cell; a column each made the table too wide. */
 function RunAndJobStatus({ execution }: { execution: ModelAutomationExecution }) {
+  useLocale();
   if (!execution.runStatus && !execution.jobStatus) return <>—</>;
   return (
     <span className="automation-statuses">
@@ -67,6 +70,7 @@ function RuleCell({
   execution: ModelAutomationExecution;
   ruleName: string;
 }) {
+  useLocale();
   return (
     <span>
       {ruleName}
@@ -95,6 +99,7 @@ function ModelVersionLink({
   modelVersionId: string;
   catalog?: ExecutionCatalog;
 }) {
+  useLocale();
   const version = catalog?.modelVersions.find((item) => item.id === modelVersionId);
   const modelName = catalog?.models.find((model) => model.id === version?.modelId)?.name;
   // The version page needs the Model id; without the catalog the registry resolves the version.
@@ -132,6 +137,7 @@ export function AutomationExecutionsTable({
   variant?: 'project' | 'version';
   onRerun?: () => void;
 }) {
+  useLocale();
   const base = `/projects/${projectId}`;
   const rows = groupAutomationPipelines(executions, rules);
   const column = (render: (execution: ModelAutomationExecution) => ReactNode) =>

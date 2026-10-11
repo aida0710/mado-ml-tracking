@@ -11,6 +11,7 @@ import {
   submissionModeBadgeLabels,
   targetCheckItemLabels,
 } from '../i18n/compute';
+import { formatNote } from '../i18n/textJoining';
 
 // Shown where a computer has nothing to tell (no connection, no facts from its check).
 const NO_VALUE = '—';
@@ -43,7 +44,7 @@ export function targetChoiceLabel(
   // The host is hidden from those who may not manage the computer; then the name stands alone.
   if (target.executor !== 'site') return target.host ? `${target.name} · ${target.host}` : target.name;
   const mode = submissionModeBadgeLabels[target.submissionMode];
-  return `${target.name} · ${computeTargetExecutorLabels.site}（${mode}）`;
+  return `${target.name} · ${computeTargetExecutorLabels.site}${formatNote(mode)}`;
 }
 
 /** The GPUs a target offers: its GPU IDs, or for a site the count each Job asks for. */

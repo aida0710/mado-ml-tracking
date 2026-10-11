@@ -167,7 +167,7 @@ try {
     serverOptions: serverTimeouts(config).serverOptions,
   });
 
-  const adminContext = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const adminContext = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1000 } });
   const { page, user: adminUser } = await devLogin(adminContext, 'admin@localhost', '検証管理者');
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -320,7 +320,7 @@ try {
     maxTrials: 1,
   });
   await api.post(`${projectPath}/sweeps/${runningSweep.id}/pause`);
-  const viewerContext = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const viewerContext = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1000 } });
   const { page: viewerPage, user: viewer } = await devLogin(viewerContext, 'viewer@localhost', '閲覧者');
   await api.put(`${projectPath}/members/${viewer.id}`, { role: 'viewer' });
   await viewerPage.goto(`${WEB_URL}${projectPath}/sweeps`);

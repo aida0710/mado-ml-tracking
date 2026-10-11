@@ -10,7 +10,7 @@ const browser = await chromium.launch({
   args: ['--no-sandbox'],
   ...(process.env.MMT_CHROMIUM_PATH ? { executablePath: process.env.MMT_CHROMIUM_PATH } : {}),
 });
-const context = await browser.newContext();
+const context = await browser.newContext({ locale: 'ja-JP' });
 const api = createBrowserApi();
 api.state.loggedIn = true;
 const plugin = api.state.plugins[0];

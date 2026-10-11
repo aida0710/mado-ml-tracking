@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/useLocale';
 import { sampleTextDiff } from '../../lib/evaluationSamples';
 import { formatValue } from '../../lib/format';
 import { artifactsTextTemplates } from '../../i18n/artifacts';
@@ -16,6 +17,7 @@ export function EvaluationSampleCards({
   expandedLine,
   onToggleExpanded,
 }: EvaluationSampleListProps) {
+  useLocale();
   return (
     <ol className="evaluation-sample-cards">
       {samples.map((sample, index) => {

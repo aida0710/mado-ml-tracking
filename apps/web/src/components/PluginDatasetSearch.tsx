@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { PluginConnection, PluginDataset } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
@@ -23,9 +24,11 @@ export function PluginDatasetSearch({
   isChecked: boolean;
   onImported: () => void;
 }) {
+  useLocale();
   const [query, setQuery] = useState('');
   const [datasets, setDatasets] = useState<PluginDataset[] | null>(null);
-  const [success, setSuccess] = useState('');
+  // The imported version, put into words when drawn so a later change of display language applies.
+  const [imported, setImported] = useState<{ name: string; version: string } | null>(null);
   const mutation = useMutation();
   // Hidden while the plugin is disabled; the results come back when it is enabled again.
   if (!plugin.enabled) return null;
@@ -35,7 +38,7 @@ export function PluginDatasetSearch({
         className="plugin-search"
         onSubmit={(event) => {
           event.preventDefault();
-          setSuccess('');
+          setImported(null);
           setDatasets(null);
           void mutation.run(async () => {
             setDatasets(await administrationApi.searchDatasets(projectId, plugin.id, query));
@@ -57,9 +60,9 @@ export function PluginDatasetSearch({
       </form>
       {!isChecked && <p className="muted">{pluginsText.pluginSearchNeedsCheck}</p>}
       <ErrorNotice message={mutation.error} />
-      {success && (
+      {imported && (
         <p className="notice success" role="status">
-          {success}
+          {`${text.success}: ${imported.name} / ${imported.version}`}
         </p>
       )}
       {datasets &&
@@ -106,9 +109,9 @@ export function PluginDatasetSearch({
                     onClick={() =>
                       void mutation
                         .run(() => administrationApi.importDataset(projectId, plugin.id, dataset))
-                        .then((imported) => {
-                          if (!imported) return;
-                          setSuccess(`${text.success}: ${imported.name} / ${imported.version}`);
+                        .then((datasetVersion) => {
+                          if (!datasetVersion) return;
+                          setImported({ name: datasetVersion.name, version: datasetVersion.version });
                           onImported();
                         })
                     }

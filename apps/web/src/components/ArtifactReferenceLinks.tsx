@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { ArtifactReferences } from '@mmt/contracts';
 import { modelVersionPath } from '../lib/modelVersionPath';
@@ -15,6 +16,7 @@ export function ArtifactReferenceLinks({
   projectId: string;
   references: ArtifactReferences;
 }) {
+  useLocale();
   const base = `/projects/${encodeURIComponent(projectId)}`;
   return (
     <ul className="artifact-reference-links" data-testid="artifact-reference-links">

@@ -7,6 +7,7 @@ import type {
 import type { FormValues } from '../types/form';
 import { getFieldValue } from './formValues';
 import { text, textTemplates } from '../i18n/catalog';
+import { LocalizedError } from './localizedError';
 
 const MIB = 1024 * 1024;
 // S3 rejects parts below 5 MiB (except the last). The API caps parts at 512 MiB because it keeps
@@ -205,7 +206,7 @@ function parsePartSizeMib(value: string): number {
     mib < MIN_MULTIPART_PART_SIZE_MIB ||
     mib > MAX_MULTIPART_PART_SIZE_MIB
   )
-    throw new Error(
+    throw new LocalizedError(() =>
       textTemplates.storagePartSizeError(MIN_MULTIPART_PART_SIZE_MIB, MAX_MULTIPART_PART_SIZE_MIB),
     );
   return mib;

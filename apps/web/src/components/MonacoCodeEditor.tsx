@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/useLocale';
 import { useEffect, useId, useRef, useState } from 'react';
 import Editor, { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
@@ -23,6 +24,7 @@ loader.config({ monaco });
 export default function MonacoCodeEditor({ path, value, onChange, readOnly = false }: {
   path: string; value: string; onChange: (path: string, content: string) => void; readOnly?: boolean;
 }) {
+  useLocale();
   const [theme, setTheme] = useState(document.documentElement.dataset.theme);
   const [failure, setFailure] = useState(false);
   const editorId = useId();
