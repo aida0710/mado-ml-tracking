@@ -1,3 +1,4 @@
+import { formatEnglishCount } from '../formatEnglishCount';
 export const artifactLifecycleText = {
   artifactActions: "File actions",
   artifactDelete: "Delete",
@@ -15,6 +16,6 @@ export const artifactLifecycleTextTemplates = {
   artifactDeleteConfirm: (path: string) =>
     `Delete “${path}”? It disappears immediately from listings and downloads and cannot be restored. If an older version exists at the same path, it becomes visible.`,
   artifactUsageNote: (graceDays: number) =>
-    `Files of deleted artifacts are reclaimed after ${graceDays} days. Older versions are not deleted automatically.`,
-  artifactUsageFiles: (count: number, size: string) => `${count} files · ${size}`,
+    `Files of deleted artifacts are reclaimed after ${formatEnglishCount(graceDays, 'day')}. Older versions are not deleted automatically.`,
+  artifactUsageFiles: (count: number, size: string) => `${formatEnglishCount(count, 'file')} · ${size}`,
 };

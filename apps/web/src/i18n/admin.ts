@@ -44,7 +44,7 @@ export const adminText = localized({
   userEnableTitle: 'ユーザーを有効化',
   userNoMatches: '一致するユーザーはいません',
   initialPassword: '初回パスワード',
-  initialPasswordHint: '12文字以上。初回ログインで変更を求めます。',
+  initialPasswordHint: "UTF-8で12〜1024バイト。初回ログイン時に変更が必要です。",
   generatePassword: '生成',
   emailOptional: 'メールアドレス（任意）',
   makeGlobalAdmin: '全体管理者にする',

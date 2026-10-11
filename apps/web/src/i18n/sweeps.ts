@@ -24,7 +24,7 @@ export const sweepsText = localized({
   sweepTaskRevisionPinned: 'Taskの現在のrevisionを固定して実行します。作成後にTaskを編集すると、Sweepは停止します。',
   sweepExperiment: 'Experiment',
   sweepExperimentHint: '試行のRunはTaskのExperimentに入ります。',
-  sweepTarget: 'Compute target',
+  sweepTarget: "コンピュータ",
   sweepTaskDefault: 'Taskの既定',
   sweepGpuIds: 'GPU ID（カンマ区切り。空はTaskの既定）',
   sweepObjective: '目的',

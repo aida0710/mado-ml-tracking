@@ -35,7 +35,7 @@ const SPACE_INVALID_CODE = 'sweep_space_invalid';
 /** A 422 about the search space: shown on the row it names, or above the rows. */
 interface SpaceError {
   rowId: string | null;
-  message: string;
+  failure: RequestError;
 }
 
 export function CreateSweepDialog({
@@ -68,7 +68,7 @@ export function CreateSweepDialog({
   const fieldErrors = isSubmitted ? validation.fieldErrors : {};
   const rowErrors = {
     ...(isSubmitted ? validation.rowErrors : {}),
-    ...(spaceError?.rowId ? { [spaceError.rowId]: spaceError.message } : {}),
+    ...(spaceError?.rowId ? { [spaceError.rowId]: formatErrorMessage(spaceError.failure) } : {}),
   };
   const gridCombinations = countGridCombinations(rowsToSearchSpace(form.rows, form.method).searchSpace);
 
@@ -78,13 +78,13 @@ export function CreateSweepDialog({
     if ('rows' in values || 'method' in values) setSpaceError(null);
   }
 
-  function loadWandbConfig(config: unknown): string | null {
+  function loadWandbConfig(config: unknown): SweepConfigError | null {
     try {
       const settings = convertWandbSweepConfig(config);
       change(applySearchSettings(form, settings, createRowId));
       return null;
     } catch (error) {
-      if (error instanceof SweepConfigError) return error.message;
+      if (error instanceof SweepConfigError) return error;
       throw error;
     }
   }
@@ -100,8 +100,9 @@ export function CreateSweepDialog({
         return await sweepsApi.create(projectId, input);
       } catch (error) {
         if (!(error instanceof RequestError) || error.code !== SPACE_INVALID_CODE) throw error;
-        const message = formatErrorMessage(error);
-        setSpaceError({ rowId: rowIdForSpaceError(message, form.rows), message });
+        // The API's original parameter name still identifies the row after localization.
+        const rowId = rowIdForSpaceError(error.serverMessage ?? error.message, form.rows);
+        setSpaceError({ rowId, failure: error });
         return undefined;
       }
     });
@@ -204,7 +205,7 @@ export function CreateSweepDialog({
               )}
             </div>
           </fieldset>
-          {spaceError && !spaceError.rowId && <p className="sweep-field-error" role="alert">{spaceError.message}</p>}
+          {spaceError && !spaceError.rowId && <p className="sweep-field-error" role="alert">{formatErrorMessage(spaceError.failure)}</p>}
           {isSubmitted && validation.searchSpaceError && (
             <p className="sweep-field-error" role="alert">{validation.searchSpaceError}</p>
           )}

@@ -1,3 +1,4 @@
+import { formatEnglishCount } from '../formatEnglishCount';
 import type { UploadItemStatus } from "../../hooks/useArtifactUploadQueue";
 
 export const uploadsText = {
@@ -28,7 +29,7 @@ export const uploadStatusLabels: Record<UploadItemStatus, string> = {
   preparing: "Preparing",
   uploading: "Sending",
   verifying: "Verifying on server",
-  paused: "Pause",
+  paused: "Paused",
   failed: "Failed",
   canceled: "Canceled",
   completed: "Completed",
@@ -36,7 +37,7 @@ export const uploadStatusLabels: Record<UploadItemStatus, string> = {
 
 // Text that embeds values; merged into catalog's textTemplates.
 export const uploadsTextTemplates = {
-  uploadSelectedCount: (count: number, totalSize: string) => `${count} files (${totalSize})`,
+  uploadSelectedCount: (count: number, totalSize: string) => `${formatEnglishCount(count, 'file')} (${totalSize})`,
   uploadTransferRate: (rate: string) => `${rate}/s`,
   uploadRemainingTime: (duration: string) => `${duration} remaining`,
   uploadResumedBytes: (size: string) => `Resuming (${size} already sent)`,

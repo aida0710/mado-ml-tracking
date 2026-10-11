@@ -6,6 +6,7 @@ import type {
   TargetCheckItemName,
   TargetCheckItemStatus,
 } from '@mmt/contracts';
+import { formatEnglishCount } from '../formatEnglishCount';
 
 // Worker presence, Job heartbeat and target connection check labels on the Compute and Jobs pages.
 export const computeText = {
@@ -86,7 +87,7 @@ export const computeText = {
 // Text that embeds values.
 export const computeTextTemplates = {
   queueTimeoutError: (minMinutes: number, maxDays: number) =>
-    `Specify a queue timeout between ${minMinutes} minutes and ${maxDays} days in HH:MM:SS format.`,
+    `Specify a queue timeout between ${formatEnglishCount(minMinutes, 'minute')} and ${formatEnglishCount(maxDays, 'day')} in HH:MM:SS format.`,
 };
 
 export const computeTargetExecutorLabels: Record<ComputeTarget['executor'], string> = {
@@ -101,8 +102,8 @@ export const submissionModeBadgeLabels: Record<SiteSubmissionMode, string> = {
 };
 
 export const cpuArchLabels: Record<CpuArch, string> = {
-  amd64: 'amd64（x86_64）',
-  arm64: 'arm64（AArch64）',
+  amd64: 'amd64 (x86_64)',
+  arm64: 'arm64 (AArch64)',
 };
 
 export const targetCheckItemLabels = {
@@ -114,14 +115,14 @@ export const targetCheckItemLabels = {
   docker: 'Docker',
   apptainer: 'Apptainer',
   singularity: 'Singularity',
-  gpu: 'GPU（nvidia-smi）',
+  gpu: 'GPU (nvidia-smi)',
   work_directory: "Working directory",
   api: "API access",
 } satisfies Record<TargetCheckItemName, string>;
 
 export const targetCheckOutcomeLabels = {
   ok: 'OK',
-  ng: 'NG',
+  ng: "Failed",
   unavailable: "None",
   skipped: "Not checked",
 } satisfies Record<TargetCheckItemStatus, string>;

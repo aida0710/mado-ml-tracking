@@ -3,6 +3,7 @@ import { Pause, Play, RotateCcw, X } from 'lucide-react';
 import type { UploadItem } from '../hooks/useArtifactUploadQueue';
 import { CopyButton } from './CopyButton';
 import { formatBytes } from '../lib/format';
+import { formatUploadFailure } from '../lib/uploadFailure';
 import { text, textTemplates } from '../i18n/catalog';
 import { uploadStatusLabels } from '../i18n/uploads';
 
@@ -89,7 +90,7 @@ function UploadQueueRow({
           <span>{textTemplates.uploadResumedBytes(formatBytes(item.resumedBytes))}</span>
         )}
       </div>
-      {item.error && <p className="upload-queue-error" role="alert">{item.error}</p>}
+      {item.error && <p className="upload-queue-error" role="alert">{formatUploadFailure(item.error)}</p>}
       {item.artifact && (
         <div className="upload-queue-artifact">
           <span className="mono">artifact://{item.artifact.id}</span>

@@ -202,26 +202,26 @@ try {
   await select('コードバージョン', dockerVersion.id);
   await dialog().getByRole('button', { name: '次へ', exact: true }).click();
   const targetOptions = await dialog()
-    .getByLabel('Compute target')
+    .getByLabel('コンピュータ')
     .locator('option')
     .evaluateAll((options) => options.map((option) => option.value));
   assert.ok(
     !targetOptions.includes(api.state.targets[0].id),
     'Python-only target is selectable for Docker',
   );
-  await select('Compute target', containerTarget.id);
+  await select('コンピュータ', containerTarget.id);
   await select('GPU ID · CPUのみ', '1');
   await dialog().getByRole('button', { name: '戻る', exact: true }).click();
   await select('コードバージョン', singularityVersion.id);
   await dialog().getByRole('button', { name: '次へ', exact: true }).click();
-  assert.equal(await dialog().getByLabel('Compute target').inputValue(), '');
+  assert.equal(await dialog().getByLabel('コンピュータ').inputValue(), '');
   assert.deepEqual(
     await dialog()
       .getByLabel('GPU ID · CPUのみ')
       .evaluate((input) => Array.from(input.selectedOptions, (option) => option.value)),
     [],
   );
-  await select('Compute target', containerTarget.id);
+  await select('コンピュータ', containerTarget.id);
   await dialog().getByRole('button', { name: '次へ', exact: true }).click();
   await dialog().getByText(storedSif.sha256, { exact: true }).waitFor();
   await dialog().getByRole('button', { name: 'ジョブを起動', exact: true }).click();
@@ -243,12 +243,12 @@ try {
   await select('コードバージョン', dockerVersion.id);
   assert.equal(
     await dialog()
-      .getByLabel('Compute target')
+      .getByLabel('コンピュータ')
       .locator('option[value="' + api.state.targets[0].id + '"]')
       .count(),
     0,
   );
-  await select('Compute target', containerTarget.id);
+  await select('コンピュータ', containerTarget.id);
   await select('GPU ID · CPUのみ', '0');
   await select('入力データセットバージョン', api.state.datasetVersions[0].id);
   await fill('パラメータ（JSON）', '{"batch_size":4}');

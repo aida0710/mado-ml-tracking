@@ -121,7 +121,7 @@ export const siteComputersText = {
   sitePersonalListAccount: "Account",
   sitePersonalListVariables: "Variables",
   sitePersonalListKey: "Key",
-  sitePersonalListUpdatedAt: "Update",
+  sitePersonalListUpdatedAt: "Updated at",
   sitePersonalListEmpty: "No users have saved settings for this computer yet.",
   siteUsesComputerSetting: "Computer settings",
   manualGuideTitle: "Submit with mado-tracking submit",

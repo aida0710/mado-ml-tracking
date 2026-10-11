@@ -229,7 +229,7 @@ try {
   await page.getByRole('button', { name: 'Taskを作成', exact: true }).click();
   await fill('名前', 'Browser Task');
   await dialog().getByLabel('コードバージョン').selectOption(smoke.id);
-  await dialog().getByLabel('Compute target').selectOption(api.state.targets[0].id);
+  await dialog().getByLabel('コンピュータ').selectOption(api.state.targets[0].id);
   await dialog().getByLabel('GPU ID', { exact: true }).selectOption([]);
   await dialog().getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });

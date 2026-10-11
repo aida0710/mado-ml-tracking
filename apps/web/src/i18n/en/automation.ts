@@ -56,7 +56,7 @@ export const automationText = {
   rerunDone: "Rerun created.",
   owner: "Owner",
   ownerHuman: (name: string) => `${name} (user)`,
-  ownerServiceAccount: (name: string) => `${name}（Service Account）`,
+  ownerServiceAccount: (name: string) => `${name} (Service Account)`,
   ownerHint: "Automation runs with this owner's permissions, and the owner becomes the run's creator.",
   transferConfirmMessage: (ruleName: string, accountName: string) =>
     `Transfer ownership of “${ruleName}” to ${accountName}? Future automation will run with this service account's permissions.`,

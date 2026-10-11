@@ -14,6 +14,28 @@ describe('placeDropdown', () => {
     expect(placement).toEqual({ left: 16, width: 280, maxHeight: 420, top: 94 });
   });
 
+  it('右端揃えではボタンの右端から左へメニューを開く', () => {
+    const placement = placeDropdown({
+      anchor: { top: 60, bottom: 90, left: 600, width: 40 },
+      viewport,
+      minWidth: 220,
+      maxHeight: 160,
+      alignment: 'end',
+    });
+    expect(placement.left + placement.width).toBe(640);
+  });
+
+  it('右端揃えで左にはみ出す場合も画面内へ収める', () => {
+    const placement = placeDropdown({
+      anchor: { top: 60, bottom: 90, left: 16, width: 40 },
+      viewport,
+      minWidth: 220,
+      maxHeight: 160,
+      alignment: 'end',
+    });
+    expect(placement.left).toBe(DROPDOWN_VIEWPORT_MARGIN);
+  });
+
   it('ボタンが幅より広ければボタンの幅に合わせる', () => {
     const placement = placeDropdown({
       anchor: { top: 60, bottom: 90, left: 16, width: 400 },

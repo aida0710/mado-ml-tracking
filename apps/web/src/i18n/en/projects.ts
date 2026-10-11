@@ -47,5 +47,5 @@ export const projectsTextTemplates = {
     `Permanently delete “${name}”? All runs, models, datasets, artifacts (including stored files), and membership settings will be deleted. This cannot be undone.`,
   projectMemberRole: (displayName: string) => `Role for ${displayName}`,
   projectMemberRemove: (displayName: string) => `Remove ${displayName}`,
-  projectArchivedAt: (date: string) => `Archive ${date}`,
+  projectArchivedAt: (date: string) => `Archived ${date}`,
 };

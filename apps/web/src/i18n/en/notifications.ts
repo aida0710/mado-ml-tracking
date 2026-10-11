@@ -39,7 +39,7 @@ export const notificationsText = {
   notificationRules: "Notification rules",
   newNotificationRule: "Create notification rule",
   notificationRulesEmpty: "No notification rules yet",
-  notificationRuleChannel: "Notification channels",
+  notificationRuleChannel: "Notification channel",
   notificationRuleEvents: "Events to notify",
   notificationRuleFilter: "Conditions",
   notificationRuleFilterNone: "All",
@@ -61,7 +61,7 @@ export const notificationsText = {
 } as const;
 
 export const notificationChannelKindLabels: Record<NotificationChannelKind, string> = {
-  slack_webhook: 'Slack（Incoming Webhook）',
+  slack_webhook: 'Slack (Incoming Webhook)',
   webhook: "Webhook (signed)",
   email: "Email",
 };

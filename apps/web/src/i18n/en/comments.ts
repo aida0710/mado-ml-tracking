@@ -1,3 +1,4 @@
+import { formatEnglishCount } from '../formatEnglishCount';
 export const commentsText = {
   markdownWrite: "Edit",
   markdownPreview: "Preview",
@@ -29,6 +30,8 @@ export const commentsText = {
 // Text that embeds values; merged into catalog's textTemplates.
 export const commentsTextTemplates = {
   markdownRemaining: (remaining: number) =>
-    remaining >= 0 ? `${remaining} characters remaining` : `${-remaining} characters over the limit`,
+    remaining >= 0
+      ? `${formatEnglishCount(remaining, 'character')} remaining`
+      : `${formatEnglishCount(-remaining, 'character')} over the limit`,
   commentEditedAt: (editedAt: string) => `Edited (${editedAt})`,
 };

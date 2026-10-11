@@ -15,14 +15,14 @@ export const sweepsText = {
   sweepTask: 'Task',
   sweepMethod: "Search method",
   sweepTrials: "Trials",
-  sweepTrialList: "Attempt",
+  sweepTrialList: "Trials",
   sweepRunningTrials: "Running",
   sweepBestObjective: "Best objective value",
   sweepCreatedBy: "Created by",
   sweepTaskRevisionPinned: "Runs with the task's current revision fixed. Editing the task after creation stops the sweep.",
   sweepExperiment: 'Experiment',
   sweepExperimentHint: "Trial runs are added to the task's experiment.",
-  sweepTarget: 'Compute target',
+  sweepTarget: "Computer",
   sweepTaskDefault: "Task default",
   sweepGpuIds: "GPU IDs (comma separated; blank uses task default)",
   sweepObjective: "Objective",
@@ -79,7 +79,7 @@ export const sweepsText = {
   sweepProgressChart: "Objective value per trial",
   sweepBestSoFar: "Best so far",
   sweepTrialObjective: "Trial objective value",
-  sweepTrialIndex: "Attempt",
+  sweepTrialIndex: "Trial",
   sweepTrialState: "Status",
   sweepObjectiveValue: "Objective value",
   sweepTrialRun: 'Run',
@@ -116,7 +116,7 @@ export const sweepsTextTemplates = {
   sweepConfigParameterValue: (name: string) =>
     `Parameter “${name}” value must be a string, number, or boolean`,
   sweepConfigParameterNumbers: (name: string, keys: string) =>
-    `Parameter “${name}” ${keys} must be a number`,
+    `Parameter “${name}”: specify numeric values for ${keys}`,
   sweepConfigParameterNested: (name: string) =>
     `Parameter “${name}”: nested parameters are not supported`,
   sweepConfigParameterLogUniform: (name: string) =>
@@ -130,9 +130,9 @@ export const sweepsTextTemplates = {
 
 export const sweepStatusLabels: Record<SweepStatus, string> = {
   running: "Running",
-  paused: "Pause",
+  paused: "Paused",
   finished: "Completed",
-  canceled: "Cancel",
+  canceled: "Canceled",
   failed: "Failed",
 };
 
@@ -151,7 +151,7 @@ export const sweepTrialStateLabels: Record<SweepTrialState, string> = {
   running: "Running",
   finished: "Completed",
   failed: "Failed",
-  canceled: "Cancel",
+  canceled: "Canceled",
   early_stopped: "Early termination",
 };
 

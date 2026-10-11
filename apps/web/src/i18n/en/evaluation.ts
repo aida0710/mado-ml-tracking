@@ -11,7 +11,7 @@ export const evaluationText = {
   referenceDatasets: "Ground truth set",
   noReferenceDatasets: "None",
   evaluationCodeVersion: "Evaluation code version",
-  evaluationRule: "Evaluation rules",
+  evaluationRule: "Evaluation rule",
   candidateEvaluationRun: "Candidate evaluation run",
   baselineEvaluationRun: "Baseline evaluation run",
   metricCandidate: "Candidate",
@@ -31,7 +31,7 @@ export const evaluationText = {
 
 export const evaluationTextTemplates = {
   versionLabel: (version: string) => `Version ${version}`,
-  baselineAliasOption: (alias: string, versionLabel: string) => `${alias}（${versionLabel}）`,
+  baselineAliasOption: (alias: string, versionLabel: string) => `${alias} (${versionLabel})`,
   baselineFallbackHint: (alias: string) =>
     `${alias} points to this version, so the previously registered version is used as the baseline.`,
 };

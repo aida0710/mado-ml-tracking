@@ -1,3 +1,4 @@
+import { formatEnglishCount } from '../formatEnglishCount';
 import type { EvaluationSampleErrorReason, ArtifactReferenceError } from "../../lib/evaluationSamples";
 
 export const artifactsText = {
@@ -76,12 +77,12 @@ export const artifactsText = {
 export const artifactsTextTemplates = {
   artifactFolder: (name: string) => `Folder ${name}`,
   artifactDirectorySummary: (fileCount: number, size: string) =>
-    `${fileCount.toLocaleString('en-US')} files · ${size}`,
+    `${formatEnglishCount(fileCount, 'file')} · ${size}`,
   audioChannelNumber: (channel: number) => `Channel ${channel}`,
   audioSampleRateValue: (hertz: number) => `${hertz.toLocaleString('en-US')} Hz`,
   audioMaxFrequency: (hertz: number) => `${(hertz / 1000).toLocaleString('en-US', { maximumFractionDigits: 1 })} kHz`,
-  evaluationSampleCount: (count: number) => `${count.toLocaleString('en-US')} samples`,
-  evaluationBrokenRowCount: (count: number) => `${count.toLocaleString('en-US')} unreadable rows`,
+  evaluationSampleCount: (count: number) => formatEnglishCount(count, 'sample'),
+  evaluationBrokenRowCount: (count: number) => formatEnglishCount(count, 'unreadable row'),
   evaluationLine: (line: number) => `Row ${line}`,
   evaluationPage: (page: number, pageCount: number) => `Page ${page} / ${pageCount}`,
 };

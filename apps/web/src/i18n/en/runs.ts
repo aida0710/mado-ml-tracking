@@ -79,6 +79,6 @@ export const runsTextTemplates = {
   chartTopRuns: (count: number) => `Top ${count} search results`,
   chartSelectedRuns: (count: number) => `${count} selected`,
   systemMetricPanelTitle: (category: string, unit: string, gpuIndex: number | null) =>
-    gpuIndex === null ? `${category}（${unit}）` : `${category} ${gpuIndex}（${unit}）`,
+    gpuIndex === null ? `${category} (${unit})` : `${category} ${gpuIndex} (${unit})`,
   resumeSegmentLabel: (index: number) => (index === 0 ? "First execution" : `Resume ${index}`),
 };

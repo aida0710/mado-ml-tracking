@@ -1,3 +1,4 @@
+import { formatEnglishCount } from '../formatEnglishCount';
 import type { ImportanceUnavailableReason, ParameterExclusionReason, ParameterImportanceResult } from '@mmt/contracts';
 
 // Exploring a set of Runs: parallel coordinates, parameter importance and the param scatter plot,
@@ -23,7 +24,7 @@ export const analysisText = {
   analysisColorHigh: "High",
   analysisColorMissing: "No value",
   analysisSelectedRuns: "Filtered runs",
-  analysisParam: "Parameters",
+  analysisParam: "Parameter",
   analysisImportanceColumn: "Importance",
   analysisCorrelation: "Correlation",
   analysisCoverage: "Coverage",
@@ -48,7 +49,9 @@ export const analysisText = {
 export const analysisTextTemplates = {
   analysisSelectionCount: (selected: number, total: number) => `${selected} of ${total}`,
   analysisRunCount: (runCount: number, skipped: number) =>
-    skipped > 0 ? `Calculated from ${runCount} runs (excluding ${skipped} without objective values)` : `Calculated from ${runCount} runs`,
+    skipped > 0
+      ? `Calculated from ${formatEnglishCount(runCount, 'run')} (excluding ${formatEnglishCount(skipped, 'run')} without objective values)`
+      : `Calculated from ${formatEnglishCount(runCount, 'run')}`,
   analysisOutOfBagR2: (r2: string) => `Model fit (out-of-bag R²): ${r2}`,
   analysisAxisCount: (shown: number, total: number) => `${shown} / ${total}`,
   analysisMoreSelectedRuns: (count: number) => `${count} more`,

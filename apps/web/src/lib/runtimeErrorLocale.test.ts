@@ -1,0 +1,110 @@
+import { afterEach, describe, expect, it } from 'vitest';
+import { ARTIFACT_CONTENT_UNAVAILABLE_CODE, RequestError } from '../api/http';
+import { setLocale } from '../i18n/locale';
+import { text } from '../i18n/catalog';
+import { errorText } from '../i18n/errors';
+import { formatErrorMessage } from './errorMessage';
+import { convertWandbSweepConfig, SweepConfigError } from './sweepConfig';
+import { formatUploadFailure } from './uploadFailure';
+import type { UploadFailure } from '../types/uploadFailure';
+
+afterEach(() => setLocale('ja'));
+
+const minimalConfig = {
+  method: 'grid',
+  metric: { name: 'loss', goal: 'minimize' },
+  parameters: { lr: { values: [0.1] } },
+  run_cap: 1,
+};
+
+describe('retained failures follow the display language', () => {
+  it('the original HTTP failure keeps its status when the language changes', () => {
+    const failure = new RequestError({ status: 404, code: ARTIFACT_CONTENT_UNAVAILABLE_CODE });
+    setLocale('ja');
+    const japanese = formatErrorMessage(failure);
+    setLocale('en');
+    expect(formatErrorMessage(failure)).toBe(`${text.contentError} (404)`);
+    expect(formatErrorMessage(failure)).not.toBe(japanese);
+  });
+
+  it('application-owned server codes use the current language', () => {
+    const failure = new RequestError({ status: 503, code: 'internal_error', serverMessage: 'リクエストの処理に失敗しました' });
+    setLocale('ja');
+    expect(formatErrorMessage(failure)).toBe(errorText.internalError);
+    setLocale('en');
+    expect(formatErrorMessage(failure)).toBe('Could not process the request');
+  });
+
+  it('an unknown server explanation preserves user text in either language', () => {
+    const failure = new RequestError({ status: 422, code: 'future_service_code', serverMessage: '保存しました' });
+    setLocale('en');
+    expect(formatErrorMessage(failure)).toBe('保存しました');
+    setLocale('ja');
+    expect(formatErrorMessage(failure)).toBe('保存しました');
+  });
+
+  it('a captured conversion error updates its explanation and retains the parameter name', () => {
+    const name = '日本語のパラメータ';
+    let failure: SweepConfigError | undefined;
+    setLocale('ja');
+    try {
+      convertWandbSweepConfig({ ...minimalConfig, parameters: { [name]: { distribution: 'normal' } } });
+    } catch (cause) {
+      if (!(cause instanceof SweepConfigError)) throw cause;
+      failure = cause;
+    }
+    expect(failure).toBeInstanceOf(SweepConfigError);
+    expect(formatErrorMessage(failure)).toContain('対応していません');
+    setLocale('en');
+    expect(formatErrorMessage(failure)).toContain(name);
+    expect(formatErrorMessage(failure)).toContain('normal');
+    expect(formatErrorMessage(failure)).not.toContain('対応していません');
+  });
+
+  it('a retained upload failure and cancellation prefix update without altering details', () => {
+    const cause = new RequestError({ status: 404, code: ARTIFACT_CONTENT_UNAVAILABLE_CODE });
+    const failure: UploadFailure = { kind: 'request', cause };
+    const cancellation: UploadFailure = { kind: 'cancel', cause: new Error('研究チームの接続詳細') };
+    setLocale('ja');
+    const japanese = formatUploadFailure(failure);
+    setLocale('en');
+    expect(formatUploadFailure(failure)).toBe(`${text.contentError} (404)`);
+    expect(formatUploadFailure(failure)).not.toBe(japanese);
+    expect(formatUploadFailure(cancellation)).toBe(`${text.uploadCancelNotSent}: 研究チームの接続詳細`);
+  });
+
+  it('parameter locations and range field labels also follow a captured error into English', () => {
+    const name = '研究（A）';
+    for (const definition of [{ values: [1], unexpected: true }, { distribution: 'uniform', min: 'invalid', max: 2 }]) {
+      setLocale('ja');
+      let failure: unknown;
+      try {
+        convertWandbSweepConfig({ ...minimalConfig, parameters: { [name]: definition } });
+      } catch (cause) {
+        failure = cause;
+      }
+      expect(failure).toBeInstanceOf(SweepConfigError);
+      setLocale('en');
+      const message = formatErrorMessage(failure);
+      expect(message).toContain(name);
+      expect(message).not.toContain('min・max');
+      expect(message).not.toContain('parameter「');
+    }
+  });
+
+  it('a captured API search-space error retains its row name and both limits', () => {
+    const name = '日本語.[x]';
+    const failure = new RequestError({ status: 422, code: 'sweep_space_invalid',
+      serverMessage: `parameter「${name}」の values は1000個までです（1001個）` });
+    setLocale('ja');
+    expect(formatErrorMessage(failure)).toContain('1000個までです');
+    setLocale('en');
+    expect(formatErrorMessage(failure)).toBe(`Parameter “${name}” values exceed the limit of 1000 (received: 1001)`);
+  });
+
+  it('a new API search-space explanation is preserved instead of guessed', () => {
+    const failure = new RequestError({ status: 422, code: 'sweep_space_invalid', serverMessage: 'new constraint: 日本語の値' });
+    setLocale('en');
+    expect(formatErrorMessage(failure)).toBe('new constraint: 日本語の値');
+  });
+});
