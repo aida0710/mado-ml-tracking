@@ -1,5 +1,5 @@
 import { promotionApi } from '../api/promotion';
-import { registryApi } from '../api/registry';
+import { useModelAliasProtections } from './useModelAliasProtections';
 import { useQuery } from './useQuery';
 
 /**
@@ -10,9 +10,7 @@ export function usePromotionChoices(projectId: string, modelId: string, versionI
   const policies = useQuery(`${projectId}:promotion-policies:${modelId}`, async (signal) =>
     (await promotionApi.policies(projectId, signal)).filter((policy) => policy.modelId === modelId),
   );
-  const protections = useQuery(`${projectId}:alias-protections:${modelId}`, (signal) =>
-    registryApi.aliasProtections(projectId, modelId, signal),
-  );
+  const protections = useModelAliasProtections(projectId, modelId);
   // The newest page is enough: a version gets one decision per policy and evaluation Run.
   const decisions = useQuery(
     versionId ? `${projectId}:promotion-evaluations:${versionId}` : null,

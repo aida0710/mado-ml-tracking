@@ -52,7 +52,17 @@ For a Private Project that others will use, add them under メンバー（任意
 
 Only the accounts of active people are suggested; you, Service Accounts, and disabled users are not. You can also add members later under **Members** in **プロジェクト設定** ([Permissions and roles](/en/admin/permissions)).
 
-If there is no Project you can see, the プロジェクト (Projects) page appears after login. Create the first Project with **プロジェクトを作成** (Create project).
+## The Project opened at login {#home}
+
+At login (and when you click the app name or leave 全体設定), the app opens a Project in this order:
+
+1. The Project last opened in this browser, if you can still open it
+2. The newest Project you are a member of (direct grant or group grant)
+3. Otherwise, the プロジェクト (Projects) page
+
+Someone else's Public Project, or a Project a global administrator sees only as an administrator, is never entered until you open it yourself. This keeps a first-time user from recording into someone else's Project without noticing.
+
+The プロジェクト page lists 参加しているプロジェクト (Projects you are a member of) and メンバーでなくても入れるプロジェクト（Public） (Public Projects you can enter without being a member); click a name to open it. Create the first Project with **プロジェクトを作成** (Create project). For a global administrator, Private Projects they are not a member of are under 全体管理 → **プロジェクト**.
 
 ## Visibility (Public and Private) {#visibility}
 
@@ -66,7 +76,9 @@ If there is no Project you can see, the プロジェクト (Projects) page appea
 - Public access is given only to the accounts of active people, not to Service Accounts or launchers.
 - People who only use a Project through Public access are not listed under **Members**, and are not counted in メンバー数 (Members) under **全体管理** → **プロジェクト**.
 
-A Project Admin changes the visibility in the プロジェクト (Project) section of **プロジェクト設定**: choose 公開範囲 (Visibility) and click **保存** (Save).
+A Project Admin changes the visibility in the プロジェクト (Project) section of **プロジェクト設定**: choose 公開範囲 (Visibility) and click **保存** (Save). A confirmation follows: making it Public says that everyone who can sign in will see and edit it as an Editor, and making it Private says that people who are not members will no longer see it. Check it and click **変更を保存** (Save changes).
+
+The Artifact storage is changed in the same section. Existing Artifacts stay in the current storage; only Artifacts saved from then on go to the new one. Changing the storage is confirmed after **保存** as well.
 
 Projects that existed before visibility was introduced become Private on upgrade. As before, only members can see them.
 

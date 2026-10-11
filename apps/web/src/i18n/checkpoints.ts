@@ -19,6 +19,7 @@ export const checkpointsText = {
   checkpointResumeKeepsSourceRun: '元のRunとそのcheckpointは変更されません。',
   checkpointResumeSubmit: '新しいRunで再開',
   checkpointResumeNoJob: 'このRunを実行したJobが見つからないため、ここからは再開できません。',
+  checkpointResumeCreatorOnly: 'checkpointからの再開は、このRunの作成者かProject adminだけができます。',
   checkpointResumedBadge: '再開',
   checkpointResumedBadgeHint: 'checkpointから再開したRunのJobです',
   checkpointSourceRun: '元のRun',

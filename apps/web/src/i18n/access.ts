@@ -80,6 +80,7 @@ export const auditActionLabels: Record<string, string> = {
   'notification.rule.update': '通知ルールの変更',
   'experiment.update': '実験の変更',
   'dataset.update': 'データセットの変更',
+  'dataset.version.delete': 'データセットのバージョンの削除',
   'model.update': 'モデルの変更',
   'run.note.update': 'Runの説明文の変更',
   'run.resume': 'Runの再開',

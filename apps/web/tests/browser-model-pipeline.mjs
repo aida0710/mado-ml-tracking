@@ -227,6 +227,8 @@ async function routeModelPipeline(route) {
       status: 'finished',
     });
   if (path === `${projectPath}/promotion-evaluations`) return reply({ items: [], nextCursor: null });
+  // The version page ends with its comment thread; nobody has commented on this version.
+  if (path === `${projectPath}/comments`) return reply({ items: [], nextCursor: null });
   if (path.endsWith('/evaluation-comparison'))
     return reply({
       status: 'baseline_not_evaluated',
@@ -252,6 +254,8 @@ const versionPage = page.locator('.model-version-page');
 const automation = () => page.getByRole('region', { name: '自動実行' });
 // The page polls every 5 seconds while work is in progress.
 const POLL_TIMEOUT_MS = 20000;
+// Buttons that change only what is shown: reloading the page and zooming the lineage diagram.
+const VIEW_ONLY_BUTTONS = ['再読み込み', '縮小', '拡大', '全体を表示'];
 
 try {
   console.log('Model pipeline: registry version link opens the version page');
@@ -296,6 +300,9 @@ try {
 
   console.log('Model pipeline: a viewer sees no operations on the page');
   project.role = 'viewer';
+  // A global administrator may rerun automation in any Project (modelAutomationService), so the
+  // viewer here is an ordinary user.
+  api.state.user.isAdmin = false;
   await page.reload();
   await versionPage.getByRole('heading', { name: `${model.name} / ${version.version}` }).waitFor();
   await results.getByText('自動評価（評価rule）').waitFor();
@@ -303,7 +310,7 @@ try {
   const labels = await versionPage.getByRole('button').evaluateAll((elements) =>
     elements.map((element) => element.getAttribute('aria-label') ?? element.textContent),
   );
-  assert.deepEqual(labels, ['再読み込み'], `unexpected buttons: ${buttons.join(', ')}`);
+  assert.deepEqual(labels, VIEW_ONLY_BUTTONS, `unexpected buttons: ${buttons.join(', ')}`);
 
   assert.deepEqual(pageErrors, []);
   console.log('Model pipeline: ok');

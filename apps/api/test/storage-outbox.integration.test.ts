@@ -13,7 +13,7 @@ import type {
 import type { ArtifactStores, PluginClient } from '@mmt/platform';
 import { createApplication } from '../src/app.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
-import { executionFixture } from './fixtures.js';
+import { executionFixture, referenceDigest } from './fixtures.js';
 import { seedDemo } from '../src/seed/demoSeed.js';
 
 describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL）', () => {
@@ -298,7 +298,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
         body: {
           version: 'v1',
           uri: 's3://fixture/predictions',
-          digest: 'sha256:fixture',
+          digest: referenceDigest('fixture'),
           sourceRunId: run.id,
         },
       }),
@@ -324,7 +324,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
         body: {
           version: 'v2',
           uri: 's3://fixture/next',
-          digest: 'sha256:next',
+          digest: referenceDigest('next'),
           sourceRunId: run.id,
         },
       });

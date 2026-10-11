@@ -1,51 +1,67 @@
 import { describe, expect, it } from 'vitest';
 import type { Job, RunStatus } from '@mmt/contracts';
 import {
-  canResumeFromCheckpoint,
   collectResumedRunIds,
   findRunJob,
   getCheckpointArtifactFileName,
+  getCheckpointResumeOffer,
   getResumeCheckpointRecord,
 } from './checkpointResume';
+import { canControlJob } from './permissions';
 import { queuedJob } from '../../tests/fixtures/execution';
 
 function job(id: string, runId: string): Job {
   return { ...queuedJob, id, runId, status: 'failed', exitCode: 1 };
 }
 
-describe('checkpointからの再開の可否', () => {
-  it('失敗・停止したRunにJobがありeditor以上なら再開できる', () => {
+describe('checkpointからの再開の出し方', () => {
+  const stopped = { status: 'failed' } as const;
+
+  it('失敗・停止したRunに止まったJobがあり、Jobを再実行できる人には再開を出す', () => {
     for (const status of ['failed', 'canceled'] as const)
       expect(
-        canResumeFromCheckpoint({ run: { status }, job: { status }, canEdit: true }),
-      ).toBe(true);
+        getCheckpointResumeOffer({ run: { status }, job: { status }, canRetryJob: true }),
+      ).toBe('resume');
   });
 
-  it('完了・実行中のRunは再開の対象にしない', () => {
+  it('完了・実行中のRunには再開も理由も出さない', () => {
     const notResumable: RunStatus[] = ['queued', 'running', 'finished'];
     for (const status of notResumable)
-      expect(
-        canResumeFromCheckpoint({ run: { status }, job: { status: 'failed' }, canEdit: true }),
-      ).toBe(false);
+      for (const canRetryJob of [true, false])
+        expect(
+          getCheckpointResumeOffer({ run: { status }, job: { status: 'failed' }, canRetryJob }),
+        ).toBe('none');
   });
 
-  it('Jobの無いRunとviewerには再開を出さない', () => {
+  it('作成者でないeditorには、再開の代わりに作成者とProject adminだけができると示す', () => {
+    // The API answers 403 job_owner_required to a retry from anyone else.
+    const editor = { role: 'editor', userId: 'editor-b' } as const;
+    const run = { ...stopped, createdBy: 'editor-a' };
+    const canRetryJob = canControlJob(editor.role, editor.userId, run);
+    expect(getCheckpointResumeOffer({ run, job: stopped, canRetryJob })).toBe('creatorOnly');
     expect(
-      canResumeFromCheckpoint({ run: { status: 'failed' }, job: undefined, canEdit: true }),
-    ).toBe(false);
-    expect(
-      canResumeFromCheckpoint({
-        run: { status: 'failed' },
-        job: { status: 'failed' },
-        canEdit: false,
+      getCheckpointResumeOffer({
+        run,
+        job: stopped,
+        canRetryJob: canControlJob('editor', 'editor-a', run),
       }),
-    ).toBe(false);
+    ).toBe('resume');
+    expect(
+      getCheckpointResumeOffer({
+        run,
+        job: stopped,
+        canRetryJob: canControlJob('admin', 'admin-c', run),
+      }),
+    ).toBe('resume');
   });
 
-  it('Jobがまだ終端でなければ再開を出さない', () => {
+  it('Jobの無いRunと、Jobがまだ終端でないRunには再開を出さない', () => {
+    expect(getCheckpointResumeOffer({ run: stopped, job: undefined, canRetryJob: true })).toBe(
+      'none',
+    );
     expect(
-      canResumeFromCheckpoint({ run: { status: 'failed' }, job: { status: 'running' }, canEdit: true }),
-    ).toBe(false);
+      getCheckpointResumeOffer({ run: stopped, job: { status: 'running' }, canRetryJob: true }),
+    ).toBe('none');
   });
 });
 

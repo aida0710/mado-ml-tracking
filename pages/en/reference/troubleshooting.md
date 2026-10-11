@@ -100,7 +100,7 @@ The URL you opened differs from the allowed origins. To use LAN or VPN IP addres
 
 ## Cannot change Project permissions (409)
 
-If the screen says the change would leave the Project without an Admin, you are removing the last Admin. Grant Admin to another member or group first. If disabling or demoting a global administrator returns 409 `last_global_admin`, prepare another global administrator first.
+If the screen says the change would leave the Project without an Admin, you are removing the last Admin. Grant Admin to another member, or to a group someone has signed in with, first. An Admin grant to a group nobody has signed in with yet does not count (the **Authentik group** list marks it "まだ誰もログインしていません"). If disabling or demoting a global administrator returns 409 `last_global_admin`, prepare another global administrator first.
 
 ## Notifications do not arrive
 

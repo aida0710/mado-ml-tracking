@@ -21,6 +21,7 @@ import {
   containerFixture,
   type ContainerFixture,
 } from './containerFixtures.js';
+import { referenceDigest } from './fixtures.js';
 
 describe.skipIf(!testDatabaseUrl)(
   '自動実行の自動再試行とruleの所有者の移管（独立PostgreSQL）',
@@ -134,7 +135,7 @@ describe.skipIf(!testDatabaseUrl)(
               body: {
                 version: job.output.version,
                 uri: `s3://datasets/${job.output.version}`,
-                digest: `sha256:${job.output.version}`,
+                digest: referenceDigest(job.output.version),
                 sourceRunId: job.runId,
               },
             },
@@ -254,13 +255,15 @@ describe.skipIf(!testDatabaseUrl)(
 
       expect(await storedExecutions(fixture, rule.id)).toHaveLength(1);
       expect(await countRows('jobs')).toBe(jobsBefore);
-      // People can still retry the automated Job by hand.
-      await entity(
-        await request(harness.app, `${fixture.basePath}/jobs/${first!.jobId}/retry`, {
+      // The rule owner (here also the Project admin) can still retry the automated Job by hand;
+      // another editor cannot, since the Job is not theirs.
+      const retryAs = (cookie: string) =>
+        request(harness.app, `${fixture.basePath}/jobs/${first!.jobId}/retry`, {
           method: 'POST',
-          cookie: fixture.editor.cookie,
-        }),
-      );
+          cookie,
+        });
+      expect((await retryAs(fixture.editor.cookie)).status).toBe(403);
+      await entity(await retryAs(fixture.administrator.cookie));
     });
 
     it('中止したRunは再試行しない', async () => {
@@ -272,7 +275,7 @@ describe.skipIf(!testDatabaseUrl)(
       await entity(
         await request(harness.app, `${fixture.basePath}/jobs/${first!.jobId}/cancel`, {
           method: 'POST',
-          cookie: fixture.editor.cookie,
+          cookie: fixture.administrator.cookie,
         }),
         200,
       );
@@ -408,13 +411,14 @@ describe.skipIf(!testDatabaseUrl)(
       const retried = await entity<{ run: Run; job: Job }>(
         await request(harness.app, `${fixture.basePath}/jobs/${chained!.jobId}/retry`, {
           method: 'POST',
-          cookie: fixture.editor.cookie,
+          cookie: fixture.administrator.cookie,
         }),
       );
 
+      // The person who retried creates the new Run; only the rule owner or a Project admin may.
       expect(retried.run).toMatchObject({
         parentRunId: upstream!.runId,
-        createdBy: fixture.editor.userId,
+        createdBy: fixture.administrator.userId,
       });
     });
 

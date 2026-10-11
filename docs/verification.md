@@ -370,6 +370,30 @@ node apps/web/tests/browser-settings-shell.mjs
 
 2026-10-11に通過しました（mockのAPIです。全体管理のAPIが全体管理者以外を拒否することはAPIのテストで確かめます）。
 
+## 誤操作・権限の防止をブラウザで確認する
+
+`apps/web/tests/browser-permission-guards.mjs`は、mockのAPI（`tests/browserApi.mjs`）で、権限を変える操作の取り違えを防ぐ画面を確かめます。Webの開発サーバーだけを別のportで起動します。
+
+| 場面 | 確かめること |
+|---|---|
+| メンバー | 最後のAdminの行は［変更］［外す］が押せず理由が出る。まだ誰もログインしていないgroupに「まだ誰もログインしていません」。［メンバーを追加］のRoleの既定はEditorで、既にいる人は「既にAdminです…」と出て選べず、Enterでも選ばれない。別の人を選んで保存すると`role: editor`で送る |
+| プロジェクト設定 | 保存先の下に「既存のArtifactは今の保存先に残ります」が常に出る。公開範囲・保存先を変えて［保存］すると確認が出て、キャンセルでは何も送らない。［変更を保存］で`PATCH`する |
+| "/"で開くProject | メンバーでない他人のPublicだけが見える人は「プロジェクト」の一覧に留まり（390px幅でも横にはみ出さない）、開いたProjectは次から"/"で開く。メンバーなら"/"でそのProjectを開く |
+| Jobs | 「作成者」の列が出て、他人のJobには停止・再実行の代わりに「停止・再実行は作成者かProject adminだけができます」が出る。停止の確認にRun名・作成者・実行先・起きることが出て、ボタンは［停止する］。再実行は［再実行する］で新しいRunの画面へ移る |
+| Models | editorには保護aliasに鍵と「保護alias（adminのみ）」が付き、［Aliasを解除］の代わりに必要な権限が出る |
+| Datasets | ［バージョンを作成］のDigestに`sha256:`と64桁の説明（`sha256:`は省ける）が出る。使われているバージョンの削除は、APIの理由（409）を確認のダイアログに出す |
+
+```bash
+(cd apps/web && MMT_WEB_API_PROXY_TARGET=http://127.0.0.1:9 npx vite --port 47410 --strictPort --host 127.0.0.1) &
+MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
+MMT_CHROMIUM_PATH=/path/to/chromium \
+MMT_WEB_URL=http://127.0.0.1:47410 \
+MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/permission-guards \
+node apps/web/tests/browser-permission-guards.mjs
+```
+
+2026-10-11に通過しました（mockのAPIです。最後のAdmin・Jobの停止と再実行・digest・バージョンの削除の規則はAPIのテストで確かめます）。
+
 ## Webで足すコンピュータ（site）をブラウザで確認する
 
 `apps/web/tests/browser-site-computers.mjs`は、mockのAPI（`tests/browserApi.mjs`）で全体設定の「コンピュータ」（`/settings/computers`）、プロジェクトのCompute画面、全体管理の「ランチャー」（`/settings/launchers`）を開きます。確認する項目は次のとおりです。

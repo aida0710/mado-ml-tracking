@@ -9,33 +9,38 @@ import {
   compileFilter,
   splitSearchField,
   SqlParameters,
-  nextPageToken,
-  pageOffset,
-  searchFingerprint,
   type SearchField,
   timestampInMillisecondsSql,
 } from './searchSyntax.js';
+import { cutPage, requestedPage, type SearchPage } from './searchPagination.js';
 import { invalidParameter, type SearchRegistry } from './validation.js';
 import type { ModelVersionRecord, RegisteredModelRecord } from './types.js';
 
-const modelFields: Record<string, SearchField> = {
+const registeredModelUpdatedAt: SearchField = {
+  expression: timestampInMillisecondsSql('COALESCE(mm.updated_at,m.created_at)'),
+  numeric: true,
+};
+const registeredModelFields: Record<string, SearchField> = {
   name: { expression: 'm.name', numeric: false },
   creation_timestamp: {
     expression: timestampInMillisecondsSql('m.created_at'),
     numeric: true,
   },
-  last_updated_timestamp: {
-    expression: timestampInMillisecondsSql('COALESCE(mm.updated_at,m.created_at)'),
-    numeric: true,
-  },
+  last_updated_timestamp: registeredModelUpdatedAt,
+  // MLflow's recommended order key for registered models; it sorts by the last update.
+  timestamp: registeredModelUpdatedAt,
 };
-const versionFields: Record<string, SearchField> = {
-  ...modelFields,
+// Versions that are not plain digits never match a numeric comparison.
+const versionNumberField: SearchField = {
+  expression: "CASE WHEN v.version ~ '^[0-9]+$' THEN v.version::numeric END",
+  numeric: true,
+  acceptsQuotedInteger: true,
+};
+const modelVersionFields: Record<string, SearchField> = {
   name: { expression: 'm.name', numeric: false, acceptsInList: true },
-  version: {
-    expression: "CASE WHEN v.version ~ '^[0-9]+$' THEN v.version::numeric END",
-    numeric: true,
-  },
+  // MLflow's name for the version number; `version` is this API's earlier name and stays accepted.
+  version_number: versionNumberField,
+  version: versionNumberField,
   run_id: { expression: 'v.source_run_id::text', numeric: false, acceptsInList: true },
   model_id: { expression: 'vm.logged_model_id', numeric: false, acceptsInList: true },
   source_path: { expression: 'vm.artifact_uri', numeric: false, acceptsInList: true },
@@ -48,21 +53,47 @@ const versionFields: Record<string, SearchField> = {
     numeric: true,
   },
 };
+// MLflow's registry search accepts the attribute., tag. and tags. prefixes (SearchModelUtils,
+// SearchModelVersionUtils); attributes. is this API's earlier spelling and stays accepted.
+const REGISTRY_FIELD_KINDS: Record<string, 'attribute' | 'tag'> = {
+  attribute: 'attribute',
+  attributes: 'attribute',
+  tag: 'tag',
+  tags: 'tag',
+};
+// MLflow 3 clients append tag.`mlflow.prompt.is_prompt` != 'true' to every registered model
+// search, and MLflow reads a model without this tag as not a prompt. Comparing a missing tag as
+// 'false' keeps plain models in those results; this API has no Prompt Registry entries to exclude.
+const PROMPT_TAG_KEY = 'mlflow.prompt.is_prompt';
+const MISSING_PROMPT_TAG_VALUE = 'false';
 
+/** The filter, order and page of one registry search, ready to follow a WHERE clause. */
 function registrySearch(
   input: SearchRegistry,
   reference: { projectId: string; kind: 'model' | 'version' },
-) {
+): { parameters: SqlParameters; page: SearchPage; filteredPageSql: string } {
+  const page = requestedPage({
+    query: { ...reference, filter: input.filter, order_by: input.order_by },
+    pageToken: input.page_token,
+    maxResults: input.max_results,
+  });
   const parameters = new SqlParameters([reference.projectId]);
-  const fields = reference.kind === 'model' ? modelFields : versionFields;
+  const fields = reference.kind === 'model' ? registeredModelFields : modelVersionFields;
+  const tagsColumn = reference.kind === 'model' ? 'mm.tags' : 'vm.tags';
   const resolveField = (field: string): SearchField => {
     const { kind, key } = splitSearchField(field);
-    if (kind === 'tags')
+    const fieldKind = REGISTRY_FIELD_KINDS[kind];
+    if (fieldKind === 'tag') {
+      const tagValue = `COALESCE(${tagsColumn},'{}'::jsonb)->>${parameters.add(key)}`;
       return {
-        expression: `COALESCE(${reference.kind === 'model' ? 'mm' : 'vm'}.tags,'{}'::jsonb)->>${parameters.add(key)}`,
+        expression:
+          key === PROMPT_TAG_KEY
+            ? `COALESCE(${tagValue},${parameters.add(MISSING_PROMPT_TAG_VALUE)})`
+            : tagValue,
         numeric: false,
       };
-    const attribute = kind === 'attributes' ? fields[key] : undefined;
+    }
+    const attribute = fieldKind === 'attribute' ? fields[key] : undefined;
     if (!attribute) invalidParameter(`検索field ${field} に対応していません`);
     return attribute;
   };
@@ -73,13 +104,16 @@ function registrySearch(
     if (!field) invalidParameter('Model Registryのorder fieldに対応していません');
     return `${field.expression} ${parsed?.[2]?.toUpperCase() ?? 'ASC'} NULLS LAST`;
   });
+  const order = [
+    ...orders,
+    reference.kind === 'model' ? 'm.name ASC,m.id ASC' : 'v.created_at DESC,v.id DESC',
+  ].join(',');
+  const limit = parameters.add(page.size + 1);
+  const offset = parameters.add(page.offset);
   return {
     parameters,
-    filter,
-    order: [
-      ...orders,
-      reference.kind === 'model' ? 'm.name ASC,m.id ASC' : 'v.created_at DESC,v.id DESC',
-    ].join(','),
+    page,
+    filteredPageSql: `${filter} ORDER BY ${order} LIMIT ${limit} OFFSET ${offset}`,
   };
 }
 
@@ -88,33 +122,22 @@ export async function searchRegisteredModels(
   projectId: string,
   input: SearchRegistry,
 ) {
-  const fingerprint = searchFingerprint({
-    kind: 'model',
-    projectId,
-    ...input,
-    page_token: undefined,
-  });
-  const offset = pageOffset(input.page_token, fingerprint);
   const search = registrySearch(input, { projectId, kind: 'model' });
-  const limit = search.parameters.add(input.max_results + 1);
-  const start = search.parameters.add(offset);
   const matches = await rows<RegisteredModelRecord>(
     database,
-    `${registeredModelSelect} WHERE m.project_id=$1 AND mm.deleted_at IS NULL AND ${search.filter} ORDER BY ${search.order} LIMIT ${limit} OFFSET ${start}`,
+    `${registeredModelSelect} WHERE m.project_id=$1 AND mm.deleted_at IS NULL AND ${search.filteredPageSql}`,
     search.parameters.values,
   );
-  const page = matches.slice(0, input.max_results);
+  const { items, continuation } = cutPage(matches, search.page);
   const versionsByModel = await activeModelVersionsByModel(database, {
     projectId,
-    modelIds: page.map((model) => model.id),
+    modelIds: items.map((model) => model.id),
   });
   return {
-    registered_models: page.map((model) =>
+    registered_models: items.map((model) =>
       registeredModelProtocol(model, versionsByModel.get(model.id) ?? []),
     ),
-    ...(matches.length > input.max_results
-      ? { next_page_token: nextPageToken(offset + input.max_results, fingerprint) }
-      : {}),
+    ...continuation,
   };
 }
 
@@ -123,25 +146,12 @@ export async function searchModelVersions(
   projectId: string,
   input: SearchRegistry,
 ) {
-  const fingerprint = searchFingerprint({
-    kind: 'version',
-    projectId,
-    ...input,
-    page_token: undefined,
-  });
-  const offset = pageOffset(input.page_token, fingerprint);
   const search = registrySearch(input, { projectId, kind: 'version' });
-  const limit = search.parameters.add(input.max_results + 1);
-  const start = search.parameters.add(offset);
   const matches = await rows<ModelVersionRecord>(
     database,
-    `${modelVersionSelect} WHERE v.project_id=$1 AND vm.deleted_at IS NULL AND mm.deleted_at IS NULL AND ${search.filter} ORDER BY ${search.order} LIMIT ${limit} OFFSET ${start}`,
+    `${modelVersionSelect} WHERE v.project_id=$1 AND vm.deleted_at IS NULL AND mm.deleted_at IS NULL AND ${search.filteredPageSql}`,
     search.parameters.values,
   );
-  return {
-    model_versions: matches.slice(0, input.max_results).map(modelVersionProtocol),
-    ...(matches.length > input.max_results
-      ? { next_page_token: nextPageToken(offset + input.max_results, fingerprint) }
-      : {}),
-  };
+  const { items, continuation } = cutPage(matches, search.page);
+  return { model_versions: items.map(modelVersionProtocol), ...continuation };
 }

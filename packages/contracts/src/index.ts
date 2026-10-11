@@ -219,6 +219,7 @@ export {
   CPU_ARCHES,
   JOB_END_REASONS,
   JOB_PHASES,
+  JOB_SUBMISSION_PHASES,
   MAX_JOB_ARRAY_SIZE,
   MAX_JOB_GPU_COUNT,
   MAX_JOB_WALLTIME_SECONDS,
@@ -369,6 +370,11 @@ export interface Project {
   artifactBackend: ArtifactBackend;
   visibility: ProjectVisibility;
   role: ProjectRole;
+  /**
+   * The user holds a role through a direct grant or a group binding. False when `role` comes only
+   * from public visibility or from a global administrator's session.
+   */
+  isMember: boolean;
   createdAt: string;
 }
 export interface Experiment {
@@ -650,6 +656,10 @@ export interface JobListItem extends Job {
   taskId: string | null;
   taskName: string | null;
   sweepEarlyStopped: boolean;
+  /** The Job's creator: the creator of its Run. Only they or a Project admin stop or retry it. */
+  createdBy: string;
+  /** Display name of createdBy; null if the user record is gone. */
+  createdByName: string | null;
 }
 export type WorkerPresenceStatus = 'online' | 'offline';
 export interface WorkerPresence {

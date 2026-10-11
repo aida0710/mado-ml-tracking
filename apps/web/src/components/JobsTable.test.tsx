@@ -13,6 +13,8 @@ const listItem = (overrides: Partial<JobListItem>): JobListItem => ({
   taskId: null,
   taskName: null,
   sweepEarlyStopped: false,
+  createdBy: 'user-researcher',
+  createdByName: '研究者A',
   ...overrides,
 });
 const siteJob = listItem({
@@ -31,7 +33,7 @@ const siteJob = listItem({
 });
 const hooks = [{ id: 'hook-0001', name: 'Shard generation' }] as Hook[];
 
-function render(jobs: JobListItem[]) {
+function render(jobs: JobListItem[], canControl: (job: JobListItem) => boolean = () => true) {
   return renderToStaticMarkup(
     <MemoryRouter>
       <JobsTable
@@ -40,7 +42,7 @@ function render(jobs: JobListItem[]) {
         hooks={hooks}
         projectId="project"
         selectedId=""
-        canEdit
+        canControl={canControl}
         resumedRunIds={undefined}
         onSelectJob={() => undefined}
         onSelectArray={() => undefined}
@@ -77,6 +79,18 @@ describe('Jobsの一覧', () => {
     expect(html).toContain('0, 1');
     expect(html).not.toContain('GPU ×');
     expect(html).not.toContain('待ち行列');
+  });
+
+  it('作成者の列を出し、停止・再実行は操作できるJobの行にだけ出して、ほかの行には理由を文で示す', () => {
+    const mine = listItem({ id: 'mine', status: 'running', createdBy: 'me', createdByName: '自分' });
+    const others = listItem({ id: 'others', status: 'running', createdByName: '研究者B' });
+    const html = render([mine, others], (job) => job.createdBy === 'me');
+    expect(html).toContain('作成者');
+    expect(html).toContain('研究者B');
+    expect(html.match(/停止を要求/g)).toHaveLength(1);
+    // A tooltip cannot be read by touch or keyboard, so the reason is the cell's own text.
+    expect(html).toContain('>停止・再実行は作成者かProject adminだけができます<');
+    expect(html).not.toContain('title="停止・再実行は');
   });
 
   it('手動投入を待つsiteごとに、本人が実行するコマンドを表示する', () => {

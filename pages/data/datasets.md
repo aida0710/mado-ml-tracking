@@ -97,8 +97,8 @@ SDKは、ファイルごとにSHA-256とサイズで同じ中身の保存済みA
 | 項目 | 入力する値 | 例 |
 | --- | --- | --- |
 | バージョン | バージョンの名前（必須） | `2026-10` |
-| URI | データの場所（必須） | `s3://corpus/speech/2026-10/` |
-| Digest | 中身を表すハッシュ（必須） | `sha256:<64桁の16進数>` |
+| URI | データの場所（必須）。`s3://`（バケットとキー、またはフォルダ）、`https://`（1つのファイル）、`file://`（実行先のコンピュータ上のパス） | `s3://corpus/speech/2026-10/` |
+| Digest | 中身のSHA-256（必須）。`sha256:`と64桁の小文字の16進数で書きます。`sha256:`は省けるので、`sha256sum`の結果の64桁をそのまま貼っても構いません。入力した形のまま保存します。大文字や桁数の違うもの、ほかの算法（`sha512:`など）は「digestは sha256:<64桁の小文字16進数>（sha256:は省略可）の形で指定してください」と断られます | `sha256:<64桁の16進数>`、または`sha256sum`の結果の64桁 |
 | 親のバージョン | 元になったバージョン | |
 | 生成元Run | このバージョンを作ったRun | |
 | Schema（JSON）、Metadata（JSON） | 任意のJSON | `{"columns": ["audio", "text"]}` |
@@ -108,7 +108,7 @@ SDKは、ファイルごとにSHA-256とサイズで同じ中身の保存済みA
 推論や前処理のRunが出力したファイルを、そのまま次のRunの入力に使えるバージョンにできます。Runの出力から作ったバージョンは、生成元のRunが記録され、Lineageの「データ出力」の線でつながります。
 
 - Taskで実行するコードでは、`/mmt/outputs/result.json`（version 2）の`datasets`で出力を宣言します。workerが出力ファイルを保存したあとに、整数で採番したバージョンを登録します。宣言はRunごとに64件までです
-- Python SDKでは、`run.register_output_dataset(version=, uri=, digest=)`で参照のバージョンを登録します。親のバージョンには、Runの入力のバージョンが入ります
+- Python SDKでは、`run.register_output_dataset(version=, uri=, digest=)`で参照のバージョンを登録します。親のバージョンには、Runの入力のバージョンが入ります。digestは画面と同じく`sha256:`と64桁の小文字の16進数です（`sha256:`は省略可）
 - APIでは、`POST /api/projects/<Project ID>/datasets/<Dataset ID>/versions`の`content`に`{"kind": "artifacts", "fromRunArtifacts": {"runId": "<Run ID>", "prefix": "outputs/audio"}}`を指定すると、RunのArtifactのうち`prefix`の下にあるファイルでバージョンを作ります
 
 `result.json`の書き方は[Taskとコードバージョン](/models/tasks)を参照してください。推論のRunの出力を評価のRunへ自動で渡す方法は[自動実行](/models/automation)にあります。
@@ -166,7 +166,9 @@ Runが始まったときと終わったときに、Runの入力と出力のバ�
 
 ## 使わなくなったデータセット
 
-データセットとバージョンは削除できません。使わなくなったデータセットは、APIの`PATCH /api/projects/<Project ID>/datasets/<Dataset ID>`に`{"archived": true}`を送ってarchiveします。archiveしたデータセットのバージョンを入力にして、新しいRunを作ることはできなくなります。作成済みのRunの記録はそのまま残ります。画面にはarchiveの操作はありません。
+データセットは削除できません。バージョンは、どこからも使われていなければ削除できます。URIを打ち間違えたバージョンなどは、バージョンを選んで［このバージョンを削除］を押し、確認で［削除する］を押します（Editor以上）。Runの入力・出力、ほかのバージョンの親、Task・自動実行ルール・フックの入力などから使われているときは、「このバージョンは使われているため削除できません（Runの入力 1件）」のように、何が使っているかを表示して断ります。削除しても、URIの先のデータとArtifactは消えません。APIでは`DELETE /api/projects/<Project ID>/datasets/<Dataset ID>/versions/<バージョンのID>`です。
+
+使わなくなったデータセットは、APIの`PATCH /api/projects/<Project ID>/datasets/<Dataset ID>`に`{"archived": true}`を送ってarchiveします。archiveしたデータセットのバージョンを入力にして、新しいRunを作ることはできなくなります。作成済みのRunの記録はそのまま残ります。画面にはarchiveの操作はありません。
 
 バージョンが参照しているArtifactは、バージョンがある限り削除できません。
 

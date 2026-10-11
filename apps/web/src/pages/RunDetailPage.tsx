@@ -9,6 +9,7 @@ import {
   type RunResumeEventPage,
 } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
+import { useAuth } from '../hooks/useAuth';
 import { useProject } from '../hooks/useProject';
 import { EXECUTION_POLL_MS, useQuery } from '../hooks/useQuery';
 import { PageHeader } from '../components/PageHeader';
@@ -51,6 +52,7 @@ import { useRunResumeEvents } from '../hooks/useRunResumeEvents';
 import { getRunParameters } from '../lib/runParameters';
 import { creatorName } from '../lib/creatorName';
 import { getResumeCheckpointRecord } from '../lib/checkpointResume';
+import { canControlJob } from '../lib/permissions';
 import { text, textTemplates } from '../i18n/catalog';
 import { systemMetricCategoryLabels, systemMetricUnitLabels } from '../i18n/runs';
 
@@ -78,6 +80,7 @@ const tabLabels: Record<RunTab, string> = {
 
 export function RunDetailPage() {
   const { project, canEdit } = useProject();
+  const { user } = useAuth();
   const { runId = '' } = useParams();
   const [params, setParams] = useSearchParams();
   const requestedTab = params.get('tab');
@@ -200,7 +203,12 @@ export function RunDetailPage() {
                   <RunArtifacts projectId={project.id} runId={runId} revision={artifactRevision} />
                 </>
               )}
-              {tab === 'checkpoints' && <RunCheckpointList run={item} canEdit={canEdit} />}
+              {tab === 'checkpoints' && (
+                <RunCheckpointList
+                  run={item}
+                  canRetryJob={canControlJob(project.role, user.id, item)}
+                />
+              )}
               {tab === 'details' && (
                 <div className="details-grid">
                   <RunDescriptionEditor projectId={project.id} run={item} />

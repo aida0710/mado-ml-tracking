@@ -85,6 +85,7 @@ export function ModelsPage() {
           <ModelRegistryPanel
             registry={registry}
             projectId={project.id}
+            projectRole={project.role}
             canEdit={canEdit}
             aliasHistory={aliasHistory}
             onCreateVersion={() => setDialog('version')}

@@ -16,21 +16,27 @@ export function isResumableStatus(status: JobStatus): boolean {
   return RESUMABLE_STATUSES.includes(status);
 }
 
+/** What the checkpoint list shows for resuming; see getCheckpointResumeOffer. */
+export type CheckpointResumeOffer = 'resume' | 'creatorOnly' | 'none';
+
 /**
- * Whether the screen offers "resume from this checkpoint": the API retries the Run's Job, so the
- * Run must have one, and retrying needs the editor role. The API stays the authority.
+ * What the checkpoint list offers for a stopped Run: 'resume' buttons, or 'creatorOnly' (the
+ * reason in their place) for someone who may not retry the Run's Job; 'none' otherwise. Resuming
+ * retries the Job, which only its creator and Project admins may (lib/permissions canControlJob
+ * with the Run's createdBy), and needs a Job that has stopped too. The API stays the authority.
  */
-export function canResumeFromCheckpoint({
+export function getCheckpointResumeOffer({
   run,
   job,
-  canEdit,
+  canRetryJob,
 }: {
   run: Pick<Run, 'status'>;
   job: Pick<Job, 'status'> | undefined;
-  canEdit: boolean;
-}): boolean {
-  if (!canEdit || !job) return false;
-  return isResumableStatus(run.status) && isResumableStatus(job.status);
+  canRetryJob: boolean;
+}): CheckpointResumeOffer {
+  if (!isResumableStatus(run.status)) return 'none';
+  if (!canRetryJob) return 'creatorOnly';
+  return job && isResumableStatus(job.status) ? 'resume' : 'none';
 }
 
 /** The Job that ran this Run. The jobs list is newest first, so a re-enqueued Run gets its newest Job. */

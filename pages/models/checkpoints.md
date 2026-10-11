@@ -53,7 +53,7 @@ Run詳細の［Checkpoint］タブに、そのRunのcheckpointをstep、ファ�
 
 ## 再開する
 
-再開できるのは、Jobで実行して失敗または中止したRunです。権限はeditor以上です。
+再開できるのは、Jobで実行して失敗または中止したRunです。再開はそのJobの再実行なので、できるのはRunの作成者とProjectのAdminだけです（Jobの停止・再実行と同じ）。ほかの人の［Checkpoint］タブには、［このcheckpointから再開］の代わりにその理由が出ます。
 
 ### checkpointを選んで再開する
 

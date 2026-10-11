@@ -11,9 +11,16 @@ export const MAX_MODEL_SEARCH_EXPERIMENTS = 1000;
 export const MAX_MODEL_SEARCH_DATASETS = 100;
 export const MAX_MODEL_ORDER_FIELDS = 20;
 export const MAX_MODEL_ORDER_FIELD_LENGTH = 500;
-// Keep pagination bounded while preserving MLflow's usual 100 item default.
+// Keep each page bounded while preserving MLflow's usual 100 item default. A larger max_results
+// is served page by page with next_page_token (see searchPagination.ts), not rejected.
 export const MAX_MODEL_PAGE_SIZE = 1000;
 export const DEFAULT_MODEL_PAGE_SIZE = 100;
+// MLflow 3.17's server rejects a larger max_results with INVALID_PARAMETER_VALUE, and so does
+// this API.
+export const MLFLOW_MAX_REGISTERED_MODEL_RESULTS = 1000;
+export const MLFLOW_MAX_MODEL_VERSION_RESULTS = 200_000;
+// MLflow sets no upper bound for search_logged_models, so any safe integer is a valid request.
+export const MLFLOW_MAX_LOGGED_MODEL_RESULTS = Number.MAX_SAFE_INTEGER;
 export const MAX_MODEL_PAGE_TOKEN_LENGTH = 2000;
 // Match the native URI limit and keep registry descriptions bounded independently of artifacts.
 export const MAX_MODEL_URI_LENGTH = 4000;

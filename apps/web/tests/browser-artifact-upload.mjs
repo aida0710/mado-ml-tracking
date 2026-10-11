@@ -180,7 +180,8 @@ try {
     assert.ok(response.ok(), `${endpoint}: ${response.status()}`);
     return response.json();
   };
-  const project = await apiPost('/projects', { name: 'Upload manager browser check' });
+  // Private: in a public Project every signed-in person is an editor, and step 6 needs a viewer.
+  const project = await apiPost('/projects', { name: 'Upload manager browser check', visibility: 'private' });
   const experiment = await apiPost(`/projects/${project.id}/experiments`, { name: 'Uploads' });
   const run = await apiPost(`/projects/${project.id}/runs`, { experimentId: experiment.id, name: 'upload-run', kind: 'training' });
   const runUrl = `${WEB_URL}/projects/${project.id}/runs/${run.id}?tab=artifacts`;

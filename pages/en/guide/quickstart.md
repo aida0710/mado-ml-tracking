@@ -15,7 +15,7 @@ The screens are in Japanese. The steps give the Japanese label followed by an En
 
 Open `MMT_PUBLIC_URL` in a browser and sign in. The first sign-in of the initial administrator asks for a new password.
 
-When there is no Project you can see yet, the "プロジェクト" (Projects) page appears. Press ［プロジェクトを作成］ (Create project), enter the following values, and press ［作成］ (Create). If other Projects already exist, press the Project name at the top of the sidebar to open the switcher, and press ［＋ プロジェクトを作成］ at the bottom.
+When you are not a member of any Project yet, the "プロジェクト" (Projects) page appears (someone else's Public Projects are only listed there and never opened by themselves). Press ［プロジェクトを作成］ (Create project), enter the following values, and press ［作成］ (Create). If other Projects already exist, press the Project name at the top of the sidebar to open the switcher, and press ［＋ プロジェクトを作成］ at the bottom.
 
 | Field | Example value |
 | --- | --- |
@@ -123,7 +123,7 @@ with mlflow.start_run(run_name="lr-5e-5"):
 ~/.venvs/mmt/bin/python train_mlflow.py
 ```
 
-`set_experiment` uses an existing experiment with the same name, so the Run goes to the experiment from step 4. The `View run ...` link the SDK prints at the end points to the standard MLflow UI, which this app does not serve. Check the results on this app's screens.
+`set_experiment` uses an existing experiment with the same name, so the Run goes to the experiment from step 4. The `View run ...` link the SDK prints at the end opens the Run's page in this app.
 
 For the supported MLflow features, see [Record from the MLflow 3 SDK](/en/tracking/mlflow).
 

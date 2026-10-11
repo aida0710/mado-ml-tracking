@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import os
 import sys
@@ -33,6 +34,9 @@ ARTIFACT_DIRECTORY = (
     / datetime.now(ZoneInfo("Asia/Tokyo")).strftime("%Y-%m-%d")
 )
 WORK_DIRECTORY = ROOT / "var/verification-worker"
+# The fixture's samples live in its code and metadata, not at its urn: URI, so nothing checks this
+# digest; it only takes the form the API accepts (sha256: and 64 lowercase hex digits).
+FIXTURE_DATASET_DIGEST = "sha256:" + hashlib.sha256(b"linear-y2x1-v1").hexdigest()
 
 
 def session_request(session: httpx.Client, method: str, path: str, **options):
@@ -150,7 +154,7 @@ async def verify_jobs(
             namespace="verification",
             version="v1",
             uri="urn:mmt:verification:linear-samples",
-            digest="fixture:linear-y2x1-v1",
+            digest=FIXTURE_DATASET_DIGEST,
             schema={"x": "number", "y": "number"},
             metadata={"fixture": True},
         )

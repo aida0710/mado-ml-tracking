@@ -488,7 +488,9 @@ class Client(ExperimentTasksClient):
 
         With ``files`` the directory is uploaded as Artifacts and the API computes the uri and
         digest; unchanged files already in the Project are not sent again. Without ``files``,
-        ``version``, ``uri`` and ``digest`` are required.
+        ``version``, ``uri`` and ``digest`` are required, and ``digest`` is the SHA-256 as 64
+        lowercase hex digits, with or without a ``sha256:`` prefix, unless ``external_ref`` is given
+        (the API refuses other forms and stores the digest as given).
         """
         if files is not None:
             if uri is not None or digest is not None:

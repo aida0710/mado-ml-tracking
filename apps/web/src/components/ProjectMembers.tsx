@@ -2,15 +2,18 @@ import { useState } from 'react';
 import type { ProjectMember, ProjectVisibility } from '@mmt/contracts';
 import type { useProjectMembers } from '../hooks/useProjectMembers';
 import { useProject } from '../hooks/useProject';
+import { useAuth } from '../hooks/useAuth';
 import { ResponsiveTable } from './ResponsiveTable';
 import { Resource } from './Feedback';
 import { ConfirmDialog } from './ConfirmDialog';
+import { AccessGrantActions } from './AccessGrantActions';
 import { MemberDialog } from '../dialogs/MemberDialog';
 import {
   hasDirectGrant,
   listProjectMemberSources,
   type ProjectMemberSource,
 } from '../lib/projectMemberSources';
+import { findLastProjectAdminGrant } from '../lib/projectAdminGrants';
 import { text } from '../i18n/catalog';
 import { projectAccessTextTemplates } from '../i18n/projectAccess';
 
@@ -28,7 +31,11 @@ export function ProjectMembers({
   projectMembers: ReturnType<typeof useProjectMembers>;
 }) {
   const { project, isProjectAdmin, reloadProjects } = useProject();
+  const { user } = useAuth();
   const { members, saveMember, removeMember } = projectMembers;
+  const lastAdminGrant = findLastProjectAdminGrant(members.value ?? []);
+  const isLastAdmin = (member: ProjectMember) =>
+    lastAdminGrant?.kind === 'member' && lastAdminGrant.userId === member.user.id;
   const [editing, setEditing] = useState<ProjectMember | 'new' | null>(null);
   const [removing, setRemoving] = useState<ProjectMember | null>(null);
   // The signed-in user's own role may have changed, which decides what the shell shows.
@@ -102,17 +109,11 @@ export function ProjectMembers({
                       header: text.actions,
                       render: (member: ProjectMember) =>
                         hasDirectGrant(member) ? (
-                          <div className="access-actions">
-                            <button className="button small" onClick={() => setEditing(member)}>
-                              {text.edit}
-                            </button>
-                            <button
-                              className="button small danger"
-                              onClick={() => setRemoving(member)}
-                            >
-                              {text.remove}
-                            </button>
-                          </div>
+                          <AccessGrantActions
+                            isLastAdmin={isLastAdmin(member)}
+                            onEdit={() => setEditing(member)}
+                            onRemove={() => setRemoving(member)}
+                          />
                         ) : (
                           <span className="muted">{text.memberGrantedByGroup}</span>
                         ),
@@ -126,6 +127,7 @@ export function ProjectMembers({
       {editing && (
         <MemberDialog
           member={editing === 'new' ? undefined : editing}
+          existingMembers={members.value ?? []}
           onSave={saveMember}
           onClose={() => setEditing(null)}
           onSaved={() => {
@@ -137,10 +139,11 @@ export function ProjectMembers({
       {removing && (
         <ConfirmDialog
           title={text.removeMember}
-          message={projectAccessTextTemplates.removeMemberConfirm(
-            removing.user.displayName,
-            removing.groups.length > 0,
-          )}
+          message={projectAccessTextTemplates.removeMemberConfirm({
+            displayName: removing.user.displayName,
+            keepsGroupRole: removing.groups.length > 0,
+            isSelf: removing.user.id === user.id,
+          })}
           confirmLabel={text.remove}
           destructive
           onClose={() => setRemoving(null)}

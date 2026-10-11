@@ -4,6 +4,7 @@ import {
   canAddSshOrLocalTarget,
   canAddTarget,
   canChangeOwnPassword,
+  canControlJob,
   canControlSweep,
   canManageHooks,
   canManageTarget,
@@ -81,8 +82,9 @@ describe('Projectの権限判定', () => {
     ['editor', 'creator', true],
     ['editor', 'other', false],
     ['admin', 'other', true],
-  ] as const)('Sweepの操作は%s（%s）なら%sになる', (role, userId, expected) => {
+  ] as const)('Sweepの操作とJobの停止・再実行は%s（%s）なら%sになる', (role, userId, expected) => {
     expect(canControlSweep(role, userId, { createdBy: 'creator' })).toBe(expected);
+    expect(canControlJob(role, userId, { createdBy: 'creator' })).toBe(expected);
   });
 });
 

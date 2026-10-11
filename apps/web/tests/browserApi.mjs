@@ -63,6 +63,7 @@ export function createBrowserApi() {
     username: 'ui-test',
     status: 'active',
     authSources: ['local'],
+    kind: 'human',
   };
   const project = {
     id: id(),
@@ -72,6 +73,8 @@ export function createBrowserApi() {
     // Projects that existed before visibility stay private (migration 054).
     visibility: 'private',
     role: 'admin',
+    // The signed-in user created it, so "/" opens it.
+    isMember: true,
     createdAt: now,
   };
   const projectAdministration = createProjectAdministration({ id, now, user, mainProject: project });
@@ -551,6 +554,15 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
         state.runs.push(run);
         return reply(run);
       }
+      // RunComparison of the chosen Runs without rows: enough for the comparison's tabs to open.
+      if (key === 'compare' && method === 'POST')
+        return reply({
+          runs: body.runIds.map((runId) => item(state.runs, runId)).filter(Boolean),
+          baselineRunId: null,
+          datasetVersions: [],
+          modelVersions: [],
+          rows: [],
+        });
       const run = item(state.runs, key);
       if (!subresource) {
         if (method === 'PATCH') Object.assign(run, body);
@@ -688,6 +700,9 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
               taskId: run?.taskId ?? null,
               taskName: null,
               sweepEarlyStopped: false,
+              // Who started the Job: its Run's creator (api-contract.md).
+              createdBy: run?.createdBy ?? state.user.id,
+              createdByName: run?.createdByName ?? state.user.displayName,
             };
           }),
         );

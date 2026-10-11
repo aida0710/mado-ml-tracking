@@ -12,6 +12,7 @@ const project = (overrides: Partial<Project>): Project => ({
   artifactBackend: 'filesystem',
   visibility: 'public',
   role: 'editor',
+  isMember: true,
   createdAt: '2026-10-11T00:00:00Z',
   ...overrides,
 });

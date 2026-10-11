@@ -56,6 +56,7 @@ const addProject = ({ name, visibility = 'public', role = 'editor' }) => {
     artifactBackend: 'filesystem',
     visibility,
     role,
+    isMember: true,
     createdAt: '2026-10-09T00:00:00Z',
     archivedAt: null,
     memberCount: 2,

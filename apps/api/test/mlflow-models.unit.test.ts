@@ -2,13 +2,9 @@ import { existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 import { mlflowSdkPythonPath } from './mlflow-sdk-fixtures.js';
-import {
-  compileFilter,
-  nextPageToken,
-  pageOffset,
-  searchFingerprint,
-  SqlParameters,
-} from '../src/mlflow/models/searchSyntax.js';
+import { compileFilter, SqlParameters } from '../src/mlflow/models/searchSyntax.js';
+import { cutPage, requestedPage } from '../src/mlflow/models/searchPagination.js';
+import { MAX_MODEL_PAGE_SIZE } from '../src/mlflow/models/limits.js';
 import {
   loggedModelProtocol,
   modelVersionProtocol,
@@ -107,13 +103,59 @@ describe('MLflowモデルの検索・保存・公式protocol', () => {
   });
 
   it('page_tokenを検索条件に結び付け、条件が変わったtokenを拒否する', () => {
-    const fingerprint = searchFingerprint({ projectId: 'one', filter: 'same' });
-    const token = nextPageToken(5, fingerprint);
-    expect(pageOffset(token, fingerprint)).toBe(5);
+    const query = { projectId: 'one', filter: 'same' };
+    const first = requestedPage({ query, pageToken: undefined, maxResults: 5 });
+    const token = cutPage([1, 2, 3, 4, 5, 6], first).continuation.next_page_token;
+    expect(requestedPage({ query, pageToken: token, maxResults: 5 }).offset).toBe(5);
     expect(() =>
-      pageOffset(token, searchFingerprint({ projectId: 'two', filter: 'same' })),
+      requestedPage({
+        query: { projectId: 'two', filter: 'same' },
+        pageToken: token,
+        maxResults: 5,
+      }),
     ).toThrow();
-    expect(() => pageOffset('invalid-token', fingerprint)).toThrow();
+    expect(() => requestedPage({ query, pageToken: 'invalid-token', maxResults: 5 })).toThrow();
+  });
+
+  it('page_tokenは次のページで件数を変えても使える（SDKは残りの件数で次を頼む）', () => {
+    const query = { projectId: 'one', filter: 'same' };
+    const first = requestedPage({ query, pageToken: undefined, maxResults: 2 });
+    const token = cutPage(['a', 'b', 'c'], first).continuation.next_page_token;
+    expect(requestedPage({ query, pageToken: token, maxResults: 7 })).toMatchObject({
+      offset: 2,
+      size: 7,
+    });
+  });
+
+  it('上限を超える件数は上限で切り、残りがあれば続きのページの印を返す', () => {
+    const page = requestedPage({ query: {}, pageToken: undefined, maxResults: 10000 });
+    expect(page.size).toBe(MAX_MODEL_PAGE_SIZE);
+    const rows = Array.from({ length: MAX_MODEL_PAGE_SIZE + 1 }, (_, index) => index);
+    const cut = cutPage(rows, page);
+    expect(cut.items).toHaveLength(MAX_MODEL_PAGE_SIZE);
+    expect(cut.continuation.next_page_token).toEqual(expect.any(String));
+    expect(cutPage(rows.slice(0, MAX_MODEL_PAGE_SIZE), page).continuation).toEqual({});
+  });
+
+  it('バージョンの番号はMLflowと同じく引用符付きの整数でも比べられ、小数や文字は断る', () => {
+    const versionNumber = { expression: 'v.number', numeric: true, acceptsQuotedInteger: true };
+    const parameters = new SqlParameters();
+    const resolveField = () => versionNumber;
+    expect(compileFilter({ filter: "version_number = '3'", parameters, resolveField })).toBe(
+      'v.number = $1',
+    );
+    expect(parameters.values).toEqual(['3']);
+    for (const filter of ["version_number = '3.5'", "version_number = 'x'"])
+      expect(() =>
+        compileFilter({ filter, parameters: new SqlParameters(), resolveField }),
+      ).toThrow();
+    expect(() =>
+      compileFilter({
+        filter: "creation_timestamp = '3'",
+        parameters: new SqlParameters(),
+        resolveField: () => ({ expression: 'm.created', numeric: true }),
+      }),
+    ).toThrow();
   });
 
   it('複数の重み候補は拒否し、mmt.weights_pathで保存済みの一つだけを選ぶ', () => {

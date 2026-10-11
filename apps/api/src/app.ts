@@ -23,6 +23,7 @@ import { isAllowedOrigin } from './http/originPolicy.js';
 import { principal, type ApiEnvironment } from './http/request.js';
 import { formatMlflowError, isMlflowArtifactUpload, isMlflowRequest } from './mlflow/errors.js';
 import { mlflowInformationRoutes } from './mlflow/informationRoutes.js';
+import { mlflowUiLinkRoutes } from './mlflow/uiLinkRoutes.js';
 import { mlflowTrackingRoutes } from './mlflow/tracking/index.js';
 import { mlflowModelRoutes } from './mlflow/models/index.js';
 import { mlflowArtifactRoutes } from './mlflow/artifacts/index.js';
@@ -40,6 +41,7 @@ import { ArtifactUsageService } from './services/artifactUsageService.js';
 import { ProjectService } from './services/projectService.js';
 import { RegistryService } from './services/registryService.js';
 import { DatasetContentService } from './services/datasetContentService.js';
+import { DatasetVersionDeletionService } from './services/datasetVersionDeletionService.js';
 import { RunService } from './services/runService.js';
 import { RunSearchService } from './services/runSearchService.js';
 import { MetricSeriesService } from './services/metricSeriesService.js';
@@ -485,7 +487,14 @@ export function createApplication(options: ApplicationOptions) {
     ),
   );
   app.route('/api', userRoutes(new UserDirectoryService(database)));
-  app.route('/api/projects', registryRoutes(registry, new DatasetContentService(database)));
+  app.route(
+    '/api/projects',
+    registryRoutes(
+      registry,
+      new DatasetContentService(database),
+      new DatasetVersionDeletionService(database),
+    ),
+  );
   app.route('/api/projects', modelAutomationRoutes(automation));
   app.route('/api/projects', runRoutes({ runs, lineage, runComparison, runExport }));
   app.route('/api/projects', runSearchRoutes(runSearch));
@@ -542,6 +551,7 @@ export function createApplication(options: ApplicationOptions) {
   app.route('/api', targetCheckRoutes(targetChecks, targetDirectoryListings));
   app.route('/api', workerPresenceRoutes(worker));
   app.route('/api/tokens', tokenRoutes(tokens));
+  app.route('/api/mlflow/projects', mlflowUiLinkRoutes());
   app.route('/api/mlflow/projects/:p', mlflowInformationRoutes(database, config.mlflowMultipart));
   app.route('/api/mlflow/projects/:p', mlflowTrackingRoutes({ database, runs, registry, runCompletion }));
   app.route('/api/mlflow/projects/:p', mlflowModelRoutes({ database, registry }));

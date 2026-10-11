@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url';
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { createApplication } from '../apps/api/src/app.js';
+import { referenceDigest } from '../apps/api/test/fixtures.js';
 import { createHarness, entity, login, request } from '../apps/api/test/harness.js';
 import type {
   Dataset,
@@ -274,7 +275,7 @@ try {
       body: {
         version: 'v1',
         uri: 's3://fixtures/predictions/v1',
-        digest: 'sha256:fixture-output',
+        digest: referenceDigest('fixture-output'),
         sourceRunId: run.id,
       },
     }),

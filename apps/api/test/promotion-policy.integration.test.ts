@@ -123,7 +123,7 @@ describe.skipIf(!testDatabaseUrl)('昇格policyと評価Run終端での自動判
     await entity(
       await request(harness.app, `${fixture.basePath}/jobs/${canceled.jobId}/cancel`, {
         method: 'POST',
-        cookie: fixture.editor.cookie,
+        cookie: fixture.administrator.cookie,
       }),
       200,
     );
@@ -235,7 +235,7 @@ describe.skipIf(!testDatabaseUrl)('昇格policyと評価Run終端での自動判
     const retry = await entity<{ run: Run; job: { id: string } }>(
       await request(harness.app, `${fixture.basePath}/jobs/${original.jobId}/retry`, {
         method: 'POST',
-        cookie: fixture.editor.cookie,
+        cookie: fixture.administrator.cookie,
       }),
     );
     await fixture.completeJob(retry.job.id, { status: 'finished', metrics: { accuracy: 0.9 } });
