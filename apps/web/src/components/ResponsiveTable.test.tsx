@@ -72,6 +72,19 @@ describe('ResponsiveTable', () => {
     expect(markup.indexOf('class="selected"')).toBeGreaterThan(markup.indexOf('asr-small'));
   });
 
+  it('isSelected が真を返す行すべてに選択中の class を付ける', () => {
+    const markup = renderToStaticMarkup(
+      <ResponsiveTableView
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        isNarrow
+        isSelected={() => true}
+      />,
+    );
+    expect(markup.match(/<tr class="selected">/g)).toHaveLength(rows.length);
+  });
+
   it('行が無いときは表の代わりに空の案内を出す', () => {
     const markup = renderToStaticMarkup(
       <ResponsiveTableView

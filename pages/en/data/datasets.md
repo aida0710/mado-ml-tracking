@@ -99,8 +99,8 @@ To create a version that points to an external location without saving files, se
 | Field | Value | Example |
 | --- | --- | --- |
 | バージョン (Version) | Version name (required) | `2026-10` |
-| URI | Location of the data (required) | `s3://corpus/speech/2026-10/` |
-| Digest | Hash of the contents (required) | `sha256:<64 hex digits>` |
+| URI | Location of the data (required): `s3://` (a bucket and key, or a folder), `https://` (one file), or `file://` (a path on the computer the Job runs on) | `s3://corpus/speech/2026-10/` |
+| Digest | SHA-256 of the contents (required), written as `sha256:` and 64 lowercase hex digits. `sha256:` may be left out, so the 64 digits `sha256sum` prints can be pasted as they are. The digest is stored as entered. Uppercase, a different length, or another algorithm (such as `sha512:`) is refused with "digestは sha256:<64桁の小文字16進数>（sha256:は省略可）の形で指定してください" | `sha256:<64 hex digits>`, or the 64 digits from `sha256sum` |
 | 親のバージョン (Parent version) | The version this one was derived from | |
 | 生成元Run (Source Run) | The Run that produced this version | |
 | Schema（JSON）, Metadata（JSON） | Any JSON | `{"columns": ["audio", "text"]}` |
@@ -110,7 +110,7 @@ To create a version that points to an external location without saving files, se
 Files written by an inference or preprocessing Run can become a version that the next Run uses as input. A version created from Run outputs records its source Run and is connected in Lineage by a データ出力 (data output) edge.
 
 - In code run by a Task, declare outputs in `datasets` of `/mmt/outputs/result.json` (version 2). After saving the output files, the worker registers a version with an integer number. A Run can declare up to 64 datasets.
-- In the Python SDK, `run.register_output_dataset(version=, uri=, digest=)` registers a reference version. The Run's input versions become its parents.
+- In the Python SDK, `run.register_output_dataset(version=, uri=, digest=)` registers a reference version. The Run's input versions become its parents. The digest takes the same form as on the screen: `sha256:` and 64 lowercase hex digits (`sha256:` is optional).
 - Through the API, `POST /api/projects/<Project ID>/datasets/<Dataset ID>/versions` with `content` set to `{"kind": "artifacts", "fromRunArtifacts": {"runId": "<Run ID>", "prefix": "outputs/audio"}}` creates a version from the Run's Artifacts under `prefix`.
 
 See [Tasks and code versions](/en/models/tasks) for `result.json`. To pass inference outputs to an evaluation Run automatically, see [Automation](/en/models/automation).
@@ -168,7 +168,9 @@ When a Run starts and finishes, its input and output versions are sent to Mado, 
 
 ## Datasets you no longer use
 
-Datasets and versions cannot be deleted. To retire a dataset, send `{"archived": true}` to `PATCH /api/projects/<Project ID>/datasets/<Dataset ID>`. New Runs can no longer use versions of an archived dataset as input; existing Runs keep their records. The UI has no archive action.
+Datasets cannot be deleted. A version can be deleted while nothing uses it: to remove one registered with a mistyped URI, select it, click **このバージョンを削除** (Delete this version), and confirm with **削除する** (Delete) (Editor or higher). While a Run input or output, a child version, or a Task, automation rule, or hook input uses it, the deletion is refused with what uses it, for example "このバージョンは使われているため削除できません（Runの入力 1件）" (in use: 1 Run input). Deleting a version leaves the data at its URI and its Artifacts. The API is `DELETE /api/projects/<Project ID>/datasets/<Dataset ID>/versions/<version ID>`.
+
+To retire a dataset, send `{"archived": true}` to `PATCH /api/projects/<Project ID>/datasets/<Dataset ID>`. New Runs can no longer use versions of an archived dataset as input; existing Runs keep their records. The UI has no archive action.
 
 Artifacts referenced by a version cannot be deleted while the version exists.
 

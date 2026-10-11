@@ -61,12 +61,25 @@ export function canManageAliasProtections(role: ProjectRole, globalAdmin: boolea
   return globalAdmin || canManageProject(role);
 }
 
+// Work one person started: its creator while still an editor, or a Project admin.
+function controlsStartedWork(role: ProjectRole, userId: string, work: { createdBy: string }) {
+  return canManageProject(role) || (canEditProject(role) && work.createdBy === userId);
+}
+
 /**
- * Pausing, resuming, canceling or resizing a sweep: its creator while still an editor, or a
- * Project admin (sweepService; other editors get 403 sweep_owner_required).
+ * Pausing, resuming, canceling or resizing a sweep (sweepService; other editors get 403
+ * sweep_owner_required).
  */
 export function canControlSweep(role: ProjectRole, userId: string, sweep: { createdBy: string }): boolean {
-  return canManageProject(role) || (canEditProject(role) && sweep.createdBy === userId);
+  return controlsStartedWork(role, userId, sweep);
+}
+
+/**
+ * Stopping or retrying a Job, also from a checkpoint; `createdBy` is its creator, the creator of
+ * its Run (jobService; other editors get 403 job_owner_required).
+ */
+export function canControlJob(role: ProjectRole, userId: string, job: { createdBy: string }): boolean {
+  return controlsStartedWork(role, userId, job);
 }
 
 /**

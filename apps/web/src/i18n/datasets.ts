@@ -18,6 +18,15 @@ export const datasetsText = {
   datasetTotalSize: '合計サイズ',
   datasetFilesReferenceOnly: 'このバージョンはURIで登録した参照で、ファイル一覧を持ちません。',
   datasetFileSelect: 'ファイルを選ぶとプレビューを表示します。',
+  datasetVersionUriPlaceholder: 's3://bucket/path/ や https://example.com/data.tar、file:///data/corpus',
+  datasetVersionUriHint:
+    'データの置き場所です。s3://（バケットとキー、またはフォルダ）、https://（1つのファイル）、file://（実行先のコンピュータ上のパス）を使えます。',
+  datasetVersionDigestPlaceholder: 'sha256:0123…（64桁）',
+  datasetVersionDigestHint:
+    'データのSHA-256を「sha256:」と64桁の小文字の16進数で書きます。「sha256:」は省けるので、sha256sum data.tar の結果の64桁をそのまま貼っても構いません。https://のデータは実行前にこの値と照合します。',
+  datasetVersionDelete: 'このバージョンを削除',
+  datasetVersionDeleteTitle: 'データセットのバージョンを削除',
+  datasetVersionDeleteConfirm: '削除する',
 };
 
 export const datasetsTextTemplates = {
@@ -26,4 +35,6 @@ export const datasetsTextTemplates = {
     `${unfinished}件のファイルがuploadされていないため、バージョンはまだ作っていません。再送するか、それらを除いてバージョンを作ってください。` +
     (stored > 0 ? `閉じると、upload済みの${stored}件はどのバージョンにも属さないArtifact（Runなし）として残ります。` : ''),
   datasetContentArtifacts: (count: number, size: string) => `Artifact ${count}件 · ${size}`,
+  datasetVersionDeleteMessage: (version: string) =>
+    `バージョン「${version}」を削除します。Runの入力・出力、ほかのバージョン、Taskなどから使われているときは削除できません。URIの先のデータとArtifactは消えません。`,
 };

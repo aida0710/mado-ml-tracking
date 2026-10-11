@@ -93,7 +93,7 @@ with mlflow.start_run(run_name="learning-rate-2e-5"):
 
 - Logging a different value for an existing param is an error. Use a new Run for new conditions
 - The latest metric value is chosen by step and timestamp, not arrival order. NaN is stored as is
-- Run links printed by the SDK use the MLflow UI format; open Runs from **Experiments** instead
+- The `View run` and `View experiment` links the SDK prints when a Run ends open this app's Run page and **Experiments** page
 - Artifacts are stored in the storage the administrator chose (a file system or S3-compatible storage). The SDK needs no storage credentials
 - `mlflow.start_run(run_id="RUN_ID")` reopens a finished Run to record more. Runs executed by a worker Job cannot be reopened
 
@@ -168,11 +168,18 @@ Verified with MLflow 3.0.0 (scikit-learn 1.6.1) and 3.17.0 (scikit-learn 1.9.1).
 | wav and flac audio Artifacts | Supported |
 | Custom pyfunc models and multi-file models | Supported |
 | pandas output of `mlflow.search_runs` | Supported |
+| Searching registered models and versions (`search_registered_models`, `search_model_versions`) | Supported (up to 1000 per response; see below) |
+| `View run` and `View experiment` links printed by the SDK | Supported (they open this app's pages) |
 | Webhooks | Not supported (`ENDPOINT_NOT_FOUND` error) |
 | Tracing (`search_traces`, `@mlflow.trace`) | Not supported. Functions decorated with `@mlflow.trace` still run, and the Run finishes normally |
 | GenAI evaluation, AI Gateway, Prompt Registry | Not supported |
 
 Search filters are joined with `AND`; `OR` and parentheses are not supported. `IN` and `NOT IN` work for some attributes such as `run_id`.
+
+- As in MLflow, tag conditions can be written as either `tags.name` or `tag.name`
+- Use `version_number` for the version number (for example `version_number > 2` or `order_by=["version_number DESC"]`)
+- Searches for registered models, versions, and Logged Models return up to 1000 items per response, with a next-page token (`next_page_token`) when more remain. Functions that start with `mlflow.`, such as `mlflow.search_model_versions()`, follow the pages and return everything
+- `MlflowClient().search_model_versions()` returns only one page (up to 1000 items), while an MLflow server returns up to 10000 at once. When there are more than 1000, pass the result's `token` as `page_token` to get the rest
 
 ## Use it inside a worker
 

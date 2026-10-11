@@ -171,4 +171,10 @@ export const registryApi = {
       `${registryPath(projectId, 'datasets', id)}/versions`,
       jsonRequest('POST', body),
     ),
+  /** Refused with 409 dataset_version_in_use while anything refers to the version. */
+  deleteDatasetVersion: (projectId: string, version: { datasetId: string; versionId: string }) =>
+    request<unknown>(
+      `${registryPath(projectId, 'datasets', version.datasetId)}/versions/${encodeId(version.versionId)}`,
+      { method: 'DELETE' },
+    ),
 };

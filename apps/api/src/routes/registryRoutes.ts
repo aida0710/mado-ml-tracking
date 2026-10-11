@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { RegistryService } from '../services/registryService.js';
 import type { DatasetContentService } from '../services/datasetContentService.js';
+import type { DatasetVersionDeletionService } from '../services/datasetVersionDeletionService.js';
 import {
   codeVersionSchema,
   datasetCreateSchema,
@@ -47,6 +48,7 @@ function datasetVersionLocation(context: ApiContext) {
 export function registryRoutes(
   registry: RegistryService,
   datasetContent: DatasetContentService,
+  datasetVersionDeletion: DatasetVersionDeletionService,
 ): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.get('/:p/models', async (context) =>
@@ -227,6 +229,14 @@ export function registryRoutes(
       201,
     ),
   );
+  routes.delete('/:p/datasets/:id/versions/:v', async (context) => {
+    await datasetVersionDeletion.delete(
+      principal(context),
+      datasetVersionLocation(context),
+      requestMetadata(context),
+    );
+    return context.body(null, 204);
+  });
   routes.get('/:p/datasets/:id/versions/:v/files', async (context) =>
     context.json(
       await datasetContent.listFiles(principal(context), {

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import type { Job, Run, WorkerJob } from '@mmt/contracts';
-import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
+import type { Job, JobListItem, Run, WorkerJob } from '@mmt/contracts';
+import { createHarness, entity, login, request, testDatabaseUrl, type Harness } from './harness.js';
 import { executionFixture } from './fixtures.js';
 
 describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立PostgreSQL）', () => {
@@ -540,6 +540,45 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         })
       ).status,
     ).toBe(409);
+  });
+
+  it('Jobの停止・再実行は作成者かProject adminだけができ、一覧に作成者が出る', async () => {
+    const fixture = await executionFixture(harness);
+    const colleague = await login(harness, 'colleague@localhost');
+    await entity(
+      await request(harness.app, `${fixture.basePath}/members/${colleague.userId}`, {
+        method: 'PUT',
+        cookie: fixture.administrator.cookie,
+        body: { role: 'editor' },
+      }),
+      200,
+    );
+    const run = await fixture.newRun('Started by the editor');
+    const job = await entity<Job>(
+      await request(harness.app, `${fixture.basePath}/jobs`, {
+        method: 'POST',
+        cookie: fixture.editor.cookie,
+        body: { runId: run.id, targetId: fixture.target.id, maxAttempts: 3 },
+      }),
+    );
+    const listed = (
+      await entity<{ items: JobListItem[] }>(
+        await request(harness.app, `${fixture.basePath}/jobs`, { cookie: fixture.viewer.cookie }),
+        200,
+      )
+    ).items.find((item) => item.id === job.id);
+    expect(listed).toMatchObject({ createdBy: fixture.editor.userId, createdByName: expect.any(String) });
+
+    const jobAction = (action: 'cancel' | 'retry', cookie: string) =>
+      request(harness.app, `${fixture.basePath}/jobs/${job.id}/${action}`, { method: 'POST', cookie });
+    for (const action of ['cancel', 'retry'] as const) {
+      const refused = await jobAction(action, colleague.cookie);
+      expect(refused.status).toBe(403);
+      expect(((await refused.json()) as { code: string }).code).toBe('job_owner_required');
+    }
+    // The Project admin stops it; the editor who started it retries it.
+    expect((await jobAction('cancel', fixture.administrator.cookie)).status).toBe(200);
+    expect((await jobAction('retry', fixture.editor.cookie)).status).toBe(201);
   });
 
   it('正しいleaseだけでmetricsとlogsを保存し、非zeroの終了コードで成功を申告できない', async () => {

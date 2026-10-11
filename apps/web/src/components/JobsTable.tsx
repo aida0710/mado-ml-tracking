@@ -73,7 +73,7 @@ export function JobsTable({
   hooks,
   projectId,
   selectedId,
-  canEdit,
+  canControl,
   resumedRunIds,
   onSelectJob,
   onSelectArray,
@@ -84,7 +84,8 @@ export function JobsTable({
   hooks: Hook[];
   projectId: string;
   selectedId: string;
-  canEdit: boolean;
+  /** Whether the signed-in user may stop or retry the Job (lib/permissions canControlJob). */
+  canControl: (job: JobListItem) => boolean;
   resumedRunIds: ReadonlySet<string> | undefined;
   onSelectJob: (jobId: string) => void;
   onSelectArray: (arrayGroupId: string) => void;
@@ -133,6 +134,12 @@ export function JobsTable({
               )}
             </>
           ),
+        },
+        {
+          key: 'createdBy',
+          priority: 'secondary',
+          header: text.jobCreatedBy,
+          render: (job) => job.createdByName ?? shortId(job.createdBy),
         },
         {
           key: 'task',
@@ -198,8 +205,10 @@ export function JobsTable({
           priority: 'secondary',
           header: text.jobActions,
           render: (job) =>
-            canEdit &&
-            (isActiveJob(job) ? (
+            // Written out rather than in a tooltip, so touch and keyboard users read why.
+            !canControl(job) ? (
+              <small className="muted job-control-reason">{text.jobControlOwnerOnly}</small>
+            ) : isActiveJob(job) ? (
               <button
                 className="button small"
                 disabled={job.cancelRequested}
@@ -218,7 +227,7 @@ export function JobsTable({
                   </button>
                 )}
               </span>
-            )),
+            ),
         },
       ]}
     />

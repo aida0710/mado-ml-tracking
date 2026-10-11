@@ -8,7 +8,7 @@ export function readLastProjectId(): string | null {
   try {
     return localStorage.getItem(LAST_PROJECT_STORAGE_KEY);
   } catch {
-    // Storage may be blocked; "/" then opens the first Project.
+    // Storage may be blocked; "/" then opens the first Project the user is a member of.
     return null;
   }
 }
@@ -21,7 +21,16 @@ export function rememberLastProjectId(projectId: string): void {
   }
 }
 
-/** The Project "/" opens: the one opened last while the user can still open it, else the first. */
+/**
+ * The Project "/" opens: the one opened last while the user can still open it, else the newest one
+ * the user is a member of (directly or through a group). A Project the user only reaches because
+ * it is public, or because they are a global administrator, is never entered by itself: someone
+ * signing in for the first time would land in a stranger's Project. Undefined leaves "/" on the
+ * Project list.
+ */
 export function projectToOpen(projects: Project[], lastProjectId: string | null): Project | undefined {
-  return projects.find((project) => project.id === lastProjectId) ?? projects[0];
+  return (
+    projects.find((project) => project.id === lastProjectId) ??
+    projects.find((project) => project.isMember)
+  );
 }

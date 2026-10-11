@@ -12,16 +12,17 @@ import { PageHeader } from '../components/PageHeader';
 import { Resource } from '../components/Feedback';
 import { RunLogs } from '../components/RunLogs';
 import { RunExecutionSnapshot } from '../components/RunExecutionSnapshot';
-import { FormDialog } from '../components/FormDialog';
 import { JobsTable, type JobAction } from '../components/JobsTable';
 import { JobArraysTable } from '../components/JobArraysTable';
 import { JobDetailsList } from '../components/JobDetailsList';
 import { ManualSubmissionNotice, WaitingJobNotice } from '../components/ManualSubmissionNotice';
 import { LaunchDialog } from '../dialogs/LaunchDialog';
+import { JobActionDialog } from '../dialogs/JobActionDialog';
 import { ResumeDialog } from '../dialogs/ResumeDialog';
 import { useResumedRunIds } from '../hooks/useResumedRunIds';
 import { summarizeJobArrays } from '../lib/jobArrays';
 import { shortId } from '../lib/jobDisplay';
+import { canControlJob } from '../lib/permissions';
 import {
   isWaitingManualSubmission,
   manualSiteOwnership,
@@ -52,6 +53,8 @@ export function JobsPage() {
   const hooks = useQuery(`${project.id}:job-hooks`, (signal) => hooksApi.list(project.id, signal));
   const resumedRunIds = useResumedRunIds(project.id, jobs.value);
   const selected = jobs.value?.find((job) => job.id === selectedId);
+  // Looked up again on every poll, so the dialog shows the Job as it is now.
+  const jobForAction = jobAction && jobs.value?.find((job) => job.id === jobAction.id);
   const selectedRun = useQuery(selected ? `${project.id}:job-run:${selected.runId}` : null,
     (signal) => trackingApi.run(project.id, selected!.runId, signal), EXECUTION_POLL_MS);
   const sourceArtifacts = useQuery(selected ? `${project.id}:job-artifacts:${selected.runId}` : null,
@@ -145,7 +148,7 @@ export function JobsPage() {
                 hooks={hookItems}
                 projectId={project.id}
                 selectedId={selectedId}
-                canEdit={canEdit}
+                canControl={(job) => canControlJob(project.role, user.id, job)}
                 resumedRunIds={resumedRunIds.value}
                 onSelectJob={selectJob}
                 onSelectArray={selectArray}
@@ -203,20 +206,20 @@ export function JobsPage() {
           onClose={() => setJobAction(null)}
         />
       )}
-      {(jobAction?.type === 'cancel' || jobAction?.type === 'retry') && (
-        <FormDialog
-          title={jobAction.type === 'cancel' ? text.cancelJob : text.retryJob}
-          onClose={() => setJobAction(null)}
-          fields={[]}
-          onSubmit={async () =>
-            jobAction.type === 'cancel'
-              ? { canceled: await executionApi.cancelJob(project.id, jobAction.id) }
-              : executionApi.retryJob(project.id, jobAction.id, {})
+      {jobForAction && (jobAction.type === 'cancel' || jobAction.type === 'retry') && (
+        <JobActionDialog
+          projectId={project.id}
+          job={jobForAction}
+          targetName={
+            targetItems.find((target) => target.id === jobForAction.targetId)?.name ??
+            jobForAction.targetId
           }
-          onSaved={(saved) => {
+          action={jobAction.type}
+          onClose={() => setJobAction(null)}
+          onDone={(retryRunId) => {
             setJobAction(null);
             jobs.reload();
-            if ('run' in saved) navigate(`/projects/${project.id}/runs/${saved.run.id}`);
+            if (retryRunId) navigate(`/projects/${project.id}/runs/${retryRunId}`);
           }}
         />
       )}

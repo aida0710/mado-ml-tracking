@@ -401,6 +401,20 @@ function toProjectMember({ role, directRole, groups, ...user }: MemberRow): Proj
   return { user, role, directRole, groups };
 }
 
+/** True when the user holds a role through a direct grant or a group binding. */
+export async function isProjectMember(
+  connection: Connection,
+  member: { projectId: string; userId: string },
+): Promise<boolean> {
+  return Boolean(
+    await first(
+      connection,
+      'SELECT 1 FROM project_membership_roles WHERE project_id=$1 AND user_id=$2',
+      [member.projectId, member.userId],
+    ),
+  );
+}
+
 export async function findDirectRole(
   connection: Connection,
   member: { projectId: string; userId: string },
@@ -426,14 +440,18 @@ export async function lockProjectAdminGrants(
     WHERE m.project_id=$1 AND m.role='admin' AND u.kind='human' ORDER BY m.user_id`,
     [projectId],
   );
-  const adminGroups = await rows<{ groupName: string }>(
+  // The share lock keeps a login's group sync from emptying a group before this change commits.
+  const adminGroupMembers = await rows<{ groupName: string }>(
     connection,
-    "SELECT group_name FROM project_group_bindings WHERE project_id=$1 AND role='admin' ORDER BY group_name",
+    `SELECT g.group_name FROM project_group_bindings b
+    JOIN user_groups g ON g.group_name=b.group_name JOIN users u ON u.id=g.user_id
+    WHERE b.project_id=$1 AND b.role='admin' AND u.kind='human'
+    ORDER BY g.group_name,g.user_id FOR SHARE OF g`,
     [projectId],
   );
   return {
     directAdminUserIds: directAdmins.map((admin) => admin.userId),
-    adminGroupNames: adminGroups.map((group) => group.groupName),
+    heldAdminGroupNames: [...new Set(adminGroupMembers.map((member) => member.groupName))],
   };
 }
 

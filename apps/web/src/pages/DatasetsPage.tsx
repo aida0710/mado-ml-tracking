@@ -14,6 +14,7 @@ import { RegistryLayout } from '../components/RegistryLayout';
 import { Empty, ErrorNotice, Resource } from '../components/Feedback';
 import { DetailsList, JsonDetails } from '../components/JsonDetails';
 import { FormDialog } from '../components/FormDialog';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { DatasetVersionDialog, type DatasetVersionSource } from '../dialogs/DatasetVersionDialog';
 import { DatasetFiles } from '../components/DatasetFiles';
 import { datasetVersionLabel } from '../lib/datasetVersionLabel';
@@ -24,6 +25,7 @@ import { text, textTemplates } from '../i18n/catalog';
 export function DatasetsPage() {
   const { project, canEdit, isProjectAdmin } = useProject();
   const [dialog, setDialog] = useState<'dataset' | DatasetVersionSource | null>(null);
+  const [versionToDelete, setVersionToDelete] = useState<DatasetVersion | null>(null);
   const registry = useRegistry(`${project.id}:datasets`, {
     list: (signal) => registryApi.datasets(project.id, signal),
     versions: (id, signal) => registryApi.datasetVersions(project.id, id, signal),
@@ -157,6 +159,16 @@ export function DatasetsPage() {
                       />
                       {registry.selectedVersion && (
                         <div className="version-detail">
+                          {canEdit && (
+                            <div className="version-detail-actions">
+                              <button
+                                className="button small danger"
+                                onClick={() => setVersionToDelete(registry.selectedVersion ?? null)}
+                              >
+                                {text.datasetVersionDelete}
+                              </button>
+                            </div>
+                          )}
                           <DetailsList
                             entries={[
                               [
@@ -235,6 +247,26 @@ export function DatasetsPage() {
             registry.reload();
             registry.selectItem(dataset.id);
           }}
+        />
+      )}
+      {versionToDelete && (
+        <ConfirmDialog
+          title={text.datasetVersionDeleteTitle}
+          message={textTemplates.datasetVersionDeleteMessage(versionToDelete.version)}
+          confirmLabel={text.datasetVersionDeleteConfirm}
+          destructive
+          onConfirm={() =>
+            registryApi.deleteDatasetVersion(project.id, {
+              datasetId: versionToDelete.datasetId,
+              versionId: versionToDelete.id,
+            })
+          }
+          onConfirmed={() => {
+            setVersionToDelete(null);
+            registry.reload();
+            registry.selectItem(versionToDelete.datasetId);
+          }}
+          onClose={() => setVersionToDelete(null)}
         />
       )}
       {(dialog === 'reference' || dialog === 'folder') && registry.selected && (

@@ -1,6 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { Navigate, Outlet, useNavigate, useParams } from 'react-router-dom';
-import { Plus } from 'lucide-react';
 import type { Project } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
 import { useAuth } from '../hooks/useAuth';
@@ -8,11 +7,10 @@ import { useQuery } from '../hooks/useQuery';
 import { ProjectContext } from '../hooks/useProject';
 import { useNavigation } from '../hooks/useNavigation';
 import { Loading, Resource } from '../components/Feedback';
-import { PageHeader } from '../components/PageHeader';
 import { ProjectCreateDialog } from '../dialogs/ProjectCreateDialog';
+import { ProjectListPage } from '../pages/ProjectListPage';
 import { canCreateProject } from '../lib/permissions';
 import { projectToOpen, readLastProjectId, rememberLastProjectId } from '../lib/lastOpenedProject';
-import { text } from '../i18n/catalog';
 import { TopBar } from './TopBar';
 import { ProjectBar } from './ProjectBar';
 import { NavigationSidebar } from './NavigationSidebar';
@@ -80,9 +78,9 @@ export function AppShell() {
                   </main>
                 </ProjectContext.Provider>
               ) : (
-                <NoOpenProject
+                <ProjectListPage
+                  projects={items}
                   isUnreachable={Boolean(projectId)}
-                  hasProjects={items.length > 0}
                   onCreateProject={startCreatingProject}
                 />
               );
@@ -97,44 +95,5 @@ export function AppShell() {
         />
       )}
     </div>
-  );
-}
-
-/**
- * Shown when no Project is open: the URL names one the user cannot open, or they have none. Those
- * who may create a Project get the button; the others are told whom to ask.
- */
-function NoOpenProject({
-  isUnreachable,
-  hasProjects,
-  onCreateProject,
-}: {
-  isUnreachable: boolean;
-  hasProjects: boolean;
-  onCreateProject?: () => void;
-}) {
-  return (
-    <main id="content" className="page">
-      <PageHeader
-        title={text.project}
-        actions={
-          onCreateProject && (
-            <button className="button primary" onClick={onCreateProject}>
-              <Plus size={15} />
-              {text.newProject}
-            </button>
-          )
-        }
-      />
-      {isUnreachable && <p className="notice error">{text.projectNotAccessible}</p>}
-      {!hasProjects && (
-        <>
-          <p className="muted">{text.noProjects}</p>
-          <p className="muted">
-            {onCreateProject ? text.noProjectsCreateHint : text.noProjectsAskAdmin}
-          </p>
-        </>
-      )}
-    </main>
   );
 }

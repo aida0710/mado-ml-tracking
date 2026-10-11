@@ -1,24 +1,40 @@
 import { useState } from 'react';
 import type { ProjectGroupBinding } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
+import type { useProjectMembers } from '../hooks/useProjectMembers';
 import { useGroupNameCandidates, useProjectGroupBindings } from '../hooks/useProjectGroupBindings';
 import { ResponsiveTable } from './ResponsiveTable';
 import { Resource } from './Feedback';
 import { ConfirmDialog } from './ConfirmDialog';
+import { AccessGrantActions } from './AccessGrantActions';
 import { GroupBindingDialog } from '../dialogs/GroupBindingDialog';
 import { formatDate } from '../lib/format';
+import { findLastProjectAdminGrant, groupsWithMembers } from '../lib/projectAdminGrants';
 import { text } from '../i18n/catalog';
 import { projectAccessTextTemplates } from '../i18n/projectAccess';
 
-/** Roles granted to Authentik groups. `onChanged` lets the member list show the new roles. */
-export function ProjectGroupBindings({ onChanged }: { onChanged: () => void }) {
+/**
+ * Roles granted to Authentik groups. The member list (shared with ProjectMembers, which it reloads
+ * after a change) tells which bound groups nobody has logged in with yet and which admin binding
+ * is the last one.
+ */
+export function ProjectGroupBindings({
+  projectMembers,
+}: {
+  projectMembers: ReturnType<typeof useProjectMembers>;
+}) {
   const { project, isProjectAdmin, reloadProjects } = useProject();
   const { bindings, saveGroupBinding, removeGroupBinding } = useProjectGroupBindings(project.id);
   const [editing, setEditing] = useState<ProjectGroupBinding | 'new' | null>(null);
   const [removing, setRemoving] = useState<ProjectGroupBinding | null>(null);
+  const members = projectMembers.members.value;
+  const heldGroups = groupsWithMembers(members ?? []);
+  const lastAdminGrant = findLastProjectAdminGrant(members ?? []);
+  const isLastAdmin = (binding: ProjectGroupBinding) =>
+    lastAdminGrant?.kind === 'groupBinding' && lastAdminGrant.group === binding.group;
   const reloadAfterChange = () => {
     bindings.reload();
-    onChanged();
+    projectMembers.members.reload();
     reloadProjects();
   };
   return (
@@ -43,8 +59,17 @@ export function ProjectGroupBindings({ onChanged }: { onChanged: () => void }) {
                 key: 'group',
                 priority: 'primary',
                 header: text.groupName,
-                className: 'mono',
-                render: (binding) => binding.group,
+                render: (binding) => (
+                  <>
+                    <span className="mono">{binding.group}</span>
+                    {/* Unknown until the member list loads, so nothing is marked meanwhile. */}
+                    {members && !heldGroups.has(binding.group) && (
+                      <span className="group-without-members" title={text.groupWithoutMembersHint}>
+                        {text.groupWithoutMembers}
+                      </span>
+                    )}
+                  </>
+                ),
               },
               {
                 key: 'role',
@@ -65,17 +90,11 @@ export function ProjectGroupBindings({ onChanged }: { onChanged: () => void }) {
                       priority: 'secondary' as const,
                       header: text.actions,
                       render: (binding: ProjectGroupBinding) => (
-                        <div className="access-actions">
-                          <button className="button small" onClick={() => setEditing(binding)}>
-                            {text.edit}
-                          </button>
-                          <button
-                            className="button small danger"
-                            onClick={() => setRemoving(binding)}
-                          >
-                            {text.remove}
-                          </button>
-                        </div>
+                        <AccessGrantActions
+                          isLastAdmin={isLastAdmin(binding)}
+                          onEdit={() => setEditing(binding)}
+                          onRemove={() => setRemoving(binding)}
+                        />
                       ),
                     },
                   ]

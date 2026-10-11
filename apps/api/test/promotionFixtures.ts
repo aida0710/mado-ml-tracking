@@ -11,6 +11,7 @@ import type {
 } from '@mmt/contracts';
 import { entity, request, type Harness } from './harness.js';
 import { automationRuleInput, containerFixture } from './containerFixtures.js';
+import { referenceDigest } from './fixtures.js';
 
 // A Project with an evaluation reference set, a worker, and helpers that drive promotion policies
 // and automatic evaluation Jobs to completion. Shared by the promotion and auto-promotion tests.
@@ -36,7 +37,7 @@ export async function promotionFixture(harness: Harness) {
     await request(harness.app, `${basePath}/datasets/${dataset.id}/versions`, {
       method: 'POST',
       cookie: editor.cookie,
-      body: { version: 'v1', uri: 's3://evaluation/reference', digest: 'digest-reference' },
+      body: { version: 'v1', uri: 's3://evaluation/reference', digest: referenceDigest('reference') },
     }),
   );
 

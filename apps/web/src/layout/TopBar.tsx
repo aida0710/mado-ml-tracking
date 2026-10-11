@@ -5,6 +5,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { useMutation } from '../hooks/useMutation';
 import type { Navigation } from '../hooks/useNavigation';
+import { narrowerThan } from '../lib/breakpoints';
+import { useMediaQuery } from '../lib/useMediaQuery';
 import { ErrorNotice } from '../components/Feedback';
 import { UserMenu } from '../components/UserMenu';
 import { ProductLogo } from '../components/ProductLogo';
@@ -14,12 +16,14 @@ import { NavigationDrawer } from './NavigationDrawer';
 
 /**
  * The header: the app name, theme, the signed-in user and logout. The screen navigation sits in
- * the sidebar or the rail; below --bp-md this header opens it in the drawer.
+ * the sidebar or the rail; below --bp-md this header opens it in the drawer. Below --bp-xs the
+ * buttons leave no room for the app name, so only its mark shows.
  */
 export function TopBar({ projectId, navigation }: { projectId?: string; navigation: Navigation }) {
   const auth = useAuth();
   const theme = useTheme();
   const mutation = useMutation();
+  const isAppNameVisuallyHidden = useMediaQuery(narrowerThan('xs'));
   return (
     <>
       <a className="skip-link" href="#content">
@@ -30,7 +34,7 @@ export function TopBar({ projectId, navigation }: { projectId?: string; navigati
           <NavigationDrawer groups={navigation.groups} />
         )}
         <Link to="/" className="brand">
-          <ProductLogo />
+          <ProductLogo isNameVisuallyHidden={isAppNameVisuallyHidden} />
         </Link>
         <div className="topbar-actions">
           {projectId && <OperationsAlertBadge projectId={projectId} />}

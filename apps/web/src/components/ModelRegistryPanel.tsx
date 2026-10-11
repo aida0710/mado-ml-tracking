@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { Lock } from 'lucide-react';
+import type { ProjectRole } from '@mmt/contracts';
 import type { ModelRegistryState } from '../types/modelRegistry';
 import { ResponsiveTable } from './ResponsiveTable';
 import { RegistryLayout } from './RegistryLayout';
@@ -8,13 +10,21 @@ import { ModelAliasHistory } from './ModelAliasHistory';
 import { ModelVersionArtifactLink } from './ModelVersionArtifactLink';
 import { RunNameLink } from './RunNameLink';
 import type { ModelAliasHistoryState } from '../hooks/useModelAliasHistory';
+import { useModelAliasProtections } from '../hooks/useModelAliasProtections';
 import { formatDate } from '../lib/format';
 import { modelVersionPath } from '../lib/modelVersionPath';
+import {
+  canRemoveAlias,
+  effectiveAliasProtection,
+  roleToRemoveAlias,
+} from '../lib/promotionEvidence';
 import { text } from '../i18n/catalog';
+import { promotionTextTemplates } from '../i18n/promotion';
 
 export function ModelRegistryPanel({
   registry,
   projectId,
+  projectRole,
   canEdit,
   aliasHistory,
   onCreateVersion,
@@ -23,6 +33,7 @@ export function ModelRegistryPanel({
 }: {
   registry: ModelRegistryState;
   projectId: string;
+  projectRole: ProjectRole;
   canEdit: boolean;
   aliasHistory: ModelAliasHistoryState;
   onCreateVersion: () => void;
@@ -30,6 +41,12 @@ export function ModelRegistryPanel({
   onRemoveAlias: (assignment: { alias: string; version: string }) => void;
 }) {
   const base = `/projects/${projectId}`;
+  // Fetched again whenever the panel opens, so a protection added on its tab shows here.
+  const protections = useModelAliasProtections(projectId, registry.selected?.id ?? null);
+  const protectionOf = (alias: string) =>
+    registry.selected
+      ? effectiveAliasProtection(protections.value ?? [], { modelId: registry.selected.id, alias })
+      : null;
   const versionLabel = (versionId: string) =>
     registry.versions.value?.find((version) => version.id === versionId)?.version ?? versionId;
   return (
@@ -104,8 +121,20 @@ export function ModelRegistryPanel({
                     key: 'alias',
                     priority: 'primary',
                     header: text.alias,
-                    className: 'mono',
-                    render: ([alias]) => alias,
+                    render: ([alias]) => {
+                      const protection = protectionOf(alias);
+                      return (
+                        <>
+                          <span className="mono">{alias}</span>
+                          {protection && (
+                            <span className="alias-protection">
+                              <Lock size={12} aria-hidden="true" />
+                              {promotionTextTemplates.protectedAliasLabel(protection.requiredRole)}
+                            </span>
+                          )}
+                        </>
+                      );
+                    },
                   },
                   {
                     key: 'version',
@@ -120,16 +149,29 @@ export function ModelRegistryPanel({
                           key: 'actions',
                           priority: 'primary' as const,
                           header: '',
-                          render: ([alias, versionId]: [string, string]) => (
-                            <button
-                              className="button small"
-                              onClick={() =>
-                                onRemoveAlias({ alias, version: versionLabel(versionId) })
-                              }
-                            >
-                              {text.removeAlias}
-                            </button>
-                          ),
+                          render: ([alias, versionId]: [string, string]) => {
+                            const protection = protectionOf(alias);
+                            // Same check as the API's manual alias guard, so nobody is offered a
+                            // removal that ends in 403.
+                            if (protection && !canRemoveAlias(projectRole, protection))
+                              return (
+                                <span className="muted">
+                                  {promotionTextTemplates.aliasRemovalRoleMissing(
+                                    roleToRemoveAlias(protection),
+                                  )}
+                                </span>
+                              );
+                            return (
+                              <button
+                                className="button small"
+                                onClick={() =>
+                                  onRemoveAlias({ alias, version: versionLabel(versionId) })
+                                }
+                              >
+                                {text.removeAlias}
+                              </button>
+                            );
+                          },
                         },
                       ]
                     : []),

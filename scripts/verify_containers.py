@@ -19,6 +19,7 @@ from mado_tracking.worker.config import WorkerSettings
 from mado_tracking.worker.service import Worker
 from verify_worker import (
     API_URL,
+    FIXTURE_DATASET_DIGEST,
     WEB_ORIGIN,
     run_next_job,
     session_request,
@@ -219,7 +220,7 @@ async def verify_automation(
             namespace="verification",
             version="v1",
             uri="urn:mmt:verification:linear-evaluation",
-            digest="fixture:linear-y2x1-v1",
+            digest=FIXTURE_DATASET_DIGEST,
             metadata={"samples": [0, 1, 2, 3], "expected": [1, 3, 5, 7]},
         )
         weights = session_request(

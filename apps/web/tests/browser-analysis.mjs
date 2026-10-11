@@ -214,11 +214,11 @@ try {
     await page.locator('.importance-table tbody tr').first().waitFor();
     const paramOrder = () => page.locator('.importance-table tbody tr').evaluateAll((rows) => rows.map((row) => row.dataset.param));
     assert.deepEqual(await paramOrder(), ['lr', 'optimizer', 'dropout', 'batch_size']);
-    await page.getByRole('button', { name: 'Coverage', exact: true }).click();
+    await page.getByRole('button', { name: '値のある割合', exact: true }).click();
     assert.equal((await paramOrder()).at(-1), 'dropout', 'descending coverage puts the partly covered param last');
-    await page.getByRole('button', { name: 'Param', exact: true }).click();
+    await page.getByRole('button', { name: 'パラメータ', exact: true }).click();
     assert.deepEqual(await paramOrder(), ['batch_size', 'dropout', 'lr', 'optimizer']);
-    await page.getByRole('radio', { name: 'Permutation' }).check();
+    await page.getByRole('radio', { name: '並べ替え（permutation）', exact: true }).check();
     await page.getByRole('button', { name: '重要度', exact: true }).click();
     assert.deepEqual(await paramOrder(), ['lr', 'optimizer', 'batch_size', 'dropout']);
     await page.getByText('計算から除いたparam (1)').waitFor();
@@ -249,7 +249,7 @@ try {
     const axisKeys = await page.locator('.parallel-axis').evaluateAll((nodes) => nodes.map((node) => node.dataset.axisKey));
     assert.equal(axisKeys.at(-1), 'objective');
     await page.getByRole('tab', { name: 'パラメータ重要度' }).click();
-    await page.getByText('Sweep試行の集約済みobjective').waitFor();
+    await page.getByText('Sweep試行の集約済みの目的値').waitFor();
     await screenshot(page, '05-sweep-importance');
     assert.deepEqual(errors, []);
     await context.close();

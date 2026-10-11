@@ -11,6 +11,7 @@ import {
   transitionStageSchema,
   setVersionTagSchema,
   deleteVersionTagSchema,
+  searchModelVersionsSchema,
 } from './validation.js';
 
 const versionPath = '/api/2.0/mlflow/model-versions';
@@ -52,7 +53,7 @@ export function modelVersionRoutes(services: {
       await models.searchVersions(
         principal(context),
         uuidParam(context, 'p'),
-        registrySearchQuery(context),
+        registrySearchQuery(context, searchModelVersionsSchema),
       ),
     ),
   );

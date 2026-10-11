@@ -53,7 +53,7 @@ The list shows the newest five per Run (`MMT_CHECKPOINT_KEEP_COUNT` on the API s
 
 ## Resume
 
-You can resume a Run that ran as a Job and failed or was canceled. You need the editor role.
+You can resume a Run that ran as a Job and failed or was canceled. Resuming retries that Job, so only the Run's creator and Project Admins can (as with stopping or retrying a Job). Other people see the reason on the **Checkpoint** tab instead of **このcheckpointから再開** (Resume from this checkpoint).
 
 ### Resume from a chosen checkpoint
 

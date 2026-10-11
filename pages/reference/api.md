@@ -62,9 +62,10 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" "$MMT_API_URL/api/projects"
 | 403 | `project_forbidden` | ProjectのRoleが足りない、またはtokenを限定したProjectと違う |
 | 403 | `session_required` | ブラウザのsessionでだけ使える操作 |
 | 403 | `job_token_forbidden` | Job限定tokenで許されていない操作 |
+| 403 | `job_owner_required` | ほかの人が作成したJobの停止・再実行（作成者かProjectのAdminだけ） |
 | 403 | `password_change_required` | 初回ログインのパスワード変更が済んでいない |
 | 404 | — | 対象が無い、または別のProjectのもの |
-| 409 | `conflict`ほか | 状態の競合（最後のAdminを外す、終わったJobへの操作、Jobが動いているProjectのアーカイブ（`project_has_active_jobs`）、アーカイブしていないProjectの削除（`project_not_archived`）など） |
+| 409 | `conflict`ほか | 状態の競合（最後のAdminを外す、終わったJobへの操作、Jobが動いているProjectのアーカイブ（`project_has_active_jobs`）、アーカイブしていないProjectの削除（`project_not_archived`）、使われているデータセットのバージョンの削除（`dataset_version_in_use`）など） |
 | 413 | `artifact_too_large` | Artifactが上限（既定200GiB）を超えた |
 | 422 | `invalid_request`ほか | 入力の形式や値が正しくない |
 | 429 | `rate_limited` | ログインの試行回数の上限。`Retry-After`秒待つ |

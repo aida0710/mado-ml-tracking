@@ -13,7 +13,7 @@ import type {
 } from '@mmt/contracts';
 import { workbenchFixture } from './workbenchFixtures.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
-import { executionFixture, projectFixture } from './fixtures.js';
+import { executionFixture, projectFixture, referenceDigest } from './fixtures.js';
 
 describe.skipIf(!testDatabaseUrl)('タスク・固定実行snapshot（独立PostgreSQL）', () => {
   let harness: Harness;
@@ -367,7 +367,7 @@ describe.skipIf(!testDatabaseUrl)('タスク・固定実行snapshot（独立Post
       await request(harness.app, `${other.basePath}/datasets/${dataset.id}/versions`, {
         method: 'POST',
         cookie: other.editor.cookie,
-        body: { version: 'v1', uri: 's3://fixture/input', digest: 'fixed' },
+        body: { version: 'v1', uri: 's3://fixture/input', digest: referenceDigest('fixed') },
       }),
     );
     for (const changes of [

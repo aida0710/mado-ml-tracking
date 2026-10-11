@@ -61,8 +61,20 @@ export function DatasetVersionDialog({
             onSaved={onSaved}
             fields={[
               { name: 'version', label: text.version, required: true },
-              { name: 'uri', label: text.uri, required: true },
-              { name: 'digest', label: text.digest, required: true },
+              {
+                name: 'uri',
+                label: text.uri,
+                required: true,
+                placeholder: text.datasetVersionUriPlaceholder,
+                hint: text.datasetVersionUriHint,
+              },
+              {
+                name: 'digest',
+                label: text.digest,
+                required: true,
+                placeholder: text.datasetVersionDigestPlaceholder,
+                hint: text.datasetVersionDigestHint,
+              },
               {
                 name: 'parents',
                 label: text.parents,

@@ -4,6 +4,7 @@ import type { Principal } from '../auth/principal.js';
 import { transaction, type Connection, type Database } from '../db/database.js';
 import { DomainError } from '../domain/errors.js';
 import { isTerminalStatus } from '../domain/runTransitions.js';
+import { controlsStartedWork } from '../domain/startedWorkControl.js';
 import {
   MAX_SWEEP_SEED,
   validateSweepDefinition,
@@ -288,7 +289,7 @@ export class SweepService {
           scope: 'jobs:write',
         });
         const unlocked = await findSweep(connection, { projectId, id: sweepId });
-        if (role !== 'admin' && unlocked.createdBy !== principal.user.id)
+        if (!controlsStartedWork({ role, userId: principal.user.id }, unlocked))
           throw new DomainError(
             403,
             'Sweepを操作できるのは作成者かProject adminだけです',

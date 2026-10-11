@@ -37,7 +37,6 @@ import { findServiceAccount } from '../repositories/serviceAccountRepository.js'
 import type { RequestMetadata } from '../http/requestMetadata.js';
 import {
   assertProjectReference,
-  assertProjectReferences,
   findCodeVersion,
   findModelVersion,
 } from '../repositories/registryRepository.js';
@@ -45,6 +44,7 @@ import { validateCodeArtifacts } from '../repositories/runtimeArtifactRepository
 import { decryptSecret, encryptSecret } from '../security/secretEncryption.js';
 import { requireProject } from './accessService.js';
 import { auditActor, recordDenial, type AuditEventDraft } from './auditService.js';
+import { assertInputDatasetVersionsUsable } from './datasetVersionReferences.js';
 import type { HookDispatcher } from './hookDispatcher.js';
 import { assertPartitionVersion } from './jobArrayService.js';
 import type { JobService } from './jobService.js';
@@ -342,8 +342,7 @@ export class HookService {
       projectId,
       id: template.experimentId,
     });
-    await assertProjectReferences(connection, {
-      table: 'dataset_versions',
+    await assertInputDatasetVersionsUsable(connection, {
       projectId,
       ids: template.inputDatasetVersionIds,
     });

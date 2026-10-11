@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import type { z } from 'zod';
 import {
   jsonBody,
   parse,
@@ -13,7 +14,8 @@ import {
   registeredModelReferenceSchema,
   updateModelSchema,
   renameModelSchema,
-  searchRegistrySchema,
+  searchRegisteredModelsSchema,
+  type SearchRegistry,
   aliasReferenceSchema,
   setAliasSchema,
   setModelTagSchema,
@@ -21,8 +23,12 @@ import {
 } from './validation.js';
 
 const registryPath = '/api/2.0/mlflow/registered-models';
-export function registrySearchQuery(context: ApiContext) {
-  return parse(searchRegistrySchema, {
+// The SDK sends registry searches as GET with order_by repeated in the query string.
+export function registrySearchQuery(
+  context: ApiContext,
+  schema: z.ZodType<SearchRegistry>,
+): SearchRegistry {
+  return parse(schema, {
     ...context.req.query(),
     order_by: context.req.queries('order_by') ?? [],
   });
@@ -54,7 +60,7 @@ export function registeredModelRoutes(models: RegisteredModelService): Hono<ApiE
       await models.search(
         principal(context),
         uuidParam(context, 'p'),
-        registrySearchQuery(context),
+        registrySearchQuery(context, searchRegisteredModelsSchema),
       ),
     ),
   );

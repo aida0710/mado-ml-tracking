@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   Dataset,
   DatasetVersion,
@@ -9,10 +9,18 @@ import type {
   Project,
   Run,
 } from '@mmt/contracts';
+import type { PoolClient } from 'pg';
+import { DomainError } from '../src/domain/errors.js';
+import { registerDatasetVersion } from '../src/services/datasetVersionRegistration.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
-import { executionFixture } from './fixtures.js';
+import { executionFixture, referenceDigest } from './fixtures.js';
 
 type Fixture = Awaited<ReturnType<typeof executionFixture>>;
+
+// How long a request may take to reach the lock it waits for; the requests run a few queries first.
+const LOCK_WAIT_TIMEOUT = 5000;
+// Six creations, each waiting for a deletion in turn.
+const SERIALIZATION_TEST_TIMEOUT = 60_000;
 
 describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立PostgreSQL）', () => {
   let harness: Harness;
@@ -54,7 +62,7 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
       await request(harness.app, `${fixture.basePath}/datasets/${dataset.id}/versions`, {
         method: 'POST',
         cookie: fixture.editor.cookie,
-        body: { version: 'v1', uri: `file:///${name}`, digest: `${name}-v1` },
+        body: { version: 'v1', uri: `file:///${name}`, digest: referenceDigest(`${name}-v1`) },
       }),
     );
     return { dataset, version };
@@ -413,6 +421,287 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
     expect(retry.status).toBe(422);
     expect(await retry.json()).toMatchObject({ code: 'dataset_archived' });
   });
+
+  it('参照のバージョンのdigestは64桁の小文字16進数を、sha256:付きでも省いても受け付け、渡された形のまま保存する', async () => {
+    const fixture = await executionFixture(harness);
+    const { dataset } = await datasetWithVersion(fixture);
+    const createVersion = (version: string, digest: string) =>
+      request(harness.app, `${fixture.basePath}/datasets/${dataset.id}/versions`, {
+        method: 'POST',
+        cookie: fixture.editor.cookie,
+        body: { version, uri: 's3://bucket/corpus/', digest },
+      });
+    const prefixed = referenceDigest('corpus-v2');
+    const bare = referenceDigest('corpus-v3').slice('sha256:'.length);
+    expect(await entity<DatasetVersion>(await createVersion('v2', prefixed))).toMatchObject({
+      digest: prefixed,
+    });
+    // The worker checks both forms; the bare one is kept without a prefix, so registering the
+    // same version again compares the text the SDK sent.
+    expect(await entity<DatasetVersion>(await createVersion('v3', bare))).toMatchObject({
+      digest: bare,
+    });
+  });
+
+  it('参照のバージョンのdigestが大文字・短い・別の算法なら422 dataset_digest_invalid', async () => {
+    const fixture = await executionFixture(harness);
+    const { dataset } = await datasetWithVersion(fixture);
+    const valid = referenceDigest('corpus-v2');
+    const hex = valid.slice('sha256:'.length);
+    const refusedDigests = [
+      'abc123',
+      valid.toUpperCase(),
+      `sha256:${hex.toUpperCase()}`,
+      hex.toUpperCase(),
+      `sha256:${hex.slice(1)}`,
+      hex.slice(1),
+      `${valid}0`,
+      `sha512:${hex}`,
+      `md5:${hex.slice(0, 32)}`,
+      `sha256:sha256:${hex}`,
+    ];
+    for (const digest of refusedDigests) {
+      const refused = await request(
+        harness.app,
+        `${fixture.basePath}/datasets/${dataset.id}/versions`,
+        {
+          method: 'POST',
+          cookie: fixture.editor.cookie,
+          body: { version: 'v2', uri: 's3://bucket/corpus/', digest },
+        },
+      );
+      expect(refused.status, digest).toBe(422);
+      expect(await refused.json()).toMatchObject({
+        code: 'dataset_digest_invalid',
+        error: expect.stringContaining('sha256:<64桁の小文字16進数>（sha256:は省略可）'),
+      });
+    }
+  });
+
+  it('どこからも使われていないバージョンだけを削除でき、使われていれば何が使っているかを409で返す', async () => {
+    const fixture = await executionFixture(harness);
+    const { dataset, version: parent } = await datasetWithVersion(fixture);
+    const versionsPath = `${fixture.basePath}/datasets/${dataset.id}/versions`;
+    const createVersion = (version: string, parentDatasetVersionIds: string[] = []) =>
+      request(harness.app, versionsPath, {
+        method: 'POST',
+        cookie: fixture.editor.cookie,
+        body: {
+          version,
+          uri: `file:///corpus/${version}`,
+          digest: referenceDigest(version),
+          parentDatasetVersionIds,
+        },
+      }).then((response) => entity<DatasetVersion>(response));
+    const child = await createVersion('v2', [parent.id]);
+    const mistyped = await createVersion('v3-typo');
+    const deleteVersion = (versionId: string, cookie = fixture.editor.cookie) =>
+      request(harness.app, `${versionsPath}/${versionId}`, { method: 'DELETE', cookie });
+
+    const parentRefusal = await deleteVersion(parent.id);
+    expect(parentRefusal.status).toBe(409);
+    expect(await parentRefusal.json()).toMatchObject({
+      code: 'dataset_version_in_use',
+      error: expect.stringContaining('このバージョンを親にしたバージョン 1件'),
+    });
+    await entity<Run>(await runWithInputs(fixture, [child.id]));
+    const inputRefusal = await deleteVersion(child.id);
+    expect(inputRefusal.status).toBe(409);
+    expect(((await inputRefusal.json()) as { error: string }).error).toContain('Runの入力 1件');
+
+    expect((await deleteVersion(mistyped.id, fixture.viewer.cookie)).status).toBe(403);
+    expect((await deleteVersion(mistyped.id)).status).toBe(204);
+    expect((await deleteVersion(mistyped.id)).status).toBe(404);
+    const remaining = await entity<{ items: DatasetVersion[] }>(
+      await request(harness.app, versionsPath, { cookie: fixture.viewer.cookie }),
+      200,
+    );
+    expect(remaining.items.map((version) => version.version).sort()).toEqual(['v1', 'v2']);
+    const deletionEvents = await auditEvents('dataset.version.delete');
+    expect(deletionEvents.map((event) => event.outcome)).toEqual([
+      'denied',
+      'denied',
+      'denied',
+      'success',
+    ]);
+    // The audit log cannot be cleaned up, so it keeps no URI (it may carry a signed query).
+    expect(deletionEvents.at(-1)!.details).toEqual({
+      datasetId: dataset.id,
+      version: 'v3-typo',
+      digest: mistyped.digest,
+    });
+  });
+
+  // Sessions waiting for a lock that the session `holderPid` holds.
+  async function sessionsWaitingFor(holderPid: number): Promise<number[]> {
+    const waiting = await harness.database.query<{ pid: number }>(
+      'SELECT pid FROM pg_stat_activity WHERE $1=ANY(pg_blocking_pids(pid))',
+      [holderPid],
+    );
+    return waiting.rows.map((row) => row.pid);
+  }
+
+  async function backendPid(connection: PoolClient): Promise<number> {
+    return (await connection.query<{ pid: number }>('SELECT pg_backend_pid() AS pid')).rows[0]!.pid;
+  }
+
+  it('Datasetをlockした作成が先なら、同じバージョンの削除はcommitを待ち、作られた参照を数えて409', async () => {
+    const fixture = await executionFixture(harness);
+    const { dataset, version: parent } = await datasetWithVersion(fixture);
+    const { dataset: derived } = await datasetWithVersion(fixture, 'Derived');
+    const registration = await harness.database.connect();
+    try {
+      await registration.query('BEGIN');
+      await registerDatasetVersion(registration, {
+        projectId: fixture.project.id,
+        datasetId: derived.id,
+        version: 'from-corpus',
+        uri: 'file:///derived/from-corpus',
+        digest: referenceDigest('from-corpus'),
+        schema: {},
+        metadata: {},
+        parentDatasetVersionIds: [parent.id],
+        actor: { type: 'callerAuthorized' },
+      });
+      const registrationPid = await backendPid(registration);
+      let isDeletionDone = false;
+      const deletion = request(
+        harness.app,
+        `${fixture.basePath}/datasets/${dataset.id}/versions/${parent.id}`,
+        { method: 'DELETE', cookie: fixture.editor.cookie },
+      ).finally(() => {
+        isDeletionDone = true;
+      });
+      await vi.waitFor(
+        async () => expect(await sessionsWaitingFor(registrationPid)).toHaveLength(1),
+        LOCK_WAIT_TIMEOUT,
+      );
+      expect(isDeletionDone).toBe(false);
+      await registration.query('COMMIT');
+      const refused = await deletion;
+      expect(refused.status).toBe(409);
+      expect(((await refused.json()) as { error: string }).error).toContain(
+        'このバージョンを親にしたバージョン 1件',
+      );
+    } finally {
+      await registration.query('ROLLBACK').catch(() => undefined);
+      registration.release();
+    }
+  });
+
+  it(
+    '削除が先にDatasetをlockしていれば、そのバージョンを参照する作成は削除のcommitを待って404',
+    { timeout: SERIALIZATION_TEST_TIMEOUT },
+    async () => {
+      const fixture = await executionFixture(harness);
+      const versionsOf = (datasetId: string) =>
+        `${fixture.basePath}/datasets/${datasetId}/versions`;
+      const post = (path: string, cookie: string, body: Record<string, unknown>) =>
+        request(harness.app, path, { method: 'POST', cookie, body });
+      const runTemplate = {
+        experimentId: fixture.experiment.id,
+        kind: 'inference',
+        codeVersionId: fixture.codeVersion.id,
+        modelVersionId: fixture.modelVersion.id,
+        targetId: fixture.target.id,
+      };
+      const { dataset: derived } = await datasetWithVersion(fixture, 'Derived');
+      // The API numbers a version only for Artifact content, which needs uploaded files; the same
+      // registration with a uri shows the numbering lock taken together with the parents'.
+      async function registerNumberedChild(parentId: string): Promise<Response> {
+        const registration = await harness.database.connect();
+        try {
+          await registration.query('BEGIN');
+          await registerDatasetVersion(registration, {
+            projectId: fixture.project.id,
+            datasetId: derived.id,
+            uri: 'file:///derived/numbered',
+            digest: referenceDigest('numbered-child'),
+            schema: {},
+            metadata: {},
+            parentDatasetVersionIds: [parentId],
+            actor: { type: 'callerAuthorized' },
+          });
+          await registration.query('COMMIT');
+          return Response.json({}, { status: 201 });
+        } catch (error) {
+          await registration.query('ROLLBACK');
+          if (!(error instanceof DomainError)) throw error;
+          return Response.json({ code: error.code }, { status: error.status });
+        } finally {
+          registration.release();
+        }
+      }
+      // Each one saves a reference to `versionId` in its own way.
+      const creations: Record<string, (versionId: string) => Promise<Response>> = {
+        Run: (versionId) => runWithInputs(fixture, [versionId]),
+        Task: (versionId) =>
+          post(`${fixture.basePath}/tasks`, fixture.editor.cookie, {
+            ...runTemplate,
+            name: 'Inference task',
+            inputDatasetVersionIds: [versionId],
+          }),
+        自動実行ルール: (versionId) =>
+          post(`${fixture.basePath}/automation-rules`, fixture.administrator.cookie, {
+            name: 'Automatic inference',
+            modelFamilies: ['qwen2'],
+            kind: 'inference',
+            experimentId: fixture.experiment.id,
+            codeVersionId: fixture.codeVersion.id,
+            targetId: fixture.target.id,
+            inputDatasetVersionIds: [versionId],
+          }),
+        フック: (versionId) =>
+          post(`${fixture.basePath}/hooks`, fixture.editor.cookie, {
+            name: 'Manual hook',
+            trigger: 'manual',
+            template: { ...runTemplate, inputDatasetVersionIds: [versionId] },
+          }),
+        名前を付けた子バージョン: (versionId) =>
+          post(versionsOf(derived.id), fixture.editor.cookie, {
+            version: 'named-child',
+            uri: 'file:///derived/named',
+            digest: referenceDigest('named-child'),
+            parentDatasetVersionIds: [versionId],
+          }),
+        番号を振る子バージョン: registerNumberedChild,
+      };
+      for (const [label, create] of Object.entries(creations)) {
+        const { dataset, version } = await datasetWithVersion(fixture, `Corpus for ${label}`);
+        // Holding the version row stops the deletion after it has locked the Dataset.
+        const versionHolder = await harness.database.connect();
+        try {
+          await versionHolder.query('BEGIN');
+          await versionHolder.query('SELECT 1 FROM dataset_versions WHERE id=$1 FOR KEY SHARE', [
+            version.id,
+          ]);
+          const deletion = request(harness.app, `${versionsOf(dataset.id)}/${version.id}`, {
+            method: 'DELETE',
+            cookie: fixture.editor.cookie,
+          });
+          const holderPid = await backendPid(versionHolder);
+          let deletionPid: number | undefined;
+          await vi.waitFor(async () => {
+            deletionPid = (await sessionsWaitingFor(holderPid))[0];
+            expect(deletionPid).toBeDefined();
+          }, LOCK_WAIT_TIMEOUT);
+          const creation = create(version.id);
+          await vi.waitFor(
+            async () => expect(await sessionsWaitingFor(deletionPid!), label).toHaveLength(1),
+            LOCK_WAIT_TIMEOUT,
+          );
+          await versionHolder.query('COMMIT');
+          expect((await deletion).status, label).toBe(204);
+          const refused = await creation;
+          expect(refused.status, label).toBe(404);
+          expect(await refused.json(), label).toMatchObject({ code: 'not_found' });
+        } finally {
+          await versionHolder.query('ROLLBACK').catch(() => undefined);
+          versionHolder.release();
+        }
+      }
+    },
+  );
 
   it('他ProjectのModel・バージョン・Experiment・DatasetのIDは404', async () => {
     const fixture = await executionFixture(harness);

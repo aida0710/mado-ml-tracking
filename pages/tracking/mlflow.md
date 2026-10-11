@@ -93,7 +93,7 @@ with mlflow.start_run(run_name="learning-rate-2e-5"):
 
 - 同じparamに違う値を記録するとエラーになります。条件を変えた実験は新しいRunにしてください
 - metricsの最新の値は、届いた順ではなくstepと時刻で決まります。NaNも保存できます
-- SDKが表示するRunのリンクはMLflow標準UIの形式です。画面では［Experiments］からRunを開いてください
+- Runの終わりにSDKが表示する`View run`・`View experiment`のリンクを開くと、このアプリのRunの画面・［Experiments］の画面が開きます
 - Artifactは管理者が選んだ保存先（ファイルシステムかS3互換ストレージ）に保存します。SDKにストレージの認証情報を渡す必要はありません
 - `mlflow.start_run(run_id="RUN_ID")`で、終わったRunを開き直して続きを記録できます。WorkerのJobで動いたRunは開き直せません
 
@@ -168,11 +168,18 @@ MLflow 3.0.0（scikit-learn 1.6.1）と3.17.0（scikit-learn 1.9.1）で動作�
 | wav・flacの音声Artifact | 対応 |
 | 自作のpyfuncモデル、複数ファイルのモデル | 対応 |
 | `mlflow.search_runs`のpandas出力 | 対応 |
+| 登録モデル・バージョンの検索（`search_registered_models`、`search_model_versions`） | 対応（1回に返すのは最大1000件。下の説明を参照） |
+| SDKが表示する`View run`・`View experiment`のリンク | 対応（このアプリの画面が開きます） |
 | webhooks | 未対応（`ENDPOINT_NOT_FOUND`のエラー） |
 | Tracing（`search_traces`、`@mlflow.trace`） | 未対応。`@mlflow.trace`を付けた関数は動き、Runも正常に終わります |
 | GenAI評価、AI Gateway、Prompt Registry | 未対応 |
 
 検索の条件は`AND`でつなぎます。`OR`と括弧は使えません。`IN`／`NOT IN`は`run_id`などの一部の属性で使えます。
+
+- tagの条件は、MLflowと同じく`tags.名前`と`tag.名前`のどちらでも書けます
+- バージョンの番号は`version_number`で指定します（例: `version_number > 2`、`order_by=["version_number DESC"]`）
+- 登録モデル・バージョン・Logged Modelの検索は、1回に最大1000件を返し、残りがあれば続きのページの印（`next_page_token`）を付けます。`mlflow.search_model_versions()`などの`mlflow.`で始まる関数は、続きを自動でたどって全件を返します
+- `MlflowClient().search_model_versions()`は1ページ分（1000件まで）だけを返します。MLflowのサーバーは10000件まで1回で返すので、ここだけ違います。1000件を超えるときは、戻り値の`token`を`page_token`に渡して続きを取ってください
 
 ## Workerの中で使う
 

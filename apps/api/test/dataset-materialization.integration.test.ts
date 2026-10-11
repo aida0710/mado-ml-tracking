@@ -10,8 +10,11 @@ import type {
   WorkerJob,
 } from '@mmt/contracts';
 import { DEFAULT_DATASET_CACHE_MAX_BYTES } from '@mmt/contracts';
-import { executionFixture } from './fixtures.js';
+import { executionFixture, referenceDigest } from './fixtures.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
+
+// The reference version's digest, which the worker receives unchanged in its claim.
+const REFERENCE_DIGEST = referenceDigest('corpus-eval');
 
 type Fixture = Awaited<ReturnType<typeof executionFixture>>;
 
@@ -99,7 +102,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる入力Datasetの取得設定�
       await request(harness.app, `${fixture.basePath}/datasets/${dataset.id}/versions`, {
         method: 'POST',
         cookie: fixture.editor.cookie,
-        body: { version: 'v1', uri: 's3://corpus/eval/', digest: 'etag-1' },
+        body: { version: 'v1', uri: 's3://corpus/eval/', digest: REFERENCE_DIGEST },
       }),
     );
   }
@@ -207,7 +210,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる入力Datasetの取得設定�
     });
     expect(claimed.inputDatasets[1]).toMatchObject({
       contentKind: 'reference',
-      digest: 'etag-1',
+      digest: REFERENCE_DIGEST,
       fileCount: null,
       uri: 's3://corpus/eval/',
     });
