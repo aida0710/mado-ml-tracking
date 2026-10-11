@@ -37,6 +37,7 @@ const TAGS: { name: string; description: string }[] = [
   { name: 'runs', description: 'Runの記録・検索・比較・再開' },
   { name: 'analysis', description: 'メトリクス系列・探索結果の分析' },
   { name: 'tasks', description: 'Task（実行の既定値）と起動' },
+  { name: 'workflows', description: '前処理・学習・評価の順次実行と固定した条件・入出力・品質' },
   { name: 'artifacts', description: 'Artifactの保存・一覧・本体・media情報' },
   { name: 'artifact-uploads', description: '再開可能なArtifact upload session' },
   { name: 'execution', description: 'Job・コンピュータ・worker' },
@@ -44,9 +45,16 @@ const TAGS: { name: string; description: string }[] = [
     name: 'worker',
     description: 'worker専用のprotocol（Projectに限定された worker:execute token）',
   },
-  { name: 'sites', description: 'site（外部のコンピュータ）の設定・job shell・個人設定・鍵・array・手動投入・runnerの報告' },
+  {
+    name: 'sites',
+    description:
+      'site（外部のコンピュータ）の設定・job shell・個人設定・鍵・array・手動投入・runnerの報告',
+  },
   { name: 'launcher', description: 'launcher専用のprotocol（Webで登録したlauncherのtoken）' },
-  { name: 'hooks', description: 'フック（任意のタイミングの自動実行）・webhook・ドライバーの子Job' },
+  {
+    name: 'hooks',
+    description: 'フック（任意のタイミングの自動実行）・webhook・ドライバーの子Job',
+  },
   { name: 'plugins', description: 'Mado plugin接続' },
   { name: 'evaluation', description: '評価結果の集約と比較' },
   { name: 'promotion', description: '昇格policyと判定履歴' },

@@ -41,6 +41,7 @@ from .runtime_capability import ContainerStateUncertain, RuntimeUnavailable
 from .source_snapshot import read_source_snapshot_chunk
 from .source_tree import MAX_SOURCE_ARCHIVE_BYTES
 from .telemetry import collect_system_metrics
+from .workflow_context import DATASET_USAGE_FILENAME, workflow_context_environment
 
 # A single status request returns bounded log output, regardless of job duration.
 STATUS_LOG_BYTES = 64 * 1024
@@ -265,6 +266,12 @@ def _execution_environment(specification: dict[str, Any], workspace: Path) -> di
         trigger_payload_environment(specification["context"], document_file=str(trigger_payload_file))
     )
     write_json(workspace / "context.json", specification["context"])
+    if "datasetUsage" in specification["context"]:
+        dataset_usage_file = workspace / DATASET_USAGE_FILENAME
+        write_json(dataset_usage_file, {"items": specification["context"]["datasetUsage"]})
+        environment.update(
+            workflow_context_environment(specification["context"], dataset_usage_file=str(dataset_usage_file))
+        )
     write_json(workspace / "parameters.json", specification["context"]["parameters"])
     # Separate JSON files are objects even when a Run has no model / datasets.
     write_json(workspace / "model-version.json", {"modelVersion": specification["context"]["modelVersion"]})

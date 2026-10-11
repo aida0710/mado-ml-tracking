@@ -25,7 +25,9 @@ export function useArtifactReferences(projectId: string, artifactIds: readonly s
   const [state, setState] = useState(() => noCheckedReferences(projectId));
   const checked = state.projectId === projectId ? state : noCheckedReferences(projectId);
   const uncheckedIds = [...new Set(artifactIds)].filter((id) => !checked.checkedIds.has(id));
-  const key = uncheckedIds.length ? `${projectId}:artifact-references:${uncheckedIds.join(',')}` : null;
+  const key = uncheckedIds.length
+    ? `${projectId}:artifact-references:${uncheckedIds.join(',')}`
+    : null;
   const query = useQuery(key, async (signal) => {
     const batches: string[][] = [];
     for (let start = 0; start < uncheckedIds.length; start += ARTIFACT_REFERENCES_BATCH_LIMIT)
@@ -72,7 +74,8 @@ export function hasArtifactReferences(references: ArtifactReferences): boolean {
     references.modelVersions.length +
       references.datasetVersions.length +
       references.codeVersions.length +
-      references.checkpoints.length >
+      references.checkpoints.length +
+      (references.preprocessingReports?.length ?? 0) >
     0
   );
 }

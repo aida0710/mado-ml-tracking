@@ -21,6 +21,7 @@ import {
   type OutputModel,
 } from '../repositories/runOutputRegistrationRepository.js';
 import { registerDatasetVersion } from './datasetVersionRegistration.js';
+import { resolveDatasetContent } from './datasetContentService.js';
 import type { ModelVersionRegistrar } from './outputRegistrationHandler.js';
 
 // What every declaration of one request shares: the Job's Run and its Task output setting.
@@ -140,30 +141,39 @@ async function registerDataset(
   declaration: DatasetOutputDeclaration,
 ): Promise<string> {
   const { projectId, run } = context;
-  if (declaration.path !== undefined)
-    await requireOutputArtifact(connection, {
-      projectId,
-      runId: run.id,
-      outputPath: declaration.path,
-    });
-  // An output file is referenced the way evaluation tables point at a Run's Artifact
-  // (docs/evaluation.md), so the version follows the Run instead of copying the bytes.
-  const uri =
-    declaration.path === undefined
-      ? declaration.uri!
-      : `mmt-artifact://runs/${run.id}/${containerArtifactPath(declaration.path)}`;
+  const content =
+    declaration.path !== undefined
+      ? await resolveDatasetOutputFile(connection, {
+          projectId,
+          runId: run.id,
+          outputPath: declaration.path,
+        })
+      : undefined;
+  // Pin the Artifact manifest so later workers can fetch the exact file through the dataset API.
   const version = await registerDatasetVersion(connection, {
     projectId,
     datasetId: declaration.datasetId,
-    uri,
-    digest: declaration.digest,
+    ...(content
+      ? { content: { files: content.files } }
+      : { uri: declaration.uri!, digest: declaration.digest }),
     schema: declaration.schema,
     metadata: declaration.metadata,
     sourceRunId: run.id,
-    parentDatasetVersionIds: [],
+    parentDatasetVersionIds: run.inputDatasetVersionIds,
     actor: { type: 'runCreator' },
   });
   return version.id;
+}
+
+async function resolveDatasetOutputFile(
+  connection: Connection,
+  reference: { projectId: string; runId: string; outputPath: string },
+) {
+  const artifactId = await requireOutputArtifact(connection, reference);
+  return resolveDatasetContent(connection, {
+    projectId: reference.projectId,
+    content: { kind: 'artifacts', files: [{ path: reference.outputPath, artifactId }] },
+  });
 }
 
 async function resolveTaskModel(

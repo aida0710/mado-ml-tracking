@@ -1,5 +1,6 @@
 import type {
   CodeVersion,
+  JsonObject,
   ExperimentTask,
   Run,
   RunKind,
@@ -161,6 +162,8 @@ export class TaskService {
       input: TaskLaunchOptions;
       createdBy: string;
       serverTags?: Record<string, string>;
+      lineage?: { parentRunId: string | null; upstreamDatasetVersionIds: string[] };
+      environment?: JsonObject;
     },
   ): Promise<TaskExecution> {
     const { task, input } = launch;
@@ -171,6 +174,7 @@ export class TaskService {
       projectId: task.projectId,
       createdBy: launch.createdBy,
       task: { id: task.id, revision: task.revision },
+      upstreamDatasetVersionIds: launch.lineage?.upstreamDatasetVersionIds,
       input: {
         experimentId: task.experimentId,
         name: input.name ?? task.name,
@@ -182,7 +186,8 @@ export class TaskService {
         inputDatasetVersionIds: input.inputDatasetVersionIds ?? task.inputDatasetVersionIds,
         parameters: { ...task.parameters, ...input.parameters },
         tags: { ...task.tags, ...launch.serverTags },
-        environment: {},
+        parentRunId: launch.lineage?.parentRunId,
+        environment: launch.environment ?? {},
       },
     });
     const run = input.resumeCheckpointId

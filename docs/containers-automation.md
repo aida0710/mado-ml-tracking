@@ -99,7 +99,7 @@ manifestのSHA256とbyte数は実ファイルと一致させます。すべて�
 - `modelId`を省略すると、Taskの「成功時に出力モデルを登録」で選んだModelへ登録します。Taskで設定していない場合は`modelId`を書きます。Taskと別のModelは指定できません（どちらに登録されたか分からなくなるため）。
 - 同じModelをTaskでも設定している場合、登録は宣言の1回だけで、下流の推論・評価も1回だけ起動します。
 - 宣言したモデルの推論・評価は、学習Runが成功してから起動します。失敗・キャンセルなら起動しません。
-- `datasets`は`{datasetId, path または uri, digest, schema?, metadata?}`。`path`の場合、バージョンのURIは`mmt-artifact://runs/<RunのID>/container/<path>`になり、評価の表から同じ形で参照できます。
+- `datasets`は`{datasetId, path または uri, digest, schema?, metadata?}`。`path`の場合、保存したArtifactのファイル一覧を固定したバージョンを登録し、後続のworkerがファイルを取得できます。URIは`mmt-dataset://<バージョンID>`、digestはサーバーがmanifestから計算します。`path`のdigestフィールドは互換性のため受け付けます。外部`uri`の場合は指定したURIとdigestを保存します。元のRunの入力バージョンは親バージョンとして記録します。
 - モデルを宣言できるのはtraining / finetuningのRunだけです。workerのtokenに`registry:write`が要ります（無いとJobはfailedになります）。
 
 ### 出力の上限

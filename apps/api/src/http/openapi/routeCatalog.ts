@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { WORKFLOW_ROUTES } from './workflowRouteCatalog.js';
 import { RUN_EXPORT_TRUNCATED_HEADER } from '@mmt/contracts';
 import * as contract from '@mmt/contracts/schemas';
 import {
@@ -1270,7 +1271,10 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     access: RUNS_WRITE,
     body: runPatchSchema,
     responses: { 200: contract.runSchema },
-    errors: [...routeError(409, 'run_finalized'), ...routeError(422, 'reserved_tag')],
+    errors: [
+      ...routeError(409, 'run_finalized', 'workflow_run_fixed'),
+      ...routeError(422, 'reserved_tag'),
+    ],
   },
   {
     method: 'get',
@@ -1808,7 +1812,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     responses: { 201: contract.taskExecutionSchema },
     errors: [
       ...routeError(403, 'job_owner_required'),
-      ...routeError(409, 'job_already_retried'),
+      ...routeError(409, 'job_already_retried', 'workflow_retry_required'),
       ...routeError(
         422,
         'checkpoint_not_found',
@@ -2057,7 +2061,8 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     method: 'post',
     path: '/api/targets/:id/directory-listings',
     tag: 'execution',
-    summary: 'コンピュータのディレクトリの子を、指定したworkerに読ませる（同じパスを待っていればそれを返す）',
+    summary:
+      'コンピュータのディレクトリの子を、指定したworkerに読ませる（同じパスを待っていればそれを返す）',
     access: GLOBAL_ADMIN,
     body: directoryListingRequestSchema,
     responses: {
@@ -3183,7 +3188,8 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     method: 'get',
     path: '/api/notification-channels/environment-names',
     tag: 'notifications',
-    summary: '通知先が参照できるAPI serverの環境変数名（MMT_NOTIFICATION_で始まり値があるもの。値は返さない）',
+    summary:
+      '通知先が参照できるAPI serverの環境変数名（MMT_NOTIFICATION_で始まり値があるもの。値は返さない）',
     access: GLOBAL_ADMIN,
     responses: { 200: contract.itemsOf(z.string()) },
   },
@@ -3284,4 +3290,5 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     query: operationsAlertQuerySchema,
     responses: { 200: contract.itemsOf(contract.operationsAlertSchema) },
   },
+  ...WORKFLOW_ROUTES,
 ];

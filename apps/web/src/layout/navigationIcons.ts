@@ -37,6 +37,7 @@ export const NAVIGATION_ICONS: Record<NavigationScreen, LucideIcon> = {
   lineage: Network,
   jobs: Play,
   hooks: Webhook,
+  workflows: ListChecks,
   compute: Server,
   plugins: Puzzle,
   settings: Settings,

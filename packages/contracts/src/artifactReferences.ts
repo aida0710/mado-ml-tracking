@@ -17,6 +17,8 @@ export interface ArtifactReferences {
   codeVersions: Array<{ id: string; codeId: string; codeName: string; version: string }>;
   /** Checkpoints still retained, or that a Run continued from. */
   checkpoints: Array<{ id: string; runId: string; runName: string; step: number }>;
+  /** Only present when a preprocessing report uses the Artifact as a review sample. */
+  preprocessingReports?: Array<{ runId: string; runName: string }>;
 }
 
 /** Maximum artifactIds per request: one page of the Project's Artifact catalog. */

@@ -198,6 +198,19 @@ export class RunService {
         scope: 'runs:write',
       });
       const run = await findRun(connection, { projectId, id: registration.runId, lock: true });
+      if (input.parameters || input.environment) {
+        const workflowStep = await first(
+          connection,
+          'SELECT id FROM workflow_step_runs WHERE run_id=$1 AND NOT reused',
+          [run.id],
+        );
+        if (workflowStep)
+          throw new DomainError(
+            409,
+            'ワークフローの実行設定は固定されています。新しいバージョンを作成してください',
+            'workflow_run_fixed',
+          );
+      }
       if (input.tags || input.parameters) await assertRunRecordsWritable(connection, run);
       const isMlflowManaged = (run as Run & { mlflowManaged?: boolean }).mlflowManaged === true;
       if (isMlflowManaged && input.parameters) {
