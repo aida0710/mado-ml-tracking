@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { RefreshCw, Search } from 'lucide-react';
 import type { Artifact } from '@mmt/contracts';
 import { registryApi } from '../api/registry';
@@ -15,15 +15,17 @@ import { ResponsiveTable } from '../components/ResponsiveTable';
 import { ArtifactBackToListButton } from '../components/ArtifactBackToListButton';
 import { useArtifactBrowserPanes } from '../hooks/useArtifactBrowserPanes';
 import { ErrorNotice } from '../components/Feedback';
-import { ArtifactPreview } from '../components/ArtifactPreview';
+import { ArtifactDetailsPanel } from '../components/ArtifactDetailsPanel';
+import { ArtifactOwnerCell } from '../components/ArtifactOwnerCell';
+import { useArtifactReferences } from '../hooks/useArtifactReferences';
 import { ARTIFACT_SEARCH_MAX_LENGTH } from '../lib/artifactCatalog';
-import { formatBytes, formatDate } from '../lib/format';
+import { artifactKindLabel } from '../lib/artifactKindLabel';
+import { formatBytes, formatDate, shortRunId } from '../lib/format';
 import { text } from '../i18n/catalog';
+import { artifactsTextTemplates } from '../i18n/artifacts';
 
 // Recent Runs offered in the Run filter; older Runs are reached from their own page's link.
 const RUN_FILTER_OPTION_LIMIT = 200;
-// Run ids are UUIDs; the first block identifies a Run whose name is not loaded.
-const SHORT_RUN_ID_LENGTH = 8;
 const mimeTypeOptions = [
   ['', text.artifactMimeAll],
   ['audio/*', text.artifactMimeAudio],
@@ -51,6 +53,8 @@ export function ArtifactsPage() {
   const { modelId } = filter;
   const [searchInput, setSearchInput] = useState(filter.query);
   const [selected, setSelected] = useState<Artifact>();
+  // The file just deleted, named until another file is chosen.
+  const [deleted, setDeleted] = useState<Artifact | null>(null);
   const { panes, containerRef, scrollBrowserIntoView } = useArtifactBrowserPanes(selected !== undefined);
   const catalog = useProjectArtifactCatalog(project.id, filter);
   const runs = useQuery(`${project.id}:artifact-filter-runs`, (signal) =>
@@ -63,11 +67,20 @@ export function ArtifactsPage() {
     modelId ? `${project.id}:artifact-filter-versions:${modelId}` : null,
     (signal) => registryApi.modelVersions(project.id, modelId, signal),
   );
+  const datasets = useQuery(`${project.id}:artifact-owner-datasets`, (signal) =>
+    registryApi.datasets(project.id, signal),
+  );
   const runNames = new Map(runs.value?.items.map((run) => [run.id, run.name]));
-  const base = `/projects/${project.id}`;
+  const datasetsById = new Map((datasets.value ?? []).map((dataset) => [dataset.id, dataset]));
+  // Files without a Run are named by what lists them; a Run's files by the Run itself.
+  const references = useArtifactReferences(
+    project.id,
+    catalog.items.filter((item) => item.runId === null).map((item) => item.id),
+  );
 
   function showArtifact(artifact: Artifact | undefined) {
     setSelected(artifact);
+    if (artifact) setDeleted(null);
     scrollBrowserIntoView();
   }
 
@@ -88,7 +101,14 @@ export function ArtifactsPage() {
         eyebrow={project.name}
         description={text.artifactCatalogDescription}
         actions={
-          <button className="icon-button" aria-label={text.refresh} onClick={catalog.reload}>
+          <button
+            className="icon-button"
+            aria-label={text.refresh}
+            onClick={() => {
+              catalog.reload();
+              references.reload();
+            }}
+          >
             <RefreshCw size={17} />
           </button>
         }
@@ -136,7 +156,7 @@ export function ArtifactsPage() {
           >
             <option value="">{text.artifactAllRuns}</option>
             {filter.runId && !runNames.has(filter.runId) && (
-              <option value={filter.runId}>{filter.runId.slice(0, SHORT_RUN_ID_LENGTH)}</option>
+              <option value={filter.runId}>{shortRunId(filter.runId)}</option>
             )}
             {runs.value?.items.map((run) => (
               <option key={run.id} value={run.id}>
@@ -187,9 +207,15 @@ export function ArtifactsPage() {
         </label>
       </div>
       <ErrorNotice
-        message={runs.error ?? models.error}
-        retry={runs.error ? runs.reload : models.reload}
+        message={runs.error ?? models.error ?? references.error}
+        retry={runs.error ? runs.reload : models.error ? models.reload : references.reload}
       />
+      {deleted && (
+        // Above both panes, so it is seen on a narrow screen too, where the list returns at once.
+        <p className="notice artifact-deleted-notice" role="status" data-testid="artifact-deleted-notice">
+          {artifactsTextTemplates.artifactDeleted(deleted.path)}
+        </p>
+      )}
       <div ref={containerRef} className="artifact-layout">
         {panes.showList && (
           <div>
@@ -210,24 +236,25 @@ export function ArtifactsPage() {
                   ),
                 },
                 {
-                  key: 'run',
-                  header: text.artifactRun,
+                  key: 'owner',
+                  header: text.artifactOwner,
                   priority: 'secondary',
-                  render: (item) =>
-                    item.runId ? (
-                      <Link to={`${base}/runs/${item.runId}?tab=artifacts`}>
-                        {runNames.get(item.runId) ?? item.runId.slice(0, SHORT_RUN_ID_LENGTH)}
-                      </Link>
-                    ) : (
-                      <span className="muted">{text.artifactNoRun}</span>
-                    ),
+                  render: (item) => (
+                    <ArtifactOwnerCell
+                      artifact={item}
+                      runName={item.runId ? runNames.get(item.runId) : undefined}
+                      references={references.byArtifactId.get(item.id)}
+                      areReferencesChecked={references.isChecked(item.id)}
+                      datasets={datasetsById}
+                    />
+                  ),
                 },
                 {
                   key: 'mimeType',
                   header: text.artifactMimeType,
                   priority: 'secondary',
-                  className: 'mono',
-                  render: (item) => item.mimeType.split(';')[0],
+                  className: 'nowrap',
+                  render: (item) => <span title={item.mimeType}>{artifactKindLabel(item.mimeType)}</span>,
                 },
                 {
                   key: 'size',
@@ -259,19 +286,21 @@ export function ArtifactsPage() {
         )}
         {panes.showBackToList && <ArtifactBackToListButton onClick={() => showArtifact(undefined)} />}
         {panes.showPreview && (
-          <section className="artifact-preview">
-            {selected ? (
-              <>
-                <h3>{selected.path}</h3>
-                <p className="mono muted">
-                  {selected.mimeType} · {formatBytes(selected.size)}
-                </p>
-                <ArtifactPreview key={selected.id} artifact={selected} />
-              </>
-            ) : (
+          selected ? (
+            <ArtifactDetailsPanel
+              key={selected.id}
+              latest={selected}
+              onDeleted={(artifact) => {
+                setSelected(undefined);
+                setDeleted(artifact);
+                catalog.reload();
+              }}
+            />
+          ) : (
+            <section className="artifact-preview">
               <p className="muted">{text.artifactSelectFile}</p>
-            )}
-          </section>
+            </section>
+          )
         )}
       </div>
     </section>

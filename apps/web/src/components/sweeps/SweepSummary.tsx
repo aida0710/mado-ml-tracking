@@ -5,7 +5,7 @@ import type { Sweep, SweepPatch, SweepStatus } from '@mmt/contracts';
 import { sweepsApi } from '../../api/sweeps';
 import { useMutation } from '../../hooks/useMutation';
 import { formatNumber } from '../../lib/format';
-import { isSweepEnded } from '../../lib/sweepTrials';
+import { isSweepEnded, plannedTrialCount } from '../../lib/sweepTrials';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { ErrorNotice } from '../Feedback';
 import { FormDialog } from '../FormDialog';
@@ -59,6 +59,8 @@ export function SweepSummary({
   const counts = sweep.trialCounts;
   const isResumable = sweep.status === 'paused' && sweep.statusReason !== 'task_revision_changed';
   const best = sweep.bestTrial;
+  // A grid with fewer combinations than maxTrials ends early; the progress says when.
+  const plannedTrials = plannedTrialCount(sweep);
   const act = (operation: () => Promise<unknown>) =>
     void mutation.run(operation).then((result) => {
       if (result !== undefined) onChanged();
@@ -100,8 +102,11 @@ export function SweepSummary({
       <ErrorNotice message={mutation.error} />
       <div className="sweep-progress" aria-label={text.sweepProgress}>
         <span>{text.sweepProgress}</span>
-        <progress max={sweep.maxTrials} value={counts.total} />
-        <span className="mono" data-testid="sweep-trial-progress">{textTemplates.sweepTrialProgress(counts.total, sweep.maxTrials)}</span>
+        <progress max={plannedTrials} value={counts.total} />
+        <span className="mono" data-testid="sweep-trial-progress">{textTemplates.sweepTrialProgress(counts.total, plannedTrials)}</span>
+        {plannedTrials < sweep.maxTrials && (
+          <span className="muted">{textTemplates.sweepGridEndsEarly(plannedTrials, sweep.maxTrials)}</span>
+        )}
         <span className="sweep-state-counts">
           {(['queued', 'running', 'finished', 'early_stopped', 'failed', 'canceled'] as const)
             .filter((state) => counts[state] > 0)
@@ -109,7 +114,7 @@ export function SweepSummary({
         </span>
       </div>
       <div className="sweep-best" data-testid="sweep-best-trial">
-        <h3>{text.sweepBestTrial}</h3>
+        <h2>{text.sweepBestTrial}</h2>
         {best ? (
           <>
             <DetailsList entries={[

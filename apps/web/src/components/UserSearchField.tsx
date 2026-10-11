@@ -1,7 +1,7 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import type { UserSearchResult } from '@mmt/contracts';
 import { useUserSearch } from '../hooks/useUserSearch';
-import { isComposingKey } from '../lib/imeComposition';
+import { isEnterOutsideComposition } from '../lib/imeComposition';
 import { ErrorNotice } from './Feedback';
 import { UserSummary } from './UserSummary';
 import { text } from '../i18n/catalog';
@@ -46,7 +46,7 @@ export function UserSearchField({
     inputRef.current?.focus();
   };
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key !== 'Enter' || isComposingKey(event)) return;
+    if (!isEnterOutsideComposition(event)) return;
     // The field sits inside dialog forms (creating a Project, adding a member), where Enter would
     // submit the form before a user is picked.
     event.preventDefault();

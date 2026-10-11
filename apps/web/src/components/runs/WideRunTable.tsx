@@ -1,6 +1,14 @@
-import { useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
+import { useId, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
 import type { Run, SavedViewColumn } from '@mmt/contracts';
-import { clampColumnWidth, moveColumn, resizeColumn, shiftColumn } from '../../lib/runColumns';
+import { useColumnHeaderWidths } from '../../hooks/useColumnHeaderWidths';
+import {
+  clampColumnWidth,
+  MAX_COLUMN_WIDTH,
+  MIN_COLUMN_WIDTH,
+  moveColumn,
+  resizeColumn,
+  shiftColumn,
+} from '../../lib/runColumns';
 import {
   RunNameCell,
   RunSelectCheckbox,
@@ -34,6 +42,9 @@ export function WideRunTable({
   selection: RunListSelection;
 }) {
   const [draggedKey, setDraggedKey] = useState<string | null>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
+  const headerWidths = useColumnHeaderWidths(tableRef);
+  const moveHintId = useId();
   // While the pointer drags a border the width lives here, so the list commits one change.
   const [resizing, setResizing] = useState<{ key: string; startX: number; startWidth: number; width: number } | null>(null);
   const shownColumns = shownRunColumns(columns).map((column) =>
@@ -75,7 +86,11 @@ export function WideRunTable({
 
   return (
     <div className="table-scroll">
-      <table className="run-table">
+      {/* Read with each column name: the name is a focus stop only for this key. */}
+      <span id={moveHintId} hidden>
+        {text.runColumnMove}
+      </span>
+      <table className="run-table" ref={tableRef}>
         <thead>
           <tr>
             <th scope="col">
@@ -109,6 +124,7 @@ export function WideRunTable({
                   className="run-column-label"
                   tabIndex={0}
                   title={text.runColumnMove}
+                  aria-describedby={moveHintId}
                   onKeyDown={(event) => moveWithKeyboard(event, column.key)}
                 >
                   {column.label}
@@ -118,7 +134,10 @@ export function WideRunTable({
                   role="separator"
                   aria-orientation="vertical"
                   aria-label={text.runColumnResize}
-                  {...(column.width === undefined ? {} : { 'aria-valuenow': column.width })}
+                  // A focusable separator is a splitter, whose value assistive technology reads.
+                  aria-valuenow={column.width ?? headerWidths[column.key] ?? MIN_COLUMN_WIDTH}
+                  aria-valuemin={MIN_COLUMN_WIDTH}
+                  aria-valuemax={MAX_COLUMN_WIDTH}
                   tabIndex={0}
                   onPointerDown={(event) => startResize(event, column.key)}
                   onPointerMove={moveResize}

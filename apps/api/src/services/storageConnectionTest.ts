@@ -46,8 +46,8 @@ function describeStorageFailure(error: unknown): string {
   if (error instanceof ArtifactNotFoundError) return 'オブジェクトが見つかりません';
   if (error instanceof StorageBackendUnavailableError)
     return error.reason === 'secret_key_missing'
-      ? 'MMT_STORAGE_SECRET_KEYが設定されていないためsecretを読めません'
-      : '保存されたsecretを現在の鍵で読めません';
+      ? 'MMT_STORAGE_SECRET_KEYが設定されていないためsecretを読めません。API serverの.envに設定し、API serverを再起動してください'
+      : '保存されたsecretを現在の鍵で読めません。API serverのMMT_STORAGE_SECRET_KEYが保存したときから変わっていないか確かめるか、［変更］でSecret access keyを入れ直してください';
   const name = error instanceof Error && /^[A-Za-z0-9_.]+$/.test(error.name) ? error.name : 'Error';
   const status = (error as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode;
   const rawCode = (error as { code?: unknown })?.code;

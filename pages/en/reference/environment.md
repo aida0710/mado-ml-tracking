@@ -74,6 +74,7 @@ Storage settings are described in [Storage](/en/data/storage).
 | `S3_FORCE_PATH_STYLE` | `false` | Use path-style URLs |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | None | S3 credentials. Without them, the AWS SDK's default provider chain is used |
 | `MMT_STORAGE_SECRET_KEY` | None | Key that encrypts in the database the secrets of S3 backends added on the screen (base64 of 32 bytes) |
+| `MMT_HOOK_SECRET_KEY` | None | Key that encrypts in the database the secrets of webhook hooks (base64 of 32 bytes). Without it, webhook hooks cannot be created and stored ones cannot be verified |
 | `MMT_ARTIFACT_MAX_BYTES` | `214748364800` (200 GiB) | Limit per Artifact |
 | `MMT_ARTIFACT_DELETE_GRACE_DAYS` | `7` | Days before a deleted Artifact's content is removed. 0 to 3650 |
 | `MMT_UPLOAD_REQUEST_TIMEOUT_MS` | `0` (disabled) | Deadline for a whole upload request |

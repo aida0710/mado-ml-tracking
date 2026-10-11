@@ -7,6 +7,7 @@ import type {
   DatasetVersion,
   Experiment,
   Job,
+  JobListItem,
   ModelAutomationExecution,
   ModelAutomationRule,
   ModelVersion,
@@ -519,7 +520,7 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
         runtime: fixture.containerCodeVersion.runtime,
       },
     });
-    const jobs = await entity<{ items: Job[] }>(
+    const jobs = await entity<{ items: JobListItem[] }>(
       await request(harness.app, `${fixture.basePath}/jobs`, {
         cookie: fixture.viewer.cookie,
       }),
@@ -530,6 +531,9 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
       maxAttempts: 4,
       gpuIds: ['0'],
       targetId: fixture.target.id,
+      // The Jobs list says which rule started the Job.
+      automationRule: { ruleId: inference.id, ruleName: inference.name },
+      sweepTrial: null,
     });
     const evaluationRun = await entity<Run>(
       await request(harness.app, `${fixture.basePath}/runs/${evaluated.runId}`, {

@@ -20,6 +20,9 @@ description: ログイン、権限、token、ユーザー、保存先、通知�
 
 新しい順に表示します。古い記録は一覧の下の［さらに読む］で読み込みます。
 
+- 一覧の上の「すべての結果」で、「拒否」や「失敗」だけに絞り込めます。拒否・失敗の記録は、操作の横にも赤く印が付きます（スマホでも行のまま見えます）。
+- 「全体管理」→［監査ログ］では、ログイン・ログアウトとIdPの同期の記録を、既定で隠します。「ログイン・ログアウトの記録を隠す」を外すと表示します。
+
 | 列 | 内容 |
 | --- | --- |
 | 日時 | 記録した時刻 |
@@ -80,6 +83,7 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" \
 | `action` | `auth.oidc.denied` |
 | `actorUserId` | 操作したユーザーのID |
 | `outcome` | `success`、`denied`、`failed` |
+| `hideSignIns` | `true`で、ログイン・ログアウトとIdPの同期・再確認（`auth.login`、`auth.logout`、`auth.oidc.sync`、`auth.oidc.recheck`）を除く |
 | `projectId`（全体の一覧だけ） | ProjectのID |
 
 全体の記録（`GET /api/audit-events`）は、全体管理者がブラウザでログインしているときだけ読めます。API tokenでは、全体管理者のtokenでも403 `session_required`です。ブラウザで全体管理者としてログインした状態で、次のURLを開きます。

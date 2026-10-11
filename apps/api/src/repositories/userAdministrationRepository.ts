@@ -2,7 +2,10 @@ import type { AdminUser, AdminUserQuery } from '@mmt/contracts';
 import { first, rows, type Connection } from '../db/database.js';
 import { userColumns } from './identityRepository.js';
 
-const adminUserColumns = `${userColumns},u.kind,u.last_login_at,u.created_at`;
+// A Service Account names its Project so administrators can tell what disabling it stops.
+const adminUserColumns = `${userColumns},u.kind,u.last_login_at,u.created_at,
+  (SELECT json_build_object('id',p.id,'name',p.name) FROM service_account_details d
+    JOIN projects p ON p.id=d.project_id WHERE d.user_id=u.id) AS service_account_project`;
 
 function containsPattern(query: string): string {
   return `%${query.replace(/[\\%_]/g, (character) => `\\${character}`)}%`;

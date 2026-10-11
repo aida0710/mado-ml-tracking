@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import type {
-  AutomationRuleOwnerTransfer,
-  Job,
-  ModelAutomationExecution,
-  ModelAutomationExecutionPage,
-  ModelAutomationRule,
-  ModelVersion,
-  Run,
+import {
+  DEFAULT_JOB_ATTEMPTS,
+  type AutomationRuleOwnerTransfer,
+  type Job,
+  type ModelAutomationExecution,
+  type ModelAutomationExecutionPage,
+  type ModelAutomationRule,
+  type ModelVersion,
+  type Run,
 } from '@mmt/contracts';
 import type { Principal } from '../auth/principal.js';
 import { first, transaction, type Connection, type Database } from '../db/database.js';
@@ -20,7 +21,6 @@ import {
   type ModelAutomationRuleCreate,
 } from '../domain/modelAutomationValidation.js';
 import { isTerminalStatus } from '../domain/runTransitions.js';
-import { DEFAULT_JOB_ATTEMPTS } from '../domain/validation.js';
 import type { RequestMetadata } from '../http/requestMetadata.js';
 import {
   findExecutionForRun,
@@ -512,7 +512,7 @@ export class ModelAutomationService {
           targetId: rule.targetId,
           gpuIds: rule.gpuIds,
           // A rule's maxAttempts bounds automatic attempts (1, the default, means no automatic
-          // retry); people may still retry an automated Job by hand up to the usual Job limit.
+          // retry); people may retry an automated Job by hand past either limit (JobService.retry).
           maxAttempts: Math.max(rule.maxAttempts, DEFAULT_JOB_ATTEMPTS),
         },
         attempt: 1,

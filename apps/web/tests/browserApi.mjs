@@ -4,11 +4,13 @@ import { listProjectArtifacts, listRunArtifacts, runArtifactTree } from './artif
 import { createProjectAdministration } from './projectAdministrationMock.mjs';
 import { createComputerSetup } from './computerSetupMock.mjs';
 import { findCodeVersionDetail, listModelFamilies, ruleMetricKeys } from './registryLookupMock.mjs';
+import { pageAutomationExecutions } from './automationExecutionMock.mjs';
 // The API default of MMT_ARTIFACT_DELETE_GRACE_DAYS (apps/api/src/config.ts).
 const DEFAULT_ARTIFACT_DELETE_GRACE_DAYS = 7;
 // TokenSummary.tokenPrefix: the first characters of the token value.
 const TOKEN_PREFIX_LENGTH = 12;
 // Lists the Compute and Settings screens read when they open; the mock has none of these.
+// Tasks: the Code page lists the Tasks that use a code version (checks with Tasks route their own).
 const EMPTY_PROJECT_LISTS = [
   'workers',
   'group-bindings',
@@ -16,6 +18,7 @@ const EMPTY_PROJECT_LISTS = [
   'notification-channels',
   'notification-rules',
   'notification-deliveries',
+  'tasks',
 ];
 // Whose Jobs a computer takes, as the API decides (targetUsableSql): everyone's on a public one,
 // its owner's on a private one. The mock has no Service Accounts.
@@ -162,6 +165,40 @@ export function createBrowserApi() {
     totalSize: null,
     createdAt: now,
   };
+  // A queued Job as POST /jobs makes it, for the fields the request does not send.
+  const makeJob = (body) => ({
+    id: id(),
+    projectId: project.id,
+    // The Job fields of sites, arrays, hooks and drivers that an ssh Job leaves at their defaults.
+    phase: null,
+    gpuCount: body.gpuIds?.length ?? 0,
+    walltimeSeconds: null,
+    schedulerJobId: null,
+    submittedAt: null,
+    runnerHost: null,
+    arrayGroupId: null,
+    arrayIndex: null,
+    arraySize: null,
+    endReason: null,
+    parentJobId: null,
+    chainDepth: 0,
+    hookId: null,
+    allowChildJobs: false,
+    retryOnFailure: false,
+    retryOnTimeout: false,
+    datasetPartitionVersionId: null,
+    siteJobShellId: null,
+    ...body,
+    status: 'queued',
+    cancelRequested: false,
+    attempt: 0,
+    createdAt: now,
+    startedAt: null,
+    endedAt: null,
+    heartbeatAt: null,
+    error: null,
+    exitCode: null,
+  });
   const makeRun = (body) => ({
     id: id(),
     projectId: project.id,
@@ -258,6 +295,7 @@ export function createBrowserApi() {
     name: 'UI検証Plugin',
     baseUrl: 'http://test.invalid',
     tokenEnv: 'UI_TEST_PLUGIN_TOKEN',
+    tokenConfigured: true,
     enabled: true,
     manifest: null,
     createdAt: now,
@@ -394,6 +432,8 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
     if (projectAnswer) return projectAnswer;
     const computerSetupAnswer = computerSetup.handle({ path, method, body, reply, list });
     if (computerSetupAnswer) return computerSetupAnswer;
+    // Every Project's workers, for a global administrator's computer details (state.workers).
+    if (path === '/workers' && method === 'GET') return list(state.workers ?? []);
     if (path === '/targets/overview' && method === 'GET')
       return list(state.targets.map((target) => targetOverview(target, state)));
     if (path === '/targets') {
@@ -421,6 +461,13 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       return reply(target, 201);
     }
     if (path === '/launchers' && method === 'GET') return list(state.launchers);
+    // The header bell: alerts of every Project the user may open; the mock has none.
+    if (path === '/operations-alerts' && method === 'GET') return list([]);
+    // 全体管理 → 監査ログ; the mock keeps no events.
+    if (path === '/audit-events' && method === 'GET') return reply({ items: [], nextCursor: null });
+    // The variables a notification channel may name; the mock server has one.
+    if (path === '/notification-channels/environment-names' && method === 'GET')
+      return list(['MMT_NOTIFICATION_SLACK_URL']);
     // 全体設定 → アカウント (/settings/account), where the user menu and redirects land.
     if (path === '/account' && method === 'GET')
       return reply({
@@ -490,7 +537,7 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       }
     }
     if (resource === 'automation-executions' && method === 'GET')
-      return list(state.automationExecutions);
+      return reply(pageAutomationExecutions(state.automationExecutions, url.searchParams));
     if (resource === 'audit-events' && method === 'GET') return reply({ items: [], nextCursor: null });
     // The promotion dialog reads these before an alias is set; the mock has none of them.
     if (resource === 'alias-protections' && method === 'GET') return list([]);
@@ -498,7 +545,19 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
     if (resource === 'promotion-evaluations' && method === 'GET')
       return reply({ items: [], nextCursor: null });
     if (resource === 'operations-alerts' && method === 'GET') return list([]);
+    // The Project's workers (WorkerPresence); a test that needs one online sets state.workers.
+    if (resource === 'workers' && !key && method === 'GET') return list(state.workers ?? []);
     if (EMPTY_PROJECT_LISTS.includes(resource) && !key && method === 'GET') return list([]);
+    // Where Artifacts are used: the mock's files are used nowhere, so each can be deleted.
+    if (resource === 'artifact-references' && method === 'GET')
+      return list(
+        (url.searchParams.get('artifactIds') ?? '')
+          .split(',')
+          .filter(Boolean)
+          .map((artifactId) => ({ artifactId, modelVersions: [], datasetVersions: [], codeVersions: [], checkpoints: [] })),
+      );
+    // No folder upload of a mock dataset ever stopped before its version.
+    if (resource === 'datasets' && key && subresource === 'folder-uploads' && method === 'GET') return list([]);
     // The Settings screen's usage per storage backend; the mock reports none.
     if (resource === 'artifact-usage' && method === 'GET')
       return reply({ backends: [], deleteGraceDays: DEFAULT_ARTIFACT_DELETE_GRACE_DAYS });
@@ -587,7 +646,10 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
           { name: 'system/gpu.utilization', value: 64, step: 100, timestamp: now },
         ]);
       if (subresource === 'logs')
-        return list([{ timestamp: now, level: 'info', message: 'Browser test log' }]);
+        return reply({
+          items: [{ timestamp: now, level: 'info', message: 'Browser test log' }],
+          totalCount: 1,
+        });
       if (subresource === 'artifacts' && parts[3] === 'tree')
         return reply(runArtifactTree(state.artifacts, key, url.searchParams));
       if (subresource === 'artifacts') {
@@ -716,47 +778,31 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
               // Who started the Job: its Run's creator (api-contract.md).
               createdBy: run?.createdBy ?? state.user.id,
               createdByName: run?.createdByName ?? state.user.displayName,
+              // A test that needs a checkpoint, a Sweep or a rule behind the Job sets it on the Job.
+              hasResumeCheckpoint: job.hasResumeCheckpoint ?? false,
+              sweepTrial: job.sweepTrial ?? null,
+              automationRule: job.automationRule ?? null,
             };
           }),
         );
+      // A Run and its Job together (POST /jobs/launch): a refused Job keeps no Run.
+      if (key === 'launch' && method === 'POST') {
+        if (state.failNextJob) {
+          state.failNextJob = false;
+          return reply({ error: 'UI verification: enqueue failed' }, 503);
+        }
+        const run = makeRun(body.run);
+        state.runs.push(run);
+        const job = makeJob({ ...body.job, runId: run.id });
+        state.jobs.push(job);
+        return reply({ run, job });
+      }
       if (!key && method === 'POST') {
         if (state.failNextJob) {
           state.failNextJob = false;
           return reply({ error: 'UI verification: enqueue failed' }, 503);
         }
-        const job = {
-          id: id(),
-          projectId: project.id,
-          // The Job fields of sites, arrays, hooks and drivers that an ssh Job leaves at their defaults.
-          phase: null,
-          gpuCount: body.gpuIds?.length ?? 0,
-          walltimeSeconds: null,
-          schedulerJobId: null,
-          submittedAt: null,
-          runnerHost: null,
-          arrayGroupId: null,
-          arrayIndex: null,
-          arraySize: null,
-          endReason: null,
-          parentJobId: null,
-          chainDepth: 0,
-          hookId: null,
-          allowChildJobs: false,
-          retryOnFailure: false,
-          retryOnTimeout: false,
-          datasetPartitionVersionId: null,
-          siteJobShellId: null,
-          ...body,
-          status: 'queued',
-          cancelRequested: false,
-          attempt: 0,
-          createdAt: now,
-          startedAt: null,
-          endedAt: null,
-          heartbeatAt: null,
-          error: null,
-          exitCode: null,
-        };
+        const job = makeJob(body);
         state.jobs.push(job);
         return reply(job);
       }
@@ -779,7 +825,15 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       if (!key && method === 'GET') return list(state.plugins);
       if (!key && method === 'POST') {
         if (!user.isAdmin) return reply({ error: 'Global admin required' }, 403);
-        const plugin = { id: id(), projectId: project.id, manifest: null, ...body, createdAt: now };
+        // The API server of the mock has the variable only when its name says so.
+        const plugin = {
+          id: id(),
+          projectId: project.id,
+          manifest: null,
+          tokenConfigured: !String(body.tokenEnv ?? '').includes('MISSING'),
+          ...body,
+          createdAt: now,
+        };
         state.plugins.push(plugin);
         return reply(plugin);
       }

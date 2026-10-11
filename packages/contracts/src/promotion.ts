@@ -48,6 +48,9 @@ export interface PromotionPolicy {
    * to an active Service Account of the Project with the admin role.
    */
   runAsUserId: string;
+  // Who runAsUserId is, for display; the policy list includes them, other responses may not.
+  runAsKind?: 'human' | 'service';
+  runAsName?: string;
   createdAt: string;
 }
 

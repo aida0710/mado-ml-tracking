@@ -14,3 +14,13 @@ export function operationsRoutes(alerts: OperationsAlertService): Hono<ApiEnviro
   });
   return routes;
 }
+
+/** Mounted at /api: the alerts of every Project the caller may open, for the header bell. */
+export function operationsOverviewRoutes(alerts: OperationsAlertService): Hono<ApiEnvironment> {
+  const routes = new Hono<ApiEnvironment>();
+  routes.get('/operations-alerts', async (context) => {
+    const filter = parse(operationsAlertQuerySchema, context.req.query());
+    return context.json({ items: await alerts.listVisible(principal(context), filter) });
+  });
+  return routes;
+}

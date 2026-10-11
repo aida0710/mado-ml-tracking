@@ -87,3 +87,33 @@
 .artifact-usage .table-scroll + p {
   margin-top: 10px;
 }
+/* Download and the ⋯ menu side by side at the right of the file name. */
+.artifact-preview-tools {
+  display: flex;
+  flex: none;
+  gap: 4px;
+}
+.artifact-actions-popover button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.artifact-actions-reason {
+  margin: 0;
+  padding: 0 14px 10px;
+  width: 18em;
+  max-width: 70vw;
+  color: var(--muted);
+  font-size: 12px;
+}
+.artifact-references h4 {
+  margin: 12px 0 4px;
+}
+.artifact-reference-links {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+}
+.artifact-reference-links li {
+  padding: 2px 0;
+  overflow-wrap: anywhere;
+}

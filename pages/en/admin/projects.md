@@ -24,6 +24,8 @@ The list shows the Projects you can see: Public Projects and the Private Project
 
 - Choose with ↑ and ↓ and open with Enter. Esc closes the list.
 - With eight or more Projects, a filter box appears at the top.
+- The Projects you are a member of (direct grant or group binding) come first. Below a line come those you can open only because they are Public or you are a global administrator, marked 参加していない (not a member).
+- When two or more Projects share a name, their creation date shows under the name.
 - **＋ プロジェクトを作成** (Create project) at the bottom creates a new Project.
 
 ## Create a Project
@@ -43,6 +45,8 @@ The list shows the Projects you can see: Public Projects and the Private Project
 The new Project opens after it is created. The creator becomes an Admin of the Project.
 
 ![The create dialog with Private selected and two members added](/images/admin-project-create.png)
+
+If a Project you can see already has the name, 同じ名前のプロジェクトがあります (A project with the same name exists) appears under the name field. You can still create it, but a different name keeps the switcher easy to read.
 
 For a Private Project that others will use, add them under メンバー（任意） (Members, optional).
 
@@ -92,10 +96,12 @@ With an API token, even a global administrator needs a role in the Project ([Per
 
 Archiving removes a Project you no longer use from the lists. The data stays, and a global administrator can restore it later.
 
-1. At the bottom of **プロジェクト設定**, click **アーカイブ** (Archive) under プロジェクトをアーカイブ (Archive project). Global administrators can also use **アーカイブ** on the row in **全体管理** → **プロジェクト**.
-2. Click **アーカイブ** in the confirmation dialog.
+1. At the bottom of **プロジェクト設定**, click **アーカイブ** (Archive) under プロジェクトをアーカイブ (Archive project); the contents at the top of the page link there. Global administrators can also use **アーカイブ** on the row in **全体管理** → **プロジェクト**.
+2. Click **アーカイブ** in the confirmation dialog. The dialog lists what stops: the number of API tokens limited to the Project, and Sweeps, hooks, automation, and automatic promotion.
 
-An archived Project disappears from the Project switcher and nobody can open it. Runs, models, Artifacts, and other data remain.
+An archived Project disappears from the Project switcher and nobody can open it. Runs, models, Artifacts, and other data remain. Archiving from **プロジェクト設定** leads to the Project list, which says the Project was archived (no other Project opens by itself).
+
+Opening an archived Project's URL tells its members and global administrators that it is archived. Anyone else sees the same as for a Project that does not exist.
 
 - A Project with queued or running Jobs cannot be archived (409 `project_has_active_jobs`). Wait for the Jobs in **Jobs** to finish, or stop them, and archive again.
 - While the Project is archived, API tokens limited to it (including those of workers and Service Accounts) return 401. A Run being recorded by the SDK can no longer record.
@@ -108,7 +114,7 @@ A global administrator restores a Project.
 ![Projects under global administration, including archived ones](/images/admin-projects.png)
 
 1. Open **全体設定** (Global settings) from the user menu, then **プロジェクト** (Projects) under 全体管理 (Global administration) in the sidebar.
-2. Select アーカイブ済みも表示 (Show archived). Archived Projects appear as アーカイブ済み (Archived).
+2. Select アーカイブ済みも表示 (Show archived). Archived Projects appear as アーカイブ済み (Archived). With many Projects, narrow the list by name in the box above it. The Admin column shows the names of the Project's admins (whom to contact); the member count includes Service Accounts.
 3. Click **元に戻す** (Restore) on the row, then **元に戻す** in the confirmation dialog.
 
 Members and data are the same as before archiving. API tokens limited to the Project work again.
@@ -119,7 +125,7 @@ This deletes an archived Project together with its data. It cannot be undone. On
 
 1. In **全体管理** → **プロジェクト**, select アーカイブ済みも表示 (Show archived).
 2. Click **完全に削除** (Delete permanently) on the row of the Project.
-3. Type the Project name in 確認のため、プロジェクト名を入力してください (Type the project name to confirm) and click **完全に削除**.
+3. Type the Project name in 確認のため、プロジェクト名を入力してください (Type the project name to confirm) and click **完全に削除**. The dialog also shows the creation and archive dates, so a Project of the same name is not taken for it.
 
 After deletion:
 
@@ -148,6 +154,7 @@ Creating and managing Projects is recorded in the audit log ([Audit log](/en/adm
 | Operation | API | Required permission |
 | --- | --- | --- |
 | Create | `POST /api/projects` (`name`, `description`, `visibility`, `artifactBackend`, `members`) | A signed-in user. API tokens need the `admin` scope and must not be limited to a Project |
+| Read one | `GET /api/projects/<Project ID>`. An archived one answers 404 `project_archived` to its members and global administrators | Project Viewer |
 | Change | `PATCH /api/projects/<Project ID>` (`description`, `visibility`, `artifactBackend`) | Project Admin |
 | Archive | `POST /api/projects/<Project ID>/archive` | Project Admin |
 | List, including archived | `GET /api/admin/projects?includeArchived=true` | Global administrator |

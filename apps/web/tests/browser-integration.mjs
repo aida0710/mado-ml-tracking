@@ -119,7 +119,12 @@ try {
   await page.keyboard.insertText('import json\npairs = [(0, 1), (1, 3), (2, 5)]\nprint(json.dumps({"mean_y": sum(y for _, y in pairs) / len(pairs)}))\n');
   await fill('実行コマンド', '["python3","main.py"]');
   await fill('対応モデル系列', 'ui-linear');
-  await select('対応する実行種別', ['training', 'finetuning']);
+  for (const kind of ['学習', 'ファインチューニング'])
+    await page
+      .getByRole('dialog')
+      .getByRole('group', { name: /対応する実行種別/ })
+      .getByRole('checkbox', { name: kind, exact: true })
+      .check();
   await submit();
   await page.getByRole('button', { name: 'v1', exact: true }).waitFor();
   const code = (await json(`/projects/${projectId}/codes`)).items[0];

@@ -9,6 +9,10 @@ import { first, rows, type Connection } from '../db/database.js';
 import type { OpenAlertReference, OperationsAlertDetail } from '../domain/operationsAlerts.js';
 
 const ALERT_COLUMNS = 'id,project_id,kind,subject_id,opened_at,resolved_at,resolution,detail';
+// The same columns read through the alias `a`, for queries that join the Project.
+const ALERT_COLUMNS_OF_A = ALERT_COLUMNS.split(',')
+  .map((column) => `a.${column}`)
+  .join(',');
 
 /** A claimed or running Job with its heartbeat age measured on the database clock. */
 export interface ActiveJobHeartbeat {
@@ -98,6 +102,41 @@ export async function listProjectAlerts(
     WHERE project_id=$1 AND ($2::boolean OR resolved_at IS NULL)
     ORDER BY opened_at DESC,id DESC LIMIT $3`,
     [filter.projectId, filter.state === 'all', filter.limit],
+  );
+}
+
+/**
+ * Alerts of every live Project the user is a member of (a direct grant or a group binding),
+ * newest first, or of all of them when `seesEveryProject` (a global administrator's session).
+ * Public access does not count: every person may open a public Project, and its stopped workers
+ * would otherwise ring everyone's bell. `onlyProjectId` keeps a Project-limited token inside its
+ * Project.
+ */
+export async function listVisibleAlerts(
+  connection: Connection,
+  filter: {
+    userId: string;
+    seesEveryProject: boolean;
+    onlyProjectId: string | null;
+    state: OperationsAlertState;
+    limit: number;
+  },
+): Promise<OperationsAlert[]> {
+  return rows<OperationsAlert>(
+    connection,
+    `SELECT ${ALERT_COLUMNS_OF_A} FROM operations_alerts a
+    JOIN projects p ON p.id=a.project_id AND p.archived_at IS NULL
+    WHERE ($1 OR EXISTS (SELECT 1 FROM project_membership_roles m
+      WHERE m.project_id=a.project_id AND m.user_id=$2))
+    AND ($3::uuid IS NULL OR a.project_id=$3) AND ($4::boolean OR a.resolved_at IS NULL)
+    ORDER BY a.opened_at DESC,a.id DESC LIMIT $5`,
+    [
+      filter.seesEveryProject,
+      filter.userId,
+      filter.onlyProjectId,
+      filter.state === 'all',
+      filter.limit,
+    ],
   );
 }
 

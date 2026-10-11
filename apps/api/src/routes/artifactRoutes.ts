@@ -2,7 +2,9 @@ import { Readable } from 'node:stream';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { uuidSchema } from '../domain/validation.js';
+import { ARTIFACT_REFERENCES_BATCH_LIMIT } from '@mmt/contracts';
 import type { ArtifactDeletionService } from '../services/artifactDeletionService.js';
+import type { ArtifactReferenceService } from '../services/artifactReferenceService.js';
 import type { ArtifactService } from '../services/artifactService.js';
 import type { ArtifactUsageService } from '../services/artifactUsageService.js';
 import { requestBodyStream } from '../http/requestBodyStream.js';
@@ -65,6 +67,15 @@ export const artifactTreeQuerySchema = z.object({
   prefix: z.string().max(MAX_PREFIX_LENGTH).default(''),
 });
 
+// artifactIds is one comma-separated value so a catalog page asks for all its rows in one URL.
+export const artifactReferencesQuerySchema = z.object({
+  artifactIds: z
+    .string()
+    .optional()
+    .transform((value) => [...new Set(value ? value.split(',') : [])])
+    .pipe(z.array(uuidSchema).max(ARTIFACT_REFERENCES_BATCH_LIMIT)),
+});
+
 function declaredContentLength(context: ApiContext): number | undefined {
   const header = context.req.header('Content-Length');
   return header && /^\d+$/.test(header) ? Number(header) : undefined;
@@ -80,7 +91,11 @@ function setResponseHeaders(context: ApiContext, headers: Record<string, string>
 
 export function artifactRoutes(
   artifacts: ArtifactService,
-  lifecycle: { deletions: ArtifactDeletionService; usage: ArtifactUsageService },
+  lifecycle: {
+    deletions: ArtifactDeletionService;
+    usage: ArtifactUsageService;
+    references: ArtifactReferenceService;
+  },
 ): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   const upload = async (context: ApiContext, runId?: string) => {
@@ -142,6 +157,14 @@ export function artifactRoutes(
         requestMetadata(context),
       ),
     ),
+  );
+  routes.get('/:p/artifact-references', async (context) =>
+    context.json({
+      items: await lifecycle.references.list(principal(context), {
+        projectId: uuidParam(context, 'p'),
+        artifactIds: parse(artifactReferencesQuerySchema, context.req.query()).artifactIds,
+      }),
+    }),
   );
   routes.get('/:p/artifact-usage', async (context) =>
     context.json(await lifecycle.usage.usage(principal(context), uuidParam(context, 'p'))),

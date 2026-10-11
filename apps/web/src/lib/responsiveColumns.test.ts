@@ -32,4 +32,14 @@ describe('splitColumnsByPriority', () => {
     expect(keys(split.rowColumns)).toEqual(['name']);
     expect(keys(split.detailColumns)).toEqual(['created']);
   });
+
+  it('detail の列は、広い幅でも行には並べず、開いたときだけ出す', () => {
+    const withDetail = [...columns, column('criteria', 'detail')];
+    const wide = splitColumnsByPriority(withDetail, false);
+    expect(keys(wide.rowColumns)).toEqual(['name', 'created', 'status', 'owner']);
+    expect(keys(wide.detailColumns)).toEqual(['criteria']);
+    const narrow = splitColumnsByPriority(withDetail, true);
+    expect(keys(narrow.rowColumns)).toEqual(['name', 'status']);
+    expect(keys(narrow.detailColumns)).toEqual(['created', 'owner', 'criteria']);
+  });
 });

@@ -5,6 +5,7 @@ import { ErrorNotice } from '../components/Feedback';
 import { ProjectRoleSelect } from '../components/ProjectRoleSelect';
 import { UserPicker } from '../components/UserPicker';
 import { useMutation } from '../hooks/useMutation';
+import { useProject } from '../hooks/useProject';
 import { DEFAULT_MEMBER_GRANT_ROLE } from '../lib/projectMemberGrants';
 import { text } from '../i18n/catalog';
 import { projectAccessTextTemplates } from '../i18n/projectAccess';
@@ -49,6 +50,7 @@ export function MemberDialog({
       ),
     [existingMembers],
   );
+  const { project } = useProject();
   const [showUserRequired, setShowUserRequired] = useState(false);
   const mutation = useMutation();
   return (
@@ -94,6 +96,11 @@ export function MemberDialog({
             />
           )}
           <ProjectRoleSelect label={text.directRole} value={role} onChange={setRole} />
+          {project.visibility === 'public' && role === 'viewer' && (
+            <p className="notice warning" role="status">
+              {text.memberPublicViewerHint}
+            </p>
+          )}
           <p className="muted">{text.directRoleHint}</p>
         </fieldset>
         <ErrorNotice message={showUserRequired ? text.userSearchRequired : mutation.error} />

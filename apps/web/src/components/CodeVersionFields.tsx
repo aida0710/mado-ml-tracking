@@ -32,6 +32,12 @@ export function CodeVersionFields({
     value: artifact.id,
     label: `${artifact.path} · ${artifact.id}`,
   }));
+  const artifactSearchField: FormField = {
+    name: 'artifactSearch',
+    label: text.artifactSearch,
+    placeholder: text.artifactSearchPlaceholder,
+    maxLength: ARTIFACT_SEARCH_MAX_LENGTH,
+  };
   const runtimeFields: FormField[] = [
     { name: 'version', label: text.version, required: true },
     {
@@ -48,13 +54,7 @@ export function CodeVersionFields({
       placeholder: text.dockerImagePlaceholder,
       visible: () => runtimeKind === 'docker',
     },
-    {
-      name: 'artifactSearch',
-      label: text.artifactSearch,
-      placeholder: text.artifactSearchPlaceholder,
-      maxLength: ARTIFACT_SEARCH_MAX_LENGTH,
-      visible: () => isSif || sourceKind === 'artifact',
-    },
+    { ...artifactSearchField, visible: () => isSif },
     {
       name: 'sifArtifactId',
       label: text.sifArtifact,
@@ -98,6 +98,8 @@ export function CodeVersionFields({
       required: true,
       visible: () => sourceKind === 'inline' && !workspaceEnabled,
     },
+    // One search box serves both Artifact lists; it sits right above the first one shown.
+    { ...artifactSearchField, visible: () => sourceKind === 'artifact' && !isSif },
     {
       name: 'sourceArtifactId',
       label: text.artifactId,
@@ -127,7 +129,7 @@ export function CodeVersionFields({
     {
       name: 'taskTypes',
       label: text.taskTypes,
-      type: 'multiselect',
+      type: 'checkboxes',
       required: true,
       options: RUN_KINDS.map((kind) => ({ value: kind, label: text[kind] })),
     },

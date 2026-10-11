@@ -10,6 +10,7 @@ import { PageHeader } from '../components/PageHeader';
 import { Empty, Resource } from '../components/Feedback';
 import { DetailsList, JsonDetails } from '../components/JsonDetails';
 import { SweepSummary } from '../components/sweeps/SweepSummary';
+import { SweepWorkerNotice } from '../components/sweeps/SweepWorkerNotice';
 import { SweepProgressChart } from '../components/sweeps/SweepProgressChart';
 import { SweepTrialsTable } from '../components/sweeps/SweepTrialsTable';
 import { MetricsChart } from '../components/charts/MetricsChart';
@@ -33,6 +34,7 @@ export function SweepDetailPage() {
               eyebrow={<Link to={`/projects/${project.id}/sweeps`}>{text.sweeps}</Link>}
               actions={<button className="icon-button" aria-label={text.refresh} onClick={detail.reload}><RefreshCw size={17} /></button>}
             />
+            <SweepWorkerNotice projectId={project.id} sweep={sweep} />
             <SweepSummary projectId={project.id} sweep={sweep}
               canControl={canControlSweep(project.role, auth.user.id, sweep)} onChanged={detail.reload} />
             <div className="sweep-detail-grid">

@@ -1,6 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import type { ExperimentTask, Job, Run, Sweep, SweepPage, WorkerJob } from '@mmt/contracts';
+import type {
+  ExperimentTask,
+  Job,
+  JobListItem,
+  Run,
+  Sweep,
+  SweepPage,
+  WorkerJob,
+} from '@mmt/contracts';
 import {
   createHarness,
   entity,
@@ -60,6 +68,15 @@ describe.skipIf(!testDatabaseUrl)('Sweep（独立PostgreSQL）', () => {
       { batch: 16, lr: 0.1 },
       { batch: 16, lr: 0.01 },
     ]);
+    // The Jobs list names the Sweep and the trial each Job runs.
+    const listedJobs = await entity<{ items: JobListItem[] }>(
+      await request(harness.app, `${fixture.basePath}/jobs`, { cookie: fixture.viewer.cookie }),
+      200,
+    );
+    expect(listedJobs.items.find((job) => job.id === trials[1]!.jobId)).toMatchObject({
+      sweepTrial: { sweepId: sweep.id, sweepName: 'grid', trialIndex: 1 },
+      automationRule: null,
+    });
     const firstRun = await runOf(fixture, trials[0]!.runId);
     expect(firstRun).toMatchObject({
       name: 'grid-0',

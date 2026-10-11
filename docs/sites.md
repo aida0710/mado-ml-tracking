@@ -101,7 +101,7 @@ job shellは保存のたびに新しいバージョンになり、古いバー�
 
 ## 管理者: launcherを用意する
 
-1. 「全体管理」→「ランチャー」（`/settings/launchers`）で登録します。tokenは一度だけ表示されるので、launcherのホストのtokenファイル（mode 600）にすぐ写します。
+1. 「全体管理」→「ランチャー」（`/settings/launchers`）で登録します。tokenは一度だけ表示されるので、launcherのホストのtokenファイル（mode 600）にすぐ写します。同じダイアログに、この画面のURLを入れた`launcher.toml`の例と、launcherを入れて起動するコマンド（`mado-tracking-launcher --config <path>`）が出ます。
 2. launcherを`docker compose --profile launcher up -d launcher`で動かします。起動設定はAPIのURL・tokenファイル・状態の置き場だけです（[deploy/sites](../deploy/sites/README.md)）。担当のコンピュータの設定・job shell・鍵の依頼は、巡回のたびにAPIから読みます。設定を変えても再起動は要りません。
 3. 計算ノードがLANの外にあるときは、[deploy/edge](../deploy/edge/README.md)のnginx設定で、Job tokenの要求と署名付きwebhookだけを通すhostnameを用意し、コンピュータの「runnerから見たAPIのURL」に書きます。
 4. 状態の置き場（launcherの鍵を含む）はvolumeに残します。消すと鍵を作り直すことになり、公開鍵を登録し直します。tokenが漏れたら「tokenの作り直し」で古いtokenを止めます。

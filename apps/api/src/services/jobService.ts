@@ -1,11 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import {
   JOB_SUBMISSION_PHASES,
+  MAX_JOB_ATTEMPTS,
   type ComputeTarget,
   type ExecutionRuntime,
   type Job,
   type JobListItem,
   type Run,
+  type TaskExecution,
   type WorkerJob,
 } from '@mmt/contracts';
 import type { Principal } from '../auth/principal.js';
@@ -21,7 +23,8 @@ import {
 import { validateCodeArtifacts } from '../repositories/runtimeArtifactRepository.js';
 import { isTerminalStatus } from '../domain/runTransitions.js';
 import { assertControlsJob } from '../domain/jobControl.js';
-import type { JobCreate } from '../domain/validation.js';
+import type { JobCreate, JobLaunch } from '../domain/validation.js';
+import { assertNoReservedRunTags } from '../domain/reservedRunTags.js';
 import { initialJobPhase, validateSiteJobOptions } from '../domain/siteJobs.js';
 import {
   findCodeVersion,
@@ -32,7 +35,7 @@ import {
 import { findJob, jobColumns } from '../repositories/jobRepository.js';
 import { shareLiveProject } from '../repositories/projectRepository.js';
 import { findExecutionForRun } from '../repositories/automationExecutionLookup.js';
-import { requireProject } from './accessService.js';
+import { requireProject, requireScope } from './accessService.js';
 import { JobTokenService } from './jobTokenService.js';
 import { assertTargetReadyForJobs } from './siteReadiness.js';
 import { NO_IMAGE_PLATFORM_CHECK, type ImagePlatformChecker } from './imagePlatformChecker.js';
@@ -70,9 +73,14 @@ export interface JobPlacement {
   idempotencyKey?: string | null;
 }
 
+/**
+ * maxAttempts bounds the automatic retries only (their callers check it); a person may retry a
+ * Job past it, as the hooks and automation rules promise. The chain stays bounded so the lookup
+ * that follows retries back to their automation execution ends.
+ */
 function assertRetryable(job: Job): void {
   if (!isTerminalStatus(job.status)) conflict('実行中または状態未確認のJobは再実行できません');
-  if (job.attempt >= job.maxAttempts) conflict('Jobの最大試行回数に達しました');
+  if (job.attempt >= MAX_JOB_ATTEMPTS) conflict(`Jobの再実行は${MAX_JOB_ATTEMPTS}回目までです`);
 }
 
 /**
@@ -111,19 +119,40 @@ export class JobService {
     this.imagePlatforms = options.imagePlatforms ?? NO_IMAGE_PLATFORM_CHECK;
   }
 
-  async list(principal: Principal, projectId: string): Promise<JobListItem[]> {
+  /** The Project's Jobs, newest first; with `runId` only that Run's. */
+  async list(
+    principal: Principal,
+    projectId: string,
+    filter: { runId?: string } = {},
+  ): Promise<JobListItem[]> {
     await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
-    // Every Job has a Run of the same Project; the Task is optional.
+    // Every Job has a Run of the same Project; the Task is optional. A Sweep trial and an
+    // automation execution name the Job they started, so a person's retry of one has no origin.
     return rows(
       this.database,
       `SELECT ${jobColumns('j')},r.name AS run_name,r.kind AS run_kind,r.task_id,t.name AS task_name,
         COALESCE(r.tags->>$2='true',false) AS sweep_early_stopped,
-        r.created_by,u.display_name AS created_by_name
+        r.created_by,u.display_name AS created_by_name,
+        (r.resume_checkpoint_id IS NOT NULL
+          OR EXISTS(SELECT 1 FROM run_checkpoints c WHERE c.run_id=r.id AND c.project_id=r.project_id))
+          AS has_resume_checkpoint,
+        CASE WHEN s.id IS NULL THEN NULL ELSE
+          jsonb_build_object('sweepId',s.id,'sweepName',s.name,'trialIndex',st.trial_index) END
+          AS sweep_trial,
+        CASE WHEN rule.id IS NULL THEN NULL ELSE
+          jsonb_build_object('ruleId',rule.id,'ruleName',rule.name) END AS automation_rule
       FROM jobs j JOIN runs r ON r.id=j.run_id
       LEFT JOIN experiment_tasks t ON t.id=r.task_id
       LEFT JOIN users u ON u.id=r.created_by
-      WHERE j.project_id=$1 ORDER BY j.created_at DESC`,
-      [projectId, SWEEP_EARLY_STOPPED_TAG],
+      LEFT JOIN sweep_trials st ON st.job_id=j.id AND st.project_id=j.project_id
+      LEFT JOIN sweeps s ON s.id=st.sweep_id AND s.project_id=st.project_id
+      LEFT JOIN LATERAL (
+        SELECT ar.id,ar.name FROM model_automation_executions e
+        JOIN model_automation_rules ar ON ar.id=e.rule_id AND ar.project_id=e.project_id
+        WHERE e.job_id=j.id AND e.project_id=j.project_id LIMIT 1
+      ) rule ON true
+      WHERE j.project_id=$1 AND ($3::uuid IS NULL OR j.run_id=$3) ORDER BY j.created_at DESC`,
+      [projectId, SWEEP_EARLY_STOPPED_TAG, filter.runId ?? null],
     );
   }
 
@@ -136,6 +165,40 @@ export class JobService {
       });
       const run = await findRun(connection, { projectId, id: input.runId, lock: true });
       return this.insertJob(connection, { run, input, attempt: 1 });
+    });
+  }
+
+  /**
+   * Creates a Run and its Job together, as a Task launch does: when the Job is refused (a computer
+   * that takes no Jobs, say), the Run is not kept either, so no queued Run waits for a Job that
+   * never comes. Tokens need runs:write and jobs:write.
+   */
+  async launch(principal: Principal, projectId: string, input: JobLaunch): Promise<TaskExecution> {
+    assertNoReservedRunTags(input.run.tags);
+    return transaction(this.database, async (connection) => {
+      await requireProject(connection, principal, {
+        projectId,
+        role: 'editor',
+        scope: 'runs:write',
+      });
+      requireScope(principal, 'jobs:write');
+      const insertedRun = await this.runs.insertRun(connection, {
+        projectId,
+        createdBy: principal.user.id,
+        input: input.run,
+      });
+      const run = input.run.resumeCheckpointId
+        ? await pinResumeCheckpoint(connection, {
+            run: insertedRun,
+            checkpointId: input.run.resumeCheckpointId,
+          })
+        : insertedRun;
+      const job = await this.insertJob(connection, {
+        run,
+        input: { ...input.job, runId: run.id },
+        attempt: 1,
+      });
+      return { run, job };
     });
   }
 
@@ -379,8 +442,9 @@ export class JobService {
 
   /**
    * Creates the next attempt of a finished Job as a new Run and Job, linked by retry_of_job_id.
-   * Shared by the retry API and automatic retries; authorization, the duplicate check, and the
-   * checkpoint choice are the caller's. The unique retry_of_job_id still refuses a second retry.
+   * Shared by the retry API and automatic retries; authorization, the duplicate check, the
+   * checkpoint choice and, for automatic retries, maxAttempts are the caller's. The unique
+   * retry_of_job_id still refuses a second retry.
    */
   async insertRetry(
     connection: Connection,

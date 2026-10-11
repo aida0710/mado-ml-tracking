@@ -38,6 +38,19 @@ describe('Run検索の入力', () => {
     expect(findRunFilterSyntaxError('metrics.loss < 1;')).not.toBeNull();
   });
 
+  it('値の種類に合わない比較は、送る前に直した式を示す', () => {
+    const paramsComparison = findRunFilterSyntaxError('params.learning_rate > 0.00005');
+    expect(paramsComparison).toContain('params.learning_rateは文字列として比べる');
+    expect(paramsComparison).toContain("params.learning_rate = '0.00005'");
+    expect(findRunFilterSyntaxError('metrics.train.loss < 0.2 and params.batch_size = 16')).toContain(
+      "params.batch_size = '16'",
+    );
+    expect(findRunFilterSyntaxError("metrics.loss < '0.2'")).toContain('metrics.lossの値は数値で書きます');
+    expect(findRunFilterSyntaxError("Metrics.loss LIKE '0.%'")).toContain('数値として比べる');
+    // Attributes differ by name (start_time is a number, status a string), so the API decides.
+    expect(findRunFilterSyntaxError('attributes.start_time > 1700000000000')).toBeNull();
+  });
+
   it('並び順をAPIのorderByに変換し、記号を含むmetric名を引用する', () => {
     expect(runSortOrderBy('newest')).toEqual([]);
     expect(runSortOrderBy('name')).toEqual(['attributes.run_name ASC']);

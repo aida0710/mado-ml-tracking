@@ -40,23 +40,37 @@ An expired token returns 401. Issue a new token and replace the old one before i
 ## Issue a personal API token
 
 1. Open **アカウント** (Account) from the user menu and click **API tokenを発行** (Issue API token) at the top right of **自分のAPI token**. Choose the Project and click **次へ** (Next). You can also issue a token from the same button in **プロジェクト設定** (Project settings).
-2. Enter a name, scopes, and expiry, and click **保存** (Save).
+2. Enter a name, choose the purpose and expiry, and click **保存** (Save). Choosing a purpose checks the scopes it needs. Changing a scope's checkbox moves the purpose to **scopeを自分で選ぶ** (Choose scopes yourself).
 
 | Field | Example |
 | --- | --- |
 | Name | `laptop-notebook` (a name that says where it is used) |
-| Scope | `read` and `runs:write` to record Runs; add `artifacts:write` to save Artifacts |
+| Purpose | **SDK・MLflow 3から記録する** (Record from the SDK and MLflow 3) to record Runs (the default: `read`, `runs:write`, `registry:write`, `artifacts:write`) |
 | Expiry | `90日` (90 days) |
 
-3. Click **コピー** (Copy) and store the token somewhere safe. It is never shown again after you close the dialog.
+The purposes on offer are below. A purpose that needs a scope above the owner's role is not shown.
 
-Tokens issued on the screen are limited to that Project. For MLflow 3, you can also use **このProject用のAPI tokenを発行** (Issue an API token for this Project) in the **MLflow 3から接続** (Connect from MLflow 3) card; it shows example environment variables after issuing.
+| Purpose | Scopes |
+| --- | --- |
+| SDK・MLflow 3から記録する (Record from the SDK and MLflow 3) | `read`, `runs:write`, `registry:write`, `artifacts:write` |
+| コマンドからJobを投入する (Submit Jobs from the command line) | `read`, `jobs:write` |
+| workerとしてJobを実行する (Run Jobs as a worker; Service Accounts only) | `read`, `worker:execute`, `artifacts:write` |
+| 読み取りだけ (Read only) | `read` |
+| scopeを自分で選ぶ (Choose scopes yourself) | The checked ones |
 
-In a terminal, type the token into an environment variable instead of writing it in command arguments or files:
+Besides recording, a token for **SDK・MLflow 3から記録する** can delete dataset versions that nothing uses, and a Project admin's token can delete Artifacts as well (on the same conditions as on the screen).
+
+3. Click **tokenをコピー** (Copy token) and store the token somewhere safe. It is never shown again after you close the dialog.
+
+Tokens issued on the screen are limited to that Project. **このProject用のAPI tokenを発行** (Issue an API token for this Project) in **SDK・MLflow 3から接続** (Connect from the SDK and MLflow 3), on the Project settings or under **SDKで記録** (Record with the SDK) on the experiment page, opens the same dialog.
+
+The **設定例** (Settings example) in the dialog holds the environment variables for the Python SDK and MLflow 3 together, without the token. Copy it with **設定例をコピー** (Copy settings example) and paste it into a terminal; it asks for `API token:`, where you paste the token you copied.
+
+In a terminal, type the token into an environment variable instead of writing it in command arguments or files. The example works in both bash and zsh (the macOS default):
 
 ```sh
 export MMT_API_URL=https://tracking.example.com
-read -rsp 'API token: ' MMT_API_TOKEN
+printf 'API token: '; read -r -s MMT_API_TOKEN; echo
 export MMT_API_TOKEN
 ```
 
@@ -89,7 +103,7 @@ A Project Admin does this in the browser (API tokens cannot create Service Accou
 | Description | `Worker on GPU server 1` |
 | Role | `Admin` for a worker or an automation owner, `Viewer` for read-only CI |
 
-3. Click **API tokenを発行** (Issue API token) on the new row, choose a name, scopes, and expiry, and save. Note the token that is shown.
+3. Click **API tokenを発行** (Issue API token) on the new row, choose a name, purpose, and expiry, and save. For a Service Account with the Admin role, the purpose starts at **workerとしてJobを実行する** (Run Jobs as a worker). Note the token that is shown.
 
 ![Issuing a token for a Service Account](/images/admin-token-dialog.png)
 
@@ -143,7 +157,7 @@ For tools that only accept a username and password, the MLflow-compatible API (`
 
 ```sh
 export MLFLOW_TRACKING_USERNAME=token
-read -rsp 'API token: ' MLFLOW_TRACKING_PASSWORD
+printf 'API token: '; read -r -s MLFLOW_TRACKING_PASSWORD; echo
 export MLFLOW_TRACKING_PASSWORD
 ```
 

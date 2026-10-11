@@ -6,9 +6,10 @@ import type {
   JobRetryRequest,
   Run,
   RunCheckpointPage,
+  TaskExecution,
   WorkerPresence,
 } from '@mmt/contracts';
-import type { CreateJob, CreateTarget, UpdateTarget } from './inputs';
+import type { CreateJob, CreateTarget, LaunchJob, UpdateTarget } from './inputs';
 import {
   encodeId,
   invalidResponseError,
@@ -59,8 +60,14 @@ export const executionApi = {
   updateTarget: (id: string, body: UpdateTarget) =>
     request<ComputeTargetDetails>(`/targets/${encodeId(id)}`, jsonRequest('PATCH', body)),
   jobs: (projectId: string, signal?: AbortSignal) => requestItems<JobListItem>(jobPath(projectId), signal),
+  /** One Run's Jobs, newest first: a re-enqueued Run has more than one. */
+  runJobs: (projectId: string, runId: string, signal?: AbortSignal) =>
+    requestItems<JobListItem>(`${jobPath(projectId)}?${new URLSearchParams({ runId })}`, signal),
   createJob: (projectId: string, body: CreateJob) =>
     request<Job>(jobPath(projectId), jsonRequest('POST', body)),
+  /** A new Run and its Job at once; a refused Job leaves no Run behind. */
+  launchJob: (projectId: string, body: LaunchJob) =>
+    request<TaskExecution>(`${jobPath(projectId)}/launch`, jsonRequest('POST', body)),
   cancelJob: (projectId: string, id: string) =>
     request<unknown>(`${jobPath(projectId, id)}/cancel`, { method: 'POST' }),
   /** An empty request starts the new Run from scratch; see JobRetryRequest for a checkpoint. */
@@ -69,4 +76,6 @@ export const executionApi = {
   listRunCheckpoints,
   workers: (projectId: string, signal?: AbortSignal) =>
     requestItems<WorkerPresence>(`${projectPath(projectId)}/workers`, signal),
+  /** Every Project's workers; global administrators only (GET /workers). */
+  allWorkers: (signal?: AbortSignal) => requestItems<WorkerPresence>('/workers', signal),
 };

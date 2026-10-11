@@ -63,6 +63,7 @@ export function PromotionPolicyPanel({ initialModelId }: { initialModelId: strin
           </button>
         </div>
       </div>
+      {!canManage && <p className="muted">{text.promotionPoliciesAdminOnly}</p>}
       <ErrorNotice message={promotion.error} />
       <ErrorNotice message={rules.error} retry={rules.reload} />
       <ErrorNotice message={catalog.error} retry={catalog.reload} />
@@ -73,7 +74,6 @@ export function PromotionPolicyPanel({ initialModelId }: { initialModelId: strin
             policies={policies}
             models={catalog.value?.models ?? []}
             rules={rules.value ?? []}
-            serviceAccounts={serviceAccounts.value ?? []}
             selectedPolicyId={policyId ?? ''}
             canManage={canManage}
             pending={promotion.pending}

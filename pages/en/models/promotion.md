@@ -68,7 +68,9 @@ A promotion policy says "decide versions of this model using results of this eva
 | **基準aliasが未設定のとき** (When the baseline alias is not set) | Pass (first release) or fail |
 | **合格したら対象aliasを自動で切り替える** (Move the target alias on pass) | Off by default |
 
-3. Check that the new policy is **有効** (Enabled).
+3. Check that the new policy is **有効** (Enabled). Open a row of the list to read its criteria. **実行ユーザー** (Run-as user) names the user who decides, as a person or a Service Account.
+
+If the model's evaluation rule is disabled, the form says so; enable it in **自動実行ルール** (Automation rules) to choose it.
 
 Like rules, policies can only be enabled or disabled after creation. To change criteria, create a new policy and disable the old one. Past decisions stay readable with their original criteria.
 

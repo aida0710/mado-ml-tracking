@@ -5,6 +5,7 @@ export const shellText = {
   collapseNavigation: 'サイドバーをアイコンだけにする',
   expandNavigation: 'サイドバーを広げる',
   resizeNavigation: 'サイドバーの幅',
+  navigationSidebar: 'サイドバー',
   navigationGroupTracking: '記録',
   navigationGroupModels: 'モデル',
   navigationGroupData: 'データ',

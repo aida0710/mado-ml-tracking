@@ -1,10 +1,6 @@
-import type { TokenScope } from '@mmt/contracts';
 import { clientApiUrl } from './clientApiUrl';
 import { madoTrackingInstallLines } from './madoTrackingPackage';
 import { exportLine, joinLines, promptedSecretLines } from './shellSnippet';
-
-// `mado-tracking submit` claims one's waiting Jobs (jobs:write) and shows how many wait (read).
-export const SUBMIT_TOKEN_SCOPES: TokenScope[] = ['read', 'jobs:write'];
 
 // A login node keeps the command for the next submission, so it goes into the home directory and
 // onto PATH rather than into one project's .venv.

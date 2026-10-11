@@ -46,6 +46,7 @@ export function ServiceAccountDialog({
           type: 'select',
           defaultValue: serviceAccount?.role ?? 'editor',
           options: PROJECT_ROLES.map((role) => ({ value: role, label: text[role] })),
+          hint: text.serviceAccountRoleHint,
         },
       ]}
       onSubmit={(values) =>

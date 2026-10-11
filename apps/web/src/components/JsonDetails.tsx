@@ -2,7 +2,12 @@ import type { ReactNode } from 'react';
 import { formatValue } from '../lib/format';
 
 export function JsonDetails({ value }: { value: unknown }) {
-  return <pre className="json-view">{JSON.stringify(value, null, 2)}</pre>;
+  // tabIndex: a long value scrolls, which the keyboard reaches only with focus.
+  return (
+    <pre className="json-view" tabIndex={0}>
+      {JSON.stringify(value, null, 2)}
+    </pre>
+  );
 }
 export function DetailsList({ entries }: { entries: Array<[string, ReactNode]> }) {
   return (

@@ -37,7 +37,7 @@ export function TopBar({ projectId, navigation }: { projectId?: string; navigati
           <ProductLogo isNameVisuallyHidden={isAppNameVisuallyHidden} />
         </Link>
         <div className="topbar-actions">
-          {projectId && <OperationsAlertBadge projectId={projectId} />}
+          <OperationsAlertBadge openProjectId={projectId} />
           <button
             className="icon-button"
             onClick={theme.toggle}

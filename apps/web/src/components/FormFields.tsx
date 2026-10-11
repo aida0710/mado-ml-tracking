@@ -1,7 +1,18 @@
 import { useId } from 'react';
 import type { FormField, FormValues } from '../types/form';
-import { getFieldValue, getSelectedValues } from '../lib/formValues';
+import { getFieldValue, getSelectedValues, toggleValue } from '../lib/formValues';
 import { SuggestionInput } from './SuggestionInput';
+import { CheckboxList } from './CheckboxList';
+import { text } from '../i18n/catalog';
+
+function RequiredMark() {
+  return (
+    <span className="required" aria-hidden="true">
+      {' '}
+      *
+    </span>
+  );
+}
 
 export function FormFields({
   fields,
@@ -22,6 +33,26 @@ export function FormFields({
           const hintId = field.hint ? `${id}-hint` : undefined;
           const value = getFieldValue(values, field.name);
           const change = (next: string | string[]) => onChange({ ...values, [field.name]: next });
+          if (field.type === 'checkboxes')
+            return (
+              <CheckboxList
+                key={field.name}
+                legend={
+                  <>
+                    {field.label}
+                    {field.required && <RequiredMark />}
+                  </>
+                }
+                options={field.options ?? []}
+                selected={getSelectedValues(values, field.name)}
+                onToggle={(option) =>
+                  change(toggleValue(getSelectedValues(values, field.name), option))
+                }
+                empty={field.emptyText}
+                hint={field.hint}
+                filterLabel={text.filter}
+              />
+            );
           if (field.type === 'checkbox')
             return (
               <label className="checkbox-field" key={field.name}>
@@ -37,12 +68,7 @@ export function FormFields({
             <div className="field" key={field.name}>
               <label htmlFor={id}>
                 {field.label}
-                {field.required && (
-                  <span className="required" aria-hidden="true">
-                    {' '}
-                    *
-                  </span>
-                )}
+                {field.required && <RequiredMark />}
               </label>
               {field.type === 'textarea' ? (
                 <textarea

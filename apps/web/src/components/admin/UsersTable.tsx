@@ -1,8 +1,10 @@
+import { Link } from 'react-router-dom';
 import type { AdminUser } from '@mmt/contracts';
 import { ResponsiveTable } from '../ResponsiveTable';
 import { formatDate } from '../../lib/format';
 import { isSsoUser, userAuthSourceLabels } from '../../lib/adminUserDisplay';
-import { text } from '../../i18n/catalog';
+import { PROJECT_SETTINGS_SECTION_IDS } from '../../lib/projectSettingsSections';
+import { text, textTemplates } from '../../i18n/catalog';
 
 export type UserAction = 'makeAdmin' | 'removeAdmin' | 'resetPassword' | 'disable' | 'enable';
 
@@ -24,13 +26,28 @@ const actionLabels: Record<UserAction, string> = {
   enable: text.userEnable,
 };
 
+// What the API refuses for the last active global administrator (409).
+const LAST_ADMIN_LOCKED_ACTIONS: readonly UserAction[] = ['disable', 'removeAdmin'];
+
+/**
+ * Users with their sign-in methods, state and actions. The signed-in administrator's own row says
+ * so, the last active global administrator's disabling and demoting are locked with the reason,
+ * and a Service Account names the Project it works for.
+ */
 export function UsersTable({
   users,
+  currentUserId,
+  lastActiveAdminId,
   onAction,
 }: {
   users: AdminUser[];
+  currentUserId: string;
+  /** Null when there are several, or while that is unknown. */
+  lastActiveAdminId: string | null;
   onAction: (user: AdminUser, action: UserAction) => void;
 }) {
+  const isLocked = (user: AdminUser, action: UserAction) =>
+    user.id === lastActiveAdminId && LAST_ADMIN_LOCKED_ACTIONS.includes(action);
   return (
     <ResponsiveTable
       rows={users}
@@ -43,9 +60,14 @@ export function UsersTable({
           header: text.displayName,
           render: (user) => (
             <div className="user-name">
-              <strong>{user.displayName}</strong>
+              <strong>
+                {user.displayName}
+                {user.id === currentUserId && (
+                  <span className="user-self-tag">{text.userIsYou}</span>
+                )}
+              </strong>
               {user.username && <span className="muted mono">{user.username}</span>}
-              {user.kind === 'service' && <span className="muted">{text.userServiceAccount}</span>}
+              {user.kind === 'service' && <ServiceAccountOrigin user={user} />}
             </div>
           ),
         },
@@ -99,15 +121,32 @@ export function UsersTable({
                   key={action}
                   type="button"
                   className={action === 'disable' ? 'button small danger' : 'button small'}
+                  disabled={isLocked(user, action)}
+                  title={isLocked(user, action) ? text.userLastAdminLocked : undefined}
                   onClick={() => onAction(user, action)}
                 >
                   {actionLabels[action]}
                 </button>
               ))}
+              {user.id === lastActiveAdminId && (
+                <span className="muted user-locked-reason">{text.userLastAdminLocked}</span>
+              )}
             </div>
           ),
         },
       ]}
     />
+  );
+}
+
+/** Which Project a Service Account works for, leading to that Project's Service Accounts. */
+function ServiceAccountOrigin({ user }: { user: AdminUser }) {
+  const project = user.serviceAccountProject;
+  if (!project) return <span className="muted">{text.userServiceAccount}</span>;
+  const settingsPath = `/projects/${encodeURIComponent(project.id)}/settings`;
+  return (
+    <Link className="muted" to={`${settingsPath}#${PROJECT_SETTINGS_SECTION_IDS.serviceAccounts}`}>
+      {textTemplates.userServiceAccountProject(project.name)}
+    </Link>
   );
 }

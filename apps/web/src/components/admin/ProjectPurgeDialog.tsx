@@ -3,6 +3,7 @@ import type { AdminProject } from '@mmt/contracts';
 import { adminProjectsApi } from '../../api/adminProjects';
 import { useMutation } from '../../hooks/useMutation';
 import { explainProjectLifecycleConflict } from '../../lib/projectLifecycleConflict';
+import { formatDate } from '../../lib/format';
 import { Dialog } from '../Dialog';
 import { ErrorNotice } from '../Feedback';
 import { text, textTemplates } from '../../i18n/catalog';
@@ -46,6 +47,13 @@ export function ProjectPurgeDialog({
         }}
       >
         <p>{textTemplates.projectPurgeConfirm(project.name)}</p>
+        {/* The name alone cannot tell two Projects of the same name apart. */}
+        <p className="muted">
+          {textTemplates.projectPurgeIdentity({
+            createdAt: formatDate(project.createdAt),
+            archivedAt: formatDate(project.archivedAt),
+          })}
+        </p>
         <div className="field">
           <label htmlFor={nameInputId}>{text.projectPurgeNameLabel}</label>
           <input

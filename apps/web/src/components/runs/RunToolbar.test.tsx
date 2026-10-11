@@ -5,10 +5,14 @@ import { RunToolbar } from './RunToolbar';
 
 const noop = () => {};
 
-function renderToolbar(kinds: RunKind[]) {
+function renderToolbar(
+  kinds: RunKind[],
+  search: { searchText?: string; filterRejection?: string | null } = {},
+) {
   return renderToStaticMarkup(
     <RunToolbar
-      searchText=""
+      searchText={search.searchText ?? ''}
+      filterRejection={search.filterRejection ?? null}
       status=""
       kinds={kinds}
       sort="newest"
@@ -35,5 +39,23 @@ describe('Run一覧の実行種別の絞り込み', () => {
     const html = renderToolbar(['inference', 'evaluation']);
     expect(html).toMatch(/<option value="inference,evaluation" selected="">[^<]*<\/option>/);
     expect(html).toContain('<option value="training">');
+  });
+});
+
+describe('検索式の失敗の案内', () => {
+  it('APIが断った検索式の理由を、再試行のボタンなしで検索欄の下に出す', () => {
+    const html = renderToolbar([], {
+      searchText: 'params.learning_rate > 0.1',
+      filterRejection: 'params.learning_rateは文字列として比べるので…',
+    });
+    expect(html).toContain('params.learning_rateは文字列として比べるので…');
+    expect(html).toContain('aria-invalid="true"');
+    expect(html).not.toContain('再試行');
+  });
+
+  it('metrics. を付け忘れた比較を名前で探したときは、直した式を示す', () => {
+    const html = renderToolbar([], { searchText: 'loss < 0.2' });
+    expect(html).toContain('metrics.loss &lt; 0.2');
+    expect(html).toContain('この式で検索');
   });
 });

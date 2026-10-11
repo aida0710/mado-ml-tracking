@@ -41,6 +41,12 @@ export const adminText = {
   userDisableTitle: 'ユーザーを無効化',
   userEnableTitle: 'ユーザーを有効化',
   userNoMatches: '一致するユーザーはいません',
+  userIsYou: 'あなた',
+  userLastAdminLocked:
+    '最後の全体管理者なので、無効化も管理者を外すこともできません。先にほかの人を全体管理者にしてください。',
+  userServiceAccountOf: 'Project',
+  localLoginDisabledNotice:
+    '今のAPI serverの設定（AUTH_MODE）では、ローカルアカウントでログインできません。作成はできますが、ログインできるのはAUTH_MODEをlocalかhybridにしたときです。',
   initialPassword: '初回パスワード',
   initialPasswordHint: '12文字以上。初回ログインで変更を求めます。',
   generatePassword: '生成',
@@ -71,6 +77,11 @@ export const adminTextTemplates = {
     `「${name}」を有効化します。API tokenは再び使えますが、終了したsessionは戻りません。`,
   userMakeAdminConfirm: (name: string) => `「${name}」を全体管理者にします。`,
   userRemoveAdminConfirm: (name: string) => `「${name}」の全体管理者権限を外します。`,
+  userDisableSelfConfirm: (name: string) =>
+    `あなた自身（${name}）を無効化します。すぐにログアウトされ、このアカウントではログインもAPI tokenも使えなくなります。元に戻すには、ほかの全体管理者に有効化を依頼する必要があります。`,
+  userRemoveAdminSelfConfirm: (name: string) =>
+    `あなた自身（${name}）の全体管理者権限を外します。すぐに全体管理の画面を使えなくなり、戻すにはほかの全体管理者に依頼する必要があります。`,
+  userServiceAccountProject: (projectName: string) => `Service Account（${projectName}）`,
   userResetPasswordConfirm: (name: string) =>
     `「${name}」のパスワードを一時パスワードに置き換え、ログイン中のsessionを終了します。`,
   groupsSyncedAt: (date: string) => `最終同期 ${date}`,

@@ -20,6 +20,7 @@ import { describeMetricKeySource, suggestMetricKeys } from '../lib/metricKeyChoi
 import {
   PROMOTION_MISSING_BASELINE_CHOICES,
   isEvaluationRuleEligible,
+  missingEvaluationRuleReason,
 } from '../lib/promotionPolicyInput';
 import { promotionMissingBaselineLabels, promotionTextTemplates } from '../i18n/promotion';
 import { text } from '../i18n/catalog';
@@ -198,9 +199,11 @@ export function PromotionPolicyDialog({
             )}
           </LabeledField>
           <p className="muted">
-            {model && !eligibleRules.length
-              ? text.promotionEvaluationRulesEmpty
-              : text.promotionEvaluationRuleHint}
+            {!model || eligibleRules.length
+              ? text.promotionEvaluationRuleHint
+              : missingEvaluationRuleReason(rules, model) === 'disabled'
+                ? text.promotionEvaluationRulesDisabled
+                : text.promotionEvaluationRulesEmpty}
           </p>
           {selectedRule && <EvaluationConditions rule={selectedRule} catalog={catalog} />}
           <PromotionCriteriaFields

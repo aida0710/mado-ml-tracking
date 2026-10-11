@@ -63,6 +63,8 @@ describe('Compute targetの表示', () => {
     expect(targetChoiceLabel({ ...computeTarget, executor: 'local', host: '' })).toBe(
       'Container worker · workerのホスト上',
     );
+    // Someone who may not manage an ssh computer sees no host, and no dangling separator.
+    expect(targetChoiceLabel({ ...computeTarget, host: '' })).toBe('Container worker');
     expect(targetChoiceLabel(siteTarget)).toBe('Supercomputer · Site（手動投入）');
     expect(targetChoiceLabel({ ...siteTarget, submissionMode: 'automatic' })).toBe(
       'Supercomputer · Site（自動投入）',

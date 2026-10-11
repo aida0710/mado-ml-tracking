@@ -1,5 +1,5 @@
 import type { Run } from '@mmt/contracts';
-import { automationApi } from '../api/automation';
+import { AUTOMATION_EXECUTION_PAGE_MAX, automationApi } from '../api/automation';
 import { registryApi } from '../api/registry';
 import { trackingApi } from '../api/tracking';
 import { hasActiveExecution, hasActiveRun } from '../lib/automationActivity';
@@ -22,7 +22,12 @@ export function useModelVersionDetail(projectId: string, versionId: string) {
   );
   const executions = useQueryPolledWhileActive(
     `${projectId}:model-version:${versionId}:executions`,
-    (signal) => automationApi.versionExecutions(projectId, versionId, signal),
+    (signal) =>
+      automationApi.executionPage(
+        projectId,
+        { filter: { modelVersionId: versionId }, limit: AUTOMATION_EXECUTION_PAGE_MAX },
+        signal,
+      ),
     (page) => hasActiveExecution(page.items),
   );
   return { detail, sourceRun, rules, executions };

@@ -71,9 +71,19 @@ The audio viewer zooms the waveform, loops a range, and switches between mel and
 1. Select the Runs under **Experiments** and choose 比較 (Compare)
 2. Open the **Media** tab
 3. Pick an audio or other key in 比較するキー (Key to compare)
-4. Enter steps separated by commas in 比較するstep (Steps to compare), for example `0, 500, 1000`, and choose 表示 (Show). The 均等にN列 (N evenly spaced columns) button fills in up to 8 evenly spaced recorded steps. Leaving it empty, or choosing 各Runの最新step (Latest step of each Run), shows one column with each Run's last step
+4. If needed, tick the steps to show under 比較するstep (Steps to compare). Only recorded steps are listed, and a step that only some Runs recorded shows how many did, such as `1/2 Run`
 
-You get a grid with Runs as rows and steps as columns. Cells without a record show なし (none); they are not filled with a nearby step.
+The tab opens on the latest step that every Run recorded, in one column, so Runs of different lengths (for example 20 and 60 steps) start without empty cells.
+
+| Button | Steps shown |
+| --- | --- |
+| 全Runに共通する最新のstep (Latest step all Runs share) | Goes back to the opening state |
+| 各Runの最新step (Latest step of each Run) | Puts each Run's last step in one column; each cell shows its Run's step |
+| 均等にN列 (N evenly spaced columns) | Picks up to 8 evenly spaced recorded steps |
+
+When the Runs share no step, the tab opens like 各Runの最新step and says so under the checkboxes. With no step ticked, each Run's latest step is shown as well.
+
+You get a grid with Runs as rows and steps as columns. Cells without a record show なし (none); they are not filled with a nearby step. When none of the chosen Runs has step media, the tab says so. Compare Artifacts that inference Runs saved, such as audio files, on the **Artifacts** tab, which lines up files with the same path.
 
 - Select a cell to show it in full below the grid. Arrow keys move between cells
 - Only one audio plays at a time. Moving to another cell while playing continues from the same position, so you can compare the same passage

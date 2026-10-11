@@ -145,9 +145,10 @@ export function ParamScatterChart({
       {points.length === 0 ? (
         <Empty>{text.analysisScatterNoPoints}</Empty>
       ) : (
-        <div className="scatter-chart-canvas" style={{ height }} role="img" aria-label={`${labelOf(x)} × ${labelOf(y)}`}>
+        <div className="scatter-chart-canvas" style={{ height }}>
           <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart margin={{ top: 12, right: 24, bottom: 24, left: 12 }}>
+            {/* recharts' keyboard layer: one focus stop whose arrow keys walk the points in the tooltip. */}
+            <ScatterChart margin={{ top: 12, right: 24, bottom: 24, left: 12 }} title={`${labelOf(x)} × ${labelOf(y)}`}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis
                 type="number"

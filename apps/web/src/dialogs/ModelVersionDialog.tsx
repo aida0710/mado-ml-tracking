@@ -53,7 +53,7 @@ export function ModelVersionDialog({
     catalogOptions?.codes.filter((option) => defaultCodeIds.has(option.value)) ?? [];
   const missingCode =
     catalog && !defaultCodeOptions.length
-      ? explainMissingCodeCandidates({ codeVersions: catalog.codeVersions, family: model.family })
+      ? explainMissingCodeCandidates({ codeVersions: catalog.codeVersions, families: [model.family] })
       : null;
   const pastedWeightsUri = parseArtifactReference(draft.weightsUri);
   const title = `${model.name} · ${text.newVersion}`;

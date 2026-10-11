@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { bandPath, keepPlottablePoints, linePath, paddedDomain, xExtent } from './chartScale';
+import {
+  bandPath,
+  keepPlottablePoints,
+  linePath,
+  lonePointsPath,
+  paddedDomain,
+  xExtent,
+} from './chartScale';
 
 describe('図の軸の範囲', () => {
   it('y軸が対数なら0以下の値の点を除き、除いた件数を返す', () => {
@@ -76,9 +83,18 @@ describe('線と帯のpath', () => {
   const scales = { x: (value: number) => value * 10, y: (value: number) => 100 - value };
 
   it('置けない値で線を切り、欠けた所を直線でつながない', () => {
-    expect(linePath([0, 1, 2, 3], [1, Number.NaN, 2, 3], scales)).toBe(
-      'M0.0,99.0M20.0,98.0L30.0,97.0',
+    expect(linePath([0, 1, 2, 3, 4], [1, 2, Number.NaN, 3, 4], scales)).toBe(
+      'M0.0,99.0L10.0,98.0M30.0,97.0L40.0,96.0',
     );
+  });
+
+  it('1点だけの区間（1回だけ記録した値）は線にせず、塗りつぶす点として描く', () => {
+    const lonePoint = 'M-3.5,99.0a3.5,3.5 0 1,0 7,0a3.5,3.5 0 1,0 -7,0';
+    expect(linePath([0], [1], scales)).toBe('');
+    expect(lonePointsPath([0], [1], scales)).toBe(lonePoint);
+    expect(linePath([0, 1, 2, 3], [1, Number.NaN, 2, 3], scales)).toBe('M20.0,98.0L30.0,97.0');
+    expect(lonePointsPath([0, 1, 2, 3], [1, Number.NaN, 2, 3], scales)).toBe(lonePoint);
+    expect(lonePointsPath([0, 1], [Number.NaN, Number.NaN], scales)).toBe('');
   });
 
   it('帯は上端を進んで下端を戻る閉じた形で、帯の無い点で区切る', () => {

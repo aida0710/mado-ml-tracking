@@ -27,6 +27,9 @@ export function projectRoutes(
       201,
     ),
   );
+  routes.get('/:p', async (context) =>
+    context.json(await projects.get(principal(context), uuidParam(context, 'p'))),
+  );
   routes.patch('/:p', async (context) =>
     context.json(
       await projects.patch(

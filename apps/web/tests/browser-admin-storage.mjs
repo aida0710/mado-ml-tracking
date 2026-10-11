@@ -1,6 +1,6 @@
-// Browser check for 全体管理 → ストレージ (/settings/storage): create a backend, run its connection
-// test, change the default, and pick backends in the Project forms. The storage API is mocked here
-// until it is integrated.
+// Browser check for 全体管理 → ストレージ (/settings/storage): create a backend (which tests its
+// connection at once), run its connection test, change the default (refused while the test fails),
+// and pick backends in the Project forms. The storage API is mocked here until it is integrated.
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -36,6 +36,9 @@ const storage = {
     },
   ],
   requests: [],
+  // The mock bucket refuses deletes until the access key is "fixed".
+  deleteAllowed: false,
+  tests: 0,
 };
 
 function toBackend(body) {
@@ -77,15 +80,19 @@ async function routeStorage(route) {
     return reply(backend);
   }
   const testMatch = path.match(/^\/admin\/storage-backends\/([^/]+)\/test$/);
-  if (testMatch)
+  if (testMatch) {
+    storage.tests++;
     return reply({
       steps: [
         { name: 'put', ok: true },
         { name: 'get', ok: true },
         { name: 'range', ok: true },
-        { name: 'delete', ok: false, error: 'AccessDenied: s3:DeleteObject is not allowed' },
+        storage.deleteAllowed
+          ? { name: 'delete', ok: true }
+          : { name: 'delete', ok: false, error: 'AccessDenied: s3:DeleteObject is not allowed' },
       ],
     });
+  }
   return api.route(route);
 }
 
@@ -127,9 +134,16 @@ try {
   await dialog.getByLabel('Access key ID（任意）').fill('AKIAEXAMPLE');
   await dialog.getByLabel('Secret access key').fill(SECRET_VALUE);
   assert.equal(await dialog.getByLabel('Secret access key').getAttribute('type'), 'password');
+  // Signing, TLS, checksums and multipart are folded under 詳細設定.
+  assert.equal(await dialog.getByLabel('署名').isVisible(), false);
+  await dialog.getByText('詳細設定（署名・TLS・Checksum・Multipart）').click();
   await dialog.getByLabel('署名').selectOption('v2');
   await dialog.getByRole('button', { name: '作成' }).click();
   await dialog.waitFor({ state: 'detached' });
+  // Saving tests the new backend at once, and a failure leads on to changing it.
+  await page.getByText('接続テストの結果: minio-main').waitFor();
+  assert.equal(storage.tests, 1);
+  await page.getByRole('button', { name: '設定を変更', exact: true }).waitFor();
   const created = storage.requests.at(-1);
   assert.equal(created.prefix, 'team-a');
   assert.equal(created.signatureVersion, 'v2');
@@ -152,10 +166,20 @@ try {
   await page.getByText('AccessDenied: s3:DeleteObject is not allowed').waitFor();
   await page.screenshot({ path: `${outputDirectory}/04-connection-test.png`, fullPage: true });
 
+  // A backend that fails its test does not become the default.
   await s3Row.getByRole('button', { name: '既定にする' }).click();
   const confirm = page.getByRole('dialog', { name: '既定の保存先を変更' });
-  await confirm.getByText('既存のArtifactは移動しません').waitFor();
+  await confirm.getByText('既存のArtifactは移動しません', { exact: false }).waitFor();
+  await confirm.getByText('既定にする前に接続テストを行い', { exact: false }).waitFor();
   await page.screenshot({ path: `${outputDirectory}/05-default-confirm.png` });
+  await confirm.getByRole('button', { name: '既定にする' }).click();
+  await confirm.getByText('接続テストに失敗したため、既定の保存先にしませんでした', { exact: false }).waitFor();
+  assert.equal(storage.defaultBackend, 'filesystem');
+  await confirm.getByRole('button', { name: 'キャンセル' }).click();
+  await confirm.waitFor({ state: 'detached' });
+  // Once the bucket accepts deletes, the fresh test passes and the default changes.
+  storage.deleteAllowed = true;
+  await s3Row.getByRole('button', { name: '既定にする' }).click();
   await confirm.getByRole('button', { name: '既定にする' }).click();
   await confirm.waitFor({ state: 'detached' });
   await s3Row.getByText('既定の保存先').waitFor();
@@ -171,6 +195,9 @@ try {
   const switcher = await openProjectSwitcher(page);
   await switcher.getByRole('option', { name: 'プロジェクトを作成', exact: true }).click();
   const projectDialog = page.getByRole('dialog', { name: 'プロジェクトを作成' });
+  // The default is stated; the other backends wait behind 「ほかの保存先を選ぶ」.
+  await projectDialog.getByText('既定の保存先「minio-main」に保存します', { exact: false }).waitFor();
+  await projectDialog.getByText('ほかの保存先を選ぶ', { exact: true }).click();
   assert.ok(await projectDialog.getByRole('radio', { name: /minio-main/ }).isChecked());
   await page.screenshot({ path: `${outputDirectory}/07-new-project-default.png` });
   await projectDialog.getByRole('button', { name: 'キャンセル' }).click();

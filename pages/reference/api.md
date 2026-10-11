@@ -25,7 +25,7 @@ API tokenの発行とscopeは[API tokenとService Account](/admin/tokens)を参�
 
 ```sh
 export MMT_API_URL=https://tracking.example.com
-read -rsp 'API token: ' MMT_API_TOKEN
+printf 'API token: '; read -r -s MMT_API_TOKEN; echo
 export MMT_API_TOKEN
 
 curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" "$MMT_API_URL/api/projects"
@@ -50,7 +50,7 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" "$MMT_API_URL/api/projects"
 エラーは次の形で返します。`error`は人が読むための文、`code`はプログラムで判定するための値です。判定には`code`を使ってください。
 
 ```json
-{"error": "API tokenのscopeが不足しています", "code": "insufficient_scope"}
+{"error": "API tokenのscopeが不足しています。この操作にはruns:writeが要ります。［プロジェクト設定］の［API tokenを発行］で用途「SDK・MLflow 3から記録する」を選び、tokenを発行し直してください", "code": "insufficient_scope"}
 ```
 
 | status | よくある`code` | 意味 |
@@ -58,8 +58,8 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" "$MMT_API_URL/api/projects"
 | 400 | `invalid_cursor`、`invalid_parameter_value` | 検索条件やcursorが正しくない |
 | 401 | `authentication_required`、`invalid_token` | ログインしていない、tokenが無効・失効・期限切れ |
 | 401 | `identity_sync_required` | SSOのユーザーが7日以上ブラウザでログインしていない（[Authentik（SSO）](/admin/sso)） |
-| 403 | `insufficient_scope` | tokenのscopeが足りない |
-| 403 | `project_forbidden` | ProjectのRoleが足りない、またはtokenを限定したProjectと違う |
+| 403 | `insufficient_scope` | tokenのscopeが足りない（`error`に足りないscopeと発行し直す場所が入る） |
+| 403 | `project_forbidden` | ProjectのRoleが足りない、またはtokenを限定したProjectと違う（`error`にtokenのProject名が入る） |
 | 403 | `session_required` | ブラウザのsessionでだけ使える操作 |
 | 403 | `job_token_forbidden` | Job限定tokenで許されていない操作 |
 | 403 | `job_owner_required` | ほかの人が作成したJobの停止・再実行（作成者かProjectのAdminだけ） |

@@ -13,6 +13,7 @@ import {
   settingsSectionPath,
   type AdminSection,
 } from '../layout/settingsSections';
+import type { AdminOnlyRedirectState } from '../layout/AdminOnlyRedirectNotice';
 
 // Each section heads itself (SettingsPageHeader) with its own actions; the sidebar switches them.
 const ADMIN_SECTION_PANELS: Record<AdminSection, ComponentType> = {
@@ -25,13 +26,18 @@ const ADMIN_SECTION_PANELS: Record<AdminSection, ComponentType> = {
 
 /**
  * 全体設定 → 全体管理 (/settings/<section>), for global administrators. Anyone else, whom the API
- * would refuse, and an unknown section land on the user's own account in 全体設定.
+ * would refuse, lands on the user's own account in 全体設定 with a note saying why; an unknown
+ * section lands there without one.
  */
 export function AdminPage() {
   const auth = useAuth();
   const { section } = useParams();
-  if (!isGlobalAdmin(auth.user) || !isAdminSection(section))
+  if (!isAdminSection(section))
     return <Navigate replace to={settingsSectionPath(DEFAULT_SETTINGS_SECTION)} />;
+  if (!isGlobalAdmin(auth.user)) {
+    const state: AdminOnlyRedirectState = { redirectedFromAdminSection: true };
+    return <Navigate replace to={settingsSectionPath(DEFAULT_SETTINGS_SECTION)} state={state} />;
+  }
   const Panel = ADMIN_SECTION_PANELS[section];
   return <Panel />;
 }

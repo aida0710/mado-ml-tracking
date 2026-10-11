@@ -12,6 +12,7 @@ const adminProject = (overrides: Partial<AdminProject>): AdminProject => ({
   artifactBackend: 'filesystem',
   visibility: 'public',
   memberCount: 3,
+  adminNames: ['相田', '渡辺'],
   runCount: 12,
   createdAt: '2026-10-01T00:00:00Z',
   archivedAt: null,
@@ -31,6 +32,7 @@ describe('AdminProjectsTable', () => {
             id: 'p2',
             name: 'Archived',
             visibility: 'private',
+            adminNames: [],
             archivedAt: '2026-10-10T00:00:00Z',
           }),
         ]}
@@ -63,5 +65,10 @@ describe('AdminProjectsTable', () => {
     expect(row).toContain('>12<');
     expect(row).toContain('>filesystem<');
     expect(rowOf(markup, 'Archived')).toContain(`>${text.private}<`);
+  });
+
+  it('困ったときの連絡先として、Adminの人の名前を並べ、いなければそう書く', () => {
+    expect(rowOf(markup, 'Speech')).toContain('>相田、渡辺<');
+    expect(rowOf(markup, 'Archived')).toContain(`>${text.projectAdminsNone}<`);
   });
 });

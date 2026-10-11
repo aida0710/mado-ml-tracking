@@ -39,7 +39,7 @@ workerには`ssh`コマンドを使う。AsyncSSHは不要。compute targetに�
 ```bash
 export MMT_API_URL=http://127.0.0.1:4182
 export MMT_PROJECT_ID="<project-uuid>"
-read -rsp 'API token: ' MMT_API_TOKEN
+printf 'API token: '; read -r -s MMT_API_TOKEN; echo
 export MMT_API_TOKEN
 python/.venv/bin/python python/examples/sdk.py
 ```
@@ -101,12 +101,12 @@ export MMT_API_URL=http://127.0.0.1:4182
 export MMT_WORKER_ID=development-worker-1
 export MMT_WORKER_TARGET_IDS="<target-uuid>"
 export MMT_WORKER_STATE_DIR=/absolute/path/to/private-worker-state
-read -rsp 'Worker API token: ' MMT_API_TOKEN
+printf 'Worker API token: '; read -r -s MMT_API_TOKEN; echo
 export MMT_API_TOKEN
 python/.venv/bin/mado-tracking-worker
 ```
 
-常駐させる場合は、手動の `export` と `read -rsp` の代わりに `mado-tracking-worker install`（systemd user/system unit）を使う。手順は [operations.md](operations.md) の「workerホストへworkerを導入する」。`install`・`upgrade`・`status`・`doctor` のサブコマンドが増えたが、引数なしと `--once` は従来どおりworkerの実行（`run`）になる。containerでは `MMT_API_TOKEN_FILE` に置いたtoken fileを `MMT_API_TOKEN` として読む（`MMT_API_TOKEN` が既にあればそちらを使う）。
+常駐させる場合は、手動の `export` と `read -s` の代わりに `mado-tracking-worker install`（systemd user/system unit）を使う。手順は [operations.md](operations.md) の「workerホストへworkerを導入する」。`install`・`upgrade`・`status`・`doctor` のサブコマンドが増えたが、引数なしと `--once` は従来どおりworkerの実行（`run`）になる。containerでは `MMT_API_TOKEN_FILE` に置いたtoken fileを `MMT_API_TOKEN` として読む（`MMT_API_TOKEN` が既にあればそちらを使う）。
 
 出力ファイル数の上限は`MMT_WORKER_MAX_OUTPUT_FILES`（既定10000、1〜1000000）で変えられる。詳しくは下の「コンテナの入力と出力は標準pathを使う」。
 

@@ -123,7 +123,9 @@ You can restrict who may change important aliases such as `production`. See [Pro
 
 ![The version page](/images/models-version.png)
 
-Select a version and press **バージョンの詳細画面を開く** (Open version page).
+Press a version's number in the version list to open its page. The list shows the newest 20 versions; **さらに読み込む** (Load more) shows the rest. The **Alias** column names the aliases that point at each version.
+
+**この系列に対応するコードバージョン** (Code versions for this family) in a Model's details lists the code versions whose **対応モデル系列** (Supported model families) include the Model's family. These are the code versions a Task or an automation rule can choose for the Model.
 
 - **学習Run → バージョン → 推論・評価Run** (Training Run → version → inference and evaluation Runs): the training Run that produced the version and up to 20 of the newest Runs that used it.
 - **自動実行** (Automation): automation runs triggered by this version.
@@ -136,7 +138,9 @@ Select a version and press **バージョンの詳細画面を開く** (Open ver
 
 Lineage draws dataset versions, Runs, MLflow logged models, model versions, and code versions of the Project in one graph. Read it from left to right to see which data trained a version and which version produced an inference output.
 
-Edges are data input, data output, model input, model output, model registration, parent model, parent dataset, parent Run, and code. Open **関係** (Relations) below the graph to see the edges as a table.
+Edges are data input, data output, model input, model output, model registration, parent model, parent dataset, parent Run, and code. Open **関係** (Relations) below the graph to see the edges as a table. The table names the kind of each end (Run, dataset version, and so on) before its name, and the name links to its page.
+
+Click **Lineageで見る** (Show in Lineage) in a dataset version's details to show only two steps before and after that version. **全体を表示** (Show all) at the top returns to the whole Project.
 
 ## Permissions
 

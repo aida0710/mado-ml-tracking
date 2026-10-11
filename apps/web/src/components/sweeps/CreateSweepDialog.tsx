@@ -4,6 +4,9 @@ import { sweepsApi } from '../../api/sweeps';
 import { RequestError } from '../../api/http';
 import { useMutation } from '../../hooks/useMutation';
 import { useTaskMetricNames } from '../../hooks/useSweeps';
+import { useCodeVersionDetail } from '../../hooks/useCodeVersionDetail';
+import { isTargetCompatible } from '../../lib/runtimeValidation';
+import { toggleValue } from '../../lib/formValues';
 import { formatErrorMessage } from '../../lib/errorMessage';
 import {
   MAX_GRID_COMBINATIONS,
@@ -22,11 +25,12 @@ import {
   type SweepFormField,
   type SweepFormValues,
 } from '../../lib/sweepForm';
+import { CheckboxList } from '../CheckboxList';
 import { Dialog } from '../Dialog';
 import { ErrorNotice } from '../Feedback';
 import { SearchSpaceEditor } from './SearchSpaceEditor';
 import { sweepAggregationLabels, sweepGoalLabels, sweepMethodLabels } from '../../i18n/sweeps';
-import { text } from '../../i18n/catalog';
+import { text, textTemplates } from '../../i18n/catalog';
 
 // The API names the offending parameter in this 422's message (domain/sweeps/searchSpace.ts).
 const SPACE_INVALID_CODE = 'sweep_space_invalid';
@@ -62,6 +66,19 @@ export function CreateSweepDialog({
   const metricListId = useId();
   const task = tasks.find((item) => item.id === form.taskId);
   const experiment = experiments.find((item) => item.id === task?.experimentId);
+  // Only computers with the runtime of the Task's code take its trials, as when the Task runs.
+  const taskCode = useCodeVersionDetail(projectId, task?.codeVersionId);
+  const usableTargets = targets.filter((target) =>
+    taskCode.value ? isTargetCompatible(target, taskCode.value.version) : target.enabled,
+  );
+  const taskTarget = targets.find((target) => target.id === task?.targetId);
+  // The trials run on the chosen computer, or on the Task's when none is chosen.
+  const trialTarget = targets.find((target) => target.id === form.targetId) ?? taskTarget;
+  // No GPU chosen means the Task's GPU IDs, which another computer may not have (the API refuses).
+  const missingTaskGpus =
+    form.targetId && trialTarget?.executor !== 'site' && !form.gpuIds.length && task
+      ? task.gpuIds.filter((id) => !trialTarget?.gpuIds.includes(id))
+      : [];
   const validation = buildSweepCreate(form);
   const fieldErrors = isSubmitted ? validation.fieldErrors : {};
   const rowErrors = {
@@ -69,9 +86,17 @@ export function CreateSweepDialog({
     ...(spaceError?.rowId ? { [spaceError.rowId]: spaceError.message } : {}),
   };
   const gridCombinations = countGridCombinations(rowsToSearchSpace(form.rows, form.method).searchSpace);
+  // A grid stops once every combination ran, whatever maxTrials says; said before it is created.
+  const isGridShorterThanMaxTrials =
+    form.method === 'grid' &&
+    gridCombinations !== null &&
+    gridCombinations < (Number(form.maxTrials) || 0);
 
   function change(values: Partial<SweepFormValues>) {
-    setForm((previous) => ({ ...previous, ...values }));
+    // The computer follows the Task's runtime and the GPU IDs belong to one computer.
+    const dependents: Partial<SweepFormValues> =
+      'taskId' in values ? { targetId: '', gpuIds: [] } : 'targetId' in values ? { gpuIds: [] } : {};
+    setForm((previous) => ({ ...previous, ...dependents, ...values }));
     // A row-level message from the API is about the rows as they were sent.
     if ('rows' in values || 'method' in values) setSpaceError(null);
   }
@@ -131,17 +156,32 @@ export function CreateSweepDialog({
             </p>
           )}
           <div className="sweep-form-grid">
-            <Field label={text.sweepTarget}>
+            <Field label={text.sweepTarget} hint={text.sweepTargetRuntimeHint}>
               <select value={form.targetId} onChange={(event) => change({ targetId: event.target.value })}>
-                <option value="">{text.sweepTaskDefault}</option>
-                {targets.filter((target) => target.enabled).map((target) => (
+                <option value="">
+                  {taskTarget ? textTemplates.sweepTargetTaskDefault(taskTarget.name) : text.sweepTaskDefault}
+                </option>
+                {usableTargets.map((target) => (
                   <option key={target.id} value={target.id}>{target.name}</option>
                 ))}
               </select>
             </Field>
-            <Field label={text.sweepGpuIds}>
-              <input value={form.gpuIds} className="mono" onChange={(event) => change({ gpuIds: event.target.value })} />
-            </Field>
+            {trialTarget?.executor === 'site' ? (
+              <p className="muted">{text.sweepGpuSiteTaskDefault}</p>
+            ) : (
+              <CheckboxList
+                legend={text.sweepGpuIds}
+                options={(trialTarget?.gpuIds ?? []).map((id) => ({ value: id, label: id }))}
+                selected={form.gpuIds}
+                onToggle={(id) => change({ gpuIds: toggleValue(form.gpuIds, id) })}
+                empty={text.gpuNoneOnTarget}
+              />
+            )}
+            {missingTaskGpus.length > 0 && (
+              <p className="notice error" role="status">
+                {textTemplates.sweepTaskGpusMissing(missingTaskGpus.join(', '))}
+              </p>
+            )}
             <Field label={text.sweepMethod}>
               <select value={form.method} onChange={(event) => change({ method: event.target.value as SweepMethod })}>
                 {(Object.keys(sweepMethodLabels) as SweepMethod[]).map((method) => (
@@ -178,6 +218,9 @@ export function CreateSweepDialog({
             </datalist>
             <p className="muted">{text.sweepObjectiveMetricHint}</p>
           </fieldset>
+          {isGridShorterThanMaxTrials && gridCombinations !== null && (
+            <p className="notice" role="status">{textTemplates.sweepGridFewerThanMaxTrials(gridCombinations)}</p>
+          )}
           <div className="sweep-form-grid">
             <IntegerField label={text.sweepMaxTrials} field="maxTrials" form={form} errors={fieldErrors} onChange={change} />
             <IntegerField label={text.sweepParallelism} field="parallelism" form={form} errors={fieldErrors} onChange={change} />
@@ -232,11 +275,22 @@ export function CreateSweepDialog({
   );
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
+function Field({
+  label,
+  error,
+  hint,
+  children,
+}: {
+  label: string;
+  error?: string;
+  hint?: string;
+  children: ReactNode;
+}) {
   return (
     <label className={`field${error ? ' invalid' : ''}`}>
       <span>{label}</span>
       {children}
+      {hint && <span className="field-hint">{hint}</span>}
       {error && <span className="sweep-field-error" role="alert">{error}</span>}
     </label>
   );

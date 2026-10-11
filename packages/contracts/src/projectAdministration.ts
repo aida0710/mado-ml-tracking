@@ -37,8 +37,13 @@ export interface AdminProject {
   description: string;
   artifactBackend: ArtifactBackend;
   visibility: ProjectVisibility;
-  /** Users with a direct grant or a group binding. Access through public visibility is not counted. */
+  /**
+   * Users with a direct grant or a group binding, Service Accounts included. Access through public
+   * visibility is not counted.
+   */
   memberCount: number;
+  /** Display names of the people (not Service Accounts) who are Project admin, by name. */
+  adminNames: string[];
   /** Active (not MLflow-deleted) Runs. */
   runCount: number;
   createdAt: string;

@@ -27,10 +27,17 @@ export interface MetricsChartSeries {
   id: string;
   label: string;
   /**
-   * Omitted: lib/seriesColors.ts picks the color from `id`, so a Run keeps its color across charts
-   * unless another line of the same chart has a too similar one.
+   * Omitted: lib/seriesColors.ts picks it by the line's style id among `MetricsChartProps.styleIds`
+   * (every Run of the page), so a Run has the same color in every chart of the page.
    */
   color?: string;
+  /**
+   * The Run (or group) whose color and line pattern the line takes; omitted, `id`. The lines of
+   * several metric keys of one Run share the Run's color and are told apart by `dashPattern`.
+   */
+  styleId?: string;
+  /** stroke-dasharray that replaces the style's pattern; null for a solid line. */
+  dashPattern?: string | null;
   points: MetricsChartPoint[];
   kind: 'run' | 'group';
 }
@@ -43,6 +50,13 @@ export interface MetricsChartMarker {
 
 export interface MetricsChartProps {
   series: MetricsChartSeries[];
+  /**
+   * The ids whose order assigns colors and line patterns: every Run the page draws, so a Run keeps
+   * its style in each chart even where another Run logged nothing, and whether the palette of eight
+   * or the hue wheel is used depends on the page, not the chart. Lines whose style id is not among
+   * them (Run groups, the metric keys of a single Run) are styled among the chart's own lines.
+   */
+  styleIds?: readonly string[];
   xAxis: ChartXAxis;
   /** Log x is offered for the step axis; values at or below 0 are left out and counted. */
   xScale?: 'linear' | 'log';

@@ -40,7 +40,8 @@ export function HooksPage() {
     hookId: selectedHookId,
     enabled: view === 'executions',
   });
-  const [isCreating, setCreating] = useState(false);
+  // 'new' starts from the defaults; a hook starts the form from its settings (a copy).
+  const [creating, setCreating] = useState<'new' | Hook | null>(null);
   const [toggling, setToggling] = useState<Hook | null>(null);
   const canManage = canManageHooks(project.role);
   const canTransferOwner = canTransferHookOwners(project.role, isGlobalAdmin(user));
@@ -71,7 +72,7 @@ export function HooksPage() {
         actions={
           <>
             {canManage && (
-              <button className="button primary" onClick={() => setCreating(true)}>
+              <button className="button primary" onClick={() => setCreating('new')}>
                 <Plus size={15} />
                 {text.newHook}
               </button>
@@ -117,6 +118,7 @@ export function HooksPage() {
                 canStart={canManage}
                 canTransferOwner={canTransferOwner}
                 onShowExecutions={() => showView('executions', selectedHook.id)}
+                onCopy={canManage ? () => setCreating(selectedHook) : undefined}
                 onStarted={executions.reload}
                 onOwnerTransferred={hooks.reload}
               />
@@ -180,18 +182,19 @@ export function HooksPage() {
           onClose={() => setToggling(null)}
         />
       )}
-      {isCreating && (
-        <QueryDialog title={text.newHook} onClose={() => setCreating(false)} query={registry}>
+      {creating && (
+        <QueryDialog title={text.newHook} onClose={() => setCreating(null)} query={registry}>
           {(choices) => (
-            <QueryDialog title={text.newHook} onClose={() => setCreating(false)} query={targets}>
+            <QueryDialog title={text.newHook} onClose={() => setCreating(null)} query={targets}>
               {(computeTargets) => (
                 <HookDialog
                   catalog={{ registry: choices, targets: computeTargets }}
+                  source={creating === 'new' ? undefined : creating}
                   onCreated={(hook) => {
                     hooks.reload();
                     showView('hooks', hook.id);
                   }}
-                  onClose={() => setCreating(false)}
+                  onClose={() => setCreating(null)}
                 />
               )}
             </QueryDialog>

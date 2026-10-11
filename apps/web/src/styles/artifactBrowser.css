@@ -9,7 +9,14 @@
   overflow-wrap: anywhere;
 }
 .artifact-breadcrumbs .breadcrumb-separator {
+  flex: none;
   margin: 0 4px;
+}
+/* The separator stays at the start of its name, so a long name wraps without leaving a lone '/'. */
+.artifact-breadcrumb {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 0;
 }
 .artifact-tree-entry {
   display: inline-flex;
@@ -112,4 +119,14 @@
 .artifact-browser > .artifact-preview,
 .artifact-catalog .artifact-layout > .artifact-preview {
   align-self: start;
+}
+/* The catalog's 所属 cell: the first owners of a file, each a link. */
+.artifact-owner-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  overflow-wrap: anywhere;
+}
+.artifact-deleted-notice {
+  margin-bottom: 12px;
 }

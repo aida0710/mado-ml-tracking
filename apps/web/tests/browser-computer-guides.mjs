@@ -85,7 +85,7 @@ async function assertSubmitSetup(page, scope) {
   const environment = await copySnippet(page, setup, '接続先とAPI token');
   assert.equal(
     environment,
-    `export MMT_API_URL=${base}\nread -r -s -p 'API token: ' MMT_API_TOKEN\nexport MMT_API_TOKEN\n`,
+    `export MMT_API_URL=${base}\nprintf 'API token: '; read -r -s MMT_API_TOKEN; echo\nexport MMT_API_TOKEN\n`,
   );
   assert.match(
     await copySnippet(page, setup, 'mado-trackingを入れて'),

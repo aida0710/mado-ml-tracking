@@ -40,7 +40,7 @@ describe('Sweep作成フォームからAPIの入力を作る', () => {
       rows: [{ ...base.rows[0]!, name: 'lr', values: '1' }],
       seed: '0',
       targetId: 'target',
-      gpuIds: '0, 1',
+      gpuIds: ['0', '1'],
       earlyStopping: 'hyperband',
       minIter: '2',
       eta: '3',

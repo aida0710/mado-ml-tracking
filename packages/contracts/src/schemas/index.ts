@@ -11,6 +11,8 @@ export * from './checkpoints.js';
 export * from './comments.js';
 export * from './computeTargetAccess.js';
 export * from './datasetContent.js';
+export * from './datasetFolderUploads.js';
+export * from './artifactReferences.js';
 export * from './evaluation.js';
 export * from './execution.js';
 export * from './experimentTasks.js';

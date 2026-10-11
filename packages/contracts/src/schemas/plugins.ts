@@ -22,6 +22,7 @@ export const pluginConnectionSchema = namedContractSchema(
     name: z.string(),
     baseUrl: z.string(),
     tokenEnv: z.string(),
+    tokenConfigured: z.boolean(),
     enabled: z.boolean(),
     manifest: pluginManifestSchema.nullable(),
     createdAt: timestampSchema,

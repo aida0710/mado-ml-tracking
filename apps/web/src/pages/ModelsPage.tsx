@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, RefreshCw } from 'lucide-react';
 import { registryApi } from '../api/registry';
+import type { AutomationExecutionFilter } from '../api/automation';
 import { useProject } from '../hooks/useProject';
 import { useRegistry } from '../hooks/useRegistry';
 import { useModelAliasHistory } from '../hooks/useModelAliasHistory';
@@ -27,6 +28,7 @@ export function ModelsPage() {
   const [aliasToRemove, setAliasToRemove] = useState<{ alias: string; version: string } | null>(
     null,
   );
+  const [historyFilter, setHistoryFilter] = useState<AutomationExecutionFilter>({});
   const registry = useRegistry(`${project.id}:models`, {
     list: (signal) => registryApi.models(project.id, signal),
     versions: (id, signal) => registryApi.modelVersions(project.id, id, signal),
@@ -79,7 +81,16 @@ export function ModelsPage() {
         ) : view === 'protections' ? (
           <AliasProtectionSettings models={registry.list.value ?? []} />
         ) : view !== 'registry' ? (
-          <ModelAutomationPanel view={view} initialFamily={registry.selected?.family} />
+          <ModelAutomationPanel
+            view={view}
+            initialFamily={registry.selected?.family}
+            historyFilter={historyFilter}
+            onHistoryFilterChange={setHistoryFilter}
+            onShowRuleHistory={(ruleId) => {
+              setHistoryFilter({ ruleId });
+              setView('history');
+            }}
+          />
         ) : (
           <ModelRegistryPanel
             registry={registry}

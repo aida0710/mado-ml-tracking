@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatBytes } from './format';
+import { formatBytes, shortRunId } from './format';
 
 describe('formatBytes', () => {
   it('KiB以上は小数1桁にそろえる', () => {
@@ -18,5 +18,11 @@ describe('formatBytes', () => {
   it('丸めると1024になる値は次の単位で表す', () => {
     expect(formatBytes(1024 * 1024 - 10)).toBe('1.0 MiB');
     expect(formatBytes(1024)).toBe('1.0 KiB');
+  });
+});
+
+describe('shortRunId', () => {
+  it('名前を読み込む前のRunを、UUIDの最初の区切りまでで示す', () => {
+    expect(shortRunId('0f1e2d3c-4b5a-4968-8776-655443322110')).toBe('0f1e2d3c');
   });
 });

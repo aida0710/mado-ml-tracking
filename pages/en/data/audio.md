@@ -36,11 +36,11 @@ For WAV and FLAC, the duration, sample rate, and channel count are read from the
 | ←, → | Move 1 second backward or forward |
 | 拡大, 縮小 (Zoom in, zoom out) | Change the visible range by a factor of 2. At the maximum zoom, 0.05 seconds is shown |
 | 全体を表示 (Show all) | Reset the zoom |
-| 表示位置 (Position) | A slider shown while zoomed in that moves the visible range |
+| 表示位置 (Position) | A slider shown while zoomed in that moves the visible range. Above it, the times of the visible range are shown (表示範囲 0:02.25–0:06.75) |
 | チャンネル (Channel) | すべて（平均） (all, averaged) or チャンネル1, チャンネル2, … Available for audio with two or more channels |
 | スペクトログラム (Spectrogram) | 線形 (linear, default) or mel |
 
-Time is shown as minutes:seconds.hundredths, such as `0:00.80`. The top right of the spectrogram shows the highest frequency displayed (half the sample rate).
+Time is shown as minutes:seconds.hundredths, such as `0:00.80`. A time ruler runs under the waveform and spectrogram; when zoomed in, its ticks follow the visible range. The top right of the spectrogram shows the highest frequency displayed (half the sample rate).
 
 There is no control for playback speed.
 

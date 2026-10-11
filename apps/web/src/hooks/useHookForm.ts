@@ -6,8 +6,17 @@ import type { HookCatalog } from '../types/hooks';
 import { buildHookInput, createHookValues, updateHookValues } from '../lib/hookInput';
 import { useMutation } from './useMutation';
 
-export function useHookForm({ projectId, catalog }: { projectId: string; catalog: HookCatalog }) {
-  const [values, setValues] = useState(createHookValues);
+export function useHookForm({
+  projectId,
+  catalog,
+  initialValues,
+}: {
+  projectId: string;
+  catalog: HookCatalog;
+  /** A copied hook's settings; a new hook starts from the defaults. */
+  initialValues?: FormValues;
+}) {
+  const [values, setValues] = useState(() => initialValues ?? createHookValues());
   const mutation = useMutation();
   function changeValues(next: FormValues) {
     setValues((previous) => updateHookValues({ previous, next, catalog }));

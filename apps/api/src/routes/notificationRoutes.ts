@@ -16,6 +16,9 @@ export function notificationRoutes(notifications: NotificationService): Hono<Api
   routes.get('/notification-channels', async (context) =>
     context.json({ items: await notifications.listChannels(principal(context)) }),
   );
+  routes.get('/notification-channels/environment-names', (context) =>
+    context.json({ items: notifications.listEnvironmentNames(principal(context)) }),
+  );
   routes.post('/notification-channels', async (context) =>
     context.json(
       await notifications.createChannel(

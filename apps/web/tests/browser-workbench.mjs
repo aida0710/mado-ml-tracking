@@ -214,7 +214,8 @@ try {
   }
   await dialog().getByRole('button', { name: 'ファイル: main.py', exact: true }).click();
   await fill('対応モデル系列（1行に1件）', 'test-family');
-  await dialog().getByLabel('対応する実行種別').selectOption(['inference', 'training']);
+  const runKinds = dialog().getByRole('group', { name: /対応する実行種別/ });
+  for (const kind of ['推論', '学習']) await runKinds.getByRole('checkbox', { name: kind, exact: true }).check();
   await clickSave();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
   const smoke = api.state.codeVersions.find((version) => version.version === 'smoke-v3');
@@ -230,7 +231,11 @@ try {
   await fill('名前', 'Browser Task');
   await dialog().getByLabel('コードバージョン').selectOption(smoke.id);
   await dialog().getByLabel('Compute target').selectOption(api.state.targets[0].id);
-  await dialog().getByLabel('GPU ID', { exact: true }).selectOption([]);
+  // No GPU is checked until one is chosen: the Task runs on the CPU.
+  assert.equal(
+    await dialog().getByRole('group', { name: 'GPU ID' }).getByRole('checkbox', { checked: true }).count(),
+    0,
+  );
   await dialog().getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
   await page.getByTestId('task-revision').getByText('1', { exact: true }).waitFor();

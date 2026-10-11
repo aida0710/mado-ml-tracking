@@ -57,3 +57,17 @@
 .connection-more > p {
   margin: 12px 0 0;
 }
+/* A token just issued: its value and the button that copies it, on one line while they fit. */
+.issued-token-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.issued-token-value input {
+  flex: 1 1 240px;
+  width: auto;
+}
+.token-usage .code-snippet {
+  margin-top: 0;
+}

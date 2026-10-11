@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Archive } from 'lucide-react';
-import { administrationApi } from '../api/administration';
 import { useProject } from '../hooks/useProject';
-import { explainProjectLifecycleConflict } from '../lib/projectLifecycleConflict';
-import { ConfirmDialog } from './ConfirmDialog';
-import { text, textTemplates } from '../i18n/catalog';
+import { ProjectArchiveDialog } from '../dialogs/ProjectArchiveDialog';
+import type { ArchivedProjectState } from '../lib/archivedProjectState';
+import { text } from '../i18n/catalog';
 
 /**
  * The end of the Project settings for its admin: archiving hides the Project and keeps its data,
- * which a global administrator can restore. Afterwards the user is sent to another Project.
+ * which a global administrator can restore. Afterwards the Project list says it was archived
+ * instead of another Project opening unannounced.
  */
 export function ProjectArchiveSection() {
   const { project, reloadProjects } = useProject();
@@ -24,18 +24,13 @@ export function ProjectArchiveSection() {
         {text.projectArchive}
       </button>
       {isConfirming && (
-        <ConfirmDialog
-          title={text.projectArchiveTitle}
-          message={textTemplates.projectArchiveConfirm(project.name)}
-          confirmLabel={text.projectArchive}
-          destructive
-          onConfirm={() =>
-            explainProjectLifecycleConflict(administrationApi.archiveProject(project.id))
-          }
-          onConfirmed={() => {
+        <ProjectArchiveDialog
+          project={project}
+          onArchived={() => {
             setIsConfirming(false);
             reloadProjects();
-            navigate('/');
+            const state: ArchivedProjectState = { archivedProjectName: project.name };
+            navigate('/', { state });
           }}
           onClose={() => setIsConfirming(false)}
         />

@@ -2,6 +2,11 @@
 export const projectsText = {
   projectSwitcherPlaceholder: 'プロジェクトを選択',
   projectSwitcherFilter: 'プロジェクトを絞り込み',
+  projectSwitcherNotMember: '参加していない',
+  projectSwitcherNotMemberHint:
+    'メンバーではありません。Publicか、全体管理者なので開けます。',
+  projectNameTakenHint:
+    '同じ名前のプロジェクトがあります。切り替えのメニューで見分けにくくなるので、別の名前にすることをおすすめします。',
   projectDescriptionOptional: '説明（任意）',
   projectVisibility: '公開範囲',
   public: 'Public',
@@ -24,7 +29,9 @@ export const projectsText = {
   projectNotArchived:
     'アーカイブしていないプロジェクトは完全に削除できません。先にアーカイブしてください。',
   adminProjectsDescription:
-    'すべてのプロジェクトです。メンバー数は、メンバーに追加した人とgroupで加わった人の数で、Publicで見られる人は数えません。',
+    'すべてのプロジェクトです。メンバー数は、メンバーに追加した人・groupで加わった人・Service Accountの数で、Publicで見られる人は数えません。',
+  projectAdmins: 'Admin',
+  projectAdminsNone: '（Adminの人がいません）',
   adminProjectsEmpty: 'プロジェクトはまだありません',
   projectIncludeArchived: 'アーカイブ済みも表示',
   projectMemberCount: 'メンバー数',
@@ -50,19 +57,35 @@ export const projectsText = {
     'ログインできる全員がEditorとして使えるプロジェクトです。開いて作ったRunや実験は、そのプロジェクトに入ります。',
   projectListAdminHint: 'メンバーでないPrivateのプロジェクトは、全体管理の「プロジェクト」にあります。',
   projectListAdminLink: '全体管理のプロジェクト一覧',
+  projectArchivedNotAccessible:
+    'このプロジェクトはアーカイブされています。使うときは、全体管理者に全体管理の「プロジェクト」から元に戻すよう依頼してください。',
+  projectSettingsContents: 'プロジェクト設定の目次',
 } as const;
 
 // Text that embeds values.
 export const projectsTextTemplates = {
   projectArchiveConfirm: (name: string) =>
     `「${name}」をアーカイブします。Run・モデル・Artifactのデータは残り、全体管理の「プロジェクト」から元に戻せます。`,
+  projectArchiveStops: (usableTokenCount: number | undefined) =>
+    usableTokenCount === undefined
+      ? '止まるもの: このプロジェクトに限定したAPI token（workerとService Accountのものを含む）は使えなくなり、動いているworkerはJobを受け取れなくなります。Sweep・フック・自動実行・自動の昇格も止まります。'
+      : `止まるもの: このプロジェクトに限定したAPI token ${usableTokenCount}本（workerとService Accountのものを含む）が使えなくなり、動いているworkerはJobを受け取れなくなります。Sweep・フック・自動実行・自動の昇格も止まります。`,
+  projectSwitcherCreatedAt: (date: string) => `${date} 作成`,
+  projectPurgeIdentity: (dates: { createdAt: string; archivedAt: string }) =>
+    `作成 ${dates.createdAt}・アーカイブ ${dates.archivedAt}`,
+  projectArchived: (name: string) =>
+    `「${name}」をアーカイブしました。全体管理者が全体管理の「プロジェクト」から元に戻せます。`,
   projectRestoreConfirm: (name: string) =>
     `「${name}」を元に戻します。メンバーとデータはアーカイブする前のまま使えます。`,
   projectPurgeConfirm: (name: string) =>
-    `「${name}」を完全に削除します。Run・モデル・データセット・Artifact（保存先のファイルを含む）・メンバーの設定をすべて消し、元に戻せません。`,
+    `「${name}」を完全に削除します。Run・モデル・データセット・Artifact（保存先のファイルを含む）・メンバーの設定をすべて消し、元に戻せません。保存先のファイルは、削除待ちの猶予（API serverのMMT_ARTIFACT_DELETE_GRACE_DAYS、既定7日）が過ぎてから消えます。監査ログは残ります。`,
   projectMemberRole: (displayName: string) => `${displayName}のRole`,
   projectMemberRemove: (displayName: string) => `${displayName}を外す`,
   projectArchivedAt: (date: string) => `アーカイブ ${date}`,
+  projectSettingsAdminOnly: (adminNames: string) =>
+    adminNames
+      ? `変更できるのはこのプロジェクトのAdmin（${adminNames}）です。変更が必要なときはAdminに依頼してください。`
+      : '変更できるのはこのプロジェクトのAdminです。変更が必要なときはAdminに依頼してください。',
   projectStorageChange: (from: string, to: string) =>
     `Artifactの保存先を「${from}」から「${to}」に変えます。既存のArtifactは「${from}」に残り、これから保存する分だけが「${to}」に入ります。`,
 };

@@ -1,6 +1,7 @@
 import type { Principal } from '../../auth/principal.js';
 import { first, rows, transaction, type Connection, type Database } from '../../db/database.js';
-import { DomainError, conflict, notFound } from '../../domain/errors.js';
+import { conflict, notFound } from '../../domain/errors.js';
+import { duplicateExperimentName } from '../../domain/experimentNames.js';
 import { requireProject } from '../../services/accessService.js';
 import {
   DEFAULT_EXPERIMENT_ID,
@@ -82,8 +83,7 @@ export class ExperimentService {
           JSON.stringify(Object.fromEntries(input.tags.map(({ key, value }) => [key, value]))),
         ],
       );
-      if (!experiment)
-        throw new DomainError(409, '同名Experimentが既に存在します', 'resource_already_exists');
+      if (!experiment) duplicateExperimentName();
       return experiment;
     });
   }
@@ -156,8 +156,7 @@ export class ExperimentService {
         'SELECT id FROM experiments WHERE project_id=$1 AND name=$2 AND id<>$3',
         [projectId, input.new_name, experiment.id],
       );
-      if (duplicate)
-        throw new DomainError(409, '同名Experimentが既に存在します', 'resource_already_exists');
+      if (duplicate) duplicateExperimentName();
       await connection.query('UPDATE experiments SET name=$2,updated_at=now() WHERE id=$1', [
         experiment.id,
         input.new_name,

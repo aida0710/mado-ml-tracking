@@ -8,12 +8,17 @@ export function formatCodeVersionName(codeName: string, version: string): string
   return `${codeName} / ${version}`;
 }
 
+/** How screens name a model version: "model name / version". */
+export function formatModelVersionName(modelName: string, version: string): string {
+  return `${modelName} / ${version}`;
+}
+
 export function buildCatalogOptions(catalog: ExecutionCatalog) {
   return {
     experiments: catalog.experiments.map((item) => ({ value: item.id, label: item.name })),
     models: catalog.modelVersions.map((item) => ({
       value: item.id,
-      label: `${catalog.models.find((model) => model.id === item.modelId)?.name ?? item.modelId} / ${item.version} · ${item.family}`,
+      label: `${formatModelVersionName(catalog.models.find((model) => model.id === item.modelId)?.name ?? item.modelId, item.version)} · ${item.family}`,
     })),
     codes: catalog.codeVersions.map((item) => ({
       value: item.id,

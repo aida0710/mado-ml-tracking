@@ -60,6 +60,33 @@ export const automationText = {
   ownerHint: '自動実行はこの所有者の権限で起動し、作るRunの作成者になります。',
   transferConfirmMessage: (ruleName: string, accountName: string) =>
     `「${ruleName}」の所有者を ${accountName} に移します。以後の自動実行はこのService Accountの権限で起動します。`,
+  copiedRuleName: (name: string) => `${name}（複製）`,
+  copyRule: '複製して新しく作る',
+  copyRuleTitle: (name: string) => `「${name}」を複製して作成`,
+  copyRuleHint:
+    '作成済みのルールは変更できないため、直すときは設定を引き継いだ新しいルールを作ります。',
+  disableSourceRule: (name: string) => `作成したら「${name}」を無効にする`,
+  disableSourceRuleHint:
+    '両方が有効のままだと、同じバージョンに両方のルールがJobを登録します。',
+  // The copy was created; disabling the rule it came from failed afterwards.
+  sourceRuleLeftEnabled: (rules: { copyName: string; sourceName: string }) =>
+    `「${rules.copyName}」は作成しましたが、元の「${rules.sourceName}」を無効にできませんでした。今は両方が有効で、同じバージョンに両方のルールがJobを登録します。一覧で「${rules.sourceName}」の［無効にする］を押してください。`,
+  downstreamFollowsSource: (names: readonly string[]) =>
+    `「${names.join('」「')}」は「上流rule」に元のルールを選んでいます。元のルールを無効にすると動かなくなるため、新しいルールを上流にするには、それらも同じ操作で作り直してください。`,
+  downstreamRules: 'このルールの後に動くルール',
+  noDownstreamRules: 'なし',
+  showRuleHistory: 'このルールの実行履歴を見る',
+  disabledRuleCannotApply:
+    'このルールは無効です。有効にすると、既存のバージョンに適用できます。',
+  enableRule: '有効にする',
+  runAndJobStatus: 'Run・Jobの状態',
+  runLabel: 'Run',
+  jobLabel: 'Job',
+  manageAdminOnly: '自動実行ルールの作成・変更・適用は、Project adminと全体管理者が行います。',
+  historyAllRules: 'すべてのルール',
+  historyAllVersions: 'すべてのバージョン',
+  historyLoadMore: 'さらに表示',
+  historyShownCount: (count: number) => `新しい順に${count}件を表示しています。`,
   transferNoAccounts:
     'ほかに移管できるService Accountがありません。移管先はプロジェクト設定でrole adminの有効なService Accountとして作成します。',
 };

@@ -1,6 +1,8 @@
 // Browser check: when a dialog closes (Esc, ×, or its cancel button), focus goes back to the button
-// that opened it, for a form dialog, a dialog of its own and a confirmation.
+// that opened it, for a form dialog, a dialog of its own and a confirmation; and Enter in the
+// filter box of a long checkbox list inside a dialog's form narrows the list without submitting.
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { createBrowserApi } from './browserApi.mjs';
 
@@ -68,6 +70,35 @@ try {
   };
   assert.equal(await focusReturnsAfter({ ...archiveConfirmation, close: pressEscape }), true, 'Esc');
   assert.equal(await focusReturnsAfter({ ...archiveConfirmation, close: clickCancel }), true, 'cancel');
+
+  console.log('Browser check: Enter in the filter of a long checkbox list does not submit the form');
+  {
+    const [firstVersion] = api.state.datasetVersions;
+    // More versions than a checkbox list shows without a filter box (FILTERABLE_OPTION_COUNT is 8).
+    for (let index = 2; index <= 10; index += 1)
+      api.state.datasetVersions.push({ ...firstVersion, id: randomUUID(), version: `v${index}` });
+    const isVersionCreation = (request) =>
+      request.method() === 'POST' && request.url().includes(`/datasets/${firstVersion.datasetId}/versions`);
+    const versionCreations = [];
+    page.on('request', (request) => {
+      if (isVersionCreation(request)) versionCreations.push(request.url());
+    });
+    await page.goto(`${projectBase}/datasets`);
+    await page.getByRole('button', { name: 'バージョンを作成', exact: true }).click();
+    await openDialog.waitFor();
+    await openDialog.getByRole('textbox', { name: /^バージョン/ }).fill('v-enter');
+    await openDialog.getByRole('textbox', { name: /^URI/ }).fill('s3://bucket/enter/');
+    await openDialog.getByRole('textbox', { name: /^Digest/ }).fill(`sha256:${'0'.repeat(64)}`);
+    const filter = openDialog.getByRole('searchbox', { name: '絞り込み' });
+    await filter.fill('v1');
+    await filter.press('Enter');
+    assert.equal(await openDialog.count(), 1, 'the dialog stays open');
+    // The save button is the only way the version is created; Enter before it sent nothing.
+    const created = page.waitForRequest(isVersionCreation);
+    await openDialog.locator('footer button.primary').click();
+    await created;
+    assert.equal(versionCreations.length, 1, 'Enter in the filter did not submit the form');
+  }
 
   assert.deepEqual(pageErrors, []);
   console.log('Dialog focus browser checks passed.');

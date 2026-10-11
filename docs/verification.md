@@ -456,6 +456,18 @@ MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/connection-guides \
 node apps/web/tests/browser-computer-guides.mjs
 ```
 
+## 実行の画面（workerの有無、Jobの詳細とログ、再実行、フックの複製）をブラウザで確認する
+
+`apps/web/tests/browser-job-execution.mjs`は、開発モード（`AUTH_MODE=development`）のAPIに、実行ごとに別の利用者・Project・workerのいないsshのコンピュータ・3,000行のログを持つ待機中のJobを作って確かめます（workerは動かさない）。Computeの一覧・Jobsの一覧の上・待機中のJobの詳細・［ジョブを起動］の実行先に「workerなし」が出ること、全体設定 → コンピュータの詳細を`?computer=`で開け、接続確認の前に警告が出ること、Jobを選ぶと詳細が画面に入り見出しにフォーカスが移ること、ログが最新の2,000行（全3,000行と表示）を最新の位置で開き、時刻が秒まで、検索・並び順・全行の読み込み・ダウンロード（3,000行のタブ区切り）が動くこと、Runの画面にJobがあれば［ジョブを起動］の代わりに［Jobを見る］が出ること、最大試行回数1のJobを作成者が再実行できること、Jobを断られた起動がRunを残さないこと、フックを［複製して新しく作る］で設定ごと写せること、390pxで横にずれないことを見ます。
+
+```bash
+MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
+MMT_CHROMIUM_PATH=/path/to/chromium \
+MMT_WEB_URL=http://127.0.0.1:<Webのport> \
+MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/job-execution \
+node apps/web/tests/browser-job-execution.mjs
+```
+
 ## Webで足すコンピュータ（site）を実APIでブラウザ確認する
 
 `apps/web/tests/browser-site-computers-api.mjs`は、`mmt_test`の一時schemaを使う開発モード（`AUTH_MODE=development`）のAPI（47140）を自分で起動し、実際の記録を作って全体設定の「コンピュータ」（`/settings/computers`）・Jobs画面・全体管理の「ランチャー」（`/settings/launchers`）を確かめます。終わるとschemaを消します。WebはViteを47141で起動しておきます。APIをTypeScriptのソースから起動するので`tsx`で実行します。

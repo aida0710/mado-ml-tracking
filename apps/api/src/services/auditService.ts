@@ -1,7 +1,11 @@
 import type { AuditEventPage } from '@mmt/contracts';
 import type { Principal } from '../auth/principal.js';
 import type { Database } from '../db/database.js';
-import type { AuditEventQuery, ProjectAuditEventQuery } from '../domain/auditValidation.js';
+import {
+  SIGN_IN_AUDIT_ACTIONS,
+  type AuditEventQuery,
+  type ProjectAuditEventQuery,
+} from '../domain/auditValidation.js';
 import { DomainError, notFound } from '../domain/errors.js';
 import type { RequestMetadata } from '../http/requestMetadata.js';
 import {
@@ -76,7 +80,12 @@ export class AuditService {
     return this.page({ ...query, projectId });
   }
 
-  private async page(filter: AuditEventFilter): Promise<AuditEventPage> {
+  private async page(query: AuditEventQuery): Promise<AuditEventPage> {
+    const { hideSignIns, ...rest } = query;
+    const filter: AuditEventFilter = {
+      ...rest,
+      excludedActions: hideSignIns ? SIGN_IN_AUDIT_ACTIONS : [],
+    };
     const cursor = filter.cursor && { id: filter.cursor, projectId: filter.projectId };
     if (cursor && !(await auditCursorExists(this.database, cursor)))
       notFound('AuditEvent cursor');

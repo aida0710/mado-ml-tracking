@@ -26,7 +26,7 @@ Webの設定画面と実験の画面（［SDKで記録］）の「SDK・MLflow 3
 python -m pip install 'mlflow>=3,<4'
 export MLFLOW_TRACKING_URI='http://localhost:5182/api/mlflow/projects/PROJECT_ID'
 export MLFLOW_REGISTRY_URI="$MLFLOW_TRACKING_URI"
-read -r -s -p 'API token: ' MLFLOW_TRACKING_TOKEN
+printf 'API token: '; read -r -s MLFLOW_TRACKING_TOKEN; echo
 export MLFLOW_TRACKING_TOKEN
 ```
 
@@ -233,7 +233,7 @@ SDKからはAPI tokenを`MLFLOW_TRACKING_TOKEN`（Bearer）で渡します。ユ
 ```bash
 export MLFLOW_TRACKING_URI="https://tracking.example.internal/api/mlflow/projects/<project-uuid>"
 export MLFLOW_TRACKING_USERNAME=mado
-read -r -s -p 'API token: ' MLFLOW_TRACKING_PASSWORD
+printf 'API token: '; read -r -s MLFLOW_TRACKING_PASSWORD; echo
 export MLFLOW_TRACKING_PASSWORD
 ```
 

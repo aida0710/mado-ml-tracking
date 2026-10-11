@@ -6,6 +6,9 @@ export const operationsText = {
   operationsAlertsNone: '開いている運用アラートはありません',
   operationsAlertsLoadFailed: '運用アラートを読み込めませんでした',
   operationsAlertOpenedAt: '検知',
+  operationsAlertsScope:
+    'メンバーになっているプロジェクトのアラートです（全体管理者はすべてのプロジェクト）。',
+  operationsAlertUnknownProject: '（読み込み中のプロジェクト）',
   pluginOutbox: 'イベントの送信状況',
   pluginOutboxPending: '未送信',
   pluginOutboxSending: '送信中',
@@ -25,4 +28,7 @@ export const operationsAlertKindLabels: Record<OperationsAlertKind, string> = {
 
 export const operationsTextTemplates = {
   operationsAlertCount: (count: number) => `運用アラート ${count}件`,
+  // The bell got as many alerts as one request returns, so more may be open.
+  operationsAlertCountAtLeast: (count: number) => `運用アラート ${count}件以上`,
+  operationsAlertBadgeAtLeast: (count: number) => `${count}+`,
 };

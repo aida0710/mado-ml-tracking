@@ -1,4 +1,5 @@
 import { Plus, RefreshCw } from 'lucide-react';
+import type { AutomationExecutionFilter } from '../api/automation';
 import { useAuth } from '../hooks/useAuth';
 import { useProject } from '../hooks/useProject';
 import { useProjectTargets } from '../hooks/useProjectTargets';
@@ -8,22 +9,35 @@ import { canManageAutomationRules } from '../lib/automationPermissions';
 import { AutomationRuleDialog } from '../dialogs/AutomationRuleDialog';
 import { AutomationRulesTable } from './AutomationRulesTable';
 import { AutomationExecutionsTable } from './AutomationExecutionsTable';
+import { AutomationHistoryFilters } from './AutomationHistoryFilters';
 import { AutomationRuleDetails } from './AutomationRuleDetails';
 import { QueryDialog } from './QueryDialog';
 import { Resource, ErrorNotice } from './Feedback';
 import { text } from '../i18n/catalog';
+import { automationText } from '../i18n/automation';
 
 export function ModelAutomationPanel({
   view,
   initialFamily,
+  historyFilter,
+  onHistoryFilterChange,
+  onShowRuleHistory,
 }: {
   view: 'rules' | 'history';
   initialFamily?: string;
+  historyFilter: AutomationExecutionFilter;
+  onHistoryFilterChange: (filter: AutomationExecutionFilter) => void;
+  /** Opens the history tab narrowed to one rule. */
+  onShowRuleHistory: (ruleId: string) => void;
 }) {
   const { project } = useProject();
   const { user } = useAuth();
   const canManage = canManageAutomationRules(project.role, user.isAdmin);
-  const automation = useModelAutomation(project.id, view === 'history');
+  const automation = useModelAutomation({
+    projectId: project.id,
+    showExecutions: view === 'history',
+    historyFilter,
+  });
   const registry = useExecutionCatalog(project.id);
   const targets = useProjectTargets(project.id);
   const rules = automation.rules.value ?? [];
@@ -34,6 +48,7 @@ export function ModelAutomationPanel({
   const selectedRule = automation.rules.value?.find(
     (rule) => rule.id === automation.selectedRuleId,
   );
+  const { executions, draft } = automation;
   return (
     <section className="automation-panel">
       <div className="section-heading">
@@ -58,7 +73,13 @@ export function ModelAutomationPanel({
           </button>
         </div>
       </div>
+      {!canManage && view === 'rules' && <p className="muted">{automationText.manageAdminOnly}</p>}
       <ErrorNotice message={automation.error} />
+      {automation.sourceLeftEnabled && (
+        <p className="notice error" role="alert">
+          {automationText.sourceRuleLeftEnabled(automation.sourceLeftEnabled)}
+        </p>
+      )}
       {view === 'history' && (
         <ErrorNotice message={automation.rules.error} retry={automation.rules.reload} />
       )}
@@ -89,30 +110,55 @@ export function ModelAutomationPanel({
               catalog={catalog}
               projectId={project.id}
               canManage={canManage}
+              pending={automation.pending}
               onSelectRule={automation.selectRule}
+              onEnable={() => void automation.setEnabled(selectedRule.id, true)}
+              onCopy={() => automation.startCopying(selectedRule)}
+              onShowHistory={() => onShowRuleHistory(selectedRule.id)}
               onApplied={automation.reload}
             />
           )}
         </>
       ) : (
-        <Resource query={automation.executions}>
-          {(executions) => (
+        <>
+          <AutomationHistoryFilters
+            filter={historyFilter}
+            rules={rules}
+            catalog={registry.value}
+            onChange={onHistoryFilterChange}
+          />
+          <ErrorNotice message={executions.error} retry={executions.reload} />
+          {executions.loading ? (
+            <p className="muted" role="status">
+              {text.loading}
+            </p>
+          ) : (
             <AutomationExecutionsTable
-              executions={executions}
+              executions={executions.items}
               rules={rules}
               projectId={project.id}
               catalog={registry.value}
               onRerun={canManage ? automation.reload : undefined}
             />
           )}
-        </Resource>
+          {executions.hasMore && (
+            <div className="section-actions">
+              <span className="muted">
+                {automationText.historyShownCount(executions.items.length)}
+              </span>
+              <button
+                className="button small"
+                disabled={executions.loadingMore}
+                onClick={executions.loadMore}
+              >
+                {executions.loadingMore ? text.loading : automationText.historyLoadMore}
+              </button>
+            </div>
+          )}
+        </>
       )}
-      {canManage && automation.isCreating && (
-        <QueryDialog
-          title={text.newAutomationRule}
-          onClose={automation.stopCreating}
-          query={registry}
-        >
+      {canManage && draft && (
+        <QueryDialog title={text.newAutomationRule} onClose={automation.stopCreating} query={registry}>
           {(choices) => (
             <QueryDialog
               title={text.newAutomationRule}
@@ -123,12 +169,9 @@ export function ModelAutomationPanel({
                 <AutomationRuleDialog
                   catalog={{ registry: choices, targets: computeTargets, rules }}
                   initialFamilies={initialFamily ? [initialFamily] : []}
+                  source={draft.source}
                   onClose={automation.stopCreating}
-                  onSaved={(rule) => {
-                    automation.stopCreating();
-                    automation.selectRule(rule.id);
-                    automation.reload();
-                  }}
+                  onSaved={(saved) => void automation.finishCreating(saved)}
                 />
               )}
             </QueryDialog>

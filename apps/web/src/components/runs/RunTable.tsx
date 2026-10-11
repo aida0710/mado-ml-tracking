@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Run, SavedViewColumn } from '@mmt/contracts';
 import { Empty } from '../Feedback';
 import { narrowerThan } from '../../lib/breakpoints';
@@ -26,6 +27,7 @@ export function RunTable({
   onColumnsChange,
   selectedIds,
   onSelectedIdsChange,
+  empty = text.noResults,
 }: {
   projectId: string;
   runs: Run[];
@@ -34,9 +36,11 @@ export function RunTable({
   onColumnsChange: (columns: SavedViewColumn[]) => void;
   selectedIds: string[];
   onSelectedIdsChange: (ids: string[]) => void;
+  /** Shown instead of the table when the page has no Runs: why, and what to do next. */
+  empty?: ReactNode;
 }) {
   const isPhone = useMediaQuery(narrowerThan('sm'));
-  if (!runs.length) return <Empty>{text.noResults}</Empty>;
+  if (!runs.length) return <Empty>{empty}</Empty>;
 
   const shownRunIds = runs.map((run) => run.id);
   const selection: RunListSelection = {

@@ -43,3 +43,11 @@ export function findLastProjectAdminGrant(
   const [onlyGrant, ...otherGrants] = listProjectAdminGrants(members);
   return onlyGrant && otherGrants.length === 0 ? onlyGrant : null;
 }
+
+/** Display names of the people who are Project admin (directly or through a group), by name. */
+export function projectAdminNames(members: readonly ProjectMember[]): string[] {
+  return people(members)
+    .filter((member) => member.role === 'admin')
+    .map((member) => member.user.displayName)
+    .sort((left, right) => left.localeCompare(right, 'ja'));
+}

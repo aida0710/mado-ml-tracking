@@ -102,6 +102,10 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" "$MMT_API_URL/api/auth/token"
 
 「Project adminがいなくなるため変更できません。」と表示される場合は、最後のAdminを外そうとしています。先に別のメンバーか、誰かがログインしたことのあるgroupへAdminを付けてください。まだ誰もログインしていないgroupのAdminは数えません（「Authentik group」の一覧に「まだ誰もログインしていません」と出ます）。全体管理者を無効化・降格しようとして409 `last_global_admin`になる場合も、先に別の全体管理者を用意します。
 
+## 「このプロジェクトはアーカイブされています」と出る
+
+そのProjectは、ProjectのAdminか全体管理者がアーカイブしました（404 `project_archived`）。データは残っています。使うときは、全体管理者に「全体管理」→［プロジェクト］の「アーカイブ済みも表示」から［元に戻す］を依頼します（[Projectの作成と管理](/admin/projects)）。
+
 ## 通知が届かない
 
 1. ［プロジェクト設定］の「通知」の通知先で、［送信設定］が「設定済み」かを確かめます。「未設定」なら、API serverの`.env`に環境変数が無いか、APIを再起動していません。
@@ -113,7 +117,7 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" "$MMT_API_URL/api/auth/token"
 
 | 表示 | 直し方 |
 | --- | --- |
-| Pluginのtoken環境変数が設定されていません（`plugin_token_unavailable`） | API serverの`.env`に、登録した変数名でPluginのtokenを入れ、APIを再起動する |
+| Pluginの詳細の「API serverの設定」が「未設定」、または「Pluginのtoken環境変数 <変数名> がAPI serverに設定されていません」（`plugin_token_unavailable`） | API serverの`.env`に、表示された変数名でPluginのtokenを入れ、APIを再起動する |
 | ［接続を確認］が失敗する | Pluginが動いているか、接続先URLにAPI serverから届くかを確かめる。PluginとAPI serverの`MMT_PLUGIN_TOKEN`の値が同じかを確かめる |
 | 運用アラート「Plugin送信の滞留」 | ［Plugins］の「イベントの送信状況」で最終エラーを確かめ、Pluginを直してから［イベントを再送］を押す |
 

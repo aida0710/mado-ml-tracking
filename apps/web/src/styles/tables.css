@@ -236,3 +236,9 @@
 .responsive-table-details dd :is(.access-actions, .user-actions, .storage-row-actions) {
   flex-wrap: wrap;
 }
+/* The Experiment list's own empty line, short enough for the list's box on a phone. */
+.experiment-sidebar-empty {
+  margin: 8px 16px;
+  color: var(--muted);
+  font-size: 12px;
+}

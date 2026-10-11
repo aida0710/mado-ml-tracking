@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   CSV_BYTE_ORDER_MARK,
-  csvAttachmentDisposition,
   encodeCsvCell,
   encodeCsvDocument,
   encodeCsvLine,
@@ -43,14 +42,5 @@ describe('CSVの符号化', () => {
 
   it('nullとundefinedと空文字は空のセルになる', () => {
     expect(encodeCsvLine([null, undefined, '', 'x'])).toBe(',,,x\r\n');
-  });
-
-  it('添付ファイル名は日本語をRFC 5987で、ASCIIの代替名は記号を置き換えて渡す', () => {
-    expect(csvAttachmentDisposition('runs-20261008.csv')).toBe(
-      `attachment; filename="runs-20261008.csv"; filename*=UTF-8''runs-20261008.csv`,
-    );
-    expect(csvAttachmentDisposition('比較"a".csv')).toBe(
-      `attachment; filename="___a_.csv"; filename*=UTF-8''${encodeURIComponent('比較"a".csv')}`,
-    );
   });
 });

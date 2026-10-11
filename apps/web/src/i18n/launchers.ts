@@ -23,7 +23,11 @@ export const launchersText = {
   launcherConfigExampleHint:
     'launcher.tomlには起動に要るものだけを書きます。担当するコンピュータ・鍵・job shellは、ランチャーがWebから読みます。',
   launcherConfigApiUrlComment:
-    'ランチャーから届くtrackingのURL。同じcomposeの中で動かすときはAPIのURL（例: http://api:4182）',
+    'ランチャーから届くこのアプリのURL（例はこの画面のURL）。ランチャーをAPIと同じdocker composeの中で動かすときは、APIのserviceのURL',
+  launcherStart: 'ランチャーを入れて起動する',
+  launcherStartHint:
+    '上のtokenをtoken_fileに、launcher.tomlを下のコマンドの--configのパスに置いてから実行します。docker composeで動かすときは docker compose --profile launcher up -d launcher です。起動後、一覧の「最後の応答」が更新されれば動いています。',
+  launcherStartCommands: 'ランチャーのホストで実行するコマンド',
   launcherConfigTokenFileComment: '上のtokenだけを書いたファイル（mode 600、ランチャーのユーザーの所有）',
   launcherConfigStateComment:
     '秘密鍵・known_hosts・投入中の記録を置くディレクトリ。ランチャーごとに別にし、再起動しても消しません（消すと鍵を登録し直します）',

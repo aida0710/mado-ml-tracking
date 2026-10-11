@@ -128,10 +128,10 @@ try {
   await page.getByRole('button', { name: 'speech', exact: true }).click();
   await page.getByRole('button', { name: 'フォルダから作る' }).click();
   const dialog = page.getByRole('dialog');
-  await dialog.getByLabel('フォルダを選択').setInputFiles(folder);
+  await dialog.getByLabel('フォルダを選ぶ').setInputFiles(folder);
   await dialog.getByText('3件のファイル').waitFor();
   await screenshot(page, 'dataset-folder-selected');
-  await dialog.getByRole('button', { name: 'uploadしてバージョンを作成' }).click();
+  await dialog.getByRole('button', { name: 'アップロードしてバージョンを作成' }).click();
   await dialog.waitFor({ state: 'detached', timeout: VERSION_TIMEOUT_MS });
 
   const versions = await (await page.request.get(`${WEB_URL}/api/projects/${project.id}/datasets/${dataset.id}/versions`)).json();
@@ -167,14 +167,15 @@ try {
   async function uploadAndCancelLarge() {
     await page.getByRole('button', { name: 'フォルダから作る' }).click();
     const folderDialog = page.getByRole('dialog');
-    await folderDialog.getByLabel('フォルダを選択').setInputFiles(largeFolder);
+    await folderDialog.getByLabel('フォルダを選ぶ').setInputFiles(largeFolder);
     await folderDialog.getByText('2件のファイル').waitFor();
-    await folderDialog.getByRole('button', { name: 'uploadしてバージョンを作成' }).click();
+    await folderDialog.getByRole('button', { name: 'アップロードしてバージョンを作成' }).click();
     const largeRow = folderDialog.locator('[data-testid="upload-queue-row"]', { hasText: 'big.bin' });
     await folderDialog.locator('[data-testid="upload-queue-row"][data-status="uploading"]', { hasText: 'big.bin' }).waitFor();
-    await folderDialog.locator('[data-testid="upload-queue-row"][data-status="completed"]', { hasText: 'tone.wav' }).waitFor({ timeout: VERSION_TIMEOUT_MS });
+    // Finished files are counted in the folder's summary rather than listed.
+    await folderDialog.getByText('1 / 2 件完了').waitFor({ timeout: VERSION_TIMEOUT_MS });
     await largeRow.getByRole('button', { name: '取消' }).click();
-    await folderDialog.getByText('1件のファイルがuploadされていないため').waitFor();
+    await folderDialog.getByText('1件のファイルがアップロードされていないため').waitFor();
     return folderDialog;
   }
   const leftOut = await uploadAndCancelLarge();

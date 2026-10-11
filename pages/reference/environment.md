@@ -74,6 +74,7 @@ openssl rand -base64 32
 | `S3_FORCE_PATH_STYLE` | `false` | path-styleのURLを使う |
 | `S3_ACCESS_KEY_ID`、`S3_SECRET_ACCESS_KEY` | なし | S3の認証情報。無ければAWS SDKの標準の方法で探す |
 | `MMT_STORAGE_SECRET_KEY` | なし | 画面で追加したS3の保存先のシークレットをDBで暗号化する鍵（base64の32 byte） |
+| `MMT_HOOK_SECRET_KEY` | なし | Webhook のフックのシークレットをDBで暗号化する鍵（base64の32 byte）。無いと、Webhook のフックを作れず、保存済みのフックの署名も確かめられない |
 | `MMT_ARTIFACT_MAX_BYTES` | `214748364800`（200GiB） | Artifact 1件の上限 |
 | `MMT_ARTIFACT_DELETE_GRACE_DAYS` | `7` | 削除したArtifactの本体を消すまでの日数。0〜3650 |
 | `MMT_UPLOAD_REQUEST_TIMEOUT_MS` | `0`（無効） | uploadの要求全体の締め切り |

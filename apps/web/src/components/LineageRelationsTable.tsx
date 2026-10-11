@@ -1,15 +1,22 @@
-import type { LineageGraph } from '@mmt/contracts';
-import { lineageRelationLabels, text } from '../i18n/catalog';
+import { Link } from 'react-router-dom';
+import type { LineageGraph, LineageNode } from '@mmt/contracts';
+import { lineageNodeUrl } from '../lib/lineageLayout';
+import { lineageNodeKindLabels, lineageRelationLabels, text } from '../i18n/catalog';
 
-/** Every relation of the graph as source → relation → target rows, folded under a summary. */
+/**
+ * Every relation of the graph as source → relation → target rows, folded under a summary. Each
+ * end names its kind and links to its page, so the table works without the diagram.
+ */
 export function LineageRelationsTable({
   graph,
+  projectId,
   initiallyOpen,
 }: {
   graph: LineageGraph;
+  projectId: string;
   initiallyOpen: boolean;
 }) {
-  const labelById = new Map(graph.nodes.map((node) => [node.id, node.label]));
+  const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
   return (
     <details className="graph-relations" open={initiallyOpen}>
       <summary>
@@ -27,14 +34,28 @@ export function LineageRelationsTable({
           <tbody>
             {graph.edges.map((edge, index) => (
               <tr key={index}>
-                <td>{labelById.get(edge.source) ?? edge.source}</td>
+                <td>
+                  <RelationEnd node={nodeById.get(edge.source)} id={edge.source} projectId={projectId} />
+                </td>
                 <td className="nowrap">{lineageRelationLabels[edge.relation] ?? edge.relation}</td>
-                <td>{labelById.get(edge.target) ?? edge.target}</td>
+                <td>
+                  <RelationEnd node={nodeById.get(edge.target)} id={edge.target} projectId={projectId} />
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
     </details>
+  );
+}
+
+function RelationEnd({ node, id, projectId }: { node: LineageNode | undefined; id: string; projectId: string }) {
+  if (!node) return <span className="mono">{id}</span>;
+  return (
+    <span className="lineage-relation-end">
+      <span className="muted">{lineageNodeKindLabels[node.kind]}</span>
+      <Link to={lineageNodeUrl(projectId, node)}>{node.label}</Link>
+    </span>
   );
 }

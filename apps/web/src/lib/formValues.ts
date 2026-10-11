@@ -3,11 +3,14 @@ import { text } from '../i18n/catalog';
 import type { FormField, FormValues } from '../types/form';
 
 export type { FormValues } from '../types/form';
+/** Fields whose value is a list of the chosen options rather than one string. */
+export const isMultiValueField = (field: Pick<FormField, 'type'>) =>
+  field.type === 'multiselect' || field.type === 'checkboxes';
 export function createInitialValues(fields: FormField[]): FormValues {
   return Object.fromEntries(
     fields.map((field) => [
       field.name,
-      field.defaultValue ?? (field.type === 'multiselect' ? [] : ''),
+      field.defaultValue ?? (isMultiValueField(field) ? [] : ''),
     ]),
   );
 }

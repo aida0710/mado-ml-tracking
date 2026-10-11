@@ -1,9 +1,5 @@
-import type { ModelAutomationExecution } from '@mmt/contracts';
+import { MAX_JOB_ATTEMPTS, type ModelAutomationExecution } from '@mmt/contracts';
 import { first, type Connection } from '../db/database.js';
-
-// A Job retry chain is bounded by the Job's maxAttempts (at most 100); the limit only stops a
-// corrupted chain from looping.
-export const MAX_RETRY_CHAIN_LENGTH = 100;
 
 export type AutomationExecutionRecord = Pick<
   ModelAutomationExecution,
@@ -31,7 +27,9 @@ export async function findExecutionForRun(
   reference: { projectId: string; runId: string },
 ): Promise<AutomationExecutionRecord | null> {
   let runId: string | null = reference.runId;
-  for (let step = 0; runId !== null && step <= MAX_RETRY_CHAIN_LENGTH; step += 1) {
+  // A retry chain has at most MAX_JOB_ATTEMPTS Jobs, so this reaches the first attempt; the bound
+  // also stops a corrupted chain from looping.
+  for (let step = 0; runId !== null && step <= MAX_JOB_ATTEMPTS; step += 1) {
     const execution = await first<AutomationExecutionRecord>(
       connection,
       `SELECT id,project_id,rule_id,model_version_id,run_id,job_id,status,trigger_run_id,

@@ -32,6 +32,9 @@ export const uploadsText = {
   uploadRestoreResumePath: '保存パスを戻す',
   uploadRestartFromQueue: '［再開］を押すと、最初から送り直します。',
   uploadInProgressNotice: 'アップロード中は閉じられません。一時停止か取消をしてから閉じてください。',
+  uploadNetworkLostResume: '通信が切れました。回線を確かめてから［再開］を押すと、続きから送ります。',
+  uploadPathSameContent: '中身も同じなので、送らなくても構いません。',
+  uploadNetworkLostResend: '通信が切れました。回線を確かめてから［再開］を押すと、送り直します。',
 } as const;
 
 export const uploadStatusLabels: Record<UploadItemStatus, string> = {
@@ -72,6 +75,15 @@ export const uploadsTextTemplates = {
   uploadSelectedCount: (count: number, totalSize: string) => `${count}件（${totalSize}）`,
   uploadTransferRate: (rate: string) => `${rate}/秒`,
   uploadRemainingTime: (duration: string) => `残り ${duration}`,
+  uploadPathExists: (storedAt: string) =>
+    `このパスにはファイルがあります（${storedAt} 保存）。送ると新しいバージョンになり、今のものは［詳細］の以前のバージョンに残ります。`,
+  uploadPlannedPaths: (examples: string[], rest: number) =>
+    `保存パス: ${examples.join('、')}${rest > 0 ? ` ほか${rest}件` : ''}`,
+  uploadRetrying: (attempt: number, maxAttempts: number) =>
+    `通信が切れたため再試行しています（${attempt}回目 / 最大${maxAttempts}回）`,
+  durationSeconds: (seconds: number) => `${seconds}秒`,
+  durationMinutes: (minutes: number, seconds: number) => `${minutes}分${seconds}秒`,
+  durationHours: (hours: number, minutes: number) => `${hours}時間${minutes}分`,
   uploadResumedBytes: (size: string) => `前回の続きから（${size} は送信済み）`,
   uploadProgressSummary: (done: number, total: number) => `${done} / ${total} 件完了`,
   uploadSessionReceived: (sent: string, total: string) => `${sent} / ${total} 送信済み`,

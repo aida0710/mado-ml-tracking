@@ -39,11 +39,6 @@ export function getCheckpointResumeOffer({
   return job && isResumableStatus(job.status) ? 'resume' : 'none';
 }
 
-/** The Job that ran this Run. The jobs list is newest first, so a re-enqueued Run gets its newest Job. */
-export function findRunJob(jobs: readonly Job[], runId: string): Job | undefined {
-  return jobs.find((job) => job.runId === runId);
-}
-
 /**
  * Reads Run.environment.resume, which the server writes when the Run is pinned to a checkpoint.
  * Returns null for an ordinary Run or a record that does not have the contract's shape.

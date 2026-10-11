@@ -56,6 +56,27 @@ describe('MediaCompareGridView', () => {
     expect(html.match(/class="media-compare-cell/g)).toHaveLength(4);
   });
 
+  it('各Runの最新stepの格子は1列にまとめ、セルごとに記録したstepを出す', () => {
+    const latest: MediaCompareGrid = {
+      key: 'samples/spectrogram',
+      steps: null,
+      rows: [
+        { runId: 'run-a', cells: [[image('run-a', 19)]] },
+        { runId: 'run-b', cells: [[image('run-b', 59)]] },
+      ],
+    };
+    const html = renderToStaticMarkup(
+      <MediaCompareGridView projectId="project" grid={latest} runLabels={runLabels} isNarrow={false} />,
+    );
+    expect(html.match(/<th scope="col"[^>]*>[^<]*<\/th>/g)).toEqual([
+      '<th scope="col">Run</th>',
+      '<th scope="col" class="mono">各Runの最新step</th>',
+    ]);
+    expect(html).toContain('aria-label="学習 1回目、step 19、画像"');
+    expect(html).toContain('aria-label="学習 2回目、step 59、画像"');
+    expect(html).not.toContain('missing');
+  });
+
   it('狭い幅では選んだセルのプレビューを、その Run の並びのすぐ下に出す', () => {
     const html = renderToStaticMarkup(
       <MediaCompareGridView projectId="project" grid={grid} runLabels={runLabels} isNarrow />,

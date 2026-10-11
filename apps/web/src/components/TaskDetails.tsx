@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import type { ComputeTarget, ExperimentTask, TaskOutputModel } from '@mmt/contracts';
+import type { CodeVersion, ComputeTarget, ExperimentTask, TaskOutputModel } from '@mmt/contracts';
 import type { ExecutionCatalog } from '../types/executionCatalog';
 import type { SelectOption } from '../types/form';
 import { DetailsList, KeyValues } from './JsonDetails';
 import { CodeRuntimeDetails } from './CodeRuntimeDetails';
 import { hasOutputModel, outputModelLabel } from '../lib/taskInput';
-import { buildCatalogOptions } from '../lib/catalogOptions';
+import { buildCatalogOptions, formatCodeVersionName } from '../lib/catalogOptions';
 import { formatClockDuration } from '../lib/clockDuration';
 import { isSiteTarget } from '../lib/siteExecutionInput';
 import { text } from '../i18n/catalog';
@@ -21,10 +21,17 @@ function OutputModelDetails({ outputModel, catalog, base }: {
       : <Link to={`${base}/models?id=${outputModel.modelId}`}>{outputModelLabel(outputModel, catalog)}</Link>],
     [text.outputModelArtifactPath, <span className="mono">{outputModel.artifactPath}</span>],
     [text.outputModelDefaultCode, outputModel.defaultCodeVersionId
-      ? <Link to={`${base}/codes?version=${outputModel.defaultCodeVersionId}`}>{defaultCode?.version ?? outputModel.defaultCodeVersionId}</Link>
+      ? <Link to={`${base}/codes?version=${outputModel.defaultCodeVersionId}`}>{defaultCode ? codeVersionName(defaultCode, catalog) : outputModel.defaultCodeVersionId}</Link>
       : null],
   ]} />;
 }
+
+// "code name / version": every code version of the sample is "v1", so the version alone says little.
+const codeVersionName = (version: CodeVersion, catalog: ExecutionCatalog) =>
+  formatCodeVersionName(
+    catalog.codes.find((item) => item.id === version.codeId)?.name ?? version.codeId,
+    version.version,
+  );
 
 // Versions not in the catalog (e.g. from another page of results) keep their id.
 const optionLabel = (options: SelectOption[], id: string) =>
@@ -48,7 +55,7 @@ export function TaskDetails({ task, catalog, targets }: {
       [text.taskRevision, <span data-testid="task-revision">{task.revision}</span>],
       [text.experiments, <Link to={`${base}/experiments?experiment=${task.experimentId}`}>{catalog.experiments.find((item) => item.id === task.experimentId)?.name ?? task.experimentId}</Link>],
       [text.kind, text[task.kind]],
-      [text.codeVersion, <Link to={`${base}/codes?version=${task.codeVersionId}`}>{code?.version ?? task.codeVersionId}</Link>],
+      [text.codeVersion, <Link to={`${base}/codes?version=${task.codeVersionId}`}>{code ? codeVersionName(code, catalog) : task.codeVersionId}</Link>],
       [text.modelVersion, task.modelVersionId ? <Link to={`${base}/models?version=${task.modelVersionId}`}>{optionLabel(options.models, task.modelVersionId)}</Link> : null],
       [text.inputDatasets, task.inputDatasetVersionIds.length
         ? task.inputDatasetVersionIds.map((id) => <Link key={id} className="version-link" to={`${base}/datasets?version=${id}`}>{optionLabel(options.datasets, id)}</Link>)

@@ -52,6 +52,21 @@ export function useRegistry<T extends RegistryItem, V extends RegistryVersion>(
         : null;
   const selectItem = (id: string) => setParams({ id });
   const selectVersion = (id: string) => setParams({ id: selectedId, version: id });
+  /**
+   * Writes the item opened by default (the first of the list) into the URL, so a reload that moves
+   * it down the list, such as archiving it, keeps it open.
+   */
+  function pinSelectedItem() {
+    if (requestedId || !selectedId) return;
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.set('id', selectedId);
+        return next;
+      },
+      { replace: true },
+    );
+  }
   function reload() {
     list.reload();
     versions.reload();
@@ -66,6 +81,7 @@ export function useRegistry<T extends RegistryItem, V extends RegistryVersion>(
     selectionError,
     selectItem,
     selectVersion,
+    pinSelectedItem,
     reload,
   };
 }

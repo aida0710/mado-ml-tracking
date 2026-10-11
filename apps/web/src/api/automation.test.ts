@@ -30,4 +30,31 @@ describe('自動実行API', () => {
       status: 403,
     });
   });
+  it('実行履歴は件数・ルール・バージョン・続きの位置をクエリに入れて読む', async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ items: [], nextCursor: null })));
+    vi.stubGlobal('fetch', fetch);
+    await automationApi.executionPage('project', {
+      filter: { ruleId: 'rule', modelVersionId: 'version' },
+      limit: 100,
+      cursor: 'execution-100',
+    });
+    const [url] = fetch.mock.calls[0] as [string];
+    const query = new URL(url, 'http://localhost').searchParams;
+    expect(Object.fromEntries(query)).toEqual({
+      limit: '100',
+      ruleId: 'rule',
+      modelVersionId: 'version',
+      cursor: 'execution-100',
+    });
+  });
+  it('絞り込みの無い最初のページは件数だけを送る', async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ items: [], nextCursor: null })));
+    vi.stubGlobal('fetch', fetch);
+    await automationApi.executionPage('project', { limit: 100 });
+    expect(fetch.mock.calls[0]![0]).toBe('/api/projects/project/automation-executions?limit=100');
+  });
 });

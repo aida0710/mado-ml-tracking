@@ -15,8 +15,8 @@ export interface SweepFormValues {
   taskId: string;
   /** '' uses the Task's target. */
   targetId: string;
-  /** Comma separated; '' uses the Task's GPUs. */
-  gpuIds: string;
+  /** GPU IDs of the chosen computer; none uses the Task's GPUs. */
+  gpuIds: string[];
   method: SweepMethod;
   metric: string;
   goal: SweepObjective['goal'];
@@ -44,7 +44,7 @@ export function initialSweepForm(taskId: string, createRowId: () => string): Swe
     name: '',
     taskId,
     targetId: '',
-    gpuIds: '',
+    gpuIds: [],
     method: 'random',
     metric: '',
     goal: 'minimize',
@@ -128,7 +128,6 @@ export function buildSweepCreate(form: SweepFormValues): SweepFormResult {
           ...(form.maxIter.trim() ? { maxIter: integer('maxIter', form.maxIter) } : {}),
         }
       : null;
-  const gpuIds = form.gpuIds.split(',').map((id) => id.trim()).filter(Boolean);
   const searchSpaceError = form.rows.length ? null : text.sweepNoParameters;
   const isValid = Object.keys(fieldErrors).length === 0 && Object.keys(rowErrors).length === 0 && !searchSpaceError;
   return {
@@ -144,7 +143,7 @@ export function buildSweepCreate(form: SweepFormValues): SweepFormResult {
           earlyStopping,
           ...(seed !== undefined ? { seed } : {}),
           targetId: form.targetId || null,
-          gpuIds: gpuIds.length ? gpuIds : null,
+          gpuIds: form.gpuIds.length ? form.gpuIds : null,
         }
       : null,
     fieldErrors,

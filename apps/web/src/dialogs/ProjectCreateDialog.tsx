@@ -8,10 +8,11 @@ import { Dialog } from '../components/Dialog';
 import { ErrorNotice } from '../components/Feedback';
 import { ProjectMemberGrantsField } from '../components/ProjectMemberGrantsField';
 import { ProjectVisibilityPicker } from '../components/ProjectVisibilityPicker';
-import { StorageBackendPicker } from '../components/StorageBackendPicker';
+import { NewProjectStorageField } from '../components/NewProjectStorageField';
 import type { StorageBackendChoice } from '../hooks/useStorageBackends';
 import { buildProjectCreate, DEFAULT_PROJECT_VISIBILITY } from '../lib/projectCreateInput';
 import type { MemberGrantDraft } from '../lib/projectMemberGrants';
+import { isProjectNameTaken } from '../lib/projectNameCollisions';
 import { text } from '../i18n/catalog';
 
 /**
@@ -20,9 +21,12 @@ import { text } from '../i18n/catalog';
  * this one dialog; the caller opens the created Project.
  */
 export function ProjectCreateDialog({
+  existingNames,
   onClose,
   onCreated,
 }: {
+  /** Names of the Projects the user can see, to warn before a second one gets the same name. */
+  existingNames: readonly string[];
   onClose: () => void;
   onCreated: (project: Project) => void;
 }) {
@@ -33,6 +37,7 @@ export function ProjectCreateDialog({
         <ProjectCreateForm
           choices={choices.items}
           defaultBackend={choices.defaultBackend}
+          existingNames={existingNames}
           onClose={onClose}
           onCreated={onCreated}
         />
@@ -44,11 +49,13 @@ export function ProjectCreateDialog({
 function ProjectCreateForm({
   choices,
   defaultBackend,
+  existingNames,
   onClose,
   onCreated,
 }: {
   choices: StorageBackendChoice[];
   defaultBackend: string;
+  existingNames: readonly string[];
   onClose: () => void;
   onCreated: (project: Project) => void;
 }) {
@@ -59,6 +66,8 @@ function ProjectCreateForm({
   // New Projects start on the backend the global administrator chose as the default.
   const [backend, setBackend] = useState(defaultBackend);
   const mutation = useMutation();
+  // A warning, not a refusal: the API allows the same name, and a team may mean to reuse one.
+  const isNameTaken = isProjectNameTaken(name, existingNames);
   return (
     <Dialog title={text.newProject} onClose={onClose} busy={mutation.pending}>
       <form
@@ -94,8 +103,14 @@ function ProjectCreateForm({
               id="new-project-name"
               value={name}
               required
+              aria-describedby={isNameTaken ? 'new-project-name-taken' : undefined}
               onChange={(event) => setName(event.target.value)}
             />
+            {isNameTaken && (
+              <p id="new-project-name-taken" className="suggestion-note warning">
+                {text.projectNameTakenHint}
+              </p>
+            )}
           </div>
           <div className="field">
             <label htmlFor="new-project-description">{text.projectDescriptionOptional}</label>
@@ -114,8 +129,7 @@ function ProjectCreateForm({
           {visibility === 'private' && (
             <ProjectMemberGrantsField drafts={memberDrafts} onChange={setMemberDrafts} />
           )}
-          <StorageBackendPicker
-            name="new-project-artifact-backend"
+          <NewProjectStorageField
             choices={choices}
             defaultBackend={defaultBackend}
             value={backend}
