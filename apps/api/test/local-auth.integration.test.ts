@@ -12,6 +12,8 @@ import { startMockOidcProvider, TEST_SESSION_ENCRYPTION_KEY } from './mockOidcPr
 
 const PASSWORD = 'correct horse battery staple';
 const NEW_PASSWORD = 'a different long passphrase';
+// Move stored session timestamps instead of waiting for the default seven-day lifetime.
+const DAY_SECONDS = 24 * 60 * 60;
 
 describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独立PostgreSQL）', () => {
   let harness: Harness;
@@ -111,7 +113,7 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独
       // local mode ignores leftover OIDC settings instead of opening an SSO path.
       const local = loadConfig({ ...base, AUTH_MODE: 'local', OIDC_ISSUER_URL: 'not a url' });
       expect(local.oidc).toBeNull();
-      expect(local.session).toEqual({ idleSeconds: 28800, absoluteSeconds: 43200 });
+      expect(local.session).toEqual({ idleSeconds: 604800, absoluteSeconds: 604800 });
     });
 
     it('local modeはOIDCの開始とcallbackが404、oidc modeはlocal loginが404、hybridは両方使える', async () => {
@@ -147,6 +149,27 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独
   });
 
   describe('local login', () => {
+    it('6日間使わずに戻っても認証でき、操作を再開してもログインから7日で終了する', async () => {
+      const app = application('local');
+      await createLocalUser('alice');
+      const cookie = await sessionCookie(app, 'alice');
+      const tokenHash = hashSecret(cookie.split('=')[1]!);
+      await harness.database.query(
+        `UPDATE sessions SET created_at=created_at-make_interval(secs=>$2),
+          last_seen_at=last_seen_at-make_interval(secs=>$2),
+          expires_at=expires_at-make_interval(secs=>$2) WHERE token_hash=$1`,
+        [tokenHash, 6 * DAY_SECONDS],
+      );
+      expect((await request(app, '/api/auth/me', { cookie })).status).toBe(200);
+
+      await harness.database.query(
+        `UPDATE sessions SET created_at=created_at-make_interval(secs=>$2),
+          expires_at=expires_at-make_interval(secs=>$2) WHERE token_hash=$1`,
+        [tokenHash, DAY_SECONDS],
+      );
+      expect((await request(app, '/api/auth/me', { cookie })).status).toBe(401);
+    });
+
     it('成功するとHttpOnly sessionを発行し、監査にpasswordを残さない', async () => {
       const app = application('local');
       const userId = await createLocalUser('alice');
@@ -160,7 +183,7 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独
       const cookie = response.headers.get('Set-Cookie')!;
       expect(cookie).toContain('HttpOnly');
       expect(cookie).toContain('SameSite=Lax');
-      expect(cookie).toContain('Max-Age=43200');
+      expect(cookie).toContain('Max-Age=604800');
       const me = await entity<{ user: { id: string } }>(
         await request(app, '/api/auth/me', { cookie: cookie.split(';')[0] }),
         200,
@@ -234,7 +257,7 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独
       await createLocalUser('alice');
       const idle = await sessionCookie(app, 'alice');
       await harness.database.query(
-        "UPDATE sessions SET last_seen_at=now()-interval '8 hours 1 minute'",
+        "UPDATE sessions SET last_seen_at=now()-interval '7 days 1 minute'",
       );
       expect((await request(app, '/api/auth/me', { cookie: idle })).status).toBe(401);
       const active = await sessionCookie(app, 'alice');
