@@ -28,9 +28,11 @@ description: 最初のProjectを作り、Python SDKと公式MLflow 3 SDKでRun�
 
 ## 2. 実験を作る
 
-［Experiments］の左側にある［＋］（実験を作成）を押し、名前に`whisper-small-finetune`と入力して［保存］を押します。
+実験がまだ無いProjectでは、Experimentsの画面の右上に［最初の実験を作成］が表示されます。押して、名前に`whisper-small-finetune`と入力して［保存］を押します。2つ目からは、左側の実験の一覧の見出し「Experiments」の右端にある［＋］（実験を作成）から作ります。
 
-左側の一覧で作った実験を選ぶと、名前の下に`実験ID`と［コピー］が表示されます。見出しの右の［SDKで記録］を押すと、このProjectと実験のIDを入れた環境変数とコードの例が開き、どれも［コピー］で写せます。
+作った実験は自動で選ばれ、名前の下に`実験ID`と［コピー］が表示されます。Runがまだ無い実験では、「SDK・MLflow 3から接続」の案内が最初から開いています。このProjectと実験のIDを入れた環境変数とコードの例が並び、どれも［コピー］で写せます。閉じたあとは、見出しの右の［SDKで記録］でまた開けます。
+
+見出しの右の［Runを作成］は、コードバージョンを選んでJobとして実行するためのRunを画面で作るものです。学習コードから記録するときは使いません（SDKやMLflowが記録を始めたときにRunが作られます）。
 
 ## 3. API tokenを発行する
 
@@ -38,12 +40,16 @@ SDKからの記録には、ログインのパスワードではなくAPI token�
 
 1. 実験の画面の［SDKで記録］（またはサイドバーの［プロジェクト設定］）の「SDK・MLflow 3から接続」で、［このProject用のAPI tokenを発行］を押します。
 2. 名前に`laptop-sdk`のように用途が分かる名前を入力します。
-3. Scopeは`read`、`runs:write`、`registry:write`、`artifacts:write`が選ばれた状態になっています。そのままにします。
+3. 用途は「SDK・MLflow 3から記録する」が選ばれ、Scopeの`read`、`runs:write`、`registry:write`、`artifacts:write`にチェックが入っています。そのままにします。
 4. 有効期限を選んで［保存］を押します。
 
-![名前、Scope、有効期限を入力するAPI tokenの発行画面](/images/guide-token-dialog.png)
+［プロジェクト設定］の「自分のAPI token」や、［アカウント］の［API tokenを発行］から開いても同じ画面で、用途は同じく「SDK・MLflow 3から記録する」から始まります。
 
-tokenの値は一度だけ表示されます。閉じる前にコピーし、パスワードマネージャーなど安全な場所へ保存してください。tokenは発行したProjectだけで使えます。
+![名前、用途、Scope、有効期限を入力するAPI tokenの発行画面](/images/guide-token-dialog.png)
+
+tokenの値は一度だけ表示されます。閉じる前に［tokenをコピー］でコピーし、パスワードマネージャーなど安全な場所へ保存してください。tokenは発行したProjectだけで使えます。
+
+同じ画面の「設定例」は、手順4と5の環境変数をまとめたものです。tokenは入っていません。［設定例をコピー］で写してターミナルに貼り付けると`API token:`と聞かれるので、コピーしたtokenを貼り付けます。
 
 ## 4. Python SDKで記録する
 
@@ -61,7 +67,7 @@ python3 -m venv ~/.venvs/mmt
 export MMT_API_URL=https://tracking.example.com
 export MMT_PROJECT_ID=<ProjectのID>
 export MMT_EXPERIMENT_ID=<実験のID>
-read -r -s -p 'API token: ' MMT_API_TOKEN
+printf 'API token: '; read -r -s MMT_API_TOKEN; echo
 export MMT_API_TOKEN
 ```
 
@@ -102,7 +108,7 @@ SDKの詳しい使い方（system metrics、途中からの再開、オフライ
 ~/.venvs/mmt/bin/pip install 'mlflow>=3,<4'
 export MLFLOW_TRACKING_URI=https://tracking.example.com/api/mlflow/projects/<ProjectのID>
 export MLFLOW_REGISTRY_URI="$MLFLOW_TRACKING_URI"
-read -r -s -p 'API token: ' MLFLOW_TRACKING_TOKEN
+printf 'API token: '; read -r -s MLFLOW_TRACKING_TOKEN; echo
 export MLFLOW_TRACKING_TOKEN
 ```
 
@@ -134,7 +140,7 @@ with mlflow.start_run(run_name="lr-5e-5"):
 
 ![2つのRunが並んだwhisper-small-finetuneの一覧](/images/guide-quickstart-runs.png)
 
-［図を表示］を押すと、一覧のRunのメトリクスが図になります。2つのRunの`train.loss`を重ねて比べられ、図の横（画面の幅が足りないときは下）の平行座標でparamsと結果の関係を確認できます。
+［図を表示］を押すと、一覧のRunのメトリクスが図になります。2つのRunの`train.loss`を重ねて比べられ、図の下の平行座標でparamsと結果の関係を確認できます。1回だけ記録した値（最後の評価値など）は、線ではなく点で表示されます。
 
 ![2つのRunのtrain.lossを重ねた図と平行座標](/images/guide-quickstart-chart.png)
 

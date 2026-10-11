@@ -1,4 +1,5 @@
 import type { Sweep, SweepObjective, SweepStatus, SweepTrial } from '@mmt/contracts';
+import { countGridCombinations } from './sweepConfig';
 
 // Values the Sweep detail derives from its trials: the progress chart, the trial order and
 // whether the page still needs polling. Kept apart from the components so they can be tested.
@@ -8,6 +9,18 @@ const ENDED_STATUSES: readonly SweepStatus[] = ['finished', 'canceled', 'failed'
 /** finished, canceled and failed sweeps accept no pause/resume/cancel/limits change (409 sweep_finished). */
 export function isSweepEnded(sweep: Pick<Sweep, 'status'>): boolean {
   return ENDED_STATUSES.includes(sweep.status);
+}
+
+/**
+ * How many trials the sweep starts: maxTrials, or the number of combinations when a grid has
+ * fewer (it ends once every combination ran).
+ */
+export function plannedTrialCount(
+  sweep: Pick<Sweep, 'method' | 'maxTrials' | 'searchSpace'>,
+): number {
+  if (sweep.method !== 'grid') return sweep.maxTrials;
+  const combinations = countGridCombinations(sweep.searchSpace);
+  return combinations === null ? sweep.maxTrials : Math.min(sweep.maxTrials, combinations);
 }
 
 /** A sweep keeps changing while it may queue trials or still has trials in flight. */

@@ -4,6 +4,8 @@ import { computeTarget, executionCatalog } from '../../tests/fixtures/execution'
 import {
   buildAutomationRuleInput,
   createAutomationValues,
+  createAutomationValuesFromRule,
+  downstreamRules,
   updateAutomationValues,
   upstreamRuleCandidates,
 } from './modelAutomationInput';
@@ -160,5 +162,63 @@ describe('モデル自動実行ルールの入力', () => {
   });
   it('Project adminはglobal adminでなくてもルールを変更できる', () => {
     expect(canManageAutomationRules('admin', false)).toBe(true);
+  });
+  it('ルールを複製すると、名前以外の設定をそのまま引き継いだ新しいルールとして登録できる', () => {
+    const source: ModelAutomationRule = {
+      ...inferenceRule,
+      id: 'evaluate-rule',
+      name: 'Evaluate',
+      trigger: 'upstream_run_finished',
+      upstreamRuleId: 'infer-rule',
+      kind: 'inference',
+      gpuIds: ['0'],
+      inputDatasetVersionIds: ['dataset-v1'],
+      parameters: { temperature: 0 },
+      tags: { suite: 'test' },
+      maxAttempts: 3,
+      enabled: false,
+    };
+    const copied = createAutomationValuesFromRule(source);
+    expect(copied.name).toBe('Evaluate（複製）');
+    expect(copied.enabled).toBe('true');
+    const { name, enabled, ...settings } = buildAutomationRuleInput(copied, catalog);
+    expect({ name, enabled }).toEqual({ name: 'Evaluate（複製）', enabled: true });
+    expect(settings).toEqual({
+      trigger: 'upstream_run_finished',
+      upstreamRuleId: 'infer-rule',
+      modelFamilies: ['Qwen3'],
+      kind: 'inference',
+      experimentId: 'experiment',
+      codeVersionId: 'code-v1',
+      targetId: 'target',
+      gpuIds: ['0'],
+      inputDatasetVersionIds: ['dataset-v1'],
+      parameters: { temperature: 0 },
+      tags: { suite: 'test' },
+      maxAttempts: 3,
+    });
+  });
+  it('このルールを上流にしているルールだけを、後に動くルールとして挙げる', () => {
+    const follower = { ...inferenceRule, id: 'follower', upstreamRuleId: 'infer-rule' };
+    expect(
+      downstreamRules([inferenceRule, disabledRule, follower], inferenceRule).map((rule) => rule.id),
+    ).toEqual(['follower']);
+  });
+  it('上流に推論のルールを選ぶと、実行種別を評価にしておく。自分で選んだ種別は変えない', () => {
+    const chained = { ...values, trigger: 'upstream_run_finished' };
+    expect(
+      updateAutomationValues({
+        previous: chained,
+        next: { ...chained, upstreamRuleId: 'infer-rule' },
+        catalog,
+      }).kind,
+    ).toBe('evaluation');
+    expect(
+      updateAutomationValues({
+        previous: chained,
+        next: { ...chained, upstreamRuleId: 'infer-rule', kind: 'processing' },
+        catalog,
+      }).kind,
+    ).toBe('processing');
   });
 });

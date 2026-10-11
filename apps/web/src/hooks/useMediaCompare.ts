@@ -1,6 +1,7 @@
 import type { MediaCompareGrid, Run, RunMediaKeySummary } from '@mmt/contracts';
 import { runMediaApi } from '../api/runMedia';
 import { trackingApi } from '../api/tracking';
+import { defaultComparisonSteps } from '../lib/mediaCompareSteps';
 import { sortedSteps } from '../lib/mediaSteps';
 import { useQuery, type QueryState } from './useQuery';
 
@@ -30,26 +31,20 @@ function mergeKeySummaries(summariesByRun: RunMediaKeySummary[][]): RunMediaKeyS
   return [...merged.values()].sort((left, right) => left.key.localeCompare(right.key));
 }
 
-/**
- * Data for comparing one media key across Runs: the Runs and keys to choose from, every step any
- * Run recorded for the selected key (the chosen one, or the first), and the Run × step grid from
- * POST /media/compare. An empty `steps` asks the API for each Run's latest step.
- */
-export function useMediaCompare({
-  projectId,
-  runIds,
-  chosenKey,
-  steps,
-}: {
+interface MediaCompareTarget {
   projectId: string;
   runIds: string[];
   chosenKey: string | null;
-  steps: number[];
-}): {
+}
+
+/**
+ * What a media comparison can be made of: the Runs, the keys any of them recorded, and the steps
+ * each Run recorded for the selected key (the chosen one, or the first), in the order of runIds.
+ */
+export function useMediaCompareChoices({ projectId, runIds, chosenKey }: MediaCompareTarget): {
   choices: QueryState<MediaCompareChoices>;
   selectedKey: string | null;
-  recordedSteps: QueryState<number[]>;
-  grid: QueryState<MediaCompareGrid>;
+  stepsByRun: QueryState<number[][]>;
 } {
   const runKey = runIds.join(',');
   const choices = useQuery(`${projectId}:media-compare-choices:${runKey}`, async (signal) => {
@@ -60,12 +55,37 @@ export function useMediaCompare({
     return { runs, keys: mergeKeySummaries(summaries) };
   });
   const key = chosenKey ?? choices.value?.keys[0]?.key ?? null;
-  const recordedSteps = useQuery(key === null ? null : `${projectId}:media-compare-steps:${runKey}:${key}`, async (signal) => {
+  const stepsByRun = useQuery(key === null ? null : `${projectId}:media-compare-steps:${runKey}:${key}`, async (signal) => {
     const lists = await Promise.all(runIds.map((runId) => runMediaApi.list(projectId, runId, { key: key! }, signal)));
-    return sortedSteps(lists.flatMap((list) => list.items.map((item) => item.step)));
+    return lists.map((list) => sortedSteps(list.items.map((item) => item.step)));
   });
-  const grid = useQuery(key === null ? null : `${projectId}:media-compare:${runKey}:${key}:${steps.join(',')}`, (signal) =>
-    runMediaApi.compare(projectId, { runIds, key: key!, ...(steps.length > 0 ? { steps } : {}) }, signal),
+  return { choices, selectedKey: key, stepsByRun };
+}
+
+/**
+ * The choices and the Run × step grid from POST /media/compare. `steps` null asks for the default
+ * columns, so the grid waits for the recorded steps to choose them; [] asks for each Run's latest
+ * step. `shownSteps` is what the grid was asked for, null until it is known.
+ */
+export function useMediaCompare({ steps, ...target }: MediaCompareTarget & { steps: number[] | null }): ReturnType<
+  typeof useMediaCompareChoices
+> & {
+  shownSteps: number[] | null;
+  grid: QueryState<MediaCompareGrid>;
+} {
+  const { choices, selectedKey, stepsByRun } = useMediaCompareChoices(target);
+  const shownSteps = steps ?? (stepsByRun.value ? defaultComparisonSteps(stepsByRun.value) : null);
+  const { projectId, runIds } = target;
+  const grid = useQuery(
+    selectedKey === null || shownSteps === null
+      ? null
+      : `${projectId}:media-compare:${runIds.join(',')}:${selectedKey}:${shownSteps.join(',')}`,
+    (signal) =>
+      runMediaApi.compare(
+        projectId,
+        { runIds, key: selectedKey!, ...(shownSteps!.length > 0 ? { steps: shownSteps! } : {}) },
+        signal,
+      ),
   );
-  return { choices, selectedKey: key, recordedSteps, grid };
+  return { choices, selectedKey, stepsByRun, shownSteps, grid };
 }

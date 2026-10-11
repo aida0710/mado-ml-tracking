@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import { trackingApi } from '../api/tracking';
 import { useProject } from '../hooks/useProject';
@@ -5,13 +6,27 @@ import { useQuery } from '../hooks/useQuery';
 import { PageHeader } from '../components/PageHeader';
 import { Resource } from '../components/Feedback';
 import { LineageGraph } from '../components/LineageGraph';
+import { focusLineage, LINEAGE_FOCUS_PARAMETER } from '../lib/lineageFocus';
 import { text } from '../i18n/catalog';
+import { lineageText, lineageTextTemplates } from '../i18n/lineage';
+
+// Two relations each way reach from data through its Runs to the models they made.
+const FOCUS_DEPTH = 2;
 
 export function LineagePage() {
   const { project } = useProject();
+  const [params, setParams] = useSearchParams();
+  const focusId = params.get(LINEAGE_FOCUS_PARAMETER);
   const graph = useQuery(`${project.id}:lineage`, (signal) =>
     trackingApi.lineage(project.id, signal),
   );
+  function showWholeGraph() {
+    setParams((previous) => {
+      const updated = new URLSearchParams(previous);
+      updated.delete(LINEAGE_FOCUS_PARAMETER);
+      return updated;
+    });
+  }
   return (
     <section className="page lineage-page">
       <PageHeader
@@ -24,7 +39,27 @@ export function LineagePage() {
         }
       />
       <Resource query={graph}>
-        {(value) => <LineageGraph graph={value} projectId={project.id} />}
+        {(value) => {
+          const focused = focusId ? focusLineage(value, { nodeId: focusId, depth: FOCUS_DEPTH }) : null;
+          const focusNode = focused?.nodes.find((node) => node.id === focusId);
+          return (
+            <>
+              {focusId && (
+                <div className="notice lineage-focus-notice" role="status" data-testid="lineage-focus">
+                  <span>
+                    {focusNode
+                      ? lineageTextTemplates.lineageFocused(focusNode.label, FOCUS_DEPTH)
+                      : lineageText.lineageFocusMissing}
+                  </span>
+                  <button type="button" className="button small" onClick={showWholeGraph}>
+                    {lineageText.lineageShowWhole}
+                  </button>
+                </div>
+              )}
+              <LineageGraph graph={focused ?? value} projectId={project.id} />
+            </>
+          );
+        }}
       </Resource>
     </section>
   );

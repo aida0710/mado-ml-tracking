@@ -64,7 +64,7 @@ export class OutboxDispatcher {
         );
         if (!delivery) return undefined;
         // Serialize the claim with plugin edits; already claimed HTTP calls can finish.
-        const plugin = await first<PluginConnection>(
+        const plugin = await first<Pick<PluginConnection, 'baseUrl' | 'tokenEnv'>>(
           connection,
           'SELECT * FROM plugin_connections WHERE id=$1 AND enabled FOR SHARE SKIP LOCKED',
           [delivery.pluginId],

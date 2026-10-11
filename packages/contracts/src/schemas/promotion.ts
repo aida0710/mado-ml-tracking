@@ -37,6 +37,8 @@ export const promotionPolicySchema = namedContractSchema(
     autoPromote: z.boolean(),
     createdBy: idSchema,
     runAsUserId: idSchema,
+    runAsKind: z.enum(['human', 'service']).optional(),
+    runAsName: z.string().optional(),
     createdAt: timestampSchema,
   }),
 );

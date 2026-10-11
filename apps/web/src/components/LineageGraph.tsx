@@ -19,7 +19,7 @@ export function LineageGraph({ graph, projectId }: { graph: Graph; projectId: st
   return (
     <LineageGraphLayout isNarrow={isNarrow}
       diagram={<LineageDiagramViewport layout={layout} projectId={projectId} fitOnOpen={isNarrow} />}
-      relations={<LineageRelationsTable graph={graph} initiallyOpen={isNarrow} />}
+      relations={<LineageRelationsTable graph={graph} projectId={projectId} initiallyOpen={isNarrow} />}
     />
   );
 }

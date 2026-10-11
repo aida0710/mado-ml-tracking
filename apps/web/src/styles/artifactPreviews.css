@@ -1,0 +1,190 @@
+/* Artifact previews: the download notice, tables of CSV / TSV / jsonl, evaluation sample cards on
+   phones, the image size toggle, and the audio viewer's time ruler. */
+
+/* A select or button pushed to the right end of a preview toolbar. */
+.preview-toolbar-end {
+  margin-left: auto;
+}
+.preview-download-notice {
+  flex-wrap: wrap;
+}
+.preview-download-notice .button {
+  flex: none;
+}
+
+/* Tables of CSV / TSV / jsonl: the header row and the line column stay in view while the rows
+   scroll inside the frame, so a wide file never widens the page. */
+.tabular-preview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+.tabular-preview-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.tabular-preview-note {
+  margin: 0;
+  font-size: 12px;
+}
+.tabular-table-scroll {
+  overflow: auto;
+  max-height: 460px;
+  border: 1px solid var(--border);
+  scrollbar-width: thin;
+}
+.tabular-table-scroll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.tabular-table {
+  width: max-content;
+  min-width: 100%;
+}
+.tabular-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.tabular-table th:first-child,
+.tabular-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  border-right: 1px solid var(--border);
+}
+.tabular-table th:first-child {
+  z-index: 3;
+}
+.tabular-table td {
+  max-width: 32em;
+  vertical-align: top;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.tabular-table .tabular-number {
+  text-align: right;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.tabular-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.tabular-sort-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Evaluation samples: a message in the audio column reads on one or two lines, not one word per line. */
+.evaluation-samples-table .sample-audio-cell {
+  min-width: 12em;
+}
+.evaluation-sample-cards {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.evaluation-sample-card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.evaluation-sample-card > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+}
+.evaluation-sample-card .sample-audio {
+  min-width: 0;
+}
+.evaluation-sample-card .audio-viewer {
+  margin: 0;
+}
+.evaluation-sample-card dl {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+.evaluation-sample-card dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+.evaluation-sample-card dd {
+  min-width: 0;
+  margin: 0 0 6px;
+}
+
+/* Images: fitted to the preview, or at the actual size inside a scrolling frame. */
+.image-preview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin: 16px 0;
+}
+.image-preview-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.image-preview .artifact-image {
+  margin: 0 auto;
+}
+.image-preview-fit .artifact-image {
+  cursor: zoom-in;
+}
+.image-preview-actual {
+  overflow: auto;
+  max-height: min(70vh, 640px);
+  border: 1px solid var(--border);
+}
+.image-preview-actual:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.image-preview-actual .artifact-image {
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  cursor: zoom-out;
+}
+
+/* The audio viewer's time ruler, tucked under the timeline (the viewer's grid gap is 10px). */
+.audio-time-axis {
+  position: relative;
+  height: 16px;
+  margin-top: -8px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+}
+.audio-time-tick {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  padding-left: 3px;
+  border-left: 1px solid var(--border-strong);
+  line-height: 16px;
+  white-space: nowrap;
+}
+.audio-visible-range {
+  font-size: 12px;
+}

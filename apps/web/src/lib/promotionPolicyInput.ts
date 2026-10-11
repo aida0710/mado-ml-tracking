@@ -70,6 +70,19 @@ export function isEvaluationRuleEligible(rule: ModelAutomationRule, model: Model
   return rule.kind === 'evaluation' && rule.enabled && rule.modelFamilies.includes(model.family);
 }
 
+/**
+ * Why no evaluation rule can be chosen for the Model: none evaluates its family, or some do but
+ * are disabled (enabling one is then enough, so the dialog says that instead of "create one").
+ */
+export function missingEvaluationRuleReason(
+  rules: readonly ModelAutomationRule[],
+  model: Model,
+): 'none' | 'disabled' {
+  const evaluatesFamily = (rule: ModelAutomationRule) =>
+    rule.kind === 'evaluation' && rule.modelFamilies.includes(model.family);
+  return rules.some((rule) => evaluatesFamily(rule) && !rule.enabled) ? 'disabled' : 'none';
+}
+
 /** Keeps the selected evaluation rule only while it can still evaluate the selected Model. */
 export function updatePromotionPolicyDraft({
   next,

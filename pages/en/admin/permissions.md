@@ -16,7 +16,9 @@ The global settings are the pages that do not belong to a Project (`/settings/<s
 | 全体設定 (Global settings) | アカウント (Account), コンピュータ (Computers) | Everyone |
 | 全体管理 (Global administration) | プロジェクト (Projects), ユーザー (Users), ストレージ (Storage), ランチャー (Launchers), 監査ログ (Audit log) | Global administrators only |
 
-These groups appear only in the sidebar of the global settings pages, not on Project pages. People who are not global administrators do not see 全体管理, and opening one of its URLs directly takes them to **アカウント**. Old URLs starting with `/admin` or `/account` move to the new ones (`/settings/projects`, `/settings/account`, and so on).
+These groups appear only in the sidebar of the global settings pages, not on Project pages. People who are not global administrators do not see 全体管理, and opening one of its URLs directly takes them to **アカウント** with a note that the page is for global administrators only. Old URLs starting with `/admin` or `/account` move to the new ones (`/settings/projects`, `/settings/account`, and so on).
+
+When the global settings are opened from a Project page, 「Project name」に戻る (Back to the Project) appears at the top; it returns to the page you came from (Jobs, for example).
 
 ![A regular user's user menu: Account, Change password, and Global settings](/images/admin-user-menu.png)
 
@@ -59,6 +61,7 @@ A Project is Public or Private. New Projects are Public by default.
 | Private | Members only (direct grants and group grants) |
 
 - Even in a Public Project, Admin is granted only to members.
+- In a Public Project, someone given Viewer still works as an Editor. Members shows their effective role as Editor（Public）, and choosing Viewer in メンバーを追加 (Add member) says so. To make someone read-only, make the Project Private.
 - Public access is given only to the accounts of active people, not to Service Accounts or launchers.
 - A Project Admin changes the visibility in the プロジェクト (Project) section of **プロジェクト設定** (Project settings). Projects that existed before visibility was introduced become Private on upgrade.
 
@@ -99,6 +102,10 @@ The effective role is the same on the screen, in the native API, in the MLflow-c
 3. Choose a role and save. Editor is selected at first, as for the members chosen while creating a Project.
 
 The member is added when the user appears in the list.
+
+Service Accounts appear in Members too, marked Service Account. Their role and disabling are changed under Service Accounts; their Members row has no actions.
+
+Someone who is not a Project Admin sees, in the プロジェクト (Project) part of **プロジェクト設定**, the names of the Admins who can change it.
 
 ### Remove a direct grant
 

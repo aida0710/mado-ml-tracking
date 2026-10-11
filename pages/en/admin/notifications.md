@@ -65,7 +65,7 @@ MMT_SMTP_FROM=mado ML Tracking <mmt@example.com>
 ## 2. Add a channel (global administrators)
 
 1. Open **プロジェクト設定** (Project settings) and click **通知先を追加** (Add channel) under **通知先**.
-2. Enter the values for the kind and save.
+2. Enter the values for the kind and save. A variable name field offers the API server's variables that start with `MMT_NOTIFICATION_` and hold a value (values are never shown). A name the API server does not have is flagged before saving; the channel can still be saved, but it cannot send.
 
 | Kind | Fields | Example |
 | --- | --- | --- |
@@ -75,22 +75,24 @@ MMT_SMTP_FROM=mado ML Tracking <mmt@example.com>
 
 With **使えるProject** (Usable in) set to all Projects, rules in other Projects can use the channel too; with this Project only, only this Project's rules can.
 
-3. Check that **送信設定** (Delivery settings) in the list shows 設定済み (configured). 未設定 (not configured) means the API process cannot see the variable (for email: no SMTP settings).
+3. Check that **送信設定** (Delivery settings) in the list shows 設定済み (configured). 未設定 (not configured) means the API process cannot see the variable (for email: no SMTP settings). Saving a channel that is not configured says so right after saving as well.
 4. Click **テスト送信** (Send test), and check that the screen reports success and the message arrives.
 
 Test messages are not kept in the delivery history. The result is recorded in the audit log as `notification.channel.test`.
 
 ## 3. Create a rule (Project Admins)
 
+Without any channel, **通知ルールを作成** (Create rule) is disabled and the screen asks you to have a global administrator add one; only global administrators add and change channels.
+
 1. Click **通知ルールを作成** (Create rule) under **通知ルール**.
-2. Choose the following and save.
+2. Choose the following and save. A channel without its server settings is marked 未設定 (not configured) in the choices, and choosing it warns that the rule will not deliver.
 
 | Field | Choose |
 | --- | --- |
 | Channel | A channel registered above |
-| Events | One or more, for example Run failed, Automation failed, Worker offline |
-| Run kinds | Training, inference, evaluation, and so on. None selected means all |
-| Experiments | None selected means all |
+| Events | Check one or more, for example Run failed, Automation failed, Worker offline |
+| Run kinds | Check training, inference, evaluation, and so on. None checked means all |
+| Experiments | Check experiments. None checked means all |
 | Only Runs started by automation | Select to notify only about automation Runs |
 
 The conditions of a rule cannot be changed after creation. To change them, create a new rule and stop the old one with **無効にする** (Disable).
@@ -130,6 +132,8 @@ Project Admins can check the status, attempts, and failure reason in **直近の
 ## Operations alerts
 
 Every 30 seconds the API server checks for stale Job heartbeats, stopped workers, and stalled plugin deliveries. When it finds one, it shows the count as **運用アラート** (Operations alerts) under the bell in the top bar and notifies the channels selected by rules, once.
+
+The bell counts the alerts of every Project you are a member of (every Project for a global administrator). Anyone can open a public Project, but its alerts are not on your bell unless you are a member. Each alert names its Project, and the open Project's alerts come first. The bell is on the 全体設定 (Global settings) screens too, so a worker that stopped in another Project shows before you open that Project. The bell reads up to 200 alerts at a time and shows "200+" beyond that.
 
 | Kind | Opens when | Closes when |
 | --- | --- | --- |

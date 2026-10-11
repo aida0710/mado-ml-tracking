@@ -28,7 +28,9 @@ The web UI is in Japanese. This page shows UI labels in Japanese followed by an 
 4. Optionally describe the change in **変更の説明** (Change description).
 5. Click **保存** (Save).
 
-**レポートを作成** is shown to editors and above. Reorder blocks with **上へ移動** (Move up) and **下へ移動** (Move down), and remove them with **削除** (Delete). Text blocks use Markdown.
+**レポートを作成** is shown to editors and above. Click **ここに追加** (Add here) between two blocks to add text or a chart at that position. Reorder blocks with **上へ移動** (Move up) and **下へ移動** (Move down), and remove them with **削除** (Delete). Text blocks use Markdown.
+
+While editing, **編集をやめる** (Stop editing) and **保存** (Save) stay at the bottom of the screen, so a long report can be saved from anywhere. When the title is empty or an embed is missing a setting, a note next to **保存** says so. The comment section is hidden while editing and comes back when you save or stop editing; a comment you were writing is kept.
 
 ## What you can embed
 
@@ -45,7 +47,7 @@ The web UI is in Japanese. This page shows UI labels in Japanese followed by an 
 
 ### Choose the Runs
 
-For every chart or table except the media table, set **対象のRun** (Runs) in one of these ways:
+For every chart or table except the media comparison and the media table, set **対象のRun** (Runs) in one of these ways:
 
 | Option | What it uses |
 | --- | --- |
@@ -53,6 +55,15 @@ For every chart or table except the media table, set **対象のRun** (Runs) in 
 | 保存ビュー (Saved view) | Runs matching a saved view. Only saved views shared with the Project can be chosen |
 | 検索式 (Search expression) | An MLflow search expression, for example `metrics.val_loss < 0.5` |
 | Sweep | Trials of a Sweep |
+
+### Media comparison
+
+A media comparison takes Runs picked directly (up to 20), a **メディアのキー** (Media key), and **比べるstep** (Steps to compare).
+
+- Choosing a key ticks the latest step that every Run recorded, as the **Media** tab of the comparison page does ([Compare across Runs](/en/tracking/media#compare-runs))
+- Only recorded steps are listed. A step that only some Runs recorded shows how many did, such as `1/2 Run`. With no step ticked, each Run's latest step is shown in one column
+- It shows media logged with a step, such as with `log_audio` or `log_image`. When the chosen Runs have none, the dialog says so. It also names the chosen Runs that did not record the key
+- Artifacts that inference Runs saved, such as audio files, cannot be embedded here. Compare them on the **Artifacts** tab of the comparison page, which lines up files with the same path
 
 ### Latest data or fixed data
 
@@ -73,7 +84,9 @@ The top of a report shows the current version number, who updated it, and when (
 
 1. Click **バージョンの履歴** (Version history). Each version shows who saved it, when, and the change description.
 2. Click **表示** (View) on an earlier version to open it read-only. **最新のバージョンを表示** (Show latest version) returns.
-3. To go back to an earlier version, click **このバージョンに戻す** (Restore this version) and confirm in the バージョンを戻す (Restore version) dialog.
+3. Click **前との違い** (Changes) to see what changed from the version before: the title, and blocks added, edited, removed, or reordered. It does not show which words of a text changed.
+4. Click **URLをコピー** (Copy URL) to copy a URL that points to that version.
+5. To go back to an earlier version, click **このバージョンに戻す** (Restore this version) and confirm in the バージョンを戻す (Restore version) dialog.
 
 Restoring creates a new version with that version's content. No version is removed from the history, and the fixed data of the restored version is reused as is.
 
@@ -83,7 +96,7 @@ If someone saved a newer version first, your changes are not saved and a message
 
 ## Sharing and permissions
 
-Project members open reports from **Reports**. Sending the URL (`/projects/<Project ID>/reports/<Report ID>`) lets members of the same Project open the same report. While viewing the history, `?revision=<version number>` in the URL points to that version.
+Project members open reports from **Reports**. Sending the URL (`/projects/<Project ID>/reports/<Report ID>`) lets members of the same Project open the same report. `?revision=<version number>` in the URL points to that version; **URLをコピー** in the version history copies such a URL.
 
 There are no public links for people outside the Project and no embedding in other sites.
 

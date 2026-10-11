@@ -1612,6 +1612,18 @@
             }
           },
           {
+            "name": "hideSignIns",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
             "name": "actorUserId",
             "in": "query",
             "required": false,
@@ -1781,6 +1793,18 @@
             }
           },
           {
+            "name": "hideSignIns",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
             "name": "actorUserId",
             "in": "query",
             "required": false,
@@ -1868,7 +1892,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -2219,6 +2244,125 @@
       }
     },
     "/api/projects/{p}": {
+      "get": {
+        "operationId": "getProjectsByP",
+        "tags": [
+          "projects"
+        ],
+        "summary": "Projectを1件（アーカイブ済みは、メンバーと全体管理者に404 project_archived）",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "read"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "project",
+          "role": "viewer",
+          "scope": "read"
+        },
+        "x-mmt-job-token": "read",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "insufficient_scope",
+              "project_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "見つからない（他Projectのものを含む）",
+            "x-mmt-error-codes": [
+              "not_found",
+              "project_archived"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "invalid_request"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
       "patch": {
         "operationId": "patchProjectsByP",
         "tags": [
@@ -2340,7 +2484,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -2483,7 +2628,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -2630,7 +2776,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -2799,7 +2946,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -2950,7 +3098,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -3097,7 +3246,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -3267,7 +3417,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -3419,7 +3570,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -3566,7 +3718,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -3698,7 +3851,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -3857,7 +4011,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -4014,7 +4169,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -4179,7 +4335,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -4335,7 +4492,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -4499,7 +4657,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -4699,7 +4858,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -4917,7 +5077,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -5491,7 +5652,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -5656,7 +5818,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -5813,7 +5976,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -5973,7 +6137,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -6140,7 +6305,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -6282,7 +6448,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -6508,7 +6675,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -6726,7 +6894,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -6922,7 +7091,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -7109,7 +7279,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -7250,7 +7421,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -7432,7 +7604,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -7592,7 +7765,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -7736,7 +7910,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -7868,7 +8043,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -7998,7 +8174,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -8128,7 +8305,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -8291,7 +8469,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -8484,7 +8663,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -8616,7 +8796,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -8775,7 +8956,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -8944,7 +9126,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -9353,7 +9536,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -9541,7 +9725,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -9712,7 +9897,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -9877,7 +10063,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -10034,7 +10221,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -10197,7 +10385,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -10366,7 +10555,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -10696,7 +10886,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -10864,7 +11055,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -11058,7 +11250,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -11208,7 +11401,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -11222,6 +11416,306 @@
             "description": "入力が不正",
             "x-mmt-error-codes": [
               "invalid_request"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{p}/datasets/{id}/folder-uploads": {
+      "get": {
+        "operationId": "getProjectsByPDatasetsByIdFolderUploads",
+        "tags": [
+          "registry"
+        ],
+        "summary": "バージョンになる前に止まったフォルダのアップロード",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "read"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "project",
+          "role": "viewer",
+          "scope": "read"
+        },
+        "x-mmt-job-token": "read",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "対象のID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DatasetFolderUpload"
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "insufficient_scope",
+              "project_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "見つからない（他Projectのものを含む）",
+            "x-mmt-error-codes": [
+              "not_found",
+              "project_archived"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "invalid_request"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{p}/datasets/{id}/folder-uploads/{folder}": {
+      "delete": {
+        "operationId": "deleteProjectsByPDatasetsByIdFolderUploadsByFolder",
+        "tags": [
+          "registry"
+        ],
+        "summary": "止まったフォルダのアップロードの保存済みファイルを削除（使われているものは残す）",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "artifacts:write"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "project",
+          "role": "admin",
+          "scope": "artifacts:write"
+        },
+        "x-mmt-job-token": "forbidden",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "対象のID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "folder",
+            "in": "path",
+            "required": true,
+            "description": "フォルダのアップロードのフォルダ（開始時刻 2026-10-08T14-19-08-955Z の形）",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{3}Z$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetFolderUploadDiscard"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "invalid_origin",
+              "insufficient_scope",
+              "project_forbidden",
+              "job_token_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "見つからない（他Projectのものを含む）",
+            "x-mmt-error-codes": [
+              "not_found",
+              "project_archived"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "現在の状態と衝突する",
+            "x-mmt-error-codes": [
+              "already_exists"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "invalid_request",
+              "invalid_reference"
             ],
             "content": {
               "application/json": {
@@ -11347,7 +11841,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -11467,7 +11962,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -11599,7 +12095,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -11870,7 +12367,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -12066,7 +12564,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -12258,7 +12757,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -12468,7 +12968,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -12660,7 +13161,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -12853,7 +13355,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -13026,7 +13529,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -13288,7 +13792,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -13491,7 +13996,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -13749,7 +14255,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -14044,7 +14551,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -14201,7 +14709,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -14404,7 +14913,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -14575,7 +15085,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -14761,7 +15272,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -14835,7 +15347,7 @@
         "tags": [
           "runs"
         ],
-        "summary": "Runのlog",
+        "summary": "Runのlog（tailで最新の行だけ）",
         "security": [
           {
             "sessionCookie": []
@@ -14872,6 +15384,16 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "tail",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
+            }
           }
         ],
         "responses": {
@@ -14880,19 +15402,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/LogEntry"
-                      }
-                    }
-                  },
-                  "required": [
-                    "items"
-                  ],
-                  "additionalProperties": false
+                  "$ref": "#/components/schemas/RunLogList"
                 }
               }
             }
@@ -14931,7 +15441,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -15115,7 +15626,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -15156,6 +15668,138 @@
             "x-mmt-error-codes": [
               "invalid_request",
               "invalid_reference"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{p}/runs/{r}/logs/download": {
+      "get": {
+        "operationId": "getProjectsByPRunsByRLogsDownload",
+        "tags": [
+          "runs"
+        ],
+        "summary": "Runのlogの全行をファイルで出力",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "read"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "project",
+          "role": "viewer",
+          "scope": "read"
+        },
+        "x-mmt-job-token": "read",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "r",
+            "in": "path",
+            "required": true,
+            "description": "Run ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Runのlogの全行（attachment、`<Run名>.log`）。1行は「時刻<TAB>LEVEL<TAB>本文」で、古い順に送りながら書く",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string",
+                  "contentMediaType": "text/plain; charset=utf-8"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "insufficient_scope",
+              "project_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "見つからない（他Projectのものを含む）",
+            "x-mmt-error-codes": [
+              "not_found",
+              "project_archived"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "invalid_request"
             ],
             "content": {
               "application/json": {
@@ -15273,7 +15917,8 @@
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
               "output_registration_not_found",
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -15423,7 +16068,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -15588,7 +16234,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -15844,7 +16491,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -16096,7 +16744,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -16238,7 +16887,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -16400,7 +17050,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -16599,7 +17250,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -16788,7 +17440,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -16948,7 +17601,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -17173,7 +17827,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -17548,7 +18203,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -17894,7 +18550,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -18231,7 +18888,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -18401,7 +19059,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -18755,7 +19414,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -18917,7 +19577,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -19269,7 +19930,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -19543,7 +20205,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -19725,7 +20388,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -19920,7 +20584,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -20070,7 +20735,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -20238,7 +20904,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -20449,7 +21116,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -20589,7 +21257,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -20747,7 +21416,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -20877,7 +21547,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -21061,7 +21732,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -21101,6 +21773,147 @@
             "description": "一時的に処理できない",
             "x-mmt-error-codes": [
               "artifact_read_failed",
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{p}/artifact-references": {
+      "get": {
+        "operationId": "getProjectsByPArtifactReferences",
+        "tags": [
+          "artifacts"
+        ],
+        "summary": "複数Artifactの使われている場所（削除を断る参照）",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "read"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "project",
+          "role": "viewer",
+          "scope": "read"
+        },
+        "x-mmt-job-token": "read",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "artifactIds",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ArtifactReferences"
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "insufficient_scope",
+              "project_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "見つからない（他Projectのものを含む）",
+            "x-mmt-error-codes": [
+              "not_found",
+              "project_archived"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "invalid_request"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
               "oidc_unavailable",
               "internal_error"
             ],
@@ -21195,7 +22008,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -21325,7 +22139,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -21465,7 +22280,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -21607,7 +22423,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -21786,7 +22603,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -21964,7 +22782,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -22095,7 +22914,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -22226,7 +23046,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -22404,7 +23225,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -22555,7 +23377,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -22699,7 +23522,7 @@
         "tags": [
           "execution"
         ],
-        "summary": "Job一覧",
+        "summary": "Job一覧（runIdでそのRunのJobだけ）",
         "security": [
           {
             "sessionCookie": []
@@ -22722,6 +23545,15 @@
             "in": "path",
             "required": true,
             "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "runId",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string",
               "format": "uuid"
@@ -22785,7 +23617,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -22990,7 +23823,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -23037,6 +23871,375 @@
               "site_job_shell_missing",
               "site_launcher_missing",
               "site_account_required",
+              "invalid_request",
+              "invalid_reference"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "image_registry_unavailable",
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{p}/jobs/launch": {
+      "post": {
+        "operationId": "postProjectsByPJobsLaunch",
+        "tags": [
+          "execution"
+        ],
+        "summary": "RunとJobを一度に作る（Jobを作れなければRunも作らない）。tokenにはjobs:writeも要る",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "runs:write"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "project",
+          "role": "editor",
+          "scope": "runs:write"
+        },
+        "x-mmt-job-token": "forbidden",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "run": {
+                    "type": "object",
+                    "properties": {
+                      "experimentId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "inference",
+                          "evaluation",
+                          "training",
+                          "finetuning",
+                          "processing"
+                        ]
+                      },
+                      "parameters": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "additionalProperties": {
+                          "$ref": "#/components/schemas/JsonValue"
+                        }
+                      },
+                      "tags": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 200
+                        },
+                        "additionalProperties": {
+                          "type": "string",
+                          "maxLength": 4000
+                        }
+                      },
+                      "modelVersionId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "codeVersionId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "executionMode": {
+                        "type": "string",
+                        "enum": [
+                          "run",
+                          "test"
+                        ]
+                      },
+                      "inputDatasetVersionIds": {
+                        "default": [],
+                        "maxItems": 1000,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "format": "uuid"
+                        }
+                      },
+                      "parentRunId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "environment": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "additionalProperties": {
+                          "$ref": "#/components/schemas/JsonValue"
+                        }
+                      },
+                      "resumeCheckpointId": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "experimentId",
+                      "name",
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "job": {
+                    "type": "object",
+                    "properties": {
+                      "targetId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "gpuIds": {
+                        "default": [],
+                        "maxItems": 128,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        }
+                      },
+                      "gpuCount": {
+                        "default": 0,
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 64
+                      },
+                      "walltimeSeconds": {
+                        "default": null,
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 2592000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "maxAttempts": {
+                        "default": 3,
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100
+                      },
+                      "retryOnFailure": {
+                        "default": false,
+                        "type": "boolean"
+                      },
+                      "retryOnTimeout": {
+                        "default": false,
+                        "type": "boolean"
+                      },
+                      "allowChildJobs": {
+                        "default": false,
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "targetId"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "run",
+                  "job"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "作成した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskExecution"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "要求を読めない",
+            "x-mmt-error-codes": [
+              "invalid_json"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "invalid_origin",
+              "insufficient_scope",
+              "project_forbidden",
+              "job_token_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "見つからない（他Projectのものを含む）",
+            "x-mmt-error-codes": [
+              "not_found",
+              "project_archived"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "現在の状態と衝突する",
+            "x-mmt-error-codes": [
+              "already_exists"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "大きすぎる",
+            "x-mmt-error-codes": [
+              "body_too_large"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "site_gpu_ids",
+              "site_only_setting",
+              "incompatible_runtime",
+              "image_platform_mismatch",
+              "target_not_available",
+              "site_job_shell_missing",
+              "site_launcher_missing",
+              "site_account_required",
+              "checkpoint_not_found",
+              "reserved_tag",
               "invalid_request",
               "invalid_reference"
             ],
@@ -23159,7 +24362,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -23339,7 +24543,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -27544,7 +28749,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -31493,7 +32699,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -31662,7 +32869,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -33698,7 +34906,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -34134,7 +35343,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -34339,7 +35549,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -34531,7 +35742,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -34732,7 +35944,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -34910,7 +36123,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -35539,7 +36753,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -35680,7 +36895,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -35812,7 +37028,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -36312,7 +37529,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -36352,6 +37570,7 @@
           "503": {
             "description": "一時的に処理できない",
             "x-mmt-error-codes": [
+              "plugin_token_unavailable",
               "oidc_unavailable",
               "internal_error"
             ],
@@ -36465,7 +37684,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -36491,6 +37711,7 @@
           "503": {
             "description": "一時的に処理できない",
             "x-mmt-error-codes": [
+              "plugin_token_unavailable",
               "oidc_unavailable",
               "internal_error"
             ],
@@ -36595,7 +37816,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -36772,7 +37994,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -36825,6 +38048,7 @@
           "503": {
             "description": "一時的に処理できない",
             "x-mmt-error-codes": [
+              "plugin_token_unavailable",
               "oidc_unavailable",
               "internal_error"
             ],
@@ -37026,7 +38250,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -37196,7 +38421,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -37351,7 +38577,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -37584,7 +38811,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -37776,7 +39004,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -37968,7 +39197,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -38163,7 +39393,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -38295,7 +39526,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -38471,7 +39703,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -38649,7 +39882,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -38845,7 +40079,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -38997,7 +40232,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -39155,7 +40391,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -39327,7 +40564,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -39489,7 +40727,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -39660,7 +40899,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -39816,7 +41056,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -39996,7 +41237,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -40933,7 +42175,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -41107,7 +42350,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -42070,7 +43314,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -42236,7 +43481,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -42376,7 +43622,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -42542,7 +43789,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -42707,7 +43955,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -42854,7 +44103,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -43112,7 +44362,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -43438,7 +44689,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -43659,7 +44911,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -43841,7 +45094,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -44076,7 +45330,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -44262,7 +45517,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -44631,7 +45887,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -44791,7 +46048,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -44958,7 +46216,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -45150,7 +46409,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -45283,7 +46543,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -45431,7 +46692,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -45611,7 +46873,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -48058,6 +49321,100 @@
         }
       }
     },
+    "/api/notification-channels/environment-names": {
+      "get": {
+        "operationId": "getNotificationChannelsEnvironmentNames",
+        "tags": [
+          "notifications"
+        ],
+        "summary": "通知先が参照できるAPI serverの環境変数名（MMT_NOTIFICATION_で始まり値があるもの。値は返さない）",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "admin"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "globalAdmin"
+        },
+        "x-mmt-job-token": "forbidden",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "insufficient_scope",
+              "admin_required",
+              "job_token_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/notification-channels/{channelId}": {
       "patch": {
         "operationId": "patchNotificationChannelsByChannelId",
@@ -48474,7 +49831,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -48606,7 +49964,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -48814,7 +50173,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -49005,7 +50365,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -49175,7 +50536,140 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "invalid_request"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations-alerts": {
+      "get": {
+        "operationId": "getOperationsAlerts",
+        "tags": [
+          "operations"
+        ],
+        "summary": "開けるすべてのProjectの運用アラート（全体管理者のsessionはすべてのProject）",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "read"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "signedIn",
+          "scope": "read"
+        },
+        "x-mmt-job-token": "forbidden",
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "open",
+              "type": "string",
+              "enum": [
+                "open",
+                "all"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/OperationsAlert"
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "insufficient_scope",
+              "job_token_forbidden"
             ],
             "content": {
               "application/json": {
@@ -49331,7 +50825,8 @@
           "404": {
             "description": "見つからない（他Projectのものを含む）",
             "x-mmt-error-codes": [
-              "not_found"
+              "not_found",
+              "project_archived"
             ],
             "content": {
               "application/json": {
@@ -49449,6 +50944,12 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "adminNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "runCount": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -49477,6 +50978,7 @@
           "artifactBackend",
           "visibility",
           "memberCount",
+          "adminNames",
           "runCount",
           "createdAt",
           "archivedAt"
@@ -49544,6 +51046,30 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "serviceAccountProject": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -49556,7 +51082,8 @@
           "authSources",
           "kind",
           "lastLoginAt",
-          "createdAt"
+          "createdAt",
+          "serviceAccountProject"
         ],
         "additionalProperties": false
       },
@@ -49879,6 +51406,145 @@
           "error",
           "attempts",
           "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "ArtifactReferences": {
+        "type": "object",
+        "properties": {
+          "artifactId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "modelVersions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "modelId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "modelName": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "modelId",
+                "modelName",
+                "version"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "datasetVersions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "datasetId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "datasetName": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "datasetId",
+                "datasetName",
+                "version",
+                "path"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "codeVersions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "codeId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "codeName": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "codeId",
+                "codeName",
+                "version"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "checkpoints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "runId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "runName": {
+                  "type": "string"
+                },
+                "step": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "id",
+                "runId",
+                "runName",
+                "step"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "artifactId",
+          "modelVersions",
+          "datasetVersions",
+          "codeVersions",
+          "checkpoints"
         ],
         "additionalProperties": false
       },
@@ -51845,6 +53511,62 @@
           "latestVersion",
           "archivedAt",
           "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "DatasetFolderUpload": {
+        "type": "object",
+        "properties": {
+          "folder": {
+            "type": "string"
+          },
+          "pathPrefix": {
+            "type": "string"
+          },
+          "fileCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "totalSize": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "firstStoredAt": {
+            "type": "string"
+          },
+          "lastStoredAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "folder",
+          "pathPrefix",
+          "fileCount",
+          "totalSize",
+          "firstStoredAt",
+          "lastStoredAt"
+        ],
+        "additionalProperties": false
+      },
+      "DatasetFolderUploadDiscard": {
+        "type": "object",
+        "properties": {
+          "deletedFileCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "keptFileCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "deletedFileCount",
+          "keptFileCount"
         ],
         "additionalProperties": false
       },
@@ -53825,6 +55547,63 @@
               "string",
               "null"
             ]
+          },
+          "hasResumeCheckpoint": {
+            "type": "boolean"
+          },
+          "sweepTrial": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "sweepId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "sweepName": {
+                    "type": "string"
+                  },
+                  "trialIndex": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "sweepId",
+                  "sweepName",
+                  "trialIndex"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "automationRule": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ruleId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "ruleName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ruleId",
+                  "ruleName"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -53870,7 +55649,10 @@
           "taskName",
           "sweepEarlyStopped",
           "createdBy",
-          "createdByName"
+          "createdByName",
+          "hasResumeCheckpoint",
+          "sweepTrial",
+          "automationRule"
         ],
         "additionalProperties": false
       },
@@ -56226,6 +58008,9 @@
           "tokenEnv": {
             "type": "string"
           },
+          "tokenConfigured": {
+            "type": "boolean"
+          },
           "enabled": {
             "type": "boolean"
           },
@@ -56250,6 +58035,7 @@
           "name",
           "baseUrl",
           "tokenEnv",
+          "tokenConfigured",
           "enabled",
           "manifest",
           "createdAt"
@@ -56898,6 +58684,16 @@
           "runAsUserId": {
             "type": "string",
             "format": "uuid"
+          },
+          "runAsKind": {
+            "type": "string",
+            "enum": [
+              "human",
+              "service"
+            ]
+          },
+          "runAsName": {
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
@@ -58649,6 +60445,27 @@
         },
         "required": [
           "kind"
+        ],
+        "additionalProperties": false
+      },
+      "RunLogList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LogEntry"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "items",
+          "totalCount"
         ],
         "additionalProperties": false
       },

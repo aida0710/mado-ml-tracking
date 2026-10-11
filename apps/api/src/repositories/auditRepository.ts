@@ -44,6 +44,8 @@ export interface AuditEventFilter {
   action?: string;
   actorUserId?: string;
   outcome?: AuditOutcome;
+  /** Actions left out of the page (sign-ins when the viewer hides them). */
+  excludedActions?: readonly string[];
   // ID of the last event on the previous page; the page continues strictly after it.
   cursor?: string;
   limit: number;
@@ -66,6 +68,7 @@ export async function listAuditEvents(
     WHERE ($1::uuid IS NULL OR a.project_id=$1) AND ($2::text IS NULL OR a.action=$2)
       AND ($3::uuid IS NULL OR a.actor_user_id=$3) AND ($4::text IS NULL OR a.outcome=$4)
       AND ($5::uuid IS NULL OR (a.occurred_at,a.id) < (SELECT occurred_at,id FROM audit_events WHERE id=$5))
+      AND NOT (a.action = ANY($7::text[]))
     ORDER BY a.occurred_at DESC,a.id DESC LIMIT $6`,
     [
       filter.projectId ?? null,
@@ -74,6 +77,7 @@ export async function listAuditEvents(
       filter.outcome ?? null,
       filter.cursor ?? null,
       filter.limit,
+      filter.excludedActions ?? [],
     ],
   );
 }

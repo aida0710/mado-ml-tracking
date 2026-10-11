@@ -164,6 +164,8 @@ import {
   datasetCreateSchema,
   heartbeatSchema,
   jobCreateSchema,
+  jobLaunchSchema,
+  jobListQuerySchema,
   logBatchSchema,
   metricBatchSchema,
   modelCreateSchema,
@@ -200,6 +202,7 @@ import {
 import { artifactMediaInfoQuerySchema } from '../../routes/artifactMediaInfoRoutes.js';
 import {
   artifactCatalogQuerySchema,
+  artifactReferencesQuerySchema,
   artifactTreeQuerySchema,
   runArtifactQuerySchema,
 } from '../../routes/artifactRoutes.js';
@@ -217,6 +220,7 @@ import { pluginDatasetImportSchema, pluginDatasetSearchSchema } from '../../rout
 import {
   runComparisonCsvQuerySchema,
   runComparisonSchema as runComparisonRequestSchema,
+  runLogQuerySchema,
   runQuerySchema,
 } from '../../routes/runRoutes.js';
 import { runSearchSchema } from '../../routes/runSearchRoutes.js';
@@ -247,6 +251,11 @@ const health = z.strictObject({ status: z.literal('ok') });
 const csvDownload: NonJsonContent = {
   contentType: 'text/csv; charset=utf-8',
   description: `UTF-8 BOM付きCSV（attachment）。最大行数を超えて切り詰めたかは${RUN_EXPORT_TRUNCATED_HEADER}ヘッダ`,
+};
+const logFileDownload: NonJsonContent = {
+  contentType: 'text/plain; charset=utf-8',
+  description:
+    'Runのlogの全行（attachment、`<Run名>.log`）。1行は「時刻<TAB>LEVEL<TAB>本文」で、古い順に送りながら書く',
 };
 const redirect: NonJsonContent = {
   contentType: 'text/plain',
@@ -564,6 +573,14 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
       ...routeError(404, 'not_found'),
       ...routeError(422, 'backend_unavailable'),
     ],
+  },
+  {
+    method: 'get',
+    path: '/api/projects/:p',
+    tag: 'projects',
+    summary: 'Projectを1件（アーカイブ済みは、メンバーと全体管理者に404 project_archived）',
+    access: PROJECT_VIEWER,
+    responses: { 200: contract.projectSchema },
   },
   {
     method: 'patch',
@@ -1064,6 +1081,22 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
   },
   {
     method: 'get',
+    path: '/api/projects/:p/datasets/:id/folder-uploads',
+    tag: 'registry',
+    summary: 'バージョンになる前に止まったフォルダのアップロード',
+    access: PROJECT_VIEWER,
+    responses: { 200: contract.itemsOf(contract.datasetFolderUploadSchema) },
+  },
+  {
+    method: 'delete',
+    path: '/api/projects/:p/datasets/:id/folder-uploads/:folder',
+    tag: 'registry',
+    summary: '止まったフォルダのアップロードの保存済みファイルを削除（使われているものは残す）',
+    access: ARTIFACTS_DELETE,
+    responses: { 200: contract.datasetFolderUploadDiscardSchema },
+  },
+  {
+    method: 'get',
     path: '/api/projects/:p/artifacts/by-digest',
     tag: 'artifacts',
     summary: 'sha256とsizeが一致する保存済みArtifact',
@@ -1261,9 +1294,18 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     method: 'get',
     path: '/api/projects/:p/runs/:r/logs',
     tag: 'runs',
-    summary: 'Runのlog',
+    summary: 'Runのlog（tailで最新の行だけ）',
     access: PROJECT_VIEWER,
-    responses: { 200: contract.itemsOf(contract.logEntrySchema) },
+    query: runLogQuerySchema,
+    responses: { 200: contract.runLogListSchema },
+  },
+  {
+    method: 'get',
+    path: '/api/projects/:p/runs/:r/logs/download',
+    tag: 'runs',
+    summary: 'Runのlogの全行をファイルで出力',
+    access: PROJECT_VIEWER,
+    responses: { 200: logFileDownload },
   },
   {
     method: 'post',
@@ -1596,6 +1638,15 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
   },
   {
     method: 'get',
+    path: '/api/projects/:p/artifact-references',
+    tag: 'artifacts',
+    summary: '複数Artifactの使われている場所（削除を断る参照）',
+    access: PROJECT_VIEWER,
+    query: artifactReferencesQuerySchema,
+    responses: { 200: contract.itemsOf(contract.artifactReferencesSchema) },
+  },
+  {
+    method: 'get',
     path: '/api/projects/:p/artifact-usage',
     tag: 'artifacts',
     summary: '保存先ごとのArtifact使用量',
@@ -1712,8 +1763,9 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     method: 'get',
     path: '/api/projects/:p/jobs',
     tag: 'execution',
-    summary: 'Job一覧',
+    summary: 'Job一覧（runIdでそのRunのJobだけ）',
     access: PROJECT_VIEWER,
+    query: jobListQuerySchema,
     responses: { 200: contract.itemsOf(contract.jobListItemSchema) },
   },
   {
@@ -1725,6 +1777,16 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     body: jobCreateSchema,
     responses: { 201: contract.jobSchema },
     errors: SITE_JOB_ERRORS,
+  },
+  {
+    method: 'post',
+    path: '/api/projects/:p/jobs/launch',
+    tag: 'execution',
+    summary: 'RunとJobを一度に作る（Jobを作れなければRunも作らない）。tokenにはjobs:writeも要る',
+    access: RUNS_WRITE,
+    body: jobLaunchSchema,
+    responses: { 201: contract.taskExecutionSchema },
+    errors: [...SITE_JOB_ERRORS, ...routeError(422, 'checkpoint_not_found', 'reserved_tag')],
   },
   {
     method: 'post',
@@ -2495,6 +2557,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     summary: 'pluginのmanifestを確認',
     access: PROJECT_ADMIN,
     responses: { 200: contract.pluginManifestSchema },
+    errors: routeError(503, 'plugin_token_unavailable'),
   },
   {
     method: 'get',
@@ -2503,6 +2566,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     summary: 'pluginのPrometheus metrics',
     access: PROJECT_ADMIN,
     responses: { 200: z.strictObject({ prometheus: z.string() }) },
+    errors: routeError(503, 'plugin_token_unavailable'),
   },
   {
     method: 'get',
@@ -2520,6 +2584,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     access: PROJECT_ADMIN,
     body: pluginDatasetSearchSchema,
     responses: { 200: contract.itemsOf(contract.pluginDatasetSchema) },
+    errors: routeError(503, 'plugin_token_unavailable'),
   },
   {
     method: 'post',
@@ -3115,6 +3180,14 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     responses: { 200: contract.itemsOf(contract.notificationChannelSchema) },
   },
   {
+    method: 'get',
+    path: '/api/notification-channels/environment-names',
+    tag: 'notifications',
+    summary: '通知先が参照できるAPI serverの環境変数名（MMT_NOTIFICATION_で始まり値があるもの。値は返さない）',
+    access: GLOBAL_ADMIN,
+    responses: { 200: contract.itemsOf(z.string()) },
+  },
+  {
     method: 'post',
     path: '/api/notification-channels',
     tag: 'notifications',
@@ -3193,6 +3266,15 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
   },
 
   // operations
+  {
+    method: 'get',
+    path: '/api/operations-alerts',
+    tag: 'operations',
+    summary: '開けるすべてのProjectの運用アラート（全体管理者のsessionはすべてのProject）',
+    access: { kind: 'signedIn', scope: 'read' },
+    query: operationsAlertQuerySchema,
+    responses: { 200: contract.itemsOf(contract.operationsAlertSchema) },
+  },
   {
     method: 'get',
     path: '/api/projects/:p/operations-alerts',

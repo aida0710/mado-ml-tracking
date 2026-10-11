@@ -14,13 +14,17 @@ import { usePopover } from '../hooks/usePopover';
 import { useAnchoredPopover } from '../hooks/useAnchoredPopover';
 import { VisibilityLabel } from '../components/VisibilityLabel';
 import { filterProjects, shouldOfferProjectFilter } from '../lib/projectFilter';
+import { memberProjectsFirst } from '../lib/projectListSections';
+import { idsOfSharedNames } from '../lib/projectNameCollisions';
+import { formatDate } from '../lib/format';
 import { isListNavigationKey, moveActiveIndex } from '../lib/listNavigation';
 import { isComposingKey } from '../lib/imeComposition';
-import { text } from '../i18n/catalog';
+import { text, textTemplates } from '../i18n/catalog';
 import { projectHomePath } from './navigationLinks';
 
-// Wide enough for a Project name, the lock and the role on one row even when the sidebar is narrow.
-const SWITCHER_MIN_WIDTH = 280;
+// Wide enough for a Project name, the lock, the "not a member" note and the role on one row even
+// when the sidebar is narrow.
+const SWITCHER_MIN_WIDTH = 340;
 // About ten rows; longer lists scroll inside the dropdown.
 const SWITCHER_MAX_HEIGHT = 420;
 
@@ -28,7 +32,7 @@ type SwitcherEntry = { kind: 'project'; project: Project } | { kind: 'create' };
 
 /**
  * Opens a Project from a dropdown listing every Project with its visibility and the user's role,
- * the open one marked. With many Projects a field narrows the list; the last entry creates a
+ * the open one marked, the user's own Projects before the ones they are not a member of. With many Projects a field narrows the list; the last entry creates a
  * Project for those who may (`onCreateProject`). ↑↓, Home and End move, Enter opens, Esc closes;
  * opening highlights the open Project. The dropdown stays inside the window in the sidebar and in
  * the narrow screen's project bar alike.
@@ -64,7 +68,10 @@ export function ProjectSwitcher({
     maxHeight: SWITCHER_MAX_HEIGHT,
   });
   const offersFilter = shouldOfferProjectFilter(projects.length);
-  const shownProjects = filterProjects(projects, query);
+  const orderedProjects = memberProjectsFirst(projects);
+  const shownProjects = filterProjects(orderedProjects, query);
+  const sharedNameIds = idsOfSharedNames(projects);
+  const firstOtherProjectId = shownProjects.find((item) => !item.isMember)?.id;
   const entries: SwitcherEntry[] = [
     ...shownProjects.map((item): SwitcherEntry => ({ kind: 'project', project: item })),
     ...(onCreateProject ? [{ kind: 'create' } as const] : []),
@@ -84,7 +91,7 @@ export function ProjectSwitcher({
 
   const open = () => {
     setQuery('');
-    setActiveIndex(Math.max(0, projects.findIndex((item) => item.id === project?.id)));
+    setActiveIndex(Math.max(0, orderedProjects.findIndex((item) => item.id === project?.id)));
     dropdown.open();
   };
   const closeToTrigger = () => {
@@ -202,6 +209,11 @@ export function ProjectSwitcher({
                 className={[
                   'project-switcher-option',
                   entry.kind === 'create' && 'project-switcher-create',
+                  // A line sets the user's own Projects apart from the others below them.
+                  entry.kind === 'project' &&
+                    entry.project.id === firstOtherProjectId &&
+                    shownProjects[0]?.isMember &&
+                    'project-switcher-others',
                   index === activeIndex && 'active',
                 ]
                   .filter(Boolean)
@@ -209,7 +221,11 @@ export function ProjectSwitcher({
                 onMouseMove={() => setActiveIndex(index)}
                 onClick={() => choose(entry)}
               >
-                <SwitcherEntryContent entry={entry} isCurrent={isCurrentEntry(entry)} />
+                <SwitcherEntryContent
+                  entry={entry}
+                  isCurrent={isCurrentEntry(entry)}
+                  sharesName={entry.kind === 'project' && sharedNameIds.has(entry.project.id)}
+                />
               </li>
             ))}
           </ul>
@@ -219,8 +235,20 @@ export function ProjectSwitcher({
   );
 }
 
-/** One row: a Project with its visibility and the user's role (checked when open), or creation. */
-function SwitcherEntryContent({ entry, isCurrent }: { entry: SwitcherEntry; isCurrent: boolean }) {
+/**
+ * One row: a Project with its visibility and the user's role (checked when open), or creation. A
+ * Project the user is not a member of says so; one whose name another shares shows its creation
+ * date, so the two can be told apart.
+ */
+function SwitcherEntryContent({
+  entry,
+  isCurrent,
+  sharesName,
+}: {
+  entry: SwitcherEntry;
+  isCurrent: boolean;
+  sharesName: boolean;
+}) {
   if (entry.kind === 'create')
     return (
       <>
@@ -236,8 +264,20 @@ function SwitcherEntryContent({ entry, isCurrent }: { entry: SwitcherEntry; isCu
         className="project-switcher-check"
         data-current={isCurrent}
       />
-      <span className="project-switcher-name">{entry.project.name}</span>
+      <span className="project-switcher-name">
+        {entry.project.name}
+        {sharesName && (
+          <span className="project-switcher-note">
+            {textTemplates.projectSwitcherCreatedAt(formatDate(entry.project.createdAt))}
+          </span>
+        )}
+      </span>
       <VisibilityLabel visibility={entry.project.visibility} iconOnly />
+      {!entry.project.isMember && (
+        <span className="project-switcher-note" title={text.projectSwitcherNotMemberHint}>
+          {text.projectSwitcherNotMember}
+        </span>
+      )}
       <span className="project-switcher-role">{text[entry.project.role]}</span>
     </>
   );

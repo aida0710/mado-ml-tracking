@@ -8,9 +8,11 @@ import { HookFields } from '../components/HookFields';
 import { CopyableValue } from '../components/CopyableValue';
 import { ErrorNotice } from '../components/Feedback';
 import { text } from '../i18n/catalog';
-import { hookWebhookSignatureHints } from '../i18n/hooks';
+import { copyHookValues } from '../lib/hookInput';
+import { hookWebhookUrl } from '../lib/hookDisplay';
+import { hookWebhookSignatureHints, hooksTextTemplates } from '../i18n/hooks';
 
-/** One value of the new webhook, shown once with a copy button. */
+/** One value of the new webhook, with a copy button. */
 function WebhookValue({ label, value }: { label: string; value: string }) {
   return (
     <div className="field">
@@ -33,7 +35,12 @@ function WebhookCreated({ created, onClose }: { created: HookCreated; onClose: (
         {created.webhookSecret && (
           <WebhookValue label={text.hookWebhookSecret} value={created.webhookSecret} />
         )}
-        {created.webhookPath && <WebhookValue label={text.hookWebhookPath} value={created.webhookPath} />}
+        {created.webhookPath && (
+          <WebhookValue
+            label={text.hookWebhookUrl}
+            value={hookWebhookUrl(created.hook.id, window.location.origin)}
+          />
+        )}
         <p className="muted">{text.hookWebhookPathHint}</p>
         {signature && <p className="muted">{hookWebhookSignatureHints[signature]}</p>}
       </div>
@@ -47,24 +54,37 @@ function WebhookCreated({ created, onClose }: { created: HookCreated; onClose: (
 }
 
 /**
- * Creates a hook. onCreated runs as soon as the API has it (the list can refresh behind the
- * secret); onClose ends the dialog, after the secret of a webhook hook has been shown.
+ * Creates a hook, from the defaults or as a copy of `source`. onCreated runs as soon as the API
+ * has it (the list can refresh behind the secret); onClose ends the dialog, after the secret of a
+ * webhook hook has been shown.
  */
 export function HookDialog({
   catalog,
+  source,
   onCreated,
   onClose,
 }: {
   catalog: HookCatalog;
+  /** The hook whose settings the form starts from ([複製して新しく作る]). */
+  source?: Hook;
   onCreated: (hook: Hook) => void;
   onClose: () => void;
 }) {
   const { project } = useProject();
-  const form = useHookForm({ projectId: project.id, catalog });
+  const form = useHookForm({
+    projectId: project.id,
+    catalog,
+    initialValues: source && copyHookValues(source, hooksTextTemplates.hookCopyName(source.name)),
+  });
   const [created, setCreated] = useState<HookCreated | null>(null);
   if (created) return <WebhookCreated created={created} onClose={onClose} />;
   return (
-    <Dialog title={text.newHook} onClose={onClose} busy={form.pending} wide>
+    <Dialog
+      title={source ? text.hookCopyTitle : text.newHook}
+      onClose={onClose}
+      busy={form.pending}
+      wide
+    >
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -76,6 +96,12 @@ export function HookDialog({
           });
         }}
       >
+        {source && (
+          <p className="notice" role="status">
+            {text.hookCopyHint}
+            {source.trigger === 'webhook' && ` ${text.hookCopyWebhookHint}`}
+          </p>
+        )}
         <fieldset disabled={form.pending}>
           <HookFields values={form.values} catalog={catalog} onChange={form.changeValues} />
         </fieldset>

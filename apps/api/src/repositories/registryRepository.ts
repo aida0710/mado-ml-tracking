@@ -43,16 +43,21 @@ export async function lockActiveExperiment(
   if (experiment.lifecycleStage !== 'active') conflict('削除済みExperimentは変更・実行できません');
 }
 
+/**
+ * Returns the stored ID, which is the lowercase form of a UUID however the URL spelled it, so a
+ * caller that builds stored text from the ID (a path prefix) matches what was stored.
+ */
 export async function assertProjectReference(
   connection: Connection,
   reference: { table: ReferenceTable; projectId: string; id: string },
-): Promise<void> {
-  const entity = await first(
+): Promise<string> {
+  const entity = await first<{ id: string }>(
     connection,
     `SELECT id FROM ${reference.table} WHERE id=$1 AND project_id=$2`,
     [reference.id, reference.projectId],
   );
   if (!entity) notFound(reference.table);
+  return entity.id;
 }
 
 export async function assertProjectReferences(

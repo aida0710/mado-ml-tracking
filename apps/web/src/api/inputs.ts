@@ -119,6 +119,11 @@ export interface CreateJob {
   retryOnTimeout?: boolean;
   allowChildJobs?: boolean;
 }
+/** POST /projects/:p/jobs/launch: a new Run and its Job, both kept only if the Job is accepted. */
+export interface LaunchJob {
+  run: CreateRun;
+  job: Omit<CreateJob, 'runId'>;
+}
 export interface UpdateRun {
   name?: string;
   tags?: Record<string, string>;

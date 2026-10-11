@@ -38,3 +38,5 @@ export function useNotificationSettings(projectId: string | null) {
       notificationsApi.setRuleEnabled(projectId!, ruleId, enabled),
   };
 }
+
+export type NotificationSettingsState = ReturnType<typeof useNotificationSettings>;

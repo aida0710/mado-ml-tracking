@@ -1,4 +1,19 @@
 /* Metric chart (components/charts): controls, legend, plot layer and tooltip. */
+
+/* Axes of every recharts chart (metrics, sweep progress, scatter). recharts writes #666 into the
+   SVG, which keeps only 3:1 on the dark background; the theme's muted text keeps 4.5:1 on both. */
+.recharts-cartesian-axis-tick-value,
+.recharts-label {
+  fill: var(--muted);
+}
+.recharts-cartesian-axis-line,
+.recharts-cartesian-axis-tick-line {
+  stroke: var(--muted);
+}
+/* A legend names its series in text colors; the mark beside the name carries the series color. */
+.chart-legend-text {
+  color: var(--text);
+}
 .chart-controls {
   display: flex;
   flex-wrap: wrap;
@@ -93,19 +108,19 @@
   white-space: nowrap;
 }
 .chart-legend-swatch {
-  display: inline-block;
   flex: none;
-  width: 12px;
-  height: 3px;
-  border-radius: var(--radius-sm);
 }
-.chart-legend-swatch.group {
-  height: 8px;
+.chart-legend-swatch line {
+  stroke-width: 2;
+}
+.chart-legend-swatch.group line {
+  stroke-width: 4;
 }
 
+/* 2px: a thinner dotted or dashed line fades into the grid. */
 .chart-line {
   fill: none;
-  stroke-width: 1.6;
+  stroke-width: 2;
   stroke-linejoin: round;
 }
 .chart-line.group {
@@ -113,6 +128,10 @@
 }
 .chart-line.highlighted {
   stroke-width: 3;
+}
+/* A value with no neighbor to draw a line to (logged once), filled in the line's color. */
+.chart-lone-points {
+  stroke: none;
 }
 .chart-raw-line {
   fill: none;
@@ -127,6 +146,7 @@
   opacity: 0.2;
 }
 .chart-line.dimmed,
+.chart-lone-points.dimmed,
 .chart-raw-line.dimmed,
 .chart-band.dimmed {
   opacity: 0.08;

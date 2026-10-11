@@ -71,6 +71,15 @@ export const artifactsText = {
   artifactIncludePreviousVersions: '以前のバージョンも表示',
   artifactNoCatalogResults: '条件に合うArtifactはありません',
   artifactNoRun: 'Runなし',
+  artifactRunEmpty:
+    'このRunにはまだArtifactがありません。［Artifactをアップロード］か、SDK の log_artifact で追加できます。',
+  artifactUsedBy: '使われている場所',
+  artifactUsedByModelVersion: 'モデルバージョン',
+  artifactUsedByDatasetVersion: 'データセットのバージョン',
+  artifactUsedByCodeVersion: 'コードバージョン',
+  artifactUsedByCheckpoint: 'checkpoint',
+  artifactOwner: '所属',
+  artifactUnfinishedFolderUpload: '途中のアップロード',
   artifactBackToList: 'ファイル一覧へ戻る',
   // Picking one Artifact in a form (ArtifactPickerField): search by path or paste its id.
   artifactPickerPlaceholder: '保存パスで検索、または ID・artifact://… を貼り付け',
@@ -83,6 +92,9 @@ export const artifactsText = {
 } as const;
 
 export const artifactsTextTemplates = {
+  artifactCheckpointLabel: (runName: string, step: number) => `${runName} · step ${step}`,
+  artifactDeleted: (path: string) => `「${path}」を削除しました。`,
+  artifactDatasetOwner: (datasetName: string) => `データセット ${datasetName}`,
   artifactFolder: (name: string) => `フォルダ ${name}`,
   artifactDirectorySummary: (fileCount: number, size: string) =>
     `${fileCount.toLocaleString('ja-JP')}件 · ${size}`,
@@ -100,7 +112,8 @@ export const evaluationSampleErrorLabels: Record<EvaluationSampleErrorReason, st
   not_object: 'JSONオブジェクトではありません',
   column_count: '列数がヘッダーと一致しません',
   unterminated_quote: '引用符が閉じていません',
-  invalid_text: 'audio・reference・predictionが文字列ではありません',
+  invalid_audio: 'audioが文字列ではありません',
+  invalid_text: 'reference・predictionが文字列・数値・真偽値ではありません',
   invalid_score: 'scoreが数値ではありません',
 };
 

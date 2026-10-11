@@ -23,8 +23,10 @@ import {
   isCheckInProgress,
   type TargetCandidates,
 } from '../lib/targetCheckCandidates';
+import { isWorkerMissing, type WorkerCoverage } from '../lib/workerCoverage';
 import { text } from '../i18n/catalog';
 import { runtimeLabels } from '../i18n/runtime';
+import { workerCoverageText } from '../i18n/workerCoverage';
 
 /**
  * The connection check of an ssh or local target, which a worker runs. A site is reached only by
@@ -32,9 +34,12 @@ import { runtimeLabels } from '../i18n/runtime';
  */
 export function TargetCheckPanel({
   target,
+  checkCoverage,
   onTargetSaved,
 }: {
   target: ComputeTarget;
+  /** Whether a worker names this computer; undefined when the viewer may not list workers. */
+  checkCoverage?: WorkerCoverage;
   onTargetSaved: () => void;
 }) {
   const check = useTargetCheck(target.id);
@@ -57,6 +62,12 @@ export function TargetCheckPanel({
         </button>
       </div>
       <p className="muted">{targetCheckHintFor(target.executor)}</p>
+      {/* Known before asking: a check nobody takes fails only after five minutes. */}
+      {checkCoverage && isWorkerMissing(checkCoverage) && !check.isInProgress && (
+        <p className="notice error" role="status">
+          {workerCoverageText.targetCheckWorkerMissing}
+        </p>
+      )}
       <ErrorNotice message={check.error} />
       <Resource query={checks}>
         {() =>

@@ -21,6 +21,8 @@ export const chartsText = {
   chartShowAllSeries: 'すべて表示',
   chartResetZoom: 'ズームを戻す',
   chartZoomHint: 'ドラッグした範囲を拡大します',
+  chartKeyboardHint: '←→ で値を表示、+ と - で拡大と縮小、Esc で値を隠す',
+  chartKeyboardRoleDescription: '図',
   chartResumeMarker: '再開',
   chartGroupSuffix: '（平均）',
 } as const;
@@ -31,5 +33,8 @@ export const chartsTextTemplates = {
     `対数軸に置けない0以下の値 ${count} 点を描いていません。`,
   chartTooltipMore: (count: number) => `ほか ${count} 件`,
   chartAriaLabel: (seriesCount: number) => `メトリクスの図（${seriesCount} 系列）`,
+  chartLineSummary: (line: { label: string; latest: string; latestAt: string; min: string; max: string }) =>
+    `${line.label}: 最新 ${line.latest}（${line.latestAt}）、最小 ${line.min}、最大 ${line.max}`,
+  chartLineSummaryMore: (count: number) => `ほか ${count} 系列`,
   chartResumeMarkerOf: (runLabel: string) => `${runLabel} を再開`,
 };

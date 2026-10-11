@@ -24,6 +24,33 @@ const domainErrorCodes: Record<string, string> = {
   alias_protected: 'PERMISSION_DENIED',
 };
 
+// The native API's text speaks of signing in; an MLflow client is told which MLflow setting to fix.
+const mlflowClientMessages: Record<string, string> = {
+  authentication_required:
+    'API tokenが送られていません。MLFLOW_TRACKING_TOKEN（Basic認証ならMLFLOW_TRACKING_PASSWORD）に、このProjectのAPI tokenを設定してください。tokenは［プロジェクト設定］の「SDK・MLflow 3から接続」で発行できます',
+};
+
+// The MLflow client appends /api/2.0/mlflow/... (or /api/3.0/..., .../mlflow-artifacts/...) to
+// MLFLOW_TRACKING_URI. These paths arrive when the URI stops at the site, at /api or at
+// /api/mlflow instead of a Project's /api/mlflow/projects/<id>.
+const MLFLOW_PATH_WITHOUT_PROJECT =
+  /^\/api\/(?:mlflow\/)?(?:api\/)?[0-9]+\.[0-9]+\/mlflow(?:-artifacts)?(?:\/|$)/;
+
+export function isMlflowRequestWithoutProject(requestPath: string): boolean {
+  return MLFLOW_PATH_WITHOUT_PROJECT.test(requestPath);
+}
+
+/** The answer to an MLflow call whose tracking URI has no Project, with the URI it should be. */
+export function mlflowProjectMissingError(publicUrl: string): MlflowErrorResponse {
+  return {
+    status: 404,
+    body: {
+      error_code: 'ENDPOINT_NOT_FOUND',
+      message: `MLFLOW_TRACKING_URIにProjectのIDが入っていません。${publicUrl}/api/mlflow/projects/<ProjectのID> にしてください。［プロジェクト設定］またはExperimentsの［SDKで記録］の「SDK・MLflow 3から接続」に、IDを入れたURIが表示されます`,
+    },
+  };
+}
+
 export function isMlflowRequest(requestPath: string): boolean {
   return /^\/api\/mlflow\/projects\/[^/]+(?:\/|$)/.test(requestPath);
 }
@@ -58,7 +85,10 @@ export function formatMlflowError(error: Error): MlflowErrorResponse {
                 : 'INVALID_PARAMETER_VALUE';
     return {
       status: statusCode,
-      body: { error_code: domainErrorCodes[error.code] ?? fallbackCode, message: error.message },
+      body: {
+        error_code: domainErrorCodes[error.code] ?? fallbackCode,
+        message: mlflowClientMessages[error.code] ?? error.message,
+      },
     };
   }
   if (error instanceof ArtifactRangeError) {

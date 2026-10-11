@@ -22,7 +22,7 @@ PluginのUI部品や任意のJavaScriptは、ブラウザで実行しません�
 | Pluginを登録する、接続先やtokenの環境変数名を変える、有効・無効を切り替える | 全体管理者 |
 | 接続を確認する、データセットを検索して取り込む、イベントを再送する、容量メトリクスを見る | ProjectのAdmin |
 
-Pluginの登録はProjectごとです。Pluginを使うProjectごとに登録します。
+Pluginの登録はProjectごとです。Pluginを使うProjectごとに登録します。Pluginが登録されていないProjectの［Plugins］には、ProjectのAdminへ「Pluginの登録は全体管理者が行います」と出ます。
 
 ## Mado pluginを動かす
 
@@ -98,7 +98,11 @@ MMT_MADO_PLUGIN_TOKEN=<PluginのMMT_PLUGIN_TOKENと同じ値>
 
 3. ［接続を確認］を押し、Pluginのversionとcapabilitiesが表示されることを確かめます。
 
-接続先URLやtokenの環境変数名を変えると、確認済みの情報は消えます。もう一度［接続を確認］を押してください。tokenの環境変数がAPIのプロセスに無いと、「Pluginのtoken環境変数が設定されていません」（`plugin_token_unavailable`）になります。
+接続先URLやtokenの環境変数名を変えると、確認済みの情報は消えます。もう一度［接続を確認］を押してください。
+
+Pluginの詳細の「API serverの設定」は、tokenの環境変数がAPIのプロセスにあるかを示します（値は表示しません）。無いときは「未設定（API serverに変数が無い）」と、どの変数をどこに置くかの案内が出て、［接続を確認］と［イベントを再送］は押せません。API serverの`.env`に設定し、APIを再起動してから［接続を確認］を押します。APIで呼んだときは「Pluginのtoken環境変数 <変数名> がAPI serverに設定されていません…」（`plugin_token_unavailable`）になります。
+
+［データセットを検索］は、［接続を確認］が成功してから使えます。
 
 Pluginとの通信は、Bearer tokenで認証し、応答は1MiBまで、5秒で打ち切ります。接続先URLを登録できるのは全体管理者だけです。
 
@@ -107,7 +111,7 @@ Pluginとの通信は、Bearer tokenで認証し、応答は1MiBまで、5秒で
 1. ［Plugins］で［データセットを検索］に検索語を入れます。
 2. 結果からバージョンを選び、［インポート］を押します。
 
-取り込んだバージョンは［Datasets］に、Madoの外部IDを保ったDatasetVersionとして表示されます。同じバージョンをもう一度取り込んでも、同じDatasetVersionを返します。Runの入力にすると、どのMadoのバージョンを使ったかが記録されます。データセットの扱いは[データセット](/data/datasets)を参照してください。
+取り込んだバージョンは［Datasets］（Pluginの詳細の［取り込んだデータセットを見る（Datasets）］からも開けます）に、Madoの外部IDを保ったDatasetVersionとして表示されます。同じバージョンをもう一度取り込んでも、同じDatasetVersionを返します。Runの入力にすると、どのMadoのバージョンを使ったかが記録されます。データセットの扱いは[データセット](/data/datasets)を参照してください。
 
 ## lineageの送信と再送
 

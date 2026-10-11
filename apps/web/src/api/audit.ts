@@ -1,19 +1,29 @@
-import type { AuditEventPage } from '@mmt/contracts';
+import type { AuditEvent, AuditEventPage } from '@mmt/contracts';
 import { invalidResponseError, projectPath, request } from './http';
 
 // Matches the API default so each "load more" fetches one server page.
 export const AUDIT_EVENT_PAGE_SIZE = 50;
 
+/** What the log is narrowed to; the API applies it, so paging stays over the narrowed log. */
+export interface AuditEventFilter {
+  outcome?: AuditEvent['outcome'];
+  /** Leaves out sign-ins, sign-outs and the identity provider's syncs. */
+  hideSignIns?: boolean;
+}
+
 export interface AuditPageRequest {
   cursor?: string;
+  filter?: AuditEventFilter;
   signal?: AbortSignal;
 }
 
 async function fetchAuditPage(
   path: string,
-  { cursor, signal }: AuditPageRequest,
+  { cursor, filter = {}, signal }: AuditPageRequest,
 ): Promise<AuditEventPage> {
   const query = new URLSearchParams({ limit: String(AUDIT_EVENT_PAGE_SIZE) });
+  if (filter.outcome) query.set('outcome', filter.outcome);
+  if (filter.hideSignIns) query.set('hideSignIns', 'true');
   if (cursor) query.set('cursor', cursor);
   const page = await request<AuditEventPage>(`${path}?${query}`, { signal });
   if (

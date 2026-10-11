@@ -1,18 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import type { Job, RunStatus } from '@mmt/contracts';
+import type { RunStatus } from '@mmt/contracts';
 import {
   collectResumedRunIds,
-  findRunJob,
   getCheckpointArtifactFileName,
   getCheckpointResumeOffer,
   getResumeCheckpointRecord,
 } from './checkpointResume';
 import { canControlJob } from './permissions';
-import { queuedJob } from '../../tests/fixtures/execution';
-
-function job(id: string, runId: string): Job {
-  return { ...queuedJob, id, runId, status: 'failed', exitCode: 1 };
-}
 
 describe('checkpointからの再開の出し方', () => {
   const stopped = { status: 'failed' } as const;
@@ -62,14 +56,6 @@ describe('checkpointからの再開の出し方', () => {
     expect(
       getCheckpointResumeOffer({ run: stopped, job: { status: 'running' }, canRetryJob: true }),
     ).toBe('none');
-  });
-});
-
-describe('RunのJobの特定', () => {
-  it('新しい順の一覧から同じRunの最初のJobを返す', () => {
-    const jobs = [job('newer', 'run-a'), job('other', 'run-b'), job('older', 'run-a')];
-    expect(findRunJob(jobs, 'run-a')?.id).toBe('newer');
-    expect(findRunJob(jobs, 'run-c')).toBeUndefined();
   });
 });
 

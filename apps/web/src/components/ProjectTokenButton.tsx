@@ -14,7 +14,7 @@ export function ProjectTokenButton({
   onCreated,
 }: {
   label: string;
-  scopes: TokenScope[];
+  scopes: readonly TokenScope[];
   onCreated?: () => void;
 }) {
   const { project, canEdit } = useProject();

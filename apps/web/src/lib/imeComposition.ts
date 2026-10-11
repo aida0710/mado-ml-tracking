@@ -1,5 +1,6 @@
 /** The parts of a React keyboard event that tell whether an input method is composing text. */
 export type CompositionAwareKeyEvent = {
+  key: string;
   keyCode: number;
   nativeEvent: { isComposing: boolean };
 };
@@ -15,4 +16,12 @@ const IME_PROCESS_KEY_CODE = 229;
  */
 export function isComposingKey(event: CompositionAwareKeyEvent): boolean {
   return event.nativeEvent.isComposing || event.keyCode === IME_PROCESS_KEY_CODE;
+}
+
+/**
+ * Whether the key is an Enter typed to act (submit the form around the field, pick an entry), not
+ * the Enter that confirms an input method's conversion.
+ */
+export function isEnterOutsideComposition(event: CompositionAwareKeyEvent): boolean {
+  return event.key === 'Enter' && !isComposingKey(event);
 }

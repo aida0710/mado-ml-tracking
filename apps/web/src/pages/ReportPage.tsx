@@ -16,16 +16,12 @@ import { ReportEditor } from '../components/reports/ReportEditor';
 import { ReportRevisionHistory } from '../components/reports/ReportRevisionHistory';
 import { formatDate } from '../lib/format';
 import { snapshotsByBlockId } from '../lib/reportBlocks';
+import { REPORT_REVISION_PARAM, parseRevisionParam, reportRevisionUrl } from '../lib/reportUrl';
 import { text, textTemplates } from '../i18n/catalog';
 
 /** Navigation state that opens the editor right away, set when a report is created. */
 export interface ReportPageLocationState {
   edit?: boolean;
-}
-
-function parseRevision(value: string | null): number | undefined {
-  const revision = Number(value);
-  return value && Number.isInteger(revision) && revision > 0 ? revision : undefined;
 }
 
 /**
@@ -39,7 +35,7 @@ export function ReportPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [params, setParams] = useSearchParams();
-  const requestedRevision = parseRevision(params.get('revision'));
+  const requestedRevision = parseRevisionParam(params.get(REPORT_REVISION_PARAM));
   const [isEditing, setEditing] = useState(() => (location.state as ReportPageLocationState | null)?.edit === true);
   const [isHistoryOpen, setHistoryOpen] = useState(requestedRevision !== undefined);
   const [restoring, setRestoring] = useState<ReportRevisionSummary | null>(null);
@@ -48,7 +44,7 @@ export function ReportPage() {
   const { document, snapshots } = useReportDetail(project.id, reportId, requestedRevision);
 
   function showRevision(revision: number | undefined) {
-    setParams(revision === undefined ? {} : { revision: String(revision) });
+    setParams(revision === undefined ? {} : { [REPORT_REVISION_PARAM]: String(revision) });
   }
   function afterSave() {
     setEditing(false);
@@ -66,6 +62,7 @@ export function ReportPage() {
           const canEditReport = canEdit && !isArchived;
           const canArchive = isProjectAdmin || (canEdit && report.createdBy.id === user.id);
           const snapshotMap = snapshotsByBlockId(snapshots.value ?? []);
+          const isEditorOpen = isEditing && isCurrent;
           return (
             <>
               <PageHeader
@@ -128,7 +125,7 @@ export function ReportPage() {
               )}
               <div className={`report-layout ${isHistoryOpen ? 'with-history' : ''}`}>
                 <div className="report-body">
-                  {isEditing && isCurrent ? (
+                  {isEditorOpen ? (
                     <ReportEditor
                       // A reloaded revision starts a fresh edit.
                       key={revision.revision}
@@ -162,11 +159,18 @@ export function ReportPage() {
                       shownRevision={revision.revision}
                       onShow={(shown) => showRevision(shown === report.currentRevision ? undefined : shown)}
                       onRestore={canEditReport && !isEditing ? setRestoring : undefined}
+                      revisionUrl={(shown) =>
+                        reportRevisionUrl({ origin: window.location.origin, projectId: project.id, reportId: report.id, revision: shown })
+                      }
                     />
                   </aside>
                 )}
               </div>
-              <CommentThread projectId={project.id} targetType="report" targetId={report.id} />
+              {/* Hidden, not unmounted, while editing: its buttons read like the editor's, and a comment
+                  draft must survive opening the editor. */}
+              <div hidden={isEditorOpen}>
+                <CommentThread projectId={project.id} targetType="report" targetId={report.id} />
+              </div>
               {restoring && (
                 <ConfirmDialog
                   title={text.reportRestoreTitle}

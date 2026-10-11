@@ -10,7 +10,10 @@ export interface ResponsiveTableColumn<T> {
   key: string;
   header: ReactNode;
   render: (row: T) => ReactNode;
-  /** primary columns stay in the row on narrow screens; secondary ones move into the opened row. */
+  /**
+   * primary columns stay in the row on narrow screens; secondary ones move into the opened row;
+   * detail ones are always in the opened row, so long text does not widen a wide table.
+   */
   priority: ColumnPriority;
   className?: string;
 }

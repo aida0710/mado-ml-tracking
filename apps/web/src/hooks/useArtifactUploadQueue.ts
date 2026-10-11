@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Artifact, ArtifactUpload, ArtifactUploadDetail, ArtifactUploadListItem } from '@mmt/contracts';
 import { artifactUploadsApi } from '../api/artifactUploads';
-import { RequestError } from '../api/http';
+import { NETWORK_ERROR_CODE, RequestError } from '../api/http';
 import { trackingApi } from '../api/tracking';
 import { canDigest, sha256Hex } from '../lib/blobDigest';
 import type { UploadSource } from '../lib/droppedFiles';
@@ -9,6 +9,7 @@ import { formatErrorMessage } from '../lib/errorMessage';
 import {
   canRetry,
   choosePartSize,
+  MAX_PART_ATTEMPTS,
   chooseUploadMethod,
   estimateRemainingSeconds,
   estimateTransferRate,
@@ -51,6 +52,13 @@ export type UploadItemStatus =
 
 const ACTIVE_STATUSES: ReadonlySet<UploadItemStatus> = new Set(['queued', 'preparing', 'uploading', 'verifying']);
 
+/** A request that failed on the network and is about to be sent again. */
+export interface UploadRetry {
+  /** The attempt about to start, from 2. */
+  attempt: number;
+  maxAttempts: number;
+}
+
 /** What the queue panel shows for one file. */
 export interface UploadItem {
   id: string;
@@ -64,6 +72,8 @@ export interface UploadItem {
   resumedBytes: number;
   bytesPerSecond: number | null;
   remainingSeconds: number | null;
+  /** Set while a failed request waits to be sent again; the rate and time left are unknown then. */
+  retry: UploadRetry | null;
   error: string | null;
   artifact: Artifact | null;
 }
@@ -92,6 +102,7 @@ interface UploadJob {
   samples: TransferSample[];
   /** Replaced on every start, so requests of a paused or canceled attempt change nothing. */
   controller: AbortController;
+  retry: UploadRetry | null;
   error: string | null;
   artifact: Artifact | null;
 }
@@ -144,9 +155,14 @@ export function useArtifactUploadQueue({
       }
       job.controller.abort();
       job.status = 'failed';
+      job.retry = null;
       job.error = blocker
         ? `${resumeBlockerReasons[blocker]}${startsOver ? text.uploadRestartFromQueue : resumeBlockerNextSteps[blocker]}`
-        : formatErrorMessage(failure);
+        : isNetworkLoss(failure)
+          ? job.method === 'multipart'
+            ? text.uploadNetworkLostResume
+            : text.uploadNetworkLostResend
+          : formatErrorMessage(failure);
       job.pendingParts = [];
       job.inFlightParts.clear();
       render();
@@ -193,6 +209,16 @@ export function useArtifactUploadQueue({
     [failJob, finishCompleted, projectId, render],
   );
 
+  const showRetry = useCallback(
+    (job: UploadJob, retry: UploadRetry) => {
+      // The rate restarts once requests get through again.
+      job.retry = retry;
+      job.samples = [];
+      render();
+    },
+    [render],
+  );
+
   const sendPart = useCallback(
     async (job: UploadJob, part: PartRange) => {
       const { signal } = job.controller;
@@ -220,18 +246,24 @@ export function useArtifactUploadQueue({
               },
             },
           );
+        }, (retry) => {
+          // The failed request's bytes were not received; they are sent again from the start.
+          job.inFlightParts.set(part.partNumber, 0);
+          showRetry(job, retry);
         });
       } catch (failure) {
         if (!signal.aborted) failJob(job, failure);
         return;
       }
       if (signal.aborted) return;
+      // A part got through, so the connection is back even if another part is still waiting.
+      job.retry = null;
       job.inFlightParts.delete(part.partNumber);
       job.confirmedBytes += part.end - part.start;
       renderSoon();
       if (job.pendingParts.length === 0 && job.inFlightParts.size === 0) void finalize(job, session);
     },
-    [failJob, finalize, projectId, renderSoon],
+    [failJob, finalize, projectId, renderSoon, showRetry],
   );
 
   const sendSingle = useCallback(
@@ -240,17 +272,23 @@ export function useArtifactUploadQueue({
       job.status = 'uploading';
       render();
       try {
-        const artifact = await retrying(signal, () =>
-          artifactUploadsApi.putSingle(
-            { projectId, runId, path: job.path, file: job.source.file },
-            {
-              signal,
-              onProgress: (sentBytes) => {
-                job.inFlightParts.set(1, sentBytes);
-                renderSoon();
+        const artifact = await retrying(
+          signal,
+          () =>
+            artifactUploadsApi.putSingle(
+              { projectId, runId, path: job.path, file: job.source.file },
+              {
+                signal,
+                onProgress: (sentBytes) => {
+                  job.inFlightParts.set(1, sentBytes);
+                  renderSoon();
+                },
               },
-            },
-          ),
+            ),
+          (retry) => {
+            job.inFlightParts.set(1, 0);
+            showRetry(job, retry);
+          },
         );
         if (signal.aborted) return;
         job.inFlightParts.clear();
@@ -259,7 +297,7 @@ export function useArtifactUploadQueue({
         if (!signal.aborted) failJob(job, failure);
       }
     },
-    [failJob, finishCompleted, projectId, render, renderSoon, runId],
+    [failJob, finishCompleted, projectId, render, renderSoon, runId, showRetry],
   );
 
   const prepareSession = useCallback(
@@ -353,6 +391,7 @@ export function useArtifactUploadQueue({
           resumedBytes: 0,
           samples: [],
           controller: new AbortController(),
+          retry: null,
           error: null,
           artifact: null,
         });
@@ -387,6 +426,7 @@ export function useArtifactUploadQueue({
       }
       job.controller = new AbortController();
       job.status = 'queued';
+      job.retry = null;
       job.error = null;
       pump();
     },
@@ -473,7 +513,7 @@ export function useArtifactUploadQueue({
 function toItem(job: UploadJob, now: number): UploadItem {
   const inFlightBytes = [...job.inFlightParts.values()].reduce((total, bytes) => total + bytes, 0);
   const sentBytes = Math.min(job.source.file.size, job.confirmedBytes + inFlightBytes);
-  const isSending = job.status === 'uploading';
+  const isSending = job.status === 'uploading' && job.retry === null;
   if (isSending) job.samples = recordTransferSample(job.samples, { at: now, bytes: sentBytes });
   const bytesPerSecond = isSending ? estimateTransferRate(job.samples) : null;
   return {
@@ -487,6 +527,7 @@ function toItem(job: UploadJob, now: number): UploadItem {
     resumedBytes: job.resumedBytes,
     bytesPerSecond,
     remainingSeconds: estimateRemainingSeconds(job.source.file.size - sentBytes, bytesPerSecond),
+    retry: job.status === 'uploading' || job.status === 'preparing' ? job.retry : null,
     error: job.error,
     artifact: job.artifact,
   };
@@ -494,6 +535,7 @@ function toItem(job: UploadJob, now: number): UploadItem {
 
 function stopRequests(job: UploadJob) {
   job.controller.abort();
+  job.retry = null;
   job.pendingParts = [];
   job.inFlightParts.clear();
   job.samples = [];
@@ -561,13 +603,23 @@ async function findResumableSession({
   return null;
 }
 
-async function retrying<T>(signal: AbortSignal, send: () => Promise<T>): Promise<T> {
+/** A dropped connection, as opposed to an answer from the server. */
+function isNetworkLoss(failure: unknown): boolean {
+  return failure instanceof RequestError && failure.code === NETWORK_ERROR_CODE;
+}
+
+async function retrying<T>(
+  signal: AbortSignal,
+  send: () => Promise<T>,
+  onRetry: (retry: UploadRetry) => void,
+): Promise<T> {
   for (let attempt = 1; ; attempt += 1) {
     try {
       return await send();
     } catch (failure) {
       const isRetryable = failure instanceof RequestError && isRetryableFailure(failure) && canRetry(attempt);
       if (signal.aborted || !isRetryable) throw failure;
+      onRetry({ attempt: attempt + 1, maxAttempts: MAX_PART_ATTEMPTS });
       await waitFor(retryDelayMs(attempt), signal);
     }
   }

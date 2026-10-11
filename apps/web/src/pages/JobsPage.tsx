@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Play, RefreshCw } from 'lucide-react';
+import { Play, RefreshCw, X } from 'lucide-react';
+import { TOKEN_PURPOSE_SCOPES } from '@mmt/contracts';
 import { executionApi } from '../api/execution';
 import { hooksApi } from '../api/hooks';
 import { trackingApi } from '../api/tracking';
 import { useAuth } from '../hooks/useAuth';
 import { useProject } from '../hooks/useProject';
 import { useProjectTargets } from '../hooks/useProjectTargets';
+import { useProjectWorkers } from '../hooks/useProjectWorkers';
+import { useRunLogs } from '../hooks/useRunLogs';
 import { EXECUTION_POLL_MS, useQuery } from '../hooks/useQuery';
 import { PageHeader } from '../components/PageHeader';
 import { Resource } from '../components/Feedback';
@@ -16,20 +19,21 @@ import { JobsTable, type JobAction } from '../components/JobsTable';
 import { JobArraysTable } from '../components/JobArraysTable';
 import { JobDetailsList } from '../components/JobDetailsList';
 import { ManualSubmissionNotice, WaitingJobNotice } from '../components/ManualSubmissionNotice';
+import { QueuedJobWaitNotice, WorkerlessJobsNotice } from '../components/QueuedJobWaitNotice';
 import { ProjectTokenButton } from '../components/ProjectTokenButton';
 import { LaunchDialog } from '../dialogs/LaunchDialog';
 import { JobActionDialog } from '../dialogs/JobActionDialog';
 import { ResumeDialog } from '../dialogs/ResumeDialog';
 import { useResumedRunIds } from '../hooks/useResumedRunIds';
 import { summarizeJobArrays } from '../lib/jobArrays';
-import { shortId } from '../lib/jobDisplay';
+import { isActiveJob, shortId } from '../lib/jobDisplay';
 import { canControlJob } from '../lib/permissions';
+import { queuedJobWait, workerlessJobGroups } from '../lib/queuedJobWait';
 import {
   isWaitingManualSubmission,
   manualSiteOwnership,
   manualSubmissionGroups,
 } from '../lib/manualSubmission';
-import { SUBMIT_TOKEN_SCOPES } from '../lib/submitCliSetup';
 import { text } from '../i18n/catalog';
 import { jobsTextTemplates } from '../i18n/jobs';
 
@@ -61,16 +65,37 @@ export function JobsPage() {
     (signal) => trackingApi.run(project.id, selected!.runId, signal), EXECUTION_POLL_MS);
   const sourceArtifacts = useQuery(selected ? `${project.id}:job-artifacts:${selected.runId}` : null,
     (signal) => trackingApi.artifacts(project.id, selected!.runId, signal), EXECUTION_POLL_MS);
-  const logs = useQuery(
-    selected ? `${selected.runId}:logs` : null,
-    (signal) => trackingApi.logs(project.id, selected!.runId, signal),
-    EXECUTION_POLL_MS,
-  );
+  const logs = useRunLogs({
+    projectId: project.id,
+    run: selected && { id: selected.runId },
+    enabled: Boolean(selected),
+    isLive: Boolean(selected && isActiveJob(selected)),
+  });
+  // Until the workers load, no Job is said to lack one.
+  const workers = useProjectWorkers(project.id);
+  const detailHeading = useRef<HTMLHeadingElement>(null);
+  const shownJobId = useRef<string | null>(null);
+  const selectedJobId = selected?.id ?? null;
+  // The details sit below the list, so choosing a Job (or arriving with ?job=) brings them into
+  // view once and moves the focus there. Only ?job= forgets that: a failed poll hides the details
+  // for a moment, and the next success must not take the scroll and focus again.
+  useEffect(() => {
+    if (shownJobId.current !== selectedId) shownJobId.current = null;
+  }, [selectedId]);
+  useEffect(() => {
+    if (!selectedJobId || shownJobId.current === selectedJobId) return;
+    shownJobId.current = selectedJobId;
+    detailHeading.current?.scrollIntoView({ block: 'start' });
+    detailHeading.current?.focus({ preventScroll: true });
+  }, [selectedJobId]);
   const targetItems = targets.value ?? [];
   const selectedTarget = selected && targetItems.find((target) => target.id === selected.targetId);
   const hookItems = hooks.value ?? [];
   const submitTokenButton = (
-    <ProjectTokenButton label={text.submitSetupIssueToken} scopes={SUBMIT_TOKEN_SCOPES} />
+    <ProjectTokenButton
+      label={text.submitSetupIssueToken}
+      scopes={TOKEN_PURPOSE_SCOPES.jobSubmission}
+    />
   );
   const setParam = (name: string, value: string) =>
     setParams((previous) => {
@@ -104,6 +129,15 @@ export function JobsPage() {
         <ManualSubmissionNotice
           groups={manualSubmissionGroups(jobs.value, targetItems, user)}
           tokenButton={submitTokenButton}
+        />
+      )}
+      {jobs.value && workers.value && (
+        <WorkerlessJobsNotice
+          groups={workerlessJobGroups({
+            jobs: jobs.value,
+            targets: targetItems,
+            workers: workers.value,
+          })}
         />
       )}
       <label className="chart-selector">
@@ -167,8 +201,22 @@ export function JobsPage() {
         }}
       </Resource>
       {selected && (
-        <section className="job-detail">
-          <h2>{selected.runName}</h2>
+        <section className="job-detail" aria-labelledby="job-detail-heading">
+          <div className="job-detail-heading">
+            <h2 id="job-detail-heading" ref={detailHeading} tabIndex={-1}>
+              {selected.runName}
+            </h2>
+            <button type="button" className="button small" onClick={() => setParam('job', '')}>
+              <X size={14} />
+              {text.jobDetailClose}
+            </button>
+          </div>
+          {workers.value && (
+            <QueuedJobWaitNotice
+              wait={queuedJobWait(selected, selectedTarget, workers.value)}
+              target={selectedTarget}
+            />
+          )}
           <JobDetailsList
             job={selected}
             target={selectedTarget}
@@ -185,6 +233,9 @@ export function JobsPage() {
               tokenButton={submitTokenButton}
             />
           )}
+          {/* The log comes before the long execution snapshot: it is what a failed Job is opened for. */}
+          <h3>{text.logs}</h3>
+          <RunLogs logs={logs} />
           <Resource query={selectedRun}>
             {(run) => (
               <Resource query={sourceArtifacts}>
@@ -194,8 +245,6 @@ export function JobsPage() {
               </Resource>
             )}
           </Resource>
-          <h3>{text.logs}</h3>
-          <Resource query={logs}>{(entries) => <RunLogs entries={entries} />}</Resource>
         </section>
       )}
       {showLaunch && (

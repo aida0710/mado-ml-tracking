@@ -4,6 +4,7 @@ import type {
   MetricPoint,
   ModelVersion,
   Run,
+  RunLogList,
   RunStatus,
 } from '@mmt/contracts';
 import type { Principal } from '../auth/principal.js';
@@ -27,13 +28,19 @@ import {
 import {
   appendLogs,
   appendMetrics,
+  listLatestLogs,
   listLogs,
+  listLogsAfter,
   listMetrics,
 } from '../repositories/telemetryRepository.js';
+import { formatLogFileLine, logFileName } from '../domain/runLogFile.js';
 import { requireProject } from './accessService.js';
 import type { RunCompletionService } from './runCompletionService.js';
 import { pinResumeCheckpoint } from './checkpointResume.js';
 import { assertInputDatasetVersionsUsable } from './datasetVersionReferences.js';
+
+// Lines read per query while a log file is downloading: about 1.5 MB at 300 bytes a line.
+const LOG_FILE_BATCH_LINES = 5000;
 
 /**
  * Job-owned Runs are the evidence automation and evaluation compare, so their records freeze once
@@ -269,9 +276,44 @@ export class RunService {
     });
   }
 
-  async logs(principal: Principal, projectId: string, runId: string): Promise<LogEntry[]> {
+  /** Every line of the Run, or with `tail` only that many of the latest, oldest first. */
+  async logs(
+    principal: Principal,
+    projectId: string,
+    query: { runId: string; tail?: number },
+  ): Promise<RunLogList> {
+    const { runId, tail } = query;
     await this.get(principal, projectId, runId);
-    return listLogs(this.database, runId);
+    if (tail !== undefined) return listLatestLogs(this.database, { runId, tail });
+    const items = await listLogs(this.database, runId);
+    return { items, totalCount: items.length };
+  }
+
+  /**
+   * Every line of the Run as a file, read in batches as the client takes them, so a long log is
+   * neither held in memory here nor in the browser.
+   */
+  async logFile(
+    principal: Principal,
+    projectId: string,
+    runId: string,
+  ): Promise<{ fileName: string; chunks: AsyncGenerator<string> }> {
+    const run = await this.get(principal, projectId, runId);
+    return { fileName: logFileName(run.name), chunks: this.logFileChunks(runId) };
+  }
+
+  private async *logFileChunks(runId: string): AsyncGenerator<string> {
+    let afterId: string | null = null;
+    for (;;) {
+      const batch = await listLogsAfter(this.database, {
+        runId,
+        afterId,
+        limit: LOG_FILE_BATCH_LINES,
+      });
+      if (!batch.length) return;
+      yield batch.map(formatLogFileLine).join('');
+      afterId = batch.at(-1)!.id;
+    }
   }
 
   async addLogs(

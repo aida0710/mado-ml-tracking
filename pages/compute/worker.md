@@ -145,7 +145,7 @@ SSH鍵の候補の報告と、コンピュータのディレクトリの読み�
 
 ```bash
 install -m 600 /dev/null ~/worker-token
-read -rsp 'Worker API token: ' TOKEN && printf '%s\n' "$TOKEN" > ~/worker-token && unset TOKEN
+printf 'Worker API token: '; read -r -s TOKEN && echo && printf '%s\n' "$TOKEN" > ~/worker-token && unset TOKEN
 ~/.local/share/mado-tracking-worker/venv/bin/mado-tracking-worker install \
   --api-url https://tracking.example.internal --worker-id gpu-host-1 \
   --target-ids "<targetのID>" --token-file ~/worker-token
@@ -183,7 +183,7 @@ export MMT_API_URL=https://tracking.example.internal
 export MMT_WORKER_ID=gpu-host-1
 export MMT_WORKER_TARGET_IDS="<targetのID>"
 export MMT_WORKER_STATE_DIR="$HOME/.local/state/mmt-worker-manual"
-read -rsp 'Worker API token: ' MMT_API_TOKEN
+printf 'Worker API token: '; read -r -s MMT_API_TOKEN; echo
 export MMT_API_TOKEN
 ~/.local/share/mado-tracking-worker/venv/bin/mado-tracking-worker
 ```

@@ -8,18 +8,17 @@ import { useQuery } from './useQuery';
 export const SELECTABLE_RUN_LIMIT = 500;
 export function useExecutionCatalog(projectId: string) {
   return useQuery<ExecutionCatalog>(`${projectId}:execution-catalog`, async (signal) => {
-    const [experiments, models, codes, datasets, runs] = await Promise.all([
+    const [experiments, models, { codes, codeVersions }, datasets, runs] = await Promise.all([
       trackingApi.experiments(projectId, signal),
       registryApi.models(projectId, signal),
-      registryApi.codes(projectId, signal),
+      registryApi.codesWithVersions(projectId, signal),
       registryApi.datasets(projectId, signal),
       trackingApi
         .searchRuns(projectId, { limit: SELECTABLE_RUN_LIMIT }, signal)
         .then((page) => page.items),
     ]);
-    const [modelVersions, codeVersions, datasetVersions] = await Promise.all([
+    const [modelVersions, datasetVersions] = await Promise.all([
       Promise.all(models.map((model) => registryApi.modelVersions(projectId, model.id, signal))),
-      Promise.all(codes.map((code) => registryApi.codeVersions(projectId, code.id, signal))),
       Promise.all(
         datasets.map((dataset) => registryApi.datasetVersions(projectId, dataset.id, signal)),
       ),
@@ -31,7 +30,7 @@ export function useExecutionCatalog(projectId: string) {
       datasets,
       runs,
       modelVersions: modelVersions.flat(),
-      codeVersions: codeVersions.flat(),
+      codeVersions,
       datasetVersions: datasetVersions.flat(),
     };
   });

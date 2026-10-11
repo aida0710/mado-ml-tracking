@@ -64,12 +64,18 @@ export type { DatasetTransferMode } from './targetDatasetCache.js';
 export { DATASET_TRANSFER_MODES, DEFAULT_DATASET_CACHE_MAX_BYTES, MIN_DATASET_CACHE_MAX_BYTES } from './targetDatasetCache.js';
 export type { DatasetContentKind, DatasetVersionContent, DatasetVersionFile, DatasetVersionFileInput, DatasetVersionFilePage } from './datasetContent.js';
 export { MAX_DATASET_VERSION_FILES } from './datasetContent.js';
+export type { DatasetFolderUpload, DatasetFolderUploadDiscard } from './datasetFolderUploads.js';
+export { DATASET_FOLDER_UPLOAD_FOLDER_PATTERN, datasetFolderUploadPrefix, datasetFolderUploadRoot } from './datasetFolderUploads.js';
+export type { ArtifactReferences } from './artifactReferences.js';
+export { ARTIFACT_REFERENCES_BATCH_LIMIT } from './artifactReferences.js';
 export type { Comment, CommentAuthor, CommentCreate, CommentPage, CommentTargetType, CommentUpdate, RunNote, RunNoteUpdate } from './comments.js';
 export { COMMENT_MAX_LENGTH, RUN_NOTE_MAX_LENGTH, RUN_NOTE_TAG } from './comments.js';
 export type { ProjectGroupBinding, ProjectMember, ProjectMemberGroupRole, UserSearchResult } from './projectAccess.js';
 export type { AdminProject, AdminProjectQuery, ProjectCreate, ProjectMemberGrant, ProjectPatch } from './projectAdministration.js';
 export type { ServiceAccount, ServiceAccountCreate, ServiceAccountTokenCreate, ServiceAccountUpdate, TokenScope } from './serviceAccounts.js';
 export { TOKEN_SCOPE_REQUIRED_ROLE, TOKEN_SCOPES } from './serviceAccounts.js';
+export type { TokenPurpose } from './tokenPurposes.js';
+export { TOKEN_PURPOSE_LABELS, TOKEN_PURPOSE_SCOPES, TOKEN_PURPOSES } from './tokenPurposes.js';
 export type {
   PromotionCriterion,
   PromotionCriterionDirection,
@@ -402,6 +408,16 @@ export interface LogEntry {
   level: 'info' | 'warning' | 'error';
   message: string;
 }
+/**
+ * GET /projects/:p/runs/:r/logs: the Run's lines, oldest first. With `tail`, only that many of
+ * the latest; totalCount says how many the Run has, so a screen knows what it left out.
+ */
+export interface RunLogList {
+  items: LogEntry[];
+  totalCount: number;
+}
+// A screen polls the latest lines; a larger read is a download, which leaves `tail` out.
+export const MAX_RUN_LOG_TAIL = 10_000;
 export interface Run {
   id: string;
   projectId: string;
@@ -668,6 +684,24 @@ export interface JobListItem extends Job {
   createdBy: string;
   /** Display name of createdBy; null if the user record is gone. */
   createdByName: string | null;
+  /**
+   * Retrying from the latest checkpoint has one to start from: the Run saved a checkpoint, or it
+   * resumed from one (JobService.retry with resumeFromLatestCheckpoint).
+   */
+  hasResumeCheckpoint: boolean;
+  /** The Sweep trial the Job runs, when a Sweep started it; a person's retry of it has none. */
+  sweepTrial: JobSweepTrialOrigin | null;
+  /** The automation rule that started the Job (an attempt or an automatic retry of it). */
+  automationRule: JobAutomationRuleOrigin | null;
+}
+export interface JobSweepTrialOrigin {
+  sweepId: string;
+  sweepName: string;
+  trialIndex: number;
+}
+export interface JobAutomationRuleOrigin {
+  ruleId: string;
+  ruleName: string;
 }
 export type WorkerPresenceStatus = 'online' | 'offline';
 export interface WorkerPresence {
@@ -738,6 +772,8 @@ export interface PluginConnection {
   name: string;
   baseUrl: string;
   tokenEnv: string;
+  /** The API server has a non-empty value for `tokenEnv`; without one no call to the plugin works. */
+  tokenConfigured: boolean;
   enabled: boolean;
   manifest: PluginManifest | null;
   createdAt: string;
@@ -816,7 +852,8 @@ export type {
   OperationsAlertState,
   PluginOutboxSummary,
 } from './operations.js';
-export { OPERATIONS_ALERT_KINDS } from './operations.js';
+export { OPERATIONS_ALERT_KINDS, OPERATIONS_ALERT_MAX_PAGE_SIZE } from './operations.js';
+export { DEFAULT_JOB_ATTEMPTS, MAX_JOB_ATTEMPTS } from './jobAttempts.js';
 export type {
   MediaCompareGrid,
   MediaCompareRequest,

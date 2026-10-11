@@ -1,4 +1,5 @@
 import { text, textTemplates } from '../i18n/catalog';
+import { findComparisonKindError } from './runFilterValueKinds';
 
 /** What the Run search box sends: a name substring, or an MLflow search filter. */
 export type RunSearchConditions = { name: string } | { filter: string } | Record<string, never>;
@@ -50,8 +51,9 @@ function tokenize(filter: string): Token[] {
 }
 
 /**
- * Checks the grammar of a filter before it is sent: `field op value` comparisons joined by AND.
- * Whether a field or operator is supported is left to the API, which reports it with a 400.
+ * Checks the grammar of a filter before it is sent: `field op value` comparisons joined by AND,
+ * each suited to what its field holds (runFilterValueKinds). Whether a field is supported is left
+ * to the API, which reports it with a 400.
  */
 class FilterGrammar {
   private offset = 0;
@@ -79,19 +81,21 @@ class FilterGrammar {
     this.offset++;
     return true;
   }
-  private name(): void {
+  private name(): Token {
     const token = this.peek();
     if (!token || (token.kind !== 'word' && token.kind !== 'quoted')) this.fail();
     this.offset++;
+    return token;
   }
-  private value(): void {
+  private value(): Token & { kind: 'quoted' | 'number' } {
     const token = this.peek();
     if (!token || (token.kind !== 'quoted' && token.kind !== 'number')) this.fail();
     this.offset++;
+    return token as Token & { kind: 'quoted' | 'number' };
   }
   private comparison(): void {
-    this.name();
-    while (this.accept('.')) this.name();
+    const fieldPath = [this.name().value];
+    while (this.accept('.')) fieldPath.push(this.name().value);
     if (this.accept('IS')) {
       this.accept('NOT');
       if (!this.accept('NULL')) this.fail();
@@ -114,7 +118,13 @@ class FilterGrammar {
     )
       this.fail();
     this.offset++;
-    this.value();
+    const value = this.value();
+    const kindError = findComparisonKindError({
+      fieldPath,
+      operator: operator.value.toUpperCase(),
+      value: { kind: value.kind, text: value.value },
+    });
+    if (kindError) throw new FilterSyntaxError(kindError);
   }
 }
 

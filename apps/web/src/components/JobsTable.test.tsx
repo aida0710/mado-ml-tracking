@@ -17,6 +17,9 @@ const listItem = (overrides: Partial<JobListItem>): JobListItem => ({
   sweepEarlyStopped: false,
   createdBy: 'user-researcher',
   createdByName: '研究者A',
+  hasResumeCheckpoint: false,
+  sweepTrial: null,
+  automationRule: null,
   ...overrides,
 });
 const siteJob = listItem({
@@ -93,6 +96,35 @@ describe('Jobsの一覧', () => {
     // A tooltip cannot be read by touch or keyboard, so the reason is the cell's own text.
     expect(html).toContain('>停止・再実行は作成者かProject adminだけができます<');
     expect(html).not.toContain('title="停止・再実行は');
+  });
+
+  it('起動元にSweepの試行と自動実行のルールを出し、Sweepへはリンクする', () => {
+    const html = render([
+      listItem({
+        id: 'trial',
+        sweepTrial: { sweepId: 'sweep-1', sweepName: 'lr探索', trialIndex: 3 },
+      }),
+      listItem({ id: 'rule', automationRule: { ruleId: 'rule-1', ruleName: '登録時に推論' } }),
+    ]);
+    expect(html).toContain('href="/projects/project/sweeps/sweep-1"');
+    expect(html).toContain('Sweep: lr探索 #3');
+    expect(html).toContain('自動実行: 登録時に推論');
+  });
+
+  it('最新checkpointからの再開は、再開できるcheckpointがあるJobにだけ出す', () => {
+    const failed = { status: 'failed' as const };
+    const withCheckpoint = render([listItem({ ...failed, id: 'a', hasResumeCheckpoint: true })]);
+    expect(withCheckpoint).toContain('最新checkpointから再開');
+    const without = render([listItem({ ...failed, id: 'b', hasResumeCheckpoint: false })]);
+    expect(without).not.toContain('最新checkpointから再開');
+    expect(without).toContain('新しいRunで再実行');
+  });
+
+  it('人が最大試行回数を超えて再実行したJobは、上限が自動の再試行のものだと示す', () => {
+    expect(render([listItem({ attempt: 2, maxAttempts: 3 })])).toContain('2 / 3');
+    expect(render([listItem({ attempt: 2, maxAttempts: 1 })])).toContain(
+      '2（自動の再試行は1回目まで）',
+    );
   });
 
   it('手動投入を待つsiteごとに、本人が実行するコマンドを表示する', () => {

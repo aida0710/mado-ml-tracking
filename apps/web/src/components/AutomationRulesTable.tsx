@@ -105,7 +105,7 @@ export function AutomationRulesTable({
               {
                 key: 'actions',
                 priority: 'secondary' as const,
-                header: text.details,
+                header: text.actions,
                 render: (rule: ModelAutomationRule) => (
                   <button
                     className="button small"

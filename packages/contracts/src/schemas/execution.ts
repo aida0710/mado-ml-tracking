@@ -91,6 +91,11 @@ export const jobListItemSchema = namedContractSchema(
     sweepEarlyStopped: z.boolean(),
     createdBy: idSchema,
     createdByName: z.string().nullable(),
+    hasResumeCheckpoint: z.boolean(),
+    sweepTrial: z
+      .strictObject({ sweepId: idSchema, sweepName: z.string(), trialIndex: z.number().int() })
+      .nullable(),
+    automationRule: z.strictObject({ ruleId: idSchema, ruleName: z.string() }).nullable(),
   }),
 );
 export const workerPresenceSchema = namedContractSchema(

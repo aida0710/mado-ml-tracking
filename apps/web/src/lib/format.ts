@@ -4,6 +4,13 @@ export const formatDate = (value: string | null) =>
         new Date(value),
       )
     : '—';
+// Log lines and last answers within the same minute need the seconds to tell them apart.
+const dateTimeWithSeconds = new Intl.DateTimeFormat('ja-JP', {
+  dateStyle: 'short',
+  timeStyle: 'medium',
+});
+export const formatDateTimeSeconds = (value: string | null) =>
+  value ? dateTimeWithSeconds.format(new Date(value)) : '—';
 export const formatNumber = (value: number) =>
   new Intl.NumberFormat('en-US', { maximumSignificantDigits: 6 }).format(value);
 // Table cells use four significant digits; their tooltip retains the original value.
@@ -55,3 +62,7 @@ export function formatValue(value: unknown): string {
       ? JSON.stringify(value)
       : String(value);
 }
+
+// Run ids are UUIDs; their first block names a Run whose name is not loaded (yet).
+const SHORT_RUN_ID_LENGTH = 8;
+export const shortRunId = (runId: string) => runId.slice(0, SHORT_RUN_ID_LENGTH);

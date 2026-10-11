@@ -1,5 +1,5 @@
 // Paths for turning a chosen folder into an 'artifacts' DatasetVersion, and the tree rows of its files.
-import type { Artifact, DatasetVersionFile } from '@mmt/contracts';
+import { datasetFolderUploadPrefix, type Artifact, type DatasetVersionFile } from '@mmt/contracts';
 import type { UploadSource } from './droppedFiles';
 import { joinArtifactPath } from './uploadPlan';
 
@@ -8,6 +8,17 @@ export interface DatasetFolderEntry {
   source: UploadSource;
   datasetPath: string;
   artifactPath: string;
+  /** An earlier attempt of this folder upload already stored the same bytes; it is not sent again. */
+  storedArtifactId?: string;
+}
+
+/**
+ * The folder of a new folder upload: its start time, so attempts never share a folder. The name
+ * has the form DATASET_FOLDER_UPLOAD_FOLDER_PATTERN describes, which is how the API finds attempts
+ * that stopped. A timestamp needs no crypto.randomUUID, which browsers offer on HTTPS origins only.
+ */
+export function createDatasetFolderUploadFolder(now: Date): string {
+  return now.toISOString().replace(/[:.]/g, '-');
 }
 
 /**
@@ -28,16 +39,13 @@ export function datasetPathsOf(sources: UploadSource[]): string[] {
  */
 export function planDatasetFolder(
   sources: UploadSource[],
-  location: { datasetId: string; uploadId: string },
+  location: { datasetId: string; folder: string },
 ): DatasetFolderEntry[] {
   const datasetPaths = datasetPathsOf(sources);
+  const prefix = datasetFolderUploadPrefix(location);
   return sources.map((source, index) => {
     const datasetPath = datasetPaths[index]!;
-    return {
-      source,
-      datasetPath,
-      artifactPath: joinArtifactPath(`datasets/${location.datasetId}/${location.uploadId}`, datasetPath),
-    };
+    return { source, datasetPath, artifactPath: joinArtifactPath(prefix, datasetPath) };
   });
 }
 
@@ -69,14 +77,19 @@ export interface DatasetFolderUploadState {
 }
 
 /**
- * Which planned files are stored (their Artifact IDs by Artifact path) and which queue rows still
- * stand between the folder and its version: failed, paused, canceled, or still running.
+ * Which planned files are stored (their Artifact IDs by Artifact path: files an earlier attempt
+ * stored, and files the queue finished) and which queue rows still stand between the folder and
+ * its version: failed, paused, canceled, or still running.
  */
 export function datasetFolderProgress(entries: readonly DatasetFolderEntry[], items: readonly DatasetFolderUploadState[]) {
   const itemsByPath = new Map(items.map((item) => [item.path, item]));
   const storedArtifactIds = new Map<string, string>();
   const unfinishedItemIds: string[] = [];
   for (const entry of entries) {
+    if (entry.storedArtifactId) {
+      storedArtifactIds.set(entry.artifactPath, entry.storedArtifactId);
+      continue;
+    }
     const item = itemsByPath.get(entry.artifactPath);
     if (item?.status === 'completed' && item.artifact) storedArtifactIds.set(entry.artifactPath, item.artifact.id);
     else if (item) unfinishedItemIds.push(item.id);

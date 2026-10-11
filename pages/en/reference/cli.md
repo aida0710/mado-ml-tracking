@@ -34,7 +34,7 @@ Sends Runs recorded where the API was unreachable (offline records) to the API. 
 
 ```sh
 export MMT_API_URL=https://tracking.example.com
-read -rsp 'API token: ' MMT_API_TOKEN
+printf 'API token: '; read -r -s MMT_API_TOKEN; echo
 export MMT_API_TOKEN
 
 mado-tracking sync

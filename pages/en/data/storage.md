@@ -37,8 +37,8 @@ To add S3-compatible storage:
 
 1. Open **全体設定** (Global settings) from the user menu, then **ストレージ** (Storage) under 全体管理 (Global administration) in the sidebar.
 2. Click **保存先を追加** (Add storage).
-3. Set **種類** (Kind) to S3 and fill in the fields below.
-4. Click **作成** (Create).
+3. Set **種類** (Kind) to S3 and fill in the fields below. Signing, TLS verification, the CA certificate, checksums, and multipart are under 詳細設定 (Advanced settings); most storage keeps their defaults.
+4. Click **作成** (Create). Saving runs a connection test right away and shows the result below the list (see [Connection test](#connection-test)).
 
 | Field | Value | Example |
 | --- | --- | --- |
@@ -64,6 +64,7 @@ To add a file system, set **種類** (Kind) to Filesystem and enter an absolute 
 
 As you type in **ルートディレクトリ** (Root directory), directories on the API server are suggested.
 
+- An empty field lists the directories directly under `/`. The operating system's own directories there (`/proc`, `/sys`, `/dev`, `/boot`, `/etc`, `/usr`, `/tmp`, and so on) are not suggested, though a full path to one still works. Choose a place on a disk meant for data (`/srv`, `/mnt`, `/home`, and so on)
 - Ending with `/` lists the directories inside it (for example `/srv/mmt/`)
 - A partial name lists the directories that start with it (for example `/srv/mmt/art`)
 - Directories starting with `.` appear only after you type `.`
@@ -110,10 +111,12 @@ For S3-compatible storage that does not implement the multipart upload API, turn
 
 ## Connection test
 
-After adding or changing storage, run a connection test before making it the default.
+Adding or changing storage runs a connection test right after saving. To test again later:
 
 1. Click **接続テスト** (Connection test) on the row.
 2. **接続テストの結果** (Connection test result) shows OK or NG for each step.
+
+When it fails, fix the storage from 設定を変更 (Change settings) below the result and test again (storage defined by environment variables cannot be changed on the screen). For 保存されたsecretを現在の鍵で読めません (the stored secret cannot be read with the current key), check that the API server's `MMT_STORAGE_SECRET_KEY` has not changed since saving, or enter the Secret access key again from **変更** (Change).
 
 The test writes a 64-byte file under `mmt-connection-test/<random ID>/` and checks these steps in order:
 
@@ -135,7 +138,7 @@ For S3, allow Put, Get, and Delete on the prefix, and creating, completing, and 
 The default storage is preselected when someone creates a new Project.
 
 1. Click **既定にする** (Make default) on the storage row.
-2. Click **既定にする** (Make default) in the 既定の保存先を変更 (Change default storage) dialog.
+2. Click **既定にする** (Make default) in the 既定の保存先を変更 (Change default storage) dialog. This runs a connection test first and does not change the default when it fails (the result shows below the list).
 
 The default storage is labeled 既定の保存先 (default storage). Changing the default does not change existing Projects. If no default is set, `filesystem` is the default.
 

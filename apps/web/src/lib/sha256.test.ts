@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { computeSha256Hex } from './sha256';
+import { computeSha256Hex, createSha256 } from './sha256';
 
 const MIB = 1024 * 1024;
 const nodeSha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
@@ -27,5 +27,21 @@ describe('computeSha256Hex', () => {
     const whole = randomBytes(2 * MIB + 3);
     const slice = whole.subarray(MIB - 7, 2 * MIB);
     expect(computeSha256Hex(slice)).toBe(nodeSha256(slice));
+  });
+});
+
+describe('createSha256', () => {
+  it('ブロックの境目をまたぐ大きさに分けて渡しても、まとめて計算した値と一致する', () => {
+    const whole = randomBytes(3 * 64 * 1024 + 37);
+    for (const pieceLength of [1, 7, 63, 64, 65, 4096, 100_000]) {
+      const hasher = createSha256();
+      for (let start = 0; start < whole.length; start += pieceLength)
+        hasher.update(whole.subarray(start, start + pieceLength));
+      expect(hasher.digestHex(), `${pieceLength} bytes ずつ`).toBe(nodeSha256(whole));
+    }
+  });
+
+  it('何も渡さなければ空のメッセージの値になる', () => {
+    expect(createSha256().digestHex()).toBe(nodeSha256(new Uint8Array()));
   });
 });

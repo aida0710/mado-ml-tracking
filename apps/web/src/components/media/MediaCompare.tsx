@@ -1,10 +1,11 @@
-import { useState, type FormEvent } from 'react';
-import { MEDIA_COMPARE_MAX_RUNS, MEDIA_COMPARE_MAX_STEPS } from '@mmt/contracts';
+import { MEDIA_COMPARE_MAX_RUNS } from '@mmt/contracts';
 import { useMediaCompare } from '../../hooks/useMediaCompare';
 import { useMediaLocation } from '../../hooks/useMediaLocation';
-import { evenlySpacedSteps, parseStepList } from '../../lib/mediaSteps';
+import { commonSteps } from '../../lib/mediaCompareSteps';
+import { evenlySpacedSteps, sortedSteps } from '../../lib/mediaSteps';
 import { Empty, ErrorNotice, Resource } from '../Feedback';
 import { MediaCompareGrid } from './MediaCompareGrid';
+import { MediaStepChecklist } from './MediaStepChecklist';
 import { mediaKindLabels } from '../../i18n/media';
 import { text, textTemplates } from '../../i18n/catalog';
 import type { MediaCompareProps } from '../charts/chartProps';
@@ -13,61 +14,36 @@ import type { MediaCompareProps } from '../charts/chartProps';
 const EVENLY_SPACED_COLUMNS = 8;
 
 /**
- * The Compare page's media tab: one key across the compared Runs, as a Run × step grid. Without
- * typed steps each Run shows its latest step; typed steps are shown as asked, empty where absent.
- * The key and steps stay in the URL so a link opens the same grid.
+ * The Compare page's media tab: one key across the compared Runs, as a Run × step grid. It opens
+ * on the latest step every Run recorded, so the first grid has no empty cells; the steps are
+ * chosen from the recorded ones. The key and steps stay in the URL so a link opens the same grid.
  */
 export function MediaCompare({ projectId, runIds }: MediaCompareProps) {
-  const { chosenKey, steps, setKeyAndSteps, setSteps } = useMediaLocation();
-  const [stepsInput, setStepsInput] = useState(() => steps.join(', '));
-  const [stepsError, setStepsError] = useState<string | null>(null);
+  const { chosenKey, steps, setComparedKey, setSteps } = useMediaLocation();
   const comparedRunIds = runIds.slice(0, MEDIA_COMPARE_MAX_RUNS);
-  const { choices, selectedKey, recordedSteps, grid } = useMediaCompare({
+  const { choices, selectedKey, stepsByRun, shownSteps, grid } = useMediaCompare({
     projectId,
     runIds: comparedRunIds,
     chosenKey,
     steps,
   });
 
-  const applySteps = (input: string) => {
-    setStepsInput(input);
-    const parsed = parseStepList(input);
-    if (!parsed.ok) {
-      setStepsError(
-        parsed.error === 'too_many' ? textTemplates.mediaCompareTooManySteps(MEDIA_COMPARE_MAX_STEPS) : text.mediaCompareStepsInvalid,
-      );
-      return;
-    }
-    setStepsError(null);
-    setSteps(parsed.steps);
-  };
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    applySteps(stepsInput);
-  };
-
   return (
     <Resource query={choices}>
       {({ runs, keys }) => {
         if (keys.length === 0 || selectedKey === null) return <Empty>{text.mediaCompareNoKeys}</Empty>;
         const runLabels = Object.fromEntries(runs.map((run) => [run.id, run.name]));
-        const recorded = recordedSteps.value ?? [];
+        const recorded = sortedSteps(stepsByRun.value?.flat() ?? []);
+        const hasCommonStep = stepsByRun.value !== undefined && commonSteps(stepsByRun.value).length > 0;
         return (
           <div className="media-compare touch-targets">
             {runIds.length > MEDIA_COMPARE_MAX_RUNS && (
               <p className="notice">{textTemplates.mediaCompareTooManyRuns(MEDIA_COMPARE_MAX_RUNS)}</p>
             )}
-            <form className="media-compare-toolbar" onSubmit={submit}>
+            <div className="media-compare-toolbar">
               <label className="audio-viewer-select">
                 {text.mediaCompareKey}
-                <select
-                  value={selectedKey}
-                  onChange={(event) => {
-                    setStepsInput('');
-                    setStepsError(null);
-                    setKeyAndSteps(event.target.value, []);
-                  }}
-                >
+                <select value={selectedKey} onChange={(event) => setComparedKey(event.target.value)}>
                   {keys.map((summary) => (
                     <option key={summary.key} value={summary.key}>
                       {summary.key}（{mediaKindLabels[summary.kind]}）
@@ -75,35 +51,45 @@ export function MediaCompare({ projectId, runIds }: MediaCompareProps) {
                   ))}
                 </select>
               </label>
-              <label className="media-compare-steps">
-                {text.mediaCompareSteps}
-                <input
-                  value={stepsInput}
-                  placeholder={text.mediaCompareStepsPlaceholder}
-                  onChange={(event) => setStepsInput(event.target.value)}
-                />
-              </label>
-              <button type="submit" className="button small">
-                {text.mediaCompareApply}
-              </button>
-              <button type="button" className="button small" onClick={() => applySteps('')} disabled={steps.length === 0}>
-                {text.mediaCompareLatest}
-              </button>
-              <button
-                type="button"
-                className="button small"
-                onClick={() => applySteps(evenlySpacedSteps(recorded, EVENLY_SPACED_COLUMNS).join(', '))}
-                disabled={recorded.length === 0}
-              >
-                {textTemplates.mediaCompareEvenly(Math.min(EVENLY_SPACED_COLUMNS, recorded.length))}
-              </button>
-            </form>
-            {recorded.length > 0 && (
-              <p className="muted media-hint">
-                {textTemplates.mediaCompareRecordedSteps(recorded.length, recorded[0]!, recorded.at(-1)!)}
-              </p>
+              {recorded.length > 0 && (
+                <span className="muted media-hint">
+                  {textTemplates.mediaCompareRecordedSteps(recorded.length, recorded[0]!, recorded.at(-1)!)}
+                </span>
+              )}
+            </div>
+            <ErrorNotice message={stepsByRun.error} retry={stepsByRun.reload} />
+            {stepsByRun.value && (
+              <MediaStepChecklist
+                legend={text.mediaCompareSteps}
+                stepsByRun={stepsByRun.value}
+                selected={shownSteps ?? []}
+                onChange={setSteps}
+                hint={hasCommonStep ? text.mediaCompareNoStepsHint : text.mediaCompareNoCommonStep}
+                actions={
+                  <>
+                    <button
+                      type="button"
+                      className="button small"
+                      onClick={() => setSteps(null)}
+                      disabled={steps === null || !hasCommonStep}
+                    >
+                      {text.mediaCompareLatestCommon}
+                    </button>
+                    <button type="button" className="button small" onClick={() => setSteps([])} disabled={shownSteps?.length === 0}>
+                      {text.mediaCompareLatest}
+                    </button>
+                    <button
+                      type="button"
+                      className="button small"
+                      onClick={() => setSteps(evenlySpacedSteps(recorded, EVENLY_SPACED_COLUMNS))}
+                      disabled={recorded.length === 0}
+                    >
+                      {textTemplates.mediaCompareEvenly(Math.min(EVENLY_SPACED_COLUMNS, recorded.length))}
+                    </button>
+                  </>
+                }
+              />
             )}
-            <ErrorNotice message={stepsError} />
             <Resource query={grid}>
               {(data) => (
                 <MediaCompareGrid

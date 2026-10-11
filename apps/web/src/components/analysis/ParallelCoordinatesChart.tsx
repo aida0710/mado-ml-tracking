@@ -296,7 +296,6 @@ export function ParallelCoordinatesChart({
                 <AxisGraphic
                   key={axis.key}
                   axisKey={axis.key}
-                  label={axis.definition.label}
                   scale={axis.scale}
                   x={layout.axisX(axisIndex)}
                   layout={layout}
@@ -363,7 +362,6 @@ export function ParallelCoordinatesChart({
 
 function AxisGraphic({
   axisKey,
-  label,
   scale,
   x,
   layout,
@@ -373,7 +371,6 @@ function AxisGraphic({
   onPointerUp,
 }: {
   axisKey: string;
-  label: string;
   scale: AxisScale;
   x: number;
   layout: ChartLayout;
@@ -419,7 +416,6 @@ function AxisGraphic({
         height={layout.plotBottom - layout.plotTop + 12}
         className="parallel-axis-hit"
         data-testid={`parallel-axis-${axisKey}`}
-        aria-label={label}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

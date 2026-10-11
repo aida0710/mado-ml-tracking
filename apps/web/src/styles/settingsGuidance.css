@@ -1,0 +1,62 @@
+/* Ways around the settings screens: back from 全体設定 to the Project screen it was opened from,
+   and the contents at the top of the long Project settings page. */
+.settings-return-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+.settings-contents ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+.settings-contents a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+}
+/* A part reached from the contents starts below the header instead of under it. */
+.settings-anchor {
+  min-width: 0;
+  scroll-margin-top: 16px;
+}
+@media (width < 900px) {
+  .settings-contents a {
+    min-height: var(--tap-target);
+  }
+}
+/* 全体管理 → プロジェクト: narrowing the list by name once there are many Projects. */
+.admin-projects-search {
+  width: min(100%, 320px);
+  margin-bottom: 12px;
+}
+/* The audit log's filters, above its table in the Project settings and in 全体管理. */
+.audit-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+}
+.admin-audit .audit-label {
+  white-space: nowrap;
+}
+/* On a phone the names wrap again, so the row keeps its button to open the event in view. */
+@media (width < 900px) {
+  .settings-stack .audit-label,
+  .admin-audit .audit-label {
+    white-space: normal;
+  }
+}
+.audit-outcome-tag {
+  margin-left: 6px;
+  color: var(--error);
+  font-size: 11px;
+  font-weight: 600;
+}

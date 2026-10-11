@@ -15,6 +15,7 @@ export function FormDialog<T>({
   onSaved,
   onClose,
   submitLabel = text.save,
+  description,
   notice,
 }: {
   title: string;
@@ -23,6 +24,8 @@ export function FormDialog<T>({
   onSaved: (value: T) => void;
   onClose: () => void;
   submitLabel?: string;
+  /** What the form is for and what happens after saving, above the fields. */
+  description?: ReactNode;
   /** A note under the fields that depends on what is entered (for example the chosen kind). */
   notice?: (values: FormValues) => ReactNode;
 }) {
@@ -40,6 +43,7 @@ export function FormDialog<T>({
             });
         }}
       >
+        {description && <p className="notice">{description}</p>}
         <fieldset disabled={mutation.pending}>
           <FormFields fields={fields} values={values} onChange={setValues} />
         </fieldset>

@@ -3,6 +3,7 @@ import type {
   CodeVersion,
   CodeVersionDetail,
   Dataset,
+  DatasetUpdate,
   DatasetVersion,
   Model,
   ModelAliasEventPage,
@@ -158,6 +159,14 @@ export const registryApi = {
     request<Code>(registryPath(projectId, 'codes'), jsonRequest('POST', body)),
   codeVersions: (projectId: string, id: string, signal?: AbortSignal) =>
     requestItems<CodeVersion>(`${registryPath(projectId, 'codes', id)}/versions`, signal),
+  /** The Project's codes and every version of them, read one code at a time in parallel. */
+  codesWithVersions: async (projectId: string, signal?: AbortSignal) => {
+    const codes = await registryApi.codes(projectId, signal);
+    const versions = await Promise.all(
+      codes.map((code) => registryApi.codeVersions(projectId, code.id, signal)),
+    );
+    return { codes, codeVersions: versions.flat() };
+  },
   codeVersionDetail: (projectId: string, versionId: string, signal?: AbortSignal) =>
     request<CodeVersionDetail>(registryPath(projectId, 'code-versions', versionId), { signal }),
   createCodeVersion: (projectId: string, id: string, body: CreateCodeVersion) =>
@@ -171,6 +180,9 @@ export const registryApi = {
     projectId: string,
     body: { name: string; namespace?: string; description?: string },
   ) => request<Dataset>(registryPath(projectId, 'datasets'), jsonRequest('POST', body)),
+  /** Description and archiving; the name stays fixed (SDKs and MLflow find a dataset by it). */
+  updateDataset: (projectId: string, id: string, body: DatasetUpdate) =>
+    request<Dataset>(registryPath(projectId, 'datasets', id), jsonRequest('PATCH', body)),
   datasetVersions: (projectId: string, id: string, signal?: AbortSignal) =>
     requestItems<DatasetVersion>(`${registryPath(projectId, 'datasets', id)}/versions`, signal),
   createDatasetVersion: (projectId: string, id: string, body: CreateDatasetVersion) =>

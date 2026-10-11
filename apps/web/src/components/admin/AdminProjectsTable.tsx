@@ -9,7 +9,8 @@ import { text, textTemplates } from '../../i18n/catalog';
 export type AdminProjectAction = 'archive' | 'restore' | 'purge';
 
 /**
- * Every Project with its visibility, members, Runs, storage, creation date and state. An active
+ * Every Project with its visibility, its admins (whom to contact), members, Runs, storage,
+ * creation date and state. An active
  * Project opens from its name and can be archived; an archived one can be restored or purged.
  */
 export function AdminProjectsTable({
@@ -42,6 +43,12 @@ export function AdminProjectsTable({
           priority: 'primary',
           header: text.projectVisibility,
           render: (project) => <VisibilityLabel visibility={project.visibility} />,
+        },
+        {
+          key: 'admins',
+          priority: 'secondary',
+          header: text.projectAdmins,
+          render: (project) => project.adminNames.join('、') || text.projectAdminsNone,
         },
         {
           key: 'members',

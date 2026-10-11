@@ -10,11 +10,14 @@ import { RegistryLayout } from '../components/RegistryLayout';
 import { Empty, ErrorNotice, Resource } from '../components/Feedback';
 import { JsonDetails } from '../components/JsonDetails';
 import { CodeRuntimeDetails } from '../components/CodeRuntimeDetails';
+import { CodeSourceDetails } from '../components/CodeSourceDetails';
+import { CodeVersionUsageDetails } from '../components/CodeVersionUsageDetails';
 import { FormDialog } from '../components/FormDialog';
 import { CodeVersionDialog } from '../dialogs/CodeVersionDialog';
 import { getFieldValue } from '../lib/formValues';
 import { text } from '../i18n/catalog';
 import { runtimeLabels } from '../i18n/runtime';
+import { codeSourceText } from '../i18n/codeSource';
 
 export function CodesPage() {
   const { project, canEdit } = useProject();
@@ -47,6 +50,7 @@ export function CodesPage() {
       <Resource query={registry.list}>
         {(items) => (
           <RegistryLayout
+            selectedKey={registry.selected?.id}
             list={
               <ResponsiveTable
                 rows={items}
@@ -150,12 +154,19 @@ export function CodesPage() {
                           <CodeRuntimeDetails version={registry.selectedVersion} />
                           {registry.selectedVersion.source && (
                             <>
-                              <h3>{text.source}</h3>
-                              <JsonDetails value={registry.selectedVersion.source} />
+                              <h3>{codeSourceText.sourceHeading}</h3>
+                              <CodeSourceDetails
+                                projectId={project.id}
+                                source={registry.selectedVersion.source}
+                              />
                             </>
                           )}
                           <h3>{text.environment}</h3>
                           <JsonDetails value={registry.selectedVersion.environment} />
+                          <CodeVersionUsageDetails
+                            projectId={project.id}
+                            version={registry.selectedVersion}
+                          />
                         </div>
                       )}
                     </>

@@ -337,6 +337,40 @@ describe.skipIf(!testDatabaseUrl)('監査ログの記録と参照（独立Postgr
     expect(projectless.every((event) => event.projectName === null)).toBe(true);
   });
 
+  it('hideSignIns=trueではログイン・ログアウト・IdPの同期を除き、ほかの操作は残す', async () => {
+    // projectFixture logged four users in and set two members.
+    const listed = async (query: string) =>
+      (
+        await entity<AuditEventPage>(
+          await request(harness.app, `/api/audit-events?limit=200${query}`, {
+            cookie: fixture.administrator.cookie,
+          }),
+          200,
+        )
+      ).items.map((event) => event.action);
+    expect(await listed('')).toContain('auth.login');
+    const withoutSignIns = await listed('&hideSignIns=true');
+    expect(withoutSignIns).not.toContain('auth.login');
+    expect(withoutSignIns).toContain('project.member.set');
+    expect(await listed('&hideSignIns=false')).toContain('auth.login');
+    const projectActions = (
+      await entity<AuditEventPage>(
+        await request(harness.app, `${fixture.basePath}/audit-events?hideSignIns=true`, {
+          cookie: fixture.administrator.cookie,
+        }),
+        200,
+      )
+    ).items.map((event) => event.action);
+    expect(projectActions).toContain('project.member.set');
+    expect(
+      (
+        await request(harness.app, '/api/audit-events?hideSignIns=yes', {
+          cookie: fixture.administrator.cookie,
+        })
+      ).status,
+    ).toBe(422);
+  });
+
   it('新しい順にlimitずつ返し、cursorで重複なく続きを読める', async () => {
     for (const role of ['editor', 'viewer', 'editor'] as const) {
       await entity(

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import type { Experiment } from '@mmt/contracts';
 import type { QueryState } from '../../hooks/useQuery';
-import { Empty, Resource } from '../Feedback';
+import { Resource } from '../Feedback';
 import { text, textTemplates } from '../../i18n/catalog';
 
 export function ExperimentSidebar({
@@ -43,11 +43,18 @@ export function ExperimentSidebar({
         {text.allExperiments}
       </button>
       <Resource query={experiments}>
-        {(items) => (
-          <>
-            {items
-              .filter((item) => item.name.toLowerCase().includes(experimentSearch.toLowerCase()))
-              .map((item) => (
+        {(items) => {
+          const shownItems = items.filter((item) =>
+            item.name.toLowerCase().includes(experimentSearch.toLowerCase()),
+          );
+          const emptyMessage = sidebarEmptyMessage({
+            hasExperiments: items.length > 0,
+            hasMatches: shownItems.length > 0,
+            canEdit,
+          });
+          return (
+            <>
+              {shownItems.map((item) => (
                 <button
                   key={item.id}
                   className={`experiment-item ${item.id === selectedExperimentId ? 'active' : ''}`}
@@ -57,10 +64,25 @@ export function ExperimentSidebar({
                   <small>{textTemplates.runCount(item.runCount)}</small>
                 </button>
               ))}
-            {!items.length && <Empty />}
-          </>
-        )}
+              {emptyMessage && <p className="experiment-sidebar-empty">{emptyMessage}</p>}
+            </>
+          );
+        }}
       </Resource>
     </aside>
   );
+}
+
+/**
+ * The list's own short line when it shows no Experiment, rather than the page's large empty state:
+ * on a phone the list is a short scrolling box that would cut a tall message at its bottom edge.
+ */
+function sidebarEmptyMessage(state: {
+  hasExperiments: boolean;
+  hasMatches: boolean;
+  canEdit: boolean;
+}): string | null {
+  if (!state.hasExperiments)
+    return state.canEdit ? text.experimentSidebarEmpty : text.experimentsNoneForViewer;
+  return state.hasMatches ? null : text.experimentSidebarNoMatch;
 }

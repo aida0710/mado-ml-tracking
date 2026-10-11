@@ -55,6 +55,8 @@ export function Dialog({
         if (!busy) onClose();
       }}
       aria-labelledby={titleId}
+      // useModalDialog focuses the dialog itself on a touch screen.
+      tabIndex={-1}
     >
       <header>
         <h2 id={titleId}>{title}</h2>

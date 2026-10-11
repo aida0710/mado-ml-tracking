@@ -10,6 +10,7 @@ import {
   type CodeVersion,
   type HookCheckpointMode,
   type HookConcurrency,
+  type Hook,
   type HookCreate,
   type HookFilter,
   type HookJobTemplateInput,
@@ -30,6 +31,7 @@ import {
 import { RUN_KINDS, meetsCodeRequirement, parseMaxAttempts } from './executionValidation';
 import { isTargetCompatible } from './runtimeValidation';
 import { buildJobResources, isSiteTarget, parseArraySize } from './siteExecutionInput';
+import { formatClockDuration } from './clockDuration';
 import { parseUserRunTags } from './reservedRunTags';
 import { text } from '../i18n/catalog';
 import { hooksTextTemplates } from '../i18n/hooks';
@@ -88,6 +90,52 @@ export function createHookValues(): FormValues {
     concurrency: 'queue',
     maxStartsPerHour: String(DEFAULT_HOOK_MAX_STARTS_PER_HOUR),
     webhookSignature: 'github',
+  };
+}
+
+/**
+ * A new hook's form filled from an existing hook ([複製して新しく作る]): every setting as it is,
+ * under `name`. Settings are fixed once a hook exists, so changing one means a copy; a webhook copy
+ * gets its own secret.
+ */
+export function copyHookValues(hook: Hook, name: string): FormValues {
+  const { filter, template } = hook;
+  const defaults = createHookValues();
+  return {
+    ...defaults,
+    name,
+    trigger: hook.trigger,
+    filterModelFamilies: filter.modelFamilies ?? [],
+    filterExperimentIds: filter.experimentIds ?? [],
+    filterRunKinds: filter.runKinds ?? [],
+    filterRunStatuses: filter.runStatuses ?? [],
+    filterTags: JSON.stringify(filter.tags ?? {}),
+    experimentId: template.experimentId,
+    kind: template.kind,
+    modelVersionId: template.inheritModelVersion
+      ? INHERIT_MODEL_VERSION
+      : (template.modelVersionId ?? ''),
+    codeVersionId: template.codeVersionId,
+    inputDatasetVersionIds: template.inputDatasetVersionIds,
+    inheritOutputDatasets: String(template.inheritOutputDatasets),
+    targetId: template.targetId,
+    gpuIds: template.gpuIds,
+    gpuCount: String(template.gpuCount),
+    walltime: formatClockDuration(template.walltimeSeconds),
+    arraySize: template.arraySize === null ? '' : String(template.arraySize),
+    datasetPartitionVersionId: template.datasetPartitionVersionId ?? '',
+    parameters: JSON.stringify(template.parameters, null, 2),
+    tags: JSON.stringify(template.tags, null, 2),
+    maxAttempts: String(template.maxAttempts),
+    retryOnFailure: String(template.retryOnFailure),
+    retryOnTimeout: String(template.retryOnTimeout),
+    allowChildJobs: String(template.allowChildJobs),
+    checkpointMode: hook.checkpointMode,
+    checkpointEvery: hook.checkpointEvery === null ? '' : String(hook.checkpointEvery),
+    concurrency: hook.concurrency,
+    maxStartsPerHour: String(hook.maxStartsPerHour),
+    // A hook of another trigger keeps the form's default signature, which it does not send.
+    ...(hook.webhookSignature ? { webhookSignature: hook.webhookSignature } : {}),
   };
 }
 

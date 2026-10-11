@@ -1,11 +1,10 @@
 import type { Job } from '@mmt/contracts';
 import { executionApi } from '../api/execution';
-import { findRunJob } from '../lib/checkpointResume';
 import { useQuery, type QueryState } from './useQuery';
 
 /**
- * The Job that ran a Run, or null for a Run registered without one. The API has no Run-to-Job
- * lookup, so this searches the Project's jobs list; `enabled` keeps it off until it is needed.
+ * The Job that ran a Run (its newest, when the Run was enqueued again), or null for a Run that has
+ * none. `enabled` keeps the lookup off until it is needed.
  */
 export function useRunJob({
   projectId,
@@ -18,6 +17,6 @@ export function useRunJob({
 }): QueryState<Job | null> {
   return useQuery(
     enabled ? `${projectId}:run-job:${runId}` : null,
-    async (signal) => findRunJob(await executionApi.jobs(projectId, signal), runId) ?? null,
+    async (signal) => (await executionApi.runJobs(projectId, runId, signal))[0] ?? null,
   );
 }

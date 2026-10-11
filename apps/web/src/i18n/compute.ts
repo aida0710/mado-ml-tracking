@@ -30,6 +30,8 @@ export const computeText = {
   datasetTransferRelay: 'workerが中継する',
   datasetTransferDirect: 'コンピュータがAPIから直接取得する',
   checkTarget: '接続を確認',
+  // The list only opens the details, where the check is asked for; the label says so.
+  checkTargetOpen: '接続確認を開く',
   targetCheck: '接続確認',
   targetCheckHint:
     '前回このコンピュータを確かめたworker（まだ無ければ、MMT_WORKER_TARGET_IDSにこのコンピュータを含むworker）が、SSHで確認します。APIサーバーはコンピュータへ接続しません',

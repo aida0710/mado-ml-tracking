@@ -1,4 +1,4 @@
-import { exportLine, joinLines, promptedSecretLines } from './shellSnippet';
+import { exportFromVariableLine, exportLine, joinLines, promptedSecretLines } from './shellSnippet';
 import { pythonString } from './pythonSnippet';
 import { clientApiUrl } from './clientApiUrl';
 
@@ -16,27 +16,31 @@ export function mlflowTrackingUri(origin: string, projectId: string): string {
   return `${clientApiUrl(origin)}/api/mlflow/projects/${encodeURIComponent(projectId)}`;
 }
 
+/**
+ * The settings shown right after a token is issued, for both SDKs at once. Like every other
+ * example on the screen, it holds no token: the token is pasted at the `read -s` prompt, so it
+ * stays out of the snippet and the shell history, and MLflow takes it from MMT_API_TOKEN.
+ */
 export function buildTokenUsageSnippet(settings: {
   origin: string;
   projectId: string;
-  token: string;
   authentication: TokenAuthentication;
 }): string {
   const apiUrl = clientApiUrl(settings.origin);
   const trackingUri = mlflowTrackingUri(apiUrl, settings.projectId);
-  const lines = [
+  return joinLines([
+    exportLine('MMT_API_URL', apiUrl),
+    exportLine('MMT_PROJECT_ID', settings.projectId),
+    ...promptedSecretLines('MMT_API_TOKEN'),
     exportLine('MLFLOW_TRACKING_URI', trackingUri),
+    exportLine('MLFLOW_REGISTRY_URI', trackingUri),
     ...(settings.authentication === 'basic'
       ? [
           exportLine('MLFLOW_TRACKING_USERNAME', BASIC_USERNAME_PLACEHOLDER),
-          exportLine('MLFLOW_TRACKING_PASSWORD', settings.token),
+          exportFromVariableLine('MLFLOW_TRACKING_PASSWORD', 'MMT_API_TOKEN'),
         ]
-      : [exportLine('MLFLOW_TRACKING_TOKEN', settings.token)]),
-    exportLine('MMT_API_URL', apiUrl),
-    exportLine('MMT_PROJECT_ID', settings.projectId),
-    exportLine('MMT_API_TOKEN', settings.token),
-  ];
-  return joinLines(lines);
+      : [exportFromVariableLine('MLFLOW_TRACKING_TOKEN', 'MMT_API_TOKEN')]),
+  ]);
 }
 
 /** What the MLflow 3 tab of the SDK and MLflow guide offers to copy. */

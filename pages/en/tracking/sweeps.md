@@ -45,12 +45,13 @@ with mado_tracking.start_run() as run:
 
 ## Create a Sweep
 
-Under **Sweeps** at the top, choose Sweepを作成 (Create Sweep) and fill in:
+Open **Sweeps** in the left sidebar, press **Sweepを作成** (Create Sweep) at the top right, and fill in:
 
 | Item | Value |
 | --- | --- |
 | Task | The training Task. Its current revision number is pinned |
-| Compute target, GPU IDs | Empty uses the Task's defaults |
+| **コンピュータ** (Computer) | Only computers that can use the runtime of the Task's code version are offered. Left empty (`Taskの既定（<computer name>）`, Task default), trials run on the Task's computer |
+| **GPU（選ばなければTaskの既定）** (GPUs, Task default if none) | Check GPUs of the chosen computer (the Task's computer when empty). Without a choice the Task's default GPUs are used. If you chose another computer that lacks the Task's GPUs, the dialog says so; choose its GPUs instead (the Sweep cannot be created as it is). On a site there is nothing to check; the Task's GPU count is used |
 | 探索方法 (Method) | grid, random, or bayes |
 | Target metric and direction | For example, minimize `val_loss`. Suggestions come from metrics recorded by the Task's past Runs |
 | 試行の値の決め方 (Trial value) | Last value (default), minimum, or maximum |
@@ -87,6 +88,8 @@ A W&B-style config:
 ```
 
 `run_cap` (max trials) is required. Unsupported keys such as `program` or `command` are errors, because silently ignoring them would run a different search than the one written. The name is entered on the page, and the Task decides which code runs.
+
+With grid, when there are fewer combinations than max trials, the form says so, for example "gridの組み合わせは6通りです。試行は6回で終わります。" (6 combinations, so 6 trials).
 
 The first trial is queued as soon as the Sweep is created. Trial Runs are created in the Task's Experiment as `<Sweep name>-<trial number>`.
 
@@ -129,7 +132,7 @@ Parallelism caps how many trials the Sweep puts in the queue at once. How many a
 
 The **Sweeps** list shows the status, trials created against the limit, running trials, and the best objective value. Select a Sweep to open its details:
 
-- Status and reason, progress (counts per state)
+- Status and reason, progress (counts per state). When a grid has fewer combinations than max trials, the progress counts against the number of combinations and says it ends before reaching max trials
 - Best trial: the best objective among finished and early-stopped trials; ties go to the smaller trial number
 - Objective value per trial and a "best so far" step line
 - Definition: method, objective, parallelism, early stopping, Task revision, seed, search space
@@ -138,6 +141,10 @@ The **Sweeps** list shows the status, trials created against the limit, running 
 - [Result analysis](/en/tracking/compare#analysis) (parallel coordinates, parameter importance, scatter plot)
 
 While trials are running, the page refreshes every 5 seconds.
+
+When trials are waiting but no worker takes the computer they run on (the Sweep's computer, or the Task's when empty), or its workers stopped answering, the details show a warning such as "「gpu-1」を担当するworkerがいません。" (No worker takes gpu-1) with **workerの設定を開く** (Open worker settings). The Sweep itself stays running, so check here when trials do not move ([When a queued Job does not start](/en/compute/jobs#queued-job-does-not-start)).
+
+Trial Jobs show `Sweep: <Sweep name> #<trial number>` in the origin column of Jobs, which links to the Sweep.
 
 ## Pause or change a Sweep
 

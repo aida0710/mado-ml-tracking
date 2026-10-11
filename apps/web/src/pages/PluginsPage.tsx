@@ -14,6 +14,7 @@ import { PluginDialog } from '../dialogs/PluginDialog';
 import { getPluginConnectionKey } from '../lib/pluginConnection';
 import { canManagePlugins, isGlobalAdmin } from '../lib/permissions';
 import { text } from '../i18n/catalog';
+import { pluginsText } from '../i18n/plugins';
 
 /**
  * Plugin connections of the Project. The navigation hides this screen from members the API would
@@ -59,8 +60,18 @@ function PluginConnections() {
           </>
         }
       />
+      <p className="muted">{pluginsText.pluginsAbout}</p>
       <Resource query={plugins}>
         {(items) => {
+          // Only global administrators register plugins, so a Project admin learns whom to ask.
+          if (!items.length)
+            return (
+              <p className="notice">
+                {isGlobalAdmin(user)
+                  ? pluginsText.pluginsEmptyForGlobalAdmin
+                  : pluginsText.pluginsEmptyForProjectAdmin}
+              </p>
+            );
           const selected = items.find((plugin) => plugin.id === params.get('id')) ?? items[0];
           return (
             <RegistryLayout

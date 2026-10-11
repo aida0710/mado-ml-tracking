@@ -1,16 +1,18 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { Navigate, Outlet, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import type { Project } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
 import { useAuth } from '../hooks/useAuth';
 import { useQuery } from '../hooks/useQuery';
 import { ProjectContext } from '../hooks/useProject';
 import { useNavigation } from '../hooks/useNavigation';
+import { useRememberSettingsReturnScreen } from '../hooks/useRememberSettingsReturnScreen';
 import { Loading, Resource } from '../components/Feedback';
 import { ProjectCreateDialog } from '../dialogs/ProjectCreateDialog';
 import { ProjectListPage } from '../pages/ProjectListPage';
 import { canCreateProject } from '../lib/permissions';
 import { projectToOpen, readLastProjectId, rememberLastProjectId } from '../lib/lastOpenedProject';
+import { readArchivedProjectName } from '../lib/archivedProjectState';
 import { TopBar } from './TopBar';
 import { ProjectBar } from './ProjectBar';
 import { NavigationSidebar } from './NavigationSidebar';
@@ -20,6 +22,8 @@ export function AppShell() {
   const { projectId } = useParams();
   const auth = useAuth();
   const navigate = useNavigate();
+  // Right after archiving, "/" lists the Projects with a note instead of opening another one.
+  const archivedProjectName = readArchivedProjectName(useLocation().state);
   const projects = useQuery('projects', administrationApi.projects);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const startCreatingProject = canCreateProject(auth.user)
@@ -35,6 +39,7 @@ export function AppShell() {
   useEffect(() => {
     if (openProject) rememberLastProjectId(openProject.id);
   }, [openProject]);
+  useRememberSettingsReturnScreen(openProject);
   const navigation = useNavigation(openProject?.id, openProject?.role);
   // The Project switcher heads the full sidebar; with the rail or the drawer it is the bar under
   // the header.
@@ -67,7 +72,10 @@ export function AppShell() {
               // A list being reloaded may still lack a Project just created, or still hold one
               // just archived; wait for it instead of showing the wrong screen.
               if (!project && projects.loading) return <Loading />;
-              const projectAtHome = projectId ? undefined : projectToOpen(items, readLastProjectId());
+              const projectAtHome =
+                projectId || archivedProjectName
+                  ? undefined
+                  : projectToOpen(items, readLastProjectId());
               if (projectAtHome) return <Navigate replace to={projectHomePath(projectAtHome.id)} />;
               return project ? (
                 <ProjectContext.Provider
@@ -80,7 +88,8 @@ export function AppShell() {
               ) : (
                 <ProjectListPage
                   projects={items}
-                  isUnreachable={Boolean(projectId)}
+                  unreachableProjectId={projectId}
+                  archivedProjectName={archivedProjectName}
                   onCreateProject={startCreatingProject}
                 />
               );
@@ -90,6 +99,7 @@ export function AppShell() {
       </div>
       {isCreatingProject && (
         <ProjectCreateDialog
+          existingNames={projects.value?.map((project) => project.name) ?? []}
           onClose={() => setIsCreatingProject(false)}
           onCreated={openCreatedProject}
         />

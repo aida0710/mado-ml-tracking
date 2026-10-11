@@ -16,7 +16,9 @@ description: 全体管理者とProjectのViewer・Editor・Admin、Projectの公
 | 全体設定 | アカウント、コンピュータ | 全員 |
 | 全体管理 | プロジェクト、ユーザー、ストレージ、ランチャー、監査ログ | 全体管理者だけ |
 
-これらの組は全体設定の画面のサイドバーにだけ出て、Projectの画面のサイドバーには出ません。全体管理者でない人には「全体管理」の組が出ず、そのURLを直接開いても［アカウント］へ移ります。以前の`/admin`・`/account`で始まるURLは、新しいURL（`/settings/projects`、`/settings/account`など）へ移ります。
+これらの組は全体設定の画面のサイドバーにだけ出て、Projectの画面のサイドバーには出ません。全体管理者でない人には「全体管理」の組が出ず、そのURLを直接開いても［アカウント］へ移り、「開こうとした画面は全体管理者だけが使えます」と出ます。以前の`/admin`・`/account`で始まるURLは、新しいURL（`/settings/projects`、`/settings/account`など）へ移ります。
+
+Projectの画面から全体設定を開いたときは、画面の上に「『Project名』に戻る」が出ます。押すと、開く前の画面（Jobsなど）へ戻ります。
 
 ![一般の利用者のユーザーメニュー。アカウント、パスワードの変更、全体設定が並ぶ](/images/admin-user-menu.png)
 
@@ -59,6 +61,7 @@ Projectの公開範囲には、PublicとPrivateがあります。新しいProjec
 | Private | メンバー（直接付与、groupへの付与）だけ |
 
 - Adminは、Publicでもメンバーにだけ付きます。
+- PublicのProjectでViewerを付けた人も、実際にはEditorとして使えます。「Members」の実効Roleは「Editor（Public）」と出て、［メンバーを追加］でViewerを選ぶとその旨が出ます。見るだけにしたいときはPrivateにします。
 - Publicの権限が付くのは有効な人のアカウントだけで、Service Accountとランチャーには付きません。
 - 公開範囲は、ProjectのAdminが［プロジェクト設定］の「プロジェクト」で変えます。公開範囲の機能が入る前からあるProjectは、更新したときにPrivateになります。
 
@@ -99,6 +102,10 @@ ProjectのRoleは2つの方法で付けます。どちらもProjectのAdminが�
 3. Roleを選んで保存します。最初はEditorが選ばれています（Projectを作るときのメンバーと同じ）。
 
 一覧にそのユーザーが出れば完了です。
+
+Service AccountもMembersの一覧に「Service Account」の印付きで出ます。Roleの変更と無効化は「Service Accounts」の欄で行います（Membersの行には操作を出しません）。
+
+ProjectのAdmin以外が［プロジェクト設定］を開くと、「プロジェクト」の欄に、変更できるAdminの名前が出ます。
 
 ### 直接付与を外す
 

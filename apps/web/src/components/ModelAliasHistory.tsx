@@ -37,7 +37,7 @@ export function ModelAliasHistory({ history }: { history: ModelAliasHistoryState
             key: 'versions',
             priority: 'primary',
             header: modelsText.aliasVersionChange,
-            className: 'mono',
+            className: 'mono alias-version-change',
             render: (event) =>
               `${versionLabel(event.previousVersion)} → ${versionLabel(event.version)}`,
           },
@@ -52,8 +52,10 @@ export function ModelAliasHistory({ history }: { history: ModelAliasHistoryState
             key: 'reason',
             priority: 'secondary',
             header: modelsText.aliasReason,
-            className: 'break-word',
-            render: (event) => event.reason || '—',
+            className: 'break-word alias-reason',
+            // An automatic promotion explains every criterion; the row shows the start of it.
+            render: (event) =>
+              event.reason ? <span title={event.reason}>{event.reason}</span> : '—',
           },
         ]}
       />

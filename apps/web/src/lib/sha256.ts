@@ -39,26 +39,59 @@ interface HashState {
 
 /** Lowercase hex digest, the same form the API stores for each received part. */
 export function computeSha256Hex(bytes: Uint8Array): string {
+  const hasher = createSha256();
+  hasher.update(bytes);
+  return hasher.digestHex();
+}
+
+/** A digest fed in pieces, so a file larger than memory is hashed one slice at a time. */
+export interface Sha256Hasher {
+  update(bytes: Uint8Array): void;
+  /** Ends the message; the hasher is not used afterwards. */
+  digestHex(): string;
+}
+
+export function createSha256(): Sha256Hasher {
   const state: HashState = {
     hash: Uint32Array.from(INITIAL_HASH),
     schedule: new Uint32Array(SCHEDULE_WORDS),
   };
-  const fullBlockBytes = bytes.length - (bytes.length % BLOCK_BYTES);
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  for (let offset = 0; offset < fullBlockBytes; offset += BLOCK_BYTES) compressBlock(state, view, offset);
-
-  const remainder = bytes.length - fullBlockBytes;
-  const tailBytes = remainder + 1 + LENGTH_FIELD_BYTES <= BLOCK_BYTES ? BLOCK_BYTES : 2 * BLOCK_BYTES;
-  const tail = new Uint8Array(tailBytes);
-  tail.set(bytes.subarray(fullBlockBytes));
-  tail[remainder] = MARKER_BYTE;
-  const tailView = new DataView(tail.buffer);
-  const bitLength = bytes.length * BITS_PER_BYTE;
-  tailView.setUint32(tailBytes - LENGTH_FIELD_BYTES, Math.floor(bitLength / TWO_TO_32));
-  tailView.setUint32(tailBytes - WORD_BYTES, bitLength >>> 0);
-  for (let offset = 0; offset < tailBytes; offset += BLOCK_BYTES) compressBlock(state, tailView, offset);
-
-  return Array.from(state.hash, (word) => word.toString(16).padStart(8, '0')).join('');
+  // Bytes of an unfinished block, kept until the next update completes it.
+  const pending = new Uint8Array(BLOCK_BYTES);
+  const pendingView = new DataView(pending.buffer);
+  let pendingLength = 0;
+  let messageLength = 0;
+  return {
+    update(bytes) {
+      messageLength += bytes.length;
+      let offset = 0;
+      if (pendingLength > 0) {
+        offset = Math.min(BLOCK_BYTES - pendingLength, bytes.length);
+        pending.set(bytes.subarray(0, offset), pendingLength);
+        pendingLength += offset;
+        if (pendingLength < BLOCK_BYTES) return;
+        compressBlock(state, pendingView, 0);
+        pendingLength = 0;
+      }
+      const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      const fullBlocksEnd = offset + Math.floor((bytes.length - offset) / BLOCK_BYTES) * BLOCK_BYTES;
+      for (; offset < fullBlocksEnd; offset += BLOCK_BYTES) compressBlock(state, view, offset);
+      pending.set(bytes.subarray(offset));
+      pendingLength = bytes.length - offset;
+    },
+    digestHex() {
+      const tailBytes = pendingLength + 1 + LENGTH_FIELD_BYTES <= BLOCK_BYTES ? BLOCK_BYTES : 2 * BLOCK_BYTES;
+      const tail = new Uint8Array(tailBytes);
+      tail.set(pending.subarray(0, pendingLength));
+      tail[pendingLength] = MARKER_BYTE;
+      const tailView = new DataView(tail.buffer);
+      const bitLength = messageLength * BITS_PER_BYTE;
+      tailView.setUint32(tailBytes - LENGTH_FIELD_BYTES, Math.floor(bitLength / TWO_TO_32));
+      tailView.setUint32(tailBytes - WORD_BYTES, bitLength >>> 0);
+      for (let offset = 0; offset < tailBytes; offset += BLOCK_BYTES) compressBlock(state, tailView, offset);
+      return Array.from(state.hash, (word) => word.toString(16).padStart(8, '0')).join('');
+    },
+  };
 }
 
 /** Folds the block at `offset` of `view` into the running hash. */

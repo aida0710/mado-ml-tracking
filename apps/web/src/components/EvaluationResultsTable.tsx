@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { AutomatedRunSummary, ModelAutomationRule } from '@mmt/contracts';
-import { DataTable, type TableColumn } from './DataTable';
+import { ResponsiveTable, type ResponsiveTableColumn } from './ResponsiveTable';
 import { StatusBadge } from './StatusBadge';
 import { formatDate } from '../lib/format';
 import { formatMetricValue } from '../lib/evaluationComparisonDisplay';
@@ -49,17 +49,20 @@ function MetricSummaryTable({
     ) : (
       '—'
     );
-  const baselineColumns: TableColumn<MetricSummaryRow>[] = baselineLabel
+  // A phone keeps the latest and the baseline value side by side; the sign opens with the row.
+  const baselineColumns: ResponsiveTableColumn<MetricSummaryRow>[] = baselineLabel
     ? [
         {
           key: 'baseline',
-          label: modelsTextTemplates.baselineValue(baselineLabel),
+          priority: 'primary',
+          header: modelsTextTemplates.baselineValue(baselineLabel),
           className: 'mono',
           render: (row) => runLink(row.baseline),
         },
         {
           key: 'sign',
-          label: text.evaluationDeltaSign,
+          priority: 'secondary',
+          header: text.evaluationDeltaSign,
           render: (row) =>
             row.deltaSign ? (
               <span className={`delta-sign delta-sign-${row.deltaSign}`}>
@@ -72,15 +75,22 @@ function MetricSummaryTable({
       ]
     : [];
   return (
-    <DataTable
-      items={summary.rows}
+    <ResponsiveTable
+      rows={summary.rows}
       rowKey={(row) => row.metric}
       empty={text.evaluationSummaryEmpty}
       columns={[
-        { key: 'metric', label: text.metricName, render: (row) => row.metric },
+        {
+          key: 'metric',
+          priority: 'primary',
+          header: text.metricName,
+          className: 'break-word',
+          render: (row) => row.metric,
+        },
         {
           key: 'latest',
-          label: text.evaluationLatestValue,
+          priority: 'primary',
+          header: text.evaluationLatestValue,
           className: 'mono',
           render: (row) => runLink(row.candidate),
         },
@@ -110,9 +120,10 @@ export function EvaluationResultsTable({
 }) {
   const ruleName = (run: AutomatedRunSummary) =>
     rules.find((rule) => rule.id === run.ruleId)?.name ?? null;
-  const metricColumns: TableColumn<AutomatedRunSummary>[] = summary.metricKeys.map((metric) => ({
+  const metricColumns: ResponsiveTableColumn<AutomatedRunSummary>[] = summary.metricKeys.map((metric) => ({
     key: `metric:${metric}`,
-    label: metric,
+    priority: 'secondary',
+    header: metric,
     className: 'mono',
     render: (run) => formatRunMetric(run, metric),
   }));
@@ -122,36 +133,50 @@ export function EvaluationResultsTable({
       <p className="muted">{text.evaluationSummaryHint}</p>
       <MetricSummaryTable projectId={projectId} summary={summary} baselineLabel={baselineLabel} />
       <h3>{text.evaluationRuns}</h3>
-      <DataTable
-        items={runs}
+      <ResponsiveTable
+        rows={runs}
         rowKey={(run) => run.id}
         empty={text.evaluationResultsEmpty}
         columns={[
           {
             key: 'name',
-            label: text.name,
+            priority: 'primary',
+            header: text.name,
             className: 'evaluation-run-name',
             render: (run) => <Link to={`/projects/${projectId}/runs/${run.id}`}>{run.name}</Link>,
           },
           {
             key: 'origin',
-            label: text.evaluationRule,
+            priority: 'secondary',
+            header: text.evaluationRule,
             render: (run) => <OriginBadge run={run} ruleName={ruleName(run)} />,
           },
-          { key: 'status', label: text.status, render: (run) => <StatusBadge status={run.status} /> },
+          {
+            key: 'status',
+            priority: 'primary',
+            header: text.status,
+            render: (run) => <StatusBadge status={run.status} />,
+          },
           {
             key: 'reference',
-            label: text.evaluationReferenceSet,
+            priority: 'secondary',
+            header: text.evaluationReferenceSet,
             className: 'mono',
             render: (run) => run.referenceDatasetVersionIds.length || '—',
           },
           {
             key: 'upstream',
-            label: text.evaluationUpstreamOutputs,
+            priority: 'secondary',
+            header: text.evaluationUpstreamOutputs,
             className: 'mono',
             render: (run) => run.upstreamDatasetVersionIds.length || '—',
           },
-          { key: 'created', label: text.created, render: (run) => formatDate(run.createdAt) },
+          {
+            key: 'created',
+            priority: 'secondary',
+            header: text.created,
+            render: (run) => formatDate(run.createdAt),
+          },
           ...metricColumns,
         ]}
       />

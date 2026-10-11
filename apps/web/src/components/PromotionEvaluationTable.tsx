@@ -7,6 +7,7 @@ import {
   type PromotionEvaluation,
 } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
+import { RunNameLink } from './RunNameLink';
 import { formatDate } from '../lib/format';
 import { summarizeCriterion } from '../lib/promotionPolicyInput';
 import {
@@ -129,9 +130,6 @@ function VersionLink({
   );
 }
 
-// Full Run ids are 36 characters; the prefix keeps the history table readable and the title has all.
-const RUN_ID_PREFIX_LENGTH = 8;
-
 function RunLink({
   projectId,
   runId,
@@ -144,13 +142,7 @@ function RunLink({
   return (
     <div>
       <span className="muted">{label} </span>
-      {runId ? (
-        <Link className="mono" title={runId} to={`/projects/${projectId}/runs/${runId}`}>
-          {runId.slice(0, RUN_ID_PREFIX_LENGTH)}
-        </Link>
-      ) : (
-        '—'
-      )}
+      {runId ? <RunNameLink projectId={projectId} runId={runId} /> : '—'}
     </div>
   );
 }
@@ -245,7 +237,7 @@ export function PromotionEvaluationTable({
               {
                 key: 'actions',
                 priority: 'secondary' as const,
-                header: text.details,
+                header: text.actions,
                 render: (evaluation: PromotionEvaluation) => (
                   <button
                     className="button small"

@@ -181,6 +181,77 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
     ]);
   });
 
+  it('全Projectのアラート一覧には、メンバーのProjectのものだけが入り、全体管理者のsessionには全Projectのものが入る', async () => {
+    const fixture = await setup();
+    const { job } = await claimedJob(fixture);
+    await ageJobHeartbeat(job.id);
+    expect(await monitor().tick()).toMatchObject({ opened: 1 });
+    const visibleAlerts = async (credentials: { cookie?: string; token?: string }) =>
+      (
+        await entity<{ items: OperationsAlert[] }>(
+          await request(harness.app, '/api/operations-alerts', credentials),
+          200,
+        )
+      ).items;
+    const opened = expect.objectContaining({
+      kind: 'job.heartbeat_stale',
+      subjectId: job.id,
+      projectId: fixture.project.id,
+    });
+    for (const identity of [fixture.viewer, fixture.administrator])
+      expect(await visibleAlerts({ cookie: identity.cookie })).toEqual([opened]);
+    // The Project is private and the outsider has no role in it.
+    expect(await visibleAlerts({ cookie: fixture.outsider.cookie })).toEqual([]);
+
+    // A token limited to another Project sees only that Project.
+    const otherProject = await entity<{ id: string }>(
+      await request(harness.app, '/api/projects', {
+        method: 'POST',
+        cookie: fixture.viewer.cookie,
+        body: { name: 'Elsewhere', visibility: 'private' },
+      }),
+    );
+    const limited = await entity<{ token: string }>(
+      await request(harness.app, '/api/tokens', {
+        method: 'POST',
+        cookie: fixture.viewer.cookie,
+        body: { name: 'Elsewhere', kind: 'personal', projectId: otherProject.id, scopes: ['read'] },
+      }),
+    );
+    expect(await visibleAlerts({ token: limited.token })).toEqual([]);
+
+    // Public access is not membership: everyone may open a public Project, but its alerts ring
+    // only its members' bells.
+    await harness.database.query("UPDATE projects SET visibility='public' WHERE id=$1", [
+      fixture.project.id,
+    ]);
+    expect(await visibleAlerts({ cookie: fixture.outsider.cookie })).toEqual([]);
+    expect(await visibleAlerts({ cookie: fixture.viewer.cookie })).toEqual([opened]);
+
+    // A global administrator's token acts for the person, so it needs membership like anyone's.
+    const administratorToken = await entity<{ token: string }>(
+      await request(harness.app, '/api/tokens', {
+        method: 'POST',
+        cookie: fixture.administrator.cookie,
+        body: { name: 'Bell', kind: 'personal', scopes: ['read'] },
+      }),
+    );
+    expect(await visibleAlerts({ token: administratorToken.token })).toEqual([opened]);
+    await harness.database.query('DELETE FROM project_members WHERE project_id=$1 AND user_id=$2', [
+      fixture.project.id,
+      fixture.administrator.userId,
+    ]);
+    expect(await visibleAlerts({ token: administratorToken.token })).toEqual([]);
+    expect(await visibleAlerts({ cookie: fixture.administrator.cookie })).toEqual([opened]);
+
+    // An archived Project's alerts are no longer shown, to global administrators either.
+    await harness.database.query('UPDATE projects SET archived_at=now(),archived_by=$2 WHERE id=$1', [
+      fixture.project.id,
+      fixture.administrator.userId,
+    ]);
+    expect(await visibleAlerts({ cookie: fixture.administrator.cookie })).toEqual([]);
+  });
+
   it('heartbeatが戻るとアラートはrecoveredで閉じ、recovered通知が1件積まれる', async () => {
     const fixture = await setup();
     const { job, leaseId } = await claimedJob(fixture);
@@ -424,6 +495,27 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
         body: { name: 'Mado', baseUrl: 'http://127.0.0.1:4999', tokenEnv: 'MMT_TEST_PLUGIN_TOKEN' },
       }),
     );
+    // Only whether the variable is set is shown, never its value.
+    expect(connection.tokenConfigured).toBe(true);
+    expect(JSON.stringify(connection)).not.toContain(environment.MMT_TEST_PLUGIN_TOKEN);
+    const unconfigured = await entity<PluginConnection>(
+      await request(application.app, `${fixture.basePath}/plugins`, {
+        method: 'POST',
+        cookie: fixture.administrator.cookie,
+        body: { name: 'Typo', baseUrl: 'http://127.0.0.1:4999', tokenEnv: 'MMT_TEST_PLUGIN_TOKN' },
+      }),
+    );
+    expect(unconfigured.tokenConfigured).toBe(false);
+    const check = await request(
+      application.app,
+      `${fixture.basePath}/plugins/${unconfigured.id}/check`,
+      { method: 'POST', cookie: fixture.administrator.cookie },
+    );
+    expect(check.status).toBe(503);
+    expect(await check.json()).toMatchObject({
+      code: 'plugin_token_unavailable',
+      error: expect.stringContaining('MMT_TEST_PLUGIN_TOKN'),
+    });
     const summaryPath = `${fixture.basePath}/plugins/${connection.id}/outbox`;
     for (const identity of [fixture.editor, fixture.viewer])
       expect((await request(application.app, summaryPath, { cookie: identity.cookie })).status).toBe(

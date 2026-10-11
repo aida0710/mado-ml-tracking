@@ -3,10 +3,13 @@ import { Outlet } from 'react-router-dom';
 import { useNavigation } from '../hooks/useNavigation';
 import { NavigationSidebar } from './NavigationSidebar';
 import { TopBar } from './TopBar';
+import { SettingsReturnLink } from './SettingsReturnLink';
+import { AdminOnlyRedirectNotice } from './AdminOnlyRedirectNotice';
 
 /**
  * Layout for 全体設定 (/settings/<section>), the screens that belong to no Project. Its navigation
- * holds only the 全体設定 group and, for global administrators, 全体管理.
+ * holds only the 全体設定 group and, for global administrators, 全体管理; above the screen is the
+ * way back to the Project screen it was opened from.
  */
 export function SettingsShell() {
   const navigation = useNavigation();
@@ -20,6 +23,8 @@ export function SettingsShell() {
       <div className="app-body">
         {navigation.mode !== 'drawer' && <NavigationSidebar navigation={navigation} />}
         <main id="content" className="page app-content">
+          <SettingsReturnLink />
+          <AdminOnlyRedirectNotice />
           <Outlet />
         </main>
       </div>

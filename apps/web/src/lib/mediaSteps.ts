@@ -1,6 +1,6 @@
 // Steps of Run media: the slider only stops at steps that were recorded, comparisons pick
 // columns from recorded steps, and switching between players keeps the playback position.
-import { MEDIA_COMPARE_MAX_STEPS, type MediaCompareGrid, type RunMedia } from '@mmt/contracts';
+import { MEDIA_COMPARE_MAX_STEPS, type RunMedia } from '@mmt/contracts';
 
 /** Recorded steps in ascending order, without duplicates. */
 export function sortedSteps(steps: Iterable<number>): number[] {
@@ -128,58 +128,9 @@ export function gridPositionAfterKey(
   }
 }
 
-export type StepListParseResult = { ok: true; steps: number[] } | { ok: false; error: 'invalid' | 'too_many' };
-
-/**
- * Steps typed for a comparison ("0, 500, 1000"). Blank means the API's default (each Run's latest
- * step). Duplicates are dropped; more than MEDIA_COMPARE_MAX_STEPS distinct steps is refused
- * rather than cut, so the grid never silently hides a step the user asked for.
- */
-export function parseStepList(input: string): StepListParseResult {
-  const parts = input
-    .split(/[\s,、]+/)
-    .map((part) => part.trim())
-    .filter((part) => part !== '');
-  if (!parts.every((part) => /^\d+$/.test(part) && Number.isSafeInteger(Number(part)))) return { ok: false, error: 'invalid' };
-  const steps = sortedSteps(parts.map(Number));
-  if (steps.length > MEDIA_COMPARE_MAX_STEPS) return { ok: false, error: 'too_many' };
-  return { ok: true, steps };
-}
-
 /** A step kept in the URL; null when the parameter is missing or not a step, so the latest is shown. */
 export function parseStepParam(value: string | null): number | null {
   if (value === null || !/^\d+$/.test(value)) return null;
   const step = Number(value);
   return Number.isSafeInteger(step) ? step : null;
-}
-
-/** Steps kept in the URL; a broken or too long list falls back to each Run's latest step. */
-export function parseStepsParam(value: string | null): number[] {
-  if (!value) return [];
-  const parsed = parseStepList(value);
-  return parsed.ok ? parsed.steps : [];
-}
-
-/** A /media/compare response laid out as a rectangle: cells[runIndex][stepIndex]. */
-export interface CompareTable {
-  runIds: string[];
-  steps: number[];
-  cells: Array<Array<RunMedia[] | null>>;
-}
-
-/**
- * Lays out the comparison grid. With requested steps the rows already line up. Without them each
- * row holds only its Run's latest step, so the columns are those latest steps and every other
- * cell of the row stays empty: a Run's media is never shown under a step it was not logged at.
- */
-export function compareTableOf(grid: MediaCompareGrid): CompareTable {
-  const runIds = grid.rows.map((row) => row.runId);
-  if (grid.steps !== null) return { runIds, steps: grid.steps, cells: grid.rows.map((row) => row.cells) };
-  const latestSteps = grid.rows.map((row) => row.cells[0]?.[0]?.step ?? null);
-  const steps = sortedSteps(latestSteps.filter((step): step is number => step !== null));
-  return {
-    runIds,
-    steps,
-    cells: grid.rows.map((row, index) => steps.map((step) => (latestSteps[index] === step ? row.cells[0]! : null))),
-  };
 }
