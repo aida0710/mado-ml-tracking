@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChartLine, Plus, RefreshCw } from 'lucide-react';
+import { ChartLine, Plus, RefreshCw, Terminal } from 'lucide-react';
 import type { RunSearchRequest, RunStatus } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
 import { useProject } from '../hooks/useProject';
@@ -11,6 +11,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useRunListSavedView } from '../hooks/useRunListSavedView';
 import { ChartPanelLayoutSourceContext } from '../hooks/useChartPanelLayout';
 import { PageHeader } from '../components/PageHeader';
+import { CopyableValue } from '../components/CopyableValue';
+import { RecordingConnectionGuide } from '../components/RecordingConnectionGuide';
 import { ErrorNotice, Resource } from '../components/Feedback';
 import { FormDialog } from '../components/FormDialog';
 import { ExperimentSidebar } from '../components/runs/ExperimentSidebar';
@@ -65,6 +67,7 @@ export function ExperimentsPage() {
     .filter(Boolean);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [dialog, setDialog] = useState<'experiment' | 'run' | 'tag' | null>(null);
+  const [isRecordingGuideOpen, setIsRecordingGuideOpen] = useState(false);
   const mutation = useMutation();
   const csvExport = useMutation();
   const [isExportTruncated, setIsExportTruncated] = useState(false);
@@ -155,10 +158,23 @@ export function ExperimentsPage() {
             </>
           }
           description={
-            experiment ? <span className="mono">ID {experiment.id}</span> : project.description
+            experiment ? (
+              <CopyableValue label={text.experimentId} value={experiment.id} />
+            ) : (
+              project.description
+            )
           }
           actions={
             <>
+              <button
+                type="button"
+                className="button"
+                aria-expanded={isRecordingGuideOpen}
+                onClick={() => setIsRecordingGuideOpen((isOpen) => !isOpen)}
+              >
+                <Terminal size={15} />
+                {text.recordingGuideToggle}
+              </button>
               {canEdit && (
                 <button className="button primary" onClick={() => setDialog('run')}>
                   <Plus size={15} />
@@ -171,6 +187,7 @@ export function ExperimentsPage() {
             </>
           }
         />
+        {isRecordingGuideOpen && <RecordingConnectionGuide experiment={experiment} />}
         <div className="tabs">
           <span className="tab active">{text.runs}</span>
           <Link className="tab" to={`/projects/${project.id}/lineage`}>

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type {
   ArtifactUpload,
   ArtifactUploadDetail,
+  ArtifactUploadListItem,
   ArtifactUploadPart,
 } from '../artifactUploads.js';
 import { idSchema, timestampSchema } from './primitives.js';
@@ -43,6 +44,10 @@ export const artifactUploadDetailSchema = namedContractSchema(
   'ArtifactUploadDetail',
   z.strictObject({ ...artifactUploadFields, receivedParts: z.array(artifactUploadPartSchema) }),
 );
+export const artifactUploadListItemSchema = namedContractSchema(
+  'ArtifactUploadListItem',
+  z.strictObject({ ...artifactUploadFields, receivedBytes: z.number().int() }),
+);
 
 type _ArtifactUpload = Expect<
   MutuallyAssignable<z.infer<typeof artifactUploadSchema>, ArtifactUpload>
@@ -52,4 +57,7 @@ type _ArtifactUploadPart = Expect<
 >;
 type _ArtifactUploadDetail = Expect<
   MutuallyAssignable<z.infer<typeof artifactUploadDetailSchema>, ArtifactUploadDetail>
+>;
+type _ArtifactUploadListItem = Expect<
+  MutuallyAssignable<z.infer<typeof artifactUploadListItemSchema>, ArtifactUploadListItem>
 >;

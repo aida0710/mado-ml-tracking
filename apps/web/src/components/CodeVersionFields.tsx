@@ -1,5 +1,6 @@
 import type { Artifact } from '@mmt/contracts';
 import { FormFields } from './FormFields';
+import { ModelFamilyListHints } from './ModelFamilyListHints';
 import type { FormField, FormValues } from '../types/form';
 import type { ArtifactUploadPurpose } from '../types/codeVersionForm';
 import { getFieldValue } from '../lib/formValues';
@@ -131,6 +132,8 @@ export function CodeVersionFields({
       options: RUN_KINDS.map((kind) => ({ value: kind, label: text[kind] })),
     },
   ];
+  // The family hints sit right under the family list.
+  const familiesEnd = commandFields.findIndex((field) => field.name === 'families') + 1;
   return (
     <>
       <FormFields fields={runtimeFields} values={values} onChange={onChange} />
@@ -149,7 +152,16 @@ export function CodeVersionFields({
           {text.uploadArtifact}
         </button>
       )}
-      <FormFields fields={commandFields} values={values} onChange={onChange} />
+      <FormFields
+        fields={commandFields.slice(0, familiesEnd)}
+        values={values}
+        onChange={onChange}
+      />
+      <ModelFamilyListHints
+        value={getFieldValue(values, 'families')}
+        onChange={(families) => onChange({ ...values, families })}
+      />
+      <FormFields fields={commandFields.slice(familiesEnd)} values={values} onChange={onChange} />
     </>
   );
 }

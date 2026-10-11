@@ -52,7 +52,7 @@ job shellは内容を変えて保存するたびに新しいバージョンに�
 
 ## 手動で投入する
 
-手動のコンピュータにJobを作ると、Jobsに手動投入待ちの案内が出ます。そのコンピュータの上（ログインノードや自分のPC）で実行します。
+手動のコンピュータにJobを作ると、Jobsに手動投入待ちの案内が出ます（［ジョブを起動］の確認の段にも、起動前に出ます）。そのコンピュータの上（ログインノードや自分のPC）で実行します。案内の「初めて投入するとき」を開くと、`mado-tracking`の入れ方、このページのURLを入れた`MMT_API_URL`の設定、tokenを発行する場所が出ます。Jobsの画面ではそこから`read`と`jobs:write`を選んだ状態でtokenを発行できます。
 
 ```bash
 export MMT_API_URL=https://tracking.example.org MMT_API_TOKEN=<自分のAPI token>

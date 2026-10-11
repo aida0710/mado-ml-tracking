@@ -442,6 +442,20 @@ node apps/web/tests/browser-computer-setup.mjs
 
 2026-10-11に通過しました（mockのAPIです。実際のworkerがSSHで確かめる流れは、APIの`target-setup-checks.integration.test.ts`、Pythonの`test_target_discovery.py`・`test_directory_listing.py`・`test_target_check_runner.py`と、確認用環境で確かめます）。`browser-containers.mjs`（Localのコンピュータを2段で足す）、`browser-site-computers.mjs`（種類にSiteを選ぶと1枚の欄）、`browser-workbench.mjs`（編集のタブ）も新しいダイアログに合わせました。
 
+## IDを入れた接続の案内（SDK・MLflow、worker、手動投入）をブラウザで確認する
+
+`apps/web/tests/browser-recording-connection.mjs`は、mockのAPIで「SDK・MLflow 3から接続」を確かめます。プロジェクト設定ではプロジェクトIDだけ、Experimentsで実験を選んで［SDKで記録］を開くと実験IDも入ること（`MMT_EXPERIMENT_ID`、MLflowの`set_experiment`に実験の名前）、［コピー］が値をそのまま写すこと、tokenの発行画面が記録用のscope（read・runs:write・registry:write・artifacts:write）を選んだ状態で開くこと、viewerには発行のボタンが出ないことを見ます。
+
+`apps/web/tests/browser-computer-guides.mjs`は、開発モード（`AUTH_MODE=development`）のAPIに、実行ごとに別の利用者・Project・コンピュータ・手動投入待ちのJobを作って確かめます。sshのコンピュータの詳細にコンピュータIDと、そのIDを入れたworkerの`install`・環境変数の例が出ること、手動投入のsiteの詳細・Jobsの案内・［ジョブを起動］の確認の段に投入コマンドと準備（`mado-tracking`の入れ方、このページのURLを入れた`MMT_API_URL`、tokenを発行する場所とscope）が出てtokenの値は出ないこと、Jobsの［投入用のAPI tokenを発行］がread・jobs:writeのtokenを作ること、viewerにはそのボタンが出ないこと、390pxで横にずれないことを見ます。管理者は`DEVELOPMENT_ADMIN_EMAIL`（既定`admin@localhost`、違うときは`MMT_DEVELOPMENT_ADMIN_EMAIL`で渡す）です。
+
+```bash
+MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
+MMT_CHROMIUM_PATH=/path/to/chromium \
+MMT_WEB_URL=http://127.0.0.1:<Webのport> \
+MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/connection-guides \
+node apps/web/tests/browser-computer-guides.mjs
+```
+
 ## Webで足すコンピュータ（site）を実APIでブラウザ確認する
 
 `apps/web/tests/browser-site-computers-api.mjs`は、`mmt_test`の一時schemaを使う開発モード（`AUTH_MODE=development`）のAPI（47140）を自分で起動し、実際の記録を作って全体設定の「コンピュータ」（`/settings/computers`）・Jobs画面・全体管理の「ランチャー」（`/settings/launchers`）を確かめます。終わるとschemaを消します。WebはViteを47141で起動しておきます。APIをTypeScriptのソースから起動するので`tsx`で実行します。

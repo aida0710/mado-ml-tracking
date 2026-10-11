@@ -1,45 +1,5 @@
 /* Project members, group bindings, the user picker on the settings page, and the members chosen
    while creating a Project. */
-.user-picker-results {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 240px;
-  overflow-y: auto;
-  border: 1px solid var(--border);
-}
-.user-picker-results button {
-  width: 100%;
-  padding: 8px 10px;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.user-picker-results button:hover,
-.user-picker-results button:focus-visible {
-  background: var(--surface-hover);
-}
-/* Existing members are listed with the reason they cannot be added again. */
-.user-picker-results button:disabled {
-  cursor: default;
-  background: transparent;
-  opacity: 0.75;
-}
-.user-picker-results button small {
-  display: block;
-  margin-top: 2px;
-}
-.user-picker-selected {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 10px;
-  background: var(--surface);
-}
 .user-summary {
   display: flex;
   flex-direction: column;

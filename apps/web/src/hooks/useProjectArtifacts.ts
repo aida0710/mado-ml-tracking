@@ -5,9 +5,34 @@ import { useCursorPages } from './useCursorPages';
 import { useQuery } from './useQuery';
 import { ARTIFACT_LIST_LIMIT } from '../lib/artifactCatalog';
 
-export function useProjectArtifacts(projectId: string, enabled: boolean, search: string) {
-  const query = useQuery(enabled ? `${projectId}:project-artifacts:${search}` : null, (signal) =>
-    trackingApi.projectArtifacts(projectId, { limit: ARTIFACT_LIST_LIMIT, query: search }, signal),
+/**
+ * The Project's Artifacts whose saved path contains `search`, newest first, for a field that picks
+ * one. With `runId`, only that Run's files as its Artifacts tab shows them (the latest per path).
+ * `rememberArtifact` keeps a chosen Artifact listed after the search changes.
+ */
+export function useProjectArtifacts({
+  projectId,
+  enabled,
+  search,
+  runId,
+}: {
+  projectId: string;
+  enabled: boolean;
+  search: string;
+  runId?: string;
+}) {
+  const query = useQuery(
+    enabled ? `${projectId}:project-artifacts:${runId ?? ''}:${search}` : null,
+    (signal) =>
+      trackingApi.projectArtifacts(
+        projectId,
+        {
+          limit: ARTIFACT_LIST_LIMIT,
+          query: search,
+          ...(runId ? { runId, versions: 'latest' as const } : {}),
+        },
+        signal,
+      ),
   );
   const [selectedArtifacts, setSelectedArtifacts] = useState<Artifact[]>([]);
   const items = [

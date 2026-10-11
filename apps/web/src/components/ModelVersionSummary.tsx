@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { AutomatedRunSummary, ModelVersionDetail, Run } from '@mmt/contracts';
+import { CodeVersionNameLink } from './CodeVersionNameLink';
 import { DetailsList } from './JsonDetails';
 import { LineageGraph } from './LineageGraph';
 import { ModelVersionArtifactLink } from './ModelVersionArtifactLink';
@@ -83,9 +84,10 @@ export function ModelVersionSummary({
             [
               text.defaultCode,
               version.defaultCodeVersionId ? (
-                <Link className="mono" to={`${base}/codes?version=${version.defaultCodeVersionId}`}>
-                  {version.defaultCodeVersionId}
-                </Link>
+                <CodeVersionNameLink
+                  projectId={projectId}
+                  codeVersionId={version.defaultCodeVersionId}
+                />
               ) : (
                 '—'
               ),

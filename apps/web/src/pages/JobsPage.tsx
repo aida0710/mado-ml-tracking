@@ -16,6 +16,7 @@ import { JobsTable, type JobAction } from '../components/JobsTable';
 import { JobArraysTable } from '../components/JobArraysTable';
 import { JobDetailsList } from '../components/JobDetailsList';
 import { ManualSubmissionNotice, WaitingJobNotice } from '../components/ManualSubmissionNotice';
+import { ProjectTokenButton } from '../components/ProjectTokenButton';
 import { LaunchDialog } from '../dialogs/LaunchDialog';
 import { JobActionDialog } from '../dialogs/JobActionDialog';
 import { ResumeDialog } from '../dialogs/ResumeDialog';
@@ -28,6 +29,7 @@ import {
   manualSiteOwnership,
   manualSubmissionGroups,
 } from '../lib/manualSubmission';
+import { SUBMIT_TOKEN_SCOPES } from '../lib/submitCliSetup';
 import { text } from '../i18n/catalog';
 import { jobsTextTemplates } from '../i18n/jobs';
 
@@ -67,6 +69,9 @@ export function JobsPage() {
   const targetItems = targets.value ?? [];
   const selectedTarget = selected && targetItems.find((target) => target.id === selected.targetId);
   const hookItems = hooks.value ?? [];
+  const submitTokenButton = (
+    <ProjectTokenButton label={text.submitSetupIssueToken} scopes={SUBMIT_TOKEN_SCOPES} />
+  );
   const setParam = (name: string, value: string) =>
     setParams((previous) => {
       const next = new URLSearchParams(previous);
@@ -96,7 +101,10 @@ export function JobsPage() {
         }
       />
       {jobs.value && (
-        <ManualSubmissionNotice groups={manualSubmissionGroups(jobs.value, targetItems, user)} />
+        <ManualSubmissionNotice
+          groups={manualSubmissionGroups(jobs.value, targetItems, user)}
+          tokenButton={submitTokenButton}
+        />
       )}
       <label className="chart-selector">
         <span>{text.status}</span>
@@ -174,6 +182,7 @@ export function JobsPage() {
               targetId={selected.targetId}
               ownership={manualSiteOwnership(selectedTarget, user)}
               isRequester={selectedRun.value?.createdBy === user.id}
+              tokenButton={submitTokenButton}
             />
           )}
           <Resource query={selectedRun}>

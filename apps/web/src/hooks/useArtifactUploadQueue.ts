@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Artifact, ArtifactUpload, ArtifactUploadDetail } from '@mmt/contracts';
+import type { Artifact, ArtifactUpload, ArtifactUploadDetail, ArtifactUploadListItem } from '@mmt/contracts';
 import { artifactUploadsApi } from '../api/artifactUploads';
 import { RequestError } from '../api/http';
 import { trackingApi } from '../api/tracking';
@@ -22,9 +22,12 @@ import {
   type TransferSample,
   type UploadMethod,
 } from '../lib/uploadPlan';
+import { blockerFromFailure, isSessionUnusable } from '../lib/uploadResumeBlocker';
+import { createPartDigestReader, inspectSessionForFile } from '../lib/uploadResumeMatch';
 import { findResumeRecord, removeResumeRecord, saveResumeRecord } from '../lib/uploadResumeStore';
 import { useQuery } from './useQuery';
 import { text } from '../i18n/catalog';
+import { resumeBlockerNextSteps, resumeBlockerReasons } from '../i18n/uploads';
 
 /**
  * Requests in flight across the whole queue. Browsers allow six connections per origin over
@@ -35,8 +38,6 @@ export const MAX_CONCURRENT_REQUESTS = 3;
 const VERIFY_POLL_INTERVAL_MS = 1000;
 // Progress events arrive many times per second; the list re-renders at most this often.
 const PROGRESS_RENDER_INTERVAL_MS = 200;
-// Session states after which the parts are gone and a new session must start from the first byte.
-const CLOSED_SESSION_CODES = new Set(['upload_not_open', 'upload_expired']);
 
 export type UploadItemStatus =
   | 'queued'
@@ -70,6 +71,8 @@ export interface UploadItem {
 export interface UploadEntry {
   source: UploadSource;
   path: string;
+  /** A session the dialog already compared with this file; it continues without comparing again. */
+  verifiedUploadId?: string;
 }
 
 /** Mutable state of one file while requests are running; UploadItem is its rendered copy. */
@@ -80,6 +83,7 @@ interface UploadJob {
   method: UploadMethod;
   status: UploadItemStatus;
   session: ArtifactUpload | null;
+  verifiedUploadId: string | null;
   pendingParts: PartRange[];
   /** Bytes sent so far by each part request in flight. */
   inFlightParts: Map<number, number>;
@@ -113,7 +117,7 @@ export function useArtifactUploadQueue({
   const openSessions = useQuery(`${projectId}:artifact-uploads:open`, (signal) =>
     artifactUploadsApi.list(projectId, 'open', signal),
   );
-  const openSessionsRef = useRef<ArtifactUpload[]>([]);
+  const openSessionsRef = useRef<ArtifactUploadListItem[]>([]);
   openSessionsRef.current = (openSessions.value ?? []).filter((session) => session.runId === runId);
 
   const render = useCallback(() => {
@@ -129,13 +133,20 @@ export function useArtifactUploadQueue({
   // The callbacks below close over refs only, so they stay valid for the whole dialog.
   const failJob = useCallback(
     (job: UploadJob, failure: unknown) => {
-      if (failure instanceof RequestError && failure.code && CLOSED_SESSION_CODES.has(failure.code)) {
-        if (job.session) removeResumeRecord(job.session.id);
+      // Only a refusal of an open session's request describes that session; a Run missing on
+      // create or on the single PUT is not "the upload is gone".
+      const blocker = job.session ? blockerFromFailure(failure) : null;
+      const startsOver = blocker !== null && isSessionUnusable(blocker);
+      if (startsOver && job.session) {
+        removeResumeRecord(job.session.id);
         job.session = null;
+        job.verifiedUploadId = null;
       }
       job.controller.abort();
       job.status = 'failed';
-      job.error = formatErrorMessage(failure);
+      job.error = blocker
+        ? `${resumeBlockerReasons[blocker]}${startsOver ? text.uploadRestartFromQueue : resumeBlockerNextSteps[blocker]}`
+        : formatErrorMessage(failure);
       job.pendingParts = [];
       job.inFlightParts.clear();
       render();
@@ -263,7 +274,8 @@ export function useArtifactUploadQueue({
           file,
           candidates: [
             ...(job.session ? [{ uploadId: job.session.id, isSameFile: true }] : []),
-            ...(storedRecord ? [{ uploadId: storedRecord.uploadId, isSameFile: true }] : []),
+            ...(job.verifiedUploadId ? [{ uploadId: job.verifiedUploadId, isSameFile: true }] : []),
+            ...(storedRecord ? [{ uploadId: storedRecord.uploadId, isSameFile: false }] : []),
             ...openSessionsRef.current
               .filter((session) => session.path === job.path && session.expectedSize === file.size)
               .map((session) => ({ uploadId: session.id, isSameFile: false })),
@@ -324,7 +336,9 @@ export function useArtifactUploadQueue({
 
   const enqueue = useCallback(
     (entries: UploadEntry[]) => {
-      for (const { source, path } of entries)
+      for (const { source, path, verifiedUploadId } of entries) {
+        // Hidden from the unfinished list at once, not only after the session is read again.
+        if (verifiedUploadId) queuedSessionIdsRef.current.add(verifiedUploadId);
         jobsRef.current.push({
           id: String(nextJobNumberRef.current++),
           source,
@@ -332,6 +346,7 @@ export function useArtifactUploadQueue({
           method: chooseUploadMethod(source.file.size),
           status: 'queued',
           session: null,
+          verifiedUploadId: verifiedUploadId ?? null,
           pendingParts: [],
           inFlightParts: new Map(),
           confirmedBytes: 0,
@@ -341,6 +356,7 @@ export function useArtifactUploadQueue({
           error: null,
           artifact: null,
         });
+      }
       pump();
     },
     [pump],
@@ -409,7 +425,12 @@ export function useArtifactUploadQueue({
   const discardSession = useCallback(
     async (uploadId: string) => {
       removeResumeRecord(uploadId);
-      await artifactUploadsApi.abort(projectId, uploadId);
+      try {
+        await artifactUploadsApi.abort(projectId, uploadId);
+      } catch (failure) {
+        // A session that is already gone has nothing left to discard.
+        if (blockerFromFailure(failure) !== 'gone') throw failure;
+      }
       openSessions.reload();
     },
     [openSessions, projectId],
@@ -499,9 +520,9 @@ function takeNextTask(
 }
 
 /**
- * Picks the first candidate session that is still usable for this file. A session found only
- * on the server (no local record) may belong to another file with the same path and size, so one
- * of its received parts must hash the same as the chosen file before it is resumed.
+ * Picks the first candidate session that is still usable for this file. A session this queue did
+ * not open with this very file (a local record, or one found only on the server) may belong to
+ * another file with the same path and size, so its received parts must match the chosen file.
  */
 async function findResumableSession({
   projectId,
@@ -514,38 +535,30 @@ async function findResumableSession({
   candidates: { uploadId: string; isSameFile: boolean }[];
   signal: AbortSignal;
 }): Promise<ArtifactUploadDetail | null> {
+  const readPartDigest = createPartDigestReader(file);
   const tried = new Set<string>();
   for (const { uploadId, isSameFile } of candidates) {
     if (tried.has(uploadId)) continue;
     tried.add(uploadId);
-    let detail: ArtifactUploadDetail;
-    try {
-      detail = await artifactUploadsApi.get(projectId, uploadId, signal);
-    } catch (failure) {
-      if (failure instanceof RequestError && failure.status >= 400 && failure.status < 500) {
-        removeResumeRecord(uploadId);
-        continue;
-      }
-      throw failure;
-    }
+    const inspection = await inspectSessionForFile({
+      uploadId,
+      file,
+      loadSession: (id) => artifactUploadsApi.get(projectId, id, signal),
+      readPartDigest,
+      now: Date.now(),
+      isKnownSameFile: isSameFile,
+    });
+    // A finished session hands over its Artifact, so an unchecked file takes it only after its
+    // parts were compared; a session with no parts yet proves nothing about the file.
     const isUsable =
-      detail.expectedSize === file.size &&
-      (detail.status === 'open' || detail.status === 'verifying' || detail.status === 'completed') &&
-      (isSameFile || (await hasSameReceivedBytes(file, detail)));
-    if (isUsable) return detail;
-    removeResumeRecord(uploadId);
+      inspection.blocker === null &&
+      (isSameFile || inspection.session.status === 'open' || !inspection.nothingSent);
+    if (isUsable) return inspection.session;
+    // A record of a session that can still continue (with the right file, or once access is back)
+    // stays, so the dialog can keep naming its file.
+    if (inspection.blocker && isSessionUnusable(inspection.blocker)) removeResumeRecord(uploadId);
   }
   return null;
-}
-
-async function hasSameReceivedBytes(file: File, detail: ArtifactUploadDetail): Promise<boolean> {
-  if (detail.status !== 'open') return false;
-  const sample = detail.receivedParts[0];
-  if (!sample) return true;
-  if (!canDigest()) return false;
-  const start = (sample.partNumber - 1) * detail.partSize;
-  const bytes = await file.slice(start, start + sample.size).arrayBuffer();
-  return (await sha256Hex(bytes)) === sample.sha256;
 }
 
 async function retrying<T>(signal: AbortSignal, send: () => Promise<T>): Promise<T> {

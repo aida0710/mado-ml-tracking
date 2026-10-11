@@ -18,6 +18,7 @@ import { hookFilterEntries, hookResourceSummary, hookWebhookPath } from '../lib/
 import { hookFilterFields } from '../lib/hookInput';
 import { formatAutoRetries } from '../lib/jobDisplay';
 import { isSiteTarget } from '../lib/siteExecutionInput';
+import { isManualSite } from '../lib/manualSubmission';
 import { text } from '../i18n/catalog';
 import {
   hookCheckpointModeLabels,
@@ -100,7 +101,7 @@ function templateEntries(hook: Hook, catalog: HookCatalog | undefined, base: str
       text.target,
       <span className="badge-group">
         {target?.name ?? template.targetId}
-        {target?.executor === 'site' && target.submissionMode === 'manual' && (
+        {isManualSite(target) && (
           <span className="status-badge status-attention">{submissionModeBadgeLabels.manual}</span>
         )}
       </span>,

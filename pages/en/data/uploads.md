@@ -63,10 +63,21 @@ The dialog cannot be closed while sending. Pause or cancel first.
 The server keeps the received parts even if you reload or close the tab.
 
 1. Open **Artifactをアップロード** (Upload Artifact) on the same Run.
-2. 途中のアップロード (Unfinished uploads) lists uploads that can be continued and their expiry.
-3. Choose the same file, keep the same saved path, and click **アップロードを開始** (Start upload).
+2. 途中のアップロード (Unfinished uploads) lists each upload with the amount already sent and its expiry. Uploads started in this browser also show the original file name.
+3. Click **続きを送る** (Continue) on the row and choose the same file.
 
-If the file name, size, and modification time match, the received parts are skipped. Click **破棄** (Discard) to delete an upload you do not want to continue.
+The upload keeps its earlier saved path, so you do not type it again. Choosing the same file with **ファイルを選ぶ** (Choose files) also switches the saved path to the earlier one and continues.
+
+The file is recognized by the content (SHA-256) of the parts already sent. A copy with another name or modification time continues if its content is the same; a file of another size or content is never continued. Click **破棄** (Discard) to delete an upload you do not want to continue.
+
+When an upload cannot continue, its row shows why and what to do next.
+
+| Shown | What to do |
+|---|---|
+| Expired | **最初から送る** (Start over) sends the file again from the first byte to the same saved path |
+| No longer on the server (discarded, or removed after expiry) | **最初から送る** (Start over) sends the file again to the same saved path |
+| Permission lost | Ask a Project administrator for Editor or higher. If access returns before the expiry, the upload continues |
+| Different size or content | Choose the same file again |
 
 ## Upload from the Python SDK
 

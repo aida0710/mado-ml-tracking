@@ -7,7 +7,13 @@ import {
   ListMultipartUploadsCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import type { Artifact, ArtifactUpload, ArtifactUploadDetail, Run } from '@mmt/contracts';
+import type {
+  Artifact,
+  ArtifactUpload,
+  ArtifactUploadDetail,
+  ArtifactUploadListItem,
+  Run,
+} from '@mmt/contracts';
 import {
   createArtifactStores,
   createFilesystemArtifactStore,
@@ -199,6 +205,74 @@ describe.skipIf(!testDatabaseUrl)('再開可能なupload session（独立Postgre
     expect(Buffer.from(await downloaded.arrayBuffer()).equals(CONTENT)).toBe(true);
     // Only the assembled object remains; part files and the session directory are gone.
     expect(await storedFiles()).toEqual(['content']);
+  });
+
+  it('一覧は受信済みpartの合計をreceivedBytesで返し、届いていないpartは数えない', async () => {
+    const fixture = await fixtureWithRun();
+    const editor = { cookie: fixture.editor.cookie };
+    const upload = await entity<ArtifactUpload>(await createUpload(fixture, editor));
+    const listOpen = async () =>
+      (
+        await entity<{ items: ArtifactUploadListItem[] }>(
+          await request(harness.app, `${fixture.basePath}/artifact-uploads?status=open`, editor),
+          200,
+        )
+      ).items;
+    expect((await listOpen()).map((item) => item.receivedBytes)).toEqual([0]);
+
+    await entity(await putPart(fixture, editor, upload, 1), 200);
+    await entity(await putPart(fixture, editor, upload, 3), 200);
+    // A part rejected for its length is not stored, so it adds nothing.
+    await entity(
+      await putPart(fixture, editor, upload, 2, { body: new Uint8Array(4), length: 4 }),
+      422,
+    );
+    expect(await listOpen()).toEqual([
+      expect.objectContaining({
+        id: upload.id,
+        path: 'audio/long.wav',
+        expectedSize: CONTENT.length,
+        receivedBytes: PART_SIZE + 'last-part'.length,
+      }),
+    ]);
+
+    // The list keeps the session API's access rules: a viewer gets nothing, and a project token
+    // sees only the sessions it opened itself, with their own received bytes.
+    expect(
+      await entity(
+        await request(harness.app, `${fixture.basePath}/artifact-uploads?status=open`, {
+          cookie: fixture.viewer.cookie,
+        }),
+        403,
+      ),
+    ).toMatchObject({ code: 'project_forbidden' });
+    const minted = await entity<{ token: string }>(
+      await request(harness.app, '/api/tokens', {
+        method: 'POST',
+        ...editor,
+        body: {
+          name: 'Upload token',
+          kind: 'personal',
+          projectId: fixture.project.id,
+          scopes: ['artifacts:write'],
+        },
+      }),
+    );
+    const tokenCredential = { token: minted.token };
+    const tokenUpload = await entity<ArtifactUpload>(await createUpload(fixture, tokenCredential));
+    await entity(await putPart(fixture, tokenCredential, tokenUpload, 2), 200);
+    expect(
+      (
+        await entity<{ items: ArtifactUploadListItem[] }>(
+          await request(
+            harness.app,
+            `${fixture.basePath}/artifact-uploads?status=open`,
+            tokenCredential,
+          ),
+          200,
+        )
+      ).items.map((item) => [item.id, item.receivedBytes]),
+    ).toEqual([[tokenUpload.id, PART_SIZE]]);
   });
 
   it('宣言と違う長さのpartは422で拒否し、受け取り済みとして記録しない', async () => {

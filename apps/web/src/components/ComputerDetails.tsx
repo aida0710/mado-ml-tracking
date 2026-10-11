@@ -1,8 +1,10 @@
 import type { ComputeTargetDetails, User } from '@mmt/contracts';
 import { ComputeTargetKind } from './ComputeTargetKind';
+import { CopyableValue } from './CopyableValue';
 import { DetailsList } from './JsonDetails';
 import { SiteComputerDetails } from './SiteComputerDetails';
 import { TargetCheckPanel } from './TargetCheckPanel';
+import { WorkerSetupGuide } from './WorkerSetupGuide';
 import { formatTargetGpus, formatTargetLocation } from '../lib/computeTargetDisplay';
 import { canManageTarget } from '../lib/permissions';
 import { text } from '../i18n/catalog';
@@ -10,8 +12,8 @@ import { runtimeLabels } from '../i18n/runtime';
 
 /**
  * A computer's details below 全体設定 → コンピュータ, for those who may use or manage it: a site's
- * job shell, settings and submission; an ssh or local target's description, and its connection
- * check for its owner and global administrators.
+ * job shell, settings and submission; an ssh or local target's description with its ID and the
+ * worker that runs its Jobs, and its connection check for its owner and global administrators.
  */
 export function ComputerDetails({
   target,
@@ -32,6 +34,7 @@ export function ComputerDetails({
         </div>
         <DetailsList
           entries={[
+            [text.computerId, <CopyableValue value={target.id} />],
             [text.computerKind, <ComputeTargetKind target={target} />],
             [text.computerLocation, <span className="mono">{formatTargetLocation(target)}</span>],
             [text.runtimeKinds, target.runtimeKinds.map((kind) => runtimeLabels[kind]).join(', ')],
@@ -43,6 +46,7 @@ export function ComputerDetails({
       {canManageTarget(user, target) && (
         <TargetCheckPanel target={target} onTargetSaved={onTargetChanged} />
       )}
+      <WorkerSetupGuide targetId={target.id} />
     </>
   );
 }

@@ -4,6 +4,7 @@ import { conflict } from '../../domain/errors.js';
 import { findRun } from '../../repositories/registryRepository.js';
 import { modelAliasActor, removeModelAliases } from '../../repositories/modelAliasRepository.js';
 import { mlflowAliasGuard } from '../../services/aliasProtectionService.js';
+import type { ArtifactService } from '../../services/artifactService.js';
 import type { RegistryService } from '../../services/registryService.js';
 import { uuidSchema } from '../../domain/validation.js';
 import { parse } from '../../http/request.js';
@@ -22,6 +23,8 @@ export class ModelVersionService {
   constructor(
     private readonly database: Database,
     private readonly registry: RegistryService,
+    // Reads the MLmodel of a Run directory registered through runs:/ (see readRunModelMetadata).
+    private readonly artifacts: ArtifactService,
   ) {}
 
   async create(principal: Principal, projectId: string, input: CreateModelVersion) {
@@ -29,7 +32,11 @@ export class ModelVersionService {
       this.database,
       { principal, projectId, name: input.name },
       async (connection, model) => {
-        const source = await resolveRegistrationSource(connection, { projectId, input });
+        const source = await resolveRegistrationSource(connection, {
+          projectId,
+          input,
+          artifacts: this.artifacts,
+        });
         if (input.run_id && input.run_id !== source.sourceRunId)
           conflict('run_idと保存済みモデルのsource Runが一致しません');
         const tags = { ...model.tags, ...source.tags, ...keyValueMap(input.tags) };

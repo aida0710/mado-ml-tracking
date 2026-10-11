@@ -8,6 +8,8 @@ import { invalidParameter, type CreateModelVersion } from './validation.js';
 import type { ArtifactManifestEntry } from './types.js';
 import { findSavedArtifact } from '../../repositories/runtimeArtifactRepository.js';
 import { uuidSchema } from '../../domain/validation.js';
+import type { ArtifactService } from '../../services/artifactService.js';
+import { readRunModelMetadata } from './runModelMetadata.js';
 
 export interface RegistrationSource extends SavedModelArtifacts {
   parentModelVersionIds: string[];
@@ -24,7 +26,7 @@ function decodedName(name: string): string {
 
 export async function resolveRegistrationSource(
   connection: Connection,
-  request: { projectId: string; input: CreateModelVersion },
+  request: { projectId: string; input: CreateModelVersion; artifacts: ArtifactService },
 ): Promise<RegistrationSource> {
   const { projectId, input } = request;
   const loggedSource =
@@ -56,7 +58,16 @@ export async function resolveRegistrationSource(
       runId: runId.data,
       directory: (runSource[2] ?? '').replace(/\/$/, ''),
     });
-    return { ...saved, parentModelVersionIds: [], defaultCodeVersionId: null };
+    return {
+      ...saved,
+      metadata: await readRunModelMetadata(connection, {
+        projectId,
+        manifest: saved.manifest,
+        artifacts: request.artifacts,
+      }),
+      parentModelVersionIds: [],
+      defaultCodeVersionId: null,
+    };
   }
   const registeredSource = /^models:\/(.+)\/([1-9][0-9]*)$/.exec(input.source);
   const aliasSource = /^models:\/(.+)@([A-Za-z0-9_-]+)$/.exec(input.source);

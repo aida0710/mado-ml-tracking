@@ -56,6 +56,7 @@ def start_run(
     *,
     project_id: str | None = None,
     experiment_id: str | None = None,
+    experiment_name: str | None = None,
     name: str | None = None,
     kind: str = "training",
     mode: RunMode | None = None,
@@ -63,16 +64,28 @@ def start_run(
 ) -> Run:
     """Use an existing worker Run, or create or resume a Run (see Client.start_run for options).
 
-    An offline Run needs neither MMT_API_URL nor MMT_API_TOKEN.
+    experiment_name chooses the Experiment by name and creates it when absent. An offline Run
+    needs neither MMT_API_URL nor MMT_API_TOKEN, and takes experiment_id or MMT_EXPERIMENT_ID.
     """
     if resolve_mode(mode, os.environ) == "offline":
         return start_run_offline(
-            project_id=project_id, experiment_id=experiment_id, name=name, kind=kind, **options
+            project_id=project_id,
+            experiment_id=experiment_id,
+            experiment_name=experiment_name,
+            name=name,
+            kind=kind,
+            **options,
         )
     client = Client()
     try:
         run = client.start_run(
-            project_id=project_id, experiment_id=experiment_id, name=name, kind=kind, mode=mode, **options
+            project_id=project_id,
+            experiment_id=experiment_id,
+            experiment_name=experiment_name,
+            name=name,
+            kind=kind,
+            mode=mode,
+            **options,
         )
     except BaseException:
         client.close()

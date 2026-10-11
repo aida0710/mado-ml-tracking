@@ -57,6 +57,53 @@
   font-weight: 600;
 }
 
+/* Search results to pick one from (users, Artifacts), and the picked one with［選び直す］. */
+.picker-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+}
+.picker-results button {
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.picker-results button:hover,
+.picker-results button:focus-visible {
+  background: var(--surface-hover);
+}
+/* A listed choice that cannot be picked, shown with the reason (an existing member). */
+.picker-results button:disabled {
+  cursor: default;
+  background: transparent;
+  opacity: 0.75;
+}
+.picker-results button small {
+  display: block;
+  margin-top: 2px;
+}
+.picker-selected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  background: var(--surface);
+}
+/* An Artifact in the picker: its saved path, and its size and date under it. */
+.artifact-choice {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
 /* What to enter in a field, under it (FormField.hint). */
 .field-hint {
   margin: 0;
@@ -109,6 +156,12 @@
   margin: 0;
   color: var(--muted);
   font-size: 11px;
+}
+/* A note about a likely mistake; --warning only marks borders, so the text keeps its color. */
+.suggestion-note.warning {
+  padding-left: 8px;
+  border-left: 3px solid var(--warning);
+  color: var(--text);
 }
 @media (width < 900px) {
   .suggestion-list li {

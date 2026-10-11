@@ -1,6 +1,8 @@
 // Evaluation sample tables (jsonl / csv with audio, reference, prediction, score columns):
 // parsing, audio path resolution, sorting, and paging. Broken rows are counted, never repaired.
 
+import { isUuid } from './uuid';
+
 export const EVALUATION_SAMPLES_PAGE_SIZE = 50;
 export const EVALUATION_SAMPLE_COLUMNS = ['audio', 'reference', 'prediction', 'score'] as const;
 /** Cross-run references: mmt-artifact://runs/<runId>/<path>. */
@@ -217,7 +219,6 @@ export type ArtifactReferenceResult =
   | { ok: true; reference: ArtifactReference }
   | { ok: false; error: ArtifactReferenceError };
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const URI_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:/i;
 
 /** Drops "." and empty segments. Paths are taken literally (no percent-decoding), like Artifact paths. */
@@ -244,13 +245,13 @@ export function resolveArtifactReference(
   if (trimmed.startsWith(ARTIFACT_REFERENCE_SCHEME)) {
     let segments = trimmed.slice(ARTIFACT_REFERENCE_SCHEME.length).split('/');
     if (segments[0] === 'projects') {
-      if (!UUID_PATTERN.test(segments[1] ?? '')) return { ok: false, error: 'invalid_run_reference' };
+      if (!isUuid(segments[1] ?? '')) return { ok: false, error: 'invalid_run_reference' };
       if (segments[1]!.toLowerCase() !== context.projectId.toLowerCase())
         return { ok: false, error: 'other_project' };
       segments = segments.slice(2);
     }
     const [kind, runId, ...rest] = segments;
-    if (kind !== 'runs' || !UUID_PATTERN.test(runId ?? '')) return { ok: false, error: 'invalid_run_reference' };
+    if (kind !== 'runs' || !isUuid(runId ?? '')) return { ok: false, error: 'invalid_run_reference' };
     const normalized = normalizeArtifactPath(rest.join('/'));
     return 'error' in normalized
       ? { ok: false, error: normalized.error }

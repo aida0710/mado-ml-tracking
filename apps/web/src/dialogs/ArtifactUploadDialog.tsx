@@ -1,13 +1,14 @@
 import { useState, type DragEvent } from 'react';
-import type { Artifact, ArtifactUpload } from '@mmt/contracts';
-import { FolderUp, Trash2, Upload } from 'lucide-react';
+import type { Artifact } from '@mmt/contracts';
+import { FolderUp, Upload } from 'lucide-react';
 import { Dialog } from '../components/Dialog';
 import { ErrorNotice } from '../components/Feedback';
+import { ResumableUploadList } from '../components/ResumableUploadList';
 import { UploadQueuePanel } from '../components/UploadQueuePanel';
 import { useArtifactUploadQueue } from '../hooks/useArtifactUploadQueue';
-import { useMutation } from '../hooks/useMutation';
+import { useUploadResume, type SelectedFileResume } from '../hooks/useUploadResume';
 import { sourcesFromDataTransfer, sourcesFromFileList, type UploadSource } from '../lib/droppedFiles';
-import { formatBytes, formatDate } from '../lib/format';
+import { formatBytes } from '../lib/format';
 import { joinArtifactPath } from '../lib/uploadPlan';
 import { text, textTemplates } from '../i18n/catalog';
 
@@ -37,6 +38,18 @@ export function ArtifactUploadDialog({
   const [singlePath, setSinglePath] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const queue = useArtifactUploadQueue({ projectId, runId, onCompleted: onSaved });
+  const resume = useUploadResume({
+    projectId,
+    runId,
+    sessions: queue.resumableSessions,
+    selectedFile: sources.length === 1 ? sources[0]!.file : null,
+    onMatched: (match) => setSinglePath(match.path),
+    enqueue: queue.enqueue,
+    discardSession: queue.discardSession,
+  });
+  const singleArtifactPath = joinArtifactPath('', singlePath);
+  const { selectedFileResume } = resume;
+  const resumeMatch = selectedFileResume.status === 'matched' ? selectedFileResume.match : null;
 
   function select(selected: UploadSource[]) {
     const accepted = multiple ? selected : selected.slice(0, 1);
@@ -54,13 +67,18 @@ export function ArtifactUploadDialog({
     queue.enqueue(
       sources.map((source) => ({
         source,
-        path: isSingle ? joinArtifactPath('', singlePath) : joinArtifactPath(destination, source.relativePath),
+        path: isSingle ? singleArtifactPath : joinArtifactPath(destination, source.relativePath),
+        ...(isSingle && resumeMatch?.path === singleArtifactPath ? { verifiedUploadId: resumeMatch.uploadId } : {}),
       })),
     );
     setSources([]);
   }
   const totalSize = sources.reduce((total, source) => total + source.file.size, 0);
-  const canStart = sources.length > 0 && (sources.length > 1 || joinArtifactPath('', singlePath) !== '');
+  // Starting while the comparison runs would miss the path it is about to fill in.
+  const canStart =
+    sources.length > 0 &&
+    selectedFileResume.status !== 'checking' &&
+    (sources.length > 1 || singleArtifactPath !== '');
   return (
     <Dialog title={text.uploadArtifact} onClose={onClose} busy={queue.isActive} wide>
       <form
@@ -115,10 +133,17 @@ export function ArtifactUploadDialog({
           </div>
         </div>
         {sources.length === 1 && (
-          <label className="field">
-            <span>{text.artifactPath}</span>
-            <input required value={singlePath} onChange={(event) => setSinglePath(event.target.value)} />
-          </label>
+          <div className="upload-path-field">
+            <label className="field">
+              <span>{text.artifactPath}</span>
+              <input required value={singlePath} onChange={(event) => setSinglePath(event.target.value)} />
+            </label>
+            <SelectedFileResumeNotice
+              resume={selectedFileResume}
+              path={singleArtifactPath}
+              onRestorePath={(path) => setSinglePath(path)}
+            />
+          </div>
         )}
         {sources.length > 1 && (
           <>
@@ -132,7 +157,12 @@ export function ArtifactUploadDialog({
             </label>
           </>
         )}
-        <ResumableSessions sessions={queue.resumableSessions} onDiscard={queue.discardSession} />
+        <ResumableUploadList
+          sessions={queue.resumableSessions}
+          onContinue={resume.continueSession}
+          onStartOver={resume.startOver}
+          onDiscard={queue.discardSession}
+        />
         <ErrorNotice message={queue.resumableSessionsError} />
         <UploadQueuePanel
           items={queue.items}
@@ -160,38 +190,32 @@ export function ArtifactUploadDialog({
   );
 }
 
-function ResumableSessions({
-  sessions,
-  onDiscard,
+/** Under the path field: whether the chosen file continues an unfinished upload. */
+function SelectedFileResumeNotice({
+  resume,
+  path,
+  onRestorePath,
 }: {
-  sessions: ArtifactUpload[];
-  onDiscard: (uploadId: string) => Promise<void>;
+  resume: SelectedFileResume;
+  path: string;
+  onRestorePath: (path: string) => void;
 }) {
-  const mutation = useMutation();
-  if (sessions.length === 0) return null;
+  if (resume.status === 'checking')
+    return <p className="muted upload-resume-notice" role="status">{text.uploadResumeChecking}</p>;
+  if (resume.status !== 'matched') return null;
+  const { match } = resume;
+  if (path === match.path)
+    return (
+      <p className="notice upload-resume-notice" data-testid="upload-resume-matched">
+        {textTemplates.uploadResumeMatched(formatBytes(match.receivedBytes), formatBytes(match.expectedSize))}
+      </p>
+    );
   return (
-    <section className="upload-resumable" aria-label={text.uploadResumableSessions}>
-      <h3>{text.uploadResumableSessions}</h3>
-      <p className="muted">{text.uploadResumableHint}</p>
-      <ul>
-        {sessions.map((session) => (
-          <li key={session.id} data-testid="upload-resumable-session">
-            <span className="mono">{session.path}</span>
-            <span className="muted">{formatBytes(session.expectedSize)}</span>
-            <span className="muted">{text.uploadExpires}: {formatDate(session.expiresAt)}</span>
-            <button
-              type="button"
-              className="button small"
-              disabled={mutation.pending}
-              onClick={() => void mutation.run(() => onDiscard(session.id))}
-            >
-              <Trash2 size={14} />
-              {text.uploadDiscardSession}
-            </button>
-          </li>
-        ))}
-      </ul>
-      <ErrorNotice message={mutation.error} />
-    </section>
+    <div className="notice upload-resume-notice" data-testid="upload-resume-path-changed">
+      <span>{text.uploadResumePathChanged}</span>
+      <button type="button" className="button small" onClick={() => onRestorePath(match.path)}>
+        {text.uploadRestoreResumePath}
+      </button>
+    </div>
   );
 }

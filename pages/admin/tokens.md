@@ -9,7 +9,7 @@ SDK、MLflow、worker、CIからAPIを使うときは、API tokenで認証しま
 
 | 種類 | 所有者 | 発行する場所 | こんなときに向いています |
 | --- | --- | --- | --- |
-| 個人のAPI token | ログインしたユーザー | ［アカウント］または［プロジェクト設定］の「自分のAPI token」、「MLflow 3から接続」 | 自分のPCやノートブックからRunを記録する |
+| 個人のAPI token | ログインしたユーザー | ［アカウント］または［プロジェクト設定］の「自分のAPI token」、「SDK・MLflow 3から接続」 | 自分のPCやノートブックからRunを記録する |
 | Service Accountのtoken | Service Account（人に紐付かない） | ［プロジェクト設定］の「Service Accounts」 | worker、自動実行、CIなど長く動くもの |
 | Job限定token | Runの作成者 | workerがJobごとに自動で受け取る | 実行コードの中からRunへ記録する。人が発行することはありません |
 
@@ -50,7 +50,7 @@ tokenで操作するときは、scopeに加えて、所有者の現在の実効R
 
 3. 表示されたtokenを［コピー］して、安全な場所に保存します。閉じると二度と表示されません。
 
-画面から発行したtokenは、そのProjectに限定されます。MLflow 3から使う場合は、［プロジェクト設定］の「MLflow 3から接続」の［このProject用のAPI tokenを発行］からも発行できます。発行後に、環境変数の設定例が表示されます。
+画面から発行したtokenは、そのProjectに限定されます。SDKやMLflow 3から使う場合は、［プロジェクト設定］（または実験の画面の［SDKで記録］）の「SDK・MLflow 3から接続」の［このProject用のAPI tokenを発行］からも発行できます。発行後に、環境変数の設定例が表示されます。
 
 ターミナルでは、tokenをコマンドの引数やファイルに書かず、入力して環境変数に入れます。
 

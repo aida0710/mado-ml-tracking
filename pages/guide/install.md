@@ -177,7 +177,7 @@ tracking.example.com {
 | MLflowの`MLFLOW_TRACKING_URI` | `https://tracking.example.com/api/mlflow/projects/<ProjectのID>` |
 | APIの稼働確認 | `https://tracking.example.com/api/health` |
 
-MLflowの接続先はProjectごとに分かれます。［プロジェクト設定］の「MLflow 3から接続」に、そのProjectのURLが表示されます。
+MLflowの接続先はProjectごとに分かれます。［プロジェクト設定］の「SDK・MLflow 3から接続」の［MLflow 3］に、そのProjectのURLが表示されます。
 
 ## workerを導入する
 
