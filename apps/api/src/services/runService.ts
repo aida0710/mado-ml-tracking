@@ -19,7 +19,6 @@ import { runColumns, runSummarySelect } from '../repositories/runListProjection.
 import { isTerminalStatus, validateRunTransition } from '../domain/runTransitions.js';
 import {
   assertProjectReference,
-  assertProjectReferences,
   findCodeVersion,
   findModelVersion,
   findRun,
@@ -34,7 +33,7 @@ import {
 import { requireProject } from './accessService.js';
 import type { RunCompletionService } from './runCompletionService.js';
 import { pinResumeCheckpoint } from './checkpointResume.js';
-import { assertDatasetVersionsNotArchived } from './registryService.js';
+import { assertInputDatasetVersionsUsable } from './datasetVersionReferences.js';
 
 /**
  * Job-owned Runs are the evidence automation and evaluation compare, so their records freeze once
@@ -121,12 +120,7 @@ export class RunService {
   ): Promise<Run> {
     const { projectId, input } = registration;
     await lockActiveExperiment(connection, { projectId, id: input.experimentId });
-    await assertProjectReferences(connection, {
-      table: 'dataset_versions',
-      projectId,
-      ids: input.inputDatasetVersionIds,
-    });
-    await assertDatasetVersionsNotArchived(connection, {
+    await assertInputDatasetVersionsUsable(connection, {
       projectId,
       ids: input.inputDatasetVersionIds,
     });

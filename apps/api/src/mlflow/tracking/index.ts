@@ -15,7 +15,6 @@ import {
   experimentReferenceSchema,
   experimentTagSchema,
   integerSchema,
-  MAX_METRIC_HISTORY_RESULTS,
   logBatchSchema,
   logInputsSchema,
   logOutputsSchema,
@@ -219,9 +218,7 @@ export function mlflowTrackingRoutes(options: {
       withRunReference(
         z.strictObject({
           metric_key: trackingKeySchema,
-          max_results: integerSchema
-            .pipe(z.number().positive().max(MAX_METRIC_HISTORY_RESULTS))
-            .optional(),
+          max_results: integerSchema.pipe(z.number().positive()).optional(),
           page_token: z.string().optional(),
         }),
       ),

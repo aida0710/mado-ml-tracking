@@ -1,9 +1,6 @@
 import type { ComputeTarget, JobPhase } from '@mmt/contracts';
 import { DomainError } from './errors.js';
 
-// Phases in which a launcher or the requester holds a site Job and no runner reports yet.
-export const SUBMISSION_PHASES: readonly JobPhase[] = ['submitting', 'submitted'];
-
 /** What a Job asks of a site beyond its runtime; ssh and local Jobs name exact GPU IDs instead. */
 export interface SiteJobOptions {
   gpuCount: number;

@@ -89,6 +89,8 @@ export const jobListItemSchema = namedContractSchema(
     taskId: idSchema.nullable(),
     taskName: z.string().nullable(),
     sweepEarlyStopped: z.boolean(),
+    createdBy: idSchema,
+    createdByName: z.string().nullable(),
   }),
 );
 export const workerPresenceSchema = namedContractSchema(

@@ -17,12 +17,13 @@ export function TrackingMark() {
 /**
  * 製品のロゴ。印と「mado ML Tracking」を並べる。mado の各製品と同じく、前の mado は通常の太さ、
  * 製品の部分は太字にする。上部バー・ドロワー・ログイン画面で同じ組み方にそろえる。
+ * isNameVisuallyHidden では印だけを見せ、名前は読み上げとリンクの名前に残す（--bp-xs 未満の上部バー）。
  */
-export function ProductLogo() {
+export function ProductLogo({ isNameVisuallyHidden = false }: { isNameVisuallyHidden?: boolean }) {
   return (
     <span className="product-logo">
       <TrackingMark />
-      <span>
+      <span className={isNameVisuallyHidden ? 'sr-only' : 'product-name'}>
         <span className="product-prefix">{text.appNamePrefix}</span>{' '}
         <strong>{text.appNameProduct}</strong>
       </span>

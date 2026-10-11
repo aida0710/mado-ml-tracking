@@ -11,7 +11,7 @@ import { loggedModelProtocol } from './protocol.js';
 import { loggedModelArtifacts } from './modelArtifactRepository.js';
 import { validateReadyModel } from './modelManifest.js';
 import { loggedModelSearch } from './loggedModelSearch.js';
-import { nextPageToken, pageOffset, searchFingerprint } from './searchSyntax.js';
+import { cutPage, requestedPage } from './searchPagination.js';
 import { keyValueMap, type CreateLoggedModel, type SearchLoggedModels } from './validation.js';
 import type { LoggedModelRecord, LoggedModelStatus } from './types.js';
 
@@ -194,25 +194,30 @@ export class LoggedModelService {
       experimentIds.push(id);
       await assertProjectReference(this.database, { table: 'experiments', projectId, id });
     }
-    const fingerprint = searchFingerprint({ projectId, ...input, page_token: undefined });
-    const offset = pageOffset(input.page_token, fingerprint);
+    const page = requestedPage({
+      query: {
+        kind: 'logged-model',
+        projectId,
+        experiment_ids: input.experiment_ids,
+        filter: input.filter,
+        datasets: input.datasets,
+        order_by: input.order_by,
+      },
+      pageToken: input.page_token,
+      maxResults: input.max_results,
+    });
     const search = loggedModelSearch({ ...input, experiment_ids: experimentIds }, projectId);
-    const limit = search.parameters.add(input.max_results + 1);
-    const start = search.parameters.add(offset);
+    const limit = search.parameters.add(page.size + 1);
+    const start = search.parameters.add(page.offset);
     const matches = await rows<LoggedModelRecord>(
       this.database,
       `SELECT l.* FROM mlflow_logged_models l JOIN experiments e ON e.id=l.experiment_id AND e.project_id=l.project_id WHERE l.project_id=$1 AND l.experiment_id=ANY($2::uuid[]) AND l.deleted_at IS NULL AND e.lifecycle_stage='active' AND ${search.filter} ORDER BY ${search.order} LIMIT ${limit} OFFSET ${start}`,
       search.parameters.values,
     );
+    const { items, continuation } = cutPage(matches, page);
     const models = [];
-    for (const model of matches.slice(0, input.max_results))
-      models.push(await this.protocol(this.database, model));
-    return {
-      models,
-      ...(matches.length > input.max_results
-        ? { next_page_token: nextPageToken(offset + input.max_results, fingerprint) }
-        : {}),
-    };
+    for (const model of items) models.push(await this.protocol(this.database, model));
+    return { models, ...continuation };
   }
 
   private async protocol(connection: Connection, model: LoggedModelRecord) {

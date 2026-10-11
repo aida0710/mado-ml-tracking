@@ -50,6 +50,18 @@ export const jobsText = {
   gpuCountError: `GPU数は0〜${MAX_JOB_GPU_COUNT}の整数で指定してください。`,
   arraySizeError: `arrayの個数は1〜${MAX_JOB_ARRAY_SIZE}の整数で指定してください。`,
   siteGpuIdsError: 'siteではGPU IDではなくGPU数を指定してください。',
+  jobCreatedBy: '作成者',
+  // Shown in place of the stop and retry buttons, so it stays short enough for the actions column.
+  jobControlOwnerOnly: '停止・再実行は作成者かProject adminだけができます',
+  jobCancelTitle: 'Jobの停止',
+  jobCancelConfirm: '停止する',
+  jobCancelEndsAtOnce: 'まだ実行を始めていないので、すぐに取り消します。',
+  jobCancelRequestsStop:
+    '実行中のプロセスへ停止を頼みます。workerが止めるまで、状態は実行中のままです。このJobから作った子Jobがあれば、それも止めます。',
+  jobRetryTitle: '新しいRunで再実行',
+  jobRetryConfirm: '再実行する',
+  jobRetryEffect:
+    '元のRunとJobはそのまま残ります。同じ設定で新しいRunとJobを作って実行し、作ったRunの画面へ移ります。',
 } as const;
 
 export const jobPhaseLabels: Record<JobPhase, string> = {
@@ -76,6 +88,8 @@ export const jobsTextTemplates = {
   jobArrayState: (stateLabel: string, count: number) => `${stateLabel} ${count}`,
   walltimeError: (maxDays: number) =>
     `制限時間は${maxDays}日以内を、HH:MM:SSの形で指定してください。`,
+  jobActionTarget: (job: { runName: string; createdByName: string; targetName: string }) =>
+    `Run「${job.runName}」　作成者: ${job.createdByName}　実行先: ${job.targetName}`,
 };
 
 export const logLevelLabels: Record<LogEntry['level'], string> = {

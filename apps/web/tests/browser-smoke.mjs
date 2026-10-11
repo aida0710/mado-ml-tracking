@@ -375,7 +375,7 @@ try {
   );
   assert.equal(api.state.jobs[0].gpuIds.length, 0, 'CPU selection must remain empty');
   await page.getByRole('button', { name: '停止を要求', exact: true }).click();
-  await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Jobの停止' }).getByRole('button', { name: '停止する', exact: true }).click();
   // The launch opens the Job's detail, so both its row and its detail mark the request.
   await page.getByRole('cell').getByText('停止要求済み', { exact: true }).waitFor();
   await page.locator('.job-detail').getByText('停止要求済み', { exact: true }).waitFor();

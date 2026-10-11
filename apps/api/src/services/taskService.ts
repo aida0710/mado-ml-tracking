@@ -22,7 +22,6 @@ import {
 } from '../domain/experimentTaskValidation.js';
 import { findTask, insertTask, updateTask } from '../repositories/experimentTaskRepository.js';
 import {
-  assertProjectReferences,
   findCodeVersion,
   findModelVersion,
   lockActiveExperiment,
@@ -35,6 +34,7 @@ import {
 } from '../repositories/runOutputRegistrationRepository.js';
 import { requireProject, requireScope } from './accessService.js';
 import { pinResumeCheckpoint } from './checkpointResume.js';
+import { assertInputDatasetVersionsUsable } from './datasetVersionReferences.js';
 import type { JobService } from './jobService.js';
 import type { RunService } from './runService.js';
 
@@ -284,8 +284,7 @@ export class TaskService {
         code,
         outputModel: input.outputModel,
       });
-    await assertProjectReferences(connection, {
-      table: 'dataset_versions',
+    await assertInputDatasetVersionsUsable(connection, {
       projectId,
       ids: input.inputDatasetVersionIds,
     });

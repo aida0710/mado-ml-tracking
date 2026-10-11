@@ -44,8 +44,8 @@ A global administrator signed in from a browser can operate any Project as an Ad
 | Role | Can do |
 | --- | --- |
 | Viewer | View experiments, Runs, models, datasets, and Artifacts |
-| Editor | Everything Viewer can, plus recording experiments, registering models and datasets, running Jobs, and changing aliases (a protected alias only with a passing promotion check) |
-| Admin | Everything Editor can, plus Project settings (description, visibility, storage), members and group grants, Service Accounts, the Project token list, notification rules, transferring automation owners, deleting Artifacts, using plugins, the Project audit log, and archiving the Project |
+| Editor | Everything Viewer can, plus recording experiments, registering models and datasets (including deleting dataset versions nothing uses), running Jobs and stopping or retrying the Jobs they started, and changing aliases (a protected alias only with a passing promotion check) |
+| Admin | Everything Editor can, plus stopping or retrying Jobs started by others, Project settings (description, visibility, storage), members and group grants, Service Accounts, the Project token list, notification rules, transferring automation owners, deleting Artifacts, using plugins, the Project audit log, and archiving the Project |
 
 Any user who is not disabled can create a Project: click **＋ プロジェクトを作成** (Create project) at the bottom of the Project switcher. The creator becomes an Admin of the new Project. See [Create and manage Projects](/en/admin/projects) for the steps.
 
@@ -95,8 +95,8 @@ The effective role is the same on the screen, in the native API, in the MLflow-c
 ### Add a member
 
 1. Click **メンバーを追加** (Add member) under **Members** in **プロジェクト設定**.
-2. Type the start of a name, email, or username and pick the user. SSO users appear only after their first login.
-3. Choose a role and save.
+2. Type the start of a name, email, or username and pick the user. SSO users appear only after their first login. Users who already have a direct grant are listed as already added (for example "既にEditorです", already an Editor) and cannot be picked; change their role with **変更** (Edit) in the list.
+3. Choose a role and save. Editor is selected at first, as for the members chosen while creating a Project.
 
 The member is added when the user appears in the list.
 
@@ -106,9 +106,9 @@ Click **外す** (Remove) on the row. Roles granted through groups remain. If on
 
 ## A Project always needs an Admin
 
-A Project needs at least one direct Admin grant or Admin group grant. Removing or lowering the last one returns 409, and the screen says the change would leave the Project without an Admin. Grant Admin to another member or group first.
+A Project needs at least one direct Admin grant, or an Admin grant to a group that someone has signed in with. On the last one, **変更** (Edit) and **外す** (Remove) are disabled and the reason is shown next to them; removing or lowering it through the API returns 409. Grant Admin to another member, or to a group someone has signed in with, first.
 
-An Admin group grant counts even if nobody in that group has signed in yet. Service Accounts with the Admin role do not count.
+An Admin grant to a group nobody has signed in with yet does not count: with a mistyped group name, removing the last person's Admin grant would leave nobody who can manage the Project. Such groups are marked "まだ誰もログインしていません" (nobody has signed in yet) in the **Authentik group** list. Service Accounts with the Admin role do not count either.
 
 ## Permissions of API tokens
 

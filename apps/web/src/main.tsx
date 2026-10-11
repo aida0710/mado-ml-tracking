@@ -54,6 +54,7 @@ import './styles/datasets.css';
 import './styles/responsiveManagement.css';
 import './styles/siteComputers.css';
 import './styles/computerSetup.css';
+import './styles/tabs.css';
 
 // The login screen and everything else start in the stored theme, or the operating system's.
 document.documentElement.dataset.theme = initialTheme();

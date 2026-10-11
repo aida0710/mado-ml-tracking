@@ -1002,6 +1002,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
       ...routeError(409, 'already_exists'),
       ...routeError(
         422,
+        'dataset_digest_invalid',
         'dataset_digest_mismatch',
         'dataset_artifact_not_found',
         'dataset_content_empty',
@@ -1009,6 +1010,15 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
         'dataset_source_run_mismatch',
       ),
     ],
+  },
+  {
+    method: 'delete',
+    path: '/api/projects/:p/datasets/:id/versions/:v',
+    tag: 'registry',
+    summary: 'どこからも使われていないDatasetVersionを削除',
+    access: REGISTRY_WRITE,
+    responses: { 204: null },
+    errors: routeError(409, 'dataset_version_in_use'),
   },
   {
     method: 'get',
@@ -1069,6 +1079,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
       'upstream_rule_disabled',
       'automation_chain_too_deep',
       'automation_chain_cycle',
+      'dataset_archived',
     ),
   },
   {
@@ -1419,6 +1430,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
       'incompatible_model_family',
       'model_family_mismatch',
       'reserved_tag',
+      'dataset_archived',
     ),
   },
   {
@@ -1443,6 +1455,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
       'incompatible_model_family',
       'model_family_mismatch',
       'reserved_tag',
+      'dataset_archived',
     ),
   },
   {
@@ -1693,20 +1706,22 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     method: 'post',
     path: '/api/projects/:p/jobs/:j/cancel',
     tag: 'execution',
-    summary: 'Jobを取り消す',
+    summary: 'Jobを取り消す（作成者かProject admin）',
     access: JOBS_WRITE,
     responses: { 200: contract.jobSchema },
+    errors: routeError(403, 'job_owner_required'),
   },
   {
     method: 'post',
     path: '/api/projects/:p/jobs/:j/retry',
     tag: 'execution',
-    summary: 'Jobを再実行（checkpointから再開も可）',
+    summary: 'Jobを再実行（checkpointから再開も可。作成者かProject admin）',
     access: JOBS_WRITE,
     body: jobRetryRequestSchema,
     bodyOptional: true,
     responses: { 201: contract.taskExecutionSchema },
     errors: [
+      ...routeError(403, 'job_owner_required'),
       ...routeError(409, 'job_already_retried'),
       ...routeError(
         422,
@@ -2331,6 +2346,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
         'site_target_required',
         'dataset_partition_invalid',
         'reserved_tag',
+        'dataset_archived',
       ),
     ],
   },

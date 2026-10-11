@@ -54,7 +54,7 @@ with mlflow.start_run(run_name="learning-rate-2e-5"):
 
 NaNは保存・読み出し時に保持します。数値検索では`!=`以外に一致させず、昇順・降順とも数値、NaN、未記録の順に並べます。Logged Modelでもこの規則を使い、MLflowのSQLストアがLogged ModelのNaNを0へ変換する動作は再現しません。
 
-SDKが表示するRunリンクはMLflow標準UIの形式です。画面での確認には本アプリのRunsを使うか、`/projects/PROJECT_ID/runs/RUN_ID`を開いてください。
+Runの終わりにSDKが表示する`View run`・`View experiment`のリンクは、MLflow標準UIの形式（`<tracking URI>/#/experiments/<Experiment>/runs/<Run>`、`<tracking URI>/#/experiments/<Experiment>`）です。ブラウザは`#`より後をサーバーへ送らないので、APIは`GET /api/mlflow/projects/<p>/`（末尾の`/`が無い形も）を302でWebの`/projects/<p>/mlflow-ui`へ移し、ブラウザが`#`以降を引き継ぎます（`apps/api/src/mlflow/uiLinkRoutes.ts`）。Webのこの経路が`#/experiments/<e>/runs/<r>`をRunの画面（`/projects/<p>/runs/<r>`）、`#/experiments/<e>`をその実験を選んだExperimentsの画面、`#/models/...`をModelsの一覧へ移し、ほかは Experiments を開きます（`apps/web/src/layout/mlflowUiPaths.ts`）。転送先は相対パスなので、リンクはtracking URIがWebのoriginにあるとき（接続カードが表示するURL）に画面へ届きます。APIのportを直接tracking URIにした場合は、APIのportで`/projects/...`を開くことになり画面は出ません。この転送はProjectの情報を返さないので認証を求めず、ログインと権限は移った先の画面で確かめます。
 
 Runの説明文はMLflowと同じ`mlflow.note.content` tagに保存します。MLflowの`set_tag("mlflow.note.content", ...)`・標準UIのDescriptionと、nativeの`PUT /api/projects/:p/runs/:r/note`は同じ値を読み書きし、別の保存場所はありません。上限はMLflowのtag値と同じ8000文字で、nativeで空文字を保存するとtagを削除します。JobのRunが終わった後は、MLflowのset-tag・delete-tagが`INVALID_STATE`で拒否されます。nativeの説明文APIは説明文を実験結果として扱わないため、終了後もeditorが編集できます。終了後に説明文を直す場合はnative APIを使ってください。Job限定token（`mmtj_`）ではnativeの説明文APIは403 `job_token_forbidden`です。WebではRun詳細の［詳細］タブの「説明」で同じ値を編集できます（`RunDescriptionEditor`）。
 
@@ -191,8 +191,26 @@ MLflow 3.0.0のSDKは、keyの`/`を`#`に置き換えたままURLへ載せる�
 | 対象 | 使える条件 |
 | --- | --- |
 | `search_runs` | 属性・`params`・`tags`・`metrics`・`datasets`の比較。`IN`/`NOT IN`は`run_id`と`datasets`の属性。`IS NULL`/`IS NOT NULL`は`params`と`tags` |
-| `search_model_versions` | `name`・`run_id`・`model_id`・`source_path`・`version`・時刻・`tags`の比較。`IN`/`NOT IN`は`name`・`run_id`・`model_id`・`source_path` |
-| `search_registered_models` | `name`・時刻・`tags`の比較。`IN`/`NOT IN`は使えません |
+| `search_model_versions` | `name`・`run_id`・`model_id`・`source_path`・`version_number`・時刻・`tags`の比較。`IN`/`NOT IN`は`name`・`run_id`・`model_id`・`source_path`。並び替えは`name`・`version_number`・`creation_timestamp`・`last_updated_timestamp` |
+| `search_registered_models` | `name`・時刻・`tags`の比較。`IN`/`NOT IN`は使えません。並び替えは`name`・`timestamp`（最後の更新）・`last_updated_timestamp`・`creation_timestamp` |
+
+接頭辞はMLflowの`SearchUtils`と同じに受け付けます。`search_runs`・`search_experiments`は`metric`/`metrics`、`param`/`params`/`parameter`/`parameters`、`tag`/`tags`、`attribute`/`attributes`/`attr`/`run`、`dataset`/`datasets`。登録モデル・バージョンの検索は`tag.`/`tags.`と`attribute.`（以前からの`attributes.`も可）で、`metric.`・`param.`はMLflowと同じくエラーです。Logged Modelの検索はMLflowと同じく複数形（`metrics.`・`params.`・`tags.`・`attributes.`）だけです。
+
+バージョンの番号はMLflowと同じ`version_number`で、`version_number = '3'`のような引用符付きの整数も比べられます。以前からの`version`も同じ意味で使えます。
+
+MLflow 3のSDKは`search_registered_models`の条件に必ず`` tag.`mlflow.prompt.is_prompt` != 'true' ``を付け足します（Prompt Registryの項目を除くため）。MLflowと同じく、このtagが無いモデルは`'false'`として比べるので、普通のモデルはすべて一致します。このアプリにPrompt Registryはありません。
+
+`max_results`の扱いは次のとおりです。MLflowのサーバーが断る値はこのAPIも`INVALID_PARAMETER_VALUE`で断り、MLflowが受け付ける値は1回に返す件数を超えていても断らずに、その件数で切って`next_page_token`を付けます。続きのページの印は`max_results`を含まないので、次のページで件数を変えても使えます（`mlflow.search_model_versions(max_results=N)`は残りの件数で次を頼みます）。
+
+| 検索 | 1回に返す最大件数 | `max_results`の上限（MLflow 3.17と同じ） | SDKの既定値 |
+| --- | --- | --- | --- |
+| `search_runs`・`search_experiments` | 50000 | 50000 | 1000（`mlflow.search_runs`は10000ずつたどる） |
+| `search_registered_models` | 1000 | 1000 | 100 |
+| `search_model_versions` | 1000 | 200000 | 10000 |
+| `search_logged_models` | 1000 | なし | 100（省略時はサーバーの既定） |
+| `get_metric_history` | 50000 | なし | 25000ずつたどる（省略時は全件を1回で返す） |
+
+`MlflowClient().search_model_versions()`は1ページだけを返すので、1000件を超えるバージョンを持つモデルでは戻り値の`token`で続きを取ります（MLflowのサーバーは10000件まで1回で返します）。`mlflow.search_model_versions()`・`mlflow.search_registered_models()`・`mlflow.search_logged_models()`は続きを自動でたどります。
 
 `IN`/`NOT IN`の値は`run_id IN ('a', 'b')`のように括弧で囲み、引用符付きの文字列をカンマで区切ります。括弧のない値や空の一覧はエラーになります。`NOT IN`はSQLの規則に従い、値が無いバージョン（生成元Runの無いバージョンの`run_id`など）には一致しません。
 
@@ -256,12 +274,14 @@ JobのRunに追加したSDKのparamsは記録用の`recordedParameters`へ保存
 | `log_image(key=, step=)`・`log_table`（画像列）のmedia索引 | 対応 | `scripts/mlflow3_checks/media_steps.py`。3 stepの画像がstep順に3件・thumbnail付きで並び、表の画像セルがArtifactに解決される（3.0.0はkeyに`/`を含めない） |
 | 自作pyfunc・複数ファイルのモデル | 対応 | alias経由の読み込みと予測値の一致、`download_artifacts("models:/名前@alias")`で全ファイルのhashが一致 |
 | `mlflow.search_runs`のpandas出力 | 対応 | `run_id`・`params.*`・`metrics.*`・`tags.*`・`status`の列 |
+| 登録モデル・バージョンの検索 | 対応 | 2026-10-11に3.0.0（mlflow-skinny）と3.17.0で確認。SDKがprompt除外の条件を付ける`search_registered_models()`、`tag.`・`tags.`・`attribute.`、`timestamp`の並び替え。1001件のバージョンで`MlflowClient.search_model_versions()`が1000件と続きのページの印、`mlflow.search_model_versions()`が1001件を返す。`version_number`の条件（`'5'`も）と並び替え。MLflowが断る`max_results`（登録モデル1001、バージョン200001、Run・Experiment 50001）は同じく`INVALID_PARAMETER_VALUE` |
+| `View run`・`View experiment`のリンク | 対応 | 2026-10-11に3.0.0と3.17.0が表示したリンクをブラウザで開き、Runの画面・Experimentsの画面へ移ること、未ログインならログインの後にRunの画面へ移ることを確認 |
 | webhooks（`create_webhook`など） | 未対応 | 3.17.0は404 `ENDPOINT_NOT_FOUND`の`MlflowException`になる。3.0.0のSDKにはAPIがない |
 | Tracing（`search_traces`、`@mlflow.trace`） | 未対応 | `search_traces`は404 `ENDPOINT_NOT_FOUND`の`MlflowException`になる。`@mlflow.trace`を付けた関数は結果を返し、Runも正常に終わる。traceの送信失敗はSDKが警告のログを出すだけ |
 
 `mlflow.models.evaluate`（回帰）とsklearn autologは、どちらのバージョンでもTracingのAPI（`/api/2.0/mlflow/traces`・`/api/3.0/mlflow/traces`）を呼びませんでした。Tracingを使うコードを動かした場合も、上の表のとおり学習・評価は止まりません。
 
-MLflow UIが図の間引きに使う`ajax-api/2.0/mlflow/metrics/get-history-bulk-interval`は実装していません。公式SDKはこのAPIを呼びません。同じ目的にはnativeの`POST /api/projects/:p/metrics/series`（等幅bucketの平均・min・max、x軸 step / relative_time / wall_time / metric）を使います。`get-history`の頁送りは変えていません。
+MLflow UIが図の間引きに使う`ajax-api/2.0/mlflow/metrics/get-history-bulk-interval`は実装していません。公式SDKはこのAPIを呼びません。同じ目的にはnativeの`POST /api/projects/:p/metrics/series`（等幅bucketの平均・min・max、x軸 step / relative_time / wall_time / metric）を使います。`get-history`は`max_results`を省くと全件を1回で返し、50000を超える`max_results`は断らずに50000点で切って`next_page_token`を付けます（MLflowのサーバーには上限がなく、SDKは25000点ずつたどります）。
 
 ## 検証する
 

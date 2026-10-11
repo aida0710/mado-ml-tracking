@@ -1,8 +1,9 @@
 /**
- * The width breakpoints defined as --bp-sm / --bp-md / --bp-lg in styles/breakpoints.css, for code
- * that has to branch on width. Keep both in step; breakpoints.test.ts compares them.
+ * The width breakpoints defined as --bp-xs / --bp-sm / --bp-md / --bp-lg in styles/breakpoints.css,
+ * for code that has to branch on width. Keep both in step; breakpoints.test.ts compares them.
  */
 export const BREAKPOINT_PX = {
+  xs: 390,
   sm: 640,
   md: 900,
   lg: 1200,

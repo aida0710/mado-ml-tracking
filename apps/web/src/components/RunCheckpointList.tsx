@@ -7,27 +7,30 @@ import { ResumeDialog } from '../dialogs/ResumeDialog';
 import { useRunCheckpoints } from '../hooks/useRunCheckpoints';
 import { useRunJob } from '../hooks/useRunJob';
 import {
-  canResumeFromCheckpoint,
   getCheckpointArtifactFileName,
+  getCheckpointResumeOffer,
   isResumableStatus,
 } from '../lib/checkpointResume';
 import { formatBytes, formatDate } from '../lib/format';
 import { checkpointSourceLabels } from '../i18n/checkpoints';
 import { text, textTemplates } from '../i18n/catalog';
 
-/** A Run's checkpoints with their files, and resuming a stopped Run from one of them. */
-export function RunCheckpointList({ run, canEdit }: { run: Run; canEdit: boolean }) {
+/**
+ * A Run's checkpoints with their files, and resuming a stopped Run from one of them.
+ * `canRetryJob`: whether the signed-in user may retry the Run's Job (lib/permissions canControlJob).
+ */
+export function RunCheckpointList({ run, canRetryJob }: { run: Run; canRetryJob: boolean }) {
   const [includeHidden, setIncludeHidden] = useState(false);
   const [resumeTarget, setResumeTarget] = useState<RunCheckpoint | null>(null);
   const checkpoints = useRunCheckpoints({ projectId: run.projectId, runId: run.id, includeHidden });
-  // Only an editor looking at a stopped Run can resume, so only then is the Run's Job looked up.
+  // Only someone who may retry, looking at a stopped Run, can resume; only then is the Job looked up.
   const runJob = useRunJob({
     projectId: run.projectId,
     runId: run.id,
-    enabled: canEdit && isResumableStatus(run.status),
+    enabled: canRetryJob && isResumableStatus(run.status),
   });
   const job = runJob.value ?? undefined;
-  const canResume = canResumeFromCheckpoint({ run, job, canEdit });
+  const resumeOffer = getCheckpointResumeOffer({ run, job, canRetryJob });
   return (
     <section className="checkpoint-list">
       <label className="checkpoint-hidden-toggle">
@@ -38,6 +41,7 @@ export function RunCheckpointList({ run, canEdit }: { run: Run; canEdit: boolean
         />
         {text.checkpointShowHidden}
       </label>
+      {resumeOffer === 'creatorOnly' && <p className="muted">{text.checkpointResumeCreatorOnly}</p>}
       {runJob.value === null && <p className="muted">{text.checkpointResumeNoJob}</p>}
       <Resource query={checkpoints}>
         {(page) => (
@@ -102,7 +106,7 @@ export function RunCheckpointList({ run, canEdit }: { run: Run; canEdit: boolean
                   />
                 ),
               },
-              ...(canResume
+              ...(resumeOffer === 'resume'
                 ? [
                     {
                       key: 'resume',

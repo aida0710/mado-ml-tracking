@@ -80,13 +80,14 @@ describe.skipIf(!testDatabaseUrl)('Projectの公開範囲（独立PostgreSQL）'
 
   it('publicのProjectは有効な人の利用者全員がメンバーでなくてもeditorとして使え、管理はできない', async () => {
     const project = await createProject(owner.cookie, { name: 'Shared' });
-    expect(project).toMatchObject({ visibility: 'public', role: 'admin' });
+    expect(project).toMatchObject({ visibility: 'public', role: 'admin', isMember: true });
 
     expect(await visibleProjects(someone.cookie)).toEqual([
       expect.objectContaining({
         id: project.id,
         visibility: 'public',
         role: 'editor',
+        isMember: false,
       }),
     ]);
     expect((await createExperiment(project.id, someone.cookie, 'by someone')).status).toBe(201);
@@ -129,7 +130,7 @@ describe.skipIf(!testDatabaseUrl)('Projectの公開範囲（独立PostgreSQL）'
 
     expect((await grant(project.id, { userId: someone.userId, role: 'viewer' })).status).toBe(200);
     expect(await visibleProjects(someone.cookie)).toEqual([
-      expect.objectContaining({ id: project.id, role: 'viewer' }),
+      expect.objectContaining({ id: project.id, role: 'viewer', isMember: true }),
     ]);
     expect((await createExperiment(project.id, someone.cookie, 'still refused')).status).toBe(403);
   });
@@ -228,8 +229,9 @@ describe.skipIf(!testDatabaseUrl)('Projectの公開範囲（独立PostgreSQL）'
   it('全体管理者のsessionはpublicでeditorになるProjectでもadminとして扱う', async () => {
     const administrator = await login(harness);
     const project = await createProject(owner.cookie, { name: 'Administered' });
+    // isMember tells the Web not to enter it on its own: the administrator is not a member.
     expect(await visibleProjects(administrator.cookie)).toEqual([
-      expect.objectContaining({ id: project.id, role: 'admin' }),
+      expect.objectContaining({ id: project.id, role: 'admin', isMember: false }),
     ]);
     const patched = await request(harness.app, `/api/projects/${project.id}`, {
       method: 'PATCH',
@@ -237,6 +239,7 @@ describe.skipIf(!testDatabaseUrl)('Projectの公開範囲（独立PostgreSQL）'
       body: { description: 'by the administrator' },
     });
     expect(patched.status).toBe(200);
+    expect(await patched.json()).toMatchObject({ role: 'admin', isMember: false });
   });
 
   it('作成時に指定したメンバーを同じtransactionで追加し、それぞれproject.member.setとして監査に残す', async () => {

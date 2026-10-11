@@ -11,10 +11,13 @@ import { text } from '../i18n/catalog';
  */
 export function UserPicker({
   label,
+  unavailableUsers,
   selectedUser,
   onSelect,
 }: {
   label: string;
+  /** Users listed in the search but not pickable, with the reason (UserSearchField). */
+  unavailableUsers?: ReadonlyMap<string, string>;
   selectedUser: UserSearchResult | null;
   onSelect: (user: UserSearchResult | null) => void;
 }) {
@@ -35,5 +38,13 @@ export function UserPicker({
         </div>
       </div>
     );
-  return <UserSearchField label={label} isRequired autoFocus onPick={onSelect} />;
+  return (
+    <UserSearchField
+      label={label}
+      isRequired
+      autoFocus
+      unavailableUsers={unavailableUsers}
+      onPick={onSelect}
+    />
+  );
 }

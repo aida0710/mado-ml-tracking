@@ -35,6 +35,7 @@ export const projectSchema = namedContractSchema(
     artifactBackend: z.string(),
     visibility: projectVisibilitySchema,
     role: projectRoleSchema,
+    isMember: z.boolean(),
     createdAt: timestampSchema,
   }),
 );

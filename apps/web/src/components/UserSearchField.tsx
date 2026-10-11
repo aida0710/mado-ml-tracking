@@ -6,23 +6,30 @@ import { ErrorNotice } from './Feedback';
 import { UserSummary } from './UserSummary';
 import { text } from '../i18n/catalog';
 
+const NO_UNAVAILABLE_USERS: ReadonlyMap<string, string> = new Map();
+
 /**
  * Searches users by the start of their name, email or username and reports the one clicked.
- * Users in `excludedUserIds` (already chosen, or the signed-in user) are not offered. The field
- * empties after a pick and takes the focus back, so the next user can be searched. Enter never
- * submits the form around the field; it picks the user when the search found exactly one.
+ * Users in `excludedUserIds` (already chosen, or the signed-in user) are not offered. Users in
+ * `unavailableUsers` (such as existing members) are listed but cannot be picked, with the reason
+ * next to them, so nobody wonders why the person they look for is missing. The field empties after
+ * a pick and takes the focus back, so the next user can be searched. Enter never submits the form
+ * around the field; it picks the user when the search found exactly one that can be picked.
  * `autoFocus` focuses the field when it appears in place of a chosen user.
  */
 export function UserSearchField({
   label,
   isRequired = false,
   excludedUserIds = [],
+  unavailableUsers = NO_UNAVAILABLE_USERS,
   autoFocus = false,
   onPick,
 }: {
   label: string;
   isRequired?: boolean;
   excludedUserIds?: readonly string[];
+  /** Reason each listed user cannot be picked, by user id. */
+  unavailableUsers?: ReadonlyMap<string, string>;
   autoFocus?: boolean;
   onPick: (user: UserSearchResult) => void;
 }) {
@@ -43,7 +50,8 @@ export function UserSearchField({
     // The field sits inside dialog forms (creating a Project, adding a member), where Enter would
     // submit the form before a user is picked.
     event.preventDefault();
-    const onlyMatch = users.length === 1 ? users[0] : undefined;
+    const pickable = users.filter((user) => !unavailableUsers.has(user.id));
+    const onlyMatch = pickable.length === 1 ? pickable[0] : undefined;
     if (onlyMatch) pick(onlyMatch);
   };
   return (
@@ -78,13 +86,26 @@ export function UserSearchField({
         ) : (
           users.length > 0 && (
             <ul className="user-picker-results">
-              {users.map((user) => (
-                <li key={user.id}>
-                  <button type="button" onClick={() => pick(user)}>
-                    <UserSummary user={user} />
-                  </button>
-                </li>
-              ))}
+              {users.map((user) => {
+                const unavailableReason = unavailableUsers.get(user.id);
+                return (
+                  <li key={user.id}>
+                    <button
+                      type="button"
+                      disabled={unavailableReason !== undefined}
+                      aria-describedby={unavailableReason ? `${resultsId}-${user.id}` : undefined}
+                      onClick={() => pick(user)}
+                    >
+                      <UserSummary user={user} />
+                      {unavailableReason && (
+                        <small id={`${resultsId}-${user.id}`} className="muted">
+                          {unavailableReason}
+                        </small>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )
         )}

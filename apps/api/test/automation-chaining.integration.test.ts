@@ -21,6 +21,7 @@ import {
   containerFixture,
   type ContainerFixture,
 } from './containerFixtures.js';
+import { referenceDigest } from './fixtures.js';
 
 describe.skipIf(!testDatabaseUrl)('自動実行の多段連鎖と既存バージョンへの手動適用（独立PostgreSQL）', () => {
   let harness: Harness;
@@ -65,7 +66,7 @@ describe.skipIf(!testDatabaseUrl)('自動実行の多段連鎖と既存バージ
         cookie: fixture.editor.cookie,
         body: {
           uri: `s3://datasets/${version.version}`,
-          digest: `sha256:${version.version}`,
+          digest: referenceDigest(version.version),
           ...version,
         },
       }),
@@ -337,7 +338,7 @@ describe.skipIf(!testDatabaseUrl)('自動実行の多段連鎖と既存バージ
     const retried = await entity<{ run: Run; job: Job }>(
       await request(harness.app, `${fixture.basePath}/jobs/${original!.jobId}/retry`, {
         method: 'POST',
-        cookie: fixture.editor.cookie,
+        cookie: fixture.administrator.cookie,
       }),
     );
     const output = await runJob(fixture, {
@@ -374,7 +375,7 @@ describe.skipIf(!testDatabaseUrl)('自動実行の多段連鎖と既存バージ
     const retried = await entity<{ run: Run; job: Job }>(
       await request(harness.app, `${fixture.basePath}/jobs/${chained!.jobId}/retry`, {
         method: 'POST',
-        cookie: fixture.editor.cookie,
+        cookie: fixture.administrator.cookie,
       }),
     );
 

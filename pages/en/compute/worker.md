@@ -263,6 +263,6 @@ A container without the SDK writes outputs to `/mmt/outputs` and finally writes 
 
 - If SSH between the worker and the target drops, the code keeps running on the target. The worker reconnects to the same Job and sends the rest of the log. The same Job is never started twice.
 - A restarted worker takes over running Jobs from the records in its state directory. Do not delete the state directory.
-- Jobs are stopped only with **停止を要求** (Request stop) in Jobs. The worker sends SIGTERM to the running processes, SIGKILL after 10 seconds, and ends the Job as canceled.
+- Jobs are stopped only with **停止を要求** (Request stop) in Jobs. The confirmation names the Run, the Job's creator, and where it runs, and says what will happen; check it and click **停止する** (Stop). Only the Job's creator (the person who created its Run) and Project Admins can stop it (see the 作成者 (Creator) column; for other people's Jobs, the actions column says why instead of showing buttons). The worker sends SIGTERM to the running processes, SIGKILL after 10 seconds, and ends the Job as canceled.
 - When a Job's heartbeat stops for 60 seconds, Jobs shows **応答なし** (Not responding). The Job's state and GPU reservation are not changed; check the worker machine before stopping or retrying by hand.
 - When a worker does not respond for 120 seconds, **Workers** in Compute shows it as offline. To be notified, select `worker.offline` in a Project notification rule ([Notifications](/en/admin/notifications)).

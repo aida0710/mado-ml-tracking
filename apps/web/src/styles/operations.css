@@ -79,3 +79,15 @@
 .plugin-outbox {
   margin: 16px 0;
 }
+
+/* On a phone the list hangs from the bell's right edge with too little room on its left for 320px:
+   it spans the screen inside a 16px margin instead, just below the header. */
+@media (width < 640px) {
+  .operations-alert-popover {
+    position: fixed;
+    top: calc(var(--topbar-height) + 8px);
+    left: 16px;
+    right: 16px;
+    width: auto;
+  }
+}

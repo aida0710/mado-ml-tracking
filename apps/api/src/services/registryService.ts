@@ -55,35 +55,7 @@ import {
 } from '../repositories/modelAliasRepository.js';
 import type { ModelAliasEventQuery } from '../domain/modelAliasValidation.js';
 import { manualAliasGuard } from './aliasProtectionService.js';
-
-/**
- * Refuses archived Datasets as inputs of a new Run. Existing Runs and Jobs keep their references;
- * only creation calls this. FOR SHARE makes a concurrent archive wait for the Run's transaction.
- */
-export async function assertDatasetVersionsNotArchived(
-  connection: Connection,
-  reference: { projectId: string; ids: string[] },
-): Promise<void> {
-  if (!reference.ids.length) return;
-  // Lock every input Dataset, not only archived ones, so an archive cannot slip in before commit.
-  const datasets = await rows<{ name: string; archivedAt: string | null }>(
-    connection,
-    `SELECT d.name,d.archived_at FROM datasets d
-    WHERE d.project_id=$1
-      AND d.id IN (SELECT dataset_id FROM dataset_versions WHERE project_id=$1 AND id=ANY($2::uuid[]))
-    ORDER BY d.id FOR SHARE OF d`,
-    [reference.projectId, reference.ids],
-  );
-  const archivedNames = datasets
-    .filter((dataset) => dataset.archivedAt)
-    .map((dataset) => dataset.name);
-  if (archivedNames.length)
-    throw new DomainError(
-      422,
-      `archive済みDatasetのバージョンは新しいRunの入力に使えません: ${archivedNames.join(', ')}`,
-      'dataset_archived',
-    );
-}
+import { assertReferenceDigest } from '../domain/datasetReferenceDigest.js';
 
 // Browser sessions are the Web UI; API tokens are scripts and the SDK's native client.
 function nativeAliasSource(principal: Principal): ModelAliasEventSource {
@@ -426,8 +398,8 @@ export class RegistryService {
   }
 
   /**
-   * Archiving keeps the first archive time when repeated; versions are never deleted. The row
-   * lock waits for Runs being created with this Dataset (see assertDatasetVersionsNotArchived).
+   * Archiving keeps the first archive time when repeated and deletes no version. The row lock
+   * waits for Runs being created with this Dataset (see assertInputDatasetVersionsUsable).
    */
   async updateDataset(
     principal: Principal,
@@ -517,15 +489,18 @@ export class RegistryService {
         parentDatasetVersionIds: input.parentDatasetVersionIds,
         actor: { type: 'callerAuthorized' as const },
       };
-      if (!input.content)
+      if (!input.content) {
+        // The request schema requires uri and digest when content is absent. An external
+        // reference keeps the digest its source system gives (docs/plugins.md).
+        if (!input.externalRef) assertReferenceDigest(input.digest!);
         return registerDatasetVersion(connection, {
           ...common,
-          // The request schema requires uri and digest when content is absent.
           uri: input.uri!,
           digest: input.digest!,
           sourceRunId: input.sourceRunId,
           externalRef: input.externalRef,
         });
+      }
       const resolved = await resolveDatasetContent(connection, {
         projectId,
         content: input.content,

@@ -11,7 +11,7 @@ import type {
   Run,
 } from '@mmt/contracts';
 import { datasetManifestDigest } from '../src/domain/datasetManifestDigest.js';
-import { projectFixture } from './fixtures.js';
+import { projectFixture, referenceDigest } from './fixtures.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 import { trackingClient } from './mlflow-tracking-fixtures.js';
 
@@ -212,6 +212,33 @@ describe.skipIf(!testDatabaseUrl)('Artifactを本体とするDatasetVersion（�
     expect(matched.digest).toBe(expected);
   });
 
+  it('使われていないArtifactを本体とするバージョンを削除すると、ファイル一覧も消えArtifactは残る', async () => {
+    const clip = await uploadArtifact({ path: 'upload/a.wav', body: 'RIFF-a' });
+    const version = await entity<DatasetVersion>(
+      await createVersion({
+        version: 'v1',
+        content: { kind: 'artifacts', files: [{ path: 'a.wav', artifactId: clip.id }] },
+      }),
+    );
+    const deleted = await request(harness.app, `${versionsPath()}/${version.id}`, {
+      method: 'DELETE',
+      cookie: fixture.editor.cookie,
+    });
+    expect(deleted.status).toBe(204);
+    const files = await harness.database.query(
+      'SELECT count(*)::int AS count FROM dataset_version_files WHERE dataset_version_id=$1',
+      [version.id],
+    );
+    expect(files.rows[0].count).toBe(0);
+    expect(
+      (
+        await request(harness.app, `${fixture.basePath}/artifacts/${clip.id}`, {
+          cookie: fixture.viewer.cookie,
+        })
+      ).status,
+    ).toBe(200);
+  });
+
   it('contentとuriは同時に指定できず、重複したpathや安全でないpathは422になる', async () => {
     const artifact = await uploadArtifact({ path: 'a.txt', body: 'a' });
     for (const body of [
@@ -299,17 +326,19 @@ describe.skipIf(!testDatabaseUrl)('Artifactを本体とするDatasetVersion（�
 
   it('uri・digestで作るバージョンとMLflow log-inputsのバージョンは従来どおりreferenceで、ファイルを持たない', async () => {
     const reference = await entity<DatasetVersion>(
-      await createVersion({ version: 'ref', uri: 's3://bucket/speech', digest: 'abc' }),
+      await createVersion({ version: 'ref', uri: 's3://bucket/speech', digest: referenceDigest('ref') }),
     );
     expect(reference).toMatchObject({
       uri: 's3://bucket/speech',
-      digest: 'abc',
+      digest: referenceDigest('ref'),
       contentKind: 'reference',
       fileCount: null,
       totalSize: null,
     });
     expect((await readFiles(reference)).items).toEqual([]);
-    expect((await createVersion({ version: 'missing-uri', digest: 'abc' })).status).toBe(422);
+    expect(
+      (await createVersion({ version: 'missing-uri', digest: referenceDigest('missing') })).status,
+    ).toBe(422);
     const tracking = trackingClient(harness.app, fixture);
     const run = await tracking.createRun();
     await entity(

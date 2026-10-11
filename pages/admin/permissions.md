@@ -44,8 +44,8 @@ SSOのユーザーが全体管理者かどうかは、Authentikのgroupで決ま
 | Role | できること |
 | --- | --- |
 | Viewer | 実験、Run、モデル、データセット、Artifactを見る |
-| Editor | Viewerに加えて、実験の記録、モデル・データセットの登録、Jobの実行、aliasの変更（保護aliasは、合格した昇格判定がある場合だけ） |
-| Admin | Editorに加えて、Projectの設定（説明、公開範囲、保存先）、メンバーとgroupへの付与、Service Account、Projectのtoken一覧、通知ルール、自動実行の所有者の移管、Artifactの削除、Pluginの利用、Projectの監査ログ、Projectのアーカイブ |
+| Editor | Viewerに加えて、実験の記録、モデル・データセットの登録（使われていないデータセットのバージョンの削除を含む）、Jobの実行と自分が起動したJobの停止・再実行、aliasの変更（保護aliasは、合格した昇格判定がある場合だけ） |
+| Admin | Editorに加えて、ほかの人が起動したJobの停止・再実行、Projectの設定（説明、公開範囲、保存先）、メンバーとgroupへの付与、Service Account、Projectのtoken一覧、通知ルール、自動実行の所有者の移管、Artifactの削除、Pluginの利用、Projectの監査ログ、Projectのアーカイブ |
 
 Projectは、無効化されていないユーザーなら誰でも作成できます。Projectの切り替えの一番下にある［＋ プロジェクトを作成］を押します。作成した人がそのProjectのAdminになります。手順は[Projectの作成と管理](/admin/projects)を参照してください。
 
@@ -95,8 +95,8 @@ ProjectのRoleは2つの方法で付けます。どちらもProjectのAdminが�
 ### メンバーを追加する
 
 1. ［プロジェクト設定］の「Members」で［メンバーを追加］を押します。
-2. 名前、メールアドレス、ユーザー名の先頭を入力して、候補からユーザーを選びます。SSOのユーザーは、一度ログインするまで候補に出ません。
-3. Roleを選んで保存します。
+2. 名前、メールアドレス、ユーザー名の先頭を入力して、候補からユーザーを選びます。SSOのユーザーは、一度ログインするまで候補に出ません。既に直接付与のある人は「既にEditorです。Roleは一覧の［変更］で変えます」のように表示され、選べません。
+3. Roleを選んで保存します。最初はEditorが選ばれています（Projectを作るときのメンバーと同じ）。
 
 一覧にそのユーザーが出れば完了です。
 
@@ -106,9 +106,9 @@ ProjectのRoleは2つの方法で付けます。どちらもProjectのAdminが�
 
 ## Projectには常にAdminが要る
 
-Projectには、直接付与のAdminか、Adminのgroupへの付与が1つ以上必要です。最後の1つを外したり下げたりする操作は409になり、「Project adminがいなくなるため変更できません。」と表示されます。先に別のメンバーかgroupへAdminを付けてください。
+Projectには、直接付与のAdminか、誰かがログインしたことのあるgroupへのAdminの付与が1つ以上必要です。最後の1つの行では［変更］［外す］が押せず、「最後のAdminなので変更・削除できません。」と理由が表示されます。APIで外したり下げたりする操作も409になります。先に別のメンバーか、誰かがログインしたことのあるgroupへAdminを付けてください。
 
-Adminのgroupへの付与は、そのgroupにまだ誰もログインしていなくても1つと数えます。Service AccountのAdminは数えません。
+まだ誰もログインしていないgroupへのAdminの付与は数えません。group名を打ち間違えたまま最後の人のAdminを外すと、Projectを管理できる人がいなくなるためです。そのようなgroupは「Authentik group」の一覧に「まだ誰もログインしていません」と表示されます。Service AccountのAdminも数えません。
 
 ## API tokenの権限
 

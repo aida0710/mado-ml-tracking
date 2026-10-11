@@ -13,7 +13,7 @@ import {
 import { createApplication } from '../src/app.js';
 import { CSV_BYTE_ORDER_MARK } from '../src/domain/csvEncoding.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
-import { projectFixture } from './fixtures.js';
+import { projectFixture, referenceDigest } from './fixtures.js';
 
 type Fixture = Awaited<ReturnType<typeof projectFixture>>;
 type Credentials = { cookie?: string; token?: string };
@@ -168,7 +168,7 @@ describe.skipIf(!testDatabaseUrl)('Runの一括比較とCSV出力（独立Postgr
       await request(harness.app, `${fixture.basePath}/datasets/${dataset.id}/versions`, {
         method: 'POST',
         cookie: fixture.editor.cookie,
-        body: { version: 'v2', uri: 'file:///eval', digest: 'eval-v2' },
+        body: { version: 'v2', uri: 'file:///eval', digest: referenceDigest('eval-v2') },
       }),
     );
     return { modelVersion, datasetVersion };

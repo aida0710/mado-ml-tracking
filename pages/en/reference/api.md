@@ -62,9 +62,10 @@ Errors have this shape. `error` is a human-readable message; `code` is for progr
 | 403 | `project_forbidden` | Insufficient Project role, or a Project other than the token's |
 | 403 | `session_required` | Only available with a browser session |
 | 403 | `job_token_forbidden` | Not allowed for Job tokens |
+| 403 | `job_owner_required` | Stopping or retrying a Job someone else created (only its creator or a Project Admin) |
 | 403 | `password_change_required` | The first-login password change is not done |
 | 404 | — | The target does not exist or belongs to another Project |
-| 409 | `conflict` and others | State conflict (removing the last Admin, acting on a finished Job, archiving a Project with active Jobs (`project_has_active_jobs`), deleting a Project that is not archived (`project_not_archived`), and so on) |
+| 409 | `conflict` and others | State conflict (removing the last Admin, acting on a finished Job, archiving a Project with active Jobs (`project_has_active_jobs`), deleting a Project that is not archived (`project_not_archived`), deleting a dataset version that is in use (`dataset_version_in_use`), and so on) |
 | 413 | `artifact_too_large` | The Artifact exceeds the limit (200 GiB by default) |
 | 422 | `invalid_request` and others | Invalid input |
 | 429 | `rate_limited` | Login attempt limit. Wait `Retry-After` seconds |

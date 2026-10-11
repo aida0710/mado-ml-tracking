@@ -76,6 +76,10 @@ export async function appendTrackingMetrics(
   );
 }
 
+// Pages longer than this are cut and continued with next_page_token, as MLflow sets no upper
+// bound; the SDK's get_metric_history asks for 25000 points per page.
+const MAX_METRIC_HISTORY_PAGE_SIZE = 50000;
+
 export async function metricHistory(
   connection: Connection,
   request: {
@@ -93,16 +97,20 @@ export async function metricHistory(
     key: request.metricKey,
   };
   const offset = pageOffset(request.pageToken, query);
+  // Without max_results MLflow returns the whole history in one response.
+  const pageSize =
+    request.maxResults === undefined
+      ? undefined
+      : Math.min(request.maxResults, MAX_METRIC_HISTORY_PAGE_SIZE);
   const points = await rows<Parameters<typeof serializeMetric>[0]>(
     connection,
     `SELECT ${metricColumns} FROM metrics WHERE run_id=$1 AND name=$2 ORDER BY step,timestamp,value,id LIMIT $3 OFFSET $4`,
-    [request.runId, request.metricKey, request.maxResults ? request.maxResults + 1 : null, offset],
+    [request.runId, request.metricKey, pageSize === undefined ? null : pageSize + 1, offset],
   );
-  const hasMore = !!request.maxResults && points.length > request.maxResults;
+  if (pageSize === undefined || points.length <= pageSize)
+    return { metrics: points.map(serializeMetric) };
   return {
-    metrics: (request.maxResults ? points.slice(0, request.maxResults) : points).map(
-      serializeMetric,
-    ),
-    ...(hasMore ? { next_page_token: nextPageToken(offset + request.maxResults!, query) } : {}),
+    metrics: points.slice(0, pageSize).map(serializeMetric),
+    next_page_token: nextPageToken(offset + pageSize, query),
   };
 }

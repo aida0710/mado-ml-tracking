@@ -102,7 +102,11 @@ try {
   page.on('pageerror', (error) => pageErrors.push(error.message));
 
   await page.goto(`${webUrl}/projects/${api.state.project.id}/experiments`);
-  // The sidebar lists each global administration screen under 「全体管理」.
+  // A Project's sidebar has only its own screens; 全体設定 opens from the user menu, and its
+  // sidebar lists each global administration screen under 「全体管理」.
+  await page.getByRole('button', { name: 'ユーザーメニュー', exact: true }).click();
+  await page.getByRole('menuitem', { name: '全体設定', exact: true }).click();
+  await page.waitForURL(/\/settings\/account$/);
   await page
     .getByRole('group', { name: '全体管理', exact: true })
     .getByRole('link', { name: 'ストレージ', exact: true })

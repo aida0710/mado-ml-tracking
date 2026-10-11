@@ -10343,11 +10343,162 @@
           "422": {
             "description": "入力が不正",
             "x-mmt-error-codes": [
+              "dataset_digest_invalid",
               "dataset_digest_mismatch",
               "dataset_artifact_not_found",
               "dataset_content_empty",
               "dataset_too_many_files",
               "dataset_source_run_mismatch",
+              "invalid_request",
+              "invalid_reference"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{p}/datasets/{id}/versions/{v}": {
+      "delete": {
+        "operationId": "deleteProjectsByPDatasetsByIdVersionsByV",
+        "tags": [
+          "registry"
+        ],
+        "summary": "どこからも使われていないDatasetVersionを削除",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "registry:write"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "project",
+          "role": "editor",
+          "scope": "registry:write"
+        },
+        "x-mmt-job-token": "forbidden",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "対象のID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "v",
+            "in": "path",
+            "required": true,
+            "description": "バージョンまたは保存ビューのID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "本文なし"
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "invalid_origin",
+              "insufficient_scope",
+              "project_forbidden",
+              "job_token_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "見つからない（他Projectのものを含む）",
+            "x-mmt-error-codes": [
+              "not_found"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "現在の状態と衝突する",
+            "x-mmt-error-codes": [
+              "dataset_version_in_use",
+              "already_exists"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
               "invalid_request",
               "invalid_reference"
             ],
@@ -11370,6 +11521,7 @@
               "upstream_rule_disabled",
               "automation_chain_too_deep",
               "automation_chain_cycle",
+              "dataset_archived",
               "invalid_request",
               "invalid_reference"
             ],
@@ -18254,6 +18406,7 @@
               "incompatible_model_family",
               "model_family_mismatch",
               "reserved_tag",
+              "dataset_archived",
               "invalid_request",
               "invalid_reference"
             ],
@@ -18767,6 +18920,7 @@
               "incompatible_model_family",
               "model_family_mismatch",
               "reserved_tag",
+              "dataset_archived",
               "invalid_request",
               "invalid_reference"
             ],
@@ -22526,7 +22680,7 @@
         "tags": [
           "execution"
         ],
-        "summary": "Jobを取り消す",
+        "summary": "Jobを取り消す（作成者かProject admin）",
         "security": [
           {
             "sessionCookie": []
@@ -22595,6 +22749,7 @@
           "403": {
             "description": "権限がない",
             "x-mmt-error-codes": [
+              "job_owner_required",
               "password_change_required",
               "invalid_origin",
               "insufficient_scope",
@@ -22672,7 +22827,7 @@
         "tags": [
           "execution"
         ],
-        "summary": "Jobを再実行（checkpointから再開も可）",
+        "summary": "Jobを再実行（checkpointから再開も可。作成者かProject admin）",
         "security": [
           {
             "sessionCookie": []
@@ -22774,6 +22929,7 @@
           "403": {
             "description": "権限がない",
             "x-mmt-error-codes": [
+              "job_owner_required",
               "password_change_required",
               "invalid_origin",
               "insufficient_scope",
@@ -33637,6 +33793,7 @@
               "site_target_required",
               "dataset_partition_invalid",
               "reserved_tag",
+              "dataset_archived",
               "invalid_request",
               "invalid_reference"
             ],
@@ -53131,6 +53288,16 @@
           },
           "sweepEarlyStopped": {
             "type": "boolean"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdByName": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -53174,7 +53341,9 @@
           "runKind",
           "taskId",
           "taskName",
-          "sweepEarlyStopped"
+          "sweepEarlyStopped",
+          "createdBy",
+          "createdByName"
         ],
         "additionalProperties": false
       },
@@ -55697,6 +55866,9 @@
               "admin"
             ]
           },
+          "isMember": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -55709,6 +55881,7 @@
           "artifactBackend",
           "visibility",
           "role",
+          "isMember",
           "createdAt"
         ],
         "additionalProperties": false

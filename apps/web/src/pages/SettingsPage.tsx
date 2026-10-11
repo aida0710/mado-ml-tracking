@@ -45,7 +45,7 @@ export function SettingsPage() {
       <div className="settings-stack">
         <MlflowConnectionCard onTokenCreated={reloadTokenLists} />
         <ProjectMembers projectMembers={projectMembers} />
-        <ProjectGroupBindings onChanged={projectMembers.members.reload} />
+        <ProjectGroupBindings projectMembers={projectMembers} />
         <ProjectServiceAccounts access={serviceAccounts} />
         <ProjectTokens key={tokenListRevision} projectTokens={serviceAccounts.projectTokens} />
         <NotificationSettings />

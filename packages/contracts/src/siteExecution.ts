@@ -36,6 +36,12 @@ export const JOB_PHASES: readonly JobPhase[] = [
 ];
 
 /**
+ * Phases in which a launcher or the requester holds a site Job and no runner reports yet: it is
+ * being submitted or waits in the scheduler queue. Nothing runs, so stopping ends it at once.
+ */
+export const JOB_SUBMISSION_PHASES: readonly JobPhase[] = ['submitting', 'submitted'];
+
+/**
  * Why a site Job ended beyond its status: the scheduler stopped it at its time limit (timed_out),
  * it waited in the queue longer than the site allows (queue_timeout), or the job shell refused it
  * (submit_failed).

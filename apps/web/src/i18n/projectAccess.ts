@@ -19,7 +19,12 @@ export const projectAccessText = {
   userSearchRequired: '追加するユーザーを選択してください',
   changeSelectedUser: '選び直す',
   lastProjectAdminConflict:
-    'Project adminがいなくなるため変更できません。先に別のメンバーかgroupへAdminを付与してください。',
+    'Project adminがいなくなるため変更できません。先に別のメンバーか、誰かがログインしたことのあるgroupへAdminを付与してください。',
+  lastProjectAdminLocked:
+    '最後のAdminなので変更・削除できません。先に別のメンバーか、誰かがログインしたことのあるgroupへAdminを付けてください。',
+  groupWithoutMembers: 'まだ誰もログインしていません',
+  groupWithoutMembersHint:
+    'このgroupでログインした人がまだいません。group名が正しいか確かめてください。誰かがログインするまで、AdminでもAdminが残るかの判定に数えません。',
   groupBindings: 'Authentik group',
   groupBindingsDescription:
     'groupに入っている全員へRoleを付与します。groupの所属はSSOのログイン時にAuthentikから同期されます。',
@@ -35,11 +40,16 @@ export const projectAccessText = {
 // Text that embeds values.
 export const projectAccessTextTemplates = {
   memberSourceGroup: (group: string) => `group ${group}`,
-  removeMemberConfirm: (displayName: string, keepsGroupRole: boolean) =>
-    `「${displayName}」への直接付与を外します。` +
-    (keepsGroupRole
+  removeMemberConfirm: (removal: { displayName: string; keepsGroupRole: boolean; isSelf: boolean }) =>
+    (removal.isSelf
+      ? 'あなた自身への直接付与を外します。'
+      : `「${removal.displayName}」への直接付与を外します。`) +
+    (removal.keepsGroupRole
       ? 'groupで付与されたRoleは残ります。'
-      : 'このユーザーはこのProjectを使えなくなります。'),
+      : removal.isSelf
+        ? 'あなたはこのProjectを使えなくなります。'
+        : 'このユーザーはこのProjectを使えなくなります。'),
+  memberAlreadyAdded: (role: string) => `既に${role}です。Roleは一覧の［変更］で変えます`,
   groupBindingExists: (group: string, role: string) =>
     `group「${group}」は${role}で登録済みです。Roleを変えるときは一覧の「変更」を使ってください。`,
   removeGroupBindingConfirm: (group: string) =>

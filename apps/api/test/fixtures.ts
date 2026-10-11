@@ -9,7 +9,16 @@ import type {
   Run,
   RunKind,
 } from '@mmt/contracts';
+import { createHash } from 'node:crypto';
 import { entity, login, request, type Harness } from './harness.js';
+
+/**
+ * A digest a reference DatasetVersion accepts (`sha256:` and 64 hex digits), different for each
+ * seed so tests can tell versions apart.
+ */
+export function referenceDigest(seed: string): string {
+  return `sha256:${createHash('sha256').update(seed).digest('hex')}`;
+}
 
 export async function projectFixture(harness: Harness) {
   const administrator = await login(harness);

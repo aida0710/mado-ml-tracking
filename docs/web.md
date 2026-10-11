@@ -20,11 +20,12 @@
 | workbench | コード編集、ファイルツリー、Task、実行スナップショット |
 | admin | 設定のセクション（最下部のアーカイブを含む）、plugin検索、容量メトリクス、全体管理の保存先とプロジェクト一覧、ユーザーメニュー |
 | uploads | Artifactのアップロードダイアログ、ドロップ領域、進み具合、途中のアップロード |
-| siteComputers | 全体設定 → コンピュータのsiteの詳細（job shellのバージョン、鍵と接続確認、自分の設定、利用者の設定、手動投入の案内）とjob shellの編集欄。最後に読み込む |
+| siteComputers | 全体設定 → コンピュータのsiteの詳細（job shellのバージョン、鍵と接続確認、自分の設定、利用者の設定、手動投入の案内）とjob shellの編集欄 |
+| tabs | タブの並び（`components/Tabs.tsx`）が入りきらず横にずれるときの、隠れている側の端の薄まり。最後に読み込む |
 
 - 新しいCSSは、そのclassが属する領域のファイルへ足します。`styles.css`のような何でも入るファイルを作り直しません。
 - 色・影・角丸は`@mado/design-system`の変数で書き、領域のファイルに色の値を直接書きません。合う変数が無いときは、役割の名前でデザインシステムに足し、ライトとダークの両方の値を決めます。リンクなど文字に使う青緑は`--link`、選択中の印や枠は`--accent`です。
-- 画面幅による上書き（`@media`）は、対象の領域ファイルの末尾にまとめます。切り替え点は下の「画面幅への対応」の3つだけを使います。
+- 画面幅による上書き（`@media`）は、対象の領域ファイルの末尾にまとめます。切り替え点は下の「画面幅への対応」の4つだけを使います。
 - 詳細度が同じルールは読み込み順で勝ち負けが決まります。新しい領域ファイルを作るときは`main.tsx`の末尾に足し、既存の順番を入れ替えません。
 
 ## エラー文言の層
@@ -38,13 +39,13 @@
 
 ## 権限判定
 
-画面の権限判定は`lib/permissions.ts`（`isGlobalAdmin`、`canEditProject`、`canManageProject`、`canManagePlugins`、`canManageAutomationRules`、`canManageHooks`、`canTransferHookOwners`、`canCreateProject`、`canChangeOwnPassword`、コンピュータの`canAddTarget`・`canAddSshOrLocalTarget`・`isTargetOwner`・`canManageTarget`）に集めます。役割名との比較（`role === 'admin'`など）をcomponentに直接書きません。判定はAPIの検査（`accessService`）に合わせた表示の出し分けで、許可の正本はAPIです。
+画面の権限判定は`lib/permissions.ts`（`isGlobalAdmin`、`canEditProject`、`canManageProject`、Sweepの`canControlSweep`とJobの停止・再実行の`canControlJob`（作った人かProject admin）、`canManagePlugins`、`canManageAutomationRules`、`canManageHooks`、`canTransferHookOwners`、`canCreateProject`、`canChangeOwnPassword`、コンピュータの`canAddTarget`・`canAddSshOrLocalTarget`・`isTargetOwner`・`canManageTarget`）に集めます。役割名との比較（`role === 'admin'`など）をcomponentに直接書きません。最後のAdminの判定（`lib/projectAdminGrants.ts`）と保護aliasの解除の判定（`lib/promotionEvidence.ts`の`canRemoveAlias`）も、APIの規則に合わせた表示の出し分けです。判定はAPIの検査（`accessService`）に合わせた表示の出し分けで、許可の正本はAPIです。
 
 ## 画面の枠
 
-- `layout/TopBar.tsx`: 上部バー（アプリ名、テーマ、ユーザー表示、ログアウト）。画面の切り替えは置きません。ユーザー表示のメニュー（`components/UserMenu.tsx`。項目は`layout/userMenuLinks.ts`）は、「アカウント」、ローカルアカウントの利用者だけ「パスワードの変更」（`/settings/account/password`）、全員に「全体設定」（`/settings/account`）です。テーマ（`hooks/useTheme.ts`）は、利用者が切り替えるまでOSの設定（`prefers-color-scheme`）に合わせ、切り替えたらブラウザの`localStorage`（`mmt.theme`）に保存します。`main.tsx`がログイン画面を含む最初の描画の前に`<html data-theme>`へ書きます。
+- `layout/TopBar.tsx`: 上部バー（アプリ名、テーマ、ユーザー表示、ログアウト）。画面の切り替えは置きません。`--bp-xs`未満ではボタンと並べるとアプリ名が入りきらないので、印だけを見せ、名前は読み上げとリンクの名前に残します（`ProductLogo`の`isNameVisuallyHidden`）。それより広い幅でも、入りきらなければ名前を「…」で縮め、画面の外へはみ出させません（`styles/productLogo.css`）。ユーザー表示のメニュー（`components/UserMenu.tsx`。項目は`layout/userMenuLinks.ts`）は、「アカウント」、ローカルアカウントの利用者だけ「パスワードの変更」（`/settings/account/password`）、全員に「全体設定」（`/settings/account`）です。テーマ（`hooks/useTheme.ts`）は、利用者が切り替えるまでOSの設定（`prefers-color-scheme`）に合わせ、切り替えたらブラウザの`localStorage`（`mmt.theme`）に保存します。`main.tsx`がログイン画面を含む最初の描画の前に`<html data-theme>`へ書きます。
 - 画面の切り替え: 切り替え先と組（記録・モデル・データ・実行・プロジェクト管理、その下に全員の全体設定、全体管理者にはさらに全体管理）は`layout/navigationLinks.ts`の`navigationGroups`が、各画面のアイコン（lucide-react）は`layout/navigationIcons.ts`が決めます。広い幅では左のサイドバー（`layout/NavigationSidebar.tsx`）に、狭い幅では`layout/NavigationDrawer.tsx`に、組の見出しを付けて並べます。サイドバーは、名前とアイコンを並べる`sidebar`と、アイコンだけの細い列の`rail`の2つの形を持ちます。どの形にするか、畳んだかどうか、幅は`hooks/useNavigation.ts`が決めて覚えます。幅を変える境目は`layout/NavigationResizeHandle.tsx`、幅の範囲は`lib/navigationWidth.ts`です。
-- `layout/AppShell.tsx`: Projectの画面の枠。`layout/ProjectBar.tsx`はProjectの切り替え（`layout/ProjectSwitcher.tsx`）と自分の権限を置き、広い幅ではサイドバーの一番上、狭い幅では上部バーの下の1行（プロジェクトバー）に出します。参加しているProjectが無いときは出しません。切り替えはブラウザのselectではなく自前のドロップダウン（listbox）で、各行に名前・公開範囲（Privateは鍵）・自分の権限を出し、開くと今のProjectを選んだ状態から↑↓・Home・End・Enter・Escで操作できます。Projectが8件以上（`lib/projectFilter.ts`の`PROJECT_FILTER_THRESHOLD`）になると絞り込みの入力を出します。一番下の「プロジェクトを作成」は作成できる人だけに出し、`dialogs/ProjectCreateDialog.tsx`を開きます。ドロップダウンはPopover API（`popover="manual"`）で最上位の層に出し、`hooks/useAnchoredPopover.ts`と`lib/dropdownPlacement.ts`が画面の内側に収めます。参加しているProjectが無いとき・開けないときは、作成できる人には「プロジェクトを作成」のボタンを、作成できない人には管理者への依頼を表示します。
+- `layout/AppShell.tsx`: Projectの画面の枠。`layout/ProjectBar.tsx`はProjectの切り替え（`layout/ProjectSwitcher.tsx`）と自分の権限を置き、広い幅ではサイドバーの一番上、狭い幅では上部バーの下の1行（プロジェクトバー）に出します。参加しているProjectが無いときは出しません。切り替えはブラウザのselectではなく自前のドロップダウン（listbox）で、各行に名前・公開範囲（Privateは鍵）・自分の権限を出し、開くと今のProjectを選んだ状態から↑↓・Home・End・Enter・Escで操作できます。Projectが8件以上（`lib/projectFilter.ts`の`PROJECT_FILTER_THRESHOLD`）になると絞り込みの入力を出します。一番下の「プロジェクトを作成」は作成できる人だけに出し、`dialogs/ProjectCreateDialog.tsx`を開きます。ドロップダウンはPopover API（`popover="manual"`）で最上位の層に出し、`hooks/useAnchoredPopover.ts`と`lib/dropdownPlacement.ts`が画面の内側に収めます。"/"で開くProjectは`lib/lastOpenedProject.ts`が決め、このブラウザで最後に開いたもの、次に自分がメンバー（直接付与・group。`Project.isMember`）のもので、他人のPublicや全体管理者として見えるだけのProjectには自分から開くまで入りません。どちらも無いとき・URLのProjectを開けないときは、プロジェクトの一覧（`pages/ProjectListPage.tsx`。参加しているもの、メンバーでなくても入れるPublic、［プロジェクトを作成］）を出します。作成できない人には管理者への依頼を表示します。
 - プロジェクトの作成（`dialogs/ProjectCreateDialog.tsx`）: 切り替え・全体管理のプロジェクト一覧・Projectが無いときの画面で共通の1つのダイアログです。公開範囲の既定はPublicで、Privateを選んだときだけ「メンバー（任意）」を出します。作成後は呼び出し側がそのProjectを開きます。プロジェクト設定（`pages/SettingsPage.tsx`）はそのProjectの設定だけを置き、Projectの一覧と作成はありません。最下部のアーカイブ（`components/ProjectArchiveSection.tsx`）はProject adminだけに出します。
 - `layout/SettingsShell.tsx`: 全体設定（Projectに属さない画面）の枠で、誰でも開けます。項目は`/settings/<項目>`（`layout/settingsSections.ts`。`/settings`は`/settings/account`へ移る）で、サイドバーの組で切り替えます。「全体設定」の組（アカウント、コンピュータ）は全員に、「全体管理」の組（プロジェクト、ユーザー、ストレージ、ランチャー、監査ログ）は全体管理者だけに出し、プロジェクトの画面のサイドバーにも同じ組を出します。全体管理の項目を全体管理者以外が開くと（知らない項目名も）`/settings/account`へ移します（`pages/AdminPage.tsx`）。パスワードの変更（`pages/PasswordChangePage.tsx`）はアカウントの下の`/settings/account/password`で、ローカルアカウント以外は`/settings/account`へ移します。初回の必須の変更は別の`pages/RequiredPasswordChangePage.tsx`で、`AuthGate`がほかの画面の代わりに出します。各画面は`components/SettingsPageHeader.tsx`で、項目名の見出しの上に小さく属する組（「全体設定」か「全体管理」）を出します。全体設定より前のURL（`/account`、`/account/password`、`/admin`、`/admin/<項目>`）は`layout/legacySettingsPaths.ts`の対応で新しいURLへ置き換えで移します（`/admin`と知らない`/admin/<項目>`は以前と同じくプロジェクトの一覧`/settings/projects`へ）。
 
@@ -56,13 +57,18 @@
 
 ## 画面幅への対応
 
-切り替え点は`styles/breakpoints.css`の`--bp-sm`（640px）・`--bp-md`（900px）・`--bp-lg`（1200px）です。CSSの変数は`@media`の中に書けないので、メディアクエリは同じ値を範囲の書き方で`@media (width < 640px)`・`(width < 900px)`・`(width < 1200px)`と書きます。スクリプトで幅を見るときは`lib/breakpoints.ts`の`narrowerThan('md')`を`lib/useMediaQuery.ts`に渡します。`lib/breakpoints.test.ts`が、CSSの変数とTSの値の一致と、ほかの数値のメディアクエリが無いことを確かめます。幅の広いタッチ画面も対象にするときだけ、`(width < 1200px), (pointer: coarse)`のように`(pointer: coarse)`を併記できます。
+切り替え点は`styles/breakpoints.css`の`--bp-xs`（390px）・`--bp-sm`（640px）・`--bp-md`（900px）・`--bp-lg`（1200px）です。`--bp-xs`はこのアプリだけのもので、上部バーのアプリ名を隠す幅です（デザインシステムは残りの3つを使います）。CSSの変数は`@media`の中に書けないので、メディアクエリは同じ値を範囲の書き方で`@media (width < 640px)`・`(width < 900px)`・`(width < 1200px)`と書きます。スクリプトで幅を見るときは`lib/breakpoints.ts`の`narrowerThan('md')`を`lib/useMediaQuery.ts`に渡します。`lib/breakpoints.test.ts`が、CSSの変数とTSの値の一致と、ほかの数値のメディアクエリが無いことを確かめます。幅の広いタッチ画面も対象にするときだけ、`(width < 1200px), (pointer: coarse)`のように`(pointer: coarse)`を併記できます。
 
 - 画面の切り替え: `--bp-lg`以上では左のサイドバーに名前とアイコンを並べます。サイドバーの下のボタンでアイコンだけの列（幅`--navigation-rail-width`、名前はツールチップと読み上げで伝えます）に畳め、右の境目をドラッグするか、境目にフォーカスして左右の矢印キーで幅（`--navigation-width`）を160〜360pxの間で変えられます。ダブルクリックかEnterで既定の192pxに戻ります。畳んだかどうかと幅は、ブラウザの`localStorage`（`mmt.navigation.collapsed`・`mmt.navigation.width`）に保存します。`--bp-md`以上`--bp-lg`未満では、サイドバーとExperimentsの実験一覧が並ぶとRunの表の幅が足りないので、いつもアイコンだけの列にします。`--bp-md`未満では上部バーのメニューボタンから左に出るドロワー（`layout/NavigationDrawer.tsx`）へ移します。メニューボタンは`aria-expanded`で開閉を示し、Esc、ドロワーの外側のタップ、リンクの選択で閉じます。
 - プロジェクトバー: サイドバーを名前つきで広げていないとき（アイコンだけの列とドロワー）に出し、どの幅でも1行です。狭い幅ではProjectの切り替えのボタンが縮み、名前を省略します。サイドバーはライト・ダークのどちらでも上部バーと同じ暗い地なので、サイドバーの中の切り替えのボタン・ラベル・権限は`--header-*`の色を使い、ドロップダウンは画面と同じ面の色にします。画面の上に並ぶものの高さは`--chrome-height`（上部バーと、出ていればプロジェクトバー）です。
 - タップ領域: `--bp-md`未満では、ボタン・アイコンボタン・入力欄・選択欄の高さを`--tap-target`（40px）以上にします（パッケージの`base.css`と`components.css`）。リンクボタン・summary・チェックボックスのラベル・スライダーも広げる画面は、根元の要素に`touch-targets`のclassを付けます（`components.css`）。
-- 表: 狭い幅で列を減らす一覧は`components/ResponsiveTable.tsx`を使います。列ごとに`priority: 'primary' | 'secondary'`を指定し、`--bp-md`未満では`primary`の列だけを行に残して、行の右端のボタンで`secondary`の列を行の下に開きます。`selectedKey`で選択中の行に印を付け、`empty`で行が無いときの表示を渡します。テストでは幅を引数で受ける`ResponsiveTableView`を描画します。`onRowClick`はポインタ用の近道なので、キーボードで開けるリンクかボタンを`primary`の列に置きます。`components/DataTable.tsx`は表の中だけで横にスクロールします。
-- ダイアログ: `components/Dialog.tsx`は`--bp-sm`未満で全画面になります。`fullScreenOnNarrow={false}`を渡すと、全画面ではなく下から出るシートになります（`ConfirmDialog`はシート）。
+- 表: 狭い幅で列を減らす一覧は`components/ResponsiveTable.tsx`を使います。列ごとに`priority: 'primary' | 'secondary'`を指定し、`--bp-md`未満では`primary`の列だけを行に残して、行の右端のボタンで`secondary`の列を行の下に開きます。`selectedKey`で選択中の行に印を付け、`empty`で行が無いときの表示を渡します。テストでは幅を引数で受ける`ResponsiveTableView`を描画します。`onRowClick`はポインタ用の近道なので、キーボードで開けるリンクかボタンを`primary`の列に置きます。チェックでまとめて選ぶ表は`isSelected`で選んだ行すべてに印を付けます。`components/DataTable.tsx`は表の中だけで横にスクロールします。
+- Runの一覧: `components/runs/RunTable.tsx`も同じ考え方で、スマホ（`--bp-sm`未満）では選択・Run名・状態だけを行に残し、保存ビューで選んだ残りの列は行を開いて見ます（`NarrowRunTable.tsx`が`ResponsiveTableView`で描く）。ほかの一覧と違って`--bp-md`ではなく`--bp-sm`で切り替えるのは、タブレットの幅ならMetricsを横に並べて比べられるほうが役に立つからです。それより広い幅（`WideRunTable.tsx`）は全部の列を並べ、見出しのドラッグ（Alt+←→）で列を動かし、境目のドラッグ（←→）で幅を変えます。2つが共有するセルは`RunTableCells.tsx`、選択の計算は`lib/runSelection.ts`です。
+- タブ: `components/Tabs.tsx`は、入りきらないと横にずれます。選んだタブ（URLで開いたもの、半分切れていて押したもの、矢印キーで選んだもの）は端から少し離して見える位置へ動かし（`hooks/useRevealSelectedTab.ts`）、隠れているタブがある側の端を薄くして続きがあることを示します（`hooks/useHiddenEdges.ts`、`styles/tabs.css`）。
+- 運用アラート（上部バーのベル）: `--bp-sm`未満では一覧をベルの下に吊るさず、上部バーのすぐ下に画面の左右16pxを空けて出します（`styles/operations.css`）。
+- 音声の波形: タッチでは縦のスワイプ（とピンチ）はページのスクロールと拡大に使い、横のドラッグだけが再生位置の移動とループ範囲の選択になります（`styles/audio.css`の`touch-action`）。サーバーが作った全体の波形は、押した瞬間ではなくクリック（タップ）で移動します。
+- Runの比較の［Artifacts］: 各Runの表示は枠の幅に収め、長い1行のテキストはその表示の中だけで横にスクロールします。
+- ダイアログ: `components/Dialog.tsx`は`--bp-sm`未満で全画面になります。`fullScreenOnNarrow={false}`を渡すと、全画面ではなく下から出るシートになります（`ConfirmDialog`はシート）。閉じると（Esc、×、キャンセル、保存）、開いたときにフォーカスがあった要素（開いたボタン）へフォーカスを戻します（`hooks/useModalDialog.ts`）。呼び出し側は開いたダイアログを外す（`{open && <XxxDialog />}`）ので、ブラウザが`close()`で戻す仕組みは使えないためです。開いたボタンが閉じるまでに画面から消えたとき（閉じたメニューの項目など）は戻しません。
 
 ## 候補つきの入力欄
 
@@ -70,7 +76,7 @@
 
 ## 確認ダイアログ
 
-入力欄の無い確認は`components/ConfirmDialog.tsx`を使います。`fields={[]}`の`FormDialog`で代用しません。
+入力欄の無い確認は`components/ConfirmDialog.tsx`を使います。`fields={[]}`の`FormDialog`で代用しません。ボタンは操作そのものの名前（［停止する］［再実行する］［変更を保存］）にし、本文には対象と起きることを書きます。Jobの停止・再実行は`dialogs/JobActionDialog.tsx`、公開範囲・保存先の変更は`components/ProjectSettings.tsx`が確認します。
 
 ## テキストのプレビュー
 

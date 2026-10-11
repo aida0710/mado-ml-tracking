@@ -12,7 +12,7 @@ import { RunService } from '../src/services/runService.js';
 import { RunOutputDeclarationService } from '../src/services/runOutputDeclarationService.js';
 import { WorkerService } from '../src/services/workerService.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
-import { executionFixture } from './fixtures.js';
+import { executionFixture, referenceDigest } from './fixtures.js';
 
 interface RecordedCompletion {
   runId: string;
@@ -217,7 +217,7 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
         body: {
           version: 'v1',
           uri: 's3://fixture/out',
-          digest: 'sha256:out',
+          digest: referenceDigest('out'),
           sourceRunId: runId,
         },
       }),

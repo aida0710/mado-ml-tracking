@@ -21,8 +21,8 @@ const appStylesheets = stylesheetNames.map((name) => ({ name, css: readStyleshee
 const allStylesheets = [...sharedStylesheets, ...appStylesheets];
 
 // Custom properties a component sets inline: ChartPanelGrid the chart row height, the app shells
-// the sidebar width the user dragged.
-const PROPERTIES_SET_FROM_COMPONENTS = ['--chart-row-height', '--navigation-width'];
+// the sidebar width the user dragged, Tabs the width of the fade at an end that hides tabs.
+const PROPERTIES_SET_FROM_COMPONENTS = ['--chart-row-height', '--navigation-width', '--tab-edge-fade'];
 const LITERAL_COLOR =
   /#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(|(?<![\w-])(?:white|black)(?![\w-])/i;
 

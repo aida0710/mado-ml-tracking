@@ -17,7 +17,7 @@ import { migrate } from '../src/db/migrate.js';
 import { reserveModelVersion } from '../src/repositories/modelVersionNumbering.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 import { applyMigrationsBefore } from './migrationFixtures.js';
-import { executionFixture, projectFixture } from './fixtures.js';
+import { executionFixture, projectFixture, referenceDigest } from './fixtures.js';
 import { modelFixture, type VersionResponse } from './mlflow-models-fixtures.js';
 
 describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立PostgreSQL）', () => {
@@ -363,7 +363,7 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
       await request(harness.app, `${otherPath}/datasets/${otherDataset.id}/versions`, {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: { version: 'v1', uri: 'file:///example', digest: 'test' },
+        body: { version: 'v1', uri: 'file:///example', digest: referenceDigest('example') },
       }),
     );
     const localDataset = await entity<Dataset>(
@@ -454,7 +454,7 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
           body: {
             version: 'bad-parent',
             uri: 'file:///local',
-            digest: 'test',
+            digest: referenceDigest('local'),
             parentDatasetVersionIds: [otherDatasetVersion.id],
           },
         })
@@ -468,7 +468,7 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
           body: {
             version: 'bad-source',
             uri: 'file:///local',
-            digest: 'test',
+            digest: referenceDigest('local'),
             sourceRunId: otherRun.id,
           },
         })
@@ -489,7 +489,7 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
       await request(harness.app, `${fixture.basePath}/datasets/${dataset.id}/versions`, {
         method: 'POST',
         cookie: fixture.editor.cookie,
-        body: { version: 'v1', uri: 'file:///corpus', digest: 'v1' },
+        body: { version: 'v1', uri: 'file:///corpus', digest: referenceDigest('corpus-v1') },
       }),
     );
     const run = await entity<Run>(
@@ -512,7 +512,7 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
         body: {
           version: 'v2',
           uri: 'file:///output',
-          digest: 'v2',
+          digest: referenceDigest('corpus-v2'),
           sourceRunId: run.id,
           parentDatasetVersionIds: [input.id],
         },

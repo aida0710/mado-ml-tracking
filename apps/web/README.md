@@ -27,7 +27,11 @@ node apps/web/tests/browser-containers.mjs
 node apps/web/tests/browser-workbench.mjs
 node apps/web/tests/browser-integration.mjs
 node apps/web/tests/browser-followup-integration.mjs
+node apps/web/tests/browser-dialog-focus.mjs
+node apps/web/tests/browser-narrow-screens.mjs
 ```
+
+`browser-dialog-focus.mjs`は、ダイアログを閉じたとき（Esc・×・キャンセル）に開いたボタンへフォーカスが戻ることを、入力のダイアログ・独自のダイアログ・確認で確かめる。`browser-narrow-screens.mjs`はスマホの幅で、320pxの上部バーと運用アラートの一覧が画面に収まること、Runの一覧が主要な列だけを行に残して残りを行を開いて見せること、URLで開いたタブが見える位置にあり隠れた端が薄くなること、比較の長い1行のJSONが表示の中だけでスクロールすること、波形の上の縦のスワイプでページがスクロールしループができないことを確かめる。どちらもAPI mocksを使う。
 
 `browser-smoke.mjs`はブラウザ内で検証用APIを使い、API障害・enqueue失敗・全画面・Pluginの動線を確認する。fixtureは`tests/`のみで、production bundleに含めない。
 

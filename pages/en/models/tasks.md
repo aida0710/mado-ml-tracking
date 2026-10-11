@@ -116,7 +116,7 @@ The worker saves the source before execution as a ZIP and a manifest in the Run 
 
 **実行履歴** (Run history) shows the latest 50 runs; **古い実行** (Older runs) and **最新の実行** (Latest runs) page through it.
 
-To run a failed Job again, use **新しいRunで再実行** (Retry in a new Run) in Jobs. It creates a new Run with the previous code version, mode, Task revision, and parameters, and keeps the original Run. To try edited code, change the Task's code version and launch again.
+To run a failed Job again, use **新しいRunで再実行** (Retry in a new Run) in Jobs and click **再実行する** (Retry) in the confirmation. It creates a new Run with the previous code version, mode, Task revision, and parameters, and keeps the original Run. The Job's creator and Project Admins can retry it. To try edited code, change the Task's code version and launch again.
 
 ## Register a model when training succeeds
 

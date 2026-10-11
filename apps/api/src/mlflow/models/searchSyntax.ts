@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { inClauseSql, type InListOperator } from '../../domain/search/inClauseSql.js';
 import { invalidParameter } from './validation.js';
 
@@ -18,6 +17,8 @@ export interface SearchField {
   numeric: boolean;
   // MLflow accepts IN / NOT IN only for string attributes of model version search.
   acceptsInList?: boolean;
+  // MLflow converts a quoted version_number with int(), so version_number = '3' also matches.
+  acceptsQuotedInteger?: boolean;
   compileComparison?: (comparison: { operator: string; valueParameter: string }) => string;
 }
 type ResolveField = (field: string) => SearchField;
@@ -35,6 +36,8 @@ const LITERAL_PATTERN =
   /('(?:[^']|'')*'|"(?:[^"]|"")*"|[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)/y;
 const LIST_START_PATTERN = /\(\s*/y;
 const LIST_ITEM_PATTERN = /('(?:[^']|'')*'|"(?:[^"]|"")*")\s*(,\s*|\))/y;
+// An optionally signed run of digits, the quoted form Python's int() reads.
+const QUOTED_INTEGER_PATTERN = /^[+-]?\d+$/;
 
 interface CompiledComparison {
   sql: string;
@@ -93,9 +96,13 @@ function compileValueComparison(input: ComparisonInput & { operator: string }): 
   const literal = match[1]!;
   const isQuoted = literal.startsWith("'") || literal.startsWith('"');
   const value = isQuoted ? unquote(literal) : literal;
+  const isAcceptedQuotedInteger =
+    !!field.acceptsQuotedInteger && QUOTED_INTEGER_PATTERN.test(value);
   if (
     field.numeric
-      ? isQuoted || !Number.isFinite(Number(value)) || ['LIKE', 'ILIKE'].includes(operator)
+      ? (isQuoted && !isAcceptedQuotedInteger) ||
+        !Number.isFinite(Number(value)) ||
+        ['LIKE', 'ILIKE'].includes(operator)
       : !isQuoted || !['=', '!=', 'LIKE', 'ILIKE'].includes(operator)
   ) {
     invalidParameter('検索fieldの型と比較演算子が一致しません');
@@ -152,32 +159,4 @@ export function splitSearchField(field: string): { kind: string; key: string } {
   const key = /^[`'"]/.test(rawKey) ? rawKey.slice(1, -1) : rawKey;
   if (!key) invalidParameter('検索keyが空です');
   return { kind, key };
-}
-
-export function searchFingerprint(input: unknown): string {
-  return createHash('sha256').update(JSON.stringify(input)).digest('hex');
-}
-
-export function pageOffset(token: string | undefined, fingerprint: string): number {
-  if (!token) return 0;
-  try {
-    const page = JSON.parse(Buffer.from(token, 'base64url').toString('utf8')) as {
-      offset?: unknown;
-      fingerprint?: unknown;
-    };
-    if (
-      typeof page.offset === 'number' &&
-      Number.isSafeInteger(page.offset) &&
-      page.offset >= 0 &&
-      page.fingerprint === fingerprint
-    )
-      return page.offset;
-  } catch {
-    /* Invalid input is translated to the same public validation error. */
-  }
-  return invalidParameter('page_tokenが検索条件に一致しません');
-}
-
-export function nextPageToken(offset: number, fingerprint: string): string {
-  return Buffer.from(JSON.stringify({ offset, fingerprint })).toString('base64url');
 }
