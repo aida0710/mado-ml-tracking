@@ -12,6 +12,9 @@ const DEFAULT_POLL_INTERVAL_MS = 5000;
 const DEFAULT_TOOL_TIMEOUT_MS = 30 * 60 * 1000;
 // Must stay well below PREVIEW_LEASE_SECONDS (2 h), since one job runs up to three tools.
 const MAX_TOOL_TIMEOUT_MS = 40 * 60 * 1000;
+// A source is copied whole into the work directory, which is often on the system disk; a larger
+// one is skipped so one upload cannot fill that disk (MMT_ARTIFACT_MAX_BYTES allows 200 GiB).
+const DEFAULT_MAX_SOURCE_BYTES = 10 * 1024 ** 3;
 
 const environmentSchema = z.object({
   MMT_DATABASE_URL: optionalSetting,
@@ -27,6 +30,7 @@ const environmentSchema = z.object({
     .max(MAX_TOOL_TIMEOUT_MS)
     .default(DEFAULT_TOOL_TIMEOUT_MS),
   MMT_PREVIEW_WORK_DIR: optionalSetting,
+  MMT_PREVIEW_MAX_SOURCE_BYTES: z.coerce.number().int().min(1).default(DEFAULT_MAX_SOURCE_BYTES),
 });
 
 /** Settings of the preview worker process (previewWorker.ts), separate from the API's. */
@@ -38,6 +42,7 @@ export interface PreviewWorkerConfig {
   pollIntervalMs: number;
   toolTimeoutMs: number;
   workDirectory: string;
+  maxSourceBytes: number;
 }
 
 export function loadPreviewWorkerConfig(
@@ -68,5 +73,6 @@ export function loadPreviewWorkerConfig(
     pollIntervalMs: settings.MMT_PREVIEW_POLL_INTERVAL_MS,
     toolTimeoutMs: settings.MMT_PREVIEW_TOOL_TIMEOUT_MS,
     workDirectory: settings.MMT_PREVIEW_WORK_DIR ?? tmpdir(),
+    maxSourceBytes: settings.MMT_PREVIEW_MAX_SOURCE_BYTES,
   };
 }

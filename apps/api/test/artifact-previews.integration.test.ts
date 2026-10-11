@@ -46,12 +46,13 @@ describe.skipIf(!testDatabaseUrl)('長い音声・動画のサーバー側previe
   let workDirectory: string;
   const media: { mp3?: Buffer; mp4?: Buffer } = {};
 
-  function processor(tools: PreviewTools = installedTools) {
+  function processor(tools: PreviewTools = installedTools, maxSourceBytes = Number.MAX_SAFE_INTEGER) {
     return new ArtifactPreviewProcessor({
       database: harness.database,
       stores: harness.services.artifactStores,
       tools,
       workDirectory,
+      maxSourceBytes,
     });
   }
 
@@ -228,6 +229,15 @@ describe.skipIf(!testDatabaseUrl)('長い音声・動画のサーバー側previe
     expect((await content(artifact.id)).status).toBe(200);
   });
 
+  it('上限より大きい本体は取り寄せずにskippedになる', async () => {
+    const body = Buffer.from('larger than the limit');
+    const artifact = await entity<Artifact>(await upload('eval/a.mp3', body));
+    expect(await processor(installedTools, body.length - 1).processNext()).toBe(true);
+    const skipped = await previewMap(artifact.id);
+    expect(skipped['waveform-peaks']).toMatchObject({ status: 'skipped', error: 'source_too_large' });
+    expect(skipped.spectrogram).toMatchObject({ status: 'skipped', error: 'source_too_large' });
+  });
+
   it('保存先から本体を読めなければqueuedへ戻し、上限回数で諦める', async () => {
     const artifact = await entity<Artifact>(await upload('eval/a.mp3', Buffer.from('bytes')));
     const failingRead = new ArtifactPreviewProcessor({
@@ -235,6 +245,7 @@ describe.skipIf(!testDatabaseUrl)('長い音声・動画のサーバー側previe
       stores: { ...harness.stores, read: () => Promise.reject(new Error('storage down')) },
       tools: installedTools,
       workDirectory,
+      maxSourceBytes: Number.MAX_SAFE_INTEGER,
     });
     expect(await failingRead.processNext()).toBe(true);
     expect((await previewMap(artifact.id))['waveform-peaks']).toMatchObject({

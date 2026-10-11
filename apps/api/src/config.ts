@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { AuthMode } from '@mmt/contracts';
 import { createOidcRolePolicy, type OidcRolePolicy } from './domain/oidcRolePolicy.js';
 import { parseSecretKey, type SecretKey } from './security/secretEncryption.js';
+import { normalizeRegistryHost, type RegistryCredentials } from './services/imagePlatformChecker.js';
 import { DEFAULT_CHECKPOINT_KEEP_COUNT } from '@mmt/contracts';
 import { parseSmtpSettings, type SmtpSettings } from '@mmt/platform';
 
@@ -43,6 +44,8 @@ const DEFAULT_UPLOAD_IDLE_TIMEOUT_MS = 120_000;
 const DEFAULT_UPLOAD_FINALIZE_WAIT_MS = 100_000;
 // New API tokens expire within a year; it is also the expiry of a token issued without one.
 const DEFAULT_TOKEN_MAX_LIFETIME_DAYS = 365;
+// An edge proxy plus the web nginx is 2; more than a few is a misconfiguration.
+const MAX_TRUSTED_PROXY_HOPS = 5;
 // Rows of one CSV export (decisions.md); beyond this Excel use gets slow and the filter should narrow.
 const DEFAULT_CSV_EXPORT_MAX_ROWS = 50_000;
 // Snapshot data of one report revision (50 MiB): a few full-size chart and table blocks fit, while
@@ -77,6 +80,8 @@ const environmentSchema = z.object({
   MMT_PUBLIC_URL: z.url().default('http://127.0.0.1:4182'),
   MMT_WEB_ORIGIN: z.url().default('http://127.0.0.1:5182'),
   MMT_ALLOW_PRIVATE_ORIGINS: z.enum(['true', 'false']).default('false'),
+  // Reverse proxies in front of the API that append to X-Forwarded-For (compose: the web nginx).
+  MMT_TRUSTED_PROXY_HOPS: z.coerce.number().int().min(0).max(MAX_TRUSTED_PROXY_HOPS).default(0),
   // Validated only when OIDC is enabled, so local mode ignores a leftover value.
   OIDC_ISSUER_URL: optionalSetting,
   OIDC_CLIENT_ID: optionalSetting,
@@ -143,7 +148,8 @@ const environmentSchema = z.object({
   MMT_HOOK_SECRET_KEY: optionalSetting,
   // enforce: a site Job's docker image must be built for the site's CPU (registry manifest).
   MMT_IMAGE_PLATFORM_CHECK: z.enum(['off', 'enforce']).default('off'),
-  // Read access to private images for that check; both or neither.
+  // Read access to private images for that check, sent only to MMT_REGISTRY_HOST; all three or none.
+  MMT_REGISTRY_HOST: optionalSetting,
   MMT_REGISTRY_USERNAME: optionalSetting,
   MMT_REGISTRY_PASSWORD: optionalSetting,
   MMT_TOKEN_MAX_LIFETIME_DAYS: z.coerce
@@ -179,6 +185,7 @@ export interface ApiConfig {
   publicUrl: string;
   webOrigin: string;
   allowPrivateOrigins: boolean;
+  trustedProxyHops: number;
   secureCookies: boolean;
   oidc: {
     issuer: string;
@@ -214,7 +221,7 @@ export interface ApiConfig {
   hookSecretKey: SecretKey | null;
   // Whether a site Job's image is checked against the site's CPU before it is queued.
   imagePlatformCheck: 'off' | 'enforce';
-  registryCredentials: { username: string; password: string } | null;
+  registryCredentials: RegistryCredentials | null;
   // Upper limit and default for the lifetime of a new API token.
   tokenMaxLifetimeDays: number;
   // Checkpoints per Run shown by default; older ones get retained=false (their files are kept).
@@ -273,8 +280,9 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
       throw new Error('MMT_HOOK_SECRET_KEY must be base64 of 32 bytes');
     }
   }
-  if (!settings.MMT_REGISTRY_USERNAME !== !settings.MMT_REGISTRY_PASSWORD)
-    throw new Error('MMT_REGISTRY_USERNAME and MMT_REGISTRY_PASSWORD must be set together');
+  const registrySettings = [settings.MMT_REGISTRY_HOST, settings.MMT_REGISTRY_USERNAME, settings.MMT_REGISTRY_PASSWORD];
+  if (registrySettings.some(Boolean) && !registrySettings.every(Boolean))
+    throw new Error('MMT_REGISTRY_HOST, MMT_REGISTRY_USERNAME and MMT_REGISTRY_PASSWORD must be set together');
   let oidc: ApiConfig['oidc'] = null;
   // local mode ignores OIDC_* so a leftover SSO setting cannot open a second login path.
   if (settings.AUTH_MODE === 'oidc' || settings.AUTH_MODE === 'hybrid') {
@@ -341,6 +349,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
     publicUrl: publicUrl.origin,
     webOrigin: webUrl.origin,
     allowPrivateOrigins: settings.MMT_ALLOW_PRIVATE_ORIGINS === 'true',
+    trustedProxyHops: settings.MMT_TRUSTED_PROXY_HOPS,
     secureCookies: publicUrl.protocol === 'https:',
     oidc,
     developmentAdminEmail: settings.DEVELOPMENT_ADMIN_EMAIL.toLowerCase(),
@@ -367,8 +376,12 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
     hookSecretKey,
     imagePlatformCheck: settings.MMT_IMAGE_PLATFORM_CHECK,
     registryCredentials:
-      settings.MMT_REGISTRY_USERNAME && settings.MMT_REGISTRY_PASSWORD
-        ? { username: settings.MMT_REGISTRY_USERNAME, password: settings.MMT_REGISTRY_PASSWORD }
+      settings.MMT_REGISTRY_HOST && settings.MMT_REGISTRY_USERNAME && settings.MMT_REGISTRY_PASSWORD
+        ? {
+            registry: normalizeRegistryHost(settings.MMT_REGISTRY_HOST),
+            username: settings.MMT_REGISTRY_USERNAME,
+            password: settings.MMT_REGISTRY_PASSWORD,
+          }
         : null,
     tokenMaxLifetimeDays: settings.MMT_TOKEN_MAX_LIFETIME_DAYS,
     checkpointKeepCount: settings.MMT_CHECKPOINT_KEEP_COUNT,
