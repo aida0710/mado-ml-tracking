@@ -30,6 +30,7 @@ from .execution_snapshot import ExecutionMode, validate_execution_mode
 from .experiment_tasks import ExperimentTasksClient
 from .experiments import EXPERIMENT_ID_VARIABLE, experiment_id_for_new_run, validate_experiment_choice
 from .http import REQUEST_TIMEOUT_SECONDS, request_sync
+from .names import trim_name
 from .pagination import iterate_cursor_pages
 from .run_search_request import build_run_search_body
 from .security import SecretMasker, secret_values
@@ -496,9 +497,14 @@ class Client(ExperimentTasksClient):
     ) -> dict[str, Any]:
         """Return the Model named ``name``, creating it when absent.
 
-        A concurrent creator can win between the lookup and the POST; the 409 is then
-        resolved by reading the Model it created.
+        White space at either end of ``name`` and ``family`` is dropped first, as the API does
+        when it saves and compares them. A concurrent creator can win between the lookup and the
+        POST; the 409 is then resolved by reading the Model it created.
         """
+        name = trim_name(name)
+        if not name:
+            raise ConfigurationError("model name must not be empty")
+        family = trim_name(family) if family is not None else None
         model = self.find_model(project_id, name=name)
         if model is None:
             if not family:
