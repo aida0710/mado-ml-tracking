@@ -1,21 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { PlugZap } from 'lucide-react';
 import type {
   ComputeTarget,
   ExecutionRuntimeKind,
   TargetCheck,
   TargetCheckGpu,
-  TargetCheckItem,
 } from '@mmt/contracts';
 import { executionApi } from '../api/execution';
-import { targetChecksApi } from '../api/targetChecks';
 import { useMutation } from '../hooks/useMutation';
-import { useQuery } from '../hooks/useQuery';
+import { useTargetCheck } from '../hooks/useTargetCheck';
+import { CheckboxList } from './CheckboxList';
 import { ResponsiveTable } from './ResponsiveTable';
 import { ErrorNotice, Resource } from './Feedback';
 import { StatusBadge } from './StatusBadge';
+import { TargetCheckItemsTable } from './TargetCheckItemsTable';
 import { formatBytes, formatDate } from '../lib/format';
-import { targetCheckHintFor, targetCheckItemLabel } from '../lib/computeTargetDisplay';
+import { formatCheckedHost, targetCheckHintFor } from '../lib/computeTargetDisplay';
+import { toggleValue } from '../lib/formValues';
 import {
   detectedCandidates,
   hasCandidateChanges,
@@ -23,19 +24,7 @@ import {
   type TargetCandidates,
 } from '../lib/targetCheckCandidates';
 import { text } from '../i18n/catalog';
-import { targetCheckCodeHints, targetCheckOutcomeLabels } from '../i18n/compute';
 import { runtimeLabels } from '../i18n/runtime';
-
-// The worker polls for checks every 5 seconds and probes for up to two minutes.
-const TARGET_CHECK_POLL_MS = 3000;
-
-// Reuses the Job status colors: ok is green, ng red, the rest neutral.
-const outcomeBadgeClass: Record<TargetCheckItem['status'], string> = {
-  ok: 'status-finished',
-  ng: 'status-failed',
-  unavailable: 'status-queued',
-  skipped: 'status-queued',
-};
 
 /**
  * The connection check of an ssh or local target, which a worker runs. A site is reached only by
@@ -48,20 +37,10 @@ export function TargetCheckPanel({
   target: ComputeTarget;
   onTargetSaved: () => void;
 }) {
-  const mutation = useMutation();
-  const [isPolling, setPolling] = useState(false);
-  const checks = useQuery(
-    `target-checks:${target.id}`,
-    (signal) => targetChecksApi.list(target.id, signal),
-    isPolling ? TARGET_CHECK_POLL_MS : undefined,
-  );
-  const latest = checks.value?.[0];
-  // Poll only while the latest check waits for a worker.
-  useEffect(() => setPolling(isCheckInProgress(latest)), [latest]);
-  const requestCheck = () =>
-    void mutation.run(() => targetChecksApi.request(target.id)).then((created) => {
-      if (created) checks.reload();
-    });
+  const check = useTargetCheck(target.id);
+  const { checks, latest } = check;
+  // The worker chosen for the last check checks again; without one, the worker in charge does.
+  const requestCheck = () => void check.request({ worker: latest?.assignedWorker ?? undefined });
   return (
     <section className="settings-section" data-testid="target-check-panel">
       <div className="section-heading">
@@ -70,7 +49,7 @@ export function TargetCheckPanel({
         </h2>
         <button
           className="button primary"
-          disabled={mutation.pending || isCheckInProgress(latest)}
+          disabled={check.pending || check.isInProgress}
           onClick={requestCheck}
         >
           <PlugZap size={15} />
@@ -78,7 +57,7 @@ export function TargetCheckPanel({
         </button>
       </div>
       <p className="muted">{targetCheckHintFor(target.executor)}</p>
-      <ErrorNotice message={mutation.error} />
+      <ErrorNotice message={check.error} />
       <Resource query={checks}>
         {() =>
           latest ? (
@@ -123,6 +102,12 @@ function TargetCheckDetails({
             <dd className="mono">{check.workerId}</dd>
           </>
         )}
+        {check.result?.version === 2 && (
+          <>
+            <dt>{text.hostFacts}</dt>
+            <dd>{formatCheckedHost(check.result.host)}</dd>
+          </>
+        )}
         {check.result?.workDirectoryFreeBytes != null && (
           <>
             <dt>{text.targetCheckFreeSpace}</dt>
@@ -138,7 +123,7 @@ function TargetCheckDetails({
         <p className="notice error">{text.targetCheckClaimTimeout}</p>
       )}
       {check.result && (
-        <TargetCheckItems items={check.result.items} executor={target.executor} />
+        <TargetCheckItemsTable items={check.result.items} executor={target.executor} />
       )}
       {check.result?.gpus && <DetectedGpus gpus={check.result.gpus} />}
       {candidates && (
@@ -150,52 +135,6 @@ function TargetCheckDetails({
         />
       )}
     </>
-  );
-}
-
-function TargetCheckItems({
-  items,
-  executor,
-}: {
-  items: TargetCheckItem[];
-  executor: ComputeTarget['executor'];
-}) {
-  return (
-    <ResponsiveTable
-      rows={items}
-      rowKey={(item) => item.name}
-      columns={[
-        {
-          key: 'item',
-          priority: 'primary',
-          header: text.targetCheckItem,
-          render: (item) => targetCheckItemLabel(item.name, executor),
-        },
-        {
-          key: 'outcome',
-          priority: 'primary',
-          header: text.targetCheckOutcome,
-          render: (item) => (
-            <span className={`status-badge ${outcomeBadgeClass[item.status]}`}>
-              {targetCheckOutcomeLabels[item.status]}
-            </span>
-          ),
-        },
-        {
-          key: 'detail',
-          priority: 'secondary',
-          header: text.targetCheckDetail,
-          className: 'mono',
-          render: (item) => item.detail ?? '—',
-        },
-        {
-          key: 'action',
-          priority: 'secondary',
-          header: text.targetCheckAction,
-          render: (item) => (item.code ? targetCheckCodeHints[item.code] : ''),
-        },
-      ]}
-    />
   );
 }
 
@@ -251,14 +190,13 @@ function TargetCandidateEditor({
   const [isSaved, setSaved] = useState(false);
   const toggle = <K extends keyof TargetCandidates>(field: K, value: TargetCandidates[K][number]) => {
     setSaved(false);
-    setSelected((previous) => {
-      const values = previous[field] as string[];
-      return {
-        ...previous,
-        [field]: values.includes(value) ? values.filter((entry) => entry !== value) : [...values, value],
-      };
-    });
+    setSelected((previous) => ({
+      ...previous,
+      [field]: toggleValue(previous[field] as string[], value),
+    }));
   };
+  const currentGpus = target.gpuIds.join(', ') || text.cpuOnly;
+  const currentRuntimes = target.runtimeKinds.map((kind) => runtimeLabels[kind]).join(', ');
   const save = () =>
     void mutation
       .run(() =>
@@ -277,38 +215,19 @@ function TargetCandidateEditor({
       <h3>{text.targetCheckCandidates}</h3>
       <p className="muted">{text.targetCheckCandidatesHint}</p>
       <ErrorNotice message={mutation.error} />
-      <fieldset>
-        <legend>
-          {text.gpuIds}（{text.targetCheckCurrent}: {target.gpuIds.join(', ') || text.cpuOnly}）
-        </legend>
-        {detected.gpuIds.length === 0 && <span className="muted">{text.noDetectedGpus}</span>}
-        {detected.gpuIds.map((gpuId) => (
-          <label className="checkbox-field" key={gpuId}>
-            <input
-              type="checkbox"
-              checked={selected.gpuIds.includes(gpuId)}
-              onChange={() => toggle('gpuIds', gpuId)}
-            />
-            {gpuId}
-          </label>
-        ))}
-      </fieldset>
-      <fieldset>
-        <legend>
-          {text.runtimeKinds}（{text.targetCheckCurrent}:{' '}
-          {target.runtimeKinds.map((kind) => runtimeLabels[kind]).join(', ')}）
-        </legend>
-        {detected.runtimeKinds.map((kind: ExecutionRuntimeKind) => (
-          <label className="checkbox-field" key={kind}>
-            <input
-              type="checkbox"
-              checked={selected.runtimeKinds.includes(kind)}
-              onChange={() => toggle('runtimeKinds', kind)}
-            />
-            {runtimeLabels[kind]}
-          </label>
-        ))}
-      </fieldset>
+      <CheckboxList
+        legend={`${text.gpuIds}（${text.targetCheckCurrent}: ${currentGpus}）`}
+        options={detected.gpuIds.map((gpuId) => ({ value: gpuId, label: gpuId }))}
+        selected={selected.gpuIds}
+        onToggle={(gpuId) => toggle('gpuIds', gpuId)}
+        empty={text.noDetectedGpus}
+      />
+      <CheckboxList
+        legend={`${text.runtimeKinds}（${text.targetCheckCurrent}: ${currentRuntimes}）`}
+        options={detected.runtimeKinds.map((kind) => ({ value: kind, label: runtimeLabels[kind] }))}
+        selected={selected.runtimeKinds}
+        onToggle={(kind) => toggle('runtimeKinds', kind as ExecutionRuntimeKind)}
+      />
       <button
         className="button"
         disabled={

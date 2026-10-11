@@ -142,17 +142,16 @@ describe.skipIf(!testDatabaseUrl)('Computeの接続確認（独立PostgreSQL）'
     ).toBe(404);
   });
 
-  it('担当外targetの接続確認はclaimできず、targetIdsの無いclaimは拒否する', async () => {
+  it('担当外targetの接続確認はclaimできず、targetIdsの無いworkerは指定の無い確認を受けない', async () => {
     const fixture = await setup();
     await requestCheck(fixture.administrator.cookie, fixture.sshTarget.id);
     expect(
       await claimItem(fixture.workerToken, { workerId: 'host-1', targetIds: [fixture.target.id] }),
     ).toBeNull();
-    // A worker without MMT_WORKER_TARGET_IDS is not in charge of any particular target.
-    expect((await claim(fixture.workerToken, { workerId: 'host-1' })).status).toBe(422);
-    expect((await claim(fixture.workerToken, { workerId: 'host-1', targetIds: [] })).status).toBe(
-      422,
-    );
+    // A worker without MMT_WORKER_TARGET_IDS is in charge of no target; it only takes the checks
+    // someone chose it for (target-setup-checks.integration.test.ts).
+    expect(await claimItem(fixture.workerToken, { workerId: 'host-1' })).toBeNull();
+    expect(await claimItem(fixture.workerToken, { workerId: 'host-1', targetIds: [] })).toBeNull();
     // Session users (even administrators) cannot claim.
     expect(
       (
@@ -266,15 +265,21 @@ describe.skipIf(!testDatabaseUrl)('Computeの接続確認（独立PostgreSQL）'
       status: 'finished',
       result: {
         ...passingResult,
-        gpus: Array.from({ length: 64 }, (_, index) => ({
-          index: String(index),
-          uuid: `GPU-${'u'.repeat(190)}`,
-          name: 'n'.repeat(200),
-          memoryTotalMiB: 1,
+        version: 2,
+        host: { machine: null, cpuArch: null, cpuCount: null, memoryTotalBytes: null, homeDirectory: null },
+        pythons: [],
+        directories: Array.from({ length: 40 }, (_, index) => ({
+          path: `/data/${index}/${'d'.repeat(1000)}`,
+          source: 'mount',
+          writable: true,
+          freeBytes: null,
         })),
       },
     });
     expect(oversized.status).toBe(422);
+    expect(((await oversized.json()) as { code: string }).code).toBe(
+      'target_check_result_too_large',
+    );
     // Unknown fields and free-form output are rejected by the schema.
     const rawOutput = await complete(fixture.workerToken, claimed.check.id, {
       leaseId: claimed.leaseId,

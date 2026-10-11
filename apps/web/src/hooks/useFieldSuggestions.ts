@@ -10,10 +10,18 @@ const NO_SUGGESTIONS: FieldSuggestions = { items: [] };
  * The candidates `suggest` offers for `value`, looked up once typing pauses. A newer value aborts
  * the lookup still running for an older one, so a late answer never replaces a newer one. Until
  * the new answer arrives the previous candidates stay, without their note.
+ *
+ * An empty value is looked up only with `offerWhenEmpty` (a short list worth showing before
+ * anything is typed). A change of `refreshKey` looks the same value up again, for candidates that
+ * arrive later (a directory a worker has just read).
  */
 export function useFieldSuggestions(
   value: string,
   suggest: SuggestFieldValues | undefined,
+  {
+    offerWhenEmpty = false,
+    refreshKey = 0,
+  }: { offerWhenEmpty?: boolean; refreshKey?: string | number } = {},
 ): FieldSuggestions {
   // The field definitions are rebuilt on every render; only the value decides when to look up.
   const suggestRef = useRef(suggest);
@@ -24,7 +32,7 @@ export function useFieldSuggestions(
   );
   useEffect(() => {
     const lookUp = suggestRef.current;
-    if (!lookUp || !value) {
+    if (!lookUp || (!value && !offerWhenEmpty)) {
       setAnswer(null);
       return;
     }
@@ -44,7 +52,9 @@ export function useFieldSuggestions(
       clearTimeout(timer);
       controller.abort();
     };
-  }, [value, hasSuggest]);
-  if (!answer || !value) return NO_SUGGESTIONS;
-  return answer.value === value ? answer.suggestions : { items: answer.suggestions.items };
+  }, [value, hasSuggest, offerWhenEmpty, refreshKey]);
+  if (!answer || (!value && !offerWhenEmpty)) return NO_SUGGESTIONS;
+  return answer.value === value
+    ? answer.suggestions
+    : { items: answer.suggestions.items, details: answer.suggestions.details };
 }

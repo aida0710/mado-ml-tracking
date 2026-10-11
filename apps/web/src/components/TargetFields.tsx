@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   CPU_ARCHES,
   MAX_SITE_CANCEL_COMMAND_LENGTH,
@@ -10,7 +11,7 @@ import {
 import type { FormField, FormValues } from '../types/form';
 import { FormFields } from './FormFields';
 import { JobShellEditor } from './JobShellEditor';
-import { VisibilityPicker } from './VisibilityPicker';
+import { ComputerVisibilityField } from './ComputerVisibilityField';
 import { getFieldValue } from '../lib/formValues';
 import { SITE_RUNTIME_KINDS } from '../lib/targetInput';
 import { JOB_SHELL_TEMPLATES } from '../lib/jobShellTemplates';
@@ -23,7 +24,6 @@ import {
   siteAccountModeLabels,
   siteGpuAssignmentLabels,
 } from '../i18n/siteComputers';
-import { computerVisibilityHints } from '../i18n/computers';
 import { text } from '../i18n/catalog';
 
 const MAX_PORT = 65535;
@@ -42,6 +42,7 @@ export function TargetFields({
   canAddSshOrLocal,
   allowLocal,
   launchers,
+  kindPicker,
 }: {
   values: FormValues;
   onChange: (values: FormValues) => void;
@@ -51,6 +52,8 @@ export function TargetFields({
   canAddSshOrLocal: boolean;
   allowLocal: boolean;
   launchers: Launcher[];
+  /** The kind of computer being added (the two-step dialog's), shown after the name. */
+  kindPicker?: ReactNode;
 }) {
   const isNew = !target;
   const isSite = getFieldValue(values, 'executor') === 'site';
@@ -58,8 +61,6 @@ export function TargetFields({
   const isAutomatic = getFieldValue(values, 'submissionMode') === 'automatic';
   const isSharedAccount = getFieldValue(values, 'accountMode') === 'shared';
   const launcherId = getFieldValue(values, 'launcherId');
-  // A computer from before owners serves everyone; with no one to be private for, it stays public.
-  const canChooseVisibility = !target || target.ownerUserId !== null;
   const targetFields: FormField[] = [
     { name: 'name', label: text.name, required: true },
     {
@@ -253,17 +254,8 @@ export function TargetFields({
     <>
       {isNew && !canAddSshOrLocal && <p className="notice">{text.siteComputerNotice}</p>}
       <FormFields fields={targetFields} values={values} onChange={onChange} />
-      {canChooseVisibility ? (
-        <VisibilityPicker
-          name="target-visibility"
-          legend={text.computerVisibility}
-          hints={computerVisibilityHints}
-          value={getFieldValue(values, 'visibility') === 'public' ? 'public' : 'private'}
-          onChange={(visibility) => onChange({ ...values, visibility })}
-        />
-      ) : (
-        <p className="muted">{text.ownerlessComputerVisibilityNotice}</p>
-      )}
+      {kindPicker}
+      <ComputerVisibilityField values={values} onChange={onChange} target={target} />
       {isSite && isNew && <p className="muted">{text.jobShellTemplateHint}</p>}
       <FormFields fields={descriptionFields} values={values} onChange={onChange} />
       {isSite && (

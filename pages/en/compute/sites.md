@@ -29,7 +29,7 @@ The target list on the Job screens shows only the computers you can use. Sites t
 
 ## Add a computer {#add-a-computer}
 
-1. Click **全体設定** (Global settings) in the user menu at the top right, open **コンピュータ** (Computers) in the sidebar (`/settings/computers`), and press **コンピュータを追加** (Add a computer). Global administrators choose "Site" as the **Executor**; researchers get a dialog for sites only.
+1. Click **全体設定** (Global settings) in the user menu at the top right, open **コンピュータ** (Computers) in the sidebar (`/settings/computers`), and press **コンピュータを追加** (Add a computer). Global administrators choose "Site" under **種類** (Kind); researchers get a dialog for sites only.
 2. Choose **公開範囲** (Visibility). With the default, Private, only your Jobs and those of the Service Accounts you created run. Choose Public to let others use it.
 3. Choose how Jobs are submitted.
    - Automatic: a launcher logs in to the site over SSH and submits. Enter the launcher and the connection (host, port, jump hosts, known_hosts). Check the output of `ssh-keyscan` against the host key fingerprints before pasting it as known_hosts.

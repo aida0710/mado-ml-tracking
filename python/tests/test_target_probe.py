@@ -1,26 +1,26 @@
-"""Connection checks: the fixed probe, its parsing into TargetCheckResult, and the worker loop."""
+"""Connection checks: the fixed probe and its parsing into a version 2 TargetCheckResult."""
 
 from __future__ import annotations
 
 import asyncio
 import json
+import os
+import platform
+import shutil
 import sys
 import threading
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Iterator, Sequence
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-import httpx
 import pytest
 
 from mado_tracking.errors import TransportError
 from mado_tracking.security import SecretMasker
-from mado_tracking.settings import ApiSettings
-from mado_tracking.worker.api import WorkerApi
-from mado_tracking.worker.config import WorkerSettings
-from mado_tracking.worker.service import Worker
+from mado_tracking.worker.reported_text import json_size
+from mado_tracking.worker.target_check_report import MAX_TARGET_CHECK_RESULT_BYTES, as_result_version
 from mado_tracking.worker.target_probe import (
     CONTAINER_EXEC_FLAGS,
     PROBE_SCRIPT,
@@ -33,8 +33,13 @@ from mado_tracking.worker.transport import CommandTransport, LocalTransport
 
 API_TOKEN = "mmt_test-worker-secret-value"
 SSH_KEY_PATH = "/home/worker/.ssh/id_gpu_host"
-# A missing completion must fail the test instead of hanging it.
-SCENARIO_TIMEOUT_SECONDS = 20
+EMPTY_HOST = {
+    "machine": None,
+    "cpuArch": None,
+    "cpuCount": None,
+    "memoryTotalBytes": None,
+    "homeDirectory": None,
+}
 
 
 def ssh_target(**overrides: Any) -> dict[str, Any]:
@@ -91,20 +96,40 @@ def healthy_facts(**overrides: Any) -> dict[str, Any]:
     }
 
 
+def discovery_output(*tokens: str) -> bytes:
+    """What the discovery script prints: NUL-terminated tokens."""
+    return b"".join(token.encode() + b"\0" for token in tokens)
+
+
+HEALTHY_DISCOVERY = discovery_output(
+    "machine", "x86_64",
+    "cpu_count", "32",
+    "memory_kib", "263840000",
+    "home_directory", "/home/mmt",
+    "python", "/usr/bin/python3", "3.10.12",
+    "python", "/home/mmt/.venvs/train/bin/python", "3.11.9",
+    "directory", "home", "/home/mmt", "1", "1000",
+    "directory", "mount", "/large", "0", "2000",
+    "directory", "home_child", "/home/mmt/work", "1", "",
+)  # fmt: skip
+
+
 class ScriptedSSHTransport(CommandTransport):
-    """Answers the three probe steps as a remote host would, without opening a connection."""
+    """Answers the probe steps as a remote host would, without opening a connection."""
 
     def __init__(
         self,
         *,
         identity: tuple[list[int], str] = ([3, 11, 9], "/usr/bin/python3"),
         facts: dict[str, Any] | None = None,
+        discovery: bytes = HEALTHY_DISCOVERY,
         fail_step: str | None = None,
         failure: str = "ssh: connect to host gpu-host.internal port 22: Connection refused",
     ):
         super().__init__(masker=SecretMasker([API_TOKEN]))
         self.identity = identity
         self.facts = facts if facts is not None else healthy_facts()
+        self.discovery = discovery
         self.fail_step = fail_step
         self.failure = failure
         self.commands: list[list[str]] = []
@@ -120,6 +145,8 @@ class ScriptedSSHTransport(CommandTransport):
         step = (
             "connection"
             if list(command) == ["true"]
+            else "discovery"
+            if list(command[:2]) == ["sh", "-s"]
             else "identity"
             if PYTHON_IDENTITY in command
             else "probe"
@@ -128,6 +155,8 @@ class ScriptedSSHTransport(CommandTransport):
             raise TransportError(f"Compute transport exited (255): {self.failure}")
         if step == "connection":
             return b""
+        if step == "discovery":
+            return self.discovery
         if step == "identity":
             return json.dumps([self.identity[0], self.identity[1]]).encode()
         return json.dumps(self.facts).encode()
@@ -200,6 +229,147 @@ def test_healthy_ssh_target_reports_every_item_and_offers_detected_gpus_and_runt
     probe_command = transport.commands[-1]
     assert probe_command[:3] == ["python3", "-c", PROBE_SCRIPT]
     assert probe_command[3:5] == ["/srv/mmt", "http://mmt.internal:4182/api/health"]
+
+
+def test_healthy_target_reports_its_machine_pythons_and_directory_candidates_as_version_2():
+    result = run_probe(ScriptedSSHTransport())
+    assert result["version"] == 2
+    assert result["host"] == {
+        "machine": "x86_64",
+        "cpuArch": "amd64",
+        "cpuCount": 32,
+        "memoryTotalBytes": 263840000 * 1024,
+        "homeDirectory": "/home/mmt",
+    }
+    assert result["pythons"] == [
+        {"path": "/usr/bin/python3", "version": "3.10.12"},
+        {"path": "/home/mmt/.venvs/train/bin/python", "version": "3.11.9"},
+    ]
+    assert result["directories"] == [
+        {"path": "/home/mmt", "source": "home", "writable": True, "freeBytes": 1000 * 1024},
+        {"path": "/large", "source": "mount", "writable": False, "freeBytes": 2000 * 1024},
+        {"path": "/home/mmt/work", "source": "home_child", "writable": True, "freeBytes": None},
+    ]
+
+
+def test_computer_without_python_or_work_directory_is_checked_with_the_first_discovered_python_3_11():
+    transport = ScriptedSSHTransport()
+    result = run_probe(transport, ssh_target(pythonExecutable="", workDirectory=""))
+    probe_command = transport.commands[-1]
+    # /usr/bin/python3 comes first but is 3.10; the venv's 3.11 is the one Jobs could use.
+    assert probe_command[:3] == ["/home/mmt/.venvs/train/bin/python", "-c", PROBE_SCRIPT]
+    # Writing is still tried somewhere real: the home the discovery reported.
+    assert probe_command[3] == "/home/mmt"
+    items = items_by_name(result)
+    assert items["python"]["status"] == "ok"
+    assert items["work_directory"] == {
+        "name": "work_directory",
+        "status": "skipped",
+        "code": "work_directory_not_set",
+        "detail": None,
+    }
+    assert result["workDirectoryFreeBytes"] is None
+    assert result["directories"][0]["source"] == "home"
+
+
+def test_computer_without_python_uses_an_older_python_that_answered_and_reports_it_too_old():
+    discovery = discovery_output(
+        "python", "/opt/broken/bin/python", "",
+        "python", "/usr/bin/python3", "3.9.2",
+    )  # fmt: skip
+    transport = ScriptedSSHTransport(identity=([3, 9, 2], "/usr/bin/python3"), discovery=discovery)
+    result = run_probe(transport, ssh_target(pythonExecutable=""))
+    assert transport.commands[2][0] == "/usr/bin/python3"
+    assert items_by_name(result)["python"]["code"] == "python_too_old"
+
+
+def test_computer_without_any_python_is_python_missing_but_still_offers_its_candidates():
+    discovery = discovery_output(
+        "machine", "aarch64",
+        "home_directory", "/home/mmt",
+        "directory", "home", "/home/mmt", "1", "1000",
+    )  # fmt: skip
+    transport = ScriptedSSHTransport(discovery=discovery)
+    result = run_probe(transport, ssh_target(pythonExecutable="", workDirectory=""))
+    assert [(entry["name"], entry["status"], entry["code"]) for entry in result["items"]] == [
+        ("connection", "ok", None),
+        ("python", "ng", "python_missing"),
+    ]
+    # Nothing was started with a guessed interpreter.
+    assert [command[0] for command in transport.commands] == ["true", "sh"]
+    assert result["host"]["cpuArch"] == "arm64"
+    assert result["directories"] == [
+        {"path": "/home/mmt", "source": "home", "writable": True, "freeBytes": 1000 * 1024}
+    ]
+    assert result["pythons"] == []
+
+
+def test_failed_discovery_leaves_the_candidates_empty_and_the_check_goes_on():
+    result = run_probe(ScriptedSSHTransport(fail_step="discovery"))
+    assert all(entry["status"] in {"ok", "unavailable"} for entry in result["items"])
+    assert result["host"] == EMPTY_HOST
+    assert result["pythons"] == [] and result["directories"] == []
+
+
+def test_candidates_naming_key_files_or_tokens_are_dropped_and_others_kept():
+    discovery = discovery_output(
+        "machine", f"x86_64 {API_TOKEN}",
+        "home_directory", "/home/mmt",
+        "python", "/home/mmt/mmt_0123456789abcdef/bin/python", "3.11.9",
+        "python", "/home/mmt/.venvs/train/bin/python", "3.11.9",
+        "directory", "home_child", "/home/worker/.ssh/id_gpu_host.d", "1", "",
+        "directory", "home_child", f"/home/mmt/{API_TOKEN}", "1", "",
+        "directory", "home", "/home/mmt", "1", "1000",
+    )  # fmt: skip
+    result = run_probe(ScriptedSSHTransport(discovery=discovery))
+    # A machine name that had to be masked is not reported at all.
+    assert result["host"]["machine"] is None and result["host"]["cpuArch"] is None
+    assert [python["path"] for python in result["pythons"]] == ["/home/mmt/.venvs/train/bin/python"]
+    assert [directory["path"] for directory in result["directories"]] == ["/home/mmt"]
+    serialized = json.dumps(result)
+    assert SSH_KEY_PATH not in serialized and API_TOKEN not in serialized
+
+
+def test_candidates_beyond_the_api_size_drop_directories_first_then_pythons_from_the_end():
+    # Paths of multi-byte characters: 20 Pythons alone exceed the API's 32 KiB.
+    long_part = "研究" * 400
+    pythons = [
+        token
+        for index in range(20)
+        for token in ("python", f"/home/mmt/{long_part}/{index:02d}/bin/python", "3.11.9")
+    ]
+    directories = [
+        token
+        for index in range(40)
+        for token in ("directory", "mount", f"/data/{long_part}/{index:02d}", "1", "")
+    ]
+    result = run_probe(ScriptedSSHTransport(discovery=discovery_output(*pythons, *directories)))
+    assert json_size(result) <= MAX_TARGET_CHECK_RESULT_BYTES
+    assert result["directories"] == []
+    kept = [python["path"] for python in result["pythons"]]
+    assert 0 < len(kept) < 20
+    assert kept == [f"/home/mmt/{long_part}/{index:02d}/bin/python" for index in range(len(kept))]
+
+
+def test_candidates_beyond_the_api_size_keep_every_python_while_directories_can_go():
+    long_part = "d" * 1000
+    directories = [
+        token
+        for index in range(40)
+        for token in ("directory", "mount", f"/data/{long_part}/{index:02d}", "1", "")
+    ]
+    result = run_probe(ScriptedSSHTransport(discovery=HEALTHY_DISCOVERY + discovery_output(*directories)))
+    assert json_size(result) <= MAX_TARGET_CHECK_RESULT_BYTES
+    assert len(result["pythons"]) == 2
+    # The home and the first mounts survive; the last mounts went.
+    assert result["directories"][0]["source"] == "home"
+    assert 3 < len(result["directories"]) < 43
+
+
+def test_version_1_for_old_apis_has_no_setup_candidates():
+    result = as_result_version(run_probe(ScriptedSSHTransport()), 1)
+    assert result["version"] == 1
+    assert set(result) == {"version", "items", "gpus", "runtimeKinds", "workDirectoryFreeBytes"}
 
 
 def test_missing_nvidia_smi_old_python_and_denied_docker_socket_are_ng_without_guessed_values():
@@ -305,6 +475,12 @@ def test_failed_steps_report_codes_and_never_the_transport_error_text(fail_step,
     serialized = json.dumps(result)
     assert SSH_KEY_PATH not in serialized and API_TOKEN not in serialized
     assert result["gpus"] is None and result["runtimeKinds"] == []
+    assert result["version"] == 2
+    if fail_step == "connection":
+        assert result["host"] == EMPTY_HOST and result["pythons"] == [] and result["directories"] == []
+    else:
+        # Once connected, the candidates the computer reported are kept.
+        assert result["host"]["homeDirectory"] == "/home/mmt"
 
 
 def test_details_naming_key_files_are_dropped_and_tokens_are_masked():
@@ -330,6 +506,7 @@ def test_missing_ssh_key_on_the_worker_fails_the_check_without_connecting(tmp_pa
     assert result["items"] == [
         {"name": "connection", "status": "ng", "code": "ssh_configuration", "detail": None}
     ]
+    assert result["version"] == 2 and result["host"] == EMPTY_HOST
     assert str(tmp_path) not in json.dumps(result)
 
 
@@ -388,101 +565,39 @@ def test_local_transport_runs_the_real_probe_on_this_host(tmp_path: Path, health
     assert "python" in result["runtimeKinds"]
     # Whatever this host has, GPU values are either nvidia-smi rows or absent.
     assert result["gpus"] is None or all(gpu["uuid"] for gpu in result["gpus"])
+    assert result["version"] == 2
+    assert result["host"]["machine"] == platform.machine()
+    assert result["host"]["homeDirectory"] == os.environ["HOME"]
 
 
-class TargetCheckServer:
-    def __init__(self, claimed: dict[str, Any]):
-        self.claimed = claimed
-        self.target_check_claims: list[dict[str, Any]] = []
-        self.completions: list[dict[str, Any]] = []
-        self.completed = asyncio.Event()
-
-    def serve(self, request: httpx.Request) -> httpx.Response:
-        body = json.loads(request.content)
-        path = request.url.path
-        if path.endswith("/worker/target-checks/claim"):
-            self.target_check_claims.append(body)
-            item = self.claimed if len(self.target_check_claims) == 1 else None
-            return httpx.Response(200, json={"item": item})
-        if path.endswith("/complete") and "/target-checks/" in path:
-            self.completions.append(body)
-            self.completed.set()
-            return httpx.Response(200, json={**self.claimed["check"], "status": body["status"]})
-        if path.endswith("/resume"):
-            return httpx.Response(200, json={"items": []})
-        return httpx.Response(200, json={"item": None})
-
-
-def worker_for(server: TargetCheckServer, tmp_path: Path, target_ids: tuple[str, ...]) -> Worker:
-    settings = WorkerSettings(
-        api=ApiSettings("http://localhost/api", API_TOKEN),
-        worker_id="probe-worker",
-        target_ids=target_ids,
-        state_directory=tmp_path / "state",
-        allow_local_executor=True,
-        poll_seconds=0.01,
-    )
-    api = WorkerApi(url=settings.api.url, token=API_TOKEN, transport=httpx.MockTransport(server.serve))
-    return Worker(settings, api=api)
-
-
-def run_until(worker: Worker, condition: Callable[[], Any]) -> None:
-    async def scenario() -> None:
-        task = asyncio.create_task(worker.run_forever())
-        try:
-            async with asyncio.timeout(SCENARIO_TIMEOUT_SECONDS):
-                await condition()
-        finally:
-            worker.stopping.set()
-            await task
-
-    asyncio.run(scenario())
-
-
-def test_idle_worker_claims_a_check_for_its_target_and_reports_the_probe_result(tmp_path: Path):
+def test_local_computer_being_set_up_is_checked_with_a_python_found_on_it(
+    tmp_path: Path, health_url: str, monkeypatch: pytest.MonkeyPatch
+):
+    home = tmp_path / "home"
+    (home / "experiments").mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(home))
+    transport = LocalTransport(allow_local_executor=True, masker=SecretMasker([API_TOKEN]))
     target = {
         "id": str(uuid4()),
         "executor": "local",
-        "workDirectory": str(tmp_path / "work"),
-        "pythonExecutable": sys.executable,
+        "workDirectory": "",
+        "pythonExecutable": "",
         "gpuIds": [],
         "sshKeyPath": "",
         "knownHostsPath": "",
     }
-    claimed = {
-        "check": {"id": str(uuid4()), "targetId": target["id"]},
-        "leaseId": str(uuid4()),
-        "target": target,
-    }
-    server = TargetCheckServer(claimed)
-    worker = worker_for(server, tmp_path, (target["id"],))
-    run_until(worker, server.completed.wait)
-    assert server.target_check_claims[0] == {"workerId": "probe-worker", "targetIds": [target["id"]]}
-    [completion] = server.completions
-    assert completion["leaseId"] == claimed["leaseId"]
-    assert completion["status"] == "finished"
-    items = items_by_name(completion["result"])
-    assert items["connection"]["status"] == "ok"
+    result = asyncio.run(
+        probe_target(target, transport=transport, health_url=health_url, masker=SecretMasker([API_TOKEN]))
+    )
+    items = items_by_name(result)
+    path_python = shutil.which("python3")
+    assert path_python is not None
     assert items["python"]["status"] == "ok"
-    assert API_TOKEN not in json.dumps(completion)
-
-
-def test_worker_without_target_ids_never_polls_for_checks(tmp_path: Path):
-    server = TargetCheckServer({"check": {}, "leaseId": "", "target": {}})
-    worker = worker_for(server, tmp_path, ())
-    # Several idle loop iterations, each of which would poll for checks if it were enabled.
-    idle_iterations = 3
-    claims_seen = asyncio.Event()
-    job_claims = 0
-    original_claim = worker.api.claim
-
-    async def counting_claim(*arguments: Any, **keywords: Any) -> Any:
-        nonlocal job_claims
-        job_claims += 1
-        if job_claims >= idle_iterations:
-            claims_seen.set()
-        return await original_claim(*arguments, **keywords)
-
-    worker.api.claim = counting_claim  # type: ignore[method-assign]
-    run_until(worker, claims_seen.wait)
-    assert server.target_check_claims == []
+    assert items["python"]["detail"].endswith(path_python)
+    assert items["work_directory"]["code"] == "work_directory_not_set"
+    home_candidate, *other_candidates = result["directories"]
+    assert home_candidate["path"] == str(home) and home_candidate["source"] == "home"
+    experiments = {"path": str(home / "experiments"), "source": "home_child", "writable": True}
+    assert {**experiments, "freeBytes": None} in other_candidates
+    # The writing check in the home leaves nothing behind.
+    assert sorted(path.name for path in home.iterdir()) == ["experiments"]

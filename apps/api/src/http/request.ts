@@ -36,6 +36,12 @@ export async function jsonBody<T>(context: ApiContext, schema: z.ZodType<T>): Pr
   return parse(schema, body);
 }
 
+/** A body the client may leave out entirely; no body is read as `{}`. */
+export async function optionalJsonBody<T>(context: ApiContext, schema: z.ZodType<T>): Promise<T> {
+  if (!(await context.req.raw.clone().text()).trim()) return parse(schema, {});
+  return jsonBody(context, schema);
+}
+
 export function uuidParam(context: ApiContext, name: string): string {
   return parse(uuidSchema, context.req.param(name));
 }

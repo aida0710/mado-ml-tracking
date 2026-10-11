@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import type { z } from 'zod';
 import type { RegistryService } from '../services/registryService.js';
 import type { DatasetContentService } from '../services/datasetContentService.js';
 import {
@@ -29,18 +28,13 @@ import {
 import { requestMetadata } from '../http/requestMetadata.js';
 import {
   jsonBody,
+  optionalJsonBody,
   parse,
   principal,
   uuidParam,
   type ApiContext,
   type ApiEnvironment,
 } from '../http/request.js';
-
-// DELETE bodies are optional: a removal without a reason may send no body at all.
-async function optionalJsonBody<T>(context: ApiContext, schema: z.ZodType<T>): Promise<T> {
-  if (!(await context.req.raw.clone().text()).trim()) return parse(schema, {});
-  return jsonBody(context, schema);
-}
 
 function datasetVersionLocation(context: ApiContext) {
   return {
@@ -130,6 +124,7 @@ export function registryRoutes(
     );
   });
   routes.delete('/:p/models/:id/aliases/:alias', async (context) => {
+    // DELETE bodies are optional: a removal without a reason may send no body at all.
     const removal = await optionalJsonBody(context, modelAliasRemovalSchema);
     await registry.removeAlias(principal(context), uuidParam(context, 'p'), {
       modelId: uuidParam(context, 'id'),

@@ -1,4 +1,5 @@
 import type { ComputeTargetVisibility, ProjectVisibility } from '@mmt/contracts';
+import { OptionPicker } from './OptionPicker';
 import { VisibilityLabel } from './VisibilityLabel';
 
 type Visibility = ProjectVisibility | ComputeTargetVisibility;
@@ -20,23 +21,16 @@ export function VisibilityPicker({
   onChange: (visibility: Visibility) => void;
 }) {
   return (
-    <fieldset className="choice-picker">
-      <legend>{legend}</legend>
-      {VISIBILITIES.map((visibility) => (
-        <label key={visibility} className="choice-picker-option">
-          <input
-            type="radio"
-            name={name}
-            value={visibility}
-            checked={visibility === value}
-            onChange={() => onChange(visibility)}
-          />
-          <span className="choice-picker-text">
-            <VisibilityLabel visibility={visibility} />
-            <span className="muted">{hints[visibility]}</span>
-          </span>
-        </label>
-      ))}
-    </fieldset>
+    <OptionPicker
+      name={name}
+      legend={legend}
+      options={VISIBILITIES.map((visibility) => ({
+        value: visibility,
+        label: <VisibilityLabel visibility={visibility} />,
+        hint: hints[visibility],
+      }))}
+      value={value}
+      onChange={onChange}
+    />
   );
 }

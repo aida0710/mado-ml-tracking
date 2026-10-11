@@ -34,7 +34,7 @@ const jaSidebar = [
   ] },
   { text: "実行環境", items: [
     { text: "コンピュータと公開範囲", link: "/compute/computers" },
-    { text: "Compute target", link: "/compute/targets" },
+    { text: "SSH・Localのコンピュータ", link: "/compute/targets" },
     { text: "外部のコンピュータ（site）", link: "/compute/sites" },
     { text: "workerの導入", link: "/compute/worker" },
   ] },

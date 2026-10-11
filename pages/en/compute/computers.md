@@ -51,10 +51,12 @@ Anyone can add their own computers. Whoever adds a computer becomes its owner.
 | Other users (researchers) | Site only |
 
 1. Under **コンピュータ** in the global settings, click **コンピュータを追加** (Add a computer).
-2. Enter a name and choose **公開範囲** (Visibility). The default is Private. Global administrators also choose the kind in **Executor**.
-3. Fill in the settings for the kind and click **保存** (Save). For SSH and Local, see [Compute targets](/en/compute/targets#register-a-target); for sites, see [External computers (sites)](/en/compute/sites#add-a-computer).
+2. Enter a name and choose **公開範囲** (Visibility). The default is Private. Global administrators also choose **種類** (Kind): SSH or Site, plus Local in development mode.
+3. Fill in the settings for the kind and save.
+   - SSH and Local are added in two steps. In step 1, **接続** (Connection), enter the destination, choose the worker that checks it, and press **接続を確認して次へ** (Check the connection and continue). In step 2, **接続後の設定** (Settings after connecting), review the working directory and the other settings and press **保存** (Save). See [Compute targets](/en/compute/targets#register-a-target).
+   - A site is added on one screen: fill in the settings and press **保存** (Save). See [External computers (sites)](/en/compute/sites#add-a-computer).
 
-After saving, the computer's details open below the list.
+After saving, the computer's details open below the list. An SSH or Local computer is listed, disabled, as soon as step 1 is done, and becomes usable when you save step 2 with **有効** (Enabled) on.
 
 ## Visibility {#visibility}
 

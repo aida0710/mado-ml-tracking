@@ -38,15 +38,30 @@
 .choice-picker-option:has(.choice-picker-text) input {
   margin-top: 2px;
 }
+/* A long explanation must not squeeze the radio button. */
+.choice-picker-option input {
+  flex: none;
+}
+.choice-picker > .field-hint {
+  margin-top: 6px;
+}
 .choice-picker-text {
   display: grid;
   gap: 2px;
   min-width: 0;
   font-size: 12px;
 }
+.choice-picker-label,
 .choice-picker-text .visibility-label {
   color: var(--text);
   font-weight: 600;
+}
+
+/* What to enter in a field, under it (FormField.hint). */
+.field-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
 }
 
 /* A text field with candidates under it (SuggestionInput). The list stays in the flow of the form,
@@ -78,6 +93,17 @@
 .suggestion-list li:hover,
 .suggestion-list li[aria-selected='true'] {
   background: var(--surface-hover);
+}
+/* A candidate with a short fact after it (a Python's version, a directory's free space). */
+.suggestion-list li:has(.suggestion-detail) {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+.suggestion-detail {
+  flex: none;
+  color: var(--muted);
+  font-family: var(--font);
 }
 .suggestion-note {
   margin: 0;
