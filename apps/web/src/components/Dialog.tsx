@@ -58,7 +58,14 @@ export function Dialog({
     >
       <header>
         <h2 id={titleId}>{title}</h2>
-        <button className="icon-button" onClick={onClose} disabled={busy} aria-label={text.close}>
+        {/* type="button": a dialog rendered inside a form would otherwise submit that form. */}
+        <button
+          type="button"
+          className="icon-button"
+          onClick={onClose}
+          disabled={busy}
+          aria-label={text.close}
+        >
           <X size={18} />
         </button>
       </header>

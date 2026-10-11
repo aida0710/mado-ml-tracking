@@ -1,7 +1,6 @@
-import { useEffect, useId, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, type KeyboardEvent } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { Upload } from 'lucide-react';
-import { ArtifactUploadDialog } from '../dialogs/ArtifactUploadDialog';
 import { useArtifactChoices } from '../hooks/useArtifactChoices';
 import { formatBytes, formatDate } from '../lib/format';
 import { isComposingKey } from '../lib/imeComposition';
@@ -25,6 +24,10 @@ function ArtifactSummary({ artifact }: { artifact: Artifact }) {
  * by saved path, by pasting its id or `artifact://<id>` (taken as soon as it is found), or by
  * uploading a file. The picked Artifact replaces the search with［選び直す］, as UserPicker does.
  * `input` is the search field's text, kept by the form so it can tell an unfinished search apart.
+ *
+ * The field sits inside its form, so it only asks for the upload (`onRequestUpload`): the form's
+ * dialog renders ArtifactUploadDialog beside itself. Rendered here, the upload dialog's own submit
+ * would also reach the outer form (React passes events up the component tree) and save it.
  */
 export function ArtifactPickerField({
   label,
@@ -35,6 +38,7 @@ export function ArtifactPickerField({
   onInputChange,
   selected,
   onSelect,
+  onRequestUpload,
 }: {
   label: string;
   hint: string;
@@ -44,11 +48,11 @@ export function ArtifactPickerField({
   onInputChange: (input: string) => void;
   selected: Artifact | null;
   onSelect: (artifact: Artifact | null) => void;
+  onRequestUpload: () => void;
 }) {
   const inputId = useId();
   const hintId = useId();
   const resultsId = useId();
-  const [isUploading, setIsUploading] = useState(false);
   const choices = useArtifactChoices({ projectId, runId, input });
   const referenced = choices.referenceId ? choices.artifacts[0] : undefined;
   useEffect(() => {
@@ -128,22 +132,11 @@ export function ArtifactPickerField({
         )}
       </div>
       <div>
-        <button type="button" className="button small" onClick={() => setIsUploading(true)}>
+        <button type="button" className="button small" onClick={onRequestUpload}>
           <Upload size={14} />
           {text.uploadArtifact}
         </button>
       </div>
-      {isUploading && (
-        <ArtifactUploadDialog
-          projectId={projectId}
-          runId={null}
-          onClose={() => setIsUploading(false)}
-          onSaved={(artifact) => {
-            setIsUploading(false);
-            onSelect(artifact);
-          }}
-        />
-      )}
     </div>
   );
 }

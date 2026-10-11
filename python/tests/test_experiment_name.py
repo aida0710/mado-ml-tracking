@@ -19,7 +19,8 @@ class FakeExperimentApi:
 
     ``deleted_names`` keep their name in the API (POST answers 409) but are not listed, like an
     MLflow soft-deleted Experiment. ``rival_names`` are created by someone else between this
-    client's lookup and its POST.
+    client's lookup and its POST. Like the API, a POST saves the name without the white space at
+    its ends; ``posted_names`` keeps the names as they were sent.
     """
 
     def __init__(
@@ -36,6 +37,7 @@ class FakeExperimentApi:
         self.create_status = create_status
         self.runs: list[dict] = []
         self.calls: list[tuple[str, str]] = []
+        self.posted_names: list[str] = []
 
     def client(self) -> Client:
         return Client(api_url="http://mmt.test", api_token=TOKEN, transport=httpx.MockTransport(self.handle))
@@ -65,7 +67,9 @@ class FakeExperimentApi:
             return httpx.Response(200, json=run)
         raise AssertionError(f"Unexpected request {request.method} {path}")
 
-    def create_experiment(self, name: str) -> httpx.Response:
+    def create_experiment(self, posted_name: str) -> httpx.Response:
+        self.posted_names.append(posted_name)
+        name = posted_name.strip()
         if self.create_status is not None:
             return httpx.Response(self.create_status, json={"error": "refused", "code": "forbidden"})
         if name in self.rival_names:
@@ -180,12 +184,35 @@ def test_the_module_start_run_passes_the_name_through(monkeypatch):
         assert run.entity["experimentId"] == "named"
 
 
-def test_an_empty_name_is_refused_without_creating_an_experiment():
+@pytest.mark.parametrize("blank_name", ["", " ", "\u3000", "\t\n"])
+def test_a_name_of_only_white_space_is_refused_before_any_request(blank_name):
     api = FakeExperimentApi()
 
     with api.client() as client, pytest.raises(ConfigurationError, match="must not be empty"):
-        client.start_run(project_id=PROJECT_ID, experiment_name=" ", name="one")
+        client.start_run(project_id=PROJECT_ID, experiment_name=blank_name, name="one")
 
+    assert api.calls == []
+
+
+def test_a_name_with_spaces_at_its_ends_is_created_once_and_reused_like_the_api_saved_it():
+    api = FakeExperimentApi()
+
+    with api.client() as client:
+        first = client.start_run(project_id=PROJECT_ID, experiment_name=" sweep-a ", name="one")
+        second = client.start_run(project_id=PROJECT_ID, experiment_name="sweep-a ", name="two")
+
+    assert api.posted_names == ["sweep-a"]
+    assert [item["name"] for item in api.experiments] == ["sweep-a"]
+    assert first.entity["experimentId"] == second.entity["experimentId"] == api.experiments[0]["id"]
+
+
+def test_a_name_with_a_full_width_space_at_its_end_finds_the_existing_experiment():
+    api = FakeExperimentApi(experiments=[{"id": "existing", "name": "音声認識-baseline"}])
+
+    with api.client() as client:
+        run = client.start_run(project_id=PROJECT_ID, experiment_name="音声認識-baseline\u3000", name="one")
+
+    assert run.entity["experimentId"] == "existing"
     assert api.experiment_posts() == 0
 
 
