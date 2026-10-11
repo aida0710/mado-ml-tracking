@@ -121,16 +121,17 @@ openssl rand -base64 32
 
 | 変数 | 既定 | 内容 |
 | --- | --- | --- |
-| `MMT_API_URL` | なし（必須） | API serverのURL。Compute targetからも届くURLにする |
+| `MMT_API_URL` | なし（必須） | API serverのURL。コンピュータからも届くURLにする |
 | `MMT_API_TOKEN` | なし（必須） | Service Accountのtoken |
 | `MMT_API_TOKEN_FILE` | なし | tokenを読むファイル（コンテナ用）。`MMT_API_TOKEN`があればそちらを使う |
 | `MMT_WORKER_ID` | なし（必須） | workerのID。再起動をまたいで同じ値にする |
-| `MMT_WORKER_TARGET_IDS` | なし（許可されたすべて） | 担当するCompute targetのID（カンマ区切り） |
+| `MMT_WORKER_TARGET_IDS` | なし（許可されたすべて） | 担当するコンピュータのID（カンマ区切り）。［接続に使うworker］で選ばれた接続確認は、これに関係なく受け取る |
+| `MMT_WORKER_SSH_DIR` | なし | `~/.ssh`に加えて、SSH鍵とknown_hostsの候補を探すディレクトリ。パスだけを報告する（[SSH鍵の候補を報告する](/compute/worker#ssh-key-candidates)） |
 | `MMT_WORKER_STATE_DIR` | `~/.local/state/mado-tracking-worker/<IDのハッシュ>` | 実行中のJobの記録を置くディレクトリ |
 | `MMT_WORKER_MAX_OUTPUT_FILES` | `10000` | 1つのJobで回収する出力ファイルの上限。1〜1000000 |
 | `MMT_ALLOW_LOCAL_EXECUTOR` | なし | `true`でlocal executorを使う（開発用。API側の許可も要る） |
 
-Docker composeで動かす場合は、`MMT_WORKER_TOKEN_FILE`、`MMT_WORKER_SSH_DIR`、`MMT_WORKER_UID`、`MMT_WORKER_GID`、`MMT_WORKER_API_URL`も使います（[worker](/compute/worker)）。
+Docker composeで動かす場合は、`MMT_WORKER_TOKEN_FILE`、`MMT_WORKER_SSH_DIR`、`MMT_WORKER_UID`、`MMT_WORKER_GID`、`MMT_WORKER_API_URL`も使います（[worker](/compute/worker#docker-compose)）。composeの`MMT_WORKER_SSH_DIR`は、コンテナの`~/.ssh`へmountするホストのディレクトリです。
 
 ## Python SDK
 

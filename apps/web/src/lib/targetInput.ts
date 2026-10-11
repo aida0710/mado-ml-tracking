@@ -38,7 +38,6 @@ export const SITE_RUNTIME_KINDS: readonly ExecutionRuntimeKind[] = [
 // Supercomputers commonly offer Apptainer; a new site starts with it selected.
 export const DEFAULT_SITE_RUNTIME_KINDS: ExecutionRuntimeKind[] = ['apptainer'];
 const SSH_DEFAULT_PORT = 22;
-const DEFAULT_PYTHON_EXECUTABLE = 'python3';
 const DEFAULT_MAX_CONCURRENT_JOBS = 1;
 /**
  * The ComputeTarget fields a site keeps empty: its settings hold the connection and accounts, and
@@ -171,7 +170,8 @@ export function newTargetFormValues({ canAddSshOrLocal }: { canAddSshOrLocal: bo
     sshKeyPath: '',
     knownHostsPath: '',
     workDirectory: '',
-    pythonExecutable: DEFAULT_PYTHON_EXECUTABLE,
+    // Filled in from the connection check (a Python it found), or typed after it.
+    pythonExecutable: '',
     runtimeKinds: ['python'],
     siteRuntimeKinds: DEFAULT_SITE_RUNTIME_KINDS,
     gpuIds: '',

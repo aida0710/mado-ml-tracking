@@ -10,6 +10,7 @@ from pathlib import Path
 from ..errors import ConfigurationError
 from ..settings import ApiSettings
 from .container_outputs import DEFAULT_MAX_OUTPUT_FILES
+from .ssh_files import default_ssh_directories
 
 # Poll frequently enough to respond to cancellation without excessive API/SSH requests.
 DEFAULT_HEARTBEAT_SECONDS = 5.0
@@ -35,6 +36,9 @@ class WorkerSettings:
     parallel_jobs: int = DEFAULT_PARALLEL_JOBS
     install_dependencies: bool = True
     max_output_files: int = DEFAULT_MAX_OUTPUT_FILES
+    # Where workerInfo looks for the SSH key and known_hosts candidates it reports (~/.ssh and
+    # MMT_WORKER_SSH_DIR); none outside from_environment.
+    ssh_directories: tuple[Path, ...] = ()
 
     @classmethod
     def from_environment(cls) -> WorkerSettings:
@@ -58,6 +62,7 @@ class WorkerSettings:
             state_directory=state_directory,
             allow_local_executor=os.environ.get("MMT_ALLOW_LOCAL_EXECUTOR") == "true",
             max_output_files=_max_output_files_from_environment(),
+            ssh_directories=default_ssh_directories(),
         )
 
 

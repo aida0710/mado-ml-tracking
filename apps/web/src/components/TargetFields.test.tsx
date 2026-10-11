@@ -33,8 +33,12 @@ function renderFields({
   );
 }
 
+// The checked radio of the visibility picker, whatever order React writes its attributes in.
 const checkedVisibility = (html: string) =>
-  html.match(/<input type="radio" name="target-visibility" checked="" value="(\w+)"/)?.[1];
+  html
+    .match(/<input[^>]*name="target-visibility"[^>]*>/g)
+    ?.find((input) => input.includes('checked=""'))
+    ?.match(/value="(\w+)"/)?.[1];
 
 describe('コンピュータの追加・編集の項目', () => {
   it('研究者の追加はsiteだけで、Executorは選ばず、公開範囲（既定Private）・雛形・job shellを出す', () => {

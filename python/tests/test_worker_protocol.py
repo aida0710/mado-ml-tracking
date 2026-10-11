@@ -8,10 +8,14 @@ import httpx
 import pytest
 
 from mado_tracking.errors import ApiError
-from mado_tracking.worker.api import WorkerApi, worker_info
+from mado_tracking.worker.api import WorkerApi
 from mado_tracking.worker.host_state import read_state, write_json
 from mado_tracking.worker.journal import JobJournal
 from mado_tracking.worker.service import Worker
+from mado_tracking.worker.worker_info import describe_host
+
+# What a worker without SSH directories (WorkerApi's default) reports about itself.
+WORKER_INFO_WITHOUT_SSH_FILES = {**describe_host(), "sshFiles": {"keyPaths": [], "knownHostsPaths": []}}
 
 
 def test_empty_target_filter_is_omitted_and_optional_completion_fields_are_omitted(worker_job):
@@ -64,7 +68,7 @@ def test_claim_sends_monitored_job_ids_and_target_filter(worker_job):
             "workerId": "worker",
             "targetIds": [worker_job.target["id"]],
             "activeJobIds": [worker_job.id],
-            "workerInfo": worker_info(),
+            "workerInfo": WORKER_INFO_WITHOUT_SSH_FILES,
         }
     ]
 

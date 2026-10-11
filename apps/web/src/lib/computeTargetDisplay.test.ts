@@ -60,6 +60,9 @@ describe('Compute targetの表示', () => {
 
   it('選択肢ではsiteに投入方式を添える', () => {
     expect(targetChoiceLabel(computeTarget)).toBe('Container worker · worker.invalid');
+    expect(targetChoiceLabel({ ...computeTarget, executor: 'local', host: '' })).toBe(
+      'Container worker · workerのホスト上',
+    );
     expect(targetChoiceLabel(siteTarget)).toBe('Supercomputer · Site（手動投入）');
     expect(targetChoiceLabel({ ...siteTarget, submissionMode: 'automatic' })).toBe(
       'Supercomputer · Site（自動投入）',

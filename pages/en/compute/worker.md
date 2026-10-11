@@ -84,13 +84,13 @@ loginctl enable-linger "$USER"
 | --- | --- | --- |
 | `--api-url` | `https://tracking.example.internal` | URL of the API server |
 | `--worker-id` | `gpu-host-1` | Worker name. Keep it the same across restarts and upgrades. Letters, digits, `.`, `_`, `-`, up to 64 characters |
-| `--target-ids` | target ID | IDs of the Compute targets this worker handles, separated by commas |
+| `--target-ids` | target ID | IDs of the Compute targets this worker handles, separated by commas. Without it, the worker processes Jobs of every target its token and the API allow |
 | `--token-file` | `/path/to/token` | Read the token from a file. Without it, the terminal asks for it |
 | `--state-dir` | | Directory for the records of running Jobs. Usually omitted |
 
 The command asks for the token without echoing it. Never put the token on the command line.
 
-`--target-ids` is optional, but a worker without it never picks up connection checks ([Compute targets](/en/compute/targets#check-the-connection)). To find a target's ID, open `https://tracking.example.internal/api/targets` (the web URL followed by `/api/targets`) in a browser where you are logged in; each target's `id` is listed.
+`--target-ids` is optional; leave it out when you install the worker before adding targets. A worker without it still picks up connection checks and directory reads when it is chosen in **接続に使うworker** (Worker used for the connection) under **コンピュータを追加** (Add a computer) ([Compute targets](/en/compute/targets#step-1-connection)). Checks that name no worker (asked from older screens or the API) are picked up only by workers whose `--target-ids` includes the target. To find a target's ID, open `https://tracking.example.internal/api/targets` (the web URL followed by `/api/targets`) in a browser where you are logged in; each target's `id` is listed.
 
 `loginctl enable-linger` keeps user units running after logout.
 
@@ -119,9 +119,9 @@ journalctl --user -u mado-tracking-worker@gpu-host-1 -f
 | `status` | Unit state, worker lock, and retained Jobs. Exit code 3 when stopped |
 | `journalctl` | Worker log |
 
-Finally, check that **Workers** in Compute shows the worker as online with its version and host name.
+Finally, check that **Workers** in Compute shows the worker as online with its version and host name. Global administrators can also open **コンピュータを追加** under コンピュータ in the global settings and check that the worker is offered in **接続に使うworker**.
 
-## 4. Upgrade
+## 4. Upgrade {#upgrade}
 
 ```bash
 git -C ~/mado-ml-tracking pull
@@ -137,6 +137,8 @@ To install a version from an internal package index, use `--version 0.2.0` inste
 - If `pip` fails, the unit is not restarted.
 - If the unit is stopped but a worker started by hand holds the state directory, nothing is done.
 
+Reporting SSH key candidates and reading target directories came with a new version of the worker. Older workers are not offered in **接続に使うworker** under **コンピュータを追加**, so upgrade them. Until then they still process Jobs and pick up connection checks of the targets in `--target-ids`.
+
 ### Replace the token
 
 Before the token expires, issue a new one, save it to a file, and run `install` again.
@@ -151,6 +153,26 @@ rm ~/worker-token
 ```
 
 Revoke the old token in **Projectのtoken一覧** (Project tokens). Disabling the Service Account with **無効化** (Disable) stops all of its tokens at the next request.
+
+## Report SSH key candidates {#ssh-key-candidates}
+
+The worker reports the paths of the SSH private keys and known_hosts files on its machine to the API server. They are offered as candidates for **SSH鍵のパス** (SSH key path) and **known_hostsのパス** (known_hosts path) under **コンピュータを追加** ([Compute targets](/en/compute/targets#step-1-connection)).
+
+- Only paths are reported. The worker never reads or sends the contents or fingerprints of keys and known_hosts.
+- It looks directly in `~/.ssh`. When the environment variable `MMT_WORKER_SSH_DIR` names a directory, it looks directly in that directory too.
+- Key candidates are files named `id_*`, `*.pem`, or `*.key`, and files only their owner can read (mode 600 and the like). `.pub`, `known_hosts*`, `authorized_keys*`, `config`, and similar files are excluded. known_hosts candidates are files whose names start with `known_hosts`.
+- Up to 50 of each. The worker looks again every 60 seconds, so a new key appears as a candidate within about a minute.
+
+To keep keys outside `~/.ssh`, add a `MMT_WORKER_SSH_DIR` line to the settings file written by `install` and restart the worker. Replace `/srv/mmt-keys` with the directory holding the keys.
+
+```bash
+echo 'MMT_WORKER_SSH_DIR=/srv/mmt-keys' >> ~/.config/mado-tracking-worker/gpu-host-1.env
+systemctl --user restart mado-tracking-worker@gpu-host-1
+```
+
+For a system unit, add it to `/etc/mado-tracking-worker/<worker-id>.env` and restart with `sudo systemctl restart mado-tracking-worker@<worker-id>`. Running `install` again rewrites the settings file, so add the line again afterwards.
+
+With Docker Compose, `MMT_WORKER_SSH_DIR` means something else: the host directory mounted at the container's `~/.ssh` ([Run with Docker Compose](#docker-compose)).
 
 ## Run by hand
 
@@ -168,7 +190,7 @@ export MMT_API_TOKEN
 
 `--once` processes one Job and exits. A second worker started with the same state directory is refused.
 
-## Run with Docker Compose
+## Run with Docker Compose {#docker-compose}
 
 A worker that only uses SSH targets can also run with the repository's Docker Compose file.
 
@@ -178,7 +200,7 @@ docker compose --profile worker run --rm worker doctor
 ```
 
 - Token: `./var/worker-token` (change with `MMT_WORKER_TOKEN_FILE`) is passed as a Docker secret.
-- Key and known_hosts: `./var/worker-ssh` (`MMT_WORKER_SSH_DIR`) is mounted read-only at `/home/worker/.ssh`. Register the target's key and known_hosts paths as paths inside the container.
+- Key and known_hosts: `./var/worker-ssh` (`MMT_WORKER_SSH_DIR`) is mounted read-only at `/home/worker/.ssh`. Register the target's key and known_hosts paths as paths inside the container. The candidates the worker reports are also paths inside the container (`/home/worker/.ssh/...`).
 - State: the `worker-state` volume. Removing it loses running Jobs.
 
 ## The code receives a Job-scoped token

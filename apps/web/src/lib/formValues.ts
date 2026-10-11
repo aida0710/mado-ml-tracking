@@ -17,6 +17,10 @@ export const getSelectedValues = (values: FormValues, name: string): string[] =>
   Array.isArray(values[name]) ? (values[name] as string[]) : [];
 export const getOptionalValue = (values: FormValues, name: string) =>
   getFieldValue(values, name).trim() || undefined;
+/** `values` with `value` added or removed (a checkbox of a list), keeping the order of the rest. */
+export function toggleValue<T extends string>(values: readonly T[], value: T): T[] {
+  return values.includes(value) ? values.filter((entry) => entry !== value) : [...values, value];
+}
 export const splitLines = (value: string) =>
   value
     .split(/\r?\n/)

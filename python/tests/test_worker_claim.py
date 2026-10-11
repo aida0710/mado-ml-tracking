@@ -50,6 +50,9 @@ class ClaimServer:
             )
         body = json.loads(request.content)
         path = request.url.path
+        if "/target-checks/" in path:
+            # Every worker asks for connection checks and directory listings; none are queued here.
+            return httpx.Response(200, json={"item": None})
         self.calls.append((path, body))
         active = [
             payload
@@ -257,7 +260,11 @@ def test_claim_and_resume_report_installed_version_and_hostname():
             await api.close()
 
     asyncio.run(scenario())
-    expected = {"version": metadata.version("mado-tracking"), "hostname": socket.gethostname()}
+    expected = {
+        "version": metadata.version("mado-tracking"),
+        "hostname": socket.gethostname(),
+        "sshFiles": {"keyPaths": [], "knownHostsPaths": []},
+    }
     assert [(path, body["workerInfo"]) for path, body in requests] == [
         ("resume", expected),
         ("claim", expected),

@@ -59,6 +59,8 @@ export const auditActionLabels: Record<string, string> = {
   'project.purge': 'プロジェクトの完全な削除',
   'compute_target.create': 'コンピュータの追加',
   'compute_target.update': 'コンピュータの変更',
+  'compute_target.check': 'コンピュータの接続確認の依頼',
+  'compute_target.directory_listing': 'コンピュータのディレクトリの読み取りの依頼',
   'project.member.set': 'メンバーの権限変更',
   'project.member.delete': 'メンバーの直接付与の削除',
   'project.group_binding.set': 'groupへの権限付与',

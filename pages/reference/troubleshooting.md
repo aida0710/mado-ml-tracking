@@ -129,7 +129,8 @@ journalctl --user -u mado-tracking-worker@gpu-host-1 -f
 
 - `doctor`がtokenのscopeのerrorを出す場合は、Service Accountのtokenに`read`、`worker:execute`、`artifacts:write`があるかを確かめます。
 - tokenが401になる場合は、期限切れか、Service Accountが無効になっていないかを確かめます。新しいtokenは`mado-tracking-worker install --token-file`で差し替えます。
-- Compute targetの「接続を確認」は、`MMT_WORKER_TARGET_IDS`にそのtargetを含むworkerだけが行います。
+- コンピュータの接続確認は、［コンピュータを追加］や［再確認］の［接続に使うworker］で選んだworkerが行います。workerを選んでいない確認は、`MMT_WORKER_TARGET_IDS`にそのコンピュータを含むworkerだけが行います。
+- ［接続に使うworker］にworkerが出ないときは、workerがオンラインか、新しい版か（`mado-tracking-worker upgrade`）を確かめます（[SSH・Localのコンピュータ](/compute/targets#step-1-connection)）。
 
 詳しくは[worker](/compute/worker)を参照してください。
 

@@ -2,6 +2,7 @@
 import { createHash } from 'node:crypto';
 import { listProjectArtifacts, listRunArtifacts, runArtifactTree } from './artifactListingMock.mjs';
 import { createProjectAdministration } from './projectAdministrationMock.mjs';
+import { createComputerSetup } from './computerSetupMock.mjs';
 // The API default of MMT_ARTIFACT_DELETE_GRACE_DAYS (apps/api/src/config.ts).
 const DEFAULT_ARTIFACT_DELETE_GRACE_DAYS = 7;
 // TokenSummary.tokenPrefix: the first characters of the token value.
@@ -276,11 +277,20 @@ export function createBrowserApi() {
     sha256: createHash('sha256').update('Browser test artifact').digest('hex'),
     createdAt: now,
   };
+  // Computers read through `state.targets`, which tests may replace.
+  const computerSetup = createComputerSetup({
+    id,
+    now,
+    projectId: project.id,
+    targets: () => state.targets,
+  });
   const state = {
     user,
     project,
     // Every Project with its archive state, and the bodies POST /projects received.
     projectAdministration: projectAdministration.state,
+    // Workers, connection checks and directory listings of computers being set up.
+    computerSetup: computerSetup.state,
     loggedIn: false,
     authMode: 'development',
     experiments: [experiment],
@@ -376,6 +386,8 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       fulfillEmpty: () => route.fulfill({ status: 204, body: '' }),
     });
     if (projectAnswer) return projectAnswer;
+    const computerSetupAnswer = computerSetup.handle({ path, method, body, reply, list });
+    if (computerSetupAnswer) return computerSetupAnswer;
     if (path === '/targets/overview' && method === 'GET')
       return list(state.targets.map((target) => targetOverview(target, state)));
     if (path === '/targets') {

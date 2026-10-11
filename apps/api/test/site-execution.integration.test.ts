@@ -93,12 +93,21 @@ describe.skipIf(!testDatabaseUrl)('site実行先・投入・runner報告（独�
     });
     expect(manualSsh.status).toBe(422);
     expect(await manualSsh.json()).toMatchObject({ code: 'site_only_setting' });
+    // ssh needs where to connect; local runs on the worker's host, but needs its setup to be on.
     const withoutHost = await create({
+      ...siteTargetInput({ name: 'Hostless ssh' }),
+      executor: 'ssh',
+      sshKeyPath: '/keys/id',
+      knownHostsPath: '/keys/known_hosts',
+      runtimeKinds: ['python'],
+    });
+    expect(await withoutHost.json()).toMatchObject({ code: 'target_connection_required' });
+    const localWithoutSetup = await create({
       ...siteTargetInput({ name: 'Hostless local' }),
       executor: 'local',
       runtimeKinds: ['python'],
     });
-    expect(await withoutHost.json()).toMatchObject({ code: 'target_connection_required' });
+    expect(await localWithoutSetup.json()).toMatchObject({ code: 'target_setup_incomplete' });
   });
 
   it('site JobはGPU数で依頼し、pythonのCodeやGPU IDは受け付けず、workerは受け取らない', async () => {

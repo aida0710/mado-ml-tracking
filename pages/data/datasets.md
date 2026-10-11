@@ -141,16 +141,16 @@ DockerやSingularity、Apptainerで動かす場合、本体は`/mmt/datasets/<�
 
 ### コンピュータへの送り方とキャッシュ
 
-Compute targetの編集画面で、［データセットの転送］と［データセットのcache上限（GiB）］を設定します。
+コンピュータの編集画面で、［データセットの転送］と［データセットのcache上限（GiB）］を設定します。
 
 | データセットの転送 | 内容 |
 | --- | --- |
 | workerが中継する（既定） | workerがAPIから取得し、まとめてGPUマシンへ送ります。GPUマシンからAPIへつながらなくても使えます。worker側にも一時的にバージョン1つ分の空き容量が必要です |
-| targetがAPIから直接取得する | GPUマシンがJob限定のtokenでAPIから取得します。GPUマシンからAPIへつながる必要があります |
+| コンピュータがAPIから直接取得する | GPUマシンがJob限定のtokenでAPIから取得します。GPUマシンからAPIへつながる必要があります |
 
 取得した本体は、コンピュータの`<作業ディレクトリ>/.mmt-cache/datasets/`にキャッシュします。同じバージョンを使う次のJobは、取得し直さずにキャッシュを使います。キャッシュの合計がcache上限（既定100 GiB）を超えると、最後に使った日時が古いものから削除します。実行中のJobが使っているバージョンは削除しません。1つのバージョンがcache上限より大きい場合は、Jobを失敗にします。
 
-Compute targetの設定は[Compute target](/compute/targets)を参照してください。
+コンピュータの設定は[SSH・Localのコンピュータ](/compute/targets)を参照してください。
 
 ## Madoのデータセットを使う
 
@@ -175,4 +175,4 @@ Runが始まったときと終わったときに、Runの入力と出力のバ�
 - [大きなファイルのアップロード](/data/uploads)
 - [Artifact](/data/artifacts)
 - [自動実行](/models/automation)
-- [Compute target](/compute/targets)
+- [SSH・Localのコンピュータ](/compute/targets)

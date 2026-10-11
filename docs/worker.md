@@ -110,7 +110,7 @@ python/.venv/bin/mado-tracking-worker
 
 出力ファイル数の上限は`MMT_WORKER_MAX_OUTPUT_FILES`（既定10000、1〜1000000）で変えられる。詳しくは下の「コンテナの入力と出力は標準pathを使う」。
 
-`MMT_WORKER_ID`とstate directoryは再起動後も同じものを使う。同じdirectoryのworkerを2つ起動すると後の起動を拒否する。`MMT_WORKER_TARGET_IDS`はカンマ区切り。省略した場合は、tokenとAPI設定で許可されたtargetが対象になる。ただし、targetの接続確認（下の「Compute targetの接続を確認する」）は`MMT_WORKER_TARGET_IDS`にそのtargetを含むworkerだけがclaimする。
+`MMT_WORKER_ID`とstate directoryは再起動後も同じものを使う。同じdirectoryのworkerを2つ起動すると後の起動を拒否する。`MMT_WORKER_TARGET_IDS`はカンマ区切り。省略した場合は、tokenとAPI設定で許可されたtargetが対象になる。targetの接続確認（下の「Compute targetの接続を確認する」）は、workerを指定した依頼ならそのworkerが`MMT_WORKER_TARGET_IDS`に関係なくclaimし、指定の無い依頼は`MMT_WORKER_TARGET_IDS`にそのtargetを含むworkerだけがclaimする。
 
 通常のworkerは`WorkerSettings.parallel_jobs=2`で最大2Jobを並行して監視・実行する。claimには現在監視中のJob IDsを`activeJobIds`として送る。APIは未監視の未完了Jobを同じleaseで返し、全件を監視中なら次のJobをclaimする。targetの`maxConcurrentJobs`とGPU予約による制限も適用される。
 
@@ -513,19 +513,49 @@ workerはclaimとresumeで`workerInfo`（パッケージ`mado-tracking`のバー
 
 ## Compute targetの接続を確認する
 
-最初のJobを流す前に、targetへSSHで入れるか、Python・venv・pip・git・Docker・Apptainer/Singularity・GPUが使えるかを、全体設定の「コンピュータ」（`/settings/computers`）の「接続を確認」で確かめる（所有者か全体管理者）。API serverはSSH鍵を持たないので、確認はそのtargetを担当するworkerが自分の鍵で行う。
+ssh・localのコンピュータは、全体設定の「コンピュータ」（`/settings/computers`）の［コンピュータを追加］で2段に分けて足す（全体管理者）。1段目「接続」で接続先と、確認に使うworkerを選び、［接続を確認して次へ］でコンピュータを無効のまま登録してそのworkerに接続確認を頼む。確認の結果（CPU、Python、ディレクトリ、GPU、動いたRuntime）が2段目「接続後の設定」の既定値と候補になる。API serverはSSH鍵を持たないので、確認はworkerが自分の鍵で行う。登録済みのコンピュータは［コンピュータを編集］の［再確認］か、詳細の「接続を確認」で確かめ直す。
 
-- 確認するのは`MMT_WORKER_TARGET_IDS`にそのtargetを含むworkerだけ。`MMT_WORKER_TARGET_IDS`の無いworkerは確認をclaimしない。依頼から5分claimされなければ「workerがありません」（`no_worker`）で終わる。
-- workerはJobのclaimが空いた間に5秒間隔で`POST /worker/target-checks/claim`を呼び、Jobの監視と並行して確認する。確認は同時に1件。
-- 確認は3段階で、最初に失敗した段階を結果にする。
-  1. `true`を送ってSSH接続を確かめる（失敗は`ssh_failed`。sshのエラー文は鍵のパスを含みうるので結果に入れない）。workerホストに鍵やknown_hostsが無い・鍵の権限が600でないときは接続せずに`ssh_configuration`で`failed`にする。
-  2. `pythonExecutable -c`でPythonのバージョンと実行パスを得る（無ければ`python_missing`、3.11未満は`python_too_old`）。
-  3. 固定の確認スクリプト（`worker/target_probe.py`の`PROBE_SCRIPT`。Python 3.6以上の標準ライブラリだけ）を送り、構造化JSONで受け取る。各コマンドは15秒、全体は90秒で打ち切る。
-- 確認する項目: venvとensurepip、`python -m pip --version`、`git --version`、`docker --version`と`docker version`（daemonへの到達。届かないときはsocketの読み書き権限で`docker_socket_denied`と`docker_daemon_unreachable`を分ける）、`apptainer`/`singularity`のバージョンと`exec --help`の必須flag（`sif_container.py`の`REQUIRED_SIF_FLAGS`と`--nv`）、`nvidia-smi --query-gpu=index,uuid,name,memory.total`、`workDirectory`（無ければ一番近い既存の親）への書き込みと空き容量、targetから`MMT_API_URL/health`への到達。
+### 確認を受けるworker
+
+- 依頼にworkerを指定したとき（Webの追加・編集は必ず指定する）は、そのworker（token＋`MMT_WORKER_ID`）だけがclaimする。`MMT_WORKER_TARGET_IDS`にそのコンピュータが無くてもよい。選べるのはオンライン（最終応答から120秒以内）で、在籍の報告にSSHの候補ファイル（下）を載せる版のworkerだけ。
+- 指定の無い依頼（以前のWebやAPIから）は、`MMT_WORKER_TARGET_IDS`にそのコンピュータを含むworkerだけがclaimする。
+- 依頼から5分claimされなければ「workerがありません」（`no_worker`）で終わる。
+- workerはJobのclaimが空いた間に2秒間隔で`POST /worker/target-checks/claim`を呼び、Jobの監視と並行して確認する。同時に2件まで（ディレクトリの読み取りが、時間のかかる接続確認の後ろで待たないため）。claimには実行中の依頼のIDを`activeCheckIds`として送る。
+- 古いAPI（`kinds`を422で拒む）には以前の形で1件ずつclaimし、`MMT_WORKER_TARGET_IDS`が無ければ確認をclaimしない。claim応答に`kind`の無いAPIにはversion 1の結果を送る。
+
+### SSHの候補ファイルを在籍の報告に載せる
+
+- workerはclaim/resumeの`workerInfo.sshFiles`に、自分のホストの`~/.ssh`と`MMT_WORKER_SSH_DIR`（設定されていてディレクトリのとき）の直下で見つけたファイルの**パスだけ**を載せる。中身・指紋は読まず、送らない。
+- 秘密鍵の候補: 通常のファイル（シンボリックリンクはリンク先で判定）のうち、`.pub`・`known_hosts*`・`authorized_keys*`・`config`・`environment`・`rc`を除き、名前が`id_*`・`*.pem`・`*.key`に当たるもの、またはgroup/otherが読めないmode（600など）のもの。known_hostsの候補: 名前が`known_hosts`で始まるファイル。
+- 絶対パスの昇順で各50件まで。制御文字を含むパスと1024文字を超えるパスは除く。60秒ごとに探し直す。
+- 古いAPIが`sshFiles`を422で拒んだら、以後は送らない（そのworkerは指定された依頼を受けられない）。
+- 候補は、1段目の［SSH鍵のパス］［known_hostsのパス］の補完に使う。手入力もできる。
+
+### 確認の手順（接続確認）
+
+確認は4段階で、最初に失敗した段階を結果にする。
+
+1. `true`を送ってSSH接続を確かめる（失敗は`ssh_failed`。sshのエラー文は鍵のパスを含みうるので結果に入れない）。workerホストに鍵やknown_hostsが無い・鍵の権限が600でないときは接続せずに`ssh_configuration`で`failed`にする。
+2. 発見: 固定のPOSIX shスクリプト（`worker/target_discovery.py`の`DISCOVERY_SCRIPT`）を`sh -s`の標準入力で送る（ログインシェルがcshでも同じに動き、値は位置引数で渡すので入力がスクリプトに混ざらない）。出力はNUL区切りのトークンで、パスに空白や改行があっても崩れない。全体60秒、Python 1つのバージョン確認は2秒（`timeout`コマンドがあるとき）、`df`は5秒で打ち切る。失敗しても確認は続け、マシンの情報はnull、候補は空にする。
+   - マシン: `uname -m`（`x86_64`/`amd64`→`amd64`、`aarch64`/`arm64`→`arm64`、ほかは`cpuArch=null`）、CPU数（`getconf _NPROCESSORS_ONLN`か`nproc`）、メモリ（`/proc/meminfo`の`MemTotal`）、`$HOME`。
+   - Pythonの候補（20件まで、見つけた順）: PATHの`python3`・`python`、`/usr/bin/python3`・`/usr/bin/python3.*`・`/usr/local/bin/python3`・`/usr/local/bin/python3.*`、`~/.venvs/*`・`~/.venv`・`~/venv`、`~/miniconda3`・`~/anaconda3`・`~/miniforge3`・`~/mambaforge`のbaseと`envs/*`、`~/.pyenv/versions/*`、`/opt/conda`。実行できるものだけで、`*-config`・`*.py`は除く。
+   - ディレクトリの候補（40件まで）: ホーム（空き容量つき）、`df -P -k`に出るマウント（`/`・`/boot`・`/dev`・`/proc`・`/sys`・`/run`・`/snap`・`/usr`・`/etc`・`/var/lib/*`などのシステムの場所と、ホームを含むマウントは除く）、`/work`・`/scratch`・`/data`・`/large`・`/fast`・`/lustre`・`/gpfs`・`/groups`のうち在るもの、ホーム直下の隠しでないディレクトリの順。書き込めるかは`[ -w ]`。
+3. `pythonExecutable -c`でPythonのバージョンと実行パスを得る（無ければ`python_missing`、3.11未満は`python_too_old`）。コンピュータに`pythonExecutable`がまだ無いとき（追加の1段目）は、発見したPythonのうち3.11以上の最初のものを使う。
+4. 固定の確認スクリプト（`worker/target_probe.py`の`PROBE_SCRIPT`。Python 3.6以上の標準ライブラリだけ）を送り、構造化JSONで受け取る。各コマンドは15秒、全体は90秒で打ち切る。
+
+- 確認する項目: venvとensurepip、`python -m pip --version`、`git --version`、`docker --version`と`docker version`（daemonへの到達。届かないときはsocketの読み書き権限で`docker_socket_denied`と`docker_daemon_unreachable`を分ける）、`apptainer`/`singularity`のバージョンと`exec --help`の必須flag（`sif_container.py`の`REQUIRED_SIF_FLAGS`と`--nv`）、`nvidia-smi --query-gpu=index,uuid,name,memory.total`、`workDirectory`（無ければ一番近い既存の親）への書き込みと空き容量、targetから`MMT_API_URL/health`への到達。`workDirectory`がまだ無いときは、ホームで確かめたうえで作業ディレクトリの項目を`skipped`（`work_directory_not_set`）にする。
+- 結果はversion 2（マシン・Python・ディレクトリの候補つき。docs/api-contract.mdの「targetの接続確認」）。JSONで32KiBを超えるときはディレクトリ、次にPythonの候補を後ろから落とす。
 - 確認はtargetに何も残さない（作業ディレクトリも作らない。書き込み確認の一時ファイルはすぐ消す）。
 - GPUはnvidia-smiが報告した値だけを返す。nvidia-smiが無ければ`gpus=null`で、GPUを設定したtargetではNG、CPUだけのtargetでは「なし」。
-- 画面は検出したGPUのindexと確認に通ったRuntimeを候補として示す。targetの`gpuIds`・`runtimeKinds`は管理者が「選んだ候補を保存」を押したときだけ変わる。
-- 結果の文字列は1行200文字以下に切り、worker tokenはマスクし、targetの鍵・known_hostsのパスを含む文字列は捨てる。APIも同じ検査をして、含んでいれば保存しない。
+- 結果と候補の文字列は1行（候補のパスは1024文字、ほかは200文字以下）に切り、worker tokenはマスクし、targetの鍵・known_hostsのパスを含む文字列やtoken・秘密鍵の形の文字列は捨てる。APIも同じ検査をして、含んでいれば保存しない。
+- 追加の2段目は、結果からCPUアーキテクチャ、動いたRuntime、見つかったGPUの全部（同時実行数はGPUの数）、3.11以上のPythonを入れる。値はどれも変えられ、GPU IDは手でも入力できる（ログインノード経由で、確認したマシンとJobが動くマシンが違うときのため）。登録済みのコンピュータでは、確認し直しても値は変えず候補だけを新しくし、詳細の「選んだ候補を保存」か編集で反映する。
+
+### ディレクトリの子を読む（directory_listing）
+
+- 2段目の［作業ディレクトリ］［Python実行パス］で、`/`で終わるところまで入力すると、Webは選んだworkerにそのディレクトリを読ませる（`POST /targets/:id/directory-listings`）。確認の候補に無い場所を補完するため。結果はダイアログを開いている間、パスごとに覚える。
+- workerは固定のshスクリプト（`worker/directory_listing.py`）を`sh -s -- <path> <上限>`の標準入力で送る。パスは位置引数で渡し、`~`・`~/`は接続先の`$HOME`に展開する。隠しファイルも含め、シンボリックリンクはリンク先の種類（壊れたリンクはファイル）で返す。名前と種類と実行できるかだけを返し、中身は読まない。
+- 200件までで、超えたら`truncated`。名前は255文字まで、制御文字・`/`・`.`・`..`・tokenの形のものは除く。20秒で打ち切る。接続できない・鍵が無いときは`failed`・`unreachable`。
+- APIは読み取りを60秒claimされなければ`no_worker`にし、終わった読み取りは1日で消す。
 
 ## ジョブを止めるとprocess groupが終了する
 

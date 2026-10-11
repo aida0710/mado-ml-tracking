@@ -52,7 +52,7 @@ API serverはworkerのホストへSSHで接続しません。workerの導入と�
 
 ## 保護されないもの
 
-- 登録したコードは、Compute targetの上で、そのホストのアカウントの権限で動きます。Publicのコンピュータでは、どのProjectのEditorもJobを実行できるので、Publicにすることは、ログインできる全員にそのホストでコードを動かす権限を与えることになります。限られた人だけで使うコンピュータはPrivateにします（[コンピュータと公開範囲](/compute/computers)）。
+- 登録したコードは、コンピュータの上で、そのホストのアカウントの権限で動きます。Publicのコンピュータでは、どのProjectのEditorもJobを実行できるので、Publicにすることは、ログインできる全員にそのホストでコードを動かす権限を与えることになります。限られた人だけで使うコンピュータはPrivateにします（[コンピュータと公開範囲](/compute/computers)）。
 - GPUの予約は、このアプリのJobの間だけ排他です。ほかのSSHのシェルや別のスケジューラが同じGPUを使うことは防げません。
 - ProjectのViewerは、そのProjectのRun、モデル、データセット、Artifactをすべて読めます。Projectより細かい読み取りの制限はありません。
 
@@ -63,4 +63,4 @@ API serverはworkerのホストへSSHで接続しません。workerの導入と�
 - DBとArtifactの保存先は、同じ時点でバックアップしてください。DBだけを戻しても、重みや音声は戻りません。
 - worker、自動実行、CIには、人のtokenではなくService Accountのtokenを使い、期限が近づいたら差し替えてください。
 - 退職・異動のときは、ユーザーを無効化し、Authentikのgroupからも外してください。
-- 共有のGPUマシンでは、このアプリ専用のGPUと作業ディレクトリをCompute targetに設定してください。
+- 共有のGPUマシンでは、このアプリ専用のGPUと作業ディレクトリをコンピュータに設定してください。

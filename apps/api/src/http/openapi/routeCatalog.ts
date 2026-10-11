@@ -129,8 +129,10 @@ import {
   sweepTrialQuerySchema,
 } from '../../domain/sweepValidation.js';
 import {
+  directoryListingRequestSchema,
   targetCheckClaimSchema,
   targetCheckCompleteSchema,
+  targetCheckRequestSchema,
 } from '../../domain/targetCheckValidation.js';
 import {
   childJobCreateSchema,
@@ -313,6 +315,7 @@ const TARGET_SETTING_ERRORS = routeError(
   'site_only_setting',
   'target_connection_required',
   'ssh_config_required',
+  'target_setup_incomplete',
   'local_executor_disabled',
   'site_settings_invalid',
   'site_launcher_invalid',
@@ -1919,15 +1922,26 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     errors: routeError(404, 'not_found'),
   },
   {
+    method: 'get',
+    path: '/api/targets/check-workers',
+    tag: 'execution',
+    summary: '接続確認を頼めるworker（オンラインで、SSHの候補ファイルを報告しているもの）',
+    access: GLOBAL_ADMIN,
+    responses: { 200: contract.itemsOf(contract.targetCheckWorkerPresenceSchema) },
+  },
+  {
     method: 'post',
     path: '/api/targets/:id/checks',
     tag: 'execution',
-    summary: 'コンピュータの接続確認を依頼',
+    summary: 'コンピュータの接続確認を依頼（workerを指定できる）',
     access: GLOBAL_ADMIN,
+    body: targetCheckRequestSchema,
+    // Clients from before chosen workers send no body.
+    bodyOptional: true,
     responses: { 201: contract.targetCheckSchema },
     errors: [
       ...routeError(409, 'target_check_in_progress'),
-      ...routeError(422, 'site_check_unsupported'),
+      ...routeError(422, 'site_check_unsupported', 'target_check_worker_unavailable'),
     ],
   },
   {
@@ -1937,6 +1951,31 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     summary: '接続確認の履歴',
     access: GLOBAL_ADMIN,
     responses: { 200: contract.itemsOf(contract.targetCheckSchema) },
+  },
+  {
+    method: 'post',
+    path: '/api/targets/:id/directory-listings',
+    tag: 'execution',
+    summary: 'コンピュータのディレクトリの子を、指定したworkerに読ませる（同じパスを待っていればそれを返す）',
+    access: GLOBAL_ADMIN,
+    body: directoryListingRequestSchema,
+    responses: {
+      200: contract.targetDirectoryListingSchema,
+      201: contract.targetDirectoryListingSchema,
+    },
+    errors: [
+      ...routeError(409, 'directory_listing_limit'),
+      ...routeError(422, 'site_check_unsupported', 'target_check_worker_unavailable'),
+    ],
+  },
+  {
+    method: 'get',
+    path: '/api/targets/:id/directory-listings/:listingId',
+    tag: 'execution',
+    summary: 'ディレクトリの読み取りの結果',
+    access: GLOBAL_ADMIN,
+    responses: { 200: contract.targetDirectoryListingSchema },
+    errors: routeError(422, 'site_check_unsupported'),
   },
   {
     method: 'get',
@@ -2039,7 +2078,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     method: 'post',
     path: '/api/worker/target-checks/claim',
     tag: 'worker',
-    summary: '接続確認を1件受け取る',
+    summary: '接続確認・ディレクトリの読み取りを1件受け取る',
     access: WORKER,
     body: targetCheckClaimSchema,
     responses: { 200: z.strictObject({ item: contract.workerTargetCheckSchema.nullable() }) },
@@ -2048,13 +2087,20 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     method: 'post',
     path: '/api/worker/target-checks/:id/complete',
     tag: 'worker',
-    summary: '接続確認の結果を報告',
+    summary: '接続確認・ディレクトリの読み取りの結果を報告',
     access: WORKER,
     body: targetCheckCompleteSchema,
-    responses: { 200: contract.targetCheckSchema },
+    responses: {
+      200: z.union([contract.targetCheckSchema, contract.targetDirectoryListingSchema]),
+    },
     errors: [
       ...routeError(409, 'invalid_lease', 'target_check_finished'),
-      ...routeError(422, 'target_check_result_too_large', 'target_check_secret_in_result'),
+      ...routeError(
+        422,
+        'target_check_result_too_large',
+        'target_check_secret_in_result',
+        'target_check_result_kind',
+      ),
     ],
   },
 
