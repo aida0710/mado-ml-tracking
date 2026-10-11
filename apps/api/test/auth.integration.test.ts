@@ -62,6 +62,7 @@ describe.skipIf(!testDatabaseUrl)(
       const session = cookies.find((cookie) => cookie.startsWith('mmt_session='))!;
       expect(session).toContain('HttpOnly');
       expect(session).toContain('SameSite=Lax');
+      expect(session).toContain('Max-Age=604800');
       const me = await entity<{ user: { email: string; isAdmin: boolean } }>(
         await request(app, '/api/auth/me', { cookie: session.split(';')[0] }),
         200,

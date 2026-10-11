@@ -45,6 +45,8 @@ UserInfoに`groups`が無いと、ログイン後の再確認で「どのgroup�
 
 `offline_access`（Authentik標準の「authentik default OAuth Mapping: OpenID 'offline_access'」）は、refresh tokenを発行させるために入れます。入れなくても動きますが、Authentikのaccess tokenの期限（Providerの［Access token validity］。既定は5分）が切れるたびに、ログインし直しが必要になります。
 
+7日保持するには、Providerを編集し、［Advanced protocol settings］の［Scopes］に上のmappingを追加します。［Refresh Token Validity］は`days=7`以上にします。既に`days=30`なら変更不要です。［Access Token Validity］は`minutes=5`のままで更新できます。
+
 ## 2. API serverを設定する
 
 API serverの`.env`に次を入れます。本番ではHTTPSが必須です。導入中はローカルの管理者を緊急用に残すため、`hybrid`にします（[認証方式](/admin/auth)の「SSOへ移行する」）。
@@ -52,6 +54,8 @@ API serverの`.env`に次を入れます。本番ではHTTPSが必須です。�
 ```dotenv
 NODE_ENV=production
 AUTH_MODE=hybrid
+AUTH_SESSION_IDLE_SECONDS=604800
+AUTH_SESSION_ABSOLUTE_SECONDS=604800
 MMT_PUBLIC_URL=https://tracking.example.com
 MMT_WEB_ORIGIN=https://tracking.example.com
 OIDC_ISSUER_URL=https://sso.example.com/application/o/ml-tracking/
@@ -75,6 +79,8 @@ openssl rand -base64 32
 ```
 
 設定を変えたらAPIを再起動します。各変数の意味は[環境変数](/reference/environment)の「認証とSSO」にまとめています。
+
+上の設定では、操作しない期間を含め、ログインから7日保持します。既存の`.env`も更新してください。設定例や既定値を変えても、既存の値は自動で変わりません。反映後、一度ログインし直してrefresh tokenを取得します。
 
 ### ログインを許すgroupと全体管理者のgroup
 

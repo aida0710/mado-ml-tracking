@@ -13,7 +13,7 @@
 
 必須の設定が欠けると、APIは設定名だけを示して起動しません。無効なmodeの経路は404を返します（`local`のOIDC開始・callback、`oidc`の`POST /api/auth/local-login`）。
 
-Web sessionはidle期限`AUTH_SESSION_IDLE_SECONDS`（既定28800=8時間）とabsolute期限`AUTH_SESSION_ABSOLUTE_SECONDS`（既定43200=12時間）の早い方で切れます。idleがabsoluteを超える設定は起動時に拒否します。SSOボタンの表示名は`OIDC_LABEL`（既定`Authentik`）です。
+Web sessionはidle期限`AUTH_SESSION_IDLE_SECONDS`とabsolute期限`AUTH_SESSION_ABSOLUTE_SECONDS`の早い方で切れます。どちらも既定604800秒（7日）なので、操作しない期間を含め、ログインから7日保持します。idleがabsoluteを超える設定は起動時に拒否します。SSOボタンの表示名は`OIDC_LABEL`（既定`Authentik`）です。
 
 ローカルアカウントのパスワードはArgon2id（memory 19456KiB、time 2、parallelism 1）で保存し、12〜1024 byteを受け付けます。ログインは接続元ごとに1分30回、同じユーザー名への失敗は15分10回、パスワード変更時の現在のパスワード確認はユーザーごとに15分10回までで、超えると429と`Retry-After`を返します。回数はAPIプロセスのメモリにあり、再起動で戻ります。Argon2の同時計算は4件までです。存在しないユーザー名、誤ったパスワード、無効化したユーザーは同じ401を返します。ログイン・ログアウト・パスワード変更・初期管理者の作成は監査ログ（`audit_events`の`auth.login`、`auth.logout`、`auth.password.change`、`auth.bootstrap_admin`）に残り、パスワードやOIDCのcode・stateは記録しません。回数制限で429になった試行は記録しません。
 
@@ -71,6 +71,8 @@ AuthentikではApplicationとOAuth2/OpenID Providerを作ります。client secr
 
 refresh tokenを発行させるため、Providerのscope mappingに`offline_access`（Authentik標準の「authentik default OAuth Mapping: OpenID 'offline_access'」）を加え、`OIDC_SCOPES`にも`offline_access`を入れます。Authentikで有効にできない場合は`offline_access`を外したままでも動きますが、access tokenの期限（Authentikの既定は5分。Providerの「Access token validity」）ごとに再ログインが必要になります。
 
+7日保持するには、Authentikの［Applications］→［Providers］でこのアプリのProviderを編集し、［Advanced protocol settings］の［Scopes］に上のmappingを追加します。［Refresh Token Validity］は`days=7`以上にします。既に`days=30`なら変更不要です。［Access Token Validity］は`minutes=5`のままで更新できます。アプリの既存`.env`にも`AUTH_SESSION_IDLE_SECONDS=604800`、`AUTH_SESSION_ABSOLUTE_SECONDS=604800`、`OIDC_SCOPES=openid profile email offline_access`を設定し、APIを再起動してください。設定例や既定値を変えても、既存`.env`の値は自動で変わりません。反映後、一度ログインし直してrefresh tokenを取得します。
+
 アプリはstate、nonce、PKCE、ID tokenの署名・issuer・audienceを検証します。OIDC開始時に短命のHttpOnly cookieを発行し、callbackは同じbrowserからだけ受け付けます。
 
 ### 設定例
@@ -80,6 +82,8 @@ refresh tokenを発行させるため、Providerのscope mappingに`offline_acce
 ```dotenv
 NODE_ENV=production
 AUTH_MODE=hybrid
+AUTH_SESSION_IDLE_SECONDS=604800
+AUTH_SESSION_ABSOLUTE_SECONDS=604800
 MMT_PUBLIC_URL=https://tracking.example.com
 MMT_WEB_ORIGIN=https://tracking.example.com
 OIDC_ISSUER_URL=https://sso.example.com/application/o/ml-tracking/
@@ -104,7 +108,7 @@ OIDC_TOKEN_SYNC_MAX_AGE_SECONDS=604800
 | `OIDC_DEFAULT_ROLE` | 対応表のどのgroupにも入っていない許可ユーザーの全体role。既定`user` |
 | `OIDC_ADMIN_GROUP` | `{"<group>":"admin"}`の省略形（以前からの設定）。対応表と両方指定して、adminのgroupが食い違うと起動しません。どちらも無ければ`mmt-admins`をadminとします |
 | `OIDC_AUTO_LINK_VERIFIED_EMAIL` | 同じemailのLocal Userへ自動連携するか。既定`false` |
-| `OIDC_SCOPES` | 要求するscope。既定`openid profile email`。`openid`が無いと起動しません。refresh tokenを使うには`offline_access`を足します |
+| `OIDC_SCOPES` | 要求するscope。既定`openid profile email offline_access`。`openid`が無いと起動しません。refresh tokenにはProvider側の`offline_access` mappingも必要です |
 | `MMT_SESSION_ENCRYPTION_KEY` | SSO sessionに保存するaccess/refresh tokenの暗号鍵（base64の32 byte、AES-256-GCM）。`oidc`/`hybrid`で必須で、無いか形式が違うと起動しません |
 | `OIDC_RECHECK_SECONDS` | SSO sessionをUserInfoで確かめ直す間隔（秒）。既定`60` |
 | `OIDC_TOKEN_SYNC_MAX_AGE_SECONDS` | SSOユーザーのAPI tokenを使える、最後のgroup同期からの期限（秒）。既定`604800`（7日）。60未満は起動時エラー |
