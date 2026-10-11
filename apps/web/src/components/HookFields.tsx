@@ -6,6 +6,7 @@ import {
   MAX_HOOK_CHECKPOINT_EVERY,
   MAX_HOOK_MAX_STARTS_PER_HOUR,
   MAX_JOB_ARRAY_SIZE,
+  MAX_JOB_ATTEMPTS,
   MAX_JOB_GPU_COUNT,
   type HookTrigger,
 } from '@mmt/contracts';
@@ -15,7 +16,7 @@ import { FormFields } from './FormFields';
 import { CodeRuntimeDetails } from './CodeRuntimeDetails';
 import { getFieldValue } from '../lib/formValues';
 import { buildCatalogOptions, withEmptyOption } from '../lib/catalogOptions';
-import { MAX_JOB_ATTEMPTS, RUN_KINDS } from '../lib/executionValidation';
+import { RUN_KINDS } from '../lib/executionValidation';
 import { isTargetCompatible } from '../lib/runtimeValidation';
 import { isSiteTarget } from '../lib/siteExecutionInput';
 import { isManualSite } from '../lib/manualSubmission';
@@ -32,7 +33,6 @@ import {
   usesRegisteredModelVersion,
 } from '../lib/hookInput';
 import { text } from '../i18n/catalog';
-import { automationText } from '../i18n/automation';
 import {
   hookCheckpointModeLabels,
   hookConcurrencyLabels,
@@ -202,10 +202,12 @@ export function HookFields({
     },
     {
       name: 'gpuIds',
-      label: `${text.gpuIds} · ${text.cpuOnly}`,
-      type: 'multiselect',
-      visible: () => !isSite,
+      label: text.launchGpuChoice,
+      type: 'checkboxes',
+      // The same choice as the Job launch: a computer's GPUs, or why there are none.
+      visible: () => Boolean(target) && !isSite,
       options: (target?.gpuIds ?? []).map((id) => ({ value: id, label: id })),
+      emptyText: text.gpuNoneOnTarget,
     },
     {
       name: 'gpuCount',
@@ -245,11 +247,13 @@ export function HookFields({
     { name: 'tags', label: text.tagsJson, type: 'textarea' },
     {
       name: 'maxAttempts',
-      label: automationText.maxAttempts,
+      // A hook's Jobs retry by themselves only on sites; the hint says what the limit covers.
+      label: text.maxAttempts,
       type: 'number',
       required: true,
       min: 1,
       max: MAX_JOB_ATTEMPTS,
+      hint: text.maxAttemptsHint,
     },
     {
       name: 'retryOnFailure',

@@ -191,6 +191,9 @@ async function pasteIntoFocusedEditor(content) {
   }, content);
 }
 
+// The checkbox labels of the run kinds (i18n/catalog.ts).
+const RUN_KIND_LABELS = { training: '学習', finetuning: 'ファインチューニング', inference: '推論', evaluation: '評価', processing: 'データ処理' };
+
 async function addCodeVersion({ name, version, files, entrypoint, taskType }) {
   await page.goto(`${projectBase}/codes`);
   await page.getByRole('button', { name: 'コードを登録', exact: true }).click();
@@ -208,7 +211,10 @@ async function addCodeVersion({ name, version, files, entrypoint, taskType }) {
   }
   await dialog().getByLabel('実行コマンド', { exact: false }).fill(JSON.stringify(entrypoint));
   await dialog().getByLabel('対応モデル系列', { exact: false }).fill(MODEL_FAMILY);
-  await dialog().getByLabel('対応する実行種別', { exact: false }).selectOption([taskType]);
+  await dialog()
+    .getByRole('group', { name: /対応する実行種別/ })
+    .getByRole('checkbox', { name: RUN_KIND_LABELS[taskType], exact: true })
+    .check();
   await dialog().getByTestId('code-version-save').click();
   await dialog().waitFor({ state: 'hidden' });
   const codes = (await api('GET', `/projects/${projectId}/codes`)).items;
@@ -409,7 +415,7 @@ try {
     await page.getByRole('button', { name: '自動実行ルールを作成' }).click();
     await dialog().getByLabel('名前', { exact: false }).fill('Browser inference');
     await dialog().getByLabel('トリガー', { exact: false }).selectOption('model_registered');
-    await dialog().getByLabel('対象モデル系列', { exact: false }).selectOption([MODEL_FAMILY]);
+    await dialog().getByRole('group', { name: /対象モデル系列/ }).getByRole('checkbox', { name: MODEL_FAMILY, exact: true }).check();
     await dialog().getByLabel('実行種別', { exact: false }).selectOption('inference');
     await dialog().getByLabel('Experiments', { exact: false }).selectOption(ids.experimentId);
     await dialog().getByLabel('コードバージョン', { exact: false }).selectOption(ids.inferenceCodeVersionId);
@@ -421,12 +427,12 @@ try {
     await dialog().getByLabel('名前', { exact: false }).fill('Browser evaluation');
     await dialog().getByLabel('トリガー', { exact: false }).selectOption('upstream_run_finished');
     await dialog().getByLabel('上流rule', { exact: false }).selectOption({ label: 'Browser inference · Inference' });
-    await dialog().getByLabel('対象モデル系列', { exact: false }).selectOption([MODEL_FAMILY]);
+    await dialog().getByRole('group', { name: /対象モデル系列/ }).getByRole('checkbox', { name: MODEL_FAMILY, exact: true }).check();
     await dialog().getByLabel('実行種別', { exact: false }).selectOption('evaluation');
     await dialog().getByLabel('Experiments', { exact: false }).selectOption(ids.experimentId);
     await dialog().getByLabel('コードバージョン', { exact: false }).selectOption(ids.evaluationCodeVersionId);
     await dialog().getByLabel('Compute target', { exact: false }).selectOption(ids.targetId);
-    await dialog().getByLabel('入力データセットバージョン', { exact: false }).selectOption([ids.referenceVersionId]);
+    await dialog().getByRole('group', { name: /入力データセットバージョン/ }).getByRole('checkbox', { name: 'verification/Browser reference lengths / v1', exact: true }).check();
     await dialog().getByRole('button', { name: '作成', exact: true }).click();
     await dialog().waitFor({ state: 'hidden' });
     const rules = (await api('GET', `/projects/${projectId}/automation-rules`)).items;

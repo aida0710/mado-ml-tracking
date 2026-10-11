@@ -62,7 +62,7 @@ Enter the token without echoing it, and never put it in source code or files tra
 export MMT_API_URL='https://tracking.example.internal'
 export MMT_PROJECT_ID='PROJECT_ID'
 export MMT_EXPERIMENT_ID='EXPERIMENT_ID'
-read -r -s -p 'API token: ' MMT_API_TOKEN
+printf 'API token: '; read -r -s MMT_API_TOKEN; echo
 export MMT_API_TOKEN
 ```
 

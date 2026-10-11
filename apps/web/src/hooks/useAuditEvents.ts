@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AuditEvent } from '@mmt/contracts';
-import { auditApi } from '../api/audit';
+import { auditApi, type AuditEventFilter } from '../api/audit';
 
 /** Whose events to read: one Project's log, or the global log of global administrators. */
 export type AuditEventScope = { projectId: string } | 'global';
@@ -10,9 +10,15 @@ export interface AuditEventsState {
   hasMore: boolean;
   loading: boolean;
   error: string | null;
+  filter: AuditEventFilter;
+  setFilter: (filter: AuditEventFilter) => void;
   loadMore: () => void;
   reload: () => void;
 }
+
+// Sign-ins are written on every session and bury the changes people look for, so they start
+// hidden; one click shows them.
+const INITIAL_AUDIT_FILTER: AuditEventFilter = { hideSignIns: true };
 
 const errorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
@@ -20,6 +26,7 @@ const errorMessage = (error: unknown) => (error instanceof Error ? error.message
 export function useAuditEvents(scope: AuditEventScope | null): AuditEventsState {
   // A string key so a new scope object with the same Project does not refetch.
   const scopeKey = scope === null ? null : scope === 'global' ? 'global' : scope.projectId;
+  const [filter, setFilter] = useState<AuditEventFilter>(INITIAL_AUDIT_FILTER);
   const [items, setItems] = useState<AuditEvent[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,7 +44,7 @@ export function useAuditEvents(scope: AuditEventScope | null): AuditEventsState 
       setLoading(true);
       setError(null);
       try {
-        const request = { cursor, signal: controller.signal };
+        const request = { cursor, filter, signal: controller.signal };
         const page =
           scopeKey === 'global'
             ? await auditApi.globalEvents(request)
@@ -51,7 +58,7 @@ export function useAuditEvents(scope: AuditEventScope | null): AuditEventsState 
         if (!controller.signal.aborted) setLoading(false);
       }
     },
-    [scopeKey],
+    [scopeKey, filter],
   );
 
   useEffect(() => {
@@ -66,6 +73,8 @@ export function useAuditEvents(scope: AuditEventScope | null): AuditEventsState 
     hasMore: nextCursor !== null,
     loading,
     error,
+    filter,
+    setFilter,
     loadMore: () => {
       if (nextCursor && !loading) void loadPage(nextCursor);
     },

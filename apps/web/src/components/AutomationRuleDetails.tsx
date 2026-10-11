@@ -13,6 +13,7 @@ import {
   serviceAccountOwnerOptions,
 } from '../lib/automationOwner';
 import { buildCatalogOptions } from '../lib/catalogOptions';
+import { downstreamRules } from '../lib/modelAutomationInput';
 import { formatDate } from '../lib/format';
 import { creatorName } from '../lib/creatorName';
 import { text } from '../i18n/catalog';
@@ -24,7 +25,11 @@ export function AutomationRuleDetails({
   catalog,
   projectId,
   canManage,
+  pending,
   onSelectRule,
+  onEnable,
+  onCopy,
+  onShowHistory,
   onApplied,
 }: {
   rule: ModelAutomationRule;
@@ -32,16 +37,40 @@ export function AutomationRuleDetails({
   catalog?: AutomationCatalog;
   projectId: string;
   canManage: boolean;
+  /** An enable or disable request is in flight. */
+  pending: boolean;
   onSelectRule: (id: string) => void;
+  onEnable: () => void;
+  /** Opens a new rule's form filled with this rule's settings. */
+  onCopy: () => void;
+  onShowHistory: () => void;
   onApplied: () => void;
 }) {
   const options = catalog ? buildCatalogOptions(catalog.registry) : undefined;
   const code = catalog?.registry.codeVersions.find((version) => version.id === rule.codeVersionId);
   const base = `/projects/${projectId}`;
   const upstream = rules.find((item) => item.id === rule.upstreamRuleId);
+  const followers = downstreamRules(rules, rule);
+  const ruleLink = (item: ModelAutomationRule) => (
+    <button key={item.id} className="link-button" onClick={() => onSelectRule(item.id)}>
+      {item.name}
+    </button>
+  );
   return (
     <section className="automation-rule-detail">
-      <h3>{rule.name}</h3>
+      <div className="section-heading">
+        <h3>{rule.name}</h3>
+        <div>
+          <button className="button small" onClick={onShowHistory}>
+            {automationText.showRuleHistory}
+          </button>
+          {canManage && (
+            <button className="button small" onClick={onCopy}>
+              {automationText.copyRule}
+            </button>
+          )}
+        </div>
+      </div>
       <DetailsList
         entries={[
           [automationText.trigger, automationTriggerLabels[rule.trigger]],
@@ -49,15 +78,18 @@ export function AutomationRuleDetails({
             ? [
                 [
                   automationText.upstreamRule,
-                  <button
-                    className="link-button"
-                    onClick={() => rule.upstreamRuleId && onSelectRule(rule.upstreamRuleId)}
-                  >
-                    {upstream?.name ?? rule.upstreamRuleId}
-                  </button>,
+                  upstream ? ruleLink(upstream) : rule.upstreamRuleId,
                 ] satisfies [string, ReactNode],
               ]
             : []),
+          [
+            automationText.downstreamRules,
+            followers.length ? (
+              <span className="inline-links">{followers.map(ruleLink)}</span>
+            ) : (
+              automationText.noDownstreamRules
+            ),
+          ],
           [text.automationModelFamilies, rule.modelFamilies.join(', ')],
           [text.kind, text[rule.kind]],
           [
@@ -99,7 +131,16 @@ export function AutomationRuleDetails({
         ]}
       />
       {code && <CodeRuntimeDetails version={code} />}
-      {canManage && catalog && (
+      {canManage && !rule.enabled && (
+        <section className="automation-manual-apply">
+          <h4>{automationText.applyToVersion}</h4>
+          <p className="muted">{automationText.disabledRuleCannotApply}</p>
+          <button className="button small" disabled={pending} onClick={onEnable}>
+            {automationText.enableRule}
+          </button>
+        </section>
+      )}
+      {canManage && rule.enabled && catalog && (
         <AutomationManualApply
           key={rule.id}
           rule={rule}

@@ -101,6 +101,7 @@
 }
 .sweep-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-left: auto;
 }
@@ -120,7 +121,8 @@
   gap: 12px;
   color: var(--muted);
 }
-.sweep-best h3 {
+/* An h2, as it follows the page's h1; sized like the small heading it was. */
+.sweep-best h2 {
   font-size: 13px;
   margin: 0 0 6px;
 }
@@ -149,6 +151,12 @@
   color: var(--link);
 }
 @media (width < 900px) {
+  /* A long objective metric name breaks inside its header, so the state and the row's toggle stay
+     on screen instead of past the table's right edge. */
+  .sweep-trials th {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
   /* Padding instead of a flex box keeps the summary's open/closed marker. */
   .sweep-search-space > summary {
     padding-block: 11px;

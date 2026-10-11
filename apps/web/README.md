@@ -29,9 +29,10 @@ node apps/web/tests/browser-integration.mjs
 node apps/web/tests/browser-followup-integration.mjs
 node apps/web/tests/browser-dialog-focus.mjs
 node apps/web/tests/browser-narrow-screens.mjs
+node apps/web/tests/browser-accessibility.mjs
 ```
 
-`browser-dialog-focus.mjs`は、ダイアログを閉じたとき（Esc・×・キャンセル）に開いたボタンへフォーカスが戻ることを、入力のダイアログ・独自のダイアログ・確認で確かめる。`browser-narrow-screens.mjs`はスマホの幅で、320pxの上部バーと運用アラートの一覧が画面に収まること、Runの一覧が主要な列だけを行に残して残りを行を開いて見せること、URLで開いたタブが見える位置にあり隠れた端が薄くなること、比較の長い1行のJSONが表示の中だけでスクロールすること、波形の上の縦のスワイプでページがスクロールしループができないことを確かめる。どちらもAPI mocksを使う。
+`browser-dialog-focus.mjs`は、ダイアログを閉じたとき（Esc・×・キャンセル）に開いたボタンへフォーカスが戻ることを、入力のダイアログ・独自のダイアログ・確認で確かめる。`browser-narrow-screens.mjs`はスマホの幅で、320pxの上部バーと運用アラートの一覧が画面に収まること、Runの一覧が主要な列だけを行に残して残りを行を開いて見せること、URLで開いたタブが見える位置にあり隠れた端が薄くなること、比較の長い1行のJSONが表示の中だけでスクロールすること、波形の上の縦のスワイプでページがスクロールしループができないことを確かめる。どちらもAPI mocksを使う。`browser-accessibility.mjs`は、メトリクスの図が1つの止まり先で←→で値を出し+で拡大すること、比較の線が色と線の形の両方で違い、ライトとダークの背景に対して線が3:1・軸の文字が4.5:1以上あること、画面ごとにタブのタイトルが付くこと、ユーザーメニュー・［表示する列］・ダイアログでフォーカスが期待どおりに動くこと、スマホの長いダイアログで［保存］が見えることを確かめる。`MMT_AXE_CORE_PATH`にaxe-coreの`axe.min.js`を渡すと、主な画面でaxeのWCAG 2.1 A/AAの違反が無いことも確かめる（渡さなければその段だけ飛ばす）。API mocksを使う。
 
 `browser-smoke.mjs`はブラウザ内で検証用APIを使い、API障害・enqueue失敗・全画面・Pluginの動線を確認する。fixtureは`tests/`のみで、production bundleに含めない。
 

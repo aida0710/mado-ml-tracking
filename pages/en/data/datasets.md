@@ -40,21 +40,34 @@ One version can contain up to 100,000 files.
 
 A namespace groups datasets, for example `voice`. **データセットを登録** is shown to editors and above.
 
+Selecting a dataset shows its namespace and description under its name. Change the description later with **⋯** → **説明を変更** (Change description) next to the name (editor or higher). The name cannot be changed, because SDKs and MLflow find a dataset by its name.
+
 ## Create a version from a folder
 
 The browser uploads the contents of a folder as Artifacts and creates the version once every file is saved.
 
 1. Select a dataset and click **フォルダから作る** (Create from folder).
-2. Click **フォルダを選択** (Choose folder) or drop a folder.
+2. Click **フォルダを選ぶ** (Choose folder) or drop a folder.
 3. Optionally fill in:
    - **バージョン（空なら自動採番）** (Version; numbered automatically when empty): integers such as `1` and `2` are used when empty
-   - **親のバージョン** (Parent version): the version this one was derived from
+   - **親のバージョン** (Parent version): the version this one was derived from. The dataset's latest version is checked from the start; uncheck it to create a version without a parent. A long list can be filtered with the box above it
    - **Metadata（JSON）**: for example `{"language": "ja", "sampleRate": 16000}`
-4. Click **uploadしてバージョンを作成** (Upload and create version).
+4. Click **アップロードしてバージョンを作成** (Upload and create version).
 
-Files are sent the same way as in [Large file uploads](/en/data/uploads). If some files fail, the version is not created. Click **残りのファイルを再送** (Resend remaining files) or **残りのファイルを除いてバージョンを作成** (Create version without the remaining files). If only creating the version fails, click **バージョンの作成を再試行** (Retry creating the version); files are not uploaded again.
+Files are sent the same way as in [Large file uploads](/en/data/uploads). Progress is one bar for the whole folder (files, bytes, and time left) and rows only for files that are sending, paused, or failed; waiting and finished files are counted. Rows are named by the file's path inside the dataset.
+
+If some files fail, the version is not created. Click **残りのファイルを再送** (Resend remaining files) or **残りのファイルを除いてバージョンを作成** (Create version without the remaining files). If only creating the version fails, click **バージョンの作成を再試行** (Retry creating the version); files are not uploaded again.
 
 Selecting a version shows ファイル数 (file count), 合計サイズ (total size), and the file list. Select a file to preview it, just like an Artifact.
+
+### A folder upload that stopped
+
+An upload that stopped before its version (a reload, a dropped connection, or a closed dialog) is listed under **途中のフォルダのアップロード** (Unfinished folder uploads) the next time **フォルダから作る** is opened. Each row shows when it started, how many files are stored and their size, and the large file you were still sending.
+
+- Continue: choose the same folder with the row's **続きを送る** (Continue), or with **フォルダを選ぶ** above. When files with the same paths and sizes are found, the dialog says it continues the upload that started at that time, and the button becomes **続きを送ってバージョンを作成** (Continue and create version). On start, the stored files are compared with yours by SHA-256 and the same ones are used as they are; the half-sent large file continues from the parts the server has. While the files are compared, **照合をやめる** (Stop comparing) stops and goes back to before the start (nothing has been sent yet). Click **新しく送る** (Send as new) to send the folder separately instead
+- Discard: click **破棄** (Discard) and confirm. Stored files that no version uses are deleted and the half-sent uploads are canceled. Only Project admins can delete stored files; editors see "保存済みのファイルを消せるのは Project admin です" (Only Project admins can delete stored files) instead of the button (an upload with only half-sent files can be discarded by editors too). Files a model version, code version, or checkpoint uses are kept; the dialog says how many and why, with a button that lists them in Artifacts. While such files remain, the row stays in the list
+
+In the Artifacts list, stored files of such an upload are shown as `データセット <name> 途中のアップロード`.
 
 ## Create a version with the Python SDK
 
@@ -115,6 +128,10 @@ Files written by an inference or preprocessing Run can become a version that the
 
 See [Tasks and code versions](/en/models/tasks) for `result.json`. To pass inference outputs to an evaluation Run automatically, see [Automation](/en/models/automation).
 
+## See which Runs used a version
+
+Selecting a version shows **このバージョンを入力にしたRun** (Runs that used this version) under its details; a Run's name opens that Run. **Lineageで見る** (Show in Lineage) opens [Lineage](/en/models/registry) with only two steps before and after the version (parent versions, the Runs that used it, the models those Runs made). **全体を表示** (Show all) returns to the whole graph.
+
 ## Use a version as a Run input
 
 Choose input dataset versions when running a Task or in an automation rule. Before starting the code, the worker prepares the contents in the work directory of the GPU machine and verifies them.
@@ -170,7 +187,7 @@ When a Run starts and finishes, its input and output versions are sent to Mado, 
 
 Datasets cannot be deleted. A version can be deleted while nothing uses it: to remove one registered with a mistyped URI, select it, click **このバージョンを削除** (Delete this version), and confirm with **削除する** (Delete) (Editor or higher). While a Run input or output, a child version, or a Task, automation rule, or hook input uses it, the deletion is refused with what uses it, for example "このバージョンは使われているため削除できません（Runの入力 1件）" (in use: 1 Run input). Deleting a version leaves the data at its URI and its Artifacts. The API is `DELETE /api/projects/<Project ID>/datasets/<Dataset ID>/versions/<version ID>`.
 
-To retire a dataset, send `{"archived": true}` to `PATCH /api/projects/<Project ID>/datasets/<Dataset ID>`. New Runs can no longer use versions of an archived dataset as input; existing Runs keep their records. The UI has no archive action.
+To retire a dataset, click **⋯** → **アーカイブ** (Archive) next to its name and confirm (editor or higher). New Runs, Tasks, automation rules, and hooks can no longer take versions of an archived dataset as input; existing Runs and versions stay. The archived dataset stays open with a notice saying it was archived. Archived datasets are hidden from the list (except the one open) unless **アーカイブ済みも表示** (Show archived) is checked. Bring one back with **⋯** → **アーカイブを解除** (Unarchive). The API is `PATCH /api/projects/<Project ID>/datasets/<Dataset ID>` with `{"archived": true}` (or `false`).
 
 Artifacts referenced by a version cannot be deleted while the version exists.
 

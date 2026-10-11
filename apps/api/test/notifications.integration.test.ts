@@ -20,6 +20,7 @@ import {
   NotificationDispatcher,
 } from '../src/services/notificationDispatcher.js';
 import { NotificationRunHandler } from '../src/services/notificationRunHandler.js';
+import { NotificationService } from '../src/services/notificationService.js';
 import { createHarness, entity, login, request, testDatabaseUrl, type Harness } from './harness.js';
 import { executionFixture } from './fixtures.js';
 
@@ -452,6 +453,37 @@ describe.skipIf(!testDatabaseUrl)('通知チャネル・ルール・送信outbox
       { action: 'notification.channel.update', outcome: 'denied' },
       { action: 'notification.channel.test', outcome: 'denied' },
     ]);
+  });
+
+  it('通知先に選べる環境変数名は、値のあるMMT_NOTIFICATION_の名前だけを全体管理者にだけ返す', async () => {
+    const fixture = await setup();
+    const principalOf = async (cookie: string) =>
+      (await harness.services.auth.authenticate({ session: cookie.slice(cookie.indexOf('=') + 1) }))!;
+    const service = new NotificationService({
+      database: harness.database,
+      senders: {},
+      environment: {
+        MMT_NOTIFICATION_SLACK_URL: 'https://hooks.slack.example/services/T/B/X',
+        MMT_NOTIFICATION_OPS_SECRET: 'signing-secret',
+        MMT_NOTIFICATION_EMPTY_URL: '',
+        MMT_DATABASE_URL: 'postgresql://user:secret@db/mmt',
+      },
+    });
+    expect(service.listEnvironmentNames(await principalOf(fixture.administrator.cookie))).toEqual([
+      'MMT_NOTIFICATION_OPS_SECRET',
+      'MMT_NOTIFICATION_SLACK_URL',
+    ]);
+    const projectAdmin = await principalOf(fixture.projectAdmin.cookie);
+    expect(() => service.listEnvironmentNames(projectAdmin)).toThrow(
+      expect.objectContaining({ code: 'admin_required' }),
+    );
+    const path = '/api/notification-channels/environment-names';
+    const listed = await request(harness.app, path, { cookie: fixture.administrator.cookie });
+    expect(listed.status).toBe(200);
+    expect(Array.isArray(((await listed.json()) as { items: unknown }).items)).toBe(true);
+    expect((await request(harness.app, path, { cookie: fixture.projectAdmin.cookie })).status).toBe(
+      403,
+    );
   });
 
   it('channelは種類ごとの設定と環境変数名の接頭辞を検証し、値を保存しない', async () => {

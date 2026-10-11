@@ -2,15 +2,12 @@ import { MEDIA_COMPARE_MAX_STEPS, type RunMedia } from '@mmt/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   STEP_PAGE_JUMP,
-  compareTableOf,
   evenlySpacedSteps,
   gridPositionAfterKey,
   groupMediaByStep,
   handoffPosition,
   nearestStep,
-  parseStepList,
   parseStepParam,
-  parseStepsParam,
   playbackHandoffFrom,
   stepIndexAfterKey,
 } from './mediaSteps';
@@ -73,50 +70,6 @@ describe('stepごとのメディアのstep', () => {
     expect(evenlySpacedSteps([30, 10, 20], 5)).toEqual([10, 20, 30]);
     expect(evenlySpacedSteps(steps).length).toBeLessThanOrEqual(MEDIA_COMPARE_MAX_STEPS);
   });
-
-  it('入力したstepを整数の昇順にし、上限を超えたら切り詰めずに断る', () => {
-    expect(parseStepList('500, 0、1000 500')).toEqual({ ok: true, steps: [0, 500, 1000] });
-    expect(parseStepList('  ')).toEqual({ ok: true, steps: [] });
-    expect(parseStepList('1.5')).toEqual({ ok: false, error: 'invalid' });
-    expect(parseStepList('-1')).toEqual({ ok: false, error: 'invalid' });
-    const tooMany = Array.from({ length: MEDIA_COMPARE_MAX_STEPS + 1 }, (_, index) => index).join(',');
-    expect(parseStepList(tooMany)).toEqual({ ok: false, error: 'too_many' });
-  });
-});
-
-describe('Run×stepの比較の格子', () => {
-  it('stepを指定した応答はそのまま並べる', () => {
-    const cell = [media('a', 5, 'a')];
-    expect(compareTableOf({ key: 'k', steps: [5, 0], rows: [{ runId: 'a', cells: [cell, null] }] })).toEqual({
-      runIds: ['a'],
-      steps: [5, 0],
-      cells: [[cell, null]],
-    });
-  });
-
-  it('各Runの最新stepの応答は最新stepを列にし、他のRunの列は空のまま近いstepで埋めない', () => {
-    const latestA = [media('a3', 3, 'a')];
-    const latestB = [media('b2', 2, 'b')];
-    expect(
-      compareTableOf({
-        key: 'k',
-        steps: null,
-        rows: [
-          { runId: 'a', cells: [latestA] },
-          { runId: 'b', cells: [latestB] },
-          { runId: 'c', cells: [null] },
-        ],
-      }),
-    ).toEqual({
-      runIds: ['a', 'b', 'c'],
-      steps: [2, 3],
-      cells: [
-        [null, latestA],
-        [latestB, null],
-        [null, null],
-      ],
-    });
-  });
 });
 
 describe('聴き比べの再生位置の受け渡し', () => {
@@ -151,11 +104,5 @@ describe('URLに残したstep', () => {
     expect(parseStepParam(null)).toBeNull();
     expect(parseStepParam('-1')).toBeNull();
     expect(parseStepParam('abc')).toBeNull();
-  });
-
-  it('比較のstep一覧は並べ直して読み、壊れた一覧は各Runの最新（空）にする', () => {
-    expect(parseStepsParam('59,9,29')).toEqual([9, 29, 59]);
-    expect(parseStepsParam('9,x')).toEqual([]);
-    expect(parseStepsParam(null)).toEqual([]);
   });
 });

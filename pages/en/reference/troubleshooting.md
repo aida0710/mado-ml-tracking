@@ -102,6 +102,10 @@ The URL you opened differs from the allowed origins. To use LAN or VPN IP addres
 
 If the screen says the change would leave the Project without an Admin, you are removing the last Admin. Grant Admin to another member, or to a group someone has signed in with, first. An Admin grant to a group nobody has signed in with yet does not count (the **Authentik group** list marks it "まだ誰もログインしていません"). If disabling or demoting a global administrator returns 409 `last_global_admin`, prepare another global administrator first.
 
+## "このプロジェクトはアーカイブされています" (This project is archived) appears
+
+A Project Admin or a global administrator archived the Project (404 `project_archived`). Its data remains. To use it again, ask a global administrator to restore it from **全体管理** → **プロジェクト** with アーカイブ済みも表示 (Show archived) selected ([Projects](/en/admin/projects)).
+
 ## Notifications do not arrive
 
 1. Check that the channel's **送信設定** (Delivery settings) under **通知** in **プロジェクト設定** (Project settings) shows configured. If not, the variable is missing from the API server's `.env`, or the API was not restarted.
@@ -113,7 +117,7 @@ If the screen says the change would leave the Project without an Admin, you are 
 
 | Symptom | Fix |
 | --- | --- |
-| `plugin_token_unavailable` | Put the plugin token in the API server's `.env` under the registered variable name, and restart the API |
+| API serverの設定 (API server setting) shows 未設定 (not set) in the plugin's details, or `plugin_token_unavailable` naming the variable | Put the plugin token in the API server's `.env` under the variable name shown, and restart the API |
 | **接続を確認** (Check connection) fails | Check that the plugin is running and its URL is reachable from the API server. Check that the plugin's `MMT_PLUGIN_TOKEN` and the API server's value match |
 | Operations alert Plugin delivery stalled | Check the last error in **イベントの送信状況** under **Plugins**, fix the plugin, then click **イベントを再送** (Resend events) |
 

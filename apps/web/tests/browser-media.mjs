@@ -83,7 +83,8 @@ for (const [run, letter] of [
     audioByRunStep.set(`${letter}:${step}`, artifact);
     addMedia({ run, key: 'eval/audio', step, kind: 'audio', artifact, caption: `Run ${letter} の step ${step}` });
   }
-// Run a also logged step 3, so the default comparison (latest step of each Run) has a missing cell.
+// Run a also logged step 3, so the Runs end at different steps: the default comparison is their
+// latest common step (2), and "each Run's latest step" puts steps 3 and 2 in one column.
 const runAStep3 = addArtifact({ run: runA, path: 'audio/run-a-step-3.wav', mimeType: 'audio/wav', body: await readFixture('run-a-step-2.wav') });
 addMedia({ run: runA, key: 'eval/audio', step: 3, kind: 'audio', artifact: runAStep3 });
 
@@ -327,18 +328,29 @@ try {
   await table.getByText('2 / 2ページ').waitFor();
   assert.equal(await table.locator('tbody > tr').count(), TABLE_ROW_COUNT - 50);
 
-  console.log('Browser check: the default comparison shows each Run latest step and missing cells as なし');
+  console.log('Browser check: the default comparison is the latest step both Runs recorded, without empty cells');
   await page.goto(harness({ view: 'compare', runIds: `${runA.id},${runB.id}` }));
   const grid = page.getByRole('grid', { name: 'Run × step のメディア' });
   await grid.waitFor();
   await page.getByLabel('比較するキー').selectOption('eval/audio');
-  await waitUntil(async () => (await grid.locator('thead th').allInnerTexts()).join('|') === 'Run|step 2|step 3', 'grid did not show the latest steps');
-  await grid.getByRole('button', { name: `${runB.name}、step 3、なし` }).waitFor();
+  await waitUntil(async () => (await grid.locator('thead th').allInnerTexts()).join('|') === 'Run|step 2', 'grid did not show the latest common step');
+  assert.equal(await grid.locator('.media-compare-cell.missing').count(), 0);
+  const stepChoices = page.getByRole('group', { name: '比較するstep' });
+  assert.equal(await stepChoices.getByRole('checkbox', { name: '2', exact: true }).isChecked(), true);
+  await stepChoices.getByRole('checkbox', { name: '3 1/2 Run' }).waitFor();
+
+  console.log('Browser check: each Run latest step shares one column');
+  await page.getByRole('button', { name: '各Runの最新step' }).click();
+  await waitUntil(async () => (await grid.locator('thead th').allInnerTexts()).join('|') === 'Run|各Runの最新step', 'grid did not show one latest column');
+  await grid.getByRole('button', { name: `${runA.name}、step 3、音声` }).waitFor();
   await grid.getByRole('button', { name: `${runB.name}、step 2、音声` }).waitFor();
 
   console.log('Browser check: 2 Runs × 3 steps, switching cells continues from the same position');
-  await page.getByLabel('比較するstep').fill('0, 1, 2');
-  await page.getByRole('button', { name: '表示', exact: true }).click();
+  // The steps live in the URL, so each checkbox is ticked once the previous choice is applied.
+  for (const step of ['0', '1', '2']) {
+    await stepChoices.getByRole('checkbox', { name: step, exact: true }).click();
+    await stepChoices.getByRole('checkbox', { name: step, exact: true }).and(page.locator(':checked')).waitFor();
+  }
   await waitUntil(async () => (await grid.locator('thead th').allInnerTexts()).join('|') === 'Run|step 0|step 1|step 2', 'grid did not show steps 0–2');
   assert.equal(await grid.locator('.media-compare-cell.missing').count(), 0);
   await grid.getByRole('button', { name: `${runA.name}、step 1、音声` }).click();

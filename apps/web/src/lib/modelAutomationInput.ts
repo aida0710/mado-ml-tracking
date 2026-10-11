@@ -57,6 +57,37 @@ export function createAutomationValues(modelFamilies: string[] = []): FormValues
     maxAttempts: String(DEFAULT_AUTOMATION_ATTEMPTS),
   };
 }
+/**
+ * The form values of a new rule that starts from `rule`'s settings. The name is marked as a copy
+ * so the two rules can be told apart in the list until the user renames it.
+ */
+export function createAutomationValuesFromRule(rule: ModelAutomationRule): FormValues {
+  return {
+    name: automationText.copiedRuleName(rule.name),
+    enabled: 'true',
+    trigger: rule.trigger,
+    upstreamRuleId: rule.upstreamRuleId ?? '',
+    modelFamilies: [...rule.modelFamilies],
+    kind: rule.kind,
+    experimentId: rule.experimentId,
+    codeVersionId: rule.codeVersionId,
+    targetId: rule.targetId,
+    gpuIds: [...rule.gpuIds],
+    inputDatasetVersionIds: [...rule.inputDatasetVersionIds],
+    parameters: JSON.stringify(rule.parameters, null, 2),
+    tags: JSON.stringify(rule.tags, null, 2),
+    maxAttempts: String(rule.maxAttempts),
+  };
+}
+
+/** Rules that start when `rule`'s Run succeeds; they stop following it once it is disabled. */
+export function downstreamRules(
+  rules: readonly ModelAutomationRule[],
+  rule: Pick<ModelAutomationRule, 'id'>,
+): ModelAutomationRule[] {
+  return rules.filter((candidate) => candidate.upstreamRuleId === rule.id);
+}
+
 export function updateAutomationValues({
   previous,
   next,
@@ -70,19 +101,24 @@ export function updateAutomationValues({
   if (getFieldValue(next, 'trigger') !== 'upstream_run_finished') updated.upstreamRuleId = '';
   const upstream = catalog.rules.find((rule) => rule.id === updated.upstreamRuleId);
   // A downstream stage normally runs on the same model families as its upstream stage.
-  if (
-    upstream &&
-    updated.upstreamRuleId !== previous.upstreamRuleId &&
-    !getSelectedValues(next, 'modelFamilies').length
-  )
+  const isNewUpstream = upstream !== undefined && updated.upstreamRuleId !== previous.upstreamRuleId;
+  if (isNewUpstream && !getSelectedValues(next, 'modelFamilies').length)
     updated.modelFamilies = upstream.modelFamilies;
+  // The stage after inference is usually its evaluation; a kind the user changed is kept.
+  if (
+    isNewUpstream &&
+    upstream.kind === 'inference' &&
+    getFieldValue(next, 'kind') === getFieldValue(previous, 'kind') &&
+    getFieldValue(next, 'kind') === 'inference'
+  )
+    updated.kind = 'evaluation';
   const code = catalog.registry.codeVersions.find((version) => version.id === next.codeVersionId);
   if (
     code &&
     !isAutomationCodeCompatible({
       code,
-      kind: getFieldValue(next, 'kind') as AutomationKind,
-      modelFamilies: getSelectedValues(next, 'modelFamilies'),
+      kind: getFieldValue(updated, 'kind') as AutomationKind,
+      modelFamilies: getSelectedValues(updated, 'modelFamilies'),
     })
   )
     updated.codeVersionId = '';

@@ -11,6 +11,8 @@ import {
   completeSchema,
   heartbeatSchema,
   jobCreateSchema,
+  jobLaunchSchema,
+  jobListQuerySchema,
   workerClaimSchema,
   workerResumeSchema,
   workerLogSchema,
@@ -74,15 +76,26 @@ export function targetRoutes(targets: TargetService): Hono<ApiEnvironment> {
 
 export function jobRoutes(jobs: JobService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
-  routes.get('/:p/jobs', async (context) =>
-    context.json({ items: await jobs.list(principal(context), uuidParam(context, 'p')) }),
-  );
+  routes.get('/:p/jobs', async (context) => {
+    const filter = parse(jobListQuerySchema, context.req.query());
+    return context.json({ items: await jobs.list(principal(context), uuidParam(context, 'p'), filter) });
+  });
   routes.post('/:p/jobs', async (context) =>
     context.json(
       await jobs.create(
         principal(context),
         uuidParam(context, 'p'),
         await jsonBody(context, jobCreateSchema),
+      ),
+      201,
+    ),
+  );
+  routes.post('/:p/jobs/launch', async (context) =>
+    context.json(
+      await jobs.launch(
+        principal(context),
+        uuidParam(context, 'p'),
+        await jsonBody(context, jobLaunchSchema),
       ),
       201,
     ),

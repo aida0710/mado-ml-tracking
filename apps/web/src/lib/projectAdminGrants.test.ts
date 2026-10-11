@@ -4,6 +4,7 @@ import {
   findLastProjectAdminGrant,
   groupsWithMembers,
   listProjectAdminGrants,
+  projectAdminNames,
 } from './projectAdminGrants';
 
 function member(
@@ -62,5 +63,17 @@ describe('Projectに残るAdmin', () => {
       member('robot', { directRole: 'admin', kind: 'service' }),
     ];
     expect(findLastProjectAdminGrant(members)).toEqual({ kind: 'member', userId: 'lead' });
+  });
+});
+
+describe('プロジェクトのAdminの名前', () => {
+  it('直接付与とgroupでAdminになっている人の名前を並べ、Service AccountとAdmin以外は入れない', () => {
+    const members = [
+      member('渡辺', { directRole: 'admin' }),
+      { ...member('相田', { groups: [{ group: 'ml-admins', role: 'admin' }] }), role: 'admin' as const },
+      member('worker', { directRole: 'admin', kind: 'service' }),
+      member('editor', { directRole: 'editor' }),
+    ];
+    expect(projectAdminNames(members)).toEqual(['相田', '渡辺']);
   });
 });

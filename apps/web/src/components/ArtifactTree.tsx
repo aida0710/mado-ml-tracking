@@ -39,7 +39,7 @@ export function ArtifactTree({
     <div className="artifact-tree">
       <nav className="artifact-breadcrumbs" aria-label={text.artifactDirectoryPath}>
         {breadcrumbs.map((breadcrumb, index) => (
-          <span key={breadcrumb.prefix}>
+          <span key={breadcrumb.prefix} className="artifact-breadcrumb">
             {index > 0 && <span className="breadcrumb-separator">/</span>}
             {index === breadcrumbs.length - 1 ? (
               <span aria-current="location" className="mono">
@@ -105,7 +105,8 @@ export function ArtifactTree({
           },
           {
             key: 'download',
-            header: text.download,
+            // The column holds only an icon; a visible heading would be wider than the icons.
+            header: <span className="sr-only">{text.download}</span>,
             priority: 'primary',
             className: 'artifact-tree-download',
             render: (row) =>

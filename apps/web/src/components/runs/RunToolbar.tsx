@@ -8,8 +8,10 @@ import {
   parseMetricRunSort,
   toRunSearchConditions,
 } from '../../lib/runFilter';
+import { suggestRunFilter } from '../../lib/runFilterSuggestion';
 import { RUN_KINDS } from '../../lib/runListUrl';
 import { text, textTemplates } from '../../i18n/catalog';
+import { detailsPopoverHandlers } from '../../lib/detailsPopover';
 
 const runStatuses: RunStatus[] = ['queued', 'running', 'finished', 'failed', 'canceled'];
 // The select chooses one kind; a view saved through the API with several keeps them as one choice.
@@ -17,6 +19,7 @@ const KIND_OPTION_SEPARATOR = ',';
 
 export function RunToolbar({
   searchText,
+  filterRejection,
   status,
   kinds,
   sort,
@@ -32,6 +35,8 @@ export function RunToolbar({
   onExportCsv,
 }: {
   searchText: string;
+  /** Why the API refused the searched filter; shown like a syntax error, without a retry. */
+  filterRejection: string | null;
   status: string;
   kinds: RunKind[];
   sort: string;
@@ -61,11 +66,15 @@ export function RunToolbar({
       ? [sortedMetric.key, ...metricNames]
       : metricNames;
 
-  function submitSearch() {
-    const conditions = toRunSearchConditions(searchInput);
+  const filterError = syntaxError ?? filterRejection;
+  // A comparison searched as a Run name, such as `loss < 0.2`, most likely meant a metric.
+  const suggestedFilter = suggestRunFilter(searchText);
+
+  function submitSearch(input = searchInput) {
+    const conditions = toRunSearchConditions(input);
     const error = 'filter' in conditions ? findRunFilterSyntaxError(conditions.filter) : null;
     setSyntaxError(error);
-    if (!error) onSearch(searchInput.trim());
+    if (!error) onSearch(input.trim());
   }
 
   return (
@@ -81,7 +90,7 @@ export function RunToolbar({
           <Search size={16} />
           <input
             aria-label={text.search}
-            aria-invalid={syntaxError ? true : undefined}
+            aria-invalid={filterError ? true : undefined}
             placeholder={text.queryHint}
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
@@ -129,7 +138,7 @@ export function RunToolbar({
             ))}
           </select>
         </label>
-        <details className="column-menu">
+        <details className="column-menu" {...detailsPopoverHandlers}>
           <summary>
             <Columns3 size={15} />
             {text.columns}
@@ -177,7 +186,19 @@ export function RunToolbar({
           {exportingCsv ? text.exportingRunsCsv : text.exportRunsCsv}
         </button>
       </div>
-      <ErrorNotice message={syntaxError} />
+      <ErrorNotice message={filterError} />
+      {suggestedFilter && !filterError && (
+        <p className="notice" role="status">
+          {textTemplates.filterSuggestion(searchText, suggestedFilter)}{' '}
+          <button
+            type="button"
+            className="button small"
+            onClick={() => submitSearch(suggestedFilter)}
+          >
+            {text.searchWithSuggestion}
+          </button>
+        </p>
+      )}
     </>
   );
 }

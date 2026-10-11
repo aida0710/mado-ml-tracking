@@ -1,7 +1,12 @@
-import type { Code, CodeVersionDetail, ModelFamilySummary, RunKind } from '@mmt/contracts';
+import {
+  MAX_JOB_ATTEMPTS,
+  type Code,
+  type CodeVersionDetail,
+  type ModelFamilySummary,
+  type RunKind,
+} from '@mmt/contracts';
 import { first, rows, type Connection } from '../db/database.js';
 import { notFound } from '../domain/errors.js';
-import { MAX_RETRY_CHAIN_LENGTH } from './automationExecutionLookup.js';
 import { runProducedByRuleCondition } from './evaluationRunRepository.js';
 import { codeSelect, findCodeVersion } from './registryRepository.js';
 
@@ -97,7 +102,7 @@ export async function listRuleRunMetricKeys(
       METRIC_KEY_RUN_SAMPLE,
       MAX_METRIC_KEYS,
       rule.id,
-      MAX_RETRY_CHAIN_LENGTH,
+      MAX_JOB_ATTEMPTS,
     ],
   );
   return found.map((row) => row.key);

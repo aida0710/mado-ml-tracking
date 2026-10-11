@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CodeView } from './CodeView';
+import { CodeView, FormattedCode, type CodeLanguageState } from './CodeView';
 
 function storage(values: Record<string, string>) {
   const items = new Map(Object.entries(values));
@@ -49,5 +49,16 @@ describe('CodeView', () => {
     vi.stubGlobal('localStorage', storage({ 'mmt.codeLanguage': JSON.stringify({ json: 'javascript' }) }));
     const markup = renderToStaticMarkup(<CodeView content={'{"a": 1}'} fileName="a.json" />);
     expect(markup).toContain('<option value="auto" selected="">自動（JSON）</option>');
+  });
+
+  it('表として読めるファイルでは、表示形式の先頭に「表」を出す', () => {
+    const code: CodeLanguageState = { detected: 'csv', choice: 'auto', language: 'csv', setChoice: () => undefined };
+    const markup = renderToStaticMarkup(<FormattedCode content={'a,b\n1,2\n'} code={code} onShowTable={() => undefined} />);
+    expect(markup).toMatch(/<select[^>]*><option value="table">表<\/option><option value="auto" selected="">自動（CSV）<\/option>/);
+  });
+
+  it('表にできないテキストでは「表」を出さない', () => {
+    const markup = renderToStaticMarkup(<CodeView content="plain" fileName="memo.txt" />);
+    expect(markup).not.toContain('value="table"');
   });
 });

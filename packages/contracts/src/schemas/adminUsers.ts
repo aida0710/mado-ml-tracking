@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { Account, AdminUser, AdminUserPasswordReset } from '../adminUsers.js';
 import { userSchema } from './identity.js';
-import { timestampSchema } from './primitives.js';
+import { idSchema, timestampSchema } from './primitives.js';
 import { namedContractSchema } from './schemaRegistry.js';
 import type { Expect, MutuallyAssignable } from './typeAssertions.js';
 
@@ -11,6 +11,7 @@ export const adminUserSchema = namedContractSchema(
     ...userSchema.shape,
     lastLoginAt: timestampSchema.nullable(),
     createdAt: timestampSchema,
+    serviceAccountProject: z.strictObject({ id: idSchema, name: z.string() }).nullable(),
   }),
 );
 export const adminUserPasswordResetSchema = namedContractSchema(

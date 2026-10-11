@@ -120,13 +120,44 @@ describe('x位置の値', () => {
 });
 
 describe('描く前の系列の準備', () => {
-  it('色はRun IDから決まり、並べ替えても同じRunは同じ色になる', () => {
+  it('色と線の模様はRun IDから決まり、並べ替えても同じRunは同じになる', () => {
     const run = (id: string) => ({ id, label: id, kind: 'run' as const, points: [] });
-    const options = { xScale: 'linear' as const, yScale: 'linear' as const, smoothing: { kind: 'none' as const, weight: 0 } };
+    const options = { xScale: 'linear' as const, yScale: 'linear' as const, smoothing: { kind: 'none' as const, weight: 0 }, theme: 'light' as const };
     const forward = prepareChartLines([run('a'), run('b')], options);
     const reversed = prepareChartLines([run('b'), run('a')], options);
     expect(reversed[1]!.color).toBe(forward[0]!.color);
+    expect(reversed[1]!.dashPattern).toBe(forward[0]!.dashPattern);
     expect(prepareChartLines([{ ...run('a'), color: '#123456' }], options)[0]!.color).toBe('#123456');
+  });
+
+  it('ある指標を記録していないRunがあっても、同じRunは画面のどの図でも同じ色と模様になる', () => {
+    const run = (id: string) => ({ id, label: id, kind: 'run' as const, points: [] });
+    const options = { xScale: 'linear' as const, yScale: 'linear' as const, smoothing: { kind: 'none' as const, weight: 0 }, theme: 'light' as const, styleIds: ['a', 'b', 'c'] };
+    const everyRun = prepareChartLines([run('a'), run('b'), run('c')], options);
+    // Run a logged no value of this key, so the chart has only b and c.
+    const withoutA = prepareChartLines([run('b'), run('c')], options);
+    expect(withoutA.map((line) => [line.color, line.dashPattern])).toEqual(
+      everyRun.slice(1).map((line) => [line.color, line.dashPattern]),
+    );
+  });
+
+  it('画面のRunが8本を超えると、2本だけの図でも同じ色相の色にする', () => {
+    const run = (id: string) => ({ id, label: id, kind: 'run' as const, points: [] });
+    const styleIds = Array.from({ length: 9 }, (_, index) => `run-${index}`);
+    const options = { xScale: 'linear' as const, yScale: 'linear' as const, smoothing: { kind: 'none' as const, weight: 0 }, theme: 'light' as const };
+    const fullChart = prepareChartLines(styleIds.map(run), { ...options, styleIds });
+    const twoLines = prepareChartLines([run('run-3'), run('run-7')], { ...options, styleIds });
+    expect(twoLines.map((line) => line.color)).toEqual([fullChart[3]!.color, fullChart[7]!.color]);
+    expect(twoLines.every((line) => line.dashPattern === null)).toBe(true);
+  });
+
+  it('画面のRunに無い線（グループ、1つのRunの指標）は、その図の線の中で色を分ける', () => {
+    const group = (key: string) => ({ id: `group:${key}`, label: key, kind: 'group' as const, points: [] });
+    const options = { xScale: 'linear' as const, yScale: 'linear' as const, smoothing: { kind: 'none' as const, weight: 0 }, theme: 'light' as const };
+    const lines = prepareChartLines([group('lr=0.1'), group('lr=0.01')], { ...options, styleIds: ['r1', 'r2'] });
+    expect(lines.map((line) => line.color)).toEqual(
+      prepareChartLines([group('lr=0.1'), group('lr=0.01')], options).map((line) => line.color),
+    );
   });
 
   it('対数軸に置けない点を除いてから平滑化し、除いた件数を残す', () => {
@@ -143,7 +174,7 @@ describe('描く前の系列の準備', () => {
           ],
         },
       ],
-      { xScale: 'linear', yScale: 'log', smoothing: { kind: 'running_average', weight: 1 } },
+      { xScale: 'linear', yScale: 'log', smoothing: { kind: 'running_average', weight: 1 }, theme: 'light' },
     );
     expect(line!.excludedCount).toBe(1);
     expect(line!.smoothedValues).toEqual([1, 1.5]);
@@ -151,7 +182,7 @@ describe('描く前の系列の準備', () => {
 });
 
 describe('tooltipの値', () => {
-  const options = { xScale: 'linear' as const, yScale: 'linear' as const, smoothing: { kind: 'none' as const, weight: 0 } };
+  const options = { xScale: 'linear' as const, yScale: 'linear' as const, smoothing: { kind: 'none' as const, weight: 0 }, theme: 'light' as const };
   const lines = prepareChartLines(
     ['a', 'b', 'c'].map((id, index) => ({
       id,
@@ -185,7 +216,7 @@ describe('tooltipの値', () => {
       { ...options, smoothing: { kind: 'running_average', weight: 1 } },
     );
     expect(valuesAtX([smoothed!], 1, { highlightedId: null, maxRows: 5 }).rows).toEqual([
-      { id: 'a', label: 'a', color: smoothed!.color, value: 5, rawValue: 10 },
+      { id: 'a', label: 'a', color: smoothed!.color, dashPattern: smoothed!.dashPattern, value: 5, rawValue: 10 },
     ]);
   });
 });
@@ -216,29 +247,27 @@ describe('複数のmetricを重ねた図の系列名', () => {
     expect(lines.map((line) => line.label)).toEqual(['loss · grid-0', 'loss · grid-1', 'acc · grid-0', 'acc · grid-1']);
   });
 
+  it('Runが複数なら、色は元のRunのもの、線の模様はmetricごとにする', () => {
+    const series = seriesForMetricKeys(['loss', 'acc'], () => [lineOf('r1', 'grid-0'), lineOf('r2', 'grid-1')]);
+    expect(series.map((line) => [line.styleId, line.dashPattern])).toEqual([
+      ['r1', null],
+      ['r2', null],
+      ['r1', '7 4'],
+      ['r2', '7 4'],
+    ]);
+    const options = { xScale: 'linear' as const, yScale: 'linear' as const, smoothing: { kind: 'none' as const, weight: 0 }, theme: 'light' as const, styleIds: ['r1', 'r2'] };
+    const runColors = prepareChartLines([lineOf('r1', 'grid-0'), lineOf('r2', 'grid-1')], options).map((line) => line.color);
+    expect(prepareChartLines(series, options).map((line) => line.color)).toEqual([...runColors, ...runColors]);
+  });
+
+  it('Runが1つなら、metricの線はそれぞれ別の色にする', () => {
+    const series = seriesForMetricKeys(['train.loss', 'val.loss'], () => [lineOf('r1', 'Run 2')]);
+    expect(series.every((line) => line.styleId === undefined)).toBe(true);
+    const options = { xScale: 'linear' as const, yScale: 'linear' as const, smoothing: { kind: 'none' as const, weight: 0 }, theme: 'light' as const, styleIds: ['r1'] };
+    expect(new Set(prepareChartLines(series, options).map((line) => line.color)).size).toBe(2);
+  });
+
   it('metricが1つならRunのidと名前をそのまま使う', () => {
     expect(seriesForMetricKeys(['loss'], () => [lineOf('r1', 'grid-0')])).toEqual([lineOf('r1', 'grid-0')]);
-  });
-});
-
-describe('同じ図の系列の色', () => {
-  const hueOf = (color: string) => Number(/^hsl\((\d+)/.exec(color)![1]);
-  const hueGap = (left: number, right: number) => {
-    const gap = Math.abs(left - right) % 360;
-    return Math.min(gap, 360 - gap);
-  };
-
-  it('数本の線は色相を45度以上離し、並び順を変えても同じ色になる', () => {
-    const ids = Array.from({ length: 6 }, (_, index) => `run-${index}`);
-    const series = ids.map((id) => ({ id, label: id, kind: 'run' as const, points: [{ x: 0, value: 1 }] }));
-    const options = { xScale: 'linear', yScale: 'linear', smoothing: { kind: 'none', weight: 0 } } as const;
-    const lines = prepareChartLines(series, options);
-    const hues = lines.map((line) => hueOf(line.color));
-    for (const [index, hue] of hues.entries())
-      for (const other of hues.slice(index + 1)) expect(hueGap(hue, other)).toBeGreaterThanOrEqual(45);
-    const reversed = prepareChartLines([...series].reverse(), options);
-    expect(Object.fromEntries(reversed.map((line) => [line.id, line.color]))).toEqual(
-      Object.fromEntries(lines.map((line) => [line.id, line.color])),
-    );
   });
 });

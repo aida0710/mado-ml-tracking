@@ -8,16 +8,22 @@ import { text, textTemplates } from '../i18n/catalog';
 
 /**
  * The ⋯ menu of an open Artifact. Deletion sits here rather than as a standing button and always
- * asks first, because it cannot be undone. Render it only for Project admins.
+ * asks first, because it cannot be undone. A file something uses cannot be deleted, so the item
+ * is disabled with the reason instead of failing after the confirmation. Render it only for
+ * Project admins.
  */
 export function ArtifactActionsMenu({
   artifact,
+  isReferenced,
   onDeleted,
 }: {
   artifact: Artifact;
+  /** null while the references are loading; the server refuses a referenced file either way. */
+  isReferenced: boolean | null;
   onDeleted: () => void;
 }) {
   const menuId = useId();
+  const reasonId = useId();
   const popover = usePopover();
   const [isConfirming, setIsConfirming] = useState(false);
   return (
@@ -40,6 +46,8 @@ export function ArtifactActionsMenu({
             type="button"
             role="menuitem"
             className="danger"
+            disabled={isReferenced === true}
+            aria-describedby={isReferenced ? reasonId : undefined}
             onClick={() => {
               popover.close();
               setIsConfirming(true);
@@ -47,6 +55,11 @@ export function ArtifactActionsMenu({
           >
             {text.artifactDelete}
           </button>
+          {isReferenced && (
+            <p className="artifact-actions-reason" id={reasonId}>
+              {text.artifactDeleteBlockedByReferences}
+            </p>
+          )}
         </div>
       )}
       {isConfirming && (

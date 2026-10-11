@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Play, Plus, RefreshCw } from 'lucide-react';
 import type { ExperimentTask, ExecutionMode } from '@mmt/contracts';
@@ -27,6 +27,7 @@ export function TasksPage() {
   const [params, setParams] = useSearchParams();
   const experimentId = params.get('experiment') ?? '';
   const [dialog, setDialog] = useState<TaskDialog | null>(null);
+  const testCommandNoteId = useId();
   const catalog = useExecutionCatalog(project.id);
   const targets = useProjectTargets(project.id);
   const tasks = useQuery(`${project.id}:tasks:${experimentId}`, (signal) => tasksApi.list(project.id, experimentId || undefined, signal));
@@ -41,14 +42,17 @@ export function TasksPage() {
       {canEdit && <button className="button primary" onClick={() => setDialog({ kind: 'create' })}><Plus size={15} />{text.newTask}</button>}
       <button className="icon-button" aria-label={text.refresh} onClick={reload}><RefreshCw size={17} /></button>
     </>} />
-    <Resource query={catalog}>{(entries) => <Resource query={targets}>{(computeTargets) => <>
+    <Resource query={catalog}>{(entries) => <Resource query={targets}>{(computeTargets) => {
+      const hasTestCommand = (task: ExperimentTask) =>
+        Boolean(entries.codeVersions.find((version) => version.id === task.codeVersionId)?.testEntrypoint?.length);
+      return <>
       <label className="chart-selector"><span>{text.experiments}</span>
         <select aria-label={text.experiments} value={experimentId} onChange={(event) => setParams(event.target.value ? { experiment: event.target.value } : {})}>
           <option value="">{text.allExperiments}</option>
           {entries.experiments.map((experiment) => <option key={experiment.id} value={experiment.id}>{experiment.name}</option>)}
         </select>
       </label>
-      <Resource query={tasks}>{(items) => <RegistryLayout list={<ResponsiveTable rows={items} rowKey={(task) => task.id}
+      <Resource query={tasks}>{(items) => <RegistryLayout selectedKey={selected?.id} list={<ResponsiveTable rows={items} rowKey={(task) => task.id}
         selectedKey={selected?.id} empty={text.noTasks} columns={[
           { key: 'name', priority: 'primary', header: text.name, render: (task) => <button className="link-button" onClick={() => selectTask(task)}>{task.name}</button> },
           { key: 'experiment', priority: 'secondary', header: text.experiments, render: (task) => entries.experiments.find((item) => item.id === task.experimentId)?.name ?? task.experimentId },
@@ -62,11 +66,13 @@ export function TasksPage() {
               <button className="button small primary" data-testid="task-launch-run"
                 onClick={() => setDialog({ kind: 'launch', task: selected, mode: 'run' })}><Play size={13} />{text.launchRun}</button>
               <button className="button small" data-testid="task-launch-test"
-                title={!entries.codeVersions.find((version) => version.id === selected.codeVersionId)?.testEntrypoint?.length ? text.testCommandRequired : undefined}
-                disabled={!entries.codeVersions.find((version) => version.id === selected.codeVersionId)?.testEntrypoint?.length}
+                aria-describedby={hasTestCommand(selected) ? undefined : testCommandNoteId}
+                disabled={!hasTestCommand(selected)}
                 onClick={() => setDialog({ kind: 'launch', task: selected, mode: 'test' })}>{text.launchTest}</button>
             </div>}
           </div>
+          {/* Said in the page, not only in a tooltip that a touch screen never shows. */}
+          {canEdit && !hasTestCommand(selected) && <p id={testCommandNoteId} className="muted">{text.testCommandRequired}</p>}
           <TaskDetails task={selected} catalog={entries} targets={computeTargets} />
           <h3>{text.taskHistory}</h3>
           <Resource query={history}>{(historyPage) => <>
@@ -80,6 +86,7 @@ export function TasksPage() {
         onClose={() => setDialog(null)} onSaved={(task) => { setDialog(null); reload(); selectTask(task); }} />}
       {dialog?.kind === 'launch' && <TaskLaunchDialog task={dialog.task} initialMode={dialog.mode} catalog={entries} targets={computeTargets}
         onClose={() => setDialog(null)} onSaved={() => { setDialog(null); history.reload(); catalog.reload(); }} />}
-    </>}</Resource>}</Resource>
+    </>;
+    }}</Resource>}</Resource>
   </section>;
 }

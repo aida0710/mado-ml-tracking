@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import type { Job, JobListItem, Run, WorkerJob } from '@mmt/contracts';
+import type { Job, JobListItem, Run, RunLogList, WorkerJob } from '@mmt/contracts';
 import { createHarness, entity, login, request, testDatabaseUrl, type Harness } from './harness.js';
 import { executionFixture } from './fixtures.js';
 
@@ -532,14 +532,53 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
       }),
       200,
     );
-    expect(
-      (
-        await request(harness.app, `${fixture.basePath}/jobs/${retry.job.id}/retry`, {
-          method: 'POST',
-          cookie: fixture.editor.cookie,
-        })
-      ).status,
-    ).toBe(409);
+    // maxAttempts (2) bounds automatic retries only; the person who started it may go on.
+    const pastMaxAttempts = await entity<{ run: Run; job: Job }>(
+      await request(harness.app, `${fixture.basePath}/jobs/${retry.job.id}/retry`, {
+        method: 'POST',
+        cookie: fixture.editor.cookie,
+      }),
+    );
+    expect(pastMaxAttempts.job).toMatchObject({ attempt: 3, maxAttempts: 2 });
+  });
+
+  it('最大試行回数に達したJobも人は再実行でき、再実行の連なりは100回目で止まる', async () => {
+    const fixture = await executionFixture(harness);
+    const run = await fixture.newRun('Hook-like Job');
+    const job = await entity<Job>(
+      await request(harness.app, `${fixture.basePath}/jobs`, {
+        method: 'POST',
+        cookie: fixture.editor.cookie,
+        body: { runId: run.id, targetId: fixture.target.id, maxAttempts: 1 },
+      }),
+    );
+    const retryOf = (jobId: string) =>
+      request(harness.app, `${fixture.basePath}/jobs/${jobId}/retry`, {
+        method: 'POST',
+        cookie: fixture.editor.cookie,
+      });
+    await entity(
+      await request(harness.app, `${fixture.basePath}/jobs/${job.id}/cancel`, {
+        method: 'POST',
+        cookie: fixture.editor.cookie,
+      }),
+      200,
+    );
+    const retried = await entity<{ run: Run; job: Job }>(await retryOf(job.id));
+    expect(retried.job).toMatchObject({ attempt: 2, maxAttempts: 1, status: 'queued' });
+
+    // A chain that reached the last attempt the retry lookup follows is refused, whoever asks.
+    await entity(
+      await request(harness.app, `${fixture.basePath}/jobs/${retried.job.id}/cancel`, {
+        method: 'POST',
+        cookie: fixture.editor.cookie,
+      }),
+      200,
+    );
+    await harness.database.query('UPDATE jobs SET attempt=100 WHERE id=$1', [retried.job.id]);
+    const refused = await retryOf(retried.job.id);
+    expect(refused.status).toBe(409);
+    expect(((await refused.json()) as { error: string }).error).toContain('100回目まで');
   });
 
   it('Jobの停止・再実行は作成者かProject adminだけができ、一覧に作成者が出る', async () => {
@@ -567,7 +606,14 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         200,
       )
     ).items.find((item) => item.id === job.id);
-    expect(listed).toMatchObject({ createdBy: fixture.editor.userId, createdByName: expect.any(String) });
+    expect(listed).toMatchObject({
+      createdBy: fixture.editor.userId,
+      createdByName: expect.any(String),
+      // A Job a person started has no Sweep or rule behind it and no checkpoint yet.
+      sweepTrial: null,
+      automationRule: null,
+      hasResumeCheckpoint: false,
+    });
 
     const jobAction = (action: 'cancel' | 'retry', cookie: string) =>
       request(harness.app, `${fixture.basePath}/jobs/${job.id}/${action}`, { method: 'POST', cookie });
@@ -579,6 +625,104 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
     // The Project admin stops it; the editor who started it retries it.
     expect((await jobAction('cancel', fixture.administrator.cookie)).status).toBe(200);
     expect((await jobAction('retry', fixture.editor.cookie)).status).toBe(201);
+  });
+
+  it('Runのlogはtailで最新の行だけを古い順に返し、全体の行数を添える', async () => {
+    const fixture = await executionFixture(harness);
+    const run = await fixture.newRun('Long log');
+    const entries = Array.from({ length: 5 }, (_, index) => ({
+      timestamp: new Date(Date.UTC(2026, 9, 11, 0, 0, index)).toISOString(),
+      level: index === 4 ? ('error' as const) : ('info' as const),
+      message: `line ${index}`,
+    }));
+    expect(
+      (
+        await request(harness.app, `${fixture.basePath}/runs/${run.id}/logs`, {
+          method: 'POST',
+          cookie: fixture.editor.cookie,
+          body: { entries },
+        })
+      ).status,
+    ).toBe(204);
+    const readLogs = async (search: string) =>
+      entity<RunLogList>(
+        await request(harness.app, `${fixture.basePath}/runs/${run.id}/logs${search}`, {
+          cookie: fixture.viewer.cookie,
+        }),
+        200,
+      );
+    const latest = await readLogs('?tail=2');
+    expect(latest.items.map((entry) => entry.message)).toEqual(['line 3', 'line 4']);
+    expect(latest.totalCount).toBe(5);
+    const everything = await readLogs('');
+    expect(everything.items).toHaveLength(5);
+    expect(everything.totalCount).toBe(5);
+    const refused = await request(harness.app, `${fixture.basePath}/runs/${run.id}/logs?tail=0`, {
+      cookie: fixture.viewer.cookie,
+    });
+    expect(refused.status).toBe(422);
+
+    const silent = await fixture.newRun('No log');
+    const empty = await entity<RunLogList>(
+      await request(harness.app, `${fixture.basePath}/runs/${silent.id}/logs?tail=2`, {
+        cookie: fixture.viewer.cookie,
+      }),
+      200,
+    );
+    expect(empty).toEqual({ items: [], totalCount: 0 });
+  });
+
+  it('logのダウンロードは、読み込みの区切りをまたいでも全行を古い順にファイルで返す', async () => {
+    const fixture = await executionFixture(harness);
+    const run = await fixture.newRun('train: long/log');
+    // More lines than one read of the download (5000), so the file is built from two reads.
+    const lineCount = 5003;
+    await harness.database.query(
+      `INSERT INTO run_logs(run_id,timestamp,level,message)
+       SELECT $1,'2026-10-11T00:00:00Z'::timestamptz+make_interval(secs=>n),
+         CASE WHEN n=$2-1 THEN 'error' ELSE 'info' END,'line '||n
+       FROM generate_series(0,$2-1) AS n`,
+      [run.id, lineCount],
+    );
+    const download = (cookie: string) =>
+      request(harness.app, `${fixture.basePath}/runs/${run.id}/logs/download`, { cookie });
+
+    const response = await download(fixture.viewer.cookie);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('text/plain; charset=utf-8');
+    expect(response.headers.get('Content-Disposition')).toContain(
+      `filename*=UTF-8''${encodeURIComponent('train_ long_log.log')}`,
+    );
+    const lines = (await response.text()).split('\n');
+    expect(lines.pop()).toBe('');
+    expect(lines).toHaveLength(lineCount);
+    expect(lines[0]).toBe('2026-10-11T00:00:00.000Z\tINFO\tline 0');
+    expect(lines[5000]).toBe('2026-10-11T01:23:20.000Z\tINFO\tline 5000');
+    expect(lines.at(-1)).toBe('2026-10-11T01:23:22.000Z\tERROR\tline 5002');
+    expect((await download(fixture.outsider.cookie)).status).toBe(403);
+  });
+
+  it('Job一覧はrunIdでそのRunのJobだけに絞れる', async () => {
+    const fixture = await executionFixture(harness);
+    const [first, second] = await Promise.all([fixture.newRun('First'), fixture.newRun('Second')]);
+    for (const run of [first, second])
+      await entity(
+        await request(harness.app, `${fixture.basePath}/jobs`, {
+          method: 'POST',
+          cookie: fixture.editor.cookie,
+          body: { runId: run.id, targetId: fixture.target.id },
+        }),
+      );
+    const listJobs = (search: string) =>
+      request(harness.app, `${fixture.basePath}/jobs${search}`, { cookie: fixture.viewer.cookie });
+
+    const filtered = await entity<{ items: JobListItem[] }>(await listJobs(`?runId=${second.id}`), 200);
+    const everything = await entity<{ items: JobListItem[] }>(await listJobs(''), 200);
+
+    expect(filtered.items.map((job) => job.runId)).toEqual([second.id]);
+    expect(everything.items).toHaveLength(2);
+    expect((await listJobs('?runId=not-a-run')).status).toBe(422);
   });
 
   it('正しいleaseだけでmetricsとlogsを保存し、非zeroの終了コードで成功を申告できない', async () => {
@@ -657,6 +801,47 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         })
       ).status,
     ).toBe(422);
+  });
+
+  it('RunとJobを一度に作り、Jobを作れなければRunも残さない', async () => {
+    const fixture = await executionFixture(harness);
+    const launchBody = (name: string, job: Record<string, unknown>) => ({
+      run: {
+        experimentId: fixture.experiment.id,
+        name,
+        kind: 'inference',
+        modelVersionId: fixture.modelVersion.id,
+      },
+      job: { targetId: fixture.target.id, maxAttempts: 3, ...job },
+    });
+    const launched = await entity<{ run: Run; job: Job }>(
+      await request(harness.app, `${fixture.basePath}/jobs/launch`, {
+        method: 'POST',
+        cookie: fixture.editor.cookie,
+        body: launchBody('Launched together', { gpuIds: ['0'] }),
+      }),
+    );
+    expect(launched.job).toMatchObject({ runId: launched.run.id, status: 'queued', attempt: 1 });
+    expect(launched.run).toMatchObject({ status: 'queued', createdBy: fixture.editor.userId });
+
+    // A GPU the computer does not have refuses the Job, and the Run goes with it.
+    const refused = await request(harness.app, `${fixture.basePath}/jobs/launch`, {
+      method: 'POST',
+      cookie: fixture.editor.cookie,
+      body: launchBody('Refused together', { gpuIds: ['9'] }),
+    });
+    expect(refused.status).toBe(422);
+    const leftOver = await harness.database.query('SELECT id FROM runs WHERE name=$1', [
+      'Refused together',
+    ]);
+    expect(leftOver.rows).toHaveLength(0);
+
+    const asViewer = await request(harness.app, `${fixture.basePath}/jobs/launch`, {
+      method: 'POST',
+      cookie: fixture.viewer.cookie,
+      body: launchBody('By a viewer', {}),
+    });
+    expect(asViewer.status).toBe(403);
   });
 
   it('Jobの重複登録・存在しないGPU・無許可のlocal targetを拒否する', async () => {

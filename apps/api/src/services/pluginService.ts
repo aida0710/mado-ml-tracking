@@ -19,6 +19,9 @@ import type { RegistryService } from './registryService.js';
 
 export type PluginClientFactory = typeof createPluginClient;
 
+/** A plugin_connections row; whether its token variable is set is read from the environment. */
+type PluginConnectionRow = Omit<PluginConnection, 'tokenConfigured'>;
+
 export class PluginService {
   private readonly database: Database;
   private readonly registry: RegistryService;
@@ -43,11 +46,12 @@ export class PluginService {
       role: 'admin',
       scope: 'admin',
     });
-    return rows(
+    const connections = await rows<PluginConnectionRow>(
       this.database,
       'SELECT * FROM plugin_connections WHERE project_id=$1 ORDER BY created_at DESC',
       [projectId],
     );
+    return connections.map((plugin) => this.present(plugin));
   }
 
   async create(
@@ -67,11 +71,12 @@ export class PluginService {
       role: 'admin',
       scope: 'admin',
     });
-    return (await first<PluginConnection>(
+    const created = (await first<PluginConnectionRow>(
       this.database,
       'INSERT INTO plugin_connections(project_id,name,base_url,token_env,enabled) VALUES($1,$2,$3,$4,$5) RETURNING *',
       [projectId, input.name, input.baseUrl.replace(/\/$/, ''), input.tokenEnv, input.enabled],
     ))!;
+    return this.present(created);
   }
 
   async check(principal: Principal, projectId: string, pluginId: string): Promise<PluginManifest> {
@@ -98,7 +103,7 @@ export class PluginService {
     requireGlobalAdmin(principal);
     return transaction(this.database, async (connection) => {
       await requireProject(connection, principal, { projectId, role: 'admin', scope: 'admin' });
-      const plugin = await first<PluginConnection>(
+      const plugin = await first<PluginConnectionRow>(
         connection,
         'SELECT * FROM plugin_connections WHERE project_id=$1 AND id=$2 FOR UPDATE',
         [projectId, request.pluginId],
@@ -110,7 +115,7 @@ export class PluginService {
         plugin.baseUrl !== updated.baseUrl || plugin.tokenEnv !== updated.tokenEnv
           ? null
           : plugin.manifest;
-      return (await first<PluginConnection>(
+      const saved = (await first<PluginConnectionRow>(
         connection,
         'UPDATE plugin_connections SET name=$2,base_url=$3,token_env=$4,enabled=$5,manifest=$6::jsonb WHERE id=$1 RETURNING *',
         [
@@ -122,6 +127,7 @@ export class PluginService {
           manifest ? JSON.stringify(manifest) : null,
         ],
       ))!;
+      return this.present(saved);
     });
   }
 
@@ -256,10 +262,15 @@ export class PluginService {
     if (!token)
       throw new DomainError(
         503,
-        'Pluginのtoken環境変数が設定されていません',
+        `Pluginのtoken環境変数 ${plugin.tokenEnv} がAPI serverに設定されていません。API serverの.envに設定し、API serverを再起動してください`,
         'plugin_token_unavailable',
       );
     return this.clientFactory({ baseUrl: plugin.baseUrl, token });
+  }
+
+  // Only whether the variable holds a value is shown; the value never leaves the server.
+  private present(plugin: PluginConnectionRow): PluginConnection {
+    return { ...plugin, tokenConfigured: Boolean(this.environment[plugin.tokenEnv]) };
   }
 
   private async authorizedConnection(

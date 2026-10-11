@@ -33,7 +33,7 @@ from .http import REQUEST_TIMEOUT_SECONDS, request_sync
 from .pagination import iterate_cursor_pages
 from .run_search_request import build_run_search_body
 from .security import SecretMasker, secret_values
-from .settings import ApiSettings
+from .settings import API_URL_HINT, ApiSettings
 from .timestamps import utc_timestamp
 
 __all__ = ["Client", "ResumeMode", "path_id", "start_run_offline"]
@@ -122,7 +122,11 @@ class Client(ExperimentTasksClient):
         )
         if response.status_code == 204:
             return {}
-        payload = response.json()
+        try:
+            payload = response.json()
+        except ValueError:
+            # A web page (the app's HTML) instead of JSON: MMT_API_URL is a page URL, not the site.
+            raise ConfigurationError(f"API returned a response that is not JSON; {API_URL_HINT}") from None
         if not isinstance(payload, dict):
             raise ConfigurationError("API returned a non-object response")
         return payload

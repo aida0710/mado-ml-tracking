@@ -22,6 +22,12 @@ export const notificationsApi = {
   /** Channels a Project's rules may use: global ones and the Project's own. */
   projectChannels: (projectId: string, signal?: AbortSignal) =>
     requestItems<NotificationChannel>(`${projectPath(projectId)}/notification-channels`, signal),
+  /**
+   * Names of the API server's MMT_NOTIFICATION_* variables that hold a value (never the values).
+   * Global administrators only.
+   */
+  environmentNames: (signal?: AbortSignal) =>
+    requestItems<string>(`${channelPath()}/environment-names`, signal),
   createChannel: (body: NotificationChannelCreate) =>
     request<NotificationChannel>(channelPath(), jsonRequest('POST', body)),
   updateChannel: (channelId: string, body: NotificationChannelPatch) =>

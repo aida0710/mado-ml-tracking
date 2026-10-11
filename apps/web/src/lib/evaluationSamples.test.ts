@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   EVALUATION_SAMPLES_PAGE_SIZE,
-  evaluationSampleFormat,
   isEvaluationSampleTable,
   paginate,
   parseEvaluationSamples,
   resolveArtifactReference,
+  sampleTextDiff,
   sortEvaluationSamples,
 } from './evaluationSamples';
 
@@ -25,19 +25,49 @@ describe('評価サンプルの読み込み', () => {
       '{"audio":"c.wav","reference":"x","prediction":"y","score":"高い"}',
       '{"audio":3,"reference":"x","prediction":"y"}',
       '{"audio":"d.wav","reference":"x","prediction":"y"}',
+      '{"audio":"e.wav","reference":{"text":"x"},"prediction":"y"}',
     ].join('\n');
     const table = parseEvaluationSamples(content, 'jsonl');
     expect(table.samples).toEqual([
-      { line: 1, audio: 'a.wav', reference: 'こんにちは', prediction: 'こんにちわ', score: 0.2 },
-      { line: 7, audio: 'd.wav', reference: 'x', prediction: 'y', score: null },
+      { line: 1, audio: 'a.wav', reference: 'こんにちは', prediction: 'こんにちわ', isTextPair: true, score: 0.2 },
+      { line: 7, audio: 'd.wav', reference: 'x', prediction: 'y', isTextPair: true, score: null },
     ]);
     expect(table.errors).toEqual([
       { line: 3, reason: 'invalid_json' },
       { line: 4, reason: 'not_object' },
       { line: 5, reason: 'invalid_score' },
-      { line: 6, reason: 'invalid_text' },
+      { line: 6, reason: 'invalid_audio' },
+      { line: 8, reason: 'invalid_text' },
     ]);
     expect(isEvaluationSampleTable(table.columns)).toBe(true);
+  });
+
+  it('referenceとpredictionが数値や真偽値の行も捨てず、書かれたとおりの文字列で表示する', () => {
+    const content = [
+      '{"audio":"a.wav","reference":0.1,"prediction":0.12,"score":1}',
+      '{"audio":"b.wav","reference":true,"prediction":false}',
+      '{"audio":"c.wav","reference":"3","prediction":3}',
+    ].join('\n');
+    const table = parseEvaluationSamples(content, 'jsonl');
+    expect(table.errors).toEqual([]);
+    expect(table.samples.map(({ reference, prediction, isTextPair }) => ({ reference, prediction, isTextPair }))).toEqual([
+      { reference: '0.1', prediction: '0.12', isTextPair: false },
+      { reference: 'true', prediction: 'false', isTextPair: false },
+      { reference: '3', prediction: '3', isTextPair: false },
+    ]);
+  });
+
+  it('差分の強調は、referenceとpredictionの両方が文字列のときだけ行う', () => {
+    const [numbers, texts] = parseEvaluationSamples(
+      ['{"reference":0.1,"prediction":0.12}', '{"reference":"今日は","prediction":"今日わ"}'].join('\n'),
+      'jsonl',
+    ).samples;
+    expect(sampleTextDiff(numbers!)).toBeNull();
+    expect(sampleTextDiff(texts!)).toEqual([
+      { kind: 'equal', text: '今日' },
+      { kind: 'delete', text: 'は' },
+      { kind: 'insert', text: 'わ' },
+    ]);
   });
 
   it('csvは引用符内の改行・カンマ・二重引用符を読み、列数の違う行と閉じない引用符をエラーにする', () => {
@@ -50,8 +80,8 @@ describe('評価サンプルの読み込み', () => {
     const table = parseEvaluationSamples(content, 'csv');
     expect(table.columns).toEqual(['audio', 'reference', 'prediction', 'score']);
     expect(table.samples).toEqual([
-      { line: 2, audio: 'a.wav', reference: '今日は、晴れ', prediction: '今日は"晴れ"', score: 0.5 },
-      { line: 3, audio: 'b.wav', reference: '一行目\n二行目', prediction: '二行目', score: 1 },
+      { line: 2, audio: 'a.wav', reference: '今日は、晴れ', prediction: '今日は"晴れ"', isTextPair: true, score: 0.5 },
+      { line: 3, audio: 'b.wav', reference: '一行目\n二行目', prediction: '二行目', isTextPair: true, score: 1 },
     ]);
     expect(table.errors).toEqual([
       { line: 5, reason: 'column_count' },
@@ -66,20 +96,20 @@ describe('評価サンプルの読み込み', () => {
     expect(isEvaluationSampleTable(['audio'])).toBe(true);
   });
 
-  it('拡張子とMIMEから形式を判定する', () => {
-    expect(evaluationSampleFormat('eval/results.jsonl', 'application/octet-stream')).toBe('jsonl');
-    expect(evaluationSampleFormat('x', 'application/x-ndjson; charset=utf-8')).toBe('jsonl');
-    expect(evaluationSampleFormat('eval/results.CSV', 'text/plain')).toBe('csv');
-    expect(evaluationSampleFormat('notes.txt', 'text/plain')).toBeNull();
+  it('tsvもcsvと同じく評価サンプルとして読む', () => {
+    const table = parseEvaluationSamples('audio\treference\tprediction\tscore\na.wav\tx\ty\t0.5\n', 'tsv');
+    expect(table.samples).toEqual([
+      { line: 2, audio: 'a.wav', reference: 'x', prediction: 'y', isTextPair: true, score: 0.5 },
+    ]);
   });
 });
 
 describe('並べ替えとページング', () => {
   const samples = [
-    { line: 1, audio: null, reference: null, prediction: null, score: 0.5 },
-    { line: 2, audio: null, reference: null, prediction: null, score: null },
-    { line: 3, audio: null, reference: null, prediction: null, score: 0.1 },
-    { line: 4, audio: null, reference: null, prediction: null, score: 0.5 },
+    { line: 1, audio: null, reference: null, prediction: null, isTextPair: false, score: 0.5 },
+    { line: 2, audio: null, reference: null, prediction: null, isTextPair: false, score: null },
+    { line: 3, audio: null, reference: null, prediction: null, isTextPair: false, score: 0.1 },
+    { line: 4, audio: null, reference: null, prediction: null, isTextPair: false, score: 0.5 },
   ];
 
   it('スコア順はどちらの向きでもスコアの無い行を最後に置き、同点は行順を保つ', () => {

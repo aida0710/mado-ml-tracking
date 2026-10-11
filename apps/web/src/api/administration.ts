@@ -22,6 +22,11 @@ const pluginPath = (projectId: string, id?: string) =>
   `${projectPath(projectId)}/plugins${id ? `/${encodeId(id)}` : ''}`;
 export const administrationApi = {
   projects: (signal?: AbortSignal) => requestItems<Project>('/projects', signal),
+  /**
+   * One Project the user may open. A Project that cannot be opened fails with the reason; an
+   * archived one answers 404 project_archived to its members and global administrators.
+   */
+  project: (id: string, signal?: AbortSignal) => request<Project>(projectPath(id), { signal }),
   createProject: (body: ProjectCreate) => request<Project>('/projects', jsonRequest('POST', body)),
   updateProject: (id: string, body: ProjectPatch) =>
     request<Project>(projectPath(id), jsonRequest('PATCH', body)),

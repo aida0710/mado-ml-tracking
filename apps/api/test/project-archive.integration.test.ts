@@ -106,6 +106,20 @@ describe.skipIf(!testDatabaseUrl)('Projectのアーカイブと全体管理（�
       expect(listed.items.map((item) => item.id)).not.toContain(project.id);
       expect((await experiments(project.id, { cookie: identity.cookie })).status).toBe(404);
     }
+    // Its members and global administrators learn that it was archived; anyone else cannot tell
+    // it from a Project that never existed.
+    for (const identity of [owner, member, administrator]) {
+      for (const path of [`/api/projects/${project.id}`, `/api/projects/${project.id}/experiments`])
+        expect(await errorCode(await request(harness.app, path, { cookie: identity.cookie }))).toBe(
+          'project_archived',
+        );
+    }
+    const passerby = await login(harness, 'passerby@localhost');
+    expect(
+      await errorCode(
+        await request(harness.app, `/api/projects/${project.id}`, { cookie: passerby.cookie }),
+      ),
+    ).toBe('not_found');
     // A token limited to the Project no longer authenticates at all.
     expect((await experiments(project.id, { token: token.token })).status).toBe(401);
     expect(await adminProjects()).toEqual([]);
@@ -115,6 +129,12 @@ describe.skipIf(!testDatabaseUrl)('Projectのアーカイブと全体管理（�
 
     const restored = await entity<AdminProject>(await restore(project.id), 200);
     expect(restored).toMatchObject({ id: project.id, archivedAt: null, memberCount: 2 });
+    expect(
+      await entity<Project>(
+        await request(harness.app, `/api/projects/${project.id}`, { cookie: member.cookie }),
+        200,
+      ),
+    ).toMatchObject({ id: project.id, role: 'editor', isMember: true });
     expect((await experiments(project.id, { cookie: member.cookie })).status).toBe(200);
     expect((await experiments(project.id, { token: token.token })).status).toBe(200);
     // Restoring a live Project changes nothing and is not audited again.
@@ -275,12 +295,20 @@ describe.skipIf(!testDatabaseUrl)('Projectのアーカイブと全体管理（�
     ]);
     // Someone using the public Project without being a member is not counted.
     await login(harness, 'passerby@localhost');
+    const ownerName = (
+      await harness.database.query<{ display_name: string }>(
+        'SELECT display_name FROM users WHERE id=$1',
+        [owner.userId],
+      )
+    ).rows[0]!.display_name;
 
     expect(await adminProjects()).toEqual([
       expect.objectContaining({
         id: project.id,
         visibility: 'public',
         memberCount: 3,
+        // Only people who are admin: the editor and the viewers through the group are left out.
+        adminNames: [ownerName],
         runCount: 1,
         archivedAt: null,
       }),

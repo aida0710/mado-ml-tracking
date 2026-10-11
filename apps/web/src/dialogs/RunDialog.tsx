@@ -36,6 +36,7 @@ export function RunDialog({
             onClose={onClose}
             onSaved={onSaved}
             submitLabel={text.create}
+            description={text.manualRunNotice}
             fields={[
               { name: 'name', label: text.name, required: true },
               {
@@ -51,7 +52,8 @@ export function RunDialog({
                 label: text.kind,
                 type: 'select',
                 required: true,
-                defaultValue: 'inference',
+                // The SDK's start_run records training by default too.
+                defaultValue: 'training',
                 options: RUN_KINDS.map((kind) => ({ value: kind, label: text[kind] })),
               },
               {

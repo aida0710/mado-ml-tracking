@@ -148,7 +148,8 @@ export const text = {
   empty: '登録はまだありません',
   noResults: '一致する項目がありません',
   requestError: 'APIへの接続に失敗しました',
-  invalidResponse: 'APIの応答形式が契約と一致しません',
+  invalidResponse:
+    'サーバーから想定と違う形式の応答が返りました。再読み込みしても直らないときは、管理者に知らせてください。',
   retry: '再試行',
   back: '戻る',
   next: '次へ',
@@ -170,7 +171,7 @@ export const text = {
   skipContent: 'コンテンツへ移動',
   noProjects: '参加しているプロジェクトがありません',
   noProjectsCreateHint:
-    '「プロジェクトを作成」から始めてください。2つ目からは、プロジェクトの切り替えメニューの一番下から作成できます。',
+    'チームの既存のプロジェクトを使うときは、そのプロジェクトのAdminにメンバーへの追加を依頼してください。新しく始めるときは「プロジェクトを作成」から作成します。2つ目からは、プロジェクトの切り替えメニューの一番下から作成できます。',
   noProjectsAskAdmin: 'プロジェクトの管理者に、メンバーへの追加を依頼してください。',
   projectNotAccessible: 'このプロジェクトは存在しないか、参加していないため開けません。',
   newExperiment: '実験を作成',
@@ -215,7 +216,8 @@ export const text = {
   metricName: 'メトリクス名',
   step: 'Step',
   noMetrics: 'メトリクスはまだありません',
-  noLogs: 'ログはまだありません',
+  noLogs:
+    'ログはまだありません。SDKの run.log("…") で書いたログや、workerで動いたJobの出力がここに並びます。',
   noArtifacts: 'Artifactはまだありません',
   download: 'ダウンロード',
   artifactPath: '保存パス',
@@ -320,8 +322,6 @@ export const text = {
   exitCode: '終了コード',
   jobError: 'ジョブエラー',
   launchBlocked: '実行種別とモデル系列に対応するコードバージョンが必要です。',
-  createdRunNoJob:
-    'Runを保存しました。ジョブの作成に失敗したため、このRunから起動を再試行できます。',
   newTarget: 'コンピュータを追加',
   host: 'Host',
   port: 'Port',
@@ -403,7 +403,6 @@ export const text = {
   failed: '失敗',
   canceled: '中止',
   logsLevel: 'レベル',
-  tokenScopesError: 'Scopeを1つ以上選択してください',
   automationRules: '自動実行ルール',
   newAutomationRule: '自動実行ルールを作成',
   automationHistory: '自動実行履歴',
@@ -413,7 +412,6 @@ export const text = {
   automationQueued: 'Jobを登録',
   automationFailed: '起動に失敗',
   automationSkipped: '起動せず',
-  automationRunStatus: 'Runの状態',
   automationJobStatus: 'Jobの状態',
   automationRun: 'Runを開く',
   automationJob: 'Jobを開く',

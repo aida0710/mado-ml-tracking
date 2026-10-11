@@ -4,7 +4,7 @@ import type { ModelAutomationExecution, ModelAutomationRule } from '@mmt/contrac
 import type { ExecutionCatalog } from '../types/executionCatalog';
 import { ResponsiveTable, type ResponsiveTableColumn } from './ResponsiveTable';
 import { StatusBadge } from './StatusBadge';
-import { buildCatalogOptions } from '../lib/catalogOptions';
+import { formatModelVersionName } from '../lib/catalogOptions';
 import { formatDate, formatDuration } from '../lib/format';
 import { modelVersionPath } from '../lib/modelVersionPath';
 import { text } from '../i18n/catalog';
@@ -23,6 +23,41 @@ function outcomeLabel(execution: ModelAutomationExecution): string {
   return skipReason
     ? automationSkipReasonLabels[skipReason]
     : automationOutcomeLabels[execution.status];
+}
+
+/** The outcome, with the reason a rule failed under it, so no separate error column is needed. */
+function OutcomeCell({ execution }: { execution: ModelAutomationExecution }) {
+  return (
+    <span className="automation-outcome">
+      <span title={execution.status === 'pending' ? automationText.pendingHint : undefined}>
+        {outcomeLabel(execution)}
+      </span>
+      {execution.error && (
+        <span className="automation-error" title={execution.error}>
+          {execution.error}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** The started Run's and Job's states in one cell; a column each made the table too wide. */
+function RunAndJobStatus({ execution }: { execution: ModelAutomationExecution }) {
+  if (!execution.runStatus && !execution.jobStatus) return <>—</>;
+  return (
+    <span className="automation-statuses">
+      {execution.runStatus && (
+        <span>
+          {automationText.runLabel} <StatusBadge status={execution.runStatus} />
+        </span>
+      )}
+      {execution.jobStatus && (
+        <span>
+          {automationText.jobLabel} <StatusBadge status={execution.jobStatus} />
+        </span>
+      )}
+    </span>
+  );
 }
 
 function RuleCell({
@@ -61,15 +96,20 @@ function ModelVersionLink({
   catalog?: ExecutionCatalog;
 }) {
   const version = catalog?.modelVersions.find((item) => item.id === modelVersionId);
-  const label = catalog
-    ? (buildCatalogOptions(catalog).models.find((option) => option.value === modelVersionId)
-        ?.label ?? modelVersionId)
-    : modelVersionId;
+  const modelName = catalog?.models.find((model) => model.id === version?.modelId)?.name;
   // The version page needs the Model id; without the catalog the registry resolves the version.
-  const to = version
-    ? modelVersionPath(projectId, { modelId: version.modelId, versionId: version.id })
-    : `/projects/${projectId}/models?version=${modelVersionId}`;
-  return <Link to={to}>{label}</Link>;
+  if (!version || !modelName)
+    return <Link to={`/projects/${projectId}/models?version=${modelVersionId}`}>{modelVersionId}</Link>;
+  const label = formatModelVersionName(modelName, version.version);
+  // A long model name is cut after a few lines so one row does not fill a phone screen.
+  return (
+    <Link
+      title={label}
+      to={modelVersionPath(projectId, { modelId: version.modelId, versionId: version.id })}
+    >
+      <span className="automation-version">{label}</span>
+    </Link>
+  );
 }
 
 /**
@@ -114,7 +154,8 @@ export function AutomationExecutionsTable({
       : [
           {
             key: 'model',
-            priority: 'secondary',
+            // Kept in a phone's row too: rows of different versions otherwise look the same.
+            priority: 'primary',
             // Each cell names the model, so the header needs only the shorter word.
             header: text.version,
             render: column((execution) => (
@@ -195,29 +236,13 @@ export function AutomationExecutionsTable({
           key: 'outcome',
           priority: 'primary',
           header: text.automationOutcome,
-          render: column((execution) =>
-            execution.status === 'pending' ? (
-              <span title={automationText.pendingHint}>{outcomeLabel(execution)}</span>
-            ) : (
-              outcomeLabel(execution)
-            ),
-          ),
+          render: column((execution) => <OutcomeCell execution={execution} />),
         },
         {
-          key: 'run-status',
+          key: 'status',
           priority: 'secondary',
-          header: text.automationRunStatus,
-          render: column((execution) =>
-            execution.runStatus ? <StatusBadge status={execution.runStatus} /> : '—',
-          ),
-        },
-        {
-          key: 'job-status',
-          priority: 'secondary',
-          header: text.automationJobStatus,
-          render: column((execution) =>
-            execution.jobStatus ? <StatusBadge status={execution.jobStatus} /> : '—',
-          ),
+          header: automationText.runAndJobStatus,
+          render: column((execution) => <RunAndJobStatus execution={execution} />),
         },
         ...durationColumns,
         {
@@ -246,14 +271,6 @@ export function AutomationExecutionsTable({
                 !execution.jobId &&
                 '—'}
             </div>
-          )),
-        },
-        {
-          key: 'error',
-          priority: 'secondary',
-          header: text.jobError,
-          render: column((execution) => (
-            <span className="automation-error">{execution.error ?? '—'}</span>
           )),
         },
         ...rerunColumns,

@@ -24,7 +24,7 @@ A Task stores what to run: which code, with which model and data, and where. Tas
 4. Check with **テスト実行** (Test run), then launch with **通常実行** (Run).
 5. Check metrics, logs, the exit status, and Artifacts in the Run.
 
-Jobs are executed by a worker. Without a worker for the target, the Job stays queued. See [Install and run the worker](/en/compute/worker).
+Jobs are executed by a worker. Without a worker for the target, the Job stays queued. See [Install and run the worker](/en/compute/worker), and [The Jobs page](/en/compute/jobs#queued-job-does-not-start) for how to find why a Job does not start.
 
 ## Register a code version
 
@@ -42,9 +42,11 @@ In Code, press **コードを登録** (Register code) to create the code entry, 
 | **依存パッケージ** (Dependencies, one per line) | Packages installed into the per-Job venv for Python, for example `numpy>=1.26` |
 | **環境変数** (Environment, JSON) | Environment variables for the code. Do not put credentials here |
 | **対応モデル系列** (Supported model families, one per line) | Model families this code can run, for example `linear` |
-| **対応する実行種別** (Supported run kinds) | Training, fine-tuning, inference, evaluation, data processing |
+| **対応する実行種別** (Supported run kinds) | Check every kind that applies: training, fine-tuning, inference, evaluation, data processing |
 
 Commands do not go through a shell. Each element of the JSON array is passed as one argument, up to 100 arguments of up to 4000 characters each.
+
+A saved version can be read by selecting it in Code, viewers included. **ファイル** (Files) shows the file list beside the chosen file, colored by its format as in Artifact previews. For a Git version it shows the repository and commit and the files changed or deleted on top of them. **このコードバージョンの使われ方** (Where this code version is used) lists the Models whose family it supports and the Tasks and automation rules that chose it.
 
 ### Start from a sample
 
@@ -91,7 +93,7 @@ The Compute target must list the runtime ([Compute targets](/en/compute/targets)
 | Model version | The input model version (the base of a fine-tuning, the version to run inference with). Optional |
 | Code version | Only code versions that support the run kind and model family can be selected |
 | Input dataset versions | Dataset versions the worker fetches before running. Optional |
-| Compute target | Only targets you can use and that support the code version's runtime can be selected. A Private target can be used only by its owner and the Service Accounts the owner created |
+| Compute target | Only targets you can use and that support the code version's runtime can be selected. A Private target can be used only by its owner and the Service Accounts the owner created. A Sweep created from this Task offers only such computers too ([Sweeps](/en/tracking/sweeps)) |
 | GPU ID | GPUs registered on the target. Without a GPU the Job runs on CPU only |
 | Parameters, tags | JSON, for example `{"epochs": 8}` |
 
@@ -116,7 +118,7 @@ The worker saves the source before execution as a ZIP and a manifest in the Run 
 
 **実行履歴** (Run history) shows the latest 50 runs; **古い実行** (Older runs) and **最新の実行** (Latest runs) page through it.
 
-To run a failed Job again, use **新しいRunで再実行** (Retry in a new Run) in Jobs and click **再実行する** (Retry) in the confirmation. It creates a new Run with the previous code version, mode, Task revision, and parameters, and keeps the original Run. The Job's creator and Project Admins can retry it. To try edited code, change the Task's code version and launch again.
+To run a failed Job again, use **新しいRunで再実行** (Retry in a new Run) in Jobs and click **再実行する** (Retry) in the confirmation. It creates a new Run with the previous code version, mode, Task revision, and parameters, and keeps the original Run. Jobs that reached their maximum attempts can be retried too. The Job's creator and Project Admins can retry it ([The Jobs page](/en/compute/jobs#stop-and-retry)). To try edited code, change the Task's code version and launch again.
 
 ## Register a model when training succeeds
 

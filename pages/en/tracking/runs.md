@@ -71,7 +71,7 @@ tags.dataset = 'training-v1' AND attributes.status = 'finished'
 - Metrics are compared by each Run's latest value
 - Status accepts both the native names (`finished`, `failed`, ...) and MLflow names (`FINISHED`, `FAILED`, ...)
 
-Search with すべての実験 selected to cover every Experiment in the Project. When a filter cannot be parsed, the message below the box tells you which character to check.
+Search with すべての実験 selected to cover every Experiment in the Project. When a filter cannot be parsed, the message below the box tells you which character to check. Comparing params with `>`, or leaving a params value unquoted, shows the corrected filter (such as `params.batch_size = '16'`). A comparison without `metrics.`, such as `loss < 0.2`, is searched as a Run name, and the box offers `metrics.loss < 0.2` with ［この式で検索］ (Search with this filter).
 
 Python uses the same filter syntax:
 

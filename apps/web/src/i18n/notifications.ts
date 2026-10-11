@@ -20,7 +20,7 @@ export const notificationsText = {
   notificationDestination: '送信先',
   notificationConfigured: '送信設定',
   notificationConfiguredYes: '設定済み',
-  notificationConfiguredNo: '未設定',
+  notificationConfiguredNo: '未設定（API serverに変数が無い）',
   notificationSmtpUnconfigured: '未設定（SMTPの送信設定が無い）',
   notificationUrlEnv: 'URLを参照する環境変数名（MMT_NOTIFICATION_で始まる）',
   notificationSecretEnv: '署名の鍵を参照する環境変数名（MMT_NOTIFICATION_で始まる）',
@@ -29,6 +29,18 @@ export const notificationsText = {
     'URLと署名の鍵はAPI serverの環境変数に置き、ここには変数名だけを登録します。値は画面にもDBにも保存しません。',
   notificationEmailHint:
     'メールはAPI serverにSMTPの送信設定（MMT_SMTP_URL、MMT_SMTP_FROM）があるときだけ送ります。設定が無くても通知先は作成できますが、送信は失敗として送信履歴に残ります。',
+  notificationChannelsAdminOnly:
+    '通知先の追加と変更は全体管理者が行います。送りたい先（Slackなど）があるときは、全体管理者に通知先の追加を依頼してください。',
+  notificationEnvNameHint:
+    'API serverの環境変数のうち、MMT_NOTIFICATION_で始まり値が入っているものを候補に出します（値は表示しません）。',
+  notificationEnvNameNoCandidates:
+    'API serverにMMT_NOTIFICATION_で始まる環境変数がありません。API serverの.envに追加し、API serverを再起動してください。',
+  notificationRuleNeedsChannelAdmin:
+    '通知ルールを作るには、先に上の［通知先を追加］で通知先を作成してください。',
+  notificationRuleNeedsChannel:
+    '通知ルールを作るには通知先が必要です。全体管理者に通知先の追加を依頼してください。',
+  notificationRuleChannelUnconfigured:
+    'この通知先はAPI serverに送信設定が無いため、ルールを作成しても届きません。送信設定は全体管理者が行います。',
   notificationTest: 'テスト送信',
   notificationTestDelivered: 'テスト送信が届きました',
   notificationTestFailed: 'テスト送信に失敗しました',
@@ -104,6 +116,13 @@ export const notificationErrorLabels: Record<string, string> = {
 };
 
 export const notificationsTextTemplates = {
+  notificationEnvironmentMissing: (names: string) =>
+    `API serverに ${names} がありません。このままでも保存できますが、送信はできません。API serverの.envに設定し、API serverを再起動してください。`,
+  notificationChannelSavedUnconfigured: (name: string) =>
+    `通知先「${name}」を保存しました。API serverに送信設定が無いため、まだ送信できません。API serverの.envに環境変数を設定し、API serverを再起動してください。`,
+  notificationChannelChoice: (name: string, kind: string) => `${name}（${kind}）`,
+  notificationChannelChoiceUnconfigured: (name: string, kind: string) =>
+    `${name}（${kind}・未設定）`,
   notificationRuleFilterRunKinds: (kinds: string) => `実行種別: ${kinds}`,
   notificationRuleFilterExperiments: (count: number) => `実験: ${count}件`,
   notificationTestError: (reason: string) => `テスト送信に失敗しました: ${reason}`,

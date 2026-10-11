@@ -8,11 +8,12 @@ import { Empty, ErrorNotice, Resource } from './Feedback';
 import { DetailsList, JsonDetails } from './JsonDetails';
 import { CodeVersionNameLink } from './CodeVersionNameLink';
 import { ModelAliasHistory } from './ModelAliasHistory';
+import { FamilyCodeVersions } from './FamilyCodeVersions';
 import { ModelVersionArtifactLink } from './ModelVersionArtifactLink';
-import { RunNameLink } from './RunNameLink';
+import { ModelVersionNameLink } from './ModelVersionNameLink';
+import { ModelVersionsTable } from './ModelVersionsTable';
 import type { ModelAliasHistoryState } from '../hooks/useModelAliasHistory';
 import { useModelAliasProtections } from '../hooks/useModelAliasProtections';
-import { formatDate } from '../lib/format';
 import { modelVersionPath } from '../lib/modelVersionPath';
 import {
   canRemoveAlias,
@@ -41,7 +42,6 @@ export function ModelRegistryPanel({
   onAssignAlias: () => void;
   onRemoveAlias: (assignment: { alias: string; version: string }) => void;
 }) {
-  const base = `/projects/${projectId}`;
   // Fetched again whenever the panel opens, so a protection added on its tab shows here.
   const protections = useModelAliasProtections(projectId, registry.selected?.id ?? null);
   const protectionOf = (alias: string) =>
@@ -54,6 +54,7 @@ export function ModelRegistryPanel({
     <Resource query={registry.list}>
       {(items) => (
         <RegistryLayout
+          selectedKey={registry.selected?.id}
           list={
             <ResponsiveTable
               rows={items}
@@ -149,7 +150,8 @@ export function ModelRegistryPanel({
                         {
                           key: 'actions',
                           priority: 'primary' as const,
-                          header: '',
+                          // Named for screen readers; the buttons below say what they do.
+                          header: <span className="sr-only">{text.actions}</span>,
                           render: ([alias, versionId]: [string, string]) => {
                             const protection = protectionOf(alias);
                             // Same check as the API's manual alias guard, so nobody is offered a
@@ -181,45 +183,11 @@ export function ModelRegistryPanel({
               <Resource query={registry.versions}>
                 {(versions) => (
                   <>
-                    <ResponsiveTable
-                      rows={versions}
-                      rowKey={(version) => version.id}
-                      selectedKey={registry.selectedVersion?.id}
-                      columns={[
-                        {
-                          key: 'version',
-                          priority: 'primary',
-                          header: text.version,
-                          render: (version) => (
-                            <Link
-                              className="mono"
-                              to={modelVersionPath(projectId, {
-                                modelId: version.modelId,
-                                versionId: version.id,
-                              })}
-                            >
-                              {version.version}
-                            </Link>
-                          ),
-                        },
-                        {
-                          key: 'source',
-                          priority: 'primary',
-                          header: text.sourceRun,
-                          render: (version) =>
-                            version.sourceRunId ? (
-                              <RunNameLink projectId={projectId} runId={version.sourceRunId} />
-                            ) : (
-                              '—'
-                            ),
-                        },
-                        {
-                          key: 'created',
-                          priority: 'secondary',
-                          header: text.created,
-                          render: (version) => formatDate(version.createdAt),
-                        },
-                      ]}
+                    <ModelVersionsTable
+                      projectId={projectId}
+                      versions={versions}
+                      aliases={registry.selected!.aliases}
+                      selectedVersionId={registry.selectedVersion?.id}
                     />
                     {registry.selectedVersion && (
                       <div className="version-detail">
@@ -238,13 +206,11 @@ export function ModelRegistryPanel({
                               text.parents,
                               registry.selectedVersion.parentModelVersionIds.length
                                 ? registry.selectedVersion.parentModelVersionIds.map((id) => (
-                                    <Link
+                                    <ModelVersionNameLink
                                       key={id}
-                                      className="version-link mono"
-                                      to={`${base}/models?version=${id}`}
-                                    >
-                                      {versionLabel(id)}
-                                    </Link>
+                                      projectId={projectId}
+                                      versionId={id}
+                                    />
                                   ))
                                 : null,
                             ],
@@ -281,6 +247,7 @@ export function ModelRegistryPanel({
                   </>
                 )}
               </Resource>
+              <FamilyCodeVersions projectId={projectId} family={registry.selected.family} />
               <ModelAliasHistory history={aliasHistory} />
             </>
           ) : (

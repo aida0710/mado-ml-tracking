@@ -20,8 +20,14 @@ import {
   SYNC_BATCH_MAX_BYTES,
 } from './http/requestBodyLimits.js';
 import { isAllowedOrigin } from './http/originPolicy.js';
-import { principal, type ApiEnvironment } from './http/request.js';
-import { formatMlflowError, isMlflowArtifactUpload, isMlflowRequest } from './mlflow/errors.js';
+import { principal, type ApiContext, type ApiEnvironment } from './http/request.js';
+import {
+  formatMlflowError,
+  isMlflowArtifactUpload,
+  isMlflowRequest,
+  isMlflowRequestWithoutProject,
+  mlflowProjectMissingError,
+} from './mlflow/errors.js';
 import { mlflowInformationRoutes } from './mlflow/informationRoutes.js';
 import { mlflowUiLinkRoutes } from './mlflow/uiLinkRoutes.js';
 import { mlflowTrackingRoutes } from './mlflow/tracking/index.js';
@@ -36,6 +42,8 @@ import { ArtifactUploadService } from './services/artifactUploadService.js';
 import { ArtifactUploadFinalizer } from './services/artifactUploadFinalizer.js';
 import { ArtifactUploadSweeper } from './services/artifactUploadSweeper.js';
 import { ArtifactDeletionService } from './services/artifactDeletionService.js';
+import { ArtifactReferenceService } from './services/artifactReferenceService.js';
+import { DatasetFolderUploadService } from './services/datasetFolderUploadService.js';
 import { ArtifactGarbageCollector } from './services/artifactGarbageCollector.js';
 import { ArtifactUsageService } from './services/artifactUsageService.js';
 import { ProjectService } from './services/projectService.js';
@@ -134,6 +142,7 @@ import { runAnalysisRoutes } from './routes/runAnalysisRoutes.js';
 import { taskRoutes } from './routes/taskRoutes.js';
 import { repositoryRoutes } from './routes/repositoryRoutes.js';
 import { artifactRoutes } from './routes/artifactRoutes.js';
+import { datasetFolderUploadRoutes } from './routes/datasetFolderUploadRoutes.js';
 import { artifactMediaInfoRoutes } from './routes/artifactMediaInfoRoutes.js';
 import { artifactPreviewRoutes } from './routes/artifactPreviewRoutes.js';
 import { artifactUploadRoutes, PART_SHA256_HEADER } from './routes/artifactUploadRoutes.js';
@@ -189,7 +198,7 @@ import { savedViewRoutes } from './routes/savedViewRoutes.js';
 import { openapiRoutes } from './routes/openapiRoutes.js';
 import { OperationsMonitor } from './services/operationsMonitor.js';
 import { OperationsAlertService } from './services/operationsAlertService.js';
-import { operationsRoutes } from './routes/operationsRoutes.js';
+import { operationsOverviewRoutes, operationsRoutes } from './routes/operationsRoutes.js';
 
 export interface ApplicationOptions {
   config: ApiConfig;
@@ -384,7 +393,15 @@ export function createApplication(options: ApplicationOptions) {
   const operationsMonitor = new OperationsMonitor(database, { webOrigin: config.webOrigin });
   const operationsAlerts = new OperationsAlertService(database);
   const app = new Hono<ApiEnvironment>();
+  // No MLflow route matches without a Project in the tracking URI, so such a call is told the URI
+  // to use first, whether it was refused (a refused token would hide the cause) or not found.
+  const answerMlflowRequestWithoutProject = (context: ApiContext) => {
+    const missingProject = mlflowProjectMissingError(config.publicUrl);
+    return context.json(missingProject.body, missingProject.status);
+  };
   app.onError((error, context) => {
+    if (isMlflowRequestWithoutProject(context.req.path))
+      return answerMlflowRequestWithoutProject(context);
     if (isMlflowRequest(context.req.path)) {
       const response = formatMlflowError(error);
       if (error instanceof ArtifactRangeError)
@@ -420,14 +437,16 @@ export function createApplication(options: ApplicationOptions) {
     );
     return context.json({ error: 'リクエストの処理に失敗しました', code: 'internal_error' }, 503);
   });
-  app.notFound((context) =>
-    isMlflowRequest(context.req.path)
+  app.notFound((context) => {
+    if (isMlflowRequestWithoutProject(context.req.path))
+      return answerMlflowRequestWithoutProject(context);
+    return isMlflowRequest(context.req.path)
       ? context.json(
           { error_code: 'ENDPOINT_NOT_FOUND', message: 'このMLflow APIは対応していません' },
           404,
         )
-      : context.json({ error: 'APIが見つかりません', code: 'not_found' }, 404),
-  );
+      : context.json({ error: 'APIが見つかりません', code: 'not_found' }, 404);
+  });
   app.use(
     '/api/*',
     cors({
@@ -511,7 +530,15 @@ export function createApplication(options: ApplicationOptions) {
   app.route('/api/projects', repositoryRoutes(repositories));
   app.route(
     '/api/projects',
-    artifactRoutes(artifacts, { deletions: artifactDeletions, usage: artifactUsage }),
+    artifactRoutes(artifacts, {
+      deletions: artifactDeletions,
+      usage: artifactUsage,
+      references: new ArtifactReferenceService(database),
+    }),
+  );
+  app.route(
+    '/api/projects',
+    datasetFolderUploadRoutes(new DatasetFolderUploadService(database), artifactDeletions),
   );
   app.route('/api/projects', artifactUploadRoutes(artifactUploads));
   app.route('/api/projects', artifactMediaInfoRoutes(artifactMediaInfo));
@@ -537,6 +564,7 @@ export function createApplication(options: ApplicationOptions) {
   app.route('/api/projects', sweepRoutes(sweeps));
   app.route('/api/projects', savedViewRoutes(savedViews));
   app.route('/api/projects', operationsRoutes(operationsAlerts));
+  app.route('/api', operationsOverviewRoutes(operationsAlerts));
   app.route('/api/targets', targetRoutes(targets));
   app.route(
     '/api/targets',

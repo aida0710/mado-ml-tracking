@@ -14,6 +14,12 @@ import { ProjectServiceAccounts } from '../components/ProjectServiceAccounts';
 import { NotificationSettings } from '../components/NotificationSettings';
 import { ProjectArchiveSection } from '../components/ProjectArchiveSection';
 import { AuditEventLog } from '../components/AuditEventLog';
+import { ProjectSettingsContents } from '../components/ProjectSettingsContents';
+import { projectAdminNames } from '../lib/projectAdminGrants';
+import {
+  PROJECT_SETTINGS_SECTION_IDS as sectionIds,
+  projectSettingsSections,
+} from '../lib/projectSettingsSections';
 import { text } from '../i18n/catalog';
 
 /**
@@ -38,26 +44,56 @@ export function SettingsPage() {
   return (
     <section className="page management-page">
       <PageHeader title={text.settings} eyebrow={project.name} />
+      <ProjectSettingsContents sections={projectSettingsSections(isProjectAdmin)} />
+      {/* Each part is wrapped in its anchor, so the parts need not know the contents. */}
       <div className="settings-grid">
-        <ProjectSettings />
-        <ArtifactUsageSummary projectId={project.id} />
+        <div id={sectionIds.project} className="settings-anchor">
+          <ProjectSettings
+            adminNames={
+              projectMembers.members.value && projectAdminNames(projectMembers.members.value)
+            }
+          />
+        </div>
+        <div id={sectionIds.usage} className="settings-anchor">
+          <ArtifactUsageSummary projectId={project.id} />
+        </div>
       </div>
       <div className="settings-stack">
-        <RecordingConnectionGuide onTokenCreated={reloadTokenLists} />
-        <ProjectMembers projectMembers={projectMembers} />
-        <ProjectGroupBindings projectMembers={projectMembers} />
-        <ProjectServiceAccounts access={serviceAccounts} />
-        <ProjectTokens key={tokenListRevision} projectTokens={serviceAccounts.projectTokens} />
-        <NotificationSettings />
+        <div id={sectionIds.connection} className="settings-anchor">
+          <RecordingConnectionGuide onTokenCreated={reloadTokenLists} />
+        </div>
+        <div id={sectionIds.members} className="settings-anchor">
+          <ProjectMembers projectMembers={projectMembers} />
+        </div>
+        <div id={sectionIds.groups} className="settings-anchor">
+          <ProjectGroupBindings projectMembers={projectMembers} />
+        </div>
         {isProjectAdmin && (
-          <section className="settings-section">
+          <div id={sectionIds.serviceAccounts} className="settings-anchor">
+            <ProjectServiceAccounts access={serviceAccounts} />
+          </div>
+        )}
+        <div id={sectionIds.tokens} className="settings-anchor">
+          <ProjectTokens key={tokenListRevision} projectTokens={serviceAccounts.projectTokens} />
+        </div>
+        {isProjectAdmin && (
+          <div id={sectionIds.notifications} className="settings-anchor">
+            <NotificationSettings />
+          </div>
+        )}
+        {isProjectAdmin && (
+          <section id={sectionIds.audit} className="settings-section settings-anchor">
             <div className="section-heading">
               <h2>{text.auditEvents}</h2>
             </div>
             <AuditEventLog audit={audit} />
           </section>
         )}
-        {isProjectAdmin && <ProjectArchiveSection />}
+        {isProjectAdmin && (
+          <div id={sectionIds.archive} className="settings-anchor">
+            <ProjectArchiveSection />
+          </div>
+        )}
       </div>
     </section>
   );

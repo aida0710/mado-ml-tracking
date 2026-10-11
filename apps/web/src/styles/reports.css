@@ -129,6 +129,56 @@
 }
 .report-editor-footer {
   justify-content: flex-end;
+  /* Stays on screen while a long report is edited (ReportEditor). */
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin: 0 -12px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--background);
+}
+.report-editor-footer .report-block-problem {
+  margin: 0 auto 0 0;
+}
+/* A small "add here" between blocks; it opens into the two kinds of block. */
+.report-insert-point {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: -6px 0;
+}
+.report-insert-point.open {
+  padding: 8px;
+  border: 1px dashed var(--border);
+  margin: 0;
+}
+.report-insert-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border: 1px dashed transparent;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.report-insert-toggle:hover,
+.report-insert-toggle:focus-visible {
+  border-color: var(--border);
+  color: var(--link);
+}
+.report-media-no-steps {
+  margin: 0;
+  font-size: 12px;
+}
+.report-media-runs-without-key {
+  margin: 0;
+  font-size: 12px;
 }
 .report-block-problem {
   color: var(--error);
@@ -237,12 +287,12 @@
   flex-direction: column;
   gap: 6px;
 }
-.report-history-list li {
+.report-history-list > li {
   border-left: 3px solid var(--border);
   padding: 6px 10px;
   font-size: 12px;
 }
-.report-history-list li.active {
+.report-history-list > li.active {
   border-left-color: var(--accent);
   background: var(--surface);
 }
@@ -257,8 +307,23 @@
 }
 .report-history-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
   margin-top: 4px;
+}
+.report-history-changes {
+  margin-top: 6px;
+}
+.report-history-changes :is(ul, p) {
+  margin: 0;
+}
+.report-history-changes ul {
+  padding-left: 18px;
+}
+/* Inside the embed dialog the fields are already spaced by the dialog's gap. */
+.report-embed-picker-body .media-step-checklist {
+  margin: 0;
 }
 .report-page .comment-thread {
   margin-top: 32px;
@@ -288,6 +353,9 @@
   }
 }
 @media (width < 900px) {
+  .report-insert-toggle {
+    min-height: 40px;
+  }
   .report-segmented label,
   .report-run-checklist li label,
   .report-checklist label {

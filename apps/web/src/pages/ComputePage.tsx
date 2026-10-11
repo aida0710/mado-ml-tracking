@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom';
 import { RefreshCw, Settings } from 'lucide-react';
-import { executionApi } from '../api/execution';
 import { useAuth } from '../hooks/useAuth';
 import { useProject } from '../hooks/useProject';
 import { useProjectTargets } from '../hooks/useProjectTargets';
-import { EXECUTION_POLL_MS, useQuery } from '../hooks/useQuery';
+import { useProjectWorkers } from '../hooks/useProjectWorkers';
 import { PageHeader } from '../components/PageHeader';
 import { ComputeTargetsTable } from '../components/ComputeTargetsTable';
 import { WorkerPresenceTable } from '../components/WorkerPresenceTable';
@@ -20,11 +19,7 @@ export function ComputePage() {
   const { user } = useAuth();
   const { project } = useProject();
   const targets = useProjectTargets(project.id);
-  const workers = useQuery(
-    `${project.id}:workers`,
-    (signal) => executionApi.workers(project.id, signal),
-    EXECUTION_POLL_MS,
-  );
+  const workers = useProjectWorkers(project.id);
   return (
     <section className="page management-page">
       <PageHeader
@@ -44,7 +39,7 @@ export function ComputePage() {
       />
       <p className="muted">{text.projectComputersHint}</p>
       <Resource query={targets}>
-        {(items) => <ComputeTargetsTable targets={items} user={user} />}
+        {(items) => <ComputeTargetsTable targets={items} workers={workers.value} user={user} />}
       </Resource>
       <section className="settings-section">
         <div className="section-heading">

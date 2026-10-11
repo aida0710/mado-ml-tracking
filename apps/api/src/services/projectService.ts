@@ -9,6 +9,7 @@ import type {
 import type { Principal } from '../auth/principal.js';
 import { first, rows, transaction, type Connection, type Database } from '../db/database.js';
 import { conflict, DomainError, notFound } from '../domain/errors.js';
+import { duplicateExperimentName } from '../domain/experimentNames.js';
 import { assertKeepsProjectAdmin } from '../domain/projectAdminInvariant.js';
 import { assertGrantableUsers, initialMemberGrants } from '../domain/projectMemberGrants.js';
 import type { ProjectCreateInput, ProjectPatchInput } from '../domain/projectValidation.js';
@@ -51,6 +52,24 @@ export class ProjectService {
 
   async list(principal: Principal): Promise<Project[]> {
     requireScope(principal, 'read');
+    return this.selectOpenableProjects(principal, principal.token?.projectId ?? null);
+  }
+
+  /**
+   * One Project as GET /projects lists it (GET /projects/:p). A Project the user cannot open
+   * answers why, archived included (requireProject).
+   */
+  async get(principal: Principal, projectId: string): Promise<Project> {
+    await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
+    const [project] = await this.selectOpenableProjects(principal, projectId);
+    if (!project) notFound('Project');
+    return project;
+  }
+
+  private selectOpenableProjects(
+    principal: Principal,
+    onlyProjectId: string | null,
+  ): Promise<Project[]> {
     // A global administrator's session sees every live Project as admin (requireProject agrees).
     // isMember tells the Projects the user was let into from those open to everyone.
     return rows<Project>(
@@ -61,11 +80,7 @@ export class ProjectService {
       LEFT JOIN project_membership_roles m ON m.project_id=p.id AND m.user_id=$1
       WHERE p.archived_at IS NULL AND (e.role IS NOT NULL OR $2) AND ($3::uuid IS NULL OR p.id=$3)
       ORDER BY p.created_at DESC`,
-      [
-        principal.user.id,
-        principal.method === 'session' && principal.user.isAdmin,
-        principal.token?.projectId ?? null,
-      ],
+      [principal.user.id, principal.method === 'session' && principal.user.isAdmin, onlyProjectId],
     );
   }
 
@@ -351,8 +366,7 @@ export class ProjectService {
             'SELECT id FROM experiments WHERE project_id=$1 AND name=$2 AND id<>$3',
             [projectId, input.name, experimentId],
           );
-          if (duplicate)
-            throw new DomainError(409, '同名Experimentが既に存在します', 'resource_already_exists');
+          if (duplicate) duplicateExperimentName();
         }
         await connection.query(
           'UPDATE experiments SET name=COALESCE($2,name),description=COALESCE($3,description),updated_at=now() WHERE id=$1',
@@ -391,8 +405,7 @@ export class ProjectService {
         'SELECT id FROM experiments WHERE project_id=$1 AND name=$2',
         [projectId, input.name],
       );
-      if (duplicate)
-        throw new DomainError(409, '同名Experimentが既に存在します', 'resource_already_exists');
+      if (duplicate) duplicateExperimentName();
       return (await first<Experiment>(
         connection,
         'INSERT INTO experiments(project_id,name,description) VALUES($1,$2,$3) RETURNING *,0 AS run_count',

@@ -1,22 +1,22 @@
-import { useId, useMemo, useState, type PointerEvent } from 'react';
-import {
-  CartesianGrid,
-  ComposedChart,
-  Line,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  usePlotArea,
-  useXAxisInverseScale,
-  useXAxisScale,
-  useYAxisScale,
-} from 'recharts';
+import { useId, useMemo, useState, type KeyboardEvent } from 'react';
+import { CartesianGrid, ComposedChart, Line, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import type { MetricXRange } from '@mmt/contracts';
-import type { MetricsChartMarker, MetricsChartProps } from './chartProps';
+import type { MetricsChartProps } from './chartProps';
+import { ChartDescription } from './ChartDescription';
 import { ChartLegend } from './ChartLegend';
+import { ChartPlotLayer, type ChartHoverPosition } from './ChartPlotLayer';
 import { ChartTooltip } from './ChartTooltip';
 import { Empty } from '../Feedback';
-import { bandPath, linePath, paddedDomain, xExtent, type PixelScale } from '../../lib/chartScale';
+import { useDocumentTheme } from '../../hooks/useDocumentTheme';
+import { paddedDomain, xExtent } from '../../lib/chartScale';
+import {
+  chartCursorStops,
+  chartZoomKeyOf,
+  isBrowserShortcut,
+  isChartCursorKey,
+  moveChartCursor,
+  zoomedChartRange,
+} from '../../lib/chartKeyboard';
 import { formatXTick, formatXValue } from '../../lib/chartXAxis';
 import { formatChartTick } from '../../lib/chartTicks';
 import { prepareChartLines, valuesAtX, type ChartLine } from '../../lib/metricSeries';
@@ -29,23 +29,17 @@ const Y_AXIS_WIDTH = 70;
 const TOOLTIP_MAX_ROWS = 10;
 // Gap between the pointer and the tooltip box.
 const TOOLTIP_OFFSET_PIXELS = 14;
-// A shorter drag is a click, not a zoom.
-const MIN_ZOOM_DRAG_PIXELS = 6;
-
-interface HoverPosition {
-  x: number;
-  pixelX: number;
-  pixelY: number;
-  chartWidth: number;
-}
 
 /**
  * Metric lines of Runs and Run groups, drawn from the data it is given (it fetches nothing, so a
  * report can pass saved data). Lines and bands are single SVG paths per series so 200 Runs stay
  * light; recharts draws the axes and grid. Hover shows the values at x, dragging zooms into x.
+ * With the keyboard the plot is one focus stop: arrow keys move the cursor whose values the tooltip
+ * shows, + and - zoom around it. A screen reader hears each line's last value and range.
  */
 export function MetricsChart({
   series,
+  styleIds,
   xAxis,
   xScale = 'linear',
   yScale,
@@ -60,27 +54,31 @@ export function MetricsChart({
   const [hiddenIds, setHiddenIds] = useState<ReadonlySet<string>>(new Set());
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [zoomRange, setZoomRange] = useState<MetricXRange | null>(null);
-  const [hover, setHover] = useState<HoverPosition | null>(null);
+  const [hover, setHover] = useState<ChartHoverPosition | null>(null);
+  const [keyboardX, setKeyboardX] = useState<number | null>(null);
+  const [isFocused, setIsFocused] = useState(false);
+  const theme = useDocumentTheme();
+  const summaryId = useId();
+  const keyboardHintId = useId();
 
   const lines = useMemo(
-    () => prepareChartLines(series, { xScale, yScale, smoothing }),
-    [series, xScale, yScale, smoothing],
+    () => prepareChartLines(series, { xScale, yScale, smoothing, theme, styleIds }),
+    [series, xScale, yScale, smoothing, theme, styleIds],
   );
   const visibleLines = useMemo(
     () => lines.filter((line) => !hiddenIds.has(line.id)),
     [lines, hiddenIds],
   );
   const isSmoothed = smoothing.kind !== 'none' && smoothing.weight > 0;
-  const xDomain = useMemo(
+  const fullXExtent = useMemo(
     () =>
-      zoomRange
-        ? ([zoomRange.min, zoomRange.max] as [number, number])
-        : xExtent(
-            visibleLines.flatMap((line) => line.points.map((point) => point.x)),
-            xScale,
-          ),
-    [visibleLines, zoomRange, xScale],
+      xExtent(
+        visibleLines.flatMap((line) => line.points.map((point) => point.x)),
+        xScale,
+      ),
+    [visibleLines, xScale],
   );
+  const xDomain = zoomRange ? ([zoomRange.min, zoomRange.max] as [number, number]) : fullXExtent;
   const yDomain = useMemo(
     () =>
       xDomain &&
@@ -94,8 +92,39 @@ export function MetricsChart({
 
   function changeZoom(range: MetricXRange | null) {
     setZoomRange(range);
-    setHover(null);
     onZoom?.(range);
+  }
+
+  // A drag or the reset button leaves the pointer elsewhere, so the values it showed go away. The
+  // keyboard zooms around its cursor, which stays at the same pixel, so its values stay.
+  function changeZoomFromPointer(range: MetricXRange | null) {
+    changeZoom(range);
+    setHover(null);
+  }
+
+  function handleKey(event: KeyboardEvent<HTMLDivElement>) {
+    if (!xDomain || !fullXExtent || isBrowserShortcut(event)) return;
+    const zoomKey = chartZoomKeyOf(event.key);
+    if (isChartCursorKey(event.key)) {
+      event.preventDefault();
+      const stops = chartCursorStops(visibleLines, xDomain);
+      setKeyboardX(moveChartCursor({ stops, current: keyboardX, key: event.key }));
+    } else if (zoomKey) {
+      event.preventDefault();
+      changeZoom(
+        zoomedChartRange({ shown: xDomain, extent: fullXExtent, center: keyboardX, key: zoomKey, scale: xScale }),
+      );
+    } else if (event.key === 'Escape' && keyboardX !== null) {
+      // Only while the cursor shows, so Escape still reaches a dialog the chart sits in.
+      event.preventDefault();
+      event.stopPropagation();
+      hideKeyboardCursor();
+    }
+  }
+
+  function hideKeyboardCursor() {
+    setKeyboardX(null);
+    setHover(null);
   }
 
   function toggleLine(id: string) {
@@ -133,14 +162,25 @@ export function MetricsChart({
   return (
     <div className="metrics-chart">
       {legend}
+      {/* role="application": a screen reader passes the arrow keys on instead of reading by line. */}
       <div
         className="metrics-chart-canvas"
         style={{ height }}
-        role="img"
+        role="application"
+        aria-roledescription={text.chartKeyboardRoleDescription}
         aria-label={textTemplates.chartAriaLabel(lines.length)}
+        aria-describedby={`${summaryId} ${keyboardHintId}`}
+        tabIndex={0}
+        onKeyDown={handleKey}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => {
+          setIsFocused(false);
+          hideKeyboardCursor();
+        }}
       >
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={domainCorners} margin={CHART_MARGIN}>
+          {/* recharts' own keyboard layer moves a tooltip this chart does not use. */}
+          <ComposedChart data={domainCorners} margin={CHART_MARGIN} accessibilityLayer={false}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis
               type="number"
@@ -177,8 +217,9 @@ export function MetricsChart({
               showRaw={showRaw && isSmoothed}
               markers={markers}
               hoverPixelX={hover?.pixelX ?? null}
+              keyboardX={keyboardX}
               onHover={setHover}
-              onZoom={changeZoom}
+              onZoom={changeZoomFromPointer}
             />
           </ComposedChart>
         </ResponsiveContainer>
@@ -198,16 +239,25 @@ export function MetricsChart({
           />
         )}
       </div>
+      <ChartDescription
+        lines={visibleLines}
+        xAxis={xAxis}
+        summaryId={summaryId}
+        keyboardHintId={keyboardHintId}
+      />
       <div className="metrics-chart-footer">
         {excludedCount > 0 && (
           <span className="chart-note">{textTemplates.chartLogExcluded(excludedCount)}</span>
         )}
-        {zoomRange ? (
-          <button type="button" className="button small" onClick={() => changeZoom(null)}>
+        {zoomRange && (
+          <button type="button" className="button small" onClick={() => changeZoomFromPointer(null)}>
             {text.chartResetZoom}
           </button>
+        )}
+        {isFocused ? (
+          <span className="chart-note">{text.chartKeyboardHint}</span>
         ) : (
-          <span className="chart-note">{text.chartZoomHint}</span>
+          !zoomRange && <span className="chart-note">{text.chartZoomHint}</span>
         )}
       </div>
     </div>
@@ -232,177 +282,3 @@ function* visibleLineValuesIn(
     }
   }
 }
-
-/**
- * Draws inside recharts' plot area with its scales: bands, faint raw lines, the lines, resume
- * markers, the hover cursor and the zoom selection. A transparent rect on top takes the pointer.
- */
-function ChartPlotLayer({
-  lines,
-  highlightedId,
-  showRange,
-  showRaw,
-  markers,
-  hoverPixelX,
-  onHover,
-  onZoom,
-}: {
-  lines: readonly ChartLine[];
-  highlightedId: string | null;
-  showRange: boolean;
-  showRaw: boolean;
-  markers: readonly MetricsChartMarker[];
-  hoverPixelX: number | null;
-  onHover: (hover: HoverPosition | null) => void;
-  onZoom: (range: MetricXRange) => void;
-}) {
-  const clipPathId = `chart-clip-${useId().replace(/[^a-zA-Z0-9-]/g, '')}`;
-  const xScaleFunction = useXAxisScale();
-  const yScaleFunction = useYAxisScale();
-  const invertX = useXAxisInverseScale();
-  const plotArea = usePlotArea();
-  const [dragStartPixelX, setDragStartPixelX] = useState<number | null>(null);
-  const scales = useMemo(
-    (): { x: PixelScale; y: PixelScale } | null =>
-      xScaleFunction && yScaleFunction ? { x: xScaleFunction, y: yScaleFunction } : null,
-    [xScaleFunction, yScaleFunction],
-  );
-  const paths = useMemo(
-    () =>
-      scales
-        ? lines.map((line) => {
-            const xs = line.points.map((point) => point.x);
-            return {
-              line,
-              band: showRange ? bandPath(line.points, scales) : '',
-              raw: showRaw ? linePath(xs, line.points.map((point) => point.value), scales) : '',
-              smoothed: linePath(xs, line.smoothedValues, scales),
-            };
-          })
-        : [],
-    [lines, scales, showRange, showRaw],
-  );
-  if (!scales || !invertX || !plotArea) return null;
-
-  const pointerX = (event: PointerEvent<SVGRectElement>) => {
-    const svgBox = event.currentTarget.ownerSVGElement?.getBoundingClientRect();
-    return {
-      pixelX: event.clientX - (svgBox?.left ?? 0),
-      pixelY: event.clientY - (svgBox?.top ?? 0),
-      chartWidth: svgBox?.width ?? 0,
-    };
-  };
-  const dataX = (pixelX: number) => Number(invertX(pixelX));
-
-  function finishDrag(event: PointerEvent<SVGRectElement>) {
-    if (dragStartPixelX === null) return;
-    const { pixelX } = pointerX(event);
-    setDragStartPixelX(null);
-    if (Math.abs(pixelX - dragStartPixelX) < MIN_ZOOM_DRAG_PIXELS) return;
-    const [min, max] = [dataX(dragStartPixelX), dataX(pixelX)].sort((left, right) => left - right);
-    if (Number.isFinite(min) && Number.isFinite(max)) onZoom({ min: min!, max: max! });
-  }
-
-  const isDimmed = (line: ChartLine) => highlightedId !== null && line.id !== highlightedId;
-  // The highlighted line is drawn last so it lies on top.
-  const ordered = [...paths].sort(
-    (left, right) => Number(left.line.id === highlightedId) - Number(right.line.id === highlightedId),
-  );
-  return (
-    <g className="chart-plot-layer">
-      <defs>
-        <clipPath id={clipPathId}>
-          <rect x={plotArea.x} y={plotArea.y} width={plotArea.width} height={plotArea.height} />
-        </clipPath>
-      </defs>
-      <g clipPath={`url(#${clipPathId})`}>
-        {ordered.map(({ line, band }) =>
-          band ? (
-            <path
-              key={`band-${line.id}`}
-              d={band}
-              fill={line.color}
-              className={`chart-band ${line.kind}${isDimmed(line) ? ' dimmed' : ''}`}
-            />
-          ) : null,
-        )}
-        {ordered.map(({ line, raw }) =>
-          raw ? (
-            <path
-              key={`raw-${line.id}`}
-              d={raw}
-              stroke={line.color}
-              className={`chart-raw-line${isDimmed(line) ? ' dimmed' : ''}`}
-            />
-          ) : null,
-        )}
-        {ordered.map(({ line, smoothed }) => (
-          <path
-            key={`line-${line.id}`}
-            d={smoothed}
-            stroke={line.color}
-            className={`chart-line ${line.kind}${isDimmed(line) ? ' dimmed' : ''}${
-              line.id === highlightedId ? ' highlighted' : ''
-            }`}
-          />
-        ))}
-        {markers.map((marker, index) => {
-          const pixelX = scales.x(marker.x);
-          if (pixelX === undefined || !Number.isFinite(pixelX)) return null;
-          return (
-            <g key={`marker-${index}`} className="chart-marker">
-              <line x1={pixelX} x2={pixelX} y1={plotArea.y} y2={plotArea.y + plotArea.height} />
-              <text x={pixelX + 4} y={plotArea.y + 12}>
-                {marker.label}
-              </text>
-            </g>
-          );
-        })}
-        {hoverPixelX !== null && (
-          <line
-            className="chart-cursor"
-            x1={hoverPixelX}
-            x2={hoverPixelX}
-            y1={plotArea.y}
-            y2={plotArea.y + plotArea.height}
-          />
-        )}
-        {dragStartPixelX !== null && hoverPixelX !== null && (
-          <rect
-            className="chart-zoom-selection"
-            x={Math.min(dragStartPixelX, hoverPixelX)}
-            y={plotArea.y}
-            width={Math.abs(hoverPixelX - dragStartPixelX)}
-            height={plotArea.height}
-          />
-        )}
-      </g>
-      <rect
-        className="chart-pointer-area"
-        x={plotArea.x}
-        y={plotArea.y}
-        width={plotArea.width}
-        height={plotArea.height}
-        onPointerMove={(event) => {
-          const position = pointerX(event);
-          onHover({ ...position, x: dataX(position.pixelX) });
-        }}
-        onPointerLeave={(event) => {
-          setDragStartPixelX(null);
-          // A finger lifts off right after a tap; the values it asked for stay until the next tap.
-          if (event.pointerType !== 'touch') onHover(null);
-        }}
-        onPointerDown={(event) => {
-          event.preventDefault();
-          event.currentTarget.setPointerCapture(event.pointerId);
-          const position = pointerX(event);
-          setDragStartPixelX(position.pixelX);
-          onHover({ ...position, x: dataX(position.pixelX) });
-        }}
-        onPointerUp={finishDrag}
-        onPointerCancel={() => setDragStartPixelX(null)}
-      />
-    </g>
-  );
-}
-

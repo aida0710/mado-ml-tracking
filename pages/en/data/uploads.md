@@ -42,10 +42,12 @@ If **Multipart uploadを使う** (Use multipart upload) is off for the storage, 
 
 1. In the Run's **Artifacts** tab, click **Artifactをアップロード** (Upload Artifact). For files that do not belong to a Run, use the upload on the **Models** or **Code** page.
 2. Click **ファイルを選ぶ** (Choose files) or **フォルダを選ぶ** (Choose folder), or drop files or folders on the dialog.
-3. For one file, enter **保存パス** (Saved path). For several files, enter **保存先フォルダ** (Destination folder). A chosen folder keeps its structure under the destination folder.
+3. For one file, enter **保存パス** (Saved path). For several files, enter **保存先フォルダ** (Destination folder). When a folder is open in the **Artifacts** tab, the dialog starts in it. A chosen folder keeps its structure, including the chosen folder's own name, under the destination folder. For several files, the first three saved paths are shown under the field.
 4. Click **アップロードを開始** (Start upload).
 
-アップロードの進み具合 (Upload progress) shows the state, speed, and remaining time of each file.
+For one file, when a file is already stored at the same saved path, the dialog says that sending it adds a new version and the current one stays under previous versions in **詳細** (Details). When the content is the same too (checked for files up to 64 MiB), it adds that the file does not need to be sent.
+
+アップロードの進み具合 (Upload progress) shows the state, speed, and remaining time of each file (such as 残り 1分5秒, 1 min 5 s left).
 
 | Action | What it does |
 | --- | --- |
@@ -54,7 +56,7 @@ If **Multipart uploadを使う** (Use multipart upload) is off for the storage, 
 | 取消 (Cancel) | Cancels the upload and deletes the parts the server received |
 | 失敗したファイルを再送 (Resend failed files) | Sends all failed files again |
 
-A failed part is retried up to 5 times, waiting from 1 second up to 30 seconds between tries. When a file finishes, `artifact://<Artifact ID>` is shown; copy it to use when registering a model version, for example.
+A failed part is retried up to 5 times, waiting from 1 second up to 30 seconds between tries. While retrying, the row shows "通信が切れたため再試行しています（2回目 / 最大5回）" (retrying after a dropped connection, attempt 2 of 5) instead of the speed and time left. When all five tries lose the connection, the file stops with "通信が切れました。回線を確かめてから［再開］を押すと、続きから送ります。" (The connection was lost. Check it and click Resume to continue); click **再開** (Resume) once the network is back. When a file finishes, `artifact://<Artifact ID>` is shown; copy it to use when registering a model version, for example.
 
 The dialog cannot be closed while sending. Pause or cancel first.
 
@@ -78,6 +80,8 @@ When an upload cannot continue, its row shows why and what to do next.
 | No longer on the server (discarded, or removed after expiry) | **最初から送る** (Start over) sends the file again to the same saved path |
 | Permission lost | Ask a Project administrator for Editor or higher. If access returns before the expiry, the upload continues |
 | Different size or content | Choose the same file again |
+
+When a dataset's **フォルダから作る** (Create from folder) stopped midway, open it again: the upload is listed under **途中のフォルダのアップロード** (Unfinished folder uploads). See [Datasets](/en/data/datasets) for continuing or discarding it.
 
 ## Upload from the Python SDK
 

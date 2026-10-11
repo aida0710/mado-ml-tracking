@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import type { AdminUser } from '@mmt/contracts';
 import { adminUsersApi } from '../../api/adminUsers';
+import { authApi } from '../../api/auth';
+import { useQuery } from '../../hooks/useQuery';
+import { loginMethods } from '../../lib/loginMethods';
 import { useMutation } from '../../hooks/useMutation';
 import { generateTemporaryPassword, isLongEnoughPassword } from '../../lib/temporaryPassword';
 import { Dialog } from '../Dialog';
@@ -26,6 +29,9 @@ export function LocalUserDialog({
   const [isAdmin, setIsAdmin] = useState(false);
   const [createdPassword, setCreatedPassword] = useState<string | null>(null);
   const mutation = useMutation();
+  // A local account can only sign in while the server offers local login (AUTH_MODE).
+  const authConfig = useQuery('auth-config', authApi.config);
+  const isLocalLoginOff = authConfig.value !== undefined && !loginMethods(authConfig.value).local;
   if (createdPassword)
     return (
       <Dialog title={text.newLocalUser} onClose={onClose}>
@@ -56,6 +62,11 @@ export function LocalUserDialog({
           });
         }}
       >
+        {isLocalLoginOff && (
+          <p className="notice warning" role="status">
+            {text.localLoginDisabledNotice}
+          </p>
+        )}
         <fieldset disabled={mutation.pending}>
           <label className="field">
             <span>{text.username}</span>

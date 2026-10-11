@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { SweepTrial, SweepTrialCounts } from '@mmt/contracts';
-import { isSweepActive, isSweepEnded, objectiveProgress, sortTrials, trialParameterNames } from './sweepTrials';
+import {
+  isSweepActive,
+  isSweepEnded,
+  objectiveProgress,
+  plannedTrialCount,
+  sortTrials,
+  trialParameterNames,
+} from './sweepTrials';
 
 function trial(trialIndex: number, state: SweepTrial['state'], objectiveValue: number | null, parameters = {}): SweepTrial {
   return {
@@ -44,5 +51,17 @@ describe('Sweepの試行から画面の値を導く', () => {
     expect(isSweepActive({ status: 'finished', trialCounts: counts({ finished: 4 }) })).toBe(false);
     expect(['running', 'paused', 'finished', 'canceled', 'failed'].map((status) => isSweepEnded({ status: status as never })))
       .toEqual([false, false, true, true, true]);
+  });
+});
+
+describe('Sweepが始める試行の数', () => {
+  const grid = { lr: { values: [0.1, 0.01, 0.001] } };
+  it('gridの組み合わせが最大試行数より少なければ、組み合わせの数で終わる', () => {
+    expect(plannedTrialCount({ method: 'grid', maxTrials: 10, searchSpace: grid })).toBe(3);
+    expect(plannedTrialCount({ method: 'grid', maxTrials: 2, searchSpace: grid })).toBe(2);
+  });
+
+  it('randomとbayesは最大試行数まで続ける', () => {
+    expect(plannedTrialCount({ method: 'random', maxTrials: 10, searchSpace: grid })).toBe(10);
   });
 });

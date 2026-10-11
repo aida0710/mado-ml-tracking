@@ -127,6 +127,9 @@ export async function markProjectPurged(
 // Runs deleted through MLflow are not counted.
 const adminProjectSelect = `SELECT ${PROJECT_COLUMNS},p.archived_at,
   (SELECT count(*)::int FROM project_membership_roles m WHERE m.project_id=p.id) AS member_count,
+  ARRAY(SELECT u.display_name FROM project_membership_roles m JOIN users u ON u.id=m.user_id
+    WHERE m.project_id=p.id AND m.role='admin' AND u.kind='human'
+    ORDER BY lower(u.display_name),u.id) AS admin_names,
   (SELECT count(*)::int FROM runs r WHERE r.project_id=p.id AND r.lifecycle_stage='active') AS run_count
   FROM projects p`;
 

@@ -6,6 +6,7 @@ import {
   hookFilterEntries,
   hookResourceSummary,
   hookWebhookPath,
+  hookWebhookUrl,
 } from './hookDisplay';
 
 const template = {
@@ -27,6 +28,10 @@ describe('フックの表示', () => {
 
   it('webhookの受け口はフックのIDのpathにする', () => {
     expect(hookWebhookPath('hook-1')).toBe('/api/hooks/hook-1/webhook');
+    // The full address goes to the sender: this page's address, which forwards /api.
+    expect(hookWebhookUrl('hook-1', 'https://mmt.example.test/')).toBe(
+      'https://mmt.example.test/api/hooks/hook-1/webhook',
+    );
   });
 
   it('絞り込みは設定した条件だけを、実験の名前で並べる', () => {

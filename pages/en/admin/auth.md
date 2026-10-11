@@ -59,7 +59,7 @@ A global administrator creates local accounts on the screen. You can create them
 ![The Users page under global administration](/images/admin-users.png)
 
 1. Open **全体設定** (Global settings) from the user menu, then **ユーザー** (Users) under 全体管理 (Global administration) in the sidebar (`/settings/users`).
-2. Click **ローカルユーザーを作成** (Create local user).
+2. Click **ローカルユーザーを作成** (Create local user). When local login is off (`AUTH_MODE` is `development` or `oidc`), the dialog says that local accounts cannot sign in with the current server settings. You can still create the account; it can sign in once `AUTH_MODE` is `local` or `hybrid`.
 3. Enter the following and save.
 
 | Field | Value |
@@ -100,7 +100,10 @@ When someone leaves or changes teams, a global administrator uses **全体管理
 2. For SSO users, also remove the user from the Authentik groups. If you re-enable the user without doing so, the next login restores the global role derived from the groups.
 3. To restore the user, click **有効化** (Enable) on the same row. API tokens work again, but ended sessions do not come back; the user signs in again.
 
-Users cannot be deleted, so that the creators of Runs and model versions stay on record. The last active global administrator cannot be disabled or demoted (409 `last_global_admin`). Prepare another global administrator first.
+Users cannot be deleted, so that the creators of Runs and model versions stay on record. The last active global administrator cannot be disabled or demoted (409 `last_global_admin`); on the screen, that row's **無効化** and **管理者を外す** (Remove admin) are disabled with the reason. Prepare another global administrator first.
+
+- Your own row is marked あなた (you). Disabling or demoting yourself is confirmed with a warning that you are signed out (or lose global administration) at once, and that only another global administrator can undo it.
+- A Service Account's row shows Service Account (Project name), which opens Service Accounts in that Project's settings. Disabling it also stops the tokens its workers use.
 
 For SSO users, Authentik is the source of truth for the global administrator flag and the display name, so they cannot be changed on the screen. The administrator column shows that the Authentik group is authoritative.
 

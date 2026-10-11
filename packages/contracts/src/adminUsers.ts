@@ -7,6 +7,8 @@ export type UserKind = 'human' | 'service' | 'launcher';
 export interface AdminUser extends User {
   lastLoginAt: string | null;
   createdAt: string;
+  /** The Project a Service Account belongs to; null for everyone else. */
+  serviceAccountProject: { id: string; name: string } | null;
 }
 
 export interface AdminUserQuery {

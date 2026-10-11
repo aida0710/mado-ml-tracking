@@ -195,6 +195,7 @@ function ModelVersionContent({
         versionLabel={versionLabel}
         baseline={selectedBaseline}
         evaluationComparison={evaluationComparison}
+        rules={rules}
       />
       {canPromote && (
         <PromotionCheckCard

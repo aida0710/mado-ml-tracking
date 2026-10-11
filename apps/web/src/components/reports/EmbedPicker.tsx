@@ -1,6 +1,5 @@
 import { useId, useState } from 'react';
 import {
-  MEDIA_COMPARE_MAX_RUNS,
   REPORT_RUN_TABLE_MAX_ROWS,
   type ReportEmbedBlock,
   type ReportEmbedMode,
@@ -9,10 +8,11 @@ import {
 import { Dialog } from '../Dialog';
 import { ChartPanelEditor } from '../charts/ChartPanelEditor';
 import { RunChecklist, RunSetPicker } from './RunSetPicker';
+import { MediaEmbedFields } from './MediaEmbedFields';
+import { NameSelect } from './NameSelect';
 import { ErrorNotice, Loading } from '../Feedback';
-import { useMediaCompare } from '../../hooks/useMediaCompare';
 import { useRunSetFieldNames, useRunTableMedia } from '../../hooks/useReportBlockData';
-import { createBlock, mediaStepsOrLatest, reportBlockProblem } from '../../lib/reportBlocks';
+import { createBlock, reportBlockProblem } from '../../lib/reportBlocks';
 import { metricFieldKey, paramFieldKey } from '../../lib/runAnalysisFields';
 import {
   reportBlockProblemLabels,
@@ -136,7 +136,7 @@ function EmbedFields({
   block: ReportEmbedBlock;
   onChange: (block: ReportEmbedBlock) => void;
 }) {
-  if (block.type === 'media') return <MediaFields projectId={projectId} block={block} onChange={onChange} />;
+  if (block.type === 'media') return <MediaEmbedFields projectId={projectId} block={block} onChange={onChange} />;
   if (block.type === 'media_table') return <MediaTableFields projectId={projectId} block={block} onChange={onChange} />;
   return <RunSetFields projectId={projectId} block={block} onChange={onChange} />;
 }
@@ -301,71 +301,6 @@ function RunSetFields({
   }
 }
 
-function MediaFields({
-  projectId,
-  block,
-  onChange,
-}: {
-  projectId: string;
-  block: Extract<ReportEmbedBlock, { type: 'media' }>;
-  onChange: (block: ReportEmbedBlock) => void;
-}) {
-  const steps = block.steps ?? [];
-  const media = useMediaCompare({ projectId, runIds: block.runIds, chosenKey: block.key || null, steps });
-  const hasRuns = block.runIds.length > 0;
-  return (
-    <>
-      <fieldset className="report-run-set">
-        <legend>{text.reportRunSet}</legend>
-        <RunChecklist
-          projectId={projectId}
-          selectedIds={block.runIds}
-          maxCount={MEDIA_COMPARE_MAX_RUNS}
-          // Steps recorded by the previous Runs may not exist for the new ones.
-          onChange={(runIds) => onChange({ ...block, runIds, steps: undefined })}
-        />
-      </fieldset>
-      {hasRuns && (
-        <>
-          <ErrorNotice message={media.choices.error} retry={media.choices.reload} />
-          <NameSelect
-            label={text.reportMediaKey}
-            value={block.key}
-            noneLabel={media.choices.value?.keys.length === 0 ? text.reportMediaKeyNone : text.none}
-            options={(media.choices.value?.keys ?? []).map((summary) => ({ key: summary.key, label: summary.key }))}
-            onChange={(key) => onChange({ ...block, key, steps: undefined })}
-          />
-          {block.key && media.recordedSteps.value && (
-            <fieldset className="report-checklist">
-              <legend>{text.reportMediaSteps}</legend>
-              <small className="muted">{text.reportMediaStepsHint}</small>
-              {media.recordedSteps.value.map((step) => (
-                <label key={step} className="checkbox-field">
-                  <input
-                    type="checkbox"
-                    checked={steps.includes(step)}
-                    onChange={(event) =>
-                      onChange({
-                        ...block,
-                        steps: mediaStepsOrLatest(
-                          event.target.checked
-                            ? [...steps, step].sort((left, right) => left - right)
-                            : steps.filter((item) => item !== step),
-                        ),
-                      })
-                    }
-                  />
-                  <span className="mono">{step}</span>
-                </label>
-              ))}
-            </fieldset>
-          )}
-        </>
-      )}
-    </>
-  );
-}
-
 function MediaTableFields({
   projectId,
   block,
@@ -401,33 +336,5 @@ function MediaTableFields({
         </>
       )}
     </>
-  );
-}
-
-function NameSelect({
-  label,
-  value,
-  options,
-  noneLabel = text.none,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: Array<{ key: string; label: string }>;
-  noneLabel?: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="field">
-      <span>{label}</span>
-      <select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)}>
-        <option value="">{noneLabel}</option>
-        {options.map((option) => (
-          <option key={option.key} value={option.key}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }

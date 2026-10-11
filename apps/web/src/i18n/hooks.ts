@@ -49,7 +49,13 @@ export const hooksText = {
   hookResources: 'Jobごとの資源',
   hookWebhookSignature: '署名の形式',
   hookFixedSettings:
-    '作成後は有効・無効だけを変更できます。設定を変えるときは新しいフックを作成してください。',
+    '作成後は有効・無効だけを変更できます。設定を変えるときは［複製して新しく作る］で今の設定を写したフックを作り、古いフックは無効にしてください。',
+  hookCopy: '複製して新しく作る',
+  hookCopyTitle: 'フックを複製して作成',
+  hookCopyHint:
+    '元のフックの設定を写しています。変えたいところだけ直して作成してください。元のフックはそのまま残るので、不要なら無効にしてください。',
+  hookCopyWebhookHint: 'webhookのフックは、複製すると新しい受け口と秘密鍵になります。送信元の設定も変えてください。',
+  hookWebhookUrl: '受け口のURL',
   hookEnabled: '有効',
   hookDisabled: '無効',
   hookStart: '手動で起動',
@@ -59,11 +65,10 @@ export const hooksText = {
   hookStartConfirm: '起動する',
   hookWebhookCreated: 'Webhookの設定',
   hookWebhookSecret: '署名の秘密鍵',
-  hookWebhookPath: '受け口のpath',
   hookWebhookSecretOnce:
     '秘密鍵はこの画面で一度だけ表示します。閉じると二度と表示できません。送信元に設定してから閉じてください。',
   hookWebhookPathHint:
-    'APIを公開しているホストにこのpathを付けたURLを、送信元に登録します。署名が合わない要求と、無効にしたフックへの要求は受け付けません。',
+    'このURLを送信元（GitHubのWebhookなど）に登録します。この画面と別の名前でAPIを公開しているときは、そのホストにpathを付けます。署名が合わない要求と、無効にしたフックへの要求は受け付けません。',
   hookManualSiteNotice:
     'この実行先は手動投入のsiteです。フックが作ったJobは、所有者がsiteのログインノードでmado-tracking submitを実行するまで待機します。',
   hookExecutionSubject: '対象',
@@ -162,6 +167,7 @@ export const hooksTextTemplates = {
     `1時間あたりの起動回数の上限は1〜${max}の整数で指定してください。`,
   hookPayloadTooLarge: (maxKiB: number) => `本文は${maxKiB}KiB以内にしてください。`,
   hookCheckpointEveryK: (every: number) => `${every}個ごと`,
+  hookCopyName: (name: string) => `${name}（複製）`,
   hookStarted: (outcome: string) =>
     `起動を受け付けました（${outcome}）。その後の結果は実行履歴で確認できます。`,
 };

@@ -29,18 +29,25 @@ export const reportsText = {
   reportHistoryShowing: '表示中',
   reportHistoryCurrent: '最新',
   reportRestore: 'このバージョンに戻す',
+  reportCopyRevisionUrl: 'URLをコピー',
+  reportChangesShow: '前との違い',
+  reportChangesNone: '前のバージョンと内容は同じです',
+  reportChangesTitle: '題名を変更',
+  reportChangesReordered: 'ブロックを並べ替え',
   reportRestoreTitle: 'バージョンを戻す',
   reportMessage: '変更の説明',
   reportMessagePlaceholder: '何を変えたか（任意）',
   reportSave: '保存',
   reportSaving: '保存中…',
   reportCancelEdit: '編集をやめる',
+  reportSaveBlocked: '題名か、設定の足りないブロックがあります',
   reportConflict:
     '編集を始めたあとに、ほかの人が新しいバージョンを保存しました。上書きを防ぐため保存していません。最新のバージョンを読み込んでから、変更を入れ直してください。',
   reportConflictReload: '最新のバージョンを読み込む',
   reportConflictReloadHint: '読み込むと、この画面の未保存の変更は消えます。必要な文章は先に控えてください。',
   reportAddMarkdown: '文章を追加',
   reportAddEmbed: '図や表を埋め込む',
+  reportInsertHere: 'ここに追加',
   reportBlockMoveUp: '上へ移動',
   reportBlockMoveDown: '下へ移動',
   reportBlockRemove: '削除',
@@ -82,8 +89,8 @@ export const reportsText = {
   reportRunTableLimit: '表示する件数',
   reportMediaKey: 'メディアのキー',
   reportMediaSteps: '比べるstep',
-  reportMediaStepsHint: '選ばないと、各Runの最新のstepを比べます。',
-  reportMediaKeyNone: 'メディアがありません',
+  reportMediaNoStepMedia:
+    '選んだRunには、stepの付いたメディアがありません。log_audio・log_image などでstepを付けて記録したものが対象です。推論Runが保存した音声などのArtifactは、比較画面の［Artifacts］タブで同じパスどうしを並べて聴けます。',
   reportMediaTableRun: 'Run',
   reportMediaTable: '表',
   reportMediaTableNone: 'このRunに表はありません',
@@ -123,6 +130,7 @@ export const reportBlockProblemLabels: Record<ReportBlockProblem, string> = {
 // Text that embeds values; merged into catalog's textTemplates.
 export const reportsTextTemplates = {
   reportRevisionLabel: (revision: number) => `バージョン ${revision}`,
+  reportInsertBelow: (position: number) => `ここに追加（${position}番目のブロックの下）`,
   reportUpdatedSummary: (revision: number, author: string, updatedAt: string) =>
     `バージョン ${revision}・${author}が${updatedAt}に更新`,
   reportShowingRevision: (revision: number, current: number) =>
@@ -131,8 +139,13 @@ export const reportsTextTemplates = {
   reportRestoreMessage: (revision: number) =>
     `バージョン ${revision} の内容で新しいバージョンを作ります。それまでのバージョンは履歴に残ります。`,
   reportRestoredFrom: (revision: number) => `バージョン ${revision} から復元`,
+  reportChangesAdded: (blocks: string) => `追加: ${blocks}`,
+  reportChangesEdited: (blocks: string) => `変更: ${blocks}`,
+  reportChangesRemoved: (blocks: string) => `削除: ${blocks}`,
+  reportBlockCount: (typeLabel: string, count: number) => (count === 1 ? typeLabel : `${typeLabel} ${count}件`),
   reportSelectedRunCount: (count: number, max: number) => `${count} / ${max} 件を選択`,
   reportChartMetrics: (keys: string) => `メトリクス: ${keys}`,
   reportMediaTableOption: (key: string, step: number) => `${key}（step ${step}）`,
+  reportMediaRunsWithoutKey: (runNames: string) => `このキーのメディアが無いRun: ${runNames}`,
   reportMediaTableSource: (runName: string, key: string, step: number) => `${runName} · ${key}（step ${step}）`,
 };

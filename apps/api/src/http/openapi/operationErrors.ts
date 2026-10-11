@@ -29,8 +29,12 @@ export function genericErrorsOf(route: NativeRoute): RouteError[] {
   else if (access.kind !== 'public') errors.push(...routeError(401, 'identity_sync_required'));
   if (access.kind === 'signedIn' || access.kind === 'project' || access.kind === 'globalAdmin')
     errors.push(...routeError(403, 'insufficient_scope'));
+  // project_archived: an archived Project opened by one of its members or a global administrator.
   if (access.kind === 'project')
-    errors.push(...routeError(403, 'project_forbidden'), ...routeError(404, 'not_found'));
+    errors.push(
+      ...routeError(403, 'project_forbidden'),
+      ...routeError(404, 'not_found', 'project_archived'),
+    );
   if (access.kind === 'globalAdmin') errors.push(...routeError(403, 'admin_required'));
   if (access.kind === 'worker') errors.push(...routeError(403, 'worker_token_required'));
   if (access.kind === 'launcher') errors.push(...routeError(403, 'launcher_token_required'));

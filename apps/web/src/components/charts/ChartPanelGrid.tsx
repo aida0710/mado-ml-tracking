@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useId, useState, type CSSProperties, type ReactNode } from 'react';
 import { Plus, RotateCcw } from 'lucide-react';
 import type { ChartPanelLayout, ChartXAxis } from '@mmt/contracts';
 import { CHART_ROW_HEIGHT_PX, ChartPanel } from './ChartPanel';
@@ -66,6 +66,7 @@ export function ChartPanelGrid({
   emptyMessage?: string;
 }) {
   const [isAdding, setIsAdding] = useState(false);
+  const headingId = useId();
   const shared = useChartPanelData({
     projectId,
     source,
@@ -75,7 +76,11 @@ export function ChartPanelGrid({
   const gridStyle = { '--chart-row-height': `${CHART_ROW_HEIGHT_PX}px` } as CSSProperties;
 
   return (
-    <section className="chart-panel-area" aria-label={text.charts}>
+    <section className="chart-panel-area" aria-labelledby={headingId}>
+      {/* The panels' titles are h3: this keeps the outline from jumping from the page's h1. */}
+      <h2 id={headingId} className="sr-only">
+        {text.charts}
+      </h2>
       {(toolbar || onLayoutChange) && (
         <div className="chart-grid-toolbar">
           {toolbar}

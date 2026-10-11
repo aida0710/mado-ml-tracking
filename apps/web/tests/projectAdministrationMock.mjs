@@ -53,8 +53,13 @@ export function suggestDirectories(typed) {
   };
 }
 
-const toProject = ({ archivedAt: _archivedAt, memberCount: _members, runCount: _runs, ...project }) =>
-  project;
+const toProject = ({
+  archivedAt: _archivedAt,
+  memberCount: _members,
+  adminNames: _adminNames,
+  runCount: _runs,
+  ...project
+}) => project;
 const toAdminProject = ({ role: _role, isMember: _isMember, ...project }) => project;
 
 /**
@@ -63,7 +68,14 @@ const toAdminProject = ({ role: _role, isMember: _isMember, ...project }) => pro
  */
 export function createProjectAdministration({ id, now, user, mainProject }) {
   const state = {
-    projects: [Object.assign(mainProject, { archivedAt: null, memberCount: 1, runCount: 3 })],
+    projects: [
+      Object.assign(mainProject, {
+        archivedAt: null,
+        memberCount: 1,
+        adminNames: [user.displayName],
+        runCount: 3,
+      }),
+    ],
     createRequests: [],
     // Set to answer the next archive with 409 project_has_active_jobs.
     activeJobsBlockArchive: false,
@@ -88,6 +100,7 @@ export function createProjectAdministration({ id, now, user, mainProject }) {
         createdAt: now,
         archivedAt: null,
         memberCount: 1 + (body.members?.length ?? 0),
+        adminNames: [user.displayName],
         runCount: 0,
       };
       state.projects.push(project);
@@ -115,6 +128,21 @@ export function createProjectAdministration({ id, now, user, mainProject }) {
       );
     }
     const projectMatch = requestPath.match(/^\/projects\/([^/]+)(\/archive)?$/);
+    // GET /projects/:p: an archived Project tells its members why it cannot be opened.
+    if (projectMatch && !projectMatch[2] && method === 'GET') {
+      const project = find(projectMatch[1]);
+      if (!project) return reply({ error: 'Projectが見つかりません', code: 'not_found' }, 404);
+      if (project.archivedAt)
+        return reply(
+          {
+            error:
+              'このProjectはアーカイブされています。全体管理者が全体管理の「プロジェクト」から元に戻せます',
+            code: 'project_archived',
+          },
+          404,
+        );
+      return reply(toProject(project));
+    }
     if (projectMatch && find(projectMatch[1])) {
       const project = find(projectMatch[1]);
       if (!projectMatch[2] && method === 'PATCH') {

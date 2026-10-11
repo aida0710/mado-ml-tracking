@@ -12,6 +12,14 @@ export const projectAccessText = {
   memberGrantedByGroup: 'Authentikのgroupで付与',
   memberDisabled: '無効',
   memberDisabledHint: 'このアカウントは無効化されているため、Roleがあってもログインやtokenでの操作はできません。',
+  memberPublicRoleHint:
+    'このプロジェクトはPublicなので、ログインできる人はViewerでもEditorとして編集できます。',
+  memberPublicViewerHint:
+    'このプロジェクトはPublicなので、Viewerを付けてもEditorとして編集できます。見るだけにしたいときは、プロジェクトの公開範囲をPrivateにしてください。',
+  memberServiceAccount: 'Service Account',
+  memberServiceAccountHint:
+    'Service Accountです。RoleはService Accountsの欄で変更します。ここで外すとtokenを発行できなくなります。',
+  memberServiceAccountManaged: 'Service Accountsの欄で変更',
   directRoleHint:
     'groupで付与されたRoleの方が高い場合は、そちらが実効Roleになります。groupの権限はAuthentik groupの欄で変更します。',
   userSearchPlaceholder: '名前・メールアドレス・ユーザー名の先頭で検索',
@@ -40,6 +48,7 @@ export const projectAccessText = {
 // Text that embeds values.
 export const projectAccessTextTemplates = {
   memberSourceGroup: (group: string) => `group ${group}`,
+  memberPublicRole: (role: string) => `${role}（Public）`,
   removeMemberConfirm: (removal: { displayName: string; keepsGroupRole: boolean; isSelf: boolean }) =>
     (removal.isSelf
       ? 'あなた自身への直接付与を外します。'

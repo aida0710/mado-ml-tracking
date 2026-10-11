@@ -1,6 +1,7 @@
 import { formatNumber } from '../../lib/format';
 import type { ChartValueAtX } from '../../lib/metricSeries';
 import { textTemplates } from '../../i18n/catalog';
+import { SeriesSwatch } from './SeriesSwatch';
 
 /**
  * The values of the series at the hovered x. The chart passes the rows already ordered and cut to
@@ -34,7 +35,7 @@ export function ChartTooltip({
           {rows.map((row) => (
             <tr key={row.id}>
               <td>
-                <span className="chart-legend-swatch" style={{ background: row.color }} />
+                <SeriesSwatch color={row.color} dashPattern={row.dashPattern} />
               </td>
               <td className="chart-tooltip-label">{row.label}</td>
               <td className="mono">{formatNumber(row.value)}</td>

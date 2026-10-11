@@ -48,7 +48,7 @@ Only Project admins create rules. API tokens also need the `admin` scope.
 | Compute target, GPU ID | Where to run. Without a GPU the Job runs on CPU only |
 | Input dataset versions | Data given to every version, such as the evaluation references |
 | Parameters, tags | JSON. Tags starting with `automation.` or `mmt.` are reserved for the server |
-| **最大試行回数** (Maximum attempts) | 1 to 100. Two or more retries failed Runs automatically. Default 1 |
+| **最大試行回数** (Maximum attempts) | 1 to 100. Two or more retries failed Runs automatically. Default 1. It limits automatic retries only; retries by people in Jobs do not count |
 
 3. Check that **状態** (Status) of the new rule is **有効** (Enabled).
 
@@ -121,14 +121,14 @@ A wait closed by failure or expiry does not start later even if the training Run
 
 ![Automation history](/images/models-automation-history.png)
 
-**自動実行履歴** (Automation history) in Models shows each rule's outcome and the state of the created Runs and Jobs.
+**自動実行履歴** (Automation history) in Models shows each rule's outcome and the state of the created Runs and Jobs. It lists the newest 100 at a time; **さらに表示** (Show more) reads older ones. **ルール** (Rule) and **バージョン** (Version) narrow the list, and **このルールの実行履歴を見る** (Show this rule's history) in a rule's details opens the history narrowed to that rule.
 
 | Outcome | Meaning |
 | --- | --- |
-| **Jobを登録** (Job queued) | A Run and a Job were created. Follow them in the Run and Job status columns |
+| **Jobを登録** (Job queued) | A Run and a Job were created. Follow them in **Run・Jobの状態** (Run and Job status) |
 | **学習完了待ち** (Waiting for training) | Waiting for the training Run to succeed |
 | **起動せず** (Skipped) | Conditions were not met. The reason is shown |
-| **起動に失敗** (Failed to start) | The Run could not be created, for example because the rule owner lost access or the target is disabled. The registered version is kept |
+| **起動に失敗** (Failed to start) | The Run could not be created, for example because the rule owner lost access or the target is disabled. The reason is shown under the outcome. The registered version is kept |
 
 Chained runs are shown as stage 1, stage 2, and so on. **学習Runを開く** (Open training Run) and **上流のRunを開く** (Open upstream Run) lead to the Run that triggered them. The **自動実行** section of a version page shows the same history for that version.
 
@@ -136,14 +136,14 @@ To be notified of start failures, select `automation.failed` in a Project notifi
 
 ## Apply a rule to existing versions
 
-Project admins can apply an enabled rule to an existing version, for example to:
+Project admins can apply an enabled rule to an existing version. A disabled rule's details show **有効にする** (Enable) in place of the apply form; once enabled, the rule can be applied. Use this, for example, to:
 
 - Evaluate versions registered before the rule existed
 - Run versions that were skipped because training failed or the wait expired
 - Re-evaluate the baseline version after changing the evaluation code
 
 1. Select the rule in **自動実行ルール** to open its details.
-2. In **既存のバージョンに適用** (Apply to existing version), choose **適用するバージョン** (Version). For a rule with an upstream, choose **上流のRun** (Upstream Run) instead: a successful Run created by the upstream rule that has output dataset versions.
+2. In **既存のバージョンに適用** (Apply to existing version), choose **適用するバージョン** (Version). For a rule with an upstream, choose **上流のRun** (Upstream Run) instead: a successful Run created by the upstream rule that has output dataset versions (chosen from the newest 200).
 3. Press **適用する** (Apply) and confirm.
 4. When **Jobを登録しました** (Job queued) appears, check the state in the automation history.
 
@@ -165,7 +165,7 @@ Setting **最大試行回数** (Maximum attempts) to two or more queues the next
 
 - Retries start from the beginning, not from a checkpoint. To continue from a checkpoint, resume manually in Jobs ([Resume training](/en/models/checkpoints)).
 - A successful retry chains to later rules as usual.
-- People can always retry with **新しいRunで再実行** (Retry in a new Run) in Jobs.
+- Maximum attempts limits automatic retries only. People can retry with **新しいRunで再実行** (Retry in a new Run) in Jobs, both for rules that do not retry automatically and for Runs that reached the attempt limit. The Job's creator (the rule owner) and Project admins can do so ([The Jobs page](/en/compute/jobs#stop-and-retry)).
 
 ## Move rule ownership to a Service Account {#move-rule-ownership}
 
@@ -184,8 +184,8 @@ If the rule runs on a Private computer, move ownership to a Service Account crea
 
 Rules cannot be edited, so switch evaluation code in this order:
 
-1. Create an evaluation rule with the new code version and the same inference rule as upstream.
-2. Disable the old evaluation rule.
+1. Select the old evaluation rule in **自動実行ルール** and press **複製して新しく作る** (Copy as a new rule). The form opens with the rule's name, trigger, upstream rule, families, code and the rest filled in.
+2. Change **コードバージョン** (Code version) to the new one, rename the rule and create it. While **作成したら「…」を無効にする** (Disable "…" after creating) stays checked, the old rule is disabled as the new one is created. Rules that follow the old rule are named on the form: they stop running once it is disabled, so recreate them the same way.
 3. Apply the new rule with the baseline version's inference Run (for example the version `production` points at) as the upstream Run. Only evaluation runs again with the new code.
 
 Comparisons use evaluation Runs with the same evaluation code version. Without evaluating the baseline with the new code, a new version has nothing to compare with.

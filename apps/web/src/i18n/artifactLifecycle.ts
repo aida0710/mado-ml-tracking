@@ -3,6 +3,8 @@ export const artifactLifecycleText = {
   artifactActions: 'ファイルの操作',
   artifactDelete: '削除',
   artifactDeleteTitle: 'Artifactを削除',
+  artifactDeleteBlockedByReferences:
+    '使われているため削除できません。「使われている場所」のバージョンなどを先に削除するか、別のファイルに替えてください。',
   artifactUsage: 'Artifactの使用量',
   artifactUsageEmpty: 'Artifactはまだありません',
   artifactUsageBackend: '保存先',

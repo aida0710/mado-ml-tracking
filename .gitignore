@@ -15,3 +15,6 @@ coverage/
 python/build/
 .mypy_cache/
 .ruff_cache/
+
+# Screenshots that browser tests write when no output directory is given (run from apps/web).
+/apps/web/artifacts/

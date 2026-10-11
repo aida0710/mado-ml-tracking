@@ -73,8 +73,6 @@ export const promotionText = {
   promotionCriterionThresholdInvalid: '合否基準の閾値は有限の数値で入力してください。',
   // Owner (run-as user) of a policy and its transfer to a Service Account.
   promotionPolicyOwner: '実行ユーザー',
-  promotionPolicyOwnerCreator: '作成者',
-  promotionPolicyOwnerServiceAccount: 'Service Account',
   promotionTransferOwner: '所有者を移管',
   promotionTransferOwnerTarget: '移管先のService Account',
   promotionTransferOwnerHint:
@@ -89,7 +87,13 @@ export const promotionText = {
   promotionEvidenceNone: '指定しない',
   promotionEvidenceChoose: '判定を選択',
   promotionEvidenceRequired: 'このaliasを変更するには、このバージョンの合格判定を選択してください。',
-  promotionEvidenceEmpty: 'このバージョンには、このaliasを対象にした合格判定がありません。',
+  promotionEvidenceEmpty:
+    'このバージョンには、このaliasを対象にした合格判定がありません。このaliasを対象にした昇格policyがあれば、その評価ルールがこのバージョンを評価すると判定されます（policyはModelsの［昇格policy］で確認できます）。',
+  promotionPoliciesAdminOnly:
+    '昇格policyの作成・有効化・所有者の移管は、Project adminと全体管理者が行います。',
+  aliasProtectionsAdminOnly: '保護aliasの追加・解除は、Project adminと全体管理者が行います。',
+  promotionEvaluationRulesDisabled:
+    'このモデルの系列を対象にした評価ルールはありますが、無効になっています。Modelsの［自動実行ルール］で有効にすると選べます。',
   promotionReasonRequired: '理由を入力してください。',
   promotionReasonRequiredForFailed:
     'このバージョンはこのaliasの昇格判定で不合格です。昇格させる場合は理由を入力してください。',

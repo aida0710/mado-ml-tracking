@@ -5,6 +5,7 @@ import { Dialog } from '../components/Dialog';
 import { FormFields } from '../components/FormFields';
 import { ErrorNotice } from '../components/Feedback';
 import { text } from '../i18n/catalog';
+import { pluginsText } from '../i18n/plugins';
 
 export function PluginDialog({ plugin, onClose, onSaved }: {
   plugin?: PluginConnection; onClose: () => void; onSaved: (plugin: PluginConnection) => void;
@@ -18,7 +19,7 @@ export function PluginDialog({ plugin, onClose, onSaved }: {
     }} data-testid="plugin-edit-form">
       <fieldset disabled={form.pending}>
         <button type="button" className="button small" onClick={form.applyMadoPreset}>{text.madoPreset}</button>
-        <p className="muted">{text.madoPresetHint}</p>
+        <p className="muted">{pluginsText.madoPluginPresetHint}</p>
         <FormFields fields={[
           { name: 'name', label: text.name, required: true },
           { name: 'baseUrl', label: text.baseUrl, type: 'url', required: true },

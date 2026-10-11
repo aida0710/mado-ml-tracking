@@ -83,28 +83,64 @@ function plottableExtent(values: Iterable<number>, scale: ChartScale): [number, 
 /** Maps a data value to a pixel; undefined when the axis cannot place it. */
 export type PixelScale = (value: number) => number | undefined;
 
+// A piece of one point (a metric logged once, or a value between two gaps) has no length to
+// stroke, so lonePointsPath draws it as a filled dot of this radius.
+const LONE_POINT_RADIUS_PIXELS = 3.5;
+
+type PixelPoint = [number, number];
+
 /**
- * SVG path of a line through (x, value) pairs. A value the axes cannot place (NaN) ends the
- * current piece, so a gap shows as a gap instead of a straight line across it.
+ * The (x, value) pairs as pixel points, split into pieces wherever a value cannot be placed (NaN),
+ * so a gap shows as a gap instead of a straight line across it.
  */
+function pixelPieces(
+  xs: readonly number[],
+  values: readonly number[],
+  scales: { x: PixelScale; y: PixelScale },
+): PixelPoint[][] {
+  const pieces: PixelPoint[][] = [[]];
+  xs.forEach((x, index) => {
+    const pixelX = scales.x(x);
+    const pixelY = Number.isFinite(values[index]) ? scales.y(values[index]!) : undefined;
+    if (!isPixel(pixelX) || !isPixel(pixelY)) {
+      if (pieces.at(-1)!.length) pieces.push([]);
+      return;
+    }
+    pieces.at(-1)!.push([pixelX, pixelY]);
+  });
+  return pieces.filter((piece) => piece.length > 0);
+}
+
+/** SVG path of a line through (x, value) pairs; a one-point piece is left to lonePointsPath. */
 export function linePath(
   xs: readonly number[],
   values: readonly number[],
   scales: { x: PixelScale; y: PixelScale },
 ): string {
-  let path = '';
-  let isPieceOpen = false;
-  xs.forEach((x, index) => {
-    const pixelX = scales.x(x);
-    const pixelY = Number.isFinite(values[index]) ? scales.y(values[index]!) : undefined;
-    if (!isPixel(pixelX) || !isPixel(pixelY)) {
-      isPieceOpen = false;
-      return;
-    }
-    path += `${isPieceOpen ? 'L' : 'M'}${pixelX.toFixed(1)},${pixelY.toFixed(1)}`;
-    isPieceOpen = true;
-  });
-  return path;
+  return pixelPieces(xs, values, scales)
+    .filter((piece) => piece.length > 1)
+    .map((piece) =>
+      piece.map(([x, y], index) => `${index ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`).join(''),
+    )
+    .join('');
+}
+
+/**
+ * SVG path of a dot at every point that has no neighbor to draw a line to, to be filled in the
+ * line's color: without it a metric logged once draws nothing at all. A path has no circle
+ * command, so two half-circle arcs make each dot.
+ */
+export function lonePointsPath(
+  xs: readonly number[],
+  values: readonly number[],
+  scales: { x: PixelScale; y: PixelScale },
+): string {
+  const radius = LONE_POINT_RADIUS_PIXELS;
+  const arc = (dx: number) => `a${radius},${radius} 0 1,0 ${dx},0`;
+  return pixelPieces(xs, values, scales)
+    .flatMap((piece) => (piece.length === 1 ? piece : []))
+    .map(([x, y]) => `M${(x - radius).toFixed(1)},${y.toFixed(1)}${arc(2 * radius)}${arc(-2 * radius)}`)
+    .join('');
 }
 
 /**

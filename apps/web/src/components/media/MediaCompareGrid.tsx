@@ -4,14 +4,13 @@ import { AudioLines, Film, Table2 } from 'lucide-react';
 import { trackingApi } from '../../api/tracking';
 import { formatAudioTime } from '../../lib/audioTimeline';
 import {
-  compareTableOf,
   gridPositionAfterKey,
   handoffPosition,
   playbackHandoffFrom,
   type GridPosition,
-  type CompareTable,
   type PlaybackHandoff,
 } from '../../lib/mediaSteps';
+import { compareTableOf, type CompareColumn, type CompareTable } from '../../lib/mediaCompareSteps';
 import { runMediaArtifact } from '../../lib/mediaPreviewArtifact';
 import { narrowerThan } from '../../lib/breakpoints';
 import { useMediaQuery } from '../../lib/useMediaQuery';
@@ -35,6 +34,16 @@ function firstFilledCell(table: CompareTable): GridPosition {
     if (column >= 0) return { row, column };
   }
   return { row: 0, column: 0 };
+}
+
+/** The column heading: its step, or "each Run's latest step" when the Runs ended at different steps. */
+function columnLabel(column: CompareColumn): string {
+  return column.kind === 'step' ? textTemplates.mediaStepLabel(column.step) : text.mediaCompareLatest;
+}
+
+/** The step a cell shows: the column's, or in the latest column the step its media was recorded at. */
+function cellStepLabel(column: CompareColumn, media: RunMedia | null): string {
+  return column.kind === 'latest' && media ? textTemplates.mediaStepLabel(media.step) : columnLabel(column);
 }
 
 function CellSummary({ projectId, media }: { projectId: string; media: RunMedia | null }) {
@@ -114,7 +123,7 @@ export function MediaCompareGridView({
   const [selected, setSelected] = useState<GridPosition>(() => firstFilledCell(table));
   const cellButtons = useRef(new Map<string, HTMLButtonElement>());
   const { attachAudio, leaveCurrent } = useAudioHandoff();
-  const size = { rows: table.runIds.length, columns: table.steps.length };
+  const size = { rows: table.runIds.length, columns: table.columns.length };
   // A cell normally holds one item; the first is shown when a Run logged several at that step.
   const cellAt = (position: GridPosition) => table.cells[position.row]?.[position.column]?.[0] ?? null;
   const cellCountAt = (position: GridPosition) => table.cells[position.row]?.[position.column]?.length ?? 0;
@@ -136,7 +145,7 @@ export function MediaCompareGridView({
   const isSelectedCell = (position: GridPosition) => position.row === selected.row && position.column === selected.column;
   const cellButton = (position: GridPosition) => {
     const runId = table.runIds[position.row]!;
-    const step = table.steps[position.column]!;
+    const column = table.columns[position.column]!;
     const media = cellAt(position);
     const state = media ? mediaKindLabels[media.kind] : text.mediaCompareMissing;
     return (
@@ -149,19 +158,21 @@ export function MediaCompareGridView({
         }}
         className={`media-compare-cell ${media ? '' : 'missing'}`}
         tabIndex={isSelectedCell(position) ? 0 : -1}
-        aria-label={textTemplates.mediaCompareCell(runLabel(runId), step, state)}
+        aria-label={textTemplates.mediaCompareCell(runLabel(runId), cellStepLabel(column, media), state)}
         aria-pressed={isNarrow ? isSelectedCell(position) : undefined}
         onClick={() => select(position)}
       >
         <CellSummary projectId={projectId} media={media} />
+        {column.kind === 'latest' && media && <span className="mono media-compare-cell-step">{cellStepLabel(column, media)}</span>}
       </button>
     );
   };
+  const selectedColumn = table.columns[selected.column];
   const detail = (
     <SelectedCellDetail
       projectId={projectId}
       runLabel={table.runIds[selected.row] === undefined ? undefined : runLabel(table.runIds[selected.row]!)}
-      step={table.steps[selected.column]}
+      stepLabel={selectedColumn === undefined ? undefined : cellStepLabel(selectedColumn, cellAt(selected))}
       media={cellAt(selected)}
       count={cellCountAt(selected)}
       attachAudio={attachAudio}
@@ -175,11 +186,9 @@ export function MediaCompareGridView({
         <div className="media-compare-runs" aria-label={text.mediaCompareGrid} onKeyDown={moveWithKeyboard}>
           {table.runIds.map((runId, row) => (
             <RunStack key={runId} label={runLabel(runId)}>
-              {table.steps.map((step, column) => (
-                <div key={step} className={`media-compare-run-step ${isSelectedCell({ row, column }) ? 'selected' : ''}`}>
-                  <span className="mono">
-                    {text.mediaStep} {step}
-                  </span>
+              {table.columns.map((compareColumn, column) => (
+                <div key={column} className={`media-compare-run-step ${isSelectedCell({ row, column }) ? 'selected' : ''}`}>
+                  <span className="mono">{cellStepLabel(compareColumn, cellAt({ row, column }))}</span>
                   {cellButton({ row, column })}
                 </div>
               ))}
@@ -199,9 +208,9 @@ export function MediaCompareGridView({
           <thead>
             <tr>
               <th scope="col">{text.mediaRun}</th>
-              {table.steps.map((step) => (
-                <th key={step} scope="col" className="mono">
-                  {text.mediaStep} {step}
+              {table.columns.map((column, index) => (
+                <th key={index} scope="col" className="mono">
+                  {columnLabel(column)}
                 </th>
               ))}
             </tr>
@@ -210,9 +219,9 @@ export function MediaCompareGridView({
             {table.runIds.map((runId, row) => (
               <tr key={runId}>
                 <th scope="row">{runLabel(runId)}</th>
-                {table.steps.map((step, column) => (
+                {table.columns.map((_column, column) => (
                   <td
-                    key={step}
+                    key={column}
                     role="gridcell"
                     aria-selected={isSelectedCell({ row, column })}
                     className={isSelectedCell({ row, column }) ? 'selected' : ''}
@@ -243,23 +252,23 @@ function RunStack({ label, children }: { label: string; children: ReactNode }) {
 function SelectedCellDetail({
   projectId,
   runLabel,
-  step,
+  stepLabel,
   media,
   count,
   attachAudio,
 }: {
   projectId: string;
   runLabel: string | undefined;
-  step: number | undefined;
+  stepLabel: string | undefined;
   media: RunMedia | null;
   count: number;
   attachAudio: (element: HTMLAudioElement | null) => void;
 }) {
   return (
     <section className="media-compare-detail" aria-live="polite">
-      {runLabel !== undefined && step !== undefined && (
+      {runLabel !== undefined && stepLabel !== undefined && (
         <h4>
-          {runLabel} · {text.mediaStep} {step}
+          {runLabel} · {stepLabel}
         </h4>
       )}
       {!media ? (

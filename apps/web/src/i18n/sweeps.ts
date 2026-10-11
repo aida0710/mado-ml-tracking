@@ -22,9 +22,11 @@ export const sweepsText = {
   sweepTaskRevisionPinned: 'Taskの現在のrevisionを固定して実行します。作成後にTaskを編集すると、Sweepは停止します。',
   sweepExperiment: 'Experiment',
   sweepExperimentHint: '試行のRunはTaskのExperimentに入ります。',
-  sweepTarget: 'Compute target',
+  sweepTarget: 'コンピュータ',
   sweepTaskDefault: 'Taskの既定',
-  sweepGpuIds: 'GPU ID（カンマ区切り。空はTaskの既定）',
+  sweepGpuIds: 'GPU（選ばなければTaskの既定）',
+  sweepGpuSiteTaskDefault: 'siteのGPU数はTaskの既定を使います。',
+  sweepTargetRuntimeHint: 'TaskのコードバージョンのRuntimeを使えるコンピュータだけを選べます。',
   sweepObjective: '目的',
   sweepObjectiveMetric: '目的メトリクス',
   sweepObjectiveMetricHint: '候補はTaskの過去のRunで記録されたメトリクスです。',
@@ -97,6 +99,13 @@ export const sweepsText = {
 // Text that embeds values; merged into catalog's textTemplates.
 export const sweepsTextTemplates = {
   sweepTrialProgress: (created: number, maxTrials: number) => `${created} / ${maxTrials}`,
+  sweepGridEndsEarly: (combinations: number, maxTrials: number) =>
+    `gridの組み合わせが${combinations}通りなので、最大試行数${maxTrials}に届く前に終わります`,
+  sweepGridFewerThanMaxTrials: (combinations: number) =>
+    `gridの組み合わせは${combinations}通りです。試行は${combinations}回で終わります。`,
+  sweepTargetTaskDefault: (targetName: string) => `Taskの既定（${targetName}）`,
+  sweepTaskGpusMissing: (gpuIds: string) =>
+    `GPUを選ばないとTaskのGPU（${gpuIds}）を使いますが、このコンピュータにはありません。使うGPUを選んでください。`,
   sweepGridCombinations: (count: number) => `gridの組み合わせ: ${count}通り`,
   sweepGridTooMany: (count: number, limit: number) =>
     `gridの組み合わせ数は${limit}までです（${count}通り）。値を減らすか、randomかbayesにしてください。`,

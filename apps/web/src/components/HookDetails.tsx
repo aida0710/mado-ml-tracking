@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { Copy } from 'lucide-react';
 import type { Hook } from '@mmt/contracts';
 import type { HookCatalog } from '../types/hooks';
 import { hooksApi } from '../api/hooks';
+import { CopyableValue } from './CopyableValue';
 import { DetailsList, JsonDetails } from './JsonDetails';
 import { HookStart } from './HookStart';
 import { ServiceAccountOwnerTransfer } from './ServiceAccountOwnerTransfer';
@@ -14,7 +16,7 @@ import {
 import { buildCatalogOptions } from '../lib/catalogOptions';
 import { creatorName } from '../lib/creatorName';
 import { formatDate } from '../lib/format';
-import { hookFilterEntries, hookResourceSummary, hookWebhookPath } from '../lib/hookDisplay';
+import { hookFilterEntries, hookResourceSummary, hookWebhookUrl } from '../lib/hookDisplay';
 import { hookFilterFields } from '../lib/hookInput';
 import { formatAutoRetries } from '../lib/jobDisplay';
 import { isSiteTarget } from '../lib/siteExecutionInput';
@@ -44,7 +46,13 @@ function triggerEntries(hook: Hook, catalog: HookCatalog | undefined): Entry[] {
   if (hook.trigger === 'webhook') {
     if (hook.webhookSignature)
       entries.push([text.hookWebhookSignature, hookWebhookSignatureLabels[hook.webhookSignature]]);
-    entries.push([text.hookWebhookPath, <code className="mono">{hookWebhookPath(hook.id)}</code>]);
+    entries.push([
+      text.hookWebhookUrl,
+      <>
+        <CopyableValue value={hookWebhookUrl(hook.id, window.location.origin)} />
+        <small className="muted">{text.hookWebhookPathHint}</small>
+      </>,
+    ]);
   }
   if (hookFilterFields(hook.trigger).length) {
     const filters = hookFilterEntries(hook.filter, catalog?.registry);
@@ -127,6 +135,7 @@ export function HookDetails({
   canStart,
   canTransferOwner,
   onShowExecutions,
+  onCopy,
   onStarted,
   onOwnerTransferred,
 }: {
@@ -136,6 +145,8 @@ export function HookDetails({
   canStart: boolean;
   canTransferOwner: boolean;
   onShowExecutions: () => void;
+  /** Opens the create dialog with this hook's settings; absent for those who may not create. */
+  onCopy?: () => void;
   onStarted: () => void;
   onOwnerTransferred: () => void;
 }) {
@@ -144,9 +155,17 @@ export function HookDetails({
     <section className="automation-rule-detail" data-testid="hook-details">
       <div className="section-heading">
         <h3>{hook.name}</h3>
-        <button className="button small" onClick={onShowExecutions}>
-          {text.hookShowExecutions}
-        </button>
+        <div className="hook-detail-actions">
+          {onCopy && (
+            <button className="button small" onClick={onCopy}>
+              <Copy size={14} />
+              {text.hookCopy}
+            </button>
+          )}
+          <button className="button small" onClick={onShowExecutions}>
+            {text.hookShowExecutions}
+          </button>
+        </div>
       </div>
       <DetailsList
         entries={[

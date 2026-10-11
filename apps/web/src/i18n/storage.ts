@@ -54,9 +54,24 @@ export const storageText = {
   storageCaBundleError: 'CA証明書はPEM形式（-----BEGIN CERTIFICATE-----）で貼り付けてください',
   storageSecretRequired: 'Access key IDを指定するときはSecret access keyも入力してください',
   storageDirectoryTruncated: '候補が多いため一部だけを表示しています。続けて入力すると絞り込めます。',
+  storageRootPathHint:
+    'API serverのディレクトリです。データ用のディスク（/srv、/mnt、/homeなど）の下を指定します。空欄で選ぶと候補が出ます（/procや/usrなどシステムのディレクトリは出しません）。',
+  storageAdvancedSettings: '詳細設定（署名・TLS・Checksum・Multipart）',
+  storageTestFailedFix: '［変更］で設定を直し、もう一度［接続テスト］を押してください。',
+  storageEditAfterFailure: '設定を変更',
+  storageMakeDefaultTestFirst:
+    '既定にする前に接続テストを行い、失敗したときは既定にしません。',
+  storageMakeDefaultTestFailed:
+    '接続テストに失敗したため、既定の保存先にしませんでした。下の結果を見て設定を直してから、もう一度試してください。',
+  // The storage choice of a new Project: the default first, the others folded away.
+  newProjectStorageOthers: 'ほかの保存先を選ぶ',
+  newProjectStorageHint:
+    '保存先は全体管理者が用意したものです。どこに保存されるかは全体管理者に確かめてください。あとから［プロジェクト設定］で変えられます（それまでのArtifactは元の保存先に残ります）。',
 } as const;
 
 export const storageTextTemplates = {
+  newProjectStorageDefault: (backend: string) =>
+    `既定の保存先「${backend}」に保存します。迷ったらこのままにします。`,
   storageDirectoryMissing: (path: string) =>
     `${path} はサーバにまだありません。接続テストか最初の保存のときに作成します。`,
   storageDirectoryNotDirectory: (path: string) =>

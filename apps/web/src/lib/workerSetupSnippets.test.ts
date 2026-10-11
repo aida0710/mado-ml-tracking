@@ -24,7 +24,7 @@ describe('コンピュータのworkerの設定例', () => {
     expect(snippets.environment).toContain('export MMT_API_URL=https://mmt.example.test\n');
     expect(snippets.environment).toContain('export MMT_WORKER_ID="$(hostname -s)"\n');
     expect(snippets.environment).toContain(
-      "read -r -s -p 'Worker API token: ' MMT_API_TOKEN\nexport MMT_API_TOKEN\n",
+      "printf 'Worker API token: '; read -r -s MMT_API_TOKEN; echo\nexport MMT_API_TOKEN\n",
     );
     expect(snippets.environment).not.toMatch(/MMT_API_TOKEN=/);
     expect(snippets.environment.trimEnd().split('\n').at(-1)).toBe(

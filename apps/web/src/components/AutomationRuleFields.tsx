@@ -1,7 +1,9 @@
+import { MAX_JOB_ATTEMPTS } from '@mmt/contracts';
 import type { AutomationCatalog, AutomationKind } from '../types/modelAutomation';
 import type { FormField, FormValues } from '../types/form';
 import { FormFields } from './FormFields';
 import { CodeRuntimeDetails } from './CodeRuntimeDetails';
+import { MissingCodeNotice } from './MissingCodeNotice';
 import { getFieldValue, getSelectedValues } from '../lib/formValues';
 import { buildCatalogOptions, withEmptyOption } from '../lib/catalogOptions';
 import {
@@ -10,7 +12,7 @@ import {
   isAutomationCodeCompatible,
   upstreamRuleCandidates,
 } from '../lib/modelAutomationInput';
-import { MAX_JOB_ATTEMPTS } from '../lib/executionValidation';
+import { explainMissingCodeCandidates } from '../lib/codeCandidateReason';
 import { isTargetCompatible } from '../lib/runtimeValidation';
 import { targetChoiceLabel } from '../lib/computeTargetDisplay';
 import { text } from '../i18n/catalog';
@@ -39,12 +41,22 @@ export function AutomationRuleFields({
     (target) => code && isTargetCompatible(target, code),
   );
   const target = compatibleTargets.find((item) => item.id === getFieldValue(values, 'targetId'));
+  // Families already chosen stay listed (a copied rule's family no model uses any more).
   const families = [
     ...new Set([
       ...choices.models.map((model) => model.family),
       ...choices.codeVersions.flatMap((version) => version.supportedModelFamilies),
+      ...modelFamilies,
     ]),
   ].sort();
+  // Said under the code version list when it offers nothing, so an empty list is not a dead end.
+  const missingCode = AUTOMATION_KINDS.includes(kind)
+    ? explainMissingCodeCandidates({
+        codeVersions: choices.codeVersions,
+        taskType: kind,
+        families: modelFamilies,
+      })
+    : null;
   const fields: FormField[] = [
     { name: 'name', label: text.name, required: true },
     {
@@ -73,7 +85,7 @@ export function AutomationRuleFields({
     {
       name: 'modelFamilies',
       label: text.automationModelFamilies,
-      type: 'multiselect',
+      type: 'checkboxes',
       required: true,
       options: families.map((family) => ({ value: family, label: family })),
     },
@@ -113,14 +125,15 @@ export function AutomationRuleFields({
     },
     {
       name: 'gpuIds',
-      label: `${text.gpuIds} · ${text.cpuOnly}`,
-      type: 'multiselect',
+      label: text.gpuIds,
+      type: 'checkboxes',
       options: (target?.gpuIds ?? []).map((id) => ({ value: id, label: id })),
+      emptyText: target ? text.gpuNoneOnTarget : text.gpuSelectTargetFirst,
     },
     {
       name: 'inputDatasetVersionIds',
       label: text.inputDatasets,
-      type: 'multiselect',
+      type: 'checkboxes',
       options: options.datasets,
     },
     { name: 'parameters', label: text.parametersJson, type: 'textarea' },
@@ -135,9 +148,12 @@ export function AutomationRuleFields({
     },
     { name: 'enabled', label: text.enabled, type: 'checkbox' },
   ];
+  const codeEnd = fields.findIndex((field) => field.name === 'codeVersionId') + 1;
   return (
     <>
-      <FormFields fields={fields} values={values} onChange={onChange} />
+      <FormFields fields={fields.slice(0, codeEnd)} values={values} onChange={onChange} />
+      {missingCode && <MissingCodeNotice reason={missingCode} />}
+      <FormFields fields={fields.slice(codeEnd)} values={values} onChange={onChange} />
       {code && <CodeRuntimeDetails version={code} />}
       {code && !compatibleTargets.length && <p className="notice">{text.noCompatibleTargets}</p>}
     </>

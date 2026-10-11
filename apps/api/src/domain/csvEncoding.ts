@@ -32,9 +32,3 @@ export function encodeCsvLine(cells: readonly CsvCell[]): string {
 export function encodeCsvDocument(lines: readonly (readonly CsvCell[])[]): string {
   return CSV_BYTE_ORDER_MARK + lines.map(encodeCsvLine).join('');
 }
-
-/** attachment with an ASCII fallback and the RFC 5987 UTF-8 name. */
-export function csvAttachmentDisposition(fileName: string): string {
-  const asciiName = fileName.replace(/[^\x20-\x7e]|["\\]/g, '_');
-  return `attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
-}

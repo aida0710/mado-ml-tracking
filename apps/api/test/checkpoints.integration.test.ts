@@ -4,6 +4,7 @@ import type {
   Code,
   CodeVersion,
   Job,
+  JobListItem,
   Run,
   RunCheckpoint,
   RunCheckpointPage,
@@ -65,6 +66,14 @@ describe.skipIf(!testDatabaseUrl)('学習の途中再開（独立PostgreSQL）',
     const workerJob = await claim();
     expect(workerJob.job.id).toBe(job.id);
     return { job, workerJob };
+  }
+
+  async function listedJob(jobId: string): Promise<JobListItem | undefined> {
+    const jobs = await entity<{ items: JobListItem[] }>(
+      await request(harness.app, `${fixture.basePath}/jobs`, { cookie: fixture.viewer.cookie }),
+      200,
+    );
+    return jobs.items.find((item) => item.id === jobId);
   }
 
   async function claim(): Promise<WorkerJob> {
@@ -350,6 +359,7 @@ describe.skipIf(!testDatabaseUrl)('学習の途中再開（独立PostgreSQL）',
 
   it('resumeFromLatestCheckpointは最大stepを選び、再送は同じRunを返し、別のcheckpoint指定は409', async () => {
     const { job, checkpoints } = await failedTrainingWithCheckpoints([30, 10, 20]);
+    expect(await listedJob(job.id)).toMatchObject({ hasResumeCheckpoint: true });
     const latest = await entity<{ run: Run; job: Job }>(
       await retry(job.id, { resumeFromLatestCheckpoint: true }),
     );
@@ -370,6 +380,8 @@ describe.skipIf(!testDatabaseUrl)('学習の途中再開（独立PostgreSQL）',
     const run = await trainingRun();
     const { workerJob } = await startJob(run);
     await failJob(workerJob);
+    // The Jobs list tells the screen there is nothing to resume from, so it offers no resume.
+    expect(await listedJob(workerJob.job.id)).toMatchObject({ hasResumeCheckpoint: false });
     const missing = await retry(workerJob.job.id, { resumeFromLatestCheckpoint: true });
     expect(missing.status).toBe(422);
     expect(await errorCode(missing)).toBe('checkpoint_not_found');

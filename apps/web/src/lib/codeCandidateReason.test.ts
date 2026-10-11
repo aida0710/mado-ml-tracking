@@ -22,7 +22,7 @@ const code = (fields: Partial<CodeVersion>): CodeVersion => ({
 describe('コードバージョンが候補に出ない理由', () => {
   it('対応するコードバージョンがあれば理由は無い', () => {
     expect(
-      explainMissingCodeCandidates({ codeVersions: [code({})], taskType: 'inference', family: 'qwen3' }),
+      explainMissingCodeCandidates({ codeVersions: [code({})], taskType: 'inference', families: ['qwen3'] }),
     ).toBeNull();
   });
 
@@ -34,7 +34,7 @@ describe('コードバージョンが候補に出ない理由', () => {
 
   it('実行種別に対応するものが無い', () => {
     expect(
-      explainMissingCodeCandidates({ codeVersions: [code({})], taskType: 'evaluation', family: 'qwen3' }),
+      explainMissingCodeCandidates({ codeVersions: [code({})], taskType: 'evaluation', families: ['qwen3'] }),
     ).toEqual({ kind: 'no_task_type', taskType: 'evaluation' });
   });
 
@@ -47,7 +47,7 @@ describe('コードバージョンが候補に出ない理由', () => {
           code({ supportedModelFamilies: ['QWEN3'], taskTypes: ['training'] }),
         ],
         taskType: 'inference',
-        family: 'qwen3',
+        families: ['qwen3'],
       }),
     ).toEqual({ kind: 'no_family', family: 'qwen3', caseVariants: ['Qwen3'] });
   });
@@ -56,16 +56,42 @@ describe('コードバージョンが候補に出ない理由', () => {
     expect(
       explainMissingCodeCandidates({
         codeVersions: [code({ taskTypes: ['training'] })],
-        family: 'qwen3',
+        families: ['qwen3'],
       }),
     ).toBeNull();
     expect(
-      explainMissingCodeCandidates({ codeVersions: [code({})], family: 'linear' }),
+      explainMissingCodeCandidates({ codeVersions: [code({})], families: ['linear'] }),
     ).toEqual({ kind: 'no_family', family: 'linear', caseVariants: [] });
   });
 
   it('モデルを選んでいなければ系列では絞らない', () => {
     expect(explainMissingCodeCandidates({ codeVersions: [code({})], taskType: 'inference' })).toBeNull();
+  });
+
+  it('自動実行ルールの複数の系列: 扱えない系列があればそれを、どれも扱えるが1つのコードでは揃わなければそう言う', () => {
+    const qwen = code({ supportedModelFamilies: ['qwen3'] });
+    const linear = code({ supportedModelFamilies: ['linear'] });
+    expect(
+      explainMissingCodeCandidates({
+        codeVersions: [qwen, linear],
+        taskType: 'inference',
+        families: ['qwen3', 'Linear'],
+      }),
+    ).toEqual({ kind: 'no_family', family: 'Linear', caseVariants: ['linear'] });
+    expect(
+      explainMissingCodeCandidates({
+        codeVersions: [qwen, linear],
+        taskType: 'inference',
+        families: ['qwen3', 'linear'],
+      }),
+    ).toEqual({ kind: 'no_common_family', families: ['qwen3', 'linear'] });
+    expect(
+      explainMissingCodeCandidates({
+        codeVersions: [code({ supportedModelFamilies: ['qwen3', 'linear'] })],
+        taskType: 'inference',
+        families: ['qwen3', 'linear'],
+      }),
+    ).toBeNull();
   });
 
   it('理由を出すのは、候補に出るコードバージョン（meetsCodeRequirement を満たすもの）が無いときだけ', () => {
@@ -81,7 +107,11 @@ describe('コードバージョンが候補に出ない理由', () => {
       const isOffered = codeVersions.some((version) =>
         meetsCodeRequirement(version, { taskType, families: family ? [family] : [] }),
       );
-      const reason = explainMissingCodeCandidates({ codeVersions, taskType, family });
+      const reason = explainMissingCodeCandidates({
+        codeVersions,
+        taskType,
+        families: family ? [family] : [],
+      });
       expect(reason === null, JSON.stringify({ count: codeVersions.length, taskType, family })).toBe(
         isOffered,
       );

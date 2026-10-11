@@ -13,6 +13,7 @@ export const adminProjectSchema = namedContractSchema(
     artifactBackend: z.string(),
     visibility: projectVisibilitySchema,
     memberCount: z.number().int(),
+    adminNames: z.array(z.string()),
     runCount: z.number().int(),
     createdAt: timestampSchema,
     archivedAt: timestampSchema.nullable(),

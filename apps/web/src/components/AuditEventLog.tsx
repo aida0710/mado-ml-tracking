@@ -1,8 +1,12 @@
 import type { AuditEventsState } from '../hooks/useAuditEvents';
 import { AuditEventsTable } from './AuditEventsTable';
+import { AuditEventFilters } from './AuditEventFilters';
 import { ErrorNotice, Loading } from './Feedback';
 
-/** A paged audit log with its loading and error states, for the settings and /admin screens. */
+/**
+ * A paged audit log with its filters and its loading and error states, for the Project settings
+ * and 全体管理 (`showProject`, the global log).
+ */
 export function AuditEventLog({
   audit,
   showProject = false,
@@ -12,6 +16,11 @@ export function AuditEventLog({
 }) {
   return (
     <>
+      <AuditEventFilters
+        filter={audit.filter}
+        onChange={audit.setFilter}
+        offersSignIns={showProject}
+      />
       <ErrorNotice message={audit.error} retry={audit.reload} />
       {audit.loading && !audit.items.length ? (
         <Loading />

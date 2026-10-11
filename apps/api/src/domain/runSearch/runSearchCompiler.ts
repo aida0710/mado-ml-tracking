@@ -23,6 +23,19 @@ export interface CompiledSearch {
   parameters: unknown[];
 }
 
+// The field as it is written in a filter, for messages that show a corrected filter.
+function fieldLabel(field: SearchField): string {
+  return `${field.group}.${field.key}`;
+}
+
+// Says how the field is compared, since `params.lr > 0.1` reads naturally but params are strings.
+function unsupportedOperatorMessage(field: SearchField, operator: string): string {
+  const label = fieldLabel(field);
+  return field.kind === 'number'
+    ? `未対応の比較演算子です: ${operator}。${label}は数値として比べるので、= != > >= < <= を使います（例: ${label} < 0.1）`
+    : `未対応の比較演算子です: ${operator}。${label}は文字列として比べるので、= != LIKE ILIKE を使います（例: ${label} = '0.01'）`;
+}
+
 // MLflow sorts numeric metrics before NaN and missing metrics in both directions.
 const METRIC_SORT_PRIORITY = { number: 0, nan: 1, missing: 2 } as const;
 
@@ -212,10 +225,15 @@ class SearchCompiler {
     const token = this.take();
     if (field.kind === 'number') {
       if (token.kind !== 'number' || !Number.isFinite(Number(token.value)))
-        invalidParameter('数値の検索値が必要です');
+        invalidParameter(
+          `${fieldLabel(field)}の値は数値で書きます（例: ${fieldLabel(field)} < 0.1）`,
+        );
       return Number(token.value);
     }
-    if (token.kind !== 'quoted') invalidParameter('文字列の検索値は引用符で囲んでください');
+    if (token.kind !== 'quoted')
+      invalidParameter(
+        `${fieldLabel(field)}の値は文字列なので、引用符で囲みます（例: ${fieldLabel(field)} = '${token.value}'）`,
+      );
     return token.value;
   }
   private comparison(): string {
@@ -250,7 +268,7 @@ class SearchCompiler {
     } else {
       const allowed =
         field.kind === 'number' ? ['=', '!=', '>', '>=', '<', '<='] : ['=', '!=', 'LIKE', 'ILIKE'];
-      if (!allowed.includes(operator)) invalidParameter(`未対応の比較演算子です: ${operator}`);
+      if (!allowed.includes(operator)) invalidParameter(unsupportedOperatorMessage(field, operator));
       const value = this.literal(field);
       const isStatusEquality =
         this.entity === 'run' &&

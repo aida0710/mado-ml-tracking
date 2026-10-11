@@ -5,7 +5,7 @@ import { DetailsList } from './JsonDetails';
 import { JobStatusBadges } from './JobStatusBadges';
 import { SiteJobShellVersion } from './SiteJobShellVersion';
 import { formatClockDuration } from '../lib/clockDuration';
-import { formatDate } from '../lib/format';
+import { formatDate, formatDateTimeSeconds } from '../lib/format';
 import {
   formatAutoRetries,
   jobArrayMemberLabel,
@@ -107,7 +107,7 @@ export function JobDetailsList({
         // A phase marks a site Job even before the targets are read.
         ...(isSiteTarget(target) || Boolean(job.phase) ? siteEntries(job) : []),
         ...originEntries({ job, hooks, projectId, onSelectJob, onSelectArray }),
-        [text.heartbeat, formatDate(job.heartbeatAt)],
+        [text.heartbeat, formatDateTimeSeconds(job.heartbeatAt)],
         [text.exitCode, job.exitCode],
         [text.jobError, job.error],
       ]}

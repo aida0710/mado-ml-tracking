@@ -3,7 +3,8 @@ import type { RunCheckpointSource } from '@mmt/contracts';
 // Run checkpoints and resuming training from one: the Run tab, the resume dialog and the Jobs page.
 export const checkpointsText = {
   checkpoints: 'Checkpoint',
-  checkpointEmpty: 'このRunのcheckpointはまだありません',
+  checkpointEmpty:
+    'このRunのcheckpointはまだありません。SDKの run.log_checkpoint(ディレクトリ, step=…) で保存すると、ここから続きの学習を始められます。',
   checkpointShowHidden: '保持数を超えた古いcheckpointも表示する',
   checkpointHidden: '保持数外',
   checkpointHiddenHint: '新しいcheckpointが保持数を超えたため一覧から外れています。再開には使えます。',

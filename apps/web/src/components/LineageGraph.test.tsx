@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router-dom';
 import type { LineageGraph } from '@mmt/contracts';
 import { LineageGraphLayout } from './LineageGraph';
 import { LineageRelationsTable } from './LineageRelationsTable';
@@ -34,17 +35,28 @@ describe('LineageGraphLayout', () => {
 });
 
 describe('LineageRelationsTable', () => {
+  const renderTable = (initiallyOpen: boolean) =>
+    renderToStaticMarkup(
+      <MemoryRouter>
+        <LineageRelationsTable graph={graph} projectId="project-1" initiallyOpen={initiallyOpen} />
+      </MemoryRouter>,
+    );
+
   it('opens the table when asked, as narrow windows do', () => {
-    const markup = renderToStaticMarkup(<LineageRelationsTable graph={graph} initiallyOpen />);
+    const markup = renderTable(true);
     expect(markup).toMatch(/<details[^>]* open=""/);
     expect(markup).toContain('評価用 v1');
     expect(markup).toContain('推論');
   });
 
   it('stays folded on wide windows', () => {
-    const markup = renderToStaticMarkup(
-      <LineageRelationsTable graph={graph} initiallyOpen={false} />,
-    );
-    expect(markup).not.toMatch(/<details[^>]* open=""/);
+    expect(renderTable(false)).not.toMatch(/<details[^>]* open=""/);
+  });
+
+  it('関係の両端は種類を添えて、それぞれのページへのリンクになる', () => {
+    const markup = renderTable(true);
+    expect(markup).toContain('データセットバージョン');
+    expect(markup).toContain('href="/projects/project-1/datasets?version=dataset"');
+    expect(markup).toContain('href="/projects/project-1/runs/run"');
   });
 });

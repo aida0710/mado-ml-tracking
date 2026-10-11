@@ -70,6 +70,13 @@ export const modelsText = {
   parentsHint: '同じ系列のバージョンだけを選べます。',
   parentsEmpty: '同じ系列のバージョンはまだありません。',
   defaultCodeHint: 'このバージョンの系列に対応するコードバージョンだけを選べます。',
+  // Which model runs on which code, shown on both the Models and the Code page.
+  familyCodeVersions: 'この系列に対応するコードバージョン',
+  codeUsage: 'このコードバージョンの使われ方',
+  codeUsageModels: '動かせるモデル',
+  codeUsageNoModels: '［対応モデル系列］に合うモデルはまだありません',
+  codeUsageTasks: '使っているTask',
+  codeUsageRules: '使っている自動実行ルール',
 } as const;
 
 // The sign of candidate − baseline; better or worse depends on the metric and is not shown.
@@ -108,6 +115,11 @@ export const modelsTextTemplates = {
     `実行種別「${kind}」に対応するコードバージョンがありません。Codeで［対応する実行種別］に「${kind}」を含むバージョンを作ってください。`,
   codeCandidatesNoFamily: (family: string) =>
     `モデル系列「${family}」に対応するコードバージョンがありません。Codeで［対応モデル系列］に「${family}」を含むバージョンを作ってください。`,
+  versionsShown: (shown: number, total: number) => `新しい順に${shown}件を表示しています（全${total}件）。`,
+  familyCodeVersionsNone: (family: string) =>
+    `まだありません。Codeで［対応モデル系列］に「${family}」を含むコードバージョンを作ると、このモデルのTaskや自動実行に使えます。`,
+  codeCandidatesNoCommonFamily: (families: readonly string[]) =>
+    `選んだ系列「${families.join('」「')}」をすべて扱えるコードバージョンがありません。1つのコードバージョンの［対応モデル系列］にすべてを含めるか、系列ごとにルールを分けてください。`,
   codeCandidatesCaseVariant: (family: string, variants: readonly string[]) =>
     `コードバージョンには「${variants.join('」「')}」と書かれています。大文字・小文字が違うため「${family}」とは対応しません。`,
 };

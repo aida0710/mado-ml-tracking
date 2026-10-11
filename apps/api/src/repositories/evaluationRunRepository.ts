@@ -1,7 +1,6 @@
-import type { Run } from '@mmt/contracts';
+import { MAX_JOB_ATTEMPTS, type Run } from '@mmt/contracts';
 import { first, rows, type Connection } from '../db/database.js';
 import type { EvaluatedMetrics } from '../domain/evaluationComparison.js';
-import { MAX_RETRY_CHAIN_LENGTH } from './automationExecutionLookup.js';
 
 export type EvaluationRunRecord = Pick<
   Run,
@@ -21,7 +20,7 @@ const referenceSetExpression = `ARRAY(
  * SQL that holds when the Run aliased `r` was produced by the rule whose id is the parameter
  * `parameters.ruleId` (for example '$6'): the rule's execution points at the Run or at the Run of
  * the original Job it retried (the same rule as findExecutionForRun in automationExecutionLookup.ts).
- * `parameters.maxChainLength` bounds the retry chain (pass MAX_RETRY_CHAIN_LENGTH).
+ * `parameters.maxChainLength` bounds the retry chain (pass MAX_JOB_ATTEMPTS).
  */
 export function runProducedByRuleCondition(parameters: {
   ruleId: string;
@@ -81,7 +80,7 @@ export async function findLatestEvaluationRun(
       filter.codeVersionId ?? null,
       filter.producedByRuleId ?? null,
       filter.runId ?? null,
-      MAX_RETRY_CHAIN_LENGTH,
+      MAX_JOB_ATTEMPTS,
     ],
   );
 }
