@@ -516,6 +516,20 @@ docker compose up -d api web
 
 Webはlocalhost:5182で待ち受けます。外側のTLS reverse proxyからこのportへ接続します。API/DBは外部portを公開しません。Artifact volumeはAPIの実行ユーザーに書き込み権限を持たせます。workerとpluginは別に起動します。
 
+Webの画面（全体設定 → 全体管理 → ストレージ）からファイルシステムの保存先を足すときは、そのディレクトリがAPIとpreviewのコンテナから見えている必要があります。`compose.filesystem-storage.yml`を使うと、`.env`の`MMT_FILESYSTEM_STORAGE_DIR`のホストのディレクトリを、コンテナの中にも同じパスで見せます。保存先の［ルートディレクトリ］には、その下のパスを指定します。
+
+```bash
+sudo mkdir -p /srv/mmt/storage
+sudo chown 1000:1000 /srv/mmt/storage   # コンテナのnode（uid 1000）が書けるようにする
+```
+
+```dotenv
+COMPOSE_FILE=compose.yml:compose.filesystem-storage.yml
+MMT_FILESYSTEM_STORAGE_DIR=/srv/mmt/storage
+```
+
+`compose.override.yml`も使っている場合は、`COMPOSE_FILE=compose.yml:compose.override.yml:compose.filesystem-storage.yml`のように並べます（`COMPOSE_FILE`を指定すると`compose.override.yml`は自動では読まれません）。ディレクトリを先に作らないと、Dockerがrootの持ち物として作り、コンテナから書けません。
+
 ## 外部接続を確認するとき
 
 1. Authentikで管理者と一般メンバーがloginし、管理者group・Project権限が正しく反映されることを確認します。
