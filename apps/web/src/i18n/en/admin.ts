@@ -80,6 +80,6 @@ export const adminTextTemplates = {
     `Remove your own global administrator permissions (${name})? You will immediately lose access to Administration. To get them back, you must ask another global administrator.`,
   userServiceAccountProject: (projectName: string) => `Service account (${projectName})`,
   userResetPasswordConfirm: (name: string) =>
-    `Replace “${name}”'s password with a temporary password and end their active sessions?`,
+    `Replace the password of “${name}” with a temporary password and end their active sessions?`,
   groupsSyncedAt: (date: string) => `Last synchronized: ${date}`,
 };

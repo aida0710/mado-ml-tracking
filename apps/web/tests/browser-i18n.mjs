@@ -37,7 +37,7 @@ try {
   assert.equal(await page.getByLabel('表示名', { exact: true }).inputValue(), 'Draft name');
   await switchLanguage(page, 'English');
   await screenshot('tracking-login-en');
-  await page.getByRole('button', { name: 'Sign in in development mode' }).click();
+  await page.getByRole('button', { name: 'Sign in (development mode)' }).click();
   await page.getByRole('heading', { name: 'Runs', exact: true }).waitFor();
   await page.getByRole('link', { name: 'training-test-01', exact: true }).waitFor();
   assert.equal(await page.locator('html').getAttribute('lang'), 'en');

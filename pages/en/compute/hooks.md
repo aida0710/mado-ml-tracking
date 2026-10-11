@@ -82,7 +82,7 @@ Every trigger except manual and external webhook can be filtered. Empty fields d
 | **コードバージョン** (Code version) | Only code versions that support the run kind and model families |
 | **入力データセットバージョン** (Input dataset versions) | Dataset versions passed every time. Optional |
 | **きっかけのRunの出力データセットバージョンも入力にする** (Also use the triggering Run's output dataset versions) | For Run ended and array ended |
-| Compute target | Only computers that can use the code version's runtime |
+| **コンピュータ** (Computer) | Only computers that can use the code version's runtime |
 | **GPU（選ばなければCPUのみ）** (GPUs, CPU only if none) | Appears once an SSH or Local computer is chosen. Check GPUs registered on the computer; without a GPU the Job runs on CPU only. A computer without GPUs shows `このコンピュータにはGPUがないため、CPUのみで実行します。` (This computer has no GPUs, so the Job runs on CPU only) |
 | GPU count, time limit, array size, input dataset version to split across the array | For sites. With an array size, each start creates an array |
 | **パラメータ（JSON）**, **タグ（JSON）** (Parameters, tags) | Tags starting with `automation.` or `mmt.` are reserved for the server |

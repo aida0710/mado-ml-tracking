@@ -8,7 +8,7 @@
 
 日本語の辞書は`i18n/*.ts`、英語の辞書は同名の`i18n/en/*.ts`です。`localized`で各辞書を結び、`catalog.ts`は`mergeTranslations`でまとめます。辞書を通常のオブジェクト展開でまとめると、読み込み時の言語で固定されるため使いません。別の辞書を参照するラベルもgetterで読みます。
 
-文言や日付を描画するコンポーネントは`useLocale()`で変更を購読します。翻訳を含む`useMemo`は`useLocalizedMemo`にします。値だけの計算やAPI取得は言語に依存させません。日付・数値には`getIntlLocale()`を使い、利用者が入力した名前・説明・ログの内容は翻訳しません。
+文言や日付を描画するコンポーネントは`useLocale()`で変更を購読します。翻訳を含む`useMemo`は`useLocalizedMemo`にします。値だけの計算やAPI取得は言語に依存させません。日付・数値には`getIntlLocale()`の書き方を使います（大きな数は日本語で「120万」、英語で“1.2M”）。`Intl`の部品は作るのが重く、ログの1行ごとに呼ばれるものもあるので、`i18n/intlFormatterCache.ts`の`memoizePerIntlLocale`で言語ごとに1つ作って使い回します。名前の列挙・ラベルの並び・文のつなぎ・括弧の注記は`i18n/textJoining.ts`、英語の辞書で名前を引用して並べるときは`i18n/formatEnglishQuotedList.ts`を使います。利用者が入力した名前・説明・ログの内容は翻訳しません。
 
 通知は、件数・バージョン・結果などを保持して描画時に翻訳します。エラーは元の`RequestError`や`LocalizedError`を保持し、`formatErrorMessage`を描画時に呼びます。翻訳した文字列を状態に保存すると、後から言語を変えても元の表示が残ります。英語の件数には`formatEnglishCount`を使い、1件のときの名詞・動詞・代名詞も合わせます。
 
@@ -46,14 +46,17 @@
 ## エラー文言の層
 
 - `api/*.ts`（APIクライアント）は`i18n`を読み込みません。失敗は`RequestError`（status、code、サーバーのerror文字列`serverMessage`）で返します。`api/i18nIndependence.test.ts`がAPIクライアントのi18n importを検出します。
-- 画面に出す文言への変換は`lib/errorMessage.ts`の`formatErrorMessage`が行い、`useMutation`と`useQuery`が描画時にこれを使います。Webが文言を持つcodeを現在の言語で表示し、未知のcodeのサーバー文字列はそのまま表示します。
-  - `network_error`: APIへ接続できなかった
-  - `invalid_response`: 応答の形が契約と違う（`invalidResponseError()`で投げる）
-  - `artifact_too_large`: uploadの413。前段proxyがHTMLで拒否した場合も同じ文言にする
-  - `artifact_content_unavailable`: Artifactの中身を取得できなかった（raw bytesの取得でAPIのエラー本文が無い）
-  - `internal_error`・`database_unavailable`・`plugin_request_failed`・`plugin_disabled`: リクエスト、データベース、Pluginの共通の失敗
-  - `upload_not_open`・`upload_expired`・`artifact_save_failed`・`part_checksum_mismatch`・`run_deleted`・`body_too_large`: アップロード、Run、サイズ制限の失敗。`run_deleted`はArtifact登録以外にも使うため、特定の操作だけを指す文言にしません。
-  - `sweep_space_invalid`: `lib/sweepSpaceError.ts`がAPIの既知の全文だけを照合して翻訳します。parameter名・値は原文のまま埋め込み、未知の制約はサーバーの説明を保ちます。API側の探索空間エラーを変えるときは照合と日英辞書も確認します。
+- 画面に出す文言への変換は`lib/errorMessage.ts`の`formatErrorMessage`が行い、`useMutation`と`useQuery`が描画時にこれを使います。APIのエラー文（`serverMessage`）は日本語で、操作を具体的に書きます（例:「削除済みのRunは編集できません」）。codeは次の3つに分けて扱います。
+  - Webが文言を持つcode: どちらの言語でもWebの文言を現在の言語で出します。
+    - `network_error`: APIへ接続できなかった
+    - `invalid_response`: 応答の形が契約と違う（`invalidResponseError()`で投げる）
+    - `artifact_too_large`: uploadの413。前段proxyがHTMLで拒否した場合も同じ文言にする
+    - `artifact_content_unavailable`: Artifactの中身を取得できなかった（raw bytesの取得でAPIのエラー本文が無い）
+    - `sweep_space_invalid`: `lib/sweepSpaceError.ts`がAPIの既知の全文だけを照合して翻訳します。parameter名・値は原文のまま埋め込み、未知の制約はサーバーの説明を保ちます。API側の探索空間エラーを変えるときは照合と日英辞書も確認します。
+  - 英語の画面でだけ置き換えるAPIのcode: 日本語の画面ではサーバーの文をそのまま出し、英語の画面では`i18n/errors.ts`の英語の文を出します。サーバーの文が無いときは、日本語の画面でも`i18n/errors.ts`の日本語の文を出します。
+    - `internal_error`・`database_unavailable`・`plugin_request_failed`・`plugin_disabled`: リクエスト、データベース、Pluginの共通の失敗
+    - `upload_not_open`・`upload_expired`・`artifact_save_failed`・`part_checksum_mismatch`・`run_deleted`・`body_too_large`: アップロード、Run、サイズ制限の失敗。英語の文はcodeから決まる一般的な言い方なので、`run_deleted`（Artifactの登録・Runの説明の編集などで使う）のように複数の操作で使うcodeでは、特定の操作だけを指す文言にしません。
+  - そのほかのcode: どちらの言語でもサーバーの文をそのまま出します。
 
 ## 権限判定
 

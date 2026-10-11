@@ -8,7 +8,7 @@ import type {
 } from '@mmt/contracts';
 import type { CriterionThresholdMeaning } from "../../lib/promotionPolicyInput";
 import type { KnownAliasSource } from "../../lib/aliasChoices";
-import { formatEnglishQuotedList } from '../textJoining';
+import { formatEnglishQuotedList } from '../formatEnglishQuotedList';
 
 // Promotion policies (pass/fail criteria for a candidate version) and their evaluation history.
 // Labels shared with the evaluation comparison (baselineAlias, evaluationRule, referenceDatasets,
@@ -77,9 +77,9 @@ export const promotionText = {
   promotionTransferOwner: "Transfer ownership",
   promotionTransferOwnerTarget: "Destination service account",
   promotionTransferOwnerHint:
-    "The creator's record is kept. Select an enabled service account with the admin role in this project.",
+    "The creator's record is kept. Select an enabled service account with the Admin role in this project.",
   promotionTransferOwnerNoCandidates:
-    "No service accounts are available for transfer. Create one with the admin role in project settings first.",
+    "No service accounts are available for transfer. Create one with the Admin role in project settings first.",
   promotionTransferOwnerRequired: "Select a destination service account.",
   // Promotion dialog (assigning an alias with its reason and evidence).
   promote: "Promote",
@@ -119,7 +119,7 @@ export const promotionText = {
   aliasProtectionAdd: "Add protected alias",
   aliasProtectionEdit: "Edit protected alias",
   aliasProtectionRemove: "Remove protection",
-  aliasProtectionScope: "Resource",
+  aliasProtectionScope: "Applies to",
   aliasProtectionScopeProject: "Project-wide",
   aliasProtectionRequiredRole: "Required role",
   aliasProtectionRequirePassedEvaluation: "Require a passing decision",
@@ -202,9 +202,9 @@ export const promotionTextTemplates = {
     `Only ${aliasProtectionAllowedChangers[role]} can remove it`,
   evidenceOption: (policyName: string, createdAt: string) => `${policyName} (${createdAt})`,
   transferOwnerConfirm: (policyName: string) =>
-    `Switch “${policyName}”'s decisions and automatic promotions to use the selected service account's permissions?`,
+    `Switch the decisions and automatic promotions of “${policyName}” to use the selected service account's permissions?`,
   removeAliasProtectionConfirm: (alias: string, scope: string) =>
-    `Remove protection from ${scope}'s alias “${alias}”? Editors and above can then change it without a reason.`,
+    `Remove protection from the alias “${alias}” (${scope})? Editors and above can then change it without a reason.`,
   criteriaTooMany: (max: number) => `At most ${max} pass criteria are allowed.`,
   criterionSubject: (metric: string, mode: PromotionCriterionMode) =>
     mode === 'absolute' ? metric : `${promotionModeLabels[mode]} of ${metric}`,

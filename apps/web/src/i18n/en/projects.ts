@@ -67,7 +67,7 @@ export const projectsText = {
 // Text that embeds values.
 export const projectsTextTemplates = {
   projectArchiveConfirm: (name: string) =>
-    `Archive “${name}”? Run, model, and artifact data is retained and can be restored from Administration → Projects.`,
+    `Archive “${name}”? Run, model, and artifact data is retained, and the project can be restored from Administration → Projects.`,
   projectArchiveStops: (usableTokenCount: number | undefined) => {
     const tokens =
       usableTokenCount === undefined ? 'API tokens' : formatEnglishCount(usableTokenCount, 'API token');

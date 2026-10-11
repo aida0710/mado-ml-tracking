@@ -5,13 +5,13 @@ import type { TargetDirectoryListingOutcome } from '@mmt/contracts';
 // and 2「接続後の設定」(what its Jobs use), filled in from a worker's connection check.
 export const computerSetupText = {
   setupStepConnection: "Connection",
-  setupStepSettings: "Post-connection settings",
+  setupStepSettings: "Settings after connecting",
   computerKindLegend: "Type",
   computerKindSshHint: "A worker connects over SSH to run jobs (GPU servers, login nodes, etc.).",
   computerKindLocalHint: "Runs jobs on the worker's own host (development only).",
   computerKindSiteHint:
-    "A launcher or mado-tracking submit submits to a job scheduler (supercomputers, etc.).",
-  computerKindFixed: "The kind cannot be changed for an existing computer.",
+    "Jobs are submitted to a job scheduler by a launcher or mado-tracking submit (supercomputers, etc.).",
+  computerKindFixed: "The type cannot be changed for an existing computer.",
   checkWorker: "Worker for this connection",
   checkWorkerHint:
     "This worker checks the connection using its own SSH key. Select SSH key and known_hosts paths from files on this worker's host.",
@@ -52,7 +52,7 @@ export const computerSetupText = {
     "Enter these manually if jobs run on a different computer from the one checked, such as when submitting from a login node.",
   maxConcurrentJobsHint: "Defaults to the number of selected GPUs (1 if there are none).",
   enabledHint: "Enabling this computer allows jobs to start on it.",
-  hostFacts: "Computer",
+  hostFacts: "Machine",
 } as const;
 
 export const computerSetupTextTemplates = {

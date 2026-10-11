@@ -1,4 +1,4 @@
-// Application-owned error codes; unknown service details are displayed unchanged.
+// English for API errors, shown instead of the server's Japanese message (lib/errorMessage.ts).
 export const errorText = {
   internalError: "Could not process the request",
   databaseUnavailable: "Could not connect to the database",
@@ -8,7 +8,7 @@ export const errorText = {
   uploadExpired: "The upload has expired",
   artifactSaveFailed: "Could not save the artifact",
   partChecksumMismatch: "The uploaded part does not match its SHA-256 checksum",
-  runArchived: "This operation is unavailable for archived runs",
+  runDeleted: "This operation is not available for a deleted run.",
   bodyTooLarge: "The request exceeds the size limit",
   sweepParameterNameEmpty: "Parameter names must not be empty",
   sweepParametersEmpty: "At least one parameter is required",

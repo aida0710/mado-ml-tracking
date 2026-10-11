@@ -18,7 +18,7 @@ export const operationsText = {
   pluginOutboxLastError: "Last error",
   pluginOutboxLastDelivered: "Last delivery",
   pluginOutboxStalled:
-    "Delivery is backlogged (undelivered for over 15 minutes or failed at least five times). Check the plugin, then press “Resend event” after recovery.",
+    "Delivery is backlogged (undelivered for 15 minutes or more, or failed at least five times). Check the plugin, then press “Resend event” after recovery.",
 } as const;
 
 export const operationsAlertKindLabels: Record<OperationsAlertKind, string> = {

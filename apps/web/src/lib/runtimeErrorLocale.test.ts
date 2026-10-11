@@ -31,10 +31,18 @@ describe('retained failures follow the display language', () => {
     expect(formatErrorMessage(failure)).not.toBe(japanese);
   });
 
-  it('application-owned server codes use the current language', () => {
-    const failure = new RequestError({ status: 503, code: 'internal_error', serverMessage: 'リクエストの処理に失敗しました' });
+  it('known API codes keep the server message in Japanese and switch to the catalog in English', () => {
+    const failure = new RequestError({ status: 503, code: 'artifact_save_failed', serverMessage: 'partの保存に失敗しました' });
     setLocale('ja');
-    expect(formatErrorMessage(failure)).toBe(errorText.internalError);
+    expect(formatErrorMessage(failure)).toBe('partの保存に失敗しました');
+    setLocale('en');
+    expect(formatErrorMessage(failure)).toBe(errorText.artifactSaveFailed);
+  });
+
+  it('a known API code without a server message uses the catalog in either language', () => {
+    const failure = new RequestError({ status: 503, code: 'internal_error' });
+    setLocale('ja');
+    expect(formatErrorMessage(failure)).toBe('リクエストの処理に失敗しました');
     setLocale('en');
     expect(formatErrorMessage(failure)).toBe('Could not process the request');
   });

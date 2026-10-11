@@ -18,6 +18,7 @@ import { CreateSweepDialog } from '../components/sweeps/CreateSweepDialog';
 import { SweepStatusBadge } from '../components/sweeps/SweepSummary';
 import { sweepMethodLabels, sweepStatusLabels } from '../i18n/sweeps';
 import { text, textTemplates } from '../i18n/catalog';
+import { formatNote } from '../i18n/textJoining';
 
 const STATUS_FILTERS = Object.keys(sweepStatusLabels) as SweepStatus[];
 
@@ -89,7 +90,7 @@ export function SweepsPage() {
               priority: 'secondary',
               render: (sweep) => {
                 const best = sweep.bestTrial?.objectiveValue ?? null;
-                return best === null ? '—' : `${formatNumber(best)}（${sweep.objective.metric}）`;
+                return best === null ? '—' : `${formatNumber(best)}${formatNote(sweep.objective.metric)}`;
               },
             },
             { key: 'createdBy', header: text.sweepCreatedBy, priority: 'secondary', render: creatorName },

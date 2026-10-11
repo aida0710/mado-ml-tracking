@@ -1,11 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { setLocale } from '../i18n/locale';
 import { formatElapsedSeconds, formatWallTime, formatXTick, formatXValue } from './chartXAxis';
+
+afterEach(() => setLocale('ja'));
 
 describe('x軸の目盛り', () => {
   it('stepは整数で表示し、桁が多いときは短縮する', () => {
     expect(formatXTick({ kind: 'step' }, 1234.4)).toBe('1234');
-    expect(formatXTick({ kind: 'step' }, 1_250_000)).toBe('1.25M');
+    expect(formatXTick({ kind: 'step' }, 1_250_000)).toBe('125万');
     expect(formatXValue({ kind: 'step' }, 1_250_000)).toBe('1250000');
+  });
+
+  it('短縮した大きなstepは、表と同じく表示言語の書き方にする', () => {
+    setLocale('en');
+    expect(formatXTick({ kind: 'step' }, 1_250_000)).toBe('1.25M');
   });
 
   it('経過時間は大きい方から2つの単位で表示する', () => {

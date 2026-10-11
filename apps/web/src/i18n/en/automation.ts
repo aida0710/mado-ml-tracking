@@ -1,7 +1,7 @@
 import type { ModelAutomationExecution, ModelAutomationRule } from '@mmt/contracts';
 import type { AutomationSkipReason } from "../../lib/automationSkipReason";
 import { formatEnglishCount } from '../formatEnglishCount';
-import { formatEnglishQuotedList } from '../textJoining';
+import { formatEnglishQuotedList } from '../formatEnglishQuotedList';
 import { text } from './catalog';
 
 export const automationOutcomeLabels: Record<ModelAutomationExecution['status'], string> = {
@@ -12,10 +12,10 @@ export const automationOutcomeLabels: Record<ModelAutomationExecution['status'],
 };
 
 export const automationSkipReasonLabels: Record<AutomationSkipReason, string> = {
-  source_run_unsuccessful: "Not started (training run failed or stopped)",
-  source_run_timeout: "Not started (training completion deadline exceeded)",
-  upstream_unsuccessful: "Not started (upstream run failed or stopped)",
-  upstream_outputs_missing: "Not started (upstream run has no output dataset)",
+  source_run_unsuccessful: "Not launched (training run failed or stopped)",
+  source_run_timeout: "Not launched (training completion deadline exceeded)",
+  upstream_unsuccessful: "Not launched (upstream run failed or stopped)",
+  upstream_outputs_missing: "Not launched (upstream run has no output dataset)",
 };
 
 export const automationTriggerLabels: Record<ModelAutomationRule['trigger'], string> = {
@@ -52,13 +52,13 @@ export const automationText = {
   automaticRun: "Automatic",
   maxAttempts: "Maximum attempts (2 or more enables automatic retries on failure)",
   retryOf: (attempt: number) => `Automatic retry after failed attempt ${attempt}`,
-  rerun: "Run again",
+  rerun: "Rerun",
   rerunConfirmMessage: (ruleName: string) =>
     `Apply “${ruleName}” again to the same version and create a new job?`,
   rerunDone: "Rerun created.",
   owner: "Owner",
   ownerHuman: (name: string) => `${name} (user)`,
-  ownerServiceAccount: (name: string) => `${name} (Service Account)`,
+  ownerServiceAccount: (name: string) => `${name} (service account)`,
   ownerHint: "Automation runs with this owner's permissions, and the owner becomes the run's creator.",
   transferConfirmMessage: (ruleName: string, accountName: string) =>
     `Transfer ownership of “${ruleName}” to ${accountName}? Future automation will run with this service account's permissions.`,
@@ -91,5 +91,5 @@ export const automationText = {
   historyLoadMore: "Show more",
   historyShownCount: (count: number) => `Showing ${formatEnglishCount(count, 'execution')}, newest first.`,
   transferNoAccounts:
-    "No other service accounts are available for transfer. Create an enabled service account with the admin role in project settings.",
+    "No other service accounts are available for transfer. Create an enabled service account with the Admin role in project settings.",
 };

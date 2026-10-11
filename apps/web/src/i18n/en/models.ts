@@ -1,6 +1,6 @@
 import type { ModelAliasEventSource } from '@mmt/contracts';
 import { formatEnglishCount } from '../formatEnglishCount';
-import { formatEnglishQuotedList } from '../textJoining';
+import { formatEnglishQuotedList } from '../formatEnglishQuotedList';
 
 // Model registry labels: alias assignment, removal and alias history.
 export const modelsText = {
@@ -13,7 +13,7 @@ export const modelsText = {
   aliasHistoryLoadMore: "Load more",
   aliasChangedAt: "Date and time",
   aliasVersionChange: "Previous version → New version",
-  aliasActor: "Actor",
+  aliasActor: "Changed by",
   aliasSource: "Source",
   aliasActorSystem: "System",
   aliasActorToken: "API token",

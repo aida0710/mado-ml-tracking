@@ -4,7 +4,7 @@ import type { ComputeTargetVisibility } from '@mmt/contracts';
 // the read-only list of the computers one may use on the Project's Compute page.
 export const computersText = {
   computersHint:
-    "Lists every computer. Computers you cannot use (another user's private computers) show only their name, kind, owner, visibility, and status.",
+    "Lists every computer. Computers you cannot use (another user's private computers) show only their name, type, owner, visibility, and status.",
   noComputers: "No computers yet",
   computerKind: "Type",
   computerOwner: "Owner",
@@ -36,7 +36,7 @@ export const computersText = {
   workerSetupHint:
     "Jobs on this computer are run by a worker whose --target-ids (MMT_WORKER_TARGET_IDS) include this ID. Run the following commands on the worker machine. For a worker that also handles other computers, list the IDs separated by commas.",
   workerSetupToken:
-    "To get the worker's token, create a service account with the admin role under “Service accounts” in project settings, and issue a token with read, worker:execute, and artifacts:write. The install command prompts for it.",
+    "To get the worker's token, create a service account with the Admin role under “Service accounts” in project settings, and issue a token with read, worker:execute, and artifacts:write. The install command prompts for it.",
   workerSetupInstall: "Install the worker (Python 3.11 or later)",
   workerSetupService: "Run as a systemd service (the worker ID is this machine's hostname)",
   workerSetupEnvironment: "Run without systemd (environment variables)",
