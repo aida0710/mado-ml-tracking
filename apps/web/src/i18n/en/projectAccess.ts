@@ -5,7 +5,7 @@ export const projectAccessText = {
   remove: "Remove",
   memberUser: "User",
   effectiveRole: "Effective role",
-  directRole: "Direct role",
+  directRole: "Direct membership role",
   memberSources: "Permission source",
   memberSourceDirect: "Direct membership",
   memberGrantedByGroup: "Granted by Authentik group",
@@ -26,9 +26,9 @@ export const projectAccessText = {
   userSearchRequired: "Select a user to add",
   changeSelectedUser: "Choose again",
   lastProjectAdminConflict:
-    "This would leave the project without an administrator. First grant admin to another member, or to a group that someone has signed in with.",
+    "This would leave the project without an administrator. First grant the Admin role to another member, or to a group that someone has signed in with.",
   lastProjectAdminLocked:
-    "This is the last admin, so it cannot be changed or removed. First grant Admin to another member, or to a group that someone has signed in with.",
+    "This is the last admin, so it cannot be changed or removed. First grant the Admin role to another member, or to a group that someone has signed in with.",
   groupWithoutMembers: "No one has signed in yet",
   groupWithoutMembersHint:
     "No one has signed in with this group yet. Check that the group name is correct. Until someone signs in, this group does not count as a remaining admin, even with the Admin role.",
@@ -50,8 +50,8 @@ export const projectAccessTextTemplates = {
   memberPublicRole: (role: string) => `${role} (Public)`,
   removeMemberConfirm: (removal: { displayName: string; keepsGroupRole: boolean; isSelf: boolean }) =>
     (removal.isSelf
-      ? 'Remove your own direct permissions?'
-      : `Remove direct permissions from “${removal.displayName}”?`) +
+      ? 'Remove your own direct membership?'
+      : `Remove the direct membership of “${removal.displayName}”?`) +
     (removal.keepsGroupRole
       ? ' Roles granted by groups are kept.'
       : removal.isSelf

@@ -32,7 +32,7 @@ export const runsText = {
   chartMetricKeysRequired: "Select at least one metric.",
   chartMetricKeyNoMatch: "No matching metrics.",
   chartGrouping: "Grouping",
-  chartGroupingNone: "No",
+  chartGroupingNone: "None",
   chartGroupingTag: 'Tag',
   chartGroupingParam: 'Param',
   chartGroupingExperiment: 'Experiment',

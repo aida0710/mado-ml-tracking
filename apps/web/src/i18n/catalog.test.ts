@@ -11,6 +11,22 @@ const japaneseDomains = import.meta.glob(['./*.ts', '!./*.test.ts'], { eager: tr
 const englishDomains = import.meta.glob('./en/*.ts', { eager: true });
 afterEach(() => setLocale('ja'));
 
+// Japanese letters, and the Japanese punctuation and brackets an English sentence never needs.
+const JAPANESE_TEXT = /[ぁ-んァ-ン一-龯、。・「」（）［］：]/;
+
+/** Each string of a catalog entry with where it is, including the labels of nested objects. */
+function listStrings(value: unknown, path: string): Array<{ path: string; message: string }> {
+  if (typeof value === 'string') return [{ path, message: value }];
+  if (typeof value !== 'object' || value === null) return [];
+  return Object.entries(value).flatMap(([key, child]) => listStrings(child, `${path}.${key}`));
+}
+
+/** The key paths inside a nested entry such as { recording: { label, hint } }. */
+function listKeyPaths(value: unknown, path = ''): string[] {
+  if (typeof value !== 'object' || value === null) return [path];
+  return Object.entries(value).flatMap(([key, child]) => listKeyPaths(child, `${path}.${key}`)).sort();
+}
+
 describe('English and Japanese catalogs', () => {
   it('covers the same domain exports and message keys in English', () => {
     for (const [path, englishModule] of Object.entries(englishDomains)) {
@@ -21,13 +37,16 @@ describe('English and Japanese catalogs', () => {
         const japaneseCatalog = japaneseModule[name];
         if (!japaneseCatalog) throw new Error(`Missing Japanese export: ${path}:${name}`);
         expect(Object.keys(englishCatalog).sort(), `${path}:${name}`).toEqual(Object.keys(japaneseCatalog).sort());
-        setLocale('en');
         for (const [key, message] of Object.entries(englishCatalog)) {
-          expect(typeof japaneseCatalog[key], `${path}:${key}`).toBe(typeof message);
-          if (typeof message === 'string') {
-            expect(message, `${path}:${key}`).not.toMatch(/[ぁ-んァ-ン一-龯]/);
-            expect(japaneseCatalog[key], `${path}:${key}`).toBe(message);
+          setLocale('ja');
+          const japaneseMessage = japaneseCatalog[key];
+          setLocale('en');
+          expect(typeof japaneseMessage, `${path}:${key}`).toBe(typeof message);
+          expect(listKeyPaths(message), `${path}:${key}`).toEqual(listKeyPaths(japaneseMessage));
+          for (const english of listStrings(message, `${path}:${name}.${key}`)) {
+            expect(english.message, english.path).not.toMatch(JAPANESE_TEXT);
           }
+          if (typeof message === 'string') expect(japaneseCatalog[key], `${path}:${key}`).toBe(message);
         }
       }
     }

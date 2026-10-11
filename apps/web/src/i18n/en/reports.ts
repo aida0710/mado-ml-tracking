@@ -137,7 +137,7 @@ export const reportsTextTemplates = {
     `Viewing version ${revision} as read-only (latest: version ${current}).`,
   reportSnapshotAt: (capturedAt: string) => `Snapshot from ${capturedAt}`,
   reportRestoreMessage: (revision: number) =>
-    `Create a new version using version ${revision}'s content? Previous versions remain in history.`,
+    `Create a new version using the content of version ${revision}? Previous versions remain in history.`,
   reportRestoredFrom: (revision: number) => `Restored from version ${revision}`,
   reportChangesAdded: (blocks: string) => `Added: ${blocks}`,
   reportChangesEdited: (blocks: string) => `Edited: ${blocks}`,

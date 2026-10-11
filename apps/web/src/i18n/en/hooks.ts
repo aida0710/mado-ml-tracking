@@ -25,7 +25,7 @@ export const hooksText = {
   hookOwner: "Owner",
   hookOwnerHint: "Hooks launch jobs with this owner's permissions, and the owner becomes the run's creator.",
   hookTransferNoAccounts:
-    "No other service accounts are available for transfer. Create an enabled service account with the editor or admin role in project settings.",
+    "No other service accounts are available for transfer. Create an enabled service account with the Editor or Admin role in project settings.",
   hookFilter: "Trigger filters",
   hookFilterHint:
     "Empty fields do not filter. Non-matching events do not launch jobs or leave execution history.",
@@ -73,7 +73,7 @@ export const hooksText = {
     "Register this URL at the sender (such as a GitHub webhook). If the API is published under a different hostname than this screen, append the path to that host. Requests with invalid signatures or to disabled hooks are rejected.",
   hookManualSiteNotice:
     "This is a manually submitted site. Hook-created jobs wait until the owner runs mado-tracking submit on the site's login node.",
-  hookExecutionSubject: "Resource",
+  hookExecutionSubject: "Event",
   hookExecutionOutcome: "Outcome",
   hookExecutionLinks: "Related",
   hookExecutionWaitingRun: "Waiting for run",

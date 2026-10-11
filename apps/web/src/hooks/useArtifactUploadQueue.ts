@@ -2,7 +2,7 @@ import { useLocale } from '../i18n/useLocale';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Artifact, ArtifactUpload, ArtifactUploadDetail, ArtifactUploadListItem } from '@mmt/contracts';
 import { artifactUploadsApi } from '../api/artifactUploads';
-import { NETWORK_ERROR_CODE, RequestError } from '../api/http';
+import { RequestError } from '../api/http';
 import { trackingApi } from '../api/tracking';
 import { canDigest, sha256Hex } from '../lib/blobDigest';
 import type { UploadSource } from '../lib/droppedFiles';
@@ -25,13 +25,12 @@ import {
   type TransferSample,
   type UploadMethod,
 } from '../lib/uploadPlan';
-import { blockerFromFailure, isSessionUnusable, type ResumeBlocker } from '../lib/uploadResumeBlocker';
+import { explainUploadFailure } from '../lib/uploadFailure';
+import { blockerFromFailure, isSessionUnusable } from '../lib/uploadResumeBlocker';
 import { createPartDigestReader, inspectSessionForFile } from '../lib/uploadResumeMatch';
 import { findResumeRecord, removeResumeRecord, saveResumeRecord } from '../lib/uploadResumeStore';
 import { useQuery } from './useQuery';
 import { text } from '../i18n/catalog';
-import { resumeBlockerNextSteps, resumeBlockerReasons } from '../i18n/uploads';
-import { joinSentences } from '../i18n/textJoining';
 
 /**
  * Requests in flight across the whole queue. Browsers allow six connections per origin over
@@ -605,42 +604,6 @@ async function findResumableSession({
     if (inspection.blocker && isSessionUnusable(inspection.blocker)) removeResumeRecord(uploadId);
   }
   return null;
-}
-
-/** A dropped connection, as opposed to an answer from the server. */
-function isNetworkLoss(failure: unknown): boolean {
-  return failure instanceof RequestError && failure.code === NETWORK_ERROR_CODE;
-}
-
-/**
- * A refused resume or a lost connection gets the next step for this file; any other failure stays
- * as it is. Both are put into words when shown, so they follow a later change of display language.
- */
-function explainUploadFailure({
-  failure,
-  blocker,
-  startsOver,
-  method,
-}: {
-  failure: unknown;
-  blocker: ResumeBlocker | null;
-  startsOver: boolean;
-  method: UploadMethod;
-}): unknown {
-  if (blocker) {
-    return new LocalizedError(() =>
-      joinSentences([
-        resumeBlockerReasons[blocker],
-        startsOver ? text.uploadRestartFromQueue : resumeBlockerNextSteps[blocker],
-      ]),
-    );
-  }
-  if (isNetworkLoss(failure)) {
-    return new LocalizedError(() =>
-      method === 'multipart' ? text.uploadNetworkLostResume : text.uploadNetworkLostResend,
-    );
-  }
-  return failure;
 }
 
 async function retrying<T>(

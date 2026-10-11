@@ -20,7 +20,7 @@ export const jobsText = {
   jobOrigin: "Launch source",
   schedulerJobId: "Scheduler job ID",
   schedulerJobIdShort: "Job ID",
-  jobSubmittedAt: "Submission",
+  jobSubmittedAt: "Submitted",
   runnerHost: "Runner host",
   jobSiteJobShell: "Job shell version",
   parentJob: "Parent job",
@@ -44,7 +44,7 @@ export const jobsText = {
   manualSubmissionOwnHint:
     "You requested this job. Run this command on the site (login node or registered PC) to submit it using your API token.",
   jobArrays: 'Job array',
-  jobArraySize: "Count",
+  jobArraySize: "Size",
   jobArrayStates: "Status (latest attempt per index)",
   jobArrayShowJobs: "Show jobs",
   jobArrayShowAll: "Show all jobs",
@@ -110,7 +110,7 @@ export const jobsTextTemplates = {
   gpuCount: (count: number) => `GPU ×${count}`,
   arrayMember: (index: number, size: number) => `${index} / ${size}`,
   arraySize: (size: number) => `array ×${size}`,
-  manualSubmissionWaiting: (siteName: string, count: number) => `${siteName}: ${count}`,
+  manualSubmissionWaiting: (siteName: string, count: number) => `${siteName}: ${formatEnglishCount(count, 'job')}`,
   jobArrayFilter: (arrayId: string) => `Showing only jobs in array ${arrayId}.`,
   jobArrayState: (stateLabel: string, count: number) => `${stateLabel} ${count}`,
   walltimeError: (maxDays: number) =>
@@ -132,7 +132,7 @@ export const jobsTextTemplates = {
 };
 
 export const logLevelLabels: Record<LogEntry['level'], string> = {
-  info: "Information",
+  info: "Info",
   warning: "Warning",
   error: "Error",
 };

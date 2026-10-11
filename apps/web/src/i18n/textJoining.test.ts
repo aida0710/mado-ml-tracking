@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { setLocale } from './locale';
-import { formatEnglishQuotedList, formatList, formatNote, joinLabels, joinSentences } from './textJoining';
+import { formatList, formatNote, joinLabels, joinSentences } from './textJoining';
 
 afterEach(() => setLocale('ja'));
 
@@ -14,9 +14,21 @@ describe('joining text in the display language', () => {
     expect(formatList([])).toBe('');
   });
 
-  it('quotes English names in English even while the screen is Japanese', () => {
+  it('returns a single name unchanged in either language and joins two Japanese names with 「、」', () => {
     setLocale('ja');
-    expect(formatEnglishQuotedList(['Qwen3', 'QWEN3'])).toBe('“Qwen3” and “QWEN3”');
+    expect(formatList(['相田'])).toBe('相田');
+    expect(formatList(['相田', '佐藤'])).toBe('相田、佐藤');
+    setLocale('en');
+    expect(formatList(['Aida'])).toBe('Aida');
+  });
+
+  it('follows a language change after a list was already formatted in the other language', () => {
+    setLocale('en');
+    expect(formatList(['Aida', 'Sato', 'Suzuki'])).toBe('Aida, Sato, and Suzuki');
+    setLocale('ja');
+    expect(formatList(['相田', '佐藤', '鈴木'])).toBe('相田、佐藤、鈴木');
+    setLocale('en');
+    expect(formatList(['Aida', 'Sato'])).toBe('Aida and Sato');
   });
 
   it('puts short labels side by side with 「・」 in Japanese and a spaced dot in English', () => {

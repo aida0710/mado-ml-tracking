@@ -1,33 +1,22 @@
-import { getIntlLocale, getLocale, INTL_LOCALES, type Locale } from './locale';
+import { memoizePerIntlLocale } from './intlFormatterCache';
+import { getLocale, type Locale } from './locale';
 
 /*
  * How the display language joins pieces of text that the screens put together: names in a list,
  * short labels side by side, sentences in one paragraph and a note in parentheses.
  * Japanese keeps its own punctuation (、・（）, no space between sentences); English uses commas,
- * spaces and half-width parentheses. Counts with singular and plural are in formatEnglishCount.
+ * spaces and half-width parentheses. Counts with singular and plural are in formatEnglishCount,
+ * quoted names in English messages in formatEnglishQuotedList.
  */
 
-const listFormats = new Map<string, Intl.ListFormat>();
-
-function getListFormat(intlLocale: string): Intl.ListFormat {
-  const cached = listFormats.get(intlLocale);
-  if (cached) return cached;
-  const listFormat = new Intl.ListFormat(intlLocale, { style: 'long', type: 'conjunction' });
-  listFormats.set(intlLocale, listFormat);
-  return listFormat;
-}
+/** The list format of the display language (or of `intlLocale`): 「A、B、C」 or “A, B, and C”. */
+export const getListFormat = memoizePerIntlLocale(
+  (intlLocale) => new Intl.ListFormat(intlLocale, { style: 'long', type: 'conjunction' }),
+);
 
 /** Names listed as a sentence of the display language lists them: 「A、B、C」 or “A, B, and C”. */
 export function formatList(items: readonly string[]): string {
-  return getListFormat(getIntlLocale()).format(items);
-}
-
-/**
- * Names quoted the way English messages quote them, listed as a sentence lists them: “a”, “b”, and
- * “c”. For the English catalogs, which build English text whatever the caller's language.
- */
-export function formatEnglishQuotedList(names: readonly string[]): string {
-  return getListFormat(INTL_LOCALES.en).format(names.map((name) => `“${name}”`));
+  return getListFormat().format(items);
 }
 
 // The separators of short labels shown side by side (a tag list, not a sentence).

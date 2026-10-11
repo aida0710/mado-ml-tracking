@@ -45,7 +45,7 @@ export const notificationsText = {
   notificationTestDelivered: "Test notification delivered",
   notificationTestFailed: "Test notification failed",
   notificationTestNotInHistory:
-    "Test notifications are not recorded in delivery history. Results are recorded in the audit log under notification channel tests.",
+    "Test notifications are not recorded in delivery history. Results are recorded in the audit log as “Send test notification”.",
   notificationEnvNameInvalid:
     "Environment variable names must start with MMT_NOTIFICATION_ and contain only uppercase letters, numbers, and underscores",
   notificationRules: "Notification rules",
@@ -80,7 +80,7 @@ export const notificationChannelKindLabels: Record<NotificationChannelKind, stri
 
 export const notificationEventTypeLabels: Record<NotificationEventType, string> = {
   'run.failed': "Run failed",
-  'run.canceled': "Run stopped",
+  'run.canceled': "Run canceled",
   'run.finished': "Run completed",
   'automation.failed': "Automation failed",
   'job.heartbeat_stale': "Job heartbeat lost",

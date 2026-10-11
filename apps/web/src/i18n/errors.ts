@@ -1,7 +1,8 @@
 import * as english from './en/errors';
 import { localized } from './localized';
 
-// Application-owned error codes; unknown service details are displayed unchanged.
+// Text for API errors (lib/errorMessage.ts, lib/sweepSpaceError.ts). For the codes, the Japanese screen
+// shows the server's own message when there is one, so these Japanese entries are its fallback.
 export const errorText = localized({
   internalError: "リクエストの処理に失敗しました",
   databaseUnavailable: "データベースに接続できません",
@@ -11,7 +12,7 @@ export const errorText = localized({
   uploadExpired: "アップロードの有効期限が切れています",
   artifactSaveFailed: "Artifactを保存できませんでした",
   partChecksumMismatch: "アップロードしたpartのSHA-256が一致しません",
-  runArchived: "アーカイブ済みのRunにはこの操作を行えません",
+  runDeleted: "削除済みのRunにはこの操作を行えません",
   bodyTooLarge: "リクエストが上限サイズを超えています",
   sweepParameterNameEmpty: "parameter 名が空です",
   sweepParametersEmpty: "parameter が1つもありません",

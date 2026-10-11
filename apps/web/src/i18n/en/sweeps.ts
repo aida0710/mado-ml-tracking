@@ -77,7 +77,7 @@ export const sweepsText = {
   sweepCancel: "Cancel sweep",
   sweepCancelConfirm: "Stops submitting new trials and cancels queued trials.",
   sweepCancelRunning: "Also request stopping running trials",
-  sweepChangeLimits: "Change trial count / Parallelism",
+  sweepChangeLimits: "Change maximum trials and parallelism",
   sweepResumeUnavailable: "The task was revised, so this sweep cannot resume. Create a new sweep.",
   sweepProgressChart: "Objective value per trial",
   sweepBestSoFar: "Best so far",
@@ -162,7 +162,7 @@ export const sweepTrialStateLabels: Record<SweepTrialState, string> = {
   finished: "Completed",
   failed: "Failed",
   canceled: "Canceled",
-  early_stopped: "Early termination",
+  early_stopped: "Stopped early",
 };
 
 export const sweepMethodLabels: Record<SweepMethod, string> = {

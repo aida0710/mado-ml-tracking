@@ -10,7 +10,7 @@ import {
   type PromotionPolicyCreate,
 } from '@mmt/contracts';
 import { promotionTextTemplates } from '../i18n/promotion';
-import { getIntlLocale } from '../i18n/locale';
+import { memoizePerIntlLocale } from '../i18n/intlFormatterCache';
 import { text } from '../i18n/catalog';
 import { LocalizedError } from './localizedError';
 
@@ -185,23 +185,29 @@ export function getCriterionThresholdMeaning(
   return improves ? 'improvement_required' : 'regression_allowed';
 }
 
-const PERCENT_FORMAT_OPTIONS: Intl.NumberFormatOptions = {
-  style: 'percent',
-  maximumFractionDigits: 4,
-  signDisplay: 'exceptZero',
-};
-const THRESHOLD_FORMAT_OPTIONS: Intl.NumberFormatOptions = {
-  maximumFractionDigits: 6,
-  signDisplay: 'exceptZero',
-};
+const getPercentFormat = memoizePerIntlLocale(
+  (intlLocale) =>
+    new Intl.NumberFormat(intlLocale, {
+      style: 'percent',
+      maximumFractionDigits: 4,
+      signDisplay: 'exceptZero',
+    }),
+);
+const getThresholdFormat = memoizePerIntlLocale(
+  (intlLocale) =>
+    new Intl.NumberFormat(intlLocale, {
+      maximumFractionDigits: 6,
+      signDisplay: 'exceptZero',
+    }),
+);
 
 /** relative_delta thresholds are ratios, shown as percentages. */
 export function formatCriterionThreshold(
   criterion: Pick<PromotionCriterion, 'mode' | 'threshold'>,
 ): string {
   if (criterion.mode === 'absolute') return String(criterion.threshold);
-  const options = criterion.mode === 'relative_delta' ? PERCENT_FORMAT_OPTIONS : THRESHOLD_FORMAT_OPTIONS;
-  return new Intl.NumberFormat(getIntlLocale(), options).format(criterion.threshold);
+  const thresholdFormat = criterion.mode === 'relative_delta' ? getPercentFormat() : getThresholdFormat();
+  return thresholdFormat.format(criterion.threshold);
 }
 
 /** One-line summary such as "werの基準との差 ≤ -0.01". */

@@ -64,7 +64,7 @@ export const siteComputersText = {
   jobShellRequired: "Enter a job shell or select a template.",
   // The owner column: a computer from before owners is everyone's (global administrators manage it).
   targetOwnerGlobal: "Global",
-  targetOwnerSelf: "Personal",
+  targetOwnerSelf: "You",
   jobShellCurrent: "Current version",
   jobShellNone: "No job shell yet. Jobs will not be submitted on this computer until one is saved.",
   jobShellEdit: "Edit job shell",
@@ -193,6 +193,6 @@ export const siteKeyStatusLabels = {
 
 export const siteConnectionCheckStatusLabels = {
   queued: "Checking",
-  succeeded: "Success",
+  succeeded: "Succeeded",
   failed: "Failed",
 } satisfies Record<SiteConnectionCheckStatus, string>;

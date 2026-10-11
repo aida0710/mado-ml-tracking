@@ -23,7 +23,7 @@ export const checkpointsText = {
   checkpointResumeNoJob: "The job that executed this run was not found, so it cannot be resumed here.",
   checkpointResumeCreatorOnly:
     "Only this run's creator or a project administrator can resume from a checkpoint.",
-  checkpointResumedBadge: "Resume",
+  checkpointResumedBadge: "Resumed",
   checkpointResumedBadgeHint: "This job belongs to a run resumed from a checkpoint",
   checkpointSourceRun: "Original run",
 } as const;

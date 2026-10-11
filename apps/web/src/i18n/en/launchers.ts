@@ -39,7 +39,7 @@ export const launchersText = {
 export const launchersTextTemplates = {
   launcherTokenTitle: (name: string) => `Token for launcher “${name}”`,
   launcherRotateConfirm: (name: string) =>
-    `Revoke “${name}”'s current token and issue a new one? This launcher cannot submit jobs until its token_file is updated.`,
+    `Revoke the current token of “${name}” and issue a new one? This launcher cannot submit jobs until its token_file is updated.`,
   launcherRevokeConfirm: (name: string) =>
     `Revoke “${name}” and its token? Jobs on computers using this launcher will wait until another launcher is selected.`,
   launcherConfigHeader: (name: string) => `Settings for mado-tracking-launcher “${name}”`,

@@ -24,7 +24,7 @@ Each Job has one Run. What the Job produced (metrics, Artifacts, exit status) st
 | Run | Run name and run kind. Press it to open the Run. Runs resumed from a checkpoint get **再開** (Resumed) |
 | **作成者** (Creator) | The person who created the Job's Run. For Jobs of automation rules and hooks, the rule's or hook's owner |
 | Task | The Task the Job was launched from |
-| Compute target | The computer that runs the Job |
+| **コンピュータ** (Computer) | The computer that runs the Job |
 | GPU ID | GPU IDs the Job uses. Site Jobs show a count such as `GPU ×2`; Jobs without GPUs show **CPUのみ** (CPU only) |
 | **実行場所** (Where) | For site Jobs, the runner's host and the scheduler's job ID |
 | **起動元** (Origin) | What started the Job when a person did not start it directly (table below) |
@@ -80,7 +80,7 @@ A choice that stops matching after you change another field is cleared, and the 
 
 | Field | Contents |
 | --- | --- |
-| Compute target | The computer to run on. Only computers you can use that support the code version's runtime are offered |
+| **コンピュータ** (Computer) | The computer to run on. Only computers you can use that support the code version's runtime are offered |
 | **GPU（選ばなければCPUのみ）** (GPUs, CPU only if none) | Check GPUs registered on the computer. Without a GPU the Job runs on CPU only |
 | **最大試行回数** (Maximum attempts) | 1 to 100, default 3. The limit of automatic retries; retries by people with **新しいRunで再実行** do not count |
 | **このJobのコードから子Jobを作れる（ドライバー）** (Let this Job's code create child Jobs, driver) | Lets the Job's code create child Jobs with its Job token |

@@ -26,7 +26,7 @@ export const workbenchText = {
   snapshotPending: "Snapshot artifacts appear after the worker saves them.",
   snapshotUnavailable: "No execution snapshot recorded for this run.",
   editCodeVersion: "Edit code and save a new version",
-  workspace: "Edit code version",
+  workspace: "Create code version",
   immutableVersionHint: "Saving creates a new immutable version.",
   saveNewVersion: "Save new version",
   baseVersion: "Source code version",
@@ -117,5 +117,5 @@ export const outputRegistrationErrorLabels = {
 // Text that embeds values.
 export const workbenchTextTemplates = {
   taskLaunchRegistration: (modelLabel: string) =>
-    `On success, a model version is registered in “${modelLabel}”. Automation rules targeting its family will then run inference and evaluation on the registered version.`,
+    `On success, a model version is registered in “${modelLabel}”. If any automation rules target its family, they then run inference and evaluation on the registered version automatically.`,
 };
