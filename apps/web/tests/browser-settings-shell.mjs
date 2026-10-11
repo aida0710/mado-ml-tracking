@@ -54,9 +54,13 @@ const waitForHeading = async (page, { eyebrow, title }) => {
   assert.equal(await page.locator('.page-header .eyebrow').innerText(), eyebrow);
 };
 const openUserMenu = async (page) => {
+  // A menu opened while the screen's lists are still arriving was sometimes closed again by the
+  // redraw, and read as empty; open it once the page has settled.
+  await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'ユーザーメニュー', exact: true }).click();
-  await page.getByRole('menu', { name: 'ユーザーメニュー', exact: true }).waitFor();
-  return page.getByRole('menuitem').allInnerTexts();
+  const menu = page.getByRole('menu', { name: 'ユーザーメニュー', exact: true });
+  await menu.getByRole('menuitem').first().waitFor();
+  return menu.getByRole('menuitem').allInnerTexts();
 };
 /** Opens a URL and waits for the 全体設定 screen it ends up on. */
 const settle = async (page, path, expectedPath) => {
