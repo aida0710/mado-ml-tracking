@@ -104,14 +104,23 @@ body {
 .VPNavBar .divider-line {
   background: var(--header-border) !important;
 }
-.VPNavBar .title {
+/* 名前の欄。.VPNavBar .title と書くと、言語のメニューの見出し (p.title) にも当たってしまう。 */
+.VPNavBar .container > .title,
+.VPNavBarTitle .title {
   color: var(--header-text);
   border-bottom: 0 !important;
 }
 /* サイドバーの真上の、名前の欄 (サイドバーと同じ幅)。下端に上部バーとの境目の線を引く。
    サイドバー自身の上端は上部バーの裏に隠れるので、線はこちらに置く。 */
-.VPNavBar.has-sidebar .title {
-  border-bottom: 1px solid var(--header-border) !important;
+@media (min-width: 960px) {
+  .VPNavBar.has-sidebar .container > .title,
+  .VPNavBarTitle.has-sidebar .title {
+    border-bottom: 1px solid var(--header-border) !important;
+  }
+}
+/* スマホでメニューを開いたときの上部バーの下端。VitePress の既定は明るい地向けの線。 */
+.VPNavBar.screen-open {
+  border-bottom-color: var(--header-border) !important;
 }
 .VPNavBarMenuLink {
   color: var(--header-text-muted) !important;
@@ -149,6 +158,15 @@ body {
 .VPNavBarExtra .button {
   color: var(--header-text-muted) !important;
 }
+/* 言語の切り替え。VitePress の既定は明るい地向けの濃い色で、暗い上部バーではほとんど見えない。 */
+.VPNavBarTranslations .button,
+.VPNavBarTranslations .text {
+  color: var(--header-text-muted) !important;
+}
+.VPNavBarTranslations .button:hover .text,
+.VPNavBarTranslations .button[aria-expanded='true'] .text {
+  color: var(--header-text-strong) !important;
+}
 .VPNavBarHamburger .top,
 .VPNavBarHamburger .middle,
 .VPNavBarHamburger .bottom {
@@ -160,6 +178,17 @@ body {
 .VPNavScreenMenuLink {
   border-color: var(--header-border) !important;
   color: var(--header-text) !important;
+}
+/* スマホのメニューの言語の切り替えと GitHub のアイコン。VitePress の既定の色は暗い地では見えにくい。 */
+.VPNavScreenTranslations .title,
+.VPNavScreenTranslations .link {
+  color: var(--header-text) !important;
+}
+.VPNavScreenSocialLinks .VPSocialLink {
+  color: var(--header-text-muted) !important;
+}
+.VPNavScreenSocialLinks .VPSocialLink:hover {
+  color: var(--header-text-strong) !important;
 }
 
 /* ── サイドバー: アプリと同じ暗い地。上部バーとの境目の線は上の .title に引く ── */
