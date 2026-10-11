@@ -1,6 +1,6 @@
 import { useLocale } from '../i18n/useLocale';
 import { RefreshCw } from 'lucide-react';
-import { administrationApi } from '../api/administration';
+import { pluginsApi } from '../api/plugins';
 import { useProject } from '../hooks/useProject';
 import { useQuery } from '../hooks/useQuery';
 import { parsePrometheus } from '../lib/prometheus';
@@ -117,7 +117,7 @@ export function PluginStorageMetrics({ pluginId }: { pluginId: string }) {
   useLocale();
   const { project } = useProject();
   const metrics = useQuery(`${project.id}:plugin:${pluginId}:metrics`, (signal) =>
-    administrationApi.pluginMetrics(project.id, pluginId, signal),
+    pluginsApi.metrics(project.id, pluginId, signal),
   );
   return (
     <section className="storage-metrics" aria-label={text.storageMetrics}>

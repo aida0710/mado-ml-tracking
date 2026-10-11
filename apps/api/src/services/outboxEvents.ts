@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import type { PluginEvent, Run } from '@mmt/contracts';
-import type { Connection } from '../db/database.js';
+import { rows, type Connection } from '../db/database.js';
 import { findDatasetVersions } from '../repositories/registryRepository.js';
+import type { PluginConnectionRecord } from '../plugins/pluginConnection.js';
+import { prepareMadoDelivery } from '../plugins/mado/deliveryPayload.js';
 
 export async function enqueueRunEvent(connection: Connection, run: Run): Promise<void> {
   if (run.status === 'queued') return;
@@ -22,10 +24,28 @@ export async function enqueueRunEvent(connection: Connection, run: Run): Promise
       ids: run.outputDatasetVersionIds,
     }),
   };
-  // Each connection receives the same immutable event snapshot and id for deduplication.
-  await connection.query(
-    `INSERT INTO plugin_outbox(plugin_id,event_id,event)
-    SELECT id,$2,$3::jsonb FROM plugin_connections WHERE project_id=$1 AND enabled=true`,
-    [run.projectId, event.id, JSON.stringify(event)],
+  // Share the connection lock with imports: edits cannot redirect this transition's delivery.
+  const plugins = await rows<PluginConnectionRecord>(
+    connection,
+    `SELECT * FROM plugin_connections WHERE project_id=$1 AND enabled AND kind='mado' AND config IS NOT NULL
+      AND NOT migration_pending AND encrypted_credentials IS NOT NULL
+      AND credentials_configured->>'readToken'='true' AND credentials_configured->>'lineageToken'='true' FOR SHARE`,
+    [run.projectId],
   );
+  for (const plugin of plugins) {
+    const delivery = prepareMadoDelivery({ event, config: plugin.config!, pluginId: plugin.id });
+    await connection.query(
+      `INSERT INTO plugin_outbox(plugin_id,event_id,event,payload,payload_hash,config_revision,destination_url)
+       VALUES($1,$2,$3::jsonb,$4,$5,$6,$7)`,
+      [
+        plugin.id,
+        event.id,
+        JSON.stringify(event),
+        delivery.payload,
+        delivery.payloadHash,
+        plugin.configRevision,
+        plugin.config!.lineageUrl,
+      ],
+    );
+  }
 }

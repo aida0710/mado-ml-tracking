@@ -142,5 +142,5 @@ The bell counts the alerts of every Project you are a member of (every Project f
 | Plugin delivery stalled | The oldest undelivered event is older than 15 minutes, or one failed 5 or more times | Undelivered events fall below the condition, or the plugin is disabled |
 
 - A stale heartbeat does not fail the Job, because the worker may still be working. Request a stop for a stuck Job in **Jobs**, or check the worker host.
-- Plugin delivery status is under **イベントの送信状況** (Event delivery status) in **Plugins**. After fixing the plugin, click **イベントを再送** (Resend events) ([Plugins and Mado integration](/en/admin/plugins)).
+- Plugin delivery status is under **イベントの送信状況** (Event delivery status) in **Integrations**. After fixing the plugin, click **イベントを再送** (Resend events) ([Mado integration](/en/admin/plugins)).
 - The thresholds are constants in the code and cannot be changed with environment variables.

@@ -39,7 +39,8 @@ async function takeScreenshot(page, name) {
 }
 
 try {
-  const adminContext = await browser.newContext({ locale: 'ja-JP',
+  const adminContext = await browser.newContext({
+    locale: 'ja-JP',
     viewport: { width: 1440, height: 960 },
     extraHTTPHeaders: { Origin: base },
   });
@@ -49,21 +50,23 @@ try {
   const demo = (await getJson(adminPage, '/projects')).items.find(
     (project) => project.name === 'mado ML Tracking Demo',
   );
-  assert.ok(demo, 'The parent-provided demo project is required');
-  await adminPage.goto(`${base}/projects/${demo.id}/experiments`);
-  await adminPage.getByRole('link', { name: 'CPU linear regression', exact: true }).waitFor();
-  const table = adminPage.locator('.runs-page table');
-  assert.equal(await table.locator('th').filter({ hasText: 'Metrics' }).count(), 2);
-  assert.equal(await table.locator('th').filter({ hasText: 'パラメータ' }).count(), 2);
-  const metricBounds = await table
-    .locator('th')
-    .filter({ hasText: 'Metrics' })
-    .nth(1)
-    .boundingBox();
-  assert.ok(metricBounds.x + metricBounds.width < 1440, 'real metrics are off screen');
-  await takeScreenshot(adminPage, 'runs-real-light');
+  if (demo) {
+    await adminPage.goto(`${base}/projects/${demo.id}/experiments`);
+    await adminPage.getByRole('link', { name: 'CPU linear regression', exact: true }).waitFor();
+    const table = adminPage.locator('.runs-page table');
+    assert.equal(await table.locator('th').filter({ hasText: 'Metrics' }).count(), 2);
+    assert.equal(await table.locator('th').filter({ hasText: 'パラメータ' }).count(), 2);
+    const metricBounds = await table
+      .locator('th')
+      .filter({ hasText: 'Metrics' })
+      .nth(1)
+      .boundingBox();
+    assert.ok(metricBounds.x + metricBounds.width < 1440, 'real metrics are off screen');
+    await takeScreenshot(adminPage, 'runs-real-light');
+  }
 
-  const projectAdminContext = await browser.newContext({ locale: 'ja-JP',
+  const projectAdminContext = await browser.newContext({
+    locale: 'ja-JP',
     viewport: { width: 1440, height: 960 },
     extraHTTPHeaders: { Origin: base },
   });
@@ -99,93 +102,81 @@ try {
   assert.equal(project.role, 'admin');
   const pluginPath = `/projects/${project.id}/plugins`;
   await projectAdminPage.goto(base + pluginPath);
-  await projectAdminPage.getByRole('heading', { name: 'Plugins', exact: true }).waitFor();
+  await projectAdminPage.getByRole('heading', { name: '連携', exact: true }).waitFor();
   assert.equal(
-    await projectAdminPage.getByRole('button', { name: 'Pluginを登録', exact: true }).count(),
+    await projectAdminPage.getByRole('button', { name: 'Madoの接続設定', exact: true }).count(),
     0,
   );
   assert.equal(await projectAdminPage.getByRole('dialog').count(), 0);
   const pluginsBefore = (await getJson(projectAdminPage, pluginPath)).items;
   const forbidden = await projectAdminPage.request.post(base + '/api' + pluginPath, {
     data: {
-      name: 'Web forbidden plugin',
-      baseUrl: 'http://127.0.0.1:9',
-      tokenEnv: 'MMT_WEB_FOLLOWUP_UNCONFIGURED_TOKEN',
-      enabled: true,
+      kind: 'mado',
+      name: 'Web forbidden Mado connection',
+      config: {
+        apiUrl: 'http://127.0.0.1:9',
+        webUrl: 'http://127.0.0.1:9',
+        lineageUrl: 'http://127.0.0.1:9',
+        namespaces: ['verification'],
+        jobNamespace: 'mado-model-tracking',
+        storageSystemKey: 'mado-model-tracking',
+      },
+      enabled: false,
     },
   });
   assert.equal(forbidden.status(), 403, 'Project admin must not register server secrets');
   assert.equal((await getJson(projectAdminPage, pluginPath)).items.length, pluginsBefore.length);
 
-  // An explicitly unconfigured localhost connection verifies real error handling,
-  // without sending any server secret or claiming that a collector is connected.
+  console.log('Real API: global admin saves a disabled Mado connection without credentials');
   await adminPage.goto(base + pluginPath);
-  console.log('Real API: global admin registers an explicitly unconfigured localhost plugin');
-  await adminPage.getByRole('button', { name: 'Pluginを登録', exact: true }).waitFor();
-  const pluginName = 'Web followup approved plugin (unconfigured)';
+  const pluginName = 'Web followup Mado (unconfigured)';
   let plugin = (await getJson(adminPage, pluginPath)).items.find(
-    (plugin) => plugin.name === pluginName,
+    (item) => item.name === pluginName,
   );
   if (!plugin) {
-    await adminPage.getByRole('button', { name: 'Pluginを登録', exact: true }).click();
+    await adminPage.getByRole('button', { name: 'Madoの接続設定', exact: true }).click();
     const dialog = adminPage.getByRole('dialog');
     await dialog.getByLabel('名前').fill(pluginName);
-    await dialog.getByLabel('接続先URL').fill('http://127.0.0.1:9');
-    await dialog
-      .getByLabel('トークンを参照する環境変数名')
-      .fill('MMT_WEB_FOLLOWUP_UNCONFIGURED_TOKEN');
+    await dialog.getByLabel('Mado API URL').fill('http://127.0.0.1:9');
+    await dialog.getByLabel('Mado Web URL').fill('http://127.0.0.1:9');
+    await dialog.getByLabel('許可Namespace').fill('verification');
     await dialog.getByRole('button', { name: '保存', exact: true }).click();
     await dialog.waitFor({ state: 'hidden' });
-    plugin = (await getJson(adminPage, pluginPath)).items.find(
-      (plugin) => plugin.name === pluginName,
-    );
+    plugin = (await getJson(adminPage, pluginPath)).items.find((item) => item.name === pluginName);
   }
   assert.ok(plugin);
-  await adminPage.reload();
-  await adminPage.getByRole('button', { name: pluginName, exact: true }).waitFor();
+  assert.equal(plugin.enabled, false);
   await projectAdminPage.goto(base + pluginPath + '?id=' + plugin.id);
-  console.log('Real API: project admin uses approved plugin and sees actual errors');
-  await projectAdminPage.getByRole('button', { name: '接続を確認', exact: true }).waitFor();
+  console.log('Real API: project admin sees missing credentials and cannot start a request');
+  const check = projectAdminPage.getByRole('button', { name: '接続を確認', exact: true });
+  await check.waitFor();
+  assert.equal(await check.isDisabled(), true);
+  await projectAdminPage
+    .getByText('Madoの参照用・送信用キーを設定してください。', { exact: false })
+    .waitFor();
   assert.equal(
-    await projectAdminPage.getByRole('button', { name: 'Pluginを登録', exact: true }).count(),
+    await projectAdminPage.getByRole('button', { name: 'Madoの接続設定', exact: true }).count(),
     0,
   );
-  const checkResponse = projectAdminPage.waitForResponse((response) =>
-    response.url().endsWith('/plugins/' + plugin.id + '/check'),
+  assert.equal(await projectAdminPage.getByLabel('データセットを検索').count(), 0);
+  const checkResponse = await projectAdminPage.request.post(
+    base + '/api' + pluginPath + '/' + plugin.id + '/check',
   );
-  await projectAdminPage.getByRole('button', { name: '接続を確認', exact: true }).click();
-  assert.equal((await checkResponse).status(), 503);
-  await projectAdminPage
-    .getByRole('alert')
-    .filter({ hasText: 'token環境変数が設定されていません' })
-    .waitFor();
-  assert.equal(await projectAdminPage.getByText('接続を確認しました', { exact: true }).count(), 0);
-  await projectAdminPage.getByLabel('データセットを検索').fill('verification');
-  const searchResponse = projectAdminPage.waitForResponse((response) =>
-    response.url().endsWith('/datasets/search'),
+  assert.equal(checkResponse.status(), 503);
+  assert.equal((await checkResponse.json()).code, 'plugin_token_unavailable');
+  const searchResponse = await projectAdminPage.request.post(
+    base + '/api' + pluginPath + '/' + plugin.id + '/datasets/search',
+    {
+      data: { query: 'verification', expectedRevision: plugin.configRevision },
+    },
   );
-  await projectAdminPage.getByRole('button', { name: '検索', exact: true }).click();
-  assert.equal((await searchResponse).status(), 503);
-  await projectAdminPage.getByRole('alert').waitFor();
-  assert.equal(
-    await projectAdminPage.getByRole('button', { name: 'インポート', exact: true }).count(),
-    0,
+  assert.equal(searchResponse.status(), 422);
+  assert.equal((await searchResponse.json()).code, 'plugin_disabled');
+  const retryResponse = await projectAdminPage.request.post(
+    base + '/api' + pluginPath + '/' + plugin.id + '/events/retry',
   );
-  const metricsResponse = await projectAdminPage.request.get(
-    base + '/api' + pluginPath + '/' + plugin.id + '/metrics',
-  );
-  assert.equal(metricsResponse.status(), 503);
-  assert.equal((await metricsResponse.json()).code, 'plugin_token_unavailable');
-  const retryResponse = projectAdminPage.waitForResponse((response) =>
-    response.url().endsWith('/events/retry'),
-  );
-  await projectAdminPage.getByRole('button', { name: 'イベントを再送', exact: true }).click();
-  const queuedResponse = await retryResponse;
-  assert.equal(queuedResponse.status(), 200);
-  const queued = (await queuedResponse.json()).queued;
-  await projectAdminPage
-    .getByText('イベントをキューに追加しました: ' + queued, { exact: true })
-    .waitFor();
+  assert.equal(retryResponse.status(), 422);
+  assert.equal((await retryResponse.json()).code, 'plugin_disabled');
   assert.equal(
     await projectAdminPage.getByRole('heading', { name: 'Storage metrics', exact: true }).count(),
     0,
@@ -198,9 +189,9 @@ try {
       projectId: project.id,
       pluginId: plugin.id,
       projectAdminRegistrationStatus: forbidden.status(),
-      unconfiguredCheckSearchMetricsStatus: 503,
-      retryStatus: queuedResponse.status(),
-      queued,
+      unconfiguredCheckStatus: checkResponse.status(),
+      disabledSearchStatus: searchResponse.status(),
+      disabledRetryStatus: retryResponse.status(),
       realCollector: 'not connected; error path only',
     }),
   );

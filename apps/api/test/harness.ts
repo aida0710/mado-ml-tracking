@@ -39,6 +39,8 @@ export async function createHarness(
   const artifactDirectory = await mkdtemp(path.join(tmpdir(), 'mmt-api-artifacts-'));
   const loadedConfig = loadConfig({
     MMT_DATABASE_URL: testDatabaseUrl,
+    // Synthetic key for encrypted integration fixtures; no machine or production secret is read.
+    MMT_PLUGIN_SECRET_KEY: Buffer.alloc(32, 1).toString('base64'),
     AUTH_MODE: 'development',
     MMT_ALLOW_LOCAL_EXECUTOR: 'true',
     MMT_ALLOW_SEED: 'true',

@@ -19,13 +19,13 @@ export const operationsText = localized({
   pluginOutboxLastError: '最終エラー',
   pluginOutboxLastDelivered: '最終送信',
   pluginOutboxStalled:
-    '送信が滞留しています（15分以上未送信、または5回以上失敗）。Pluginの状態を確認し、復旧後に「イベントを再送」を押してください。',
+    '送信が滞留しています（15分以上未送信、または5回以上失敗）。連携の状態を確認し、復旧後に「イベントを再送」を押してください。',
 } as const, english.operationsText);
 
 export const operationsAlertKindLabels: Record<OperationsAlertKind, string> = localized({
   'job.heartbeat_stale': 'Jobのheartbeat途絶',
   'worker.offline': 'workerの停止',
-  'plugin.delivery_stalled': 'Plugin送信の滞留',
+  'plugin.delivery_stalled': '連携の送信滞留',
 }, english.operationsAlertKindLabels);
 
 export const operationsTextTemplates = localized({

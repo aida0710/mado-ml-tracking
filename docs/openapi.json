@@ -36936,13 +36936,531 @@
         }
       }
     },
+    "/api/projects/{p}/plugins/availability": {
+      "get": {
+        "operationId": "getProjectsByPPluginsAvailability",
+        "tags": [
+          "plugins"
+        ],
+        "summary": "内蔵連携の表示用状態（資格情報を含まない）",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "read"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "project",
+          "role": "viewer",
+          "scope": "read"
+        },
+        "x-mmt-job-token": "read",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PluginAvailability"
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "insufficient_scope",
+              "project_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "見つからない（他Projectのものを含む）",
+            "x-mmt-error-codes": [
+              "not_found",
+              "project_archived"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "invalid_request"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{p}/plugins/{id}/migration/complete": {
+      "post": {
+        "operationId": "postProjectsByPPluginsByIdMigrationComplete",
+        "tags": [
+          "plugins"
+        ],
+        "summary": "旧Mado連携の移行を完了（全体管理者）",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "admin"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "globalAdmin"
+        },
+        "x-mmt-job-token": "forbidden",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "対象のID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expectedRevision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "expectedRevision"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginConnection"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "要求を読めない",
+            "x-mmt-error-codes": [
+              "invalid_json"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "invalid_origin",
+              "insufficient_scope",
+              "admin_required",
+              "job_token_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "現在の状態と衝突する",
+            "x-mmt-error-codes": [
+              "already_exists"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "大きすぎる",
+            "x-mmt-error-codes": [
+              "body_too_large"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "invalid_request",
+              "invalid_reference"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{p}/plugins/{id}/events/receipts": {
+      "post": {
+        "operationId": "postProjectsByPPluginsByIdEventsReceipts",
+        "tags": [
+          "plugins"
+        ],
+        "summary": "旧Mado連携の配送済み記録を照合して引き継ぐ（全体管理者）",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "admin"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "globalAdmin"
+        },
+        "x-mmt-job-token": "forbidden",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "対象のID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "receipts": {
+                    "minItems": 1,
+                    "maxItems": 1000,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "eventId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "payloadHash": {
+                          "type": "string",
+                          "pattern": "^[a-f0-9]{64}$"
+                        }
+                      },
+                      "required": [
+                        "eventId",
+                        "payloadHash"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "receipts"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "imported": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "imported"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "要求を読めない",
+            "x-mmt-error-codes": [
+              "invalid_json"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "invalid_origin",
+              "insufficient_scope",
+              "admin_required",
+              "job_token_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "現在の状態と衝突する",
+            "x-mmt-error-codes": [
+              "already_exists"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "大きすぎる",
+            "x-mmt-error-codes": [
+              "body_too_large"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "invalid_request",
+              "invalid_reference"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{p}/plugins": {
       "get": {
         "operationId": "getProjectsByPPlugins",
         "tags": [
           "plugins"
         ],
-        "summary": "Mado plugin接続",
+        "summary": "内蔵連携の接続設定",
         "security": [
           {
             "sessionCookie": []
@@ -37107,29 +37625,101 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "mado"
+                  },
                   "name": {
+                    "default": "Mado",
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 200
                   },
-                  "baseUrl": {
-                    "type": "string",
-                    "maxLength": 2000,
-                    "format": "uri"
+                  "config": {
+                    "type": "object",
+                    "properties": {
+                      "apiUrl": {
+                        "type": "string",
+                        "maxLength": 2000,
+                        "format": "uri"
+                      },
+                      "webUrl": {
+                        "type": "string",
+                        "maxLength": 2000,
+                        "format": "uri"
+                      },
+                      "lineageUrl": {
+                        "type": "string",
+                        "maxLength": 2000,
+                        "format": "uri"
+                      },
+                      "namespaces": {
+                        "minItems": 1,
+                        "maxItems": 50,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 512
+                        }
+                      },
+                      "jobNamespace": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "storageSystemKey": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      }
+                    },
+                    "required": [
+                      "apiUrl",
+                      "webUrl",
+                      "lineageUrl",
+                      "namespaces",
+                      "jobNamespace",
+                      "storageSystemKey"
+                    ],
+                    "additionalProperties": false
                   },
-                  "tokenEnv": {
-                    "type": "string",
-                    "pattern": "^[A-Z][A-Z0-9_]*$"
+                  "credentials": {
+                    "type": "object",
+                    "properties": {
+                      "readToken": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 8192
+                      },
+                      "lineageToken": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 8192
+                      },
+                      "metricsToken": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 8192
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
                   },
                   "enabled": {
-                    "default": true,
+                    "default": false,
                     "type": "boolean"
                   }
                 },
                 "required": [
-                  "name",
-                  "baseUrl",
-                  "tokenEnv"
+                  "kind",
+                  "config"
                 ],
                 "additionalProperties": false
               }
@@ -37305,17 +37895,90 @@
                     "minLength": 1,
                     "maxLength": 200
                   },
-                  "baseUrl": {
-                    "type": "string",
-                    "maxLength": 2000,
-                    "format": "uri"
+                  "config": {
+                    "type": "object",
+                    "properties": {
+                      "apiUrl": {
+                        "type": "string",
+                        "maxLength": 2000,
+                        "format": "uri"
+                      },
+                      "webUrl": {
+                        "type": "string",
+                        "maxLength": 2000,
+                        "format": "uri"
+                      },
+                      "lineageUrl": {
+                        "type": "string",
+                        "maxLength": 2000,
+                        "format": "uri"
+                      },
+                      "namespaces": {
+                        "minItems": 1,
+                        "maxItems": 50,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 512
+                        }
+                      },
+                      "jobNamespace": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "storageSystemKey": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      }
+                    },
+                    "required": [
+                      "apiUrl",
+                      "webUrl",
+                      "lineageUrl",
+                      "namespaces",
+                      "jobNamespace",
+                      "storageSystemKey"
+                    ],
+                    "additionalProperties": false
                   },
-                  "tokenEnv": {
-                    "type": "string",
-                    "pattern": "^[A-Z][A-Z0-9_]*$"
+                  "credentials": {
+                    "type": "object",
+                    "properties": {
+                      "readToken": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 8192
+                      },
+                      "lineageToken": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 8192
+                      },
+                      "metricsToken": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 8192
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
                   },
                   "enabled": {
                     "type": "boolean"
+                  },
+                  "expectedRevision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
                   }
                 },
                 "additionalProperties": false
@@ -37443,7 +38106,7 @@
         "tags": [
           "plugins"
         ],
-        "summary": "pluginのmanifestを確認",
+        "summary": "Madoの参照接続を確認（無効中も実行可能）",
         "security": [
           {
             "sessionCookie": []
@@ -37911,7 +38574,12 @@
                 "properties": {
                   "query": {
                     "type": "string",
-                    "maxLength": 1000
+                    "maxLength": 512
+                  },
+                  "expectedRevision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
                   }
                 },
                 "required": [
@@ -38115,75 +38783,19 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "dataset": {
-                    "type": "object",
-                    "properties": {
-                      "externalId": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 200
-                      },
-                      "namespace": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 200
-                      },
-                      "name": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 200
-                      },
-                      "version": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 200
-                      },
-                      "uri": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 4000
-                      },
-                      "digest": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 1000
-                      },
-                      "schema": {
-                        "type": "object",
-                        "propertyNames": {
-                          "type": "string",
-                          "maxLength": 200
-                        },
-                        "additionalProperties": {
-                          "$ref": "#/components/schemas/JsonValue"
-                        }
-                      },
-                      "metadata": {
-                        "type": "object",
-                        "propertyNames": {
-                          "type": "string",
-                          "maxLength": 200
-                        },
-                        "additionalProperties": {
-                          "$ref": "#/components/schemas/JsonValue"
-                        }
-                      }
-                    },
-                    "required": [
-                      "externalId",
-                      "namespace",
-                      "name",
-                      "version",
-                      "uri",
-                      "digest",
-                      "schema",
-                      "metadata"
-                    ],
-                    "additionalProperties": false
+                  "externalId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "expectedRevision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
                   }
                 },
                 "required": [
-                  "dataset"
+                  "externalId",
+                  "expectedRevision"
                 ],
                 "additionalProperties": false
               }
@@ -56047,6 +56659,41 @@
         ],
         "additionalProperties": false
       },
+      "MadoPluginConfig": {
+        "type": "object",
+        "properties": {
+          "apiUrl": {
+            "type": "string"
+          },
+          "webUrl": {
+            "type": "string"
+          },
+          "lineageUrl": {
+            "type": "string"
+          },
+          "namespaces": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "jobNamespace": {
+            "type": "string"
+          },
+          "storageSystemKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "apiUrl",
+          "webUrl",
+          "lineageUrl",
+          "namespaces",
+          "jobNamespace",
+          "storageSystemKey"
+        ],
+        "additionalProperties": false
+      },
       "ManualSiteConfiguration": {
         "type": "object",
         "properties": {
@@ -57988,6 +58635,56 @@
         ],
         "additionalProperties": false
       },
+      "PluginAvailability": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "mado"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "configRevision": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "webUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "canImport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "enabled",
+          "configured",
+          "configRevision",
+          "webUrl",
+          "canImport"
+        ],
+        "additionalProperties": false
+      },
       "PluginConnection": {
         "type": "object",
         "properties": {
@@ -58001,6 +58698,59 @@
           },
           "name": {
             "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "mado",
+              "legacy"
+            ]
+          },
+          "configurationStatus": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "migration_pending",
+              "unsupported"
+            ]
+          },
+          "config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MadoPluginConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "configRevision": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "credentialsConfigured": {
+            "type": "object",
+            "properties": {
+              "readToken": {
+                "type": "boolean"
+              },
+              "lineageToken": {
+                "type": "boolean"
+              },
+              "metricsToken": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "readToken",
+              "lineageToken",
+              "metricsToken"
+            ],
+            "additionalProperties": false
+          },
+          "secretStorageAvailable": {
+            "type": "boolean"
           },
           "baseUrl": {
             "type": "string"
@@ -58033,6 +58783,12 @@
           "id",
           "projectId",
           "name",
+          "kind",
+          "configurationStatus",
+          "config",
+          "configRevision",
+          "credentialsConfigured",
+          "secretStorageAvailable",
           "baseUrl",
           "tokenEnv",
           "tokenConfigured",

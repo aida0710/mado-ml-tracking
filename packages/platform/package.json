@@ -11,7 +11,8 @@
     "@aws-sdk/client-s3": "^3.1039.0",
     "@aws-sdk/lib-storage": "^3.1039.0",
     "@mmt/contracts": "0.1.0",
-    "nodemailer": "^10.0.16"
+    "nodemailer": "^10.0.16",
+    "zod": "^4.4.1"
   },
   "devDependencies": {
     "@types/smtp-server": "^3.5.13",

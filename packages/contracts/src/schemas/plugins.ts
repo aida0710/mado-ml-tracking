@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import type { LineageGraph, PluginConnection, PluginDataset, PluginManifest } from '../index.js';
+import type {
+  LineageGraph,
+  PluginConnection,
+  PluginDataset,
+  PluginManifest,
+  MadoPluginConfig,
+  PluginAvailability,
+} from '../index.js';
 import { idSchema, jsonObjectSchema, timestampSchema } from './primitives.js';
 import { namedContractSchema } from './schemaRegistry.js';
 import type { Expect, MutuallyAssignable } from './typeAssertions.js';
@@ -14,12 +21,45 @@ export const pluginManifestSchema = namedContractSchema(
     capabilities: z.array(z.string()),
   }),
 );
+export const madoPluginConfigSchema = namedContractSchema(
+  'MadoPluginConfig',
+  z.strictObject({
+    apiUrl: z.string(),
+    webUrl: z.string(),
+    lineageUrl: z.string(),
+    namespaces: z.array(z.string()),
+    jobNamespace: z.string(),
+    storageSystemKey: z.string(),
+  }),
+);
+export const pluginAvailabilitySchema = namedContractSchema(
+  'PluginAvailability',
+  z.strictObject({
+    kind: z.literal('mado'),
+    id: idSchema.nullable(),
+    enabled: z.boolean(),
+    configured: z.boolean(),
+    configRevision: z.number().int(),
+    webUrl: z.string().nullable(),
+    canImport: z.boolean(),
+  }),
+);
 export const pluginConnectionSchema = namedContractSchema(
   'PluginConnection',
   z.strictObject({
     id: idSchema,
     projectId: idSchema,
     name: z.string(),
+    kind: z.enum(['mado', 'legacy']),
+    configurationStatus: z.enum(['ready', 'migration_pending', 'unsupported']),
+    config: madoPluginConfigSchema.nullable(),
+    configRevision: z.number().int(),
+    credentialsConfigured: z.strictObject({
+      readToken: z.boolean(),
+      lineageToken: z.boolean(),
+      metricsToken: z.boolean(),
+    }),
+    secretStorageAvailable: z.boolean(),
     baseUrl: z.string(),
     tokenEnv: z.string(),
     tokenConfigured: z.boolean(),
@@ -69,3 +109,10 @@ type _PluginDataset = Expect<
   MutuallyAssignable<z.infer<typeof pluginDatasetSchema>, PluginDataset>
 >;
 type _LineageGraph = Expect<MutuallyAssignable<z.infer<typeof lineageGraphSchema>, LineageGraph>>;
+
+type _MadoConfig = Expect<
+  MutuallyAssignable<z.infer<typeof madoPluginConfigSchema>, MadoPluginConfig>
+>;
+type _PluginAvailability = Expect<
+  MutuallyAssignable<z.infer<typeof pluginAvailabilitySchema>, PluginAvailability>
+>;
