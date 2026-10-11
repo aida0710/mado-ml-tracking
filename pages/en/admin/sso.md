@@ -45,6 +45,8 @@ If UserInfo has no `groups`, the periodic recheck after login decides that the u
 
 `offline_access` (Authentik's built-in "authentik default OAuth Mapping: OpenID 'offline_access'") makes Authentik issue refresh tokens. Without it the application still works, but users must sign in again each time Authentik's access token expires (the provider's **Access token validity**, 5 minutes by default).
 
+For a seven-day login, edit the Provider and add that mapping under **Advanced protocol settings → Scopes**. Set **Refresh Token Validity** to `days=7` or longer; an existing `days=30` setting can stay as it is. **Access Token Validity** can remain `minutes=5` because the application refreshes access tokens.
+
 ## 2. Configure the API server
 
 Put the following in the API server's `.env`. HTTPS is required in production. Use `hybrid` while introducing SSO so that a local administrator remains for emergencies ("Move to SSO" in [Authentication](/en/admin/auth)).
@@ -52,6 +54,8 @@ Put the following in the API server's `.env`. HTTPS is required in production. U
 ```dotenv
 NODE_ENV=production
 AUTH_MODE=hybrid
+AUTH_SESSION_IDLE_SECONDS=604800
+AUTH_SESSION_ABSOLUTE_SECONDS=604800
 MMT_PUBLIC_URL=https://tracking.example.com
 MMT_WEB_ORIGIN=https://tracking.example.com
 OIDC_ISSUER_URL=https://sso.example.com/application/o/ml-tracking/
@@ -75,6 +79,8 @@ openssl rand -base64 32
 ```
 
 Restart the API after changing the settings. Each variable is listed under "Authentication and SSO" in [Environment variables](/en/reference/environment).
+
+These settings keep a login for seven days, including inactivity. Update an existing `.env` too: changing examples or defaults does not replace values already set there. Sign in once after applying the settings to obtain a refresh token.
 
 ### Allowed groups and the administrator group
 

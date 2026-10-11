@@ -26,7 +26,7 @@ The login screen shows only the methods enabled by `AUTH_MODE`.
 - `hybrid`: the SSO button, then the username and password fields for local accounts
 - `local`: the username and password fields only
 
-A session ends after `AUTH_SESSION_IDLE_SECONDS` without activity (default 28800 seconds, 8 hours) or `AUTH_SESSION_ABSOLUTE_SECONDS` after login (default 43200 seconds, 12 hours), whichever comes first. The API does not start if the idle limit is longer than the absolute limit.
+A session ends after `AUTH_SESSION_IDLE_SECONDS` without activity or `AUTH_SESSION_ABSOLUTE_SECONDS` after login, whichever comes first. Both default to 604800 seconds (7 days), so a login lasts for up to seven days, including inactivity. The API does not start if the idle limit is longer than the absolute limit.
 
 ## Create the initial administrator
 

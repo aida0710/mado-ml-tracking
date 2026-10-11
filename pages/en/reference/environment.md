@@ -37,8 +37,8 @@ See [Authentication and local accounts](/en/admin/auth) and [Authentik (SSO)](/e
 | Variable | Default | Content |
 | --- | --- | --- |
 | `AUTH_MODE` | `hybrid` | `local`, `oidc`, `hybrid`, `development` |
-| `AUTH_SESSION_IDLE_SECONDS` | `28800` (8 hours) | Seconds without activity until a session ends. At least 300 |
-| `AUTH_SESSION_ABSOLUTE_SECONDS` | `43200` (12 hours) | Seconds from login until a session ends. At least 3600, and not less than the idle limit |
+| `AUTH_SESSION_IDLE_SECONDS` | `604800` (7 days) | Seconds without activity until a session ends. At least 300 |
+| `AUTH_SESSION_ABSOLUTE_SECONDS` | `604800` (7 days) | Seconds from login until a session ends. At least 3600, and not less than the idle limit |
 | `OIDC_ISSUER_URL` | None | Issuer of the Authentik application. Required for `oidc` and `hybrid`. HTTPS |
 | `OIDC_CLIENT_ID` | None | Provider client ID. Required for `oidc` and `hybrid` |
 | `OIDC_CLIENT_SECRET` | None | Provider client secret |
@@ -46,7 +46,7 @@ See [Authentication and local accounts](/en/admin/auth) and [Authentik (SSO)](/e
 | `OIDC_ROLE_MAPPING_JSON` | None | Group → global role mapping. Example: `{"mmt-admins":"admin","mmt-users":"user"}` |
 | `OIDC_DEFAULT_ROLE` | `user` | Role of users in no mapped group |
 | `OIDC_ADMIN_GROUP` | None | Shorthand for `{"<group>":"admin"}`. Without it and the mapping, `mmt-admins` is the administrator group |
-| `OIDC_SCOPES` | `openid profile email` | Requested scopes. `openid` is required. Add `offline_access` for refresh tokens |
+| `OIDC_SCOPES` | `openid profile email offline_access` | Requested scopes. `openid` is required. Refresh tokens also require the Provider's `offline_access` mapping |
 | `OIDC_LABEL` | `Authentik` | Label of the SSO button on the login screen |
 | `OIDC_AUTO_LINK_VERIFIED_EMAIL` | `false` | Whether to link to a local account with the same email automatically |
 | `OIDC_ALLOW_INSECURE_HTTP` | `false` | Allows a loopback HTTP issuer (for tests). Not allowed in production |

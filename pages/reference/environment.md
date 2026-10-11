@@ -37,8 +37,8 @@ chmod 600 .env
 | 変数 | 既定 | 内容 |
 | --- | --- | --- |
 | `AUTH_MODE` | `hybrid` | `local`、`oidc`、`hybrid`、`development` |
-| `AUTH_SESSION_IDLE_SECONDS` | `28800`（8時間） | 操作しないままsessionが切れるまでの秒数。300以上 |
-| `AUTH_SESSION_ABSOLUTE_SECONDS` | `43200`（12時間） | ログインからsessionが切れるまでの秒数。3600以上で、idle以上 |
+| `AUTH_SESSION_IDLE_SECONDS` | `604800`（7日） | 操作しないままsessionが切れるまでの秒数。300以上 |
+| `AUTH_SESSION_ABSOLUTE_SECONDS` | `604800`（7日） | ログインからsessionが切れるまでの秒数。3600以上で、idle以上 |
 | `OIDC_ISSUER_URL` | なし | AuthentikのApplicationのIssuer。`oidc`・`hybrid`で必須。HTTPSのURL |
 | `OIDC_CLIENT_ID` | なし | ProviderのClient ID。`oidc`・`hybrid`で必須 |
 | `OIDC_CLIENT_SECRET` | なし | ProviderのClient Secret |
@@ -46,7 +46,7 @@ chmod 600 .env
 | `OIDC_ROLE_MAPPING_JSON` | なし | group→全体のroleの対応表。例: `{"mmt-admins":"admin","mmt-users":"user"}` |
 | `OIDC_DEFAULT_ROLE` | `user` | 対応表のどのgroupにも入っていない人のrole |
 | `OIDC_ADMIN_GROUP` | なし | `{"<group>":"admin"}`の省略形。対応表も無ければ`mmt-admins`が全体管理者 |
-| `OIDC_SCOPES` | `openid profile email` | 要求するscope。`openid`は必須。refresh tokenを使うなら`offline_access`を足す |
+| `OIDC_SCOPES` | `openid profile email offline_access` | 要求するscope。`openid`は必須。refresh tokenにはProvider側の`offline_access` mappingも必要 |
 | `OIDC_LABEL` | `Authentik` | ログイン画面のSSOボタンの表示名 |
 | `OIDC_AUTO_LINK_VERIFIED_EMAIL` | `false` | 同じメールアドレスのローカルアカウントへ自動で結び付けるか |
 | `OIDC_ALLOW_INSECURE_HTTP` | `false` | loopbackのHTTPのIssuerを許す（試験用）。本番では使えない |
