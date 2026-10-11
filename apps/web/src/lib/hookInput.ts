@@ -27,7 +27,7 @@ import {
   parsePositiveInteger,
   parseStringMap,
 } from './formValues';
-import { RUN_KINDS, parseMaxAttempts } from './executionValidation';
+import { RUN_KINDS, meetsCodeRequirement, parseMaxAttempts } from './executionValidation';
 import { isTargetCompatible } from './runtimeValidation';
 import { buildJobResources, isSiteTarget, parseArraySize } from './siteExecutionInput';
 import { parseUserRunTags } from './reservedRunTags';
@@ -121,11 +121,10 @@ function requiredFamilies(values: FormValues, catalog: HookCatalog): string[] {
 }
 
 export function isHookCodeCompatible(code: CodeVersion, values: FormValues, catalog: HookCatalog) {
-  const kind = getFieldValue(values, 'kind') as RunKind;
-  return (
-    code.taskTypes.includes(kind) &&
-    requiredFamilies(values, catalog).every((family) => code.supportedModelFamilies.includes(family))
-  );
+  return meetsCodeRequirement(code, {
+    taskType: getFieldValue(values, 'kind') as RunKind,
+    families: requiredFamilies(values, catalog),
+  });
 }
 
 /** Input versions an array may split among its members: selected inputs that hold files. */

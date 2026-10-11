@@ -1,8 +1,9 @@
 // Browser check of the model screens that offer values instead of having them typed (fix plan
 // 2026-10-11, 2段目 B-2〜B-4), against the isolated mock API (tests/browserApi.mjs): a model
-// version's weights picked from its training Run (or pasted as artifact://), the model family with
-// candidates and a letter-case warning, why a Task offers no code version, the default code
-// version by name, and alias and metric names offered in the promotion dialogs.
+// version's weights picked from its training Run (pasted as artifact://, or uploaded without saving
+// the version), the model family with candidates and a letter-case warning, why a Task offers no
+// code version, the default code version by name, and alias and metric names offered in the
+// promotion dialogs.
 // Start Vite on MMT_WEB_URL first; MMT_SCREENSHOT_DIR, when set, receives the screenshots.
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
@@ -23,7 +24,8 @@ const RECORDED_METRICS = ['evaluation.duration_match_rate', 'evaluation.wer'];
 /**
  * The shared mock API with what these screens need on top: families qwen3 and qwen2 (a code
  * version lists `Qwen2`, a letter-case slip), a training Run's weights and an upload without a
- * Run, an evaluation rule whose Runs recorded two metrics, and the new lookups of the API.
+ * Run, an evaluation rule whose Runs recorded two metrics, and the saves of models, versions and
+ * promotion policies.
  */
 function createChoicesApi() {
   const api = createBrowserApi();
@@ -95,23 +97,8 @@ function createChoicesApi() {
   const policies = [];
   const versionSaves = [];
   const modelSaves = [];
-  const families = () => {
-    const counts = new Map();
-    const count = (name, field) => {
-      const entry = counts.get(name) ?? { name, modelCount: 0, codeVersionCount: 0 };
-      entry[field] += 1;
-      counts.set(name, entry);
-    };
-    state.models.forEach((item) => count(item.family, 'modelCount'));
-    state.codeVersions.forEach((item) =>
-      new Set(item.supportedModelFamilies).forEach((name) => count(name, 'codeVersionCount')),
-    );
-    return [...counts.values()].sort(
-      (left, right) =>
-        left.name.toLowerCase().localeCompare(right.name.toLowerCase()) ||
-        (left.name < right.name ? -1 : 1),
-    );
-  };
+  // A check may set `gate` to hold each file upload (PUT …/artifacts) and look at the form meanwhile.
+  const heldUploads = { gate: null };
   async function route(route) {
     const request = route.request();
     const url = new URL(request.url());
@@ -121,13 +108,9 @@ function createChoicesApi() {
       route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(payload) });
     const notFound = (entity) => reply({ error: `${entity}が見つかりません`, code: 'not_found' }, 404);
     const projectPath = `/projects/${project.id}`;
-    if (path === `${projectPath}/model-families` && method === 'GET') return reply({ items: families() });
-    const codeVersionMatch = path.match(/^\/projects\/[^/]+\/code-versions\/([^/]+)$/);
-    if (codeVersionMatch && method === 'GET') {
-      const version = state.codeVersions.find((item) => item.id === codeVersionMatch[1]);
-      if (!version) return notFound('CodeVersion');
-      return reply({ code: state.codes.find((code) => code.id === version.codeId), version });
-    }
+    if (path === `${projectPath}/artifacts` && method === 'PUT') await heldUploads.gate;
+    // The shared mock answers the families and the code versions by name; the rule's metric keys
+    // are this check's own, with no evaluation Runs added to the lists the other checks read.
     const metricKeysMatch = path.match(/^\/projects\/[^/]+\/automation-rules\/([^/]+)\/metric-keys$/);
     if (metricKeysMatch && method === 'GET')
       return reply({ items: RECORDED_METRICS, source: 'rule_runs' });
@@ -197,6 +180,7 @@ function createChoicesApi() {
     policies,
     versionSaves,
     modelSaves,
+    heldUploads,
   };
 }
 
@@ -260,6 +244,88 @@ try {
       metadata: {},
     });
     await page.getByRole('link', { name: '2', exact: true }).waitFor();
+    await context.close();
+  }
+
+  for (const viewport of [WIDE, NARROW]) {
+    const suffix = viewport === WIDE ? 'desktop' : 'mobile';
+    // The upload dialog once sat inside the version form, so its submit and its × also submitted
+    // the form and saved an immutable version without weights. Nothing may be saved before 保存.
+    console.log(`Model version (${suffix}): uploading the weights from the form saves no version`);
+    const choices = createChoicesApi();
+    const { api, model } = choices;
+    const { context, page, screenshot } = await openPage({ choices, viewport });
+    await page.goto(`${base}/projects/${api.state.project.id}/models?id=${model.id}`);
+    await page.getByRole('button', { name: 'バージョンを作成', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: `${model.name} · バージョンを作成` });
+    const openUpload = async () => {
+      await dialog.getByRole('button', { name: 'Artifactをアップロード', exact: true }).click();
+      const upload = page.getByRole('dialog', { name: 'Artifactをアップロード' });
+      await upload.waitFor();
+      return upload;
+    };
+    const chooseFile = async (upload, path) => {
+      await upload.locator('input[type=file]').setInputFiles({
+        name: path.split('/').at(-1),
+        mimeType: 'application/octet-stream',
+        buffer: Buffer.from(`weights uploaded from the version form: ${path}`),
+      });
+      await upload.getByRole('textbox', { name: '保存パス' }).fill(path);
+      // The start waits for the check against unfinished uploads; Enter before it does nothing.
+      await upload.locator('footer button.primary:not([disabled])').waitFor();
+    };
+
+    const closing = await openUpload();
+    await closing.locator('header').getByRole('button', { name: '閉じる' }).click();
+    await closing.waitFor({ state: 'detached' });
+    assert.equal(choices.versionSaves.length, 0, 'the upload dialog\'s × saved the version');
+    await dialog.getByRole('button', { name: 'Artifactをアップロード', exact: true }).waitFor();
+
+    const started = await openUpload();
+    await chooseFile(started, 'uploads/weights-by-button.bin');
+    await screenshot(`09-version-weights-upload-${suffix}`);
+    let releaseUpload;
+    choices.heldUploads.gate = new Promise((resolve) => {
+      releaseUpload = resolve;
+    });
+    // Had the start reached the version form, the form would be saved (or the page submitted and
+    // reloaded) before the file goes out, so whichever comes first tells.
+    const firstOf = (waits) =>
+      Promise.race(waits.map(([waiting, outcome]) => waiting.then(() => outcome, () => null)));
+    const isFileUpload = (request) =>
+      request.method() === 'PUT' && request.url().includes('/artifacts?');
+    const isVersionSave = (request) =>
+      request.method() === 'POST' && request.url().endsWith(`/models/${model.id}/versions`);
+    const startOutcome = firstOf([
+      [page.waitForRequest(isFileUpload), 'uploading'],
+      [page.waitForRequest(isVersionSave), 'version saved'],
+      [page.waitForEvent('framenavigated'), 'page reloaded'],
+    ]);
+    await started.getByRole('button', { name: 'アップロードを開始', exact: true }).click();
+    assert.equal(await startOutcome, 'uploading', '［アップロードを開始］ reached the version form');
+    assert.equal(choices.versionSaves.length, 0, '［アップロードを開始］ saved the version');
+    releaseUpload();
+    choices.heldUploads.gate = null;
+    await started.waitFor({ state: 'detached' });
+    await dialog.getByText('uploads/weights-by-button.bin', { exact: true }).waitFor();
+    assert.equal(choices.versionSaves.length, 0, 'the finished upload saved the version');
+    await screenshot(`10-version-weights-uploaded-${suffix}`);
+
+    // Enter in the upload's path field submits only the upload.
+    await dialog.getByRole('button', { name: '選び直す', exact: true }).click();
+    const entered = await openUpload();
+    await chooseFile(entered, 'uploads/weights-by-enter.bin');
+    await entered.getByRole('textbox', { name: '保存パス' }).press('Enter');
+    await entered.waitFor({ state: 'detached' });
+    await dialog.getByText('uploads/weights-by-enter.bin', { exact: true }).waitFor();
+    assert.equal(choices.versionSaves.length, 0, 'Enter in the upload saved the version');
+
+    await dialog.getByRole('button', { name: '保存', exact: true }).click();
+    await dialog.waitFor({ state: 'detached' });
+    const uploaded = api.state.artifacts.find((artifact) => artifact.path === 'uploads/weights-by-enter.bin');
+    assert.deepEqual(choices.versionSaves, [
+      { parentModelVersionIds: [], artifactId: uploaded.id, metadata: {} },
+    ]);
     await context.close();
   }
 

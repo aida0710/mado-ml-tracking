@@ -3,7 +3,10 @@
 
 const BLOCK_BYTES = 64;
 const WORD_BYTES = 4;
+// A block is read as 16 big-endian words, the first words of the message schedule.
+const BLOCK_WORDS = BLOCK_BYTES / WORD_BYTES;
 const SCHEDULE_WORDS = 64;
+const BITS_PER_BYTE = 8;
 // The message length is appended as a 64-bit big-endian bit count after the 0x80 marker byte.
 const LENGTH_FIELD_BYTES = 8;
 const MARKER_BYTE = 0x80;
@@ -25,13 +28,24 @@ const INITIAL_HASH = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f
 
 const rotateRight = (word: number, bits: number) => (word >>> bits) | (word << (32 - bits));
 
+/**
+ * The running hash, and the message schedule each block is expanded into. The schedule buffer is
+ * reused for every block so that hashing a large part allocates nothing per block.
+ */
+interface HashState {
+  hash: Uint32Array;
+  schedule: Uint32Array;
+}
+
 /** Lowercase hex digest, the same form the API stores for each received part. */
 export function computeSha256Hex(bytes: Uint8Array): string {
-  const hash = Uint32Array.from(INITIAL_HASH);
-  const schedule = new Uint32Array(SCHEDULE_WORDS);
+  const state: HashState = {
+    hash: Uint32Array.from(INITIAL_HASH),
+    schedule: new Uint32Array(SCHEDULE_WORDS),
+  };
   const fullBlockBytes = bytes.length - (bytes.length % BLOCK_BYTES);
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  for (let offset = 0; offset < fullBlockBytes; offset += BLOCK_BYTES) compressBlock(hash, schedule, view, offset);
+  for (let offset = 0; offset < fullBlockBytes; offset += BLOCK_BYTES) compressBlock(state, view, offset);
 
   const remainder = bytes.length - fullBlockBytes;
   const tailBytes = remainder + 1 + LENGTH_FIELD_BYTES <= BLOCK_BYTES ? BLOCK_BYTES : 2 * BLOCK_BYTES;
@@ -39,17 +53,19 @@ export function computeSha256Hex(bytes: Uint8Array): string {
   tail.set(bytes.subarray(fullBlockBytes));
   tail[remainder] = MARKER_BYTE;
   const tailView = new DataView(tail.buffer);
-  const bitLength = bytes.length * 8;
+  const bitLength = bytes.length * BITS_PER_BYTE;
   tailView.setUint32(tailBytes - LENGTH_FIELD_BYTES, Math.floor(bitLength / TWO_TO_32));
   tailView.setUint32(tailBytes - WORD_BYTES, bitLength >>> 0);
-  for (let offset = 0; offset < tailBytes; offset += BLOCK_BYTES) compressBlock(hash, schedule, tailView, offset);
+  for (let offset = 0; offset < tailBytes; offset += BLOCK_BYTES) compressBlock(state, tailView, offset);
 
-  return Array.from(hash, (word) => word.toString(16).padStart(8, '0')).join('');
+  return Array.from(state.hash, (word) => word.toString(16).padStart(8, '0')).join('');
 }
 
-function compressBlock(hash: Uint32Array, schedule: Uint32Array, view: DataView, offset: number) {
-  for (let index = 0; index < 16; index += 1) schedule[index] = view.getUint32(offset + index * WORD_BYTES);
-  for (let index = 16; index < SCHEDULE_WORDS; index += 1) {
+/** Folds the block at `offset` of `view` into the running hash. */
+function compressBlock({ hash, schedule }: HashState, view: DataView, offset: number) {
+  for (let index = 0; index < BLOCK_WORDS; index += 1) schedule[index] = view.getUint32(offset + index * WORD_BYTES);
+  // Each later word mixes the words 16, 15, 7 and 2 places before it (FIPS 180-4, 6.2.2 step 1).
+  for (let index = BLOCK_WORDS; index < SCHEDULE_WORDS; index += 1) {
     const before15 = schedule[index - 15]!;
     const before2 = schedule[index - 2]!;
     const sigma0 = rotateRight(before15, 7) ^ rotateRight(before15, 18) ^ (before15 >>> 3);

@@ -1,6 +1,7 @@
 // The commands with a computer's ID filled in, against a development-mode API (AUTH_MODE=development)
-// behind the Web on MMT_WEB_URL: an ssh computer's details give its ID and the worker's install
-// and environment with that ID; a manual site's details, the Jobs notice and the launch review
+// behind the Web on MMT_WEB_URL: an ssh computer's details give its managers its ID and the
+// worker's install and environment with that ID, and those who only use it the ID and who sets
+// the worker up; a manual site's details, the Jobs notice and the launch review
 // give the submit command with the URL to connect to, how to install the command, and where and
 // with which scopes the token is issued (never the token itself). The token button of the Jobs
 // page issues a token with read and jobs:write, and a viewer gets no button. At 390px the pages
@@ -170,6 +171,16 @@ try {
   await workerSetup.scrollIntoViewIfNeeded();
   await screenshot(admin.page, '01-ssh-computer-worker-setup', { fullPage: true });
 
+  console.log('ssh computer: one who only uses it gets its ID and who sets the worker up, not the setup');
+  const workerSetUpBy = `所有者（${admin.user.displayName}さん）か全体管理者が設定します。`;
+  await editor.page.goto(`${base}/settings/computers`);
+  await editor.page.getByRole('button', { name: ssh.name, exact: true }).click();
+  const editorSummary = editor.page.getByTestId('computer-summary');
+  assert.equal(await copyValue(editor.page, editorSummary), ssh.id);
+  assert.equal(await editorSummary.getByTestId('worker-set-up-by').textContent(), workerSetUpBy);
+  assert.equal(await editor.page.getByTestId('worker-setup').count(), 0);
+  await screenshot(editor.page, '07-ssh-computer-non-manager', { fullPage: true });
+
   console.log('Manual site: its ID, the submit commands and the setup with this URL');
   await editor.page.goto(`${base}/settings/computers`);
   await editor.page.getByRole('button', { name: site.name, exact: true }).click();
@@ -235,9 +246,16 @@ try {
   await phone.page.getByTestId('site-computer-details').locator('details.submit-cli-setup summary').click();
   await assertNoSidewaysScroll(phone.page, 'the manual site details');
   await phone.page.getByRole('button', { name: ssh.name, exact: true }).click();
-  await phone.page.getByTestId('worker-setup').waitFor();
+  await phone.page.getByTestId('worker-set-up-by').waitFor();
+  assert.equal(await phone.page.getByTestId('worker-setup').count(), 0);
   await assertNoSidewaysScroll(phone.page, 'the ssh computer details');
   await screenshot(phone.page, '06-phone-ssh-computer', { fullPage: true });
+  const phoneAdmin = await signIn(adminEmail, '全体管理者', PHONE);
+  await phoneAdmin.page.goto(`${base}/settings/computers`);
+  await phoneAdmin.page.getByRole('button', { name: ssh.name, exact: true }).click();
+  await phoneAdmin.page.getByTestId('worker-setup').waitFor();
+  await assertNoSidewaysScroll(phoneAdmin.page, 'the ssh computer details of its manager');
+  await screenshot(phoneAdmin.page, '08-phone-ssh-computer-manager', { fullPage: true });
 
   assert.deepEqual(pageErrors, []);
   console.log('computer guides: ok');

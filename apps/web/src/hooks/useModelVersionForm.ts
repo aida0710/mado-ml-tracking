@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Model, ModelVersion } from '@mmt/contracts';
+import type { Artifact, Model, ModelVersion } from '@mmt/contracts';
 import { registryApi } from '../api/registry';
 import { trackingApi } from '../api/tracking';
 import {
@@ -15,10 +15,11 @@ import { useQuery } from './useQuery';
 
 /**
  * State of the［バージョンを作成］form: the draft, the training Runs it may name as the source, the
- * catalog its parents and default code come from, and saving.
+ * catalog its parents and default code come from, uploading the weights, and saving.
  */
 export function useModelVersionForm({ projectId, model }: { projectId: string; model: Model }) {
   const [draft, setDraft] = useState<ModelVersionDraft>(EMPTY_MODEL_VERSION_DRAFT);
+  const [isUploadingWeights, setIsUploadingWeights] = useState(false);
   const catalog = useExecutionCatalog(projectId);
   const sourceRuns = useQuery(`${projectId}:source-runs`, async (signal) =>
     (
@@ -38,6 +39,12 @@ export function useModelVersionForm({ projectId, model }: { projectId: string; m
     setDraft((previous) => withSourceRun(previous, sourceRunId));
     mutation.clearError();
   }
+  /** The uploaded file becomes the weights, as if picked from the list. */
+  function selectUploadedWeights(weightsArtifact: Artifact) {
+    setDraft((previous) => ({ ...previous, weightsArtifact }));
+    setIsUploadingWeights(false);
+    mutation.clearError();
+  }
   function save(): Promise<ModelVersion | undefined> {
     return mutation.run(() =>
       registryApi.createModelVersion(projectId, model.id, buildModelVersionInput(draft)),
@@ -49,6 +56,10 @@ export function useModelVersionForm({ projectId, model }: { projectId: string; m
     chooseSourceRun,
     catalog,
     sourceRuns,
+    isUploadingWeights,
+    openWeightsUpload: () => setIsUploadingWeights(true),
+    closeWeightsUpload: () => setIsUploadingWeights(false),
+    selectUploadedWeights,
     save,
     pending: mutation.pending,
     error: mutation.error,

@@ -7,6 +7,7 @@ import { Dialog } from '../components/Dialog';
 import { ErrorNotice } from '../components/Feedback';
 import { LabeledField } from '../components/LabeledField';
 import { MissingCodeNotice } from '../components/MissingCodeNotice';
+import { ArtifactUploadDialog } from './ArtifactUploadDialog';
 import { parseArtifactReference } from '../lib/artifactReference';
 import { buildCatalogOptions, withEmptyOption } from '../lib/catalogOptions';
 import { explainMissingCodeCandidates } from '../lib/codeCandidateReason';
@@ -19,7 +20,9 @@ import { text } from '../i18n/catalog';
 /**
  * Registers a version of `model` by hand, in the order the work goes: its number (left empty, the
  * API numbers it), the training Run that made it, the weights picked from that Run's Artifacts
- * (or the Project's, or pasted as an id), then parents and the default code of the same family.
+ * (or the Project's, pasted as an id, or uploaded), then parents and the default code of the same
+ * family. The upload dialog is a sibling of this one, not inside its form: a version is immutable,
+ * and starting or closing the upload must not save it.
  */
 export function ModelVersionDialog({
   model,
@@ -55,153 +58,168 @@ export function ModelVersionDialog({
   const pastedWeightsUri = parseArtifactReference(draft.weightsUri);
   const title = `${model.name} · ${text.newVersion}`;
   return (
-    <Dialog title={title} onClose={onClose} busy={form.pending}>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          void form.save().then((version) => {
-            if (version) onSaved(version);
-          });
-        }}
-      >
-        <fieldset disabled={form.pending}>
-          <LabeledField
-            label={text.version}
-            hint={
-              model.nextVersion
-                ? modelsTextTemplates.versionAutoNumber(model.nextVersion)
-                : text.versionAutoNumberHint
-            }
-          >
-            {(id, hintId) => (
-              <input
-                id={id}
-                className="mono"
-                value={draft.version}
-                placeholder={model.nextVersion}
-                aria-describedby={hintId}
-                onChange={(event) => form.change({ version: event.target.value })}
-              />
+    <>
+      <Dialog title={title} onClose={onClose} busy={form.pending}>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void form.save().then((version) => {
+              if (version) onSaved(version);
+            });
+          }}
+        >
+          <fieldset disabled={form.pending}>
+            <LabeledField
+              label={text.version}
+              hint={
+                model.nextVersion
+                  ? modelsTextTemplates.versionAutoNumber(model.nextVersion)
+                  : text.versionAutoNumberHint
+              }
+            >
+              {(id, hintId) => (
+                <input
+                  id={id}
+                  className="mono"
+                  value={draft.version}
+                  placeholder={model.nextVersion}
+                  aria-describedby={hintId}
+                  onChange={(event) => form.change({ version: event.target.value })}
+                />
+              )}
+            </LabeledField>
+            <LabeledField label={text.sourceRun} hint={text.sourceRunHint}>
+              {(id, hintId) => (
+                <select
+                  id={id}
+                  value={draft.sourceRunId}
+                  aria-describedby={hintId}
+                  disabled={form.sourceRuns.loading}
+                  onChange={(event) => form.chooseSourceRun(event.target.value)}
+                >
+                  {withEmptyOption(
+                    (form.sourceRuns.value ?? []).map((run) => ({
+                      value: run.id,
+                      label: modelsTextTemplates.sourceRunOption({
+                        name: run.name,
+                        kind: text[run.kind],
+                        date: formatDate(run.createdAt),
+                        status: text[run.status],
+                      }),
+                    })),
+                  ).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </LabeledField>
+            <ErrorNotice message={form.sourceRuns.error} retry={form.sourceRuns.reload} />
+            <ArtifactPickerField
+              label={text.modelVersionWeightsArtifact}
+              hint={
+                draft.sourceRunId ? text.weightsArtifactHintRun : text.weightsArtifactHintProject
+              }
+              projectId={project.id}
+              runId={draft.sourceRunId || undefined}
+              input={draft.weightsSearch}
+              onInputChange={(weightsSearch) => form.change({ weightsSearch })}
+              selected={draft.weightsArtifact}
+              onSelect={(weightsArtifact) => form.change({ weightsArtifact })}
+              onRequestUpload={form.openWeightsUpload}
+            />
+            <LabeledField label={text.weightsUri} hint={text.weightsUriHint}>
+              {(id, hintId) => (
+                <input
+                  id={id}
+                  className="mono"
+                  value={draft.weightsUri}
+                  aria-describedby={hintId}
+                  onChange={(event) => form.change({ weightsUri: event.target.value })}
+                />
+              )}
+            </LabeledField>
+            {pastedWeightsUri && !draft.weightsArtifact && (
+              <p className="notice" role="status">
+                <span>{text.weightsUriIsArtifact}</span>
+                <button
+                  type="button"
+                  className="button small"
+                  onClick={() => form.change({ weightsSearch: draft.weightsUri, weightsUri: '' })}
+                >
+                  {text.weightsUriUseAsArtifact}
+                </button>
+              </p>
             )}
-          </LabeledField>
-          <LabeledField label={text.sourceRun} hint={text.sourceRunHint}>
-            {(id, hintId) => (
-              <select
-                id={id}
-                value={draft.sourceRunId}
-                aria-describedby={hintId}
-                disabled={form.sourceRuns.loading}
-                onChange={(event) => form.chooseSourceRun(event.target.value)}
-              >
-                {withEmptyOption(
-                  (form.sourceRuns.value ?? []).map((run) => ({
-                    value: run.id,
-                    label: modelsTextTemplates.sourceRunOption({
-                      name: run.name,
-                      kind: text[run.kind],
-                      date: formatDate(run.createdAt),
-                      status: text[run.status],
-                    }),
-                  })),
-                ).map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+            <ErrorNotice message={form.catalog.error} retry={form.catalog.reload} />
+            {catalog ? (
+              <>
+                <CheckboxList
+                  legend={text.parents}
+                  options={parentOptions}
+                  selected={draft.parentVersionIds}
+                  onToggle={(versionId) =>
+                    form.change({
+                      parentVersionIds: toggleValue(draft.parentVersionIds, versionId),
+                    })
+                  }
+                  empty={text.parentsEmpty}
+                  hint={text.parentsHint}
+                />
+                <LabeledField label={text.defaultCode} hint={text.defaultCodeHint}>
+                  {(id, hintId) => (
+                    <select
+                      id={id}
+                      value={draft.defaultCodeVersionId}
+                      aria-describedby={hintId}
+                      onChange={(event) =>
+                        form.change({ defaultCodeVersionId: event.target.value })
+                      }
+                    >
+                      {withEmptyOption(defaultCodeOptions).map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </LabeledField>
+                {missingCode && <MissingCodeNotice reason={missingCode} />}
+              </>
+            ) : (
+              !form.catalog.error && <p className="muted">{text.loading}</p>
             )}
-          </LabeledField>
-          <ErrorNotice message={form.sourceRuns.error} retry={form.sourceRuns.reload} />
-          <ArtifactPickerField
-            label={text.modelVersionWeightsArtifact}
-            hint={
-              draft.sourceRunId ? text.weightsArtifactHintRun : text.weightsArtifactHintProject
-            }
-            projectId={project.id}
-            runId={draft.sourceRunId || undefined}
-            input={draft.weightsSearch}
-            onInputChange={(weightsSearch) => form.change({ weightsSearch })}
-            selected={draft.weightsArtifact}
-            onSelect={(weightsArtifact) => form.change({ weightsArtifact })}
-          />
-          <LabeledField label={text.weightsUri} hint={text.weightsUriHint}>
-            {(id, hintId) => (
-              <input
-                id={id}
-                className="mono"
-                value={draft.weightsUri}
-                aria-describedby={hintId}
-                onChange={(event) => form.change({ weightsUri: event.target.value })}
-              />
-            )}
-          </LabeledField>
-          {pastedWeightsUri && !draft.weightsArtifact && (
-            <p className="notice" role="status">
-              <span>{text.weightsUriIsArtifact}</span>
-              <button
-                type="button"
-                className="button small"
-                onClick={() => form.change({ weightsSearch: draft.weightsUri, weightsUri: '' })}
-              >
-                {text.weightsUriUseAsArtifact}
-              </button>
-            </p>
-          )}
-          <ErrorNotice message={form.catalog.error} retry={form.catalog.reload} />
-          {catalog ? (
-            <>
-              <CheckboxList
-                legend={text.parents}
-                options={parentOptions}
-                selected={draft.parentVersionIds}
-                onToggle={(versionId) =>
-                  form.change({ parentVersionIds: toggleValue(draft.parentVersionIds, versionId) })
-                }
-                empty={text.parentsEmpty}
-                hint={text.parentsHint}
-              />
-              <LabeledField label={text.defaultCode} hint={text.defaultCodeHint}>
-                {(id, hintId) => (
-                  <select
-                    id={id}
-                    value={draft.defaultCodeVersionId}
-                    aria-describedby={hintId}
-                    onChange={(event) => form.change({ defaultCodeVersionId: event.target.value })}
-                  >
-                    {withEmptyOption(defaultCodeOptions).map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </LabeledField>
-              {missingCode && <MissingCodeNotice reason={missingCode} />}
-            </>
-          ) : (
-            !form.catalog.error && <p className="muted">{text.loading}</p>
-          )}
-          <LabeledField label={text.metadata}>
-            {(id) => (
-              <textarea
-                id={id}
-                rows={4}
-                value={draft.metadata}
-                onChange={(event) => form.change({ metadata: event.target.value })}
-              />
-            )}
-          </LabeledField>
-        </fieldset>
-        <ErrorNotice message={form.error} />
-        <footer>
-          <button type="button" className="button" onClick={onClose} disabled={form.pending}>
-            {text.cancel}
-          </button>
-          <button className="button primary" disabled={form.pending}>
-            {form.pending ? text.loading : text.save}
-          </button>
-        </footer>
-      </form>
-    </Dialog>
+            <LabeledField label={text.metadata}>
+              {(id) => (
+                <textarea
+                  id={id}
+                  rows={4}
+                  value={draft.metadata}
+                  onChange={(event) => form.change({ metadata: event.target.value })}
+                />
+              )}
+            </LabeledField>
+          </fieldset>
+          <ErrorNotice message={form.error} />
+          <footer>
+            <button type="button" className="button" onClick={onClose} disabled={form.pending}>
+              {text.cancel}
+            </button>
+            <button className="button primary" disabled={form.pending}>
+              {form.pending ? text.loading : text.save}
+            </button>
+          </footer>
+        </form>
+      </Dialog>
+      {form.isUploadingWeights && (
+        <ArtifactUploadDialog
+          projectId={project.id}
+          runId={null}
+          onClose={form.closeWeightsUpload}
+          onSaved={form.selectUploadedWeights}
+        />
+      )}
+    </>
   );
 }

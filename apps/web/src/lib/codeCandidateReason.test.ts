@@ -1,6 +1,7 @@
-import type { CodeVersion } from '@mmt/contracts';
+import type { CodeVersion, RunKind } from '@mmt/contracts';
 import { describe, expect, it } from 'vitest';
 import { explainMissingCodeCandidates } from './codeCandidateReason';
+import { meetsCodeRequirement } from './executionValidation';
 
 const code = (fields: Partial<CodeVersion>): CodeVersion => ({
   id: 'code-version',
@@ -65,5 +66,25 @@ describe('コードバージョンが候補に出ない理由', () => {
 
   it('モデルを選んでいなければ系列では絞らない', () => {
     expect(explainMissingCodeCandidates({ codeVersions: [code({})], taskType: 'inference' })).toBeNull();
+  });
+
+  it('理由を出すのは、候補に出るコードバージョン（meetsCodeRequirement を満たすもの）が無いときだけ', () => {
+    const inference = code({ supportedModelFamilies: ['qwen3'], taskTypes: ['inference'] });
+    const training = code({ supportedModelFamilies: ['Qwen2'], taskTypes: ['training'] });
+    const codeVersionSets = [[], [inference], [training], [inference, training]];
+    const taskTypes: (RunKind | undefined)[] = [undefined, 'inference', 'training', 'evaluation'];
+    const families = [undefined, 'qwen3', 'Qwen2', 'linear'];
+    const cases = codeVersionSets.flatMap((codeVersions) =>
+      taskTypes.flatMap((taskType) => families.map((family) => ({ codeVersions, taskType, family }))),
+    );
+    for (const { codeVersions, taskType, family } of cases) {
+      const isOffered = codeVersions.some((version) =>
+        meetsCodeRequirement(version, { taskType, families: family ? [family] : [] }),
+      );
+      const reason = explainMissingCodeCandidates({ codeVersions, taskType, family });
+      expect(reason === null, JSON.stringify({ count: codeVersions.length, taskType, family })).toBe(
+        isOffered,
+      );
+    }
   });
 });

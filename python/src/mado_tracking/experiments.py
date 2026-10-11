@@ -17,6 +17,13 @@ if TYPE_CHECKING:
 
 # Set by the worker for a Job's Run, and by people who record into one Experiment from a shell.
 EXPERIMENT_ID_VARIABLE = "MMT_EXPERIMENT_ID"
+# What the API strips from both ends of a name before saving and comparing it (zod's .trim(), that
+# is JavaScript's String.prototype.trim): its white space and line terminators. Python's own
+# str.strip() differs at the edges (it keeps U+FEFF and also strips U+001C-U+001F and U+0085).
+API_TRIMMED_CHARACTERS = (
+    "\t\n\v\f\r \u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a"
+    "\u2028\u2029\u202f\u205f\u3000\ufeff"
+)
 
 
 def find_experiment(client: Client, project_id: str, *, name: str) -> dict[str, Any] | None:
@@ -31,11 +38,14 @@ def find_experiment(client: Client, project_id: str, *, name: str) -> dict[str, 
 def ensure_experiment(client: Client, project_id: str, *, name: str, description: str = "") -> dict[str, Any]:
     """Return the Experiment named ``name``, creating it when absent.
 
+    White space at either end is dropped first, as the API does when it saves and compares names;
+    otherwise ``"exp "`` would be created as ``"exp"`` and never found again by its own name.
     A concurrent creator can win between the lookup and the POST; the 409 is then resolved by
     reading the Experiment it created. A deleted Experiment keeps its name, so it is reported
     instead of being silently replaced.
     """
-    if not name.strip():
+    name = name.strip(API_TRIMMED_CHARACTERS)
+    if not name:
         raise ConfigurationError("experiment_name must not be empty")
     experiment = find_experiment(client, project_id, name=name)
     if experiment is not None:

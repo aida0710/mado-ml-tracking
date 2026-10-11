@@ -47,6 +47,10 @@ export const computersText = {
 // Text that embeds values.
 export const computersTextTemplates = {
   computerLauncherSeen: (name: string, lastSeen: string) => `${name}（最終応答 ${lastSeen}）`,
+  // The「workerの設定」row for those who may not manage the computer. Without an owner (a computer
+  // from before owners), only global administrators manage it.
+  workerSetUpBy: (ownerName: string | null) =>
+    ownerName ? `所有者（${ownerName}さん）か全体管理者が設定します。` : '全体管理者が設定します。',
 };
 
 export const computerVisibilityHints = {

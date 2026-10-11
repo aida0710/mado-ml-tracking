@@ -5,7 +5,7 @@ import type { CreateTask, LaunchTask } from '../api/inputs';
 import type { ExecutionCatalog } from '../types/executionCatalog';
 import type { FormValues } from '../types/form';
 import { getFieldValue, getSelectedValues, parseJsonObject, parseStringMap } from './formValues';
-import { isCodeCompatible, RUN_KINDS } from './executionValidation';
+import { isCodeCompatible, meetsCodeRequirement, RUN_KINDS } from './executionValidation';
 import { validateTargetRuntime } from './runtimeValidation';
 import { validateFilePath } from './codeWorkspace';
 import { formatClockDuration } from './clockDuration';
@@ -103,7 +103,7 @@ export function getOutputModelFamily(values: FormValues, models: Model[]): strin
 }
 
 export function getDefaultCodeCandidates(codeVersions: CodeVersion[], family: string): CodeVersion[] {
-  return family ? codeVersions.filter((version) => version.supportedModelFamilies.includes(family)) : [];
+  return family ? codeVersions.filter((version) => meetsCodeRequirement(version, { families: [family] })) : [];
 }
 
 function buildEnabledOutputModel({ values, catalog, code, previous }: {
