@@ -17,7 +17,7 @@ import { serviceAccountsTextTemplates } from '../i18n/serviceAccounts';
  * admins manage them, so the section is hidden from everyone else.
  */
 export function ProjectServiceAccounts({ access }: { access: ServiceAccountsState }) {
-  const { isProjectAdmin } = useProject();
+  const { project, isProjectAdmin } = useProject();
   const [editing, setEditing] = useState<ServiceAccount | 'new' | null>(null);
   const [issuingFor, setIssuingFor] = useState<ServiceAccount | null>(null);
   const [disabling, setDisabling] = useState<ServiceAccount | null>(null);
@@ -137,6 +137,7 @@ export function ProjectServiceAccounts({ access }: { access: ServiceAccountsStat
       )}
       {issuingFor && (
         <TokenDialog
+          project={project}
           owner={{
             serviceAccount: issuingFor,
             issue: (request) => access.issueServiceAccountToken(issuingFor.id, request),

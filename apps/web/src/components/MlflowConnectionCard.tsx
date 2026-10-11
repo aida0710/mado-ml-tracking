@@ -50,6 +50,7 @@ export function MlflowConnectionCard({ onTokenCreated }: { onTokenCreated: () =>
       </details>
       {showTokenDialog && (
         <TokenDialog
+          project={project}
           initialScopes={MLFLOW_TOKEN_SCOPES}
           onClose={() => setShowTokenDialog(false)}
           onCreated={onTokenCreated}

@@ -72,7 +72,9 @@ export function ProjectTokens({ projectTokens }: { projectTokens: QueryState<Tok
           </Resource>
         </section>
       )}
-      {showCreate && <TokenDialog onClose={() => setShowCreate(false)} onCreated={reloadAll} />}
+      {showCreate && (
+        <TokenDialog project={project} onClose={() => setShowCreate(false)} onCreated={reloadAll} />
+      )}
       {revokingToken && (
         <ConfirmDialog
           title={text.revokeToken}

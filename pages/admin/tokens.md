@@ -9,7 +9,7 @@ SDK、MLflow、worker、CIからAPIを使うときは、API tokenで認証しま
 
 | 種類 | 所有者 | 発行する場所 | こんなときに向いています |
 | --- | --- | --- | --- |
-| 個人のAPI token | ログインしたユーザー | ［プロジェクト設定］の「自分のAPI token」、「MLflow 3から接続」 | 自分のPCやノートブックからRunを記録する |
+| 個人のAPI token | ログインしたユーザー | ［アカウント］または［プロジェクト設定］の「自分のAPI token」、「MLflow 3から接続」 | 自分のPCやノートブックからRunを記録する |
 | Service Accountのtoken | Service Account（人に紐付かない） | ［プロジェクト設定］の「Service Accounts」 | worker、自動実行、CIなど長く動くもの |
 | Job限定token | Runの作成者 | workerがJobごとに自動で受け取る | 実行コードの中からRunへ記録する。人が発行することはありません |
 
@@ -39,7 +39,7 @@ tokenで操作するときは、scopeに加えて、所有者の現在の実効R
 
 ## 個人のAPI tokenを発行する
 
-1. ［プロジェクト設定］を開き、「自分のAPI token」の［API tokenを発行］を押します。
+1. ユーザーメニューの［アカウント］を開き、「自分のAPI token」の右上の［API tokenを発行］を押します。対象のプロジェクトを選んで［次へ］を押します。［プロジェクト設定］の同じボタンからも発行できます。
 2. 名前、scope、有効期限を選んで［保存］を押します。
 
 | 項目 | 入力値の例 |
