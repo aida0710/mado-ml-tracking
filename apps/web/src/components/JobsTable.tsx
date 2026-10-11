@@ -14,6 +14,7 @@ import {
 } from '../lib/jobDisplay';
 import { text } from '../i18n/catalog';
 import { jobsTextTemplates } from '../i18n/jobs';
+import { useComputerNames } from '../hooks/useComputerNames';
 
 export type JobAction = 'cancel' | 'retry' | 'resumeLatest';
 
@@ -116,6 +117,7 @@ export function JobsTable({
   onAction: (jobId: string, action: JobAction) => void;
 }) {
   useLocale();
+  const computerName = useComputerNames(targets);
   return (
     <ResponsiveTable
       rows={jobs}
@@ -183,7 +185,7 @@ export function JobsTable({
           key: 'target',
           priority: 'secondary',
           header: text.target,
-          render: (job) => targets.find((target) => target.id === job.targetId)?.name ?? job.targetId,
+          render: (job) => computerName(job.targetId),
         },
         {
           key: 'gpu',
