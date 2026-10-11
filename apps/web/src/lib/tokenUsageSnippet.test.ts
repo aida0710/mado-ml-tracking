@@ -128,3 +128,19 @@ describe('MLflow 3の接続案内', () => {
     expect(JSON.stringify(logged)).not.toContain(TOKEN);
   });
 });
+
+describe('MLflow 3の例の実験', () => {
+  it('実験を選んでいれば、その名前を set_experiment に入れる（引用符はPythonの文字列として逃がす）', () => {
+    const { python } = buildMlflowConnectionSnippets({
+      origin: 'http://host',
+      projectId: PROJECT_ID,
+      experimentName: '音声 "A" 版',
+    });
+    expect(python).toContain('mlflow.set_experiment("音声 \\"A\\" 版")');
+  });
+
+  it('実験を選んでいなければ、例の名前で set_experiment する', () => {
+    const { python } = buildMlflowConnectionSnippets({ origin: 'http://host', projectId: PROJECT_ID });
+    expect(python).toContain('mlflow.set_experiment("my-experiment")');
+  });
+});

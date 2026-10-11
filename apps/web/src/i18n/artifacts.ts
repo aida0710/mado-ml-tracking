@@ -72,6 +72,14 @@ export const artifactsText = {
   artifactNoCatalogResults: '条件に合うArtifactはありません',
   artifactNoRun: 'Runなし',
   artifactBackToList: 'ファイル一覧へ戻る',
+  // Picking one Artifact in a form (ArtifactPickerField): search by path or paste its id.
+  artifactPickerPlaceholder: '保存パスで検索、または ID・artifact://… を貼り付け',
+  artifactPickerEmpty: 'Artifactはまだありません。',
+  artifactPickerEmptyRun: 'このRunにはArtifactがありません。',
+  artifactPickerEmptySearch: '一致するArtifactがありません。',
+  artifactPickerNotFound: 'このプロジェクトに、そのIDのArtifactはありません。',
+  artifactPickerChooseAgain: '選び直す',
+  artifactPickerOtherRun: '選んだRunとは別のRun（またはRunなし）のArtifactです。',
 } as const;
 
 export const artifactsTextTemplates = {

@@ -9,7 +9,7 @@ The SDK, MLflow, workers, and CI authenticate to the API with API tokens. There 
 
 | Kind | Owner | Where it is issued | Good for |
 | --- | --- | --- | --- |
-| Personal API token | The signed-in user | **自分のAPI token** (My API tokens) in **プロジェクト設定** (Project settings), or **MLflow 3から接続** (Connect from MLflow 3) | Recording Runs from your own PC or notebook |
+| Personal API token | The signed-in user | **自分のAPI token** (My API tokens) in **アカウント** (Account) or **プロジェクト設定** (Project settings), or **MLflow 3から接続** (Connect from MLflow 3) | Recording Runs from your own PC or notebook |
 | Service Account token | A Service Account (not tied to a person) | **Service Accounts** in **プロジェクト設定** | Long-running workers, automation, CI |
 | Job token | The creator of the Run | Workers receive one automatically for each Job | Recording to the Run from the running code. Nobody issues these by hand |
 
@@ -39,7 +39,7 @@ An expired token returns 401. Issue a new token and replace the old one before i
 
 ## Issue a personal API token
 
-1. Open **プロジェクト設定** (Project settings) and click **API tokenを発行** (Issue API token) under **自分のAPI token**.
+1. Open **アカウント** (Account) from the user menu and click **API tokenを発行** (Issue API token) at the top right of **自分のAPI token**. Choose the Project and click **次へ** (Next). You can also issue a token from the same button in **プロジェクト設定** (Project settings).
 2. Enter a name, scopes, and expiry, and click **保存** (Save).
 
 | Field | Example |

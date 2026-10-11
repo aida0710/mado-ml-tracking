@@ -1,8 +1,7 @@
 import type { ExperimentTask, RunOutputRegistration, TaskExecution, TaskRunPage } from '@mmt/contracts';
 import type { CreateTask, LaunchTask, UpdateTask } from './inputs';
-import { encodeId, invalidResponseError, jsonRequest, projectPath, request, RequestError, requestItems } from './http';
+import { encodeId, invalidResponseError, isNotFoundError, jsonRequest, projectPath, request, requestItems } from './http';
 
-const HTTP_NOT_FOUND = 404;
 const REGISTRATION_STATUSES: RunOutputRegistration['status'][] = ['registered', 'failed', 'skipped'];
 
 // Match the API's bounded default rather than polling the entire task history.
@@ -39,7 +38,7 @@ export const tasksApi = {
       if (registration && !REGISTRATION_STATUSES.includes(registration.status)) throw invalidResponseError();
       return registration ?? null;
     } catch (error) {
-      if (error instanceof RequestError && error.status === HTTP_NOT_FOUND) return null;
+      if (isNotFoundError(error)) return null;
       throw error;
     }
   },

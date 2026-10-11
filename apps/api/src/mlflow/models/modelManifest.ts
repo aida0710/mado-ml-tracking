@@ -16,11 +16,15 @@ const MODEL_BODY_PATH_FIELDS = [
   'model_binary',
   'local_base_model_path',
 ];
-// Default filenames are used only when the captured MLmodel has no body path fields.
+// Default filenames are used only when the MLmodel could not be read (over the capture limit,
+// invalid YAML) or has no body path fields. model.skops and data/model.pt2 are what
+// mlflow.sklearn and mlflow.pytorch save by default in MLflow 3.17.
 const DEFAULT_WEIGHT_PATHS = [
   'model.pkl',
+  'model.skops',
   'python_model.pkl',
   'data/model.pth',
+  'data/model.pt2',
   'model.pth',
   'model.pt',
   'model.onnx',

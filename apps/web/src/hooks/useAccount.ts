@@ -9,5 +9,5 @@ export function useAccount() {
   const tokens = useQuery('personal-tokens', administrationApi.tokens);
   const projects = useQuery('projects', administrationApi.projects);
   const projectNames = new Map(projects.value?.map((project) => [project.id, project.name]));
-  return { account, tokens, projectNames };
+  return { account, tokens, projects, projectNames };
 }

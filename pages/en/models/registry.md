@@ -39,7 +39,7 @@ Version fields:
 You need the editor role in the Project. An API token also needs the `registry:write` scope.
 
 1. Open Models and press **モデルを登録** (Register model).
-2. Enter the model name in **名前** (Name) and the family in **モデル系列** (Model family), for example `voice-tts` and `linear`. Use the same string as the code version's supported model families.
+2. Enter the model name in **名前** (Name) and choose the family in **モデル系列** (Model family) from the candidates, for example `voice-tts` and `linear`. The candidates are the families the Project's models and code versions use, with how many use each; type a new family as it is. Use the same string as the code version's supported model families. Families that differ only in letter case, such as `Qwen3` and `qwen3`, are different families and do not match; typing one shows a warning.
 3. Press **保存** (Save) and check that the model appears in the list on the left.
 
 ## Register a version
@@ -48,7 +48,7 @@ There are five ways to register a version. To go from training to registration w
 
 | Method | Version name | Suitable for |
 | --- | --- | --- |
-| **バージョンを作成** (Create version) in the web UI | Required | Registering weights created elsewhere |
+| **バージョンを作成** (Create version) in the web UI | Numbered automatically when left empty | Registering weights created elsewhere |
 | [Task output model setting](/en/models/tasks#register-a-model-when-training-succeeds) | Numbered automatically (a version name template is also available) | Registering the weights of successful training without changing the training code |
 | Python SDK `register_output_model()` | Numbered automatically when omitted | Registering from inside the training code |
 | MLflow `register_model()` or `log_model(registered_model_name=…)` | Numbered automatically | Training already logged with the MLflow 3 SDK |
@@ -57,10 +57,11 @@ There are five ways to register a version. To go from training to registration w
 ### Register from the web UI
 
 1. Select the model in the list and press **バージョンを作成** (Create version).
-2. Enter a name in **バージョン** (Version), for example `3`. The web UI does not number versions for you.
-3. Select the training Run in **生成元Run** (Source Run), then enter the weights' Artifact ID in **Artifact ID** or a URI in **重みのURI** (Weights URI). The Artifact ID is shown when you open the weights file in the Artifacts tab of the training Run.
-4. Optionally select **親のバージョン** (Parent versions) and **既定のコードバージョン** (Default code version), then press **保存** (Save).
-5. Check that a new row appears in the version list and that **最新のバージョン** (Latest version) has changed.
+2. Leave **バージョン** (Version) empty to get the number shown under it (for example "空欄なら 3 を付けます。"). Enter a name only when you want one.
+3. Select the training Run in **生成元Run** (Source Run). Only training and fine-tuning Runs are offered.
+4. **重みのArtifact** (Weights Artifact) lists the source Run's Artifacts; press the weights file to choose it. You can narrow the list by saved path. Without a Run, the Project's Artifacts are listed, newest first. A file uploaded with **Artifactをアップロード** (Upload Artifact) is chosen as it finishes. Pasting an Artifact ID, or the `artifact://…` shown after an upload, also chooses it. Enter weights that are not an Artifact (on S3, for example) in **重みのURI** (Weights URI).
+5. Optionally select **親のバージョン** (Parent versions) and **既定のコードバージョン** (Default code version), then press **保存** (Save). When no code version supports the family, the reason and a link to Code appear under **既定のコードバージョン**.
+6. Check that a new row appears in the version list and that **最新のバージョン** (Latest version) has changed.
 
 ### Register from training code
 

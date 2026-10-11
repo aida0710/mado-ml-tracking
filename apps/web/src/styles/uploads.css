@@ -63,14 +63,15 @@
   max-height: 320px;
   overflow: auto;
 }
-.upload-queue-row {
+.upload-queue-row,
+.upload-resumable-row {
   display: grid;
   gap: 6px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
 }
 .upload-queue-row:last-child,
-.upload-resumable li:last-child {
+.upload-resumable-row:last-child {
   border-bottom: 0;
 }
 .upload-queue-title {
@@ -94,7 +95,8 @@
 .upload-status.completed {
   color: var(--success);
 }
-.upload-queue-row progress {
+.upload-queue-row progress,
+.upload-resumable-row progress {
   width: 100%;
   height: 6px;
   accent-color: var(--accent);
@@ -129,16 +131,26 @@
   margin: 10px 14px 0;
   font-size: 12px;
 }
-.upload-resumable li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 14px;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
+.upload-resumable-row p {
+  margin: 0;
+  font-size: 12px;
 }
-.upload-resumable li .button {
-  margin-left: auto;
+/* A picker inside a label cannot be :disabled, so the label dims like a disabled button. */
+.upload-resumable-row label.button[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}
+/* The path field with, right under it, whether the chosen file continues an unfinished upload. */
+.upload-path-field {
+  display: grid;
+  gap: 8px;
+}
+.upload-path-field > .field,
+.upload-resume-notice {
+  margin: 0;
+}
+p.upload-resume-notice.muted {
+  font-size: 12px;
 }
 /* The folder dialog's question after an upload stopped: the explanation, then its two answers. */
 .notice.dataset-folder-choice {

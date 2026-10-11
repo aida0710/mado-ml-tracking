@@ -38,6 +38,8 @@ export const jobsText = {
   manualSubmissionTitle: '手動投入を待っているJob',
   manualSubmissionHint:
     '依頼した本人がsite（ログインノードか、コンピュータにしたPC）で次のコマンドを実行すると、待っているJobが投入されます（本人のAPI tokenを使います）。PCを共有している所有者が--allで待ち受けていれば、所有者が投入します。',
+  launchManualSubmissionNotice:
+    'このコンピュータは手動投入です。起動したJobは、依頼した本人がそのコンピュータで次のコマンドを実行するまで待ちます。',
   manualSubmissionOwnHint:
     'あなたが依頼したJobです。site（ログインノードか、コンピュータにしたPC）で次のコマンドを実行して投入してください（あなたのAPI tokenを使います）。',
   jobArrays: 'Job array',

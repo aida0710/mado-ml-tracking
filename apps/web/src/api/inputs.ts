@@ -27,7 +27,8 @@ export interface CreateRun {
   environment?: JsonObject;
 }
 export interface CreateModelVersion {
-  version: string;
+  /** Omitted: the API gives the Model's next number (Model.nextVersion). */
+  version?: string;
   parentModelVersionIds?: string[];
   sourceRunId?: string;
   weightsUri?: string;

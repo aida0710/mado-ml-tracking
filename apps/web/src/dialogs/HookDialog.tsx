@@ -5,7 +5,7 @@ import { useHookForm } from '../hooks/useHookForm';
 import { useProject } from '../hooks/useProject';
 import { Dialog } from '../components/Dialog';
 import { HookFields } from '../components/HookFields';
-import { CopyButton } from '../components/CopyButton';
+import { CopyableValue } from '../components/CopyableValue';
 import { ErrorNotice } from '../components/Feedback';
 import { text } from '../i18n/catalog';
 import { hookWebhookSignatureHints } from '../i18n/hooks';
@@ -15,10 +15,7 @@ function WebhookValue({ label, value }: { label: string; value: string }) {
   return (
     <div className="field">
       <span>{label}</span>
-      <div className="copyable-value">
-        <code>{value}</code>
-        <CopyButton value={value} />
-      </div>
+      <CopyableValue value={value} />
     </div>
   );
 }

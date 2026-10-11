@@ -5,6 +5,7 @@ import type {
   ArtifactUpload,
   ArtifactUploadCreate,
   ArtifactUploadDetail,
+  ArtifactUploadListItem,
   ArtifactUploadPart,
   ArtifactUploadStatus,
 } from '@mmt/contracts';
@@ -27,6 +28,7 @@ import {
   findArtifactUpload,
   listArtifactUploadParts,
   publicArtifactUpload,
+  receivedBytesColumn,
   runLifecycleStage,
   type ArtifactUploadRecord,
 } from '../repositories/artifactUploadRepository.js';
@@ -201,12 +203,12 @@ export class ArtifactUploadService {
     principal: Principal,
     projectId: string,
     filter: { status?: ArtifactUploadStatus },
-  ): Promise<ArtifactUpload[]> {
+  ): Promise<ArtifactUploadListItem[]> {
     await requireProject(this.database, principal, { projectId, ...PERMISSION });
     const credential = uploadCredential(principal);
-    const uploads = await rows<ArtifactUploadRecord>(
+    const uploads = await rows<ArtifactUploadRecord & { receivedBytes: number }>(
       this.database,
-      `SELECT ${artifactUploadColumns} FROM artifact_uploads
+      `SELECT ${artifactUploadColumns},${receivedBytesColumn} FROM artifact_uploads
       WHERE project_id=$1 AND created_by_user_id=$2 AND created_by_token_id IS NOT DISTINCT FROM $3
       AND created_by_job_token_id IS NOT DISTINCT FROM $4 AND owner_kind IS NULL
       AND ($5::text IS NULL OR status=$5) ORDER BY created_at DESC,id DESC`,
@@ -218,7 +220,10 @@ export class ArtifactUploadService {
         filter.status ?? null,
       ],
     );
-    return uploads.map(publicArtifactUpload);
+    return uploads.map((upload) => ({
+      ...publicArtifactUpload(upload),
+      receivedBytes: upload.receivedBytes,
+    }));
   }
 
   async get(

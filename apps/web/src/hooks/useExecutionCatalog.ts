@@ -5,7 +5,7 @@ import { useQuery } from './useQuery';
 
 // Selectors offer the newest Runs, one search page at the API maximum; older Runs are reached
 // through the Run search on the Experiments page.
-const SELECTABLE_RUN_LIMIT = 500;
+export const SELECTABLE_RUN_LIMIT = 500;
 export function useExecutionCatalog(projectId: string) {
   return useQuery<ExecutionCatalog>(`${projectId}:execution-catalog`, async (signal) => {
     const [experiments, models, codes, datasets, runs] = await Promise.all([

@@ -28,6 +28,7 @@ export * from './projectAccess.js';
 export * from './projectAdministration.js';
 export * from './promotion.js';
 export * from './registry.js';
+export * from './registryLookups.js';
 export * from './reports.js';
 export * from './runAnalysis.js';
 export * from './runComparison.js';

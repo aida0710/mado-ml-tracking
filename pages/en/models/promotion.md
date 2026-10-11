@@ -61,8 +61,8 @@ A promotion policy says "decide versions of this model using results of this eva
 | --- | --- |
 | Name | For example `promotion to production` |
 | **対象モデル** (Model) | The model to decide |
-| **対象alias** (Target alias) | The alias that should point at passing versions, for example `production` |
-| **基準alias** (Baseline alias) | The alias of the version to compare with. Default `production` |
+| **対象alias** (Target alias) | The alias that should point at passing versions, for example `production`. The names the model's aliases, other policies and alias protections use are offered; a name not used yet is marked as a new alias |
+| **基準alias** (Baseline alias) | The alias of the version to compare with. Default `production`. Offered like the target alias |
 | **評価ルール** (Evaluation rule) | An enabled evaluation rule that handles the model's family. Only Runs created by this rule are decided |
 | **合否基準** (Criteria) | 1 to 50 criteria. All must pass |
 | **基準aliasが未設定のとき** (When the baseline alias is not set) | Pass (first release) or fail |
@@ -74,7 +74,7 @@ Like rules, policies can only be enabled or disabled after creation. To change c
 
 ### Writing criteria
 
-Each criterion has a metric, a direction (**大きいほど良い** higher is better or **小さいほど良い** lower is better), a value to compare, and a threshold.
+Each criterion has a metric, a direction (**大きいほど良い** higher is better or **小さいほど良い** lower is better), a value to compare, and a threshold. **メトリクス** (Metric) offers the metric names the chosen rule's evaluation Runs recorded (before the rule has any, those recorded by Runs of the same evaluation code version). A name they never recorded shows a warning: the decision would find no value and fail.
 
 | Value to compare | Compared with the threshold |
 | --- | --- |

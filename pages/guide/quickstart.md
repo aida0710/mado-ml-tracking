@@ -30,13 +30,13 @@ description: 最初のProjectを作り、Python SDKと公式MLflow 3 SDKでRun�
 
 ［Experiments］の左側にある［＋］（実験を作成）を押し、名前に`whisper-small-finetune`と入力して［保存］を押します。
 
-左側の一覧で作った実験を選ぶと、名前の下に`ID`が表示されます。Python SDKではこの実験IDを使うので控えておきます。ProjectのIDは、ブラウザのURLの`/projects/`の後ろの部分です。
+左側の一覧で作った実験を選ぶと、名前の下に`実験ID`と［コピー］が表示されます。見出しの右の［SDKで記録］を押すと、このProjectと実験のIDを入れた環境変数とコードの例が開き、どれも［コピー］で写せます。
 
 ## 3. API tokenを発行する
 
 SDKからの記録には、ログインのパスワードではなくAPI tokenを使います。
 
-1. サイドバーの［プロジェクト設定］を開き、「MLflow 3から接続」の［このProject用のAPI tokenを発行］を押します。
+1. 実験の画面の［SDKで記録］（またはサイドバーの［プロジェクト設定］）の「SDK・MLflow 3から接続」で、［このProject用のAPI tokenを発行］を押します。
 2. 名前に`laptop-sdk`のように用途が分かる名前を入力します。
 3. Scopeは`read`、`runs:write`、`registry:write`、`artifacts:write`が選ばれた状態になっています。そのままにします。
 4. 有効期限を選んで［保存］を押します。
@@ -59,21 +59,22 @@ python3 -m venv ~/.venvs/mmt
 
 ```sh
 export MMT_API_URL=https://tracking.example.com
+export MMT_PROJECT_ID=<ProjectのID>
+export MMT_EXPERIMENT_ID=<実験のID>
 read -r -s -p 'API token: ' MMT_API_TOKEN
 export MMT_API_TOKEN
 ```
 
-次の内容を`train_sdk.py`として保存します。`PROJECT_ID`と`EXPERIMENT_ID`は、手順1と2で控えた値に置き換えます。
+実験の画面の［SDKで記録］の「環境変数（tokenは実行時に入力）」は、URLと2つのIDを入れたこの内容です。［コピー］して貼り付けられます。
+
+次の内容を`train_sdk.py`として保存します。`start_run`は`MMT_PROJECT_ID`と`MMT_EXPERIMENT_ID`を使います。
 
 ```python
 import math
 
 from mado_tracking import start_run
 
-PROJECT_ID = "<ProjectのID>"
-EXPERIMENT_ID = "<実験のID>"
-
-with start_run(project_id=PROJECT_ID, experiment_id=EXPERIMENT_ID, name="lr-1e-4") as run:
+with start_run(name="lr-1e-4") as run:
     run.log_params({"learning_rate": 1e-4, "batch_size": 16})
     for step in range(50):
         loss = 2.0 * math.exp(-step / 15) + 0.1
@@ -87,13 +88,15 @@ with start_run(project_id=PROJECT_ID, experiment_id=EXPERIMENT_ID, name="lr-1e-4
 
 `Run: <RunのID>`と表示されれば記録できています。`with`を抜けるとRunは完了になり、例外で抜けた場合は失敗になります。
 
+実験はIDの代わりに名前でも指定できます。`start_run(experiment_name="whisper-small-finetune", name="lr-1e-4")`のように渡すと、その名前の実験に記録し、無ければ作ります（MLflowの`set_experiment`と同じです）。
+
 SDKの詳しい使い方（system metrics、途中からの再開、オフラインで記録してあとから送る方法）は[Python SDK](/tracking/sdk)を参照してください。
 
 ## 5. MLflow 3 SDKで記録する
 
-既存の学習コードがMLflowで記録している場合は、接続先を変えるだけで同じProjectへ記録できます。［プロジェクト設定］の「MLflow 3から接続」に、このProjectの`MLFLOW_TRACKING_URI`と設定例が表示されます。
+既存の学習コードがMLflowで記録している場合は、接続先を変えるだけで同じProjectへ記録できます。［プロジェクト設定］（または実験の画面の［SDKで記録］）の「SDK・MLflow 3から接続」の［MLflow 3］に、このProjectの`MLFLOW_TRACKING_URI`と設定例が表示されます。
 
-![MLFLOW_TRACKING_URIと環境変数の設定例を表示した「MLflow 3から接続」](/images/guide-mlflow-connection.png)
+![MLFLOW_TRACKING_URIと環境変数の設定例を表示した「SDK・MLflow 3から接続」](/images/guide-mlflow-connection.png)
 
 ```sh
 ~/.venvs/mmt/bin/pip install 'mlflow>=3,<4'

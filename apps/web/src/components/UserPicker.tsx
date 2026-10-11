@@ -25,7 +25,7 @@ export function UserPicker({
     return (
       <div className="field">
         <span>{label}</span>
-        <div className="user-picker-selected">
+        <div className="picker-selected">
           <UserSummary user={selectedUser} />
           <button
             type="button"

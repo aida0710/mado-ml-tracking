@@ -31,11 +31,26 @@ export const computersText = {
   projectComputersHint:
     'このプロジェクトで自分が使えるコンピュータです。追加・設定・job shell・鍵は、全体設定の「コンピュータ」で扱います。',
   openComputerSettings: '全体設定の「コンピュータ」を開く',
+  computerId: 'コンピュータID',
+  // A computer's details: the worker that takes its Jobs, with the computer's ID filled in.
+  workerSetupTitle: 'workerの設定',
+  workerSetupHint:
+    'このコンピュータのJobは、このIDを--target-ids（MMT_WORKER_TARGET_IDS）に含むworkerが実行します。workerのマシンで次のコマンドを実行します。ほかのコンピュータも受け持つworkerでは、IDをカンマで区切って並べます。',
+  workerSetupToken:
+    'workerのtokenは、プロジェクト設定の［Service Accounts］でRoleがAdminのService Accountを作り、read・worker:execute・artifacts:writeを選んで発行します。installの途中で入力を求められます。',
+  workerSetupInstall: 'workerを入れる（Python 3.11以上）',
+  workerSetupService: 'systemdで常駐させる（worker IDはこのマシンのホスト名）',
+  workerSetupEnvironment: 'systemdを使わずに動かす（環境変数）',
+  workerSetupEnvironmentCommands: '環境変数（tokenは実行時に入力）とworkerの起動',
 } as const;
 
 // Text that embeds values.
 export const computersTextTemplates = {
   computerLauncherSeen: (name: string, lastSeen: string) => `${name}（最終応答 ${lastSeen}）`,
+  // The「workerの設定」row for those who may not manage the computer. Without an owner (a computer
+  // from before owners), only global administrators manage it.
+  workerSetUpBy: (ownerName: string | null) =>
+    ownerName ? `所有者（${ownerName}さん）か全体管理者が設定します。` : '全体管理者が設定します。',
 };
 
 export const computerVisibilityHints = {

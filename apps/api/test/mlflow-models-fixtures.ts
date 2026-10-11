@@ -62,7 +62,11 @@ export async function modelFixture(harness: Harness) {
   const base = `/api/mlflow/projects/${fixture.project.id}`;
   app.route(
     '/api/mlflow/projects/:p',
-    mlflowModelRoutes({ database: harness.database, registry: harness.services.registry }),
+    mlflowModelRoutes({
+      database: harness.database,
+      registry: harness.services.registry,
+      artifacts: harness.services.artifacts,
+    }),
   );
   app.route(
     '/api/mlflow/projects/:p',

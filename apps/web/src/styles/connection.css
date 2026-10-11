@@ -1,31 +1,37 @@
-/* The "connect from MLflow 3" card on the Project settings page. */
+/* How to connect from outside the browser with the IDs filled in: the Python SDK and MLflow 3
+   guide (Project settings, Experiments), a computer's worker, and manual submission. */
 /* Full width so each export line fits without breaking after the shell keyword. */
-.mlflow-connection {
+.recording-connection {
   grid-column: 1 / -1;
 }
-.mlflow-connection-uris {
+.runs-page > .recording-connection {
+  margin-bottom: 16px;
+}
+.connection-values {
   margin: 0 0 12px;
   display: grid;
   gap: 8px;
 }
-.mlflow-connection-uris dt {
+.connection-values dt {
   color: var(--muted);
   font-size: 12px;
 }
-.mlflow-connection-uris dd {
+.connection-values dd {
   margin: 2px 0 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
 }
-.mlflow-connection-uris code {
-  overflow-wrap: anywhere;
+.connection-values .copyable-value {
+  margin-top: 0;
 }
-.mlflow-connection-snippet {
+.recording-connection-panel {
   margin-top: 12px;
 }
-.mlflow-connection-snippet-heading {
+.recording-connection-panel > p {
+  margin: 12px 0 0;
+}
+.code-snippet {
+  margin-top: 12px;
+}
+.code-snippet-heading {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -34,15 +40,20 @@
   font-size: 12px;
   color: var(--muted);
 }
-.mlflow-connection-snippet pre {
+.code-snippet pre {
   margin: 0;
   white-space: pre;
   overflow-x: auto;
 }
-.mlflow-connection-more {
+/* Folded extras: Basic authentication, or what to set up before the first command. */
+.connection-more {
   margin-top: 12px;
 }
-.mlflow-connection-more summary {
+.connection-more summary {
   color: var(--muted);
   font-size: 12px;
+  cursor: pointer;
+}
+.connection-more > p {
+  margin: 12px 0 0;
 }

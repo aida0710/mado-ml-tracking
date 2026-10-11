@@ -19,10 +19,32 @@ export const RUN_KINDS: RunKind[] = [
   'finetuning',
   'processing',
 ];
-export function isCodeCompatible(code: CodeVersion, kind: RunKind, model?: ModelVersion): boolean {
+/**
+ * What a Run needs of its code version: to run `taskType`, and to support every family of
+ * `families` (the models it runs). An omitted part is not checked.
+ */
+export interface CodeRequirement {
+  taskType?: RunKind;
+  families?: readonly string[];
+}
+
+/**
+ * Whether the code version meets the requirement: the rule of the API's validateCodeCompatibility
+ * (apps/api/src/domain/compatibility.ts). Every screen that offers code versions, or explains why
+ * it offers none, asks this, so the rule lives only here.
+ */
+export function meetsCodeRequirement(
+  code: CodeVersion,
+  { taskType, families = [] }: CodeRequirement,
+): boolean {
   return (
-    code.taskTypes.includes(kind) && (!model || code.supportedModelFamilies.includes(model.family))
+    (!taskType || code.taskTypes.includes(taskType)) &&
+    families.every((family) => code.supportedModelFamilies.includes(family))
   );
+}
+
+export function isCodeCompatible(code: CodeVersion, kind: RunKind, model?: ModelVersion): boolean {
+  return meetsCodeRequirement(code, { taskType: kind, families: model ? [model.family] : [] });
 }
 export function validateCodeCompatibility(
   code: CodeVersion | undefined,

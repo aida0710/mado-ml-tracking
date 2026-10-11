@@ -6,7 +6,7 @@ import { useServiceAccounts } from '../hooks/useServiceAccounts';
 import { PageHeader } from '../components/PageHeader';
 import { ProjectSettings } from '../components/ProjectSettings';
 import { ArtifactUsageSummary } from '../components/ArtifactUsageSummary';
-import { MlflowConnectionCard } from '../components/MlflowConnectionCard';
+import { RecordingConnectionGuide } from '../components/RecordingConnectionGuide';
 import { ProjectMembers } from '../components/ProjectMembers';
 import { ProjectGroupBindings } from '../components/ProjectGroupBindings';
 import { ProjectTokens } from '../components/ProjectTokens';
@@ -29,7 +29,7 @@ export function SettingsPage() {
   // Shared so a key issued to a Service Account appears in the Project token list.
   const serviceAccounts = useServiceAccounts(project.id, isProjectAdmin);
   // ProjectTokens loads the personal tokens itself; remounting it shows a token issued from the
-  // MLflow connection card.
+  // SDK and MLflow guide.
   const [tokenListRevision, setTokenListRevision] = useState(0);
   const reloadTokenLists = () => {
     setTokenListRevision((revision) => revision + 1);
@@ -43,7 +43,7 @@ export function SettingsPage() {
         <ArtifactUsageSummary projectId={project.id} />
       </div>
       <div className="settings-stack">
-        <MlflowConnectionCard onTokenCreated={reloadTokenLists} />
+        <RecordingConnectionGuide onTokenCreated={reloadTokenLists} />
         <ProjectMembers projectMembers={projectMembers} />
         <ProjectGroupBindings projectMembers={projectMembers} />
         <ProjectServiceAccounts access={serviceAccounts} />

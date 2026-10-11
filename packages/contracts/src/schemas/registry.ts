@@ -28,6 +28,7 @@ export const modelSchema = namedContractSchema(
     family: z.string(),
     description: z.string(),
     latestVersion: z.string().nullable(),
+    nextVersion: z.string().optional(),
     aliases: stringMapSchema,
     createdAt: timestampSchema,
   }),

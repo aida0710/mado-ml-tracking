@@ -139,6 +139,18 @@ loaded = mlflow.pyfunc.load_model("models:/regression@candidate")
 - Load with `models:/name/version` or `models:/name@alias`
 - **Lineage** shows the input Datasets, the source Run, and the registered version
 
+A directory saved with `save_model()` and uploaded to a Run with `log_artifacts()` can be registered as is.
+
+```python
+mlflow.sklearn.save_model(model, "saved")
+with mlflow.start_run() as run:
+    mlflow.log_artifacts("saved", "model")
+version = mlflow.register_model(f"runs:/{run.info.run_id}/model", "regression")
+```
+
+- On registration the server reads the directory's `MLmodel` and uses the file it names as the model body (the weights on the Models page). The source Run is linked to the version as well
+- The returned `source` is where the version's pinned files live (`mlflow-artifacts:/model-versions/...`), not the `runs:/...` you passed, unlike the MLflow server
+
 To run inference and evaluation automatically on registration, set the registered model tag `mmt.model_family` to a model family and create an automation rule for that family in the Project.
 
 ```python
@@ -167,6 +179,8 @@ Verified with MLflow 3.0.0 (scikit-learn 1.6.1) and 3.17.0 (scikit-learn 1.9.1).
 | `log_table`, `log_image`, `log_dict`, `log_text`, `log_figure` | Supported |
 | wav and flac audio Artifacts | Supported |
 | Custom pyfunc models and multi-file models | Supported |
+| `register_model("runs:/...")` for a model saved with `save_model()` and uploaded with `log_artifacts()` | Supported |
+| `mlflow.search_runs()` and `get_experiment("0")` before the first Run | Supported (no results, and an empty Default Experiment) |
 | pandas output of `mlflow.search_runs` | Supported |
 | Searching registered models and versions (`search_registered_models`, `search_model_versions`) | Supported (up to 1000 per response; see below) |
 | `View run` and `View experiment` links printed by the SDK | Supported (they open this app's pages) |

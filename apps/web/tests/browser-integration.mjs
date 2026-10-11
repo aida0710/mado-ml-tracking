@@ -128,11 +128,14 @@ try {
   await page.goto(`${projectBase}/models`);
   await page.getByRole('button', { name: 'モデルを登録', exact: true }).click();
   await fill('名前', 'UI linear model');
-  await fill('Family', 'ui-linear');
+  await fill('モデル系列', 'ui-linear');
   await submit();
   await page.getByRole('button', { name: 'バージョンを作成', exact: true }).click();
-  await fill('バージョン', 'v1');
-  await fill('Artifact ID', weightsArtifact.id);
+  // 'バージョン' is also part of '既定のコードバージョン'; the exact accessible name picks the field.
+  await page.getByRole('dialog').getByRole('textbox', { name: 'バージョン', exact: true }).fill('v1');
+  // The weights Artifact is taken by pasting its id; the picked file replaces the search.
+  await page.getByRole('dialog').getByRole('searchbox', { name: '重みのArtifact' }).fill(weightsArtifact.id);
+  await page.getByRole('dialog').getByRole('button', { name: '選び直す', exact: true }).waitFor();
   await submit();
   await page.getByRole('button', { name: 'v1', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Aliasを設定', exact: true }).click();

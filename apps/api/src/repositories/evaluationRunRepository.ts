@@ -17,19 +17,29 @@ export type EvaluationRunRecord = Pick<
 const referenceSetExpression = `ARRAY(
   SELECT unnest(r.input_dataset_version_ids) EXCEPT SELECT unnest(r.upstream_dataset_version_ids))`;
 
-// A Run counts as produced by a rule when the rule's execution points at it or at the Run of the
-// original Job it retried (the same rule as findExecutionForRun in automationExecutionLookup.ts).
-const producedByRuleExpression = `EXISTS (
+/**
+ * SQL that holds when the Run aliased `r` was produced by the rule whose id is the parameter
+ * `parameters.ruleId` (for example '$6'): the rule's execution points at the Run or at the Run of
+ * the original Job it retried (the same rule as findExecutionForRun in automationExecutionLookup.ts).
+ * `parameters.maxChainLength` bounds the retry chain (pass MAX_RETRY_CHAIN_LENGTH).
+ */
+export function runProducedByRuleCondition(parameters: {
+  ruleId: string;
+  maxChainLength: string;
+}): string {
+  return `EXISTS (
   WITH RECURSIVE chain(run_id, retry_of_job_id, depth) AS (
     SELECT j.run_id, j.retry_of_job_id, 0 FROM jobs j WHERE j.project_id=r.project_id AND j.run_id=r.id
     UNION ALL
     SELECT previous.run_id, previous.retry_of_job_id, chain.depth + 1
     FROM jobs previous JOIN chain ON previous.id=chain.retry_of_job_id
-    WHERE previous.project_id=r.project_id AND chain.depth < $8
+    WHERE previous.project_id=r.project_id AND chain.depth < ${parameters.maxChainLength}
   )
   SELECT 1 FROM model_automation_executions e
-  WHERE e.project_id=r.project_id AND e.rule_id=$6::uuid
+  WHERE e.project_id=r.project_id AND e.rule_id=${parameters.ruleId}::uuid
     AND (e.run_id=r.id OR e.run_id IN (SELECT run_id FROM chain)))`;
+}
+const producedByRuleExpression = runProducedByRuleCondition({ ruleId: '$6', maxChainLength: '$8' });
 
 /**
  * The latest comparable evaluation of a model version: same Project, kind=evaluation, finished,

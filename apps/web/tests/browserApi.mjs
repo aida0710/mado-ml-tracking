@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { listProjectArtifacts, listRunArtifacts, runArtifactTree } from './artifactListingMock.mjs';
 import { createProjectAdministration } from './projectAdministrationMock.mjs';
 import { createComputerSetup } from './computerSetupMock.mjs';
+import { findCodeVersionDetail, listModelFamilies, ruleMetricKeys } from './registryLookupMock.mjs';
 // The API default of MMT_ARTIFACT_DELETE_GRACE_DAYS (apps/api/src/config.ts).
 const DEFAULT_ARTIFACT_DELETE_GRACE_DAYS = 7;
 // TokenSummary.tokenPrefix: the first characters of the token value.
@@ -347,6 +348,8 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
     const reply = (payload, status = 200) =>
       route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(payload) });
     const list = (items) => reply({ items });
+    // The API's answer for an id it does not know (domain/errors.ts).
+    const notFound = (entity) => reply({ error: `${entity}が見つかりません`, code: 'not_found' }, 404);
     if (path === '/auth/config')
       return reply({
         mode: state.authMode,
@@ -453,6 +456,10 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
     const parts = path.split('/').filter(Boolean).slice(2);
     const [resource, key, subresource] = parts;
     if (resource === 'automation-rules') {
+      if (key && subresource === 'metric-keys' && method === 'GET') {
+        const rule = item(state.automationRules, key);
+        return rule ? reply(ruleMetricKeys(state, rule)) : notFound('ModelAutomationRule');
+      }
       if (method === 'GET') return list(state.automationRules);
       if (!user.isAdmin && project.role !== 'admin') return reply({ error: 'Admin required' }, 403);
       if (method === 'POST') {
@@ -630,6 +637,12 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       return reply(item(state.artifacts, key));
     if (resource === 'artifacts' && subresource === 'content')
       return route.fulfill({ contentType: 'text/plain', body: 'Browser test artifact' });
+    // The registry lookups the model screens offer values from (registryLookupMock.mjs).
+    if (resource === 'model-families' && !key && method === 'GET') return list(listModelFamilies(state));
+    if (resource === 'code-versions' && key && !subresource && method === 'GET') {
+      const detail = findCodeVersionDetail(state, key);
+      return detail ? reply(detail) : notFound('CodeVersion');
+    }
     if (['models', 'codes', 'datasets'].includes(resource)) {
       const collection = state[resource];
       const versionCollection =
@@ -812,6 +825,9 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
         return reply(imported);
       }
     }
+    // Also said in the test's own output: a screen calling an API the mock lacks fails only checks
+    // that watch the console, and the missing route is easier to find here.
+    console.warn(`[browserApi] 501 Unhandled test API: ${method} ${path}`);
     return reply({ error: `Unhandled test API: ${method} ${path}` }, 501);
   }
   return { state, route };

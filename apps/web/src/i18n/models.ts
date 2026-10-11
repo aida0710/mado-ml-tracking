@@ -46,6 +46,30 @@ export const modelsText = {
   runDownstream: 'このRunから起動したRun',
   runDownstreamEmpty: 'このRunから起動したRunはありません',
   loadMore: 'さらに読み込む',
+  // Model family: chosen from the families the Project uses (models and code versions).
+  familyHint:
+    '既存の系列から選ぶか、新しい系列を入力します。コードバージョンの［対応モデル系列］と同じ文字列のとき、そのコードで動かせます。',
+  familiesLoadFailed: '既存の系列を読み込めませんでした。系列はそのまま入力できます。',
+  existingFamilies: '既存の系列（押すと追加）',
+  // Code versions a Task or a model version can use.
+  openCodes: 'Codeを開く',
+  codeCandidatesNone: 'コードバージョンがまだありません。Codeで登録すると選べます。',
+  // Model version form: weights chosen from the source Run's Artifacts.
+  versionAutoNumberHint: '空欄なら自動で番号を付けます。',
+  sourceRunHint:
+    '学習・ファインチューニングのRunだけを選べます。選ぶと、そのRunのArtifactから重みを選べます。',
+  weightsArtifactHintRun: '生成元RunのArtifactを表示しています。保存パスで絞り込めます。',
+  weightsArtifactHintProject:
+    'プロジェクトのArtifactを新しい順に表示しています。保存パスで検索するか、IDや artifact://… を貼り付けます。',
+  weightsArtifactUnchosen:
+    '［重みのArtifact］は一覧から選んでください。検索しただけでは選ばれません（使わないときは欄を空にします）。',
+  weightsUriHint:
+    'Artifactにしていない重み（S3やHugging Faceなど）の場所。Artifactを選んだときは空欄でかまいません。',
+  weightsUriIsArtifact: 'これはArtifactを指しています。［重みのArtifact］で選ぶと、取得元として使われます。',
+  weightsUriUseAsArtifact: '重みのArtifactとして選ぶ',
+  parentsHint: '同じ系列のバージョンだけを選べます。',
+  parentsEmpty: '同じ系列のバージョンはまだありません。',
+  defaultCodeHint: 'このバージョンの系列に対応するコードバージョンだけを選べます。',
 } as const;
 
 // The sign of candidate − baseline; better or worse depends on the metric and is not shown.
@@ -70,4 +94,20 @@ export const modelsTextTemplates = {
   automaticByRule: (ruleName: string) => `自動評価（${ruleName}）`,
   removeAliasConfirm: (alias: string, version: string) =>
     `Alias「${alias}」（バージョン ${version}）を解除します。解除したことは履歴に残ります。`,
+  familyUsage: (modelCount: number, codeVersionCount: number) =>
+    `モデル${modelCount}件・コード${codeVersionCount}件`,
+  familyNew: (family: string) => `新しい系列「${family}」として登録します。`,
+  familyCaseVariant: (family: string, variants: readonly string[]) =>
+    `「${variants.join('」「')}」が既にあります。大文字・小文字だけが違っても別の系列になり、「${family}」とは対応しません。`,
+  familyListCaseVariant: (family: string, variants: readonly string[]) =>
+    `「${family}」: 既にある「${variants.join('」「')}」とは大文字・小文字だけが違います。別の系列になり、そちらのモデルには対応しません。`,
+  versionAutoNumber: (nextVersion: string) => `空欄なら ${nextVersion} を付けます。`,
+  sourceRunOption: (run: { name: string; kind: string; date: string; status: string }) =>
+    `${run.name} · ${run.kind} · ${run.date} · ${run.status}`,
+  codeCandidatesNoTaskType: (kind: string) =>
+    `実行種別「${kind}」に対応するコードバージョンがありません。Codeで［対応する実行種別］に「${kind}」を含むバージョンを作ってください。`,
+  codeCandidatesNoFamily: (family: string) =>
+    `モデル系列「${family}」に対応するコードバージョンがありません。Codeで［対応モデル系列］に「${family}」を含むバージョンを作ってください。`,
+  codeCandidatesCaseVariant: (family: string, variants: readonly string[]) =>
+    `コードバージョンには「${variants.join('」「')}」と書かれています。大文字・小文字が違うため「${family}」とは対応しません。`,
 };
