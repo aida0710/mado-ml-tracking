@@ -6,6 +6,7 @@ export const computersText = {
   computersHint:
     "Lists every computer. Computers you cannot use (another user's private computers) show only their name, type, owner, visibility, and status.",
   noComputers: "No computers yet",
+  computerDeleted: "Deleted computer",
   computerKind: "Type",
   computerOwner: "Owner",
   computerVisibility: "Visibility",

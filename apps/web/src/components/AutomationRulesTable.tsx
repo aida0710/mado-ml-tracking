@@ -6,6 +6,7 @@ import { ResponsiveTable } from './ResponsiveTable';
 import { buildCatalogOptions } from '../lib/catalogOptions';
 import { text } from '../i18n/catalog';
 import { automationText, automationTriggerLabels } from '../i18n/automation';
+import { useComputerNames } from '../hooks/useComputerNames';
 
 export function AutomationRulesTable({
   rules,
@@ -27,6 +28,7 @@ export function AutomationRulesTable({
   onSetEnabled: (id: string, enabled: boolean) => void;
 }) {
   useLocale();
+  const computerName = useComputerNames(catalog?.targets);
   const codeOptions = catalog ? buildCatalogOptions(catalog.registry).codes : [];
   return (
     <ResponsiveTable
@@ -100,7 +102,7 @@ export function AutomationRulesTable({
           priority: 'secondary',
           header: text.target,
           render: (rule) =>
-            catalog?.targets.find((target) => target.id === rule.targetId)?.name ?? rule.targetId,
+            computerName(rule.targetId),
         },
         ...(canManage
           ? [

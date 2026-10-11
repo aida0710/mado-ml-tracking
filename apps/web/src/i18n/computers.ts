@@ -8,6 +8,8 @@ export const computersText = localized({
   computersHint:
     'すべてのコンピュータが出ます。自分が使えないもの（他の人のPrivate）は、名前・種類・所有者・公開範囲・状態だけを出します。',
   noComputers: 'コンピュータはまだありません',
+  // Job・Task・フック・自動実行ルールの実行先が、全体のコンピュータの一覧に無いとき。
+  computerDeleted: '削除されたコンピュータ',
   computerKind: '種類',
   computerOwner: '所有者',
   computerVisibility: '公開範囲',
