@@ -179,6 +179,26 @@ tracking.example.com {
 
 MLflowの接続先はProjectごとに分かれます。［プロジェクト設定］の「MLflow 3から接続」に、そのProjectのURLが表示されます。
 
+## ホストのディレクトリをArtifactの保存先に使う
+
+composeの`api`はコンテナの中で動くので、ホストのディレクトリはそのままでは見えません。既定では、Artifactは`artifacts`というDockerのvolumeに保存されます。大きなディスクや共有ストレージ（NFS、Lustreなど）に置きたいときは、`compose.filesystem-storage.yml`を使います。`MMT_FILESYSTEM_STORAGE_DIR`に指定したホストのディレクトリが、`api`と`preview`のコンテナの中にも同じパスで見えるようになります。
+
+先にディレクトリを作り、コンテナの実行ユーザー（`node`、uid 1000）が書けるようにします。作らずに起動すると、Dockerがrootの持ち物として作るため、コンテナから書けません。
+
+```sh
+sudo mkdir -p /srv/mmt/storage
+sudo chown 1000:1000 /srv/mmt/storage
+```
+
+`.env`に次を足します。`compose.override.yml`も使っている場合は、`COMPOSE_FILE`にそれも並べます（`COMPOSE_FILE`を指定すると、`compose.override.yml`は自動では読まれません）。
+
+```sh
+COMPOSE_FILE=compose.yml:compose.override.yml:compose.filesystem-storage.yml
+MMT_FILESYSTEM_STORAGE_DIR=/srv/mmt/storage
+```
+
+`docker compose up -d`で反映したら、全体設定 → 全体管理 → ［ストレージ］で保存先を追加し、［ルートディレクトリ］にこのディレクトリの下のパス（例: `/srv/mmt/storage/artifacts`）を指定します（[保存先](/data/storage)）。
+
 ## workerを導入する
 
 学習・推論・評価のJobを実行するには、GPUのあるworkerホストへworkerを導入します。API serverはworkerホストへSSHしません。workerホスト上で`mado-tracking-worker`コマンドを使って導入し、systemdで常駐させます。手順は[workerの導入](/compute/worker)を参照してください。
