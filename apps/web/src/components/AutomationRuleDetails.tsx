@@ -19,6 +19,7 @@ import { formatDate } from '../lib/format';
 import { creatorName } from '../lib/creatorName';
 import { text } from '../i18n/catalog';
 import { automationText, automationTriggerLabels } from '../i18n/automation';
+import { useComputerNames } from '../hooks/useComputerNames';
 
 export function AutomationRuleDetails({
   rule,
@@ -48,6 +49,7 @@ export function AutomationRuleDetails({
   onApplied: () => void;
 }) {
   useLocale();
+  const computerName = useComputerNames(catalog?.targets);
   const options = catalog ? buildCatalogOptions(catalog.registry) : undefined;
   const code = catalog?.registry.codeVersions.find((version) => version.id === rule.codeVersionId);
   const base = `/projects/${projectId}`;
@@ -110,7 +112,7 @@ export function AutomationRuleDetails({
           ],
           [
             text.target,
-            catalog?.targets.find((target) => target.id === rule.targetId)?.name ?? rule.targetId,
+            computerName(rule.targetId),
           ],
           [text.gpuIds, rule.gpuIds.join(', ') || text.cpuOnly],
           [

@@ -7,11 +7,16 @@ import { isManualSite } from '../lib/manualSubmission';
 import { text } from '../i18n/catalog';
 import { hookTriggerLabels } from '../i18n/hooks';
 import { submissionModeBadgeLabels } from '../i18n/compute';
+import { useComputerNames } from '../hooks/useComputerNames';
 
-function HookTarget({ hook, targets }: { hook: Hook; targets: ComputeTarget[] }) {
+function HookTarget({ hook, targets, computerName }: {
+  hook: Hook;
+  targets: ComputeTarget[];
+  computerName: (targetId: string) => string;
+}) {
   useLocale();
   const target = targets.find((item) => item.id === hook.template.targetId);
-  if (!target) return <>{hook.template.targetId}</>;
+  if (!target) return <>{computerName(hook.template.targetId)}</>;
   return (
     <span className="badge-group">
       {target.name}
@@ -41,6 +46,7 @@ export function HooksTable({
   onToggle: (hook: Hook) => void;
 }) {
   useLocale();
+  const computerName = useComputerNames();
   return (
     <ResponsiveTable
       rows={hooks}
@@ -68,7 +74,7 @@ export function HooksTable({
           key: 'target',
           priority: 'secondary',
           header: text.target,
-          render: (hook) => <HookTarget hook={hook} targets={targets} />,
+          render: (hook) => <HookTarget hook={hook} targets={targets} computerName={computerName} />,
         },
         {
           key: 'enabled',

@@ -7,6 +7,7 @@ import { JOB_ARRAY_STATE_ORDER, type JobArraySummary } from '../lib/jobArrays';
 import { shortId } from '../lib/jobDisplay';
 import { text } from '../i18n/catalog';
 import { jobsTextTemplates } from '../i18n/jobs';
+import { useComputerNames } from '../hooks/useComputerNames';
 
 function ArrayStates({ counts }: { counts: JobArraySummary['counts'] }) {
   useLocale();
@@ -43,6 +44,7 @@ export function JobArraysTable({
   onSelectJob: (jobId: string) => void;
 }) {
   useLocale();
+  const computerName = useComputerNames(targets);
   return (
     <section className="job-arrays">
       <h2>{text.jobArrays}</h2>
@@ -85,7 +87,7 @@ export function JobArraysTable({
             priority: 'secondary',
             header: text.target,
             render: (array) =>
-              targets.find((target) => target.id === array.targetId)?.name ?? array.targetId,
+              computerName(array.targetId),
           },
           {
             key: 'origin',
