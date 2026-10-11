@@ -1,13 +1,18 @@
 /*
  * Width breakpoints shared by every screen. CSS custom properties cannot appear inside @media, so
  * media queries write the same literal values in range syntax and nothing else:
+ *   (width < 390px)  phones narrower than most iPhones (375px SE and mini, 360/320px Android,
+ *                    1280px zoomed to 400%) — --bp-xs
  *   (width < 640px)  phones in portrait       — --bp-sm
  *   (width < 900px)  tablets, narrow windows  — --bp-md
  *   (width < 1200px) small laptops            — --bp-lg
- * Scripts read the same values from lib/breakpoints.ts; breakpoints.test.ts keeps all three in step.
- * @mado/design-system uses the same three, and its --tap-target sizes tapped controls below 900px.
+ * Scripts read the same values from lib/breakpoints.ts; breakpoints.test.ts keeps all four in step.
+ * @mado/design-system uses --bp-sm, --bp-md and --bp-lg, and its --tap-target sizes tapped controls
+ * below 900px. --bp-xs is this app's own: below it the header shows only the mark of the app name,
+ * because the name and the header's buttons need about 386px.
  */
 :root {
+  --bp-xs: 390px;
   --bp-sm: 640px;
   --bp-md: 900px;
   --bp-lg: 1200px;

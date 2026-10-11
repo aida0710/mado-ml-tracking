@@ -154,8 +154,9 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
       await request(harness.app, '/api/projects', { cookie: member.cookie }),
       200,
     );
-    expect(projects.items.map((project) => [project.id, project.role])).toEqual([
-      [fixture.project.id, 'editor'],
+    // A role through a group makes the user a member, so "/" opens this Project for them.
+    expect(projects.items.map((project) => [project.id, project.role, project.isMember])).toEqual([
+      [fixture.project.id, 'editor', true],
     ]);
     const listed = (await members(fixture)).find((entry) => entry.user.id === member.userId);
     expect(listed).toMatchObject({
@@ -321,7 +322,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
     ).toBe(403);
   });
 
-  it('最後の直接adminは外せないが、adminのgroup bindingがあれば外せる', async () => {
+  it('最後の直接adminは外せないが、誰かが入っているgroupのadmin bindingがあれば外せる', async () => {
     const fixture = await projectFixture(harness);
     const administratorId = fixture.administrator.userId;
     expect((await deleteMember(fixture, administratorId)).status).toBe(409);
@@ -335,11 +336,46 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
       ).status,
     ).toBe(409);
 
+    const groupAdmin = await login(harness, 'lead@localhost');
+    await joinGroup(groupAdmin.userId);
     await bindGroup(fixture, 'admin');
     expect((await deleteMember(fixture, administratorId)).status).toBe(204);
     expect((await members(fixture)).some((entry) => entry.user.id === administratorId)).toBe(
       false,
     );
+  });
+
+  it('まだ誰もloginしていないgroupのadmin bindingは数えず、最後の直接adminは外せも下げられもしない', async () => {
+    const fixture = await projectFixture(harness);
+    const administratorId = fixture.administrator.userId;
+    // A mistyped group name: nobody holds it, so it cannot keep the Project manageable.
+    await bindGroup(fixture, 'admin', 'ml-team-typo');
+    const removal = await deleteMember(fixture, administratorId);
+    expect(removal.status).toBe(409);
+    expect(((await removal.json()) as { error: string }).error).toContain(
+      'まだ誰も入っていないgroupのAdminは数えません',
+    );
+    const demotion = await request(harness.app, `${fixture.basePath}/members/${administratorId}`, {
+      method: 'PUT',
+      cookie: fixture.administrator.cookie,
+      body: { role: 'editor' },
+    });
+    expect(demotion.status).toBe(409);
+
+    // The empty binding itself is not the last admin, so it can be fixed or removed.
+    expect((await deleteBinding(fixture, 'ml-team-typo')).status).toBe(204);
+    expect((await members(fixture)).find((entry) => entry.user.id === administratorId)?.role).toBe(
+      'admin',
+    );
+  });
+
+  it('adminのgroupの最後の人がgroupを抜けた後は、そのbindingを数えない', async () => {
+    const fixture = await projectFixture(harness);
+    const groupAdmin = await login(harness, 'lead@localhost');
+    await joinGroup(groupAdmin.userId);
+    await bindGroup(fixture, 'admin');
+    await leaveGroup(groupAdmin.userId);
+    expect((await deleteMember(fixture, fixture.administrator.userId)).status).toBe(409);
   });
 
   it('管理者が0になるadmin bindingの削除・格下げは409', async () => {

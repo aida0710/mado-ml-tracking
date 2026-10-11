@@ -4,7 +4,9 @@ import {
   hasBaselineMoved,
   currentDecisionsForAlias,
   effectiveAliasProtection,
+  canRemoveAlias,
   meetsProtectionRole,
+  roleToRemoveAlias,
   promotionEvidenceRequirement,
 } from './promotionEvidence';
 
@@ -72,6 +74,17 @@ describe('保護aliasと昇格の根拠', () => {
     expect(meetsProtectionRole('editor', adminOnly)).toBe(false);
     expect(meetsProtectionRole('admin', adminOnly)).toBe(true);
     expect(meetsProtectionRole('viewer', null)).toBe(true);
+  });
+
+  it('aliasの解除は保護のroleが要り、合格判定が必須の保護ならeditor以上でもadminだけが解除できる', () => {
+    const editorOnly = { requiredRole: 'editor', requirePassedEvaluation: false } as const;
+    const needsDecision = { requiredRole: 'editor', requirePassedEvaluation: true } as const;
+    expect(canRemoveAlias('editor', null)).toBe(true);
+    expect(canRemoveAlias('editor', editorOnly)).toBe(true);
+    expect(canRemoveAlias('viewer', editorOnly)).toBe(false);
+    expect(roleToRemoveAlias(needsDecision)).toBe('admin');
+    expect(canRemoveAlias('editor', needsDecision)).toBe(false);
+    expect(canRemoveAlias('admin', needsDecision)).toBe(true);
   });
 
   it('同じ候補Runの再判定は最新だけを残し、別aliasのpolicyや別のバージョンの判定は除く', () => {

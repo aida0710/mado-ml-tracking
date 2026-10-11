@@ -225,6 +225,10 @@ page.on('pageerror', (error) => pageErrors.push(error.message));
 const harness = (parameters) =>
   `${base}/tests/fixtures/media/harness.html?${new URLSearchParams({ projectId, ...parameters })}`;
 const contentUrl = (artifact) => `/api/projects/${projectId}/artifacts/${artifact.id}/content`;
+// The audio viewer plays through its own toolbar, so its <audio> has no controls and is never
+// visible; wait for the element to be in the page with the expected file instead.
+const waitForAudio = (scope, artifact) =>
+  scope.locator(`audio[src="${contentUrl(artifact)}"]`).waitFor({ state: 'attached' });
 
 async function screenshot(name) {
   if (!screenshotDirectory) return;
@@ -251,13 +255,13 @@ try {
   const slider = page.getByRole('slider', { name: '表示するstep' });
   // The latest step is shown first.
   await page.locator('.media-step-value', { hasText: 'step 3（4 / 4）' }).waitFor();
-  await page.locator(`.run-media-step audio[src="${contentUrl(runAStep3)}"]`).waitFor();
+  await waitForAudio(page.locator('.run-media-step'), runAStep3);
   await page.locator('.media-info', { hasText: '16,000 Hz' }).waitFor();
   await slider.focus();
   await page.keyboard.press('ArrowLeft');
   await page.locator('.media-step-value', { hasText: 'step 2（3 / 4）' }).waitFor();
   const step2 = audioByRunStep.get('a:2');
-  await page.locator(`.run-media-step audio[src="${contentUrl(step2)}"]`).waitFor();
+  await waitForAudio(page.locator('.run-media-step'), step2);
   await page.locator('.media-caption', { hasText: 'Run a の step 2' }).waitFor();
   await page.locator('.run-media-step .audio-viewer canvas.audio-spectrogram').waitFor();
   await screenshot('run-media-audio-light');
@@ -267,7 +271,7 @@ try {
   await waitUntil(async () => (await playingAudio()).length === 1, 'step 2 audio did not start');
   await page.getByRole('button', { name: '前のstep' }).click();
   await page.locator('.media-step-value', { hasText: 'step 1（2 / 4）' }).waitFor();
-  await page.locator(`.run-media-step audio[src="${contentUrl(audioByRunStep.get('a:1'))}"]`).waitFor();
+  await waitForAudio(page.locator('.run-media-step'), audioByRunStep.get('a:1'));
   await page.waitForTimeout(300);
   assert.deepEqual(await playingAudio(), [], 'audio kept playing after the step moved');
   await slider.focus();
@@ -339,7 +343,7 @@ try {
   assert.equal(await grid.locator('.media-compare-cell.missing').count(), 0);
   await grid.getByRole('button', { name: `${runA.name}、step 1、音声` }).click();
   const detail = page.locator('.media-compare-detail');
-  await detail.locator(`audio[src="${contentUrl(audioByRunStep.get('a:1'))}"]`).waitFor();
+  await waitForAudio(detail, audioByRunStep.get('a:1'));
   await detail.locator('canvas.audio-spectrogram').waitFor();
   await detail.getByRole('button', { name: '再生', exact: true }).click();
   await page.waitForTimeout(700);

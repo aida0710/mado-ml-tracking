@@ -1,5 +1,16 @@
-import { useId, useRef } from 'react';
+import { useId, useRef, type CSSProperties } from 'react';
+import { useHiddenEdges } from '../hooks/useHiddenEdges';
+import { useRevealSelectedTab } from '../hooks/useRevealSelectedTab';
 
+// How far an end that hides tabs fades out (styles/tabs.css); the selected tab is kept this far
+// from the edges so it is never drawn faded.
+const EDGE_FADE_PX = 32;
+const edgeFadeStyle = { '--tab-edge-fade': `${EDGE_FADE_PX}px` } as CSSProperties;
+
+/**
+ * A row of tabs. When they do not fit (a phone), the row scrolls sideways: the selected tab is
+ * scrolled into view, and an end that hides tabs fades out to show there are more.
+ */
 export function Tabs({
   tabs,
   selected,
@@ -13,18 +24,22 @@ export function Tabs({
 }) {
   const id = useId();
   const container = useRef<HTMLDivElement>(null);
+  const selectedIndex = tabs.findIndex((tab) => tab.key === selected);
+  useRevealSelectedTab(container, selectedIndex, EDGE_FADE_PX);
+  const hiddenEdges = useHiddenEdges(container, tabs.map((tab) => `${tab.key}:${tab.label}`).join('\n'));
   return (
     <div
       ref={container}
       className="tabs"
       role="tablist"
+      data-hidden-edges={hiddenEdges ?? undefined}
+      style={edgeFadeStyle}
       onKeyDown={(event) => {
-        const currentIndex = tabs.findIndex((tab) => tab.key === selected);
         const nextIndex =
           event.key === 'ArrowRight'
-            ? (currentIndex + 1) % tabs.length
+            ? (selectedIndex + 1) % tabs.length
             : event.key === 'ArrowLeft'
-              ? (currentIndex - 1 + tabs.length) % tabs.length
+              ? (selectedIndex - 1 + tabs.length) % tabs.length
               : event.key === 'Home'
                 ? 0
                 : event.key === 'End'

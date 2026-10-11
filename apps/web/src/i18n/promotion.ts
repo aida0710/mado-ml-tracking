@@ -161,6 +161,12 @@ export const aliasProtectionRoleLabels: Record<ModelAliasProtectionRole, string>
   admin: 'adminのみ',
 };
 
+// How a sentence names the role a change needs (「…にはProject adminの権限が必要です」).
+const aliasProtectionRoleNeeded: Record<ModelAliasProtectionRole, string> = {
+  editor: 'editor以上',
+  admin: 'Project admin',
+};
+
 // Text that embeds values.
 export const promotionTextTemplates = {
   protectedAliasNotice: (role: ModelAliasProtectionRole, requirePassedEvaluation: boolean) =>
@@ -168,7 +174,11 @@ export const promotionTextTemplates = {
       requirePassedEvaluation ? '・合格判定が必須' : ''
     }）。`,
   protectedAliasRoleMissing: (role: ModelAliasProtectionRole) =>
-    `このaliasの変更には${aliasProtectionRoleLabels[role]}の権限が必要です。`,
+    `このaliasの変更には${aliasProtectionRoleNeeded[role]}の権限が必要です。`,
+  protectedAliasLabel: (role: ModelAliasProtectionRole) =>
+    `保護alias（${aliasProtectionRoleLabels[role]}）`,
+  aliasRemovalRoleMissing: (role: ModelAliasProtectionRole) =>
+    `解除には${aliasProtectionRoleNeeded[role]}の権限が必要です`,
   evidenceOption: (policyName: string, createdAt: string) => `${policyName}（${createdAt}）`,
   transferOwnerConfirm: (policyName: string) =>
     `「${policyName}」の判定と自動昇格を、選んだService Accountの権限で実行するように切り替えます。`,

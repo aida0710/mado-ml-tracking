@@ -1,11 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import type {
-  ComputeTarget,
-  ExecutionRuntime,
-  Job,
-  JobListItem,
-  Run,
-  WorkerJob,
+import {
+  JOB_SUBMISSION_PHASES,
+  type ComputeTarget,
+  type ExecutionRuntime,
+  type Job,
+  type JobListItem,
+  type Run,
+  type WorkerJob,
 } from '@mmt/contracts';
 import type { Principal } from '../auth/principal.js';
 import type { ApiConfig } from '../config.js';
@@ -19,12 +20,9 @@ import {
 } from '../domain/runtimeCompatibility.js';
 import { validateCodeArtifacts } from '../repositories/runtimeArtifactRepository.js';
 import { isTerminalStatus } from '../domain/runTransitions.js';
+import { assertControlsJob } from '../domain/jobControl.js';
 import type { JobCreate } from '../domain/validation.js';
-import {
-  initialJobPhase,
-  SUBMISSION_PHASES,
-  validateSiteJobOptions,
-} from '../domain/siteJobs.js';
+import { initialJobPhase, validateSiteJobOptions } from '../domain/siteJobs.js';
 import {
   findCodeVersion,
   findDatasetVersions,
@@ -119,9 +117,11 @@ export class JobService {
     return rows(
       this.database,
       `SELECT ${jobColumns('j')},r.name AS run_name,r.kind AS run_kind,r.task_id,t.name AS task_name,
-        COALESCE(r.tags->>$2='true',false) AS sweep_early_stopped
+        COALESCE(r.tags->>$2='true',false) AS sweep_early_stopped,
+        r.created_by,u.display_name AS created_by_name
       FROM jobs j JOIN runs r ON r.id=j.run_id
       LEFT JOIN experiment_tasks t ON t.id=r.task_id
+      LEFT JOIN users u ON u.id=r.created_by
       WHERE j.project_id=$1 ORDER BY j.created_at DESC`,
       [projectId, SWEEP_EARLY_STOPPED_TAG],
     );
@@ -257,11 +257,14 @@ export class JobService {
 
   async cancel(principal: Principal, projectId: string, jobId: string): Promise<Job> {
     return transaction(this.database, async (connection) => {
-      await requireProject(connection, principal, {
+      const role = await requireProject(connection, principal, {
         projectId,
         role: 'editor',
         scope: 'jobs:write',
       });
+      const job = await findJob(connection, { projectId, id: jobId });
+      const run = await findRun(connection, { projectId, id: job.runId });
+      assertControlsJob({ role, userId: principal.user.id }, run);
       return this.requestCancelInTransaction(connection, { projectId, jobId });
     });
   }
@@ -299,7 +302,7 @@ export class JobService {
     if (isTerminalStatus(job.status)) return job;
     // A site Job that is being submitted or waits in the scheduler queue runs nothing yet, so it
     // ends now; the launcher removes the queued scheduler job (scheduler_cancel_state).
-    const waitsInSchedulerQueue = !!job.phase && SUBMISSION_PHASES.includes(job.phase);
+    const waitsInSchedulerQueue = !!job.phase && JOB_SUBMISSION_PHASES.includes(job.phase);
     if (job.status !== 'queued' && !waitsInSchedulerQueue) {
       // Even a silent worker may still own a live remote process. Only completion releases its reservation.
       return (await first<Job>(
@@ -336,18 +339,19 @@ export class JobService {
   ): Promise<{ run: Run; job: Job }> {
     const { jobId, input: retryRequest } = request;
     return transaction(this.database, async (connection) => {
-      await requireProject(connection, principal, {
+      const role = await requireProject(connection, principal, {
         projectId,
         role: 'editor',
         scope: 'jobs:write',
       });
       const previousJob = await findJob(connection, { projectId, id: jobId, lock: true });
+      const previousRun = await findRun(connection, { projectId, id: previousJob.runId });
+      assertControlsJob({ role, userId: principal.user.id }, previousRun);
       const existingRetry = await first<Job>(
         connection,
         `SELECT ${jobColumns()} FROM jobs WHERE retry_of_job_id=$1`,
         [previousJob.id],
       );
-      const previousRun = await findRun(connection, { projectId, id: previousJob.runId });
       if (existingRetry) {
         const retryRun = await findRun(connection, { projectId, id: existingRetry.runId });
         await this.assertSameRetryCheckpoint(connection, {

@@ -28,6 +28,7 @@ import {
   uploadFixtureArtifact,
   type ContainerFixture,
 } from './containerFixtures.js';
+import { referenceDigest } from './fixtures.js';
 
 describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（独立PostgreSQL）', () => {
   let harness: Harness;
@@ -379,7 +380,7 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
       await create(`datasets/${dataset.id}/versions`, {
         version: 'v1',
         uri: 'file:///fixture/other',
-        digest: 'fixture',
+        digest: referenceDigest('fixture'),
       }),
     );
     for (const reference of [
@@ -447,7 +448,7 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
         body: {
           version: 'v1',
           uri: 'file:///fixture/inputs',
-          digest: 'fixture',
+          digest: referenceDigest('fixture'),
         },
       }),
     );
@@ -901,7 +902,7 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
       await request(harness.app, `${fixture.basePath}/datasets/${dataset.id}/versions`, {
         method: 'POST',
         cookie: fixture.editor.cookie,
-        body: { version: 'v1', uri: 'file:///fixture/input', digest: 'fixture' },
+        body: { version: 'v1', uri: 'file:///fixture/input', digest: referenceDigest('fixture') },
       }),
     );
     const rule = await registerRule(fixture, {

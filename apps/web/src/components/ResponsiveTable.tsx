@@ -23,6 +23,8 @@ export interface ResponsiveTableProps<T> {
   onRowClick?: (row: T) => void;
   /** The key of the row the screen has chosen (for example the one shown in a side panel). */
   selectedKey?: string;
+  /** Marks rows chosen together, such as rows ticked for a bulk action, like selectedKey does one. */
+  isSelected?: (row: T) => boolean;
   /** Shown instead of the table when there are no rows. */
   empty?: ReactNode;
   /** Accessible name of the table when no heading names it. */
@@ -57,6 +59,7 @@ export function ResponsiveTableView<T>({
   rowKey,
   onRowClick,
   selectedKey,
+  isSelected,
   empty,
   label,
   isNarrow,
@@ -97,7 +100,10 @@ export function ResponsiveTableView<T>({
             return [
               <tr
                 key={key}
-                className={rowClassName({ isClickable: Boolean(onRowClick), isSelected: key === selectedKey })}
+                className={rowClassName({
+                  isClickable: Boolean(onRowClick),
+                  isSelected: key === selectedKey || Boolean(isSelected?.(row)),
+                })}
                 onClick={
                   onRowClick &&
                   ((event) => {

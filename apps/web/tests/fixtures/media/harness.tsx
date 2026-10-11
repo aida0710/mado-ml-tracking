@@ -3,6 +3,7 @@
 // tab, ComparePage's media tab) belong to chart-panels-and-pages-web.
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import '../../../src/styles/base.css';
 import '../../../src/styles/layout.css';
 import '../../../src/styles/tables.css';
@@ -17,14 +18,18 @@ const parameters = new URLSearchParams(window.location.search);
 const projectId = parameters.get('projectId') ?? '';
 document.documentElement.dataset.theme = parameters.get('theme') === 'dark' ? 'dark' : 'light';
 
+// The components keep the chosen key and steps in the URL (hooks/useMediaLocation), as on the
+// Run and Compare pages, so they need a router; it adds them next to the harness parameters.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <main className="page" style={{ padding: 24 }}>
-      {parameters.get('view') === 'compare' ? (
-        <MediaCompare projectId={projectId} runIds={(parameters.get('runIds') ?? '').split(',')} />
-      ) : (
-        <RunMediaPanel projectId={projectId} runId={parameters.get('runId') ?? ''} />
-      )}
-    </main>
+    <BrowserRouter>
+      <main className="page" style={{ padding: 24 }}>
+        {parameters.get('view') === 'compare' ? (
+          <MediaCompare projectId={projectId} runIds={(parameters.get('runIds') ?? '').split(',')} />
+        ) : (
+          <RunMediaPanel projectId={projectId} runId={parameters.get('runId') ?? ''} />
+        )}
+      </main>
+    </BrowserRouter>
   </StrictMode>,
 );

@@ -1,8 +1,8 @@
 import type { ProjectGroupBinding, ProjectRole } from '@mmt/contracts';
 import type { Principal } from '../auth/principal.js';
 import { transaction, type Database } from '../db/database.js';
-import { conflict, notFound } from '../domain/errors.js';
-import { removesLastProjectAdmin } from '../domain/projectAdminInvariant.js';
+import { notFound } from '../domain/errors.js';
+import { assertKeepsProjectAdmin } from '../domain/projectAdminInvariant.js';
 import type { RequestMetadata } from '../http/requestMetadata.js';
 import { writeAuditEvent } from '../repositories/auditRepository.js';
 import { lockProjectAdminGrants } from '../repositories/identityRepository.js';
@@ -46,8 +46,7 @@ export class ProjectGroupBindingService {
         await requireProject(connection, principal, { projectId, role: 'admin', scope: 'admin' });
         const adminGrants = await lockProjectAdminGrants(connection, projectId);
         const previous = await findGroupBinding(connection, { projectId, group });
-        if (removesLastProjectAdmin(adminGrants, { kind: 'group_binding', groupName: group, role }))
-          conflict('最後のProject管理者は権限を下げられません');
+        assertKeepsProjectAdmin(adminGrants, { kind: 'group_binding', groupName: group, role });
         const saved = await upsertGroupBinding(connection, {
           projectId,
           group,
@@ -81,9 +80,7 @@ export class ProjectGroupBindingService {
         const adminGrants = await lockProjectAdminGrants(connection, projectId);
         const previous = await findGroupBinding(connection, { projectId, group });
         if (!previous) notFound('Group binding');
-        const change = { kind: 'group_binding', groupName: group, role: null } as const;
-        if (removesLastProjectAdmin(adminGrants, change))
-          conflict('最後のProject管理者は外せません');
+        assertKeepsProjectAdmin(adminGrants, { kind: 'group_binding', groupName: group, role: null });
         await deleteGroupBinding(connection, { projectId, group });
         await writeAuditEvent(connection, {
           ...draft,

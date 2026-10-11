@@ -1,10 +1,27 @@
-/* The Run list on the Experiments page: row selection and the toolbar menus on narrow screens. */
+/* The Run list on the Experiments page: row selection, the narrow list and the toolbar menus on
+   narrow screens. */
 
 /* The selection checkbox of a Run row; on narrow (touch) screens its label is the tap target. */
 .run-select-target {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* The Run list below --bp-sm (NarrowRunTable): the name wraps instead of keeping the wide table's
+   180px column, so the selection, the name, the status and the open button fit a 320px phone. */
+.narrow-run-table .responsive-table :is(th, td):is(.run-select-cell, .run-name-cell) {
+  min-width: 0;
+}
+.narrow-run-table .run-name {
+  width: auto;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+/* In the opened row a metric sits next to its name, so it starts at the left like the other values
+   instead of lining up on the right as in a column of numbers. */
+.narrow-run-table .responsive-table-details dd.numeric {
+  text-align: left;
 }
 
 @media (width < 900px) {

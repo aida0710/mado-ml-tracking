@@ -1,6 +1,7 @@
 import type { ProjectMemberGrant, ProjectRole, UserSearchResult } from '@mmt/contracts';
 
-// A member added while creating a Project can record Runs; the creator changes it per row.
+// A member added while creating a Project or from the member list can record Runs; the admin
+// changes it per member.
 export const DEFAULT_MEMBER_GRANT_ROLE: ProjectRole = 'editor';
 
 /** A member chosen in the creation dialog, with the name shown in its row. */

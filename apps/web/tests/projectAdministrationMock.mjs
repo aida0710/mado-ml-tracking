@@ -55,7 +55,7 @@ export function suggestDirectories(typed) {
 
 const toProject = ({ archivedAt: _archivedAt, memberCount: _members, runCount: _runs, ...project }) =>
   project;
-const toAdminProject = ({ role: _role, ...project }) => project;
+const toAdminProject = ({ role: _role, isMember: _isMember, ...project }) => project;
 
 /**
  * The Projects of a mock API. `mainProject` is the one the other mock routes serve; it stays the
@@ -84,6 +84,7 @@ export function createProjectAdministration({ id, now, user, mainProject }) {
         artifactBackend: body.artifactBackend ?? 'filesystem',
         visibility: body.visibility ?? 'public',
         role: 'admin',
+        isMember: true,
         createdAt: now,
         archivedAt: null,
         memberCount: 1 + (body.members?.length ?? 0),

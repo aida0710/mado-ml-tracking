@@ -34,3 +34,15 @@
 .navigation-drawer-header .product-mark-top {
   stroke: var(--header-indicator);
 }
+/* 上部バーで操作のボタンに押されたときは、名前を「…」で縮めて画面の外へはみ出させない。
+   @mado/design-system の .brand は縮まないため、ここで縮められるようにする。
+   --bp-xs 未満の幅では、TopBar が名前を隠して印だけにする。 */
+.brand,
+.brand .product-logo {
+  min-width: 0;
+}
+.brand .product-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

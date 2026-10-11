@@ -43,6 +43,24 @@ export function meetsProtectionRole(
 }
 
 /**
+ * The role removing a protected alias takes: the protection's role, raised to admin when the
+ * protection requires a passed decision, since no decision can justify a removal.
+ */
+export function roleToRemoveAlias(protection: EffectiveAliasProtection): ModelAliasProtectionRole {
+  return protection.requirePassedEvaluation ? 'admin' : protection.requiredRole;
+}
+
+export function canRemoveAlias(
+  role: ProjectRole,
+  protection: EffectiveAliasProtection | null,
+): boolean {
+  return (
+    !protection ||
+    meetsProtectionRole(role, { ...protection, requiredRole: roleToRemoveAlias(protection) })
+  );
+}
+
+/**
  * The current decisions about the version under policies that target the alias: a later
  * re-evaluation of the same candidate Run replaces the earlier one, as the API judges it.
  */

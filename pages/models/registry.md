@@ -108,7 +108,7 @@ loaded = mlflow.pyfunc.load_model("models:/voice-tts@production")
 3. ［理由］に切り替えの理由を入力し、［保存］を押します。理由は任意ですが、保護Aliasでは必要になる場合があります。
 4. Aliasの一覧で、Aliasが指定したバージョンを指していることを確かめます。
 
-Aliasを外すときは、Aliasの一覧の［Aliasを解除］を押します。解除も履歴に残ります。
+Aliasを外すときは、Aliasの一覧の［Aliasを解除］を押します。解除も履歴に残ります。保護aliasには一覧で鍵の印と「保護alias（adminのみ）」のような必要なRoleが付き、権限が足りないときは［Aliasを解除］の代わりに「解除にはProject adminの権限が必要です」と表示されます。合格判定が必須の保護aliasを外せるのは、Project adminだけです。
 
 推論や評価のRunを起動するときにAliasを指定しても、Runに保存されるのはその時点でAliasが指していたバージョンです。後でAliasを別のバージョンへ移しても、過去のRunの記録は変わりません。
 

@@ -263,6 +263,6 @@ SDKを入れていないコンテナでは、出力を`/mmt/outputs`に書き、
 
 - workerとコンピュータのSSHが切れても、コンピュータの上でコードは動き続けます。workerは再接続して同じJobに戻り、続きのログを送ります。同じJobを二重に起動することはありません。
 - workerを再起動しても、state directoryの記録から実行中のJobを引き継ぎます。state directoryを消さないでください。
-- Jobを止めるのは、Jobsの［停止を要求］だけです。workerは実行中のプロセスにSIGTERMを送り、10秒で終わらなければSIGKILLで止めてから、Jobを「中止」で終えます。
+- Jobを止めるのは、Jobsの［停止を要求］だけです。確認のダイアログにRun名・作成者・実行先と何が起きるかが出るので、確かめてから［停止する］を押します。止められるのはJobの作成者（JobのRunを作った人）とProjectのAdminだけです（一覧の［作成者］の列で確かめられます。ほかの人のJobの［操作］には、ボタンの代わりにその理由が出ます）。workerは実行中のプロセスにSIGTERMを送り、10秒で終わらなければSIGKILLで止めてから、Jobを「中止」で終えます。
 - Jobのheartbeatが60秒途絶えると、Jobsに「応答なし」を表示します。Jobの状態とGPUの予約は変えません。workerのマシンで状態を確かめてから、停止や再実行を手で行ってください。
 - workerの応答が120秒途絶えると、Computeの［Workers］で「オフライン」になります。通知で受け取るには、Projectの通知ルールで`worker.offline`を選びます（[通知](/admin/notifications)）。

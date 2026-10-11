@@ -23,7 +23,6 @@ const MAX_DATASET_SOURCE_LENGTH = 65535;
 const MAX_DATASET_PROFILE_LENGTH = 16777215;
 const MAX_INPUT_TAG_KEY_LENGTH = 255;
 const MAX_INPUT_TAG_VALUE_LENGTH = 500;
-export const MAX_METRIC_HISTORY_RESULTS = 50000;
 // PostgreSQL and JavaScript Date both retain the millisecond timestamps used by the SDK.
 const MAX_TIMESTAMP = 8640000000000000;
 // Metric and ModelOutput steps are signed int64 in the official service descriptor.

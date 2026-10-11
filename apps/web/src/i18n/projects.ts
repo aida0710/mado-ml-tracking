@@ -36,6 +36,20 @@ export const projectsText = {
   projectPurge: '完全に削除',
   projectPurgeTitle: 'プロジェクトを完全に削除',
   projectPurgeNameLabel: '確認のため、プロジェクト名を入力してください',
+  projectStorageChangeHint:
+    '保存先を変えても、既存のArtifactは今の保存先に残ります。これから保存する分だけが新しい保存先に入ります。',
+  projectSettingsConfirmTitle: 'プロジェクト設定の変更を確認',
+  projectSettingsConfirmSave: '変更を保存',
+  projectBecomesPublic:
+    '公開範囲をPublicにします。ログインできる全員がEditorとして見られて、編集できるようになります。ViewerにしていたメンバーもEditorとして使えるようになります。',
+  projectBecomesPrivate: '公開範囲をPrivateにします。メンバーでない人は見られなくなります。',
+  projectListMine: '参加しているプロジェクト',
+  projectListRole: 'あなたの権限',
+  projectListPublic: 'メンバーでなくても入れるプロジェクト（Public）',
+  projectListPublicHint:
+    'ログインできる全員がEditorとして使えるプロジェクトです。開いて作ったRunや実験は、そのプロジェクトに入ります。',
+  projectListAdminHint: 'メンバーでないPrivateのプロジェクトは、全体管理の「プロジェクト」にあります。',
+  projectListAdminLink: '全体管理のプロジェクト一覧',
 } as const;
 
 // Text that embeds values.
@@ -49,4 +63,6 @@ export const projectsTextTemplates = {
   projectMemberRole: (displayName: string) => `${displayName}のRole`,
   projectMemberRemove: (displayName: string) => `${displayName}を外す`,
   projectArchivedAt: (date: string) => `アーカイブ ${date}`,
+  projectStorageChange: (from: string, to: string) =>
+    `Artifactの保存先を「${from}」から「${to}」に変えます。既存のArtifactは「${from}」に残り、これから保存する分だけが「${to}」に入ります。`,
 };

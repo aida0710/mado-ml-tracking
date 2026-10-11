@@ -2,7 +2,7 @@ import type { AdminProject, Project } from '@mmt/contracts';
 import { first, rows, type Connection } from '../db/database.js';
 
 /** A Project row as the API returns it, without the caller's role. */
-export type ProjectRecord = Omit<Project, 'role'>;
+export type ProjectRecord = Omit<Project, 'role' | 'isMember'>;
 
 // The Project fields of the API (Project without role); archive and purge columns stay internal.
 export const PROJECT_COLUMNS =

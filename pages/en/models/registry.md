@@ -110,7 +110,7 @@ When the version name is omitted, versions are numbered `1`, `2`, `3`, and so on
 3. Enter the reason in **理由** (Reason) and press **保存** (Save). The reason is optional, but a protected alias may require it.
 4. Check that the alias points at the version in the alias list.
 
-To remove an alias, press **Aliasを解除** (Remove alias) in the alias list. Removals are recorded too.
+To remove an alias, press **Aliasを解除** (Remove alias) in the alias list. Removals are recorded too. A protected alias carries a lock and the role it needs (for example 保護alias（adminのみ）, protected alias, admins only) in the list; without that role, the list says which role removal needs instead of showing **Aliasを解除**. Only Project Admins can remove a protected alias that requires a passed check.
 
 When you start an inference or evaluation Run with an alias, the Run stores the version the alias pointed at at that moment. Moving the alias later does not change past Runs.
 

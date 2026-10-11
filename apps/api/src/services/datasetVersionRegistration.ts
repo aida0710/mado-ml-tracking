@@ -4,13 +4,10 @@ import { first, type Connection } from '../db/database.js';
 import { datasetManifestDigest } from '../domain/datasetManifestDigest.js';
 import { conflict, DomainError, notFound } from '../domain/errors.js';
 import { isTerminalStatus } from '../domain/runTransitions.js';
-import {
-  assertProjectReference,
-  assertProjectReferences,
-  findRun,
-} from '../repositories/registryRepository.js';
+import { assertProjectReference, findRun } from '../repositories/registryRepository.js';
 import { runColumns } from '../repositories/runListProjection.js';
 import { requireProject } from './accessService.js';
+import { lockDatasetsOfVersions } from './datasetVersionReferences.js';
 import type { ModelVersionRegistrationActor } from './modelVersionRegistration.js';
 import { enqueueRunEvent } from './outboxEvents.js';
 
@@ -88,14 +85,18 @@ export async function registerDatasetVersion(
     });
   const dataset = await first<Dataset>(
     connection,
-    `SELECT * FROM datasets WHERE id=$1 AND project_id=$2 ${registration.version ? '' : 'FOR UPDATE'}`,
+    'SELECT * FROM datasets WHERE id=$1 AND project_id=$2',
     [registration.datasetId, projectId],
   );
   if (!dataset) notFound('Dataset');
-  await assertProjectReferences(connection, {
-    table: 'dataset_versions',
+  // The parents must outlive this transaction (a version deletion waits, or has already removed
+  // one and this answers 404). A version without a name is numbered after the Dataset's integer
+  // versions, which needs the Dataset to itself; it is locked in the same id order as the parents'.
+  // A named version needs no lock of its own: deleting another version does not touch it.
+  await lockDatasetsOfVersions(connection, {
     projectId,
-    ids: registration.parentDatasetVersionIds,
+    versionIds: registration.parentDatasetVersionIds,
+    numberingDatasetId: registration.version ? undefined : dataset.id,
   });
   const sourceRun = registration.sourceRunId
     ? await findRun(connection, {

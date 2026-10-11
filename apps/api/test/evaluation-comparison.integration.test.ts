@@ -10,7 +10,7 @@ import type {
   RunStatus,
 } from '@mmt/contracts';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
-import { executionFixture } from './fixtures.js';
+import { executionFixture, referenceDigest } from './fixtures.js';
 
 async function evaluationFixture(harness: Harness) {
   const fixture = await executionFixture(harness);
@@ -48,7 +48,7 @@ async function evaluationFixture(harness: Harness) {
       await request(harness.app, `${basePath}/datasets/${dataset.id}/versions`, {
         method: 'POST',
         cookie: editor.cookie,
-        body: { version, uri: `s3://evaluation/${version}`, digest: `digest-${version}` },
+        body: { version, uri: `s3://evaluation/${version}`, digest: referenceDigest(`evaluation-${version}`) },
       }),
     );
   }
@@ -542,7 +542,7 @@ describe.skipIf(!testDatabaseUrl)('評価結果の基準バージョンとの比
       await request(harness.app, `${otherPath}/datasets/${otherDataset.id}/versions`, {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: { version: '1', uri: 's3://other/1', digest: 'other' },
+        body: { version: '1', uri: 's3://other/1', digest: referenceDigest('other') },
       }),
     );
     const viewer = { cookie: fixture.viewer.cookie };

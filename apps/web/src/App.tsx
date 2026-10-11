@@ -5,6 +5,8 @@ import { AppShell } from './layout/AppShell';
 import { SettingsShell } from './layout/SettingsShell';
 import { LegacySettingsRedirect } from './layout/LegacySettingsRedirect';
 import { LEGACY_SETTINGS_ROUTES } from './layout/legacySettingsPaths';
+import { MlflowUiRedirect } from './layout/MlflowUiRedirect';
+import { MLFLOW_UI_ROUTE } from './layout/mlflowUiPaths';
 import {
   DEFAULT_SETTINGS_SECTION,
   PASSWORD_CHANGE_PATH,
@@ -125,6 +127,7 @@ export function App() {
             <Route path="compute" element={<ComputePage />} />
             <Route path="plugins" element={<PluginsPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path={MLFLOW_UI_ROUTE} element={<MlflowUiRedirect />} />
             <Route path="*" element={<Navigate replace to="experiments" />} />
           </Route>
           <Route path="*" element={<Navigate replace to="/" />} />

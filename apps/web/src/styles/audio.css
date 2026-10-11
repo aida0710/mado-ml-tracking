@@ -43,7 +43,9 @@
   border-radius: var(--radius-sm);
   background: var(--surface);
   cursor: crosshair;
-  touch-action: none;
+  /* A vertical swipe scrolls the page (and pinching zooms) as anywhere else; only a sideways drag
+     reaches the viewer, which seeks or selects the loop range. */
+  touch-action: pan-y pinch-zoom;
   user-select: none;
 }
 .audio-timeline:focus-visible {
@@ -163,11 +165,15 @@
 .evaluation-pagination {
   align-items: center;
 }
+/* The single column is as wide as the preview, not as its widest line: a long line of JSON or a
+   log scrolls inside its own view instead of widening the page. */
 .artifact-compare-stack {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
 }
 .artifact-compare-item {
+  min-width: 0;
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);

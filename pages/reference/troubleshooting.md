@@ -100,7 +100,7 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" "$MMT_API_URL/api/auth/token"
 
 ## Projectの権限を変えられない（409）
 
-「Project adminがいなくなるため変更できません。」と表示される場合は、最後のAdminを外そうとしています。先に別のメンバーかgroupへAdminを付けてください。全体管理者を無効化・降格しようとして409 `last_global_admin`になる場合も、先に別の全体管理者を用意します。
+「Project adminがいなくなるため変更できません。」と表示される場合は、最後のAdminを外そうとしています。先に別のメンバーか、誰かがログインしたことのあるgroupへAdminを付けてください。まだ誰もログインしていないgroupのAdminは数えません（「Authentik group」の一覧に「まだ誰もログインしていません」と出ます）。全体管理者を無効化・降格しようとして409 `last_global_admin`になる場合も、先に別の全体管理者を用意します。
 
 ## 通知が届かない
 

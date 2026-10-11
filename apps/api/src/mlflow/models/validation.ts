@@ -11,8 +11,10 @@ import {
   MAX_MODEL_SEARCH_DATASETS,
   MAX_MODEL_ORDER_FIELDS,
   MAX_MODEL_ORDER_FIELD_LENGTH,
-  MAX_MODEL_PAGE_SIZE,
   DEFAULT_MODEL_PAGE_SIZE,
+  MLFLOW_MAX_REGISTERED_MODEL_RESULTS,
+  MLFLOW_MAX_MODEL_VERSION_RESULTS,
+  MLFLOW_MAX_LOGGED_MODEL_RESULTS,
   MAX_MODEL_PAGE_TOKEN_LENGTH,
   MAX_MODEL_URI_LENGTH,
   MAX_MODEL_DESCRIPTION_LENGTH,
@@ -59,6 +61,13 @@ export const loggedModelParamsSchema = z.strictObject({
 });
 export const deleteLoggedModelSchema = z.strictObject({ model_id: loggedModelIdSchema.optional() });
 
+/**
+ * max_results as MLflow's server validates it for one search: values MLflow rejects stay errors,
+ * and accepted values above the page size are served page by page (searchPagination.ts).
+ */
+function maxResultsSchema(mlflowMaximum: number) {
+  return z.coerce.number().int().min(1).max(mlflowMaximum).default(DEFAULT_MODEL_PAGE_SIZE);
+}
 const datasetSchema = z.strictObject({
   dataset_name: modelNameSchema,
   dataset_digest: z.string().min(1).max(MAX_MODEL_DATASET_DIGEST_LENGTH).optional(),
@@ -70,12 +79,7 @@ export const searchLoggedModelsSchema = z.strictObject({
     .max(MAX_MODEL_SEARCH_EXPERIMENTS),
   filter: z.string().max(MAX_MODEL_FILTER_LENGTH).default(''),
   datasets: z.array(datasetSchema).max(MAX_MODEL_SEARCH_DATASETS).default([]),
-  max_results: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(MAX_MODEL_PAGE_SIZE)
-    .default(DEFAULT_MODEL_PAGE_SIZE),
+  max_results: maxResultsSchema(MLFLOW_MAX_LOGGED_MODEL_RESULTS),
   order_by: z
     .array(
       z.strictObject({
@@ -148,26 +152,27 @@ export const transitionStageSchema = modelVersionReferenceSchema.extend({
 export const latestVersionsSchema = registeredModelReferenceSchema.extend({
   stages: z.array(z.enum(['None', 'Staging', 'Production', 'Archived'])).optional(),
 });
-export const searchRegistrySchema = z.strictObject({
-  filter: z.string().max(MAX_MODEL_FILTER_LENGTH).default(''),
-  max_results: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(MAX_MODEL_PAGE_SIZE)
-    .default(DEFAULT_MODEL_PAGE_SIZE),
-  order_by: z
-    .array(z.string().max(MAX_MODEL_ORDER_FIELD_LENGTH))
-    .max(MAX_MODEL_ORDER_FIELDS)
-    .default([]),
-  page_token: z.string().max(MAX_MODEL_PAGE_TOKEN_LENGTH).optional(),
-});
+function registrySearchSchema(mlflowMaximumResults: number) {
+  return z.strictObject({
+    filter: z.string().max(MAX_MODEL_FILTER_LENGTH).default(''),
+    max_results: maxResultsSchema(mlflowMaximumResults),
+    order_by: z
+      .array(z.string().max(MAX_MODEL_ORDER_FIELD_LENGTH))
+      .max(MAX_MODEL_ORDER_FIELDS)
+      .default([]),
+    page_token: z.string().max(MAX_MODEL_PAGE_TOKEN_LENGTH).optional(),
+  });
+}
+export const searchRegisteredModelsSchema = registrySearchSchema(
+  MLFLOW_MAX_REGISTERED_MODEL_RESULTS,
+);
+export const searchModelVersionsSchema = registrySearchSchema(MLFLOW_MAX_MODEL_VERSION_RESULTS);
 
 export type CreateLoggedModel = z.infer<typeof createLoggedModelSchema>;
 export type SearchLoggedModels = z.infer<typeof searchLoggedModelsSchema>;
 export type CreateRegisteredModel = z.infer<typeof createRegisteredModelSchema>;
 export type CreateModelVersion = z.infer<typeof createModelVersionSchema>;
-export type SearchRegistry = z.infer<typeof searchRegistrySchema>;
+export type SearchRegistry = z.infer<typeof searchRegisteredModelsSchema>;
 
 export function keyValueMap(entries: { key: string; value: string }[]): Record<string, string> {
   const values = new Map<string, string>();

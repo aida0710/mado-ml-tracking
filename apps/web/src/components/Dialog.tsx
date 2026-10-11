@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useId, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { useModalDialog } from '../hooks/useModalDialog';
 import { text } from '../i18n/catalog';
 
 /**
@@ -44,13 +45,7 @@ export function Dialog({
 }) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    dialog?.showModal();
-    return () => {
-      dialog?.close();
-    };
-  }, []);
+  useModalDialog(dialogRef);
   return (
     <dialog
       ref={dialogRef}

@@ -51,7 +51,6 @@ import {
 import { findServiceAccount } from '../repositories/serviceAccountRepository.js';
 import {
   assertProjectReference,
-  assertProjectReferences,
   findCodeVersion,
   findModelVersion,
   findRun,
@@ -64,6 +63,7 @@ import { assertNoReservedRunTags } from '../domain/reservedRunTags.js';
 import { requireProject } from './accessService.js';
 import { auditActor, recordDenial, type AuditEventDraft } from './auditService.js';
 import { enqueueAutomationFailure } from './automationFailureNotification.js';
+import { assertInputDatasetVersionsUsable } from './datasetVersionReferences.js';
 import { notifyListener } from './eventListeners.js';
 import type { JobService } from './jobService.js';
 import type { RunService } from './runService.js';
@@ -160,8 +160,7 @@ export class ModelAutomationService {
         projectId,
         id: input.experimentId,
       });
-      await assertProjectReferences(connection, {
-        table: 'dataset_versions',
+      await assertInputDatasetVersionsUsable(connection, {
         projectId,
         ids: input.inputDatasetVersionIds,
       });
