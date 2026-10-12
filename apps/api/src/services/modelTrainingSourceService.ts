@@ -8,10 +8,9 @@ import type { RequestMetadata } from '../http/requestMetadata.js';
 import { writeAuditEvent } from '../repositories/auditRepository.js';
 import {
   findModelTrainingSource,
-  hasLineageAncestor,
-  lockProjectTrainingSources,
   type ModelTrainingSourceLocation,
 } from '../repositories/modelTrainingSourceRepository.js';
+import { hasLineageAncestor, lockProjectLineage } from '../repositories/lineageMutationRepository.js';
 import { findModelVersion } from '../repositories/registryRepository.js';
 import { requireProject } from './accessService.js';
 import {
@@ -76,7 +75,7 @@ export class ModelTrainingSourceService {
           role: 'editor',
           scope: 'runs:write',
         });
-        await lockProjectTrainingSources(connection, location.projectId);
+        await lockProjectLineage(connection, location.projectId);
         const version = await findModelVersion(connection, {
           projectId: location.projectId,
           id: location.versionId,

@@ -18,6 +18,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { DatasetVersionDialog, type DatasetVersionSource } from '../dialogs/DatasetVersionDialog';
 import { DatasetFiles } from '../components/DatasetFiles';
 import { DatasetActionsMenu } from '../components/DatasetActionsMenu';
+import { DatasetVersionParentsPanel } from '../components/DatasetVersionParentsPanel';
 import { DatasetVersionUsage } from '../components/DatasetVersionUsage';
 import { DatasetPluginActions } from '../components/DatasetPluginActions';
 import { datasetVersionLabel } from '../lib/datasetVersionLabel';
@@ -250,6 +251,12 @@ export function DatasetsPage() {
                                 ) : null,
                               ],
                             ]}
+                          />
+                          <DatasetVersionParentsPanel
+                            key={registry.selectedVersion.id}
+                            version={registry.selectedVersion}
+                            canEdit={canEdit}
+                            onSaved={registry.reload}
                           />
                           <DatasetVersionUsage version={registry.selectedVersion} />
                           <h3>{text.datasetFiles}</h3>

@@ -999,3 +999,9 @@ export type { ModelVersionTrainingSource, ModelVersionTrainingSourceCreate, Hist
 export type { TrainingDataStage, TrainingDataStageCreate, TrainingDataStagePage } from './trainingDataStages.js';
 
 export { TRAINING_RUN_KINDS, isTrainingRunKind } from './trainingRuns.js';
+
+export type {
+  DatasetVersionParentAddition,
+  DatasetVersionParentCreate,
+  DatasetVersionParentPage,
+} from './datasetVersionParents.js';

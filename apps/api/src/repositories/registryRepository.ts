@@ -1,6 +1,7 @@
 import type { CodeVersion, DatasetVersion, ModelVersion, Run } from '@mmt/contracts';
 import { first, rows, type Connection } from '../db/database.js';
 import { conflict, notFound } from '../domain/errors.js';
+import { datasetVersionParentIdsColumn } from './datasetVersionParentRepository.js';
 import { modelTrainingSourceRunIdColumn } from './modelTrainingSourceRepository.js';
 import { runColumns } from './runListProjection.js';
 
@@ -17,7 +18,7 @@ export const datasetSelect = `SELECT d.*, (SELECT version FROM dataset_versions 
 export const modelVersionSelect =
   `SELECT v.*,m.family,${modelTrainingSourceRunIdColumn} FROM model_versions v JOIN models m ON m.id=v.model_id`;
 export const datasetVersionSelect =
-  'SELECT v.*,d.name,d.namespace FROM dataset_versions v JOIN datasets d ON d.id=v.dataset_id';
+  `SELECT v.*,d.name,d.namespace,${datasetVersionParentIdsColumn} FROM dataset_versions v JOIN datasets d ON d.id=v.dataset_id`;
 
 type ReferenceTable =
   | 'experiments'
