@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { Artifact } from '@mmt/contracts';
 import { FormFields } from './FormFields';
 import { ModelFamilyListHints } from './ModelFamilyListHints';
@@ -9,6 +8,7 @@ import { RUN_KINDS } from '../lib/executionValidation';
 import { EXECUTION_RUNTIME_KINDS, isSifArtifact } from '../lib/runtimeValidation';
 import { withEmptyOption } from '../lib/catalogOptions';
 import { ARTIFACT_SEARCH_MAX_LENGTH } from '../lib/artifactCatalog';
+import { useLocale } from '../i18n/useLocale';
 import { runtimeLabels } from '../i18n/runtime';
 import { text } from '../i18n/catalog';
 

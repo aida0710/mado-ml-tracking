@@ -1,13 +1,13 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ComputeTargetExecutor } from '@mmt/contracts';
 import { OptionPicker } from './OptionPicker';
+import { useLocale } from '../i18n/useLocale';
 import { computeTargetExecutorLabels } from '../i18n/compute';
 import { text } from '../i18n/catalog';
 
 const kindHints: Record<ComputeTargetExecutor, string> = {
-  get ssh() { return text.computerKindSshHint },
-  get local() { return text.computerKindLocalHint },
-  get site() { return text.computerKindSiteHint },
+  get ssh() { return text.computerKindSshHint; },
+  get local() { return text.computerKindLocalHint; },
+  get site() { return text.computerKindSiteHint; },
 };
 
 /** SSH, Local or Site: how Jobs reach the computer. `kinds` are those one may choose here. */

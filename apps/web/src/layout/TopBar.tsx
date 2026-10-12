@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { LogOut, Moon, Sun } from 'lucide-react';
 import { authApi } from '../api/auth';
@@ -13,8 +12,9 @@ import { LanguagePicker } from '../components/LanguagePicker';
 import { UserMenu } from '../components/UserMenu';
 import { ProductLogo } from '../components/ProductLogo';
 import { OperationsAlertBadge } from '../components/OperationsAlertBadge';
-import { text } from '../i18n/catalog';
 import { NavigationDrawer } from './NavigationDrawer';
+import { useLocale } from '../i18n/useLocale';
+import { text } from '../i18n/catalog';
 
 /**
  * The header: the app name, display language, theme, the signed-in user and logout. The screen

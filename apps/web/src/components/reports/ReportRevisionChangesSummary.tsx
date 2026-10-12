@@ -1,7 +1,7 @@
-import { useLocale } from '../../i18n/useLocale';
 import { Resource } from '../Feedback';
 import { useReportRevisionChanges } from '../../hooks/useReport';
 import { hasRevisionChanges, type BlockTypeCount } from '../../lib/reportRevisionChanges';
+import { useLocale } from '../../i18n/useLocale';
 import { reportBlockTypeLabels } from '../../i18n/reports';
 import { text, textTemplates } from '../../i18n/catalog';
 import { formatList } from '../../i18n/textJoining';

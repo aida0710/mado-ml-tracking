@@ -1,10 +1,10 @@
-import { useLocale } from '../i18n/useLocale';
 import { useNavigate } from 'react-router-dom';
 import type { JobRetryRequest, RunCheckpoint } from '@mmt/contracts';
 import { executionApi } from '../api/execution';
 import { Dialog } from '../components/Dialog';
 import { ErrorNotice } from '../components/Feedback';
 import { useMutation } from '../hooks/useMutation';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**

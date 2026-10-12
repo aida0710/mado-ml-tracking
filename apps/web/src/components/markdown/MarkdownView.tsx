@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import type { ReactNode } from 'react';
 import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -8,6 +7,7 @@ import {
   getSafeLinkHref,
   isExternalLink,
 } from '../../lib/markdownSafety';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 // GFM adds tables, task lists, strikethrough and autolinks to CommonMark.

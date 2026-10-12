@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useId, useMemo, useState } from 'react';
 import type { Run, RunGroupBy, RunSearchRequest } from '@mmt/contracts';
 import { ChartPanelGrid, type ChartLayoutChange } from './ChartPanelGrid';
@@ -9,6 +8,7 @@ import { useChartPanelLayout } from '../../hooks/useChartPanelLayout';
 import { useQuery } from '../../hooks/useQuery';
 import { createDefaultLayout, setPanelsGroupBy } from '../../lib/chartPanelLayout';
 import { getRunChartKeys } from '../../lib/runChartKeys';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 /** Runs drawn from a search: more lines than this hide each other on one chart. */

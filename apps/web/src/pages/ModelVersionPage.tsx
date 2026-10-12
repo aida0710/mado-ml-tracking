@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { Navigate, useParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import type {
@@ -28,6 +27,7 @@ import { PromotionCheckCard } from '../components/PromotionCheckCard';
 import { CommentThread } from '../components/comments/CommentThread';
 import { collectSummaryMetrics, summarizeEvaluations } from '../lib/evaluationSummary';
 import { modelVersionPath } from '../lib/modelVersionPath';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { evaluationTextTemplates } from '../i18n/evaluation';
 

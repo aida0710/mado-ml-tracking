@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -12,6 +11,7 @@ import { ErrorNotice, Resource } from '../components/Feedback';
 import { TargetDialog } from '../dialogs/TargetDialog';
 import { canAddTarget } from '../lib/permissions';
 import { COMPUTER_DETAILS_PARAM } from '../layout/settingsSections';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 type TargetDialogState = { mode: 'create' } | { mode: 'edit'; target: ComputeTargetDetails };

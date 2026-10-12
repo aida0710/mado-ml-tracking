@@ -55,7 +55,7 @@ The model version page shows the chain from the training Run to the version and 
 
 ## How it relates to Mado
 
-mado ML Tracking runs as an app separate from Mado, with its own database. The two connect through a plugin.
+mado ML Tracking runs as an app separate from Mado, with its own database. The two connect through the built-in Mado integration (disabled at first; a global administrator configures and enables it).
 
 - Search dataset versions managed in Mado and import them as dataset versions
 - Send the start and end of Runs, with their input and output dataset versions, to Mado's lineage

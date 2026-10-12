@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import type { Project, ProjectRole, ServiceAccount, TokenScope, TokenSummary } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
@@ -14,6 +13,7 @@ import {
   type TokenOwnerKind,
   type TokenScopeChoice,
 } from '../lib/tokenPurposes';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { serviceAccountsTextTemplates } from '../i18n/serviceAccounts';
 

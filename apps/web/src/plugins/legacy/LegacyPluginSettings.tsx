@@ -1,13 +1,13 @@
 import type { PluginConnection } from '@mmt/contracts';
-import { useLocale } from '../../i18n/useLocale';
-import { pluginsText } from '../../i18n/plugins';
-import { text } from '../../i18n/catalog';
 import { useAuth } from '../../hooks/useAuth';
 import { useProject } from '../../hooks/useProject';
 import { useLegacyPluginSettings } from '../../hooks/useLegacyPluginSettings';
 import { usePluginOutboxSummary } from '../../hooks/usePluginOutboxSummary';
 import { ErrorNotice } from '../../components/Feedback';
 import { PluginOutboxStatus } from '../../components/PluginOutboxStatus';
+import { useLocale } from '../../i18n/useLocale';
+import { pluginsText } from '../../i18n/plugins';
+import { text } from '../../i18n/catalog';
 
 export function LegacyPluginSettings({ plugin, onSaved }: {
   plugin: PluginConnection;

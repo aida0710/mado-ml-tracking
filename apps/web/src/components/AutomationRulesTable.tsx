@@ -1,12 +1,13 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { ModelAutomationRule } from '@mmt/contracts';
 import type { AutomationCatalog } from '../types/modelAutomation';
 import { ResponsiveTable } from './ResponsiveTable';
 import { buildCatalogOptions } from '../lib/catalogOptions';
+import { useComputerNames } from '../hooks/useComputerNames';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { automationText, automationTriggerLabels } from '../i18n/automation';
-import { useComputerNames } from '../hooks/useComputerNames';
+import { formatList } from '../i18n/textJoining';
 
 export function AutomationRulesTable({
   rules,
@@ -62,7 +63,7 @@ export function AutomationRulesTable({
           priority: 'secondary',
           header: text.family,
           className: 'mono',
-          render: (rule) => rule.modelFamilies.join(', '),
+          render: (rule) => formatList(rule.modelFamilies),
         },
         { key: 'kind', priority: 'secondary', header: text.kind, render: (rule) => text[rule.kind] },
         {

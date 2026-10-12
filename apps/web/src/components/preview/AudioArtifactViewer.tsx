@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useEffect, useState, type PointerEvent } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { Pause, Play, Repeat, X, ZoomIn, ZoomOut } from 'lucide-react';
@@ -20,12 +19,13 @@ import {
   type TimeRange,
 } from '../../lib/audioTimeline';
 import { ErrorNotice, Loading } from '../Feedback';
-import { text, textTemplates } from '../../i18n/catalog';
-import { artifactsTextTemplates } from '../../i18n/artifacts';
 import { AudioPreviewOverview } from './AudioPreviewOverview';
 import { AudioSpectrogram } from './AudioSpectrogram';
 import { AudioTimeAxis } from './AudioTimeAxis';
 import { AudioWaveform } from './AudioWaveform';
+import { useLocale } from '../../i18n/useLocale';
+import { text, textTemplates } from '../../i18n/catalog';
+import { artifactsTextTemplates } from '../../i18n/artifacts';
 
 const WAVEFORM_HEIGHT = 88;
 const SPECTROGRAM_HEIGHT = 140;
@@ -51,9 +51,9 @@ function useDeviceColumns(element: HTMLElement | null): number {
 }
 
 const serverPreviewNotices: Record<Exclude<ServerAudioPreviewState['status'], 'ready'>, string> = {
-  get none() { return text.audioAnalysisSkipped },
-  get pending() { return text.audioServerPreviewPending },
-  get failed() { return text.audioServerPreviewFailed },
+  get none() { return text.audioAnalysisSkipped; },
+  get pending() { return text.audioServerPreviewPending; },
+  get failed() { return text.audioServerPreviewFailed; },
 };
 
 function AudioMetaList({ summary }: { summary: AudioMediaSummary }) {

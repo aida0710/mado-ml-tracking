@@ -12,7 +12,7 @@ describe('メトリクスの平滑化', () => {
   );
 
   it('EMAはW&Bと同じdebiasを掛け、最初の点を0へ引き寄せない', () => {
-    // last = last*w + (1-w)*y を 1 - w^n で割る: 0.5/0.5, 1.25/0.75, 2.125/0.875
+    // last = last*w + (1-w)*y divided by 1 - w^n: 0.5/0.5, 1.25/0.75, 2.125/0.875
     const smoothed = smoothValues([1, 2, 3], { kind: 'ema', weight: 0.5 });
     expect(smoothed[0]).toBeCloseTo(1);
     expect(smoothed[1]).toBeCloseTo(5 / 3);
@@ -49,7 +49,7 @@ describe('メトリクスの平滑化', () => {
   });
 
   it('移動平均は直前までの有限な点の平均で、窓の外の点を含めない', () => {
-    // 重み1/99で窓は2点
+    // A weight of 1/99 makes a window of two points.
     const smoothed = smoothValues([2, 4, Number.NaN, 8], {
       kind: 'running_average',
       weight: 1 / 99,

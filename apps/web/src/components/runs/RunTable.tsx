@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import type { ReactNode } from 'react';
 import type { Run, SavedViewColumn } from '@mmt/contracts';
 import { Empty } from '../Feedback';
@@ -12,6 +11,7 @@ import {
 import { NarrowRunTable } from './NarrowRunTable';
 import { WideRunTable } from './WideRunTable';
 import type { RunListSelection } from './RunTableCells';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**

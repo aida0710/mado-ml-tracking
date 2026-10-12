@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ModelAutomationRule } from '@mmt/contracts';
 import type { AutomationExecutionFilter } from '../api/automation';
 import type { ExecutionCatalog } from '../types/executionCatalog';
 import { buildCatalogOptions } from '../lib/catalogOptions';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { automationText } from '../i18n/automation';
 

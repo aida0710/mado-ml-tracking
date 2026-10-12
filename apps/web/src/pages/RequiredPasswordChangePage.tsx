@@ -1,9 +1,9 @@
-import { useLocale } from '../i18n/useLocale';
 import { authApi } from '../api/auth';
 import { useMutation } from '../hooks/useMutation';
 import { PasswordChangeForm } from '../components/PasswordChangeForm';
 import { ErrorNotice } from '../components/Feedback';
 import { LoginHeader } from '../components/LoginHeader';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

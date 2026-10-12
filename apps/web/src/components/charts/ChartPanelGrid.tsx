@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useId, useState, type CSSProperties, type ReactNode } from 'react';
 import { Plus, RotateCcw } from 'lucide-react';
 import type { ChartPanelLayout, ChartXAxis } from '@mmt/contracts';
@@ -16,6 +15,7 @@ import {
   resizePanel,
   updatePanel,
 } from '../../lib/chartPanelLayout';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /** Unique within a layout; crypto.randomUUID is missing on plain-http origins. */

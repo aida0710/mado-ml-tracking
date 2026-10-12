@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ModelVersionDetail, PromotionEvaluation, PromotionPolicy } from '@mmt/contracts';
 import type { usePromotionChoices } from '../hooks/usePromotionChoices';
@@ -6,14 +5,15 @@ import { currentDecisionsForAlias, hasBaselineMoved } from '../lib/promotionEvid
 import { PromotionDialog } from '../dialogs/PromotionDialog';
 import { CriterionResults, DecisionBadge } from './PromotionEvaluationTable';
 import { ErrorNotice, Resource } from './Feedback';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { promotionTextTemplates } from '../i18n/promotion';
 
 // Notes on a pass that an autoPromote policy did not turn into an alias change.
 const automaticPromotionNotes: Partial<Record<NonNullable<PromotionEvaluation['reason']>, string>> =
   {
-    get baseline_changed() { return text.promotionCheckBaselineChanged },
-    get promotion_denied() { return text.promotionCheckPromotionDenied },
+    get baseline_changed() { return text.promotionCheckBaselineChanged; },
+    get promotion_denied() { return text.promotionCheckPromotionDenied; },
   };
 
 function latestDecision(

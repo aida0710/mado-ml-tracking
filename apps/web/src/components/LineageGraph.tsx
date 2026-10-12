@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useMemo, type ReactNode } from 'react';
 import type { LineageGraph as Graph } from '@mmt/contracts';
 import { narrowerThan } from '../lib/breakpoints';
@@ -7,6 +6,7 @@ import { useMediaQuery } from '../lib/useMediaQuery';
 import { Empty } from './Feedback';
 import { LineageDiagramViewport } from './LineageDiagramViewport';
 import { LineageRelationsTable } from './LineageRelationsTable';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

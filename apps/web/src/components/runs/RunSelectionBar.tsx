@@ -1,5 +1,5 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useNavigate } from 'react-router-dom';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 export function RunSelectionBar({

@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -6,6 +5,7 @@ import { FolderPickerButton } from './FolderPickerButton';
 import type { UnfinishedFolderUpload } from '../lib/datasetFolderResume';
 import type { UploadSource } from '../lib/droppedFiles';
 import { formatBytes, formatDate } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**

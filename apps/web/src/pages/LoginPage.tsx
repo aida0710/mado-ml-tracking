@@ -1,14 +1,14 @@
 import { LoginHeader } from '../components/LoginHeader';
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { AuthConfig } from '@mmt/contracts';
 import { authApi } from '../api/auth';
 import { useMutation } from '../hooks/useMutation';
 import { ErrorNotice } from '../components/Feedback';
 import { LocalLoginForm } from '../components/LocalLoginForm';
-import { text } from '../i18n/catalog';
 import { rememberAuthReturnPath } from '../lib/authReturnPath';
 import { loginMethods } from '../lib/loginMethods';
+import { useLocale } from '../i18n/useLocale';
+import { text } from '../i18n/catalog';
 
 function DevelopmentLoginForm({ onLogin }: { onLogin: () => void }) {
   useLocale();

@@ -1,4 +1,3 @@
-import { initializeLocale } from './i18n/locale';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
@@ -62,6 +61,7 @@ import './styles/siteComputers.css';
 import './styles/computerSetup.css';
 import './styles/tabs.css';
 import './styles/tapTargets.css';
+import { initializeLocale } from './i18n/locale';
 
 // The login screen and everything else start in the stored theme, or the operating system's.
 document.documentElement.dataset.theme = initialTheme();

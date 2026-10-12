@@ -33,9 +33,9 @@ import { isTargetCompatible } from './runtimeValidation';
 import { buildJobResources, isSiteTarget, parseArraySize } from './siteExecutionInput';
 import { formatClockDuration } from './clockDuration';
 import { parseUserRunTags } from './reservedRunTags';
+import { LocalizedError } from './localizedError';
 import { text } from '../i18n/catalog';
 import { hooksTextTemplates } from '../i18n/hooks';
-import { LocalizedError } from './localizedError';
 
 /** The model version select's value for "the triggering Run's version"; real values are uuids. */
 export const INHERIT_MODEL_VERSION = 'inherit';

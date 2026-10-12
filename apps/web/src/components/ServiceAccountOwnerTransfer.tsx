@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ServiceAccount } from '@mmt/contracts';
 import { accessApi } from '../api/access';
@@ -9,6 +8,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { ErrorNotice } from './Feedback';
 import { withEmptyOption } from '../lib/catalogOptions';
 import { getFieldValue } from '../lib/formValues';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

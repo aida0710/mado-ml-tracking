@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { Account, TokenSummary } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
@@ -12,7 +11,9 @@ import { AccountTokenDialog } from '../dialogs/AccountTokenDialog';
 import { formatDate } from '../lib/format';
 import { isSsoUser, userAuthSourceLabels } from '../lib/adminUserDisplay';
 import { canChangeOwnPassword } from '../lib/permissions';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
+import { formatList } from '../i18n/textJoining';
 
 function AccountProfile({ account }: { account: Account }) {
   useLocale();
@@ -101,7 +102,7 @@ function AccountTokens({
           key: 'scopes',
           label: text.scopes,
           className: 'mono',
-          render: (token) => token.scopes.join(', '),
+          render: (token) => formatList(token.scopes),
         },
         {
           key: 'expires',

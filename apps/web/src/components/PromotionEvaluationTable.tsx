@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import {
   PROMOTION_FIRST_RELEASE_REASON,
@@ -16,6 +15,7 @@ import {
   formatMetricValue,
   formatRelativeDelta,
 } from '../lib/evaluationComparisonDisplay';
+import { useLocale } from '../i18n/useLocale';
 import {
   promotionCriterionReasonLabels,
   promotionDecisionLabels,
@@ -57,9 +57,9 @@ const criterionOutcomeClass: Record<PromotionCriterionOutcome, string> = {
   insufficient: 'promotion-criterion-failed',
 };
 const criterionOutcomeLabel: Record<PromotionCriterionOutcome, string> = {
-  get passed() { return text.promotionCriterionPassed },
-  get failed() { return text.promotionCriterionFailed },
-  get insufficient() { return text.promotionCriterionInsufficient },
+  get passed() { return text.promotionCriterionPassed; },
+  get failed() { return text.promotionCriterionFailed; },
+  get insufficient() { return text.promotionCriterionInsufficient; },
 };
 
 // A criterion that passed without comparing (no baseline version on a first release) is not shown
@@ -78,9 +78,7 @@ function CriterionOutcome({ result }: { result: PromotionCriterionResult }) {
 function formatComparedValue(result: PromotionCriterionResult): string {
   if (result.mode === 'relative_delta') return formatRelativeDelta(result.observed);
   if (result.mode === 'delta') return formatDelta(result.observed);
-  return formatMetricValue(result.observed, result.candidateStatus, {
-    notFinite: text.metricNotFinite,
-  });
+  return formatMetricValue(result.observed, result.candidateStatus);
 }
 
 export function CriterionResults({ results }: { results: PromotionCriterionResult[] }) {
@@ -97,14 +95,10 @@ export function CriterionResults({ results }: { results: PromotionCriterionResul
             <span className="muted">
               {' '}
               ({text.metricCandidate}{' '}
-              {formatMetricValue(result.candidate, result.candidateStatus, {
-                notFinite: text.metricNotFinite,
-              })}
+              {formatMetricValue(result.candidate, result.candidateStatus)}
               {' / '}
               {text.metricBaseline}{' '}
-              {formatMetricValue(result.baseline, result.baselineStatus, {
-                notFinite: text.metricNotFinite,
-              })}
+              {formatMetricValue(result.baseline, result.baselineStatus)}
               )
             </span>
           )}

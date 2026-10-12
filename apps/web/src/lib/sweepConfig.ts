@@ -5,9 +5,9 @@ import type {
   SweepParameterDefinition,
   SweepParameterValue,
 } from '@mmt/contracts';
+import { LocalizedError } from './localizedError';
 import { text, textTemplates } from '../i18n/catalog';
 import { errorText, errorTextTemplates } from '../i18n/errors';
-import { LocalizedError } from './localizedError';
 
 /**
  * The three forms of a sweep's search settings: the W&B sweep config pasted as JSON, the editor

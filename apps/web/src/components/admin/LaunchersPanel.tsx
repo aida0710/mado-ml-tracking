@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { Plus, RefreshCw } from 'lucide-react';
 import type { Launcher, LauncherCreated } from '@mmt/contracts';
@@ -11,6 +10,7 @@ import { Resource } from '../Feedback';
 import { SettingsPageHeader } from '../SettingsPageHeader';
 import { LaunchersTable } from './LaunchersTable';
 import { LauncherTokenDialog } from '../../dialogs/LauncherTokenDialog';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 import { launchersTextTemplates } from '../../i18n/launchers';
 

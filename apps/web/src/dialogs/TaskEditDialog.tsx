@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useRef, useState } from 'react';
 import type { ComputeTarget, ExperimentTask } from '@mmt/contracts';
 import type { ExecutionCatalog } from '../types/executionCatalog';
@@ -11,6 +10,7 @@ import { CodeRuntimeDetails } from '../components/CodeRuntimeDetails';
 import { ErrorNotice } from '../components/Feedback';
 import { UnsavedChangesDialog } from '../components/UnsavedChangesDialog';
 import { CodeVersionDialog } from './CodeVersionDialog';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 export function TaskEditDialog({ task, experimentId, catalog, targets, onClose, onSaved }: {

@@ -25,9 +25,8 @@ describe('比較値の表示', () => {
     expect(formatRelativeDelta(null)).toBe('—');
   });
   it('数値でない値と欠損を区別して表示する', () => {
-    const labels = { notFinite: 'NaN' };
-    expect(formatMetricValue(null, 'not_finite', labels)).toBe('NaN');
-    expect(formatMetricValue(null, 'missing', labels)).toBe('—');
-    expect(formatMetricValue(0.123456789, 'present', labels)).toBe('0.123457');
+    expect(formatMetricValue(null, 'not_finite')).toBe('NaN/∞');
+    expect(formatMetricValue(null, 'missing')).toBe('—');
+    expect(formatMetricValue(0.123456789, 'present')).toBe('0.123457');
   });
 });

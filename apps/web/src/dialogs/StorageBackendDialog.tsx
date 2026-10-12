@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { StorageBackend } from '@mmt/contracts';
 import type { FieldSuggestions, FormField, FormValues } from '../types/form';
@@ -19,6 +18,7 @@ import {
   updateStorageBackendValues,
 } from '../lib/storageBackendInput';
 import { toDirectoryFieldSuggestions } from '../lib/storageDirectorySuggestions';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 const isS3 = (values: FormValues) => getFieldValue(values, 'kind') === 's3';

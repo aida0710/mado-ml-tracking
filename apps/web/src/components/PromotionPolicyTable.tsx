@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import type { Model, ModelAutomationRule, PromotionPolicy } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { summarizeCriterion } from '../lib/promotionPolicyInput';
 import { automationOwnerLabel } from '../lib/automationOwner';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 export function PromotionPolicyTable({

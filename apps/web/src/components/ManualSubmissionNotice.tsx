@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { CopyableValue } from './CopyableValue';
 import { SubmitCliSetup } from './SubmitCliSetup';
@@ -9,6 +8,7 @@ import {
   type ManualSubmissionGroup,
   type ManualSubmitOptions,
 } from '../lib/manualSubmission';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { jobsTextTemplates } from '../i18n/jobs';
 import { siteComputersTextTemplates } from '../i18n/siteComputers';

@@ -1,5 +1,5 @@
-import { useLocale } from '../../i18n/useLocale';
 import { CopyButton } from '../CopyButton';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /** Shows a temporary password once, with a copy button; it is not shown again after closing. */

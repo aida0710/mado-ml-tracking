@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { SweepMethod } from '@mmt/contracts';
@@ -11,8 +10,9 @@ import {
   type SearchSpaceRowKind,
   type SweepDistribution,
 } from '../../lib/sweepConfig';
-import { searchSpaceRowKindLabels } from '../../i18n/sweeps';
 import { formatErrorMessage } from '../../lib/errorMessage';
+import { useLocale } from '../../i18n/useLocale';
+import { searchSpaceRowKindLabels } from '../../i18n/sweeps';
 import { text, textTemplates } from '../../i18n/catalog';
 
 type EditorMode = 'rows' | 'json';

@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Play, RefreshCw, Upload } from 'lucide-react';
@@ -61,6 +60,7 @@ import { getResumeCheckpointRecord } from '../lib/checkpointResume';
 import { canControlJob } from '../lib/permissions';
 import { workflowIdOfRun } from '../lib/workflowRunTags';
 import { isTerminalRun } from '../lib/runOutputRegistrationState';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 import { systemMetricCategoryLabels, systemMetricUnitLabels } from '../i18n/runs';
 
@@ -76,14 +76,14 @@ const tabs = [
 ] as const;
 type RunTab = (typeof tabs)[number];
 const tabLabels: Record<RunTab, string> = {
-  get metrics() { return text.metrics },
-  get media() { return text.mediaTab },
-  get artifacts() { return text.artifacts },
-  get checkpoints() { return text.checkpoints },
-  get systemMetrics() { return text.systemMetrics },
-  get logs() { return text.logs },
-  get details() { return text.details },
-  get executionSnapshot() { return text.executionSnapshot },
+  get metrics() { return text.metrics; },
+  get media() { return text.mediaTab; },
+  get artifacts() { return text.artifacts; },
+  get checkpoints() { return text.checkpoints; },
+  get systemMetrics() { return text.systemMetrics; },
+  get logs() { return text.logs; },
+  get details() { return text.details; },
+  get executionSnapshot() { return text.executionSnapshot; },
 };
 
 export function RunDetailPage() {

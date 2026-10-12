@@ -1,7 +1,7 @@
-import { useLocale } from '../../i18n/useLocale';
 import type { Launcher } from '@mmt/contracts';
 import { ResponsiveTable } from '../ResponsiveTable';
 import { formatDate } from '../../lib/format';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /** The launchers with their last answer and token prefix; revoked ones keep no actions. */
@@ -26,7 +26,7 @@ export function LaunchersTable({
         {
           key: 'status',
           priority: 'primary',
-          header: text.launcherStatus,
+          header: text.status,
           render: (launcher) =>
             launcher.revokedAt === null ? (
               <span className="status-badge status-finished">{text.launcherActive}</span>

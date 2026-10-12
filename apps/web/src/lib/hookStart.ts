@@ -1,7 +1,7 @@
 import { HOOK_PAYLOAD_MAX_BYTES, type HookTriggerRequest } from '@mmt/contracts';
 import { parseJsonObject } from './formValues';
-import { hooksTextTemplates } from '../i18n/hooks';
 import { LocalizedError } from './localizedError';
+import { hooksTextTemplates } from '../i18n/hooks';
 
 const BYTES_PER_KIB = 1024;
 

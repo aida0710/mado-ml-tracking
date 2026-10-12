@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Play, Plus, RefreshCw } from 'lucide-react';
@@ -18,6 +17,7 @@ import { TaskRunHistory } from '../components/TaskRunHistory';
 import { TaskHistoryPagination } from '../components/TaskHistoryPagination';
 import { TaskEditDialog } from '../dialogs/TaskEditDialog';
 import { TaskLaunchDialog } from '../dialogs/TaskLaunchDialog';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 type TaskDialog = { kind: 'create' } | { kind: 'edit'; task: ExperimentTask } |

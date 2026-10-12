@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useEffect, useState } from 'react';
 import type { MediaTableColumn } from '@mmt/contracts';
 import { AudioLines, Maximize2, Pause, Play, X } from 'lucide-react';
@@ -9,6 +8,7 @@ import { tableCellArtifact } from '../../lib/mediaPreviewArtifact';
 import { AudioArtifactViewer } from '../preview/AudioArtifactViewer';
 import { ImagePreview } from '../preview/ImagePreview';
 import { VideoPreview } from '../preview/VideoPreview';
+import { useLocale } from '../../i18n/useLocale';
 import { mediaCellErrorLabels } from '../../i18n/media';
 import { text } from '../../i18n/catalog';
 

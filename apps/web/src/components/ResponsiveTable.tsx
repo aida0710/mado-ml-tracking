@@ -1,10 +1,10 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId, useState, type MouseEvent, type ReactNode } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Empty } from './Feedback';
 import { narrowerThan } from '../lib/breakpoints';
 import { splitColumnsByPriority, type ColumnPriority } from '../lib/responsiveColumns';
 import { useMediaQuery } from '../lib/useMediaQuery';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 export interface ResponsiveTableColumn<T> {

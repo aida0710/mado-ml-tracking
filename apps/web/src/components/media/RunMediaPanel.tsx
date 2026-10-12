@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useMemo } from 'react';
 import type { RunMediaKeySummary } from '@mmt/contracts';
 import { useMediaLocation } from '../../hooks/useMediaLocation';
@@ -8,9 +7,10 @@ import { ResponsiveTable } from '../ResponsiveTable';
 import { Empty, Resource } from '../Feedback';
 import { MediaGallery } from './MediaGallery';
 import { MediaStepSlider } from './MediaStepSlider';
+import type { RunMediaPanelProps } from '../charts/chartProps';
+import { useLocale } from '../../i18n/useLocale';
 import { mediaKindLabels } from '../../i18n/media';
 import { text, textTemplates } from '../../i18n/catalog';
-import type { RunMediaPanelProps } from '../charts/chartProps';
 
 function KeyList({
   keys,

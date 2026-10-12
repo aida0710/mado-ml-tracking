@@ -1,7 +1,7 @@
-import { useLocale } from '../../i18n/useLocale';
 import type { Artifact } from '@mmt/contracts';
 import { Download } from 'lucide-react';
 import { trackingApi } from '../../api/tracking';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**

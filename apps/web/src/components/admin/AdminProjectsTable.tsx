@@ -1,10 +1,10 @@
-import { useLocale } from '../../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { AdminProject } from '@mmt/contracts';
 import { ResponsiveTable } from '../ResponsiveTable';
 import { VisibilityLabel } from '../VisibilityLabel';
 import { formatDate } from '../../lib/format';
 import { projectHomePath } from '../../layout/navigationLinks';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 import { formatList } from '../../i18n/textJoining';
 

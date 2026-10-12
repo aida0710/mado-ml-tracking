@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { Artifact, Run } from '@mmt/contracts';
 import { ArrowRightLeft } from 'lucide-react';
@@ -10,6 +9,7 @@ import { DataTable } from './DataTable';
 import { Resource } from './Feedback';
 import { ArtifactPreview } from './ArtifactPreview';
 import { AudioArtifactViewer } from './preview/AudioArtifactViewer';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 interface CommonArtifactPath {

@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useId, useState } from 'react';
 import {
   REPORT_RUN_TABLE_MAX_ROWS,
@@ -15,12 +14,14 @@ import { ErrorNotice, Loading } from '../Feedback';
 import { useRunSetFieldNames, useRunTableMedia } from '../../hooks/useReportBlockData';
 import { createBlock, reportBlockProblem } from '../../lib/reportBlocks';
 import { metricFieldKey, paramFieldKey } from '../../lib/runAnalysisFields';
+import { useLocale } from '../../i18n/useLocale';
 import {
   reportBlockProblemLabels,
   reportBlockTypeLabels,
   reportEmbedModeLabels,
 } from '../../i18n/reports';
 import { text, textTemplates } from '../../i18n/catalog';
+import { formatList } from '../../i18n/textJoining';
 
 type EmbedType = ReportEmbedBlock['type'];
 const EMBED_TYPES: EmbedType[] = [
@@ -176,7 +177,7 @@ function RunSetFields({
           <span>{text.reportChartSettings}</span>
           <div className="report-inline-row">
             <span className="mono">
-              {textTemplates.reportChartMetrics(block.panel.metricKeys.join(', ') || text.reportChartMetricsNone)}
+              {textTemplates.reportChartMetrics(formatList(block.panel.metricKeys) || text.reportChartMetricsNone)}
             </span>
             <button type="button" className="button small" onClick={() => setEditingChart(true)}>
               {text.reportChartSettings}

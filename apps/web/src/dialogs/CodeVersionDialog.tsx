@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { Code, CodeVersion } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
 import { useCodeVersionWorkspace } from '../hooks/useCodeVersionWorkspace';
@@ -8,6 +7,7 @@ import { CodeWorkspaceEditor } from '../components/CodeWorkspaceEditor';
 import { UnsavedChangesDialog } from '../components/UnsavedChangesDialog';
 import { ErrorNotice } from '../components/Feedback';
 import { ArtifactUploadDialog } from './ArtifactUploadDialog';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 export function CodeVersionDialog({ code, initialVersion, versions = [], onClose, onSaved }: {

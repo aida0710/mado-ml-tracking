@@ -1,5 +1,5 @@
 import { useEffect, type RefObject } from 'react';
-import { composeDocumentTitle, PRODUCT_NAME } from '../lib/documentTitle';
+import { composeDocumentTitle, getProductName } from '../lib/documentTitle';
 
 /**
  * Names the browser tab after the text of the given elements (a screen's heading, then the line
@@ -13,7 +13,7 @@ export function usePageDocumentTitle(parts: readonly RefObject<HTMLElement | nul
   });
   useEffect(
     () => () => {
-      document.title = PRODUCT_NAME;
+      document.title = getProductName();
     },
     [],
   );

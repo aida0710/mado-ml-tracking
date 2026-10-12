@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Archive, ArchiveRestore, History, Pencil, RefreshCw } from 'lucide-react';
@@ -18,6 +17,7 @@ import { ReportRevisionHistory } from '../components/reports/ReportRevisionHisto
 import { formatDate } from '../lib/format';
 import { snapshotsByBlockId } from '../lib/reportBlocks';
 import { REPORT_REVISION_PARAM, parseRevisionParam, reportRevisionUrl } from '../lib/reportUrl';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /** Navigation state that opens the editor right away, set when a report is created. */

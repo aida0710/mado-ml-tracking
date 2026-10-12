@@ -1,5 +1,5 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 // Tall enough to read a whole section of a job shell without scrolling the dialog.

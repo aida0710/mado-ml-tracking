@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
-import { useLocale } from '../i18n/useLocale';
 import { formatErrorMessage } from '../lib/errorMessage';
+import { useLocale } from '../i18n/useLocale';
 
 export interface FailureMessage {
   /** The kept failure in the current display language; null when there is none. */

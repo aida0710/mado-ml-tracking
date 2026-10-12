@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ComputeTarget, TargetCheckItem } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { targetCheckItemLabel } from '../lib/computeTargetDisplay';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { targetCheckCodeHints, targetCheckOutcomeLabels } from '../i18n/compute';
 

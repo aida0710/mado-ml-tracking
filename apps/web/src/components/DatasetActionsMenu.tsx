@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import type { Dataset } from '@mmt/contracts';
@@ -7,6 +6,7 @@ import { usePopover } from '../hooks/usePopover';
 import { ConfirmDialog } from './ConfirmDialog';
 import { FormDialog } from './FormDialog';
 import { getFieldValue } from '../lib/formValues';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
