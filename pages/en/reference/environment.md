@@ -128,7 +128,7 @@ Settings of `mado-tracking-worker`. When installed with `install`, they are writ
 | `MMT_API_TOKEN` | None (required) | Service Account token |
 | `MMT_API_TOKEN_FILE` | None | File to read the token from (for containers). `MMT_API_TOKEN` wins if set |
 | `MMT_WORKER_ID` | None (required) | Worker ID. Keep the same value across restarts |
-| `MMT_WORKER_TARGET_IDS` | None (all allowed) | Compute target IDs to serve (comma-separated). Connection checks for which the worker is chosen in **接続に使うworker** are picked up regardless |
+| `MMT_WORKER_TARGET_IDS` | None (all allowed) | Compute target IDs to serve (comma-separated). Connection checks for which the worker is chosen in **Worker for this connection** are picked up regardless |
 | `MMT_WORKER_SSH_DIR` | None | A directory searched, besides `~/.ssh`, for SSH key and known_hosts candidates. Only paths are reported ([Report SSH key candidates](/en/compute/worker#ssh-key-candidates)) |
 | `MMT_WORKER_STATE_DIR` | `~/.local/state/mado-tracking-worker/<hash of the ID>` | Directory for the journal of running Jobs |
 | `MMT_WORKER_MAX_OUTPUT_FILES` | `10000` | Limit of output files collected from one Job. 1 to 1000000 |
