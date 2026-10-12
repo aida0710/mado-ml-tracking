@@ -29,6 +29,14 @@ const webOwnedErrorText: Record<string, (failure: RequestError) => string | null
  * uses this general translation of the code instead.
  */
 const serverMessageTranslations: Record<string, keyof typeof errorText> = {
+  model_training_source_conflict: 'modelTrainingSourceConflict',
+  model_training_source_not_terminal: 'modelTrainingSourceNotTerminal',
+  model_training_source_cycle: 'modelTrainingSourceCycle',
+  training_data_run_kind: 'trainingDataRunKind',
+  training_data_stage_conflict: 'trainingDataStageConflict',
+  training_data_stage_order: 'trainingDataStageOrder',
+  training_data_stage_checkpoint: 'trainingDataStageCheckpoint',
+  training_data_stage_cycle: 'trainingDataStageCycle',
   internal_error: 'internalError',
   database_unavailable: 'databaseUnavailable',
   plugin_request_failed: 'pluginRequestFailed',

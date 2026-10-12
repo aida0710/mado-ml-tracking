@@ -1,5 +1,7 @@
 import {
   MLFLOW_CHECKPOINT_PATH_PREFIX,
+  TRAINING_RUN_KINDS,
+  isTrainingRunKind,
   type RunCheckpointFile,
   type RunKind,
 } from '@mmt/contracts';
@@ -9,7 +11,7 @@ import { isSafeArtifactPath } from '../mlflow/artifacts/artifactPath.js';
 import { jsonObjectSchema, uuidSchema } from './validation.js';
 
 /** Only Runs that train weights save and continue from checkpoints. */
-export const CHECKPOINT_RUN_KINDS: readonly RunKind[] = ['training', 'finetuning'];
+export const CHECKPOINT_RUN_KINDS: readonly RunKind[] = TRAINING_RUN_KINDS;
 // A checkpoint directory is model weights plus a few state files; this bounds the manifest row.
 export const MAX_CHECKPOINT_FILES = 10000;
 // metadata is a small description (epoch, loss, ...), not a place for training state.
@@ -80,7 +82,7 @@ export function parseMlflowCheckpointPath(
 }
 
 export function assertCheckpointRunKind(kind: RunKind): void {
-  if (!CHECKPOINT_RUN_KINDS.includes(kind))
+  if (!isTrainingRunKind(kind))
     throw new DomainError(
       422,
       'checkpointはtrainingまたはfinetuningのRunにだけ登録できます',
@@ -96,7 +98,7 @@ export function assertResumableFrom(
   checkpointRun: { kind: RunKind; codeId: string | null },
   run: { kind: RunKind; codeId: string | null },
 ): void {
-  if (!CHECKPOINT_RUN_KINDS.includes(run.kind) || run.kind !== checkpointRun.kind)
+  if (!isTrainingRunKind(run.kind) || run.kind !== checkpointRun.kind)
     throw new DomainError(
       422,
       'checkpointは元のRunと同じ種類（trainingまたはfinetuning）のRunでだけ再開できます',

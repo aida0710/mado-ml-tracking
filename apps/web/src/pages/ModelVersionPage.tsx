@@ -1,6 +1,7 @@
 import { Navigate, useParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import type {
+  DatasetVersion,
   ModelAutomationExecutionPage,
   ModelAutomationRule,
   ModelVersion,
@@ -9,6 +10,7 @@ import type {
 } from '@mmt/contracts';
 import type { QueryState } from '../hooks/useQuery';
 import { useProject } from '../hooks/useProject';
+import { useProjectDatasetVersions } from '../hooks/useProjectDatasetVersions';
 import { useModelVersionDetail } from '../hooks/useModelVersionDetail';
 import { useModelVersionEvaluations } from '../hooks/useModelVersionEvaluations';
 import { useEvaluationComparison } from '../hooks/useEvaluationComparison';
@@ -18,6 +20,7 @@ import { registryApi } from '../api/registry';
 import { usePromotionChoices } from '../hooks/usePromotionChoices';
 import { PageHeader } from '../components/PageHeader';
 import { ErrorNotice, Resource } from '../components/Feedback';
+import { ModelTrainingSourcePanel } from '../components/ModelTrainingSourcePanel';
 import { ModelVersionSummary } from '../components/ModelVersionSummary';
 import { ModelVersionAutomation } from '../components/ModelVersionAutomation';
 import { EvaluationResultsTable } from '../components/EvaluationResultsTable';
@@ -41,6 +44,13 @@ export function ModelVersionPage() {
   const { project, canEdit } = useProject();
   const { modelId = '', versionId = '' } = useParams();
   const { detail, sourceRun, rules, executions } = useModelVersionDetail(project.id, versionId);
+  const trainingDatasets = useProjectDatasetVersions(
+    project.id,
+    Boolean(
+      sourceRun.value?.trainingDatasetVersionIds?.length ||
+        sourceRun.value?.inputDatasetVersionIds.length,
+    ),
+  );
   // Every version of the Model: the version numbers to show and the baselines to choose from.
   const versions = useQuery(`${project.id}:model-versions:${modelId}`, (signal) =>
     registryApi.modelVersions(project.id, modelId, signal),
@@ -64,6 +74,7 @@ export function ModelVersionPage() {
     detail.reload();
     versions.reload();
     sourceRun.reload();
+    trainingDatasets.reload();
     executions.reload();
     evaluations.results.reload();
     evaluations.baseline.results.reload();
@@ -100,6 +111,7 @@ export function ModelVersionPage() {
             projectId={project.id}
             detail={value}
             sourceRun={sourceRun.value}
+            trainingDatasets={trainingDatasets.value ?? []}
             rules={rules.value ?? []}
             versions={versions.value ?? []}
             selectedBaseline={baseline}
@@ -120,6 +132,7 @@ function ModelVersionContent({
   projectId,
   detail,
   sourceRun,
+  trainingDatasets,
   rules,
   versions,
   selectedBaseline,
@@ -133,6 +146,7 @@ function ModelVersionContent({
   projectId: string;
   detail: ModelVersionDetail;
   sourceRun: Run | undefined;
+  trainingDatasets: DatasetVersion[];
   rules: ModelAutomationRule[];
   versions: ModelVersion[];
   selectedBaseline: EvaluationBaseline;
@@ -169,7 +183,15 @@ function ModelVersionContent({
         projectId={projectId}
         detail={detail}
         sourceRun={sourceRun}
+        trainingDatasets={trainingDatasets}
         resultRuns={resultRuns}
+      />
+      <ModelTrainingSourcePanel
+        projectId={projectId}
+        detail={detail}
+        sourceRun={sourceRun}
+        canEdit={canPromote}
+        onSaved={onPromoted}
       />
       <ModelVersionAutomation projectId={projectId} executions={executions} rules={rules} />
       <section className="model-version-section" aria-label={text.evaluationResults}>

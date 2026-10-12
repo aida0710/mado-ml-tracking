@@ -24,7 +24,7 @@ export const modelsText = localized({
   modelVersionArtifactOpen: 'Artifactsで開く',
   modelVersionWeightsArtifact: '重みのArtifact',
   modelVersionSummary: '概要',
-  modelVersionLineage: '学習Run → バージョン → 推論・評価Run',
+  modelVersionLineage: 'データセット → 学習Run → バージョン → 推論・評価Run',
   modelVersionLineageTruncated: '新しい順に最大20件の推論・評価Runを表示しています。',
   modelVersionAliases: 'このバージョンのAlias',
   modelVersionModel: 'モデル',

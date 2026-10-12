@@ -33,6 +33,7 @@ from .preprocessing_reports import log_preprocessing_report
 from .security import SecretMasker, secret_values
 from .system_metrics import DEFAULT_SYSTEM_METRICS_SECONDS, SystemMetricsMonitor
 from .timestamps import utc_timestamp
+from .training_data_stages import log_training_data_stage, training_data_stages
 
 if TYPE_CHECKING:
     from .client import Client
@@ -48,6 +49,8 @@ class Run:
     """
 
     log_preprocessing_report = log_preprocessing_report
+    log_training_data_stage = log_training_data_stage
+    training_data_stages = training_data_stages
 
     def __init__(
         self,

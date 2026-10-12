@@ -42,6 +42,7 @@ export const modelVersionSchema = namedContractSchema(
     version: z.string(),
     family: z.string(),
     sourceRunId: idSchema.nullable(),
+    trainingSourceRunId: idSchema.nullable().optional(),
     parentModelVersionIds: z.array(idSchema),
     weightsUri: z.string().nullable(),
     artifactId: idSchema.nullable(),

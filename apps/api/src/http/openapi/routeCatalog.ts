@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { trainingDataStageCreateSchema } from '../../domain/trainingDataStageValidation.js';
+import { modelTrainingSourceCreateSchema } from '../../domain/modelTrainingSourceValidation.js';
 import { WORKFLOW_ROUTES } from './workflowRouteCatalog.js';
 import { RUN_EXPORT_TRUNCATED_HEADER } from '@mmt/contracts';
 import * as contract from '@mmt/contracts/schemas';
@@ -773,6 +775,20 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
 
   // registry
   {
+    method: 'get', path: '/api/projects/:p/runs/:r/training-data-stages', tag: 'runs',
+    summary: '学習途中のデータ構成をstep順に取得', access: PROJECT_VIEWER,
+    responses: { 200: contract.trainingDataStagePageSchema },
+  },
+  {
+    method: 'post', path: '/api/projects/:p/runs/:r/training-data-stages', tag: 'runs',
+    summary: '学習の開始stepと実際に使ったデータセットを追記', access: RUNS_WRITE,
+    body: trainingDataStageCreateSchema, responses: { 200: contract.trainingDataStageSchema },
+    errors: [
+      ...routeError(409, 'run_finalized', 'training_data_stage_conflict', 'training_data_stage_order'),
+      ...routeError(422, 'training_data_run_kind', 'source_run_deleted', 'training_data_stage_checkpoint', 'training_data_stage_cycle', 'dataset_archived'),
+    ],
+  },
+  {
     method: 'get',
     path: '/api/projects/:p/models',
     tag: 'registry',
@@ -832,6 +848,27 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     body: modelVersionCreateSchema,
     responses: { 201: contract.modelVersionSchema },
     errors: routeError(422, 'output_model_kind', 'source_run_deleted'),
+  },
+  {
+    method: 'get',
+    path: '/api/projects/:p/models/:id/versions/:v/training-source',
+    tag: 'registry',
+    summary: 'モデル版の学習元を取得（未設定はsource:null）',
+    access: PROJECT_VIEWER,
+    responses: { 200: contract.modelVersionTrainingSourceResponseSchema },
+  },
+  {
+    method: 'post',
+    path: '/api/projects/:p/models/:id/versions/:v/training-source',
+    tag: 'registry',
+    summary: '不変のモデル版に終了済み学習Runを紐付ける（registry:writeとruns:write）',
+    access: REGISTRY_WRITE,
+    body: modelTrainingSourceCreateSchema,
+    responses: { 200: contract.modelVersionTrainingSourceSchema },
+    errors: [
+      ...routeError(409, 'model_training_source_conflict'),
+      ...routeError(422, 'output_model_kind', 'source_run_deleted', 'model_training_source_not_terminal', 'model_training_source_cycle'),
+    ],
   },
   {
     method: 'put',

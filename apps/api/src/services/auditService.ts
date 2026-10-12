@@ -28,6 +28,10 @@ export type AuditEventDraft = Omit<AuditEventInput, 'outcome'>;
 export function auditActor(
   principal: Principal,
 ): Pick<AuditEventInput, 'actorType' | 'actorUserId' | 'actorTokenId'> {
+  // Job tokens live in job_tokens, while actorTokenId references api_tokens.
+  // The caller records the Job ID in details to attribute the automated write.
+  if (principal.token?.job)
+    return { actorType: 'system', actorUserId: null, actorTokenId: null };
   return principal.token
     ? { actorType: 'token', actorUserId: principal.user.id, actorTokenId: principal.token.id }
     : { actorType: 'user', actorUserId: principal.user.id, actorTokenId: null };

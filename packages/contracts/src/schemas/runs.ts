@@ -116,6 +116,7 @@ export const runSchema = namedContractSchema(
     executionMode: z.enum(['run', 'test']).optional(),
     executionSnapshot: executionSnapshotSchema.nullable().optional(),
     inputDatasetVersionIds: z.array(idSchema),
+    trainingDatasetVersionIds: z.array(idSchema).optional(),
     upstreamDatasetVersionIds: z.array(idSchema),
     outputDatasetVersionIds: z.array(idSchema),
     outputModelVersionIds: z.array(idSchema),

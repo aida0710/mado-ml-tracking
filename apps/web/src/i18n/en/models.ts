@@ -25,7 +25,7 @@ export const modelsText = {
   modelVersionArtifactOpen: 'Open in Artifacts',
   modelVersionWeightsArtifact: 'Weights artifact',
   modelVersionSummary: 'Overview',
-  modelVersionLineage: 'Training run → Version → Inference / Evaluation runs',
+  modelVersionLineage: 'Datasets → Training run → Version → Inference / Evaluation runs',
   modelVersionLineageTruncated: 'Shows up to 20 inference/evaluation runs, newest first.',
   modelVersionAliases: 'Aliases for this version',
   modelVersionModel: 'Model',

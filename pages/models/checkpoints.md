@@ -1,11 +1,39 @@
 ---
-title: 学習の途中再開
-description: 学習コードでcheckpointを保存し、失敗・中止した学習を保存したcheckpointから新しいRunとして続ける。
+title: 学習の継続とデータの追加
+description: 事前学習の途中でデータセットを追加した履歴を残し、checkpointから新しいRunで学習を続ける。
 ---
 
-# 学習の途中再開
+# 学習の継続とデータの追加
 
 長い学習が途中で止まっても、保存したcheckpointから新しいRunとして続きを回せます。元のRunは変更せず、失敗や中止の記録として残ります。再開は手動で行います。自動実行の再試行では、checkpointから再開せず最初からやり直します。
+
+## 事前学習の途中でデータを追加する {#training-data-stages}
+
+同じRunのまま学習データを追加したときは、［学習データの履歴］タブの［データの変更を記録］で、使い始めたstepと、そのstep以降のデータセットの全構成を登録します。画面には開始時の構成、追加したデータ、外したデータが並びます。元の入力設定を上書きしません。
+
+学習コードからも記録できます。先にデータ読み込みを切り替え、その構成をSDKへ渡します。記録しただけで実行中のデータ読み込みが切り替わるものではありません。
+
+```python
+# 1000stepまで学習した後、読み込み側に合成データを追加した例。
+run.log_training_data_stage(
+    start_step=1001,
+    input_dataset_version_ids=[original_dataset_version_id, synthetic_dataset_version_id],
+    checkpoint_id=checkpoint["id"],  # このRunがstep 1000で保存したcheckpoint。省略も可能。
+    metadata={"note": "事前学習に合成データを追加"},
+)
+```
+
+引き続き使うデータも含めて、全構成を渡してください。データセットの版とstepは固定され、同じ内容の再送は同じ記録を返します。Jobが終了した後に履歴を追加することはできません。オンライン接続で利用できます。
+
+## checkpointから構成を変えて学習を続ける
+
+完了済みの学習のcheckpointからも、新しいRunで学習を続けられます。元のRunにJobがなくても利用できます。
+
+1. Runの［Checkpoint］タブで［この重みから学習を続ける］を押します。
+2. checkpointの時点のデータ構成が選ばれていることを確認し、追加するデータセットの版を選びます。
+3. 学習設定と実行先を確認し、［ジョブを起動］を押します。
+
+新しいRunには元のRunとcheckpoint、今回使うデータの版が記録されます。元の実行種別を引き継ぐため、事前学習は事前学習として継続します。元のCodeと同じCodeの別バージョンを選ぶこともできます。重みの読み込みは学習コードの`run.resume_checkpoint()`で行います。
 
 ## こんなときに向いています
 
@@ -51,7 +79,7 @@ Run詳細の［Checkpoint］タブに、そのRunのcheckpointをstep、ファ�
 
 一覧には、Runごとに新しい順で5件を表示します（API serverの`MMT_CHECKPOINT_KEEP_COUNT`で変更できます）。古いものは［保持数を超えた古いcheckpointも表示する］を選ぶと表示されます。一覧から外れても、Artifactは消えないので再開に使えます。
 
-## 再開する
+## 停止したJobを同じ条件で再開する
 
 再開できるのは、Jobで実行して失敗または中止したRunです。再開はそのJobの再実行なので、できるのはRunの作成者とProjectのAdminだけです（Jobの停止・再実行と同じ）。ほかの人の［Checkpoint］タブには、［このcheckpointから再開］の代わりにその理由が出ます。
 
