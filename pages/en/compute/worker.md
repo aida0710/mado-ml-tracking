@@ -38,9 +38,9 @@ python3 --version
 
 Issue the worker token to a Service Account, which is not tied to a person and keeps working when the issuer leaves the Project. A Project admin does this in the web UI.
 
-1. Open **プロジェクト設定** (Project settings) and press **Service Accountを作成** (Create Service Account) under **Service Accounts**.
+1. Open **Project settings** and press **Create service account** under **Service accounts**.
 2. Enter a name such as `gpu-host-1-worker`, choose Role `Admin`, and save. The `worker:execute` scope can only be issued to Service Accounts with the Admin role.
-3. Press **API tokenを発行** (Issue API token) on the new row and choose scopes and an expiry.
+3. Press **Issue API token** on the new row and choose scopes and an expiry.
 
 | Scope | When it is needed |
 | --- | --- |
@@ -90,7 +90,7 @@ loginctl enable-linger "$USER"
 
 The command asks for the token without echoing it. Never put the token on the command line.
 
-`--target-ids` is optional; leave it out when you install the worker before adding targets. A worker without it still picks up connection checks and directory reads when it is chosen in **接続に使うworker** (Worker used for the connection) under **コンピュータを追加** (Add a computer) ([Compute targets](/en/compute/targets#step-1-connection)). Checks that name no worker (asked from older screens or the API) are picked up only by workers whose `--target-ids` includes the target. To find a target's ID, open `https://tracking.example.internal/api/targets` (the web URL followed by `/api/targets`) in a browser where you are logged in; each target's `id` is listed.
+`--target-ids` is optional; leave it out when you install the worker before adding targets. A worker without it still picks up connection checks and directory reads when it is chosen in **Worker for this connection** under **Add computer** ([Compute targets](/en/compute/targets#step-1-connection)). Checks that name no worker (asked from older screens or the API) are picked up only by workers whose `--target-ids` includes the target. To find a target's ID, open `https://tracking.example.internal/api/targets` (the web URL followed by `/api/targets`) in a browser where you are logged in; each target's `id` is listed.
 
 `loginctl enable-linger` keeps user units running after logout.
 
@@ -119,7 +119,7 @@ journalctl --user -u mado-tracking-worker@gpu-host-1 -f
 | `status` | Unit state, worker lock, and retained Jobs. Exit code 3 when stopped |
 | `journalctl` | Worker log |
 
-Finally, check that **Workers** in Compute shows the worker as online with its version and host name. Global administrators can also open **コンピュータを追加** under コンピュータ in the global settings and check that the worker is offered in **接続に使うworker**.
+Finally, check that **Workers** in **Compute** shows the worker as **Online** with its version and host name. Global administrators can also open **Add computer** under **Computers** in **Global settings** and check that the worker is offered in **Worker for this connection**.
 
 ## 4. Upgrade {#upgrade}
 
@@ -137,7 +137,7 @@ To install a version from an internal package index, use `--version 0.2.0` inste
 - If `pip` fails, the unit is not restarted.
 - If the unit is stopped but a worker started by hand holds the state directory, nothing is done.
 
-Reporting SSH key candidates and reading target directories came with a new version of the worker. Older workers are not offered in **接続に使うworker** under **コンピュータを追加**, so upgrade them. Until then they still process Jobs and pick up connection checks of the targets in `--target-ids`.
+Reporting SSH key candidates and reading target directories came with a new version of the worker. Older workers are not offered in **Worker for this connection** under **Add computer**, so upgrade them. Until then they still process Jobs and pick up connection checks of the targets in `--target-ids`.
 
 ### Replace the token
 
@@ -152,11 +152,11 @@ printf 'Worker API token: '; read -r -s TOKEN && echo && printf '%s\n' "$TOKEN" 
 rm ~/worker-token
 ```
 
-Revoke the old token in **Projectのtoken一覧** (Project tokens). Disabling the Service Account with **無効化** (Disable) stops all of its tokens at the next request.
+Revoke the old token in **Project tokens**. Disabling the Service Account with **Disable** stops all of its tokens at the next request.
 
 ## Report SSH key candidates {#ssh-key-candidates}
 
-The worker reports the paths of the SSH private keys and known_hosts files on its machine to the API server. They are offered as candidates for **SSH鍵のパス** (SSH key path) and **known_hostsのパス** (known_hosts path) under **コンピュータを追加** ([Compute targets](/en/compute/targets#step-1-connection)).
+The worker reports the paths of the SSH private keys and known_hosts files on its machine to the API server. They are offered as candidates for **SSH key path** and **known_hosts path** under **Add computer** ([Compute targets](/en/compute/targets#step-1-connection)).
 
 - Only paths are reported. The worker never reads or sends the contents or fingerprints of keys and known_hosts.
 - It looks directly in `~/.ssh`. When the environment variable `MMT_WORKER_SSH_DIR` names a directory, it looks directly in that directory too.
@@ -263,6 +263,6 @@ A container without the SDK writes outputs to `/mmt/outputs` and finally writes 
 
 - If SSH between the worker and the target drops, the code keeps running on the target. The worker reconnects to the same Job and sends the rest of the log. The same Job is never started twice.
 - A restarted worker takes over running Jobs from the records in its state directory. Do not delete the state directory.
-- Jobs are stopped only with **停止を要求** (Request stop) in Jobs. The confirmation names the Run, the Job's creator, and where it runs, and says what will happen; check it and click **停止する** (Stop). Only the Job's creator (the person who created its Run) and Project Admins can stop it (see the 作成者 (Creator) column; for other people's Jobs, the actions column says why instead of showing buttons). The worker sends SIGTERM to the running processes, SIGKILL after 10 seconds, and ends the Job as canceled.
-- When a Job's heartbeat stops for 60 seconds, Jobs shows **応答なし** (Not responding). The Job's state and GPU reservation are not changed; check the worker machine before stopping or retrying by hand.
-- When a worker does not respond for 120 seconds, **Workers** in Compute shows it as offline. To be notified, select `worker.offline` in a Project notification rule ([Notifications](/en/admin/notifications)).
+- Jobs are stopped only with **Request stop** in **Jobs**. The confirmation names the Run, the Job's creator, and where it runs, and says what will happen; check it and click **Stop**. Only the Job's creator (the person who created its Run) and Project Admins can stop it (see the **Created by** column; for other people's Jobs, the **Actions** column says why instead of showing buttons). The worker sends SIGTERM to the running processes, SIGKILL after 10 seconds, and ends the Job as canceled.
+- When a Job's heartbeat stops for 60 seconds, **Jobs** shows **No response**. The Job's state and GPU reservation are not changed; check the worker machine before stopping or retrying by hand.
+- When a worker does not respond for 120 seconds, **Workers** in **Compute** shows it as **Offline**. To be notified, select `worker.offline` in a Project notification rule ([Notifications](/en/admin/notifications)).

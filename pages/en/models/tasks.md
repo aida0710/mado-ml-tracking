@@ -5,7 +5,7 @@ description: Pin the code to run as a version and launch normal and test runs fr
 
 # Tasks and code versions
 
-![A Task and its output model setting](/images/models-tasks.png)
+![A Task and its output model setting](/images/en/models-tasks.png)
 
 A Task stores what to run: which code, with which model and data, and where. Tasks live under an Experiment, and you launch normal and test runs from them. The code is pinned as a code version, so after you edit the code you can still see exactly what each past Job ran.
 
@@ -18,39 +18,39 @@ A Task stores what to run: which code, with which model and data, and where. Tas
 
 ## Overview
 
-1. Prepare a computer (Compute target) to run on: add one under コンピュータ (Computers) in the global settings, or pick one you can use. See [Computers and visibility](/en/compute/computers) and [Compute targets](/en/compute/targets).
+1. Prepare a computer (Compute target) to run on: add one under **Computers** in the global settings, or pick one you can use. See [Computers and visibility](/en/compute/computers) and [Compute targets](/en/compute/targets).
 2. Register code in Code and create a version.
 3. Create a Task in Tasks, select the Experiment, code version, and computer, and save.
-4. Check with **テスト実行** (Test run), then launch with **通常実行** (Run).
+4. Check with **Test execution**, then launch with **Normal execution**.
 5. Check metrics, logs, the exit status, and Artifacts in the Run.
 
 Jobs are executed by a worker. Without a worker for the target, the Job stays queued. See [Install and run the worker](/en/compute/worker), and [The Jobs page](/en/compute/jobs#queued-job-does-not-start) for how to find why a Job does not start.
 
 ## Register a code version
 
-![The code version editor](/images/models-code-editor.png)
+![The code version editor](/images/en/models-code-editor.png)
 
-In Code, press **コードを登録** (Register code) to create the code entry, then **バージョンを作成** (Create version). A version cannot be changed after saving. Saving an edit creates a new version.
+In Code, press **Register code** to create the code entry, then **Create version**. A version cannot be changed after saving. Saving an edit creates a new version.
 
 | Field | Meaning |
 | --- | --- |
-| **バージョン** (Version) | The version name, for example `v1` |
+| **Version** | The version name, for example `v1` |
 | **Runtime** | Python, Docker, Singularity, or Apptainer |
-| **ソース形式** (Source format) | Git, Inline (files stored in the app), Artifact (a stored ZIP or TAR), or code inside the container |
-| **実行コマンド** (Command, JSON array of arguments) | The command of a normal run, for example `["python", "train.py"]` |
-| **テストコマンド** (Test command, optional) | The command of a test run, for example `["python", "train.py", "--steps", "2"]` |
-| **依存パッケージ** (Dependencies, one per line) | Packages installed into the per-Job venv for Python, for example `numpy>=1.26` |
-| **環境変数** (Environment, JSON) | Environment variables for the code. Do not put credentials here |
-| **対応モデル系列** (Supported model families, one per line) | Model families this code can run, for example `linear` |
-| **対応する実行種別** (Supported run kinds) | Check every kind that applies: training, fine-tuning, inference, evaluation, data processing |
+| **Source kind** | Git, Inline (files stored in the app), Artifact (a stored ZIP or TAR), or code inside the container |
+| **Command (JSON array of arguments)** | The command of a normal run, for example `["python", "train.py"]` |
+| **Test command (JSON array of arguments, optional)** | The command of a test run, for example `["python", "train.py", "--steps", "2"]` |
+| **Dependencies (one per line)** | Packages installed into the per-Job venv for Python, for example `numpy>=1.26` |
+| **Environment variables (JSON)** | Environment variables for the code. Do not put credentials here |
+| **Supported model families (one per line)** | Model families this code can run, for example `linear` |
+| **Supported run kinds** | Check every kind that applies: training, fine-tuning, inference, evaluation, data processing |
 
 Commands do not go through a shell. Each element of the JSON array is passed as one argument, up to 100 arguments of up to 4000 characters each.
 
-A saved version can be read by selecting it in Code, viewers included. **ファイル** (Files) shows the file list beside the chosen file, colored by its format as in Artifact previews. For a Git version it shows the repository and commit and the files changed or deleted on top of them. **このコードバージョンの使われ方** (Where this code version is used) lists the Models whose family it supports and the Tasks and automation rules that chose it.
+A saved version can be read by selecting it in Code, viewers included. **Files** shows the file list beside the chosen file, colored by its format as in Artifact previews. For a Git version it shows the repository and commit and the files changed or deleted on top of them. **How this code version is used** lists the Models whose family it supports and the Tasks and automation rules that chose it.
 
 ### Start from a sample
 
-Select a sample in **サンプル** (Sample) and press **サンプルを追加** (Add sample) to load files and normal and test commands: a standard-library smoke test, Mado SDK metrics, MLflow 3 metrics, CPU inference, and CPU training.
+Select a sample in **Samples** and press **Add sample** to load files and normal and test commands: a standard-library smoke test, Mado SDK metrics, MLflow 3 metrics, CPU inference, and CPU training.
 
 The CPU training sample only saves weights to the Run Artifact `model/weights.json`. Registration is done by the Task output model setting described below.
 
@@ -58,20 +58,20 @@ The CPU training sample only saves weights to the Run Artifact `model/weights.js
 
 Choose Git as the source format and enter **Git URL** and **Commit**. The commit must be a full 40- or 64-character hash; branch and tag names are not accepted. The URL must be HTTPS or SSH without credentials.
 
-Press **Gitのファイルを読み込む** (Load Git files) to load the pinned commit into the editor. Saving creates a version that overlays the changed files and deleted paths on the pinned commit. Nothing is pushed to the original repository. Binary or large files that were not loaded are listed under **編集対象外のパス** (Paths not edited) and are fetched from the original commit at run time.
+Press **Load Git files** to load the pinned commit into the editor. Saving creates a version that overlays the changed files and deleted paths on the pinned commit. Nothing is pushed to the original repository. Binary or large files that were not loaded are listed under **Excluded paths** and are fetched from the original commit at run time.
 
-Training and inference code in the same repository can be registered as separate code versions with different commands. To use another repository for inference only, choose **別のリポジトリ** (Another repository) in **リポジトリの選択** (Repository).
+Training and inference code in the same repository can be registered as separate code versions with different commands. To use another repository for inference only, choose **Another repository** in **Repository selection**.
 
 ### Store standalone code
 
-Choose **Standalone（ファイルを保存）** (Standalone, store files) in **リポジトリの選択** to store files in the app. Enter a relative path such as `src/main.py`, press **ファイルを追加** (Add file), and write the content in the editor (Monaco Editor). Closing the dialog with unsaved changes asks before discarding them.
+Choose **Standalone (save files)** in **Repository selection** to store files in the app. Enter a relative path such as `src/main.py`, press **Add file**, and write the content in the editor (Monaco Editor). Closing the dialog with unsaved changes asks before discarding them.
 
 ### Run in a container
 
 | Runtime | What to specify |
 | --- | --- |
-| Docker | **Docker image（digest固定）** (Docker image pinned by digest), for example `registry.example.com/team/infer@sha256:<64-digit digest>`. A tag alone such as `image:latest` is rejected |
-| Singularity, Apptainer | **SIF Artifact**. Selecting a stored SIF file fills in its SHA256 |
+| Docker | **Docker image (fixed digest)**, for example `registry.example.com/team/infer@sha256:<64-digit digest>`. A tag alone such as `image:latest` is rejected |
+| Singularity, Apptainer | **SIF artifact**. Selecting a stored SIF file fills in its SHA256 |
 
 - When the code is inside the image, choose code inside the container as the source format.
 - An added Git, Inline, or Artifact source is mounted read-only at `/mmt/source`.
@@ -82,8 +82,8 @@ The Compute target must list the runtime ([Compute targets](/en/compute/targets)
 
 ## Create a Task
 
-1. In Tasks, press **Taskを作成** (Create Task).
-2. Fill in the fields and press **保存** (Save).
+1. In Tasks, press **Create task**.
+2. Fill in the fields and press **Save**.
 
 | Field | Meaning |
 | --- | --- |
@@ -99,11 +99,11 @@ The Compute target must list the runtime ([Compute targets](/en/compute/targets)
 
 3. Select the new Task and check that the saved settings are shown on the right.
 
-Each save increments **Taskの改訂番号** (Task revision). If someone else updated the Task in the meantime, saving is rejected; check the latest settings and save again.
+Each save increments **Task revision**. If someone else updated the Task in the meantime, saving is rejected; check the latest settings and save again.
 
 ## Normal and test runs
 
-Press **通常実行** (Run) or **テスト実行** (Test run) on the Task. To change parameters for this launch, enter only the changed values in **パラメータの上書き（JSON）** (Parameter overrides).
+Press **Normal execution** or **Test execution** on the Task. To change parameters for this launch, enter only the changed values in **Parameter overrides (JSON)**.
 
 | | Command | Model registration |
 | --- | --- | --- |
@@ -112,31 +112,31 @@ Press **通常実行** (Run) or **テスト実行** (Test run) on the Task. To c
 
 A test run requires a test command in the code version.
 
-The Task revision, code version, source, runtime, command, dependencies, and environment at launch are stored in the Run's **実行snapshot** (Execution snapshot). Editing the Task or code afterwards does not change that Run.
+The Task revision, code version, source, runtime, command, dependencies, and environment at launch are stored in the Run's **Execution snapshot**. Editing the Task or code afterwards does not change that Run.
 
 The worker saves the source before execution as a ZIP and a manifest in the Run Artifacts, even for failed test runs. The manifest shows the Git commit and the SHA-256 of each file.
 
-**実行履歴** (Run history) shows the latest 50 runs; **古い実行** (Older runs) and **最新の実行** (Latest runs) page through it.
+**Execution history** shows the latest 50 runs; **Older executions** and **Latest execution** page through it.
 
-To run a failed Job again, use **新しいRunで再実行** (Retry in a new Run) in Jobs and click **再実行する** (Retry) in the confirmation. It creates a new Run with the previous code version, mode, Task revision, and parameters, and keeps the original Run. Jobs that reached their maximum attempts can be retried too. The Job's creator and Project Admins can retry it ([The Jobs page](/en/compute/jobs#stop-and-retry)). To try edited code, change the Task's code version and launch again.
+To run a failed Job again, use **Rerun as a new run** in Jobs and click **Rerun** in the confirmation. It creates a new Run with the previous code version, mode, Task revision, and parameters, and keeps the original Run. Jobs that reached their maximum attempts can be retried too. The Job's creator and Project Admins can retry it ([The Jobs page](/en/compute/jobs#stop-and-retry)). To try edited code, change the Task's code version and launch again.
 
 ## Register a model when training succeeds
 
 Training and fine-tuning Tasks can register the weights of a successful Run as a model version, without registration code in the training script.
 
-1. Open **Taskを編集** (Edit Task) and check **成功時にモデルバージョンを登録** (Register a model version on success) under **出力モデル** (Output model).
-2. In **登録先** (Destination), choose **既存のモデル** (Existing model) or **新しいモデルを作成** (Create a new model).
-   - Existing model: select it in **登録先のモデル** (Destination model).
-   - New model: enter **モデル名** (Model name) and **モデル系列** (Model family). The family must be one the Task's code version supports. An existing model with the same name is reused.
-3. Enter the path of the weights file the training code saved in **Artifactのパス** (Artifact path), for example `model/weights.json`. It must match the file path exactly.
-4. Optionally select **登録するバージョンの既定コードバージョン** (Default code version of registered versions) and press **保存** (Save).
-5. Press **通常実行** (Run); the confirmation shows the destination model.
+1. Open **Edit task** and check **Register model version on success** under **Output model**.
+2. In **Registration destination**, choose **Existing model** or **Create new model**.
+   - Existing model: select it in **Destination model**.
+   - New model: enter **Model name** and **Model family**. The family must be one the Task's code version supports. An existing model with the same name is reused.
+3. Enter the path of the weights file the training code saved in **Artifact path**, for example `model/weights.json`. It must match the file path exactly.
+4. Optionally select **Default code version for the registered version** and press **Save**.
+5. Press **Normal execution**; the confirmation shows the destination model.
 
 If the training code writes files to `MMT_OUTPUTS_DIR` instead of using the SDK, their Artifact paths start with `container/`. For example `MMT_OUTPUTS_DIR/model/weights.bin` becomes `container/model/weights.bin`.
 
 Versions are numbered automatically. Tasks created with the Python SDK or the API can also set a version name template using `{runId}`, `{runName}`, and `{taskRevision}`.
 
-The output model setting is copied to the Run at launch; editing the Task afterwards does not change where that Run registers. The result is shown in **出力モデル** (Output model) on the Run page.
+The output model setting is copied to the Run at launch; editing the Task afterwards does not change where that Run registers. The result is shown in **Output model versions** on the Run page.
 
 | Run result | Registration |
 | --- | --- |
@@ -147,7 +147,7 @@ The output model setting is copied to the Run at launch; editing the Task afterw
 
 ## Change Compute targets and plugins
 
-Compute targets are added under コンピュータ in the global settings, and their owner and global administrators change their settings. Only global administrators add SSH and Local targets; anyone can add a site ([Computers and visibility](/en/compute/computers)). Only global administrators add plugins, change their settings, and enable or disable them ([Plugins and Mado integration](/en/admin/plugins)).
+Compute targets are added under **Computers** in the global settings, and their owner and global administrators change their settings. Only global administrators add SSH and Local targets; anyone can add a site ([Computers and visibility](/en/compute/computers)). Only global administrators add plugins, change their settings, and enable or disable them ([Plugins and Mado integration](/en/admin/plugins)).
 
 ## Next steps
 

@@ -1,11 +1,11 @@
 ---
 title: Computers and visibility
-description: Add the computers that run Jobs (SSH, Local, sites) under コンピュータ in the global settings, and decide who can use each one with its visibility (Public or Private). Owners, hooks and automation, and how this relates to a Project's Compute page.
+description: Add the computers that run Jobs (SSH, Local, sites) under Computers in Global settings, and decide who can use each one with its visibility (Public or Private). Owners, hooks and automation, and how this relates to a Project's Compute page.
 ---
 
 # Computers and visibility
 
-![コンピュータ (Computers) in the global settings: every computer with its kind, owner, visibility, state, and whether you can use it](/images/compute-computers.png)
+![Computers in Global settings: every computer with its kind, owner, visibility, state, and whether you can use it](/images/en/compute-computers.png)
 
 A computer is a place where Jobs run. There are three kinds.
 
@@ -15,7 +15,7 @@ A computer is a place where Jobs run. There are three kinds.
 | Local | The worker's own host. Available only in development mode | [Compute targets](/en/compute/targets) |
 | Site | A supercomputer, a lab GPU server, or your own PC. Jobs are submitted by a launcher or by `mado-tracking submit` | [External computers (sites)](/en/compute/sites) |
 
-Computers do not belong to a Project. You add them under **コンピュータ** (Computers) in the global settings, and each computer's visibility (Public or Private) decides whose Jobs can run on it.
+Computers do not belong to a Project. You add them under **Computers** in **Global settings**, and each computer's visibility (Public or Private) decides whose Jobs can run on it.
 
 ## When to use this
 
@@ -23,21 +23,21 @@ Computers do not belong to a Project. You add them under **コンピュータ** 
 - You want a shared GPU server to be usable from every Project.
 - You want to see what computers other people have added and whether you can use them now.
 
-## Open コンピュータ in the global settings
+## Open Computers in Global settings
 
-Click **全体設定** (Global settings) in the user menu at the top right, then open **コンピュータ** (Computers) under 全体設定 in the sidebar (`/settings/computers`). Anyone can open the global settings, not only global administrators. You can also get there from **全体設定の「コンピュータ」を開く** (Open Computers in the global settings) on a Project's **Compute** page.
+Click **Global settings** in the user menu at the top right, then open **Computers** under **Global settings** in the sidebar (`/settings/computers`). Anyone can open **Global settings**, not only global administrators. You can also get there from **Open Computers in global settings** on a Project's **Compute** page.
 
 The list shows every computer, including other people's Private ones.
 
 | Column | Content |
 | --- | --- |
-| 名前 (Name) | For a computer you can use or manage, click the name to open its details below the list |
-| 種類 (Kind) | SSH, Local, or Site, with the CPU architecture and, for a site, automatic or manual submission and array support |
-| 所有者 (Owner) | The person who added the computer. 自分 (You) for your own, 全体 (Global) for one without an owner |
-| 公開範囲 (Visibility) | Public or Private. Private has a lock icon |
-| 状態 (State) | Enabled or disabled. For an automatic site, also the launcher's state, such as no response or revoked |
-| 自分が使えるか (Can you use it) | Whether your Jobs run on the computer |
-| 操作 (Actions) | Only owners and global administrators see **コンピュータを編集** (Edit the computer) and **無効にする** (Disable), plus **接続を確認** (Check the connection) for SSH and Local |
+| **Name** | For a computer you can use or manage, click the name to open its details below the list |
+| **Type** | SSH, Local, or Site, with the CPU architecture and, for a site, automatic or manual submission and array support |
+| **Owner** | The person who added the computer. **You** for your own, **Global** for one without an owner |
+| **Visibility** | Public or Private. Private has a lock icon |
+| **Status** | **Enabled** or **Disabled**. For an automatic site, also the launcher's state, such as **Launcher not responding** or **Launcher revoked** |
+| **Available to me** | Whether your Jobs run on the computer |
+| **Actions** | Only owners and global administrators see **Edit computer** and **Disable**, plus **Open connection check** for SSH and Local |
 
 For a computer you cannot use (someone else's Private computer), only the name, kind, owner, visibility, and state are shown. The destination, accounts, paths, and job shell are not.
 
@@ -50,13 +50,13 @@ Anyone can add their own computers. Whoever adds a computer becomes its owner.
 | Global administrators | SSH and Site, plus Local in development mode |
 | Other users (researchers) | Site only |
 
-1. Under **コンピュータ** in the global settings, click **コンピュータを追加** (Add a computer).
-2. Enter a name and choose **公開範囲** (Visibility). The default is Private. Global administrators also choose **種類** (Kind): SSH or Site, plus Local in development mode.
+1. Under **Computers** in **Global settings**, click **Add computer**.
+2. Enter a name and choose **Visibility**. The default is Private. Global administrators also choose **Type**: SSH or Site, plus Local in development mode.
 3. Fill in the settings for the kind and save.
-   - SSH and Local are added in two steps. In step 1, **接続** (Connection), enter the destination, choose the worker that checks it, and press **接続を確認して次へ** (Check the connection and continue). In step 2, **接続後の設定** (Settings after connecting), review the working directory and the other settings and press **保存** (Save). See [Compute targets](/en/compute/targets#register-a-target).
-   - A site is added on one screen: fill in the settings and press **保存** (Save). See [External computers (sites)](/en/compute/sites#add-a-computer).
+   - SSH and Local are added in two steps. In step 1, **Connection**, enter the destination, choose the worker that checks it, and press **Check connection and continue**. In step 2, **Settings after connecting**, review the working directory and the other settings and press **Save**. See [Compute targets](/en/compute/targets#register-a-target).
+   - A site is added on one screen: fill in the settings and press **Save**. See [External computers (sites)](/en/compute/sites#add-a-computer).
 
-After saving, the computer's details open below the list. An SSH or Local computer is listed, disabled, as soon as step 1 is done, and becomes usable when you save step 2 with **有効** (Enabled) on.
+After saving, the computer's details open below the list. An SSH or Local computer is listed, disabled, as soon as step 1 is done, and becomes usable when you save step 2 with **Enabled** on.
 
 ## Visibility {#visibility}
 
@@ -75,14 +75,14 @@ On a Private computer, the check uses the person a Job runs as.
 | Sweep | The person who created the Sweep |
 
 - "Service Accounts the owner created" are the Service Accounts that the owner created as a Project Admin. A Service Account created by someone else cannot use the owner's Private computers.
-- Service Accounts cannot have their own settings (自分の設定), so they cannot use sites that submit with each person's own account ([External computers (sites)](/en/compute/sites#keys-and-connection-checks)).
+- Service Accounts cannot have their own settings (**My settings**), so they cannot use sites that submit with each person's own account ([External computers (sites)](/en/compute/sites#keys-and-connection-checks)).
 - Even a global administrator cannot run Jobs on a Private computer they do not own. They can still change its settings, disable it, or make it Public.
 
 Creating a Job on a computer you cannot use returns 422 `target_not_available`. Tasks, automation rules, hooks, and Sweeps run the same check when they are saved.
 
 ### Change the visibility
 
-The owner or a global administrator chooses another **公開範囲** in **コンピュータを編集** in the list and saves. The change is recorded in the audit log (`compute_target.update`).
+The owner or a global administrator chooses another **Visibility** in **Edit computer** in the list and saves. The change is recorded in the audit log (`compute_target.update`).
 
 - A computer without an owner stays Public and cannot be made Private (422 `target_owner_missing`).
 - When a computer becomes Private after Jobs were created, the queued Jobs of people who can no longer use it fail when they are submitted (`submit_failed`). Running Jobs are not stopped.
@@ -98,9 +98,9 @@ Sharing with Projects no longer exists. To let others use a computer you used to
 
 ## A Project's Compute page
 
-![A Project's Compute page: the computers you can use, and the workers](/images/compute-targets.png)
+![A Project's Compute page: the computers you can use, and the workers](/images/en/compute-targets.png)
 
-A Project's **Compute** page shows the computers you can use (read only) and the state of the workers connected to the Project (**Workers**). To add or configure computers, use **全体設定の「コンピュータ」を開く** at the top right to go to the global settings.
+A Project's **Compute** page shows the computers you can use (read only) and the state of the workers connected to the Project (**Workers**). To add or configure computers, use **Open Computers in global settings** at the top right to go to **Global settings**.
 
 The target list on the Job screens also shows only the computers you can use.
 
@@ -114,7 +114,7 @@ On a site that runs as your own account, the job shell chosen by the owner runs 
 
 | Operation | Who |
 | --- | --- |
-| Open コンピュータ in the global settings and see every computer's name, kind, owner, visibility, and state | Anyone signed in |
+| Open **Computers** in **Global settings** and see every computer's name, kind, owner, visibility, and state | Anyone signed in |
 | Add a site | Anyone signed in |
 | Add SSH or Local computers | Global administrators |
 | Change settings and visibility, enable or disable, check the connection, save job shells, the shared account's key | The owner or a global administrator |

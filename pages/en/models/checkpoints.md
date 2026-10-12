@@ -49,22 +49,22 @@ Files the MLflow 3 SDK saves under `checkpoints/step-<integer>/`, for example wi
 
 The **Checkpoint** tab of a Run lists its checkpoints with the step, number of files, whether the optimizer state is included, and the framework.
 
-The list shows the newest five per Run (`MMT_CHECKPOINT_KEEP_COUNT` on the API server). Check **保持数を超えた古いcheckpointも表示する** (Show older checkpoints beyond the limit) to see the rest. Checkpoints outside the list keep their Artifacts and can still be resumed from.
+The list shows the newest five per Run (`MMT_CHECKPOINT_KEEP_COUNT` on the API server). Check **Include checkpoints outside the retention limit** to see the rest. Checkpoints outside the list keep their Artifacts and can still be resumed from.
 
 ## Resume
 
-You can resume a Run that ran as a Job and failed or was canceled. Resuming retries that Job, so only the Run's creator and Project Admins can (as with stopping or retrying a Job). Other people see the reason on the **Checkpoint** tab instead of **このcheckpointから再開** (Resume from this checkpoint).
+You can resume a Run that ran as a Job and failed or was canceled. Resuming retries that Job, so only the Run's creator and Project Admins can (as with stopping or retrying a Job). Other people see the reason on the **Checkpoint** tab instead of **Resume from this checkpoint**.
 
 ### Resume from a chosen checkpoint
 
 1. Open the stopped Run and select the **Checkpoint** tab.
-2. Press **このcheckpointから再開** (Resume from this checkpoint) on the checkpoint's row.
-3. The confirmation says that training resumes from step N as a new Run. Press **新しいRunで再開** (Resume in a new Run).
-4. Check that a new Run was created and that its Job appears in Jobs with the **再開** (Resumed) badge.
+2. Press **Resume from this checkpoint** on the checkpoint's row.
+3. The confirmation says that training resumes from step N as a new Run. Press **Resume as a new run**.
+4. Check that a new Run was created and that its Job appears in Jobs with the **Resumed** badge.
 
 ### Resume from the latest checkpoint
 
-In Jobs, press **最新checkpointから再開** (Resume from latest checkpoint) on a failed or canceled Job to resume from the checkpoint with the highest step of that Run. If the Run has no checkpoint but was itself resumed, its resume checkpoint is used.
+In Jobs, press **Resume from latest checkpoint** on a failed or canceled Job to resume from the checkpoint with the highest step of that Run. If the Run has no checkpoint but was itself resumed, its resume checkpoint is used.
 
 ### Conditions
 

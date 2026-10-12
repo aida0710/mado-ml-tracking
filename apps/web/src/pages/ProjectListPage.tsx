@@ -76,7 +76,7 @@ export function ProjectListPage({
   return (
     <main id="content" className="page project-list-page">
       <PageHeader
-        title={text.project}
+        title={text.projectList}
         actions={
           onCreateProject && (
             <button className="button primary" onClick={onCreateProject}>
