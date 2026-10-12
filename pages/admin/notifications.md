@@ -5,7 +5,7 @@ description: Runの失敗や自動実行の失敗、workerの停止などをSlac
 
 # 通知と運用アラート
 
-Runの失敗、自動実行の失敗、Jobのheartbeatの途絶、workerの停止、Pluginへの送信の滞留を、Slack、Webhook、メールへ通知します。
+Runの失敗、自動実行の失敗、Jobのheartbeatの途絶、workerの停止、Plugin送信の滞留を、Slack、Webhook、メールへ通知します。
 
 役割は2つに分かれます。
 
@@ -131,7 +131,7 @@ ProjectのAdminは、「直近の送信履歴」で状態、試行回数、失�
 
 ## 運用アラート
 
-API serverは30秒ごとに、Jobのheartbeatの途絶、workerの停止、Pluginへの送信の滞留を確かめます。見つかると、上部バーのベルに「運用アラート」として件数を表示し、ルールで選んだ通知先へ1回だけ通知します。
+API serverは30秒ごとに、Jobのheartbeatの途絶、workerの停止、Plugin送信の滞留を確かめます。見つかると、上部バーのベルに「運用アラート」として件数を表示し、ルールで選んだ通知先へ1回だけ通知します。
 
 ベルは、メンバーになっているProject（全体管理者はすべてのProject）のアラートを数えます。publicのProjectは誰でも開けますが、メンバーでなければベルには出ません。一覧にはProject名が付き、開いているProjectのものが先に並びます。全体設定の画面にもベルがあるので、別のProjectのworkerが止まっても、そのProjectを開く前に気づけます。一度に読むのは200件までで、それを超えると「200+」と表示します。
 
@@ -139,8 +139,8 @@ API serverは30秒ごとに、Jobのheartbeatの途絶、workerの停止、Plugi
 | --- | --- | --- |
 | Jobのheartbeat途絶 | 実行中のJobのheartbeatが60秒より古い | heartbeatが戻る（「Jobのheartbeat復旧」を通知）、またはJobが終わる |
 | workerの停止 | workerの最後の応答が120秒より古い | workerが再び応答する、tokenが失効・期限切れになる、7日以上応答が無い |
-| Plugin送信の滞留 | 最古の未送信が15分より古い、または5回以上失敗した | 未送信が条件を下回る、Pluginを無効にする |
+| Plugin送信の滞留 | 最古の未送信が15分より古い、または5回以上失敗した | 未送信が条件を下回る、連携を無効にする |
 
 - heartbeatが途絶しても、Jobは失敗にしません。workerがまだ処理を続けている場合があるためです。止まったJobは［Jobs］で停止を要求するか、workerのホストを確かめてください。
-- Pluginの送信状況は［連携］の「イベントの送信状況」で確認できます。Pluginを直したら［イベントを再送］を押します（[Mado連携](/admin/plugins)）。
+- Mado連携の送信状況は［連携］の「イベントの送信状況」で確認できます。Madoの状態や接続設定を直したら、［イベントを再送］を押します（[Mado連携](/admin/plugins)）。
 - 閾値はコードの定数で、環境変数では変えられません。
