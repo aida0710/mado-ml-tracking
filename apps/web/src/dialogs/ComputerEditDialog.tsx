@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import { PlugZap } from 'lucide-react';
 import type { AuthConfig, ComputeTargetDetails, ComputeTargetExecutor } from '@mmt/contracts';
@@ -18,6 +17,7 @@ import { Tabs } from '../components/Tabs';
 import { TargetCheckStatus } from '../components/TargetCheckStatus';
 import { buildConnectionPatch, hasConnectionChanges } from '../lib/computerSetupInput';
 import { getFieldValue } from '../lib/formValues';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 type ComputerEditTab = 'connection' | 'setup';

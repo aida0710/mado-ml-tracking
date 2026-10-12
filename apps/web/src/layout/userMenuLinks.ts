@@ -1,7 +1,7 @@
 import type { User } from '@mmt/contracts';
 import { canChangeOwnPassword } from '../lib/permissions';
-import { text } from '../i18n/catalog';
 import { PASSWORD_CHANGE_PATH, settingsSectionPath } from './settingsSections';
+import { text } from '../i18n/catalog';
 
 export interface UserMenuLink {
   to: string;

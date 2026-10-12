@@ -1,14 +1,14 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ComputeTarget, ExperimentTask, ExecutionMode, TaskExecution } from '@mmt/contracts';
 import type { ExecutionCatalog } from '../types/executionCatalog';
 import { useProject } from '../hooks/useProject';
 import { useTaskLaunchForm } from '../hooks/useTaskLaunchForm';
 import { getExecutionCommand, hasOutputModel, outputModelLabel } from '../lib/taskInput';
-import { workbenchTextTemplates } from '../i18n/workbench';
 import { Dialog } from '../components/Dialog';
 import { TaskFields } from '../components/TaskFields';
 import { DetailsList, KeyValues } from '../components/JsonDetails';
 import { ErrorNotice } from '../components/Feedback';
+import { useLocale } from '../i18n/useLocale';
+import { workbenchTextTemplates } from '../i18n/workbench';
 import { text } from '../i18n/catalog';
 
 export function TaskLaunchDialog({ task, initialMode, catalog, targets, onClose, onSaved }: {

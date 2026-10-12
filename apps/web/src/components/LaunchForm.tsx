@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { ComputeTargetDetails, Job, Run, WorkerPresence } from '@mmt/contracts';
 import { FormFields } from './FormFields';
@@ -18,6 +17,7 @@ import { validateTargetRuntime } from '../lib/runtimeValidation';
 import { buildJobRequest } from '../lib/siteExecutionInput';
 import { jobWorkerCoverage } from '../lib/workerCoverage';
 import type { ExecutionCatalog } from '../types/executionCatalog';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { workerCoverageText } from '../i18n/workerCoverage';
 

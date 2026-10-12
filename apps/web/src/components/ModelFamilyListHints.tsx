@@ -1,9 +1,9 @@
-import { useLocale } from '../i18n/useLocale';
 import { Plus } from 'lucide-react';
 import { useModelFamilies } from '../hooks/useModelFamilies';
 import { useProject } from '../hooks/useProject';
 import { splitLines } from '../lib/formValues';
 import { findFamilyCaseVariants } from '../lib/modelFamilyChoices';
+import { useLocale } from '../i18n/useLocale';
 import { modelsTextTemplates } from '../i18n/models';
 import { text } from '../i18n/catalog';
 

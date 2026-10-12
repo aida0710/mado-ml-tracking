@@ -49,7 +49,7 @@ describe('Sweepの試行表の幅による切り替え', () => {
       'batch_size',
       'lr',
       `${text.sweepObjectiveValue}（val_loss）`,
-      text.sweepTrialState,
+      text.status,
       text.sweepTrialRun,
       text.sweepTrialJob,
     ]);
@@ -61,7 +61,7 @@ describe('Sweepの試行表の幅による切り替え', () => {
     expect(headerTexts(html)).toEqual([
       text.sweepTrialIndex,
       `${text.sweepObjectiveValue}（val_loss）`,
-      text.sweepTrialState,
+      text.status,
       text.showRowDetails,
     ]);
     // Rows start closed: the Run link is reached by opening the row.

@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { ModelVersion } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
 import { useQuery } from '../hooks/useQuery';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

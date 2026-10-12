@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { Run } from '@mmt/contracts';
 import { useRunOutputRegistration } from '../hooks/useRunOutputRegistration';
 import type { RunOutputRegistrationState } from '../lib/runOutputRegistrationState';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { outputRegistrationErrorLabels } from '../i18n/workbench';
 

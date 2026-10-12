@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ProjectRole, ServiceAccount, ServiceAccountCreate } from '@mmt/contracts';
 import { FormDialog } from '../components/FormDialog';
 import { getFieldValue } from '../lib/formValues';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 const PROJECT_ROLES: ProjectRole[] = ['viewer', 'editor', 'admin'];

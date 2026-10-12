@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ComputeTargetDetails, SitePersonalSettings } from '@mmt/contracts';
 import { siteComputersApi } from '../api/siteComputers';
@@ -17,6 +16,7 @@ import {
   personalSettingsScope,
   type PersonalSettingsScope,
 } from '../lib/sitePersonalSettingsInput';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

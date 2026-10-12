@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { ModelVersion } from '@mmt/contracts';
@@ -6,8 +5,10 @@ import { ResponsiveTable } from './ResponsiveTable';
 import { RunNameLink } from './RunNameLink';
 import { formatDate } from '../lib/format';
 import { modelVersionPath } from '../lib/modelVersionPath';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { modelsTextTemplates } from '../i18n/models';
+import { formatList } from '../i18n/textJoining';
 
 // The newest versions shown at first; a Model with hundreds of versions would push its alias
 // history far down the page.
@@ -71,7 +72,7 @@ export function ModelVersionsTable({
             priority: 'primary',
             header: text.alias,
             className: 'mono',
-            render: (version) => aliasesOf(version.id).join(', ') || '—',
+            render: (version) => formatList(aliasesOf(version.id)) || '—',
           },
           {
             key: 'created',

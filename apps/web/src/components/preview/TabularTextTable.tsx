@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useMemo, useState, type ReactNode } from 'react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import type { TabularText } from '../../lib/tabularText';
@@ -10,8 +9,9 @@ import {
   toTabularRows,
   type TabularSort,
 } from '../../lib/tabularTableRows';
-import { text, textTemplates } from '../../i18n/catalog';
 import { BrokenRowCount, BrokenRowsDetails } from './BrokenRowsDetails';
+import { useLocale } from '../../i18n/useLocale';
+import { text, textTemplates } from '../../i18n/catalog';
 
 function SortIcon({ sort, column }: { sort: TabularSort | null; column: number }) {
   useLocale();

@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState, type ReactNode } from 'react';
 import type { Dataset, DatasetVersion } from '@mmt/contracts';
 import { Link } from 'react-router-dom';
@@ -24,6 +23,7 @@ import { DatasetPluginActions } from '../components/DatasetPluginActions';
 import { datasetVersionLabel } from '../lib/datasetVersionLabel';
 import { formatBytes, shortRunId } from '../lib/format';
 import { getFieldValue } from '../lib/formValues';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 export function DatasetsPage() {

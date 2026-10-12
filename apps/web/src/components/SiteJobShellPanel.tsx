@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import { Pencil } from 'lucide-react';
 import type { SiteJobShell, SiteJobShellSummary } from '@mmt/contracts';
@@ -12,6 +11,7 @@ import { formatBytes, formatDate } from '../lib/format';
 import { JOB_SHELL_TEMPLATES, findJobShellTemplate } from '../lib/jobShellTemplates';
 import { parseJobShellContent } from '../lib/jobShellContent';
 import { shortSha256 } from '../lib/siteComputerDisplay';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { jobShellTemplateLabels, siteComputersTextTemplates } from '../i18n/siteComputers';
 

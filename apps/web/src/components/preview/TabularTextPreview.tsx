@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useMemo, useState } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { trackingApi } from '../../api/tracking';
@@ -9,12 +8,13 @@ import { formatBytes } from '../../lib/format';
 import { parseTabularText, type TabularTextFormat } from '../../lib/tabularText';
 import { leadingTextWithinBytes } from '../../lib/textPrefix';
 import { Resource } from '../Feedback';
-import { textTemplates } from '../../i18n/catalog';
 import { FormattedCode } from './CodeView';
 import { EvaluationSamplesTable } from './EvaluationSamplesTable';
 import { PreviewFormatSelect, TABLE_PREVIEW_FORMAT } from './PreviewFormatSelect';
 import { TabularTextTable } from './TabularTextTable';
 import { TEXT_PREVIEW_MAX_BYTES, TextHeadNotice, TextPreview } from './TextPreview';
+import { useLocale } from '../../i18n/useLocale';
+import { textTemplates } from '../../i18n/catalog';
 
 /**
  * Evaluation results with thousands of rows are a few MB of jsonl. 16MiB keeps parsing on the main

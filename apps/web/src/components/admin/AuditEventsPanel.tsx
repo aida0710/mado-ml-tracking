@@ -1,8 +1,8 @@
-import { useLocale } from '../../i18n/useLocale';
 import { RefreshCw } from 'lucide-react';
 import { useAuditEvents } from '../../hooks/useAuditEvents';
 import { AuditEventLog } from '../AuditEventLog';
 import { SettingsPageHeader } from '../SettingsPageHeader';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**

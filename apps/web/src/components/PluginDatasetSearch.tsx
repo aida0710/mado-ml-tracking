@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import type { PluginConnection } from '@mmt/contracts';
 import { useMadoDatasetSearch } from '../hooks/useMadoDatasetSearch';
 import { ResponsiveTable } from './ResponsiveTable';
 import { Empty, ErrorNotice } from './Feedback';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { pluginsText } from '../i18n/plugins';
 

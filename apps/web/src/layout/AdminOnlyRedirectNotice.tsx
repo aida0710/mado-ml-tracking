@@ -1,5 +1,5 @@
-import { useLocale } from '../i18n/useLocale';
 import { useLocation } from 'react-router-dom';
+import { useLocale } from '../i18n/useLocale';
 import { settingsShellText } from '../i18n/settingsShell';
 
 /** The navigation state AdminPage leaves when it sends someone who is not a global admin away. */

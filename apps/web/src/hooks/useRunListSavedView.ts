@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { ChartPanelLayout, SavedView, SavedViewColumn, SavedViewState } from '@mmt/contracts';
@@ -10,12 +9,13 @@ import {
   toSavedViewState,
 } from '../lib/savedViewState';
 import { RUN_LIST_PARAMS, runListParamsForView, type RunListConditions } from '../lib/runListUrl';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 const unavailableViewNotice: Record<SavedViewUnavailableReason, string> = {
-  get not_found() { return text.savedViewNotFound },
-  get unsupported_version() { return text.savedViewUnsupportedVersion },
-  get invalid() { return text.savedViewInvalid },
+  get not_found() { return text.savedViewNotFound; },
+  get unsupported_version() { return text.savedViewUnsupportedVersion; },
+  get invalid() { return text.savedViewInvalid; },
 };
 
 /**

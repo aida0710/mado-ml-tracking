@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { PromotionPolicy, ServiceAccount } from '@mmt/contracts';
 import { promotionApi } from '../api/promotion';
@@ -7,6 +6,7 @@ import { ErrorNotice } from '../components/Feedback';
 import { FormFields } from '../components/FormFields';
 import { useMutation } from '../hooks/useMutation';
 import { getFieldValue, type FormValues } from '../lib/formValues';
+import { useLocale } from '../i18n/useLocale';
 import { promotionTextTemplates } from '../i18n/promotion';
 import { text } from '../i18n/catalog';
 

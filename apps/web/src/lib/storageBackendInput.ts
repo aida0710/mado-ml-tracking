@@ -6,8 +6,8 @@ import type {
 } from '@mmt/contracts';
 import type { FormValues } from '../types/form';
 import { getFieldValue } from './formValues';
-import { text, textTemplates } from '../i18n/catalog';
 import { LocalizedError } from './localizedError';
+import { text, textTemplates } from '../i18n/catalog';
 
 const MIB = 1024 * 1024;
 // S3 rejects parts below 5 MiB (except the last). The API caps parts at 512 MiB because it keeps

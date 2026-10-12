@@ -1,13 +1,13 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ComputeTarget, Hook } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { automationOwnerLabel } from '../lib/automationOwner';
 import { formatDate } from '../lib/format';
 import { isManualSite } from '../lib/manualSubmission';
+import { useComputerNames } from '../hooks/useComputerNames';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { hookTriggerLabels } from '../i18n/hooks';
 import { submissionModeBadgeLabels } from '../i18n/compute';
-import { useComputerNames } from '../hooks/useComputerNames';
 
 function HookTarget({ hook, targets, computerName }: {
   hook: Hook;

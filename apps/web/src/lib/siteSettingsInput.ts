@@ -26,9 +26,9 @@ import {
 import type { FormValues } from '../types/form';
 import { getFieldValue, parseChoice, splitLines } from './formValues';
 import { formatSiteVariables, parseSiteVariables } from './siteVariables';
+import { LocalizedError } from './localizedError';
 import { text } from '../i18n/catalog';
 import { siteComputersTextTemplates } from '../i18n/siteComputers';
-import { LocalizedError } from './localizedError';
 
 /** Every global setting of a site; the job shell is saved on its own, as a new version. */
 export type SiteSettingsValues = Omit<SiteSettings, 'jobShell'>;

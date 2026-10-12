@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { CodeFileTree } from './CodeFileTree';
 import { CodeView } from './preview/CodeView';
+import { useLocale } from '../i18n/useLocale';
 import { codeSourceText } from '../i18n/codeSource';
 
 /**

@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { RefreshCw, Settings } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -10,6 +9,7 @@ import { ComputeTargetsTable } from '../components/ComputeTargetsTable';
 import { WorkerPresenceTable } from '../components/WorkerPresenceTable';
 import { Resource } from '../components/Feedback';
 import { settingsSectionPath } from '../layout/settingsSections';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

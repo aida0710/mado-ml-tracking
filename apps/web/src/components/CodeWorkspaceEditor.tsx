@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { lazy, Suspense, useState } from 'react';
 import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import type { useCodeWorkspace } from '../hooks/useCodeWorkspace';
@@ -9,6 +8,7 @@ import { useMediaQuery } from '../lib/useMediaQuery';
 import { CodeFileTree } from './CodeFileTree';
 import { ErrorBoundary } from './ErrorBoundary';
 import { ErrorNotice } from './Feedback';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 const MonacoCodeEditor = lazy(() => import('./MonacoCodeEditor'));

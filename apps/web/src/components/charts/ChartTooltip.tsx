@@ -1,8 +1,8 @@
-import { useLocale } from '../../i18n/useLocale';
 import { formatNumber } from '../../lib/format';
 import type { ChartValueAtX } from '../../lib/metricSeries';
-import { textTemplates } from '../../i18n/catalog';
 import { SeriesSwatch } from './SeriesSwatch';
+import { useLocale } from '../../i18n/useLocale';
+import { textTemplates } from '../../i18n/catalog';
 
 /**
  * The values of the series at the hovered x. The chart passes the rows already ordered and cut to

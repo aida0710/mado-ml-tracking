@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChartLine, Plus, RefreshCw, Terminal } from 'lucide-react';
@@ -48,6 +47,7 @@ import {
   RUN_LIST_PARAMS,
   savedViewUrl,
 } from '../lib/runListUrl';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 // A compact page keeps wide parameter and metric columns usable on a laptop.

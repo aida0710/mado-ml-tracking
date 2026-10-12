@@ -1,10 +1,10 @@
-import { useLocale } from '../../i18n/useLocale';
 import type { MouseEvent } from 'react';
-import { text } from '../../i18n/catalog';
-import { artifactsTextTemplates } from '../../i18n/artifacts';
 import { formatAudioTime, fractionOfTime, timeAtFraction } from '../../lib/audioTimeline';
 import type { ServerWaveform } from '../../lib/serverAudioPreview';
 import { AudioWaveform } from './AudioWaveform';
+import { useLocale } from '../../i18n/useLocale';
+import { text } from '../../i18n/catalog';
+import { artifactsTextTemplates } from '../../i18n/artifacts';
 
 const WAVEFORM_HEIGHT = 88;
 const SPECTROGRAM_HEIGHT = 140;

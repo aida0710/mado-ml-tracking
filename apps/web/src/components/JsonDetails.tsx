@@ -1,6 +1,6 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { formatValue } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 
 export function JsonDetails({ value }: { value: unknown }) {
   useLocale();

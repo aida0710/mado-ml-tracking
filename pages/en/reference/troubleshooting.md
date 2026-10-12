@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: What to check when the API does not start, SSO login fails, tokens return 401 or 403, notifications do not arrive, or plugins and workers stop.
+description: What to check when the API does not start, SSO login fails, tokens return 401 or 403, notifications do not arrive, or the Mado integration and workers stop.
 ---
 
 # Troubleshooting
@@ -113,13 +113,16 @@ A Project Admin or a global administrator archived the Project (404 `project_arc
 3. Check the status and failure reason in **Recent delivery history**. What to check for each reason is under "Delivery and failures" in [Notifications and operations alerts](/en/admin/notifications).
 4. Check that the rule is enabled and its events and conditions match. **Worker stopped** and **Plugin delivery backlog** do not reach rules with Run kind or experiment conditions.
 
-## Plugin unreachable or deliveries stalled
+## Mado integration unreachable or deliveries stalled {#plugin-unreachable-or-deliveries-stalled}
+
+Check the state of the Mado integration under **Integrations** in the Project. Only global administrators can fix its connection settings and keys ([Mado integration](/en/admin/plugins)).
 
 | Symptom | Fix |
 | --- | --- |
-| **API server setting** shows **Not configured (variable missing on the API server)** in the plugin's details, or `plugin_token_unavailable` naming the variable | Put the plugin token in the API server's `.env` under the variable name shown, and restart the API |
-| **Check connection** fails | Check that the plugin is running and its URL is reachable from the API server. Check that the plugin's `MMT_PLUGIN_TOKEN` and the API server's value match |
-| Operations alert **Plugin delivery backlog** | Check the last error in **Event delivery status** under **Plugins**, fix the plugin, then click **Resend event** |
+| "The API server needs MMT_PLUGIN_SECRET_KEY to save and use integration keys.", or `plugin_secret_key_unavailable` | Set `MMT_PLUGIN_SECRET_KEY` in the API server's `.env` and restart the API ([Environment variables](/en/reference/environment#mado-plugin)) |
+| "Configure the Mado read and write keys.", or `plugin_token_unavailable` or `plugin_secret_decryption_failed` | If a key shows **Not configured**, enter **Read key (lineage:read)** and **Write key (lineage:write)** in **Mado connection settings** and click **Save**. If the keys show **Configured**, check that `MMT_PLUGIN_SECRET_KEY` has the value it had when the keys were saved. If that value cannot be restored, re-enter and save every key |
+| **Check connection** fails with "Could not communicate with the integration" (`plugin_request_failed`) | Check that the API server can reach **Mado API URL**, and that the read key is valid and can read every namespace in **Allowed namespaces**. If a capacity key is set, check it too: the check also reads capacity metrics |
+| Operations alert **Plugin delivery backlog** | Check **Last error** in **Event delivery status** under **Integrations**, fix Mado or the connection settings (**OpenLineage URL**, the write key), then click **Resend event** |
 
 ## The worker does not take Jobs or shows as offline
 

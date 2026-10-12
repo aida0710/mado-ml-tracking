@@ -41,7 +41,7 @@ describe('フックの表示', () => {
         executionCatalog,
       ),
     ).toEqual([
-      ['実験', 'Evaluation, gone'],
+      ['実験', 'Evaluation、gone'],
       ['Runの終了状態', '失敗'],
       ['Runのタグ（JSON・すべて一致）', '{"suite":"a"}'],
     ]);

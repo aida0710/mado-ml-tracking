@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import { TOKEN_PURPOSE_SCOPES, type Experiment } from '@mmt/contracts';
 import { CodeSnippet } from './CodeSnippet';
@@ -11,6 +10,7 @@ import {
   buildMlflowConnectionSnippets,
   type MlflowConnectionSnippets,
 } from '../lib/tokenUsageSnippet';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 type RecordingClient = 'sdk' | 'mlflow';

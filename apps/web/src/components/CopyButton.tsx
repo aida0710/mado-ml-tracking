@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Copy } from 'lucide-react';
 import { useMutation } from '../hooks/useMutation';
 import { ErrorNotice } from './Feedback';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

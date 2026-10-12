@@ -1,6 +1,6 @@
 import { parseStringMap } from './formValues';
-import { automationText } from '../i18n/automation';
 import { LocalizedError } from './localizedError';
+import { automationText } from '../i18n/automation';
 
 // Mirrors RESERVED_RUN_TAG_PREFIXES in the API (domain/reservedRunTags.ts): the server sets these
 // tags on the Runs it starts (automation rules, hooks, arrays), so a request may not carry them.

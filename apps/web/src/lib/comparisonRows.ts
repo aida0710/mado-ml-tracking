@@ -8,6 +8,7 @@ import {
   type RunComparisonValue,
 } from '@mmt/contracts';
 import { formatNumber, formatValue } from './format';
+import { formatList } from '../i18n/textJoining';
 
 // Same labels as the API's CSV, so the page and a downloaded file name versions alike.
 export const modelVersionLabel = (version: ComparedModelVersion) =>
@@ -82,12 +83,12 @@ export function buildComparisonTableRows(comparison: RunComparison): ComparisonT
   });
   const datasetVersionCells = comparison.runs.map((run) =>
     run.inputDatasetVersionIds.length
-      ? run.inputDatasetVersionIds
-          .map((id) => {
+      ? formatList(
+          run.inputDatasetVersionIds.map((id) => {
             const version = datasetVersions.get(id);
             return version ? datasetVersionLabel(version) : id;
-          })
-          .join(', ')
+          }),
+        )
       : null,
   );
   return [

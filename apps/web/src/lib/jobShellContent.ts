@@ -1,7 +1,7 @@
 import { MAX_JOB_SHELL_BYTES } from '@mmt/contracts';
+import { LocalizedError } from './localizedError';
 import { text } from '../i18n/catalog';
 import { siteComputersTextTemplates } from '../i18n/siteComputers';
-import { LocalizedError } from './localizedError';
 
 const BYTES_PER_MIB = 1024 ** 2;
 

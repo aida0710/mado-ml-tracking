@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell } from 'lucide-react';
@@ -10,7 +9,8 @@ import { useQuery } from '../hooks/useQuery';
 import { describeOperationsAlertSubject } from '../lib/operationsAlertSubject';
 import { orderAlertsForProject } from '../lib/operationsAlertOrder';
 import { formatDate } from '../lib/format';
-import { operationsAlertKindLabels } from '../i18n/operations';
+import { useLocale } from '../i18n/useLocale';
+import { notificationEventTypeLabels } from '../i18n/notifications';
 import { text, textTemplates } from '../i18n/catalog';
 
 function bellLabel(count: number, mayHaveMore: boolean): string {
@@ -85,7 +85,8 @@ export function OperationsAlertBadge({ openProjectId }: { openProjectId?: string
                         {projectName(alert.projectId)}
                       </span>
                       <span className="operations-alert-kind">
-                        {operationsAlertKindLabels[alert.kind]}
+                        {/* An alert kind is also the notification event it queues, named alike on both screens. */}
+                        {notificationEventTypeLabels[alert.kind]}
                       </span>
                       <span className="operations-alert-subject">{subject.label}</span>
                       <span className="muted operations-alert-time">

@@ -5,7 +5,7 @@ describe('HH:MM:SSの時間', () => {
   it('スケジューラの書き方を秒に直し、空は未指定にする', () => {
     expect(parseClockDuration('12:00:00')).toBe(12 * 60 * 60);
     expect(parseClockDuration(' 0:05:30 ')).toBe(5 * 60 + 30);
-    // 1日を超える時間もHHのまま書く（PBSのwalltime=72:00:00）
+    // Durations over a day still use HH, as PBS writes walltime=72:00:00.
     expect(parseClockDuration('72:00:00')).toBe(72 * 60 * 60);
     expect(parseClockDuration('')).toBeNull();
   });

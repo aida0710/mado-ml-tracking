@@ -84,7 +84,6 @@ export const sweepsText = localized({
   sweepBestSoFar: 'それまでの最良',
   sweepTrialObjective: '試行の目的値',
   sweepTrialIndex: '試行',
-  sweepTrialState: '状態',
   sweepObjectiveValue: '目的値',
   sweepTrialRun: 'Run',
   sweepTrialJob: 'Job',

@@ -1,9 +1,9 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ComputeTarget, TargetCheck } from '@mmt/contracts';
 import { TargetCheckItemsTable } from './TargetCheckItemsTable';
 import { formatCheckedHost } from '../lib/computeTargetDisplay';
 import { isCheckInProgress } from '../lib/targetCheckCandidates';
 import { isConnectionReached } from '../lib/computerSetupValues';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

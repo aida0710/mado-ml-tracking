@@ -1,9 +1,9 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { NavLink } from 'react-router-dom';
-import { text } from '../i18n/catalog';
 import type { NavigationGroup } from './navigationLinks';
 import { NAVIGATION_ICONS } from './navigationIcons';
+import { useLocale } from '../i18n/useLocale';
+import { text } from '../i18n/catalog';
 
 /**
  * The main navigation's links with their icons under the group labels, laid out by the sidebar,

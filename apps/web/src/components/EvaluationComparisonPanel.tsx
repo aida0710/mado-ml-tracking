@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import type {
@@ -20,24 +19,25 @@ import {
   formatMetricValue,
   formatRelativeDelta,
 } from '../lib/evaluationComparisonDisplay';
-import { text } from '../i18n/catalog';
-import { evaluationTextTemplates } from '../i18n/evaluation';
 import { ResponsiveTable } from './ResponsiveTable';
 import { Resource } from './Feedback';
 import { DetailsList } from './JsonDetails';
 import { RunNameLink } from './RunNameLink';
 import { CodeVersionNameLink } from './CodeVersionNameLink';
 import { DatasetVersionNameLinks } from './DatasetVersionNameLinks';
+import { useLocale } from '../i18n/useLocale';
+import { text } from '../i18n/catalog';
+import { evaluationTextTemplates } from '../i18n/evaluation';
 
 const statusMessages: Record<Exclude<EvaluationComparisonStatus, 'ok'>, string> = {
-  get baseline_missing() { return text.comparisonBaselineMissing },
-  get baseline_not_evaluated() { return text.comparisonBaselineNotEvaluated },
-  get candidate_not_evaluated() { return text.comparisonCandidateNotEvaluated },
+  get baseline_missing() { return text.comparisonBaselineMissing; },
+  get baseline_not_evaluated() { return text.comparisonBaselineNotEvaluated; },
+  get candidate_not_evaluated() { return text.comparisonCandidateNotEvaluated; },
 };
 
 const sourceLabels: Record<MetricValueSource, string> = {
-  get dataset_context() { return text.metricSourceDatasetContext },
-  get run_latest() { return text.metricSourceRunLatest },
+  get dataset_context() { return text.metricSourceDatasetContext; },
+  get run_latest() { return text.metricSourceRunLatest; },
 };
 
 function OptionalRunLink({ projectId, runId }: { projectId: string; runId: string | null }) {
@@ -108,8 +108,6 @@ function ComparisonConditions({
   );
 }
 
-const metricValueLabels = { get notFinite() { return text.metricNotFinite } };
-
 function describeSources(source: MetricComparison['source']): string {
   const labels = [source.candidate, source.baseline].map((value) =>
     value ? sourceLabels[value] : '—',
@@ -140,16 +138,14 @@ function MetricComparisonTable({ metrics }: { metrics: MetricComparison[] }) {
           priority: 'primary',
           header: text.metricCandidate,
           className: 'mono',
-          render: (metric) =>
-            formatMetricValue(metric.candidate, metric.candidateStatus, metricValueLabels),
+          render: (metric) => formatMetricValue(metric.candidate, metric.candidateStatus),
         },
         {
           key: 'baseline',
           priority: 'secondary',
           header: text.metricBaseline,
           className: 'mono',
-          render: (metric) =>
-            formatMetricValue(metric.baseline, metric.baselineStatus, metricValueLabels),
+          render: (metric) => formatMetricValue(metric.baseline, metric.baselineStatus),
         },
         {
           key: 'delta',

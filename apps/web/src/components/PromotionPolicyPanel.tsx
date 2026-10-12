@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Plus, RefreshCw } from 'lucide-react';
 import type { PromotionPolicy } from '@mmt/contracts';
@@ -17,6 +16,7 @@ import { PromotionPolicyTable } from './PromotionPolicyTable';
 import { PromotionEvaluationTable } from './PromotionEvaluationTable';
 import { QueryDialog } from './QueryDialog';
 import { ErrorNotice, Resource } from './Feedback';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /** The "昇格policy" tab of the Models page: policies and the decision history of the selected one. */

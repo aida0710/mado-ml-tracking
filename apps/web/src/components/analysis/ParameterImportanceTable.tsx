@@ -1,6 +1,8 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { ParameterImportanceEntry, ParameterImportanceResult } from '@mmt/contracts';
+import { formatCompactNumber } from '../../lib/format';
+import { Empty } from '../Feedback';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 import {
   analysisParamKindLabels,
@@ -8,8 +10,6 @@ import {
   importanceUnavailableReasonLabels,
   parameterExclusionReasonLabels,
 } from '../../i18n/analysis';
-import { formatCompactNumber } from '../../lib/format';
-import { Empty } from '../Feedback';
 import { formatNote } from '../../i18n/textJoining';
 
 export type ImportanceMethod = 'impurity' | 'permutation';

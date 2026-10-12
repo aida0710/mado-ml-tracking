@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { ModelAutomationExecution, ModelAutomationRule } from '@mmt/contracts';
@@ -8,16 +7,17 @@ import { StatusBadge } from './StatusBadge';
 import { formatModelVersionName } from '../lib/catalogOptions';
 import { formatDate, formatDuration } from '../lib/format';
 import { modelVersionPath } from '../lib/modelVersionPath';
+import { automationSkipReason } from '../lib/automationSkipReason';
+import { groupAutomationPipelines, type AutomationPipelineRow } from '../lib/automationPipelines';
+import { canRerunExecution } from '../lib/automationRerun';
+import { AutomationRerunButton } from './AutomationRerunButton';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import {
   automationOutcomeLabels,
   automationSkipReasonLabels,
   automationText,
 } from '../i18n/automation';
-import { automationSkipReason } from '../lib/automationSkipReason';
-import { groupAutomationPipelines, type AutomationPipelineRow } from '../lib/automationPipelines';
-import { canRerunExecution } from '../lib/automationRerun';
-import { AutomationRerunButton } from './AutomationRerunButton';
 
 function outcomeLabel(execution: ModelAutomationExecution): string {
   const skipReason = automationSkipReason(execution);

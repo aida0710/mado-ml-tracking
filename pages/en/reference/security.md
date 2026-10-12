@@ -28,7 +28,7 @@ description: What mado ML Tracking protects, where credentials and secrets live,
 | --- | --- | --- |
 | Database URL, SSO client secret, SMTP URL | The API server's `.env` | Neither stored nor shown |
 | Notification webhook URLs and signing keys | The API server's `.env` (`MMT_NOTIFICATION_*`) | Only the variable names are stored |
-| Tokens for connecting to plugins | The API server's `.env` | Only the variable names are stored |
+| Keys for the Mado integration | Database (encrypted with `MMT_PLUGIN_SECRET_KEY`) | Never returned to screens |
 | Secrets of S3 backends added on the screen | Database (encrypted with `MMT_STORAGE_SECRET_KEY`) | Never returned to screens |
 | Authentik tokens of sessions | Database (encrypted with `MMT_SESSION_ENCRYPTION_KEY`) | Never returned to screens |
 | Worker tokens | The environment file on the worker host (mode 600) | Hash only |

@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useSearchParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import { trackingApi } from '../api/tracking';
@@ -8,6 +7,7 @@ import { PageHeader } from '../components/PageHeader';
 import { Resource } from '../components/Feedback';
 import { LineageGraph } from '../components/LineageGraph';
 import { focusLineage, LINEAGE_FOCUS_PARAMETER } from '../lib/lineageFocus';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { lineageText, lineageTextTemplates } from '../i18n/lineage';
 

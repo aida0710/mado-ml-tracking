@@ -1,8 +1,9 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ComputeTarget, WorkerPresence } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { formatDate } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
+import { formatList } from '../i18n/textJoining';
 
 // Reuses the Job status colors: finished is the green badge and failed the red one.
 const workerStatusBadgeClass: Record<WorkerPresence['status'], string> = {
@@ -74,7 +75,7 @@ export function WorkerPresenceTable({
           key: 'targets',
           priority: 'secondary',
           header: text.workerTargets,
-          render: (worker) => worker.targetIds?.map(targetName).join(', ') ?? text.workerAllTargets,
+          render: (worker) => (worker.targetIds ? formatList(worker.targetIds.map(targetName)) : text.workerAllTargets),
         },
         {
           key: 'lastSeen',

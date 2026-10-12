@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import type { ComputeTarget } from '@mmt/contracts';
 import { executionApi } from '../api/execution';
-import { text } from '../i18n/catalog';
 import { computerNameOf } from '../lib/computerNames';
 import { useQuery } from './useQuery';
+import { text } from '../i18n/catalog';
 
 const NO_KNOWN_COMPUTERS: readonly Pick<ComputeTarget, 'id' | 'name'>[] = [];
 

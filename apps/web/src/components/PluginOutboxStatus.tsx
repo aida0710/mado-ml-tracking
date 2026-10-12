@@ -1,9 +1,9 @@
-import { useLocale } from '../i18n/useLocale';
 import type { PluginOutboxSummary } from '@mmt/contracts';
 import type { QueryState } from '../hooks/useQuery';
 import { formatDate } from '../lib/format';
 import { DetailsList } from './JsonDetails';
 import { Resource } from './Feedback';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /** Undelivered plugin events: counts, the oldest one, and the latest failure code. */

@@ -47,7 +47,7 @@ SSOのユーザーが全体管理者かどうかは、Authentikのgroupで決ま
 | --- | --- |
 | Viewer | 実験、Run、モデル、データセット、Artifactを見る |
 | Editor | Viewerに加えて、実験の記録、モデル・データセットの登録（使われていないデータセットのバージョンの削除を含む）、Jobの実行と自分が起動したJobの停止・再実行、aliasの変更（保護aliasは、合格した昇格判定がある場合だけ） |
-| Admin | Editorに加えて、ほかの人が起動したJobの停止・再実行、Projectの設定（説明、公開範囲、保存先）、メンバーとgroupへの付与、Service Account、Projectのtoken一覧、通知ルール、自動実行の所有者の移管、Artifactの削除、Pluginの利用、Projectの監査ログ、Projectのアーカイブ |
+| Admin | Editorに加えて、ほかの人が起動したJobの停止・再実行、Projectの設定（説明、公開範囲、保存先）、メンバーとgroupへの付与、Service Account、Projectのtoken一覧、通知ルール、自動実行の所有者の移管、Artifactの削除、Mado連携の利用（接続確認、データセットの取り込み、再送）、Projectの監査ログ、Projectのアーカイブ |
 
 Projectは、無効化されていないユーザーなら誰でも作成できます。Projectの切り替えの一番下にある［＋ プロジェクトを作成］を押します。作成した人がそのProjectのAdminになります。手順は[Projectの作成と管理](/admin/projects)を参照してください。
 
@@ -103,7 +103,7 @@ ProjectのRoleは2つの方法で付けます。どちらもProjectのAdminが�
 
 一覧にそのユーザーが出れば完了です。
 
-Service AccountもMembersの一覧に「Service Account」の印付きで出ます。Roleの変更と無効化は「Service Accounts」の欄で行います（Membersの行には操作を出しません）。
+Service AccountもMembersの一覧に「Service Account」の印付きで出ます。Roleの変更と無効化は「Service Accounts」の欄で行います。Service Accountの行の［操作］には、［変更］［外す］の代わりに［Service Accountsの欄で変更］が出て、押すとその欄へ移ります。
 
 ProjectのAdmin以外が［プロジェクト設定］を開くと、「プロジェクト」の欄に、変更できるAdminの名前が出ます。
 

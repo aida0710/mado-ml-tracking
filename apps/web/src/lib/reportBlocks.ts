@@ -234,11 +234,3 @@ export function reportChartSeries(
 export function snapshotRunLabels(runs: readonly ReportSnapshotRun[]): Record<string, string> {
   return Object.fromEntries(runs.map((run) => [run.runId, run.name]));
 }
-
-const twoDigits = (value: number) => String(value).padStart(2, '0');
-
-/** `YYYY-MM-DD HH:mm` in the reader's time zone, for the "fixed at" mark of a snapshot. */
-export function formatSnapshotTime(isoTime: string): string {
-  const time = new Date(isoTime);
-  return `${time.getFullYear()}-${twoDigits(time.getMonth() + 1)}-${twoDigits(time.getDate())} ${twoDigits(time.getHours())}:${twoDigits(time.getMinutes())}`;
-}

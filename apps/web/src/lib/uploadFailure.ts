@@ -1,12 +1,12 @@
 import { NETWORK_ERROR_CODE, RequestError } from '../api/http';
-import { text } from '../i18n/catalog';
-import { joinSentences } from '../i18n/textJoining';
-import { resumeBlockerNextSteps, resumeBlockerReasons } from '../i18n/uploads';
 import type { UploadFailure } from '../types/uploadFailure';
 import { formatErrorMessage } from './errorMessage';
 import { LocalizedError } from './localizedError';
 import type { UploadMethod } from './uploadPlan';
 import type { ResumeBlocker } from './uploadResumeBlocker';
+import { text } from '../i18n/catalog';
+import { joinSentences } from '../i18n/textJoining';
+import { resumeBlockerNextSteps, resumeBlockerReasons } from '../i18n/uploads';
 
 export function formatUploadFailure(failure: UploadFailure): string {
   const reason = formatErrorMessage(failure.cause);

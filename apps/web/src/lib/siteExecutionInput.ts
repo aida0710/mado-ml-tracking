@@ -12,10 +12,10 @@ import { getFieldValue, getSelectedValues } from './formValues';
 import { parseMaxAttempts } from './executionValidation';
 import { parseClockDuration } from './clockDuration';
 import { validateTargetGpuIds } from './runtimeValidation';
+import { LocalizedError } from './localizedError';
 import { text } from '../i18n/catalog';
 import { computeTextTemplates } from '../i18n/compute';
 import { jobsTextTemplates } from '../i18n/jobs';
-import { LocalizedError } from './localizedError';
 
 const SECONDS_PER_MINUTE = 60;
 const SECONDS_PER_DAY = 24 * 60 * 60;

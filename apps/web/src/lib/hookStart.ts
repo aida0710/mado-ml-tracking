@@ -1,7 +1,7 @@
 import { HOOK_PAYLOAD_MAX_BYTES, type HookTriggerRequest } from '@mmt/contracts';
 import { parseJsonObject } from './formValues';
-import { hooksTextTemplates } from '../i18n/hooks';
 import { LocalizedError } from './localizedError';
+import { hooksTextTemplates } from '../i18n/hooks';
 
 // 16 random bytes keep keys apart without crypto.randomUUID, which plain-http origins lack.
 const START_KEY_BYTES = 16;

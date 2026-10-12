@@ -4,19 +4,19 @@ import { localized } from './localized';
 // Text for API errors (lib/errorMessage.ts, lib/sweepSpaceError.ts). For the codes, the Japanese screen
 // shows the server's own message when there is one, so these Japanese entries are its fallback.
 export const errorText = localized({
-  internalError: "リクエストの処理に失敗しました",
-  databaseUnavailable: "データベースに接続できません",
-  pluginRequestFailed: "連携先との通信に失敗しました",
-  pluginDisabled: "連携は無効です",
-  uploadNotOpen: "このアップロードはデータを受け付けていません",
-  uploadExpired: "アップロードの有効期限が切れています",
-  artifactSaveFailed: "Artifactを保存できませんでした",
-  partChecksumMismatch: "アップロードしたpartのSHA-256が一致しません",
-  runDeleted: "削除済みのRunにはこの操作を行えません",
-  bodyTooLarge: "リクエストが上限サイズを超えています",
-  sweepParameterNameEmpty: "parameter 名が空です",
-  sweepParametersEmpty: "parameter が1つもありません",
-  sweepRangeFields: "min・max",
+  internalError: 'リクエストの処理に失敗しました',
+  databaseUnavailable: 'データベースに接続できません',
+  pluginRequestFailed: '連携先との通信に失敗しました',
+  pluginDisabled: '連携は無効です',
+  uploadNotOpen: 'このアップロードはデータを受け付けていません',
+  uploadExpired: 'アップロードの有効期限が切れています',
+  artifactSaveFailed: 'Artifactを保存できませんでした',
+  partChecksumMismatch: 'アップロードしたpartのSHA-256が一致しません',
+  runDeleted: '削除済みのRunにはこの操作を行えません',
+  bodyTooLarge: 'リクエストが上限サイズを超えています',
+  sweepParameterNameEmpty: 'parameter 名が空です',
+  sweepParametersEmpty: 'parameter が1つもありません',
+  sweepRangeFields: 'min・max',
 } as const, english.errorText);
 
 export const errorTextTemplates = localized({

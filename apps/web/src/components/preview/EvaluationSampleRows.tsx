@@ -1,10 +1,10 @@
-import { useLocale } from '../../i18n/useLocale';
 import { Fragment } from 'react';
 import { sampleTextDiff } from '../../lib/evaluationSamples';
 import { formatValue } from '../../lib/format';
-import { text } from '../../i18n/catalog';
 import { AudioArtifactViewer } from './AudioArtifactViewer';
 import { SampleAudioCell, SampleComparedText, type EvaluationSampleListProps } from './EvaluationSampleCells';
+import { useLocale } from '../../i18n/useLocale';
+import { text } from '../../i18n/catalog';
 
 const COLUMN_COUNT = 5;
 

@@ -139,8 +139,8 @@ The bell counts the alerts of every Project you are a member of (every Project f
 | --- | --- | --- |
 | **Job heartbeat lost** | A running Job's heartbeat is older than 60 seconds | The heartbeat returns (**Job heartbeat recovered** is sent) or the Job ends |
 | **Worker stopped** | A worker's last response is older than 120 seconds | The worker responds again, its token is revoked or expired, or it has not responded for 7 days |
-| **Integration delivery backlog** | The oldest undelivered event is older than 15 minutes, or one failed 5 or more times | Undelivered events fall below the condition, or the plugin is disabled |
+| **Plugin delivery backlog** | The oldest undelivered event is older than 15 minutes, or one failed 5 or more times | Undelivered events fall below the condition, or the integration is disabled |
 
 - A stale heartbeat does not fail the Job, because the worker may still be working. Request a stop for a stuck Job in **Jobs**, or check the worker host.
-- Plugin delivery status is under **Event delivery status** in **Integrations**. After fixing the plugin, click **Resend event** ([Mado integration](/en/admin/plugins)).
+- Mado delivery status is under **Event delivery status** in **Integrations**. After fixing Mado or the connection settings, click **Resend event** ([Mado integration](/en/admin/plugins)).
 - The thresholds are constants in the code and cannot be changed with environment variables.

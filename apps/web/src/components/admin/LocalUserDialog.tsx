@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { AdminUser } from '@mmt/contracts';
 import { adminUsersApi } from '../../api/adminUsers';
@@ -10,6 +9,7 @@ import { generateTemporaryPassword, isLongEnoughPassword } from '../../lib/tempo
 import { Dialog } from '../Dialog';
 import { ErrorNotice } from '../Feedback';
 import { TemporaryPasswordNotice } from './TemporaryPasswordNotice';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**
