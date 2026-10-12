@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import type { ComputeTargetDetails, User } from '@mmt/contracts';
 import { ComputeTargetKind } from './ComputeTargetKind';
@@ -12,6 +11,7 @@ import { useAllWorkers } from '../hooks/useAllWorkers';
 import { formatTargetGpus, formatTargetLocation } from '../lib/computeTargetDisplay';
 import { canManageTarget, isGlobalAdmin } from '../lib/permissions';
 import { checkWorkerCoverage, jobWorkerCoverage } from '../lib/workerCoverage';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 import { runtimeLabels } from '../i18n/runtime';
 import { workerCoverageText } from '../i18n/workerCoverage';

@@ -1,7 +1,7 @@
-import { useLocale } from '../../i18n/useLocale';
 import type { StorageBackend } from '@mmt/contracts';
 import { Lock } from 'lucide-react';
 import { ResponsiveTable } from '../ResponsiveTable';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /** Lists the storage backends with the actions a global administrator may take on each. */

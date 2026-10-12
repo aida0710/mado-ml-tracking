@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { Project, ProjectVisibility } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
@@ -14,6 +13,7 @@ import type { StorageBackendChoice } from '../hooks/useStorageBackends';
 import { buildProjectCreate, DEFAULT_PROJECT_VISIBILITY } from '../lib/projectCreateInput';
 import type { MemberGrantDraft } from '../lib/projectMemberGrants';
 import { isProjectNameTaken } from '../lib/projectNameCollisions';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

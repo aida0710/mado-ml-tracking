@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { CodeVersion, ComputeTarget, ExperimentTask, TaskOutputModel } from '@mmt/contracts';
@@ -10,8 +9,9 @@ import { hasOutputModel, outputModelLabel } from '../lib/taskInput';
 import { buildCatalogOptions, formatCodeVersionName } from '../lib/catalogOptions';
 import { formatClockDuration } from '../lib/clockDuration';
 import { isSiteTarget } from '../lib/siteExecutionInput';
-import { text } from '../i18n/catalog';
 import { useComputerNames } from '../hooks/useComputerNames';
+import { useLocale } from '../i18n/useLocale';
+import { text } from '../i18n/catalog';
 
 function OutputModelDetails({ outputModel, catalog, base }: {
   outputModel: TaskOutputModel; catalog: ExecutionCatalog; base: string;

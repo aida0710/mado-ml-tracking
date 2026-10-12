@@ -1,9 +1,9 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { trackingApi } from '../../api/tracking';
 import { ErrorNotice } from '../Feedback';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 /** 'fit' shrinks the image into the preview; 'actual' draws it pixel for pixel in a scrolling frame. */

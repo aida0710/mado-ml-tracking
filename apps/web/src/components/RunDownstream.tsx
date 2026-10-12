@@ -1,10 +1,10 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { useRunDownstream } from '../hooks/useRunDownstream';
 import { ResponsiveTable } from './ResponsiveTable';
 import { ErrorNotice } from './Feedback';
 import { StatusBadge } from './StatusBadge';
 import { formatDate, formatDuration } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { automationText } from '../i18n/automation';
 

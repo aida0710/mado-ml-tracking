@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { AutomatedRunSummary, ModelAutomationRule } from '@mmt/contracts';
 import { ResponsiveTable, type ResponsiveTableColumn } from './ResponsiveTable';
@@ -6,11 +5,12 @@ import { StatusBadge } from './StatusBadge';
 import { formatDate } from '../lib/format';
 import { formatMetricValue } from '../lib/evaluationComparisonDisplay';
 import type { EvaluationSummary, MetricSummaryRow, MetricValueAt } from '../lib/evaluationSummary';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { automationText } from '../i18n/automation';
 import { deltaSignLabels, modelsTextTemplates } from '../i18n/models';
 
-const metricValueLabels = { get notFinite() { return text.metricNotFinite } };
+const metricValueLabels = { get notFinite() { return text.metricNotFinite; } };
 
 function formatSummaryValue(value: MetricValueAt | null): string {
   return value ? formatMetricValue(value.value, 'present', metricValueLabels) : '—';

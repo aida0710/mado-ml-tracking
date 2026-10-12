@@ -1,18 +1,18 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useId, useState } from 'react';
 import { REPORT_RUN_SET_MAX_RUN_IDS, type ReportRunSet, type RunMediaKind } from '@mmt/contracts';
 import { useRunCandidates, useRunSetSources, useRunsWithMediaKind } from '../../hooks/useReportBlockData';
 import { ErrorNotice, Loading } from '../Feedback';
 import { RunStatusBadge } from '../runs/RunStatusBadge';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 type RunSetSource = 'runIds' | 'savedViewId' | 'search' | 'sweepId';
 
 const sourceLabels: Record<RunSetSource, string> = {
-  get runIds() { return text.reportRunSetSelected },
-  get savedViewId() { return text.reportRunSetSavedView },
-  get search() { return text.reportRunSetSearch },
-  get sweepId() { return text.reportRunSetSweep },
+  get runIds() { return text.reportRunSetSelected; },
+  get savedViewId() { return text.reportRunSetSavedView; },
+  get search() { return text.reportRunSetSearch; },
+  get sweepId() { return text.reportRunSetSweep; },
 };
 
 function sourceOf(runSet: ReportRunSet): RunSetSource {

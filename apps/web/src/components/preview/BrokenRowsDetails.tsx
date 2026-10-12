@@ -1,5 +1,5 @@
-import { useLocale } from '../../i18n/useLocale';
 import type { EvaluationSampleError } from '../../lib/evaluationSamples';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 import { artifactsTextTemplates, evaluationSampleErrorLabels } from '../../i18n/artifacts';
 

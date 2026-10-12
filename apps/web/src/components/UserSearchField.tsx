@@ -1,10 +1,10 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import type { UserSearchResult } from '@mmt/contracts';
 import { useUserSearch } from '../hooks/useUserSearch';
 import { isEnterOutsideComposition } from '../lib/imeComposition';
 import { ErrorNotice } from './Feedback';
 import { UserSummary } from './UserSummary';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 const NO_UNAVAILABLE_USERS: ReadonlyMap<string, string> = new Map();

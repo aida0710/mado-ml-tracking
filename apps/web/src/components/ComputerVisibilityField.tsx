@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ComputeTarget } from '@mmt/contracts';
 import type { FormValues } from '../types/form';
 import { VisibilityPicker } from './VisibilityPicker';
 import { getFieldValue } from '../lib/formValues';
+import { useLocale } from '../i18n/useLocale';
 import { computerVisibilityHints } from '../i18n/computers';
 import { text } from '../i18n/catalog';
 

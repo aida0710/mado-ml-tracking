@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
-import { useLocale } from '../../i18n/useLocale';
-import { pluginsText } from '../../i18n/plugins';
 import type { DatasetPluginActionsProps } from '../types';
 import { getMadoVersionUrl } from './madoVersionUrl';
+import { useLocale } from '../../i18n/useLocale';
+import { pluginsText } from '../../i18n/plugins';
 
 export function MadoDatasetActions({ projectId, availability, version }: DatasetPluginActionsProps) {
   useLocale();

@@ -1,9 +1,9 @@
-import { useLocale } from '../../i18n/useLocale';
 import type { ChartXAxis } from '@mmt/contracts';
 import { summarizeChartLines } from '../../lib/chartSummary';
 import { formatXValue } from '../../lib/chartXAxis';
 import { formatNumber } from '../../lib/format';
 import type { ChartLine } from '../../lib/metricSeries';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 import { joinSentences } from '../../i18n/textJoining';
 

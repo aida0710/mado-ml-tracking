@@ -1,10 +1,10 @@
-import { useLocale } from '../i18n/useLocale';
 import { Pause, Play, X } from 'lucide-react';
 import type { UploadItem } from '../hooks/useArtifactUploadQueue';
 import { CopyButton } from './CopyButton';
 import { formatBytes } from '../lib/format';
 import { formatRemainingTime } from '../lib/remainingTime';
 import { formatUploadFailure } from '../lib/uploadFailure';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 import { uploadStatusLabels } from '../i18n/uploads';
 

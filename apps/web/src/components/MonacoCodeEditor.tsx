@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useEffect, useId, useRef, useState } from 'react';
 import Editor, { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
@@ -8,6 +7,7 @@ import CssWorker from 'monaco-editor/language/css/css.worker?worker';
 import HtmlWorker from 'monaco-editor/language/html/html.worker?worker';
 import TypeScriptWorker from 'monaco-editor/language/typescript/ts.worker?worker';
 import { getFileLanguage } from '../lib/codeWorkspace';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 self.MonacoEnvironment = {

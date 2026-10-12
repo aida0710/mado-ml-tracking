@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { StorageBackendPicker } from './StorageBackendPicker';
 import type { StorageBackendChoice } from '../hooks/useStorageBackends';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**

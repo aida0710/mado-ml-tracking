@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell } from 'lucide-react';
@@ -10,6 +9,7 @@ import { useQuery } from '../hooks/useQuery';
 import { describeOperationsAlertSubject } from '../lib/operationsAlertSubject';
 import { orderAlertsForProject } from '../lib/operationsAlertOrder';
 import { formatDate } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { operationsAlertKindLabels } from '../i18n/operations';
 import { text, textTemplates } from '../i18n/catalog';
 

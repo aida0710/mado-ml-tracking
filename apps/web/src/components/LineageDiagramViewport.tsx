@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Maximize2, ZoomIn, ZoomOut } from 'lucide-react';
 import { useDragToScroll } from '../hooks/useDragToScroll';
@@ -6,6 +5,7 @@ import { useElementWidth } from '../hooks/useElementWidth';
 import type { layoutLineage } from '../lib/lineageLayout';
 import { fitLineageZoom, openingLineageZoom, stepLineageZoom } from '../lib/lineageZoom';
 import { LineageDiagram } from './LineageDiagram';
+import { useLocale } from '../i18n/useLocale';
 import { lineageText } from '../i18n/lineage';
 
 /**

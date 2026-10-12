@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import { RefreshCw } from 'lucide-react';
 import type { ComputeTarget, TargetCheckWorker, TargetCheckWorkerPresence } from '@mmt/contracts';
 import { OptionPicker } from './OptionPicker';
 import { checkWorkerOf, findCheckWorker } from '../lib/checkWorkerChoice';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 const workerKey = (worker: TargetCheckWorker) => `${worker.tokenId}:${worker.workerId}`;

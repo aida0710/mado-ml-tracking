@@ -1,6 +1,6 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { FileText, LayoutGrid, Plus } from 'lucide-react';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 /**

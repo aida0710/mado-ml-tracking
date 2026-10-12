@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ComputeTarget, WorkerPresence } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { formatDate } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 // Reuses the Job status colors: finished is the green badge and failed the red one.

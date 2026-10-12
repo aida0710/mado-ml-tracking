@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import {
   CartesianGrid,
   ComposedChart,
@@ -14,6 +13,7 @@ import type { SweepObjective, SweepTrial } from '@mmt/contracts';
 import { formatNumber } from '../../lib/format';
 import { objectiveProgress } from '../../lib/sweepTrials';
 import { Empty } from '../Feedback';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 const OBJECTIVE_COLOR = '#647ee5';

@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import {
   CPU_ARCHES,
@@ -18,6 +17,7 @@ import { SITE_RUNTIME_KINDS } from '../lib/targetInput';
 import { JOB_SHELL_TEMPLATES } from '../lib/jobShellTemplates';
 import { launcherOptions } from '../lib/siteComputerDisplay';
 import { EXECUTION_RUNTIME_KINDS } from '../lib/runtimeValidation';
+import { useLocale } from '../i18n/useLocale';
 import { runtimeLabels } from '../i18n/runtime';
 import { cpuArchLabels } from '../i18n/compute';
 import {

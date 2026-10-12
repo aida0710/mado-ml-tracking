@@ -1,14 +1,14 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useId, useState } from 'react';
 import { SAVED_VIEW_NAME_MAX_LENGTH, type SavedViewVisibility } from '@mmt/contracts';
 import { Dialog } from '../Dialog';
 import { ErrorNotice } from '../Feedback';
 import { useMutation } from '../../hooks/useMutation';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 const visibilityLabels: Record<SavedViewVisibility, { label: string; hint: string }> = {
-  private: { get label() { return text.savedViewVisibilityPrivate }, get hint() { return text.savedViewVisibilityPrivateHint } },
-  project: { get label() { return text.savedViewVisibilityProject }, get hint() { return text.savedViewVisibilityProjectHint } },
+  private: { get label() { return text.savedViewVisibilityPrivate; }, get hint() { return text.savedViewVisibilityPrivateHint; } },
+  project: { get label() { return text.savedViewVisibilityProject; }, get hint() { return text.savedViewVisibilityProjectHint; } },
 };
 
 /**

@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { Run, RunKind } from '@mmt/contracts';
 import { useExecutionCatalog } from '../hooks/useExecutionCatalog';
 import { useProject } from '../hooks/useProject';
@@ -14,6 +13,7 @@ import {
 } from '../lib/formValues';
 import { RUN_KINDS, validateCodeCompatibility } from '../lib/executionValidation';
 import { trackingApi } from '../api/tracking';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 export function RunDialog({

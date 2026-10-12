@@ -1,7 +1,7 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useId, useState } from 'react';
 import { Tabs } from '../Tabs';
 import { MarkdownView } from './MarkdownView';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 type MarkdownEditorTab = 'write' | 'preview';

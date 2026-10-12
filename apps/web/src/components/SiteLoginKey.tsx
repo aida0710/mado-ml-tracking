@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { KeyRound } from 'lucide-react';
 import type { SiteKey } from '@mmt/contracts';
@@ -9,6 +8,7 @@ import { CopyableValue } from './CopyableValue';
 import { ErrorNotice } from './Feedback';
 import { DetailsList } from './JsonDetails';
 import { formatDate } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { siteComputersTextTemplates, siteKeyStatusLabels } from '../i18n/siteComputers';
 

@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -16,6 +15,7 @@ import { ResponsiveTable } from '../components/ResponsiveTable';
 import { ErrorNotice, Loading, Resource } from '../components/Feedback';
 import { CreateSweepDialog } from '../components/sweeps/CreateSweepDialog';
 import { SweepStatusBadge } from '../components/sweeps/SweepSummary';
+import { useLocale } from '../i18n/useLocale';
 import { sweepMethodLabels, sweepStatusLabels } from '../i18n/sweeps';
 import { text, textTemplates } from '../i18n/catalog';
 import { formatNote } from '../i18n/textJoining';

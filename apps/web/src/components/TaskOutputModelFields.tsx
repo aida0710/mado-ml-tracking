@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { CodeVersion } from '@mmt/contracts';
 import type { ExecutionCatalog } from '../types/executionCatalog';
 import type { FormField, FormValues } from '../types/form';
@@ -8,6 +7,7 @@ import {
   getDefaultCodeCandidates, getOutputModelCandidates, getOutputModelFamilies, getOutputModelFamily,
 } from '../lib/taskInput';
 import { FormFields } from './FormFields';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 const isEnabled = (values: FormValues) => getFieldValue(values, 'outputModelEnabled') === 'true';

@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { PageHeader } from './PageHeader';
 import {
@@ -6,6 +5,7 @@ import {
   SETTINGS_SECTION_LABELS,
   type SettingsSection,
 } from '../layout/settingsSections';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

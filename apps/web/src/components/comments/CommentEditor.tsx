@@ -1,9 +1,9 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { COMMENT_MAX_LENGTH } from '@mmt/contracts';
 import { MarkdownEditor } from '../markdown/MarkdownEditor';
 import { ErrorNotice } from '../Feedback';
 import { useMutation } from '../../hooks/useMutation';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**

@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { NotificationChannel, NotificationChannelKind, NotificationTestResult } from '@mmt/contracts';
 import { notificationsApi } from '../../api/notifications';
@@ -18,6 +17,7 @@ import type { FieldSuggestions, FormField, FormValues } from '../../types/form';
 import { ResponsiveTable } from '../ResponsiveTable';
 import { ErrorNotice, Resource } from '../Feedback';
 import { FormDialog } from '../FormDialog';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 import { notificationChannelKindLabels } from '../../i18n/notifications';
 import { formatList, joinSentences } from '../../i18n/textJoining';

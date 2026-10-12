@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useEffect, useState } from 'react';
 import { Columns3, Download, Search } from 'lucide-react';
 import type { RunKind, RunStatus } from '@mmt/contracts';
@@ -11,8 +10,9 @@ import {
 } from '../../lib/runFilter';
 import { suggestRunFilter } from '../../lib/runFilterSuggestion';
 import { RUN_KINDS } from '../../lib/runListUrl';
-import { text, textTemplates } from '../../i18n/catalog';
 import { detailsPopoverHandlers } from '../../lib/detailsPopover';
+import { useLocale } from '../../i18n/useLocale';
+import { text, textTemplates } from '../../i18n/catalog';
 import { joinLabels } from '../../i18n/textJoining';
 
 const runStatuses: RunStatus[] = ['queued', 'running', 'finished', 'failed', 'canceled'];

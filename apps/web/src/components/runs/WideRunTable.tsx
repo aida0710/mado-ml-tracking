@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useId, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
 import type { Run, SavedViewColumn } from '@mmt/contracts';
 import { useColumnHeaderWidths } from '../../hooks/useColumnHeaderWidths';
@@ -17,6 +16,7 @@ import {
   ShownRunsCheckbox,
   type RunListSelection,
 } from './RunTableCells';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 // One arrow key press widens or narrows a column by this much, like a coarse mouse drag.

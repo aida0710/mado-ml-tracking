@@ -1,7 +1,5 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { CartesianGrid, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from 'recharts';
-import { text } from '../../i18n/catalog';
 import { formatCompactNumber, formatNumber } from '../../lib/format';
 import {
   canUseLogScale,
@@ -13,6 +11,8 @@ import {
 } from '../../lib/parallelCoordinates';
 import { useDocumentTheme } from '../../hooks/useDocumentTheme';
 import { Empty } from '../Feedback';
+import { useLocale } from '../../i18n/useLocale';
+import { text } from '../../i18n/catalog';
 
 export interface ParamScatterChartProps {
   rows: ChartRunRow[];

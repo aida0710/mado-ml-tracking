@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import type { Run, SavedViewColumn } from '@mmt/contracts';
 import { ResponsiveTableView, type ResponsiveTableColumn } from '../ResponsiveTable';
 import {
@@ -8,6 +7,7 @@ import {
   ShownRunsCheckbox,
   type RunListSelection,
 } from './RunTableCells';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 // The saved view's columns that stay in a narrow row next to the selection and the name; the

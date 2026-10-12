@@ -1,9 +1,9 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { Run } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { RunStatusBadge } from './runs/RunStatusBadge';
 import { formatDate } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 export function TaskRunHistory({ runs, projectId }: { runs: Run[]; projectId: string }) {

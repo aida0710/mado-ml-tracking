@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useCallback, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { MediaCompareGrid as MediaCompareGridData, RunMedia } from '@mmt/contracts';
 import { AudioLines, Film, Table2 } from 'lucide-react';
@@ -19,6 +18,7 @@ import { AudioArtifactViewer } from '../preview/AudioArtifactViewer';
 import { ImagePreview } from '../preview/ImagePreview';
 import { VideoPreview } from '../preview/VideoPreview';
 import { MediaTableView } from './MediaTableView';
+import { useLocale } from '../../i18n/useLocale';
 import { mediaKindLabels } from '../../i18n/media';
 import { text, textTemplates } from '../../i18n/catalog';
 

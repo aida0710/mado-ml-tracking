@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { RefreshCw, Search } from 'lucide-react';
@@ -22,6 +21,7 @@ import { useArtifactReferences } from '../hooks/useArtifactReferences';
 import { ARTIFACT_SEARCH_MAX_LENGTH } from '../lib/artifactCatalog';
 import { artifactKindLabel } from '../lib/artifactKindLabel';
 import { formatBytes, formatDate, shortRunId } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { artifactsTextTemplates } from '../i18n/artifacts';
 

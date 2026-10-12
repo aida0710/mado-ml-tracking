@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { Component, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pin, Radio } from 'lucide-react';
@@ -18,6 +17,7 @@ import { useExclusiveAudio } from '../../hooks/useExclusiveAudio';
 import { CHART_ROW_HEIGHT_PX } from '../charts/ChartPanel';
 import { formatSnapshotTime, reportChartSeries, snapshotRunLabels } from '../../lib/reportBlocks';
 import { analysisRows, metricFieldKey, metricFields, paramFieldKey, paramFields } from '../../lib/runAnalysisFields';
+import { useLocale } from '../../i18n/useLocale';
 import { reportBlockTypeLabels } from '../../i18n/reports';
 import { text, textTemplates } from '../../i18n/catalog';
 

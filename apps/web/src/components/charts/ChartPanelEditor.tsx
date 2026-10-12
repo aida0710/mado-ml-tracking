@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useId, useState } from 'react';
 import type { RunGroupBy } from '@mmt/contracts';
 import { Dialog } from '../Dialog';
@@ -6,6 +5,7 @@ import { ChartControls } from './ChartControls';
 import type { ChartDisplaySettings } from './chartProps';
 import { isCompleteGrouping, RunGroupingControl } from './RunGroupingControl';
 import { MAX_PANEL_METRIC_KEYS, type NewChartPanel } from '../../lib/chartPanelLayout';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 /** Display settings of a panel that are not part of the stored panel config. */

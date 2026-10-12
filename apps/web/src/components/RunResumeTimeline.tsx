@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import type { RunSegment } from '@mmt/contracts';
 import { StatusBadge } from './StatusBadge';
 import { formatDate, formatDuration } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**

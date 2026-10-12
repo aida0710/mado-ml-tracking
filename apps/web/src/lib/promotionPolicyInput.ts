@@ -9,10 +9,10 @@ import {
   type PromotionMissingBaseline,
   type PromotionPolicyCreate,
 } from '@mmt/contracts';
+import { LocalizedError } from './localizedError';
 import { promotionTextTemplates } from '../i18n/promotion';
 import { memoizePerIntlLocale } from '../i18n/intlFormatterCache';
 import { text } from '../i18n/catalog';
-import { LocalizedError } from './localizedError';
 
 export const PROMOTION_DIRECTIONS: PromotionCriterionDirection[] = ['higher', 'lower'];
 export const PROMOTION_MODES: PromotionCriterionMode[] = ['absolute', 'delta', 'relative_delta'];

@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useId, useState } from 'react';
 import {
   REPORT_RUN_TABLE_MAX_ROWS,
@@ -15,6 +14,7 @@ import { ErrorNotice, Loading } from '../Feedback';
 import { useRunSetFieldNames, useRunTableMedia } from '../../hooks/useReportBlockData';
 import { createBlock, reportBlockProblem } from '../../lib/reportBlocks';
 import { metricFieldKey, paramFieldKey } from '../../lib/runAnalysisFields';
+import { useLocale } from '../../i18n/useLocale';
 import {
   reportBlockProblemLabels,
   reportBlockTypeLabels,

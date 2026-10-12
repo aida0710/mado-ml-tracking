@@ -1,9 +1,9 @@
-import { useLocale } from '../i18n/useLocale';
 import type { CodeSource } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
 import { CodeFilesViewer } from './CodeFilesViewer';
 import { CopyableValue } from './CopyableValue';
 import { DetailsList } from './JsonDetails';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { codeSourceText } from '../i18n/codeSource';
 

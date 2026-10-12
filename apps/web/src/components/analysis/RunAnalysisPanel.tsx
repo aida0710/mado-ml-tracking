@@ -1,9 +1,6 @@
-import { useLocalizedMemo } from '../../i18n/useLocalizedMemo';
-import { useLocale } from '../../i18n/useLocale';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { RunAnalysisPanelProps } from '../charts/chartProps';
-import { text, textTemplates } from '../../i18n/catalog';
 import { useRunAnalysis } from '../../hooks/useRunAnalysis';
 import {
   analysisRows,
@@ -20,6 +17,9 @@ import { ParallelCoordinatesChart } from './ParallelCoordinatesChart';
 import { ParameterImportanceTable } from './ParameterImportanceTable';
 import { ParamScatterChart } from './ParamScatterChart';
 import { detailsPopoverHandlers } from '../../lib/detailsPopover';
+import { useLocalizedMemo } from '../../i18n/useLocalizedMemo';
+import { useLocale } from '../../i18n/useLocale';
+import { text, textTemplates } from '../../i18n/catalog';
 
 type AnalysisTab = 'parallel' | 'importance' | 'scatter';
 // The selected-Run list under the chart stays short; the page's own list shows them all.

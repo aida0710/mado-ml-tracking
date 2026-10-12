@@ -4,8 +4,8 @@ import type {
   TargetCheckHost,
   TargetCheckItemName,
 } from '@mmt/contracts';
-import { text, textTemplates } from '../i18n/catalog';
 import { formatBytes } from './format';
+import { text, textTemplates } from '../i18n/catalog';
 import {
   computeTargetExecutorLabels,
   submissionModeBadgeLabels,

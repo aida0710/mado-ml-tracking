@@ -1,5 +1,5 @@
-import { useLocale } from '../i18n/useLocale';
 import { File, Folder } from 'lucide-react';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 // One indentation step per directory keeps long nested paths readable.

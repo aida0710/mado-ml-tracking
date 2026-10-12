@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { Dataset, DatasetVersion } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
 import { useExecutionCatalog } from '../hooks/useExecutionCatalog';
@@ -14,6 +13,7 @@ import {
   getOptionalValue,
   getSelectedValues,
 } from '../lib/formValues';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /** 'reference' registers a uri and digest; 'folder' uploads a folder and lists its Artifacts. */

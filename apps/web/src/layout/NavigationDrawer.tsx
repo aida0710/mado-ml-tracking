@@ -1,10 +1,10 @@
-import { useLocale } from '../i18n/useLocale';
 import { useEffect, useId, useRef, useState, type MouseEvent } from 'react';
 import { Menu, X } from 'lucide-react';
-import { text } from '../i18n/catalog';
 import type { NavigationGroup } from './navigationLinks';
 import { NavigationLinkList } from './NavigationLinkList';
 import { ProductLogo } from '../components/ProductLogo';
+import { useLocale } from '../i18n/useLocale';
+import { text } from '../i18n/catalog';
 
 /**
  * The main navigation on narrow screens: a menu button that opens the grouped links in a drawer

@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { PlugZap } from 'lucide-react';
 import type { SiteConnectionCheck, SiteConnectionCheckStatus } from '@mmt/contracts';
 import { siteComputersApi } from '../api/siteComputers';
@@ -8,6 +7,7 @@ import { ErrorNotice, Resource } from './Feedback';
 import { ResponsiveTable } from './ResponsiveTable';
 import { formatDate } from '../lib/format';
 import { isConnectionCheckInProgress } from '../lib/siteComputerDisplay';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { siteConnectionCheckStatusLabels } from '../i18n/siteComputers';
 

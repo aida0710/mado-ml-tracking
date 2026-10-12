@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type {
   Model,
   ModelAutomationRule,
@@ -23,6 +22,7 @@ import {
   isEvaluationRuleEligible,
   missingEvaluationRuleReason,
 } from '../lib/promotionPolicyInput';
+import { useLocale } from '../i18n/useLocale';
 import { promotionMissingBaselineLabels, promotionTextTemplates } from '../i18n/promotion';
 import { text } from '../i18n/catalog';
 

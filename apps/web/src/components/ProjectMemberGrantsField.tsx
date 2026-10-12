@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ProjectRole } from '@mmt/contracts';
 import { useAuth } from '../hooks/useAuth';
 import {
@@ -10,6 +9,7 @@ import {
 import { ProjectRoleOptions } from './ProjectRoleSelect';
 import { UserSearchField } from './UserSearchField';
 import { UserSummary } from './UserSummary';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**

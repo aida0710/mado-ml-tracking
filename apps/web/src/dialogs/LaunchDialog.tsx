@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { Job, Run } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
 import { useProjectTargets } from '../hooks/useProjectTargets';
@@ -8,6 +7,7 @@ import { useLaunch } from '../hooks/useLaunch';
 import { Dialog } from '../components/Dialog';
 import { Resource } from '../components/Feedback';
 import { LaunchForm } from '../components/LaunchForm';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

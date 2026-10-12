@@ -1,6 +1,6 @@
-import { useLocale } from '../i18n/useLocale';
 import type { AuditEvent } from '@mmt/contracts';
 import type { AuditEventFilter } from '../api/audit';
+import { useLocale } from '../i18n/useLocale';
 import { accessText } from '../i18n/access';
 
 const OUTCOMES: AuditEvent['outcome'][] = ['success', 'denied', 'failed'];
