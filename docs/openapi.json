@@ -5124,7 +5124,6 @@
             "description": "入力が不正",
             "x-mmt-error-codes": [
               "scope_exceeds_role",
-              "token_lifetime_exceeded",
               "invalid_expiry",
               "invalid_request",
               "invalid_reference"
@@ -5416,7 +5415,6 @@
           "422": {
             "description": "入力が不正",
             "x-mmt-error-codes": [
-              "token_lifetime_exceeded",
               "invalid_expiry",
               "invalid_request",
               "invalid_reference"

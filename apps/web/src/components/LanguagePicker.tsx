@@ -79,7 +79,7 @@ export function LanguagePicker() {
         <Globe size={17} aria-hidden="true" />
       </button>
       {isOpen && (
-        <div ref={menu} id={menuId} className="popover anchored-popover" popover="manual" role="menu" aria-label={label}
+        <div ref={menu} id={menuId} className="popover anchored-popover language-picker-menu" popover="manual" role="menu" aria-label={label}
           onKeyDown={navigateMenu} style={popoverStyle}>
           {LANGUAGES.map(language => (
             <button
@@ -94,8 +94,8 @@ export function LanguagePicker() {
                 closeAndFocus();
               }}
             >
-              {locale === language.locale && <Check size={15} aria-hidden="true" />}
-              {language.name}
+              <Check size={15} className="language-picker-check" aria-hidden="true" />
+              <span>{language.name}</span>
             </button>
           ))}
         </div>

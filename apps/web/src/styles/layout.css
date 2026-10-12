@@ -86,6 +86,17 @@
   min-width: 0;
   z-index: 30;
 }
+/* Both language rows reserve the same checkmark space and avoid inline baseline alignment. */
+.language-picker-menu .button {
+  display: flex;
+  width: 100%;
+  justify-content: flex-start;
+  /* Native Japanese and English fonts have different normal line heights. */
+  line-height: 1.5;
+}
+.language-picker-menu [aria-checked='false'] .language-picker-check {
+  visibility: hidden;
+}
 .project-switcher-popover {
   padding: 0;
   flex-direction: column;

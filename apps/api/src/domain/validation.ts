@@ -285,7 +285,8 @@ export const tokenCreateSchema = z.strictObject({
     .min(1)
     .max(7)
     .refine((values) => new Set(values).size === values.length),
-  expiresAt: z.iso.datetime({ offset: true }).nullish(),
+  expiresAt: z.iso.datetime({ offset: true }).nullish()
+    .describe('未来の日時。nullは無期限。省略時は設定された既定の日数（既定365日）。'),
 });
 export { pluginCreateSchema, pluginPatchSchema } from './pluginValidation.js';
 import { pluginPatchSchema } from './pluginValidation.js';

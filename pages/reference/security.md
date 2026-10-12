@@ -17,7 +17,7 @@ description: mado ML Trackingが守るもの、認証情報とシークレット
 ## API token
 
 - tokenの値はDBに保存しません。SHA-256のハッシュと、見分けるための先頭12文字だけを保存します。値は発行時に1回だけ表示します。
-- すべてのtokenに期限があります（上限365日）。scopeと、所有者の現在のProjectのRoleを、要求のたびに確かめます。
+- 個人とService Accountのtokenは、有効期限または無期限を選べます。scopeと、所有者の現在のProjectのRoleを、要求のたびに確かめます。
 - SSOのユーザーのtokenは、ブラウザでのログインから7日を過ぎると止まります。groupから外したことを確かめるためです。
 - 実行コードには、worker自身のtokenではなく、そのJobの間だけ使えるJob限定tokenを渡します。書き込めるのは対象のRunとその出力だけです（[API tokenとService Account](/admin/tokens)）。
 - MLflow互換APIのBasic認証は、passwordにAPI tokenを入れる形だけを受け付けます。ローカルアカウントのパスワードは受け付けません。

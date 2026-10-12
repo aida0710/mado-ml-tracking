@@ -1,0 +1,6 @@
+/* A custom duration and its unit share the available form width, including on phones. */
+.token-expiry-duration {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}

@@ -377,7 +377,7 @@ export function createApplication(options: ApplicationOptions) {
   const launchers = new LauncherService(database);
   const runner = new RunnerService({ database, jobs, runCompletion, outputDeclarations });
   const siteJobMonitor = new SiteJobMonitor(database, runCompletion);
-  const tokens = new TokenService({ database, tokenMaxLifetimeDays: config.tokenMaxLifetimeDays });
+  const tokens = new TokenService({ database, tokenDefaultLifetimeDays: config.tokenDefaultLifetimeDays });
   const evaluation = new EvaluationService(database);
   const plugins = new PluginService({
     database,
@@ -525,7 +525,7 @@ export function createApplication(options: ApplicationOptions) {
   app.route(
     '/api/projects',
     serviceAccountRoutes(
-      new ServiceAccountService({ database, tokenMaxLifetimeDays: config.tokenMaxLifetimeDays }),
+      new ServiceAccountService({ database, tokenDefaultLifetimeDays: config.tokenDefaultLifetimeDays }),
     ),
   );
   app.route('/api', userRoutes(new UserDirectoryService(database)));

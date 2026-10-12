@@ -320,7 +320,7 @@ APIサーバーはworkerホストへSSHしない（decisions.md）。導入・�
 workerのtokenは、人に紐付かないService Accountで発行する。発行した人がProjectを離れても止まらない。
 
 1. 「プロジェクト設定」の「Service Accounts」で「Service Accountを作成」を押す。名前（例: `gpu-host-1-worker`）、説明、Role `Admin` を入力する。`worker:execute` scope は Role が Admin の Service Account にだけ発行できる。
-2. 作成した行の「tokenを発行」を押し、scope `read`・`worker:execute`・`artifacts:write`（出力の登録をするなら `registry:write` も。`result.json` version 2で出力（モデル・データセット）を宣言するJobは `registry:write` が無いとfailedになる）、有効期限（上限365日、`MMT_TOKEN_MAX_LIFETIME_DAYS`）を選ぶ。
+2. 作成した行の「tokenを発行」を押し、scope `read`・`worker:execute`・`artifacts:write`（出力の登録をするなら `registry:write` も。`result.json` version 2で出力（モデル・データセット）を宣言するJobは `registry:write` が無いとfailedになる）、有効期限（プリセット、無期限、任意の有効期間）を選ぶ。
 3. 表示されたtokenを次の手順の入力に使う。tokenは一度だけ表示される。
 
 APIで行う場合（Project adminのbrowser sessionが必要。API tokenからは403 `session_required`）:
@@ -486,7 +486,7 @@ API serverは30秒ごとに次を確かめ、見つけたらProjectの「運用�
 
 | 変数 | 既定 | 意味 |
 |---|---|---|
-| `MMT_TOKEN_MAX_LIFETIME_DAYS` | `365` | 新しいAPI tokenの期限の上限。期限を省略したtokenはこの日数で切れる。1〜3650 |
+| `MMT_TOKEN_DEFAULT_LIFETIME_DAYS` | `365` | 期限を省略したAPI tokenの既定日数。1〜3650。`expiresAt: null`は無期限、明示する未来の日時には上限なし。旧`MMT_TOKEN_MAX_LIFETIME_DAYS`は新設定がない場合だけ既定日数として使う |
 | `MMT_REPORT_SNAPSHOT_MAX_BYTES` | `52428800` | 共有レポートの1つのバージョンで「作成時点で固定」したブロックの固定データ（JSONのUTF-8）の合計の上限（バイト）。超える保存は413 `report_snapshot_too_large` でバージョンを作らない。1ブロックは別に5MiB（`REPORT_SNAPSHOT_BLOCK_MAX_BYTES`、定数）まで。正の整数 |
 | `MMT_CSV_EXPORT_MAX_ROWS` | `50000` | `POST /projects/:p/runs/search/export.csv`の最大行数。超えた分は省き、応答ヘッダ`X-MMT-Export-Truncated: true`とCSV末尾の`# truncated: ...`行で示す。正の整数 |
 | `MMT_CHECKPOINT_KEEP_COUNT` | `5` | Runごとに既定の一覧へ出すcheckpointの数（1以上）。超えた古いcheckpointは`retained=false`になり、一覧の既定表示から外れる。Artifactは消さないので再開には使える |

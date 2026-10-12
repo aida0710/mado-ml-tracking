@@ -27,5 +27,6 @@ export const serviceAccountUpdateSchema = z
 export const serviceAccountTokenCreateSchema = z.strictObject({
   name: nameSchema,
   scopes: uniqueScopesSchema,
-  expiresAt: z.iso.datetime({ offset: true }).nullish(),
+  expiresAt: z.iso.datetime({ offset: true }).nullish()
+    .describe('未来の日時。nullは無期限。省略時は設定された既定の日数（既定365日）。'),
 });

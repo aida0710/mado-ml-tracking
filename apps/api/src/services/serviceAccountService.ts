@@ -30,10 +30,10 @@ import {
 import {
   issueApiToken,
   requireSession,
-  requireTokenExpiry,
   tokenCreateAuditDetails,
   type IssuedToken,
 } from './tokenService.js';
+import { resolveTokenExpiry } from '../domain/tokenExpiry.js';
 
 interface ServiceAccountReference {
   projectId: string;
@@ -46,11 +46,11 @@ interface ServiceAccountReference {
  */
 export class ServiceAccountService {
   private readonly database: Database;
-  private readonly tokenMaxLifetimeDays: number;
+  private readonly tokenDefaultLifetimeDays: number;
 
-  constructor(dependencies: { database: Database; tokenMaxLifetimeDays: number }) {
+  constructor(dependencies: { database: Database; tokenDefaultLifetimeDays: number }) {
     this.database = dependencies.database;
-    this.tokenMaxLifetimeDays = dependencies.tokenMaxLifetimeDays;
+    this.tokenDefaultLifetimeDays = dependencies.tokenDefaultLifetimeDays;
   }
 
   async list(principal: Principal, projectId: string): Promise<ServiceAccount[]> {
@@ -195,7 +195,11 @@ export class ServiceAccountService {
           name: input.name,
           kind: 'service',
           scopes: input.scopes,
-          expiresAt: requireTokenExpiry(input.expiresAt, this.tokenMaxLifetimeDays),
+          expiresAt: resolveTokenExpiry({
+            expiresAt: input.expiresAt,
+            defaultLifetimeDays: this.tokenDefaultLifetimeDays,
+            now: new Date(),
+          }),
         });
         await writeAuditEvent(connection, {
           ...draft,
