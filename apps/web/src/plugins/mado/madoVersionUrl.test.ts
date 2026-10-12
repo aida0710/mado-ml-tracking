@@ -2,14 +2,15 @@ import { describe, expect, it } from 'vitest';
 import type { DatasetVersion, PluginAvailability } from '@mmt/contracts';
 import { getMadoVersionUrl } from './madoVersionUrl';
 
-const externalId = '10000000-0000-4000-8000-000000000001';
+const externalId = 'abcdef01-2345-4abc-8def-abcdef012345';
+const connectionId = 'fedcba98-7654-4fed-8cba-fedcba987654';
 const availability: PluginAvailability = {
-  kind: 'mado', id: 'connection', enabled: true, configured: true,
+  kind: 'mado', id: connectionId, enabled: true, configured: true,
   configRevision: 1, webUrl: 'https://mado.example/catalog/', canImport: false,
 };
 const version = {
   projectId: 'project',
-  externalRef: { pluginId: 'connection', externalId, namespace: 'speech', name: 'training', version: 'v1' },
+  externalRef: { pluginId: connectionId, externalId, namespace: 'speech', name: 'training', version: 'v1' },
   metadata: { madoVersionId: 'metadata-is-not-trusted' },
 } as unknown as DatasetVersion;
 
@@ -21,9 +22,24 @@ describe('Madoの固定バージョンを開くURL', () => {
     expect(Object.fromEntries(url.searchParams)).toEqual({ mode: 'versions', versionId: externalId, node: externalId });
   });
 
+  it('旧参照の大文字UUIDを同じ接続として開き小文字のnodeを選択する', () => {
+    const externalRef = Object.freeze({
+      ...version.externalRef!,
+      pluginId: connectionId.toUpperCase(),
+      externalId: externalId.toUpperCase(),
+    });
+    const url = new URL(getMadoVersionUrl({
+      projectId: 'project', availability, version: { ...version, externalRef },
+    })!);
+    expect(url.searchParams.get('versionId')).toBe(externalId);
+    expect(url.searchParams.get('node')).toBe(externalId);
+    expect(externalRef.pluginId).toBe(connectionId.toUpperCase());
+    expect(externalRef.externalId).toBe(externalId.toUpperCase());
+  });
+
   it.each([
     { enabled: false }, { configured: false }, { id: null },
-    { id: 'another-connection' }, { webUrl: 'javascript:alert(1)' },
+    { id: 'fedcba98-7654-4fed-8cba-fedcba987655' }, { webUrl: 'javascript:alert(1)' },
     { webUrl: 'https://user:password@mado.example' }, { webUrl: 'https://mado.example/?token=secret' },
   ])('利用できない連携や照合できない接続先はリンクを返さない: %j', (change) => {
     expect(getMadoVersionUrl({ projectId: 'project', availability: { ...availability, ...change }, version })).toBeNull();

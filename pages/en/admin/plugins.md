@@ -45,7 +45,7 @@ Migration 059 preserves connection UUIDs, enabled flags, external references, pe
 1. Back up the DB and the bridge's `PLUGIN_LEDGER_DIRECTORY`. Let in-flight bridge requests finish before updating Tracking.
 2. Save the actual Mado settings and keys on the existing connection. The bridge's old base URL is not the Mado API URL. Saving settings does not resume delivery.
 3. Check the connection and import legacy ledger hashes with the command below. Only matching event IDs and exact body hashes are marked delivered. A mismatch, unknown event or active delivery rejects its whole batch.
-4. After verifying the destination and receipt import, choose “Complete migration”. The existing enabled flag is retained. You can disable first and use a controlled real Run to validate writes before enabling.
+4. After verifying the destination and receipt import, choose “Complete migration”. This retains the existing enabled flag, so disable the connection first if you want to keep it paused during verification. To verify delivery, complete migration, enable the connection, then execute a controlled real Run and check START/COMPLETE and its inputs and outputs. Runs created while disabled are not sent, and enabling later does not backfill them.
 5. Stop the bridge after confirming the built-in connection works, and revoke its bridge key. `MMT_MADO_PLUGIN_TOKEN` and the bridge's `MMT_PLUGIN_TOKEN` are no longer needed.
 
 ```sh

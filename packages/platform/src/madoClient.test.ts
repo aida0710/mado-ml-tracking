@@ -85,6 +85,25 @@ describe('内蔵MadoのHTTP通信と応答検証', () => {
     await expect(client.dataset(DATASET_ID)).rejects.toMatchObject({ status: 502 });
   });
 
+  it('大文字のDataset IDと小文字の応答、所属IDの大小差を同じ識別子として照合する', async () => {
+    const { namespace, name, ...version } = VERSION;
+    const dataset = {
+      datasetId: DATASET_ID, namespace, name,
+      versions: [{ ...version, datasetId: DATASET_ID.toUpperCase() }],
+    };
+    const fetcher = vi.fn<typeof fetch>(async () => Response.json(dataset));
+    const client = createMadoClient({ config: CONFIG, credentials: CREDENTIALS, fetcher });
+    expect(await client.dataset(DATASET_ID.toUpperCase())).toEqual(dataset);
+    expect(String(fetcher.mock.calls[0]![0])).toContain(`/datasets/${DATASET_ID.toUpperCase()}`);
+  });
+
+  it('大文字の固定バージョンIDでも小文字の応答を取得し、応答の表記は変えない', async () => {
+    const fetcher = vi.fn<typeof fetch>(async () => Response.json(VERSION));
+    const client = createMadoClient({ config: CONFIG, credentials: CREDENTIALS, fetcher });
+    expect(await client.version(VERSION_ID.toUpperCase())).toEqual(VERSION);
+    expect(String(fetcher.mock.calls[0]![0])).toContain(`/versions/${VERSION_ID.toUpperCase()}`);
+  });
+
   it('キーが未設定の操作は送信せず、readキーだけで参照できる', async () => {
     const fetcher = vi.fn<typeof fetch>(async () => Response.json(VERSION));
     const client = createMadoClient({ config: CONFIG, credentials: { readToken: CREDENTIALS.readToken }, fetcher });

@@ -1,3 +1,5 @@
+export { isSameUuid } from './uuidIdentity.js';
+
 export type JsonValue =
   | string
   | number

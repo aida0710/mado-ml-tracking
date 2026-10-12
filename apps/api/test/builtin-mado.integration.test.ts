@@ -8,11 +8,53 @@ import { executionFixture, projectFixture, referenceDigest } from './fixtures.js
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 import { MADO_CONFIG_FIXTURE, MADO_CREDENTIALS_FIXTURE, madoClientStub, madoPluginInput } from './pluginFixtures.js';
 
+// Includes hex letters so uppercasing always changes the request's representation.
+const MADO_VERSION_ID_FIXTURE = 'e5aab0f8-acdc-40a4-8177-107b7ca5dba7';
+const MADO_PLUGIN_ID_FIXTURE = 'bdbd6443-ac2c-43b4-8071-a8b7efe83cc1';
+
 describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送（独立PostgreSQL）', () => {
   let harness: Harness;
   beforeAll(async () => { harness = await createHarness(); });
   beforeEach(async () => { await harness.reset(); });
   afterAll(async () => { await harness?.close(); });
+
+  async function seedUppercaseMadoDataset() {
+    const fixture = await projectFixture(harness);
+    const externalVersion = {
+      externalId: MADO_VERSION_ID_FIXTURE, namespace: 'remote', name: 'Corpus', version: 'v1',
+      uri: 's3://fixture/corpus', digest: referenceDigest('uppercase-external-reference'), schema: {}, metadata: {},
+    };
+    const deliveredPayloads: { pluginId: string | undefined; payload: string }[] = [];
+    const application = createApplication({
+      config: harness.config, database: harness.database, stores: harness.stores,
+      pluginClientFactory: (options) => madoClientStub({
+        datasetVersion: async () => externalVersion,
+        sendPayload: async (payload) => { deliveredPayloads.push({ pluginId: options.pluginId, payload }); },
+      }),
+    });
+    // Seed an empty connection at a fixed UUID before encryption binds its credentials to that ID.
+    await harness.database.query(`INSERT INTO plugin_connections(id,project_id,name,kind,config,config_revision)
+      VALUES($1,$2,'Mado','mado',$3::jsonb,1)`,
+      [MADO_PLUGIN_ID_FIXTURE, fixture.project.id, JSON.stringify(MADO_CONFIG_FIXTURE)]);
+    const connection = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins/${MADO_PLUGIN_ID_FIXTURE}`, {
+      method: 'PATCH', cookie: fixture.administrator.cookie,
+      body: { credentials: MADO_CREDENTIALS_FIXTURE, enabled: true, expectedRevision: 1 },
+    }), 200);
+    const dataset = await entity<Dataset>(await request(application.app, `${fixture.basePath}/datasets`, {
+      method: 'POST', cookie: fixture.editor.cookie,
+      body: { namespace: externalVersion.namespace, name: externalVersion.name },
+    }));
+    const versionPath = `${fixture.basePath}/datasets/${dataset.id}/versions`;
+    const externalRef = {
+      pluginId: MADO_PLUGIN_ID_FIXTURE.toUpperCase(), externalId: externalVersion.externalId.toUpperCase(),
+      namespace: externalVersion.namespace, name: externalVersion.name, version: externalVersion.version,
+    };
+    const existing = await entity<DatasetVersion>(await request(application.app, versionPath, {
+      method: 'POST', cookie: fixture.editor.cookie,
+      body: { version: externalVersion.version, uri: externalVersion.uri, digest: externalVersion.digest, externalRef },
+    }));
+    return { fixture, application, connection, externalVersion, externalRef, existing, versionPath, deliveredPayloads };
+  }
 
   it('設定と保存用キーなしで起動し、Madoの表示用GETは接続を作成も通信もしない', async () => {
     const unconfiguredHarness = await createHarness({ environment: { MMT_PLUGIN_SECRET_KEY: undefined } });
@@ -224,6 +266,82 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
       method: 'POST', cookie: fixture.administrator.cookie,
       body: { dataset: { externalId, namespace: 'remote', name: 'Spoof', version: 'v1', uri: 's3://fixture/spoof', digest: referenceDigest('spoof'), schema: {}, metadata: {} } },
     })).status).toBe(422);
+  });
+
+  it('大文字で指定した固定バージョンを取り込み、Madoの応答表記で1件だけ保存する', async () => {
+    const fixture = await projectFixture(harness);
+    const externalVersion = {
+      externalId: MADO_VERSION_ID_FIXTURE, namespace: 'remote', name: 'Corpus', version: 'v1',
+      uri: 's3://fixture/corpus', digest: referenceDigest('case-insensitive-import'), schema: {}, metadata: {},
+    };
+    const datasetVersion = vi.fn(async (_externalId: string) => externalVersion);
+    const application = createApplication({
+      config: harness.config, database: harness.database, stores: harness.stores,
+      pluginClientFactory: () => madoClientStub({ datasetVersion }),
+    });
+    const connection = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins`, {
+      method: 'POST', cookie: fixture.administrator.cookie, body: madoPluginInput(),
+    }));
+    const importVersion = (externalId: string) => request(application.app, `${fixture.basePath}/plugins/${connection.id}/datasets/import`, {
+      method: 'POST', cookie: fixture.administrator.cookie,
+      body: { externalId, expectedRevision: connection.configRevision },
+    });
+    const imported = await entity<DatasetVersion>(await importVersion(externalVersion.externalId.toUpperCase()));
+    expect(imported.externalRef?.externalId).toBe(externalVersion.externalId);
+    expect(datasetVersion).toHaveBeenCalledWith(externalVersion.externalId.toUpperCase());
+    expect(await entity<DatasetVersion>(await importVersion(externalVersion.externalId))).toEqual(imported);
+    expect((await harness.database.query('SELECT id FROM dataset_versions')).rows).toEqual([{ id: imported.id }]);
+  });
+
+  it('既存の大文字externalRefを小文字IDで再取り込みしても同じバージョンと元の表記を保つ', async () => {
+    const { fixture, application, connection, externalVersion, externalRef, existing, versionPath } = await seedUppercaseMadoDataset();
+    const imported = await entity<DatasetVersion>(await request(application.app, `${fixture.basePath}/plugins/${connection.id}/datasets/import`, {
+      method: 'POST', cookie: fixture.administrator.cookie,
+      body: { externalId: externalVersion.externalId, expectedRevision: connection.configRevision },
+    }));
+    expect(imported).toEqual(existing);
+    expect(imported.externalRef).toEqual(externalRef);
+    expect(await entity(await request(application.app, versionPath, { cookie: fixture.viewer.cookie }), 200))
+      .toEqual({ items: [existing] });
+    expect((await harness.database.query('SELECT id FROM plugin_outbox')).rows).toHaveLength(0);
+    expect((await request(application.app, `${fixture.basePath}/plugins/${connection.id}`, {
+      method: 'PATCH', cookie: fixture.administrator.cookie,
+      body: { config: { ...MADO_CONFIG_FIXTURE, apiUrl: 'https://different-mado.example.test' }, expectedRevision: connection.configRevision },
+    })).status).toBe(409);
+    expect((await harness.database.query('SELECT config FROM plugin_connections WHERE id=$1', [connection.id])).rows[0].config)
+      .toEqual(MADO_CONFIG_FIXTURE);
+  });
+
+  it('大文字の接続UUIDが残る外部参照は元のMadoの識別を維持し、別接続へ流用しない', async () => {
+    const { fixture, application, connection, externalVersion, existing, deliveredPayloads } = await seedUppercaseMadoDataset();
+    const otherConnection = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins`, {
+      method: 'POST', cookie: fixture.administrator.cookie,
+      body: madoPluginInput({ name: 'Other Mado', config: {
+        apiUrl: 'https://other-api.mado.example.test', webUrl: 'https://other.mado.example.test',
+        lineageUrl: 'https://other-ingest.mado.example.test',
+      } }),
+    }));
+    const run = await entity<Run>(await request(application.app, `${fixture.basePath}/runs`, {
+      method: 'POST', cookie: fixture.editor.cookie,
+      body: { experimentId: fixture.experiment.id, name: 'Uppercase external reference', kind: 'inference', inputDatasetVersionIds: [existing.id] },
+    }));
+    await entity(await request(application.app, `${fixture.basePath}/runs/${run.id}`, {
+      method: 'PATCH', cookie: fixture.editor.cookie, body: { status: 'finished' },
+    }), 200);
+    expect(await application.outbox.dispatchBatch()).toBe(2);
+    const originalEvent = JSON.parse(deliveredPayloads.find((delivery) => delivery.pluginId === connection.id)!.payload);
+    expect(originalEvent.inputs[0]).toEqual({
+      namespace: externalVersion.namespace, name: externalVersion.name,
+      facets: { version: { datasetVersion: externalVersion.version } },
+    });
+    const otherEvent = JSON.parse(deliveredPayloads.find((delivery) => delivery.pluginId === otherConnection.id)!.payload);
+    expect(otherEvent.inputs[0]).toMatchObject({
+      namespace: MADO_CONFIG_FIXTURE.jobNamespace,
+      name: `${fixture.project.id}/${externalVersion.namespace}/${externalVersion.name}`,
+      facets: { version: { datasetVersion: externalVersion.version }, datasetRegistry: { contentHash: externalVersion.digest } },
+    });
+    expect(originalEvent.run.runId).toBe(run.id);
+    expect(otherEvent.run.runId).toBe(run.id);
   });
 
   it('既存の相対URIを持つDatasetがあってもRun開始と完了を記録し、versionとhashを配送する', async () => {

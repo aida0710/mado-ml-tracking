@@ -1,4 +1,4 @@
-import type { MadoPluginConfig, DatasetVersion, PluginEvent } from '@mmt/contracts';
+import { isSameUuid, type MadoPluginConfig, type DatasetVersion, type PluginEvent } from '@mmt/contracts';
 
 // Keep the producer and property order stable for the legacy delivery ledger.
 // Bound the error facet while preserving the bridge's existing truncation.
@@ -21,7 +21,7 @@ function datasetReference(
   const { config, pluginId } = options;
   // Local names are unique within a Project; imported Mado identities remain unchanged.
   const externalRef =
-    dataset.externalRef && (!pluginId || dataset.externalRef.pluginId === pluginId)
+    dataset.externalRef && (!pluginId || isSameUuid(pluginId, dataset.externalRef.pluginId))
       ? dataset.externalRef
       : null;
   const reference = externalRef ?? {
