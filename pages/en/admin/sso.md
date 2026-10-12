@@ -12,7 +12,7 @@ Permissions are decided in two levels.
 | Level | Decided by | Where to change |
 | --- | --- | --- |
 | Can sign in / is a global administrator | Authentik groups and a mapping in the API server's environment | Group membership in Authentik and `.env` |
-| Project role (Viewer / Editor / Admin) | The stronger of a direct grant and a group grant. In a Public Project, everyone who can sign in is an Editor | **プロジェクト設定** (Project settings) |
+| Project role (Viewer / Editor / Admin) | The stronger of a direct grant and a group grant. In a Public Project, everyone who can sign in is an Editor | **Project settings** |
 
 ## 1. Register in Authentik
 
@@ -101,8 +101,8 @@ A user in several groups gets the stronger role (`admin`). Include the groups in
 ### Check
 
 1. Open this application in a browser and check that the login screen shows the **Authentik** button (the value of `OIDC_LABEL`).
-2. Have someone in `mmt-admins` sign in with SSO, open **全体設定** (Global settings) from the user menu, and check that the 全体管理 (Global administration) group (Projects, Users, and so on) appears in the sidebar.
-3. Have someone only in `mmt-users` sign in, open **全体設定** from the user menu, and check that the sidebar shows the 全体設定 group (Account, Computers) but not the 全体管理 group.
+2. Have someone in `mmt-admins` sign in with SSO, open **Global settings** from the user menu, and check that the **Administration** group (**Projects**, **Users**, and so on) appears in the sidebar.
+3. Have someone only in `mmt-users` sign in, open **Global settings** from the user menu, and check that the sidebar shows the **Global settings** group (**Account**, **Computers**) but not the **Administration** group.
 4. Check that someone in neither group is refused. The reason is recorded in the audit log as `auth.oidc.denied` ("Cannot sign in with SSO" in [Troubleshooting](/en/reference/troubleshooting)).
 
 ## What is synchronized at each login
@@ -151,13 +151,13 @@ Instead of granting a role to each person, you can grant a Project role to an Au
 
 1. Create a group per Project in Authentik (for example `mmt-proj-asr-editors`).
 2. Add the members to the group and have them sign in with SSO once.
-3. Open **プロジェクト設定** (Project settings) and click **groupを追加** (Add group) under **Authentik group**.
+3. Open **Project settings** and click **Add group** under **Authentik group**.
 4. Enter the group name and role, and save.
 
 | Field | Value |
 | --- | --- |
-| Group name | The Authentik group name as is. Exact match, including case and spaces. Example: `mmt-proj-asr-editors` |
-| Role | `Viewer`, `Editor`, or `Admin` |
+| **Group name** | The Authentik group name as is. Exact match, including case and spaces. Example: `mmt-proj-asr-editors` |
+| **Role** | `Viewer`, `Editor`, or `Admin` |
 
 The suggestions list only groups that have been synchronized by someone's login. Type the name directly for a group nobody has signed in with yet.
 

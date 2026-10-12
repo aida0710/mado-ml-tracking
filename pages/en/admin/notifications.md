@@ -14,7 +14,7 @@ There are two roles.
 | Notification channels (where to send) | Global administrators | **通知** (Notifications) → **通知先** (Channels) in **プロジェクト設定** (Project settings) |
 | Notification rules (which events go to which channel) | Project Admins | **通知** → **通知ルール** (Rules) in **プロジェクト設定** (Project settings) |
 
-![The Notifications section of the Project settings](/images/admin-notifications.png)
+![The Notifications section of the Project settings](/images/en/admin-notifications.png)
 
 ## Events
 

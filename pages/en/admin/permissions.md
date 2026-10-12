@@ -20,7 +20,7 @@ These groups appear only in the sidebar of the global settings pages, not on Pro
 
 When the global settings are opened from a Project page, 「Project name」に戻る (Back to the Project) appears at the top; it returns to the page you came from (Jobs, for example).
 
-![A regular user's user menu: Account, Change password, and Global settings](/images/admin-user-menu.png)
+![A regular user's user menu: Account, Change password, and Global settings](/images/en/admin-user-menu.png)
 
 The user menu at the top right has **アカウント** (Account), **パスワードの変更** (Change password, local accounts only), and **全体設定** (Global settings) ([Authentication modes and local accounts](/en/admin/auth#check-your-account)).
 
@@ -75,7 +75,7 @@ Computers that run Jobs also have Public and Private, separately from Projects. 
 
 There are two ways to grant a Project role. A Project Admin sets both in **プロジェクト設定** (Project settings).
 
-![The Members and Authentik group sections of a Project](/images/admin-permissions.png)
+![The Members and Authentik group sections of a Project](/images/en/admin-permissions.png)
 
 | Method | Granted to | Where |
 | --- | --- | --- |

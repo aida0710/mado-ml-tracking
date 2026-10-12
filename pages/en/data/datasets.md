@@ -5,13 +5,11 @@ description: Create dataset versions and link them to Run inputs and outputs. Bu
 
 # Datasets
 
-![Dataset versions and file list](/images/data-datasets.png)
+![Dataset versions and file list](/images/en/data-datasets.png)
 
 A dataset is a collection of data used for training or evaluation. Each time the contents change you create a new version, and each Run records which version it used. Versions cannot be changed after they are created, so you can repeat training or evaluation with exactly the same version later.
 
 The contents of a version are either files saved in mado ML Tracking as Artifacts, or a URI that points to an external location. When a version is a Run input, the worker prepares its contents on the GPU machine before the code starts.
-
-The web UI is in Japanese. This page shows UI labels in Japanese followed by an English translation.
 
 ## When to use it
 
@@ -25,8 +23,8 @@ The web UI is in Japanese. This page shows UI labels in Japanese followed by an 
 
 | Kind | Contents | Created by |
 | --- | --- | --- |
-| Artifact-backed version | A list of saved Artifacts. The version list shows Artifact N件 · size | Folder upload, Python SDK, Run outputs |
-| Reference version | A URI (`s3://`, `https://`, `file://`, and so on) and a digest. The version list shows 参照 (reference) | **バージョンを作成** (Create version), MLflow `log_input`, import from Mado |
+| Artifact-backed version | A list of saved Artifacts. The version list shows N artifacts · size | Folder upload, Python SDK, Run outputs |
+| Reference version | A URI (`s3://`, `https://`, `file://`, and so on) and a digest. The version list shows **Reference (URI)** | **Create version**, MLflow `log_input`, import from Mado |
 
 An Artifact-backed version has a digest (`sha256:<hex>`) computed from the path, SHA-256, and size of each file. Uploading the same contents again gives the same digest. Its URI is `mmt-dataset://<version ID>`.
 
@@ -35,39 +33,39 @@ One version can contain up to 100,000 files.
 ## Register a dataset
 
 1. Open **Datasets** in the sidebar.
-2. Click **データセットを登録** (Register dataset).
-3. Enter **名前** (Name, required), **Namespace**, and **説明** (Description), and save.
+2. Click **Register dataset**.
+3. Enter **Name** (required), **Namespace**, and **Description**, and save.
 
-A namespace groups datasets, for example `voice`. **データセットを登録** is shown to editors and above.
+A namespace groups datasets, for example `voice`. **Register dataset** is shown to editors and above.
 
-Selecting a dataset shows its namespace and description under its name. Change the description later with **⋯** → **説明を変更** (Change description) next to the name (editor or higher). The name cannot be changed, because SDKs and MLflow find a dataset by its name.
+Selecting a dataset shows its namespace and description under its name. Change the description later with **⋯** → **Edit description** next to the name (editor or higher). The name cannot be changed, because SDKs and MLflow find a dataset by its name.
 
 ## Create a version from a folder
 
 The browser uploads the contents of a folder as Artifacts and creates the version once every file is saved.
 
-1. Select a dataset and click **フォルダから作る** (Create from folder).
-2. Click **フォルダを選ぶ** (Choose folder) or drop a folder.
+1. Select a dataset and click **Create from a folder**.
+2. Click **Choose folder** or drop a folder.
 3. Optionally fill in:
-   - **バージョン（空なら自動採番）** (Version; numbered automatically when empty): integers such as `1` and `2` are used when empty
-   - **親のバージョン** (Parent version): the version this one was derived from. The dataset's latest version is checked from the start; uncheck it to create a version without a parent. A long list can be filtered with the box above it
-   - **Metadata（JSON）**: for example `{"language": "ja", "sampleRate": 16000}`
-4. Click **アップロードしてバージョンを作成** (Upload and create version).
+   - **Version (leave blank to auto-number)**: integers such as `1` and `2` are used when empty
+   - **Parent versions**: the version this one was derived from. The dataset's latest version is checked from the start; uncheck it to create a version without a parent. A long list can be filtered with the box above it
+   - **Metadata (JSON)**: for example `{"language": "ja", "sampleRate": 16000}`
+4. Click **Upload and create version**.
 
 Files are sent the same way as in [Large file uploads](/en/data/uploads). Progress is one bar for the whole folder (files, bytes, and time left) and rows only for files that are sending, paused, or failed; waiting and finished files are counted. Rows are named by the file's path inside the dataset.
 
-If some files fail, the version is not created. Click **残りのファイルを再送** (Resend remaining files) or **残りのファイルを除いてバージョンを作成** (Create version without the remaining files). If only creating the version fails, click **バージョンの作成を再試行** (Retry creating the version); files are not uploaded again.
+If some files fail, the version is not created. Click **Resend remaining files** or **Create version without remaining files**. If only creating the version fails, click **Retry version creation**; files are not uploaded again.
 
-Selecting a version shows ファイル数 (file count), 合計サイズ (total size), and the file list. Select a file to preview it, just like an Artifact.
+Selecting a version shows **File count**, **Total size**, and the file list. Select a file to preview it, just like an Artifact.
 
 ### A folder upload that stopped
 
-An upload that stopped before its version (a reload, a dropped connection, or a closed dialog) is listed under **途中のフォルダのアップロード** (Unfinished folder uploads) the next time **フォルダから作る** is opened. Each row shows when it started, how many files are stored and their size, and the large file you were still sending.
+An upload that stopped before its version (a reload, a dropped connection, or a closed dialog) is listed under **Incomplete folder uploads** the next time **Create from a folder** is opened. Each row shows when it started, how many files are stored and their size, and the large file you were still sending.
 
-- Continue: choose the same folder with the row's **続きを送る** (Continue), or with **フォルダを選ぶ** above. When files with the same paths and sizes are found, the dialog says it continues the upload that started at that time, and the button becomes **続きを送ってバージョンを作成** (Continue and create version). On start, the stored files are compared with yours by SHA-256 and the same ones are used as they are; the half-sent large file continues from the parts the server has. While the files are compared, **照合をやめる** (Stop comparing) stops and goes back to before the start (nothing has been sent yet). Click **新しく送る** (Send as new) to send the folder separately instead
-- Discard: click **破棄** (Discard) and confirm. Stored files that no version uses are deleted and the half-sent uploads are canceled. Only Project admins can delete stored files; editors see "保存済みのファイルを消せるのは Project admin です" (Only Project admins can delete stored files) instead of the button (an upload with only half-sent files can be discarded by editors too). Files a model version, code version, or checkpoint uses are kept; the dialog says how many and why, with a button that lists them in Artifacts. While such files remain, the row stays in the list
+- Continue: choose the same folder with the row's **Continue upload**, or with **Choose folder** above. When files with the same paths and sizes are found, the dialog says it continues the upload that started at that time, and the button becomes **Continue upload and create version**. On start, the stored files are compared with yours by SHA-256 and the same ones are used as they are; the half-sent large file continues from the parts the server has. While the files are compared, **Stop comparing** stops and goes back to before the start (nothing has been sent yet). Click **Start new upload** to send the folder separately instead
+- Discard: click **Discard** and confirm. Stored files that no version uses are deleted and the half-sent uploads are canceled. Only Project admins can delete stored files; editors see "Only project administrators can delete stored files. Continue the upload to use them as they are." instead of the button (an upload with only half-sent files can be discarded by editors too). Files a model version, code version, or checkpoint uses are kept; the dialog says how many and why, with a button that lists them in Artifacts. While such files remain, the row stays in the list
 
-In the Artifacts list, stored files of such an upload are shown as `データセット <name> 途中のアップロード`.
+In the Artifacts list, stored files of such an upload are shown as `Dataset <name>` with **Incomplete upload**.
 
 ## Create a version with the Python SDK
 
@@ -107,20 +105,20 @@ When you use `files`, do not pass `uri`, `digest`, `source_run_id`, `parent_data
 
 ## Create a version that references a URI
 
-To create a version that points to an external location without saving files, select the dataset, click **バージョンを作成** (Create version), and fill in:
+To create a version that points to an external location without saving files, select the dataset, click **Create version**, and fill in:
 
 | Field | Value | Example |
 | --- | --- | --- |
-| バージョン (Version) | Version name (required) | `2026-10` |
-| URI | Location of the data (required): `s3://` (a bucket and key, or a folder), `https://` (one file), or `file://` (a path on the computer the Job runs on) | `s3://corpus/speech/2026-10/` |
-| Digest | SHA-256 of the contents (required), written as `sha256:` and 64 lowercase hex digits. `sha256:` may be left out, so the 64 digits `sha256sum` prints can be pasted as they are. The digest is stored as entered. Uppercase, a different length, or another algorithm (such as `sha512:`) is refused with "digestは sha256:<64桁の小文字16進数>（sha256:は省略可）の形で指定してください" | `sha256:<64 hex digits>`, or the 64 digits from `sha256sum` |
-| 親のバージョン (Parent version) | The version this one was derived from | |
-| 生成元Run (Source Run) | The Run that produced this version | |
-| Schema（JSON）, Metadata（JSON） | Any JSON | `{"columns": ["audio", "text"]}` |
+| **Version** | Version name (required) | `2026-10` |
+| **URI** | Location of the data (required): `s3://` (a bucket and key, or a folder), `https://` (one file), or `file://` (a path on the computer the Job runs on) | `s3://corpus/speech/2026-10/` |
+| **Digest** | SHA-256 of the contents (required), written as `sha256:` and 64 lowercase hex digits. `sha256:` may be left out, so the 64 digits `sha256sum` prints can be pasted as they are. The digest is stored as entered. Uppercase, a different length, or another algorithm (such as `sha512:`) is refused with "digestは sha256:<64桁の小文字16進数>（sha256:は省略可）の形で指定してください" (specify the digest as sha256: and 64 lowercase hex digits; sha256: may be left out) | `sha256:<64 hex digits>`, or the 64 digits from `sha256sum` |
+| **Parent versions** | The version this one was derived from | |
+| **Source run** | The Run that produced this version | |
+| **Schema (JSON)**, **Metadata (JSON)** | Any JSON | `{"columns": ["audio", "text"]}` |
 
 ## Create a version from Run outputs
 
-Files written by an inference or preprocessing Run can become a version that the next Run uses as input. A version created from Run outputs records its source Run and is connected in Lineage by a データ出力 (data output) edge.
+Files written by an inference or preprocessing Run can become a version that the next Run uses as input. A version created from Run outputs records its source Run and is connected in Lineage by a **Data output** edge.
 
 - In code run by a Task, declare outputs in `datasets` of `/mmt/outputs/result.json` (version 2). After saving the output files, the worker registers a version with an integer number. A Run can declare up to 64 datasets.
 - In the Python SDK, `run.register_output_dataset(version=, uri=, digest=)` registers a reference version. The Run's input versions become its parents. The digest takes the same form as on the screen: `sha256:` and 64 lowercase hex digits (`sha256:` is optional).
@@ -130,7 +128,7 @@ See [Tasks and code versions](/en/models/tasks) for `result.json`. To pass infer
 
 ## See which Runs used a version
 
-Selecting a version shows **このバージョンを入力にしたRun** (Runs that used this version) under its details; a Run's name opens that Run. **Lineageで見る** (Show in Lineage) opens [Lineage](/en/models/registry) with only two steps before and after the version (parent versions, the Runs that used it, the models those Runs made). **全体を表示** (Show all) returns to the whole graph.
+Selecting a version shows **Runs using this version as input** under its details; a Run's name opens that Run. **View in Lineage** opens [Lineage](/en/models/registry) with only two steps before and after the version (parent versions, the Runs that used it, the models those Runs made). **Show full graph** returns to the whole graph.
 
 ## Use a version as a Run input
 
@@ -160,12 +158,12 @@ In Docker, Singularity, and Apptainer, the contents are at `/mmt/datasets/<versi
 
 ### Transfer and cache
 
-Set **データセットの転送** (Dataset transfer) and **データセットのcache上限（GiB）** (Dataset cache limit, GiB) when editing a computer.
+Set **Dataset transfer** and **Dataset cache limit (GiB)** when editing a computer.
 
 | Dataset transfer | What it does |
 | --- | --- |
-| workerが中継する (Relay through the worker, default) | The worker fetches from the API and sends everything to the GPU machine. Works even when the GPU machine cannot reach the API. The worker needs free space for one version temporarily |
-| targetがAPIから直接取得する (Target fetches from the API) | The GPU machine fetches from the API with a Job-scoped token. The GPU machine must be able to reach the API |
+| **Relay through worker** (default) | The worker fetches from the API and sends everything to the GPU machine. Works even when the GPU machine cannot reach the API. The worker needs free space for one version temporarily |
+| **Computer downloads directly from the API** | The GPU machine fetches from the API with a Job-scoped token. The GPU machine must be able to reach the API |
 
 Fetched contents are cached in `<work directory>/.mmt-cache/datasets/` on the machine. The next Job that uses the same version reuses the cache. When the cache exceeds its limit (100 GiB by default), the least recently used entries are removed. Versions used by running Jobs are never removed. A version larger than the limit makes the Job fail.
 
@@ -175,19 +173,19 @@ See [Compute targets](/en/compute/targets).
 
 With the Mado plugin registered, you can import dataset versions managed in Mado.
 
-1. Click **Madoからインポート** (Import from Mado) on the **Datasets** page. The **Plugins** page opens.
-2. Find the dataset with **データセットを検索** (Search datasets).
-3. Choose a version and click **インポート** (Import).
+1. Click **Import from Mado** on the **Datasets** page. The **Plugins** page opens.
+2. Find the dataset with **Search datasets**.
+3. Choose a version and click **Import**.
 
-An imported version is a reference version that keeps its name, namespace, and version from Mado. Importing the same version again does not add a new version. **Madoからインポート** is shown to Project admins.
+An imported version is a reference version that keeps its name, namespace, and version from Mado. Importing the same version again does not add a new version. **Import from Mado** is shown to Project admins.
 
 When a Run starts and finishes, its input and output versions are sent to Mado, so Mado's dataset lineage shows which experiments used them. See [Plugins and Mado integration](/en/admin/plugins) to register the plugin.
 
 ## Datasets you no longer use
 
-Datasets cannot be deleted. A version can be deleted while nothing uses it: to remove one registered with a mistyped URI, select it, click **このバージョンを削除** (Delete this version), and confirm with **削除する** (Delete) (Editor or higher). While a Run input or output, a child version, or a Task, automation rule, or hook input uses it, the deletion is refused with what uses it, for example "このバージョンは使われているため削除できません（Runの入力 1件）" (in use: 1 Run input). Deleting a version leaves the data at its URI and its Artifacts. The API is `DELETE /api/projects/<Project ID>/datasets/<Dataset ID>/versions/<version ID>`.
+Datasets cannot be deleted. A version can be deleted while nothing uses it: to remove one registered with a mistyped URI, select it, click **Delete this version**, and confirm with **Delete** (Editor or higher). While a Run input or output, a child version, or a Task, automation rule, or hook input uses it, the deletion is refused with what uses it, for example "このバージョンは使われているため削除できません（Runの入力 1件）" (in use: 1 Run input). Deleting a version leaves the data at its URI and its Artifacts. The API is `DELETE /api/projects/<Project ID>/datasets/<Dataset ID>/versions/<version ID>`.
 
-To retire a dataset, click **⋯** → **アーカイブ** (Archive) next to its name and confirm (editor or higher). New Runs, Tasks, automation rules, and hooks can no longer take versions of an archived dataset as input; existing Runs and versions stay. The archived dataset stays open with a notice saying it was archived. Archived datasets are hidden from the list (except the one open) unless **アーカイブ済みも表示** (Show archived) is checked. Bring one back with **⋯** → **アーカイブを解除** (Unarchive). The API is `PATCH /api/projects/<Project ID>/datasets/<Dataset ID>` with `{"archived": true}` (or `false`).
+To retire a dataset, click **⋯** → **Archive** next to its name and confirm (editor or higher). New Runs, Tasks, automation rules, and hooks can no longer take versions of an archived dataset as input; existing Runs and versions stay. The archived dataset stays open with a notice saying it was archived. Archived datasets are hidden from the list (except the one open) unless **Include archived datasets** is checked. Bring one back with **⋯** → **Unarchive**. The API is `PATCH /api/projects/<Project ID>/datasets/<Dataset ID>` with `{"archived": true}` (or `false`).
 
 Artifacts referenced by a version cannot be deleted while the version exists.
 

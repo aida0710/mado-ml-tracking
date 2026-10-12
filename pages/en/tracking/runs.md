@@ -5,11 +5,9 @@ description: Projects, Experiments, and Runs; params, metrics, and tags; the Run
 
 # Record and Find Runs
 
-![The Run list of a selected Experiment](/images/tracking-runs.png)
+![The Run list of a selected Experiment](/images/en/tracking-runs.png)
 
-mado ML Tracking records each training or evaluation execution as a Run. A Run carries params (the conditions), metrics (numbers per step), tags (labels), logs, and Artifacts (files). Open **Experiments** at the top of the screen to list, search, and compare Runs.
-
-The screenshots show the Japanese UI; the labels quoted on this page are the Japanese ones followed by their meaning.
+mado ML Tracking records each training or evaluation execution as a Run. A Run carries params (the conditions), metrics (numbers per step), tags (labels), logs, and Artifacts (files). Open **Experiments** in the sidebar to list, search, and compare Runs.
 
 ## When it helps
 
@@ -22,11 +20,11 @@ The screenshots show the Japanese UI; the labels quoted on this page are the Jap
 
 | Unit | What it is | Where to create it |
 | --- | --- | --- |
-| Project | The unit of permissions and storage. Members and their roles (viewer, editor, admin) are set per Project | **＋ プロジェクトを作成** (Create project) in the Project switcher ([Create and manage Projects](/en/admin/projects)) |
-| Experiment | A group of Runs with one purpose, such as "speech synthesis training" | The **+** button on the left of **Experiments** |
-| Run | The record of one execution | Python SDK, MLflow 3 SDK, Tasks, Sweeps, automation rules, or Runを作成 (Create Run) |
+| Project | The unit of permissions and storage. Members and their roles (viewer, editor, admin) are set per Project | **Create project** in the Project switcher ([Create and manage Projects](/en/admin/projects)) |
+| Experiment | A group of Runs with one purpose, such as "speech synthesis training" | **Create experiment** (the **+** button) on the left of **Experiments** |
+| Run | The record of one execution | Python SDK, MLflow 3 SDK, Tasks, Sweeps, automation rules, or **Create run** |
 
-Every Run has a kind: training, fine-tuning, inference, evaluation, or data processing. The 実行種別 (kind) filter narrows the list by kind.
+Every Run has a kind: training, fine-tuning, inference, evaluation, or data processing. The **Run kind** filter narrows the list by kind.
 
 Viewing needs the viewer role or higher; recording and editing Runs needs editor or higher. See [Permissions](/en/admin/permissions).
 
@@ -46,17 +44,17 @@ Once a Run executed by a worker (a Run with a Job) has finished, metrics, params
 
 ## The Run list
 
-Select すべての実験 (all experiments) or an Experiment on the left to list its Runs, newest first.
+Select **All experiments** or an Experiment on the left to list its Runs, newest first.
 
-- Filter by 状態 (status) and 実行種別 (kind)
-- 並び順 (sort) offers creation time, name, and ascending or descending order of any metric
-- 表示する列 (columns) chooses which params, metrics, and tags appear. Drag a column edge to resize it; focus a header and press Alt+←/→ to move it
-- Selecting rows shows a selection bar above the table. With two or more Runs selected, 比較 (Compare) opens the [comparison page](/en/tracking/compare). Editors can tag the selected Runs at once with タグを追加 (Add tag)
-- Click a Run name to open its details (Metrics, Media, Artifacts, System metrics, Logs, and more)
+- Filter by **Status** and **Run kind**
+- **Sort by** offers creation time, name, and ascending or descending order of any metric
+- **Visible columns** chooses which params, metrics, and tags appear. Drag a column edge to resize it; focus a header and press Alt+←/→ to move it
+- Selecting rows shows a selection bar above the table. With two or more Runs selected, **Compare** opens the [comparison page](/en/tracking/compare). Editors can tag the selected Runs at once with **Add tag**
+- Click a Run name to open its details (**Metrics**, **Media**, **Artifacts**, **System metrics**, **Logs**, and more)
 
 ## Search the whole history
 
-![All Experiments searched with metrics.val_loss < 0.1](/images/tracking-runs-search.png)
+![All Experiments searched with metrics.val_loss < 0.1](/images/en/tracking-runs-search.png)
 
 Type part of a Run name, or a filter in the same syntax as MLflow `search_runs`. The server searches the whole history, so old Runs that are not on the current page are found too.
 
@@ -71,7 +69,7 @@ tags.dataset = 'training-v1' AND attributes.status = 'finished'
 - Metrics are compared by each Run's latest value
 - Status accepts both the native names (`finished`, `failed`, ...) and MLflow names (`FINISHED`, `FAILED`, ...)
 
-Search with すべての実験 selected to cover every Experiment in the Project. When a filter cannot be parsed, the message below the box tells you which character to check. Comparing params with `>`, or leaving a params value unquoted, shows the corrected filter (such as `params.batch_size = '16'`). A comparison without `metrics.`, such as `loss < 0.2`, is searched as a Run name, and the box offers `metrics.loss < 0.2` with ［この式で検索］ (Search with this filter).
+Search with **All experiments** selected to cover every Experiment in the Project. When a filter cannot be parsed, the message below the box tells you which character to check. Comparing params with `>`, or leaving a params value unquoted, shows the corrected filter (such as `params.batch_size = '16'`). A comparison without `metrics.`, such as `loss < 0.2`, is searched as a Run name, and the box offers `metrics.loss < 0.2` with **Search with this expression**.
 
 Python uses the same filter syntax:
 
@@ -89,26 +87,26 @@ with Client() as client:
 
 ## Saved views {#saved-views}
 
-![The saved view menu](/images/tracking-saved-views.png)
+![The saved view menu](/images/en/tracking-saved-views.png)
 
 A saved view keeps the selected Experiments, filter, status and kind filters, sort order, columns and their widths, chart grouping, and the [chart panel](/en/tracking/charts) layout under a name. Open saved views from the menu at the top left of the list.
 
 1. Arrange the list the way you want
-2. Choose 名前を付けて保存 (Save as)
-3. Enter a name, choose who can see it (公開範囲), and save
+2. Choose **Save as**
+3. Enter a name, choose who can see it (**Visibility**), and save
 
 | Visibility | Who sees it | Who can create it |
 | --- | --- | --- |
-| 自分だけ (Only me) | Only the owner. Other members see it neither in the menu nor by URL | viewer or higher |
-| プロジェクトで共有 (Shared with the Project) | Every Project member | editor or higher |
+| **Only me** | Only the owner. Other members see it neither in the menu nor by URL | viewer or higher |
+| **Shared with project** | Every Project member | editor or higher |
 
-After you change the display, the menu shows 未保存の変更 (unsaved changes). 上書き保存 (Save) overwrites the view, 名前を付けて保存 saves a new one, and URLをコピー copies a URL that opens the view (`?view=<ID>`). A shared view can be renamed, changed, or deleted by its owner and by Project admins.
+After you change the display, the menu shows **Unsaved changes**. **Save changes** overwrites the view, **Save as** saves a new one, and **Copy URL** copies a URL that opens the view (`?view=<ID>`). A shared view can be renamed, changed, or deleted by its owner and by Project admins.
 
 A view stores the conditions, not a list of Runs: every time you open it, the search runs again against the current Runs.
 
 ## Export CSV
 
-検索結果をCSV出力 (Export search results as CSV) downloads every Run that matches the current search as one row each, not just the visible page.
+**Export search results to CSV** downloads every Run that matches the current search as one row each, not just the visible page.
 
 - Columns are `id`, `name`, `experiment`, `kind`, `status`, `created`, `ended`, `modelVersion`, `datasetVersions`, followed by `params.*`, `metrics.*`, and `tags.*`
 - The file is UTF-8 with a BOM, so Excel opens it directly
@@ -122,4 +120,4 @@ with Client() as client:
     client.export_runs_csv("PROJECT_ID", "runs.csv", filter="metrics.val_loss < 0.1")
 ```
 
-For a CSV with items as rows and selected Runs as columns, use CSVをダウンロード on the [comparison page](/en/tracking/compare).
+For a CSV with items as rows and selected Runs as columns, use **Download CSV** on the [comparison page](/en/tracking/compare).
