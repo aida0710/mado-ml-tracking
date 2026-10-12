@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import type { ComputeTarget, TargetCheckWorker, TargetCheckWorkerPresence } from '@mmt/contracts';
 import type { FieldSuggestions, FormField, FormValues } from '../types/form';
@@ -8,6 +7,7 @@ import { FormFields } from './FormFields';
 import { findCheckWorker } from '../lib/checkWorkerChoice';
 import { getFieldValue } from '../lib/formValues';
 import { completeFromKnownPaths } from '../lib/targetPathCompletion';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 const MAX_PORT = 65535;

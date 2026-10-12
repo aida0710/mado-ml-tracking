@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 /**
  * How the Run list draws its cells, shared by the wide table (WideRunTable) and the narrow one
  * (NarrowRunTable): the selection checkboxes, the name, and each column the saved view chose.
@@ -13,6 +12,7 @@ import { MarkdownView } from '../markdown/MarkdownView';
 import { getRunParameters } from '../../lib/runParameters';
 import { formatDate, formatDuration } from '../../lib/format';
 import { descriptionSummary, RUN_DESCRIPTION_COLUMN } from '../../lib/runColumns';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 interface RunColumn {

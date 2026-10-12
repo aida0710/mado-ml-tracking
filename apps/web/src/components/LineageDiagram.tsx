@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import {
   GRAPH_NODE_HEIGHT,
@@ -8,6 +7,7 @@ import {
   type layoutLineage,
   type Point,
 } from '../lib/lineageLayout';
+import { useLocale } from '../i18n/useLocale';
 import { lineageNodeKindLabels, lineageRelationLabels, text } from '../i18n/catalog';
 
 // About what fits in GRAPH_NODE_WIDTH at the label's font size.
@@ -15,12 +15,12 @@ const NODE_LABEL_MAX_LENGTH = 28;
 
 // Run nodes carry a RunStatus; other strings are shown as they are.
 const runStatusLabels: Record<string, string> = {
-  get queued() { return text.queued },
-  get claimed() { return text.claimed },
-  get running() { return text.running },
-  get finished() { return text.finished },
-  get failed() { return text.failed },
-  get canceled() { return text.canceled },
+  get queued() { return text.queued; },
+  get claimed() { return text.claimed; },
+  get running() { return text.running; },
+  get finished() { return text.finished; },
+  get failed() { return text.failed; },
+  get canceled() { return text.canceled; },
 };
 const runStatusLabel = (status: string) => runStatusLabels[status] ?? status;
 

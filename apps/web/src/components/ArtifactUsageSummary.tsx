@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import { useArtifactUsage } from '../hooks/useArtifactUsage';
 import { formatBytes } from '../lib/format';
 import { Resource } from './Feedback';
 import { ResponsiveTable } from './ResponsiveTable';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /** Stored Artifacts of the Project per backend, with what deletion and old versions hold. */

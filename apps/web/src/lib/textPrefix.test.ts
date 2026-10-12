@@ -4,7 +4,7 @@ import { decodeUtf8Prefix, leadingTextWithinBytes } from './textPrefix';
 describe('大きなテキストの先頭', () => {
   it('バイトの上限で切れた文字は置換文字にせず、手前の文字までを返す', () => {
     const bytes = new TextEncoder().encode('ログ');
-    // 「グ」は3バイト。最後の1バイトを落とすと、文字の途中で切れる。
+    // 「グ」 is three bytes; dropping the last byte cuts the character in the middle.
     expect(decodeUtf8Prefix(bytes.subarray(0, bytes.length - 1))).toBe('ロ');
     expect(decodeUtf8Prefix(bytes)).toBe('ログ');
   });

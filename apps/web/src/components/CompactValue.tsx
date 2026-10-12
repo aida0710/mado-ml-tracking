@@ -1,5 +1,5 @@
-import { useLocale } from '../i18n/useLocale';
 import { formatCompactNumber, formatValue } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 
 export function CompactValue({ value }: { value: unknown }) {
   useLocale();

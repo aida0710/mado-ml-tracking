@@ -1,18 +1,18 @@
 // English for API errors, shown instead of the server's Japanese message (lib/errorMessage.ts).
 export const errorText = {
-  internalError: "Could not process the request",
-  databaseUnavailable: "Could not connect to the database",
-  pluginRequestFailed: "Could not communicate with the integration",
-  pluginDisabled: "The integration is disabled",
-  uploadNotOpen: "This upload is no longer accepting data",
-  uploadExpired: "The upload has expired",
-  artifactSaveFailed: "Could not save the artifact",
-  partChecksumMismatch: "The uploaded part does not match its SHA-256 checksum",
-  runDeleted: "This operation is not available for a deleted run.",
-  bodyTooLarge: "The request exceeds the size limit",
-  sweepParameterNameEmpty: "Parameter names must not be empty",
-  sweepParametersEmpty: "At least one parameter is required",
-  sweepRangeFields: "min and max",
+  internalError: 'Could not process the request',
+  databaseUnavailable: 'Could not connect to the database',
+  pluginRequestFailed: 'Could not communicate with the integration',
+  pluginDisabled: 'The integration is disabled',
+  uploadNotOpen: 'This upload is no longer accepting data',
+  uploadExpired: 'The upload has expired',
+  artifactSaveFailed: 'Could not save the artifact',
+  partChecksumMismatch: 'The uploaded part does not match its SHA-256 checksum',
+  runDeleted: 'This operation is not available for a deleted run.',
+  bodyTooLarge: 'The request exceeds the size limit',
+  sweepParameterNameEmpty: 'Parameter names must not be empty',
+  sweepParametersEmpty: 'At least one parameter is required',
+  sweepRangeFields: 'min and max',
 } as const;
 
 export const errorTextTemplates = {

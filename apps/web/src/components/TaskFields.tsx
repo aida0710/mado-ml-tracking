@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { MAX_JOB_GPU_COUNT, type ComputeTarget, type RunKind } from '@mmt/contracts';
 import type { ExecutionCatalog } from '../types/executionCatalog';
 import type { FormField, FormValues } from '../types/form';
@@ -12,6 +11,7 @@ import { hasOutputModel } from '../lib/taskInput';
 import { FormFields } from './FormFields';
 import { MissingCodeNotice } from './MissingCodeNotice';
 import { TaskOutputModelFields } from './TaskOutputModelFields';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 export function TaskFields({ values, catalog, targets, onChange, isEditing = false, launchOnly = false }: {

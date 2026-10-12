@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { Dialog } from '../components/Dialog';
 import { CopyButton } from '../components/CopyButton';
 import { TokenUsageSnippet } from '../components/TokenUsageSnippet';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

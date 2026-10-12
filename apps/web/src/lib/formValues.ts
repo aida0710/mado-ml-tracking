@@ -1,6 +1,6 @@
 import type { JsonObject } from '@mmt/contracts';
-import { text } from '../i18n/catalog';
 import type { FormField, FormValues } from '../types/form';
+import { text } from '../i18n/catalog';
 
 export type { FormValues } from '../types/form';
 /** Fields whose value is a list of the chosen options rather than one string. */

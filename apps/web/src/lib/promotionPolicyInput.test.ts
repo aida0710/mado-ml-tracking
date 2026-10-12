@@ -12,8 +12,8 @@ import {
   updatePromotionPolicyDraft,
   type PromotionPolicyDraft,
 } from './promotionPolicyInput';
-import { promotionTextTemplates } from '../i18n/promotion';
 import { canManagePromotionPolicies, canReevaluatePromotion } from './permissions';
+import { promotionTextTemplates } from '../i18n/promotion';
 import { text } from '../i18n/catalog';
 
 const models = executionCatalog.models;

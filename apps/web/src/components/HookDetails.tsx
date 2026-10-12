@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Copy } from 'lucide-react';
@@ -22,6 +21,8 @@ import { hookFilterFields } from '../lib/hookInput';
 import { formatAutoRetries } from '../lib/jobDisplay';
 import { isSiteTarget } from '../lib/siteExecutionInput';
 import { isManualSite } from '../lib/manualSubmission';
+import { useComputerNames } from '../hooks/useComputerNames';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import {
   hookCheckpointModeLabels,
@@ -31,7 +32,6 @@ import {
   hooksTextTemplates,
 } from '../i18n/hooks';
 import { submissionModeBadgeLabels } from '../i18n/compute';
-import { useComputerNames } from '../hooks/useComputerNames';
 
 type Entry = [string, ReactNode];
 

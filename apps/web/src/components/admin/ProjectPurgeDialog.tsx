@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useId, useState } from 'react';
 import type { AdminProject } from '@mmt/contracts';
 import { adminProjectsApi } from '../../api/adminProjects';
@@ -7,6 +6,7 @@ import { explainProjectLifecycleConflict } from '../../lib/projectLifecycleConfl
 import { formatDate } from '../../lib/format';
 import { Dialog } from '../Dialog';
 import { ErrorNotice } from '../Feedback';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 /**

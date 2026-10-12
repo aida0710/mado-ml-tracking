@@ -11,6 +11,7 @@ import {
   hooksTextTemplates,
 } from '../i18n/hooks';
 import { jobsTextTemplates } from '../i18n/jobs';
+import { formatList } from '../i18n/textJoining';
 
 export { hookWebhookPath };
 
@@ -34,20 +35,20 @@ export function hookFilterEntries(
 ): Array<[string, string]> {
   const entries: Array<[string, string]> = [];
   if (filter.modelFamilies?.length)
-    entries.push([text.hookFilterModelFamilies, filter.modelFamilies.join(', ')]);
+    entries.push([text.hookFilterModelFamilies, formatList(filter.modelFamilies)]);
   if (filter.experimentIds?.length)
     entries.push([
       text.hookFilterExperiments,
-      filter.experimentIds
-        .map((id) => catalog?.experiments.find((experiment) => experiment.id === id)?.name ?? id)
-        .join(', '),
+      formatList(
+        filter.experimentIds.map((id) => catalog?.experiments.find((experiment) => experiment.id === id)?.name ?? id),
+      ),
     ]);
   if (filter.runKinds?.length)
-    entries.push([text.hookFilterRunKinds, filter.runKinds.map((kind) => text[kind]).join(', ')]);
+    entries.push([text.hookFilterRunKinds, formatList(filter.runKinds.map((kind) => text[kind]))]);
   if (filter.runStatuses?.length)
     entries.push([
       text.hookFilterRunStatuses,
-      filter.runStatuses.map((status) => text[status]).join(', '),
+      formatList(filter.runStatuses.map((status) => text[status])),
     ]);
   if (filter.tags && Object.keys(filter.tags).length)
     entries.push([text.hookFilterTags, JSON.stringify(filter.tags)]);

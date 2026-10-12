@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useEffect, useState } from 'react';
 import { MEDIA_COMPARE_MAX_RUNS, type ReportMediaBlock } from '@mmt/contracts';
 import { useMediaCompareChoices } from '../../hooks/useMediaCompare';
@@ -8,6 +7,7 @@ import { ErrorNotice } from '../Feedback';
 import { MediaStepChecklist } from '../media/MediaStepChecklist';
 import { NameSelect } from './NameSelect';
 import { RunChecklist } from './RunSetPicker';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 import { formatList } from '../../i18n/textJoining';
 

@@ -77,13 +77,17 @@
   flex: 0 0 auto;
   color: var(--muted);
 }
-/* The dropdown sits in the top layer (popover="manual"); useAnchoredPopover sets where and how big. */
-.project-switcher-popover {
+/* A dropdown in the top layer (popover="manual") next to its button: the Project switcher and the
+   language picker. useAnchoredPopover sets where and how big. */
+.anchored-popover {
   position: fixed;
   inset: auto;
   margin: 0;
-  padding: 0;
+  min-width: 0;
   z-index: 30;
+}
+.project-switcher-popover {
+  padding: 0;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;

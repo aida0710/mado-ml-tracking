@@ -1,5 +1,5 @@
-import { useLocale } from '../i18n/useLocale';
 import type { JobStatus } from '@mmt/contracts';
+import { useLocale } from '../i18n/useLocale';
 import { sweepTrialStateLabels } from '../i18n/sweeps';
 import { text } from '../i18n/catalog';
 

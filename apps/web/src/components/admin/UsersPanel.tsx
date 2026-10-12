@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { AdminUser, AdminUserQuery } from '@mmt/contracts';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -14,6 +13,7 @@ import { SettingsPageHeader } from '../SettingsPageHeader';
 import { LocalUserDialog } from './LocalUserDialog';
 import { TemporaryPasswordNotice } from './TemporaryPasswordNotice';
 import { UsersTable, type UserAction } from './UsersTable';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 interface PendingAction {
@@ -121,7 +121,7 @@ export function UsersPanel() {
         />
         <button className="button">{text.search}</button>
         <select
-          aria-label={text.userStatusFilter}
+          aria-label={text.status}
           value={filter.status ?? ''}
           onChange={(event) =>
             setFilter({

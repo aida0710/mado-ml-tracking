@@ -1,8 +1,8 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useMemo } from 'react';
 import { highlightCode } from '@mado/design-system/code';
 import { useCodeLanguage } from '../../hooks/useCodeLanguage';
 import { PreviewFormatSelect, TABLE_PREVIEW_FORMAT } from './PreviewFormatSelect';
+import { useLocale } from '../../i18n/useLocale';
 
 /** The format a text is colored as, and the user's pick (useCodeLanguage). */
 export type CodeLanguageState = ReturnType<typeof useCodeLanguage>;

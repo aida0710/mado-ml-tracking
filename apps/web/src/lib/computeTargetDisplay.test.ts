@@ -54,7 +54,7 @@ describe('Compute targetの表示', () => {
 
   it('siteのGPUはJobごとの数として表示する', () => {
     expect(formatTargetGpus(siteTarget)).toBe('Jobごとに数を指定');
-    expect(formatTargetGpus(computeTarget)).toBe('0, 1');
+    expect(formatTargetGpus(computeTarget)).toBe('0、1');
     expect(formatTargetGpus({ ...computeTarget, gpuIds: [] })).toBe('CPUのみ');
   });
 

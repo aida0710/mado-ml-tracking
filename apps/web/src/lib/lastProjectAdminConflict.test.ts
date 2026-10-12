@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RequestError } from '../api/http';
-import { text } from '../i18n/catalog';
 import { explainLastProjectAdminConflict } from './lastProjectAdminConflict';
+import { text } from '../i18n/catalog';
 
 describe('最後のProject adminを外す変更', () => {
   it('409は管理者がいなくなる理由の文言に置き換える', async () => {

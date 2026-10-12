@@ -1,10 +1,10 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import type { Artifact } from '@mmt/contracts';
 import { artifactLifecycleApi } from '../api/artifactLifecycle';
 import { usePopover } from '../hooks/usePopover';
 import { ConfirmDialog } from './ConfirmDialog';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**

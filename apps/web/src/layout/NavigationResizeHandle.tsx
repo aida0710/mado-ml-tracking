@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import { useRef, useState } from 'react';
-import { text } from '../i18n/catalog';
 import { NAVIGATION_WIDTH } from '../lib/navigationWidth';
+import { useLocale } from '../i18n/useLocale';
+import { text } from '../i18n/catalog';
 
 /**
  * The right edge of the full sidebar: drag it, or focus it and press ←/→ (Home/End for the

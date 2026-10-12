@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { Project } from '@mmt/contracts';
 import type { QueryState } from '../hooks/useQuery';
@@ -6,6 +5,7 @@ import { Dialog } from '../components/Dialog';
 import { Resource } from '../components/Feedback';
 import { OptionPicker } from '../components/OptionPicker';
 import { TokenDialog } from './TokenDialog';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /** Chooses the Project before opening the shared token form outside a Project's settings. */

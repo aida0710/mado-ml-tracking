@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Download } from 'lucide-react';
@@ -33,6 +32,7 @@ import {
   parseComparedRunIds,
   type ComparisonTableRow,
 } from '../lib/comparisonRows';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 // URL parameters, so a comparison with its baseline can be shared as a link.
@@ -42,18 +42,18 @@ const TAB_PARAM = 'tab';
 const compareTabs = ['details', 'artifacts', 'media', 'analysis'] as const;
 type CompareTab = (typeof compareTabs)[number];
 const compareTabLabels: Record<CompareTab, string> = {
-  get details() { return text.details },
-  get artifacts() { return text.artifacts },
-  get media() { return text.mediaTab },
-  get analysis() { return text.analysisTab },
+  get details() { return text.details; },
+  get artifacts() { return text.artifacts; },
+  get media() { return text.mediaTab; },
+  get analysis() { return text.analysisTab; },
 };
 
 const rowGroupLabels: Record<ComparisonTableRow['group'], string> = {
-  get modelVersion() { return text.comparisonModelVersion },
-  get datasetVersions() { return text.comparisonDatasetVersions },
-  get params() { return text.parameters },
-  get metrics() { return text.metrics },
-  get tags() { return text.tags },
+  get modelVersion() { return text.comparisonModelVersion; },
+  get datasetVersions() { return text.comparisonDatasetVersions; },
+  get params() { return text.parameters; },
+  get metrics() { return text.metrics; },
+  get tags() { return text.tags; },
 };
 
 export function ComparePage() {

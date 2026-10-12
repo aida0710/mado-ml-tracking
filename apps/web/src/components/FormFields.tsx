@@ -1,9 +1,9 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import type { FormField, FormValues } from '../types/form';
 import { getFieldValue, getSelectedValues, toggleValue } from '../lib/formValues';
 import { SuggestionInput } from './SuggestionInput';
 import { CheckboxList } from './CheckboxList';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 function RequiredMark() {

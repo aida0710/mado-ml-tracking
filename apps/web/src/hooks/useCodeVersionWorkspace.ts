@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useRef, useState } from 'react';
 import type { CodeVersion } from '@mmt/contracts';
 import type { FormValues } from '../types/form';
@@ -11,8 +10,9 @@ import { getFieldValue } from '../lib/formValues';
 import { useCodeVersionForm } from './useCodeVersionForm';
 import { useCodeWorkspace } from './useCodeWorkspace';
 import { useUnsavedChanges } from './useUnsavedChanges';
-import { text } from '../i18n/catalog';
 import { useFailureMessage } from './useFailureMessage';
+import { useLocale } from '../i18n/useLocale';
+import { text } from '../i18n/catalog';
 
 export function useCodeVersionWorkspace({ projectId, codeId, initialVersion, versions, onNavigationDiscard }: {
   projectId: string; codeId: string; initialVersion?: CodeVersion; versions: CodeVersion[];

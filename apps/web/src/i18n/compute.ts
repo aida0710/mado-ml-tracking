@@ -56,7 +56,6 @@ export const computeText = localized({
   targetCheckFreeSpace: '作業ディレクトリの空き',
   detectedGpus: '検出したGPU',
   gpuIndex: 'Index',
-  gpuName: '名前',
   gpuMemory: 'メモリ',
   gpuUuid: 'UUID',
   noDetectedGpus: 'nvidia-smiはGPUを報告しませんでした',

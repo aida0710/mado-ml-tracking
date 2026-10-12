@@ -1,12 +1,12 @@
 import type { PluginConnection } from '@mmt/contracts';
-import { useLocale } from '../../i18n/useLocale';
-import { pluginsText } from '../../i18n/plugins';
-import { text } from '../../i18n/catalog';
 import { useProject } from '../../hooks/useProject';
 import { useMadoPluginForm } from '../../hooks/useMadoPluginForm';
 import { Dialog } from '../../components/Dialog';
 import { ErrorNotice } from '../../components/Feedback';
 import { FormFields } from '../../components/FormFields';
+import { useLocale } from '../../i18n/useLocale';
+import { pluginsText } from '../../i18n/plugins';
+import { text } from '../../i18n/catalog';
 
 export function MadoSettingsDialog({ plugin, onClose, onSaved }: {
   plugin: PluginConnection | null;

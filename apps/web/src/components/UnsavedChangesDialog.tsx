@@ -1,5 +1,5 @@
-import { useLocale } from '../i18n/useLocale';
 import { Dialog } from './Dialog';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 export function UnsavedChangesDialog({ onDiscard, onKeepEditing }: {

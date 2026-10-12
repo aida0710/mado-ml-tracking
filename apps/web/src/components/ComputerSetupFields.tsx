@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import {
   CPU_ARCHES,
   type CpuArch,
@@ -17,6 +16,7 @@ import {
 } from '../lib/computerSetupValues';
 import { getFieldValue, getSelectedValues, toggleValue } from '../lib/formValues';
 import { EXECUTION_RUNTIME_KINDS } from '../lib/runtimeValidation';
+import { useLocale } from '../i18n/useLocale';
 import { cpuArchLabels } from '../i18n/compute';
 import { runtimeLabels } from '../i18n/runtime';
 import { text, textTemplates } from '../i18n/catalog';

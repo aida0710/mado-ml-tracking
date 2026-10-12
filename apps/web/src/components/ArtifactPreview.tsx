@@ -1,8 +1,6 @@
-import { useLocale } from '../i18n/useLocale';
 import type { Artifact } from '@mmt/contracts';
 import { artifactMediaKind } from '../lib/artifactMediaKind';
 import { tabularTextFormat } from '../lib/tabularText';
-import { text } from '../i18n/catalog';
 import { AudioArtifactViewer } from './preview/AudioArtifactViewer';
 import { ImagePreview } from './preview/ImagePreview';
 import { MediaTablePreview } from './preview/MediaTablePreview';
@@ -10,6 +8,8 @@ import { PreviewDownloadNotice } from './preview/PreviewDownloadNotice';
 import { TabularTextPreview } from './preview/TabularTextPreview';
 import { TextPreview } from './preview/TextPreview';
 import { VideoPreview } from './preview/VideoPreview';
+import { useLocale } from '../i18n/useLocale';
+import { text } from '../i18n/catalog';
 
 /** Chooses the preview for an Artifact's media kind; each kind lives in components/preview/. */
 export function ArtifactPreview({ artifact }: { artifact: Artifact }) {

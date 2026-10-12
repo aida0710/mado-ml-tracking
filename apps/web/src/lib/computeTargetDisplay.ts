@@ -4,14 +4,14 @@ import type {
   TargetCheckHost,
   TargetCheckItemName,
 } from '@mmt/contracts';
-import { text, textTemplates } from '../i18n/catalog';
 import { formatBytes } from './format';
+import { text, textTemplates } from '../i18n/catalog';
 import {
   computeTargetExecutorLabels,
   submissionModeBadgeLabels,
   targetCheckItemLabels,
 } from '../i18n/compute';
-import { formatNote } from '../i18n/textJoining';
+import { formatList, formatNote } from '../i18n/textJoining';
 
 // Shown where a computer has nothing to tell (no connection, no facts from its check).
 const NO_VALUE = '—';
@@ -50,7 +50,7 @@ export function targetChoiceLabel(
 /** The GPUs a target offers: its GPU IDs, or for a site the count each Job asks for. */
 export function formatTargetGpus(target: Pick<ComputeTarget, 'executor' | 'gpuIds'>): string {
   if (target.executor === 'site') return text.targetGpuPerJob;
-  return target.gpuIds.join(', ') || text.cpuOnly;
+  return formatList(target.gpuIds) || text.cpuOnly;
 }
 
 /**

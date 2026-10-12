@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { useModalDialog } from '../hooks/useModalDialog';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

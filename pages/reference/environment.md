@@ -1,6 +1,6 @@
 ---
 title: 環境変数
-description: API server、preview worker、worker、Python SDK、Mado pluginの環境変数の一覧と既定値。
+description: API server（標準搭載のMado連携を含む）、preview worker、worker、Python SDKの環境変数の一覧と既定値。
 ---
 
 # 環境変数
@@ -95,6 +95,18 @@ openssl rand -base64 32
 | `MMT_SMTP_FROM` | なし | 送信元のアドレス。例: `mado ML Tracking <mmt@example.com>` |
 | `NODE_EXTRA_CA_CERTS` | なし | 社内CAの証明書（PEM）のパス。SMTPやWebhookの送信先の検証に使う |
 
+## Mado連携 {#mado-plugin}
+
+Mado連携はAPI serverに標準搭載されています。別のサービスや、連携だけの`.env`はありません。連携のためにAPI serverの`.env`に置くのは、接続キーを暗号化する鍵だけです。MadoのURL、Namespace、接続キーは環境変数ではなく、全体管理者がProjectの［連携］で保存します（[Mado連携](/admin/plugins)）。
+
+| 変数 | 既定 | 内容 |
+| --- | --- | --- |
+| `MMT_PLUGIN_SECRET_KEY` | なし | Madoの接続キーをDBで暗号化する鍵（base64の32 byte）。Mado連携を使わないなら不要。無いと接続キーを保存できず、連携を有効にできない |
+
+- 鍵は`openssl rand -base64 32`で作り、ほかの暗号鍵（`MMT_SESSION_ENCRYPTION_KEY`、`MMT_STORAGE_SECRET_KEY`、`MMT_HOOK_SECRET_KEY`）とは別の値にします。
+- 接続キーを保存したあとは、鍵を変えたり消したりしないでください。保存済みのキーを復号できなくなります。鍵を失ったときは、元の鍵を戻すか、保存済みの接続キーをすべて入れ直します。DBを復元するときにも要るので、鍵も安全な場所に保管してください。
+- 以前の別サービス方式で本体に置いた`MMT_MADO_PLUGIN_TOKEN`は、もう読みません。旧サービスからの移り方は[旧HTTPサービスから移行する](/admin/plugins#migrate-a-legacy-bridge)を参照してください。
+
 ## そのほかのAPI serverの設定
 
 | 変数 | 既定 | 内容 |
@@ -103,7 +115,6 @@ openssl rand -base64 32
 | `MMT_CSV_EXPORT_MAX_ROWS` | `50000` | Run検索のCSV出力の最大行数 |
 | `MMT_REPORT_SNAPSHOT_MAX_BYTES` | `52428800` | 共有レポートの1つのバージョンで固定するデータの上限（バイト） |
 | `MMT_GIT_SSH_KEY_PATH`、`MMT_GIT_KNOWN_HOSTS_PATH` | なし | エディタへSSHのGitリポジトリを読み込むための秘密鍵とknown_hosts（絶対パス）。両方を設定する |
-| `MMT_PLUGIN_SECRET_KEY` | なし | 内蔵Madoの接続キーを暗号化する専用の鍵（32 bytesのbase64）。設定なし・無効なら不要。有効化前に設定し、再起動で変更しない（[Mado連携](/admin/plugins)） |
 
 ## preview worker
 
@@ -159,7 +170,3 @@ workerはJobの実行コードに次の変数を渡します。実行コード�
 | `MMT_UPSTREAM_RUN_ID`、`MMT_UPSTREAM_RUN_FILE` | 上流のRun（あるときだけ） |
 | `MMT_RESUME_CHECKPOINT_DIR`、`MMT_RESUME_STEP`、`MMT_RESUME_CHECKPOINT_FILE` | 再開元のcheckpoint（再開するときだけ） |
 | `MMT_OUTPUTS_DIR`、`MMT_RESULT_FILE` | 出力のディレクトリと`result.json`のパス |
-
-## Mado plugin
-
-Mado pluginは別のサービスで、自分の`.env`を持ちます。一覧は[PluginとMado連携](/admin/plugins)の「Pluginの`.env`」を参照してください。

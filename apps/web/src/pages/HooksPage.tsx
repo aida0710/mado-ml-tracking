@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -19,6 +18,7 @@ import { HookDetails } from '../components/HookDetails';
 import { HookExecutionsTable } from '../components/HookExecutionsTable';
 import { HookDialog } from '../dialogs/HookDialog';
 import { canManageHooks, canTransferHookOwners, isGlobalAdmin } from '../lib/permissions';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { hooksTextTemplates } from '../i18n/hooks';
 

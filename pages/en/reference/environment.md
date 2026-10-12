@@ -1,6 +1,6 @@
 ---
 title: Environment variables
-description: Environment variables and defaults of the API server, the preview worker, the worker, the Python SDK, and the Mado plugin.
+description: Environment variables and defaults of the API server (including the built-in Mado integration), the preview worker, the worker, and the Python SDK.
 ---
 
 # Environment variables
@@ -95,6 +95,18 @@ See [Notifications and operations alerts](/en/admin/notifications).
 | `MMT_SMTP_FROM` | None | Sender address. Example: `mado ML Tracking <mmt@example.com>` |
 | `NODE_EXTRA_CA_CERTS` | None | Path of an internal CA certificate (PEM), used to verify SMTP servers and webhook destinations |
 
+## Mado integration {#mado-plugin}
+
+The Mado integration is built into the API server. There is no separate service and no `.env` of its own. The only variable it needs in the API server's `.env` is the key that encrypts connection keys. Mado URLs, namespaces, and connection keys are not environment variables: a global administrator saves them in **Integrations** in the Project ([Mado integration](/en/admin/plugins)).
+
+| Variable | Default | Content |
+| --- | --- | --- |
+| `MMT_PLUGIN_SECRET_KEY` | None | Key that encrypts Mado connection keys in the database (base64 of 32 bytes). Not needed if you do not use the Mado integration. Without it, connection keys cannot be saved and the integration cannot be enabled |
+
+- Generate the key with `openssl rand -base64 32`, and use a value different from the other encryption keys (`MMT_SESSION_ENCRYPTION_KEY`, `MMT_STORAGE_SECRET_KEY`, `MMT_HOOK_SECRET_KEY`).
+- Once connection keys are saved, do not change or remove the key: the saved keys could no longer be decrypted. If the key is lost, restore it or re-enter every saved connection key. Restoring the database needs it too, so keep the key somewhere safe.
+- `MMT_MADO_PLUGIN_TOKEN`, which the old separate-service setup put on the API server, is no longer read. To move from the old service, see [Migrate a legacy bridge](/en/admin/plugins#migrate-a-legacy-bridge).
+
 ## Other API server settings
 
 | Variable | Default | Content |
@@ -103,7 +115,6 @@ See [Notifications and operations alerts](/en/admin/notifications).
 | `MMT_CSV_EXPORT_MAX_ROWS` | `50000` | Maximum rows of a Run search CSV export |
 | `MMT_REPORT_SNAPSHOT_MAX_BYTES` | `52428800` | Limit (bytes) of fixed data in one revision of a shared report |
 | `MMT_GIT_SSH_KEY_PATH`, `MMT_GIT_KNOWN_HOSTS_PATH` | None | Private key and known_hosts (absolute paths) for loading SSH Git repositories into the editor. Set both |
-| `MMT_PLUGIN_SECRET_KEY` | None | Dedicated encryption key for built-in Mado credentials (base64 of 32 bytes). Optional while unconfigured/disabled; keep the key across restarts ([Mado integration](/en/admin/plugins)) |
 
 ## Preview worker
 
@@ -159,7 +170,3 @@ The worker passes these variables to a Job's code. The code only reads them; you
 | `MMT_UPSTREAM_RUN_ID`, `MMT_UPSTREAM_RUN_FILE` | The upstream Run (only when there is one) |
 | `MMT_RESUME_CHECKPOINT_DIR`, `MMT_RESUME_STEP`, `MMT_RESUME_CHECKPOINT_FILE` | The checkpoint to resume from (only when resuming) |
 | `MMT_OUTPUTS_DIR`, `MMT_RESULT_FILE` | The output directory and the path of `result.json` |
-
-## Mado plugin
-
-The Mado plugin is a separate service with its own `.env`. See "Plugin `.env`" in [Plugins and Mado integration](/en/admin/plugins).

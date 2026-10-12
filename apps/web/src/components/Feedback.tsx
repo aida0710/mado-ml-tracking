@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { AlertCircle, LoaderCircle, RefreshCw } from 'lucide-react';
 import type { QueryState } from '../hooks/useQuery';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { localizeMessage } from '../i18n/messageTranslations';
 

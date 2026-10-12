@@ -1,11 +1,11 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { authApi } from '../api/auth';
 import { useMutation } from '../hooks/useMutation';
 import { ErrorNotice } from './Feedback';
-import { text } from '../i18n/catalog';
 import { changePasswordErrorMessage } from '../lib/authErrorMessages';
 import { LocalizedError } from '../lib/localizedError';
+import { useLocale } from '../i18n/useLocale';
+import { text } from '../i18n/catalog';
 
 /** Changes the signed-in local user's password; the API keeps this session and ends the others. */
 export function PasswordChangeForm({

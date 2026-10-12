@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import type { Model, ModelAliasProtection, ModelAliasProtectionRole } from '@mmt/contracts';
@@ -14,6 +13,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { ResponsiveTable } from './ResponsiveTable';
 import { Resource } from './Feedback';
 import { FormDialog } from './FormDialog';
+import { useLocale } from '../i18n/useLocale';
 import { aliasProtectionRoleLabels, promotionTextTemplates } from '../i18n/promotion';
 import { text } from '../i18n/catalog';
 

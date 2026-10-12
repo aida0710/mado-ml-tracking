@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { RequestError } from '../api/http';
-import { setLocale } from '../i18n/locale';
 import { formatErrorMessage } from './errorMessage';
 import { explainUploadFailure } from './uploadFailure';
+import { setLocale } from '../i18n/locale';
 
 afterEach(() => setLocale('ja'));
 

@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { TokenScope } from '@mmt/contracts';
 import { CheckboxList } from './CheckboxList';
 import { OptionPicker } from './OptionPicker';
@@ -9,6 +8,7 @@ import {
   type TokenPurposeOption,
   type TokenScopeChoice,
 } from '../lib/tokenPurposes';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { tokenPurposeLabels, tokenScopeLabels } from '../i18n/serviceAccounts';
 

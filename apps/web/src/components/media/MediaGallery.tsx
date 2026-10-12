@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import type { ArtifactMediaInfo, RunMedia } from '@mmt/contracts';
 import { useExclusiveAudio } from '../../hooks/useExclusiveAudio';
 import { formatAudioTime } from '../../lib/audioTimeline';
@@ -7,14 +6,16 @@ import { AudioArtifactViewer } from '../preview/AudioArtifactViewer';
 import { ImagePreview } from '../preview/ImagePreview';
 import { VideoPreview } from '../preview/VideoPreview';
 import { MediaTableView } from './MediaTableView';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
+import { artifactsTextTemplates } from '../../i18n/artifacts';
 
 function MediaInfoLine({ info }: { info: ArtifactMediaInfo }) {
   useLocale();
   return (
     <p className="muted mono media-info">
       {[
-        `${info.sampleRate.toLocaleString('en-US')} Hz`,
+        artifactsTextTemplates.audioSampleRateValue(info.sampleRate),
         `${info.channels}ch`,
         formatAudioTime(info.durationSeconds),
         info.codec,

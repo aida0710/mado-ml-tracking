@@ -1,5 +1,5 @@
-import { text, textTemplates } from '../i18n/catalog';
 import { findComparisonKindError } from './runFilterValueKinds';
+import { text, textTemplates } from '../i18n/catalog';
 
 /** What the Run search box sends: a name substring, or an MLflow search filter. */
 export type RunSearchConditions = { name: string } | { filter: string } | Record<string, never>;

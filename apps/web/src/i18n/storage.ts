@@ -7,7 +7,6 @@ export const storageText = localized({
   storageBackendKind: '種類',
   storageLocation: '保存場所',
   storageSignature: '署名',
-  storageState: '状態',
   storageSource: '定義元',
   storageSourceEnvironment: '環境変数',
   storageSourceDatabase: '画面',

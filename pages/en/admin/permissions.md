@@ -47,7 +47,7 @@ A global administrator signed in from a browser can operate any Project as an Ad
 | --- | --- |
 | Viewer | View experiments, Runs, models, datasets, and Artifacts |
 | Editor | Everything Viewer can, plus recording experiments, registering models and datasets (including deleting dataset versions nothing uses), running Jobs and stopping or retrying the Jobs they started, and changing aliases (a protected alias only with a passing promotion check) |
-| Admin | Everything Editor can, plus stopping or retrying Jobs started by others, Project settings (description, visibility, storage), members and group grants, Service Accounts, the Project token list, notification rules, transferring automation owners, deleting Artifacts, using plugins, the Project audit log, and archiving the Project |
+| Admin | Everything Editor can, plus stopping or retrying Jobs started by others, Project settings (description, visibility, storage), members and group grants, Service Accounts, the Project token list, notification rules, transferring automation owners, deleting Artifacts, using the Mado integration (checking the connection, importing datasets, resending events), the Project audit log, and archiving the Project |
 
 Any user who is not disabled can create a Project: click **Create project** at the bottom of the Project switcher. The creator becomes an Admin of the new Project. See [Create and manage Projects](/en/admin/projects) for the steps.
 
@@ -103,7 +103,7 @@ The effective role is the same on the screen, in the native API, in the MLflow-c
 
 The member is added when the user appears in the list.
 
-Service Accounts appear in **Members** too, marked **Service account**. Their role and disabling are changed under **Service accounts**; their **Members** row has no actions.
+Service Accounts appear in **Members** too, marked **Service account**. Their role and disabling are changed under **Service accounts**: instead of **Change** and **Remove**, the **Actions** column of their row shows **Change in Service accounts**, which jumps to that section.
 
 Someone who is not a Project Admin sees, in the **Project** part of **Project settings**, the names of the Admins who can change it.
 

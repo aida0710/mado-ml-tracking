@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ComputeTargetDetails } from '@mmt/contracts';
 import { siteComputersApi } from '../api/siteComputers';
 import { useQueryPolledWhileActive } from '../hooks/useQueryPolledWhileActive';
@@ -6,6 +5,7 @@ import { Resource } from './Feedback';
 import { SiteConnectionChecks } from './SiteConnectionChecks';
 import { SiteLoginKey } from './SiteLoginKey';
 import { isKeyReady, isKeyRequested, sharedAccountKey } from '../lib/siteComputerDisplay';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

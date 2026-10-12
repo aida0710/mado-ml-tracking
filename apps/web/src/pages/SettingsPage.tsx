@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { useProject } from '../hooks/useProject';
 import { useAuditEvents } from '../hooks/useAuditEvents';
@@ -21,6 +20,7 @@ import {
   PROJECT_SETTINGS_SECTION_IDS as sectionIds,
   projectSettingsSections,
 } from '../lib/projectSettingsSections';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

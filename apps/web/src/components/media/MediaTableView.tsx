@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { runMediaApi } from '../../api/runMedia';
@@ -7,6 +6,7 @@ import { useQuery } from '../../hooks/useQuery';
 import { countErrorCells, MEDIA_TABLE_PAGE_SIZE, tablePageCount } from '../../lib/mediaTableCells';
 import { Resource } from '../Feedback';
 import { MediaCell } from './MediaCell';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 /**

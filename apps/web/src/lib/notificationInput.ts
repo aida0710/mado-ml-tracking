@@ -8,8 +8,6 @@ import type {
   NotificationRuleFilter,
   RunKind,
 } from '@mmt/contracts';
-import { text } from '../i18n/catalog';
-import { notificationsTextTemplates } from '../i18n/notifications';
 import {
   getFieldValue,
   getOptionalValue,
@@ -17,6 +15,8 @@ import {
   splitLines,
   type FormValues,
 } from './formValues';
+import { text } from '../i18n/catalog';
+import { notificationsTextTemplates } from '../i18n/notifications';
 import { formatList } from '../i18n/textJoining';
 
 /** The channel scope field: every Project, or only the Project being edited. */

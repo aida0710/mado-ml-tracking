@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import type { Project } from '@mmt/contracts';
-import { text } from '../i18n/catalog';
 import { ProjectSwitcher } from './ProjectSwitcher';
+import { useLocale } from '../i18n/useLocale';
+import { text } from '../i18n/catalog';
 
 /**
  * Which Project is open and the user's role in it. On wide screens it heads the navigation sidebar

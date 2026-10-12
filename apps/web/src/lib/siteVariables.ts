@@ -1,6 +1,6 @@
 import { MAX_SITE_VARIABLES, SITE_VARIABLE_NAME_PATTERN } from '@mmt/contracts';
-import { siteComputersTextTemplates } from '../i18n/siteComputers';
 import { LocalizedError } from './localizedError';
+import { siteComputersTextTemplates } from '../i18n/siteComputers';
 
 const NAME_VALUE_SEPARATOR = '=';
 
