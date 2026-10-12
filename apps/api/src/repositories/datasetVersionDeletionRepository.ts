@@ -20,7 +20,8 @@ export async function countDatasetVersionReferences(
       (SELECT count(*)::int FROM jobs WHERE project_id=$1 AND dataset_partition_version_id=$2) AS job_partition,
       (SELECT count(*)::int FROM run_output_declarations WHERE project_id=$1 AND dataset_version_id=$2) AS output_declaration,
       ((SELECT count(*)::int FROM mlflow_datasets WHERE project_id=$1 AND dataset_version_id=$2)
-        + (SELECT count(*)::int FROM mlflow_run_dataset_inputs WHERE project_id=$1 AND dataset_version_id=$2)) AS mlflow_dataset`,
+        + (SELECT count(*)::int FROM mlflow_run_dataset_inputs WHERE project_id=$1 AND dataset_version_id=$2)) AS mlflow_dataset,
+      (SELECT count(*)::int FROM workflow_version_inputs WHERE project_id=$1 AND dataset_version_id=$2) AS workflow_version`,
     [version.projectId, version.id],
   ))!;
 }

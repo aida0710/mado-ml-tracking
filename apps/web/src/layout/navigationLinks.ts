@@ -21,17 +21,18 @@ type ProjectScreen =
   | 'lineage'
   | 'jobs'
   | 'hooks'
+  | 'workflows'
   | 'compute'
   | 'plugins'
   | 'settings';
 
-// The fourteen Project screens in the groups the sidebar and the drawer show, in display order.
+// Project screens in the groups the sidebar and the drawer show, in display order.
 // The 全体設定 screens have groups of their own, shown only away from a Project.
 const SCREEN_GROUPS: { label: string; screens: ProjectScreen[] }[] = [
   { get label() { return text.navigationGroupTracking }, screens: ['experiments', 'sweeps', 'reports'] },
   { get label() { return text.navigationGroupModels }, screens: ['models', 'tasks', 'codes'] },
   { get label() { return text.navigationGroupData }, screens: ['datasets', 'artifacts', 'lineage'] },
-  { get label() { return text.navigationGroupExecution }, screens: ['jobs', 'hooks', 'compute'] },
+  { get label() { return text.navigationGroupExecution }, screens: ['workflows', 'jobs', 'hooks', 'compute'] },
   { get label() { return text.navigationGroupProjectManagement }, screens: ['plugins', 'settings'] },
 ];
 

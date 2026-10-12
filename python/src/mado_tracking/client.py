@@ -19,6 +19,7 @@ from . import (
     hooks,
     job_arrays,
     service_accounts,
+    workflows,
 )
 from .api_paths import path_id
 from .artifact_downloads import download_resumable_sync
@@ -90,6 +91,14 @@ class Client(ExperimentTasksClient):
     transfer_hook_owner = hooks.transfer_hook_owner
     create_job_array = job_arrays.create_job_array
     get_job_array = job_arrays.get_job_array
+    create_workflow = workflows.create_workflow
+    get_workflow = workflows.get_workflow
+    list_workflow_versions = workflows.list_workflow_versions
+    create_workflow_version = workflows.create_workflow_version
+    launch_workflow = workflows.launch_workflow
+    get_workflow_execution = workflows.get_workflow_execution
+    cancel_workflow_execution = workflows.cancel_workflow_execution
+    list_workflow_executions = workflows.list_workflow_executions
 
     def __init__(
         self,

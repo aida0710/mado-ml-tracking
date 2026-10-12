@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 import runpy
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,6 +34,8 @@ def main() -> None:
         if not isinstance(value, str):
             raise SystemExit("Worker settings must be strings")
         os.environ[name] = value
+    # The worker CLI has its own arguments; this wrapper's --settings has already been consumed.
+    sys.argv = [sys.argv[0], "run"]
     runpy.run_module("mado_tracking.worker.cli", run_name="__main__")
 
 

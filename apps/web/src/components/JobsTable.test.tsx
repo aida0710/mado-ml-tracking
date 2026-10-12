@@ -20,6 +20,8 @@ const listItem = (overrides: Partial<JobListItem>): JobListItem => ({
   hasResumeCheckpoint: false,
   sweepTrial: null,
   automationRule: null,
+  workflowExecution: null,
+  requiredWorkerCapabilities: [],
   ...overrides,
 });
 const siteJob = listItem({
@@ -118,6 +120,35 @@ describe('Jobsの一覧', () => {
     const without = render([listItem({ ...failed, id: 'b', hasResumeCheckpoint: false })]);
     expect(without).not.toContain('最新checkpointから再開');
     expect(without).toContain('新しいRunで再実行');
+  });
+
+  it('ワークフローのステップのJobには、APIが断る再実行ではなくワークフローの画面での再開を案内する', () => {
+    const html = render([
+      listItem({
+        id: 'step',
+        status: 'failed',
+        hasResumeCheckpoint: true,
+        workflowExecution: { workflowId: 'wf-1', executionId: 'ex-1' },
+      }),
+    ]);
+    expect(html).not.toContain('新しいRunで再実行');
+    expect(html).not.toContain('最新checkpointから再開');
+    expect(html).toContain('href="/projects/project/workflows/wf-1?execution=ex-1"');
+    expect(html).toContain('ワークフローの画面で再開');
+  });
+
+  it('完了したワークフローのステップのJobには、再開ではなくワークフローを開く案内を出す', () => {
+    const html = render([
+      listItem({
+        id: 'step',
+        status: 'finished',
+        workflowExecution: { workflowId: 'wf-1', executionId: 'ex-1' },
+      }),
+    ]);
+    expect(html).not.toContain('再開');
+    expect(html).not.toContain('新しいRunで再実行');
+    expect(html).toContain('href="/projects/project/workflows/wf-1?execution=ex-1"');
+    expect(html).toContain('ワークフローを開く');
   });
 
   it('人が最大試行回数を超えて再実行したJobは、上限が自動の再実行のものだと示す', () => {

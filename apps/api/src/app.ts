@@ -57,6 +57,15 @@ import { RunSearchService } from './services/runSearchService.js';
 import { MetricSeriesService } from './services/metricSeriesService.js';
 import { RunAnalysisService } from './services/runAnalysisService.js';
 import { TaskService } from './services/taskService.js';
+import { WorkflowDefinitionService } from './services/workflowDefinitionService.js';
+import { WorkflowExecutionService } from './services/workflowExecutionService.js';
+import { WorkflowExecutor } from './services/workflowExecutor.js';
+import { WorkflowScheduler } from './services/workflowScheduler.js';
+import { PreprocessingReportService } from './services/preprocessingReportService.js';
+import { RunDatasetUsageService } from './services/runDatasetUsageService.js';
+import { workflowRoutes } from './routes/workflowRoutes.js';
+import { preprocessingReportRoutes } from './routes/preprocessingReportRoutes.js';
+import { runDatasetUsageRoutes } from './routes/runDatasetUsageRoutes.js';
 import { AuditService } from './services/auditService.js';
 import {
   RunCompletionService,
@@ -309,6 +318,16 @@ export function createApplication(options: ApplicationOptions) {
       : NO_IMAGE_PLATFORM_CHECK;
   const jobs = new JobService({ database, runs, config, runCompletion, jobTokens, imagePlatforms });
   const tasks = new TaskService(database, runs, jobs);
+  const workflowDefinitions = new WorkflowDefinitionService(database);
+  const workflowExecutor = new WorkflowExecutor(tasks);
+  const workflowExecutions = new WorkflowExecutionService({
+    database,
+    jobs,
+    executor: workflowExecutor,
+  });
+  const workflowScheduler = new WorkflowScheduler(database, workflowExecutor);
+  const preprocessingReports = new PreprocessingReportService(database);
+  const runDatasetUsage = new RunDatasetUsageService(database);
   const gitRepositories = new GitRepositoryReader({ ssh: config.repositorySsh });
   const repositories = new RepositoryFilesService(
     database,
@@ -525,6 +544,12 @@ export function createApplication(options: ApplicationOptions) {
   app.route('/api/projects', metricSeriesRoutes(metricSeries));
   app.route('/api/projects', runAnalysisRoutes(runAnalysis));
   app.route('/api/projects', taskRoutes(tasks));
+  app.route('/api/projects', preprocessingReportRoutes(preprocessingReports));
+  app.route('/api/projects', runDatasetUsageRoutes(runDatasetUsage));
+  app.route(
+    '/api/projects',
+    workflowRoutes({ definitions: workflowDefinitions, executions: workflowExecutions }),
+  );
   app.route(
     '/api/projects',
     runOutputRegistrationRoutes(new RunOutputRegistrationService(database)),
@@ -629,6 +654,7 @@ export function createApplication(options: ApplicationOptions) {
     operationsMonitor,
     siteJobMonitor,
     hookSweeper,
+    workflowScheduler,
     services: {
       auth,
       audit,
@@ -641,6 +667,10 @@ export function createApplication(options: ApplicationOptions) {
       metricSeries,
       runAnalysis,
       tasks,
+      workflowDefinitions,
+      workflowExecutions,
+      preprocessingReports,
+      runDatasetUsage,
       repositories,
       lineage,
       artifacts,

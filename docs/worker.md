@@ -304,6 +304,7 @@ SDKをimage内に入れた場合は従来のAPIを使える。SDKなしimageは�
 | `artifactsManifest`の1行 | 4KiB | 固定（ファイル全体は「ファイル数の上限×4KiB」まで） |
 | metrics | 1000点 | 固定 |
 | `models` / `datasets` | 16件 / 64件 | 固定（APIのRunごとの上限と同じ） |
+| `datasets[].path`のディレクトリの下のファイル数 | 100000 | 固定（APIの1つのDatasetVersionの上限`MAX_DATASET_VERSION_FILES`と同じ） |
 
 Python runtimeの出力も同じ検証・上限・転送になる。ファイル数の上限はtarget側のrunnerが検査するので、workerの設定はJobの起動時にspecで渡す（起動後に変えても、実行中のJobには効かない）。
 
@@ -328,7 +329,8 @@ SDKを入れないコンテナでも、実行時に決まる出力を自分で�
 ```
 
 - `artifactsManifest` は JSON Lines の出力ファイル。1行に1件 `{path, sha256, size, mimeType?}` を書き、各行は `artifacts` に足して扱う。音声推論のように数千ファイルを出すときは、`result.json`（1MiBまで）に並べずこちらへ書く。空行は無視する。manifest自身と`result.json`はRun Artifactとして保存しない。
-- `models[].path` と `datasets[].path` は `artifacts`（または `artifactsManifest`）に載せた出力ファイル。`modelId` は省略するとTaskの出力モデルへ登録する。Taskに出力モデルの設定が無いRunでは必須。Taskの出力モデルと別のModelは指定できない。
+- `models[].path` と `datasets[].path` は `artifacts`（または `artifactsManifest`）に載せた出力ファイル（`datasets[].path` はディレクトリでもよい。次項）。`modelId` は省略するとTaskの出力モデルへ登録する。Taskに出力モデルの設定が無いRunでは必須。Taskの出力モデルと別のModelは指定できない。
+- `datasets[].path` にはディレクトリも書ける（末尾の`/`は付けない。例: `"path": "prepared"`）。その下に載せた出力ファイルすべてを、1つのDatasetVersionのファイルとして登録する。前処理で数千の音声を1つのデータセットにするときに使う。DatasetVersionのファイルのパスはそのディレクトリからの相対パス（`prepared/speaker-2/b.wav`は`speaker-2/b.wav`）。ファイルを指定したときは`/mmt/outputs`からの相対パスのまま。下にファイルが1つも無いディレクトリ、100000件を超えるディレクトリは検証で失敗する。symlinkと`..`は、ファイルと同じく出力の検査で拒否する。`models[].path` はファイルだけ。
 - `datasets[]` は `path` と `uri`（外部の場所）のどちらか一方。`digest` は必須。`schema`・`metadata` はJSON object。
 - モデルを宣言できるのは training / finetuning の Run だけ（APIが422 `output_model_kind`で拒否し、Jobはfailedになる）。上限はRunごとにモデル16件・Dataset 64件で、超えた`result.json`はtarget側の検証で失敗する。
 - workerは全Artifactの保存とmetricsの送信の後、complete の前に `POST /worker/jobs/:id/outputs` で宣言を送る。`index` は `models` を0から、続けて `datasets` を `models.length` からの通し番号にする。登録できた `index` はjournalに残し、worker再起動後は未登録の分だけを送る。応答が失われて再送しても同じ `index` なので二重登録にならない。
@@ -503,13 +505,16 @@ logsとmetricsは少なくとも1回送る方式。APIの保存成功後に応�
 
 ## workerの在籍と応答途絶を確認する
 
-workerはclaimとresumeで`workerInfo`（パッケージ`mado-tracking`のバージョンとホスト名）をAPIへ送る。APIはtoken IDとworkerIdの組で`workers`へ記録し、Compute画面の「Workers」に接続状態、バージョン、ホスト名、最終応答、担当Job数を出す。一覧は`GET /projects/:p/workers`（viewer）と`GET /workers`（全体管理者）でも読める。
+workerはclaimとresumeで`workerInfo`（パッケージ`mado-tracking`のバージョン、ホスト名、対応する機能）をAPIへ送る。APIはtoken IDとworkerIdの組で`workers`へ記録し、Compute画面の「Workers」に接続状態、バージョン、ホスト名、最終応答、担当Job数を出す。一覧は`GET /projects/:p/workers`（viewer）と`GET /workers`（全体管理者）でも読める。
 
 - workerは120秒応答がないと「オフライン」になる。idleでも毎秒claimするので、通常はオンラインのまま。
 - claimは毎秒届くため、最終応答の書き込みは15秒ごとにまとめる。表示される最終応答は最大15秒古い。
 - Jobのheartbeatが60秒途絶すると、Jobs画面に「応答なし」を出す。Jobの状態、GPUの予約、leaseは変えず、再claimや自動再実行もしない（前節の方針）。止まったままのJobは、workerホストで状態を確認してからcancelやretryを手で行う。
 - バージョンは`importlib.metadata`で読む。インストールせずに動かしている場合はバージョンを送らず、画面は「—」になる。
 - `parallelJobs`はAPIでは受け付けるが、現在のworkerはまだ送らない。
+- 対応する機能は`capabilities`で送る。今は`workflowDatasetUsage`だけで、Jobへ`MMT_DATASET_USAGE_FILE`（用途・重み・抽出条件）と`MMT_WORKFLOW_EXECUTION_ID`を渡せることを表す。APIはワークフローのステップのJobを、これを名乗るworkerにだけ渡す。名乗らない古いworkerは、ワークフローのJobを受け取らない（用途や抽出条件を知らないまま学習しないため）。ワークフローを使うコンピュータのworkerは更新する。
+- 古いAPIは知らない`workerInfo`の項目を422で拒む。workerは422を受けると、新しい項目から1つずつ（`capabilities`、次に`sshFiles`）送るのをやめて同じ依頼を送り直す。422は何も受け付けていないので、送り直してもJobを二重にclaimしない。
+- やめた項目は、10分（`REFUSED_FIELD_RETRY_SECONDS`）たつと送り直してみる。その間にAPIを更新していれば受け付けられ、workerを再起動しなくても以後は送る（ログに「The API now takes …」）。まだ拒まれれば、またやめて警告をログに出す。名乗れない間は、この警告が10分ごとに出る。別の理由の422で項目をやめてしまった場合も、10分後には戻る。
 
 ## Compute targetの接続を確認する
 
@@ -528,7 +533,7 @@ ssh・localのコンピュータは、全体設定の「コンピュータ」（
 - workerはclaim/resumeの`workerInfo.sshFiles`に、自分のホストの`~/.ssh`と`MMT_WORKER_SSH_DIR`（設定されていてディレクトリのとき）の直下で見つけたファイルの**パスだけ**を載せる。中身・指紋は読まず、送らない。
 - 秘密鍵の候補: 通常のファイル（シンボリックリンクはリンク先で判定）のうち、`.pub`・`known_hosts*`・`authorized_keys*`・`config`・`environment`・`rc`を除き、名前が`id_*`・`*.pem`・`*.key`に当たるもの、またはgroup/otherが読めないmode（600など）のもの。known_hostsの候補: 名前が`known_hosts`で始まるファイル。
 - 絶対パスの昇順で各50件まで。制御文字を含むパスと1024文字を超えるパスは除く。60秒ごとに探し直す。
-- 古いAPIが`sshFiles`を422で拒んだら、以後は送らない（そのworkerは指定された依頼を受けられない）。
+- 古いAPIが`sshFiles`を422で拒んだら、送るのをやめ、10分ごとに送り直してみる（上の「workerの在籍」）。送れない間、そのworkerは指定された依頼を受けられない。
 - 候補は、1段目の［SSH鍵のパス］［known_hostsのパス］の補完に使う。手入力もできる。
 
 ### 確認の手順（接続確認）

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { WORKFLOW_ROUTES } from './workflowRouteCatalog.js';
 import { RUN_EXPORT_TRUNCATED_HEADER } from '@mmt/contracts';
 import * as contract from '@mmt/contracts/schemas';
 import {
@@ -1275,7 +1276,10 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     access: RUNS_WRITE,
     body: runPatchSchema,
     responses: { 200: contract.runSchema },
-    errors: [...routeError(409, 'run_finalized'), ...routeError(422, 'reserved_tag')],
+    errors: [
+      ...routeError(409, 'run_finalized', 'workflow_run_fixed'),
+      ...routeError(422, 'reserved_tag'),
+    ],
   },
   {
     method: 'get',
@@ -1813,7 +1817,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     responses: { 201: contract.taskExecutionSchema },
     errors: [
       ...routeError(403, 'job_owner_required'),
-      ...routeError(409, 'job_already_retried'),
+      ...routeError(409, 'job_already_retried', 'workflow_retry_required'),
       ...routeError(
         422,
         'checkpoint_not_found',
@@ -3317,4 +3321,5 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     query: operationsAlertQuerySchema,
     responses: { 200: contract.itemsOf(contract.operationsAlertSchema) },
   },
+  ...WORKFLOW_ROUTES,
 ];

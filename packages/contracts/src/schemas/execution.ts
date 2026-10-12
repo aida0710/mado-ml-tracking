@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { ComputeTarget, Job, JobListItem, WorkerPresence } from '../index.js';
 import { CPU_ARCHES, JOB_END_REASONS, JOB_PHASES, SITE_SUBMISSION_MODES } from '../siteExecution.js';
 import { COMPUTE_TARGET_VISIBILITIES } from '../computeTargetAccess.js';
+import { WORKER_CAPABILITIES } from '../workerCapabilities.js';
 import { idSchema, jobStatusSchema, runKindSchema, timestampSchema } from './primitives.js';
 import { namedContractSchema } from './schemaRegistry.js';
 import type { Expect, MutuallyAssignable } from './typeAssertions.js';
@@ -13,6 +14,7 @@ export const cpuArchSchema = z.enum(CPU_ARCHES);
 export const jobPhaseSchema = z.enum(JOB_PHASES);
 export const jobEndReasonSchema = z.enum(JOB_END_REASONS);
 export const computeTargetVisibilitySchema = z.enum(COMPUTE_TARGET_VISIBILITIES);
+export const workerCapabilitySchema = z.enum(WORKER_CAPABILITIES);
 export const computeTargetSchema = namedContractSchema(
   'ComputeTarget',
   z.strictObject({
@@ -96,6 +98,10 @@ export const jobListItemSchema = namedContractSchema(
       .strictObject({ sweepId: idSchema, sweepName: z.string(), trialIndex: z.number().int() })
       .nullable(),
     automationRule: z.strictObject({ ruleId: idSchema, ruleName: z.string() }).nullable(),
+    workflowExecution: z
+      .strictObject({ workflowId: idSchema, executionId: idSchema })
+      .nullable(),
+    requiredWorkerCapabilities: z.array(workerCapabilitySchema),
   }),
 );
 export const workerPresenceSchema = namedContractSchema(
@@ -113,6 +119,7 @@ export const workerPresenceSchema = namedContractSchema(
     lastSeenAt: timestampSchema,
     status: z.enum(['online', 'offline']),
     activeJobCount: z.number().int(),
+    capabilities: z.array(workerCapabilitySchema),
   }),
 );
 

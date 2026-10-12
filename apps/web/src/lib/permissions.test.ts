@@ -6,6 +6,7 @@ import {
   canChangeOwnPassword,
   canControlJob,
   canControlSweep,
+  canControlWorkflowExecution,
   canManageHooks,
   canManageTarget,
   canTransferHookOwners,
@@ -85,6 +86,15 @@ describe('Projectの権限判定', () => {
   ] as const)('Sweepの操作とJobの停止・再実行は%s（%s）なら%sになる', (role, userId, expected) => {
     expect(canControlSweep(role, userId, { createdBy: 'creator' })).toBe(expected);
     expect(canControlJob(role, userId, { createdBy: 'creator' })).toBe(expected);
+  });
+
+  it.each([
+    ['viewer', 'creator', false],
+    ['editor', 'creator', true],
+    ['editor', 'other', false],
+    ['admin', 'other', true],
+  ] as const)('ワークフローの実行の停止・再開は%s（%s）なら%sになる', (role, userId, expected) => {
+    expect(canControlWorkflowExecution(role, userId, { createdBy: 'creator' })).toBe(expected);
   });
 });
 

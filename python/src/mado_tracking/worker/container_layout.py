@@ -20,6 +20,7 @@ from ..checkpoint_archive import extract_checkpoint_archive
 from .container_outputs import HASH_CHUNK_BYTES, file_checksum
 from .dataset_cache import DatasetCache
 from .host_state import write_json
+from .workflow_context import DATASET_USAGE_FILENAME, dataset_usage_document, workflow_context_environment
 
 INPUTS_PATH = "/mmt/inputs"
 CONTEXT_PATH = "/mmt/context"
@@ -277,6 +278,9 @@ def prepare_container_layout(workspace: Path, specification: dict[str, Any]) -> 
         "model-version.json": {"modelVersion": context["modelVersion"]},
         "dataset-versions.json": {"inputDatasets": context["inputDatasets"]},
     }
+    dataset_usage = dataset_usage_document(context)
+    if dataset_usage is not None:
+        context_files[DATASET_USAGE_FILENAME] = dataset_usage
     # A spec saved before upstream inputs existed has no upstreamRun key.
     if context.get("upstreamRun") is not None:
         context_files[UPSTREAM_RUN_FILENAME] = context["upstreamRun"]
@@ -368,6 +372,9 @@ def container_environment(specification: dict[str, Any]) -> dict[str, str]:
         PYTHONUNBUFFERED="1",
     )
     environment.update(upstream_environment(context, f"{CONTEXT_PATH}/{UPSTREAM_RUN_FILENAME}"))
+    environment.update(
+        workflow_context_environment(context, dataset_usage_file=f"{CONTEXT_PATH}/{DATASET_USAGE_FILENAME}")
+    )
     staged_datasets = specification.get("stagedInputs", {}).get("datasets")
     if staged_datasets is not None:
         environment["MMT_INPUT_DATASET_DIRS"] = json.dumps(

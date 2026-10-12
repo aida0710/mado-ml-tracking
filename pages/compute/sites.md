@@ -9,6 +9,8 @@ description: スーパーコンピュータ、研究室のGPUサーバー、自�
 
 siteは、スーパーコンピュータ、SSHで入るGPUサーバー、研究者のPCのようなコンピュータです。ランチャーがsiteに入ってjob shellを実行し、スケジューラへJobを投入します（自分で投入するコンピュータでは、Jobを依頼した本人の`mado-tracking submit`が投入します）。計算ノードのrunnerは、Job tokenでtrackingへ直接報告します。
 
+[ワークフロー](/compute/workflows)のステップのJobは、データの用途と抽出条件を実行コードへ渡せるrunnerを置くランチャーと`mado-tracking submit`だけが受け取ります。古いものでは、ワークフローのJobは受け取られずに待機したままになるので、更新してください。
+
 ## 誰が足せて、誰が使えるか
 
 siteは誰でも足せます。足した人が、そのコンピュータの所有者になります。

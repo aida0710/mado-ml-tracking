@@ -14,6 +14,7 @@ import type { ApiConfig } from '../config.js';
 import { first, rows, transaction, type Database, type Connection } from '../db/database.js';
 import { conflict, DomainError } from '../domain/errors.js';
 import { isTerminalStatus } from '../domain/runTransitions.js';
+import { requiredWorkerCapabilitiesSql } from '../domain/workerCapabilities.js';
 import type {
   completeSchema,
   workerClaimSchema,
@@ -125,6 +126,8 @@ export class WorkerService {
       }
       const skipped: string[] = [];
       for (let candidateIndex = 0; candidateIndex < CLAIM_CANDIDATE_LIMIT; candidateIndex++) {
+        // A Job that needs a capability the worker did not name in this request waits for one
+        // that did, rather than run without what the capability passes to its code.
         const job = await first<Job>(
           connection,
           `SELECT ${jobColumns('j')} FROM jobs j JOIN compute_targets t ON t.id=j.target_id
@@ -136,8 +139,15 @@ export class WorkerService {
           AND ($4 OR t.executor<>'local') AND NOT(j.id=ANY($3::uuid[]))
           AND (SELECT count(*) FROM jobs active WHERE active.target_id=t.id AND active.status IN ('claimed','running')) < t.max_concurrent_jobs
           AND NOT EXISTS(SELECT 1 FROM gpu_reservations g WHERE g.target_id=t.id AND g.gpu_id=ANY(j.gpu_ids))
+          AND ${requiredWorkerCapabilitiesSql('r')} <@ $5::text[]
           ORDER BY j.created_at,j.id LIMIT 1 FOR UPDATE OF j SKIP LOCKED`,
-          [worker.projectId, request.targetIds ?? null, skipped, this.config.allowLocalExecutor],
+          [
+            worker.projectId,
+            request.targetIds ?? null,
+            skipped,
+            this.config.allowLocalExecutor,
+            request.workerInfo?.capabilities ?? [],
+          ],
         );
         if (!job) return null;
         skipped.push(job.id);
@@ -311,6 +321,7 @@ export class WorkerService {
       workerId: request.workerId,
       targetIds: request.targetIds ?? null,
       ...request.workerInfo,
+      capabilities: request.workerInfo?.capabilities ?? [],
     });
   }
 

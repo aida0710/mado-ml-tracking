@@ -219,7 +219,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
     const dataset = await createDataset(fixture.basePath, fixture.editor.cookie, 'Test split');
     const claimed = await launchTraining(fixture, token);
     const weights = await uploadOutput(fixture, claimed, WEIGHTS_OUTPUT);
-    await uploadOutput(fixture, claimed, SPLIT_OUTPUT);
+    const splitArtifact = await uploadOutput(fixture, claimed, SPLIT_OUTPUT);
     const response = await entity<WorkerOutputsResponse>(
       await declare(token, claimed, [
         {
@@ -229,13 +229,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
           modelId: fixture.model.id,
           metadata: { epoch: 2 },
         },
-        {
-          index: 1,
-          kind: 'dataset',
-          datasetId: dataset.id,
-          path: SPLIT_OUTPUT,
-          digest: 'sha256:split',
-        },
+        { index: 1, kind: 'dataset', datasetId: dataset.id, path: SPLIT_OUTPUT, digest: 'sha256:split' },
         {
           index: 2,
           kind: 'dataset',
@@ -270,9 +264,22 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
         .map((version) => [version.version, version.uri, version.sourceRunId])
         .sort(),
     ).toEqual([
-      ['1', `mmt-artifact://runs/${claimed.run.id}/container/${SPLIT_OUTPUT}`, claimed.run.id],
+      ['1', `mmt-dataset://${response.items[1]!.datasetVersionId}`, claimed.run.id],
       ['2', 's3://bucket/eval/', claimed.run.id],
     ]);
+    const files = await entity<{ items: Array<{ artifactId: string; path: string }> }>(
+      await request(
+        harness.app,
+        `${fixture.basePath}/datasets/${dataset.id}/versions/${response.items[1]!.datasetVersionId}/files`,
+        { cookie: fixture.viewer.cookie },
+      ),
+      200,
+    );
+    expect(files.items).toMatchObject([{ artifactId: splitArtifact.id, path: SPLIT_OUTPUT }]);
+    expect(
+      datasetVersions.items.find((version) => version.id === response.items[1]!.datasetVersionId)
+        ?.contentKind,
+    ).toBe('artifacts');
     const run = await entity<Run>(
       await request(harness.app, `${fixture.basePath}/runs/${claimed.run.id}`, {
         cookie: fixture.viewer.cookie,
@@ -283,6 +290,59 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
     expect(new Set(run.outputDatasetVersionIds)).toEqual(
       new Set([response.items[1]!.datasetVersionId, response.items[2]!.datasetVersionId]),
     );
+  });
+
+  it('ディレクトリを指定したデータセットは、その下に保存した出力すべてを1つのバージョンにする', async () => {
+    const { fixture, token } = await setup();
+    const dataset = await createDataset(fixture.basePath, fixture.editor.cookie, 'Prepared audio');
+    const claimed = await launchTraining(fixture, token);
+    const first = await uploadOutput(fixture, claimed, 'prepared/a.wav');
+    const nested = await uploadOutput(fixture, claimed, 'prepared/speaker-2/b.wav');
+    // A sibling that only shares the name's beginning is not inside the directory.
+    await uploadOutput(fixture, claimed, 'prepared-report.json');
+    const response = await entity<WorkerOutputsResponse>(
+      await declare(token, claimed, [
+        { index: 0, kind: 'dataset', datasetId: dataset.id, path: 'prepared', digest: 'unused' },
+      ]),
+      200,
+    );
+    const files = await entity<{ items: Array<{ artifactId: string; path: string }> }>(
+      await request(
+        harness.app,
+        `${fixture.basePath}/datasets/${dataset.id}/versions/${response.items[0]!.datasetVersionId}/files`,
+        { cookie: fixture.viewer.cookie },
+      ),
+      200,
+    );
+    // Paths are relative to the declared directory, like a version made from a Run's Artifacts.
+    expect(files.items.map((file) => [file.path, file.artifactId])).toEqual([
+      ['a.wav', first.id],
+      ['speaker-2/b.wav', nested.id],
+    ]);
+  });
+
+  it('ファイルもその下の出力も無いデータセットのパスと、ディレクトリを指すモデルは422', async () => {
+    const { fixture, token } = await setup();
+    const dataset = await createDataset(fixture.basePath, fixture.editor.cookie, 'Prepared audio');
+    const claimed = await launchTraining(fixture, token);
+    await uploadOutput(fixture, claimed, 'prepared/a.wav');
+    for (const path of ['prepared/missing', 'prep'])
+      expect(
+        await errorCode(
+          await declare(token, claimed, [
+            { index: 0, kind: 'dataset', datasetId: dataset.id, path, digest: 'unused' },
+          ]),
+          422,
+        ),
+      ).toBe('output_artifact_not_found');
+    expect(
+      await errorCode(
+        await declare(token, claimed, [
+          { index: 0, kind: 'model', path: 'prepared', modelId: fixture.model.id },
+        ]),
+        422,
+      ),
+    ).toBe('output_artifact_not_found');
   });
 
   it('同じindexの再送は保存済みの結果を返し、二重登録しない', async () => {
@@ -633,7 +693,13 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
     const response = await entity<WorkerOutputsResponse>(
       await declare(token, claimed, [
         { index: 0, kind: 'model', path: WEIGHTS_OUTPUT, modelId: fixture.model.id },
-        { index: 1, kind: 'dataset', datasetId: dataset.id, path: SPLIT_OUTPUT, digest: 'sha256:split' },
+        {
+          index: 1,
+          kind: 'dataset',
+          datasetId: dataset.id,
+          path: SPLIT_OUTPUT,
+          digest: 'sha256:split',
+        },
       ]),
       200,
     );

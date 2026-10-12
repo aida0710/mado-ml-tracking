@@ -18,6 +18,7 @@ const {
   operationsMonitor,
   siteJobMonitor,
   hookSweeper,
+  workflowScheduler,
 } = createApplication({
   config,
   database,
@@ -34,6 +35,7 @@ const backgroundTasks = [
   operationsMonitor,
   siteJobMonitor,
   hookSweeper,
+  workflowScheduler,
 ];
 const timeouts = serverTimeouts(config);
 const server = serve(

@@ -37,6 +37,7 @@ const TAGS: { name: string; description: string }[] = [
   { name: 'runs', description: 'Runの記録・検索・比較・再開' },
   { name: 'analysis', description: 'メトリクス系列・探索結果の分析' },
   { name: 'tasks', description: 'Task（実行の既定値）と起動' },
+  { name: 'workflows', description: '前処理・学習・評価の順次実行と固定した条件・入出力・品質' },
   { name: 'artifacts', description: 'Artifactの保存・一覧・本体・media情報' },
   { name: 'artifact-uploads', description: '再開可能なArtifact upload session' },
   { name: 'execution', description: 'Job・コンピュータ・worker' },

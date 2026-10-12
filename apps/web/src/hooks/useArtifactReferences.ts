@@ -72,7 +72,8 @@ export function hasArtifactReferences(references: ArtifactReferences): boolean {
     references.modelVersions.length +
       references.datasetVersions.length +
       references.codeVersions.length +
-      references.checkpoints.length >
+      references.checkpoints.length +
+      (references.preprocessingReports?.length ?? 0) >
     0
   );
 }

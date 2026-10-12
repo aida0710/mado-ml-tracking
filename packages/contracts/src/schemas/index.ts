@@ -49,3 +49,6 @@ export * from './sweeps.js';
 export * from './targetChecks.js';
 export * from './workerJobs.js';
 export * from './workerOutputs.js';
+export * from './datasetUsage.js';
+export * from './preprocessingReports.js';
+export * from './workflows.js';

@@ -29,6 +29,7 @@ from .media import (
     validate_step,
 )
 from .offline.transport import ARTIFACT_CHUNK_BYTES, HttpRunTransport, RunMediaItem, RunTransport
+from .preprocessing_reports import log_preprocessing_report
 from .security import SecretMasker, secret_values
 from .system_metrics import DEFAULT_SYSTEM_METRICS_SECONDS, SystemMetricsMonitor
 from .timestamps import utc_timestamp
@@ -45,6 +46,8 @@ class Run:
     ``last_steps`` is given when the Run was resumed: log_metrics without a step then continues each
     metric key after its largest step instead of writing step 0.
     """
+
+    log_preprocessing_report = log_preprocessing_report
 
     def __init__(
         self,

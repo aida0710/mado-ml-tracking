@@ -132,6 +132,7 @@ export const JOB_TOKEN_WRITE_RULES: readonly JobTokenRule[] = [
   // A driver creates child Jobs under its own Job (ChildJobService checks allowChildJobs).
   { methods: ['POST'], route: `${NATIVE}/jobs/:j/children`, allows: ownJobInPath },
   { methods: ['POST'], route: `${NATIVE}/runs/:r/metrics`, allows: ownRunInPath },
+  { methods: ['PUT'], route: `${NATIVE}/runs/:r/preprocessing-report`, allows: ownRunInPath },
   { methods: ['POST'], route: `${NATIVE}/runs/:r/logs`, allows: ownRunInPath },
   { methods: ['PUT'], route: `${NATIVE}/runs/:r/artifacts`, allows: ownRunInPath },
   { methods: ['POST'], route: `${NATIVE}/runs/:r/checkpoints`, allows: ownRunInPath },

@@ -29,6 +29,7 @@ import { RunExecutionSnapshot } from '../components/RunExecutionSnapshot';
 import { RunOutputModels } from '../components/RunOutputModels';
 import { RunCheckpointList } from '../components/RunCheckpointList';
 import { RunDownstream } from '../components/RunDownstream';
+import { RunWorkflowContext } from '../components/workflows/RunWorkflowContext';
 import { DetailsList, KeyValues } from '../components/JsonDetails';
 import { FormDialog } from '../components/FormDialog';
 import { ArtifactUploadDialog } from '../dialogs/ArtifactUploadDialog';
@@ -57,6 +58,7 @@ import { getRunParameters } from '../lib/runParameters';
 import { creatorName } from '../lib/creatorName';
 import { getResumeCheckpointRecord } from '../lib/checkpointResume';
 import { canControlJob } from '../lib/permissions';
+import { workflowIdOfRun } from '../lib/workflowRunTags';
 import { isTerminalRun } from '../lib/runOutputRegistrationState';
 import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
@@ -220,11 +222,12 @@ export function RunDetailPage() {
               {tab === 'checkpoints' && (
                 <RunCheckpointList
                   run={item}
-                  canRetryJob={canControlJob(project.role, user.id, item)}
+                  canRetryJob={canControlJob(project.role, user.id, item) && !workflowIdOfRun(item)}
                 />
               )}
               {tab === 'details' && (
                 <div className="details-grid">
+                  <RunWorkflowContext run={item} canEdit={canEdit} />
                   <RunDescriptionEditor projectId={project.id} run={item} />
                   <section>
                     <h2>{text.details}</h2>

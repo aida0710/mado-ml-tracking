@@ -264,6 +264,7 @@ def test_claim_and_resume_report_installed_version_and_hostname():
         "version": metadata.version("mado-tracking"),
         "hostname": socket.gethostname(),
         "sshFiles": {"keyPaths": [], "knownHostsPaths": []},
+        "capabilities": ["workflowDatasetUsage"],
     }
     assert [(path, body["workerInfo"]) for path, body in requests] == [
         ("resume", expected),

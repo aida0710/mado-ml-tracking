@@ -18,9 +18,12 @@ import {
   findLatestRunArtifact,
   findOrCreateOutputModel,
   findOutputModelById,
+  hasRunArtifactsUnder,
   type OutputModel,
 } from '../repositories/runOutputRegistrationRepository.js';
+import { directoryPrefix } from './artifactListing.js';
 import { registerDatasetVersion } from './datasetVersionRegistration.js';
+import { resolveDatasetContent } from './datasetContentService.js';
 import type { ModelVersionRegistrar } from './outputRegistrationHandler.js';
 
 // What every declaration of one request shares: the Job's Run and its Task output setting.
@@ -140,30 +143,58 @@ async function registerDataset(
   declaration: DatasetOutputDeclaration,
 ): Promise<string> {
   const { projectId, run } = context;
-  if (declaration.path !== undefined)
-    await requireOutputArtifact(connection, {
-      projectId,
-      runId: run.id,
-      outputPath: declaration.path,
-    });
-  // An output file is referenced the way evaluation tables point at a Run's Artifact
-  // (docs/evaluation.md), so the version follows the Run instead of copying the bytes.
-  const uri =
-    declaration.path === undefined
-      ? declaration.uri!
-      : `mmt-artifact://runs/${run.id}/${containerArtifactPath(declaration.path)}`;
+  const content =
+    declaration.path !== undefined
+      ? await resolveDatasetOutput(connection, {
+          projectId,
+          runId: run.id,
+          outputPath: declaration.path,
+        })
+      : undefined;
+  // Pin the Artifact manifest so later workers can fetch the exact files through the dataset API.
   const version = await registerDatasetVersion(connection, {
     projectId,
     datasetId: declaration.datasetId,
-    uri,
-    digest: declaration.digest,
+    ...(content
+      ? { content: { files: content.files } }
+      : { uri: declaration.uri!, digest: declaration.digest }),
     schema: declaration.schema,
     metadata: declaration.metadata,
     sourceRunId: run.id,
-    parentDatasetVersionIds: [],
+    parentDatasetVersionIds: run.inputDatasetVersionIds,
     actor: { type: 'runCreator' },
   });
   return version.id;
+}
+
+/**
+ * The files of a dataset declared by `path`: the saved output file at that path, or, when the
+ * path is a directory, every saved output under it with paths relative to that directory.
+ */
+async function resolveDatasetOutput(
+  connection: Connection,
+  reference: { projectId: string; runId: string; outputPath: string },
+) {
+  const { projectId, runId, outputPath } = reference;
+  const artifactPath = containerArtifactPath(outputPath);
+  const fileArtifactId = await findLatestRunArtifact(connection, {
+    projectId,
+    runId,
+    path: artifactPath,
+  });
+  if (fileArtifactId)
+    return resolveDatasetContent(connection, {
+      projectId,
+      content: { kind: 'artifacts', files: [{ path: outputPath, artifactId: fileArtifactId }] },
+    });
+  const prefix = directoryPrefix(artifactPath);
+  if (!(await hasRunArtifactsUnder(connection, { projectId, runId, prefix })))
+    outputArtifactNotFound(outputPath);
+  // The listing stops at MAX_DATASET_VERSION_FILES, like a version made from a Run's Artifacts.
+  return resolveDatasetContent(connection, {
+    projectId,
+    content: { kind: 'artifacts', fromRunArtifacts: { runId, prefix } },
+  });
 }
 
 async function resolveTaskModel(
@@ -206,13 +237,16 @@ async function requireOutputArtifact(
     runId: reference.runId,
     path: containerArtifactPath(reference.outputPath),
   });
-  if (!artifactId)
-    throw new DomainError(
-      422,
-      `出力ファイル${reference.outputPath}はこのJobのArtifactとして保存されていません`,
-      'output_artifact_not_found',
-    );
+  if (!artifactId) outputArtifactNotFound(reference.outputPath);
   return artifactId;
+}
+
+function outputArtifactNotFound(outputPath: string): never {
+  throw new DomainError(
+    422,
+    `出力${outputPath}はこのJobのArtifactとして保存されていません`,
+    'output_artifact_not_found',
+  );
 }
 
 async function listRunOutputDeclarations(

@@ -62,6 +62,12 @@ const HooksPage = lazy(() =>
 const TasksPage = lazy(() =>
   import('./pages/TasksPage').then((module) => ({ default: module.TasksPage })),
 );
+const WorkflowsPage = lazy(() =>
+  import('./pages/WorkflowsPage').then((module) => ({ default: module.WorkflowsPage })),
+);
+const WorkflowDetailPage = lazy(() =>
+  import('./pages/WorkflowDetailPage').then((module) => ({ default: module.WorkflowDetailPage })),
+);
 const ComputePage = lazy(() =>
   import('./pages/ComputePage').then((module) => ({ default: module.ComputePage })),
 );
@@ -123,6 +129,8 @@ export function App() {
             <Route path="lineage" element={<LineagePage />} />
             <Route path="jobs" element={<JobsPage />} />
             <Route path="hooks" element={<HooksPage />} />
+            <Route path="workflows" element={<WorkflowsPage />} />
+            <Route path="workflows/:workflowId" element={<WorkflowDetailPage />} />
             <Route path="tasks" element={<TasksPage />} />
             <Route path="compute" element={<ComputePage />} />
             <Route path="plugins" element={<PluginsPage />} />

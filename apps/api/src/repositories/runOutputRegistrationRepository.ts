@@ -125,3 +125,17 @@ export async function findLatestRunArtifact(
   );
   return artifact?.id;
 }
+
+/** Whether the Run has a saved Artifact under `prefix`, a directory path ending in `/`. */
+export async function hasRunArtifactsUnder(
+  connection: Connection,
+  reference: { projectId: string; runId: string; prefix: string },
+): Promise<boolean> {
+  const artifact = await first(
+    connection,
+    `SELECT 1 FROM artifacts
+    WHERE project_id=$1 AND run_id=$2 AND starts_with(path,$3) AND deleted_at IS NULL LIMIT 1`,
+    [reference.projectId, reference.runId, reference.prefix],
+  );
+  return artifact !== undefined;
+}
