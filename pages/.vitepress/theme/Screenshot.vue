@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useData, withBase } from 'vitepress'
 
-// public/images/ の画面はすべて 1440×900 で撮っている。
+// public/images/ と public/images/en/ の画面は 1440×900 で撮っている（token の画面だけ 1440×1000）。
 const SCREENSHOT_WIDTH = 1440
 const SCREENSHOT_HEIGHT = 900
 
