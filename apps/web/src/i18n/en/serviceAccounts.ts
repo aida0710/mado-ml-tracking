@@ -42,6 +42,9 @@ export const serviceAccountsText = {
     'Choosing a purpose selects the scopes it needs. Changing the scopes switches to “Choose scopes manually”.',
   tokenPurposeRequired: 'Choose a purpose or select at least one scope',
   tokenExpiryCustom: 'Custom duration',
+  tokenExpiryCalendar: 'Choose from calendar',
+  tokenExpiryDateTime: 'Expiry date and time',
+  tokenExpiryDateInvalid: 'Choose a future expiry date and time',
   tokenExpiryDuration: 'Duration',
   tokenExpiryUnit: 'Unit',
   tokenExpiryMinutes: 'Minutes',
@@ -88,6 +91,7 @@ export const tokenScopeLabels: Record<TokenScope, string> = {
 // Text that embeds values.
 export const serviceAccountsTextTemplates = {
   tokenExpiryDays: (days: number) => `${days} days`,
+  tokenExpiryTimezone: (timezone: string) => `Times use ${timezone}.`,
   serviceAccountTokenTitle: (name: string) => `Issue token for ${name}`,
   disableServiceAccountConfirm: (name: string) =>
     `Disable “${name}”? All tokens of this service account will stop working from the next request.`,

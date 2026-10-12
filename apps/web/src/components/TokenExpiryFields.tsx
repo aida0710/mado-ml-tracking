@@ -2,10 +2,12 @@ import { useId } from 'react';
 import { ChoiceField } from './ChoiceField';
 import {
   TOKEN_EXPIRY_PRESET_DAYS,
+  changeTokenExpiryOption,
   type TokenExpiryOption,
   type TokenExpirySelection,
   type TokenExpiryUnit,
 } from '../lib/tokenExpiry';
+import { formatLocalDateTimeInput } from '../lib/dateTimeInput';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { serviceAccountsTextTemplates } from '../i18n/serviceAccounts';
@@ -17,6 +19,8 @@ export function TokenExpiryFields({ value, onChange }: {
 }) {
   useLocale();
   const durationId = useId();
+  const dateTimeId = useId();
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   return (
     <>
       <ChoiceField
@@ -29,9 +33,27 @@ export function TokenExpiryFields({ value, onChange }: {
           })),
           { value: 'never', label: text.noExpiry },
           { value: 'custom', label: text.tokenExpiryCustom },
+          { value: 'calendar', label: text.tokenExpiryCalendar },
         ]}
-        onChange={option => onChange({ ...value, option: option as TokenExpiryOption })}
+        onChange={option => onChange(changeTokenExpiryOption(value, option as TokenExpiryOption))}
       />
+      {value.option === 'calendar' && (
+        <div className="field token-expiry-calendar">
+          <label htmlFor={dateTimeId}>{text.tokenExpiryDateTime}</label>
+          <input
+            id={dateTimeId}
+            type="datetime-local"
+            min={formatLocalDateTimeInput(new Date())}
+            required
+            value={value.dateTime}
+            aria-describedby={`${dateTimeId}-hint`}
+            onChange={event => onChange({ ...value, dateTime: event.target.value })}
+          />
+          <p id={`${dateTimeId}-hint`} className="field-hint">
+            {serviceAccountsTextTemplates.tokenExpiryTimezone(timezone)}
+          </p>
+        </div>
+      )}
       {value.option === 'custom' && (
         <div className="token-expiry-duration">
           <div className="field">

@@ -474,7 +474,7 @@ node apps/web/tests/browser-computer-setup.mjs
 
 `apps/web/tests/browser-recording-connection.mjs`は、mockのAPIで「SDK・MLflow 3から接続」を確かめます。プロジェクト設定ではプロジェクトIDだけ、Experimentsで実験を選んで［SDKで記録］を開くと実験IDも入ること（`MMT_EXPERIMENT_ID`、MLflowの`set_experiment`に実験の名前）、［コピー］が値をそのまま写すこと、tokenの発行画面が記録用のscope（read・runs:write・registry:write・artifacts:write）を選んだ状態で開くこと、viewerには発行のボタンが出ないことを見ます。
 
-`apps/web/tests/browser-copy-token-expiry.mjs`は、同じWebサーバをloopbackとLANのHTTPの両方から開きます。Clipboard APIのある場合・拒否された場合・HTTPで使えない場合に、値と複数行の設定例を実際のクリップボードへ写せることを確かめます。失敗時にボタンが動かないこと、modal内のコピー、日英の言語ボタンの高さ、320pxでの表示、無期限・730日・小数の時間のtoken発行、0の有効期間の拒否も確認します。APIの期限・認証・失効・権限は`service-accounts.integration.test.ts`で検証します。
+`apps/web/tests/browser-copy-token-expiry.mjs`は、同じWebサーバをloopbackとLANのHTTPの両方から開きます。Clipboard APIのある場合・拒否された場合・HTTPで使えない場合に、値と複数行の設定例を実際のクリップボードへ写せることを確かめます。失敗時にボタンが動かないこと、modal内のコピー、日英の言語ボタンの高さ、320pxでの表示、無期限・730日・小数の時間のtoken発行、0の有効期間の拒否も確認します。カレンダーの日時指定では、Asia/Tokyoの2027-12-31 23:59がUTCの14:59になること、選択肢を切り替えても日時が残ること、空欄・過去の日時の拒否、320pxの表示を確認します。APIの期限・認証・失効・権限は`service-accounts.integration.test.ts`で検証します。
 
 ```bash
 MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
