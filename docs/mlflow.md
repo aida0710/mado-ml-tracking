@@ -16,7 +16,7 @@ API tokenの画面で対象Projectのtokenを作成します。記録するユ�
 | Artifactのアップロード | `artifacts:write` |
 | Logged Models・モデルバージョン・aliasの登録や変更 | `registry:write` |
 
-Authentikのログインはブラウザでの操作に使います。Pythonの記録には個人tokenまたはService Account tokenを使い、失効・期限・Projectへの所属・scopeはリクエストごとに確認します。自動実行やworkerなど、人の異動で止めたくない記録には、Projectの設定画面「Service Accounts」で作ったService Accountのtokenを使います。tokenの期限は最長365日です。
+Authentikのログインはブラウザでの操作に使います。Pythonの記録には個人tokenまたはService Account tokenを使い、失効・期限・Projectへの所属・scopeはリクエストごとに確認します。自動実行やworkerなど、人の異動で止めたくない記録には、Projectの設定画面「Service Accounts」で作ったService Accountのtokenを使います。tokenは無期限、または任意の有効期間で発行できます。
 
 学習を実行するマシンのターミナルで設定します。`PROJECT_ID`は記録先ProjectのUUIDへ置き換えてください。`http://localhost:5182`は手元の開発環境のURLです。別の配置ではそのWeb/APIのURLに変更します。
 

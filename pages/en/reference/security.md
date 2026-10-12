@@ -17,7 +17,7 @@ description: What mado ML Tracking protects, where credentials and secrets live,
 ## API tokens
 
 - Token values are not stored. Only a SHA-256 hash and the first 12 characters (to tell tokens apart) are kept. The value is shown once, at issue time.
-- Every token has an expiry (365 days at most). Scopes and the owner's current Project role are checked on every request.
+- Personal and service account tokens can have a chosen expiry or no expiry. Scopes and the owner's current Project role are checked on every request.
 - SSO users' tokens stop 7 days after the last browser login, so that removal from a group is noticed.
 - Running code receives a Job token valid only during the Job, never the worker's own token. It can write only to the target Run and its outputs ([API tokens and Service Accounts](/en/admin/tokens)).
 - Basic authentication on the MLflow-compatible API accepts only an API token in the password. Local account passwords are not accepted.

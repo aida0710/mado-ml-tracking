@@ -94,7 +94,7 @@ contextが正常に終了するとRunは`finished`、例外が出ると`failed`�
 
 ## workerを起動する
 
-worker tokenは、Projectの設定画面「Service Accounts」で作ったService Account（Role `Admin`）に発行する。scopeは`read`、`worker:execute`、実行前のコードと出力ファイル（`/mmt/outputs`・`MMT_OUTPUTS_DIR`）をRun Artifactへ保存するための`artifacts:write`。`result.json`で出力モデル・出力Datasetを宣言して登録するなら`registry:write`も要る。出力のmetricsはworker APIで送るため、ほかのscopeは要らない。実行コードの記録・登録にはworker tokenを使わない（次節）ので、そのためにscopeを足す必要もない。個人が所有するservice token（`POST /tokens`のkind=`service`）は旧形式で、所有者がProjectを離れると止まる。期限は最長365日（`MMT_TOKEN_MAX_LIFETIME_DAYS`）で、期限が近づいたら新しいtokenを発行して`mado-tracking-worker install --token-file`で差し替える。手順は[operations.md](operations.md)の「1. tokenを用意する」。tokenとSSH秘密鍵はworkerマシンに置き、tokenをコードやコマンド引数へ埋め込まない。
+worker tokenは、Projectの設定画面「Service Accounts」で作ったService Account（Role `Admin`）に発行する。scopeは`read`、`worker:execute`、実行前のコードと出力ファイル（`/mmt/outputs`・`MMT_OUTPUTS_DIR`）をRun Artifactへ保存するための`artifacts:write`。`result.json`で出力モデル・出力Datasetを宣言して登録するなら`registry:write`も要る。出力のmetricsはworker APIで送るため、ほかのscopeは要らない。実行コードの記録・登録にはworker tokenを使わない（次節）ので、そのためにscopeを足す必要もない。個人が所有するservice token（`POST /tokens`のkind=`service`）は旧形式で、所有者がProjectを離れると止まる。期限はプリセット、無期限、任意の有効期間から選べる。APIで期限を省略した場合は`MMT_TOKEN_DEFAULT_LIFETIME_DAYS`（既定365日）後になる。期限があるtokenは、期限が近づいたら新しいtokenを発行して`mado-tracking-worker install --token-file`で差し替える。手順は[operations.md](operations.md)の「1. tokenを用意する」。tokenとSSH秘密鍵はworkerマシンに置き、tokenをコードやコマンド引数へ埋め込まない。
 
 ```bash
 export MMT_API_URL=http://127.0.0.1:4182

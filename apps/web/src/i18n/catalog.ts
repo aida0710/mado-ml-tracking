@@ -387,7 +387,7 @@ export const text = mergeTranslations([
     copy: 'コピー',
     copied: 'コピーしました',
     copyFailed: 'コピーできませんでした',
-    noExpiry: '期限なし',
+    noExpiry: '無期限',
     lastUsed: '最終使用',
     projectSaved: 'プロジェクト設定を保存しました',
     success: '保存しました',

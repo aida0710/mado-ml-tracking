@@ -740,7 +740,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     responses: { 201: contract.issuedTokenSchema },
     errors: [
       ...routeError(409, 'service_account_disabled', 'service_account_role_missing'),
-      ...routeError(422, 'scope_exceeds_role', 'token_lifetime_exceeded', 'invalid_expiry'),
+      ...routeError(422, 'scope_exceeds_role', 'invalid_expiry'),
     ],
   },
   {
@@ -759,7 +759,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     access: { kind: 'session' },
     body: tokenCreateSchema,
     responses: { 201: contract.issuedTokenSchema },
-    errors: routeError(422, 'token_lifetime_exceeded', 'invalid_expiry'),
+    errors: routeError(422, 'invalid_expiry'),
   },
   {
     method: 'delete',

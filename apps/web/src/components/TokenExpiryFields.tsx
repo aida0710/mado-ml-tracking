@@ -1,0 +1,64 @@
+import { useId } from 'react';
+import { ChoiceField } from './ChoiceField';
+import {
+  TOKEN_EXPIRY_PRESET_DAYS,
+  type TokenExpiryOption,
+  type TokenExpirySelection,
+  type TokenExpiryUnit,
+} from '../lib/tokenExpiry';
+import { useLocale } from '../i18n/useLocale';
+import { text } from '../i18n/catalog';
+import { serviceAccountsTextTemplates } from '../i18n/serviceAccounts';
+
+/** The shared expiry selector for personal and Service Account tokens. */
+export function TokenExpiryFields({ value, onChange }: {
+  value: TokenExpirySelection;
+  onChange: (value: TokenExpirySelection) => void;
+}) {
+  useLocale();
+  const durationId = useId();
+  return (
+    <>
+      <ChoiceField
+        label={text.expiry}
+        value={value.option}
+        placeholder={text.expiry}
+        options={[
+          ...TOKEN_EXPIRY_PRESET_DAYS.map(days => ({
+            value: String(days), label: serviceAccountsTextTemplates.tokenExpiryDays(days),
+          })),
+          { value: 'never', label: text.noExpiry },
+          { value: 'custom', label: text.tokenExpiryCustom },
+        ]}
+        onChange={option => onChange({ ...value, option: option as TokenExpiryOption })}
+      />
+      {value.option === 'custom' && (
+        <div className="token-expiry-duration">
+          <div className="field">
+            <label htmlFor={durationId}>{text.tokenExpiryDuration}</label>
+            <input
+              id={durationId}
+              type="number"
+              min="0"
+              step="any"
+              required
+              value={value.duration}
+              onChange={event => onChange({ ...value, duration: event.target.value })}
+            />
+          </div>
+          <ChoiceField
+            label={text.tokenExpiryUnit}
+            value={value.unit}
+            placeholder={text.tokenExpiryUnit}
+            options={[
+              { value: 'minutes', label: text.tokenExpiryMinutes },
+              { value: 'hours', label: text.tokenExpiryHours },
+              { value: 'days', label: text.tokenExpiryDays },
+            ]}
+            onChange={unit => onChange({ ...value, unit: unit as TokenExpiryUnit })}
+          />
+        </div>
+      )}
+    </>
+  );
+}

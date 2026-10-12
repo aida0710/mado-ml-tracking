@@ -15,6 +15,7 @@ import {
   type SavedViewActor,
 } from '../../lib/savedViewPermissions';
 import { detailsPopoverHandlers } from '../../lib/detailsPopover';
+import { copyText } from '../../lib/clipboard';
 import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
@@ -77,8 +78,7 @@ export function SavedViewsMenu({
   }
   async function copyUrl(view: SavedView) {
     const copied = await mutation.run(async () => {
-      if (!navigator.clipboard) throw new Error(text.copyFailed);
-      await navigator.clipboard.writeText(viewUrl(view.id));
+      await copyText(viewUrl(view.id));
       return true;
     });
     setIsUrlCopied(Boolean(copied));

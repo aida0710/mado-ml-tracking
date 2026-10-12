@@ -13,25 +13,3 @@ export function requiredProjectRoleForScopes(scopes: readonly TokenScope[]): Pro
 export function scopesBeyondRole(scopes: readonly TokenScope[], role: ProjectRole): TokenScope[] {
   return scopes.filter((scope) => !satisfiesProjectRole(role, TOKEN_SCOPE_REQUIRED_ROLE[scope]));
 }
-
-const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
-
-export type TokenExpiryResolution =
-  { expiresAt: Date } | { error: 'expiry_in_past' | 'lifetime_exceeded' };
-
-/**
- * Resolves a requested expiry against the lifetime limit. No expiry means the longest allowed
- * one, so every new token expires.
- */
-export function resolveTokenExpiry(request: {
-  expiresAt: string | null | undefined;
-  maxLifetimeDays: number;
-  now: Date;
-}): TokenExpiryResolution {
-  const latest = new Date(request.now.getTime() + request.maxLifetimeDays * DAY_MILLISECONDS);
-  if (!request.expiresAt) return { expiresAt: latest };
-  const expiresAt = new Date(request.expiresAt);
-  if (expiresAt <= request.now) return { error: 'expiry_in_past' };
-  if (expiresAt > latest) return { error: 'lifetime_exceeded' };
-  return { expiresAt };
-}

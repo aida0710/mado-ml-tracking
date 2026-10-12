@@ -4,7 +4,8 @@ import type { Principal } from '../auth/principal.js';
 import { hashSecret, randomSecret } from '../auth/secrets.js';
 import { first, transaction, type Connection, type Database } from '../db/database.js';
 import { DomainError, notFound } from '../domain/errors.js';
-import { requiredProjectRoleForScopes, resolveTokenExpiry } from '../domain/tokenScopes.js';
+import { requiredProjectRoleForScopes } from '../domain/tokenScopes.js';
+import { resolveTokenExpiry } from '../domain/tokenExpiry.js';
 import type { tokenCreateSchema } from '../domain/validation.js';
 import type { RequestMetadata } from '../http/requestMetadata.js';
 import { writeAuditEvent } from '../repositories/auditRepository.js';
@@ -30,22 +31,6 @@ const TOKEN_PREFIX_LENGTH = 12;
 export interface IssuedToken {
   token: string;
   item: TokenSummary;
-}
-
-/** Validates the requested expiry against the lifetime limit; no expiry means the limit. */
-export function requireTokenExpiry(
-  expiresAt: string | null | undefined,
-  maxLifetimeDays: number,
-): Date {
-  const resolution = resolveTokenExpiry({ expiresAt, maxLifetimeDays, now: new Date() });
-  if ('expiresAt' in resolution) return resolution.expiresAt;
-  if (resolution.error === 'expiry_in_past')
-    throw new DomainError(422, 'Tokenの期限は未来の日時を指定してください', 'invalid_expiry');
-  throw new DomainError(
-    422,
-    `Tokenの期限は${maxLifetimeDays}日以内にしてください`,
-    'token_lifetime_exceeded',
-  );
 }
 
 /** Generates a token value and stores only its hash and prefix. The value is returned once. */
@@ -76,11 +61,11 @@ export function tokenCreateAuditDetails(item: TokenSummary) {
 
 export class TokenService {
   private readonly database: Database;
-  private readonly tokenMaxLifetimeDays: number;
+  private readonly tokenDefaultLifetimeDays: number;
 
-  constructor(dependencies: { database: Database; tokenMaxLifetimeDays: number }) {
+  constructor(dependencies: { database: Database; tokenDefaultLifetimeDays: number }) {
     this.database = dependencies.database;
-    this.tokenMaxLifetimeDays = dependencies.tokenMaxLifetimeDays;
+    this.tokenDefaultLifetimeDays = dependencies.tokenDefaultLifetimeDays;
   }
 
   async list(principal: Principal): Promise<TokenSummary[]> {
@@ -128,7 +113,11 @@ export class TokenService {
           name: input.name,
           kind: input.kind,
           scopes: input.scopes,
-          expiresAt: requireTokenExpiry(input.expiresAt, this.tokenMaxLifetimeDays),
+          expiresAt: resolveTokenExpiry({
+            expiresAt: input.expiresAt,
+            defaultLifetimeDays: this.tokenDefaultLifetimeDays,
+            now: new Date(),
+          }),
         });
         await writeAuditEvent(connection, {
           ...draft,
