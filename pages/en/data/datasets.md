@@ -171,15 +171,16 @@ See [Compute targets](/en/compute/targets).
 
 ## Use datasets from Mado
 
-With the Mado plugin registered, you can import dataset versions managed in Mado.
+Once a global administrator has configured and enabled the Mado integration for the Project, you can import dataset versions managed in Mado. The integration starts disabled; while it is disabled, **Import from Mado** and **View in Mado** are not shown.
 
-1. Click **Import from Mado** on the **Datasets** page. The **Plugins** page opens.
-2. Find the dataset with **Search datasets**.
-3. Choose a version and click **Import**.
+1. Click **Import from Mado** on the **Datasets** page. The **Integrations** page opens.
+2. Click **Check connection**. Searching becomes available once the check succeeds.
+3. Enter a name in **Search datasets** and click **Search**.
+4. Click **Import** in the row of the version to import.
 
-An imported version is a reference version that keeps its name, namespace, and version from Mado. Importing the same version again does not add a new version. **Import from Mado** is shown to Project admins.
+An imported version is a reference version that keeps its name, namespace, and version from Mado. Importing the same version again does not add a new version. **Import from Mado** is shown to Project admins. Selecting an imported version shows **View in Mado**, which opens that version in Mado. Mado applies the person's own login and permissions.
 
-When a Run starts and finishes, its input and output versions are sent to Mado, so Mado's dataset lineage shows which experiments used them. See [Plugins and Mado integration](/en/admin/plugins) to register the plugin.
+While the integration is enabled, a Run's input and output versions are sent to Mado when the Run starts and finishes, so Mado's dataset lineage shows which experiments used them. To configure and enable the integration, see [Mado integration](/en/admin/plugins).
 
 ## Datasets you no longer use
 
