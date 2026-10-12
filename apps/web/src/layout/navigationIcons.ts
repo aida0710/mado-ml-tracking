@@ -20,6 +20,7 @@ import {
   SlidersHorizontal,
   Users,
   Webhook,
+  Workflow,
   type LucideIcon,
 } from 'lucide-react';
 import type { NavigationScreen } from './navigationLinks';
@@ -37,6 +38,7 @@ export const NAVIGATION_ICONS: Record<NavigationScreen, LucideIcon> = {
   lineage: Network,
   jobs: Play,
   hooks: Webhook,
+  workflows: Workflow,
   compute: Server,
   plugins: Puzzle,
   settings: Settings,

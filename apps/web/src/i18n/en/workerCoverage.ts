@@ -1,3 +1,4 @@
+import type { WorkerCapability } from '@mmt/contracts';
 import { formatEnglishCount } from '../formatEnglishCount';
 
 // Whether a worker takes a computer's Jobs and connection checks (lib/workerCoverage), on the
@@ -22,6 +23,8 @@ export const workerCoverageText = {
     "The computer does not support the code's runtime",
     "The computer is Local, and the API server does not allow the local executor (MMT_ALLOW_LOCAL_EXECUTOR)",
   ],
+  queuedJobNeedsWorkerUpdate:
+    "A worker for this computer is responding but does not support the following, which this job needs. It takes the job once it is updated to a newer mado-tracking.",
   launchWorkerMissingHint: "If you launch now, the job stays queued until a worker runs.",
   queuedJobWaitsForWorker: "This job stays queued until a worker runs.",
   sweepTrialsWaitForWorker:
@@ -32,6 +35,11 @@ export const workerCoverageText = {
   targetCheckWorkerMissing:
     "No worker that names this computer (MMT_WORKER_TARGET_IDS) is responding, so a connection check would fail after five minutes. Start a worker first.",
 } as const;
+
+export const workerCapabilityLabels: Record<WorkerCapability, string> = {
+  workflowDatasetUsage:
+    "Workflow steps (passing the dataset usage, weights and selection conditions to the execution code)",
+};
 
 // Text that embeds values.
 export const workerCoverageTextTemplates = {

@@ -3,11 +3,16 @@ import { Link } from 'react-router-dom';
 import { WorkerCoverageBadge, WorkerMissingNotice } from './WorkerCoverage';
 import { computerDetailsPath } from '../layout/settingsSections';
 import type { QueuedJobWait, WorkerlessJobGroup } from '../lib/queuedJobWait';
-import { workerCoverageText, workerCoverageTextTemplates } from '../i18n/workerCoverage';
+import {
+  workerCapabilityLabels,
+  workerCoverageText,
+  workerCoverageTextTemplates,
+} from '../i18n/workerCoverage';
 
 /**
  * Why the selected queued Job has not started: no worker for its computer (and where to set one
- * up), or a busy computer. A site Job tells its phase in the details instead.
+ * up), a worker too old for what the Job needs, or a busy computer. A site Job tells its phase in
+ * the details instead.
  */
 export function QueuedJobWaitNotice({
   wait,
@@ -18,6 +23,18 @@ export function QueuedJobWaitNotice({
 }) {
   useLocale();
   if (!wait || !target) return null;
+  if (wait.kind === 'workerUpdate')
+    return (
+      <div className="notice queued-job-reason" role="status">
+        <p>{workerCoverageText.queuedJobNeedsWorkerUpdate}</p>
+        <ul>
+          {wait.missingCapabilities.map((capability) => (
+            <li key={capability}>{workerCapabilityLabels[capability]}</li>
+          ))}
+        </ul>
+        <p className="muted">{workerCoverageText.workerCoverageSetupByOwner}</p>
+      </div>
+    );
   if (wait.kind === 'notTaken')
     return (
       <div className="notice queued-job-reason" role="status">

@@ -3,7 +3,11 @@ import { rows, type Connection } from '../db/database.js';
 
 /** Records that keep an Artifact's bytes alive; while any exists the Artifact cannot be deleted. */
 export type ArtifactReferenceKind =
-  'model_version' | 'code_version' | 'dataset_version' | 'checkpoint';
+  | 'model_version'
+  | 'code_version'
+  | 'dataset_version'
+  | 'checkpoint'
+  | 'preprocessing_report';
 
 /**
  * One SQL condition per reference kind, for an artifacts row aliased `artifact`. Registered model
@@ -28,6 +32,8 @@ function referenceConditions(artifact: string): Record<ArtifactReferenceKind, st
         AND checkpoint.artifact_ids @> ARRAY[${artifact}.id]
         AND (checkpoint.retained OR EXISTS(SELECT 1 FROM runs resumed
           WHERE resumed.resume_checkpoint_id=checkpoint.id)))`,
+    preprocessing_report: `EXISTS(SELECT 1 FROM preprocessing_report_samples sample
+      WHERE sample.project_id=${artifact}.project_id AND sample.artifact_id=${artifact}.id)`,
   };
 }
 
@@ -116,6 +122,16 @@ export async function listArtifactReferences(
   // Checkpoint steps stay far below 2^53.
   for (const { artifactId, step, ...checkpoint } of checkpoints)
     listed.get(artifactId)?.checkpoints.push({ ...checkpoint, step: Number(step) });
+  const samples = await rows<ArtifactOwner<{ runId: string; runName: string }>>(
+    connection,
+    `SELECT sample.artifact_id,sample.run_id,run.name AS run_name FROM preprocessing_report_samples sample
+     JOIN runs run ON run.id=sample.run_id WHERE sample.project_id=$1 AND sample.artifact_id=ANY($2::uuid[])`,
+    parameters,
+  );
+  for (const { artifactId, ...report } of samples) {
+    const owners = listed.get(artifactId);
+    if (owners) (owners.preprocessingReports ??= []).push(report);
+  }
   return [...listed.values()];
 }
 

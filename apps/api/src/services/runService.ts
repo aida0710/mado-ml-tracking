@@ -33,6 +33,7 @@ import {
   listLogsAfter,
   listMetrics,
 } from '../repositories/telemetryRepository.js';
+import { findOriginStepExecutionOfRun } from '../repositories/workflowExecutionRepository.js';
 import { formatLogFileLine, logFileName } from '../domain/runLogFile.js';
 import { requireProject } from './accessService.js';
 import type { RunCompletionService } from './runCompletionService.js';
@@ -198,6 +199,15 @@ export class RunService {
         scope: 'runs:write',
       });
       const run = await findRun(connection, { projectId, id: registration.runId, lock: true });
+      if (
+        (input.parameters || input.environment) &&
+        (await findOriginStepExecutionOfRun(connection, { projectId, runId: run.id }))
+      )
+        throw new DomainError(
+          409,
+          'ワークフローの実行設定は固定されています。新しいバージョンを作成してください',
+          'workflow_run_fixed',
+        );
       if (input.tags || input.parameters) await assertRunRecordsWritable(connection, run);
       const isMlflowManaged = (run as Run & { mlflowManaged?: boolean }).mlflowManaged === true;
       if (isMlflowManaged && input.parameters) {

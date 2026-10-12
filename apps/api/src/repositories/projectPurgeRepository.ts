@@ -30,6 +30,13 @@ export const PROJECT_PURGE_STEPS: readonly ProjectPurgeStep[] = [
   // artifact_upload_parts goes with artifact_uploads (ON DELETE CASCADE).
   ...[
     'comments',
+    'preprocessing_report_samples',
+    'preprocessing_reports',
+    'workflow_step_runs',
+    'workflow_executions',
+    'workflow_version_inputs',
+    'workflow_versions',
+    'workflows',
     'saved_views',
     'reports',
     'notification_outbox',

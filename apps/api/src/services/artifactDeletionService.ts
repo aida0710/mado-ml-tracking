@@ -25,6 +25,7 @@ const referenceLabels: Record<ArtifactReferenceKind, string> = {
   code_version: 'CodeVersion',
   dataset_version: 'DatasetVersion',
   checkpoint: '保持中のcheckpoint',
+  preprocessing_report: '前処理のレポート',
 };
 
 function artifactInUse(kinds: ArtifactReferenceKind[]): never {

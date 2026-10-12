@@ -43,6 +43,14 @@ export function parseJsonObject(value: string): JsonObject {
     throw new Error(text.jsonObjectError);
   return parsed as JsonObject;
 }
+/** A JSON object written in a field (empty means {}), or null for anything else. */
+export function parseJsonObjectOrNull(value: string): JsonObject | null {
+  try {
+    return parseJsonObject(value);
+  } catch {
+    return null;
+  }
+}
 export function parseStringMap(value: string): Record<string, string> {
   const parsed = parseJsonObject(value);
   if (!Object.values(parsed).every((item) => typeof item === 'string'))

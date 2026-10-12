@@ -13,6 +13,7 @@ import {
   uniqueIdsSchema,
   uuidSchema,
   walltimeSecondsSchema,
+  workerCapabilitiesSchema,
 } from './validation.js';
 import { outputDeclarationsSchema } from './workerOutputValidation.js';
 
@@ -44,10 +45,14 @@ const submissionResultSchema = z.strictObject({
   error: z.string().max(20000).nullish(),
 });
 const submissionResultsSchema = z.array(submissionResultSchema).min(1).max(SITE_CLAIM_MAX_SUBMISSIONS);
+// What the runner that the claimant installs on the site passes to a Job's code; a claim without
+// them is from an older launcher or `mado-tracking submit`, whose runner has none.
+const runnerCapabilitiesSchema = workerCapabilitiesSchema.default([]);
 
 export const siteSubmissionClaimSchema = z.strictObject({
   targetIds: uniqueIdsSchema.optional(),
   limit: claimLimitSchema,
+  capabilities: runnerCapabilitiesSchema,
 });
 export const siteSubmissionReportSchema = z.strictObject({
   results: submissionResultsSchema,
@@ -63,6 +68,7 @@ export const manualSubmissionClaimSchema = z.strictObject({
   submitterId: holderIdSchema,
   limit: claimLimitSchema,
   all: z.boolean().default(false),
+  capabilities: runnerCapabilitiesSchema,
 });
 export const manualSubmissionReportSchema = z.strictObject({
   submitterId: holderIdSchema,

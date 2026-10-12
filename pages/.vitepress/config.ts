@@ -40,6 +40,7 @@ const jaSidebar = [
     { text: "workerの導入", link: "/compute/worker" },
     { text: "Jobsの画面", link: "/compute/jobs" },
     { text: "フック", link: "/compute/hooks" },
+    { text: "前処理ワークフロー", link: "/compute/workflows" },
   ] },
   { text: "データと保存先", items: [
     { text: "Artifacts", link: "/data/artifacts" },
@@ -98,6 +99,7 @@ const enSidebar = [
     { text: "Install a worker", link: "/en/compute/worker" },
     { text: "The Jobs page", link: "/en/compute/jobs" },
     { text: "Hooks", link: "/en/compute/hooks" },
+    { text: "Preprocessing workflows", link: "/en/compute/workflows" },
   ] },
   { text: "Data and storage", items: [
     { text: "Artifacts", link: "/en/data/artifacts" },

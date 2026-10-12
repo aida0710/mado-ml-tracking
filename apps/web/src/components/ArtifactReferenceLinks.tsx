@@ -4,6 +4,7 @@ import type { ArtifactReferences } from '@mmt/contracts';
 import { modelVersionPath } from '../lib/modelVersionPath';
 import { text } from '../i18n/catalog';
 import { artifactsTextTemplates } from '../i18n/artifacts';
+import { workflowsText } from '../i18n/workflows';
 
 /**
  * Every record that uses the Artifact, each a link to where it can be changed: model, dataset and
@@ -51,6 +52,12 @@ export function ArtifactReferenceLinks({
           <Link to={`${base}/runs/${checkpoint.runId}?tab=checkpoints`}>
             {artifactsTextTemplates.artifactCheckpointLabel(checkpoint.runName, checkpoint.step)}
           </Link>
+        </li>
+      ))}
+      {references.preprocessingReports?.map((report) => (
+        <li key={`preprocessing:${report.runId}`}>
+          <span className="muted">{workflowsText.preprocessingReport}</span>{' '}
+          <Link to={`${base}/runs/${report.runId}?tab=details`}>{report.runName}</Link>
         </li>
       ))}
     </ul>

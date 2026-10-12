@@ -104,6 +104,7 @@ def build_runtime_bundle() -> bytes:
             "dataset_cache",
             "dataset_downloads",
             "dataset_runner",
+            "workflow_context",
         ):
             source = (package_directory / "worker" / f"{name}.py").read_text()
             archive.writestr(

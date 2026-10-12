@@ -1,3 +1,4 @@
+import type { WorkerCapability } from '@mmt/contracts';
 import * as english from './en/workerCoverage';
 import { localized } from './localized';
 // Whether a worker takes a computer's Jobs and connection checks (lib/workerCoverage), on the
@@ -26,6 +27,8 @@ export const workerCoverageText = localized({
     'コンピュータがコードのRuntimeを扱えない',
     'Localのコンピュータで、API serverがlocal executorを許していない（MMT_ALLOW_LOCAL_EXECUTOR）',
   ] as readonly string[],
+  queuedJobNeedsWorkerUpdate:
+    '担当するworkerは応答していますが、このJobに必要な次の機能に対応していません。workerを新しいmado-trackingに更新すると受け取ります。',
   launchWorkerMissingHint:
     'このまま起動すると、Jobはworkerが動くまで待機中のままです。',
   queuedJobWaitsForWorker: 'workerが動くまで、このJobは待機中のままです。',
@@ -36,6 +39,11 @@ export const workerCoverageText = localized({
   targetCheckWorkerMissing:
     'このコンピュータを名指ししたworker（MMT_WORKER_TARGET_IDS）が応答していないため、接続確認を頼んでも5分後に失敗します。先にworkerを起動してください。',
 } as const, english.workerCoverageText);
+
+// What each feature a worker names (workerInfo.capabilities) lets it run.
+export const workerCapabilityLabels = localized<Record<WorkerCapability, string>>({
+  workflowDatasetUsage: 'ワークフローのステップ（データの用途・重み・抽出条件を実行コードへ渡す）',
+}, english.workerCapabilityLabels);
 
 // Text that embeds values.
 export const workerCoverageTextTemplates = localized({

@@ -26,6 +26,7 @@ export const artifactReferencesSchema = namedContractSchema(
     checkpoints: z.array(
       z.strictObject({ id: idSchema, runId: idSchema, runName: z.string(), step: z.number().int() }),
     ),
+    preprocessingReports: z.array(z.strictObject({ runId: idSchema, runName: z.string() })).optional(),
   }),
 );
 
