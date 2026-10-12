@@ -237,6 +237,16 @@ export interface ApiConfig {
   smtp: SmtpSettings | null;
 }
 
+function parseOptionalSecretKey(base64: string | undefined, settingName: string): SecretKey | null {
+  if (!base64) return null;
+  try {
+    return parseSecretKey(base64);
+  } catch {
+    // Configuration errors identify the setting without exposing the supplied credential.
+    throw new Error(`${settingName} must be base64 of 32 bytes`);
+  }
+}
+
 export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiConfig {
   // Report field names only: environment values can contain credentials.
   const parsed = environmentSchema.safeParse(environment);
@@ -265,30 +275,15 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
     throw new Error('Insecure OIDC transport is forbidden in production');
   if (settings.AUTH_SESSION_IDLE_SECONDS > settings.AUTH_SESSION_ABSOLUTE_SECONDS)
     throw new Error('AUTH_SESSION_IDLE_SECONDS must not exceed AUTH_SESSION_ABSOLUTE_SECONDS');
-  let storageSecretKey: SecretKey | null = null;
-  if (settings.MMT_STORAGE_SECRET_KEY) {
-    try {
-      storageSecretKey = parseSecretKey(settings.MMT_STORAGE_SECRET_KEY);
-    } catch {
-      throw new Error('MMT_STORAGE_SECRET_KEY must be base64 of 32 bytes');
-    }
-  }
-  let pluginSecretKey: SecretKey | null = null;
-  if (settings.MMT_PLUGIN_SECRET_KEY) {
-    try {
-      pluginSecretKey = parseSecretKey(settings.MMT_PLUGIN_SECRET_KEY);
-    } catch {
-      throw new Error('MMT_PLUGIN_SECRET_KEY must be base64 of 32 bytes');
-    }
-  }
-  let hookSecretKey: SecretKey | null = null;
-  if (settings.MMT_HOOK_SECRET_KEY) {
-    try {
-      hookSecretKey = parseSecretKey(settings.MMT_HOOK_SECRET_KEY);
-    } catch {
-      throw new Error('MMT_HOOK_SECRET_KEY must be base64 of 32 bytes');
-    }
-  }
+  const storageSecretKey = parseOptionalSecretKey(
+    settings.MMT_STORAGE_SECRET_KEY,
+    'MMT_STORAGE_SECRET_KEY',
+  );
+  const pluginSecretKey = parseOptionalSecretKey(
+    settings.MMT_PLUGIN_SECRET_KEY,
+    'MMT_PLUGIN_SECRET_KEY',
+  );
+  const hookSecretKey = parseOptionalSecretKey(settings.MMT_HOOK_SECRET_KEY, 'MMT_HOOK_SECRET_KEY');
   const registrySettings = [
     settings.MMT_REGISTRY_HOST,
     settings.MMT_REGISTRY_USERNAME,

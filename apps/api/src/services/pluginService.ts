@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto';
-import type {
-  PluginCreate,
-  PluginEvent,
-  PluginManifest,
-  PluginOutboxSummary,
-  PluginPatch,
+import {
+  isSameUuid,
+  type PluginCreate,
+  type PluginEvent,
+  type PluginManifest,
+  type PluginOutboxSummary,
+  type PluginPatch,
 } from '@mmt/contracts';
 import { MadoApiError } from '@mmt/platform';
 import type { Principal } from '../auth/principal.js';
@@ -127,7 +128,7 @@ export class PluginService {
         this.client(plugin).datasetVersion(request.externalId),
       );
       if (
-        imported.externalId !== request.externalId ||
+        !isSameUuid(request.externalId, imported.externalId) ||
         !plugin.config!.namespaces.includes(imported.namespace)
       )
         throw new DomainError(

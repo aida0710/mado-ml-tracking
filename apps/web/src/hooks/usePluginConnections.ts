@@ -2,31 +2,35 @@ import { useEffect, useState } from 'react';
 import type { PluginConnection } from '@mmt/contracts';
 import { pluginsApi } from '../api/plugins';
 import { refreshPluginAvailability } from '../lib/pluginAvailabilityRevision';
+import { getPluginConnectionsWithSavedResponses, getUnobservedPluginResponses } from '../lib/pluginConnectionResponses';
 import { useQuery } from './useQuery';
 
 export function usePluginConnections(projectId: string) {
   const query = useQuery(`${projectId}:plugins`, (signal) => pluginsApi.connections(projectId, signal));
-  const [saved, setSaved] = useState<PluginConnection | null>(null);
-  const visibleSaved = saved?.projectId === projectId ? saved : null;
-  const fetched = query.value?.find((plugin) => plugin.id === saved?.id);
+  const [savedResponses, setSavedResponses] = useState<ReadonlyMap<string, PluginConnection>>(() => new Map());
   useEffect(() => {
-    if (saved && fetched && (
-      fetched.configRevision > saved.configRevision ||
-      (fetched.configRevision === saved.configRevision && fetched.enabled === saved.enabled &&
-        fetched.name === saved.name && fetched.configurationStatus === saved.configurationStatus)
-    )) setSaved(null);
-  }, [saved, fetched]);
+    const observedConnections = query.value;
+    if (!observedConnections) return;
+    setSavedResponses((previous) => getUnobservedPluginResponses({
+      savedResponses: previous, observedConnections,
+    }));
+  }, [query.value, savedResponses]);
   function onSaved(plugin: PluginConnection) {
-    // Use the PATCH response immediately; an older GET must not keep import actions usable.
-    setSaved(plugin);
+    if (plugin.projectId !== projectId) return;
+    // Each connection keeps its response until GET observes it; another save must not replace it.
+    setSavedResponses((previous) => {
+      const saved = previous.get(plugin.id);
+      if (saved && saved.configRevision > plugin.configRevision) return previous;
+      return new Map(previous).set(plugin.id, plugin);
+    });
     refreshPluginAvailability(projectId);
     query.reload();
   }
   return {
     ...query,
-    value: visibleSaved && query.value
-      ? [...query.value.filter((plugin) => plugin.id !== visibleSaved.id), visibleSaved]
-      : query.value,
+    value: query.value === undefined ? undefined : getPluginConnectionsWithSavedResponses({
+      projectId, observedConnections: query.value, savedResponses,
+    }),
     onSaved,
   };
 }

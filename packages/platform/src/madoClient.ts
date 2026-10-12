@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { MadoPluginConfig } from '@mmt/contracts';
+import { isSameUuid, type MadoPluginConfig } from '@mmt/contracts';
 import {
   madoCatalogSchema,
   madoDatasetSchema,
@@ -119,7 +119,10 @@ export function createMadoClient({
         madoDatasetSchema,
       );
       assertNamespace(dataset.namespace);
-      if (dataset.datasetId !== id || dataset.versions.some((version) => version.datasetId !== id))
+      if (
+        !isSameUuid(id, dataset.datasetId) ||
+        dataset.versions.some((version) => !isSameUuid(id, version.datasetId))
+      )
         throw new MadoApiError(502);
       return dataset;
     },
@@ -130,7 +133,7 @@ export function createMadoClient({
         madoVersionDetailSchema,
       );
       assertNamespace(version.namespace);
-      if (version.id !== id) throw new MadoApiError(502);
+      if (!isSameUuid(id, version.id)) throw new MadoApiError(502);
       return version;
     },
     async sendLineage(payload: string): Promise<void> {

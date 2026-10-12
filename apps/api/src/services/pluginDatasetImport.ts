@@ -1,4 +1,4 @@
-import type { Dataset, DatasetVersion, PluginDataset } from '@mmt/contracts';
+import { isSameUuid, type Dataset, type DatasetVersion, type PluginDataset } from '@mmt/contracts';
 import type { Connection } from '../db/database.js';
 import { first } from '../db/database.js';
 import { conflict } from '../domain/errors.js';
@@ -36,8 +36,9 @@ export async function importPluginDataset(
   );
   if (existing) {
     if (
-      existing.externalRef?.pluginId !== pluginId ||
-      existing.externalRef.externalId !== imported.externalId ||
+      !existing.externalRef ||
+      !isSameUuid(pluginId, existing.externalRef.pluginId) ||
+      !isSameUuid(imported.externalId, existing.externalRef.externalId) ||
       existing.digest !== imported.digest ||
       existing.uri !== imported.uri
     )

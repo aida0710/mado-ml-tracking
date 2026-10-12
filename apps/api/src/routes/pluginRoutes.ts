@@ -6,6 +6,8 @@ import { jsonBody, principal, uuidParam, type ApiEnvironment } from '../http/req
 
 // Keep validation aligned with Mado's service catalog rather than failing downstream.
 const MAX_MADO_QUERY_LENGTH = 512;
+// Keep each receipt import atomic while bounding the number of rows locked by one request.
+const MAX_DELIVERY_RECEIPT_COUNT = 1000;
 export const pluginDatasetSearchSchema = z.strictObject({
   query: z.string().trim().max(MAX_MADO_QUERY_LENGTH),
   expectedRevision: z.number().int().nonnegative().optional(),
@@ -22,7 +24,7 @@ export const pluginDeliveryReceiptsSchema = z.strictObject({
   receipts: z
     .array(z.strictObject({ eventId: z.uuid(), payloadHash: z.string().regex(/^[a-f0-9]{64}$/) }))
     .min(1)
-    .max(1000),
+    .max(MAX_DELIVERY_RECEIPT_COUNT),
 });
 
 export function pluginRoutes(plugins: PluginService): Hono<ApiEnvironment> {

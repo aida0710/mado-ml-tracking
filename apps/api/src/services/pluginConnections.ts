@@ -281,7 +281,7 @@ export class PluginConnections {
     const history = await first<{ exists: boolean }>(
       connection,
       `SELECT EXISTS(SELECT 1 FROM plugin_outbox WHERE plugin_id=$1)
-        OR EXISTS(SELECT 1 FROM dataset_versions WHERE external_ref->>'pluginId'=$1::text) AS exists`,
+        OR EXISTS(SELECT 1 FROM dataset_versions WHERE lower(external_ref->>'pluginId')=lower($1::text)) AS exists`,
       [plugin.id],
     );
     if (history?.exists)
