@@ -1,10 +1,15 @@
 import { DATASET_USAGE_ROLES } from '@mmt/contracts';
 import type { WorkflowInputDraft } from '../../lib/workflowDraft';
 import { ChoiceField, type ChoiceOption } from '../ChoiceField';
+import { MissingStepReferenceNotice } from './MissingStepReferenceNotice';
 import { text } from '../../i18n/catalog';
 import { workflowsText as labels } from '../../i18n/workflows';
 import { datasetRoleLabel } from '../../lib/workflowLabels';
 import { useLocale } from '../../i18n/useLocale';
+
+// The contract takes a weight above 0; the smallest positive number makes the browser's own check
+// refuse 0 and below while still taking any positive weight.
+const MIN_POSITIVE_WEIGHT = Number.MIN_VALUE;
 
 export function WorkflowInputEditor({
   input,
@@ -31,6 +36,7 @@ export function WorkflowInputEditor({
         <ChoiceField
           label={labels.workflowSource}
           value={source.kind}
+          placeholder={labels.workflowChoose}
           options={[
             { value: 'dataset', label: labels.workflowFixedDataset },
             { value: 'step', label: labels.workflowStepDataset },
@@ -48,17 +54,22 @@ export function WorkflowInputEditor({
           <ChoiceField
             label={labels.workflowDatasetVersion}
             value={source.datasetVersionId}
+            placeholder={labels.workflowChoose}
             options={datasets}
             onChange={(datasetVersionId) => update({ source: { ...source, datasetVersionId } })}
           />
         ) : (
           <>
-            <ChoiceField
-              label={labels.workflowSourceStep}
-              value={source.stepKey}
-              options={earlierSteps}
-              onChange={(stepKey) => update({ source: { ...source, stepKey } })}
-            />
+            <div>
+              <ChoiceField
+                label={labels.workflowSourceStep}
+                value={source.stepKey}
+                placeholder={labels.workflowChoose}
+                options={earlierSteps}
+                onChange={(stepKey) => update({ source: { ...source, stepKey } })}
+              />
+              <MissingStepReferenceNotice stepKey={source.stepKey} earlierSteps={earlierSteps} />
+            </div>
             <label className="field">
               <span>{labels.workflowDatasetName}</span>
               <input
@@ -73,6 +84,7 @@ export function WorkflowInputEditor({
         <ChoiceField
           label={labels.workflowRole}
           value={binding.role}
+          placeholder={labels.workflowChoose}
           options={DATASET_USAGE_ROLES.map((role) => ({
             value: role,
             label: datasetRoleLabel(role),
@@ -86,7 +98,7 @@ export function WorkflowInputEditor({
           <span>{labels.workflowWeight}</span>
           <input
             type="number"
-            min="0"
+            min={MIN_POSITIVE_WEIGHT}
             step="any"
             value={binding.weight}
             onChange={(event) => update({ weight: event.target.valueAsNumber })}

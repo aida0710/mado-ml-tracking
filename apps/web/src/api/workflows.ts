@@ -7,10 +7,7 @@ import type {
   WorkflowLaunch,
   WorkflowVersion,
   WorkflowVersionCreate,
-  RunDatasetUsage,
-  PreprocessingReportResponse,
-  PreprocessingReport,
-  PreprocessingReportInput,
+  WorkflowVersionPage,
 } from '@mmt/contracts';
 import {
   assertCursorPage,
@@ -25,14 +22,22 @@ const workflowPath = (projectId: string, workflowId: string) =>
   `${projectPath(projectId)}/workflows/${encodeId(workflowId)}`;
 const executionPath = (projectId: string, executionId: string) =>
   `${projectPath(projectId)}/workflow-executions/${encodeId(executionId)}`;
-const runPath = (projectId: string, runId: string) =>
-  `${projectPath(projectId)}/runs/${encodeId(runId)}`;
+const cursorQuery = (cursor: string | undefined) =>
+  cursor ? `?${new URLSearchParams({ cursor })}` : '';
 
 export const workflowsApi = {
   list: (projectId: string, signal?: AbortSignal) =>
     requestItems<Workflow>(`${projectPath(projectId)}/workflows`, signal),
+  /** The workflow with its newest versions; `olderVersionsCursor` reaches the rest. */
   get: (projectId: string, id: string, signal?: AbortSignal) =>
     request<WorkflowDetail>(workflowPath(projectId, id), { signal }),
+  olderVersions: async (projectId: string, id: string, cursor: string) => {
+    const page = await request<WorkflowVersionPage>(
+      `${workflowPath(projectId, id)}/versions${cursorQuery(cursor)}`,
+    );
+    assertCursorPage(page);
+    return page;
+  },
   create: (projectId: string, input: WorkflowCreate) =>
     request<WorkflowDetail>(`${projectPath(projectId)}/workflows`, jsonRequest('POST', input)),
   createVersion: (projectId: string, id: string, input: WorkflowVersionCreate) =>
@@ -44,9 +49,8 @@ export const workflowsApi = {
     id: string,
     { cursor, signal }: { cursor?: string; signal?: AbortSignal } = {},
   ) => {
-    const query = cursor ? `?${new URLSearchParams({ cursor })}` : '';
     const page = await request<WorkflowExecutionPage>(
-      `${workflowPath(projectId, id)}/executions${query}`,
+      `${workflowPath(projectId, id)}/executions${cursorQuery(cursor)}`,
       { signal },
     );
     assertCursorPage(page);
@@ -56,22 +60,4 @@ export const workflowsApi = {
     request<WorkflowExecution>(executionPath(projectId, id), { signal }),
   cancel: (projectId: string, id: string) =>
     request<WorkflowExecution>(`${executionPath(projectId, id)}/cancel`, jsonRequest('POST', {})),
-};
-
-export const preprocessingApi = {
-  report: async (projectId: string, runId: string, signal?: AbortSignal) =>
-    (
-      await request<PreprocessingReportResponse>(
-        `${runPath(projectId, runId)}/preprocessing-report`,
-        { signal },
-      )
-    ).report,
-  saveReport: (projectId: string, runId: string, report: PreprocessingReportInput) =>
-    request<PreprocessingReport>(
-      `${runPath(projectId, runId)}/preprocessing-report`,
-      jsonRequest('PUT', report),
-    ),
-  usage: async (projectId: string, runId: string, signal?: AbortSignal) =>
-    (await request<RunDatasetUsage>(`${runPath(projectId, runId)}/dataset-usage`, { signal }))
-      .items,
 };

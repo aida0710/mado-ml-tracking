@@ -59,6 +59,7 @@ import { getRunParameters } from '../lib/runParameters';
 import { creatorName } from '../lib/creatorName';
 import { getResumeCheckpointRecord } from '../lib/checkpointResume';
 import { canControlJob } from '../lib/permissions';
+import { workflowIdOfRun } from '../lib/workflowRunTags';
 import { isTerminalRun } from '../lib/runOutputRegistrationState';
 import { text, textTemplates } from '../i18n/catalog';
 import { systemMetricCategoryLabels, systemMetricUnitLabels } from '../i18n/runs';
@@ -146,11 +147,7 @@ export function RunDetailPage() {
                       item.executionMode === 'test' ? text.testMode : text.runMode,
                     )}
                   </span>
-                  {item.taskId && (
-                    <Link to={`${base}/tasks?id=${item.taskId}`}>
-                      {text.taskRevision}: {item.taskRevision}
-                    </Link>
-                  )}
+                  {item.taskId && <Link to={`${base}/tasks?id=${item.taskId}`}>{text.taskRevision}: {item.taskRevision}</Link>}
                   <span>{formatDuration(item.startedAt, item.endedAt)}</span>
                   <ResumedFromCheckpoint run={item} />
                 </>
@@ -206,11 +203,9 @@ export function RunDetailPage() {
               {tab === 'systemMetrics' && <RunSystemMetricCharts key={item.id} run={item} />}
               {tab === 'media' && <RunMediaPanel projectId={project.id} runId={runId} />}
               {tab === 'logs' && <RunLogs logs={logs} />}
-              {tab === 'executionSnapshot' && (
-                <Resource query={artifacts}>
-                  {(files) => <RunExecutionSnapshot run={item} artifacts={files} />}
-                </Resource>
-              )}
+              {tab === 'executionSnapshot' && <Resource query={artifacts}>
+                {(files) => <RunExecutionSnapshot run={item} artifacts={files} />}
+              </Resource>}
               {tab === 'artifacts' && (
                 <>
                   {canEdit && (
@@ -227,9 +222,7 @@ export function RunDetailPage() {
               {tab === 'checkpoints' && (
                 <RunCheckpointList
                   run={item}
-                  canRetryJob={
-                    canControlJob(project.role, user.id, item) && !item.tags['mmt.workflowId']
-                  }
+                  canRetryJob={canControlJob(project.role, user.id, item) && !workflowIdOfRun(item)}
                 />
               )}
               {tab === 'details' && (

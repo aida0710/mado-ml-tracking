@@ -1,25 +1,35 @@
+import { useRef } from 'react';
 import {
   WORKFLOW_MAX_INPUTS,
   WORKFLOW_MAX_QUALITY_GATES,
   type ExperimentTask,
 } from '@mmt/contracts';
-import type { WorkflowStepDraft } from '../../lib/workflowDraft';
+import {
+  newDatasetInput,
+  newRetainedInputGate,
+  taskInputDrafts,
+  type WorkflowStepDraft,
+} from '../../lib/workflowDraft';
 import { ChoiceField, type ChoiceOption } from '../ChoiceField';
 import { WorkflowInputEditor } from './WorkflowInputEditor';
 import { WorkflowGateEditor } from './WorkflowGateEditor';
+import { MissingStepReferenceNotice } from './MissingStepReferenceNotice';
 import { text } from '../../i18n/catalog';
-import { workflowsText as labels } from '../../i18n/workflows';
+import { workflowsText as labels, workflowsTextTemplates } from '../../i18n/workflows';
+import { joinLabels } from '../../i18n/textJoining';
 import { useLocale } from '../../i18n/useLocale';
 
-// Start with a common retained-input threshold; each workflow can change it before saving.
-const DEFAULT_MIN_RETAINED_INPUT_RATIO = 0.9;
-
+/**
+ * One step of the definition. A changed key is reported once the field is left
+ * (`onKeyRenamed`), so the steps after it can follow the new key instead of each keystroke.
+ */
 export function WorkflowStepEditor({
   step,
   tasks,
   datasets,
   earlierSteps,
   onChange,
+  onKeyRenamed,
   onRemove,
 }: {
   step: WorkflowStepDraft;
@@ -27,9 +37,11 @@ export function WorkflowStepEditor({
   datasets: ChoiceOption[];
   earlierSteps: ChoiceOption[];
   onChange: (step: WorkflowStepDraft) => void;
+  onKeyRenamed: (rename: { from: string; to: string }) => void;
   onRemove: () => void;
 }) {
   useLocale();
+  const keyWhenFocused = useRef(step.key);
   const update = (changes: Partial<WorkflowStepDraft>) => onChange({ ...step, ...changes });
   return (
     <fieldset className="workflow-step-editor">
@@ -48,45 +60,47 @@ export function WorkflowStepEditor({
           <input
             value={step.key}
             required
+            onFocus={() => {
+              keyWhenFocused.current = step.key;
+            }}
+            onBlur={() => {
+              if (keyWhenFocused.current !== step.key)
+                onKeyRenamed({ from: keyWhenFocused.current, to: step.key });
+            }}
             onChange={(event) => update({ key: event.target.value })}
           />
         </label>
         <ChoiceField
           label={labels.workflowTask}
           value={step.taskId}
+          placeholder={labels.workflowChoose}
           options={tasks.map((task) => ({
             value: task.id,
-            label: `${task.name} · ${text[task.kind]} · v${task.revision}`,
+            label: joinLabels([
+              task.name,
+              text[task.kind],
+              workflowsTextTemplates.workflowVersionLabel(task.revision),
+            ]),
           }))}
           onChange={(taskId) => {
             const task = tasks.find((item) => item.id === taskId);
             update({
               taskId,
               name: step.name || task?.name || '',
-              inputs:
-                step.inputs.length || !task
-                  ? step.inputs
-                  : task.inputDatasetVersionIds.map((datasetVersionId) => ({
-                      binding: {
-                        source: { kind: 'dataset', datasetVersionId },
-                        role:
-                          task.kind === 'training' || task.kind === 'finetuning'
-                            ? 'training'
-                            : 'input',
-                        weight: 1,
-                        selection: {},
-                      },
-                      selectionJson: '{}',
-                    })),
+              inputs: step.inputs.length || !task ? step.inputs : taskInputDrafts(task),
             });
           }}
         />
-        <ChoiceField
-          label={labels.workflowModelSource}
-          value={step.modelFromStepKey ?? ''}
-          options={[{ value: '', label: labels.workflowTaskModel }, ...earlierSteps]}
-          onChange={(modelFromStepKey) => update({ modelFromStepKey: modelFromStepKey || null })}
-        />
+        <div>
+          <ChoiceField
+            label={labels.workflowModelSource}
+            value={step.modelFromStepKey ?? ''}
+            placeholder={labels.workflowChoose}
+            options={[{ value: '', label: labels.workflowTaskModel }, ...earlierSteps]}
+            onChange={(modelFromStepKey) => update({ modelFromStepKey: modelFromStepKey || null })}
+          />
+          <MissingStepReferenceNotice stepKey={step.modelFromStepKey} earlierSteps={earlierSteps} />
+        </div>
       </div>
       {step.inputs.map((input, index) => (
         <WorkflowInputEditor
@@ -108,22 +122,7 @@ export function WorkflowStepEditor({
         type="button"
         className="button small"
         disabled={step.inputs.length >= WORKFLOW_MAX_INPUTS}
-        onClick={() =>
-          update({
-            inputs: [
-              ...step.inputs,
-              {
-                binding: {
-                  source: { kind: 'dataset', datasetVersionId: '' },
-                  role: 'input',
-                  weight: 1,
-                  selection: {},
-                },
-                selectionJson: '{}',
-              },
-            ],
-          })
-        }
+        onClick={() => update({ inputs: [...step.inputs, newDatasetInput()] })}
       >
         {labels.workflowAddInput}
       </button>
@@ -149,24 +148,13 @@ export function WorkflowStepEditor({
         type="button"
         className="button small"
         disabled={step.qualityGates.length >= WORKFLOW_MAX_QUALITY_GATES}
-        onClick={() =>
-          update({
-            qualityGates: [
-              ...step.qualityGates,
-              {
-                metric: 'preprocessing.retained_input_ratio',
-                operator: 'gte',
-                threshold: DEFAULT_MIN_RETAINED_INPUT_RATIO,
-              },
-            ],
-          })
-        }
+        onClick={() => update({ qualityGates: [...step.qualityGates, newRetainedInputGate()] })}
       >
         {labels.workflowAddGate}
       </button>
       <p className="muted">{labels.workflowGateHint}</p>
       <button type="button" className="button small danger" onClick={onRemove}>
-        {text.remove}
+        {labels.workflowRemoveStep}
       </button>
     </fieldset>
   );

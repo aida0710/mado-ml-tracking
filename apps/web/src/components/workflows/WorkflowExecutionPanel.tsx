@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { ErrorNotice } from '../Feedback';
 import { DatasetUsagePanel } from './DatasetUsagePanel';
 import { PreprocessingReportSummary } from './PreprocessingReportSummary';
-import { workflowsText as labels } from '../../i18n/workflows';
-import { workflowStatusLabel } from '../../lib/workflowLabels';
+import { WorkflowStatusBadge } from './WorkflowStatusBadge';
+import { workflowsText as labels, workflowsTextTemplates } from '../../i18n/workflows';
+import { joinLabels } from '../../i18n/textJoining';
 import { useLocale } from '../../i18n/useLocale';
 
 export function WorkflowExecutionPanel({ execution }: { execution: WorkflowExecution }) {
@@ -13,23 +14,18 @@ export function WorkflowExecutionPanel({ execution }: { execution: WorkflowExecu
   return (
     <section className="workflow-execution">
       <h2>
-        {labels.workflowExecution} ·{' '}
-        <span className={`workflow-status ${execution.status}`}>
-          {workflowStatusLabel(execution.status)}
-        </span>
+        {labels.workflowExecution} <WorkflowStatusBadge status={execution.status} />
       </h2>
       <p className="muted mono">
-        {execution.id} · v{execution.revision}
+        {joinLabels([execution.id, workflowsTextTemplates.workflowVersionLabel(execution.revision)])}
       </p>
       <ErrorNotice message={execution.error} />
       <ol className="workflow-steps">
         {execution.steps.map((step) => (
-          <li key={step.id} className={`workflow-step ${step.status}`}>
+          <li key={step.id} className="workflow-step">
             <header>
               <h3>{step.name}</h3>
-              <span className={`workflow-status ${step.status}`}>
-                {workflowStatusLabel(step.status)}
-              </span>
+              <WorkflowStatusBadge status={step.status} />
             </header>
             {step.reused && <p className="muted">{labels.workflowReused}</p>}
             <div className="section-actions">

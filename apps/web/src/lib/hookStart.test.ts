@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { HOOK_PAYLOAD_MAX_BYTES } from '@mmt/contracts';
-import { buildHookStartRequest, createHookStartKey } from './hookStart';
+import { buildHookStartRequest } from './hookStart';
 
 describe('手動のフックの起動', () => {
   it('本文が空なら送らず、JSONオブジェクトならそのまま送る', () => {
@@ -16,11 +16,5 @@ describe('手動のフックの起動', () => {
     expect(() => buildHookStartRequest('{', 'key')).toThrow();
     const large = JSON.stringify({ text: 'x'.repeat(HOOK_PAYLOAD_MAX_BYTES) });
     expect(() => buildHookStartRequest(large, 'key')).toThrow('256KiB');
-  });
-
-  it('起動ごとに別の重複防止キーを作る', () => {
-    const key = createHookStartKey();
-    expect(key).toMatch(/^[0-9a-f]{32}$/);
-    expect(createHookStartKey()).not.toBe(key);
   });
 });

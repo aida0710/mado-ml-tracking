@@ -24,9 +24,7 @@ export function ArtifactReferenceLinks({
       {references.modelVersions.map((version) => (
         <li key={`model:${version.id}`}>
           <span className="muted">{text.artifactUsedByModelVersion}</span>{' '}
-          <Link
-            to={modelVersionPath(projectId, { modelId: version.modelId, versionId: version.id })}
-          >
+          <Link to={modelVersionPath(projectId, { modelId: version.modelId, versionId: version.id })}>
             {version.modelName} / {version.version}
           </Link>
         </li>

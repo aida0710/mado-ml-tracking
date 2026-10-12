@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { PreprocessingReport } from '@mmt/contracts';
-import { preprocessingReportInputSchema } from '@mmt/contracts/schemas';
-import { preprocessingApi } from '../api/workflows';
+import { preprocessingReportsApi } from '../api/preprocessingReports';
+import { buildPreprocessingReportInput } from '../lib/preprocessingReportInput';
 import { useMutation } from '../hooks/useMutation';
 import { Dialog } from '../components/Dialog';
 import { ErrorNotice } from '../components/Feedback';
@@ -60,32 +60,15 @@ export function PreprocessingReportDialog({
         onSubmit={(event) => {
           event.preventDefault();
           void mutation.run(async () => {
-            let input;
-            try {
-              const reasonBreakdown: unknown = JSON.parse(reasons);
-              if (
-                typeof reasonBreakdown !== 'object' ||
-                !reasonBreakdown ||
-                Array.isArray(reasonBreakdown)
-              )
-                throw new Error();
-              input = preprocessingReportInputSchema.parse({
-                ...counts,
-                ...reasonBreakdown,
-                inputDurationSeconds: durations.inputDurationSeconds
-                  ? Number(durations.inputDurationSeconds)
-                  : null,
-                outputDurationSeconds: durations.outputDurationSeconds
-                  ? Number(durations.outputDurationSeconds)
-                  : null,
-                metrics: JSON.parse(metrics) as unknown,
-                sampleArtifactIds: samples.split(/\s+/).filter(Boolean),
-                metadata: report?.metadata ?? {},
-              });
-            } catch {
-              throw new Error(labels.workflowInvalid);
-            }
-            await preprocessingApi.saveReport(projectId, runId, input);
+            const input = buildPreprocessingReportInput({
+              counts,
+              durations,
+              reasonsJson: reasons,
+              metricsJson: metrics,
+              samples,
+              metadata: report?.metadata ?? {},
+            });
+            await preprocessingReportsApi.save(projectId, runId, input);
             onSaved();
           });
         }}

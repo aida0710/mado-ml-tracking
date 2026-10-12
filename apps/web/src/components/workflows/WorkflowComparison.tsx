@@ -1,5 +1,6 @@
 import type { WorkflowExecution } from '@mmt/contracts';
 import { ResponsiveTable } from '../ResponsiveTable';
+import { shortId } from '../../lib/jobDisplay';
 import { workflowsText as labels } from '../../i18n/workflows';
 import { useLocale } from '../../i18n/useLocale';
 
@@ -45,13 +46,13 @@ export function WorkflowComparison({
           },
           {
             key: 'current',
-            header: current.id.slice(0, 8),
+            header: shortId(current.id),
             priority: 'primary',
             render: (row) => row.current ?? '—',
           },
           {
             key: 'previous',
-            header: previous.id.slice(0, 8),
+            header: shortId(previous.id),
             priority: 'primary',
             render: (row) => row.previous ?? '—',
           },

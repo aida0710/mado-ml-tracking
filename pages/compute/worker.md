@@ -139,6 +139,8 @@ git -C ~/mado-ml-tracking pull
 
 SSH鍵の候補の報告と、コンピュータのディレクトリの読み取りは、新しい版のworkerで入りました。古い版のworkerは［コンピュータを追加］の［接続に使うworker］に出ないので、更新してください。古い版のままでも、Jobの処理と、`--target-ids`で担当するコンピュータの接続確認はこれまでどおり行います。
 
+[ワークフロー](/compute/workflows)のステップのJobは、データの用途と抽出条件を実行コードへ渡せるworkerだけが受け取ります。古いworkerしかいないコンピュータでは、ワークフローのJobは受け取られずに待機したままになるので、更新してください。
+
 ### tokenを差し替える
 
 期限が近づいたら新しいtokenを発行し、ファイルに保存して`install`をもう一度実行します。
@@ -228,6 +230,8 @@ workerは、実行コードに次の環境変数を渡します。コンテナ�
 | `MMT_INPUT_DATASET_DIRS` | 入力データセットバージョンごとの、取得済みの本体のディレクトリ（JSON） |
 | `MMT_DATASET_VERSIONS_FILE` | 入力データセットバージョンの情報 |
 | `MMT_UPSTREAM_RUN_ID`、`MMT_UPSTREAM_RUN_FILE` | 上流Run（[ルールの連鎖](/models/automation#chain-evaluation-after-inference)のとき） |
+| `MMT_DATASET_USAGE_FILE` | 入力データの用途・重み・抽出条件（`{"items": [...]}`。[ワークフロー](/compute/workflows)のステップのとき） |
+| `MMT_WORKFLOW_EXECUTION_ID` | ワークフローの実行のID（ワークフローのステップのとき） |
 | `MMT_RESUME_CHECKPOINT_DIR`など | 再開元のcheckpoint（[学習の途中再開](/models/checkpoints)のとき） |
 | `/mmt/source` | 追加のソース（コンテナで、ソースを指定したとき。読み取り専用） |
 | `/mmt/outputs`、`MMT_OUTPUTS_DIR` | 出力ファイルを書く場所 |
@@ -249,7 +253,7 @@ SDKを入れていないコンテナでは、出力を`/mmt/outputs`に書き、
 
 - `sha256`と`size`は実際のファイルと一致させます。すべての出力を書き終えてから`result.json`を書きます。
 - `models`で宣言した重みは、モデルのバージョンとして登録します。宣言できるのは学習とファインチューニングのRunだけで、workerのtokenに`registry:write`が必要です。
-- `datasets`には`{datasetId, path, digest}`を書くと、出力をデータセットバージョンとして登録します。推論の出力を評価へ渡すときに使います。
+- `datasets`には`{datasetId, path, digest}`を書くと、出力をデータセットバージョンとして登録します。推論の出力を評価へ渡すときに使います。`path`にディレクトリ（例: `"prepared"`）を書くと、その下の出力ファイルすべてを1つのバージョンにします。前処理で数千の音声を1つのデータセットにするときに使います。バージョンの中のパスは、そのディレクトリからの相対パスです。
 - 出力ファイルが数千件あるときは、`result.json`に並べず、1行に1件`{"path","sha256","size"}`を書いたJSON Linesのファイルを`"artifactsManifest": "artifacts.jsonl"`で指します。
 
 | 上限 | 値 |
@@ -258,6 +262,7 @@ SDKを入れていないコンテナでは、出力を`/mmt/outputs`に書き、
 | `result.json` | 1MiB |
 | メトリクス | 1000点 |
 | `models`、`datasets` | 16件、64件 |
+| `datasets`のディレクトリの下のファイル | 100000件 |
 
 ## 接続が切れたとき、止めたとき
 
