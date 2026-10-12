@@ -49,7 +49,7 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
   function issueServiceAccountToken(
     fixture: ProjectFixture,
     account: ServiceAccount,
-    body: { scopes: string[]; expiresAt?: string },
+    body: { scopes: string[]; expiresAt?: string | null },
     cookie = fixture.administrator.cookie,
   ) {
     return request(harness.app, `${fixture.basePath}/service-accounts/${account.id}/tokens`, {
@@ -376,28 +376,27 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
     expect(revocation.rows).toEqual([{ owner_type: 'user' }]);
   });
 
-  it('期限は上限365日を超えると422、未指定なら365日後になる', async () => {
+  it('個人とService Accountの期限は365日を超えて指定でき、省略時は365日後になる', async () => {
     const fixture = await projectFixture(harness);
     const account = await serviceAccount(fixture, { name: 'expiring', role: 'editor' });
-    const tooLong = new Date(Date.now() + 366 * DAY_MILLISECONDS).toISOString();
-    const refusedPersonal = await request(harness.app, '/api/tokens', {
+    const customExpiry = new Date(Date.now() + 730 * DAY_MILLISECONDS).toISOString();
+    const customPersonal = await entity<IssuedToken>(await request(harness.app, '/api/tokens', {
       method: 'POST',
       cookie: fixture.editor.cookie,
       body: {
-        name: 'Too long',
+        name: 'Two years',
         kind: 'personal',
         projectId: fixture.project.id,
         scopes: ['read'],
-        expiresAt: tooLong,
+        expiresAt: customExpiry,
       },
-    });
-    expect(refusedPersonal.status).toBe(422);
-    expect(await errorCode(refusedPersonal)).toBe('token_lifetime_exceeded');
-    const refusedAccount = await issueServiceAccountToken(fixture, account, {
+    }));
+    expect(customPersonal.item.expiresAt).toBe(customExpiry);
+    const customAccount = await entity<IssuedToken>(await issueServiceAccountToken(fixture, account, {
       scopes: ['read'],
-      expiresAt: tooLong,
-    });
-    expect(refusedAccount.status).toBe(422);
+      expiresAt: customExpiry,
+    }));
+    expect(customAccount.item.expiresAt).toBe(customExpiry);
     const beforeIssue = Date.now();
     const issued = await entity<IssuedToken>(
       await issueServiceAccountToken(fixture, account, { scopes: ['read'] }),
@@ -414,6 +413,57 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
       }),
     );
     expect(personal.item.expiresAt).toBe(thirtyDays);
+  });
+
+  it('無期限の個人とService Accountのtokenを発行でき、認証・一覧・失効が機能する', async () => {
+    const fixture = await projectFixture(harness);
+    const account = await serviceAccount(fixture, { name: 'unlimited', role: 'editor' });
+    const personal = await entity<IssuedToken>(await request(harness.app, '/api/tokens', {
+      method: 'POST', cookie: fixture.editor.cookie,
+      body: { name: 'Unlimited personal', kind: 'personal', projectId: fixture.project.id,
+        scopes: ['read'], expiresAt: null },
+    }));
+    const service = await entity<IssuedToken>(await issueServiceAccountToken(fixture, account, {
+      scopes: ['read'], expiresAt: null,
+    }));
+    const listed = await entity<{ items: TokenSummary[] }>(await request(harness.app, `${fixture.basePath}/tokens`, {
+      cookie: fixture.administrator.cookie,
+    }), 200);
+    for (const issued of [personal, service]) {
+      expect(issued.item.expiresAt).toBeNull();
+      expect(listed.items.find(item => item.id === issued.item.id)?.expiresAt).toBeNull();
+      const authenticated = await entity<CurrentApiToken>(await request(harness.app, '/api/auth/token', {
+        token: issued.token,
+      }), 200);
+      expect(authenticated.id).toBe(issued.item.id);
+      const audit = await harness.database.query<{ expires_at: string | null }>(
+        "SELECT details->>'expiresAt' AS expires_at FROM audit_events WHERE action='token.create' AND resource_id=$1",
+        [issued.item.id],
+      );
+      expect(audit.rows).toEqual([{ expires_at: null }]);
+      expect((await request(harness.app, `/api/tokens/${issued.item.id}`, {
+        method: 'DELETE', cookie: fixture.administrator.cookie,
+      })).status).toBe(204);
+      expect((await request(harness.app, '/api/auth/token', { token: issued.token })).status).toBe(401);
+    }
+  });
+
+  it('過去の期限は個人とService Accountのどちらも拒否する', async () => {
+    const fixture = await projectFixture(harness);
+    const account = await serviceAccount(fixture, { name: 'past', role: 'editor' });
+    const expiresAt = '2000-01-01T00:00:00Z';
+    const responses = [
+      await request(harness.app, '/api/tokens', {
+        method: 'POST', cookie: fixture.editor.cookie,
+        body: { name: 'Past', kind: 'personal', projectId: fixture.project.id, scopes: ['read'], expiresAt },
+      }),
+      await issueServiceAccountToken(fixture, account, { scopes: ['read'], expiresAt }),
+    ];
+    for (const response of responses) {
+      expect(response.status).toBe(422);
+      expect(await errorCode(response)).toBe('invalid_expiry');
+    }
+    expect((await harness.database.query('SELECT id FROM api_tokens')).rows).toHaveLength(0);
   });
 
   it('既存の個人所有service tokenは旧形式のまま動き続ける', async () => {

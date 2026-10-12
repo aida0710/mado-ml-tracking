@@ -1,7 +1,5 @@
-import { useState } from 'react';
 import { Copy } from 'lucide-react';
-import { useMutation } from '../hooks/useMutation';
-import { ErrorNotice } from './Feedback';
+import { useCopyText } from '../hooks/useCopyText';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
@@ -11,26 +9,19 @@ import { text } from '../i18n/catalog';
  */
 export function CopyButton({ value, label = text.copy }: { value: string; label?: string }) {
   useLocale();
-  const [copied, setCopied] = useState(false);
-  const mutation = useMutation();
+  const clipboard = useCopyText(value);
   return (
-    <>
+    <span className="copy-button-control">
       <button
         type="button"
         className="button small"
-        disabled={mutation.pending}
-        onClick={() =>
-          void mutation.run(async () => {
-            if (!navigator.clipboard) throw new Error(text.copyFailed);
-            await navigator.clipboard.writeText(value);
-            setCopied(true);
-          })
-        }
+        disabled={clipboard.isPending}
+        onClick={() => void clipboard.copy()}
       >
-        <Copy size={13} />
-        {copied ? text.copied : label}
+        <Copy size={13} aria-hidden="true" />
+        {clipboard.isCopied ? text.copied : label}
       </button>
-      <ErrorNotice message={mutation.error} />
-    </>
+      {clipboard.error && <span className="copy-button-error" role="alert">{clipboard.error}</span>}
+    </span>
   );
 }

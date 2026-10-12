@@ -75,7 +75,7 @@ export interface CreateToken {
   kind: 'personal' | 'service';
   projectId: string;
   scopes: string[];
-  expiresAt?: string;
+  expiresAt?: string | null;
 }
 /**
  * POST /targets: the target's own fields with its visibility and, for a site, its global settings

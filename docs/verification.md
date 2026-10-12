@@ -474,6 +474,17 @@ node apps/web/tests/browser-computer-setup.mjs
 
 `apps/web/tests/browser-recording-connection.mjs`は、mockのAPIで「SDK・MLflow 3から接続」を確かめます。プロジェクト設定ではプロジェクトIDだけ、Experimentsで実験を選んで［SDKで記録］を開くと実験IDも入ること（`MMT_EXPERIMENT_ID`、MLflowの`set_experiment`に実験の名前）、［コピー］が値をそのまま写すこと、tokenの発行画面が記録用のscope（read・runs:write・registry:write・artifacts:write）を選んだ状態で開くこと、viewerには発行のボタンが出ないことを見ます。
 
+`apps/web/tests/browser-copy-token-expiry.mjs`は、同じWebサーバをloopbackとLANのHTTPの両方から開きます。Clipboard APIのある場合・拒否された場合・HTTPで使えない場合に、値と複数行の設定例を実際のクリップボードへ写せることを確かめます。失敗時にボタンが動かないこと、modal内のコピー、日英の言語ボタンの高さ、320pxでの表示、無期限・730日・小数の時間のtoken発行、0の有効期間の拒否も確認します。APIの期限・認証・失効・権限は`service-accounts.integration.test.ts`で検証します。
+
+```bash
+MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
+MMT_CHROMIUM_PATH=/path/to/chromium \
+MMT_WEB_URL=http://127.0.0.1:<Webのport> \
+MMT_WEB_HTTP_URL=http://<LANのIP>:<Webのport> \
+MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/copy-token-expiry \
+node apps/web/tests/browser-copy-token-expiry.mjs
+```
+
 `apps/web/tests/browser-computer-guides.mjs`は、開発モード（`AUTH_MODE=development`）のAPIに、実行ごとに別の利用者・Project・コンピュータ・手動投入待ちのJobを作って確かめます。sshのコンピュータの詳細に、管理する人（全体管理者）にはコンピュータIDと、そのIDを入れたworkerの`install`・環境変数の例が出て、使うだけの人にはコンピュータIDと、概要の「workerの設定」の行に誰が設定するかだけが出ること、手動投入のsiteの詳細・Jobsの案内・［ジョブを起動］の確認の段に投入コマンドと準備（`mado-tracking`の入れ方、このページのURLを入れた`MMT_API_URL`、tokenを発行する場所とscope）が出てtokenの値は出ないこと、Jobsの［投入用のAPI tokenを発行］がread・jobs:writeのtokenを作ること、viewerにはそのボタンが出ないこと、390pxで横にずれないことを見ます。管理者は`DEVELOPMENT_ADMIN_EMAIL`（既定`admin@localhost`、違うときは`MMT_DEVELOPMENT_ADMIN_EMAIL`で渡す）です。
 
 ```bash

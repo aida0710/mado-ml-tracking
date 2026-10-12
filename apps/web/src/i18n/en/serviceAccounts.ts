@@ -41,6 +41,13 @@ export const serviceAccountsText = {
   tokenPurposeHint:
     'Choosing a purpose selects the scopes it needs. Changing the scopes switches to “Choose scopes manually”.',
   tokenPurposeRequired: 'Choose a purpose or select at least one scope',
+  tokenExpiryCustom: 'Custom duration',
+  tokenExpiryDuration: 'Duration',
+  tokenExpiryUnit: 'Unit',
+  tokenExpiryMinutes: 'Minutes',
+  tokenExpiryHours: 'Hours',
+  tokenExpiryDays: 'Days',
+  tokenExpiryInvalid: 'Enter a valid duration greater than zero',
   copyIssuedToken: 'Copy token',
   copyTokenUsage: 'Copy example',
   tokenUsageEnvironment: 'Environment variables (for both the Python SDK and MLflow 3)',
