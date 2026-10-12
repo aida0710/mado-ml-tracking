@@ -10,6 +10,7 @@ import { createApplication } from '../src/app.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 import { executionFixture } from './fixtures.js';
 import { deferred } from './workbenchFixtures.js';
+import { madoClientStub, madoPluginInput } from './pluginFixtures.js';
 
 // Wait on PostgreSQL's actual lock waiter, rather than delaying a competing request by a guessed timeout.
 const MAX_LOCK_OBSERVATIONS = 1000;
@@ -327,7 +328,7 @@ describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立P
     }
   });
 
-  it('Project adminだけではplugin接続先を変更できず、token/URL編集でmanifestをクリアする', async () => {
+  it('Project adminはMado設定を変更できず、全体管理者の設定変更はキーを維持して確認結果を消す', async () => {
     const fixture = await executionFixture(harness);
     await entity(
       await request(harness.app, `${fixture.basePath}/members/${fixture.editor.userId}`, {
@@ -337,212 +338,162 @@ describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立P
       }),
       200,
     );
+    const sendPayload = vi.fn(async () => undefined);
+    const application = createApplication({
+      config: harness.config,
+      database: harness.database,
+      stores: harness.stores,
+      pluginClientFactory: () => madoClientStub({ sendPayload }),
+    });
+    const input = madoPluginInput({ name: 'Plugin' });
     const plugin = await entity<PluginConnection>(
-      await request(harness.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: { name: 'Plugin', baseUrl: 'http://127.0.0.1:4999', tokenEnv: 'FIXTURE_TOKEN' },
+      await request(application.app, `${fixture.basePath}/plugins`, {
+        method: 'POST', cookie: fixture.administrator.cookie, body: input,
       }),
     );
-    const manifest: PluginManifest = {
-      id: 'fixture',
-      name: 'Fixture',
-      version: '1',
-      protocolVersion: '1.0',
-      capabilities: ['events'],
-    };
-    await harness.database.query('UPDATE plugin_connections SET manifest=$2 WHERE id=$1', [
-      plugin.id,
-      JSON.stringify(manifest),
-    ]);
     const endpoint = `${fixture.basePath}/plugins/${plugin.id}`;
+    const manifest = await entity<PluginManifest>(
+      await request(application.app, endpoint + '/check', {
+        method: 'POST', cookie: fixture.editor.cookie,
+      }), 200,
+    );
     expect(
-      (
-        await request(harness.app, endpoint, {
-          method: 'PATCH',
-          cookie: fixture.editor.cookie,
-          body: { baseUrl: 'http://127.0.0.1:4998' },
-        })
-      ).status,
+      (await request(application.app, endpoint, {
+        method: 'PATCH', cookie: fixture.editor.cookie,
+        body: { config: { ...input.config, apiUrl: 'https://different.example.test' }, expectedRevision: plugin.configRevision },
+      })).status,
     ).toBe(403);
     const renamed = await entity<PluginConnection>(
-      await request(harness.app, endpoint, {
-        method: 'PATCH',
-        cookie: fixture.administrator.cookie,
-        body: { name: 'Renamed' },
-      }),
-      200,
+      await request(application.app, endpoint, {
+        method: 'PATCH', cookie: fixture.administrator.cookie, body: { name: 'Renamed' },
+      }), 200,
     );
     expect(renamed.manifest).toEqual(manifest);
-    expect(renamed.enabled).toBe(true);
+    expect(renamed.configRevision).toBeGreaterThan(plugin.configRevision);
     const changed = await entity<PluginConnection>(
-      await request(harness.app, endpoint, {
-        method: 'PATCH',
-        cookie: fixture.administrator.cookie,
+      await request(application.app, endpoint, {
+        method: 'PATCH', cookie: fixture.administrator.cookie,
         body: {
-          baseUrl: 'http://127.0.0.1:4998/',
-          tokenEnv: 'FIXTURE_OTHER_TOKEN',
-          enabled: false,
+          config: { ...input.config, apiUrl: 'https://different.example.test/' },
+          expectedRevision: renamed.configRevision, enabled: false,
         },
-      }),
-      200,
+      }), 200,
     );
     expect(changed).toMatchObject({
-      manifest: null,
-      enabled: false,
-      baseUrl: 'http://127.0.0.1:4998',
-      tokenEnv: 'FIXTURE_OTHER_TOKEN',
+      manifest: null, enabled: false, tokenConfigured: true,
+      credentialsConfigured: { readToken: true, lineageToken: true, metricsToken: false },
+      config: { ...input.config, apiUrl: 'https://different.example.test' },
     });
+    expect(changed.configRevision).toBeGreaterThan(renamed.configRevision);
+    await entity(
+      await request(application.app, endpoint + '/check', {
+        method: 'POST', cookie: fixture.editor.cookie,
+      }), 200,
+    );
+    expect(sendPayload).not.toHaveBeenCalled();
     for (const [path, method, body] of [
-      ['/check', 'POST', undefined],
       ['/metrics', 'GET', undefined],
       ['/datasets/search', 'POST', { query: '' }],
       ['/events/retry', 'POST', undefined],
     ] as const)
-      expect(
-        (
-          await request(harness.app, endpoint + path, {
-            method,
-            cookie: fixture.administrator.cookie,
-            body,
-          })
-        ).status,
-      ).toBe(422);
-    const bad = await request(harness.app, endpoint, {
-      method: 'PATCH',
-      cookie: fixture.administrator.cookie,
-      body: { baseUrl: 'https://user:fixture-password@example.test/' },
+      expect((await request(application.app, endpoint + path, {
+        method, cookie: fixture.administrator.cookie, body,
+      })).status).toBe(422);
+    const bad = await request(application.app, endpoint, {
+      method: 'PATCH', cookie: fixture.administrator.cookie,
+      body: {
+        config: { ...input.config, apiUrl: 'https://user:fixture-password@example.test/' },
+        expectedRevision: changed.configRevision,
+      },
     });
     expect(bad.status).toBe(422);
     expect(await bad.text()).not.toContain('fixture-password');
   });
 
-  it('manifest取得中に接続先が変わった場合は旧manifestを保存せず409にする', async () => {
+  it('接続確認中にキーが更新されると古い確認結果を保存せず409にする', async () => {
     const fixture = await executionFixture(harness);
     const entered = deferred<void>();
     const returned = deferred<PluginManifest>();
     const application = createApplication({
-      config: harness.config,
-      database: harness.database,
-      stores: harness.stores,
-      environment: { FIXTURE_TOKEN: 'fixture-only-token' },
-      pluginClientFactory: () => ({
-        manifest: async () => {
-          entered.resolve();
-          return returned.promise;
-        },
-        metrics: async () => ({ prometheus: '' }),
-        searchDatasets: async () => ({ items: [] }),
-        sendEvent: async () => undefined,
+      config: harness.config, database: harness.database, stores: harness.stores,
+      pluginClientFactory: () => madoClientStub({
+        manifest: async () => { entered.resolve(); return returned.promise; },
       }),
     });
     const plugin = await entity<PluginConnection>(
       await request(application.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: {
-          name: 'Concurrent plugin',
-          baseUrl: 'http://127.0.0.1:4999',
-          tokenEnv: 'FIXTURE_TOKEN',
-        },
+        method: 'POST', cookie: fixture.administrator.cookie,
+        body: madoPluginInput({ name: 'Concurrent Mado', enabled: false }),
       }),
     );
     const endpoint = `${fixture.basePath}/plugins/${plugin.id}`;
     const checking = request(application.app, `${endpoint}/check`, {
-      method: 'POST',
-      cookie: fixture.administrator.cookie,
+      method: 'POST', cookie: fixture.administrator.cookie,
     });
     await entered.promise;
     await entity(
       await request(application.app, endpoint, {
-        method: 'PATCH',
-        cookie: fixture.administrator.cookie,
-        body: { baseUrl: 'http://127.0.0.1:4998' },
-      }),
-      200,
+        method: 'PATCH', cookie: fixture.administrator.cookie,
+        body: { credentials: { readToken: 'rotated-fixture-key' }, expectedRevision: plugin.configRevision },
+      }), 200,
     );
     returned.resolve({
-      id: 'old',
-      name: 'Old',
-      version: '1',
-      protocolVersion: '1.0',
-      capabilities: ['events'],
+      id: 'mado', name: 'Mado', version: '1.0.0', protocolVersion: '1.0',
+      capabilities: ['datasets:search', 'lineage:publish'],
     });
     expect((await checking).status).toBe(409);
     expect(
-      (
-        await harness.database.query('SELECT manifest FROM plugin_connections WHERE id=$1', [
-          plugin.id,
-        ])
-      ).rows[0].manifest,
+      (await harness.database.query('SELECT manifest FROM plugin_connections WHERE id=$1', [plugin.id])).rows[0].manifest,
     ).toBeNull();
   });
 
-  it('disabled pluginのqueued eventを送信せず、再enableで同じeventを一度だけ送る', async () => {
+  it('無効中は送信と新規記録を止め、再有効化で既存の同じイベントだけを送る', async () => {
     const fixture = await executionFixture(harness);
-    const sendEvent = vi.fn(async () => undefined);
+    const sendPayload = vi.fn(async (_payload: string) => undefined);
     const application = createApplication({
-      config: harness.config,
-      database: harness.database,
-      stores: harness.stores,
-      environment: { FIXTURE_TOKEN: 'fixture-only-token' },
-      pluginClientFactory: () => ({
-        manifest: async () => ({
-          id: 'fixture',
-          name: 'Fixture',
-          version: '1',
-          protocolVersion: '1.0',
-          capabilities: ['events'],
-        }),
-        metrics: async () => ({ prometheus: '' }),
-        searchDatasets: async () => ({ items: [] }),
-        sendEvent,
-      }),
+      config: harness.config, database: harness.database, stores: harness.stores,
+      pluginClientFactory: () => madoClientStub({ sendPayload }),
     });
     const plugin = await entity<PluginConnection>(
       await request(application.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: {
-          name: 'Paused plugin',
-          baseUrl: 'http://127.0.0.1:4999',
-          tokenEnv: 'FIXTURE_TOKEN',
-        },
+        method: 'POST', cookie: fixture.administrator.cookie,
+        body: madoPluginInput({ name: 'Paused Mado' }),
       }),
     );
     const run = await fixture.newRun();
     await entity(
       await request(application.app, `${fixture.basePath}/runs/${run.id}`, {
-        method: 'PATCH',
-        cookie: fixture.editor.cookie,
-        body: { status: 'finished' },
-      }),
-      200,
+        method: 'PATCH', cookie: fixture.editor.cookie, body: { status: 'finished' },
+      }), 200,
     );
     const endpoint = `${fixture.basePath}/plugins/${plugin.id}`;
     await entity(
       await request(application.app, endpoint, {
-        method: 'PATCH',
-        cookie: fixture.administrator.cookie,
-        body: { enabled: false },
-      }),
-      200,
+        method: 'PATCH', cookie: fixture.administrator.cookie, body: { enabled: false },
+      }), 200,
+    );
+    const skippedRun = await fixture.newRun('Run while disabled');
+    await entity(
+      await request(application.app, `${fixture.basePath}/runs/${skippedRun.id}`, {
+        method: 'PATCH', cookie: fixture.editor.cookie, body: { status: 'finished' },
+      }), 200,
     );
     expect(await application.outbox.dispatchBatch()).toBe(0);
-    expect(sendEvent).not.toHaveBeenCalled();
-    expect(
-      (await harness.database.query('SELECT status,attempts FROM plugin_outbox')).rows[0],
-    ).toMatchObject({ status: 'pending', attempts: 0 });
+    expect(sendPayload).not.toHaveBeenCalled();
+    const pending = await harness.database.query('SELECT event_id,status,attempts,payload,destination_url FROM plugin_outbox');
+    expect(pending.rows).toHaveLength(1);
+    expect(pending.rows[0]).toMatchObject({ status: 'pending', attempts: 0 });
     await entity(
       await request(application.app, endpoint, {
-        method: 'PATCH',
-        cookie: fixture.administrator.cookie,
-        body: { enabled: true },
-      }),
-      200,
+        method: 'PATCH', cookie: fixture.administrator.cookie, body: { enabled: true },
+      }), 200,
     );
     expect(await application.outbox.dispatchBatch()).toBe(1);
     expect(await application.outbox.dispatchBatch()).toBe(0);
-    expect(sendEvent).toHaveBeenCalledOnce();
+    expect(sendPayload).toHaveBeenCalledExactlyOnceWith(pending.rows[0].payload);
+    expect(JSON.parse(sendPayload.mock.calls[0]![0]).run.runId).toBe(run.id);
+    expect((await harness.database.query('SELECT event_id FROM plugin_outbox')).rows).toEqual([
+      { event_id: pending.rows[0].event_id },
+    ]);
   });
 });

@@ -20,6 +20,7 @@ import { DatasetVersionDialog, type DatasetVersionSource } from '../dialogs/Data
 import { DatasetFiles } from '../components/DatasetFiles';
 import { DatasetActionsMenu } from '../components/DatasetActionsMenu';
 import { DatasetVersionUsage } from '../components/DatasetVersionUsage';
+import { DatasetPluginActions } from '../components/DatasetPluginActions';
 import { datasetVersionLabel } from '../lib/datasetVersionLabel';
 import { formatBytes, shortRunId } from '../lib/format';
 import { getFieldValue } from '../lib/formValues';
@@ -27,7 +28,7 @@ import { text, textTemplates } from '../i18n/catalog';
 
 export function DatasetsPage() {
   useLocale();
-  const { project, canEdit, isProjectAdmin } = useProject();
+  const { project, canEdit } = useProject();
   const [dialog, setDialog] = useState<'dataset' | DatasetVersionSource | null>(null);
   const [versionToDelete, setVersionToDelete] = useState<DatasetVersion | null>(null);
   const [includeArchived, setIncludeArchived] = useState(false);
@@ -42,7 +43,6 @@ export function DatasetsPage() {
     versions: (id, signal) => registryApi.datasetVersions(project.id, id, signal),
     parentId: (version) => version.datasetId,
   });
-  const base = `/projects/${project.id}`;
   return (
     <section className="page datasets-page touch-targets">
       <PageHeader
@@ -50,11 +50,7 @@ export function DatasetsPage() {
         eyebrow={project.name}
         actions={
           <>
-            {isProjectAdmin && (
-              <Link className="button" to={`${base}/plugins`}>
-                {text.importMado}
-              </Link>
-            )}
+            <DatasetPluginActions projectId={project.id} />
             {canEdit && (
               <button className="button primary" onClick={() => setDialog('dataset')}>
                 <Plus size={15} />
@@ -218,16 +214,17 @@ export function DatasetsPage() {
                       )}
                       {registry.selectedVersion && (
                         <div className="version-detail">
-                          {canEdit && (
-                            <div className="version-detail-actions">
+                          <div className="version-detail-actions">
+                            <DatasetPluginActions projectId={project.id} version={registry.selectedVersion} />
+                            {canEdit && (
                               <button
                                 className="button small danger"
                                 onClick={() => setVersionToDelete(registry.selectedVersion ?? null)}
                               >
                                 {text.datasetVersionDelete}
                               </button>
-                            </div>
-                          )}
+                            )}
+                          </div>
                           <DetailsList
                             entries={[
                               [

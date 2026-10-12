@@ -1,141 +1,58 @@
 ---
-title: PluginとMado連携
-description: 外部サービスとつなぐPluginの仕組みと、MadoのデータセットをRunの入力に使い、lineageをMadoへ送るMado pluginの設定。
+title: Mado連携
+description: 標準搭載・初期無効のMado連携の設定、バージョン固定の取り込み、Runの送信と旧接続の移行。
 ---
 
-# PluginとMado連携
+# Mado連携
 
-Pluginは、このアプリとは別に動くHTTPのサービスです。このアプリのDBには接続せず、決まった形のHTTP APIだけでやり取りします。最初のPluginとして、Madoと連携するMado pluginがあります。
+Mado連携は本体に標準搭載され、本体と同時にビルド・更新します。新しいProjectでは未設定・無効です。設定なしでも実験管理を利用でき、Madoへ通信しません。画面では「連携」、内部の型・テーブル・ルートでは既存のPlugin名を使います。
 
-Mado pluginでは、次のことができます。
+## 設定する
 
-- Madoのデータセットを検索し、固定したバージョンをこのアプリのDatasetVersionとして取り込む
-- Runの開始・完了・失敗・中止と、その入力・出力のデータセットのバージョンを、OpenLineageとしてMadoへ送る
-- Madoのストレージの容量メトリクスを見る
+1. API serverに`MMT_PLUGIN_SECRET_KEY`を設定します。`openssl rand -base64 32`で専用の鍵を作り、`.env`へ保存します。ストレージ用・通知用の鍵とは分け、DBと一緒に安全に保管します。再起動ごとに作り直さないでください。
+2. MadoのService Accountsで`lineage:read`、`lineage:write`、必要なら`metrics:read`のキーを用途別に発行します。参照用は検索Namespace、送信用はjobNamespaceと入出力に使うNamespaceを許可します。容量は全体の情報なのでmetrics用のNamespaceはありません。
+3. Projectの「連携」で全体管理者がMadoのAPI URL、Web URL、OpenLineage URL、許可Namespace、RunのNamespace、ストレージの識別名とキーを保存します。3つのURLは異なる入口を使えます。保存後も初期無効です。
+4. 「接続を確認」で参照と任意の容量APIを確認し、連携を有効にします。確認では架空のRunを送信しません。送信用キーは実Runを1件実行して確認します。
 
-PluginのUI部品や任意のJavaScriptは、ブラウザで実行しません。画面はどのPluginでも共通です。
+Madoの参照APIには`/api/mado/lineage/catalog`、`datasets/:id`、`versions/:id`が必要です。Mado側の`docs/model-tracking-api.md`を参照してください。Registryへ直接アクセスせず、Madoの認証済みAPIだけを使います。
 
-## 役割
-
-| 操作 | 担当 |
+| 操作 | 権限 |
 | --- | --- |
-| Pluginを登録する、接続先やtokenの環境変数名を変える、有効・無効を切り替える | 全体管理者 |
-| 接続を確認する、データセットを検索して取り込む、イベントを再送する、容量メトリクスを見る | ProjectのAdmin |
+| 接続設定・キーの保存、有効切替、旧接続の移行 | 全体管理者 |
+| 接続確認、検索、取り込み、容量、再送 | Project admin |
+| 取り込んだデータセットをMadoで見る | Projectを読める利用者 |
 
-Pluginの登録はProjectごとです。Pluginを使うProjectごとに登録します。Pluginが登録されていないProjectの［Plugins］には、ProjectのAdminへ「Pluginの登録は全体管理者が行います」と出ます。
+キーはAES-256-GCMで暗号化保存し、画面やAPIには設定有無だけを返します。編集時に入力を空にすると既存キーを維持します。容量用キーは明示的に削除できます。保存用の鍵を失った場合、旧値を復号できません。保存用の鍵を復旧するか、保存済みのすべてのキーを再入力して保存します。
 
-## Mado pluginを動かす
+## データセットとRun
 
-Mado pluginは別のリポジトリ（`mado-model-tracking-plugin-mado`）です。Node.js 22.12以降が必要です。Ubuntuでは、次のコマンドでNode.js 22を入れられます。
+検索結果から固定バージョンを選ぶと、APIがそのIDをMadoから再取得してNamespace・URI・digestを検証します。同じバージョンを同時に取り込んでも同じDatasetVersionを返します。既存バージョンやexternalRefは書き換えません。
 
-```sh
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt-get install -y nodejs
-node --version
-```
+有効中だけデータセット画面へ「Madoからインポート」を表示します。「Madoで見る」は外部参照が指す接続と固定バージョンを使い、Madoの`/lineage?mode=versions&versionId=…&node=…`へ移動します。Mado側では本人のログインと権限が必要です。
 
-Pluginのリポジトリで依存を入れ、`.env`を用意します。
+Runの状態遷移と送信待ちを同じtransactionで保存します。OpenLineage本文・hash・接続先・設定revisionを固定し、失敗時は同じ本文を再送します。入力は取り込んだMadoのidentity、ローカル出力はProject IDを含む名前です。別のMadoで取り込んだ外部参照をそのまま流用しません。
 
-```sh
-npm ci
-cp .env.example .env
-chmod 600 .env
-```
+無効中は新しい取り込みと配送を止め、送信待ちを新規作成しません。既に送信中の処理は完了できます。再有効化では既存未送信分だけを再開し、無効中のRunは遡及送信しません。過去の取り込みと送信記録は残ります。
 
-### Madoでkeyを発行する
+履歴がある接続のAPI/Web/OpenLineage URLは変更できません。別のMadoには新しい名前の接続を作り、既存参照の送信先を保持します。資格情報の更新やNamespace・RunのNamespaceの変更はrevisionを進め、検索・確認の古い結果を破棄します。
 
-MadoのSettings → Access → Service Accountsで、用途ごとにkeyを分けて発行します。
+送信成功直後に応答やDB更新を失うと同じ本文を再送する場合があります。運用者が用意するMado Registryには、同じOpenLineage eventを同じRunとバージョンとして扱う実装が必要です。Mado入口の重複応答だけから、実RegistryのDB動作を保証しません。
 
-| keyのscope | 使う場面 | Pluginの`.env` |
-| --- | --- | --- |
-| `lineage:read` | データセットとバージョンの検索 | `MADO_READ_TOKEN` |
-| `lineage:write` | lineageの送信 | `MADO_LINEAGE_TOKEN` |
-| `metrics:read`（任意） | 容量メトリクス | `MADO_METRICS_TOKEN` |
+## 旧HTTPサービスから移行する
 
-`lineage:read`と`lineage:write`のkeyは、使うNamespaceに限定してください。容量メトリクスはストレージ全体の値なので、Namespaceを設定しません。
+migration 059は接続UUID、旧enabled、外部参照、送信待ち、event IDを保持します。旧manifest.id=madoの接続だけを移行候補にし、移行待ちは配送・新規取り込みを止めます。その他の旧Pluginは削除せず、無効化と名前変更だけできます。複数接続は自動統合しません。
 
-### Pluginの`.env`
-
-| 変数 | 設定するもの | 例 |
-| --- | --- | --- |
-| `MMT_PLUGIN_TOKEN` | このアプリがPluginへ接続するための専用のシークレット。Madoのkeyとは別の値 | `openssl rand -hex 32`で作る |
-| `MADO_BASE_URL` | MadoのUI・APIのorigin | `https://mado.example.com/` |
-| `MADO_LINEAGE_URL` | OpenLineage APIのorigin。同じなら省略可 | `https://mado-api.example.com/` |
-| `MADO_NAMESPACES` | 検索するNamespace。カンマ区切り | `speech` |
-| `MADO_JOB_NAMESPACE` | このアプリの実験をMadoへ登録するNamespace | `mado-model-tracking` |
-| `MADO_STORAGE_SYSTEM_KEY` | このアプリで作った出力のStorageSystemの識別子 | `mado-model-tracking` |
-| `PLUGIN_LEDGER_DIRECTORY` | 送信済みイベントの記録を置く場所。永続ボリュームにする | `./var/events` |
-| `HOST`、`PORT` | 待ち受けるアドレスとポート | `127.0.0.1`、`4190` |
-
-起動して、待ち受けを確かめます。
+1. DBと旧サービスのledger（`PLUGIN_LEDGER_DIRECTORY`）を退避します。旧サービスの送信中の処理を完了させてからAPIを更新します。
+2. 同じ接続の設定画面に、旧サービスの実Mado設定・Namespace・キーを保存します。旧baseUrlはbridgeのURLなのでMado URLへ転用しません。設定保存だけでは配送を再開しません。
+3. 無効または移行待ちで接続確認を行います。旧ledgerがある場合は下の管理スクリプトで引き継ぎます。イベントIDと本文hashが一致する記録だけを配送済みにし、違いは409で停止します。
+4. 参照結果と設定先を確認して「移行を完了」を実行します。この操作は旧enabledを維持するため、無効で確認を進めたい場合は先に無効にしておきます。送信の確認は、移行完了後に連携を有効にしてから、検証用の実Runを1件実行し、START/COMPLETEと入出力を確認します。無効中のRunは送信されず、後から有効にしても遡及送信しません。
+5. 旧サービスに依存しなくなったことを確認し、旧bridgeを停止してbridge用キーを失効します。本体の`MMT_MADO_PLUGIN_TOKEN`と旧サービスの`MMT_PLUGIN_TOKEN`は新方式には不要です。
 
 ```sh
-npm start
+# MMT_API_TOKEN: 全体管理者のadmin scope token。値をコマンド引数やログへ出さない。
+# MMT_API_URL: 本体のAPI origin（例 http://127.0.0.1:4182）。
+node --env-file=/path/to/private.env node_modules/tsx/dist/cli.mjs \
+  scripts/import_plugin_receipts.ts <project-id> <plugin-id> /path/to/old/ledger
 ```
 
-### このアプリのAPI serverに同じシークレットを置く
-
-API serverの`.env`に、Pluginの`MMT_PLUGIN_TOKEN`と同じ値を置きます。変数名は自由に決められ、Pluginの登録ではその変数名を指定します。値はDBに保存しません。
-
-```sh
-# API serverの.env
-MMT_MADO_PLUGIN_TOKEN=<PluginのMMT_PLUGIN_TOKENと同じ値>
-```
-
-変えたらAPIを再起動します。
-
-## Pluginを登録する（全体管理者）
-
-1. Projectの［Plugins］を開き、［Pluginを登録］を押します。
-2. 次の値を入力して保存します。
-
-| 項目 | 入力値の例 |
-| --- | --- |
-| 名前 | `Mado` |
-| 接続先URL | `http://127.0.0.1:4190`。別のコンテナならservice名（`http://mado-plugin:4190`） |
-| トークンを参照する環境変数名 | `MMT_MADO_PLUGIN_TOKEN`（英大文字・数字・`_`） |
-| 有効 | 選ぶ |
-
-3. ［接続を確認］を押し、Pluginのversionとcapabilitiesが表示されることを確かめます。
-
-接続先URLやtokenの環境変数名を変えると、確認済みの情報は消えます。もう一度［接続を確認］を押してください。
-
-Pluginの詳細の「API serverの設定」は、tokenの環境変数がAPIのプロセスにあるかを示します（値は表示しません）。無いときは「未設定（API serverに変数が無い）」と、どの変数をどこに置くかの案内が出て、［接続を確認］と［イベントを再送］は押せません。API serverの`.env`に設定し、APIを再起動してから［接続を確認］を押します。APIで呼んだときは「Pluginのtoken環境変数 <変数名> がAPI serverに設定されていません…」（`plugin_token_unavailable`）になります。
-
-［データセットを検索］は、［接続を確認］が成功してから使えます。
-
-Pluginとの通信は、Bearer tokenで認証し、応答は1MiBまで、5秒で打ち切ります。接続先URLを登録できるのは全体管理者だけです。
-
-## Madoのデータセットを取り込む（ProjectのAdmin）
-
-1. ［Plugins］で［データセットを検索］に検索語を入れます。
-2. 結果からバージョンを選び、［インポート］を押します。
-
-取り込んだバージョンは［Datasets］（Pluginの詳細の［取り込んだデータセットを見る（Datasets）］からも開けます）に、Madoの外部IDを保ったDatasetVersionとして表示されます。同じバージョンをもう一度取り込んでも、同じDatasetVersionを返します。Runの入力にすると、どのMadoのバージョンを使ったかが記録されます。データセットの扱いは[データセット](/data/datasets)を参照してください。
-
-## lineageの送信と再送
-
-Runの状態が変わると、その変更と同じtransactionで送信待ちのイベントを積みます。Pluginが止まっていても、Runは失敗しません。送信に失敗したイベントは、間隔を空けて再送します。
-
-- 送るイベント: `run.started`、`run.finished`、`run.failed`、`run.canceled`。Runと、入力・出力のDatasetVersionを含みます。
-- 終わったRunへ後から出力のDatasetVersionを登録した場合も、その出力を含む完了のイベントを送り直します。
-- Pluginは同じイベントIDの再送を重複として扱います。
-
-［Plugins］の「イベントの送信状況」で、未送信の件数、最古の未送信、最多の試行回数、最終エラー、最終送信を確認できます。Pluginを直したら［イベントを再送］を押すと、待ち時間を飛ばしてすぐに再送します。
-
-15分以上未送信のイベントがあるか、5回以上失敗したイベントがあると、運用アラート「Plugin送信の滞留」が開きます（[通知と運用アラート](/admin/notifications)）。
-
-Pluginを無効にしているあいだは送信を止め、新しいイベントも積みません。無効にする前に積んだ未送信のイベントは残り、有効に戻すと送信を再開します。無効のあいだに起きたRunの変化は、あとから送られません。
-
-## Pluginを自作する
-
-Pluginは次のHTTP APIを持つサービスです（plugin protocol 1.0）。認証はBearer tokenです。
-
-| method・path | 内容 |
-| --- | --- |
-| `GET /manifest` | `id`、`name`、`version`、`protocolVersion:"1.0"`、`capabilities` |
-| `POST /datasets/search` | `{query}`を受け取り、`{items: PluginDataset[]}`を返す |
-| `POST /events` | Runのイベントを受け取り、`{accepted: true}`を返す |
-| `GET /metrics` | `storage:metrics`に対応する場合だけ。Prometheusのテキスト形式 |
-
-`PluginDataset`は`externalId`、`namespace`、`name`、`version`、`uri`、`digest`、`schema`、`metadata`を返します。バージョンの無いデータセットは返しません。イベントはIDで重複を除き、処理できていないイベントに`accepted`を返さないでください。
+スクリプトは旧ledgerの`<event-id>.json`にあるdigestだけを読み、最大1000件単位で送ります。知らないイベント・不一致・60秒のleaseが有効な送信中の行があれば、その単位は登録されません。leaseが切れている送信記録は引き継げます。元ledgerは変更しません。DB更新前に同じキーで書かれた本文を再生成し、本文の順序と旧producerを保持して照合します。

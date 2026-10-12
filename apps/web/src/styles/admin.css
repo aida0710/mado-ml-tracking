@@ -56,6 +56,10 @@
   flex: 1;
   margin-bottom: 0;
 }
+.mado-settings-actions {
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .storage-metrics {
   margin-top: 24px;
   padding-top: 20px;
