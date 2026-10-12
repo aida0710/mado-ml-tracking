@@ -1,4 +1,5 @@
 import type {
+  DatasetUsage,
   WorkflowExecution,
   WorkflowExecutionSummary,
   WorkflowStepExecution,
@@ -6,8 +7,82 @@ import type {
 import { first, rows, type Connection } from '../db/database.js';
 import { notFound } from '../domain/errors.js';
 
+// A WorkflowStepExecution is stored as a row of workflow_step_runs: one per step of an execution,
+// naming the Run and Job that ran the step (or, when reused, an earlier execution's).
+
 export const workflowExecutionColumns =
   'id,project_id,workflow_id,workflow_version_id,revision,status,created_by,created_at,ended_at,error,resume_from_execution_id';
+
+export async function insertWorkflowExecution(
+  connection: Connection,
+  execution: {
+    projectId: string;
+    workflowId: string;
+    workflowVersionId: string;
+    revision: number;
+    createdBy: string;
+    idempotencyKey: string;
+    requestHash: string;
+    resumeFromExecutionId: string | null;
+  },
+): Promise<{ id: string }> {
+  return (await first<{ id: string }>(
+    connection,
+    `INSERT INTO workflow_executions(project_id,workflow_id,workflow_version_id,revision,created_by,
+      idempotency_key,request_hash,resume_from_execution_id)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+    [
+      execution.projectId,
+      execution.workflowId,
+      execution.workflowVersionId,
+      execution.revision,
+      execution.createdBy,
+      execution.idempotencyKey,
+      execution.requestHash,
+      execution.resumeFromExecutionId,
+    ],
+  ))!;
+}
+
+/**
+ * A new step waits as pending; a step resumed from an earlier execution starts as finished with
+ * that execution's Run, Job, inputs and outputs (reused).
+ */
+export async function insertWorkflowStepExecution(
+  connection: Connection,
+  step: {
+    executionId: string;
+    projectId: string;
+    stepIndex: number;
+    stepKey: string;
+    name: string;
+    reused: WorkflowStepExecution | null;
+  },
+): Promise<void> {
+  const { reused } = step;
+  await connection.query(
+    `INSERT INTO workflow_step_runs(execution_id,project_id,step_index,step_key,name,status,
+      run_id,job_id,reused,dataset_usage,output_dataset_version_ids,output_model_version_ids,
+      metrics,ended_at)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+    [
+      step.executionId,
+      step.projectId,
+      step.stepIndex,
+      step.stepKey,
+      step.name,
+      reused ? 'finished' : 'pending',
+      reused?.runId ?? null,
+      reused?.jobId ?? null,
+      !!reused,
+      JSON.stringify(reused?.datasetUsage ?? []),
+      reused?.outputDatasetVersionIds ?? [],
+      reused?.outputModelVersionIds ?? [],
+      JSON.stringify(reused?.metrics ?? {}),
+      reused?.endedAt ?? null,
+    ],
+  );
+}
 
 export async function findWorkflowExecutionSummary(
   connection: Connection,
@@ -22,7 +97,7 @@ export async function findWorkflowExecutionSummary(
   return execution;
 }
 
-export async function listWorkflowStepRuns(
+export async function listWorkflowStepExecutions(
   connection: Connection,
   executionId: string,
 ): Promise<WorkflowStepExecution[]> {
@@ -39,12 +114,30 @@ export async function listWorkflowStepRuns(
   );
 }
 
+/**
+ * The step a workflow started the Run for, or null for a Run no workflow started. Steps of later
+ * executions that reuse the Run are not its origin.
+ */
+export async function findOriginStepExecutionOfRun(
+  connection: Connection,
+  reference: { projectId: string; runId: string },
+): Promise<{ id: string; executionId: string; datasetUsage: DatasetUsage[] } | null> {
+  return (
+    (await first<{ id: string; executionId: string; datasetUsage: DatasetUsage[] }>(
+      connection,
+      `SELECT id,execution_id,dataset_usage FROM workflow_step_runs
+      WHERE project_id=$1 AND run_id=$2 AND NOT reused`,
+      [reference.projectId, reference.runId],
+    )) ?? null
+  );
+}
+
 export async function findWorkflowExecution(
   connection: Connection,
   reference: { projectId: string; id: string },
 ): Promise<WorkflowExecution> {
   const execution = await findWorkflowExecutionSummary(connection, reference);
-  return { ...execution, steps: await listWorkflowStepRuns(connection, execution.id) };
+  return { ...execution, steps: await listWorkflowStepExecutions(connection, execution.id) };
 }
 
 export async function finishWorkflowExecution(

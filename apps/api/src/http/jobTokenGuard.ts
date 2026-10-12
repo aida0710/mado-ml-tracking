@@ -217,11 +217,7 @@ export const JOB_TOKEN_READ_RULES: readonly JobTokenRule[] = [
   { methods: ['POST'], route: `${MLFLOW}/runs/search`, allows: allowWithinProject },
   { methods: ['POST'], route: `${MLFLOW}/experiments/search`, allows: allowWithinProject },
   { methods: ['POST'], route: `${MLFLOW}/logged-models/search`, allows: allowWithinProject },
-  {
-    methods: ['POST'],
-    route: `${MLFLOW}/registered-models/get-latest-versions`,
-    allows: allowWithinProject,
-  },
+  { methods: ['POST'], route: `${MLFLOW}/registered-models/get-latest-versions`, allows: allowWithinProject },
 ];
 
 interface CompiledRule {

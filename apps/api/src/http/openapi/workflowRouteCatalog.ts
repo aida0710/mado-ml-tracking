@@ -1,5 +1,8 @@
 import * as contract from '@mmt/contracts/schemas';
-import { workflowHistoryQuerySchema } from '../../domain/workflowValidation.js';
+import {
+  workflowHistoryQuerySchema,
+  workflowVersionsQuerySchema,
+} from '../../domain/workflowValidation.js';
 import { PROJECT_VIEWER, projectEditor, routeError, type NativeRoute } from './nativeRoute.js';
 
 const WORKFLOWS = '/api/projects/:p/workflows';
@@ -23,15 +26,27 @@ export const WORKFLOW_ROUTES: readonly NativeRoute[] = [
     access: projectEditor('registry:write'),
     body: contract.workflowCreateSchema,
     responses: { 201: contract.workflowDetailSchema },
-    errors: routeError(409, 'task_revision_conflict'),
+    errors: [
+      ...routeError(409, 'task_revision_conflict'),
+      ...routeError(422, 'workflow_quality_metric_unknown', 'workflow_model_source_unregistered'),
+    ],
   },
   {
     method: 'get',
     path: `${WORKFLOWS}/:id`,
     tag: 'workflows',
-    summary: 'ワークフローと不変のバージョン',
+    summary: 'ワークフローと新しい順に20件の不変のバージョン（それより前はolderVersionsCursorで）',
     access: PROJECT_VIEWER,
     responses: { 200: contract.workflowDetailSchema },
+  },
+  {
+    method: 'get',
+    path: `${WORKFLOWS}/:id/versions`,
+    tag: 'workflows',
+    summary: 'ワークフローの以前のバージョン（新しい順に20件ずつのcursorページ）',
+    access: PROJECT_VIEWER,
+    query: workflowVersionsQuerySchema,
+    responses: { 200: contract.workflowVersionPageSchema },
   },
   {
     method: 'post',
@@ -41,17 +56,24 @@ export const WORKFLOW_ROUTES: readonly NativeRoute[] = [
     access: projectEditor('registry:write'),
     body: contract.workflowVersionCreateSchema,
     responses: { 201: contract.workflowVersionSchema },
-    errors: routeError(409, 'workflow_revision_conflict', 'task_revision_conflict'),
+    errors: [
+      ...routeError(409, 'workflow_revision_conflict', 'task_revision_conflict'),
+      ...routeError(422, 'workflow_quality_metric_unknown', 'workflow_model_source_unregistered'),
+    ],
   },
   {
     method: 'post',
     path: `${WORKFLOWS}/:id/launch`,
     tag: 'workflows',
-    summary: '指定バージョンを実行、または成功済みステップを再利用して再開',
+    summary:
+      '指定バージョンを実行、または成功済みステップを再利用して再開（再開は元の実行の作成者かadmin）。tokenにはjobs:writeも要る',
     access: projectEditor('runs:write'),
     body: contract.workflowLaunchSchema,
     responses: { 201: contract.workflowExecutionSchema },
-    errors: routeError(409, 'workflow_launch_mismatch', 'workflow_resume_invalid'),
+    errors: [
+      ...routeError(403, 'workflow_control_forbidden'),
+      ...routeError(409, 'workflow_launch_mismatch', 'workflow_resume_invalid'),
+    ],
   },
   {
     method: 'get',
@@ -74,7 +96,8 @@ export const WORKFLOW_ROUTES: readonly NativeRoute[] = [
     method: 'post',
     path: `${EXECUTIONS}/:id/cancel`,
     tag: 'workflows',
-    summary: '所有者またはadminが実行を停止（実行中のJob終了まで待つ）',
+    summary:
+      '作成者かadminが実行を停止（実行中のJobの終了まで待つ）。tokenにはruns:writeも要る',
     access: projectEditor('jobs:write'),
     responses: { 200: contract.workflowExecutionSchema },
     errors: routeError(403, 'workflow_control_forbidden'),

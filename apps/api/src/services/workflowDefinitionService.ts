@@ -7,14 +7,21 @@ import type {
   WorkflowStepInput,
   WorkflowVersion,
   WorkflowVersionCreate,
+  WorkflowVersionPage,
 } from '@mmt/contracts';
+import { WORKFLOW_VERSIONS_PAGE_SIZE } from '@mmt/contracts';
 import type { Principal } from '../auth/principal.js';
 import { first, rows, transaction, type Connection, type Database } from '../db/database.js';
 import { DomainError, notFound } from '../domain/errors.js';
-import { validateWorkflowOrder } from '../domain/workflowValidation.js';
+import {
+  validateModelSources,
+  validateQualityGateMetrics,
+  validateWorkflowOrder,
+} from '../domain/workflowValidation.js';
 import { lockActiveExperiment } from '../repositories/registryRepository.js';
 import {
   findWorkflow,
+  findWorkflowVersionById,
   insertWorkflowVersion,
   listWorkflowVersions,
 } from '../repositories/workflowDefinitionRepository.js';
@@ -36,9 +43,48 @@ export class WorkflowDefinitionService {
   async get(principal: Principal, projectId: string, workflowId: string): Promise<WorkflowDetail> {
     await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
     const workflow = await findWorkflow(this.database, { projectId, id: workflowId });
+    const newest = await this.versionPage(this.database, {
+      projectId,
+      workflowId,
+      beforeRevision: null,
+    });
+    return { workflow, versions: newest.items, olderVersionsCursor: newest.nextCursor };
+  }
+
+  /** Versions older than the cursor (the last version of the previous page), newest first. */
+  async listVersions(
+    principal: Principal,
+    projectId: string,
+    request: { workflowId: string; cursor?: string },
+  ): Promise<WorkflowVersionPage> {
+    await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
+    const workflow = await findWorkflow(this.database, { projectId, id: request.workflowId });
+    const boundary = request.cursor
+      ? await findWorkflowVersionById(this.database, {
+          projectId,
+          workflowId: workflow.id,
+          id: request.cursor,
+        })
+      : null;
+    return this.versionPage(this.database, {
+      projectId,
+      workflowId: workflow.id,
+      beforeRevision: boundary?.revision ?? null,
+    });
+  }
+
+  private async versionPage(
+    connection: Connection,
+    page: { projectId: string; workflowId: string; beforeRevision: number | null },
+  ): Promise<WorkflowVersionPage> {
+    const versions = await listWorkflowVersions(connection, {
+      ...page,
+      limit: WORKFLOW_VERSIONS_PAGE_SIZE + 1,
+    });
+    const items = versions.slice(0, WORKFLOW_VERSIONS_PAGE_SIZE);
     return {
-      workflow,
-      versions: await listWorkflowVersions(this.database, { projectId, workflowId }),
+      items,
+      nextCursor: versions.length > WORKFLOW_VERSIONS_PAGE_SIZE ? items.at(-1)!.id : null,
     };
   }
 
@@ -65,7 +111,7 @@ export class WorkflowDefinitionService {
         createdBy: principal.user.id,
         revision: 1,
       });
-      return { workflow, versions: [version] };
+      return { workflow, versions: [version], olderVersionsCursor: null };
     });
   }
 
@@ -106,6 +152,7 @@ export class WorkflowDefinitionService {
     request: { projectId: string; inputs: WorkflowStepInput[] },
   ): Promise<WorkflowStep[]> {
     validateWorkflowOrder(request.inputs);
+    validateQualityGateMetrics(request.inputs);
     const ids = [...new Set(request.inputs.map((step) => step.taskId.toLowerCase()))];
     const candidates = await rows<ExperimentTask>(
       connection,
@@ -131,7 +178,7 @@ export class WorkflowDefinitionService {
       projectId: request.projectId,
       ids: [...new Set(fixedIds)],
     });
-    return request.inputs.map((step) => {
+    const steps = request.inputs.map((step) => {
       const task = byId.get(step.taskId.toLowerCase())!;
       if (task.revision !== step.expectedTaskRevision)
         throw new DomainError(
@@ -158,5 +205,7 @@ export class WorkflowDefinitionService {
         })),
       };
     });
+    validateModelSources(steps);
+    return steps;
   }
 }

@@ -23,6 +23,7 @@ import {
 import { validateCodeArtifacts } from '../repositories/runtimeArtifactRepository.js';
 import { isTerminalStatus } from '../domain/runTransitions.js';
 import { assertControlsJob } from '../domain/jobControl.js';
+import { requiredWorkerCapabilitiesSql } from '../domain/workerCapabilities.js';
 import type { JobCreate, JobLaunch } from '../domain/validation.js';
 import { assertNoReservedRunTags } from '../domain/reservedRunTags.js';
 import { initialJobPhase, validateSiteJobOptions } from '../domain/siteJobs.js';
@@ -33,6 +34,7 @@ import {
   findRun,
 } from '../repositories/registryRepository.js';
 import { findJob, jobColumns } from '../repositories/jobRepository.js';
+import { findOriginStepExecutionOfRun } from '../repositories/workflowExecutionRepository.js';
 import { shareLiveProject } from '../repositories/projectRepository.js';
 import { findExecutionForRun } from '../repositories/automationExecutionLookup.js';
 import { requireProject, requireScope } from './accessService.js';
@@ -126,8 +128,9 @@ export class JobService {
     filter: { runId?: string } = {},
   ): Promise<JobListItem[]> {
     await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
-    // Every Job has a Run of the same Project; the Task is optional. A Sweep trial and an
-    // automation execution name the Job they started, so a person's retry of one has no origin.
+    // Every Job has a Run of the same Project; the Task is optional. A Sweep trial, an automation
+    // execution and a workflow step name the Job they started, so a person's retry of one has no
+    // origin. A workflow step that reuses an earlier execution's Run did not start its Job.
     return rows(
       this.database,
       `SELECT ${jobColumns('j')},r.name AS run_name,r.kind AS run_kind,r.task_id,t.name AS task_name,
@@ -140,7 +143,11 @@ export class JobService {
           jsonb_build_object('sweepId',s.id,'sweepName',s.name,'trialIndex',st.trial_index) END
           AS sweep_trial,
         CASE WHEN rule.id IS NULL THEN NULL ELSE
-          jsonb_build_object('ruleId',rule.id,'ruleName',rule.name) END AS automation_rule
+          jsonb_build_object('ruleId',rule.id,'ruleName',rule.name) END AS automation_rule,
+        CASE WHEN workflow_step.execution_id IS NULL THEN NULL ELSE
+          jsonb_build_object('workflowId',workflow_step.workflow_id,
+            'executionId',workflow_step.execution_id) END AS workflow_execution,
+        ${requiredWorkerCapabilitiesSql('r')} AS required_worker_capabilities
       FROM jobs j JOIN runs r ON r.id=j.run_id
       LEFT JOIN experiment_tasks t ON t.id=r.task_id
       LEFT JOIN users u ON u.id=r.created_by
@@ -151,6 +158,11 @@ export class JobService {
         JOIN model_automation_rules ar ON ar.id=e.rule_id AND ar.project_id=e.project_id
         WHERE e.job_id=j.id AND e.project_id=j.project_id LIMIT 1
       ) rule ON true
+      LEFT JOIN LATERAL (
+        SELECT step.execution_id,execution.workflow_id FROM workflow_step_runs step
+        JOIN workflow_executions execution ON execution.id=step.execution_id
+        WHERE step.job_id=j.id AND NOT step.reused LIMIT 1
+      ) workflow_step ON true
       WHERE j.project_id=$1 AND ($3::uuid IS NULL OR j.run_id=$3) ORDER BY j.created_at DESC`,
       [projectId, SWEEP_EARLY_STOPPED_TAG, filter.runId ?? null],
     );
@@ -410,15 +422,10 @@ export class JobService {
       const previousJob = await findJob(connection, { projectId, id: jobId, lock: true });
       const previousRun = await findRun(connection, { projectId, id: previousJob.runId });
       assertControlsJob({ role, userId: principal.user.id }, previousRun);
-      const workflowStep = await first(
-        connection,
-        'SELECT id FROM workflow_step_runs WHERE run_id=$1 AND NOT reused',
-        [previousRun.id],
-      );
-      if (workflowStep)
+      if (await findOriginStepExecutionOfRun(connection, { projectId, runId: previousRun.id }))
         throw new DomainError(
           409,
-          'ワークフローの実行画面から再処理してください',
+          'ワークフローの実行画面から再開してください',
           'workflow_retry_required',
         );
       const existingRetry = await first<Job>(

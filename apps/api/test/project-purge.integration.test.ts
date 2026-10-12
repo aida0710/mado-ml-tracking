@@ -274,6 +274,24 @@ describe.skipIf(!testDatabaseUrl)('Projectの完全な削除（独立PostgreSQL�
     expect(intoPurged.filter((key) => !key.deferrable).map((key) => key.name)).toEqual([]);
   });
 
+  it('削除の対象の表へ向かう外部キーには、参照する列で引ける索引がある', async () => {
+    // Without one, each deferred check of the purge reads the whole referencing table (056). An
+    // index serves the key when its leading columns are the key's columns in any order, or when
+    // it starts with the key's first column (the referencing id).
+    const unindexed = await harness.database.query<{ name: string }>(
+      `SELECT c.conrelid::regclass::text || '.' || c.conname AS name FROM pg_constraint c
+      WHERE c.contype='f' AND c.connamespace=current_schema()::regnamespace
+        AND c.confrelid::regclass::text=ANY($1::text[])
+        AND NOT EXISTS(SELECT 1 FROM pg_index i
+          CROSS JOIN LATERAL (SELECT string_to_array(i.indkey::text,' ')::int2[] AS columns) indexed
+          WHERE i.indrelid=c.conrelid AND (indexed.columns[1]=c.conkey[1]
+            OR indexed.columns[1:cardinality(c.conkey)] @> c.conkey))
+      ORDER BY 1`,
+      [[...PURGED_TABLES]],
+    );
+    expect(unindexed.rows.map((row) => row.name)).toEqual([]);
+  });
+
   it('アーカイブしたProjectを完全に削除するとそのProjectの行だけが消え、墓標・監査・失効したtokenが残る', async () => {
     const purged = await populatedProject();
     const bystander = await bystanderProject();

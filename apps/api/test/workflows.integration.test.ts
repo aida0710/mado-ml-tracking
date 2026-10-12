@@ -125,6 +125,63 @@ describe.skipIf(!testDatabaseUrl)('前処理から学習までのワークフロ
     expect((await fixture.execution(execution.id)).status).toBe('finished');
   });
 
+  it('親のRunは読む出力を出した最も近いステップのRunで、モデルだけを受け取るならその供給元、固定の入力だけなら無い', async () => {
+    const training = await fixture.task('training', {
+      outputModel: { modelId: fixture.model.id, createModel: null, artifactPath: 'weights.bin' },
+    });
+    const evaluation = await fixture.task('evaluation');
+    const preparedInput = {
+      source: { kind: 'step' as const, stepKey: 'prepare', datasetName: null },
+      role: 'test' as const,
+      weight: 1,
+      selection: {},
+    };
+    const evaluationStep = {
+      taskId: evaluation.id,
+      expectedTaskRevision: evaluation.revision,
+      modelFromStepKey: 'train',
+      qualityGates: [],
+    };
+    await fixture.launch(
+      await fixture.createWorkflow([
+        fixture.steps[0]!,
+        { ...fixture.steps[1]!, taskId: training.id, expectedTaskRevision: training.revision },
+        // Reads the data two steps back and the model of the step before it.
+        { ...evaluationStep, key: 'evaluate', name: '評価', inputs: [preparedInput] },
+        { ...evaluationStep, key: 'score', name: '採点', inputs: [] },
+        { ...fixture.steps[0]!, key: 'recheck', name: '再確認' },
+      ]),
+    );
+    const runIds: string[] = [];
+    for (const stepKey of ['prepare', 'train', 'evaluate', 'score', 'recheck']) {
+      const job = await fixture.claim();
+      if (stepKey === 'prepare') await fixture.output(job.run.id);
+      if (stepKey === 'train')
+        await entity(
+          await request(
+            harness.app,
+            `${fixture.basePath}/runs/${job.run.id}/artifacts?path=weights.bin`,
+            { method: 'PUT', cookie: fixture.editor.cookie, binary: 'weights' },
+          ),
+        );
+      runIds.push(job.run.id);
+      await fixture.finish(job);
+    }
+    const parents = await Promise.all(
+      runIds.map(async (runId) => {
+        const run = await entity<Run>(
+          await request(harness.app, `${fixture.basePath}/runs/${runId}`, {
+            cookie: fixture.viewer.cookie,
+          }),
+          200,
+        );
+        return run.parentRunId;
+      }),
+    );
+    const [prepare, train] = runIds;
+    expect(parents).toEqual([null, prepare, prepare, train, null]);
+  });
+
   it('実行中の停止ではJobが終了するまで待ち、成功の報告が競合しても後段を起動しない', async () => {
     const execution = await fixture.launch(await fixture.createWorkflow());
     const job = await fixture.claim();
@@ -202,7 +259,7 @@ describe.skipIf(!testDatabaseUrl)('前処理から学習までのワークフロ
     ).toBe(1);
   });
 
-  it('失敗した学習を再処理すると完了済みの前処理を再利用する', async () => {
+  it('失敗した学習から再開すると完了済みの前処理を再利用する', async () => {
     const definition = await fixture.createWorkflow();
     const execution = await fixture.launch(definition);
     const processingJob = await fixture.claim();
@@ -222,7 +279,7 @@ describe.skipIf(!testDatabaseUrl)('前処理から学習までのワークフロ
     ).toBe(3);
   });
 
-  it('取消すると待機中のJobと後段を止め、再処理できる', async () => {
+  it('停止すると待機中のJobと後段を止め、そこから再開できる', async () => {
     const definition = await fixture.createWorkflow();
     const execution = await fixture.launch(definition);
     const canceled = await entity<WorkflowExecution>(

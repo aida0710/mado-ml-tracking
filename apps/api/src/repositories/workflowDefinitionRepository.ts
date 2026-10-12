@@ -28,15 +28,35 @@ export async function findWorkflowVersion(
   return version;
 }
 
+/** Newest first, from the revision below `beforeRevision` (from the newest when null). */
 export async function listWorkflowVersions(
   connection: Connection,
-  reference: { projectId: string; workflowId: string },
+  reference: {
+    projectId: string;
+    workflowId: string;
+    beforeRevision: number | null;
+    limit: number;
+  },
 ): Promise<WorkflowVersion[]> {
   return rows(
     connection,
-    'SELECT * FROM workflow_versions WHERE project_id=$1 AND workflow_id=$2 ORDER BY revision DESC',
-    [reference.projectId, reference.workflowId],
+    `SELECT * FROM workflow_versions WHERE project_id=$1 AND workflow_id=$2
+    AND ($3::integer IS NULL OR revision<$3) ORDER BY revision DESC LIMIT $4`,
+    [reference.projectId, reference.workflowId, reference.beforeRevision, reference.limit],
   );
+}
+
+export async function findWorkflowVersionById(
+  connection: Connection,
+  reference: { projectId: string; workflowId: string; id: string },
+): Promise<WorkflowVersion> {
+  const version = await first<WorkflowVersion>(
+    connection,
+    'SELECT * FROM workflow_versions WHERE project_id=$1 AND workflow_id=$2 AND id=$3',
+    [reference.projectId, reference.workflowId, reference.id],
+  );
+  if (!version) notFound('WorkflowVersion');
+  return version;
 }
 
 export async function insertWorkflowVersion(

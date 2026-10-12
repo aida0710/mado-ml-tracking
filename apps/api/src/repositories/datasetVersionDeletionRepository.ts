@@ -31,10 +31,10 @@ export async function deleteDatasetVersionWithFiles(
   connection: Connection,
   version: { projectId: string; id: string },
 ): Promise<void> {
-  await connection.query(
-    'DELETE FROM dataset_version_files WHERE project_id=$1 AND dataset_version_id=$2',
-    [version.projectId, version.id],
-  );
+  await connection.query('DELETE FROM dataset_version_files WHERE project_id=$1 AND dataset_version_id=$2', [
+    version.projectId,
+    version.id,
+  ]);
   await connection.query('DELETE FROM dataset_versions WHERE project_id=$1 AND id=$2', [
     version.projectId,
     version.id,

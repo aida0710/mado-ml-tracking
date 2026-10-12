@@ -6,6 +6,8 @@ import type {
 import { z } from 'zod';
 import type { Expect, MutuallyAssignable } from './typeAssertions.js';
 import {
+  PREPROCESSING_METADATA_MAX_BYTES,
+  PREPROCESSING_METADATA_MAX_DEPTH,
   PREPROCESSING_MAX_METRICS,
   PREPROCESSING_MAX_REASONS,
   PREPROCESSING_MAX_SAMPLES,
@@ -13,10 +15,27 @@ import {
   PREPROCESSING_MAX_METRIC_NAME_LENGTH,
   PREPROCESSING_METRIC_PREFIX,
 } from '../preprocessingReports.js';
+import { isJsonNestedDeeperThan } from './jsonNesting.js';
 import { idSchema, jsonObjectSchema, timestampSchema } from './primitives.js';
 import { namedContractSchema } from './schemaRegistry.js';
 
 const countSchema = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
+// The depth is checked before the JSON validation, which recurses into every level.
+const preprocessingMetadataSchema = z.preprocess(
+  (metadata, context) => {
+    if (isJsonNestedDeeperThan(metadata, PREPROCESSING_METADATA_MAX_DEPTH))
+      context.addIssue({
+        code: 'custom',
+        message: `metadata may nest at most ${PREPROCESSING_METADATA_MAX_DEPTH} levels`,
+      });
+    return metadata;
+  },
+  jsonObjectSchema.refine(
+    (metadata) =>
+      new TextEncoder().encode(JSON.stringify(metadata)).length <= PREPROCESSING_METADATA_MAX_BYTES,
+    `metadata may be at most ${PREPROCESSING_METADATA_MAX_BYTES} bytes of JSON`,
+  ),
+);
 export const preprocessingReasonSchema = namedContractSchema(
   'PreprocessingReason',
   z.strictObject({
@@ -45,7 +64,7 @@ const reportFields = {
     .array(idSchema)
     .max(PREPROCESSING_MAX_SAMPLES)
     .refine((ids) => new Set(ids).size === ids.length),
-  metadata: jsonObjectSchema,
+  metadata: preprocessingMetadataSchema,
 };
 export const preprocessingReportInputSchema = namedContractSchema(
   'PreprocessingReportInput',

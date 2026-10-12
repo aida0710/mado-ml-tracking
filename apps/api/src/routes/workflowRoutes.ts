@@ -4,7 +4,10 @@ import {
   workflowVersionCreateSchema,
   workflowLaunchSchema,
 } from '@mmt/contracts/schemas';
-import { workflowHistoryQuerySchema } from '../domain/workflowValidation.js';
+import {
+  workflowHistoryQuerySchema,
+  workflowVersionsQuerySchema,
+} from '../domain/workflowValidation.js';
 import { jsonBody, parse, principal, uuidParam, type ApiEnvironment } from '../http/request.js';
 import type { WorkflowDefinitionService } from '../services/workflowDefinitionService.js';
 import type { WorkflowExecutionService } from '../services/workflowExecutionService.js';
@@ -36,6 +39,14 @@ export function workflowRoutes(services: {
         uuidParam(context, 'p'),
         uuidParam(context, 'id'),
       ),
+    ),
+  );
+  routes.get('/:p/workflows/:id/versions', async (context) =>
+    context.json(
+      await services.definitions.listVersions(principal(context), uuidParam(context, 'p'), {
+        workflowId: uuidParam(context, 'id'),
+        ...parse(workflowVersionsQuerySchema, context.req.query()),
+      }),
     ),
   );
   routes.post('/:p/workflows/:id/versions', async (context) =>

@@ -9,6 +9,7 @@ import { PREPROCESSING_METRIC_PREFIX } from '@mmt/contracts';
 import type { Principal } from '../auth/principal.js';
 import { first, type Connection } from '../db/database.js';
 import { DomainError } from '../domain/errors.js';
+import { workflowParentRunId } from '../domain/workflowLineage.js';
 import { finiteWorkflowMetrics, workflowQualityFailure } from '../domain/workflowQuality.js';
 import { preprocessingMetrics } from '../domain/preprocessingMetrics.js';
 import {
@@ -20,7 +21,7 @@ import { findRun } from '../repositories/registryRepository.js';
 import { findWorkflowVersion } from '../repositories/workflowDefinitionRepository.js';
 import {
   finishWorkflowExecution,
-  listWorkflowStepRuns,
+  listWorkflowStepExecutions,
 } from '../repositories/workflowExecutionRepository.js';
 import { requireProject } from './accessService.js';
 import type { TaskService } from './taskService.js';
@@ -38,7 +39,7 @@ export class WorkflowExecutor {
       workflowId: execution.workflowId,
       revision: execution.revision,
     });
-    let steps = await listWorkflowStepRuns(connection, execution.id);
+    let steps = await listWorkflowStepExecutions(connection, execution.id);
     const active = steps.find((step) => step.status === 'queued' || step.status === 'running');
     if (active?.runId) {
       const run = await findRun(connection, { projectId: execution.projectId, id: active.runId });
@@ -48,7 +49,7 @@ export class WorkflowExecutor {
         run,
       });
       if (!finished) return;
-      steps = await listWorkflowStepRuns(connection, execution.id);
+      steps = await listWorkflowStepExecutions(connection, execution.id);
     }
     if (execution.status === 'canceling') {
       await finishWorkflowExecution(connection, { id: execution.id, status: 'canceled' });
@@ -78,7 +79,11 @@ export class WorkflowExecutor {
     });
   }
 
-  private async recordRunState(
+  /**
+   * Records the step's Run as it is now: its status, metrics and outputs, failed when it finished
+   * short of its quality gates or output model. Returns whether the Run has ended.
+   */
+  async recordRunState(
     connection: Connection,
     request: { step: WorkflowStepExecution; definition: WorkflowStep; run: Run },
   ): Promise<boolean> {
@@ -151,7 +156,6 @@ export class WorkflowExecutor {
         step: definition,
         completed,
       });
-      const previous = completed.find((step) => step.stepIndex === pending.stepIndex - 1);
       const launched = await this.tasks.launchTaskInTransaction(connection, {
         task: definition.task,
         input: {
@@ -167,7 +171,7 @@ export class WorkflowExecutor {
           'mmt.workflowStepKey': definition.key,
         },
         lineage: {
-          parentRunId: previous?.runId ?? null,
+          parentRunId: workflowParentRunId(definition, completed),
           upstreamDatasetVersionIds: inputs.upstreamDatasetVersionIds,
         },
         environment: {
@@ -194,16 +198,27 @@ export class WorkflowExecutor {
     } catch (error) {
       await connection.query(`ROLLBACK TO SAVEPOINT ${LAUNCH_SAVEPOINT}`);
       await connection.query(`RELEASE SAVEPOINT ${LAUNCH_SAVEPOINT}`);
-      const message =
-        error instanceof DomainError ? error.message : 'ステップを起動できませんでした';
+      const refused = error instanceof DomainError;
+      // Error details can include SQL text; the execution and step are enough to find it.
+      console.error(
+        JSON.stringify({
+          event: 'workflow_step_launch_failed',
+          executionId: request.execution.id,
+          stepKey: request.definition.key,
+          code: refused ? error.code : 'internal_error',
+        }),
+      );
+      // Anything but a refusal (a lost database connection, say) may pass, so the step stays
+      // pending and the next scheduler pass launches it, even hours into an execution.
+      if (!refused) throw error;
       await connection.query(
         "UPDATE workflow_step_runs SET status='failed',error=$2,ended_at=now() WHERE id=$1",
-        [request.pending.id, message],
+        [request.pending.id, error.message],
       );
       await finishWorkflowExecution(connection, {
         id: request.execution.id,
         status: 'failed',
-        error: message,
+        error: error.message,
       });
     }
   }
