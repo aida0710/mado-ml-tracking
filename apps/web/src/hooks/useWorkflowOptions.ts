@@ -1,6 +1,7 @@
 import { tasksApi } from '../api/tasks';
 import { registryApi } from '../api/registry';
 import { useQuery } from './useQuery';
+import { qualifiedDatasetVersionLabel } from '../lib/datasetVersionLabel';
 
 export function useWorkflowOptions(projectId: string) {
   return useQuery(`workflow-options:${projectId}`, async (signal) => {
@@ -13,7 +14,7 @@ export function useWorkflowOptions(projectId: string) {
         datasets.map(async (dataset) =>
           (await registryApi.datasetVersions(projectId, dataset.id, signal)).map((version) => ({
             value: version.id,
-            label: `${dataset.name} · ${version.version}`,
+            label: qualifiedDatasetVersionLabel(version),
           })),
         ),
       )

@@ -59,10 +59,22 @@
 .workflow-step h3 {
   margin-block: 0.5rem;
 }
+/* A dataset on one line and how the step uses it on the next, in a definition and an execution. */
 .workflow-usage li {
   display: grid;
   gap: 0.4rem;
   margin-block: 0.75rem;
+}
+/* Resuming or stopping the shown execution: the button, and under it the note on what resuming
+   reuses, read before pressing it. */
+.workflow-execution-controls {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+  margin-block-end: 1rem;
+}
+.workflow-execution-controls > p {
+  margin: 0;
 }
 .preprocessing-report {
   margin-block-start: 1rem;

@@ -6,46 +6,63 @@ import type { WorkflowLaunchIntent } from '../lib/workflowLaunchKeys';
 import { workflowsText as labels, workflowsTextTemplates } from '../i18n/workflows';
 import { useLocale } from '../i18n/useLocale';
 
+/** What the confirmation starts: a version of the workflow, or a failed or canceled execution again. */
+type LaunchTarget =
+  | { kind: 'start'; workflowName: string; revision: number }
+  | { kind: 'resume'; execution: WorkflowExecutionSummary };
+
+/** The confirmation's words, in the display language, and the start it sends. */
+function describeLaunch(target: LaunchTarget) {
+  if (target.kind === 'resume') {
+    const { execution } = target;
+    return {
+      title: labels.workflowResume,
+      subject: workflowsTextTemplates.workflowResumeTarget(shortId(execution.id), execution.revision),
+      effect: labels.workflowResumeEffect,
+      confirmLabel: labels.workflowResumeConfirm,
+      intent: { revision: execution.revision, resumeFromExecutionId: execution.id },
+    };
+  }
+  return {
+    title: labels.workflowStart,
+    subject: workflowsTextTemplates.workflowStartTarget(target.workflowName, target.revision),
+    effect: labels.workflowStartEffect,
+    confirmLabel: labels.workflowStartConfirm,
+    intent: { revision: target.revision },
+  };
+}
+
 /**
  * Asks before starting a version of the workflow, or before resuming a failed or canceled
  * execution in a new one, naming the version and what will run. A confirmation sent again after
  * a failure keeps its idempotency key (useWorkflowActions), so it cannot start two executions.
  */
 export function WorkflowLaunchDialog({
-  workflowName,
-  revision,
-  resumeFrom,
   launch,
   onStarted,
   onClose,
-}: {
-  workflowName: string;
-  revision: number;
-  /** The execution to resume, or null for a fresh start of `revision`. */
-  resumeFrom: WorkflowExecutionSummary | null;
+  ...target
+}: LaunchTarget & {
   launch: (intent: WorkflowLaunchIntent) => Promise<WorkflowExecution>;
   onStarted: (execution: WorkflowExecution) => void;
   onClose: () => void;
 }) {
   useLocale();
   const started = useRef<WorkflowExecution | null>(null);
+  const { title, subject, effect, confirmLabel, intent } = describeLaunch(target);
   return (
     <ConfirmDialog
-      title={resumeFrom ? labels.workflowResume : labels.workflowStart}
+      title={title}
       message={
         <>
-          {resumeFrom
-            ? workflowsTextTemplates.workflowResumeTarget(shortId(resumeFrom.id), resumeFrom.revision)
-            : workflowsTextTemplates.workflowStartTarget(workflowName, revision)}
+          {subject}
           <br />
-          {resumeFrom ? labels.workflowResumeEffect : labels.workflowStartEffect}
+          {effect}
         </>
       }
-      confirmLabel={resumeFrom ? labels.workflowResumeConfirm : labels.workflowStartConfirm}
+      confirmLabel={confirmLabel}
       onConfirm={async () => {
-        started.current = await launch(
-          resumeFrom ? { revision, resumeFromExecutionId: resumeFrom.id } : { revision },
-        );
+        started.current = await launch(intent);
       }}
       onConfirmed={() => {
         if (started.current) onStarted(started.current);

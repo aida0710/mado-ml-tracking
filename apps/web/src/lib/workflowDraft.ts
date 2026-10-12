@@ -99,16 +99,22 @@ export function workflowStepDrafts(steps: WorkflowStep[]): WorkflowStepDraft[] {
   }));
 }
 
-/**
- * Points the steps that took their model or an input from the step key `from` at `to`, after
- * that step's key changed. An empty key is not a rename: the references then show as missing.
- */
-export function renameStepReferences(
+/** The earlier steps a step can take its model or an input from, each key once; '' is no step. */
+export function earlierStepChoices(
   steps: WorkflowStepDraft[],
+  stepIndex: number,
+): { value: string; label: string }[] {
+  const labels = new Map<string, string>();
+  for (const step of steps.slice(0, stepIndex))
+    if (step.key && !labels.has(step.key)) labels.set(step.key, step.name || step.key);
+  return [...labels].map(([value, label]) => ({ value, label }));
+}
+
+function withStepReferencesRenamed(
+  step: WorkflowStepDraft,
   { from, to }: { from: string; to: string },
-): WorkflowStepDraft[] {
-  if (!from || !to || from === to) return steps;
-  return steps.map((step) => ({
+): WorkflowStepDraft {
+  return {
     ...step,
     modelFromStepKey: step.modelFromStepKey === from ? to : step.modelFromStepKey,
     inputs: step.inputs.map((input) =>
@@ -119,5 +125,24 @@ export function renameStepReferences(
           }
         : input,
     ),
-  }));
+  };
+}
+
+/**
+ * After the key of the step at `stepIndex` changed from `from` to `to`, points the steps after it
+ * that took their model or an input from `from` at `to`; a step refers only to earlier steps.
+ * Nothing is renamed when the references would not surely mean the renamed step: when another
+ * step also has the key `from` or `to`, or the key was cleared. They then show as missing, or the
+ * key as taken by an earlier step, for the person to choose again.
+ */
+export function renameStepReferences(
+  steps: WorkflowStepDraft[],
+  { stepIndex, from, to }: { stepIndex: number; from: string; to: string },
+): WorkflowStepDraft[] {
+  const otherKeys = steps.filter((_, index) => index !== stepIndex).map((step) => step.key);
+  if (!from || !to || from === to || otherKeys.includes(from) || otherKeys.includes(to))
+    return steps;
+  return steps.map((step, index) =>
+    index > stepIndex ? withStepReferencesRenamed(step, { from, to }) : step,
+  );
 }

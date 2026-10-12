@@ -1,5 +1,6 @@
 import type { DatasetUsageRole, WorkflowStepStatus, WorkflowExecutionStatus } from '@mmt/contracts';
 import { text } from '../i18n/catalog';
+import { joinLabels } from '../i18n/textJoining';
 import { workflowsText } from '../i18n/workflows';
 
 export function datasetRoleLabel(role: DatasetUsageRole): string {
@@ -9,6 +10,11 @@ export function datasetRoleLabel(role: DatasetUsageRole): string {
     validation: workflowsText.workflowValidationRole,
     test: workflowsText.workflowTestRole,
   }[role];
+}
+
+/** How a step uses a dataset, in a definition and in an execution: 「学習・混合比率の重み: 2」. */
+export function datasetUsageLabel({ role, weight }: { role: DatasetUsageRole; weight: number }): string {
+  return joinLabels([datasetRoleLabel(role), `${workflowsText.workflowWeight}: ${weight}`]);
 }
 
 /**

@@ -31,17 +31,21 @@ ML Trackingの入出力の関係もデータリネージです。Data Catalogの
 
 各ステップのRunの親（workerが上流Runとして`MMT_UPSTREAM_RUN_ID`と`upstream-run.json`で渡すRun）は、そのステップが出力データセットを読む前のステップのうち、最も近いステップのRunです。データセットを読まずにモデルだけを受け取るステップでは、モデルを出したステップのRunが親です。固定のデータセットとモデルだけを使うステップには親がありません。たとえば「前処理→学習→評価」で、評価が前処理の出力と学習のモデルを使うと、評価の親は前処理のRunになります。
 
-ステップのJobは、用途と条件を実行コードへ渡せるworker（claimの`workerInfo.capabilities`に`workflowDatasetUsage`を含むもの）だけが受け取ります。古いworkerしかいないコンピュータでは、ワークフローのJobは待機したままになります。ワークフローを使うコンピュータのworkerは更新してください。ワークフローのステップのJobには`MMT_WORKFLOW_EXECUTION_ID`（実行のID）も渡します。
+ステップのJobは、用途と条件を実行コードへ渡せるworker（claimの`workerInfo.capabilities`に`workflowDatasetUsage`を含むもの）だけが受け取ります。古いworkerしかいないコンピュータでは、ワークフローのJobは待機したままになります。ワークフローを使うコンピュータのworkerは更新してください。siteでは、launcherと`mado-tracking submit`がclaimの`capabilities`で、siteに置くrunnerの機能を名乗ります。古いlauncher・`submit`はワークフローのJobを受け取らないので、更新してください（[sites](sites.md)の「runner」）。ワークフローのステップのJobには`MMT_WORKFLOW_EXECUTION_ID`（実行のID）も渡します。
 
 ## 前処理レポート
 
-前処理コードから、終了前にレポートを保存します。レポートを保存できるのは`processing`（データ処理）のRunだけです。ワークフローのステップ（データ処理のTaskのJob）の中では、`start_run()`はworkerが作ったprocessingのRunをそのまま返します。Jobの外で試すときは`kind="processing"`を指定してください。
+前処理コードから、終了前にレポートを保存します。レポートを保存できるのは`processing`（データ処理）のRunだけです。ワークフローのステップ（データ処理のTaskのJob）の中では、引数なしの`start_run()`がworkerの作ったprocessingのRunをそのまま返します（`name=`を渡すと、workerのRunを使わずに新しいRunを作ろうとします）。Jobの外で試すときは、新しいRunを作るので、Experimentの名前`experiment_name=`、Runの名前`name=`、`kind="processing"`を指定してください。
 
 ```python
 import mado_tracking
 
-# Jobの外では kind="processing" が要る（Jobの中ではworkerのRunの種類が使われる）
-run = mado_tracking.start_run(kind="processing")
+# Jobの外で試す例。Jobの中では引数なしの start_run() を使う
+run = mado_tracking.start_run(
+    experiment_name="speech-preprocessing",
+    name="preprocessing-trial",
+    kind="processing",
+)
 run.log_preprocessing_report(
     input_count=1000,
     output_count=940,
@@ -66,7 +70,7 @@ run.log_preprocessing_report(
 
 Jobの失敗、必要な出力の欠落、品質条件の不一致、実行した利用者の権限喪失が起きると、後続のステップを停止して理由を残します。停止操作では、実行中のJobに停止を依頼し、Jobが終了するまで「停止要求済み」と表示します（状態は`canceling`）。
 
-失敗・停止した実行は、同じバージョンで新しい実行として再開できます。成功した先頭のステップはRunと出力をそのまま再利用し、最初の未完了ステップから再実行します。元の実行履歴は残ります。条件を変える場合は新しいバージョンを作り、最初から実行してください。ステップ単体のJob retryは使いません（`409 workflow_retry_required`）。停止と再開ができるのは、元の実行の作成者とProject adminだけです（ほかのeditorは`403 workflow_control_forbidden`）。Webでは、実行・再開・停止のどれも確認を挟みます。
+失敗・中止した実行は、同じバージョンで新しい実行として再開できます。成功した先頭のステップはRunと出力をそのまま再利用し、最初の未完了ステップから再実行します。元の実行履歴は残ります。条件を変える場合は新しいバージョンを作り、最初から実行してください。ステップ単体のJob retryは使いません（`409 workflow_retry_required`）。停止と再開ができるのは、元の実行の作成者とProject adminだけです（ほかのeditorは`403 workflow_control_forbidden`）。Webでは、実行・再開・停止のどれも確認を挟みます。
 
 起動APIには`idempotencyKey`を指定します。同じ利用者が同じワークフローへ同じキーを再送すると、最初の実行を返します。バージョンや再開元を変えて同じキーを使うと409です。APIの再起動後も、保存したRunの状態から次のステップを進めます。
 

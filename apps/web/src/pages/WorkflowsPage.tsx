@@ -8,6 +8,7 @@ import { PageHeader } from '../components/PageHeader';
 import { Resource } from '../components/Feedback';
 import { ResponsiveTable } from '../components/ResponsiveTable';
 import { WorkflowDialog } from '../dialogs/WorkflowDialog';
+import { workflowPath } from '../lib/workflowPath';
 import { text } from '../i18n/catalog';
 import { workflowsText as labels, workflowsTextTemplates } from '../i18n/workflows';
 import { useLocale } from '../i18n/useLocale';
@@ -46,7 +47,7 @@ export function WorkflowsPage() {
                 header: text.name,
                 priority: 'primary',
                 render: (workflow) => (
-                  <Link to={`/projects/${project.id}/workflows/${workflow.id}`}>
+                  <Link to={workflowPath(project.id, { workflowId: workflow.id })}>
                     {workflow.name}
                   </Link>
                 ),
@@ -73,7 +74,7 @@ export function WorkflowsPage() {
           onClose={() => setCreating(false)}
           onSaved={(id) => {
             setCreating(false);
-            navigate(`/projects/${project.id}/workflows/${id}`);
+            navigate(workflowPath(project.id, { workflowId: id }));
           }}
         />
       )}

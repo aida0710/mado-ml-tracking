@@ -96,6 +96,9 @@ export const workflowsText = {
   preprocessingOutputDuration: 'Output duration (seconds)',
   preprocessingReasons: 'Exclusion / failure reasons',
   preprocessingSamples: 'Sample artifacts',
+  preprocessingReasonsJson: 'Exclusion / failure reasons (JSON)',
+  preprocessingMetricsJson: 'Metrics (JSON)',
+  preprocessingSampleIds: 'Sample artifact IDs',
   preprocessingReportEdit: 'Record preprocessing report',
   preprocessingReportHint:
     'Reports are fixed when the run ends. Reasons, custom quality metrics and sample artifact IDs can also be sent through the SDK or API.',

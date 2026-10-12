@@ -9,26 +9,31 @@ export interface WorkflowLaunchIntent {
 export interface WorkflowLaunchKeys {
   /** The idempotency key to send for this intent. */
   keyFor: (intent: WorkflowLaunchIntent) => string;
-  /** The API answered with an execution: the next start of any intent is a new one. */
-  markAccepted: () => void;
+  /** The API answered this intent with an execution: its next start is a new one. */
+  markAccepted: (intent: WorkflowLaunchIntent) => void;
+}
+
+function intentId({ revision, resumeFromExecutionId }: WorkflowLaunchIntent): string {
+  return `${revision}:${resumeFromExecutionId ?? ''}`;
 }
 
 /**
- * The idempotency keys of workflow starts. A start whose answer did not arrive may still have
- * been accepted, so the same intent is sent again with the same key until the API answers with an
- * execution; then the API returns that execution instead of starting a second one. Another intent
- * gets a new key.
+ * The idempotency keys of workflow starts, one per intent. A start whose answer did not arrive may
+ * still have been accepted, so that intent is sent again with the same key until the API answers
+ * it with an execution, even when other intents were started in between; the API then returns
+ * the first execution instead of starting a second one.
  */
 export function createWorkflowLaunchKeys(createKey: () => string = createRandomId): WorkflowLaunchKeys {
-  let unanswered: { intent: string; key: string } | null = null;
+  const unansweredKeys = new Map<string, string>();
   return {
-    keyFor: ({ revision, resumeFromExecutionId }) => {
-      const intent = `${revision}:${resumeFromExecutionId ?? ''}`;
-      if (unanswered?.intent !== intent) unanswered = { intent, key: createKey() };
-      return unanswered.key;
+    keyFor: (intent) => {
+      const id = intentId(intent);
+      const key = unansweredKeys.get(id) ?? createKey();
+      unansweredKeys.set(id, key);
+      return key;
     },
-    markAccepted: () => {
-      unanswered = null;
+    markAccepted: (intent) => {
+      unansweredKeys.delete(intentId(intent));
     },
   };
 }

@@ -4,6 +4,8 @@ import type { ComputeTarget, Hook, JobListItem } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { JobStatusBadges } from './JobStatusBadges';
 import { isResumableStatus } from '../lib/checkpointResume';
+import { isResumableWorkflowStepJob } from '../lib/workflowExecutionState';
+import { workflowPath } from '../lib/workflowPath';
 import { formatDate } from '../lib/format';
 import {
   isActiveJob,
@@ -244,12 +246,10 @@ export function JobsTable({
                 {text.cancelJob}
               </button>
             ) : job.workflowExecution ? (
-              // A workflow step is rerun by resuming its execution; the Job's own retry is refused.
-              <Link
-                className="button small"
-                to={`/projects/${projectId}/workflows/${job.workflowExecution.workflowId}?execution=${job.workflowExecution.executionId}`}
-              >
-                {text.workflowResumeFromJob}
+              // A workflow step is rerun by resuming its execution (the Job's own retry is refused),
+              // so its Job leads there: to resume a failed or canceled one, else to open it.
+              <Link className="button small" to={workflowPath(projectId, job.workflowExecution)}>
+                {isResumableWorkflowStepJob(job) ? text.workflowResumeFromJob : text.workflowOpen}
               </Link>
             ) : (
               <span className="job-row-actions">

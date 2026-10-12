@@ -6,6 +6,7 @@ import { preprocessingReportsApi } from '../../api/preprocessingReports';
 import { EXECUTION_POLL_MS, useQuery } from '../../hooks/useQuery';
 import { isTerminalRun } from '../../lib/runOutputRegistrationState';
 import { workflowExecutionIdOfRun, workflowIdOfRun } from '../../lib/workflowRunTags';
+import { workflowPath } from '../../lib/workflowPath';
 import { Resource } from '../Feedback';
 import { DatasetUsagePanel } from './DatasetUsagePanel';
 import { PreprocessingReportSummary } from './PreprocessingReportSummary';
@@ -38,10 +39,7 @@ function RunWorkflowLink({ run, workflowId }: { run: Run; workflowId: string }) 
   );
   return (
     <>
-      <Link
-        className="button"
-        to={`/projects/${run.projectId}/workflows/${workflowId}${executionId ? `?execution=${executionId}` : ''}`}
-      >
+      <Link className="button" to={workflowPath(run.projectId, { workflowId, executionId })}>
         {labels.workflowOpen}
       </Link>
       <Resource query={usage}>

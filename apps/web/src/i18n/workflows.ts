@@ -98,6 +98,9 @@ export const workflowsText = localized(
     preprocessingOutputDuration: '出力の時間（秒）',
     preprocessingReasons: '除外・失敗の理由',
     preprocessingSamples: 'サンプルのArtifact',
+    preprocessingReasonsJson: '除外・失敗の理由（JSON）',
+    preprocessingMetricsJson: 'メトリクス（JSON）',
+    preprocessingSampleIds: 'サンプルのArtifact ID',
     preprocessingReportEdit: '前処理レポートを記録',
     preprocessingReportHint:
       'Runの終了時にレポートを固定します。理由別の件数、品質メトリクス、サンプルのArtifact IDもSDKやAPIから記録できます。',

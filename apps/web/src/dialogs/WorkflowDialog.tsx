@@ -9,7 +9,12 @@ import { Dialog } from '../components/Dialog';
 import { Resource, ErrorNotice } from '../components/Feedback';
 import { UnsavedChangesDialog } from '../components/UnsavedChangesDialog';
 import { WorkflowStepEditor } from '../components/workflows/WorkflowStepEditor';
-import { newWorkflowStep, renameStepReferences, workflowStepDrafts } from '../lib/workflowDraft';
+import {
+  earlierStepChoices,
+  newWorkflowStep,
+  renameStepReferences,
+  workflowStepDrafts,
+} from '../lib/workflowDraft';
 import { pinWorkflowDrafts } from '../lib/workflowDraftSave';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
@@ -108,16 +113,16 @@ export function WorkflowDialog({
                   step={step}
                   tasks={choices.tasks}
                   datasets={choices.datasetVersions}
-                  earlierSteps={steps
-                    .slice(0, index)
-                    .map((earlier) => ({ value: earlier.key, label: earlier.name || earlier.key }))}
+                  earlierSteps={earlierStepChoices(steps, index)}
                   onChange={(next) =>
                     setSteps((current) =>
                       current.map((item, position) => (position === index ? next : item)),
                     )
                   }
                   onKeyRenamed={(rename) =>
-                    setSteps((current) => renameStepReferences(current, rename))
+                    setSteps((current) =>
+                      renameStepReferences(current, { ...rename, stepIndex: index }),
+                    )
                   }
                   onRemove={() => setRemovingIndex(index)}
                 />

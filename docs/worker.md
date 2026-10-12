@@ -513,7 +513,8 @@ workerはclaimとresumeで`workerInfo`（パッケージ`mado-tracking`のバー
 - バージョンは`importlib.metadata`で読む。インストールせずに動かしている場合はバージョンを送らず、画面は「—」になる。
 - `parallelJobs`はAPIでは受け付けるが、現在のworkerはまだ送らない。
 - 対応する機能は`capabilities`で送る。今は`workflowDatasetUsage`だけで、Jobへ`MMT_DATASET_USAGE_FILE`（用途・重み・抽出条件）と`MMT_WORKFLOW_EXECUTION_ID`を渡せることを表す。APIはワークフローのステップのJobを、これを名乗るworkerにだけ渡す。名乗らない古いworkerは、ワークフローのJobを受け取らない（用途や抽出条件を知らないまま学習しないため）。ワークフローを使うコンピュータのworkerは更新する。
-- 古いAPIは知らない`workerInfo`の項目を422で拒む。workerは422を受けると、新しい項目から1つずつ（`capabilities`、次に`sshFiles`）送るのをやめて同じ依頼を送り直し、以後もその項目は送らない。422は何も受け付けていないので、送り直してもJobを二重にclaimしない。
+- 古いAPIは知らない`workerInfo`の項目を422で拒む。workerは422を受けると、新しい項目から1つずつ（`capabilities`、次に`sshFiles`）送るのをやめて同じ依頼を送り直す。422は何も受け付けていないので、送り直してもJobを二重にclaimしない。
+- やめた項目は、10分（`REFUSED_FIELD_RETRY_SECONDS`）たつと送り直してみる。その間にAPIを更新していれば受け付けられ、workerを再起動しなくても以後は送る（ログに「The API now takes …」）。まだ拒まれれば、またやめて警告をログに出す。名乗れない間は、この警告が10分ごとに出る。別の理由の422で項目をやめてしまった場合も、10分後には戻る。
 
 ## Compute targetの接続を確認する
 
@@ -532,7 +533,7 @@ ssh・localのコンピュータは、全体設定の「コンピュータ」（
 - workerはclaim/resumeの`workerInfo.sshFiles`に、自分のホストの`~/.ssh`と`MMT_WORKER_SSH_DIR`（設定されていてディレクトリのとき）の直下で見つけたファイルの**パスだけ**を載せる。中身・指紋は読まず、送らない。
 - 秘密鍵の候補: 通常のファイル（シンボリックリンクはリンク先で判定）のうち、`.pub`・`known_hosts*`・`authorized_keys*`・`config`・`environment`・`rc`を除き、名前が`id_*`・`*.pem`・`*.key`に当たるもの、またはgroup/otherが読めないmode（600など）のもの。known_hostsの候補: 名前が`known_hosts`で始まるファイル。
 - 絶対パスの昇順で各50件まで。制御文字を含むパスと1024文字を超えるパスは除く。60秒ごとに探し直す。
-- 古いAPIが`sshFiles`を422で拒んだら、以後は送らない（そのworkerは指定された依頼を受けられない）。
+- 古いAPIが`sshFiles`を422で拒んだら、送るのをやめ、10分ごとに送り直してみる（上の「workerの在籍」）。送れない間、そのworkerは指定された依頼を受けられない。
 - 候補は、1段目の［SSH鍵のパス］［known_hostsのパス］の補完に使う。手入力もできる。
 
 ### 確認の手順（接続確認）

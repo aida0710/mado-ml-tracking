@@ -4,8 +4,9 @@ import { createWorkflowLaunchKeys, type WorkflowLaunchIntent } from '../lib/work
 
 /**
  * Starting, resuming and stopping executions of one workflow. The calls throw, so the
- * confirmation that makes them shows the failure; a start sent again after an unanswered one
- * reuses its idempotency key (lib/workflowLaunchKeys).
+ * confirmation that makes them shows the failure; a start sent again after a failed one reuses
+ * its idempotency key, and only a start answered with an execution gives up its key
+ * (lib/workflowLaunchKeys).
  */
 export function useWorkflowActions(projectId: string, workflowId: string) {
   const [launchKeys] = useState(createWorkflowLaunchKeys);
@@ -18,7 +19,7 @@ export function useWorkflowActions(projectId: string, workflowId: string) {
           ? { resumeFromExecutionId: intent.resumeFromExecutionId }
           : {}),
       });
-      launchKeys.markAccepted();
+      launchKeys.markAccepted(intent);
       return execution;
     },
     cancel: (executionId: string) => workflowsApi.cancel(projectId, executionId),

@@ -2,6 +2,7 @@ import type { ExecutionCatalog } from '../types/executionCatalog';
 import type { SelectOption } from '../types/form';
 import { runtimeLabels } from '../i18n/runtime';
 import { text } from '../i18n/catalog';
+import { qualifiedDatasetVersionLabel } from './datasetVersionLabel';
 
 /** How screens name a code version: "code name / version". */
 export function formatCodeVersionName(codeName: string, version: string): string {
@@ -26,7 +27,7 @@ export function buildCatalogOptions(catalog: ExecutionCatalog) {
     })),
     datasets: catalog.datasetVersions.map((item) => ({
       value: item.id,
-      label: `${item.namespace}/${item.name} / ${item.version}`,
+      label: qualifiedDatasetVersionLabel(item),
     })),
     runs: catalog.runs.map((item) => ({ value: item.id, label: item.name })),
   };
