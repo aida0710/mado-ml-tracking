@@ -8,6 +8,8 @@ import type {
   Run,
 } from '@mmt/contracts';
 
+import { getModelTrainingSourceRunId } from './modelTrainingSource';
+
 // The band shows the newest results only; the full list is in the tables below it.
 export const LINEAGE_RESULT_RUN_LIMIT = 20;
 
@@ -18,22 +20,37 @@ export const LINEAGE_RESULT_RUN_LIMIT = 20;
  */
 export function buildModelVersionLineage(input: {
   model: Pick<Model, 'name'>;
-  version: Pick<ModelVersion, 'id' | 'version' | 'sourceRunId'>;
-  sourceRun: Pick<Run, 'id' | 'name' | 'status'> | null;
+  version: Pick<ModelVersion, 'id' | 'version' | 'sourceRunId' | 'trainingSourceRunId'>;
+  sourceRun:
+    | (Pick<Run, 'id' | 'name' | 'status'> &
+        Partial<Pick<Run, 'inputDatasetVersionIds' | 'trainingDatasetVersionIds'>>)
+    | null;
+  datasetLabels?: ReadonlyMap<string, string>;
   resultRuns: readonly Pick<AutomatedRunSummary, 'id' | 'name' | 'status' | 'parentRunId'>[];
 }): LineageGraph {
   const { model, version, sourceRun } = input;
+  const sourceRunId = getModelTrainingSourceRunId(version);
   const resultRuns = input.resultRuns.slice(0, LINEAGE_RESULT_RUN_LIMIT);
   const nodes: LineageNode[] = [];
   const edges: LineageEdge[] = [];
-  if (version.sourceRunId) {
+  if (sourceRunId) {
     nodes.push({
-      id: version.sourceRunId,
+      id: sourceRunId,
       kind: 'run',
-      label: sourceRun?.name ?? version.sourceRunId,
+      label: sourceRun?.name ?? sourceRunId,
       ...(sourceRun ? { status: sourceRun.status } : {}),
     });
-    edges.push({ source: version.sourceRunId, target: version.id, relation: 'registeredModel' });
+    edges.push({
+      source: sourceRunId,
+      target: version.id,
+      relation: version.sourceRunId ? 'registeredModel' : 'outputModel',
+    });
+    for (const id of sourceRun?.trainingDatasetVersionIds ??
+      sourceRun?.inputDatasetVersionIds ??
+      []) {
+      nodes.push({ id, kind: 'datasetVersion', label: input.datasetLabels?.get(id) ?? id });
+      edges.push({ source: id, target: sourceRunId, relation: 'input' });
+    }
   }
   nodes.push({ id: version.id, kind: 'modelVersion', label: `${model.name} / ${version.version}` });
   const resultIds = new Set(resultRuns.map((run) => run.id));

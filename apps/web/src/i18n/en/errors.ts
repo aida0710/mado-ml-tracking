@@ -1,5 +1,13 @@
 // English for API errors, shown instead of the server's Japanese message (lib/errorMessage.ts).
 export const errorText = {
+  modelTrainingSourceConflict: 'Another training source is already recorded for this model version.',
+  modelTrainingSourceNotTerminal: 'Choose a completed training run.',
+  modelTrainingSourceCycle: 'The model version is an input or ancestor of the proposed training run.',
+  trainingDataRunKind: 'Training data history requires a training or fine-tuning run.',
+  trainingDataStageConflict: 'Different training data is already recorded for this step.',
+  trainingDataStageOrder: 'Add a data configuration after the latest recorded step.',
+  trainingDataStageCheckpoint: 'Choose a checkpoint from this run before the first step of the new data configuration.',
+  trainingDataStageCycle: 'Datasets derived from this run cannot be added as its inputs.',
   internalError: 'Could not process the request',
   databaseUnavailable: 'Could not connect to the database',
   pluginRequestFailed: 'Could not communicate with the integration',

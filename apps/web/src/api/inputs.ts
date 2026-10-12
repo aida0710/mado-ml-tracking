@@ -24,6 +24,7 @@ export interface CreateRun {
   codeVersionId?: string;
   inputDatasetVersionIds?: string[];
   parentRunId?: string;
+  resumeCheckpointId?: string;
   environment?: JsonObject;
 }
 export interface CreateModelVersion {

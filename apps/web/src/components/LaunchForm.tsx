@@ -1,3 +1,6 @@
+import type { TrainingContinuation } from '../types/trainingContinuation';
+import { pinCheckpointTrainingInput } from '../lib/checkpointTraining';
+import { trainingText, trainingTextTemplates } from '../i18n/training';
 import { Link } from 'react-router-dom';
 import type { ComputeTargetDetails, Job, Run, WorkerPresence } from '@mmt/contracts';
 import { FormFields } from './FormFields';
@@ -22,15 +25,27 @@ import { text } from '../i18n/catalog';
 import { workerCoverageText } from '../i18n/workerCoverage';
 
 const clearedChoiceNotices: Record<ClearedLaunchChoice, string> = {
-  get codeVersion() { return text.launchClearedCodeVersion; },
-  get target() { return text.launchClearedTarget; },
-  get gpus() { return text.launchClearedGpus; },
+  get codeVersion() {
+    return text.launchClearedCodeVersion;
+  },
+  get target() {
+    return text.launchClearedTarget;
+  },
+  get gpus() {
+    return text.launchClearedGpus;
+  },
 };
 
 const stepLabels: Record<LaunchStep, string> = {
-  get setup() { return text.launchSetup; },
-  get resources() { return text.launchResources; },
-  get review() { return text.launchReview; },
+  get setup() {
+    return text.launchSetup;
+  },
+  get resources() {
+    return text.launchResources;
+  },
+  get review() {
+    return text.launchReview;
+  },
 };
 
 /**
@@ -40,6 +55,7 @@ const stepLabels: Record<LaunchStep, string> = {
 export function LaunchForm({
   projectId,
   existingRun,
+  continuation,
   catalog,
   targets,
   workers,
@@ -49,6 +65,7 @@ export function LaunchForm({
 }: {
   projectId: string;
   existingRun: Run | undefined;
+  continuation?: TrainingContinuation;
   catalog: ExecutionCatalog;
   targets: ComputeTargetDetails[];
   /** The Project's workers; undefined until they load, so no computer is said to lack one. */
@@ -60,10 +77,18 @@ export function LaunchForm({
   useLocale();
   const form = useLaunchForm({
     existingRun,
+    continuation,
     candidates: {
       codeVersions: catalog.codeVersions,
       modelVersions: catalog.modelVersions,
       targets,
+      ...(continuation
+        ? {
+            checkpointCodeId:
+              catalog.codeVersions.find((code) => code.id === continuation.run.codeVersionId)
+                ?.codeId ?? null,
+          }
+        : {}),
     },
   });
   const { values, choices, step } = form;
@@ -90,9 +115,11 @@ export function LaunchForm({
       return;
     }
     validateSetup();
-    void launch.launch({ run: launchRunInput(values), job }).then((created) => {
-      if (created) onSaved(created);
-    });
+    void launch
+      .launch({ run: pinCheckpointTrainingInput(launchRunInput(values), continuation), job })
+      .then((created) => {
+        if (created) onSaved(created);
+      });
   }
 
   return (
@@ -107,6 +134,12 @@ export function LaunchForm({
         }
       }}
     >
+      {continuation && (
+        <p className="notice">
+          {trainingTextTemplates.continueTrainingFromStep(continuation.checkpoint.step)}{' '}
+          {trainingText.continueTrainingHint}
+        </p>
+      )}
       <ol className="wizard-steps">
         {LAUNCH_STEPS.map((key, index) => (
           <li
@@ -124,7 +157,7 @@ export function LaunchForm({
         </p>
       )}
       {/* A Task keeps the code, parameters and computer, so a repeated run starts there. */}
-      {step === 'setup' && !existingRun && (
+      {step === 'setup' && !existingRun && !continuation && (
         <p className="muted">
           {text.launchFromTaskHint}{' '}
           <Link to={`/projects/${projectId}/tasks`}>{text.launchOpenTasks}</Link>
@@ -152,7 +185,9 @@ export function LaunchForm({
           <FormFields
             fields={
               step === 'setup'
-                ? launchSetupFields({ options, choices })
+                ? launchSetupFields({ options, choices }).filter(
+                    (field) => !continuation || !['kind', 'modelVersionId'].includes(field.name),
+                  )
                 : launchResourceFields({ choices, coverageOf })
             }
             values={values}
@@ -172,12 +207,7 @@ export function LaunchForm({
           {text.cancel}
         </button>
         {step !== 'setup' && (
-          <button
-            type="button"
-            className="button"
-            onClick={form.goBack}
-            disabled={launch.pending}
-          >
+          <button type="button" className="button" onClick={form.goBack} disabled={launch.pending}>
             {text.back}
           </button>
         )}

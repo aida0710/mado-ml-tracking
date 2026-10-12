@@ -125,7 +125,7 @@ Press a version's number in the version list to open its page. The list shows th
 
 **Code versions for this family** in a Model's details lists the code versions whose **Supported model families** include the Model's family. These are the code versions a Task or an automation rule can choose for the Model.
 
-- **Training run → Version → Inference / Evaluation runs**: the training Run that produced the version and up to 20 of the newest Runs that used it.
+- **Datasets → Training run → Version → Inference / Evaluation runs**: the datasets used for training, the training run that produced the version, and up to 20 of the newest runs that used it.
 - **Automation**: automation runs triggered by this version.
 - **Evaluation results**: the latest metrics of successful evaluation Runs and the comparison with the baseline version ([Evaluation and promotion](/en/models/promotion)).
 - **Promotion decision**: whether the version passed each promotion policy.
@@ -152,3 +152,27 @@ Click **View in Lineage** in a dataset version's details to show only two steps 
 
 - In [Tasks and code versions](/en/models/tasks), register a version when training succeeds.
 - In [Automation after registration](/en/models/automation), run inference and evaluation for each new version.
+
+## Link training history to an existing model
+
+After registering weights stored in S3 or another location, open the model version and choose **Link training source**. The version ID, weights reference and aliases are preserved.
+
+Choose **Use an existing training run** to link the completed run that produced the weights. If the training has not been recorded, choose **Record past training** and enter its experiment, kind, exact dataset versions and configuration. Leave unknown dates empty. This records history without starting a job.
+
+The lineage then connects datasets to the training run and model version. Training sources cannot be replaced, so verify the recipe first. Filtered and unfiltered data with the same batch name must be treated as distinct versions.
+
+The Python SDK supports the same operation. `model_id` and `version_id` identify existing MMT records, and `run_id` is an MMT run in the same project. Keep another tracking server's run ID in evidence or tags.
+
+```python
+client.associate_model_training_source(
+    project_id,
+    model_id,
+    version_id,
+    run_id=run_id,
+    evidence={"recipe": "reference-to-verified-training-config"},
+)
+```
+
+Register synthetic data in [Datasets](/en/data/datasets) with its S3 URI and the SHA-256 of the referenced object, then select the exact version as a training input. Record data added during training in [training data history](/en/models/checkpoints#training-data-stages).
+
+The model page lists datasets used across the training run. For an intermediate checkpoint, inspect the run's training data history and the starting steps of each configuration.

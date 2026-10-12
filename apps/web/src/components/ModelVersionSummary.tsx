@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
-import type { AutomatedRunSummary, ModelVersionDetail, Run } from '@mmt/contracts';
+import type { AutomatedRunSummary, DatasetVersion, ModelVersionDetail, Run } from '@mmt/contracts';
 import { CodeVersionNameLink } from './CodeVersionNameLink';
 import { DetailsList } from './JsonDetails';
 import { LineageGraph } from './LineageGraph';
 import { ModelVersionArtifactLink } from './ModelVersionArtifactLink';
 import { ModelVersionNameLink } from './ModelVersionNameLink';
 import { StatusBadge } from './StatusBadge';
+import { getModelTrainingSourceRunId } from '../lib/modelTrainingSource';
+import { qualifiedDatasetVersionLabel } from '../lib/datasetVersionLabel';
 import { formatDate } from '../lib/format';
 import { buildModelVersionLineage, LINEAGE_RESULT_RUN_LIMIT } from '../lib/modelVersionLineage';
 import { useLocale } from '../i18n/useLocale';
@@ -16,20 +18,26 @@ export function ModelVersionSummary({
   projectId,
   detail,
   sourceRun,
+  trainingDatasets = [],
   resultRuns,
 }: {
   projectId: string;
   detail: ModelVersionDetail;
   sourceRun: Run | undefined;
+  trainingDatasets?: DatasetVersion[];
   resultRuns: AutomatedRunSummary[];
 }) {
   useLocale();
   const { model, version, aliases } = detail;
+  const sourceRunId = getModelTrainingSourceRunId(version);
   const base = `/projects/${projectId}`;
   const lineage = buildModelVersionLineage({
     model,
     version,
     sourceRun: sourceRun ?? null,
+    datasetLabels: new Map(
+      trainingDatasets.map((dataset) => [dataset.id, qualifiedDatasetVersionLabel(dataset)]),
+    ),
     resultRuns,
   });
   return (
@@ -58,10 +66,10 @@ export function ModelVersionSummary({
             ],
             [
               text.sourceRun,
-              version.sourceRunId ? (
+              sourceRunId ? (
                 <span>
-                  <Link className="mono" to={`${base}/runs/${version.sourceRunId}`}>
-                    {sourceRun?.name ?? version.sourceRunId}
+                  <Link className="mono" to={`${base}/runs/${sourceRunId}`}>
+                    {sourceRun?.name ?? sourceRunId}
                   </Link>{' '}
                   {sourceRun && <StatusBadge status={sourceRun.status} />}
                 </span>
@@ -79,9 +87,16 @@ export function ModelVersionSummary({
             ],
             [
               text.weightsUri,
-              version.weightsUri ? <span className="mono break-word">{version.weightsUri}</span> : '—',
+              version.weightsUri ? (
+                <span className="mono break-word">{version.weightsUri}</span>
+              ) : (
+                '—'
+              ),
             ],
-            [text.modelVersionWeightsArtifact, <ModelVersionArtifactLink projectId={projectId} version={version} />],
+            [
+              text.modelVersionWeightsArtifact,
+              <ModelVersionArtifactLink projectId={projectId} version={version} />,
+            ],
             [
               text.defaultCode,
               version.defaultCodeVersionId ? (

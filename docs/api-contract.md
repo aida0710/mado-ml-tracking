@@ -806,3 +806,34 @@ Pluginは本体に登録したkindだけを実行する。新規はkind=madoで�
 
 - POST /projects/:p/plugins/:id/events/receipts は全体管理者。`{receipts:[{eventId:UUID,payloadHash:64桁hex}]}`（1〜1000件）→ `{imported:number}`。すべてのhashと既存イベントを照合し、1件でも不一致ならtransactionを戻す。送信中で60秒のleaseが有効な行は409。leaseが切れていれば照合済み記録を引き継ぎ、古いdeliveryIdを無効化する。既に配送済みの行は加算しない。
 - POST /projects/:p/plugins/:id/migration/complete は全体管理者。`{expectedRevision}`→ PluginConnection。同じIDの設定・資格情報・接続確認が完了している場合だけmigration_pendingを解除する。旧enabledは維持する。移行の設定を保存しただけでは配送を再開しない。旧ledger引継・確認を終えてから実行する。
+
+## 登録済みモデルの学習元
+
+既存のモデル版のUUID、`sourceRunId`、親、重みの参照、metadataは不変のまま保持する。後から判明した学習元は`model_version_training_sources`へ追記する。1つのモデル版に学習元は1つで、上書き・通常の削除はできない。
+
+- `GET /projects/:p/models/:id/versions/:v/training-source` → `{source: ModelVersionTrainingSource | null}`。登録時の学習元は`origin: registration`、後付けは`origin: association`。
+- `POST /projects/:p/models/:id/versions/:v/training-source` → `ModelVersionTrainingSource`。Project editorと`registry:write`・`runs:write`が必要。`runId`と任意の`evidence`で、同Projectの終了済み`training` / `finetuning` Runを紐付ける。同じRunの再送は同じ記録を返し、異なるRunは409。
+- POSTの`runId`の代わりに`run`を渡すと、過去の学習Runを作成して紐付ける。`run`は`experimentId`・`name`・`kind`と、実際に使った`inputDatasetVersionIds`、任意のモデル・コード・パラメータ・tag・環境・開始/終了日時を持つ。Run作成と紐付けは同じtransactionで保存する。未確認の日時はnullで、終了日時を登録時刻に置き換えない。学習を実行するJobや完了時の自動処理は起動しない。
+- 学習元が削除済み・未終了・別Project、モデルがその学習元の入力や祖先となって循環する場合は拒否する。後付け自体はモデル登録の自動処理を起動しない。
+- `ModelVersion.trainingSourceRunId`は読み取り専用の投影で、登録時の`sourceRunId`または後付けのRun ID。`Run.outputModelVersionIds`、モデル一覧・詳細・来歴図には後付けも含める。作成直後などで投影がない場合、クライアントは`sourceRunId`を使える。
+- `evidence`は実設定の参照・照合内容などのJSON（64KiB以内）。監査ログはモデル版とRunのIDだけを保持し、参照URLや根拠の本文は転載しない。
+
+## 事前学習途中のデータ構成
+
+`Run.inputDatasetVersionIds`は開始時の固定設定。途中でデータを足したり外したりした場合は、`training_data_stages`へ使用開始stepとデータセットの全構成を追記する。履歴を記録しても実行中の学習loaderは変更されない。実際の切り替えは学習コードが行う。
+
+- `GET /projects/:p/runs/:r/training-data-stages` → `TrainingDataStagePage`。`initialStep`・`initialDatasetVersionIds`と、開始step順の`items`を返す。checkpointから継続したRunの初期stepはcheckpointの次のstep。
+- `POST /projects/:p/runs/:r/training-data-stages` → `TrainingDataStage`。Project editorと`runs:write`が必要。学習コードのJob tokenは自身のRunだけに記録できる。`startStep`、`inputDatasetVersionIds`の全構成、任意の`checkpointId`・`metadata`を渡す。追加分だけを渡さず、引き続き使う版も含める。
+- 1つのRunの同stepには1記録。同じ内容の再送は同じ記録を返す。異なる内容の同stepや記録済みのstepより前は409。他Project・削除/アーカイブ済みDatasetVersion、循環、checkpointが別Runまたは開始step以降の場合は拒否する。通常のUPDATE/DELETEはできない。
+- Jobが終了したRunへの新しい記録は409 `run_finalized`。既存記録の同一再送は可能。手動で記録したRunには、過去の構成もstep順で追記できる。
+- `Run.trainingDatasetVersionIds`は初期入力と全stageの入力の集合。途中で外した版も、使った履歴として含む。来歴図・モデルの学習元の表示はこの集合を使う。workerが開始時に受け取る`inputDatasets`は初期設定で、履歴の追記による自動取得は行わない。
+- Python SDK: `run.log_training_data_stage(start_step=..., input_dataset_version_ids=[...])`と`run.training_data_stages()`。オンライン接続で利用する。
+- checkpoint一覧の［この重みから学習を続ける］は既存の`RunCreate.resumeCheckpointId`とJob launchを使い、新しいRun/Jobを作る。元の実行種別とモデル、checkpointの時点のデータ構成を引き継ぐ。利用者は入力データを選び直せる。元のCodeと同じCodeのバージョンだけを選べる。完了済みRunやJobのないRunからも継続できる。停止したJobの同条件でのretryは従来どおり別の操作。
+
+新しい来歴表も、Projectの完全削除ではそのProjectと一緒に削除される。ほかのProjectの記録と監査履歴は保持する。
+
+学習元とデータ構成の拒否コード:
+
+- 学習元の上書きは409 `model_training_source_conflict`、未終了の学習元は422 `model_training_source_not_terminal`、入力/祖先への逆向きの紐付けは422 `model_training_source_cycle`。
+- 学習以外のRunへのデータ履歴は422 `training_data_run_kind`。同stepの別構成は409 `training_data_stage_conflict`、過去stepへの新しい記録は409 `training_data_stage_order`。
+- 別Runまたは開始step以降のcheckpointは422 `training_data_stage_checkpoint`。自分の出力を入力へ戻す循環は422 `training_data_stage_cycle`。

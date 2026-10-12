@@ -114,6 +114,8 @@ export const auditActionLabels: Record<string, string> = localized({
   'promotion.policy.update': '昇格policyの変更',
   'promotion_policy.owner.transfer': '昇格policyの所有者の変更',
   'promotion.evaluation.reevaluate': '昇格判定のやり直し',
+  'model.training_source.associate': 'モデルの学習元の紐付け',
+  'run.training_data_stage.append': '学習データの構成の記録',
   'model_alias.protection.set': 'aliasの保護の設定',
   'model_alias.protection.delete': 'aliasの保護の解除',
 }, english.auditActionLabels);

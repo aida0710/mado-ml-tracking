@@ -4,6 +4,16 @@ import type pg from 'pg';
 
 const MIGRATIONS = new URL('../src/db/migrations/', import.meta.url);
 
+/** Applies one independent migration while preserving migrate()'s checksum ledger. */
+export async function applyMigrationFile(database: pg.Pool, name: string): Promise<void> {
+  const sql = await readFile(new URL(name, MIGRATIONS), 'utf8');
+  await database.query(sql);
+  await database.query('INSERT INTO schema_migrations(name,sha256) VALUES($1,$2)', [
+    name,
+    createHash('sha256').update(sql).digest('hex'),
+  ]);
+}
+
 /**
  * Applies the migrations that sort before `firstPending` and records them as migrate() does, so a
  * test can insert rows of the older schema and then let migrate() apply the rest. The harness must
@@ -19,12 +29,5 @@ export async function applyMigrationsBefore(
   const earlier = (await readdir(MIGRATIONS))
     .filter((name) => name.endsWith('.sql') && name < firstPending)
     .sort();
-  for (const name of earlier) {
-    const sql = await readFile(new URL(name, MIGRATIONS), 'utf8');
-    await database.query(sql);
-    await database.query('INSERT INTO schema_migrations(name,sha256) VALUES($1,$2)', [
-      name,
-      createHash('sha256').update(sql).digest('hex'),
-    ]);
-  }
+  for (const name of earlier) await applyMigrationFile(database, name);
 }

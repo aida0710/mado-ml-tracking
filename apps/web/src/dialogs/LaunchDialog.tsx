@@ -1,3 +1,5 @@
+import type { TrainingContinuation } from '../types/trainingContinuation';
+import { trainingText } from '../i18n/training';
 import type { Job, Run } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
 import { useProjectTargets } from '../hooks/useProjectTargets';
@@ -16,10 +18,12 @@ import { text } from '../i18n/catalog';
  */
 export function LaunchDialog({
   existingRun,
+  continuation,
   onClose,
   onSaved,
 }: {
   existingRun?: Run;
+  continuation?: TrainingContinuation;
   onClose: () => void;
   onSaved: (job: Job) => void;
 }) {
@@ -30,7 +34,12 @@ export function LaunchDialog({
   const workers = useProjectWorkers(project.id);
   const launch = useLaunch(project.id, existingRun);
   return (
-    <Dialog title={text.launchTitle} onClose={onClose} busy={launch.pending} wide>
+    <Dialog
+      title={continuation ? trainingText.continueTraining : text.launchTitle}
+      onClose={onClose}
+      busy={launch.pending}
+      wide
+    >
       <Resource query={catalog}>
         {(choices) => (
           <Resource query={targets}>
@@ -38,6 +47,7 @@ export function LaunchDialog({
               <LaunchForm
                 projectId={project.id}
                 existingRun={existingRun}
+                continuation={continuation}
                 catalog={choices}
                 targets={computeTargets}
                 workers={workers.value}
