@@ -68,6 +68,8 @@ export const workbenchText = {
   mlflowSample: "MLflow 3 metrics",
   inferenceSample: 'CPU inference',
   trainingSample: 'CPU training',
+  trainingSampleTaskRegistersModel: "The Task's output model setting (Artifact path model/weights.json) registers these weights after the Run succeeds.",
+  trainingSampleOwnRegistrationSkipsTask: "If run.register_output_model() registers them to the same Model here, the Task's registration is skipped.",
   sampleConflict: "A path in this sample already exists. Rename or delete it before adding the sample.",
   editTarget: "Edit computer",
   enableTarget: "Enable computer",

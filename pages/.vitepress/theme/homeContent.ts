@@ -4,7 +4,7 @@ export interface Feature {
   label: string
   title: string
   description: string
-  /** public/images/ の画像名（拡張子なし）。 */
+  /** 画像名（拡張子なし）。HomeContent.imageDirectory の中のファイル。 */
   image: string
   alt: string
   link: string
@@ -19,6 +19,8 @@ export interface Entry {
 }
 
 export interface HomeContent {
+  /** その言語の画面を撮った画像の置き場所。日本語は public/images/、英語は public/images/en/。 */
+  imageDirectory: string
   eyebrow: string
   title: string
   lead: string
@@ -32,6 +34,7 @@ export interface HomeContent {
 }
 
 const ja: HomeContent = {
+  imageDirectory: '/images',
   eyebrow: 'MLflow 3互換の実験管理',
   title: '学習の記録から、モデルの評価と昇格まで',
   lead: '公式のMLflow 3 SDKからそのまま記録でき、モデルバージョンの登録をきっかけに推論と評価を自動で実行します。音声などの大きなArtifactは、ファイルシステムかS3互換ストレージに保存します。',
@@ -55,6 +58,7 @@ const ja: HomeContent = {
 }
 
 const en: HomeContent = {
+  imageDirectory: '/images/en',
   eyebrow: 'Experiment tracking compatible with MLflow 3',
   title: 'From training records to model evaluation and promotion',
   lead: 'Record from the official MLflow 3 SDK as is. Registering a model version starts inference and evaluation automatically. Large Artifacts such as audio are stored on a file system or in S3-compatible storage.',

@@ -5,11 +5,9 @@ description: Models, versions, model families and aliases, how to register versi
 
 # Models and versions
 
-![The model and version list](/images/models-registry.png)
+![The model and version list](/images/en/models-registry.png)
 
-The **モデルとバージョン** (Models and versions) tab of Models registers trained weights as model versions and uses aliases to point at the version currently in use. A version cannot be changed after registration, so you can always tell which weights a Run used for inference or evaluation.
-
-The web UI is in Japanese. This page shows each label as it appears on screen, followed by an English translation.
+The **Models and versions** tab of Models registers trained weights as model versions and uses aliases to point at the version currently in use. A version cannot be changed after registration, so you can always tell which weights a Run used for inference or evaluation.
 
 ## When to use it
 
@@ -38,9 +36,9 @@ Version fields:
 
 You need the editor role in the Project. An API token also needs the `registry:write` scope.
 
-1. Open Models and press **モデルを登録** (Register model).
-2. Enter the model name in **名前** (Name) and choose the family in **モデル系列** (Model family) from the candidates, for example `voice-tts` and `linear`. The candidates are the families the Project's models and code versions use, with how many use each; type a new family as it is. Use the same string as the code version's supported model families. Families that differ only in letter case, such as `Qwen3` and `qwen3`, are different families and do not match; typing one shows a warning.
-3. Press **保存** (Save) and check that the model appears in the list on the left.
+1. Open Models and press **Register model**.
+2. Enter the model name in **Name** and choose the family in **Model family** from the candidates, for example `voice-tts` and `linear`. The candidates are the families the Project's models and code versions use, with how many use each; type a new family as it is. Use the same string as the code version's supported model families. Families that differ only in letter case, such as `Qwen3` and `qwen3`, are different families and do not match; typing one shows a warning.
+3. Press **Save** and check that the model appears in the list on the left.
 
 ## Register a version
 
@@ -48,7 +46,7 @@ There are five ways to register a version. To go from training to registration w
 
 | Method | Version name | Suitable for |
 | --- | --- | --- |
-| **バージョンを作成** (Create version) in the web UI | Numbered automatically when left empty | Registering weights created elsewhere |
+| **Create version** in the web UI | Numbered automatically when left empty | Registering weights created elsewhere |
 | [Task output model setting](/en/models/tasks#register-a-model-when-training-succeeds) | Numbered automatically (a version name template is also available) | Registering the weights of successful training without changing the training code |
 | Python SDK `register_output_model()` | Numbered automatically when omitted | Registering from inside the training code |
 | MLflow `register_model()` or `log_model(registered_model_name=…)` | Numbered automatically | Training already logged with the MLflow 3 SDK |
@@ -56,12 +54,12 @@ There are five ways to register a version. To go from training to registration w
 
 ### Register from the web UI
 
-1. Select the model in the list and press **バージョンを作成** (Create version).
-2. Leave **バージョン** (Version) empty to get the number shown under it (for example "空欄なら 3 を付けます。"). Enter a name only when you want one.
-3. Select the training Run in **生成元Run** (Source Run). Only training and fine-tuning Runs are offered.
-4. **重みのArtifact** (Weights Artifact) lists the source Run's Artifacts; press the weights file to choose it. You can narrow the list by saved path. Without a Run, the Project's Artifacts are listed, newest first. A file uploaded with **Artifactをアップロード** (Upload Artifact) is chosen as it finishes. Pasting an Artifact ID, or the `artifact://…` shown after an upload, also chooses it. Enter weights that are not an Artifact (on S3, for example) in **重みのURI** (Weights URI).
-5. Optionally select **親のバージョン** (Parent versions) and **既定のコードバージョン** (Default code version), then press **保存** (Save). When no code version supports the family, the reason and a link to Code appear under **既定のコードバージョン**.
-6. Check that a new row appears in the version list and that **最新のバージョン** (Latest version) has changed.
+1. Select the model in the list and press **Create version**.
+2. Leave **Version** empty to get the number shown under it (for example "Leave blank to use 3."). Enter a name only when you want one.
+3. Select the training Run in **Source run**. Only training and fine-tuning Runs are offered.
+4. **Weights artifact** lists the source Run's Artifacts; press the weights file to choose it. You can narrow the list by saved path. Without a Run, the Project's Artifacts are listed, newest first. A file uploaded with **Upload artifact** is chosen as it finishes. Pasting an Artifact ID, or the `artifact://…` shown after an upload, also chooses it. Enter weights that are not an Artifact (on S3, for example) in **Weights URI**.
+5. Optionally select **Parent versions** and **Default code version**, then press **Save**. When no code version supports the family, the reason and a link to Code appear under **Default code version**.
+6. Check that a new row appears in the version list and that **Latest version** has changed.
 
 ### Register from training code
 
@@ -104,43 +102,43 @@ When the version name is omitted, versions are numbered `1`, `2`, `3`, and so on
 
 ## Set an alias
 
-![The alias (promotion) dialog](/images/models-promotion-dialog.png)
+![The alias (promotion) dialog](/images/en/models-promotion-dialog.png)
 
-1. Select the model and press **Aliasを設定** (Set alias).
-2. Enter the alias in **Alias** and choose the version in **バージョン** (Version), for example `production` and `3`.
-3. Enter the reason in **理由** (Reason) and press **保存** (Save). The reason is optional, but a protected alias may require it.
+1. Select the model and press **Assign alias**.
+2. Enter the alias in **Alias** and choose the version in **Version**, for example `production` and `3`.
+3. Enter the reason in **Reason** and press **Save**. The reason is optional, but a protected alias may require it.
 4. Check that the alias points at the version in the alias list.
 
-To remove an alias, press **Aliasを解除** (Remove alias) in the alias list. Removals are recorded too. A protected alias carries a lock and the role it needs (for example 保護alias（adminのみ）, protected alias, admins only) in the list; without that role, the list says which role removal needs instead of showing **Aliasを解除**. Only Project Admins can remove a protected alias that requires a passed check.
+To remove an alias, press **Remove alias** in the alias list. Removals are recorded too. A protected alias carries a lock and the role it needs (for example **Protected alias (Admin only)**) in the list; without that role, the list says which role removal needs instead of showing **Remove alias**. Only Project Admins can remove a protected alias that requires a passed check.
 
 When you start an inference or evaluation Run with an alias, the Run stores the version the alias pointed at at that moment. Moving the alias later does not change past Runs.
 
-**Aliasの履歴** (Alias history) lists the time, the old and new version, the actor, and the path of each change (Web, API, MLflow, promotion policy, version deletion, model deletion), newest first. The history is append-only.
+**Alias history** lists the time, the old and new version, the actor, and the path of each change (Web, API, MLflow, promotion policy, version deletion, model deletion), newest first. The history is append-only.
 
 You can restrict who may change important aliases such as `production`. See [Protected aliases](/en/models/promotion#protect-an-alias).
 
 ## Open a version
 
-![The version page](/images/models-version.png)
+![The version page](/images/en/models-version.png)
 
-Press a version's number in the version list to open its page. The list shows the newest 20 versions; **さらに読み込む** (Load more) shows the rest. The **Alias** column names the aliases that point at each version.
+Press a version's number in the version list to open its page. The list shows the newest 20 versions; **Load more** shows the rest. The **Alias** column names the aliases that point at each version.
 
-**この系列に対応するコードバージョン** (Code versions for this family) in a Model's details lists the code versions whose **対応モデル系列** (Supported model families) include the Model's family. These are the code versions a Task or an automation rule can choose for the Model.
+**Code versions for this family** in a Model's details lists the code versions whose **Supported model families** include the Model's family. These are the code versions a Task or an automation rule can choose for the Model.
 
-- **学習Run → バージョン → 推論・評価Run** (Training Run → version → inference and evaluation Runs): the training Run that produced the version and up to 20 of the newest Runs that used it.
-- **自動実行** (Automation): automation runs triggered by this version.
-- **評価結果** (Evaluation results): the latest metrics of successful evaluation Runs and the comparison with the baseline version ([Evaluation and promotion](/en/models/promotion)).
-- **昇格の判定** (Promotion check): whether the version passed each promotion policy.
+- **Training run → Version → Inference / Evaluation runs**: the training Run that produced the version and up to 20 of the newest Runs that used it.
+- **Automation**: automation runs triggered by this version.
+- **Evaluation results**: the latest metrics of successful evaluation Runs and the comparison with the baseline version ([Evaluation and promotion](/en/models/promotion)).
+- **Promotion decision**: whether the version passed each promotion policy.
 
 ## Follow relationships in Lineage
 
-![The Lineage page](/images/models-lineage.png)
+![The Lineage page](/images/en/models-lineage.png)
 
 Lineage draws dataset versions, Runs, MLflow logged models, model versions, and code versions of the Project in one graph. Read it from left to right to see which data trained a version and which version produced an inference output.
 
-Edges are data input, data output, model input, model output, model registration, parent model, parent dataset, parent Run, and code. Open **関係** (Relations) below the graph to see the edges as a table. The table names the kind of each end (Run, dataset version, and so on) before its name, and the name links to its page.
+Edges are data input, data output, model input, model output, model registration, parent model, parent dataset, parent Run, and code. Open **Relation** below the graph to see the edges as a table. The table names the kind of each end (Run, dataset version, and so on) before its name, and the name links to its page.
 
-Click **Lineageで見る** (Show in Lineage) in a dataset version's details to show only two steps before and after that version. **全体を表示** (Show all) at the top returns to the whole Project.
+Click **View in Lineage** in a dataset version's details to show only two steps before and after that version. **Show full graph** at the top returns to the whole Project.
 
 ## Permissions
 
