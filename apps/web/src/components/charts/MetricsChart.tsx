@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useId, useMemo, useState, type KeyboardEvent } from 'react';
 import { CartesianGrid, ComposedChart, Line, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import type { MetricXRange } from '@mmt/contracts';
@@ -21,6 +20,7 @@ import {
 import { formatXTick, formatXValue } from '../../lib/chartXAxis';
 import { formatChartTick } from '../../lib/chartTicks';
 import { prepareChartLines, valuesAtX, type ChartLine } from '../../lib/metricSeries';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 const DEFAULT_CHART_HEIGHT = 320;

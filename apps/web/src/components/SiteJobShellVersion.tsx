@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import { siteComputersApi } from '../api/siteComputers';
 import { useQuery } from '../hooks/useQuery';
 import { Resource } from './Feedback';
 import { formatDate } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { siteComputersTextTemplates } from '../i18n/siteComputers';
 
 /**

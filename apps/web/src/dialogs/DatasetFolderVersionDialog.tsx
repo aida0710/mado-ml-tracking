@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState, type DragEvent } from 'react';
 import type { Dataset, DatasetVersion } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
@@ -22,8 +21,9 @@ import {
   parseJsonObject,
 } from '../lib/formValues';
 import type { FormField, SelectOption } from '../types/form';
-import { text, textTemplates } from '../i18n/catalog';
 import { useFailureMessage } from '../hooks/useFailureMessage';
+import { useLocale } from '../i18n/useLocale';
+import { text, textTemplates } from '../i18n/catalog';
 
 /**
  * Uploads a folder and creates a version of its files. A folder upload that stopped earlier is

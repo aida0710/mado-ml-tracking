@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { readSettingsReturnScreen } from '../lib/settingsReturnScreen';
+import { useLocale } from '../i18n/useLocale';
 import { settingsShellTextTemplates } from '../i18n/settingsShell';
 
 /**

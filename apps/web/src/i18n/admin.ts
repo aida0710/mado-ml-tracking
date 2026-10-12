@@ -49,7 +49,7 @@ export const adminText = localized({
   localLoginDisabledNotice:
     '今のAPI serverの設定（AUTH_MODE）では、ローカルアカウントでログインできません。作成はできますが、ログインできるのはAUTH_MODEをlocalかhybridにしたときです。',
   initialPassword: '初回パスワード',
-  initialPasswordHint: "UTF-8で12〜1024バイト。初回ログイン時に変更が必要です。",
+  initialPasswordHint: 'UTF-8で12〜1024バイト。初回ログイン時に変更が必要です。',
   generatePassword: '生成',
   emailOptional: 'メールアドレス（任意）',
   makeGlobalAdmin: '全体管理者にする',

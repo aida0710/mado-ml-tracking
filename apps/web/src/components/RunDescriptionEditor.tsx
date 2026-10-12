@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Pencil } from 'lucide-react';
 import { RUN_NOTE_MAX_LENGTH, RUN_NOTE_TAG } from '@mmt/contracts';
@@ -11,6 +10,7 @@ import { MarkdownEditor } from './markdown/MarkdownEditor';
 import { MarkdownView } from './markdown/MarkdownView';
 import { Empty, ErrorNotice } from './Feedback';
 import { UnsavedChangesDialog } from './UnsavedChangesDialog';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

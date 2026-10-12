@@ -1,7 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
 import type { PluginConnection } from '@mmt/contracts';
-import { useLocale } from '../i18n/useLocale';
 import { useProject } from '../hooks/useProject';
 import { useAuth } from '../hooks/useAuth';
 import { usePluginConnections } from '../hooks/usePluginConnections';
@@ -13,6 +12,7 @@ import { builtinPluginViews } from '../plugins/builtinPluginViews';
 import { LegacyPluginSettings } from '../plugins/legacy/LegacyPluginSettings';
 import { getPluginConnectionKey } from '../lib/pluginConnection';
 import { canManagePlugins, isGlobalAdmin } from '../lib/permissions';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { pluginsText } from '../i18n/plugins';
 

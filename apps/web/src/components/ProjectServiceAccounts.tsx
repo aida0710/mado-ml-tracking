@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ServiceAccount } from '@mmt/contracts';
 import { useMutation } from '../hooks/useMutation';
@@ -10,6 +9,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { ServiceAccountDialog } from '../dialogs/ServiceAccountDialog';
 import { TokenDialog } from '../dialogs/TokenDialog';
 import { formatDate } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { serviceAccountsTextTemplates } from '../i18n/serviceAccounts';
 

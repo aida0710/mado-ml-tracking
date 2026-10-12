@@ -1,13 +1,13 @@
-import { useLocale } from '../../i18n/useLocale';
 import type { Artifact } from '@mmt/contracts';
 import { fetchArtifactTextHead } from '../../api/artifactTextHead';
 import { trackingApi } from '../../api/tracking';
 import { useQuery } from '../../hooks/useQuery';
 import { formatBytes } from '../../lib/format';
 import { Resource } from '../Feedback';
-import { textTemplates } from '../../i18n/catalog';
 import { CodeView } from './CodeView';
 import { PreviewDownloadNotice } from './PreviewDownloadNotice';
+import { useLocale } from '../../i18n/useLocale';
+import { textTemplates } from '../../i18n/catalog';
 import { joinSentences } from '../../i18n/textJoining';
 
 /**

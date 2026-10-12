@@ -1,6 +1,6 @@
-import { useLocale } from '../../i18n/useLocale';
 import type { ChartLine } from '../../lib/metricSeries';
 import { SeriesSwatch } from './SeriesSwatch';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**

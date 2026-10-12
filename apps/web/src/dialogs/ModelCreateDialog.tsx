@@ -1,9 +1,9 @@
-import { useLocale } from '../i18n/useLocale';
 import type { Model } from '@mmt/contracts';
 import { registryApi } from '../api/registry';
 import { FormDialog } from '../components/FormDialog';
 import { useModelFamilies } from '../hooks/useModelFamilies';
 import { getFieldValue } from '../lib/formValues';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /** Registers a Model; its family is chosen from the families the Project uses, or typed anew. */

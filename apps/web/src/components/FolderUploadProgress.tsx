@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { RotateCcw } from 'lucide-react';
 import type { UploadItem } from '../hooks/useArtifactUploadQueue';
 import type { DatasetFolderEntry } from '../lib/datasetFolder';
@@ -6,6 +5,7 @@ import { summarizeFolderUpload } from '../lib/folderUploadSummary';
 import { formatBytes } from '../lib/format';
 import { formatRemainingTime } from '../lib/remainingTime';
 import { UploadQueueRow } from './UploadQueueRow';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**

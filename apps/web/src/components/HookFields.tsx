@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import {
   HOOK_CHECKPOINT_MODES,
   HOOK_CONCURRENCY_MODES,
@@ -33,6 +32,7 @@ import {
   partitionCandidates,
   usesRegisteredModelVersion,
 } from '../lib/hookInput';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import {
   hookCheckpointModeLabels,

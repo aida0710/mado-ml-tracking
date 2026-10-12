@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState, type DragEvent } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { Upload } from 'lucide-react';
@@ -13,6 +12,7 @@ import { useArtifactAtPath, type ArtifactAtPath } from '../hooks/useArtifactAtPa
 import { sourcesFromDataTransfer, sourcesFromFileList, type UploadSource } from '../lib/droppedFiles';
 import { formatBytes, formatDate } from '../lib/format';
 import { joinArtifactPath } from '../lib/uploadPlan';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 // Saved paths listed before the start, so a folder's layout can be checked without reading all.

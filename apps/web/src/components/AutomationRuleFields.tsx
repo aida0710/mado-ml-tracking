@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { MAX_JOB_ATTEMPTS } from '@mmt/contracts';
 import type { AutomationCatalog, AutomationKind } from '../types/modelAutomation';
 import type { FormField, FormValues } from '../types/form';
@@ -16,6 +15,7 @@ import {
 import { explainMissingCodeCandidates } from '../lib/codeCandidateReason';
 import { isTargetCompatible } from '../lib/runtimeValidation';
 import { targetChoiceLabel } from '../lib/computeTargetDisplay';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { automationText, automationTriggerLabels } from '../i18n/automation';
 

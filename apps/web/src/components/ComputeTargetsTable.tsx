@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ComputeTargetDetails, User, WorkerPresence } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { WorkerCoverageBadge } from './WorkerCoverage';
@@ -8,6 +7,7 @@ import { VisibilityLabel } from './VisibilityLabel';
 import { formatTargetGpus, formatTargetLocation } from '../lib/computeTargetDisplay';
 import { targetOwnerLabel } from '../lib/siteComputerDisplay';
 import { jobWorkerCoverage } from '../lib/workerCoverage';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { runtimeLabels } from '../i18n/runtime';
 import { workerCoverageText } from '../i18n/workerCoverage';

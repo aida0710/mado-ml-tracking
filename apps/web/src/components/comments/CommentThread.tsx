@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { Comment } from '@mmt/contracts';
 import type { CommentThreadProps } from '../charts/chartProps';
@@ -14,6 +13,7 @@ import {
 import { CommentEditor } from './CommentEditor';
 import { CommentItem } from './CommentItem';
 import { Empty, ErrorNotice, Loading } from '../Feedback';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**

@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { Hook, HookExecution } from '@mmt/contracts';
 import { ResponsiveTable, type ResponsiveTableColumn } from './ResponsiveTable';
@@ -6,6 +5,7 @@ import { StatusBadge } from './StatusBadge';
 import { formatDate } from '../lib/format';
 import { hookExecutionOutcome } from '../lib/hookDisplay';
 import { shortId } from '../lib/jobDisplay';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { hookExecutionSubjectLabels } from '../i18n/hooks';
 

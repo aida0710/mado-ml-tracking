@@ -1,5 +1,4 @@
 import type { SweepCreate, SweepMethod, SweepObjective } from '@mmt/contracts';
-import { text } from '../i18n/catalog';
 import {
   DEFAULT_HYPERBAND_ETA,
   createSearchSpaceRow,
@@ -8,6 +7,7 @@ import {
   type SearchSpaceRow,
   type SweepSearchSettings,
 } from './sweepConfig';
+import { text } from '../i18n/catalog';
 
 /** The create dialog's inputs as typed. Numbers stay text until buildSweepCreate reads them. */
 export interface SweepFormValues {

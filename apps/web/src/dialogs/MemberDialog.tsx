@@ -1,5 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
-import { useLocalizedMemo } from '../i18n/useLocalizedMemo';
 import { useState } from 'react';
 import type { ProjectMember, ProjectRole, UserSearchResult } from '@mmt/contracts';
 import { Dialog } from '../components/Dialog';
@@ -9,6 +7,8 @@ import { UserPicker } from '../components/UserPicker';
 import { useMutation } from '../hooks/useMutation';
 import { useProject } from '../hooks/useProject';
 import { DEFAULT_MEMBER_GRANT_ROLE } from '../lib/projectMemberGrants';
+import { useLocale } from '../i18n/useLocale';
+import { useLocalizedMemo } from '../i18n/useLocalizedMemo';
 import { text } from '../i18n/catalog';
 import { projectAccessTextTemplates } from '../i18n/projectAccess';
 

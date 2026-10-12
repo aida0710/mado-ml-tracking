@@ -1,10 +1,10 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
-import { text } from '../i18n/catalog';
 import type { Navigation } from '../hooks/useNavigation';
 import { NavigationLinkList } from './NavigationLinkList';
 import { NavigationResizeHandle } from './NavigationResizeHandle';
+import { useLocale } from '../i18n/useLocale';
+import { text } from '../i18n/catalog';
 
 /**
  * The main navigation from --bp-md up: the full sidebar with names (the Project selector on top,

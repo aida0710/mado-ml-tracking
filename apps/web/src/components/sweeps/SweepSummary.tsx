@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Pause, Play, Square } from 'lucide-react';
@@ -11,6 +10,7 @@ import { ConfirmDialog } from '../ConfirmDialog';
 import { ErrorNotice } from '../Feedback';
 import { FormDialog } from '../FormDialog';
 import { DetailsList, KeyValues } from '../JsonDetails';
+import { useLocale } from '../../i18n/useLocale';
 import {
   sweepGoalLabels,
   sweepStatusLabels,

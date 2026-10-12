@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import type { ArtifactMediaInfo, RunMedia } from '@mmt/contracts';
 import { useExclusiveAudio } from '../../hooks/useExclusiveAudio';
 import { formatAudioTime } from '../../lib/audioTimeline';
@@ -7,6 +6,7 @@ import { AudioArtifactViewer } from '../preview/AudioArtifactViewer';
 import { ImagePreview } from '../preview/ImagePreview';
 import { VideoPreview } from '../preview/VideoPreview';
 import { MediaTableView } from './MediaTableView';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 function MediaInfoLine({ info }: { info: ArtifactMediaInfo }) {

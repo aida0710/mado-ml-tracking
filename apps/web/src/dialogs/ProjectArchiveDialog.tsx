@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { Project } from '@mmt/contracts';
 import { accessApi } from '../api/access';
 import { administrationApi } from '../api/administration';
@@ -6,6 +5,7 @@ import { useQuery } from '../hooks/useQuery';
 import { countUsableTokens } from '../lib/projectArchiveImpact';
 import { explainProjectLifecycleConflict } from '../lib/projectLifecycleConflict';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 import { joinSentences } from '../i18n/textJoining';
 

@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import type { UserSearchResult } from '@mmt/contracts';
 import { UserSearchField } from './UserSearchField';
 import { UserSummary } from './UserSummary';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

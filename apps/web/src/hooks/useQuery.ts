@@ -1,6 +1,6 @@
-import { useLocale } from '../i18n/useLocale';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatErrorMessage } from '../lib/errorMessage';
+import { useLocale } from '../i18n/useLocale';
 
 export interface QueryState<T> {
   value: T | undefined;

@@ -13,10 +13,10 @@ import {
   validateContainerWorkingDirectory,
   validateDockerImage,
 } from './runtimeValidation';
-import { text } from '../i18n/catalog';
 import type { CodeWorkspace } from '../types/codeWorkspace';
 import { buildWorkspaceSource, validateFilePaths, validateGitRepository } from './codeWorkspace';
 import { parseCommand } from './commandInput';
+import { text } from '../i18n/catalog';
 
 export function createCodeVersionValues(): FormValues {
   return {

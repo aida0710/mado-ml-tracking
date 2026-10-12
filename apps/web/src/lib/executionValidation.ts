@@ -4,8 +4,8 @@ import {
   type ModelVersion,
   type RunKind,
 } from '@mmt/contracts';
-import { text } from '../i18n/catalog';
 import { parsePositiveInteger } from './formValues';
+import { text } from '../i18n/catalog';
 
 export function parseMaxAttempts(value: string): number {
   const attempts = parsePositiveInteger(value);

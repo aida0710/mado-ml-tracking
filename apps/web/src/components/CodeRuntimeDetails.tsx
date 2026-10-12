@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import type { CodeVersion } from '@mmt/contracts';
 import type { ReactNode } from 'react';
 import { DetailsList } from './JsonDetails';
+import { useLocale } from '../i18n/useLocale';
 import { runtimeLabels } from '../i18n/runtime';
 import { text } from '../i18n/catalog';
 

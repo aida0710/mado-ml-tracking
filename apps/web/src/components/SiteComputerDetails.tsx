@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ComputeTargetDetails, User } from '@mmt/contracts';
 import { CopyableValue } from './CopyableValue';
 import { ManualSubmissionGuide } from './ManualSubmissionNotice';
@@ -9,6 +8,7 @@ import { SiteSharedKeyPanel } from './SiteSharedKeyPanel';
 import { manualSiteOwnership } from '../lib/manualSubmission';
 import { canManageTarget } from '../lib/permissions';
 import { personalSettingsScope } from '../lib/sitePersonalSettingsInput';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

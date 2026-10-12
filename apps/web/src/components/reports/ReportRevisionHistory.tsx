@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useId, useState } from 'react';
 import type { ReportRevisionSummary } from '@mmt/contracts';
 import { CopyButton } from '../CopyButton';
@@ -6,6 +5,7 @@ import { Resource } from '../Feedback';
 import { ReportRevisionChangesSummary } from './ReportRevisionChangesSummary';
 import { useReportRevisions } from '../../hooks/useReport';
 import { formatDate } from '../../lib/format';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 import { joinLabels } from '../../i18n/textJoining';
 

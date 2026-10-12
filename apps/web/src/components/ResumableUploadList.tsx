@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useMemo, useState, type ReactNode } from 'react';
 import type { ArtifactUploadListItem } from '@mmt/contracts';
 import { FileSearch, Play, RotateCcw, Trash2 } from 'lucide-react';
@@ -13,6 +12,7 @@ import {
   type ResumeBlocker,
 } from '../lib/uploadResumeBlocker';
 import { findResumeRecordByUploadId } from '../lib/uploadResumeStore';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 import { resumeBlockerNextSteps, resumeBlockerReasons } from '../i18n/uploads';
 import { joinSentences } from '../i18n/textJoining';

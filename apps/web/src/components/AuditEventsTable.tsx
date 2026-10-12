@@ -1,15 +1,15 @@
-import { useLocale } from '../i18n/useLocale';
 import type { AuditEvent } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { summarizeAuditDetails } from '../lib/auditEventSummary';
 import { auditActionLabel, auditActorLabel, auditProjectLabel } from '../lib/auditEventDisplay';
 import { formatDate } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { accessText } from '../i18n/access';
 
 const outcomeLabels: Record<AuditEvent['outcome'], string> = {
-  get success() { return accessText.auditOutcomeSuccess },
-  get denied() { return accessText.auditOutcomeDenied },
-  get failed() { return accessText.auditOutcomeFailed },
+  get success() { return accessText.auditOutcomeSuccess; },
+  get denied() { return accessText.auditOutcomeDenied; },
+  get failed() { return accessText.auditOutcomeFailed; },
 };
 
 /** Audit events, newest first. `showProject` adds the Project column for the global log. */

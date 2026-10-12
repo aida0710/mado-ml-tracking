@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { ArrowDownToLine, Download } from 'lucide-react';
 import { MAX_RUN_LOG_TAIL, type LogEntry, type RunLogList } from '@mmt/contracts';
@@ -13,6 +12,7 @@ import {
   type LogOrder,
   type LogViewFilter,
 } from '../lib/runLogText';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { jobsTextTemplates, logLevelLabels } from '../i18n/jobs';
 

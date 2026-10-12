@@ -1,5 +1,3 @@
-import { useLocalizedMemo } from '../../i18n/useLocalizedMemo';
-import { useLocale } from '../../i18n/useLocale';
 import { useState, type ReactNode } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { useEvaluationSampleAudio } from '../../hooks/useEvaluationSampleAudio';
@@ -12,11 +10,13 @@ import {
 } from '../../lib/evaluationSamples';
 import { useMediaQuery } from '../../lib/useMediaQuery';
 import { ErrorNotice } from '../Feedback';
-import { text } from '../../i18n/catalog';
-import { artifactsTextTemplates } from '../../i18n/artifacts';
 import { BrokenRowCount, BrokenRowsDetails } from './BrokenRowsDetails';
 import { EvaluationSampleCards } from './EvaluationSampleCards';
 import { EvaluationSampleRows } from './EvaluationSampleRows';
+import { useLocalizedMemo } from '../../i18n/useLocalizedMemo';
+import { useLocale } from '../../i18n/useLocale';
+import { text } from '../../i18n/catalog';
+import { artifactsTextTemplates } from '../../i18n/artifacts';
 
 /**
  * Evaluation samples (audio, reference, prediction, score) with sorting, diff highlighting, and

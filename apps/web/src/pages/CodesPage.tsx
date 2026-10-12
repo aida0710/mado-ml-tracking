@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Plus, RefreshCw } from 'lucide-react';
 import { registryApi } from '../api/registry';
@@ -16,6 +15,7 @@ import { CodeVersionUsageDetails } from '../components/CodeVersionUsageDetails';
 import { FormDialog } from '../components/FormDialog';
 import { CodeVersionDialog } from '../dialogs/CodeVersionDialog';
 import { getFieldValue } from '../lib/formValues';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { runtimeLabels } from '../i18n/runtime';
 import { codeSourceText } from '../i18n/codeSource';

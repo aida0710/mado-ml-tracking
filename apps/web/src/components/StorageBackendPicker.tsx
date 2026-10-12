@@ -1,5 +1,5 @@
-import { useLocale } from '../i18n/useLocale';
 import type { StorageBackendChoice } from '../hooks/useStorageBackends';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

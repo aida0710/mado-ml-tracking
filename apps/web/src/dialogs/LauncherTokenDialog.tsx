@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import type { LauncherCreated } from '@mmt/contracts';
 import { Dialog } from '../components/Dialog';
@@ -6,6 +5,7 @@ import { CopyButton } from '../components/CopyButton';
 import { CodeSnippet } from '../components/CodeSnippet';
 import { buildLauncherConfigExample } from '../lib/launcherConfig';
 import { buildLauncherStartCommands } from '../lib/launcherStartCommands';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { launchersTextTemplates } from '../i18n/launchers';
 

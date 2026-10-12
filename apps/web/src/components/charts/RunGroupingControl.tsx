@@ -1,15 +1,15 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useId } from 'react';
 import type { RunGroupBy } from '@mmt/contracts';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 type GroupingKind = RunGroupBy['kind'] | 'none';
 
 const groupingLabels: Record<GroupingKind, string> = {
-  get none() { return text.chartGroupingNone },
-  get tag() { return text.chartGroupingTag },
-  get param() { return text.chartGroupingParam },
-  get experiment() { return text.chartGroupingExperiment },
+  get none() { return text.chartGroupingNone; },
+  get tag() { return text.chartGroupingTag; },
+  get param() { return text.chartGroupingParam; },
+  get experiment() { return text.chartGroupingExperiment; },
 };
 
 /**

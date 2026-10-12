@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { PlugZap } from 'lucide-react';
 import type {
@@ -25,6 +24,7 @@ import {
   type TargetCandidates,
 } from '../lib/targetCheckCandidates';
 import { isWorkerMissing, type WorkerCoverage } from '../lib/workerCoverage';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { runtimeLabels } from '../i18n/runtime';
 import { workerCoverageText } from '../i18n/workerCoverage';

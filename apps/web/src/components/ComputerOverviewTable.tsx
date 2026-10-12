@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ComputeTargetOverview, User } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { ComputeTargetKind } from './ComputeTargetKind';
@@ -6,6 +5,7 @@ import { ComputeTargetState } from './ComputeTargetState';
 import { VisibilityLabel } from './VisibilityLabel';
 import { canOpenTargetDetails, launcherStatusLabel } from '../lib/computeTargetOverview';
 import { targetOwnerLabel } from '../lib/siteComputerDisplay';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useRef, useState } from 'react';
 import { Bookmark, Check, Link2, Pencil, Save, Trash2 } from 'lucide-react';
 import type { SavedView, SavedViewState } from '@mmt/contracts';
@@ -15,8 +14,9 @@ import {
   savedViewVisibilityChoices,
   type SavedViewActor,
 } from '../../lib/savedViewPermissions';
-import { text, textTemplates } from '../../i18n/catalog';
 import { detailsPopoverHandlers } from '../../lib/detailsPopover';
+import { useLocale } from '../../i18n/useLocale';
+import { text, textTemplates } from '../../i18n/catalog';
 
 type MenuDialog = 'saveAs' | 'rename' | 'delete' | null;
 

@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { Artifact } from '@mmt/contracts';
@@ -8,6 +7,7 @@ import { ArtifactTree } from './ArtifactTree';
 import { ErrorNotice, Resource } from './Feedback';
 import { useArtifactBrowserPanes } from '../hooks/useArtifactBrowserPanes';
 import { useRunArtifacts } from '../hooks/useRunArtifacts';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { artifactsTextTemplates } from '../i18n/artifacts';
 

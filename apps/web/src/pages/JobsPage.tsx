@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Play, RefreshCw, X } from 'lucide-react';
@@ -35,6 +34,7 @@ import {
   manualSiteOwnership,
   manualSubmissionGroups,
 } from '../lib/manualSubmission';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { jobsTextTemplates } from '../i18n/jobs';
 

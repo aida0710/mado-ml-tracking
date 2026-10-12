@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { AuthConfig, ComputeTargetDetails, Launcher } from '@mmt/contracts';
 import { authApi } from '../api/auth';
 import { launchersApi } from '../api/launchers';
@@ -12,6 +11,7 @@ import { TargetFields } from '../components/TargetFields';
 import { ComputerEditDialog } from './ComputerEditDialog';
 import { NewComputerDialog } from './NewComputerDialog';
 import { canAddSshOrLocalTarget } from '../lib/permissions';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /** What the dialog reads before it opens: whether local targets exist here, and the launchers. */

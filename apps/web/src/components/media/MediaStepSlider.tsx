@@ -1,6 +1,6 @@
-import { useLocale } from '../../i18n/useLocale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { stepIndexAfterKey } from '../../lib/mediaSteps';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 /**

@@ -1,8 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useLocale } from '../../i18n/useLocale';
-import { pluginsText } from '../../i18n/plugins';
-import { text } from '../../i18n/catalog';
 import { useAuth } from '../../hooks/useAuth';
 import { useProject } from '../../hooks/useProject';
 import { usePluginOutboxSummary } from '../../hooks/usePluginOutboxSummary';
@@ -14,6 +11,9 @@ import { PluginOutboxStatus } from '../../components/PluginOutboxStatus';
 import { PluginStorageMetrics } from '../../components/PluginStorageMetrics';
 import type { PluginSettingsProps } from '../types';
 import { MadoSettingsDialog } from './MadoSettingsDialog';
+import { useLocale } from '../../i18n/useLocale';
+import { pluginsText } from '../../i18n/plugins';
+import { text } from '../../i18n/catalog';
 
 export function MadoSettings({ plugin, onSaved }: PluginSettingsProps) {
   useLocale();

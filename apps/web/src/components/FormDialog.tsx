@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState, type ReactNode } from 'react';
 import { Dialog } from './Dialog';
 import { FormFields } from './FormFields';
@@ -6,8 +5,9 @@ import { createInitialValues } from '../lib/formValues';
 import type { FormField } from '../types/form';
 import { ErrorNotice } from './Feedback';
 import { useMutation } from '../hooks/useMutation';
-import { text } from '../i18n/catalog';
 import type { FormValues } from '../lib/formValues';
+import { useLocale } from '../i18n/useLocale';
+import { text } from '../i18n/catalog';
 
 export function FormDialog<T>({
   title,

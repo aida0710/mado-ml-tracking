@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useId, useRef, useState, type ReactNode } from 'react';
 import type { ComputeTarget, Experiment, ExperimentTask, Sweep, SweepMethod, SweepObjective } from '@mmt/contracts';
 import { sweepsApi } from '../../api/sweeps';
@@ -30,6 +29,7 @@ import { CheckboxList } from '../CheckboxList';
 import { Dialog } from '../Dialog';
 import { ErrorNotice } from '../Feedback';
 import { SearchSpaceEditor } from './SearchSpaceEditor';
+import { useLocale } from '../../i18n/useLocale';
 import { sweepAggregationLabels, sweepGoalLabels, sweepMethodLabels } from '../../i18n/sweeps';
 import { text, textTemplates } from '../../i18n/catalog';
 import { formatNote } from '../../i18n/textJoining';

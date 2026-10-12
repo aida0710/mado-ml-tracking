@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { useProject } from '../hooks/useProject';
 import type { MissingCodeReason } from '../lib/codeCandidateReason';
+import { useLocale } from '../i18n/useLocale';
 import { modelsTextTemplates } from '../i18n/models';
 import { text } from '../i18n/catalog';
 import { joinSentences } from '../i18n/textJoining';

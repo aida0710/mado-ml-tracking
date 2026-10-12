@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import { CodeSnippet } from './CodeSnippet';
 import { buildTokenUsageSnippet, type TokenAuthentication } from '../lib/tokenUsageSnippet';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

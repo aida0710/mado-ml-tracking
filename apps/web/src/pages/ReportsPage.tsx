@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -12,6 +11,7 @@ import { ErrorNotice, Loading } from '../components/Feedback';
 import { FormDialog } from '../components/FormDialog';
 import { formatDate } from '../lib/format';
 import type { ReportPageLocationState } from './ReportPage';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 const SHOW_ARCHIVED_PARAM = 'archived';

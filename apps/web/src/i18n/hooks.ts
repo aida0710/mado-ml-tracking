@@ -109,7 +109,7 @@ export const hookCheckpointModeLabels: Record<HookCheckpointMode, string> = loca
 
 export const hookConcurrencyLabels: Record<HookConcurrency, string> = localized({
   queue: 'すべて起動する',
-  skip_if_running: "前のJobが実行中ならイベントをスキップする",
+  skip_if_running: '前のJobが実行中ならイベントをスキップする',
 }, english.hookConcurrencyLabels);
 
 export const hookWebhookSignatureLabels: Record<HookWebhookSignature, string> = localized({

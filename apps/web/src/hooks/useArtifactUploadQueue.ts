@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Artifact, ArtifactUpload, ArtifactUploadDetail, ArtifactUploadListItem } from '@mmt/contracts';
 import { artifactUploadsApi } from '../api/artifactUploads';
@@ -30,6 +29,7 @@ import { blockerFromFailure, isSessionUnusable } from '../lib/uploadResumeBlocke
 import { createPartDigestReader, inspectSessionForFile } from '../lib/uploadResumeMatch';
 import { findResumeRecord, removeResumeRecord, saveResumeRecord } from '../lib/uploadResumeStore';
 import { useQuery } from './useQuery';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

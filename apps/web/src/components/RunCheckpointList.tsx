@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { Run, RunCheckpoint, RunCheckpointArtifact } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
@@ -13,6 +12,7 @@ import {
   isResumableStatus,
 } from '../lib/checkpointResume';
 import { formatBytes, formatDate } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { checkpointSourceLabels } from '../i18n/checkpoints';
 import { text, textTemplates } from '../i18n/catalog';
 

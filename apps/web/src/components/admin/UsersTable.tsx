@@ -1,10 +1,10 @@
-import { useLocale } from '../../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { AdminUser } from '@mmt/contracts';
 import { ResponsiveTable } from '../ResponsiveTable';
 import { formatDate } from '../../lib/format';
 import { isSsoUser, userAuthSourceLabels } from '../../lib/adminUserDisplay';
 import { PROJECT_SETTINGS_SECTION_IDS } from '../../lib/projectSettingsSections';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 export type UserAction = 'makeAdmin' | 'removeAdmin' | 'resetPassword' | 'disable' | 'enable';
@@ -20,11 +20,11 @@ function availableActions(user: AdminUser): UserAction[] {
 }
 
 const actionLabels: Record<UserAction, string> = {
-  get makeAdmin() { return text.userMakeAdmin },
-  get removeAdmin() { return text.userRemoveAdmin },
-  get resetPassword() { return text.userResetPassword },
-  get disable() { return text.userDisable },
-  get enable() { return text.userEnable },
+  get makeAdmin() { return text.userMakeAdmin; },
+  get removeAdmin() { return text.userRemoveAdmin; },
+  get resetPassword() { return text.userResetPassword; },
+  get disable() { return text.userDisable; },
+  get enable() { return text.userEnable; },
 };
 
 // What the API refuses for the last active global administrator (409).

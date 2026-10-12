@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { AutomatedRunSummary, ModelVersionDetail, Run } from '@mmt/contracts';
 import { CodeVersionNameLink } from './CodeVersionNameLink';
@@ -9,6 +8,7 @@ import { ModelVersionNameLink } from './ModelVersionNameLink';
 import { StatusBadge } from './StatusBadge';
 import { formatDate } from '../lib/format';
 import { buildModelVersionLineage, LINEAGE_RESULT_RUN_LIMIT } from '../lib/modelVersionLineage';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /** The version's identity and where it came from, with the training → version → results band. */

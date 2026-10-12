@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { setLocale } from '../i18n/locale';
 import { formatElapsedSeconds, formatWallTime, formatXTick, formatXValue } from './chartXAxis';
+import { setLocale } from '../i18n/locale';
 
 afterEach(() => setLocale('ja'));
 

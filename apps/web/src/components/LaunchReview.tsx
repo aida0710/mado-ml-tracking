@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import type { ComputeTarget } from '@mmt/contracts';
 import { DetailsList } from './JsonDetails';
@@ -8,6 +7,7 @@ import { formatAutoRetries } from '../lib/jobDisplay';
 import type { LaunchChoices } from '../lib/launchFormValues';
 import { isSiteTarget } from '../lib/siteExecutionInput';
 import type { FormValues } from '../types/form';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { jobsTextTemplates } from '../i18n/jobs';
 

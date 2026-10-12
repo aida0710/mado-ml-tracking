@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { Artifact, DatasetVersion } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
@@ -11,6 +10,7 @@ import { ArtifactBackToListButton } from './ArtifactBackToListButton';
 import { ArtifactPreview } from './ArtifactPreview';
 import { ArtifactTree } from './ArtifactTree';
 import { ErrorNotice, Resource } from './Feedback';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

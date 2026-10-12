@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Download } from 'lucide-react';
 import type { Artifact } from '@mmt/contracts';
@@ -11,6 +10,7 @@ import { useProject } from '../hooks/useProject';
 import { hasArtifactReferences, useArtifactReferences } from '../hooks/useArtifactReferences';
 import { useArtifactVersions } from '../hooks/useRunArtifacts';
 import { formatBytes, formatDate } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

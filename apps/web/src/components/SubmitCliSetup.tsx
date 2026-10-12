@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { CodeSnippet } from './CodeSnippet';
 import { buildSubmitCliSetupSnippets } from '../lib/submitCliSetup';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

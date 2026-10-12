@@ -1,16 +1,16 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ARTIFACT_CONTENT_UNAVAILABLE_CODE, RequestError } from '../api/http';
-import { setLocale } from '../i18n/locale';
-import { text } from '../i18n/catalog';
-import { errorText } from '../i18n/errors';
 import { formatErrorMessage } from './errorMessage';
 import { convertWandbSweepConfig, SweepConfigError } from './sweepConfig';
 import { formatUploadFailure } from './uploadFailure';
 import { parseSiteVariables } from './siteVariables';
 import { buildSiteSettingsInput, siteSettingsFormValues } from './siteSettingsInput';
-import { siteComputersTextTemplates } from '../i18n/siteComputers';
 import { globalSiteDetails } from '../../tests/fixtures/siteComputers';
 import type { UploadFailure } from '../types/uploadFailure';
+import { setLocale } from '../i18n/locale';
+import { text } from '../i18n/catalog';
+import { errorText } from '../i18n/errors';
+import { siteComputersTextTemplates } from '../i18n/siteComputers';
 
 afterEach(() => setLocale('ja'));
 

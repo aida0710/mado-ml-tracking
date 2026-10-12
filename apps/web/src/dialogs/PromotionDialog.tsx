@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { Model, ModelVersion, PromotionPolicy } from '@mmt/contracts';
 import { MAX_MODEL_ALIAS_REASON_LENGTH, registryApi } from '../api/registry';
@@ -18,6 +17,7 @@ import {
   promotionEvidenceRequirement,
 } from '../lib/promotionEvidence';
 import type { FormField } from '../types/form';
+import { useLocale } from '../i18n/useLocale';
 import { promotionTextTemplates } from '../i18n/promotion';
 import { text } from '../i18n/catalog';
 

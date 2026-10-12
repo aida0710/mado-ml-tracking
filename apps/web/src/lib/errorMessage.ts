@@ -5,12 +5,12 @@ import {
   NETWORK_ERROR_CODE,
   RequestError,
 } from '../api/http';
+import { LocalizedError } from './localizedError';
+import { formatSweepSpaceError } from './sweepSpaceError';
 import { text } from '../i18n/catalog';
 import { errorText } from '../i18n/errors';
 import { getLocale } from '../i18n/locale';
 import { localizeMessage } from '../i18n/messageTranslations';
-import { LocalizedError } from './localizedError';
-import { formatSweepSpaceError } from './sweepSpaceError';
 
 // Codes whose text the Web owns, shown in the display language whatever the server sent.
 const webOwnedErrorText: Record<string, (failure: RequestError) => string | null> = {

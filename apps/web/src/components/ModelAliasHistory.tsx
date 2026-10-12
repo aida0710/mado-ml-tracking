@@ -1,9 +1,9 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ModelAliasEvent } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { ErrorNotice } from './Feedback';
 import type { ModelAliasHistoryState } from '../hooks/useModelAliasHistory';
 import { formatDate } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { modelAliasSourceLabels, modelsText } from '../i18n/models';
 import { text } from '../i18n/catalog';
 
