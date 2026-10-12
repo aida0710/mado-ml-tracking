@@ -2,29 +2,45 @@
 
 The API knows a launcher by its token, so no request names the launcher. Claims are never
 retried: a lost answer leaves the Jobs `submitting` until the API fails them, while a resent
-claim would take further Jobs instead.
+claim would take further Jobs instead. The one exception is a claim an older API refuses for a
+field it does not know, which accepted nothing (newer_request_fields.py).
 """
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import time
+from collections.abc import Callable, Collection, Sequence
 from typing import Any
 
 from ..api_paths import path_id
 from ..client import Client
 from ..errors import ApiError, ConfigurationError
+from ..newer_request_fields import NewerRequestFields
+from ..worker.capabilities import WORKER_CAPABILITIES
 from .launcher_assignment import LauncherAssignment, SchedulerCancellation
 from .site_settings import ManualSiteConfiguration
 
 # Client errors that a later attempt may not repeat: a request timeout and a rate limit.
 TEMPORARY_CLIENT_ERRORS = frozenset({408, 429})
 CLIENT_ERROR_STATUSES = range(400, 500)
+# The claim fields an older API may refuse, oldest first, with what is lost while it does.
+REFUSED_CLAIM_FIELD_WARNINGS = {
+    "capabilities": (
+        "The API does not take capabilities in site claims; Jobs are claimed without reporting what "
+        "the runner supports until the API is upgraded"
+    ),
+}
 
 
 def refused_for_good(error: ApiError) -> bool:
     """The API would answer the same request the same way later (a 4xx but 408 and 429)."""
     status = error.status_code
     return status is not None and status in CLIENT_ERROR_STATUSES and status not in TEMPORARY_CLIENT_ERRORS
+
+
+def _newer_claim_fields(offered: Collection[str]) -> dict[str, Any]:
+    """The claim fields of `offered`: what the runner this package installs passes to a Job."""
+    return {"capabilities": list(WORKER_CAPABILITIES)} if "capabilities" in offered else {}
 
 
 def _items(response: dict[str, Any], label: str) -> list[dict[str, Any]]:
@@ -35,8 +51,9 @@ def _items(response: dict[str, Any], label: str) -> list[dict[str, Any]]:
 
 
 class LauncherApi:
-    def __init__(self, client: Client):
+    def __init__(self, client: Client, *, clock: Callable[[], float] = time.monotonic):
         self.client = client
+        self.claim_fields = NewerRequestFields(REFUSED_CLAIM_FIELD_WARNINGS, clock=clock)
 
     def assignment(self) -> LauncherAssignment:
         return LauncherAssignment.parse(self.client.request("GET", "launcher/config", retryable=True))
@@ -56,8 +73,11 @@ class LauncherApi:
         )
 
     def claim(self, target_ids: Sequence[str], *, limit: int) -> list[dict[str, Any]]:
-        response = self.client.request(
-            "POST", "launcher/site-submissions/claim", json={"targetIds": list(target_ids), "limit": limit}
+        body = {"targetIds": list(target_ids), "limit": limit}
+        response = self.claim_fields.send(
+            lambda offered: self.client.request(
+                "POST", "launcher/site-submissions/claim", json={**body, **_newer_claim_fields(offered)}
+            )
         )
         return _items(response, "Site submission claim")
 
@@ -89,6 +109,7 @@ class ManualSubmissionApi:
     def __init__(self, client: Client, *, submitter_id: str):
         self.client = client
         self.submitter_id = submitter_id
+        self.claim_fields = NewerRequestFields(REFUSED_CLAIM_FIELD_WARNINGS)
 
     def waiting(self) -> list[dict[str, Any]]:
         return _items(
@@ -102,10 +123,11 @@ class ManualSubmissionApi:
 
     def claim(self, target_id: str, *, limit: int, all_jobs: bool) -> list[dict[str, Any]]:
         """`all_jobs` takes every waiting Job of a computer one owns, not only one's own."""
-        response = self.client.request(
-            "POST",
-            "manual-submissions/claim",
-            json={"targetId": target_id, "submitterId": self.submitter_id, "limit": limit, "all": all_jobs},
+        body = {"targetId": target_id, "submitterId": self.submitter_id, "limit": limit, "all": all_jobs}
+        response = self.claim_fields.send(
+            lambda offered: self.client.request(
+                "POST", "manual-submissions/claim", json={**body, **_newer_claim_fields(offered)}
+            )
         )
         return _items(response, "Manual submission claim")
 

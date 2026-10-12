@@ -9,6 +9,8 @@ description: Add supercomputers, lab GPU servers and your own PC on the Web and 
 
 A site is a computer such as a supercomputer, a GPU server reached over SSH, or a researcher's PC. A launcher logs in to the site, runs its job shell and submits the Job to the scheduler (on computers you submit to yourself, the requester's `mado-tracking submit` does this). The runner on the compute node reports to tracking directly with the Job token.
 
+Jobs of [workflow](/en/compute/workflows) steps go only to launchers and `mado-tracking submit` whose runner passes dataset roles and selection conditions to the code. With older ones, workflow Jobs stay queued, so upgrade them.
+
 ## Who can add and use one
 
 Anyone can add a site. Whoever adds a computer becomes its owner.

@@ -77,6 +77,8 @@ class ManualApi:
         # Statuses of the next GET /manual-submissions attempts (200 once they run out).
         self.waiting_statuses: list[int] = []
         self.after_waiting: Callable[[int], None] | None = None
+        # Claim fields this API does not know yet: an older API refuses a claim that has one.
+        self.unknown_claim_fields: set[str] = set()
         self.calls: list[tuple[str, str, Any]] = []
 
     def serve(self, request: httpx.Request) -> httpx.Response:
@@ -89,6 +91,8 @@ class ManualApi:
         if (request.method, path) == ("GET", f"/sites/{self.target['id']}"):
             return httpx.Response(200, json=self.configuration)
         if path == "/claim":
+            if self.unknown_claim_fields & set(body):
+                return httpx.Response(422, json={"error": "入力が不正です: ", "code": "invalid_request"})
             if body["all"] and not self.owner:
                 return httpx.Response(403, json={"error": "owners only", "code": "site_owner_required"})
             taken = (self.mine + self.others if body["all"] else self.mine)[: body["limit"]]
@@ -151,7 +155,13 @@ def test_submit_runs_the_job_shell_from_the_web_with_this_runs_overrides(tmp_pat
     site_route = f"/sites/{target_id}"
     assert api.routes() == [("GET", ""), ("GET", site_route), ("POST", "/claim"), ("POST", "/report")]
     assert api.bodies("POST", "/claim") == [
-        {"targetId": target_id, "submitterId": submitter_id(), "limit": 50, "all": False}
+        {
+            "targetId": target_id,
+            "submitterId": submitter_id(),
+            "limit": 50,
+            "all": False,
+            "capabilities": ["workflowDatasetUsage"],
+        }
     ]
     [report] = api.bodies("POST", "/report")
     assert report == {
@@ -169,6 +179,21 @@ def test_submit_runs_the_job_shell_from_the_web_with_this_runs_overrides(tmp_pat
     assert json.loads((spec / "api.json").read_text()) == {"apiUrl": "https://mmt.example.invalid/api"}
     assert not (tmp_path / "web-work").exists()
     assert not list((tmp_path / "state/pending").iterdir())
+
+
+def test_an_api_that_refuses_capabilities_gets_the_claim_again_without_them(tmp_path, caplog):
+    account = web_account(tmp_path)
+    submission = manual_submission(account)
+    api = ManualApi(submission["target"], account)
+    api.mine = [submission]
+    api.unknown_claim_fields = {"capabilities"}
+    lines: list[str] = []
+    options = SubmitOptions(target_id=submission["target"]["id"], work_dir=str(tmp_path / "work"))
+    assert submitter_for(api, options, tmp_path, lines).run_once() == 0
+    # The refused claim took nothing, so the one sent again takes the Job once.
+    assert ["capabilities" in body for body in api.bodies("POST", "/claim")] == [True, False]
+    assert lines[-1].startswith(f"submitted {submission['jobs'][0]['job']['id']}")
+    assert "does not take capabilities in site claims" in caplog.text
 
 
 def test_all_takes_everyones_jobs_on_a_computer_one_owns_and_only_there(tmp_path):

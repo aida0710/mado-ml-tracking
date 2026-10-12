@@ -324,6 +324,15 @@ const MAX_WORKER_PARALLEL_JOBS = 1000;
 export const MAX_WORKER_SSH_FILE_PATHS = 50;
 // A worker names each capability it has once.
 const MAX_WORKER_CAPABILITIES = WORKER_CAPABILITIES.length;
+/**
+ * What the code that runs a Job passes to it beyond the base protocol, named by a worker in
+ * workerInfo and by a launcher or `mado-tracking submit` in a site claim (for the runner it
+ * installs). A Job that needs one goes only to a claim that names it.
+ */
+export const workerCapabilitiesSchema = z
+  .array(workerCapabilitySchema)
+  .max(MAX_WORKER_CAPABILITIES)
+  .refine((names) => new Set(names).size === names.length, 'capabilities must be unique');
 // Self-reported by the worker host and never used for authorization. sshFiles are paths on the
 // worker's host, never the files' contents, offered for a computer's key paths.
 export const workerInfoSchema = z.strictObject({
@@ -338,11 +347,7 @@ export const workerInfoSchema = z.strictObject({
     .optional(),
   // The others are only shown; capabilities also decide which Jobs the worker is given (claim). A
   // worker that sends workerInfo without them is an older one and has none.
-  capabilities: z
-    .array(workerCapabilitySchema)
-    .max(MAX_WORKER_CAPABILITIES)
-    .refine((names) => new Set(names).size === names.length, 'capabilities must be unique')
-    .optional(),
+  capabilities: workerCapabilitiesSchema.optional(),
 });
 export const workerResumeSchema = z.strictObject({
   workerId: z.string().min(1).max(200),

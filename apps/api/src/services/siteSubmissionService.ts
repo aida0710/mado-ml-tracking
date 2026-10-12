@@ -9,11 +9,13 @@ import type {
   SiteSubmissionAccount,
   SiteSubmissionMode,
   SiteSubmissionRequester,
+  WorkerCapability,
 } from '@mmt/contracts';
 import type { Principal } from '../auth/principal.js';
 import { first, rows, transaction, type Connection, type Database } from '../db/database.js';
 import { DomainError } from '../domain/errors.js';
 import type { SiteSubmissionResultInput } from '../domain/siteExecutionValidation.js';
+import { requiredWorkerCapabilitiesSql } from '../domain/workerCapabilities.js';
 import { jobColumns } from '../repositories/jobRepository.js';
 import { findCurrentJobShell } from '../repositories/siteJobShellRepository.js';
 import { findSiteSettings } from '../repositories/siteSettingsRepository.js';
@@ -51,6 +53,9 @@ interface ClaimScope {
   requesterId: string | null;
   // Whoever runs the job shell of a manual submission; their settings apply.
   submittingUserId: string | null;
+  // What the runner the holder installs passes to a Job's code, as the claim named it. A Job that
+  // needs more waits for a holder whose runner has it, as with workers (WorkerService.claim).
+  capabilities: WorkerCapability[];
   limit: number;
 }
 
@@ -98,7 +103,7 @@ export class SiteSubmissionService {
 
   async claim(
     principal: Principal,
-    request: { targetIds?: string[]; limit: number },
+    request: { targetIds?: string[]; limit: number; capabilities: WorkerCapability[] },
   ): Promise<SiteSubmission[]> {
     return transaction(this.database, async (connection) => {
       const launcher = await requireLauncher(connection, principal);
@@ -113,6 +118,7 @@ export class SiteSubmissionService {
         launcherId: launcher.launcherId,
         requesterId: null,
         submittingUserId: null,
+        capabilities: request.capabilities,
         limit: request.limit,
       });
     });
@@ -223,7 +229,13 @@ export class SiteSubmissionService {
 
   async claimManual(
     principal: Principal,
-    request: { targetId: string; submitterId: string; limit: number; all: boolean },
+    request: {
+      targetId: string;
+      submitterId: string;
+      limit: number;
+      all: boolean;
+      capabilities: WorkerCapability[];
+    },
   ): Promise<SiteSubmission[]> {
     const { tokenId } = requireSubmitterToken(principal, 'jobs:write');
     return transaction(this.database, async (connection) => {
@@ -244,6 +256,7 @@ export class SiteSubmissionService {
         launcherId: null,
         requesterId: request.all ? null : principal.user.id,
         submittingUserId: principal.user.id,
+        capabilities: request.capabilities,
         limit: request.limit,
       });
     });
@@ -317,6 +330,8 @@ export class SiteSubmissionService {
     // Targets that are at their limit, or that another claim is filling right now.
     const unavailableTargets: string[] = [];
     while (submissions.length < scope.limit) {
+      // The first member of an array stands for the rest: a workflow step, the one kind of Job
+      // that needs a capability, is never an array (a Task starts one Job).
       const candidate = await first<Job>(
         connection,
         `SELECT ${jobColumns('j')} FROM jobs j JOIN compute_targets t ON t.id=j.target_id
@@ -329,6 +344,7 @@ export class SiteSubmissionService {
         AND NOT(j.id=ANY($6::uuid[])) AND NOT(j.target_id=ANY($7::uuid[]))
         AND ($8::uuid IS NULL OR EXISTS(SELECT 1 FROM site_settings s
           WHERE s.target_id=j.target_id AND s.launcher_id=$8))
+        AND ${requiredWorkerCapabilitiesSql('r')} <@ $9::text[]
         ORDER BY j.created_at,j.array_index NULLS FIRST,j.id LIMIT 1 FOR UPDATE OF j SKIP LOCKED`,
         [
           waitingPhase,
@@ -339,6 +355,7 @@ export class SiteSubmissionService {
           seen,
           unavailableTargets,
           scope.launcherId,
+          scope.capabilities,
         ],
       );
       if (!candidate) break;

@@ -10,7 +10,8 @@ import logging
 from typing import Any
 
 from ..errors import ApiError, ConfigurationError
-from .api import UNKNOWN_FIELD_STATUS, WorkerApi
+from ..newer_request_fields import UNKNOWN_FIELD_STATUS
+from .api import WorkerApi
 from .config import WorkerSettings
 from .directory_listing import list_directory
 from .target_check_claims import DIRECTORY_LISTING, TARGET_CHECK_KINDS, ClaimedTargetCheck

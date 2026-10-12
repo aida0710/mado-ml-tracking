@@ -8,9 +8,15 @@ import type {
 import { PREPROCESSING_METRIC_PREFIX } from '@mmt/contracts';
 import type { Principal } from '../auth/principal.js';
 import { first, type Connection } from '../db/database.js';
+import { errorClue } from '../domain/errorClue.js';
 import { DomainError } from '../domain/errors.js';
 import { workflowParentRunId } from '../domain/workflowLineage.js';
 import { finiteWorkflowMetrics, workflowQualityFailure } from '../domain/workflowQuality.js';
+import {
+  isTemporaryLaunchFailure,
+  launchFailureMessage,
+  WORKFLOW_STEP_LAUNCH_MAX_FAILURES,
+} from '../domain/workflowStepLaunchRetry.js';
 import { preprocessingMetrics } from '../domain/preprocessingMetrics.js';
 import {
   findPreprocessingReport,
@@ -22,6 +28,7 @@ import { findWorkflowVersion } from '../repositories/workflowDefinitionRepositor
 import {
   finishWorkflowExecution,
   listWorkflowStepExecutions,
+  recordWorkflowStepLaunchFailure,
 } from '../repositories/workflowExecutionRepository.js';
 import { requireProject } from './accessService.js';
 import type { TaskService } from './taskService.js';
@@ -198,29 +205,52 @@ export class WorkflowExecutor {
     } catch (error) {
       await connection.query(`ROLLBACK TO SAVEPOINT ${LAUNCH_SAVEPOINT}`);
       await connection.query(`RELEASE SAVEPOINT ${LAUNCH_SAVEPOINT}`);
-      const refused = error instanceof DomainError;
-      // Error details can include SQL text; the execution and step are enough to find it.
-      console.error(
-        JSON.stringify({
-          event: 'workflow_step_launch_failed',
-          executionId: request.execution.id,
-          stepKey: request.definition.key,
-          code: refused ? error.code : 'internal_error',
-        }),
-      );
-      // Anything but a refusal (a lost database connection, say) may pass, so the step stays
-      // pending and the next scheduler pass launches it, even hours into an execution.
-      if (!refused) throw error;
-      await connection.query(
-        "UPDATE workflow_step_runs SET status='failed',error=$2,ended_at=now() WHERE id=$1",
-        [request.pending.id, error.message],
-      );
-      await finishWorkflowExecution(connection, {
-        id: request.execution.id,
-        status: 'failed',
-        error: error.message,
+      await this.recordLaunchFailure(connection, {
+        execution: request.execution,
+        step: request.pending,
+        error,
       });
     }
+  }
+
+  /**
+   * A lasting refusal fails the step and its execution at once. A failure that may pass leaves the
+   * step pending, for the scheduler to launch again after a wait, until its launch has failed
+   * WORKFLOW_STEP_LAUNCH_MAX_FAILURES times in a row. The count is kept with the step in this
+   * transaction, so a restart or another API process carries it on.
+   */
+  private async recordLaunchFailure(
+    connection: Connection,
+    failure: { execution: WorkflowExecutionSummary; step: WorkflowStepExecution; error: unknown },
+  ): Promise<void> {
+    const { execution, step, error } = failure;
+    const failures = await recordWorkflowStepLaunchFailure(connection, step.id);
+    const retrying =
+      isTemporaryLaunchFailure(error) && failures < WORKFLOW_STEP_LAUNCH_MAX_FAILURES;
+    // Error details can include SQL text; the execution, step, and the error's name and code
+    // (SQLSTATE) are enough to find it.
+    console.error(
+      JSON.stringify({
+        event: 'workflow_step_launch_failed',
+        executionId: execution.id,
+        stepKey: step.stepKey,
+        code: error instanceof DomainError ? error.code : 'internal_error',
+        ...errorClue(error),
+        failures,
+        retrying,
+      }),
+    );
+    if (retrying) return;
+    const message = launchFailureMessage({ error, failures });
+    await connection.query(
+      "UPDATE workflow_step_runs SET status='failed',error=$2,ended_at=now() WHERE id=$1",
+      [step.id, message],
+    );
+    await finishWorkflowExecution(connection, {
+      id: execution.id,
+      status: 'failed',
+      error: message,
+    });
   }
 
   private async executionPrincipal(

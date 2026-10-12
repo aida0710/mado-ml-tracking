@@ -31472,6 +31472,17 @@
                     "type": "integer",
                     "minimum": 1,
                     "maximum": 50
+                  },
+                  "capabilities": {
+                    "default": [],
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "workflowDatasetUsage"
+                      ]
+                    }
                   }
                 },
                 "additionalProperties": false
@@ -33192,6 +33203,17 @@
                   "all": {
                     "default": false,
                     "type": "boolean"
+                  },
+                  "capabilities": {
+                    "default": [],
+                    "maxItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "workflowDatasetUsage"
+                      ]
+                    }
                   }
                 },
                 "required": [
