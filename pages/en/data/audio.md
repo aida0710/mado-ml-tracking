@@ -5,13 +5,11 @@ description: Show audio Artifacts as a waveform and spectrogram, zoom in, and lo
 
 # Audio viewer
 
-![Audio viewer with a waveform and mel spectrogram](/images/data-audio-viewer.png)
+![Audio viewer with a waveform and mel spectrogram](/images/en/data-audio-viewer.png)
 
 Opening an audio Artifact shows the audio viewer. It displays the waveform and spectrogram together, plays from where you click, and loops the section you drag. Analysis runs in the browser without external services or libraries.
 
 The audio viewer is used in Artifact previews for Runs and datasets, the Run **Media** tab, media comparison on the Compare page, and media blocks in shared reports.
-
-The web UI is in Japanese. This page shows UI labels in Japanese followed by an English translation.
 
 ## When to use it
 
@@ -22,7 +20,7 @@ The web UI is in Japanese. This page shows UI labels in Japanese followed by an 
 
 ## Supported formats
 
-WAV, FLAC, MP3, Ogg, Opus, M4A (AAC), and WebM. If the browser cannot decode a file, the viewer shows 音声をデコードできませんでした。(The audio could not be decoded.)
+WAV, FLAC, MP3, Ogg, Opus, M4A (AAC), and WebM. If the browser cannot decode a file, the viewer shows "Could not decode audio. This format may not be supported by your browser."
 
 For WAV and FLAC, the duration, sample rate, and channel count are read from the file header when it is saved, so they are shown before the audio is decoded. Other formats get these values from ffprobe when the server generates a preview.
 
@@ -32,13 +30,13 @@ For WAV and FLAC, the duration, sample rate, and channel count are read from the
 | --- | --- |
 | Play, pause | The toolbar button toggles playback |
 | Click | Click the waveform or spectrogram to move to that position |
-| Drag | Loops the dragged range. **ループを解除** (Clear loop) removes it |
+| Drag | Loops the dragged range. **Clear loop** removes it |
 | ←, → | Move 1 second backward or forward |
-| 拡大, 縮小 (Zoom in, zoom out) | Change the visible range by a factor of 2. At the maximum zoom, 0.05 seconds is shown |
-| 全体を表示 (Show all) | Reset the zoom |
-| 表示位置 (Position) | A slider shown while zoomed in that moves the visible range. Above it, the times of the visible range are shown (表示範囲 0:02.25–0:06.75) |
-| チャンネル (Channel) | すべて（平均） (all, averaged) or チャンネル1, チャンネル2, … Available for audio with two or more channels |
-| スペクトログラム (Spectrogram) | 線形 (linear, default) or mel |
+| **Zoom in**, **Zoom out** | Change the visible range by a factor of 2. At the maximum zoom, 0.05 seconds is shown |
+| **Fit to view** | Reset the zoom |
+| **Position** | A slider shown while zoomed in that moves the visible range. Above it, the times of the visible range are shown (Visible range 0:02.25–0:06.75) |
+| **Channel** | **All (average)** or **Channel 1**, **Channel 2**, … Available for audio with two or more channels |
+| **Spectrogram** | **Linear** (default) or **mel** |
 
 Time is shown as minutes:seconds.hundredths, such as `0:00.80`. A time ruler runs under the waveform and spectrogram; when zoomed in, its ticks follow the visible range. The top right of the spectrogram shows the highest frequency displayed (half the sample rate).
 
@@ -59,10 +57,10 @@ Decoding audio over 64 MiB in the browser would exhaust memory, so the browser d
 
 | State | Display |
 | --- | --- |
-| Generating | 64MiBを超えるため、サーバーで波形とスペクトログラムを生成しています。再生はできます。(Generating on the server; playback works.) The state is checked every 5 seconds |
+| Generating | "This file exceeds 64MiB. The server is generating its waveform and spectrogram. Playback is available." The state is checked every 5 seconds |
 | Ready | The full waveform and a linear spectrogram |
-| Failed | サーバーでの波形とスペクトログラムの生成に失敗しました。再生はできます。(Generation failed; playback works.) |
-| No preview | 64MiBを超えるため、波形とスペクトログラムは表示しません。再生はできます。(Not shown; playback works.) For example when the preview worker has no ffmpeg, or the audio was saved before the preview worker was set up |
+| Failed | "Server-side waveform and spectrogram generation failed. Playback is available." |
+| No preview | "Waveforms and spectrograms are unavailable for files over 64MiB. Playback is available." For example when the preview worker has no ffmpeg, or the audio was saved before the preview worker was set up |
 
 In a ready preview, clicking and ← and → still move the position. Zoom, channel selection, and mel are not available. Playback loads only the parts it needs, so even audio of several gigabytes starts playing quickly.
 

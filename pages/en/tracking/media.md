@@ -5,7 +5,7 @@ description: Record audio, images, video, and tables per training step, then com
 
 # Media Logging and Listening
 
-![The Media tab of a Run with its keys, step slider, and a table with audio](/images/tracking-media.png)
+![The Media tab of a Run with its keys, step slider, and a table with audio](/images/en/tracking-media.png)
 
 Audio and images generated during training can be recorded with their step. On a Run's **Media** tab, move through steps to hear and see the change; on the comparison page's **Media** tab, line up several Runs and steps side by side.
 
@@ -59,31 +59,31 @@ The left side lists each recorded key with its kind (audio, image, video, table)
 
 - The slider selects the step and stops only at steps that have records
 - With the slider focused, arrow keys move to the previous or next step, and Home and End go to the first and last
-- Audio cells in tables play in place with the play button, and the 波形 (waveform) button opens the waveform and spectrogram
+- Audio cells in tables play in place with the play button, and the **Waveform** button opens the waveform and spectrogram
 - With many records, only the first 10,000 are shown
 
 The audio viewer zooms the waveform, loops a range, and switches between mel and linear spectrograms ([Audio viewer](/en/data/audio)).
 
 ## Compare across Runs {#compare-runs}
 
-![The Media tab of the comparison page with audio in a Run-by-step grid](/images/tracking-media-compare.png)
+![The Media tab of the comparison page with audio in a Run-by-step grid](/images/en/tracking-media-compare.png)
 
-1. Select the Runs under **Experiments** and choose 比較 (Compare)
+1. Select the Runs under **Experiments** and choose **Compare**
 2. Open the **Media** tab
-3. Pick an audio or other key in 比較するキー (Key to compare)
-4. If needed, tick the steps to show under 比較するstep (Steps to compare). Only recorded steps are listed, and a step that only some Runs recorded shows how many did, such as `1/2 Run`
+3. Pick an audio or other key in **Key to compare**
+4. If needed, tick the steps to show under **Steps to compare**. Only recorded steps are listed, and a step that only some Runs recorded shows how many did, such as `1/2 runs`
 
 The tab opens on the latest step that every Run recorded, in one column, so Runs of different lengths (for example 20 and 60 steps) start without empty cells.
 
 | Button | Steps shown |
 | --- | --- |
-| 全Runに共通する最新のstep (Latest step all Runs share) | Goes back to the opening state |
-| 各Runの最新step (Latest step of each Run) | Puts each Run's last step in one column; each cell shows its Run's step |
-| 均等にN列 (N evenly spaced columns) | Picks up to 8 evenly spaced recorded steps |
+| **Latest common step** | Goes back to the opening state |
+| **Latest step of each run** | Puts each Run's last step in one column; each cell shows its Run's step |
+| **N equal columns** | Picks up to 8 evenly spaced recorded steps |
 
-When the Runs share no step, the tab opens like 各Runの最新step and says so under the checkboxes. With no step ticked, each Run's latest step is shown as well.
+When the Runs share no step, the tab opens like **Latest step of each run** and says so under the checkboxes. With no step ticked, each Run's latest step is shown as well.
 
-You get a grid with Runs as rows and steps as columns. Cells without a record show なし (none); they are not filled with a nearby step. When none of the chosen Runs has step media, the tab says so. Compare Artifacts that inference Runs saved, such as audio files, on the **Artifacts** tab, which lines up files with the same path.
+You get a grid with Runs as rows and steps as columns. Cells without a record show **None**; they are not filled with a nearby step. When none of the chosen Runs has step media, the tab says so. Compare Artifacts that inference Runs saved, such as audio files, on the **Artifacts** tab, which lines up files with the same path.
 
 - Select a cell to show it in full below the grid. Arrow keys move between cells
 - Only one audio plays at a time. Moving to another cell while playing continues from the same position, so you can compare the same passage

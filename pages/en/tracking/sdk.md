@@ -5,7 +5,7 @@ description: Install mado-tracking, then use start_run, log_metrics, system metr
 
 # Record with the Python SDK
 
-![The Metrics tab of a training Run recorded with the SDK](/images/tracking-run-metrics.png)
+![The Metrics tab of a training Run recorded with the SDK](/images/en/tracking-run-metrics.png)
 
 `mado-tracking` is the Python SDK for recording Runs from training code. Besides params, metrics, and Artifacts, it records GPU and memory usage (system metrics), appends to finished Runs, and records offline on machines that cannot reach the API.
 
@@ -47,7 +47,7 @@ Check the installation; a help message starting with `usage: mado-tracking` mean
 
 ## Set the server and token
 
-The SDK reads the server and API token from environment variables. Create a token with このProject用のAPI tokenを発行 (Issue an API token for this Project) under **プロジェクト設定** (Project settings) > MLflow 3から接続 (Connect from MLflow 3). Recording needs the `read` and `runs:write` scopes, plus `artifacts:write` to upload Artifacts; that button opens the token form with these scopes selected ([API tokens](/en/admin/tokens)).
+The SDK reads the server and API token from environment variables. Create a token with **Issue API token for this project** under **Project settings** > **Connect from SDK or MLflow 3**. Recording needs the `read` and `runs:write` scopes, plus `artifacts:write` to upload Artifacts; that button opens the token form with these scopes selected ([API tokens](/en/admin/tokens)).
 
 | Variable | Value | Example |
 | --- | --- | --- |
@@ -91,7 +91,7 @@ Inside a worker Job, `start_run` does not create a Run; it records into the Run 
 
 ## Record system metrics {#system-metrics}
 
-![The System metrics tab with CPU, memory, and disk charts](/images/tracking-system-metrics.png)
+![The System metrics tab with CPU, memory, and disk charts](/images/en/tracking-system-metrics.png)
 
 `system_metrics=True` records CPU, memory, disk, network, and GPU usage at a fixed interval.
 
@@ -125,7 +125,7 @@ run.finish()
 | `"allow"` | Reopens the Run, or creates one with that ID (needs `experiment_id` and `name`) |
 
 - In a resumed Run, an omitted `step` continues from each key's previous maximum step + 1. `run.last_step("train.loss")` reads the current maximum
-- Every resume is recorded: charts show a 再開 (resumed) marker, and the Run details list the execution segments (first run, resume 1, resume 2, ...)
+- Every resume is recorded: charts show a **Resume** marker, and the Run details list the execution segments (first run, resume 1, resume 2, ...)
 - Runs executed by a worker Job cannot be resumed. Continue them from a checkpoint as a new Run ([Resume training](/en/models/checkpoints))
 - System metric steps restart at 0 after each resume, so they overlap the previous segment
 

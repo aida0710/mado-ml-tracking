@@ -9,8 +9,8 @@ The SDK, MLflow, workers, and CI authenticate to the API with API tokens. There 
 
 | Kind | Owner | Where it is issued | Good for |
 | --- | --- | --- | --- |
-| Personal API token | The signed-in user | **自分のAPI token** (My API tokens) in **アカウント** (Account) or **プロジェクト設定** (Project settings), or **MLflow 3から接続** (Connect from MLflow 3) | Recording Runs from your own PC or notebook |
-| Service Account token | A Service Account (not tied to a person) | **Service Accounts** in **プロジェクト設定** | Long-running workers, automation, CI |
+| Personal API token | The signed-in user | **My API tokens** in **Account** or **Project settings**, or **Connect from SDK or MLflow 3** | Recording Runs from your own PC or notebook |
+| Service Account token | A Service Account (not tied to a person) | **Service accounts** in **Project settings** | Long-running workers, automation, CI |
 | Job token | The creator of the Run | Workers receive one automatically for each Job | Recording to the Run from the running code. Nobody issues these by hand |
 
 The token value is shown only once, when it is issued. The database keeps only a hash and the first 12 characters, and no list shows the value.
@@ -39,32 +39,32 @@ An expired token returns 401. Issue a new token and replace the old one before i
 
 ## Issue a personal API token
 
-1. Open **アカウント** (Account) from the user menu and click **API tokenを発行** (Issue API token) at the top right of **自分のAPI token**. Choose the Project and click **次へ** (Next). You can also issue a token from the same button in **プロジェクト設定** (Project settings).
-2. Enter a name, choose the purpose and expiry, and click **保存** (Save). Choosing a purpose checks the scopes it needs. Changing a scope's checkbox moves the purpose to **scopeを自分で選ぶ** (Choose scopes yourself).
+1. Open **Account** from the user menu and click **Issue API token** at the top right of **My API tokens**. Choose the Project and click **Next**. You can also issue a token from the same button in **Project settings**.
+2. Enter a name, choose the purpose and expiry, and click **Save**. Choosing a purpose checks the scopes it needs. Changing a scope's checkbox moves the purpose to **Choose scopes manually**.
 
 | Field | Example |
 | --- | --- |
-| Name | `laptop-notebook` (a name that says where it is used) |
-| Purpose | **SDK・MLflow 3から記録する** (Record from the SDK and MLflow 3) to record Runs (the default: `read`, `runs:write`, `registry:write`, `artifacts:write`) |
-| Expiry | `90日` (90 days) |
+| **Name** | `laptop-notebook` (a name that says where it is used) |
+| **Purpose** | **Record from SDK or MLflow 3** to record Runs (the default: `read`, `runs:write`, `registry:write`, `artifacts:write`) |
+| **Expires at** | **90 days** |
 
 The purposes on offer are below. A purpose that needs a scope above the owner's role is not shown.
 
 | Purpose | Scopes |
 | --- | --- |
-| SDK・MLflow 3から記録する (Record from the SDK and MLflow 3) | `read`, `runs:write`, `registry:write`, `artifacts:write` |
-| コマンドからJobを投入する (Submit Jobs from the command line) | `read`, `jobs:write` |
-| workerとしてJobを実行する (Run Jobs as a worker; Service Accounts only) | `read`, `worker:execute`, `artifacts:write` |
-| 読み取りだけ (Read only) | `read` |
-| scopeを自分で選ぶ (Choose scopes yourself) | The checked ones |
+| **Record from SDK or MLflow 3** | `read`, `runs:write`, `registry:write`, `artifacts:write` |
+| **Submit jobs from the command line** | `read`, `jobs:write` |
+| **Run jobs as a worker** (Service Accounts only) | `read`, `worker:execute`, `artifacts:write` |
+| **Read only** | `read` |
+| **Choose scopes manually** | The checked ones |
 
-Besides recording, a token for **SDK・MLflow 3から記録する** can delete dataset versions that nothing uses, and a Project admin's token can delete Artifacts as well (on the same conditions as on the screen).
+Besides recording, a token for **Record from SDK or MLflow 3** can delete dataset versions that nothing uses, and a Project admin's token can delete Artifacts as well (on the same conditions as on the screen).
 
-3. Click **tokenをコピー** (Copy token) and store the token somewhere safe. It is never shown again after you close the dialog.
+3. Click **Copy token** and store the token somewhere safe. It is never shown again after you close the dialog.
 
-Tokens issued on the screen are limited to that Project. **このProject用のAPI tokenを発行** (Issue an API token for this Project) in **SDK・MLflow 3から接続** (Connect from the SDK and MLflow 3), on the Project settings or under **SDKで記録** (Record with the SDK) on the experiment page, opens the same dialog.
+Tokens issued on the screen are limited to that Project. **Issue API token for this project** in **Connect from SDK or MLflow 3**, on **Project settings** or under **Record with SDK** on the experiment page, opens the same dialog.
 
-The **設定例** (Settings example) in the dialog holds the environment variables for the Python SDK and MLflow 3 together, without the token. Copy it with **設定例をコピー** (Copy settings example) and paste it into a terminal; it asks for `API token:`, where you paste the token you copied.
+The **Configuration example** in the dialog holds the environment variables for the Python SDK and MLflow 3 together, without the token. Copy it with **Copy example** and paste it into a terminal; it asks for `API token:`, where you paste the token you copied.
 
 In a terminal, type the token into an environment variable instead of writing it in command arguments or files. The example works in both bash and zsh (the macOS default):
 
@@ -88,24 +88,24 @@ Tokens of users who sign in with SSO stop with 401 `identity_sync_required` when
 
 A Service Account is an account that belongs to one Project and to no person. Its tokens keep working when the person who issued them leaves the Project, and the 7-day limit for SSO users does not apply.
 
-![The Service Accounts and Project token list sections](/images/admin-service-accounts.png)
+![The Service Accounts and Project token list sections](/images/en/admin-service-accounts.png)
 
 ### Create a Service Account
 
 A Project Admin does this in the browser (API tokens cannot create Service Accounts).
 
-1. Click **Service Accountを作成** (Create Service Account) under **Service Accounts** in **プロジェクト設定**.
+1. Click **Create service account** under **Service accounts** in **Project settings**.
 2. Enter the following and save.
 
 | Field | Example |
 | --- | --- |
-| Name | `gpu-host-1-worker` (unique in the Project, up to 200 characters) |
-| Description | `Worker on GPU server 1` |
-| Role | `Admin` for a worker or an automation owner, `Viewer` for read-only CI |
+| **Name** | `gpu-host-1-worker` (unique in the Project, up to 200 characters) |
+| **Description** | `Worker on GPU server 1` |
+| **Role** | `Admin` for a worker or an automation owner, `Viewer` for read-only CI |
 
-3. Click **API tokenを発行** (Issue API token) on the new row, choose a name, purpose, and expiry, and save. For a Service Account with the Admin role, the purpose starts at **workerとしてJobを実行する** (Run Jobs as a worker). Note the token that is shown.
+3. Click **Issue API token** on the new row, choose a name, purpose, and expiry, and save. For a Service Account with the Admin role, the purpose starts at **Run jobs as a worker**. Note the token that is shown.
 
-![Issuing a token for a Service Account](/images/admin-token-dialog.png)
+![Issuing a token for a Service Account](/images/en/admin-token-dialog.png)
 
 Only scopes up to the Service Account's role can be chosen. `worker:execute` can be issued only to Service Accounts with the Admin role.
 
@@ -121,16 +121,16 @@ See [Worker](/en/compute/worker) for installing a worker, and [Automation](/en/m
 
 ### Stop or change
 
-- Stop temporarily: click **無効化** (Disable) on the row. All tokens of the Service Account return 401 from the next request. **有効化** (Enable) makes the same tokens work again.
-- Change the role: choose a new role with **変更** (Change). After lowering the role, operations above the new role return 403.
-- Stop one token: revoke it in the **Projectのtoken一覧** (Project token list) below.
+- Stop temporarily: click **Disable** on the row. All tokens of the Service Account return 401 from the next request. **Enable** makes the same tokens work again.
+- Change the role: choose a new role with **Change**. After lowering the role, operations above the new role return 403.
+- Stop one token: revoke it in **Project tokens** below.
 
-Service Accounts also appear in **全体管理** (Global administration) → **ユーザー** (Users) as "Service Account", but they cannot sign in and cannot be made global administrators.
+Service Accounts also appear in **Administration** → **Users** as **Service account**, but they cannot sign in and cannot be made global administrators.
 
 ## Revoke a token
 
-- Your own tokens: click **失効** (Revoke) under **自分のAPI token** in **プロジェクト設定**, or under the same heading on the **アカウント** (Account) page.
-- Project tokens: in **Projectのtoken一覧**, a Project Admin sees the tokens of every user and Service Account limited to the Project, and can revoke them with **失効**. The list shows the owner, the first 12 characters, scopes, expiry, and last use (updated every 5 minutes).
+- Your own tokens: click **Revoke** under **My API tokens** in **Project settings**, or under the same heading on the **Account** page.
+- Project tokens: in **Project tokens**, a Project Admin sees the tokens of every user and Service Account limited to the Project, and can revoke them with **Revoke**. The list shows the owner, the first 12 characters, scopes, expiry, and last use (updated every 5 minutes).
 
 A revoked token returns 401 from the next request and cannot be restored. Issuing and revoking are recorded in the audit log as `token.create` and `token.revoke`.
 
@@ -138,7 +138,7 @@ While a Project is archived, tokens limited to it (including those of Service Ac
 
 ### Legacy tokens
 
-Tokens marked **旧形式** (legacy) in the list are service tokens owned by a person. They stop when the owner leaves the Project, so replace them with Service Account tokens. Legacy tokens of the running Playground are to be replaced by their expiry (2026-10-15).
+Tokens marked **Legacy** in the list are service tokens owned by a person. They stop when the owner leaves the Project, so replace them with Service Account tokens. Legacy tokens of the running Playground are to be replaced by their expiry (2026-10-15).
 
 ## Job tokens
 

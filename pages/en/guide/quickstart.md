@@ -9,49 +9,47 @@ Create your first Project and experiment, then record training Runs with the Pyt
 
 This page assumes that the server is running as described in [Install](/en/guide/install). Replace `https://tracking.example.com` below with your `MMT_PUBLIC_URL`.
 
-The screens are in Japanese. The steps give the Japanese label followed by an English translation in parentheses.
-
 ## 1. Create a Project
 
 Open `MMT_PUBLIC_URL` in a browser and sign in. The first sign-in of the initial administrator asks for a new password.
 
-When you are not a member of any Project yet, the "プロジェクト" (Projects) page appears (someone else's Public Projects are only listed there and never opened by themselves). Press ［プロジェクトを作成］ (Create project), enter the following values, and press ［作成］ (Create). If other Projects already exist, press the Project name at the top of the sidebar to open the switcher, and press ［＋ プロジェクトを作成］ at the bottom.
+When you are not a member of any Project yet, the **Projects** page appears (someone else's Public Projects are only listed there and never opened by themselves). Press **Create project**, enter the following values, and press **Create**. If other Projects already exist, press the Project name at the top of the sidebar to open the switcher, and press **Create project** at the bottom.
 
 | Field | Example value |
 | --- | --- |
-| 名前 (Name) | `speech-recognition` |
-| 説明（任意） (Description, optional) | May be left empty |
-| 公開範囲 (Visibility) | Keep the default "Public" (everyone who can sign in can use it). Choose "Private" to limit it to members |
-| Artifact保存先 (Artifact storage) | Keep the default (the storage a global administrator set) |
+| **Name** | `speech-recognition` |
+| **Description (optional)** | May be left empty |
+| **Visibility** | Keep the default **Public** (everyone who can sign in can use it). Choose **Private** to limit it to members |
+| **Artifact storage** | Keep the default (the storage a global administrator set) |
 
-The Project is ready when its Experiments page opens. The creator becomes an Admin of the Project. For switching Projects and visibility, see [Create and manage Projects](/en/admin/projects).
+The Project is ready when its **Experiments** page opens. The creator becomes an Admin of the Project. For switching Projects and visibility, see [Create and manage Projects](/en/admin/projects).
 
-![The create project dialog with name, description, visibility, and Artifact storage](/images/guide-projects.png)
+![The create project dialog with name, description, visibility, and Artifact storage](/images/en/guide-projects.png)
 
 ## 2. Create an experiment
 
-In a Project without experiments, the Experiments page shows ［最初の実験を作成］ (Create the first experiment) at the top right. Press it, enter `whisper-small-finetune` as the name, and press ［保存］ (Save). Later experiments are created with ［＋］ (実験を作成, Create experiment) at the right end of the "Experiments" heading of the experiment list on the left.
+In a Project without experiments, the **Experiments** page shows **Create first experiment** at the top right. Press it, enter `whisper-small-finetune` as the name, and press **Save**. Later experiments are created with **Create experiment** (the + button) at the right end of the **Experiments** heading of the experiment list on the left.
 
-The new experiment is selected, and its `実験ID` (experiment ID) appears below the name with ［コピー］ (Copy). For an experiment without Runs, the "SDK・MLflow 3から接続" (Connect from the SDK and MLflow 3) guide is already open: it lists the environment variables and code examples with the IDs of this Project and experiment, each with ［コピー］ (Copy). After closing it, ［SDKで記録］ (Record with the SDK) beside the heading opens it again.
+The new experiment is selected, and its **Experiment ID** appears below the name with **Copy**. For an experiment without Runs, the **Connect from SDK or MLflow 3** guide is already open: it lists the environment variables and code examples with the IDs of this Project and experiment, each with **Copy**. After closing it, **Record with SDK** beside the heading opens it again.
 
-［Runを作成］ (Create Run) beside the heading creates a Run on the screen to run as a Job with a code version. It is not for recording from training code: the SDKs and MLflow create the Run when they start recording.
+**Create run** beside the heading creates a Run on the screen to run as a Job with a code version. It is not for recording from training code: the SDKs and MLflow create the Run when they start recording.
 
 ## 3. Issue an API token
 
 The SDKs record with an API token instead of your sign-in password.
 
-1. In "SDK・MLflow 3から接続" (Connect from the SDK and MLflow 3), opened with ［SDKで記録］ (Record with the SDK) on the experiment page or in ［プロジェクト設定］ (Project settings), press ［このProject用のAPI tokenを発行］ (Issue an API token for this Project).
+1. In **Connect from SDK or MLflow 3**, opened with **Record with SDK** on the experiment page or in **Project settings**, press **Issue API token for this project**.
 2. Enter a name that tells its purpose, such as `laptop-sdk`.
-3. The purpose "SDK・MLflow 3から記録する" (Record from the SDK and MLflow 3) is chosen, and the scopes `read`, `runs:write`, `registry:write`, and `artifacts:write` are checked. Keep them.
-4. Choose the expiry and press ［保存］ (Save).
+3. The purpose **Record from SDK or MLflow 3** is chosen, and the scopes `read`, `runs:write`, `registry:write`, and `artifacts:write` are checked. Keep them.
+4. Choose the expiry and press **Save**.
 
-［API tokenを発行］ (Issue API token) under "自分のAPI token" (My API tokens) in the Project settings, or on ［アカウント］ (Account), opens the same dialog, also starting from the recording purpose.
+**Issue API token** under **My API tokens** in the **Project settings**, or on **Account**, opens the same dialog, also starting from the recording purpose.
 
-![The API token dialog with name, purpose, scopes, and expiry](/images/guide-token-dialog.png)
+![The API token dialog with name, purpose, scopes, and expiry](/images/en/guide-token-dialog.png)
 
-The token value is shown only once. Copy it with ［tokenをコピー］ (Copy token) before closing the dialog and store it somewhere safe, such as a password manager. The token works only for the Project it was issued in.
+The token value is shown only once. Copy it with **Copy token** before closing the dialog and store it somewhere safe, such as a password manager. The token works only for the Project it was issued in.
 
-The "設定例" (Settings example) in the same dialog holds the environment variables of steps 4 and 5 without the token. Copy it with ［設定例をコピー］ (Copy settings example) and paste it into a terminal; it asks for `API token:`, where you paste the token you copied.
+The **Configuration example** in the same dialog holds the environment variables of steps 4 and 5 without the token. Copy it with **Copy example** and paste it into a terminal; it asks for `API token:`, where you paste the token you copied.
 
 ## 4. Record with the Python SDK
 
@@ -73,7 +71,7 @@ printf 'API token: '; read -r -s MMT_API_TOKEN; echo
 export MMT_API_TOKEN
 ```
 
-"環境変数（tokenは実行時に入力）" (Environment variables, the token entered when run) under ［SDKで記録］ (Record with the SDK) on the experiment page holds exactly this, with the URL and both IDs filled in. Copy it with ［コピー］ (Copy) and paste it.
+**Environment variables (enter the token when running)** under **Record with SDK** on the experiment page holds exactly this, with the URL and both IDs filled in. Copy it with **Copy** and paste it.
 
 Save the following as `train_sdk.py`. `start_run` uses `MMT_PROJECT_ID` and `MMT_EXPERIMENT_ID`.
 
@@ -102,9 +100,9 @@ For more on the SDK (system metrics, resuming a Run, recording offline and sendi
 
 ## 5. Record with the MLflow 3 SDK
 
-If your training code already records with MLflow, changing the endpoint is enough to record to the same Project. The ［MLflow 3］ tab of "SDK・MLflow 3から接続" (Connect from the SDK and MLflow 3), in ［プロジェクト設定］ (Project settings) or under ［SDKで記録］ (Record with the SDK) on the experiment page, shows the Project's `MLFLOW_TRACKING_URI` and an example configuration.
+If your training code already records with MLflow, changing the endpoint is enough to record to the same Project. The **MLflow 3** tab of **Connect from SDK or MLflow 3**, in **Project settings** or under **Record with SDK** on the experiment page, shows the Project's `MLFLOW_TRACKING_URI` and an example configuration.
 
-![The MLFLOW_TRACKING_URI and the example environment variables](/images/guide-mlflow-connection.png)
+![The MLFLOW_TRACKING_URI and the example environment variables](/images/en/guide-mlflow-connection.png)
 
 ```sh
 ~/.venvs/mmt/bin/pip install 'mlflow>=3,<4'
@@ -138,13 +136,13 @@ For the supported MLflow features, see [Record from the MLflow 3 SDK](/en/tracki
 
 ## 6. Check on screen
 
-Select the experiment in ［Experiments］ to list the recorded Runs with the latest `train.loss`, the params, and the creator.
+Select the experiment in **Experiments** to list the recorded Runs with the latest `train.loss`, the params, and the creator.
 
-![The whisper-small-finetune list with two Runs](/images/guide-quickstart-runs.png)
+![The whisper-small-finetune list with two Runs](/images/en/guide-quickstart-runs.png)
 
-Press ［図を表示］ (Show charts) to chart the metrics of the listed Runs. The `train.loss` of the two Runs is overlaid, and the parallel coordinates below the charts show how params relate to results. A value logged once (such as a final evaluation) shows as a dot instead of a line.
+Press **Show charts** to chart the metrics of the listed Runs. The `train.loss` of the two Runs is overlaid, and the parallel coordinates below the charts show how params relate to results. A value logged once (such as a final evaluation) shows as a dot instead of a line.
 
-![The train.loss of two Runs overlaid, and parallel coordinates](/images/guide-quickstart-chart.png)
+![The train.loss of two Runs overlaid, and parallel coordinates](/images/en/guide-quickstart-chart.png)
 
 Click a Run name to open its details and switch between metrics, Artifacts, logs, and system metrics with the tabs. See [Metric charts](/en/tracking/charts) for chart controls and [Compare Runs](/en/tracking/compare) for comparisons.
 
@@ -154,24 +152,24 @@ When a model version is registered, the automation rules that match its model fa
 
 ### Prepare a worker and the code to run
 
-1. Install a worker on a host with GPUs (a CPU-only host also works) and register it as a compute target under コンピュータ (Computers) in the global settings. See [Install a worker](/en/compute/worker) and [Compute targets](/en/compute/targets). Only global administrators can add SSH and Local targets. With the default, Private, only the Jobs of the person who added it run, so make it Public if someone else creates the automation rules ([Computers and visibility](/en/compute/computers)).
-2. Register the inference and evaluation code as code versions in ［Code］, with the run kind (inference, evaluation) and the supported model family (for example `whisper`). See [Tasks and code versions](/en/models/tasks). CPU-only inference and evaluation examples (`inference.py`, `evaluation.py`) are in `share/mado-tracking/examples/` of the virtual environment where you installed the SDK (`~/.venvs/mmt/share/mado-tracking/examples/` in step 4).
+1. Install a worker on a host with GPUs (a CPU-only host also works) and register it as a compute target under **Computers** in **Global settings**. See [Install a worker](/en/compute/worker) and [Compute targets](/en/compute/targets). Only global administrators can add SSH and Local targets. With the default, Private, only the Jobs of the person who added it run, so make it Public if someone else creates the automation rules ([Computers and visibility](/en/compute/computers)).
+2. Register the inference and evaluation code as code versions in **Code**, with the run kind (inference, evaluation) and the supported model family (for example `whisper`). See [Tasks and code versions](/en/models/tasks). CPU-only inference and evaluation examples (`inference.py`, `evaluation.py`) are in `share/mado-tracking/examples/` of the virtual environment where you installed the SDK (`~/.venvs/mmt/share/mado-tracking/examples/` in step 4).
 3. Register the reference data for the evaluation as a dataset version ([Datasets](/en/data/datasets)).
 
 ### Create automation rules
 
-Under "自動実行ルール" (Automation rules) in ［Models］, press ［自動実行ルールを作成］ (Create automation rule) and create two rules, one for inference and one for evaluation.
+Under **Automation rules** in **Models**, press **Create automation rule** and create two rules, one for inference and one for evaluation.
 
 | Field | Inference rule | Evaluation rule |
 | --- | --- | --- |
-| 名前 (Name) | `infer-on-register` | `evaluate-after-inference` |
-| トリガー (Trigger) | モデル登録 (Model registration) | 上流ruleの成功 (Upstream rule succeeded), upstream rule: `infer-on-register` |
-| 対象モデル系列 (Model families) | `whisper` | `whisper` |
-| 実行種別 (Run kind) | 推論 (Inference) | 評価 (Evaluation) |
-| Experiments | `whisper-small-finetune` | `whisper-small-finetune` |
-| コードバージョン (Code version) | The inference code version | The evaluation code version |
-| コンピュータ (Computer) | The one registered in preparation step 1 | The same one |
-| 入力データセットバージョン (Input dataset versions) | None | The reference data from preparation step 3 |
+| **Name** | `infer-on-register` | `evaluate-after-inference` |
+| **Trigger** | **Model registration** | **Upstream rule success**, **Upstream rule**: `infer-on-register` |
+| **Target model families** | `whisper` | `whisper` |
+| **Run kind** | **Inference** | **Evaluation** |
+| **Experiments** | `whisper-small-finetune` | `whisper-small-finetune` |
+| **Code version** | The inference code version | The evaluation code version |
+| **Computer** | The one registered in preparation step 1 | The same one |
+| **Input dataset versions** | None | The reference data from preparation step 3 |
 
 The evaluation rule receives the outputs of the inference Run as upstream outputs. After creation, a rule can only be enabled or disabled. To change its settings, create a new rule.
 
@@ -198,12 +196,12 @@ version = mlflow.register_model(recorded.model_uri, "whisper-small-ja")
 print("version", version.version)
 ```
 
-The version is registered when `version 1` appears. Version numbers are assigned automatically from 1. The ［Models］ list also shows `whisper-small-ja` with the model family `whisper`.
+The version is registered when `version 1` appears. Version numbers are assigned automatically from 1. The **Models** list also shows `whisper-small-ja` with the model family `whisper`.
 
 ### Check the results
 
-Select the version in ［Models］ and press ［バージョンの詳細画面を開く］ (Open version details). "自動実行" (Automation) lists the inference as the first stage and the evaluation as the second. When the Jobs finish, "評価結果" (Evaluation results) shows the metrics of the evaluation Run.
+Select the version in **Models** and press **Open version details**. **Automation** lists the inference as the first stage and the evaluation as the second. When the Jobs finish, **Evaluation results** shows the metrics of the evaluation Run.
 
-![The chain of training Run, model version, inference Run, and evaluation Run, with the automation history](/images/guide-model-version-automation.png)
+![The chain of training Run, model version, inference Run, and evaluation Run, with the automation history](/images/en/guide-model-version-automation.png)
 
-If a Job could not start, the reason appears in "起動結果" (Launch result) and "ジョブエラー" (Job error). To move an alias such as `production` based on the evaluation, see [Evaluation and promotion](/en/models/promotion). For automation settings in detail, see [Automatic inference and evaluation](/en/models/automation).
+If a Job could not start, the reason appears in **Launch outcome** and **Job error**. To move an alias such as `production` based on the evaluation, see [Evaluation and promotion](/en/models/promotion). For automation settings in detail, see [Automatic inference and evaluation](/en/models/automation).
