@@ -17,6 +17,8 @@ export type RunKind = 'inference' | 'evaluation' | 'training' | 'finetuning' | '
 export * from './datasetUsage.js';
 export * from './preprocessingReports.js';
 export * from './workflows.js';
+export * from './workerCapabilities.js';
+import type { WorkerCapability } from './workerCapabilities.js';
 export type RunStatus = 'queued' | 'running' | 'finished' | 'failed' | 'canceled';
 export type JobStatus = RunStatus | 'claimed';
 // Immutable backend name: 'filesystem' and 's3' from the environment, or one stored in the DB.
@@ -696,6 +698,17 @@ export interface JobListItem extends Job {
   sweepTrial: JobSweepTrialOrigin | null;
   /** The automation rule that started the Job (an attempt or an automatic retry of it). */
   automationRule: JobAutomationRuleOrigin | null;
+  /**
+   * The workflow execution whose step started the Job (not a later one that reuses its Run). Such
+   * a Job is resumed from the workflow, not retried on its own (409 workflow_retry_required).
+   */
+  workflowExecution: JobWorkflowExecutionOrigin | null;
+  /** What a worker must name in workerInfo.capabilities to take the Job (WorkerService.claim). */
+  requiredWorkerCapabilities: WorkerCapability[];
+}
+export interface JobWorkflowExecutionOrigin {
+  workflowId: string;
+  executionId: string;
 }
 export interface JobSweepTrialOrigin {
   sweepId: string;
@@ -720,6 +733,8 @@ export interface WorkerPresence {
   lastSeenAt: string;
   status: WorkerPresenceStatus;
   activeJobCount: number;
+  /** What the worker named on its latest claim or resume; an older worker names nothing. */
+  capabilities: WorkerCapability[];
 }
 export interface WorkerJob {
   job: Job;

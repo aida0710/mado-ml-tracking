@@ -1,5 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import type { Artifact, ArtifactReferences, PreprocessingReport } from '@mmt/contracts';
+import type {
+  Artifact,
+  ArtifactReferences,
+  JsonObject,
+  PreprocessingReport,
+} from '@mmt/contracts';
 import { preprocessingReportSchema, workflowExecutionSchema } from '@mmt/contracts/schemas';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 import { workflowFixture, type WorkflowFixture } from './workflowFixtures.js';
@@ -54,6 +59,34 @@ describe.skipIf(!testDatabaseUrl)('前処理レポートの品質と固定（独
     expect(
       (await fixture.report(id, { metrics: { 'preprocessing.input_count': 99 } })).status,
     ).toBe(422);
+  });
+
+  it('metadataは16KiB・入れ子10段までで、それより大きく深いレポートは保存しない', async () => {
+    const execution = await fixture.launch(await fixture.createWorkflow());
+    const id = execution.steps[0]!.runId!;
+    function nested(depth: number): JsonObject {
+      let value: JsonObject = {};
+      for (let level = 1; level < depth; level++) value = { level: value };
+      return value;
+    }
+    expect((await fixture.report(id, { metadata: nested(10) })).status).toBe(200);
+    for (const metadata of [
+      nested(11),
+      // Thousands of levels are refused before validation recurses into them.
+      nested(10_000),
+      { note: 'x'.repeat(16 * 1024) },
+    ]) {
+      const refused = await fixture.report(id, { metadata });
+      expect(refused.status).toBe(422);
+      expect(((await refused.json()) as { code: string }).code).toBe('invalid_request');
+    }
+    const stored = await entity<{ report: PreprocessingReport }>(
+      await request(harness.app, `${fixture.basePath}/runs/${id}/preprocessing-report`, {
+        cookie: fixture.viewer.cookie,
+      }),
+      200,
+    );
+    expect(stored.report.metadata).toEqual(nested(10));
   });
 
   it('最新レポートで未定義になった品質値を以前のメトリクスから補わない', async () => {
@@ -207,6 +240,7 @@ describe.skipIf(!testDatabaseUrl)('前処理レポートの品質と固定（独
     for (const table of [
       'workflows',
       'workflow_versions',
+      'workflow_version_inputs',
       'workflow_executions',
       'workflow_step_runs',
       'preprocessing_reports',

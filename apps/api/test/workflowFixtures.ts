@@ -7,8 +7,10 @@ import type {
   WorkflowDetail,
   WorkflowExecution,
   WorkflowStepInput,
+  WorkerCapability,
   WorkerJob,
 } from '@mmt/contracts';
+import { WORKER_CAPABILITIES } from '@mmt/contracts';
 import { executionFixture, referenceDigest } from './fixtures.js';
 import { entity, request, type Harness } from './harness.js';
 
@@ -119,19 +121,24 @@ export async function workflowFixture(harness: Harness) {
       }),
     );
   }
-  async function claim() {
+  /** A claim by a worker that names `capabilities`; a current worker names them all. */
+  async function claimAs(capabilities: WorkerCapability[]): Promise<WorkerJob | null> {
     return (
-      await entity<{ item: WorkerJob }>(
+      await entity<{ item: WorkerJob | null }>(
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'workflow-worker' },
+          body: { workerId: 'workflow-worker', workerInfo: { capabilities } },
         }),
         200,
       )
     ).item;
   }
-  async function finish(job: WorkerJob, status: 'finished' | 'failed' = 'finished') {
+  async function claim(): Promise<WorkerJob> {
+    return (await claimAs([...WORKER_CAPABILITIES]))!;
+  }
+  /** The worker reports the Job's end; the scheduler has not seen it yet. */
+  async function complete(job: WorkerJob, status: 'finished' | 'failed' = 'finished') {
     await entity(
       await request(harness.app, `/api/worker/jobs/${job.job.id}/complete`, {
         method: 'POST',
@@ -140,6 +147,9 @@ export async function workflowFixture(harness: Harness) {
       }),
       200,
     );
+  }
+  async function finish(job: WorkerJob, status: 'finished' | 'failed' = 'finished') {
+    await complete(job, status);
     await harness.workflowScheduler.tick();
   }
   async function output(runId: string, name = 'Processed speech') {
@@ -197,7 +207,9 @@ export async function workflowFixture(harness: Harness) {
     task,
     createWorkflow,
     launch,
+    claimAs,
     claim,
+    complete,
     finish,
     output,
     execution,

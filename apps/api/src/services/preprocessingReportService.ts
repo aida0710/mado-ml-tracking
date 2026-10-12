@@ -1,4 +1,4 @@
-import type { PreprocessingReport, RunDatasetUsage } from '@mmt/contracts';
+import type { PreprocessingReport } from '@mmt/contracts';
 import { preprocessingReportInputSchema } from '@mmt/contracts/schemas';
 import type { z } from 'zod';
 import type { Principal } from '../auth/principal.js';
@@ -24,21 +24,6 @@ export class PreprocessingReportService {
     await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
     await findRun(this.database, { projectId, id: runId });
     return findPreprocessingReport(this.database, { projectId, runId });
-  }
-
-  async datasetUsage(
-    principal: Principal,
-    projectId: string,
-    runId: string,
-  ): Promise<RunDatasetUsage> {
-    await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
-    await findRun(this.database, { projectId, id: runId });
-    const step = await first<RunDatasetUsage>(
-      this.database,
-      'SELECT dataset_usage AS items FROM workflow_step_runs WHERE project_id=$1 AND run_id=$2 AND NOT reused',
-      [projectId, runId],
-    );
-    return step ?? { items: [] };
   }
 
   async save(

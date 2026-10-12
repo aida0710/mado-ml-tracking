@@ -8,6 +8,25 @@ export const PREPROCESSING_MAX_METRICS = 100;
 // Match the native Run metric-name limit; this prefix belongs to the report's computed summary.
 export const PREPROCESSING_MAX_METRIC_NAME_LENGTH = 250;
 export const PREPROCESSING_METRIC_PREFIX = 'preprocessing.';
+/**
+ * The summary metrics the API computes from a report; no other preprocessing.* name is ever
+ * recorded, so a quality gate on one could never pass.
+ */
+export const PREPROCESSING_SUMMARY_METRIC_NAMES = [
+  'preprocessing.input_count',
+  'preprocessing.output_count',
+  'preprocessing.excluded_count',
+  'preprocessing.failed_count',
+  'preprocessing.retained_input_ratio',
+  'preprocessing.input_duration_seconds',
+  'preprocessing.output_duration_seconds',
+] as const;
+export type PreprocessingSummaryMetricName = (typeof PREPROCESSING_SUMMARY_METRIC_NAMES)[number];
+// Every workflow execution lists its steps' reports, so metadata stays a short note, as large as
+// Run media metadata; detailed lists belong in Artifacts.
+export const PREPROCESSING_METADATA_MAX_BYTES = 16 * 1024;
+// A short note needs little nesting.
+export const PREPROCESSING_METADATA_MAX_DEPTH = 10;
 
 export interface PreprocessingReason {
   reason: string;

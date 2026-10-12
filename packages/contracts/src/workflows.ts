@@ -5,8 +5,11 @@ import type { PreprocessingReport } from './preprocessingReports.js';
 // Match the existing maximum Job chain depth so a workflow stays a small, inspectable sequence.
 export const WORKFLOW_MAX_STEPS = 10;
 export const WORKFLOW_MAX_INPUTS = 100;
-// The history page and scheduler batch use the same bounded number of executions.
+// One page of an execution history.
 export const WORKFLOW_PAGE_SIZE = 50;
+// Versions pin whole Task snapshots, so a workflow's detail carries only the newest ones and the
+// rest come a page at a time (GET /workflows/:id/versions).
+export const WORKFLOW_VERSIONS_PAGE_SIZE = 20;
 export const WORKFLOW_MAX_QUALITY_GATES = 20;
 // Match PostgreSQL revision storage and existing registry field limits.
 export const WORKFLOW_MAX_REVISION = 2_147_483_647;
@@ -74,7 +77,16 @@ export interface WorkflowVersion {
 
 export interface WorkflowDetail {
   workflow: Workflow;
+  /** The newest WORKFLOW_VERSIONS_PAGE_SIZE versions, newest first. */
   versions: WorkflowVersion[];
+  /** Cursor for GET /workflows/:id/versions; null when `versions` holds them all. */
+  olderVersionsCursor: string | null;
+}
+
+/** Older versions of a workflow, newest first. */
+export interface WorkflowVersionPage {
+  items: WorkflowVersion[];
+  nextCursor: string | null;
 }
 
 export interface WorkflowCreate {

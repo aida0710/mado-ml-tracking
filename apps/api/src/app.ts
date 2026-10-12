@@ -62,8 +62,10 @@ import { WorkflowExecutionService } from './services/workflowExecutionService.js
 import { WorkflowExecutor } from './services/workflowExecutor.js';
 import { WorkflowScheduler } from './services/workflowScheduler.js';
 import { PreprocessingReportService } from './services/preprocessingReportService.js';
+import { RunDatasetUsageService } from './services/runDatasetUsageService.js';
 import { workflowRoutes } from './routes/workflowRoutes.js';
 import { preprocessingReportRoutes } from './routes/preprocessingReportRoutes.js';
+import { runDatasetUsageRoutes } from './routes/runDatasetUsageRoutes.js';
 import { AuditService } from './services/auditService.js';
 import {
   RunCompletionService,
@@ -325,6 +327,7 @@ export function createApplication(options: ApplicationOptions) {
   });
   const workflowScheduler = new WorkflowScheduler(database, workflowExecutor);
   const preprocessingReports = new PreprocessingReportService(database);
+  const runDatasetUsage = new RunDatasetUsageService(database);
   const gitRepositories = new GitRepositoryReader({ ssh: config.repositorySsh });
   const repositories = new RepositoryFilesService(
     database,
@@ -542,6 +545,7 @@ export function createApplication(options: ApplicationOptions) {
   app.route('/api/projects', runAnalysisRoutes(runAnalysis));
   app.route('/api/projects', taskRoutes(tasks));
   app.route('/api/projects', preprocessingReportRoutes(preprocessingReports));
+  app.route('/api/projects', runDatasetUsageRoutes(runDatasetUsage));
   app.route(
     '/api/projects',
     workflowRoutes({ definitions: workflowDefinitions, executions: workflowExecutions }),
@@ -666,6 +670,7 @@ export function createApplication(options: ApplicationOptions) {
       workflowDefinitions,
       workflowExecutions,
       preprocessingReports,
+      runDatasetUsage,
       repositories,
       lineage,
       artifacts,

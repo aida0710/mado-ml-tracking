@@ -2061,8 +2061,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     method: 'post',
     path: '/api/targets/:id/directory-listings',
     tag: 'execution',
-    summary:
-      'コンピュータのディレクトリの子を、指定したworkerに読ませる（同じパスを待っていればそれを返す）',
+    summary: 'コンピュータのディレクトリの子を、指定したworkerに読ませる（同じパスを待っていればそれを返す）',
     access: GLOBAL_ADMIN,
     body: directoryListingRequestSchema,
     responses: {
@@ -3188,8 +3187,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     method: 'get',
     path: '/api/notification-channels/environment-names',
     tag: 'notifications',
-    summary:
-      '通知先が参照できるAPI serverの環境変数名（MMT_NOTIFICATION_で始まり値があるもの。値は返さない）',
+    summary: '通知先が参照できるAPI serverの環境変数名（MMT_NOTIFICATION_で始まり値があるもの。値は返さない）',
     access: GLOBAL_ADMIN,
     responses: { 200: contract.itemsOf(z.string()) },
   },

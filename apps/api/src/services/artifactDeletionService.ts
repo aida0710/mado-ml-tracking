@@ -210,9 +210,7 @@ export class ArtifactDeletionService {
         });
         const deleted = await markArtifactsDeleted(connection, {
           projectId: location.projectId,
-          artifactIds: locked
-            .filter((artifact) => !references.has(artifact.id))
-            .map(({ id }) => id),
+          artifactIds: locked.filter((artifact) => !references.has(artifact.id)).map(({ id }) => id),
           deletedBy: principal.user.id,
           origin: 'native',
         });

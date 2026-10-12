@@ -6,6 +6,7 @@ import type {
   Workflow,
   WorkflowVersion,
   WorkflowDetail,
+  WorkflowVersionPage,
   WorkflowStepExecution,
   WorkflowExecutionSummary,
   WorkflowExecution,
@@ -132,7 +133,12 @@ export const workflowDetailSchema = namedContractSchema(
   z.strictObject({
     workflow: workflowSchema,
     versions: z.array(workflowVersionSchema),
+    olderVersionsCursor: z.string().nullable(),
   }),
+);
+export const workflowVersionPageSchema = namedContractSchema(
+  'WorkflowVersionPage',
+  cursorPageOf(workflowVersionSchema),
 );
 export const workflowStepExecutionSchema = namedContractSchema(
   'WorkflowStepExecution',
@@ -202,6 +208,10 @@ type _WorkflowVersion = Expect<
 
 type _WorkflowDetail = Expect<
   MutuallyAssignable<z.infer<typeof workflowDetailSchema>, WorkflowDetail>
+>;
+
+type _WorkflowVersionPage = Expect<
+  MutuallyAssignable<z.infer<typeof workflowVersionPageSchema>, WorkflowVersionPage>
 >;
 
 type _WorkflowStepExecution = Expect<

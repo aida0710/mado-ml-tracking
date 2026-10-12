@@ -13,7 +13,9 @@ import {
   MIN_DATASET_CACHE_MAX_BYTES,
   MIN_QUEUE_TIMEOUT_SECONDS,
   SITE_SUBMISSION_MODES,
+  WORKER_CAPABILITIES,
 } from '@mmt/contracts';
+import { workerCapabilitySchema } from '@mmt/contracts/schemas';
 import { executionRuntimeSchema, runtimeKindSchema } from './runtimeValidation.js';
 import { codeSourceSchema } from './codeSourceValidation.js';
 import { reportedPathSchema } from './reportedPathValidation.js';
@@ -320,8 +322,10 @@ export const pluginDatasetSchema = z.strictObject({
 const MAX_WORKER_PARALLEL_JOBS = 1000;
 // The ~/.ssh of a worker host rarely holds more; the candidates are only offered.
 export const MAX_WORKER_SSH_FILE_PATHS = 50;
-// Self-reported by the worker host for display only; never used for authorization. sshFiles are
-// paths on the worker's host, never the files' contents, offered for a computer's key paths.
+// A worker names each capability it has once.
+const MAX_WORKER_CAPABILITIES = WORKER_CAPABILITIES.length;
+// Self-reported by the worker host and never used for authorization. sshFiles are paths on the
+// worker's host, never the files' contents, offered for a computer's key paths.
 export const workerInfoSchema = z.strictObject({
   version: z.string().trim().min(1).max(200).optional(),
   hostname: z.string().trim().min(1).max(255).optional(),
@@ -331,6 +335,13 @@ export const workerInfoSchema = z.strictObject({
       keyPaths: z.array(reportedPathSchema).max(MAX_WORKER_SSH_FILE_PATHS),
       knownHostsPaths: z.array(reportedPathSchema).max(MAX_WORKER_SSH_FILE_PATHS),
     })
+    .optional(),
+  // The others are only shown; capabilities also decide which Jobs the worker is given (claim). A
+  // worker that sends workerInfo without them is an older one and has none.
+  capabilities: z
+    .array(workerCapabilitySchema)
+    .max(MAX_WORKER_CAPABILITIES)
+    .refine((names) => new Set(names).size === names.length, 'capabilities must be unique')
     .optional(),
 });
 export const workerResumeSchema = z.strictObject({

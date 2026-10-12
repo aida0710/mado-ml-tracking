@@ -7,15 +7,6 @@ export function preprocessingReportRoutes(
   reports: PreprocessingReportService,
 ): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
-  routes.get('/:p/runs/:r/dataset-usage', async (context) =>
-    context.json(
-      await reports.datasetUsage(
-        principal(context),
-        uuidParam(context, 'p'),
-        uuidParam(context, 'r'),
-      ),
-    ),
-  );
   routes.get('/:p/runs/:r/preprocessing-report', async (context) =>
     context.json({
       report: await reports.get(

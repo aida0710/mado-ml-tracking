@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import type {
+  ProjectRole,
   WorkflowExecution,
   WorkflowExecutionPage,
   WorkflowLaunch,
@@ -9,12 +10,17 @@ import type {
 import type { Principal } from '../auth/principal.js';
 import { first, rows, transaction, type Connection, type Database } from '../db/database.js';
 import { DomainError, notFound } from '../domain/errors.js';
+import { isTerminalStatus } from '../domain/runTransitions.js';
+import { assertControlsWorkflowExecution } from '../domain/workflowExecutionControl.js';
+import { findRun } from '../repositories/registryRepository.js';
 import { findWorkflow, findWorkflowVersion } from '../repositories/workflowDefinitionRepository.js';
 import {
   findWorkflowExecution,
   findWorkflowExecutionSummary,
   finishWorkflowExecution,
-  listWorkflowStepRuns,
+  insertWorkflowExecution,
+  insertWorkflowStepExecution,
+  listWorkflowStepExecutions,
   workflowExecutionColumns,
 } from '../repositories/workflowExecutionRepository.js';
 import { requireProject, requireScope } from './accessService.js';
@@ -80,7 +86,7 @@ export class WorkflowExecutionService {
     request: { workflowId: string; input: WorkflowLaunch },
   ): Promise<WorkflowExecution> {
     return transaction(this.options.database, async (connection) => {
-      await requireProject(connection, principal, {
+      const role = await requireProject(connection, principal, {
         projectId,
         role: 'editor',
         scope: 'runs:write',
@@ -120,49 +126,31 @@ export class WorkflowExecutionService {
       });
       const completed = request.input.resumeFromExecutionId
         ? await this.completedStepsForResume(connection, {
+            caller: { role, userId: principal.user.id },
             projectId,
             version,
             executionId: request.input.resumeFromExecutionId,
           })
         : [];
-      const execution = (await first<{ id: string }>(
-        connection,
-        `INSERT INTO workflow_executions(project_id,workflow_id,workflow_version_id,revision,created_by,idempotency_key,request_hash,resume_from_execution_id)
-         VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
-        [
+      const execution = await insertWorkflowExecution(connection, {
+        projectId,
+        workflowId: workflow.id,
+        workflowVersionId: version.id,
+        revision: version.revision,
+        createdBy: principal.user.id,
+        idempotencyKey: request.input.idempotencyKey,
+        requestHash,
+        resumeFromExecutionId: request.input.resumeFromExecutionId ?? null,
+      });
+      for (const [stepIndex, step] of version.steps.entries())
+        await insertWorkflowStepExecution(connection, {
+          executionId: execution.id,
           projectId,
-          workflow.id,
-          version.id,
-          version.revision,
-          principal.user.id,
-          request.input.idempotencyKey,
-          requestHash,
-          request.input.resumeFromExecutionId ?? null,
-        ],
-      ))!;
-      for (const [stepIndex, step] of version.steps.entries()) {
-        const reused = completed.find((previous) => previous.stepIndex === stepIndex);
-        await connection.query(
-          `INSERT INTO workflow_step_runs(execution_id,project_id,step_index,step_key,name,status,run_id,job_id,reused,dataset_usage,
-          output_dataset_version_ids,output_model_version_ids,metrics,ended_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
-          [
-            execution.id,
-            projectId,
-            stepIndex,
-            step.key,
-            step.name,
-            reused ? 'finished' : 'pending',
-            reused?.runId ?? null,
-            reused?.jobId ?? null,
-            !!reused,
-            JSON.stringify(reused?.datasetUsage ?? []),
-            reused?.outputDatasetVersionIds ?? [],
-            reused?.outputModelVersionIds ?? [],
-            JSON.stringify(reused?.metrics ?? {}),
-            reused?.endedAt ?? null,
-          ],
-        );
-      }
+          stepIndex,
+          stepKey: step.key,
+          name: step.name,
+          reused: completed.find((previous) => previous.stepIndex === stepIndex) ?? null,
+        });
       const summary = await findWorkflowExecutionSummary(connection, {
         projectId,
         id: execution.id,
@@ -190,22 +178,22 @@ export class WorkflowExecutionService {
         id: executionId,
         lock: true,
       });
-      if (execution.createdBy !== principal.user.id && role !== 'admin')
-        throw new DomainError(
-          403,
-          'ワークフローを停止できるのは実行した利用者と管理者です',
-          'workflow_control_forbidden',
-        );
+      assertControlsWorkflowExecution({ role, userId: principal.user.id }, execution);
       if (execution.status !== 'running' && execution.status !== 'canceling')
         return findWorkflowExecution(connection, { projectId, id: execution.id });
       await connection.query("UPDATE workflow_executions SET status='canceling' WHERE id=$1", [
         execution.id,
       ]);
-      const steps = await listWorkflowStepRuns(connection, execution.id);
+      const steps = await listWorkflowStepExecutions(connection, execution.id);
       await connection.query(
         "UPDATE workflow_step_runs SET status='canceled',ended_at=now() WHERE execution_id=$1 AND status='pending'",
         [execution.id],
       );
+      const version = await findWorkflowVersion(connection, {
+        projectId,
+        workflowId: execution.workflowId,
+        revision: execution.revision,
+      });
       let active = false;
       for (const step of steps.filter(
         (step) => step.status === 'queued' || step.status === 'running',
@@ -214,13 +202,17 @@ export class WorkflowExecutionService {
           projectId,
           jobId: step.jobId!,
         });
-        if (job.status === 'queued' || job.status === 'claimed' || job.status === 'running')
+        if (!isTerminalStatus(job.status)) {
           active = true;
-        else
-          await connection.query(
-            "UPDATE workflow_step_runs SET status='canceled',ended_at=now() WHERE id=$1",
-            [step.id],
-          );
+          continue;
+        }
+        // The Job may have ended before the scheduler saw it, even successfully; its step keeps
+        // what the Run did, so a resumed execution reuses a step that succeeded.
+        await this.options.executor.recordRunState(connection, {
+          step,
+          definition: version.steps[step.stepIndex]!,
+          run: await findRun(connection, { projectId, id: job.runId }),
+        });
       }
       if (!active)
         await finishWorkflowExecution(connection, { id: execution.id, status: 'canceled' });
@@ -228,21 +220,28 @@ export class WorkflowExecutionService {
     });
   }
 
+  /** The leading steps a resumed execution reuses; only those who may stop the source resume it. */
   private async completedStepsForResume(
     connection: Connection,
-    request: { projectId: string; version: WorkflowVersion; executionId: string },
+    request: {
+      caller: { role: ProjectRole; userId: string };
+      projectId: string;
+      version: WorkflowVersion;
+      executionId: string;
+    },
   ): Promise<WorkflowStepExecution[]> {
     const source = await findWorkflowExecution(connection, {
       projectId: request.projectId,
       id: request.executionId,
     });
+    assertControlsWorkflowExecution(request.caller, source);
     if (
       source.workflowVersionId !== request.version.id ||
       (source.status !== 'failed' && source.status !== 'canceled')
     )
       throw new DomainError(
         409,
-        '同じバージョンの失敗・停止した実行から再処理してください',
+        '同じバージョンの失敗・停止した実行から再開してください',
         'workflow_resume_invalid',
       );
     const completed: WorkflowStepExecution[] = [];

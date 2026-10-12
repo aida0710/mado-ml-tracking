@@ -28977,6 +28977,16 @@
                           "knownHostsPaths"
                         ],
                         "additionalProperties": false
+                      },
+                      "capabilities": {
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "workflowDatasetUsage"
+                          ]
+                        }
                       }
                     },
                     "additionalProperties": false
@@ -29214,6 +29224,16 @@
                           "knownHostsPaths"
                         ],
                         "additionalProperties": false
+                      },
+                      "capabilities": {
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "workflowDatasetUsage"
+                          ]
+                        }
                       }
                     },
                     "additionalProperties": false
@@ -51149,6 +51169,8 @@
           "422": {
             "description": "入力が不正",
             "x-mmt-error-codes": [
+              "workflow_quality_metric_unknown",
+              "workflow_model_source_unregistered",
               "invalid_request",
               "invalid_reference"
             ],
@@ -51183,7 +51205,7 @@
         "tags": [
           "workflows"
         ],
-        "summary": "ワークフローと不変のバージョン",
+        "summary": "ワークフローと新しい順に20件の不変のバージョン（それより前はolderVersionsCursorで）",
         "security": [
           {
             "sessionCookie": []
@@ -51309,6 +51331,144 @@
       }
     },
     "/api/projects/{p}/workflows/{id}/versions": {
+      "get": {
+        "operationId": "getProjectsByPWorkflowsByIdVersions",
+        "tags": [
+          "workflows"
+        ],
+        "summary": "ワークフローの以前のバージョン（新しい順に20件ずつのcursorページ）",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "read"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "project",
+          "role": "viewer",
+          "scope": "read"
+        },
+        "x-mmt-job-token": "read",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "対象のID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowVersionPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "insufficient_scope",
+              "project_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "見つからない（他Projectのものを含む）",
+            "x-mmt-error-codes": [
+              "not_found",
+              "project_archived"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "invalid_request"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "operationId": "postProjectsByPWorkflowsByIdVersions",
         "tags": [
@@ -51465,6 +51625,8 @@
           "422": {
             "description": "入力が不正",
             "x-mmt-error-codes": [
+              "workflow_quality_metric_unknown",
+              "workflow_model_source_unregistered",
               "invalid_request",
               "invalid_reference"
             ],
@@ -51499,7 +51661,7 @@
         "tags": [
           "workflows"
         ],
-        "summary": "指定バージョンを実行、または成功済みステップを再利用して再開",
+        "summary": "指定バージョンを実行、または成功済みステップを再利用して再開（再開は元の実行の作成者かadmin）。tokenにはjobs:writeも要る",
         "security": [
           {
             "sessionCookie": []
@@ -51591,6 +51753,7 @@
           "403": {
             "description": "権限がない",
             "x-mmt-error-codes": [
+              "workflow_control_forbidden",
               "password_change_required",
               "invalid_origin",
               "insufficient_scope",
@@ -51966,7 +52129,7 @@
         "tags": [
           "workflows"
         ],
-        "summary": "所有者またはadminが実行を停止（実行中のJob終了まで待つ）",
+        "summary": "作成者かadminが実行を停止（実行中のJobの終了まで待つ）。tokenにはruns:writeも要る",
         "security": [
           {
             "sessionCookie": []
@@ -57344,6 +57507,40 @@
                 "type": "null"
               }
             ]
+          },
+          "workflowExecution": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "workflowId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "executionId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                "required": [
+                  "workflowId",
+                  "executionId"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requiredWorkerCapabilities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "workflowDatasetUsage"
+              ]
+            }
           }
         },
         "required": [
@@ -57392,7 +57589,9 @@
           "createdByName",
           "hasResumeCheckpoint",
           "sweepTrial",
-          "automationRule"
+          "automationRule",
+          "workflowExecution",
+          "requiredWorkerCapabilities"
         ],
         "additionalProperties": false
       },
@@ -60138,7 +60337,6 @@
             }
           },
           "metadata": {
-            "default": {},
             "$ref": "#/components/schemas/JsonObject"
           }
         },
@@ -65683,6 +65881,15 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "workflowDatasetUsage"
+              ]
+            }
           }
         },
         "required": [
@@ -65697,7 +65904,8 @@
           "startedAt",
           "lastSeenAt",
           "status",
-          "activeJobCount"
+          "activeJobCount",
+          "capabilities"
         ],
         "additionalProperties": false
       },
@@ -65971,11 +66179,18 @@
             "items": {
               "$ref": "#/components/schemas/WorkflowVersion"
             }
+          },
+          "olderVersionsCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
           "workflow",
-          "versions"
+          "versions",
+          "olderVersionsCursor"
         ],
         "additionalProperties": false
       },
@@ -66544,6 +66759,28 @@
         "required": [
           "expectedRevision",
           "steps"
+        ],
+        "additionalProperties": false
+      },
+      "WorkflowVersionPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowVersion"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
         ],
         "additionalProperties": false
       }
