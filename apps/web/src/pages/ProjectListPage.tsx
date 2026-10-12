@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import type { Project } from '@mmt/contracts';
@@ -11,6 +10,7 @@ import { splitProjectList } from '../lib/projectListSections';
 import { projectHomePath } from '../layout/navigationLinks';
 import { settingsSectionPath } from '../layout/settingsSections';
 import { useUnreachableProjectReason } from '../hooks/useUnreachableProjectReason';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 function ProjectTable({ projects, empty }: { projects: Project[]; empty?: string }) {

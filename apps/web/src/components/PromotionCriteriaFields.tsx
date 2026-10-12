@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import type { PromotionCriterionDirection, PromotionCriterionMode } from '@mmt/contracts';
@@ -10,13 +9,14 @@ import {
   summarizeCriterion,
   type PromotionCriterionDraft,
 } from '../lib/promotionPolicyInput';
+import type { SuggestFieldValues } from '../types/form';
+import { SuggestionInput } from './SuggestionInput';
+import { useLocale } from '../i18n/useLocale';
 import {
   criterionThresholdMeaningLabels,
   promotionDirectionLabels,
   promotionModeLabels,
 } from '../i18n/promotion';
-import type { SuggestFieldValues } from '../types/form';
-import { SuggestionInput } from './SuggestionInput';
 import { text } from '../i18n/catalog';
 import { formatNote } from '../i18n/textJoining';
 

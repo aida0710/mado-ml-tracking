@@ -42,7 +42,7 @@ export const accessText = localized({
   auditActorUnknown: '不明なユーザー',
 } as const, english.accessText);
 
-// Audit actions recorded by the API (docs/api-contract.md「監査ログ」と各機能の「監査」).
+// Audit actions recorded by the API (docs/api-contract.md, the section 「監査ログ」 and each feature's 「監査」).
 // An action without a label is shown by its raw name, so a new action stays readable.
 export const auditActionLabels: Record<string, string> = localized({
   'auth.login': 'ログイン',

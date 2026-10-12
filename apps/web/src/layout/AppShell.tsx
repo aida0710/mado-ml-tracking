@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import type { Project } from '@mmt/contracts';
@@ -18,6 +17,7 @@ import { TopBar } from './TopBar';
 import { ProjectBar } from './ProjectBar';
 import { NavigationSidebar } from './NavigationSidebar';
 import { projectHomePath } from './navigationLinks';
+import { useLocale } from '../i18n/useLocale';
 
 export function AppShell() {
   useLocale();

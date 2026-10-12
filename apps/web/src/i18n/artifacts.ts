@@ -1,5 +1,6 @@
 import * as english from './en/artifacts';
 import { localized } from './localized';
+import { INTL_LOCALES } from './locale';
 // Artifact browser, preview, size limit, audio viewer, evaluation samples, and Artifact comparison labels.
 import type { EvaluationSampleErrorReason, ArtifactReferenceError } from '../lib/evaluationSamples';
 
@@ -45,7 +46,6 @@ export const artifactsText = localized({
   artifactRoot: 'ルート',
   artifactUnnamed: '（名前なし）',
   artifactDirectoryPath: 'フォルダの場所',
-  artifactName: '名前',
   artifactFileCount: 'ファイル数',
   artifactLoadMore: '続きを読み込む',
   artifactDirectoriesTruncated: 'フォルダが多いため、一部だけを表示しています。',
@@ -99,12 +99,12 @@ export const artifactsTextTemplates = localized({
   artifactDatasetOwner: (datasetName: string) => `データセット ${datasetName}`,
   artifactFolder: (name: string) => `フォルダ ${name}`,
   artifactDirectorySummary: (fileCount: number, size: string) =>
-    `${fileCount.toLocaleString('ja-JP')}件 · ${size}`,
+    `${fileCount.toLocaleString(INTL_LOCALES.ja)}件 · ${size}`,
   audioChannelNumber: (channel: number) => `チャンネル${channel}`,
-  audioSampleRateValue: (hertz: number) => `${hertz.toLocaleString('ja-JP')} Hz`,
-  audioMaxFrequency: (hertz: number) => `${(hertz / 1000).toLocaleString('ja-JP', { maximumFractionDigits: 1 })} kHz`,
-  evaluationSampleCount: (count: number) => `${count.toLocaleString('ja-JP')}件のサンプル`,
-  evaluationBrokenRowCount: (count: number) => `読み取れない行 ${count.toLocaleString('ja-JP')}件`,
+  audioSampleRateValue: (hertz: number) => `${hertz.toLocaleString(INTL_LOCALES.ja)} Hz`,
+  audioMaxFrequency: (hertz: number) => `${(hertz / 1000).toLocaleString(INTL_LOCALES.ja, { maximumFractionDigits: 1 })} kHz`,
+  evaluationSampleCount: (count: number) => `${count.toLocaleString(INTL_LOCALES.ja)}件のサンプル`,
+  evaluationBrokenRowCount: (count: number) => `読み取れない行 ${count.toLocaleString(INTL_LOCALES.ja)}件`,
   evaluationLine: (line: number) => `${line}行目`,
   evaluationPage: (page: number, pageCount: number) => `${page} / ${pageCount}ページ`,
 }, english.artifactsTextTemplates);

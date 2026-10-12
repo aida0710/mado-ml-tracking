@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { LineageGraph, LineageNode } from '@mmt/contracts';
 import { lineageNodeUrl } from '../lib/lineageLayout';
+import { useLocale } from '../i18n/useLocale';
 import { lineageNodeKindLabels, lineageRelationLabels, text } from '../i18n/catalog';
 
 /**

@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { Comment } from '@mmt/contracts';
 import { MarkdownView } from '../markdown/MarkdownView';
@@ -6,6 +5,7 @@ import { ConfirmDialog } from '../ConfirmDialog';
 import { CommentEditor } from './CommentEditor';
 import { formatDate } from '../../lib/format';
 import { formatRelativeTime } from '../../lib/relativeTime';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 /**

@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { StorageBackend, StorageTestResult as StorageTestResultValue } from '@mmt/contracts';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -11,6 +10,7 @@ import { StorageBackendDialog } from '../../dialogs/StorageBackendDialog';
 import { SettingsPageHeader } from '../SettingsPageHeader';
 import { StorageBackendsTable } from './StorageBackendsTable';
 import { hasStorageTestPassed, StorageTestResult } from './StorageTestResult';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 import { joinSentences } from '../../i18n/textJoining';
 

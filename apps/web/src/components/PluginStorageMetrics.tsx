@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { RefreshCw } from 'lucide-react';
 import { pluginsApi } from '../api/plugins';
 import { useProject } from '../hooks/useProject';
@@ -12,17 +11,19 @@ import {
 import { ResponsiveTable, type ResponsiveTableColumn } from './ResponsiveTable';
 import { Empty, ErrorNotice, Resource } from './Feedback';
 import { StorageMetricValue } from './StorageMetricValue';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
+import { formatList } from '../i18n/textJoining';
 
 type StorageMeasurementFields = Pick<
   StorageBucketMetrics,
   'bytes' | 'objects' | 'ageSeconds' | 'failures'
 >;
 const metricColumnDefinitions = {
-  bytes: { get label() { return text.capacity }, unit: 'bytes' },
-  objects: { get label() { return text.objects }, unit: 'count' },
-  ageSeconds: { get label() { return text.collectionAge }, unit: 'seconds' },
-  failures: { get label() { return text.collectionFailures }, unit: 'count' },
+  bytes: { get label() { return text.capacity; }, unit: 'bytes' },
+  objects: { get label() { return text.objects; }, unit: 'count' },
+  ageSeconds: { get label() { return text.collectionAge; }, unit: 'seconds' },
+  failures: { get label() { return text.collectionFailures; }, unit: 'count' },
 } as const;
 
 function createStorageMetricColumns<T extends StorageMeasurementFields>(
@@ -141,7 +142,7 @@ export function PluginStorageMetrics({ pluginId }: { pluginId: string }) {
               <ErrorNotice
                 message={
                   parsed.invalidLineNumbers.length
-                    ? `${text.metricsParseErrors}: ${parsed.invalidLineNumbers.join(', ')}`
+                    ? `${text.metricsParseErrors}: ${formatList(parsed.invalidLineNumbers.map(String))}`
                     : null
                 }
               />

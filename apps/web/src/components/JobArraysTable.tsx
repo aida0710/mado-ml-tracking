@@ -1,13 +1,13 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { ComputeTarget, Hook } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { formatDate } from '../lib/format';
 import { JOB_ARRAY_STATE_ORDER, type JobArraySummary } from '../lib/jobArrays';
 import { shortId } from '../lib/jobDisplay';
+import { useComputerNames } from '../hooks/useComputerNames';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { jobsTextTemplates } from '../i18n/jobs';
-import { useComputerNames } from '../hooks/useComputerNames';
 
 function ArrayStates({ counts }: { counts: JobArraySummary['counts'] }) {
   useLocale();

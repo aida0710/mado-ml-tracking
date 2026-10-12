@@ -28,7 +28,7 @@ description: mado ML Trackingが守るもの、認証情報とシークレット
 | --- | --- | --- |
 | DBの接続URL、SSOのClient Secret、SMTPのURL | API serverの`.env` | 保存も表示もしない |
 | 通知のWebhookのURLと署名の鍵 | API serverの`.env`（`MMT_NOTIFICATION_*`） | 変数名だけを保存する |
-| Pluginへ接続するtoken | API serverの`.env` | 変数名だけを保存する |
+| Mado連携のキー | DB（`MMT_PLUGIN_SECRET_KEY`で暗号化） | 画面へは返さない |
 | 画面で追加したS3の保存先のシークレット | DB（`MMT_STORAGE_SECRET_KEY`で暗号化） | 画面へは返さない |
 | sessionのAuthentikのtoken | DB（`MMT_SESSION_ENCRYPTION_KEY`で暗号化） | 画面へは返さない |
 | workerのtoken | workerのホストの環境変数のファイル（mode 600） | ハッシュだけ |

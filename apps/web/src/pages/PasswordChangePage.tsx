@@ -1,10 +1,10 @@
-import { useLocale } from '../i18n/useLocale';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { PasswordChangeForm } from '../components/PasswordChangeForm';
 import { SettingsPageHeader } from '../components/SettingsPageHeader';
 import { canChangeOwnPassword } from '../lib/permissions';
 import { settingsSectionPath } from '../layout/settingsSections';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

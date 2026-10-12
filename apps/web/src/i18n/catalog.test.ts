@@ -27,8 +27,8 @@ function listKeyPaths(value: unknown, path = ''): string[] {
   return Object.entries(value).flatMap(([key, child]) => listKeyPaths(child, `${path}.${key}`)).sort();
 }
 
-describe('English and Japanese catalogs', () => {
-  it('covers the same domain exports and message keys in English', () => {
+describe('英語と日本語の辞書', () => {
+  it('英語の辞書は日本語の辞書と同じexport・キー・形を持ち、日本語の文字を含まない', () => {
     for (const [path, englishModule] of Object.entries(englishDomains)) {
       const japaneseModule = japaneseDomains[path.replace('/en/', '/')] as Record<string, Record<string, unknown>>;
       expect(japaneseModule, path).toBeDefined();
@@ -52,7 +52,7 @@ describe('English and Japanese catalogs', () => {
     }
   });
 
-  it('updates merged catalogs and templates that were imported before switching', () => {
+  it('切り替える前に読み込んだ、まとめた辞書とテンプレートも切り替えた言語で返す', () => {
     setLocale('ja');
     expect(text.name).toBe('名前');
     setLocale('en');
@@ -61,7 +61,7 @@ describe('English and Japanese catalogs', () => {
     expect(textTemplates.revokeTokenConfirm('sample')).not.toMatch(/[ぁ-んァ-ン一-龯]/);
   });
 
-  it('updates a captured application error and retains unknown server text', () => {
+  it('保持したアプリのエラー文は切り替えた言語で出し、知らないサーバーの文はそのまま残す', () => {
     setLocale('ja');
     const captured = text.unexpectedError;
     setLocale('en');
@@ -69,7 +69,7 @@ describe('English and Japanese catalogs', () => {
     expect(localizeMessage('custom service detail')).toBe('custom service detail');
   });
 
-  it('uses singular nouns and matching verbs when one item remains', () => {
+  it('英語で1件のときは単数の名詞と、それに合う動詞にする', () => {
     setLocale('en');
     expect(textTemplates.uploadSelectedCount(1, '512 B')).toBe('1 file (512 B)');
     expect(textTemplates.uploadSelectedCount(2, '1 KB')).toBe('2 files (1 KB)');
@@ -82,7 +82,7 @@ describe('English and Japanese catalogs', () => {
     expect(projectAccessTextTemplates.removeMemberConfirm({ displayName: '試験（A）、B〜C', keepsGroupRole: true, isSelf: false })).toContain('“試験（A）、B〜C”? Roles');
   });
 
-  it('formats dates, large values and elapsed time in the selected language', () => {
+  it('日付・大きな数・経過時間を選んだ言語の書き方にする', () => {
     const now = Date.parse('2026-10-11T03:00:00Z');
     const value = '2026-10-11T02:58:00Z';
     setLocale('ja');

@@ -1,9 +1,9 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import type { Experiment } from '@mmt/contracts';
 import type { QueryState } from '../../hooks/useQuery';
 import { Resource } from '../Feedback';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 export function ExperimentSidebar({

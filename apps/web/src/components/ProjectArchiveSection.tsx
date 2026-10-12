@@ -1,10 +1,10 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Archive } from 'lucide-react';
 import { useProject } from '../hooks/useProject';
 import { ProjectArchiveDialog } from '../dialogs/ProjectArchiveDialog';
 import type { ArchivedProjectState } from '../lib/archivedProjectState';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId, useState } from 'react';
 import type { ProjectGroupBinding, ProjectRole } from '@mmt/contracts';
 import { Dialog } from '../components/Dialog';
@@ -6,9 +5,10 @@ import { ErrorNotice } from '../components/Feedback';
 import { ProjectRoleSelect } from '../components/ProjectRoleSelect';
 import { useMutation } from '../hooks/useMutation';
 import { findExistingGroupBinding } from '../lib/groupBindingInput';
+import { LocalizedError } from '../lib/localizedError';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { projectAccessTextTemplates } from '../i18n/projectAccess';
-import { LocalizedError } from '../lib/localizedError';
 
 /**
  * Grants a role to an Authentik group, or changes the role of an existing binding.

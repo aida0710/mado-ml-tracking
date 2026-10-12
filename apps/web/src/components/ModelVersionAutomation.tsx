@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ModelAutomationExecutionPage, ModelAutomationRule } from '@mmt/contracts';
 import type { QueryState } from '../hooks/useQuery';
 import { useAuth } from '../hooks/useAuth';
@@ -6,6 +5,7 @@ import { useProject } from '../hooks/useProject';
 import { canManageAutomationRules } from '../lib/automationPermissions';
 import { AutomationExecutionsTable } from './AutomationExecutionsTable';
 import { Resource } from './Feedback';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

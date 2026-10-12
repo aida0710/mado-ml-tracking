@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import type { JobListItem } from '@mmt/contracts';
 import { StatusBadge } from './StatusBadge';
 import { isJobUnresponsive } from '../lib/jobLiveness';
 import { jobDetailBadge } from '../lib/jobDisplay';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

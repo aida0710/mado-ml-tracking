@@ -1,7 +1,7 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useId } from 'react';
 import type { ChartSmoothing, ChartXAxis } from '@mmt/contracts';
 import type { ChartDisplaySettings } from './chartProps';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 // The slider stops short of 1: EMA caps its weight at 0.999 and 1 would freeze the line.
@@ -11,16 +11,16 @@ const SMOOTHING_WEIGHT_STEP = 0.01;
 const DEFAULT_SMOOTHING_WEIGHT = 0.6;
 
 const smoothingLabels: Record<ChartSmoothing['kind'], string> = {
-  get none() { return text.chartSmoothingNone },
-  get ema() { return text.chartSmoothingEma },
-  get gaussian() { return text.chartSmoothingGaussian },
-  get running_average() { return text.chartSmoothingRunningAverage },
+  get none() { return text.chartSmoothingNone; },
+  get ema() { return text.chartSmoothingEma; },
+  get gaussian() { return text.chartSmoothingGaussian; },
+  get running_average() { return text.chartSmoothingRunningAverage; },
 };
 const xAxisLabels: Record<ChartXAxis['kind'], string> = {
-  get step() { return text.chartXAxisStep },
-  get relative_time() { return text.chartXAxisRelativeTime },
-  get wall_time() { return text.chartXAxisWallTime },
-  get metric() { return text.chartXAxisMetric },
+  get step() { return text.chartXAxisStep; },
+  get relative_time() { return text.chartXAxisRelativeTime; },
+  get wall_time() { return text.chartXAxisWallTime; },
+  get metric() { return text.chartXAxisMetric; },
 };
 
 const ALL_X_AXIS_KINDS = Object.keys(xAxisLabels) as ChartXAxis['kind'][];

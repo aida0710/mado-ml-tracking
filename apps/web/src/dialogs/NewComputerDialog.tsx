@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { PlugZap } from 'lucide-react';
 import type {
@@ -21,6 +20,7 @@ import { TargetCheckStatus } from '../components/TargetCheckStatus';
 import { TargetFields } from '../components/TargetFields';
 import { isConnectionReached } from '../lib/computerSetupValues';
 import { getFieldValue } from '../lib/formValues';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 // What the step 1 buttons ask for; both check the form's required fields first.

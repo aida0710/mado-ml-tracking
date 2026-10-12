@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { RefreshCw } from 'lucide-react';
 import type { SitePersonalSettings } from '@mmt/contracts';
 import { siteComputersApi } from '../api/siteComputers';
@@ -7,6 +6,7 @@ import { Resource } from './Feedback';
 import { ResponsiveTable } from './ResponsiveTable';
 import { formatDate } from '../lib/format';
 import { formatSiteVariables } from '../lib/siteVariables';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { siteKeyStatusLabels } from '../i18n/siteComputers';
 

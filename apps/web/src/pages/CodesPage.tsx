@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Plus, RefreshCw } from 'lucide-react';
 import { registryApi } from '../api/registry';
@@ -16,9 +15,11 @@ import { CodeVersionUsageDetails } from '../components/CodeVersionUsageDetails';
 import { FormDialog } from '../components/FormDialog';
 import { CodeVersionDialog } from '../dialogs/CodeVersionDialog';
 import { getFieldValue } from '../lib/formValues';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { runtimeLabels } from '../i18n/runtime';
 import { codeSourceText } from '../i18n/codeSource';
+import { formatList } from '../i18n/textJoining';
 
 export function CodesPage() {
   useLocale();
@@ -140,14 +141,14 @@ export function CodesPage() {
                             key: 'families',
                             priority: 'secondary',
                             header: text.family,
-                            render: (version) => version.supportedModelFamilies.join(', '),
+                            render: (version) => formatList(version.supportedModelFamilies),
                           },
                           {
                             key: 'tasks',
                             priority: 'secondary',
                             header: text.taskTypes,
                             render: (version) =>
-                              version.taskTypes.map((kind) => text[kind]).join(', '),
+                              formatList(version.taskTypes.map((kind) => text[kind])),
                           },
                         ]}
                       />

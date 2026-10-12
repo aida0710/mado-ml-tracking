@@ -1,9 +1,9 @@
-import { useLocale } from '../i18n/useLocale';
 import { useNotificationSettings } from '../hooks/useNotificationSettings';
 import { useProject } from '../hooks/useProject';
 import { NotificationChannelSection } from './notifications/NotificationChannelSection';
 import { NotificationRuleSection } from './notifications/NotificationRuleSection';
 import { NotificationDeliverySection } from './notifications/NotificationDeliverySection';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { MEDIA_COMPARE_MAX_RUNS } from '@mmt/contracts';
 import { useMediaCompare } from '../../hooks/useMediaCompare';
 import { useMediaLocation } from '../../hooks/useMediaLocation';
@@ -7,9 +6,10 @@ import { evenlySpacedSteps, sortedSteps } from '../../lib/mediaSteps';
 import { Empty, ErrorNotice, Resource } from '../Feedback';
 import { MediaCompareGrid } from './MediaCompareGrid';
 import { MediaStepChecklist } from './MediaStepChecklist';
+import type { MediaCompareProps } from '../charts/chartProps';
+import { useLocale } from '../../i18n/useLocale';
 import { mediaKindLabels } from '../../i18n/media';
 import { text, textTemplates } from '../../i18n/catalog';
-import type { MediaCompareProps } from '../charts/chartProps';
 import { formatNote } from '../../i18n/textJoining';
 
 // Columns for the "evenly spaced" shortcut: enough to follow training, few enough to fit a screen.

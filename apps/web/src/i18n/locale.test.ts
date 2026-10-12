@@ -12,25 +12,25 @@ afterEach(() => {
   setLocale('ja');
 });
 
-describe('language preference', () => {
-  it('a saved choice overrides the browser language', () => {
+describe('表示言語の選択', () => {
+  it('保存した選択をブラウザの言語より優先する', () => {
     browserPreference({ languages: ['en-US'], stored: 'ja' });
     expect(initialLocale()).toBe('ja');
   });
 
-  it('uses the first supported language when no valid choice is saved', () => {
+  it('有効な選択が保存されていなければ、ブラウザの言語のうち対応している最初のものにする', () => {
     browserPreference({ languages: ['fr-FR', 'ja-JP', 'en-US'], stored: 'invalid' });
     expect(initialLocale()).toBe('ja');
     browserPreference({ languages: ['en-GB', 'ja-JP'], stored: null });
     expect(initialLocale()).toBe('en');
   });
 
-  it('falls back to English for unsupported languages', () => {
+  it('ブラウザの言語に対応しているものが無ければ英語にする', () => {
     browserPreference({ languages: ['fr-FR'], stored: null });
     expect(initialLocale()).toBe('en');
   });
 
-  it('falls back to English when the browser reports no language', () => {
+  it('ブラウザが言語を返さないときは英語にする', () => {
     vi.stubGlobal('navigator', { languages: [], language: undefined });
     vi.stubGlobal('localStorage', { getItem: () => null, setItem: vi.fn() });
     expect(initialLocale()).toBe('en');
@@ -38,13 +38,13 @@ describe('language preference', () => {
     expect(initialLocale()).toBe('en');
   });
 
-  it('uses navigator.language when the language list is empty', () => {
+  it('言語の一覧が空ならnavigator.languageを使う', () => {
     vi.stubGlobal('navigator', { languages: [], language: 'ja-JP' });
     vi.stubGlobal('localStorage', { getItem: () => null, setItem: vi.fn() });
     expect(initialLocale()).toBe('ja');
   });
 
-  it('still switches language when browser storage is unavailable', () => {
+  it('ブラウザの保存領域が使えなくても言語を切り替えられる', () => {
     browserPreference({ languages: ['en-US'], stored: null });
     vi.stubGlobal('localStorage', {
       getItem: () => { throw new Error('Unavailable'); },

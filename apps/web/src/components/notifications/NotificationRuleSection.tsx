@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import type { NotificationChannel, NotificationRule, RunKind } from '@mmt/contracts';
 import { NOTIFICATION_EVENT_TYPES } from '@mmt/contracts';
@@ -13,6 +12,7 @@ import type { FormField } from '../../types/form';
 import { ResponsiveTable } from '../ResponsiveTable';
 import { ErrorNotice, Resource } from '../Feedback';
 import { FormDialog } from '../FormDialog';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 import {
   notificationChannelKindLabels,

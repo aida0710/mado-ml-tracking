@@ -1,5 +1,5 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ComputeTarget } from '@mmt/contracts';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { computeTargetExecutorLabels, submissionModeBadgeLabels } from '../i18n/compute';
 

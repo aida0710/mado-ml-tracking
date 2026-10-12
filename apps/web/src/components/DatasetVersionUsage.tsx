@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { DatasetVersion, JobStatus } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
@@ -6,6 +5,7 @@ import { useQuery } from '../hooks/useQuery';
 import { LINEAGE_FOCUS_PARAMETER, runsUsingInput } from '../lib/lineageFocus';
 import { Resource } from './Feedback';
 import { StatusBadge } from './StatusBadge';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**

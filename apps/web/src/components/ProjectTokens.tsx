@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { TokenSummary } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
@@ -9,7 +8,9 @@ import { Resource } from './Feedback';
 import { ConfirmDialog } from './ConfirmDialog';
 import { TokenDialog } from '../dialogs/TokenDialog';
 import { formatDate } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
+import { formatList } from '../i18n/textJoining';
 
 /**
  * The signed-in user's tokens and, for Project admins, every token limited to the Project.
@@ -140,7 +141,7 @@ function tokenColumns({ withOwner = false } = {}): ResponsiveTableColumn<TokenSu
       priority: 'secondary',
       header: text.scopes,
       className: 'mono',
-      render: (item) => item.scopes.join(', '),
+      render: (item) => formatList(item.scopes),
     },
     {
       key: 'expires',

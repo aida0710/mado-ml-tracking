@@ -1,10 +1,10 @@
-import { useLocale } from '../i18n/useLocale';
 import { useEffect, useId, useRef, type FocusEvent, type KeyboardEvent, type MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { usePopover } from '../hooks/usePopover';
 import { userMenuLinks } from '../layout/userMenuLinks';
 import { isListNavigationKey, moveActiveIndex } from '../lib/listNavigation';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 // Two letters fit the 27px avatar circle.

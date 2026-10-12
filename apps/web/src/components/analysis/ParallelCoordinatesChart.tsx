@@ -1,7 +1,5 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { text, textTemplates } from '../../i18n/catalog';
 import {
   canUseLogScale,
   computePositions,
@@ -20,6 +18,8 @@ import { useDocumentTheme } from '../../hooks/useDocumentTheme';
 import { useElementWidth } from '../../hooks/useElementWidth';
 import { narrowerThan } from '../../lib/breakpoints';
 import { useMediaQuery } from '../../lib/useMediaQuery';
+import { useLocale } from '../../i18n/useLocale';
+import { text, textTemplates } from '../../i18n/catalog';
 
 export interface ParallelCoordinatesChartProps {
   rows: ChartRunRow[];

@@ -1,9 +1,9 @@
-import { useLocale } from '../i18n/useLocale';
 import type { Experiment } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
 import { FormDialog } from '../components/FormDialog';
 import { getFieldValue } from '../lib/formValues';
 import { findExperimentNamed } from '../lib/experimentList';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

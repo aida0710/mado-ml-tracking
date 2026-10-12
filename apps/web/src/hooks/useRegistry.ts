@@ -1,6 +1,6 @@
-import { useLocale } from '../i18n/useLocale';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from './useQuery';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 interface RegistryItem {

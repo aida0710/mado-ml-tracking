@@ -1,10 +1,10 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { SweepObjective, SweepTrial, SweepTrialState } from '@mmt/contracts';
 import { formatNumber, formatValue } from '../../lib/format';
 import { sortTrials, trialParameterNames, type SweepTrialOrder } from '../../lib/sweepTrials';
 import { ResponsiveTable, type ResponsiveTableColumn } from '../ResponsiveTable';
+import { useLocale } from '../../i18n/useLocale';
 import { sweepTrialStateLabels } from '../../i18n/sweeps';
 import { text, textTemplates } from '../../i18n/catalog';
 import { formatNote } from '../../i18n/textJoining';
@@ -80,7 +80,7 @@ export function sweepTrialColumns({
     },
     {
       key: 'state',
-      header: text.sweepTrialState,
+      header: text.status,
       priority: 'primary',
       render: (trial) => <SweepTrialStateBadge trial={trial} />,
     },

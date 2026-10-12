@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { datasetFolderUploadPrefix } from '@mmt/contracts';
 import type { FolderUploadDiscardWithKeptFiles } from '../hooks/useDatasetFolderUploads';
 import { formatDate } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**

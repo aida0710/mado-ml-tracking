@@ -1,9 +1,9 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { Artifact, ArtifactReferences, Dataset } from '@mmt/contracts';
 import { folderOfUploadPath } from '../lib/datasetFolderResume';
 import { shortRunId } from '../lib/format';
 import { modelVersionPath } from '../lib/modelVersionPath';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { artifactsTextTemplates } from '../i18n/artifacts';
 

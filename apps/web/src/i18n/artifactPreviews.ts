@@ -1,5 +1,6 @@
 import * as english from './en/artifactPreviews';
 import { localized } from './localized';
+import { INTL_LOCALES } from './locale';
 // Previews of Artifacts: server-generated audio previews, the format of text previews, the table
 // view of CSV / TSV / jsonl, the head of large text, and the image size toggle.
 export const artifactPreviewsText = localized({
@@ -23,11 +24,11 @@ export const artifactPreviewsTextTemplates = localized({
     `先頭の${shownSize}だけを表示しています（全体 ${totalSize}）。`,
   previewTableTooLarge: (limitSize: string) => `${limitSize}を超えるため、表にはせずテキストで表示しています。`,
   tabularTableSize: (rowCount: number, columnCount: number) =>
-    `${rowCount.toLocaleString('ja-JP')}行 · ${columnCount.toLocaleString('ja-JP')}列`,
+    `${rowCount.toLocaleString(INTL_LOCALES.ja)}行 · ${columnCount.toLocaleString(INTL_LOCALES.ja)}列`,
   tabularTableTruncated: (shownRowCount: number, rowCount: number) =>
-    `全${rowCount.toLocaleString('ja-JP')}行のうち、先頭の${shownRowCount.toLocaleString('ja-JP')}行を表示しています。並べ替えはすべての行が対象です。`,
+    `全${rowCount.toLocaleString(INTL_LOCALES.ja)}行のうち、先頭の${shownRowCount.toLocaleString(INTL_LOCALES.ja)}行を表示しています。並べ替えはすべての行が対象です。`,
   tabularSortBy: (column: string) => `${column}で並べ替え`,
   imageSize: (width: number, height: number) =>
-    `${width.toLocaleString('ja-JP')} × ${height.toLocaleString('ja-JP')} px`,
+    `${width.toLocaleString(INTL_LOCALES.ja)} × ${height.toLocaleString(INTL_LOCALES.ja)} px`,
   audioVisibleRange: (start: string, end: string) => `表示範囲 ${start}–${end}`,
 }, english.artifactPreviewsTextTemplates);

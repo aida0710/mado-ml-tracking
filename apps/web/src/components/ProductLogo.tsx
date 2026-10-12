@@ -2,8 +2,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * 重なった3枚の層の印。上の層は強調色、下の2枚は文字と同じ色で、記録がバージョンとして積み重なる様子を表す。
- * 形はブラウザのタブのアイコン（public/favicon.svg）と同じ。色と大きさは styles/productLogo.css の .product-mark。
+ * The mark of three stacked layers: the top one in the accent color and the two below in the text
+ * color, records piling up as versions. The shape is the browser tab's icon (public/favicon.svg);
+ * its color and size are .product-mark in styles/productLogo.css.
  */
 export function TrackingMark() {
   useLocale();
@@ -17,9 +18,10 @@ export function TrackingMark() {
 }
 
 /**
- * 製品のロゴ。印と「mado ML Tracking」を並べる。mado の各製品と同じく、前の mado は通常の太さ、
- * 製品の部分は太字にする。上部バー・ドロワー・ログイン画面で同じ組み方にそろえる。
- * isNameVisuallyHidden では印だけを見せ、名前は読み上げとリンクの名前に残す（--bp-xs 未満の上部バー）。
+ * The product logo: the mark next to "mado ML Tracking". As in every mado product, the leading "mado"
+ * has the regular weight and the product part is bold, set alike in the top bar, the drawer and the
+ * login screen. With isNameVisuallyHidden only the mark shows, and the name stays for screen readers
+ * and the link's name (the top bar below --bp-xs).
  */
 export function ProductLogo({ isNameVisuallyHidden = false }: { isNameVisuallyHidden?: boolean }) {
   useLocale();

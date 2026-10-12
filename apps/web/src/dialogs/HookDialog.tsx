@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { Hook, HookCreated } from '@mmt/contracts';
 import type { HookCatalog } from '../types/hooks';
@@ -8,9 +7,10 @@ import { Dialog } from '../components/Dialog';
 import { HookFields } from '../components/HookFields';
 import { CopyableValue } from '../components/CopyableValue';
 import { ErrorNotice } from '../components/Feedback';
-import { text } from '../i18n/catalog';
 import { copyHookValues } from '../lib/hookInput';
 import { hookWebhookUrl } from '../lib/hookDisplay';
+import { useLocale } from '../i18n/useLocale';
+import { text } from '../i18n/catalog';
 import { hookWebhookSignatureHints, hooksTextTemplates } from '../i18n/hooks';
 
 /** One value of the new webhook, with a copy button. */

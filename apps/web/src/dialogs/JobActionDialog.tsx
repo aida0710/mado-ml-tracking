@@ -1,10 +1,10 @@
-import { useLocale } from '../i18n/useLocale';
 import { useRef } from 'react';
 import type { JobListItem } from '@mmt/contracts';
 import { executionApi } from '../api/execution';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { cancelEndsAtOnce } from '../lib/jobCancellation';
 import { shortId } from '../lib/jobDisplay';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { jobsTextTemplates } from '../i18n/jobs';
 

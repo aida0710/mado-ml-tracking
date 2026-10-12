@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import type { ProjectRole } from '@mmt/contracts';
@@ -21,8 +20,10 @@ import {
   effectiveAliasProtection,
   roleToRemoveAlias,
 } from '../lib/promotionEvidence';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { promotionTextTemplates } from '../i18n/promotion';
+import { formatList } from '../i18n/textJoining';
 
 export function ModelRegistryPanel({
   registry,
@@ -90,7 +91,7 @@ export function ModelRegistryPanel({
                   key: 'aliases',
                   priority: 'secondary',
                   header: text.alias,
-                  render: (item) => Object.keys(item.aliases).join(', ') || '—',
+                  render: (item) => formatList(Object.keys(item.aliases)) || '—',
                 },
               ]}
             />

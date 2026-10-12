@@ -1,7 +1,5 @@
 import type { TargetCheckResult, TargetDirectoryListingResult } from '@mmt/contracts';
 import type { FieldSuggestions } from '../types/form';
-import { directoryListingOutcomeNotes } from '../i18n/computerSetup';
-import { text, textTemplates } from '../i18n/catalog';
 import { formatBytes } from './format';
 import { detectedDirectories, detectedPythons } from './computerSetupValues';
 import {
@@ -11,6 +9,8 @@ import {
   mergeSuggestions,
   type PathCompletionKind,
 } from './targetPathCompletion';
+import { directoryListingOutcomeNotes } from '../i18n/computerSetup';
+import { text, textTemplates } from '../i18n/catalog';
 
 /** One directory a worker was asked to read, as the dialog remembers it. */
 export type DirectoryListingState =

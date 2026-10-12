@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useRef, useState } from 'react';
 import {
   ArrowDown,
@@ -30,8 +29,10 @@ import {
 } from '../../lib/chartPanelLayout';
 import { groupChartSeries, runChartSeries, seriesForMetricKeys } from '../../lib/metricSeries';
 import { chartValueUnit } from '../../lib/systemMetricKeys';
-import { text } from '../../i18n/catalog';
 import { detailsPopoverHandlers } from '../../lib/detailsPopover';
+import { useLocale } from '../../i18n/useLocale';
+import { text } from '../../i18n/catalog';
+import { formatList } from '../../i18n/textJoining';
 
 /** Height of one grid row; a panel spans PANEL_HEIGHTS rows. */
 export const CHART_ROW_HEIGHT_PX = 150;
@@ -40,9 +41,9 @@ const PANEL_CHROME_PX = 110;
 const DEFAULT_VIEW_SETTINGS: ChartPanelViewSettings = { xScale: 'linear', showRaw: true };
 
 const widthLabels: Record<PanelWidth, string> = {
-  get third() { return text.chartWidthThird },
-  get half() { return text.chartWidthHalf },
-  get full() { return text.chartWidthFull },
+  get third() { return text.chartWidthThird; },
+  get half() { return text.chartWidthHalf; },
+  get full() { return text.chartWidthFull; },
 };
 const getMoveButtons = (): Array<[PanelMoveDirection, string, typeof ArrowUp]> => [
   ['up', text.moveChartUp, ArrowUp],
@@ -112,7 +113,7 @@ export function ChartPanel({
   if (fetched) lastDrawn.current = { planId, data: fetched };
   const data =
     fetched ?? (query.loading && lastDrawn.current?.planId === planId ? lastDrawn.current.data : undefined);
-  const title = config.title || config.metricKeys.join(', ');
+  const title = config.title || formatList(config.metricKeys);
   const chartHeight = config.layout.h * CHART_ROW_HEIGHT_PX - PANEL_CHROME_PX;
   const currentWidth = (Object.keys(PANEL_WIDTHS) as PanelWidth[]).find(
     (width) => PANEL_WIDTHS[width] === config.layout.w,

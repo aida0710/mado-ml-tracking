@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import {
   useEffect,
   useId,
@@ -20,8 +19,9 @@ import { idsOfSharedNames } from '../lib/projectNameCollisions';
 import { formatDate } from '../lib/format';
 import { isListNavigationKey, moveActiveIndex } from '../lib/listNavigation';
 import { isComposingKey } from '../lib/imeComposition';
-import { text, textTemplates } from '../i18n/catalog';
 import { projectHomePath } from './navigationLinks';
+import { useLocale } from '../i18n/useLocale';
+import { text, textTemplates } from '../i18n/catalog';
 
 // Wide enough for a Project name, the lock, the "not a member" note and the role on one row even
 // when the sidebar is narrow.
@@ -166,7 +166,7 @@ export function ProjectSwitcher({
         <div
           ref={popoverRef}
           popover="manual"
-          className="project-switcher-popover"
+          className="anchored-popover project-switcher-popover"
           style={popoverStyle}
           onMouseDown={keepFocusOnPress}
         >

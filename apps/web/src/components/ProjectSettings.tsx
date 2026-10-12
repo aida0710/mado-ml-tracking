@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ArtifactBackend, ProjectPatch, ProjectVisibility } from '@mmt/contracts';
 import { administrationApi } from '../api/administration';
@@ -14,6 +13,7 @@ import {
   projectSettingsImpact,
   type ProjectSettingsImpact,
 } from '../lib/projectSettingsChanges';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 import { formatList } from '../i18n/textJoining';
 

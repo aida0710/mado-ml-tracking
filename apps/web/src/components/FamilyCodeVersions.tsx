@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { useFamilyCodeVersions } from '../hooks/useFamilyCodeVersions';
 import { formatCodeVersionName } from '../lib/catalogOptions';
 import { ErrorNotice } from './Feedback';
+import { useLocale } from '../i18n/useLocale';
 import { modelsText, modelsTextTemplates } from '../i18n/models';
 import { text } from '../i18n/catalog';
 

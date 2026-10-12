@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RequestError } from '../api/http';
-import { text } from '../i18n/catalog';
 import { explainProjectLifecycleConflict } from './projectLifecycleConflict';
+import { text } from '../i18n/catalog';
 
 const conflict = (code: string) => new RequestError({ status: 409, code, serverMessage: 'raw' });
 

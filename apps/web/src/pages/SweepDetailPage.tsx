@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link, useParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import type { MetricSeries, SweepTrial } from '@mmt/contracts';
@@ -17,6 +16,7 @@ import { SweepTrialsTable } from '../components/sweeps/SweepTrialsTable';
 import { MetricsChart } from '../components/charts/MetricsChart';
 import type { MetricsChartProps } from '../components/charts/chartProps';
 import { RunAnalysisPanel } from '../components/analysis/RunAnalysisPanel';
+import { useLocale } from '../i18n/useLocale';
 import { sweepAggregationLabels, sweepGoalLabels, sweepMethodLabels } from '../i18n/sweeps';
 import { text, textTemplates } from '../i18n/catalog';
 import { formatNote, joinLabels } from '../i18n/textJoining';

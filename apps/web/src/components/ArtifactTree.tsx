@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { Artifact, ArtifactTree as ArtifactTreeLevel } from '@mmt/contracts';
 import { Download, File, Folder } from 'lucide-react';
 import { ResponsiveTable } from './ResponsiveTable';
@@ -9,6 +8,7 @@ import {
   type ArtifactBrowserRow,
 } from '../lib/artifactTree';
 import { formatBytes } from '../lib/format';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { artifactsTextTemplates } from '../i18n/artifacts';
 
@@ -68,7 +68,7 @@ export function ArtifactTree({
         columns={[
           {
             key: 'name',
-            header: text.artifactName,
+            header: text.name,
             priority: 'primary',
             className: 'artifact-tree-name',
             render: (row) =>

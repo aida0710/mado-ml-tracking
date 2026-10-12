@@ -1,10 +1,10 @@
-import { useLocale } from '../../i18n/useLocale';
 import type { NotificationDelivery } from '@mmt/contracts';
 import type { NotificationSettingsState } from '../../hooks/useNotificationSettings';
 import { formatDate } from '../../lib/format';
 import { describeNotificationError } from '../../lib/notificationErrorText';
 import { ResponsiveTable } from '../ResponsiveTable';
 import { Resource } from '../Feedback';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 import { notificationDeliveryStatusLabels } from '../../i18n/notifications';
 

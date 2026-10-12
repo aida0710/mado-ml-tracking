@@ -1,9 +1,9 @@
 import type { ChartXAxis } from '@mmt/contracts';
 import { metricSeriesApi } from '../api/metricSeries';
 import type { MetricsChartMarker } from '../components/charts/chartProps';
-import { textTemplates } from '../i18n/catalog';
 import { resumeMarkers } from '../lib/metricSeries';
 import { useQuery, type QueryState } from './useQuery';
+import { textTemplates } from '../i18n/catalog';
 
 // resume-events is one request per Run, so markers are drawn only for charts of a few Runs.
 export const MAX_RESUME_MARKER_RUNS = 10;

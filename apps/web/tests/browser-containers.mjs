@@ -201,7 +201,7 @@ try {
   await page
     .locator('tr')
     .filter({ hasText: 'Container target' })
-    .getByText('Python, Docker, Singularity, Apptainer', { exact: true })
+    .getByText('Python、Docker、Singularity、Apptainer', { exact: true })
     .waitFor();
   await page.goto(projectBase + '/jobs');
   await page.getByRole('button', { name: 'ジョブを起動', exact: true }).click();

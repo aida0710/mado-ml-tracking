@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import { RotateCcw } from 'lucide-react';
 import type { UploadItem } from '../hooks/useArtifactUploadQueue';
 import { UploadQueueRow } from './UploadQueueRow';
+import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**

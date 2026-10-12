@@ -1,9 +1,9 @@
-import { useLocale } from '../../i18n/useLocale';
 import { sampleTextDiff } from '../../lib/evaluationSamples';
 import { formatValue } from '../../lib/format';
-import { artifactsTextTemplates } from '../../i18n/artifacts';
 import { AudioArtifactViewer } from './AudioArtifactViewer';
 import { SampleAudioCell, SampleComparedText, type EvaluationSampleListProps } from './EvaluationSampleCells';
+import { useLocale } from '../../i18n/useLocale';
+import { artifactsTextTemplates } from '../../i18n/artifacts';
 
 /**
  * A page of evaluation samples as one card each, for phones: five columns do not fit, and a

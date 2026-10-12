@@ -1,7 +1,7 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useMemo, type ReactNode } from 'react';
 import { MEDIA_COMPARE_MAX_STEPS } from '@mmt/contracts';
 import { stepCoverage, withStepToggled } from '../../lib/mediaCompareSteps';
+import { useLocale } from '../../i18n/useLocale';
 import { textTemplates } from '../../i18n/catalog';
 
 /**

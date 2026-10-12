@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ModelAutomationRule } from '@mmt/contracts';
 import type { AutomationCatalog } from '../types/modelAutomation';
@@ -12,6 +11,7 @@ import {
   createAutomationValuesFromRule,
   downstreamRules,
 } from '../lib/modelAutomationInput';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { automationText } from '../i18n/automation';
 

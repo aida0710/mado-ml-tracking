@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import type { Sweep } from '@mmt/contracts';
 import { tasksApi } from '../../api/tasks';
 import { useProjectTargets } from '../../hooks/useProjectTargets';
@@ -7,6 +6,7 @@ import { useQuery } from '../../hooks/useQuery';
 import { WorkerMissingNotice } from '../WorkerCoverage';
 import { isSweepActive } from '../../lib/sweepTrials';
 import { jobWorkerCoverage } from '../../lib/workerCoverage';
+import { useLocale } from '../../i18n/useLocale';
 import { workerCoverageText } from '../../i18n/workerCoverage';
 
 /**

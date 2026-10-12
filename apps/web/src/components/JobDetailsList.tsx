@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { ComputeTarget, Hook, JobListItem } from '@mmt/contracts';
@@ -14,6 +13,7 @@ import {
   jobPhaseText,
 } from '../lib/jobDisplay';
 import { isSiteTarget } from '../lib/siteExecutionInput';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { jobEndReasonLabels } from '../i18n/jobs';
 

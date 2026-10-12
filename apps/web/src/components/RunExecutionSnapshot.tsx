@@ -1,8 +1,8 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import type { Artifact, Run } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
 import { DetailsList, JsonDetails } from './JsonDetails';
+import { useLocale } from '../i18n/useLocale';
 import { runtimeLabels } from '../i18n/runtime';
 import { text } from '../i18n/catalog';
 

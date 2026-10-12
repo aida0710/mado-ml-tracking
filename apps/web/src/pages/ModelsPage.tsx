@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import { Plus, RefreshCw } from 'lucide-react';
 import { registryApi } from '../api/registry';
@@ -17,6 +16,7 @@ import { PromotionPolicyPanel } from '../components/PromotionPolicyPanel';
 import { AliasProtectionSettings } from '../components/AliasProtectionSettings';
 import { PromotionDialog } from '../dialogs/PromotionDialog';
 import { Tabs } from '../components/Tabs';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { modelsTextTemplates } from '../i18n/models';
 

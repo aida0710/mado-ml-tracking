@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { Model, ModelVersion } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
 import { useModelVersionForm } from '../hooks/useModelVersionForm';
@@ -15,6 +14,7 @@ import { explainMissingCodeCandidates } from '../lib/codeCandidateReason';
 import { toggleValue } from '../lib/formValues';
 import { formatDate } from '../lib/format';
 import { getDefaultCodeCandidates } from '../lib/taskInput';
+import { useLocale } from '../i18n/useLocale';
 import { modelsTextTemplates } from '../i18n/models';
 import { text } from '../i18n/catalog';
 

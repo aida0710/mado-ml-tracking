@@ -1,10 +1,10 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { CodeVersion } from '@mmt/contracts';
 import { useCodeVersionUsage } from '../hooks/useCodeVersionUsage';
 import { DetailsList } from './JsonDetails';
 import { ErrorNotice } from './Feedback';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { modelsText } from '../i18n/models';
 

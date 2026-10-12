@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { Plus, RefreshCw } from 'lucide-react';
 import type { AutomationExecutionFilter } from '../api/automation';
 import { useAuth } from '../hooks/useAuth';
@@ -14,6 +13,7 @@ import { AutomationHistoryFilters } from './AutomationHistoryFilters';
 import { AutomationRuleDetails } from './AutomationRuleDetails';
 import { QueryDialog } from './QueryDialog';
 import { Resource, ErrorNotice } from './Feedback';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { automationText } from '../i18n/automation';
 

@@ -1,9 +1,9 @@
-import { useLocale } from '../i18n/useLocale';
 import { Link } from 'react-router-dom';
 import { computerDetailsPath } from '../layout/settingsSections';
 import { formatDateTimeSeconds } from '../lib/format';
 import type { WorkerCoverage } from '../lib/workerCoverage';
 import { workerCoverageLabel } from '../lib/workerCoverageDisplay';
+import { useLocale } from '../i18n/useLocale';
 import { workerCoverageText, workerCoverageTextTemplates } from '../i18n/workerCoverage';
 import { joinSentences } from '../i18n/textJoining';
 

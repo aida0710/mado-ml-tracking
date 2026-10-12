@@ -1,6 +1,6 @@
 import { RequestError } from '../api/http';
-import { text } from '../i18n/catalog';
 import { formatErrorMessage } from './errorMessage';
+import { text } from '../i18n/catalog';
 
 // Failures the sign-in screens do not name themselves read like any other failure, in the display language.
 function rateLimitOr(error: unknown, fallback: (error: RequestError) => string | undefined) {

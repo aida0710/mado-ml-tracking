@@ -1,10 +1,10 @@
-import { useLocale } from '../../i18n/useLocale';
 import { Fragment } from 'react';
 import { AudioLines } from 'lucide-react';
 import { trackingApi } from '../../api/tracking';
 import type { SampleAudio } from '../../lib/evaluationSampleAudio';
 import type { EvaluationSample } from '../../lib/evaluationSamples';
 import type { TextDiffSegment } from '../../lib/textDiff';
+import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 import { artifactReferenceErrorLabels } from '../../i18n/artifacts';
 
@@ -22,9 +22,9 @@ export interface EvaluationSampleListProps {
 }
 
 const sampleAudioMessages = {
-  get lookup_error() { return text.evaluationAudioLookupError },
-  get run_unavailable() { return text.evaluationAudioRunUnavailable },
-  get not_found() { return text.evaluationAudioNotFound },
+  get lookup_error() { return text.evaluationAudioLookupError; },
+  get run_unavailable() { return text.evaluationAudioRunUnavailable; },
+  get not_found() { return text.evaluationAudioNotFound; },
 } as const;
 
 /** The player of the sample's audio and the button that opens its waveform, or why there is none. */

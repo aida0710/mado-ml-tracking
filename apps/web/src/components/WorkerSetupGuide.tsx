@@ -1,7 +1,7 @@
-import { useLocale } from '../i18n/useLocale';
 import { useId } from 'react';
 import { CodeSnippet } from './CodeSnippet';
 import { buildWorkerSetupSnippets } from '../lib/workerSetupSnippets';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**

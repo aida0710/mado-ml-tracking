@@ -1,4 +1,3 @@
-import { useLocale } from '../../i18n/useLocale';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -14,6 +13,7 @@ import { Resource } from '../Feedback';
 import { SettingsPageHeader } from '../SettingsPageHeader';
 import { AdminProjectsTable, type AdminProjectAction } from './AdminProjectsTable';
 import { ProjectPurgeDialog } from './ProjectPurgeDialog';
+import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 interface PendingAction {

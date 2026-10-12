@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ProjectGroupBinding } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
@@ -11,6 +10,7 @@ import { AccessGrantActions } from './AccessGrantActions';
 import { GroupBindingDialog } from '../dialogs/GroupBindingDialog';
 import { formatDate } from '../lib/format';
 import { findLastProjectAdminGrant, groupsWithMembers } from '../lib/projectAdminGrants';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { projectAccessTextTemplates } from '../i18n/projectAccess';
 

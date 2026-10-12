@@ -1,5 +1,6 @@
 import * as english from './en/jobs';
 import { localized } from './localized';
+import { INTL_LOCALES } from './locale';
 import {
   MAX_JOB_ARRAY_SIZE,
   MAX_JOB_GPU_COUNT,
@@ -122,10 +123,10 @@ export const jobsTextTemplates = localized({
   jobActionTarget: (job: { runName: string; createdByName: string; targetName: string }) =>
     `Run「${job.runName}」　作成者: ${job.createdByName}　実行先: ${job.targetName}`,
   logsShowingLatest: (shown: number, total: number) =>
-    `最新の${shown.toLocaleString('ja-JP')}行を表示しています（全${total.toLocaleString('ja-JP')}行）。検索とレベルの絞り込みも、この範囲が対象です。ダウンロードはすべての行です。`,
-  logsMatchCount: (count: number) => `${count.toLocaleString('ja-JP')}行が一致`,
+    `最新の${shown.toLocaleString(INTL_LOCALES.ja)}行を表示しています（全${total.toLocaleString(INTL_LOCALES.ja)}行）。検索とレベルの絞り込みも、この範囲が対象です。ダウンロードはすべての行です。`,
+  logsMatchCount: (count: number) => `${count.toLocaleString(INTL_LOCALES.ja)}行が一致`,
   // One read returns at most this many lines; older ones are in the download.
-  logsReadLatestLines: (count: number) => `最新の${count.toLocaleString('ja-JP')}行まで読み込む`,
+  logsReadLatestLines: (count: number) => `最新の${count.toLocaleString(INTL_LOCALES.ja)}行まで読み込む`,
   attempt: (attempt: number, maxAttempts: number) => `${attempt} / ${maxAttempts}`,
   // A person retried past maxAttempts, which bounds the automatic retries only.
   attemptPastLimit: (attempt: number, maxAttempts: number) =>

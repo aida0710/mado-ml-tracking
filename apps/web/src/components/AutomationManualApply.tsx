@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import { useState } from 'react';
 import type { ModelAutomationRule } from '@mmt/contracts';
 import type { ExecutionCatalog } from '../types/executionCatalog';
@@ -15,8 +14,9 @@ import {
   manualUpstreamRunOptions,
   manualVersionOptions,
 } from '../lib/automationManualExecution';
-import { automationText } from '../i18n/automation';
 import { LocalizedError } from '../lib/localizedError';
+import { useLocale } from '../i18n/useLocale';
+import { automationText } from '../i18n/automation';
 
 /** Lets a Project admin run a rule on a version (or upstream Run) registered before the rule. */
 export function AutomationManualApply({

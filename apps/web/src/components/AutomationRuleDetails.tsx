@@ -1,4 +1,3 @@
-import { useLocale } from '../i18n/useLocale';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { ModelAutomationRule } from '@mmt/contracts';
@@ -17,9 +16,11 @@ import { buildCatalogOptions } from '../lib/catalogOptions';
 import { downstreamRules } from '../lib/modelAutomationInput';
 import { formatDate } from '../lib/format';
 import { creatorName } from '../lib/creatorName';
+import { useComputerNames } from '../hooks/useComputerNames';
+import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { automationText, automationTriggerLabels } from '../i18n/automation';
-import { useComputerNames } from '../hooks/useComputerNames';
+import { formatList } from '../i18n/textJoining';
 
 export function AutomationRuleDetails({
   rule,
@@ -94,7 +95,7 @@ export function AutomationRuleDetails({
               automationText.noDownstreamRules
             ),
           ],
-          [text.automationModelFamilies, rule.modelFamilies.join(', ')],
+          [text.automationModelFamilies, formatList(rule.modelFamilies)],
           [text.kind, text[rule.kind]],
           [
             text.experiments,
@@ -114,7 +115,7 @@ export function AutomationRuleDetails({
             text.target,
             computerName(rule.targetId),
           ],
-          [text.gpuIds, rule.gpuIds.join(', ') || text.cpuOnly],
+          [text.gpuIds, formatList(rule.gpuIds) || text.cpuOnly],
           [
             text.inputDatasets,
             rule.inputDatasetVersionIds.length
