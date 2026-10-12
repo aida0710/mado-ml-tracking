@@ -5,9 +5,9 @@ description: A Markdown description of each Run's purpose and findings, and comm
 
 # Notes and Comments
 
-![The details tab of a Run, with the description on the left and Run details on the right](/images/tracking-notes.png)
+![The details tab of a Run, with the description on the left and Run details on the right](/images/en/tracking-notes.png)
 
-A Run's 詳細 (Details) tab has a description and comments. Use the description for the purpose, conditions, and findings of the experiment, and comments for discussion between members.
+A Run's **Details** tab has a description and comments. Use the description for the purpose, conditions, and findings of the experiment, and comments for discussion between members.
 
 ## When it helps
 
@@ -17,9 +17,9 @@ A Run's 詳細 (Details) tab has a description and comments. Use the description
 
 ## Write a description
 
-1. Open the Run and choose the 詳細 tab
-2. Choose 説明を編集 (Edit description)
-3. Write in the 編集 (Write) tab, check the result in プレビュー (Preview), and save
+1. Open the Run and choose the **Details** tab
+2. Choose **Edit description**
+3. Write in the **Edit** tab, check the result in **Preview**, and save
 
 - Markdown is supported, including tables, checklists, and code
 - Up to 8,000 characters; the remaining count is shown below the editor
@@ -32,13 +32,13 @@ The description is stored in the same place as MLflow's Run description (the `ml
 
 ## Comment
 
-![Run comments with a reply and a deleted comment](/images/tracking-comments.png)
+![Run comments with a reply and a deleted comment](/images/en/tracking-comments.png)
 
-In コメント (Comments) at the bottom of the 詳細 tab, type in the comment box and choose 投稿 (Post). Comments support Markdown and up to 20,000 characters.
+In **Comments** at the bottom of the **Details** tab, type in the comment box and choose **Post**. Comments support Markdown and up to 20,000 characters.
 
-- 返信 (Reply) adds to that comment's thread. Replies are one level deep; a reply to a reply goes into the same thread
-- Edit your own comments with 編集 (Edit); edited comments show 編集済み (edited)
-- Delete your own comments with 削除 (Delete); Project admins can delete anyone's. A deleted comment stays in the thread as 削除されました (deleted), so the replies keep their place
+- **Reply** adds to that comment's thread. Replies are one level deep; a reply to a reply goes into the same thread
+- Edit your own comments with **Edit**; edited comments show **Edited**
+- Delete your own comments with **Delete**; Project admins can delete anyone's. A deleted comment stays in the thread as **Deleted**, so the replies keep their place
 
 | Action | Required role |
 | --- | --- |

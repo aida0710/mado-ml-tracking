@@ -9,7 +9,7 @@ mado ML Tracking is a web app for managing machine learning experiments and mode
 
 You can record with the official MLflow 3 SDK as is, and the app also has its own Python SDK and API. Large files such as audio and weights go to a filesystem or S3-compatible storage.
 
-![The Runs list showing the Runs of one experiment](/images/guide-runs.png)
+![The Runs list showing the Runs of one experiment](/images/en/guide-runs.png)
 
 ## When it fits
 
@@ -39,7 +39,7 @@ The steps from registering the model a training Run produced to moving an alias 
 
 The model version page shows the chain from the training Run to the version and the inference and evaluation Runs, along with the results of the automation.
 
-![The chain of training Run, model version, inference Run, and evaluation Run, with the automation history](/images/guide-model-version-automation.png)
+![The chain of training Run, model version, inference Run, and evaluation Run, with the automation history](/images/en/guide-model-version-automation.png)
 
 ## What it manages
 
@@ -62,6 +62,14 @@ mado ML Tracking runs as an app separate from Mado, with its own database. The t
 - Show Mado's storage capacity metrics on screen
 
 Sign-in works the same way as in Mado. Authentik groups decide who can sign in and who is a global administrator, and local accounts can be used alongside SSO or instead of it.
+
+## Display language
+
+The screens are available in Japanese and English. To switch, press the globe button (**Language**) at the right of the top bar and choose **日本語** or **English**. On the sign-in screen and on the screen that asks for a new password, the same button is at the right end of the row with the logo; on the error screen shown when a screen fails to display, it is above the message.
+
+The choice is saved in the browser and applied to the other tabs open in the same browser. Until you choose, the browser's preferred language is used. When the browser reports no language, or none of its preferred languages is Japanese or English, the screens are in English.
+
+Screen names such as **Experiments**, **Runs**, **Models**, and **Jobs** stay in English on the Japanese screens as well. Some messages returned by the server, such as error messages, may appear in Japanese even on the English screens.
 
 ## What it does not do
 

@@ -13,24 +13,24 @@ The audit log is kept indefinitely and cannot be deleted or changed. Neither the
 
 | Place | Who | Scope |
 | --- | --- | --- |
-| **監査ログ** (Audit log) in **プロジェクト設定** (Project settings) | Project Admins | Records of that Project |
-| **全体管理** (Global administration) → **監査ログ** | Global administrators | All Projects and records outside Projects (logins, user management, storage, notification channels, and so on), including the records of permanently deleted Projects |
+| **Audit log** in **Project settings** | Project Admins | Records of that Project |
+| **Administration** → **Audit log** | Global administrators | All Projects and records outside Projects (logins, user management, storage, notification channels, and so on), including the records of permanently deleted Projects |
 
-![A Project's audit log](/images/admin-audit.png)
+![A Project's audit log](/images/en/admin-audit.png)
 
-Records are listed newest first. Load older ones with **さらに読む** (Load more) at the bottom.
+Records are listed newest first. Load older ones with **Load more** at the bottom.
 
-- すべての結果 (All outcomes) above the list narrows it to refusals (拒否) or failures (失敗). A refused or failed record is also marked in red next to its action, so it shows in the row on a phone too.
-- **全体管理** → **監査ログ** hides sign-ins, sign-outs, and the identity provider's syncs by default. Clear ログイン・ログアウトの記録を隠す (Hide sign-in records) to show them.
+- **All outcomes** above the list narrows it to refusals (**Denied**) or failures (**Failed**). A refused or failed record is also marked in red next to its action, so it shows in the row on a phone too.
+- **Administration** → **Audit log** hides sign-ins, sign-outs, and the identity provider's syncs by default. Clear **Hide sign-in and sign-out events** to show them.
 
 | Column | Content |
 | --- | --- |
-| 日時 (Time) | When it was recorded |
-| 操作者 (Performed by) | The display name of the user. Operations with an API token show the token owner's name followed by "(API token)". Records not made by a user, such as failed logins and refused SSO logins, show システム (System) |
-| 操作 (Action) | The kind of operation, such as issuing an API token |
-| 結果 (Outcome) | 成功 (success), 拒否 (denied), or 失敗 (failed) |
-| 対象 (Resource) | The target, such as `api_token/<ID>` |
-| 詳細 (Details) | Operation-specific details: roles before and after, scopes, the error code of a refusal, and so on |
+| **Date and time** | When it was recorded |
+| **Performed by** | The display name of the user. Operations with an API token show the token owner's name followed by "(API token)". Records not made by a user, such as failed logins and refused SSO logins, show **System** |
+| **Actions** | The kind of operation, such as issuing an API token |
+| **Outcome** | **Success**, **Denied**, or **Failed** |
+| **Resource** | The target, such as `api_token/<ID>` |
+| **Details** | Operation-specific details: roles before and after, scopes, the error code of a refusal, and so on |
 
 ## What is and is not recorded
 
@@ -92,4 +92,4 @@ The global records (`GET /api/audit-events`) can be read only by a global admini
 https://tracking.example.com/api/audit-events?action=auth.oidc.denied
 ```
 
-**全体管理** → **監査ログ** on the screen has no filters yet. Use this API to filter by action or outcome.
+**Administration** → **Audit log** on the screen has no filters yet. Use this API to filter by action or outcome.

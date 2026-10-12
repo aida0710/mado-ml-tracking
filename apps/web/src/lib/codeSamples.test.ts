@@ -2,8 +2,9 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { CODE_SAMPLES } from './codeSamples';
+import { setLocale } from '../i18n/locale';
 
 describe('コード編集のPythonサンプル', () => {
   for (const sample of CODE_SAMPLES) {
@@ -22,4 +23,16 @@ describe('コード編集のPythonサンプル', () => {
       } finally { rmSync(directory, { recursive: true, force: true }); }
     });
   }
+});
+
+describe('サンプルのコメントの言語', () => {
+  afterEach(() => setLocale('ja'));
+
+  it('追加したときの表示言語でコメントを書く', () => {
+    const training = CODE_SAMPLES.find((sample) => sample.id === 'training')!;
+    setLocale('en');
+    expect(training.files['main.py']).not.toMatch(/[ぁ-んァ-ン一-龯]/);
+    setLocale('ja');
+    expect(training.files['main.py']).toContain('# Taskの出力モデル設定');
+  });
 });

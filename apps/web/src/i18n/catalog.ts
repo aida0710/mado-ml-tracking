@@ -143,6 +143,7 @@ export const text = mergeTranslations([
     allExperiments: 'すべての実験',
     newProject: 'プロジェクトを作成',
     project: 'プロジェクト',
+    projectList: 'プロジェクト',
     name: '名前',
     description: '説明',
     create: '作成',

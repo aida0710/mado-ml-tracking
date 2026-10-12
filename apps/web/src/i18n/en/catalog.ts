@@ -140,6 +140,7 @@ export const text = {
   allExperiments: "All experiments",
   newProject: "Create project",
   project: "Project",
+  projectList: 'Projects',
   name: "Name",
   description: "Description",
   create: "Create",

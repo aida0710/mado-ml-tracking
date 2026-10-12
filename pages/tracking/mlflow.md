@@ -81,7 +81,7 @@ export MLFLOW_TRACKING_PASSWORD
 - ローカルアカウントのパスワードを入れても接続できません
 - 失効・期限・scope・Projectの役割の確認は、`MLFLOW_TRACKING_TOKEN`のときと同じです
 
-設定例は、画面の［Pythonの例・Basic認証］を開くと表示されます。
+設定例は、画面の［Service Accountのtoken・Basic認証］を開くと表示されます。
 
 ## RunとArtifactを記録する
 

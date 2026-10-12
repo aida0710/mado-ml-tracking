@@ -1,11 +1,12 @@
 import { RequestError } from '../api/http';
 import { text } from '../i18n/catalog';
+import { formatErrorMessage } from './errorMessage';
 
+// Failures the sign-in screens do not name themselves read like any other failure, in the display language.
 function rateLimitOr(error: unknown, fallback: (error: RequestError) => string | undefined) {
-  if (!(error instanceof RequestError))
-    return error instanceof Error ? error.message : String(error);
+  if (!(error instanceof RequestError)) return formatErrorMessage(error);
   if (error.status === 429) return text.loginRateLimited;
-  return fallback(error) ?? error.message;
+  return fallback(error) ?? formatErrorMessage(error);
 }
 
 // 401 means wrong credentials and 429 means waiting is required; the screen tells them apart.

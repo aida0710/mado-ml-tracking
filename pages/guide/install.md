@@ -179,7 +179,7 @@ tracking.example.com {
 
 MLflowの接続先はProjectごとに分かれます。［プロジェクト設定］の「SDK・MLflow 3から接続」の［MLflow 3］に、そのProjectのURLが表示されます。
 
-## ホストのディレクトリをArtifactの保存先に使う
+## ホストのディレクトリをArtifactの保存先に使う {#host-directory-storage}
 
 composeの`api`はコンテナの中で動くので、ホストのディレクトリはそのままでは見えません。既定では、Artifactは`artifacts`というDockerのvolumeに保存されます。大きなディスクや共有ストレージ（NFS、Lustreなど）に置きたいときは、`compose.filesystem-storage.yml`を使います。`MMT_FILESYSTEM_STORAGE_DIR`に指定したホストのディレクトリが、`api`と`preview`のコンテナの中にも同じパスで見えるようになります。
 

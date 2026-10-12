@@ -5,13 +5,11 @@ description: Send large Artifacts in parts and resume after an interruption, fro
 
 # Large file uploads
 
-![Upload Artifact dialog](/images/data-uploads-dialog.png)
+![Upload Artifact dialog](/images/en/data-uploads-dialog.png)
 
 Sending a multi-gigabyte checkpoint or audio file in a single request means starting over whenever the connection drops. mado ML Tracking splits large files into fixed-size parts, and after an interruption it skips the parts the server already has and continues.
 
 The browser, the Python SDK, and the worker do this automatically based on file size. The MLflow SDK can do the same with MLflow multipart upload.
-
-The web UI is in Japanese. This page shows UI labels in Japanese followed by an English translation.
 
 ## When to use it
 
@@ -35,28 +33,28 @@ When all parts have arrived, the API computes the SHA-256 and size of the whole 
 An unfinished upload expires 7 days after it started. Expired uploads and their parts are removed automatically.
 
 ::: warning
-If **Multipart uploadを使う** (Use multipart upload) is off for the storage, uploads cannot be split. See [Storage settings](/en/data/storage#storage-without-multipart-support).
+If **Use multipart uploads (otherwise limited to 5GiB per file)** is off for the storage, uploads cannot be split. See [Storage settings](/en/data/storage#storage-without-multipart-support).
 :::
 
 ## Upload from the browser
 
-1. In the Run's **Artifacts** tab, click **Artifactをアップロード** (Upload Artifact). For files that do not belong to a Run, use the upload on the **Models** or **Code** page.
-2. Click **ファイルを選ぶ** (Choose files) or **フォルダを選ぶ** (Choose folder), or drop files or folders on the dialog.
-3. For one file, enter **保存パス** (Saved path). For several files, enter **保存先フォルダ** (Destination folder). When a folder is open in the **Artifacts** tab, the dialog starts in it. A chosen folder keeps its structure, including the chosen folder's own name, under the destination folder. For several files, the first three saved paths are shown under the field.
-4. Click **アップロードを開始** (Start upload).
+1. In the Run's **Artifacts** tab, click **Upload artifact**. For files that do not belong to a Run, use the upload on the **Models** or **Code** page.
+2. Click **Choose files** or **Choose folder**, or drop files or folders on the dialog.
+3. For one file, enter **Storage path**. For several files, enter **Destination folder**. When a folder is open in the **Artifacts** tab, the dialog starts in it. A chosen folder keeps its structure, including the chosen folder's own name, under the destination folder. For several files, the first three saved paths are shown under the field.
+4. Click **Start upload**.
 
-For one file, when a file is already stored at the same saved path, the dialog says that sending it adds a new version and the current one stays under previous versions in **詳細** (Details). When the content is the same too (checked for files up to 64 MiB), it adds that the file does not need to be sent.
+For one file, when a file is already stored at the same saved path, the dialog says that sending it adds a new version and the current one stays under previous versions in **Details**. When the content is the same too (checked for files up to 64 MiB), it adds that the file does not need to be sent.
 
-アップロードの進み具合 (Upload progress) shows the state, speed, and remaining time of each file (such as 残り 1分5秒, 1 min 5 s left).
+**Upload progress** shows the state, speed, and remaining time of each file (such as 1m 5s remaining).
 
 | Action | What it does |
 | --- | --- |
-| 一時停止 (Pause) | Stops sending new parts. Not shown for files under 8 MiB |
-| 再開 (Resume) | Continues a paused or failed file where it stopped |
-| 取消 (Cancel) | Cancels the upload and deletes the parts the server received |
-| 失敗したファイルを再送 (Resend failed files) | Sends all failed files again |
+| **Pause** | Stops sending new parts. Not shown for files under 8 MiB |
+| **Resume** | Continues a paused or failed file where it stopped |
+| **Cancel** | Cancels the upload and deletes the parts the server received |
+| **Retry failed files** | Sends all failed files again |
 
-A failed part is retried up to 5 times, waiting from 1 second up to 30 seconds between tries. While retrying, the row shows "通信が切れたため再試行しています（2回目 / 最大5回）" (retrying after a dropped connection, attempt 2 of 5) instead of the speed and time left. When all five tries lose the connection, the file stops with "通信が切れました。回線を確かめてから［再開］を押すと、続きから送ります。" (The connection was lost. Check it and click Resume to continue); click **再開** (Resume) once the network is back. When a file finishes, `artifact://<Artifact ID>` is shown; copy it to use when registering a model version, for example.
+A failed part is retried up to 5 times, waiting from 1 second up to 30 seconds between tries. While retrying, the row shows "Connection lost. Retrying (attempt 2 of 5)" instead of the speed and time left. When all five tries lose the connection, the file stops with "The connection was lost. Check your network, then press “Resume” to continue where it stopped."; click **Resume** once the network is back. When a file finishes, `artifact://<Artifact ID>` is shown; copy it to use when registering a model version, for example.
 
 The dialog cannot be closed while sending. Pause or cancel first.
 
@@ -64,24 +62,24 @@ The dialog cannot be closed while sending. Pause or cancel first.
 
 The server keeps the received parts even if you reload or close the tab.
 
-1. Open **Artifactをアップロード** (Upload Artifact) on the same Run.
-2. 途中のアップロード (Unfinished uploads) lists each upload with the amount already sent and its expiry. Uploads started in this browser also show the original file name.
-3. Click **続きを送る** (Continue) on the row and choose the same file.
+1. Open **Upload artifact** on the same Run.
+2. **Incomplete uploads** lists each upload with the amount already sent and its expiry. Uploads started in this browser also show the original file name.
+3. Click **Continue upload** on the row and choose the same file.
 
-The upload keeps its earlier saved path, so you do not type it again. Choosing the same file with **ファイルを選ぶ** (Choose files) also switches the saved path to the earlier one and continues.
+The upload keeps its earlier saved path, so you do not type it again. Choosing the same file with **Choose files** also switches the saved path to the earlier one and continues.
 
-The file is recognized by the content (SHA-256) of the parts already sent. A copy with another name or modification time continues if its content is the same; a file of another size or content is never continued. Click **破棄** (Discard) to delete an upload you do not want to continue.
+The file is recognized by the content (SHA-256) of the parts already sent. A copy with another name or modification time continues if its content is the same; a file of another size or content is never continued. Click **Discard** to delete an upload you do not want to continue.
 
 When an upload cannot continue, its row shows why and what to do next.
 
 | Shown | What to do |
 |---|---|
-| Expired | **最初から送る** (Start over) sends the file again from the first byte to the same saved path |
-| No longer on the server (discarded, or removed after expiry) | **最初から送る** (Start over) sends the file again to the same saved path |
+| Expired | **Start over** sends the file again from the first byte to the same saved path |
+| No longer on the server (discarded, or removed after expiry) | **Start over** sends the file again to the same saved path |
 | Permission lost | Ask a Project administrator for Editor or higher. If access returns before the expiry, the upload continues |
 | Different size or content | Choose the same file again |
 
-When a dataset's **フォルダから作る** (Create from folder) stopped midway, open it again: the upload is listed under **途中のフォルダのアップロード** (Unfinished folder uploads). See [Datasets](/en/data/datasets) for continuing or discarding it.
+When a dataset's **Create from a folder** stopped midway, open it again: the upload is listed under **Incomplete folder uploads**. See [Datasets](/en/data/datasets) for continuing or discarding it.
 
 ## Upload from the Python SDK
 

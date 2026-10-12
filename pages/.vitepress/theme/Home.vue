@@ -7,7 +7,7 @@ import { homeContent } from './homeContent'
 const repository = 'https://github.com/aida0710/mado-ml-tracking'
 const { lang } = useData()
 const content = computed(() => homeContent(lang.value))
-const imagePath = (name: string) => `/images/${name}.png`
+const imagePath = (name: string) => `${content.value.imageDirectory}/${name}.png`
 </script>
 
 <template>
