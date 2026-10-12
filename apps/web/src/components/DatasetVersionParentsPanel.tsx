@@ -62,7 +62,12 @@ export function DatasetVersionParentsPanel({
                 {
                   key: 'evidence',
                   label: datasetParentsText.evidenceColumn,
-                  render: (addition) => <JsonDetails value={addition.evidence} />,
+                  render: (addition) => (
+                    <details>
+                      <summary>{datasetParentsText.evidenceColumn}</summary>
+                      <JsonDetails value={addition.evidence} />
+                    </details>
+                  ),
                 },
                 {
                   key: 'by',
