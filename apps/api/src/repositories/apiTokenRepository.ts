@@ -18,7 +18,7 @@ export interface TokenInsert {
   tokenHash: string;
   tokenPrefix: string;
   scopes: string[];
-  expiresAt: Date;
+  expiresAt: Date | null;
 }
 
 export interface TokenOwnership {

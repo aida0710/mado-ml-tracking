@@ -56,5 +56,6 @@ export interface ServiceAccountUpdate {
 export interface ServiceAccountTokenCreate {
   name: string;
   scopes: TokenScope[];
+  /** Explicit null never expires; omission uses the server's default lifetime. */
   expiresAt?: string | null;
 }

@@ -44,8 +44,12 @@ const DEFAULT_UPLOAD_IDLE_TIMEOUT_MS = 120_000;
 // MLflow's mpu/complete is synchronous. The wait stays below the SDK's default 120-second request
 // timeout so a slow verification answers 503 instead of the SDK giving up and aborting.
 const DEFAULT_UPLOAD_FINALIZE_WAIT_MS = 100_000;
-// New API tokens expire within a year; it is also the expiry of a token issued without one.
-const DEFAULT_TOKEN_MAX_LIFETIME_DAYS = 365;
+// Preserve the previous one-year default when an API request omits its expiry.
+const DEFAULT_TOKEN_LIFETIME_DAYS = 365;
+// Keep the existing ten-year bound on operator defaults; explicit expiries have no lifetime cap.
+const MAX_TOKEN_DEFAULT_LIFETIME_DAYS = 3650;
+const tokenDefaultLifetimeDaysSchema = z.coerce.number().int().min(1)
+  .max(MAX_TOKEN_DEFAULT_LIFETIME_DAYS).optional();
 // An edge proxy plus the web nginx is 2; more than a few is a misconfiguration.
 const MAX_TRUSTED_PROXY_HOPS = 5;
 // Rows of one CSV export (decisions.md); beyond this Excel use gets slow and the filter should narrow.
@@ -156,12 +160,9 @@ const environmentSchema = z.object({
   MMT_REGISTRY_HOST: optionalSetting,
   MMT_REGISTRY_USERNAME: optionalSetting,
   MMT_REGISTRY_PASSWORD: optionalSetting,
-  MMT_TOKEN_MAX_LIFETIME_DAYS: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(3650)
-    .default(DEFAULT_TOKEN_MAX_LIFETIME_DAYS),
+  MMT_TOKEN_DEFAULT_LIFETIME_DAYS: tokenDefaultLifetimeDaysSchema,
+  // Accept existing installations' setting as a default, without enforcing the former cap.
+  MMT_TOKEN_MAX_LIFETIME_DAYS: tokenDefaultLifetimeDaysSchema,
   MMT_CHECKPOINT_KEEP_COUNT: z.coerce.number().int().min(1).default(DEFAULT_CHECKPOINT_KEEP_COUNT),
   MMT_CSV_EXPORT_MAX_ROWS: z.coerce.number().int().positive().default(DEFAULT_CSV_EXPORT_MAX_ROWS),
   MMT_REPORT_SNAPSHOT_MAX_BYTES: z.coerce
@@ -223,8 +224,8 @@ export interface ApiConfig {
   // Whether a site Job's image is checked against the site's CPU before it is queued.
   imagePlatformCheck: 'off' | 'enforce';
   registryCredentials: RegistryCredentials | null;
-  // Upper limit and default for the lifetime of a new API token.
-  tokenMaxLifetimeDays: number;
+  // Lifetime when token creation omits expiresAt; explicit null means no expiry.
+  tokenDefaultLifetimeDays: number;
   // Checkpoints per Run shown by default; older ones get retained=false (their files are kept).
   checkpointKeepCount: number;
   // Rows of POST /runs/search/export.csv; further matches are cut and marked at the end.
@@ -394,7 +395,8 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
             password: settings.MMT_REGISTRY_PASSWORD,
           }
         : null,
-    tokenMaxLifetimeDays: settings.MMT_TOKEN_MAX_LIFETIME_DAYS,
+    tokenDefaultLifetimeDays: settings.MMT_TOKEN_DEFAULT_LIFETIME_DAYS
+      ?? settings.MMT_TOKEN_MAX_LIFETIME_DAYS ?? DEFAULT_TOKEN_LIFETIME_DAYS,
     checkpointKeepCount: settings.MMT_CHECKPOINT_KEEP_COUNT,
     csvExportMaxRows: settings.MMT_CSV_EXPORT_MAX_ROWS,
     reportSnapshotMaxBytes: settings.MMT_REPORT_SNAPSHOT_MAX_BYTES,
