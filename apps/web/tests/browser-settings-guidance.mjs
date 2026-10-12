@@ -1,6 +1,6 @@
 // Browser check of the guidance on the settings screens (fix plan 2026-10-11, 3段目 settings),
 // against the isolated mock API (tests/browserApi.mjs): notification rules without a channel and
-// the channel's variable names, a plugin whose token variable the server lacks, the contents of
+// the channel's variable names, a Mado connection whose credential storage is unavailable,
 // the Project settings, the way back from 全体設定 and the bell there, a link to a 全体管理
 // screen for someone else, and an archived Project's URL.
 // Start Vite on MMT_WEB_URL first; MMT_SCREENSHOT_DIR, when set, receives the screenshots.
@@ -122,24 +122,29 @@ try {
   }
 
   {
-    console.log('Plugins: a token variable the server lacks says which and stops the calls');
+    console.log('Mado: missing credential storage is explained and stops connection calls');
     const guidance = createGuidanceApi();
     const [plugin] = guidance.api.state.plugins;
     plugin.tokenConfigured = false;
+    plugin.secretStorageAvailable = false;
     const { context, page, screenshot } = await openPage({ guidance });
     await page.goto(`${base}/projects/${guidance.api.state.project.id}/plugins`);
     await page
-      .getByText(`API serverに環境変数 ${plugin.tokenEnv} がありません`, { exact: false })
+      .getByText('APIサーバーにMMT_PLUGIN_SECRET_KEYの設定が必要です', { exact: false })
       .waitFor();
     assert.equal(await page.getByRole('button', { name: '接続を確認', exact: true }).isDisabled(), true);
     assert.equal(await page.getByLabel('データセットを検索', { exact: true }).count(), 0);
-    await screenshot('03-plugin-token-missing');
-    // Once the variable is set the check works, and the search waits for it.
+    await screenshot('03-mado-secret-storage-missing');
+    // Restoring credential storage enables a fresh explicit check before search.
     plugin.tokenConfigured = true;
+    plugin.secretStorageAvailable = true;
+    plugin.configRevision++;
     await page.getByRole('button', { name: '再読み込み', exact: true }).click();
     const check = page.getByRole('button', { name: '接続を確認', exact: true });
     await page.waitForFunction(
-      () => !document.querySelector('.section-heading button')?.hasAttribute('disabled'),
+      () => Array.from(document.querySelectorAll('button')).some(
+        (button) => button.textContent.trim() === '接続を確認' && !button.disabled,
+      ),
     );
     assert.equal(await page.getByLabel('データセットを検索', { exact: true }).isDisabled(), true);
     await page.getByText('［接続を確認］が成功すると、データセットを検索できます。').waitFor();

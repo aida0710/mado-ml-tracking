@@ -35,7 +35,7 @@ Projectの画面から全体設定を開いたときは、画面の上に「『P
 - 全体の監査ログ（「全体管理」→［監査ログ］）
 - SSH・Localのコンピュータを足す。すべてのコンピュータの設定と公開範囲を変える（全体設定の「コンピュータ」。[コンピュータと公開範囲](/compute/computers)）。ただし、ほかの人のPrivateのコンピュータでJobは動かせません。siteは研究者も足せます
 - 通知先の作成・変更・テスト送信（[通知と運用アラート](/admin/notifications)）
-- Pluginの登録と変更（[PluginとMado連携](/admin/plugins)）
+- Mado連携の設定と有効切替（[Mado連携](/admin/plugins)）
 
 SSOのユーザーが全体管理者かどうかは、Authentikのgroupで決まります（[Authentik（SSO）](/admin/sso)）。ローカルアカウントは、「全体管理」→［ユーザー］の［管理者にする］［管理者を外す］で変えます。
 

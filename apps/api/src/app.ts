@@ -382,7 +382,7 @@ export function createApplication(options: ApplicationOptions) {
   const plugins = new PluginService({
     database,
     registry,
-    environment: options.environment,
+    secretKey: config.pluginSecretKey,
     clientFactory: options.pluginClientFactory,
   });
   const outbox = new OutboxDispatcher(database, plugins);

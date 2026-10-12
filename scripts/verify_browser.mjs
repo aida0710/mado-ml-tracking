@@ -38,7 +38,7 @@ try {
     ['lineage', 'Lineage'],
     ['jobs', 'Jobs'],
     ['compute', 'Compute'],
-    ['plugins', 'Plugins'],
+    ['plugins', '連携'],
     ['settings', 'プロジェクト設定'],
   ]) {
     await page.goto(`${base}${demoBase}/${route}`);

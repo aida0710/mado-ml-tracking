@@ -103,7 +103,7 @@ See [Notifications and operations alerts](/en/admin/notifications).
 | `MMT_CSV_EXPORT_MAX_ROWS` | `50000` | Maximum rows of a Run search CSV export |
 | `MMT_REPORT_SNAPSHOT_MAX_BYTES` | `52428800` | Limit (bytes) of fixed data in one revision of a shared report |
 | `MMT_GIT_SSH_KEY_PATH`, `MMT_GIT_KNOWN_HOSTS_PATH` | None | Private key and known_hosts (absolute paths) for loading SSH Git repositories into the editor. Set both |
-| `MMT_MADO_PLUGIN_TOKEN` | None | Example secret for connecting to the Mado plugin. The variable name is given when registering the plugin ([Plugins and Mado integration](/en/admin/plugins)) |
+| `MMT_PLUGIN_SECRET_KEY` | None | Dedicated encryption key for built-in Mado credentials (base64 of 32 bytes). Optional while unconfigured/disabled; keep the key across restarts ([Mado integration](/en/admin/plugins)) |
 
 ## Preview worker
 

@@ -1,3 +1,5 @@
+export { isSameUuid } from './uuidIdentity.js';
+
 export type JsonValue =
   | string
   | number
@@ -784,17 +786,63 @@ export interface PluginManifest {
   protocolVersion: '1.0';
   capabilities: string[];
 }
+export type PluginKind = 'mado' | 'legacy';
+export interface MadoPluginConfig {
+  apiUrl: string;
+  webUrl: string;
+  lineageUrl: string;
+  namespaces: string[];
+  jobNamespace: string;
+  storageSystemKey: string;
+}
+/** Secrets are accepted only in write requests. Omitted values keep the saved credential. */
+export interface MadoPluginCredentialsInput {
+  readToken?: string;
+  lineageToken?: string;
+  metricsToken?: string | null;
+}
+export interface PluginCreate {
+  kind: 'mado';
+  name?: string;
+  config: MadoPluginConfig;
+  credentials?: MadoPluginCredentialsInput;
+  enabled?: boolean;
+}
+export interface PluginPatch {
+  name?: string;
+  config?: MadoPluginConfig;
+  credentials?: MadoPluginCredentialsInput;
+  enabled?: boolean;
+  expectedRevision?: number;
+}
 export interface PluginConnection {
   id: string;
   projectId: string;
   name: string;
+  kind: PluginKind;
+  configurationStatus: 'ready' | 'migration_pending' | 'unsupported';
+  config: MadoPluginConfig | null;
+  configRevision: number;
+  credentialsConfigured: { readToken: boolean; lineageToken: boolean; metricsToken: boolean };
+  secretStorageAvailable: boolean;
+  /** Legacy connection information is restricted to administrators. */
   baseUrl: string;
   tokenEnv: string;
-  /** The API server has a non-empty value for `tokenEnv`; without one no call to the plugin works. */
+  /** Both Mado read/write credentials can be decrypted by this API server. */
   tokenConfigured: boolean;
   enabled: boolean;
   manifest: PluginManifest | null;
   createdAt: string;
+}
+/** Safe for Project viewers: no credentials, token references or server-side API destinations. */
+export interface PluginAvailability {
+  kind: 'mado';
+  id: string | null;
+  enabled: boolean;
+  configured: boolean;
+  configRevision: number;
+  webUrl: string | null;
+  canImport: boolean;
 }
 export interface PluginDataset {
   externalId: string;

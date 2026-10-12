@@ -5,20 +5,18 @@ import type {
   NotificationEventType,
   OperationsAlert,
   PluginConnection,
-  PluginEvent,
   PluginOutboxSummary,
 } from '@mmt/contracts';
-import type { PluginClient } from '@mmt/platform';
 import { createApplication } from '../src/app.js';
 import { jobCreateSchema } from '../src/domain/validation.js';
 import { PLUGIN_STALL_ATTEMPTS } from '../src/domain/operationsAlerts.js';
 import { OperationsMonitor } from '../src/services/operationsMonitor.js';
 import { createHarness, entity, login, request, testDatabaseUrl, type Harness } from './harness.js';
 import { executionFixture } from './fixtures.js';
+import { MADO_CREDENTIALS_FIXTURE, madoClientStub, madoPluginInput } from './pluginFixtures.js';
 
 const environment = {
   MMT_NOTIFICATION_OPS_URL: 'https://hooks.slack.example/services/T/B/OPS',
-  MMT_TEST_PLUGIN_TOKEN: 'mock-plugin-secret',
 };
 
 const OPERATIONS_EVENT_TYPES: NotificationEventType[] = [
@@ -42,22 +40,13 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
 
   /** An application whose plugin client fails while `plugin.isUnavailable` is true. */
   function applicationWithPlugin() {
-    const plugin = { isUnavailable: true, delivered: [] as PluginEvent[] };
-    const client: PluginClient = {
-      manifest: async () => ({
-        id: 'mock',
-        name: 'Mock',
-        version: '1.0',
-        protocolVersion: '1.0',
-        capabilities: ['events'],
-      }),
-      metrics: async () => ({ prometheus: '' }),
-      searchDatasets: async () => ({ items: [] }),
-      sendEvent: async (event) => {
+    const plugin = { isUnavailable: true, delivered: [] as string[] };
+    const client = madoClientStub({
+      sendPayload: async (payload) => {
         if (plugin.isUnavailable) throw new Error('Unavailable');
-        plugin.delivered.push(event);
+        plugin.delivered.push(payload);
       },
-    };
+    });
     const application = createApplication({
       config: harness.config,
       database: harness.database,
@@ -349,11 +338,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
       await request(application.app, `${fixture.basePath}/plugins`, {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: {
-          name: 'Mado',
-          baseUrl: 'http://127.0.0.1:4999',
-          tokenEnv: 'MMT_TEST_PLUGIN_TOKEN',
-        },
+        body: madoPluginInput(),
       }),
     );
     const run = await fixture.newRun();
@@ -399,7 +384,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
       type: 'plugin.delivery_stalled',
       details: { pluginId: connection.id, pluginName: 'Mado', undelivered: 1, maxAttempts: 5 },
     });
-    expect(JSON.stringify(queued[0]!.event)).not.toContain(environment.MMT_TEST_PLUGIN_TOKEN);
+    expect(JSON.stringify(queued[0]!.event)).not.toContain(MADO_CREDENTIALS_FIXTURE.readToken!);
 
     plugin.isUnavailable = false;
     await makeDue();
@@ -429,7 +414,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
       await request(application.app, `${fixture.basePath}/plugins`, {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: { name: 'Mado', baseUrl: 'http://127.0.0.1:4999', tokenEnv: 'MMT_TEST_PLUGIN_TOKEN' },
+        body: madoPluginInput(),
       }),
     );
     const run = await fixture.newRun();
@@ -492,17 +477,17 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
       await request(application.app, `${fixture.basePath}/plugins`, {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: { name: 'Mado', baseUrl: 'http://127.0.0.1:4999', tokenEnv: 'MMT_TEST_PLUGIN_TOKEN' },
+        body: madoPluginInput(),
       }),
     );
-    // Only whether the variable is set is shown, never its value.
+    // Public replies show whether credentials are saved, never their values.
     expect(connection.tokenConfigured).toBe(true);
-    expect(JSON.stringify(connection)).not.toContain(environment.MMT_TEST_PLUGIN_TOKEN);
+    expect(JSON.stringify(connection)).not.toContain(MADO_CREDENTIALS_FIXTURE.readToken!);
     const unconfigured = await entity<PluginConnection>(
       await request(application.app, `${fixture.basePath}/plugins`, {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: { name: 'Typo', baseUrl: 'http://127.0.0.1:4999', tokenEnv: 'MMT_TEST_PLUGIN_TOKN' },
+        body: madoPluginInput({ name: 'Unconfigured', enabled: false, credentials: {} }),
       }),
     );
     expect(unconfigured.tokenConfigured).toBe(false);
@@ -512,10 +497,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
       { method: 'POST', cookie: fixture.administrator.cookie },
     );
     expect(check.status).toBe(503);
-    expect(await check.json()).toMatchObject({
-      code: 'plugin_token_unavailable',
-      error: expect.stringContaining('MMT_TEST_PLUGIN_TOKN'),
-    });
+    expect(await check.text()).not.toContain(MADO_CREDENTIALS_FIXTURE.readToken!);
     const summaryPath = `${fixture.basePath}/plugins/${connection.id}/outbox`;
     for (const identity of [fixture.editor, fixture.viewer])
       expect((await request(application.app, summaryPath, { cookie: identity.cookie })).status).toBe(
