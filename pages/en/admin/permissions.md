@@ -7,37 +7,37 @@ description: Global administrators, the Project roles Viewer, Editor, and Admin,
 
 Permissions have two levels: whether a user is a global administrator, and the role in each Project.
 
-## Global settings and global administration
+## Global settings and Administration {#global-settings-and-global-administration}
 
-The global settings are the pages that do not belong to a Project (`/settings/<section>`). Anyone can open them from **全体設定** (Global settings) in the user menu at the top right. The sidebar items fall into two groups.
+**Global settings** are the pages that do not belong to a Project (`/settings/<section>`). Anyone can open them from **Global settings** in the user menu at the top right. The sidebar items fall into two groups.
 
 | Group | Items | Who sees it |
 | --- | --- | --- |
-| 全体設定 (Global settings) | アカウント (Account), コンピュータ (Computers) | Everyone |
-| 全体管理 (Global administration) | プロジェクト (Projects), ユーザー (Users), ストレージ (Storage), ランチャー (Launchers), 監査ログ (Audit log) | Global administrators only |
+| **Global settings** | **Account**, **Computers** | Everyone |
+| **Administration** | **Projects**, **Users**, **Storage**, **Launchers**, **Audit log** | Global administrators only |
 
-These groups appear only in the sidebar of the global settings pages, not on Project pages. People who are not global administrators do not see 全体管理, and opening one of its URLs directly takes them to **アカウント** with a note that the page is for global administrators only. Old URLs starting with `/admin` or `/account` move to the new ones (`/settings/projects`, `/settings/account`, and so on).
+These groups appear only in the sidebar of the **Global settings** pages, not on Project pages. People who are not global administrators do not see **Administration**, and opening one of its URLs directly takes them to **Account** with a note that the page is for global administrators only. Old URLs starting with `/admin` or `/account` move to the new ones (`/settings/projects`, `/settings/account`, and so on).
 
-When the global settings are opened from a Project page, 「Project name」に戻る (Back to the Project) appears at the top; it returns to the page you came from (Jobs, for example).
+When **Global settings** is opened from a Project page, **Back to “…”** (with the Project's name) appears at the top; it returns to the page you came from (Jobs, for example).
 
 ![A regular user's user menu: Account, Change password, and Global settings](/images/en/admin-user-menu.png)
 
-The user menu at the top right has **アカウント** (Account), **パスワードの変更** (Change password, local accounts only), and **全体設定** (Global settings) ([Authentication modes and local accounts](/en/admin/auth#check-your-account)).
+The user menu at the top right has **Account**, **Change password** (local accounts only), and **Global settings** ([Authentication modes and local accounts](/en/admin/auth#check-your-account)).
 
 ## Global administrators
 
-Global administrators manage application-wide settings. Most of their pages open from the 全体管理 (Global administration) group in the sidebar of the pages opened from **全体設定** (Global settings) in the user menu.
+Global administrators manage application-wide settings. Most of their pages open from the **Administration** group in the sidebar of the pages opened from **Global settings** in the user menu.
 
-- Listing every Project, and restoring or permanently deleting archived Projects (**全体管理** → **プロジェクト** (Projects); see [Create and manage Projects](/en/admin/projects))
-- Creating, disabling, and resetting passwords of users (**全体管理** → **ユーザー** (Users))
-- Adding storage backends and choosing the default backend (**全体管理** → **ストレージ** (Storage); see [Storage](/en/data/storage))
-- Registering launchers (**全体管理** → **ランチャー** (Launchers))
-- The global audit log (**全体管理** → **監査ログ** (Audit log))
-- Adding SSH and Local computers, and changing the settings and visibility of every computer (コンピュータ in the global settings; see [Computers and visibility](/en/compute/computers)). They still cannot run Jobs on other people's Private computers. Researchers can add sites too
+- Listing every Project, and restoring or permanently deleting archived Projects (**Administration** → **Projects**; see [Create and manage Projects](/en/admin/projects))
+- Creating, disabling, and resetting passwords of users (**Administration** → **Users**)
+- Adding storage backends and choosing the default backend (**Administration** → **Storage**; see [Storage](/en/data/storage))
+- Registering launchers (**Administration** → **Launchers**)
+- The global audit log (**Administration** → **Audit log**)
+- Adding SSH and Local computers, and changing the settings and visibility of every computer (**Computers** in **Global settings**; see [Computers and visibility](/en/compute/computers)). They still cannot run Jobs on other people's Private computers. Researchers can add sites too
 - Creating, changing, and testing notification channels ([Notifications and operations alerts](/en/admin/notifications))
 - Configuring and enabling built-in Mado connections ([Mado integration](/en/admin/plugins))
 
-Whether an SSO user is a global administrator is decided by Authentik groups ([Authentik (SSO)](/en/admin/sso)). For local accounts, use **管理者にする** (Make administrator) and **管理者を外す** (Remove administrator) in **全体管理** → **ユーザー**.
+Whether an SSO user is a global administrator is decided by Authentik groups ([Authentik (SSO)](/en/admin/sso)). For local accounts, use **Make administrator** and **Remove administrator** in **Administration** → **Users**.
 
 A global administrator signed in from a browser can operate any Project as an Admin, including Private Projects they are not a member of. With an API token, even a global administrator needs a role in the Project.
 
@@ -49,7 +49,7 @@ A global administrator signed in from a browser can operate any Project as an Ad
 | Editor | Everything Viewer can, plus recording experiments, registering models and datasets (including deleting dataset versions nothing uses), running Jobs and stopping or retrying the Jobs they started, and changing aliases (a protected alias only with a passing promotion check) |
 | Admin | Everything Editor can, plus stopping or retrying Jobs started by others, Project settings (description, visibility, storage), members and group grants, Service Accounts, the Project token list, notification rules, transferring automation owners, deleting Artifacts, using plugins, the Project audit log, and archiving the Project |
 
-Any user who is not disabled can create a Project: click **＋ プロジェクトを作成** (Create project) at the bottom of the Project switcher. The creator becomes an Admin of the new Project. See [Create and manage Projects](/en/admin/projects) for the steps.
+Any user who is not disabled can create a Project: click **Create project** at the bottom of the Project switcher. The creator becomes an Admin of the new Project. See [Create and manage Projects](/en/admin/projects) for the steps.
 
 ## Project visibility
 
@@ -61,9 +61,9 @@ A Project is Public or Private. New Projects are Public by default.
 | Private | Members only (direct grants and group grants) |
 
 - Even in a Public Project, Admin is granted only to members.
-- In a Public Project, someone given Viewer still works as an Editor. Members shows their effective role as Editor（Public）, and choosing Viewer in メンバーを追加 (Add member) says so. To make someone read-only, make the Project Private.
+- In a Public Project, someone given Viewer still works as an Editor. **Members** shows their effective role as **Editor (Public)**, and choosing Viewer in **Add member** says so. To make someone read-only, make the Project Private.
 - Public access is given only to the accounts of active people, not to Service Accounts or launchers.
-- A Project Admin changes the visibility in the プロジェクト (Project) section of **プロジェクト設定** (Project settings). Projects that existed before visibility was introduced become Private on upgrade.
+- A Project Admin changes the visibility in the **Project** section of **Project settings**. Projects that existed before visibility was introduced become Private on upgrade.
 
 See [Create and manage Projects](/en/admin/projects#visibility) for details.
 
@@ -73,14 +73,14 @@ Computers that run Jobs also have Public and Private, separately from Projects. 
 
 ## Direct grants and group grants
 
-There are two ways to grant a Project role. A Project Admin sets both in **プロジェクト設定** (Project settings).
+There are two ways to grant a Project role. A Project Admin sets both in **Project settings**.
 
 ![The Members and Authentik group sections of a Project](/images/en/admin-permissions.png)
 
 | Method | Granted to | Where |
 | --- | --- | --- |
-| Direct grant | One user | **メンバーを追加** (Add member) under **Members** |
-| Group grant | An Authentik group | **groupを追加** (Add group) under **Authentik group** |
+| Direct grant | One user | **Add member** under **Members** |
+| Group grant | An Authentik group | **Add group** under **Authentik group** |
 
 The effective role is the strongest of the direct grant and the grants of the groups the user belongs to. In a Public Project, the Editor role everyone who can sign in gets is included as well.
 
@@ -91,31 +91,31 @@ The effective role is the strongest of the direct grant and the grants of the gr
 | None | Editor | Editor |
 | Editor | None | Editor |
 
-In the **Members** list, the effective role and source columns (for example "直接付与: Editor" for a direct grant, or "group mmt-proj-asr-editors") show where a role comes from. The list shows only people with a direct or group grant. People who only use the Project through Public access are not listed, and the effective role column does not include the Public Editor role.
+In the **Members** list, the **Effective role** and **Permission source** columns (for example "Direct membership: Editor" for a direct grant, or "group mmt-proj-asr-editors: Editor") show where a role comes from. The list shows only people with a direct or group grant. People who only use the Project through Public access are not listed, and the **Effective role** column does not include the Public Editor role.
 
 The effective role is the same on the screen, in the native API, in the MLflow-compatible API, for API tokens, and for Job tokens.
 
 ### Add a member
 
-1. Click **メンバーを追加** (Add member) under **Members** in **プロジェクト設定**.
-2. Type the start of a name, email, or username and pick the user. SSO users appear only after their first login. Users who already have a direct grant are listed as already added (for example "既にEditorです", already an Editor) and cannot be picked; change their role with **変更** (Edit) in the list.
+1. Click **Add member** under **Members** in **Project settings**.
+2. Type the start of a name, email, or username and pick the user. SSO users appear only after their first login. Users who already have a direct grant are listed as already added (for example "Already has the Editor role. Use “Change” in the list to change it") and cannot be picked; change their role with **Change** in the list.
 3. Choose a role and save. Editor is selected at first, as for the members chosen while creating a Project.
 
 The member is added when the user appears in the list.
 
-Service Accounts appear in Members too, marked Service Account. Their role and disabling are changed under Service Accounts; their Members row has no actions.
+Service Accounts appear in **Members** too, marked **Service account**. Their role and disabling are changed under **Service accounts**; their **Members** row has no actions.
 
-Someone who is not a Project Admin sees, in the プロジェクト (Project) part of **プロジェクト設定**, the names of the Admins who can change it.
+Someone who is not a Project Admin sees, in the **Project** part of **Project settings**, the names of the Admins who can change it.
 
 ### Remove a direct grant
 
-Click **外す** (Remove) on the row. Roles granted through groups remain. If only a group role remains, the confirmation says so.
+Click **Remove** on the row. Roles granted through groups remain. If only a group role remains, the confirmation says so.
 
 ## A Project always needs an Admin
 
-A Project needs at least one direct Admin grant, or an Admin grant to a group that someone has signed in with. On the last one, **変更** (Edit) and **外す** (Remove) are disabled and the reason is shown next to them; removing or lowering it through the API returns 409. Grant Admin to another member, or to a group someone has signed in with, first.
+A Project needs at least one direct Admin grant, or an Admin grant to a group that someone has signed in with. On the last one, **Change** and **Remove** are disabled and the reason is shown next to them; removing or lowering it through the API returns 409. Grant Admin to another member, or to a group someone has signed in with, first.
 
-An Admin grant to a group nobody has signed in with yet does not count: with a mistyped group name, removing the last person's Admin grant would leave nobody who can manage the Project. Such groups are marked "まだ誰もログインしていません" (nobody has signed in yet) in the **Authentik group** list. Service Accounts with the Admin role do not count either.
+An Admin grant to a group nobody has signed in with yet does not count: with a mistyped group name, removing the last person's Admin grant would leave nobody who can manage the Project. Such groups are marked **No one has signed in yet** in the **Authentik group** list. Service Accounts with the Admin role do not count either.
 
 ## Permissions of API tokens
 
