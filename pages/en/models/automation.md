@@ -5,7 +5,7 @@ description: Start inference and evaluation automatically when a model version i
 
 # Automation after registration
 
-![Automation rules and rule details](/images/models-automation-rules.png)
+![Automation rules and rule details](/images/en/models-automation-rules.png)
 
 An automation rule starts inference and evaluation Jobs whenever a model version is registered. A rule pins the code version, dataset versions, computer, and parameters, so every version is evaluated under the same conditions.
 
@@ -33,26 +33,26 @@ Two chained rules connect registration, inference, and evaluation as above. To d
 
 Only Project admins create rules. API tokens also need the `admin` scope.
 
-1. Open **自動実行ルール** (Automation rules) in Models and press **自動実行ルールを作成** (Create automation rule).
+1. Open **Automation rules** in Models and press **Create automation rule**.
 2. Fill in the fields and save.
 
 | Field | Meaning |
 | --- | --- |
 | Name | For example `inference on registration` |
-| **トリガー** (Trigger) | **モデル登録** (Model registration) or **上流ruleの成功** (Upstream rule succeeded) |
-| **上流rule** (Upstream rule) | The previous rule, when the trigger is upstream success |
-| **対象モデル系列** (Target model families) | Families this rule runs for, chosen from those the code version supports |
+| **Trigger** | **Model registration** or **Upstream rule success** |
+| **Upstream rule** | The previous rule, when the trigger is upstream success |
+| **Target model families** | Families this rule runs for, chosen from those the code version supports |
 | Run kind | Inference, evaluation, or data processing |
 | Experiments | The Experiment that records the Runs |
 | Code version | A code version that supports the families and the run kind |
 | Computer, GPU ID | Where to run. Without a GPU the Job runs on CPU only |
 | Input dataset versions | Data given to every version, such as the evaluation references |
 | Parameters, tags | JSON. Tags starting with `automation.` or `mmt.` are reserved for the server |
-| **最大試行回数** (Maximum attempts) | 1 to 100. Two or more retries failed Runs automatically. Default 1. It limits automatic retries only; retries by people in Jobs do not count |
+| **Maximum attempts** | 1 to 100. Two or more retries failed Runs automatically. Default 1. It limits automatic retries only; retries by people in Jobs do not count |
 
-3. Check that **状態** (Status) of the new rule is **有効** (Enabled).
+3. Check that **Status** of the new rule is **Enabled**.
 
-Rule settings cannot be changed after creation; only enabling and disabling is possible. To change settings, create a new rule and disable the old one with **無効にする** (Disable). This keeps the settings each past run used.
+Rule settings cannot be changed after creation; only enabling and disabling is possible. To change settings, create a new rule and disable the old one with **Disable**. This keeps the settings each past run used.
 
 With the Python SDK:
 
@@ -110,7 +110,7 @@ The SDK's `register_output_model()` and MLflow's `log_model(registered_model_nam
 | Source Run | Automation |
 | --- | --- |
 | None, or already ended at registration | Starts with the registration |
-| Running | Waits; the history shows **学習完了待ち** (Waiting for training) |
+| Running | Waits; the history shows **Waiting for training to finish** |
 | Finished while waiting | Starts with the rules enabled at that time |
 | Failed or canceled while waiting | Skipped |
 | Waiting for more than 7 days, or the training Run was deleted | Skipped as expired |
@@ -119,41 +119,41 @@ A wait closed by failure or expiry does not start later even if the training Run
 
 ## Check the results
 
-![Automation history](/images/models-automation-history.png)
+![Automation history](/images/en/models-automation-history.png)
 
-**自動実行履歴** (Automation history) in Models shows each rule's outcome and the state of the created Runs and Jobs. It lists the newest 100 at a time; **さらに表示** (Show more) reads older ones. **ルール** (Rule) and **バージョン** (Version) narrow the list, and **このルールの実行履歴を見る** (Show this rule's history) in a rule's details opens the history narrowed to that rule.
+**Automation history** in Models shows each rule's outcome and the state of the created Runs and Jobs. It lists the newest 100 at a time; **Show more** reads older ones. **Rule** and **Version** narrow the list, and **View this rule's history** in a rule's details opens the history narrowed to that rule.
 
 | Outcome | Meaning |
 | --- | --- |
-| **Jobを登録** (Job queued) | A Run and a Job were created. Follow them in **Run・Jobの状態** (Run and Job status) |
-| **学習完了待ち** (Waiting for training) | Waiting for the training Run to succeed |
-| **起動せず** (Skipped) | Conditions were not met. The reason is shown |
-| **起動に失敗** (Failed to start) | The Run could not be created, for example because the rule owner lost access or the target is disabled. The reason is shown under the outcome. The registered version is kept |
+| **Job created** | A Run and a Job were created. Follow them in **Run and job status** |
+| **Waiting for training to finish** | Waiting for the training Run to succeed |
+| **Not launched** | Conditions were not met. The reason is shown |
+| **Launch failed** | The Run could not be created, for example because the rule owner lost access or the target is disabled. The reason is shown under the outcome. The registered version is kept |
 
-Chained runs are shown as stage 1, stage 2, and so on. **学習Runを開く** (Open training Run) and **上流のRunを開く** (Open upstream Run) lead to the Run that triggered them. The **自動実行** section of a version page shows the same history for that version.
+Chained runs are shown as stage 1, stage 2, and so on. **Open training run** and **Open upstream run** lead to the Run that triggered them. The **Automation** section of a version page shows the same history for that version.
 
 To be notified of start failures, select `automation.failed` in a Project notification rule ([Notifications](/en/admin/notifications)).
 
 ## Apply a rule to existing versions
 
-Project admins can apply an enabled rule to an existing version. A disabled rule's details show **有効にする** (Enable) in place of the apply form; once enabled, the rule can be applied. Use this, for example, to:
+Project admins can apply an enabled rule to an existing version. A disabled rule's details show **Enable** in place of the apply form; once enabled, the rule can be applied. Use this, for example, to:
 
 - Evaluate versions registered before the rule existed
 - Run versions that were skipped because training failed or the wait expired
 - Re-evaluate the baseline version after changing the evaluation code
 
-1. Select the rule in **自動実行ルール** to open its details.
-2. In **既存のバージョンに適用** (Apply to existing version), choose **適用するバージョン** (Version). For a rule with an upstream, choose **上流のRun** (Upstream Run) instead: a successful Run created by the upstream rule that has output dataset versions (chosen from the newest 200).
-3. Press **適用する** (Apply) and confirm.
-4. When **Jobを登録しました** (Job queued) appears, check the state in the automation history.
+1. Select the rule in **Automation rules** to open its details.
+2. In **Apply to an existing version**, choose **Version to apply to**. For a rule with an upstream, choose **Upstream run** instead: a successful Run created by the upstream rule that has output dataset versions (chosen from the newest 200).
+3. Press **Apply** and confirm.
+4. When **Job created. Check its status in automation history.** appears, check the state there.
 
 While a run of the same rule and version is queued or running, applying is rejected. Otherwise a new Run is created with the attempt number increased by one. A manually applied inference that succeeds chains to evaluation as usual.
 
-**再実行** (Rerun) in the automation history and on the version page applies the same rule to the same version (or the same upstream Run) again. Both are shown only to Project admins, and the person who applied it is recorded in the history and the audit log.
+**Rerun** in the automation history and on the version page applies the same rule to the same version (or the same upstream Run) again. Both are shown only to Project admins, and the person who applied it is recorded in the history and the audit log.
 
 ## Retry failures automatically
 
-Setting **最大試行回数** (Maximum attempts) to two or more queues the next attempt when an automation Run fails. The default is 1 (no retry) so GPUs are not spent on retries you did not ask for.
+Setting **Maximum attempts** to two or more queues the next attempt when an automation Run fails. The default is 1 (no retry) so GPUs are not spent on retries you did not ask for.
 
 | How the automation Run ended | Retried |
 | --- | --- |
@@ -165,16 +165,16 @@ Setting **最大試行回数** (Maximum attempts) to two or more queues the next
 
 - Retries start from the beginning, not from a checkpoint. To continue from a checkpoint, resume manually in Jobs ([Resume training](/en/models/checkpoints)).
 - A successful retry chains to later rules as usual.
-- Maximum attempts limits automatic retries only. People can retry with **新しいRunで再実行** (Retry in a new Run) in Jobs, both for rules that do not retry automatically and for Runs that reached the attempt limit. The Job's creator (the rule owner) and Project admins can do so ([The Jobs page](/en/compute/jobs#stop-and-retry)).
+- Maximum attempts limits automatic retries only. People can retry with **Rerun as a new run** in Jobs, both for rules that do not retry automatically and for Runs that reached the attempt limit. The Job's creator (the rule owner) and Project admins can do so ([The Jobs page](/en/compute/jobs#stop-and-retry)).
 
 ## Move rule ownership to a Service Account {#move-rule-ownership}
 
 Automation runs with the permissions of the rule owner, who becomes the creator of the Runs. The owner is initially the person who created the rule. If that person stops being a Project admin, the rule fails to start. For long-lived rules, move ownership to a Service Account that is not tied to a person.
 
 1. In the Project settings, create a Service Account with the admin role. No token is needed ([API tokens and Service Accounts](/en/admin/tokens)).
-2. Select the rule in **自動実行ルール** and press **Service Accountへ移す** (Move to Service Account).
-3. Choose **移管先のService Account** (Service Account) and confirm.
-4. Check that **所有者** (Owner) in the rule details shows `<name>（Service Account）`.
+2. Select the rule in **Automation rules** and press **Transfer to service account**.
+3. Choose **Destination service account** and confirm.
+4. Check that **Owner** in the rule details shows `<name> (service account)`.
 
 Only Project admins can move ownership, and only to an enabled admin Service Account of the same Project. The rule's creator is still recorded, and the change is in the audit log.
 
@@ -184,8 +184,8 @@ If the rule runs on a Private computer, move ownership to a Service Account crea
 
 Rules cannot be edited, so switch evaluation code in this order:
 
-1. Select the old evaluation rule in **自動実行ルール** and press **複製して新しく作る** (Copy as a new rule). The form opens with the rule's name, trigger, upstream rule, families, code and the rest filled in.
-2. Change **コードバージョン** (Code version) to the new one, rename the rule and create it. While **作成したら「…」を無効にする** (Disable "…" after creating) stays checked, the old rule is disabled as the new one is created. Rules that follow the old rule are named on the form: they stop running once it is disabled, so recreate them the same way.
+1. Select the old evaluation rule in **Automation rules** and press **Copy as new rule**. The form opens with the rule's name, trigger, upstream rule, families, code and the rest filled in.
+2. Change **Code version** to the new one, rename the rule and create it. While **Disable “…” after creating** stays checked, the old rule is disabled as the new one is created. Rules that follow the old rule are named on the form: they stop running once it is disabled, so recreate them the same way.
 3. Apply the new rule with the baseline version's inference Run (for example the version `production` points at) as the upstream Run. Only evaluation runs again with the new code.
 
 Comparisons use evaluation Runs with the same evaluation code version. Without evaluating the baseline with the new code, a new version has nothing to compare with.

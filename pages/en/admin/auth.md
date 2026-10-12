@@ -56,30 +56,30 @@ If the username already exists, the command makes that user an active global adm
 
 A global administrator creates local accounts on the screen. You can create them in any `AUTH_MODE`, but they cannot sign in when the mode is `oidc`.
 
-![The Users page under global administration](/images/admin-users.png)
+![The Users page under Administration](/images/en/admin-users.png)
 
-1. Open **全体設定** (Global settings) from the user menu, then **ユーザー** (Users) under 全体管理 (Global administration) in the sidebar (`/settings/users`).
-2. Click **ローカルユーザーを作成** (Create local user). When local login is off (`AUTH_MODE` is `development` or `oidc`), the dialog says that local accounts cannot sign in with the current server settings. You can still create the account; it can sign in once `AUTH_MODE` is `local` or `hybrid`.
+1. Open **Global settings** from the user menu, then **Users** under **Administration** in the sidebar (`/settings/users`).
+2. Click **Create local user**. When local login is off (`AUTH_MODE` is `development` or `oidc`), the dialog says that local accounts cannot sign in with the current server settings. You can still create the account; it can sign in once `AUTH_MODE` is `local` or `hybrid`.
 3. Enter the following and save.
 
 | Field | Value |
 | --- | --- |
-| Username | Lowercase letters, digits, `.`, `_`, `-`, up to 64 characters. Example: `tanaka` |
-| Display name | The name shown on screens. Example: `Tanaka` |
-| Email (optional) | Example: `tanaka@example.com` |
-| Initial password | At least 12 characters. **生成** (Generate) creates a random value |
-| Make global administrator | Select only for a global administrator |
+| **Username** | Lowercase letters, digits, `.`, `_`, `-`, up to 64 characters. Example: `tanaka` |
+| **Display name** | The name shown on screens. Example: `Tanaka` |
+| **Email address (optional)** | Example: `tanaka@example.com` |
+| **Initial password** | At least 12 characters. **Generate** creates a random value |
+| **Make global administrator** | Select only for a global administrator |
 
 The account is created when it appears in the list. Give the initial password to the user through a safe channel. The user must change it at the first login.
 
-A new user can use Public Projects right away. To use a Private Project, add the user under **Members** in **プロジェクト設定** (Project settings) ([Permissions and roles](/en/admin/permissions)).
+A new user can use Public Projects right away. To use a Private Project, add the user under **Members** in **Project settings** ([Permissions and roles](/en/admin/permissions)).
 
 ## Passwords
 
 Local account passwords are stored as Argon2id hashes. A new password must be 12 to 1024 bytes and differ from the current one.
 
-- Change your own: open **パスワードの変更** (Change password) from the user menu (your avatar) at the top right (`/settings/account/password`). You can also change it under パスワード (Password) on **アカウント** (Account) in the global settings. Changing it ends your logins in other browsers and machines.
-- Forgotten password: a global administrator clicks **パスワード再設定** (Reset password) on the user's row in **全体管理** → **ユーザー**. A temporary password is shown once; give it to the user through a safe channel. The user's sessions end and the next login asks for a new password.
+- Change your own: open **Change password** from the user menu (your avatar) at the top right (`/settings/account/password`). You can also change it under **Password** on **Account** in **Global settings**. Changing it ends your logins in other browsers and machines.
+- Forgotten password: a global administrator clicks **Reset password** on the user's row in **Administration** → **Users**. A temporary password is shown once; give it to the user through a safe channel. The user's sessions end and the next login asks for a new password.
 - SSO-only users have no password in this application. Their passwords are managed in Authentik.
 
 Login and current-password checks are rate limited. Over the limit, the screen says the attempt limit was reached and the API returns 429 with `Retry-After`.
@@ -90,20 +90,20 @@ Login and current-password checks are rate limited. Over the limit, the screen s
 | Failed logins for the same username | 10 per 15 minutes |
 | Current-password checks when changing the password | 10 per 15 minutes per user |
 
-The counters live in the API process memory and reset when the API restarts. An unknown username, a wrong password, and a disabled user all get the same "username or password is incorrect" message.
+The counters live in the API process memory and reset when the API restarts. An unknown username, a wrong password, and a disabled user all get the same "Incorrect username or password" message.
 
 ## Disable and re-enable users
 
-When someone leaves or changes teams, a global administrator uses **全体管理** → **ユーザー**.
+When someone leaves or changes teams, a global administrator uses **Administration** → **Users**.
 
-1. Click **無効化** (Disable) on the row and confirm. The user's sessions end immediately, and the user's API tokens (including the MLflow-compatible API) return 401 from the next request.
+1. Click **Disable** on the row and confirm. The user's sessions end immediately, and the user's API tokens (including the MLflow-compatible API) return 401 from the next request.
 2. For SSO users, also remove the user from the Authentik groups. If you re-enable the user without doing so, the next login restores the global role derived from the groups.
-3. To restore the user, click **有効化** (Enable) on the same row. API tokens work again, but ended sessions do not come back; the user signs in again.
+3. To restore the user, click **Enable** on the same row. API tokens work again, but ended sessions do not come back; the user signs in again.
 
-Users cannot be deleted, so that the creators of Runs and model versions stay on record. The last active global administrator cannot be disabled or demoted (409 `last_global_admin`); on the screen, that row's **無効化** and **管理者を外す** (Remove admin) are disabled with the reason. Prepare another global administrator first.
+Users cannot be deleted, so that the creators of Runs and model versions stay on record. The last active global administrator cannot be disabled or demoted (409 `last_global_admin`); on the screen, that row's **Disable** and **Remove administrator** are disabled with the reason. Prepare another global administrator first.
 
-- Your own row is marked あなた (you). Disabling or demoting yourself is confirmed with a warning that you are signed out (or lose global administration) at once, and that only another global administrator can undo it.
-- A Service Account's row shows Service Account (Project name), which opens Service Accounts in that Project's settings. Disabling it also stops the tokens its workers use.
+- Your own row is marked **You**. Disabling or demoting yourself is confirmed with a warning that you are signed out (or lose global administration) at once, and that only another global administrator can undo it.
+- A Service Account's row shows **Service account (Project name)**, which opens **Service accounts** in that Project's settings. Disabling it also stops the tokens its workers use.
 
 For SSO users, Authentik is the source of truth for the global administrator flag and the display name, so they cannot be changed on the screen. The administrator column shows that the Authentik group is authoritative.
 
@@ -120,6 +120,6 @@ If Authentik stops and nobody can sign in, change back to `AUTH_MODE=hybrid` and
 
 ## Check your account {#check-your-account}
 
-Open **アカウント** (Account) from the user menu (your avatar) at the top right (`/settings/account`) to see your display name, email, login method, whether you are a global administrator, your groups (SSO users only, with the last sync time), and your API tokens. Local accounts can also change their password here. You can also open it from **アカウント** in the global settings sidebar.
+Open **Account** from the user menu (your avatar) at the top right (`/settings/account`) to see your display name, email, login method, whether you are a global administrator, your groups (SSO users only, with the last sync time), and your API tokens. Local accounts can also change their password here. You can also open it from **Account** in the **Global settings** sidebar.
 
-![The account screen](/images/admin-account.png)
+![The account screen](/images/en/admin-account.png)

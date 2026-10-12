@@ -7,7 +7,7 @@ description: Project・Experiment・Runの関係、params・metrics・tags、Run
 
 ![Experimentを選んでRunの一覧を表示した画面](/images/tracking-runs.png)
 
-mado ML Trackingでは、学習や評価の1回の実行を「Run」として記録します。Runにはparams（実行条件）、metrics（stepごとの数値）、tags（目印）、ログ、Artifact（ファイル）が付きます。画面上部の［Experiments］で、Runを一覧・検索・比較できます。
+mado ML Trackingでは、学習や評価の1回の実行を「Run」として記録します。Runにはparams（実行条件）、metrics（stepごとの数値）、tags（目印）、ログ、Artifact（ファイル）が付きます。サイドバーの［Experiments］で、Runを一覧・検索・比較できます。
 
 ## こんなときに向いています
 

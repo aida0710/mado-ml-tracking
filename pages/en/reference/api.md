@@ -35,7 +35,7 @@ Some operations work only with a browser session; with an API token they return 
 
 - Issuing and revoking API tokens
 - Creating and changing Service Accounts and issuing their tokens
-- The global audit log and user management (全体管理, Global administration)
+- The global audit log and user management (**Administration**)
 
 ## Common shapes
 
@@ -52,6 +52,8 @@ Errors have this shape. `error` is a human-readable message; `code` is for progr
 ```json
 {"error": "API tokenのscopeが不足しています。この操作にはruns:writeが要ります。［プロジェクト設定］の［API tokenを発行］で用途「SDK・MLflow 3から記録する」を選び、tokenを発行し直してください", "code": "insufficient_scope"}
 ```
+
+`error` is written in Japanese. The message above means: the API token lacks a scope; this operation needs `runs:write`; choose the purpose **Record from SDK or MLflow 3** with **Issue API token** in **Project settings** and issue a new token.
 
 | Status | Common `code` | Meaning |
 | --- | --- | --- |

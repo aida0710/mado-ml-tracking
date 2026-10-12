@@ -5,7 +5,7 @@ description: Connect the official MLflow 3 SDK with MLFLOW_TRACKING_URI and an A
 
 # Record from MLflow 3
 
-![The "Connect from MLflow 3" section of the Project settings](/images/tracking-mlflow-connection.png)
+![The "Connect from SDK or MLflow 3" section of the Project settings](/images/en/tracking-mlflow-connection.png)
 
 The official `mlflow` Python SDK (MLflow 3) can record into a mado ML Tracking Project. Set the server and token in environment variables and keep your MLflow code as it is. Runs, metrics, Artifacts, and registered models recorded this way are the same data as those recorded from the Web UI.
 
@@ -19,8 +19,8 @@ This is not a server with every MLflow feature. Check the [supported features](#
 
 ## Connect
 
-1. Open **プロジェクト設定** (Project settings) and find MLflow 3から接続 (Connect from MLflow 3). `MLFLOW_TRACKING_URI` and `MLFLOW_REGISTRY_URI` show the same URL, `https://<server>/api/mlflow/projects/<Project ID>`
-2. Choose このProject用のAPI tokenを発行 (Issue an API token for this Project). The token form opens with `read`, `runs:write`, `registry:write`, and `artifacts:write` selected; enter a name and expiry and issue it. The token is shown only once, so keep it (the button is shown to editors and above)
+1. Open **Project settings** and find **Connect from SDK or MLflow 3**. `MLFLOW_TRACKING_URI` and `MLFLOW_REGISTRY_URI` show the same URL, `https://<server>/api/mlflow/projects/<Project ID>`
+2. Choose **Issue API token for this project**. The token form opens with `read`, `runs:write`, `registry:write`, and `artifacts:write` selected; enter a name and expiry and issue it. The token is shown only once, so keep it (the button is shown to editors and above)
 3. In a terminal on the training machine, install MLflow and set the environment variables
 
 ```bash
@@ -31,7 +31,7 @@ printf 'API token: '; read -r -s MLFLOW_TRACKING_TOKEN; echo
 export MLFLOW_TRACKING_TOKEN
 ```
 
-The コピー (Copy) button next to the environment variable example copies these lines with the Project's URL. Never put the token in source code or Git-tracked files; pass it to containers as an environment variable.
+The **Copy** button next to the environment variable example copies these lines with the Project's URL. Never put the token in source code or Git-tracked files; pass it to containers as an environment variable.
 
 | Purpose | Scope |
 | --- | --- |
@@ -60,11 +60,11 @@ When it fails, the error message says what to fix.
 
 | Error | What to fix |
 | --- | --- |
-| `ENDPOINT_NOT_FOUND: MLFLOW_TRACKING_URIにProjectのIDが入っていません` (no Project ID in the URI) | Do not stop `MLFLOW_TRACKING_URI` at the site or at `/api/mlflow`; include `/api/mlflow/projects/<Project ID>` |
-| `UNAUTHENTICATED: API tokenが送られていません` (no token sent) | Put the token in `MLFLOW_TRACKING_TOKEN` (`MLFLOW_TRACKING_PASSWORD` for Basic authentication) |
+| `ENDPOINT_NOT_FOUND: MLFLOW_TRACKING_URIにProjectのIDが入っていません` (MLFLOW_TRACKING_URI does not contain the Project ID) | Do not stop `MLFLOW_TRACKING_URI` at the site or at `/api/mlflow`; include `/api/mlflow/projects/<Project ID>` |
+| `UNAUTHENTICATED: API tokenが送られていません` (no API token was sent) | Put the token in `MLFLOW_TRACKING_TOKEN` (`MLFLOW_TRACKING_PASSWORD` for Basic authentication) |
 | `UNAUTHENTICATED` (the token is invalid or revoked) | Check the token's value and expiry, and issue a new one if needed |
-| `PERMISSION_DENIED: API tokenのscopeが不足しています` (missing scope) | The message names the missing scope. Issue a token with the purpose "SDK・MLflow 3から記録する" (Record from the SDK and MLflow 3) |
-| `PERMISSION_DENIED: API tokenのprojectが一致しません` (another Project) | The message names the token's Project. Match the Project ID in the URI or the token you use |
+| `PERMISSION_DENIED: API tokenのscopeが不足しています` (the API token lacks a required scope) | The message names the missing scope. Issue a token with the purpose **Record from SDK or MLflow 3** |
+| `PERMISSION_DENIED: API tokenのprojectが一致しません` (the API token's Project does not match) | The message names the token's Project. Match the Project ID in the URI or the token you use |
 
 ## Connect with Basic authentication
 
@@ -81,7 +81,7 @@ export MLFLOW_TRACKING_PASSWORD
 - A local account password is not accepted
 - Revocation, expiry, scopes, and Project roles are checked exactly as with `MLFLOW_TRACKING_TOKEN`
 
-The page shows this example under Pythonの例・Basic認証 (Python example and Basic authentication).
+The page shows this example when you open **Service account tokens / Basic authentication**.
 
 ## Record Runs and Artifacts
 
@@ -156,7 +156,7 @@ with mlflow.start_run() as run:
 version = mlflow.register_model(f"runs:/{run.info.run_id}/model", "regression")
 ```
 
-- On registration the server reads the directory's `MLmodel` and uses the file it names as the model body (the weights on the Models page). The source Run is linked to the version as well
+- On registration the server reads the directory's `MLmodel` and uses the file it names as the model body (the weights on the **Models** page). The source Run is linked to the version as well
 - The returned `source` is where the version's pinned files live (`mlflow-artifacts:/model-versions/...`), not the `runs:/...` you passed, unlike the MLflow server
 
 To run inference and evaluation automatically on registration, set the registered model tag `mmt.model_family` to a model family and create an automation rule for that family in the Project.

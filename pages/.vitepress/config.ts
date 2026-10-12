@@ -133,6 +133,8 @@ export default defineConfig({
   description: jaDescription,
   lang: "ja",
   base,
+  // 撮影スクリプトの説明 (scripts/screenshots/README.md) はサイトのページにしない。
+  srcExclude: ["scripts/**"],
   cleanUrls: true,
   lastUpdated: true,
   sitemap: { hostname: siteUrl },

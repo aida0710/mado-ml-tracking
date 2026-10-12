@@ -6,6 +6,7 @@ import { configDefaults, defineConfig } from 'vitest/config';
 // of shared memory", so these files run at most this many at a time; everything else stays parallel.
 const DATABASE_TEST_FILE_CONCURRENCY = 6;
 const databaseTestFiles = ['apps/api/test/**/*.integration.test.ts'];
+const webTestFiles = ['apps/web/**/*.{test,spec}.?(c|m)[jt]s?(x)'];
 
 export default defineConfig({
   test: {
@@ -14,8 +15,17 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'unit',
-          exclude: [...configDefaults.exclude, ...databaseTestFiles],
+          exclude: [...configDefaults.exclude, ...databaseTestFiles, ...webTestFiles],
           // Projects with different maxWorkers must run as separate groups; unit tests go first.
+          sequence: { groupOrder: 0 },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'web',
+          include: webTestFiles,
+          setupFiles: ['apps/web/src/i18n/japaneseTestLocale.ts'],
           sequence: { groupOrder: 0 },
         },
       },

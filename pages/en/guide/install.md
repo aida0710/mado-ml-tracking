@@ -165,7 +165,7 @@ The nginx in the bundled `web` container overwrites `X-Forwarded-Proto` with the
 
 Open `MMT_PUBLIC_URL` in a browser and check that the sign-in screen appears. With `hybrid`, the SSO button is shown as well.
 
-![The sign-in screen with username and password fields](/images/guide-login.png)
+![The sign-in screen with username and password fields](/images/en/guide-login.png)
 
 ## Web and API URLs
 
@@ -177,7 +177,7 @@ Open `MMT_PUBLIC_URL` in a browser and check that the sign-in screen appears. Wi
 | MLflow `MLFLOW_TRACKING_URI` | `https://tracking.example.com/api/mlflow/projects/<Project ID>` |
 | API health check | `https://tracking.example.com/api/health` |
 
-The MLflow endpoint is separate for each Project. The Project URL is shown under "MLflow 3から接続" (Connect from MLflow 3) in プロジェクト設定 (Project settings).
+The MLflow endpoint is separate for each Project. The Project URL is shown under **Connect from SDK or MLflow 3** in **Project settings**.
 
 ## Store Artifacts in a host directory
 
@@ -197,7 +197,7 @@ COMPOSE_FILE=compose.yml:compose.override.yml:compose.filesystem-storage.yml
 MMT_FILESYSTEM_STORAGE_DIR=/srv/mmt/storage
 ```
 
-After `docker compose up -d`, add a storage under 全体設定 (Global settings) → 全体管理 (Global administration) → **ストレージ** (Storage) and use a path below this directory, for example `/srv/mmt/storage/artifacts`, as the root directory ([Storage](/en/data/storage)).
+After `docker compose up -d`, add a storage under **Global settings** → **Administration** → **Storage** and use a path below this directory, for example `/srv/mmt/storage/artifacts`, as the root directory ([Storage](/en/data/storage)).
 
 ## Install workers
 
