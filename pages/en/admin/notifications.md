@@ -11,8 +11,8 @@ There are two roles.
 
 | Setting | Who | Where |
 | --- | --- | --- |
-| Notification channels (where to send) | Global administrators | **通知** (Notifications) → **通知先** (Channels) in **プロジェクト設定** (Project settings) |
-| Notification rules (which events go to which channel) | Project Admins | **通知** → **通知ルール** (Rules) in **プロジェクト設定** (Project settings) |
+| Notification channels (where to send) | Global administrators | **Notifications** → **Notification channels** in **Project settings** |
+| Notification rules (which events go to which channel) | Project Admins | **Notifications** → **Notification rules** in **Project settings** |
 
 ![The Notifications section of the Project settings](/images/en/admin-notifications.png)
 
@@ -20,14 +20,14 @@ There are two roles.
 
 | Event | Sent when |
 | --- | --- |
-| Run failed | A Run ended as failed |
-| Run canceled | A Run ended as canceled |
-| Run finished | A Run finished (only if the rule selects it) |
-| Automation failed | Automation after a model registration failed to start |
-| Job heartbeat stale | A running Job's heartbeat is older than 60 seconds |
-| Job heartbeat recovered | A stale Job's heartbeat came back |
-| Worker offline | A worker's last response is older than 120 seconds |
-| Plugin delivery stalled | An undelivered plugin event is older than 15 minutes, or one event failed 5 or more times |
+| **Run failed** | A Run ended as failed |
+| **Run canceled** | A Run ended as canceled |
+| **Run completed** | A Run finished (only if the rule selects it) |
+| **Automation failed** | Automation after a model registration failed to start |
+| **Job heartbeat lost** | A running Job's heartbeat is older than 60 seconds |
+| **Job heartbeat recovered** | A stale Job's heartbeat came back |
+| **Worker stopped** | A worker's last response is older than 120 seconds |
+| **Plugin delivery backlog** | An undelivered plugin event is older than 15 minutes, or one event failed 5 or more times |
 
 ## 1. Put URLs and secrets in environment variables
 
@@ -64,40 +64,40 @@ MMT_SMTP_FROM=mado ML Tracking <mmt@example.com>
 
 ## 2. Add a channel (global administrators)
 
-1. Open **プロジェクト設定** (Project settings) and click **通知先を追加** (Add channel) under **通知先**.
-2. Enter the values for the kind and save. A variable name field offers the API server's variables that start with `MMT_NOTIFICATION_` and hold a value (values are never shown). A name the API server does not have is flagged before saving; the channel can still be saved, but it cannot send.
+1. Open **Project settings** and click **Add notification channel** under **Notification channels**.
+2. Choose the **Type**, enter its values, and save. A variable name field offers the API server's variables that start with `MMT_NOTIFICATION_` and hold a value (values are never shown). A name the API server does not have is flagged before saving; the channel can still be saved, but it cannot send.
 
-| Kind | Fields | Example |
+| **Type** | Fields | Example |
 | --- | --- | --- |
-| Slack (Incoming Webhook) | Variable name holding the URL | `MMT_NOTIFICATION_SLACK_URL` |
-| Webhook (signed) | Variable names holding the URL and the signing key | `MMT_NOTIFICATION_OPS_URL`, `MMT_NOTIFICATION_OPS_SECRET` |
-| Email | Recipient addresses (one per line, up to 50) | `ml-team@example.com` |
+| **Slack (Incoming Webhook)** | **Environment variable containing the URL (starts with MMT_NOTIFICATION_)** | `MMT_NOTIFICATION_SLACK_URL` |
+| **Webhook (signed)** | **Environment variable containing the URL (starts with MMT_NOTIFICATION_)** and **Environment variable containing the signing secret (starts with MMT_NOTIFICATION_)** | `MMT_NOTIFICATION_OPS_URL`, `MMT_NOTIFICATION_OPS_SECRET` |
+| **Email** | **Recipient email addresses (one per line)**, up to 50 | `ml-team@example.com` |
 
-With **使えるProject** (Usable in) set to all Projects, rules in other Projects can use the channel too; with this Project only, only this Project's rules can.
+With **Available projects** set to **All projects**, rules in other Projects can use the channel too; with **This project only**, only this Project's rules can.
 
-3. Check that **送信設定** (Delivery settings) in the list shows 設定済み (configured). 未設定 (not configured) means the API process cannot see the variable (for email: no SMTP settings). Saving a channel that is not configured says so right after saving as well.
-4. Click **テスト送信** (Send test), and check that the screen reports success and the message arrives.
+3. Check that **Delivery settings** in the list shows **Configured**. **Not configured (variable missing on the API server)** means the API process cannot see the variable; for email, **Not configured (SMTP delivery settings missing)** means there are no SMTP settings. Saving a channel that is not configured says so right after saving as well.
+4. Click **Send test**, and check that the screen shows "Test notification delivered" and the message arrives.
 
 Test messages are not kept in the delivery history. The result is recorded in the audit log as `notification.channel.test`.
 
 ## 3. Create a rule (Project Admins)
 
-Without any channel, **通知ルールを作成** (Create rule) is disabled and the screen asks you to have a global administrator add one; only global administrators add and change channels.
+Without any channel, **Create notification rule** is disabled and the screen asks you to have a global administrator add one; only global administrators add and change channels.
 
-1. Click **通知ルールを作成** (Create rule) under **通知ルール**.
-2. Choose the following and save. A channel without its server settings is marked 未設定 (not configured) in the choices, and choosing it warns that the rule will not deliver.
+1. Click **Create notification rule** under **Notification rules**.
+2. Choose the following and save. A channel without its server settings is marked **not configured** in the choices, and choosing it warns that the rule will not deliver.
 
 | Field | Choose |
 | --- | --- |
-| Channel | A channel registered above |
-| Events | Check one or more, for example Run failed, Automation failed, Worker offline |
-| Run kinds | Check training, inference, evaluation, and so on. None checked means all |
-| Experiments | Check experiments. None checked means all |
-| Only Runs started by automation | Select to notify only about automation Runs |
+| **Notification channel** | A channel registered above |
+| **Events to notify** | Check one or more, for example **Run failed**, **Automation failed**, **Worker stopped** |
+| **Run kinds (none selected means all)** | Check **Training**, **Inference**, **Evaluation**, and so on. None checked means all |
+| **Experiments (none selected means all)** | Check experiments. None checked means all |
+| **Only runs launched by automation** | Select to notify only about automation Runs |
 
-The conditions of a rule cannot be changed after creation. To change them, create a new rule and stop the old one with **無効にする** (Disable).
+The conditions of a rule cannot be changed after creation. To change them, create a new rule and stop the old one with **Disable**.
 
-Rules with Run kind or experiment conditions do not receive Worker offline and Plugin delivery stalled, because those events have no Run. Use a rule without conditions for operations notifications.
+Rules with Run kind or experiment conditions do not receive **Worker stopped** and **Plugin delivery backlog**, because those events have no Run. Use a rule without conditions for operations notifications.
 
 ## What is sent
 
@@ -118,11 +118,11 @@ No notification contains execution settings, parameters, environment variables, 
 - A failed delivery is retried with intervals doubling from 5 seconds (up to 1 hour), and marked failed after 8 attempts (about 10 minutes), because old notifications lose their value.
 - Deliveries whose channel or rule was disabled while queued are marked failed without sending. Re-enabling does not send old notifications in bulk.
 
-Project Admins can check the status, attempts, and failure reason in **直近の送信履歴** (Recent deliveries).
+Project Admins can check the **Status**, **Attempts**, and **Failure reason** in **Recent delivery history**.
 
 | Failure reason | Check |
 | --- | --- |
-| The API server lacks the variable the channel refers to | The variable name and value in `.env`, and whether the API was restarted |
+| The URL or signing secret environment variable referenced by this channel is not set on the API server | The variable name and value in `.env`, and whether the API was restarted |
 | The destination returned HTTP 4xx / 5xx | The webhook URL and the receiver's state |
 | Could not connect to the destination | Network access from the API server, certificates |
 | The destination did not respond in time | Whether the receiver responds within 5 seconds |
@@ -131,16 +131,16 @@ Project Admins can check the status, attempts, and failure reason in **直近の
 
 ## Operations alerts
 
-Every 30 seconds the API server checks for stale Job heartbeats, stopped workers, and stalled plugin deliveries. When it finds one, it shows the count as **運用アラート** (Operations alerts) under the bell in the top bar and notifies the channels selected by rules, once.
+Every 30 seconds the API server checks for stale Job heartbeats, stopped workers, and stalled plugin deliveries. When it finds one, it shows the count as **Operations alerts** under the bell in the top bar and notifies the channels selected by rules, once.
 
-The bell counts the alerts of every Project you are a member of (every Project for a global administrator). Anyone can open a public Project, but its alerts are not on your bell unless you are a member. Each alert names its Project, and the open Project's alerts come first. The bell is on the 全体設定 (Global settings) screens too, so a worker that stopped in another Project shows before you open that Project. The bell reads up to 200 alerts at a time and shows "200+" beyond that.
+The bell counts the alerts of every Project you are a member of (every Project for a global administrator). Anyone can open a public Project, but its alerts are not on your bell unless you are a member. Each alert names its Project, and the open Project's alerts come first. The bell is on the **Global settings** screens too, so a worker that stopped in another Project shows before you open that Project. The bell reads up to 200 alerts at a time and shows "200+" beyond that.
 
 | Kind | Opens when | Closes when |
 | --- | --- | --- |
-| Job heartbeat stale | A running Job's heartbeat is older than 60 seconds | The heartbeat returns (Job heartbeat recovered is sent) or the Job ends |
-| Worker offline | A worker's last response is older than 120 seconds | The worker responds again, its token is revoked or expired, or it has not responded for 7 days |
-| Plugin delivery stalled | The oldest undelivered event is older than 15 minutes, or one failed 5 or more times | Undelivered events fall below the condition, or the plugin is disabled |
+| **Job heartbeat lost** | A running Job's heartbeat is older than 60 seconds | The heartbeat returns (**Job heartbeat recovered** is sent) or the Job ends |
+| **Worker stopped** | A worker's last response is older than 120 seconds | The worker responds again, its token is revoked or expired, or it has not responded for 7 days |
+| **Integration delivery backlog** | The oldest undelivered event is older than 15 minutes, or one failed 5 or more times | Undelivered events fall below the condition, or the plugin is disabled |
 
 - A stale heartbeat does not fail the Job, because the worker may still be working. Request a stop for a stuck Job in **Jobs**, or check the worker host.
-- Plugin delivery status is under **イベントの送信状況** (Event delivery status) in **Integrations**. After fixing the plugin, click **イベントを再送** (Resend events) ([Mado integration](/en/admin/plugins)).
+- Plugin delivery status is under **Event delivery status** in **Integrations**. After fixing the plugin, click **Resend event** ([Mado integration](/en/admin/plugins)).
 - The thresholds are constants in the code and cannot be changed with environment variables.
