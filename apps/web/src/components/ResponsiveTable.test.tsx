@@ -47,7 +47,7 @@ describe('ResponsiveTable', () => {
       `<span class="sr-only">${text.showRowDetails}</span>`,
     ]);
     expect(markup.match(/aria-expanded="false"/g)).toHaveLength(rows.length);
-    // secondary の値は行を開くまで出ない。
+    // Secondary values stay hidden until the row is opened.
     expect(markup).not.toContain('aida');
     expect(markup).not.toContain('responsive-table-details');
   });

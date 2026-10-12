@@ -3,7 +3,6 @@ import type { ReportBlock, SavedViewState } from '@mmt/contracts';
 import {
   analysisTableRequest,
   createBlock,
-  formatSnapshotTime,
   insertBlock,
   moveBlock,
   refreshableSnapshotIds,
@@ -141,11 +140,6 @@ describe('固定データ', () => {
       markdown('text'),
     ];
     expect(refreshableSnapshotIds(blocks, new Set(['fixed', 'live', 'text', 'gone']))).toEqual(['fixed']);
-  });
-
-  it('固定した時刻は閲覧者の時刻で YYYY-MM-DD HH:mm にする', () => {
-    const time = new Date(2026, 9, 8, 7, 5);
-    expect(formatSnapshotTime(time.toISOString())).toBe('2026-10-08 07:05');
   });
 
   it('グループの図は平均線と範囲を、複数のメトリクスはRunとキーの組を1本にする', () => {

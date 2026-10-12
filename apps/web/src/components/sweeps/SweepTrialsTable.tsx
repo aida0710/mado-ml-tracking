@@ -80,7 +80,7 @@ export function sweepTrialColumns({
     },
     {
       key: 'state',
-      header: text.sweepTrialState,
+      header: text.status,
       priority: 'primary',
       render: (trial) => <SweepTrialStateBadge trial={trial} />,
     },

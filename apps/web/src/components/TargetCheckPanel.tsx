@@ -28,7 +28,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { runtimeLabels } from '../i18n/runtime';
 import { workerCoverageText } from '../i18n/workerCoverage';
-import { formatNote } from '../i18n/textJoining';
+import { formatList, formatNote } from '../i18n/textJoining';
 
 /**
  * The connection check of an ssh or local target, which a worker runs. A site is reached only by
@@ -170,7 +170,7 @@ function DetectedGpus({ gpus }: { gpus: TargetCheckGpu[] }) {
             className: 'mono',
             render: (gpu) => gpu.index,
           },
-          { key: 'name', priority: 'primary', header: text.gpuName, render: (gpu) => gpu.name },
+          { key: 'name', priority: 'primary', header: text.name, render: (gpu) => gpu.name },
           {
             key: 'memory',
             priority: 'secondary',
@@ -212,8 +212,8 @@ function TargetCandidateEditor({
       [field]: toggleValue(previous[field] as string[], value),
     }));
   };
-  const currentGpus = target.gpuIds.join(', ') || text.cpuOnly;
-  const currentRuntimes = target.runtimeKinds.map((kind) => runtimeLabels[kind]).join(', ');
+  const currentGpus = formatList(target.gpuIds) || text.cpuOnly;
+  const currentRuntimes = formatList(target.runtimeKinds.map((kind) => runtimeLabels[kind]));
   const save = () =>
     void mutation
       .run(() =>

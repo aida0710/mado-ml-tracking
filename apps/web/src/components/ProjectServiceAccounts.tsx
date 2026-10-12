@@ -67,7 +67,7 @@ export function ProjectServiceAccounts({ access }: { access: ServiceAccountsStat
               {
                 key: 'status',
                 priority: 'primary',
-                header: text.serviceAccountStatus,
+                header: text.status,
                 render: (account) =>
                   account.status === 'active'
                     ? text.serviceAccountActive

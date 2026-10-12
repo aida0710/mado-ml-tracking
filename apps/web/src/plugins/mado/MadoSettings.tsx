@@ -14,6 +14,7 @@ import { MadoSettingsDialog } from './MadoSettingsDialog';
 import { useLocale } from '../../i18n/useLocale';
 import { pluginsText } from '../../i18n/plugins';
 import { text } from '../../i18n/catalog';
+import { formatList } from '../../i18n/textJoining';
 
 export function MadoSettings({ plugin, onSaved }: PluginSettingsProps) {
   useLocale();
@@ -39,7 +40,7 @@ export function MadoSettings({ plugin, onSaved }: PluginSettingsProps) {
       [pluginsText.madoApiUrl, plugin.config.apiUrl],
       [pluginsText.madoWebUrl, plugin.config.webUrl],
       [pluginsText.madoLineageUrl, plugin.config.lineageUrl],
-      [pluginsText.madoNamespaces, plugin.config.namespaces.join(', ')],
+      [pluginsText.madoNamespaces, formatList(plugin.config.namespaces)],
       [pluginsText.madoReadToken, plugin.credentialsConfigured.readToken ? pluginsText.credentialConfigured : pluginsText.credentialMissing],
       [pluginsText.madoLineageToken, plugin.credentialsConfigured.lineageToken ? pluginsText.credentialConfigured : pluginsText.credentialMissing],
       [pluginsText.madoMetricsToken, plugin.credentialsConfigured.metricsToken ? pluginsText.credentialConfigured : pluginsText.credentialMissing],

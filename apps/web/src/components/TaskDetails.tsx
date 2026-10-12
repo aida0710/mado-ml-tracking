@@ -12,6 +12,7 @@ import { isSiteTarget } from '../lib/siteExecutionInput';
 import { useComputerNames } from '../hooks/useComputerNames';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
+import { formatList } from '../i18n/textJoining';
 
 function OutputModelDetails({ outputModel, catalog, base }: {
   outputModel: TaskOutputModel; catalog: ExecutionCatalog; base: string;
@@ -53,7 +54,7 @@ export function TaskDetails({ task, catalog, targets }: {
   const resourceEntries: Array<[string, ReactNode]> = isSiteTarget(target)
     ? [[text.gpuCount, task.gpuCount],
       [text.walltimeShort, formatClockDuration(task.walltimeSeconds) || text.walltimeUnset]]
-    : [[text.gpuIds, task.gpuIds.join(', ') || text.cpuOnly]];
+    : [[text.gpuIds, formatList(task.gpuIds) || text.cpuOnly]];
   return <div className="task-details" data-testid="task-details">
     {task.description && <p>{task.description}</p>}
     <DetailsList entries={[

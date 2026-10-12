@@ -32,7 +32,7 @@ import { SearchSpaceEditor } from './SearchSpaceEditor';
 import { useLocale } from '../../i18n/useLocale';
 import { sweepAggregationLabels, sweepGoalLabels, sweepMethodLabels } from '../../i18n/sweeps';
 import { text, textTemplates } from '../../i18n/catalog';
-import { formatNote } from '../../i18n/textJoining';
+import { formatList, formatNote } from '../../i18n/textJoining';
 
 // The API names the offending parameter in this 422's message (domain/sweeps/searchSpace.ts).
 const SPACE_INVALID_CODE = 'sweep_space_invalid';
@@ -183,7 +183,7 @@ export function CreateSweepDialog({
             )}
             {missingTaskGpus.length > 0 && (
               <p className="notice error" role="status">
-                {textTemplates.sweepTaskGpusMissing(missingTaskGpus.join(', '))}
+                {textTemplates.sweepTaskGpusMissing(formatList(missingTaskGpus))}
               </p>
             )}
             <Field label={text.sweepMethod}>

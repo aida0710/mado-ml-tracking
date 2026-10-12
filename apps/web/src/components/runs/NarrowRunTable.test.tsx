@@ -50,7 +50,7 @@ const headerCount = (markup: string) => (markup.match(/<th[\s>]/g) ?? []).length
 describe('狭い幅の Run 一覧', () => {
   it('選択・Run名・状態だけを行に出し、残りの列は行を開くボタンの奥に置く', () => {
     const markup = render(columns);
-    // 見出しは「すべて選択」「Run名」「状態」と、行を開くボタンの列。
+    // The headers: select all, the Run name, the status, and the column of the buttons that open a row.
     expect(headerCount(markup)).toBe(4);
     expect(markup).toContain(text.selectAll);
     expect(markup).toContain(text.runName);

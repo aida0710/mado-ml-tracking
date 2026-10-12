@@ -12,7 +12,6 @@ export const reportsText = localized({
   reportUpdatedBy: '更新者',
   reportUpdatedAt: '更新日時',
   reportRevision: 'バージョン',
-  reportState: '状態',
   reportArchived: 'アーカイブ済み',
   reportActive: '公開中',
   reportShowArchived: 'アーカイブ済みも表示',

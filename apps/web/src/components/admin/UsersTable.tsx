@@ -88,7 +88,7 @@ export function UsersTable({
         {
           key: 'status',
           priority: 'primary',
-          header: text.userStatusFilter,
+          header: text.status,
           render: (user) => (
             <span className={`user-status ${user.status}`}>
               {user.status === 'active' ? text.userStatusActive : text.userStatusDisabled}
@@ -115,7 +115,7 @@ export function UsersTable({
         {
           key: 'actions',
           priority: 'secondary',
-          header: text.userActions,
+          header: text.actions,
           render: (user) => (
             <div className="user-actions">
               {availableActions(user).map((action) => (

@@ -26,7 +26,7 @@ export function LaunchersTable({
         {
           key: 'status',
           priority: 'primary',
-          header: text.launcherStatus,
+          header: text.status,
           render: (launcher) =>
             launcher.revokedAt === null ? (
               <span className="status-badge status-finished">{text.launcherActive}</span>

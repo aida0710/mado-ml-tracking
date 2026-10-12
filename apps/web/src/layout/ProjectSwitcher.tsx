@@ -166,7 +166,7 @@ export function ProjectSwitcher({
         <div
           ref={popoverRef}
           popover="manual"
-          className="project-switcher-popover"
+          className="anchored-popover project-switcher-popover"
           style={popoverStyle}
           onMouseDown={keepFocusOnPress}
         >

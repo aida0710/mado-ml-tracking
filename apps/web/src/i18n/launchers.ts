@@ -7,7 +7,6 @@ export const launchersText = localized({
     'ランチャーは、自動投入のコンピュータへSSHで入ってJobを投入します。ランチャーごとにtokenを1本発行し、ランチャーのホストのtoken_fileに置きます。コンピュータ・鍵・job shellの設定は、ランチャーがWebから読みます。',
   newLauncher: 'ランチャーを登録',
   noLaunchers: 'ランチャーはまだ登録されていません。',
-  launcherStatus: '状態',
   launcherActive: '有効',
   launcherRevoked: '失効',
   launcherLastSeen: '最後の応答',

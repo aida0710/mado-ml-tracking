@@ -11,7 +11,6 @@ export const serviceAccountsText = localized({
   serviceAccountsEmpty: 'Service Accountはまだありません',
   newServiceAccount: 'Service Accountを作成',
   editServiceAccount: 'Service Accountを編集',
-  serviceAccountStatus: '状態',
   serviceAccountActive: '有効',
   serviceAccountDisabled: '無効',
   serviceAccountRoleMissing: 'Roleなし',

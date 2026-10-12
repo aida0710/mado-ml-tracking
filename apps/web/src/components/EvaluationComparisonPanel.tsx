@@ -108,8 +108,6 @@ function ComparisonConditions({
   );
 }
 
-const metricValueLabels = { get notFinite() { return text.metricNotFinite; } };
-
 function describeSources(source: MetricComparison['source']): string {
   const labels = [source.candidate, source.baseline].map((value) =>
     value ? sourceLabels[value] : '—',
@@ -140,16 +138,14 @@ function MetricComparisonTable({ metrics }: { metrics: MetricComparison[] }) {
           priority: 'primary',
           header: text.metricCandidate,
           className: 'mono',
-          render: (metric) =>
-            formatMetricValue(metric.candidate, metric.candidateStatus, metricValueLabels),
+          render: (metric) => formatMetricValue(metric.candidate, metric.candidateStatus),
         },
         {
           key: 'baseline',
           priority: 'secondary',
           header: text.metricBaseline,
           className: 'mono',
-          render: (metric) =>
-            formatMetricValue(metric.baseline, metric.baselineStatus, metricValueLabels),
+          render: (metric) => formatMetricValue(metric.baseline, metric.baselineStatus),
         },
         {
           key: 'delta',

@@ -15,7 +15,8 @@ import { Empty, ErrorNotice, Loading } from '../Feedback';
 import { useLiveBlockData, useMediaTableSource } from '../../hooks/useReportBlockData';
 import { useExclusiveAudio } from '../../hooks/useExclusiveAudio';
 import { CHART_ROW_HEIGHT_PX } from '../charts/ChartPanel';
-import { formatSnapshotTime, reportChartSeries, snapshotRunLabels } from '../../lib/reportBlocks';
+import { formatDate } from '../../lib/format';
+import { reportChartSeries, snapshotRunLabels } from '../../lib/reportBlocks';
 import { analysisRows, metricFieldKey, metricFields, paramFieldKey, paramFields } from '../../lib/runAnalysisFields';
 import { useLocale } from '../../i18n/useLocale';
 import { reportBlockTypeLabels } from '../../i18n/reports';
@@ -100,7 +101,7 @@ function EmbedModeMark({ block, snapshot }: { block: ReportEmbedBlock; snapshot:
   return (
     <span className="report-mode-mark snapshot" data-testid="report-snapshot-mark">
       <Pin size={13} />
-      {snapshot ? textTemplates.reportSnapshotAt(formatSnapshotTime(snapshot.capturedAt)) : text.reportSnapshotPending}
+      {snapshot ? textTemplates.reportSnapshotAt(formatDate(snapshot.capturedAt)) : text.reportSnapshotPending}
     </span>
   );
 }

@@ -2,7 +2,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 
 afterEach(() => vi.unstubAllGlobals());
 
-it('shows Japanese derived labels after the application first loads in English', async () => {
+it('英語で起動したあと日本語に切り替えると、別の辞書を参照するラベルも日本語になる', async () => {
   vi.resetModules();
   vi.stubGlobal('window', {});
   vi.stubGlobal('navigator', { languages: ['en-US'] });

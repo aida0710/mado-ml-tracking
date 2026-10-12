@@ -1,4 +1,5 @@
 import { formatEnglishCount } from '../formatEnglishCount';
+import { INTL_LOCALES } from '../locale';
 import {
   MAX_JOB_ARRAY_SIZE,
   MAX_JOB_GPU_COUNT,
@@ -118,7 +119,7 @@ export const jobsTextTemplates = {
   jobActionTarget: (job: { runName: string; createdByName: string; targetName: string }) =>
     `Run “${job.runName}” · Created by: ${job.createdByName} · Execution computer: ${job.targetName}`,
   logsShowingLatest: (shown: number, total: number) =>
-    `Showing the latest ${shown.toLocaleString('en-US')} of ${formatEnglishCount(total, 'line')}. Search and level filters apply only to these lines. Downloads include all lines.`,
+    `Showing the latest ${shown.toLocaleString(INTL_LOCALES.en)} of ${formatEnglishCount(total, 'line')}. Search and level filters apply only to these lines. Downloads include all lines.`,
   logsMatchCount: (count: number) => formatEnglishCount(count, 'matching line'),
   logsReadLatestLines: (count: number) => `Load the latest ${formatEnglishCount(count, 'line')}`,
   attempt: (attempt: number, maxAttempts: number) => `${attempt} / ${maxAttempts}`,

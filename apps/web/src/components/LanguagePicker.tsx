@@ -59,7 +59,7 @@ export function LanguagePicker() {
   };
 
   return (
-    <div ref={container} style={{ position: 'relative' }}>
+    <div ref={container}>
       <button
         ref={trigger}
         type="button"
@@ -79,9 +79,8 @@ export function LanguagePicker() {
         <Globe size={17} aria-hidden="true" />
       </button>
       {isOpen && (
-        <div ref={menu} id={menuId} className="popover" popover="manual" role="menu" aria-label={label} onKeyDown={navigateMenu}
-          style={{ ...popoverStyle, position: 'fixed', margin: 0, right: 'auto', minWidth: 0,
-            top: popoverStyle?.top ?? 'auto', bottom: popoverStyle?.bottom ?? 'auto' }}>
+        <div ref={menu} id={menuId} className="popover anchored-popover" popover="manual" role="menu" aria-label={label}
+          onKeyDown={navigateMenu} style={popoverStyle}>
           {LANGUAGES.map(language => (
             <button
               key={language.locale}

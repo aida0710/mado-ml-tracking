@@ -10,11 +10,12 @@ import type { FormValues } from '../types/form';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { jobsTextTemplates } from '../i18n/jobs';
+import { formatList } from '../i18n/textJoining';
 
 /** The resources the review lists: GPU IDs, or a site's GPU count, time limit and retries. */
 function reviewResources(values: FormValues, isSite: boolean): Array<[string, ReactNode]> {
   if (!isSite)
-    return [[text.gpuIds, getSelectedValues(values, 'gpuIds').join(', ') || text.cpuOnly]];
+    return [[text.gpuIds, formatList(getSelectedValues(values, 'gpuIds')) || text.cpuOnly]];
   const retries = formatAutoRetries({
     retryOnFailure: getFieldValue(values, 'retryOnFailure') === 'true',
     retryOnTimeout: getFieldValue(values, 'retryOnTimeout') === 'true',
@@ -54,10 +55,11 @@ export function LaunchReview<Target extends ComputeTarget>({
         ],
         [
           text.inputDatasets,
-          options.datasets
-            .filter((option) => chosenDatasets.includes(option.value))
-            .map((option) => option.label)
-            .join(', '),
+          formatList(
+            options.datasets
+              .filter((option) => chosenDatasets.includes(option.value))
+              .map((option) => option.label),
+          ),
         ],
         [text.target, choices.target?.name],
         ...reviewResources(values, isSiteTarget(choices.target)),

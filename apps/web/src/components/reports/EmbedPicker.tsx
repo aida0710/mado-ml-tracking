@@ -21,6 +21,7 @@ import {
   reportEmbedModeLabels,
 } from '../../i18n/reports';
 import { text, textTemplates } from '../../i18n/catalog';
+import { formatList } from '../../i18n/textJoining';
 
 type EmbedType = ReportEmbedBlock['type'];
 const EMBED_TYPES: EmbedType[] = [
@@ -176,7 +177,7 @@ function RunSetFields({
           <span>{text.reportChartSettings}</span>
           <div className="report-inline-row">
             <span className="mono">
-              {textTemplates.reportChartMetrics(block.panel.metricKeys.join(', ') || text.reportChartMetricsNone)}
+              {textTemplates.reportChartMetrics(formatList(block.panel.metricKeys) || text.reportChartMetricsNone)}
             </span>
             <button type="button" className="button small" onClick={() => setEditingChart(true)}>
               {text.reportChartSettings}

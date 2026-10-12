@@ -121,7 +121,7 @@ export function UsersPanel() {
         />
         <button className="button">{text.search}</button>
         <select
-          aria-label={text.userStatusFilter}
+          aria-label={text.status}
           value={filter.status ?? ''}
           onChange={(event) =>
             setFilter({

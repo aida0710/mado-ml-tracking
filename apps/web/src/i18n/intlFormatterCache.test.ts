@@ -5,7 +5,7 @@ import { setLocale } from './locale';
 afterEach(() => setLocale('ja'));
 
 describe('memoizePerIntlLocale', () => {
-  it('builds the formatter once per language and returns the one for the current display language', () => {
+  it('部品は言語ごとに1回だけ作り、今の表示言語のものを返す', () => {
     const builtFor: string[] = [];
     const getFormat = memoizePerIntlLocale((intlLocale) => {
       builtFor.push(intlLocale);
@@ -21,7 +21,7 @@ describe('memoizePerIntlLocale', () => {
     expect(builtFor).toEqual(['ja-JP', 'en-US']);
   });
 
-  it('gives the formatter of a fixed language when one is named', () => {
+  it('言語を指定すると、表示言語にかかわらずその言語の部品を返す', () => {
     setLocale('ja');
     const getFormat = memoizePerIntlLocale((intlLocale) => new Intl.NumberFormat(intlLocale, { notation: 'compact' }));
     expect(getFormat('en-US').format(1_200_000)).toBe('1.2M');

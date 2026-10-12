@@ -13,6 +13,7 @@ import { isSsoUser, userAuthSourceLabels } from '../lib/adminUserDisplay';
 import { canChangeOwnPassword } from '../lib/permissions';
 import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
+import { formatList } from '../i18n/textJoining';
 
 function AccountProfile({ account }: { account: Account }) {
   useLocale();
@@ -101,7 +102,7 @@ function AccountTokens({
           key: 'scopes',
           label: text.scopes,
           className: 'mono',
-          render: (token) => token.scopes.join(', '),
+          render: (token) => formatList(token.scopes),
         },
         {
           key: 'expires',

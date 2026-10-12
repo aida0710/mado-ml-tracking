@@ -63,7 +63,7 @@ export function StorageBackendsTable({
         {
           key: 'state',
           priority: 'secondary',
-          header: text.storageState,
+          header: text.status,
           render: (backend) => (backend.enabled ? text.enabled : text.disabled),
         },
         {
