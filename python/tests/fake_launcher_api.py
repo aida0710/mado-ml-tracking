@@ -79,6 +79,8 @@ class FakeLauncherApi:
         self.report_statuses: list[int] = []
         # Keys revoked after the configuration listed them: publishing one is refused.
         self.revoked: set[str] = set()
+        # Claim fields this API does not know yet: an older API refuses a claim that has one.
+        self.unknown_claim_fields: set[str] = set()
         self.calls: list[tuple[str, str, Any]] = []
 
     def assign_site(self, target: dict[str, Any], settings: dict[str, Any]) -> None:
@@ -126,6 +128,8 @@ class FakeLauncherApi:
             self.checks = [check for check in self.checks if check["id"] != check_id]
             return httpx.Response(204)
         if path == "launcher/site-submissions/claim":
+            if self.unknown_claim_fields & set(body):
+                return httpx.Response(422, json={"error": "入力が不正です: ", "code": "invalid_request"})
             wanted = set(body["targetIds"])
             taken = [item for item in self.submissions if item["target"]["id"] in wanted][: body["limit"]]
             self.submissions = [item for item in self.submissions if item not in taken]

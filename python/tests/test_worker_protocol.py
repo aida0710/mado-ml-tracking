@@ -9,10 +9,11 @@ import pytest
 
 from mado_tracking.errors import ApiError
 from mado_tracking.worker.api import WorkerApi
+from mado_tracking.worker.capabilities import WORKER_CAPABILITIES
 from mado_tracking.worker.host_state import read_state, write_json
 from mado_tracking.worker.journal import JobJournal
 from mado_tracking.worker.service import Worker
-from mado_tracking.worker.worker_info import WORKER_CAPABILITIES, describe_host
+from mado_tracking.worker.worker_info import describe_host
 
 # What a worker without SSH directories (WorkerApi's default) reports about itself.
 WORKER_INFO_WITHOUT_SSH_FILES = {

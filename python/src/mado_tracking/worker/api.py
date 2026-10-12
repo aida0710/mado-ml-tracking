@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
+import time
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -23,19 +24,6 @@ LEASE_REJECTED_STATUSES = {401, 403, 404, 409, 410}
 # the lease itself is gone (the other job routes treat every such status as a lost lease).
 OUTPUT_LEASE_REJECTED_STATUSES = {401, 410}
 INVALID_LEASE_CODE = "invalid_lease"
-# The API's answer to a body its strict schema does not know (a field of a newer worker).
-UNKNOWN_FIELD_STATUS = 422
-# What the operator loses once an older API refuses each workerInfo field; logged once per field.
-REFUSED_WORKER_INFO_WARNINGS = {
-    "capabilities": (
-        "The API does not take capabilities in workerInfo; this worker keeps claiming Jobs without "
-        "reporting what it supports until the API is upgraded"
-    ),
-    "sshFiles": (
-        "The API does not take SSH files in workerInfo; the Web cannot assign computer checks "
-        "to this worker until the API is upgraded"
-    ),
-}
 LOGGER = logging.getLogger(__name__)
 
 
@@ -48,9 +36,10 @@ class WorkerApi(ArtifactTransferApi):
         transport: httpx.AsyncBaseTransport | None = None,
         upload_state_store: UploadStateStore | None = None,
         ssh_directories: Sequence[Path] = (),
+        clock: Callable[[], float] = time.monotonic,
     ):
         super().__init__(url=url, token=token, transport=transport, upload_state_store=upload_state_store)
-        self.worker_info = WorkerInfo(ssh_directories=ssh_directories)
+        self.worker_info = WorkerInfo(ssh_directories=ssh_directories, clock=clock)
 
     async def request(
         self, path: str, payload: dict[str, Any], *, retryable: bool = True, leased: bool = False
@@ -73,24 +62,15 @@ class WorkerApi(ArtifactTransferApi):
     async def request_with_worker_info(
         self, path: str, payload: dict[str, Any], *, retryable: bool
     ) -> dict[str, Any]:
-        """Send a claim or resume with workerInfo, dropping the fields an older API refuses.
+        """Send a claim or resume with workerInfo, without the fields an older API refuses.
 
-        The API's 422 does not name the unknown field, so each 422 drops the newest field still
-        reported, until the API accepts the request or nothing is left to drop.
+        A refused field is offered again from time to time (newer_request_fields.py).
         """
-        while True:
-            try:
-                return await self.request(
-                    path, {**payload, "workerInfo": self.worker_info.payload()}, retryable=retryable
-                )
-            except ApiError as error:
-                if error.status_code != UNKNOWN_FIELD_STATUS:
-                    raise
-                refused_field = self.worker_info.stop_reporting_newest_field()
-                if refused_field is None:
-                    raise
-                LOGGER.warning(REFUSED_WORKER_INFO_WARNINGS[refused_field])
-            # A 422 accepted nothing, so sending the request again cannot claim a second Job.
+        return await self.worker_info.newer_fields.send_async(
+            lambda offered: self.request(
+                path, {**payload, "workerInfo": self.worker_info.payload(offered)}, retryable=retryable
+            )
+        )
 
     async def claim(
         self, worker_id: str, target_ids: Sequence[str], *, active_job_ids: Sequence[str] = ()

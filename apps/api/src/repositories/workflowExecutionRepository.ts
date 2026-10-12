@@ -84,6 +84,20 @@ export async function insertWorkflowStepExecution(
   );
 }
 
+/** Counts a failed launch of a pending step and returns how many of its launches have failed. */
+export async function recordWorkflowStepLaunchFailure(
+  connection: Connection,
+  stepId: string,
+): Promise<number> {
+  const counted = await first<{ launchFailures: number }>(
+    connection,
+    `UPDATE workflow_step_runs SET launch_failures=launch_failures+1,launch_failed_at=now()
+    WHERE id=$1 RETURNING launch_failures`,
+    [stepId],
+  );
+  return counted!.launchFailures;
+}
+
 export async function findWorkflowExecutionSummary(
   connection: Connection,
   reference: { projectId: string; id: string; lock?: boolean },

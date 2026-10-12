@@ -120,9 +120,12 @@ def test_ssh_files_are_listed_again_once_the_scan_interval_has_passed(tmp_path: 
     info = WorkerInfo(ssh_directories=[directory], clock=lambda: now[0])
     write_file(directory / "id_new", mode=0o600)
     now[0] = SSH_FILE_SCAN_INTERVAL_SECONDS - 1
-    assert info.payload()["sshFiles"]["keyPaths"] == [str(directory / "id_old")]
+    assert info.payload(["sshFiles"])["sshFiles"]["keyPaths"] == [str(directory / "id_old")]
     now[0] = SSH_FILE_SCAN_INTERVAL_SECONDS
-    assert info.payload()["sshFiles"]["keyPaths"] == [str(directory / "id_new"), str(directory / "id_old")]
+    assert info.payload(["sshFiles"])["sshFiles"]["keyPaths"] == [
+        str(directory / "id_new"),
+        str(directory / "id_old"),
+    ]
 
 
 def test_claim_and_resume_report_the_ssh_file_paths_in_worker_info(ssh_directory: Path):

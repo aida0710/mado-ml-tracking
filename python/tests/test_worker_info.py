@@ -13,6 +13,7 @@ import httpx
 import pytest
 
 from mado_tracking.errors import ApiError
+from mado_tracking.newer_request_fields import REFUSED_FIELD_RETRY_SECONDS
 from mado_tracking.worker.api import WorkerApi
 
 API_TOKEN = "test-api-secret"
@@ -59,6 +60,31 @@ def run_presence(server: PresenceServer, *, ssh_directories: Sequence[Path] = ()
         try:
             await api.resume("presence-worker", [])
             assert await api.claim("presence-worker", []) is None
+        finally:
+            await api.close()
+
+    asyncio.run(scenario())
+
+
+def claim_at_times(
+    server: PresenceServer, times: Sequence[float], *, upgrade_at: float | None = None
+) -> None:
+    """One worker claiming at each of `times`; from `upgrade_at` on, the API knows every field."""
+    now = [0.0]
+
+    async def scenario() -> None:
+        api = WorkerApi(
+            url="http://localhost/api",
+            token=API_TOKEN,
+            transport=httpx.MockTransport(server.serve),
+            clock=lambda: now[0],
+        )
+        try:
+            for moment in times:
+                now[0] = moment
+                if upgrade_at is not None and moment >= upgrade_at:
+                    server.unknown_fields = frozenset()
+                assert await api.claim("presence-worker", []) is None
         finally:
             await api.close()
 
@@ -138,3 +164,38 @@ def test_a_422_for_another_reason_is_raised_once_no_field_is_left_to_drop():
         set(),
         set(),
     ]
+
+
+def test_a_refused_field_is_offered_again_after_the_retry_interval_and_warned_about_again(
+    caplog: pytest.LogCaptureFixture,
+):
+    server = PresenceServer(unknown_fields=FIELDS_UNKNOWN_BEFORE_WORKFLOWS)
+    with caplog.at_level(logging.WARNING):
+        claim_at_times(server, [0.0, REFUSED_FIELD_RETRY_SECONDS - 1, REFUSED_FIELD_RETRY_SECONDS])
+    assert server.reported_fields() == [
+        ("claim", {"capabilities", "sshFiles"}),
+        ("claim", {"sshFiles"}),
+        ("claim", {"sshFiles"}),
+        # Due again: the API is still older, so it is refused once more.
+        ("claim", {"capabilities", "sshFiles"}),
+        ("claim", {"sshFiles"}),
+    ]
+    assert warnings_about(caplog, "capabilities") == 2
+
+
+def test_an_api_upgraded_while_the_worker_runs_gets_the_refused_field_again_without_a_restart(
+    caplog: pytest.LogCaptureFixture,
+):
+    server = PresenceServer(unknown_fields=FIELDS_UNKNOWN_BEFORE_COMPUTER_SETUP)
+    later = REFUSED_FIELD_RETRY_SECONDS
+    with caplog.at_level(logging.INFO):
+        claim_at_times(server, [0.0, later, later + 1], upgrade_at=later)
+    assert server.reported_fields() == [
+        ("claim", {"capabilities", "sshFiles"}),
+        ("claim", {"sshFiles"}),
+        ("claim", set()),
+        ("claim", {"capabilities", "sshFiles"}),
+        ("claim", {"capabilities", "sshFiles"}),
+    ]
+    assert warnings_about(caplog, "The API now takes capabilities") == 1
+    assert warnings_about(caplog, "The API now takes sshFiles") == 1

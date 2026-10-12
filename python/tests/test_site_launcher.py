@@ -28,6 +28,7 @@ from site_fixtures import (
 from test_site_runner import RESULT_ENTRYPOINT
 
 from mado_tracking.errors import ConfigurationError, TransportError
+from mado_tracking.newer_request_fields import REFUSED_FIELD_RETRY_SECONDS
 from mado_tracking.security import SecretMasker
 from mado_tracking.site.launcher import Launcher
 from mado_tracking.site.launcher_config import load_launcher_config
@@ -223,7 +224,10 @@ def test_a_claimed_submission_runs_as_its_account_and_is_reported_then_canceled_
     launcher = launcher_for(tmp_path, api, logins)
     launcher.run_once()
     # The API knows the launcher by its token: no request names it.
-    assert api.bodies("POST", "launcher/site-submissions/claim") == [{"targetIds": [target_id], "limit": 7}]
+    # It names what the runner it installs passes to a Job, so it is given workflow steps too.
+    assert api.bodies("POST", "launcher/site-submissions/claim") == [
+        {"targetIds": [target_id], "limit": 7, "capabilities": ["workflowDatasetUsage"]}
+    ]
     [report_body] = api.bodies("POST", "launcher/site-submissions/report")
     assert report_body == {
         "results": [{"jobIds": [job_id], "outcome": "submitted", "schedulerJobId": "4242.pbs", "error": None}]
@@ -347,6 +351,43 @@ def test_an_unreported_result_is_kept_and_resent_by_the_next_poll(tmp_path, keyg
     assert not list(pending.iterdir())
     assert api.reports()[-1]["schedulerJobId"] == "4242.pbs"
     assert all(old_job_id not in result["jobIds"] for result in api.reports())
+    launcher.close()
+
+
+def test_an_api_that_refuses_capabilities_gets_claims_without_them_until_it_takes_them_again(
+    tmp_path, keygen, caplog
+):
+    submission = site_submission()
+    api, logins = FakeLauncherApi(), LocalLogins()
+    queue_on_assigned_site(api, submission, work_directory=str(tmp_path / "work"))
+    api.unknown_claim_fields = {"capabilities"}
+    now = [0.0]
+    launcher = launcher_for(tmp_path, api, logins, clock=lambda: now[0])
+
+    def claimed_with_capabilities() -> list[bool]:
+        claims = api.bodies("POST", "launcher/site-submissions/claim")
+        return ["capabilities" in body for body in claims]
+
+    with caplog.at_level(logging.INFO, logger="mado_tracking.newer_request_fields"):
+        launcher.run_once()
+        # The refused claim took nothing; the one sent again submitted the Job.
+        assert claimed_with_capabilities() == [True, False]
+        assert api.reports()[-1]["outcome"] == "submitted"
+        now[0] = REFUSED_FIELD_RETRY_SECONDS - 1
+        launcher.run_once()
+        assert claimed_with_capabilities() == [True, False, False]
+        # Still older: refused once more, and the warning repeats.
+        now[0] = REFUSED_FIELD_RETRY_SECONDS
+        launcher.run_once()
+        assert claimed_with_capabilities() == [True, False, False, True, False]
+        assert caplog.text.count("does not take capabilities in site claims") == 2
+        # Upgraded: the launcher names them again without a restart, and keeps naming them.
+        api.unknown_claim_fields = set()
+        now[0] = 2 * REFUSED_FIELD_RETRY_SECONDS
+        launcher.run_once()
+        launcher.run_once()
+    assert claimed_with_capabilities()[-2:] == [True, True]
+    assert "The API now takes capabilities" in caplog.text
     launcher.close()
 
 
