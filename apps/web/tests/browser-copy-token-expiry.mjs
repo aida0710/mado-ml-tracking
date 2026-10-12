@@ -16,7 +16,7 @@ const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 const CUSTOM_DURATION_DAYS = 730;
 const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'],
   ...(process.env.MMT_CHROMIUM_PATH ? { executablePath: process.env.MMT_CHROMIUM_PATH } : {}) });
-const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 960 } });
+const context = await browser.newContext({ locale: 'ja-JP', timezoneId: 'Asia/Tokyo', viewport: { width: 1440, height: 960 } });
 await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: base });
 const api = createBrowserApi();
 api.state.loggedIn = true;
@@ -56,6 +56,12 @@ async function openTokenForm(name) {
 
 async function closeTokenDialog() {
   await page.getByRole('dialog').getByRole('button', { name: '閉じる', exact: true }).last().click();
+}
+
+async function saveToken(dialog) {
+  await dialog.getByRole('button', { name: '保存', exact: true }).click();
+  await dialog.getByText('API tokenは一度だけ表示されます', { exact: false }).waitFor();
+  return api.state.tokens.at(-1);
 }
 
 try {
@@ -120,9 +126,7 @@ try {
 
   const unlimited = await openTokenForm('browser-unlimited');
   await selectOption(unlimited, '有効期限', '無期限');
-  await unlimited.getByRole('button', { name: '保存', exact: true }).click();
-  await unlimited.getByText('API tokenは一度だけ表示されます', { exact: false }).waitFor();
-  assert.equal(api.state.tokens.at(-1).expiresAt, null);
+  assert.equal((await saveToken(unlimited)).expiresAt, null);
   await unlimited.getByRole('button', { name: 'tokenをコピー', exact: true }).click();
   assert.equal(await clipboardText(), 'browser-test-value-only', 'HTTP copy must work inside modal dialogs');
   assert.equal(await unlimited.getByRole('alert').count(), 0);
@@ -142,9 +146,7 @@ try {
   await page.setViewportSize({ width: 320, height: 768 });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'custom fields must fit a phone');
   const beforeIssue = Date.now();
-  await custom.getByRole('button', { name: '保存', exact: true }).click();
-  await custom.getByText('API tokenは一度だけ表示されます', { exact: false }).waitFor();
-  const customExpiresAt = Date.parse(api.state.tokens.at(-1).expiresAt);
+  const customExpiresAt = Date.parse((await saveToken(custom)).expiresAt);
   assert.ok(customExpiresAt >= beforeIssue + CUSTOM_DURATION_DAYS * DAY_MILLISECONDS);
   assert.ok(customExpiresAt <= Date.now() + CUSTOM_DURATION_DAYS * DAY_MILLISECONDS);
   await closeTokenDialog();
@@ -160,13 +162,46 @@ try {
   await fractional.getByLabel('有効期間', { exact: true }).fill('1.5');
   await selectOption(fractional, '単位', '時間');
   const beforeFractionalIssue = Date.now();
-  await fractional.getByRole('button', { name: '保存', exact: true }).click();
-  await fractional.getByText('API tokenは一度だけ表示されます', { exact: false }).waitFor();
-  const fractionalExpiry = Date.parse(api.state.tokens.at(-1).expiresAt);
+  const fractionalExpiry = Date.parse((await saveToken(fractional)).expiresAt);
   assert.ok(fractionalExpiry >= beforeFractionalIssue + 1.5 * DAY_MILLISECONDS / 24);
   assert.ok(fractionalExpiry <= Date.now() + 1.5 * DAY_MILLISECONDS / 24);
+  await closeTokenDialog();
+
+  const calendar = await openTokenForm('browser-calendar-expiry');
+  await selectOption(calendar, '有効期限', 'カレンダーで指定');
+  const dateTimeInput = calendar.getByLabel('有効期限の日時', { exact: true });
+  assert.equal(await dateTimeInput.getAttribute('type'), 'datetime-local');
+  assert.ok(await dateTimeInput.evaluate(input => input.validity.valid), 'the calendar starts with a valid expiry');
+  await calendar.getByText('時刻はAsia/Tokyoで指定します。', { exact: true }).waitFor();
+  await dateTimeInput.fill('2027-12-31T23:59');
+  await selectOption(calendar, '有効期限', '無期限');
+  await selectOption(calendar, '有効期限', 'カレンダーで指定');
+  assert.equal(await dateTimeInput.inputValue(), '2027-12-31T23:59', 'switching options must keep the chosen date');
+  const beforeCalendarIssue = api.state.tokens.length;
+  await dateTimeInput.fill('2000-01-01T00:00');
+  await calendar.getByRole('button', { name: '保存', exact: true }).click();
+  assert.equal(await dateTimeInput.evaluate(input => input.validity.rangeUnderflow), true);
+  assert.equal(api.state.tokens.length, beforeCalendarIssue, 'a past date must not issue a token');
+  await dateTimeInput.fill('');
+  await calendar.getByRole('button', { name: '保存', exact: true }).click();
+  assert.equal(await dateTimeInput.evaluate(input => input.validity.valueMissing), true);
+  assert.equal(api.state.tokens.length, beforeCalendarIssue, 'an empty calendar must not issue a token');
+  await dateTimeInput.fill('2027-12-31T23:59');
+  await page.setViewportSize({ width: 320, height: 768 });
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'the calendar must fit a phone');
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await dateTimeInput.scrollIntoViewIfNeeded();
+  if (screenshots) {
+    const expiryField = await calendar.getByRole('combobox', { name: '有効期限', exact: true }).locator('..').boundingBox();
+    const calendarField = await calendar.locator('.token-expiry-calendar').boundingBox();
+    await page.screenshot({ path: `${screenshots}/calendar-expiry.png`, clip: {
+      x: expiryField.x, y: expiryField.y, width: expiryField.width,
+      height: calendarField.y + calendarField.height - expiryField.y,
+    } });
+  }
+  assert.equal((await saveToken(calendar)).expiresAt, '2027-12-31T14:59:00.000Z', 'JST selection must become the exact UTC expiry');
   assert.deepEqual(pageErrors, []);
-  console.log('copy, failure placement, language dimensions, unlimited and custom token expiry: ok');
+  console.log('copy, failure placement, language dimensions, unlimited, duration and calendar token expiry: ok');
 } finally {
   await browser.close();
 }

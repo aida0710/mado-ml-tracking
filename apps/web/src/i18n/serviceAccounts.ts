@@ -43,6 +43,9 @@ export const serviceAccountsText = localized({
   tokenPurposeHint: '用途を選ぶと、必要なscopeが選ばれます。scopeを変えると「scopeを自分で選ぶ」になります。',
   tokenPurposeRequired: '用途を選ぶか、scopeを1つ以上選んでください',
   tokenExpiryCustom: '期間を指定',
+  tokenExpiryCalendar: 'カレンダーで指定',
+  tokenExpiryDateTime: '有効期限の日時',
+  tokenExpiryDateInvalid: '有効期限は未来の日時を指定してください',
   tokenExpiryDuration: '有効期間',
   tokenExpiryUnit: '単位',
   tokenExpiryMinutes: '分',
@@ -89,6 +92,7 @@ export const tokenScopeLabels: Record<TokenScope, string> = localized({
 // Text that embeds values.
 export const serviceAccountsTextTemplates = localized({
   tokenExpiryDays: (days: number) => `${days}日`,
+  tokenExpiryTimezone: (timezone: string) => `時刻は${timezone}で指定します。`,
   serviceAccountTokenTitle: (name: string) => `${name} のtokenを発行`,
   disableServiceAccountConfirm: (name: string) =>
     `「${name}」を無効化します。このService Accountのtokenはすべて、次の要求から使えなくなります。`,

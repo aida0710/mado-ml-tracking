@@ -103,7 +103,8 @@ function TokenIssueForm({
   async function submit() {
     if (!scopeChoice.scopes.length) throw new Error(text.tokenPurposeRequired);
     const expiresAt = resolveTokenExpiryTimestamp(expiry);
-    if (expiresAt === undefined) throw new Error(text.tokenExpiryInvalid);
+    if (expiresAt === undefined)
+      throw new Error(expiry.option === 'calendar' ? text.tokenExpiryDateInvalid : text.tokenExpiryInvalid);
     return issue({
       name: name.trim(),
       scopes: scopeChoice.scopes,

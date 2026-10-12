@@ -33,7 +33,7 @@ Besides the scopes, every token request checks the owner's current effective rol
 
 ## Expiry
 
-Choose 7, 30, 90 (default), or 365 days, **Never expires**, or **Custom duration**. A custom duration accepts minutes, hours, or days, including fractional values and durations longer than 365 days. These options apply to personal and service account tokens.
+Choose 7, 30, 90 (default), or 365 days, **Never expires**, **Custom duration**, or **Choose from calendar**. A custom duration accepts minutes, hours, or days, including fractional values and durations longer than 365 days. The calendar selects a date and time in the browser's timezone, shown below the field. These options apply to personal and service account tokens.
 
 In the API, `expiresAt: null` means no expiry. Any future timestamp is accepted without a lifetime cap. Omitting the field uses `MMT_TOKEN_DEFAULT_LIFETIME_DAYS` (365 days by default). The legacy `MMT_TOKEN_MAX_LIFETIME_DAYS` setting supplies the default only when the new setting is absent. Past or invalid timestamps return 422 `invalid_expiry`.
 
