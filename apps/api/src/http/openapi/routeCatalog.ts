@@ -216,7 +216,12 @@ import {
   developmentLoginSchema,
   localLoginSchema,
 } from '../../routes/authRoutes.js';
-import { pluginDatasetImportSchema, pluginDatasetSearchSchema } from '../../routes/pluginRoutes.js';
+import {
+  pluginDatasetImportSchema,
+  pluginDatasetSearchSchema,
+  pluginMigrationCompleteSchema,
+  pluginDeliveryReceiptsSchema,
+} from '../../routes/pluginRoutes.js';
 import {
   runComparisonCsvQuerySchema,
   runComparisonSchema as runComparisonRequestSchema,
@@ -2057,7 +2062,8 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     method: 'post',
     path: '/api/targets/:id/directory-listings',
     tag: 'execution',
-    summary: 'コンピュータのディレクトリの子を、指定したworkerに読ませる（同じパスを待っていればそれを返す）',
+    summary:
+      'コンピュータのディレクトリの子を、指定したworkerに読ませる（同じパスを待っていればそれを返す）',
     access: GLOBAL_ADMIN,
     body: directoryListingRequestSchema,
     responses: {
@@ -2526,9 +2532,35 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
   // plugins
   {
     method: 'get',
+    path: '/api/projects/:p/plugins/availability',
+    tag: 'plugins',
+    summary: '内蔵連携の表示用状態（資格情報を含まない）',
+    access: PROJECT_VIEWER,
+    responses: { 200: contract.itemsOf(contract.pluginAvailabilitySchema) },
+  },
+  {
+    method: 'post',
+    path: '/api/projects/:p/plugins/:id/migration/complete',
+    tag: 'plugins',
+    summary: '旧Mado連携の移行を完了（全体管理者）',
+    access: GLOBAL_ADMIN,
+    body: pluginMigrationCompleteSchema,
+    responses: { 200: contract.pluginConnectionSchema },
+  },
+  {
+    method: 'post',
+    path: '/api/projects/:p/plugins/:id/events/receipts',
+    tag: 'plugins',
+    summary: '旧Mado連携の配送済み記録を照合して引き継ぐ（全体管理者）',
+    access: GLOBAL_ADMIN,
+    body: pluginDeliveryReceiptsSchema,
+    responses: { 200: z.strictObject({ imported: z.number().int().nonnegative() }) },
+  },
+  {
+    method: 'get',
     path: '/api/projects/:p/plugins',
     tag: 'plugins',
-    summary: 'Mado plugin接続',
+    summary: '内蔵連携の接続設定',
     access: PROJECT_ADMIN,
     responses: { 200: contract.itemsOf(contract.pluginConnectionSchema) },
   },
@@ -2554,7 +2586,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     method: 'post',
     path: '/api/projects/:p/plugins/:id/check',
     tag: 'plugins',
-    summary: 'pluginのmanifestを確認',
+    summary: 'Madoの参照接続を確認（無効中も実行可能）',
     access: PROJECT_ADMIN,
     responses: { 200: contract.pluginManifestSchema },
     errors: routeError(503, 'plugin_token_unavailable'),
@@ -3183,7 +3215,8 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     method: 'get',
     path: '/api/notification-channels/environment-names',
     tag: 'notifications',
-    summary: '通知先が参照できるAPI serverの環境変数名（MMT_NOTIFICATION_で始まり値があるもの。値は返さない）',
+    summary:
+      '通知先が参照できるAPI serverの環境変数名（MMT_NOTIFICATION_で始まり値があるもの。値は返さない）',
     access: GLOBAL_ADMIN,
     responses: { 200: contract.itemsOf(z.string()) },
   },

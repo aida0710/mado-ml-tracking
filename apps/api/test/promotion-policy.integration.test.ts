@@ -8,6 +8,7 @@ import type {
 } from '@mmt/contracts';
 import type { Connection } from '../src/db/database.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
+import { madoPluginInput } from './pluginFixtures.js';
 import { promotionFixture, type PromotionFixture } from './promotionFixtures.js';
 
 // Lets one test make the run-as user's permission check fail with a database error inside the
@@ -307,7 +308,7 @@ describe.skipIf(!testDatabaseUrl)('昇格policyと評価Run終端での自動判
       await request(harness.app, `${fixture.basePath}/plugins`, {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: { name: 'Lineage', baseUrl: 'http://127.0.0.1:4999', tokenEnv: 'MMT_TEST_PLUGIN_TOKEN' },
+        body: madoPluginInput({ name: 'Lineage' }),
       }),
     );
     const rule = await fixture.registerEvaluationRule('Evaluation A');

@@ -57,7 +57,7 @@ const jaSidebar = [
     { text: "API tokenとService Account", link: "/admin/tokens" },
     { text: "監査ログ", link: "/admin/audit" },
     { text: "通知", link: "/admin/notifications" },
-    { text: "pluginとMado連携", link: "/admin/plugins" },
+    { text: "Mado連携", link: "/admin/plugins" },
   ] },
   { text: "リファレンス", items: [
     { text: "API", link: "/reference/api" },
@@ -115,7 +115,7 @@ const enSidebar = [
     { text: "API tokens and Service Accounts", link: "/en/admin/tokens" },
     { text: "Audit log", link: "/en/admin/audit" },
     { text: "Notifications", link: "/en/admin/notifications" },
-    { text: "Plugins and Mado integration", link: "/en/admin/plugins" },
+    { text: "Mado integration", link: "/en/admin/plugins" },
   ] },
   { text: "Reference", items: [
     { text: "API", link: "/en/reference/api" },

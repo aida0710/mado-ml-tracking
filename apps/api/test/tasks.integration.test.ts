@@ -13,6 +13,7 @@ import type {
 } from '@mmt/contracts';
 import { workbenchFixture } from './workbenchFixtures.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
+import { madoPluginInput } from './pluginFixtures.js';
 import { executionFixture, projectFixture, referenceDigest } from './fixtures.js';
 
 describe.skipIf(!testDatabaseUrl)('タスク・固定実行snapshot（独立PostgreSQL）', () => {
@@ -456,7 +457,7 @@ describe.skipIf(!testDatabaseUrl)('タスク・固定実行snapshot（独立Post
       await request(harness.app, `${fixture.basePath}/plugins`, {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: { name: 'Lineage', baseUrl: 'http://127.0.0.1:4999', tokenEnv: 'FIXTURE_TOKEN' },
+        body: madoPluginInput({ name: 'Lineage' }),
       }),
     );
     const launch = await entity<TaskExecution>(

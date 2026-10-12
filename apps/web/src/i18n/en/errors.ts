@@ -2,8 +2,8 @@
 export const errorText = {
   internalError: "Could not process the request",
   databaseUnavailable: "Could not connect to the database",
-  pluginRequestFailed: "Could not communicate with the plugin",
-  pluginDisabled: "The plugin is disabled",
+  pluginRequestFailed: "Could not communicate with the integration",
+  pluginDisabled: "The integration is disabled",
   uploadNotOpen: "This upload is no longer accepting data",
   uploadExpired: "The upload has expired",
   artifactSaveFailed: "Could not save the artifact",

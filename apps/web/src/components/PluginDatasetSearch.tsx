@@ -1,36 +1,25 @@
 import { useLocale } from '../i18n/useLocale';
-import { useState } from 'react';
-import type { PluginConnection, PluginDataset } from '@mmt/contracts';
-import { administrationApi } from '../api/administration';
-import { useMutation } from '../hooks/useMutation';
+import type { PluginConnection } from '@mmt/contracts';
+import { useMadoDatasetSearch } from '../hooks/useMadoDatasetSearch';
 import { ResponsiveTable } from './ResponsiveTable';
 import { Empty, ErrorNotice } from './Feedback';
 import { text } from '../i18n/catalog';
 import { pluginsText } from '../i18n/plugins';
 
 /**
- * Searches a plugin's datasets and imports a version into the Project. Searching waits for a
- * successful connection check (`isChecked`): until then the plugin may not even be reachable.
- * The parent remounts this per connection, so results of an older URL or token never show.
+ * The parent remounts on configuration changes, discarding earlier requests and their results.
  */
 export function PluginDatasetSearch({
   projectId,
   plugin,
   isChecked,
-  onImported,
 }: {
   projectId: string;
   plugin: PluginConnection;
   isChecked: boolean;
-  onImported: () => void;
 }) {
   useLocale();
-  const [query, setQuery] = useState('');
-  const [datasets, setDatasets] = useState<PluginDataset[] | null>(null);
-  // The imported version, put into words when drawn so a later change of display language applies.
-  const [imported, setImported] = useState<{ name: string; version: string } | null>(null);
-  const mutation = useMutation();
-  // Hidden while the plugin is disabled; the results come back when it is enabled again.
+  const search = useMadoDatasetSearch({ projectId, plugin });
   if (!plugin.enabled) return null;
   return (
     <>
@@ -38,37 +27,33 @@ export function PluginDatasetSearch({
         className="plugin-search"
         onSubmit={(event) => {
           event.preventDefault();
-          setImported(null);
-          setDatasets(null);
-          void mutation.run(async () => {
-            setDatasets(await administrationApi.searchDatasets(projectId, plugin.id, query));
-          });
+          search.search();
         }}
       >
         <label className="field">
           <span>{text.searchDatasets}</span>
           <input
-            value={query}
+            value={search.query}
             disabled={!isChecked}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => search.setQuery(event.target.value)}
             aria-label={text.searchDatasets}
           />
         </label>
-        <button className="button primary" disabled={mutation.pending || !isChecked}>
-          {mutation.pending ? text.loading : text.search}
+        <button className="button primary" disabled={search.pending || !isChecked}>
+          {search.pending ? text.loading : text.search}
         </button>
       </form>
       {!isChecked && <p className="muted">{pluginsText.pluginSearchNeedsCheck}</p>}
-      <ErrorNotice message={mutation.error} />
-      {imported && (
+      <ErrorNotice message={search.error} />
+      {search.imported && (
         <p className="notice success" role="status">
-          {`${text.success}: ${imported.name} / ${imported.version}`}
+          {`${text.success}: ${search.imported.name} / ${search.imported.version}`}
         </p>
       )}
-      {datasets &&
-        (datasets.length ? (
+      {search.datasets &&
+        (search.datasets.length ? (
           <ResponsiveTable
-            rows={datasets}
+            rows={search.datasets}
             rowKey={(dataset) => `${dataset.externalId}:${dataset.version}`}
             columns={[
               {
@@ -105,16 +90,8 @@ export function PluginDatasetSearch({
                 render: (dataset) => (
                   <button
                     className="button small"
-                    disabled={mutation.pending}
-                    onClick={() =>
-                      void mutation
-                        .run(() => administrationApi.importDataset(projectId, plugin.id, dataset))
-                        .then((datasetVersion) => {
-                          if (!datasetVersion) return;
-                          setImported({ name: datasetVersion.name, version: datasetVersion.version });
-                          onImported();
-                        })
-                    }
+                    disabled={search.pending}
+                    onClick={() => search.importDataset(dataset)}
                   >
                     {text.importDataset}
                   </button>
