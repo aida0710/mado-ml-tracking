@@ -12,7 +12,13 @@ assert len(usage) == 1 and usage[0]["role"] == "training" and usage[0]["weight"]
 assert usage[0]["selection"] == {"seed": 42}
 directories = json.loads(os.environ["MMT_INPUT_DATASET_DIRS"])
 input_directory = Path(directories[usage[0]["datasetVersionId"]])
-records = json.loads(next(input_directory.rglob("prepared.json")).read_text())
+# The preprocessing step declared its shard directory; the version holds the shards at its root.
+records = [
+    record
+    for shard in sorted(input_directory.glob("part-*.json"))
+    for record in json.loads(shard.read_text())
+]
+assert records
 with mado_tracking.start_run() as run:
     run.log_metrics({"train.records": len(records), "accuracy": 0.875})
 weights = json.dumps(

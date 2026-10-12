@@ -33,6 +33,9 @@ MAX_METRIC_POINTS = 1000
 # The API's per-Run declaration limits (apps/api/src/domain/workerOutputValidation.ts).
 MAX_MODEL_DECLARATIONS = 16
 MAX_DATASET_DECLARATIONS = 64
+# A dataset declared by a directory becomes one DatasetVersion of every file under it; the API takes
+# at most MAX_DATASET_VERSION_FILES (packages/contracts/src/datasetContent.ts) files per version.
+MAX_DATASET_VERSION_FILES = 100_000
 MAX_DATASET_URI_LENGTH = 4000
 MAX_DATASET_DIGEST_LENGTH = 1000
 OUTPUT_CHUNK_BYTES = 64 * 1024
@@ -296,7 +299,7 @@ def _dataset_declaration(dataset: Any, declared_paths: set[str]) -> dict[str, An
     if ("uri" in dataset) == ("path" in dataset):
         raise ValueError("A result.json dataset needs exactly one of uri or path")
     if "path" in dataset:
-        _require_declared_path(dataset["path"], declared_paths)
+        _require_dataset_path(dataset["path"], declared_paths)
     else:
         _require_text(dataset["uri"], "uri", maximum_length=MAX_DATASET_URI_LENGTH)
     _require_json_object(dataset, "schema")
@@ -307,6 +310,25 @@ def _dataset_declaration(dataset: Any, declared_paths: set[str]) -> dict[str, An
 def _require_declared_path(path: Any, declared_paths: set[str]) -> None:
     if not isinstance(path, str) or path not in declared_paths:
         raise ValueError("Declared model and dataset paths must be listed output artifacts")
+
+
+def _require_dataset_path(path: Any, declared_paths: set[str]) -> None:
+    """A listed output file, or a directory: the API registers every listed file under it.
+
+    Every regular file in the outputs is listed (undeclared files fail validation), and symlinks
+    and `..` are refused before this, so a directory cannot reach outside the outputs.
+    """
+    if isinstance(path, str) and path in declared_paths:
+        return
+    if not isinstance(path, str):
+        raise ValueError("A result.json dataset path must be an output file or directory")
+    output_path_parts(path)
+    directory = f"{path}/"
+    file_count = sum(1 for declared in declared_paths if declared.startswith(directory))
+    if file_count == 0:
+        raise ValueError("A result.json dataset path must be a listed output file or a directory of them")
+    if file_count > MAX_DATASET_VERSION_FILES:
+        raise ValueError(f"A result.json dataset directory holds at most {MAX_DATASET_VERSION_FILES} files")
 
 
 def _require_text(value: Any, name: str, *, maximum_length: int) -> None:

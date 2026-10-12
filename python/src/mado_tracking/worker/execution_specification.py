@@ -12,6 +12,7 @@ from ..settings import ApiSettings
 from .container_layout import resume_checkpoint_document, upstream_run_document
 from .contracts import WorkerJob
 from .tracking_environment import build_tracking_environment
+from .workflow_context import workflow_context_fields
 
 
 def build_execution_specification(
@@ -43,11 +44,7 @@ def build_execution_specification(
         context["inputCheckpoint"] = resume_checkpoint_document(job.input_checkpoint)
     if job.trigger_payload is not None:
         context["triggerPayload"] = job.trigger_payload
-    environment = job.run.get("environment", {})
-    if isinstance(environment.get("datasetUsage"), list):
-        context["datasetUsage"] = environment["datasetUsage"]
-    if isinstance(environment.get("workflow"), dict):
-        context["workflow"] = environment["workflow"]
+    context.update(workflow_context_fields(job.run.get("environment")))
     return {
         "jobId": job.id,
         "leaseId": job.lease_id,

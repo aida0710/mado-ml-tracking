@@ -25,7 +25,20 @@ def create_workflow(
 
 
 def get_workflow(client: Client, project_id: str, workflow_id: str) -> dict[str, Any]:
-    return client.request("GET", client.project_path(project_id, f"workflows/{path_id(workflow_id)}"))
+    """The workflow with its newest versions; list_workflow_versions walks every version."""
+    return client.request(
+        "GET", client.project_path(project_id, f"workflows/{path_id(workflow_id)}"), retryable=True
+    )
+
+
+def list_workflow_versions(client: Client, project_id: str, workflow_id: str) -> Iterator[dict[str, Any]]:
+    """Every saved version, newest first, each with its pinned Task settings."""
+    return iterate_listed_items(
+        client,
+        client.project_path(project_id, f"workflows/{path_id(workflow_id)}/versions"),
+        params={},
+        label="Workflow versions",
+    )
 
 
 def create_workflow_version(
@@ -66,7 +79,9 @@ def launch_workflow(
 
 def get_workflow_execution(client: Client, project_id: str, execution_id: str) -> dict[str, Any]:
     return client.request(
-        "GET", client.project_path(project_id, f"workflow-executions/{path_id(execution_id)}")
+        "GET",
+        client.project_path(project_id, f"workflow-executions/{path_id(execution_id)}"),
+        retryable=True,
     )
 
 

@@ -12,10 +12,14 @@ from mado_tracking.worker.api import WorkerApi
 from mado_tracking.worker.host_state import read_state, write_json
 from mado_tracking.worker.journal import JobJournal
 from mado_tracking.worker.service import Worker
-from mado_tracking.worker.worker_info import describe_host
+from mado_tracking.worker.worker_info import WORKER_CAPABILITIES, describe_host
 
 # What a worker without SSH directories (WorkerApi's default) reports about itself.
-WORKER_INFO_WITHOUT_SSH_FILES = {**describe_host(), "sshFiles": {"keyPaths": [], "knownHostsPaths": []}}
+WORKER_INFO_WITHOUT_SSH_FILES = {
+    **describe_host(),
+    "sshFiles": {"keyPaths": [], "knownHostsPaths": []},
+    "capabilities": list(WORKER_CAPABILITIES),
+}
 
 
 def test_empty_target_filter_is_omitted_and_optional_completion_fields_are_omitted(worker_job):

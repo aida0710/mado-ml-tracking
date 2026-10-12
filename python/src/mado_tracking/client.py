@@ -93,6 +93,7 @@ class Client(ExperimentTasksClient):
     get_job_array = job_arrays.get_job_array
     create_workflow = workflows.create_workflow
     get_workflow = workflows.get_workflow
+    list_workflow_versions = workflows.list_workflow_versions
     create_workflow_version = workflows.create_workflow_version
     launch_workflow = workflows.launch_workflow
     get_workflow_execution = workflows.get_workflow_execution
