@@ -30,7 +30,7 @@ On the **Details** tab of a run a workflow created, **Open workflow** goes back 
 4. Choose each input's usage, such as training, validation or test. Add mixing weights and selection conditions when needed. A weight is a number greater than 0.
 5. Save quality conditions. For example, `preprocessing.retained_input_ratio ≥ 0.9` continues only when at least 90% of inputs remain.
 
-When the workflow cannot be saved, the message names the place and the reason, such as “Step 2, input 1: Choose a dataset version.” Changing a step's key also changes the later steps that take their input or model from it. A field whose source step is gone (for example after removing a step) says “The earlier step … is not there”; choose another one. Removing a step and closing without saving both ask first.
+When the workflow cannot be saved, the message names the place and the reason, such as “Step 2, input 1: Choose a dataset version.” Changing a step's key also changes the later steps that take their input or model from it. When the new key is one an earlier step has, or another step has the same key, nothing is changed and the key field says “An earlier step already uses the key …”. A field whose source step is gone (for example after removing a step) says “The earlier step … is not there”; choose another one. Removing a step and closing without saving both ask first.
 
 Later task edits do not change saved workflow versions. Create a new version with **Create new version** to change conditions. The execution code must read and apply mixing weights and selection conditions; Workflows do not sample data automatically.
 
@@ -54,7 +54,7 @@ A failed or canceled execution shows **Resume in a new execution**. After the co
 
 To stop a running execution, choose **Stop workflow**. The confirmation names the execution, its version and its creator. **Stop** asks the running job to stop and starts no further steps. The status is “Stop requested” until the job stops, then “Canceled”.
 
-A job of a workflow step cannot be rerun on its own from the Jobs page. Its actions column shows **Resume from the workflow**, which opens the execution's page.
+A job of a workflow step cannot be rerun on its own from the Jobs page. Its actions column shows **Resume from the workflow** for a failed or canceled job and **Open workflow** for a finished one; both open the execution's page.
 
 For a manually submitted site, each job waits until it is [submitted to the site](/en/compute/sites).
 

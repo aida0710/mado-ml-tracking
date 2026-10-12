@@ -4,7 +4,7 @@ import { DetailsList, JsonDetails } from '../JsonDetails';
 import { text } from '../../i18n/catalog';
 import { workflowsText as labels, workflowsTextTemplates } from '../../i18n/workflows';
 import { joinLabels } from '../../i18n/textJoining';
-import { datasetRoleLabel } from '../../lib/workflowLabels';
+import { datasetUsageLabel } from '../../lib/workflowLabels';
 import { QUALITY_GATE_OPERATOR_SYMBOLS } from '../../lib/workflowDraft';
 import { useLocale } from '../../i18n/useLocale';
 
@@ -21,9 +21,7 @@ export function WorkflowVersionDetails({ version }: { version: WorkflowVersion }
       <ol className="workflow-steps">
         {version.steps.map((step) => (
           <li key={step.key} className="workflow-step">
-            <h3>
-              {step.name} <span className="muted">· {text[step.task.kind]}</span>
-            </h3>
+            <h3>{joinLabels([step.name, text[step.task.kind]])}</h3>
             <DetailsList
               entries={[
                 [
@@ -50,7 +48,7 @@ export function WorkflowVersionDetails({ version }: { version: WorkflowVersion }
             {step.inputs.length > 0 && (
               <>
                 <h4>{labels.workflowInputs}</h4>
-                <ul>
+                <ul className="workflow-usage">
                   {step.inputs.map((input, index) => (
                     <li key={index}>
                       {input.source.kind === 'dataset' ? (
@@ -61,10 +59,9 @@ export function WorkflowVersionDetails({ version }: { version: WorkflowVersion }
                           {input.source.datasetVersionId}
                         </Link>
                       ) : (
-                        `${input.source.stepKey} → ${input.source.datasetName ?? '*'}`
+                        <span>{`${input.source.stepKey} → ${input.source.datasetName ?? '*'}`}</span>
                       )}
-                      {' · '}
-                      {datasetRoleLabel(input.role)} · {labels.workflowWeight}: {input.weight}
+                      <span>{datasetUsageLabel(input)}</span>
                       {Object.keys(input.selection).length > 0 && (
                         <JsonDetails value={input.selection} />
                       )}

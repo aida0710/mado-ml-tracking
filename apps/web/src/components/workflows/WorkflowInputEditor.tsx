@@ -7,10 +7,6 @@ import { workflowsText as labels } from '../../i18n/workflows';
 import { datasetRoleLabel } from '../../lib/workflowLabels';
 import { useLocale } from '../../i18n/useLocale';
 
-// The contract takes a weight above 0; the smallest positive number makes the browser's own check
-// refuse 0 and below while still taking any positive weight.
-const MIN_POSITIVE_WEIGHT = Number.MIN_VALUE;
-
 export function WorkflowInputEditor({
   input,
   datasets,
@@ -96,9 +92,10 @@ export function WorkflowInputEditor({
         />
         <label className="field">
           <span>{labels.workflowWeight}</span>
+          {/* A weight of 0 or below is left to the save check, which names the step and the input
+              (lib/workflowDraftSave); a min here would show the browser's own message first. */}
           <input
             type="number"
-            min={MIN_POSITIVE_WEIGHT}
             step="any"
             value={binding.weight}
             onChange={(event) => update({ weight: event.target.valueAsNumber })}

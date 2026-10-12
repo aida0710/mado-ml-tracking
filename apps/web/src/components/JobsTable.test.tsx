@@ -137,6 +137,20 @@ describe('Jobsの一覧', () => {
     expect(html).toContain('ワークフローの画面で再開');
   });
 
+  it('完了したワークフローのステップのJobには、再開ではなくワークフローを開く案内を出す', () => {
+    const html = render([
+      listItem({
+        id: 'step',
+        status: 'finished',
+        workflowExecution: { workflowId: 'wf-1', executionId: 'ex-1' },
+      }),
+    ]);
+    expect(html).not.toContain('再開');
+    expect(html).not.toContain('新しいRunで再実行');
+    expect(html).toContain('href="/projects/project/workflows/wf-1?execution=ex-1"');
+    expect(html).toContain('ワークフローを開く');
+  });
+
   it('人が最大試行回数を超えて再実行したJobは、上限が自動の再実行のものだと示す', () => {
     expect(render([listItem({ attempt: 2, maxAttempts: 3 })])).toContain('2 / 3');
     expect(render([listItem({ attempt: 2, maxAttempts: 1 })])).toContain(

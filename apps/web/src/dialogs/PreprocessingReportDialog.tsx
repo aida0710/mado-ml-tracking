@@ -102,7 +102,7 @@ export function PreprocessingReportDialog({
           ))}
         </div>
         <label className="field">
-          <span>{labels.preprocessingReasons} · JSON</span>
+          <span>{labels.preprocessingReasonsJson}</span>
           <textarea
             rows={5}
             value={reasons}
@@ -111,7 +111,7 @@ export function PreprocessingReportDialog({
           />
         </label>
         <label className="field">
-          <span>{labels.workflowMetric} · JSON</span>
+          <span>{labels.preprocessingMetricsJson}</span>
           <textarea
             rows={3}
             value={metrics}
@@ -120,7 +120,7 @@ export function PreprocessingReportDialog({
           />
         </label>
         <label className="field">
-          <span>{labels.preprocessingSamples} · ID</span>
+          <span>{labels.preprocessingSampleIds}</span>
           <textarea rows={2} value={samples} onChange={(event) => setSamples(event.target.value)} />
         </label>
         <ErrorNotice message={mutation.error} />

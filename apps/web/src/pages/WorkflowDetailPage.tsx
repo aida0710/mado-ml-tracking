@@ -22,6 +22,7 @@ import { WorkflowHistoryPicker } from '../components/workflows/WorkflowHistoryPi
 import { WorkflowComparison } from '../components/workflows/WorkflowComparison';
 import { canControlWorkflowExecution } from '../lib/permissions';
 import { shortId } from '../lib/jobDisplay';
+import { WORKFLOW_EXECUTION_PARAM } from '../lib/workflowPath';
 import { workflowsText as labels, workflowsTextTemplates } from '../i18n/workflows';
 import { useLocale } from '../i18n/useLocale';
 
@@ -59,12 +60,12 @@ export function WorkflowDetailPage() {
     detail.value?.olderVersionsCursor ?? null,
   );
   const history = useWorkflowHistory(project.id, workflowId);
-  const shownId = params.get('execution') ?? '';
+  const shownId = params.get(WORKFLOW_EXECUTION_PARAM) ?? '';
   const newestId = history.cursor === undefined ? history.value?.items[0]?.id : undefined;
   // Without ?execution= the newest execution is shown. Writing it into the address keeps it shown
   // while the history pages turn and new executions arrive.
   useEffect(() => {
-    if (!shownId && newestId) setParams({ execution: newestId }, { replace: true });
+    if (!shownId && newestId) setParams({ [WORKFLOW_EXECUTION_PARAM]: newestId }, { replace: true });
   }, [shownId, newestId, setParams]);
   const execution = useWorkflowExecution(project.id, shownId);
   const compared = useWorkflowExecution(project.id, comparedId);
@@ -77,7 +78,7 @@ export function WorkflowDetailPage() {
       describe: () =>
         workflowsTextTemplates.workflowStarted(shortId(started.id), started.revision),
     });
-    setParams({ execution: started.id });
+    setParams({ [WORKFLOW_EXECUTION_PARAM]: started.id });
     history.setCursor(undefined);
     history.reload();
   };
@@ -138,9 +139,9 @@ export function WorkflowDetailPage() {
               <WorkflowVersionDetails version={version} />
               {launching && (
                 <WorkflowLaunchDialog
+                  kind="start"
                   workflowName={workflow.name}
                   revision={version.revision}
-                  resumeFrom={null}
                   launch={actions.launch}
                   onStarted={(started) => {
                     setLaunching(false);
@@ -179,7 +180,7 @@ export function WorkflowDetailPage() {
             shownId={shownId}
             compared={compared.value}
             comparedId={comparedId}
-            onShow={(id) => setParams({ execution: id })}
+            onShow={(id) => setParams({ [WORKFLOW_EXECUTION_PARAM]: id })}
             onCompare={setComparedId}
             onFirstPage={() => history.setCursor(undefined)}
             onNextPage={history.setCursor}
@@ -189,7 +190,6 @@ export function WorkflowDetailPage() {
       {current && (
         <WorkflowExecutionControls
           projectId={project.id}
-          workflowName={detail.value?.workflow.name ?? ''}
           execution={current}
           canEdit={canEdit}
           canControl={canControlWorkflowExecution(project.role, user.id, current)}

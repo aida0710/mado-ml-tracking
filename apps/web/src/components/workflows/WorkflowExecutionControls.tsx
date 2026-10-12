@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import type { WorkflowExecution, WorkflowExecutionSummary } from '@mmt/contracts';
 import { WorkflowLaunchDialog } from '../../dialogs/WorkflowLaunchDialog';
 import { WorkflowCancelDialog } from '../../dialogs/WorkflowCancelDialog';
@@ -10,14 +10,22 @@ import {
 import { workflowsText as labels } from '../../i18n/workflows';
 import { useLocale } from '../../i18n/useLocale';
 
+type ControlAction = 'resume' | 'cancel';
+
+/** What the execution allows now: resuming a failed or canceled one, or stopping a running one. */
+function allowedAction(execution: WorkflowExecutionSummary): ControlAction | null {
+  if (isResumableWorkflowExecution(execution)) return 'resume';
+  if (isStoppableWorkflowExecution(execution)) return 'cancel';
+  return null;
+}
+
 /**
- * Resuming and stopping the shown execution, each after a confirmation; the page says what
+ * Resuming or stopping the shown execution, each after a confirmation; the page says what
  * happened. An editor who may not control it (only its creator and Project admins may) reads why
  * instead of finding the buttons gone.
  */
 export function WorkflowExecutionControls({
   projectId,
-  workflowName,
   execution,
   canEdit,
   canControl,
@@ -27,7 +35,6 @@ export function WorkflowExecutionControls({
   onCanceled,
 }: {
   projectId: string;
-  workflowName: string;
   execution: WorkflowExecutionSummary;
   canEdit: boolean;
   /** lib/permissions canControlWorkflowExecution */
@@ -38,53 +45,61 @@ export function WorkflowExecutionControls({
   onCanceled: (canceled: WorkflowExecutionSummary) => void;
 }) {
   useLocale();
-  const [confirming, setConfirming] = useState<'resume' | 'cancel' | null>(null);
-  const isResumable = isResumableWorkflowExecution(execution);
-  const isStoppable = isStoppableWorkflowExecution(execution);
-  if (!canEdit || (!isResumable && !isStoppable)) return null;
+  const resumeHintId = useId();
+  const action = allowedAction(execution);
+  const [confirming, setConfirming] = useState<{
+    action: ControlAction;
+    executionId: string;
+  } | null>(null);
+  // A confirmation belongs to the execution and the state it was opened for. Once the execution
+  // ends, is stopped from elsewhere or another one is shown, it closes and does not come back.
+  const isConfirming = confirming?.executionId === execution.id && confirming.action === action;
+  useEffect(() => {
+    if (confirming && !isConfirming) setConfirming(null);
+  }, [confirming, isConfirming]);
+  if (!canEdit || !action) return null;
+  const confirm = () => setConfirming({ action, executionId: execution.id });
+  const close = () => setConfirming(null);
   return (
     <div className="workflow-execution-controls">
-      {!canControl && (isResumable || isStoppable) && (
+      {!canControl ? (
         <p className="muted">{labels.workflowControlOwnerOnly}</p>
-      )}
-      {canControl && isResumable && (
-        <div className="section-actions">
-          <button className="button" onClick={() => setConfirming('resume')}>
+      ) : action === 'resume' ? (
+        <>
+          <button className="button" aria-describedby={resumeHintId} onClick={confirm}>
             {labels.workflowResume}
           </button>
-          <p className="muted">{labels.workflowResumeHint}</p>
-        </div>
+          <p id={resumeHintId} className="muted">
+            {labels.workflowResumeHint}
+          </p>
+        </>
+      ) : (
+        <button className="button danger" onClick={confirm}>
+          {labels.workflowCancel}
+        </button>
       )}
-      {canControl && isStoppable && (
-        <div className="section-actions">
-          <button className="button danger" onClick={() => setConfirming('cancel')}>
-            {labels.workflowCancel}
-          </button>
-        </div>
-      )}
-      {confirming === 'resume' && (
+      {isConfirming && action === 'resume' && (
         <WorkflowLaunchDialog
-          workflowName={workflowName}
-          revision={execution.revision}
-          resumeFrom={execution}
+          kind="resume"
+          execution={execution}
           launch={launch}
           onStarted={(started) => {
-            setConfirming(null);
+            close();
             onResumed(started);
           }}
-          onClose={() => setConfirming(null)}
+          onClose={close}
         />
       )}
-      {confirming === 'cancel' && (
+      {isConfirming && action === 'cancel' && (
         <WorkflowCancelDialog
           projectId={projectId}
           execution={execution}
           cancel={cancel}
           onCanceled={() => {
-            setConfirming(null);
+            close();
             onCanceled(execution);
           }}
-          onClose={() => setConfirming(null)}
+          onClose={close}
         />
       )}
     </div>

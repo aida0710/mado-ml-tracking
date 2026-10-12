@@ -55,21 +55,29 @@ export function WorkflowStepEditor({
             onChange={(event) => update({ name: event.target.value })}
           />
         </label>
-        <label className="field">
-          <span>{labels.workflowStepKey}</span>
-          <input
-            value={step.key}
-            required
-            onFocus={() => {
-              keyWhenFocused.current = step.key;
-            }}
-            onBlur={() => {
-              if (keyWhenFocused.current !== step.key)
-                onKeyRenamed({ from: keyWhenFocused.current, to: step.key });
-            }}
-            onChange={(event) => update({ key: event.target.value })}
-          />
-        </label>
+        <div>
+          <label className="field">
+            <span>{labels.workflowStepKey}</span>
+            <input
+              value={step.key}
+              required
+              onFocus={() => {
+                keyWhenFocused.current = step.key;
+              }}
+              onBlur={() => {
+                if (keyWhenFocused.current !== step.key)
+                  onKeyRenamed({ from: keyWhenFocused.current, to: step.key });
+              }}
+              onChange={(event) => update({ key: event.target.value })}
+            />
+          </label>
+          {/* References do not follow a key an earlier step already has, so the clash shows here. */}
+          {earlierSteps.some((earlier) => earlier.value === step.key) && (
+            <p className="notice error" role="status">
+              {workflowsTextTemplates.workflowDraftDuplicateKey(step.key)}
+            </p>
+          )}
+        </div>
         <ChoiceField
           label={labels.workflowTask}
           value={step.taskId}

@@ -2,7 +2,7 @@ import type { DatasetUsage } from '@mmt/contracts';
 import { Link } from 'react-router-dom';
 import { JsonDetails } from '../JsonDetails';
 import { workflowsText as labels } from '../../i18n/workflows';
-import { datasetRoleLabel } from '../../lib/workflowLabels';
+import { datasetUsageLabel } from '../../lib/workflowLabels';
 import { useLocale } from '../../i18n/useLocale';
 
 export function DatasetUsagePanel({
@@ -26,9 +26,7 @@ export function DatasetUsagePanel({
             >
               {input.datasetVersionId}
             </Link>
-            <span>
-              {datasetRoleLabel(input.role)} · {labels.workflowWeight}: {input.weight}
-            </span>
+            <span>{datasetUsageLabel(input)}</span>
             {Object.keys(input.selection).length > 0 && <JsonDetails value={input.selection} />}
           </li>
         ))}

@@ -2,6 +2,7 @@ import type { PreprocessingReport } from '@mmt/contracts';
 import { Link } from 'react-router-dom';
 import { DetailsList, JsonDetails } from '../JsonDetails';
 import { workflowsText as labels } from '../../i18n/workflows';
+import { joinLabels } from '../../i18n/textJoining';
 import { useLocale } from '../../i18n/useLocale';
 
 export function PreprocessingReportSummary({ report }: { report: PreprocessingReport }) {
@@ -29,7 +30,7 @@ export function PreprocessingReportSummary({ report }: { report: PreprocessingRe
           <ul>
             {reasons.map((reason, index) => (
               <li key={index}>
-                {reason.category} · {reason.reason}: {reason.count}
+                {joinLabels([reason.category, `${reason.reason}: ${reason.count}`])}
               </li>
             ))}
           </ul>

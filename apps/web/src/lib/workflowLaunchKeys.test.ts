@@ -16,7 +16,7 @@ describe('ワークフローの起動の重複防止キー', () => {
   it('実行が返った後の起動は、同じバージョンでも新しいキーにする', () => {
     const keys = createWorkflowLaunchKeys(sequentialKeys());
     const first = keys.keyFor({ revision: 2 });
-    keys.markAccepted();
+    keys.markAccepted({ revision: 2 });
     expect(keys.keyFor({ revision: 2 })).not.toBe(first);
   });
 
@@ -26,5 +26,14 @@ describe('ワークフローの起動の重複防止キー', () => {
     const resume = keys.keyFor({ revision: 2, resumeFromExecutionId: 'e1' });
     expect(resume).not.toBe(fresh);
     expect(keys.keyFor({ revision: 3, resumeFromExecutionId: 'e1' })).not.toBe(resume);
+  });
+
+  it('答えが届かなかった起動は、間に別の起動をはさんでも、送り直すと同じキーを使う', () => {
+    const keys = createWorkflowLaunchKeys(sequentialKeys());
+    const lostStart = keys.keyFor({ revision: 2 });
+    const resume = { revision: 1, resumeFromExecutionId: 'e1' };
+    keys.keyFor(resume);
+    keys.markAccepted(resume);
+    expect(keys.keyFor({ revision: 2 })).toBe(lostStart);
   });
 });
