@@ -31,6 +31,7 @@ from .execution_snapshot import ExecutionMode, validate_execution_mode
 from .experiment_tasks import ExperimentTasksClient
 from .experiments import EXPERIMENT_ID_VARIABLE, experiment_id_for_new_run, validate_experiment_choice
 from .http import REQUEST_TIMEOUT_SECONDS, request_sync
+from .model_training_sources import associate_model_training_source
 from .names import trim_name
 from .pagination import iterate_cursor_pages
 from .run_search_request import build_run_search_body
@@ -450,6 +451,8 @@ class Client(ExperimentTasksClient):
         return AutoRunTransport(
             online, lambda: RunSpool.create(default_offline_directory(), record, run_created=True)
         )
+
+    associate_model_training_source = associate_model_training_source
 
     def register_model(
         self,

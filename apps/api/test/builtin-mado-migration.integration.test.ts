@@ -5,7 +5,7 @@ import { createApplication } from '../src/app.js';
 import { migrate } from '../src/db/migrate.js';
 import { createHarness, entity, request, testDatabaseUrl } from './harness.js';
 import { executionFixture, referenceDigest } from './fixtures.js';
-import { applyMigrationsBefore } from './migrationFixtures.js';
+import { applyMigrationFile, applyMigrationsBefore } from './migrationFixtures.js';
 import { MADO_CONFIG_FIXTURE, MADO_CREDENTIALS_FIXTURE, madoClientStub } from './pluginFixtures.js';
 
 describe.skipIf(!testDatabaseUrl)('旧Mado接続と送信記録の移行（独立PostgreSQL）', () => {
@@ -13,6 +13,9 @@ describe.skipIf(!testDatabaseUrl)('旧Mado接続と送信記録の移行（独�
     const harness = await createHarness({ applyMigrations: false });
     try {
       await applyMigrationsBefore(harness.database, '059_builtin_mado.sql');
+      // Current Run projections need these independent tables; Mado itself stays in its old shape.
+      await applyMigrationFile(harness.database, '063_model_training_sources.sql');
+      await applyMigrationFile(harness.database, '064_training_data_stages.sql');
       const fixture = await executionFixture(harness);
       const pluginId = randomUUID();
       const unrelatedId = randomUUID();

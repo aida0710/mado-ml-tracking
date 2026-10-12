@@ -1,10 +1,11 @@
-import type { JsonObject, Model, ModelVersion, RunKind } from '@mmt/contracts';
+import type { JsonObject, Model, ModelVersion } from '@mmt/contracts';
 import type { PoolClient } from 'pg';
 import type { Principal } from '../auth/principal.js';
 import { first, type Connection } from '../db/database.js';
 import { validateCodeCompatibility } from '../domain/compatibility.js';
-import { DomainError, notFound } from '../domain/errors.js';
+import { DomainError } from '../domain/errors.js';
 import { isTerminalStatus } from '../domain/runTransitions.js';
+import { lockOutputSourceRun } from '../repositories/modelOutputSourceRepository.js';
 import { reserveModelVersion } from '../repositories/modelVersionNumbering.js';
 import {
   assertProjectReferences,
@@ -34,15 +35,6 @@ export interface ModelVersionRegistration {
   metadata: JsonObject;
   actor: ModelVersionRegistrationActor;
 }
-
-interface OutputSourceRun {
-  id: string;
-  kind: RunKind;
-  lifecycleStage: 'active' | 'deleted';
-  createdBy: string;
-}
-
-const OUTPUT_MODEL_RUN_KINDS: readonly RunKind[] = ['training', 'finetuning'];
 
 /**
  * Inserts an immutable ModelVersion and starts model automation in the caller's transaction.
@@ -119,28 +111,7 @@ export async function registerModelVersion(
     const currentRun = await findRun(connection, { projectId, id: sourceRun.id });
     if (isTerminalStatus(currentRun.status)) await enqueueRunEvent(connection, currentRun);
   }
-  return { ...inserted, family: model.family };
-}
-
-async function lockOutputSourceRun(
-  connection: Connection,
-  reference: { projectId: string; id: string },
-): Promise<OutputSourceRun> {
-  const run = await first<OutputSourceRun>(
-    connection,
-    'SELECT id,kind,lifecycle_stage,created_by FROM runs WHERE project_id=$1 AND id=$2 FOR KEY SHARE',
-    [reference.projectId, reference.id],
-  );
-  if (!run) notFound('Run');
-  if (!OUTPUT_MODEL_RUN_KINDS.includes(run.kind))
-    throw new DomainError(
-      422,
-      '出力モデルのsource Runはtrainingまたはfinetuningである必要があります',
-      'output_model_kind',
-    );
-  if (run.lifecycleStage !== 'active')
-    throw new DomainError(422, '削除済みRunには出力モデルを登録できません', 'source_run_deleted');
-  return run;
+  return { ...inserted, family: model.family, trainingSourceRunId: inserted.sourceRunId };
 }
 
 async function requireRunCreatorRegistryAccess(

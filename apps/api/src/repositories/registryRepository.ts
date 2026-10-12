@@ -1,6 +1,7 @@
 import type { CodeVersion, DatasetVersion, ModelVersion, Run } from '@mmt/contracts';
 import { first, rows, type Connection } from '../db/database.js';
 import { conflict, notFound } from '../domain/errors.js';
+import { modelTrainingSourceRunIdColumn } from './modelTrainingSourceRepository.js';
 import { runColumns } from './runListProjection.js';
 
 // models.next_version is the numbering counter (modelVersionNumbering.ts). Models show it as
@@ -14,7 +15,7 @@ export const modelSelect = `SELECT m.id,m.project_id,m.name,m.family,m.descripti
 export const codeSelect = `SELECT c.*, (SELECT version FROM code_versions v WHERE v.code_id=c.id ORDER BY created_at DESC,id DESC LIMIT 1) AS latest_version FROM codes c`;
 export const datasetSelect = `SELECT d.*, (SELECT version FROM dataset_versions v WHERE v.dataset_id=d.id ORDER BY created_at DESC,id DESC LIMIT 1) AS latest_version FROM datasets d`;
 export const modelVersionSelect =
-  'SELECT v.*,m.family FROM model_versions v JOIN models m ON m.id=v.model_id';
+  `SELECT v.*,m.family,${modelTrainingSourceRunIdColumn} FROM model_versions v JOIN models m ON m.id=v.model_id`;
 export const datasetVersionSelect =
   'SELECT v.*,d.name,d.namespace FROM dataset_versions v JOIN datasets d ON d.id=v.dataset_id';
 

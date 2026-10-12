@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { ModelVersion } from '@mmt/contracts';
 import { ResponsiveTable } from './ResponsiveTable';
 import { RunNameLink } from './RunNameLink';
+import { getModelTrainingSourceRunId } from '../lib/modelTrainingSource';
 import { formatDate } from '../lib/format';
 import { modelVersionPath } from '../lib/modelVersionPath';
 import { useLocale } from '../i18n/useLocale';
@@ -50,7 +51,10 @@ export function ModelVersionsTable({
             render: (version) => (
               <Link
                 className="mono"
-                to={modelVersionPath(projectId, { modelId: version.modelId, versionId: version.id })}
+                to={modelVersionPath(projectId, {
+                  modelId: version.modelId,
+                  versionId: version.id,
+                })}
               >
                 {version.version}
               </Link>
@@ -60,12 +64,10 @@ export function ModelVersionsTable({
             key: 'source',
             priority: 'primary',
             header: text.sourceRun,
-            render: (version) =>
-              version.sourceRunId ? (
-                <RunNameLink projectId={projectId} runId={version.sourceRunId} />
-              ) : (
-                '—'
-              ),
+            render: (version) => {
+              const sourceRunId = getModelTrainingSourceRunId(version);
+              return sourceRunId ? <RunNameLink projectId={projectId} runId={sourceRunId} /> : '—';
+            },
           },
           {
             key: 'aliases',

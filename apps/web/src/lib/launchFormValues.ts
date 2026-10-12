@@ -9,12 +9,7 @@ import {
 import type { CreateRun } from '../api/inputs';
 import type { FormValues } from '../types/form';
 import { isCodeCompatible } from './executionValidation';
-import {
-  getFieldValue,
-  getSelectedValues,
-  parseJsonObject,
-  parseStringMap,
-} from './formValues';
+import { getFieldValue, getSelectedValues, parseJsonObject, parseStringMap } from './formValues';
 import { applyLaunchFormChange, type ClearedLaunchChoice } from './launchFormChanges';
 import { isTargetCompatible } from './runtimeValidation';
 
@@ -23,6 +18,7 @@ export interface LaunchCandidates<Target extends ComputeTarget> {
   codeVersions: readonly CodeVersion[];
   modelVersions: readonly ModelVersion[];
   targets: readonly Target[];
+  checkpointCodeId?: string | null;
 }
 
 /** What the form's values choose, and which code versions and computers fit those choices. */
@@ -76,8 +72,10 @@ export function launchChoices<Target extends ComputeTarget>(
 ): LaunchChoices<Target> {
   const kind = getFieldValue(values, 'kind') as RunKind;
   const model = findChosen(candidates.modelVersions, values, 'modelVersionId');
-  const compatibleCodes = candidates.codeVersions.filter((version) =>
-    isCodeCompatible(version, kind, model),
+  const compatibleCodes = candidates.codeVersions.filter(
+    (version) =>
+      isCodeCompatible(version, kind, model) &&
+      (candidates.checkpointCodeId === undefined || version.codeId === candidates.checkpointCodeId),
   );
   const selectedCode = findChosen(compatibleCodes, values, 'codeVersionId');
   return {

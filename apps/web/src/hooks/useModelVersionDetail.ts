@@ -1,5 +1,6 @@
 import type { Run } from '@mmt/contracts';
 import { AUTOMATION_EXECUTION_PAGE_MAX, automationApi } from '../api/automation';
+import { getModelTrainingSourceRunId } from '../lib/modelTrainingSource';
 import { registryApi } from '../api/registry';
 import { trackingApi } from '../api/tracking';
 import { hasActiveExecution, hasActiveRun } from '../lib/automationActivity';
@@ -11,7 +12,7 @@ export function useModelVersionDetail(projectId: string, versionId: string) {
   const detail = useQuery(`${projectId}:model-version:${versionId}`, (signal) =>
     registryApi.modelVersionDetail(projectId, versionId, signal),
   );
-  const sourceRunId = detail.value?.version.sourceRunId ?? null;
+  const sourceRunId = detail.value ? getModelTrainingSourceRunId(detail.value.version) : null;
   const sourceRun = useQueryPolledWhileActive<Run>(
     sourceRunId ? `${projectId}:run:${sourceRunId}` : null,
     (signal) => trackingApi.run(projectId, sourceRunId!, signal),

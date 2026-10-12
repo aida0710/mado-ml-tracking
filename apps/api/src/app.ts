@@ -48,6 +48,10 @@ import { DatasetFolderUploadService } from './services/datasetFolderUploadServic
 import { ArtifactGarbageCollector } from './services/artifactGarbageCollector.js';
 import { ArtifactUsageService } from './services/artifactUsageService.js';
 import { ProjectService } from './services/projectService.js';
+import { TrainingDataStageService } from './services/trainingDataStageService.js';
+import { trainingDataStageRoutes } from './routes/trainingDataStageRoutes.js';
+import { ModelTrainingSourceService } from './services/modelTrainingSourceService.js';
+import { modelTrainingSourceRoutes } from './routes/modelTrainingSourceRoutes.js';
 import { RegistryService } from './services/registryService.js';
 import { RegistryLookupService } from './services/registryLookupService.js';
 import { DatasetContentService } from './services/datasetContentService.js';
@@ -538,6 +542,8 @@ export function createApplication(options: ApplicationOptions) {
     ),
   );
   app.route('/api/projects', modelAutomationRoutes(automation));
+  app.route('/api/projects', trainingDataStageRoutes(new TrainingDataStageService(database)));
+  app.route('/api/projects', modelTrainingSourceRoutes(new ModelTrainingSourceService(database, runs)));
   app.route('/api/projects', registryLookupRoutes(new RegistryLookupService(database)));
   app.route('/api/projects', runRoutes({ runs, lineage, runComparison, runExport }));
   app.route('/api/projects', runSearchRoutes(runSearch));

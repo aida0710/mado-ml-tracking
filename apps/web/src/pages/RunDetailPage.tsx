@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Play, RefreshCw, Upload } from 'lucide-react';
 import {
   RUN_NOTE_TAG,
+  isTrainingRunKind,
   type ChartPanelLayout,
   type ChartXAxis,
   type Run,
@@ -27,6 +28,8 @@ import { RunLogs } from '../components/RunLogs';
 import { RunArtifacts, RUN_ARTIFACT_PREFIX_PARAMETER } from '../components/RunArtifacts';
 import { RunExecutionSnapshot } from '../components/RunExecutionSnapshot';
 import { RunOutputModels } from '../components/RunOutputModels';
+import { TrainingDataStagesPanel } from '../components/TrainingDataStagesPanel';
+import { trainingText } from '../i18n/training';
 import { RunCheckpointList } from '../components/RunCheckpointList';
 import { RunDownstream } from '../components/RunDownstream';
 import { RunWorkflowContext } from '../components/workflows/RunWorkflowContext';
@@ -69,6 +72,7 @@ const tabs = [
   'media',
   'artifacts',
   'checkpoints',
+  'trainingData',
   'systemMetrics',
   'logs',
   'details',
@@ -80,6 +84,7 @@ const tabLabels: Record<RunTab, string> = {
   get media() { return text.mediaTab; },
   get artifacts() { return text.artifacts; },
   get checkpoints() { return text.checkpoints; },
+  get trainingData() { return trainingText.trainingData; },
   get systemMetrics() { return text.systemMetrics; },
   get logs() { return text.logs; },
   get details() { return text.details; },
@@ -89,6 +94,7 @@ const tabLabels: Record<RunTab, string> = {
 export function RunDetailPage() {
   useLocale();
   const { project, canEdit } = useProject();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { runId = '' } = useParams();
   const [params, setParams] = useSearchParams();
@@ -187,7 +193,9 @@ export function RunDetailPage() {
               <RunResumeTimeline segments={resumeEvents.value.segments} now={Date.now()} />
             )}
             <Tabs
-              tabs={tabs.map((key) => ({ key, label: tabLabels[key] }))}
+              tabs={tabs
+                .filter((key) => key !== 'trainingData' || isTrainingRunKind(item.kind))
+                .map((key) => ({ key, label: tabLabels[key] }))}
               selected={tab}
               onSelect={(key) => setParams({ tab: key })}
             />
@@ -222,7 +230,17 @@ export function RunDetailPage() {
               {tab === 'checkpoints' && (
                 <RunCheckpointList
                   run={item}
+                  canEdit={canEdit}
+                  canRecordData={canEdit && (!isTerminalRun(item) || !runsCode || runJob.value === null)}
+                  onContinued={(job) => navigate(`/projects/${project.id}/runs/${job.runId}`)}
                   canRetryJob={canControlJob(project.role, user.id, item) && !workflowIdOfRun(item)}
+                />
+              )}
+              {tab === 'trainingData' && (
+                <TrainingDataStagesPanel
+                  run={item}
+                  canRecord={canEdit && (!isTerminalRun(item) || !runsCode || runJob.value === null)}
+                  onSaved={reload}
                 />
               )}
               {tab === 'details' && (

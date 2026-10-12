@@ -50,7 +50,7 @@ export class LineageService {
         edges.push({ source: run.codeVersionId, target: run.id, relation: 'code' });
       if (run.parentRunId)
         edges.push({ source: run.parentRunId, target: run.id, relation: 'parentRun' });
-      for (const id of run.inputDatasetVersionIds)
+      for (const id of run.trainingDatasetVersionIds ?? run.inputDatasetVersionIds)
         edges.push({ source: id, target: run.id, relation: 'input' });
       // Same derivation as Run.outputModelVersionIds, so deleted versions lose the edge too.
       for (const id of run.outputModelVersionIds)

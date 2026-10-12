@@ -443,6 +443,8 @@ export interface Run {
   executionMode?: ExecutionMode;
   executionSnapshot?: ExecutionSnapshot | null;
   inputDatasetVersionIds: string[];
+  // Dataset versions used initially or recorded in step-specific training data stages.
+  trainingDatasetVersionIds?: string[];
   // Subset of inputDatasetVersionIds produced by an upstream Run; fixed at creation.
   upstreamDatasetVersionIds: string[];
   outputDatasetVersionIds: string[];
@@ -482,6 +484,8 @@ export interface ModelVersion {
   version: string;
   family: string;
   sourceRunId: string | null;
+  // Read projection of the registration source or an appended training-source association.
+  trainingSourceRunId?: string | null;
   parentModelVersionIds: string[];
   weightsUri: string | null;
   artifactId: string | null;
@@ -989,3 +993,9 @@ export {
   REPORT_SNAPSHOT_BLOCK_MAX_BYTES,
   REPORT_TITLE_MAX_LENGTH,
 } from './reports.js';
+
+export type { ModelVersionTrainingSource, ModelVersionTrainingSourceCreate, HistoricalTrainingRunCreate } from './modelTrainingSources.js';
+
+export type { TrainingDataStage, TrainingDataStageCreate, TrainingDataStagePage } from './trainingDataStages.js';
+
+export { TRAINING_RUN_KINDS, isTrainingRunKind } from './trainingRuns.js';

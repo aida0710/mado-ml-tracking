@@ -1,8 +1,13 @@
 import { useState } from 'react';
-import type { Run, RunCheckpoint, RunCheckpointArtifact } from '@mmt/contracts';
+import type { Job, Run, RunCheckpoint, RunCheckpointArtifact } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
 import { DataTable } from './DataTable';
 import { Resource } from './Feedback';
+import { LaunchDialog } from '../dialogs/LaunchDialog';
+import { TrainingDataStageDialog } from '../dialogs/TrainingDataStageDialog';
+import { useTrainingDataStages } from '../hooks/useTrainingDataStages';
+import { canContinueTraining, datasetVersionIdsAtStep } from '../lib/checkpointTraining';
+import { trainingText } from '../i18n/training';
 import { ResumeDialog } from '../dialogs/ResumeDialog';
 import { useRunCheckpoints } from '../hooks/useRunCheckpoints';
 import { useRunJob } from '../hooks/useRunJob';
@@ -20,8 +25,23 @@ import { text, textTemplates } from '../i18n/catalog';
  * A Run's checkpoints with their files, and resuming a stopped Run from one of them.
  * `canRetryJob`: whether the signed-in user may retry the Run's Job (lib/permissions canControlJob).
  */
-export function RunCheckpointList({ run, canRetryJob }: { run: Run; canRetryJob: boolean }) {
+export function RunCheckpointList({
+  run,
+  canRetryJob,
+  canEdit = false,
+  canRecordData = false,
+  onContinued,
+}: {
+  run: Run;
+  canRetryJob: boolean;
+  canEdit?: boolean;
+  canRecordData?: boolean;
+  onContinued?: (job: Job) => void;
+}) {
   useLocale();
+  const [continueTarget, setContinueTarget] = useState<RunCheckpoint | null>(null);
+  const [dataTarget, setDataTarget] = useState<RunCheckpoint | null>(null);
+  const dataHistory = useTrainingDataStages(run);
   const [includeHidden, setIncludeHidden] = useState(false);
   const [resumeTarget, setResumeTarget] = useState<RunCheckpoint | null>(null);
   const checkpoints = useRunCheckpoints({ projectId: run.projectId, runId: run.id, includeHidden });
@@ -108,6 +128,39 @@ export function RunCheckpointList({ run, canRetryJob }: { run: Run; canRetryJob:
                   />
                 ),
               },
+              ...(canEdit
+                ? [
+                    {
+                      key: 'continueTraining',
+                      label: trainingText.trainingData,
+                      render: (checkpoint: RunCheckpoint) => (
+                        <div className="section-actions">
+                          {canRecordData && (
+                            <button
+                              className="button small"
+                              disabled={!dataHistory.value}
+                              onClick={() => setDataTarget(checkpoint)}
+                            >
+                              {trainingText.recordTrainingData}
+                            </button>
+                          )}
+                          <button
+                            className="button small"
+                            disabled={!dataHistory.value || !canContinueTraining(run)}
+                            title={
+                              !canContinueTraining(run)
+                                ? trainingText.continueTrainingNoCode
+                                : undefined
+                            }
+                            onClick={() => setContinueTarget(checkpoint)}
+                          >
+                            {trainingText.continueTraining}
+                          </button>
+                        </div>
+                      ),
+                    },
+                  ]
+                : []),
               ...(resumeOffer === 'resume'
                 ? [
                     {
@@ -128,6 +181,35 @@ export function RunCheckpointList({ run, canRetryJob }: { run: Run; canRetryJob:
           />
         )}
       </Resource>
+      {continueTarget && dataHistory.value && (
+        <LaunchDialog
+          continuation={{
+            run,
+            checkpoint: continueTarget,
+            inputDatasetVersionIds: datasetVersionIdsAtStep(
+              dataHistory.value,
+              continueTarget.step + 1,
+            ),
+          }}
+          onClose={() => setContinueTarget(null)}
+          onSaved={(created) => {
+            setContinueTarget(null);
+            onContinued?.(created);
+          }}
+        />
+      )}
+      {dataTarget && dataHistory.value && (
+        <TrainingDataStageDialog
+          run={run}
+          history={dataHistory.value}
+          checkpoint={dataTarget}
+          onClose={() => setDataTarget(null)}
+          onSaved={() => {
+            setDataTarget(null);
+            dataHistory.reload();
+          }}
+        />
+      )}
       {resumeTarget && job && (
         <ResumeDialog
           projectId={run.projectId}

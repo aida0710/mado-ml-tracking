@@ -1,11 +1,38 @@
 ---
-title: Resume training
-description: Save checkpoints from training code and continue a failed or canceled training from a saved checkpoint as a new Run.
+title: Continue training and add data
+description: Record data added during pretraining and continue from checkpoints as new runs.
 ---
 
-# Resume training
+# Continue training and add data
 
 When a long training stops, you can continue from a saved checkpoint as a new Run. The original Run is not changed and stays as the record of the failure or cancellation. Resuming is manual; automatic retries of automation rules start from the beginning.
+
+## Record data added during pretraining {#training-data-stages}
+
+When you add data without changing runs, open **Training data history** and choose **Record data change**. Enter the first step using the new configuration and select every dataset version still used from that step. The history shows initial inputs, additions and removals without rewriting the original run configuration.
+
+Training code can record the same change after updating its loader:
+
+```python
+run.log_training_data_stage(
+    start_step=1001,
+    input_dataset_version_ids=[original_dataset_version_id, synthetic_dataset_version_id],
+    checkpoint_id=checkpoint["id"],  # This run's checkpoint at step 1000; optional.
+    metadata={"note": "Synthetic data added during pretraining"},
+)
+```
+
+Include retained datasets as well as additions. Recorded steps and versions are fixed; identical resends return the same record. New records cannot be added after a job finishes. This method needs an online connection and does not change the running loader itself.
+
+## Continue training with a different data configuration
+
+A completed training run's checkpoint can start a new run, including checkpoints recorded without a job.
+
+1. Open the run's **Checkpoint** tab and choose **Continue training with these weights**.
+2. Review the datasets used at that checkpoint and add the exact versions needed for the next stage.
+3. Review the training configuration and computer, then choose **Launch job**.
+
+The new run pins its original run, checkpoint and new dataset configuration. It keeps the original kind, so pretraining continues as training. You may select another version of the same code. Training code loads the weights with `run.resume_checkpoint()`.
 
 ## When to use it
 

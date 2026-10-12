@@ -1,3 +1,5 @@
+import type { TrainingContinuation } from '../types/trainingContinuation';
+import { checkpointTrainingValues } from '../lib/checkpointTraining';
 import { useState } from 'react';
 import type { ComputeTarget, Run } from '@mmt/contracts';
 import type { FormValues } from '../types/form';
@@ -20,13 +22,17 @@ export type LaunchStep = (typeof LAUNCH_STEPS)[number];
  */
 export function useLaunchForm<Target extends ComputeTarget>({
   existingRun,
+  continuation,
   candidates,
 }: {
   existingRun: Run | undefined;
+  continuation?: TrainingContinuation;
   candidates: LaunchCandidates<Target>;
 }) {
   const [step, setStep] = useState<LaunchStep>('setup');
-  const [values, setValues] = useState<FormValues>(() => initialLaunchValues(existingRun));
+  const [values, setValues] = useState<FormValues>(() =>
+    continuation ? checkpointTrainingValues(continuation) : initialLaunchValues(existingRun),
+  );
   const [clearedChoices, setClearedChoices] = useState<ClearedLaunchChoice[]>([]);
   const validation = useFailureMessage();
   const stepIndex = LAUNCH_STEPS.indexOf(step);
