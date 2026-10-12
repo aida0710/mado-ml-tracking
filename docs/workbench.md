@@ -51,6 +51,6 @@ training/finetuningのTaskでは「成功時に出力モデルを登録」を設
 
 全体管理者はComputeの追加・設定編集・有効切替を行えます。Jobが参照している接続先やGPUを変更するときは、そのJobが終わってから保存します。無効化は新しい実行を止め、実行中のJobはworkerが引き続き管理します。
 
-pluginも全体管理者が登録・編集・有効切替を行います。Mado presetを使い、別リポジトリで動かすHTTP serviceのURLと認証用環境変数名を指定します。接続確認でmanifestを読み込み、データセット参照、metrics、lineageを使います。設定変更後は再度接続を確認します。
+Mado連携は標準搭載で初期無効です。全体管理者が「連携」でMadoのAPI/Web/OpenLineage URL、Namespaceと接続キーを保存し、有効にします。無効中でも参照キーで接続を確認できます。設定変更後は古い検索・確認結果を破棄します。
 
-pluginの起動・認証設定は[plugin仕様](plugins.md)を参照してください。
+内蔵連携の認証設定は[Mado連携の仕様](plugins.md)を参照してください。

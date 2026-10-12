@@ -287,27 +287,8 @@ export const tokenCreateSchema = z.strictObject({
     .refine((values) => new Set(values).size === values.length),
   expiresAt: z.iso.datetime({ offset: true }).nullish(),
 });
-export const pluginCreateSchema = z.strictObject({
-  name: nameSchema,
-  baseUrl: z
-    .url()
-    .max(2000)
-    .refine((value) => {
-      const url = new URL(value);
-      return (
-        ['http:', 'https:'].includes(url.protocol) &&
-        !url.username &&
-        !url.password &&
-        !url.search &&
-        !url.hash
-      );
-    }, 'An HTTP service URL without credentials is required'),
-  tokenEnv: z.string().regex(/^[A-Z][A-Z0-9_]*$/),
-  enabled: z.boolean().default(true),
-});
-export const pluginPatchSchema = pluginCreateSchema
-  .partial()
-  .extend({ enabled: z.boolean().optional() });
+export { pluginCreateSchema, pluginPatchSchema } from './pluginValidation.js';
+import { pluginPatchSchema } from './pluginValidation.js';
 export const pluginDatasetSchema = z.strictObject({
   externalId: nameSchema,
   namespace: nameSchema,

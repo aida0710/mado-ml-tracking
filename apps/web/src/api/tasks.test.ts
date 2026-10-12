@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { tasksApi } from './tasks';
 import { executionApi } from './execution';
-import { administrationApi } from './administration';
+import { pluginsApi } from './plugins';
 
 afterEach(() => vi.unstubAllGlobals());
 describe('Taskと管理設定の変更', () => {
@@ -49,7 +49,7 @@ describe('Taskと管理設定の変更', () => {
     const fetch = vi.fn().mockImplementation(() => Promise.resolve(new Response('{}', { status: 200 })));
     vi.stubGlobal('fetch', fetch);
     await executionApi.updateTarget('target', { enabled: false });
-    await administrationApi.updatePlugin('project', 'plugin', { enabled: true });
+    await pluginsApi.update('project', 'plugin', { enabled: true });
     expect(fetch.mock.calls.map(([path, options]) => [path, options.method, JSON.parse(options.body)])).toEqual([
       ['/api/targets/target', 'PATCH', { enabled: false }],
       ['/api/projects/project/plugins/plugin', 'PATCH', { enabled: true }],

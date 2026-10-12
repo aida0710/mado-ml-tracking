@@ -1,37 +1,41 @@
-import { useLocale } from '../i18n/useLocale';
-import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
-import { administrationApi } from '../api/administration';
+import type { PluginConnection } from '@mmt/contracts';
+import { useLocale } from '../i18n/useLocale';
 import { useProject } from '../hooks/useProject';
 import { useAuth } from '../hooks/useAuth';
-import { useQuery } from '../hooks/useQuery';
+import { usePluginConnections } from '../hooks/usePluginConnections';
 import { PageHeader } from '../components/PageHeader';
 import { Resource } from '../components/Feedback';
 import { ResponsiveTable } from '../components/ResponsiveTable';
 import { RegistryLayout } from '../components/RegistryLayout';
-import { PluginPanel } from '../components/PluginPanel';
-import { PluginDialog } from '../dialogs/PluginDialog';
+import { builtinPluginViews } from '../plugins/builtinPluginViews';
+import { LegacyPluginSettings } from '../plugins/legacy/LegacyPluginSettings';
 import { getPluginConnectionKey } from '../lib/pluginConnection';
 import { canManagePlugins, isGlobalAdmin } from '../lib/permissions';
 import { text } from '../i18n/catalog';
 import { pluginsText } from '../i18n/plugins';
 
-/**
- * Plugin connections of the Project. The navigation hides this screen from members the API would
- * refuse; opening the URL directly shows why instead of a 403 that retrying cannot fix.
- */
+interface PluginSettingsItem {
+  id: string;
+  name: string;
+  plugin: PluginConnection | null;
+  kind: string;
+}
+
+// New built-in connections coexist with existing connections and keep a distinct saved UUID.
+const NEW_MADO_CONNECTION_SELECTION = 'new:mado';
+
 export function PluginsPage() {
   useLocale();
   const { project } = useProject();
   const { user } = useAuth();
-  if (!canManagePlugins(project.role, isGlobalAdmin(user)))
-    return (
-      <section className="page management-page">
-        <PageHeader title={text.plugins} eyebrow={project.name} />
-        <p className="notice">{text.pluginsAdminOnly}</p>
-      </section>
-    );
+  if (!canManagePlugins(project.role, isGlobalAdmin(user))) return (
+    <section className="page management-page">
+      <PageHeader title={text.plugins} eyebrow={project.name} />
+      <p className="notice">{text.pluginsAdminOnly}</p>
+    </section>
+  );
   return <PluginConnections />;
 }
 
@@ -40,105 +44,59 @@ function PluginConnections() {
   const { project } = useProject();
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();
-  const [showDialog, setShowDialog] = useState(false);
-  const plugins = useQuery(`${project.id}:plugins`, (signal) =>
-    administrationApi.plugins(project.id, signal),
-  );
+  const plugins = usePluginConnections(project.id);
   return (
     <section className="page management-page">
-      <PageHeader
-        title={text.plugins}
-        eyebrow={project.name}
-        actions={
-          <>
-            {user.isAdmin && (
-              <button className="button primary" onClick={() => setShowDialog(true)}>
-                <Plus size={15} />
-                {text.newPlugin}
-              </button>
-            )}
-            <button className="icon-button" aria-label={text.refresh} onClick={plugins.reload}>
-              <RefreshCw size={17} />
-            </button>
-          </>
-        }
-      />
+      <PageHeader title={text.plugins} eyebrow={project.name} actions={
+        <>
+          {user.isAdmin && <button className="button" onClick={() => setParams({ id: NEW_MADO_CONNECTION_SELECTION })}>
+            <Plus size={15} />
+            {pluginsText.madoAddConnection}
+          </button>}
+          <button className="icon-button" aria-label={text.refresh} onClick={plugins.reload}>
+            <RefreshCw size={17} />
+          </button>
+        </>
+      } />
       <p className="muted">{pluginsText.pluginsAbout}</p>
       <Resource query={plugins}>
-        {(items) => {
-          // Only global administrators register plugins, so a Project admin learns whom to ask.
-          if (!items.length)
-            return (
-              <p className="notice">
-                {isGlobalAdmin(user)
-                  ? pluginsText.pluginsEmptyForGlobalAdmin
-                  : pluginsText.pluginsEmptyForProjectAdmin}
-              </p>
-            );
-          const selected = items.find((plugin) => plugin.id === params.get('id')) ?? items[0];
-          return (
-            <RegistryLayout
-              list={
-                <ResponsiveTable
-                  rows={items}
-                  rowKey={(plugin) => plugin.id}
-                  selectedKey={selected?.id}
-                  columns={[
-                    {
-                      key: 'name',
-                      priority: 'primary',
-                      header: text.name,
-                      render: (plugin) => (
-                        <button
-                          className="link-button"
-                          onClick={() => setParams({ id: plugin.id })}
-                        >
-                          {plugin.name}
-                        </button>
-                      ),
-                    },
-                    {
-                      key: 'url',
-                      priority: 'secondary',
-                      header: text.baseUrl,
-                      className: 'long-value',
-                      render: (plugin) => plugin.baseUrl,
-                    },
-                    {
-                      key: 'enabled',
-                      priority: 'primary',
-                      header: text.enabled,
-                      render: (plugin) => (
-                        <input
-                          type="checkbox"
-                          disabled
-                          checked={plugin.enabled}
-                          aria-label={text.enabled}
-                          readOnly
-                        />
-                      ),
-                    },
-                  ]}
-                />
-              }
-            >
-              {selected && (
-                <PluginPanel key={getPluginConnectionKey(selected)} plugin={selected} onChanged={plugins.reload} />
-              )}
-            </RegistryLayout>
-          );
+        {(connections) => {
+          const items: PluginSettingsItem[] = connections.map((plugin) => ({
+            id: plugin.id, name: plugin.name, plugin, kind: plugin.kind,
+          }));
+          for (const view of builtinPluginViews) {
+            if (!items.some((item) => item.kind === view.kind))
+              items.push({ id: view.kind, name: view.name, plugin: null, kind: view.kind });
+          }
+          if (params.get('id') === NEW_MADO_CONNECTION_SELECTION) {
+            items.push({ id: NEW_MADO_CONNECTION_SELECTION, name: pluginsText.madoNewConnection, plugin: null, kind: 'mado' });
+          }
+          const selected = items.find((item) => item.id === params.get('id')) ?? items[0];
+          const view = builtinPluginViews.find((candidate) => candidate.kind === selected?.kind);
+          return <RegistryLayout list={
+            <ResponsiveTable rows={items} rowKey={(item) => item.id} selectedKey={selected?.id} columns={[
+              { key: 'name', priority: 'primary', header: text.name, render: (item) => (
+                <button className="link-button" onClick={() => setParams({ id: item.id })}>{item.name}</button>
+              ) },
+              { key: 'configured', priority: 'primary', header: pluginsText.configuration, render: (item) =>
+                item.plugin?.configurationStatus === 'ready' ? pluginsText.configured :
+                  item.plugin?.configurationStatus === 'unsupported' ? pluginsText.unsupported :
+                    item.plugin ? pluginsText.migrationPending : pluginsText.notConfigured },
+              { key: 'enabled', priority: 'primary', header: text.enabled, render: (item) =>
+                item.plugin?.enabled ? text.enabled : text.disabled },
+            ]} />
+          }>
+            {selected && view ? <view.Settings
+              key={selected.plugin ? getPluginConnectionKey(selected.plugin) : `${project.id}:${selected.id}`}
+              plugin={selected.plugin}
+              onSaved={(plugin) => { plugins.onSaved(plugin); setParams({ id: plugin.id }); }}
+            /> : selected?.plugin && <LegacyPluginSettings
+              key={getPluginConnectionKey(selected.plugin)} plugin={selected.plugin}
+              onSaved={plugins.onSaved}
+            />}
+          </RegistryLayout>;
         }}
       </Resource>
-      {user.isAdmin && showDialog && (
-        <PluginDialog
-          onClose={() => setShowDialog(false)}
-          onSaved={(plugin) => {
-            setShowDialog(false);
-            plugins.reload();
-            setParams({ id: plugin.id });
-          }}
-        />
-      )}
     </section>
   );
 }

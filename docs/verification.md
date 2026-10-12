@@ -169,16 +169,16 @@ node apps/web/tests/browser-pipeline.mjs
 
 結果は`artifacts/verification/<日付>/pipeline/browser-pipeline.json`（段階ごとの結果と所要秒数）と、同じディレクトリの`browser-pipeline-server.log`・`browser-pipeline-worker.log`です。2026-10-08に全13段階が成功しました（約1分）。
 
-## Madoとのplugin連携を確認する
+## 内蔵Mado連携のAPIを確認する
 
-Mado拡張worktreeと別pluginリポジトリが隣にあれば、次で本体→plugin→Mado routesの接続を確認します。Mado Registryは隔離fixtureを使います。
+参照APIを追加したMado checkoutを指定すると、本体の内蔵処理→実Mado routesの接続を確認できます。Registryは隔離fixtureを使い、本番へは接続しません。
 
 ```bash
 MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55483/mmt_test \
-node_modules/.bin/tsx scripts/verify_mado_plugin.ts
+MMT_VERIFY_MADO_ROOT=/path/to/mado node_modules/.bin/tsx scripts/verify_mado_plugin.ts
 ```
 
-配置が違う場合は`MMT_VERIFY_MADO_ROOT`と`MMT_VERIFY_PLUGIN_ROOT`を指定します。こちらのテストは専用schemaを最後に削除します。
+配置が違う場合は`MMT_VERIFY_MADO_ROOT`に参照APIを含むMadoのcheckoutを指定します。こちらのテストは専用schemaを最後に削除します。
 
 ## 公式MLflow 3 SDKを確認する
 
@@ -228,10 +228,10 @@ PYTHONPATH=python/src python/.venv/bin/python scripts/verify_workbench.py
 
 公開Gitリポジトリの固定commitを読み込み、編集・削除したファイルを実CPU workerで実行します。通常とテストのコマンド、Taskの新しいバージョンを保存したあとも固定されるqueued Job、古いrevisionの409、失敗テストと再実行、実行前のsource ZIPとmanifest、履歴を確認します。コード自身がmain.pyを書き換えた場合も、ZIPが実行前の内容を保つことを照合します。検証用tokenは最後に失効し、targetを無効にします。結果は`artifacts/verification/<日付>/workbench/task-integration.json`です。
 
-ブラウザからCompute/plugin登録、Monacoでの編集と新しいバージョンの保存、Task作成・テスト・学習・推論を確認する場合は、開発APIとworkerのlocal executorを許可します。`.env`の`MMT_WORKBENCH_PLUGIN_TOKEN`に検証専用の値を用意してAPIを起動し、別terminalでloopbackのHTTP fixtureを起動します。
+ブラウザからCompute、Monacoでの編集と新しいバージョンの保存、Task作成・テスト・学習・推論を確認する場合は、開発APIとworkerのlocal executorを許可します。内蔵Mado連携の検証は上のMado参照APIを持つ隔離fixtureで行います。旧HTTP fixtureの起動手順は現在の接続登録には使いません。
 
 ```bash
-python/.venv/bin/python scripts/serve_workbench_plugin.py
+# 旧HTTP fixtureは内蔵連携では起動しません。
 ```
 
 ```bash
@@ -244,7 +244,7 @@ node scripts/verify_workbench_browser.mjs
 
 この操作はPlaygroundを残し、そのProjectとCPU targetだけを扱うworkerを起動します。Service Account tokenは7日で失効し、`var/playground/worker-settings.json`へmode600で保存します。ブラウザの確認後もTaskを編集・実行できます。再起動は`PYTHONPATH=python/src python/.venv/bin/python scripts/serve_workbench_worker.py`。workerの停止には`var/playground/worker.pid`のprocessを確認してSIGTERMを送り、設定画面で当該tokenを失効してください。
 
-HTTP fixtureはMadoのprotocol・metrics・Dataset importを確認するための専用サンプルです。実Madoへの接続確認は前節の別plugin検証を使います。PlaygroundのIDと実行結果、閲覧用画像は`artifacts/verification/<日付>/workbench/`へ保存し、tokenの値を含めません。
+Madoの参照・容量・取り込み・配送の確認は前節の内蔵連携検証を使います。PlaygroundのIDと実行結果、閲覧用画像は`artifacts/verification/<日付>/workbench/`へ保存し、tokenの値を含めません。
 
 2026-10-08の追加機能では、API・ストレージ366件、Web98件、Python316件、実Docker20件が成功しました。S3接続fixtureの2件はskipです。型検査・build・ruff・strict mypy、wheel/sdistの45ファイルと現ソースの一致も確認しました。
 
@@ -577,3 +577,27 @@ node apps/web/tests/browser-comments.mjs
 説明文の8000文字超過は送信前に止まること、保存した説明文とMLflowの`runs/get`の`mlflow.note.content`が同じこと、`<script>`・`onerror`・`javascript:`リンクが実行されず文字として出ること、外部画像は読み込まずリンクになること、コメントの投稿・返信・編集（編集済み表示）・削除（「削除されました」）、viewerには入力欄と操作が出ないこと、モデルバージョンの詳細ページに別のスレッドが出ることを確かめます。
 
 `apps/api/test/harness.ts`はWebのOriginを`http://127.0.0.1:5182`に固定するため、別portのWebから使うときはOriginを付け替える検証用の小さなserverが要ります（2026-10-08の検証では`/tmp`に置いて使い、リポジトリには入れていない）。
+
+
+## 内蔵Madoの実APIブラウザ確認
+
+専用のPostgreSQLテストDBと、参照APIを含むMado checkoutを使います。MadoのHTTPルートは実装を使い、Registryの応答だけをfixtureに置き換えます。本番の接続先は使いません。
+
+```sh
+MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55490/mmt_test \
+MMT_VERIFY_MADO_ROOT=/path/to/mado \
+node_modules/.bin/tsx scripts/serve_mado_verification.ts
+
+# 別terminal: 専用Web6084を起動
+MMT_WEB_API_PROXY_TARGET=http://127.0.0.1:6083 \
+node_modules/.bin/vite --config apps/web/vite.config.ts --host 127.0.0.1 --port 6084 --strictPort apps/web
+
+# PlaywrightとChromiumの場所を設定して実行
+MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
+MMT_CHROMIUM_PATH=/path/to/chrome \
+node scripts/verify_builtin_mado_browser.mjs
+```
+
+APIは独立schemaを作り、終了時に削除します。fixtureの一時キーはgitignore済みの`var/builtin-mado-verification.json`（mode 600）だけに保存し、終了時に削除します。結果とキー入力を含まない画像は`artifacts/builtin-mado/<JSTの日付>/`に保存します。
+
+ブラウザは初期無効、キー保存と接続確認、有効化、固定バージョンの取り込み、Madoへのリンク、START/COMPLETEの配送、無効化時の操作非表示、日英と幅320pxを確認します。運用者が用意する実RegistryのDBで同じRunやDatasetVersionが増えないことは、このfixtureでは確認しません。

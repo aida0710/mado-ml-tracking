@@ -142,5 +142,5 @@ API serverは30秒ごとに、Jobのheartbeatの途絶、workerの停止、Plugi
 | Plugin送信の滞留 | 最古の未送信が15分より古い、または5回以上失敗した | 未送信が条件を下回る、Pluginを無効にする |
 
 - heartbeatが途絶しても、Jobは失敗にしません。workerがまだ処理を続けている場合があるためです。止まったJobは［Jobs］で停止を要求するか、workerのホストを確かめてください。
-- Pluginの送信状況は［Plugins］の「イベントの送信状況」で確認できます。Pluginを直したら［イベントを再送］を押します（[PluginとMado連携](/admin/plugins)）。
+- Pluginの送信状況は［連携］の「イベントの送信状況」で確認できます。Pluginを直したら［イベントを再送］を押します（[Mado連携](/admin/plugins)）。
 - 閾値はコードの定数で、環境変数では変えられません。

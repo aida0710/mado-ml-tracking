@@ -1,18 +1,39 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { PluginService } from '../services/pluginService.js';
-import {
-  pluginCreateSchema,
-  pluginDatasetSchema,
-  pluginPatchSchema,
-} from '../domain/validation.js';
+import { pluginCreateSchema, pluginPatchSchema } from '../domain/validation.js';
 import { jsonBody, principal, uuidParam, type ApiEnvironment } from '../http/request.js';
 
-export const pluginDatasetSearchSchema = z.strictObject({ query: z.string().max(1000) });
-export const pluginDatasetImportSchema = z.strictObject({ dataset: pluginDatasetSchema });
+// Keep validation aligned with Mado's service catalog rather than failing downstream.
+const MAX_MADO_QUERY_LENGTH = 512;
+// Keep each receipt import atomic while bounding the number of rows locked by one request.
+const MAX_DELIVERY_RECEIPT_COUNT = 1000;
+export const pluginDatasetSearchSchema = z.strictObject({
+  query: z.string().trim().max(MAX_MADO_QUERY_LENGTH),
+  expectedRevision: z.number().int().nonnegative().optional(),
+});
+export const pluginDatasetImportSchema = z.strictObject({
+  externalId: z.uuid(),
+  expectedRevision: z.number().int().nonnegative(),
+});
+
+export const pluginMigrationCompleteSchema = z.strictObject({
+  expectedRevision: z.number().int().nonnegative(),
+});
+export const pluginDeliveryReceiptsSchema = z.strictObject({
+  receipts: z
+    .array(z.strictObject({ eventId: z.uuid(), payloadHash: z.string().regex(/^[a-f0-9]{64}$/) }))
+    .min(1)
+    .max(MAX_DELIVERY_RECEIPT_COUNT),
+});
 
 export function pluginRoutes(plugins: PluginService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
+  routes.get('/:p/plugins/availability', async (context) =>
+    context.json({
+      items: await plugins.availability(principal(context), uuidParam(context, 'p')),
+    }),
+  );
   routes.get('/:p/plugins', async (context) =>
     context.json({ items: await plugins.list(principal(context), uuidParam(context, 'p')) }),
   );
@@ -50,6 +71,7 @@ export function pluginRoutes(plugins: PluginService): Hono<ApiEnvironment> {
       await plugins.search(principal(context), uuidParam(context, 'p'), {
         pluginId: uuidParam(context, 'id'),
         query: input.query,
+        expectedRevision: input.expectedRevision,
       }),
     );
   });
@@ -58,7 +80,8 @@ export function pluginRoutes(plugins: PluginService): Hono<ApiEnvironment> {
     return context.json(
       await plugins.importDataset(principal(context), uuidParam(context, 'p'), {
         pluginId: uuidParam(context, 'id'),
-        dataset: input.dataset,
+        externalId: input.externalId,
+        expectedRevision: input.expectedRevision,
       }),
       201,
     );
@@ -81,5 +104,23 @@ export function pluginRoutes(plugins: PluginService): Hono<ApiEnvironment> {
       ),
     ),
   );
+  routes.post('/:p/plugins/:id/migration/complete', async (context) => {
+    const input = await jsonBody(context, pluginMigrationCompleteSchema);
+    return context.json(
+      await plugins.completeMigration(principal(context), uuidParam(context, 'p'), {
+        pluginId: uuidParam(context, 'id'),
+        ...input,
+      }),
+    );
+  });
+  routes.post('/:p/plugins/:id/events/receipts', async (context) => {
+    const input = await jsonBody(context, pluginDeliveryReceiptsSchema);
+    return context.json(
+      await plugins.importReceipts(principal(context), uuidParam(context, 'p'), {
+        pluginId: uuidParam(context, 'id'),
+        ...input,
+      }),
+    );
+  });
   return routes;
 }

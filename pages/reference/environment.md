@@ -103,7 +103,7 @@ openssl rand -base64 32
 | `MMT_CSV_EXPORT_MAX_ROWS` | `50000` | Run検索のCSV出力の最大行数 |
 | `MMT_REPORT_SNAPSHOT_MAX_BYTES` | `52428800` | 共有レポートの1つのバージョンで固定するデータの上限（バイト） |
 | `MMT_GIT_SSH_KEY_PATH`、`MMT_GIT_KNOWN_HOSTS_PATH` | なし | エディタへSSHのGitリポジトリを読み込むための秘密鍵とknown_hosts（絶対パス）。両方を設定する |
-| `MMT_MADO_PLUGIN_TOKEN` | なし | Mado pluginへ接続するシークレットの例。変数名はPluginの登録で指定する（[PluginとMado連携](/admin/plugins)） |
+| `MMT_PLUGIN_SECRET_KEY` | なし | 内蔵Madoの接続キーを暗号化する専用の鍵（32 bytesのbase64）。設定なし・無効なら不要。有効化前に設定し、再起動で変更しない（[Mado連携](/admin/plugins)） |
 
 ## preview worker
 

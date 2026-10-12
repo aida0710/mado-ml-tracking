@@ -1,6 +1,6 @@
 # API契約 v0.1
 
-本体はTypeScript/Hono＋PostgreSQL、React/Vite、Python worker/SDK。Mado pluginは別リポジトリのHTTP service。JSONはcamelCase。成功時はentityを直接返す。一覧は`{items: T[]}`。エラーは`{error:string,code?:string}`で適切な4xx/5xx。IDはUUID、日時はISO UTC。バージョンとRunの参照は不変。外部のサンプルを自動で本番へseedしない。
+本体はTypeScript/Hono＋PostgreSQL、React/Vite、Python worker/SDK。Mado連携は本体に標準搭載し、Projectごとに初期無効。JSONはcamelCase。成功時はentityを直接返す。一覧は`{items: T[]}`。エラーは`{error:string,code?:string}`で適切な4xx/5xx。IDはUUID、日時はISO UTC。バージョンとRunの参照は不変。外部のサンプルを自動で本番へseedしない。
 
 ## Web/SDK
 
@@ -70,9 +70,8 @@ Originは`MMT_WEB_ORIGIN`/`MMT_PUBLIC_URL`の完全一致を許可し、`MMT_ALL
 - `POST /projects/:p/jobs/:j/cancel` / `POST /projects/:p/jobs/:j/retry`。retryは新Run/Jobを作り`{run,job}`。生きているleaseのGPUを解放しない。retryの本文は省略可で、`{checkpointId}`か`{resumeFromLatestCheckpoint:true}`でcheckpointから再開する（「学習の途中再開」節）。
 - `GET|POST /tokens` (POST:name,kind,projectId,scopes,expiresAt?; `{token:string,item:TokenSummary}`一度だけ返す)。`DELETE /tokens/:id`。tokenはhashのみ保存。scope候補は`read`,`runs:write`,`registry:write`,`artifacts:write`,`jobs:write`,`worker:execute`,`admin`。worker tokenは設定されたprojectのみclaim可能。
 - `GET /auth/token` → CurrentApiToken `{id,projectId,scopes,job}`。認証に使ったAPI token自身の情報（Job tokenは`job=true`）。sessionでは400 `api_token_required`、未認証は401。`mado-tracking-worker doctor`がworker tokenのscopeを確かめるために使う。
-- `GET|POST /projects/:p/plugins` (POST:name,baseUrl,tokenEnv,enabled?)。登録は全体管理者に限定し、plugin secretは環境変数参照。PluginConnectionの`tokenConfigured`は、APIのプロセスに`tokenEnv`の値（空でないもの）があるか（値は返さない）。保存は変数が無くてもでき、Webは未設定と直し方を出し、確認・再送・検索を止める。変数が無いときのpluginへの呼び出しは503 `plugin_token_unavailable`で、文に変数名と直し方（API serverの`.env`に置いて再起動）を含む。Project adminは登録済みのpluginを利用する。`POST /projects/:p/plugins/:id/check` → manifest。`POST /projects/:p/plugins/:id/datasets/search` ({query}) → `{items:PluginDataset[]}`。
-- `PATCH /projects/:p/plugins/:id` (name?,baseUrl?,tokenEnv?,enabled?) → PluginConnection。変更も全体管理者に限定する。接続設定を変えると保存済みmanifestを消し、再確認を要求する。確認中に設定が変わった場合は古いmanifestを保存しない。無効pluginへはoutboxを送らず、再び有効にすると配信を再開する。
-- `POST /projects/:p/plugins/:id/datasets/import` ({dataset:PluginDataset}) → DatasetVersion。`POST /projects/:p/plugins/:id/events/retry` → `{queued:number}`。`GET /projects/:p/plugins/:id/metrics` → `{prometheus:string}`（storage:metrics対応pluginのみ）。event outboxはRun状態のtransactionと一緒に保存し、plugin障害でRunを失敗させない。送信状況は`GET /projects/:p/plugins/:id/outbox`（「運用アラートとplugin送信状況」）。
+- 内蔵連携の接続・有効切替・表示用状態・検索・取り込み・再送は「内蔵Mado連携」を参照する。内部のPlugin名称と`/plugins`ルートを維持し、画面では「連携」と表示する。
+
 
 ## Runの比較とCSV出力
 
@@ -766,7 +765,7 @@ OperationsAlert `{id,projectId,kind:'job.heartbeat_stale'|'worker.offline'|'plug
 
 `@mmt/platform`は`createArtifactStoresFromEnv(env?)` → `ArtifactStores`をexportする。`stores.backends():ArtifactBackend[]`、`stores.put({backend,key,body:Readable,mimeType})` → `{size,sha256}`、`stores.read({backend,key,range?:string})` → `{body:Readable,size,totalSize,contentRange?:string,status:200|206}`。`stores.remove({backend,key})`。`stores.multipart(backend)`は再開可能uploadに対応する保存先で`createMultipart`／`putPart`（宣言sizeと任意のpart SHA-256を検証）／`completeMultipart`（S3は最後以外5MiB以上）／`abortMultipart`／`listIncompleteUploads`／`removeAbandonedStaging`を返し、未対応ならnull。S3の単一`put()`は送信元の失敗時にAbortMultipartUploadの完了を待ってからrejectする。keyはprojectId/artifactId配下の不変ID。登録DB失敗時は書いたblobをcleanup。streamingでGBファイルを全量メモリへ載せない。`.env`設定は`ARTIFACT_FILESYSTEM_ROOT`、`S3_BUCKET`, `S3_ENDPOINT?`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_FORCE_PATH_STYLE`。FSは常時available、S3は必要設定がある場合available。DB由来の保存先は`createArtifactStoreFromConfig({config,credentials?,caBundle?})`（S3 clientは`createS3Client`）で作り、`createReplaceableArtifactStores()`が名前→storeの差し替えと書き込み停止（`ArtifactBackendDisabledError`）を受け持つ。APIでは`services/artifactStoreRegistry.ts`が環境変数由来とDB由来をまとめて`ArtifactStores`を実装する。
 
-`createPluginClient({baseUrl,token})` → `manifest()`, `searchDatasets(query)`, `metrics()` → `{prometheus:string}`, `sendEvent(event)`。HTTP POST `/datasets/search`、`/events`、GET `/manifest`。deadlineとvalidation必須。専用pluginはprivate networkで管理者が設定する。任意ユーザーがURLを指定できない。
+`createMadoClient({config,credentials})`はNamespace限定のcatalog/dataset/version取得、OpenLineageの固定本文送信、容量取得を行う。HTTP締切8秒・応答4MiB・redirect拒否・応答の形とID/Namespaceを検証する。`createPluginClient`は旧HTTP契約のライブラリとして残るが、APIの接続登録・配送では使わない。
 
 ## ローカル検証
 
@@ -789,3 +788,21 @@ OperationsAlert `{id,projectId,kind:'job.heartbeat_stale'|'worker.offline'|'plug
 実行手順とSDKの例は[ワークフロー](workflows.md)を参照。
 
 workerの`datasets.path`出力は、保存したArtifactのファイル一覧を持つDatasetVersionとして登録する。URIは`mmt-dataset://<versionId>`、digestはmanifestから計算する。pathの場合のdigest入力は互換性のため受け付け、実際のdigestは保存済みArtifactから決める。外部uri出力は指定されたuri/digestを保存する。親データセットバージョンには元のRunの入力を保存する。
+
+## 内蔵Mado連携
+
+Pluginは本体に登録したkindだけを実行する。新規はkind=madoで初期無効。任意の外部サービスURLを登録する旧入力は受け付けない。既存legacy接続・接続ID・DatasetVersion.externalRef・送信待ちは削除しない。
+
+- POST /projects/:p/plugins: `{kind:'mado',name?,config:{apiUrl,webUrl,lineageUrl,namespaces,jobNamespace,storageSystemKey},credentials?:{readToken?,lineageToken?,metricsToken?:string|null},enabled?:boolean}`。全体管理者。設定なしでの起動・一覧取得ではDB行や通信を作らない。
+- PATCH /projects/:p/plugins/:id: `{name?,config?,credentials?,enabled?,expectedRevision?}`。設定・資格情報を変える場合expectedRevision必須で、不一致は409。資格情報の省略は維持、metricsToken=nullは削除。実体の参照/イベント履歴がある接続のAPI/Web/OpenLineage接続先の変更は409。別接続を作成する。legacy接続の編集は名前と無効化だけ。
+- GET /projects/:p/plugins はProject admin。kind、configurationStatus、configRevision、Mado設定と資格情報の有無だけを返す。キーは暗号化して保存し、平文/暗号文/鍵IDは返さない。保存用MMT_PLUGIN_SECRET_KEYがなくても未設定・無効で起動する。
+- GET /projects/:p/plugins/availability はProject viewer/read scope。`{items:[{kind:'mado',id:null|UUID,enabled,configured,configRevision,webUrl:null|string,canImport}]}`。未登録でも未設定・無効のMadoを1件返す。管理APIのURL、資格情報、環境変数名を含めない。canImportは現在のProject admin/admin scopeと有効・設定済みの両方が必要。
+- POST check はProject admin、無効中でも参照/容量APIだけを検証。架空Runは送らない。変更中の結果は409。
+- 接続確認・検索・容量取得で必要な資格情報を利用できない場合は503 `plugin_token_unavailable`。保存用の暗号化キーや資格情報の内容は応答に含めない。
+- POST datasets/import は `{externalId: UUID,expectedRevision:number}`。有効・設定済みを確認し、APIが指定バージョンをMadoから再取得。投稿されたURI/digest/Namespaceは信頼しない。同じ外部バージョンの並行取り込みは同じ不変DatasetVersionを返す。
+- POST datasets/search は `{query,expectedRevision?}`。有効・設定済みの接続だけ。設定が変わった応答を409として破棄する。
+- 送信待ちにはOpenLineage本文・本文hash・送信先・設定revisionを固定する。無効中は新規の送信待ちを作らず、送信を開始しない。送信中の処理は完了可。再有効化で既存未送信分だけを再開し、過去の実験を遡及登録しない。
+- 旧manifest.id=madoの接続はmigration_pendingとして配送を止め、管理者が実Mado設定を保存して同じIDへ移行する。bridge URLをMado URLへ自動転用しない。旧イベントのpayload hashを照合して配送済み記録を引き継げる管理操作を提供する。ネットワークを越えた一度だけの配送は保証しない。同一Run/eventの再送をMadoの不変IDで処理する。
+
+- POST /projects/:p/plugins/:id/events/receipts は全体管理者。`{receipts:[{eventId:UUID,payloadHash:64桁hex}]}`（1〜1000件）→ `{imported:number}`。すべてのhashと既存イベントを照合し、1件でも不一致ならtransactionを戻す。送信中で60秒のleaseが有効な行は409。leaseが切れていれば照合済み記録を引き継ぎ、古いdeliveryIdを無効化する。既に配送済みの行は加算しない。
+- POST /projects/:p/plugins/:id/migration/complete は全体管理者。`{expectedRevision}`→ PluginConnection。同じIDの設定・資格情報・接続確認が完了している場合だけmigration_pendingを解除する。旧enabledは維持する。移行の設定を保存しただけでは配送を再開しない。旧ledger引継・確認を終えてから実行する。

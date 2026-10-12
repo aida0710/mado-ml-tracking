@@ -1,24 +1,49 @@
 import * as english from './en/plugins';
 import { localized } from './localized';
-// The Plugins screen: what a plugin is for, whether the API server can reach it, and where its
-// imports go. The older plugin labels (接続を確認, データセットを検索, ...) stay in catalog.ts.
+
 export const pluginsText = localized({
-  pluginsAbout:
-    'Pluginは、このアプリとは別に動くサービスです。Mado pluginを登録すると、Madoのデータセットを検索してRunの入力に取り込み、Runの記録をMadoへ送れます。',
-  pluginsEmptyForProjectAdmin:
-    'このプロジェクトにはPluginが登録されていません。Pluginの登録は全体管理者が行います。MadoのデータセットをRunの入力に使いたいときは、全体管理者にMado pluginの登録を依頼してください。',
-  pluginsEmptyForGlobalAdmin:
-    'このプロジェクトにはPluginが登録されていません。［Pluginを登録］から登録します。登録はプロジェクトごとです。',
-  pluginTokenStatus: 'API serverの設定',
-  pluginTokenConfigured: '設定済み',
-  pluginTokenMissing: '未設定（API serverに変数が無い）',
+  pluginsAbout: 'Mado連携は標準搭載されています。プロジェクトごとに接続先を設定し、有効にするとデータセットを取り込めます。Runの記録もMadoへ送ります。',
+  configuration: '設定',
+  configured: '設定済み',
+  notConfigured: '未設定',
+  migrationPending: '移行待ち',
+  unsupported: '非対応',
+  madoAddConnection: 'Madoの接続を追加',
+  madoNewConnection: '新しいMado接続',
+  legacyEnabledState: '移行前の設定',
+  madoNotConfigured: 'Mado連携は未設定・無効です。接続設定を保存し、接続を確認してから有効にしてください。',
+  madoAskAdmin: 'Mado連携は未設定・無効です。利用する場合は全体管理者に接続設定を依頼してください。',
+  madoMigrationPending: '以前のMado接続は移行待ちです。実際のMado接続先とキーを保存してください。旧サービスの配送記録を引き継ぎ、接続を確認した後、［移行を完了］で送信を再開します。',
+  unsupportedConnection: 'この接続は標準搭載の連携ではありません。既存のデータと記録を保持したまま停止しています。移行について全体管理者に相談してください。',
+  madoCredentialsMissing: 'Madoの参照用・送信用キーを設定してください。設定済みでも利用できない場合は、保存用の暗号化キーを確認してください。',
+  secretStorageUnavailable: '連携キーを保存・利用するには、APIサーバーにMMT_PLUGIN_SECRET_KEYの設定が必要です。全体管理者に確認してください。',
+  credentialConfigured: '設定済み',
+  credentialMissing: '未設定',
+  madoSettings: 'Madoの接続設定',
+  madoApiUrl: 'Mado API URL',
+  madoWebUrl: 'Mado Web URL',
+  madoLineageUrl: 'OpenLineage URL',
+  madoLineageUrlHint: '送信先のベースURLです。空欄ならMado API URLを使います。',
+  madoNamespaces: '許可Namespace',
+  madoNamespacesHint: '1行に1つ、またはカンマで区切って入力します。Madoのキーにも同じ範囲を許可してください。',
+  madoJobNamespace: 'RunのNamespace',
+  madoStorageSystemKey: 'ストレージの識別名',
+  madoReadToken: '参照用キー（lineage:read）',
+  madoLineageToken: '送信用キー（lineage:write）',
+  madoMetricsToken: '容量取得用キー（metrics:read、任意）',
+  madoRemoveMetricsToken: '容量取得用キーを削除',
+  savedCredentialHint: '設定済みです。空欄なら現在のキーを保持します。',
+  readCredentialHint: '接続確認とデータセットの検索に使います。有効にする前に設定してください。',
+  writeCredentialHint: 'Runの記録の送信に使います。有効にする前に設定してください。',
+  optionalCredentialHint: '容量メトリクスを表示する場合に設定します。',
+  madoSavedSecretsHint: 'キーは暗号化して保存します。入力しなかったキーは現在の設定を保持します。',
+  madoInitialDisabledHint: '初回の保存では無効のまま登録します。接続を確認してから有効にしてください。キーは暗号化して保存します。',
+  enableIntegration: '連携を有効にする',
+  disableIntegration: '連携を無効にする',
+  completeMigration: '移行を完了',
+  madoCheckHint: '無効のまま接続を確認できます。参照と容量の取得を確認し、Runは送信しません。',
   pluginSearchNeedsCheck: '［接続を確認］が成功すると、データセットを検索できます。',
   pluginOpenDatasets: '取り込んだデータセットを見る（Datasets）',
-  madoPluginPresetHint:
-    '接続先は、Mado pluginが待ち受けるURL（同じマシンなら http://127.0.0.1:4190）です。環境変数名は、PluginのMMT_PLUGIN_TOKENと同じ値をAPI serverの.envに置いた変数の名前です。',
+  madoImport: 'Madoからインポート',
+  madoOpenVersion: 'Madoで見る',
 } as const, english.pluginsText);
-
-export const pluginsTextTemplates = localized({
-  pluginTokenMissingNotice: (name: string) =>
-    `API serverに環境変数 ${name} がありません。PluginのMMT_PLUGIN_TOKENと同じ値を、API serverの.envに ${name} として設定し、API serverを再起動してから［接続を確認］を押してください。`,
-}, english.pluginsTextTemplates);

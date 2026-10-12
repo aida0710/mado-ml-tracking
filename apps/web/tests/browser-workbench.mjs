@@ -79,14 +79,6 @@ await context.route((url) => url.pathname.startsWith('/api/'), async (route) => 
     Object.assign(target, body);
     return reply(target);
   }
-  if (parts[0] === 'plugins' && parts.length === 2 && method === 'PATCH') {
-    api.state.calls.push({ method, path, body });
-    if (!api.state.user.isAdmin) return reply({ error: 'Global admin required' }, 403);
-    const plugin = api.state.plugins.find((item) => item.id === parts[1]);
-    if ((body.baseUrl && body.baseUrl !== plugin.baseUrl) || (body.tokenEnv && body.tokenEnv !== plugin.tokenEnv)) plugin.manifest = null;
-    Object.assign(plugin, body);
-    return reply(plugin);
-  }
   if (parts[0] === 'artifacts' && parts.length === 2 && method === 'GET')
     return reply(api.state.artifacts.find((artifact) => artifact.id === parts[1]));
   if (parts[0] === 'codes' && parts[2] === 'versions' && method === 'POST' && controls.failSave) {
@@ -275,7 +267,7 @@ try {
   assert.deepEqual(normalRun.executionSnapshot.entrypoint, smoke.entrypoint);
   assert.equal(normalRun.taskRevision, 2);
 
-  console.log('Workbench: computer edit/toggle with failure, plugin preset/edit/toggle/manifest');
+  console.log('Workbench: computer edit/toggle with failure, built-in Mado settings/check/toggle');
   await page.goto(new URL('/settings/computers', projectBase).href);
   await page.getByRole('button', { name: 'コンピュータを編集', exact: true }).click();
   // An ssh computer is edited in two tabs, 接続 and 接続後の設定, saved together.
@@ -294,23 +286,31 @@ try {
   await editedRow.getByRole('button', { name: '有効にする', exact: true }).waitFor();
   assert.deepEqual(api.state.calls.filter((call) => call.method === 'PATCH' && call.path.includes('/targets/')).at(-1).body, { enabled: false });
   await page.goto(projectBase + '/plugins');
-  await page.getByRole('button', { name: 'Pluginを編集', exact: true }).click();
-  await dialog().getByRole('button', { name: 'Madoの設定例を使う', exact: true }).click();
-  assert.equal(await dialog().getByLabel('接続先URL').inputValue(), 'http://127.0.0.1:4190');
-  assert.equal(await dialog().getByLabel('トークンを参照する環境変数名').inputValue(), 'MMT_MADO_PLUGIN_TOKEN');
+  const plugin = api.state.plugins[0];
+  const expectedRevision = plugin.configRevision;
+  await page.getByRole('button', { name: 'Madoの接続設定', exact: true }).click();
+  assert.equal(await dialog().getByLabel('Mado API URL').inputValue(), plugin.config.apiUrl);
+  assert.equal(await dialog().getByLabel('参照用キー（lineage:read）').inputValue(), '');
+  assert.equal(await dialog().getByLabel('送信用キー（lineage:write）').inputValue(), '');
+  await fill('名前', 'Edited Mado');
+  await fill('Mado Web URL', 'https://edited-mado.invalid');
   await dialog().getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  await page.getByRole('heading', { name: 'Edited Mado', exact: true }).waitFor();
+  const savedSettings = api.state.calls.filter((call) => call.method === 'PATCH' && call.path.includes('/plugins/')).at(-1).body;
+  assert.equal(savedSettings.expectedRevision, expectedRevision);
+  assert.equal(savedSettings.config.webUrl, 'https://edited-mado.invalid');
+  assert.equal(Object.hasOwn(savedSettings, 'credentials'), false, 'blank saved keys must be preserved');
   await page.getByRole('button', { name: '接続を確認', exact: true }).click();
   await page.getByText('接続を確認しました', { exact: true }).waitFor();
-  await page.locator('.plugin-manifest summary').click();
-  assert.ok((await page.locator('.plugin-manifest pre').textContent()).includes('capabilities'));
+  await page.getByText('https://edited-mado.invalid', { exact: true }).waitFor();
   await page.getByTestId('plugin-toggle').click();
-  await page.getByRole('button', { name: 'Pluginを有効にする', exact: true }).waitFor();
+  await page.getByRole('button', { name: '連携を有効にする', exact: true }).waitFor();
   assert.deepEqual(api.state.calls.filter((call) => call.method === 'PATCH' && call.path.includes('/plugins/')).at(-1).body, { enabled: false });
   api.state.user.isAdmin = false;
   await page.reload();
   await page.getByRole('button', { name: '接続を確認', exact: true }).waitFor();
-  assert.equal(await page.getByRole('button', { name: 'Pluginを編集', exact: true }).count(), 0);
+  assert.equal(await page.getByRole('button', { name: 'Madoの接続設定', exact: true }).count(), 0);
   assert.equal(await page.getByTestId('plugin-toggle').count(), 0);
   api.state.project.role = 'viewer';
   await page.goto(projectBase + '/tasks');

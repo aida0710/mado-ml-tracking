@@ -419,7 +419,7 @@ Runの失敗などを外部へ知らせます。通知先（channel）は全体�
 
 ### 通知先の環境変数を置く
 
-Webhookの URL と署名の鍵はDBにも画面にも保存しません。API serverの環境変数に値を置き、通知先には変数名だけを登録します（pluginの`tokenEnv`と同じ方針）。変数名は`MMT_NOTIFICATION_`で始まる英大文字・数字・`_`に限ります。ほかの設定（DBのURLなど）を通知先に指定できないようにするためです。
+Webhookの URL と署名の鍵はDBにも画面にも保存しません。API serverの環境変数に値を置き、通知先には変数名だけを登録します（Mado連携のキーは別の仕組みで暗号化保存します）。変数名は`MMT_NOTIFICATION_`で始まる英大文字・数字・`_`に限ります。ほかの設定（DBのURLなど）を通知先に指定できないようにするためです。
 
 ```sh
 # API serverの.env（値はリポジトリやチャットに貼らない）
@@ -479,7 +479,7 @@ API serverは30秒ごとに次を確かめ、見つけたらProjectの「運用�
 - 通知はアラートを開いたときに1回だけ（Jobは復旧時にも1回）。同じ対象が再び途絶したら、新しいアラートとして再び通知します。
 - 通知を受けるには、Project設定の「通知」でruleを作り、上の種別を選びます。worker・pluginの通知は、Runの条件（実行種別・実験）を付けたruleには届きません。
 - Jobは途絶しても失敗にしません（workerがまだ処理を続けている可能性があるため）。止まったJobはJobs画面から停止を要求するか、workerホストを確認します。
-- Pluginの送信状況はPlugins画面の「イベントの送信状況」（Project admin）で見られます。pluginを直したら「イベントを再送」で待ち時間を飛ばして再送します。
+- Pluginの送信状況は「連携」画面の「イベントの送信状況」（Project admin）で見られます。pluginを直したら「イベントを再送」で待ち時間を飛ばして再送します。
 - 閾値はコードの定数（`apps/api/src/domain/workerLiveness.ts`、`apps/api/src/domain/operationsAlerts.ts`）で、環境変数では変えません。
 
 ## API serverの上限と保持数
@@ -520,7 +520,7 @@ docker compose run --rm api npm run db:migrate --workspace @mmt/api
 docker compose up -d api web
 ```
 
-Webはlocalhost:5182で待ち受けます。外側のTLS reverse proxyからこのportへ接続します。API/DBは外部portを公開しません。Artifact volumeはAPIの実行ユーザーに書き込み権限を持たせます。workerとpluginは別に起動します。
+Webはlocalhost:5182で待ち受けます。外側のTLS reverse proxyからこのportへ接続します。API/DBは外部portを公開しません。Artifact volumeはAPIの実行ユーザーに書き込み権限を持たせます。workerは別に起動します。Mado連携はAPIに標準搭載されています。
 
 Webの画面（全体設定 → 全体管理 → ストレージ）からファイルシステムの保存先を足すときは、そのディレクトリがAPIとpreviewのコンテナから見えている必要があります。`compose.filesystem-storage.yml`を使うと、`.env`の`MMT_FILESYSTEM_STORAGE_DIR`のホストのディレクトリを、コンテナの中にも同じパスで見せます。保存先の［ルートディレクトリ］には、その下のパスを指定します。
 
