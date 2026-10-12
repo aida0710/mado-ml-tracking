@@ -8,6 +8,7 @@ export type DatasetVersionReferenceKind =
   | 'runInput'
   | 'runOutput'
   | 'childVersion'
+  | 'parentAddition'
   | 'task'
   | 'automationRule'
   | 'hook'
@@ -23,6 +24,7 @@ const REFERENCE_LABELS: Record<DatasetVersionReferenceKind, string> = {
   runInput: 'Runの入力',
   runOutput: 'Runの出力',
   childVersion: 'このバージョンを親にしたバージョン',
+  parentAddition: '親の追記履歴',
   task: 'Taskの入力',
   automationRule: '自動実行ルールの入力',
   hook: 'フックの入力',

@@ -8,6 +8,7 @@ import type {
   Run,
 } from '@mmt/contracts';
 
+import { buildDatasetAncestors } from './datasetLineage';
 import { getModelTrainingSourceRunId } from './modelTrainingSource';
 
 // The band shows the newest results only; the full list is in the tables below it.
@@ -26,6 +27,7 @@ export function buildModelVersionLineage(input: {
         Partial<Pick<Run, 'inputDatasetVersionIds' | 'trainingDatasetVersionIds'>>)
     | null;
   datasetLabels?: ReadonlyMap<string, string>;
+  datasetParents?: ReadonlyMap<string, readonly string[]>;
   resultRuns: readonly Pick<AutomatedRunSummary, 'id' | 'name' | 'status' | 'parentRunId'>[];
 }): LineageGraph {
   const { model, version, sourceRun } = input;
@@ -45,12 +47,16 @@ export function buildModelVersionLineage(input: {
       target: version.id,
       relation: version.sourceRunId ? 'registeredModel' : 'outputModel',
     });
-    for (const id of sourceRun?.trainingDatasetVersionIds ??
-      sourceRun?.inputDatasetVersionIds ??
-      []) {
-      nodes.push({ id, kind: 'datasetVersion', label: input.datasetLabels?.get(id) ?? id });
+    const inputs = sourceRun?.trainingDatasetVersionIds ?? sourceRun?.inputDatasetVersionIds ?? [];
+    const ancestors = buildDatasetAncestors({
+      versionIds: inputs,
+      parents: input.datasetParents ?? new Map(),
+      labels: input.datasetLabels,
+    });
+    nodes.push(...ancestors.nodes);
+    edges.push(...ancestors.edges);
+    for (const id of inputs)
       edges.push({ source: id, target: sourceRunId, relation: 'input' });
-    }
   }
   nodes.push({ id: version.id, kind: 'modelVersion', label: `${model.name} / ${version.version}` });
   const resultIds = new Set(resultRuns.map((run) => run.id));

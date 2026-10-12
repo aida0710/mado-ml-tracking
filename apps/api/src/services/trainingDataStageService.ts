@@ -14,8 +14,8 @@ import { findRun } from '../repositories/registryRepository.js';
 import { listTrainingDataStages } from '../repositories/trainingDataStageRepository.js';
 import {
   hasLineageAncestor,
-  lockProjectTrainingSources,
-} from '../repositories/modelTrainingSourceRepository.js';
+  lockProjectLineage,
+} from '../repositories/lineageMutationRepository.js';
 import { writeAuditEvent } from '../repositories/auditRepository.js';
 import { requireProject } from './accessService.js';
 import { auditActor, NO_REQUEST_METADATA } from './auditService.js';
@@ -58,7 +58,7 @@ export class TrainingDataStageService {
         role: 'editor',
         scope: 'runs:write',
       });
-      await lockProjectTrainingSources(connection, projectId);
+      await lockProjectLineage(connection, projectId);
       const run = await findRun(connection, { projectId, id: runId, lock: true });
       if (!isTrainingRunKind(run.kind))
         throw new DomainError(

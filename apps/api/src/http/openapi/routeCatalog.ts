@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { datasetVersionParentCreateSchema } from '../../domain/datasetVersionParentValidation.js';
 import { trainingDataStageCreateSchema } from '../../domain/trainingDataStageValidation.js';
 import { modelTrainingSourceCreateSchema } from '../../domain/modelTrainingSourceValidation.js';
 import { WORKFLOW_ROUTES } from './workflowRouteCatalog.js';
@@ -774,6 +775,18 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
   },
 
   // registry
+  {
+    method: 'get', path: '/api/projects/:p/datasets/:id/versions/:v/parents', tag: 'registry',
+    summary: 'データ版の親と後から補った来歴の履歴を取得', access: PROJECT_VIEWER,
+    responses: { 200: contract.datasetVersionParentPageSchema },
+  },
+  {
+    method: 'post', path: '/api/projects/:p/datasets/:id/versions/:v/parents', tag: 'registry',
+    summary: '既存データ版を保って確認済みの親と根拠を追記', access: REGISTRY_WRITE,
+    body: datasetVersionParentCreateSchema,
+    responses: { 200: contract.datasetVersionParentPageSchema },
+    errors: routeError(422, 'dataset_parent_cycle'),
+  },
   {
     method: 'get', path: '/api/projects/:p/runs/:r/training-data-stages', tag: 'runs',
     summary: '学習途中のデータ構成をstep順に取得', access: PROJECT_VIEWER,

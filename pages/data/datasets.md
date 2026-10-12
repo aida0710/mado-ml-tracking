@@ -196,3 +196,24 @@ DockerやSingularity、Apptainerで動かす場合、本体は`/mmt/datasets/<�
 - [Artifact](/data/artifacts)
 - [自動実行](/models/automation)
 - [SSH・Localのコンピュータ](/compute/targets)
+
+## 登録済みの版に生成元を追加する {#add-existing-parents}
+
+過去の加工音声や生成設定を照合して、親の登録漏れが分かったときに使います。版を作り直さず、現在の版ID・保存先・ハッシュと、学習Runからの参照を保ったまま親を補足できます。
+
+1. Datasetsで対象のバージョンを開き、［親データ版を追加］を押します。
+2. 照合済みの親データ版を選び、追加する理由とJSON形式の照合根拠を入力します。
+3. 保存後、［親］と［親の追記履歴］に表示されることを確認します。Lineageとモデルの学習元からも生成元を辿れます。
+
+照合根拠には保存済み設定、参照先、SHA-256、件数などを記録します。未知の生成者や日時を推測で埋めないでください。学習中に利用データを切り替えた記録は、Runの［学習データの履歴］で別に管理します。
+
+同じProjectの親だけ追加でき、循環する関係は拒否されます。同じ親を再送しても重複せず、最初の理由・根拠・追加した人・日時を保持します。追加した親と、訂正履歴を持つ版は削除から保護されます。編集はProjectのeditor以上、API tokenは`registry:write`が必要です。
+
+```python
+client.add_dataset_version_parents(
+    project_id, dataset_id, feature_version_id,
+    parent_dataset_version_ids=[processed_audio_version_id],
+    reason="保存済みの生成設定から、親の登録漏れを確認",
+    evidence={"recipe": "保存済み設定の参照", "archive_count": 32},
+)
+```

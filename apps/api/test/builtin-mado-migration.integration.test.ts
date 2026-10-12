@@ -16,6 +16,7 @@ describe.skipIf(!testDatabaseUrl)('旧Mado接続と送信記録の移行（独�
       // Current Run projections need these independent tables; Mado itself stays in its old shape.
       await applyMigrationFile(harness.database, '063_model_training_sources.sql');
       await applyMigrationFile(harness.database, '064_training_data_stages.sql');
+      await applyMigrationFile(harness.database, '065_dataset_version_parent_additions.sql');
       const fixture = await executionFixture(harness);
       const pluginId = randomUUID();
       const unrelatedId = randomUUID();

@@ -54,3 +54,4 @@ export * from './datasetUsage.js';
 export * from './preprocessingReports.js';
 export * from './workflows.js';
 export * from './trainingDataStages.js';
+export * from './datasetVersionParents.js';
