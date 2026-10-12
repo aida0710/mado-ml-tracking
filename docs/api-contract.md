@@ -837,3 +837,14 @@ Pluginは本体に登録したkindだけを実行する。新規はkind=madoで�
 - 学習元の上書きは409 `model_training_source_conflict`、未終了の学習元は422 `model_training_source_not_terminal`、入力/祖先への逆向きの紐付けは422 `model_training_source_cycle`。
 - 学習以外のRunへのデータ履歴は422 `training_data_run_kind`。同stepの別構成は409 `training_data_stage_conflict`、過去stepへの新しい記録は409 `training_data_stage_order`。
 - 別Runまたは開始step以降のcheckpointは422 `training_data_stage_checkpoint`。自分の出力を入力へ戻す循環は422 `training_data_stage_cycle`。
+
+## 登録済みDatasetVersionへの親追記
+
+`POST /projects/:p/datasets/:id/versions/:v/parents` は `parentDatasetVersionIds`、`reason`、`evidence` を受け取る。Project editorと`registry:write`が必要。これは過去の生成元を補う訂正であり、学習中のデータ変更や生成Runの後付けではない。Job tokenでは使用できない。
+
+- 同Projectの既存親版1〜1000件、UUIDの重複なし、空白以外の理由（2000文字以内）、空でないJSONの照合根拠（64KiB以内）が必要。自己・逆向きの祖先・Run/モデルを経由する循環は422 `dataset_parent_cycle`。競合する追記も共通Project lockで非循環を守る。
+- 元の版ID、URI、digest、schema、metadata、sourceRunId、既存Runの入力を変更しない。`dataset_version_parent_additions`へ親ごとの根拠・理由・createdBy/createdAtを追記する。一度追加した関係と根拠は上書きできない。同じ親の再送は追加時の履歴を返し、理由や根拠が異なっても既存記録を置き換えない。
+- `GET`と`POST`の200応答は`DatasetVersionParentPage`。`registeredParentDatasetVersionIds`は登録時の親、`parentDatasetVersionIds`は追記を含む実効集合、`items`は後付けした親の訂正履歴。登録済みの親だけを送った場合は新しい履歴を作らない。
+- 通常の`DatasetVersion.parentDatasetVersionIds`も実効集合を返す。データ詳細・Lineage・モデルの学習元から親を辿れる。後付けした親も使用中として削除を409 `dataset_version_in_use`で拒否する。訂正履歴のある子版も履歴保護のため削除できない。Project完全削除では関連履歴を一緒に削除する。
+- 監査は追加した人と対象/親のIDを記録する。照合根拠の本文やURLは来歴記録だけに保存し、監査へ転載しない。
+- Python SDK: `client.add_dataset_version_parents(project_id, dataset_id, version_id, parent_dataset_version_ids=[...], reason=..., evidence={...})`、`client.dataset_version_parents(...)`。

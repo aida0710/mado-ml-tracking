@@ -38,6 +38,9 @@ export function ModelVersionSummary({
     datasetLabels: new Map(
       trainingDatasets.map((dataset) => [dataset.id, qualifiedDatasetVersionLabel(dataset)]),
     ),
+    datasetParents: new Map(
+      trainingDatasets.map((dataset) => [dataset.id, dataset.parentDatasetVersionIds]),
+    ),
     resultRuns,
   });
   return (

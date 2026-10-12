@@ -175,6 +175,14 @@ describe.skipIf(!testDatabaseUrl)('Projectの完全な削除（独立PostgreSQL�
       method: 'POST', body: { version: '1', uri: 's3://purged-training/data.json',
         digest: `sha256:${createHash('sha256').update('training-data').digest('hex')}` },
     });
+    const correctedData = await send<{ id: string }>('/datasets', { method: 'POST', body: { name: 'Purged corrected data' } });
+    const correctedVersion = await send<{ id: string }>(`/datasets/${correctedData.id}/versions`, {
+      method: 'POST', body: { version: '1', uri: 's3://purged-corrected/data.json',
+        digest: `sha256:${createHash('sha256').update('corrected-data').digest('hex')}` },
+    });
+    await send(`/datasets/${correctedData.id}/versions/${correctedVersion.id}/parents`, {
+      method: 'POST', body: { parentDatasetVersionIds: [trainingData.id], reason: 'Historical evidence', evidence: { verified: true } },
+    }, 200);
     await send(`${runPath}/training-data-stages`, {
       method: 'POST', body: { startStep: 2, inputDatasetVersionIds: [trainingData.id] },
     }, 200);
@@ -318,6 +326,7 @@ describe.skipIf(!testDatabaseUrl)('Projectの完全な削除（独立PostgreSQL�
       'artifact_deletions',
       'run_checkpoints',
       'run_resume_events',
+      'dataset_version_parent_additions',
       'model_version_training_sources',
       'training_data_stages',
       'model_alias_events',
