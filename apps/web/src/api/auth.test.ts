@@ -49,6 +49,13 @@ describe('authApi.localLogin', () => {
     const limited = await failure(() => authApi.localLogin({ username: 'a', password: 'b' }));
     expect(localLoginErrorMessage(limited)).toBe(text.loginRateLimited);
   });
+
+  it('通信できないときも、ほかの画面と同じ表示言語の文にする', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    const offline = await failure(() => authApi.localLogin({ username: 'a', password: 'b' }));
+    expect(offline).toBeInstanceOf(RequestError);
+    expect(localLoginErrorMessage(offline)).toBe(text.requestError);
+  });
 });
 
 describe('authApi.changePassword', () => {

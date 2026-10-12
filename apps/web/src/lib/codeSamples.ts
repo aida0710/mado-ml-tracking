@@ -106,7 +106,8 @@ class InferenceTest(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 `;
-const trainingMain = `${calculation}
+// The comments are written in the display language when the sample is added.
+const trainingMain = () => `${calculation}
 
 def train(steps=12):
     weight, bias = 0.0, 0.0
@@ -133,8 +134,8 @@ def main():
     with start_run(kind="training") as run:
         for step, loss in enumerate(history):
             run.log_metrics({"train.loss": loss}, step=step)
-        # Taskの出力モデル設定（Artifactのパス model/weights.json）が、Runの成功後にこの重みを登録する。
-        # ここでrun.register_output_model()により同じModelへ登録した場合、Task側の登録はskipされる。
+        # ${text.trainingSampleTaskRegistersModel}
+        # ${text.trainingSampleOwnRegistrationSkipsTask}
         run.log_artifact(output, path="model/weights.json", mime_type="application/json")
 
 
@@ -171,5 +172,5 @@ export const CODE_SAMPLES: CodeSample[] = [
   { ...sampleDefaults, id: 'inference', get label() { return text.inferenceSample }, requirements: [], taskTypes: ['inference'],
     files: { 'main.py': inferenceMain, 'test_inference.py': inferenceTest } },
   { ...sampleDefaults, id: 'training', get label() { return text.trainingSample }, requirements: [], taskTypes: ['training'],
-    files: { 'main.py': trainingMain, 'test_training.py': trainingTest } },
+    get files() { return { 'main.py': trainingMain(), 'test_training.py': trainingTest }; } },
 ];

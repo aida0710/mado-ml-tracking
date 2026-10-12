@@ -70,6 +70,8 @@ export const workbenchText = localized({
   mlflowSample: 'MLflow 3のメトリクス',
   inferenceSample: 'CPU inference',
   trainingSample: 'CPU training',
+  trainingSampleTaskRegistersModel: 'Taskの出力モデル設定（Artifactのパス model/weights.json）が、Runの成功後にこの重みを登録する。',
+  trainingSampleOwnRegistrationSkipsTask: 'ここでrun.register_output_model()により同じModelへ登録した場合、Task側の登録はskipされる。',
   sampleConflict: 'サンプルと同じパスがあります。名前を変更するか削除してから追加してください。',
   editTarget: 'コンピュータを編集',
   editPlugin: 'Pluginを編集',

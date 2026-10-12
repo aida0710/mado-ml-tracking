@@ -30,6 +30,20 @@ describe('language preference', () => {
     expect(initialLocale()).toBe('en');
   });
 
+  it('falls back to English when the browser reports no language', () => {
+    vi.stubGlobal('navigator', { languages: [], language: undefined });
+    vi.stubGlobal('localStorage', { getItem: () => null, setItem: vi.fn() });
+    expect(initialLocale()).toBe('en');
+    vi.stubGlobal('navigator', undefined);
+    expect(initialLocale()).toBe('en');
+  });
+
+  it('uses navigator.language when the language list is empty', () => {
+    vi.stubGlobal('navigator', { languages: [], language: 'ja-JP' });
+    vi.stubGlobal('localStorage', { getItem: () => null, setItem: vi.fn() });
+    expect(initialLocale()).toBe('ja');
+  });
+
   it('still switches language when browser storage is unavailable', () => {
     browserPreference({ languages: ['en-US'], stored: null });
     vi.stubGlobal('localStorage', {
