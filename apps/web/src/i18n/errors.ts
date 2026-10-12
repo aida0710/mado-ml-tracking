@@ -4,6 +4,14 @@ import { localized } from './localized';
 // Text for API errors (lib/errorMessage.ts, lib/sweepSpaceError.ts). For the codes, the Japanese screen
 // shows the server's own message when there is one, so these Japanese entries are its fallback.
 export const errorText = localized({
+  modelTrainingSourceConflict: 'このモデル版には別の学習元が記録されています',
+  modelTrainingSourceNotTerminal: '終了済みの学習Runを選んでください',
+  modelTrainingSourceCycle: 'モデル版が学習元の入力や祖先になっています',
+  trainingDataRunKind: '学習データの履歴は学習Runに記録してください',
+  trainingDataStageConflict: 'このstepには別の学習データが記録されています',
+  trainingDataStageOrder: '記録済みのstepより後の学習データを追加してください',
+  trainingDataStageCheckpoint: 'このRunの開始stepより前のcheckpointを選んでください',
+  trainingDataStageCycle: 'このRunの出力から作られたデータは入力に追加できません',
   internalError: 'リクエストの処理に失敗しました',
   databaseUnavailable: 'データベースに接続できません',
   pluginRequestFailed: '連携先との通信に失敗しました',

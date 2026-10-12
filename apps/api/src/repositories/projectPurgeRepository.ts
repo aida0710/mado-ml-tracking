@@ -80,6 +80,8 @@ export const PROJECT_PURGE_STEPS: readonly ProjectPurgeStep[] = [
     'run_output_registrations',
     'run_resume_events',
     'run_sync_batches',
+    'model_version_training_sources',
+    'training_data_stages',
     'run_checkpoints',
     'dataset_version_files',
     'runs',

@@ -136,6 +136,7 @@ export const JOB_TOKEN_WRITE_RULES: readonly JobTokenRule[] = [
   { methods: ['POST'], route: `${NATIVE}/runs/:r/logs`, allows: ownRunInPath },
   { methods: ['PUT'], route: `${NATIVE}/runs/:r/artifacts`, allows: ownRunInPath },
   { methods: ['POST'], route: `${NATIVE}/runs/:r/checkpoints`, allows: ownRunInPath },
+  { methods: ['POST'], route: `${NATIVE}/runs/:r/training-data-stages`, allows: ownRunInPath },
   { methods: ['POST'], route: `${NATIVE}/runs/:r/media`, allows: ownRunInPath },
   { methods: ['POST'], route: `${NATIVE}/artifact-uploads`, allows: ownRunInBody('runId') },
   {

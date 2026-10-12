@@ -20,7 +20,7 @@ export const checkpointsText = {
     "Resume training as a new run from the latest checkpoint (highest step) saved by this job's run.",
   checkpointResumeKeepsSourceRun: 'The original run and checkpoint are kept unchanged.',
   checkpointResumeSubmit: 'Resume as a new run',
-  checkpointResumeNoJob: 'The job that executed this run was not found, so it cannot be resumed here.',
+  checkpointResumeNoJob: 'The original job was not found, so it cannot be retried.',
   checkpointResumeCreatorOnly:
     "Only this run's creator or a project administrator can resume from a checkpoint.",
   checkpointResumedBadge: 'Resumed',

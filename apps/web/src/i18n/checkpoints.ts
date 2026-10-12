@@ -21,7 +21,7 @@ export const checkpointsText = localized({
     'このJobのRunで保存された最新（stepが最大）のcheckpointから、新しいRunとして学習を再開します。',
   checkpointResumeKeepsSourceRun: '元のRunとそのcheckpointは変更されません。',
   checkpointResumeSubmit: '新しいRunで再開',
-  checkpointResumeNoJob: 'このRunを実行したJobが見つからないため、ここからは再開できません。',
+  checkpointResumeNoJob: '元のJobがないため、Jobの再実行はできません。',
   checkpointResumeCreatorOnly: 'checkpointからの再開は、このRunの作成者かProject adminだけができます。',
   checkpointResumedBadge: '再開',
   checkpointResumedBadgeHint: 'checkpointから再開したRunのJobです',

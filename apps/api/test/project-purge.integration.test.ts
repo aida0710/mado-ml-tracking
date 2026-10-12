@@ -166,7 +166,19 @@ describe.skipIf(!testDatabaseUrl)('Projectの完全な削除（独立PostgreSQL�
       },
     });
     await send(runPath, { method: 'PATCH', body: { status: 'finished' } }, 200);
+    await send(`/models/${fixture.model.id}/versions/${fixture.modelVersion.id}/training-source`, {
+      method: 'POST', body: { runId: training.id },
+    }, 200);
     await send(`${runPath}/resume`, { method: 'POST', body: {} }, 200);
+    const trainingDataset = await send<{ id: string }>('/datasets', { method: 'POST', body: { name: 'Purged training data' } });
+    const trainingData = await send<{ id: string }>(`/datasets/${trainingDataset.id}/versions`, {
+      method: 'POST', body: { version: '1', uri: 's3://purged-training/data.json',
+        digest: `sha256:${createHash('sha256').update('training-data').digest('hex')}` },
+    });
+    await send(`${runPath}/training-data-stages`, {
+      method: 'POST', body: { startStep: 2, inputDatasetVersionIds: [trainingData.id] },
+    }, 200);
+
 
     await send(
       `/models/${fixture.model.id}/aliases/production`,
@@ -306,6 +318,8 @@ describe.skipIf(!testDatabaseUrl)('Projectの完全な削除（独立PostgreSQL�
       'artifact_deletions',
       'run_checkpoints',
       'run_resume_events',
+      'model_version_training_sources',
+      'training_data_stages',
       'model_alias_events',
       'jobs',
       'comments',

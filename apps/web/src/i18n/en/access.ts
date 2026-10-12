@@ -111,6 +111,8 @@ export const auditActionLabels = {
   'promotion.policy.update': 'Update promotion policy',
   'promotion_policy.owner.transfer': 'Change promotion policy owner',
   'promotion.evaluation.reevaluate': 'Re-evaluate promotion',
+  'model.training_source.associate': 'Link model training source',
+  'run.training_data_stage.append': 'Record training data configuration',
   'model_alias.protection.set': 'Protect alias',
   'model_alias.protection.delete': 'Remove alias protection',
 } satisfies Record<string, string>;
