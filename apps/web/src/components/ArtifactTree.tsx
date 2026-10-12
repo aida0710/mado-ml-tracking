@@ -68,7 +68,7 @@ export function ArtifactTree({
         columns={[
           {
             key: 'name',
-            header: text.artifactName,
+            header: text.name,
             priority: 'primary',
             className: 'artifact-tree-name',
             render: (row) =>

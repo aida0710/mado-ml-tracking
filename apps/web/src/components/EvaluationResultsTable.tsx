@@ -10,16 +10,14 @@ import { text } from '../i18n/catalog';
 import { automationText } from '../i18n/automation';
 import { deltaSignLabels, modelsTextTemplates } from '../i18n/models';
 
-const metricValueLabels = { get notFinite() { return text.metricNotFinite; } };
-
 function formatSummaryValue(value: MetricValueAt | null): string {
-  return value ? formatMetricValue(value.value, 'present', metricValueLabels) : '—';
+  return value ? formatMetricValue(value.value, 'present') : '—';
 }
 
 function formatRunMetric(run: AutomatedRunSummary, metric: string): string {
   const value: unknown = run.latestMetrics[metric];
   if (typeof value !== 'number') return '—';
-  return formatMetricValue(value, Number.isFinite(value) ? 'present' : 'not_finite', metricValueLabels);
+  return formatMetricValue(value, Number.isFinite(value) ? 'present' : 'not_finite');
 }
 
 // Automatic evaluations are the ones promotion policies judge, so the mark names the rule.

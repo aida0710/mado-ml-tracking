@@ -1,5 +1,4 @@
 import { formatEnglishCount } from '../formatEnglishCount';
-import type { OperationsAlertKind } from '@mmt/contracts';
 
 // The operations alert badge in the header and the plugin delivery status.
 export const operationsText = {
@@ -20,12 +19,6 @@ export const operationsText = {
   pluginOutboxStalled:
     'Delivery is backlogged (undelivered for 15 minutes or more, or failed at least five times). Check the integration, then press “Resend event” after recovery.',
 } as const;
-
-export const operationsAlertKindLabels: Record<OperationsAlertKind, string> = {
-  'job.heartbeat_stale': 'Job heartbeat lost',
-  'worker.offline': 'Worker stopped',
-  'plugin.delivery_stalled': 'Integration delivery backlog',
-};
 
 export const operationsTextTemplates = {
   operationsAlertCount: (count: number) => formatEnglishCount(count, 'operations alert'),

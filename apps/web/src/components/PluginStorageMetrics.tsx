@@ -13,6 +13,7 @@ import { Empty, ErrorNotice, Resource } from './Feedback';
 import { StorageMetricValue } from './StorageMetricValue';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
+import { formatList } from '../i18n/textJoining';
 
 type StorageMeasurementFields = Pick<
   StorageBucketMetrics,
@@ -141,7 +142,7 @@ export function PluginStorageMetrics({ pluginId }: { pluginId: string }) {
               <ErrorNotice
                 message={
                   parsed.invalidLineNumbers.length
-                    ? `${text.metricsParseErrors}: ${parsed.invalidLineNumbers.join(', ')}`
+                    ? `${text.metricsParseErrors}: ${formatList(parsed.invalidLineNumbers.map(String))}`
                     : null
                 }
               />

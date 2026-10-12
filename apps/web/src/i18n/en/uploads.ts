@@ -1,4 +1,5 @@
 import { formatEnglishCount } from '../formatEnglishCount';
+import { INTL_LOCALES } from '../locale';
 import type { UploadItemStatus } from '../../hooks/useArtifactUploadQueue';
 import type { ResumeBlocker } from '../../lib/uploadResumeBlocker';
 
@@ -79,7 +80,7 @@ export const uploadsTextTemplates = {
   uploadPathExists: (storedAt: string) =>
     `A file already exists at this path (stored ${storedAt}). Uploading creates a new version, and the current one stays under “Previous versions” in “Details”.`,
   uploadPlannedPaths: (examples: string[], rest: number) =>
-    `Storage paths: ${examples.join(', ')}${rest > 0 ? ` and ${rest.toLocaleString('en-US')} more` : ''}`,
+    `Storage paths: ${examples.join(', ')}${rest > 0 ? ` and ${rest.toLocaleString(INTL_LOCALES.en)} more` : ''}`,
   uploadRetrying: (attempt: number, maxAttempts: number) =>
     `Connection lost. Retrying (attempt ${attempt} of ${maxAttempts})`,
   durationSeconds: (seconds: number) => `${seconds}s`,

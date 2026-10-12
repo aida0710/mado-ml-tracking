@@ -11,6 +11,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { runtimeLabels } from '../i18n/runtime';
 import { workerCoverageText } from '../i18n/workerCoverage';
+import { formatList } from '../i18n/textJoining';
 
 /**
  * The computers one may run Jobs on, for the Project's Compute page: read only, since adding and
@@ -65,7 +66,7 @@ export function ComputeTargetsTable({
           key: 'runtime',
           priority: 'secondary',
           header: text.runtimeKinds,
-          render: (target) => target.runtimeKinds.map((kind) => runtimeLabels[kind]).join(', '),
+          render: (target) => formatList(target.runtimeKinds.map((kind) => runtimeLabels[kind])),
         },
         {
           key: 'gpu',
@@ -84,7 +85,7 @@ export function ComputeTargetsTable({
         {
           key: 'state',
           priority: 'primary',
-          header: text.computerState,
+          header: text.status,
           render: (target) => <ComputeTargetState enabled={target.enabled} />,
         },
         {

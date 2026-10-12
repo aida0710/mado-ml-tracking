@@ -15,6 +15,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 import { runtimeLabels } from '../i18n/runtime';
 import { workerCoverageText } from '../i18n/workerCoverage';
+import { formatList } from '../i18n/textJoining';
 
 /**
  * A computer's details below 全体設定 → コンピュータ, for those who may use or manage it: a site's
@@ -71,7 +72,7 @@ export function ComputerDetails({
             [text.computerId, <CopyableValue value={target.id} />],
             [text.computerKind, <ComputeTargetKind target={target} />],
             [text.computerLocation, <span className="mono">{formatTargetLocation(target)}</span>],
-            [text.runtimeKinds, target.runtimeKinds.map((kind) => runtimeLabels[kind]).join(', ')],
+            [text.runtimeKinds, formatList(target.runtimeKinds.map((kind) => runtimeLabels[kind]))],
             [text.gpuIds, formatTargetGpus(target)],
             [text.maxConcurrentJobs, String(target.maxConcurrentJobs)],
             ...workerEntry,

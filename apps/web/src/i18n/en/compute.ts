@@ -54,7 +54,6 @@ export const computeText = {
   targetCheckFreeSpace: 'Free space in working directory',
   detectedGpus: 'Detected GPUs',
   gpuIndex: 'Index',
-  gpuName: 'Name',
   gpuMemory: 'Memory',
   gpuUuid: 'UUID',
   noDetectedGpus: 'nvidia-smi reported no GPUs',

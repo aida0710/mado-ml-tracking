@@ -1,4 +1,6 @@
 import { DEFAULT_BASELINE_ALIAS, type MetricValueStatus } from '@mmt/contracts';
+import { memoizePerIntlLocale } from '../i18n/intlFormatterCache';
+import { evaluationText } from '../i18n/evaluation';
 
 // Prefers production, then the first alias by name. null lets the API apply its own default.
 export function defaultBaselineAlias(aliases: Record<string, string>): string | null {
@@ -9,32 +11,38 @@ export function defaultBaselineAlias(aliases: Record<string, string>): string | 
 const SIGNIFICANT_DIGITS = 6;
 const RELATIVE_FRACTION_DIGITS = 2;
 
-export function formatMetricValue(
-  value: number | null,
-  status: MetricValueStatus,
-  labels: { notFinite: string },
-): string {
-  if (status === 'not_finite') return labels.notFinite;
+const getMetricValueFormat = memoizePerIntlLocale(
+  (intlLocale) => new Intl.NumberFormat(intlLocale, { maximumSignificantDigits: SIGNIFICANT_DIGITS }),
+);
+// Differences always show their sign so that a decrease is not mistaken for a value.
+const getDeltaFormat = memoizePerIntlLocale(
+  (intlLocale) =>
+    new Intl.NumberFormat(intlLocale, {
+      maximumSignificantDigits: SIGNIFICANT_DIGITS,
+      signDisplay: 'exceptZero',
+    }),
+);
+const getRelativeDeltaFormat = memoizePerIntlLocale(
+  (intlLocale) =>
+    new Intl.NumberFormat(intlLocale, {
+      style: 'percent',
+      maximumFractionDigits: RELATIVE_FRACTION_DIGITS,
+      signDisplay: 'exceptZero',
+    }),
+);
+
+export function formatMetricValue(value: number | null, status: MetricValueStatus): string {
+  if (status === 'not_finite') return evaluationText.metricNotFinite;
   if (value === null) return '—';
-  return new Intl.NumberFormat('en-US', { maximumSignificantDigits: SIGNIFICANT_DIGITS }).format(
-    value,
-  );
+  return getMetricValueFormat().format(value);
 }
 
-// Differences always show their sign so that a decrease is not mistaken for a value.
 export function formatDelta(delta: number | null): string {
   if (delta === null) return '—';
-  return new Intl.NumberFormat('en-US', {
-    maximumSignificantDigits: SIGNIFICANT_DIGITS,
-    signDisplay: 'exceptZero',
-  }).format(delta);
+  return getDeltaFormat().format(delta);
 }
 
 export function formatRelativeDelta(relativeDelta: number | null): string {
   if (relativeDelta === null) return '—';
-  return new Intl.NumberFormat('en-US', {
-    style: 'percent',
-    maximumFractionDigits: RELATIVE_FRACTION_DIGITS,
-    signDisplay: 'exceptZero',
-  }).format(relativeDelta);
+  return getRelativeDeltaFormat().format(relativeDelta);
 }

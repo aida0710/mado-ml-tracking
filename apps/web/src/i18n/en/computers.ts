@@ -10,7 +10,6 @@ export const computersText = {
   computerKind: 'Type',
   computerOwner: 'Owner',
   computerVisibility: 'Visibility',
-  computerState: 'Status',
   computerUsable: 'Available to me',
   computerUsableYes: 'Available',
   computerUsableNo: 'Unavailable',

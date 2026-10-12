@@ -4,7 +4,6 @@ export const launchersText = {
     'Launchers connect to automatic submission computers over SSH and submit jobs. Issue one token per launcher and store it in token_file on the launcher host. The launcher reads computer, key, and job shell settings from the web application.',
   newLauncher: 'Register launcher',
   noLaunchers: 'No launchers registered yet.',
-  launcherStatus: 'Status',
   launcherActive: 'Enabled',
   launcherRevoked: 'Revoked',
   launcherLastSeen: 'Last response',

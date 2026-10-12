@@ -4,7 +4,6 @@ export const storageText = {
   storageBackendKind: 'Type',
   storageLocation: 'Storage locations',
   storageSignature: 'Signature',
-  storageState: 'Status',
   storageSource: 'Defined by',
   storageSourceEnvironment: 'Environment variables',
   storageSourceDatabase: 'Web UI',

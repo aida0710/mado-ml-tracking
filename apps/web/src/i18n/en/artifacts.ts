@@ -1,4 +1,5 @@
 import { formatEnglishCount } from '../formatEnglishCount';
+import { INTL_LOCALES } from '../locale';
 import type { EvaluationSampleErrorReason, ArtifactReferenceError } from '../../lib/evaluationSamples';
 
 export const artifactsText = {
@@ -43,7 +44,6 @@ export const artifactsText = {
   artifactRoot: 'Root',
   artifactUnnamed: '(unnamed)',
   artifactDirectoryPath: 'Folder location',
-  artifactName: 'Name',
   artifactFileCount: 'File count',
   artifactLoadMore: 'Load more',
   artifactDirectoriesTruncated: 'There are many folders. Only some are shown.',
@@ -98,8 +98,8 @@ export const artifactsTextTemplates = {
   artifactDirectorySummary: (fileCount: number, size: string) =>
     `${formatEnglishCount(fileCount, 'file')} · ${size}`,
   audioChannelNumber: (channel: number) => `Channel ${channel}`,
-  audioSampleRateValue: (hertz: number) => `${hertz.toLocaleString('en-US')} Hz`,
-  audioMaxFrequency: (hertz: number) => `${(hertz / 1000).toLocaleString('en-US', { maximumFractionDigits: 1 })} kHz`,
+  audioSampleRateValue: (hertz: number) => `${hertz.toLocaleString(INTL_LOCALES.en)} Hz`,
+  audioMaxFrequency: (hertz: number) => `${(hertz / 1000).toLocaleString(INTL_LOCALES.en, { maximumFractionDigits: 1 })} kHz`,
   evaluationSampleCount: (count: number) => formatEnglishCount(count, 'sample'),
   evaluationBrokenRowCount: (count: number) => formatEnglishCount(count, 'unreadable row'),
   evaluationLine: (line: number) => `Row ${line}`,

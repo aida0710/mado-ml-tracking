@@ -9,7 +9,6 @@ export const serviceAccountsText = {
   serviceAccountsEmpty: 'No service accounts yet',
   newServiceAccount: 'Create service account',
   editServiceAccount: 'Edit service account',
-  serviceAccountStatus: 'Status',
   serviceAccountActive: 'Enabled',
   serviceAccountDisabled: 'Disabled',
   serviceAccountRoleMissing: 'No role',

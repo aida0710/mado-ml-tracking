@@ -94,7 +94,7 @@ export function ReportsPage() {
               ? [
                   {
                     key: 'state',
-                    header: text.reportState,
+                    header: text.status,
                     priority: 'secondary' as const,
                     render: (report: Report) => (report.archivedAt ? text.reportArchived : text.reportActive),
                   },

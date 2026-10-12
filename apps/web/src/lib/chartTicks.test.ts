@@ -20,7 +20,7 @@ describe('図の値の軸の目盛り', () => {
     expect(formatChartTick(24503275520, 'bytes')).toBe('22.8\u00a0GiB');
     expect(formatChartTick(0, 'bytes')).toBe('0\u00a0B');
     expect(formatChartTick(1536, 'bytes_per_second')).toBe('1.5\u00a0KiB/s');
-    // 改行しない空白なので、目盛りが数字と単位の2行に折れない。
+    // A no-break space, so a tick never wraps into a number line and a unit line.
     expect(formatChartTick(1199571, 'bytes_per_second')).toBe('1.14\u00a0MiB/s');
     expect(formatChartTick(0.5, 'number')).toBe('0.5');
   });

@@ -1,4 +1,5 @@
 import { formatEnglishCount } from '../formatEnglishCount';
+import { INTL_LOCALES } from '../locale';
 
 export const artifactPreviewsText = {
   audioServerPreviewPending: 'This file exceeds 64MiB. The server is generating its waveform and spectrogram. Playback is available.',
@@ -23,9 +24,9 @@ export const artifactPreviewsTextTemplates = {
   tabularTableSize: (rowCount: number, columnCount: number) =>
     `${formatEnglishCount(rowCount, 'row')} · ${formatEnglishCount(columnCount, 'column')}`,
   tabularTableTruncated: (shownRowCount: number, rowCount: number) =>
-    `Showing the first ${shownRowCount.toLocaleString('en-US')} of ${formatEnglishCount(rowCount, 'row')}. Sorting applies to all rows.`,
+    `Showing the first ${shownRowCount.toLocaleString(INTL_LOCALES.en)} of ${formatEnglishCount(rowCount, 'row')}. Sorting applies to all rows.`,
   tabularSortBy: (column: string) => `Sort by ${column}`,
   imageSize: (width: number, height: number) =>
-    `${width.toLocaleString('en-US')} × ${height.toLocaleString('en-US')} px`,
+    `${width.toLocaleString(INTL_LOCALES.en)} × ${height.toLocaleString(INTL_LOCALES.en)} px`,
   audioVisibleRange: (start: string, end: string) => `Visible range ${start}–${end}`,
 };

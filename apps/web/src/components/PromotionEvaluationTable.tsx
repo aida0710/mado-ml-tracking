@@ -78,9 +78,7 @@ function CriterionOutcome({ result }: { result: PromotionCriterionResult }) {
 function formatComparedValue(result: PromotionCriterionResult): string {
   if (result.mode === 'relative_delta') return formatRelativeDelta(result.observed);
   if (result.mode === 'delta') return formatDelta(result.observed);
-  return formatMetricValue(result.observed, result.candidateStatus, {
-    notFinite: text.metricNotFinite,
-  });
+  return formatMetricValue(result.observed, result.candidateStatus);
 }
 
 export function CriterionResults({ results }: { results: PromotionCriterionResult[] }) {
@@ -97,14 +95,10 @@ export function CriterionResults({ results }: { results: PromotionCriterionResul
             <span className="muted">
               {' '}
               ({text.metricCandidate}{' '}
-              {formatMetricValue(result.candidate, result.candidateStatus, {
-                notFinite: text.metricNotFinite,
-              })}
+              {formatMetricValue(result.candidate, result.candidateStatus)}
               {' / '}
               {text.metricBaseline}{' '}
-              {formatMetricValue(result.baseline, result.baselineStatus, {
-                notFinite: text.metricNotFinite,
-              })}
+              {formatMetricValue(result.baseline, result.baselineStatus)}
               )
             </span>
           )}

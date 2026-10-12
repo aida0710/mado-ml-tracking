@@ -10,7 +10,6 @@ export const reportsText = {
   reportUpdatedBy: 'Updated by',
   reportUpdatedAt: 'Updated at',
   reportRevision: 'Version',
-  reportState: 'Status',
   reportArchived: 'Archived',
   reportActive: 'Published',
   reportShowArchived: 'Include archived reports',

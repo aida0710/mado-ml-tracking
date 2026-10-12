@@ -1,5 +1,5 @@
 import type { ChartXAxis } from '@mmt/contracts';
-import { formatCompactNumber, formatNumber } from './format';
+import { formatCompactNumber, formatDateTimeSeconds, formatNumber } from './format';
 
 const SECONDS_PER_MINUTE = 60;
 const SECONDS_PER_HOUR = 3600;
@@ -15,15 +15,15 @@ export function formatXTick(xAxis: ChartXAxis, value: number): string {
     return Math.abs(step) < FULL_STEP_TICK_LIMIT ? String(step) : formatCompactNumber(step);
   }
   if (xAxis.kind === 'relative_time') return formatElapsedSeconds(value);
-  if (xAxis.kind === 'wall_time') return formatWallTime(value, false);
+  if (xAxis.kind === 'wall_time') return formatWallTimeTick(value);
   return formatNumber(value);
 }
 
-/** Text for an x value in the tooltip, more precise than a tick. */
+/** Text for an x value in the tooltip, more precise than a tick; a time reads as the tables write it. */
 export function formatXValue(xAxis: ChartXAxis, value: number): string {
   if (xAxis.kind === 'step') return String(Math.round(value));
   if (xAxis.kind === 'relative_time') return formatElapsedSeconds(value);
-  if (xAxis.kind === 'wall_time') return formatWallTime(value, true);
+  if (xAxis.kind === 'wall_time') return formatDateTimeSeconds(value);
   return formatNumber(value);
 }
 
@@ -46,14 +46,11 @@ export function formatElapsedSeconds(value: number): string {
   return `${sign}${large}${largeSuffix}${padTwoDigits(small)}${smallSuffix}`;
 }
 
-/** Epoch milliseconds in local time: `10/08 13:45` on ticks, `2026/10/08 13:45:07` in the tooltip. */
-export function formatWallTime(epochMilliseconds: number, withSeconds: boolean): string {
+/** Epoch milliseconds in local time as a tick, short enough for the axis: `10/08 13:45`. */
+export function formatWallTimeTick(epochMilliseconds: number): string {
   const date = new Date(epochMilliseconds);
   const monthDay = `${padTwoDigits(date.getMonth() + 1)}/${padTwoDigits(date.getDate())}`;
-  const hourMinute = `${padTwoDigits(date.getHours())}:${padTwoDigits(date.getMinutes())}`;
-  return withSeconds
-    ? `${date.getFullYear()}/${monthDay} ${hourMinute}:${padTwoDigits(date.getSeconds())}`
-    : `${monthDay} ${hourMinute}`;
+  return `${monthDay} ${padTwoDigits(date.getHours())}:${padTwoDigits(date.getMinutes())}`;
 }
 
 const padTwoDigits = (part: number) => String(part).padStart(2, '0');

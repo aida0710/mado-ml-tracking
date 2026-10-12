@@ -83,7 +83,6 @@ export const sweepsText = {
   sweepBestSoFar: 'Best so far',
   sweepTrialObjective: 'Trial objective value',
   sweepTrialIndex: 'Trial',
-  sweepTrialState: 'Status',
   sweepObjectiveValue: 'Objective value',
   sweepTrialRun: 'Run',
   sweepTrialJob: 'Job',

@@ -78,7 +78,7 @@ export function ComputerOverviewTable({
         {
           key: 'state',
           priority: 'secondary',
-          header: text.computerState,
+          header: text.status,
           render: (target) => (
             <ComputeTargetState
               enabled={target.enabled}
