@@ -14,7 +14,9 @@ export async function countDatasetVersionReferences(
       ((SELECT count(*)::int FROM runs WHERE project_id=$1 AND $2::uuid=ANY(input_dataset_version_ids))
         + (SELECT count(*)::int FROM training_data_stages WHERE project_id=$1 AND $2::uuid=ANY(input_dataset_version_ids))) AS run_input,
       (SELECT count(*)::int FROM runs WHERE project_id=$1 AND $2::uuid=ANY(output_dataset_version_ids)) AS run_output,
-      (SELECT count(*)::int FROM dataset_versions WHERE project_id=$1 AND $2::uuid=ANY(parent_dataset_version_ids)) AS child_version,
+      ((SELECT count(*)::int FROM dataset_versions WHERE project_id=$1 AND $2::uuid=ANY(parent_dataset_version_ids))
+        + (SELECT count(*)::int FROM dataset_version_parent_additions WHERE project_id=$1 AND parent_dataset_version_id=$2)) AS child_version,
+      (SELECT count(*)::int FROM dataset_version_parent_additions WHERE project_id=$1 AND dataset_version_id=$2) AS parent_addition,
       (SELECT count(*)::int FROM experiment_tasks WHERE project_id=$1 AND $2::uuid=ANY(input_dataset_version_ids)) AS task,
       (SELECT count(*)::int FROM model_automation_rules WHERE project_id=$1 AND $2::uuid=ANY(input_dataset_version_ids)) AS automation_rule,
       (SELECT count(*)::int FROM hooks WHERE project_id=$1 AND template->'inputDatasetVersionIds' ? $2::text) AS hook,

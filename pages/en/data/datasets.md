@@ -196,3 +196,24 @@ Artifacts referenced by a version cannot be deleted while the version exists.
 - [Artifacts](/en/data/artifacts)
 - [Automation](/en/models/automation)
 - [Compute targets](/en/compute/targets)
+
+## Add sources to an existing version {#add-existing-parents}
+
+Use this when verified processing records reveal a missing parent. The existing version ID, location, hash and references from training runs are preserved.
+
+1. Open the version in Datasets and choose **Add parent versions**.
+2. Select the verified parent versions and enter a reason and comparison evidence as JSON.
+3. After saving, inspect **Parents** and **Parent addition history**. The sources also appear in Lineage and the model's training lineage.
+
+Evidence can include saved configurations, references, SHA-256 hashes and counts. Leave unknown producer details and times unknown. Changes to datasets actually used during training belong in the run's **Training data history**.
+
+Parents must be in the same project and cannot create a cycle. Resending a parent preserves its original reason, evidence, author and timestamp. Added parents and versions with correction history are protected from deletion. Project editors need `registry:write` when using an API token.
+
+```python
+client.add_dataset_version_parents(
+    project_id, dataset_id, feature_version_id,
+    parent_dataset_version_ids=[processed_audio_version_id],
+    reason="A saved processing configuration confirmed the missing parent",
+    evidence={"recipe": "reference-to-saved-config", "archive_count": 32},
+)
+```

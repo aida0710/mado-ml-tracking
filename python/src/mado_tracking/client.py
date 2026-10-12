@@ -25,6 +25,7 @@ from .api_paths import path_id
 from .artifact_downloads import download_resumable_sync
 from .code_version import build_code_version_payload
 from .dataset_upload import upload_dataset_directory
+from .dataset_version_parents import add_dataset_version_parents, dataset_version_parents
 from .errors import ApiError, ConfigurationError
 from .execution_runtime import ExecutionRuntime
 from .execution_snapshot import ExecutionMode, validate_execution_mode
@@ -453,6 +454,8 @@ class Client(ExperimentTasksClient):
         )
 
     associate_model_training_source = associate_model_training_source
+    add_dataset_version_parents = add_dataset_version_parents
+    dataset_version_parents = dataset_version_parents
 
     def register_model(
         self,
