@@ -54,6 +54,14 @@ async function choose(container, label, option) {
   await container.getByRole('combobox', { name: label, exact: true }).click();
   await container.getByRole('option', { name: option, exact: true }).click();
 }
+/** Starts the shown version: the button opens a confirmation, and its 実行する sends the start. */
+async function startWorkflow() {
+  await page.getByRole('button', { name: 'ワークフローを実行', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'ワークフローを実行' })
+    .getByRole('button', { name: '実行する', exact: true })
+    .click();
+}
 async function mutationResponse(resource, method, click) {
   const responsePromise = page.waitForResponse(
     (response) => response.url().endsWith(resource) && response.request().method() === method,
@@ -88,10 +96,10 @@ try {
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('名前', { exact: true }).fill('画面から作った前処理と学習');
   let step = dialog.locator('.workflow-step-editor').first();
-  await choose(step, 'Task', '音声の前処理 · データ処理 · v1');
+  await choose(step, 'Task', '音声の前処理・データ処理・v1');
   await dialog.getByRole('button', { name: 'ステップを追加', exact: true }).click();
   step = dialog.locator('.workflow-step-editor').nth(1);
-  await choose(step, 'Task', '音声の学習 · 学習 · v1');
+  await choose(step, 'Task', '音声の学習・学習・v1');
   await step.getByRole('button', { name: '入力を追加', exact: true }).click();
   const input = step.locator('.workflow-input');
   await choose(input, '入力元', '前のステップの出力');
@@ -106,7 +114,7 @@ try {
   );
   await page.waitForURL(`**/workflows/${created.workflow.id}`);
   const launched = await mutationResponse(`/workflows/${created.workflow.id}/launch`, 'POST', () =>
-    page.getByRole('button', { name: 'ワークフローを実行', exact: true }).click(),
+    startWorkflow(),
   );
   await waitForExecution(launched.id, 'finished');
 
@@ -125,7 +133,7 @@ try {
     .getByText('v2', { exact: true })
     .waitFor();
   const stopped = await mutationResponse(`/workflows/${created.workflow.id}/launch`, 'POST', () =>
-    page.getByRole('button', { name: 'ワークフローを実行', exact: true }).click(),
+    startWorkflow(),
   );
   const failed = await waitForExecution(stopped.id, 'failed');
   assert.equal(failed.steps[1].jobId, null);

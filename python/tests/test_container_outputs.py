@@ -10,6 +10,7 @@ from pathlib import Path
 import httpx
 import pytest
 
+from mado_tracking.worker import container_outputs
 from mado_tracking.worker.container_outputs import (
     parse_output_index,
     read_output_chunk,
@@ -199,6 +200,10 @@ DATASET_ID = "8d4c4b2e-7f3a-4c55-9d61-0f5f8f0f3a11"
         {"models": [{"path": "model/missing.bin"}]},
         {"models": [{"path": "result.json"}]},
         {"datasets": [{"datasetId": DATASET_ID, "path": "data/other.jsonl", "digest": "d"}]},
+        {"datasets": [{"datasetId": DATASET_ID, "path": "data/te", "digest": "d"}]},
+        {"datasets": [{"datasetId": DATASET_ID, "path": "data/", "digest": "d"}]},
+        {"datasets": [{"datasetId": DATASET_ID, "path": "../outputs/data", "digest": "d"}]},
+        {"models": [{"path": "model"}]},
         {"models": [{"path": "model/weights.bin"}] * 17},
         {"datasets": [{"datasetId": DATASET_ID, "uri": "s3://b/x", "digest": "d"}] * 65},
         {
@@ -214,6 +219,10 @@ DATASET_ID = "8d4c4b2e-7f3a-4c55-9d61-0f5f8f0f3a11"
         "undeclared-model-path",
         "result-json-as-model",
         "undeclared-dataset-path",
+        "dataset-directory-cut-inside-a-file-name",
+        "dataset-directory-with-trailing-slash",
+        "dataset-directory-outside-outputs",
+        "model-directory",
         "too-many-models",
         "too-many-datasets",
         "uri-and-path",
@@ -225,6 +234,37 @@ DATASET_ID = "8d4c4b2e-7f3a-4c55-9d61-0f5f8f0f3a11"
 def test_invalid_version_two_declarations_fail_before_any_output_is_saved(tmp_path, fields):
     outputs = version_two_outputs(tmp_path, **fields)
     with pytest.raises(ValueError):
+        validate_results(outputs)
+    assert not (tmp_path / "output-index.jsonl").exists()
+
+
+def test_a_dataset_declared_by_a_directory_takes_every_listed_file_under_it(tmp_path):
+    outputs = tmp_path / "outputs"
+    outputs.mkdir()
+    artifacts = [
+        write_file(outputs, "prepared/a.wav", b"a"),
+        write_file(outputs, "prepared/speaker-2/b.wav", b"b"),
+        write_file(outputs, "prepared-report.json", b"{}"),
+    ]
+    declaration = {"datasetId": DATASET_ID, "path": "prepared", "digest": "d"}
+    result = {"version": 2, "complete": True, "artifacts": artifacts, "datasets": [declaration]}
+    (outputs / "result.json").write_text(json.dumps(result))
+    results = validate_results(outputs)
+    assert results["artifactCount"] == 3
+    assert results["declarations"] == [{"index": 0, "kind": "dataset", **declaration}]
+
+
+def test_a_dataset_directory_with_more_files_than_one_version_holds_fails_before_any_output_is_saved(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(container_outputs, "MAX_DATASET_VERSION_FILES", 1)
+    outputs = tmp_path / "outputs"
+    outputs.mkdir()
+    artifacts = [write_file(outputs, f"prepared/{number}.wav", b"a") for number in range(2)]
+    declaration = {"datasetId": DATASET_ID, "path": "prepared", "digest": "d"}
+    result = {"version": 2, "complete": True, "artifacts": artifacts, "datasets": [declaration]}
+    (outputs / "result.json").write_text(json.dumps(result))
+    with pytest.raises(ValueError, match="at most 1 files"):
         validate_results(outputs)
     assert not (tmp_path / "output-index.jsonl").exists()
 

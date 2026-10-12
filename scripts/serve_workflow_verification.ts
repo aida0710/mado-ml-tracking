@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { serve } from '@hono/node-server';
 import type { Artifact, Dataset, DatasetVersion, WorkflowStepInput } from '@mmt/contracts';
@@ -164,19 +164,26 @@ const worker = spawn(
   { stdio: ['ignore', 'inherit', 'inherit'] },
 );
 console.log(`Workflow verification API listening on 127.0.0.1:${API_PORT}`);
+/** A worker killed by a signal has no exit code, only a signal code; either means it has ended. */
+function workerEnded(): Promise<void> {
+  if (worker.exitCode !== null || worker.signalCode !== null) return Promise.resolve();
+  return new Promise((resolve) => worker.once('exit', () => resolve()));
+}
 let closing = false;
 async function shutdown() {
   if (closing) return;
   closing = true;
-  worker.kill('SIGTERM');
-  await new Promise<void>((resolve) =>
-    worker.exitCode !== null ? resolve() : worker.once('exit', () => resolve()),
-  );
-  await new Promise<void>((resolve) => server.close(() => resolve()));
-  await harness.workflowScheduler.stop();
-  await harness.artifactUploadFinalizer.stop();
-  await harness.close();
-  await unlink(workerSettingsPath);
+  try {
+    worker.kill('SIGTERM');
+    await workerEnded();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    await harness.workflowScheduler.stop();
+    await harness.artifactUploadFinalizer.stop();
+    await harness.close();
+  } finally {
+    // The worker's token must not outlive the verification, even when a step above fails.
+    await rm(workerSettingsPath, { force: true });
+  }
 }
 process.once('SIGINT', () => void shutdown());
 process.once('SIGTERM', () => void shutdown());

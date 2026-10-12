@@ -6,7 +6,6 @@ import json
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any
 
-from .api_paths import path_id
 from .errors import ConfigurationError
 
 if TYPE_CHECKING:
@@ -33,6 +32,11 @@ def log_preprocessing_report(
     Output count may exceed input count when records are segmented. Identical resends retain the
     report revision. This method requires an online Run; offline logging has no report transport.
     """
+    if run.offline_directory is not None:
+        raise ConfigurationError(
+            "A preprocessing report needs the API; this Run is recording offline and `mado-tracking "
+            "sync` does not send reports"
+        )
     body = {
         "inputCount": input_count,
         "outputCount": output_count,
@@ -50,9 +54,4 @@ def log_preprocessing_report(
         json.dumps(body, allow_nan=False)
     except (ValueError, TypeError) as error:
         raise ConfigurationError("Preprocessing reports require finite JSON values") from error
-    return run.client.request(
-        "PUT",
-        run.client.project_path(run.project_id, f"runs/{path_id(run.id)}/preprocessing-report"),
-        retryable=True,
-        json=body,
-    )
+    return run.client.request("PUT", f"{run.api_path}/preprocessing-report", retryable=True, json=body)

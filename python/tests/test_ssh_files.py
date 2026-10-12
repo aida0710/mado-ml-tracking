@@ -1,19 +1,18 @@
-"""SSH key and known_hosts candidates in workerInfo: what is offered, and APIs that refuse them."""
+"""SSH key and known_hosts candidates in workerInfo: what is offered and how it reaches the API.
+
+APIs that refuse workerInfo fields are in test_worker_info.py.
+"""
 
 from __future__ import annotations
 
-import asyncio
 import builtins
 import json
-import logging
 from pathlib import Path
 from typing import Any
 
-import httpx
 import pytest
+from test_worker_info import PresenceServer, run_presence
 
-from mado_tracking.errors import ApiError
-from mado_tracking.worker.api import WorkerApi
 from mado_tracking.worker.ssh_files import (
     MAX_WORKER_SSH_FILE_PATHS,
     SSH_DIRECTORY_VARIABLE,
@@ -22,7 +21,6 @@ from mado_tracking.worker.ssh_files import (
 )
 from mado_tracking.worker.worker_info import SSH_FILE_SCAN_INTERVAL_SECONDS, WorkerInfo
 
-API_TOKEN = "test-api-secret"
 # What the ssh_directory fixture offers as keys: by name (id_*, *.pem) or by owner-only mode.
 EXPECTED_KEY_NAMES = ("gpu.pem", "id_ed25519", "id_linked", "lab-cluster")
 
@@ -127,43 +125,9 @@ def test_ssh_files_are_listed_again_once_the_scan_interval_has_passed(tmp_path: 
     assert info.payload()["sshFiles"]["keyPaths"] == [str(directory / "id_new"), str(directory / "id_old")]
 
 
-class PresenceServer:
-    """Answers claim and resume; an API from before computer setup refuses workerInfo.sshFiles."""
-
-    def __init__(self, *, refuses_ssh_files: bool):
-        self.refuses_ssh_files = refuses_ssh_files
-        self.requests: list[tuple[str, dict[str, Any]]] = []
-
-    def serve(self, request: httpx.Request) -> httpx.Response:
-        body = json.loads(request.content)
-        endpoint = request.url.path.rsplit("/", 1)[-1]
-        self.requests.append((endpoint, body))
-        if self.refuses_ssh_files and "sshFiles" in body.get("workerInfo", {}):
-            refusal = {"error": "Unrecognized key: sshFiles", "code": "invalid_request"}
-            return httpx.Response(422, json=refusal)
-        return httpx.Response(200, json={"item": None} if endpoint == "claim" else {"items": []})
-
-
-def run_presence(server: PresenceServer, ssh_directory: Path) -> None:
-    async def scenario() -> None:
-        api = WorkerApi(
-            url="http://localhost/api",
-            token=API_TOKEN,
-            transport=httpx.MockTransport(server.serve),
-            ssh_directories=[ssh_directory],
-        )
-        try:
-            await api.resume("presence-worker", [])
-            assert await api.claim("presence-worker", []) is None
-        finally:
-            await api.close()
-
-    asyncio.run(scenario())
-
-
 def test_claim_and_resume_report_the_ssh_file_paths_in_worker_info(ssh_directory: Path):
-    server = PresenceServer(refuses_ssh_files=False)
-    run_presence(server, ssh_directory)
+    server = PresenceServer()
+    run_presence(server, ssh_directories=[ssh_directory])
     expected = {
         "keyPaths": [str(ssh_directory / name) for name in EXPECTED_KEY_NAMES],
         "knownHostsPaths": [str(ssh_directory / "known_hosts"), str(ssh_directory / "known_hosts.lab")],
@@ -173,46 +137,3 @@ def test_claim_and_resume_report_the_ssh_file_paths_in_worker_info(ssh_directory
         ("claim", expected),
     ]
     assert "never read" not in json.dumps(server.requests)
-
-
-def test_api_refusing_ssh_files_gets_the_same_request_again_without_them_and_never_again(
-    ssh_directory: Path, caplog: pytest.LogCaptureFixture
-):
-    server = PresenceServer(refuses_ssh_files=True)
-    with caplog.at_level(logging.WARNING):
-        run_presence(server, ssh_directory)
-    assert [(endpoint, "sshFiles" in body["workerInfo"]) for endpoint, body in server.requests] == [
-        ("resume", True),
-        ("resume", False),
-        ("claim", False),
-    ]
-    # The request sent again is the same apart from sshFiles.
-    first, again = server.requests[0][1], server.requests[1][1]
-    assert {**first, "workerInfo": {}} == {**again, "workerInfo": {}}
-    assert len([record for record in caplog.records if "SSH files" in record.getMessage()]) == 1
-
-
-def test_a_422_for_another_reason_is_not_retried_once_ssh_files_are_dropped(ssh_directory: Path):
-    calls = []
-
-    def refuse_everything(request: httpx.Request) -> httpx.Response:
-        calls.append(json.loads(request.content))
-        return httpx.Response(422, json={"error": "targetIds: invalid", "code": "invalid_request"})
-
-    async def scenario() -> None:
-        api = WorkerApi(
-            url="http://localhost/api",
-            token=API_TOKEN,
-            transport=httpx.MockTransport(refuse_everything),
-            ssh_directories=[ssh_directory],
-        )
-        try:
-            for _ in range(2):
-                with pytest.raises(ApiError):
-                    await api.claim("presence-worker", [])
-        finally:
-            await api.close()
-
-    asyncio.run(scenario())
-    # The first claim is sent with and without sshFiles; the second only once.
-    assert ["sshFiles" in call["workerInfo"] for call in calls] == [True, False, False]

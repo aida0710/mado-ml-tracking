@@ -7,6 +7,10 @@ from pathlib import Path
 
 import mado_tracking
 
+# The output is split into shards under one directory, declared as one dataset version, the way
+# thousands of preprocessed audio files would be.
+SHARD_COUNT = 2
+
 context = json.loads(Path(os.environ["MMT_JOB_CONTEXT_FILE"]).read_text())
 usage = json.loads(Path(os.environ["MMT_DATASET_USAGE_FILE"]).read_text())["items"]
 assert usage[0]["role"] == "input"
@@ -19,8 +23,19 @@ retained = [
     if record["duration"] >= context["parameters"]["minimumDuration"]
 ]
 output = Path(os.environ["MMT_OUTPUTS_DIR"])
-prepared = output / "prepared.json"
-prepared.write_text(json.dumps(retained))
+(output / "prepared").mkdir()
+shards = []
+for index in range(SHARD_COUNT):
+    content = json.dumps(retained[index::SHARD_COUNT]).encode()
+    path = f"prepared/part-{index}.json"
+    (output / path).write_bytes(content)
+    shards.append(
+        {
+            "path": path,
+            "sha256": hashlib.sha256(content).hexdigest(),
+            "size": len(content),
+        }
+    )
 sample = output.parent / "preprocessing-sample.txt"
 sample.write_text(json.dumps(retained[0]))
 with mado_tracking.start_run() as run:
@@ -38,22 +53,19 @@ with mado_tracking.start_run() as run:
         metrics={"snr_mean": 21.5},
         sample_artifact_ids=[artifact["id"]],
     )
-content = prepared.read_bytes()
-digest = hashlib.sha256(content).hexdigest()
 (output / "result.json").write_text(
     json.dumps(
         {
             "version": 2,
             "complete": True,
-            "artifacts": [
-                {"path": "prepared.json", "sha256": digest, "size": len(content)}
-            ],
+            "artifacts": shards,
             "metrics": [],
             "datasets": [
                 {
                     "datasetId": context["parameters"]["outputDatasetId"],
-                    "path": "prepared.json",
-                    "digest": digest,
+                    "path": "prepared",
+                    # The server computes a path declaration's digest from the files.
+                    "digest": "server-computed",
                 }
             ],
         }
