@@ -1,8 +1,11 @@
 import type { WorkflowQualityGate } from '@mmt/contracts';
 import { ChoiceField } from '../ChoiceField';
+import { QUALITY_GATE_OPERATOR_SYMBOLS, RETAINED_INPUT_RATIO_METRIC } from '../../lib/workflowDraft';
 import { text } from '../../i18n/catalog';
 import { workflowsText as labels } from '../../i18n/workflows';
 import { useLocale } from '../../i18n/useLocale';
+
+const OPERATORS = Object.keys(QUALITY_GATE_OPERATOR_SYMBOLS) as WorkflowQualityGate['operator'][];
 
 export function WorkflowGateEditor({
   gate,
@@ -20,7 +23,7 @@ export function WorkflowGateEditor({
         <span>{labels.workflowMetric}</span>
         <input
           value={gate.metric}
-          placeholder="preprocessing.retained_input_ratio"
+          placeholder={RETAINED_INPUT_RATIO_METRIC}
           onChange={(event) => onChange({ ...gate, metric: event.target.value })}
           required
         />
@@ -28,14 +31,14 @@ export function WorkflowGateEditor({
       <ChoiceField
         label={labels.workflowOperator}
         value={gate.operator}
-        options={[
-          { value: 'gte', label: '≥' },
-          { value: 'lte', label: '≤' },
-          { value: 'eq', label: '=' },
-        ]}
+        placeholder={labels.workflowChoose}
+        options={OPERATORS.map((operator) => ({
+          value: operator,
+          label: QUALITY_GATE_OPERATOR_SYMBOLS[operator],
+        }))}
         onChange={(operator) => {
-          if (operator === 'gte' || operator === 'lte' || operator === 'eq')
-            onChange({ ...gate, operator });
+          const chosen = OPERATORS.find((candidate) => candidate === operator);
+          if (chosen) onChange({ ...gate, operator: chosen });
         }}
       />
       <label className="field">

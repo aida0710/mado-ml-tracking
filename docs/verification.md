@@ -276,7 +276,7 @@ MMT_CHROMIUM_PATH=/path/to/chromium \
 node scripts/verify_workflow_browser.mjs
 ```
 
-前処理で10件から8件を残し、その8件を学習して、出力モデルを評価する実ジョブを確認します。画面からの定義作成・実行、新しいバージョンの保存、品質条件による後続Jobの停止、390px幅の表示も確認します。結果と画面は`artifacts/workflows/<JSTの日付>/`へ保存します。
+前処理で10件から8件を残し、その8件を学習して、出力モデルを評価する実ジョブを確認します。前処理は2つのファイルをディレクトリで宣言し、1つのデータセットバージョンとして学習へ渡します。画面からの定義作成・実行、新しいバージョンの保存、品質条件による後続Jobの停止、390px幅の表示も確認します。結果と画面は`artifacts/workflows/<JSTの日付>/`へ保存します。
 
 終了時はAPIをCtrl+Cで停止します。workerとテスト用schemaを終了・削除し、検証用tokenを保存した`var/workflow-verification/worker-settings.json`も消します。このファイルの内容は記録へ転記しません。
 

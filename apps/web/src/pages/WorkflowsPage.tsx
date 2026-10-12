@@ -9,7 +9,7 @@ import { Resource } from '../components/Feedback';
 import { ResponsiveTable } from '../components/ResponsiveTable';
 import { WorkflowDialog } from '../dialogs/WorkflowDialog';
 import { text } from '../i18n/catalog';
-import { workflowsText as labels } from '../i18n/workflows';
+import { workflowsText as labels, workflowsTextTemplates } from '../i18n/workflows';
 import { useLocale } from '../i18n/useLocale';
 
 export function WorkflowsPage() {
@@ -55,7 +55,7 @@ export function WorkflowsPage() {
                 key: 'version',
                 header: labels.workflowVersion,
                 priority: 'primary',
-                render: (workflow) => `v${workflow.latestRevision}`,
+                render: (workflow) => workflowsTextTemplates.workflowVersionLabel(workflow.latestRevision),
               },
               {
                 key: 'description',

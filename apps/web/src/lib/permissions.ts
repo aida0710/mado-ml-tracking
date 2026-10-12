@@ -83,6 +83,18 @@ export function canControlJob(role: ProjectRole, userId: string, job: { createdB
 }
 
 /**
+ * Stopping a workflow execution, or resuming it in a new one (workflowExecutionService; other
+ * editors get 403 workflow_control_forbidden).
+ */
+export function canControlWorkflowExecution(
+  role: ProjectRole,
+  userId: string,
+  execution: { createdBy: string },
+): boolean {
+  return controlsStartedWork(role, userId, execution);
+}
+
+/**
  * Hooks: every researcher (editor) may create one, switch one on or off and start a 'manual' one
  * (hookService checks the editor role with jobs:write); a hook runs with its owner's authority.
  */

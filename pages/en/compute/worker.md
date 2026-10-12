@@ -139,6 +139,8 @@ To install a version from an internal package index, use `--version 0.2.0` inste
 
 Reporting SSH key candidates and reading target directories came with a new version of the worker. Older workers are not offered in **接続に使うworker** under **コンピュータを追加**, so upgrade them. Until then they still process Jobs and pick up connection checks of the targets in `--target-ids`.
 
+Jobs of [workflow](/en/compute/workflows) steps go only to workers that pass dataset roles and selection conditions to the code. On a computer with only older workers, workflow Jobs stay queued, so upgrade them.
+
 ### Replace the token
 
 Before the token expires, issue a new one, save it to a file, and run `install` again.
@@ -228,6 +230,8 @@ The worker passes these variables to the code. In containers, the paths are path
 | `MMT_INPUT_DATASET_DIRS` | JSON mapping each input dataset version to its downloaded directory |
 | `MMT_DATASET_VERSIONS_FILE` | Information about input dataset versions |
 | `MMT_UPSTREAM_RUN_ID`, `MMT_UPSTREAM_RUN_FILE` | The upstream Run, for [chained rules](/en/models/automation#chain-evaluation-after-inference) |
+| `MMT_DATASET_USAGE_FILE` | Role, weight and selection conditions of each input dataset (`{"items": [...]}`), for a [workflow](/en/compute/workflows) step |
+| `MMT_WORKFLOW_EXECUTION_ID` | The workflow execution's ID, for a workflow step |
 | `MMT_RESUME_CHECKPOINT_DIR` and others | The checkpoint to resume from ([Resume training](/en/models/checkpoints)) |
 | `/mmt/source` | An additional source (containers with a source, read-only) |
 | `/mmt/outputs`, `MMT_OUTPUTS_DIR` | Where to write output files |
@@ -249,7 +253,7 @@ A container without the SDK writes outputs to `/mmt/outputs` and finally writes 
 
 - `sha256` and `size` must match the files. Write `result.json` after all outputs are written.
 - Weights declared in `models` are registered as model versions. Only training and fine-tuning Runs can declare models, and the worker token needs `registry:write`.
-- `datasets` entries `{datasetId, path, digest}` register outputs as dataset versions, which is how inference outputs reach evaluation.
+- `datasets` entries `{datasetId, path, digest}` register outputs as dataset versions, which is how inference outputs reach evaluation. A directory `path` (such as `"prepared"`) registers every output file under it as one version, for example thousands of preprocessed audio files. Paths in that version are relative to the directory.
 - For thousands of output files, list them in a JSON Lines file with one `{"path","sha256","size"}` per line and point to it with `"artifactsManifest": "artifacts.jsonl"`.
 
 | Limit | Value |
@@ -258,6 +262,7 @@ A container without the SDK writes outputs to `/mmt/outputs` and finally writes 
 | `result.json` | 1 MiB |
 | Metrics | 1000 points |
 | `models`, `datasets` | 16, 64 |
+| Files under a `datasets` directory | 100000 |
 
 ## Disconnects and stopping
 

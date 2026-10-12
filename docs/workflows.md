@@ -27,16 +27,21 @@ ML Trackingの入出力の関係もデータリネージです。Data Catalogの
 
 重みと抽出条件は実行コードへの指示です。ワークフロー自体は抽出やサンプリングを行いません。コードは`MMT_DATASET_USAGE_FILE`にある`{ "items": [...] }`を読み、指定した用途と条件でデータを使います。Python・Docker・Apptainerで同じ情報を渡します。`MMT_JOB_CONTEXT_FILE`にはワークフローの実行ID、バージョンID、ステップのキーも入ります。
 
-前処理が`result.json`の`datasets.path`で出力したファイルは、ファイル一覧を持つデータセットバージョンになります。後続のworkerが同じファイルを取得し、`MMT_INPUT_DATASET_DIRS`から読めます。元のRunの入力バージョンも親バージョンとして残します。
+前処理が`result.json`の`datasets.path`で出力したファイルは、ファイル一覧を持つデータセットバージョンになります。`path`にディレクトリを書くと、その下の出力ファイルすべて（数千の音声など）が1つのバージョンになり、パスはそのディレクトリからの相対パスになります（[worker](worker.md)の「result.json version 2」）。後続のworkerが同じファイルを取得し、`MMT_INPUT_DATASET_DIRS`から読めます。元のRunの入力バージョンも親バージョンとして残します。
+
+各ステップのRunの親（workerが上流Runとして`MMT_UPSTREAM_RUN_ID`と`upstream-run.json`で渡すRun）は、そのステップが出力データセットを読む前のステップのうち、最も近いステップのRunです。データセットを読まずにモデルだけを受け取るステップでは、モデルを出したステップのRunが親です。固定のデータセットとモデルだけを使うステップには親がありません。たとえば「前処理→学習→評価」で、評価が前処理の出力と学習のモデルを使うと、評価の親は前処理のRunになります。
+
+ステップのJobは、用途と条件を実行コードへ渡せるworker（claimの`workerInfo.capabilities`に`workflowDatasetUsage`を含むもの）だけが受け取ります。古いworkerしかいないコンピュータでは、ワークフローのJobは待機したままになります。ワークフローを使うコンピュータのworkerは更新してください。ワークフローのステップのJobには`MMT_WORKFLOW_EXECUTION_ID`（実行のID）も渡します。
 
 ## 前処理レポート
 
-前処理コードから、終了前にレポートを保存します。
+前処理コードから、終了前にレポートを保存します。レポートを保存できるのは`processing`（データ処理）のRunだけです。ワークフローのステップ（データ処理のTaskのJob）の中では、`start_run()`はworkerが作ったprocessingのRunをそのまま返します。Jobの外で試すときは`kind="processing"`を指定してください。
 
 ```python
 import mado_tracking
 
-run = mado_tracking.start_run()
+# Jobの外では kind="processing" が要る（Jobの中ではworkerのRunの種類が使われる）
+run = mado_tracking.start_run(kind="processing")
 run.log_preprocessing_report(
     input_count=1000,
     output_count=940,
@@ -59,9 +64,9 @@ run.log_preprocessing_report(
 
 ## 停止と再開
 
-Jobの失敗、必要な出力の欠落、品質条件の不一致、実行した利用者の権限喪失が起きると、後続のステップを停止して理由を残します。停止操作では、実行中のJobが終了するまで「停止処理中」と表示します。
+Jobの失敗、必要な出力の欠落、品質条件の不一致、実行した利用者の権限喪失が起きると、後続のステップを停止して理由を残します。停止操作では、実行中のJobに停止を依頼し、Jobが終了するまで「停止要求済み」と表示します（状態は`canceling`）。
 
-失敗・停止した実行は、同じバージョンで新しい実行として再開できます。成功した先頭のステップはRunと出力をそのまま再利用し、最初の未完了ステップから再実行します。元の実行履歴は残ります。条件を変える場合は新しいバージョンを作り、最初から実行してください。ステップ単体のJob retryは使いません。
+失敗・停止した実行は、同じバージョンで新しい実行として再開できます。成功した先頭のステップはRunと出力をそのまま再利用し、最初の未完了ステップから再実行します。元の実行履歴は残ります。条件を変える場合は新しいバージョンを作り、最初から実行してください。ステップ単体のJob retryは使いません（`409 workflow_retry_required`）。停止と再開ができるのは、元の実行の作成者とProject adminだけです（ほかのeditorは`403 workflow_control_forbidden`）。Webでは、実行・再開・停止のどれも確認を挟みます。
 
 起動APIには`idempotencyKey`を指定します。同じ利用者が同じワークフローへ同じキーを再送すると、最初の実行を返します。バージョンや再開元を変えて同じキーを使うと409です。APIの再起動後も、保存したRunの状態から次のステップを進めます。
 
@@ -79,4 +84,4 @@ with Client() as client:
     status = client.get_workflow_execution(project_id, execution["id"])
 ```
 
-定義の作成・バージョン追加・実行履歴の取得・停止もClientから行えます。詳細は[API契約](api-contract.md)と生成した[OpenAPI](openapi.json)を参照してください。
+定義の作成・バージョン追加・バージョンの一覧・実行履歴の取得・停止もClientから行えます。`get_workflow`は新しいバージョンから20件だけを返すので、すべてのバージョンは`list_workflow_versions`でたどります。詳細は[API契約](api-contract.md)と生成した[OpenAPI](openapi.json)を参照してください。

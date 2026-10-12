@@ -1,0 +1,51 @@
+/* ChoiceField: a labelled listbox whose options can be longer than a native select shows. */
+.choice-field {
+  position: relative;
+  min-width: 0;
+}
+.choice-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: start;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  background: var(--surface);
+  color: inherit;
+}
+.choice-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.choice-trigger svg {
+  flex-shrink: 0;
+}
+.choice-options {
+  position: absolute;
+  top: 100%;
+  inset-inline: 0;
+  z-index: 20;
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem;
+  max-height: 18rem;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  box-shadow: var(--shadow-menu);
+}
+.choice-options li {
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.choice-options li.active,
+.choice-options li[aria-selected='true'] {
+  background: var(--surface-hover);
+}

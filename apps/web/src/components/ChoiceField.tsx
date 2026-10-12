@@ -1,24 +1,28 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useLocale } from '../i18n/useLocale';
-import { workflowsText } from '../i18n/workflows';
 
 export interface ChoiceOption {
   value: string;
   label: string;
 }
 
-/** A labelled, keyboard-accessible listbox that also fits long version names. */
+/**
+ * A labelled, keyboard-accessible listbox that also fits long version names. `placeholder` shows
+ * while the value is none of the options.
+ */
 export function ChoiceField({
   label,
   value,
   options,
+  placeholder,
   onChange,
   disabled = false,
 }: {
   label: string;
   value: string;
   options: ChoiceOption[];
+  placeholder: string;
   onChange: (value: string) => void;
   disabled?: boolean;
 }) {
@@ -66,6 +70,10 @@ export function ChoiceField({
         }}
         onKeyDown={(event) => {
           if (event.key === 'Escape') {
+            if (!open) return;
+            // Closes only the list: the dialog around it must not take the key as its own close.
+            event.preventDefault();
+            event.stopPropagation();
             setOpen(false);
             return;
           }
@@ -97,7 +105,7 @@ export function ChoiceField({
           }
         }}
       >
-        <span>{selected?.label ?? workflowsText.workflowChoose}</span>
+        <span>{selected?.label ?? placeholder}</span>
         <ChevronDown size={16} />
       </button>
       {open && (

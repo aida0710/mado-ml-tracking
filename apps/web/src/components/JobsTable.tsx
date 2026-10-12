@@ -243,6 +243,14 @@ export function JobsTable({
               >
                 {text.cancelJob}
               </button>
+            ) : job.workflowExecution ? (
+              // A workflow step is rerun by resuming its execution; the Job's own retry is refused.
+              <Link
+                className="button small"
+                to={`/projects/${projectId}/workflows/${job.workflowExecution.workflowId}?execution=${job.workflowExecution.executionId}`}
+              >
+                {text.workflowResumeFromJob}
+              </Link>
             ) : (
               <span className="job-row-actions">
                 <button className="button small" onClick={() => onAction(job.id, 'retry')}>

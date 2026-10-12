@@ -782,6 +782,9 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
               hasResumeCheckpoint: job.hasResumeCheckpoint ?? false,
               sweepTrial: job.sweepTrial ?? null,
               automationRule: job.automationRule ?? null,
+              // A test that needs a workflow step's Job sets these on the Job.
+              workflowExecution: job.workflowExecution ?? null,
+              requiredWorkerCapabilities: job.requiredWorkerCapabilities ?? [],
             };
           }),
         );

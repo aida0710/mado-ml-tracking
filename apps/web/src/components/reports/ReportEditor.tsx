@@ -27,8 +27,7 @@ import {
   snapshotsByBlockId,
 } from '../../lib/reportBlocks';
 import { text } from '../../i18n/catalog';
-
-const newBlockId = () => crypto.randomUUID();
+import { createRandomId } from '../../lib/randomId';
 
 /** An embed being configured before it is added, and where it goes in the list. */
 interface PendingEmbed {
@@ -90,9 +89,9 @@ export function ReportEditor({
     if (outcome.kind === 'saved') onSaved(outcome.document);
   }
 
-  const addMarkdownAt = (index: number) => setBlocks(insertBlock(blocks, createBlock('markdown', newBlockId()), index));
+  const addMarkdownAt = (index: number) => setBlocks(insertBlock(blocks, createBlock('markdown', createRandomId()), index));
   const configureEmbedAt = (index: number) =>
-    setNewEmbed({ block: createBlock('chart', newBlockId()) as ReportEmbedBlock, index });
+    setNewEmbed({ block: createBlock('chart', createRandomId()) as ReportEmbedBlock, index });
 
   function setRefreshRequested(blockId: string, isRequested: boolean) {
     const next = new Set(refreshIds);

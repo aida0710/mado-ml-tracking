@@ -2,8 +2,10 @@ import type { WorkflowVersion } from '@mmt/contracts';
 import { Link } from 'react-router-dom';
 import { DetailsList, JsonDetails } from '../JsonDetails';
 import { text } from '../../i18n/catalog';
-import { workflowsText as labels } from '../../i18n/workflows';
+import { workflowsText as labels, workflowsTextTemplates } from '../../i18n/workflows';
+import { joinLabels } from '../../i18n/textJoining';
 import { datasetRoleLabel } from '../../lib/workflowLabels';
+import { QUALITY_GATE_OPERATOR_SYMBOLS } from '../../lib/workflowDraft';
 import { useLocale } from '../../i18n/useLocale';
 
 export function WorkflowVersionDetails({ version }: { version: WorkflowVersion }) {
@@ -11,7 +13,10 @@ export function WorkflowVersionDetails({ version }: { version: WorkflowVersion }
   return (
     <details className="workflow-definition">
       <summary>
-        {labels.workflowSteps} · v{version.revision}
+        {joinLabels([
+          labels.workflowSteps,
+          workflowsTextTemplates.workflowVersionLabel(version.revision),
+        ])}
       </summary>
       <ol className="workflow-steps">
         {version.steps.map((step) => (
@@ -24,7 +29,10 @@ export function WorkflowVersionDetails({ version }: { version: WorkflowVersion }
                 [
                   labels.workflowTask,
                   <Link to={`/projects/${version.projectId}/tasks?id=${step.task.id}`}>
-                    {step.task.name} · v{step.task.revision}
+                    {joinLabels([
+                      step.task.name,
+                      workflowsTextTemplates.workflowVersionLabel(step.task.revision),
+                    ])}
                   </Link>,
                 ],
                 [
@@ -71,7 +79,7 @@ export function WorkflowVersionDetails({ version }: { version: WorkflowVersion }
                 <ul>
                   {step.qualityGates.map((gate, index) => (
                     <li key={index} className="mono">
-                      {gate.metric} {{ gte: '≥', lte: '≤', eq: '=' }[gate.operator]}{' '}
+                      {gate.metric} {QUALITY_GATE_OPERATOR_SYMBOLS[gate.operator]}{' '}
                       {gate.threshold}
                     </li>
                   ))}

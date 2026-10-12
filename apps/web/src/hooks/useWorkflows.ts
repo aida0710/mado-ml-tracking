@@ -1,7 +1,10 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
+import type { WorkflowVersion } from '@mmt/contracts';
 import { workflowsApi } from '../api/workflows';
-import { EXECUTION_POLL_MS, useQuery } from './useQuery';
+import { isActiveWorkflowExecution } from '../lib/workflowExecutionState';
 import { useMutation } from './useMutation';
+import { useQuery } from './useQuery';
+import { useQueryPolledWhileActive } from './useQueryPolledWhileActive';
 
 export function useWorkflowDetail(projectId: string, workflowId: string) {
   return useQuery(`workflow:${projectId}:${workflowId}`, (signal) =>
@@ -9,50 +12,56 @@ export function useWorkflowDetail(projectId: string, workflowId: string) {
   );
 }
 
-export function useWorkflowExecution(projectId: string, executionId: string) {
-  return useQuery(
-    executionId ? `workflow-execution:${projectId}:${executionId}` : null,
-    (signal) => workflowsApi.execution(projectId, executionId, signal),
-    EXECUTION_POLL_MS,
-  );
-}
-
-export function useWorkflowHistory(projectId: string, workflowId: string) {
-  const [cursor, setCursor] = useState<string | undefined>();
-  const query = useQuery(
-    `workflow-history:${projectId}:${workflowId}:${cursor ?? ''}`,
-    (signal) => workflowsApi.history(projectId, workflowId, { cursor, signal }),
-    EXECUTION_POLL_MS,
-  );
-  return { ...query, cursor, setCursor };
-}
-
-export function useWorkflowActions(
+/**
+ * The versions older than the ones the workflow came with, loaded a page at a time on request.
+ * A new first cursor (the workflow was reloaded after a new version) starts over.
+ */
+export function useOlderWorkflowVersions(
   projectId: string,
   workflowId: string,
-  onStarted: (executionId: string) => void,
+  firstCursor: string | null,
 ) {
   const mutation = useMutation();
-  // A transport failure may have happened after acceptance; the next click repeats the same request.
-  const launchIntent = useRef<{ intent: string; key: string } | null>(null);
-  const start = async (revision: number, resumeFromExecutionId?: string) =>
-    mutation.run(async () => {
-      const intent = `${revision}:${resumeFromExecutionId ?? ''}`;
-      if (launchIntent.current?.intent !== intent)
-        launchIntent.current = { intent, key: crypto.randomUUID() };
-      const execution = await workflowsApi.launch(projectId, workflowId, {
-        revision,
-        idempotencyKey: launchIntent.current.key,
-        ...(resumeFromExecutionId ? { resumeFromExecutionId } : {}),
+  const startingOver = { firstCursor, versions: [] as WorkflowVersion[], nextCursor: firstCursor };
+  const [loaded, setLoaded] = useState(startingOver);
+  const current = loaded.firstCursor === firstCursor ? loaded : startingOver;
+  const loadMore = () => {
+    const cursor = current.nextCursor;
+    if (!cursor) return;
+    void mutation.run(async () => {
+      const page = await workflowsApi.olderVersions(projectId, workflowId, cursor);
+      setLoaded({
+        firstCursor,
+        versions: [...current.versions, ...page.items],
+        nextCursor: page.nextCursor,
       });
-      launchIntent.current = null;
-      onStarted(execution.id);
-      return execution;
     });
-  return {
-    ...mutation,
-    start,
-    cancel: (executionId: string) =>
-      mutation.run(() => workflowsApi.cancel(projectId, executionId)),
   };
+  return {
+    versions: current.versions,
+    hasMore: current.nextCursor !== null,
+    loadMore,
+    pending: mutation.pending,
+    error: mutation.error,
+  };
+}
+
+/** One execution, polled only while it runs or waits for a stop. */
+export function useWorkflowExecution(projectId: string, executionId: string) {
+  return useQueryPolledWhileActive(
+    executionId ? `workflow-execution:${projectId}:${executionId}` : null,
+    (signal) => workflowsApi.execution(projectId, executionId, signal),
+    isActiveWorkflowExecution,
+  );
+}
+
+/** A page of the execution history, polled only while one of its executions is still moving. */
+export function useWorkflowHistory(projectId: string, workflowId: string) {
+  const [cursor, setCursor] = useState<string | undefined>();
+  const query = useQueryPolledWhileActive(
+    `workflow-history:${projectId}:${workflowId}:${cursor ?? ''}`,
+    (signal) => workflowsApi.history(projectId, workflowId, { cursor, signal }),
+    (page) => page.items.some(isActiveWorkflowExecution),
+  );
+  return { ...query, cursor, setCursor };
 }

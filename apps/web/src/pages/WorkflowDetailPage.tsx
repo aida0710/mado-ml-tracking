@@ -1,25 +1,45 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
+import type { WorkflowExecution, WorkflowVersion } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
 import { useAuth } from '../hooks/useAuth';
 import {
-  useWorkflowActions,
+  useOlderWorkflowVersions,
   useWorkflowDetail,
   useWorkflowExecution,
   useWorkflowHistory,
 } from '../hooks/useWorkflows';
+import { useWorkflowActions } from '../hooks/useWorkflowActions';
 import { PageHeader } from '../components/PageHeader';
-import { Resource, ErrorNotice, Empty } from '../components/Feedback';
+import { Resource, ErrorNotice } from '../components/Feedback';
 import { ChoiceField } from '../components/ChoiceField';
 import { WorkflowDialog } from '../dialogs/WorkflowDialog';
+import { WorkflowLaunchDialog } from '../dialogs/WorkflowLaunchDialog';
 import { WorkflowVersionDetails } from '../components/workflows/WorkflowVersionDetails';
 import { WorkflowExecutionPanel } from '../components/workflows/WorkflowExecutionPanel';
+import { WorkflowExecutionControls } from '../components/workflows/WorkflowExecutionControls';
+import { WorkflowHistoryPicker } from '../components/workflows/WorkflowHistoryPicker';
 import { WorkflowComparison } from '../components/workflows/WorkflowComparison';
-import { canControlJob } from '../lib/permissions';
-import { formatDate } from '../lib/format';
-import { workflowsText as labels } from '../i18n/workflows';
-import { workflowStatusLabel } from '../lib/workflowLabels';
+import { canControlWorkflowExecution } from '../lib/permissions';
+import { shortId } from '../lib/jobDisplay';
+import { workflowsText as labels, workflowsTextTemplates } from '../i18n/workflows';
 import { useLocale } from '../i18n/useLocale';
+
+/**
+ * What a confirmed start, resume or stop did, said next to the button that did it: the version
+ * toolbar for a start, the shown execution for a resume or a stop.
+ */
+interface ActionOutcome {
+  place: 'version' | 'execution';
+  executionId: string;
+  describe: () => string;
+}
+
+/** The versions the workflow came with, then the older ones loaded on request, newest first. */
+function mergeVersions(newest: WorkflowVersion[], older: WorkflowVersion[]): WorkflowVersion[] {
+  const known = new Set(newest.map((version) => version.revision));
+  return [...newest, ...older.filter((version) => !known.has(version.revision))];
+}
 
 export function WorkflowDetailPage() {
   useLocale();
@@ -28,24 +48,45 @@ export function WorkflowDetailPage() {
   const { workflowId = '' } = useParams();
   const [params, setParams] = useSearchParams();
   const [editing, setEditing] = useState(false);
+  const [launching, setLaunching] = useState(false);
   const [revision, setRevision] = useState<number>();
   const [comparedId, setComparedId] = useState('');
+  const [outcome, setOutcome] = useState<ActionOutcome | null>(null);
   const detail = useWorkflowDetail(project.id, workflowId);
+  const olderVersions = useOlderWorkflowVersions(
+    project.id,
+    workflowId,
+    detail.value?.olderVersionsCursor ?? null,
+  );
   const history = useWorkflowHistory(project.id, workflowId);
-  const executionId = params.get('execution') ?? history.value?.items[0]?.id ?? '';
-  const execution = useWorkflowExecution(project.id, executionId);
+  const shownId = params.get('execution') ?? '';
+  const newestId = history.cursor === undefined ? history.value?.items[0]?.id : undefined;
+  // Without ?execution= the newest execution is shown. Writing it into the address keeps it shown
+  // while the history pages turn and new executions arrive.
+  useEffect(() => {
+    if (!shownId && newestId) setParams({ execution: newestId }, { replace: true });
+  }, [shownId, newestId, setParams]);
+  const execution = useWorkflowExecution(project.id, shownId);
   const compared = useWorkflowExecution(project.id, comparedId);
-  const actions = useWorkflowActions(project.id, workflowId, (id) => {
-    setParams({ execution: id });
-    history.reload();
-  });
+  const actions = useWorkflowActions(project.id, workflowId);
   const current = execution.value;
-  const canCancel = current && canControlJob(project.role, user.id, current);
+  const showStarted = (started: WorkflowExecution, place: ActionOutcome['place']) => {
+    setOutcome({
+      place,
+      executionId: started.id,
+      describe: () =>
+        workflowsTextTemplates.workflowStarted(shortId(started.id), started.revision),
+    });
+    setParams({ execution: started.id });
+    history.setCursor(undefined);
+    history.reload();
+  };
   return (
     <section className="page workflow-detail-page">
       <Resource query={detail}>
         {({ workflow, versions }) => {
-          const version = versions.find((item) => item.revision === revision) ?? versions[0]!;
+          const choices = mergeVersions(versions, olderVersions.versions);
+          const version = choices.find((item) => item.revision === revision) ?? choices[0]!;
           return (
             <>
               <PageHeader
@@ -61,26 +102,53 @@ export function WorkflowDetailPage() {
                 }
               />
               <div className="workflow-toolbar">
-                <ChoiceField
-                  label={labels.workflowVersion}
-                  value={String(version.revision)}
-                  options={versions.map((item) => ({
-                    value: String(item.revision),
-                    label: `v${item.revision}`,
-                  }))}
-                  onChange={(value) => setRevision(Number(value))}
-                />
+                <div className="workflow-version-choice">
+                  <ChoiceField
+                    label={labels.workflowVersion}
+                    value={String(version.revision)}
+                    placeholder={labels.workflowChoose}
+                    options={choices.map((item) => ({
+                      value: String(item.revision),
+                      label: workflowsTextTemplates.workflowVersionLabel(item.revision),
+                    }))}
+                    onChange={(value) => setRevision(Number(value))}
+                  />
+                  {olderVersions.hasMore && (
+                    <button
+                      className="button small"
+                      disabled={olderVersions.pending}
+                      onClick={olderVersions.loadMore}
+                    >
+                      {labels.workflowOlderVersions}
+                    </button>
+                  )}
+                </div>
                 {canEdit && (
-                  <button
-                    className="button primary"
-                    disabled={actions.pending}
-                    onClick={() => void actions.start(version.revision)}
-                  >
+                  <button className="button primary" onClick={() => setLaunching(true)}>
                     {labels.workflowStart}
                   </button>
                 )}
               </div>
+              <ErrorNotice message={olderVersions.error} />
+              {outcome?.place === 'version' && (
+                <p className="notice success" role="status">
+                  {outcome.describe()}
+                </p>
+              )}
               <WorkflowVersionDetails version={version} />
+              {launching && (
+                <WorkflowLaunchDialog
+                  workflowName={workflow.name}
+                  revision={version.revision}
+                  resumeFrom={null}
+                  launch={actions.launch}
+                  onStarted={(started) => {
+                    setLaunching(false);
+                    showStarted(started, 'version');
+                  }}
+                  onClose={() => setLaunching(false)}
+                />
+              )}
               {editing && (
                 <WorkflowDialog
                   projectId={project.id}
@@ -101,89 +169,50 @@ export function WorkflowDetailPage() {
           );
         }}
       </Resource>
-      <ErrorNotice message={actions.error} />
       <h2>{labels.workflowHistory}</h2>
       <Resource query={history}>
         {(page) => (
-          <>
-            {page.items.length > 0 ? (
-              <div className="workflow-toolbar">
-                <ChoiceField
-                  label={labels.workflowExecution}
-                  value={executionId}
-                  onChange={(id) => setParams({ execution: id })}
-                  options={page.items.map((item) => ({
-                    value: item.id,
-                    label: `${formatDate(item.createdAt)} · v${item.revision} · ${workflowStatusLabel(item.status)} · ${item.id.slice(0, 8)}`,
-                  }))}
-                />
-                <ChoiceField
-                  label={labels.workflowCompare}
-                  value={comparedId}
-                  onChange={setComparedId}
-                  options={[
-                    { value: '', label: labels.workflowNoComparison },
-                    ...page.items
-                      .filter((item) => item.id !== executionId)
-                      .map((item) => ({
-                        value: item.id,
-                        label: `${formatDate(item.createdAt)} · ${item.id.slice(0, 8)}`,
-                      })),
-                  ]}
-                />
-              </div>
-            ) : (
-              <Empty>{labels.workflowNoExecutions}</Empty>
-            )}
-            <div className="section-actions">
-              {history.cursor && (
-                <button className="button small" onClick={() => history.setCursor(undefined)}>
-                  {labels.workflowFirstPage}
-                </button>
-              )}
-              {page.nextCursor && (
-                <button
-                  className="button small"
-                  onClick={() => history.setCursor(page.nextCursor ?? undefined)}
-                >
-                  {labels.workflowNextPage}
-                </button>
-              )}
-            </div>
-          </>
+          <WorkflowHistoryPicker
+            page={page}
+            isFirstPage={history.cursor === undefined}
+            shown={current}
+            shownId={shownId}
+            compared={compared.value}
+            comparedId={comparedId}
+            onShow={(id) => setParams({ execution: id })}
+            onCompare={setComparedId}
+            onFirstPage={() => history.setCursor(undefined)}
+            onNextPage={history.setCursor}
+          />
         )}
       </Resource>
       {current && (
-        <>
-          <div className="section-actions">
-            {canEdit && (current.status === 'failed' || current.status === 'canceled') && (
-              <button
-                className="button"
-                disabled={actions.pending}
-                title={labels.workflowResumeHint}
-                onClick={() => void actions.start(current.revision, current.id)}
-              >
-                {labels.workflowResume}
-              </button>
-            )}
-            {canCancel && current.status === 'running' && (
-              <button
-                className="button danger"
-                disabled={actions.pending}
-                onClick={() =>
-                  void actions.cancel(current.id).then(() => {
-                    execution.reload();
-                    history.reload();
-                  })
-                }
-              >
-                {labels.workflowCancel}
-              </button>
-            )}
-          </div>
-        </>
+        <WorkflowExecutionControls
+          projectId={project.id}
+          workflowName={detail.value?.workflow.name ?? ''}
+          execution={current}
+          canEdit={canEdit}
+          canControl={canControlWorkflowExecution(project.role, user.id, current)}
+          launch={actions.launch}
+          cancel={actions.cancel}
+          onResumed={(started) => showStarted(started, 'execution')}
+          onCanceled={(canceled) => {
+            setOutcome({
+              place: 'execution',
+              executionId: canceled.id,
+              describe: () => workflowsTextTemplates.workflowCancelRequested(shortId(canceled.id)),
+            });
+            execution.reload();
+            history.reload();
+          }}
+        />
       )}
-      {executionId && (
+      {outcome?.place === 'execution' && outcome.executionId === shownId && (
+        <p className="notice success" role="status">
+          {outcome.describe()}
+        </p>
+      )}
+      {shownId && (
         <Resource query={execution}>
           {(item) => <WorkflowExecutionPanel execution={item} />}
         </Resource>

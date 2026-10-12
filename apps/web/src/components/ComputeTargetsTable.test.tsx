@@ -31,6 +31,7 @@ const offlineWorker: WorkerPresence = {
   lastSeenAt: '2026-10-11T04:19:30Z',
   status: 'offline',
   activeJobCount: 0,
+  capabilities: [],
 };
 
 describe('プロジェクトのComputeのコンピュータ一覧', () => {

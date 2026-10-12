@@ -8,7 +8,8 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { ErrorNotice } from './Feedback';
 import { getFieldValue } from '../lib/formValues';
 import { hookExecutionOutcome } from '../lib/hookDisplay';
-import { buildHookStartRequest, createHookStartKey } from '../lib/hookStart';
+import { buildHookStartRequest } from '../lib/hookStart';
+import { createRandomId } from '../lib/randomId';
 import { text } from '../i18n/catalog';
 import { hooksTextTemplates } from '../i18n/hooks';
 import { useFailureMessage } from '../hooks/useFailureMessage';
@@ -50,7 +51,7 @@ export function HookStart({
         disabled={!hook.enabled}
         onClick={() => {
           try {
-            setRequest(buildHookStartRequest(getFieldValue(values, 'payload'), createHookStartKey()));
+            setRequest(buildHookStartRequest(getFieldValue(values, 'payload'), createRandomId()));
           } catch (failure) {
             validation.setFailure(failure);
           }

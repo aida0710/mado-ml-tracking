@@ -11,6 +11,14 @@
 .workflow-toolbar > .button {
   justify-self: start;
 }
+.workflow-version-choice {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+}
+.workflow-version-choice > .choice-field {
+  justify-self: stretch;
+}
 .workflow-form {
   display: grid;
   gap: 1rem;
@@ -51,19 +59,6 @@
 .workflow-step h3 {
   margin-block: 0.5rem;
 }
-.workflow-status {
-  display: inline-flex;
-  border-radius: 999px;
-  padding: 0.2rem 0.65rem;
-  font-size: 0.85rem;
-  background: var(--surface-hover);
-}
-.workflow-status.failed {
-  color: var(--error);
-}
-.workflow-status.finished {
-  color: var(--success);
-}
 .workflow-usage li {
   display: grid;
   gap: 0.4rem;
@@ -72,55 +67,11 @@
 .preprocessing-report {
   margin-block-start: 1rem;
 }
-.choice-field {
-  position: relative;
+/* A Run's workflow and preprocessing details span the whole details grid of its page. */
+.workflow-run-context {
+  grid-column: 1 / -1;
   min-width: 0;
-}
-.choice-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  width: 100%;
-  text-align: start;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  padding: 0.65rem 0.75rem;
-  background: var(--surface);
-  color: inherit;
-}
-.choice-trigger span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.choice-trigger svg {
-  flex-shrink: 0;
-}
-.choice-options {
-  position: absolute;
-  top: 100%;
-  inset-inline: 0;
-  z-index: 20;
-  list-style: none;
-  margin: 0.25rem 0 0;
-  padding: 0.25rem;
-  max-height: 18rem;
-  overflow-y: auto;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  background: var(--surface);
-  box-shadow: var(--shadow-menu);
-}
-.choice-options li {
-  padding: 0.65rem 0.75rem;
-  border-radius: 0.25rem;
-  cursor: pointer;
   overflow-wrap: anywhere;
-}
-.choice-options li.active,
-.choice-options li[aria-selected='true'] {
-  background: var(--surface-hover);
 }
 .workflow-definition > summary {
   cursor: pointer;
