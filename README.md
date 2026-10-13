@@ -1,6 +1,6 @@
 # mado ML Tracking
 
-実験、モデル、実行コード、データセットを同じRunに結び付ける実験管理アプリです。Madoとは別に動作し、最初の外部連携を[Mado plugin](../mado-model-tracking-plugin-mado/README.md)で提供します。
+実験、モデル、実行コード、データセットを同じRunに結び付ける実験管理アプリです。mado S3 Data Catalogとは別に動作し、[Mado連携](docs/plugins.md)を標準搭載しています。連携は初期状態では無効です。
 
 利用者向けのドキュメント（インストール、使い方、管理）は[https://aida0710.github.io/mado-ml-tracking/](https://aida0710.github.io/mado-ml-tracking/)にあります。ソースは`pages/`です。
 
