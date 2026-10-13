@@ -1,30 +1,7 @@
 /*
- * Models, model version, Tasks, Jobs, Lineage and Codes on narrow windows, plus the lineage zoom
- * controls and the folded file list of the code workspace. Breakpoints: styles/breakpoints.css.
+ * Models, model version, Tasks, Jobs, Lineage and Codes on narrow windows, and the folded file list of the
+ * code workspace. Breakpoints: styles/breakpoints.css.
  */
-.lineage-zoom-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 8px;
-}
-.lineage-zoom-level {
-  min-width: 48px;
-  text-align: center;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
-.lineage-pan-hint {
-  margin-left: 8px;
-  font-size: 11px;
-}
-.lineage-viewport .graph-scroll {
-  cursor: grab;
-}
-.lineage-graph.narrow .graph-relations {
-  margin: 0 0 20px;
-}
 .file-list-toggle {
   display: flex;
   align-items: center;
@@ -76,13 +53,6 @@
   /* The wide-table minimum would push the Job list past a phone width. */
   .job-run-cell {
     min-width: 0;
-  }
-  .lineage-graph.narrow .graph-scroll {
-    max-height: 60vh;
-  }
-  .lineage-pan-hint {
-    flex-basis: 100%;
-    margin-left: 0;
   }
 }
 

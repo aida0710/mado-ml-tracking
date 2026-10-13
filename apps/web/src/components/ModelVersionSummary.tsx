@@ -117,7 +117,7 @@ export function ModelVersionSummary({
       </div>
       <h2>{text.modelVersionLineage}</h2>
       <div className="model-version-lineage">
-        <LineageGraph graph={lineage} projectId={projectId} />
+        <LineageGraph key={`${projectId}:${version.id}`} graph={lineage} projectId={projectId} />
       </div>
       {resultRuns.length > LINEAGE_RESULT_RUN_LIMIT && (
         <p className="muted">{text.modelVersionLineageTruncated}</p>
