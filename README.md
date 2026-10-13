@@ -4,6 +4,8 @@
 
 利用者向けのドキュメント（インストール、使い方、管理）は[https://aida0710.github.io/mado-ml-tracking/](https://aida0710.github.io/mado-ml-tracking/)にあります。ソースは`pages/`です。
 
+[GitHub Releases](https://github.com/aida0710/mado-ml-tracking/releases)では、ビルド済みコンテナから起動するComposeと設定例を配布します。配布物を展開し、同梱のREADMEに従って設定・DB更新・初期管理者の作成を行ってください。コンテナはGHCRで配布し、配布用Composeは内容をdigestで固定します。公開の手順は[リリース手順](docs/releasing.md)にあります。
+
 React/Viteの画面、TypeScript/HonoのAPI、PostgreSQL、Python SDKとSSH workerで構成します。学習・fine-tuning・推論・評価・データ加工を扱います。ArtifactsはファイルシステムまたはS3互換ストレージをProjectごとに選びます。[公式MLflow 3 SDK](docs/mlflow.md)からも記録できます。
 
 [タスクとコード編集](docs/workbench.md)では、リポジトリまたは単体コードをMonaco Editorで編集し、通常実行・テストのコマンドを登録できます。Taskのrevisionと実行内容を固定し、Jobごとのコードsnapshotと結果を追跡します。Computeとpluginも画面から追加・編集できます。
