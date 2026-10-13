@@ -28,7 +28,8 @@
 | base | このアプリの高さと幅（プロジェクトバー、Experimentsの実験一覧）、描画に失敗したときの画面 |
 | layout | Projectの切り替え（サイドバーの一番上とプロジェクトバーのボタン、そのドロップダウン）、公開範囲（ProjectとコンピュータのPublic・Private）の鍵の印（`.visibility-label`）、作業領域の高さ |
 | tables | Experimentsの実験一覧、Runのツールバー・選択バー、Runの表 |
-| registry | Registryの一覧・詳細、詳細リスト、自動実行パネル、グラフ、ログ、Job、Lineage |
+| registry | Registryの一覧・詳細、詳細リスト、自動実行パネル、グラフ、ログ、Job |
+| lineage | Lineageの図・検索・経路選択・関係一覧 |
 | artifacts | Artifactの一覧・プレビュー・アップロード結果 |
 | forms | このアプリだけのダイアログの幅、ダイアログの下のボタンの固定、ダイアログの中の詳細リスト、1行ずつの選択肢（`choice-picker`。保存先と公開範囲）、候補つきの入力欄 |
 | workbench | コード編集、ファイルツリー、Task、実行スナップショット |
@@ -133,3 +134,11 @@ Artifactのテキストのプレビュー（`components/preview/CodeView.tsx`）
 - 一時停止と再開はsessionを残し、再開時に`GET /artifact-uploads/:u`の受信済みpartとの差分だけを送ります。取消は`DELETE`でsessionを`aborted`にします。
 - 再読込に備え、localStorageに`{uploadId, projectId, runId, path, name, size, lastModified}`を残します（`lib/uploadResumeStore.ts`。保存できない環境でも送信はできます）。同じファイルを同じ保存パスで選び直すと続きから送ります。localStorageに無いサーバー側の`open` sessionは、受信済みpartのSHA-256が選んだファイルと一致したときだけ使います。
 - 送信中はダイアログを閉じられず、ページを離れるときは`beforeunload`で警告します。ダイアログはRunの取得が失敗しても消えないよう、`Resource`の外に置きます。
+
+## Lineageの表示
+
+`LineageGraph`は全体画面とモデルバージョンの詳細で共用します。`@xyflow/react`と`@dagrejs/dagre`はData Catalogと同じ構成です。APIの`LineageGraph`から全種類の項目・関係を`lib/lineageGraphModel.ts`で変換し、`lib/lineageLayout.ts`で左から右へ配置します。複数の関係は別の辺として残し、列を飛ばす辺もDagreの通り道を`LineageFlowEdge`で描きます。
+
+検索・選択・方向は`hooks/useLineageInteraction.ts`、選択した項目への表示移動は`hooks/useLineageViewport.ts`、検索と前後の経路の計算は`lib/lineageInteraction.ts`です。前後は生成元・生成先をそれぞれ独立に辿り、共通の生成元から分かれた兄弟を強調しません。描画は`LineageCanvas`、項目は`LineageFlowNode`、検索と方向の操作は`LineageGraphTools`、表示用の型は`types/lineage.ts`に分けています。項目の移動・接続・削除は無効です。名前のリンクと選択した項目の［詳細を開く］は、既存のRun・バージョン・ArtifactsへのURLを使います。
+
+言語変更では表示ラベルだけを更新し、検索文字・選択・拡大率を保持します。操作ボタンと読み上げの説明も日英カタログから渡します。`focus`付きURLとモデルバージョンの切替では、画面の対象ごとに選択を初期化します。図の高さは内容に合わせ、小さいモデルの図に大きな空白を作りません。狭い画面では既存の関係一覧を先に開き、図・検索・方向をページ幅に収めます。

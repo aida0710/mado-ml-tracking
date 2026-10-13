@@ -17,6 +17,7 @@ import '@mado/design-system/base.css';
 import '@mado/design-system/components.css';
 import '@mado/design-system/shell.css';
 import '@mado/design-system/code.css';
+import '@xyflow/react/dist/style.css';
 // Area stylesheets. Order matters for equal-specificity rules: keep breakpoints (the width
 // breakpoints every other stylesheet uses) and base first, and add new rules to the file of the
 // area they style instead of creating a catch-all stylesheet.
@@ -26,6 +27,7 @@ import './styles/layout.css';
 import './styles/productLogo.css';
 import './styles/tables.css';
 import './styles/registry.css';
+import './styles/lineage.css';
 import './styles/jobs.css';
 import './styles/artifacts.css';
 import './styles/artifactBrowser.css';

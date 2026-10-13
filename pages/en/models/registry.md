@@ -136,6 +136,10 @@ Press a version's number in the version list to open its page. The list shows th
 
 Lineage draws dataset versions, Runs, MLflow logged models, model versions, and code versions of the Project in one graph. Read it from left to right to see which data trained a version and which version produced an inference output.
 
+Search for an item by name or kind, then select it to highlight its connected path. Choose **Both**, **Upstream** or **Downstream** to follow the relationship in either direction. **Open details** or the item's name opens its original page. Drag or swipe to pan, scroll or pinch to zoom, and use the controls at the bottom left to fit the graph. Larger graphs have an overview at the bottom right for moving around.
+
+The model version page uses the same graph controls. On narrow screens, the relations table opens before the graph. Switching languages preserves your search input and selection.
+
 Edges are data input, data output, model input, model output, model registration, parent model, parent dataset, parent Run, and code. Open **Relation** below the graph to see the edges as a table. The table names the kind of each end (Run, dataset version, and so on) before its name, and the name links to its page.
 
 Click **View in Lineage** in a dataset version's details to show only two steps before and after that version. **Show full graph** at the top returns to the whole Project.

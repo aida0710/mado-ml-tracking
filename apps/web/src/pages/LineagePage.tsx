@@ -58,7 +58,8 @@ export function LineagePage() {
                   </button>
                 </div>
               )}
-              <LineageGraph graph={focused ?? value} projectId={project.id} />
+              <LineageGraph key={`${project.id}:${focusId ?? ''}`} graph={focused ?? value}
+                projectId={project.id} initialSelectedNodeId={focused ? focusId : null} />
             </>
           );
         }}

@@ -612,3 +612,17 @@ node scripts/verify_builtin_mado_browser.mjs
 APIは独立schemaを作り、終了時に削除します。fixtureの一時キーはgitignore済みの`var/builtin-mado-verification.json`（mode 600）だけに保存し、終了時に削除します。結果とキー入力を含まない画像は`artifacts/builtin-mado/<JSTの日付>/`に保存します。
 
 ブラウザは初期無効、キー保存と接続確認、有効化、固定バージョンの取り込み、Madoへのリンク、START/COMPLETEの配送、無効化時の操作非表示、日英と幅320pxを確認します。運用者が用意する実RegistryのDBで同じRunやDatasetVersionが増えないことは、このfixtureでは確認しません。
+
+## Lineageの画面操作を確認する
+
+Webを起動し、次を実行します。API応答には検証用のグラフを使います。
+
+```bash
+MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
+MMT_CHROMIUM_PATH=/path/to/chrome \
+MMT_WEB_URL=http://127.0.0.1:5182 \
+MMT_SCREENSHOT_DIR=artifacts/lineage/<日付> \
+node apps/web/tests/browser-lineage.mjs
+```
+
+全種類・関係の描画、拡大縮小・全体表示・移動・全体図、検索・方向別の経路、詳細へのリンク、focus付きURL、言語切替時の入力/選択保持と再取得の抑止、320pxと日英・テーマ、モデル詳細の学習元、閲覧者の操作と新たな書き込みが無いことを確認します。結果は`browser-result.json`と画像に残します。既存モデル画面の操作と閲覧権限は`browser-model-pipeline.mjs`でも確認します。
