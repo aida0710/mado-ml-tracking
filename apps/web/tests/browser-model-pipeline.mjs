@@ -254,8 +254,8 @@ const versionPage = page.locator('.model-version-page');
 const automation = () => page.getByRole('region', { name: '自動実行' });
 // The page polls every 5 seconds while work is in progress.
 const POLL_TIMEOUT_MS = 20000;
-// Buttons that change only what is shown: reloading the page and zooming the lineage diagram.
-const VIEW_ONLY_BUTTONS = ['再読み込み', '縮小', '拡大', '全体を表示'];
+// Graph selection and navigation are read-only; domain operations live outside the graph.
+const VIEW_ONLY_BUTTONS = ['再読み込み'];
 
 try {
   console.log('Model pipeline: registry version link opens the version page');
@@ -306,11 +306,11 @@ try {
   await page.reload();
   await versionPage.getByRole('heading', { name: `${model.name} / ${version.version}` }).waitFor();
   await results.getByText('自動評価（評価rule）').waitFor();
-  const buttons = await versionPage.getByRole('button').allTextContents();
   const labels = await versionPage.getByRole('button').evaluateAll((elements) =>
-    elements.map((element) => element.getAttribute('aria-label') ?? element.textContent),
+    elements.filter((element) => !element.closest('.lineage-graph'))
+      .map((element) => element.getAttribute('aria-label') ?? element.textContent),
   );
-  assert.deepEqual(labels, VIEW_ONLY_BUTTONS, `unexpected buttons: ${buttons.join(', ')}`);
+  assert.deepEqual(labels, VIEW_ONLY_BUTTONS, `unexpected buttons: ${labels.join(', ')}`);
 
   assert.deepEqual(pageErrors, []);
   console.log('Model pipeline: ok');
