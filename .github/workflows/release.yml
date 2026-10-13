@@ -1,0 +1,163 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 再実行する既存のリリースタグ
+        required: true
+        type: string
+
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-publication
+  cancel-in-progress: false
+
+jobs:
+  source:
+    name: Verify release source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      commit: ${{ steps.source.outputs.commit }}
+      matrix: ${{ steps.source.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+      - id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
+        run: |
+          node scripts/release/version.mjs "$RELEASE_TAG"
+          commit=$(scripts/ci/verify-release-source.sh)
+          [ "$GITHUB_REF" = "refs/tags/$RELEASE_TAG" ]
+          [ "$(git rev-parse "$GITHUB_SHA^{commit}")" = "$commit" ]
+          printf 'commit=%s\n' "$commit" >> "$GITHUB_OUTPUT"
+          printf 'matrix=%s\n' "$(node scripts/release/images.mjs)" >> "$GITHUB_OUTPUT"
+
+  images:
+    name: Image (${{ matrix.service }})
+    needs: source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.source.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.source.outputs.commit }}
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push a staging image
+        id: image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: mode=max
+          sbom: true
+          tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:${{ env.RELEASE_TAG }}-staging-${{ needs.source.outputs.commit }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.version=${{ env.RELEASE_TAG }}
+            org.opencontainers.image.revision=${{ needs.source.outputs.commit }}
+            org.opencontainers.image.title=mado ML Tracking ${{ matrix.service }}
+      - name: Record the immutable image reference
+        env:
+          IMAGE_NAME: ${{ matrix.image }}
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+          IMAGE_SERVICE: ${{ matrix.service }}
+        run: |
+          mkdir -p manifests
+          jq -n --arg image "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/$IMAGE_NAME" --arg digest "$IMAGE_DIGEST" \
+            '{image: $image, digest: $digest}' > "manifests/$IMAGE_SERVICE.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: manifest-${{ matrix.service }}
+          path: manifests/*.json
+
+  publish:
+    name: Validate and publish
+    needs: [source, images]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.source.outputs.commit }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: manifest-*
+          path: manifests
+          merge-multiple: true
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Require anonymous image downloads
+        run: |
+          [ "$(find manifests -name '*.json' -type f | wc -l)" -eq 5 ]
+          for manifest in manifests/*.json; do
+            reference=$(jq -r '.image + "@" + .digest' "$manifest")
+            docker pull "$reference"
+          done
+      - name: Verify the published images on a fresh database
+        run: node scripts/release/verifyImages.mjs "$RELEASE_TAG" manifests
+      - name: Build the digest-pinned release bundle
+        run: node scripts/release/buildBundle.mjs "$RELEASE_TAG" dist/release manifests
+      - name: Attest the release bundle
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/release/mado-ml-tracking-${{ env.RELEASE_TAG }}.tar.gz
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Promote image tags without replacing a released image
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/release/promoteImages.sh manifests
+      - name: Create or resume the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$RELEASE_TAG" --json isDraft >/tmp/release.json 2>/dev/null; then
+            jq -e '.isDraft == true' /tmp/release.json >/dev/null
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --draft \
+              --title "mado ML Tracking $RELEASE_TAG" --notes-file "docs/releases/$RELEASE_TAG.md"
+          fi
+          gh release upload "$RELEASE_TAG" dist/release/* --clobber
+          gh release edit "$RELEASE_TAG" --draft=false --prerelease=false --latest

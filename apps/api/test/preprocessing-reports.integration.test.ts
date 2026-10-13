@@ -7,7 +7,14 @@ import type {
 } from '@mmt/contracts';
 import { preprocessingReportSchema, workflowExecutionSchema } from '@mmt/contracts/schemas';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
-import { workflowFixture, type WorkflowFixture } from './workflowFixtures.js';
+import {
+  createPreprocessingReportInput,
+  workflowFixture,
+  type WorkflowFixture,
+} from './workflowFixtures.js';
+
+// Far beyond the accepted depth, including runtimes where JSON.stringify itself exhausts the stack.
+const EXCESSIVE_METADATA_DEPTH = 10_000;
 
 describe.skipIf(!testDatabaseUrl)('前処理レポートの品質と固定（独立PostgreSQL）', () => {
   let harness: Harness;
@@ -72,14 +79,28 @@ describe.skipIf(!testDatabaseUrl)('前処理レポートの品質と固定（独
     expect((await fixture.report(id, { metadata: nested(10) })).status).toBe(200);
     for (const metadata of [
       nested(11),
-      // Thousands of levels are refused before validation recurses into them.
-      nested(10_000),
       { note: 'x'.repeat(16 * 1024) },
     ]) {
       const refused = await fixture.report(id, { metadata });
       expect(refused.status).toBe(422);
       expect(((await refused.json()) as { code: string }).code).toBe('invalid_request');
     }
+    // Send raw JSON so the API's depth check runs before any client-side recursive serialization.
+    const serializedReport = JSON.stringify(createPreprocessingReportInput());
+    const serializedMetadata = '{"level":'.repeat(EXCESSIVE_METADATA_DEPTH)
+      + '{}' + '}'.repeat(EXCESSIVE_METADATA_DEPTH);
+    const deeplyNestedReport = await request(
+      harness.app,
+      `${fixture.basePath}/runs/${id}/preprocessing-report`,
+      {
+        method: 'PUT',
+        cookie: fixture.editor.cookie,
+        headers: { 'Content-Type': 'application/json' },
+        binary: `${serializedReport.slice(0, -1)},"metadata":${serializedMetadata}}`,
+      },
+    );
+    expect(deeplyNestedReport.status).toBe(422);
+    expect(((await deeplyNestedReport.json()) as { code: string }).code).toBe('invalid_request');
     const stored = await entity<{ report: PreprocessingReport }>(
       await request(harness.app, `${fixture.basePath}/runs/${id}/preprocessing-report`, {
         cookie: fixture.viewer.cookie,

@@ -14,6 +14,17 @@ import { WORKER_CAPABILITIES } from '@mmt/contracts';
 import { executionFixture, referenceDigest } from './fixtures.js';
 import { entity, request, type Harness } from './harness.js';
 
+export function createPreprocessingReportInput(overrides: Partial<PreprocessingReportInput> = {}) {
+  return {
+    inputCount: 10,
+    outputCount: 8,
+    excludedCount: 2,
+    failedCount: 0,
+    exclusions: [{ reason: '短い音声', count: 2 }],
+    ...overrides,
+  };
+}
+
 export async function workflowFixture(harness: Harness) {
   const fixture = await executionFixture(harness);
   const codeVersion = await entity<CodeVersion>(
@@ -186,14 +197,7 @@ export async function workflowFixture(harness: Harness) {
     return request(harness.app, `${fixture.basePath}/runs/${runId}/preprocessing-report`, {
       method: 'PUT',
       cookie: fixture.editor.cookie,
-      body: {
-        inputCount: 10,
-        outputCount: 8,
-        excludedCount: 2,
-        failedCount: 0,
-        exclusions: [{ reason: '短い音声', count: 2 }],
-        ...overrides,
-      },
+      body: createPreprocessingReportInput(overrides),
     });
   }
   return {
