@@ -245,57 +245,6 @@ th.alias-version-change {
 .details-list .copyable-value {
   margin-top: 0;
 }
-.lineage-legend {
-  color: var(--muted);
-  margin: 0 0 16px;
-  font-size: 12px;
-}
-.graph-scroll {
-  max-width: 100%;
-  overflow: auto;
-  border: 1px solid var(--border);
-  background: var(--surface);
-}
-.graph-edge {
-  fill: none;
-  stroke: var(--muted);
-  stroke-width: 1.5px;
-}
-.graph-node rect {
-  fill: var(--background);
-  stroke: var(--border);
-  stroke-width: 1.5px;
-}
-.graph-node:hover rect {
-  stroke: var(--accent);
-}
-.node-run rect {
-  stroke: var(--accent);
-}
-.node-modelVersion rect,
-.node-loggedModel rect {
-  stroke: var(--lineage-model);
-}
-.node-datasetVersion rect {
-  stroke: var(--lineage-dataset);
-}
-.node-kind {
-  fill: var(--muted);
-  font-family: var(--mono);
-  font-size: 10px;
-}
-.node-label {
-  fill: var(--text);
-  font-family: var(--font);
-  font-size: 12px;
-}
-.graph-relations {
-  margin-top: 20px;
-  color: var(--muted);
-}
-.graph-relations table {
-  margin-top: 14px;
-}
 /* A protected alias in the Model's alias list: the lock and who may change it. */
 .alias-protection {
   display: inline-flex;
@@ -359,18 +308,4 @@ th.alias-version-change {
    .field-hint, which forms.css (loaded later) gives no margin. */
 .field-hint.missing-code-notice {
   margin: -6px 0 14px;
-}
-/* Lineage: the notice that only the part around one node is shown, and a relation's two ends. */
-.notice.lineage-focus-notice {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  margin-bottom: 12px;
-}
-.lineage-relation-end {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 2px 6px;
-  overflow-wrap: anywhere;
 }

@@ -1,10 +1,11 @@
-import { useMemo, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import type { LineageGraph as Graph } from '@mmt/contracts';
 import { narrowerThan } from '../lib/breakpoints';
-import { layoutLineage } from '../lib/lineageLayout';
+import { useLineageInteraction } from '../hooks/useLineageInteraction';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { Empty } from './Feedback';
-import { LineageDiagramViewport } from './LineageDiagramViewport';
+import { LineageCanvas } from './LineageCanvas';
+import { LineageGraphTools } from './LineageGraphTools';
 import { LineageRelationsTable } from './LineageRelationsTable';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
@@ -13,15 +14,39 @@ import { text } from '../i18n/catalog';
  * The lineage diagram and its relations table. Below --bp-md the diagram is too small to read
  * first, so the relations table leads (open) and the diagram follows, fitted to the width.
  */
-export function LineageGraph({ graph, projectId }: { graph: Graph; projectId: string }) {
+export function LineageGraph({
+  graph,
+  projectId,
+  initialSelectedNodeId,
+}: {
+  graph: Graph;
+  projectId: string;
+  initialSelectedNodeId?: string | null;
+}) {
   useLocale();
   const isNarrow = useMediaQuery(narrowerThan('md'));
-  const layout = useMemo(() => layoutLineage(graph), [graph]);
+  const interaction = useLineageInteraction({ graph, initialSelectedNodeId });
   if (!graph.nodes.length) return <Empty>{text.graphEmpty}</Empty>;
   return (
-    <LineageGraphLayout isNarrow={isNarrow}
-      diagram={<LineageDiagramViewport layout={layout} projectId={projectId} fitOnOpen={isNarrow} />}
-      relations={<LineageRelationsTable graph={graph} projectId={projectId} initiallyOpen={isNarrow} />}
+    <LineageGraphLayout
+      isNarrow={isNarrow}
+      diagram={
+        <>
+          <LineageGraphTools interaction={interaction} projectId={projectId} />
+          <LineageCanvas
+            graph={graph}
+            projectId={projectId}
+            isNarrow={isNarrow}
+            selectedId={interaction.selectedId}
+            direction={interaction.direction}
+            onSelect={interaction.selectNode}
+            onClearSelection={interaction.clearSelection}
+          />
+        </>
+      }
+      relations={
+        <LineageRelationsTable graph={graph} projectId={projectId} initiallyOpen={isNarrow} />
+      }
     />
   );
 }

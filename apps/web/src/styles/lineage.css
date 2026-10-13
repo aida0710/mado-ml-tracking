@@ -1,0 +1,215 @@
+/* Data Catalog's graph interactions, using MMT's node kinds and shared design tokens. */
+.lineage-graph {
+  min-width: 0;
+}
+.lineage-legend {
+  color: var(--muted);
+  margin: 0 0 16px;
+  font-size: 12px;
+}
+.lineage-graph-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-bottom: 12px;
+}
+.lineage-graph-search {
+  position: relative;
+  flex: 1 1 280px;
+  min-width: 0;
+}
+.lineage-search-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  min-width: 0;
+}
+.lineage-search-field input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding-inline: 0;
+}
+.lineage-search-results {
+  position: absolute;
+  inset: 100% 0 auto;
+  z-index: 10;
+  max-height: 320px;
+  overflow: auto;
+}
+.lineage-search-results ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.lineage-search-results button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  text-align: start;
+  border: 0;
+  background: transparent;
+  overflow-wrap: anywhere;
+}
+.lineage-search-results button:hover {
+  background: var(--surface);
+}
+.lineage-search-results button span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.lineage-direction {
+  display: flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--border);
+}
+.lineage-direction button {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+.lineage-direction button[aria-pressed="true"] {
+  color: var(--link);
+  background: var(--surface);
+  box-shadow: inset 0 -2px var(--link);
+}
+.lineage-selection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  font-size: 12px;
+}
+.lineage-selection > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.lineage-selection .link-button {
+  flex-shrink: 0;
+}
+.lineage-canvas {
+  --lineage-content-height: 180px;
+  /* Small model graphs leave room for their summary; large graphs use the same bounded viewport. */
+  height: clamp(180px, var(--lineage-content-height), 640px);
+  width: 100%;
+  border: 1px solid var(--border);
+  --xy-background-color: var(--surface);
+  --xy-background-pattern-dots-color: var(--border);
+  --xy-edge-stroke: var(--muted);
+  --xy-edge-stroke-selected: var(--link);
+  --xy-edge-stroke-width: 1.5;
+  --xy-controls-button-background-color: var(--background);
+  --xy-controls-button-background-color-hover: var(--surface);
+  --xy-controls-button-color: var(--text);
+  --xy-controls-button-color-hover: var(--text);
+  --xy-controls-button-border-color: var(--border);
+  --xy-minimap-background-color: var(--background);
+  --xy-minimap-mask-background-color: color-mix(in srgb, var(--surface) 70%, transparent);
+  --xy-minimap-node-stroke-color: var(--border);
+  --xy-node-boxshadow-hover: none;
+}
+.lineage-canvas .react-flow__node {
+  cursor: pointer;
+}
+.lineage-node-card {
+  height: 100%;
+  box-sizing: border-box;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--muted);
+  border-radius: 2px;
+  padding: 12px;
+  color: var(--text);
+}
+.lineage-node-card[data-kind="run"] { border-left-color: var(--accent); }
+.lineage-node-card[data-kind="datasetVersion"] { border-left-color: var(--lineage-dataset); }
+.lineage-node-card:is([data-kind="modelVersion"], [data-kind="loggedModel"]) { border-left-color: var(--lineage-model); }
+.lineage-node-card[data-selected],
+.lineage-node-card:hover,
+.react-flow__node:focus-visible .lineage-node-card {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+.lineage-node-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.lineage-node-card__kind {
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.lineage-node-card .status-badge {
+  font-size: 10px;
+  padding: 0;
+  white-space: nowrap;
+}
+.lineage-node-card__title {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lineage-node-card .react-flow__handle {
+  background: var(--border);
+  border: 0;
+}
+.lineage-flow-node--muted,
+.lineage-flow-edge--muted { opacity: 0.22; }
+.lineage-flow-edge--path .react-flow__edge-path {
+  stroke: var(--link);
+  stroke-width: 2.5;
+}
+.lineage-canvas .react-flow__edge-path { stroke-linejoin: round; }
+.lineage-minimap-node--run { fill: var(--accent); }
+.lineage-minimap-node--datasetVersion { fill: var(--lineage-dataset); }
+.lineage-minimap-node--modelVersion,
+.lineage-minimap-node--loggedModel { fill: var(--lineage-model); }
+.lineage-minimap-node--codeVersion { fill: var(--muted); }
+.graph-relations {
+  margin-top: 20px;
+  color: var(--muted);
+}
+.graph-relations table { margin-top: 14px; }
+.lineage-graph.narrow .graph-relations { margin: 0 0 20px; }
+.notice.lineage-focus-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+.lineage-relation-end {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  overflow-wrap: anywhere;
+}
+@media (width < 900px) {
+  .lineage-canvas { height: clamp(180px, var(--lineage-content-height), 360px); }
+  .lineage-canvas .react-flow__controls-button {
+    min-width: var(--tap-target);
+    min-height: var(--tap-target);
+  }
+  .lineage-canvas .react-flow__minimap { width: 120px; height: 84px; }
+  .lineage-direction button { min-height: var(--tap-target); }
+}
