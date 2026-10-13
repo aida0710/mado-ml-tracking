@@ -27,7 +27,7 @@ jobs:
           POSTGRES_DB: mmt_test
         ports: ['5432:5432']
         options: >-
-          --health-cmd 'pg_isready -U mmt -d mmt_test'
+          --health-cmd "pg_isready -U mmt -d mmt_test"
           --health-interval 5s --health-timeout 3s --health-retries 20
     env:
       MMT_TEST_DATABASE_URL: postgresql://mmt:ci-fixture-password@127.0.0.1:5432/mmt_test
@@ -51,8 +51,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install SDK and test dependencies
-        run: python3 -m pip install './python[test,telemetry]'
-      - run: python3 -m pytest python/tests
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install './python[test,telemetry]'
+          printf '%s\n' "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - run: .venv/bin/python -m pytest python/tests
 
   images:
     name: Release images
