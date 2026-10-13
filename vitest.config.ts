@@ -5,6 +5,8 @@ import { configDefaults, defineConfig } from 'vitest/config';
 // CASCADE take hundreds of locks. With one file per CPU the run hit "too many clients" and "out
 // of shared memory", so these files run at most this many at a time; everything else stays parallel.
 const DATABASE_TEST_FILE_CONCURRENCY = 6;
+// The hosted runner shares CPU and storage with PostgreSQL; avoid six concurrent migration runs.
+const CI_DATABASE_TEST_FILE_CONCURRENCY = 2;
 const databaseTestFiles = ['apps/api/test/**/*.integration.test.ts'];
 const webTestFiles = ['apps/web/**/*.{test,spec}.?(c|m)[jt]s?(x)'];
 
@@ -34,7 +36,9 @@ export default defineConfig({
         test: {
           name: 'database',
           include: databaseTestFiles,
-          maxWorkers: DATABASE_TEST_FILE_CONCURRENCY,
+          maxWorkers: process.env.CI === 'true'
+            ? CI_DATABASE_TEST_FILE_CONCURRENCY
+            : DATABASE_TEST_FILE_CONCURRENCY,
           sequence: { groupOrder: 1 },
         },
       },
