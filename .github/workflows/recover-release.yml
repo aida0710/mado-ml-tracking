@@ -1,0 +1,116 @@
+name: Recover release publication
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 公開を再開する既存のリリースタグ
+        required: true
+        type: string
+      run_id:
+        description: イメージをビルドした元のRelease実行ID
+        required: true
+        type: string
+      bundle_sha256:
+        description: 元の実行でビルド証明を作成したbundleのSHA-256
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+  packages: write
+
+concurrency:
+  group: release-publication
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: ${{ inputs.tag }}
+  ORIGINAL_RUN_ID: ${{ inputs.run_id }}
+  EXPECTED_BUNDLE_SHA256: ${{ inputs.bundle_sha256 }}
+
+jobs:
+  recover:
+    name: Restore the original release artifacts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: publisher
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          path: release
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: release/package-lock.json
+      - name: Require the original tag, successful CI and matching build run
+        working-directory: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
+        run: |
+          printf '%s\n' "$ORIGINAL_RUN_ID" | grep -Eq '^[0-9]+$'
+          printf '%s\n' "$EXPECTED_BUNDLE_SHA256" | grep -Eq '^[0-9a-f]{64}$'
+          node scripts/release/version.mjs "$RELEASE_TAG"
+          commit=$(scripts/ci/verify-release-source.sh)
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$ORIGINAL_RUN_ID" \
+            | jq -e --arg commit "$commit" --arg tag "$RELEASE_TAG" \
+              '.head_sha == $commit and .head_branch == $tag and .event == "push" and .path == ".github/workflows/release.yml"'
+      - run: npm ci
+        working-directory: release
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+          pattern: manifest-*
+          path: release/manifests
+          merge-multiple: true
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Recreate the identical bundle and verify its original attestation
+        working-directory: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ "$(find manifests -name '*.json' -type f | wc -l)" -eq 5 ]
+          node scripts/release/buildBundle.mjs "$RELEASE_TAG" dist/release manifests
+          archive="dist/release/mado-ml-tracking-$RELEASE_TAG.tar.gz"
+          printf '%s  %s\n' "$EXPECTED_BUNDLE_SHA256" "$archive" | sha256sum -c -
+          gh attestation verify "$archive" --repo "$GITHUB_REPOSITORY" \
+            --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
+            --source-ref "refs/tags/$RELEASE_TAG" --source-digest "$(git rev-parse HEAD)"
+      - name: Check anonymous image downloads and fresh startup
+        working-directory: release
+        run: |
+          for manifest in manifests/*.json; do
+            docker pull "$(jq -r '.image + "@" + .digest' "$manifest")"
+          done
+          node scripts/release/verifyImages.mjs "$RELEASE_TAG" manifests
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Complete the image tags using the corrected publisher
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: publisher/scripts/release/promoteImages.sh release/manifests
+      - name: Publish the verified original bundle
+        working-directory: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$RELEASE_TAG" --json isDraft >/tmp/release.json 2>/dev/null; then
+            jq -e '.isDraft == true' /tmp/release.json >/dev/null
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --draft \
+              --title "mado ML Tracking $RELEASE_TAG" --notes-file "docs/releases/$RELEASE_TAG.md"
+          fi
+          gh release upload "$RELEASE_TAG" dist/release/* --clobber
+          gh release edit "$RELEASE_TAG" --draft=false --prerelease=false --latest
