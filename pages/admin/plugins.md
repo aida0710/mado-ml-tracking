@@ -10,7 +10,7 @@ Mado連携は本体に標準搭載され、本体と同時にビルド・更新�
 ## 設定する
 
 1. API serverに`MMT_PLUGIN_SECRET_KEY`を設定します。`openssl rand -base64 32`で専用の鍵を作り、`.env`へ保存します。ほかの暗号鍵（`MMT_SESSION_ENCRYPTION_KEY`、`MMT_STORAGE_SECRET_KEY`、`MMT_HOOK_SECRET_KEY`）とは別の値にし、DBと一緒に安全に保管します。再起動ごとに作り直さないでください（[環境変数](/reference/environment#mado-plugin)）。
-2. MadoのService Accountsで`lineage:read`、`lineage:write`、必要なら`metrics:read`のキーを用途別に発行します。参照用は検索Namespace、送信用はjobNamespaceと入出力に使うNamespaceを許可します。容量は全体の情報なのでmetrics用のNamespaceはありません。
+2. Madoの**Settings → Access → Access Tokens**で**ML Tracking連携**を選び、DataLineageの**読み取り**と**送信**を許可したアクセストークンを発行します。検索対象、Run、入出力に使うNamespaceを許可します。一つのトークンを参照用・送信用の両欄へ設定できます。容量も取得する場合はCapacityの**読み取り**と対象の接続を選び、容量用の欄にも同じ値を設定します。用途別に分けることもできます。
 3. 全体管理者がProjectの［連携］を開き、［Madoの接続設定］で「Mado API URL」「Mado Web URL」「OpenLineage URL」「許可Namespace」「RunのNamespace」「ストレージの識別名」とキーを入力して［保存］を押します。3つのURLは異なる入口を使えます。「OpenLineage URL」が空欄なら、Mado API URLへ送ります。保存後も初期無効です。
 4. ［接続を確認］で参照と、容量取得用キーがあれば容量APIを確認してから、［連携を有効にする］を押します。確認では架空のRunを送信しません。送信用キーは実Runを1件実行して確認します。
 

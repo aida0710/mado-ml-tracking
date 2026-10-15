@@ -5,11 +5,11 @@ Mado連携は本体に標準搭載され、本体と同時にビルド・更新�
 ## 設定する
 
 1. API serverに`MMT_PLUGIN_SECRET_KEY`を設定します。`openssl rand -base64 32`で専用の鍵を作り、`.env`へ保存します。ストレージ用・通知用の鍵とは分け、DBと一緒に安全に保管します。再起動ごとに作り直さないでください。
-2. MadoのService Accountsで`lineage:read`、`lineage:write`、必要なら`metrics:read`のキーを用途別に発行します。参照用は検索Namespace、送信用はjobNamespaceと入出力に使うNamespaceを許可します。容量は全体の情報なのでmetrics用のNamespaceはありません。
+2. MadoのSettings → Access → Access Tokensで「ML Tracking連携」を選び、DataLineageの「読み取り」と「送信」を許可したアクセストークンを発行します。検索対象、jobNamespace、入出力に使うNamespaceを許可します。一つのトークンを参照用・送信用の両欄へ設定できます。容量も取得する場合はCapacityの「読み取り」を追加し、対象の接続を選択して容量用の欄にも同じトークンを設定します。用途別にトークンを分けることもできます。
 3. Projectの「連携」で全体管理者がMadoのAPI URL、Web URL、OpenLineage URL、許可Namespace、RunのNamespace、ストレージの識別名とキーを保存します。3つのURLは異なる入口を使えます。保存後も初期無効です。
 4. 「接続を確認」で参照と任意の容量APIを確認し、連携を有効にします。確認では架空のRunを送信しません。送信用キーは実Runを1件実行して確認します。
 
-Madoの参照APIには`/api/mado/lineage/catalog`、`datasets/:id`、`versions/:id`が必要です。Mado側の`docs/model-tracking-api.md`を参照してください。Registryへ直接アクセスせず、Madoの認証済みAPIだけを使います。
+Madoの参照APIには`/api/mado/lineage/catalog`、`datasets/:id`、`versions/:id`が必要です。機能別の「読み取り・送信・Capacity読み取り」から、従来APIの`lineage:read`・`lineage:write`・`metrics:read`もMado側で許可されるため、通信先を変更する必要はありません。既存のキーと接続設定も引き続き利用できます。Mado側の`docs/model-tracking-api.md`を参照してください。Registryへ直接アクセスせず、Madoの認証済みAPIだけを使います。
 
 | 操作 | 権限 |
 | --- | --- |

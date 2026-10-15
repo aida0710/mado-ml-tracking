@@ -10,11 +10,11 @@ Mado is built into mado ML Tracking and updated with the application. New Projec
 ## Configure a Project
 
 1. Set `MMT_PLUGIN_SECRET_KEY` on the API server. Generate a dedicated key with `openssl rand -base64 32`, save it in the private `.env`, and retain it across restarts. Use a value different from the other encryption keys (`MMT_SESSION_ENCRYPTION_KEY`, `MMT_STORAGE_SECRET_KEY`, `MMT_HOOK_SECRET_KEY`), and back it up with the DB ([Environment variables](/en/reference/environment#mado-plugin)).
-2. In Mado Service Accounts, issue separate `lineage:read`, `lineage:write`, and optional `metrics:read` keys. Limit read access to the search namespaces and write access to the job and input/output namespaces. Capacity metrics apply to the entire storage system.
+2. In Mado **Settings → Access → Access Tokens**, choose **ML Tracking integration** to allow DataLineage **Read** and **Send**. Allow the namespaces used for search, Runs, and their inputs and outputs. Enter the same token in the read and send fields. For capacity metrics, also allow Capacity **Read**, select the connections, and enter the same value in the capacity field. Separate tokens are also supported.
 3. A global administrator opens **Integrations** in the Project, clicks **Mado connection settings**, enters **Mado API URL**, **Mado Web URL**, **OpenLineage URL**, **Allowed namespaces**, **Run namespace**, **Storage system identifier**, and the keys, and clicks **Save**. The URLs can point to separate entry points; with **OpenLineage URL** left blank, events go to the Mado API URL. Saving a new connection leaves it disabled.
 4. Click **Check connection**, then **Enable integration**. Checking reads the catalog and optional capacity metrics, even while disabled. It can use a read key before the write key is configured and never sends a fabricated Run. Verify the write key with a controlled real Run.
 
-Mado must provide `/api/mado/lineage/catalog`, `datasets/:id`, and `versions/:id`. See its `docs/model-tracking-api.md`. Tracking uses authenticated Mado APIs, never the Registry directly.
+Mado must provide `/api/mado/lineage/catalog`, `datasets/:id`, and `versions/:id`. See its `docs/model-tracking-api.md`. Mado maps the selected feature permissions to the legacy API scopes, so existing endpoints, saved keys, and connection settings continue to work. Tracking uses authenticated Mado APIs, never the Registry directly.
 
 | Operation | Permission |
 | --- | --- |

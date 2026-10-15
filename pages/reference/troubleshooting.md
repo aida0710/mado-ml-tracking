@@ -120,7 +120,7 @@ Mado連携の状態は、Projectの［連携］で確かめます。接続設定
 | 表示 | 直し方 |
 | --- | --- |
 | 「連携キーを保存・利用するには、APIサーバーにMMT_PLUGIN_SECRET_KEYの設定が必要です。」、または`plugin_secret_key_unavailable` | API serverの`.env`に`MMT_PLUGIN_SECRET_KEY`を設定し、APIを再起動する（[環境変数](/reference/environment#mado-plugin)） |
-| 「Madoの参照用・送信用キーを設定してください。」、または`plugin_token_unavailable`・`plugin_secret_decryption_failed` | キーが「未設定」なら、［Madoの接続設定］で「参照用キー（lineage:read）」と「送信用キー（lineage:write）」を入れて［保存］を押す。「設定済み」なのに出るなら、`MMT_PLUGIN_SECRET_KEY`がキーを保存したときと同じ値かを確かめる。元の値に戻せないときは、すべてのキーを入れ直して保存する |
+| 「Madoの参照用・送信用キーを設定してください。」、または`plugin_token_unavailable`・`plugin_secret_decryption_failed` | キーが「未設定」なら、［Madoの接続設定］で「参照用アクセストークン（DataLineage: 読み取り）」と「送信用アクセストークン（DataLineage: 送信）」を入れて［保存］を押す。「設定済み」なのに出るなら、`MMT_PLUGIN_SECRET_KEY`がキーを保存したときと同じ値かを確かめる。元の値に戻せないときは、すべてのキーを入れ直して保存する |
 | ［接続を確認］で「Madoとの通信に失敗しました」（`plugin_request_failed`） | API serverから「Mado API URL」に届くか、参照用キーが有効で「許可Namespace」のすべてを参照できるかを確かめる。容量取得用キーを設定しているなら、そのキーも確かめる（確認では容量も取得する） |
 | 運用アラート「Plugin送信の滞留」 | ［連携］の「イベントの送信状況」で「最終エラー」を確かめ、Madoの状態や接続設定（「OpenLineage URL」、送信用キー）を直してから［イベントを再送］を押す |
 

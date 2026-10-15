@@ -73,13 +73,13 @@ try {
   await dialog.getByLabel('Mado Web URL').fill(settings.madoUrl);
   await dialog.getByLabel('許可Namespace').fill('speech');
   await dialog
-    .getByLabel('参照用キー（lineage:read）', { exact: true })
+    .getByLabel('参照用アクセストークン（DataLineage: 読み取り）', { exact: true })
     .fill(settings.credentials.readToken);
   await dialog
-    .getByLabel('送信用キー（lineage:write）', { exact: true })
+    .getByLabel('送信用アクセストークン（DataLineage: 送信）', { exact: true })
     .fill(settings.credentials.lineageToken);
   await dialog
-    .getByLabel('容量取得用キー（metrics:read、任意）', { exact: true })
+    .getByLabel('容量取得用アクセストークン（Capacity: 読み取り、任意）', { exact: true })
     .fill(settings.credentials.metricsToken);
   await dialog.getByRole('button', { name: '保存', exact: true }).click();
   await dialog.waitFor({ state: 'hidden' });

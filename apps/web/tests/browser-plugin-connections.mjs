@@ -140,10 +140,13 @@ async function switchLanguage(name, target = page) {
   await target.getByRole('button', { name: /^(Language|表示言語):/ }).click();
   await target.getByRole('menuitemradio', { name, exact: true }).click();
 }
-async function screenshot(name) {
+async function screenshot(name, target = page) {
   if (!screenshots) return;
+  for (const field of await page.locator('input[type="password"]').all()) {
+    assert.equal(await field.inputValue(), '', 'Never capture a credential');
+  }
   await mkdir(screenshots, { recursive: true });
-  await page.screenshot({ path: `${screenshots}/${name}.png`, fullPage: true });
+  await target.screenshot({ path: `${screenshots}/${name}.png`, ...(target === page ? { fullPage: true } : {}) });
 }
 async function checkConnection() {
   await page.getByRole('button', { name: '接続を確認', exact: true }).click();
@@ -175,16 +178,18 @@ try {
   assert.equal(calls.some(call => /\/(check|metrics|datasets\/search)$/.test(call.pathname)), false);
   await screenshot('mado-unconfigured-ja');
   await page.getByRole('button', { name: 'Madoの接続設定', exact: true }).click();
+  await dialog().getByLabel('容量取得用アクセストークン（Capacity: 読み取り、任意）').scrollIntoViewIfNeeded();
+  await screenshot('mado-token-settings-ja', dialog());
   await dialog().getByLabel('Mado API URL').fill('http://mado-api.invalid');
   await dialog().getByLabel('Mado Web URL').fill('https://mado-web.invalid');
   await dialog().getByLabel('許可Namespace').fill('review');
-  await dialog().getByLabel('参照用キー（lineage:read）').fill('browser-read-fixture');
+  await dialog().getByLabel('参照用アクセストークン（DataLineage: 読み取り）').fill('browser-read-fixture');
   const languageTab = await context.newPage();
   await languageTab.goto(`${base}/projects/${projectId}/plugins`);
   await languageTab.getByRole('heading', { name: '連携', exact: true }).waitFor();
   await switchLanguage('English', languageTab);
   assert.equal(await dialog().getByLabel('Mado API URL').inputValue(), 'http://mado-api.invalid');
-  assert.equal(await dialog().getByLabel('Read key (lineage:read)').inputValue(), 'browser-read-fixture');
+  assert.equal(await dialog().getByLabel('Read access token (DataLineage: Read)').inputValue(), 'browser-read-fixture');
   await switchLanguage('日本語', languageTab);
   await languageTab.close();
   await dialog().getByRole('button', { name: '保存', exact: true }).click();
@@ -195,9 +200,9 @@ try {
   await checkConnection();
   assert.equal(await page.locator('.storage-metrics').count(), 0, 'Disabled integration must not fetch metrics automatically');
   await page.getByRole('button', { name: 'Madoの接続設定', exact: true }).click();
-  assert.equal(await dialog().getByLabel('参照用キー（lineage:read）').inputValue(), '', 'Saved keys must not be returned to the browser');
-  await dialog().getByLabel('送信用キー（lineage:write）').fill('browser-write-fixture');
-  await dialog().getByLabel('容量取得用キー（metrics:read、任意）').fill('browser-metrics-fixture');
+  assert.equal(await dialog().getByLabel('参照用アクセストークン（DataLineage: 読み取り）').inputValue(), '', 'Saved keys must not be returned to the browser');
+  await dialog().getByLabel('送信用アクセストークン（DataLineage: 送信）').fill('browser-write-fixture');
+  await dialog().getByLabel('容量取得用アクセストークン（Capacity: 読み取り、任意）').fill('browser-metrics-fixture');
   await dialog().getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
   const initialRevision = plugin.configRevision;
@@ -215,7 +220,7 @@ try {
   await switchLanguage('日本語');
 
   console.log('Built-in Mado: credential revision invalidation, fixed-version import and disable');
-  await editConnection('参照用キー（lineage:read）', 'browser-replacement-fixture');
+  await editConnection('参照用アクセストークン（DataLineage: 読み取り）', 'browser-replacement-fixture');
   const importedRevision = plugin.configRevision;
   await checkConnection();
   await searchConnection();
