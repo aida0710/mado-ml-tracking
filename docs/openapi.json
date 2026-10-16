@@ -39291,16 +39291,6 @@
                         "maxLength": 2000,
                         "format": "uri"
                       },
-                      "namespaces": {
-                        "minItems": 1,
-                        "maxItems": 50,
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 512
-                        }
-                      },
                       "jobNamespace": {
                         "type": "string",
                         "minLength": 1,
@@ -39316,7 +39306,6 @@
                       "apiUrl",
                       "webUrl",
                       "lineageUrl",
-                      "namespaces",
                       "jobNamespace",
                       "storageSystemKey"
                     ],
@@ -39325,27 +39314,10 @@
                   "credentials": {
                     "type": "object",
                     "properties": {
-                      "readToken": {
+                      "accessToken": {
                         "type": "string",
                         "minLength": 1,
                         "maxLength": 8192
-                      },
-                      "lineageToken": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 8192
-                      },
-                      "metricsToken": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 8192
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
                       }
                     },
                     "additionalProperties": false
@@ -39551,16 +39523,6 @@
                         "maxLength": 2000,
                         "format": "uri"
                       },
-                      "namespaces": {
-                        "minItems": 1,
-                        "maxItems": 50,
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 512
-                        }
-                      },
                       "jobNamespace": {
                         "type": "string",
                         "minLength": 1,
@@ -39576,7 +39538,6 @@
                       "apiUrl",
                       "webUrl",
                       "lineageUrl",
-                      "namespaces",
                       "jobNamespace",
                       "storageSystemKey"
                     ],
@@ -39585,27 +39546,10 @@
                   "credentials": {
                     "type": "object",
                     "properties": {
-                      "readToken": {
+                      "accessToken": {
                         "type": "string",
                         "minLength": 1,
                         "maxLength": 8192
-                      },
-                      "lineageToken": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 8192
-                      },
-                      "metricsToken": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 8192
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
                       }
                     },
                     "additionalProperties": false
@@ -39744,7 +39688,7 @@
         "tags": [
           "plugins"
         ],
-        "summary": "Madoの参照接続を確認（無効中も実行可能）",
+        "summary": "Madoのアクセストークンの許可範囲を取得して接続を確認（無効中も実行可能）",
         "security": [
           {
             "sessionCookie": []
@@ -39789,7 +39733,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PluginManifest"
+                  "$ref": "#/components/schemas/PluginConnection"
                 }
               }
             }
@@ -39857,8 +39801,23 @@
           "422": {
             "description": "入力が不正",
             "x-mmt-error-codes": [
+              "plugin_token_scope_missing",
+              "plugin_job_namespace_not_allowed",
               "invalid_request",
               "invalid_reference"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "連携先から使える応答を得られない",
+            "x-mmt-error-codes": [
+              "plugin_mado_access_token_unsupported"
             ],
             "content": {
               "application/json": {
@@ -39999,6 +39958,7 @@
           "422": {
             "description": "入力が不正",
             "x-mmt-error-codes": [
+              "plugin_capability_unsupported",
               "invalid_request"
             ],
             "content": {
@@ -60381,6 +60341,44 @@
         ],
         "additionalProperties": false
       },
+      "MadoAccessTokenGrant": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "namespaces": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "scopes",
+          "namespaces",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
       "MadoPluginConfig": {
         "type": "object",
         "properties": {
@@ -60393,12 +60391,6 @@
           "lineageUrl": {
             "type": "string"
           },
-          "namespaces": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
           "jobNamespace": {
             "type": "string"
           },
@@ -60410,7 +60402,6 @@
           "apiUrl",
           "webUrl",
           "lineageUrl",
-          "namespaces",
           "jobNamespace",
           "storageSystemKey"
         ],
@@ -62541,20 +62532,12 @@
           "credentialsConfigured": {
             "type": "object",
             "properties": {
-              "readToken": {
-                "type": "boolean"
-              },
-              "lineageToken": {
-                "type": "boolean"
-              },
-              "metricsToken": {
+              "accessToken": {
                 "type": "boolean"
               }
             },
             "required": [
-              "readToken",
-              "lineageToken",
-              "metricsToken"
+              "accessToken"
             ],
             "additionalProperties": false
           },
@@ -62583,6 +62566,16 @@
               }
             ]
           },
+          "accessTokenGrant": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MadoAccessTokenGrant"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -62603,6 +62596,7 @@
           "tokenConfigured",
           "enabled",
           "manifest",
+          "accessTokenGrant",
           "createdAt"
         ],
         "additionalProperties": false

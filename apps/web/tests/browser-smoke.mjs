@@ -190,7 +190,6 @@ try {
   await page.getByRole('dialog').getByLabel('名前').fill('UI登録Mado');
   await page.getByRole('dialog').getByLabel('Mado API URL').fill('http://mado-api.invalid');
   await page.getByRole('dialog').getByLabel('Mado Web URL').fill('http://mado-web.invalid');
-  await page.getByRole('dialog').getByLabel('許可Namespace').fill('test');
   await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('heading', { name: 'UI登録Mado', exact: true }).waitFor();
   assert.equal(api.state.plugins.length, 2, 'global admin registration did not reach the API');
@@ -265,7 +264,7 @@ try {
         name: 'Forbidden',
         config: {
           apiUrl: 'http://mado-api.invalid', webUrl: 'http://mado-web.invalid',
-          lineageUrl: 'http://mado-api.invalid', namespaces: ['test'],
+          lineageUrl: 'http://mado-api.invalid',
           jobNamespace: 'test', storageSystemKey: 'test',
         },
         enabled: false,
@@ -285,9 +284,11 @@ try {
   await page.getByText(/保存しました: UI検索データ/).waitFor();
   await page.getByRole('button', { name: 'イベントを再送' }).click();
   await page.getByText(/イベントをキューに追加しました: 2/).waitFor();
-  api.state.plugins[0].credentialsConfigured.metricsToken = false;
+  // Capacity Read is removed from the token in Mado; the next check no longer shows metrics.
+  api.state.madoAccessTokenGrant = { ...api.state.madoAccessTokenGrant, scopes: ['lineage:read', 'lineage:write'] };
   api.state.plugins[0].configRevision++;
   api.state.plugins[0].manifest = null;
+  api.state.plugins[0].accessTokenGrant = null;
   const metricsCalls = api.state.calls.filter(
     (call) => call.path.endsWith('/metrics') && call.path.includes('/plugins/'),
   ).length;

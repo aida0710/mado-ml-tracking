@@ -32,6 +32,9 @@ export async function startMadoVerificationServer() {
   const { mountMetricsRoutes } = await import(
     pathToFileURL(path.join(madoRoot, 'api/routes/metrics.ts')).href
   );
+  const { mountServiceAccessTokenRoutes } = await import(
+    pathToFileURL(path.join(madoRoot, 'api/routes/service-access-token.ts')).href
+  );
 
   const datasetId = randomUUID(),
     versionId = randomUUID();
@@ -67,16 +70,27 @@ export async function startMadoVerificationServer() {
     createdAt: version.createdAt,
     versions: [version],
   };
-  const readToken = randomBytes(24).toString('hex'),
-    writeToken = randomBytes(24).toString('hex'),
-    metricsToken = randomBytes(24).toString('hex');
+  // One access token reads datasets, sends run records and reads capacity, like Mado's ML Tracking preset.
+  const accessToken = randomBytes(24).toString('hex');
+  const principal = {
+    serviceAccountId: randomUUID(),
+    keyId: randomUUID(),
+    keyName: 'ML Tracking verification',
+    scopes: ['lineage:read', 'lineage:write', 'metrics:read'],
+    namespaces: ['speech', 'mado-model-tracking', 'local'],
+    expiresAt: null,
+  };
+  const authenticate = async (token: string) => (token === accessToken ? principal : null);
   const events: Array<{
     eventType: string;
     inputs: Array<{ name: string; namespace: string; facets: unknown }>;
     outputs: Array<{ name: string; namespace: string; facets: unknown }>;
   }> = [];
   const registry = {
-    searchDatasets: async () => ({ results: [dataset], totalCount: 1 }),
+    searchDatasets: async (query: { namespace?: string }) =>
+      !query.namespace || query.namespace === dataset.namespace
+        ? { results: [dataset], totalCount: 1 }
+        : { results: [], totalCount: 0 },
     getDataset: async () => dataset,
     getVersion: async () => version,
     ingestOpenLineage: async (event: (typeof events)[number]) => {
@@ -86,14 +100,10 @@ export async function startMadoVerificationServer() {
   };
   const mado = new Hono(),
     madoPrivate = new Hono();
-  mountServiceLineageRoutes(madoPrivate, {
-    registry,
-    authenticate: async (token: string) =>
-      token === readToken ? { scopes: ['lineage:read'], namespaces: ['speech'] } : null,
-  });
+  mountServiceAccessTokenRoutes(madoPrivate, { authenticate });
+  mountServiceLineageRoutes(madoPrivate, { registry, authenticate });
   mountMetricsRoutes(madoPrivate, {
-    authenticate: async (token: string) =>
-      token === metricsToken ? { scopes: ['metrics:read'] } : null,
+    authenticate,
     collectors: [
       {
         name: 'capacity',
@@ -115,21 +125,8 @@ export async function startMadoVerificationServer() {
   });
   mado.route('/api/mado', madoPrivate);
   const lineage = new Hono();
-  mountOpenLineageRoutes(lineage, {
-    registry,
-    auth: {
-      authenticate: async (token: string) =>
-        token === writeToken
-          ? {
-              serviceAccountId: randomUUID(),
-              keyId: randomUUID(),
-              scopes: ['lineage:write'],
-              namespaces: ['mado-model-tracking', 'local'],
-            }
-          : null,
-    },
-  });
+  mountOpenLineageRoutes(lineage, { registry, auth: { authenticate } });
   mado.route('/api', lineage);
   const server = await listen(mado);
-  return { ...server, events, readToken, writeToken, metricsToken, datasetId, versionId };
+  return { ...server, events, accessToken, datasetId, versionId };
 }

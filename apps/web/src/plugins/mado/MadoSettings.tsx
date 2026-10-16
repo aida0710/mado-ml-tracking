@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { MADO_SCOPES } from '@mmt/contracts';
 import { useAuth } from '../../hooks/useAuth';
 import { useProject } from '../../hooks/useProject';
 import { usePluginOutboxSummary } from '../../hooks/usePluginOutboxSummary';
@@ -11,10 +12,12 @@ import { PluginOutboxStatus } from '../../components/PluginOutboxStatus';
 import { PluginStorageMetrics } from '../../components/PluginStorageMetrics';
 import type { PluginSettingsProps } from '../types';
 import { MadoSettingsDialog } from './MadoSettingsDialog';
+import {
+  formatMadoTokenExpiry, formatMadoTokenNamespaces, formatMadoTokenPermissions,
+} from './madoAccessTokenGrantText';
 import { useLocale } from '../../i18n/useLocale';
 import { pluginsText } from '../../i18n/plugins';
 import { text } from '../../i18n/catalog';
-import { formatList } from '../../i18n/textJoining';
 
 export function MadoSettings({ plugin, onSaved }: PluginSettingsProps) {
   useLocale();
@@ -23,8 +26,10 @@ export function MadoSettings({ plugin, onSaved }: PluginSettingsProps) {
   const [showEdit, setShowEdit] = useState(false);
   const canManage = isProjectAdmin || user.isAdmin;
   const ready = plugin?.configurationStatus === 'ready';
-  const canCheck = !!plugin?.config && plugin.credentialsConfigured.readToken && plugin.secretStorageAvailable;
+  const canCheck = !!plugin?.config && plugin.credentialsConfigured.accessToken && plugin.secretStorageAvailable;
   const canCall = ready && plugin.enabled && plugin.tokenConfigured;
+  const grant = plugin?.accessTokenGrant ?? null;
+  const canReadCapacity = grant?.scopes.includes(MADO_SCOPES.metricsRead) ?? false;
   const outbox = usePluginOutboxSummary(project.id, canManage ? plugin?.id ?? null : null);
   const connection = useMadoPluginConnection({ projectId: project.id, plugin, onSaved, onRetried: outbox.reload });
   return <>
@@ -40,10 +45,11 @@ export function MadoSettings({ plugin, onSaved }: PluginSettingsProps) {
       [pluginsText.madoApiUrl, plugin.config.apiUrl],
       [pluginsText.madoWebUrl, plugin.config.webUrl],
       [pluginsText.madoLineageUrl, plugin.config.lineageUrl],
-      [pluginsText.madoNamespaces, formatList(plugin.config.namespaces)],
-      [pluginsText.madoReadToken, plugin.credentialsConfigured.readToken ? pluginsText.credentialConfigured : pluginsText.credentialMissing],
-      [pluginsText.madoLineageToken, plugin.credentialsConfigured.lineageToken ? pluginsText.credentialConfigured : pluginsText.credentialMissing],
-      [pluginsText.madoMetricsToken, plugin.credentialsConfigured.metricsToken ? pluginsText.credentialConfigured : pluginsText.credentialMissing],
+      [pluginsText.madoJobNamespace, plugin.config.jobNamespace],
+      [pluginsText.madoAccessToken, plugin.credentialsConfigured.accessToken ? pluginsText.credentialConfigured : pluginsText.credentialMissing],
+      [pluginsText.madoTokenPermissions, grant ? formatMadoTokenPermissions(grant) : pluginsText.madoGrantNotChecked],
+      [pluginsText.madoNamespaces, grant ? formatMadoTokenNamespaces(grant) : pluginsText.madoGrantNotChecked],
+      [pluginsText.madoTokenExpiresAt, grant ? formatMadoTokenExpiry(grant) : pluginsText.madoGrantNotChecked],
     ]} />}
     <div className="section-actions mado-settings-actions">
       {user.isAdmin && <>
@@ -75,7 +81,7 @@ export function MadoSettings({ plugin, onSaved }: PluginSettingsProps) {
       {connection.success.kind === 'checked' ? text.checked : `${text.queuedEvents}: ${connection.success.count}`}
     </p>}
     {canManage && plugin && <PluginOutboxStatus summary={outbox} />}
-    {canManage && canCall && connection.checked && plugin.credentialsConfigured.metricsToken &&
+    {canManage && canCall && connection.checked && canReadCapacity &&
       <PluginStorageMetrics pluginId={plugin.id} />}
     {canManage && canCall && <PluginDatasetSearch
       projectId={project.id} plugin={plugin} isChecked={connection.checked}

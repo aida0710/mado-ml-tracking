@@ -72,11 +72,7 @@ try {
       projectId: project.id,
       experimentId: experiment.id,
       madoUrl: mado.url,
-      credentials: {
-        readToken: mado.readToken,
-        lineageToken: mado.writeToken,
-        metricsToken: mado.metricsToken,
-      },
+      credentials: { accessToken: mado.accessToken },
       madoVersionId: mado.versionId,
     }),
     { mode: 0o600 },

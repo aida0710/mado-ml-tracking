@@ -6,7 +6,9 @@ import type { PluginClientFactory } from '../src/services/pluginService.js';
 import { parseSecretKey } from '../src/security/secretEncryption.js';
 import { executionFixture, projectFixture, referenceDigest } from './fixtures.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
-import { MADO_CONFIG_FIXTURE, MADO_CREDENTIALS_FIXTURE, madoClientStub, madoPluginInput } from './pluginFixtures.js';
+import {
+  MADO_ACCESS_TOKEN_GRANT_FIXTURE, MADO_CONFIG_FIXTURE, MADO_CREDENTIALS_FIXTURE, madoClientStub, madoPluginInput,
+} from './pluginFixtures.js';
 
 // Includes hex letters so uppercasing always changes the request's representation.
 const MADO_VERSION_ID_FIXTURE = 'e5aab0f8-acdc-40a4-8177-107b7ca5dba7';
@@ -104,8 +106,7 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
     });
     expect(rejected.status).toBe(503);
     const failure = await rejected.text();
-    expect(failure).not.toContain(MADO_CREDENTIALS_FIXTURE.readToken!);
-    expect(failure).not.toContain(MADO_CREDENTIALS_FIXTURE.lineageToken!);
+    expect(failure).not.toContain(MADO_CREDENTIALS_FIXTURE.accessToken!);
     expect((await request(application.app, `${fixture.basePath}/plugins/${saved.id}`, {
       method: 'PATCH', cookie: fixture.administrator.cookie, body: { enabled: true },
     })).status).toBe(422);
@@ -121,12 +122,12 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
         method: 'POST', cookie: fixture.administrator.cookie, body: input,
       }),
     );
-    expect(connection.credentialsConfigured).toEqual({ readToken: true, lineageToken: true, metricsToken: false });
+    expect(connection.credentialsConfigured).toEqual({ accessToken: true });
     const row = (await harness.database.query('SELECT encrypted_credentials,secret_key_id FROM plugin_connections WHERE id=$1', [connection.id])).rows[0];
     expect(Buffer.isBuffer(row.encrypted_credentials)).toBe(true);
     expect(row.secret_key_id).toBe(harness.config.pluginSecretKey!.id);
-    expect(row.encrypted_credentials.includes(Buffer.from(input.credentials.readToken!))).toBe(false);
-    expect(JSON.stringify(connection)).not.toContain(input.credentials.readToken);
+    expect(row.encrypted_credentials.includes(Buffer.from(input.credentials.accessToken!))).toBe(false);
+    expect(JSON.stringify(connection)).not.toContain(input.credentials.accessToken);
     const availabilityPath = `${fixture.basePath}/plugins/availability`;
     for (const identity of [fixture.viewer, fixture.editor]) {
       expect((await request(harness.app, `${fixture.basePath}/plugins`, { cookie: identity.cookie })).status).toBe(403);
@@ -138,7 +139,7 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
         configRevision: connection.configRevision, webUrl: input.config.webUrl, canImport: false,
       }]);
       const publicReply = JSON.stringify(reply);
-      for (const excluded of ['apiUrl', 'lineageUrl', 'tokenEnv', 'credentials', 'encrypted', input.credentials.readToken!, input.credentials.lineageToken!])
+      for (const excluded of ['apiUrl', 'lineageUrl', 'tokenEnv', 'credentials', 'encrypted', input.credentials.accessToken!])
         expect(publicReply).not.toContain(excluded);
     }
     expect((await request(harness.app, availabilityPath, { cookie: fixture.outsider.cookie })).status).toBe(403);
@@ -172,38 +173,71 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
       method: 'POST', cookie: fixture.administrator.cookie,
     });
     expect(rejected.status).toBe(503);
-    expect(await rejected.text()).not.toContain(MADO_CREDENTIALS_FIXTURE.readToken!);
+    expect(await rejected.text()).not.toContain(MADO_CREDENTIALS_FIXTURE.accessToken!);
     expect(clientFactory).not.toHaveBeenCalled();
   });
 
-  it('無効なMadoは参照キーだけで接続確認でき、送信も送信待ちの作成も行わない', async () => {
+  it('無効なMadoでも接続確認でトークンの許可範囲を保存し、送信も送信待ちの作成も行わない', async () => {
     const fixture = await projectFixture(harness);
     const sendPayload = vi.fn(async (_payload: string) => undefined);
-    const manifest = vi.fn(madoClientStub().manifest);
-    const clientFactory = vi.fn<PluginClientFactory>(() => madoClientStub({ manifest, sendPayload }));
+    const checkConnection = vi.fn(madoClientStub().checkConnection);
+    const clientFactory = vi.fn<PluginClientFactory>(() => madoClientStub({ checkConnection, sendPayload }));
     const application = createApplication({ config: harness.config, database: harness.database, stores: harness.stores, pluginClientFactory: clientFactory });
     const connection = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins`, {
-      method: 'POST', cookie: fixture.administrator.cookie,
-      body: madoPluginInput({ enabled: false, credentials: { readToken: MADO_CREDENTIALS_FIXTURE.readToken } }),
+      method: 'POST', cookie: fixture.administrator.cookie, body: madoPluginInput({ enabled: false }),
     }));
-    expect(connection.credentialsConfigured).toEqual({ readToken: true, lineageToken: false, metricsToken: false });
-    await entity(await request(application.app, `${fixture.basePath}/plugins/${connection.id}/check`, {
+    expect(connection).toMatchObject({ credentialsConfigured: { accessToken: true }, accessTokenGrant: null, manifest: null });
+    const checked = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins/${connection.id}/check`, {
       method: 'POST', cookie: fixture.administrator.cookie,
     }), 200);
-    expect(manifest).toHaveBeenCalledOnce();
-    expect(clientFactory).toHaveBeenCalledWith(expect.objectContaining({ credentials: { readToken: MADO_CREDENTIALS_FIXTURE.readToken } }));
+    expect(checked).toMatchObject({
+      id: connection.id, enabled: false, configRevision: connection.configRevision,
+      accessTokenGrant: MADO_ACCESS_TOKEN_GRANT_FIXTURE,
+      manifest: { capabilities: ['datasets:search', 'lineage:publish'] },
+    });
+    expect(checkConnection).toHaveBeenCalledOnce();
+    expect(clientFactory).toHaveBeenCalledWith(expect.objectContaining({ credentials: MADO_CREDENTIALS_FIXTURE }));
     expect(sendPayload).not.toHaveBeenCalled();
     expect((await harness.database.query('SELECT id FROM plugin_outbox')).rows).toHaveLength(0);
-    expect((await request(application.app, `${fixture.basePath}/plugins/${connection.id}`, {
-      method: 'PATCH', cookie: fixture.administrator.cookie, body: { enabled: true },
-    })).status).toBe(422);
+    // Saving a token again needs a fresh check: the saved grant described the replaced one.
+    const replaced = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins/${connection.id}`, {
+      method: 'PATCH', cookie: fixture.administrator.cookie,
+      body: { credentials: { accessToken: 'replaced-fixture-token' }, expectedRevision: checked.configRevision },
+    }), 200);
+    expect(replaced).toMatchObject({ accessTokenGrant: null, manifest: null });
   });
 
-  it('保存用の暗号鍵を失っても全キーの再入力で復旧し、省略したキーの誤った消去を防ぐ', async () => {
+  it('容量の読み取りを許可していないトークンでは容量を取得せず、許可を確認した後だけ取得する', async () => {
+    const fixture = await projectFixture(harness);
+    let grant = MADO_ACCESS_TOKEN_GRANT_FIXTURE;
+    const metrics = vi.fn(async () => ({ prometheus: 'mado_storage_bucket_bytes 1\n' }));
+    const application = createApplication({
+      config: harness.config, database: harness.database, stores: harness.stores,
+      pluginClientFactory: () => madoClientStub({ grant, metrics }),
+    });
+    const connection = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins`, {
+      method: 'POST', cookie: fixture.administrator.cookie, body: madoPluginInput(),
+    }));
+    const metricsPath = `${fixture.basePath}/plugins/${connection.id}/metrics`;
+    const check = () => request(application.app, `${fixture.basePath}/plugins/${connection.id}/check`, {
+      method: 'POST', cookie: fixture.administrator.cookie,
+    });
+    expect((await request(application.app, metricsPath, { cookie: fixture.administrator.cookie })).status).toBe(422);
+    await entity(await check(), 200);
+    expect((await request(application.app, metricsPath, { cookie: fixture.administrator.cookie })).status).toBe(422);
+    expect(metrics).not.toHaveBeenCalled();
+    grant = { ...MADO_ACCESS_TOKEN_GRANT_FIXTURE, scopes: [...MADO_ACCESS_TOKEN_GRANT_FIXTURE.scopes, 'metrics:read'] };
+    expect(await entity<PluginConnection>(await check(), 200)).toMatchObject({
+      manifest: { capabilities: ['datasets:search', 'lineage:publish', 'storage:metrics'] },
+    });
+    expect(await entity(await request(application.app, metricsPath, { cookie: fixture.administrator.cookie }), 200))
+      .toEqual({ prometheus: 'mado_storage_bucket_bytes 1\n' });
+  });
+
+  it('保存用の暗号鍵を失ってもアクセストークンの再入力で復旧し、入力しなければ保存済みの値を保つ', async () => {
     const fixture = await projectFixture(harness);
     const saved = await entity<PluginConnection>(await request(harness.app, `${fixture.basePath}/plugins`, {
-      method: 'POST', cookie: fixture.administrator.cookie,
-      body: madoPluginInput({ enabled: false, credentials: { ...MADO_CREDENTIALS_FIXTURE, metricsToken: 'old-fixture-metrics' } }),
+      method: 'POST', cookie: fixture.administrator.cookie, body: madoPluginInput({ enabled: false }),
     }));
     const rotatedKey = parseSecretKey(Buffer.alloc(32, 2).toString('base64'));
     const clientFactory = vi.fn<PluginClientFactory>(() => madoClientStub());
@@ -215,24 +249,21 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
     expect((await request(application.app, endpoint + '/check', {
       method: 'POST', cookie: fixture.administrator.cookie,
     })).status).toBe(503);
-    for (const credentials of [
-      { readToken: 'new-fixture-read' },
-      { readToken: 'new-fixture-read', lineageToken: 'new-fixture-write' },
-    ])
-      expect((await request(application.app, endpoint, {
-        method: 'PATCH', cookie: fixture.administrator.cookie,
-        body: { credentials, expectedRevision: saved.configRevision },
-      })).status).toBe(503);
-    expect((await harness.database.query('SELECT secret_key_id,config_revision FROM plugin_connections WHERE id=$1', [saved.id])).rows[0])
-      .toEqual({ secret_key_id: harness.config.pluginSecretKey!.id, config_revision: saved.configRevision });
+    const renamed = await entity<PluginConnection>(await request(application.app, endpoint, {
+      method: 'PATCH', cookie: fixture.administrator.cookie,
+      body: { name: 'Renamed', credentials: {}, expectedRevision: saved.configRevision },
+    }), 200);
+    expect(renamed.credentialsConfigured).toEqual({ accessToken: true });
+    expect((await harness.database.query('SELECT secret_key_id FROM plugin_connections WHERE id=$1', [saved.id])).rows[0].secret_key_id)
+      .toBe(harness.config.pluginSecretKey!.id);
     const restored = await entity<PluginConnection>(await request(application.app, endpoint, {
       method: 'PATCH', cookie: fixture.administrator.cookie,
-      body: { credentials: { readToken: 'new-fixture-read', lineageToken: 'new-fixture-write', metricsToken: null }, expectedRevision: saved.configRevision },
+      body: { credentials: { accessToken: 'new-fixture-token' }, expectedRevision: renamed.configRevision },
     }), 200);
-    expect(restored).toMatchObject({ id: saved.id, tokenConfigured: true, credentialsConfigured: { readToken: true, lineageToken: true, metricsToken: false } });
+    expect(restored).toMatchObject({ id: saved.id, tokenConfigured: true, credentialsConfigured: { accessToken: true } });
     expect((await harness.database.query('SELECT secret_key_id FROM plugin_connections WHERE id=$1', [saved.id])).rows[0].secret_key_id).toBe(rotatedKey.id);
     await entity(await request(application.app, endpoint + '/check', { method: 'POST', cookie: fixture.administrator.cookie }), 200);
-    expect(clientFactory).toHaveBeenCalledWith(expect.objectContaining({ credentials: { readToken: 'new-fixture-read', lineageToken: 'new-fixture-write' } }));
+    expect(clientFactory).toHaveBeenCalledWith(expect.objectContaining({ credentials: { accessToken: 'new-fixture-token' } }));
   });
 
   it('Namespace外の固定バージョンと古い設定での取り込みを拒否し、既存Datasetを作らない', async () => {
@@ -255,7 +286,7 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
     expect((await harness.database.query('SELECT id FROM datasets')).rows).toHaveLength(0);
     await entity(await request(application.app, `${fixture.basePath}/plugins/${connection.id}`, {
       method: 'PATCH', cookie: fixture.administrator.cookie,
-      body: { credentials: { readToken: 'rotated-fixture' }, expectedRevision: connection.configRevision },
+      body: { credentials: { accessToken: 'rotated-fixture' }, expectedRevision: connection.configRevision },
     }), 200);
     datasetVersion.mockClear();
     expect((await request(application.app, endpoint, {
@@ -430,7 +461,7 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
     expect(await application.outbox.dispatchBatch()).toBe(0);
     const updated = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins/${connection.id}`, {
       method: 'PATCH', cookie: fixture.administrator.cookie,
-      body: { credentials: { lineageToken: 'rotated-fixture-write-key' }, expectedRevision: connection.configRevision },
+      body: { credentials: { accessToken: 'rotated-fixture-access-token' }, expectedRevision: connection.configRevision },
     }), 200);
     const changedDestination = await request(application.app, `${fixture.basePath}/plugins/${connection.id}`, {
       method: 'PATCH', cookie: fixture.administrator.cookie,
@@ -444,7 +475,7 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
     expect(attemptedPayloads).toEqual([snapshot.payload, snapshot.payload]);
     expect(attemptedPayloads.map((payload) => JSON.parse(payload).run.runId)).toEqual([run.id, run.id]);
     expect(clientFactory.mock.calls.at(-1)?.[0]).toMatchObject({
-      credentials: { readToken: MADO_CREDENTIALS_FIXTURE.readToken, lineageToken: 'rotated-fixture-write-key' },
+      credentials: { accessToken: 'rotated-fixture-access-token' },
       config: { lineageUrl: MADO_CONFIG_FIXTURE.lineageUrl },
     });
     expect((await harness.database.query('SELECT event_id,payload,payload_hash,status FROM plugin_outbox')).rows).toEqual([{

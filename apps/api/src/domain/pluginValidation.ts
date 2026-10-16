@@ -4,7 +4,6 @@ import { madoPluginConfigSchema } from '@mmt/contracts/schemas';
 // Match Mado's identity limits and bound work for operator-supplied endpoints and credentials.
 const MAX_SERVICE_URL_LENGTH = 2000;
 const MAX_IDENTITY_LENGTH = 512;
-const MAX_NAMESPACE_COUNT = 50;
 const MAX_CREDENTIAL_LENGTH = 8192;
 const MAX_CONNECTION_NAME_LENGTH = 200;
 
@@ -22,22 +21,18 @@ const serviceUrlSchema = z
     );
   }, 'An HTTP URL without credentials, query or fragment is required')
   .transform((value) => value.replace(/\/$/, ''));
-const namespaceSchema = z
+// Runs are recorded in one concrete namespace; Mado's "*" only appears in a token's grant.
+const jobNamespaceSchema = z
   .string()
   .trim()
   .min(1)
   .max(MAX_IDENTITY_LENGTH)
-  .refine((value) => value !== '*', 'Enumerate namespaces');
+  .refine((value) => value !== '*', 'Name one namespace');
 export const madoConfigInputSchema = madoPluginConfigSchema.extend({
   apiUrl: serviceUrlSchema,
   webUrl: serviceUrlSchema,
   lineageUrl: serviceUrlSchema,
-  namespaces: z
-    .array(namespaceSchema)
-    .min(1)
-    .max(MAX_NAMESPACE_COUNT)
-    .refine((values) => new Set(values).size === values.length),
-  jobNamespace: z.string().trim().min(1).max(MAX_IDENTITY_LENGTH),
+  jobNamespace: jobNamespaceSchema,
   storageSystemKey: z.string().trim().min(1).max(MAX_IDENTITY_LENGTH),
 });
 const credentialSchema = z
@@ -46,9 +41,7 @@ const credentialSchema = z
   .max(MAX_CREDENTIAL_LENGTH)
   .refine((value) => !/[\r\n]/.test(value));
 export const madoCredentialsInputSchema = z.strictObject({
-  readToken: credentialSchema.optional(),
-  lineageToken: credentialSchema.optional(),
-  metricsToken: credentialSchema.nullable().optional(),
+  accessToken: credentialSchema.optional(),
 });
 export const pluginCreateSchema = z.strictObject({
   kind: z.literal('mado'),

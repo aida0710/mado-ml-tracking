@@ -16,7 +16,9 @@ import { createHarness, entity, request, testDatabaseUrl, type Harness } from '.
 import { executionFixture, referenceDigest } from './fixtures.js';
 import { seedDemo } from '../src/seed/demoSeed.js';
 import type { BuiltinPluginClient } from '../src/plugins/mado/madoPlugin.js';
-import { MADO_CREDENTIALS_FIXTURE, madoClientStub, madoPluginInput } from './pluginFixtures.js';
+import {
+  MADO_ACCESS_TOKEN_GRANT_FIXTURE, MADO_CREDENTIALS_FIXTURE, madoClientStub, madoPluginInput,
+} from './pluginFixtures.js';
 
 describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL）', () => {
   let harness: Harness;
@@ -234,10 +236,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
     expect(clientFactory).toHaveBeenCalledOnce();
     expect(clientFactory).toHaveBeenCalledWith(expect.objectContaining({
       config: madoPluginInput().config,
-      credentials: expect.objectContaining({
-        readToken: MADO_CREDENTIALS_FIXTURE.readToken,
-        lineageToken: MADO_CREDENTIALS_FIXTURE.lineageToken,
-      }),
+      credentials: MADO_CREDENTIALS_FIXTURE,
       pluginId: approved.id,
     }));
   });
@@ -525,17 +524,22 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
     expect((await harness.database.query('SELECT count(*)::int AS count FROM dataset_versions')).rows[0].count).toBe(1);
   });
 
-  it('容量取得キーを設定したMadoだけmetricsを返し、editorには公開しない', async () => {
+  it('容量の読み取りを許可したトークンで確認したMadoだけmetricsを返し、editorには公開しない', async () => {
     const fixture = await executionFixture(harness);
+    const grant = { ...MADO_ACCESS_TOKEN_GRANT_FIXTURE, scopes: [...MADO_ACCESS_TOKEN_GRANT_FIXTURE.scopes, 'metrics:read'] };
     const application = createApplication({
       config: harness.config, database: harness.database, stores: harness.stores,
-      pluginClientFactory: () => madoClientStub({ metrics: async () => ({ prometheus: 'storage_bytes 12\n' }) }),
+      pluginClientFactory: () => madoClientStub({ grant, metrics: async () => ({ prometheus: 'storage_bytes 12\n' }) }),
     });
     const plugin = await entity<PluginConnection>(
       await request(application.app, `${fixture.basePath}/plugins`, {
-        method: 'POST', cookie: fixture.administrator.cookie,
-        body: madoPluginInput({ name: 'Storage', credentials: { ...MADO_CREDENTIALS_FIXTURE, metricsToken: 'fixture-metrics-key' } }),
+        method: 'POST', cookie: fixture.administrator.cookie, body: madoPluginInput({ name: 'Storage' }),
       }),
+    );
+    const checked = await entity<PluginConnection>(
+      await request(application.app, `${fixture.basePath}/plugins/${plugin.id}/check`, {
+        method: 'POST', cookie: fixture.administrator.cookie,
+      }), 200,
     );
     const endpoint = `${fixture.basePath}/plugins/${plugin.id}/metrics`;
     expect((await request(application.app, endpoint, { cookie: fixture.editor.cookie })).status).toBe(403);
@@ -544,7 +548,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
     await entity(
       await request(application.app, `${fixture.basePath}/plugins/${plugin.id}`, {
         method: 'PATCH', cookie: fixture.administrator.cookie,
-        body: { credentials: { metricsToken: null }, expectedRevision: plugin.configRevision },
+        body: { credentials: { accessToken: 'replaced-fixture-token' }, expectedRevision: checked.configRevision },
       }), 200,
     );
     expect((await request(application.app, endpoint, { cookie: fixture.administrator.cookie })).status).toBe(422);

@@ -1,6 +1,13 @@
 import { z } from 'zod';
-import { isSameUuid, type MadoPluginConfig } from '@mmt/contracts';
 import {
+  allowsAllMadoNamespaces,
+  allowsMadoNamespace,
+  isSameUuid,
+  type MadoAccessTokenGrant,
+  type MadoPluginConfig,
+} from '@mmt/contracts';
+import {
+  madoAccessTokenGrantSchema,
   madoCatalogSchema,
   madoDatasetSchema,
   madoVersionDetailSchema,
@@ -40,11 +47,8 @@ export function createMadoClient({
   }
   const readOrigin = baseUrl(config.apiUrl);
   const lineageOrigin = baseUrl(config.lineageUrl);
-  async function requestText(
-    url: URL,
-    token: string | undefined,
-    payload?: string,
-  ): Promise<string> {
+  async function requestText(url: URL, payload?: string): Promise<string> {
+    const token = credentials.accessToken;
     if (!token) throw new MadoApiError(503);
     let response: Response;
     try {
@@ -88,27 +92,44 @@ export function createMadoClient({
   }
   async function readJson<T>(url: URL, schema: z.ZodType<T>): Promise<T> {
     try {
-      return schema.parse(JSON.parse(await requestText(url, credentials.readToken)));
+      return schema.parse(JSON.parse(await requestText(url)));
     } catch (error) {
       if (error instanceof MadoApiError) throw error;
       throw new MadoApiError(502);
     }
   }
-  function assertNamespace(namespace: string): void {
-    if (!config.namespaces.includes(namespace)) throw new MadoApiError(403);
+  // One client serves one operation, so a grant changed in Mado applies from the next operation.
+  let grantRequest: Promise<MadoAccessTokenGrant> | null = null;
+  function accessTokenGrant(): Promise<MadoAccessTokenGrant> {
+    grantRequest ??= readJson(
+      new URL('api/mado/access-token', readOrigin),
+      madoAccessTokenGrantSchema,
+    );
+    return grantRequest;
+  }
+  async function assertNamespace(namespace: string): Promise<void> {
+    if (!allowsMadoNamespace(await accessTokenGrant(), namespace)) throw new MadoApiError(403);
   }
   return {
-    async catalog(namespace: string, query: string) {
-      assertNamespace(namespace);
+    accessTokenGrant,
+    /** `namespace: null` searches every namespace and requires a token that allows all of them. */
+    async catalog(namespace: string | null, query: string) {
+      const grant = await accessTokenGrant();
+      const isAllowed =
+        namespace === null ? allowsAllMadoNamespaces(grant) : allowsMadoNamespace(grant, namespace);
+      if (!isAllowed) throw new MadoApiError(403);
+      // Mado answers within the requested namespace, or within the grant when searching all.
+      const isRequested = (candidate: string) =>
+        namespace === null ? allowsMadoNamespace(grant, candidate) : candidate === namespace;
       const url = new URL('api/mado/lineage/catalog', readOrigin);
       url.search = new URLSearchParams({
-        namespace,
+        ...(namespace === null ? {} : { namespace }),
         q: query,
         limit: String(SEARCH_PAGE_SIZE),
         offset: '0',
       }).toString();
       const catalog = await readJson(url, madoCatalogSchema);
-      if (catalog.results.some((dataset) => dataset.namespace !== namespace))
+      if (catalog.results.some((dataset) => !isRequested(dataset.namespace)))
         throw new MadoApiError(502);
       return catalog;
     },
@@ -118,7 +139,7 @@ export function createMadoClient({
         new URL(`api/mado/lineage/datasets/${id}`, readOrigin),
         madoDatasetSchema,
       );
-      assertNamespace(dataset.namespace);
+      await assertNamespace(dataset.namespace);
       if (
         !isSameUuid(id, dataset.datasetId) ||
         dataset.versions.some((version) => !isSameUuid(id, version.datasetId))
@@ -132,7 +153,7 @@ export function createMadoClient({
         new URL(`api/mado/lineage/versions/${id}`, readOrigin),
         madoVersionDetailSchema,
       );
-      assertNamespace(version.namespace);
+      await assertNamespace(version.namespace);
       if (!isSameUuid(id, version.id)) throw new MadoApiError(502);
       return version;
     },
@@ -140,11 +161,7 @@ export function createMadoClient({
       let acknowledgment: unknown;
       try {
         acknowledgment = JSON.parse(
-          await requestText(
-            new URL('api/openlineage/v1/lineage', lineageOrigin),
-            credentials.lineageToken,
-            payload,
-          ),
+          await requestText(new URL('api/openlineage/v1/lineage', lineageOrigin), payload),
         );
       } catch (error) {
         if (error instanceof MadoApiError) throw error;
@@ -153,8 +170,7 @@ export function createMadoClient({
       if (!z.object({ accepted: z.literal(true) }).safeParse(acknowledgment).success)
         throw new MadoApiError(502);
     },
-    capacityMetrics: () =>
-      requestText(new URL('api/mado/metrics/capacity', readOrigin), credentials.metricsToken),
+    capacityMetrics: () => requestText(new URL('api/mado/metrics/capacity', readOrigin)),
   };
 }
 export type MadoClient = ReturnType<typeof createMadoClient>;

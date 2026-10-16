@@ -148,6 +148,7 @@ const ERROR_DESCRIPTIONS: Record<number, string> = {
   416: 'Rangeを読めない',
   422: '入力が不正',
   429: '試行回数の上限（Retry-After秒後に再試行）',
+  502: '連携先から使える応答を得られない',
   503: '一時的に処理できない',
 };
 

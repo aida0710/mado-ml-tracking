@@ -97,14 +97,14 @@ See [Notifications and operations alerts](/en/admin/notifications).
 
 ## Mado integration {#mado-plugin}
 
-The Mado integration is built into the API server. There is no separate service and no `.env` of its own. The only variable it needs in the API server's `.env` is the key that encrypts connection keys. Mado URLs, namespaces, and connection keys are not environment variables: a global administrator saves them in **Integrations** in the Project ([Mado integration](/en/admin/plugins)).
+The Mado integration is built into the API server. There is no separate service and no `.env` of its own. The only variable it needs in the API server's `.env` is the key that encrypts Mado access tokens. Mado URLs and access tokens are not environment variables: a global administrator saves them in **Integrations** in the Project. Namespaces are not configured anywhere; Mado reports them for the access token ([Mado integration](/en/admin/plugins)).
 
 | Variable | Default | Content |
 | --- | --- | --- |
-| `MMT_PLUGIN_SECRET_KEY` | None | Key that encrypts Mado connection keys in the database (base64 of 32 bytes). Not needed if you do not use the Mado integration. Without it, connection keys cannot be saved and the integration cannot be enabled |
+| `MMT_PLUGIN_SECRET_KEY` | None | Key that encrypts Mado access tokens in the database (base64 of 32 bytes). Not needed if you do not use the Mado integration. Without it, access tokens cannot be saved and the integration cannot be enabled |
 
 - Generate the key with `openssl rand -base64 32`, and use a value different from the other encryption keys (`MMT_SESSION_ENCRYPTION_KEY`, `MMT_STORAGE_SECRET_KEY`, `MMT_HOOK_SECRET_KEY`).
-- Once connection keys are saved, do not change or remove the key: the saved keys could no longer be decrypted. If the key is lost, restore it or re-enter every saved connection key. Restoring the database needs it too, so keep the key somewhere safe.
+- Once access tokens are saved, do not change or remove the key: the saved tokens could no longer be decrypted. If the key is lost, restore it or re-enter every saved access token. Restoring the database needs it too, so keep the key somewhere safe.
 - `MMT_MADO_PLUGIN_TOKEN`, which the old separate-service setup put on the API server, is no longer read. To move from the old service, see [Migrate a legacy bridge](/en/admin/plugins#migrate-a-legacy-bridge).
 
 ## Other API server settings

@@ -97,14 +97,14 @@ openssl rand -base64 32
 
 ## Mado連携 {#mado-plugin}
 
-Mado連携はAPI serverに標準搭載されています。別のサービスや、連携だけの`.env`はありません。連携のためにAPI serverの`.env`に置くのは、接続キーを暗号化する鍵だけです。MadoのURL、Namespace、接続キーは環境変数ではなく、全体管理者がProjectの［連携］で保存します（[Mado連携](/admin/plugins)）。
+Mado連携はAPI serverに標準搭載されています。別のサービスや、連携だけの`.env`はありません。連携のためにAPI serverの`.env`に置くのは、Madoのアクセストークンを暗号化する鍵だけです。MadoのURLとアクセストークンは環境変数ではなく、全体管理者がProjectの［連携］で保存します。NamespaceはアクセストークンからMadoが返すので、どこにも設定しません（[Mado連携](/admin/plugins)）。
 
 | 変数 | 既定 | 内容 |
 | --- | --- | --- |
-| `MMT_PLUGIN_SECRET_KEY` | なし | Madoの接続キーをDBで暗号化する鍵（base64の32 byte）。Mado連携を使わないなら不要。無いと接続キーを保存できず、連携を有効にできない |
+| `MMT_PLUGIN_SECRET_KEY` | なし | Madoのアクセストークンを、DBで暗号化する鍵（base64の32 byte）。Mado連携を使わないなら不要。無いとアクセストークンを保存できず、連携を有効にできない |
 
 - 鍵は`openssl rand -base64 32`で作り、ほかの暗号鍵（`MMT_SESSION_ENCRYPTION_KEY`、`MMT_STORAGE_SECRET_KEY`、`MMT_HOOK_SECRET_KEY`）とは別の値にします。
-- 接続キーを保存したあとは、鍵を変えたり消したりしないでください。保存済みのキーを復号できなくなります。鍵を失ったときは、元の鍵を戻すか、保存済みの接続キーをすべて入れ直します。DBを復元するときにも要るので、鍵も安全な場所に保管してください。
+- アクセストークンを保存したあとは、鍵を変えたり消したりしないでください。保存済みのトークンを復号できなくなります。鍵を失ったときは、元の鍵を戻すか、保存済みのアクセストークンをすべて入れ直します。DBを復元するときにも要るので、鍵も安全な場所に保管してください。
 - 以前の別サービス方式で本体に置いた`MMT_MADO_PLUGIN_TOKEN`は、もう読みません。旧サービスからの移り方は[旧HTTPサービスから移行する](/admin/plugins#migrate-a-legacy-bridge)を参照してください。
 
 ## そのほかのAPI serverの設定

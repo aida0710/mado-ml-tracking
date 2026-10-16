@@ -20,8 +20,9 @@ export class PluginCredentials {
         '連携キーの保存用の鍵が設定されていません',
         'plugin_secret_key_unavailable',
       );
+    let saved: MadoCredentials;
     try {
-      return JSON.parse(
+      saved = JSON.parse(
         decryptSecret({
           key: this.key,
           context: `plugin-connection:${plugin.id}`,
@@ -35,12 +36,13 @@ export class PluginCredentials {
         'plugin_secret_decryption_failed',
       );
     }
+    // Per-purpose keys saved before migration 067 are ignored; the access token is entered again.
+    return saved.accessToken ? { accessToken: saved.accessToken } : {};
   }
 
-  hasRequiredCredentials(plugin: PluginConnectionRecord): boolean {
+  hasAccessToken(plugin: PluginConnectionRecord): boolean {
     try {
-      const credentials = this.read(plugin);
-      return Boolean(credentials.readToken && credentials.lineageToken);
+      return Boolean(this.read(plugin).accessToken);
     } catch {
       return false;
     }
@@ -53,7 +55,7 @@ export class PluginCredentials {
     >,
     input: MadoPluginCredentialsInput | undefined,
   ) {
-    if (!input || Object.keys(input).length === 0)
+    if (!input?.accessToken)
       return {
         secretKeyId: plugin.secretKeyId,
         encryptedCredentials: plugin.encryptedCredentials,
@@ -65,13 +67,8 @@ export class PluginCredentials {
         'MMT_PLUGIN_SECRET_KEYをAPI serverに設定してください',
         'plugin_secret_key_unavailable',
       );
-    // Replacing all saved values can recover a connection after loss of its old encryption key.
-    const replacesAll =
-      input.readToken &&
-      input.lineageToken &&
-      (!plugin.credentialsConfigured.metricsToken || 'metricsToken' in input);
-    const credentials = { ...(replacesAll ? {} : this.read(plugin)), ...input };
-    if (credentials.metricsToken === null) delete credentials.metricsToken;
+    // A new token replaces the saved value, which also recovers from loss of the old encryption key.
+    const credentials: MadoCredentials = { accessToken: input.accessToken };
     const encrypted = encryptSecret({
       key: this.key,
       plaintext: JSON.stringify(credentials),
@@ -80,11 +77,7 @@ export class PluginCredentials {
     return {
       secretKeyId: encrypted.keyId,
       encryptedCredentials: encrypted.payload,
-      credentialsConfigured: {
-        readToken: Boolean(credentials.readToken),
-        lineageToken: Boolean(credentials.lineageToken),
-        metricsToken: Boolean(credentials.metricsToken),
-      },
+      credentialsConfigured: { accessToken: true },
     };
   }
 }

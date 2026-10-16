@@ -3,14 +3,14 @@ import type {
   ComputeTarget,
   Job,
   PluginConnection,
-  PluginManifest,
   WorkerJob,
 } from '@mmt/contracts';
 import { createApplication } from '../src/app.js';
+import { madoManifest, type MadoConnectionCheck } from '../src/plugins/mado/madoPlugin.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 import { executionFixture } from './fixtures.js';
 import { deferred } from './workbenchFixtures.js';
-import { madoClientStub, madoPluginInput } from './pluginFixtures.js';
+import { MADO_ACCESS_TOKEN_GRANT_FIXTURE, madoClientStub, madoPluginInput } from './pluginFixtures.js';
 
 // Wait on PostgreSQL's actual lock waiter, rather than delaying a competing request by a guessed timeout.
 const MAX_LOCK_OBSERVATIONS = 1000;
@@ -352,7 +352,7 @@ describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立P
       }),
     );
     const endpoint = `${fixture.basePath}/plugins/${plugin.id}`;
-    const manifest = await entity<PluginManifest>(
+    const { manifest, accessTokenGrant } = await entity<PluginConnection>(
       await request(application.app, endpoint + '/check', {
         method: 'POST', cookie: fixture.editor.cookie,
       }), 200,
@@ -369,6 +369,7 @@ describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立P
       }), 200,
     );
     expect(renamed.manifest).toEqual(manifest);
+    expect(renamed.accessTokenGrant).toEqual(accessTokenGrant);
     expect(renamed.configRevision).toBeGreaterThan(plugin.configRevision);
     const changed = await entity<PluginConnection>(
       await request(application.app, endpoint, {
@@ -380,8 +381,8 @@ describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立P
       }), 200,
     );
     expect(changed).toMatchObject({
-      manifest: null, enabled: false, tokenConfigured: true,
-      credentialsConfigured: { readToken: true, lineageToken: true, metricsToken: false },
+      manifest: null, accessTokenGrant: null, enabled: false, tokenConfigured: true,
+      credentialsConfigured: { accessToken: true },
       config: { ...input.config, apiUrl: 'https://different.example.test' },
     });
     expect(changed.configRevision).toBeGreaterThan(renamed.configRevision);
@@ -410,14 +411,14 @@ describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立P
     expect(await bad.text()).not.toContain('fixture-password');
   });
 
-  it('接続確認中にキーが更新されると古い確認結果を保存せず409にする', async () => {
+  it('接続確認中にアクセストークンが更新されると古い確認結果を保存せず409にする', async () => {
     const fixture = await executionFixture(harness);
     const entered = deferred<void>();
-    const returned = deferred<PluginManifest>();
+    const returned = deferred<MadoConnectionCheck>();
     const application = createApplication({
       config: harness.config, database: harness.database, stores: harness.stores,
       pluginClientFactory: () => madoClientStub({
-        manifest: async () => { entered.resolve(); return returned.promise; },
+        checkConnection: async () => { entered.resolve(); return returned.promise; },
       }),
     });
     const plugin = await entity<PluginConnection>(
@@ -434,17 +435,17 @@ describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立P
     await entity(
       await request(application.app, endpoint, {
         method: 'PATCH', cookie: fixture.administrator.cookie,
-        body: { credentials: { readToken: 'rotated-fixture-key' }, expectedRevision: plugin.configRevision },
+        body: { credentials: { accessToken: 'rotated-fixture-token' }, expectedRevision: plugin.configRevision },
       }), 200,
     );
     returned.resolve({
-      id: 'mado', name: 'Mado', version: '1.0.0', protocolVersion: '1.0',
-      capabilities: ['datasets:search', 'lineage:publish'],
+      manifest: madoManifest(MADO_ACCESS_TOKEN_GRANT_FIXTURE),
+      accessTokenGrant: MADO_ACCESS_TOKEN_GRANT_FIXTURE,
     });
     expect((await checking).status).toBe(409);
     expect(
-      (await harness.database.query('SELECT manifest FROM plugin_connections WHERE id=$1', [plugin.id])).rows[0].manifest,
-    ).toBeNull();
+      (await harness.database.query('SELECT manifest,access_token_grant FROM plugin_connections WHERE id=$1', [plugin.id])).rows[0],
+    ).toEqual({ manifest: null, access_token_grant: null });
   });
 
   it('無効中は送信と新規記録を止め、再有効化で既存の同じイベントだけを送る', async () => {

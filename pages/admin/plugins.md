@@ -10,19 +10,23 @@ Mado連携は本体に標準搭載され、本体と同時にビルド・更新�
 ## 設定する
 
 1. API serverに`MMT_PLUGIN_SECRET_KEY`を設定します。`openssl rand -base64 32`で専用の鍵を作り、`.env`へ保存します。ほかの暗号鍵（`MMT_SESSION_ENCRYPTION_KEY`、`MMT_STORAGE_SECRET_KEY`、`MMT_HOOK_SECRET_KEY`）とは別の値にし、DBと一緒に安全に保管します。再起動ごとに作り直さないでください（[環境変数](/reference/environment#mado-plugin)）。
-2. MadoのService Accountsで`lineage:read`、`lineage:write`、必要なら`metrics:read`のキーを用途別に発行します。参照用は検索Namespace、送信用はjobNamespaceと入出力に使うNamespaceを許可します。容量は全体の情報なのでmetrics用のNamespaceはありません。
-3. 全体管理者がProjectの［連携］を開き、［Madoの接続設定］で「Mado API URL」「Mado Web URL」「OpenLineage URL」「許可Namespace」「RunのNamespace」「ストレージの識別名」とキーを入力して［保存］を押します。3つのURLは異なる入口を使えます。「OpenLineage URL」が空欄なら、Mado API URLへ送ります。保存後も初期無効です。
-4. ［接続を確認］で参照と、容量取得用キーがあれば容量APIを確認してから、［連携を有効にする］を押します。確認では架空のRunを送信しません。送信用キーは実Runを1件実行して確認します。
+2. Madoの**Settings → Access → Access Tokens**で、DataLineageの**読み取り**と**送信**を許可したアクセストークンを発行します（プリセットの**ML Tracking連携**で選べます）。Namespaceには、取り込むデータセットのNamespaceと、Runの記録を送るNamespace（既定は`mado-model-tracking`）を許可します。容量メトリクスも見る場合は、Capacityの**読み取り**と対象の接続も許可します。
+3. 全体管理者がProjectの［連携］を開き、［Madoの接続設定］で「Mado API URL」「Mado Web URL」「OpenLineage URL」「RunのNamespace」「ストレージの識別名」「アクセストークン」を入力して［保存］を押します。Namespaceの一覧は入力しません。3つのURLは異なる入口を使えます。「OpenLineage URL」が空欄なら、Mado API URLへ送ります。保存後も初期無効です。
+4. ［接続を確認］を押します。アクセストークンの許可範囲（許可されている操作、許可Namespace、有効期限）をMadoから取得して画面に出し、許可されたNamespaceと、容量の読み取りを許可していれば容量を参照できるかを確かめます。読み取りか送信を許可していないトークンや、「RunのNamespace」を許可していないトークンは、ここで理由を示して断ります。確認では架空のRunを送信しません。確認できたら［連携を有効にする］を押し、送信は実Runを1件実行して確かめます。
 
-Madoの参照APIには`/api/mado/lineage/catalog`、`datasets/:id`、`versions/:id`が必要です。Mado側の`docs/model-tracking-api.md`を参照してください。Registryへ直接アクセスせず、Madoの認証済みAPIだけを使います。
+検索と取り込みでは、その時点でMadoが返す許可範囲を使います。MadoでトークンのNamespaceを足したり外したりしても、接続設定を保存し直す必要はありません。画面の表示は［接続を確認］で更新します。
+
+Madoには、アクセストークン自身の許可範囲を返す`/api/mado/access-token`と、参照API`/api/mado/lineage/catalog`、`datasets/:id`、`versions/:id`が必要です。`/api/mado/access-token`の無いMadoでは、接続確認が「このMadoはアクセストークンの許可範囲の取得（/api/mado/access-token）に対応していません」で止まるので、Madoを更新してください。Mado側の`docs/model-tracking-api.md`を参照してください。Registryへ直接アクセスせず、Madoの認証済みAPIだけを使います。
 
 | 操作 | 権限 |
 | --- | --- |
-| 接続設定・キーの保存、有効切替、旧接続の移行 | 全体管理者 |
+| 接続設定・アクセストークンの保存、有効切替、旧接続の移行 | 全体管理者 |
 | 接続確認、検索、取り込み、容量、再送 | Project admin |
 | 取り込んだデータセットをMadoで見る | Projectを読める利用者 |
 
-キーはAES-256-GCMで暗号化保存し、画面やAPIには設定有無だけを返します。編集時に入力を空にすると既存キーを維持します。容量取得用キーは「容量取得用キーを削除」で削除できます。保存用の鍵を失った場合、旧値を復号できません。保存用の鍵を復旧するか、保存済みのすべてのキーを再入力して保存します。
+アクセストークンはAES-256-GCMで暗号化保存し、画面やAPIには設定の有無だけを返します。編集時に入力を空にすると保存済みのトークンを維持します。保存用の鍵を失った場合、旧値を復号できません。保存用の鍵を復旧するか、アクセストークンを入れ直して保存します。
+
+以前の版で「参照用キー」「送信用キー」「容量取得用キー」を保存した接続は、更新後に未設定と表示されます。3つは1つにまとめられないため、アクセストークンを入れ直して［接続を確認］を押してください。
 
 ## データセットとRun
 
@@ -34,7 +38,7 @@ Runの状態遷移と送信待ちを同じtransactionで保存します。OpenLi
 
 無効中は新しい取り込みと配送を止め、送信待ちを新規作成しません。既に送信中の処理は完了できます。再有効化では既存未送信分だけを再開し、無効中のRunは遡及送信しません。過去の取り込みと送信記録は残ります。
 
-履歴がある接続のAPI/Web/OpenLineage URLは変更できません。別のMadoには［Madoの接続を追加］で新しい名前の接続を作り、既存参照の送信先を保持します。資格情報の更新やNamespace・RunのNamespaceの変更はrevisionを進め、検索・確認の古い結果を破棄します。
+履歴がある接続のAPI/Web/OpenLineage URLは変更できません。別のMadoには［Madoの接続を追加］で新しい名前の接続を作り、既存参照の送信先を保持します。アクセストークンの入れ替えや接続設定の変更はrevisionを進め、検索・確認の古い結果を破棄します。
 
 送信成功直後に応答やDB更新を失うと同じ本文を再送する場合があります。運用者が用意するMado Registryには、同じOpenLineage eventを同じRunとバージョンとして扱う実装が必要です。Mado入口の重複応答だけから、実RegistryのDB動作を保証しません。
 
@@ -43,7 +47,7 @@ Runの状態遷移と送信待ちを同じtransactionで保存します。OpenLi
 migration 059は接続UUID、旧enabled、外部参照、送信待ち、event IDを保持します。旧manifest.id=madoの接続だけを移行候補にし、移行待ちは配送・新規取り込みを止めます。その他の旧Pluginは削除せず、無効化と名前変更だけできます。複数接続は自動統合しません。
 
 1. DBと旧サービスのledger（`PLUGIN_LEDGER_DIRECTORY`）を退避します。旧サービスの送信中の処理を完了させてからAPIを更新します。
-2. 同じ接続の設定画面に、旧サービスの実Mado設定・Namespace・キーを保存します。旧baseUrlはbridgeのURLなのでMado URLへ転用しません。設定保存だけでは配送を再開しません。
+2. 同じ接続の設定画面に、旧サービスの実Mado設定と、そのMadoで発行したアクセストークンを保存します。旧baseUrlはbridgeのURLなのでMado URLへ転用しません。設定保存だけでは配送を再開しません。
 3. 無効または移行待ちで接続確認を行います。旧ledgerがある場合は下の管理スクリプトで引き継ぎます。イベントIDと本文hashが一致する記録だけを配送済みにし、違いは409で停止します。
 4. 参照結果と設定先を確認して［移行を完了］を押します。この操作は旧enabledを維持するため、無効で確認を進めたい場合は先に無効にしておきます。送信の確認は、移行完了後に連携を有効にしてから、検証用の実Runを1件実行し、START/COMPLETEと入出力を確認します。無効中のRunは送信されず、後から有効にしても遡及送信しません。
 5. 旧サービスに依存しなくなったことを確認し、旧bridgeを停止してbridge用キーを失効します。本体の`MMT_MADO_PLUGIN_TOKEN`と旧サービスの`MMT_PLUGIN_TOKEN`は新方式には不要です。
