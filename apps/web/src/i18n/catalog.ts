@@ -56,6 +56,7 @@ export const lineageRelationLabels: Record<string, string> = localized({
   parentModel: '親モデル',
   output: 'データ出力',
   parentDataset: '親データセット',
+  reference: '根拠・資料の参照',
 }, english.lineageRelationLabels);
 
 // Text that embeds values. Kept apart from `text` so every `text` entry stays a plain string.

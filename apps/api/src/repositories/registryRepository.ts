@@ -18,7 +18,10 @@ export const datasetSelect = `SELECT d.*, (SELECT version FROM dataset_versions 
 export const modelVersionSelect =
   `SELECT v.*,m.family,${modelTrainingSourceRunIdColumn} FROM model_versions v JOIN models m ON m.id=v.model_id`;
 export const datasetVersionSelect =
-  `SELECT v.*,d.name,d.namespace,${datasetVersionParentIdsColumn} FROM dataset_versions v JOIN datasets d ON d.id=v.dataset_id`;
+  `SELECT v.*,d.name,d.namespace,${datasetVersionParentIdsColumn},
+   COALESCE(v.source_run_id,(SELECT source_id FROM lineage_relation_additions
+     WHERE project_id=v.project_id AND target_id=v.id AND relation='output')) AS source_run_id
+   FROM dataset_versions v JOIN datasets d ON d.id=v.dataset_id`;
 
 type ReferenceTable =
   | 'experiments'
