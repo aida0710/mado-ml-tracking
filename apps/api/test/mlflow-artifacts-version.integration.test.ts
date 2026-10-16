@@ -224,7 +224,6 @@ describe.skipIf(!testDatabaseUrl)('登録モデルバージョンの固定Artifa
         cookie: fixture.viewer.cookie,
         body: {
           name: 'Version readonly',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['read'],
         },

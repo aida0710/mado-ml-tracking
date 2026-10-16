@@ -151,7 +151,6 @@ describe.skipIf(!testDatabaseUrl)('Runの説明文（独立PostgreSQL）', () =>
         cookie: fixture.editor.cookie,
         body: {
           name: 'Job stand-in',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['read', 'runs:write'],
         },

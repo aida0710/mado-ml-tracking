@@ -144,7 +144,6 @@ try {
   console.log('Run description: MLflow get-run returns the same mlflow.note.content');
   const { token } = await adminApi.post('/tokens', {
     name: 'comments verification',
-    kind: 'personal',
     projectId: project.id,
     scopes: ['read'],
   });

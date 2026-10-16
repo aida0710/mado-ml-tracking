@@ -254,7 +254,7 @@ describe.skipIf(!testDatabaseUrl)('Job限定token（独立PostgreSQL）', () => 
       }),
       await request(harness.app, '/api/tokens', {
         method: 'POST', token: jobToken,
-        body: { name: 'escalate', kind: 'personal', projectId: fixture.project.id, scopes: ['read'] },
+        body: { name: 'escalate', projectId: fixture.project.id, scopes: ['read'] },
       }),
       await request(harness.app, `${fixture.basePath}/automation-rules`, {
         method: 'POST', token: jobToken,

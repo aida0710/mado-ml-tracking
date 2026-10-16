@@ -122,7 +122,6 @@ export async function executionFixture(harness: Harness) {
       cookie: administrator.cookie,
       body: {
         name: 'Test Worker',
-        kind: 'service',
         projectId: project.id,
         scopes: ['worker:execute'],
       },

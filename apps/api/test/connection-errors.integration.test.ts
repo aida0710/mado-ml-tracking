@@ -27,7 +27,7 @@ describe.skipIf(!testDatabaseUrl)('接続先とtokenを間違えたときのエ�
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: fixture.editor.cookie,
-        body: { name: scopes.join(' '), kind: 'personal', projectId: fixture.project.id, scopes },
+        body: { name: scopes.join(' '), projectId: fixture.project.id, scopes },
       }),
     );
     return minted.token;

@@ -362,7 +362,7 @@ describe.skipIf(!testDatabaseUrl)('全履歴のRun検索（独立PostgreSQL）',
           await request(harness.app, '/api/tokens', {
             method: 'POST',
             cookie: fixture.administrator.cookie,
-            body: { name: 'Run search test', kind: 'personal', ...body },
+            body: { name: 'Run search test', ...body },
           }),
         )
       ).token;

@@ -323,7 +323,6 @@ def main() -> None:
             "tokens",
             json={
                 "name": "Temporary workbench verification",
-                "kind": "service",
                 "projectId": project["id"],
                 "scopes": [
                     "read",

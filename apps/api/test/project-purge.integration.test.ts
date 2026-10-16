@@ -220,7 +220,6 @@ describe.skipIf(!testDatabaseUrl)('Projectの完全な削除（独立PostgreSQL�
         cookie: editor.cookie,
         body: {
           name: 'Limited',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['read'],
         },

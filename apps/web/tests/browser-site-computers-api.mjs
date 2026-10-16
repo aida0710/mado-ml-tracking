@@ -601,7 +601,6 @@ try {
   // A token that writes belongs to one Project; --all takes that Project's Jobs on the PC.
   const { token: aliceToken } = await alice.api.post('/tokens', {
     name: 'Alice PC submit',
-    kind: 'personal',
     projectId: sharedProject.project.id,
     scopes: ['read', 'jobs:write'],
   });

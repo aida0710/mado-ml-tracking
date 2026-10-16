@@ -98,7 +98,6 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
       ownerType: 'service_account',
       ownerId: worker.id,
       ownerName: 'gpu-worker',
-      legacy: false,
       tokenPrefix: issued.token.slice(0, 12),
     });
     const run = await fixture.newRun('Inference');
@@ -231,7 +230,7 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: { name: 'admin', kind: 'personal', projectId: fixture.project.id, scopes: ['admin'] },
+        body: { name: 'admin', projectId: fixture.project.id, scopes: ['admin'] },
       }),
     );
     const byToken = await request(harness.app, `${fixture.basePath}/service-accounts`, {
@@ -269,7 +268,6 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
         cookie: fixture.administrator.cookie,
         body: {
           name: 'automation',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['read', 'runs:write', 'tokens:manage'],
           expiresAt: expiresAt.toISOString(),
@@ -370,7 +368,6 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
         cookie: fixture.editor.cookie,
         body: {
           name: 'Notebook',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['read', 'runs:write'],
         },
@@ -392,17 +389,15 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
       ownerId: fixture.editor.userId,
       ownerName: 'editor@localhost',
       tokenPrefix: personal.token.slice(0, 12),
-      legacy: false,
     });
     expect(byName.get('evaluator key')).toMatchObject({
       ownerType: 'service_account',
       ownerId: account.id,
       tokenPrefix: accountToken.token.slice(0, 12),
     });
-    // The fixture's worker token is a personally owned service token: the legacy form.
     expect(byName.get('Test Worker')).toMatchObject({
+      kind: 'personal',
       ownerType: 'user',
-      legacy: true,
       tokenPrefix: expect.any(String),
     });
     expect(listed.items.every((item) => item.token === undefined)).toBe(true);
@@ -434,7 +429,6 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
       cookie: fixture.editor.cookie,
       body: {
         name: 'Two years',
-        kind: 'personal',
         projectId: fixture.project.id,
         scopes: ['read'],
         expiresAt: customExpiry,
@@ -458,7 +452,7 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: fixture.editor.cookie,
-        body: { name: '30 days', kind: 'personal', scopes: ['read'], expiresAt: thirtyDays },
+        body: { name: '30 days', scopes: ['read'], expiresAt: thirtyDays },
       }),
     );
     expect(personal.item.expiresAt).toBe(thirtyDays);
@@ -469,7 +463,7 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
     const account = await serviceAccount(fixture, { name: 'unlimited', role: 'editor' });
     const personal = await entity<IssuedToken>(await request(harness.app, '/api/tokens', {
       method: 'POST', cookie: fixture.editor.cookie,
-      body: { name: 'Unlimited personal', kind: 'personal', projectId: fixture.project.id,
+      body: { name: 'Unlimited personal', projectId: fixture.project.id,
         scopes: ['read'], expiresAt: null },
     }));
     const service = await entity<IssuedToken>(await issueServiceAccountToken(fixture, account, {
@@ -504,7 +498,7 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
     const responses = [
       await request(harness.app, '/api/tokens', {
         method: 'POST', cookie: fixture.editor.cookie,
-        body: { name: 'Past', kind: 'personal', projectId: fixture.project.id, scopes: ['read'], expiresAt },
+        body: { name: 'Past', projectId: fixture.project.id, scopes: ['read'], expiresAt },
       }),
       await issueServiceAccountToken(fixture, account, { scopes: ['read'], expiresAt }),
     ];
@@ -515,43 +509,13 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
     expect((await harness.database.query('SELECT id FROM api_tokens')).rows).toHaveLength(0);
   });
 
-  it('既存の個人所有service tokenは旧形式のまま動き続ける', async () => {
-    const fixture = await executionFixture(harness);
-    // Tokens issued before migration 033 have neither prefix nor issuer, and may never expire.
-    await harness.database.query(
-      'UPDATE api_tokens SET token_prefix=NULL,created_by_user_id=NULL,expires_at=NULL WHERE kind=$1',
-      ['service'],
-    );
-    const claimed = await request(harness.app, '/api/worker/claim', {
-      method: 'POST',
-      token: fixture.workerToken,
-      body: { workerId: 'legacy-worker' },
-    });
-    expect(claimed.status).toBe(200);
-    const listed = await entity<{ items: TokenSummary[] }>(
-      await request(harness.app, `${fixture.basePath}/tokens`, {
-        cookie: fixture.administrator.cookie,
-      }),
-      200,
-    );
-    expect(listed.items).toEqual([
-      expect.objectContaining({
-        name: 'Test Worker',
-        legacy: true,
-        tokenPrefix: null,
-        expiresAt: null,
-        ownerId: fixture.administrator.userId,
-      }),
-    ]);
-  });
-
   it('最終使用日時は間隔をあけてだけ更新する', async () => {
     const fixture = await projectFixture(harness);
     const issued = await entity<IssuedToken>(
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: fixture.viewer.cookie,
-        body: { name: 'Reader', kind: 'personal', projectId: fixture.project.id, scopes: ['read'] },
+        body: { name: 'Reader', projectId: fixture.project.id, scopes: ['read'] },
       }),
     );
     const lastUsedAt = async () =>

@@ -113,7 +113,6 @@ def main() -> int:
             "tokens",
             json={
                 "name": "laptop-sdk",
-                "kind": "personal",
                 "projectId": project_id,
                 "scopes": ["read", "runs:write", "registry:write", "artifacts:write"],
                 "expiresAt": (datetime.now(UTC) + TOKEN_LIFETIME).isoformat().replace("+00:00", "Z"),

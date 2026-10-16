@@ -56,7 +56,7 @@ Changing your own password, your own settings on a computer, and purging an arch
 
 Choose 7, 30, 90 (default), or 365 days, **Never expires**, **Custom duration**, or **Choose from calendar**. A custom duration accepts minutes, hours, or days, including fractional values and durations longer than 365 days. The calendar selects a date and time in the browser's timezone, shown below the field. These options apply to personal and service account tokens.
 
-In the API, `expiresAt: null` means no expiry. Any future timestamp is accepted without a lifetime cap. Omitting the field uses `MMT_TOKEN_DEFAULT_LIFETIME_DAYS` (365 days by default). The legacy `MMT_TOKEN_MAX_LIFETIME_DAYS` setting supplies the default only when the new setting is absent. Past or invalid timestamps return 422 `invalid_expiry`.
+In the API, `expiresAt: null` means no expiry. Any future timestamp is accepted without a lifetime cap. Omitting the field uses `MMT_TOKEN_DEFAULT_LIFETIME_DAYS` (365 days by default). Past or invalid timestamps return 422 `invalid_expiry`.
 
 An expired token returns 401. Issue a new token and replace the old one before it expires.
 
@@ -158,10 +158,6 @@ Service Accounts also appear in **Administration** → **Users** as **Service ac
 A revoked token returns 401 from the next request and cannot be restored. Issuing and revoking are recorded in the audit log as `token.create` and `token.revoke`.
 
 While a Project is archived, tokens limited to it (including those of Service Accounts) return 401 until it is restored. When a Project is deleted permanently, its tokens are revoked and its Service Accounts are disabled ([Create and manage Projects](/en/admin/projects)).
-
-### Legacy tokens
-
-Tokens marked **Legacy** in the list are service tokens owned by a person. They stop when the owner leaves the Project, so replace them with Service Account tokens. Legacy tokens of the running Playground are to be replaced by their expiry (2026-10-15).
 
 ## Job tokens
 

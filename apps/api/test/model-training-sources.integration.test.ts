@@ -337,7 +337,7 @@ describe.skipIf(!testDatabaseUrl)('既存モデル版の学習元（独立Postgr
         await request(harness.app, '/api/tokens', {
           method: 'POST',
           cookie: fixture.editor.cookie,
-          body: { name: 'Restricted', kind: 'personal', projectId: fixture.project.id, scopes },
+          body: { name: 'Restricted', projectId: fixture.project.id, scopes },
         }),
       );
       expect(

@@ -305,7 +305,7 @@ describe.skipIf(!testDatabaseUrl)('探索結果の分析API（独立PostgreSQL�
           await request(harness.app, '/api/tokens', {
             method: 'POST',
             cookie: fixture.administrator.cookie,
-            body: { name: 'Run analysis test', kind: 'personal', ...tokenBody },
+            body: { name: 'Run analysis test', ...tokenBody },
           }),
         )
       ).token;

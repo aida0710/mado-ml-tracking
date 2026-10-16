@@ -120,7 +120,7 @@ export async function siteFixture(harness: Harness, overrides: Record<string, un
     await request(harness.app, '/api/tokens', {
       method: 'POST',
       cookie: fixture.editor.cookie,
-      body: { name: 'Submit', kind: 'personal', projectId: fixture.project.id, scopes: ['read', 'jobs:write'] },
+      body: { name: 'Submit', projectId: fixture.project.id, scopes: ['read', 'jobs:write'] },
     }),
   );
   async function newContainerRun(name = 'Site inference'): Promise<Run> {

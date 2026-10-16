@@ -49,7 +49,7 @@ const DEFAULT_TOKEN_LIFETIME_DAYS = 365;
 // Keep the existing ten-year bound on operator defaults; explicit expiries have no lifetime cap.
 const MAX_TOKEN_DEFAULT_LIFETIME_DAYS = 3650;
 const tokenDefaultLifetimeDaysSchema = z.coerce.number().int().min(1)
-  .max(MAX_TOKEN_DEFAULT_LIFETIME_DAYS).optional();
+  .max(MAX_TOKEN_DEFAULT_LIFETIME_DAYS).default(DEFAULT_TOKEN_LIFETIME_DAYS);
 // An edge proxy plus the web nginx is 2; more than a few is a misconfiguration.
 const MAX_TRUSTED_PROXY_HOPS = 5;
 // Rows of one CSV export (decisions.md); beyond this Excel use gets slow and the filter should narrow.
@@ -161,8 +161,6 @@ const environmentSchema = z.object({
   MMT_REGISTRY_USERNAME: optionalSetting,
   MMT_REGISTRY_PASSWORD: optionalSetting,
   MMT_TOKEN_DEFAULT_LIFETIME_DAYS: tokenDefaultLifetimeDaysSchema,
-  // Accept existing installations' setting as a default, without enforcing the former cap.
-  MMT_TOKEN_MAX_LIFETIME_DAYS: tokenDefaultLifetimeDaysSchema,
   MMT_CHECKPOINT_KEEP_COUNT: z.coerce.number().int().min(1).default(DEFAULT_CHECKPOINT_KEEP_COUNT),
   MMT_CSV_EXPORT_MAX_ROWS: z.coerce.number().int().positive().default(DEFAULT_CSV_EXPORT_MAX_ROWS),
   MMT_REPORT_SNAPSHOT_MAX_BYTES: z.coerce
@@ -395,8 +393,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
             password: settings.MMT_REGISTRY_PASSWORD,
           }
         : null,
-    tokenDefaultLifetimeDays: settings.MMT_TOKEN_DEFAULT_LIFETIME_DAYS
-      ?? settings.MMT_TOKEN_MAX_LIFETIME_DAYS ?? DEFAULT_TOKEN_LIFETIME_DAYS,
+    tokenDefaultLifetimeDays: settings.MMT_TOKEN_DEFAULT_LIFETIME_DAYS,
     checkpointKeepCount: settings.MMT_CHECKPOINT_KEEP_COUNT,
     csvExportMaxRows: settings.MMT_CSV_EXPORT_MAX_ROWS,
     reportSnapshotMaxBytes: settings.MMT_REPORT_SNAPSHOT_MAX_BYTES,

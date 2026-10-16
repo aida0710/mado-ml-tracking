@@ -92,7 +92,7 @@ describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立P
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: { name: 'Jobs only', kind: 'personal', scopes: ['jobs:write'] },
+        body: { name: 'Jobs only', scopes: ['jobs:write'] },
       }),
     );
     expect(

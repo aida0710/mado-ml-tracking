@@ -331,7 +331,7 @@ APIで行う場合（Project adminのbrowser session、または`tokens:manage`�
 
 止めるとき: Service Accountを「無効化」すると、そのtokenは次の要求から401になる。1本だけ止めるときは「Projectのtoken一覧」で失効する。期限が近づいたら新しいtokenを発行し、`mado-tracking-worker install --token-file` で差し替える。
 
-既存の個人所有のservice token（一覧で「旧形式」）は動き続けるが、所有者がProjectを離れると止まる。稼働中Playgroundの旧形式tokenは期限（2026-10-15）までにService Accountのtokenへ置き換える。
+個人が所有するservice tokenと、先頭12文字を保存する前に発行したtokenは、migration 068で失効した（理由は監査ログの`token.revoke`の`details.reason`）。使っていたものはService Accountか個人のtokenを発行し直す。
 
 ### 2. venvへ入れてinstallする（user unit）
 
@@ -486,7 +486,7 @@ API serverは30秒ごとに次を確かめ、見つけたらProjectの「運用�
 
 | 変数 | 既定 | 意味 |
 |---|---|---|
-| `MMT_TOKEN_DEFAULT_LIFETIME_DAYS` | `365` | 期限を省略したAPI tokenの既定日数。1〜3650。`expiresAt: null`は無期限、明示する未来の日時には上限なし。旧`MMT_TOKEN_MAX_LIFETIME_DAYS`は新設定がない場合だけ既定日数として使う |
+| `MMT_TOKEN_DEFAULT_LIFETIME_DAYS` | `365` | 期限を省略したAPI tokenの既定日数。1〜3650。`expiresAt: null`は無期限、明示する未来の日時には上限なし。 |
 | `MMT_REPORT_SNAPSHOT_MAX_BYTES` | `52428800` | 共有レポートの1つのバージョンで「作成時点で固定」したブロックの固定データ（JSONのUTF-8）の合計の上限（バイト）。超える保存は413 `report_snapshot_too_large` でバージョンを作らない。1ブロックは別に5MiB（`REPORT_SNAPSHOT_BLOCK_MAX_BYTES`、定数）まで。正の整数 |
 | `MMT_CSV_EXPORT_MAX_ROWS` | `50000` | `POST /projects/:p/runs/search/export.csv`の最大行数。超えた分は省き、応答ヘッダ`X-MMT-Export-Truncated: true`とCSV末尾の`# truncated: ...`行で示す。正の整数 |
 | `MMT_CHECKPOINT_KEEP_COUNT` | `5` | Runごとに既定の一覧へ出すcheckpointの数（1以上）。超えた古いcheckpointは`retained=false`になり、一覧の既定表示から外れる。Artifactは消さないので再開には使える |

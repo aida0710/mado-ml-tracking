@@ -284,7 +284,6 @@ describe.skipIf(!testDatabaseUrl)('alias変更の履歴（独立PostgreSQL）', 
           cookie: fixture.editor.cookie,
           body: {
             name: scopes.join(' '),
-            kind: 'personal',
             projectId: fixture.project.id,
             scopes,
           },

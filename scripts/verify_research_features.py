@@ -940,7 +940,6 @@ def set_up(session: httpx.Client) -> Research:
         "tokens",
         json={
             "name": "Research features verification",
-            "kind": "service",
             "projectId": project["id"],
             "scopes": [
                 "read",

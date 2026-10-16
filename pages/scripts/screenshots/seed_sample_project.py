@@ -1057,7 +1057,6 @@ def main() -> int:
             "tokens",
             json={
                 "name": "preview seed (1h)",
-                "kind": "personal",
                 "projectId": api.project_id,
                 "scopes": ["read", "runs:write", "registry:write", "artifacts:write"],
                 "expiresAt": expires_in(1 / 24),

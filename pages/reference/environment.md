@@ -53,7 +53,7 @@ chmod 600 .env
 | `MMT_SESSION_ENCRYPTION_KEY` | なし | sessionに保存するAuthentikのtokenの暗号鍵（base64の32 byte）。`oidc`・`hybrid`で必須 |
 | `OIDC_RECHECK_SECONDS` | `60` | SSOのsessionのgroupを確かめ直す間隔（秒） |
 | `OIDC_TOKEN_SYNC_MAX_AGE_SECONDS` | `604800`（7日） | SSOのユーザーのAPI tokenを使える、最後のgroupの同期からの秒数。60以上 |
-| `MMT_TOKEN_DEFAULT_LIFETIME_DAYS` | `365` | API token発行で期限を省略したときの既定日数。1〜3650。`expiresAt: null`は無期限、明示する未来の日時には上限なし。旧`MMT_TOKEN_MAX_LIFETIME_DAYS`はこの設定がない場合だけ既定日数として使う |
+| `MMT_TOKEN_DEFAULT_LIFETIME_DAYS` | `365` | API token発行で期限を省略したときの既定日数。1〜3650。`expiresAt: null`は無期限、明示する未来の日時には上限なし。 |
 
 暗号鍵はターミナルで作ります。`MMT_SESSION_ENCRYPTION_KEY`と`MMT_STORAGE_SECRET_KEY`には別の値を使ってください。
 

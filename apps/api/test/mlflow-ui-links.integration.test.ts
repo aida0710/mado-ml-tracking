@@ -56,7 +56,6 @@ describe.skipIf(!testDatabaseUrl)('MLflowライブラリが出す画面のリン
           cookie: fixture.administrator.cookie,
           body: {
             name: 'mlflow-sdk-links',
-            kind: 'personal',
             projectId: fixture.project.id,
             scopes: ['read', 'runs:write'],
           },

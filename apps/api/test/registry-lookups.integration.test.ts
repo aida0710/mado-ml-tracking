@@ -72,7 +72,7 @@ describe.skipIf(!testDatabaseUrl)('登録画面の候補と表示名の問い合
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: fixture.viewer.cookie,
-        body: { name: 'Lookup token', kind: 'personal', projectId: fixture.project.id, scopes: ['read'] },
+        body: { name: 'Lookup token', projectId: fixture.project.id, scopes: ['read'] },
       }),
     );
     const paths = [`${basePath}/model-families`, `${basePath}/code-versions/${fixture.codeVersion.id}`];

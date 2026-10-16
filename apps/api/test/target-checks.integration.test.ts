@@ -71,7 +71,6 @@ describe.skipIf(!testDatabaseUrl)('Computeの接続確認（独立PostgreSQL）'
           cookie: fixture.administrator.cookie,
           body: {
             name: 'Second Worker',
-            kind: 'service',
             projectId: fixture.project.id,
             scopes: ['worker:execute'],
           },

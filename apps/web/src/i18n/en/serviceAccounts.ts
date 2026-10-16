@@ -29,9 +29,6 @@ export const serviceAccountsText = {
   tokenOwnerUser: 'User',
   tokenOwnerServiceAccount: 'Service account',
   tokenPrefix: 'Prefix',
-  legacyToken: 'Legacy',
-  legacyTokenHint:
-    'A service token owned by a person. It stops when the owner leaves the project. Replace it with a service account token.',
   tokenUsage: 'Configuration example',
   tokenAuthentication: 'Authentication method',
   tokenAuthenticationBearer: 'Bearer (default for MLflow and Mado SDK)',

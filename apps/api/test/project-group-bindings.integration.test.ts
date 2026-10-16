@@ -105,7 +105,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: identity.cookie,
-        body: { name: 'Project token', kind: 'personal', ...project },
+        body: { name: 'Project token', ...project },
       }),
     );
     return minted.token;

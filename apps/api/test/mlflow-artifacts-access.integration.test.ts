@@ -52,7 +52,6 @@ describe.skipIf(!testDatabaseUrl)('MLflow Artifactの権限とowner検証（隔�
         cookie: fixture.viewer.cookie,
         body: {
           name: 'Artifact read test',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['read'],
         },
@@ -84,7 +83,6 @@ describe.skipIf(!testDatabaseUrl)('MLflow Artifactの権限とowner検証（隔�
         cookie: fixture.editor.cookie,
         body: {
           name: 'Artifact write test',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['artifacts:write'],
         },
@@ -146,7 +144,6 @@ describe.skipIf(!testDatabaseUrl)('MLflow Artifactの権限とowner検証（隔�
         cookie: fixture.administrator.cookie,
         body: {
           name: 'Project bounded',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['read', 'artifacts:write'],
         },

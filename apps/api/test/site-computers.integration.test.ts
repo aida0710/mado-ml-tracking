@@ -112,7 +112,6 @@ describe.skipIf(!testDatabaseUrl)('Webで足すコンピュータ（独立Postgr
           cookie,
           body: {
             name: 'Submit',
-            kind: 'personal',
             projectId: fixture.project.id,
             scopes: ['read', 'jobs:write'],
           },

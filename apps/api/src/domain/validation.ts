@@ -276,7 +276,6 @@ export const targetPatchSchema = targetSchema.partial().extend({
 });
 export const tokenCreateSchema = z.strictObject({
   name: nameSchema,
-  kind: z.enum(['personal', 'service']),
   projectId: uuidSchema.nullish(),
   scopes: uniqueScopesSchema,
   expiresAt: z.iso.datetime({ offset: true }).nullish()
