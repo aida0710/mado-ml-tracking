@@ -20,18 +20,10 @@ import {
   metricBatchSchema,
   runCreateSchema,
   runPatchSchema,
-  runStatusSchema,
   uuidSchema,
 } from '../domain/validation.js';
 import { jsonBody, parse, principal, uuidParam, type ApiEnvironment } from '../http/request.js';
 import { runSearchSchema } from './runSearchRoutes.js';
-
-export const runQuerySchema = z.strictObject({
-  experimentId: uuidSchema.optional(),
-  status: runStatusSchema.optional(),
-  q: z.string().max(200).optional(),
-  limit: z.coerce.number().int().min(1).max(1000).default(200),
-});
 
 // Without tail every line comes back (a download); a screen polls the latest lines only.
 export const runLogQuerySchema = z.strictObject({
@@ -125,15 +117,6 @@ export function runRoutes(services: {
       'Content-Type': CSV_CONTENT_TYPE,
       'Content-Disposition': attachmentDisposition(exported.fileName),
       [RUN_EXPORT_TRUNCATED_HEADER]: String(exported.truncated),
-    });
-  });
-  routes.get('/:p/runs', async (context) => {
-    const filter = parse(runQuerySchema, context.req.query());
-    return context.json({
-      items: await runs.list(principal(context), uuidParam(context, 'p'), {
-        ...filter,
-        query: filter.q,
-      }),
     });
   });
   routes.post('/:p/runs', async (context) =>

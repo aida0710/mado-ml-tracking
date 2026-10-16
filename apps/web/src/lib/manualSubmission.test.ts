@@ -9,8 +9,8 @@ import {
 } from './manualSubmission';
 
 const waiting = { ...queuedJob, targetId: siteTarget.id, phase: 'waiting_manual' as const };
-// A global manual site, and a researcher's PC shared with the Project whose Jobs are listed.
-const globalSite = { ...siteTarget, ownerName: null };
+// Both computers are owned; viewers may submit their own Jobs.
+const sharedSite = { ...siteTarget, ownerName: 'Admin' };
 const alicePc = { ...siteTarget, id: 'pc', name: 'Alice PC', ownerUserId: 'alice', ownerName: 'Alice' };
 
 describe('手動投入を待つJob', () => {
@@ -22,8 +22,8 @@ describe('手動投入を待つJob', () => {
       { ...queuedJob, id: 'd' },
       { ...waiting, id: 'e', targetId: 'removed-site' },
     ];
-    expect(manualSubmissionGroups(jobs, [globalSite], { id: 'alice' })).toEqual([
-      { targetId: 'site', targetName: 'Supercomputer', waitingJobs: 2, ownership: { kind: 'global' } },
+    expect(manualSubmissionGroups(jobs, [sharedSite], { id: 'alice' })).toEqual([
+      { targetId: 'site', targetName: 'Supercomputer', waitingJobs: 2, ownership: { kind: 'someoneElse', ownerName: 'Admin' } },
       // A site that is no longer listed keeps its id so the command can still be run.
       {
         targetId: 'removed-site',
@@ -40,18 +40,18 @@ describe('手動投入を待つJob', () => {
       { ...waiting, id: 'b' },
     ];
     const ownership = (viewerId: string) =>
-      manualSubmissionGroups(jobs, [alicePc, globalSite], { id: viewerId }).map((group) => [
+      manualSubmissionGroups(jobs, [alicePc, sharedSite], { id: viewerId }).map((group) => [
         group.targetName,
         group.ownership,
       ]);
     expect(ownership('alice')).toEqual([
       ['Alice PC', { kind: 'own' }],
-      ['Supercomputer', { kind: 'global' }],
+      ['Supercomputer', { kind: 'someoneElse', ownerName: 'Admin' }],
     ]);
     // Another member sees whose computer it is; they still submit their own Jobs on it.
     expect(ownership('bob')).toEqual([
       ['Alice PC', { kind: 'someoneElse', ownerName: 'Alice' }],
-      ['Supercomputer', { kind: 'global' }],
+      ['Supercomputer', { kind: 'someoneElse', ownerName: 'Admin' }],
     ]);
   });
 

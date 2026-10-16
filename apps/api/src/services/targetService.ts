@@ -77,15 +77,6 @@ function targetAdminRequired(): never {
   );
 }
 
-// A private computer serves its owner, so one from before owners must stay public.
-function ownerRequiredForPrivate(): never {
-  throw new DomainError(
-    422,
-    '所有者のいないコンピュータはPrivateにできません',
-    'target_owner_missing',
-  );
-}
-
 async function findTarget(
   connection: Connection,
   targetId: string,
@@ -256,7 +247,6 @@ export class TargetService {
         const updated = { ...target, ...input };
         validateTargetConfiguration(updated, this.config.allowLocalExecutor);
         if (!isGlobalAdministrator(principal) && updated.executor !== 'site') targetAdminRequired();
-        if (updated.visibility === 'private' && !updated.ownerUserId) ownerRequiredForPrivate();
         if (site && updated.executor !== 'site') siteOnly('全体設定はsiteだけの設定です');
         const occupancy = (await first<{ pending: number; active: number }>(
           connection,
@@ -299,10 +289,10 @@ export class TargetService {
             updated.visibility,
           ],
         );
-        // Settings are checked when they or the submission mode change, so an older site that has
-        // not been filled in yet can still be switched off.
-        if (updated.executor === 'site' && (site || updated.submissionMode !== target.submissionMode))
-          await this.updateSite(connection, principal, { target: updated, site });
+        if (updated.executor === 'site')
+          await this.updateSite(connection, principal, {
+            target: updated, site, creating: target.executor !== 'site',
+          });
         // Who opened a private computer to everyone, or closed a public one, is worth finding.
         await writeAuditEvent(connection, {
           ...draft,
@@ -322,11 +312,12 @@ export class TargetService {
   private async updateSite(
     connection: Connection,
     principal: Principal,
-    change: { target: ComputeTarget; site: SiteSettingsInputValues | undefined },
+    change: { target: ComputeTarget; site: SiteSettingsInputValues | undefined; creating: boolean },
   ): Promise<void> {
     const { target } = change;
     await lockSiteSettings(connection, target.id);
     const stored = await findSiteSettings(connection, target.id);
+    if (!stored && !change.creating) notFound('SiteSettings');
     const settings = mergeSiteSettings(
       stored ? siteSettingsValues(stored) : DEFAULT_SITE_SETTINGS,
       change.site ?? {},

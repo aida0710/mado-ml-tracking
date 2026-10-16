@@ -287,7 +287,7 @@ def code_version(
             source={"kind": "inline", "files": files},
             entrypoint=entrypoint,
             test_entrypoint=[],
-            runtime=None,
+            runtime={"kind": "python"},
             requirements=requirements,
             environment=None,
             supported_model_families=[FAMILY],

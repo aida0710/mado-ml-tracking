@@ -66,7 +66,7 @@ export function updateStorageBackendValues(backend: StorageBackend): FormValues 
     signatureVersion: backend.signatureVersion,
     tlsVerify: String(backend.tlsVerify),
     checksumMode: backend.checksumMode,
-    multipartEnabled: String(backend.multipartEnabled ?? true),
+    multipartEnabled: String(backend.multipartEnabled),
     multipartPartSizeMib: String(Math.round(backend.multipartPartSizeBytes / MIB)),
     accessKeyId: backend.accessKeyId ?? '',
     enabled: String(backend.enabled),

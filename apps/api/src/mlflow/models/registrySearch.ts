@@ -38,9 +38,7 @@ const versionNumberField: SearchField = {
 };
 const modelVersionFields: Record<string, SearchField> = {
   name: { expression: 'm.name', numeric: false, acceptsInList: true },
-  // MLflow's name for the version number; `version` is this API's earlier name and stays accepted.
   version_number: versionNumberField,
-  version: versionNumberField,
   run_id: { expression: 'v.source_run_id::text', numeric: false, acceptsInList: true },
   model_id: { expression: 'vm.logged_model_id', numeric: false, acceptsInList: true },
   source_path: { expression: 'vm.artifact_uri', numeric: false, acceptsInList: true },
@@ -54,10 +52,9 @@ const modelVersionFields: Record<string, SearchField> = {
   },
 };
 // MLflow's registry search accepts the attribute., tag. and tags. prefixes (SearchModelUtils,
-// SearchModelVersionUtils); attributes. is this API's earlier spelling and stays accepted.
+// SearchModelVersionUtils).
 const REGISTRY_FIELD_KINDS: Record<string, 'attribute' | 'tag'> = {
   attribute: 'attribute',
-  attributes: 'attribute',
   tag: 'tag',
   tags: 'tag',
 };
@@ -81,7 +78,10 @@ function registrySearch(
   const fields = reference.kind === 'model' ? registeredModelFields : modelVersionFields;
   const tagsColumn = reference.kind === 'model' ? 'mm.tags' : 'vm.tags';
   const resolveField = (field: string): SearchField => {
-    const { kind, key } = splitSearchField(field);
+    // splitSearchField names an unprefixed field `attributes`, a prefix only Run search accepts.
+    const { kind, key } = field.includes('.')
+      ? splitSearchField(field)
+      : { kind: 'attribute', key: field };
     const fieldKind = REGISTRY_FIELD_KINDS[kind];
     if (fieldKind === 'tag') {
       const tagValue = `COALESCE(${tagsColumn},'{}'::jsonb)->>${parameters.add(key)}`;
@@ -93,14 +93,15 @@ function registrySearch(
         numeric: false,
       };
     }
-    const attribute = fieldKind === 'attribute' ? fields[key] : undefined;
+    const attribute =
+      fieldKind === 'attribute' && Object.hasOwn(fields, key) ? fields[key] : undefined;
     if (!attribute) invalidParameter(`検索field ${field} に対応していません`);
     return attribute;
   };
   const filter = compileFilter({ filter: input.filter, parameters, resolveField });
   const orders = input.order_by.map((order) => {
     const parsed = /^([a-z_]+)(?:\s+(ASC|DESC))?$/i.exec(order.trim());
-    const field = parsed ? fields[parsed[1]!] : undefined;
+    const field = parsed && Object.hasOwn(fields, parsed[1]!) ? fields[parsed[1]!] : undefined;
     if (!field) invalidParameter('Model Registryのorder fieldに対応していません');
     return `${field.expression} ${parsed?.[2]?.toUpperCase() ?? 'ASC'} NULLS LAST`;
   });

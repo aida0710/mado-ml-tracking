@@ -14,6 +14,7 @@ from ..artifact_uploads import UploadStateStore
 from ..errors import ApiError, ConfigurationError, LeaseRejected
 from ..http import request_async
 from .artifact_transfer import ArtifactTransferApi
+from .config import DEFAULT_PARALLEL_JOBS
 from .contracts import WorkerJob
 from .job_responses import InvalidWorkerJob, parse_worker_job_response
 from .target_check_claims import ClaimedTargetCheck, parse_claimed_target_check
@@ -36,9 +37,11 @@ class WorkerApi(ArtifactTransferApi):
         transport: httpx.AsyncBaseTransport | None = None,
         upload_state_store: UploadStateStore | None = None,
         ssh_directories: Sequence[Path] = (),
+        parallel_jobs: int = DEFAULT_PARALLEL_JOBS,
         clock: Callable[[], float] = time.monotonic,
     ):
         super().__init__(url=url, token=token, transport=transport, upload_state_store=upload_state_store)
+        self.parallel_jobs = parallel_jobs
         self.worker_info = WorkerInfo(ssh_directories=ssh_directories, clock=clock)
 
     async def request(
@@ -62,14 +65,10 @@ class WorkerApi(ArtifactTransferApi):
     async def request_with_worker_info(
         self, path: str, payload: dict[str, Any], *, retryable: bool
     ) -> dict[str, Any]:
-        """Send a claim or resume with workerInfo, without the fields an older API refuses.
-
-        A refused field is offered again from time to time (newer_request_fields.py).
-        """
-        return await self.worker_info.newer_fields.send_async(
-            lambda offered: self.request(
-                path, {**payload, "workerInfo": self.worker_info.payload(offered)}, retryable=retryable
-            )
+        return await self.request(
+            path,
+            {**payload, "workerInfo": self.worker_info.payload(parallel_jobs=self.parallel_jobs)},
+            retryable=retryable,
         )
 
     async def claim(
@@ -114,18 +113,13 @@ class WorkerApi(ArtifactTransferApi):
         worker_id: str,
         target_ids: Sequence[str],
         *,
-        kinds: Sequence[str] | None,
+        kinds: Sequence[str],
         active_check_ids: Sequence[str] = (),
     ) -> ClaimedTargetCheck | None:
-        """Claim a connection check or directory listing (a resent claim returns the same lease).
-
-        `kinds=None` claims in the form of APIs from before directory listings, which know neither
-        kinds nor activeCheckIds.
-        """
+        """Claim a connection check or directory listing (a resent claim returns the same lease)."""
         payload: dict[str, Any] = {"workerId": worker_id, "targetIds": list(target_ids)}
-        if kinds is not None:
-            payload["kinds"] = list(kinds)
-            payload["activeCheckIds"] = list(active_check_ids)
+        payload["kinds"] = list(kinds)
+        payload["activeCheckIds"] = list(active_check_ids)
         response = await self.request("worker/target-checks/claim", payload)
         return parse_claimed_target_check(response.get("item"), worker_id=worker_id, target_ids=target_ids)
 
@@ -163,7 +157,8 @@ class WorkerApi(ArtifactTransferApi):
         """Register result.json models/datasets; a resent index returns the stored registration."""
         try:
             response = await self.request(
-                f"worker/jobs/{job.id}/outputs", {"leaseId": job.lease_id, "declarations": declarations}
+                f"worker/jobs/{job.id}/outputs",
+                {"version": 2, "leaseId": job.lease_id, "declarations": declarations},
             )
         except ApiError as error:
             if error.status_code in OUTPUT_LEASE_REJECTED_STATUSES or error.code == INVALID_LEASE_CODE:

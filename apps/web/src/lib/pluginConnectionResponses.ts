@@ -9,8 +9,7 @@ function isSavedConnectionObserved(
   return (
     observed.configRevision === saved.configRevision &&
     observed.enabled === saved.enabled &&
-    observed.name === saved.name &&
-    observed.configurationStatus === saved.configurationStatus
+    observed.name === saved.name
   );
 }
 

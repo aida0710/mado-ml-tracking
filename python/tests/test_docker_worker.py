@@ -19,6 +19,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
+from execution_fixtures import pin_execution
 from test_container_inputs import container_payload
 from test_worker import WorkerServer
 
@@ -164,7 +165,9 @@ class ContainerServer(WorkerServer):
 async def execute_job(server, settings, *, executor_factory=JobExecutor):
     worker = Worker(settings, api=server.client(), executor_factory=executor_factory)
     try:
-        await asyncio.wait_for(worker.run_job(WorkerJob.parse(server.payload)), DOCKER_TEST_TIMEOUT_SECONDS)
+        await asyncio.wait_for(
+            worker.run_job(WorkerJob.parse(pin_execution(server.payload))), DOCKER_TEST_TIMEOUT_SECONDS
+        )
     finally:
         await worker.api.close()
         if not server.completions and workspace_for(server.payload).exists():
@@ -275,7 +278,7 @@ def test_docker_cancel_stops_daemon_and_children_before_job_completion(
         worker = Worker(worker_settings, api=server.client())
         ready = asyncio.Event()
         server.log_notifications["container-ready"] = ready
-        task = asyncio.create_task(worker.run_job(WorkerJob.parse(job_payload)))
+        task = asyncio.create_task(worker.run_job(WorkerJob.parse(pin_execution(job_payload))))
         try:
             async with asyncio.timeout(DOCKER_TEST_TIMEOUT_SECONDS):
                 await ready.wait()
@@ -303,7 +306,7 @@ def test_docker_recovery_adopts_one_existing_container_without_restart(
         ready = asyncio.Event()
         server.log_notifications["container-ready"] = ready
         first = Worker(worker_settings, api=server.client())
-        task = asyncio.create_task(first.run_job(WorkerJob.parse(job_payload)))
+        task = asyncio.create_task(first.run_job(WorkerJob.parse(pin_execution(job_payload))))
         try:
             async with asyncio.timeout(DOCKER_TEST_TIMEOUT_SECONDS):
                 await ready.wait()
@@ -474,7 +477,7 @@ def test_worker_restart_during_result_collection_keeps_the_artifact_acknowledgme
             transport=httpx.MockTransport(interrupted_metrics),
         )
         first = Worker(worker_settings, api=api)
-        task = asyncio.create_task(first.run_job(WorkerJob.parse(job_payload)))
+        task = asyncio.create_task(first.run_job(WorkerJob.parse(pin_execution(job_payload))))
         try:
             async with asyncio.timeout(DOCKER_TEST_TIMEOUT_SECONDS):
                 await metrics_started.wait()
@@ -510,7 +513,7 @@ def test_log_thread_failure_after_real_container_start_always_stops_and_removes_
 
     script = "exit 0" if failure == "join" else "trap '' TERM; sleep 60 & wait"
     docker_job(job_payload, docker_image, script=script)
-    specification = execution_specification(WorkerJob.parse(job_payload), worker_settings)
+    specification = execution_specification(WorkerJob.parse(pin_execution(job_payload)), worker_settings)
     execution = CommandExecution(
         tmp_path,
         {

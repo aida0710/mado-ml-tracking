@@ -11,7 +11,9 @@ import { executionFixture } from './fixtures.js';
 const SSH_KEY_PATH = '/home/worker/.ssh/id_gpu_host';
 
 const passingResult: TargetCheckResult = {
-  version: 1,
+  version: 2,
+  host: { machine: null, cpuArch: null, cpuCount: null, memoryTotalBytes: null, homeDirectory: null },
+  pythons: [], directories: [],
   items: [
     { name: 'connection', status: 'ok', code: null, detail: null },
     { name: 'python', status: 'ok', code: null, detail: '3.11.9 /usr/bin/python3' },
@@ -61,6 +63,7 @@ describe.skipIf(!testDatabaseUrl)('Computeの接続確認（独立PostgreSQL）'
           maxConcurrentJobs: 1,
           enabled: false,
           executor: 'ssh',
+          runtimeKinds: ['python'],
         },
       }),
     );
@@ -90,7 +93,7 @@ describe.skipIf(!testDatabaseUrl)('Computeの接続確認（独立PostgreSQL）'
     return request(harness.app, '/api/worker/target-checks/claim', {
       method: 'POST',
       token,
-      body,
+      body: { kinds: ['connection'], ...body as object },
     });
   }
 
@@ -157,7 +160,7 @@ describe.skipIf(!testDatabaseUrl)('Computeの接続確認（独立PostgreSQL）'
         await request(harness.app, '/api/worker/target-checks/claim', {
           method: 'POST',
           cookie: fixture.administrator.cookie,
-          body: { workerId: 'host-1', targetIds: [fixture.sshTarget.id] },
+          body: { kinds: ['connection'], workerId: 'host-1', targetIds: [fixture.sshTarget.id] },
         })
       ).status,
     ).toBe(403);
@@ -166,7 +169,7 @@ describe.skipIf(!testDatabaseUrl)('Computeの接続確認（独立PostgreSQL）'
   it('同じ接続確認を二重にclaimせず、同じworkerの再送には同じleaseを返す', async () => {
     const fixture = await setup();
     const check = await requestCheck(fixture.administrator.cookie, fixture.sshTarget.id);
-    const body = { workerId: 'host-1', targetIds: [fixture.sshTarget.id] };
+    const body = { kinds: ['connection'], workerId: 'host-1', targetIds: [fixture.sshTarget.id] };
     const [first, second] = await Promise.all([
       claimItem(fixture.workerToken, body),
       claimItem(fixture.secondWorkerToken, { ...body, workerId: 'host-2' }),

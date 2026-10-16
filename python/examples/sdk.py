@@ -31,7 +31,7 @@ def main() -> None:
                 weights.write_text(json.dumps({"weight": 2.0, "bias": 1.0}))
                 artifact = run.log_artifact(weights, path="model/weights.json")
             run.register_output_model(
-                name=f"sdk-linear-{run.id}", family="linear", version="v1", artifact_id=artifact["id"]
+                model_name=f"sdk-linear-{run.id}", family="linear", version="v1", artifact_id=artifact["id"]
             )
 
 

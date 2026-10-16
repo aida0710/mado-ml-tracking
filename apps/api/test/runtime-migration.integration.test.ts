@@ -48,6 +48,10 @@ describe.skipIf(!testDatabaseUrl)('既存Registryとtargetのruntime移行（独
       [registered.rows[0].user_id, registered.rows[0].development_user_id],
     );
     const legacy = registered.rows[0];
+    await applyMigrationsBefore(harness.database, '070_require_computer_owners.sql');
+    await harness.database.query('UPDATE compute_targets SET owner_user_id=$1 WHERE id=$2', [
+      legacy.user_id, legacy.target_id,
+    ]);
     await migrate(harness.database);
     await migrate(harness.database);
     // SSO users keep their user.id through user_oidc_identities; development users are not SSO identities.
@@ -93,13 +97,9 @@ describe.skipIf(!testDatabaseUrl)('既存Registryとtargetのruntime移行（独
       kind: 'inline',
       files: { 'main.py': 'pass' },
     });
-    expect(
-      (
-        await harness.database.query('SELECT runtime_kinds FROM compute_targets WHERE id=$1', [
-          legacy.target_id,
-        ])
-      ).rows[0].runtime_kinds,
-    ).toEqual(['python']);
+    expect((await harness.database.query(
+      'SELECT owner_user_id,runtime_kinds FROM compute_targets WHERE id=$1', [legacy.target_id],
+    )).rows).toEqual([{ owner_user_id: legacy.user_id, runtime_kinds: ['python'] }]);
     expect(
       (await harness.database.query('SELECT environment FROM runs WHERE id=$1', [legacy.run_id]))
         .rows[0].environment,

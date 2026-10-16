@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { randomUUID } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -627,7 +628,11 @@ describe.skipIf(!testDatabaseUrl)('公式MLflow 3 tracking契約（隔離Postgre
     expect(
       (
         await entity<{ items: Run[] }>(
-          await request(harness.app, `${fixture.basePath}/runs`, { cookie: fixture.viewer.cookie }),
+          await request(harness.app, `${fixture.basePath}/runs/search`, {
+            cookie: fixture.viewer.cookie,
+            method: 'POST',
+            body: {},
+          }),
           200,
         )
       ).items,
@@ -667,7 +672,11 @@ describe.skipIf(!testDatabaseUrl)('公式MLflow 3 tracking契約（隔離Postgre
     expect(
       (
         await entity<{ items: Run[] }>(
-          await request(harness.app, `${fixture.basePath}/runs`, { cookie: fixture.viewer.cookie }),
+          await request(harness.app, `${fixture.basePath}/runs/search`, {
+            cookie: fixture.viewer.cookie,
+            method: 'POST',
+            body: {},
+          }),
           200,
         )
       ).items,
@@ -1021,7 +1030,7 @@ describe.skipIf(!testDatabaseUrl)('公式MLflow 3 tracking契約（隔離Postgre
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: execution.workerToken,
-        body: { workerId: 'mlflow-worker' },
+        body: { workerInfo, workerId: 'mlflow-worker' },
       }),
       200,
     );
@@ -1086,7 +1095,7 @@ describe.skipIf(!testDatabaseUrl)('公式MLflow 3 tracking契約（隔離Postgre
       await request(harness.app, '/api/worker/resume', {
         method: 'POST',
         token: execution.workerToken,
-        body: { workerId: 'mlflow-worker' },
+        body: { workerInfo, workerId: 'mlflow-worker' },
       }),
       200,
     );

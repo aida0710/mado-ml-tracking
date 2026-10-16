@@ -85,9 +85,8 @@ openssl rand -base64 32
 ### ログインを許すgroupと全体管理者のgroup
 
 - `OIDC_ALLOWED_GROUPS`: ログインを許すgroup（カンマ区切り）。`oidc`と`hybrid`では必須で、空ならAPIが起動しません。どのgroupにも入っていない人はログインできず、ユーザーも作られません。
-- `OIDC_ROLE_MAPPING_JSON`: group→全体のroleの対応表。roleは`admin`（全体管理者）と`user`（ログインだけ）の2つです。ほかの値はAPIの起動時にエラーになります。
+- `OIDC_ROLE_MAPPING_JSON`: group→全体のroleの対応表。roleは`admin`（全体管理者）と`user`（ログインだけ）の2つです。ほかの値はAPIの起動時にエラーになります。設定しなければ、SSOで入る人は誰も全体管理者になりません。
 - `OIDC_DEFAULT_ROLE`: 対応表のどのgroupにも入っていない、許可された人のrole。既定は`user`です。
-- `OIDC_ADMIN_GROUP`: `{"<group>":"admin"}`の省略形です。対応表と両方を書いて、adminのgroupが食い違うとAPIが起動しません。どちらも書かなければ、`mmt-admins`が全体管理者のgroupになります。
 
 複数のgroupに入っている人は、強い方（`admin`）になります。対応表に書いたgroupも`OIDC_ALLOWED_GROUPS`に入れてください。許可されていないgroupだけの人は、対応表に関係なくログインできません。
 

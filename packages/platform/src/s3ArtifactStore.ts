@@ -63,7 +63,7 @@ export function createS3ArtifactStore({
   bucket,
   prefix = '',
   multipartPartSizeBytes = DEFAULT_MULTIPART_PART_SIZE_BYTES,
-  multipartEnabled = true,
+  multipartEnabled,
 }: {
   client: S3Client;
   bucket: string;
@@ -74,7 +74,7 @@ export function createS3ArtifactStore({
    * false sends every put() as one PutObject and offers no multipart store, so upload sessions
    * are refused for the backend. For S3-compatible services whose multipart API fails.
    */
-  multipartEnabled?: boolean;
+  multipartEnabled: boolean;
 }): ArtifactStore {
   const keyPrefix = prefix ? `${prefix.replace(/\/$/, '')}/` : '';
   function objectKey(key: string): string {

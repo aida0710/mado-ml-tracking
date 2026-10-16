@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { Job, Project, WorkerJob, WorkerPresence } from '@mmt/contracts';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
@@ -43,6 +44,7 @@ describe.skipIf(!testDatabaseUrl)('workerの在籍登録とheartbeat途絶（独
   it('claimでworkerが登録され、15秒以内の連続claimでは最終応答を書き換えない', async () => {
     const fixture = await executionFixture(harness);
     const workerInfo = {
+      sshFiles: { keyPaths: [], knownHostsPaths: [] }, capabilities: [],
       version: '0.1.0',
       hostname: 'gpu-host-1',
       parallelJobs: 2,
@@ -57,7 +59,7 @@ describe.skipIf(!testDatabaseUrl)('workerの在籍登録とheartbeat途絶（独
       "UPDATE workers SET last_seen_at=now()-interval '16 seconds' WHERE worker_id='host-1'",
     );
     const aged = await lastSeenAt('host-1');
-    await claim(fixture.workerToken, { workerId: 'host-1' });
+    await claim(fixture.workerToken, { workerInfo, workerId: 'host-1' });
     expect((await lastSeenAt('host-1')).getTime()).toBeGreaterThan(aged.getTime());
 
     const [worker] = await listWorkers(`${fixture.basePath}/workers`, fixture.viewer.cookie);
@@ -65,7 +67,6 @@ describe.skipIf(!testDatabaseUrl)('workerの在籍登録とheartbeat途絶（独
       projectId: fixture.project.id,
       workerId: 'host-1',
       tokenName: 'Test Worker',
-      // Fields omitted by a later claim keep the reported values.
       version: '0.1.0',
       hostname: 'gpu-host-1',
       parallelJobs: 2,
@@ -77,11 +78,11 @@ describe.skipIf(!testDatabaseUrl)('workerの在籍登録とheartbeat途絶（独
 
   it('作業内容が変わったclaimは間隔内でも記録し、120秒途絶したworkerはofflineになる', async () => {
     const fixture = await executionFixture(harness);
-    await claim(fixture.workerToken, { workerId: 'host-1' });
+    await claim(fixture.workerToken, { workerInfo, workerId: 'host-1' });
     await claim(fixture.workerToken, {
       workerId: 'host-1',
       targetIds: [fixture.target.id],
-      workerInfo: { version: '0.2.0' },
+      workerInfo: { ...workerInfo, version: '0.2.0' },
     });
     let [worker] = await listWorkers(`${fixture.basePath}/workers`, fixture.viewer.cookie);
     expect(worker).toMatchObject({
@@ -98,7 +99,7 @@ describe.skipIf(!testDatabaseUrl)('workerの在籍登録とheartbeat途絶（独
     await request(harness.app, '/api/worker/resume', {
       method: 'POST',
       token: fixture.workerToken,
-      body: { workerId: 'host-1' },
+      body: { workerInfo, workerId: 'host-1' },
     });
     [worker] = await listWorkers(`${fixture.basePath}/workers`, fixture.viewer.cookie);
     expect(worker!.status).toBe('online');
@@ -115,7 +116,7 @@ describe.skipIf(!testDatabaseUrl)('workerの在籍登録とheartbeat途絶（独
         body: { runId: run.id, targetId: fixture.target.id, gpuIds: ['0'] },
       }),
     );
-    const claimed = (await claim(fixture.workerToken, { workerId: 'host-1' })).item!;
+    const claimed = (await claim(fixture.workerToken, { workerInfo, workerId: 'host-1' })).item!;
     expect(claimed.job.heartbeatStale).toBe(false);
     const heartbeat = await request(harness.app, `/api/worker/jobs/${claimed.job.id}/heartbeat`, {
       method: 'POST',
@@ -160,7 +161,7 @@ describe.skipIf(!testDatabaseUrl)('workerの在籍登録とheartbeat途絶（独
       cookie: fixture.editor.cookie,
       body: { runId: run.id, targetId: fixture.target.id, gpuIds: ['0'] },
     });
-    const claimed = (await claim(fixture.workerToken, { workerId: 'host-1' })).item!;
+    const claimed = (await claim(fixture.workerToken, { workerInfo, workerId: 'host-1' })).item!;
     await harness.database.query("UPDATE workers SET last_seen_at=now()-interval '90 seconds'");
     const aged = await lastSeenAt('host-1');
     await request(harness.app, `/api/worker/jobs/${claimed.job.id}/heartbeat`, {
@@ -173,7 +174,7 @@ describe.skipIf(!testDatabaseUrl)('workerの在籍登録とheartbeat途絶（独
 
   it('別projectのworkerは見えず、viewerは読めるがscope不足と全体一覧の非管理者は403', async () => {
     const fixture = await executionFixture(harness);
-    await claim(fixture.workerToken, { workerId: 'host-a' });
+    await claim(fixture.workerToken, { workerInfo, workerId: 'host-a' });
     const otherProject = await entity<Project>(
       await request(harness.app, '/api/projects', {
         method: 'POST',
@@ -194,7 +195,7 @@ describe.skipIf(!testDatabaseUrl)('workerの在籍登録とheartbeat途絶（独
         }),
       )
     ).token;
-    await claim(otherToken, { workerId: 'host-b' });
+    await claim(otherToken, { workerInfo, workerId: 'host-b' });
 
     const visibleToViewer = await listWorkers(`${fixture.basePath}/workers`, fixture.viewer.cookie);
     expect(visibleToViewer.map((worker) => worker.workerId)).toEqual(['host-a']);
@@ -242,7 +243,7 @@ describe.skipIf(!testDatabaseUrl)('workerの在籍登録とheartbeat途絶（独
     const response = await request(harness.app, '/api/worker/claim', {
       method: 'POST',
       token: fixture.workerToken,
-      body: { workerId: 'host-1', workerInfo: { parallelJobs: 0 } },
+      body: { workerId: 'host-1', workerInfo: { ...workerInfo, parallelJobs: 0 } },
     });
     expect(response.status).toBe(422);
     expect((await harness.database.query('SELECT 1 FROM workers')).rows).toHaveLength(0);

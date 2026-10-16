@@ -18,7 +18,7 @@ Restart the API after changing values. If a value is malformed or a setting is m
 
 | Variable | Default | Content |
 | --- | --- | --- |
-| `MMT_DATABASE_URL` | None (required) | PostgreSQL connection URL. `DATABASE_URL` also works |
+| `MMT_DATABASE_URL` | None (required) | PostgreSQL connection URL |
 | `NODE_ENV` | `development` | `production` in production. HTTPS URLs become mandatory and development features are disabled |
 | `HOST` | `127.0.0.1` | Address the API listens on |
 | `PORT` | `4182` | Port the API listens on |
@@ -45,7 +45,6 @@ See [Authentication and local accounts](/en/admin/auth) and [Authentik (SSO)](/e
 | `OIDC_ALLOWED_GROUPS` | None | Groups allowed to sign in (comma-separated). Required for `oidc` and `hybrid` |
 | `OIDC_ROLE_MAPPING_JSON` | None | Group → global role mapping. Example: `{"mmt-admins":"admin","mmt-users":"user"}` |
 | `OIDC_DEFAULT_ROLE` | `user` | Role of users in no mapped group |
-| `OIDC_ADMIN_GROUP` | None | Shorthand for `{"<group>":"admin"}`. Without it and the mapping, `mmt-admins` is the administrator group |
 | `OIDC_SCOPES` | `openid profile email offline_access` | Requested scopes. `openid` is required. Refresh tokens also require the Provider's `offline_access` mapping |
 | `OIDC_LABEL` | `Authentik` | Label of the SSO button on the login screen |
 | `OIDC_AUTO_LINK_VERIFIED_EMAIL` | `false` | Whether to link to a local account with the same email automatically |
@@ -105,7 +104,6 @@ The Mado integration is built into the API server. There is no separate service 
 
 - Generate the key with `openssl rand -base64 32`, and use a value different from the other encryption keys (`MMT_SESSION_ENCRYPTION_KEY`, `MMT_STORAGE_SECRET_KEY`, `MMT_HOOK_SECRET_KEY`).
 - Once access tokens are saved, do not change or remove the key: the saved tokens could no longer be decrypted. If the key is lost, restore it or re-enter every saved access token. Restoring the database needs it too, so keep the key somewhere safe.
-- `MMT_MADO_PLUGIN_TOKEN`, which the old separate-service setup put on the API server, is no longer read. To move from the old service, see [Migrate a legacy bridge](/en/admin/plugins#migrate-a-legacy-bridge).
 
 ## Other API server settings
 

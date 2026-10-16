@@ -24,8 +24,6 @@ export const computersText = {
   computerVisibilityPublicHint: 'Jobs from any project can run on this computer.',
   computerVisibilityPrivateHint:
     "Only the owner's jobs and jobs from service accounts created by the owner can run here. Hooks, automation, tasks, and sweeps can run only when their owner owns this computer. Global administrators cannot run jobs here unless they are the owner.",
-  ownerlessComputerVisibilityNotice:
-    'This computer has no owner and remains public. It cannot be made private.',
   siteComputerNotice:
     'Add a site (supercomputer, GPU server, or your PC). You become its owner.',
   projectComputersHint:
@@ -46,10 +44,7 @@ export const computersText = {
 // Text that embeds values.
 export const computersTextTemplates = {
   computerLauncherSeen: (name: string, lastSeen: string) => `${name} (last response: ${lastSeen})`,
-  workerSetUpBy: (ownerName: string | null) =>
-    ownerName
-      ? `Set up by the owner (${ownerName}) or a global administrator.`
-      : 'Set up by a global administrator.',
+  workerSetUpBy: (ownerName: string) => `Set up by the owner (${ownerName}) or a global administrator.`,
 };
 
 export const computerVisibilityHints = {

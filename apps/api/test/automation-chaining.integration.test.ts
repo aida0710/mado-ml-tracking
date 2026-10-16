@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type {
   Code,
@@ -141,7 +142,7 @@ describe.skipIf(!testDatabaseUrl)('自動実行の多段連鎖と既存バージ
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'chain-worker' },
+          body: { workerInfo, workerId: 'chain-worker' },
         }),
         200,
       )

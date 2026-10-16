@@ -257,7 +257,7 @@ export function TargetFields({
       {isNew && !canAddSshOrLocal && <p className="notice">{text.siteComputerNotice}</p>}
       <FormFields fields={targetFields} values={values} onChange={onChange} />
       {kindPicker}
-      <ComputerVisibilityField values={values} onChange={onChange} target={target} />
+      <ComputerVisibilityField values={values} onChange={onChange} />
       {isSite && isNew && <p className="muted">{text.jobShellTemplateHint}</p>}
       <FormFields fields={descriptionFields} values={values} onChange={onChange} />
       {isSite && (

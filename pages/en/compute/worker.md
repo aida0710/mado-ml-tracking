@@ -90,7 +90,7 @@ loginctl enable-linger "$USER"
 
 The command asks for the token without echoing it. Never put the token on the command line.
 
-`--target-ids` is optional; leave it out when you install the worker before adding targets. A worker without it still picks up connection checks and directory reads when it is chosen in **Worker for this connection** under **Add computer** ([Compute targets](/en/compute/targets#step-1-connection)). Checks that name no worker (asked from older screens or the API) are picked up only by workers whose `--target-ids` includes the target. To find a target's ID, open `https://tracking.example.internal/api/targets` (the web URL followed by `/api/targets`) in a browser where you are logged in; each target's `id` is listed.
+`--target-ids` is optional; leave it out when you install the worker before adding targets. A worker without it still picks up connection checks and directory reads when it is chosen in **Worker for this connection** under **Add computer** ([Compute targets](/en/compute/targets#step-1-connection)). Checks that name no worker are picked up only by workers whose `--target-ids` includes the target. To find a target's ID, open `https://tracking.example.internal/api/targets` (the web URL followed by `/api/targets`) in a browser where you are logged in; each target's `id` is listed.
 
 `loginctl enable-linger` keeps user units running after logout.
 
@@ -137,9 +137,9 @@ To install a version from an internal package index, use `--version 0.2.0` inste
 - If `pip` fails, the unit is not restarted.
 - If the unit is stopped but a worker started by hand holds the state directory, nothing is done.
 
-Reporting SSH key candidates and reading target directories came with a new version of the worker. Older workers are not offered in **Worker for this connection** under **Add computer**, so upgrade them. Until then they still process Jobs and pick up connection checks of the targets in `--target-ids`.
+The worker reports its version, hostname, parallel job limit, SSH file candidates, and capabilities on every claim and resume. Requests missing any of these fields receive 422.
 
-Jobs of [workflow](/en/compute/workflows) steps go only to workers that pass dataset roles and selection conditions to the code. On a computer with only older workers, workflow Jobs stay queued, so upgrade them.
+Jobs of [workflow](/en/compute/workflows) steps go only to workers that pass dataset roles and selection conditions to the code. Workflow Jobs stay queued until a worker reports that capability.
 
 ### Replace the token
 
@@ -187,7 +187,7 @@ export MMT_WORKER_TARGET_IDS="<target ID>"
 export MMT_WORKER_STATE_DIR="$HOME/.local/state/mmt-worker-manual"
 printf 'Worker API token: '; read -r -s MMT_API_TOKEN; echo
 export MMT_API_TOKEN
-~/.local/share/mado-tracking-worker/venv/bin/mado-tracking-worker
+~/.local/share/mado-tracking-worker/venv/bin/mado-tracking-worker run
 ```
 
 `--once` processes one Job and exits. A second worker started with the same state directory is refused.
@@ -253,7 +253,8 @@ A container without the SDK writes outputs to `/mmt/outputs` and finally writes 
 
 - `sha256` and `size` must match the files. Write `result.json` after all outputs are written.
 - Weights declared in `models` are registered as model versions. Only training and fine-tuning Runs can declare models, and the worker token needs `registry:write`.
-- `datasets` entries `{datasetId, path, digest}` register outputs as dataset versions, which is how inference outputs reach evaluation. A directory `path` (such as `"prepared"`) registers every output file under it as one version, for example thousands of preprocessed audio files. Paths in that version are relative to the directory.
+- A `path` declaration rejects digest; the server computes it from the saved files. A `uri` declaration requires digest.
+- `datasets` entries `{datasetId, path}` register outputs as dataset versions, which is how inference outputs reach evaluation. A directory `path` (such as `"prepared"`) registers every output file under it as one version, for example thousands of preprocessed audio files. Paths in that version are relative to the directory.
 - For thousands of output files, list them in a JSON Lines file with one `{"path","sha256","size"}` per line and point to it with `"artifactsManifest": "artifacts.jsonl"`.
 
 | Limit | Value |

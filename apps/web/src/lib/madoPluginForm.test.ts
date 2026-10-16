@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { PluginConnection } from '@mmt/contracts';
 import { getMadoPluginConfig, getMadoPluginCredentials, getMadoPluginFormValues } from './madoPluginForm';
 
 describe('Madoの接続設定入力', () => {
   it('保存済みのアクセストークンを入力欄へ戻さず、空欄なら送信しない', () => {
-    const values = getMadoPluginFormValues({ name: 'Mado', config: null } as PluginConnection);
+    const values = getMadoPluginFormValues(null);
     expect(values.accessToken).toBe('');
     expect(getMadoPluginCredentials(values)).toBeUndefined();
     expect(getMadoPluginCredentials({ ...values, accessToken: 'entered-token' })).toEqual({ accessToken: 'entered-token' });

@@ -145,7 +145,7 @@ class InputStaging:
 
     async def prepare_host_runtime(self) -> dict[str, Any] | None:
         runtime = self.job.runtime
-        runtime_kinds = list(self.job.target.get("runtimeKinds", []))
+        runtime_kinds = list(self.job.target["runtimeKinds"])
         if not needs_conversion(runtime, runtime_kinds):
             return None
         kind = site_sif_kind(runtime_kinds)

@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type {
   Artifact,
@@ -135,7 +136,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる入力Datasetの取得設定�
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token,
-        body: { workerId: 'dataset-worker' },
+        body: { workerInfo, workerId: 'dataset-worker' },
       }),
       200,
     );
@@ -248,7 +249,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる入力Datasetの取得設定�
           await request(harness.app, '/api/worker/claim', {
             method: 'POST',
             token: workerToken,
-            body: { workerId: 'dataset-worker', activeJobIds: [claimed.job.id] },
+            body: { workerInfo, workerId: 'dataset-worker', activeJobIds: [claimed.job.id] },
           }),
           200,
         )

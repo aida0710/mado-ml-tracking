@@ -19,6 +19,7 @@ from .container_outputs import (
     OUTPUT_CHUNK_BYTES,
     artifact_key,
     parse_output_index,
+    validate_output_summary,
 )
 from .contracts import WorkerJob
 from .output_archive import (
@@ -89,9 +90,13 @@ async def receive_output_archive(
     An interrupted stream raises TransportError; the session retries and this call requests only
     the outputs whose save was not yet acknowledged.
     """
+    try:
+        validate_output_summary(results)
+    except ValueError as error:
+        raise ConfigurationError(str(error)) from None
     uploaded: list[str] = acknowledgments.setdefault("artifacts", [])
     acknowledged = set(uploaded)
-    expected_count = results.get("artifactCount", len(results.get("artifacts", [])))
+    expected_count = results["artifactCount"]
     if len(acknowledged) >= expected_count:
         return
     persisted_at = time.monotonic()
@@ -136,14 +141,14 @@ async def receive_output_archive(
 
 
 def _pending_outputs(index: bytes, results: dict[str, Any], acknowledged: set[str]) -> list[dict[str, Any]]:
-    expected_sha256 = results.get("artifactIndexSha256")
-    if expected_sha256 is not None and hashlib.sha256(index).hexdigest() != expected_sha256:
+    expected_sha256 = results["artifactIndexSha256"]
+    if hashlib.sha256(index).hexdigest() != expected_sha256:
         raise ConfigurationError("Output index does not match the validated result")
     try:
         artifacts = parse_output_index(index)
     except ValueError:
         raise ConfigurationError("Output index is invalid") from None
-    if len(artifacts) != results.get("artifactCount", len(artifacts)):
+    if len(artifacts) != results["artifactCount"]:
         raise ConfigurationError("Output index does not match the validated result")
     return [artifact for artifact in artifacts if artifact_key(artifact) not in acknowledged]
 

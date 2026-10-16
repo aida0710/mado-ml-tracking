@@ -16,7 +16,7 @@ import type { RunCreate, RunPatch } from '../domain/validation.js';
 import { validateCodeCompatibility } from '../domain/compatibility.js';
 import { validatePinnedRuntime } from '../domain/runtimeCompatibility.js';
 import { validateCodeArtifacts } from '../repositories/runtimeArtifactRepository.js';
-import { runColumns, runSummarySelect } from '../repositories/runListProjection.js';
+import { runColumns } from '../repositories/runListProjection.js';
 import { isTerminalStatus, validateRunTransition } from '../domain/runTransitions.js';
 import {
   assertProjectReference,
@@ -62,37 +62,6 @@ export class RunService {
     private readonly database: Database,
     private readonly runCompletion: RunCompletionService,
   ) {}
-
-  async list(
-    principal: Principal,
-    projectId: string,
-    filter: {
-      experimentId?: string;
-      status?: RunStatus;
-      query?: string;
-      limit: number;
-    },
-  ): Promise<Run[]> {
-    await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
-    if (filter.experimentId)
-      await assertProjectReference(this.database, {
-        table: 'experiments',
-        projectId,
-        id: filter.experimentId,
-      });
-    return rows(
-      this.database,
-      `${runSummarySelect} WHERE project_id=$1 AND lifecycle_stage='active' AND ($2::uuid IS NULL OR experiment_id=$2)
-      AND ($3::text IS NULL OR status=$3) AND ($4::text IS NULL OR name ILIKE '%'||$4||'%') ORDER BY created_at DESC,id DESC LIMIT $5`,
-      [
-        projectId,
-        filter.experimentId ?? null,
-        filter.status ?? null,
-        filter.query ?? null,
-        filter.limit,
-      ],
-    );
-  }
 
   async create(principal: Principal, projectId: string, input: RunCreate): Promise<Run> {
     assertNoReservedRunTags(input.tags);

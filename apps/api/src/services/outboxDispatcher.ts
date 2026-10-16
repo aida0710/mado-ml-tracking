@@ -60,7 +60,7 @@ export class OutboxDispatcher {
         const delivery = await first<Omit<PluginDelivery, 'plugin'>>(
           connection,
           `SELECT o.id,o.event,o.attempts,o.plugin_id,o.payload,o.payload_hash,o.destination_url FROM plugin_outbox o JOIN plugin_connections p ON p.id=o.plugin_id
-          WHERE p.enabled AND p.kind='mado' AND p.config IS NOT NULL AND NOT p.migration_pending AND o.payload IS NOT NULL AND ${claimableCondition('o', '$1')}
+          WHERE p.enabled AND ${claimableCondition('o', '$1')}
           ORDER BY o.created_at LIMIT 1 FOR UPDATE OF o SKIP LOCKED`,
           [leaseSeconds],
         );
@@ -68,7 +68,7 @@ export class OutboxDispatcher {
         // Serialize the claim with plugin edits; already claimed HTTP calls can finish.
         const plugin = await first<PluginConnectionRecord>(
           connection,
-          `SELECT * FROM plugin_connections WHERE id=$1 AND enabled AND kind='mado' AND config IS NOT NULL AND NOT migration_pending FOR SHARE SKIP LOCKED`,
+          `SELECT * FROM plugin_connections WHERE id=$1 AND enabled FOR SHARE SKIP LOCKED`,
           [delivery.pluginId],
         );
         if (!plugin) return undefined;

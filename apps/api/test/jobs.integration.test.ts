@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { Job, JobListItem, Run, RunLogList, WorkerJob } from '@mmt/contracts';
@@ -51,7 +52,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId },
+          body: { workerInfo, workerId },
         }).then((response) => entity<{ item: WorkerJob | null }>(response, 200)),
       ),
     );
@@ -77,7 +78,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'stable-worker' },
+          body: { workerInfo, workerId: 'stable-worker' },
         }).then((response) => entity<{ item: WorkerJob }>(response, 200)),
       ),
     );
@@ -87,7 +88,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
       await request(harness.app, '/api/worker/resume', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'stable-worker' },
+        body: { workerInfo, workerId: 'stable-worker' },
       }),
       200,
     );
@@ -96,7 +97,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
       await request(harness.app, '/api/worker/resume', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'different-worker' },
+        body: { workerInfo, workerId: 'different-worker' },
       }),
       200,
     );
@@ -129,7 +130,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'unblocked-worker' },
+          body: { workerInfo, workerId: 'unblocked-worker' },
         }),
         200,
       );
@@ -157,12 +158,12 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'parallel-worker', activeJobIds: [] },
+          body: { workerInfo, workerId: 'parallel-worker', activeJobIds: [] },
         }),
         200,
       )
     ).item;
-    const payload = { workerId: 'parallel-worker', activeJobIds: [firstClaim.job.id] };
+    const payload = { workerInfo, workerId: 'parallel-worker', activeJobIds: [firstClaim.job.id] };
     const nextClaims = await Promise.all(
       Array.from({ length: 2 }, () =>
         request(harness.app, '/api/worker/claim', {
@@ -178,7 +179,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
       await request(harness.app, '/api/worker/resume', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'parallel-worker' },
+        body: { workerInfo, workerId: 'parallel-worker' },
       }),
       200,
     );
@@ -188,7 +189,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'parallel-worker', activeJobIds: [randomUUID()] },
+          body: { workerInfo, workerId: 'parallel-worker', activeJobIds: [randomUUID()] },
         })
       ).status,
     ).toBe(409);
@@ -214,7 +215,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
             await request(harness.app, '/api/worker/claim', {
               method: 'POST',
               token: fixture.workerToken,
-              body: { workerId },
+              body: { workerInfo, workerId },
             }),
             200,
           )
@@ -236,7 +237,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
           await request(harness.app, '/api/worker/claim', {
             method: 'POST',
             token: fixture.workerToken,
-            body: { workerId: 'cpu-three' },
+            body: { workerInfo, workerId: 'cpu-three' },
           }),
           200,
         )
@@ -259,7 +260,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'cancel-worker' },
+          body: { workerInfo, workerId: 'cancel-worker' },
         }),
         200,
       )
@@ -293,7 +294,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'another-worker' },
+        body: { workerInfo, workerId: 'another-worker' },
       }),
       200,
     );
@@ -333,7 +334,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
           await request(harness.app, '/api/worker/claim', {
             method: 'POST',
             token: fixture.workerToken,
-            body: { workerId: 'another-worker' },
+            body: { workerInfo, workerId: 'another-worker' },
           }),
           200,
         )
@@ -356,7 +357,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           cookie: fixture.administrator.cookie,
-          body: { workerId: 'browser' },
+          body: { workerInfo, workerId: 'browser' },
         })
       ).status,
     ).toBe(403);
@@ -376,7 +377,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: readToken.token,
-          body: { workerId: 'not-worker' },
+          body: { workerInfo, workerId: 'not-worker' },
         })
       ).status,
     ).toBe(403);
@@ -385,7 +386,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'real-worker' },
+          body: { workerInfo, workerId: 'real-worker' },
         }),
         200,
       )
@@ -421,7 +422,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
           await request(harness.app, '/api/worker/claim', {
             method: 'POST',
             token: otherToken.token,
-            body: { workerId: 'real-worker' },
+            body: { workerInfo, workerId: 'real-worker' },
           }),
           200,
         )
@@ -471,7 +472,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'retry-worker' },
+          body: { workerInfo, workerId: 'retry-worker' },
         }),
         200,
       )
@@ -738,7 +739,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'telemetry-worker' },
+          body: { workerInfo, workerId: 'telemetry-worker' },
         }),
         200,
       )

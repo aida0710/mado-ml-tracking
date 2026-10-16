@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type {
   Job,
@@ -64,7 +65,7 @@ describe.skipIf(!testDatabaseUrl)('予約tagと終端後のRun記録（独立Pos
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'integrity-worker' },
+        body: { workerInfo, workerId: 'integrity-worker' },
       }),
       200,
     );

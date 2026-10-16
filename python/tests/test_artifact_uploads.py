@@ -10,6 +10,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
+from execution_fixtures import pin_execution
 
 from mado_tracking import Client, artifact_uploads, http
 from mado_tracking.artifact_uploads import (
@@ -300,7 +301,7 @@ def test_worker_uploads_large_run_artifacts_through_a_session(weights, job_paylo
     for entity in ("job", "run", "codeVersion"):
         job_payload[entity]["projectId"] = PROJECT_ID
     job_payload["job"]["runId"] = job_payload["run"]["id"] = RUN_ID
-    job = WorkerJob.parse(job_payload)
+    job = WorkerJob.parse(pin_execution(job_payload))
     api = FakeUploadApi()
     monkeypatch.setattr(artifact_transfer, "SESSION_UPLOAD_THRESHOLD_BYTES", weights.stat().st_size)
     monkeypatch.setattr(artifact_uploads, "choose_part_size", lambda _size: PART_SIZE)

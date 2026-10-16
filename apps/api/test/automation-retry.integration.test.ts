@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type {
   Code,
@@ -94,7 +95,7 @@ describe.skipIf(!testDatabaseUrl)(
           await request(harness.app, '/api/worker/claim', {
             method: 'POST',
             token: fixture.workerToken,
-            body: { workerId: 'retry-worker' },
+            body: { workerInfo, workerId: 'retry-worker' },
           }),
           200,
         )

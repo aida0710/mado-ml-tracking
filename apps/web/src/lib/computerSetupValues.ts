@@ -19,16 +19,16 @@ export function isConnectionReached(check: TargetCheck | undefined): boolean {
   );
 }
 
-/** Pythons a version 2 check found; none from older workers. */
+/** Pythons the check found. */
 export function detectedPythons(result: TargetCheckResult | null | undefined): TargetCheckPython[] {
-  return result?.version === 2 ? result.pythons : [];
+  return result?.pythons ?? [];
 }
 
-/** Directories a version 2 check found that could hold the work directory. */
+/** Directories the check found that could hold the work directory. */
 export function detectedDirectories(
   result: TargetCheckResult | null | undefined,
 ): TargetCheckDirectory[] {
-  return result?.version === 2 ? result.directories : [];
+  return result?.directories ?? [];
 }
 
 export function detectedGpus(result: TargetCheckResult | null | undefined): TargetCheckGpu[] {
@@ -75,7 +75,7 @@ export function toggleGpuId(values: FormValues, gpuId: string): FormValues {
  */
 export function applyCheckToSetupValues(values: FormValues, result: TargetCheckResult): FormValues {
   const next = { ...values };
-  if (result.version === 2 && result.host.cpuArch) next.cpuArch = result.host.cpuArch;
+  if (result.host.cpuArch) next.cpuArch = result.host.cpuArch;
   if (result.runtimeKinds.length) next.runtimeKinds = [...result.runtimeKinds];
   if (result.gpus) {
     const gpuIds = result.gpus.map((gpu) => gpu.index);

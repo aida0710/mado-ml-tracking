@@ -18,7 +18,7 @@ chmod 600 .env
 
 | 変数 | 既定 | 内容 |
 | --- | --- | --- |
-| `MMT_DATABASE_URL` | なし（必須） | PostgreSQLの接続URL。`DATABASE_URL`でも可 |
+| `MMT_DATABASE_URL` | なし（必須） | PostgreSQLの接続URL |
 | `NODE_ENV` | `development` | 本番では`production`。HTTPSのURLが必須になり、開発用の機能が使えなくなる |
 | `HOST` | `127.0.0.1` | APIが待ち受けるアドレス |
 | `PORT` | `4182` | APIが待ち受けるポート |
@@ -45,7 +45,6 @@ chmod 600 .env
 | `OIDC_ALLOWED_GROUPS` | なし | ログインを許すgroup（カンマ区切り）。`oidc`・`hybrid`で必須 |
 | `OIDC_ROLE_MAPPING_JSON` | なし | group→全体のroleの対応表。例: `{"mmt-admins":"admin","mmt-users":"user"}` |
 | `OIDC_DEFAULT_ROLE` | `user` | 対応表のどのgroupにも入っていない人のrole |
-| `OIDC_ADMIN_GROUP` | なし | `{"<group>":"admin"}`の省略形。対応表も無ければ`mmt-admins`が全体管理者 |
 | `OIDC_SCOPES` | `openid profile email offline_access` | 要求するscope。`openid`は必須。refresh tokenにはProvider側の`offline_access` mappingも必要 |
 | `OIDC_LABEL` | `Authentik` | ログイン画面のSSOボタンの表示名 |
 | `OIDC_AUTO_LINK_VERIFIED_EMAIL` | `false` | 同じメールアドレスのローカルアカウントへ自動で結び付けるか |
@@ -105,7 +104,6 @@ Mado連携はAPI serverに標準搭載されています。別のサービスや
 
 - 鍵は`openssl rand -base64 32`で作り、ほかの暗号鍵（`MMT_SESSION_ENCRYPTION_KEY`、`MMT_STORAGE_SECRET_KEY`、`MMT_HOOK_SECRET_KEY`）とは別の値にします。
 - アクセストークンを保存したあとは、鍵を変えたり消したりしないでください。保存済みのトークンを復号できなくなります。鍵を失ったときは、元の鍵を戻すか、保存済みのアクセストークンをすべて入れ直します。DBを復元するときにも要るので、鍵も安全な場所に保管してください。
-- 以前の別サービス方式で本体に置いた`MMT_MADO_PLUGIN_TOKEN`は、もう読みません。旧サービスからの移り方は[旧HTTPサービスから移行する](/admin/plugins#migrate-a-legacy-bridge)を参照してください。
 
 ## そのほかのAPI serverの設定
 

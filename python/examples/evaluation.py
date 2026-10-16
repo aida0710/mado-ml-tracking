@@ -143,7 +143,7 @@ def write_result_manifest(outputs: Path, *, metrics: dict[str, float], results_p
     """result.json version 1: the results file and the metrics, published by rename."""
     relative = results_path.relative_to(outputs).as_posix()
     result = {
-        "version": 1,
+        "version": 2,
         "complete": True,
         "artifacts": [
             {

@@ -3,8 +3,6 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthGate } from './hooks/useAuth';
 import { AppShell } from './layout/AppShell';
 import { SettingsShell } from './layout/SettingsShell';
-import { LegacySettingsRedirect } from './layout/LegacySettingsRedirect';
-import { LEGACY_SETTINGS_ROUTES } from './layout/legacySettingsPaths';
 import { MlflowUiRedirect } from './layout/MlflowUiRedirect';
 import { MLFLOW_UI_ROUTE } from './layout/mlflowUiPaths';
 import {
@@ -109,9 +107,6 @@ export function App() {
             {/* The 全体管理 sections; AdminPage sends anyone else and unknown names to the account. */}
             <Route path={`${SETTINGS_PATH}/:section`} element={<AdminPage />} />
           </Route>
-          {LEGACY_SETTINGS_ROUTES.map((legacyPath) => (
-            <Route key={legacyPath} path={legacyPath} element={<LegacySettingsRedirect />} />
-          ))}
           <Route path="/projects/:projectId" element={<AppShell />}>
             <Route index element={<Navigate replace to="experiments" />} />
             <Route path="experiments" element={<ExperimentsPage />} />

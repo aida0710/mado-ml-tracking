@@ -119,7 +119,7 @@ describe('フックの権限判定', () => {
 
 describe('コンピュータの権限判定', () => {
   const ownedByAlice = { ownerUserId: 'alice' };
-  const global = { ownerUserId: null };
+  const global = { ownerUserId: 'carol' };
 
   it('サインインしている人は誰でもsiteを追加でき、ssh・localは全体管理者だけが追加する', () => {
     expect(canAddTarget({ status: 'active' })).toBe(true);
@@ -132,13 +132,13 @@ describe('コンピュータの権限判定', () => {
     ['研究者のコンピュータの所有者', true, { id: 'alice', isAdmin: false }, ownedByAlice],
     ['研究者のコンピュータの所有者でない研究者', false, { id: 'bob', isAdmin: false }, ownedByAlice],
     ['研究者のコンピュータの全体管理者', true, { id: 'admin', isAdmin: true }, ownedByAlice],
-    ['所有者のいないコンピュータの研究者', false, { id: 'alice', isAdmin: false }, global],
-    ['所有者のいないコンピュータの全体管理者', true, { id: 'admin', isAdmin: true }, global],
+    ['別の人が所有するコンピュータの研究者', false, { id: 'alice', isAdmin: false }, global],
+    ['別の人が所有するコンピュータの全体管理者', true, { id: 'admin', isAdmin: true }, global],
   ] as const)('%sは管理（編集・公開範囲・job shell・共用の鍵・全員の設定）=%s', (_who, expected, user, target) => {
     expect(canManageTarget(user, target)).toBe(expected);
   });
 
-  it('所有者は自分が足したコンピュータだけで、全体管理者でも所有者のいないコンピュータの所有者ではない', () => {
+  it('所有者は自分が足したコンピュータだけで、全体管理者でも他人のコンピュータの所有者ではない', () => {
     expect(isTargetOwner({ id: 'alice' }, ownedByAlice)).toBe(true);
     expect(isTargetOwner({ id: 'admin' }, ownedByAlice)).toBe(false);
     expect(isTargetOwner({ id: 'admin' }, global)).toBe(false);

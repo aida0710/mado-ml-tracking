@@ -15,6 +15,8 @@ import { taskPatchSchema } from '../src/domain/experimentTaskValidation.js';
 import { loadConfig } from '../src/config.js';
 
 const version = {
+
+  runtime: { kind: 'python' },
   version: 'v1',
   source: { kind: 'inline', files: { 'main.py': 'pass' } },
   entrypoint: ['python', 'main.py'],

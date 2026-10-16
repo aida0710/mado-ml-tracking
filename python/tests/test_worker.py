@@ -12,6 +12,7 @@ from pathlib import Path
 import httpx
 import pytest
 from background_process import entrypoint_with_background_child
+from execution_fixtures import pin_execution
 
 from mado_tracking.errors import TransportError
 from mado_tracking.security import SecretMasker
@@ -92,7 +93,7 @@ def test_local_job_runs_for_real_and_forwards_masked_output_with_metrics(job_pay
     async def scenario():
         worker = Worker(worker_settings, api=server.client())
         try:
-            await asyncio.wait_for(worker.run_job(WorkerJob.parse(job_payload)), 15)
+            await asyncio.wait_for(worker.run_job(WorkerJob.parse(pin_execution(job_payload))), 15)
         finally:
             await worker.api.close()
 
@@ -123,7 +124,7 @@ def test_nonzero_exit_completes_failed_and_stderr_is_visible(job_payload, worker
     async def scenario():
         worker = Worker(worker_settings, api=server.client())
         try:
-            await asyncio.wait_for(worker.run_job(WorkerJob.parse(job_payload)), 15)
+            await asyncio.wait_for(worker.run_job(WorkerJob.parse(pin_execution(job_payload))), 15)
         finally:
             await worker.api.close()
 
@@ -151,7 +152,7 @@ def test_successful_job_completes_after_stopping_children_that_inherit_its_outpu
     async def scenario():
         worker = Worker(worker_settings, api=server.client())
         try:
-            await asyncio.wait_for(worker.run_job(WorkerJob.parse(job_payload)), 15)
+            await asyncio.wait_for(worker.run_job(WorkerJob.parse(pin_execution(job_payload))), 15)
         finally:
             if (workspace / "state.json").exists() and not server.completions:
                 (workspace / "cancel.request").touch()
@@ -188,7 +189,7 @@ def test_cancel_kills_process_group_after_sigterm_grace(job_payload, worker_sett
 
     async def scenario():
         worker = Worker(worker_settings, api=server.client())
-        task = asyncio.create_task(worker.run_job(WorkerJob.parse(job_payload)))
+        task = asyncio.create_task(worker.run_job(WorkerJob.parse(pin_execution(job_payload))))
         ready = asyncio.Event()
         server.log_notifications["ready-for-cancel"] = ready
         try:
@@ -213,7 +214,7 @@ def test_rejected_lease_never_installs_or_starts_execution(job_payload, worker_s
     async def scenario():
         worker = Worker(worker_settings, api=server.client())
         try:
-            await worker.run_job(WorkerJob.parse(job_payload))
+            await worker.run_job(WorkerJob.parse(pin_execution(job_payload)))
         finally:
             await worker.api.close()
 
@@ -249,7 +250,7 @@ def test_lost_start_response_reattaches_without_starting_twice(job_payload, work
     async def scenario():
         worker = Worker(worker_settings, api=server.client(), executor_factory=executor)
         try:
-            await asyncio.wait_for(worker.run_job(WorkerJob.parse(job_payload)), 15)
+            await asyncio.wait_for(worker.run_job(WorkerJob.parse(pin_execution(job_payload))), 15)
         finally:
             await worker.api.close()
 
@@ -278,7 +279,7 @@ def test_artifact_source_downloads_and_runs_real_code(job_payload, worker_settin
     async def scenario():
         worker = Worker(worker_settings, api=server.client())
         try:
-            await asyncio.wait_for(worker.run_job(WorkerJob.parse(job_payload)), 15)
+            await asyncio.wait_for(worker.run_job(WorkerJob.parse(pin_execution(job_payload))), 15)
         finally:
             await worker.api.close()
 
@@ -315,7 +316,7 @@ def test_cancel_during_source_download_does_not_wait_for_the_entire_artifact(job
             url="http://localhost/api", token="test-api-secret", transport=httpx.MockTransport(serve)
         )
         worker = Worker(worker_settings, api=api)
-        task = asyncio.create_task(worker.run_job(WorkerJob.parse(job_payload)))
+        task = asyncio.create_task(worker.run_job(WorkerJob.parse(pin_execution(job_payload))))
         try:
             async with asyncio.timeout(15):
                 await download_started.wait()
@@ -373,7 +374,7 @@ def test_fake_ssh_transport_preserves_argv_and_detached_runner_state(job_payload
     async def scenario():
         worker = Worker(worker_settings, api=server.client(), executor_factory=executor)
         try:
-            await asyncio.wait_for(worker.run_job(WorkerJob.parse(job_payload)), 15)
+            await asyncio.wait_for(worker.run_job(WorkerJob.parse(pin_execution(job_payload))), 15)
         finally:
             await worker.api.close()
 
@@ -402,7 +403,7 @@ def test_worker_restart_reattaches_existing_process_and_preserves_log_cursor(job
 
     async def scenario():
         first_worker = Worker(worker_settings, api=server.client())
-        first_task = asyncio.create_task(first_worker.run_job(WorkerJob.parse(job_payload)))
+        first_task = asyncio.create_task(first_worker.run_job(WorkerJob.parse(pin_execution(job_payload))))
         ready = asyncio.Event()
         server.log_notifications["before-worker-restart"] = ready
         async with asyncio.timeout(15):

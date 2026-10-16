@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { Job, TokenSummary, WorkerJob } from '@mmt/contracts';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
@@ -118,7 +119,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow互換APIのBasic認証（独立Postgre
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'basic-worker' },
+        body: { workerInfo, workerId: 'basic-worker' },
       }),
       200,
     );

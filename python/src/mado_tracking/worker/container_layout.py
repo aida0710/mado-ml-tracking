@@ -71,7 +71,7 @@ def host_runtime(specification: dict[str, Any]) -> dict[str, Any]:
     converted = specification.get("hostRuntime")
     if converted is not None:
         return dict(converted)
-    return dict(specification["codeVersion"].get("runtime") or {"kind": "python"})
+    return dict(specification["codeVersion"]["runtime"])
 
 
 def host_environment() -> dict[str, str]:
@@ -167,15 +167,9 @@ def trigger_payload_environment(context: dict[str, Any], *, document_file: str) 
     return {"MMT_TRIGGER_PAYLOAD_FILE": document_file}
 
 
-def staged_dataset_paths(workspace: Path, specification: dict[str, Any]) -> dict[str, Path] | None:
-    """Target paths of the staged input datasets, checked again right before launch.
-
-    None for a specification saved before datasets were staged; such a Job gets no
-    MMT_INPUT_DATASET_DIRS rather than an empty mapping that would claim nothing is staged.
-    """
-    staged = specification.get("stagedInputs", {}).get("datasets")
-    if staged is None:
-        return None
+def staged_dataset_paths(workspace: Path, specification: dict[str, Any]) -> dict[str, Path]:
+    """Target paths of the staged input datasets, checked again right before launch."""
+    staged = specification["stagedInputs"]["datasets"]
     # Descriptor-only versions (urn:, mmt-artifact:) have nothing staged and are left out.
     if not set(staged) <= {dataset["id"] for dataset in specification["context"]["inputDatasets"]}:
         raise ValueError("Staged datasets are not the Job's inputs")
@@ -281,7 +275,6 @@ def prepare_container_layout(workspace: Path, specification: dict[str, Any]) -> 
     dataset_usage = dataset_usage_document(context)
     if dataset_usage is not None:
         context_files[DATASET_USAGE_FILENAME] = dataset_usage
-    # A spec saved before upstream inputs existed has no upstreamRun key.
     if context.get("upstreamRun") is not None:
         context_files[UPSTREAM_RUN_FILENAME] = context["upstreamRun"]
     if context.get("resumeCheckpoint") is not None:
@@ -294,7 +287,7 @@ def prepare_container_layout(workspace: Path, specification: dict[str, Any]) -> 
         write_json(workspace / "context" / name, document)
     if specification["codeVersion"]["source"] is not None:
         mounts.append(ContainerMount(workspace / "source", SOURCE_PATH, True))
-    for version_id, path in (staged_dataset_paths(workspace, specification) or {}).items():
+    for version_id, path in staged_dataset_paths(workspace, specification).items():
         mounts.append(ContainerMount(path, f"{INPUT_DATASETS_PATH}/{version_id}", True))
     return mounts
 
@@ -375,11 +368,10 @@ def container_environment(specification: dict[str, Any]) -> dict[str, str]:
     environment.update(
         workflow_context_environment(context, dataset_usage_file=f"{CONTEXT_PATH}/{DATASET_USAGE_FILENAME}")
     )
-    staged_datasets = specification.get("stagedInputs", {}).get("datasets")
-    if staged_datasets is not None:
-        environment["MMT_INPUT_DATASET_DIRS"] = json.dumps(
-            {version_id: f"{INPUT_DATASETS_PATH}/{version_id}" for version_id in staged_datasets}
-        )
+    staged_datasets = specification["stagedInputs"]["datasets"]
+    environment["MMT_INPUT_DATASET_DIRS"] = json.dumps(
+        {version_id: f"{INPUT_DATASETS_PATH}/{version_id}" for version_id in staged_datasets}
+    )
     environment.update(
         resume_checkpoint_environment(
             context,

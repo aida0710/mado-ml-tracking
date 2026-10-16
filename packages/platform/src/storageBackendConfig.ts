@@ -24,9 +24,9 @@ export interface S3BackendConfig {
   multipartPartSizeBytes: number;
   /**
    * false stores every Artifact with one PutObject, for S3-compatible services whose multipart
-   * API does not work. Backends saved before this setting existed lack it, which means true.
+   * API does not work.
    */
-  multipartEnabled?: boolean;
+  multipartEnabled: boolean;
 }
 export type StorageBackendConfig = FilesystemBackendConfig | S3BackendConfig;
 

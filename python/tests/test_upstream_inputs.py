@@ -12,6 +12,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
+from execution_fixtures import pin_execution
 
 # docker_image is the shared fixture that skips unless MMT_TEST_DOCKER_IMAGE names a cached image.
 from test_docker_worker import ContainerServer, docker_job, execute_job, workspace_for
@@ -46,7 +47,15 @@ def chained_payload(job_payload: dict) -> dict:
         inputDatasetVersionIds=[dataset_id],
         upstreamDatasetVersionIds=[dataset_id],
     )
-    job_payload["inputDatasets"] = [{"id": dataset_id, "projectId": job_payload["job"]["projectId"]}]
+    job_payload["inputDatasets"] = [
+        {
+            "id": dataset_id,
+            "projectId": job_payload["job"]["projectId"],
+            "contentKind": "reference",
+            "uri": "urn:upstream",
+            "digest": "upstream",
+        }
+    ]
     return job_payload
 
 
@@ -64,7 +73,8 @@ def test_host_python_job_receives_the_upstream_run_id_and_upstream_run_json(
     job_payload, worker_settings, tmp_path
 ):
     payload = chained_payload(job_payload)
-    specification = execution_specification(WorkerJob.parse(payload), worker_settings)
+    specification = execution_specification(WorkerJob.parse(pin_execution(payload)), worker_settings)
+    specification["stagedInputs"] = {"datasets": {}}
     specification["executionSnapshot"] = {"mode": "run"}
     environment = host_runner._execution_environment(specification, tmp_path)
 
@@ -84,7 +94,8 @@ def test_docker_job_receives_the_same_upstream_run_id_and_upstream_run_json(
     job_payload, worker_settings, tmp_path
 ):
     payload = docker_payload(chained_payload(job_payload))
-    specification = execution_specification(WorkerJob.parse(payload), worker_settings)
+    specification = execution_specification(WorkerJob.parse(pin_execution(payload)), worker_settings)
+    specification["stagedInputs"] = {"datasets": {}}
     prepare_container_layout(tmp_path, specification)
     environment = container_environment(specification)
 
@@ -105,7 +116,8 @@ def test_training_run_model_version_is_listed_as_an_upstream_output(job_payload,
         "artifactId": None,
         "weightsUri": "",
     }
-    specification = execution_specification(WorkerJob.parse(job_payload), worker_settings)
+    specification = execution_specification(WorkerJob.parse(pin_execution(job_payload)), worker_settings)
+    specification["stagedInputs"] = {"datasets": {}}
     assert specification["context"]["upstreamRun"] == {
         "runId": UPSTREAM_RUN_ID,
         "outputModelVersionIds": [model_version_id],
@@ -117,12 +129,16 @@ def test_job_without_upstream_gets_neither_the_variable_nor_the_file(
     job_payload, worker_settings, tmp_path, runtime
 ):
     if runtime == "docker":
-        specification = execution_specification(WorkerJob.parse(docker_payload(job_payload)), worker_settings)
+        specification = execution_specification(
+            WorkerJob.parse(pin_execution(docker_payload(job_payload))), worker_settings
+        )
+        specification["stagedInputs"] = {"datasets": {}}
         prepare_container_layout(tmp_path, specification)
         environment = container_environment(specification)
         upstream_run_file = tmp_path / "context/upstream-run.json"
     else:
-        specification = execution_specification(WorkerJob.parse(job_payload), worker_settings)
+        specification = execution_specification(WorkerJob.parse(pin_execution(job_payload)), worker_settings)
+        specification["stagedInputs"] = {"datasets": {}}
         specification["executionSnapshot"] = {"mode": "run"}
         environment = host_runner._execution_environment(specification, tmp_path)
         upstream_run_file = tmp_path / "upstream-run.json"
@@ -130,15 +146,18 @@ def test_job_without_upstream_gets_neither_the_variable_nor_the_file(
     assert not upstream_run_file.exists()
 
 
-def test_spec_saved_before_upstream_inputs_still_prepares_a_container(job_payload, worker_settings, tmp_path):
-    specification = execution_specification(WorkerJob.parse(docker_payload(job_payload)), worker_settings)
-    del specification["context"]["upstreamRun"]
+def test_上流Runがないspecでもコンテナを準備できる(job_payload, worker_settings, tmp_path):
+    specification = execution_specification(
+        WorkerJob.parse(pin_execution(docker_payload(job_payload))), worker_settings
+    )
+    specification["stagedInputs"] = {"datasets": {}}
+    specification["context"]["upstreamRun"] = None
     prepare_container_layout(tmp_path, specification)
     assert "MMT_UPSTREAM_RUN_ID" not in container_environment(specification)
 
 
 class ArtifactApi:
-    """Run Artifact listing with cursor pages (new API) or one unfiltered page (old API)."""
+    """Run Artifact listing with cursor pages or a single final page."""
 
     def __init__(self, artifacts: list[dict], contents: dict[str, bytes], *, paged: bool):
         self.artifacts = artifacts
@@ -201,18 +220,13 @@ def test_download_walks_every_page_and_keeps_artifact_paths(upstream_environment
     assert not list((tmp_path / "upstream").rglob("*.partial"))
 
 
-def test_old_api_without_prefix_or_versions_yields_the_newest_artifact_per_path(
-    upstream_environment, tmp_path
-):
-    newest, older = artifact("wav/a.wav"), artifact("wav/a.wav")
-    other = artifact("logs/train.log")
-    # The old API returns every saved row, newest first, and ignores the query parameters.
-    api = ArtifactApi([newest, other, older], {newest["id"]: b"new", older["id"]: b"old"}, paged=False)
-
+def test_上流ArtifactはAPIでprefixとversionsを絞って取得する(upstream_environment, tmp_path):
+    newest, other = artifact("wav/a.wav"), artifact("logs/train.log")
+    api = ArtifactApi([newest, other], {newest["id"]: b"new"}, paged=True)
     with client_for(api.serve) as client:
         listed = list_upstream_artifacts("wav/", client=client)
         download_upstream_artifacts(tmp_path, "wav/", client=client)
-
+    assert all(query["prefix"] == ["wav/"] and query["versions"] == ["latest"] for query in api.list_requests)
     assert [item["id"] for item in listed] == [newest["id"]]
     assert (tmp_path / "wav/a.wav").read_bytes() == b"new"
     assert api.downloads == [newest["id"]]
@@ -318,7 +332,7 @@ def test_chained_host_job_downloads_the_upstream_wavs_with_the_same_paths(job_pa
     async def scenario():
         worker = Worker(settings, api=server.client())
         try:
-            await asyncio.wait_for(worker.run_job(WorkerJob.parse(payload)), 20)
+            await asyncio.wait_for(worker.run_job(WorkerJob.parse(pin_execution(payload))), 20)
         finally:
             await worker.api.close()
 

@@ -50,9 +50,7 @@ def build_execution_specification(
         "leaseId": job.lease_id,
         "codeVersion": {**job.code_version, "runtime": snapshot["runtime"]},
         "executionSnapshot": snapshot,
-        "runExecution": {
-            name: job.run[name] for name in ("executionMode", "executionSnapshot") if name in job.run
-        },
+        "runExecution": {name: job.run[name] for name in ("executionMode", "executionSnapshot")},
         "gpuIds": gpu_ids,
         "context": context,
         "sdkEnvironment": build_tracking_environment(job, api),

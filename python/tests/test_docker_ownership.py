@@ -6,8 +6,8 @@ import os
 import threading
 
 import pytest
+from execution_fixtures import pin_execution
 from test_container_inputs import container_payload
-from test_execution_snapshot import pin_execution
 
 from mado_tracking.security import SecretMasker
 from mado_tracking.worker.contracts import WorkerJob
@@ -21,7 +21,7 @@ from mado_tracking.worker.runtime_capability import ContainerStateUncertain, Run
 
 def docker_owner(payload, settings, workspace, *, monkeypatch):
     container_payload(payload)
-    specification = execution_specification(WorkerJob.parse(payload), settings)
+    specification = execution_specification(WorkerJob.parse(pin_execution(payload)), settings)
     execution = CommandExecution(
         workspace,
         {"status": "running", "supervisorPid": 999_999_999, "processPid": 0},
@@ -155,7 +155,7 @@ def test_docker_uses_the_snapshot_command_for_normal_or_test_execution(
         entrypoint=["/app/train", "normal arguments"], testEntrypoint=["/app/test", "test arguments"]
     )
     pin_execution(job_payload, mode)
-    specification = execution_specification(WorkerJob.parse(job_payload), worker_settings)
+    specification = execution_specification(WorkerJob.parse(pin_execution(job_payload)), worker_settings)
     execution = CommandExecution(
         tmp_path,
         {"status": "running"},

@@ -48,7 +48,9 @@ def validate_runtime(
     source: Mapping[str, Any] | None,
     requirements: Sequence[str],
 ) -> dict[str, Any]:
-    definition = dict(runtime) if runtime is not None else {"kind": "python"}
+    if not isinstance(runtime, Mapping):
+        raise ValueError("CodeVersion.runtime is required")
+    definition = dict(runtime)
     kind = definition.get("kind")
     if kind not in RUNTIME_KINDS:
         raise ValueError("Unknown CodeVersion runtime")

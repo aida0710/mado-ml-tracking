@@ -37,13 +37,13 @@ export const computeTarget: ComputeTarget = {
   cpuArch: 'amd64',
   supportsArray: false,
   queueTimeoutSeconds: null,
-  ownerUserId: null,
+  ownerUserId: 'admin',
   visibility: 'public',
 };
 // The ssh target as GET /targets lists it: one from before owners, public to every Project.
 export const computeTargetDetails: ComputeTargetDetails = {
   ...computeTarget,
-  ownerName: null,
+  ownerName: 'Admin',
   site: null,
   siteAccountMode: null,
 };

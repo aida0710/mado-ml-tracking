@@ -553,7 +553,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow 3 Logged Models / native Model Registr
     );
     expect(first.model_version.version).toBe('9007199254740993');
     expect(second.model_version.version).toBe('9007199254740994');
-    const filter = new URLSearchParams({ filter: 'version = 9007199254740993' });
+    const filter = new URLSearchParams({ filter: 'version_number = 9007199254740993' });
     const found = await entity<{ model_versions: VersionResponse['model_version'][] }>(
       await request(fixture.app, `${fixture.versionEndpoint}/search?${filter}`, {
         cookie: fixture.viewer.cookie,
@@ -632,6 +632,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow 3 Logged Models / native Model Registr
         method: 'POST',
         cookie: fixture.editor.cookie,
         body: {
+          runtime: { kind: 'python' },
           version: 'v1',
           source: { kind: 'inline', files: { 'main.py': 'print(1)' } },
           entrypoint: ['python', 'main.py'],
@@ -683,6 +684,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow 3 Logged Models / native Model Registr
         method: 'POST',
         cookie: fixture.administrator.cookie,
         body: {
+          runtime: { kind: 'python' },
           version: 'v1',
           source: { kind: 'inline', files: { 'main.py': 'print(1)' } },
           entrypoint: ['python', 'main.py'],
@@ -858,7 +860,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow 3 Logged Models / native Model Registr
       `run_id IN '${fixture.run.id}'`,
       'run_id IN ()',
       `run_id IN ('${fixture.run.id}',)`,
-      "version IN ('1')",
+      "version_number IN ('1')",
       "tags.stage IN ('production')",
     ])
       expect((await search(fixture.versionEndpoint, invalid)).status, invalid).toBe(422);

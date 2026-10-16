@@ -35,9 +35,16 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
 
   it('未認証は401になり、viewerは読むだけでeditorはRunとRegistryを作成できる', async () => {
     const fixture = await projectFixture(harness);
-    expect((await request(harness.app, `${fixture.basePath}/runs`)).status).toBe(401);
+    expect((await request(harness.app, `${fixture.basePath}/runs/search`, {
+      method: 'POST',
+      body: {},
+    })).status).toBe(401);
     expect(
-      (await request(harness.app, `${fixture.basePath}/runs`, { cookie: fixture.viewer.cookie }))
+      (await request(harness.app, `${fixture.basePath}/runs/search`, {
+        cookie: fixture.viewer.cookie,
+        method: 'POST',
+        body: {},
+      }))
         .status,
     ).toBe(200);
     expect(
@@ -74,7 +81,11 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
     );
     expect(experiments.items[0]!.runCount).toBe(1);
     expect(
-      (await request(harness.app, `${fixture.basePath}/runs`, { cookie: fixture.outsider.cookie }))
+      (await request(harness.app, `${fixture.basePath}/runs/search`, {
+        cookie: fixture.outsider.cookie,
+        method: 'POST',
+        body: {},
+      }))
         .status,
     ).toBe(403);
   });
@@ -247,6 +258,7 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
       ]),
     ).rejects.toMatchObject({ code: '23514' });
     const unpinnedCode = {
+      runtime: { kind: 'python' },
       version: 'mutable',
       source: { kind: 'git', url: 'https://example.test/repo.git', commit: 'main' },
       entrypoint: ['python', 'main.py'],
@@ -299,6 +311,7 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
         method: 'POST',
         cookie: fixture.editor.cookie,
         body: {
+          runtime: { kind: 'python' },
           version: 'invalid-overlay',
           source: {
             kind: 'git',
@@ -633,7 +646,11 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
     expect(stored.rows[0].token_hash).not.toBe(token.token);
     expect(stored.rows[0].token_hash).toMatch(/^[a-f0-9]{64}$/);
     expect(
-      (await request(harness.app, `${fixture.basePath}/runs`, { token: token.token })).status,
+      (await request(harness.app, `${fixture.basePath}/runs/search`, {
+        token: token.token,
+        method: 'POST',
+        body: {},
+      })).status,
     ).toBe(200);
     expect(
       (
@@ -665,7 +682,11 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
       }),
     );
     expect(
-      (await request(harness.app, `/api/projects/${other.id}/runs`, { token: token.token })).status,
+      (await request(harness.app, `/api/projects/${other.id}/runs/search`, {
+        token: token.token,
+        method: 'POST',
+        body: {},
+      })).status,
     ).toBe(403);
     expect(
       (
@@ -676,7 +697,11 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
       ).status,
     ).toBe(204);
     expect(
-      (await request(harness.app, `${fixture.basePath}/runs`, { token: token.token })).status,
+      (await request(harness.app, `${fixture.basePath}/runs/search`, {
+        token: token.token,
+        method: 'POST',
+        body: {},
+      })).status,
     ).toBe(401);
     const another = await entity<{ token: string }>(
       await request(harness.app, '/api/tokens', {
@@ -694,7 +719,11 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
       fixture.project.id,
     ]);
     expect(
-      (await request(harness.app, `${fixture.basePath}/runs`, { token: another.token })).status,
+      (await request(harness.app, `${fixture.basePath}/runs/search`, {
+        token: another.token,
+        method: 'POST',
+        body: {},
+      })).status,
     ).toBe(401);
   });
 });
@@ -828,7 +857,11 @@ describe.skipIf(!testDatabaseUrl)('出力モデル登録とバージョンの自
     const activeIds = ['1', '2', '3', '5', '6'].map((version) => idsByVersion.get(version));
     expect((await readRun(fixture, fixture.run.id)).outputModelVersionIds).toEqual(activeIds);
     const listed = await entity<{ items: Run[] }>(
-      await request(harness.app, `${fixture.basePath}/runs`, { cookie: fixture.viewer.cookie }),
+      await request(harness.app, `${fixture.basePath}/runs/search`, {
+        cookie: fixture.viewer.cookie,
+        method: 'POST',
+        body: {},
+      }),
       200,
     );
     expect(listed.items.find((run) => run.id === fixture.run.id)?.outputModelVersionIds).toEqual(

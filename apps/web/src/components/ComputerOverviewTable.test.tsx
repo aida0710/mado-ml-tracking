@@ -57,10 +57,10 @@ describe('全体設定のコンピュータ一覧', () => {
     expect(html).not.toContain('data-testid="target-check-bob-site"');
   });
 
-  it('自動投入のsiteの状態にはランチャーの様子を、所有者のいないものには「全体」を出す', () => {
-    const html = renderTable([automaticSiteOverview, { ...publicSshOverview, ownerUserId: null, ownerName: null }]);
+  it('自動投入のsiteにはランチャーの状態と所有者を表示する', () => {
+    const html = renderTable([automaticSiteOverview, { ...publicSshOverview, ownerUserId: 'admin', ownerName: null }]);
     expect(html).toContain('main（最終応答');
-    expect(html).toContain('全体');
+    expect(html).toContain('admin');
     expect(html).toContain('有効');
   });
 });

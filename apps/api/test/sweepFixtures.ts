@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import type { ComputeTarget, Sweep, SweepTrial, SweepTrialPage, WorkerJob } from '@mmt/contracts';
 import { entity, request, type Harness } from './harness.js';
 import { workbenchFixture } from './workbenchFixtures.js';
@@ -13,6 +14,7 @@ export async function sweepFixture(harness: Harness) {
       method: 'POST',
       cookie: fixture.administrator.cookie,
       body: {
+        runtimeKinds: ['python'],
         name: 'Sweep target',
         host: '127.0.0.1',
         port: 22,
@@ -66,7 +68,7 @@ export async function sweepFixture(harness: Harness) {
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: `sweep-worker-${workerCount}` },
+        body: { workerInfo, workerId: `sweep-worker-${workerCount}` },
       }),
       200,
     );

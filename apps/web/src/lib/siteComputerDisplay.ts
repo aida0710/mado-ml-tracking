@@ -7,14 +7,13 @@ import { formatNote } from '../i18n/textJoining';
 const SHORT_SHA256_LENGTH = 12;
 
 /**
- * Whose a computer is, for the lists: everyone's (one from before owners), one's own, or its
+ * Whose a computer is, for the lists: one's own, or its
  * owner's name (their ID when the name is unknown).
  */
 export function targetOwnerLabel(
   target: Pick<ComputeTarget, 'ownerUserId'> & { ownerName: string | null },
   userId: string,
 ): string {
-  if (target.ownerUserId === null) return text.targetOwnerGlobal;
   if (target.ownerUserId === userId) return text.targetOwnerSelf;
   return target.ownerName ?? target.ownerUserId;
 }

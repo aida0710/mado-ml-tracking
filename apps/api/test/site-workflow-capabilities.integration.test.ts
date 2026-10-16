@@ -86,14 +86,14 @@ describe.skipIf(!testDatabaseUrl)('siteのワークフローのJobとrunnerの�
 
   async function launcherClaim(
     fixture: SiteFixture,
-    capabilities?: WorkerCapability[],
+    capabilities: WorkerCapability[],
   ): Promise<SiteSubmission[]> {
     return (
       await entity<{ items: SiteSubmission[] }>(
         await request(harness.app, '/api/launcher/site-submissions/claim', {
           method: 'POST',
           token: fixture.launcherToken,
-          body: capabilities ? { capabilities } : {},
+          body: { capabilities },
         }),
         200,
       )
@@ -115,8 +115,8 @@ describe.skipIf(!testDatabaseUrl)('siteのワークフローのJobとrunnerの�
 
     // The workflow's Job is older, but a launcher whose runner does not pass dataset usage to it
     // skips it.
-    const older = await launcherClaim(fixture);
-    expect(older.flatMap((submission) => submission.jobs.map((item) => item.job.id))).toEqual([
+    const plain = await launcherClaim(fixture, []);
+    expect(plain.flatMap((submission) => submission.jobs.map((item) => item.job.id))).toEqual([
       plainJob.id,
     ]);
     expect(await launcherClaim(fixture, [])).toEqual([]);
@@ -133,7 +133,7 @@ describe.skipIf(!testDatabaseUrl)('siteのワークフローのJobとrunnerの�
     const fixture = await siteFixture(harness, { submissionMode: 'manual' });
     const execution = await launchSiteWorkflow(harness, fixture);
     expect(
-      (await entity<{ items: SiteSubmission[] }>(await manualClaim(fixture, {}), 200)).items,
+      (await entity<{ items: SiteSubmission[] }>(await manualClaim(fixture, { capabilities: [] }), 200)).items,
     ).toEqual([]);
 
     const claimed = await entity<{ items: SiteSubmission[] }>(
@@ -143,6 +143,15 @@ describe.skipIf(!testDatabaseUrl)('siteのワークフローのJobとrunnerの�
     expect(claimed.items.map((submission) => submission.jobs[0]!.job.id)).toEqual([
       execution.steps[0]!.jobId,
     ]);
+  });
+
+  it('capabilitiesを省略するとlauncherと手動投入のclaimは422になる', async () => {
+    const fixture = await siteFixture(harness, { submissionMode: 'manual' });
+    expect((await manualClaim(fixture, {})).status).toBe(422);
+    const response = await request(harness.app, '/api/launcher/site-submissions/claim', {
+      method: 'POST', token: fixture.launcherToken, body: {},
+    });
+    expect(response.status).toBe(422);
   });
 
   it('知らない機能や重複した機能を名乗るsiteのclaimは断る', async () => {

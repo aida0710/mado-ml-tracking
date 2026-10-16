@@ -20,7 +20,7 @@ import pytest
 from mado_tracking.errors import TransportError
 from mado_tracking.security import SecretMasker
 from mado_tracking.worker.reported_text import json_size
-from mado_tracking.worker.target_check_report import MAX_TARGET_CHECK_RESULT_BYTES, as_result_version
+from mado_tracking.worker.target_check_report import MAX_TARGET_CHECK_RESULT_BYTES
 from mado_tracking.worker.target_probe import (
     CONTAINER_EXEC_FLAGS,
     PROBE_SCRIPT,
@@ -366,10 +366,10 @@ def test_candidates_beyond_the_api_size_keep_every_python_while_directories_can_
     assert 3 < len(result["directories"]) < 43
 
 
-def test_version_1_for_old_apis_has_no_setup_candidates():
-    result = as_result_version(run_probe(ScriptedSSHTransport()), 1)
-    assert result["version"] == 1
-    assert set(result) == {"version", "items", "gpus", "runtimeKinds", "workDirectoryFreeBytes"}
+def test_接続診断はversion2で候補情報を返す():
+    result = run_probe(ScriptedSSHTransport())
+    assert result["version"] == 2
+    assert {"host", "pythons", "directories"} <= set(result)
 
 
 def test_missing_nvidia_smi_old_python_and_denied_docker_socket_are_ng_without_guessed_values():

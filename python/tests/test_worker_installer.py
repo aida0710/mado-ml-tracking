@@ -79,7 +79,7 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def install_from_cli(arguments: list[str], runner: RecordingRunner, stdin: str = TOKEN + "\n") -> int:
-    parsed = cli.build_parser().parse_args(cli.normalize_arguments(arguments))
+    parsed = cli.build_parser().parse_args(arguments)
     return cli.dispatch(parsed, runner, io.StringIO(stdin))
 
 
@@ -366,10 +366,15 @@ def test_doctor_checks_the_installed_environment_file_mode(home: Path, capsys: p
     assert all(TOKEN not in check.detail for check in checks)
 
 
-def test_bare_command_and_once_still_run_the_worker():
-    assert cli.normalize_arguments([]) == ["run"]
-    assert cli.normalize_arguments(["--once"]) == ["run", "--once"]
-    assert cli.normalize_arguments(["status", "--worker-id", WORKER_ID])[0] == "status"
+@pytest.mark.parametrize("arguments", [[], ["--once"]])
+def test_runを省略した起動を拒否する(arguments):
+    with pytest.raises(SystemExit):
+        cli.build_parser().parse_args(arguments)
+
+
+def test_runを指定すると単発実行を選べる():
+    parsed = cli.build_parser().parse_args(["run", "--once"])
+    assert parsed.command == "run" and parsed.once
 
 
 def test_token_file_is_loaded_as_the_api_token(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

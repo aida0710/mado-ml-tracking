@@ -28,7 +28,6 @@ from site_fixtures import (
 from test_site_runner import RESULT_ENTRYPOINT
 
 from mado_tracking.errors import ConfigurationError, TransportError
-from mado_tracking.newer_request_fields import REFUSED_FIELD_RETRY_SECONDS
 from mado_tracking.security import SecretMasker
 from mado_tracking.site.launcher import Launcher
 from mado_tracking.site.launcher_config import load_launcher_config
@@ -354,40 +353,15 @@ def test_an_unreported_result_is_kept_and_resent_by_the_next_poll(tmp_path, keyg
     launcher.close()
 
 
-def test_an_api_that_refuses_capabilities_gets_claims_without_them_until_it_takes_them_again(
-    tmp_path, keygen, caplog
-):
+def test_能力の報告を拒否されたlauncherは再送も投入もしない(tmp_path, keygen):
     submission = site_submission()
     api, logins = FakeLauncherApi(), LocalLogins()
     queue_on_assigned_site(api, submission, work_directory=str(tmp_path / "work"))
     api.unknown_claim_fields = {"capabilities"}
-    now = [0.0]
-    launcher = launcher_for(tmp_path, api, logins, clock=lambda: now[0])
-
-    def claimed_with_capabilities() -> list[bool]:
-        claims = api.bodies("POST", "launcher/site-submissions/claim")
-        return ["capabilities" in body for body in claims]
-
-    with caplog.at_level(logging.INFO, logger="mado_tracking.newer_request_fields"):
-        launcher.run_once()
-        # The refused claim took nothing; the one sent again submitted the Job.
-        assert claimed_with_capabilities() == [True, False]
-        assert api.reports()[-1]["outcome"] == "submitted"
-        now[0] = REFUSED_FIELD_RETRY_SECONDS - 1
-        launcher.run_once()
-        assert claimed_with_capabilities() == [True, False, False]
-        # Still older: refused once more, and the warning repeats.
-        now[0] = REFUSED_FIELD_RETRY_SECONDS
-        launcher.run_once()
-        assert claimed_with_capabilities() == [True, False, False, True, False]
-        assert caplog.text.count("does not take capabilities in site claims") == 2
-        # Upgraded: the launcher names them again without a restart, and keeps naming them.
-        api.unknown_claim_fields = set()
-        now[0] = 2 * REFUSED_FIELD_RETRY_SECONDS
-        launcher.run_once()
-        launcher.run_once()
-    assert claimed_with_capabilities()[-2:] == [True, True]
-    assert "The API now takes capabilities" in caplog.text
+    launcher = launcher_for(tmp_path, api, logins)
+    launcher.run_once()
+    assert len(api.bodies("POST", "launcher/site-submissions/claim")) == 1
+    assert not api.reports()
     launcher.close()
 
 

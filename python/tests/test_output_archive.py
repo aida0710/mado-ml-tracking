@@ -10,6 +10,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
+from execution_fixtures import pin_execution
 from test_worker import WorkerServer
 
 from mado_tracking.errors import ConfigurationError, TransportError
@@ -122,7 +123,9 @@ def test_thousands_of_outputs_take_one_archive_command_and_register_the_declared
             executor_factory=lambda job, settings: JobExecutor(job, settings, transport=transport),
         )
         try:
-            await asyncio.wait_for(worker.run_job(WorkerJob.parse(job_payload)), BULK_JOB_TIMEOUT_SECONDS)
+            await asyncio.wait_for(
+                worker.run_job(WorkerJob.parse(pin_execution(job_payload))), BULK_JOB_TIMEOUT_SECONDS
+            )
         finally:
             await worker.api.close()
 
@@ -171,7 +174,7 @@ def write_outputs(workspace: Path, count: int = 4) -> dict:
         artifacts.append(
             {"path": f"{number}.wav", "sha256": hashlib.sha256(content).hexdigest(), "size": len(content)}
         )
-    (outputs / "result.json").write_text(json.dumps({"version": 1, "complete": True, "artifacts": artifacts}))
+    (outputs / "result.json").write_text(json.dumps({"version": 2, "complete": True, "artifacts": artifacts}))
     results = validate_results(outputs)
     assert results is not None
     return results

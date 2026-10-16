@@ -89,7 +89,7 @@ export const hookSchema = namedContractSchema(
     runAsUserId: idSchema,
     runAsKind: z.enum(['human', 'service']).optional(),
     runAsName: z.string().optional(),
-    createdByName: z.string().optional(),
+    createdByName: z.string(),
     createdAt: timestampSchema,
   }),
 );

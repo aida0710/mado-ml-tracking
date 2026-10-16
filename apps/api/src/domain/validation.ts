@@ -93,7 +93,7 @@ export const codeVersionSchema = z
   .strictObject({
     version: nameSchema,
     source: codeSourceSchema.nullable().default(null),
-    runtime: executionRuntimeSchema.default({ kind: 'python' }),
+    runtime: executionRuntimeSchema,
     entrypoint: commandSchema.min(1),
     testEntrypoint: commandSchema.default([]),
     requirements: z.array(z.string().min(1).max(2000)).max(1000).default([]),
@@ -218,8 +218,7 @@ export const targetSchema = z.strictObject({
     .array(runtimeKindSchema)
     .min(1)
     .max(runtimeKindSchema.options.length)
-    .refine((values) => new Set(values).size === values.length)
-    .default(['python']),
+    .refine((values) => new Set(values).size === values.length),
   gpuIds: gpuIdsSchema,
   maxConcurrentJobs: z.number().int().min(1).max(128),
   enabled: z.boolean(),
@@ -245,9 +244,7 @@ export const targetSchema = z.strictObject({
   // Private unless chosen: a new computer serves its owner until they open it to everyone.
   visibility: z.enum(COMPUTE_TARGET_VISIBILITIES).default('private'),
 });
-// GET /projects/:p/jobs: a Run's Jobs (its retries make new Runs, so usually one). Other query
-// values are ignored, as they were before the list took any.
-export const jobListQuerySchema = z.object({ runId: uuidSchema.optional() });
+export const jobListQuerySchema = z.strictObject({ runId: uuidSchema.optional() });
 // gpuCount, retryOnFailure and retryOnTimeout are for site Jobs (validateSiteJobOptions).
 export const jobCreateSchema = z.strictObject({
   runId: uuidSchema,
@@ -266,7 +263,7 @@ export const jobLaunchSchema = z.strictObject({
   job: jobCreateSchema.omit({ runId: true }),
 });
 export const targetPatchSchema = targetSchema.partial().extend({
-  runtimeKinds: targetSchema.shape.runtimeKinds.removeDefault().optional(),
+  runtimeKinds: targetSchema.shape.runtimeKinds.optional(),
   datasetCacheMaxBytes: targetSchema.shape.datasetCacheMaxBytes.removeDefault().optional(),
   submissionMode: targetSchema.shape.submissionMode.removeDefault().optional(),
   cpuArch: targetSchema.shape.cpuArch.removeDefault().optional(),
@@ -311,23 +308,20 @@ export const workerCapabilitiesSchema = z
 // Self-reported by the worker host and never used for authorization. sshFiles are paths on the
 // worker's host, never the files' contents, offered for a computer's key paths.
 export const workerInfoSchema = z.strictObject({
-  version: z.string().trim().min(1).max(200).optional(),
-  hostname: z.string().trim().min(1).max(255).optional(),
-  parallelJobs: z.number().int().min(1).max(MAX_WORKER_PARALLEL_JOBS).optional(),
+  version: z.string().trim().min(1).max(200),
+  hostname: z.string().trim().min(1).max(255),
+  parallelJobs: z.number().int().min(1).max(MAX_WORKER_PARALLEL_JOBS),
   sshFiles: z
     .strictObject({
       keyPaths: z.array(reportedPathSchema).max(MAX_WORKER_SSH_FILE_PATHS),
       knownHostsPaths: z.array(reportedPathSchema).max(MAX_WORKER_SSH_FILE_PATHS),
-    })
-    .optional(),
-  // The others are only shown; capabilities also decide which Jobs the worker is given (claim). A
-  // worker that sends workerInfo without them is an older one and has none.
-  capabilities: workerCapabilitiesSchema.optional(),
+    }),
+  capabilities: workerCapabilitiesSchema,
 });
 export const workerResumeSchema = z.strictObject({
   workerId: z.string().min(1).max(200),
   targetIds: uniqueIdsSchema.optional(),
-  workerInfo: workerInfoSchema.optional(),
+  workerInfo: workerInfoSchema,
 });
 export const workerClaimSchema = workerResumeSchema.extend({
   activeJobIds: uniqueIdsSchema.optional(),

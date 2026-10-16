@@ -68,6 +68,7 @@ def _serve_python_job(tmp_path, monkeypatch, worker_job, worker_settings, entryp
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     specification = execution_specification(worker_job, worker_settings)
+    specification["stagedInputs"] = {"datasets": {}}
     assert specification["codeVersion"]["runtime"]["kind"] == "python"
     write_json(workspace / "spec.json", specification)
     write_json(workspace / "state.json", {"status": "starting", "supervisorPid": 0, "processPid": 0})
@@ -93,7 +94,7 @@ def test_python_job_outputs_and_result_json_are_collected_like_container_outputs
         (outputs / "model").mkdir()
         (outputs / "model/weights.bin").write_bytes(weights)
         manifest = {
-            "version": 1,
+            "version": 2,
             "complete": True,
             "artifacts": [
                 {

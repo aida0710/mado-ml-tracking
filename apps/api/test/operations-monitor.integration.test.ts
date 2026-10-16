@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type {
   NotificationChannel,
@@ -105,6 +106,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
       jobCreateSchema.parse({ runId: run.id, targetId: fixture.target.id, gpuIds: ['0'] }),
     );
     const claimed = await harness.services.worker.claim(fixture.workerPrincipal, {
+      workerInfo,
       workerId: 'gpu-host-1',
     });
     const leaseId = claimed!.job.leaseId!;
@@ -290,7 +292,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
     const fixture = await setup();
     await harness.services.worker.claim(fixture.workerPrincipal, {
       workerId: 'gpu-host-2',
-      workerInfo: { hostname: 'gpu-2.internal' },
+      workerInfo: { ...workerInfo, hostname: 'gpu-2.internal' },
     });
     await harness.database.query(
       "UPDATE workers SET last_seen_at=now()-interval '121 seconds' WHERE worker_id='gpu-host-2'",
@@ -308,7 +310,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
     });
     expect(JSON.stringify(queued[0]!.event)).not.toContain(fixture.workerToken);
 
-    await harness.services.worker.claim(fixture.workerPrincipal, { workerId: 'gpu-host-2' });
+    await harness.services.worker.claim(fixture.workerPrincipal, { workerInfo, workerId: 'gpu-host-2' });
     expect(await monitor().tick()).toMatchObject({ resolved: 1 });
     expect(await listAlerts(fixture, '?state=all')).toEqual([
       expect.objectContaining({ kind: 'worker.offline', resolution: 'recovered' }),
@@ -317,7 +319,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
 
   it('1週間以上応答の無いworkerは引退扱いで、新しいアラートを開かず開いていたものはinactiveで閉じる', async () => {
     const fixture = await setup();
-    await harness.services.worker.claim(fixture.workerPrincipal, { workerId: 'old-host' });
+    await harness.services.worker.claim(fixture.workerPrincipal, { workerInfo, workerId: 'old-host' });
     await harness.database.query(
       "UPDATE workers SET last_seen_at=now()-interval '3 minutes' WHERE worker_id='old-host'",
     );

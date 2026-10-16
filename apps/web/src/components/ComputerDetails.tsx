@@ -57,7 +57,7 @@ export function ComputerDetails({
         [
           text.workerSetupTitle,
           <span data-testid="worker-set-up-by">
-            {textTemplates.workerSetUpBy(target.ownerUserId ? target.ownerName : null)}
+            {textTemplates.workerSetUpBy(target.ownerName ?? target.ownerUserId)}
           </span>,
         ],
       ];

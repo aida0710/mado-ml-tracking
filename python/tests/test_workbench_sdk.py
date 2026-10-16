@@ -22,6 +22,7 @@ def test_code_version_sdk_keeps_the_pinned_commit_overlay_deletions_and_test_com
     with client:
         client.create_code_version(
             "project",
+            runtime={"kind": "python"},
             code_id="code",
             version="v2",
             source=source,
@@ -34,6 +35,7 @@ def test_code_version_sdk_keeps_the_pinned_commit_overlay_deletions_and_test_com
             "/api/projects/project/codes/code/versions",
             {
                 "version": "v2",
+                "runtime": {"kind": "python"},
                 "source": source,
                 "entrypoint": ["python", "main.py"],
                 "testEntrypoint": ["python", "-m", "unittest"],
@@ -52,6 +54,7 @@ def test_invalid_test_command_is_rejected_before_the_sdk_creates_code(test_entry
     with client, pytest.raises(ConfigurationError, match="argv"):
         client.register_code(
             "project",
+            runtime={"kind": "python"},
             name="test",
             version="v1",
             source={"kind": "inline", "files": {"main.py": "ok"}},
@@ -75,7 +78,12 @@ def test_unsafe_git_edits_fail_before_any_registry_request(edits):
     source = {"kind": "git", "url": "https://example.invalid/code.git", "commit": "a" * 40, **edits}
     with client, pytest.raises(ConfigurationError):
         client.register_code(
-            "project", name="edited", version="v1", source=source, entrypoint=["python", "main.py"]
+            "project",
+            runtime={"kind": "python"},
+            name="edited",
+            version="v1",
+            source=source,
+            entrypoint=["python", "main.py"],
         )
     assert not calls
 

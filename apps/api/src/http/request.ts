@@ -20,7 +20,13 @@ export function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   if (!parsed.success)
     throw new DomainError(
       422,
-      `入力が不正です: ${parsed.error.issues.map((issue) => issue.path.join('.') || 'body').join(', ')}`,
+      `入力が不正です: ${parsed.error.issues.map((issue) => {
+        const field = issue.path.join('.') || 'body';
+        return issue.code === 'invalid_value' && issue.values.length === 1 && issue.values[0] === 2
+          && issue.path.at(-1) === 'version'
+          ? `${field}: version 2が必要です。version 1は処理できません`
+          : field;
+      }).join(', ')}`,
       'invalid_request',
     );
   return parsed.data;

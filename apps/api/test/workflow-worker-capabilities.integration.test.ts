@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { Job, JobListItem, WorkerJob, WorkerPresence } from '@mmt/contracts';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
@@ -21,7 +22,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローのJobとworkerの対応機
     return request(harness.app, '/api/worker/claim', {
       method: 'POST',
       token: fixture.workerToken,
-      body: { workerId: 'older-worker', ...body },
+      body: { workerInfo, workerId: 'limited-worker', ...body },
     });
   }
 
@@ -60,11 +61,11 @@ describe.skipIf(!testDatabaseUrl)('ワークフローのJobとworkerの対応機
       }),
     );
     // The workflow's Job is older, but a worker that does not pass dataset usage skips it.
-    const older = await claimedJob({ workerInfo: { version: '0.9.0' } });
+    const older = await claimedJob({ workerInfo: { ...workerInfo, version: '0.9.0' } });
     expect(older?.job.id).toBe(plainJob.id);
-    expect(await claimedJob({ workerId: 'no-info' })).toBeNull();
+    expect(await claimedJob({ workerInfo, workerId: 'empty-capabilities' })).toBeNull();
     expect(
-      await claimedJob({ workerId: 'none-named', workerInfo: { capabilities: [] } }),
+      await claimedJob({ workerId: 'none-named', workerInfo: { ...workerInfo, capabilities: [] } }),
     ).toBeNull();
 
     const current = await fixture.claim();
@@ -74,16 +75,16 @@ describe.skipIf(!testDatabaseUrl)('ワークフローのJobとworkerの対応機
 
   it('知らない機能や重複した機能を名乗るclaimは断る', async () => {
     for (const capabilities of [['gpuTelepathy'], ['workflowDatasetUsage', 'workflowDatasetUsage']])
-      expect((await claim({ workerInfo: { capabilities } })).status).toBe(422);
+      expect((await claim({ workerInfo: { ...workerInfo, capabilities } })).status).toBe(422);
   });
 
   it('workerの一覧には最後に名乗った機能が出て、名乗らなくなれば空になる', async () => {
-    await claimedJob({ workerInfo: { capabilities: ['workflowDatasetUsage'] } });
+    await claimedJob({ workerInfo: { ...workerInfo, capabilities: ['workflowDatasetUsage'] } });
     expect((await workers()).map((worker) => worker.capabilities)).toEqual([
       ['workflowDatasetUsage'],
     ]);
     // The same worker id restarted as an older version that names nothing.
-    await claimedJob({ workerInfo: { version: '0.9.0' } });
+    await claimedJob({ workerInfo: { ...workerInfo, version: '0.9.0' } });
     expect((await workers()).map((worker) => worker.capabilities)).toEqual([[]]);
   });
 

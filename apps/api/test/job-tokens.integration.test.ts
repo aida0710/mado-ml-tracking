@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { createHash, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { Job, Run, WorkerJob } from '@mmt/contracts';
@@ -43,7 +44,7 @@ describe.skipIf(!testDatabaseUrl)('Job限定token（独立PostgreSQL）', () => 
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId },
+        body: { workerInfo, workerId },
       }),
       200,
     );
@@ -55,7 +56,7 @@ describe.skipIf(!testDatabaseUrl)('Job限定token（独立PostgreSQL）', () => 
       await request(harness.app, '/api/worker/resume', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId },
+        body: { workerInfo, workerId },
       }),
       200,
     );
@@ -250,7 +251,7 @@ describe.skipIf(!testDatabaseUrl)('Job限定token（独立PostgreSQL）', () => 
         body: { name: 'Qwen2 Test', source: `runs:/${other.id}/model`, run_id: other.id },
       }),
       await request(harness.app, '/api/worker/claim', {
-        method: 'POST', token: jobToken, body: { workerId: 'job-code' },
+        method: 'POST', token: jobToken, body: { workerInfo, workerId: 'job-code' },
       }),
       await request(harness.app, '/api/tokens', {
         method: 'POST', token: jobToken,

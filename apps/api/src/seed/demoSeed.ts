@@ -22,10 +22,6 @@ import {
 } from './samplePrograms.js';
 
 const DEMO_PROJECT_NAME = 'mado ML Tracking Demo';
-// demo_seed_history.name of a seed made before the product was renamed. A database seeded then
-// keeps that Project, so it still counts as seeded and is not created a second time.
-const LEGACY_DEMO_PROJECT_NAME = 'Mado Model Tracking Demo';
-const DEMO_SEED_NAMES = [DEMO_PROJECT_NAME, LEGACY_DEMO_PROJECT_NAME];
 
 export async function seedDemo(
   options: ApplicationOptions,
@@ -42,15 +38,15 @@ export async function seedDemo(
     await seedLock.query('SELECT pg_advisory_lock(4182,2)');
     const complete = await first<{ projectId: string }>(
       database,
-      'SELECT project_id FROM demo_seed_history WHERE name=ANY($1::text[])',
-      [DEMO_SEED_NAMES],
+      'SELECT project_id FROM demo_seed_history WHERE name=$1',
+      [DEMO_PROJECT_NAME],
     );
     if (complete) return { projectId: complete.projectId, alreadySeeded: true };
     // A purged Project keeps only its name (a tombstone), which does not block a new seed.
     const incomplete = await first(
       database,
-      'SELECT id FROM projects WHERE name=ANY($1::text[]) AND purged_at IS NULL',
-      [DEMO_SEED_NAMES],
+      'SELECT id FROM projects WHERE name=$1 AND purged_at IS NULL',
+      [DEMO_PROJECT_NAME],
     );
     if (incomplete)
       throw new DomainError(
@@ -135,6 +131,7 @@ export async function seedDemo(
         input: codeVersionSchema.parse({
           version: 'v1',
           source: { kind: 'inline', files: { [example.filename]: example.program } },
+          runtime: { kind: 'python' },
           entrypoint: ['python', example.filename],
           supportedModelFamilies: [example.family],
           taskTypes: example.kind === 'training' ? ['training', 'finetuning'] : [example.kind],

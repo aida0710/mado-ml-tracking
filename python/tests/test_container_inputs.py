@@ -11,6 +11,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
+from execution_fixtures import pin_execution
 from test_worker import WorkerServer
 
 from mado_tracking.errors import ApiError
@@ -44,7 +45,7 @@ def test_sif_checksum_mismatch_fails_before_transfer_or_entrypoint(job_payload, 
     async def scenario():
         worker = Worker(worker_settings, api=server.client())
         try:
-            await asyncio.wait_for(worker.run_job(WorkerJob.parse(job_payload)), 10)
+            await asyncio.wait_for(worker.run_job(WorkerJob.parse(pin_execution(job_payload))), 10)
         finally:
             await worker.api.close()
 
@@ -82,7 +83,7 @@ def test_api_weight_download_failure_never_starts_the_container(job_payload, wor
         )
         worker = Worker(worker_settings, api=api)
         try:
-            await asyncio.wait_for(worker.run_job(WorkerJob.parse(job_payload)), 10)
+            await asyncio.wait_for(worker.run_job(WorkerJob.parse(pin_execution(job_payload))), 10)
         finally:
             await api.close()
 
@@ -111,7 +112,7 @@ def test_missing_sif_runtime_reports_capability_failure_without_pip_or_a_fake_su
     async def scenario():
         worker = Worker(worker_settings, api=server.client())
         try:
-            await asyncio.wait_for(worker.run_job(WorkerJob.parse(job_payload)), 10)
+            await asyncio.wait_for(worker.run_job(WorkerJob.parse(pin_execution(job_payload))), 10)
         finally:
             await worker.api.close()
 
@@ -162,7 +163,7 @@ def test_lease_rejection_during_weight_transfer_never_launches_or_reports_a_comp
             url="http://localhost/api", token="test-api-secret", transport=httpx.MockTransport(serve)
         )
         worker = Worker(worker_settings, api=api)
-        task = asyncio.create_task(worker.run_job(WorkerJob.parse(job_payload)))
+        task = asyncio.create_task(worker.run_job(WorkerJob.parse(pin_execution(job_payload))))
         try:
             async with asyncio.timeout(10):
                 await started.wait()

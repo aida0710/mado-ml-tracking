@@ -14,7 +14,9 @@ const finishedCheck: TargetCheck = {
   claimedAt: '2026-10-08T00:00:01.000Z',
   finishedAt: '2026-10-08T00:00:10.000Z',
   result: {
-    version: 1,
+    version: 2,
+    host: { machine: null, cpuArch: null, cpuCount: null, memoryTotalBytes: null, homeDirectory: null },
+    pythons: [], directories: [],
     items: [{ name: 'connection', status: 'ok', code: null, detail: null }],
     gpus: [
       { index: '0', uuid: 'GPU-a', name: 'NVIDIA A100', memoryTotalMiB: 81920 },

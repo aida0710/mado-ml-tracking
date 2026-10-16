@@ -45,9 +45,7 @@ const submissionResultSchema = z.strictObject({
   error: z.string().max(20000).nullish(),
 });
 const submissionResultsSchema = z.array(submissionResultSchema).min(1).max(SITE_CLAIM_MAX_SUBMISSIONS);
-// What the runner that the claimant installs on the site passes to a Job's code; a claim without
-// them is from an older launcher or `mado-tracking submit`, whose runner has none.
-const runnerCapabilitiesSchema = workerCapabilitiesSchema.default([]);
+const runnerCapabilitiesSchema = workerCapabilitiesSchema;
 
 export const siteSubmissionClaimSchema = z.strictObject({
   targetIds: uniqueIdsSchema.optional(),
@@ -113,6 +111,7 @@ export const runnerHeartbeatSchema = z.strictObject({
 export const runnerLogsSchema = logBatchSchema.extend({ instanceId: uuidSchema });
 export const runnerMetricsSchema = metricBatchSchema.extend({ instanceId: uuidSchema });
 export const runnerOutputsSchema = z.strictObject({
+  version: z.literal(2),
   instanceId: uuidSchema,
   declarations: outputDeclarationsSchema,
 });

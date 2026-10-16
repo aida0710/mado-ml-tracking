@@ -268,7 +268,7 @@ def test_chained_rule_sends_trigger_upstream_rule_and_summary_metrics():
     assert body["maxAttempts"] == 1
 
 
-def test_registration_rule_omits_the_fields_it_does_not_use():
+def test_Automationの空の項目も明示して送る():
     client, requests = recording_client()
     with client:
         client.create_automation_rule(
@@ -282,7 +282,7 @@ def test_registration_rule_omits_the_fields_it_does_not_use():
         )
     body = requests[0][3]
     assert body["trigger"] == "model_registered" and body["kind"] == "processing"
-    assert "upstreamRuleId" not in body and "summaryMetrics" not in body
+    assert body["upstreamRuleId"] is None and body["summaryMetrics"] == []
 
 
 @pytest.mark.parametrize(

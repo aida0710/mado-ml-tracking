@@ -455,7 +455,7 @@ def register_sweep_task(research: Research) -> str:
             },
             entrypoint=["python", "slow_trial.py"],
             test_entrypoint=[],
-            runtime=None,
+            runtime={"kind": "python"},
             requirements=[],
             environment=None,
             supported_model_families=["linear"],

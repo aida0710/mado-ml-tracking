@@ -85,16 +85,13 @@ def _list_latest_artifacts(
     params = {"versions": "latest", "limit": str(ARTIFACT_PAGE_LIMIT)}
     if prefix:
         params["prefix"] = prefix
-    latest_by_path: dict[str, dict[str, Any]] = {}
+    artifacts: list[dict[str, Any]] = []
     for artifact in iterate_listed_items(api, resource, params=params, label="Upstream Artifact list"):
         path = artifact.get("path")
         if not isinstance(path, str) or not isinstance(artifact.get("id"), str):
             raise ConfigurationError("API returned an Artifact without id or path")
-        # An API without prefix/versions support returns every row, newest first.
-        if prefix and not path.startswith(prefix):
-            continue
-        latest_by_path.setdefault(path, artifact)
-    return list(latest_by_path.values())
+        artifacts.append(artifact)
+    return artifacts
 
 
 def _safe_artifact_parts(path: str) -> list[str]:

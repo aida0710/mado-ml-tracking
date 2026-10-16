@@ -1,3 +1,4 @@
+import { requireDatabaseUrl } from './db/databaseSettings.js';
 import { z } from 'zod';
 import type { AuthMode } from '@mmt/contracts';
 import { createOidcRolePolicy, type OidcRolePolicy } from './domain/oidcRolePolicy.js';
@@ -68,7 +69,6 @@ const MIN_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS = 60;
 const environmentSchema = z.object({
   NODE_ENV: z.string().default('development'),
   MMT_DATABASE_URL: optionalSetting,
-  DATABASE_URL: optionalSetting,
   HOST: z.string().default('127.0.0.1'),
   PORT: z.coerce.number().int().min(1).max(65535).default(4182),
   // hybrid keeps a local administrator as the recovery path while SSO is introduced.
@@ -95,8 +95,6 @@ const environmentSchema = z.object({
   OIDC_ALLOWED_GROUPS: optionalSetting,
   OIDC_ROLE_MAPPING_JSON: optionalSetting,
   OIDC_DEFAULT_ROLE: optionalSetting,
-  // Shorthand for {"<group>":"admin"}; without it and the mapping, mmt-admins stays the admin group.
-  OIDC_ADMIN_GROUP: optionalSetting,
   // Off by default: linking by email would let an IdP account take over a same-email local account.
   OIDC_AUTO_LINK_VERIFIED_EMAIL: z.enum(['true', 'false']).default('false'),
   OIDC_SCOPES: z.string().default(DEFAULT_OIDC_SCOPES),
@@ -247,6 +245,8 @@ function parseOptionalSecretKey(base64: string | undefined, settingName: string)
 }
 
 export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiConfig {
+  if (environment.OIDC_ADMIN_GROUP !== undefined)
+    throw new Error('OIDC_ADMIN_GROUP is not supported; use OIDC_ROLE_MAPPING_JSON');
   // Report field names only: environment values can contain credentials.
   const parsed = environmentSchema.safeParse(environment);
   if (!parsed.success)
@@ -256,8 +256,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
   const settings = parsed.data;
   if (!!settings.MMT_GIT_SSH_KEY_PATH !== !!settings.MMT_GIT_KNOWN_HOSTS_PATH)
     throw new Error('MMT_GIT_SSH_KEY_PATH and MMT_GIT_KNOWN_HOSTS_PATH must be set together');
-  const databaseUrl = settings.MMT_DATABASE_URL ?? settings.DATABASE_URL;
-  if (!databaseUrl) throw new Error('MMT_DATABASE_URL or DATABASE_URL is required');
+  const databaseUrl = requireDatabaseUrl(environment);
   const isProduction = settings.NODE_ENV === 'production';
   if (isProduction && settings.AUTH_MODE === 'development')
     throw new Error('Development authentication is forbidden in production');
@@ -335,7 +334,6 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
         allowedGroups: settings.OIDC_ALLOWED_GROUPS,
         roleMappingJson: settings.OIDC_ROLE_MAPPING_JSON,
         defaultRole: settings.OIDC_DEFAULT_ROLE,
-        adminGroup: settings.OIDC_ADMIN_GROUP,
       }),
       autoLinkVerifiedEmail: settings.OIDC_AUTO_LINK_VERIFIED_EMAIL === 'true',
       scopes: scopes.join(' '),

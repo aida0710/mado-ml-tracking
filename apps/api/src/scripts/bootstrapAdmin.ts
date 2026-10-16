@@ -1,3 +1,4 @@
+import { requireDatabaseUrl } from '../db/databaseSettings.js';
 import { stdin, stdout } from 'node:process';
 import { pathToFileURL } from 'node:url';
 import type { Readable, Writable } from 'node:stream';
@@ -125,9 +126,7 @@ export async function bootstrapAdministrator(options: {
 async function main(): Promise<void> {
   if (!stdin.isTTY)
     throw new Error('Password input requires a TTY; run this command in an interactive terminal');
-  const databaseUrl = process.env.MMT_DATABASE_URL ?? process.env.DATABASE_URL;
-  if (!databaseUrl) throw new Error('MMT_DATABASE_URL or DATABASE_URL is required');
-  const database = createDatabase(databaseUrl);
+  const database = createDatabase(requireDatabaseUrl(process.env));
   try {
     await bootstrapAdministrator({ database, terminal: { input: stdin, output: stdout } });
   } finally {

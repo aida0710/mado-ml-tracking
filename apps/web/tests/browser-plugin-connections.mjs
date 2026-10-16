@@ -12,7 +12,7 @@ const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1
 const api = createBrowserApi();
 api.state.loggedIn = true;
 const plugin = {
-  ...api.state.plugins[0], name: 'Mado', kind: 'mado', configurationStatus: 'ready',
+  ...api.state.plugins[0], name: 'Mado', kind: 'mado',
   configRevision: 1, config: null, enabled: false,
   credentialsConfigured: { accessToken: false }, accessTokenGrant: null,
   secretStorageAvailable: true, tokenConfigured: false, baseUrl: '', tokenEnv: '',
@@ -51,7 +51,7 @@ function manifest() {
 function availability() {
   const connections = api.state.plugins.filter(connection => connection.kind === 'mado');
   return connections.length ? connections.map(connection => ({ kind: 'mado', id: connection.id, enabled: connection.enabled,
-    configured: connection.configurationStatus === 'ready', configRevision: connection.configRevision,
+    configured: connection.tokenConfigured, configRevision: connection.configRevision,
     webUrl: connection.config?.webUrl ?? null,
     canImport: api.state.project.role === 'admin' || api.state.user.isAdmin,
   })) : [{ kind: 'mado', id: null, enabled: false, configured: false,
@@ -128,11 +128,6 @@ await context.route(url => url.pathname.startsWith('/api/'), async route => {
         namespace: dataset.namespace, name: dataset.name, version: dataset.version },
     });
     return reply(version);
-  }
-  if (pathname === `${pluginPath}/migration/complete`) {
-    assert.equal(body.expectedRevision, plugin.configRevision);
-    plugin.configurationStatus = 'ready';
-    return reply(plugin);
   }
   return api.route(route);
 });
@@ -283,15 +278,7 @@ try {
   api.state.user.isAdmin = true;
   api.state.project.role = 'admin';
   plugin.enabled = true;
-  plugin.configurationStatus = 'migration_pending';
   await page.goto(`${base}/projects/${projectId}/plugins`);
-  await page.getByRole('button', { name: '移行を完了', exact: true }).waitFor();
-  assert.equal(await page.getByRole('button', { name: '移行を完了', exact: true }).isDisabled(), true);
-  assert.equal(await importButtons().count(), 0);
-  await checkConnection();
-  await page.getByRole('button', { name: '移行を完了', exact: true }).click();
-  await page.getByLabel('データセットを検索', { exact: true }).waitFor();
-  assert.equal(await page.getByRole('button', { name: '移行を完了', exact: true }).count(), 0);
 
   console.log('Built-in Mado: adding a disabled connection preserves earlier connections and references');
   await page.getByRole('button', { name: 'Madoの接続を追加', exact: true }).click();
@@ -307,25 +294,6 @@ try {
   assert.notEqual(api.state.plugins[1].id, plugin.id);
   assert.equal(api.state.plugins[1].enabled, false);
   assert.equal(api.state.datasetVersions[0].externalRef.pluginId, plugin.id);
-
-  console.log('Built-in Mado: legacy connections allow administrator rename/disable and project-admin inspection');
-  const legacy = { ...plugin, id: '30000000-0000-4000-8000-000000000003', name: 'Legacy connection',
-    kind: 'legacy', configurationStatus: 'unsupported', config: null, enabled: true };
-  api.state.plugins.push(legacy);
-  await page.goto(`${base}/projects/${projectId}/plugins?id=${legacy.id}`);
-  await page.getByLabel('名前', { exact: true }).fill('Legacy archive');
-  await page.getByRole('button', { name: '保存', exact: true }).click();
-  await page.getByRole('heading', { name: 'Legacy archive', exact: true }).waitFor();
-  await page.getByRole('button', { name: '連携を無効にする', exact: true }).click();
-  await page.waitForFunction(() => document.querySelector('form.plugin-search input')?.value === 'Legacy archive');
-  assert.equal(legacy.enabled, false);
-  assert.equal(await page.getByRole('button', { name: '連携を有効にする', exact: true }).count(), 0);
-  api.state.user.isAdmin = false;
-  await page.reload();
-  await page.getByRole('heading', { name: 'Legacy archive', exact: true }).waitFor();
-  assert.equal(await page.getByRole('button', { name: '保存', exact: true }).count(), 0);
-  assert.equal(await page.getByRole('button', { name: '連携を無効にする', exact: true }).count(), 0);
-  await page.getByRole('heading', { name: 'イベントの送信状況', exact: true }).waitFor();
 
   api.state.user.isAdmin = true;
   await page.goto(`${base}/projects/${projectId}/plugins?id=${plugin.id}`);

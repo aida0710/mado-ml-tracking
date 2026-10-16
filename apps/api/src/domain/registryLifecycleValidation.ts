@@ -25,9 +25,8 @@ export const datasetPatchSchema = z
   .refine(requireSomeField, EMPTY_PATCH_MESSAGE);
 export type DatasetPatch = z.infer<typeof datasetPatchSchema>;
 
-// Omitted lists every Dataset, as before archiving existed. Not strict: the list ignored every
-// query parameter before this filter, and existing clients must keep working.
-export const datasetListQuerySchema = z.object({
+// Omitted lists every Dataset: the Datasets screen shows archived ones on request from that list.
+export const datasetListQuerySchema = z.strictObject({
   archived: z.enum(['true', 'false']).optional(),
 });
 export type DatasetListQuery = z.infer<typeof datasetListQuerySchema>;

@@ -27,7 +27,7 @@ export const storageBackendSchema = namedContractSchema(
     caBundleConfigured: z.boolean(),
     checksumMode: z.enum(['when_required', 'when_supported']),
     multipartPartSizeBytes: z.number().int(),
-    multipartEnabled: z.boolean().optional(),
+    multipartEnabled: z.boolean(),
     accessKeyId: z.string().optional(),
     secretConfigured: z.boolean(),
     enabled: z.boolean(),

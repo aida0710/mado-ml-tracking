@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { randomUUID } from 'node:crypto';
 import type {
   Artifact,
@@ -205,7 +206,7 @@ describe.skipIf(!testDatabaseUrl)('Runのmedia（独立PostgreSQL）', () => {
           await request(harness.app, '/api/worker/claim', {
             method: 'POST',
             token: fixture.workerToken,
-            body: { workerId: 'media-worker' },
+            body: { workerInfo, workerId: 'media-worker' },
           }),
           200,
         )

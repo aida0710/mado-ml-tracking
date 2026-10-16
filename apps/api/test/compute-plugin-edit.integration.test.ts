@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   ComputeTarget,
@@ -142,7 +143,7 @@ describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立P
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'active-before-disable' },
+          body: { workerInfo, workerId: 'active-before-disable' },
         }),
         200,
       )
@@ -161,7 +162,7 @@ describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立P
           await request(harness.app, '/api/worker/claim', {
             method: 'POST',
             token: fixture.workerToken,
-            body: { workerId: 'new-while-disabled' },
+            body: { workerInfo, workerId: 'new-while-disabled' },
           }),
           200,
         )
@@ -171,7 +172,7 @@ describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立P
       await request(harness.app, '/api/worker/resume', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'active-before-disable' },
+        body: { workerInfo, workerId: 'active-before-disable' },
       }),
       200,
     );
@@ -190,7 +191,7 @@ describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立P
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'second-active' },
+          body: { workerInfo, workerId: 'second-active' },
         }),
         200,
       )

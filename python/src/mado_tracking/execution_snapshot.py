@@ -13,13 +13,13 @@ ExecutionMode = Literal["run", "test"]
 EXECUTION_MODES = {"run", "test"}
 
 
-def validate_execution_mode(mode: str) -> None:
-    if mode not in EXECUTION_MODES:
+def validate_execution_mode(mode: object) -> None:
+    if not isinstance(mode, str) or mode not in EXECUTION_MODES:
         raise ValueError("Run.executionMode must be run or test")
 
 
 def resolve_execution_snapshot(code_version: Mapping[str, Any], run: Mapping[str, Any]) -> dict[str, Any]:
-    mode = run.get("executionMode", "run")
+    mode = run.get("executionMode")
     validate_execution_mode(mode)
     source = code_version["source"]
     validate_code_source(source)
@@ -27,7 +27,7 @@ def resolve_execution_snapshot(code_version: Mapping[str, Any], run: Mapping[str
     if not isinstance(entrypoint, list):
         raise ValueError("CodeVersion.entrypoint must be a nonempty argv")
     validate_entrypoint(entrypoint)
-    test_entrypoint = code_version.get("testEntrypoint", [])
+    test_entrypoint = code_version["testEntrypoint"]
     if not isinstance(test_entrypoint, list):
         raise ValueError("CodeVersion.testEntrypoint must be an argv")
     if test_entrypoint:
@@ -40,7 +40,7 @@ def resolve_execution_snapshot(code_version: Mapping[str, Any], run: Mapping[str
     runtime = validate_runtime(code_version.get("runtime"), source=source, requirements=requirements)
     expected = {
         "codeVersionId": code_version["id"],
-        "version": code_version.get("version", ""),
+        "version": code_version["version"],
         "mode": mode,
         "source": source,
         "runtime": runtime,
@@ -48,9 +48,6 @@ def resolve_execution_snapshot(code_version: Mapping[str, Any], run: Mapping[str
         "requirements": requirements,
         "environment": code_version["environment"],
     }
-    if "executionMode" not in run and "executionSnapshot" not in run:
-        # Old saved worker journals and fixtures precede the API's mandatory snapshot fields.
-        return copy.deepcopy(expected)
     snapshot = run.get("executionSnapshot")
     if not isinstance(snapshot, Mapping) or dict(snapshot) != expected:
         raise ValueError("Run.executionSnapshot does not match its pinned CodeVersion and executionMode")
@@ -60,7 +57,7 @@ def resolve_execution_snapshot(code_version: Mapping[str, Any], run: Mapping[str
 
 
 def resolve_runner_execution_snapshot(specification: Mapping[str, Any]) -> dict[str, Any]:
-    snapshot = resolve_execution_snapshot(specification["codeVersion"], specification.get("runExecution", {}))
-    if "executionSnapshot" in specification and specification["executionSnapshot"] != snapshot:
+    snapshot = resolve_execution_snapshot(specification["codeVersion"], specification["runExecution"])
+    if specification.get("executionSnapshot") != snapshot:
         raise ValueError("Runner executionSnapshot does not match the pinned Run instructions")
     return snapshot

@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type {
   ComputeTargetDetails,
@@ -11,10 +12,9 @@ import type {
   SiteSubmission,
   WorkerJob,
 } from '@mmt/contracts';
-import { migrate } from '../src/db/migrate.js';
 import { automationRuleInput, containerFixture, type ContainerFixture } from './containerFixtures.js';
 import { createHarness, entity, login, request, testDatabaseUrl, type Harness } from './harness.js';
-import { applyMigrationsBefore } from './migrationFixtures.js';
+import { applyMigrationFile, applyMigrationsBefore } from './migrationFixtures.js';
 import { automaticSiteSettings, siteTargetInput, TEST_JOB_SHELL } from './siteFixtures.js';
 
 type Caller = { cookie?: string; token?: string };
@@ -323,20 +323,8 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立Pos
       { outcome: 'success', details: { fields: ['name', 'visibility'], siteFields: [] } },
     ]);
 
-    // A computer from before owners serves everyone and has no one to be private for.
-    await harness.database.query('UPDATE compute_targets SET owner_user_id=NULL WHERE id=$1', [
-      fixture.target.id,
-    ]);
-    const ownerless = await patchTarget(fixture.target.id, fixture.administrator.cookie, {
-      visibility: 'private',
-    });
-    expect(ownerless.status).toBe(422);
-    expect(await ownerless.json()).toMatchObject({ code: 'target_owner_missing' });
-    await expect(
-      harness.database.query("UPDATE compute_targets SET visibility='private' WHERE id=$1", [
-        fixture.target.id,
-      ]),
-    ).rejects.toThrow('target_private_owner');
+    await expect(harness.database.query('UPDATE compute_targets SET owner_user_id=NULL WHERE id=$1', [fixture.target.id]))
+      .rejects.toThrow(/owner_user_id/);
   });
 
   it('待機中のJobのコンピュータがあとでPrivateになると、Jobは投入のときに失敗する', async () => {
@@ -347,7 +335,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立Pos
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'worker-1' },
+        body: { workerInfo, workerId: 'worker-1' },
       }),
       200,
     );
@@ -378,7 +366,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立Pos
       await request(harness.app, '/api/manual-submissions/claim', {
         method: 'POST',
         token: ownerToken,
-        body: { targetId: computer.id, submitterId: 'pc', all: true },
+        body: { capabilities: [], targetId: computer.id, submitterId: 'pc', all: true },
       }),
       200,
     );
@@ -419,7 +407,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲の移行（
       SELECT owned.id AS owned_id,global.id AS global_id,owner.id AS owner_id FROM owned,global,owner`);
     const { owned_id: ownedId, global_id: globalId, owner_id: ownerId } = legacy.rows[0]!;
 
-    await migrate(harness.database);
+    await applyMigrationFile(harness.database, '057_compute_target_visibility.sql');
 
     const migrated = await harness.database.query<{ id: string; visibility: string }>(
       'SELECT id,visibility FROM compute_targets ORDER BY name',

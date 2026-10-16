@@ -25,7 +25,7 @@ export function MadoSettings({ plugin, onSaved }: PluginSettingsProps) {
   const { user } = useAuth();
   const [showEdit, setShowEdit] = useState(false);
   const canManage = isProjectAdmin || user.isAdmin;
-  const ready = plugin?.configurationStatus === 'ready';
+  const ready = plugin !== null;
   const canCheck = !!plugin?.config && plugin.credentialsConfigured.accessToken && plugin.secretStorageAvailable;
   const canCall = ready && plugin.enabled && plugin.tokenConfigured;
   const grant = plugin?.accessTokenGrant ?? null;
@@ -38,7 +38,6 @@ export function MadoSettings({ plugin, onSaved }: PluginSettingsProps) {
       <span className="report-badge">{plugin?.enabled ? text.enabled : text.disabled}</span>
     </div>
     {!plugin && <p className="notice">{user.isAdmin ? pluginsText.madoNotConfigured : pluginsText.madoAskAdmin}</p>}
-    {plugin?.configurationStatus === 'migration_pending' && <p className="notice warning">{pluginsText.madoMigrationPending}</p>}
     {ready && !plugin.tokenConfigured && <p className="notice warning">{pluginsText.madoCredentialsMissing}</p>}
     {plugin?.secretStorageAvailable === false && <p className="notice warning">{pluginsText.secretStorageUnavailable}</p>}
     {plugin?.config && <DetailsList entries={[
@@ -59,11 +58,6 @@ export function MadoSettings({ plugin, onSaved }: PluginSettingsProps) {
         {plugin && <button className="button small" data-testid="plugin-toggle" onClick={connection.toggle}
           disabled={connection.pending || (!plugin.enabled && !(ready && plugin.tokenConfigured))}>
           {plugin.enabled ? pluginsText.disableIntegration : pluginsText.enableIntegration}
-        </button>}
-        {plugin?.configurationStatus === 'migration_pending' && plugin.config && <button
-          className="button small" onClick={connection.completeMigration}
-          disabled={connection.pending || !plugin.tokenConfigured || !connection.checked}>
-          {pluginsText.completeMigration}
         </button>}
       </>}
       {canManage && plugin && <>

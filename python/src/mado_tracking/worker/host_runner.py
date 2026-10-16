@@ -68,10 +68,9 @@ def launch(workspace: Path, specification: dict[str, Any], runtime_path: Path) -
                 previous.get("jobId") != specification["jobId"]
                 or previous.get("codeVersionId") != specification["codeVersion"]["id"]
                 or previous.get("leaseId") != specification.get("leaseId")
-                or previous.get("executionMode", "run") != specification["executionSnapshot"]["mode"]
-                or previous.get("runId", specification["context"]["runId"])
-                != specification["context"]["runId"]
-                or previous.get("instructionsHash", instructions_hash) != instructions_hash
+                or previous.get("executionMode") != specification["executionSnapshot"]["mode"]
+                or previous.get("runId") != specification["context"]["runId"]
+                or previous.get("instructionsHash") != instructions_hash
             ):
                 raise ValueError("Workspace belongs to a different pinned job")
             return read_state(workspace)
@@ -83,7 +82,6 @@ def launch(workspace: Path, specification: dict[str, Any], runtime_path: Path) -
             "runId": specification["context"]["runId"],
             "executionMode": specification["executionSnapshot"]["mode"],
             "instructionsHash": instructions_hash,
-            "sourceSnapshotRequired": True,
             "status": "starting",
             "supervisorPid": 0,
             "processPid": 0,
@@ -109,7 +107,6 @@ def serve(workspace: Path) -> None:
         fcntl.flock(lock, fcntl.LOCK_EX)
         state = read_json(workspace / "state.json")
         specification = read_json(workspace / "spec.json")
-        # A saved supervisor spec from before snapshots still needs cancellation/container cleanup.
         specification["executionSnapshot"] = resolve_runner_execution_snapshot(specification)
         if state.get("supervisorPid") not in {0, os.getpid()}:
             return

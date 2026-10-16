@@ -24,7 +24,7 @@ printf '%s\n' "$MMT_API_TOKEN"
 sleep "${1:-0}"
 checksum=$(sha256sum "$MMT_OUTPUTS_DIR/input-copy.json" | cut -d ' ' -f 1)
 size=$(wc -c < "$MMT_OUTPUTS_DIR/input-copy.json" | tr -d ' ')
-printf '{"version":1,"complete":true,'\
+printf '{"version":2,"complete":true,'\
 '"artifacts":[{"path":"input-copy.json","sha256":"%s","size":%s,"mimeType":"application/json"}],'\
 '"metrics":[{"name":"fixture.score","value":0.9,"step":1}]}' \
   "$checksum" "$size" > "$MMT_OUTPUTS_DIR/manifest.partial"

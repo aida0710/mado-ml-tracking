@@ -57,13 +57,13 @@ export function WorkerPresenceTable({
           priority: 'secondary',
           header: text.workerVersion,
           className: 'mono',
-          render: (worker) => worker.version ?? '—',
+          render: (worker) => worker.version,
         },
         {
           key: 'hostname',
           priority: 'secondary',
           header: text.workerHostname,
-          render: (worker) => worker.hostname ?? '—',
+          render: (worker) => worker.hostname,
         },
         {
           key: 'token',
@@ -89,9 +89,7 @@ export function WorkerPresenceTable({
           header: text.workerActiveJobs,
           className: 'mono',
           render: (worker) =>
-            worker.parallelJobs
-              ? `${worker.activeJobCount} / ${worker.parallelJobs}`
-              : worker.activeJobCount,
+            `${worker.activeJobCount} / ${worker.parallelJobs}`,
         },
       ]}
     />

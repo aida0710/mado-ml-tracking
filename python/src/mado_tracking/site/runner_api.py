@@ -98,7 +98,7 @@ class RunnerApi(ArtifactTransferApi):
         """Register result.json models/datasets; a resent index returns the stored registration."""
         response = await self._post(
             "outputs",
-            {"declarations": declarations},
+            {"version": 2, "declarations": declarations},
             retryable=True,
             rejected_statuses=OUTPUT_REJECTED_STATUSES,
         )

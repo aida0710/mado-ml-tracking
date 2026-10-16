@@ -5,9 +5,9 @@ export async function routeBuiltinPlugins({state, request, reply, id, now, proje
   if (key === 'availability' && method === 'GET') {
     const connections = state.plugins.filter((plugin) => plugin.kind === 'mado');
     return list(connections.length ? connections.map((plugin) => ({
-      kind: 'mado', id: plugin.id, enabled: plugin.enabled, configured: plugin.tokenConfigured && plugin.configurationStatus === 'ready',
+      kind: 'mado', id: plugin.id, enabled: plugin.enabled, configured: plugin.tokenConfigured,
       configRevision: plugin.configRevision, webUrl: plugin.config?.webUrl ?? null,
-      canImport: project.role === 'admin' && plugin.enabled && plugin.tokenConfigured && plugin.configurationStatus === 'ready',
+      canImport: project.role === 'admin' && plugin.enabled && plugin.tokenConfigured,
     })) : [{kind: 'mado', id: null, enabled: false, configured: false, configRevision: 0, webUrl: null, canImport: false}]);
   }
   if (project.role !== 'admin' && !user.isAdmin) return reply({error: 'Project admin required'}, 403);
@@ -16,9 +16,9 @@ export async function routeBuiltinPlugins({state, request, reply, id, now, proje
     if (!user.isAdmin) return reply({error: 'Global admin required'}, 403);
     const credentialsConfigured = {accessToken: Boolean(body.credentials?.accessToken)};
     const plugin = {id: id(), projectId: project.id, name: body.name ?? 'Mado', kind: 'mado', config: body.config,
-      configRevision: 1, configurationStatus: 'ready', credentialsConfigured,
+      configRevision: 1, credentialsConfigured,
       secretStorageAvailable: state.pluginSecretStorageAvailable ?? true,
-      baseUrl: '', tokenEnv: '', tokenConfigured: credentialsConfigured.accessToken,
+      tokenConfigured: credentialsConfigured.accessToken,
       enabled: body.enabled ?? false, manifest: null, accessTokenGrant: null, createdAt: now};
     state.plugins.push(plugin);
     return reply(plugin, 201);
@@ -33,12 +33,6 @@ export async function routeBuiltinPlugins({state, request, reply, id, now, proje
     plugin.tokenConfigured = plugin.credentialsConfigured.accessToken;
     plugin.configRevision++;
     if (body.config || body.credentials?.accessToken) Object.assign(plugin, {manifest: null, accessTokenGrant: null});
-    return reply(plugin);
-  }
-  if (subresource === 'migration') {
-    if (!user.isAdmin) return reply({error: 'Global admin required'}, 403);
-    plugin.configurationStatus = 'ready';
-    plugin.configRevision++;
     return reply(plugin);
   }
   if (subresource === 'check') {

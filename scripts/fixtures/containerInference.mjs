@@ -45,7 +45,7 @@ await saveCompletedFile(
 await saveCompletedFile(
   process.env.MMT_RESULT_FILE ?? join(outputDirectory, 'result.json'),
   JSON.stringify({
-    version: 1,
+    version: 2,
     complete: true,
     artifacts: [{
       path: 'artifacts/predictions.json',

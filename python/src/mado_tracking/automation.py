@@ -65,11 +65,8 @@ def create_automation_rule(
         "tags": dict(tags or {}),
         "maxAttempts": max_attempts,
     }
-    # Optional fields are left out when unset so an API without them still accepts the rule.
-    if upstream_rule_id is not None:
-        body["upstreamRuleId"] = upstream_rule_id
-    if summary_metrics:
-        body["summaryMetrics"] = list(summary_metrics)
+    body["upstreamRuleId"] = upstream_rule_id
+    body["summaryMetrics"] = list(summary_metrics)
     # Not retried: a resent create would add a second rule.
     return client.request("POST", client.project_path(project_id, "automation-rules"), json=body)
 

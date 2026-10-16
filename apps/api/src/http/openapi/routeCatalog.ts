@@ -224,14 +224,11 @@ import {
 import {
   pluginDatasetImportSchema,
   pluginDatasetSearchSchema,
-  pluginMigrationCompleteSchema,
-  pluginDeliveryReceiptsSchema,
 } from '../../routes/pluginRoutes.js';
 import {
   runComparisonCsvQuerySchema,
   runComparisonSchema as runComparisonRequestSchema,
   runLogQuerySchema,
-  runQuerySchema,
 } from '../../routes/runRoutes.js';
 import { runSearchSchema } from '../../routes/runSearchRoutes.js';
 import { MAX_DATASET_VERSION_BODY_BYTES, SYNC_BATCH_MAX_BYTES } from '../requestBodyLimits.js';
@@ -1302,15 +1299,6 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     responses: { 200: csvDownload },
   },
   {
-    method: 'get',
-    path: '/api/projects/:p/runs',
-    tag: 'runs',
-    summary: 'Run一覧（互換。検索はruns/search）',
-    access: PROJECT_VIEWER,
-    query: runQuerySchema,
-    responses: { 200: contract.itemsOf(contract.runSchema) },
-  },
-  {
     method: 'post',
     path: '/api/projects/:p/runs',
     tag: 'runs',
@@ -1951,7 +1939,6 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
       ...TARGET_MANAGER_ERRORS,
       ...routeError(403, 'target_admin_required'),
       ...routeError(409, 'conflict'),
-      ...routeError(422, 'target_owner_missing'),
     ],
   },
   {
@@ -2619,24 +2606,6 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     summary: '内蔵連携の表示用状態（資格情報を含まない）',
     access: PROJECT_VIEWER,
     responses: { 200: contract.itemsOf(contract.pluginAvailabilitySchema) },
-  },
-  {
-    method: 'post',
-    path: '/api/projects/:p/plugins/:id/migration/complete',
-    tag: 'plugins',
-    summary: '旧Mado連携の移行を完了（全体管理者）',
-    access: GLOBAL_ADMIN,
-    body: pluginMigrationCompleteSchema,
-    responses: { 200: contract.pluginConnectionSchema },
-  },
-  {
-    method: 'post',
-    path: '/api/projects/:p/plugins/:id/events/receipts',
-    tag: 'plugins',
-    summary: '旧Mado連携の配送済み記録を照合して引き継ぐ（全体管理者）',
-    access: GLOBAL_ADMIN,
-    body: pluginDeliveryReceiptsSchema,
-    responses: { 200: z.strictObject({ imported: z.number().int().nonnegative() }) },
   },
   {
     method: 'get',

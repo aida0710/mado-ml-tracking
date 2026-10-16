@@ -7,7 +7,7 @@ import {
 
 function connection(id: string, configRevision: number, projectId = 'project'): PluginConnection {
   return {
-    id, projectId, name: id, configRevision, configurationStatus: 'ready', enabled: true,
+    id, projectId, name: id, configRevision, enabled: true,
   } as PluginConnection;
 }
 

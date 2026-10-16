@@ -86,7 +86,7 @@ mado-tracking-worker doctor [--worker-id <ID>] [--ssh-key <path>] [--known-hosts
 
 ### run
 
-Runs the worker in the foreground. Running `mado-tracking-worker` with no arguments also means `run`. Settings come from environment variables (`MMT_API_URL`, `MMT_API_TOKEN`, `MMT_WORKER_ID`, `MMT_WORKER_TARGET_IDS`, `MMT_WORKER_STATE_DIR`, and others; see "Worker" in [Environment variables](/en/reference/environment)).
+Runs the worker in the foreground. Settings come from environment variables (`MMT_API_URL`, `MMT_API_TOKEN`, `MMT_WORKER_ID`, `MMT_WORKER_TARGET_IDS`, `MMT_WORKER_STATE_DIR`, and others; see "Worker" in [Environment variables](/en/reference/environment)).
 
 | Option | Content |
 | --- | --- |

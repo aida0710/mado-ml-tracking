@@ -132,23 +132,19 @@ const factsShape = {
 const uniquePaths = <T extends { path: string }>(values: T[]) =>
   new Set(values.map((value) => value.path)).size === values.length;
 
-export const targetCheckResultSchema = z.discriminatedUnion('version', [
-  // Workers from before the computer setup steps.
-  z.strictObject({ version: z.literal(1), ...factsShape }),
-  z.strictObject({
-    version: z.literal(2),
-    ...factsShape,
-    host: hostSchema,
-    pythons: z
-      .array(pythonSchema)
-      .max(MAX_TARGET_CHECK_PYTHONS)
-      .refine(uniquePaths, { message: 'Paths must be unique' }),
-    directories: z
-      .array(directorySchema)
-      .max(MAX_TARGET_CHECK_DIRECTORIES)
-      .refine(uniquePaths, { message: 'Paths must be unique' }),
-  }),
-]);
+export const targetCheckResultSchema = z.strictObject({
+  version: z.literal(2),
+  ...factsShape,
+  host: hostSchema,
+  pythons: z
+    .array(pythonSchema)
+    .max(MAX_TARGET_CHECK_PYTHONS)
+    .refine(uniquePaths, { message: 'Paths must be unique' }),
+  directories: z
+    .array(directorySchema)
+    .max(MAX_TARGET_CHECK_DIRECTORIES)
+    .refine(uniquePaths, { message: 'Paths must be unique' }),
+});
 
 const directoryEntrySchema = z.strictObject({
   name: z
@@ -178,7 +174,7 @@ export const targetCheckWorkerSchema = z.strictObject({
   workerId: workerIdSchema,
 });
 
-/** POST /targets/:id/checks; clients from before chosen workers send no body. */
+/** Without a chosen worker, any worker assigned to the target may claim the check. */
 export const targetCheckRequestSchema = z.strictObject({
   worker: targetCheckWorkerSchema.optional(),
 });
@@ -204,12 +200,10 @@ export const targetCheckClaimSchema = z.strictObject({
     .max(1000)
     .refine(uniqueValues, 'IDs must be unique')
     .default([]),
-  // Workers from before directory listings send none and only run connection checks.
   kinds: z
     .array(z.enum(TARGET_CHECK_KINDS))
     .min(1)
-    .refine(uniqueValues, 'Kinds must be unique')
-    .default(['connection']),
+    .refine(uniqueValues, 'Kinds must be unique'),
   // Requests the worker runs now; one it claimed but does not run is returned before a new one.
   activeCheckIds: z
     .array(uuidSchema)
@@ -233,7 +227,6 @@ function connectionTexts(result: TargetCheckResult): string[] {
     ...result.items.flatMap((item) => (item.detail === null ? [] : [item.detail])),
     ...(result.gpus ?? []).flatMap((gpu) => [gpu.uuid, gpu.name]),
   ];
-  if (result.version === 1) return facts;
   return [
     ...facts,
     ...[result.host.machine, result.host.homeDirectory].filter((value) => value !== null),

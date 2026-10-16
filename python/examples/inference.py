@@ -130,9 +130,6 @@ def declare_outputs_in_result_json(
     dataset = {
         "datasetId": output_dataset_id,
         "path": PREDICTIONS_ARTIFACT_PATH,
-        "digest": output_digest(
-            [predictions_path, *(audio_directory / sample["audio"] for sample in samples)]
-        ),
         "schema": OUTPUT_SCHEMA,
         "metadata": {
             "audioPrefix": WORKER_OUTPUT_ARTIFACT_PREFIX + AUDIO_ARTIFACT_PREFIX,

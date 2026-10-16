@@ -45,7 +45,6 @@ from .job_responses import InvalidWorkerJob
 from .service import Worker
 from .systemd_unit import ServiceScope
 
-SUBCOMMANDS = ("run", "install", "upgrade", "status", "doctor")
 # Containers receive the token as a Docker secret file instead of an environment value.
 TOKEN_FILE_VARIABLE = "MMT_API_TOKEN_FILE"
 
@@ -246,13 +245,6 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def normalize_arguments(argv: Sequence[str]) -> list[str]:
-    # Before subcommands existed the worker was started bare or with --once; both still mean `run`.
-    if argv and (argv[0] in SUBCOMMANDS or argv[0] in {"-h", "--help"}):
-        return list(argv)
-    return ["run", *argv]
-
-
 def dispatch(
     arguments: argparse.Namespace, run_systemctl: CommandRunner = run_command, stdin: TextIO = sys.stdin
 ) -> int:
@@ -268,7 +260,7 @@ def dispatch(
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    arguments = build_parser().parse_args(normalize_arguments(sys.argv[1:] if argv is None else argv))
+    arguments = build_parser().parse_args(sys.argv[1:] if argv is None else argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     try:
         exit_code = dispatch(arguments)

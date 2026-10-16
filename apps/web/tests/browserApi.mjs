@@ -297,10 +297,9 @@ export function createBrowserApi() {
     kind: 'mado',
     config: {apiUrl: 'http://test.invalid', webUrl: 'https://mado.example.invalid', lineageUrl: 'http://test.invalid', jobNamespace: 'mado-model-tracking', storageSystemKey: 'mado-model-tracking'},
     configRevision: 1,
-    configurationStatus: 'ready',
     credentialsConfigured: {accessToken: true},
     secretStorageAvailable: true,
-    baseUrl: '', tokenEnv: '', tokenConfigured: true, enabled: true, manifest: null, accessTokenGrant: null,
+    tokenConfigured: true, enabled: true, manifest: null, accessTokenGrant: null,
     createdAt: now,
   };
   const manifest = {

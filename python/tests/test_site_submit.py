@@ -181,7 +181,7 @@ def test_submit_runs_the_job_shell_from_the_web_with_this_runs_overrides(tmp_pat
     assert not list((tmp_path / "state/pending").iterdir())
 
 
-def test_an_api_that_refuses_capabilities_gets_the_claim_again_without_them(tmp_path, caplog):
+def test_能力の報告を拒否された手動投入は再送しない(tmp_path):
     account = web_account(tmp_path)
     submission = manual_submission(account)
     api = ManualApi(submission["target"], account)
@@ -189,11 +189,10 @@ def test_an_api_that_refuses_capabilities_gets_the_claim_again_without_them(tmp_
     api.unknown_claim_fields = {"capabilities"}
     lines: list[str] = []
     options = SubmitOptions(target_id=submission["target"]["id"], work_dir=str(tmp_path / "work"))
-    assert submitter_for(api, options, tmp_path, lines).run_once() == 0
-    # The refused claim took nothing, so the one sent again takes the Job once.
-    assert ["capabilities" in body for body in api.bodies("POST", "/claim")] == [True, False]
-    assert lines[-1].startswith(f"submitted {submission['jobs'][0]['job']['id']}")
-    assert "does not take capabilities in site claims" in caplog.text
+    with pytest.raises(ApiError):
+        submitter_for(api, options, tmp_path, lines).run_once()
+    assert len(api.bodies("POST", "/claim")) == 1
+    assert not api.bodies("POST", "/report")
 
 
 def test_all_takes_everyones_jobs_on_a_computer_one_owns_and_only_there(tmp_path):

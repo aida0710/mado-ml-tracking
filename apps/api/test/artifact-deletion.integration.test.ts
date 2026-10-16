@@ -569,7 +569,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactの削除とgarbage collection（独�
       });
       const bucket = `mmt-gc-test-${Date.now()}`;
       await client.send(new CreateBucketCommand({ Bucket: bucket }));
-      const s3 = createS3ArtifactStore({ client, bucket, prefix: 'artifacts' });
+      const s3 = createS3ArtifactStore({ multipartEnabled: true, client, bucket, prefix: 'artifacts' });
       const application = createApplication({
         config: harness.config,
         database: harness.database,

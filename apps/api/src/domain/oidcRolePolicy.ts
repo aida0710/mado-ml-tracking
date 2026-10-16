@@ -58,12 +58,7 @@ export interface OidcRolePolicySettings {
   // OIDC_ROLE_MAPPING_JSON: {"<group>": "<global role>"}.
   roleMappingJson: string | undefined;
   defaultRole: string | undefined;
-  // OIDC_ADMIN_GROUP: shorthand for {"<group>": "admin"}.
-  adminGroup: string | undefined;
 }
-
-// Kept from before role mapping existed, so a deployment without either setting keeps its admins.
-export const LEGACY_DEFAULT_ADMIN_GROUP = 'mmt-admins';
 
 function parseRoleMapping(json: string): Record<string, GlobalRole> {
   let parsed: unknown;
@@ -86,13 +81,6 @@ function parseRoleMapping(json: string): Record<string, GlobalRole> {
   return mapping;
 }
 
-function adminGroupsOf(mapping: Record<string, GlobalRole>): string[] {
-  return Object.entries(mapping)
-    .filter(([, role]) => role === 'admin')
-    .map(([group]) => group)
-    .sort();
-}
-
 // Builds the policy from environment settings. Errors name the setting, never its value.
 export function createOidcRolePolicy(settings: OidcRolePolicySettings): OidcRolePolicy {
   const allowedGroups = normalizeGroups(
@@ -102,20 +90,6 @@ export function createOidcRolePolicy(settings: OidcRolePolicySettings): OidcRole
   const defaultRole = settings.defaultRole ?? 'user';
   if (!isGlobalRole(defaultRole))
     throw new Error(`OIDC_DEFAULT_ROLE must be one of ${GLOBAL_ROLES.join(', ')}`);
-  const adminGroup = settings.adminGroup?.trim() || undefined;
-  if (settings.roleMappingJson === undefined)
-    return {
-      allowedGroups,
-      roleMapping: { [adminGroup ?? LEGACY_DEFAULT_ADMIN_GROUP]: 'admin' },
-      defaultRole,
-    };
-  const roleMapping = parseRoleMapping(settings.roleMappingJson);
-  // With both settings, the admin groups must agree exactly; otherwise neither can be trusted.
-  const mappedAdminGroups = adminGroupsOf(roleMapping);
-  if (
-    adminGroup !== undefined &&
-    !(mappedAdminGroups.length === 1 && mappedAdminGroups[0] === adminGroup)
-  )
-    throw new Error('OIDC_ADMIN_GROUP disagrees with the admin groups in OIDC_ROLE_MAPPING_JSON');
+  const roleMapping = parseRoleMapping(settings.roleMappingJson ?? '{}');
   return { allowedGroups, roleMapping, defaultRole };
 }

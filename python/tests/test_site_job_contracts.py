@@ -12,6 +12,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
+from execution_fixtures import pin_execution
 from site_fixtures import site_job
 from test_worker import WorkerServer
 
@@ -70,8 +71,8 @@ def test_site_jobs_are_parsed_by_the_site_runner_only():
         runtime_kinds=["apptainer"],
     )
     with pytest.raises(ConfigurationError, match="Unknown compute executor"):
-        WorkerJob.parse(payload)
-    assert WorkerJob.parse(payload, executors=SITE_EXECUTORS).target["executor"] == "site"
+        WorkerJob.parse(pin_execution(payload))
+    assert WorkerJob.parse(pin_execution(payload), executors=SITE_EXECUTORS).target["executor"] == "site"
 
 
 @pytest.mark.parametrize(
@@ -89,30 +90,31 @@ def test_a_site_runs_containers_and_converts_docker_images_for_its_sif_cli(runti
         project_id=str(uuid4()), source_files={"main.py": ""}, runtime=runtime, runtime_kinds=runtime_kinds
     )
     if accepted:
-        WorkerJob.parse(payload, executors=SITE_EXECUTORS)
+        WorkerJob.parse(pin_execution(payload), executors=SITE_EXECUTORS)
     else:
         with pytest.raises(ConfigurationError):
-            WorkerJob.parse(payload, executors=SITE_EXECUTORS)
+            WorkerJob.parse(pin_execution(payload), executors=SITE_EXECUTORS)
 
 
 def test_an_input_checkpoint_must_be_the_one_the_run_was_started_for(job_payload):
     document, _content = checkpoint({"model.bin": b"weights"})
     job_payload["inputCheckpoint"] = document
-    assert WorkerJob.parse(job_payload).input_checkpoint == document
+    assert WorkerJob.parse(pin_execution(job_payload)).input_checkpoint == document
     job_payload["run"]["tags"] = {"mmt.inputCheckpointId": str(uuid4())}
     with pytest.raises(ConfigurationError, match="inputCheckpoint"):
-        WorkerJob.parse(job_payload)
+        WorkerJob.parse(pin_execution(job_payload))
     job_payload["run"]["tags"] = {"mmt.inputCheckpointId": document["id"]}
     job_payload["triggerPayload"] = ["not", "an", "object"]
     with pytest.raises(ConfigurationError, match="triggerPayload"):
-        WorkerJob.parse(job_payload)
+        WorkerJob.parse(pin_execution(job_payload))
 
 
 def test_hook_inputs_appear_in_the_context_and_the_environment(job_payload, worker_settings, tmp_path):
     document, _content = checkpoint({"model.bin": b"weights"})
     job_payload["inputCheckpoint"] = document
     job_payload["triggerPayload"] = {"after": "abc123"}
-    specification = execution_specification(WorkerJob.parse(job_payload), worker_settings)
+    specification = execution_specification(WorkerJob.parse(pin_execution(job_payload)), worker_settings)
+    specification["stagedInputs"] = {"datasets": {}}
     assert specification["context"]["inputCheckpoint"]["checkpointId"] == document["id"]
     workspace = tmp_path / "workspace"
     workspace.mkdir()
@@ -133,14 +135,18 @@ def test_a_job_that_also_resumes_reads_its_input_checkpoint_beside_the_resume_on
     job_payload["resumeCheckpoint"] = resume
     job_payload["inputCheckpoint"], _input_content = checkpoint({"model.bin": b"weights"})
     environment = container_environment(
-        execution_specification(WorkerJob.parse(job_payload), worker_settings)
+        {
+            **execution_specification(WorkerJob.parse(pin_execution(job_payload)), worker_settings),
+            "stagedInputs": {"datasets": {}},
+        }
     )
     assert environment["MMT_RESUME_CHECKPOINT_DIR"] == "/mmt/inputs/checkpoint"
     assert environment["MMT_INPUT_CHECKPOINT_DIR"] == "/mmt/inputs/input-checkpoint"
 
 
 def test_jobs_without_hook_inputs_keep_their_context_unchanged(job_payload, worker_settings):
-    specification = execution_specification(WorkerJob.parse(job_payload), worker_settings)
+    specification = execution_specification(WorkerJob.parse(pin_execution(job_payload)), worker_settings)
+    specification["stagedInputs"] = {"datasets": {}}
     assert (
         "inputCheckpoint" not in specification["context"] and "triggerPayload" not in specification["context"]
     )
@@ -163,7 +169,7 @@ class RelayExecutor:
 def test_the_worker_relays_an_input_checkpoint_verified_against_its_manifest(job_payload, tmp_path):
     document, content = checkpoint({"model.bin": b"weights"})
     job_payload["inputCheckpoint"] = document
-    job = WorkerJob.parse(job_payload)
+    job = WorkerJob.parse(pin_execution(job_payload))
     executor = RelayExecutor()
 
     def serve(request: httpx.Request) -> httpx.Response:
@@ -226,7 +232,7 @@ def test_the_worker_hands_hook_inputs_to_a_python_job(job_payload, worker_settin
     async def scenario() -> None:
         worker = Worker(worker_settings, api=server.client())
         try:
-            await asyncio.wait_for(worker.run_job(WorkerJob.parse(job_payload)), 30)
+            await asyncio.wait_for(worker.run_job(WorkerJob.parse(pin_execution(job_payload))), 30)
         finally:
             await worker.api.close()
 

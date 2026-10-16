@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type {
   NotificationChannel,
@@ -126,6 +127,7 @@ describe.skipIf(!testDatabaseUrl)('通知チャネル・ルール・送信outbox
       jobCreateSchema.parse({ runId: run.id, targetId: fixture.target.id, gpuIds: ['0'] }),
     );
     const claimed = await harness.services.worker.claim(fixture.workerPrincipal, {
+      workerInfo,
       workerId: 'notification-worker',
     });
     // Only failed is used: the worker reports it with a non-zero exit code.

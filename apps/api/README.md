@@ -4,7 +4,7 @@ Hono API、PostgreSQL migration、認証とトラッキングのサービスを�
 
 ## 起動
 
-依存のinstallと開発DBの作成はroot担当が行う。`MMT_DATABASE_URL`、またはfallbackの`DATABASE_URL`を設定し、repo rootから実行する。
+依存のinstallと開発DBの作成はroot担当が行う。`MMT_DATABASE_URL`を設定し、repo rootから実行する。
 
 ```bash
 npm run db:migrate -w @mmt/api
@@ -16,7 +16,7 @@ npm run start -w @mmt/api
 - `MMT_PUBLIC_URL`: ブラウザからAPIに届くURL。Vite proxyを使う開発環境では`http://127.0.0.1:5182`にする。
 - `MMT_WEB_ORIGIN`: Cookieで変更要求を送れるWebのOrigin。既定は`http://127.0.0.1:5182`。
 - `OIDC_ISSUER_URL`、`OIDC_CLIENT_ID`、`OIDC_CLIENT_SECRET`: Authentikの設定。callbackは`{MMT_PUBLIC_URL}/api/auth/callback`。client secretがない場合はpublic clientとしてPKCEを使う。
-- `OIDC_ADMIN_GROUP`: global adminに対応するOIDC groups claim。既定は`mmt-admins`。OIDC identityはissuerとsubjectで結び、verified emailが必要。
+- `OIDC_ROLE_MAPPING_JSON`: OIDC groups claimから全体roleへの対応表（例: `{"mmt-admins":"admin","mmt-users":"user"}`）。対応表に無いgroupは全体管理者にならない。OIDC identityはissuerとsubjectで結び、verified emailが必要。
 - `OIDC_ALLOW_INSECURE_HTTP=true`: 非productionのloopback mock providerに限りHTTPを許可する。
 - `DEVELOPMENT_ADMIN_EMAIL`: 開発管理者のemail。既定は`admin@localhost`。開発ログインbodyは`{email?,displayName?}`。
 - `MMT_ALLOW_LOCAL_EXECUTOR=true`: developmentでlocal targetの実行を許可する。SSH targetの実行には不要。

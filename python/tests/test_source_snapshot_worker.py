@@ -9,8 +9,8 @@ from pathlib import Path
 
 import httpx
 import pytest
+from execution_fixtures import pin_execution
 from test_container_inputs import container_payload
-from test_execution_snapshot import pin_execution
 from test_source import git_source as git_source
 from test_worker import WorkerServer
 
@@ -28,7 +28,9 @@ JOB_TIMEOUT_SECONDS = 15
 async def execute_job(server, settings):
     worker = Worker(settings, api=server.client())
     try:
-        await asyncio.wait_for(worker.run_job(WorkerJob.parse(server.payload)), JOB_TIMEOUT_SECONDS)
+        await asyncio.wait_for(
+            worker.run_job(WorkerJob.parse(pin_execution(server.payload))), JOB_TIMEOUT_SECONDS
+        )
     finally:
         await worker.api.close()
 
@@ -101,7 +103,9 @@ def test_snapshot_upload_rejection_fails_success_or_preserves_the_original_code_
         )
         worker = Worker(worker_settings, api=api)
         try:
-            await asyncio.wait_for(worker.run_job(WorkerJob.parse(job_payload)), JOB_TIMEOUT_SECONDS)
+            await asyncio.wait_for(
+                worker.run_job(WorkerJob.parse(pin_execution(job_payload))), JOB_TIMEOUT_SECONDS
+            )
         finally:
             await api.close()
 
@@ -135,7 +139,7 @@ def test_restart_during_snapshot_collection_keeps_acknowledged_zip_without_reexe
             url="http://localhost/api", token="test-api-secret", transport=httpx.MockTransport(serve)
         )
         first = Worker(worker_settings, api=api)
-        task = asyncio.create_task(first.run_job(WorkerJob.parse(job_payload)))
+        task = asyncio.create_task(first.run_job(WorkerJob.parse(pin_execution(job_payload))))
         try:
             async with asyncio.timeout(JOB_TIMEOUT_SECONDS):
                 await manifest_started.wait()
@@ -197,7 +201,7 @@ def test_bad_archive_fails_source_preparation_without_running_code_or_saving_fal
 def test_resume_refuses_changed_pinned_instructions_even_with_the_same_lease(job_payload, worker_settings):
     pin_execution(job_payload)
     journal = JobJournal(worker_settings.state_directory)
-    journal.save(WorkerJob.parse(job_payload))
+    journal.save(WorkerJob.parse(pin_execution(job_payload)))
     job_payload["codeVersion"]["entrypoint"] = ["python", "other.py"]
     pin_execution(job_payload)
     server = WorkerServer(job_payload)
@@ -206,7 +210,7 @@ def test_resume_refuses_changed_pinned_instructions_even_with_the_same_lease(job
         worker = Worker(worker_settings, api=server.client())
         try:
             with pytest.raises(ConfigurationError, match="Saved executionSnapshot differs"):
-                await worker.run_job(WorkerJob.parse(job_payload))
+                await worker.run_job(WorkerJob.parse(pin_execution(job_payload)))
         finally:
             await worker.api.close()
 
@@ -269,7 +273,9 @@ def test_snapshot_creation_failure_reports_failure_without_starting_the_entrypoi
     async def scenario():
         worker = Worker(worker_settings, api=server.client(), executor_factory=BlockedSnapshotExecutor)
         try:
-            await asyncio.wait_for(worker.run_job(WorkerJob.parse(job_payload)), JOB_TIMEOUT_SECONDS)
+            await asyncio.wait_for(
+                worker.run_job(WorkerJob.parse(pin_execution(job_payload))), JOB_TIMEOUT_SECONDS
+            )
         finally:
             await worker.api.close()
 

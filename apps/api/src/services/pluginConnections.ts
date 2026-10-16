@@ -12,7 +12,6 @@ import { PluginCredentials } from '../security/pluginCredentials.js';
 import type { SecretKey } from '../security/secretEncryption.js';
 import type { PluginConnectionRecord } from '../plugins/pluginConnection.js';
 import { requireGlobalAdmin, requireProject } from './accessService.js';
-import { pinLegacyPluginEvents } from './pluginEventMigration.js';
 
 function credentialsRequired(): never {
   throw new DomainError(
@@ -59,9 +58,7 @@ export class PluginConnections {
         },
       ];
     return records.map((plugin) => {
-      const configured = Boolean(
-        plugin.config && !plugin.migrationPending && this.credentials.hasAccessToken(plugin),
-      );
+      const configured = this.credentials.hasAccessToken(plugin);
       return {
         kind: 'mado',
         id: plugin.id,
@@ -133,14 +130,8 @@ export class PluginConnections {
       const { input } = request;
       if (input.expectedRevision !== undefined && input.expectedRevision !== plugin.configRevision)
         conflict('連携設定が変更されています。更新してから保存してください');
-      if (plugin.kind === 'legacy' && (input.config || input.credentials || input.enabled === true))
-        throw new DomainError(
-          422,
-          'この旧Pluginは内蔵連携に対応していません。無効化して記録を保持できます',
-          'plugin_kind_unsupported',
-        );
       const config = input.config ?? plugin.config;
-      if (input.config && plugin.config)
+      if (input.config)
         await this.assertInstanceUnchanged(connection, plugin, input.config);
       const secrets = this.credentials.prepare(plugin, input.credentials);
       const updated = {
@@ -174,9 +165,6 @@ export class PluginConnections {
             : null,
         ],
       ))!;
-      // Migration resolves the bridge's real destination without replacing its UUID or event IDs.
-      if (plugin.kind === 'mado' && !plugin.config && saved.config)
-        await pinLegacyPluginEvents(connection, saved);
       return this.present(saved);
     });
   }
@@ -189,7 +177,6 @@ export class PluginConnections {
       lock?: 'share' | 'update';
       allowDisabled?: boolean;
       allowUnconfigured?: boolean;
-      allowMigration?: boolean;
     },
     connection: Connection = this.database,
   ): Promise<PluginConnectionRecord> {
@@ -205,16 +192,6 @@ export class PluginConnections {
     );
     if (!plugin) notFound('連携');
     if (reference.allowUnconfigured) return plugin;
-    if (plugin.kind !== 'mado')
-      throw new DomainError(
-        422,
-        'この旧Pluginは内蔵連携に対応していません',
-        'plugin_kind_unsupported',
-      );
-    if (plugin.migrationPending && !reference.allowMigration)
-      throw new DomainError(422, 'Mado連携の移行確認が必要です', 'plugin_migration_required');
-    if (!plugin.config)
-      throw new DomainError(422, 'Mado連携の移行設定が必要です', 'plugin_migration_required');
     if (!reference.allowDisabled && !plugin.enabled)
       throw new DomainError(422, '連携は無効です', 'plugin_disabled');
     return plugin;
@@ -226,19 +203,11 @@ export class PluginConnections {
       projectId: plugin.projectId,
       name: plugin.name,
       kind: plugin.kind,
-      configurationStatus:
-        plugin.kind === 'legacy'
-          ? 'unsupported'
-          : plugin.config && !plugin.migrationPending
-            ? 'ready'
-            : 'migration_pending',
       config: plugin.config,
       configRevision: plugin.configRevision,
       credentialsConfigured: plugin.credentialsConfigured,
       secretStorageAvailable: this.credentials.available,
       tokenConfigured: this.credentials.hasAccessToken(plugin),
-      baseUrl: plugin.baseUrl,
-      tokenEnv: plugin.tokenEnv,
       enabled: plugin.enabled,
       manifest: plugin.manifest,
       accessTokenGrant: plugin.accessTokenGrant,
@@ -273,7 +242,7 @@ export class PluginConnections {
   ): Promise<void> {
     if (
       (['apiUrl', 'webUrl', 'lineageUrl'] as const).every(
-        (key) => plugin.config![key] === config[key],
+        (key) => plugin.config[key] === config[key],
       )
     )
       return;

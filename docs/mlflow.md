@@ -204,9 +204,9 @@ MLflow 3.0.0のSDKは、keyの`/`を`#`に置き換えたままURLへ載せる�
 | `search_model_versions` | `name`・`run_id`・`model_id`・`source_path`・`version_number`・時刻・`tags`の比較。`IN`/`NOT IN`は`name`・`run_id`・`model_id`・`source_path`。並び替えは`name`・`version_number`・`creation_timestamp`・`last_updated_timestamp` |
 | `search_registered_models` | `name`・時刻・`tags`の比較。`IN`/`NOT IN`は使えません。並び替えは`name`・`timestamp`（最後の更新）・`last_updated_timestamp`・`creation_timestamp` |
 
-接頭辞はMLflowの`SearchUtils`と同じに受け付けます。`search_runs`・`search_experiments`は`metric`/`metrics`、`param`/`params`/`parameter`/`parameters`、`tag`/`tags`、`attribute`/`attributes`/`attr`/`run`、`dataset`/`datasets`。登録モデル・バージョンの検索は`tag.`/`tags.`と`attribute.`（以前からの`attributes.`も可）で、`metric.`・`param.`はMLflowと同じくエラーです。Logged Modelの検索はMLflowと同じく複数形（`metrics.`・`params.`・`tags.`・`attributes.`）だけです。
+接頭辞はMLflowの`SearchUtils`と同じに受け付けます。`search_runs`・`search_experiments`は`metric`/`metrics`、`param`/`params`/`parameter`/`parameters`、`tag`/`tags`、`attribute`/`attributes`/`attr`/`run`、`dataset`/`datasets`。登録モデル・バージョンの検索では`tag.`/`tags.`、`attribute.`、前置きなしの属性名を使えます。`metric.`・`param.`はMLflowと同じくエラーです。Logged Modelの検索はMLflowと同じく複数形（`metrics.`・`params.`・`tags.`・`attributes.`）だけです。
 
-バージョンの番号はMLflowと同じ`version_number`で、`version_number = '3'`のような引用符付きの整数も比べられます。以前からの`version`も同じ意味で使えます。
+バージョンの番号はMLflowと同じ`version_number`で、`version_number = '3'`のような引用符付きの整数も比べられます。`version`と`attributes.`は受け付けません。
 
 MLflow 3のSDKは`search_registered_models`の条件に必ず`` tag.`mlflow.prompt.is_prompt` != 'true' ``を付け足します（Prompt Registryの項目を除くため）。MLflowと同じく、このtagが無いモデルは`'false'`として比べるので、普通のモデルはすべて一致します。このアプリにPrompt Registryはありません。
 

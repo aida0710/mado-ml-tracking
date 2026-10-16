@@ -11,9 +11,9 @@ from dataclasses import replace
 from uuid import uuid4
 
 import pytest
+from execution_fixtures import pin_execution
 from test_container_inputs import container_payload
 from test_docker_worker import ContainerServer, execute_job, workspace_for
-from test_execution_snapshot import pin_execution
 
 from mado_tracking.worker.contracts import WorkerJob
 from mado_tracking.worker.host_state import process_identity
@@ -66,7 +66,7 @@ assert context["parameters"] == {"steps": 3}
 output = pathlib.Path(os.environ["MMT_OUTPUTS_DIR"])
 content = b"SIF process executed registered source"
 (output / "output.bin").write_bytes(content)
-result = {"version":1,"complete":True,"artifacts":[{
+result = {"version":2,"complete":True,"artifacts":[{
     "path":"output.bin","sha256":hashlib.sha256(content).hexdigest(),"size":len(content)
 }],"metrics":[]}
 (output / "result.json").write_text(json.dumps(result))
@@ -146,7 +146,7 @@ def test_sif_cancel_waits_for_the_owned_process_group_and_ignoring_children_to_e
         worker = Worker(settings, api=server.client())
         ready = asyncio.Event()
         server.log_notifications["sif-ready"] = ready
-        task = asyncio.create_task(worker.run_job(WorkerJob.parse(job_payload)))
+        task = asyncio.create_task(worker.run_job(WorkerJob.parse(pin_execution(job_payload))))
         try:
             async with asyncio.timeout(15):
                 await ready.wait()

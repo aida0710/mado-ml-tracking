@@ -9,7 +9,6 @@ import { Resource } from '../components/Feedback';
 import { ResponsiveTable } from '../components/ResponsiveTable';
 import { RegistryLayout } from '../components/RegistryLayout';
 import { builtinPluginViews } from '../plugins/builtinPluginViews';
-import { LegacyPluginSettings } from '../plugins/legacy/LegacyPluginSettings';
 import { getPluginConnectionKey } from '../lib/pluginConnection';
 import { canManagePlugins, isGlobalAdmin } from '../lib/permissions';
 import { useLocale } from '../i18n/useLocale';
@@ -79,9 +78,7 @@ function PluginConnections() {
                 <button className="link-button" onClick={() => setParams({ id: item.id })}>{item.name}</button>
               ) },
               { key: 'configured', priority: 'primary', header: pluginsText.configuration, render: (item) =>
-                item.plugin?.configurationStatus === 'ready' ? pluginsText.configured :
-                  item.plugin?.configurationStatus === 'unsupported' ? pluginsText.unsupported :
-                    item.plugin ? pluginsText.migrationPending : pluginsText.notConfigured },
+                item.plugin ? pluginsText.configured : pluginsText.notConfigured },
               { key: 'enabled', priority: 'primary', header: text.enabled, render: (item) =>
                 item.plugin?.enabled ? text.enabled : text.disabled },
             ]} />
@@ -90,10 +87,7 @@ function PluginConnections() {
               key={selected.plugin ? getPluginConnectionKey(selected.plugin) : `${project.id}:${selected.id}`}
               plugin={selected.plugin}
               onSaved={(plugin) => { plugins.onSaved(plugin); setParams({ id: plugin.id }); }}
-            /> : selected?.plugin && <LegacyPluginSettings
-              key={getPluginConnectionKey(selected.plugin)} plugin={selected.plugin}
-              onSaved={plugins.onSaved}
-            />}
+            /> : null}
           </RegistryLayout>;
         }}
       </Resource>

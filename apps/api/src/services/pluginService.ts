@@ -20,8 +20,7 @@ import type { PluginConnectionRecord } from '../plugins/pluginConnection.js';
 import type { SecretKey } from '../security/secretEncryption.js';
 import { PluginConnections } from './pluginConnections.js';
 import { importPluginDataset } from './pluginDatasetImport.js';
-import { importPluginDeliveryReceipts } from './pluginEventMigration.js';
-import { requireGlobalAdmin, requireProject } from './accessService.js';
+import { requireProject } from './accessService.js';
 import type { RegistryService } from './registryService.js';
 
 export type { PluginClientFactory } from '../plugins/builtinPlugins.js';
@@ -77,7 +76,6 @@ export class PluginService {
       projectId,
       pluginId,
       allowDisabled: true,
-      allowMigration: true,
     });
     const checked = await this.callPlugin(() => this.client(plugin).checkConnection());
     const saved = await first<PluginConnectionRecord>(
@@ -181,64 +179,6 @@ export class PluginService {
     });
   }
 
-  async completeMigration(
-    principal: Principal,
-    projectId: string,
-    request: { pluginId: string; expectedRevision: number },
-  ) {
-    requireGlobalAdmin(principal);
-    return transaction(this.database, async (connection) => {
-      const plugin = await this.connections.authorize(
-        principal,
-        {
-          projectId,
-          pluginId: request.pluginId,
-          lock: 'update',
-          allowDisabled: true,
-          allowMigration: true,
-        },
-        connection,
-      );
-      if (plugin.configRevision !== request.expectedRevision)
-        conflict('連携設定が変更されています');
-      if (!plugin.migrationPending) return this.connections.present(plugin);
-      if (!plugin.manifest || !this.connections.credentials.hasAccessToken(plugin))
-        throw new DomainError(
-          422,
-          'アクセストークンを設定し、接続確認を完了してから移行してください',
-          'plugin_migration_check_required',
-        );
-      const migrated = (await first<PluginConnectionRecord>(
-        connection,
-        'UPDATE plugin_connections SET migration_pending=false,config_revision=config_revision+1 WHERE id=$1 RETURNING *',
-        [plugin.id],
-      ))!;
-      return this.connections.present(migrated);
-    });
-  }
-
-  async importReceipts(
-    principal: Principal,
-    projectId: string,
-    request: { pluginId: string; receipts: { eventId: string; payloadHash: string }[] },
-  ) {
-    requireGlobalAdmin(principal);
-    return transaction(this.database, async (connection) => {
-      await this.connections.authorize(
-        principal,
-        {
-          projectId,
-          pluginId: request.pluginId,
-          lock: 'share',
-          allowDisabled: true,
-          allowMigration: true,
-        },
-        connection,
-      );
-      return importPluginDeliveryReceipts(connection, request);
-    });
-  }
-
   async outboxSummary(
     principal: Principal,
     projectId: string,
@@ -259,8 +199,6 @@ export class PluginService {
   }
 
   client(plugin: PluginConnectionRecord) {
-    if (plugin.kind !== 'mado' || !plugin.config)
-      throw new DomainError(422, 'Mado連携の設定が必要です', 'plugin_migration_required');
     const credentials = this.connections.credentials.read(plugin);
     if (!credentials.accessToken)
       throw new DomainError(503, 'Madoのアクセストークンが未設定です', 'plugin_token_unavailable');

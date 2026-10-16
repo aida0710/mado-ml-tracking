@@ -29,7 +29,7 @@ export interface ModelAutomationRule {
   runAsKind?: Exclude<UserKind, 'launcher'>;
   runAsName?: string;
   // Display name of createdBy, included in API responses like runAsName.
-  createdByName?: string;
+  createdByName: string;
   createdAt: string;
 }
 

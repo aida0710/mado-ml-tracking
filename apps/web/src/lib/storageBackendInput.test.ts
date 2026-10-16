@@ -20,6 +20,7 @@ const s3Values = {
 const savedS3: StorageBackend = {
   name: 'minio-main',
   kind: 's3',
+  multipartEnabled: true,
   source: 'database',
   endpoint: 'https://minio.example.internal:9000',
   region: 'us-east-1',
@@ -147,7 +148,7 @@ describe('保存先の変更', () => {
     });
     expect(create({ checksumMode: 'when_supported' }).checksumMode).toBe('when_supported');
   });
-  it('multipartを使わない設定を送り、保存済みの値を表示する（未設定は使う）', () => {
+  it('multipartを使わない設定を送り、保存済みの値を表示する', () => {
     expect(create({ multipartEnabled: 'false' }).multipartEnabled).toBe(false);
     expect(updateStorageBackendValues(savedS3).multipartEnabled).toBe('true');
     const withoutMultipart = { ...savedS3, multipartEnabled: false };

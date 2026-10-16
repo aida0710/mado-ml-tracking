@@ -101,6 +101,7 @@ function publicDatabaseBackend(row: StorageBackendRow): StorageBackend {
       tlsVerify: true,
       checksumMode: 'when_required',
       multipartPartSizeBytes: DEFAULT_MULTIPART_PART_SIZE_BYTES,
+      multipartEnabled: false,
     };
   return { ...common, ...config };
 }
@@ -114,6 +115,7 @@ function publicEnvironmentBackend(description: EnvironmentBackendDescription): S
     caBundleConfigured: false,
     multipartPartSizeBytes: DEFAULT_MULTIPART_PART_SIZE_BYTES,
     enabled: true,
+    multipartEnabled: description.kind === 's3',
   };
   if (description.kind === 'filesystem')
     return {

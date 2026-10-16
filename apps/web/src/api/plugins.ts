@@ -46,6 +46,4 @@ export const pluginsApi = {
   ) => request<DatasetVersion>(`${pluginPath(projectId, id)}/datasets/import`, jsonRequest('POST', source)),
   retryEvents: (projectId: string, id: string) =>
     request<{ queued: number }>(`${pluginPath(projectId, id)}/events/retry`, { method: 'POST' }),
-  completeMigration: (projectId: string, id: string, expectedRevision: number) =>
-    request<PluginConnection>(`${pluginPath(projectId, id)}/migration/complete`, jsonRequest('POST', { expectedRevision })),
 };

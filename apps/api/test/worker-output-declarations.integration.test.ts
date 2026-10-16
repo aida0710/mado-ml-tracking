@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type {
   Dataset,
@@ -67,7 +68,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token,
-        body: { workerId: 'output-worker' },
+        body: { workerInfo, workerId: 'output-worker' },
       }),
       200,
     );
@@ -102,7 +103,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
     return request(harness.app, `/api/worker/jobs/${claimed.job.id}/outputs`, {
       method: 'POST',
       token,
-      body: { leaseId, declarations },
+      body: { version: 2, leaseId, declarations },
     });
   }
 
@@ -228,7 +229,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
           modelId: fixture.model.id,
           metadata: { epoch: 2 },
         },
-        { index: 1, kind: 'dataset', datasetId: dataset.id, path: SPLIT_OUTPUT, digest: 'sha256:split' },
+        { index: 1, kind: 'dataset', datasetId: dataset.id, path: SPLIT_OUTPUT },
         {
           index: 2,
           kind: 'dataset',
@@ -301,7 +302,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
     await uploadOutput(fixture, claimed, 'prepared-report.json');
     const response = await entity<WorkerOutputsResponse>(
       await declare(token, claimed, [
-        { index: 0, kind: 'dataset', datasetId: dataset.id, path: 'prepared', digest: 'unused' },
+        { index: 0, kind: 'dataset', datasetId: dataset.id, path: 'prepared',  },
       ]),
       200,
     );
@@ -329,7 +330,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
       expect(
         await errorCode(
           await declare(token, claimed, [
-            { index: 0, kind: 'dataset', datasetId: dataset.id, path, digest: 'unused' },
+            { index: 0, kind: 'dataset', datasetId: dataset.id, path },
           ]),
           422,
         ),
@@ -440,7 +441,6 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
           kind: 'dataset',
           datasetId: dataset.id,
           path: WEIGHTS_OUTPUT,
-          digest: 'd',
         },
       ]),
       200,
@@ -697,7 +697,6 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
           kind: 'dataset',
           datasetId: dataset.id,
           path: SPLIT_OUTPUT,
-          digest: 'sha256:split',
         },
       ]),
       200,

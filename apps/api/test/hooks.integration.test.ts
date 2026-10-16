@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { createHmac, randomBytes, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type {
@@ -90,7 +91,7 @@ describe.skipIf(!testDatabaseUrl)('フック・webhook・ドライバー（独�
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId },
+        body: { workerInfo, workerId },
       }),
       200,
     );

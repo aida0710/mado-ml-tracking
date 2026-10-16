@@ -122,7 +122,7 @@ async def verify_jobs(
         )
         training = client.register_code(
             project_id,
-            name="Real CPU training",
+            runtime={"kind": "python"}, name="Real CPU training",
             version="v1",
             source={
                 "kind": "inline",
@@ -136,7 +136,7 @@ async def verify_jobs(
         )
         inference = client.register_code(
             project_id,
-            name="Real CPU inference",
+            runtime={"kind": "python"}, name="Real CPU inference",
             version="v1",
             source={
                 "kind": "inline",
@@ -259,7 +259,7 @@ async def verify_jobs(
 
         parallel_code = client.register_code(
             project_id,
-            name="Parallel claim verification",
+            runtime={"kind": "python"}, name="Parallel claim verification",
             version="v1",
             source={
                 "kind": "inline",
@@ -327,7 +327,7 @@ async def verify_jobs(
 
         long_code = client.register_code(
             project_id,
-            name="Cancellation and restart",
+            runtime={"kind": "python"}, name="Cancellation and restart",
             version="v1",
             source={
                 "kind": "inline",

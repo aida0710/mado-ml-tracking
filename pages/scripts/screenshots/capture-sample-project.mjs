@@ -84,7 +84,11 @@ async function openModelsTab(tabName) {
   await page.waitForTimeout(RENDER_SETTLE_MS);
 }
 
-const sweepRuns = (await apiGet(`projects/${state.projectId}/runs?experimentId=${state.experiments.sweep}&limit=50`)).items;
+const sweepResponse = await context.request.post(`${webUrl}/api/projects/${state.projectId}/runs/search`, {
+  data: { experimentIds: [state.experiments.sweep], limit: 50 },
+});
+if (!sweepResponse.ok()) throw new Error(`Run search: ${sweepResponse.status()}`);
+const sweepRuns = (await sweepResponse.json()).items;
 if (sweepRuns.length === 0) throw new Error('the sample Sweep has no Runs');
 const finishedSweepRuns = sweepRuns.filter((run) => run.status === 'finished').map((run) => run.id);
 const otherSweepRuns = sweepRuns.filter((run) => run.status !== 'finished').map((run) => run.id);

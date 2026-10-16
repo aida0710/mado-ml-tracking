@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import type { AddressInfo } from 'node:net';
 import { SMTPServer } from 'smtp-server';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -122,7 +123,7 @@ describe.skipIf(!testDatabaseUrl)('メール通知（テスト用SMTPサーバ�
       fixture.project.id,
       jobCreateSchema.parse({ runId: run.id, targetId: fixture.target.id, gpuIds: ['0'] }),
     );
-    const claimed = await harness.services.worker.claim(worker, { workerId: 'mail-worker' });
+    const claimed = await harness.services.worker.claim(worker, { workerInfo, workerId: 'mail-worker' });
     await harness.services.worker.complete(worker, job.id, {
       leaseId: claimed!.job.leaseId!,
       status: 'failed',

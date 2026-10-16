@@ -10,15 +10,12 @@ export interface PluginConnectionRecord {
   id: string;
   projectId: string;
   name: string;
-  kind: 'mado' | 'legacy';
-  config: MadoPluginConfig | null;
-  migrationPending: boolean;
+  kind: 'mado';
+  config: MadoPluginConfig;
   configRevision: number;
   credentialsConfigured: PluginConnection['credentialsConfigured'];
   secretKeyId: string | null;
   encryptedCredentials: Buffer | null;
-  baseUrl: string;
-  tokenEnv: string;
   enabled: boolean;
   manifest: PluginManifest | null;
   accessTokenGrant: MadoAccessTokenGrant | null;

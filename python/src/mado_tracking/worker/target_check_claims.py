@@ -12,8 +12,7 @@ CONNECTION = "connection"
 DIRECTORY_LISTING = "directory_listing"
 # TARGET_CHECK_KINDS of the contract: what this worker runs.
 TARGET_CHECK_KINDS = (CONNECTION, DIRECTORY_LISTING)
-# TargetCheckResult versions: 2 adds the host and the Python and directory candidates.
-RESULT_VERSION_BEFORE_SETUP = 1
+# TargetCheckResult includes the host and the Python and directory candidates.
 RESULT_VERSION = 2
 
 
@@ -25,8 +24,6 @@ class ClaimedTargetCheck:
     kind: str
     # The directory a listing reads, as requested; None for a connection check.
     directory_path: str | None
-    # The TargetCheckResult version the API takes; APIs from before computer setup take only 1.
-    result_version: int
 
 
 def is_assigned_to(check: dict[str, Any], worker_id: str) -> bool:
@@ -51,17 +48,7 @@ def parse_claimed_target_check(
     # is being added); any other must be one of this worker's computers.
     if target.get("id") not in target_ids and not is_assigned_to(check, worker_id):
         raise ConfigurationError("Target check claim names a computer this worker is not in charge of")
-    if "kind" not in item:
-        # An API from before directory listings: connection checks with version 1 results.
-        return ClaimedTargetCheck(
-            check_id=check["id"],
-            lease_id=item["leaseId"],
-            target=target,
-            kind=CONNECTION,
-            directory_path=None,
-            result_version=RESULT_VERSION_BEFORE_SETUP,
-        )
-    kind = item["kind"]
+    kind = item.get("kind")
     directory_path = item.get("directoryPath")
     if kind not in TARGET_CHECK_KINDS or (
         kind == DIRECTORY_LISTING and (not isinstance(directory_path, str) or not directory_path)
@@ -73,5 +60,4 @@ def parse_claimed_target_check(
         target=target,
         kind=kind,
         directory_path=directory_path if kind == DIRECTORY_LISTING else None,
-        result_version=RESULT_VERSION,
     )

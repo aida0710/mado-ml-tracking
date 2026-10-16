@@ -93,7 +93,7 @@ def run_output_archive_command(argv: list[str]) -> None:
             raise ValueError("Job workspace is unavailable")
         results = finished_results(read_state(workspace))
         index = read_output_index(workspace, results)
-        maximum_request_bytes = (int(results.get("artifactCount", 0)) + 1) * MAX_ACKNOWLEDGED_KEY_BYTES
+        maximum_request_bytes = (results["artifactCount"] + 1) * MAX_ACKNOWLEDGED_KEY_BYTES
         raw_request = sys.stdin.buffer.read(maximum_request_bytes + 1)
         if len(raw_request) > maximum_request_bytes:
             raise ValueError("Acknowledged output list exceeds its size limit")

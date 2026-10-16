@@ -28,6 +28,7 @@ async function evaluationFixture(harness: Harness) {
       method: 'POST',
       cookie: editor.cookie,
       body: {
+        runtime: { kind: 'python' },
         version: 'v2',
         source: { kind: 'inline', files: { 'main.py': 'print("evaluate v2")\n' } },
         entrypoint: ['python', 'main.py'],
@@ -170,7 +171,11 @@ describe.skipIf(!testDatabaseUrl)('評価結果の基準バージョンとの比
     );
     expect(run.upstreamDatasetVersionIds).toEqual([]);
     const list = await entity<{ items: Run[] }>(
-      await request(harness.app, `${fixture.basePath}/runs`, { cookie: fixture.viewer.cookie }),
+      await request(harness.app, `${fixture.basePath}/runs/search`, {
+        cookie: fixture.viewer.cookie,
+        method: 'POST',
+        body: {},
+      }),
       200,
     );
     expect(list.items.find((item) => item.id === run.id)?.upstreamDatasetVersionIds).toEqual([]);
@@ -308,8 +313,8 @@ describe.skipIf(!testDatabaseUrl)('評価結果の基準バージョンとの比
   it('evaluationRuleIdを指定すると、そのruleの自動実行が作ったRunだけを比べ、手動の評価Runを除く', async () => {
     const fixture = await evaluationFixture(harness);
     const rule = await harness.database.query<{ id: string }>(
-      `INSERT INTO model_automation_rules(project_id,name,model_families,kind,experiment_id,code_version_id,target_id,created_by)
-      VALUES($1,'Evaluate',ARRAY['qwen2'],'evaluation',$2,$3,$4,$5) RETURNING id`,
+      `INSERT INTO model_automation_rules(project_id,name,model_families,kind,experiment_id,code_version_id,target_id,created_by,run_as_user_id)
+      VALUES($1,'Evaluate',ARRAY['qwen2'],'evaluation',$2,$3,$4,$5,$5) RETURNING id`,
       [
         fixture.project.id,
         fixture.experiment.id,

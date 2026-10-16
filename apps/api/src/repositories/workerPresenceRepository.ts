@@ -14,17 +14,15 @@ export interface WorkerPresenceTouch {
   tokenId: string;
   workerId: string;
   targetIds: string[] | null;
-  version?: string;
-  hostname?: string;
-  parallelJobs?: number;
-  sshFiles?: WorkerSshFiles;
+  version: string;
+  hostname: string;
+  parallelJobs: number;
+  sshFiles: WorkerSshFiles;
   capabilities: WorkerCapability[];
 }
 
 // Upserts on claim/resume. An unchanged worker is rewritten only after the write interval, and
 // started_at restarts when the worker comes back from offline so it shows the current uptime.
-// Omitted workerInfo fields keep their previous values for workers that do not send them, except
-// capabilities: a worker that names none has none, even if an earlier version of it named some.
 export async function touchWorker(
   connection: Connection,
   presence: WorkerPresenceTouch,
@@ -33,30 +31,30 @@ export async function touchWorker(
     `INSERT INTO workers(project_id,token_id,worker_id,version,hostname,target_ids,parallel_jobs,ssh_files,capabilities)
     VALUES($1,$2,$3,$4,$5,$6::uuid[],$7,$8::jsonb,$9::text[])
     ON CONFLICT (token_id,worker_id) DO UPDATE SET
-      version=COALESCE(EXCLUDED.version,workers.version),
-      hostname=COALESCE(EXCLUDED.hostname,workers.hostname),
+      version=EXCLUDED.version,
+      hostname=EXCLUDED.hostname,
       target_ids=EXCLUDED.target_ids,
-      parallel_jobs=COALESCE(EXCLUDED.parallel_jobs,workers.parallel_jobs),
-      ssh_files=COALESCE(EXCLUDED.ssh_files,workers.ssh_files),
+      parallel_jobs=EXCLUDED.parallel_jobs,
+      ssh_files=EXCLUDED.ssh_files,
       capabilities=EXCLUDED.capabilities,
       started_at=CASE WHEN ${workerOfflineSql('workers')} THEN now() ELSE workers.started_at END,
       last_seen_at=now()
     WHERE ${workerPresenceWriteDueSql('workers')}
       OR EXCLUDED.target_ids IS DISTINCT FROM workers.target_ids
-      OR COALESCE(EXCLUDED.version,workers.version) IS DISTINCT FROM workers.version
-      OR COALESCE(EXCLUDED.hostname,workers.hostname) IS DISTINCT FROM workers.hostname
-      OR COALESCE(EXCLUDED.parallel_jobs,workers.parallel_jobs) IS DISTINCT FROM workers.parallel_jobs
-      OR COALESCE(EXCLUDED.ssh_files,workers.ssh_files) IS DISTINCT FROM workers.ssh_files
+      OR EXCLUDED.version IS DISTINCT FROM workers.version
+      OR EXCLUDED.hostname IS DISTINCT FROM workers.hostname
+      OR EXCLUDED.parallel_jobs IS DISTINCT FROM workers.parallel_jobs
+      OR EXCLUDED.ssh_files IS DISTINCT FROM workers.ssh_files
       OR EXCLUDED.capabilities IS DISTINCT FROM workers.capabilities`,
     [
       presence.projectId,
       presence.tokenId,
       presence.workerId,
-      presence.version ?? null,
-      presence.hostname ?? null,
+      presence.version,
+      presence.hostname,
       presence.targetIds,
-      presence.parallelJobs ?? null,
-      presence.sshFiles ? JSON.stringify(presence.sshFiles) : null,
+      presence.parallelJobs,
+      JSON.stringify(presence.sshFiles),
       presence.capabilities,
     ],
   );

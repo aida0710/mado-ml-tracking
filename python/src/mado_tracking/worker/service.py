@@ -30,7 +30,10 @@ class Worker:
     ):
         self.settings = settings
         self.api = api or WorkerApi(
-            url=settings.api.url, token=settings.api.token, ssh_directories=settings.ssh_directories
+            parallel_jobs=settings.parallel_jobs,
+            url=settings.api.url,
+            token=settings.api.token,
+            ssh_directories=settings.ssh_directories,
         )
         self.journal = JobJournal(settings.state_directory)
         self.executor_factory = executor_factory

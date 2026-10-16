@@ -64,8 +64,6 @@ export const siteComputersText = localized({
   runnerApiUrlError:
     'runnerから見たAPIのURLは、http://かhttps://で始まるURLで入力してください。',
   jobShellRequired: 'job shellを入力するか、雛形を選んでください。',
-  // The owner column: a computer from before owners is everyone's (global administrators manage it).
-  targetOwnerGlobal: '全体',
   targetOwnerSelf: '自分',
   jobShellCurrent: '今のバージョン',
   jobShellNone: 'job shellがまだありません。保存するまで、このコンピュータのJobは投入されません。',

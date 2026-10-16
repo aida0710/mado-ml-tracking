@@ -16,7 +16,7 @@ MMT_SESSION_ENCRYPTION_KEY is required when AUTH_MODE=hybrid
 
 | 表示 | 直し方 |
 | --- | --- |
-| `MMT_DATABASE_URL or DATABASE_URL is required` | `.env`にDBの接続URLを入れる |
+| `MMT_DATABASE_URL is required` | `.env`にDBの接続URLを入れる |
 | `OIDC_ISSUER_URL and OIDC_CLIENT_ID are required when AUTH_MODE=...` | Authentikの設定を入れるか、`AUTH_MODE=local`にする |
 | `MMT_SESSION_ENCRYPTION_KEY is required ...`、`... must be base64 of 32 bytes` | `openssl rand -base64 32`で作った値を入れる |
 | `OIDC issuer requires HTTPS ...` | IssuerをHTTPSのURLにする |
@@ -25,7 +25,7 @@ MMT_SESSION_ENCRYPTION_KEY is required when AUTH_MODE=hybrid
 | `AUTH_SESSION_IDLE_SECONDS must not exceed AUTH_SESSION_ABSOLUTE_SECONDS` | idleをabsolute以下にする |
 | `MMT_GIT_SSH_KEY_PATH and MMT_GIT_KNOWN_HOSTS_PATH must be set together` | 両方を設定するか、両方を消す |
 
-`OIDC_ALLOWED_GROUPS`が空のとき、`OIDC_ROLE_MAPPING_JSON`に`admin`・`user`以外のroleを書いたとき、`OIDC_ADMIN_GROUP`と対応表のadminのgroupが食い違うときも起動しません。SMTPの設定は、`MMT_SMTP_URL`と`MMT_SMTP_FROM`の片方だけでは起動しません。
+`OIDC_ALLOWED_GROUPS`が空のとき、`OIDC_ROLE_MAPPING_JSON`に`admin`・`user`以外のroleを書いたときも起動しません。SMTPの設定は、`MMT_SMTP_URL`と`MMT_SMTP_FROM`の片方だけでは起動しません。
 
 更新したあとに起動しない場合は、新しく必須になった設定が無いかを確かめてください。SSOの再確認を含むバージョンからは`MMT_SESSION_ENCRYPTION_KEY`が、groupで許可を決めるバージョンからは`OIDC_ALLOWED_GROUPS`が必須です。
 

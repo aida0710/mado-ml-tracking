@@ -43,9 +43,5 @@ export function useMadoPluginConnection({ projectId, plugin, onSaved, onRetried 
       onRetried();
     });
   }
-  function completeMigration() {
-    if (!plugin) return;
-    runConnectionOperation(() => pluginsApi.completeMigration(projectId, plugin.id, plugin.configRevision), onSaved);
-  }
-  return { checked, success, pending: mutation.pending, error: mutation.error, check, toggle, retry, completeMigration };
+  return { checked, success, pending: mutation.pending, error: mutation.error, check, toggle, retry };
 }
