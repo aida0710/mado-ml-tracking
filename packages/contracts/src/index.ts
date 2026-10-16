@@ -875,6 +875,8 @@ export interface PluginEvent {
   inputDatasets: DatasetVersion[];
   outputDatasets: DatasetVersion[];
 }
+export type { LineageRelationAddition } from './lineageRelations.js';
+
 export interface LineageNode {
   id: string;
   kind: 'datasetVersion' | 'modelVersion' | 'loggedModel' | 'run' | 'codeVersion';

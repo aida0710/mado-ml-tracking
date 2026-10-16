@@ -12,6 +12,8 @@ import { formatDate } from '../lib/format';
 import { buildModelVersionLineage, LINEAGE_RESULT_RUN_LIMIT } from '../lib/modelVersionLineage';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
+import { lineageText } from '../i18n/lineage';
+import { lineageFocusPath } from '../lib/lineageFocus';
 
 /** The version's identity and where it came from, with the training → version → results band. */
 export function ModelVersionSummary({
@@ -115,7 +117,12 @@ export function ModelVersionSummary({
           ]}
         />
       </div>
-      <h2>{text.modelVersionLineage}</h2>
+      <div className="section-heading">
+        <h2>{text.modelVersionLineage}</h2>
+        <Link className="button small" to={lineageFocusPath(projectId, version.id)}>
+          {lineageText.lineageOpenModel}
+        </Link>
+      </div>
       <div className="model-version-lineage">
         <LineageGraph key={`${projectId}:${version.id}`} graph={lineage} projectId={projectId} />
       </div>

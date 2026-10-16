@@ -5552,6 +5552,362 @@
         }
       }
     },
+    "/api/projects/{p}/lineage/relations": {
+      "get": {
+        "operationId": "getProjectsByPLineageRelations",
+        "tags": [
+          "registry"
+        ],
+        "summary": "根拠付きで補完した過去の来歴を取得",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "read"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "project",
+          "role": "viewer",
+          "scope": "read"
+        },
+        "x-mmt-job-token": "read",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineageRelationPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "insufficient_scope",
+              "project_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "見つからない（他Projectのものを含む）",
+            "x-mmt-error-codes": [
+              "not_found",
+              "project_archived"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "invalid_request"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "postProjectsByPLineageRelations",
+        "tags": [
+          "registry"
+        ],
+        "summary": "原記録を保って確認済みの来歴を追記",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "registry:write"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "project",
+          "role": "editor",
+          "scope": "registry:write"
+        },
+        "x-mmt-job-token": "forbidden",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sourceId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "sourceKind": {
+                    "type": "string",
+                    "enum": [
+                      "run",
+                      "modelVersion",
+                      "datasetVersion"
+                    ]
+                  },
+                  "targetId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "targetKind": {
+                    "type": "string",
+                    "enum": [
+                      "run",
+                      "modelVersion",
+                      "datasetVersion"
+                    ]
+                  },
+                  "relation": {
+                    "type": "string",
+                    "enum": [
+                      "input",
+                      "output",
+                      "model",
+                      "parentRun",
+                      "reference"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  },
+                  "evidence": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/JsonValue"
+                    }
+                  }
+                },
+                "required": [
+                  "sourceId",
+                  "sourceKind",
+                  "targetId",
+                  "targetKind",
+                  "relation",
+                  "reason",
+                  "evidence"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineageRelationAddition"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "要求を読めない",
+            "x-mmt-error-codes": [
+              "invalid_json"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "invalid_origin",
+              "insufficient_scope",
+              "project_forbidden",
+              "job_token_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "見つからない（他Projectのものを含む）",
+            "x-mmt-error-codes": [
+              "not_found",
+              "project_archived"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "現在の状態と衝突する",
+            "x-mmt-error-codes": [
+              "lineage_output_conflict",
+              "already_exists"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "大きすぎる",
+            "x-mmt-error-codes": [
+              "body_too_large"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "lineage_relation_cycle",
+              "lineage_run_not_terminal",
+              "invalid_request",
+              "invalid_reference"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{p}/datasets/{id}/versions/{v}/parents": {
       "get": {
         "operationId": "getProjectsByPDatasetsByIdVersionsByVParents",
@@ -59866,6 +60222,96 @@
         "required": [
           "nodes",
           "edges"
+        ],
+        "additionalProperties": false
+      },
+      "LineageRelationAddition": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceKind": {
+            "type": "string",
+            "enum": [
+              "run",
+              "modelVersion",
+              "datasetVersion"
+            ]
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetKind": {
+            "type": "string",
+            "enum": [
+              "run",
+              "modelVersion",
+              "datasetVersion"
+            ]
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "input",
+              "output",
+              "model",
+              "parentRun",
+              "reference"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/JsonObject"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "projectId",
+          "sourceId",
+          "sourceKind",
+          "targetId",
+          "targetKind",
+          "relation",
+          "reason",
+          "evidence",
+          "createdBy",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "LineageRelationPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LineageRelationAddition"
+            }
+          }
+        },
+        "required": [
+          "items"
         ],
         "additionalProperties": false
       },
