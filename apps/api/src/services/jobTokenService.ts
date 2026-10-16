@@ -28,6 +28,8 @@ export class JobTokenService {
         id: identity.tokenId,
         projectId: identity.projectId,
         scopes: [...JOB_TOKEN_SCOPES],
+        // A Job token's fixed scopes cannot issue tokens, so its lifetime never bounds another's.
+        expiresAt: null,
         job: identity.job,
       },
     };

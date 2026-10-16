@@ -13,6 +13,7 @@ import {
   MIN_DATASET_CACHE_MAX_BYTES,
   MIN_QUEUE_TIMEOUT_SECONDS,
   SITE_SUBMISSION_MODES,
+  TOKEN_SCOPES,
   WORKER_CAPABILITIES,
 } from '@mmt/contracts';
 import { workerCapabilitySchema } from '@mmt/contracts/schemas';
@@ -45,15 +46,12 @@ export const groupNameSchema = z
 export const userSearchQuerySchema = z.object({ query: z.string().trim().min(1).max(200) });
 // Environment backends ('filesystem', 's3') or a name an administrator stored in storage_backends.
 export const artifactBackendSchema = z.string().refine(isValidStorageBackendName);
-export const scopeSchema = z.enum([
-  'read',
-  'runs:write',
-  'registry:write',
-  'artifacts:write',
-  'jobs:write',
-  'worker:execute',
-  'admin',
-]);
+export const scopeSchema = z.enum(TOKEN_SCOPES);
+export const uniqueScopesSchema = z
+  .array(scopeSchema)
+  .min(1)
+  .max(TOKEN_SCOPES.length)
+  .refine((values) => new Set(values).size === values.length, 'Scopes must be unique');
 export const uniqueIdsSchema = z
   .array(uuidSchema)
   .max(1000)
@@ -280,11 +278,7 @@ export const tokenCreateSchema = z.strictObject({
   name: nameSchema,
   kind: z.enum(['personal', 'service']),
   projectId: uuidSchema.nullish(),
-  scopes: z
-    .array(scopeSchema)
-    .min(1)
-    .max(7)
-    .refine((values) => new Set(values).size === values.length),
+  scopes: uniqueScopesSchema,
   expiresAt: z.iso.datetime({ offset: true }).nullish()
     .describe('未来の日時。nullは無期限。省略時は設定された既定の日数（既定365日）。'),
 });

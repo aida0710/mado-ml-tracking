@@ -150,7 +150,7 @@ with Client() as client:
 
 ### Service Accountと所有者の移管
 
-人の異動で自動実行が止まらないように、rule・policy・フックをService Accountの権限で動かす。どれもProject adminの操作。移管先のService Accountのroleは、ruleとpolicyがadmin、フックがeditorかadmin（`worker:execute`のtokenもadminにだけ発行できる）。
+人の異動で自動実行が止まらないように、rule・policy・フックをService Accountの権限で動かす。どれもProject adminの操作。Service Accountの作成とtokenの発行には、`tokens:manage`を付けたtokenを使う（`admin`には含まれない）。発行できるscopeと期限は、使うtokenが持つ範囲まで。移管先のService Accountのroleは、ruleとpolicyがadmin、フックがeditorかadmin（`worker:execute`のtokenもadminにだけ発行できる）。
 
 ```python
 from datetime import UTC, datetime, timedelta
@@ -169,7 +169,7 @@ with Client() as client:
         print(token["ownerType"], token["ownerName"], token["tokenPrefix"], token["expiresAt"])
 ```
 
-`expires_at`はtimezone付きのdatetimeで渡す。省略するとAPIの上限（既定365日）になる。token発行と作成系の操作は、応答が失われても再送しない（tokenが二重に発行されるのを避ける）。alias設定と所有者の移管は同じ値の再送で結果が変わらないので、一時的な失敗のときに再送する。
+`expires_at`はtimezone付きのdatetimeで渡す。省略するとAPIの既定（365日）になり、使うtokenの期限より後になる場合は403 `token_outlives_issuer`。token発行と作成系の操作は、応答が失われても再送しない（tokenが二重に発行されるのを避ける）。alias設定と所有者の移管は同じ値の再送で結果が変わらないので、一時的な失敗のときに再送する。
 
 ### 学習の途中再開（checkpoint）
 

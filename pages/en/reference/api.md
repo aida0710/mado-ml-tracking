@@ -33,9 +33,12 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" "$MMT_API_URL/api/projects"
 
 Some operations work only with a browser session; with an API token they return 403 `session_required`:
 
-- Issuing and revoking API tokens
-- Creating and changing Service Accounts and issuing their tokens
-- The global audit log and user management (**Administration**)
+- Changing your own password
+- Saving and deleting your own settings on a computer
+- Adding a computer (site) and changing its settings, by someone who is not a global administrator
+- Purging an archived Project
+
+Issuing and revoking API tokens, Service Accounts, the global audit log and user management work with tokens that hold `tokens:manage`, `audit:read` or `users:manage` ([API tokens and Service Accounts](/en/admin/tokens)).
 
 ## Common shapes
 

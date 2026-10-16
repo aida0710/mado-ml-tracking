@@ -84,7 +84,7 @@ The login attempt limit was exceeded (429 `rate_limited`). Wait for the `Retry-A
 | 401 `identity_sync_required` | An SSO user has not signed in from a browser for 7 days | Sign in once in a browser; the same token works again. Use a Service Account token for long-running work |
 | 403 `insufficient_scope` | The token lacks a scope | Issue a token with the needed scopes |
 | 403 `project_forbidden` | The owner's Project role is insufficient, or the Project differs from the token's | Check the role, and whether the owner left a group |
-| 403 `session_required` | A browser-only operation (issuing tokens, Service Accounts, the global audit log, and so on) | Use the screen |
+| 403 `session_required` | A browser-only operation (changing your own password, your own settings on a computer, purging a Project, and so on) | Use the screen |
 | 403 `job_token_forbidden` | Not allowed for Job tokens | Check what running code may do ([API tokens and Service Accounts](/en/admin/tokens)) |
 | 401 `basic_auth_unsupported` | Basic authentication on the native API | Use a Bearer token. Basic authentication works only on the MLflow-compatible API |
 

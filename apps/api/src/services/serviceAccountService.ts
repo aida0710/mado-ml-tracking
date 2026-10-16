@@ -27,12 +27,8 @@ import {
   recordDenial,
   type AuditEventDraft,
 } from './auditService.js';
-import {
-  issueApiToken,
-  requireSession,
-  tokenCreateAuditDetails,
-  type IssuedToken,
-} from './tokenService.js';
+import { issueApiToken, tokenCreateAuditDetails, type IssuedToken } from './tokenService.js';
+import { requireGlobalScopesUnrestricted, requireGrantWithinIssuer } from './tokenIssuerAuthority.js';
 import { resolveTokenExpiry } from '../domain/tokenExpiry.js';
 
 interface ServiceAccountReference {
@@ -41,8 +37,8 @@ interface ServiceAccountReference {
 }
 
 /**
- * Service Accounts of a Project and the tokens issued to them. Only Project admins in a browser
- * session manage them, so a leaked token cannot create accounts or mint more tokens.
+ * Service Accounts of a Project and the tokens issued to them. Project admins manage them, in a
+ * browser session or with a `tokens:manage` token; such a token issues only within its own grant.
  */
 export class ServiceAccountService {
   private readonly database: Database;
@@ -54,7 +50,6 @@ export class ServiceAccountService {
   }
 
   async list(principal: Principal, projectId: string): Promise<ServiceAccount[]> {
-    requireSession(principal, 'Service Accountの管理');
     await requireProjectAdmin(this.database, principal, projectId);
     return listServiceAccounts(this.database, projectId);
   }
@@ -73,9 +68,8 @@ export class ServiceAccountService {
       projectId,
       details: { name: input.name, role: input.role },
     };
-    return recordDenial(this.database, draft, async () => {
-      requireSession(principal, 'Service Accountの作成');
-      return transaction(this.database, async (connection) => {
+    return recordDenial(this.database, draft, () =>
+      transaction(this.database, async (connection) => {
         await requireProjectAdmin(connection, principal, projectId);
         const account = await insertServiceAccount(connection, {
           projectId,
@@ -86,8 +80,8 @@ export class ServiceAccountService {
         });
         await writeAuditEvent(connection, { ...draft, outcome: 'success', resourceId: account.id });
         return account;
-      });
-    });
+      }),
+    );
   }
 
   async update(
@@ -105,9 +99,8 @@ export class ServiceAccountService {
       projectId: reference.projectId,
       details: { role: input.role ?? null, status: input.status ?? null },
     };
-    return recordDenial(this.database, draft, async () => {
-      requireSession(principal, 'Service Accountの変更');
-      return transaction(this.database, async (connection) => {
+    return recordDenial(this.database, draft, () =>
+      transaction(this.database, async (connection) => {
         await requireProjectAdmin(connection, principal, reference.projectId);
         const before = await lockServiceAccount(connection, reference);
         if (!before) notFound('Service Account');
@@ -138,8 +131,8 @@ export class ServiceAccountService {
           },
         });
         return after;
-      });
-    });
+      }),
+    );
   }
 
   async createToken(
@@ -163,10 +156,14 @@ export class ServiceAccountService {
         ownerUserId: reference.serviceAccountId,
       },
     };
-    return recordDenial(this.database, draft, async () => {
-      requireSession(principal, 'Tokenの発行');
-      return transaction(this.database, async (connection) => {
+    return recordDenial(this.database, draft, () =>
+      transaction(this.database, async (connection) => {
         await requireProjectAdmin(connection, principal, reference.projectId);
+        requireGlobalScopesUnrestricted({
+          scopes: input.scopes,
+          projectId: reference.projectId,
+          ownerIsAdmin: false,
+        });
         const account = await lockServiceAccount(connection, reference);
         if (!account) notFound('Service Account');
         if (account.status !== 'active')
@@ -188,6 +185,16 @@ export class ServiceAccountService {
             `Service AccountのRole（${account.role}）では使えないscopeです: ${excessScopes.join(', ')}`,
             'scope_exceeds_role',
           );
+        const expiresAt = resolveTokenExpiry({
+          expiresAt: input.expiresAt,
+          defaultLifetimeDays: this.tokenDefaultLifetimeDays,
+          now: new Date(),
+        });
+        requireGrantWithinIssuer(principal, {
+          scopes: input.scopes,
+          projectId: reference.projectId,
+          expiresAt: expiresAt?.toISOString() ?? null,
+        });
         const issued = await issueApiToken(connection, {
           ownerUserId: account.id,
           createdByUserId: principal.user.id,
@@ -195,11 +202,7 @@ export class ServiceAccountService {
           name: input.name,
           kind: 'service',
           scopes: input.scopes,
-          expiresAt: resolveTokenExpiry({
-            expiresAt: input.expiresAt,
-            defaultLifetimeDays: this.tokenDefaultLifetimeDays,
-            now: new Date(),
-          }),
+          expiresAt,
         });
         await writeAuditEvent(connection, {
           ...draft,
@@ -208,8 +211,8 @@ export class ServiceAccountService {
           details: tokenCreateAuditDetails(issued.item),
         });
         return issued;
-      });
-    });
+      }),
+    );
   }
 }
 
@@ -218,5 +221,5 @@ function requireProjectAdmin(
   principal: Principal,
   projectId: string,
 ): Promise<unknown> {
-  return requireProject(connection, principal, { projectId, role: 'admin', scope: 'admin' });
+  return requireProject(connection, principal, { projectId, role: 'admin', scope: 'tokens:manage' });
 }

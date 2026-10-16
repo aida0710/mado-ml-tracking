@@ -86,7 +86,7 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" \
 | `hideSignIns` | `true`で、ログイン・ログアウトとIdPの同期・再確認（`auth.login`、`auth.logout`、`auth.oidc.sync`、`auth.oidc.recheck`）を除く |
 | `projectId`（全体の一覧だけ） | ProjectのID |
 
-全体の記録（`GET /api/audit-events`）は、全体管理者がブラウザでログインしているときだけ読めます。API tokenでは、全体管理者のtokenでも403 `session_required`です。ブラウザで全体管理者としてログインした状態で、次のURLを開きます。
+全体の記録（`GET /api/audit-events`）は、全体管理者がブラウザでログインしているときか、全体管理者がProjectを指定せずに発行した`admin`と`audit:read`を持つtokenで読めます（[API tokenとService Account](/admin/tokens)）。ブラウザで全体管理者としてログインした状態で、次のURLを開きます。
 
 ```text
 https://tracking.example.com/api/audit-events?action=auth.oidc.denied

@@ -119,6 +119,11 @@ export async function login(
   return { cookie: response.headers.get('Set-Cookie')!.split(';')[0]!, userId: entity.user.id };
 }
 
+/** The `code` of an error response. */
+export async function errorCode(response: Response): Promise<string> {
+  return ((await response.json()) as { code: string }).code;
+}
+
 export async function entity<T>(response: Response, expectedStatus = 201): Promise<T> {
   if (response.status !== expectedStatus)
     throw new Error(

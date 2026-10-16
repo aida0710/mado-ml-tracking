@@ -15,10 +15,10 @@ export type RouteAccess =
   // A browser session of any user (API tokens get 403 session_required).
   | { kind: 'session' }
   // Effective Project role (direct grant or group binding) and, for API tokens, the scope.
-  // sessionOnly: API tokens get 403 session_required even with the scope.
-  | { kind: 'project'; role: ProjectRole; scope: TokenScope; sessionOnly?: boolean }
-  // A global administrator; an API token needs `admin` and no Project restriction.
-  | { kind: 'globalAdmin'; sessionOnly?: boolean }
+  | { kind: 'project'; role: ProjectRole; scope: TokenScope }
+  // A global administrator; an API token needs `admin`, no Project restriction and, when given,
+  // `scope` too (one `admin` does not include). sessionOnly: API tokens get 403 session_required.
+  | { kind: 'globalAdmin'; scope?: TokenScope; sessionOnly?: boolean }
   // A Project-bound API token with `worker:execute` (the worker process).
   | { kind: 'worker' }
   // The token of a launcher registered on the Web (`launcher:execute`); sessions get 403.

@@ -33,9 +33,12 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" "$MMT_API_URL/api/projects"
 
 一部の操作はブラウザのsessionでだけ使えます。API tokenで呼ぶと403 `session_required`になります。
 
-- API tokenの発行と失効
-- Service Accountの作成・変更・token発行
-- 全体の監査ログ、ユーザーの管理（「全体管理」）
+- 自分のパスワードの変更
+- コンピュータの自分の設定（保存と削除）
+- 全体管理者でない人による、コンピュータ（site）の追加と設定の変更
+- アーカイブしたProjectの完全な削除
+
+API tokenの発行と失効、Service Account、全体の監査ログ、ユーザーの管理は、`tokens:manage`・`audit:read`・`users:manage`を付けたtokenで使えます（[API tokenとService Account](/admin/tokens)）。
 
 ## 共通の形
 
