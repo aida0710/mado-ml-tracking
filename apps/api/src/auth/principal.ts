@@ -17,6 +17,8 @@ export interface Principal {
     id: string;
     projectId: string | null;
     scopes: string[];
+    // An API token's own expiry (ISO 8601); tokens it issues may not outlive it. Null never expires.
+    expiresAt: string | null;
     job?: JobTokenBinding;
   } | null;
   // Browser sessions only; absent for API tokens and for principals built inside the server (seed).

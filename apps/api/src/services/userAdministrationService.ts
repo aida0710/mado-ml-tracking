@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import type { AdminUser, AdminUserPasswordReset, AdminUserQuery } from '@mmt/contracts';
+import { TOKEN_SCOPES, type AdminUser, type AdminUserPasswordReset, type AdminUserQuery } from '@mmt/contracts';
 import type { Principal } from '../auth/principal.js';
 import { isAcceptablePasswordLength, type PasswordHasher } from '../auth/passwordHasher.js';
 import { transaction, type Database } from '../db/database.js';
@@ -24,7 +24,7 @@ import {
   resetLocalPassword,
   updateAdminUser,
 } from '../repositories/userAdministrationRepository.js';
-import { requireGlobalAdmin } from './accessService.js';
+import { holdsScope, requireGlobalAdmin, requireScope } from './accessService.js';
 import {
   auditActor,
   NO_REQUEST_METADATA,
@@ -35,11 +35,23 @@ import {
 // 18 random bytes encode to 24 base64url characters, well above the 12-byte minimum.
 const TEMPORARY_PASSWORD_BYTES = 18;
 
-// Account management changes who can sign in, so it is not exposed to API tokens at all.
-function requireAdministratorSession(principal: Principal): void {
-  if (principal.method !== 'session')
-    throw new DomainError(403, 'ユーザー管理にはブラウザでのloginが必要です', 'session_required');
+// A global administrator's session, or an unrestricted administrator token with `users:manage`.
+function requireUserReader(principal: Principal): void {
+  requireScope(principal, 'users:manage');
   requireGlobalAdmin(principal);
+}
+
+// Changing accounts can create an administrator login, which holds every scope; a token may do it
+// only when it already holds every scope itself, so it cannot reach more than it has.
+function requireUserAdministrator(principal: Principal): void {
+  requireUserReader(principal);
+  const missingScopes = TOKEN_SCOPES.filter((scope) => !holdsScope(principal, scope));
+  if (missingScopes.length)
+    throw new DomainError(
+      403,
+      `ユーザーの変更には、すべてのscopeを持つtokenが必要です。足りないscope: ${missingScopes.join(', ')}`,
+      'insufficient_scope',
+    );
 }
 
 // SSO users get their global role and display name from the IdP at every login.
@@ -54,7 +66,7 @@ export class UserAdministrationService {
   ) {}
 
   async list(principal: Principal, query: AdminUserQuery): Promise<AdminUser[]> {
-    requireAdministratorSession(principal);
+    requireUserReader(principal);
     return listAdminUsers(this.options.database, { ...query, limit: ADMIN_USER_LIST_LIMIT });
   }
 
@@ -69,7 +81,7 @@ export class UserAdministrationService {
       isAdmin: input.isAdmin,
     });
     return recordDenial(this.options.database, draft, async () => {
-      requireAdministratorSession(principal);
+      requireUserAdministrator(principal);
       const passwordHash = await this.hashTemporaryPassword(input.password);
       return transaction(this.options.database, async (connection) => {
         if (await isUsernameTaken(connection, input.username))
@@ -97,7 +109,7 @@ export class UserAdministrationService {
       changedFields: Object.keys(patch).sort(),
     });
     return recordDenial(this.options.database, draft, async () => {
-      requireAdministratorSession(principal);
+      requireUserAdministrator(principal);
       return transaction(this.options.database, async (connection) => {
         const current = await lockAdminUser(connection, userId);
         if (!current) notFound('User');
@@ -147,7 +159,7 @@ export class UserAdministrationService {
   ): Promise<AdminUserPasswordReset> {
     const draft = this.auditDraft(principal, request, 'admin.user.password_reset', userId, {});
     return recordDenial(this.options.database, draft, async () => {
-      requireAdministratorSession(principal);
+      requireUserAdministrator(principal);
       const temporaryPassword = randomBytes(TEMPORARY_PASSWORD_BYTES).toString('base64url');
       const passwordHash = await this.options.passwordHasher.hash(temporaryPassword);
       await transaction(this.options.database, async (connection) => {

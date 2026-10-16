@@ -86,6 +86,9 @@ export const tokenScopeLabels: Record<TokenScope, string> = {
   'jobs:write': 'jobs:write — Launch and cancel jobs',
   'worker:execute': 'worker:execute — Execute jobs as a worker',
   admin: 'admin — Manage project',
+  'tokens:manage': 'tokens:manage — Manage tokens and service accounts within this token',
+  'audit:read': 'audit:read — Read the whole audit log',
+  'users:manage': 'users:manage — Manage users',
 };
 
 // Text that embeds values.

@@ -84,7 +84,7 @@ Authentikに接続できないあいだは、前回の確認から`OIDC_RECHECK_
 | 401 `identity_sync_required` | SSOのユーザーが7日以上ブラウザでログインしていない | ブラウザで一度ログインすれば、同じtokenが使える。長く動く処理はService Accountのtokenにする |
 | 403 `insufficient_scope` | tokenのscopeが足りない | 必要なscopeでtokenを発行し直す |
 | 403 `project_forbidden` | 所有者のProjectのRoleが足りない、またはtokenを限定したProjectと違う | Roleを確かめる。groupから外れていないかも確かめる |
-| 403 `session_required` | ブラウザでだけ使える操作（token発行、Service Account、全体の監査ログなど） | 画面から操作する |
+| 403 `session_required` | ブラウザでだけ使える操作（自分のパスワード変更、コンピュータの自分の設定、Projectの完全な削除など） | 画面から操作する |
 | 403 `job_token_forbidden` | Job限定tokenで許されていない操作 | 実行コードから行える操作か確かめる（[API tokenとService Account](/admin/tokens)） |
 | 401 `basic_auth_unsupported` | 独自APIにBasic認証を使った | Bearer tokenにする。Basic認証はMLflow互換APIだけ |
 

@@ -18,6 +18,7 @@ import {
   type TokenInsert,
 } from '../repositories/apiTokenRepository.js';
 import { requireProject, requireScope } from './accessService.js';
+import { requireGlobalScopesUnrestricted, requireGrantWithinIssuer } from './tokenIssuerAuthority.js';
 import {
   auditActor,
   NO_REQUEST_METADATA,
@@ -106,6 +107,16 @@ export class TokenService {
     return recordDenial(this.database, draft, () =>
       transaction(this.database, async (connection) => {
         await this.requireCreatePermission(connection, principal, input);
+        const expiresAt = resolveTokenExpiry({
+          expiresAt: input.expiresAt,
+          defaultLifetimeDays: this.tokenDefaultLifetimeDays,
+          now: new Date(),
+        });
+        requireGrantWithinIssuer(principal, {
+          scopes: input.scopes,
+          projectId,
+          expiresAt: expiresAt?.toISOString() ?? null,
+        });
         const issued = await issueApiToken(connection, {
           ownerUserId: principal.user.id,
           createdByUserId: principal.user.id,
@@ -113,11 +124,7 @@ export class TokenService {
           name: input.name,
           kind: input.kind,
           scopes: input.scopes,
-          expiresAt: resolveTokenExpiry({
-            expiresAt: input.expiresAt,
-            defaultLifetimeDays: this.tokenDefaultLifetimeDays,
-            now: new Date(),
-          }),
+          expiresAt,
         });
         await writeAuditEvent(connection, {
           ...draft,
@@ -142,7 +149,7 @@ export class TokenService {
       resourceType: 'api_token',
       resourceId: tokenId,
     };
-    await recordDenial(this.database, draft, async () => requireSession(principal, 'Tokenの失効'));
+    await recordDenial(this.database, draft, async () => requireScope(principal, 'tokens:manage'));
     const target = await findActiveTokenOwnership(this.database, tokenId);
     if (!target) notFound('Token');
     const ownerType = target.ownerKind === 'service' ? 'service_account' : 'user';
@@ -160,9 +167,10 @@ export class TokenService {
           await requireProject(connection, principal, {
             projectId: target.projectId,
             role: 'admin',
-            scope: 'admin',
+            scope: 'tokens:manage',
           });
         }
+        requireGrantWithinIssuer(principal, target);
         const revoked = await revokeToken(connection, tokenId);
         // A concurrent revocation won the race; report it the same way as an unknown token.
         if (!revoked) notFound('Token');
@@ -180,9 +188,10 @@ export class TokenService {
     principal: Principal,
     input: z.infer<typeof tokenCreateSchema>,
   ): Promise<void> {
-    // Minting tokens from a token could extend its expiry and escalate its scope.
-    requireSession(principal, 'Tokenの発行');
+    // A token issues only within its own grant (requireGrantWithinIssuer, once the expiry is known).
+    requireScope(principal, 'tokens:manage');
     const projectId = input.projectId ?? null;
+    requireGlobalScopesUnrestricted({ scopes: input.scopes, projectId, ownerIsAdmin: principal.user.isAdmin });
     if ((input.kind === 'service' || input.scopes.includes('worker:execute')) && !projectId)
       throw new DomainError(422, 'Service/worker tokenにはProjectが必要です', 'project_required');
     if (!projectId) {
@@ -193,7 +202,7 @@ export class TokenService {
     // A personally owned service token is the legacy form; issuing one still takes an admin.
     const requiredRole =
       input.kind === 'service' ? 'admin' : requiredProjectRoleForScopes(input.scopes);
-    await requireProject(connection, principal, { projectId, role: requiredRole, scope: 'admin' });
+    await requireProject(connection, principal, { projectId, role: requiredRole, scope: 'tokens:manage' });
     // Unlike session administration, token membership (direct or through a group) is mandatory.
     const membership = await first(
       connection,

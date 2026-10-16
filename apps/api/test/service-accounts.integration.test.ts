@@ -7,7 +7,15 @@ import { transaction } from '../src/db/database.js';
 import { createOidcRolePolicy } from '../src/domain/oidcRolePolicy.js';
 import { TOKEN_LAST_USED_WRITE_INTERVAL_SECONDS } from '../src/repositories/identityRepository.js';
 import { OidcLoginDeniedError, provisionOidcLogin } from '../src/services/oidcProvisioning.js';
-import { createHarness, entity, login, request, testDatabaseUrl, type Harness } from './harness.js';
+import {
+  createHarness,
+  entity,
+  errorCode,
+  login,
+  request,
+  testDatabaseUrl,
+  type Harness,
+} from './harness.js';
 import { executionFixture, projectFixture } from './fixtures.js';
 
 type ProjectFixture = Awaited<ReturnType<typeof projectFixture>>;
@@ -77,10 +85,6 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
       token,
       body: { experimentId: fixture.experiment.id, name, kind: 'processing' },
     });
-  }
-
-  async function errorCode(response: Response): Promise<string> {
-    return ((await response.json()) as { code: string }).code;
   }
 
   it('Service Accountのworker tokenでJobをclaimでき、GET /auth/tokenがscopeを返す', async () => {
@@ -209,7 +213,7 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
     expect(await errorCode(refused)).toBe('project_forbidden');
   });
 
-  it('Service AccountのRoleを超えるscopeは422で、作成・変更・発行はProject adminのsessionだけ', async () => {
+  it('Service AccountのRoleを超えるscopeは422で、作成・変更・発行はProject adminだけ（adminのtokenでも足りない）', async () => {
     const fixture = await projectFixture(harness);
     const account = await serviceAccount(fixture, { name: 'reader', role: 'viewer' });
     const excess = await issueServiceAccountToken(fixture, account, {
@@ -236,7 +240,7 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
       body: { name: 'token-made', role: 'viewer' },
     });
     expect(byToken.status).toBe(403);
-    expect(await errorCode(byToken)).toBe('session_required');
+    expect(await errorCode(byToken)).toBe('insufficient_scope');
     const duplicate = await createServiceAccount(fixture, { name: 'READER', role: 'viewer' });
     expect(duplicate.status).toBe(409);
     const listed = await entity<{ items: ServiceAccount[] }>(
@@ -254,6 +258,51 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
       { action: 'service_account.create', outcome: 'success', owner_type: null },
       { action: 'token.create', outcome: 'success', owner_type: 'user' },
     ]);
+  });
+
+  it('tokens:manageのtokenは、自分の範囲内でService Accountを作りtokenを発行できる', async () => {
+    const fixture = await projectFixture(harness);
+    const expiresAt = new Date(Date.now() + 30 * DAY_MILLISECONDS);
+    const manager = await entity<IssuedToken>(
+      await request(harness.app, '/api/tokens', {
+        method: 'POST',
+        cookie: fixture.administrator.cookie,
+        body: {
+          name: 'automation',
+          kind: 'personal',
+          projectId: fixture.project.id,
+          scopes: ['read', 'runs:write', 'tokens:manage'],
+          expiresAt: expiresAt.toISOString(),
+        },
+      }),
+    );
+    const created = await request(harness.app, `${fixture.basePath}/service-accounts`, {
+      method: 'POST',
+      token: manager.token,
+      body: { name: 'pipeline', role: 'editor' },
+    });
+    const account = await entity<ServiceAccount>(created);
+    const issue = (body: { scopes: string[]; expiresAt?: string | null }) =>
+      request(harness.app, `${fixture.basePath}/service-accounts/${account.id}/tokens`, {
+        method: 'POST',
+        token: manager.token,
+        body: { name: 'pipeline key', ...body },
+      });
+    const withinIssuer = new Date(expiresAt.getTime() - DAY_MILLISECONDS).toISOString();
+    const issued = await entity<IssuedToken>(await issue({ scopes: ['read', 'runs:write'], expiresAt: withinIssuer }));
+    expect((await createRunWith(fixture, issued.token, 'from service account')).status).toBe(201);
+
+    const strongerScope = await issue({ scopes: ['read', 'artifacts:write'], expiresAt: withinIssuer });
+    expect(strongerScope.status).toBe(403);
+    expect(await errorCode(strongerScope)).toBe('scope_exceeds_issuer');
+    for (const outliving of [null, new Date(expiresAt.getTime() + DAY_MILLISECONDS).toISOString()]) {
+      const response = await issue({ scopes: ['read'], expiresAt: outliving });
+      expect(response.status).toBe(403);
+      expect(await errorCode(response)).toBe('token_outlives_issuer');
+    }
+    const globalScope = await issue({ scopes: ['audit:read'], expiresAt: withinIssuer });
+    expect(globalScope.status).toBe(422);
+    expect(await errorCode(globalScope)).toBe('global_scope_requires_unrestricted_token');
   });
 
   it('Service Accountはローカルアカウントでも SSO でもloginできず、ユーザー検索にも出ない', async () => {

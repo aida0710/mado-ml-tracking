@@ -15,7 +15,7 @@ import {
   type AuditEventFilter,
   type AuditEventInput,
 } from '../repositories/auditRepository.js';
-import { requireGlobalAdmin, requireProject } from './accessService.js';
+import { requireGlobalAdmin, requireProject, requireScope } from './accessService.js';
 
 // Internal callers such as the demo seed have no HTTP request to attribute.
 export const NO_REQUEST_METADATA: RequestMetadata = { ip: null, userAgent: null };
@@ -64,13 +64,8 @@ export class AuditService {
   constructor(readonly database: Database) {}
 
   async list(principal: Principal, query: AuditEventQuery): Promise<AuditEventPage> {
-    // A session is required: unlike Project-scoped reads, the global log is not exposed to tokens.
-    if (principal.method !== 'session')
-      throw new DomainError(
-        403,
-        '監査ログの全体一覧にはブラウザでのloginが必要です',
-        'session_required',
-      );
+    // The global log spans every Project, so a token needs the explicit audit:read besides admin.
+    requireScope(principal, 'audit:read');
     requireGlobalAdmin(principal);
     return this.page(query);
   }

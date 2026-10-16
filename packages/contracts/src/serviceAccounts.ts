@@ -9,8 +9,24 @@ export const TOKEN_SCOPES = [
   'jobs:write',
   'worker:execute',
   'admin',
+  'tokens:manage',
+  'audit:read',
+  'users:manage',
 ] as const;
 export type TokenScope = (typeof TOKEN_SCOPES)[number];
+
+/**
+ * Scopes that `admin` does not include: a token holds them only when they are named. They let a
+ * token issue credentials, read the whole audit log or manage accounts, so an existing `admin`
+ * token does not gain them, and a token cannot grant them onward unless it holds them itself.
+ */
+export const EXPLICIT_TOKEN_SCOPES: readonly TokenScope[] = ['tokens:manage', 'audit:read', 'users:manage'];
+
+/**
+ * Scopes for operations over the whole server. Only a global administrator's token without a
+ * Project restriction may hold them; a Project-bound token would have nothing to use them on.
+ */
+export const GLOBAL_TOKEN_SCOPES: readonly TokenScope[] = ['audit:read', 'users:manage'];
 
 /**
  * The Project role a token's owner needs to hold a scope. The API checks it when a token is
@@ -24,6 +40,10 @@ export const TOKEN_SCOPE_REQUIRED_ROLE: Record<TokenScope, ProjectRole> = {
   'jobs:write': 'editor',
   'worker:execute': 'admin',
   admin: 'admin',
+  // A token manages only tokens within its own scopes, so holding this needs no stronger role.
+  'tokens:manage': 'viewer',
+  'audit:read': 'admin',
+  'users:manage': 'admin',
 };
 
 /**

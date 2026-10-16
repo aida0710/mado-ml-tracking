@@ -323,7 +323,7 @@ workerのtokenは、人に紐付かないService Accountで発行する。発行
 2. 作成した行の「tokenを発行」を押し、scope `read`・`worker:execute`・`artifacts:write`（出力の登録をするなら `registry:write` も。`result.json` version 2で出力（モデル・データセット）を宣言するJobは `registry:write` が無いとfailedになる）、有効期限（プリセット、無期限、任意の有効期間）を選ぶ。
 3. 表示されたtokenを次の手順の入力に使う。tokenは一度だけ表示される。
 
-APIで行う場合（Project adminのbrowser sessionが必要。API tokenからは403 `session_required`）:
+APIで行う場合（Project adminのbrowser session、または`tokens:manage`を持つtoken。tokenからは、そのtokenが持つscopeと期限の範囲でだけ発行できる）:
 - `POST /api/projects/:p/service-accounts` `{name, description, role:'admin'}`
 - `POST /api/projects/:p/service-accounts/:id/tokens` `{name, scopes:['read','worker:execute','artifacts:write'], expiresAt?}`
 

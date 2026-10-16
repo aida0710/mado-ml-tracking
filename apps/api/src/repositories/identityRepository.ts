@@ -315,7 +315,7 @@ export const TOKEN_LAST_USED_WRITE_INTERVAL_SECONDS = 5 * 60;
 
 export interface TokenIdentity {
   user: User;
-  token: { id: string; projectId: string | null; scopes: string[] };
+  token: { id: string; projectId: string | null; scopes: string[]; expiresAt: string | null };
   // The owner has an SSO identity whose groups were not synced recently enough; the token must not be used.
   isIdentitySyncStale: boolean;
 }
@@ -334,12 +334,13 @@ export async function tokenIdentity(
       tokenId: string;
       projectId: string | null;
       scopes: string[];
+      expiresAt: string | null;
       usageIsStale: boolean;
       isIdentitySyncStale: boolean;
     }
   >(
     connection,
-    `SELECT ${userColumns},t.id AS token_id,t.project_id,t.scopes,
+    `SELECT ${userColumns},t.id AS token_id,t.project_id,t.scopes,t.expires_at,
     (t.last_used_at IS NULL OR t.last_used_at<now()-make_interval(secs=>$2)) AS usage_is_stale,
     (u.kind='human' AND EXISTS(SELECT 1 FROM user_oidc_identities i WHERE i.user_id=u.id)
       AND NOT EXISTS(SELECT 1 FROM user_oidc_identities i WHERE i.user_id=u.id AND i.groups_synced_at>$3))
@@ -350,7 +351,7 @@ export async function tokenIdentity(
     [lookup.tokenHash, TOKEN_LAST_USED_WRITE_INTERVAL_SECONDS, lookup.syncedAfter],
   );
   if (!identity) return undefined;
-  const { tokenId, projectId, scopes, usageIsStale, isIdentitySyncStale, ...user } = identity;
+  const { tokenId, projectId, scopes, expiresAt, usageIsStale, isIdentitySyncStale, ...user } = identity;
   // A stale token is refused, so its use is not recorded.
   // The condition is repeated so concurrent requests write the timestamp only once.
   if (usageIsStale && !isIdentitySyncStale)
@@ -359,7 +360,7 @@ export async function tokenIdentity(
       AND (last_used_at IS NULL OR last_used_at<now()-make_interval(secs=>$2))`,
       [tokenId, TOKEN_LAST_USED_WRITE_INTERVAL_SECONDS],
     );
-  return { user, token: { id: tokenId, projectId, scopes }, isIdentitySyncStale };
+  return { user, token: { id: tokenId, projectId, scopes, expiresAt }, isIdentitySyncStale };
 }
 
 // Direct members and users who hold a bound group. Users who reach a public Project only through

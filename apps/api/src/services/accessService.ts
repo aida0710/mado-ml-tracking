@@ -1,4 +1,4 @@
-import type { ProjectRole } from '@mmt/contracts';
+import { EXPLICIT_TOKEN_SCOPES, type ProjectRole, type TokenScope } from '@mmt/contracts';
 import type { Principal } from '../auth/principal.js';
 import { first, type Connection } from '../db/database.js';
 import { DomainError, notFound } from '../domain/errors.js';
@@ -8,11 +8,20 @@ import {
   tokenProjectMismatchMessage,
 } from '../domain/tokenAccessMessages.js';
 
+/**
+ * Whether the principal may act with `scope`. A browser session is limited by roles alone; a token
+ * needs the scope itself or `admin`, which stands for every scope except the explicit ones.
+ */
+export function holdsScope(principal: Principal, scope: string): boolean {
+  if (principal.method === 'session') return true;
+  const scopes = principal.token?.scopes ?? [];
+  if (scopes.includes(scope)) return true;
+  return scopes.includes('admin') && !EXPLICIT_TOKEN_SCOPES.includes(scope as TokenScope);
+}
+
 export function requireScope(principal: Principal, scope: string): void {
-  if (principal.method === 'session') return;
-  if (!principal.token?.scopes.includes(scope) && !principal.token?.scopes.includes('admin')) {
+  if (!holdsScope(principal, scope))
     throw new DomainError(403, insufficientScopeMessage(scope), 'insufficient_scope');
-  }
 }
 
 export async function requireProject(

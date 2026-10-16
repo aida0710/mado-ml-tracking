@@ -80,7 +80,7 @@ export { COMMENT_MAX_LENGTH, RUN_NOTE_MAX_LENGTH, RUN_NOTE_TAG } from './comment
 export type { ProjectGroupBinding, ProjectMember, ProjectMemberGroupRole, UserSearchResult } from './projectAccess.js';
 export type { AdminProject, AdminProjectQuery, ProjectCreate, ProjectMemberGrant, ProjectPatch } from './projectAdministration.js';
 export type { ServiceAccount, ServiceAccountCreate, ServiceAccountTokenCreate, ServiceAccountUpdate, TokenScope } from './serviceAccounts.js';
-export { TOKEN_SCOPE_REQUIRED_ROLE, TOKEN_SCOPES } from './serviceAccounts.js';
+export { EXPLICIT_TOKEN_SCOPES, GLOBAL_TOKEN_SCOPES, TOKEN_SCOPE_REQUIRED_ROLE, TOKEN_SCOPES } from './serviceAccounts.js';
 export type { TokenPurpose } from './tokenPurposes.js';
 export { TOKEN_PURPOSE_LABELS, TOKEN_PURPOSE_SCOPES, TOKEN_PURPOSES } from './tokenPurposes.js';
 export type {
