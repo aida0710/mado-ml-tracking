@@ -56,7 +56,7 @@ tokenで操作するときは、scopeに加えて、所有者の現在の実効R
 
 画面では7日、30日、90日（既定）、365日に加え、［無期限］、［期間を指定］、［カレンダーで指定］を選べます。［期間を指定］では分・時間・日単位で有効期間を入力します。小数も使え、365日を超える期間も指定できます。［カレンダーで指定］では日付と時刻を選びます。時刻は画面に表示されたブラウザのタイムゾーンで扱います。個人とService Accountのどちらにも使えます。
 
-APIでは`expiresAt: null`が無期限です。未来の日時を指定した場合、日数の上限はありません。省略時は`MMT_TOKEN_DEFAULT_LIFETIME_DAYS`（既定365日）後になります。旧`MMT_TOKEN_MAX_LIFETIME_DAYS`は、新しい設定がない場合だけ既定日数として使います。過去・無効な日時は422 `invalid_expiry`です。
+APIでは`expiresAt: null`が無期限です。未来の日時を指定した場合、日数の上限はありません。省略時は`MMT_TOKEN_DEFAULT_LIFETIME_DAYS`（既定365日）後になります。過去・無効な日時は422 `invalid_expiry`です。
 
 期限が切れたtokenは401になります。期限が近づいたら新しいtokenを発行して差し替えてください。
 
@@ -158,10 +158,6 @@ Service Accountは「全体管理」→［ユーザー］にも「Service Accoun
 失効させたtokenは次の要求から401になり、元に戻せません。発行と失効は監査ログに「API tokenの発行」（`token.create`）、「API tokenの失効」（`token.revoke`）として残ります。
 
 Projectをアーカイブすると、そのProjectに限定したtoken（Service Accountのものを含む）は、元に戻すまで401になります。Projectを完全に削除すると、そのtokenは失効し、Service Accountは無効になります（[Projectの作成と管理](/admin/projects)）。
-
-### 旧形式のtoken
-
-一覧で「旧形式」と表示されるtokenは、個人が所有するservice tokenです。所有者がProjectを離れると止まるので、Service Accountのtokenへ置き換えてください。稼働中のPlaygroundの旧形式tokenは、期限（2026-10-15）までに置き換えます。
 
 ## Job限定token
 

@@ -79,7 +79,7 @@ describe.skipIf(!testDatabaseUrl)('全体管理者のユーザー管理（独立
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie,
-        body: { name: 'admin-users test', kind: 'personal', ...token },
+        body: { name: 'admin-users test', ...token },
       }),
     );
     return minted.token;
@@ -437,8 +437,8 @@ describe.skipIf(!testDatabaseUrl)('全体管理者のユーザー管理（独立
     const ssoUserId = await createSsoUser('member@example.invalid');
     // SSO users cannot sign in here without an IdP, so a token stands in for their session.
     await harness.database.query(
-      `INSERT INTO api_tokens(user_id,name,kind,token_hash,scopes)
-      VALUES($1,'account test','personal',encode(sha256('mmt_account_test'::bytea),'hex'),'{read}')`,
+      `INSERT INTO api_tokens(user_id,name,kind,token_hash,token_prefix,scopes)
+      VALUES($1,'account test','personal',encode(sha256('mmt_account_test'::bytea),'hex'),'mmt_account_','{read}')`,
       [ssoUserId],
     );
     const ssoAccount = await entity<Account>(

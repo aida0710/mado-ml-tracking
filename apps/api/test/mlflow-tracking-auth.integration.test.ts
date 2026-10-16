@@ -36,7 +36,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow互換APIのBasic認証（独立Postgre
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: fixture.editor.cookie,
-        body: { name: scopes.join(' '), kind: 'personal', projectId: fixture.project.id, scopes },
+        body: { name: scopes.join(' '), projectId: fixture.project.id, scopes },
       }),
     );
   }

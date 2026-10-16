@@ -188,7 +188,6 @@ describe.skipIf(!testDatabaseUrl)('workerの在籍登録とheartbeat途絶（独
           cookie: fixture.administrator.cookie,
           body: {
             name: 'Other Worker',
-            kind: 'service',
             projectId: otherProject.id,
             scopes: ['worker:execute', 'read'],
           },

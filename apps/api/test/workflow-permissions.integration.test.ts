@@ -258,7 +258,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの権限（独立PostgreSQ
         await request(harness.app, '/api/tokens', {
           method: 'POST',
           cookie: fixture.editor.cookie,
-          body: { name: scopes.join(' '), kind: 'personal', projectId: fixture.project.id, scopes },
+          body: { name: scopes.join(' '), projectId: fixture.project.id, scopes },
         }),
       );
     }

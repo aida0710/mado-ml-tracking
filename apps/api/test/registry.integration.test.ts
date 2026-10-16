@@ -622,7 +622,6 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
         cookie: fixture.editor.cookie,
         body: {
           name: 'Read only',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['read'],
         },
@@ -652,23 +651,8 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
           token: token.token,
           body: {
             name: 'Escalate',
-            kind: 'personal',
             projectId: fixture.project.id,
             scopes: ['admin'],
-          },
-        })
-      ).status,
-    ).toBe(403);
-    expect(
-      (
-        await request(harness.app, '/api/tokens', {
-          method: 'POST',
-          cookie: fixture.editor.cookie,
-          body: {
-            name: 'Service forbidden',
-            kind: 'service',
-            projectId: fixture.project.id,
-            scopes: ['read'],
           },
         })
       ).status,
@@ -700,7 +684,6 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
         cookie: fixture.viewer.cookie,
         body: {
           name: 'Membership',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['read'],
         },

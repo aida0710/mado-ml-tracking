@@ -123,7 +123,6 @@ const workerCredential = await entity<{ token: string }>(
     cookie: fixture.administrator.cookie,
     body: {
       name: 'CPU workflow verification',
-      kind: 'service',
       projectId: fixture.project.id,
       scopes: ['read', 'worker:execute', 'artifacts:write', 'registry:write'],
     },

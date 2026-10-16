@@ -48,7 +48,6 @@ describe.skipIf(!testDatabaseUrl)('workerによる入力Datasetの取得設定�
           cookie: fixture.administrator.cookie,
           body: {
             name: `Dataset worker ${scopes.join(' ')}`,
-            kind: 'service',
             projectId: fixture.project.id,
             scopes,
           },

@@ -152,8 +152,8 @@ describe.skipIf(!testDatabaseUrl)(
     // Mints an API token row for the user; the value is hashed the same way as issued tokens.
     async function insertToken(userId: string, token: string): Promise<void> {
       await harness.database.query(
-        `INSERT INTO api_tokens(user_id,name,kind,token_hash,scopes)
-        VALUES($1,'recheck test','personal',encode(sha256($2::bytea),'hex'),'{read}')`,
+        `INSERT INTO api_tokens(user_id,name,kind,token_hash,token_prefix,scopes)
+        VALUES($1,'recheck test','personal',encode(sha256($2::bytea),'hex'),left($2::text,12),'{read}')`,
         [userId, token],
       );
     }

@@ -89,6 +89,7 @@ export class TokenService {
     request: RequestMetadata = NO_REQUEST_METADATA,
   ): Promise<IssuedToken> {
     const projectId = input.projectId ?? null;
+    const kind = ownTokenKind(principal);
     const draft: AuditEventDraft = {
       ...auditActor(principal),
       ...request,
@@ -97,7 +98,7 @@ export class TokenService {
       projectId,
       details: {
         name: input.name,
-        kind: input.kind,
+        kind,
         scopes: input.scopes,
         expiresAt: input.expiresAt ?? null,
         ownerType: 'user',
@@ -122,7 +123,7 @@ export class TokenService {
           createdByUserId: principal.user.id,
           projectId,
           name: input.name,
-          kind: input.kind,
+          kind,
           scopes: input.scopes,
           expiresAt,
         });
@@ -192,17 +193,18 @@ export class TokenService {
     requireScope(principal, 'tokens:manage');
     const projectId = input.projectId ?? null;
     requireGlobalScopesUnrestricted({ scopes: input.scopes, projectId, ownerIsAdmin: principal.user.isAdmin });
-    if ((input.kind === 'service' || input.scopes.includes('worker:execute')) && !projectId)
-      throw new DomainError(422, 'Service/worker tokenにはProjectが必要です', 'project_required');
+    if (input.scopes.includes('worker:execute') && !projectId)
+      throw new DomainError(422, 'worker tokenにはProjectが必要です', 'project_required');
     if (!projectId) {
       if (input.scopes.some((scope) => scope !== 'read') && !principal.user.isAdmin)
         throw new DomainError(403, '書き込みtokenはProjectを指定してください', 'project_required');
       return;
     }
-    // A personally owned service token is the legacy form; issuing one still takes an admin.
-    const requiredRole =
-      input.kind === 'service' ? 'admin' : requiredProjectRoleForScopes(input.scopes);
-    await requireProject(connection, principal, { projectId, role: requiredRole, scope: 'tokens:manage' });
+    await requireProject(connection, principal, {
+      projectId,
+      role: requiredProjectRoleForScopes(input.scopes),
+      scope: 'tokens:manage',
+    });
     // Unlike session administration, token membership (direct or through a group) is mandatory.
     const membership = await first(
       connection,
@@ -216,6 +218,11 @@ export class TokenService {
         'membership_required',
       );
   }
+}
+
+/** A token one issues for oneself is of one's own kind: a person's is personal, a Service Account's is service. */
+function ownTokenKind(principal: Principal): TokenSummary['kind'] {
+  return principal.user.kind === 'service' ? 'service' : 'personal';
 }
 
 export function requireSession(principal: Principal, operation: string): void {

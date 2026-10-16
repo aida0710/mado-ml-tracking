@@ -73,7 +73,6 @@ export interface CreateDatasetVersion {
 }
 export interface CreateToken {
   name: string;
-  kind: 'personal' | 'service';
   projectId: string;
   scopes: string[];
   expiresAt?: string | null;

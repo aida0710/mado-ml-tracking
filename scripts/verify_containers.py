@@ -506,7 +506,6 @@ def main() -> None:
             "tokens",
             json={
                 "name": "Temporary container verification worker",
-                "kind": "service",
                 "projectId": project["id"],
                 "scopes": [
                     "read",

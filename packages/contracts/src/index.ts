@@ -771,10 +771,8 @@ export interface TokenSummary {
   ownerType: 'user' | 'service_account';
   ownerId: string;
   ownerName: string;
-  // First 12 characters of the token value; null for tokens issued before prefixes were kept.
-  tokenPrefix: string | null;
-  // kind='service' owned by a person: the form used before Service Accounts. It keeps working.
-  legacy: boolean;
+  // First 12 characters of the token value.
+  tokenPrefix: string;
 }
 // GET /auth/token: the authenticating API token itself (`job` is true for Job tokens).
 export interface CurrentApiToken {

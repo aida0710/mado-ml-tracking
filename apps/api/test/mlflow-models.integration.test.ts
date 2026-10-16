@@ -253,7 +253,6 @@ describe.skipIf(!testDatabaseUrl)('MLflow 3 Logged Models / native Model Registr
         cookie: fixture.editor.cookie,
         body: {
           name: 'read-only',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['read'],
         },
@@ -281,7 +280,6 @@ describe.skipIf(!testDatabaseUrl)('MLflow 3 Logged Models / native Model Registr
         cookie: fixture.administrator.cookie,
         body: {
           name: 'other-token',
-          kind: 'service',
           projectId: other.id,
           scopes: ['registry:write'],
         },
@@ -305,7 +303,6 @@ describe.skipIf(!testDatabaseUrl)('MLflow 3 Logged Models / native Model Registr
         cookie: fixture.editor.cookie,
         body: {
           name: 'models-write',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['registry:write', 'read'],
         },
@@ -998,7 +995,6 @@ describe.skipIf(!testDatabaseUrl)('MLflow 3 Logged Models / native Model Registr
           cookie: fixture.administrator.cookie,
           body: {
             name: 'mlflow-sdk',
-            kind: 'personal',
             projectId: fixture.project.id,
             scopes: ['read', 'registry:write'],
           },

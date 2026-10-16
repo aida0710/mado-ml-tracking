@@ -66,7 +66,7 @@ export function TokenDialog({
       issue={(request) =>
         owner
           ? owner.issue(request)
-          : administrationApi.createToken({ ...request, kind: 'personal', projectId: project.id })
+          : administrationApi.createToken({ ...request, projectId: project.id })
       }
       onClose={onClose}
       onIssued={(issued) => {
