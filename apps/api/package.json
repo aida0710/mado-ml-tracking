@@ -1,6 +1,6 @@
 {
   "name": "@mmt/api",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,8 +16,8 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.0.0",
-    "@mmt/contracts": "0.1.0",
-    "@mmt/platform": "0.1.0",
+    "@mmt/contracts": "0.2.0",
+    "@mmt/platform": "0.2.0",
     "argon2": "^0.44.0",
     "hono": "^4.13.13",
     "jose": "^6.2.10",

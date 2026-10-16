@@ -9,7 +9,9 @@ import { buildReleaseBundle } from './buildBundle.mjs';
 import { RELEASE_IMAGES } from './images.mjs';
 import { REPOSITORY_ROOT } from './version.mjs';
 
-const TAG = 'v0.1.0';
+// The fixture uses the repository's own manifests, so its tag follows the current version.
+const VERSION = JSON.parse(await readFile(join(REPOSITORY_ROOT, 'package.json'), 'utf8')).version;
+const TAG = `v${VERSION}`;
 const FIXTURE_DIGEST = `sha256:${'1'.repeat(64)}`;
 
 async function createFixture() {
@@ -17,7 +19,7 @@ async function createFixture() {
   for (const path of [
     'package.json', 'package-lock.json', 'apps/api/package.json', 'apps/web/package.json',
     'packages/contracts/package.json', 'packages/platform/package.json', 'python/pyproject.toml',
-    'docs/releases/v0.1.0.md', 'compose.yml', 'compose.filesystem-storage.yml',
+    `docs/releases/${TAG}.md`, 'compose.yml', 'compose.filesystem-storage.yml',
     'deploy/release', 'deploy/sites', 'deploy/worker', 'deploy/forgejo',
   ]) {
     await cp(join(REPOSITORY_ROOT, path), join(repositoryRoot, path), { recursive: true });
@@ -66,7 +68,10 @@ test('SDKのバージョンがタグと違うと配布物を作らない', async
   const fixture = await createFixture();
   try {
     const pythonManifest = join(fixture.repositoryRoot, 'python/pyproject.toml');
-    await writeFile(pythonManifest, (await readFile(pythonManifest, 'utf8')).replace('version = "0.1.0"', 'version = "0.2.0"'));
+    const original = await readFile(pythonManifest, 'utf8');
+    const mismatched = original.replace(`version = "${VERSION}"`, 'version = "0.0.0"');
+    assert.notEqual(mismatched, original, 'The fixture must change the SDK version');
+    await writeFile(pythonManifest, mismatched);
     await assert.rejects(buildReleaseBundle(fixture), /Python SDK version/);
   } finally { await rm(fixture.repositoryRoot, { recursive: true, force: true }); }
 });
