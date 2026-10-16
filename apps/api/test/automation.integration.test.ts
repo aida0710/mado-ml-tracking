@@ -188,7 +188,6 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
           cookie,
           body: {
             name: 'Scoped rule token',
-            kind: 'personal',
             projectId: fixture.project.id,
             scopes,
           },
@@ -415,7 +414,6 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
         cookie: fixture.administrator.cookie,
         body: {
           name: 'Other scoped token',
-          kind: 'service',
           projectId: other.id,
           scopes: ['admin'],
         },
@@ -592,7 +590,6 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
         cookie: fixture.editor.cookie,
         body: {
           name: 'SDK output',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['registry:write'],
         },

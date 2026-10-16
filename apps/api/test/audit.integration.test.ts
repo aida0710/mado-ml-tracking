@@ -42,7 +42,7 @@ describe.skipIf(!testDatabaseUrl)('監査ログの記録と参照（独立Postgr
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie,
-        body: { kind: 'personal', ...body },
+        body: { ...body },
       }),
     );
   }
@@ -98,7 +98,6 @@ describe.skipIf(!testDatabaseUrl)('監査ログの記録と参照（独立Postgr
       projectId: fixture.project.id,
       details: {
         name: 'Audit CI',
-        kind: 'personal',
         scopes: ['runs:write'],
         expiresAt,
         ownerType: 'user',
@@ -197,7 +196,7 @@ describe.skipIf(!testDatabaseUrl)('監査ログの記録と参照（独立Postgr
     const fromToken = await request(harness.app, '/api/tokens', {
       method: 'POST',
       token: adminToken.token,
-      body: { name: 'Nested', kind: 'personal', scopes: ['read'] },
+      body: { name: 'Nested', scopes: ['read'] },
     });
     expect(fromToken.status).toBe(403);
     const personal = await mintToken(fixture.administrator.cookie, {

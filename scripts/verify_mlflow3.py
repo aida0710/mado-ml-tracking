@@ -445,7 +445,6 @@ def main() -> None:
                     "tokens",
                     json={
                         "name": f"Temporary MLflow verification {label}",
-                        "kind": "service",
                         "projectId": project["id"],
                         "scopes": scopes,
                         "expiresAt": (datetime.now(UTC) + TOKEN_LIFETIME).isoformat().replace("+00:00", "Z"),

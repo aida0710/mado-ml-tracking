@@ -286,7 +286,7 @@ describe.skipIf(!testDatabaseUrl)('タスク・固定実行snapshot（独立Post
         await request(harness.app, '/api/tokens', {
           method: 'POST',
           cookie: fixture.administrator.cookie,
-          body: { name: scopes[0], kind: 'service', projectId: fixture.project.id, scopes },
+          body: { name: scopes[0], projectId: fixture.project.id, scopes },
         }),
       );
       expect(
@@ -317,7 +317,6 @@ describe.skipIf(!testDatabaseUrl)('タスク・固定実行snapshot（独立Post
         cookie: fixture.administrator.cookie,
         body: {
           name: 'Launcher',
-          kind: 'service',
           projectId: fixture.project.id,
           scopes: ['runs:write', 'jobs:write'],
         },

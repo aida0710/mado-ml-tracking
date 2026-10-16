@@ -353,7 +353,6 @@ describe.skipIf(!testDatabaseUrl)('Run一覧の保存ビュー（独立PostgreSQ
         cookie: fixture.viewer.cookie,
         body: {
           name: 'read only',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['read'],
         },

@@ -212,7 +212,6 @@ try {
   });
   const issued = await api.post('/tokens', {
     name: 'Sweeps browser worker',
-    kind: 'service',
     projectId: project.id,
     scopes: ['read', 'runs:write', 'artifacts:write', 'jobs:write', 'worker:execute'],
   });

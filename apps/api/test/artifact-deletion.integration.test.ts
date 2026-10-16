@@ -470,7 +470,6 @@ describe.skipIf(!testDatabaseUrl)('Artifactの削除とgarbage collection（独�
           cookie: fixture.administrator.cookie,
           body: {
             name: 'mlflow-sdk-delete',
-            kind: 'personal',
             projectId: fixture.project.id,
             scopes: ['read', 'artifacts:write'],
           },

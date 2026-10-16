@@ -262,7 +262,6 @@ describe.skipIf(!testDatabaseUrl)('公式MLflowライブラリが送る形の検
           cookie: fixture.administrator.cookie,
           body: {
             name: 'mlflow-sdk-search',
-            kind: 'personal',
             projectId: fixture.project.id,
             scopes: ['read'],
           },

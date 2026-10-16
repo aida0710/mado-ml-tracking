@@ -34,7 +34,7 @@ describe.skipIf(!testDatabaseUrl)('tokenからのtoken管理と全体の操作�
     return request(harness.app, '/api/tokens', {
       method: 'POST',
       ...caller,
-      body: { kind: 'personal', ...body },
+      body: { ...body },
     });
   }
 

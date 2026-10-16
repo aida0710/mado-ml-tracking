@@ -204,7 +204,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: fixture.viewer.cookie,
-        body: { name: 'Elsewhere', kind: 'personal', projectId: otherProject.id, scopes: ['read'] },
+        body: { name: 'Elsewhere', projectId: otherProject.id, scopes: ['read'] },
       }),
     );
     expect(await visibleAlerts({ token: limited.token })).toEqual([]);
@@ -222,7 +222,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: { name: 'Bell', kind: 'personal', scopes: ['read'] },
+        body: { name: 'Bell', scopes: ['read'] },
       }),
     );
     expect(await visibleAlerts({ token: administratorToken.token })).toEqual([opened]);

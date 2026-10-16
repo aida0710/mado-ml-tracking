@@ -275,8 +275,8 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独
       const cookie = await sessionCookie(app, 'alice');
       const token = 'disabled-user-token-value';
       await harness.database.query(
-        "INSERT INTO api_tokens(user_id,name,kind,token_hash,scopes) VALUES($1,'cli','personal',$2,'{read}')",
-        [userId, hashSecret(token)],
+        "INSERT INTO api_tokens(user_id,name,kind,token_hash,token_prefix,scopes) VALUES($1,'cli','personal',$2,$3,'{read}')",
+        [userId, hashSecret(token), token.slice(0, 12)],
       );
       expect((await request(app, '/api/auth/me', { token })).status).toBe(200);
       await harness.database.query("UPDATE users SET status='disabled' WHERE id=$1", [userId]);

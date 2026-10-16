@@ -40,7 +40,7 @@ describe.skipIf(!testDatabaseUrl)('repository-filesの認可（独立PostgreSQL�
         await request(app, '/api/tokens', {
           method: 'POST',
           cookie: fixture.administrator.cookie,
-          body: { name: scopes[0], kind: 'service', projectId: fixture.project.id, scopes },
+          body: { name: scopes[0], projectId: fixture.project.id, scopes },
         }),
       );
       expect(

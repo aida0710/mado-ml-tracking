@@ -77,7 +77,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie,
-        body: { name: 'Setup Worker', kind: 'service', projectId, scopes: ['worker:execute'] },
+        body: { name: 'Setup Worker', projectId, scopes: ['worker:execute'] },
       }),
     );
   }

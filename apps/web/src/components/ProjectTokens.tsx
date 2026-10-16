@@ -102,17 +102,7 @@ function tokenColumns({ withOwner = false } = {}): ResponsiveTableColumn<TokenSu
       key: 'name',
       priority: 'primary',
       header: text.name,
-      render: (item) => (
-        <>
-          {item.name}
-          {item.legacy && (
-            <span className="muted" title={text.legacyTokenHint}>
-              {' '}
-              ({text.legacyToken})
-            </span>
-          )}
-        </>
-      ),
+      render: (item) => item.name,
     },
     ...(withOwner
       ? [
@@ -134,7 +124,7 @@ function tokenColumns({ withOwner = false } = {}): ResponsiveTableColumn<TokenSu
       priority: 'secondary',
       header: text.tokenPrefix,
       className: 'mono',
-      render: (item) => (item.tokenPrefix ? `${item.tokenPrefix}…` : '—'),
+      render: (item) => `${item.tokenPrefix}…`,
     },
     {
       key: 'scopes',

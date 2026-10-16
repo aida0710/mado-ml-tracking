@@ -1411,7 +1411,6 @@ def prepare_project(
         "tokens",
         json={
             "name": "pipeline setup",
-            "kind": "personal",
             "projectId": project["id"],
             "scopes": ["read", "registry:write", "artifacts:write"],
             "expiresAt": expires_in_one_day(),

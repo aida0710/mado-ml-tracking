@@ -78,8 +78,7 @@ export const tokenSummarySchema = namedContractSchema(
     ownerType: z.enum(['user', 'service_account']),
     ownerId: idSchema,
     ownerName: z.string(),
-    tokenPrefix: z.string().nullable(),
-    legacy: z.boolean(),
+    tokenPrefix: z.string(),
   }),
 );
 export const currentApiTokenSchema = namedContractSchema(

@@ -568,7 +568,7 @@ describe.skipIf(!testDatabaseUrl)('評価結果の基準バージョンとの比
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: fixture.viewer.cookie,
-        body: { name: 'Read', kind: 'personal', projectId: fixture.project.id, scopes: ['read'] },
+        body: { name: 'Read', projectId: fixture.project.id, scopes: ['read'] },
       }),
     );
     expect((await fixture.compare({}, { token: readToken.token })).status).toBe(200);
@@ -584,7 +584,7 @@ describe.skipIf(!testDatabaseUrl)('評価結果の基準バージョンとの比
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: { name: 'Other', kind: 'personal', projectId: otherProject.id, scopes: ['read'] },
+        body: { name: 'Other', projectId: otherProject.id, scopes: ['read'] },
       }),
     );
     expect((await fixture.compare({}, { token: otherProjectToken.token })).status).toBe(403);

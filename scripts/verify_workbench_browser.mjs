@@ -177,7 +177,7 @@ async function startDevelopmentWorker(targetId) {
     }
   } catch (error) { if (error.code !== 'ENOENT' && error.code !== 'ESRCH') throw error; }
   const issued = await api('POST', 'tokens', {
-    name: 'Playground CPU worker', kind: 'service', projectId: summary.projectId,
+    name: 'Playground CPU worker', projectId: summary.projectId,
     scopes: ['read', 'runs:write', 'registry:write', 'artifacts:write', 'jobs:write', 'worker:execute'],
     expiresAt: new Date(Date.now() + SERVICE_TOKEN_DAYS * 24 * 60 * 60 * 1000).toISOString(),
   });

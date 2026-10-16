@@ -110,7 +110,7 @@ describe.skipIf(!testDatabaseUrl)('Runの一括比較とCSV出力（独立Postgr
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: fixture.administrator.cookie,
-        body: { name: 'Compare export test', kind: 'personal', ...body },
+        body: { name: 'Compare export test', ...body },
       }),
     );
     return minted.token;

@@ -368,7 +368,6 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立Pos
           cookie: owner.cookie,
           body: {
             name: 'Submit',
-            kind: 'personal',
             projectId: fixture.project.id,
             scopes: ['read', 'jobs:write'],
           },

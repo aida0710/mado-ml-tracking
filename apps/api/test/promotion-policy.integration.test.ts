@@ -47,7 +47,7 @@ describe.skipIf(!testDatabaseUrl)('昇格policyと評価Run終端での自動判
         await request(harness.app, '/api/tokens', {
           method: 'POST',
           cookie: fixture.administrator.cookie,
-          body: { name: 'Promotion token', kind: 'personal', projectId: fixture.project.id, scopes },
+          body: { name: 'Promotion token', projectId: fixture.project.id, scopes },
         }),
       )
     ).token;

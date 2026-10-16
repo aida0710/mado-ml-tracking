@@ -31,7 +31,6 @@ describe.skipIf(!testDatabaseUrl)(
           cookie: fixture.administrator.cookie,
           body: {
             name: "Doctor Worker",
-            kind: "service",
             projectId: fixture.project.id,
             scopes: ["read", "worker:execute"],
           },

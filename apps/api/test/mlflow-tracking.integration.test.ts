@@ -803,7 +803,6 @@ describe.skipIf(!testDatabaseUrl)('公式MLflow 3 tracking契約（隔離Postgre
         cookie: fixture.editor.cookie,
         body: {
           name: 'tracking-only',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['runs:write'],
         },
@@ -1144,7 +1143,6 @@ describe.skipIf(!testDatabaseUrl)('公式MLflow 3 tracking契約（隔離Postgre
         cookie: fixture.editor.cookie,
         body: {
           name: 'read only',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['read'],
         },

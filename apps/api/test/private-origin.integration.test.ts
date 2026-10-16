@@ -105,7 +105,7 @@ describe.skipIf(!testDatabaseUrl)('プライベートOriginの認証と変更操
     const created = await request(app, '/api/tokens', {
       method: 'POST',
       cookie,
-      body: { name: 'SDK origin regression', kind: 'personal', scopes: ['read'] },
+      body: { name: 'SDK origin regression', scopes: ['read'] },
       headers: { Origin: 'http://192.168.1.20:5182' },
     });
     expect(created.status).toBe(201);

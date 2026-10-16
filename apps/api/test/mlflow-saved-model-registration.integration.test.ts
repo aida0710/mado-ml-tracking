@@ -111,7 +111,7 @@ describe.skipIf(!testDatabaseUrl)(
         await request(harness.app, '/api/tokens', {
           method: 'POST',
           cookie,
-          body: { name: 'saved-model', kind: 'personal', projectId: owner.project.id, scopes },
+          body: { name: 'saved-model', projectId: owner.project.id, scopes },
         }),
       );
       return minted.token;

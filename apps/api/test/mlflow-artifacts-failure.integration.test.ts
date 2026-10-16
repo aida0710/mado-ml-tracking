@@ -109,7 +109,6 @@ describe.skipIf(!testDatabaseUrl)('MLflow Artifact保存の原子性とstream（
           cookie: fixture.editor.cookie,
           body: {
             name: 'Transfer revocation',
-            kind: 'personal',
             projectId: fixture.project.id,
             scopes: ['read', 'artifacts:write'],
           },

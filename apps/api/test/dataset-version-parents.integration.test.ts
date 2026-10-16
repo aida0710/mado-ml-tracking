@@ -283,7 +283,6 @@ describe.skipIf(!testDatabaseUrl)('既存データ版の親追記（独立Postgr
         cookie: fixture.editor.cookie,
         body: {
           name: 'Read only',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['read'],
         },

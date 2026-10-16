@@ -150,7 +150,6 @@ def main() -> int:
                 "tokens",
                 json={
                     "name": "Temporary media steps check",
-                    "kind": "service",
                     "projectId": project["id"],
                     "scopes": ["read", "runs:write", "artifacts:write"],
                     "expiresAt": expires_at,

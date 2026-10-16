@@ -78,6 +78,8 @@ export async function startMadoVerificationServer() {
     keyName: 'ML Tracking verification',
     scopes: ['lineage:read', 'lineage:write', 'metrics:read'],
     namespaces: ['speech', 'mado-model-tracking', 'local'],
+    // Capacity metrics read only the connections a token lists; this one has all of them.
+    connections: ['*'],
     expiresAt: null,
   };
   const authenticate = async (token: string) => (token === accessToken ? principal : null);

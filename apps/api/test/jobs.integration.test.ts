@@ -366,7 +366,6 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         cookie: fixture.administrator.cookie,
         body: {
           name: 'Not Worker',
-          kind: 'service',
           projectId: fixture.project.id,
           scopes: ['read', 'admin'],
         },
@@ -411,7 +410,6 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
         cookie: fixture.administrator.cookie,
         body: {
           name: 'Other Worker',
-          kind: 'service',
           projectId: otherProject.id,
           scopes: ['worker:execute'],
         },

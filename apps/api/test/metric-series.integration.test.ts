@@ -421,7 +421,7 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
           await request(harness.app, '/api/tokens', {
             method: 'POST',
             cookie: owner.cookie,
-            body: { name: 'Metric series test', kind: 'personal', ...body },
+            body: { name: 'Metric series test', ...body },
           }),
         )
       ).token;

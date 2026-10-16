@@ -5308,13 +5308,6 @@
                     "minLength": 1,
                     "maxLength": 200
                   },
-                  "kind": {
-                    "type": "string",
-                    "enum": [
-                      "personal",
-                      "service"
-                    ]
-                  },
                   "projectId": {
                     "anyOf": [
                       {
@@ -5360,7 +5353,6 @@
                 },
                 "required": [
                   "name",
-                  "kind",
                   "scopes"
                 ],
                 "additionalProperties": false
@@ -68305,13 +68297,7 @@
             "type": "string"
           },
           "tokenPrefix": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "legacy": {
-            "type": "boolean"
+            "type": "string"
           }
         },
         "required": [
@@ -68326,8 +68312,7 @@
           "ownerType",
           "ownerId",
           "ownerName",
-          "tokenPrefix",
-          "legacy"
+          "tokenPrefix"
         ],
         "additionalProperties": false
       },

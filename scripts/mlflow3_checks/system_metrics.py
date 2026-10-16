@@ -137,7 +137,6 @@ def run_against_mado(api_url: str, *, web_origin: str, run_seconds: float) -> di
                 "tokens",
                 json={
                     "name": "Temporary system metrics check",
-                    "kind": "service",
                     "projectId": project["id"],
                     "scopes": ["read", "runs:write"],
                     "expiresAt": expires_at,

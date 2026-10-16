@@ -31,9 +31,6 @@ export const serviceAccountsText = localized({
   tokenOwnerUser: 'ユーザー',
   tokenOwnerServiceAccount: 'Service Account',
   tokenPrefix: '先頭',
-  legacyToken: '旧形式',
-  legacyTokenHint:
-    '個人が所有するservice tokenです。所有者がProjectを離れると止まるため、Service Accountのtokenへ置き換えてください。',
   tokenUsage: '設定例',
   tokenAuthentication: '認証方式',
   tokenAuthenticationBearer: 'Bearer（MLflow・Mado SDKの既定）',

@@ -252,7 +252,6 @@ describe.skipIf(!testDatabaseUrl)('再開可能なupload session（独立Postgre
         ...editor,
         body: {
           name: 'Upload token',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['artifacts:write'],
         },
@@ -337,7 +336,6 @@ describe.skipIf(!testDatabaseUrl)('再開可能なupload session（独立Postgre
         ...editor,
         body: {
           name: 'Upload token',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['artifacts:write'],
         },
@@ -349,7 +347,6 @@ describe.skipIf(!testDatabaseUrl)('再開可能なupload session（独立Postgre
         ...editor,
         body: {
           name: 'Read token',
-          kind: 'personal',
           projectId: fixture.project.id,
           scopes: ['read'],
         },

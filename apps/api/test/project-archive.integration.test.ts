@@ -92,7 +92,7 @@ describe.skipIf(!testDatabaseUrl)('Projectのアーカイブと全体管理（�
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: member.cookie,
-        body: { name: 'Limited', kind: 'personal', projectId: project.id, scopes: ['read'] },
+        body: { name: 'Limited', projectId: project.id, scopes: ['read'] },
       }),
     );
     expect((await experiments(project.id, { token: token.token })).status).toBe(200);
@@ -200,14 +200,14 @@ describe.skipIf(!testDatabaseUrl)('Projectのアーカイブと全体管理（�
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: administrator.cookie,
-        body: { name: 'Admin token', kind: 'personal', scopes: ['admin'] },
+        body: { name: 'Admin token', scopes: ['admin'] },
       }),
     );
     const readToken = await entity<{ token: string }>(
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: administrator.cookie,
-        body: { name: 'Read token', kind: 'personal', scopes: ['read'] },
+        body: { name: 'Read token', scopes: ['read'] },
       }),
     );
     const attempts = (credentials: { cookie?: string; token?: string }) => [

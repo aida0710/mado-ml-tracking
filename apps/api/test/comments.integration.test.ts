@@ -82,7 +82,7 @@ describe.skipIf(!testDatabaseUrl)('Run・モデルバージョンのスレッド
       await request(harness.app, '/api/tokens', {
         method: 'POST',
         cookie: fixture.editor.cookie,
-        body: { name: 'Comment CI', kind: 'personal', projectId: fixture.project.id, scopes },
+        body: { name: 'Comment CI', projectId: fixture.project.id, scopes },
       }),
     );
     return minted.token;

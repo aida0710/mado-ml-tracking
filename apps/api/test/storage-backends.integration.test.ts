@@ -104,7 +104,7 @@ describe.skipIf(!testDatabaseUrl)('Artifact保存先の全体設定（独立Post
     const scopedToken = await entity<{ token: string }>(
       await call('/api/tokens', {
         method: 'POST',
-        body: { name: 'scoped admin', kind: 'personal', projectId: project.id, scopes: ['admin'] },
+        body: { name: 'scoped admin', projectId: project.id, scopes: ['admin'] },
       }),
     );
     for (const credential of [{ cookie: member.cookie }, { token: scopedToken.token }]) {

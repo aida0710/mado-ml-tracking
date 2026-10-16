@@ -1,12 +1,10 @@
 import type { TokenSummary } from '@mmt/contracts';
 import { first, rows, type Connection } from '../db/database.js';
 
-// Who owns a token decides how it is shown: a Service Account, or a person. A service token
-// owned by a person is the form used before Service Accounts existed.
+// Who owns a token decides how it is shown: a Service Account, or a person.
 const tokenSummarySelect = `SELECT t.id,t.name,t.kind,t.project_id,t.scopes,t.expires_at,t.last_used_at,
   t.created_at,CASE WHEN o.kind='service' THEN 'service_account' ELSE 'user' END AS owner_type,
-  o.id AS owner_id,o.display_name AS owner_name,t.token_prefix,
-  (t.kind='service' AND o.kind='human') AS legacy
+  o.id AS owner_id,o.display_name AS owner_name,t.token_prefix
   FROM api_tokens t JOIN users o ON o.id=t.user_id`;
 
 export interface TokenInsert {

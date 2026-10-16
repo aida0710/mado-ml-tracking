@@ -45,7 +45,6 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
         cookie: fixture.administrator.cookie,
         body: {
           name: 'Output worker',
-          kind: 'service',
           projectId: fixture.project.id,
           scopes,
         },

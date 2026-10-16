@@ -53,7 +53,7 @@ See [Authentication and local accounts](/en/admin/auth) and [Authentik (SSO)](/e
 | `MMT_SESSION_ENCRYPTION_KEY` | None | Key that encrypts Authentik tokens stored with sessions (base64 of 32 bytes). Required for `oidc` and `hybrid` |
 | `OIDC_RECHECK_SECONDS` | `60` | Interval (seconds) for rechecking an SSO session's groups |
 | `OIDC_TOKEN_SYNC_MAX_AGE_SECONDS` | `604800` (7 days) | Seconds after the last group sync during which SSO users' API tokens work. At least 60 |
-| `MMT_TOKEN_DEFAULT_LIFETIME_DAYS` | `365` | Default lifetime in days when token creation omits its expiry. 1 to 3650. `expiresAt: null` never expires; explicit future timestamps have no lifetime cap. The legacy `MMT_TOKEN_MAX_LIFETIME_DAYS` supplies the default only when this setting is absent |
+| `MMT_TOKEN_DEFAULT_LIFETIME_DAYS` | `365` | Default lifetime in days when token creation omits its expiry. 1 to 3650. `expiresAt: null` never expires; explicit future timestamps have no lifetime cap. |
 
 Generate keys in a terminal. Use different values for `MMT_SESSION_ENCRYPTION_KEY` and `MMT_STORAGE_SECRET_KEY`.
 
