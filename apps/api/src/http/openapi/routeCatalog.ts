@@ -358,7 +358,13 @@ const RUNNER_ERRORS = [
   ...routeError(403, 'runner_token_required'),
   ...routeError(409, 'runner_conflict', 'conflict'),
 ];
-const SERVICE_ACCOUNT_ADMIN = { ...PROJECT_ADMIN, sessionOnly: true };
+// Project admins manage Service Accounts; a token also needs the explicit tokens:manage.
+const SERVICE_ACCOUNT_ADMIN: RouteAccess = { kind: 'project', role: 'admin', scope: 'tokens:manage' };
+// A token issues or revokes only within its own scopes, Project and expiry (tokenIssuerAuthority.ts).
+// Changing accounts can create an administrator login, so a token also needs every scope
+// (UserAdministrationService); a missing one is insufficient_scope like any other.
+const USER_ADMINISTRATION: RouteAccess = { kind: 'globalAdmin', scope: 'users:manage' };
+const TOKEN_ISSUER_ERRORS = [...routeError(403, 'scope_exceeds_issuer', 'token_outlives_issuer')];
 
 // Saving a revision captures its snapshot blocks through the series, analysis and media services.
 const REPORT_SNAPSHOT_ERRORS = [
@@ -546,7 +552,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     path: '/api/audit-events',
     tag: 'audit',
     summary: '監査ログ（全体）',
-    access: { kind: 'globalAdmin', sessionOnly: true },
+    access: { kind: 'globalAdmin', scope: 'audit:read' },
     query: auditEventQuerySchema,
     responses: { 200: contract.auditEventPageSchema },
   },
@@ -743,8 +749,9 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     body: serviceAccountTokenCreateSchema,
     responses: { 201: contract.issuedTokenSchema },
     errors: [
+      ...TOKEN_ISSUER_ERRORS,
       ...routeError(409, 'service_account_disabled', 'service_account_role_missing'),
-      ...routeError(422, 'scope_exceeds_role', 'invalid_expiry'),
+      ...routeError(422, 'scope_exceeds_role', 'invalid_expiry', 'global_scope_requires_unrestricted_token'),
     ],
   },
   {
@@ -760,19 +767,23 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     path: '/api/tokens',
     tag: 'tokens',
     summary: 'API tokenを発行',
-    access: { kind: 'session' },
+    access: { kind: 'signedIn', scope: 'tokens:manage' },
     body: tokenCreateSchema,
     responses: { 201: contract.issuedTokenSchema },
-    errors: routeError(422, 'invalid_expiry'),
+    errors: [
+      ...TOKEN_ISSUER_ERRORS,
+      ...routeError(403, 'project_forbidden'),
+      ...routeError(422, 'invalid_expiry', 'global_scope_requires_unrestricted_token'),
+    ],
   },
   {
     method: 'delete',
     path: '/api/tokens/:id',
     tag: 'tokens',
     summary: 'API tokenを失効',
-    access: { kind: 'session' },
+    access: { kind: 'signedIn', scope: 'tokens:manage' },
     responses: { 204: null },
-    errors: routeError(403, 'token_forbidden'),
+    errors: [...TOKEN_ISSUER_ERRORS, ...routeError(403, 'token_forbidden', 'project_forbidden')],
   },
 
   // registry
@@ -3234,7 +3245,8 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     path: '/api/admin/projects/:p',
     tag: 'admin',
     summary: 'アーカイブしたProjectをデータごと完全に削除',
-    access: GLOBAL_ADMIN,
+    // It cannot be undone, so it takes a global administrator's browser session (ProjectAdministrationService).
+    access: { kind: 'globalAdmin', sessionOnly: true },
     responses: { 204: null },
     errors: [...routeError(404, 'not_found'), ...routeError(409, 'project_not_archived')],
   },
@@ -3243,7 +3255,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     path: '/api/admin/users',
     tag: 'admin',
     summary: 'ユーザー一覧',
-    access: { kind: 'globalAdmin', sessionOnly: true },
+    access: { kind: 'globalAdmin', scope: 'users:manage' },
     query: adminUserQuerySchema,
     responses: { 200: contract.itemsOf(contract.adminUserSchema) },
   },
@@ -3252,7 +3264,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     path: '/api/admin/users',
     tag: 'admin',
     summary: 'ローカルアカウントを作成',
-    access: { kind: 'globalAdmin', sessionOnly: true },
+    access: USER_ADMINISTRATION,
     body: adminUserCreateSchema,
     responses: { 201: contract.adminUserSchema },
     errors: [...routeError(409, 'username_taken'), ...routeError(422, 'weak_password')],
@@ -3262,7 +3274,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     path: '/api/admin/users/:id',
     tag: 'admin',
     summary: 'ユーザーを変更・無効化',
-    access: { kind: 'globalAdmin', sessionOnly: true },
+    access: USER_ADMINISTRATION,
     body: adminUserPatchSchema,
     responses: { 200: contract.adminUserSchema },
     errors: [
@@ -3275,7 +3287,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     path: '/api/admin/users/:id/reset-password',
     tag: 'admin',
     summary: '一時passwordを発行',
-    access: { kind: 'globalAdmin', sessionOnly: true },
+    access: USER_ADMINISTRATION,
     responses: { 200: contract.adminUserPasswordResetSchema },
     errors: routeError(422, 'local_account_required'),
   },

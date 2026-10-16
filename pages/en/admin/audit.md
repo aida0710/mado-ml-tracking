@@ -86,7 +86,7 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" \
 | `hideSignIns` | `true` leaves out sign-ins, sign-outs, and the identity provider's syncs and rechecks (`auth.login`, `auth.logout`, `auth.oidc.sync`, `auth.oidc.recheck`) |
 | `projectId` (global list only) | A Project ID |
 
-The global records (`GET /api/audit-events`) can be read only by a global administrator signed in from a browser. API tokens get 403 `session_required`, even a global administrator's. Open the URL in the browser where you are signed in as a global administrator:
+The global records (`GET /api/audit-events`) can be read by a global administrator signed in from a browser, or with a token a global administrator issued without a Project that holds `admin` and `audit:read` ([API tokens and Service Accounts](/en/admin/tokens)). Open the URL in the browser where you are signed in as a global administrator:
 
 ```text
 https://tracking.example.com/api/audit-events?action=auth.oidc.denied

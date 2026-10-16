@@ -27,9 +27,30 @@ Scopes decide what a token can do. Scopes beyond the owner's Project role cannot
 | `artifacts:write` | Saving Artifacts | Editor |
 | `jobs:write` | Starting and canceling Jobs | Editor |
 | `worker:execute` | Running Jobs as a worker | Admin |
-| `admin` | Managing the Project. Includes every other scope | Admin |
+| `admin` | Managing the Project. Includes every other scope except the three below | Admin |
+| `tokens:manage` | Issuing and managing tokens and Service Accounts within this token's own grant | Viewer (Admin for Service Accounts) |
+| `audit:read` | Reading the global audit log | Global administrator (a token without a Project) |
+| `users:manage` | Managing users | Global administrator (a token without a Project) |
+
+`admin` does not include `tokens:manage`, `audit:read` or `users:manage`. Only a token that names them holds them.
 
 Besides the scopes, every token request checks the owner's current effective role. If the owner is removed from the Project or loses a role, the affected operations return 403 even without revoking the token.
+
+## Manage tokens from a token
+
+A token with `tokens:manage` can issue and revoke tokens through the API, and create and change Service Accounts and issue their tokens. It handles only tokens within its own grant.
+
+| Rule | When broken |
+| --- | --- |
+| Only scopes it holds itself (even with `admin`, `tokens:manage`, `audit:read` and `users:manage` only when it holds them) | 403 `scope_exceeds_issuer` |
+| A token limited to a Project handles only tokens of the same Project | 403 `project_forbidden` |
+| No token that stays valid after its own expiry, including no expiry and an omitted expiry that defaults to 365 days | 403 `token_outlives_issuer` |
+
+Revoking follows the same rules: a token cannot revoke a stronger one. A token it issues is owned by the calling token's owner, and the audit log records the calling token.
+
+Only a token a global administrator issues without a Project can hold `audit:read` and `users:manage` (otherwise 422 `global_scope_requires_unrestricted_token`). The screen issues only Project tokens, so issue these two through the API. `admin` with `users:manage` reads the user list; creating and changing users and issuing temporary passwords need every scope (`admin`, `tokens:manage`, `audit:read` and `users:manage`).
+
+Changing your own password, your own settings on a computer, and purging an archived Project work only in the browser.
 
 ## Expiry
 
@@ -94,7 +115,7 @@ A Service Account is an account that belongs to one Project and to no person. It
 
 ### Create a Service Account
 
-A Project Admin does this in the browser (API tokens cannot create Service Accounts).
+A Project Admin does this. Through the API, a token with `tokens:manage` can do it too (see **Manage tokens from a token** above).
 
 1. Click **Create service account** under **Service accounts** in **Project settings**.
 2. Enter the following and save.

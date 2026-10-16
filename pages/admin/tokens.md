@@ -27,9 +27,30 @@ tokenで使える操作はscopeで決めます。所有者のProjectのRoleが�
 | `artifacts:write` | Artifactの保存 | Editor |
 | `jobs:write` | Jobの起動と取り消し | Editor |
 | `worker:execute` | workerとしてJobを実行 | Admin |
-| `admin` | Projectの管理。ほかのscopeの操作もすべて含みます | Admin |
+| `admin` | Projectの管理。下の3つを除き、ほかのscopeの操作もすべて含みます | Admin |
+| `tokens:manage` | このtokenの範囲内で、tokenとService Accountを発行・管理する | Viewer（Service Accountの管理はAdmin） |
+| `audit:read` | 全体の監査ログを読む | 全体管理者（Projectを指定しないtoken） |
+| `users:manage` | ユーザーを管理する | 全体管理者（Projectを指定しないtoken） |
+
+`tokens:manage`・`audit:read`・`users:manage`は`admin`に含まれません。名前を指定して付けたtokenだけが持ちます。
 
 tokenで操作するときは、scopeに加えて、所有者の現在の実効Roleも毎回確かめます。所有者をProjectから外したり、Roleを下げたりすると、tokenを失効させなくても、その操作は403になります。
+
+## tokenからtokenを管理する
+
+`tokens:manage`を付けたtokenは、APIでtokenの発行・失効と、Service Accountの作成・変更・token発行ができます。扱えるのは、そのtokenの範囲に収まるtokenだけです。
+
+| 条件 | 外れたとき |
+| --- | --- |
+| 自分が持つscopeだけを付けられる（`admin`を持っていても、`tokens:manage`・`audit:read`・`users:manage`は自分が持つときだけ） | 403 `scope_exceeds_issuer` |
+| Projectに限定したtokenは、同じProjectのtokenだけを扱える | 403 `project_forbidden` |
+| 自分の期限より後まで有効なtokenは作れない。期限なしや、省略して既定の365日になる場合も含みます | 403 `token_outlives_issuer` |
+
+失効も同じ条件です。自分より強いtokenは失効できません。発行したtokenの所有者は、呼び出したtokenの所有者です。監査ログには、呼び出したtokenが記録されます。
+
+`audit:read`と`users:manage`は、全体管理者がProjectを指定せずに発行するtokenだけが持てます（ほかは422 `global_scope_requires_unrestricted_token`）。画面のtoken発行はProjectに限定したtokenだけなので、この2つはAPIで発行します。ユーザーの一覧は`admin`と`users:manage`で読めます。作成・変更・一時パスワードの発行には、すべてのscope（`admin`・`tokens:manage`・`audit:read`・`users:manage`）が要ります。
+
+自分のパスワード変更、コンピュータの自分の設定、アーカイブしたProjectの完全な削除は、ブラウザでだけ行えます。
 
 ## 期限
 
@@ -94,7 +115,7 @@ Service Accountは、人に紐付かない、1つのProjectに属するアカウ
 
 ### Service Accountを作る
 
-ProjectのAdminがブラウザで操作します（API tokenからは作れません）。
+ProjectのAdminが操作します。APIでは、`tokens:manage`を付けたtokenでも作れます（上の「tokenからtokenを管理する」）。
 
 1. ［プロジェクト設定］の「Service Accounts」で［Service Accountを作成］を押します。
 2. 次の値を入力して保存します。

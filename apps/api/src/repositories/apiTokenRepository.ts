@@ -25,6 +25,8 @@ export interface TokenOwnership {
   ownerUserId: string;
   ownerKind: 'human' | 'service';
   projectId: string | null;
+  scopes: string[];
+  expiresAt: string | null;
 }
 
 export async function insertToken(
@@ -89,7 +91,7 @@ export async function findActiveTokenOwnership(
 ): Promise<TokenOwnership | undefined> {
   return first<TokenOwnership>(
     connection,
-    `SELECT t.user_id AS owner_user_id,o.kind AS owner_kind,t.project_id
+    `SELECT t.user_id AS owner_user_id,o.kind AS owner_kind,t.project_id,t.scopes,t.expires_at
     FROM api_tokens t JOIN users o ON o.id=t.user_id WHERE t.id=$1 AND t.revoked_at IS NULL`,
     [tokenId],
   );

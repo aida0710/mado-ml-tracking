@@ -248,12 +248,9 @@ function security(route: NativeRoute): Record<string, string[]>[] {
   if (access.kind === 'jobToken') return [{ bearerToken: [] }];
   if (access.kind === 'apiToken') return [{ bearerToken: [access.scope] }];
   if (access.kind === 'launcher') return [{ bearerToken: ['launcher:execute'] }];
-  const scope =
-    access.kind === 'worker'
-      ? 'worker:execute'
-      : access.kind === 'globalAdmin'
-        ? 'admin'
-        : access.scope;
+  if (access.kind === 'globalAdmin')
+    return [{ sessionCookie: [] }, { bearerToken: access.scope ? ['admin', access.scope] : ['admin'] }];
+  const scope = access.kind === 'worker' ? 'worker:execute' : access.scope;
   return [{ sessionCookie: [] }, { bearerToken: [scope] }];
 }
 

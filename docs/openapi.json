@@ -1597,11 +1597,17 @@
         "security": [
           {
             "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "admin",
+              "audit:read"
+            ]
           }
         ],
         "x-mmt-access": {
           "kind": "globalAdmin",
-          "sessionOnly": true
+          "scope": "audit:read"
         },
         "x-mmt-job-token": "forbidden",
         "parameters": [
@@ -1695,7 +1701,8 @@
             "x-mmt-error-codes": [
               "authentication_required",
               "invalid_token",
-              "basic_auth_unsupported"
+              "basic_auth_unsupported",
+              "identity_sync_required"
             ],
             "content": {
               "application/json": {
@@ -1709,7 +1716,6 @@
             "description": "権限がない",
             "x-mmt-error-codes": [
               "password_change_required",
-              "session_required",
               "insufficient_scope",
               "admin_required",
               "job_token_forbidden"
@@ -4418,13 +4424,17 @@
         "security": [
           {
             "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "tokens:manage"
+            ]
           }
         ],
         "x-mmt-access": {
           "kind": "project",
           "role": "admin",
-          "scope": "admin",
-          "sessionOnly": true
+          "scope": "tokens:manage"
         },
         "x-mmt-job-token": "read",
         "parameters": [
@@ -4467,7 +4477,8 @@
             "x-mmt-error-codes": [
               "authentication_required",
               "invalid_token",
-              "basic_auth_unsupported"
+              "basic_auth_unsupported",
+              "identity_sync_required"
             ],
             "content": {
               "application/json": {
@@ -4481,7 +4492,6 @@
             "description": "権限がない",
             "x-mmt-error-codes": [
               "password_change_required",
-              "session_required",
               "insufficient_scope",
               "project_forbidden"
             ],
@@ -4545,13 +4555,17 @@
         "security": [
           {
             "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "tokens:manage"
+            ]
           }
         ],
         "x-mmt-access": {
           "kind": "project",
           "role": "admin",
-          "scope": "admin",
-          "sessionOnly": true
+          "scope": "tokens:manage"
         },
         "x-mmt-job-token": "forbidden",
         "parameters": [
@@ -4630,7 +4644,8 @@
             "x-mmt-error-codes": [
               "authentication_required",
               "invalid_token",
-              "basic_auth_unsupported"
+              "basic_auth_unsupported",
+              "identity_sync_required"
             ],
             "content": {
               "application/json": {
@@ -4645,7 +4660,6 @@
             "x-mmt-error-codes": [
               "password_change_required",
               "invalid_origin",
-              "session_required",
               "insufficient_scope",
               "project_forbidden",
               "job_token_forbidden"
@@ -4739,13 +4753,17 @@
         "security": [
           {
             "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "tokens:manage"
+            ]
           }
         ],
         "x-mmt-access": {
           "kind": "project",
           "role": "admin",
-          "scope": "admin",
-          "sessionOnly": true
+          "scope": "tokens:manage"
         },
         "x-mmt-job-token": "forbidden",
         "parameters": [
@@ -4831,7 +4849,8 @@
             "x-mmt-error-codes": [
               "authentication_required",
               "invalid_token",
-              "basic_auth_unsupported"
+              "basic_auth_unsupported",
+              "identity_sync_required"
             ],
             "content": {
               "application/json": {
@@ -4846,7 +4865,6 @@
             "x-mmt-error-codes": [
               "password_change_required",
               "invalid_origin",
-              "session_required",
               "insufficient_scope",
               "project_forbidden",
               "job_token_forbidden"
@@ -4940,13 +4958,17 @@
         "security": [
           {
             "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "tokens:manage"
+            ]
           }
         ],
         "x-mmt-access": {
           "kind": "project",
           "role": "admin",
-          "scope": "admin",
-          "sessionOnly": true
+          "scope": "tokens:manage"
         },
         "x-mmt-job-token": "forbidden",
         "parameters": [
@@ -4985,7 +5007,7 @@
                   },
                   "scopes": {
                     "minItems": 1,
-                    "maxItems": 7,
+                    "maxItems": 10,
                     "type": "array",
                     "items": {
                       "type": "string",
@@ -4996,7 +5018,10 @@
                         "artifacts:write",
                         "jobs:write",
                         "worker:execute",
-                        "admin"
+                        "admin",
+                        "tokens:manage",
+                        "audit:read",
+                        "users:manage"
                       ]
                     }
                   },
@@ -5050,7 +5075,8 @@
             "x-mmt-error-codes": [
               "authentication_required",
               "invalid_token",
-              "basic_auth_unsupported"
+              "basic_auth_unsupported",
+              "identity_sync_required"
             ],
             "content": {
               "application/json": {
@@ -5063,9 +5089,10 @@
           "403": {
             "description": "権限がない",
             "x-mmt-error-codes": [
+              "scope_exceeds_issuer",
+              "token_outlives_issuer",
               "password_change_required",
               "invalid_origin",
-              "session_required",
               "insufficient_scope",
               "project_forbidden",
               "job_token_forbidden"
@@ -5125,6 +5152,7 @@
             "x-mmt-error-codes": [
               "scope_exceeds_role",
               "invalid_expiry",
+              "global_scope_requires_unrestricted_token",
               "invalid_request",
               "invalid_reference"
             ],
@@ -5255,10 +5283,16 @@
         "security": [
           {
             "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "tokens:manage"
+            ]
           }
         ],
         "x-mmt-access": {
-          "kind": "session"
+          "kind": "signedIn",
+          "scope": "tokens:manage"
         },
         "x-mmt-job-token": "forbidden",
         "parameters": [],
@@ -5294,7 +5328,7 @@
                   },
                   "scopes": {
                     "minItems": 1,
-                    "maxItems": 7,
+                    "maxItems": 10,
                     "type": "array",
                     "items": {
                       "type": "string",
@@ -5305,7 +5339,10 @@
                         "artifacts:write",
                         "jobs:write",
                         "worker:execute",
-                        "admin"
+                        "admin",
+                        "tokens:manage",
+                        "audit:read",
+                        "users:manage"
                       ]
                     }
                   },
@@ -5360,7 +5397,8 @@
             "x-mmt-error-codes": [
               "authentication_required",
               "invalid_token",
-              "basic_auth_unsupported"
+              "basic_auth_unsupported",
+              "identity_sync_required"
             ],
             "content": {
               "application/json": {
@@ -5373,9 +5411,12 @@
           "403": {
             "description": "権限がない",
             "x-mmt-error-codes": [
+              "scope_exceeds_issuer",
+              "token_outlives_issuer",
+              "project_forbidden",
               "password_change_required",
               "invalid_origin",
-              "session_required",
+              "insufficient_scope",
               "job_token_forbidden"
             ],
             "content": {
@@ -5416,6 +5457,7 @@
             "description": "入力が不正",
             "x-mmt-error-codes": [
               "invalid_expiry",
+              "global_scope_requires_unrestricted_token",
               "invalid_request",
               "invalid_reference"
             ],
@@ -5454,10 +5496,16 @@
         "security": [
           {
             "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "tokens:manage"
+            ]
           }
         ],
         "x-mmt-access": {
-          "kind": "session"
+          "kind": "signedIn",
+          "scope": "tokens:manage"
         },
         "x-mmt-job-token": "forbidden",
         "parameters": [
@@ -5481,7 +5529,8 @@
             "x-mmt-error-codes": [
               "authentication_required",
               "invalid_token",
-              "basic_auth_unsupported"
+              "basic_auth_unsupported",
+              "identity_sync_required"
             ],
             "content": {
               "application/json": {
@@ -5494,10 +5543,13 @@
           "403": {
             "description": "権限がない",
             "x-mmt-error-codes": [
+              "scope_exceeds_issuer",
+              "token_outlives_issuer",
               "token_forbidden",
+              "project_forbidden",
               "password_change_required",
               "invalid_origin",
-              "session_required",
+              "insufficient_scope",
               "job_token_forbidden"
             ],
             "content": {
@@ -50504,15 +50556,11 @@
         "security": [
           {
             "sessionCookie": []
-          },
-          {
-            "bearerToken": [
-              "admin"
-            ]
           }
         ],
         "x-mmt-access": {
-          "kind": "globalAdmin"
+          "kind": "globalAdmin",
+          "sessionOnly": true
         },
         "x-mmt-job-token": "forbidden",
         "parameters": [
@@ -50536,8 +50584,7 @@
             "x-mmt-error-codes": [
               "authentication_required",
               "invalid_token",
-              "basic_auth_unsupported",
-              "identity_sync_required"
+              "basic_auth_unsupported"
             ],
             "content": {
               "application/json": {
@@ -50552,6 +50599,7 @@
             "x-mmt-error-codes": [
               "password_change_required",
               "invalid_origin",
+              "session_required",
               "insufficient_scope",
               "admin_required",
               "job_token_forbidden"
@@ -50632,11 +50680,17 @@
         "security": [
           {
             "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "admin",
+              "users:manage"
+            ]
           }
         ],
         "x-mmt-access": {
           "kind": "globalAdmin",
-          "sessionOnly": true
+          "scope": "users:manage"
         },
         "x-mmt-job-token": "forbidden",
         "parameters": [
@@ -50702,7 +50756,8 @@
             "x-mmt-error-codes": [
               "authentication_required",
               "invalid_token",
-              "basic_auth_unsupported"
+              "basic_auth_unsupported",
+              "identity_sync_required"
             ],
             "content": {
               "application/json": {
@@ -50716,7 +50771,6 @@
             "description": "権限がない",
             "x-mmt-error-codes": [
               "password_change_required",
-              "session_required",
               "insufficient_scope",
               "admin_required",
               "job_token_forbidden"
@@ -50767,11 +50821,17 @@
         "security": [
           {
             "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "admin",
+              "users:manage"
+            ]
           }
         ],
         "x-mmt-access": {
           "kind": "globalAdmin",
-          "sessionOnly": true
+          "scope": "users:manage"
         },
         "x-mmt-job-token": "forbidden",
         "parameters": [],
@@ -50845,7 +50905,8 @@
             "x-mmt-error-codes": [
               "authentication_required",
               "invalid_token",
-              "basic_auth_unsupported"
+              "basic_auth_unsupported",
+              "identity_sync_required"
             ],
             "content": {
               "application/json": {
@@ -50860,7 +50921,6 @@
             "x-mmt-error-codes": [
               "password_change_required",
               "invalid_origin",
-              "session_required",
               "insufficient_scope",
               "admin_required",
               "job_token_forbidden"
@@ -50942,11 +51002,17 @@
         "security": [
           {
             "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "admin",
+              "users:manage"
+            ]
           }
         ],
         "x-mmt-access": {
           "kind": "globalAdmin",
-          "sessionOnly": true
+          "scope": "users:manage"
         },
         "x-mmt-job-token": "forbidden",
         "parameters": [
@@ -51018,7 +51084,8 @@
             "x-mmt-error-codes": [
               "authentication_required",
               "invalid_token",
-              "basic_auth_unsupported"
+              "basic_auth_unsupported",
+              "identity_sync_required"
             ],
             "content": {
               "application/json": {
@@ -51033,7 +51100,6 @@
             "x-mmt-error-codes": [
               "password_change_required",
               "invalid_origin",
-              "session_required",
               "insufficient_scope",
               "admin_required",
               "job_token_forbidden"
@@ -51116,11 +51182,17 @@
         "security": [
           {
             "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "admin",
+              "users:manage"
+            ]
           }
         ],
         "x-mmt-access": {
           "kind": "globalAdmin",
-          "sessionOnly": true
+          "scope": "users:manage"
         },
         "x-mmt-job-token": "forbidden",
         "parameters": [
@@ -51151,7 +51223,8 @@
             "x-mmt-error-codes": [
               "authentication_required",
               "invalid_token",
-              "basic_auth_unsupported"
+              "basic_auth_unsupported",
+              "identity_sync_required"
             ],
             "content": {
               "application/json": {
@@ -51166,7 +51239,6 @@
             "x-mmt-error-codes": [
               "password_change_required",
               "invalid_origin",
-              "session_required",
               "insufficient_scope",
               "admin_required",
               "job_token_forbidden"

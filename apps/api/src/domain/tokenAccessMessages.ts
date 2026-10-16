@@ -1,4 +1,10 @@
-import { TOKEN_PURPOSE_LABELS, TOKEN_PURPOSE_SCOPES, TOKEN_PURPOSES } from '@mmt/contracts';
+import {
+  GLOBAL_TOKEN_SCOPES,
+  TOKEN_PURPOSE_LABELS,
+  TOKEN_PURPOSE_SCOPES,
+  TOKEN_PURPOSES,
+  type TokenScope,
+} from '@mmt/contracts';
 
 /**
  * What a client is told when its API token cannot do what it asked, written so a person who copied
@@ -17,11 +23,17 @@ function purposeIncludingScope(scope: string): string | null {
   return purpose ? TOKEN_PURPOSE_LABELS[purpose] : null;
 }
 
-export function insufficientScopeMessage(scope: string): string {
+function howToIssueScope(scope: string): string {
+  if (GLOBAL_TOKEN_SCOPES.includes(scope as TokenScope))
+    return `全体管理者がProjectを指定せずに、${scope}を含むtokenを発行してください`;
   const purpose = purposeIncludingScope(scope);
-  const howToIssue = purpose
+  return purpose
     ? `［プロジェクト設定］の［API tokenを発行］で用途「${purpose}」を選び、tokenを発行し直してください`
     : `ProjectのAdminに、${scope}を含むtokenの発行を頼んでください`;
+}
+
+export function insufficientScopeMessage(scope: string): string {
+  const howToIssue = howToIssueScope(scope);
   return `API tokenのscopeが不足しています。この操作には${scope}が要ります。${howToIssue}`;
 }
 

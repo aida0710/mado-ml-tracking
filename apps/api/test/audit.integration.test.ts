@@ -188,7 +188,7 @@ describe.skipIf(!testDatabaseUrl)('監査ログの記録と参照（独立Postgr
     expect(denied).toHaveLength(2);
   });
 
-  it('tokenからのtoken発行と他人のtokenの失効はdeniedとして記録する', async () => {
+  it('tokens:manageの無いtokenからの発行と他人のtokenの失効はdeniedとして記録する', async () => {
     const adminToken = await mintToken(fixture.administrator.cookie, {
       name: 'Admin automation',
       projectId: fixture.project.id,
@@ -216,7 +216,7 @@ describe.skipIf(!testDatabaseUrl)('監査ログの記録と参照（独立Postgr
       expect.objectContaining({
         actorType: 'token',
         actorTokenId: adminToken.item.id,
-        details: expect.objectContaining({ name: 'Nested', code: 'session_required' }),
+        details: expect.objectContaining({ name: 'Nested', code: 'insufficient_scope' }),
       }),
     ]);
     expect(

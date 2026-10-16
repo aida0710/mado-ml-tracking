@@ -87,6 +87,9 @@ export const tokenScopeLabels: Record<TokenScope, string> = localized({
   'jobs:write': 'jobs:write — Jobの起動と取り消し',
   'worker:execute': 'worker:execute — workerとしてJobを実行',
   admin: 'admin — Projectの管理',
+  'tokens:manage': 'tokens:manage — このtokenの範囲内でtokenとService Accountを管理',
+  'audit:read': 'audit:read — 全体の監査ログを読む',
+  'users:manage': 'users:manage — ユーザーを管理',
 }, english.tokenScopeLabels);
 
 // Text that embeds values.
