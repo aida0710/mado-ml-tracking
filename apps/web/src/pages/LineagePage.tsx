@@ -42,7 +42,11 @@ export function LineagePage() {
       />
       <Resource query={graph}>
         {(value) => {
-          const focused = focusId ? focusLineage(value, { nodeId: focusId, depth: FOCUS_DEPTH }) : null;
+          const isModelFocus = value.nodes.some((node) => node.id === focusId && node.kind === 'modelVersion');
+          const focused = focusId ? focusLineage(value, {
+            nodeId: focusId,
+            ...(isModelFocus ? {} : { depth: FOCUS_DEPTH }),
+          }) : null;
           const focusNode = focused?.nodes.find((node) => node.id === focusId);
           return (
             <>
@@ -50,7 +54,9 @@ export function LineagePage() {
                 <div className="notice lineage-focus-notice" role="status" data-testid="lineage-focus">
                   <span>
                     {focusNode
-                      ? lineageTextTemplates.lineageFocused(focusNode.label, FOCUS_DEPTH)
+                      ? isModelFocus
+                        ? lineageTextTemplates.lineageModelFocused(focusNode.label)
+                        : lineageTextTemplates.lineageFocused(focusNode.label, FOCUS_DEPTH)
                       : lineageText.lineageFocusMissing}
                   </span>
                   <button type="button" className="button small" onClick={showWholeGraph}>

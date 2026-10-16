@@ -276,6 +276,18 @@ try {
   assert.ok((await page.locator('.model-version-lineage .react-flow__node').count()) >= 3);
   await page.locator('.model-version-lineage').scrollIntoViewIfNeeded();
   await screenshot('lineage-model-dark');
+  await page.getByRole('link', { name: 'このモデルのLineage', exact: true }).click();
+  await page.waitForURL(`${base}${projectPath}/lineage?focus=${model.id}`);
+  await page.getByTestId('lineage-focus').waitFor();
+  await node(rawId).waitFor();
+  assert.equal(await canvas().locator('.react-flow__node').count(), 9);
+  assert.equal(await node(fixtureId(4)).count(), 0);
+  assert.equal(await node(fixtureId(5)).count(), 0);
+  assert.equal(await node(fixtureId(6)).count(), 0);
+  await page.getByRole('searchbox', { name: 'グラフ内を検索' }).fill('音声モデル学習');
+  await page.getByRole('region', { name: 'グラフ内の検索結果' })
+    .getByRole('button', { name: /音声モデル学習/ }).click();
+  await screenshot('lineage-model-focused');
 
   console.log('Lineage: viewers can inspect the graph without writing data');
   api.state.project.role = 'viewer';
@@ -306,6 +318,7 @@ try {
             'version focus',
             '320px/table order/dark theme',
             'model training graph',
+            'model page opens complete ancestry without shared sibling branches',
             'viewer',
           ],
           pageErrors,

@@ -55,6 +55,7 @@ export const lineageRelationLabels = {
   parentModel: "Parent model",
   output: "Data output",
   parentDataset: "Parent dataset",
+  reference: "Evidence reference",
 } satisfies Record<string, string>;
 
 // Text that embeds values. Kept apart from `text` so every `text` entry stays a plain string.

@@ -27,6 +27,7 @@ export async function hasLineageAncestor(
       UNION ALL SELECT unnest(parent_dataset_version_ids),id FROM dataset_versions WHERE project_id=$1
       UNION ALL SELECT parent_dataset_version_id,dataset_version_id FROM dataset_version_parent_additions WHERE project_id=$1
       UNION ALL SELECT source_run_id,id FROM dataset_versions WHERE project_id=$1 AND source_run_id IS NOT NULL
+      UNION ALL SELECT source_id,target_id FROM lineage_relation_additions WHERE project_id=$1 AND relation<>'reference'
     ), ancestors(id) AS (
       SELECT source FROM lineage_edges WHERE target=ANY($3::uuid[])
       UNION SELECT edge.source FROM lineage_edges edge JOIN ancestors ON edge.target=ancestors.id

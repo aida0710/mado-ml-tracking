@@ -14,14 +14,21 @@ export const outputModelVersionIdsColumn = `ARRAY(
 export const createdByNameColumn = `(SELECT u.display_name FROM users u WHERE u.id=runs.created_by)
   AS created_by_name`;
 
+export const outputDatasetVersionIdsColumn = `(runs.output_dataset_version_ids || ARRAY(
+  SELECT target_id FROM lineage_relation_additions
+    WHERE project_id=runs.project_id AND source_id=runs.id AND relation='output'
+      AND NOT target_id=ANY(runs.output_dataset_version_ids)
+    ORDER BY created_at,id
+)) AS output_dataset_version_ids`;
+
 // Every statement that returns a whole Run (SELECT or RETURNING) uses this so the field is never missing.
-export const runColumns = `*,${outputModelVersionIdsColumn},${trainingDatasetVersionIdsColumn},${createdByNameColumn}`;
+export const runColumns = `*,${outputModelVersionIdsColumn},${outputDatasetVersionIdsColumn},${trainingDatasetVersionIdsColumn},${createdByNameColumn}`;
 
 // Polling lists retain execution identity; code text and code environment belong to detail reads.
 export const runSummarySelect = `SELECT
   id,project_id,experiment_id,name,kind,status,parameters,tags,latest_metrics,
   model_version_id,code_version_id,input_dataset_version_ids,upstream_dataset_version_ids,
-  output_dataset_version_ids,
+  ${outputDatasetVersionIdsColumn},
   ${outputModelVersionIdsColumn},
   ${trainingDatasetVersionIdsColumn},
   parent_run_id,environment,created_by,${createdByNameColumn},created_at,started_at,ended_at,error,

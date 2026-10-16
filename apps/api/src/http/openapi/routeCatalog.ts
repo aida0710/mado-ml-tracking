@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { datasetVersionParentCreateSchema } from '../../domain/datasetVersionParentValidation.js';
+import { lineageRelationCreateSchema } from '../../domain/lineageRelationValidation.js';
 import { trainingDataStageCreateSchema } from '../../domain/trainingDataStageValidation.js';
 import { modelTrainingSourceCreateSchema } from '../../domain/modelTrainingSourceValidation.js';
 import { WORKFLOW_ROUTES } from './workflowRouteCatalog.js';
@@ -775,6 +776,22 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
   },
 
   // registry
+  {
+    method: 'get', path: '/api/projects/:p/lineage/relations', tag: 'registry',
+    summary: '根拠付きで補完した過去の来歴を取得', access: PROJECT_VIEWER,
+    responses: { 200: contract.lineageRelationPageSchema },
+  },
+  {
+    method: 'post', path: '/api/projects/:p/lineage/relations', tag: 'registry',
+    summary: '原記録を保って確認済みの来歴を追記', access: REGISTRY_WRITE,
+    body: lineageRelationCreateSchema,
+    responses: { 200: contract.lineageRelationAdditionSchema },
+    errors: [
+      ...routeError(422, 'lineage_relation_cycle'),
+      ...routeError(422, 'lineage_run_not_terminal'),
+      ...routeError(409, 'lineage_output_conflict'),
+    ],
+  },
   {
     method: 'get', path: '/api/projects/:p/datasets/:id/versions/:v/parents', tag: 'registry',
     summary: 'データ版の親と後から補った来歴の履歴を取得', access: PROJECT_VIEWER,

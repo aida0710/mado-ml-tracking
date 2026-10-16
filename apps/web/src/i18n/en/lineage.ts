@@ -19,11 +19,13 @@ export const lineageText = {
   lineageRelationHelp: 'A relationship between items. It is also available in the relations table.',
   // Leaves the focus on one item; unlike lineageZoomFit, it changes which items are drawn.
   lineageShowWhole: 'Show full graph',
+  lineageOpenModel: 'Lineage for this model',
   lineageFocusMissing: 'The specified item is not in Lineage. Showing the full graph.',
 } as const;
 
 export const lineageTextTemplates = {
   lineageMoreResults: (count: number) => formatEnglishCount(count, 'more item'),
+  lineageModelFocused: (label: string) => `Showing the lineage connected to “${label}”.`,
   lineageFocused: (label: string, depth: number) =>
     `Showing only items within ${formatEnglishCount(depth, 'level')} of “${label}”.`,
 };
