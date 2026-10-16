@@ -384,7 +384,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
       type: 'plugin.delivery_stalled',
       details: { pluginId: connection.id, pluginName: 'Mado', undelivered: 1, maxAttempts: 5 },
     });
-    expect(JSON.stringify(queued[0]!.event)).not.toContain(MADO_CREDENTIALS_FIXTURE.readToken!);
+    expect(JSON.stringify(queued[0]!.event)).not.toContain(MADO_CREDENTIALS_FIXTURE.accessToken!);
 
     plugin.isUnavailable = false;
     await makeDue();
@@ -482,7 +482,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
     );
     // Public replies show whether credentials are saved, never their values.
     expect(connection.tokenConfigured).toBe(true);
-    expect(JSON.stringify(connection)).not.toContain(MADO_CREDENTIALS_FIXTURE.readToken!);
+    expect(JSON.stringify(connection)).not.toContain(MADO_CREDENTIALS_FIXTURE.accessToken!);
     const unconfigured = await entity<PluginConnection>(
       await request(application.app, `${fixture.basePath}/plugins`, {
         method: 'POST',
@@ -497,7 +497,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
       { method: 'POST', cookie: fixture.administrator.cookie },
     );
     expect(check.status).toBe(503);
-    expect(await check.text()).not.toContain(MADO_CREDENTIALS_FIXTURE.readToken!);
+    expect(await check.text()).not.toContain(MADO_CREDENTIALS_FIXTURE.accessToken!);
     const summaryPath = `${fixture.basePath}/plugins/${connection.id}/outbox`;
     for (const identity of [fixture.editor, fixture.viewer])
       expect((await request(application.app, summaryPath, { cookie: identity.cookie })).status).toBe(

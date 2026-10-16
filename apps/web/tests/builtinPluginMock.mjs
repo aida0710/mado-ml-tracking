@@ -14,12 +14,12 @@ export async function routeBuiltinPlugins({state, request, reply, id, now, proje
   if (!key && method === 'GET') return list(state.plugins);
   if (!key && method === 'POST') {
     if (!user.isAdmin) return reply({error: 'Global admin required'}, 403);
-    const credentialsConfigured = {readToken: Boolean(body.credentials?.readToken), lineageToken: Boolean(body.credentials?.lineageToken), metricsToken: Boolean(body.credentials?.metricsToken)};
+    const credentialsConfigured = {accessToken: Boolean(body.credentials?.accessToken)};
     const plugin = {id: id(), projectId: project.id, name: body.name ?? 'Mado', kind: 'mado', config: body.config,
       configRevision: 1, configurationStatus: 'ready', credentialsConfigured,
       secretStorageAvailable: state.pluginSecretStorageAvailable ?? true,
-      baseUrl: '', tokenEnv: '', tokenConfigured: credentialsConfigured.readToken && credentialsConfigured.lineageToken,
-      enabled: body.enabled ?? false, manifest: null, createdAt: now};
+      baseUrl: '', tokenEnv: '', tokenConfigured: credentialsConfigured.accessToken,
+      enabled: body.enabled ?? false, manifest: null, accessTokenGrant: null, createdAt: now};
     state.plugins.push(plugin);
     return reply(plugin, 201);
   }
@@ -28,13 +28,11 @@ export async function routeBuiltinPlugins({state, request, reply, id, now, proje
   if (method === 'PATCH' && !subresource) {
     if (!user.isAdmin) return reply({error: 'Global admin required'}, 403);
     if (body.expectedRevision !== undefined && body.expectedRevision !== plugin.configRevision) return reply({error: 'Configuration changed'}, 409);
-    if (body.credentials) for (const name of ['readToken', 'lineageToken', 'metricsToken']) {
-      if (name in body.credentials) plugin.credentialsConfigured[name] = Boolean(body.credentials[name]);
-    }
+    if (body.credentials?.accessToken) plugin.credentialsConfigured.accessToken = true;
     for (const name of ['name', 'config', 'enabled']) if (name in body) plugin[name] = body[name];
-    plugin.tokenConfigured = plugin.credentialsConfigured.readToken && plugin.credentialsConfigured.lineageToken;
+    plugin.tokenConfigured = plugin.credentialsConfigured.accessToken;
     plugin.configRevision++;
-    if (body.config || body.credentials) plugin.manifest = null;
+    if (body.config || body.credentials?.accessToken) Object.assign(plugin, {manifest: null, accessTokenGrant: null});
     return reply(plugin);
   }
   if (subresource === 'migration') {
@@ -44,11 +42,14 @@ export async function routeBuiltinPlugins({state, request, reply, id, now, proje
     return reply(plugin);
   }
   if (subresource === 'check') {
-    plugin.manifest = {...manifest, capabilities: ['datasets:search', 'lineage:publish', ...(plugin.credentialsConfigured.metricsToken ? ['storage:metrics'] : [])]};
-    return reply(plugin.manifest);
+    // The fixture Mado's answer for the saved token; a test changes state.madoAccessTokenGrant to vary it.
+    const grant = state.madoAccessTokenGrant;
+    plugin.accessTokenGrant = grant;
+    plugin.manifest = {...manifest, capabilities: ['datasets:search', 'lineage:publish', ...(grant.scopes.includes('metrics:read') ? ['storage:metrics'] : [])]};
+    return reply(plugin);
   }
   if (subresource === 'metrics') {
-    if (!plugin.credentialsConfigured.metricsToken) return reply({error: 'Unsupported capability'}, 422);
+    if (!plugin.accessTokenGrant?.scopes.includes('metrics:read')) return reply({error: 'Unsupported capability'}, 422);
     if (state.metricsGate) await state.metricsGate;
     if (state.failPluginMetrics) return reply({error: 'UI verification: metrics unavailable'}, 502);
     return reply({prometheus: state.prometheus});

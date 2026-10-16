@@ -290,8 +290,7 @@ try {
   const expectedRevision = plugin.configRevision;
   await page.getByRole('button', { name: 'Madoの接続設定', exact: true }).click();
   assert.equal(await dialog().getByLabel('Mado API URL').inputValue(), plugin.config.apiUrl);
-  assert.equal(await dialog().getByLabel('参照用キー（lineage:read）').inputValue(), '');
-  assert.equal(await dialog().getByLabel('送信用キー（lineage:write）').inputValue(), '');
+  assert.equal(await dialog().getByLabel('アクセストークン').inputValue(), '');
   await fill('名前', 'Edited Mado');
   await fill('Mado Web URL', 'https://edited-mado.invalid');
   await dialog().getByRole('button', { name: '保存', exact: true }).click();
@@ -300,7 +299,7 @@ try {
   const savedSettings = api.state.calls.filter((call) => call.method === 'PATCH' && call.path.includes('/plugins/')).at(-1).body;
   assert.equal(savedSettings.expectedRevision, expectedRevision);
   assert.equal(savedSettings.config.webUrl, 'https://edited-mado.invalid');
-  assert.equal(Object.hasOwn(savedSettings, 'credentials'), false, 'blank saved keys must be preserved');
+  assert.equal(Object.hasOwn(savedSettings, 'credentials'), false, 'a blank access token must keep the saved one');
   await page.getByRole('button', { name: '接続を確認', exact: true }).click();
   await page.getByText('接続を確認しました', { exact: true }).waitFor();
   await page.getByText('https://edited-mado.invalid', { exact: true }).waitFor();

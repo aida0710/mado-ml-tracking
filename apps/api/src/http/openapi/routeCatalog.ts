@@ -2640,10 +2640,14 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     method: 'post',
     path: '/api/projects/:p/plugins/:id/check',
     tag: 'plugins',
-    summary: 'Madoの参照接続を確認（無効中も実行可能）',
+    summary: 'Madoのアクセストークンの許可範囲を取得して接続を確認（無効中も実行可能）',
     access: PROJECT_ADMIN,
-    responses: { 200: contract.pluginManifestSchema },
-    errors: routeError(503, 'plugin_token_unavailable'),
+    responses: { 200: contract.pluginConnectionSchema },
+    errors: [
+      ...routeError(422, 'plugin_token_scope_missing', 'plugin_job_namespace_not_allowed'),
+      ...routeError(502, 'plugin_mado_access_token_unsupported'),
+      ...routeError(503, 'plugin_token_unavailable'),
+    ],
   },
   {
     method: 'get',
@@ -2652,7 +2656,10 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     summary: 'pluginのPrometheus metrics',
     access: PROJECT_ADMIN,
     responses: { 200: z.strictObject({ prometheus: z.string() }) },
-    errors: routeError(503, 'plugin_token_unavailable'),
+    errors: [
+      ...routeError(422, 'plugin_capability_unsupported'),
+      ...routeError(503, 'plugin_token_unavailable'),
+    ],
   },
   {
     method: 'get',

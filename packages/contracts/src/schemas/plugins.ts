@@ -4,6 +4,7 @@ import type {
   PluginConnection,
   PluginDataset,
   PluginManifest,
+  MadoAccessTokenGrant,
   MadoPluginConfig,
   PluginAvailability,
 } from '../index.js';
@@ -27,9 +28,17 @@ export const madoPluginConfigSchema = namedContractSchema(
     apiUrl: z.string(),
     webUrl: z.string(),
     lineageUrl: z.string(),
-    namespaces: z.array(z.string()),
     jobNamespace: z.string(),
     storageSystemKey: z.string(),
+  }),
+);
+export const madoAccessTokenGrantSchema = namedContractSchema(
+  'MadoAccessTokenGrant',
+  z.strictObject({
+    name: z.string(),
+    scopes: z.array(z.string()),
+    namespaces: z.array(z.string()),
+    expiresAt: timestampSchema.nullable(),
   }),
 );
 export const pluginAvailabilitySchema = namedContractSchema(
@@ -54,17 +63,14 @@ export const pluginConnectionSchema = namedContractSchema(
     configurationStatus: z.enum(['ready', 'migration_pending', 'unsupported']),
     config: madoPluginConfigSchema.nullable(),
     configRevision: z.number().int(),
-    credentialsConfigured: z.strictObject({
-      readToken: z.boolean(),
-      lineageToken: z.boolean(),
-      metricsToken: z.boolean(),
-    }),
+    credentialsConfigured: z.strictObject({ accessToken: z.boolean() }),
     secretStorageAvailable: z.boolean(),
     baseUrl: z.string(),
     tokenEnv: z.string(),
     tokenConfigured: z.boolean(),
     enabled: z.boolean(),
     manifest: pluginManifestSchema.nullable(),
+    accessTokenGrant: madoAccessTokenGrantSchema.nullable(),
     createdAt: timestampSchema,
   }),
 );
@@ -112,6 +118,9 @@ type _LineageGraph = Expect<MutuallyAssignable<z.infer<typeof lineageGraphSchema
 
 type _MadoConfig = Expect<
   MutuallyAssignable<z.infer<typeof madoPluginConfigSchema>, MadoPluginConfig>
+>;
+type _MadoAccessTokenGrant = Expect<
+  MutuallyAssignable<z.infer<typeof madoAccessTokenGrantSchema>, MadoAccessTokenGrant>
 >;
 type _PluginAvailability = Expect<
   MutuallyAssignable<z.infer<typeof pluginAvailabilitySchema>, PluginAvailability>

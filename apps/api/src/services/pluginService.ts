@@ -1,9 +1,11 @@
 import { createHash } from 'node:crypto';
 import {
+  allowsMadoNamespace,
   isSameUuid,
+  MADO_SCOPES,
+  type PluginConnection,
   type PluginCreate,
   type PluginEvent,
-  type PluginManifest,
   type PluginOutboxSummary,
   type PluginPatch,
 } from '@mmt/contracts';
@@ -65,21 +67,33 @@ export class PluginService {
     return this.connections.patch(principal, projectId, request);
   }
 
-  async check(principal: Principal, projectId: string, pluginId: string): Promise<PluginManifest> {
+  /** Reads the access token's grant from Mado and saves it with the manifest for this revision. */
+  async check(
+    principal: Principal,
+    projectId: string,
+    pluginId: string,
+  ): Promise<PluginConnection> {
     const plugin = await this.connections.authorize(principal, {
       projectId,
       pluginId,
       allowDisabled: true,
       allowMigration: true,
     });
-    const manifest = await this.callPlugin(() => this.client(plugin).manifest());
-    const saved = await first(
+    const checked = await this.callPlugin(() => this.client(plugin).checkConnection());
+    const saved = await first<PluginConnectionRecord>(
       this.database,
-      'UPDATE plugin_connections SET manifest=$2::jsonb WHERE id=$1 AND project_id=$3 AND config_revision=$4 RETURNING id',
-      [plugin.id, JSON.stringify(manifest), projectId, plugin.configRevision],
+      `UPDATE plugin_connections SET manifest=$2::jsonb,access_token_grant=$3::jsonb
+        WHERE id=$1 AND project_id=$4 AND config_revision=$5 RETURNING *`,
+      [
+        plugin.id,
+        JSON.stringify(checked.manifest),
+        JSON.stringify(checked.accessTokenGrant),
+        projectId,
+        plugin.configRevision,
+      ],
     );
     if (!saved) conflict('連携の接続設定が変更されています。再確認してください');
-    return manifest;
+    return this.connections.present(saved);
   }
 
   async search(
@@ -103,8 +117,12 @@ export class PluginService {
     pluginId: string,
   ): Promise<{ prometheus: string }> {
     const plugin = await this.connections.authorize(principal, { projectId, pluginId });
-    if (!plugin.credentialsConfigured.metricsToken)
-      throw new DomainError(422, '容量取得用のキーは未設定です', 'plugin_capability_unsupported');
+    if (!plugin.accessTokenGrant?.scopes.includes(MADO_SCOPES.metricsRead))
+      throw new DomainError(
+        422,
+        '容量の読み取りがアクセストークンで許可されていません。許可した後に接続を確認し直してください',
+        'plugin_capability_unsupported',
+      );
     const metrics = await this.callPlugin(() => this.client(plugin).metrics());
     await this.connections.assertRevision(plugin);
     return metrics;
@@ -124,12 +142,12 @@ export class PluginService {
       if (plugin.configRevision !== request.expectedRevision)
         conflict('連携設定が変更されています。検索し直してください');
       // The server resolves the immutable version itself; browser-supplied URI/digest are never trusted.
-      const imported = await this.callPlugin(() =>
-        this.client(plugin).datasetVersion(request.externalId),
-      );
+      const client = this.client(plugin);
+      const imported = await this.callPlugin(() => client.datasetVersion(request.externalId));
+      const grant = await this.callPlugin(() => client.accessTokenGrant());
       if (
         !isSameUuid(request.externalId, imported.externalId) ||
-        !plugin.config!.namespaces.includes(imported.namespace)
+        !allowsMadoNamespace(grant, imported.namespace)
       )
         throw new DomainError(
           422,
@@ -184,10 +202,10 @@ export class PluginService {
       if (plugin.configRevision !== request.expectedRevision)
         conflict('連携設定が変更されています');
       if (!plugin.migrationPending) return this.connections.present(plugin);
-      if (!plugin.manifest || !this.connections.credentials.hasRequiredCredentials(plugin))
+      if (!plugin.manifest || !this.connections.credentials.hasAccessToken(plugin))
         throw new DomainError(
           422,
-          '接続キーを設定し、接続確認を完了してから移行してください',
+          'アクセストークンを設定し、接続確認を完了してから移行してください',
           'plugin_migration_check_required',
         );
       const migrated = (await first<PluginConnectionRecord>(
@@ -240,15 +258,12 @@ export class PluginService {
     };
   }
 
-  client(
-    plugin: PluginConnectionRecord,
-    requiredCredential: 'readToken' | 'lineageToken' = 'readToken',
-  ) {
+  client(plugin: PluginConnectionRecord) {
     if (plugin.kind !== 'mado' || !plugin.config)
       throw new DomainError(422, 'Mado連携の設定が必要です', 'plugin_migration_required');
     const credentials = this.connections.credentials.read(plugin);
-    if (!credentials[requiredCredential])
-      throw new DomainError(503, '必要なMado接続キーが未設定です', 'plugin_token_unavailable');
+    if (!credentials.accessToken)
+      throw new DomainError(503, 'Madoのアクセストークンが未設定です', 'plugin_token_unavailable');
     return this.clientFactory({ config: plugin.config, credentials, pluginId: plugin.id });
   }
 
@@ -265,7 +280,7 @@ export class PluginService {
         '連携の送信先または内容が一致しません',
         'plugin_delivery_identity_mismatch',
       );
-    await this.client(plugin, 'lineageToken').sendPayload(delivery.payload);
+    await this.client(plugin).sendPayload(delivery.payload);
   }
 
   private async callPlugin<T>(operation: () => Promise<T>): Promise<T> {

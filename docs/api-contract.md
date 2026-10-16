@@ -765,7 +765,7 @@ OperationsAlert `{id,projectId,kind:'job.heartbeat_stale'|'worker.offline'|'plug
 
 `@mmt/platform`は`createArtifactStoresFromEnv(env?)` → `ArtifactStores`をexportする。`stores.backends():ArtifactBackend[]`、`stores.put({backend,key,body:Readable,mimeType})` → `{size,sha256}`、`stores.read({backend,key,range?:string})` → `{body:Readable,size,totalSize,contentRange?:string,status:200|206}`。`stores.remove({backend,key})`。`stores.multipart(backend)`は再開可能uploadに対応する保存先で`createMultipart`／`putPart`（宣言sizeと任意のpart SHA-256を検証）／`completeMultipart`（S3は最後以外5MiB以上）／`abortMultipart`／`listIncompleteUploads`／`removeAbandonedStaging`を返し、未対応ならnull。S3の単一`put()`は送信元の失敗時にAbortMultipartUploadの完了を待ってからrejectする。keyはprojectId/artifactId配下の不変ID。登録DB失敗時は書いたblobをcleanup。streamingでGBファイルを全量メモリへ載せない。`.env`設定は`ARTIFACT_FILESYSTEM_ROOT`、`S3_BUCKET`, `S3_ENDPOINT?`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_FORCE_PATH_STYLE`。FSは常時available、S3は必要設定がある場合available。DB由来の保存先は`createArtifactStoreFromConfig({config,credentials?,caBundle?})`（S3 clientは`createS3Client`）で作り、`createReplaceableArtifactStores()`が名前→storeの差し替えと書き込み停止（`ArtifactBackendDisabledError`）を受け持つ。APIでは`services/artifactStoreRegistry.ts`が環境変数由来とDB由来をまとめて`ArtifactStores`を実装する。
 
-`createMadoClient({config,credentials})`はNamespace限定のcatalog/dataset/version取得、OpenLineageの固定本文送信、容量取得を行う。HTTP締切8秒・応答4MiB・redirect拒否・応答の形とID/Namespaceを検証する。`createPluginClient`は旧HTTP契約のライブラリとして残るが、APIの接続登録・配送では使わない。
+`createMadoClient({config,credentials})`はアクセストークンの許可範囲の取得（1つのclientで1回）、その範囲に限ったcatalog/dataset/version取得、OpenLineageの固定本文送信、容量取得を行う。HTTP締切8秒・応答4MiB・redirect拒否・応答の形とID/Namespaceを検証する。`createPluginClient`は旧HTTP契約のライブラリとして残るが、APIの接続登録・配送では使わない。
 
 ## ローカル検証
 
@@ -793,14 +793,15 @@ workerの`datasets.path`出力は、保存したArtifactのファイル一覧を
 
 Pluginは本体に登録したkindだけを実行する。新規はkind=madoで初期無効。任意の外部サービスURLを登録する旧入力は受け付けない。既存legacy接続・接続ID・DatasetVersion.externalRef・送信待ちは削除しない。
 
-- POST /projects/:p/plugins: `{kind:'mado',name?,config:{apiUrl,webUrl,lineageUrl,namespaces,jobNamespace,storageSystemKey},credentials?:{readToken?,lineageToken?,metricsToken?:string|null},enabled?:boolean}`。全体管理者。設定なしでの起動・一覧取得ではDB行や通信を作らない。
-- PATCH /projects/:p/plugins/:id: `{name?,config?,credentials?,enabled?,expectedRevision?}`。設定・資格情報を変える場合expectedRevision必須で、不一致は409。資格情報の省略は維持、metricsToken=nullは削除。実体の参照/イベント履歴がある接続のAPI/Web/OpenLineage接続先の変更は409。別接続を作成する。legacy接続の編集は名前と無効化だけ。
-- GET /projects/:p/plugins はProject admin。kind、configurationStatus、configRevision、Mado設定と資格情報の有無だけを返す。キーは暗号化して保存し、平文/暗号文/鍵IDは返さない。保存用MMT_PLUGIN_SECRET_KEYがなくても未設定・無効で起動する。
+- 資格情報はMadoのアクセストークン1本（参照・送信・容量取得を兼ねる）。Namespaceは入力させず、Mado側の入口`/api/mado/access-token`（GETで、呼び出したトークン自身の`{name,scopes,namespaces,expiresAt}`を返す。`namespaces:['*']`は全Namespace）から取得する。Mado側にこの入口が必要で、無いMado（404）への接続確認・検索・取り込みは502 `plugin_mado_access_token_unsupported`。
+- POST /projects/:p/plugins: `{kind:'mado',name?,config:{apiUrl,webUrl,lineageUrl,jobNamespace,storageSystemKey},credentials?:{accessToken?},enabled?:boolean}`。全体管理者。設定なしでの起動・一覧取得ではDB行や通信を作らない。`jobNamespace`の`*`は422。
+- PATCH /projects/:p/plugins/:id: `{name?,config?,credentials?,enabled?,expectedRevision?}`。設定・資格情報を変える場合expectedRevision必須で、不一致は409。アクセストークンの省略は維持し、入力すれば置き換える（保存用の暗号鍵を失った接続もこれで復旧する）。設定かアクセストークンを変えると、前回の接続確認の結果（manifest・accessTokenGrant）を消す。実体の参照/イベント履歴がある接続のAPI/Web/OpenLineage接続先の変更は409。別接続を作成する。legacy接続の編集は名前と無効化だけ。
+- GET /projects/:p/plugins はProject admin。kind、configurationStatus、configRevision、Mado設定、資格情報の有無（`credentialsConfigured:{accessToken}`）、前回の接続確認で取得した`accessTokenGrant`（MadoAccessTokenGrant `{name,scopes,namespaces,expiresAt}`、未確認ならnull）を返す。トークンは暗号化して保存し、平文/暗号文/鍵IDは返さない。保存用MMT_PLUGIN_SECRET_KEYがなくても未設定・無効で起動する。migration 067より前に保存した用途別キー（readToken等）は使わず、アクセストークンの再入力を求める。
 - GET /projects/:p/plugins/availability はProject viewer/read scope。`{items:[{kind:'mado',id:null|UUID,enabled,configured,configRevision,webUrl:null|string,canImport}]}`。未登録でも未設定・無効のMadoを1件返す。管理APIのURL、資格情報、環境変数名を含めない。canImportは現在のProject admin/admin scopeと有効・設定済みの両方が必要。
-- POST check はProject admin、無効中でも参照/容量APIだけを検証。架空Runは送らない。変更中の結果は409。
-- 接続確認・検索・容量取得で必要な資格情報を利用できない場合は503 `plugin_token_unavailable`。保存用の暗号化キーや資格情報の内容は応答に含めない。
-- POST datasets/import は `{externalId: UUID,expectedRevision:number}`。有効・設定済みを確認し、APIが指定バージョンをMadoから再取得。投稿されたURI/digest/Namespaceは信頼しない。同じ外部バージョンの並行取り込みは同じ不変DatasetVersionを返す。
-- POST datasets/search は `{query,expectedRevision?}`。有効・設定済みの接続だけ。設定が変わった応答を409として破棄する。
+- POST check はProject admin → PluginConnection。無効中でも実行でき、Madoからトークンの許可範囲を取得して、許可された各Namespace（全Namespaceなら指定なしで1回）の参照と、`metrics:read`があれば容量APIを検証する。`lineage:read`か`lineage:write`が無いトークンは422 `plugin_token_scope_missing`、`jobNamespace`を許可していないトークンは422 `plugin_job_namespace_not_allowed`（送信で失敗する前に断る）。成功したら同じrevisionのmanifest（capabilitiesの`storage:metrics`はトークンの`metrics:read`による）とaccessTokenGrantを保存する。架空Runは送らない。変更中の結果は409。
+- 接続確認・検索・容量取得で必要な資格情報を利用できない場合は503 `plugin_token_unavailable`。保存用の暗号化キーや資格情報の内容は応答に含めない。GET metricsは前回の接続確認でトークンに`metrics:read`があった接続だけで、無ければ422 `plugin_capability_unsupported`。
+- POST datasets/import は `{externalId: UUID,expectedRevision:number}`。有効・設定済みを確認し、APIが指定バージョンをMadoから再取得。投稿されたURI/digest/Namespaceは信頼しない。取り込むバージョンのNamespaceは、その時点でMadoが返すトークンの許可範囲で確かめる。同じ外部バージョンの並行取り込みは同じ不変DatasetVersionを返す。
+- POST datasets/search は `{query,expectedRevision?}`。有効・設定済みの接続だけ。Namespaceはその時点でMadoが返すトークンの許可範囲を使う（Mado側で許可を変えても接続の再保存は不要）。設定が変わった応答を409として破棄する。
 - 送信待ちにはOpenLineage本文・本文hash・送信先・設定revisionを固定する。無効中は新規の送信待ちを作らず、送信を開始しない。送信中の処理は完了可。再有効化で既存未送信分だけを再開し、過去の実験を遡及登録しない。
 - 旧manifest.id=madoの接続はmigration_pendingとして配送を止め、管理者が実Mado設定を保存して同じIDへ移行する。bridge URLをMado URLへ自動転用しない。旧イベントのpayload hashを照合して配送済み記録を引き継げる管理操作を提供する。ネットワークを越えた一度だけの配送は保証しない。同一Run/eventの再送をMadoの不変IDで処理する。
 
