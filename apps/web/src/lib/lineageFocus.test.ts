@@ -31,6 +31,24 @@ describe('focusLineage', () => {
   it('グラフに無いノードを中心にはできない', () => {
     expect(focusLineage(graph, { nodeId: 'missing', depth: 2 })).toBeNull();
   });
+
+  it('モデルの全来歴を辿っても、共通データや同じ学習Runの別モデルは含めない', () => {
+    const withCheckpoint: LineageGraph = {
+      nodes: [...graph.nodes, { id: 'checkpoint', kind: 'modelVersion', label: 'other checkpoint' }],
+      edges: [...graph.edges, { source: 'train', target: 'checkpoint', relation: 'outputModel' }],
+    };
+    expect(focusLineage(withCheckpoint, { nodeId: 'model' })?.nodes.map((node) => node.id))
+      .toEqual(['parent', 'data', 'train', 'model', 'eval']);
+  });
+
+  it('循環した参照があっても全来歴の探索が終了する', () => {
+    const cyclic: LineageGraph = {
+      ...graph,
+      edges: [...graph.edges, { source: 'eval', target: 'model', relation: 'reference' }],
+    };
+    expect(focusLineage(cyclic, { nodeId: 'model' })?.nodes.map((node) => node.id))
+      .toEqual(['parent', 'data', 'train', 'model', 'eval']);
+  });
 });
 
 describe('runsUsingInput', () => {

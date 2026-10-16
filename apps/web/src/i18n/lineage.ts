@@ -20,10 +20,12 @@ export const lineageText = localized({
   lineageNodeHelp: 'Enterで項目を選択します。名前のリンクから詳細を開けます。',
   lineageRelationHelp: '項目間の関係です。関係一覧でも確認できます。',
   lineageShowWhole: '全体を表示',
+  lineageOpenModel: 'このモデルのLineage',
   lineageFocusMissing: '指定したものはLineageにありません。全体を表示しています。',
 } as const, english.lineageText);
 
 export const lineageTextTemplates = localized({
   lineageMoreResults: (count: number) => `ほか${count}件`,
   lineageFocused: (label: string, depth: number) => `「${label}」の前後${depth}段だけを表示しています。`,
+  lineageModelFocused: (label: string) => `「${label}」につながるLineageを表示しています。`,
 }, english.lineageTextTemplates);

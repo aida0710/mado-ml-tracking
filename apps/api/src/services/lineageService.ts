@@ -13,13 +13,14 @@ import { datasetVersionSelect } from '../repositories/registryRepository.js';
 import { getMlflowLineage } from '../repositories/mlflowLineageRepository.js';
 import { runColumns } from '../repositories/runListProjection.js';
 import { requireProject } from './accessService.js';
+import { listLineageRelations } from '../repositories/lineageRelationRepository.js';
 
 export class LineageService {
   constructor(private readonly database: Database) {}
 
   async graph(principal: Principal, projectId: string): Promise<LineageGraph> {
     await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
-    const [runs, models, datasets, codes, mlflow] = await Promise.all([
+    const [runs, models, datasets, codes, mlflow, additions] = await Promise.all([
       rows<Run>(
         this.database,
         `SELECT ${runColumns} FROM runs WHERE project_id=$1`,
@@ -39,6 +40,7 @@ export class LineageService {
         [projectId],
       ),
       getMlflowLineage(this.database, projectId),
+      listLineageRelations(this.database, projectId),
     ]);
     const nodes: LineageNode[] = [...mlflow.nodes];
     const edges: LineageEdge[] = [...mlflow.edges];
@@ -75,6 +77,12 @@ export class LineageService {
     for (const code of codes)
       nodes.push({ id: code.id, kind: 'codeVersion', label: `${code.name} ${code.version}` });
     const nodeIds = new Set(nodes.map((node) => node.id));
+    const edgeKeys = new Set(edges.map((edge) => JSON.stringify(edge)));
+    for (const addition of additions) {
+      const edge = { source: addition.sourceId, target: addition.targetId, relation: addition.relation };
+      const key = JSON.stringify(edge);
+      if (!edgeKeys.has(key)) { edges.push(edge); edgeKeys.add(key); }
+    }
     return {
       nodes,
       edges: edges.filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target)),

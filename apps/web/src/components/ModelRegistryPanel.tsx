@@ -24,6 +24,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { promotionTextTemplates } from '../i18n/promotion';
 import { formatList } from '../i18n/textJoining';
+import { lineageText } from '../i18n/lineage';
+import { lineageFocusPath } from '../lib/lineageFocus';
 
 export function ModelRegistryPanel({
   registry,
@@ -201,6 +203,9 @@ export function ModelRegistryPanel({
                           })}
                         >
                           {text.modelVersionOpenPage}
+                        </Link>
+                        <Link className="button small" to={lineageFocusPath(projectId, registry.selectedVersion.id)}>
+                          {lineageText.lineageOpenModel}
                         </Link>
                         <DetailsList
                           entries={[
