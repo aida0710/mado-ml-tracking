@@ -1,19 +1,31 @@
-import type { MadoPluginConfig, MadoPluginCredentialsInput } from '@mmt/contracts';
-import type { BuiltinPluginClient } from '../src/plugins/mado/madoPlugin.js';
+import type {
+  MadoAccessTokenGrant,
+  MadoPluginConfig,
+  MadoPluginCredentialsInput,
+} from '@mmt/contracts';
+import {
+  madoManifest,
+  type BuiltinPluginClient,
+} from '../src/plugins/mado/madoPlugin.js';
 
 export const MADO_CONFIG_FIXTURE: MadoPluginConfig = {
   apiUrl: 'https://mado-api.example.test',
   webUrl: 'https://mado.example.test',
   lineageUrl: 'https://mado-lineage.example.test',
-  namespaces: ['remote'],
   jobNamespace: 'mado-model-tracking',
   storageSystemKey: 'mado-model-tracking',
 };
 
 export const MADO_CREDENTIALS_FIXTURE: MadoPluginCredentialsInput = {
-  readToken: 'fixture-mado-read-token',
-  lineageToken: 'fixture-mado-lineage-token',
-  metricsToken: null,
+  accessToken: 'fixture-mado-access-token',
+};
+
+/** What Mado reports for the fixture token: reading and sending in two namespaces, no capacity. */
+export const MADO_ACCESS_TOKEN_GRANT_FIXTURE: MadoAccessTokenGrant = {
+  name: 'ML Tracking',
+  scopes: ['lineage:read', 'lineage:write'],
+  namespaces: ['mado-model-tracking', 'remote'],
+  expiresAt: null,
 };
 
 /** Existing Run tests explicitly enable delivery; omission in the public API still means disabled. */
@@ -37,15 +49,14 @@ export function madoPluginInput({
   };
 }
 
-export function madoClientStub(overrides: Partial<BuiltinPluginClient> = {}): BuiltinPluginClient {
+export function madoClientStub(
+  overrides: Partial<BuiltinPluginClient> & { grant?: MadoAccessTokenGrant } = {},
+): BuiltinPluginClient {
+  const { grant = MADO_ACCESS_TOKEN_GRANT_FIXTURE, ...clientOverrides } = overrides;
   return {
-    manifest: async () => ({
-      id: 'mado',
-      name: 'Mado',
-      version: '1.0.0',
-      protocolVersion: '1.0',
-      capabilities: ['datasets:search', 'lineage:publish'],
-    }),
+    checkConnection: async () => ({ manifest: madoManifest(grant), accessTokenGrant: grant }),
+    accessTokenGrant: async () => grant,
+    manifest: async () => madoManifest(grant),
     metrics: async () => ({ prometheus: '' }),
     searchDatasets: async () => ({ items: [] }),
     datasetVersion: async () => {
@@ -53,6 +64,6 @@ export function madoClientStub(overrides: Partial<BuiltinPluginClient> = {}): Bu
     },
     sendEvent: async () => undefined,
     sendPayload: async () => undefined,
-    ...overrides,
+    ...clientOverrides,
   };
 }

@@ -17,7 +17,7 @@ import type {
 } from '@mmt/contracts';
 
 const madoServer = await startMadoVerificationServer();
-const { events, readToken, writeToken, metricsToken, versionId } = madoServer;
+const { events, accessToken, versionId } = madoServer;
 const harness = await createHarness();
 const host = createApplication({
   config: harness.config,
@@ -45,22 +45,24 @@ try {
           apiUrl: madoServer.url,
           webUrl: madoServer.url,
           lineageUrl: madoServer.url,
-          namespaces: ['speech'],
           jobNamespace: 'mado-model-tracking',
           storageSystemKey: 'mado-model-tracking',
         },
-        credentials: { readToken, lineageToken: writeToken, metricsToken },
+        credentials: { accessToken },
       },
     }),
   );
-  const manifest = await entity<{ capabilities: string[] }>(
+  const checked = await entity<PluginConnection>(
     await request(host.app, `${basePath}/plugins/${plugin.id}/check`, {
       method: 'POST',
       cookie: administrator.cookie,
     }),
     200,
   );
-  assert(manifest.capabilities.includes('storage:metrics'));
+  assert(checked.manifest?.capabilities.includes('storage:metrics'));
+  // Mado reported the namespaces itself; nobody typed them into the connection.
+  assert.deepEqual(checked.accessTokenGrant?.namespaces, ['speech', 'mado-model-tracking', 'local']);
+  assert.equal(checked.accessTokenGrant?.name, 'ML Tracking verification');
   assert.equal(plugin.enabled, false);
   assert.equal(events.length, 0, 'A disabled connection check must never send a Run');
   const enabledPlugin = await entity<PluginConnection>(
@@ -162,6 +164,7 @@ try {
   assert(stored.rows.every((row) => row.status === 'delivered'));
   const summary = {
     checks: [
+      "one access token; namespaces read from Mado's /api/mado/access-token, none entered",
       'Mado namespace-scoped catalog and immutable version read',
       'built-in Mado search and server-resolved immutable import',
       'Mado metrics:read through built-in client and host API',

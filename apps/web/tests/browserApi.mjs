@@ -295,12 +295,12 @@ export function createBrowserApi() {
     projectId: project.id,
     name: 'Mado',
     kind: 'mado',
-    config: {apiUrl: 'http://test.invalid', webUrl: 'https://mado.example.invalid', lineageUrl: 'http://test.invalid', namespaces: ['test'], jobNamespace: 'mado-model-tracking', storageSystemKey: 'mado-model-tracking'},
+    config: {apiUrl: 'http://test.invalid', webUrl: 'https://mado.example.invalid', lineageUrl: 'http://test.invalid', jobNamespace: 'mado-model-tracking', storageSystemKey: 'mado-model-tracking'},
     configRevision: 1,
     configurationStatus: 'ready',
-    credentialsConfigured: {readToken: true, lineageToken: true, metricsToken: true},
+    credentialsConfigured: {accessToken: true},
     secretStorageAvailable: true,
-    baseUrl: '', tokenEnv: '', tokenConfigured: true, enabled: true, manifest: null,
+    baseUrl: '', tokenEnv: '', tokenConfigured: true, enabled: true, manifest: null, accessTokenGrant: null,
     createdAt: now,
   };
   const manifest = {
@@ -352,6 +352,10 @@ export function createBrowserApi() {
     automationRules: [],
     automationExecutions: [],
     plugins: [plugin],
+    // What the fixture Mado reports for a saved access token when the connection is checked.
+    madoAccessTokenGrant: {
+      name: 'ML Tracking', scopes: ['lineage:read', 'lineage:write', 'metrics:read'], namespaces: ['test'], expiresAt: null,
+    },
     tokens: [],
     artifacts: [artifact],
     calls: [],

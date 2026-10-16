@@ -71,16 +71,9 @@ try {
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Mado API URL').fill(settings.madoUrl);
   await dialog.getByLabel('Mado Web URL').fill(settings.madoUrl);
-  await dialog.getByLabel('許可Namespace').fill('speech');
   await dialog
-    .getByLabel('参照用キー（lineage:read）', { exact: true })
-    .fill(settings.credentials.readToken);
-  await dialog
-    .getByLabel('送信用キー（lineage:write）', { exact: true })
-    .fill(settings.credentials.lineageToken);
-  await dialog
-    .getByLabel('容量取得用キー（metrics:read、任意）', { exact: true })
-    .fill(settings.credentials.metricsToken);
+    .getByLabel('アクセストークン', { exact: true })
+    .fill(settings.credentials.accessToken);
   await dialog.getByRole('button', { name: '保存', exact: true }).click();
   await dialog.waitFor({ state: 'hidden' });
   const connection = (await api(`${projectPath}/plugins`)).items[0];
@@ -89,6 +82,9 @@ try {
   for (const token of Object.values(settings.credentials))
     assert(!JSON.stringify(connection).includes(token));
   await checkConnection();
+  // The namespaces shown here come from Mado's answer for the access token.
+  await page.getByText('speech、mado-model-tracking、local', { exact: true }).waitFor();
+  await capture('real-mado-checked-ja');
   assert.equal((await api(`${projectPath}/plugins/${connection.id}/outbox`)).pending, 0);
   await page.getByRole('button', { name: '連携を有効にする', exact: true }).click();
   await page.getByRole('button', { name: '連携を無効にする', exact: true }).waitFor();
@@ -159,7 +155,8 @@ try {
   await capture('real-mado-configured-en');
   await switchLanguage('日本語');
   await page.setViewportSize({ width: 320, height: 850 });
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  // Responsive parts re-render after the resize; wait for that layout rather than a fixed delay.
+  await page.waitForFunction(() => document.documentElement.scrollWidth <= innerWidth);
   await capture('real-mado-mobile-ja');
   assert.deepEqual(pageErrors, []);
   const summary = {

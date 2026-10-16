@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { MadoAccessTokenGrant } from '@mmt/contracts';
 
 // Bound untrusted Registry fields and collections independently of the HTTP response byte limit.
 const MAX_IDENTITY_LENGTH = 512;
@@ -8,8 +9,21 @@ const MAX_VERSION_LOCATION_COUNT = 1000;
 const MAX_DATASET_VERSION_COUNT = 1000;
 // Mado's catalog permits pages of at most 100 datasets.
 const MAX_CATALOG_PAGE_SIZE = 100;
+// Mado allows at most 128 namespaces per access token; scopes are a short fixed list.
+const MAX_TOKEN_NAMESPACE_COUNT = 128;
+const MAX_TOKEN_SCOPE_COUNT = 16;
 
 const identitySchema = z.string().min(1).max(MAX_IDENTITY_LENGTH);
+/**
+ * `GET /api/mado/access-token`: the calling token's own permissions; Mado never lists other tokens.
+ * Unknown fields such as the token ID are dropped so only these fields are stored.
+ */
+export const madoAccessTokenGrantSchema: z.ZodType<MadoAccessTokenGrant> = z.object({
+  name: z.string().max(MAX_IDENTITY_LENGTH),
+  scopes: z.array(identitySchema).max(MAX_TOKEN_SCOPE_COUNT),
+  namespaces: z.array(identitySchema).max(MAX_TOKEN_NAMESPACE_COUNT),
+  expiresAt: z.iso.datetime({ offset: true }).nullable(),
+});
 const uriSchema = z
   .string()
   .min(1)
@@ -71,8 +85,7 @@ export const madoVersionDetailSchema = madoVersionSchema.extend({
 export type MadoVersion = z.infer<typeof madoVersionSchema>;
 export type MadoDataset = z.infer<typeof madoDatasetSchema>;
 export type MadoVersionDetail = z.infer<typeof madoVersionDetailSchema>;
+/** One Mado access token reads datasets, sends run records and, if allowed, reads capacity. */
 export interface MadoCredentials {
-  readToken?: string;
-  lineageToken?: string;
-  metricsToken?: string;
+  accessToken?: string;
 }

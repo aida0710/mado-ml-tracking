@@ -29,7 +29,7 @@ export async function enqueueRunEvent(connection: Connection, run: Run): Promise
     connection,
     `SELECT * FROM plugin_connections WHERE project_id=$1 AND enabled AND kind='mado' AND config IS NOT NULL
       AND NOT migration_pending AND encrypted_credentials IS NOT NULL
-      AND credentials_configured->>'readToken'='true' AND credentials_configured->>'lineageToken'='true' FOR SHARE`,
+      AND credentials_configured->>'accessToken'='true' FOR SHARE`,
     [run.projectId],
   );
   for (const plugin of plugins) {

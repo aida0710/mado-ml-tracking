@@ -117,7 +117,6 @@ try {
         apiUrl: 'http://127.0.0.1:9',
         webUrl: 'http://127.0.0.1:9',
         lineageUrl: 'http://127.0.0.1:9',
-        namespaces: ['verification'],
         jobNamespace: 'mado-model-tracking',
         storageSystemKey: 'mado-model-tracking',
       },
@@ -139,7 +138,6 @@ try {
     await dialog.getByLabel('名前').fill(pluginName);
     await dialog.getByLabel('Mado API URL').fill('http://127.0.0.1:9');
     await dialog.getByLabel('Mado Web URL').fill('http://127.0.0.1:9');
-    await dialog.getByLabel('許可Namespace').fill('verification');
     await dialog.getByRole('button', { name: '保存', exact: true }).click();
     await dialog.waitFor({ state: 'hidden' });
     plugin = (await getJson(adminPage, pluginPath)).items.find((item) => item.name === pluginName);
@@ -152,7 +150,7 @@ try {
   await check.waitFor();
   assert.equal(await check.isDisabled(), true);
   await projectAdminPage
-    .getByText('Madoの参照用・送信用キーを設定してください。', { exact: false })
+    .getByText('Madoのアクセストークンを設定してください。', { exact: false })
     .waitFor();
   assert.equal(
     await projectAdminPage.getByRole('button', { name: 'Madoの接続設定', exact: true }).count(),

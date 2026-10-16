@@ -1,4 +1,9 @@
-import type { MadoPluginConfig, PluginConnection, PluginManifest } from '@mmt/contracts';
+import type {
+  MadoAccessTokenGrant,
+  MadoPluginConfig,
+  PluginConnection,
+  PluginManifest,
+} from '@mmt/contracts';
 
 /** Persisted fields only; the DTO is assembled explicitly so ciphertext can never leak. */
 export interface PluginConnectionRecord {
@@ -16,5 +21,6 @@ export interface PluginConnectionRecord {
   tokenEnv: string;
   enabled: boolean;
   manifest: PluginManifest | null;
+  accessTokenGrant: MadoAccessTokenGrant | null;
   createdAt: string;
 }

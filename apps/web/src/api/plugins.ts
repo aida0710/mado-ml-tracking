@@ -4,7 +4,6 @@ import type {
   PluginConnection,
   PluginCreate,
   PluginDataset,
-  PluginManifest,
   PluginPatch,
 } from '@mmt/contracts';
 import { encodeId, invalidResponseError, jsonRequest, projectPath, request, requestItems } from './http';
@@ -22,7 +21,7 @@ export const pluginsApi = {
   update: (projectId: string, id: string, body: PluginPatch) =>
     request<PluginConnection>(pluginPath(projectId, id), jsonRequest('PATCH', body)),
   check: (projectId: string, id: string) =>
-    request<PluginManifest>(`${pluginPath(projectId, id)}/check`, { method: 'POST' }),
+    request<PluginConnection>(`${pluginPath(projectId, id)}/check`, { method: 'POST' }),
   metrics: async (projectId: string, id: string, signal?: AbortSignal) => {
     const payload = await request<{ prometheus: string }>(`${pluginPath(projectId, id)}/metrics`, { signal });
     if (typeof payload.prometheus !== 'string') throw invalidResponseError();

@@ -14,8 +14,13 @@ api.state.loggedIn = true;
 const plugin = {
   ...api.state.plugins[0], name: 'Mado', kind: 'mado', configurationStatus: 'ready',
   configRevision: 1, config: null, enabled: false,
-  credentialsConfigured: { readToken: false, lineageToken: false, metricsToken: false },
+  credentialsConfigured: { accessToken: false }, accessTokenGrant: null,
   secretStorageAvailable: true, tokenConfigured: false, baseUrl: '', tokenEnv: '',
+};
+// What the fixture Mado reports for the saved access token at each connection check.
+const accessTokenGrant = {
+  name: 'ML Tracking', scopes: ['lineage:read', 'lineage:write', 'metrics:read'],
+  namespaces: ['mado-model-tracking', 'review'], expiresAt: null,
 };
 api.state.plugins = [];
 const projectId = api.state.project.id;
@@ -41,7 +46,7 @@ function createDataset(revision) {
 }
 function manifest() {
   return { id: 'mado', name: 'Mado', version: 'builtin', protocolVersion: '1.0',
-    capabilities: ['datasets:search', 'lineage:publish', ...(plugin.credentialsConfigured.metricsToken ? ['storage:metrics'] : [])] };
+    capabilities: ['datasets:search', 'lineage:publish', ...(accessTokenGrant.scopes.includes('metrics:read') ? ['storage:metrics'] : [])] };
 }
 function availability() {
   const connections = api.state.plugins.filter(connection => connection.kind === 'mado');
@@ -53,11 +58,9 @@ function availability() {
     configRevision: 0, webUrl: null, canImport: false }];
 }
 function saveCredentials(credentials) {
-  if (!credentials) return;
-  for (const name of ['readToken', 'lineageToken', 'metricsToken']) {
-    if (Object.hasOwn(credentials, name)) plugin.credentialsConfigured[name] = credentials[name] !== null;
-  }
-  plugin.tokenConfigured = plugin.credentialsConfigured.readToken && plugin.credentialsConfigured.lineageToken;
+  if (!credentials?.accessToken) return;
+  plugin.credentialsConfigured.accessToken = true;
+  plugin.tokenConfigured = true;
 }
 
 await context.route(url => url.pathname.startsWith('/api/'), async route => {
@@ -79,7 +82,7 @@ await context.route(url => url.pathname.startsWith('/api/'), async route => {
     if (api.state.plugins.length) {
       const added = { ...plugin, id: '20000000-0000-4000-8000-000000000002',
         name: body.name, config: body.config, configRevision: 1, enabled: false, manifest: null,
-        tokenConfigured: false, credentialsConfigured: { readToken: false, lineageToken: false, metricsToken: false } };
+        accessTokenGrant: null, tokenConfigured: false, credentialsConfigured: { accessToken: false } };
       api.state.plugins.push(added);
       return reply(added);
     }
@@ -91,10 +94,12 @@ await context.route(url => url.pathname.startsWith('/api/'), async route => {
   if (pathname === pluginPath && method === 'PATCH') {
     assert.equal(Object.hasOwn(body, 'baseUrl'), false);
     assert.equal(Object.hasOwn(body, 'tokenEnv'), false);
+    assert.equal(Object.hasOwn(body.config ?? {}, 'namespaces'), false, 'Namespaces come from the access token');
     if (body.config || body.credentials) {
       assert.equal(body.expectedRevision, plugin.configRevision);
       plugin.configRevision++;
       plugin.manifest = null;
+      plugin.accessTokenGrant = null;
     }
     if (body.config) plugin.config = body.config;
     if (body.name) plugin.name = body.name;
@@ -104,7 +109,8 @@ await context.route(url => url.pathname.startsWith('/api/'), async route => {
   }
   if (pathname === `${pluginPath}/check`) {
     plugin.manifest = manifest();
-    return reply(plugin.manifest);
+    plugin.accessTokenGrant = accessTokenGrant;
+    return reply(plugin);
   }
   if (pathname === `${pluginPath}/datasets/search`) {
     assert.equal(body.expectedRevision, plugin.configRevision);
@@ -175,30 +181,33 @@ try {
   assert.equal(calls.some(call => /\/(check|metrics|datasets\/search)$/.test(call.pathname)), false);
   await screenshot('mado-unconfigured-ja');
   await page.getByRole('button', { name: 'Madoの接続設定', exact: true }).click();
+  assert.equal(await dialog().getByLabel('許可Namespace').count(), 0, 'Namespaces come from the access token, not from input');
   await dialog().getByLabel('Mado API URL').fill('http://mado-api.invalid');
   await dialog().getByLabel('Mado Web URL').fill('https://mado-web.invalid');
-  await dialog().getByLabel('許可Namespace').fill('review');
-  await dialog().getByLabel('参照用キー（lineage:read）').fill('browser-read-fixture');
+  await dialog().getByLabel('アクセストークン').fill('browser-access-fixture');
   const languageTab = await context.newPage();
   await languageTab.goto(`${base}/projects/${projectId}/plugins`);
   await languageTab.getByRole('heading', { name: '連携', exact: true }).waitFor();
   await switchLanguage('English', languageTab);
   assert.equal(await dialog().getByLabel('Mado API URL').inputValue(), 'http://mado-api.invalid');
-  assert.equal(await dialog().getByLabel('Read key (lineage:read)').inputValue(), 'browser-read-fixture');
+  assert.equal(await dialog().getByLabel('Access token').inputValue(), 'browser-access-fixture');
   await switchLanguage('日本語', languageTab);
   await languageTab.close();
+  await screenshot('mado-settings-dialog-ja');
   await dialog().getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
   assert.equal(plugin.enabled, false);
   assert.equal(await page.getByLabel('データセットを検索', { exact: true }).count(), 0);
-  assert.equal(await page.getByTestId('plugin-toggle').isDisabled(), true, 'A read key alone must not enable Run delivery');
+  assert.equal(await page.getByText('接続を確認すると表示します', { exact: true }).count(), 3,
+    'Permissions, namespaces and expiration are unknown until the connection is checked');
   await checkConnection();
+  await page.getByText('mado-model-tracking、review', { exact: true }).waitFor();
+  await page.getByText('DataLineageの読み取り、DataLineageの送信、Capacityの読み取り', { exact: true }).waitFor();
   assert.equal(await page.locator('.storage-metrics').count(), 0, 'Disabled integration must not fetch metrics automatically');
+  await screenshot('mado-checked-ja');
   await page.getByRole('button', { name: 'Madoの接続設定', exact: true }).click();
-  assert.equal(await dialog().getByLabel('参照用キー（lineage:read）').inputValue(), '', 'Saved keys must not be returned to the browser');
-  await dialog().getByLabel('送信用キー（lineage:write）').fill('browser-write-fixture');
-  await dialog().getByLabel('容量取得用キー（metrics:read、任意）').fill('browser-metrics-fixture');
-  await dialog().getByRole('button', { name: '保存', exact: true }).click();
+  assert.equal(await dialog().getByLabel('アクセストークン').inputValue(), '', 'Saved tokens must not be returned to the browser');
+  await dialog().getByRole('button', { name: 'キャンセル', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
   const initialRevision = plugin.configRevision;
   await page.getByTestId('plugin-toggle').click();
@@ -215,7 +224,9 @@ try {
   await switchLanguage('日本語');
 
   console.log('Built-in Mado: credential revision invalidation, fixed-version import and disable');
-  await editConnection('参照用キー（lineage:read）', 'browser-replacement-fixture');
+  await editConnection('アクセストークン', 'browser-replacement-fixture');
+  assert.equal(await page.getByText('接続を確認すると表示します', { exact: true }).count(), 3,
+    'A replaced token must be checked again before its namespaces are shown');
   const importedRevision = plugin.configRevision;
   await checkConnection();
   await searchConnection();
@@ -288,7 +299,6 @@ try {
   await dialog().getByLabel('名前').fill('Secondary Mado');
   await dialog().getByLabel('Mado API URL').fill('https://secondary-api.invalid');
   await dialog().getByLabel('Mado Web URL').fill('https://secondary-web.invalid');
-  await dialog().getByLabel('許可Namespace').fill('review');
   await dialog().getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
   await page.getByRole('heading', { name: 'Secondary Mado', exact: true }).waitFor();

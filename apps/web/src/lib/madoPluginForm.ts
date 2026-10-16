@@ -13,13 +13,9 @@ export function getMadoPluginFormValues(plugin: PluginConnection | null): FormVa
     apiUrl: config?.apiUrl ?? '',
     webUrl: config?.webUrl ?? '',
     lineageUrl: config?.lineageUrl ?? '',
-    namespaces: config?.namespaces.join('\n') ?? '',
     jobNamespace: config?.jobNamespace ?? DEFAULT_MADO_JOB_NAMESPACE,
     storageSystemKey: config?.storageSystemKey ?? DEFAULT_MADO_STORAGE_SYSTEM_KEY,
-    readToken: '',
-    lineageToken: '',
-    metricsToken: '',
-    removeMetricsToken: 'false',
+    accessToken: '',
   };
 }
 
@@ -29,18 +25,13 @@ export function getMadoPluginConfig(values: FormValues): MadoPluginConfig {
     apiUrl,
     webUrl: getFieldValue(values, 'webUrl').trim(),
     lineageUrl: getFieldValue(values, 'lineageUrl').trim() || apiUrl,
-    namespaces: [...new Set(getFieldValue(values, 'namespaces').split(/[\n,]/).map((name) => name.trim()).filter(Boolean))],
     jobNamespace: getFieldValue(values, 'jobNamespace').trim(),
     storageSystemKey: getFieldValue(values, 'storageSystemKey').trim(),
   };
 }
 
+/** A blank token field keeps the saved token, so nothing is sent for it. */
 export function getMadoPluginCredentials(values: FormValues): MadoPluginCredentialsInput | undefined {
-  const credentials: MadoPluginCredentialsInput = {};
-  for (const name of ['readToken', 'lineageToken', 'metricsToken'] as const) {
-    const token = getFieldValue(values, name);
-    if (token) credentials[name] = token;
-  }
-  if (values.removeMetricsToken === 'true') credentials.metricsToken = null;
-  return Object.keys(credentials).length ? credentials : undefined;
+  const accessToken = getFieldValue(values, 'accessToken');
+  return accessToken ? { accessToken } : undefined;
 }

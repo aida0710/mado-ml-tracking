@@ -791,20 +791,26 @@ export interface PluginManifest {
   capabilities: string[];
 }
 export type PluginKind = 'mado' | 'legacy';
+/** The namespaces come from the access token's grant in Mado; they are not entered here. */
 export interface MadoPluginConfig {
   apiUrl: string;
   webUrl: string;
   lineageUrl: string;
-  namespaces: string[];
   jobNamespace: string;
   storageSystemKey: string;
 }
-/** Secrets are accepted only in write requests. Omitted values keep the saved credential. */
+/** Secrets are accepted only in write requests. Omitting the token keeps the saved one. */
 export interface MadoPluginCredentialsInput {
-  readToken?: string;
-  lineageToken?: string;
-  metricsToken?: string | null;
+  accessToken?: string;
 }
+import type { MadoAccessTokenGrant } from './madoAccessTokenGrant.js';
+export type { MadoAccessTokenGrant } from './madoAccessTokenGrant.js';
+export {
+  ALL_MADO_NAMESPACES,
+  MADO_SCOPES,
+  allowsAllMadoNamespaces,
+  allowsMadoNamespace,
+} from './madoAccessTokenGrant.js';
 export interface PluginCreate {
   kind: 'mado';
   name?: string;
@@ -827,15 +833,17 @@ export interface PluginConnection {
   configurationStatus: 'ready' | 'migration_pending' | 'unsupported';
   config: MadoPluginConfig | null;
   configRevision: number;
-  credentialsConfigured: { readToken: boolean; lineageToken: boolean; metricsToken: boolean };
+  credentialsConfigured: { accessToken: boolean };
   secretStorageAvailable: boolean;
   /** Legacy connection information is restricted to administrators. */
   baseUrl: string;
   tokenEnv: string;
-  /** Both Mado read/write credentials can be decrypted by this API server. */
+  /** The Mado access token can be decrypted by this API server. */
   tokenConfigured: boolean;
   enabled: boolean;
   manifest: PluginManifest | null;
+  /** Set by the last connection check and cleared when the destination or access token changes. */
+  accessTokenGrant: MadoAccessTokenGrant | null;
   createdAt: string;
 }
 /** Safe for Project viewers: no credentials, token references or server-side API destinations. */

@@ -16,7 +16,6 @@ export function MadoSettingsDialog({ plugin, onClose, onSaved }: {
   useLocale();
   const { project } = useProject();
   const form = useMadoPluginForm({ projectId: project.id, plugin });
-  const configured = plugin?.credentialsConfigured;
   return <Dialog title={pluginsText.madoSettings} onClose={onClose} busy={form.pending}>
     <form onSubmit={(event) => {
       event.preventDefault();
@@ -30,13 +29,10 @@ export function MadoSettingsDialog({ plugin, onClose, onSaved }: {
           { name: 'apiUrl', label: pluginsText.madoApiUrl, type: 'url', required: true },
           { name: 'webUrl', label: pluginsText.madoWebUrl, type: 'url', required: true },
           { name: 'lineageUrl', label: pluginsText.madoLineageUrl, type: 'url', hint: pluginsText.madoLineageUrlHint },
-          { name: 'namespaces', label: pluginsText.madoNamespaces, type: 'textarea', required: true, hint: pluginsText.madoNamespacesHint },
-          { name: 'jobNamespace', label: pluginsText.madoJobNamespace, required: true },
+          { name: 'jobNamespace', label: pluginsText.madoJobNamespace, required: true, hint: pluginsText.madoJobNamespaceHint },
           { name: 'storageSystemKey', label: pluginsText.madoStorageSystemKey, required: true },
-          { name: 'readToken', label: pluginsText.madoReadToken, type: 'password', hint: configured?.readToken ? pluginsText.savedCredentialHint : pluginsText.readCredentialHint },
-          { name: 'lineageToken', label: pluginsText.madoLineageToken, type: 'password', hint: configured?.lineageToken ? pluginsText.savedCredentialHint : pluginsText.writeCredentialHint },
-          { name: 'metricsToken', label: pluginsText.madoMetricsToken, type: 'password', hint: configured?.metricsToken ? pluginsText.savedCredentialHint : pluginsText.optionalCredentialHint, visible: (values) => values.removeMetricsToken !== 'true' },
-          ...(configured?.metricsToken ? [{ name: 'removeMetricsToken', label: pluginsText.madoRemoveMetricsToken, type: 'checkbox' as const }] : []),
+          { name: 'accessToken', label: pluginsText.madoAccessToken, type: 'password',
+            hint: plugin?.credentialsConfigured.accessToken ? pluginsText.madoSavedAccessTokenHint : pluginsText.madoAccessTokenHint },
         ]} values={form.values} onChange={form.changeValues} />
       </fieldset>
       <ErrorNotice message={form.error} />

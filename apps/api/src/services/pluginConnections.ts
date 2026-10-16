@@ -14,6 +14,14 @@ import type { PluginConnectionRecord } from '../plugins/pluginConnection.js';
 import { requireGlobalAdmin, requireProject } from './accessService.js';
 import { pinLegacyPluginEvents } from './pluginEventMigration.js';
 
+function credentialsRequired(): never {
+  throw new DomainError(
+    422,
+    'Madoのアクセストークンを設定してから有効にしてください',
+    'plugin_credentials_required',
+  );
+}
+
 export class PluginConnections {
   readonly credentials: PluginCredentials;
   constructor(
@@ -52,9 +60,7 @@ export class PluginConnections {
       ];
     return records.map((plugin) => {
       const configured = Boolean(
-        plugin.config &&
-          !plugin.migrationPending &&
-          this.credentials.hasRequiredCredentials(plugin),
+        plugin.config && !plugin.migrationPending && this.credentials.hasAccessToken(plugin),
       );
       return {
         kind: 'mado',
@@ -82,19 +88,11 @@ export class PluginConnections {
           id,
           secretKeyId: null,
           encryptedCredentials: null,
-          credentialsConfigured: { readToken: false, lineageToken: false, metricsToken: false },
+          credentialsConfigured: { accessToken: false },
         },
         input.credentials,
       );
-      if (
-        input.enabled &&
-        (!secrets.credentialsConfigured.readToken || !secrets.credentialsConfigured.lineageToken)
-      )
-        throw new DomainError(
-          422,
-          '参照用と送信用のキーを設定してから有効にしてください',
-          'plugin_credentials_required',
-        );
+      if (input.enabled && !secrets.credentialsConfigured.accessToken) credentialsRequired();
       const plugin = (await first<PluginConnectionRecord>(
         connection,
         `INSERT INTO plugin_connections(id,project_id,name,kind,config,config_revision,secret_key_id,encrypted_credentials,credentials_configured,enabled)
@@ -152,18 +150,15 @@ export class PluginConnections {
         name: input.name ?? plugin.name,
         enabled: input.enabled ?? plugin.enabled,
         configRevision: plugin.configRevision + 1,
-        manifest: input.config || input.credentials ? null : plugin.manifest,
       };
-      if (updated.enabled && updated.config && !this.credentials.hasRequiredCredentials(updated))
-        throw new DomainError(
-          422,
-          '参照用と送信用のキーを設定してから有効にしてください',
-          'plugin_credentials_required',
-        );
+      // A checked result describes the previous destination and token; check the new ones again.
+      const isCheckStillValid = !input.config && !input.credentials?.accessToken;
+      if (updated.enabled && updated.config && !this.credentials.hasAccessToken(updated))
+        credentialsRequired();
       const saved = (await first<PluginConnectionRecord>(
         connection,
         `UPDATE plugin_connections SET name=$2,config=$3::jsonb,config_revision=$4,secret_key_id=$5,encrypted_credentials=$6,
-          credentials_configured=$7::jsonb,enabled=$8,manifest=$9::jsonb WHERE id=$1 RETURNING *`,
+          credentials_configured=$7::jsonb,enabled=$8,manifest=$9::jsonb,access_token_grant=$10::jsonb WHERE id=$1 RETURNING *`,
         [
           plugin.id,
           updated.name,
@@ -173,7 +168,10 @@ export class PluginConnections {
           secrets.encryptedCredentials,
           JSON.stringify(secrets.credentialsConfigured),
           updated.enabled,
-          updated.manifest ? JSON.stringify(updated.manifest) : null,
+          isCheckStillValid && plugin.manifest ? JSON.stringify(plugin.manifest) : null,
+          isCheckStillValid && plugin.accessTokenGrant
+            ? JSON.stringify(plugin.accessTokenGrant)
+            : null,
         ],
       ))!;
       // Migration resolves the bridge's real destination without replacing its UUID or event IDs.
@@ -238,11 +236,12 @@ export class PluginConnections {
       configRevision: plugin.configRevision,
       credentialsConfigured: plugin.credentialsConfigured,
       secretStorageAvailable: this.credentials.available,
-      tokenConfigured: this.credentials.hasRequiredCredentials(plugin),
+      tokenConfigured: this.credentials.hasAccessToken(plugin),
       baseUrl: plugin.baseUrl,
       tokenEnv: plugin.tokenEnv,
       enabled: plugin.enabled,
       manifest: plugin.manifest,
+      accessTokenGrant: plugin.accessTokenGrant,
       createdAt: plugin.createdAt,
     };
   }

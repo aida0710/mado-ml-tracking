@@ -25,9 +25,11 @@ export function useMadoPluginConnection({ projectId, plugin, onSaved, onRetried 
   }
   function check() {
     if (!plugin) return;
-    runConnectionOperation(() => pluginsApi.check(projectId, plugin.id), () => {
+    // The checked connection carries the access token's grant read from Mado.
+    runConnectionOperation(() => pluginsApi.check(projectId, plugin.id), (checkedPlugin) => {
       setChecked(true);
       setSuccess({ kind: 'checked' });
+      onSaved(checkedPlugin);
     });
   }
   function toggle() {
