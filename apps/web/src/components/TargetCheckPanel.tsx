@@ -117,7 +117,7 @@ function TargetCheckDetails({
             <dd className="mono">{check.workerId}</dd>
           </>
         )}
-        {check.result?.version === 2 && (
+        {check.result && (
           <>
             <dt>{text.hostFacts}</dt>
             <dd>{formatCheckedHost(check.result.host)}</dd>

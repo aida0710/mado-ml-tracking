@@ -153,7 +153,7 @@ export async function siteFixture(harness: Harness, overrides: Record<string, un
       await request(harness.app, '/api/launcher/site-submissions/claim', {
         method: 'POST',
         token,
-        body: {},
+        body: { capabilities: [] },
       }),
       200,
     );

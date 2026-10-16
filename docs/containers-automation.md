@@ -55,7 +55,7 @@ SDKを使うコードは、RunのメトリクスやArtifactを既存APIへ保存
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "complete": true,
   "artifacts": [
     {
@@ -75,7 +75,7 @@ manifestのSHA256とbyte数は実ファイルと一致させます。すべて�
 
 ### 出力が多いとき（音声の推論など）
 
-出力ファイルは1つのJobで10000件まで保存できます（workerの`MMT_WORKER_MAX_OUTPUT_FILES`で変更）。`result.json`は1MiBまでなので、数千件のファイルは`result.json`に並べず、JSON Linesのファイル（1行に1件`{"path","sha256","size","mimeType"}`）に書いて`artifactsManifest`で指します。このときは`"version": 2`にします。
+出力ファイルは1つのJobで10000件まで保存できます（workerの`MMT_WORKER_MAX_OUTPUT_FILES`で変更）。`result.json`は1MiBまでなので、数千件のファイルは`result.json`に並べず、JSON Linesのファイル（1行に1件`{"path","sha256","size","mimeType"}`）に書いて`artifactsManifest`で指します。形式は`"version": 2`に統一します。
 
 ```json
 {"version": 2, "complete": true, "artifactsManifest": "artifacts.jsonl"}
@@ -99,7 +99,7 @@ manifestのSHA256とbyte数は実ファイルと一致させます。すべて�
 - `modelId`を省略すると、Taskの「成功時に出力モデルを登録」で選んだModelへ登録します。Taskで設定していない場合は`modelId`を書きます。Taskと別のModelは指定できません（どちらに登録されたか分からなくなるため）。
 - 同じModelをTaskでも設定している場合、登録は宣言の1回だけで、下流の推論・評価も1回だけ起動します。
 - 宣言したモデルの推論・評価は、学習Runが成功してから起動します。失敗・キャンセルなら起動しません。
-- `datasets`は`{datasetId, path または uri, digest, schema?, metadata?}`。`path`の場合、保存したArtifactのファイル一覧を固定したバージョンを登録し、後続のworkerがファイルを取得できます。`path`にディレクトリ（末尾の`/`なし）を書くと、その下の出力ファイルすべてを1つのバージョンにします。ファイルのパスはそのディレクトリからの相対パスです。URIは`mmt-dataset://<バージョンID>`、digestはサーバーがmanifestから計算します。`path`のdigestフィールドは互換性のため受け付けます。外部`uri`の場合は指定したURIとdigestを保存します。元のRunの入力バージョンは親バージョンとして記録します。
+- `datasets`は`{datasetId,path,schema?,metadata?}`または`{datasetId,uri,digest,schema?,metadata?}`。`path`の場合、保存したArtifactのファイル一覧を固定したバージョンを登録し、後続のworkerがファイルを取得できます。`path`にディレクトリ（末尾の`/`なし）を書くと、その下の出力ファイルすべてを1つのバージョンにします。ファイルのパスはそのディレクトリからの相対パスです。URIは`mmt-dataset://<バージョンID>`、digestはサーバーがmanifestから計算します。`path`にdigestを指定すると検証エラーになります。外部`uri`の場合は指定したURIとdigestを保存します。元のRunの入力バージョンは親バージョンとして記録します。
 - モデルを宣言できるのはtraining / finetuningのRunだけです。workerのtokenに`registry:write`が要ります（無いとJobはfailedになります）。
 
 ### 出力の上限

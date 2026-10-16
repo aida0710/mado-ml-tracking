@@ -72,6 +72,7 @@ export async function executionFixture(harness: Harness) {
       method: 'POST',
       cookie: editor.cookie,
       body: {
+        runtime: { kind: 'python' },
         version: 'v1',
         source: { kind: 'inline', files: { 'main.py': 'print("CPU test execution")\n' } },
         entrypoint: ['python', 'main.py'],
@@ -99,6 +100,7 @@ export async function executionFixture(harness: Harness) {
       method: 'POST',
       cookie: administrator.cookie,
       body: {
+        runtimeKinds: ['python'],
         name: 'Local test target',
         host: '127.0.0.1',
         port: 22,

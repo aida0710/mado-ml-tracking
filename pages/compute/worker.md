@@ -90,7 +90,7 @@ loginctl enable-linger "$USER"
 
 実行すると、tokenの入力を求められます。入力した文字は表示されません。tokenをコマンドの引数に書かないでください。
 
-`--target-ids`は省略できます。コンピュータを足す前にworkerを入れるときは、省略してかまいません。省略したworkerも、［コンピュータを追加］の［接続に使うworker］で選べば、接続確認とディレクトリの読み取りを受け取ります（[SSH・Localのコンピュータ](/compute/targets#step-1-connection)）。workerを選んでいない確認（以前の画面やAPIから頼んだもの）を受け取るのは、`--target-ids`にそのコンピュータを含むworkerだけです。コンピュータのIDは、全体設定の「コンピュータ」でそのコンピュータの名前を押すと、詳細の`コンピュータID`に［コピー］付きで出ます。その下の「workerの設定」には、このページのURLとそのIDを入れた、この節のコマンド（`--worker-id`はworkerのマシンのホスト名）と、systemdを使わずに環境変数で動かす例があります。「workerの設定」は、そのコンピュータの所有者と全体管理者にだけ出ます。ほかの人には、概要の「workerの設定」の行に、誰が設定するか（所有者か全体管理者）だけを出します。
+`--target-ids`は省略できます。コンピュータを足す前にworkerを入れるときは、省略してかまいません。省略したworkerも、［コンピュータを追加］の［接続に使うworker］で選べば、接続確認とディレクトリの読み取りを受け取ります（[SSH・Localのコンピュータ](/compute/targets#step-1-connection)）。workerを選んでいない確認を受け取るのは、`--target-ids`にそのコンピュータを含むworkerだけです。コンピュータのIDは、全体設定の「コンピュータ」でそのコンピュータの名前を押すと、詳細の`コンピュータID`に［コピー］付きで出ます。その下の「workerの設定」には、このページのURLとそのIDを入れた、この節のコマンド（`--worker-id`はworkerのマシンのホスト名）と、systemdを使わずに環境変数で動かす例があります。「workerの設定」は、そのコンピュータの所有者と全体管理者にだけ出ます。ほかの人には、概要の「workerの設定」の行に、誰が設定するか（所有者か全体管理者）だけを出します。
 
 `loginctl enable-linger`は、ログアウトした後もuserのunitを動かし続けるための設定です。
 
@@ -137,9 +137,9 @@ git -C ~/mado-ml-tracking pull
 - `pip`が失敗したら、再起動しません。
 - unitが止まっているのに、手で起動したworkerがstate directoryを使っている場合は、何もせずに止まります。
 
-SSH鍵の候補の報告と、コンピュータのディレクトリの読み取りは、新しい版のworkerで入りました。古い版のworkerは［コンピュータを追加］の［接続に使うworker］に出ないので、更新してください。古い版のままでも、Jobの処理と、`--target-ids`で担当するコンピュータの接続確認はこれまでどおり行います。
+workerはバージョン・ホスト名・並列数・SSHファイル候補・対応する機能をAPIへ報告します。必須項目が欠けると、Jobの取得・再開は422で拒否されます。
 
-[ワークフロー](/compute/workflows)のステップのJobは、データの用途と抽出条件を実行コードへ渡せるworkerだけが受け取ります。古いworkerしかいないコンピュータでは、ワークフローのJobは受け取られずに待機したままになるので、更新してください。
+[ワークフロー](/compute/workflows)のステップのJobは、データの用途と抽出条件を実行コードへ渡せるworkerだけが受け取ります。対応する機能を報告するworkerがいないコンピュータでは、ワークフローのJobは待機したままになります。
 
 ### tokenを差し替える
 
@@ -187,7 +187,7 @@ export MMT_WORKER_TARGET_IDS="<targetのID>"
 export MMT_WORKER_STATE_DIR="$HOME/.local/state/mmt-worker-manual"
 printf 'Worker API token: '; read -r -s MMT_API_TOKEN; echo
 export MMT_API_TOKEN
-~/.local/share/mado-tracking-worker/venv/bin/mado-tracking-worker
+~/.local/share/mado-tracking-worker/venv/bin/mado-tracking-worker run
 ```
 
 `--once`を付けると、Jobを1件処理して終了します。同じstate directoryでworkerを2つ起動すると、後から起動した方を拒否します。
@@ -253,7 +253,8 @@ SDKを入れていないコンテナでは、出力を`/mmt/outputs`に書き、
 
 - `sha256`と`size`は実際のファイルと一致させます。すべての出力を書き終えてから`result.json`を書きます。
 - `models`で宣言した重みは、モデルのバージョンとして登録します。宣言できるのは学習とファインチューニングのRunだけで、workerのtokenに`registry:write`が必要です。
-- `datasets`には`{datasetId, path, digest}`を書くと、出力をデータセットバージョンとして登録します。推論の出力を評価へ渡すときに使います。`path`にディレクトリ（例: `"prepared"`）を書くと、その下の出力ファイルすべてを1つのバージョンにします。前処理で数千の音声を1つのデータセットにするときに使います。バージョンの中のパスは、そのディレクトリからの相対パスです。
+- `path`指定ではdigestを送らず、サーバーがファイル一覧から計算します。`uri`指定ではdigestが必須です。
+- `datasets`には`{datasetId, path}`を書くと、出力をデータセットバージョンとして登録します。推論の出力を評価へ渡すときに使います。`path`にディレクトリ（例: `"prepared"`）を書くと、その下の出力ファイルすべてを1つのバージョンにします。前処理で数千の音声を1つのデータセットにするときに使います。バージョンの中のパスは、そのディレクトリからの相対パスです。
 - 出力ファイルが数千件あるときは、`result.json`に並べず、1行に1件`{"path","sha256","size"}`を書いたJSON Linesのファイルを`"artifactsManifest": "artifacts.jsonl"`で指します。
 
 | 上限 | 値 |

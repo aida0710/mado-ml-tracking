@@ -53,7 +53,7 @@ describe('createOidcRolePolicy', () => {
     allowedGroups: 'mmt-users, mmt-admins',
     roleMappingJson: undefined,
     defaultRole: undefined,
-    adminGroup: undefined,
+
   };
 
   it('OIDC_ALLOWED_GROUPSが空なら作れない', () => {
@@ -65,37 +65,16 @@ describe('createOidcRolePolicy', () => {
     );
   });
 
-  it('対応表もOIDC_ADMIN_GROUPも無ければ従来どおりmmt-adminsが全体管理者になる', () => {
-    expect(createOidcRolePolicy(base)).toEqual({
-      allowedGroups: ['mmt-admins', 'mmt-users'],
-      roleMapping: { 'mmt-admins': 'admin' },
-      defaultRole: 'user',
-    });
+  it('対応表が無いとmmt-adminsも一般ユーザーになる', () => {
+    const configured = createOidcRolePolicy(base);
+    expect(configured.roleMapping).toEqual({});
+    expect(resolveOidcAccess(configured, ['mmt-admins'])).toMatchObject({ isAdmin: false });
   });
 
-  it('OIDC_ADMIN_GROUPだけでも対応表と同じ判定になる', () => {
-    const shorthand = createOidcRolePolicy({ ...base, adminGroup: 'ops' });
-    const mapping = createOidcRolePolicy({ ...base, roleMappingJson: '{"ops":"admin"}' });
-    expect(shorthand).toEqual(mapping);
-    expect(resolveOidcAccess(shorthand, ['mmt-users', 'ops'])).toMatchObject({ isAdmin: true });
-  });
-
-  it('対応表とOIDC_ADMIN_GROUPのadmin groupが一致すれば併用でき、食い違えば作れない', () => {
-    expect(
-      createOidcRolePolicy({
-        ...base,
-        adminGroup: 'mmt-admins',
-        roleMappingJson: '{"mmt-admins":"admin","mmt-users":"user"}',
-      }).roleMapping,
-    ).toEqual({ 'mmt-admins': 'admin', 'mmt-users': 'user' });
-    for (const roleMappingJson of [
-      '{"ops":"admin"}',
-      '{"mmt-admins":"user"}',
-      '{"mmt-admins":"admin","ops":"admin"}',
-    ])
-      expect(() =>
-        createOidcRolePolicy({ ...base, adminGroup: 'mmt-admins', roleMappingJson }),
-      ).toThrow(/OIDC_ADMIN_GROUP disagrees/);
+  it('対応表で明示したgroupだけが管理者になる', () => {
+    const configured = createOidcRolePolicy({ ...base, roleMappingJson: '{"ops":"admin"}' });
+    expect(resolveOidcAccess(configured, ['mmt-users', 'ops'])).toMatchObject({ isAdmin: true });
+    expect(resolveOidcAccess(configured, ['mmt-admins'])).toMatchObject({ isAdmin: false });
   });
 
   it('未知のroleや壊れたJSONは作れない', () => {
@@ -143,14 +122,14 @@ describe('OIDCの起動設定', () => {
     ).toBeNull();
   });
 
-  it('対応表とOIDC_ADMIN_GROUPが食い違うと起動しない', () => {
+  it('OIDC_ADMIN_GROUPを指定すると設定エラーになる', () => {
     expect(() =>
       loadConfig({
         ...oidcEnvironment,
         OIDC_ADMIN_GROUP: 'mmt-admins',
         OIDC_ROLE_MAPPING_JSON: '{"ops":"admin"}',
       }),
-    ).toThrow(/OIDC_ADMIN_GROUP disagrees/);
+    ).toThrow(/OIDC_ADMIN_GROUP/);
   });
 
   it('自動連携は既定で無効、refresh tokenを要求し、openidの無いscopeは拒否する', () => {
@@ -158,7 +137,7 @@ describe('OIDCの起動設定', () => {
     expect(config.oidc).toMatchObject({
       autoLinkVerifiedEmail: false,
       scopes: 'openid profile email offline_access',
-      rolePolicy: { roleMapping: { 'mmt-admins': 'admin' }, defaultRole: 'user' },
+      rolePolicy: { roleMapping: {}, defaultRole: 'user' },
     });
     expect(() => loadConfig({ ...oidcEnvironment, OIDC_SCOPES: 'profile email' })).toThrow(
       /OIDC_SCOPES/,

@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type {
   Job,
@@ -179,7 +180,11 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
     await joinGroup(member.userId);
     await bindGroup(fixture, 'viewer');
     expect(
-      (await request(harness.app, `${fixture.basePath}/runs`, { cookie: member.cookie })).status,
+      (await request(harness.app, `${fixture.basePath}/runs/search`, {
+        cookie: member.cookie,
+        method: 'POST',
+        body: {},
+      })).status,
     ).toBe(200);
     expect((await createRun(fixture, { cookie: member.cookie })).status).toBe(403);
   });
@@ -217,13 +222,25 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
     await leaveGroup(member.userId);
     expect((await createRun(fixture, { cookie: member.cookie })).status).toBe(403);
     expect(
-      (await request(harness.app, `${fixture.basePath}/runs`, { cookie: member.cookie })).status,
+      (await request(harness.app, `${fixture.basePath}/runs/search`, {
+        cookie: member.cookie,
+        method: 'POST',
+        body: {},
+      })).status,
     ).toBe(403);
-    expect((await request(harness.app, `${fixture.basePath}/runs`, { token })).status).toBe(401);
+    expect((await request(harness.app, `${fixture.basePath}/runs/search`, {
+      token,
+      method: 'POST',
+      body: {},
+    })).status).toBe(401);
 
     // The token was not revoked: rejoining the group makes it usable again.
     await joinGroup(member.userId);
-    expect((await request(harness.app, `${fixture.basePath}/runs`, { token })).status).toBe(200);
+    expect((await request(harness.app, `${fixture.basePath}/runs/search`, {
+      token,
+      method: 'POST',
+      body: {},
+    })).status).toBe(200);
   });
 
   it('MLflow互換APIのruns/createとArtifactも同じ実効roleで判定する', async () => {
@@ -301,7 +318,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'group-worker' },
+        body: { workerInfo, workerId: 'group-worker' },
       }),
       200,
     );

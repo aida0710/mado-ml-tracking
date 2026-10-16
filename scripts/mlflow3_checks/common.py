@@ -143,6 +143,7 @@ def evaluation_rule(
             environment.project_id,
             name=name,
             version="v1",
+            runtime={"kind": "python"},
             source={"kind": "inline", "files": {"main.py": main_source}},
             entrypoint=[sys.executable, "main.py"],
             supported_model_families=[model_family],

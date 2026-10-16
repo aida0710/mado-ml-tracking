@@ -80,7 +80,7 @@ export function ComputerConnectionFields({
     <>
       <FormFields fields={nameField} values={values} onChange={onChange} />
       {kindPicker}
-      <ComputerVisibilityField values={values} onChange={onChange} target={target} />
+      <ComputerVisibilityField values={values} onChange={onChange} />
       {isSsh && <FormFields fields={sshFields} values={values} onChange={onChange} />}
       <CheckWorkerPicker
         workers={workers}

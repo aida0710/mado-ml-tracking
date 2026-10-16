@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import type {
   CodeVersion,
   Dataset,
@@ -32,6 +33,7 @@ export async function workflowFixture(harness: Harness) {
       method: 'POST',
       cookie: fixture.editor.cookie,
       body: {
+        runtime: { kind: 'python' },
         version: 'workflow-v1',
         source: { kind: 'inline', files: { 'main.py': 'print("workflow")\n' } },
         entrypoint: ['python', 'main.py'],
@@ -139,7 +141,7 @@ export async function workflowFixture(harness: Harness) {
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'workflow-worker', workerInfo: { capabilities } },
+          body: { workerId: 'workflow-worker', workerInfo: { ...workerInfo, capabilities } },
         }),
         200,
       )

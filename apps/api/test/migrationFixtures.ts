@@ -16,18 +16,23 @@ export async function applyMigrationFile(database: pg.Pool, name: string): Promi
 
 /**
  * Applies the migrations that sort before `firstPending` and records them as migrate() does, so a
- * test can insert rows of the older schema and then let migrate() apply the rest. The harness must
- * be created with applyMigrations: false.
+ * test can insert rows of the older schema and then let migrate() apply the rest. A later call with
+ * a later file applies only the migrations not recorded yet. The harness must be created with
+ * applyMigrations: false.
  */
 export async function applyMigrationsBefore(
   database: pg.Pool,
   firstPending: string,
 ): Promise<void> {
   await database.query(
-    'CREATE TABLE schema_migrations(name text PRIMARY KEY,sha256 text NOT NULL,applied_at timestamptz NOT NULL DEFAULT now())',
+    'CREATE TABLE IF NOT EXISTS schema_migrations(name text PRIMARY KEY,sha256 text NOT NULL,applied_at timestamptz NOT NULL DEFAULT now())',
   );
   const earlier = (await readdir(MIGRATIONS))
     .filter((name) => name.endsWith('.sql') && name < firstPending)
     .sort();
-  for (const name of earlier) await applyMigrationFile(database, name);
+  const applied = await database.query<{ name: string }>('SELECT name FROM schema_migrations');
+  const appliedNames = new Set(applied.rows.map((row) => row.name));
+  for (const name of earlier) {
+    if (!appliedNames.has(name)) await applyMigrationFile(database, name);
+  }
 }

@@ -21,8 +21,6 @@ describe('作業ディレクトリとPythonの候補', () => {
       '3.12.3',
       'バージョン不明',
     ]);
-    // A version 1 result (an older worker) has no candidates.
-    expect(knownDirectoryPaths({ ...setupCheckResult, version: 1 } as never)).toEqual([]);
   });
 
   it('/ で終わる入力は、まだ読んでいなければ読む依頼をし、読み込み中と出す', () => {

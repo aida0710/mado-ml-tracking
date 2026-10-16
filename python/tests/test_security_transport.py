@@ -4,6 +4,7 @@ import shlex
 from pathlib import Path
 
 import pytest
+from execution_fixtures import pin_execution
 
 from mado_tracking import ConfigurationError
 from mado_tracking.security import SecretMasker, StreamMasker
@@ -65,7 +66,7 @@ def test_unknown_known_hosts_and_implicit_local_execution_are_rejected(tmp_path:
 def test_supported_run_kinds_are_validated_against_code_version(job_payload: dict, kind: str):
     job_payload["run"]["kind"] = kind
     job_payload["codeVersion"]["taskTypes"] = [kind]
-    assert WorkerJob.parse(job_payload).run["kind"] == kind
+    assert WorkerJob.parse(pin_execution(job_payload)).run["kind"] == kind
     job_payload["codeVersion"]["taskTypes"] = []
     with pytest.raises(ConfigurationError):
-        WorkerJob.parse(job_payload)
+        WorkerJob.parse(pin_execution(job_payload))

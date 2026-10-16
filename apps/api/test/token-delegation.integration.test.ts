@@ -80,7 +80,11 @@ describe.skipIf(!testDatabaseUrl)('tokenからのtoken管理と全体の操作�
       ),
     );
     expect(child.item).toMatchObject({ scopes: ['read'], ownerId: fixture.administrator.userId });
-    expect((await request(harness.app, `${fixture.basePath}/runs`, { token: child.token })).status).toBe(200);
+    expect((await request(harness.app, `${fixture.basePath}/runs/search`, {
+      token: child.token,
+      method: 'POST',
+      body: {},
+    })).status).toBe(200);
 
     const refusals: Array<[Parameters<typeof postToken>[1], string]> = [
       [{ name: 'stronger', projectId: fixture.project.id, scopes: ['runs:write'], expiresAt: inDays(7) }, 'scope_exceeds_issuer'],
@@ -122,9 +126,17 @@ describe.skipIf(!testDatabaseUrl)('tokenからのtoken管理と全体の操作�
     const refused = await revoke(stronger);
     expect(refused.status).toBe(403);
     expect(await errorCode(refused)).toBe('scope_exceeds_issuer');
-    expect((await request(harness.app, `${fixture.basePath}/runs`, { token: stronger.token })).status).toBe(200);
+    expect((await request(harness.app, `${fixture.basePath}/runs/search`, {
+      token: stronger.token,
+      method: 'POST',
+      body: {},
+    })).status).toBe(200);
     expect((await revoke(weaker)).status).toBe(204);
-    expect((await request(harness.app, `${fixture.basePath}/runs`, { token: weaker.token })).status).toBe(401);
+    expect((await request(harness.app, `${fixture.basePath}/runs/search`, {
+      token: weaker.token,
+      method: 'POST',
+      body: {},
+    })).status).toBe(401);
   });
 
   it('全体の監査ログは、Projectに縛られない全体管理者のtokenにaudit:readがあるときだけ読める', async () => {

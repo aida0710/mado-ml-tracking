@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import type {
   Dataset,
   DatasetVersion,
@@ -195,7 +196,7 @@ describe.skipIf(!testDatabaseUrl)('事前学習途中のデータ追加（独立
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'training-stages' },
+          body: { workerInfo, workerId: 'training-stages' },
         }),
         200,
       )

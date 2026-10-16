@@ -18,6 +18,7 @@ from mado_tracking.worker.worker_info import describe_host
 # What a worker without SSH directories (WorkerApi's default) reports about itself.
 WORKER_INFO_WITHOUT_SSH_FILES = {
     **describe_host(),
+    "parallelJobs": 2,
     "sshFiles": {"keyPaths": [], "knownHostsPaths": []},
     "capabilities": list(WORKER_CAPABILITIES),
 }

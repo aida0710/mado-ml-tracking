@@ -133,7 +133,7 @@ launcherのtokenは、launcherのAPI（`/api/launcher/*`）にしか届きませ
 
 runnerは`mado-tracking site-run <仕様の置き場>`で、launcherと`submit`がsiteの作業ディレクトリへzipapp（`.mmt-runner/<バージョン>/mmt-runner.pyz`）として置きます。計算ノードにはPython 3.11以上が要ります。
 
-runnerは置いたlauncher・`submit`と同じバージョンなので、launcherと`submit`はclaimの`capabilities`で、そのrunnerがJobへ渡せる機能を名乗ります（今は`workflowDatasetUsage`。ワークフローのステップに用途・重み・抽出条件を渡せること）。名乗らない古いlauncher・`submit`には、ワークフローのJobは渡されず待機したままになります。ワークフローをsiteで動かすときは、launcherと`mado-tracking`を更新してください。古いAPIが`capabilities`を断ったら、workerと同じく名乗るのをやめてclaimし直し、10分ごとに名乗り直してみます（docs/worker.md「workerの在籍と応答途絶を確認する」）。
+runnerは配置したlauncher・`submit`と同じバージョンです。launcherと`submit`はclaimの必須項目`capabilities`で、そのrunnerがJobへ渡せる機能を報告します（今は`workflowDatasetUsage`。用途・重み・抽出条件を渡せること）。APIは報告された機能に対応するJobを割り当てます。空配列は機能なしとして扱い、項目自体の欠損は422で拒否します。422を受けた要求から項目を削って再送することはありません。
 
 | 仕様の置き場のファイル | 内容 |
 |---|---|

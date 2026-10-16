@@ -21,6 +21,7 @@ describe.skipIf(!testDatabaseUrl)(
         OIDC_ISSUER_URL: provider.issuer,
         OIDC_CLIENT_ID: 'mmt-test',
         OIDC_ALLOWED_GROUPS: 'mmt-users,mmt-admins',
+        OIDC_ROLE_MAPPING_JSON: '{"mmt-admins":"admin","mmt-users":"user"}',
         OIDC_CLIENT_SECRET: 'mock-client-secret',
         OIDC_ALLOW_INSECURE_HTTP: 'true',
         MMT_SESSION_ENCRYPTION_KEY: TEST_SESSION_ENCRYPTION_KEY,
@@ -148,10 +149,9 @@ describe.skipIf(!testDatabaseUrl)(
       }
     });
 
-    it('開発の.envに空のOIDC設定があっても起動でき、DATABASE_URLへfallbackする', () => {
+    it('開発の.envに空のOIDC設定があってもMMT_DATABASE_URLで起動できる', () => {
       const config = loadConfig({
-        MMT_DATABASE_URL: '',
-        DATABASE_URL: testDatabaseUrl,
+        MMT_DATABASE_URL: testDatabaseUrl,
         AUTH_MODE: 'development',
         OIDC_ISSUER_URL: '',
         OIDC_CLIENT_ID: '',

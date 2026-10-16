@@ -16,7 +16,7 @@ MMT_SESSION_ENCRYPTION_KEY is required when AUTH_MODE=hybrid
 
 | Message | Fix |
 | --- | --- |
-| `MMT_DATABASE_URL or DATABASE_URL is required` | Put the database URL in `.env` |
+| `MMT_DATABASE_URL is required` | Put the database URL in `.env` |
 | `OIDC_ISSUER_URL and OIDC_CLIENT_ID are required when AUTH_MODE=...` | Add the Authentik settings, or use `AUTH_MODE=local` |
 | `MMT_SESSION_ENCRYPTION_KEY is required ...`, `... must be base64 of 32 bytes` | Set a value generated with `openssl rand -base64 32` |
 | `OIDC issuer requires HTTPS ...` | Use an HTTPS issuer URL |
@@ -25,7 +25,7 @@ MMT_SESSION_ENCRYPTION_KEY is required when AUTH_MODE=hybrid
 | `AUTH_SESSION_IDLE_SECONDS must not exceed AUTH_SESSION_ABSOLUTE_SECONDS` | Make the idle limit no longer than the absolute limit |
 | `MMT_GIT_SSH_KEY_PATH and MMT_GIT_KNOWN_HOSTS_PATH must be set together` | Set both or remove both |
 
-The API also refuses to start when `OIDC_ALLOWED_GROUPS` is empty, when `OIDC_ROLE_MAPPING_JSON` contains a role other than `admin` and `user`, or when `OIDC_ADMIN_GROUP` and the mapping disagree on the admin group. Setting only one of `MMT_SMTP_URL` and `MMT_SMTP_FROM` also stops it.
+The API also refuses to start when `OIDC_ALLOWED_GROUPS` is empty, when `OIDC_ROLE_MAPPING_JSON` contains a role other than `admin` and `user`. Setting only one of `MMT_SMTP_URL` and `MMT_SMTP_FROM` also stops it.
 
 If it stops after an update, check for newly required settings. `MMT_SESSION_ENCRYPTION_KEY` is required from the version with SSO session rechecks, and `OIDC_ALLOWED_GROUPS` from the version with group-based login.
 

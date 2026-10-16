@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { createHash } from 'node:crypto';
 import { readdir } from 'node:fs/promises';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -494,7 +495,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow multipart upload（独立PostgreSQL）
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'multipart-worker' },
+        body: { workerInfo, workerId: 'multipart-worker' },
       }),
       200,
     );
@@ -549,7 +550,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow multipart upload（独立PostgreSQL）
         database: harness.database,
         stores: createArtifactStores({
           filesystem: createFilesystemArtifactStore(harness.artifactDirectory),
-          s3: createS3ArtifactStore({ client, bucket, prefix: 'artifacts' }),
+          s3: createS3ArtifactStore({ multipartEnabled: true, client, bucket, prefix: 'artifacts' }),
         }),
       });
       try {

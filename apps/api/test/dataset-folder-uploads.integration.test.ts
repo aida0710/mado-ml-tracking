@@ -268,6 +268,7 @@ describe.skipIf(!testDatabaseUrl)('途中で止まったフォルダのアップ
         method: 'POST',
         cookie: fixture.editor.cookie,
         body: {
+          runtime: { kind: 'python' },
           version: 'c1',
           source: { kind: 'artifact', artifactId: source.id },
           entrypoint: ['python', 'main.py'],

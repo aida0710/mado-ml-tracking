@@ -38,9 +38,9 @@ describe('コンピュータの詳細（ssh・local）', () => {
     expect(html).toContain(`>${aliceComputer.id}</code>`);
   });
 
-  it('所有者のいない古いコンピュータでは、全体管理者が設定すると出す', () => {
+  it('管理者所有のコンピュータでは所有者名を表示する', () => {
     const html = render(computeTargetDetails, { id: 'bob', isAdmin: false });
     expect(html).not.toContain(WORKER_SETUP_TITLE);
-    expect(html).toContain('>全体管理者が設定します。</span>');
+    expect(html).toContain('>所有者（Adminさん）か全体管理者が設定します。</span>');
   });
 });

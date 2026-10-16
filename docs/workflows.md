@@ -31,7 +31,7 @@ ML Trackingの入出力の関係もデータリネージです。Data Catalogの
 
 各ステップのRunの親（workerが上流Runとして`MMT_UPSTREAM_RUN_ID`と`upstream-run.json`で渡すRun）は、そのステップが出力データセットを読む前のステップのうち、最も近いステップのRunです。データセットを読まずにモデルだけを受け取るステップでは、モデルを出したステップのRunが親です。固定のデータセットとモデルだけを使うステップには親がありません。たとえば「前処理→学習→評価」で、評価が前処理の出力と学習のモデルを使うと、評価の親は前処理のRunになります。
 
-ステップのJobは、用途と条件を実行コードへ渡せるworker（claimの`workerInfo.capabilities`に`workflowDatasetUsage`を含むもの）だけが受け取ります。古いworkerしかいないコンピュータでは、ワークフローのJobは待機したままになります。ワークフローを使うコンピュータのworkerは更新してください。siteでは、launcherと`mado-tracking submit`がclaimの`capabilities`で、siteに置くrunnerの機能を名乗ります。古いlauncher・`submit`はワークフローのJobを受け取らないので、更新してください（[sites](sites.md)の「runner」）。ワークフローのステップのJobには`MMT_WORKFLOW_EXECUTION_ID`（実行のID）も渡します。
+ステップのJobは、用途と条件を実行コードへ渡せるworker（claimの`workerInfo.capabilities`に`workflowDatasetUsage`を含むもの）だけが受け取ります。対応する機能を報告するworkerがいなければ、ワークフローのJobは待機したままになります。siteでは、launcherと`mado-tracking submit`がclaimの`capabilities`で、siteに置くrunnerの機能を名乗ります。`capabilities`は省略できません（[sites](sites.md)の「runner」）。ワークフローのステップのJobには`MMT_WORKFLOW_EXECUTION_ID`（実行のID）も渡します。
 
 ## 前処理レポート
 

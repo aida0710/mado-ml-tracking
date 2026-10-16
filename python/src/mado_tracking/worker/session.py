@@ -381,7 +381,7 @@ class JobSession:
                     persist=self.persist,
                     temporary_path=self.journal.transfer_path(self.job.id, "snapshot"),
                 )
-            elif status == "finished" and state.get("sourceSnapshotRequired"):
+            elif status == "finished":
                 raise ConfigurationError("Source snapshot is missing; execution evidence could not be saved")
         except LeaseRejected:
             raise

@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CodeVersion, ComputeTarget, Job, Project, Run, WorkerJob } from '@mmt/contracts';
@@ -22,7 +23,7 @@ describe.skipIf(!testDatabaseUrl)('固定runtimeとtarget互換性（独立Postg
     await harness?.close();
   });
 
-  it('従来の登録入力はPythonへ正規化され、targetにもPythonが保存される', async () => {
+  it('runtimeを明示するとCodeVersionとコンピュータにその種類が保存される', async () => {
     const fixture = await executionFixture(harness);
     expect(fixture.codeVersion.runtime).toEqual({ kind: 'python' });
     expect(fixture.target.runtimeKinds).toEqual(['python']);
@@ -321,7 +322,7 @@ describe.skipIf(!testDatabaseUrl)('固定runtimeとtarget互換性（独立Postg
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'runtime-worker' },
+        body: { workerInfo, workerId: 'runtime-worker' },
       }),
       200,
     );
@@ -339,7 +340,7 @@ describe.skipIf(!testDatabaseUrl)('固定runtimeとtarget互換性（独立Postg
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'runtime-worker' },
+        body: { workerInfo, workerId: 'runtime-worker' },
       }),
       200,
     );
@@ -394,7 +395,7 @@ describe.skipIf(!testDatabaseUrl)('固定runtimeとtarget互換性（独立Postg
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'sif-worker' },
+          body: { workerInfo, workerId: 'sif-worker' },
         })
       ).status,
     ).toBe(422);

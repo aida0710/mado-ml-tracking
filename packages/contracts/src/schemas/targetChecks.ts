@@ -104,16 +104,13 @@ const targetCheckFactsShape = {
 };
 export const targetCheckResultSchema = namedContractSchema(
   'TargetCheckResult',
-  z.discriminatedUnion('version', [
-    z.strictObject({ version: z.literal(1), ...targetCheckFactsShape }),
-    z.strictObject({
-      version: z.literal(2),
-      ...targetCheckFactsShape,
-      host: targetCheckHostSchema,
-      pythons: z.array(targetCheckPythonSchema),
-      directories: z.array(targetCheckDirectorySchema),
-    }),
-  ]),
+  z.strictObject({
+    version: z.literal(2),
+    ...targetCheckFactsShape,
+    host: targetCheckHostSchema,
+    pythons: z.array(targetCheckPythonSchema),
+    directories: z.array(targetCheckDirectorySchema),
+  }),
 );
 export const targetCheckWorkerSchema = namedContractSchema(
   'TargetCheckWorker',
@@ -178,8 +175,8 @@ export const targetCheckWorkerPresenceSchema = namedContractSchema(
     tokenName: z.string(),
     projectId: idSchema,
     workerId: z.string(),
-    hostname: z.string().nullable(),
-    version: z.string().nullable(),
+    hostname: z.string(),
+    version: z.string(),
     lastSeenAt: timestampSchema,
     sshFiles: workerSshFilesSchema,
   }),

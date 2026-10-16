@@ -1,3 +1,4 @@
+import { requireDatabaseUrl } from '../apps/api/src/db/databaseSettings.js';
 /**
  * Verify the S3 Artifact store against a real bucket (or a local emulator) inside a dedicated
  * prefix, then remove everything it wrote. Bucket names, endpoints, object keys and credentials
@@ -188,8 +189,7 @@ async function readS3TargetFromDatabase(
   env: NodeJS.ProcessEnv,
   backendName: string,
 ): Promise<S3VerificationTarget> {
-  const databaseUrl = env.MMT_DATABASE_URL ?? env.DATABASE_URL;
-  if (!databaseUrl) throw new Error('MMT_DATABASE_URL is required to read a DB backend');
+  const databaseUrl = requireDatabaseUrl(env);
   const database = new pg.Pool({ connectionString: databaseUrl, max: 1 });
   try {
     const row = await findStorageBackendRow(database, backendName);

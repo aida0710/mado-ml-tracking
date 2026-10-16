@@ -247,6 +247,7 @@ describe('フックの複製', () => {
     maxStartsPerHour: input.maxStartsPerHour ?? 60,
     webhookSignature: input.webhookSignature ?? null,
     createdBy: 'user',
+    createdByName: '研究者',
     runAsUserId: 'user',
     createdAt: '2026-10-11T00:00:00Z',
   });

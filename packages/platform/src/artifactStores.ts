@@ -74,7 +74,7 @@ export function createArtifactStoresFromEnv(env: NodeJS.ProcessEnv = process.env
       forcePathStyle: s3.forcePathStyle,
       ...(s3.credentials ? { credentials: s3.credentials } : {}),
     });
-    stores.s3 = createS3ArtifactStore({ client, bucket: s3.bucket, prefix: s3.prefix });
+    stores.s3 = createS3ArtifactStore({ multipartEnabled: true, client, bucket: s3.bucket, prefix: s3.prefix });
   }
   return createArtifactStores(stores);
 }

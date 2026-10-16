@@ -21,6 +21,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
+from execution_fixtures import pin_execution
 from test_docker_worker import docker_image as docker_image  # noqa: F401
 from test_docker_worker import docker_job, workspace_for
 from test_worker import WorkerServer
@@ -156,7 +157,7 @@ async def run_jobs(settings, servers: list[DatasetServer]) -> None:
         await asyncio.wait_for(
             asyncio.gather(
                 *(
-                    worker.run_job(WorkerJob.parse(server.payload))
+                    worker.run_job(WorkerJob.parse(pin_execution(server.payload)))
                     for worker, server in zip(workers, servers, strict=True)
                 )
             ),
@@ -583,7 +584,7 @@ def staged_container_specification(job_payload, worker_settings, tmp_path) -> tu
         runtime={"kind": "docker", "image": "example.invalid/model@sha256:" + "1" * 64},
         entrypoint=["/bin/true"],
     )
-    specification = execution_specification(WorkerJob.parse(payload), worker_settings)
+    specification = execution_specification(WorkerJob.parse(pin_execution(payload)), worker_settings)
     workspace = tmp_path / "work" / payload["job"]["id"]
     workspace.mkdir(parents=True)
     key = dataset["digest"].removeprefix("sha256:")

@@ -8,6 +8,7 @@ const failedRun = {
   projectId: 'project',
   status: 'failed',
   createdBy: 'editor-a',
+  createdByName: '研究者',
 } as Run;
 
 const render = (run: Run, canRetryJob: boolean) =>

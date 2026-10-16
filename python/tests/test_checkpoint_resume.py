@@ -16,6 +16,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
+from execution_fixtures import pin_execution
 from test_artifact_uploads import PROJECT_ID, RUN_ID, TOKEN, FakeUploadApi
 from test_worker import WorkerServer
 
@@ -233,7 +234,9 @@ def run_worker_job(server: WorkerServer, payload: dict, worker_settings) -> None
     async def scenario():
         worker = Worker(worker_settings, api=server.client())
         try:
-            await asyncio.wait_for(worker.run_job(WorkerJob.parse(payload)), JOB_TIMEOUT_SECONDS)
+            await asyncio.wait_for(
+                worker.run_job(WorkerJob.parse(pin_execution(payload))), JOB_TIMEOUT_SECONDS
+            )
         finally:
             await worker.api.close()
 
@@ -312,7 +315,7 @@ def test_a_checkpoint_other_than_the_runs_pinned_one_is_rejected(job_payload):
     payload, artifact = native_checkpoint_payload(job_payload, archive)
     payload["run"]["resumeCheckpointId"] = str(uuid4())
     with pytest.raises(ConfigurationError, match="pinned checkpoint"):
-        WorkerJob.parse(payload)
+        WorkerJob.parse(pin_execution(payload))
 
 
 def test_a_container_sees_the_checkpoint_under_a_read_only_inputs_mount(
@@ -326,8 +329,11 @@ def test_a_container_sees_the_checkpoint_under_a_read_only_inputs_mount(
         runtime={"kind": "docker", "image": "example.invalid/model@sha256:" + "1" * 64},
         entrypoint=["/bin/true"],
     )
-    specification = execution_specification(WorkerJob.parse(payload), worker_settings)
-    specification["stagedInputs"] = {"checkpoint": {"sha256": sha256(archive), "size": len(archive)}}
+    specification = execution_specification(WorkerJob.parse(pin_execution(payload)), worker_settings)
+    specification["stagedInputs"] = {
+        "datasets": {},
+        "checkpoint": {"sha256": sha256(archive), "size": len(archive)},
+    }
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     (workspace / "checkpoint.tar").write_bytes(archive)
@@ -351,7 +357,7 @@ def test_a_container_sees_the_checkpoint_under_a_read_only_inputs_mount(
 
 
 def test_a_job_without_a_checkpoint_gets_no_resume_variables(job_payload, worker_settings):
-    specification = execution_specification(WorkerJob.parse(job_payload), worker_settings)
+    specification = execution_specification(WorkerJob.parse(pin_execution(job_payload)), worker_settings)
     assert specification["context"]["resumeCheckpoint"] is None
     assert resume_checkpoint_from_environment({}) is None
 
@@ -359,8 +365,11 @@ def test_a_job_without_a_checkpoint_gets_no_resume_variables(job_payload, worker
 def test_a_staged_archive_that_changed_on_the_target_is_not_extracted(job_payload, worker_settings, tmp_path):
     archive = tar_of(CHECKPOINT_FILES)
     payload, artifact = native_checkpoint_payload(job_payload, archive)
-    specification = execution_specification(WorkerJob.parse(payload), worker_settings)
-    specification["stagedInputs"] = {"checkpoint": {"sha256": sha256(archive), "size": len(archive)}}
+    specification = execution_specification(WorkerJob.parse(pin_execution(payload)), worker_settings)
+    specification["stagedInputs"] = {
+        "datasets": {},
+        "checkpoint": {"sha256": sha256(archive), "size": len(archive)},
+    }
     (tmp_path / "checkpoint.tar").write_bytes(tar_of({"model.json": b"swapped"}))
     with pytest.raises(ValueError, match="sha256"):
         install_resume_checkpoint(tmp_path, specification)

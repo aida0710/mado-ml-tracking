@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -138,7 +139,7 @@ describe.skipIf(!testDatabaseUrl)('タスク・固定実行snapshot（独立Post
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'task-worker' },
+          body: { workerInfo, workerId: 'task-worker' },
         }),
         200,
       )
@@ -348,6 +349,7 @@ describe.skipIf(!testDatabaseUrl)('タスク・固定実行snapshot（独立Post
         method: 'POST',
         cookie: other.editor.cookie,
         body: {
+          runtime: { kind: 'python' },
           version: 'v1',
           source: { kind: 'inline', files: { 'main.py': 'pass' } },
           entrypoint: ['python', 'main.py'],
@@ -496,7 +498,7 @@ describe.skipIf(!testDatabaseUrl)('タスク・固定実行snapshot（独立Post
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'safe-event-worker' },
+        body: { workerInfo, workerId: 'safe-event-worker' },
       }),
       200,
     );

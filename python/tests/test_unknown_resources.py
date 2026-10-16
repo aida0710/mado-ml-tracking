@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 import pytest
+from execution_fixtures import pin_execution
 from test_worker import WorkerServer
 
 from mado_tracking.worker.contracts import WorkerJob
@@ -147,7 +148,7 @@ def test_disappeared_python_execution_completes_failed_without_restarting_known_
         worker = Worker(worker_settings, api=server.client())
         try:
             async with asyncio.timeout(5):
-                await worker.run_job(WorkerJob.parse(job_payload))
+                await worker.run_job(WorkerJob.parse(pin_execution(job_payload)))
         finally:
             await worker.api.close()
 

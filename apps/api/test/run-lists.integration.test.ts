@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type {
   CodeVersion,
@@ -20,7 +21,10 @@ async function readRunList(
   harness: Harness,
   reference: { endpoint: string; cookie: string },
 ): Promise<{ body: string; items: Run[] }> {
-  const response = await request(harness.app, reference.endpoint, { cookie: reference.cookie });
+  const response = await request(harness.app, reference.endpoint, {
+    cookie: reference.cookie,
+    ...(reference.endpoint.endsWith('/search') ? { method: 'POST', body: {} } : {}),
+  });
   expect(response.status).toBe(200);
   const body = await response.text();
   return { body, items: (JSON.parse(body) as { items: Run[] }).items };
@@ -38,6 +42,17 @@ describe.skipIf(!testDatabaseUrl)('Run一覧とタスク履歴の概要（独立
     await harness?.close();
   });
 
+  it('Run一覧のGETは404になりPOST検索で一覧を取得する', async () => {
+    const fixture = await workbenchFixture(harness);
+    expect((await request(harness.app, `${fixture.basePath}/runs`, {
+      cookie: fixture.editor.cookie,
+    })).status).toBe(404);
+    const response = await request(harness.app, `${fixture.basePath}/runs/search`, {
+      method: 'POST', cookie: fixture.editor.cookie, body: {},
+    });
+    expect(response.status).toBe(200);
+  });
+
   it('大きなコードの一覧は固定参照の概要を返し、詳細とworker claimにはsnapshotを返す', async () => {
     const fixture = await workbenchFixture(harness);
     const sourceText = `# ${SOURCE_CONTENT_MARKER}${'x'.repeat(SOURCE_PADDING_BYTES)}\n`;
@@ -47,6 +62,7 @@ describe.skipIf(!testDatabaseUrl)('Run一覧とタスク履歴の概要（独立
         method: 'POST',
         cookie: fixture.editor.cookie,
         body: {
+          runtime: { kind: 'python' },
           version: 'large-source',
           source,
           entrypoint: ['python', 'main.py'],
@@ -95,7 +111,7 @@ describe.skipIf(!testDatabaseUrl)('Run一覧とタスク履歴の概要（独立
     const taskRuns = launches.map((launch) => launch.run);
     for (const { endpoint, expectedRuns } of [
       { endpoint: `${fixture.taskPath}/runs`, expectedRuns: taskRuns },
-      { endpoint: `${fixture.basePath}/runs`, expectedRuns: [...taskRuns, nativeRun] },
+      { endpoint: `${fixture.basePath}/runs/search`, expectedRuns: [...taskRuns, nativeRun] },
     ]) {
       const listed = await readRunList(harness, { endpoint, cookie: fixture.viewer.cookie });
       expect(Buffer.byteLength(listed.body)).toBeLessThan(MAX_RUN_LIST_RESPONSE_BYTES);
@@ -169,7 +185,7 @@ describe.skipIf(!testDatabaseUrl)('Run一覧とタスク履歴の概要（独立
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'summary-detail-worker' },
+          body: { workerInfo, workerId: 'summary-detail-worker' },
         }),
         200,
       )
@@ -195,7 +211,7 @@ describe.skipIf(!testDatabaseUrl)('Run一覧とタスク履歴の概要（独立
       }),
       200,
     );
-    const endpoints = [`${fixture.taskPath}/runs`, `${fixture.basePath}/runs`];
+    const endpoints = [`${fixture.taskPath}/runs`, `${fixture.basePath}/runs/search`];
     for (const endpoint of endpoints) {
       const listed = await readRunList(harness, { endpoint, cookie: fixture.viewer.cookie });
       expect(listed.items.map((run) => run.id)).toEqual([launch.run.id]);

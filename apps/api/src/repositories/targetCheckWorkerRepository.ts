@@ -7,7 +7,7 @@ const MAX_CHECK_WORKERS = 100;
 
 // Online, reporting its SSH files (so it claims what is assigned to it), and still holding a live
 // token: a worker one may ask to check a computer.
-const checkWorkerConditionSql = `NOT ${workerOfflineSql('w')} AND w.ssh_files IS NOT NULL
+const checkWorkerConditionSql = `NOT ${workerOfflineSql('w')}
   AND t.revoked_at IS NULL AND (t.expires_at IS NULL OR t.expires_at > now())`;
 
 const CHECK_WORKER_COLUMNS = `w.token_id,t.name AS token_name,w.project_id,w.worker_id,w.hostname,

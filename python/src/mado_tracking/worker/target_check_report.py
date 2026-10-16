@@ -1,4 +1,4 @@
-"""Make a TargetCheckResult fit to send: no secrets, within the API's size, in the version it takes."""
+"""Make a TargetCheckResult fit to send: no secrets, within the API's size, version 2."""
 
 from __future__ import annotations
 
@@ -6,14 +6,11 @@ from typing import Any
 
 from ..security import SecretMasker
 from .reported_text import CONTROL_CHARACTERS, is_one_line_path, json_size, looks_like_secret
-from .target_check_claims import RESULT_VERSION_BEFORE_SETUP
 
 # Matches the API's limit (apps/api/src/domain/targetCheckValidation.ts).
 MAX_DETAIL_LENGTH = 200
 # MAX_TARGET_CHECK_RESULT_BYTES of the API; the candidate lists take most of it.
 MAX_TARGET_CHECK_RESULT_BYTES = 32 * 1024
-# What version 2 adds to version 1.
-SETUP_FIELDS = ("host", "pythons", "directories")
 
 
 def sanitize_text(value: str | None, *, masker: SecretMasker, secret_paths: list[str]) -> str | None:
@@ -58,8 +55,6 @@ def sanitize_result(
             if (uuid := clean(gpu["uuid"])) is not None and (name := clean(gpu["name"])) is not None
         ]
     sanitized = {**result, "items": items, "gpus": gpus}
-    if "host" not in result:
-        return sanitized
     machine = result["host"]["machine"]
     # `uname -m` is one word; one that had to be masked or cut names no machine.
     if machine is not None and clean(machine) != machine:
@@ -81,8 +76,6 @@ def sanitize_result(
 
 def fit_result_size(result: dict[str, Any]) -> dict[str, Any]:
     """Drop the last directory candidates, then the last Pythons, until the API takes the result."""
-    if "host" not in result:
-        return result
     directories = list(result["directories"])
     pythons = list(result["pythons"])
     fitted = {**result, "directories": directories, "pythons": pythons}
@@ -91,13 +84,3 @@ def fit_result_size(result: dict[str, Any]) -> dict[str, Any]:
     while json_size(fitted) > MAX_TARGET_CHECK_RESULT_BYTES and pythons:
         pythons.pop()
     return fitted
-
-
-def as_result_version(result: dict[str, Any], version: int) -> dict[str, Any]:
-    """An API from before computer setup takes only version 1, which has no setup candidates."""
-    if version != RESULT_VERSION_BEFORE_SETUP:
-        return result
-    return {
-        **{key: value for key, value in result.items() if key not in SETUP_FIELDS},
-        "version": RESULT_VERSION_BEFORE_SETUP,
-    }

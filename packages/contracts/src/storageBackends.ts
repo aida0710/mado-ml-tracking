@@ -19,8 +19,8 @@ export interface StorageBackend {
   caBundleConfigured: boolean;
   checksumMode: 'when_required' | 'when_supported';
   multipartPartSizeBytes: number;
-  /** S3 only; false stores each Artifact with one PUT and refuses upload sessions. Absent = true. */
-  multipartEnabled?: boolean;
+  /** S3 only; false stores each Artifact with one PUT and refuses upload sessions. */
+  multipartEnabled: boolean;
   accessKeyId?: string;
   secretConfigured: boolean;
   enabled: boolean;

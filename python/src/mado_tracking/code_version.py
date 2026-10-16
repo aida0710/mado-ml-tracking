@@ -15,7 +15,7 @@ def build_code_version_payload(
     source: Mapping[str, Any] | None,
     entrypoint: Sequence[str],
     test_entrypoint: Sequence[str],
-    runtime: ExecutionRuntime | None,
+    runtime: ExecutionRuntime,
     requirements: Sequence[str],
     environment: Mapping[str, str] | None,
     supported_model_families: Sequence[str],
@@ -31,7 +31,7 @@ def build_code_version_payload(
     return {
         "version": version,
         "source": dict(source) if source is not None else None,
-        **({"runtime": dict(runtime)} if runtime is not None else {}),
+        "runtime": dict(runtime),
         "entrypoint": list(entrypoint),
         "testEntrypoint": list(test_entrypoint),
         "requirements": list(requirements),

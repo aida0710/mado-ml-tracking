@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { createHash, randomUUID } from 'node:crypto';
 import type {
   ArtifactPresence,
@@ -146,7 +147,7 @@ describe.skipIf(!testDatabaseUrl)('オフライン記録の後送り（独立Pos
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'sync-worker' },
+        body: { workerInfo, workerId: 'sync-worker' },
       }),
       200,
     );

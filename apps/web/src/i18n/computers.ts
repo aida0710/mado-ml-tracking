@@ -27,8 +27,6 @@ export const computersText = localized({
   computerVisibilityPublicHint: 'どのプロジェクトのJobも、このコンピュータで動かせます。',
   computerVisibilityPrivateHint:
     '所有者と、所有者が作ったService AccountのJobだけが動きます。フック・自動実行・Task・Sweepも、それらの所有者がこのコンピュータの所有者のときだけ動きます。全体管理者も、所有者でなければ動かせません。',
-  ownerlessComputerVisibilityNotice:
-    'このコンピュータには所有者がいないので、Publicのままです（Privateにはできません）。',
   siteComputerNotice:
     'site（スパコン・GPUサーバー・自分のPCなど）を追加します。追加した人が所有者になります。',
   projectComputersHint:
@@ -50,10 +48,7 @@ export const computersText = localized({
 // Text that embeds values.
 export const computersTextTemplates = localized({
   computerLauncherSeen: (name: string, lastSeen: string) => `${name}（最終応答 ${lastSeen}）`,
-  // The「workerの設定」row for those who may not manage the computer. Without an owner (a computer
-  // from before owners), only global administrators manage it.
-  workerSetUpBy: (ownerName: string | null) =>
-    ownerName ? `所有者（${ownerName}さん）か全体管理者が設定します。` : '全体管理者が設定します。',
+  workerSetUpBy: (ownerName: string) => `所有者（${ownerName}さん）か全体管理者が設定します。`,
 }, english.computersTextTemplates);
 
 export const computerVisibilityHints = localized({

@@ -123,12 +123,12 @@ export function canAddSshOrLocalTarget(user: Pick<User, 'isAdmin'>): boolean {
   return isGlobalAdmin(user);
 }
 
-/** Whoever added a computer owns it; one from before owners has none. */
+/** Whoever added a computer owns it. */
 export function isTargetOwner(
   user: Pick<User, 'id'>,
   target: Pick<ComputeTarget, 'ownerUserId'>,
 ): boolean {
-  return target.ownerUserId !== null && target.ownerUserId === user.id;
+  return target.ownerUserId === user.id;
 }
 
 /**

@@ -54,6 +54,7 @@ export type CreateAutomationRule = Omit<
   | 'id'
   | 'projectId'
   | 'createdBy'
+  | 'createdByName'
   | 'createdAt'
   | 'summaryMetrics'
   | 'runAsUserId'

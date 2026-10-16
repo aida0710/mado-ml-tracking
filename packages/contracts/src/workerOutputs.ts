@@ -24,17 +24,19 @@ export interface ContainerResultModel {
 }
 
 /** A dataset version the container produced: either an output file (`path`) or an external `uri`. */
-export interface ContainerResultDataset {
+interface ContainerResultDatasetFields {
   datasetId: string;
-  uri?: string;
-  path?: string;
-  digest: string;
   schema?: JsonObject;
   metadata?: JsonObject;
 }
 
+export type ContainerResultDataset = ContainerResultDatasetFields & (
+  | { path: string; uri?: never; digest?: never }
+  | { uri: string; digest: string; path?: never }
+);
+
 /**
- * /mmt/outputs/result.json version 2. Version 1 has only version, complete, artifacts and metrics.
+ * /mmt/outputs/result.json version 2.
  * `artifactsManifest` names an output file in JSON Lines, one ContainerResultArtifact per line,
  * for outputs too many to list in result.json; its entries are added to `artifacts`.
  */
@@ -57,6 +59,7 @@ export type WorkerOutputDeclaration =
   | ({ index: number; kind: 'dataset' } & ContainerResultDataset);
 
 export interface WorkerOutputsRequest {
+  version: 2;
   leaseId: string;
   declarations: WorkerOutputDeclaration[];
 }

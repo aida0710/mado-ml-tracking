@@ -17,8 +17,7 @@ import {
 } from './siteComputerDisplay';
 
 describe('コンピュータの所有者の表示', () => {
-  it('所有者のいないものは全体、自分のものは自分、ほかの人のものはその名前と書き分ける', () => {
-    expect(targetOwnerLabel({ ownerUserId: null, ownerName: null }, 'alice')).toBe('全体');
+  it('自分のコンピュータには自分と表示し他人のコンピュータには所有者名を表示する', () => {
     expect(targetOwnerLabel(ownedSiteDetails, 'alice')).toBe('自分');
     expect(targetOwnerLabel(ownedSiteDetails, 'bob')).toBe('Alice');
     expect(targetOwnerLabel({ ownerUserId: 'carol', ownerName: null }, 'bob')).toBe('carol');

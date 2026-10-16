@@ -48,7 +48,6 @@ SPEC_FILENAME = "spec.json"
 ISO_TIMESTAMP_PATTERN = re.compile(r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$")
 MAX_METRIC_STEP = 2**53 - 1
 RESULT_VERSION_FIELDS = {
-    1: {"version", "complete", "artifacts", "metrics"},
     2: {"version", "complete", "artifacts", "metrics", "artifactsManifest", "models", "datasets"},
 }
 
@@ -143,7 +142,9 @@ def validate_results(root: Path, *, max_files: int | None = None) -> dict[str, A
         or result.get("complete") is not True
         or set(result) - RESULT_VERSION_FIELDS[version]
     ):
-        raise ValueError("Container result.json requires version 1 or 2 and complete=true")
+        raise ValueError(
+            "Container result.json requires version 2 and complete=true; version 1 is unsupported"
+        )
     listed = result.get("artifacts", [])
     if not isinstance(listed, list):
         raise ValueError("Invalid container artifact list")
@@ -295,13 +296,15 @@ def _dataset_declaration(dataset: Any, declared_paths: set[str]) -> dict[str, An
     }:
         raise ValueError("Invalid result.json dataset declaration")
     _require_text(dataset.get("datasetId"), "datasetId", maximum_length=100)
-    _require_text(dataset.get("digest"), "digest", maximum_length=MAX_DATASET_DIGEST_LENGTH)
     if ("uri" in dataset) == ("path" in dataset):
         raise ValueError("A result.json dataset needs exactly one of uri or path")
     if "path" in dataset:
+        if "digest" in dataset:
+            raise ValueError("A path dataset must not include digest; it is computed from its files")
         _require_dataset_path(dataset["path"], declared_paths)
     else:
         _require_text(dataset["uri"], "uri", maximum_length=MAX_DATASET_URI_LENGTH)
+        _require_text(dataset.get("digest"), "digest", maximum_length=MAX_DATASET_DIGEST_LENGTH)
     _require_json_object(dataset, "schema")
     _require_json_object(dataset, "metadata")
     return dict(dataset)
@@ -368,12 +371,21 @@ def parse_output_index(raw: bytes) -> list[dict[str, Any]]:
     return artifacts
 
 
+def validate_output_summary(results: dict[str, Any]) -> None:
+    """Require the index identity before reading any outputs, including an empty result."""
+    if "artifacts" in results:
+        raise ValueError("Results require an output index, not inline artifacts")
+    if type(results.get("artifactCount")) is not int or results["artifactCount"] < 0:
+        raise ValueError("Results require a nonnegative artifactCount")
+    checksum = results.get("artifactIndexSha256")
+    if not isinstance(checksum, str) or not SHA256_PATTERN.fullmatch(checksum):
+        raise ValueError("Results require artifactIndexSha256")
+
+
 def read_output_index(workspace: Path, results: dict[str, Any]) -> bytes:
     """The index saved by validate_results, checked against the summary in the job state."""
-    if "artifacts" in results:
-        # A job validated by an earlier runner kept its descriptors inline in the state.
-        return encode_output_index(results["artifacts"])
-    maximum_bytes = (int(results["artifactCount"]) + 1) * MAX_ARTIFACT_LINE_BYTES
+    validate_output_summary(results)
+    maximum_bytes = (results["artifactCount"] + 1) * MAX_ARTIFACT_LINE_BYTES
     with open_regular_file(workspace, [OUTPUT_INDEX_FILENAME]) as content:
         raw = content.read(maximum_bytes + 1)
     if len(raw) > maximum_bytes or hashlib.sha256(raw).hexdigest() != results["artifactIndexSha256"]:

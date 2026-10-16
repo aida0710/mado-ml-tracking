@@ -282,7 +282,6 @@ class RunnerSession:
             "status": "starting",
             "runnerPid": os.getpid(),
             "runnerIdentity": process_identity(os.getpid()),
-            "sourceSnapshotRequired": True,
         }
         self.forwarder = LogForwarder(workspace, send=api.logs, masker=self.masker)
         self.telemetry_step = 0

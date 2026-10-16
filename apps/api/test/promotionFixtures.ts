@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { expect } from 'vitest';
 import type {
   Dataset,
@@ -148,7 +149,7 @@ export async function promotionFixture(harness: Harness) {
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: `promotion-worker-${workerSequence}` },
+          body: { workerInfo, workerId: `promotion-worker-${workerSequence}` },
         }),
         200,
       );

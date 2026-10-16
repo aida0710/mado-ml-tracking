@@ -140,16 +140,14 @@ describe.skipIf(!testDatabaseUrl)('SSO groupの許可判定と全体roleの同�
     ]);
   });
 
-  // OIDC_ADMIN_GROUP alone must behave exactly like the equivalent role mapping.
-  describe.each([
-    ['OIDC_ROLE_MAPPING_JSON', {}],
-    [
-      'OIDC_ADMIN_GROUPだけの既存設定',
-      { OIDC_ROLE_MAPPING_JSON: '', OIDC_ADMIN_GROUP: 'mmt-admins' },
-    ],
-  ])('%s', (_name, settings) => {
+  it('OIDC_ADMIN_GROUPを指定すると設定エラーになる', () => {
+    expect(() => application({ OIDC_ADMIN_GROUP: 'mmt-admins' }))
+      .toThrow('OIDC_ADMIN_GROUP is not supported; use OIDC_ROLE_MAPPING_JSON');
+  });
+
+  describe('OIDC_ROLE_MAPPING_JSON', () => {
     it('admin groupを持てば全体管理者になり、外れると次回ログインで外れる', async () => {
-      const app = application(settings);
+      const app = application();
       await createLocalUser({ username: 'recovery', email: 'recovery@localhost', isAdmin: true });
       expect((await ssoLogin(app, { groups: ['mmt-users', 'mmt-admins'] })).status).toBe(302);
       expect((await oidcUser())!.is_admin).toBe(true);
@@ -164,7 +162,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupの許可判定と全体roleの同�
     });
 
     it('最後の全体管理者を外す同期は401(last_admin)で、is_adminが残る', async () => {
-      const app = application(settings);
+      const app = application();
       expect((await ssoLogin(app, { groups: ['mmt-admins'] })).status).toBe(302);
       expect(await ssoLogin(app, { groups: ['mmt-users'] })).toEqual({
         status: 401,

@@ -63,7 +63,7 @@ export function manualSiteOwnership(
   target: Pick<ComputeTargetDetails, 'ownerUserId' | 'ownerName'> | undefined,
   viewer: Pick<User, 'id'>,
 ): ManualSiteOwnership {
-  if (!target || target.ownerUserId === null) return { kind: 'global' };
+  if (!target) return { kind: 'global' };
   if (isTargetOwner(viewer, target)) return { kind: 'own' };
   return { kind: 'someoneElse', ownerName: target.ownerName ?? target.ownerUserId };
 }
