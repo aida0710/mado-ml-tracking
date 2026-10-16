@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { createHash } from 'node:crypto';
 import type {
   Artifact,
@@ -82,7 +83,7 @@ describe.skipIf(!testDatabaseUrl)('学習の途中再開（独立PostgreSQL）',
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'checkpoint-worker' },
+          body: { workerInfo, workerId: 'checkpoint-worker' },
         }),
         200,
       )
@@ -444,6 +445,7 @@ describe.skipIf(!testDatabaseUrl)('学習の途中再開（独立PostgreSQL）',
         method: 'POST',
         cookie: fixture.editor.cookie,
         body: {
+          runtime: { kind: 'python' },
           version: 'v1',
           source: { kind: 'inline', files: { 'main.py': 'print("other")\n' } },
           entrypoint: ['python', 'main.py'],
@@ -471,6 +473,7 @@ describe.skipIf(!testDatabaseUrl)('学習の途中再開（独立PostgreSQL）',
         method: 'POST',
         cookie: fixture.editor.cookie,
         body: {
+          runtime: { kind: 'python' },
           version: 'v2',
           source: { kind: 'inline', files: { 'main.py': 'print("v2")\n' } },
           entrypoint: ['python', 'main.py'],

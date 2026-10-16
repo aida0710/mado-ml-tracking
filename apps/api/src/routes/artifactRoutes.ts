@@ -36,7 +36,7 @@ const MAX_PREFIX_LENGTH = 1024;
 const MAX_CURSOR_LENGTH = 4096;
 const versionsSchema = z.enum(['latest', 'all']);
 const cursorSchema = z.string().max(MAX_CURSOR_LENGTH).optional();
-export const artifactCatalogQuerySchema = z.object({
+export const artifactCatalogQuerySchema = z.strictObject({
   limit: z.coerce.number().int().min(1).max(MAX_CATALOG_LIMIT).default(DEFAULT_CATALOG_LIMIT),
   query: z.string().trim().max(200).optional(),
   cursor: cursorSchema,
@@ -48,10 +48,10 @@ export const artifactCatalogQuerySchema = z.object({
   runId: uuidSchema.optional(),
   modelVersionId: uuidSchema.optional(),
   modelId: uuidSchema.optional(),
-  // The catalog listed every upload before versions existed; keep that as the default.
+  // Every version by default: the Web's search across Runs (useProjectArtifacts) omits `versions`.
   versions: versionsSchema.default('all'),
 });
-export const runArtifactQuerySchema = z.object({
+export const runArtifactQuerySchema = z.strictObject({
   prefix: z.string().max(MAX_PREFIX_LENGTH).default(''),
   delimiter: z.literal('/').optional(),
   versions: versionsSchema.default('latest'),
@@ -63,12 +63,12 @@ export const runArtifactQuerySchema = z.object({
     .default(DEFAULT_RUN_ARTIFACT_LIMIT),
   cursor: cursorSchema,
 });
-export const artifactTreeQuerySchema = z.object({
+export const artifactTreeQuerySchema = z.strictObject({
   prefix: z.string().max(MAX_PREFIX_LENGTH).default(''),
 });
 
 // artifactIds is one comma-separated value so a catalog page asks for all its rows in one URL.
-export const artifactReferencesQuerySchema = z.object({
+export const artifactReferencesQuerySchema = z.strictObject({
   artifactIds: z
     .string()
     .optional()

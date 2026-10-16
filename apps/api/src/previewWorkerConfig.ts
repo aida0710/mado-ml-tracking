@@ -1,4 +1,5 @@
 import { tmpdir } from 'node:os';
+import { requireDatabaseUrl } from './db/databaseSettings.js';
 import { z } from 'zod';
 import { parseSecretKey, type SecretKey } from './security/secretEncryption.js';
 
@@ -18,7 +19,6 @@ const DEFAULT_MAX_SOURCE_BYTES = 10 * 1024 ** 3;
 
 const environmentSchema = z.object({
   MMT_DATABASE_URL: optionalSetting,
-  DATABASE_URL: optionalSetting,
   MMT_STORAGE_SECRET_KEY: optionalSetting,
   MMT_PREVIEW_FFMPEG_PATH: z.string().min(1).default('ffmpeg'),
   MMT_PREVIEW_FFPROBE_PATH: z.string().min(1).default('ffprobe'),
@@ -55,8 +55,7 @@ export function loadPreviewWorkerConfig(
       `Invalid configuration: ${parsed.error.issues.map((issue) => issue.path.join('.')).join(', ')}`,
     );
   const settings = parsed.data;
-  const databaseUrl = settings.MMT_DATABASE_URL ?? settings.DATABASE_URL;
-  if (!databaseUrl) throw new Error('MMT_DATABASE_URL or DATABASE_URL is required');
+  const databaseUrl = requireDatabaseUrl(environment);
   let storageSecretKey: SecretKey | null = null;
   if (settings.MMT_STORAGE_SECRET_KEY) {
     try {

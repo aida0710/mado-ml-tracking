@@ -233,7 +233,7 @@ async def verify_automation(
         )
         model_before_rules = client.register_model(
             project_id,
-            name="Automated linear model",
+            model_name="Automated linear model",
             family="linear",
             version="v0",
             artifact_id=weights["id"],
@@ -266,7 +266,7 @@ async def verify_automation(
         def register_version(version: str) -> dict:
             return client.register_model(
                 project_id,
-                name="Automated linear model",
+                model_name="Automated linear model",
                 family="linear",
                 model_id=model_before_rules["modelId"],
                 version=version,

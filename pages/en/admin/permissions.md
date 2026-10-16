@@ -16,7 +16,7 @@ Permissions have two levels: whether a user is a global administrator, and the r
 | **Global settings** | **Account**, **Computers** | Everyone |
 | **Administration** | **Projects**, **Users**, **Storage**, **Launchers**, **Audit log** | Global administrators only |
 
-These groups appear only in the sidebar of the **Global settings** pages, not on Project pages. People who are not global administrators do not see **Administration**, and opening one of its URLs directly takes them to **Account** with a note that the page is for global administrators only. Old URLs starting with `/admin` or `/account` move to the new ones (`/settings/projects`, `/settings/account`, and so on).
+These groups appear only in the sidebar of the **Global settings** pages, not on Project pages. People who are not global administrators do not see **Administration**, and opening one of its URLs directly takes them to **Account** with a note that the page is for global administrators only.
 
 When **Global settings** is opened from a Project page, **Back to “…”** (with the Project's name) appears at the top; it returns to the page you came from (Jobs, for example).
 

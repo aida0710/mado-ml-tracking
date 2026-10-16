@@ -8,6 +8,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
+from execution_fixtures import pin_execution
 
 from mado_tracking import Client, artifact_downloads
 from mado_tracking.errors import ApiError
@@ -190,7 +191,7 @@ def test_sif_staging_resumes_after_a_cut_and_passes_the_sha256_check(job_payload
         },
         entrypoint=["/bin/true"],
     )
-    job = WorkerJob.parse(job_payload)
+    job = WorkerJob.parse(pin_execution(job_payload))
     server = ContentServer()
     executor = StagingExecutor()
 

@@ -29,6 +29,7 @@ function run(id: string, overrides: Partial<Run> = {}): Run {
     parentRunId: null,
     environment: {},
     createdBy: 'u',
+    createdByName: '研究者',
     createdAt: '2026-10-08T00:00:00.000Z',
     startedAt: null,
     endedAt: null,

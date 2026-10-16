@@ -22,7 +22,7 @@ from mado_tracking.worker.container_outputs import (
 def completed_result(root, *, content=b'[{"prediction":0.9}]'):
     (root / "predictions.json").write_bytes(content)
     manifest = {
-        "version": 1,
+        "version": 2,
         "complete": True,
         "artifacts": [
             {"path": "predictions.json", "sha256": hashlib.sha256(content).hexdigest(), "size": len(content)}
@@ -165,7 +165,7 @@ def test_version_two_declarations_are_numbered_models_first_then_datasets(tmp_pa
         tmp_path,
         models=[{"path": "model/weights.bin", "metadata": {"epoch": 3}}],
         datasets=[
-            {"datasetId": dataset_id, "path": "data/test.jsonl", "digest": "sha256:abc"},
+            {"datasetId": dataset_id, "path": "data/test.jsonl"},
             {"datasetId": dataset_id, "uri": "s3://bucket/eval/", "digest": "etag-1", "schema": {"a": 1}},
         ],
     )
@@ -178,7 +178,6 @@ def test_version_two_declarations_are_numbered_models_first_then_datasets(tmp_pa
             "kind": "dataset",
             "datasetId": dataset_id,
             "path": "data/test.jsonl",
-            "digest": "sha256:abc",
         },
         {
             "index": 2,
@@ -211,7 +210,7 @@ DATASET_ID = "8d4c4b2e-7f3a-4c55-9d61-0f5f8f0f3a11"
                 {"datasetId": DATASET_ID, "uri": "s3://b/x", "path": "data/test.jsonl", "digest": "d"}
             ]
         },
-        {"datasets": [{"datasetId": DATASET_ID, "path": "data/test.jsonl"}]},
+        {"datasets": [{"datasetId": DATASET_ID, "uri": "s3://b/x"}]},
         {"models": [{"path": "model/weights.bin", "metadata": ["not", "an", "object"]}]},
         {"models": [{"path": "model/weights.bin", "registeredName": "unknown field"}]},
     ],
@@ -246,7 +245,7 @@ def test_a_dataset_declared_by_a_directory_takes_every_listed_file_under_it(tmp_
         write_file(outputs, "prepared/speaker-2/b.wav", b"b"),
         write_file(outputs, "prepared-report.json", b"{}"),
     ]
-    declaration = {"datasetId": DATASET_ID, "path": "prepared", "digest": "d"}
+    declaration = {"datasetId": DATASET_ID, "path": "prepared"}
     result = {"version": 2, "complete": True, "artifacts": artifacts, "datasets": [declaration]}
     (outputs / "result.json").write_text(json.dumps(result))
     results = validate_results(outputs)
@@ -261,7 +260,7 @@ def test_a_dataset_directory_with_more_files_than_one_version_holds_fails_before
     outputs = tmp_path / "outputs"
     outputs.mkdir()
     artifacts = [write_file(outputs, f"prepared/{number}.wav", b"a") for number in range(2)]
-    declaration = {"datasetId": DATASET_ID, "path": "prepared", "digest": "d"}
+    declaration = {"datasetId": DATASET_ID, "path": "prepared"}
     result = {"version": 2, "complete": True, "artifacts": artifacts, "datasets": [declaration]}
     (outputs / "result.json").write_text(json.dumps(result))
     with pytest.raises(ValueError, match="at most 1 files"):
@@ -269,16 +268,20 @@ def test_a_dataset_directory_with_more_files_than_one_version_holds_fails_before
     assert not (tmp_path / "output-index.jsonl").exists()
 
 
-@pytest.mark.parametrize("field", ["models", "datasets", "artifactsManifest"])
-def test_version_one_keeps_its_fields_and_rejects_version_two_fields(tmp_path, field):
-    outputs = tmp_path / "outputs"
-    outputs.mkdir()
-    completed_result(outputs)
-    manifest = json.loads((outputs / "result.json").read_text())
-    assert validate_results(outputs)["declarations"] == []
-    manifest[field] = "artifacts.jsonl" if field == "artifactsManifest" else []
-    (outputs / "result.json").write_text(json.dumps(manifest))
-    with pytest.raises(ValueError, match="version"):
+@pytest.mark.parametrize("version", [1, None])
+def test_version2以外の結果は理由を示して拒否する(tmp_path, version):
+    manifest = completed_result(tmp_path)
+    manifest["version"] = version
+    (tmp_path / "result.json").write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="requires version 2.*version 1 is unsupported"):
+        validate_results(tmp_path)
+
+
+def test_path形式にdigestを指定すると拒否する(tmp_path):
+    outputs = version_two_outputs(
+        tmp_path, datasets=[{"datasetId": DATASET_ID, "path": "data/test.jsonl", "digest": "unused"}]
+    )
+    with pytest.raises(ValueError, match="digest"):
         validate_results(outputs)
 
 
@@ -327,7 +330,7 @@ def test_output_file_limit_comes_from_the_worker_setting_in_the_job_spec(tmp_pat
     outputs = tmp_path / "outputs"
     outputs.mkdir()
     artifacts = [write_file(outputs, f"{number}.wav", b"a") for number in range(5)]
-    (outputs / "result.json").write_text(json.dumps({"version": 1, "complete": True, "artifacts": artifacts}))
+    (outputs / "result.json").write_text(json.dumps({"version": 2, "complete": True, "artifacts": artifacts}))
     assert validate_results(outputs)["artifactCount"] == 5
     (tmp_path / "spec.json").write_text(json.dumps({"maxOutputFiles": 4}))
     with pytest.raises(ValueError, match="limit 4"):
@@ -352,6 +355,7 @@ def test_worker_setting_rejects_an_invalid_output_file_limit(monkeypatch):
 def declaration_results():
     return {
         "artifactCount": 0,
+        "artifactIndexSha256": hashlib.sha256(b"").hexdigest(),
         "metrics": [],
         "declarations": [
             {"index": 0, "kind": "model", "path": "model/weights.bin"},

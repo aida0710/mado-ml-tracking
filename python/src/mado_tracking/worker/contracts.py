@@ -147,12 +147,12 @@ class WorkerJob:
         if not set(gpu_ids).issubset(self.target["gpuIds"]):
             raise ConfigurationError("Job requests GPUs outside the compute target")
         snapshot = self.execution_snapshot
-        if "runtime" in self.run and self.run["runtime"] != snapshot["runtime"]:
+        if self.run.get("runtime") != snapshot["runtime"]:
             raise ConfigurationError("Run.runtime does not match its immutable executionSnapshot")
         if self.target["executor"] not in executors:
             raise ConfigurationError("Unknown compute executor")
         validate_target_dataset_settings(self.target)
-        runtime_kinds = self.target.get("runtimeKinds", ["python"])
+        runtime_kinds = self.target.get("runtimeKinds")
         if (
             not isinstance(runtime_kinds, list)
             or not runtime_kinds
@@ -187,10 +187,8 @@ def _is_positive_integer(value: Any) -> bool:
 
 
 def validate_dataset_content(dataset: dict[str, Any]) -> None:
-    """What the worker needs to fetch and verify a version (absent from APIs before W4 content)."""
+    """What the worker needs to fetch and verify a version."""
     content_kind = dataset.get("contentKind")
-    if content_kind is None:
-        return
     if content_kind == "artifacts":
         file_count = dataset.get("fileCount")
         if (
@@ -211,10 +209,9 @@ def validate_dataset_content(dataset: dict[str, Any]) -> None:
 
 
 def validate_target_dataset_settings(target: dict[str, Any]) -> None:
-    # Both are optional so that an API from before the setting existed keeps working.
-    if target.get("datasetTransfer", "relay") not in DATASET_TRANSFERS:
+    if target.get("datasetTransfer") not in DATASET_TRANSFERS:
         raise ConfigurationError("Compute target has an unknown datasetTransfer")
-    if "datasetCacheMaxBytes" in target and not _is_positive_integer(target["datasetCacheMaxBytes"]):
+    if not _is_positive_integer(target.get("datasetCacheMaxBytes")):
         raise ConfigurationError("Compute target datasetCacheMaxBytes must be a positive integer")
 
 

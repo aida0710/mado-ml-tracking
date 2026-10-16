@@ -14,7 +14,7 @@ const client = new S3Client({
   // These values authenticate only to the isolated emulator, never to real storage.
   credentials: { accessKeyId: 'testing', secretAccessKey: 'testing' },
 });
-const store = createS3ArtifactStore({ client, bucket, prefix: 'artifacts' });
+const store = createS3ArtifactStore({ multipartEnabled: true, client, bucket, prefix: 'artifacts' });
 async function contents(stream: Readable): Promise<Buffer> {
   const chunks: Buffer[] = [];
   for await (const chunk of stream) chunks.push(Buffer.from(chunk));

@@ -1,7 +1,6 @@
 import { isSameUuid, type MadoPluginConfig, type DatasetVersion, type PluginEvent } from '@mmt/contracts';
 
-// Keep the producer and property order stable for the legacy delivery ledger.
-// Bound the error facet while preserving the bridge's existing truncation.
+// Bound error details carried with a Run event.
 const MAX_ERROR_MESSAGE_LENGTH = 4096;
 const EVENT_TYPES = {
   'run.started': 'START',

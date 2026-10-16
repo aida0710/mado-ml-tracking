@@ -215,6 +215,7 @@ export interface RunnerMetrics {
 }
 
 export interface RunnerOutputs {
+  version: 2;
   instanceId: string;
   declarations: WorkerOutputDeclaration[];
 }

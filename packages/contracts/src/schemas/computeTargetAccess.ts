@@ -21,7 +21,7 @@ export const computeTargetOverviewSchema = namedContractSchema(
     supportsArray: z.boolean(),
     enabled: z.boolean(),
     visibility: computeTargetVisibilitySchema,
-    ownerUserId: idSchema.nullable(),
+    ownerUserId: idSchema,
     ownerName: z.string().nullable(),
     usable: z.boolean(),
     canManage: z.boolean(),

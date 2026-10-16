@@ -1,32 +1,11 @@
 from __future__ import annotations
 
-import copy
-
 import pytest
+from execution_fixtures import pin_execution
 
 from mado_tracking.errors import ConfigurationError
 from mado_tracking.worker.contracts import WorkerJob
 from mado_tracking.worker.runtime import execution_specification
-
-
-def pin_execution(payload, mode="run"):
-    code = payload["codeVersion"]
-    payload["run"].update(
-        executionMode=mode,
-        executionSnapshot=copy.deepcopy(
-            {
-                "codeVersionId": code["id"],
-                "version": code["version"],
-                "mode": mode,
-                "source": code["source"],
-                "runtime": code.get("runtime", {"kind": "python"}),
-                "entrypoint": code["testEntrypoint"] if mode == "test" else code["entrypoint"],
-                "requirements": code["requirements"],
-                "environment": code["environment"],
-            }
-        ),
-    )
-    return payload
 
 
 @pytest.mark.parametrize(
@@ -53,6 +32,7 @@ def test_changed_execution_snapshot_is_rejected_before_any_runner_instruction(jo
 @pytest.mark.parametrize("mode", ["invalid", "test", "run"])
 def test_explicit_mode_requires_a_saved_matching_snapshot(job_payload, mode):
     job_payload["codeVersion"]["testEntrypoint"] = ["python", "test.py"]
+    job_payload["run"].pop("executionSnapshot")
     job_payload["run"]["executionMode"] = mode
     with pytest.raises(ConfigurationError, match="executionMode|executionSnapshot"):
         WorkerJob.parse(job_payload)
@@ -86,8 +66,8 @@ def test_run_runtime_must_match_the_immutable_execution_snapshot(job_payload):
         WorkerJob.parse(job_payload)
 
 
-def test_legacy_journal_without_snapshot_fields_can_only_use_the_regular_command(job_payload):
-    job_payload["codeVersion"]["testEntrypoint"] = ["python", "test.py"]
-    job = WorkerJob.parse(job_payload)
-    assert job.execution_snapshot["mode"] == "run"
-    assert job.execution_snapshot["entrypoint"] == job_payload["codeVersion"]["entrypoint"]
+def test_実行snapshotのないjournalを拒否する(job_payload):
+    job_payload["run"].pop("executionSnapshot")
+    job_payload["run"].pop("executionMode")
+    with pytest.raises(ConfigurationError, match="executionMode"):
+        WorkerJob.parse(job_payload)

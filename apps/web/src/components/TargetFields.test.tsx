@@ -104,10 +104,9 @@ describe('コンピュータの追加・編集の項目', () => {
     expect(html).toContain('>Executor<');
   });
 
-  it('所有者のいないコンピュータはPrivateにできないので、公開範囲を選ばせず理由を出す', () => {
-    const ownerless = { ...computeTargetDetails, ownerUserId: null, ownerName: null };
-    const html = renderFields({ values: targetFormValues(ownerless), target: ownerless, ...administrator });
-    expect(html).not.toContain('name="target-visibility"');
-    expect(html).toContain('所有者がいないので、Publicのままです');
+  it('コンピュータの編集では公開範囲を選べる', () => {
+    const owned = { ...computeTargetDetails, ownerUserId: 'admin', ownerName: null };
+    const html = renderFields({ values: targetFormValues(owned), target: owned, ...administrator });
+    expect(html).toContain('name="target-visibility"');
   });
 });

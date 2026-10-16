@@ -1,3 +1,4 @@
+import { requireDatabaseUrl } from '../db/databaseSettings.js';
 import { pathToFileURL } from 'node:url';
 import { createDatabase, transaction, type Database } from '../db/database.js';
 import { listRunImageArtifacts } from '../repositories/runMediaRepository.js';
@@ -33,9 +34,7 @@ export async function backfillRunMedia(database: Database): Promise<number> {
 }
 
 async function main(): Promise<void> {
-  const databaseUrl = process.env.MMT_DATABASE_URL ?? process.env.DATABASE_URL;
-  if (!databaseUrl) throw new Error('MMT_DATABASE_URL or DATABASE_URL is required');
-  const database = createDatabase(databaseUrl);
+  const database = createDatabase(requireDatabaseUrl(process.env));
   try {
     const examined = await backfillRunMedia(database);
     console.log(JSON.stringify({ event: 'run_media_backfill_complete', examinedArtifacts: examined }));

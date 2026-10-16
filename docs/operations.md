@@ -104,9 +104,8 @@ OIDC_TOKEN_SYNC_MAX_AGE_SECONDS=604800
 | 設定 | 意味 |
 |---|---|
 | `OIDC_ALLOWED_GROUPS` | loginを許すgroup（カンマ区切り）。`oidc`/`hybrid`で必須で、空なら起動しません |
-| `OIDC_ROLE_MAPPING_JSON` | group→全体roleの対応表。roleは`admin`（全体管理者）と`user`（loginのみ）。ほかの値は起動時エラー |
+| `OIDC_ROLE_MAPPING_JSON` | group→全体roleの対応表。roleは`admin`（全体管理者）と`user`（loginのみ）。ほかの値は起動時エラー。設定しなければ、OIDCで入る人は誰も全体管理者になりません |
 | `OIDC_DEFAULT_ROLE` | 対応表のどのgroupにも入っていない許可ユーザーの全体role。既定`user` |
-| `OIDC_ADMIN_GROUP` | `{"<group>":"admin"}`の省略形（以前からの設定）。対応表と両方指定して、adminのgroupが食い違うと起動しません。どちらも無ければ`mmt-admins`をadminとします |
 | `OIDC_AUTO_LINK_VERIFIED_EMAIL` | 同じemailのLocal Userへ自動連携するか。既定`false` |
 | `OIDC_SCOPES` | 要求するscope。既定`openid profile email offline_access`。`openid`が無いと起動しません。refresh tokenにはProvider側の`offline_access` mappingも必要です |
 | `MMT_SESSION_ENCRYPTION_KEY` | SSO sessionに保存するaccess/refresh tokenの暗号鍵（base64の32 byte、AES-256-GCM）。`oidc`/`hybrid`で必須で、無いか形式が違うと起動しません |
@@ -115,7 +114,6 @@ OIDC_TOKEN_SYNC_MAX_AGE_SECONDS=604800
 
 対応表に書いたgroupも`OIDC_ALLOWED_GROUPS`に入れてください。許可groupに無いgroupだけを持つ人は、対応表に関係なくloginできません。
 
-以前のバージョンから更新するときは、`OIDC_ALLOWED_GROUPS`を足してから再起動してください（無いとAPIが起動しません）。`OIDC_ADMIN_GROUP`だけの設定は、そのまま同じ全体管理者の判定になります。
 
 migration 042を含むバージョンへ更新するときは、先に`MMT_SESSION_ENCRYPTION_KEY`を`.env`へ足します（無いとAPIが起動しません）。042はtokenを持たない既存のSSO sessionを失効させるので、SSOの利用者は更新後に一度ログインし直します。Local sessionはそのまま使えます。鍵を変えると、保存済みのtokenを復号できないSSO sessionは次の再確認で失効し、再ログインになります。
 
@@ -200,7 +198,7 @@ callbackで断ったときは、利用者には理由を区別せず401を返し
 
 | 段 | 決め方 | 変える場所 |
 |---|---|---|
-| 全体role（全体管理者か否か） | `OIDC_ROLE_MAPPING_JSON`（と`OIDC_ADMIN_GROUP`）の対応表。loginとsessionの再確認のたびに同期 | API serverの環境変数とAuthentikのgroup |
+| 全体role（全体管理者か否か） | `OIDC_ROLE_MAPPING_JSON`の対応表。loginとsessionの再確認のたびに同期 | API serverの環境変数とAuthentikのgroup |
 | Project role（viewer/editor/admin） | 直接付与とgroup bindingのうち強い方 | 「プロジェクト設定」（Project admin） |
 
 - 直接付与はユーザー1人に付けるrole（`project_members`）、group bindingはAuthentikのgroup名に付けるrole（`project_group_bindings`）です。どちらもProject adminが設定し、監査ログに`project.member.set`・`project.member.delete`・`project.group_binding.set`・`project.group_binding.delete`として残ります。

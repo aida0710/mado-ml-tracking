@@ -13,6 +13,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
+from execution_fixtures import pin_execution
 
 from mado_tracking.worker.api import WorkerApi
 from mado_tracking.worker.contracts import TERMINAL_STATUSES
@@ -129,7 +130,7 @@ def gated_jobs(template: dict, directory: Path, *, count: int) -> list[dict]:
             "while not gate.exists(): time.sleep(0.02)\n"
             "print('released', flush=True)\n"
         )
-        payloads.append(payload)
+        payloads.append(pin_execution(payload))
     return payloads
 
 
@@ -263,6 +264,7 @@ def test_claim_and_resume_report_installed_version_and_hostname():
     expected = {
         "version": metadata.version("mado-tracking"),
         "hostname": socket.gethostname(),
+        "parallelJobs": 2,
         "sshFiles": {"keyPaths": [], "knownHostsPaths": []},
         "capabilities": ["workflowDatasetUsage"],
     }

@@ -25,6 +25,7 @@ const run = (id: string, name: string, metric: number): Run => ({
   parentRunId: null,
   environment: {},
   createdBy: 'user-1',
+  createdByName: '研究者',
   createdAt: '2026-10-08T00:00:00Z',
   startedAt: '2026-10-08T00:00:00Z',
   endedAt: '2026-10-08T01:00:00Z',

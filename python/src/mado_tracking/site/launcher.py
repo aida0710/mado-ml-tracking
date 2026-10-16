@@ -77,7 +77,7 @@ class Launcher:
     ):
         self.config = config
         self.client = client_factory(api_url=config.api_url, api_token=config.token)
-        self.api = LauncherApi(self.client, clock=clock)
+        self.api = LauncherApi(self.client)
         # The client's masker knows the launcher's token; keys, transports and logs share it.
         self.masker = self.client.masker
         state = config.state_directory

@@ -346,6 +346,7 @@ describe('S3 storeのpart size', () => {
       },
     } as unknown as S3Client;
     const store = createS3ArtifactStore({
+      multipartEnabled: true,
       client,
       bucket: 'mmt-artifacts',
       multipartPartSizeBytes: 5 * MIB,

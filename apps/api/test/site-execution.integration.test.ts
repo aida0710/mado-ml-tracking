@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type {
@@ -146,7 +147,7 @@ describe.skipIf(!testDatabaseUrl)('site実行先・投入・runner報告（独�
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'worker-1' },
+        body: { workerInfo, workerId: 'worker-1' },
       }),
       200,
     );
@@ -391,7 +392,7 @@ describe.skipIf(!testDatabaseUrl)('site実行先・投入・runner報告（独�
     const withSession = await request(harness.app, '/api/manual-submissions/claim', {
       method: 'POST',
       cookie: fixture.editor.cookie,
-      body: { targetId: fixture.site.id, submitterId: 'laptop' },
+      body: { capabilities: [], targetId: fixture.site.id, submitterId: 'laptop' },
     });
     expect(withSession.status).toBe(403);
     expect(await withSession.json()).toMatchObject({ code: 'api_token_required' });
@@ -406,7 +407,7 @@ describe.skipIf(!testDatabaseUrl)('site実行先・投入・runner報告（独�
       await request(harness.app, '/api/manual-submissions/claim', {
         method: 'POST',
         token: fixture.personalToken,
-        body: { targetId: fixture.site.id, submitterId: 'laptop' },
+        body: { capabilities: [], targetId: fixture.site.id, submitterId: 'laptop' },
       }),
       200,
     );

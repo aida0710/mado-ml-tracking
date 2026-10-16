@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -544,7 +545,7 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'automation-worker' },
+        body: { workerInfo, workerId: 'automation-worker' },
       }),
       200,
     );
@@ -1044,7 +1045,7 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId },
+          body: { workerInfo, workerId },
         }),
         200,
       )

@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { createHash, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -438,7 +439,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
         await request(harness.app, '/api/worker/claim', {
           method: 'POST',
           token: fixture.workerToken,
-          body: { workerId: 'atomic-worker' },
+          body: { workerInfo, workerId: 'atomic-worker' },
         }),
         200,
       )

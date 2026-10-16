@@ -125,7 +125,7 @@ export const runSchema = namedContractSchema(
     resumeCheckpointId: idSchema.nullable().optional(),
     environment: jsonObjectSchema,
     createdBy: idSchema,
-    createdByName: describedField(z.string().nullable().optional(), '作成者の表示名'),
+    createdByName: describedField(z.string().nullable(), '作成者の表示名'),
     createdAt: timestampSchema,
     startedAt: timestampSchema.nullable(),
     endedAt: timestampSchema.nullable(),

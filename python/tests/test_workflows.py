@@ -7,6 +7,7 @@ from typing import Any
 
 import httpx
 import pytest
+from execution_fixtures import pin_execution
 from test_sdk_registry_features import paged_responder, recording_client
 
 from mado_tracking import ConfigurationError
@@ -162,7 +163,8 @@ def prepared_runtime(
             },
             entrypoint=["/bin/true"],
         )
-    specification = execution_specification(WorkerJob.parse(job_payload), worker_settings)
+    specification = execution_specification(WorkerJob.parse(pin_execution(job_payload)), worker_settings)
+    specification["stagedInputs"] = {"datasets": {}}
     if runtime == "python":
         specification["executionSnapshot"] = {"mode": "run"}
         environment = host_runner._execution_environment(specification, workspace)
@@ -185,10 +187,10 @@ def test_every_runtime_receives_pinned_usage_and_workflow_identity(
 
 
 @pytest.mark.parametrize("runtime", RUNTIMES)
-def test_a_job_from_an_api_before_workflows_gets_no_usage_file_and_no_workflow_variables(
+def test_Workflowに属さないJobにはWorkflowの環境変数を渡さない(
     job_payload, worker_settings, tmp_path, runtime
 ):
-    job_payload["run"].pop("environment", None)
+    job_payload["run"]["environment"] = {}
     environment, usage_file = prepared_runtime(job_payload, worker_settings, tmp_path, runtime)
     assert not WORKFLOW_VARIABLES & set(environment)
     assert not usage_file.exists()

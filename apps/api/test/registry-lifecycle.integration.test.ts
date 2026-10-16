@@ -362,7 +362,7 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
     ]);
   });
 
-  it('Dataset一覧はarchivedで絞り込め、省略すると全件を返す', async () => {
+  it('Dataset一覧はarchivedで絞り込め、省略すると全件を返し、知らない条件は422', async () => {
     const fixture = await executionFixture(harness);
     const active = await datasetWithVersion(fixture, 'Active');
     const old = await datasetWithVersion(fixture, 'Old');
@@ -388,6 +388,13 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
     expect(
       (
         await request(harness.app, `${fixture.basePath}/datasets?archived=yes`, {
+          cookie: fixture.viewer.cookie,
+        })
+      ).status,
+    ).toBe(422);
+    expect(
+      (
+        await request(harness.app, `${fixture.basePath}/datasets?archive=true`, {
           cookie: fixture.viewer.cookie,
         })
       ).status,

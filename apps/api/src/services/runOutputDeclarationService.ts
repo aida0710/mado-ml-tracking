@@ -144,20 +144,20 @@ async function registerDataset(
 ): Promise<string> {
   const { projectId, run } = context;
   const content =
-    declaration.path !== undefined
-      ? await resolveDatasetOutput(connection, {
-          projectId,
-          runId: run.id,
-          outputPath: declaration.path,
-        })
-      : undefined;
+    'path' in declaration
+      ? {
+          content: await resolveDatasetOutput(connection, {
+            projectId,
+            runId: run.id,
+            outputPath: declaration.path,
+          }),
+        }
+      : { uri: declaration.uri, digest: declaration.digest };
   // Pin the Artifact manifest so later workers can fetch the exact files through the dataset API.
   const version = await registerDatasetVersion(connection, {
     projectId,
     datasetId: declaration.datasetId,
-    ...(content
-      ? { content: { files: content.files } }
-      : { uri: declaration.uri!, digest: declaration.digest }),
+    ...content,
     schema: declaration.schema,
     metadata: declaration.metadata,
     sourceRunId: run.id,

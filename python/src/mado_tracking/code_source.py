@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from typing import Any
 from urllib.parse import urlsplit
 
-# Bound legacy text sources independently; the API enforces a smaller registry JSON budget.
+# Bound inline text sources independently; the API enforces a smaller registry JSON budget.
 MAX_SOURCE_TEXT_BYTES = 16 * 1024**2
 MAX_SOURCE_FILES = 100_000
 MAX_SOURCE_PATH_LENGTH = 1024

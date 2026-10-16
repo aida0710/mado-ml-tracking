@@ -104,9 +104,11 @@ describe.skipIf(!testDatabaseUrl)('OpenAPIの応答schemaと実応答（独立Po
         status: 200,
       },
     );
-    await conforms(await request(harness.app, `${basePath}/runs`, { cookie: viewer.cookie }), {
-      method: 'get',
-      path: '/api/projects/:p/runs',
+    await conforms(await request(harness.app, `${basePath}/runs/search`, {
+      method: 'POST', cookie: viewer.cookie, body: {},
+    }), {
+      method: 'post',
+      path: '/api/projects/:p/runs/search',
       status: 200,
     });
     const page = await conforms<{ items: Run[] }>(

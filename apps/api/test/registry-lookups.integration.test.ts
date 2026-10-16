@@ -44,6 +44,7 @@ describe.skipIf(!testDatabaseUrl)('登録画面の候補と表示名の問い合
         method: 'POST',
         cookie: editor.cookie,
         body: {
+          runtime: { kind: 'python' },
           version: 'v2',
           source: { kind: 'inline', files: { 'main.py': 'print(1)\n' } },
           entrypoint: ['python', 'main.py'],

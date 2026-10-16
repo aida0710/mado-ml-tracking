@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type {
   ComputeTarget,
@@ -83,12 +84,16 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
   }
 
   /** A worker reports itself (and its SSH files) with its Job claim, as the worker loop does. */
-  async function reportPresence(token: string, workerId: string, sshFiles?: WorkerSshFiles) {
+  async function reportPresence(
+    token: string,
+    workerId: string,
+    sshFiles: WorkerSshFiles = workerInfo.sshFiles,
+  ) {
     await entity(
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token,
-        body: { workerId, workerInfo: { hostname: `${workerId}.internal`, sshFiles } },
+        body: { workerId, workerInfo: { ...workerInfo, hostname: `${workerId}.internal`, sshFiles } },
       }),
       200,
     );
@@ -102,6 +107,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
         method: 'POST',
         cookie: fixture.administrator.cookie,
         body: {
+          runtimeKinds: ['python'],
           name: 'New GPU host',
           host: 'gpu-new.internal',
           port: 22,
@@ -189,6 +195,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
         method: 'POST',
         cookie: fixture.administrator.cookie,
         body: {
+          runtimeKinds: ['python'],
           name: 'Local without host',
           host: '',
           port: 22,
@@ -204,12 +211,13 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
         },
       }),
     );
-    expect(local).toMatchObject({ executor: 'local', host: '', enabled: false });
+    expect(local).toMatchObject({ runtimeKinds: ['python'], executor: 'local', host: '', enabled: false });
     // ssh still needs where to connect.
     const sshWithoutHost = await request(harness.app, '/api/targets', {
       method: 'POST',
       cookie: fixture.administrator.cookie,
       body: {
+        runtimeKinds: ['python'],
         name: 'No host',
         host: '',
         port: 22,
@@ -228,10 +236,10 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
     expect(await errorCode(sshWithoutHost)).toBe('target_connection_required');
   });
 
-  it('接続確認を頼めるworkerは全体管理者だけが見られ、SSHの候補ファイルはProjectのworker一覧に出ない', async () => {
+  it('SSHの候補が空でも接続確認のworker一覧に含まれ、一覧は全体管理者だけが見られる', async () => {
     const fixture = await setup();
-    // A worker from before setup checks reports no SSH files and is not offered.
-    await reportPresence(fixture.workerToken, 'old-host');
+    // An empty SSH file list is a complete report, including for local checks.
+    await reportPresence(fixture.workerToken, 'empty-ssh-host');
     for (const cookie of [fixture.editor.cookie, fixture.viewer.cookie]) {
       expect((await request(harness.app, '/api/targets/check-workers', { cookie })).status).toBe(
         403,
@@ -243,7 +251,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
       }),
       200,
     );
-    expect(workers.items).toEqual([
+    expect(workers.items).toEqual(expect.arrayContaining([
       expect.objectContaining({
         tokenId: fixture.setupWorker.tokenId,
         workerId: 'setup-host',
@@ -251,7 +259,12 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
         hostname: 'setup-host.internal',
         sshFiles: WORKER_SSH_FILES,
       }),
-    ]);
+      expect.objectContaining({
+        workerId: 'empty-ssh-host',
+        sshFiles: workerInfo.sshFiles,
+      }),
+    ]));
+    expect(workers.items).toHaveLength(2);
     const projectWorkers = await entity<{ items: WorkerPresence[] }>(
       await request(harness.app, `/api/projects/${fixture.project.id}/workers`, {
         cookie: fixture.viewer.cookie,
@@ -259,13 +272,13 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
       200,
     );
     expect(projectWorkers.items.map((worker) => worker.workerId).sort()).toEqual([
-      'old-host',
+      'empty-ssh-host',
       'setup-host',
     ]);
     expect(JSON.stringify(projectWorkers.items)).not.toContain('.ssh');
     // Gone quiet for over two minutes: offline, no longer offered.
     await harness.database.query(
-      "UPDATE workers SET last_seen_at=now()-interval '121 seconds' WHERE worker_id='setup-host'",
+      "UPDATE workers SET last_seen_at=now()-interval '121 seconds' WHERE worker_id IN ('setup-host','empty-ssh-host')",
     );
     const afterSilence = await entity<{ items: TargetCheckWorkerPresence[] }>(
       await request(harness.app, '/api/targets/check-workers', {
@@ -323,16 +336,19 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
     expect(listed.items[0]!.result).toEqual(setupResult);
   });
 
-  it('オンラインでない・SSHの候補ファイルを報告しない・失効したtokenのworkerは指定できない', async () => {
+  it('オフライン・未登録・失効したtokenのworkerは指定できない', async () => {
     const fixture = await setup();
-    await reportPresence(fixture.workerToken, 'old-host');
+    await reportPresence(fixture.workerToken, 'empty-ssh-host');
     const workerTokenId = (
       await harness.database.query<{ token_id: string }>(
-        "SELECT token_id FROM workers WHERE worker_id='old-host'",
+        "SELECT token_id FROM workers WHERE worker_id='empty-ssh-host'",
       )
     ).rows[0]!.token_id;
+    await harness.database.query(
+      "UPDATE workers SET last_seen_at=now()-interval '121 seconds' WHERE worker_id='empty-ssh-host'",
+    );
     const unavailable = [
-      { tokenId: workerTokenId, workerId: 'old-host' },
+      { tokenId: workerTokenId, workerId: 'empty-ssh-host' },
       { tokenId: fixture.setupWorker.tokenId, workerId: 'never-seen' },
     ];
     for (const worker of unavailable) {
@@ -438,23 +454,21 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
       },
     });
     expect(await errorCode(oversized)).toBe('target_check_result_too_large');
-    // A version 1 result (older workers) keeps being taken.
-    const { host: _host, pythons: _pythons, directories: _directories, ...facts } = setupResult as Extract<
-      TargetCheckResult,
-      { version: 2 }
-    >;
-    const versionOne = await entity<TargetCheck>(
-      await complete(fixture.setupToken, claimed.check.id, {
-        leaseId: claimed.leaseId,
-        status: 'finished',
-        result: { ...facts, version: 1 },
-      }),
-      200,
-    );
-    expect(versionOne.result).toEqual({ ...facts, version: 1 });
+    const versionOne = await complete(fixture.setupToken, claimed.check.id, {
+      leaseId: claimed.leaseId,
+      status: 'finished',
+      result: { ...setupResult, version: 1 },
+    });
+    expect(versionOne.status).toBe(422);
+    const completed = await entity<TargetCheck>(await complete(fixture.setupToken, claimed.check.id, {
+      leaseId: claimed.leaseId,
+      status: 'finished',
+      result: setupResult,
+    }), 200);
+    expect(completed.result).toEqual(setupResult);
   });
 
-  it('ディレクトリの読み取りは指定したworkerだけが受け、以前のworkerはclaimしない', async () => {
+  it('ディレクトリの読み取りは指定された種別に対応するworkerだけが受ける', async () => {
     const fixture = await setup();
     const path = '~/projects/';
     const listing = await entity<TargetDirectoryListing>(
@@ -486,8 +500,8 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
       200,
     );
     expect(checks.items).toEqual([]);
-    // A worker from before listings asks for connection checks only.
-    expect(await claimItem(fixture.setupToken, { workerId: 'setup-host' })).toBeNull();
+    // A worker that asks for connection checks only does not receive directory listings.
+    expect(await claimItem(fixture.setupToken, { workerId: 'setup-host', kinds: ['connection'] })).toBeNull();
     const claimed = (await claimItem(fixture.setupToken, {
       workerId: 'setup-host',
       kinds: ['connection', 'directory_listing'],
@@ -571,8 +585,9 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
     // A site has no worker connection to read through.
     const site = await harness.database.query<{ id: string }>(
       `INSERT INTO compute_targets(name,host,port,username,ssh_key_path,known_hosts_path,work_directory,
-        python_executable,gpu_ids,max_concurrent_jobs,enabled,executor,runtime_kinds,dataset_transfer)
-      VALUES('Site','',22,'','','','','','{}',1,true,'site','{apptainer}','direct') RETURNING id`,
+        python_executable,gpu_ids,max_concurrent_jobs,enabled,executor,runtime_kinds,dataset_transfer,owner_user_id,visibility)
+      VALUES('Site','',22,'','','','','','{}',1,true,'site','{apptainer}','direct',$1,'private') RETURNING id`,
+      [fixture.administrator.userId],
     );
     const siteListing = await requestListing(fixture.administrator.cookie, site.rows[0]!.id, {
       path: '/data',

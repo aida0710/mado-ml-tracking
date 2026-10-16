@@ -34,8 +34,7 @@ export interface ComputeTargetOverview {
   supportsArray: boolean;
   enabled: boolean;
   visibility: ComputeTargetVisibility;
-  /** null: a computer from before owners, managed by global administrators. */
-  ownerUserId: string | null;
+  ownerUserId: string;
   ownerName: string | null;
   /** The caller's Jobs may run here. */
   usable: boolean;

@@ -324,7 +324,7 @@ def register_code(
     task_type: str,
     families: list[str],
     version: str = "v1",
-    runtime: ExecutionRuntime | None = None,
+    runtime: ExecutionRuntime,
 ) -> dict[str, Any]:
     code = api.post("codes", {"name": name, "description": "pipeline verification"})
     return create_code_version(
@@ -348,7 +348,7 @@ def create_code_version(
     entrypoint: list[str],
     task_type: str,
     families: list[str],
-    runtime: ExecutionRuntime | None = None,
+    runtime: ExecutionRuntime,
 ) -> dict[str, Any]:
     return api.post(
         f"codes/{code_id}/versions",
@@ -376,6 +376,7 @@ def register_codes(pipeline: Pipeline) -> None:
     training_source = (EXAMPLES / "training.py").read_text()
     ids["trainingCodeVersionId"] = register_code(
         api,
+        runtime={"kind": "python"},
         name="Pipeline training",
         files={"training.py": training_source, "pipeline_entry.py": JOB_ENTRY},
         entrypoint=job_entrypoint("training.py"),
@@ -384,6 +385,7 @@ def register_codes(pipeline: Pipeline) -> None:
     )["id"]
     ids["failingTrainingCodeVersionId"] = register_code(
         api,
+        runtime={"kind": "python"},
         name="Pipeline failing training",
         files={"training.py": training_source, "failing_training.py": FAILING_TRAINING_ENTRY},
         entrypoint=["python", "failing_training.py"],
@@ -392,6 +394,7 @@ def register_codes(pipeline: Pipeline) -> None:
     )["id"]
     ids["inferenceCodeVersionId"] = register_code(
         api,
+        runtime={"kind": "python"},
         name="Pipeline inference",
         files={"inference.py": (EXAMPLES / "inference.py").read_text(), "pipeline_entry.py": JOB_ENTRY},
         entrypoint=job_entrypoint("inference.py"),
@@ -404,6 +407,7 @@ def register_codes(pipeline: Pipeline) -> None:
     }
     evaluation = register_code(
         api,
+        runtime={"kind": "python"},
         name="Pipeline evaluation",
         files=evaluation_files,
         entrypoint=job_entrypoint("evaluation.py"),
@@ -414,6 +418,7 @@ def register_codes(pipeline: Pipeline) -> None:
     ids["evaluationCodeVersionId"] = evaluation["id"]
     ids["strictEvaluationCodeVersionId"] = create_code_version(
         api,
+        runtime={"kind": "python"},
         code_id=evaluation["codeId"],
         version="v2-strict",
         files=evaluation_files,

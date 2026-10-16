@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { CurrentApiToken, Job, ServiceAccount, TokenSummary, WorkerJob } from '@mmt/contracts';
 import { argon2idPasswordHasher } from '../src/auth/passwordHasher.js';
@@ -112,7 +113,7 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: issued.token,
-        body: { workerId: 'service-account-worker' },
+        body: { workerInfo, workerId: 'service-account-worker' },
       }),
       200,
     );
@@ -343,7 +344,7 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
             allowedGroups: 'mmt-users',
             roleMappingJson: undefined,
             defaultRole: undefined,
-            adminGroup: undefined,
+
           }),
           autoLinkVerifiedEmail: false,
         },

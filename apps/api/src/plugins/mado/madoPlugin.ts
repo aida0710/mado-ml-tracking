@@ -5,12 +5,12 @@ import {
   type MadoPluginConfig,
   type PluginDataset,
   type PluginManifest,
+  type PluginEvent,
 } from '@mmt/contracts';
 import {
   createMadoClient,
   MadoApiError,
   type MadoCredentials,
-  type PluginClient,
 } from '@mmt/platform';
 import { DomainError } from '../../domain/errors.js';
 import { assertAccessTokenCoversConnection } from './accessTokenRequirements.js';
@@ -23,7 +23,11 @@ export interface MadoConnectionCheck {
   manifest: PluginManifest;
   accessTokenGrant: MadoAccessTokenGrant;
 }
-export interface BuiltinPluginClient extends PluginClient {
+export interface BuiltinPluginClient {
+  manifest(): Promise<PluginManifest>;
+  searchDatasets(query: string): Promise<{ items: PluginDataset[] }>;
+  metrics(): Promise<{ prometheus: string }>;
+  sendEvent(event: PluginEvent): Promise<void>;
   /** Reads the access token's grant from Mado, then confirms every read the integration relies on. */
   checkConnection(): Promise<MadoConnectionCheck>;
   /** The grant as Mado reports it now; it can differ from the one saved at the last check. */

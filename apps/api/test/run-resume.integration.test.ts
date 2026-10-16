@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import type {
   AuditEventPage,
   Job,
@@ -225,7 +226,7 @@ describe.skipIf(!testDatabaseUrl)('Runの再開（独立PostgreSQL）', () => {
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'resume-worker' },
+        body: { workerInfo, workerId: 'resume-worker' },
       }),
       200,
     );

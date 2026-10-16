@@ -228,63 +228,21 @@ def test_check_the_api_hands_back_while_it_runs_is_not_started_twice(
     assert len(server.completions) == 1
 
 
-def test_old_api_refusing_kinds_is_asked_in_its_own_form_one_check_at_a_time_with_version_1(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
-    gated = GatedCheck()
-    monkeypatch.setattr(target_check_runner, "check_target", gated)
+def test_診断種別が欠けた応答を拒否する(tmp_path: Path):
     target = local_target(tmp_path)
-    item = claimed_check(target, kind=None)
-    server = TargetCheckServer([item, claimed_check(target, kind=None)], refuses_kinds=True)
-    worker = worker_for(server, tmp_path, (target["id"],))
-    claims_while_running: list[int] = []
-
-    async def scenario() -> None:
-        await server.wait_for(lambda: bool(gated.started))
-        job_claims = server.job_claims
-        await server.wait_for(lambda: server.job_claims >= job_claims + IDLE_ITERATIONS)
-        claims_while_running.append(len(server.claims))
-        gated.release.set()
-        await server.wait_for(lambda: server.completion_of(item["check"]["id"]) is not None)
-
-    run_until(worker, scenario)
-    assert server.claims[0]["kinds"] == ["connection", "directory_listing"]
-    assert server.claims[1] == {"workerId": WORKER_ID, "targetIds": [target["id"]]}
-    # While the first check ran, the old API was not asked for another (it has one more queued).
-    assert claims_while_running == [2]
-    completion = server.completion_of(item["check"]["id"])
-    assert completion is not None
-    assert completion["result"]["version"] == 1
-    assert "host" not in completion["result"] and "pythons" not in completion["result"]
+    with pytest.raises(ConfigurationError, match="kind"):
+        parse_claimed_target_check(
+            claimed_check(target, kind=None), worker_id=WORKER_ID, target_ids=(target["id"],)
+        )
 
 
-def test_old_api_refusing_kinds_is_not_asked_again_by_a_worker_without_target_ids(tmp_path: Path):
-    server = TargetCheckServer([], refuses_kinds=True)
+@pytest.mark.parametrize("status", [404, 422])
+def test_診断APIが拒否しても旧形式へ切り替えない(tmp_path: Path, status: int):
+    server = TargetCheckServer([], claim_status=status)
     worker = worker_for(server, tmp_path)
-    run_until(worker, lambda: server.wait_for(lambda: server.job_claims >= IDLE_ITERATIONS))
-    assert len(server.claims) == 1 and "kinds" in server.claims[0]
-
-
-def test_claim_response_without_kind_gets_a_version_1_result(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    async def finished_check(_target: dict[str, Any], **_keywords: Any) -> tuple[str, dict[str, Any]]:
-        return "finished", failed_result("connection", "ssh_failed")
-
-    monkeypatch.setattr(target_check_runner, "check_target", finished_check)
-    target = local_target(tmp_path)
-    item = claimed_check(target, kind=None)
-    server = TargetCheckServer([item])
-    worker = worker_for(server, tmp_path, (target["id"],))
-    run_until(worker, lambda: server.wait_for(lambda: bool(server.completions)))
-    assert "kinds" in server.claims[0]
-    [(_, completion)] = server.completions
-    assert completion["result"]["version"] == 1 and "directories" not in completion["result"]
-
-
-def test_api_without_target_checks_is_not_asked_again(tmp_path: Path):
-    server = TargetCheckServer([], claim_status=404)
-    worker = worker_for(server, tmp_path)
-    run_until(worker, lambda: server.wait_for(lambda: server.job_claims >= IDLE_ITERATIONS))
-    assert len(server.claims) == 1
+    run_until(worker, lambda: server.wait_for(lambda: len(server.claims) >= 2))
+    assert all(body["kinds"] == ["connection", "directory_listing"] for body in server.claims)
+    assert not server.completions
 
 
 def test_claim_of_a_computer_neither_assigned_to_the_worker_nor_in_its_target_ids_is_refused(tmp_path: Path):
@@ -298,7 +256,7 @@ def test_claim_of_a_computer_neither_assigned_to_the_worker_nor_in_its_target_id
     # The same requests are this worker's when the computer is one of its targets.
     for item in (unassigned, assigned_elsewhere):
         claimed = parse_claimed_target_check(item, worker_id=WORKER_ID, target_ids=(target["id"],))
-        assert claimed is not None and claimed.result_version == 2
+        assert claimed is not None and claimed.kind == "connection"
 
 
 def test_listing_claim_without_a_directory_or_with_an_unknown_kind_is_refused(tmp_path: Path):

@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type {
   ExperimentTask,
@@ -83,7 +84,7 @@ describe.skipIf(!testDatabaseUrl)('Taskの成功時の出力モデル登録（�
       await request(harness.app, '/api/worker/claim', {
         method: 'POST',
         token: fixture.workerToken,
-        body: { workerId: 'output-registration-worker' },
+        body: { workerInfo, workerId: 'output-registration-worker' },
       }),
       200,
     );

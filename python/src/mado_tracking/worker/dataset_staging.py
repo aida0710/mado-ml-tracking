@@ -35,9 +35,6 @@ from .dataset_partition import DatasetPartition, partition_cache_key, partition_
 from .download_content import DOWNLOAD_ACCEPT_ENCODING, write_downloaded_content
 from .runner_commands import RunnerCommands
 
-# Same as the API's migration default, for claims from an API without the target setting.
-DEFAULT_DATASET_CACHE_MAX_BYTES = 100 * 1024**3
-DEFAULT_DATASET_TRANSFER = "relay"
 # The files API's largest page.
 FILE_PAGE_LIMIT = 1000
 # A target-side fetch that failed on the network is tried again before the Job fails.
@@ -91,11 +88,11 @@ def artifacts_cache_key(digest: str) -> str:
 
 
 def dataset_transfer(target: dict[str, Any]) -> str:
-    return str(target.get("datasetTransfer", DEFAULT_DATASET_TRANSFER))
+    return str(target["datasetTransfer"])
 
 
 def dataset_cache_max_bytes(target: dict[str, Any]) -> int:
-    return int(target.get("datasetCacheMaxBytes", DEFAULT_DATASET_CACHE_MAX_BYTES))
+    return int(target["datasetCacheMaxBytes"])
 
 
 async def list_dataset_files(api: ArtifactTransferApi, dataset: dict[str, Any]) -> list[dict[str, Any]]:
@@ -120,9 +117,8 @@ async def plan_dataset(api: ArtifactTransferApi, dataset: dict[str, Any]) -> Dat
     """How to obtain one version, or None when it is a descriptor only."""
     version_id, uri, digest = dataset["id"], str(dataset.get("uri") or ""), str(dataset.get("digest") or "")
     content_kind = dataset.get("contentKind")
-    if content_kind is None:
-        # An API from before 'artifacts' versions sends descriptors only; keep its behavior.
-        return None
+    if content_kind not in {"artifacts", "reference"}:
+        raise DatasetStagingError("Input DatasetVersion requires contentKind")
     if content_kind == "artifacts":
         files = await list_dataset_files(api, dataset)
         if len(files) != dataset["fileCount"] or manifest_entries_digest(files) != digest:

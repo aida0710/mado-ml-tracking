@@ -41,6 +41,7 @@ with Client() as client:
             "files": {"main.py": "print('edited code')\n"},
             "deletedFiles": ["old.py"],
         },
+        runtime={"kind": "python"},
         entrypoint=["python", "main.py"],
         test_entrypoint=["python", "-m", "unittest", "discover"],
         supported_model_families=["linear"],
@@ -303,7 +304,7 @@ workerはRunの`executionMode`と`executionSnapshot`をコードバージョン�
 
 ZIPは空ディレクトリも保持する。manifestには既存の`files`に加えて`directories: [{path, mode}]`を記録し、modeはPOSIX権限の整数値。復元時は権限の特殊bitを除き、所有者の読み取り・検索権限を確保する。read-onlyディレクトリは子ファイルを展開した後で権限を適用する。containerのsource mountはread-onlyのまま。
 
-snapshotの回収は既存のArtifact upload経路を使い、各保存のackをprivate journalへ残す。再接続・worker再起動・Docker recoveryでは、sourceの展開やコード実行を繰り返さない。snapshotの保存に失敗したRunは成功扱いにせず、コードが失敗した場合のexit codeとerrorも保持する。旧worker journalで実行modeとsnapshotの両方が無い場合だけ、通常実行として扱う。
+snapshotの回収は既存のArtifact upload経路を使い、各保存のackをprivate journalへ残す。再接続・worker再起動・Docker recoveryでは、sourceの展開やコード実行を繰り返さない。snapshotの保存に失敗したRunは成功扱いにせず、コードが失敗した場合のexit codeとerrorも保持する。journalには実行modeとsnapshotが必須で、欠損したものは拒否する。
 
 不正なclaimはJob/leaseのUUIDとworkerの所有を確認でき、claimedかつjournal・監視・recoveryの記録が無い場合に限り、実行せずfailedとして完了する。不正なresume、running状態、既存journalまたは監視中のJobは診断を残し、leaseを解放しない。保存済み正常snapshotがあればその監視を継続し、復帰できないJobは以後のclaim対象から外して他のJobの処理を続ける。対象Jobの状況とjournalを確認し、復旧または停止確認後の処理を行う。ID/lease/所有を確認できないclaim応答は`ConfigurationError`、resumeではその行を診断して他の行を処理する。
 

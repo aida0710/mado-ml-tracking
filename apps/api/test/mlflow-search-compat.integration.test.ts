@@ -170,7 +170,7 @@ describe.skipIf(!testDatabaseUrl)('公式MLflowライブラリが送る形の検
     );
     for (const filter of ["tag.stage = 'production'", "tags.stage = 'production'"])
       expect(await versionNumbers({ filter }), filter).toEqual(['1']);
-    for (const filter of ['metric.accuracy > 0', "param.alpha = '1'", "run.name = 'Classifier'"]) {
+    for (const filter of ['metric.accuracy > 0', "param.alpha = '1'", "run.name = 'Classifier'", "attributes.name = 'Classifier'"]) {
       expect((await searchModels({ filter })).status, filter).toBe(422);
       expect((await searchVersions({ filter })).status, filter).toBe(422);
     }
@@ -192,8 +192,11 @@ describe.skipIf(!testDatabaseUrl)('公式MLflowライブラリが送る形の検
     ]);
     const greaterThanOne = await versionNumbers({ filter: 'version_number > 1' });
     expect(greaterThanOne.sort()).toEqual(['2', '3']);
-    for (const numberFilter of ["version_number = '2'", 'version_number = 2', 'version = 2'])
+    for (const numberFilter of ["version_number = '2'", 'version_number = 2', 'attribute.version_number = 2'])
       expect(await versionNumbers({ filter: numberFilter }), numberFilter).toEqual(['2']);
+    for (const filter of ['version = 2', 'attributes.version_number = 2', "constructor = 'x'", "__proto__ = 'x'"])
+      expect((await searchVersions({ filter })).status, filter).toBe(422);
+    expect(await versionNumbers({ filter: 'creation_timestamp > 0' })).toHaveLength(3);
     expect((await searchVersions({ filter: "version_number = '2.5'" })).status).toBe(422);
     expect((await searchVersions({ filter: "version_number LIKE '2%'" })).status).toBe(422);
   });

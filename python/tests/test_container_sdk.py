@@ -4,6 +4,7 @@ import json
 
 import httpx
 import pytest
+from execution_fixtures import pin_execution
 
 from mado_tracking import Client, ConfigurationError
 from mado_tracking.worker.contracts import WorkerJob
@@ -22,12 +23,13 @@ def recording_sdk():
     ), requests
 
 
-def test_python_code_registration_preserves_the_existing_payload_default():
+def test_Pythonの登録もruntimeを明示して送る():
     client, requests = recording_sdk()
     source = {"kind": "inline", "files": {"main.py": "print('python')"}}
     with client:
         client.register_code(
             "project",
+            runtime={"kind": "python"},
             name="python",
             code_id="code",
             version="v1",
@@ -35,7 +37,7 @@ def test_python_code_registration_preserves_the_existing_payload_default():
             entrypoint=["python", "main.py"],
             requirements=["numpy"],
         )
-    assert requests[0][2]["source"] == source and "runtime" not in requests[0][2]
+    assert requests[0][2]["source"] == source and requests[0][2]["runtime"] == {"kind": "python"}
 
 
 @pytest.mark.parametrize(
@@ -91,9 +93,9 @@ def test_compute_target_capability_must_match_the_registered_runtime(job_payload
         source=None, runtime={"kind": "docker", "image": "model@sha256:" + "a" * 64}
     )
     with pytest.raises(ConfigurationError, match="support"):
-        WorkerJob.parse(job_payload)
+        WorkerJob.parse(pin_execution(job_payload))
     job_payload["target"]["runtimeKinds"] = ["python", "docker"]
-    assert WorkerJob.parse(job_payload).runtime["kind"] == "docker"
+    assert WorkerJob.parse(pin_execution(job_payload)).runtime["kind"] == "docker"
 
 
 @pytest.mark.parametrize("entrypoint", [[], [""], "python main.py", ["python", "argument\x00"]])
@@ -102,6 +104,7 @@ def test_invalid_entrypoint_is_rejected_before_the_code_is_registered(entrypoint
     with client, pytest.raises(ConfigurationError, match="argv"):
         client.register_code(
             "project",
+            runtime={"kind": "python"},
             name="bad",
             version="v1",
             source={"kind": "inline", "files": {}},

@@ -134,7 +134,7 @@ export interface Hook {
   runAsUserId: string;
   runAsKind?: Exclude<UserKind, 'launcher'>;
   runAsName?: string;
-  createdByName?: string;
+  createdByName: string;
   createdAt: string;
 }
 

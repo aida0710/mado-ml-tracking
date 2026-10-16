@@ -86,7 +86,7 @@ mado-tracking-worker doctor [--worker-id <ID>] [--ssh-key <パス>] [--known-hos
 
 ### run
 
-workerを前面で動かします。引数を付けずに`mado-tracking-worker`だけを実行した場合も`run`になります。設定は環境変数から読みます（`MMT_API_URL`、`MMT_API_TOKEN`、`MMT_WORKER_ID`、`MMT_WORKER_TARGET_IDS`、`MMT_WORKER_STATE_DIR`など。[環境変数](/reference/environment)の「worker」）。
+workerを前面で動かします。設定は環境変数から読みます（`MMT_API_URL`、`MMT_API_TOKEN`、`MMT_WORKER_ID`、`MMT_WORKER_TARGET_IDS`、`MMT_WORKER_STATE_DIR`など。[環境変数](/reference/environment)の「worker」）。
 
 | オプション | 内容 |
 | --- | --- |

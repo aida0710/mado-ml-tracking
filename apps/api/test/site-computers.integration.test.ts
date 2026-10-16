@@ -128,7 +128,7 @@ describe.skipIf(!testDatabaseUrl)('Webで足すコンピュータ（独立Postgr
       site: { workDirectory: '/home/editor/mmt', accountMode: 'personal', jobShell: { version: 1 } },
     });
     const local = await createTarget(fixture.editor.cookie, {
-      ...siteTargetInput({ name: 'Local', executor: 'local', host: '127.0.0.1', username: 'me' }),
+      ...siteTargetInput({ runtimeKinds: ['python'], name: 'Local', executor: 'local', host: '127.0.0.1', username: 'me' }),
     });
     expect(local.status).toBe(403);
     expect(await local.json()).toMatchObject({ code: 'target_admin_required' });
@@ -260,7 +260,7 @@ describe.skipIf(!testDatabaseUrl)('Webで足すコンピュータ（独立Postgr
       await request(harness.app, '/api/launcher/site-submissions/claim', {
         method: 'POST',
         token: launcher.token,
-        body: {},
+        body: { capabilities: [] },
       }),
       200,
     );
@@ -296,7 +296,7 @@ describe.skipIf(!testDatabaseUrl)('Webで足すコンピュータ（独立Postgr
           await request(harness.app, '/api/launcher/site-submissions/claim', {
             method: 'POST',
             token: launcher.token,
-            body: {},
+            body: { capabilities: [] },
           }),
           200,
         )
@@ -457,7 +457,7 @@ describe.skipIf(!testDatabaseUrl)('Webで足すコンピュータ（独立Postgr
       await request(harness.app, '/api/launcher/site-submissions/claim', {
         method: 'POST',
         token: launcher.token,
-        body: {},
+        body: { capabilities: [] },
       }),
       200,
     );
@@ -518,7 +518,7 @@ describe.skipIf(!testDatabaseUrl)('Webで足すコンピュータ（独立Postgr
       request(harness.app, '/api/manual-submissions/claim', {
         method: 'POST',
         token,
-        body: { targetId: own.id, submitterId: 'pc', all: true },
+        body: { capabilities: [], targetId: own.id, submitterId: 'pc', all: true },
       });
     const refused = await takeAll(colleagueToken);
     expect(refused.status).toBe(403);

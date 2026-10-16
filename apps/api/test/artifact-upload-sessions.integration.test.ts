@@ -590,7 +590,7 @@ describe.skipIf(!testDatabaseUrl)('再開可能なupload session（独立Postgre
       await client.send(new CreateBucketCommand({ Bucket: bucket }));
       const stores = createArtifactStores({
         filesystem: createFilesystemArtifactStore(harness.artifactDirectory),
-        s3: createS3ArtifactStore({ client, bucket, prefix: 'artifacts' }),
+        s3: createS3ArtifactStore({ multipartEnabled: true, client, bucket, prefix: 'artifacts' }),
       });
       const application = createApplication({
         config: harness.config,

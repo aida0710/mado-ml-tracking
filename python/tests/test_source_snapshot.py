@@ -20,6 +20,7 @@ from mado_tracking.worker.source_tree import walk_source_entries
 
 
 def snapshot_fixture(tmp_path, worker_job, worker_settings):
+    worker_job.run["executionSnapshot"]["source"] = worker_job.code_version["source"]
     source = tmp_path / "source"
     materialize_source(worker_job.code_version["source"], source)
     specification = execution_specification(worker_job, worker_settings)
@@ -159,6 +160,7 @@ def test_artifact_snapshot_restores_empty_directories_and_runs_the_same_entrypoi
                 member.size = len(content.encode())
                 archive.addfile(member, io.BytesIO(content.encode()))
     worker_job.code_version["source"] = {"kind": "artifact", "artifactId": "source-artifact"}
+    worker_job.run["executionSnapshot"]["source"] = worker_job.code_version["source"]
     source = tmp_path / "source"
     materialize_source(worker_job.code_version["source"], source, artifact=artifact)
     create_snapshot(tmp_path, execution_specification(worker_job, worker_settings))

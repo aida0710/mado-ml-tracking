@@ -37,21 +37,21 @@ const modelDeclarationSchema = z.strictObject({
   metadata: jsonObjectSchema.default({}),
 });
 
-const datasetDeclarationSchema = z
-  .strictObject({
-    index: declarationIndexSchema,
-    kind: z.literal('dataset'),
-    datasetId: uuidSchema,
-    uri: z.string().min(1).max(4000).optional(),
-    path: outputPathSchema.optional(),
+const datasetDeclarationShape = {
+  index: declarationIndexSchema,
+  kind: z.literal('dataset'),
+  datasetId: uuidSchema,
+  schema: jsonObjectSchema.default({}),
+  metadata: jsonObjectSchema.default({}),
+};
+const datasetDeclarationSchema = z.union([
+  z.strictObject({ ...datasetDeclarationShape, path: outputPathSchema }),
+  z.strictObject({
+    ...datasetDeclarationShape,
+    uri: z.string().min(1).max(4000),
     digest: z.string().min(1).max(1000),
-    schema: jsonObjectSchema.default({}),
-    metadata: jsonObjectSchema.default({}),
-  })
-  .refine(
-    (declaration) => (declaration.uri === undefined) !== (declaration.path === undefined),
-    'A dataset declaration needs exactly one of uri or path',
-  );
+  }),
+]);
 
 // Shared by the worker (with its lease) and the site runner (with its instance ID).
 export const outputDeclarationsSchema = z
@@ -65,6 +65,7 @@ export const outputDeclarationsSchema = z
   );
 
 export const workerOutputsSchema = z.strictObject({
+  version: z.literal(2),
   leaseId: uuidSchema,
   declarations: outputDeclarationsSchema,
 });

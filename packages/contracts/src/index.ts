@@ -457,7 +457,7 @@ export interface Run {
   environment: JsonObject;
   createdBy: string;
   /** Display name of createdBy, for screens; null if the user record is gone. */
-  createdByName?: string | null;
+  createdByName: string | null;
   createdAt: string;
   startedAt: string | null;
   endedAt: string | null;
@@ -627,11 +627,8 @@ export interface ComputeTarget {
   supportsArray: boolean;
   /** Sites: a Job still in the scheduler queue after this many seconds fails as queue_timeout. */
   queueTimeoutSeconds: number | null;
-  /**
-   * Whoever added the computer; null for one from before owners, which global administrators
-   * manage. Its owner and global administrators change it.
-   */
-  ownerUserId: string | null;
+  /** Whoever added the computer. Its owner and global administrators change it. */
+  ownerUserId: string;
   /** Public: every Project's Jobs; private: its owner's and their Service Accounts' only. */
   visibility: ComputeTargetVisibility;
 }
@@ -731,15 +728,15 @@ export interface WorkerPresence {
   tokenId: string;
   tokenName: string;
   workerId: string;
-  version: string | null;
-  hostname: string | null;
+  version: string;
+  hostname: string;
   targetIds: string[] | null;
-  parallelJobs: number | null;
+  parallelJobs: number;
   startedAt: string;
   lastSeenAt: string;
   status: WorkerPresenceStatus;
   activeJobCount: number;
-  /** What the worker named on its latest claim or resume; an older worker names nothing. */
+  /** What the worker named on its latest claim or resume. */
   capabilities: WorkerCapability[];
 }
 export interface WorkerJob {
@@ -788,7 +785,7 @@ export interface PluginManifest {
   protocolVersion: '1.0';
   capabilities: string[];
 }
-export type PluginKind = 'mado' | 'legacy';
+export type PluginKind = 'mado';
 /** The namespaces come from the access token's grant in Mado; they are not entered here. */
 export interface MadoPluginConfig {
   apiUrl: string;
@@ -828,14 +825,10 @@ export interface PluginConnection {
   projectId: string;
   name: string;
   kind: PluginKind;
-  configurationStatus: 'ready' | 'migration_pending' | 'unsupported';
-  config: MadoPluginConfig | null;
+  config: MadoPluginConfig;
   configRevision: number;
   credentialsConfigured: { accessToken: boolean };
   secretStorageAvailable: boolean;
-  /** Legacy connection information is restricted to administrators. */
-  baseUrl: string;
-  tokenEnv: string;
   /** The Mado access token can be decrypted by this API server. */
   tokenConfigured: boolean;
   enabled: boolean;
@@ -907,7 +900,7 @@ export interface ApiError {
   code?: string;
   issues?: unknown;
 }
-export type { TargetCheck, TargetCheckDirectory, TargetCheckDirectorySource, TargetCheckFailureReason, TargetCheckGpu, TargetCheckHost, TargetCheckItem, TargetCheckItemCode, TargetCheckItemName, TargetCheckItemStatus, TargetCheckKind, TargetCheckPython, TargetCheckRequest, TargetCheckResult, TargetCheckResultV1, TargetCheckResultV2, TargetCheckStatus, TargetCheckWorker, TargetCheckWorkerPresence, TargetDirectoryEntry, TargetDirectoryListing, TargetDirectoryListingOutcome, TargetDirectoryListingRequest, TargetDirectoryListingResult, WorkerSshFiles, WorkerTargetCheck, WorkerTargetCheckClaim, WorkerTargetCheckComplete } from './targetChecks.js';
+export type { TargetCheck, TargetCheckDirectory, TargetCheckDirectorySource, TargetCheckFailureReason, TargetCheckGpu, TargetCheckHost, TargetCheckItem, TargetCheckItemCode, TargetCheckItemName, TargetCheckItemStatus, TargetCheckKind, TargetCheckPython, TargetCheckRequest, TargetCheckResult, TargetCheckResultV2, TargetCheckStatus, TargetCheckWorker, TargetCheckWorkerPresence, TargetDirectoryEntry, TargetDirectoryListing, TargetDirectoryListingOutcome, TargetDirectoryListingRequest, TargetDirectoryListingResult, WorkerSshFiles, WorkerTargetCheck, WorkerTargetCheckClaim, WorkerTargetCheckComplete } from './targetChecks.js';
 export { MAX_TARGET_PATH_LENGTH, TARGET_CHECK_KINDS } from './targetChecks.js';
 export type {
   SavedView,

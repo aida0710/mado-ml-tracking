@@ -85,9 +85,8 @@ These settings keep a login for seven days, including inactivity. Update an exis
 ### Allowed groups and the administrator group
 
 - `OIDC_ALLOWED_GROUPS`: groups allowed to sign in (comma-separated). Required in `oidc` and `hybrid`; the API does not start if it is empty. People in none of these groups cannot sign in, and no user is created for them.
-- `OIDC_ROLE_MAPPING_JSON`: a group → global role mapping. The roles are `admin` (global administrator) and `user` (sign-in only). Any other value is a startup error.
+- `OIDC_ROLE_MAPPING_JSON`: a group → global role mapping. The roles are `admin` (global administrator) and `user` (sign-in only). Any other value is a startup error. Without it, no one who signs in through SSO is a global administrator.
 - `OIDC_DEFAULT_ROLE`: the role of allowed users who match no group in the mapping. Default `user`.
-- `OIDC_ADMIN_GROUP`: shorthand for `{"<group>":"admin"}`. If you set both and the admin groups differ, the API does not start. If you set neither, `mmt-admins` is the administrator group.
 
 A user in several groups gets the stronger role (`admin`). Include the groups in the mapping in `OIDC_ALLOWED_GROUPS` too. People whose groups are all outside the allowed list cannot sign in, whatever the mapping says.
 

@@ -169,7 +169,7 @@ describe.skipIf(!endpoint)('S3の再開可能upload（S3 emulator）', () => {
     // These values authenticate only to the isolated emulator, never to real storage.
     credentials: { accessKeyId: 'testing', secretAccessKey: 'testing' },
   });
-  const store = createS3ArtifactStore({ client, bucket, prefix: 'artifacts' });
+  const store = createS3ArtifactStore({ multipartEnabled: true, client, bucket, prefix: 'artifacts' });
   const multipart = store.multipart!;
   async function pendingUploads(): Promise<number> {
     const listed = await client.send(new ListMultipartUploadsCommand({ Bucket: bucket }));

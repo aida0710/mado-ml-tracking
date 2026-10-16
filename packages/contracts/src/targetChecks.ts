@@ -124,11 +124,6 @@ interface TargetCheckFacts {
   workDirectoryFreeBytes: number | null;
 }
 
-/** Results of workers from before the computer setup steps; the API still takes and keeps them. */
-export interface TargetCheckResultV1 extends TargetCheckFacts {
-  version: 1;
-}
-
 /**
  * Version 2 adds what the setup of a computer is filled in from: the machine, its Pythons and the
  * directories that could hold the work directory. Candidates are only offered, never applied.
@@ -140,7 +135,7 @@ export interface TargetCheckResultV2 extends TargetCheckFacts {
   directories: TargetCheckDirectory[];
 }
 
-export type TargetCheckResult = TargetCheckResultV1 | TargetCheckResultV2;
+export type TargetCheckResult = TargetCheckResultV2;
 
 export interface TargetCheck {
   id: string;
@@ -228,8 +223,8 @@ export interface TargetCheckWorkerPresence {
   tokenName: string;
   projectId: string;
   workerId: string;
-  hostname: string | null;
-  version: string | null;
+  hostname: string;
+  version: string;
   lastSeenAt: string;
   sshFiles: WorkerSshFiles;
 }
@@ -238,8 +233,8 @@ export interface WorkerTargetCheckClaim {
   workerId: string;
   /** MMT_WORKER_TARGET_IDS: unassigned connection checks of these computers. May be empty. */
   targetIds?: string[];
-  /** What the worker does; workers from before directory listings omit it (connection only). */
-  kinds?: TargetCheckKind[];
+  /** What the worker does. */
+  kinds: TargetCheckKind[];
   /**
    * Requests the worker is running now. A request it claimed but is not running (a lost claim
    * response) comes back with the same lease before a new one is claimed.

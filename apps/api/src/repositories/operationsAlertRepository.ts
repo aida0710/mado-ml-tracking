@@ -140,7 +140,6 @@ export async function listVisibleAlerts(
   );
 }
 
-// A claimed Job always has heartbeat_at (set on claim); the fallbacks only guard older rows.
 export async function listActiveJobHeartbeats(
   connection: Connection,
 ): Promise<ActiveJobHeartbeat[]> {
@@ -148,7 +147,7 @@ export async function listActiveJobHeartbeats(
     connection,
     `SELECT j.id AS job_id,j.project_id,j.run_id,r.name AS run_name,r.kind AS run_kind,
       r.experiment_id,j.worker_id,j.heartbeat_at,
-      extract(epoch FROM now()-COALESCE(j.heartbeat_at,j.started_at,j.created_at))::float8
+      extract(epoch FROM now()-j.heartbeat_at)::float8
         AS heartbeat_age_seconds
     FROM jobs j JOIN runs r ON r.id=j.run_id
     WHERE j.status IN ('claimed','running')`,
@@ -170,7 +169,7 @@ export async function listWorkerSilences(connection: Connection): Promise<Worker
 }
 
 // The LEFT JOIN keeps plugins with an empty backlog, so their open alert resolves as recovered.
-const PLUGIN_BACKLOG_SELECT = `SELECT p.id AS plugin_id,p.project_id,p.name AS plugin_name,(p.enabled AND p.kind='mado' AND p.config IS NOT NULL AND NOT p.migration_pending) AS enabled,
+const PLUGIN_BACKLOG_SELECT = `SELECT p.id AS plugin_id,p.project_id,p.name AS plugin_name,(p.enabled) AS enabled,
     count(o.id) FILTER (WHERE o.status='pending')::int AS pending,
     count(o.id) FILTER (WHERE o.status='sending')::int AS sending,
     min(o.created_at) FILTER (WHERE o.status='pending') AS oldest_pending_at,
@@ -183,7 +182,7 @@ const PLUGIN_BACKLOG_SELECT = `SELECT p.id AS plugin_id,p.project_id,p.name AS p
 export async function listEnabledPluginBacklogs(connection: Connection): Promise<PluginBacklog[]> {
   return rows<PluginBacklog>(
     connection,
-    `${PLUGIN_BACKLOG_SELECT} WHERE p.enabled AND p.kind='mado' AND p.config IS NOT NULL AND NOT p.migration_pending GROUP BY p.id`,
+    `${PLUGIN_BACKLOG_SELECT} WHERE p.enabled GROUP BY p.id`,
   );
 }
 

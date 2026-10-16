@@ -1,6 +1,6 @@
 ---
 title: Mado連携
-description: 標準搭載・初期無効のMado連携の設定、バージョン固定の取り込み、Runの送信と旧接続の移行。
+description: 標準搭載・初期無効のMado連携の設定、バージョン固定の取り込み、Runの送信。
 ---
 
 # Mado連携
@@ -20,13 +20,12 @@ Madoには、アクセストークン自身の許可範囲を返す`/api/mado/ac
 
 | 操作 | 権限 |
 | --- | --- |
-| 接続設定・アクセストークンの保存、有効切替、旧接続の移行 | 全体管理者 |
+| 接続設定・アクセストークンの保存、有効切替 | 全体管理者 |
 | 接続確認、検索、取り込み、容量、再送 | Project admin |
 | 取り込んだデータセットをMadoで見る | Projectを読める利用者 |
 
 アクセストークンはAES-256-GCMで暗号化保存し、画面やAPIには設定の有無だけを返します。編集時に入力を空にすると保存済みのトークンを維持します。保存用の鍵を失った場合、旧値を復号できません。保存用の鍵を復旧するか、アクセストークンを入れ直して保存します。
 
-以前の版で「参照用キー」「送信用キー」「容量取得用キー」を保存した接続は、更新後に未設定と表示されます。3つは1つにまとめられないため、アクセストークンを入れ直して［接続を確認］を押してください。
 
 ## データセットとRun
 
@@ -41,41 +40,3 @@ Runの状態遷移と送信待ちを同じtransactionで保存します。OpenLi
 履歴がある接続のAPI/Web/OpenLineage URLは変更できません。別のMadoには［Madoの接続を追加］で新しい名前の接続を作り、既存参照の送信先を保持します。アクセストークンの入れ替えや接続設定の変更はrevisionを進め、検索・確認の古い結果を破棄します。
 
 送信成功直後に応答やDB更新を失うと同じ本文を再送する場合があります。運用者が用意するMado Registryには、同じOpenLineage eventを同じRunとバージョンとして扱う実装が必要です。Mado入口の重複応答だけから、実RegistryのDB動作を保証しません。
-
-## 旧HTTPサービスから移行する {#migrate-a-legacy-bridge}
-
-migration 059は接続UUID、旧enabled、外部参照、送信待ち、event IDを保持します。旧manifest.id=madoの接続だけを移行候補にし、移行待ちは配送・新規取り込みを止めます。その他の旧Pluginは削除せず、無効化と名前変更だけできます。複数接続は自動統合しません。
-
-1. DBと旧サービスのledger（`PLUGIN_LEDGER_DIRECTORY`）を退避します。旧サービスの送信中の処理を完了させてからAPIを更新します。
-2. 同じ接続の設定画面に、旧サービスの実Mado設定と、そのMadoで発行したアクセストークンを保存します。旧baseUrlはbridgeのURLなのでMado URLへ転用しません。設定保存だけでは配送を再開しません。
-3. 無効または移行待ちで接続確認を行います。旧ledgerがある場合は下の管理スクリプトで引き継ぎます。イベントIDと本文hashが一致する記録だけを配送済みにし、違いは409で停止します。
-4. 参照結果と設定先を確認して［移行を完了］を押します。この操作は旧enabledを維持するため、無効で確認を進めたい場合は先に無効にしておきます。送信の確認は、移行完了後に連携を有効にしてから、検証用の実Runを1件実行し、START/COMPLETEと入出力を確認します。無効中のRunは送信されず、後から有効にしても遡及送信しません。
-5. 旧サービスに依存しなくなったことを確認し、旧bridgeを停止してbridge用キーを失効します。本体の`MMT_MADO_PLUGIN_TOKEN`と旧サービスの`MMT_PLUGIN_TOKEN`は新方式には不要です。
-
-```sh
-# MMT_API_TOKEN: 全体管理者のadmin scopeのtoken。Projectに限定せず、所有者がそのProjectのAdminであること。値をコマンド引数やログへ出さない。
-# MMT_API_URL: 本体のAPI origin（例 http://127.0.0.1:4182）。
-node --env-file=/path/to/private.env node_modules/tsx/dist/cli.mjs \
-  scripts/import_plugin_receipts.ts <project-id> <plugin-id> /path/to/old/ledger
-```
-
-画面から発行できるtokenはProjectに限定されるため、このスクリプトでは403（`admin_required`）になります。Projectに限定しないtokenは、全体管理者でログインしたブラウザの開発者ツールのコンソールから、APIで発行します（tokenの発行はログイン中の画面からだけ受け付けます）。表示された`token`は一度しか表示されないので、`MMT_API_TOKEN`として私用のファイルに保存し、取り込みが終わったら失効してください。
-
-```js
-const response = await fetch('/api/tokens', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    name: 'import plugin receipts',
-    kind: 'personal',
-    scopes: ['admin'],
-    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-  }),
-});
-const { token, item } = await response.json();
-console.log(item.id, token);
-// 取り込みが終わったら失効する:
-// await fetch(`/api/tokens/${item.id}`, { method: 'DELETE' });
-```
-
-スクリプトは旧ledgerの`<event-id>.json`にあるdigestだけを読み、最大1000件単位で送ります。知らないイベント・不一致・60秒のleaseが有効な送信中の行があれば、その単位は登録されません。leaseが切れている送信記録は引き継げます。元ledgerは変更しません。DB更新前に同じキーで書かれた本文を再生成し、本文の順序と旧producerを保持して照合します。

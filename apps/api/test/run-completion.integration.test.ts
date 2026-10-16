@@ -1,3 +1,4 @@
+import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Dataset, ModelVersion, PluginConnection, Run, RunStatus } from '@mmt/contracts';
 import type { Principal } from '../src/auth/principal.js';
@@ -119,6 +120,7 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
       }),
     );
     const claimed = await services.worker.claim(fixture.workerPrincipal, {
+      workerInfo,
       workerId: 'worker-one',
     });
     expect(claimed?.job.id).toBe(job.id);
@@ -282,6 +284,7 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
       }),
     );
     const claimed = await services.worker.claim(fixture.workerPrincipal, {
+      workerInfo,
       workerId: 'worker-one',
     });
     try {

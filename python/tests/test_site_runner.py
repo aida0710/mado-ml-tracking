@@ -57,7 +57,7 @@ result = {
     "version": 2, "complete": True,
     "artifacts": [{"path": "shard-0.tar", "sha256": digest, "size": len(content)}],
     "metrics": [{"name": "samples", "value": 3}],
-    "datasets": [{"datasetId": "dataset-1", "path": "shard-0.tar", "digest": "sha256:" + digest}],
+    "datasets": [{"datasetId": "dataset-1", "path": "shard-0.tar"}],
 }
 (outputs / "result.json").write_text(json.dumps(result))
 """
@@ -147,7 +147,6 @@ def test_runner_reports_in_protocol_order_and_saves_outputs_with_the_job_token(t
         "kind": "dataset",
         "datasetId": "dataset-1",
         "path": "shard-0.tar",
-        "digest": declaration["digest"],
     }
     finish = api.bodies("finish")[0]
     assert finish["status"] == "finished" and finish["exitCode"] == 0 and "endReason" not in finish

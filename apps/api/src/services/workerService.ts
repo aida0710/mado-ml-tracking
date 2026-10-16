@@ -146,7 +146,7 @@ export class WorkerService {
             request.targetIds ?? null,
             skipped,
             this.config.allowLocalExecutor,
-            request.workerInfo?.capabilities ?? [],
+            request.workerInfo.capabilities,
           ],
         );
         if (!job) return null;
@@ -321,7 +321,7 @@ export class WorkerService {
       workerId: request.workerId,
       targetIds: request.targetIds ?? null,
       ...request.workerInfo,
-      capabilities: request.workerInfo?.capabilities ?? [],
+      capabilities: request.workerInfo.capabilities,
     });
   }
 

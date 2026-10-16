@@ -464,7 +464,6 @@ class Client(ExperimentTasksClient):
         version: str | None = None,
         model_id: str | None = None,
         model_name: str | None = None,
-        name: str | None = None,
         family: str | None = None,
         description: str = "",
         parent_model_version_ids: Sequence[str] = (),
@@ -476,12 +475,9 @@ class Client(ExperimentTasksClient):
     ) -> dict[str, Any]:
         """Register a ModelVersion; an omitted version is numbered by the API (1, 2, 3, ...).
 
-        ``model_name`` (or the older ``name``) reuses the Model with that name and creates it
+        ``model_name`` reuses the Model with that name and creates it
         only when it does not exist yet.
         """
-        if name is not None and model_name is not None and name != model_name:
-            raise ConfigurationError("Specify either model_name or name, not both")
-        model_name = model_name if model_name is not None else name
         if model_id is None:
             if not model_name:
                 raise ConfigurationError("model_id or model_name is required")
@@ -617,7 +613,7 @@ class Client(ExperimentTasksClient):
         source: Mapping[str, Any] | None = None,
         entrypoint: Sequence[str],
         test_entrypoint: Sequence[str] = (),
-        runtime: ExecutionRuntime | None = None,
+        runtime: ExecutionRuntime,
         requirements: Sequence[str] = (),
         environment: Mapping[str, str] | None = None,
         supported_model_families: Sequence[str] = (),
@@ -657,7 +653,7 @@ class Client(ExperimentTasksClient):
         source: Mapping[str, Any] | None = None,
         entrypoint: Sequence[str],
         test_entrypoint: Sequence[str] = (),
-        runtime: ExecutionRuntime | None = None,
+        runtime: ExecutionRuntime,
         requirements: Sequence[str] = (),
         environment: Mapping[str, str] | None = None,
         supported_model_families: Sequence[str] = (),

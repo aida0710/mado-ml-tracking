@@ -9,6 +9,7 @@ export async function workbenchFixture(harness: Harness) {
       method: 'POST',
       cookie: fixture.editor.cookie,
       body: {
+        runtime: { kind: 'python' },
         version: 'editable-v1',
         source: {
           kind: 'git',
