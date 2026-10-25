@@ -65,6 +65,8 @@ import './styles/responsiveManagement.css';
 import './styles/siteComputers.css';
 import './styles/computerSetup.css';
 import './styles/tabs.css';
+// デザインシステム0.6.1の不具合を抑える仮の指定。直った版に上げたら消す。
+import './styles/designSystemFixes.css';
 import { localeStore } from './i18n/locale';
 
 // The login screen and everything else start in the stored theme, or the operating system's.

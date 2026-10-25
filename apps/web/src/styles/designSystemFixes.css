@@ -1,0 +1,20 @@
+/* @mado/design-system 0.6.1 の不具合を、直った版が出るまでこのアプリで抑える指定。どれもデザインシステムに
+   報告済みで、直った版に上げたらこのファイルごと消す（main.tsx の読み込みも）。 */
+
+/* 640px未満では見出しの右の余白が4pxなのに、閉じるボタンに -8px の右のマージンが付き、ボタンがダイアログの
+   外へ4pxはみ出してダイアログが横にスクロールする。 */
+@media (width < 640px) {
+  .dialog > header .icon-button {
+    margin-right: 0;
+  }
+}
+
+/* 900px未満の .touch-targets は、チェックボックスのラベルを inline-flex にするので、1行に1つずつ並べる
+   .checkbox-field（API tokenのscopeなど）や、表示する列・分析の軸のポップオーバーの選択肢まで横に並んで
+   しまう。 */
+@media (width < 900px) {
+  .touch-targets label.checkbox-field:has(> input[type='checkbox']),
+  .touch-targets .popover > label:has(> input[type='checkbox']) {
+    display: flex;
+  }
+}
