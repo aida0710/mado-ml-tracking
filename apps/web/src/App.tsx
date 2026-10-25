@@ -81,6 +81,9 @@ const AccountPage = lazy(() =>
 const PasswordChangePage = lazy(() =>
   import('./pages/PasswordChangePage').then((module) => ({ default: module.PasswordChangePage })),
 );
+const AboutPage = lazy(() =>
+  import('./pages/AboutPage').then((module) => ({ default: module.AboutPage })),
+);
 const ComputersSettingsPage = lazy(() =>
   import('./pages/ComputersSettingsPage').then((module) => ({
     default: module.ComputersSettingsPage,
@@ -104,6 +107,7 @@ export function App() {
             <Route path={settingsSectionPath('account')} element={<AccountPage />} />
             <Route path={PASSWORD_CHANGE_PATH} element={<PasswordChangePage />} />
             <Route path={settingsSectionPath('computers')} element={<ComputersSettingsPage />} />
+            <Route path={settingsSectionPath('about')} element={<AboutPage />} />
             {/* The 全体管理 sections; AdminPage sends anyone else and unknown names to the account. */}
             <Route path={`${SETTINGS_PATH}/:section`} element={<AdminPage />} />
           </Route>

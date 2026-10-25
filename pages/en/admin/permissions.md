@@ -13,7 +13,7 @@ Permissions have two levels: whether a user is a global administrator, and the r
 
 | Group | Items | Who sees it |
 | --- | --- | --- |
-| **Global settings** | **Account**, **Computers** | Everyone |
+| **Global settings** | **Account**, **Computers**, **About** | Everyone |
 | **Administration** | **Projects**, **Users**, **Storage**, **Launchers**, **Audit log** | Global administrators only |
 
 These groups appear only in the sidebar of the **Global settings** pages, not on Project pages. People who are not global administrators do not see **Administration**, and opening one of its URLs directly takes them to **Account** with a note that the page is for global administrators only.
@@ -22,7 +22,9 @@ When **Global settings** is opened from a Project page, **Back to “…”** (w
 
 ![A regular user's user menu: Account, Change password, and Global settings](/images/en/admin-user-menu.png)
 
-The user menu at the top right has **Account**, **Change password** (local accounts only), and **Global settings** ([Authentication modes and local accounts](/en/admin/auth#check-your-account)).
+The user menu at the top right has **Account**, **Change password** (local accounts only), **Global settings**, and **Sign out** ([Authentication modes and local accounts](/en/admin/auth#check-your-account)).
+
+**About** (`/settings/about`) shows the running web version, the commit it was built from with its date, and the repository.
 
 ## Global administrators
 
