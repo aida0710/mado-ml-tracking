@@ -22,11 +22,11 @@ import { formatNote } from '../../i18n/textJoining';
 
 // Reuses the Job status colors: a paused sweep reads like waiting work.
 const STATUS_BADGE_CLASSES: Record<SweepStatus, string> = {
-  running: 'status-running',
-  paused: 'status-queued',
-  finished: 'status-finished',
-  canceled: 'status-canceled',
-  failed: 'status-failed',
+  running: 'status-info',
+  paused: 'status-neutral',
+  finished: 'status-success',
+  canceled: 'status-neutral',
+  failed: 'status-danger',
 };
 
 export function SweepStatusBadge({ status }: { status: SweepStatus }) {

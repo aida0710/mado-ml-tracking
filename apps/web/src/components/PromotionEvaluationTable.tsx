@@ -25,10 +25,10 @@ import { text } from '../i18n/catalog';
 
 // Decisions reuse the Run status colors: passed reads as finished, failed as failed.
 const decisionBadgeClass: Record<PromotionDecision, string> = {
-  passed: 'status-finished',
-  failed: 'status-failed',
-  insufficient: 'status-queued',
-  skipped: 'status-canceled',
+  passed: 'status-success',
+  failed: 'status-danger',
+  insufficient: 'status-neutral',
+  skipped: 'status-neutral',
 };
 
 export function DecisionBadge({ evaluation }: { evaluation: PromotionEvaluation }) {

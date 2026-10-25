@@ -1,12 +1,36 @@
-/* Layout values of this app and the screen shown when rendering fails. Fonts, theme colors,
-   element defaults, components and the app frame come from @mado/design-system (imported first in
-   main.tsx). */
+/* このアプリだけが使う変数と、描画に失敗したときの画面。書体・テーマの色・要素の既定・部品・画面の枠は
+   @mado/design-system（main.tsx で最初に読み込む）。
+   色はデザインシステムの決まりどおり、このアプリの変数の定義（:root と :root[data-theme='dark']）にだけ
+   値で書く。どちらのテーマでも同じ地に載る色（暗いままの上部バー、画像の上の札）はライトの値だけを置く。 */
 :root {
-  /* The project bar under the header, and everything above a screen (--chrome-height). */
+  /* 上部バーの下のプロジェクトの帯と、画面の上にあるものすべての高さ（--chrome-height）。 */
   --projectbar-height: 43px;
   --chrome-height: var(--topbar-height);
-  /* The Experiments list beside the runs. */
+  /* Runの一覧の横のExperimentsの一覧。 */
   --sidebar-width: 240px;
+
+  /* 系列の色以外のデータの印。重要度の正と負と、値の無い点。 */
+  --chart-positive: #2a78d6;
+  --chart-negative: #d03b3b;
+  --chart-missing: #9a9a96;
+  /* Sweepが早く止めたRunの状態バッジ。人が取り消したものと見分ける。 */
+  --status-stopped-text: #8a5300;
+  --status-stopped-background: #fde7c4;
+  /* 暗い上部バーの運用の通知の数。 */
+  --header-alert: #ffb4bc;
+  /* 強調色の選択の帯のボタンにマウスを載せたとき。 */
+  --on-accent-hover: rgb(255 255 255 / 8%);
+  /* 画像・動画の上に重ねる札。 */
+  --media-label-background: rgb(0 0 0 / 55%);
+  --media-label-text: #fff;
+  /* ドラッグで動かしているグラフの枠。 */
+  --shadow-drag: 0 6px 18px rgb(0 0 0 / 18%);
+}
+:root[data-theme='dark'] {
+  --chart-positive: #3987e5;
+  --chart-negative: #e66767;
+  --status-stopped-text: #f6cf8e;
+  --status-stopped-background: #5a4220;
 }
 .fatal-error {
   padding: 40px;

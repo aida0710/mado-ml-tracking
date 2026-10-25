@@ -132,7 +132,7 @@ function JobShellContent({
       <p className="badge-group">
         <span>{siteComputersTextTemplates.jobShellShowing(summary.version)}</span>
         {isCurrent ? (
-          <span className="status-badge status-finished">{text.jobShellCurrent}</span>
+          <span className="status-badge status-success">{text.jobShellCurrent}</span>
         ) : (
           <button className="button small" onClick={onShowCurrent}>
             {text.jobShellShowCurrent}
@@ -285,7 +285,7 @@ function JobShellHistory({
                   {siteComputersTextTemplates.jobShellVersionLabel(version.version)}
                 </span>
                 {version.id === currentId && (
-                  <span className="status-badge status-finished">{text.jobShellCurrent}</span>
+                  <span className="status-badge status-success">{text.jobShellCurrent}</span>
                 )}
               </span>
             ),

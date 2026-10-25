@@ -141,8 +141,9 @@
   }
 }
 
-/* early_stopped is a decision of the sweep, so it is told apart from a user cancel. */
-.status-early-stopped {
+/* 早期打ち切り（early_stopped）はSweepが決めたことなので、人が取り消したもの（.status-neutral）と
+   見分ける。デザインシステムの役割の色に無いので、このアプリで決める。 */
+.status-badge.status-stopped {
   background: var(--status-stopped-background);
   color: var(--status-stopped-text);
 }

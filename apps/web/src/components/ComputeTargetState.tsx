@@ -15,7 +15,7 @@ export function ComputeTargetState({
   useLocale();
   return (
     <span className="badge-group">
-      <span className={`status-badge ${enabled ? 'status-finished' : 'status-queued'}`}>
+      <span className={`status-badge ${enabled ? 'status-success' : 'status-neutral'}`}>
         {enabled ? text.computerEnabled : text.computerDisabled}
       </span>
       {launcherStatus && <span className="muted">{launcherStatus}</span>}

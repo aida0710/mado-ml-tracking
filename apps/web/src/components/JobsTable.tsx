@@ -155,7 +155,7 @@ export function JobsTable({
               <small className="muted"> {text[job.runKind]}</small>
               {resumedRunIds?.has(job.runId) && (
                 <span
-                  className="status-badge status-running resumed-run-badge"
+                  className="status-badge status-info resumed-run-badge"
                   title={text.checkpointResumedBadgeHint}
                 >
                   {text.checkpointResumedBadge}

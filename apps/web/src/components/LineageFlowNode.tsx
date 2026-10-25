@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { LineageFlowNode as FlowNode } from '../types/lineage';
 import { lineageNodeUrl } from '../lib/lineageNodeUrl';
 import { shortenLineageLabel } from '../lib/lineageNodeLabel';
+import { isJobStatus, JOB_STATUS_BADGE_CLASS } from '../lib/statusBadge';
 import { useLocale } from '../i18n/useLocale';
 import { lineageNodeKindLabels, text } from '../i18n/catalog';
 
@@ -21,7 +22,13 @@ export function LineageFlowNode({ data, selected }: NodeProps<FlowNode>) {
       <Handle type="target" position={Position.Left} isConnectable={false} aria-hidden="true" />
       <div className="lineage-node-card__head">
         <span className="lineage-node-card__kind">{lineageNodeKindLabels[node.kind]}</span>
-        {status && <span className={`status-badge status-${node.status}`}>{status}</span>}
+        {status && node.status && (
+          <span
+            className={`status-badge ${isJobStatus(node.status) ? JOB_STATUS_BADGE_CLASS[node.status] : 'status-neutral'}`}
+          >
+            {status}
+          </span>
+        )}
       </div>
       <Link
         className="lineage-node-card__title nodrag nopan"

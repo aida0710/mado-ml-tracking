@@ -10,16 +10,16 @@ export const shortId = (id: string): string => id.slice(0, SHORT_ID_LENGTH);
 
 export interface JobBadge {
   label: string;
-  /** A status color class of tables.css. */
+  /** 状態バッジの役割の class（@mado/design-system/components.css の .status-info など）。 */
   className: string;
 }
 
 // waiting_manual waits for a person; the other phases are on their way like a claimed Job.
 const phaseBadgeClass: Record<Exclude<JobPhase, 'running'>, string> = {
   waiting_manual: 'status-attention',
-  submitting: 'status-claimed',
-  submitted: 'status-claimed',
-  waiting_resources: 'status-claimed',
+  submitting: 'status-info',
+  submitted: 'status-info',
+  waiting_resources: 'status-info',
 };
 
 export const isActiveJob = (job: Pick<Job, 'status'>): boolean =>
@@ -33,7 +33,7 @@ export const isActiveJob = (job: Pick<Job, 'status'>): boolean =>
 export function jobDetailBadge(job: Pick<Job, 'status' | 'phase' | 'endReason'>): JobBadge | null {
   if (!isActiveJob(job))
     return job.endReason
-      ? { label: jobEndReasonLabels[job.endReason], className: 'status-failed' }
+      ? { label: jobEndReasonLabels[job.endReason], className: 'status-danger' }
       : null;
   if (!job.phase || job.phase === 'running') return null;
   return { label: jobPhaseLabels[job.phase], className: phaseBadgeClass[job.phase] };

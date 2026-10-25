@@ -9,10 +9,10 @@ import { joinSentences } from '../i18n/textJoining';
 
 // Online is the green Job badge, a missing worker the red one; a site needs no worker.
 const coverageBadgeClass: Record<WorkerCoverage['state'], string> = {
-  online: 'status-finished',
-  offline: 'status-failed',
-  none: 'status-failed',
-  notNeeded: 'status-queued',
+  online: 'status-success',
+  offline: 'status-danger',
+  none: 'status-danger',
+  notNeeded: 'status-neutral',
 };
 
 /** A computer's worker state in a list, with the last answer of workers that went quiet. */
