@@ -16,14 +16,14 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { jobsTextTemplates, logLevelLabels } from '../i18n/jobs';
 
-// Within this many pixels of the newest line, the view keeps following new lines.
+// 最新の行からこのピクセル数以内にいる間は、新しい行を追い続ける。
 const FOLLOW_LATEST_DISTANCE_PX = 24;
 const LOG_LEVELS = ['info', 'warning', 'error'] as const;
 
 /**
- * A Run's log: the latest lines (more of them on request), filtered by level and words, oldest or
- * newest first. It opens at the newest line and follows new ones while the reader stays there;
- * [最新へ] returns to it. The download always holds every line.
+ * Runのログ。最新の行（求めればもっと前まで）を、レベルと語で絞り込み、古い順か新しい順に並べる。
+ * 開いたときは最新の行にいて、読み手がそこにいる間は新しい行を追う。［最新へ］でそこへ戻る。
+ * ダウンロードには常にすべての行が入る。
  */
 export function RunLogs({ logs }: { logs: RunLogsState }) {
   useLocale();
@@ -71,7 +71,7 @@ export function RunLogs({ logs }: { logs: RunLogsState }) {
           onChange={(event) => changeFilter({ search: event.target.value })}
         />
         {logs.downloadUrl && (
-          // The API streams every line into the file, however long the log is.
+          // ログがどれほど長くても、APIがすべての行をファイルへ流し込む。
           <a className="button small" href={logs.downloadUrl} download>
             <Download size={14} />
             {text.logsDownload}
@@ -98,7 +98,7 @@ function LogLines({
 }) {
   useLocale();
   const view = useRef<HTMLDivElement>(null);
-  // Starts at the newest line; scrolling away stops following until [最新へ].
+  // 最新の行から始める。スクロールして離れると、［最新へ］を押すまで追うのをやめる。
   const followsLatest = useRef(true);
   const shown = orderLogEntries(filterLogEntries(numberLogEntries(list), filter), order);
   const isFiltered = Boolean(filter.level || filter.search.trim());
@@ -153,7 +153,8 @@ function LogLines({
           className="log-view"
           role="log"
           aria-label={text.logs}
-          // Focusable, so the keyboard scrolls the lines (axe scrollable-region-focusable).
+          // キーボードで行をスクロールできるよう、フォーカスを受けられるようにする
+          // （axeのscrollable-region-focusable）。
           tabIndex={0}
           onScroll={(event) => {
             const element = event.currentTarget;

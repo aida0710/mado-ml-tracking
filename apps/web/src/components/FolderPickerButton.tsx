@@ -1,12 +1,12 @@
 import { FolderUp } from 'lucide-react';
 import { sourcesFromFileList, type UploadSource } from '../lib/droppedFiles';
 
-// The icon sizes of the regular and the small button.
+// 通常のボタンと小さいボタンのアイコンの大きさ。
 const ICON_SIZE = { regular: 15, small: 14 } as const;
 
 /**
- * A button that opens the browser's folder picker and hands over the files of the chosen folder.
- * The input is emptied after each choice, so choosing the same folder again is reported again.
+ * ブラウザのフォルダ選択を開き、選んだフォルダのファイルを渡すボタン。選ぶたびにinputを空に
+ * するので、同じフォルダをもう一度選んでも再び知らせる。
  */
 export function FolderPickerButton({
   label,
@@ -17,7 +17,7 @@ export function FolderPickerButton({
   label: string;
   size?: keyof typeof ICON_SIZE;
   disabled?: boolean;
-  /** Called only with a folder that holds files. */
+  /** ファイルを含むフォルダのときだけ呼ぶ。 */
   onChoose: (sources: UploadSource[]) => void;
 }) {
   return (
@@ -28,7 +28,7 @@ export function FolderPickerButton({
         type="file"
         className="sr-only"
         disabled={disabled}
-        // React has no typed prop for the non-standard folder picker attribute.
+        // 標準でないフォルダ選択の属性には、Reactに型付きのpropが無い。
         ref={(input) => input?.setAttribute('webkitdirectory', '')}
         onChange={(event) => {
           const sources = sourcesFromFileList(event.target.files);

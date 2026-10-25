@@ -25,9 +25,9 @@ export function FormDialog<T>({
   onSaved: (value: T) => void;
   onClose: () => void;
   submitLabel?: string;
-  /** What the form is for and what happens after saving, above the fields. */
+  /** 欄の上に出す、フォームの目的と保存した後に起きること。 */
   description?: ReactNode;
-  /** A note under the fields that depends on what is entered (for example the chosen kind). */
+  /** 入力に応じて欄の下に出す注記（たとえば選んだ種類によるもの）。 */
   notice?: (values: FormValues) => ReactNode;
 }) {
   useLocale();

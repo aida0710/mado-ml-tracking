@@ -5,7 +5,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { formatList } from '../i18n/textJoining';
 
-// Reuses the Job status colors: finished is the green badge and failed the red one.
+// Jobの状態の色を流用する（finishedの緑のバッジとfailedの赤のバッジ）。
 const workerStatusBadgeClass: Record<WorkerPresence['status'], string> = {
   online: 'status-success',
   offline: 'status-danger',

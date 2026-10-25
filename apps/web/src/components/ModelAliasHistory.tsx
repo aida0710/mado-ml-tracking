@@ -16,7 +16,7 @@ function actorLabel(event: ModelAliasEvent): string {
 
 const versionLabel = (version: string | null) => version ?? modelsText.aliasUnassigned;
 
-/** Append-only alias changes of one Model, newest first. */
+/** 1つのモデルのaliasの変更履歴（追記のみ）を新しい順に並べる。 */
 export function ModelAliasHistory({ history }: { history: ModelAliasHistoryState }) {
   useLocale();
   return (
@@ -55,7 +55,7 @@ export function ModelAliasHistory({ history }: { history: ModelAliasHistoryState
             priority: 'secondary',
             header: modelsText.aliasReason,
             className: 'break-word alias-reason',
-            // An automatic promotion explains every criterion; the row shows the start of it.
+            // 自動の昇格はすべての基準を説明するので、行にはその冒頭を出す。
             render: (event) =>
               event.reason ? <span title={event.reason}>{event.reason}</span> : '—',
           },

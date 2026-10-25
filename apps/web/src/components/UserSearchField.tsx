@@ -10,13 +10,13 @@ import { text } from '../i18n/catalog';
 const NO_UNAVAILABLE_USERS: ReadonlyMap<string, string> = new Map();
 
 /**
- * Searches users by the start of their name, email or username and reports the one clicked.
- * Users in `excludedUserIds` (already chosen, or the signed-in user) are not offered. Users in
- * `unavailableUsers` (such as existing members) are listed but cannot be picked, with the reason
- * next to them, so nobody wonders why the person they look for is missing. The field empties after
- * a pick and takes the focus back, so the next user can be searched. Enter never submits the form
- * around the field; it picks the user when the search found exactly one that can be picked.
- * `autoFocus` focuses the field when it appears in place of a chosen user.
+ * 名前・メールアドレス・ユーザー名の先頭でユーザーを検索し、クリックした人を知らせる。
+ * `excludedUserIds`のユーザー（選択済み、またはログイン中の本人）は候補に出さない。
+ * `unavailableUsers`のユーザー（既存のメンバーなど）は一覧に出すが選べず、横に理由を出す。
+ * 探している人がなぜ出ないのかと迷わせないためである。選ぶと欄は空になってフォーカスを
+ * 取り戻し、次のユーザーを検索できる。Enterで周りのフォームを送信することはなく、選べる
+ * ユーザーがちょうど1人見つかったときにその人を選ぶ。
+ * `autoFocus`は、選んだユーザーの代わりに欄が現れたときにフォーカスを当てる。
  */
 export function UserSearchField({
   label,
@@ -29,7 +29,7 @@ export function UserSearchField({
   label: string;
   isRequired?: boolean;
   excludedUserIds?: readonly string[];
-  /** Reason each listed user cannot be picked, by user id. */
+  /** 一覧に出たユーザーを選べない理由。キーはユーザーのid。 */
   unavailableUsers?: ReadonlyMap<string, string>;
   autoFocus?: boolean;
   onPick: (user: UserSearchResult) => void;
@@ -44,13 +44,13 @@ export function UserSearchField({
   const pick = (user: UserSearchResult) => {
     onPick(user);
     setQuery('');
-    // The picked user's button disappears; without this the focus would drop to the page.
+    // 選んだユーザーのボタンは消える。これが無いとフォーカスがページへ落ちる。
     inputRef.current?.focus();
   };
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (!isEnterOutsideComposition(event)) return;
-    // The field sits inside dialog forms (creating a Project, adding a member), where Enter would
-    // submit the form before a user is picked.
+    // この欄はダイアログのフォーム（Projectの作成、メンバーの追加）の中にあり、Enterでは
+    // ユーザーを選ぶ前にフォームが送信されてしまう。
     event.preventDefault();
     const pickable = users.filter((user) => !unavailableUsers.has(user.id));
     const onlyMatch = pickable.length === 1 ? pickable[0] : undefined;

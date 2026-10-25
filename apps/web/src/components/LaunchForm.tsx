@@ -49,8 +49,8 @@ const stepLabels: Record<LaunchStep, string> = {
 };
 
 /**
- * The launch dialog's form in three steps: what to run, where it runs, and a review. [ジョブを起動]
- * on the review starts the Job (with a new Run, unless `existingRun` is given).
+ * 起動のダイアログのフォーム。何を動かすか、どこで動かすか、確認、の3段階。確認の［ジョブを起動］で
+ * Jobを始める（`existingRun`を渡さなければ新しいRunも作る）。
  */
 export function LaunchForm({
   projectId,
@@ -68,7 +68,7 @@ export function LaunchForm({
   continuation?: TrainingContinuation;
   catalog: ExecutionCatalog;
   targets: ComputeTargetDetails[];
-  /** The Project's workers; undefined until they load, so no computer is said to lack one. */
+  /** Projectのworker。読み込むまではundefinedにし、workerの無いコンピュータを誤って示さない。 */
   workers: WorkerPresence[] | undefined;
   launch: ReturnType<typeof useLaunch>;
   onClose: () => void;
@@ -156,7 +156,7 @@ export function LaunchForm({
           {text.launchBlocked} <Link to={`/projects/${projectId}/codes`}>{text.newCode}</Link>
         </p>
       )}
-      {/* A Task keeps the code, parameters and computer, so a repeated run starts there. */}
+      {/* Taskはコード、パラメータ、コンピュータを保持するので、同じ実行を繰り返すならTaskから始める。 */}
       {step === 'setup' && !existingRun && !continuation && (
         <p className="muted">
           {text.launchFromTaskHint}{' '}

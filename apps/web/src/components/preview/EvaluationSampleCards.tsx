@@ -6,9 +6,9 @@ import { useLocale } from '../../i18n/useLocale';
 import { artifactsTextTemplates } from '../../i18n/artifacts';
 
 /**
- * A page of evaluation samples as one card each, for phones: five columns do not fit, and a
- * sideways-scrolling table hides score and prediction. score sits beside the line in the heading;
- * reference and prediction stack so each line of text uses the full width.
+ * 1ページ分の評価サンプルを、1件ずつカードにしてスマートフォンに出す。5列は入らず、横に
+ * スクロールする表ではscoreとpredictionが隠れてしまう。scoreは見出しの行番号の横に置き、
+ * referenceとpredictionは縦に積んで、テキストの各行が幅いっぱいを使えるようにする。
  */
 export function EvaluationSampleCards({
   samples,

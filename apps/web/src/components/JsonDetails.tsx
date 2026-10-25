@@ -4,7 +4,7 @@ import { useLocale } from '../i18n/useLocale';
 
 export function JsonDetails({ value }: { value: unknown }) {
   useLocale();
-  // tabIndex: a long value scrolls, which the keyboard reaches only with focus.
+  // tabIndexを付けるのは、長い値がスクロールし、キーボードではフォーカスが無いと動かせないから。
   return (
     <pre className="json-view" tabIndex={0}>
       {JSON.stringify(value, null, 2)}

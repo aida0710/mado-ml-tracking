@@ -25,7 +25,7 @@ import { text, textTemplates } from '../../i18n/catalog';
 export interface MediaCompareGridProps {
   projectId: string;
   grid: MediaCompareGridData;
-  /** Display name per Run id; the id is shown for Runs missing here. */
+  /** Runのidごとの表示名。ここに無いRunはidを出す。 */
   runLabels: Record<string, string>;
 }
 
@@ -37,12 +37,12 @@ function firstFilledCell(table: CompareTable): GridPosition {
   return { row: 0, column: 0 };
 }
 
-/** The column heading: its step, or "each Run's latest step" when the Runs ended at different steps. */
+/** 列の見出し。そのstep、またはRunごとに終わったstepが違うときは「各Runの最新step」。 */
 function columnLabel(column: CompareColumn): string {
   return column.kind === 'step' ? textTemplates.mediaStepLabel(column.step) : text.mediaCompareLatest;
 }
 
-/** The step a cell shows: the column's, or in the latest column the step its media was recorded at. */
+/** セルが出すstep。列のstep、または最新の列ではそのメディアを記録したstep。 */
 function cellStepLabel(column: CompareColumn, media: RunMedia | null): string {
   return column.kind === 'latest' && media ? textTemplates.mediaStepLabel(media.step) : columnLabel(column);
 }
@@ -74,8 +74,8 @@ function CellSummary({ projectId, media }: { projectId: string; media: RunMedia 
 }
 
 /**
- * Starts the next audio player where the previous one was: same position, and playing if it was.
- * The position is applied once the new file's duration is known, so a shorter file starts over.
+ * 次の音声プレイヤーを、前のプレイヤーと同じ位置から、前が再生中なら再生した状態で始める。
+ * 位置は新しいファイルの長さが分かってから当てるので、短いファイルは最初から始まる。
  */
 function useAudioHandoff() {
   useLocale();
@@ -93,7 +93,7 @@ function useAudioHandoff() {
     if (element.readyState >= HTMLMediaElement.HAVE_METADATA) apply();
     else element.addEventListener('loadedmetadata', apply, { once: true });
   }, []);
-  /** Call before showing another cell; `toAudio` false drops the handoff (nothing to hand it to). */
+  /** 別のセルを出す前に呼ぶ。`toAudio`がfalseなら引き継ぎを捨てる（引き継ぐ相手が無い）。 */
   const leaveCurrent = useCallback((toAudio: boolean) => {
     pendingHandoff.current = toAudio ? playbackHandoffFrom(currentAudio.current) : null;
     currentAudio.current?.pause();
@@ -102,10 +102,10 @@ function useAudioHandoff() {
 }
 
 /**
- * Runs as rows and steps as columns, from a /media/compare response. Empty cells say so; they are
- * never filled from a nearby step. One cell is shown below the grid at a time, so only one audio
- * plays, and moving to another audio cell continues from the same position (A/B listening).
- * It only displays the data it is given, so a report can show a grid fixed when it was made.
+ * /media/compareの応答から、Runを行、stepを列にして並べる。空のセルは空と出し、近いstepの
+ * もので埋めない。セルはグリッドの下に一度に1つだけ出すので鳴る音声は1つだけで、別の音声の
+ * セルへ移ると同じ位置から続く（A/Bの聴き比べ）。渡されたデータを出すだけなので、レポートは
+ * 作ったときに固定したグリッドを出せる。
  */
 export function MediaCompareGrid(props: MediaCompareGridProps) {
   useLocale();
@@ -114,8 +114,8 @@ export function MediaCompareGrid(props: MediaCompareGridProps) {
 }
 
 /**
- * The grid for a known width. A narrow screen stacks the Runs: each Run's steps in a block of its
- * own, with the chosen cell's player right under the Run it belongs to.
+ * 幅が分かっているときのグリッド。狭い画面ではRunを縦に積む。各Runのstepを1つのまとまりにし、
+ * 選んだセルのプレイヤーを、そのセルのRunのすぐ下に出す。
  */
 export function MediaCompareGridView({
   projectId,
@@ -129,7 +129,7 @@ export function MediaCompareGridView({
   const cellButtons = useRef(new Map<string, HTMLButtonElement>());
   const { attachAudio, leaveCurrent } = useAudioHandoff();
   const size = { rows: table.runIds.length, columns: table.columns.length };
-  // A cell normally holds one item; the first is shown when a Run logged several at that step.
+  // セルには普通1つだけ入る。Runがそのstepで複数記録したときは最初のものを出す。
   const cellAt = (position: GridPosition) => table.cells[position.row]?.[position.column]?.[0] ?? null;
   const cellCountAt = (position: GridPosition) => table.cells[position.row]?.[position.column]?.length ?? 0;
   const runLabel = (runId: string) => runLabels[runId] ?? runId;
@@ -244,7 +244,7 @@ export function MediaCompareGridView({
   );
 }
 
-/** One Run's steps on a narrow screen, laid out as a wrapping row of cells under the Run's name. */
+/** 狭い画面での1つのRunのstep。Runの名前の下に、折り返す1行のセルとして並べる。 */
 function RunStack({ label, children }: { label: string; children: ReactNode }) {
   useLocale();
   return (

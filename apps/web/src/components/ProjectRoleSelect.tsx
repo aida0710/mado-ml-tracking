@@ -3,10 +3,10 @@ import type { ProjectRole } from '@mmt/contracts';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-// Weakest first, the order people read the roles in.
+// 弱い順。Roleを読むときの順に合わせる。
 const PROJECT_ROLES: readonly ProjectRole[] = ['viewer', 'editor', 'admin'];
 
-/** The <option>s of a Project role select, weakest first. */
+/** ProjectのRoleの選択欄の<option>。弱い順に並べる。 */
 export function ProjectRoleOptions() {
   useLocale();
   return PROJECT_ROLES.map((role) => (

@@ -12,13 +12,13 @@ import { mediaKindLabels } from '../../i18n/media';
 import { text, textTemplates } from '../../i18n/catalog';
 import { formatNote } from '../../i18n/textJoining';
 
-// Columns for the "evenly spaced" shortcut: enough to follow training, few enough to fit a screen.
+// 均等に並べる近道の列数。学習の経過を追うには足り、1画面に収まるほど少ない。
 const EVENLY_SPACED_COLUMNS = 8;
 
 /**
- * The Compare page's media tab: one key across the compared Runs, as a Run × step grid. It opens
- * on the latest step every Run recorded, so the first grid has no empty cells; the steps are
- * chosen from the recorded ones. The key and steps stay in the URL so a link opens the same grid.
+ * Compareの画面のメディアのタブ。比べるRunにまたがって1つのキーをRun × stepのグリッドで出す。
+ * 全Runが記録した最新のstepで開くので、最初のグリッドに空のセルは無い。stepは記録のある
+ * ものから選ぶ。キーとstepはURLに残し、リンクで同じグリッドが開くようにする。
  */
 export function MediaCompare({ projectId, runIds }: MediaCompareProps) {
   useLocale();

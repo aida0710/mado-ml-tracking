@@ -15,9 +15,9 @@ import { workflowsText as labels } from '../../i18n/workflows';
 import { useLocale } from '../../i18n/useLocale';
 
 /**
- * A Run's place in a workflow (a link to its execution and how it used its data) and, for a
- * processing Run, its preprocessing report. Nothing for any other Run, so the details grid of
- * the Run page keeps its order.
+ * ワークフローの中でのRunの位置（その実行へのリンクと、データをどう使ったか）と、データ処理の
+ * Runならその前処理レポート。ほかのRunでは何も出さず、Runの画面の詳細のグリッドの並びを
+ * 保つ。
  */
 export function RunWorkflowContext({ run, canEdit }: { run: Run; canEdit: boolean }) {
   useLocale();

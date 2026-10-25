@@ -21,9 +21,9 @@ function bellLabel(count: number, mayHaveMore: boolean): string {
 }
 
 /**
- * The header bell: open operations alerts of every Project the user is a member of, on Project
- * screens and in 全体設定 alike, listed with their Project in a popover on click. The open
- * Project's alerts come first.
+ * 上部バーのベル。利用者がメンバーであるすべてのProjectの、開いている運用アラートを、Projectの画面
+ * でも全体設定でも同じように示し、クリックでポップオーバーにProjectと一緒に並べる。開いている
+ * Projectのアラートを先に並べる。
  */
 export function OperationsAlertBadge({ openProjectId }: { openProjectId?: string }) {
   useLocale();
@@ -31,7 +31,7 @@ export function OperationsAlertBadge({ openProjectId }: { openProjectId?: string
   const popoverId = useId();
   const { pathname } = useLocation();
   const { container, isOpen, toggle } = usePopover({ closeKey: pathname });
-  // Names are looked up only once the list is shown; the count needs none.
+  // 名前は一覧を表示してから引く。件数だけなら名前は要らない。
   const projects = useQuery({
     key: isOpen ? 'operations-alert-projects' : null,
     load: administrationApi.projects,
@@ -40,7 +40,7 @@ export function OperationsAlertBadge({ openProjectId }: { openProjectId?: string
     projects.value?.find((project) => project.id === projectId)?.name ??
     text.operationsAlertUnknownProject;
   const items = orderAlertsForProject(alerts.value ?? [], openProjectId);
-  // One request returns at most this many, so a full list means more may be open.
+  // 1回の要求で返るのはこの数までなので、満杯ならほかにも開いているものがありうる。
   const mayHaveMore = items.length >= OPERATIONS_ALERT_MAX_PAGE_SIZE;
   const countBadge = mayHaveMore
     ? textTemplates.operationsAlertBadgeAtLeast(items.length)
@@ -86,7 +86,7 @@ export function OperationsAlertBadge({ openProjectId }: { openProjectId?: string
                         {projectName(alert.projectId)}
                       </span>
                       <span className="operations-alert-kind">
-                        {/* An alert kind is also the notification event it queues, named alike on both screens. */}
+                        {/* アラートの種類は、それが積む通知のイベントでもあり、両方の画面で同じ名前で呼ぶ。 */}
                         {notificationEventTypeLabels[alert.kind]}
                       </span>
                       <span className="operations-alert-subject">{subject.label}</span>

@@ -9,7 +9,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { hookExecutionSubjectLabels } from '../i18n/hooks';
 
-/** The event a start came from, linked to its page where there is one. */
+/** 起動のもとになったイベント。ページがあればそこへリンクする。 */
 function ExecutionSubject({ execution, base }: { execution: HookExecution; base: string }) {
   useLocale();
   const label = hookExecutionSubjectLabels[execution.subjectKind];
@@ -24,12 +24,12 @@ function ExecutionSubject({ execution, base }: { execution: HookExecution; base:
     case 'array_group':
       return <Link to={`${base}/jobs?array=${id}`} title={id}>{label} {shown}</Link>;
     default:
-      // A manual start's key, a webhook delivery ID or a checkpoint: no page of its own.
+      // 手動の起動のkey、webhookの配信ID、checkpointには、それぞれのページが無い。
       return <span title={id}>{label} {shown}</span>;
   }
 }
 
-/** What the start created or waits for. */
+/** 起動で作ったもの、または起動が待っているもの。 */
 function ExecutionLinks({ execution, base }: { execution: HookExecution; base: string }) {
   useLocale();
   const { runId, jobId, arrayGroupId, waitingRunId } = execution;
@@ -45,8 +45,7 @@ function ExecutionLinks({ execution, base }: { execution: HookExecution; base: s
 }
 
 /**
- * Starts of the Project's hooks, newest first. The hook column is left out when the list shows
- * one hook's executions.
+ * Projectのフックの起動を新しい順に並べる。1つのフックの実行履歴ではフックの列を省く。
  */
 export function HookExecutionsTable({
   executions,

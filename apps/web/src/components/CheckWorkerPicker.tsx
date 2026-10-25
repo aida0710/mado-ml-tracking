@@ -8,8 +8,8 @@ import { text, textTemplates } from '../i18n/catalog';
 const workerKey = (worker: TargetCheckWorker) => `${worker.tokenId}:${worker.workerId}`;
 
 /**
- * Chooses the online worker that checks the computer and reads its directories. Without one, it
- * says so: the setup goes on by hand.
+ * コンピュータを確認し、そのディレクトリを読むオンラインのworkerを選ぶ。workerが無いときは、
+ * 設定を手で進めることになると伝える。
  */
 export function CheckWorkerPicker({
   workers,

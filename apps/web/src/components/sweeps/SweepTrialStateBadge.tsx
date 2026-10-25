@@ -3,7 +3,7 @@ import { useLocale } from '../../i18n/useLocale';
 import { sweepTrialStateLabels } from '../../i18n/sweeps';
 import { textTemplates } from '../../i18n/catalog';
 
-// early_stopped gets its own color so it is not read as a user cancel.
+// early_stoppedには専用の色を付け、利用者のキャンセルと読み違えないようにする。
 const TRIAL_BADGE_CLASSES: Record<SweepTrialState, string> = {
   queued: 'status-neutral',
   running: 'status-info',
@@ -13,7 +13,7 @@ const TRIAL_BADGE_CLASSES: Record<SweepTrialState, string> = {
   early_stopped: 'status-stopped',
 };
 
-/** A trial's state, with why it stopped early when it did. */
+/** 試行の状態。早期終了したときはその理由も出す。 */
 export function SweepTrialStateBadge({ trial }: { trial: SweepTrial }) {
   useLocale();
   return (

@@ -18,8 +18,8 @@ import { resumeBlockerNextSteps, resumeBlockerReasons } from '../i18n/uploads';
 import { joinSentences } from '../i18n/textJoining';
 
 /**
- * Unfinished uploads of this Run, each with a way to continue it: choosing the file again sends
- * only the missing parts to the session's path, so the path never has to be typed again.
+ * このRunの終わっていないアップロードと、それぞれを続ける手段。ファイルを選び直すと、足りない部分
+ * だけをセッションのパスへ送るので、パスを入力し直す必要は無い。
  */
 export function ResumableUploadList({
   sessions,
@@ -28,7 +28,7 @@ export function ResumableUploadList({
   onDiscard,
 }: {
   sessions: ArtifactUploadListItem[];
-  /** Resolves to why the file cannot continue the session, or null once it is queued. */
+  /** ファイルでセッションを続けられない理由、またはキューに入ったらnullで解決する。 */
   onContinue: (session: ArtifactUploadListItem, source: UploadSource) => Promise<ResumeBlocker | null>;
   onStartOver: (session: ArtifactUploadListItem, source: UploadSource) => void;
   onDiscard: (uploadId: string) => Promise<void>;
@@ -66,12 +66,12 @@ function ResumableUploadRow({
   onDiscard: (uploadId: string) => Promise<void>;
 }) {
   useLocale();
-  // The file the check refused, kept so [最初から送る] needs no second pick.
+  // 検査で断られたファイル。［最初から送る］でもう一度選ばずに済むよう取っておく。
   const [refused, setRefused] = useState<{ blocker: ResumeBlocker; source: UploadSource } | null>(null);
   const check = useMutation();
   const discard = useMutation();
   const originalFile = useMemo(() => findResumeRecordByUploadId(session.id), [session.id]);
-  // Judged when the row appears; the server refuses an expired session anyway.
+  // 行が出たときに判定する。いずれにせよ、期限切れのセッションはサーバーが断る。
   const [shownAt] = useState(() => Date.now());
   const isExpired = blockerFromSession(session, shownAt) === 'expired';
   const blocker = refused?.blocker ?? (isExpired ? 'expired' : null);
@@ -104,7 +104,7 @@ function ResumableUploadRow({
         <span>{text.uploadExpires}: {formatDate(session.expiresAt)}</span>
       </div>
       {blocker && (
-        // Announced when a pick was refused; an expired row says it from the start, quietly.
+        // 選択が断られたときは読み上げで知らせる。期限切れの行は最初から静かにそう表示する。
         <p className="upload-queue-error" role={refused ? 'alert' : undefined}>
           {joinSentences([resumeBlockerReasons[blocker], resumeBlockerNextSteps[blocker]])}
         </p>
@@ -127,7 +127,7 @@ function ResumableUploadRow({
           </button>
         )}
         {blocker !== 'permissionLost' && (
-          // Without editor access the discard would be refused as well.
+          // Editorの権限が無ければ、破棄も同じく断られる。
           <button
             type="button"
             className="button small"
@@ -156,11 +156,11 @@ const PICKER_ICONS: Record<RowPicker, ReactNode> = {
   startOver: <RotateCcw size={14} />,
 };
 
-/** What picking a file in the row does, or null when picking a file cannot help. */
+/** 行でファイルを選ぶと何が起きるか。ファイルを選んでも役に立たないときはnull。 */
 function choosePicker({ blocker, hasRefusedFile }: { blocker: ResumeBlocker | null; hasRefusedFile: boolean }): RowPicker | null {
   if (!blocker) return 'continue';
   if (canChooseAnotherFileAfter(blocker)) return 'chooseAgain';
-  // Seen as expired before any file was picked: the pick itself starts over.
+  // ファイルを選ぶ前から期限切れと分かっていれば、選んだ時点で最初からやり直す。
   if (blocker === 'expired' && !hasRefusedFile) return 'startOver';
   return null;
 }

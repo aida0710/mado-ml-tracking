@@ -8,7 +8,7 @@ const PROJECT_VISIBILITY_HINTS: Record<ProjectVisibility, string> = {
   get private() { return text.projectVisibilityPrivateHint; },
 };
 
-/** Chooses who may open a Project, with what each choice means under its name. */
+/** Projectを開ける人を選ぶ。各選択肢の名前の下にその意味を出す。 */
 export function ProjectVisibilityPicker({
   name,
   value,

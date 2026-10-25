@@ -6,7 +6,7 @@ import { Resource } from './Feedback';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-/** Undelivered plugin events: counts, the oldest one, and the latest failure code. */
+/** 届いていないプラグインのイベント。件数、最も古いもの、最新の失敗のコード。 */
 export function PluginOutboxStatus({ summary }: { summary: QueryState<PluginOutboxSummary> }) {
   useLocale();
   return (

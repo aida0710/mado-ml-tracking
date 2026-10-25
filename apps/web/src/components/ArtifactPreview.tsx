@@ -11,7 +11,7 @@ import { VideoPreview } from './preview/VideoPreview';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-/** Chooses the preview for an Artifact's media kind; each kind lives in components/preview/. */
+/** Artifactのメディアの種類に合うプレビューを選ぶ。種類ごとの実装はcomponents/preview/にある。 */
 export function ArtifactPreview({ artifact }: { artifact: Artifact }) {
   useLocale();
   const mediaKind = artifactMediaKind(artifact.mimeType);
@@ -25,7 +25,7 @@ export function ArtifactPreview({ artifact }: { artifact: Artifact }) {
   return <PreviewDownloadNotice artifact={artifact} message={text.previewUnsupported} />;
 }
 
-// Media tables are stored as orient='split' JSON; only a Run's JSON can be one.
+// メディアの表はorient='split'のJSONで保存される。表になりうるのはRunのJSONだけ。
 function isJsonArtifact(artifact: Artifact): boolean {
   return artifact.mimeType.split(';')[0]!.trim().toLowerCase() === 'application/json';
 }

@@ -5,9 +5,9 @@ import { useLocale } from '../../i18n/useLocale';
 import { textTemplates } from '../../i18n/catalog';
 
 /**
- * The steps the compared Runs recorded, as checkboxes, so only logged steps can be chosen. A step
- * that not every Run recorded says how many did, since its column will have empty cells. Used by
- * the Compare page's media tab and by the report's media embed.
+ * 比べるRunが記録したstepをチェックボックスで並べ、記録のあるstepだけを選べるようにする。
+ * 全Runが記録したわけではないstepには、いくつのRunが記録したかを添える。その列には空のセルが
+ * できるため。Compareの画面のメディアのタブと、レポートのメディアの埋め込みが使う。
  */
 export function MediaStepChecklist({
   legend,
@@ -18,13 +18,13 @@ export function MediaStepChecklist({
   hint,
 }: {
   legend: string;
-  /** The steps each compared Run recorded for the key. */
+  /** 比べる各Runが、そのキーで記録したstep。 */
   stepsByRun: readonly (readonly number[])[];
   selected: readonly number[];
   onChange: (steps: number[]) => void;
-  /** Shortcut buttons shown above the checkboxes. */
+  /** チェックボックスの上に出す近道のボタン。 */
   actions?: ReactNode;
-  /** What an empty choice means, read with the group. */
+  /** 何も選ばないときの意味。グループと一緒に読ませる。 */
   hint?: string;
 }) {
   useLocale();

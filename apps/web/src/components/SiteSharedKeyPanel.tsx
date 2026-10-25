@@ -9,8 +9,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * The shared account of an automatic site, for its owner and global administrators: the
- * launcher's public key to authorize on the account, its rotation, and the login checks.
+ * 所有者と全体管理者に向けた、自動投入のsiteの共有アカウント。アカウントに登録するランチャーの
+ * 公開鍵、その作り直し、ログインの確認。
  */
 export function SiteSharedKeyPanel({
   target,

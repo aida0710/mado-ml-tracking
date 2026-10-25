@@ -100,7 +100,7 @@ export function CodeVersionFields({
       required: true,
       visible: () => sourceKind === 'inline' && !workspaceEnabled,
     },
-    // One search box serves both Artifact lists; it sits right above the first one shown.
+    // 1つの検索欄を両方のArtifactの一覧で使い、表示される最初の一覧のすぐ上に置く。
     { ...artifactSearchField, visible: () => sourceKind === 'artifact' && !isSif },
     {
       name: 'sourceArtifactId',
@@ -136,7 +136,7 @@ export function CodeVersionFields({
       options: RUN_KINDS.map((kind) => ({ value: kind, label: text[kind] })),
     },
   ];
-  // The family hints sit right under the family list.
+  // モデル系列の説明は、モデル系列の一覧のすぐ下に置く。
   const familiesEnd = commandFields.findIndex((field) => field.name === 'families') + 1;
   return (
     <>

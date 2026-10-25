@@ -7,8 +7,8 @@ import { text, textTemplates } from '../../i18n/catalog';
 type MarkdownEditorTab = 'write' | 'preview';
 
 /**
- * A Markdown textarea with a preview tab and the characters left before maxLength. Input over
- * the limit is kept so nothing typed is lost; the caller stops saving it.
+ * プレビューのタブと、maxLengthまでの残りの文字数を持つMarkdownのtextarea。上限を超えた
+ * 入力も残し、打ったものを失わないようにする。保存を止めるのは呼び出し側。
  */
 export function MarkdownEditor({
   label,
@@ -30,7 +30,7 @@ export function MarkdownEditor({
   useLocale();
   const id = useId();
   const [tab, setTab] = useState<MarkdownEditorTab>('write');
-  // Counts UTF-16 code units, the same unit the API's length check uses.
+  // APIの長さの検査と同じ単位の、UTF-16のコード単位で数える。
   const remaining = maxLength - value.length;
   return (
     <div className="markdown-editor">

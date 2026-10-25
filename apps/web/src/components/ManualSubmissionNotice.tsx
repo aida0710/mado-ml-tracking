@@ -13,7 +13,7 @@ import { text } from '../i18n/catalog';
 import { jobsTextTemplates } from '../i18n/jobs';
 import { siteComputersTextTemplates } from '../i18n/siteComputers';
 
-/** The command for one manual site, with a button to copy it. */
+/** 1つの手動のsiteのコマンドと、それをコピーするボタン。 */
 export function ManualSubmitCommand({
   targetId,
   options,
@@ -26,9 +26,9 @@ export function ManualSubmitCommand({
 }
 
 /**
- * What the viewer is told about the owner below a manual site's commands: on their own computer,
- * which Jobs `--all` takes; on someone else's, that where its owner waits with `--watch --all`
- * (their PC, say) the owner submits the Jobs. A global site has no owner to mention.
+ * 手動のsiteのコマンドの下で、所有者について伝えること。自分のコンピュータなら、`--all`がどのJobを
+ * 受け取るか。ほかの人のものなら、所有者が`--watch --all`で待ち受けている場所（所有者のPCなど）では
+ * 所有者がJobを投入すること。全体のsiteには触れるべき所有者がいない。
  */
 function ManualSiteOwnerNote({ ownership }: { ownership: ManualSiteOwnership }) {
   useLocale();
@@ -41,9 +41,9 @@ function ManualSiteOwnerNote({ ownership }: { ownership: ManualSiteOwnership }) 
 }
 
 /**
- * How a manual site's waiting Jobs get submitted, for the viewer: each requester runs the command
- * with their own account, and the owner of a computer may also take everyone's, waiting on it
- * (`--watch --all`) once per Project whose Jobs it takes.
+ * 手動のsiteで待っているJobがどう投入されるかを、見ている人に伝える。依頼した人がそれぞれ自分の
+ * アカウントでコマンドを実行する。コンピュータの所有者は全員の分も受け取れ、受け取るJobの
+ * Projectごとに1つずつ待ち受ける（`--watch --all`）。
  */
 export function WaitingJobSubmission({
   targetId,
@@ -67,7 +67,7 @@ export function WaitingJobSubmission({
   );
 }
 
-/** The selected Job's notice while it waits for `mado-tracking submit`. */
+/** 選んだJobが`mado-tracking submit`を待っている間の案内。 */
 export function WaitingJobNotice({
   targetId,
   ownership,
@@ -76,9 +76,9 @@ export function WaitingJobNotice({
 }: {
   targetId: string;
   ownership: ManualSiteOwnership;
-  /** The viewer created the Job's Run. */
+  /** 見ている人がJobのRunを作った。 */
   isRequester: boolean;
-  /** Issues the token `mado-tracking submit` needs, where a Project is open. */
+  /** `mado-tracking submit`に要るtokenを発行する。Projectを開いているときに渡す。 */
   tokenButton?: ReactNode;
 }) {
   useLocale();
@@ -92,8 +92,8 @@ export function WaitingJobNotice({
 }
 
 /**
- * Said before launching on a manual site: the Job will wait for its requester's
- * `mado-tracking submit`, so the review step shows the command and its setup up front.
+ * 手動のsiteで起動する前に伝える文。Jobは依頼した人の`mado-tracking submit`を待つので、
+ * 確認の段階でコマンドとその準備を先に見せる。
  */
 export function LaunchManualSubmissionNotice({ targetId }: { targetId: string }) {
   useLocale();
@@ -107,15 +107,15 @@ export function LaunchManualSubmissionNotice({ targetId }: { targetId: string })
 }
 
 /**
- * Jobs of manual sites wait until their requester runs `mado-tracking submit` on the site;
- * tracking cannot submit them itself, so the Jobs page says so above the list.
+ * 手動のsiteのJobは、依頼した人がsiteで`mado-tracking submit`を実行するまで待つ。
+ * mado ML Trackingが自分で投入することはできないので、Jobsの画面の一覧の上でそう伝える。
  */
 export function ManualSubmissionNotice({
   groups,
   tokenButton,
 }: {
   groups: ManualSubmissionGroup[];
-  /** Issues the token `mado-tracking submit` needs, where a Project is open. */
+  /** `mado-tracking submit`に要るtokenを発行する。Projectを開いているときに渡す。 */
   tokenButton?: ReactNode;
 }) {
   useLocale();
@@ -138,10 +138,9 @@ export function ManualSubmissionNotice({
 }
 
 /**
- * How a manual site's Jobs are submitted, in its details: once on a login node, by waiting on a
- * PC that is the computer itself, and for its owner, everyone's Jobs (`--all`) of the token's
- * Project. Others are told that the owner may submit them instead. What to set up before the
- * first command follows.
+ * 手動のsiteのJobの投入のしかたを、siteの詳細で示す。ログインノードで1回、コンピュータそのものである
+ * PCで待ち受けて、所有者ならtokenのProjectの全員のJob（`--all`）。ほかの人には、代わりに所有者が
+ * 投入することもあると伝える。最初のコマンドの前に準備することを続けて示す。
  */
 export function ManualSubmissionGuide({
   targetId,
@@ -155,7 +154,7 @@ export function ManualSubmissionGuide({
     { label: text.manualGuideOnce, options: {} },
     { label: text.manualGuideWatch, options: { watch: true } },
   ];
-  // Only the owner may take everyone's Jobs; others get 403 site_owner_required.
+  // 全員のJobを受け取れるのは所有者だけ。ほかの人には403 site_owner_requiredが返る。
   if (ownership.kind === 'own')
     commands.push({ label: text.manualGuideAll, options: OWNER_SUBMIT_OPTIONS });
   return (

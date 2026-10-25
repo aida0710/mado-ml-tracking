@@ -14,11 +14,11 @@ import { text } from '../i18n/catalog';
 
 interface CommonArtifactPath {
   path: string;
-  /** One Artifact per compared Run, in the order of the Runs. */
+  /** 比べるRunごとに1つのArtifact。Runと同じ順に並ぶ。 */
   artifacts: Artifact[];
 }
 
-/** Paths every compared Run has, sorted by path. */
+/** 比べるどのRunにもあるパス。パスの順に並べる。 */
 function findCommonPaths(artifactsByRun: Artifact[][]): CommonArtifactPath[] {
   const indexes = artifactsByRun.map((artifacts) => new Map(artifacts.map((artifact) => [artifact.path, artifact])));
   const [first, ...rest] = indexes;
@@ -37,7 +37,7 @@ function ComparedAudio({ runs, entry }: { runs: Run[]; entry: CommonArtifactPath
     setLastPlayedRunId(runId);
     for (const [otherRunId, player] of players.current) if (otherRunId !== runId) player.pause();
   };
-  // Switching keeps the position, so the same moment can be heard from each Run in turn.
+  // 切り替えても再生位置を保つので、同じ箇所を各Runで順に聞き比べられる。
   const switchTo = (runId: string) => {
     const target = players.current.get(runId);
     if (!target) return;

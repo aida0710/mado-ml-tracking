@@ -12,8 +12,8 @@ const visibilityLabels: Record<SavedViewVisibility, { label: string; hint: strin
 };
 
 /**
- * Name and visibility of a view, for "save as" and for renaming. `visibilityChoices` lists what
- * the user may pick; with fewer than two the choice is not shown and `initialVisibility` is kept.
+ * ビューの名前と公開範囲。「名前を付けて保存」と名前の変更に使う。`visibilityChoices`は利用者が
+ * 選べるもので、2つ未満なら選択を出さずに`initialVisibility`のままにする。
  */
 export function SaveViewDialog<T>({
   title,

@@ -31,7 +31,7 @@ function createStorageMetricColumns<T extends StorageMeasurementFields>(
 ): ResponsiveTableColumn<T>[] {
   return fields.map((field) => ({
     key: field,
-    // Capacity is what the panel is for; the other measurements wait for the row to open.
+    // このパネルの目的は容量なので、ほかの測定値は行を開くまで出さない。
     priority: field === 'bytes' ? 'primary' : 'secondary',
     header: metricColumnDefinitions[field].label,
     className: 'mono numeric nowrap',

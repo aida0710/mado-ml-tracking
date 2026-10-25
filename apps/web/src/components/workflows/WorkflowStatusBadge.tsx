@@ -3,13 +3,13 @@ import { StatusBadge } from '../StatusBadge';
 import { workflowStatusLabel } from '../../lib/workflowLabels';
 import { useLocale } from '../../i18n/useLocale';
 
-// The Job colors of the two states a Job lacks: waiting like a queued Job, still running.
+// Jobに無い2つの状態に当てるJobの色。待機はqueuedのJobと同じ色、停止の途中はまだ実行中の色。
 const OWN_STATE_CLASSES = { pending: 'status-neutral', canceling: 'status-info' } as const;
 
 /**
- * The status of a workflow execution or step with the badge of Jobs and Runs. A step waiting for
- * the one before it and an execution whose stop was asked for have their own words
- * (lib/workflowLabels) in the color of the nearest Job state.
+ * ワークフローの実行またはステップの状態を、JobやRunと同じバッジで出す。前のステップを待つ
+ * ステップと、停止を求められた実行には専用の言葉（lib/workflowLabels）があり、一番近いJobの
+ * 状態の色で出す。
  */
 export function WorkflowStatusBadge({
   status,

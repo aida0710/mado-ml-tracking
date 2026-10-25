@@ -28,7 +28,7 @@ function sortValue(entry: ParameterImportanceEntry, column: SortColumn, method: 
   return importanceOf(entry, method);
 }
 
-/** Sorted copy; entries without a value go last in either direction. */
+/** 並べ替えた写し。値の無い項目は、昇順でも降順でも最後に置く。 */
 function sortEntries(
   entries: ParameterImportanceEntry[],
   sort: { column: SortColumn; descending: boolean },
@@ -48,11 +48,11 @@ function formatOptional(value: number | null): string {
   return value === null ? '—' : formatCompactNumber(value);
 }
 
-/** Parameter importance as returned by the API, with the method and sort chosen on screen. */
+/** APIが返したパラメータ重要度と、画面で選んだ計算方法・並べ替え。 */
 export function ParameterImportanceTable({ result }: { result: ParameterImportanceResult }) {
   useLocale();
   const [method, setMethod] = useState<ImportanceMethod>('impurity');
-  // null keeps the API order: most important first (by |correlation| while importance is null).
+  // nullならAPIの順のまま。重要度の高い順（重要度がnullの間は|correlation|の大きい順）。
   const [sort, setSort] = useState<{ column: SortColumn; descending: boolean } | null>(null);
   const entries = sort ? sortEntries(result.entries, sort, method) : result.entries;
   const maxImportance = Math.max(0, ...result.entries.map((entry) => importanceOf(entry, method) ?? 0));
@@ -156,7 +156,7 @@ export function ParameterImportanceTable({ result }: { result: ParameterImportan
   );
 }
 
-/** A bar from the center: right and blue for positive, left and red for negative. */
+/** 中央から伸びる棒。正なら右へ青、負なら左へ赤。 */
 function CorrelationCell({ correlation }: { correlation: number | null }) {
   useLocale();
   if (correlation === null) return <span className="importance-value">—</span>;

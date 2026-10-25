@@ -8,7 +8,7 @@ import { joinLabels } from '../../i18n/textJoining';
 import { workflowsText as labels, workflowsTextTemplates } from '../../i18n/workflows';
 import { useLocale } from '../../i18n/useLocale';
 
-/** The page's executions, with the chosen one first when it is on another page. */
+/** ページの実行の一覧。選んだ実行が別のページにあるときは、それを先頭に置く。 */
 function withChosen(
   items: WorkflowExecutionSummary[],
   chosen: WorkflowExecutionSummary | undefined,
@@ -17,8 +17,8 @@ function withChosen(
 }
 
 /**
- * Picks the execution to show and another to compare it with, from one page of the history.
- * Turning the page changes the choices only: the shown and compared executions stay chosen.
+ * 表示する実行と、比べる相手の実行を、履歴の1ページから選ぶ。ページを送っても変わるのは
+ * 選択肢だけで、表示中と比較中の実行は選んだまま残る。
  */
 export function WorkflowHistoryPicker({
   page,
@@ -34,7 +34,7 @@ export function WorkflowHistoryPicker({
 }: {
   page: WorkflowExecutionPage;
   isFirstPage: boolean;
-  /** The shown execution once loaded; it stays a choice on every page. */
+  /** 読み込んだ後の表示中の実行。どのページでも選択肢に残る。 */
   shown: WorkflowExecutionSummary | undefined;
   shownId: string;
   compared: WorkflowExecutionSummary | undefined;

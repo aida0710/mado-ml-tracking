@@ -17,10 +17,10 @@ import { useLocale } from '../i18n/useLocale';
 import { aliasProtectionRoleLabels, promotionTextTemplates } from '../i18n/promotion';
 import { text } from '../i18n/catalog';
 
-// The scope select uses this value for the Project-wide protection (modelId null).
+// 範囲の選択欄では、この値でProject全体の保護（modelIdがnull）を表す。
 const PROJECT_SCOPE = '';
 
-/** The "保護alias" tab of the Models page: who may change which alias by hand. */
+/** Modelsの画面の「保護alias」タブ。どのaliasをだれが手で変えてよいかを決める。 */
 export function AliasProtectionSettings({ models }: { models: Model[] }) {
   useLocale();
   const { project } = useProject();
@@ -30,7 +30,7 @@ export function AliasProtectionSettings({ models }: { models: Model[] }) {
     registryApi.aliasProtections(project.id, null, signal),
   });
   const [editing, setEditing] = useState<ModelAliasProtection | 'new' | null>(null);
-  // Any Model's aliases: the scope is chosen in the same form, and a name is protected per Model.
+  // どのモデルのaliasも候補に出す。範囲は同じフォームで選び、名前はモデルごとに保護する。
   const aliases = useAliasSuggestions({ projectId: project.id, models, modelId: null });
   const [removing, setRemoving] = useState<ModelAliasProtection | null>(null);
   const scopeLabel = (modelId: string | null) =>

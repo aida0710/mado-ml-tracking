@@ -12,7 +12,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { serviceAccountsTextTemplates } from '../i18n/serviceAccounts';
 
-/** The shared expiry selector for personal and Service Account tokens. */
+/** 個人とService Accountのtokenで共有する、有効期限の選択欄。 */
 export function TokenExpiryFields({ value, onChange }: {
   value: TokenExpirySelection;
   onChange: (value: TokenExpirySelection) => void;

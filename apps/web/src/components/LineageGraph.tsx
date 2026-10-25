@@ -11,8 +11,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * The lineage diagram and its relations table. Below 900px the diagram is too small to read
- * first, so the relations table leads (open) and the diagram follows, fitted to the width.
+ * 来歴の図と関係の表。900px未満では図が小さすぎて最初に読むには向かないので、関係の表を先に
+ * （開いて）置き、図は幅に合わせてその後に置く。
  */
 export function LineageGraph({
   graph,
@@ -51,7 +51,7 @@ export function LineageGraph({
   );
 }
 
-/** The order of the parts for a known width; LineageGraph passes the current one. */
+/** 幅が分かっているときの部品の並び。LineageGraphが今の幅を渡す。 */
 export function LineageGraphLayout({
   isNarrow,
   diagram,

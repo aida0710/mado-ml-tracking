@@ -14,15 +14,15 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * One file: its preview, a download, where it is used, and earlier uploads to the same path.
- * Project admins get the ⋯ menu; a file something uses cannot be deleted, and the menu says so
- * before any confirmation.
+ * 1つのファイルのプレビュー、ダウンロード、使われている場所、同じパスへの以前のアップロード。
+ * Project adminには⋯メニューを出す。何かが使っているファイルは削除できず、メニューが確認の前に
+ * そう伝える。
  */
 export function ArtifactDetailsPanel({
   latest,
   onDeleted,
 }: {
-  /** The newest upload at the path; an earlier one can be shown from the details. */
+  /** そのパスへの最新のアップロード。以前のものは詳細から表示できる。 */
   latest: Artifact;
   onDeleted: (artifact: Artifact) => void;
 }) {

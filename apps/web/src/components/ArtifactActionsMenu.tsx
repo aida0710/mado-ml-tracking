@@ -9,10 +9,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
- * The ⋯ menu of an open Artifact. Deletion sits here rather than as a standing button and always
- * asks first, because it cannot be undone. A file something uses cannot be deleted, so the item
- * is disabled with the reason instead of failing after the confirmation. Render it only for
- * Project admins.
+ * 開いているArtifactの⋯メニュー。削除は元に戻せないので、常に見えるボタンにせずここに置き、
+ * 必ず先に確かめる。何かが使っているファイルは削除できないので、確認の後で失敗させるのでなく、
+ * 理由を添えて項目を無効にする。Project adminにだけ表示する。
  */
 export function ArtifactActionsMenu({
   artifact,
@@ -20,7 +19,7 @@ export function ArtifactActionsMenu({
   onDeleted,
 }: {
   artifact: Artifact;
-  /** null while the references are loading; the server refuses a referenced file either way. */
+  /** 参照を読み込んでいる間はnull。どちらにしても、参照されているファイルはサーバーが断る。 */
   isReferenced: boolean | null;
   onDeleted: () => void;
 }) {

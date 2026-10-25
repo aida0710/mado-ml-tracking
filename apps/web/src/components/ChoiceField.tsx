@@ -8,8 +8,8 @@ export interface ChoiceOption {
 }
 
 /**
- * A labelled, keyboard-accessible listbox that also fits long version names. `placeholder` shows
- * while the value is none of the options.
+ * ラベル付きで、キーボードで操作でき、長いバージョン名も収まるリストボックス。値がどの選択肢でも
+ * ない間は`placeholder`を表示する。
  */
 export function ChoiceField({
   label,
@@ -71,7 +71,7 @@ export function ChoiceField({
         onKeyDown={(event) => {
           if (event.key === 'Escape') {
             if (!open) return;
-            // Closes only the list: the dialog around it must not take the key as its own close.
+            // 閉じるのは一覧だけ。周りのダイアログに、このキーで自分を閉じさせない。
             event.preventDefault();
             event.stopPropagation();
             setOpen(false);

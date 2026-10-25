@@ -2,10 +2,10 @@ import { useId } from 'react';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-// Tall enough to read a whole section of a job shell without scrolling the dialog.
+// ダイアログをスクロールせずに、job shellの1つの区切りを丸ごと読める高さ。
 const JOB_SHELL_EDITOR_ROWS = 18;
 
-/** A job shell as plain text: monospaced, unwrapped and without spelling marks. */
+/** job shellをプレーンテキストで扱う。等幅で、折り返さず、スペルチェックの印も付けない。 */
 export function JobShellEditor({
   value,
   onChange,

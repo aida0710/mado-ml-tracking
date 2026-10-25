@@ -47,7 +47,7 @@ export function ModelRegistryPanel({
   onRemoveAlias: (assignment: { alias: string; version: string }) => void;
 }) {
   useLocale();
-  // Fetched again whenever the panel opens, so a protection added on its tab shows here.
+  // パネルを開くたびに取り直し、保護aliasのタブで足した保護がここにも出るようにする。
   const protections = useModelAliasProtections(projectId, registry.selected?.id ?? null);
   const protectionOf = (alias: string) =>
     registry.selected
@@ -155,12 +155,12 @@ export function ModelRegistryPanel({
                         {
                           key: 'actions',
                           priority: 'primary' as const,
-                          // Named for screen readers; the buttons below say what they do.
+                          // スクリーンリーダー向けの名前。下のボタンが自分の働きを示す。
                           header: <span className="sr-only">{text.actions}</span>,
                           render: ([alias, versionId]: [string, string]) => {
                             const protection = protectionOf(alias);
-                            // Same check as the API's manual alias guard, so nobody is offered a
-                            // removal that ends in 403.
+                            // APIの手動のalias操作の検査と同じ判定にし、403で終わる削除を
+                            // だれにも出さないようにする。
                             if (protection && !canRemoveAlias(projectRole, protection))
                               return (
                                 <span className="muted">

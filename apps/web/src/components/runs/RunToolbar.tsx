@@ -16,7 +16,7 @@ import { text, textTemplates } from '../../i18n/catalog';
 import { joinLabels } from '../../i18n/textJoining';
 
 const runStatuses: RunStatus[] = ['queued', 'running', 'finished', 'failed', 'canceled'];
-// The select chooses one kind; a view saved through the API with several keeps them as one choice.
+// selectで選ぶ種類は1つ。APIで複数を指定して保存したビューは、それを1つの選択肢として残す。
 const KIND_OPTION_SEPARATOR = ',';
 
 export function RunToolbar({
@@ -37,7 +37,7 @@ export function RunToolbar({
   onExportCsv,
 }: {
   searchText: string;
-  /** Why the API refused the searched filter; shown like a syntax error, without a retry. */
+  /** 検索したフィルタをAPIが拒んだ理由。構文エラーと同じように出し、再試行は付けない。 */
   filterRejection: string | null;
   status: string;
   kinds: RunKind[];
@@ -51,15 +51,15 @@ export function RunToolbar({
   onSortChange: (sort: string) => void;
   onColumnToggle: (name: string) => void;
   exportingCsv: boolean;
-  /** Exports every Run of the current search, not only the shown page. */
+  /** 出ているページだけでなく、今の検索のRunをすべて書き出す。 */
   onExportCsv: () => void;
 }) {
   useLocale();
   const [searchInput, setSearchInput] = useState(searchText);
-  // The filter the last search refused; its message is put into words on each render, so it
-  // follows a change of display language.
+  // 前回の検索で拒まれたフィルタ。メッセージは描画のたびに文章にするので、表示言語を
+  // 変えても追従する。
   const [rejectedFilter, setRejectedFilter] = useState<string | null>(null);
-  // A search applied elsewhere (a saved view, the address) replaces what is typed here.
+  // ほかの場所で適用した検索（保存ビュー、アドレス）は、ここに入力したものを置き換える。
   const [appliedSearchText, setAppliedSearchText] = useState(searchText);
   if (appliedSearchText !== searchText) {
     setAppliedSearchText(searchText);
@@ -68,7 +68,7 @@ export function RunToolbar({
   }
   const kindValue = kinds.join(KIND_OPTION_SEPARATOR);
   const sortedMetric = parseMetricRunSort(sort);
-  // Keep the current metric order selectable even when this page lacks that metric.
+  // このページにそのメトリクスが無くても、今のメトリクスでの並べ替えを選べるように残す。
   const sortMetricNames =
     sortedMetric && !metricNames.includes(sortedMetric.key)
       ? [sortedMetric.key, ...metricNames]
@@ -76,7 +76,7 @@ export function RunToolbar({
 
   const syntaxError = rejectedFilter === null ? null : findRunFilterSyntaxError(rejectedFilter);
   const filterError = syntaxError ?? filterRejection;
-  // A comparison searched as a Run name, such as `loss < 0.2`, most likely meant a metric.
+  // `loss < 0.2`のような比較をRunの名前として検索したなら、たぶんメトリクスのつもりだった。
   const suggestedFilter = suggestRunFilter(searchText);
 
   function submitSearch(input = searchInput) {

@@ -8,7 +8,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { modelsText } from '../i18n/models';
 
-/** On the Code page: which models a code version can run, and which Tasks and rules use it. */
+/** Codeの画面で、コードバージョンが動かせるモデルと、それを使うTaskとルールを示す。 */
 export function CodeVersionUsageDetails({
   projectId,
   version,

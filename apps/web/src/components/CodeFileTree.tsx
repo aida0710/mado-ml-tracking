@@ -2,7 +2,7 @@ import { File, Folder } from 'lucide-react';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-// One indentation step per directory keeps long nested paths readable.
+// ディレクトリごとに1段字下げし、深く入れ子になった長いパスも読めるようにする。
 const FILE_TREE_INDENT_PX = 14;
 
 export function CodeFileTree({ paths, activePath, onSelect }: {

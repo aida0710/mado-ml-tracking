@@ -36,10 +36,10 @@ import { formatList, formatNote } from '../../i18n/textJoining';
 
 // API はこの 422 の横の項目 `parameter` に、該当する parameter を置く（domain/sweeps/searchSpace.ts）。
 const SPACE_INVALID_CODE = 'sweep_space_invalid';
-// The one row the form opens with; rows added later are `row-<n>`, so the ids never collide.
+// フォームを開いたときの1行。後から足す行は`row-<n>`なので、idがぶつからない。
 const INITIAL_SEARCH_SPACE_ROW_ID = 'row-initial';
 
-/** A 422 about the search space: shown on the row it names, or above the rows. */
+/** 探索空間についての422。それが指す行に出すか、行の上に出す。 */
 interface SpaceError {
   rowId: string | null;
   failure: RequestError;
@@ -61,7 +61,7 @@ export function CreateSweepDialog({
   onCreated: (sweep: Sweep) => void;
 }) {
   useLocale();
-  // Rows added later are numbered from the counter, which only event handlers advance.
+  // 後から足す行はカウンターで番号を振る。カウンターを進めるのはイベントハンドラだけ。
   const nextRowId = useRef(0);
   const createRowId = () => `row-${nextRowId.current++}`;
   const [form, setForm] = useState<SweepFormValues>(() =>
@@ -74,15 +74,15 @@ export function CreateSweepDialog({
   const metricListId = useId();
   const task = tasks.find((item) => item.id === form.taskId);
   const experiment = experiments.find((item) => item.id === task?.experimentId);
-  // Only computers with the runtime of the Task's code take its trials, as when the Task runs.
+  // Taskを実行するときと同じく、試行を引き受けるのはTaskのコードのランタイムを持つコンピュータだけ。
   const taskCode = useCodeVersionDetail(projectId, task?.codeVersionId);
   const usableTargets = targets.filter((target) =>
     taskCode.value ? isTargetCompatible(target, taskCode.value.version) : target.enabled,
   );
   const taskTarget = targets.find((target) => target.id === task?.targetId);
-  // The trials run on the chosen computer, or on the Task's when none is chosen.
+  // 試行は選んだコンピュータで動く。選ばなければTaskのコンピュータで動く。
   const trialTarget = targets.find((target) => target.id === form.targetId) ?? taskTarget;
-  // No GPU chosen means the Task's GPU IDs, which another computer may not have (the API refuses).
+  // GPUを選ばないとTaskのGPU IDを使うが、別のコンピュータにはそのGPUが無いかもしれない（APIが拒む）。
   const missingTaskGpus =
     form.targetId && trialTarget?.executor !== 'site' && !form.gpuIds.length && task
       ? task.gpuIds.filter((id) => !trialTarget?.gpuIds.includes(id))
@@ -94,18 +94,18 @@ export function CreateSweepDialog({
     ...(spaceError?.rowId ? { [spaceError.rowId]: formatErrorMessage(spaceError.failure) } : {}),
   };
   const gridCombinations = countGridCombinations(rowsToSearchSpace(form.rows, form.method).searchSpace);
-  // A grid stops once every combination ran, whatever maxTrials says; said before it is created.
+  // gridはmaxTrialsにかかわらず、全組み合わせを実行した時点で止まる。作成前にそれを伝える。
   const isGridShorterThanMaxTrials =
     form.method === 'grid' &&
     gridCombinations !== null &&
     gridCombinations < (Number(form.maxTrials) || 0);
 
   function change(values: Partial<SweepFormValues>) {
-    // The computer follows the Task's runtime and the GPU IDs belong to one computer.
+    // コンピュータはTaskのランタイムに従い、GPU IDは1つのコンピュータのもの。
     const dependents: Partial<SweepFormValues> =
       'taskId' in values ? { targetId: '', gpuIds: [] } : 'targetId' in values ? { gpuIds: [] } : {};
     setForm((previous) => ({ ...previous, ...dependents, ...values }));
-    // A row-level message from the API is about the rows as they were sent.
+    // APIからの行ごとのメッセージは、送ったときの行についてのもの。
     if ('rows' in values || 'method' in values) setSpaceError(null);
   }
 

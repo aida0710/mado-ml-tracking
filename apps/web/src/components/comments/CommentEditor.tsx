@@ -7,8 +7,8 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**
- * Writes a new comment, a reply or an edit. The body is checked against the API's rules
- * (not only whitespace, at most COMMENT_MAX_LENGTH) before it is sent.
+ * 新しいコメント、返信、編集を書く。本文は送る前にAPIの決まり（空白だけでない、長さは
+ * COMMENT_MAX_LENGTHまで）に照らして確かめる。
  */
 export function CommentEditor({
   label,

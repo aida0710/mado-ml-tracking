@@ -35,7 +35,7 @@ function emptyRunSet(source: RunSetSource): ReportRunSet {
   }
 }
 
-/** Chooses the Runs of an embed: picked Runs, a Project saved view, a search, or a sweep. */
+/** 埋め込みのRunを選ぶ。選んだRun、Projectの保存ビュー、検索、Sweep。 */
 export function RunSetPicker({
   projectId,
   runSet,
@@ -127,8 +127,8 @@ export function RunSetPicker({
 }
 
 /**
- * Runs found by name, checked to pick them. Runs picked earlier stay picked when the search hides them.
- * With mediaKind, only Runs that recorded media of that kind are offered.
+ * 名前で探したRunを、チェックして選ぶ。前に選んだRunは、検索で隠れても選んだまま残る。
+ * mediaKindがあれば、その種類のメディアを記録したRunだけを出す。
  */
 export function RunChecklist({
   projectId,

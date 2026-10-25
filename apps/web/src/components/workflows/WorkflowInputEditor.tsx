@@ -92,8 +92,8 @@ export function WorkflowInputEditor({
         />
         <label className="field">
           <span>{labels.workflowWeight}</span>
-          {/* A weight of 0 or below is left to the save check, which names the step and the input
-              (lib/workflowDraftSave); a min here would show the browser's own message first. */}
+          {/* 0以下の重みは、ステップと入力を名指しする保存時の検査（lib/workflowDraftSave）に任せる。
+              minを付けるとブラウザ自身のメッセージが先に出る。 */}
           <input
             type="number"
             step="any"

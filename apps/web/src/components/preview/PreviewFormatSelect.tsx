@@ -4,7 +4,7 @@ import type { CodeLanguageChoice } from '@mado/design-system/react';
 import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
-/** The table view of a CSV / TSV / jsonl file, offered beside the text formats. */
+/** CSV / TSV / jsonlのファイルの表の表示。テキストの形式と並べて選択肢に出す。 */
 export const TABLE_PREVIEW_FORMAT = 'table';
 export type PreviewFormat = CodeLanguageChoice | typeof TABLE_PREVIEW_FORMAT;
 
@@ -15,8 +15,8 @@ function formatName(language: CodeLanguage) {
 }
 
 /**
- * The ［表示形式］ select of a preview: 「自動」 with the detected format, every text format, and
- * 「表」 first for files that can be read as a table.
+ * プレビューの［表示形式］のselect。検出した形式を添えた「自動」、すべてのテキストの形式、
+ * 表として読めるファイルでは先頭に「表」を出す。
  */
 export function PreviewFormatSelect({
   value,

@@ -30,7 +30,7 @@ export default function MonacoCodeEditor({ path, value, onChange, readOnly = fal
   const theme = useDocumentTheme();
   const [failure, setFailure] = useState(false);
   const editorId = useId();
-  // Keep Undo inside each file, then release every model owned by this dialog.
+  // Undoを各ファイルの中に留め、最後にこのダイアログが持つmodelをすべて解放する。
   const visitedModelPaths = useRef(new Set<string>());
   const modelPath = monaco.Uri.from({ scheme: 'mmt-code', path: `/${editorId}/${path}` }).toString();
   useEffect(() => {
@@ -49,7 +49,8 @@ export default function MonacoCodeEditor({ path, value, onChange, readOnly = fal
     defineMonacoTheme(monaco.editor, theme);
   }, [theme]);
   return failure ? <p className="notice error" role="alert">{text.editorUnavailable}</p> : (
-    // A model switch can notify the previous onChange listener; keep each Editor bound to one path.
+    // modelを切り替えると前のonChangeのリスナーに通知が届くことがあるので、
+    // Editorはそれぞれ1つのpathに結び付けておく。
     <Editor key={modelPath} height="100%" path={modelPath} keepCurrentModel saveViewState={false}
       language={getFileLanguage(path)} value={value}
       theme={MONACO_THEME_NAMES[theme]} loading={text.loading}

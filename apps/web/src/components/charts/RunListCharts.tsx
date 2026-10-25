@@ -12,15 +12,15 @@ import { getRunChartKeys } from '../../lib/runChartKeys';
 import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
-/** Runs drawn from a search: more lines than this hide each other on one chart. */
+/** 検索から描くRunの数。これより多いと、1つの図で線が互いを隠してしまう。 */
 export const RUN_LIST_CHART_LIMIT = 50;
 
 type ChartTarget = 'top' | 'selected';
 export type RunSearchConditions = Omit<RunSearchRequest, 'limit' | 'cursor'>;
 
 /**
- * Charts above the Run list: the selected Runs or the top of the search, overlaid per panel.
- * A grouping draws each group's mean and range over the whole search instead.
+ * Runの一覧の上の図。選んだRunか検索の上位を、パネルごとに重ねて描く。グループ化したときは、
+ * 代わりに検索全体の各グループの平均と範囲を描く。
  */
 export function RunListCharts({
   projectId,
@@ -57,7 +57,7 @@ export function RunListCharts({
     'runList',
     defaultLayout,
   );
-  // The grouping of every panel; a tag or param without a key waits here until one is typed.
+  // 全パネルのグループ化。キーの無いタグ・パラメータは、キーが入力されるまでここで待つ。
   const appliedGrouping = layout.panels[0]?.groupBy;
   const [groupingDraft, setGroupingDraft] = useState<RunGroupBy | undefined>();
   const grouping = groupingDraft ?? appliedGrouping;
@@ -66,7 +66,7 @@ export function RunListCharts({
     if (value === undefined || isCompleteGrouping(value))
       updateLayout((current) => setPanelsGroupBy(current, value));
   }
-  // New and edited panels follow the grouping chosen for the page.
+  // 新しいパネルと編集したパネルは、ページで選んだグループ化に従う。
   const changeLayout: ChartLayoutChange = (change) =>
     updateLayout((current) => setPanelsGroupBy(change(current), appliedGrouping));
 
@@ -77,7 +77,7 @@ export function RunListCharts({
         layout={layout}
         source={{
           runIds,
-          // A group covers the whole search; selected Runs are grouped among themselves.
+          // グループは検索全体を対象にする。選んだRunは、その中だけでグループ化する。
           ...(target === 'top' ? { search: conditions } : {}),
         }}
         runLabels={Object.fromEntries(knownRuns.map((run) => [run.id, run.name]))}

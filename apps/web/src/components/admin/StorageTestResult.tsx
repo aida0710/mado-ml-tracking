@@ -4,7 +4,7 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 import { hasStorageTestPassed } from '../../lib/storageTestResult';
 
-// The API names the steps; names it adds later are shown as sent.
+// 手順の名前はAPIが決める。後から増えた名前は、送られたまま出す。
 const stepLabels: Record<string, string> = {
   get put() { return text.storageTestStepPut; },
   get get() { return text.storageTestStepGet; },
@@ -13,8 +13,8 @@ const stepLabels: Record<string, string> = {
 };
 
 /**
- * Shows each step of a connection test with OK/NG and the API's short error. A failure leads on
- * to changing the backend (`onEdit`, when the screen may change it).
+ * 接続テストの各手順を、OK/NGとAPIの短いエラーとともに出す。失敗したときは保存先の変更へ
+ * 案内する（`onEdit`。画面から変更できる保存先のとき）。
  */
 export function StorageTestResult({
   backendName,

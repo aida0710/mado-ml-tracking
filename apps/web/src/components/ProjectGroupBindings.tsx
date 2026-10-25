@@ -15,9 +15,8 @@ import { text } from '../i18n/catalog';
 import { projectAccessTextTemplates } from '../i18n/projectAccess';
 
 /**
- * Roles granted to Authentik groups. The member list (shared with ProjectMembers, which it reloads
- * after a change) tells which bound groups nobody has logged in with yet and which admin binding
- * is the last one.
+ * Authentikのgroupへ付与したRole。メンバーの一覧（ProjectMembersと共有し、変更の後に読み直す）
+ * から、付与したgroupのうちまだだれもログインしていないものと、最後のAdminの付与がどれかが分かる。
  */
 export function ProjectGroupBindings({
   projectMembers,
@@ -64,7 +63,7 @@ export function ProjectGroupBindings({
                 render: (binding) => (
                   <>
                     <span className="mono">{binding.group}</span>
-                    {/* Unknown until the member list loads, so nothing is marked meanwhile. */}
+                    {/* メンバーの一覧を読み込むまでは分からないので、その間は印を付けない。 */}
                     {members && !heldGroups.has(binding.group) && (
                       <span className="group-without-members" title={text.groupWithoutMembersHint}>
                         {text.groupWithoutMembers}
@@ -135,7 +134,7 @@ export function ProjectGroupBindings({
   );
 }
 
-// Group names are fetched only while the dialog is open, since only admins ever open it.
+// ダイアログを開くのはProject adminだけなので、group名はダイアログを開いている間だけ取得する。
 function GroupBindingEditor(
   props: Omit<Parameters<typeof GroupBindingDialog>[0], 'groupNameCandidates'>,
 ) {

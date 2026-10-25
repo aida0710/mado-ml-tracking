@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { SPECTROGRAM_DB_FLOOR, type Spectrogram } from '../../lib/audioAnalysis';
 
-// A magma-like ramp: readable on both themes because silence is near-black and loud bins are pale.
+// magmaに似たカラースケール。無音はほぼ黒、大きな音のビンは淡い色なので、どちらのテーマでも読める。
 const COLOR_STOPS: Array<[number, [number, number, number]]> = [
   [0, [0, 0, 4]],
   [0.25, [59, 15, 112]],
@@ -40,7 +40,7 @@ export function AudioSpectrogram({ spectrogram, height }: { spectrogram: Spectro
       context.clearRect(0, 0, canvas.width, canvas.height);
       return;
     }
-    // One pixel per frame and bin; CSS stretches it to the drawn size. Low frequencies at the bottom.
+    // フレームとビンごとに1ピクセル。描く大きさにはCSSで引き伸ばす。低い周波数を下にする。
     const image = context.createImageData(frameCount, binCount);
     for (let frame = 0; frame < frameCount; frame += 1)
       for (let bin = 0; bin < binCount; bin += 1) {

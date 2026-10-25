@@ -4,15 +4,15 @@ import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 /**
- * Moves through the recorded steps of one media key. The range input runs over step positions,
- * not step values, so every stop is a step that has media.
+ * 1つのメディアのキーの、記録のあるstepを順に移動する。rangeの入力はstepの値でなく位置を
+ * 動くので、どの止まる場所にもメディアがある。
  */
 export function MediaStepSlider({
   steps,
   step,
   onStepChange,
 }: {
-  /** Recorded steps in ascending order. */
+  /** 記録のあるstep。昇順。 */
   steps: readonly number[];
   step: number;
   onStepChange: (step: number) => void;
@@ -48,7 +48,7 @@ export function MediaStepSlider({
         onKeyDown={(event) => {
           const nextIndex = stepIndexAfterKey(steps.length, index, event.key);
           if (nextIndex === null) return;
-          // The native range would move by a fraction of the range on PageUp/PageDown; keep one rule.
+          // ネイティブのrangeはPageUp/PageDownで範囲の何分の一かずつ動く。決まりを1つにそろえる。
           event.preventDefault();
           moveTo(nextIndex);
         }}

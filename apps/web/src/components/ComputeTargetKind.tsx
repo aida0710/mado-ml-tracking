@@ -3,7 +3,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { computeTargetExecutorLabels, submissionModeBadgeLabels } from '../i18n/compute';
 
-/** The executor with the CPU, and for a site how it is submitted and whether it takes arrays. */
+/** executorとCPU。siteなら投入方式と、arrayを扱えるかも示す。 */
 export function ComputeTargetKind({
   target,
 }: {

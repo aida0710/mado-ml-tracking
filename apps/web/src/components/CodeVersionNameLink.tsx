@@ -4,8 +4,8 @@ import { useQuery } from '../hooks/useQuery';
 import { formatCodeVersionName } from '../lib/catalogOptions';
 
 /**
- * A link to a code version by "code name / version", loaded on its own (as RunNameLink does for a
- * Run); the id stays until the name arrives, or if it cannot.
+ * コードバージョンへの「<コード名> / <バージョン>」のリンク。名前は自分で読み込む
+ * （RunNameLinkがRunでするのと同じ）。名前が届くまで、または届かなければidのまま表示する。
  */
 export function CodeVersionNameLink({
   projectId,

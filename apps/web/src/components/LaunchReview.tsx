@@ -12,7 +12,7 @@ import { text } from '../i18n/catalog';
 import { jobsTextTemplates } from '../i18n/jobs';
 import { formatList } from '../i18n/textJoining';
 
-/** The resources the review lists: GPU IDs, or a site's GPU count, time limit and retries. */
+/** 確認に並べる資源。GPUのID、またはsiteのGPUの数、時間の上限、再試行。 */
 function reviewResources(values: FormValues, isSite: boolean): Array<[string, ReactNode]> {
   if (!isSite)
     return [[text.gpuIds, formatList(getSelectedValues(values, 'gpuIds')) || text.cpuOnly]];
@@ -27,7 +27,7 @@ function reviewResources(values: FormValues, isSite: boolean): Array<[string, Re
   ];
 }
 
-/** The launch form's last step: what will start, by the names the earlier steps showed. */
+/** 起動フォームの最後の段階。前の段階で見せた名前で、何が始まるかを示す。 */
 export function LaunchReview<Target extends ComputeTarget>({
   values,
   choices,

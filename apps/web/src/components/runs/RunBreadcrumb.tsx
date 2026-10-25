@@ -6,8 +6,8 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**
- * Where a Run sits: the Experiments page, then the Run's Experiment by name, both links. The name
- * comes from the Project's Experiment list; until it arrives the second link reads "Runs".
+ * Runの位置を示す。Experimentsの画面、続いてRunのExperimentの名前で、どちらもリンク。名前は
+ * ProjectのExperimentの一覧から取り、届くまで2つ目のリンクは"Runs"と出す。
  */
 export function RunBreadcrumb({ run }: { run: Pick<Run, 'projectId' | 'experimentId'> }) {
   useLocale();

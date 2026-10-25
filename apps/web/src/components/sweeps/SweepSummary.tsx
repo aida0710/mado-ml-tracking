@@ -20,7 +20,7 @@ import {
 import { text, textTemplates } from '../../i18n/catalog';
 import { formatNote } from '../../i18n/textJoining';
 
-// Reuses the Job status colors: a paused sweep reads like waiting work.
+// Jobの状態の色を流用する。一時停止したSweepは待っている作業のように見せる。
 const STATUS_BADGE_CLASSES: Record<SweepStatus, string> = {
   running: 'status-info',
   paused: 'status-neutral',
@@ -42,8 +42,8 @@ export function SweepStatusBadge({ status }: { status: SweepStatus }) {
 type SweepDialog = 'cancel' | 'limits' | null;
 
 /**
- * The sweep's state, why it is in it, how far it got and its best trial. Pause, resume, cancel and
- * the limits change are shown only to `canControl` (the creator or a Project admin).
+ * Sweepの状態と、その状態の理由、進み具合、最良の試行。一時停止、再開、キャンセル、上限の
+ * 変更は`canControl`（作成者かProject admin）にだけ出す。
  */
 export function SweepSummary({
   projectId,
@@ -63,7 +63,7 @@ export function SweepSummary({
   const counts = sweep.trialCounts;
   const isResumable = sweep.status === 'paused' && sweep.statusReason !== 'task_revision_changed';
   const best = sweep.bestTrial;
-  // A grid with fewer combinations than maxTrials ends early; the progress says when.
+  // 組み合わせがmaxTrialsより少ないgridは早く終わる。いつ終わるかは進み具合が伝える。
   const plannedTrials = plannedTrialCount(sweep);
   const act = (operation: () => Promise<unknown>) =>
     void mutation.run(operation).then((result) => {

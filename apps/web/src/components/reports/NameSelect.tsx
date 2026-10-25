@@ -1,7 +1,7 @@
 import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
-/** A labelled select of names for an embed setting; the empty value means "not chosen". */
+/** 埋め込みの設定に使う、ラベル付きの名前のselect。空の値は「選んでいない」を表す。 */
 export function NameSelect({
   label,
   value,

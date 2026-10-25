@@ -10,10 +10,10 @@ import {
 import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
-// GFM adds tables, task lists, strikethrough and autolinks to CommonMark.
+// GFMはCommonMarkに表、タスクリスト、取り消し線、自動リンクを足す。
 const REMARK_PLUGINS = [remarkGfm];
-// URLs reach the components below unchanged; MarkdownLink and MarkdownImage decide what is safe.
-// Raw HTML is never enabled (no rehype-raw), so react-markdown shows it as text.
+// URLは手を加えずに下の部品へ渡し、安全かどうかはMarkdownLinkとMarkdownImageが決める。
+// 生のHTMLは有効にしない（rehype-rawを使わない）ので、react-markdownはそれを文字として出す。
 const keepUrl = (url: string) => url;
 
 function MarkdownLink({ href, children }: { href: string; children: ReactNode }) {
@@ -64,8 +64,8 @@ type MarkdownHeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 const HEADING_TAGS = ['h2', 'h3', 'h4', 'h5', 'h6', 'h6'] as const;
 
 /**
- * Markdown is shown inside a screen that already has its h1 (a report, a Run, a comment), so each
- * level moves one down: # is an h2. data-markdown-level keeps the look of the level written.
+ * Markdownは既にh1のある画面（レポート、Run、コメント）の中に出すので、見出しの各階層を
+ * 1つ下げる。#はh2になる。data-markdown-levelは、書いた階層の見た目を保つ。
  */
 function shiftedHeading(level: MarkdownHeadingLevel) {
   const Tag = HEADING_TAGS[level - 1]!;
@@ -88,8 +88,8 @@ const MARKDOWN_COMPONENTS: Components = {
 };
 
 /**
- * Renders Markdown written by project members or MLflow clients. Raw HTML stays text, links
- * open only for safe schemes, and only Artifact images from this server are loaded.
+ * Projectのメンバーや、MLflowのクライアントが書いたMarkdownを描く。生のHTMLは文字のままにし、
+ * リンクは安全なスキームのときだけ開き、画像はこのサーバーのArtifactのものだけを読み込む。
  */
 export function MarkdownView({ source }: { source: string }) {
   useLocale();

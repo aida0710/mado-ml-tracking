@@ -12,7 +12,7 @@ import { useLocale } from '../../i18n/useLocale';
 import { mediaCellErrorLabels } from '../../i18n/media';
 import { text } from '../../i18n/catalog';
 
-/** The table's one-at-a-time playback and this cell's player id in it. */
+/** 表の中で一度に1つだけ鳴らす再生と、その中でのこのセルのプレイヤーのid。 */
 export interface CellPlayback {
   exclusiveAudio: ExclusiveAudio;
   cellId: string;
@@ -32,7 +32,7 @@ function AudioCell({ projectId, media, playback }: { projectId: string; media: R
   }, [audio, exclusiveAudio, cellId]);
   return (
     <div className="media-cell-audio">
-      {/* preload="none": a page of 50 rows must not download 50 files before anyone presses play. */}
+      {/* preload="none"にする。50行のページで、誰も再生を押す前に50個のファイルを取りに行かないため。 */}
       <audio
         ref={setAudio}
         preload="none"
@@ -45,7 +45,7 @@ function AudioCell({ projectId, media, playback }: { projectId: string; media: R
         onPause={() => setPlaying(false)}
         onEnded={() => setPlaying(false)}
       />
-      {/* The open viewer has its own play button; one control per cell keeps it clear which one plays. */}
+      {/* 開いたビューアには専用の再生ボタンがある。操作をセルに1つにして、どれが鳴るかを明確にする。 */}
       {!expanded && (
         <button
           type="button"
@@ -119,7 +119,7 @@ function VideoCell({ projectId, media }: { projectId: string; media: ResolvedMed
   );
 }
 
-/** One cell of a media table; media cells load nothing until they are played or opened, except image thumbnails. */
+/** メディアの表の1セル。画像のサムネイルを除き、再生するか開くまで何も読み込まない。 */
 export function MediaCell({
   projectId,
   column,

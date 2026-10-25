@@ -4,8 +4,8 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**
- * The series of a chart as buttons: a click hides or shows one, hovering highlights it in the plot.
- * Each shows its line's color and pattern, so the lines are told apart without color vision too.
+ * 図の系列をボタンとして並べる。クリックで1本を隠す・出す、ホバーでプロットの中のその線を
+ * 強調する。各ボタンに線の色と線種を出すので、色覚に頼らなくても線を見分けられる。
  */
 export function ChartLegend({
   lines,

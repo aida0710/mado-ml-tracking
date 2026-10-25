@@ -5,8 +5,9 @@ import { modelVersionPath } from '../lib/modelVersionPath';
 import { formatModelVersionName } from '../lib/catalogOptions';
 
 /**
- * A link to a model version's page by "model name / version", loaded on its own (as
- * CodeVersionNameLink does for code); the id stays until the name arrives, or if it cannot.
+ * モデルバージョンのページへの「<モデル名> / <バージョン>」のリンク。名前は自分で読み込む
+ * （CodeVersionNameLinkがコードでするのと同じ）。名前が届くまで、または届かなければidのまま
+ * 表示する。
  */
 export function ModelVersionNameLink({
   projectId,

@@ -4,7 +4,7 @@ import { ResponsiveTable } from '../ResponsiveTable';
 import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
-/** Lists the storage backends with the actions a global administrator may take on each. */
+/** 保存先の一覧と、全体管理者がそれぞれに対して行える操作。 */
 export function StorageBackendsTable({
   backends,
   defaultBackend,
@@ -15,7 +15,7 @@ export function StorageBackendsTable({
 }: {
   backends: StorageBackend[];
   defaultBackend: string;
-  /** The backend whose connection test is running; its button shows the wait. */
+  /** 接続テストを実行中の保存先。そのボタンに待ちを表示する。 */
   testingBackend: string | null;
   onTest: (backend: StorageBackend) => void;
   onEdit: (backend: StorageBackend) => void;

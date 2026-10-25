@@ -24,8 +24,8 @@ const RUN_KINDS: RunKind[] = ['training', 'finetuning', 'inference', 'evaluation
 const runKindLabel = (kind: RunKind) => text[kind];
 
 /**
- * The Project's notification rules. A rule needs a channel, which only a global administrator
- * adds, so without one the button stays disabled and says whom to ask.
+ * Projectの通知ルール。ルールには通知先が要り、通知先を追加できるのは全体管理者だけなので、
+ * 通知先が無いときはボタンを無効のままにし、誰に頼めばよいかを伝える。
  */
 export function NotificationRuleSection({ settings }: { settings: NotificationSettingsState }) {
   useLocale();
@@ -136,7 +136,7 @@ export function NotificationRuleSection({ settings }: { settings: NotificationSe
   );
 }
 
-// A channel without its server settings stays selectable (it may be set up later) but says so.
+// サーバーの設定が無い通知先も選べるまま残す（後で設定されることがある）が、その旨を出す。
 function channelChoiceLabel(channel: NotificationChannel): string {
   const kind = notificationChannelKindLabels[channel.kind];
   return channel.configured

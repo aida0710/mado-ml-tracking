@@ -20,7 +20,7 @@ import { useComputerNames } from '../hooks/useComputerNames';
 
 export type JobAction = 'cancel' | 'retry' | 'resumeLatest';
 
-/** Where a site Job runs: the runner's host and the scheduler's job ID, once reported. */
+/** siteのJobが動く場所。報告されたら、runnerのホストとスケジューラーのjob IDを示す。 */
 function JobLocation({ job }: { job: Pick<JobListItem, 'runnerHost' | 'schedulerJobId'> }) {
   useLocale();
   if (!job.runnerHost && !job.schedulerJobId) return <>—</>;
@@ -38,8 +38,8 @@ function JobLocation({ job }: { job: Pick<JobListItem, 'runnerHost' | 'scheduler
 }
 
 /**
- * What started the Job besides a person: a Sweep trial, an automation rule, a hook, a driver Job
- * (parent), or an array it belongs to.
+ * 人のほかにJobを始めたもの。Sweepの試行、自動実行ルール、フック、ドライバーのJob（親Job）、
+ * またはJobが属するarray。
  */
 function JobOrigin({
   job,
@@ -91,8 +91,8 @@ function JobOrigin({
 }
 
 /**
- * The Project's Jobs. Site Jobs add their phase or end reason to the status, where they run
- * (runner host, scheduler job ID) and what started them (hook, driver Job, array).
+ * ProjectのJob。siteのJobは、状態にphaseか終了の理由を添え、動く場所（runnerのホスト、
+ * スケジューラーのjob ID）と、始めたもの（フック、親Job、array）も示す。
  */
 export function JobsTable({
   jobs,
@@ -111,7 +111,7 @@ export function JobsTable({
   hooks: Hook[];
   projectId: string;
   selectedId: string;
-  /** Whether the signed-in user may stop or retry the Job (lib/permissions canControlJob). */
+  /** ログイン中の利用者がJobを停止・再実行できるか（lib/permissionsのcanControlJob）。 */
   canControl: (job: JobListItem) => boolean;
   resumedRunIds: ReadonlySet<string> | undefined;
   onSelectJob: (jobId: string) => void;
@@ -234,7 +234,7 @@ export function JobsTable({
           priority: 'secondary',
           header: text.jobActions,
           render: (job) =>
-            // Written out rather than in a tooltip, so touch and keyboard users read why.
+            // ツールチップでなく文で示し、タッチやキーボードでも理由が読めるようにする。
             !canControl(job) ? (
               <small className="muted job-control-reason">{text.jobControlOwnerOnly}</small>
             ) : isActiveJob(job) ? (
@@ -246,8 +246,9 @@ export function JobsTable({
                 {text.cancelJob}
               </button>
             ) : job.workflowExecution ? (
-              // A workflow step is rerun by resuming its execution (the Job's own retry is refused),
-              // so its Job leads there: to resume a failed or canceled one, else to open it.
+              // ワークフローのステップは、その実行を再開してやり直す（Jobそのものの再実行は
+              // 断られる）。そのためJobからはワークフローへ案内する。失敗か取り消しなら再開へ、
+              // そうでなければ開くだけ。
               <Link className="button small" to={workflowPath(projectId, job.workflowExecution)}>
                 {isResumableWorkflowStepJob(job) ? text.workflowResumeFromJob : text.workflowOpen}
               </Link>

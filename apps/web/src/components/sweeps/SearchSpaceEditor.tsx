@@ -20,8 +20,8 @@ type JsonError = { kind: 'syntax' } | { kind: 'conversion'; failure: SweepConfig
 const JSON_INDENT = 2;
 
 /**
- * The search space as one row per parameter, or a pasted W&B sweep config. Loading the JSON
- * replaces the whole search setting through onLoadWandbConfig, which reports a conversion error.
+ * 探索空間をパラメータごとに1行で並べる。またはW&Bのsweepの設定を貼り付ける。JSONを読み込むと
+ * onLoadWandbConfigを通して探索の設定全体を置き換え、変換のエラーはそこが返す。
  */
 export function SearchSpaceEditor({
   rows,
@@ -36,7 +36,7 @@ export function SearchSpaceEditor({
   rows: SearchSpaceRow[];
   method: SweepMethod;
   rowErrors: Record<string, string>;
-  /** null when the space has a range parameter (or the method is not grid). */
+  /** 探索空間に範囲のパラメータがあるとき（または方法がgridでないとき）はnull。 */
   gridCombinations: number | null;
   createRowId: () => string;
   onRowsChange: (rows: SearchSpaceRow[]) => void;
