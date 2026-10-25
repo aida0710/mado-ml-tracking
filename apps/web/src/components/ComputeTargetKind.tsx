@@ -13,16 +13,16 @@ export function ComputeTargetKind({
   return (
     <span className="badge-group">
       {computeTargetExecutorLabels[target.executor]}
-      <span className="status-badge status-queued">{target.cpuArch}</span>
+      <span className="status-badge status-neutral">{target.cpuArch}</span>
       {target.executor === 'site' && (
         <span
-          className={`status-badge ${target.submissionMode === 'manual' ? 'status-attention' : 'status-queued'}`}
+          className={`status-badge ${target.submissionMode === 'manual' ? 'status-attention' : 'status-neutral'}`}
         >
           {submissionModeBadgeLabels[target.submissionMode]}
         </span>
       )}
       {target.executor === 'site' && target.supportsArray && (
-        <span className="status-badge status-queued">{text.supportsArrayBadge}</span>
+        <span className="status-badge status-neutral">{text.supportsArrayBadge}</span>
       )}
     </span>
   );

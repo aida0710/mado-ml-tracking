@@ -80,7 +80,7 @@ export function RunCheckpointList({
                     <span className="mono">{checkpoint.step}</span>
                     {!checkpoint.retained && (
                       <span
-                        className="status-badge status-queued"
+                        className="status-badge status-neutral"
                         title={text.checkpointHiddenHint}
                       >
                         {text.checkpointHidden}

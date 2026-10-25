@@ -11,13 +11,13 @@ import { useQuery } from './useQuery';
  * Project admin views, so nothing is requested when `isProjectAdmin` is false.
  */
 export function useServiceAccounts(projectId: string, isProjectAdmin: boolean) {
-  const serviceAccounts = useQuery(
-    isProjectAdmin ? `${projectId}:service-accounts` : null,
-    (signal) => accessApi.serviceAccounts(projectId, signal),
-  );
-  const projectTokens = useQuery(isProjectAdmin ? `${projectId}:project-tokens` : null, (signal) =>
+  const serviceAccounts = useQuery({
+    key: isProjectAdmin ? `${projectId}:service-accounts` : null,
+    load: (signal) => accessApi.serviceAccounts(projectId, signal),
+  });
+  const projectTokens = useQuery({ key: isProjectAdmin ? `${projectId}:project-tokens` : null, load: (signal) =>
     accessApi.projectTokens(projectId, signal),
-  );
+  });
   return {
     serviceAccounts,
     projectTokens,

@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { artifactBrowserPanes } from '../lib/artifactBrowserPanes';
-import { narrowerThan } from '../lib/breakpoints';
-import { useMediaQuery } from '../lib/useMediaQuery';
+import { narrowerThan } from '@mado/design-system/layout';
+import { useMediaQuery } from '@mado/design-system/react';
 
 /**
  * The panes an Artifact browser shows at the current width, and a ref for its outer element. On

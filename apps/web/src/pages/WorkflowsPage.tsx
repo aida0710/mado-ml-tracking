@@ -18,9 +18,9 @@ export function WorkflowsPage() {
   const { project, canEdit } = useProject();
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
-  const workflows = useQuery(`workflows:${project.id}`, (signal) =>
+  const workflows = useQuery({ key: `workflows:${project.id}`, load: (signal) =>
     workflowsApi.list(project.id, signal),
-  );
+  });
   return (
     <section className="page workflows-page">
       <PageHeader

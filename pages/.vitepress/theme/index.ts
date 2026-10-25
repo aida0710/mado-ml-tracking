@@ -6,6 +6,8 @@ import '@fontsource/noto-sans-jp/japanese-500.css'
 import '@fontsource/noto-sans-jp/japanese-700.css'
 import '@mado/design-system/fonts.css'
 import '@mado/design-system/tokens.css'
+// 上部バー・サイドバー・本文・トップページの見た目は両製品のドキュメントサイトで共通（デザインシステムのdocs.css）。
+import '@mado/design-system/docs.css'
 import Screenshot from './Screenshot.vue'
 import Home from './Home.vue'
 import ProductLogo from './ProductLogo.vue'

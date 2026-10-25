@@ -4,7 +4,7 @@ import { useQuery } from './useQuery';
 
 /** The Project's hooks, newest first. */
 export function useHookList(projectId: string) {
-  return useQuery(`${projectId}:hooks`, (signal) => hooksApi.list(projectId, signal));
+  return useQuery({ key: `${projectId}:hooks`, load: (signal) => hooksApi.list(projectId, signal) });
 }
 
 /**

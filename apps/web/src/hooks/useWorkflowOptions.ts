@@ -4,7 +4,7 @@ import { useQuery } from './useQuery';
 import { qualifiedDatasetVersionLabel } from '../lib/datasetVersionLabel';
 
 export function useWorkflowOptions(projectId: string) {
-  return useQuery(`workflow-options:${projectId}`, async (signal) => {
+  return useQuery({ key: `workflow-options:${projectId}`, load: async (signal) => {
     const [tasks, datasets] = await Promise.all([
       tasksApi.list(projectId, undefined, signal),
       registryApi.datasets(projectId, signal),
@@ -20,5 +20,5 @@ export function useWorkflowOptions(projectId: string) {
       )
     ).flat();
     return { tasks: tasks.filter((task) => task.targetId !== null), datasetVersions };
-  });
+  } });
 }

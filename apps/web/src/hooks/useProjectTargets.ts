@@ -6,7 +6,7 @@ import { useQuery } from './useQuery';
  * one's own and those shared with the Project (GET /targets?projectId=).
  */
 export function useProjectTargets(projectId: string) {
-  return useQuery(`${projectId}:project-targets`, (signal) =>
+  return useQuery({ key: `${projectId}:project-targets`, load: (signal) =>
     executionApi.projectTargets(projectId, signal),
-  );
+  });
 }

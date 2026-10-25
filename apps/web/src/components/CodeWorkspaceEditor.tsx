@@ -3,8 +3,8 @@ import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import type { useCodeWorkspace } from '../hooks/useCodeWorkspace';
 import type { CodeSample } from '../types/codeSample';
 import { CODE_SAMPLES } from '../lib/codeSamples';
-import { narrowerThan } from '../lib/breakpoints';
-import { useMediaQuery } from '../lib/useMediaQuery';
+import { narrowerThan } from '@mado/design-system/layout';
+import { useMediaQuery } from '@mado/design-system/react';
 import { CodeFileTree } from './CodeFileTree';
 import { ErrorBoundary } from './ErrorBoundary';
 import { ErrorNotice } from './Feedback';
@@ -19,7 +19,7 @@ export function CodeWorkspaceEditor({ editor, isGit, disabled, sampleId, onSampl
   onApplySample: () => void;
 }) {
   useLocale();
-  // Below --bp-md the file list folds away so that Monaco keeps the dialog's full width.
+  // Below 900px the file list folds away so that Monaco keeps the dialog's full width.
   const isNarrow = useMediaQuery(narrowerThan('md'));
   const [isFileListOpen, setFileListOpen] = useState(false);
   const fileTree = <CodeFileTree paths={editor.paths} activePath={editor.activePath}

@@ -21,20 +21,20 @@ export function useServerAudioPreview(
   const listKey = enabled ? `${artifact.projectId}/${artifact.id}` : null;
   // The key whose previews have settled; polling stops for it and restarts for another Artifact.
   const [settledKey, setSettledKey] = useState<string | null>(null);
-  const previews = useQuery(
-    listKey,
-    (signal) => artifactPreviewsApi.list(artifact.projectId, artifact.id, signal),
-    settledKey === listKey ? undefined : EXECUTION_POLL_MS,
-  );
+  const previews = useQuery({
+    key: listKey,
+    load: (signal) => artifactPreviewsApi.list(artifact.projectId, artifact.id, signal),
+    pollMs: settledKey === listKey ? undefined : EXECUTION_POLL_MS,
+  });
   const summary = previews.value ? summarizeServerAudioPreviews(previews.value) : null;
   // A failed request also stops polling: the viewer then plays the file without a preview.
   const isSettled = (summary !== null && summary.status !== 'pending') || previews.error !== null;
   if (isSettled && settledKey !== listKey) setSettledKey(listKey);
 
   const peaksArtifactId = summary?.status === 'ready' ? summary.peaksArtifactId : null;
-  const waveform = useQuery(peaksArtifactId, (signal) =>
+  const waveform = useQuery({ key: peaksArtifactId, load: (signal) =>
     artifactPreviewsApi.waveform(artifact.projectId, peaksArtifactId!, signal),
-  );
+  });
   if (!summary) return { status: previews.loading ? 'pending' : 'none' };
   if (summary.status !== 'ready') return { status: summary.status };
   if (!waveform.value) return { status: waveform.error ? 'none' : 'pending' };

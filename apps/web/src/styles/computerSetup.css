@@ -34,7 +34,7 @@
 .checkbox-list legend {
   padding: 0;
   margin-bottom: 2px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .checkbox-list .checkbox-field {
   padding: 4px 0;

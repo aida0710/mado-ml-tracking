@@ -17,22 +17,22 @@ export function useRunAnalysis({
   chosenTarget: AnalysisTarget | null;
 }) {
   const runSetKey = `${projectId}:run-analysis:${JSON.stringify(runSet)}`;
-  const metricOptions = useQuery(runSetKey, (signal) => runAnalysisApi.metricOptions(projectId, runSet, signal));
+  const metricOptions = useQuery({ key: runSetKey, load: (signal) => runAnalysisApi.metricOptions(projectId, runSet, signal) });
   const target = metricOptions.value ? resolveAnalysisTarget(chosenTarget, metricOptions.value) : null;
   const metrics = metricOptions.value ? tableMetricKeys(metricOptions.value.metricKeys, target) : [];
-  const table = useQuery(
+  const table = useQuery({
     // Keyed by the set of metrics so picking another target among them does not reload the table.
-    metrics.length > 0 ? `${runSetKey}:table:${JSON.stringify([...metrics].sort())}` : null,
-    (signal) => runAnalysisApi.table(projectId, { runSet, metrics }, signal),
-  );
-  const importance = useQuery(
-    target ? `${runSetKey}:importance:${JSON.stringify(target)}` : null,
-    (signal) =>
+    key: metrics.length > 0 ? `${runSetKey}:table:${JSON.stringify([...metrics].sort())}` : null,
+    load: (signal) => runAnalysisApi.table(projectId, { runSet, metrics }, signal),
+  });
+  const importance = useQuery({
+    key: target ? `${runSetKey}:importance:${JSON.stringify(target)}` : null,
+    load: (signal) =>
       runAnalysisApi.parameterImportance(
         projectId,
         { runSet, ...(target?.source === 'latest_metric' ? { targetMetric: target.metric } : {}) },
         signal,
       ),
-  );
+  });
   return { metricOptions, target, table, importance };
 }

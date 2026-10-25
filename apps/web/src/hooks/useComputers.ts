@@ -8,8 +8,8 @@ import { useQuery } from './useQuery';
  * use or manage (GET /targets), reloaded together after a change.
  */
 export function useComputers() {
-  const overview = useQuery('compute-target-overview', executionApi.targetOverview);
-  const details = useQuery('compute-targets', executionApi.targets);
+  const overview = useQuery({ key: 'compute-target-overview', load: executionApi.targetOverview });
+  const details = useQuery({ key: 'compute-targets', load: executionApi.targets });
   const mutation = useMutation();
   function reload() {
     overview.reload();

@@ -277,9 +277,9 @@ async function checkReport(page) {
   await report.locator('.report-markdown .markdown-view').getByRole('heading', { name: '研究機能の通し確認' }).waitFor();
   const charts = report.locator('figure.report-embed[data-block-type=chart]');
   await waitUntil(async () => (await charts.count()) === 2, 'the live and the fixed chart');
-  const live = charts.filter({ has: page.locator('.report-mode-mark.live') });
+  const live = charts.filter({ has: page.getByTestId('report-live-mark') });
   const fixed = charts.filter({ has: page.locator('[data-testid=report-snapshot-mark]') });
-  await live.locator('.report-mode-mark', { hasText: '最新データ' }).waitFor();
+  await live.getByTestId('report-live-mark').getByText('最新データ').waitFor();
   await fixed.locator('[data-testid=report-snapshot-mark]', { hasText: '時点で固定' }).waitFor();
   await waitForLine(live);
   await waitForLine(fixed);

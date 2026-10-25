@@ -47,7 +47,7 @@
   align-items: center;
   gap: 8px 16px;
   margin: 0 0 8px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .log-status .log-latest {
   margin-left: auto;

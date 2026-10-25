@@ -59,19 +59,19 @@ export function ArtifactsPage() {
   const [deleted, setDeleted] = useState<Artifact | null>(null);
   const { panes, containerRef, scrollBrowserIntoView } = useArtifactBrowserPanes(selected !== undefined);
   const catalog = useProjectArtifactCatalog(project.id, filter);
-  const runs = useQuery(`${project.id}:artifact-filter-runs`, (signal) =>
+  const runs = useQuery({ key: `${project.id}:artifact-filter-runs`, load: (signal) =>
     trackingApi.searchRuns(project.id, { limit: RUN_FILTER_OPTION_LIMIT }, signal),
-  );
-  const models = useQuery(`${project.id}:artifact-filter-models`, (signal) =>
+  });
+  const models = useQuery({ key: `${project.id}:artifact-filter-models`, load: (signal) =>
     registryApi.models(project.id, signal),
-  );
-  const modelVersions = useQuery(
-    modelId ? `${project.id}:artifact-filter-versions:${modelId}` : null,
-    (signal) => registryApi.modelVersions(project.id, modelId, signal),
-  );
-  const datasets = useQuery(`${project.id}:artifact-owner-datasets`, (signal) =>
+  });
+  const modelVersions = useQuery({
+    key: modelId ? `${project.id}:artifact-filter-versions:${modelId}` : null,
+    load: (signal) => registryApi.modelVersions(project.id, modelId, signal),
+  });
+  const datasets = useQuery({ key: `${project.id}:artifact-owner-datasets`, load: (signal) =>
     registryApi.datasets(project.id, signal),
-  );
+  });
   const runNames = new Map(runs.value?.items.map((run) => [run.id, run.name]));
   const datasetsById = new Map((datasets.value ?? []).map((dataset) => [dataset.id, dataset]));
   // Files without a Run are named by what lists them; a Run's files by the Run itself.
@@ -97,7 +97,7 @@ export function ArtifactsPage() {
   }
 
   return (
-    <section className="page artifact-catalog touch-targets">
+    <section className="page artifact-catalog">
       <PageHeader
         title={text.artifacts}
         eyebrow={project.name}
@@ -115,9 +115,9 @@ export function ArtifactsPage() {
           </button>
         }
       />
-      <div className="run-toolbar artifact-catalog-toolbar">
+      <div className="toolbar artifact-catalog-toolbar">
         <form
-          className="search-field"
+          className="toolbar-search"
           onSubmit={(event) => {
             event.preventDefault();
             updateParams({ query: searchInput.trim() });
@@ -135,7 +135,7 @@ export function ArtifactsPage() {
             {text.search}
           </button>
         </form>
-        <label className="toolbar-select">
+        <label className="toolbar-item">
           <span>{text.artifactMimeType}</span>
           <select
             aria-label={text.artifactMimeType}
@@ -149,7 +149,7 @@ export function ArtifactsPage() {
             ))}
           </select>
         </label>
-        <label className="toolbar-select">
+        <label className="toolbar-item">
           <span>{text.artifactRun}</span>
           <select
             aria-label={text.artifactRun}
@@ -167,7 +167,7 @@ export function ArtifactsPage() {
             ))}
           </select>
         </label>
-        <label className="toolbar-select">
+        <label className="toolbar-item">
           <span>{text.artifactModelFilter}</span>
           <select
             aria-label={text.artifactModelFilter}
@@ -183,7 +183,7 @@ export function ArtifactsPage() {
           </select>
         </label>
         {modelId && (
-          <label className="toolbar-select">
+          <label className="toolbar-item">
             <span>{text.artifactModelVersionFilter}</span>
             <select
               aria-label={text.artifactModelVersionFilter}
@@ -199,7 +199,7 @@ export function ArtifactsPage() {
             </select>
           </label>
         )}
-        <label className="toolbar-select">
+        <label className="toolbar-item">
           <input
             type="checkbox"
             checked={filter.includePreviousVersions}

@@ -12,14 +12,14 @@ import { EXECUTION_POLL_MS, useQuery } from './useQuery';
 export function useRunOutputRegistration(run: Run) {
   const [hasOutcome, setHasOutcome] = useState(false);
   const isExpected = !!run.outputModelRegistration && !hasOutcome;
-  const query = useQuery(
-    hasOutputModel(run.kind) && isTerminalRun(run) ? `${run.projectId}:${run.id}:output-registration` : null,
-    async (signal) => {
+  const query = useQuery({
+    key: hasOutputModel(run.kind) && isTerminalRun(run) ? `${run.projectId}:${run.id}:output-registration` : null,
+    load: async (signal) => {
       const registration = await tasksApi.runOutputRegistration(run.projectId, run.id, signal);
       if (registration) setHasOutcome(true);
       return registration;
     },
-    isExpected ? EXECUTION_POLL_MS : undefined,
-  );
+    pollMs: isExpected ? EXECUTION_POLL_MS : undefined,
+  });
   return { state: getRunOutputRegistrationState(run, query.value), error: query.error };
 }

@@ -16,11 +16,11 @@ export function useResumedRunIds(
   jobs: readonly Job[] | undefined,
 ): QueryState<Set<string>> {
   const newestJobId = jobs?.[0]?.id;
-  return useQuery(
-    jobs ? `${projectId}:resumed-runs:${jobs.length}:${newestJobId ?? ''}` : null,
-    async (signal) => {
+  return useQuery({
+    key: jobs ? `${projectId}:resumed-runs:${jobs.length}:${newestJobId ?? ''}` : null,
+    load: async (signal) => {
       const search = { limit: RESUMED_RUN_SEARCH_LIMIT };
       return collectResumedRunIds((await trackingApi.searchRuns(projectId, search, signal)).items);
     },
-  );
+  });
 }

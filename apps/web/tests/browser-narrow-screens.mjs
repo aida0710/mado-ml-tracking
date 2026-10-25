@@ -121,8 +121,9 @@ try {
   const hiddenName = brand.locator('.sr-only');
   assert.equal(await hiddenName.textContent(), 'mado ML Tracking');
   assert.ok((await hiddenName.boundingBox()).width <= 1, 'the app name is still drawn');
-  const logout = await page.getByRole('button', { name: 'ログアウト' }).boundingBox();
-  assert.ok(logout.x + logout.width <= NARROWEST_PHONE.width, 'the logout button is cut off');
+  // ログアウトはユーザーメニューの中にあるので、上部バーの右端はメニューを開く丸。
+  const userMenu = await page.getByRole('button', { name: 'ユーザーメニュー' }).boundingBox();
+  assert.ok(userMenu.x + userMenu.width <= NARROWEST_PHONE.width, 'the user menu button is cut off');
   await page.getByRole('button', { name: '運用アラート 1件' }).click();
   const alerts = await page.locator('.operations-alert-popover').boundingBox();
   assert.ok(alerts.x >= 0 && alerts.x + alerts.width <= NARROWEST_PHONE.width, `alerts ${alerts.x}+${alerts.width}`);

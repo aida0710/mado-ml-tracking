@@ -54,7 +54,7 @@ export function PreprocessingReportDialog({
     outputDurationSeconds: labels.preprocessingOutputDuration,
   };
   return (
-    <Dialog wide title={labels.preprocessingReportEdit} onClose={onClose} busy={mutation.pending}>
+    <Dialog size="wide" title={labels.preprocessingReportEdit} onClose={onClose} dismissible={!mutation.pending}>
       <form
         className="workflow-form"
         onSubmit={(event) => {

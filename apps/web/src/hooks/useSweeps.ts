@@ -42,23 +42,23 @@ export function useTrialObjectiveSeries(projectId: string, detail: SweepDetail |
   const shownTrials = detail ? [...detail.trials].sort((left, right) => right.trialIndex - left.trialIndex).slice(0, MAX_SERIES_RUNS) : [];
   const stateKey = shownTrials.map((trial) => `${trial.trialIndex}:${trial.state}`).join(',');
   const isActive = detail ? isSweepActive(detail.sweep) : false;
-  const series = useQuery(
-    detail && shownTrials.length ? `${projectId}:sweep-series:${detail.sweep.id}:${stateKey}` : null,
-    (signal) =>
+  const series = useQuery({
+    key: detail && shownTrials.length ? `${projectId}:sweep-series:${detail.sweep.id}:${stateKey}` : null,
+    load: (signal) =>
       sweepsApi.objectiveSeries(projectId, {
         runIds: shownTrials.map((trial) => trial.runId),
         metric: detail!.sweep.objective.metric,
         signal,
       }),
-    isActive ? EXECUTION_POLL_MS : undefined,
-  );
+    pollMs: isActive ? EXECUTION_POLL_MS : undefined,
+  });
   return { series, shownTrials, totalTrials: detail?.trials.length ?? 0 };
 }
 
 // Metric names come from the Task's newest Runs: one history page is enough to offer candidates.
 export function useTaskMetricNames(projectId: string, taskId: string) {
-  return useQuery(taskId ? `${projectId}:task-metric-names:${taskId}` : null, async (signal) => {
+  return useQuery({ key: taskId ? `${projectId}:task-metric-names:${taskId}` : null, load: async (signal) => {
     const page = await tasksApi.runs(projectId, taskId, { signal });
     return [...new Set(page.items.flatMap((run) => Object.keys(run.latestMetrics)))].sort();
-  });
+  } });
 }

@@ -385,7 +385,7 @@ export const text = {
   tokenOnce: "This API token is shown only once. Save it securely before closing this screen.",
   copy: "Copy",
   copied: "Copied",
-  copyFailed: "Could not copy",
+  copyFailed: "Couldn't copy",
   noExpiry: "Never expires",
   lastUsed: "Last used",
   projectSaved: "Project settings saved",

@@ -1,9 +1,9 @@
 import { useId, useState, type MouseEvent, type ReactNode } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Empty } from './Feedback';
-import { narrowerThan } from '../lib/breakpoints';
+import { narrowerThan } from '@mado/design-system/layout';
+import { useMediaQuery } from '@mado/design-system/react';
 import { splitColumnsByPriority, type ColumnPriority } from '../lib/responsiveColumns';
-import { useMediaQuery } from '../lib/useMediaQuery';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
@@ -48,7 +48,7 @@ function rowClassName({ isClickable, isSelected }: { isClickable: boolean; isSel
 }
 
 /**
- * A table for lists that must fit a phone: below --bp-md only the primary columns stay in the row
+ * A table for lists that must fit a phone: below 900px only the primary columns stay in the row
  * and a button on each row opens the secondary ones beneath it.
  */
 export function ResponsiveTable<T>(props: ResponsiveTableProps<T>) {

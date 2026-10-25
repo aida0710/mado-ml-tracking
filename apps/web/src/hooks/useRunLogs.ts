@@ -30,16 +30,16 @@ export function useRunLogs({
   const [moreLinesRunId, setMoreLinesRunId] = useState<string | null>(null);
   const runId = run?.id;
   const readsMoreLines = runId !== undefined && moreLinesRunId === runId;
-  const lines = useQuery(
-    enabled && runId ? `${projectId}:${runId}:logs:${readsMoreLines ? 'more' : 'latest'}` : null,
-    (signal) =>
+  const lines = useQuery({
+    key: enabled && runId ? `${projectId}:${runId}:logs:${readsMoreLines ? 'more' : 'latest'}` : null,
+    load: (signal) =>
       trackingApi.logs(projectId, runId!, {
         tail: readsMoreLines ? MAX_RUN_LOG_TAIL : RUN_LOG_TAIL_LINES,
         signal,
       }),
     // Leaving the poll reads once more, so the lines a Run wrote as it ended are shown.
-    isLive && !readsMoreLines ? EXECUTION_POLL_MS : undefined,
-  );
+    pollMs: isLive && !readsMoreLines ? EXECUTION_POLL_MS : undefined,
+  });
   return {
     lines,
     isLive,

@@ -8,9 +8,9 @@ import { useQuery } from './useQuery';
  * cannot, the field takes any typed family; `refreshKey` offers them once they arrive.
  */
 export function useModelFamilies(projectId: string) {
-  const families = useQuery(`${projectId}:model-families`, (signal) =>
+  const families = useQuery({ key: `${projectId}:model-families`, load: (signal) =>
     registryApi.modelFamilies(projectId, signal),
-  );
+  });
   const suggest: SuggestFieldValues = async (value) =>
     suggestModelFamilies(value, families.value ?? []);
   return {

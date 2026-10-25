@@ -4,7 +4,7 @@ import { workflowStatusLabel } from '../../lib/workflowLabels';
 import { useLocale } from '../../i18n/useLocale';
 
 // The Job colors of the two states a Job lacks: waiting like a queued Job, still running.
-const OWN_STATE_CLASSES = { pending: 'status-queued', canceling: 'status-running' } as const;
+const OWN_STATE_CLASSES = { pending: 'status-neutral', canceling: 'status-info' } as const;
 
 /**
  * The status of a workflow execution or step with the badge of Jobs and Runs. A step waiting for

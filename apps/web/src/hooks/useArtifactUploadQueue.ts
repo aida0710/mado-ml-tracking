@@ -133,9 +133,9 @@ export function useArtifactUploadQueue({
   );
   const onCompletedRef = useLatestRef(onCompleted);
   const [items, setItems] = useState<UploadItem[]>([]);
-  const openSessions = useQuery(`${projectId}:artifact-uploads:open`, (signal) =>
+  const openSessions = useQuery({ key: `${projectId}:artifact-uploads:open`, load: (signal) =>
     artifactUploadsApi.list(projectId, 'open', signal),
-  );
+  });
   const runOpenSessions = useMemo(
     () => (openSessions.value ?? []).filter((session) => session.runId === runId),
     [openSessions.value, runId],

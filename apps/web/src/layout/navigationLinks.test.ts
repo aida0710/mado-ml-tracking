@@ -9,7 +9,7 @@ import {
 import { text } from '../i18n/catalog';
 
 const paths = (links: { to: string }[]) => links.map((link) => link.to);
-const GENERAL_SETTINGS_PATHS = ['/settings/account', '/settings/computers'];
+const GENERAL_SETTINGS_PATHS = ['/settings/account', '/settings/computers', '/settings/about'];
 const ADMIN_PATHS = [
   '/settings/projects',
   '/settings/users',
@@ -39,12 +39,13 @@ describe('navigationLinks', () => {
     expect(links).toContain('/projects/p1/plugins');
   });
 
-  it('Project を開いていない一般利用者には全体設定の組（アカウント・コンピュータ）だけを出す', () => {
+  it('Project を開いていない一般利用者には全体設定の組（アカウント・コンピュータ・このアプリについて）だけを出す', () => {
     const groups = navigationGroups({ isGlobalAdmin: false });
     expect(groups.map((group) => group.label)).toEqual(['全体設定']);
     expect(groups[0]!.links).toEqual([
       { screen: 'account', to: '/settings/account', label: 'アカウント' },
       { screen: 'computers', to: '/settings/computers', label: 'コンピュータ' },
+      { screen: 'about', to: '/settings/about', label: 'このアプリについて' },
     ]);
   });
 

@@ -101,11 +101,11 @@ export function RunDetailPage() {
   const requestedTab = params.get('tab');
   const tab = tabs.find((key) => key === requestedTab) ?? 'metrics';
   const [dialog, setDialog] = useState<'edit' | 'upload' | 'launch' | null>(null);
-  const run = useQuery(
-    `${project.id}:run:${runId}`,
-    (signal) => trackingApi.run(project.id, runId, signal),
-    EXECUTION_POLL_MS,
-  );
+  const run = useQuery({
+    key: `${project.id}:run:${runId}`,
+    load: (signal) => trackingApi.run(project.id, runId, signal),
+    pollMs: EXECUTION_POLL_MS,
+  });
   const resumeEvents = useRunResumeEvents(project.id, runId, run.value?.status);
   const logs = useRunLogs({
     projectId: project.id,
@@ -121,11 +121,11 @@ export function RunDetailPage() {
   const runJob = useRunJob({ projectId: project.id, runId, enabled: runsCode });
   // The artifacts tab pages by folder itself; only the execution snapshot needs every file.
   const [artifactRevision, setArtifactRevision] = useState(0);
-  const artifacts = useQuery(
-    tab === 'executionSnapshot' ? `${runId}:artifacts` : null,
-    (signal) => trackingApi.artifacts(project.id, runId, signal),
-    EXECUTION_POLL_MS,
-  );
+  const artifacts = useQuery({
+    key: tab === 'executionSnapshot' ? `${runId}:artifacts` : null,
+    load: (signal) => trackingApi.artifacts(project.id, runId, signal),
+    pollMs: EXECUTION_POLL_MS,
+  });
   function reload() {
     run.reload();
     resumeEvents.reload();

@@ -5,9 +5,9 @@ import { useQuery } from './useQuery';
 
 /** Authentik group bindings of a Project, and the changes a Project admin can make. */
 export function useProjectGroupBindings(projectId: string) {
-  const bindings = useQuery(`${projectId}:group-bindings`, (signal) =>
+  const bindings = useQuery({ key: `${projectId}:group-bindings`, load: (signal) =>
     accessApi.groupBindings(projectId, signal),
-  );
+  });
   return {
     bindings,
     saveGroupBinding: (group: string, role: ProjectRole) =>
@@ -22,6 +22,6 @@ export function useProjectGroupBindings(projectId: string) {
  * lookup leaves the list empty and the name can still be typed.
  */
 export function useGroupNameCandidates(): string[] {
-  const groups = useQuery('auth-groups', accessApi.groups);
+  const groups = useQuery({ key: 'auth-groups', load: accessApi.groups });
   return groups.value ?? [];
 }

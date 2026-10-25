@@ -89,9 +89,9 @@ export function RunToolbar({
 
   return (
     <>
-      <div className="run-toolbar">
+      <div className="toolbar">
         <form
-          className="search-field"
+          className="toolbar-search"
           onSubmit={(event) => {
             event.preventDefault();
             submitSearch();
@@ -109,7 +109,7 @@ export function RunToolbar({
             {text.filter}
           </button>
         </form>
-        <label className="toolbar-select">
+        <label className="toolbar-item">
           <span>{text.status}</span>
           <select
             aria-label={text.status}
@@ -124,7 +124,7 @@ export function RunToolbar({
             ))}
           </select>
         </label>
-        <label className="toolbar-select">
+        <label className="toolbar-item">
           <span>{text.kind}</span>
           <select
             aria-label={text.kind}
@@ -166,7 +166,7 @@ export function RunToolbar({
             ))}
           </div>
         </details>
-        <label className="toolbar-select">
+        <label className="toolbar-item">
           <span>{text.sort}</span>
           <select
             aria-label={text.sort}

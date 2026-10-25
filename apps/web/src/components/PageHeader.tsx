@@ -20,7 +20,8 @@ export function PageHeader({
     <header className="page-header">
       <div>
         {eyebrow && (
-          <div className="eyebrow" ref={eyebrowRef}>
+          // 上の行はたいてい今の画面までの道筋（プロジェクト・一覧）なので、パンくずの並べ方にする。
+          <div className="eyebrow breadcrumbs" ref={eyebrowRef}>
             {eyebrow}
           </div>
         )}

@@ -46,11 +46,11 @@
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }
 .upload-queue > header h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }
 .upload-queue > header .button {
   margin-left: auto;
@@ -87,7 +87,7 @@
 }
 .upload-status {
   flex: none;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .upload-status.failed {
   color: var(--error);
@@ -108,12 +108,12 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px 14px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .upload-queue-error {
   margin: 0;
   color: var(--error);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 .upload-queue-artifact,
@@ -129,11 +129,11 @@
 }
 .upload-resumable > p {
   margin: 10px 14px 0;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .upload-resumable-row p {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 /* A picker inside a label cannot be :disabled, so the label dims like a disabled button. */
 .upload-resumable-row label.button[aria-disabled='true'] {
@@ -150,7 +150,7 @@
   margin: 0;
 }
 p.upload-resume-notice.muted {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 /* The folder dialog's question after an upload stopped: the explanation, then its two answers. */
 .notice.dataset-folder-choice {
@@ -160,7 +160,7 @@ p.upload-resume-notice.muted {
 .dataset-folder-choice p {
   margin: 0;
 }
-/* Below --bp-sm a long path wraps instead of hiding the part that tells files apart. */
+/* Below 640px a long path wraps instead of hiding the part that tells files apart. */
 @media (width < 640px) {
   .upload-queue-title {
     flex-wrap: wrap;
@@ -192,7 +192,7 @@ p.upload-resume-notice.muted {
 .upload-queue-retry {
   margin: 0;
   color: var(--warning);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 /* After a discard that kept files: the reason, then (below it on a phone, .action-notice) the link
    to those files. */

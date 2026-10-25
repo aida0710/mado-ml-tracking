@@ -9,6 +9,7 @@ import {
   FlaskConical,
   FolderKanban,
   HardDrive,
+  Info,
   ListChecks,
   Network,
   Play,
@@ -45,6 +46,7 @@ export const NAVIGATION_ICONS: Record<NavigationScreen, LucideIcon> = {
   account: CircleUser,
   // 全体設定 lists every computer; the Project's Compute (Server) shows the ones it can use.
   computers: Computer,
+  about: Info,
   projects: FolderKanban,
   users: Users,
   storage: HardDrive,

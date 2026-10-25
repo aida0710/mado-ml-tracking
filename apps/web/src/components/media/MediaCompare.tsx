@@ -39,7 +39,7 @@ export function MediaCompare({ projectId, runIds }: MediaCompareProps) {
         const recorded = sortedSteps(stepsByRun.value?.flat() ?? []);
         const hasCommonStep = stepsByRun.value !== undefined && commonSteps(stepsByRun.value).length > 0;
         return (
-          <div className="media-compare touch-targets">
+          <div className="media-compare">
             {runIds.length > MEDIA_COMPARE_MAX_RUNS && (
               <p className="notice">{textTemplates.mediaCompareTooManyRuns(MEDIA_COMPARE_MAX_RUNS)}</p>
             )}

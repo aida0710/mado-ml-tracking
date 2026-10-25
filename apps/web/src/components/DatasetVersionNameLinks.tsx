@@ -18,9 +18,9 @@ export function DatasetVersionNameLinks({
   projectId: string;
   versionIds: readonly string[];
 }) {
-  const datasets = useQuery(versionIds.length ? `${projectId}:datasets` : null, (signal) =>
+  const datasets = useQuery({ key: versionIds.length ? `${projectId}:datasets` : null, load: (signal) =>
     registryApi.datasets(projectId, signal),
-  );
+  });
   // The versions are looked up once the datasets are known; before that the ids are shown.
   const versions = useDatasetVersionsById({
     projectId,

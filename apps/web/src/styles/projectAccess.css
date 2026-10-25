@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 13px;
+  font-size: var(--font-size-base);
 }
 .member-sources {
   list-style: none;
@@ -21,7 +21,7 @@
 .access-locked-reason {
   flex-basis: 100%;
   max-width: 28em;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 /* A bound group nobody has logged in with: likely a typo, and not counted as an admin. */
 .group-without-members {
@@ -30,7 +30,7 @@
   padding: 1px 6px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--muted);
   white-space: nowrap;
 }
@@ -44,11 +44,11 @@
 .member-grants legend {
   padding: 0;
   margin-bottom: 6px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .member-grants > p {
   margin: 0 0 10px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .member-grants .field {
   margin-bottom: 10px;

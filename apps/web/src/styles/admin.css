@@ -43,7 +43,7 @@
   gap: 8px;
 }
 .member-name .user-status {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .plugin-search {
   display: flex;
@@ -77,13 +77,13 @@
   flex-wrap: wrap;
   gap: 8px 20px;
   margin: 12px 0;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--muted);
 }
 .storage-metrics th,
 .storage-metrics td {
   padding: 9px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .storage-label {
   max-width: 160px;
@@ -99,9 +99,9 @@
 .raw-metrics {
   margin: 18px 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
-/* The two-column settings stack below --bp-lg, before either column gets too narrow. */
+/* The two-column settings stack below 1200px, before either column gets too narrow. */
 @media (width < 1200px) {
   .settings-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -119,22 +119,9 @@
   align-items: center;
   gap: 8px;
 }
-.storage-tag {
-  display: inline-block;
-  border-radius: var(--radius-pill);
-  padding: 2px 8px;
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 10px;
-  white-space: nowrap;
-}
-.storage-tag.storage-default {
-  background: var(--accent-tint);
-  color: var(--link);
-}
 .storage-location code {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   overflow-wrap: anywhere;
 }
 .storage-readonly {
@@ -162,7 +149,7 @@
 }
 .storage-test-summary {
   margin: 0 0 10px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .storage-test-summary.ok,
 .storage-test-result li.ok svg {
@@ -185,7 +172,7 @@
   grid-template-columns: 16px 12em 3em minmax(0, 1fr);
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .storage-test-error {
   color: var(--muted);
@@ -215,7 +202,7 @@
 }
 .storage-picker-name {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 
@@ -239,23 +226,15 @@
   gap: 2px;
 }
 .user-admin .muted {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 /* The signed-in administrator's own row, which the actions affect at once. */
 .user-self-tag {
-  display: inline-block;
   margin-left: 8px;
-  white-space: nowrap;
-  border-radius: var(--radius-pill);
-  padding: 1px 8px;
-  background: var(--accent-tint);
-  color: var(--link);
-  font-size: 10px;
-  font-weight: 600;
 }
 .user-locked-reason {
   flex-basis: 100%;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .user-actions {
   display: flex;
@@ -289,7 +268,7 @@
 }
 .temporary-password .field-label {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .temporary-password-value {
   display: flex;
@@ -304,45 +283,6 @@
   font-family: var(--mono);
   user-select: all;
   overflow-wrap: anywhere;
-}
-.user-menu {
-  position: relative;
-}
-.user-menu-popover {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 20;
-  min-width: 220px;
-  display: flex;
-  flex-direction: column;
-  background: var(--background);
-  color: var(--text);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-popover);
-}
-.user-menu-identity {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-  overflow-wrap: anywhere;
-}
-.user-menu-identity .muted {
-  font-size: 11px;
-}
-.user-menu-popover a {
-  padding: 10px 14px;
-  color: var(--text);
-}
-.user-menu-popover a.user-menu-settings {
-  border-top: 1px solid var(--border);
-}
-.user-menu-popover a:hover,
-.user-menu-popover a:focus-visible {
-  background: var(--surface-hover);
-  text-decoration: none;
 }
 .account-page {
   display: flex;
@@ -376,5 +316,5 @@
   padding: 3px 8px;
   background: var(--surface);
   border: 1px solid var(--border);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }

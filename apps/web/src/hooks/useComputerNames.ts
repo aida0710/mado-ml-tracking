@@ -17,7 +17,7 @@ const NO_KNOWN_COMPUTERS: readonly Pick<ComputeTarget, 'id' | 'name'>[] = [];
 export function useComputerNames(
   known: readonly Pick<ComputeTarget, 'id' | 'name'>[] = NO_KNOWN_COMPUTERS,
 ): (targetId: string) => string {
-  const overview = useQuery('compute-target-overview', executionApi.targetOverview);
+  const overview = useQuery({ key: 'compute-target-overview', load: executionApi.targetOverview });
   const computers = overview.value;
   return useCallback(
     (targetId: string) => computerNameOf({ known, computers, targetId, deletedLabel: text.computerDeleted }),

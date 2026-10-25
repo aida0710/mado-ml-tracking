@@ -5,12 +5,12 @@ import { textTemplates } from '../../i18n/catalog';
 
 // early_stopped gets its own color so it is not read as a user cancel.
 const TRIAL_BADGE_CLASSES: Record<SweepTrialState, string> = {
-  queued: 'status-queued',
-  running: 'status-running',
-  finished: 'status-finished',
-  failed: 'status-failed',
-  canceled: 'status-canceled',
-  early_stopped: 'status-early-stopped',
+  queued: 'status-neutral',
+  running: 'status-info',
+  finished: 'status-success',
+  failed: 'status-danger',
+  canceled: 'status-neutral',
+  early_stopped: 'status-stopped',
 };
 
 /** A trial's state, with why it stopped early when it did. */

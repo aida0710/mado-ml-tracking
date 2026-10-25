@@ -105,23 +105,20 @@ try {
   }
   await page.setViewportSize({ width: 1440, height: 960 });
 
-  // Error feedback must not move a copy button in a heading with space-between alignment.
+  // コピーの失敗は、ボタンの名前の代わりに結果を出す（成功と同じく1.5秒で戻る）。
   const snippet = guide.locator('.code-snippet', { hasText: '環境変数' }).first();
   const snippetButton = snippet.getByRole('button');
   await snippetButton.scrollIntoViewIfNeeded();
-  const beforeFailure = await snippetButton.boundingBox();
   await page.evaluate(() => {
     window.originalExecCommand = document.execCommand.bind(document);
     document.execCommand = () => false;
   });
   await snippetButton.click();
-  await snippet.getByRole('alert').getByText('コピーできませんでした', { exact: true }).waitFor();
-  assert.deepEqual(await snippetButton.boundingBox(), beforeFailure);
+  await snippet.getByRole('button', { name: 'コピーできませんでした', exact: true }).waitFor();
   if (screenshots) await snippet.screenshot({ path: `${screenshots}/copy-failure.png` });
   await page.evaluate(() => { document.execCommand = window.originalExecCommand; });
   await snippetButton.click();
   await snippet.getByRole('button', { name: 'コピーしました', exact: true }).waitFor();
-  assert.equal(await snippet.getByRole('alert').count(), 0);
   assert.equal(await clipboardText(), await snippet.locator('pre').innerText(), 'multiline snippets must copy exactly');
 
   const unlimited = await openTokenForm('browser-unlimited');

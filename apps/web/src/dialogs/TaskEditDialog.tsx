@@ -26,7 +26,7 @@ export function TaskEditDialog({ task, experimentId, catalog, targets, onClose, 
   const selectedVersion = form.catalog.codeVersions.find((version) => version.id === form.values.codeVersionId);
   const selectedCode = form.catalog.codes.find((code) => code.id === selectedVersion?.codeId);
   return <>
-    <Dialog title={task ? text.editTask : text.newTask} onClose={() => unsaved.requestAction(onClose)} busy={form.pending} wide>
+    <Dialog title={task ? text.editTask : text.newTask} onClose={() => unsaved.requestAction(onClose)} dismissible={!form.pending} size="wide">
       <form onSubmit={(event) => {
         event.preventDefault();
         void form.save().then((saved) => { if (saved) onSaved(saved); });

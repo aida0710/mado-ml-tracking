@@ -51,7 +51,7 @@ export function ReportRevisionHistory({
                 <li key={item.revision} className={item.revision === shownRevision ? 'active' : ''}>
                   <div className="report-history-heading">
                     <strong>{textTemplates.reportRevisionLabel(item.revision)}</strong>
-                    {item.revision === currentRevision && <span className="report-badge">{text.reportHistoryCurrent}</span>}
+                    {item.revision === currentRevision && <span className="status-badge status-accent">{text.reportHistoryCurrent}</span>}
                   </div>
                   <div className="muted">
                     {joinLabels([item.createdBy.displayName, formatDate(item.createdAt)])}

@@ -79,9 +79,9 @@ export function UsersPanel() {
   const { user: signedInUser } = useAuth();
   const { users, filter, setFilter } = useAdminUsers();
   // Unfiltered, so the last global administrator is known whatever the table is narrowed to.
-  const activePeople = useQuery('admin-users:active-people', (signal) =>
+  const activePeople = useQuery({ key: 'admin-users:active-people', load: (signal) =>
     adminUsersApi.list({ status: 'active', kind: 'human' }, signal),
-  );
+  });
   const [searchText, setSearchText] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);

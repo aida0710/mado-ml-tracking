@@ -4,6 +4,7 @@ import { ResponsiveTable } from './ResponsiveTable';
 import { formatDate } from '../lib/format';
 import { JOB_ARRAY_STATE_ORDER, type JobArraySummary } from '../lib/jobArrays';
 import { shortId } from '../lib/jobDisplay';
+import { JOB_STATUS_BADGE_CLASS } from '../lib/statusBadge';
 import { useComputerNames } from '../hooks/useComputerNames';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
@@ -16,7 +17,7 @@ function ArrayStates({ counts }: { counts: JobArraySummary['counts'] }) {
       {JOB_ARRAY_STATE_ORDER.map((status) => {
         const count = counts[status];
         return count ? (
-          <span key={status} className={`status-badge status-${status}`}>
+          <span key={status} className={`status-badge ${JOB_STATUS_BADGE_CLASS[status]}`}>
             {jobsTextTemplates.jobArrayState(text[status], count)}
           </span>
         ) : null;

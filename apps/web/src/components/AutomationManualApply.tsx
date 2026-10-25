@@ -34,15 +34,15 @@ export function AutomationManualApply({
   const isChained = rule.trigger === 'upstream_run_finished';
   // Only the upstream rule's executions can offer a Run, so the API is asked for those alone.
   const upstreamRuleId = isChained ? rule.upstreamRuleId : null;
-  const upstreamExecutions = useQuery(
-    upstreamRuleId ? `${projectId}:automation-executions:${upstreamRuleId}:manual-apply` : null,
-    (signal) =>
+  const upstreamExecutions = useQuery({
+    key: upstreamRuleId ? `${projectId}:automation-executions:${upstreamRuleId}:manual-apply` : null,
+    load: (signal) =>
       automationApi.executionPage(
         projectId,
         { filter: { ruleId: upstreamRuleId! }, limit: AUTOMATION_EXECUTION_PAGE_MAX },
         signal,
       ),
-  );
+  });
   const [values, setValues] = useState<Record<string, string>>({ target: '' });
   const [isConfirming, setIsConfirming] = useState(false);
   const [isApplied, setIsApplied] = useState(false);

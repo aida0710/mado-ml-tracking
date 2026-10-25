@@ -7,7 +7,7 @@ import { useQuery } from './useQuery';
 /** Artifacts of the Runs referenced on the current page, keyed by Run and then by path. */
 function useRunArtifactIndex(projectId: string, runIds: string[]) {
   const key = runIds.length ? `${projectId}:evaluation-audio:${runIds.join(',')}` : null;
-  return useQuery(key, async (signal) => {
+  return useQuery({ key, load: async (signal) => {
     const entries = await Promise.all(
       runIds.map(async (runId): Promise<[string, Map<string, Artifact> | 'unavailable']> => {
         try {
@@ -21,7 +21,7 @@ function useRunArtifactIndex(projectId: string, runIds: string[]) {
       }),
     );
     return new Map(entries) satisfies RunArtifactIndex;
-  });
+  } });
 }
 
 /**

@@ -1,4 +1,4 @@
-import { INTL_LOCALES } from './locale';
+import { intlLocaleOf } from '@mado/design-system/locale';
 import { getListFormat } from './textJoining';
 
 /**
@@ -6,5 +6,5 @@ import { getListFormat } from './textJoining';
  * “c”. For the English catalogs, which build English text whatever the caller's language.
  */
 export function formatEnglishQuotedList(names: readonly string[]): string {
-  return getListFormat(INTL_LOCALES.en).format(names.map((name) => `“${name}”`));
+  return getListFormat(intlLocaleOf('en')).format(names.map((name) => `“${name}”`));
 }

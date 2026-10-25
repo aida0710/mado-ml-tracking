@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { CODE_LANGUAGES, type CodeLanguage } from '@mado/design-system/code';
-import type { CodeLanguageChoice } from '../../hooks/useCodeLanguage';
+import type { CodeLanguageChoice } from '@mado/design-system/react';
 import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 

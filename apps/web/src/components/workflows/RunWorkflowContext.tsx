@@ -34,9 +34,9 @@ export function RunWorkflowContext({ run, canEdit }: { run: Run; canEdit: boolea
 function RunWorkflowLink({ run, workflowId }: { run: Run; workflowId: string }) {
   useLocale();
   const executionId = workflowExecutionIdOfRun(run);
-  const usage = useQuery(`run-usage:${run.id}`, (signal) =>
+  const usage = useQuery({ key: `run-usage:${run.id}`, load: (signal) =>
     datasetUsageApi.forRun(run.projectId, run.id, signal),
-  );
+  });
   return (
     <>
       <Link className="button" to={workflowPath(run.projectId, { workflowId, executionId })}>
@@ -52,11 +52,11 @@ function RunWorkflowLink({ run, workflowId }: { run: Run; workflowId: string }) 
 function RunPreprocessingReport({ run, canEdit }: { run: Run; canEdit: boolean }) {
   useLocale();
   const [editing, setEditing] = useState(false);
-  const report = useQuery(
-    `preprocessing-report:${run.id}`,
-    (signal) => preprocessingReportsApi.get(run.projectId, run.id, signal),
-    isTerminalRun(run) ? undefined : EXECUTION_POLL_MS,
-  );
+  const report = useQuery({
+    key: `preprocessing-report:${run.id}`,
+    load: (signal) => preprocessingReportsApi.get(run.projectId, run.id, signal),
+    pollMs: isTerminalRun(run) ? undefined : EXECUTION_POLL_MS,
+  });
   return (
     <Resource query={report}>
       {(summary) => (

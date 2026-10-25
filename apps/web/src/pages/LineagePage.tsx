@@ -19,9 +19,9 @@ export function LineagePage() {
   const { project } = useProject();
   const [params, setParams] = useSearchParams();
   const focusId = params.get(LINEAGE_FOCUS_PARAMETER);
-  const graph = useQuery(`${project.id}:lineage`, (signal) =>
+  const graph = useQuery({ key: `${project.id}:lineage`, load: (signal) =>
     trackingApi.lineage(project.id, signal),
-  );
+  });
   function showWholeGraph() {
     setParams((previous) => {
       const updated = new URLSearchParams(previous);

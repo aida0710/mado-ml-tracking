@@ -39,7 +39,7 @@ export function SaveViewDialog<T>({
   const [nameError, setNameError] = useState<string | null>(null);
   const mutation = useMutation();
   return (
-    <Dialog title={title} onClose={onClose} busy={mutation.pending}>
+    <Dialog title={title} onClose={onClose} dismissible={!mutation.pending}>
       <form
         onSubmit={(event) => {
           event.preventDefault();

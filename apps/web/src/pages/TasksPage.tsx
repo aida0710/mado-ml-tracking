@@ -32,7 +32,7 @@ export function TasksPage() {
   const testCommandNoteId = useId();
   const catalog = useExecutionCatalog(project.id);
   const targets = useProjectTargets(project.id);
-  const tasks = useQuery(`${project.id}:tasks:${experimentId}`, (signal) => tasksApi.list(project.id, experimentId || undefined, signal));
+  const tasks = useQuery({ key: `${project.id}:tasks:${experimentId}`, load: (signal) => tasksApi.list(project.id, experimentId || undefined, signal) });
   const selected = tasks.value?.find((task) => task.id === params.get('id')) ?? tasks.value?.[0];
   const history = useTaskRunHistory({ projectId: project.id, taskId: selected?.id });
   function reload() { tasks.reload(); catalog.reload(); targets.reload(); history.reload(); }

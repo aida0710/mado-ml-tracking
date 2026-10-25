@@ -23,7 +23,7 @@
 .evaluation-origin {
   display: inline-block;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .evaluation-origin-automatic {
   color: var(--link);

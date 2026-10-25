@@ -1,13 +1,13 @@
 import { useId, useMemo, useState, type KeyboardEvent } from 'react';
 import { CartesianGrid, ComposedChart, Line, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import type { MetricXRange } from '@mmt/contracts';
+import { useDocumentTheme } from '@mado/design-system/react';
 import type { MetricsChartProps } from './chartProps';
 import { ChartDescription } from './ChartDescription';
 import { ChartLegend } from './ChartLegend';
 import { ChartPlotLayer, type ChartHoverPosition } from './ChartPlotLayer';
 import { ChartTooltip } from './ChartTooltip';
 import { Empty } from '../Feedback';
-import { useDocumentTheme } from '../../hooks/useDocumentTheme';
 import { paddedDomain, xExtent } from '../../lib/chartScale';
 import {
   chartCursorStops,

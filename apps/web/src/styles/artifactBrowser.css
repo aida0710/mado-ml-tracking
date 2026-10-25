@@ -1,11 +1,8 @@
 /* Run Artifact folder tree and the Project-wide Artifact catalog. */
+/* フォルダーまでの道筋（デザインシステムの.breadcrumbs）。長い名前はどこででも折り返す。 */
 .artifact-breadcrumbs {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 2px;
   margin-bottom: 10px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 .artifact-breadcrumbs .breadcrumb-separator {
@@ -46,7 +43,7 @@
   margin-top: 12px;
 }
 .artifact-version-notice {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .artifact-version-list {
   list-style: none;
@@ -58,28 +55,24 @@
   flex-wrap: wrap;
   gap: 10px;
   padding: 4px 0;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .artifact-version-list li.selected {
   font-weight: 600;
 }
-.artifact-catalog-toolbar {
-  flex-wrap: wrap;
-}
-.artifact-catalog-toolbar .toolbar-select input[type='checkbox'] {
+.artifact-catalog-toolbar .toolbar-item input[type='checkbox'] {
   margin: 0;
 }
-/* Below --bp-sm each filter takes a full row, so long Run and model names stay readable. */
+/* 640px未満では絞り込みを1つずつ1行に取り、長いRunやモデルの名前を読めるようにする。 */
 @media (width < 640px) {
-  .artifact-catalog-toolbar .toolbar-select {
+  .artifact-catalog-toolbar .toolbar-item {
     flex-basis: 100%;
     border-left: 0;
-    border-top: 1px solid var(--background);
   }
-  .artifact-catalog-toolbar .toolbar-select > span {
+  .artifact-catalog-toolbar .toolbar-item > span {
     min-width: 4.5em;
   }
-  .artifact-catalog-toolbar .toolbar-select select {
+  .artifact-catalog-toolbar .toolbar-item > select {
     flex: 1;
     max-width: none;
   }
@@ -92,7 +85,7 @@
   .artifact-catalog .artifact-layout {
     grid-template-columns: minmax(0, 1fr);
   }
-  /* One pane at a time below --bp-md: the list scrolls with the page instead of inside itself. */
+  /* One pane at a time below 900px: the list scrolls with the page instead of inside itself. */
   .artifact-tree .table-scroll,
   .artifact-catalog .artifact-layout .table-scroll {
     max-height: none;
@@ -101,7 +94,7 @@
     min-width: 9em;
   }
   .artifact-breadcrumbs {
-    font-size: 13px;
+    font-size: var(--font-size-base);
   }
 }
 .artifact-back-to-list {

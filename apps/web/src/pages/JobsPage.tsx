@@ -51,22 +51,22 @@ export function JobsPage() {
   const arrayFilter = params.get('array') ?? '';
   const [showLaunch, setShowLaunch] = useState(false);
   const [jobAction, setJobAction] = useState<{ id: string; type: JobAction } | null>(null);
-  const jobs = useQuery(
-    `${project.id}:jobs`,
-    (signal) => executionApi.jobs(project.id, signal),
-    EXECUTION_POLL_MS,
-  );
+  const jobs = useQuery({
+    key: `${project.id}:jobs`,
+    load: (signal) => executionApi.jobs(project.id, signal),
+    pollMs: EXECUTION_POLL_MS,
+  });
   const targets = useProjectTargets(project.id);
   // Hook names for the origin column; without them the column shows the hook's id.
-  const hooks = useQuery(`${project.id}:job-hooks`, (signal) => hooksApi.list(project.id, signal));
+  const hooks = useQuery({ key: `${project.id}:job-hooks`, load: (signal) => hooksApi.list(project.id, signal) });
   const resumedRunIds = useResumedRunIds(project.id, jobs.value);
   const selected = jobs.value?.find((job) => job.id === selectedId);
   // Looked up again on every poll, so the dialog shows the Job as it is now.
   const jobForAction = jobAction && jobs.value?.find((job) => job.id === jobAction.id);
-  const selectedRun = useQuery(selected ? `${project.id}:job-run:${selected.runId}` : null,
-    (signal) => trackingApi.run(project.id, selected!.runId, signal), EXECUTION_POLL_MS);
-  const sourceArtifacts = useQuery(selected ? `${project.id}:job-artifacts:${selected.runId}` : null,
-    (signal) => trackingApi.artifacts(project.id, selected!.runId, signal), EXECUTION_POLL_MS);
+  const selectedRun = useQuery({ key: selected ? `${project.id}:job-run:${selected.runId}` : null,
+    load: (signal) => trackingApi.run(project.id, selected!.runId, signal), pollMs: EXECUTION_POLL_MS });
+  const sourceArtifacts = useQuery({ key: selected ? `${project.id}:job-artifacts:${selected.runId}` : null,
+    load: (signal) => trackingApi.artifacts(project.id, selected!.runId, signal), pollMs: EXECUTION_POLL_MS });
   const logs = useRunLogs({
     projectId: project.id,
     run: selected && { id: selected.runId },

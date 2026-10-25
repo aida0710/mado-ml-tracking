@@ -29,9 +29,9 @@ export function useModelAutomation({
   showExecutions: boolean;
   historyFilter: AutomationExecutionFilter;
 }) {
-  const rules = useQuery(`${projectId}:automation-rules`, (signal) =>
+  const rules = useQuery({ key: `${projectId}:automation-rules`, load: (signal) =>
     automationApi.rules(projectId, signal),
-  );
+  });
   const executions = useAutomationHistory({
     projectId,
     filter: historyFilter,

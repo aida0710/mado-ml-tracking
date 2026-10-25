@@ -25,7 +25,7 @@ type LauncherAction = { kind: 'rotate' | 'revoke'; launcher: Launcher };
  */
 export function LaunchersPanel() {
   useLocale();
-  const launchers = useQuery('launchers', launchersApi.list);
+  const launchers = useQuery({ key: 'launchers', load: launchersApi.list });
   const [isCreating, setCreating] = useState(false);
   const [action, setAction] = useState<LauncherAction | null>(null);
   const [issued, setIssued] = useState<LauncherCreated | null>(null);

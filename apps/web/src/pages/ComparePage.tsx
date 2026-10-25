@@ -160,8 +160,8 @@ function ComparisonDetails({
   return (
     <>
       <ComparisonCharts projectId={projectId} runs={runs} />
-      <div className="run-toolbar">
-        <label className="toolbar-select">
+      <div className="toolbar">
+        <label className="toolbar-item">
           <span>{text.comparisonBaselineRun}</span>
           <select
             aria-label={text.comparisonBaselineRun}
@@ -176,7 +176,7 @@ function ComparisonDetails({
             ))}
           </select>
         </label>
-        <label className="toolbar-select">
+        <label className="toolbar-item">
           <input
             type="checkbox"
             checked={onlyDifferences}

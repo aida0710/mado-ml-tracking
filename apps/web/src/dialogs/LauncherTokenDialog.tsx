@@ -28,7 +28,7 @@ export function LauncherTokenDialog({
     launcherName: issued.launcher.name,
   });
   return (
-    <Dialog title={launchersTextTemplates.launcherTokenTitle(issued.launcher.name)} onClose={onClose} wide>
+    <Dialog title={launchersTextTemplates.launcherTokenTitle(issued.launcher.name)} onClose={onClose} size="wide">
       <p className="notice">{text.launcherTokenOnce}</p>
       <div className="field">
         <label htmlFor={tokenId}>{text.launcherTokenValue}</label>

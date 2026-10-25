@@ -113,7 +113,7 @@ export function PromotionCheckCard({
                         <CriterionResults results={decision.criteriaResults} />
                       </>
                     ) : (
-                      <span className="status-badge status-queued">
+                      <span className="status-badge status-neutral">
                         <span aria-hidden="true">●</span>
                         {text.promotionCheckPending}
                       </span>

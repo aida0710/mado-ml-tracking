@@ -1,5 +1,5 @@
+import { intlLocaleOf } from '@mado/design-system/locale';
 import { formatEnglishCount } from '../formatEnglishCount';
-import { INTL_LOCALES } from '../locale';
 import type { EvaluationSampleErrorReason, ArtifactReferenceError } from '../../lib/evaluationSamples';
 
 export const artifactsText = {
@@ -98,8 +98,8 @@ export const artifactsTextTemplates = {
   artifactDirectorySummary: (fileCount: number, size: string) =>
     `${formatEnglishCount(fileCount, 'file')} · ${size}`,
   audioChannelNumber: (channel: number) => `Channel ${channel}`,
-  audioSampleRateValue: (hertz: number) => `${hertz.toLocaleString(INTL_LOCALES.en)} Hz`,
-  audioMaxFrequency: (hertz: number) => `${(hertz / 1000).toLocaleString(INTL_LOCALES.en, { maximumFractionDigits: 1 })} kHz`,
+  audioSampleRateValue: (hertz: number) => `${hertz.toLocaleString(intlLocaleOf('en'))} Hz`,
+  audioMaxFrequency: (hertz: number) => `${(hertz / 1000).toLocaleString(intlLocaleOf('en'), { maximumFractionDigits: 1 })} kHz`,
   evaluationSampleCount: (count: number) => formatEnglishCount(count, 'sample'),
   evaluationBrokenRowCount: (count: number) => formatEnglishCount(count, 'unreadable row'),
   evaluationLine: (line: number) => `Row ${line}`,

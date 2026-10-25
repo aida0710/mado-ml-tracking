@@ -29,9 +29,9 @@ export function LaunchersTable({
           header: text.status,
           render: (launcher) =>
             launcher.revokedAt === null ? (
-              <span className="status-badge status-finished">{text.launcherActive}</span>
+              <span className="status-badge status-success">{text.launcherActive}</span>
             ) : (
-              <span className="status-badge status-failed" title={formatDate(launcher.revokedAt)}>
+              <span className="status-badge status-danger" title={formatDate(launcher.revokedAt)}>
                 {text.launcherRevoked}
               </span>
             ),

@@ -37,10 +37,10 @@ export function NotificationChannelSection({
   const { user } = useAuth();
   const canEditChannels = isGlobalAdmin(user);
   // The API refuses the names to anyone else, so only administrators ask for them.
-  const environmentNames = useQuery(
-    canEditChannels ? 'notification-environment-names' : null,
-    notificationsApi.environmentNames,
-  );
+  const environmentNames = useQuery({
+    key: canEditChannels ? 'notification-environment-names' : null,
+    load: notificationsApi.environmentNames,
+  });
   const [editing, setEditing] = useState<NotificationChannel | 'new' | null>(null);
   const [savedUnconfigured, setSavedUnconfigured] = useState<string | null>(null);
   const test = useMutation();

@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
-import { BREAKPOINT_PX } from '../lib/breakpoints';
+import { BREAKPOINT_PX } from '@mado/design-system/layout';
+import { contrastRatio, parseHexColor } from '../lib/colorContrast';
 
 const stylesDirectory = new URL('./', import.meta.url);
 const stylesheetNames = readdirSync(stylesDirectory).filter((name) => name.endsWith('.css'));
@@ -13,12 +14,17 @@ const readPackageFile = (name: string) =>
 const tokensCss = readPackageFile('tokens.css');
 // The shared element defaults, components, app frame and code view, which use the tokens like this
 // app does.
-const sharedStylesheets = ['base.css', 'components.css', 'shell.css', 'code.css'].map((name) => ({
+const sharedStylesheets = ['base.css', 'components.css', 'shell.css', 'code.css', 'lineage.css'].map((name) => ({
   name: `@mado/design-system/${name}`,
   css: readPackageFile(name),
 }));
 const appStylesheets = stylesheetNames.map((name) => ({ name, css: readStylesheet(name) }));
 const allStylesheets = [...sharedStylesheets, ...appStylesheets];
+// このアプリだけが使う色の変数を値で書く場所（デザインシステムの決まりの「アプリの変数の定義」）。
+const APP_TOKENS_STYLESHEET = 'base.css';
+const appTokensCss = readStylesheet(APP_TOKENS_STYLESHEET);
+const LIGHT_SELECTOR = ':root';
+const DARK_SELECTOR = ":root[data-theme='dark']";
 
 // Custom properties a component sets inline: ChartPanelGrid the chart row height, the app shells
 // the sidebar width the user dragged, Tabs the width of the fade at an end that hides tabs.
@@ -39,13 +45,32 @@ const ruleBody = (css: string, selector: string) => {
   const start = css.indexOf(`${selector} {`);
   return start < 0 ? '' : css.slice(start, css.indexOf('}', start));
 };
+const customPropertyValues = (css: string) =>
+  Object.fromEntries(
+    declarations(css)
+      .filter(({ property }) => property.startsWith('--'))
+      .map(({ property, value }) => [property, value]),
+  );
+// テーマごとの変数の値。ダークはライトの値をダークの定義で上書きしたもの。
+const themeValues = (css: string) => {
+  const light = customPropertyValues(ruleBody(css, LIGHT_SELECTOR));
+  return { light, dark: { ...light, ...customPropertyValues(ruleBody(css, DARK_SELECTOR)) } };
+};
 
 describe('design tokens', () => {
-  it('共通の部品とこのアプリのスタイルシートは色を値で書かず、@mado/design-system の変数を使う', () => {
+  it('色を値で書くのはこのアプリの変数の定義だけで、ほかは変数を使う', () => {
+    const appTokenDefinitions = new Set(
+      [LIGHT_SELECTOR, DARK_SELECTOR].flatMap((selector) =>
+        declarations(ruleBody(appTokensCss, selector))
+          .filter(({ property }) => property.startsWith('--'))
+          .map(({ property, value }) => `${APP_TOKENS_STYLESHEET}: ${property}: ${value}`),
+      ),
+    );
     const offending = allStylesheets.flatMap(({ name, css }) =>
       declarations(css)
         .filter(({ value }) => LITERAL_COLOR.test(value))
-        .map(({ property, value }) => `${name}: ${property}: ${value}`),
+        .map(({ property, value }) => `${name}: ${property}: ${value}`)
+        .filter((declaration) => !appTokenDefinitions.has(declaration)),
     );
     expect(offending).toEqual([]);
   });
@@ -65,21 +90,50 @@ describe('design tokens', () => {
     expect(undefinedReferences).toEqual([]);
   });
 
-  it('共通の部品のメディアクエリもこのアプリと同じ切り替え点だけを使う', () => {
+  it('どのスタイルシートのメディアクエリもデザインシステムの切り替え幅だけを使う', () => {
     const allowed = new Set(Object.values(BREAKPOINT_PX).map((px) => `(width < ${px}px)`));
-    const offending = sharedStylesheets.flatMap(({ name, css }) =>
+    // 切り替え幅より広いタッチ画面は `(width < …), (pointer: coarse)` で同じ指定に加えてよい。
+    const isAllowedCondition = (condition: string) =>
+      condition.startsWith('(prefers-') || condition === '(pointer: coarse)' || allowed.has(condition);
+    const offending = allStylesheets.flatMap(({ name, css }) =>
       [...css.matchAll(/@media\s+([^{]*?)\s*\{/g)]
         .map((match) => match[1]!)
-        .filter((query) => !query.startsWith('(prefers-') && !allowed.has(query))
+        .filter((query) => !query.split(/\s*,\s*/).every(isAllowedCondition))
         .map((query) => `${name}: ${query}`),
     );
     expect(offending).toEqual([]);
   });
 
   it('ダークテーマはライトにある変数だけを上書きする', () => {
-    const light = new Set(definedProperties(ruleBody(tokensCss, ':root')));
-    const dark = definedProperties(ruleBody(tokensCss, ":root[data-theme='dark']"));
-    expect(dark.length).toBeGreaterThan(0);
-    expect(dark.filter((property) => !light.has(property))).toEqual([]);
+    for (const css of [tokensCss, appTokensCss]) {
+      const light = new Set(definedProperties(ruleBody(css, LIGHT_SELECTOR)));
+      const dark = definedProperties(ruleBody(css, DARK_SELECTOR));
+      expect(dark.length).toBeGreaterThan(0);
+      expect(dark.filter((property) => !light.has(property))).toEqual([]);
+    }
   });
+});
+
+// デザインシステムから移したこのアプリの色の、文字のコントラスト（WCAG AA の 4.5:1）。
+describe('このアプリの色のコントラスト', () => {
+  const designSystemThemes = themeValues(tokensCss);
+  const appThemes = themeValues(appTokensCss);
+  const pairs = [
+    // 運用の通知の数は、暗いままの上部バーと、そのボタンにマウスを載せた色の上に出る。
+    ...['--header', '--header-hover', '--header-active'].map((surface) => ['--header-alert', surface]),
+    ['--status-stopped-text', '--status-stopped-background'],
+  ];
+  for (const theme of ['light', 'dark'] as const) {
+    it(`${theme}: 文字は地に対して 4.5:1 以上`, () => {
+      const values: Record<string, string | undefined> = { ...designSystemThemes[theme], ...appThemes[theme] };
+      const failing = pairs
+        .map(([foreground, background]) => ({
+          pair: `${foreground} on ${background}`,
+          ratio: contrastRatio(parseHexColor(values[foreground!]!), parseHexColor(values[background!]!)),
+        }))
+        .filter(({ ratio }) => ratio < 4.5)
+        .map(({ pair, ratio }) => `${pair}: ${ratio.toFixed(2)}`);
+      expect(failing).toEqual([]);
+    });
+  }
 });

@@ -80,14 +80,14 @@ export function useChartPanelData({
   const hasRuns = source.runIds.length > 0 || source.search !== undefined;
   const key =
     hasRuns && plans.length ? JSON.stringify(['chart-panels', projectId, source, plans, xRange ?? null]) : null;
-  return useQuery(
+  return useQuery({
     key,
-    async (signal) => {
+    load: async (signal) => {
       const loaded = await Promise.all(
         plans.map(async (plan) => [plan.id, await loadPlan(projectId, source, plan, xRange, signal)] as const),
       );
       return Object.fromEntries(loaded) as Record<string, ChartPlanData>;
     },
-    live ? EXECUTION_POLL_MS : undefined,
-  );
+    pollMs: live ? EXECUTION_POLL_MS : undefined,
+  });
 }

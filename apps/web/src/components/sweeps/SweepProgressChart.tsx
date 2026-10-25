@@ -16,8 +16,9 @@ import { Empty } from '../Feedback';
 import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
-const OBJECTIVE_COLOR = '#647ee5';
-const BEST_COLOR = '#008c88';
+// テーマで変わる色（styles/base.css）。recharts は SVG の属性にそのまま書くので、変数のまま渡せる。
+const OBJECTIVE_COLOR = 'var(--chart-objective)';
+const BEST_COLOR = 'var(--chart-best)';
 const CHART_HEIGHT = 280;
 
 /**

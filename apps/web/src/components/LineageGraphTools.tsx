@@ -35,7 +35,7 @@ export function LineageGraphTools({
         </label>
         {interaction.query.trim() && (
           <div
-            className="popover lineage-search-results"
+            className="popover menu lineage-search-results"
             role="region"
             aria-label={lineageText.lineageSearchResults}
           >
@@ -43,7 +43,7 @@ export function LineageGraphTools({
               <ul>
                 {visibleSearchResults.map((node) => (
                   <li key={node.id}>
-                    <button type="button" onClick={() => interaction.selectNode(node.id)}>
+                    <button type="button" className="menu-item" onClick={() => interaction.selectNode(node.id)}>
                       <strong>{node.label}</strong>
                       <span>{lineageNodeKindLabels[node.kind]}</span>
                     </button>

@@ -10,34 +10,34 @@ import { useFailureMessage } from './useFailureMessage';
  * with it. Snapshots are read only when a block needs them.
  */
 export function useReportDetail(projectId: string, reportId: string, revision: number | undefined) {
-  const document = useQuery(`${projectId}:report:${reportId}:${revision ?? 'current'}`, (signal) =>
+  const document = useQuery({ key: `${projectId}:report:${reportId}:${revision ?? 'current'}`, load: (signal) =>
     reportsApi.get(projectId, reportId, { revision, signal }),
-  );
+  });
   const shownRevision = document.value?.revision;
   const hasSnapshotBlocks = shownRevision?.blocks.some((block) => block.type !== 'markdown' && block.mode === 'snapshot');
-  const snapshots = useQuery(
-    shownRevision && hasSnapshotBlocks ? `${projectId}:report-snapshots:${reportId}:${shownRevision.revision}` : null,
-    (signal) => reportsApi.snapshots(projectId, reportId, shownRevision!.revision, signal),
-  );
+  const snapshots = useQuery({
+    key: shownRevision && hasSnapshotBlocks ? `${projectId}:report-snapshots:${reportId}:${shownRevision.revision}` : null,
+    load: (signal) => reportsApi.snapshots(projectId, reportId, shownRevision!.revision, signal),
+  });
   return { document, snapshots };
 }
 
 export function useReportRevisions(projectId: string, reportId: string, currentRevision: number | undefined) {
   // Keyed by the current revision so a save or restore lists the new revision.
-  return useQuery(currentRevision === undefined ? null : `${projectId}:report-revisions:${reportId}:${currentRevision}`, (signal) =>
+  return useQuery({ key: currentRevision === undefined ? null : `${projectId}:report-revisions:${reportId}:${currentRevision}`, load: (signal) =>
     reportsApi.revisions(projectId, reportId, signal),
-  );
+  });
 }
 
 /** What `revision` changed from the revision before it; null reads nothing. */
 export function useReportRevisionChanges(projectId: string, reportId: string, revision: number | null) {
-  return useQuery(revision === null ? null : `${projectId}:report-revision-changes:${reportId}:${revision}`, async (signal) => {
+  return useQuery({ key: revision === null ? null : `${projectId}:report-revision-changes:${reportId}:${revision}`, load: async (signal) => {
     const [previous, current] = await Promise.all([
       reportsApi.get(projectId, reportId, { revision: revision! - 1, signal }),
       reportsApi.get(projectId, reportId, { revision: revision!, signal }),
     ]);
     return reportRevisionChanges(previous.revision, current.revision);
-  });
+  } });
 }
 
 export type ReportSaveOutcome =

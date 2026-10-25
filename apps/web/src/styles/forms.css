@@ -32,7 +32,7 @@
 .choice-picker legend {
   padding: 0;
   margin-bottom: 6px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .choice-picker-option {
   display: flex;
@@ -66,7 +66,7 @@
   display: grid;
   gap: 2px;
   min-width: 0;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .choice-picker-label,
 .choice-picker-text .visibility-label {
@@ -125,7 +125,7 @@
 .field-hint {
   margin: 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 
 /* A text field with candidates under it (SuggestionInput). The list stays in the flow of the form,
@@ -150,7 +150,7 @@
 .suggestion-list li {
   padding: 6px 10px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
   cursor: pointer;
 }
@@ -172,7 +172,7 @@
 .suggestion-note {
   margin: 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 /* A note about a likely mistake; --warning only marks borders, so the text keeps its color. */
 .suggestion-note.warning {
@@ -180,11 +180,7 @@
   border-left: 3px solid var(--warning);
   color: var(--text);
 }
-/* A notice that what was entered or saved will not work yet (a variable the server lacks). */
-.notice.warning {
-  border-left-color: var(--warning);
-}
-/* A notice with a button: below --bp-sm the button goes under the text, so the explanation keeps
+/* A notice with a button: below 640px the button goes under the text, so the explanation keeps
    the full width instead of a narrow column beside a long label (English labels are longer). */
 @media (width < 640px) {
   .notice.action-notice {

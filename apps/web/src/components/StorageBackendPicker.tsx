@@ -38,9 +38,9 @@ export function StorageBackendPicker({
             onChange={() => onChange(choice.name)}
           />
           <span className="storage-picker-name">{choice.name}</span>
-          {choice.kind && <span className="storage-tag">{text[choice.kind]}</span>}
+          {choice.kind && <span className="status-badge status-neutral">{text[choice.kind]}</span>}
           {choice.name === defaultBackend && (
-            <span className="storage-tag storage-default">{text.storageDefault}</span>
+            <span className="status-badge status-accent">{text.storageDefault}</span>
           )}
         </label>
       ))}

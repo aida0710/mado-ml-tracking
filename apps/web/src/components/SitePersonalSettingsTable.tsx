@@ -15,9 +15,9 @@ const NOT_SET = '—';
 /** Everyone's settings for a site, for its owner and global administrators. */
 export function SitePersonalSettingsTable({ targetId }: { targetId: string }) {
   useLocale();
-  const settings = useQuery(`site-personal-settings-list:${targetId}`, (signal) =>
+  const settings = useQuery({ key: `site-personal-settings-list:${targetId}`, load: (signal) =>
     siteComputersApi.personalSettings(targetId, signal),
-  );
+  });
   return (
     <section className="site-computer-section" aria-label={text.sitePersonalListTitle}>
       <div className="section-heading">

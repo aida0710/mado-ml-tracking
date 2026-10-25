@@ -77,7 +77,7 @@ export function EmbedPicker({
     <Dialog
       title={isNew ? text.reportEmbedTitleNew : text.reportEmbedTitleEdit}
       onClose={onClose}
-      wide
+      size="wide"
       className="report-embed-picker"
     >
       {/* Not a form: the chart editor opened from here has its own form, and nested forms submit

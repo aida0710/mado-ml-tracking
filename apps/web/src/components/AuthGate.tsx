@@ -9,7 +9,7 @@ import { RequiredPasswordChangePage } from '../pages/RequiredPasswordChangePage'
 import { AuthReturn } from './AuthReturn';
 
 export function AuthGate({ children }: { children: ReactNode }) {
-  const session = useQuery('auth', async (signal) => {
+  const session = useQuery({ key: 'auth', load: async (signal) => {
     const config = await authApi.config(signal);
     try {
       const { user, mustChangePassword } = await authApi.me(signal);
@@ -19,7 +19,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
         return { config, user: null, mustChangePassword: false };
       throw error;
     }
-  });
+  } });
   return (
     <Resource query={session}>
       {({ config, user, mustChangePassword }) =>

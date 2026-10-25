@@ -68,7 +68,7 @@ export function ComputerEditDialog({
   };
 
   return (
-    <Dialog title={text.editTarget} onClose={onClose} busy={pending} wide>
+    <Dialog title={text.editTarget} onClose={onClose} dismissible={!pending} size="wide">
       <form
         onSubmit={(event) => {
           event.preventDefault();

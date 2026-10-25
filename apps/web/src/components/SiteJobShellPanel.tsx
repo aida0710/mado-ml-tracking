@@ -31,9 +31,9 @@ export function SiteJobShellPanel({
   onSaved: () => void;
 }) {
   useLocale();
-  const versions = useQuery(`site-job-shells:${targetId}`, (signal) =>
+  const versions = useQuery({ key: `site-job-shells:${targetId}`, load: (signal) =>
     siteComputersApi.jobShells(targetId, signal),
-  );
+  });
   const [shownId, setShownId] = useState<string | null>(null);
   const [isEditing, setEditing] = useState(false);
   const [savedNotice, setSavedNotice] = useState<{ isUnchanged: boolean; version: number } | null>(null);
@@ -124,15 +124,15 @@ function JobShellContent({
   onShowCurrent: () => void;
 }) {
   useLocale();
-  const shell = useQuery(`site-job-shell:${summary.id}`, (signal) =>
+  const shell = useQuery({ key: `site-job-shell:${summary.id}`, load: (signal) =>
     siteComputersApi.jobShell(targetId, summary.id, signal),
-  );
+  });
   return (
     <div className="job-shell-version">
       <p className="badge-group">
         <span>{siteComputersTextTemplates.jobShellShowing(summary.version)}</span>
         {isCurrent ? (
-          <span className="status-badge status-finished">{text.jobShellCurrent}</span>
+          <span className="status-badge status-success">{text.jobShellCurrent}</span>
         ) : (
           <button className="button small" onClick={onShowCurrent}>
             {text.jobShellShowCurrent}
@@ -159,9 +159,9 @@ function JobShellEditForm({
   onCancel: () => void;
 }) {
   useLocale();
-  const current = useQuery(currentId ? `site-job-shell:${currentId}` : null, (signal) =>
+  const current = useQuery({ key: currentId ? `site-job-shell:${currentId}` : null, load: (signal) =>
     siteComputersApi.jobShell(targetId, currentId!, signal),
-  );
+  });
   // A new version starts from the current one, so the editor waits for its content.
   if (currentId && current.value === undefined)
     return <Resource query={current}>{() => null}</Resource>;
@@ -285,7 +285,7 @@ function JobShellHistory({
                   {siteComputersTextTemplates.jobShellVersionLabel(version.version)}
                 </span>
                 {version.id === currentId && (
-                  <span className="status-badge status-finished">{text.jobShellCurrent}</span>
+                  <span className="status-badge status-success">{text.jobShellCurrent}</span>
                 )}
               </span>
             ),

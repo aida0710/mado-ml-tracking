@@ -37,12 +37,12 @@ async function openSavedView(
 
 /** The views listed for a page, and the view named in the URL (`viewId`, empty for none). */
 export function useSavedViews(projectId: string, page: SavedViewPage, viewId: string) {
-  const views = useQuery(`${projectId}:saved-views:${page}`, (signal) =>
+  const views = useQuery({ key: `${projectId}:saved-views:${page}`, load: (signal) =>
     savedViewsApi.list(projectId, page, signal),
-  );
-  const openQuery = useQuery(viewId ? `${projectId}:saved-view:${viewId}` : null, (signal) =>
+  });
+  const openQuery = useQuery({ key: viewId ? `${projectId}:saved-view:${viewId}` : null, load: (signal) =>
     openSavedView(projectId, viewId, signal),
-  );
+  });
   const opened: OpenedSavedView = !viewId
     ? { status: 'none' }
     : openQuery.error

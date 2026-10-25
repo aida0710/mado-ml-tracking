@@ -84,10 +84,10 @@ export function AdminProjectsTable({
           header: text.status,
           render: (project) =>
             project.archivedAt === null ? (
-              <span className="status-badge status-finished">{text.projectStateActive}</span>
+              <span className="status-badge status-success">{text.projectStateActive}</span>
             ) : (
               <span
-                className="status-badge status-canceled"
+                className="status-badge status-neutral"
                 title={textTemplates.projectArchivedAt(formatDate(project.archivedAt))}
               >
                 {text.projectStateArchived}

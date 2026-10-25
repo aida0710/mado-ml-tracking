@@ -30,9 +30,9 @@ export function SweepsPage() {
   const status = (STATUS_FILTERS as string[]).includes(params.get('status') ?? '') ? (params.get('status') as SweepStatus) : '';
   const [isCreating, setCreating] = useState(false);
   const sweeps = useSweepList(project.id, status);
-  const tasks = useQuery(`${project.id}:sweep-tasks`, (signal) => tasksApi.list(project.id, undefined, signal));
+  const tasks = useQuery({ key: `${project.id}:sweep-tasks`, load: (signal) => tasksApi.list(project.id, undefined, signal) });
   // Names for the list; a failed lookup only falls back to ids, so these do not block the page.
-  const members = useQuery(`${project.id}:sweep-members`, (signal) => accessApi.members(project.id, signal));
+  const members = useQuery({ key: `${project.id}:sweep-members`, load: (signal) => accessApi.members(project.id, signal) });
   const taskName = (sweep: Sweep) => tasks.value?.find((task) => task.id === sweep.taskId)?.name ?? sweep.taskId;
   const creatorName = (sweep: Sweep) =>
     members.value?.find((member) => member.user.id === sweep.createdBy)?.user.displayName ?? sweep.createdBy;
@@ -130,7 +130,7 @@ function CreateSweepDialogLoader({
   onCreated: (sweep: Sweep) => void;
 }) {
   useLocale();
-  const experiments = useQuery(`${projectId}:sweep-experiments`, (signal) => trackingApi.experiments(projectId, signal));
+  const experiments = useQuery({ key: `${projectId}:sweep-experiments`, load: (signal) => trackingApi.experiments(projectId, signal) });
   const targets = useProjectTargets(projectId);
   return (
     <Resource query={experiments}>

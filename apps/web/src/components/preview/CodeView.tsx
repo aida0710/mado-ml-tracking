@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
 import { highlightCode } from '@mado/design-system/code';
+import type { CodeLanguageState } from '@mado/design-system/react';
 import { useCodeLanguage } from '../../hooks/useCodeLanguage';
 import { PreviewFormatSelect, TABLE_PREVIEW_FORMAT } from './PreviewFormatSelect';
 import { useLocale } from '../../i18n/useLocale';
 
-/** The format a text is colored as, and the user's pick (useCodeLanguage). */
-export type CodeLanguageState = ReturnType<typeof useCodeLanguage>;
 
 /**
  * A text preview colored by its format (@mado/design-system/code). The format is detected from the
@@ -18,8 +17,8 @@ export function CodeView({
   mimeType,
 }: {
   content: string;
-  fileName?: string | null;
-  mimeType?: string | null;
+  fileName: string;
+  mimeType?: string;
 }) {
   useLocale();
   const code = useCodeLanguage({ fileName, mimeType, text: content });

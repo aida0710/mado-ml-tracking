@@ -31,8 +31,8 @@ export function ProjectPurgeDialog({
     <Dialog
       title={text.projectPurgeTitle}
       onClose={onClose}
-      busy={mutation.pending}
-      fullScreenOnNarrow={false}
+      dismissible={!mutation.pending}
+      narrowLayout="sheet"
     >
       <form
         onSubmit={(event) => {

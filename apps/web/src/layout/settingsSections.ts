@@ -4,7 +4,7 @@ import { text } from '../i18n/catalog';
 export const SETTINGS_PATH = '/settings';
 
 /** The 全体設定 group, open to every signed-in user, in the sidebar's order. */
-export const GENERAL_SETTINGS_SECTIONS = ['account', 'computers'] as const;
+export const GENERAL_SETTINGS_SECTIONS = ['account', 'computers', 'about'] as const;
 export type GeneralSettingsSection = (typeof GENERAL_SETTINGS_SECTIONS)[number];
 
 /** The 全体管理 group, for global administrators only, in the sidebar's order. */
@@ -19,6 +19,7 @@ export const DEFAULT_SETTINGS_SECTION: GeneralSettingsSection = 'account';
 export const SETTINGS_SECTION_LABELS: Record<SettingsSection, string> = {
   get account() { return text.account; },
   get computers() { return text.settingsSectionComputers; },
+  get about() { return text.settingsSectionAbout; },
   get projects() { return text.adminSectionProjects; },
   get users() { return text.adminSectionUsers; },
   get storage() { return text.adminSectionStorage; },

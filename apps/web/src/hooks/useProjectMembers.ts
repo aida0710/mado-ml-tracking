@@ -5,9 +5,9 @@ import { useQuery } from './useQuery';
 
 /** Project members with their effective role, and the changes a Project admin can make. */
 export function useProjectMembers(projectId: string) {
-  const members = useQuery(`${projectId}:members`, (signal) =>
+  const members = useQuery({ key: `${projectId}:members`, load: (signal) =>
     accessApi.members(projectId, signal),
-  );
+  });
   return {
     members,
     saveMember: (userId: string, role: ProjectRole) =>

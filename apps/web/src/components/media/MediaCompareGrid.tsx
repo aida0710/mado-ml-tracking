@@ -12,8 +12,8 @@ import {
 } from '../../lib/mediaSteps';
 import { compareTableOf, type CompareColumn, type CompareTable } from '../../lib/mediaCompareSteps';
 import { runMediaArtifact } from '../../lib/mediaPreviewArtifact';
-import { narrowerThan } from '../../lib/breakpoints';
-import { useMediaQuery } from '../../lib/useMediaQuery';
+import { narrowerThan } from '@mado/design-system/layout';
+import { useMediaQuery } from '@mado/design-system/react';
 import { AudioArtifactViewer } from '../preview/AudioArtifactViewer';
 import { ImagePreview } from '../preview/ImagePreview';
 import { VideoPreview } from '../preview/VideoPreview';

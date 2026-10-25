@@ -1,9 +1,9 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { narrowerThan } from '../lib/breakpoints';
-import { useMediaQuery } from '../lib/useMediaQuery';
+import { narrowerThan } from '@mado/design-system/layout';
+import { useMediaQuery } from '@mado/design-system/react';
 
 /**
- * A list beside the chosen item's detail; below --bp-md the detail sits under the list. There a
+ * A list beside the chosen item's detail; below 900px the detail sits under the list. There a
  * new choice (a different `selectedKey`) scrolls the detail into view, or the tap would seem to do
  * nothing. The first choice made while the page loads does not scroll.
  */

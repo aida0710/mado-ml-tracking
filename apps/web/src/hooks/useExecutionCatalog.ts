@@ -7,7 +7,7 @@ import { useQuery } from './useQuery';
 // through the Run search on the Experiments page.
 export const SELECTABLE_RUN_LIMIT = 500;
 export function useExecutionCatalog(projectId: string) {
-  return useQuery<ExecutionCatalog>(`${projectId}:execution-catalog`, async (signal) => {
+  return useQuery<ExecutionCatalog>({ key: `${projectId}:execution-catalog`, load: async (signal) => {
     const [experiments, models, { codes, codeVersions }, datasets, runs] = await Promise.all([
       trackingApi.experiments(projectId, signal),
       registryApi.models(projectId, signal),
@@ -33,5 +33,5 @@ export function useExecutionCatalog(projectId: string) {
       codeVersions,
       datasetVersions: datasetVersions.flat(),
     };
-  });
+  } });
 }

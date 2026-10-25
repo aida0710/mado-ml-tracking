@@ -7,6 +7,10 @@ COPY apps ./apps
 COPY packages ./packages
 # The Web offers these job shells as templates and reads them at build time.
 COPY deploy/sites/examples ./deploy/sites/examples
+# 「このアプリについて」に出すコミットとその日時。.gitはイメージに持ち込まないので、ビルド引数で受け取る
+# （RUNの中では環境変数になり、apps/web/vite.config.tsが読む）。
+ARG VITE_GIT_COMMIT=""
+ARG VITE_GIT_DATE=""
 RUN npm ci && npm run build --workspace @mmt/web
 
 # nginxinc/nginx-unprivileged:1.28-alpine, as Mado's web image. nginx runs as its own user (uid 101)

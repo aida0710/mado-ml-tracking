@@ -28,10 +28,10 @@ export function useArtifactChoices({
     ARTIFACT_SEARCH_DELAY_MS,
   );
   const listing = useProjectArtifacts({ projectId, enabled: !referenceId, search, runId });
-  const referenced = useQuery<Artifact | null>(
-    referenceId ? `${projectId}:artifact:${referenceId}` : null,
-    (signal) => trackingApi.findArtifact(projectId, referenceId!, signal),
-  );
+  const referenced = useQuery<Artifact | null>({
+    key: referenceId ? `${projectId}:artifact:${referenceId}` : null,
+    load: (signal) => trackingApi.findArtifact(projectId, referenceId!, signal),
+  });
   if (referenceId)
     return {
       referenceId,

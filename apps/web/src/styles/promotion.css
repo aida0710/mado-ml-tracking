@@ -40,7 +40,7 @@
 }
 .promotion-criterion-preview {
   margin: -8px 0 4px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 /* Promotion check card on the model version page: one bordered block per policy. */
 .promotion-check-list {
@@ -63,5 +63,5 @@
 }
 .promotion-check h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }

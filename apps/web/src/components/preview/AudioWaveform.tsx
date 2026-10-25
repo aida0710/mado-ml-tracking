@@ -1,20 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useDocumentTheme } from '@mado/design-system/react';
 import type { WaveformPeaks } from '../../lib/audioAnalysis';
-
-// Redraws when the theme changes, because canvas pixels do not follow CSS variables.
-function useThemeRevision(): number {
-  const [revision, setRevision] = useState(0);
-  useEffect(() => {
-    const observer = new MutationObserver(() => setRevision((value) => value + 1));
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    return () => observer.disconnect();
-  }, []);
-  return revision;
-}
 
 export function AudioWaveform({ peaks, height }: { peaks: WaveformPeaks; height: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const themeRevision = useThemeRevision();
+  // canvasの点はCSSの変数に従わないので、テーマが変わったら描き直す。
+  const theme = useDocumentTheme();
   useEffect(() => {
     const canvas = canvasRef.current;
     const context = canvas?.getContext('2d');
@@ -33,6 +24,6 @@ export function AudioWaveform({ peaks, height }: { peaks: WaveformPeaks; height:
       const bottom = middle - peaks.min[column]! * middle;
       context.fillRect(column, top, 1, Math.max(1, bottom - top));
     }
-  }, [peaks, height, themeRevision]);
+  }, [peaks, height, theme]);
   return <canvas ref={canvasRef} className="audio-waveform" style={{ height }} aria-hidden="true" />;
 }

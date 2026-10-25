@@ -34,9 +34,9 @@ export function useDatasetFolderUploads({
   discardOpenUpload: (uploadId: string) => Promise<void>;
   canDeleteStoredFiles: boolean;
 }) {
-  const stored = useQuery(`${projectId}:dataset-folder-uploads:${datasetId}`, (signal) =>
+  const stored = useQuery({ key: `${projectId}:dataset-folder-uploads:${datasetId}`, load: (signal) =>
     datasetFolderUploadsApi.list(projectId, datasetId, signal),
-  );
+  });
   // Choosing a folder compares it with every attempt; each attempt's file list is read once.
   const storedFilesRef = useRef(new Map<string, Promise<StoredFolderFile[]>>());
   const [discardWithKeptFiles, setDiscardWithKeptFiles] = useState<FolderUploadDiscardWithKeptFiles | null>(null);

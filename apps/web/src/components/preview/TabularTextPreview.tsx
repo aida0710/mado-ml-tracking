@@ -77,9 +77,9 @@ function LoadedTabularText({
 export function TabularTextPreview({ artifact, format }: { artifact: Artifact; format: TabularTextFormat }) {
   useLocale();
   const canParse = artifact.size <= TABULAR_TEXT_MAX_BYTES;
-  const content = useQuery(canParse ? `${artifact.id}:text` : null, (signal) =>
+  const content = useQuery({ key: canParse ? `${artifact.id}:text` : null, load: (signal) =>
     trackingApi.artifactText(artifact.projectId, artifact.id, signal),
-  );
+  });
   if (!canParse)
     return <TextPreview artifact={artifact} reason={textTemplates.previewTableTooLarge(formatBytes(TABULAR_TEXT_MAX_BYTES))} />;
   return (

@@ -1,13 +1,13 @@
 import { useId } from 'react';
-import { ChoiceField } from './ChoiceField';
 import {
   TOKEN_EXPIRY_PRESET_DAYS,
   changeTokenExpiryOption,
   type TokenExpiryOption,
   type TokenExpirySelection,
   type TokenExpiryUnit,
-} from '../lib/tokenExpiry';
-import { formatLocalDateTimeInput } from '../lib/dateTimeInput';
+} from '@mado/design-system/token-expiry';
+import { formatLocalDateTimeInput } from '@mado/design-system/datetime-input';
+import { ChoiceField } from './ChoiceField';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { serviceAccountsTextTemplates } from '../i18n/serviceAccounts';

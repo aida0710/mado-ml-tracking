@@ -2,18 +2,18 @@
 .workflow-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 16px;
   align-items: end;
 }
 .workflow-toolbar {
-  margin-block: 1.5rem;
+  margin-block: 24px;
 }
 .workflow-toolbar > .button {
   justify-self: start;
 }
 .workflow-version-choice {
   display: grid;
-  gap: 0.5rem;
+  gap: 8px;
   justify-items: start;
 }
 .workflow-version-choice > .choice-field {
@@ -21,63 +21,63 @@
 }
 .workflow-form {
   display: grid;
-  gap: 1rem;
+  gap: 16px;
 }
 .workflow-step-editor,
 .workflow-input {
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  padding: 1rem;
+  border-radius: var(--radius-sm);
+  padding: 16px;
   min-width: 0;
 }
 .workflow-step-editor > *,
 .workflow-input > * {
-  margin-block-end: 0.75rem;
+  margin-block-end: 12px;
 }
 .workflow-steps {
   list-style: none;
   padding: 0;
   display: grid;
-  gap: 1rem;
+  gap: 16px;
   counter-reset: workflow-step;
 }
 .workflow-step {
   border: 1px solid var(--border);
   border-inline-start: 3px solid var(--accent);
-  border-radius: 0.75rem;
-  padding: 1rem;
+  border-radius: var(--radius-sm);
+  padding: 16px;
   min-width: 0;
   overflow-wrap: anywhere;
 }
 .workflow-step > header {
   display: flex;
-  gap: 1rem;
+  gap: 16px;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
 }
 .workflow-step h3 {
-  margin-block: 0.5rem;
+  margin-block: 8px;
 }
 /* A dataset on one line and how the step uses it on the next, in a definition and an execution. */
 .workflow-usage li {
   display: grid;
-  gap: 0.4rem;
-  margin-block: 0.75rem;
+  gap: 6px;
+  margin-block: 12px;
 }
 /* Resuming or stopping the shown execution: the button, and under it the note on what resuming
    reuses, read before pressing it. */
 .workflow-execution-controls {
   display: grid;
-  gap: 0.5rem;
+  gap: 8px;
   justify-items: start;
-  margin-block-end: 1rem;
+  margin-block-end: 16px;
 }
 .workflow-execution-controls > p {
   margin: 0;
 }
 .preprocessing-report {
-  margin-block-start: 1rem;
+  margin-block-start: 16px;
 }
 /* A Run's workflow and preprocessing details span the whole details grid of its page. */
 .workflow-run-context {

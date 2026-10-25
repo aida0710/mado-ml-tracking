@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import type { LineageGraph as Graph } from '@mmt/contracts';
-import { narrowerThan } from '../lib/breakpoints';
+import { narrowerThan } from '@mado/design-system/layout';
+import { useMediaQuery } from '@mado/design-system/react';
 import { useLineageInteraction } from '../hooks/useLineageInteraction';
-import { useMediaQuery } from '../lib/useMediaQuery';
 import { Empty } from './Feedback';
 import { LineageCanvas } from './LineageCanvas';
 import { LineageGraphTools } from './LineageGraphTools';
@@ -11,7 +11,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * The lineage diagram and its relations table. Below --bp-md the diagram is too small to read
+ * The lineage diagram and its relations table. Below 900px the diagram is too small to read
  * first, so the relations table leads (open) and the diagram follows, fitted to the width.
  */
 export function LineageGraph({

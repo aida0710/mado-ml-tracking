@@ -34,7 +34,7 @@ export function FormDialog<T>({
   const [values, setValues] = useState(() => createInitialValues(fields));
   const mutation = useMutation();
   return (
-    <Dialog title={title} onClose={onClose} busy={mutation.pending}>
+    <Dialog title={title} onClose={onClose} dismissible={!mutation.pending}>
       <form
         onSubmit={(event) => {
           event.preventDefault();

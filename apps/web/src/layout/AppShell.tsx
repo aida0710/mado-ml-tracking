@@ -26,7 +26,7 @@ export function AppShell() {
   const navigate = useNavigate();
   // Right after archiving, "/" lists the Projects with a note instead of opening another one.
   const archivedProjectName = readArchivedProjectName(useLocation().state);
-  const projects = useQuery('projects', administrationApi.projects);
+  const projects = useQuery({ key: 'projects', load: administrationApi.projects });
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const startCreatingProject = canCreateProject(auth.user)
     ? () => setIsCreatingProject(true)
@@ -45,7 +45,7 @@ export function AppShell() {
   const navigation = useNavigation(openProject?.id, openProject?.role);
   // The Project switcher heads the full sidebar; with the rail or the drawer it is the bar under
   // the header.
-  const inSidebar = navigation.mode === 'sidebar';
+  const inSidebar = navigation.layout.mode === 'sidebar';
   const projectPicker = projects.value?.length ? (
     <ProjectBar
       projects={projects.value}
@@ -57,14 +57,14 @@ export function AppShell() {
   return (
     <div
       className="app-shell"
-      data-navigation={navigation.mode}
+      data-navigation={navigation.layout.mode}
       data-project-bar={projectPicker && !inSidebar ? 'true' : undefined}
-      style={{ '--navigation-width': `${navigation.width}px` } as CSSProperties}
+      style={{ '--navigation-width': `${navigation.layout.width}px` } as CSSProperties}
     >
       <TopBar projectId={openProject?.id} navigation={navigation} />
       <div className="app-body">
-        {navigation.mode !== 'drawer' && (projectPicker || navigation.groups.length > 0) && (
-          <NavigationSidebar navigation={navigation}>{inSidebar && projectPicker}</NavigationSidebar>
+        {navigation.layout.mode !== 'drawer' && (projectPicker || navigation.groups.length > 0) && (
+          <NavigationSidebar navigation={navigation} header={projectPicker} />
         )}
         <div className="app-content">
           {!inSidebar && projectPicker}

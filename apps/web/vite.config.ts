@@ -1,9 +1,29 @@
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import process from 'node:process';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
 // Verification runs point the dev proxy at an isolated API; the default is the shared dev API.
 const apiProxyTarget = process.env.MMT_WEB_API_PROXY_TARGET ?? 'http://127.0.0.1:4182';
+
+const webPackage = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as {
+  version: string;
+};
+
+// gitを、シェルを通さず決まった引数だけで呼ぶ。gitもリポジトリも無ければ空。
+function readGit(args: string[]): string {
+  try {
+    return execFileSync('git', args, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    return '';
+  }
+}
+
+// 「このアプリについて」に出すビルドしたコミットとその日時。Dockerのビルドでは.gitを持ち込まないので
+// ビルド引数（Dockerfile.webのVITE_GIT_COMMIT・VITE_GIT_DATE）で受け取り、ホストでのビルドではgitから読む。
+const gitCommit = process.env.VITE_GIT_COMMIT?.trim() || readGit(['rev-parse', 'HEAD']);
+const gitCommitDate = process.env.VITE_GIT_DATE?.trim() || readGit(['log', '-1', '--format=%cI']);
 
 /**
  * MLflow clients upload through this dev server (MLFLOW_TRACKING_URI uses the Web port), and Node's
@@ -27,6 +47,11 @@ function disableRequestTimeout(): Plugin {
 }
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(webPackage.version),
+    __GIT_COMMIT__: JSON.stringify(gitCommit),
+    __GIT_DATE__: JSON.stringify(gitCommitDate),
+  },
   plugins: [react(), disableRequestTimeout()],
   server: {
     host: '0.0.0.0',

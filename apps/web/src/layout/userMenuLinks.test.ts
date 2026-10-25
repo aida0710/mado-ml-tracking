@@ -6,9 +6,9 @@ const labels = (links: { label: string }[]) => links.map((link) => link.label);
 describe('userMenuLinks', () => {
   it('ローカルアカウントには アカウント・パスワードの変更・全体設定 を出す', () => {
     expect(userMenuLinks({ authSources: ['local'] })).toEqual([
-      { to: '/settings/account', label: 'アカウント' },
-      { to: '/settings/account/password', label: 'パスワードの変更' },
-      { to: '/settings/account', label: '全体設定', isSettingsEntry: true },
+      { href: '/settings/account', label: 'アカウント' },
+      { href: '/settings/account/password', label: 'パスワードの変更' },
+      { href: '/settings/account', label: '全体設定', startsGroup: true },
     ]);
   });
 
@@ -19,7 +19,7 @@ describe('userMenuLinks', () => {
   it('全体管理の項目は無く、全体設定は全体管理者でなくても出る', () => {
     const links = userMenuLinks({ authSources: ['oidc', 'local'] });
     expect(labels(links)).not.toContain('全体管理');
-    expect(links.filter((link) => link.to.startsWith('/admin'))).toEqual([]);
-    expect(links.at(-1)).toMatchObject({ label: '全体設定', to: '/settings/account' });
+    expect(links.filter((link) => link.href.startsWith('/admin'))).toEqual([]);
+    expect(links.at(-1)).toMatchObject({ label: '全体設定', href: '/settings/account' });
   });
 });

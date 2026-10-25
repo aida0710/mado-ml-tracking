@@ -1,7 +1,7 @@
 /*
  * Narrow and touch layouts of the settings, global administration, Compute and Plugins screens:
  * controls grow to the tap size and header actions wrap instead of leaving the screen. Up to
- * --bp-lg covers tablets in landscape; a coarse pointer covers touch screens wider than that.
+ * 1200px covers tablets in landscape; a coarse pointer covers touch screens wider than that.
  */
 @media (width < 1200px), (pointer: coarse) {
   :is(.management-page, .admin-users, .admin-storage, .admin-launchers, .admin-audit)

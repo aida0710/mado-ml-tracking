@@ -11,9 +11,9 @@ export function useMetricGroups(
   body: MetricGroupsRequest | null,
   live: boolean,
 ): QueryState<MetricGroupsResponse> {
-  return useQuery(
-    body ? `${projectId}:metric-groups:${JSON.stringify(body)}` : null,
-    (signal) => metricSeriesApi.groups(projectId, body!, signal),
-    live ? EXECUTION_POLL_MS : undefined,
-  );
+  return useQuery({
+    key: body ? `${projectId}:metric-groups:${JSON.stringify(body)}` : null,
+    load: (signal) => metricSeriesApi.groups(projectId, body!, signal),
+    pollMs: live ? EXECUTION_POLL_MS : undefined,
+  });
 }

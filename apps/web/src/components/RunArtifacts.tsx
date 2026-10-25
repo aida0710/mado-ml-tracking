@@ -65,7 +65,7 @@ export function RunArtifacts({
           {artifactsTextTemplates.artifactDeleted(deleted.path)}
         </p>
       )}
-      <div ref={containerRef} className="artifact-layout artifact-browser touch-targets">
+      <div ref={containerRef} className="artifact-layout artifact-browser">
         {panes.showList && (
           <div>
             <Resource query={tree}>

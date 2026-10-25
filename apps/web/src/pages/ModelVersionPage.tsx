@@ -52,9 +52,9 @@ export function ModelVersionPage() {
     ),
   );
   // Every version of the Model: the version numbers to show and the baselines to choose from.
-  const versions = useQuery(`${project.id}:model-versions:${modelId}`, (signal) =>
+  const versions = useQuery({ key: `${project.id}:model-versions:${modelId}`, load: (signal) =>
     registryApi.modelVersions(project.id, modelId, signal),
-  );
+  });
   const baseline = useEvaluationBaseline({
     aliases: detail.value?.model.aliases ?? {},
     candidateVersionId: versionId,

@@ -81,7 +81,7 @@ export function NewComputerDialog({
 
   if (executor === 'site')
     return (
-      <Dialog title={text.newTarget} onClose={onClose} busy={pending} wide>
+      <Dialog title={text.newTarget} onClose={onClose} dismissible={!pending} size="wide">
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -150,7 +150,7 @@ export function NewComputerDialog({
     </ol>
   );
   return (
-    <Dialog title={text.newTarget} onClose={onClose} busy={pending} wide>
+    <Dialog title={text.newTarget} onClose={onClose} dismissible={!pending} size="wide">
       {steps.step === 'connection' ? (
         <form ref={stepForm} onSubmit={submitConnection} data-testid="computer-connection-step">
           {wizardSteps}

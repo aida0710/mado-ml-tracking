@@ -13,9 +13,9 @@ import { siteConnectionCheckStatusLabels } from '../i18n/siteComputers';
 
 // Reuses the Job status colors: succeeded is green, failed red, a waiting check neutral.
 const checkBadgeClass: Record<SiteConnectionCheckStatus, string> = {
-  queued: 'status-queued',
-  succeeded: 'status-finished',
-  failed: 'status-failed',
+  queued: 'status-neutral',
+  succeeded: 'status-success',
+  failed: 'status-danger',
 };
 
 /**

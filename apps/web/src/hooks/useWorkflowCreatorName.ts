@@ -15,9 +15,9 @@ export function useWorkflowCreatorName(
 ): string {
   const { user } = useAuth();
   const isOwn = execution.createdBy === user.id;
-  const members = useQuery(isOwn ? null : `${projectId}:members`, (signal) =>
+  const members = useQuery({ key: isOwn ? null : `${projectId}:members`, load: (signal) =>
     accessApi.members(projectId, signal),
-  );
+  });
   if (isOwn) return user.displayName;
   return (
     members.value?.find((member) => member.user.id === execution.createdBy)?.user.displayName ??

@@ -1,8 +1,9 @@
 import { useId, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import type { Dataset } from '@mmt/contracts';
+import { useLocation } from 'react-router-dom';
+import { usePopover } from '@mado/design-system/react';
 import { registryApi } from '../api/registry';
-import { usePopover } from '../hooks/usePopover';
 import { ConfirmDialog } from './ConfirmDialog';
 import { FormDialog } from './FormDialog';
 import { getFieldValue } from '../lib/formValues';
@@ -22,7 +23,8 @@ export function DatasetActionsMenu({
 }) {
   useLocale();
   const menuId = useId();
-  const { container: popoverContainer, isOpen, toggle, close } = usePopover();
+  const { pathname } = useLocation();
+  const { container: popoverContainer, isOpen, toggle, close } = usePopover({ closeKey: pathname });
   const [dialog, setDialog] = useState<'description' | 'archive' | 'unarchive' | null>(null);
   const isArchived = dataset.archivedAt !== null;
   function choose(next: typeof dialog) {
@@ -44,11 +46,11 @@ export function DatasetActionsMenu({
         <MoreHorizontal size={17} />
       </button>
       {isOpen && (
-        <div className="artifact-actions-popover" id={menuId} role="menu">
-          <button type="button" role="menuitem" onClick={() => choose('description')}>
+        <div className="popover menu artifact-actions-popover" id={menuId} role="menu">
+          <button type="button" role="menuitem" className="menu-item" onClick={() => choose('description')}>
             {text.datasetEditDescription}
           </button>
-          <button type="button" role="menuitem" onClick={() => choose(isArchived ? 'unarchive' : 'archive')}>
+          <button type="button" role="menuitem" className="menu-item" onClick={() => choose(isArchived ? 'unarchive' : 'archive')}>
             {isArchived ? text.datasetUnarchive : text.datasetArchive}
           </button>
         </div>
