@@ -18,3 +18,9 @@
     display: flex;
   }
 }
+
+/* 表示言語のメニューは、各言語の名前をその言語（lang）で描く。.menu-itemの行の高さが既定（normal）のままなので、
+   日本語の書体の行が英語の行より2px高くなり、2つの行の大きさがそろわない。 */
+.language-picker .menu-item {
+  line-height: 1.5;
+}
