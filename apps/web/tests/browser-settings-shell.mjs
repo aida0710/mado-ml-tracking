@@ -81,13 +81,13 @@ try {
   const projectGroups = await groupLabels(sidebar);
   assert.equal(projectGroups.at(-1), 'プロジェクト管理');
   assert.ok(!projectGroups.includes('全体設定') && !projectGroups.includes('全体管理'));
-  assert.deepEqual(await openUserMenu(page), ['アカウント', 'パスワードの変更', '全体設定']);
+  assert.deepEqual(await openUserMenu(page), ['アカウント', 'パスワードの変更', '全体設定', 'ログアウト']);
   await screenshot(page, '01-user-project-sidebar-menu');
   await page.getByRole('menuitem', { name: '全体設定', exact: true }).click();
   await page.waitForURL(`${base}/settings/account`);
   await waitForHeading(page, { eyebrow: '全体設定', title: 'アカウント' });
   assert.deepEqual(await groupLabels(sidebar), ['全体設定']);
-  assert.deepEqual(await groupLinks(sidebar, '全体設定'), ['アカウント', 'コンピュータ']);
+  assert.deepEqual(await groupLinks(sidebar, '全体設定'), ['アカウント', 'コンピュータ', 'このアプリについて']);
   await screenshot(page, '02-user-settings-account');
 
   await sidebar.getByRole('link', { name: 'コンピュータ', exact: true }).click();
@@ -124,7 +124,7 @@ try {
   user.authSources = ['oidc'];
   page = await openPage(WIDE);
   await settle(page, '/settings/account/password', '/settings/account');
-  assert.deepEqual(await openUserMenu(page), ['アカウント', '全体設定']);
+  assert.deepEqual(await openUserMenu(page), ['アカウント', '全体設定', 'ログアウト']);
   await page.context().close();
 
   console.log('Settings: a global administrator also gets 全体管理');
@@ -136,7 +136,7 @@ try {
   await adminSidebar.getByRole('link', { name: 'Experiments', exact: true }).waitFor();
   const adminProjectGroups = await groupLabels(adminSidebar);
   assert.ok(!adminProjectGroups.includes('全体設定') && !adminProjectGroups.includes('全体管理'));
-  assert.deepEqual(await openUserMenu(page), ['アカウント', 'パスワードの変更', '全体設定']);
+  assert.deepEqual(await openUserMenu(page), ['アカウント', 'パスワードの変更', '全体設定', 'ログアウト']);
   await screenshot(page, '04-admin-project-sidebar-menu');
   await page.keyboard.press('Escape');
   await settle(page, '/admin', '/settings/projects');
