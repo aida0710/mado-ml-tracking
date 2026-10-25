@@ -19,13 +19,18 @@
     "backfill-run-media": "npm run backfill-run-media -w @mmt/api"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
-    "tsx": "^4.21.0",
+    "@types/node": "^24.19.1",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.2",
-    "vitest": "^4.1.5",
+    "vitest": "^5.0.3",
     "yaml": "^2.9.1"
   },
   "engines": {
     "node": ">=22.12"
+  },
+  "overrides": {
+    "monaco-editor": {
+      "dompurify": "^3.4.17"
+    }
   }
 }
