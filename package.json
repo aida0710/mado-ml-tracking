@@ -12,6 +12,7 @@
     "dev": "node scripts/dev.mjs",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint .",
     "test": "vitest run",
     "db:migrate": "npm run db:migrate -w @mmt/api",
     "db:seed": "npm run db:seed -w @mmt/api",
@@ -19,9 +20,15 @@
     "backfill-run-media": "npm run backfill-run-media -w @mmt/api"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^24.19.1",
+    "eslint": "^10.13.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
     "tsx": "^4.23.15",
     "typescript": "~6.0.2",
+    "typescript-eslint": "^8.72.0",
     "vitest": "^5.0.3",
     "yaml": "^2.9.1"
   },

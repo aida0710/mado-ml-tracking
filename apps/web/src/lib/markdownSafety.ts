@@ -8,6 +8,7 @@ const ALLOWED_LINK_SCHEMES = new Set(['http', 'https', 'mailto']);
 const URL_SCHEME_PATTERN = /^([a-z][a-z0-9+.-]*):/i;
 // Browsers drop ASCII whitespace and control characters inside a scheme ("java\tscript:"),
 // so the scheme is read with them removed.
+// eslint-disable-next-line no-control-regex -- matching control characters is the point here
 const IGNORED_URL_CHARACTERS = /[\u0000- \u007f]/g;
 // The API path that streams one Artifact's bytes (api/tracking.ts artifactContentPath).
 const ARTIFACT_CONTENT_PATH_PATTERN = /^\/api\/projects\/[^/]+\/artifacts\/[^/]+\/content$/;

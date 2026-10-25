@@ -35,13 +35,11 @@ function latestDecision(
  * The page owns `choices` so that its reload also refreshes the decisions shown here.
  */
 export function PromotionCheckCard({
-  projectId,
   detail,
   versionLabel,
   choices,
   onPromoted,
 }: {
-  projectId: string;
   detail: ModelVersionDetail;
   versionLabel: (versionId: string) => string;
   choices: ReturnType<typeof usePromotionChoices>;

@@ -1,4 +1,5 @@
 import type { Artifact, CodeVersion, ComputeTarget, ExecutionRuntimeKind } from '@mmt/contracts';
+import { containsControlCharacter } from '@mmt/contracts';
 import { text } from '../i18n/catalog';
 
 export const EXECUTION_RUNTIME_KINDS: ExecutionRuntimeKind[] = [
@@ -32,7 +33,8 @@ export function validateContainerWorkingDirectory(workingDirectory: string) {
   if (
     workingDirectory &&
     (!workingDirectory.startsWith('/') ||
-      /[\\\u0000-\u001f\u007f]/.test(workingDirectory) ||
+      workingDirectory.includes('\\') ||
+      containsControlCharacter(workingDirectory) ||
       workingDirectory.length > MAX_CONTAINER_DIRECTORY_LENGTH ||
       workingDirectory.split('/').some((part) => part === '.' || part === '..'))
   )

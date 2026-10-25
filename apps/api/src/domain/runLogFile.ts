@@ -12,6 +12,7 @@ export function formatLogFileLine(entry: LogEntry): string {
 }
 
 // Characters Windows and macOS refuse in file names, and control characters.
+// eslint-disable-next-line no-control-regex -- control characters are among those replaced
 const UNSAFE_FILE_NAME_CHARACTERS = /[\\/:*?"<>|\u0000-\u001f]+/g;
 
 export function logFileName(runName: string): string {

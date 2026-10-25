@@ -224,7 +224,6 @@ function ModelVersionContent({
       />
       {canPromote && (
         <PromotionCheckCard
-          projectId={projectId}
           detail={detail}
           versionLabel={versionLabel}
           choices={promotionChoices}
