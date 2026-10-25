@@ -51,7 +51,7 @@ export const automaticSiteSettings: SiteSettings = {
   jobShell: currentJobShellSummary,
 };
 
-// 全体管理者（admin）が持つ、publicで自動投入のsite。全体管理者から見た形。
+// 所有者の決まりができる前からある、publicで自動投入のsite（所有者なし）。全体管理者から見た形。
 export const globalSiteDetails: ComputeTargetDetails = {
   ...siteTarget,
   submissionMode: 'automatic',
