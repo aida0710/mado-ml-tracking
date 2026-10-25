@@ -1,3 +1,8 @@
+# Fixed so that the containers and volumes (mado-model-tracking_postgres, ...) keep their names
+# whatever directory holds this file: a release bundle unpacks into a directory named after its
+# version. It is the name that installations from a checkout named mado-model-tracking already use.
+# COMPOSE_PROJECT_NAME in .env still overrides it.
+name: mado-model-tracking
 services:
   postgres:
     image: postgres:16-alpine

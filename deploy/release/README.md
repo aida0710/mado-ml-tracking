@@ -51,6 +51,6 @@ docker compose --profile launcher up -d launcher
 docker compose exec -T postgres pg_dump -U mmt -Fc mmt > mmt-backup.dump
 ```
 
-新しいリリースを展開し、既存の`.env`と同じCompose project名・保存volumeを使います。新しいイメージを取得してmigrationを適用し、コンテナを更新します。実行中のJobがあるworkerや、処理中のプレビューの更新は完了を待ってください。DB更新後の切り戻しには、更新前のバックアップが必要です。
+新しいリリースを展開し、既存の`.env`を置きます。Composeのproject名は`compose.yml`の`name`（`mado-model-tracking`）に固定しているので、展開先のディレクトリが変わっても同じ保存volumeを使います。v0.4.0までのbundleから入れた環境は、project名が展開先のディレクトリ名になっています。`docker compose ls`で確かめ、`.env`に`COMPOSE_PROJECT_NAME=<その名前>`を書いて既存のvolumeを使い続けてください。新しいイメージを取得してmigrationを適用し、コンテナを更新します。実行中のJobがあるworkerや、処理中のプレビューの更新は完了を待ってください。DB更新後の切り戻しには、更新前のバックアップが必要です。
 
 公開時のComposeは5種類のイメージをdigestで固定し、同じリリースで内容が変わることを防ぎます。参照は`images.txt`、配布バージョンは`VERSION`に記録しています。[ドキュメント](https://aida0710.github.io/mado-ml-tracking/)に機能と管理手順があります。
