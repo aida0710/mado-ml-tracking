@@ -8,8 +8,8 @@ import {
 } from '../lib/evaluationBaseline';
 
 /**
- * The baseline the version page compares with, shared by the metric summary and the comparison
- * panel. A choice whose alias was removed or whose version is gone falls back to the default.
+ * バージョンのページが比べる基準バージョン。メトリクスの要約と比較のパネルが共有する。選んだ
+ * aliasが消えたか、そのバージョンが無くなったときは、既定の基準バージョンに戻る。
  */
 export function useEvaluationBaseline(model: {
   aliases: Record<string, string>;

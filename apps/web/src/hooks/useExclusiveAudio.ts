@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 export interface ExclusiveAudio {
-  /** A stable callback per player id, usable as `ref` or AudioArtifactViewer's onAudioElement. */
+  /** プレーヤーのidごとの変わらないコールバック。`ref`やAudioArtifactViewerのonAudioElementに使える。 */
   register: (playerId: string) => (element: HTMLAudioElement | null) => void;
-  /** Call from the player's onPlay; pauses every other player. */
+  /** プレーヤーのonPlayから呼ぶ。ほかのプレーヤーをすべて一時停止する。 */
   played: (playerId: string) => void;
 }
 
 /**
- * Lets only one of several <audio> elements sound at a time, and silences all of them when the
- * owner unmounts (for example when the step slider moves to another step).
+ * 複数の<audio>要素のうち同時に鳴るのを1つだけにし、持ち主がアンマウントされたら（たとえば
+ * stepのスライダーで別のstepに移ったとき）すべてを止める。
  */
 export function useExclusiveAudio(): ExclusiveAudio {
   const players = useRef(new Map<string, HTMLAudioElement>());

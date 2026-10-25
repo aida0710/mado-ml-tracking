@@ -3,9 +3,8 @@ import { artifactMediaInfoApi } from '../api/artifactMediaInfo';
 import { useQuery } from './useQuery';
 
 /**
- * The header-derived audio properties of one Artifact, or null while loading, when the server
- * has none, or when the request failed. They only supplement the decoded values, so a failure
- * is not shown.
+ * 1つのArtifactの、ヘッダーから読んだ音声の属性。読み込み中、サーバーが持っていないとき、要求が
+ * 失敗したときはnull。デコードした値を補うだけなので、失敗は画面に出さない。
  */
 export function useArtifactMediaInfo(artifact: Pick<Artifact, 'projectId' | 'id'>): ArtifactMediaInfo | null {
   const query = useQuery({ key: `${artifact.projectId}/${artifact.id}`, load: (signal) =>

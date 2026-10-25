@@ -7,9 +7,9 @@ import type {
 import { targetChecksApi } from '../api/targetChecks';
 import type { DirectoryListingState } from '../lib/targetPathSuggestions';
 
-// The chosen worker polls every two seconds; reading the result about as often keeps the wait short.
+// 選んだworkerは2秒ごとに取りに来る。結果もほぼ同じ間隔で読めば、待ち時間が短くなる。
 const DIRECTORY_LISTING_POLL_MS = 1500;
-// The API ends an unclaimed listing after a minute; the dialog stops waiting a little later.
+// APIは誰も取らない一覧の依頼を1分で終わらせる。ダイアログはそれより少し後に待つのをやめる。
 const DIRECTORY_LISTING_WAIT_MS = 70_000;
 
 function pause(milliseconds: number, signal: AbortSignal): Promise<void> {
@@ -25,7 +25,7 @@ function pause(milliseconds: number, signal: AbortSignal): Promise<void> {
 const isWaiting = (listing: TargetDirectoryListing) =>
   listing.status === 'queued' || listing.status === 'claimed';
 
-/** Asks the worker to read the directory and waits for what it read; null if it never answers. */
+/** workerにディレクトリを読むよう頼み、読んだ結果を待つ。答えが来なければnull。 */
 async function readDirectory(
   request: { targetId: string; worker: TargetCheckWorker; path: string },
   signal: AbortSignal,
@@ -43,9 +43,9 @@ async function readDirectory(
 }
 
 /**
- * Directories of a computer read by the chosen worker, remembered by path while the dialog is
- * open. `version` changes whenever a reading ends or another computer or worker is chosen, so
- * path fields look their value up again. Another computer or worker starts from nothing.
+ * 選んだworkerが読んだコンピュータのディレクトリ。ダイアログが開いている間はパスごとに覚えておく。
+ * 読み込みが終わるか、別のコンピュータやworkerを選ぶたびに`version`が変わり、パスの欄が値を
+ * 問い合わせ直す。別のコンピュータやworkerでは何も無いところから始める。
  */
 export function useTargetDirectoryListings({
   targetId,
@@ -76,7 +76,7 @@ export function useTargetDirectoryListings({
     known.set(path, { status: 'loading' });
     readDirectory({ targetId, worker, path }, signal).then(
       (result) => {
-        // A reading of a former computer or worker is not remembered for the new one.
+        // 前のコンピュータやworkerで読んだ結果は、新しいものの分としては覚えない。
         if (signal.aborted || known !== listings.current) return;
         remember(path, result ? { status: 'read', result } : { status: 'failed' });
       },
@@ -87,7 +87,7 @@ export function useTargetDirectoryListings({
   }
 
   return {
-    /** Whether a worker can be asked (a saved computer and a chosen worker). */
+    /** workerに頼めるか（保存したコンピュータと、選んだworkerがある）。 */
     isAvailable: scope !== null,
     listingOf: (path: string) => listings.current.get(path),
     request,

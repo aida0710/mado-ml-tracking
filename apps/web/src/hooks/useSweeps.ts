@@ -6,7 +6,7 @@ import { useCursorPages } from './useCursorPages';
 import { EXECUTION_POLL_MS, useQuery } from './useQuery';
 import { useQueryPolledWhileActive } from './useQueryPolledWhileActive';
 
-/** The Project's sweeps, newest first, narrowed by status and read page by page. */
+/** ProjectのSweepを新しい順に、状態で絞り込み、ページごとに読む。 */
 export function useSweepList(projectId: string, status: SweepStatus | '') {
   return useCursorPages(`${projectId}:sweeps:${status}`, (cursor, signal) =>
     sweepsApi.list(projectId, { status: status || undefined, cursor, signal }),
@@ -18,7 +18,7 @@ export interface SweepDetail {
   trials: SweepTrial[];
 }
 
-/** A sweep and all of its trials, polled together while trials may still change. */
+/** Sweepとそのすべての試行。試行がまだ変わりうる間は、まとめてポーリングする。 */
 export function useSweepDetail(projectId: string, sweepId: string) {
   return useQueryPolledWhileActive<SweepDetail>(
     `${projectId}:sweep:${sweepId}`,
@@ -34,9 +34,9 @@ export function useSweepDetail(projectId: string, sweepId: string) {
 }
 
 /**
- * The objective metric of the newest trial Runs, by step. The API takes MAX_SERIES_RUNS Runs per
- * request, so a larger sweep shows its newest trials. The key follows the trials' states so that
- * a newly finished trial is drawn without polling idle sweeps.
+ * 新しい試行のRunの、stepごとの目的メトリクス。APIは1回の要求でMAX_SERIES_RUNS個のRunまで
+ * 受け付けるので、それより大きいSweepは新しい試行を出す。キーは試行の状態に従うので、動きの無い
+ * Sweepをポーリングしなくても、新しく終わった試行が描かれる。
  */
 export function useTrialObjectiveSeries(projectId: string, detail: SweepDetail | undefined) {
   const shownTrials = detail ? [...detail.trials].sort((left, right) => right.trialIndex - left.trialIndex).slice(0, MAX_SERIES_RUNS) : [];
@@ -55,7 +55,7 @@ export function useTrialObjectiveSeries(projectId: string, detail: SweepDetail |
   return { series, shownTrials, totalTrials: detail?.trials.length ?? 0 };
 }
 
-// Metric names come from the Task's newest Runs: one history page is enough to offer candidates.
+// メトリクス名はTaskの最新のRunから取る。候補を出すには履歴の1ページで足りる。
 export function useTaskMetricNames(projectId: string, taskId: string) {
   return useQuery({ key: taskId ? `${projectId}:task-metric-names:${taskId}` : null, load: async (signal) => {
     const page = await tasksApi.runs(projectId, taskId, { signal });

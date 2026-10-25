@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-/** Async operations use this to discard results after their connection view is replaced. */
+/** 非同期の処理が、接続の画面が置き換わった後の結果を捨てるのに使う。 */
 export function useMountedRef() {
   const mounted = useRef(true);
   useEffect(() => {

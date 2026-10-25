@@ -1,7 +1,7 @@
 import { reportsApi } from '../api/reports';
 import { useCursorPages } from './useCursorPages';
 
-/** The Project's reports, newest update first, read page by page; archived ones on request. */
+/** Projectのレポートを更新の新しい順にページごとに読む。アーカイブしたものは求めたときだけ。 */
 export function useReportList(projectId: string, includeArchived: boolean) {
   return useCursorPages(`${projectId}:reports:${includeArchived}`, (cursor, signal) =>
     reportsApi.list(projectId, { includeArchived, cursor, signal }),

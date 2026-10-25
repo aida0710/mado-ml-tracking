@@ -3,8 +3,8 @@ import { metricSeriesApi } from '../api/metricSeries';
 import { EXECUTION_POLL_MS, useQuery, type QueryState } from './useQuery';
 
 /**
- * Sampled series of the Runs for a chart. Pass null to fetch nothing. It polls while `live` (some
- * Run is still running) and stops once every Run has ended; a zoom is a new request with xRange.
+ * 図のための、Runのサンプリングした系列。nullを渡すと何も取得しない。`live`（実行中のRunがある）の
+ * 間はポーリングし、すべてのRunが終わったら止める。拡大はxRangeを付けた新しい要求になる。
  */
 export function useMetricSeries(
   projectId: string,

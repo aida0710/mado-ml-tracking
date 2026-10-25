@@ -10,11 +10,11 @@ import type { UploadSource } from '../lib/droppedFiles';
 import { formatErrorMessage } from '../lib/errorMessage';
 import { useLocale } from '../i18n/useLocale';
 
-/** The stopped attempt a chosen folder continues, with what it already holds of the folder. */
+/** 選んだフォルダが続きになる止まったアップロードと、それが既に持っているフォルダの中身。 */
 export interface FolderContinuation {
   upload: UnfinishedFolderUpload;
   storedFiles: StoredFolderFile[];
-  /** Chosen files the attempt holds at the same path and size; their bytes are compared on start. */
+  /** 止まったアップロードが同じパスとサイズで持っている選んだファイル。バイト列は始めるときに比べる。 */
   matchedCount: number;
 }
 
@@ -25,9 +25,9 @@ type ContinuationCheck =
   | { status: 'failed'; failure: unknown };
 
 /**
- * Decides whether the chosen folder continues a stopped attempt. Choosing a folder compares it
- * with every attempt and takes the one holding most of its files; the row's [続きを送る] names the
- * attempt itself. Either can be declined, and the folder then goes up as a new upload.
+ * 選んだフォルダが止まったアップロードの続きになるかを決める。フォルダを選ぶと止まったアップロードの
+ * すべてと比べ、ファイルを最も多く持つものを選ぶ。行の[続きを送る]は、そのアップロードを名指しする。
+ * どちらも断ることができ、そのときフォルダは新しいアップロードとして送る。
  */
 export function useFolderContinuation({
   datasetId,
@@ -41,21 +41,21 @@ export function useFolderContinuation({
   loadStoredFiles: (folder: string) => Promise<StoredFolderFile[]>;
 }) {
   useLocale();
-  // Both belong to one selection of files, so choosing another folder forgets them.
+  // どちらも1回のファイルの選択に属するので、別のフォルダを選ぶと忘れる。
   const [chosenFolder, setChosenFolder] = useState<{ sources: UploadSource[]; folder: string } | null>(null);
   const [declinedSources, setDeclinedSources] = useState<UploadSource[] | null>(null);
   const folder = chosenFolder?.sources === sources ? chosenFolder.folder : null;
   const isDeclined = declinedSources === sources;
   const uploadsKey = uploads.map((upload) => `${upload.folder}:${upload.storedFileCount}:${upload.openUploads.length}`).join(',');
   const candidates = folder ? uploads.filter((upload) => upload.folder === folder) : uploads;
-  // Known without reading anything: no files chosen, the attempt declined, or none to continue.
+  // 何も読まずに決まる場合（ファイルを選んでいない、続きを断った、続きにできるものが無い）。
   const decidedCheck: ContinuationCheck | null =
     sources.length === 0
       ? { status: 'idle' }
       : isDeclined || candidates.length === 0
         ? { status: 'ready', continuation: null }
         : null;
-  // The answer of the last comparison, with the selection it was made for.
+  // 最後の比較の答えと、それがどの選択に対するものか。
   const [measured, setMeasured] = useState<{
     sources: UploadSource[];
     folder: string | null;
@@ -70,8 +70,8 @@ export function useFolderContinuation({
   const check: ContinuationCheck =
     decidedCheck ?? (isMeasuredCurrent ? measured.check : { status: 'checking' });
 
-  // Reads the attempts of the latest render: uploads is compared by uploadsKey, so a reload with
-  // the same attempts changes nothing.
+  // 最新のレンダリングの止まったアップロードを読む。uploadsはuploadsKeyで比べるので、同じ
+  // アップロードのまま読み直しても何も変わらない。
   const measureCandidates = useEffectEvent(() =>
     Promise.all(
       candidates.map(async (upload) => {
@@ -90,7 +90,7 @@ export function useFolderContinuation({
     void measureCandidates().then(
       (measuredCandidates) => {
         if (!isCurrent) return;
-        // A named attempt is continued even when nothing matches yet; the notice then says so.
+        // 名指しされたアップロードは、まだ何も一致しなくても続きにする。そのときはお知らせにそう出す。
         const best = folder
           ? measuredCandidates[0]!
           : measuredCandidates.find(
@@ -114,14 +114,14 @@ export function useFolderContinuation({
   return {
     continuation: check.status === 'ready' ? check.continuation : null,
     isChecking: check.status === 'checking',
-    // Put into words here, so a later change of display language reaches the message.
+    // ここで文にするので、後で表示言語を変えるとメッセージにも反映される。
     error: check.status === 'failed' ? formatErrorMessage(check.failure) : null,
-    /** Continues this attempt with the folder chosen from its row. */
+    /** 行から選んだフォルダで、このアップロードの続きを送る。 */
     continueUpload: (upload: UnfinishedFolderUpload, chosen: UploadSource[]) => {
       setDeclinedSources(null);
       setChosenFolder({ sources: chosen, folder: upload.folder });
     },
-    /** Sends the chosen folder as a new upload, next to the stopped attempt. */
+    /** 選んだフォルダを、止まったアップロードとは別の新しいアップロードとして送る。 */
     startNew: () => {
       setChosenFolder(null);
       setDeclinedSources(sources);

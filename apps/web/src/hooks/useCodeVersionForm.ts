@@ -33,7 +33,7 @@ export function useCodeVersionForm({ projectId, codeId, initialVersion }: {
   const sourceArtifactIds = [getFieldValue(values, 'sifArtifactId'), getFieldValue(values, 'sourceArtifactId')].filter(Boolean);
   const savedArtifacts = useQuery({ key: needsArtifacts && sourceArtifactIds.length ? `${projectId}:code-artifacts:${sourceArtifactIds.join(',')}` : null,
     load: (signal) => Promise.all(sourceArtifactIds.map((id) => trackingApi.artifact(projectId, id, signal))) });
-  // rememberArtifact is rebuilt on every render; only newly loaded Artifacts are remembered.
+  // rememberArtifactはレンダリングのたびに作り直される。覚えるのは新しく読み込んだArtifactだけ。
   const rememberArtifacts = useEffectEvent((loaded: Artifact[]) => loaded.forEach(artifacts.rememberArtifact));
   useEffect(() => {
     if (savedArtifacts.value) rememberArtifacts(savedArtifacts.value);

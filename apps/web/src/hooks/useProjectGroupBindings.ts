@@ -3,7 +3,7 @@ import { accessApi } from '../api/access';
 import { explainLastProjectAdminConflict } from '../lib/lastProjectAdminConflict';
 import { useQuery } from './useQuery';
 
-/** Authentik group bindings of a Project, and the changes a Project admin can make. */
+/** ProjectのAuthentik groupの割り当てと、Project adminができる変更。 */
 export function useProjectGroupBindings(projectId: string) {
   const bindings = useQuery({ key: `${projectId}:group-bindings`, load: (signal) =>
     accessApi.groupBindings(projectId, signal),
@@ -18,8 +18,8 @@ export function useProjectGroupBindings(projectId: string) {
 }
 
 /**
- * Group names to offer when adding a binding. Candidates are only a convenience, so a failed
- * lookup leaves the list empty and the name can still be typed.
+ * 割り当てを追加するときに出すgroup名。候補は補助にすぎないので、問い合わせに失敗しても
+ * 一覧が空になるだけで、名前は入力できる。
  */
 export function useGroupNameCandidates(): string[] {
   const groups = useQuery({ key: 'auth-groups', load: accessApi.groups });

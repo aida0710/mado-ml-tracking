@@ -13,8 +13,8 @@ export function useWorkflowDetail(projectId: string, workflowId: string) {
 }
 
 /**
- * The versions older than the ones the workflow came with, loaded a page at a time on request.
- * A new first cursor (the workflow was reloaded after a new version) starts over.
+ * ワークフローに付いてきたバージョンより古いバージョン。求められたときに1ページずつ読み込む。
+ * 最初のカーソルが新しくなる（新しいバージョンの後でワークフローを読み直した）と、最初からにする。
  */
 export function useOlderWorkflowVersions(
   projectId: string,
@@ -46,7 +46,7 @@ export function useOlderWorkflowVersions(
   };
 }
 
-/** One execution, polled only while it runs or waits for a stop. */
+/** 1つの実行。実行中か停止を待っている間だけポーリングする。 */
 export function useWorkflowExecution(projectId: string, executionId: string) {
   return useQueryPolledWhileActive(
     executionId ? `workflow-execution:${projectId}:${executionId}` : null,
@@ -55,7 +55,7 @@ export function useWorkflowExecution(projectId: string, executionId: string) {
   );
 }
 
-/** A page of the execution history, polled only while one of its executions is still moving. */
+/** 実行の履歴の1ページ。その中の実行がまだ動いている間だけポーリングする。 */
 export function useWorkflowHistory(projectId: string, workflowId: string) {
   const [cursor, setCursor] = useState<string | undefined>();
   const query = useQueryPolledWhileActive(

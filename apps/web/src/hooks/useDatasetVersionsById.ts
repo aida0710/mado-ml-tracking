@@ -3,8 +3,8 @@ import { registryApi } from '../api/registry';
 import { useQuery } from './useQuery';
 
 /**
- * The dataset versions with the given ids. Versions already loaded are used as they are; the
- * other datasets' versions are read only when an id is not among them (a parent from another dataset).
+ * 指定したidのデータセットのバージョン。読み込み済みのバージョンはそのまま使い、ほかの
+ * データセットのバージョンは、idがその中に無いとき（別のデータセットの親）だけ読む。
  */
 export function useDatasetVersionsById({
   projectId,

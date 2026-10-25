@@ -1,9 +1,9 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 
 /**
- * A ref that always holds the value of the latest render, for event handlers, timers and
- * callbacks that must call the current prop without being recreated when it changes. It is
- * updated in a layout effect, which runs before any of those can, and must not be read in render.
+ * 常に最新のレンダリングの値を持つref。今のpropを呼ぶ必要はあるが、propが変わるたびに
+ * 作り直したくないイベントハンドラ・タイマー・コールバックに使う。それらのどれよりも先に動く
+ * layout effectで更新する。レンダリング中には読まない。
  */
 export function useLatestRef<T>(value: T): RefObject<T> {
   const ref = useRef(value);

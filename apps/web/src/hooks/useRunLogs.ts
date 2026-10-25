@@ -4,16 +4,16 @@ import { trackingApi } from '../api/tracking';
 import { EXECUTION_POLL_MS, useQuery } from './useQuery';
 
 /**
- * The lines a log view polls: enough to read a failure and its traceback, small enough to fetch
- * every few seconds (3,000 lines were about 450 KB). Older lines come on request.
+ * ログの画面がポーリングする行数。失敗とそのtracebackを読むには足り、数秒ごとに取得できるほど
+ * 小さい（3,000行で約450KBだった）。それより古い行は求めたときに読む。
  */
 export const RUN_LOG_TAIL_LINES = 2000;
 
 /**
- * A Run's log for the Jobs page and the Run's Logs tab. It shows the latest lines, read again
- * every few seconds while the Run can still write (`isLive`); a finished Run's log is read once.
- * On request it reads as many latest lines as one read returns (MAX_RUN_LOG_TAIL), once: polling
- * that many would fetch megabytes every few seconds. Every line is in the download link.
+ * JobsのページとRunのLogsタブで出すRunのログ。最新の行を出し、Runがまだ書き込める間（`isLive`）は
+ * 数秒ごとに読み直す。終わったRunのログは1回だけ読む。求められたら、1回の読み込みで返る最大の
+ * 行数（MAX_RUN_LOG_TAIL）の最新の行を1回だけ読む。その行数をポーリングすると、数秒ごとに
+ * メガバイト単位で取得してしまう。すべての行はダウンロードのリンクにある。
  */
 export function useRunLogs({
   projectId,
@@ -26,7 +26,7 @@ export function useRunLogs({
   enabled: boolean;
   isLive: boolean;
 }) {
-  // Remembered per Run, so choosing another Job starts from its latest lines again.
+  // Runごとに覚えるので、別のJobを選ぶと、また最新の行から始まる。
   const [moreLinesRunId, setMoreLinesRunId] = useState<string | null>(null);
   const runId = run?.id;
   const readsMoreLines = runId !== undefined && moreLinesRunId === runId;
@@ -37,7 +37,7 @@ export function useRunLogs({
         tail: readsMoreLines ? MAX_RUN_LOG_TAIL : RUN_LOG_TAIL_LINES,
         signal,
       }),
-    // Leaving the poll reads once more, so the lines a Run wrote as it ended are shown.
+    // ポーリングをやめるときにもう1回読み、Runが終わるときに書いた行も出す。
     pollMs: isLive && !readsMoreLines ? EXECUTION_POLL_MS : undefined,
   });
   return {
@@ -45,7 +45,7 @@ export function useRunLogs({
     isLive,
     readsMoreLines,
     readMoreLines: () => setMoreLinesRunId(runId ?? null),
-    /** Back to the latest lines, read again every few seconds while the Run is live. */
+    /** 最新の行に戻る。Runが動いている間は数秒ごとに読み直す。 */
     followLatestLines: () => setMoreLinesRunId(null),
     downloadUrl: runId ? trackingApi.runLogFileUrl(projectId, runId) : undefined,
   };

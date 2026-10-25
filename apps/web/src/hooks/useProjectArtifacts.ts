@@ -6,9 +6,9 @@ import { useQuery } from './useQuery';
 import { ARTIFACT_LIST_LIMIT } from '../lib/artifactCatalog';
 
 /**
- * The Project's Artifacts whose saved path contains `search`, newest first, for a field that picks
- * one. With `runId`, only that Run's files as its Artifacts tab shows them (the latest per path).
- * `rememberArtifact` keeps a chosen Artifact listed after the search changes.
+ * 保存されたパスに`search`を含むProjectのArtifactを新しい順に並べたもの。Artifactを1つ選ぶ欄で
+ * 使う。`runId`を渡すと、そのRunのArtifactのタブが出すとおりの、そのRunのファイルだけ（パスごとに
+ * 最新のもの）。`rememberArtifact`は、検索を変えた後も選んだArtifactを一覧に残す。
  */
 export function useProjectArtifacts({
   projectId,
@@ -51,19 +51,19 @@ export function useProjectArtifacts({
 
 export interface ProjectArtifactFilter {
   query: string;
-  /** `type/*`, or '' for every type. */
+  /** `type/*`、またはすべての種類なら''。 */
   mimeType: string;
   runId: string;
-  /** '' with modelVersionId '' for every Artifact; a Model alone covers all of its versions. */
+  /** modelVersionIdとともに''なら、すべてのArtifact。モデルだけなら、そのすべてのバージョンを含む。 */
   modelId: string;
   modelVersionId: string;
   includePreviousVersions: boolean;
 }
 
-// The catalog API allows up to 500; a smaller page keeps the first screen quick.
+// カタログのAPIは500件まで許すが、小さいページにすると最初の画面が早く出る。
 const PROJECT_ARTIFACT_PAGE_SIZE = 100;
 
-/** The Project-wide Artifact catalog, newest first, read page by page. */
+/** Project全体のArtifactのカタログ。新しい順にページごとに読む。 */
 export function useProjectArtifactCatalog(projectId: string, filter: ProjectArtifactFilter) {
   return useCursorPages(
     `${projectId}:artifact-catalog:${JSON.stringify(filter)}`,

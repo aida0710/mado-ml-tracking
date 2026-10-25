@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { User } from '@mmt/contracts';
 
-/** The signed-in user, provided by AuthGate around every screen that needs one. */
+/** ログイン中の利用者。利用者が必要な画面をすべて囲むAuthGateが渡す。 */
 export const AuthContext = createContext<{ user: User; reload: () => void } | null>(null);
 
 export function useAuth() {

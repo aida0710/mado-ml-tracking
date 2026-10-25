@@ -19,9 +19,9 @@ const unavailableViewNotice: Record<SavedViewUnavailableReason, string> = {
 };
 
 /**
- * The saved view open on the Run list (`?view=<id>`) and the display parts that live outside
- * the URL: columns and, while a view is open, its chart layout. Opening a view writes its
- * conditions to the URL; any later difference from the stored state is an unsaved change.
+ * Runの一覧で開いている保存ビュー（`?view=<id>`）と、URLの外にある表示の部分（列と、ビューを
+ * 開いている間はその図の配置）。ビューを開くと条件をURLに書く。その後、保存した状態と違う点が
+ * あれば未保存の変更になる。
  */
 export function useRunListSavedView({
   projectId,
@@ -30,7 +30,7 @@ export function useRunListSavedView({
 }: {
   projectId: string;
   conditions: RunListConditions;
-  /** Shown while the user has not arranged the columns; follows the Runs on the page. */
+  /** 利用者が列を並べていない間に出す。ページのRunに合わせて変わる。 */
   defaultColumns: SavedViewColumn[];
 }) {
   useLocale();
@@ -41,10 +41,10 @@ export function useRunListSavedView({
   const [activeView, setActiveView] = useState<SavedView | null>(null);
   const [viewChartPanels, setViewChartPanels] = useState<ChartPanelLayout | null>(null);
   const [noticeReason, setNoticeReason] = useState<SavedViewUnavailableReason | null>(null);
-  // The view a save just put into the URL. The router applies the URL after the state, so until
-  // then the URL still names the previous view (or none) and must not be followed.
+  // 保存の直後にURLに入れたビュー。ルーターはstateの後でURLを反映するので、それまでURLはまだ
+  // 前のビュー（または無し）を指しており、それに従ってはいけない。
   const [savedViewId, setSavedViewId] = useState<string | null>(null);
-  // The view last opened by following the URL; its conditions are then written to the URL.
+  // 最後にURLに従って開いたビュー。その条件を、続けてURLに書く。
   const [viewOpenedFromUrl, setViewOpenedFromUrl] = useState<{
     view: SavedView;
     state: SavedViewState;
@@ -59,13 +59,13 @@ export function useRunListSavedView({
     });
   }
   const isChanged = activeView ? hasUnsavedChanges(activeView.state, readCurrentState()) : false;
-  // Inside an open view the charts edit the view's layout, not this browser's stored one.
+  // ビューを開いている間、図はこのブラウザに保存した配置ではなく、ビューの配置を編集する。
   const chartLayoutSource = useMemo<ChartPanelLayoutSource | null>(
     () => (activeView ? { layout: viewChartPanels, onChange: setViewChartPanels } : null),
     [activeView, viewChartPanels],
   );
 
-  /** Shows the view's columns and charts; the caller puts its conditions into the URL. */
+  /** ビューの列と図を出す。条件をURLに入れるのは呼び出し側。 */
   function showView(view: SavedView, state: SavedViewState) {
     const display = toRunListDisplay(state);
     setCustomColumns(display.columns.length ? display.columns : null);
@@ -81,8 +81,8 @@ export function useRunListSavedView({
     setCustomColumns(null);
     setViewChartPanels(null);
   }
-  // Follows the URL during render: a newly loaded view is shown once, an unavailable one falls
-  // back to the default display with a notice, and removing `?view=` (back button) leaves the view.
+  // レンダリング中にURLに従う。新しく読み込んだビューは1回だけ出し、開けないビューはお知らせを
+  // 出して既定の表示に戻し、`?view=`が消えたら（戻るボタン）ビューを離れる。
   const isWaitingForSavedUrl = savedViewId !== null && viewId !== savedViewId;
   if (savedViewId !== null && viewId === savedViewId) setSavedViewId(null);
   if (!isWaitingForSavedUrl) {
@@ -100,8 +100,8 @@ export function useRunListSavedView({
       leaveView();
     }
   }
-  // The URL is written after the render: the router's setter cannot run during one. The setter
-  // changes with every URL, so it is read through an Effect Event instead of being a dependency.
+  // URLはレンダリングの後で書く。ルーターのsetterはレンダリング中には呼べない。setterはURLが
+  // 変わるたびに変わるので、依存に入れずにEffect Eventを通して読む。
   const replaceUrl = useEffectEvent((next: URLSearchParams) => setParams(next, { replace: true }));
   useEffect(() => {
     if (viewOpenedFromUrl)
@@ -112,7 +112,7 @@ export function useRunListSavedView({
     if (isOpenedViewUnavailable) replaceUrl(new URLSearchParams());
   }, [isOpenedViewUnavailable]);
 
-  /** Opens a view, or the default display for null. Opening the open view drops its changes. */
+  /** ビューを開く。nullなら既定の表示を開く。開いているビューをもう一度開くと、その変更を捨てる。 */
   function openView(id: string | null) {
     setNoticeReason(null);
     if (id && id === activeView?.id) {
@@ -121,10 +121,10 @@ export function useRunListSavedView({
     }
     setParams(id ? { [RUN_LIST_PARAMS.view]: id } : {});
   }
-  /** After a save, rename or "save as": the list keeps what it shows under the stored view. */
+  /** 保存・名前の変更・［名前を付けて保存］の後。一覧は今の表示を、保存したビューのものとして保つ。 */
   function finishSave(view: SavedView) {
     if (!activeView) {
-      // Saved from the default display: keep exactly what was stored, not the moving defaults.
+      // 既定の表示から保存した。動く既定値ではなく、保存した内容をそのまま保つ。
       setCustomColumns(columns);
       setViewChartPanels(toRunListDisplay(view.state).chartPanels);
     }

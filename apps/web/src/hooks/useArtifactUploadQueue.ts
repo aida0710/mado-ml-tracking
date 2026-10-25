@@ -34,13 +34,13 @@ import { text } from '../i18n/catalog';
 import { useLatestRef } from './useLatestRef';
 
 /**
- * Requests in flight across the whole queue. Browsers allow six connections per origin over
- * HTTP/1.1; three keeps the line busy while leaving room for page polling and previews.
+ * キュー全体で同時に送る要求の数。ブラウザはHTTP/1.1では同じオリジンへの接続を6本まで許す。3本なら
+ * 回線を使い続けながら、ページのポーリングやプレビューの分の余裕を残せる。
  */
 export const MAX_CONCURRENT_REQUESTS = 3;
-// The finalizer hashes the whole object; once a second is enough to show it finish.
+// finalizerがオブジェクト全体のハッシュを取る。終わったことを出すには1秒に1回で足りる。
 const VERIFY_POLL_INTERVAL_MS = 1000;
-// Progress events arrive many times per second; the list re-renders at most this often.
+// 進み具合のイベントは1秒に何度も届く。一覧の描き直しは多くてもこの間隔に1回にする。
 const PROGRESS_RENDER_INTERVAL_MS = 200;
 
 export type UploadItemStatus =
@@ -55,14 +55,14 @@ export type UploadItemStatus =
 
 const ACTIVE_STATUSES: ReadonlySet<UploadItemStatus> = new Set(['queued', 'preparing', 'uploading', 'verifying']);
 
-/** A request that failed on the network and is about to be sent again. */
+/** ネットワークで失敗し、これから送り直す要求。 */
 export interface UploadRetry {
-  /** The attempt about to start, from 2. */
+  /** これから始める送信が何回目か。2から数える。 */
   attempt: number;
   maxAttempts: number;
 }
 
-/** What the queue panel shows for one file. */
+/** キューのパネルが1つのファイルについて出すもの。 */
 export interface UploadItem {
   id: string;
   name: string;
@@ -71,11 +71,11 @@ export interface UploadItem {
   method: UploadMethod;
   status: UploadItemStatus;
   sentBytes: number;
-  /** Bytes the server already had when the file resumed; they were not sent again. */
+  /** 再開したときにサーバーが既に持っていたバイト数。この分は送り直していない。 */
   resumedBytes: number;
   bytesPerSecond: number | null;
   remainingSeconds: number | null;
-  /** Set while a failed request waits to be sent again; the rate and time left are unknown then. */
+  /** 失敗した要求が送り直しを待つ間だけ入る。その間は速さと残り時間が分からない。 */
   retry: UploadRetry | null;
   error: UploadFailure | null;
   artifact: Artifact | null;
@@ -84,11 +84,11 @@ export interface UploadItem {
 export interface UploadEntry {
   source: UploadSource;
   path: string;
-  /** A session the dialog already compared with this file; it continues without comparing again. */
+  /** ダイアログがこのファイルと比べ済みのセッション。もう一度比べずに続きから送る。 */
   verifiedUploadId?: string;
 }
 
-/** Mutable state of one file while requests are running; UploadItem is its rendered copy. */
+/** 要求を送っている間の、1つのファイルの書き換えられる状態。UploadItemはその描画用の写し。 */
 interface UploadJob {
   id: string;
   source: UploadSource;
@@ -98,12 +98,12 @@ interface UploadJob {
   session: ArtifactUpload | null;
   verifiedUploadId: string | null;
   pendingParts: PartRange[];
-  /** Bytes sent so far by each part request in flight. */
+  /** 送信中の各パートの要求が、ここまでに送ったバイト数。 */
   inFlightParts: Map<number, number>;
   confirmedBytes: number;
   resumedBytes: number;
   samples: TransferSample[];
-  /** Replaced on every start, so requests of a paused or canceled attempt change nothing. */
+  /** 始めるたびに作り直すので、一時停止や取り消しをした回の要求は何も変えない。 */
   controller: AbortController;
   retry: UploadRetry | null;
   error: UploadFailure | null;
@@ -124,7 +124,7 @@ export function useArtifactUploadQueue({
   const activeRequestsRef = useRef(0);
   const nextJobNumberRef = useRef(1);
   const renderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Sessions this queue has taken over; the server list is not reloaded, so they are hidden here.
+  // このキューが引き継いだセッション。サーバーの一覧は読み直さないので、ここで隠す。
   const [queuedSessionIds, setQueuedSessionIds] = useState<ReadonlySet<string>>(() => new Set());
   const rememberQueuedSession = useCallback(
     (uploadId: string) =>
@@ -140,7 +140,7 @@ export function useArtifactUploadQueue({
     () => (openSessions.value ?? []).filter((session) => session.runId === runId),
     [openSessions.value, runId],
   );
-  // Read when a job starts, which may be long after the dialog last rendered.
+  // 送信を始めるときに読む。ダイアログが最後に描画されてから、だいぶ経っていることもある。
   const openSessionsRef = useLatestRef(runOpenSessions);
 
   const render = useCallback(() => {
@@ -153,11 +153,11 @@ export function useArtifactUploadQueue({
     renderTimerRef.current ??= setTimeout(render, PROGRESS_RENDER_INTERVAL_MS);
   }, [render]);
 
-  // The callbacks below close over refs only, so they stay valid for the whole dialog.
+  // 下のコールバックはrefだけを参照するので、ダイアログが開いている間ずっと有効なままになる。
   const failJob = useCallback(
     (job: UploadJob, failure: unknown) => {
-      // Only a refusal of an open session's request describes that session; a Run missing on
-      // create or on the single PUT is not "the upload is gone".
+      // 開いているセッションへの要求が断られたときだけ、そのセッションのことを表す。作成時や単発の
+      // PUTでRunが見つからないのは「アップロードが無くなった」ではない。
       const blocker = job.session ? blockerFromFailure(failure) : null;
       const startsOver = blocker !== null && isSessionUnusable(blocker);
       if (startsOver && job.session) {
@@ -203,7 +203,7 @@ export function useArtifactUploadQueue({
           await waitFor(VERIFY_POLL_INTERVAL_MS, signal);
           current = await artifactUploadsApi.get(projectId, session.id, signal);
         }
-        // A completed session stays referenced until its Artifact is read, so a resume can retry that read.
+        // 完了したセッションはArtifactを読むまで参照を残し、再開でその読み込みをやり直せるようにする。
         const artifact = current.status === 'completed' && current.artifactId
           ? await trackingApi.artifact(projectId, current.artifactId, signal)
           : null;
@@ -223,7 +223,7 @@ export function useArtifactUploadQueue({
 
   const showRetry = useCallback(
     (job: UploadJob, retry: UploadRetry) => {
-      // The rate restarts once requests get through again.
+      // 要求がまた通るようになったら、速さを測り直す。
       job.retry = retry;
       job.samples = [];
       render();
@@ -238,7 +238,7 @@ export function useArtifactUploadQueue({
       if (!session) return;
       try {
         await retrying(signal, async () => {
-          // Set before the first await so the last part to finish sees the others in flight.
+          // 最初のawaitの前に入れ、最後に終わるパートから、ほかのパートが送信中だと分かるようにする。
           job.inFlightParts.set(part.partNumber, 0);
           const slice = job.source.file.slice(part.start, part.end);
           const bytes = canDigest() ? await slice.arrayBuffer() : null;
@@ -259,7 +259,7 @@ export function useArtifactUploadQueue({
             },
           );
         }, (retry) => {
-          // The failed request's bytes were not received; they are sent again from the start.
+          // 失敗した要求のバイトは受け取られていないので、最初から送り直す。
           job.inFlightParts.set(part.partNumber, 0);
           showRetry(job, retry);
         });
@@ -268,7 +268,7 @@ export function useArtifactUploadQueue({
         return;
       }
       if (signal.aborted) return;
-      // A part got through, so the connection is back even if another part is still waiting.
+      // パートが1つ通ったので、ほかのパートがまだ待っていても接続は戻っている。
       job.retry = null;
       job.inFlightParts.delete(part.partNumber);
       job.confirmedBytes += part.end - part.start;
@@ -372,7 +372,7 @@ export function useArtifactUploadQueue({
   );
 
   const pump = useCallback(() => {
-    // Each finished request starts the next tasks.
+    // 要求が1つ終わるたびに、次の処理を始める。
     function startTasks() {
       while (activeRequestsRef.current < MAX_CONCURRENT_REQUESTS) {
         const task = takeNextTask(jobsRef.current, { prepareSession, sendPart, sendSingle });
@@ -391,7 +391,7 @@ export function useArtifactUploadQueue({
   const enqueue = useCallback(
     (entries: UploadEntry[]) => {
       for (const { source, path, verifiedUploadId } of entries) {
-        // Hidden from the unfinished list at once, not only after the session is read again.
+        // セッションを読み直した後でなく、すぐに未完了の一覧から隠す。
         if (verifiedUploadId) rememberQueuedSession(verifiedUploadId);
         jobsRef.current.push({
           id: String(nextJobNumberRef.current++),
@@ -419,7 +419,7 @@ export function useArtifactUploadQueue({
 
   const findJob = (id: string) => jobsRef.current.find((job) => job.id === id);
 
-  /** Stops sending but keeps the session, so resume sends only the parts the server lacks. */
+  /** 送信を止めるがセッションは残すので、再開ではサーバーに無いパートだけを送る。 */
   const pause = useCallback(
     (id: string) => {
       const job = findJob(id);
@@ -431,7 +431,7 @@ export function useArtifactUploadQueue({
     [pump],
   );
 
-  /** Paused and failed files continue from their session; a canceled file starts over from the first byte. */
+  /** 一時停止・失敗したファイルはセッションの続きから送る。取り消したファイルは最初のバイトからやり直す。 */
   const resume = useCallback(
     (id: string) => {
       const job = findJob(id);
@@ -453,7 +453,7 @@ export function useArtifactUploadQueue({
     for (const job of jobsRef.current) if (job.status === 'failed') resume(job.id);
   }, [resume]);
 
-  /** Stops the file and discards what the server received (DELETE), so no Artifact appears. */
+  /** ファイルの送信を止め、サーバーが受け取った分を捨てる（DELETE）。Artifactはできない。 */
   const cancel = useCallback(
     async (id: string) => {
       const job = findJob(id);
@@ -468,7 +468,7 @@ export function useArtifactUploadQueue({
       try {
         await artifactUploadsApi.abort(projectId, session.id);
       } catch (failure) {
-        // A session that already closed keeps nothing; anything else expires with the session.
+        // 既に閉じたセッションは何も残さない。それ以外は、セッションと一緒に期限が切れて消える。
         if (!(failure instanceof RequestError && failure.code === 'upload_not_open')) {
           job.error = { kind: 'cancel', cause: failure };
           render();
@@ -484,7 +484,7 @@ export function useArtifactUploadQueue({
       try {
         await artifactUploadsApi.abort(projectId, uploadId);
       } catch (failure) {
-        // A session that is already gone has nothing left to discard.
+        // 既に無くなったセッションには、捨てるものが残っていない。
         if (blockerFromFailure(failure) !== 'gone') throw failure;
       }
       openSessions.reload();
@@ -503,7 +503,7 @@ export function useArtifactUploadQueue({
     return () => window.removeEventListener('beforeunload', warnBeforeUnload);
   }, [isActive]);
 
-  // Leaving the dialog stops the requests; open sessions stay on the server for a later resume.
+  // ダイアログを離れると要求は止まる。開いているセッションはサーバーに残り、後で再開できる。
   useEffect(
     () => () => {
       for (const job of jobsRef.current) job.controller.abort();
@@ -557,7 +557,7 @@ function stopRequests(job: UploadJob) {
   job.samples = [];
 }
 
-/** Next request in queue order: prepare files first come first, then fill free slots with parts. */
+/** キューの順で次に送る要求。準備は先に来たファイルから行い、空いた枠はパートで埋める。 */
 function takeNextTask(
   jobs: UploadJob[],
   handlers: {
@@ -578,9 +578,10 @@ function takeNextTask(
 }
 
 /**
- * Picks the first candidate session that is still usable for this file. A session this queue did
- * not open with this very file (a local record, or one found only on the server) may belong to
- * another file with the same path and size, so its received parts must match the chosen file.
+ * 候補のセッションのうち、このファイルにまだ使える最初のものを選ぶ。このキューがこのファイル
+ * そのもので開いたのではないセッション（手元の記録や、サーバーにだけ見つかったもの）は、同じ
+ * パスとサイズの別のファイルのものかもしれないので、受け取ったパートが選んだファイルと一致する
+ * 必要がある。
  */
 async function findResumableSession({
   projectId,
@@ -606,14 +607,14 @@ async function findResumableSession({
       now: Date.now(),
       isKnownSameFile: isSameFile,
     });
-    // A finished session hands over its Artifact, so an unchecked file takes it only after its
-    // parts were compared; a session with no parts yet proves nothing about the file.
+    // 完了したセッションはそのArtifactを渡すので、確かめていないファイルがそれを受け取るのは、
+    // パートを比べた後だけ。まだパートの無いセッションは、ファイルについて何の裏付けにもならない。
     const isUsable =
       inspection.blocker === null &&
       (isSameFile || inspection.session.status === 'open' || !inspection.nothingSent);
     if (isUsable) return inspection.session;
-    // A record of a session that can still continue (with the right file, or once access is back)
-    // stays, so the dialog can keep naming its file.
+    // まだ続けられるセッション（正しいファイルなら、またはアクセスが戻れば）の記録は残し、
+    // ダイアログがそのファイル名を出し続けられるようにする。
     if (inspection.blocker && isSessionUnusable(inspection.blocker)) removeResumeRecord(uploadId);
   }
   return null;

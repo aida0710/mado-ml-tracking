@@ -3,7 +3,7 @@ import { ARTIFACT_REFERENCES_BATCH_LIMIT, type ArtifactReferences } from '@mmt/c
 import { artifactLifecycleApi } from '../api/artifactLifecycle';
 import { useQuery } from './useQuery';
 
-/** What was fetched for a Project: every ID asked about, and the references of the known ones. */
+/** Projectについて取得したもの。問い合わせたすべてのIDと、存在したIDの参照。 */
 interface CheckedReferences {
   projectId: string;
   checkedIds: ReadonlySet<string>;
@@ -17,9 +17,9 @@ const noCheckedReferences = (projectId: string): CheckedReferences => ({
 });
 
 /**
- * Where each of the given Artifacts is used, by Artifact ID. What was fetched is kept, so a list
- * that grows (the catalog's next page) asks only about its new IDs, in requests of
- * ARTIFACT_REFERENCES_BATCH_LIMIT, and the rows already shown keep their references meanwhile.
+ * 渡した各Artifactが使われている場所（Artifact IDごと）。取得したものは持っておくので、一覧が
+ * 伸びたとき（カタログの次のページ）は新しいIDだけをARTIFACT_REFERENCES_BATCH_LIMIT件ずつの要求で
+ * 問い合わせ、その間も表示済みの行は参照を出したままにする。
  */
 export function useArtifactReferences(projectId: string, artifactIds: readonly string[]) {
   const [state, setState] = useState(() => noCheckedReferences(projectId));
@@ -33,11 +33,11 @@ export function useArtifactReferences(projectId: string, artifactIds: readonly s
     const pages = await Promise.all(
       batches.map((batch) => artifactLifecycleApi.references(projectId, batch, signal)),
     );
-    // The API leaves out IDs it does not know; they count as asked, so they are not asked again.
+    // APIは知らないIDを返さない。それらも問い合わせ済みとして扱い、もう一度は問い合わせない。
     return { askedIds: uncheckedIds, items: pages.flat() };
   } });
 
-  // Each answer is merged once, during the render that first sees it.
+  // 各応答は、それを最初に見たレンダリングの中で1回だけ取り込む。
   const fetched = query.value;
   const [mergedAnswer, setMergedAnswer] = useState<typeof fetched>(undefined);
   if (fetched && fetched !== mergedAnswer) {
@@ -57,10 +57,10 @@ export function useArtifactReferences(projectId: string, artifactIds: readonly s
 
   return {
     byArtifactId: checked.byArtifactId,
-    /** Whether the Artifact's references are known; false while they load or after a failure. */
+    /** Artifactの参照が分かっているか。読み込み中と失敗した後はfalse。 */
     isChecked: (artifactId: string) => checked.checkedIds.has(artifactId),
     error: query.error,
-    /** Forgets what was fetched and asks about every ID again. */
+    /** 取得したものを捨てて、すべてのIDをもう一度問い合わせる。 */
     reload: () => {
       setState(noCheckedReferences(projectId));
       query.reload();
@@ -68,7 +68,7 @@ export function useArtifactReferences(projectId: string, artifactIds: readonly s
   };
 }
 
-/** Whether anything keeps the Artifact, so deleting it would be refused. */
+/** Artifactを保持しているものがあるか。あれば削除は断られる。 */
 export function hasArtifactReferences(references: ArtifactReferences): boolean {
   return (
     references.modelVersions.length +

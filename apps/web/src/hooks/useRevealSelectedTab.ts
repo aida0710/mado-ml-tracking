@@ -4,9 +4,9 @@ import { scrollLeftToReveal } from '../lib/horizontalScroll';
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 /**
- * Scrolls a tab list sideways so the selected tab is in view, `margin` clear of the edges, whenever
- * the selection changes: a tab opened from the URL, tapped while half cut off, or chosen by keys.
- * Opening the screen jumps there; later changes glide unless the user asked for less motion.
+ * 選択が変わるたびに、選んだタブが端から`margin`だけ離れて見えるように、タブの並びを横に
+ * スクロールする。URLから開いたタブ、半分切れたまま押したタブ、キーで選んだタブが対象。
+ * 画面を開いたときはすぐに移り、その後の変更は、利用者が動きを減らす設定にしていなければ滑らかに動く。
  */
 export function useRevealSelectedTab(
   listRef: RefObject<HTMLElement | null>,

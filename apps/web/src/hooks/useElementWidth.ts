@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-/** The content width of the element given `ref`, kept current while it resizes. */
+/** `ref`を渡した要素の内容の幅。大きさが変わる間も最新に保つ。 */
 export function useElementWidth() {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);

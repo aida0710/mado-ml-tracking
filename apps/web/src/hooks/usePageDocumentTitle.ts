@@ -2,12 +2,12 @@ import { useEffect, type RefObject } from 'react';
 import { composeDocumentTitle, getProductName } from '../lib/documentTitle';
 
 /**
- * Names the browser tab after the text of the given elements (a screen's heading, then the line
- * above it), so a heading built from elements, such as a Run name with links around it, names the
- * tab as it reads. Leaving the screen puts back the product name until the next one names itself.
+ * 渡した要素の文字列（画面の見出し、次にその上の行）でブラウザのタブに名前を付ける。要素で
+ * 組み立てた見出し（リンクに囲まれたRun名など）でも、見たとおりの文でタブに名前が付く。画面を
+ * 離れると、次の画面が名前を付けるまで製品名に戻す。
  */
 export function usePageDocumentTitle(parts: readonly RefObject<HTMLElement | null>[]) {
-  // Runs after every render: the heading's text is the page's props, which change with them.
+  // レンダリングのたびに動く。見出しの文字列はページのpropsから作られ、propsと一緒に変わる。
   useEffect(() => {
     document.title = composeDocumentTitle(parts.map((part) => part.current?.textContent));
   });

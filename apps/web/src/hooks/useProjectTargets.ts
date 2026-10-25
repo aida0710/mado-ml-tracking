@@ -2,8 +2,8 @@ import { executionApi } from '../api/execution';
 import { useQuery } from './useQuery';
 
 /**
- * The targets a Job of the Project may run on, for every screen that chooses one: global ones,
- * one's own and those shared with the Project (GET /targets?projectId=).
+ * ProjectのJobが実行できるコンピュータ。コンピュータを選ぶすべての画面で使う。全体で使えるもの、
+ * 自分のもの、Projectに共有されたもの（GET /targets?projectId=）。
  */
 export function useProjectTargets(projectId: string) {
   return useQuery({ key: `${projectId}:project-targets`, load: (signal) =>

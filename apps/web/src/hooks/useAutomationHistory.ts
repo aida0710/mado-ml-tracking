@@ -10,7 +10,7 @@ import { useFailureMessage } from './useFailureMessage';
 
 export interface AutomationHistoryState {
   items: ModelAutomationExecution[];
-  /** True until the first page has arrived. */
+  /** 最初のページが届くまでtrue。 */
   loading: boolean;
   loadingMore: boolean;
   hasMore: boolean;
@@ -19,7 +19,7 @@ export interface AutomationHistoryState {
   reload: () => void;
 }
 
-/** Older pages read on demand, kept with the filter they belong to. */
+/** 必要になったときに読んだ古いページ。どの絞り込みのものかと一緒に持つ。 */
 interface LoadedPages {
   filterKey: string;
   items: ModelAutomationExecution[];
@@ -27,10 +27,10 @@ interface LoadedPages {
 }
 
 /**
- * The Project's automation executions, newest first, narrowed by rule and version. The newest page
- * is polled so running work stays current. Reading older pages stops the polling and keeps the
- * list as it was, so new rows cannot push rows out between the pages; reload and another filter
- * start over.
+ * Projectの自動実行履歴を新しい順に並べ、ルールとバージョンで絞り込んだもの。最新のページは
+ * ポーリングして、実行中のものを最新に保つ。古いページを読むとポーリングを止めて一覧をそのまま
+ * 保ち、ページの間に新しい行が入って行を押し出さないようにする。読み直しや別の絞り込みでは
+ * 最初からにする。
  */
 export function useAutomationHistory({
   projectId,
@@ -45,15 +45,15 @@ export function useAutomationHistory({
   const [loaded, setLoaded] = useState<LoadedPages | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadMoreFailure = useFailureMessage();
-  // Changing the filter drops the older pages, so coming back to a filter shows its newest page
-  // again, polled, not the list as it stood when it was left.
+  // 絞り込みを変えると古いページは捨てるので、元の絞り込みに戻ると、離れたときの一覧ではなく、
+  // ポーリングしている最新のページをまた出す。
   const [shownFilterKey, setShownFilterKey] = useState(filterKey);
   if (shownFilterKey !== filterKey) {
     setShownFilterKey(filterKey);
     setLoaded(null);
     loadMoreFailure.clearFailure();
   }
-  // A page that arrives after the filter changed still carries the filter it was read with.
+  // 絞り込みが変わった後に届いたページにも、読んだときの絞り込みが付いている。
   const pages = loaded?.filterKey === filterKey ? loaded : null;
   const newestPage = useQuery({
     key: enabled && !pages ? `${projectId}:automation-executions:${filterKey}` : null,

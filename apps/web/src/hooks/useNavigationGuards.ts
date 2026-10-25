@@ -14,14 +14,14 @@ export function useNavigationGuards(): NavigationGuardRegistration {
   const removeGuard = useCallback((id: string) => {
     setGuards((previous) => previous.filter((guard) => guard.id !== id));
   }, []);
-  // React Router supports one blocker; nested editors register their guards here.
+  // React Routerのblockerは1つだけなので、入れ子の編集画面はここにガードを登録する。
   const blocker = useBlocker(guards.some((guard) => guard.isDirty || guard.isBusy));
   const settledBlocker = useRef<Blocker | null>(null);
   useEffect(() => {
     if (blocker.state !== 'blocked' || settledBlocker.current === blocker || guards.some((guard) => guard.isBusy)) return;
     function continueNavigation() {
       if (settledBlocker.current === blocker || blocker.state !== 'blocked') return;
-      // Closing guards can render before the router publishes its proceeding state.
+      // 閉じていくガードの描画は、ルーターが進行中の状態を出すより先に起きることがある。
       settledBlocker.current = blocker;
       guards.forEach((item) => item.discardNavigation());
       blocker.proceed();

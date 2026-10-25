@@ -2,9 +2,9 @@ import { useLayoutEffect, useState, type RefObject } from 'react';
 import { hiddenEdges, type HiddenEdges } from '../lib/horizontalScroll';
 
 /**
- * Which ends of a sideways scrolling element hide content, kept current as it scrolls or resizes.
- * `contentKey` changes when the content does (a tab added or renamed), which resizing does not
- * report.
+ * 横にスクロールする要素のどちらの端が内容を隠しているか。スクロールや大きさの変化に合わせて
+ * 最新に保つ。`contentKey`は内容が変わったとき（タブの追加や名前の変更）に変わる。これは大きさの
+ * 変化としては通知されない。
  */
 export function useHiddenEdges(elementRef: RefObject<HTMLElement | null>, contentKey: string): HiddenEdges {
   const [edges, setEdges] = useState<HiddenEdges>(null);

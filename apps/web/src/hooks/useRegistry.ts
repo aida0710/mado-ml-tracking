@@ -55,8 +55,8 @@ export function useRegistry<T extends RegistryItem, V extends RegistryVersion>(
   const selectItem = (id: string) => setParams({ id });
   const selectVersion = (id: string) => setParams({ id: selectedId, version: id });
   /**
-   * Writes the item opened by default (the first of the list) into the URL, so a reload that moves
-   * it down the list, such as archiving it, keeps it open.
+   * 既定で開いた項目（一覧の先頭）をURLに書き、アーカイブなどで読み直して一覧の下に移っても、
+   * 開いたままにする。
    */
   function pinSelectedItem() {
     if (requestedId || !selectedId) return;

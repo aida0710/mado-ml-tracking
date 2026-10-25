@@ -4,8 +4,8 @@ import { useMutation } from './useMutation';
 import { useQuery } from './useQuery';
 
 /**
- * 全体設定 → コンピュータ: every computer (GET /targets/overview) and the details of those one may
- * use or manage (GET /targets), reloaded together after a change.
+ * 全体設定 → コンピュータ。すべてのコンピュータ（GET /targets/overview）と、利用者が使うか
+ * 管理できるものの詳細（GET /targets）。変更の後は両方をまとめて読み直す。
  */
 export function useComputers() {
   const overview = useQuery({ key: 'compute-target-overview', load: executionApi.targetOverview });
@@ -22,7 +22,7 @@ export function useComputers() {
         if (saved) reload();
       });
   }
-  /** The full computer for a row one may open; undefined until GET /targets has it. */
+  /** 利用者が開ける行の、コンピュータの全部の情報。GET /targetsの結果に入るまではundefined。 */
   const findDetails = (targetId: string | null) =>
     details.value?.find((target) => target.id === targetId);
   return { overview, findDetails, reload, toggleEnabled, mutation };

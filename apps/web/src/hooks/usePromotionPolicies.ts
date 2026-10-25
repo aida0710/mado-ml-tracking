@@ -3,7 +3,7 @@ import { promotionApi } from '../api/promotion';
 import { useQuery } from './useQuery';
 import { useMutation } from './useMutation';
 
-// The Project's promotion policies, the selected one, and enabling/disabling them.
+// Projectの昇格policy、選んだもの、その有効・無効の切り替え。
 export function usePromotionPolicies(projectId: string) {
   const policies = useQuery({ key: `${projectId}:promotion-policies`, load: (signal) =>
     promotionApi.policies(projectId, signal),

@@ -12,13 +12,13 @@ import {
 } from '../lib/launchFormValues';
 import { useFailureMessage } from './useFailureMessage';
 
-/** The launch form's steps: what to run, where it runs, and a review before starting. */
+/** 起動フォームの手順。何を実行するか、どこで実行するか、始める前の確認。 */
 export const LAUNCH_STEPS = ['setup', 'resources', 'review'] as const;
 export type LaunchStep = (typeof LAUNCH_STEPS)[number];
 
 /**
- * The launch form's values and step, kept consistent: an edit that makes the chosen code or
- * computer no longer fit drops it, and the form names what was dropped (clearedChoices).
+ * 起動フォームの値と手順を、矛盾の無いように保つ。編集で選んだコードやコンピュータが合わなく
+ * なったらそれを外し、フォームは何を外したかを伝える（clearedChoices）。
  */
 export function useLaunchForm<Target extends ComputeTarget>({
   existingRun,
