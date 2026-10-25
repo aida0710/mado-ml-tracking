@@ -21,6 +21,8 @@ import '@mado/design-system/components.css';
 import '@mado/design-system/shell.css';
 import '@mado/design-system/code.css';
 import '@xyflow/react/dist/style.css';
+// 来歴のグラフの色・項目のカード・検索欄（React Flowの既定の見た目を上書きするので、その後に読み込む）。
+import '@mado/design-system/lineage.css';
 // 画面の区域ごとのスタイルシート。同じ詳細度の指定は後の方が勝つので、このアプリの変数を持つbaseを
 // 先頭に置く。新しい指定は、何でも入るスタイルシートを作らず、その区域のファイルに足す。
 import './styles/base.css';
