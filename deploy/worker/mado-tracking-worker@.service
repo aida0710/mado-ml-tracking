@@ -1,9 +1,9 @@
-# mado ML Tracking worker (system unit template). One instance per worker ID:
-#   /etc/systemd/system/mado-tracking-worker@.service      (this file)
-#   /etc/mado-tracking-worker/<worker-id>.env               (mode 600, root; see worker.env.example)
+# mado ML Trackingのworker（system unitの雛形）。worker IDごとに1つのinstanceを動かす:
+#   /etc/systemd/system/mado-tracking-worker@.service      （このファイル）
+#   /etc/mado-tracking-worker/<worker-id>.env               （mode 600、所有者root。worker.env.exampleを参照）
 #   systemctl enable --now mado-tracking-worker@<worker-id>.service
-# `sudo mado-tracking-worker install --systemd-system --service-user mado-worker ...` writes the same
-# unit with your venv path and service user. Edit User= and ExecStart= when installing by hand.
+# `sudo mado-tracking-worker install --systemd-system --service-user mado-worker ...`は、venvのパスと
+# サービス用のユーザーを入れた同じunitを書く。手で入れるときはUser=とExecStart=を書き換える。
 [Unit]
 Description=mado ML Tracking worker %i
 Wants=network-online.target

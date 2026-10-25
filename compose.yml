@@ -1,7 +1,7 @@
-# Fixed so that the containers and volumes (mado-model-tracking_postgres, ...) keep their names
-# whatever directory holds this file: a release bundle unpacks into a directory named after its
-# version. It is the name that installations from a checkout named mado-model-tracking already use.
-# COMPOSE_PROJECT_NAME in .env still overrides it.
+# このファイルがどのディレクトリにあっても、コンテナとvolume（mado-model-tracking_postgresなど）の
+# 名前が変わらないよう固定する。リリースのbundleは版の名前のディレクトリに展開されるため。
+# mado-model-trackingという名前でcheckoutした環境が既に使っている名前に合わせている。
+# .envにCOMPOSE_PROJECT_NAMEがあれば、そちらが優先される。
 name: mado-model-tracking
 services:
   postgres:
@@ -27,7 +27,7 @@ services:
       HOST: 0.0.0.0
       PORT: 4182
       AUTH_MODE: oidc
-      # The web nginx appends the client to X-Forwarded-For; add 1 for each proxy in front of it.
+      # webのnginxがX-Forwarded-Forにクライアントを追記する。その前にproxyを置くなら1つにつき1を足す。
       MMT_TRUSTED_PROXY_HOPS: ${MMT_TRUSTED_PROXY_HOPS:-1}
       MMT_DATABASE_URL: postgresql://mmt:${MMT_POSTGRES_PASSWORD:?Set MMT_POSTGRES_PASSWORD}@postgres:5432/mmt
       ARTIFACT_FILESYSTEM_ROOT: /app/var/artifacts
@@ -44,8 +44,8 @@ services:
       retries: 3
       start_period: 60s
     restart: unless-stopped
-  # Generates waveform peaks, spectrograms and video posters with ffmpeg for long audio and video.
-  # A separate image so the API carries no ffmpeg; it shares the DB and the Artifact storage.
+  # 長い音声・動画の波形のピーク、スペクトログラム、動画のポスター画像をffmpegで作る。
+  # APIにffmpegを入れないよう別のイメージにしている。DBとArtifactの保存領域はAPIと共有する。
   preview:
     build:
       context: .
@@ -60,9 +60,9 @@ services:
         condition: service_healthy
     volumes:
       - artifacts:/app/var/artifacts
-      # Holds one downloaded source file at a time, up to MMT_PREVIEW_MAX_SOURCE_BYTES (10 GiB).
+      # ダウンロードした元のファイルを一度に1つだけ置く。MMT_PREVIEW_MAX_SOURCE_BYTES（10 GiB）まで。
       - preview-work:/app/var/preview-work
-    # Lets the Artifact being processed finish its current step before the container stops.
+    # 処理中のArtifactが、コンテナが止まる前に今の段階を終えられるようにする。
     stop_grace_period: 30s
     restart: unless-stopped
   web:
@@ -73,11 +73,11 @@ services:
     depends_on:
       api:
         condition: service_healthy
-    # nginx in the web image runs unprivileged and listens on 8080 (Dockerfile.web).
+    # webイメージのnginxは非特権で動き、8080で待ち受ける（Dockerfile.web）。
     ports: ['127.0.0.1:5182:8080']
     restart: unless-stopped
-  # Optional: `docker compose --profile worker up -d worker`. The systemd unit (deploy/worker/) is the
-  # primary way to run a worker; see docs/operations.md.
+  # 任意: `docker compose --profile worker up -d worker`。workerはsystemdのunit（deploy/worker/）で
+  # 動かすのが基本（docs/operations.mdを参照）。
   worker:
     profiles: [worker]
     build:
@@ -92,15 +92,15 @@ services:
       MMT_WORKER_TARGET_IDS: ${MMT_WORKER_TARGET_IDS:-}
     secrets: [mmt_worker_token]
     volumes:
-      # The journal of running Jobs; removing the volume abandons them.
+      # 実行中のJobのjournal。volumeを消すと、それらのJobは放棄される。
       - worker-state:/var/lib/mado-tracking-worker
-      # Targets name sshKeyPath / knownHostsPath under /home/worker/.ssh inside the container.
+      # コンピュータのsshKeyPath・knownHostsPathには、コンテナ内の/home/worker/.sshの下を指定する。
       - ${MMT_WORKER_SSH_DIR:-./var/worker-ssh}:/home/worker/.ssh:ro
-    # The worker stops monitoring on SIGTERM and keeps its journal; give it time to flush.
+    # workerはSIGTERMで監視を止め、journalを残す。書き出しを終える時間を与える。
     stop_grace_period: 30s
     restart: unless-stopped
-  # Optional: `docker compose --profile launcher up -d launcher`. Claims site Jobs and runs each
-  # site's job shell over SSH; the runner on the compute node reports back. See deploy/sites/.
+  # 任意: `docker compose --profile launcher up -d launcher`。site Jobを受け取り、siteごとの
+  # job shellをSSHで実行する。結果は計算ノードのrunnerが報告する。deploy/sites/を参照。
   launcher:
     profiles: [launcher]
     build:
@@ -110,70 +110,71 @@ services:
         LAUNCHER_UID: ${MMT_LAUNCHER_UID:-10002}
         LAUNCHER_GID: ${MMT_LAUNCHER_GID:-10002}
     environment:
-      # Names the API (api_url, for example http://api:4182), the token file and the state
-      # directory. The sites, job shells and accounts come from the API on each poll.
+      # API（api_url。例: http://api:4182）、tokenファイル、状態ディレクトリを書いたファイル。
+      # site、job shell、アカウントは、ポーリングのたびにAPIから受け取る。
       MMT_LAUNCHER_CONFIG: /etc/mado-tracking-launcher/launcher.toml
     volumes:
-      # launcher.toml (deploy/sites/examples/launcher.toml).
+      # launcher.toml（deploy/sites/examples/launcher.toml）。
       - ${MMT_LAUNCHER_CONFIG_DIR:-./var/launcher-config}:/etc/mado-tracking-launcher:ro
-      # The launcher's token and the registry login that launcher.toml names (mode 600 files).
+      # launcher.tomlが指す、launcherのtokenとregistryのログイン情報（mode 600のファイル）。
       - ${MMT_LAUNCHER_SECRETS_DIR:-./var/launcher-secrets}:/run/secrets/mado-tracking-launcher:ro
-      # state_directory of launcher.toml: the private SSH keys the launcher makes, the sites'
-      # known_hosts, submissions in flight and reports not yet delivered.
+      # launcher.tomlのstate_directory: launcherが作るSSHの秘密鍵、siteのknown_hosts、
+      # 投入中のsubmission、まだ届けていない報告。
       - launcher-state:/var/lib/mado-tracking-launcher
-    # SIGTERM stops the launcher after the current poll; a report cut off by the stop is kept in
-    # the state volume and sent on the next start.
+    # SIGTERMを受けると、launcherは今のポーリングを終えてから止まる。停止で途切れた報告は
+    # 状態のvolumeに残り、次の起動時に送る。
     stop_grace_period: 30s
     restart: unless-stopped
-  # Optional: `docker compose --profile forge up -d forgejo`. Git repositories of job templates,
-  # mirrors and the container registry, with Authentik login. See deploy/forgejo/README.md.
+  # 任意: `docker compose --profile forge up -d forgejo`。Jobの雛形のGitリポジトリ、ミラー、
+  # コンテナレジストリを置く。ログインはAuthentik。deploy/forgejo/README.mdを参照。
   forgejo:
     profiles: [forge]
     image: codeberg.org/forgejo/forgejo:16.0.5-rootless
     environment:
-      # Written into app.ini on every start (FORGEJO__<section>__<KEY>). No secret goes here: the
-      # secret key is a file, and the OIDC client secret is entered in Forgejo's admin screen.
+      # 起動のたびにapp.iniへ書き込まれる（FORGEJO__<section>__<KEY>）。ここに秘密の値は書かない。
+      # secret keyはファイルで渡し、OIDCのclient secretはForgejoの管理画面で入力する。
       FORGEJO__server__DOMAIN: ${MMT_FORGEJO_DOMAIN:-forge.example.org}
       FORGEJO__server__ROOT_URL: https://${MMT_FORGEJO_DOMAIN:-forge.example.org}/
       FORGEJO__server__SSH_DOMAIN: ${MMT_FORGEJO_SSH_DOMAIN:-${MMT_FORGEJO_DOMAIN:-forge.example.org}}
-      # Port shown in clone URLs: the host side of the SSH mapping below. The built-in SSH server
-      # listens on 2222 inside the container.
+      # clone用のURLに出すポート。下のSSHのポート割り当てのホスト側。内蔵のSSHサーバーは
+      # コンテナ内の2222で待ち受ける。
       FORGEJO__server__SSH_PORT: ${MMT_FORGEJO_SSH_PORT:-2222}
       FORGEJO__server__SSH_LISTEN_PORT: '2222'
       FORGEJO__database__DB_TYPE: sqlite3
       FORGEJO__security__INSTALL_LOCK: 'true'
-      # Without a secret key Forgejo falls back to a built-in, publicly known value.
+      # secret keyが無いと、Forgejoは内蔵の、公開されている値を使ってしまう。
       FORGEJO__security__SECRET_KEY_URI: file:/run/secrets/forgejo_secret_key
-      # Accounts are created on the first Authentik (OIDC) login; nobody can sign up otherwise.
+      # アカウントはAuthentik（OIDC）での初回ログインで作られる。それ以外の方法では登録できない。
       FORGEJO__service__DISABLE_REGISTRATION: 'false'
       FORGEJO__service__ALLOW_ONLY_EXTERNAL_REGISTRATION: 'true'
       FORGEJO__service__REQUIRE_SIGNIN_VIEW: 'true'
       FORGEJO__oauth2_client__ENABLE_AUTO_REGISTRATION: 'true'
       FORGEJO__oauth2_client__USERNAME: preferred_username
       FORGEJO__oauth2_client__ACCOUNT_LINKING: login
-      # Container registry at https://<MMT_FORGEJO_DOMAIN>/v2/ (images: <domain>/<owner>/<name>).
+      # コンテナレジストリはhttps://<MMT_FORGEJO_DOMAIN>/v2/（イメージ名は<domain>/<owner>/<name>）。
       FORGEJO__packages__ENABLED: 'true'
     secrets: [forgejo_secret_key]
     volumes:
-      # Repositories, packages (container images), the SQLite database and app.ini.
+      # リポジトリ、package（コンテナイメージ）、SQLiteのデータベース、app.ini。
       - forgejo-data:/var/lib/gitea
     ports:
-      # The TLS reverse proxy forwards https://<MMT_FORGEJO_DOMAIN>/ (web, git, registry) here.
+      # TLSのリバースプロキシがhttps://<MMT_FORGEJO_DOMAIN>/（web、git、registry）をここへ転送する。
       - 127.0.0.1:${MMT_FORGEJO_HTTP_PORT:-3000}:3000
-      # git over SSH; loopback only until MMT_FORGEJO_SSH_BIND names the address users reach.
+      # SSH経由のgit。MMT_FORGEJO_SSH_BINDに利用者が届くアドレスを指定するまでは、
+      # loopbackだけで受ける。
       - ${MMT_FORGEJO_SSH_BIND:-127.0.0.1}:${MMT_FORGEJO_SSH_PORT:-2222}:2222
     healthcheck:
       test: [CMD, curl, -fsS, 'http://127.0.0.1:3000/api/healthz']
       interval: 30s
       timeout: 5s
       retries: 5
-    # Lets running pushes and pulls finish on shutdown.
+    # 停止時に、実行中のpushとpullを終えられるようにする。
     stop_grace_period: 60s
     restart: unless-stopped
 secrets:
   mmt_worker_token:
     file: ${MMT_WORKER_TOKEN_FILE:-./var/worker-token}
-  # Read by the Forgejo container user (uid 1000); see deploy/forgejo/README.md.
+  # Forgejoのコンテナのユーザー（uid 1000）が読む。deploy/forgejo/README.mdを参照。
   forgejo_secret_key:
     file: ${MMT_FORGEJO_SECRET_KEY_FILE:-./var/forgejo-secret-key}
 volumes:

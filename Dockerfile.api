@@ -1,5 +1,5 @@
-# The release image runs the API compiled by tsc with production dependencies only; it does not
-# carry the TypeScript sources or the compiler. Dependabot updates the pinned digests.
+# リリース用のイメージは、tscでコンパイルしたAPIを本番用の依存だけで動かす。TypeScriptのソースと
+# コンパイラは含めない。固定したdigestはDependabotが更新する。
 # node:22-bookworm-slim
 FROM node:22-bookworm-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436 AS build
 WORKDIR /app
@@ -7,8 +7,8 @@ COPY package.json package-lock.json tsconfig.base.json ./
 COPY apps/api ./apps/api
 COPY apps/web/package.json ./apps/web/package.json
 COPY packages ./packages
-# Reinstalls only the API's production dependencies (npm may nest some under a workspace), then
-# drops the sources so that the release stage copies compiled code and dependencies only.
+# APIの本番用の依存だけを入れ直し（npmは一部をworkspaceの下に置くことがある）、ソースを消す。
+# release段階がコンパイル済みのコードと依存だけをコピーするようにするため。
 RUN npm ci && npm run build --workspace @mmt/api \
   && rm -rf node_modules && npm ci --omit=dev --workspace @mmt/api \
   && rm -rf apps/api/src apps/api/test apps/api/tsconfig*.json packages/*/src packages/*/tsconfig*.json
@@ -24,8 +24,8 @@ COPY --from=build /app/packages ./packages
 RUN mkdir -p /app/var/artifacts && chown -R node:node /app/var
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=4182
 USER node
-# The same working directory as `npm start --workspace @mmt/api`, which relative paths assume.
+# 相対パスが前提とする、`npm start --workspace @mmt/api`と同じ作業ディレクトリ。
 WORKDIR /app/apps/api
 EXPOSE 4182
-# `compiled` makes the workspace packages resolve to their dist/ (see their package.json exports).
+# `compiled`の条件で、workspaceのpackageがdist/を指すようにする（各package.jsonのexportsを参照）。
 CMD ["node", "--conditions=compiled", "dist/server.js"]
