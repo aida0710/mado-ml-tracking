@@ -13,7 +13,7 @@
 // tsx is needed because the script starts the API from its TypeScript sources.
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';

@@ -1,14 +1,13 @@
-import { createContext, useContext, type ReactNode } from 'react';
-import type { User } from '@mmt/contracts';
+import type { ReactNode } from 'react';
 import { authApi } from '../api/auth';
 import { RequestError } from '../api/http';
-import { useQuery } from './useQuery';
-import { Resource } from '../components/Feedback';
+import { useQuery } from '../hooks/useQuery';
+import { AuthContext } from '../hooks/useAuth';
+import { Resource } from './Feedback';
 import { LoginPage } from '../pages/LoginPage';
 import { RequiredPasswordChangePage } from '../pages/RequiredPasswordChangePage';
-import { AuthReturn } from '../components/AuthReturn';
+import { AuthReturn } from './AuthReturn';
 
-const AuthContext = createContext<{ user: User; reload: () => void } | null>(null);
 export function AuthGate({ children }: { children: ReactNode }) {
   const session = useQuery('auth', async (signal) => {
     const config = await authApi.config(signal);
@@ -37,9 +36,4 @@ export function AuthGate({ children }: { children: ReactNode }) {
       }
     </Resource>
   );
-}
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('Auth context is required');
-  return context;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import type { Artifact, CodeVersion } from '@mmt/contracts';
 import { registryApi } from '../api/registry';
 import { trackingApi } from '../api/tracking';
@@ -33,8 +33,10 @@ export function useCodeVersionForm({ projectId, codeId, initialVersion }: {
   const sourceArtifactIds = [getFieldValue(values, 'sifArtifactId'), getFieldValue(values, 'sourceArtifactId')].filter(Boolean);
   const savedArtifacts = useQuery(needsArtifacts && sourceArtifactIds.length ? `${projectId}:code-artifacts:${sourceArtifactIds.join(',')}` : null,
     (signal) => Promise.all(sourceArtifactIds.map((id) => trackingApi.artifact(projectId, id, signal))));
+  // rememberArtifact is rebuilt on every render; only newly loaded Artifacts are remembered.
+  const rememberArtifacts = useEffectEvent((loaded: Artifact[]) => loaded.forEach(artifacts.rememberArtifact));
   useEffect(() => {
-    savedArtifacts.value?.forEach(artifacts.rememberArtifact);
+    if (savedArtifacts.value) rememberArtifacts(savedArtifacts.value);
   }, [savedArtifacts.value]);
   function changeValues(next: FormValues) {
     for (const fieldName of ['sifArtifactId', 'sourceArtifactId']) {

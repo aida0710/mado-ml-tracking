@@ -36,3 +36,15 @@ export async function applyMigrationsBefore(
     if (!appliedNames.has(name)) await applyMigrationFile(database, name);
   }
 }
+
+const AUDIT_LOG_MIGRATION = '071_audit_failure_and_ip_address.sql';
+
+/**
+ * Applies 071 (the audit log's `failure` outcome and `ip_address` column) ahead of the earlier
+ * pending migrations. Tests of 068–070 create their rows through the current application, which
+ * writes audit events in 071's shape; none of 068–070 reads what 071 changes. migrate() then skips
+ * it as already applied.
+ */
+export async function applyAuditLogMigrationAhead(database: pg.Pool): Promise<void> {
+  await applyMigrationFile(database, AUDIT_LOG_MIGRATION);
+}

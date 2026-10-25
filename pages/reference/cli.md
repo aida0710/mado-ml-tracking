@@ -154,7 +154,7 @@ mado-tracking-worker doctor --worker-id gpu-host-1 --ssh-key ~/.ssh/gpu_key --kn
 
 ## API serverのコマンド
 
-API serverのリポジトリで実行します。Docker Composeでは`docker compose run --rm api`に続けて実行します。
+API serverのリポジトリで実行します。Docker Composeでは`docker compose run --rm api`に続けて実行します。Composeを使わずにソースから動かす場合は、先に`npm run build -w @mmt/api`でAPIをビルドします。
 
 | コマンド | 内容 |
 | --- | --- |

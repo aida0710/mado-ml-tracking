@@ -1,5 +1,6 @@
-import { useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useId, useLayoutEffect, useState } from 'react';
 import type { UnsavedChangesAction } from '../types/navigationGuard';
+import { useLatestRef } from './useLatestRef';
 import { NavigationGuardContext } from './useNavigationGuards';
 
 export function useUnsavedChanges(isDirty: boolean, isBusy: boolean, { onNavigationDiscard }: {
@@ -10,9 +11,8 @@ export function useUnsavedChanges(isDirty: boolean, isBusy: boolean, { onNavigat
   const { registerGuard, removeGuard } = registration;
   const id = useId();
   const [pendingAction, setPendingAction] = useState<UnsavedChangesAction | null>(null);
-  const navigationDiscardRef = useRef(onNavigationDiscard);
-  navigationDiscardRef.current = onNavigationDiscard;
-  const discardNavigation = useCallback(() => navigationDiscardRef.current(), []);
+  const navigationDiscardRef = useLatestRef(onNavigationDiscard);
+  const discardNavigation = useCallback(() => navigationDiscardRef.current(), [navigationDiscardRef]);
   const requestConfirmation = useCallback((action: UnsavedChangesAction) => setPendingAction(action), []);
   useLayoutEffect(() => {
     registerGuard({ id, isDirty, isBusy, requestConfirmation, discardNavigation });

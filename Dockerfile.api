@@ -1,12 +1,31 @@
-FROM node:22-bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends git openssh-client ca-certificates && rm -rf /var/lib/apt/lists/*
+# The release image runs the API compiled by tsc with production dependencies only; it does not
+# carry the TypeScript sources or the compiler. Dependabot updates the pinned digests.
+# node:22-bookworm-slim
+FROM node:22-bookworm-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436 AS build
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY apps/api ./apps/api
 COPY apps/web/package.json ./apps/web/package.json
 COPY packages ./packages
-RUN npm ci && mkdir -p /app/var/artifacts && chown -R node:node /app/var
+# Reinstalls only the API's production dependencies (npm may nest some under a workspace), then
+# drops the sources so that the release stage copies compiled code and dependencies only.
+RUN npm ci && npm run build --workspace @mmt/api \
+  && rm -rf node_modules && npm ci --omit=dev --workspace @mmt/api \
+  && rm -rf apps/api/src apps/api/test apps/api/tsconfig*.json packages/*/src packages/*/tsconfig*.json
+
+# node:22-bookworm-slim
+FROM node:22-bookworm-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436 AS release
+RUN apt-get update && apt-get install -y --no-install-recommends git openssh-client ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY --from=build /app/package.json /app/package-lock.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/apps ./apps
+COPY --from=build /app/packages ./packages
+RUN mkdir -p /app/var/artifacts && chown -R node:node /app/var
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=4182
 USER node
+# The same working directory as `npm start --workspace @mmt/api`, which relative paths assume.
+WORKDIR /app/apps/api
 EXPOSE 4182
-CMD ["npm", "start", "--workspace", "@mmt/api"]
+# `compiled` makes the workspace packages resolve to their dist/ (see their package.json exports).
+CMD ["node", "--conditions=compiled", "dist/server.js"]

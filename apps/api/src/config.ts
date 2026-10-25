@@ -7,7 +7,7 @@ import {
   normalizeRegistryHost,
   type RegistryCredentials,
 } from './services/imagePlatformChecker.js';
-import { DEFAULT_CHECKPOINT_KEEP_COUNT } from '@mmt/contracts';
+import { containsControlCharacter, DEFAULT_CHECKPOINT_KEEP_COUNT } from '@mmt/contracts';
 import { parseSmtpSettings, type SmtpSettings } from '@mmt/platform';
 
 const optionalSetting = z.preprocess(
@@ -21,7 +21,7 @@ const optionalSshPath = z.preprocess(
     .string()
     .min(1)
     .max(4000)
-    .refine((value) => value.startsWith('/') && !/[\x00-\x1f\x7f]/.test(value))
+    .refine((value) => value.startsWith('/') && !containsControlCharacter(value))
     .optional(),
 );
 

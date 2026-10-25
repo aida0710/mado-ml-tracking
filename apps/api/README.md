@@ -4,9 +4,17 @@ Hono API、PostgreSQL migration、認証とトラッキングのサービスを�
 
 ## 起動
 
-依存のinstallと開発DBの作成はroot担当が行う。`MMT_DATABASE_URL`を設定し、repo rootから実行する。
+依存のinstallと開発DBの作成はrepo rootで行う（[README](../../README.md)）。`MMT_DATABASE_URL`を設定し、repo rootから実行する。開発中はTypeScriptをtsxでそのまま動かす。
 
 ```bash
+npm run db:migrate:dev -w @mmt/api
+npm run dev -w @mmt/api
+```
+
+本番（Dockerイメージを含む）は`npm run build -w @mmt/api`でtscが`dist/`へ出したJSを`node`で動かす。`start`・`db:migrate`・`preview-worker`・`bootstrap-admin`・`backfill-run-media`はこのJSを使うので、ソースから動かす場合は先にbuildする。buildは`packages/contracts`と`packages/platform`もそれぞれの`dist/`へ出す。両packageの`exports`は通常TypeScriptのソースを指し、nodeの`--conditions=compiled`を付けたときだけ`dist/`を指す。
+
+```bash
+npm run build -w @mmt/api
 npm run db:migrate -w @mmt/api
 npm run start -w @mmt/api
 ```

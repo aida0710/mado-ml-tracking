@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { isValidStorageBackendName } from '@mmt/platform';
 import {
+  containsControlCharacter,
   COMPUTE_TARGET_VISIBILITIES,
   CPU_ARCHES,
   DATASET_TRANSFER_MODES,
@@ -41,7 +42,7 @@ export const groupNameSchema = z
   .string()
   .min(1)
   .max(256)
-  .refine((value) => !/[\u0000-\u001f\u007f]/.test(value), 'Control characters are not allowed');
+  .refine((value) => !containsControlCharacter(value), 'Control characters are not allowed');
 // Query string of GET /users: a prefix of an email, username, or display name.
 export const userSearchQuerySchema = z.object({ query: z.string().trim().min(1).max(200) });
 // Environment backends ('filesystem', 's3') or a name an administrator stored in storage_backends.

@@ -1,10 +1,9 @@
-import { MAX_TARGET_PATH_LENGTH } from '@mmt/contracts';
+import { containsControlCharacter, MAX_TARGET_PATH_LENGTH } from '@mmt/contracts';
 import { z } from 'zod';
 
-const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
 
 export function hasNoControlCharacters(value: string): boolean {
-  return !CONTROL_CHARACTERS.test(value);
+  return !containsControlCharacter(value);
 }
 
 /**

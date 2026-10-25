@@ -24,7 +24,7 @@ const projectAuditEventQueryFields = {
     .optional()
     .transform((value) => value === 'true'),
   actorUserId: uuidSchema.optional(),
-  outcome: z.enum(['success', 'denied', 'failed']).optional(),
+  outcome: z.enum(['success', 'denied', 'failure']).optional(),
   limit: z.coerce
     .number()
     .int()

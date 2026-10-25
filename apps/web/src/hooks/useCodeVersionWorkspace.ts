@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import type { CodeVersion } from '@mmt/contracts';
 import type { FormValues } from '../types/form';
 import type { RepositoryMode } from '../types/codeWorkspace';
@@ -26,8 +26,8 @@ export function useCodeVersionWorkspace({ projectId, codeId, initialVersion, ver
   const sourceKind = getFieldValue(form.values, 'sourceKind');
   const editor = useCodeWorkspace({ projectId, initialSource: initialVersion?.source,
     repository: sourceKind === 'git' ? { url: getFieldValue(form.values, 'url').trim(), commit: getFieldValue(form.values, 'commit').trim() } : null });
-  const initialSignature = useRef(getWorkspaceSignature(form.values, editor.workspace));
-  const isDirty = initialSignature.current !== getWorkspaceSignature(form.values, editor.workspace);
+  const [initialSignature, setInitialSignature] = useState(() => getWorkspaceSignature(form.values, editor.workspace));
+  const isDirty = initialSignature !== getWorkspaceSignature(form.values, editor.workspace);
   const busy = form.pending || editor.pending;
   const unsaved = useUnsavedChanges(isDirty, busy, { onNavigationDiscard });
   const baseRepository = baseVersion?.source?.kind === 'git' ? baseVersion.source : null;
@@ -48,7 +48,7 @@ export function useCodeVersionWorkspace({ projectId, codeId, initialVersion, ver
       editor.replaceWorkspace(selected?.source);
       setBaseVersion(selected);
       sampleFailure.clearFailure();
-      initialSignature.current = getWorkspaceSignature(values, createCodeWorkspace(selected?.source));
+      setInitialSignature(getWorkspaceSignature(values, createCodeWorkspace(selected?.source)));
     });
   }
   function changeRepositoryMode(mode: RepositoryMode) {

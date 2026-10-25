@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { containsControlCharacter } from '@mmt/contracts';
 
 // A full public CA bundle is about 200 KiB; a private CA chain is far smaller.
 const MAX_CA_BUNDLE_LENGTH = 1024 * 1024;
@@ -45,7 +46,7 @@ export type StorageBackendPatchInput = z.infer<typeof storageBackendPatchSchema>
 // the same length bound. Control characters (NUL above all) could not name a directory.
 export const storageDirectoryQuerySchema = z.object({
   path: backendSettingsShape.rootPath.refine(
-    (typed) => !/[\u0000-\u001f\u007f]/.test(typed),
+    (typed) => !containsControlCharacter(typed),
     'Control characters are not allowed',
   ),
 });

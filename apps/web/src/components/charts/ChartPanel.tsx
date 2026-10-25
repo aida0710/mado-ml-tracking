@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   ArrowDown,
   ArrowLeft,
@@ -108,11 +108,12 @@ export function ChartPanel({
   const query = ownFetch ? own : shared!;
   // While a zoomed range loads, the chart keeps drawing the lines it had: in place of a loading
   // line it would be unmounted and forget its zoom, with no way to reset it.
-  const lastDrawn = useRef<{ planId: string; data: ChartPlanData } | null>(null);
+  const [lastDrawn, setLastDrawn] = useState<{ planId: string; data: ChartPlanData } | null>(null);
   const fetched = query.value?.[planId];
-  if (fetched) lastDrawn.current = { planId, data: fetched };
+  if (fetched && (lastDrawn?.planId !== planId || lastDrawn.data !== fetched))
+    setLastDrawn({ planId, data: fetched });
   const data =
-    fetched ?? (query.loading && lastDrawn.current?.planId === planId ? lastDrawn.current.data : undefined);
+    fetched ?? (query.loading && lastDrawn?.planId === planId ? lastDrawn.data : undefined);
   const title = config.title || formatList(config.metricKeys);
   const chartHeight = config.layout.h * CHART_ROW_HEIGHT_PX - PANEL_CHROME_PX;
   const currentWidth = (Object.keys(PANEL_WIDTHS) as PanelWidth[]).find(

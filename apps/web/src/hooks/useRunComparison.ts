@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { RunComparison, RunStatus } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
 import { isComparableRunCount } from '../lib/comparisonRows';
@@ -34,8 +34,7 @@ export function useRunComparison(comparison: {
   const hasActiveRuns = query.value
     ? query.value.runs.some((run) => activeStatuses.includes(run.status))
     : null;
-  useEffect(() => {
-    if (hasActiveRuns !== null) setPollMs(hasActiveRuns ? EXECUTION_POLL_MS : undefined);
-  }, [hasActiveRuns]);
+  const decidedPollMs = hasActiveRuns === null ? pollMs : hasActiveRuns ? EXECUTION_POLL_MS : undefined;
+  if (decidedPollMs !== pollMs) setPollMs(decidedPollMs);
   return query;
 }

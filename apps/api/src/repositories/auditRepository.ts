@@ -11,7 +11,7 @@ export interface AuditEventInput {
   resourceId?: string | null;
   projectId?: string | null;
   details?: JsonObject;
-  ip?: string | null;
+  ipAddress?: string | null;
   userAgent?: string | null;
 }
 
@@ -22,7 +22,7 @@ export async function writeAuditEvent(
 ): Promise<void> {
   await connection.query(
     `INSERT INTO audit_events(actor_type,actor_user_id,actor_token_id,action,outcome,resource_type,
-    resource_id,project_id,details,ip,user_agent) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11)`,
+    resource_id,project_id,details,ip_address,user_agent) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11)`,
     [
       event.actorType,
       event.actorUserId ?? null,
@@ -33,7 +33,7 @@ export async function writeAuditEvent(
       event.resourceId ?? null,
       event.projectId ?? null,
       JSON.stringify(event.details ?? {}),
-      event.ip ?? null,
+      event.ipAddress ?? null,
       event.userAgent ?? null,
     ],
   );
@@ -54,7 +54,7 @@ export interface AuditEventFilter {
 // Names are joined at read time: a renamed user or Project shows its current name in old events.
 const auditEventColumns = `a.id,a.occurred_at,a.actor_type,a.actor_user_id,u.display_name AS actor_name,
   a.actor_token_id,a.action,a.outcome,a.resource_type,a.resource_id,a.project_id,
-  p.name AS project_name,a.details,a.ip,a.user_agent`;
+  p.name AS project_name,a.details,a.ip_address,a.user_agent`;
 
 // Keyset pagination on (occurred_at,id) stays stable while new events are appended.
 export async function listAuditEvents(

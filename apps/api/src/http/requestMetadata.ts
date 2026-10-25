@@ -3,7 +3,7 @@ import type { MiddlewareHandler } from 'hono';
 import type { ApiContext, ApiEnvironment } from './request.js';
 
 export interface RequestMetadata {
-  ip: string | null;
+  ipAddress: string | null;
   userAgent: string | null;
 }
 
@@ -53,7 +53,7 @@ export function clientAddress(trustedProxyHops: number): MiddlewareHandler<ApiEn
 export function requestMetadata(context: ApiContext): RequestMetadata {
   const userAgent = context.req.header('User-Agent');
   return {
-    ip: context.get('clientAddress') ?? socketAddress(context),
+    ipAddress: context.get('clientAddress') ?? socketAddress(context),
     userAgent: userAgent ? userAgent.slice(0, MAX_USER_AGENT_LENGTH) : null,
   };
 }

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MAX_JOB_ARRAY_SIZE, SITE_CLAIM_MAX_SUBMISSIONS } from '@mmt/contracts';
+import { containsControlCharacter, MAX_JOB_ARRAY_SIZE, SITE_CLAIM_MAX_SUBMISSIONS } from '@mmt/contracts';
 import {
   gpuCountSchema,
   gpuIdsSchema,
@@ -37,7 +37,7 @@ const schedulerJobIdSchema = z
   .trim()
   .min(1)
   .max(200)
-  .refine((value) => !/[\u0000-\u001f\u007f]/.test(value), 'Control characters are not allowed');
+  .refine((value) => !containsControlCharacter(value), 'Control characters are not allowed');
 const submissionResultSchema = z.strictObject({
   jobIds: submissionJobIdsSchema,
   outcome: z.enum(['submitted', 'failed']),

@@ -3,11 +3,11 @@ import type { AuditEventFilter } from '../api/audit';
 import { useLocale } from '../i18n/useLocale';
 import { accessText } from '../i18n/access';
 
-const OUTCOMES: AuditEvent['outcome'][] = ['success', 'denied', 'failed'];
+const OUTCOMES: AuditEvent['outcome'][] = ['success', 'denied', 'failure'];
 const outcomeLabels: Record<AuditEvent['outcome'], string> = {
   get success() { return accessText.auditOutcomeSuccess; },
   get denied() { return accessText.auditOutcomeDenied; },
-  get failed() { return accessText.auditOutcomeFailed; },
+  get failure() { return accessText.auditOutcomeFailure; },
 };
 
 /**

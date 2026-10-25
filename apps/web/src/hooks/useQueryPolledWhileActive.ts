@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { EXECUTION_POLL_MS, useQuery, type QueryState } from './useQuery';
 
 /**
@@ -10,13 +10,10 @@ export function useQueryPolledWhileActive<T>(
   loader: (signal: AbortSignal) => Promise<T>,
   isActive: (value: T) => boolean,
 ): QueryState<T> {
-  const isActiveRef = useRef(isActive);
-  isActiveRef.current = isActive;
   const [isPolling, setPolling] = useState(true);
   const query = useQuery(key, loader, isPolling ? EXECUTION_POLL_MS : undefined);
-  const { value } = query;
-  useEffect(() => {
-    if (value !== undefined) setPolling(isActiveRef.current(value));
-  }, [value]);
+  // While the key has no value yet, keep the previous decision.
+  const shouldPoll = query.value === undefined ? isPolling : isActive(query.value);
+  if (shouldPoll !== isPolling) setPolling(shouldPoll);
   return query;
 }

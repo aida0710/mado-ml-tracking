@@ -1,16 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PromotionEvaluation } from '@mmt/contracts';
 import { promotionApi } from '../api/promotion';
+import { useCursorPages, type CursorPagesState } from './useCursorPages';
 import { useMutation } from './useMutation';
-import { useFailureMessage } from './useFailureMessage';
 
-export interface PromotionEvaluationsState {
-  items: PromotionEvaluation[];
-  hasMore: boolean;
-  loading: boolean;
-  error: string | null;
-  loadMore: () => void;
-  reload: () => void;
+export interface PromotionEvaluationsState extends CursorPagesState<PromotionEvaluation> {
   reevaluate: (evaluationId: string) => Promise<void>;
   reevaluating: boolean;
   reevaluateError: string | null;
@@ -21,63 +14,19 @@ export function usePromotionEvaluations(
   projectId: string,
   policyId: string | null,
 ): PromotionEvaluationsState {
-  const [items, setItems] = useState<PromotionEvaluation[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const { message: error, setFailure, clearFailure } = useFailureMessage();
-  const [revision, setRevision] = useState(0);
   const mutation = useMutation();
-  // Aborts the in-flight page when the policy changes or the history is reloaded.
-  const controllerRef = useRef<AbortController | null>(null);
-
-  const loadPage = useCallback(
-    async (cursor: string | undefined) => {
-      if (!policyId) return;
-      controllerRef.current?.abort();
-      const controller = new AbortController();
-      controllerRef.current = controller;
-      setLoading(true);
-      clearFailure();
-      try {
-        const page = await promotionApi.evaluations(projectId, {
-          policyId,
-          cursor,
-          signal: controller.signal,
-        });
-        if (controller.signal.aborted) return;
-        setItems((previous) => (cursor ? [...previous, ...page.items] : page.items));
-        setNextCursor(page.nextCursor);
-      } catch (failure) {
-        if (!controller.signal.aborted) setFailure(failure);
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
-      }
-    },
-    [projectId, policyId, clearFailure, setFailure],
+  // The key is null without a policy, so the loader only runs with one.
+  const pages = useCursorPages(
+    policyId === null ? null : `${projectId}:promotion-evaluations:${policyId}`,
+    (cursor, signal) => promotionApi.evaluations(projectId, { policyId: policyId!, cursor, signal }),
   );
-
-  useEffect(() => {
-    setItems([]);
-    setNextCursor(null);
-    void loadPage(undefined);
-    return () => controllerRef.current?.abort();
-  }, [loadPage, revision]);
-
-  const reload = () => setRevision((value) => value + 1);
   // A re-evaluation appends a new row, so the first page is fetched again to show it on top.
   async function reevaluate(evaluationId: string) {
     const created = await mutation.run(() => promotionApi.reevaluate(projectId, evaluationId));
-    if (created) reload();
+    if (created) pages.reload();
   }
   return {
-    items,
-    hasMore: nextCursor !== null,
-    loading,
-    error,
-    loadMore: () => {
-      if (nextCursor && !loading) void loadPage(nextCursor);
-    },
-    reload,
+    ...pages,
     reevaluate,
     reevaluating: mutation.pending,
     reevaluateError: mutation.error,

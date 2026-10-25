@@ -31,7 +31,7 @@ export const accessText = {
   auditActorSystem: 'System',
   auditOutcomeSuccess: 'Success',
   auditOutcomeDenied: 'Denied',
-  auditOutcomeFailed: 'Failed',
+  auditOutcomeFailure: 'Failed',
   auditOutcomeAll: 'All outcomes',
   auditHideSignIns: 'Hide sign-in and sign-out events',
   auditProject: 'Project',

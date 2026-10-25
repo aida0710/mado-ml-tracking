@@ -1,7 +1,8 @@
 import { useId, useMemo, useState } from 'react';
 import type { Run, RunGroupBy, RunSearchRequest } from '@mmt/contracts';
 import { ChartPanelGrid, type ChartLayoutChange } from './ChartPanelGrid';
-import { isCompleteGrouping, RunGroupingControl } from './RunGroupingControl';
+import { RunGroupingControl } from './RunGroupingControl';
+import { isCompleteGrouping } from '../../lib/runGrouping';
 import { RunAnalysisPanel } from '../analysis/RunAnalysisPanel';
 import { trackingApi } from '../../api/tracking';
 import { useChartPanelLayout } from '../../hooks/useChartPanelLayout';
@@ -39,7 +40,7 @@ export function RunListCharts({
   const topRuns = useQuery(`${projectId}:run-list-charts:${conditionsKey}`, (signal) =>
     trackingApi.searchRuns(projectId, { ...conditions, limit: RUN_LIST_CHART_LIMIT }, signal),
   );
-  const topItems = topRuns.value?.items ?? [];
+  const topItems = useMemo(() => topRuns.value?.items ?? [], [topRuns.value]);
   const knownRuns = useMemo(() => {
     const byId = new Map([...topItems, ...pageRuns].map((run) => [run.id, run]));
     return [...byId.values()];

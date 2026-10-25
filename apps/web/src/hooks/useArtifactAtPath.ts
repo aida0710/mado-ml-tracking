@@ -34,9 +34,15 @@ export function useArtifactAtPath({
   file: File | null;
 }): ArtifactAtPath | null {
   const { settled } = useSettledValue(path, PATH_SETTLE_MS);
-  const [found, setFound] = useState<ArtifactAtPath | null>(null);
+  // Tagged with what was looked up, so an answer for another file or path is never shown.
+  const [found, setFound] = useState<{
+    file: File;
+    path: string;
+    projectId: string;
+    runId: string | null;
+    artifactAtPath: ArtifactAtPath;
+  } | null>(null);
   useEffect(() => {
-    setFound(null);
     if (!file || settled === '') return;
     const controller = new AbortController();
     void (async () => {
@@ -47,17 +53,25 @@ export function useArtifactAtPath({
       );
       const existing = candidates.find((artifact) => artifact.path === settled && artifact.runId === runId);
       if (!existing || controller.signal.aborted) return;
-      setFound({ existing, isSameContent: null });
+      const lookup = { file, path: settled, projectId, runId };
+      setFound({ ...lookup, artifactAtPath: { existing, isSameContent: null } });
       if (existing.size !== file.size) {
-        setFound({ existing, isSameContent: false });
+        setFound({ ...lookup, artifactAtPath: { existing, isSameContent: false } });
         return;
       }
       if (file.size > SAME_CONTENT_CHECK_MAX_BYTES) return;
       const digest = await sha256OfFile(file, controller.signal);
-      if (!controller.signal.aborted) setFound({ existing, isSameContent: digest === existing.sha256 });
+      if (!controller.signal.aborted)
+        setFound({ ...lookup, artifactAtPath: { existing, isSameContent: digest === existing.sha256 } });
       // Without an answer the dialog only goes without the warning; the upload itself is unaffected.
     })().catch(() => undefined);
     return () => controller.abort();
   }, [file, projectId, runId, settled]);
-  return found;
+  const isCurrent =
+    found !== null &&
+    found.file === file &&
+    found.path === settled &&
+    found.projectId === projectId &&
+    found.runId === runId;
+  return isCurrent ? found.artifactAtPath : null;
 }

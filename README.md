@@ -27,7 +27,7 @@ docker run -d --name mmt-dev-postgres \
   -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_USER=mmt -e POSTGRES_DB=mmt \
   -p 127.0.0.1:55483:5432 -v mmt-dev-postgres:/var/lib/postgresql/data postgres:16-alpine
 docker exec mmt-dev-postgres createdb -U mmt mmt_test
-npm run db:migrate
+npm run db:migrate:dev
 npm run dev
 ```
 
@@ -68,3 +68,7 @@ uv run pytest
 ```
 
 実際のAuthentik client、SSH GPU接続先、S3保存先は環境に合わせて設定します。外部サービスに接続していないテスト結果を、本番接続の確認として扱わないでください。
+
+## License
+
+mado ML Tracking is licensed under the [Apache License 2.0](LICENSE).

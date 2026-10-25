@@ -16,6 +16,7 @@ import { NATIVE_ROUTES } from '../src/http/openapi/routeCatalog.js';
 
 const CONTRACT_DOCUMENT = new URL('../../../docs/api-contract.md', import.meta.url);
 const GENERATED_DOCUMENT = new URL('../../../docs/openapi.json', import.meta.url);
+const ROOT_MANIFEST = new URL('../../../package.json', import.meta.url);
 // Never connected: building the app only reads the route table. The loopback port is closed.
 const UNREACHABLE_DATABASE_URL = 'postgresql://mmt@127.0.0.1:1/mmt_unreachable';
 
@@ -189,6 +190,13 @@ describe('OpenAPI document of the native API', () => {
       'mlflowBasic',
       'sessionCookie',
     ]);
+  });
+
+  it('文書の版はリリースの版（ルートのpackage.json）と同じで、コミット済みの文書もその版を持つ', async () => {
+    const { version } = JSON.parse(await readFile(ROOT_MANIFEST, 'utf8')) as { version: string };
+    const committed = JSON.parse(await readFile(GENERATED_DOCUMENT, 'utf8')) as { info: { version: string } };
+    expect(buildOpenApiDocument().info.version).toBe(version);
+    expect(committed.info.version).toBe(version);
   });
 
   it('matches the committed docs/openapi.json (run npm run openapi:generate after changes)', async () => {

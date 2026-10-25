@@ -2,7 +2,6 @@ import type { User } from '@mmt/contracts';
 import { first, type Connection } from '../db/database.js';
 import { hashSecret, randomSecret } from '../auth/secrets.js';
 import type { SessionAuthMethod } from '../auth/principal.js';
-import type { EncryptedSecret } from '../security/secretEncryption.js';
 import { userColumns } from './identityRepository.js';
 
 // last_seen_at is written at most once per minute so reads do not each cost a write.

@@ -1,3 +1,8 @@
+# Fixed so that the containers and volumes (mado-model-tracking_postgres, ...) keep their names
+# whatever directory holds this file: a release bundle unpacks into a directory named after its
+# version. It is the name that installations from a checkout named mado-model-tracking already use.
+# COMPOSE_PROJECT_NAME in .env still overrides it.
+name: mado-model-tracking
 services:
   postgres:
     image: postgres:16-alpine
@@ -58,7 +63,8 @@ services:
       context: .
       dockerfile: Dockerfile.web
     depends_on: [api]
-    ports: ['127.0.0.1:5182:80']
+    # nginx in the web image runs unprivileged and listens on 8080 (Dockerfile.web).
+    ports: ['127.0.0.1:5182:8080']
     restart: unless-stopped
   # Optional: `docker compose --profile worker up -d worker`. The systemd unit (deploy/worker/) is the
   # primary way to run a worker; see docs/operations.md.

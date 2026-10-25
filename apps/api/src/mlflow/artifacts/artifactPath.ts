@@ -1,4 +1,5 @@
 import { DomainError } from '../../domain/errors.js';
+import { containsControlCharacter } from '@mmt/contracts';
 import { isMlflowPercentImagePath } from '../../domain/mlflowMediaPaths.js';
 import { uuidSchema } from '../../domain/validation.js';
 import type { ArtifactLocation, ArtifactOwner } from './artifactTypes.js';
@@ -31,7 +32,8 @@ export function isSafeArtifactPath(path: string): boolean {
     Buffer.byteLength(path, 'utf8') <= MAX_ARTIFACT_PATH_BYTES &&
     !path.startsWith('/') &&
     !/^[a-z]:/i.test(path) &&
-    !/[\\\u0000-\u001f\u007f]/.test(path) &&
+    !path.includes('\\') &&
+    !containsControlCharacter(path) &&
     // MLflow 3.0 log_image(key=, step=) names files with literal '%' before digits.
     (!/%[a-f0-9]{2}/i.test(path) || isMlflowPercentImagePath(path)) &&
     path.split('/').every((segment) => !!segment && segment !== '.' && segment !== '..')
