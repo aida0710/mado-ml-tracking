@@ -11,25 +11,47 @@ export type ApiContext = Context<ApiEnvironment>;
 
 export function principal(context: ApiContext): Principal {
   const identity = context.get('principal');
-  if (!identity) throw new DomainError(401, 'Loginが必要です', 'authentication_required');
+  if (!identity) throw new DomainError({
+    status: 401,
+    code: 'authentication_required',
+    message: 'authentication required',
+  });
   return identity;
 }
 
+/**
+ * 入力を検証する。誤りは 422 invalid_request で、どの項目かを文と `fields` に出す。項目の値は返さない
+ * （秘密の値が入りうるため）。
+ */
 export function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   const parsed = schema.safeParse(input);
-  if (!parsed.success)
-    throw new DomainError(
-      422,
-      `入力が不正です: ${parsed.error.issues.map((issue) => {
-        const field = issue.path.join('.') || 'body';
-        return issue.code === 'invalid_value' && issue.values.length === 1 && issue.values[0] === 2
-          && issue.path.at(-1) === 'version'
-          ? `${field}: version 2が必要です。version 1は処理できません`
-          : field;
-      }).join(', ')}`,
-      'invalid_request',
-    );
-  return parsed.data;
+  if (parsed.success) return parsed.data;
+  const { issues } = parsed.error;
+  throw new DomainError({
+    status: 422,
+    code: 'invalid_request',
+    message: `invalid request: ${issues.map(describeIssue).join(', ')}`,
+    details: { fields: [...new Set(issues.map(issueField))] },
+  });
+}
+
+function issueField(issue: z.core.$ZodIssue): string {
+  return issue.path.join('.') || 'body';
+}
+
+// 記録の形式の version は 2 だけを読む。1 を送ったクライアントには、要る version を文で伝える。
+const SUPPORTED_RECORD_VERSION = 2;
+
+function describeIssue(issue: z.core.$ZodIssue): string {
+  const field = issueField(issue);
+  const isUnsupportedVersion =
+    issue.code === 'invalid_value' &&
+    issue.values.length === 1 &&
+    issue.values[0] === SUPPORTED_RECORD_VERSION &&
+    issue.path.at(-1) === 'version';
+  return isUnsupportedVersion
+    ? `${field}: version ${SUPPORTED_RECORD_VERSION} is required; version 1 is not supported`
+    : field;
 }
 
 export async function jsonBody<T>(context: ApiContext, schema: z.ZodType<T>): Promise<T> {
@@ -37,7 +59,7 @@ export async function jsonBody<T>(context: ApiContext, schema: z.ZodType<T>): Pr
   try {
     body = await context.req.json();
   } catch {
-    throw new DomainError(400, 'JSONを読み込めません', 'invalid_json');
+    throw new DomainError({ status: 400, code: 'invalid_json', message: 'invalid JSON body' });
   }
   return parse(schema, body);
 }

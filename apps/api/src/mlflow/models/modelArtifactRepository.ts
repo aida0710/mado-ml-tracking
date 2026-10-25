@@ -15,7 +15,7 @@ async function requireArtifactIndex(connection: Connection): Promise<void> {
       )
     )?.present
   )
-    unsupported('Artifact indexが未導入のためモデルを確定できません');
+    unsupported('the model cannot be finalized because the artifact index is not available');
 }
 
 export async function loggedModelArtifacts(
@@ -55,7 +55,7 @@ export async function runModelArtifacts(
       [run.experimentId, input.projectId],
     ))
   )
-    notFound('Experiment');
+    notFound('experiment');
   if (
     !(await first(
       connection,
@@ -63,7 +63,7 @@ export async function runModelArtifacts(
       [run.id, input.projectId],
     ))
   )
-    notFound('Run');
+    notFound('run');
   const prefix = input.directory ? `${artifactPath(input.directory)}/` : '';
   // Native uploads have no index entry; an existing index entry remains authoritative.
   const manifest = await rows<ArtifactManifestEntry>(

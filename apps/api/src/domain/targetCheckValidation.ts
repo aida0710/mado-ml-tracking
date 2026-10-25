@@ -242,11 +242,11 @@ function rejectSecretTexts(texts: string[], secretPaths: string[]): void {
       secretPaths.some((path) => value.includes(path)),
   );
   if (leaks)
-    throw new DomainError(
-      422,
-      '診断結果に鍵のパスや認証情報が含まれています',
-      'target_check_secret_in_result',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'target_check_secret_in_result',
+      message: 'the check result contains key paths or credentials',
+    });
 }
 
 /** The target's own key files name the worker's credentials; a result must never carry them. */
@@ -268,7 +268,11 @@ export function rejectSecretsInListing(result: TargetDirectoryListingResult): vo
 
 export function rejectOversizedResult(result: unknown, maxBytes: number): void {
   if (Buffer.byteLength(JSON.stringify(result)) > maxBytes)
-    throw new DomainError(422, '診断結果が上限サイズを超えています', 'target_check_result_too_large');
+    throw new DomainError({
+      status: 422,
+      code: 'target_check_result_too_large',
+      message: 'the check result exceeds the size limit',
+    });
 }
 
 export function isDirectoryListingResult(

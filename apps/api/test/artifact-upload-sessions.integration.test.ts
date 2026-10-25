@@ -353,7 +353,7 @@ describe.skipIf(!testDatabaseUrl)('再開可能なupload session（独立Postgre
       }),
     );
     expect(await entity(await createUpload(fixture, { token: readOnly.token }), 403)).toMatchObject(
-      { code: 'insufficient_scope' },
+      { code: 'scope_required' },
     );
     const upload = await entity<ArtifactUpload>(await createUpload(fixture, editor));
 

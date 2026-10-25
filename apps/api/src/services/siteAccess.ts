@@ -24,12 +24,12 @@ export function isGlobalAdministrator(principal: Principal): boolean {
 export function requireTargetManager(principal: Principal, target: ComputeTarget): void {
   if (isGlobalAdministrator(principal)) return;
   if (target.ownerUserId !== principal.user.id)
-    throw new DomainError(
-      403,
-      'このコンピュータの設定は所有者か全体管理者だけが変えられます',
-      'target_owner_required',
-    );
-  requireSession(principal, 'コンピュータの設定');
+    throw new DomainError({
+      status: 403,
+      code: 'target_owner_required',
+      message: 'only the owner or a global administrator can change the settings of this computer',
+    });
+  requireSession(principal, 'changing computer settings');
 }
 
 export function isTargetManager(
@@ -67,11 +67,15 @@ export async function canRunQueuedJob(
 }
 
 export const TARGET_NOT_AVAILABLE_MESSAGE =
-  'このコンピュータはPrivateです。所有者と、所有者が作ったService AccountのJobだけが動きます';
+  'this computer is private; only jobs of its owner and of service accounts the owner created run on it';
 
 /** Refuses Jobs of someone who may not use a private computer (the Job's, rule's or hook's owner). */
 export function targetNotAvailable(status: 403 | 422): never {
-  throw new DomainError(status, TARGET_NOT_AVAILABLE_MESSAGE, 'target_not_available');
+  throw new DomainError({
+    status: status,
+    code: 'target_not_available',
+    message: TARGET_NOT_AVAILABLE_MESSAGE,
+  });
 }
 
 /**
@@ -98,6 +102,6 @@ export async function findSiteTarget(
     `SELECT * FROM compute_targets WHERE id=$1 AND executor='site'${options.lock ? ' FOR UPDATE' : ''}`,
     [targetId],
   );
-  if (!target) notFound('ComputeTarget');
+  if (!target) notFound('computer');
   return target;
 }

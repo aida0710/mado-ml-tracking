@@ -69,9 +69,9 @@ describe('authApi.changePassword', () => {
 
   it('現在のpasswordの誤り・弱いpassword・回数制限を区別する', async () => {
     const cases = [
-      [401, 'invalid_credentials', text.currentPasswordInvalid],
+      [400, 'incorrect_password', text.currentPasswordInvalid],
       [422, 'weak_password', text.weakPassword],
-      [403, 'local_account_required', text.localAccountRequired],
+      [403, 'local_credential_unavailable', text.localAccountRequired],
       [429, 'rate_limited', text.loginRateLimited],
     ] as const;
     for (const [status, code, message] of cases) {

@@ -363,7 +363,7 @@ describe.skipIf(!testDatabaseUrl)('Run一覧の保存ビュー（独立PostgreSQ
       token: minted.token,
       body: { visibility: 'private', name: 'token', state: viewState() },
     });
-    expect(await errorCode(response, 403)).toBe('insufficient_scope');
+    expect(await errorCode(response, 403)).toBe('scope_required');
     expect(
       (await request(harness.app, `${fixture.basePath}/saved-views`, { token: minted.token }))
         .status,

@@ -66,7 +66,7 @@ export class ArtifactService {
       'SELECT * FROM artifacts WHERE id=$1 AND project_id=$2 AND deleted_at IS NULL',
       [artifactId, projectId],
     );
-    if (!artifact) notFound('Artifact');
+    if (!artifact) notFound('artifact');
     return artifact;
   }
 
@@ -165,7 +165,11 @@ export class ArtifactService {
       // Stores may report the aborted pipeline as their own error instead of the limit's error.
       if (sizeLimit.isExceeded) throw artifactTooLargeError(this.limits.maxBytes);
       if (error instanceof DomainError) throw error;
-      throw new DomainError(503, 'Artifactの保存に失敗しました', 'artifact_save_failed');
+      throw new DomainError({
+        status: 503,
+        code: 'artifact_save_failed',
+        message: 'failed to save the artifact',
+      });
     }
   }
 
@@ -189,12 +193,16 @@ export class ArtifactService {
     } catch (error) {
       if (error instanceof ArtifactRangeError) throw error;
       if (error instanceof ArtifactNotFoundError)
-        throw new DomainError(
-          404,
-          'Artifactの実ファイルが見つかりません',
-          'artifact_content_not_found',
-        );
-      throw new DomainError(503, 'Artifactを読み込めません', 'artifact_read_failed');
+        throw new DomainError({
+          status: 404,
+          code: 'artifact_content_not_found',
+          message: 'the artifact file was not found',
+        });
+      throw new DomainError({
+        status: 503,
+        code: 'artifact_read_failed',
+        message: 'cannot read the artifact',
+      });
     }
   }
 }

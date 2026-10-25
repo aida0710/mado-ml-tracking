@@ -112,7 +112,11 @@ export class MlflowMultipartUploadService {
         await requireArtifactProject(connection, location, { write: true, lock: true });
         const owner = await requireArtifactOwner(connection, location, { write: true, lock: true });
         if (owner.runId !== session.runId)
-          throw new DomainError(409, 'Artifactのsource Runが変更されました', 'conflict');
+          throw new DomainError({
+            status: 409,
+            code: 'conflict',
+            message: 'the source run of the artifact has changed',
+          });
         await requireNonconflictingArtifactPath(connection, location);
       },
     });
@@ -148,7 +152,11 @@ export class MlflowMultipartUploadService {
     // Throwing keeps the session verifying; the finalizer retries and finally marks it failed.
     const { runId } = await requireArtifactOwner(connection, access, { write: true, lock: true });
     if (runId !== upload.runId)
-      throw new DomainError(409, 'Artifactのsource Runが変更されました', 'conflict');
+      throw new DomainError({
+        status: 409,
+        code: 'conflict',
+        message: 'the source run of the artifact has changed',
+      });
     await requireNonconflictingArtifactPath(connection, access);
     await replaceArtifactPath(connection, { ...access, artifact, runId });
     if (owner.kind === 'run') {
@@ -190,13 +198,17 @@ export class MlflowMultipartUploadService {
       if (session?.status === 'completed') return;
       if (session?.status === 'failed') throw finalizeFailure(session.error);
       if (session?.status !== 'verifying')
-        throw new DomainError(409, 'このupload sessionは完了できません', 'upload_not_open');
+        throw new DomainError({
+          status: 409,
+          code: 'upload_not_open',
+          message: 'this upload session cannot be completed',
+        });
       if (Date.now() >= deadline)
-        throw new DomainError(
-          503,
-          'Artifactの検証が続いています。完了後に一覧へ表示されます',
-          'upload_finalize_pending',
-        );
+        throw new DomainError({
+          status: 503,
+          code: 'upload_finalize_pending',
+          message: 'the artifact is still being verified; it appears in the list when done',
+        });
       await delay(FINALIZE_POLL_MS);
     }
   }
@@ -205,7 +217,11 @@ export class MlflowMultipartUploadService {
 function writableLocation<T extends MultipartAccess>(request: T): T & { owner: WritableOwner } {
   const owner = validateArtifactOwner(request.owner);
   if (owner.kind === 'model-version')
-    throw new DomainError(409, '登録モデルバージョンのArtifactは変更できません', 'conflict');
+    throw new DomainError({
+      status: 409,
+      code: 'conflict',
+      message: 'artifacts of a registered model version cannot be changed',
+    });
   return { ...request, owner: { kind: owner.kind, id: owner.id } };
 }
 
@@ -220,23 +236,39 @@ function assertSessionTarget(upload: ArtifactUploadRecord, location: ArtifactLoc
     upload.ownerId !== location.owner.id ||
     upload.path !== nativeArtifactPath(location)
   )
-    throw new DomainError(
-      422,
-      'upload_idと保存先のArtifactパスが一致しません',
-      'invalid_parameter_value',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'invalid_request',
+      message: 'upload_id does not match the destination artifact path',
+    });
 }
 
 function finalizeFailure(error: string | null): DomainError {
   switch (error) {
     case 'size_mismatch':
     case 'sha256_mismatch':
-      return new DomainError(422, '受け取ったpartを結合した内容を検証できませんでした', error);
+      return new DomainError({
+        status: 422,
+        code: error,
+        message: 'the combined content of the received parts could not be verified',
+      });
     case 'part_too_small':
-      return new DomainError(422, '最後以外のpartが保存先の最小サイズ未満です', error);
+      return new DomainError({
+        status: 422,
+        code: error,
+        message: 'a part other than the last is smaller than the minimum part size of the storage',
+      });
     case 'run_deleted':
-      return new DomainError(409, '削除済みRunにはArtifactを登録できません', error);
+      return new DomainError({
+        status: 409,
+        code: error,
+        message: 'artifacts cannot be registered to a deleted run',
+      });
     default:
-      return new DomainError(503, 'Artifactの登録に失敗しました', 'artifact_save_failed');
+      return new DomainError({
+        status: 503,
+        code: 'artifact_save_failed',
+        message: 'failed to register the artifact',
+      });
   }
 }

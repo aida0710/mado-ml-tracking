@@ -28,7 +28,7 @@ export function genericErrorsOf(route: NativeRoute): RouteError[] {
   // An SSO user's API token stops when the user's group sync is older than the allowed age.
   else if (access.kind !== 'public') errors.push(...routeError(401, 'identity_sync_required'));
   if (access.kind === 'signedIn' || access.kind === 'project' || access.kind === 'globalAdmin')
-    errors.push(...routeError(403, 'insufficient_scope'));
+    errors.push(...routeError(403, 'scope_required'));
   // project_archived: an archived Project opened by one of its members or a global administrator.
   if (access.kind === 'project')
     errors.push(
@@ -39,7 +39,7 @@ export function genericErrorsOf(route: NativeRoute): RouteError[] {
   if (access.kind === 'worker') errors.push(...routeError(403, 'worker_token_required'));
   if (access.kind === 'launcher') errors.push(...routeError(403, 'launcher_token_required'));
   if (access.kind === 'apiToken')
-    errors.push(...routeError(403, 'api_token_required', 'insufficient_scope'));
+    errors.push(...routeError(403, 'api_token_required', 'scope_required'));
   if (access.kind !== 'public' && jobTokenAccess(route) !== 'read')
     errors.push(...routeError(403, 'job_token_forbidden'));
   if (route.method !== 'get')

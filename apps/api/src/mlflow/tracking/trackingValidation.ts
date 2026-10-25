@@ -30,10 +30,10 @@ const INT64_MAX = (1n << 63n) - 1n;
 const INT64_MIN = -(1n << 63n);
 
 export function invalidParameter(message: string): never {
-  throw new DomainError(400, message, 'invalid_parameter_value');
+  throw new DomainError({ status: 400, code: 'invalid_request', message });
 }
 export function unsupported(message: string): never {
-  throw new DomainError(422, message, 'not_implemented');
+  throw new DomainError({ status: 422, code: 'not_implemented', message });
 }
 
 export const integerSchema = z
@@ -50,7 +50,7 @@ export const int64Schema = z
     } catch {
       return false;
     }
-  }, 'int64の範囲外です')
+  }, 'out of the int64 range')
   .transform(serializeInt64);
 export const experimentIdSchema = z.union([uuidSchema, z.literal('0')]);
 // MLflow keys allow paths, spaces and Unicode, but paths cannot escape or normalize differently.
@@ -63,7 +63,7 @@ export const trackingKeySchema = z
       /^[\p{L}\p{N}_ .\-/]+$/u.test(key) &&
       !key.startsWith('/') &&
       key.split('/').every((part) => part !== '' && part !== '.' && part !== '..'),
-    'keyの形式が不正です',
+    'invalid key format',
   );
 export const tagSchema = z.strictObject({
   key: trackingKeySchema,
@@ -90,11 +90,11 @@ export function withRunReference<T extends z.ZodRawShape>(schema: z.ZodObject<T>
     .refine((input) => {
       const reference = input as { run_id?: string; run_uuid?: string };
       return !!(reference.run_id || reference.run_uuid);
-    }, 'run_idが必要です')
+    }, 'run_id is required')
     .refine((input) => {
       const reference = input as { run_id?: string; run_uuid?: string };
       return !reference.run_id || !reference.run_uuid || reference.run_id === reference.run_uuid;
-    }, 'run_idとrun_uuidが一致しません');
+    }, 'run_id and run_uuid do not match');
 }
 export const runReferenceSchema = withRunReference(z.strictObject({}));
 export function runId(input: { run_id?: string; run_uuid?: string }): string {
@@ -150,7 +150,7 @@ export const logBatchSchema = z
   })
   .refine(
     (batch) => batch.metrics.length + batch.params.length + batch.tags.length <= MAX_BATCH_ENTITIES,
-    'batchの項目数が上限を超えています',
+    'the batch has more items than the limit',
   );
 export const datasetSchema = z.strictObject({
   name: z.string().min(1).max(MAX_DATASET_NAME_LENGTH),

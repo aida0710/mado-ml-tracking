@@ -26,14 +26,14 @@ export class RegisteredModelService {
   constructor(private readonly database: Database) {}
 
   async create(principal: Principal, projectId: string, input: CreateRegisteredModel) {
-    if (input.deployment_job_id) unsupported('deployment job連携は対応していません');
+    if (input.deployment_job_id) unsupported('deployment jobs are not supported');
     try {
       return await transaction(this.database, async (connection) => {
         await requireModelsWrite(connection, { principal, projectId });
         const tags = keyValueMap(input.tags);
         const family = tags['mmt.model_family'] ?? 'mlflow';
         if (!family || family.length > MAX_MODEL_NAME_LENGTH)
-          invalidParameter('mmt.model_familyが不正です');
+          invalidParameter('invalid mmt.model_family');
         const existing = await first<RegisteredModelRecord>(
           connection,
           `SELECT m.*,mm.deleted_at FROM models m LEFT JOIN mlflow_registered_model_metadata mm ON mm.model_id=m.id
@@ -41,14 +41,14 @@ export class RegisteredModelService {
           [projectId, input.name],
         );
         if (existing && !existing.deletedAt)
-          throw new DomainError(
-            409,
-            '同じ名前のModelが既に登録されています',
-            'resource_already_exists',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'already_exists',
+            message: 'a model with the same name is already registered',
+          });
         if (existing) {
           if (tags['mmt.model_family'] && family !== existing.family)
-            conflict('再作成時もnative Modelの系列を維持してください');
+            conflict('keep the family of the native model when recreating it');
           await connection.query('UPDATE models SET description=$2 WHERE id=$1', [
             existing.id,
             input.description,
@@ -78,11 +78,11 @@ export class RegisteredModelService {
       });
     } catch (error) {
       if ((error as { code?: string }).code === '23505')
-        throw new DomainError(
-          409,
-          '同じ名前のModelが既に登録されています',
-          'resource_already_exists',
-        );
+        throw new DomainError({
+          status: 409,
+          code: 'already_exists',
+          message: 'a model with the same name is already registered',
+        });
       throw error;
     }
   }
@@ -111,7 +111,7 @@ export class RegisteredModelService {
     projectId: string,
     reference: { name: string; description?: string; deployment_job_id?: string },
   ) {
-    if (reference.deployment_job_id) unsupported('deployment job連携は対応していません');
+    if (reference.deployment_job_id) unsupported('deployment jobs are not supported');
     return mutateRegisteredModel(
       this.database,
       { principal, projectId, name: reference.name },
@@ -188,7 +188,7 @@ export class RegisteredModelService {
       { principal, projectId, name: reference.name },
       async (connection, model) => {
         if (reference.key === 'mmt.model_family' && reference.value !== model.family)
-          conflict('mmt.model_familyはnative Modelの系列と一致する値だけを設定できます');
+          conflict('mmt.model_family can only be set to the family of the native model');
         await this.touchMetadata(connection, model);
         if (reference.value === undefined)
           await connection.query(
@@ -265,7 +265,7 @@ export class RegisteredModelService {
       'SELECT v.version FROM model_aliases a JOIN model_versions v ON v.id=a.version_id WHERE a.model_id=$1 AND a.alias=$2',
       [model.id, reference.alias],
     );
-    if (!resolved) notFound('Model alias');
+    if (!resolved) notFound('model alias');
     return modelVersionProtocol(
       await findModelVersion(this.database, {
         projectId,

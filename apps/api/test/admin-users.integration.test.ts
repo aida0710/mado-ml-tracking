@@ -289,7 +289,7 @@ describe.skipIf(!testDatabaseUrl)('全体管理者のユーザー管理（独立
         body,
       });
       expect(response.status).toBe(409);
-      expect(((await response.json()) as { code: string }).code).toBe('last_global_admin');
+      expect(((await response.json()) as { code: string }).code).toBe('last_active_admin');
     }
     // A disabled administrator does not count as a remaining administrator.
     const dormant = await createLocalUser(administrator.cookie, {

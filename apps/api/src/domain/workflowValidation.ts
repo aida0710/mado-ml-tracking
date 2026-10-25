@@ -24,17 +24,21 @@ export function validateWorkflowOrder(steps: WorkflowStepInput[]): void {
   const previousKeys = new Set<string>();
   for (const step of steps) {
     if (previousKeys.has(step.key))
-      throw new DomainError(422, 'ステップのkeyは重複できません', 'workflow_step_duplicate');
+      throw new DomainError({
+        status: 422,
+        code: 'workflow_step_duplicate',
+        message: 'step keys must be unique',
+      });
     const sourceKeys = step.inputs.flatMap((binding) =>
       binding.source.kind === 'step' ? [binding.source.stepKey] : [],
     );
     if (step.modelFromStepKey) sourceKeys.push(step.modelFromStepKey);
     if (sourceKeys.some((key) => !previousKeys.has(key)))
-      throw new DomainError(
-        422,
-        '入力は先に実行するステップの出力を指定してください',
-        'workflow_source_order',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'workflow_source_order',
+        message: 'an input must name an output of an earlier step',
+      });
     previousKeys.add(step.key);
   }
 }
@@ -49,11 +53,12 @@ export function validateQualityGateMetrics(steps: readonly WorkflowStepInput[]):
       gate.metric.startsWith(PREPROCESSING_METRIC_PREFIX) &&
       !knownPreprocessingMetrics.has(gate.metric)
     )
-      throw new DomainError(
-        422,
-        `前処理の指標「${gate.metric}」はありません。${PREPROCESSING_METRIC_PREFIX}で始まる指標は前処理のレポートから計算したものだけです`,
-        'workflow_quality_metric_unknown',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'workflow_quality_metric_unknown',
+        message: `there is no preprocessing metric "${gate.metric}"; metrics starting with ${PREPROCESSING_METRIC_PREFIX} are only those computed from preprocessing reports`,
+        details: { metric: gate.metric },
+      });
 }
 
 /** A step that takes its model from another needs that step's Task to register one. */
@@ -62,10 +67,11 @@ export function validateModelSources(steps: readonly WorkflowStep[]): void {
   for (const step of steps) {
     const modelSource = step.modelFromStepKey ? stepsByKey.get(step.modelFromStepKey) : undefined;
     if (modelSource && !modelSource.task.outputModel)
-      throw new DomainError(
-        422,
-        `モデルの入力元「${modelSource.name}」のTaskに、成功時に出力モデルを登録する設定がありません`,
-        'workflow_model_source_unregistered',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'workflow_model_source_unregistered',
+        message: `the task of model source "${modelSource.name}" does not register an output model on success`,
+        details: { modelSource: modelSource.name },
+      });
   }
 }

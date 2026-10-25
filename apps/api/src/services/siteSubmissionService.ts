@@ -74,14 +74,18 @@ const CANCELLATION_LIST_LIMIT = 1000;
 const TERMINAL_STATUSES = ['finished', 'failed', 'canceled'];
 
 function invalidSubmission(message: string): never {
-  throw new DomainError(409, message, 'invalid_submission');
+  throw new DomainError({ status: 409, code: 'invalid_submission', message });
 }
 
 // A manual submission is the requester's own act on a site, so it needs their own API token: a
 // browser session cannot run `mado-tracking submit`, and a Job token is the Job's, not theirs.
 function requireSubmitterToken(principal: Principal, scope: string): { tokenId: string } {
   if (principal.method !== 'token' || !principal.token || principal.token.job)
-    throw new DomainError(403, '本人のAPI tokenが必要です', 'api_token_required');
+    throw new DomainError({
+      status: 403,
+      code: 'api_token_required',
+      message: 'a personal API token is required',
+    });
   requireScope(principal, scope);
   return { tokenId: principal.token.id };
 }
@@ -241,11 +245,11 @@ export class SiteSubmissionService {
     return transaction(this.database, async (connection) => {
       const target = await this.manualTarget(connection, request.targetId);
       if (request.all && target.ownerUserId !== principal.user.id)
-        throw new DomainError(
-          403,
-          '全員のJobを投入できるのは、このコンピュータの所有者だけです',
-          'site_owner_required',
-        );
+        throw new DomainError({
+          status: 403,
+          code: 'site_owner_required',
+          message: 'only the owner of this computer can submit jobs of everyone',
+        });
       const holder = { tokenId, holderId: request.submitterId };
       await this.lockHolder(connection, holder);
       return this.claimSubmissions(connection, {
@@ -278,11 +282,11 @@ export class SiteSubmissionService {
   private async manualTarget(connection: Connection, targetId: string): Promise<ComputeTarget> {
     const target = await findSiteTarget(connection, targetId);
     if (target.submissionMode !== 'manual')
-      throw new DomainError(
-        422,
-        'このsiteはlauncherが投入します（手動投入のsiteではありません）',
-        'site_not_manual',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'site_not_manual',
+        message: 'a launcher submits jobs for this site (it is not a manual site)',
+      });
     return target;
   }
 
@@ -429,7 +433,11 @@ export class SiteSubmissionService {
       const settings = await findSiteSettings(connection, target.id);
       const jobShell = settings ? await findCurrentJobShell(connection, target.id) : undefined;
       if (!settings || !jobShell)
-        throw new DomainError(422, 'このコンピュータにはjob shellがありません', 'site_submission_unready');
+        throw new DomainError({
+          status: 422,
+          code: 'site_submission_unready',
+          message: 'this computer has no job shell',
+        });
       const requester = (await first<SiteSubmissionRequester>(
         connection,
         'SELECT u.id,u.email,u.username FROM runs r JOIN users u ON u.id=r.created_by WHERE r.id=$1',
@@ -489,7 +497,7 @@ export class SiteSubmissionService {
         [result.jobIds, holder.tokenId, holder.holderId],
       );
       if (jobs.length !== result.jobIds.length)
-        invalidSubmission('このlauncher（submit）が受け取ったJobではありません');
+        invalidSubmission('this job was not received by this launcher (submit)');
       for (const job of jobs)
         reported.push(
           result.outcome === 'submitted'
@@ -539,7 +547,7 @@ export class SiteSubmissionService {
         error: failed.error ?? 'siteのjob shellが投入に失敗しました',
       });
     if (job.status === 'claimed' && job.phase === 'submitted')
-      invalidSubmission('投入済みと報告されたJobを失敗にはできません');
+      invalidSubmission('a job reported as submitted cannot be failed');
     // A resend, or a Job that already ended or whose runner reports for itself.
     return job;
   }

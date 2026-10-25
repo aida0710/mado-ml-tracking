@@ -47,11 +47,12 @@ function requireUserAdministrator(principal: Principal): void {
   requireUserReader(principal);
   const missingScopes = TOKEN_SCOPES.filter((scope) => !holdsScope(principal, scope));
   if (missingScopes.length)
-    throw new DomainError(
-      403,
-      `ユーザーの変更には、すべてのscopeを持つtokenが必要です。足りないscope: ${missingScopes.join(', ')}`,
-      'insufficient_scope',
-    );
+    throw new DomainError({
+      status: 403,
+      code: 'scope_required',
+      message: `changing users requires a token with all scopes; missing scopes: ${missingScopes.join(', ')}`,
+      details: { scopes: missingScopes },
+    });
 }
 
 // SSO users get their global role and display name from the IdP at every login.
@@ -85,7 +86,11 @@ export class UserAdministrationService {
       const passwordHash = await this.hashTemporaryPassword(input.password);
       return transaction(this.options.database, async (connection) => {
         if (await isUsernameTaken(connection, input.username))
-          throw new DomainError(409, '同じユーザー名が既にあります', 'username_taken');
+          throw new DomainError({
+            status: 409,
+            code: 'username_taken',
+            message: 'a user with the same username already exists',
+          });
         const userId = await insertLocalUser(connection, {
           username: input.username,
           displayName: input.displayName,
@@ -112,7 +117,7 @@ export class UserAdministrationService {
       requireUserAdministrator(principal);
       return transaction(this.options.database, async (connection) => {
         const current = await lockAdminUser(connection, userId);
-        if (!current) notFound('User');
+        if (!current) notFound('user');
         const next = {
           status: patch.status ?? current.status,
           displayName: patch.displayName ?? current.displayName,
@@ -122,11 +127,11 @@ export class UserAdministrationService {
         // Order from the global admin invariant: the user's row first, then the admin lock.
         const activeAdminIds = await lockActiveGlobalAdminIds(connection);
         if (removesLastGlobalAdmin(activeAdminIds, { userId, ...next }))
-          throw new DomainError(
-            409,
-            '最後の有効な全体管理者は無効化・降格できません',
-            'last_global_admin',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'last_active_admin',
+            message: 'the last active global administrator cannot be disabled or demoted',
+          });
         await updateAdminUser(connection, { userId, ...next });
         // A Service Account disabled here reads the same as one disabled from Project settings.
         if (current.kind === 'service' && next.status !== current.status)
@@ -164,13 +169,13 @@ export class UserAdministrationService {
       const passwordHash = await this.options.passwordHasher.hash(temporaryPassword);
       await transaction(this.options.database, async (connection) => {
         const user = await lockAdminUser(connection, userId);
-        if (!user) notFound('User');
+        if (!user) notFound('user');
         if (!(await resetLocalPassword(connection, { userId, passwordHash })))
-          throw new DomainError(
-            422,
-            'ローカルアカウントを持たないユーザーのパスワードは再設定できません',
-            'local_account_required',
-          );
+          throw new DomainError({
+            status: 422,
+            code: 'local_credential_unavailable',
+            message: 'the password of a user without a local account cannot be reset',
+          });
         await revokeAllForUser(connection, userId);
         await writeAuditEvent(connection, { ...draft, outcome: 'success' });
       });
@@ -183,32 +188,32 @@ export class UserAdministrationService {
     next: Pick<AdminUser, 'status' | 'displayName' | 'isAdmin'>,
   ): void {
     if (isSsoUser(current) && next.isAdmin !== current.isAdmin)
-      throw new DomainError(
-        422,
-        'SSOユーザーの全体管理者権限はAuthentikのgroupで決まるため変更できません',
-        'admin_role_managed_by_sso',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'admin_role_managed_by_sso',
+        message: 'the global administrator permission of an SSO user is decided by Authentik groups and cannot be changed',
+      });
     if (isSsoUser(current) && next.displayName !== current.displayName)
-      throw new DomainError(
-        422,
-        'SSOユーザーの表示名はAuthentikから同期されるため変更できません',
-        'profile_managed_by_sso',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'profile_managed_by_sso',
+        message: 'the display name of an SSO user is synchronized from Authentik and cannot be changed',
+      });
     if (current.kind === 'service' && next.isAdmin)
-      throw new DomainError(
-        422,
-        'Service Accountは全体管理者にできません',
-        'service_account_admin_forbidden',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'service_account_admin_forbidden',
+        message: 'a service account cannot be a global administrator',
+      });
   }
 
   private async hashTemporaryPassword(password: string): Promise<string> {
     if (!isAcceptablePasswordLength(password))
-      throw new DomainError(
-        422,
-        '初回パスワードは12〜1024 byteにしてください',
-        'weak_password',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'weak_password',
+        message: 'the initial password must be 12 to 1024 bytes',
+      });
     return this.options.passwordHasher.hash(password);
   }
 

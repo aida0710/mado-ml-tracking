@@ -173,7 +173,7 @@ export function mergeSiteSettings(
 }
 
 function invalidSettings(message: string): never {
-  throw new DomainError(422, message, 'site_settings_invalid');
+  throw new DomainError({ status: 422, code: 'site_settings_invalid', message });
 }
 
 /**
@@ -185,24 +185,24 @@ export function validateSiteSettings(
   settings: SiteSettingsValues,
 ): void {
   if (target.submissionMode === 'automatic') {
-    if (!settings.launcherId) invalidSettings('自動投入のsiteには投入するlauncherが必要です');
-    if (!settings.connection) invalidSettings('自動投入のsiteには接続先（host）が必要です');
+    if (!settings.launcherId) invalidSettings('an automatic site requires a launcher to submit jobs');
+    if (!settings.connection) invalidSettings('an automatic site requires a host to connect to');
     if (!settings.connection.knownHosts.trim())
-      invalidSettings('接続先と経由するホストのknown_hostsが必要です');
+      invalidSettings('known_hosts of the host and the jump host are required');
     if (settings.accountMode === 'shared' && !settings.sharedAccount)
-      invalidSettings('共用アカウントのsiteにはアカウント名が必要です');
+      invalidSettings('a site with a shared account requires the account name');
     if (settings.accountMode === 'personal' && settings.sharedAccount)
-      invalidSettings('本人のアカウントで投入するsiteには共用アカウント名を入れません');
+      invalidSettings('a site that submits with personal accounts does not take a shared account name');
   } else {
     if (settings.launcherId || settings.connection || settings.sharedAccount)
-      invalidSettings('手動投入のsiteにはlauncher・接続先・共用アカウントを入れません');
+      invalidSettings('a manual site does not take a launcher, a host or a shared account');
     if (settings.accountMode !== 'personal')
-      invalidSettings('手動投入のsiteは投入した本人のアカウントで動きます（accountMode personal）');
+      invalidSettings('a manual site runs with the account of the person who submits (accountMode personal)');
   }
   if (settings.accountMode === 'shared' && !settings.workDirectory)
-    invalidSettings('共用アカウントのsiteには作業ディレクトリが必要です');
+    invalidSettings('a site with a shared account requires a working directory');
   if (settings.gpuAssignment === 'scheduler' && settings.leaseGpuIds.length)
-    invalidSettings('選んでよいGPUは、runnerがGPUを選ぶ（lease）siteだけに入れます');
+    invalidSettings('allowed GPUs can be set only for a site whose runner chooses GPUs (lease)');
 }
 
 // POST /targets and PATCH /targets/:id take a site's settings with the ComputeTarget fields.

@@ -330,7 +330,7 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独
       expect(audit[0].details).not.toContain(NEW_PASSWORD);
     });
 
-    it('現在のpasswordの誤りは401で、user単位の上限を超えると429になる', async () => {
+    it('現在のpasswordの誤りは400 incorrect_passwordで、user単位の上限を超えると429になる', async () => {
       const app = application('local');
       await createLocalUser('alice');
       const cookie = await sessionCookie(app, 'alice');
@@ -342,8 +342,8 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独
         });
       for (let count = 0; count < 10; count += 1) {
         const response = await attempt();
-        expect(response.status).toBe(401);
-        expect((await response.json()).code).toBe('invalid_credentials');
+        expect(response.status).toBe(400);
+        expect((await response.json()).code).toBe('incorrect_password');
       }
       const limited = await attempt();
       expect(limited.status).toBe(429);
@@ -372,7 +372,7 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独
         body: { currentPassword: PASSWORD, newPassword: NEW_PASSWORD },
       });
       expect(response.status).toBe(403);
-      expect((await response.json()).code).toBe('local_account_required');
+      expect((await response.json()).code).toBe('local_credential_unavailable');
     });
   });
 

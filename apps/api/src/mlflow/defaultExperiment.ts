@@ -28,7 +28,7 @@ export async function resolveExperimentId(
 ): Promise<string> {
   if (reference.id !== DEFAULT_EXPERIMENT_ID) return reference.id;
   const id = await findDefaultExperimentId(connection, reference.projectId);
-  if (!id) notFound('Default Experiment');
+  if (!id) notFound('default experiment');
   return id;
 }
 

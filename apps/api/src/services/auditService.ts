@@ -87,7 +87,7 @@ export class AuditService {
     };
     const cursor = filter.cursor && { id: filter.cursor, projectId: filter.projectId };
     if (cursor && !(await auditCursorExists(this.database, cursor)))
-      notFound('AuditEvent cursor');
+      notFound('audit event cursor');
     // Fetch one extra row to know whether another page exists without a count query.
     const events = await listAuditEvents(this.database, { ...filter, limit: filter.limit + 1 });
     const items = events.slice(0, filter.limit);

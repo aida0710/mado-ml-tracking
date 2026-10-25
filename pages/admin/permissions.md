@@ -121,7 +121,7 @@ Projectには、直接付与のAdminか、誰かがログインしたことの�
 
 API tokenで操作するときは、tokenのscopeと、tokenの所有者の現在の実効Roleの両方を確かめます。どちらかが足りなければ403です。
 
-- scopeが足りない: 403 `insufficient_scope`
+- scopeが足りない: 403 `scope_required`
 - Roleが足りない、またはtokenを限定したProjectと違う: 403 `project_forbidden`
 
 所有者をProjectから外すと、その人のtokenは次の要求からそのProjectで使えなくなります。scopeとRoleの対応は[API tokenとService Account](/admin/tokens)を参照してください。

@@ -5,9 +5,9 @@ import { DomainError } from './errors.js';
  * one, and it must come back under its own name. Shared by the native and MLflow APIs.
  */
 export function duplicateExperimentName(): never {
-  throw new DomainError(
-    409,
-    '同じ名前の実験が既にあります（削除した実験を含みます）。既存の実験を使うか、別の名前にしてください',
-    'resource_already_exists',
-  );
+  throw new DomainError({
+    status: 409,
+    code: 'already_exists',
+    message: 'an experiment with the same name already exists (including deleted experiments); use the existing experiment or choose another name',
+  });
 }

@@ -188,7 +188,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactのサイズ上限（独立PostgreSQL
     expect(response.status).toBe(413);
     expect(await response.json()).toEqual({
       error_code: 'RESOURCE_EXHAUSTED',
-      message: expect.stringContaining('上限'),
+      message: expect.stringContaining('size limit'),
     });
     expect(await remainingBlobs()).toEqual([]);
     expect(await artifactRowCount()).toBe(0);

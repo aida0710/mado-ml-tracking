@@ -81,18 +81,20 @@ export class ArtifactUploadService {
       throw artifactTooLargeError(this.limits.maxBytes);
     const partSize = input.partSize ?? DEFAULT_UPLOAD_PART_BYTES;
     if (partSize < MULTIPART_MIN_PART_BYTES || partSize > MULTIPART_MAX_PART_BYTES)
-      throw new DomainError(
-        422,
-        `partSizeは${MULTIPART_MIN_PART_BYTES}〜${MULTIPART_MAX_PART_BYTES} bytesにしてください`,
-        'invalid_part_size',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'invalid_part_size',
+        message: `partSize must be ${MULTIPART_MIN_PART_BYTES} to ${MULTIPART_MAX_PART_BYTES} bytes`,
+        details: { minBytes: MULTIPART_MIN_PART_BYTES, maxBytes: MULTIPART_MAX_PART_BYTES },
+      });
     const partCount = Math.ceil(input.expectedSize / partSize);
     if (partCount > MULTIPART_MAX_PART_COUNT)
-      throw new DomainError(
-        422,
-        `part数が上限${MULTIPART_MAX_PART_COUNT}を超えます。partSizeを大きくしてください`,
-        'too_many_parts',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'too_many_parts',
+        message: `the number of parts exceeds the limit of ${MULTIPART_MAX_PART_COUNT}; use a larger partSize`,
+        details: { limit: MULTIPART_MAX_PART_COUNT },
+      });
     if (input.runId) await assertRunAcceptsArtifacts(this.database, projectId, input.runId);
     const upload = await this.openSession(principal, projectId, {
       path: input.path,
@@ -125,11 +127,12 @@ export class ArtifactUploadService {
     await requireProject(this.database, principal, { projectId, ...PERMISSION });
     assertArtifactPath(input.path);
     if (input.partCount < 1 || input.partCount > MULTIPART_MAX_PART_COUNT)
-      throw new DomainError(
-        422,
-        `part数は1〜${MULTIPART_MAX_PART_COUNT}にしてください`,
-        'too_many_parts',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'too_many_parts',
+        message: `the number of parts must be 1 to ${MULTIPART_MAX_PART_COUNT}`,
+        details: { limit: MULTIPART_MAX_PART_COUNT },
+      });
     if (input.runId) await assertRunAcceptsArtifacts(this.database, projectId, input.runId);
     const partToken = randomBytes(PART_TOKEN_BYTES).toString('base64url');
     const upload = await this.openSession(principal, projectId, {
@@ -265,11 +268,12 @@ export class ArtifactUploadService {
     assertPartNumber(upload, part.partNumber);
     const size = expectedPartBytes(upload, part.partNumber);
     if (part.declaredBytes !== size)
-      throw new DomainError(
-        422,
-        `part ${part.partNumber}のContent-Lengthは${size} bytesにしてください`,
-        'part_size_mismatch',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'part_size_mismatch',
+        message: `Content-Length of part ${part.partNumber} must be ${size} bytes`,
+        details: { partNumber: part.partNumber, expectedBytes: size },
+      });
     return this.storePart(upload, { ...part, size });
   }
 
@@ -296,20 +300,26 @@ export class ArtifactUploadService {
     assertPartNumber(upload, part.partNumber);
     const size = part.declaredBytes;
     if (size === undefined)
-      throw new DomainError(422, 'partにはContent-Lengthが必要です', 'part_size_mismatch');
+      throw new DomainError({
+        status: 422,
+        code: 'part_size_mismatch',
+        message: 'a part requires Content-Length',
+      });
     if (size > MULTIPART_MAX_PART_BYTES)
-      throw new DomainError(
-        422,
-        `partは${MULTIPART_MAX_PART_BYTES} bytes以下にしてください`,
-        'invalid_part_size',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'invalid_part_size',
+        message: `a part must be ${MULTIPART_MAX_PART_BYTES} bytes or less`,
+        details: { maxBytes: MULTIPART_MAX_PART_BYTES },
+      });
     const isFinalPart = part.partNumber === upload.partCount;
     if (!isFinalPart && size < MULTIPART_MIN_PART_BYTES)
-      throw new DomainError(
-        422,
-        `最後以外のpartは${MULTIPART_MIN_PART_BYTES} bytes以上にしてください`,
-        'part_too_small',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'part_too_small',
+        message: `parts other than the last must be ${MULTIPART_MIN_PART_BYTES} bytes or more`,
+        details: { minBytes: MULTIPART_MIN_PART_BYTES },
+      });
     // Every non-final part has the client's chunk size, so this is a lower bound of the total.
     if (!isFinalPart && size * (upload.partCount - 1) > this.limits.maxBytes)
       throw artifactTooLargeError(this.limits.maxBytes);
@@ -384,11 +394,12 @@ export class ArtifactUploadService {
       );
       const missing = upload.partCount - received!.count;
       if (missing > 0)
-        throw new DomainError(
-          409,
-          `受け取っていないpartが${missing}件あります`,
-          'upload_incomplete',
-        );
+        throw new DomainError({
+          status: 409,
+          code: 'upload_incomplete',
+          message: `${missing} parts have not been received`,
+          details: { missingParts: missing },
+        });
       return publicArtifactUpload(
         (await first<ArtifactUploadRecord>(
           connection,
@@ -429,11 +440,12 @@ export class ArtifactUploadService {
       const received = await listArtifactUploadParts(connection, upload.id);
       const missing = upload.partCount - received.length;
       if (missing > 0)
-        throw new DomainError(
-          409,
-          `受け取っていないpartが${missing}件あります`,
-          'upload_incomplete',
-        );
+        throw new DomainError({
+          status: 409,
+          code: 'upload_incomplete',
+          message: `${missing} parts have not been received`,
+          details: { missingParts: missing },
+        });
       assertReportedParts(received, input.parts);
       const totalBytes = received.reduce((total, part) => total + part.size, 0);
       if (totalBytes > this.limits.maxBytes) throw artifactTooLargeError(this.limits.maxBytes);
@@ -509,11 +521,11 @@ export class ArtifactUploadService {
   private multipartStore(backend: ArtifactBackend): ArtifactMultipartStore {
     const multipart = this.stores.multipart(backend);
     if (!multipart)
-      throw new DomainError(
-        422,
-        'このArtifact保存先は再開可能なuploadに対応していません',
-        'multipart_unsupported',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'multipart_unsupported',
+        message: 'this artifact storage does not support resumable uploads',
+      });
     return multipart;
   }
 }
@@ -539,18 +551,18 @@ async function loadOwnUpload(
   await requireProject(connection, principal, { projectId: reference.projectId, ...PERMISSION });
   const upload = await findArtifactUpload(connection, reference);
   // Each session is completed through the API that opened it; the other API does not see it.
-  if ((upload.ownerKind !== null) !== (reference.protocol === 'mlflow')) notFound('Upload session');
+  if ((upload.ownerKind !== null) !== (reference.protocol === 'mlflow')) notFound('upload session');
   const credential = uploadCredential(principal);
   if (
     upload.createdByUserId !== principal.user.id ||
     upload.createdByTokenId !== credential.apiTokenId ||
     upload.createdByJobTokenId !== credential.jobTokenId
   )
-    throw new DomainError(
-      403,
-      'このupload sessionは作成したユーザーと認証情報だけが使えます',
-      'upload_forbidden',
-    );
+    throw new DomainError({
+      status: 403,
+      code: 'upload_forbidden',
+      message: 'only the user and the credential that created this upload session can use it',
+    });
   return upload;
 }
 
@@ -564,28 +576,37 @@ async function findTokenUpload(
   reference: { projectId: string; id: string; partToken: string | undefined },
 ): Promise<ArtifactUploadRecord> {
   if (!reference.partToken)
-    throw new DomainError(401, 'upload tokenが必要です', 'upload_token_required');
+    throw new DomainError({
+      status: 401,
+      code: 'upload_token_required',
+      message: 'an upload token is required',
+    });
   const upload = await first<ArtifactUploadRecord & { partTokenHash: string | null }>(
     connection,
     `SELECT ${artifactUploadColumns},part_token_hash FROM artifact_uploads
     WHERE project_id=$1 AND id=$2`,
     [reference.projectId, reference.id],
   );
-  if (!upload) notFound('Upload session');
+  if (!upload) notFound('upload session');
   const presented = Buffer.from(hashPartToken(reference.partToken), 'hex');
   const stored = Buffer.from(upload.partTokenHash ?? '', 'hex');
   if (stored.length !== presented.length || !timingSafeEqual(stored, presented))
-    throw new DomainError(
-      403,
-      'このupload sessionのupload tokenではありません',
-      'upload_forbidden',
-    );
+    throw new DomainError({
+      status: 403,
+      code: 'upload_forbidden',
+      message: 'the upload token is not for this upload session',
+    });
   return upload;
 }
 
 function assertPartNumber(upload: ArtifactUploadRecord, partNumber: number): void {
   if (partNumber > upload.partCount)
-    throw new DomainError(422, `part番号は1〜${upload.partCount}です`, 'invalid_part_number');
+    throw new DomainError({
+      status: 422,
+      code: 'invalid_part_number',
+      message: `part numbers are 1 to ${upload.partCount}`,
+      details: { partCount: upload.partCount },
+    });
 }
 
 /** A reported part whose digest differs was replaced after the client sent it. */
@@ -596,29 +617,47 @@ function assertReportedParts(
   const stored = new Map(received.map((part) => [part.partNumber, part.sha256]));
   const reportedNumbers = new Set(reported.map((part) => part.partNumber));
   if (reportedNumbers.size !== reported.length || reportedNumbers.size !== stored.size)
-    throw new DomainError(422, 'partsは全partを1件ずつ指定してください', 'invalid_parts');
+    throw new DomainError({
+      status: 422,
+      code: 'invalid_parts',
+      message: 'list every part exactly once in parts',
+    });
   for (const part of reported) {
     const sha256 = stored.get(part.partNumber);
     if (sha256 === undefined)
-      throw new DomainError(422, `part ${part.partNumber}は受け取っていません`, 'invalid_parts');
+      throw new DomainError({
+        status: 422,
+        code: 'invalid_parts',
+        message: `part ${part.partNumber} has not been received`,
+        details: { partNumber: part.partNumber },
+      });
     if (part.sha256 !== null && part.sha256 !== sha256)
-      throw new DomainError(
-        409,
-        `part ${part.partNumber}は送信後に置き換えられています`,
-        'part_replaced',
-      );
+      throw new DomainError({
+        status: 409,
+        code: 'part_replaced',
+        message: `part ${part.partNumber} was replaced after it was sent`,
+        details: { partNumber: part.partNumber },
+      });
   }
 }
 
 function uploadNotOpenError(): DomainError {
-  return new DomainError(409, 'このupload sessionはpartを受け付けていません', 'upload_not_open');
+  return new DomainError({
+    status: 409,
+    code: 'upload_not_open',
+    message: 'this upload session does not accept parts',
+  });
 }
 
 function assertAcceptsParts(upload: ArtifactUploadRecord): void {
   if (upload.status !== 'open') throw uploadNotOpenError();
   // The sweeper marks expired sessions periodically; until then the deadline still applies.
   if (new Date(upload.expiresAt) <= new Date())
-    throw new DomainError(409, 'upload sessionの期限が切れています', 'upload_expired');
+    throw new DomainError({
+      status: 409,
+      code: 'upload_expired',
+      message: 'the upload session has expired',
+    });
 }
 
 async function assertRunAcceptsArtifacts(
@@ -627,17 +666,33 @@ async function assertRunAcceptsArtifacts(
   runId: string,
 ): Promise<void> {
   const stage = await runLifecycleStage(connection, { projectId, runId });
-  if (!stage) throw new DomainError(404, 'Runが見つかりません', 'not_found');
+  if (!stage) throw new DomainError({ status: 404, code: 'not_found', message: 'run not found' });
   if (stage === 'deleted')
-    throw new DomainError(409, '削除済みRunにはArtifactを登録できません', 'run_deleted');
+    throw new DomainError({
+      status: 409,
+      code: 'run_deleted',
+      message: 'artifacts cannot be registered to a deleted run',
+    });
 }
 
 function partFailure(error: unknown): Error {
   if (error instanceof DomainError) return error;
   if (error instanceof ArtifactPartMismatchError)
     return error.mismatch === 'size'
-      ? new DomainError(422, 'partの長さがContent-Lengthと一致しません', 'part_size_mismatch')
-      : new DomainError(422, 'partのSHA-256が一致しません', 'part_checksum_mismatch');
+      ? new DomainError({
+        status: 422,
+        code: 'part_size_mismatch',
+        message: 'the part length does not match Content-Length',
+      })
+      : new DomainError({
+        status: 422,
+        code: 'part_checksum_mismatch',
+        message: 'the SHA-256 of the part does not match',
+      });
   if (error instanceof ArtifactUploadNotFoundError) return uploadNotOpenError();
-  return new DomainError(503, 'partの保存に失敗しました', 'artifact_save_failed');
+  return new DomainError({
+    status: 503,
+    code: 'artifact_save_failed',
+    message: 'failed to save the part',
+  });
 }

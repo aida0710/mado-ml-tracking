@@ -61,12 +61,12 @@ function unquote(literal: string): string {
 
 function readValueList(filter: string, offset: number): { values: string[]; end: number } {
   if (!readPattern(LIST_START_PATTERN, filter, offset))
-    invalidParameter('IN/NOT INには括弧で囲んだ値一覧が必要です');
+    invalidParameter('IN and NOT IN require a list of values in parentheses');
   const values: string[] = [];
   let position = LIST_START_PATTERN.lastIndex;
   for (;;) {
     const item = readPattern(LIST_ITEM_PATTERN, filter, position);
-    if (!item) invalidParameter('IN/NOT INの値一覧は引用符付きの文字列をカンマで区切ってください');
+    if (!item) invalidParameter('separate the values of IN and NOT IN with commas, as quoted strings');
     values.push(unquote(item[1]!));
     position = LIST_ITEM_PATTERN.lastIndex;
     if (item[2] === ')') return { values, end: position };
@@ -77,7 +77,7 @@ function compileListComparison(
   input: ComparisonInput & { operator: InListOperator },
 ): CompiledComparison {
   if (!input.field.acceptsInList)
-    invalidParameter('IN/NOT INはModel versionの文字列属性だけに対応しています');
+    invalidParameter('IN and NOT IN are supported only for string attributes of model versions');
   const list = readValueList(input.filter, input.offset);
   return {
     sql: inClauseSql({
@@ -91,7 +91,7 @@ function compileListComparison(
 
 function compileValueComparison(input: ComparisonInput & { operator: string }): CompiledComparison {
   const match = readPattern(LITERAL_PATTERN, input.filter, input.offset);
-  if (!match) invalidParameter('検索filterの構文に対応していません');
+  if (!match) invalidParameter('unsupported search filter syntax');
   const { field, operator } = input;
   const literal = match[1]!;
   const isQuoted = literal.startsWith("'") || literal.startsWith('"');
@@ -105,7 +105,7 @@ function compileValueComparison(input: ComparisonInput & { operator: string }): 
         ['LIKE', 'ILIKE'].includes(operator)
       : !isQuoted || !['=', '!=', 'LIKE', 'ILIKE'].includes(operator)
   ) {
-    invalidParameter('検索fieldの型と比較演算子が一致しません');
+    invalidParameter('the type of the search field does not match the comparison operator');
   }
   // Preserve integer precision; PostgreSQL infers the numeric type from the compared field.
   const valueParameter = input.parameters.add(value);
@@ -127,7 +127,7 @@ export function compileFilter(input: {
   const comparisons: string[] = [];
   while (offset < input.filter.length) {
     const clause = readPattern(FIELD_AND_OPERATOR_PATTERN, input.filter, offset);
-    if (!clause) invalidParameter('検索filterの構文に対応していません');
+    if (!clause) invalidParameter('unsupported search filter syntax');
     const comparisonInput: ComparisonInput = {
       filter: input.filter,
       offset: FIELD_AND_OPERATOR_PATTERN.lastIndex,
@@ -144,9 +144,9 @@ export function compileFilter(input: {
     const remainder = input.filter.slice(offset);
     if (!remainder.trim()) break;
     const separator = /^\s+AND\s+/i.exec(remainder);
-    if (!separator) invalidParameter('検索filterはANDによる条件指定に対応しています');
+    if (!separator) invalidParameter('search filters support only conditions combined with AND');
     offset += separator[0].length;
-    if (offset === input.filter.length) invalidParameter('ANDの後に検索条件が必要です');
+    if (offset === input.filter.length) invalidParameter('a search condition is required after AND');
   }
   return comparisons.join(' AND ');
 }
@@ -157,6 +157,6 @@ export function splitSearchField(field: string): { kind: string; key: string } {
   const kind = field.slice(0, separator);
   const rawKey = field.slice(separator + 1);
   const key = /^[`'"]/.test(rawKey) ? rawKey.slice(1, -1) : rawKey;
-  if (!key) invalidParameter('検索keyが空です');
+  if (!key) invalidParameter('empty search key');
   return { kind, key };
 }

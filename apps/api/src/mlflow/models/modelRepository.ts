@@ -33,7 +33,7 @@ export async function findLoggedModel(
       WHERE l.project_id=$1 AND l.id=$2 AND e.lifecycle_stage='active' FOR SHARE OF e`,
       [reference.projectId, reference.id],
     );
-    if (!experiment) notFound('LoggedModel');
+    if (!experiment) notFound('logged model');
     if (experiment.sourceRunId) {
       // Match Tracking and Artifact's source Run -> model order before native INSERT takes
       // its source Run FK lock. Taking a Run lock after the model can deadlock with outputs.
@@ -49,7 +49,7 @@ export async function findLoggedModel(
       WHERE l.project_id=$1 AND l.id=$2 ${reference.allowDeleted ? '' : "AND l.deleted_at IS NULL AND e.lifecycle_stage='active'"} ${reference.lock ? 'FOR UPDATE OF l' : ''}`,
     [reference.projectId, reference.id],
   );
-  if (!model) notFound('LoggedModel');
+  if (!model) notFound('logged model');
   return model;
 }
 
@@ -62,7 +62,7 @@ export async function findRegisteredModel(
     `${registeredModelSelect} WHERE m.project_id=$1 AND m.name=$2 AND mm.deleted_at IS NULL ${reference.lock ? 'FOR UPDATE OF m' : ''}`,
     [reference.projectId, reference.name],
   );
-  if (!model) notFound('RegisteredModel');
+  if (!model) notFound('registered model');
   return model;
 }
 
@@ -75,7 +75,7 @@ export async function findModelVersion(
     `${modelVersionSelect} WHERE v.project_id=$1 AND m.name=$2 AND v.version=$3 AND vm.deleted_at IS NULL AND mm.deleted_at IS NULL`,
     [reference.projectId, reference.name, reference.version],
   );
-  if (!version) notFound('ModelVersion');
+  if (!version) notFound('model version');
   return version;
 }
 

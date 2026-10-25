@@ -19,7 +19,7 @@ interface EncodedCursor {
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function invalidCursor(message: string): never {
-  throw new DomainError(400, message, 'invalid_cursor');
+  throw new DomainError({ status: 400, code: 'invalid_cursor', message });
 }
 
 /**
@@ -43,16 +43,16 @@ export function decodeRunSearchCursor(
   try {
     cursor = JSON.parse(Buffer.from(token, 'base64url').toString('utf8')) as EncodedCursor;
   } catch {
-    invalidCursor('cursorが不正です');
+    invalidCursor('invalid cursor');
   }
-  if (typeof cursor !== 'object' || cursor === null) invalidCursor('cursorが不正です');
+  if (typeof cursor !== 'object' || cursor === null) invalidCursor('invalid cursor');
   if (cursor.conditions !== expected.fingerprint || cursor.mode !== expected.mode)
-    invalidCursor('cursorが検索条件と一致しません。最初のページから検索し直してください');
+    invalidCursor('the cursor does not match the search conditions; search again from the first page');
   if (cursor.mode === 'keyset') {
     if (typeof cursor.afterRunId !== 'string' || !UUID_PATTERN.test(cursor.afterRunId))
-      invalidCursor('cursorが不正です');
+      invalidCursor('invalid cursor');
     return { mode: 'keyset', afterRunId: cursor.afterRunId };
   }
-  if (!Number.isSafeInteger(cursor.offset) || cursor.offset! < 0) invalidCursor('cursorが不正です');
+  if (!Number.isSafeInteger(cursor.offset) || cursor.offset! < 0) invalidCursor('invalid cursor');
   return { mode: 'offset', offset: cursor.offset! };
 }

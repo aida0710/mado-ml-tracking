@@ -26,9 +26,9 @@ export function appendParameters(
   );
   for (const { key, value } of entries) {
     if (Object.hasOwn(run.parameters, key) && !matchesParameter(run.parameters[key]!, value))
-      invalidParameter(`paramは不変です: ${key}`);
+      invalidParameter(`params are immutable: ${key}`);
     if (Object.hasOwn(parameters, key)) {
-      if (!matchesParameter(parameters[key]!, value)) invalidParameter(`paramは不変です: ${key}`);
+      if (!matchesParameter(parameters[key]!, value)) invalidParameter(`params are immutable: ${key}`);
       continue;
     }
     parameters[key] = value;

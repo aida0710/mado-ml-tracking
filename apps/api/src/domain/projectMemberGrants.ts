@@ -15,7 +15,11 @@ export function initialMemberGrants(
   for (const { userId } of grants) {
     const key = userId.toLowerCase();
     if (listed.has(key))
-      throw new DomainError(400, '同じユーザーが2回指定されています', 'duplicate_project_member');
+      throw new DomainError({
+        status: 400,
+        code: 'duplicate_project_member',
+        message: 'the same user is specified twice',
+      });
     listed.add(key);
   }
   return grants.filter((grant) => grant.userId.toLowerCase() !== creatorId.toLowerCase());
@@ -32,12 +36,12 @@ export function assertGrantableUsers(
   const usersById = new Map(users.map((user) => [user.id.toLowerCase(), user]));
   for (const { userId } of grants) {
     const user = usersById.get(userId.toLowerCase());
-    if (!user) notFound('User');
+    if (!user) notFound('user');
     if (user.kind !== 'human' || user.status !== 'active')
-      throw new DomainError(
-        400,
-        'メンバーに追加できるのは有効な利用者だけです',
-        'invalid_project_member',
-      );
+      throw new DomainError({
+        status: 400,
+        code: 'invalid_project_member',
+        message: 'only active users can be added as members',
+      });
   }
 }

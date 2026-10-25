@@ -10,6 +10,7 @@ import {
   MAX_HOOK_CHECKPOINT_EVERY,
   MAX_HOOK_MAX_STARTS_PER_HOUR,
   MAX_JOB_ARRAY_SIZE,
+  type ApiErrorDetails,
   type HookFilter,
 } from '@mmt/contracts';
 import { DomainError } from './errors.js';
@@ -143,28 +144,31 @@ export type HookJobTemplateInput = z.infer<typeof hookJobTemplateSchema>;
 export type HookExecutionQuery = z.infer<typeof hookExecutionQuerySchema>;
 export type ChildJobCreateInput = z.infer<typeof childJobCreateSchema>;
 
-function invalidHook(message: string): never {
-  throw new DomainError(422, message, 'invalid_request');
+function invalidHook(message: string, details?: ApiErrorDetails): never {
+  throw new DomainError({ status: 422, code: 'invalid_request', message, details });
 }
 
 /** Settings that depend on each other; the schema checks each field alone. */
 export function validateHookSettings(input: HookCreateInput): void {
   if ((input.trigger === 'webhook') !== (input.webhookSignature !== undefined))
-    invalidHook('webhookSignatureはtriggerがwebhookのときだけ指定します');
+    invalidHook('webhookSignature can be set only when trigger is webhook');
   if ((input.checkpointMode === 'every_k') !== (input.checkpointEvery !== null))
-    invalidHook('checkpointEveryはcheckpointModeがevery_kのときだけ指定します');
+    invalidHook('checkpointEvery can be set only when checkpointMode is every_k');
   if (input.trigger !== 'checkpoint_saved' && input.checkpointMode !== 'every')
-    invalidHook('checkpointModeはtriggerがcheckpoint_savedのときだけ指定します');
+    invalidHook('checkpointMode can be set only when trigger is checkpoint_saved');
   // The registered version is the input; a fixed one would silently be ignored.
   if (input.trigger === 'model_registered' && input.template.modelVersionId !== null)
-    invalidHook('model_registeredのフックでは、登録されたバージョンを使うのでmodelVersionIdを指定しません');
+    invalidHook('a model_registered hook uses the registered version, so do not set modelVersionId');
   if (input.template.datasetPartitionVersionId && input.template.arraySize === null)
-    invalidHook('datasetPartitionVersionIdはarraySizeと一緒に指定します');
+    invalidHook('set datasetPartitionVersionId together with arraySize');
   // A condition on a fact the trigger's event does not have would never match.
   const allowed = HOOK_FILTER_FIELDS[input.trigger];
   const unusable = (Object.keys(input.filter) as (keyof HookFilter)[]).filter(
     (field) => input.filter[field] !== undefined && !allowed.includes(field),
   );
   if (unusable.length)
-    invalidHook(`trigger ${input.trigger}では絞り込みに${unusable.join('・')}を使えません`);
+    invalidHook(`trigger ${input.trigger} cannot filter by ${unusable.join(', ')}`, {
+      trigger: input.trigger,
+      fields: unusable,
+    });
 }

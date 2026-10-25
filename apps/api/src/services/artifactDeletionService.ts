@@ -21,19 +21,20 @@ import { auditActor, NO_REQUEST_METADATA, recordDenial } from './auditService.js
 export const ARTIFACT_DELETE_PERMISSION = { role: 'admin', scope: 'artifacts:write' } as const;
 
 const referenceLabels: Record<ArtifactReferenceKind, string> = {
-  model_version: '登録モデルバージョン',
-  code_version: 'CodeVersion',
-  dataset_version: 'DatasetVersion',
-  checkpoint: '保持中のcheckpoint',
-  preprocessing_report: '前処理のレポート',
+  model_version: 'registered model versions',
+  code_version: 'code versions',
+  dataset_version: 'dataset versions',
+  checkpoint: 'retained checkpoints',
+  preprocessing_report: 'preprocessing reports',
 };
 
 function artifactInUse(kinds: ArtifactReferenceKind[]): never {
-  throw new DomainError(
-    409,
-    `${kinds.map((kind) => referenceLabels[kind]).join('・')}から参照されているため削除できません`,
-    'artifact_in_use',
-  );
+  throw new DomainError({
+    status: 409,
+    code: 'artifact_in_use',
+    message: `the artifact cannot be deleted because it is referenced by ${kinds.map((kind) => referenceLabels[kind]).join(', ')}`,
+    details: { references: kinds },
+  });
 }
 
 type DeletionOrigin = 'native' | 'mlflow' | 'derived';
@@ -139,7 +140,7 @@ export class ArtifactDeletionService {
           projectId: location.projectId,
           artifactIds: [location.artifactId],
         });
-        if (!artifact) notFound('Artifact');
+        if (!artifact) notFound('artifact');
         const references = await findArtifactReferences(connection, {
           projectId: location.projectId,
           artifactIds: [artifact.id],

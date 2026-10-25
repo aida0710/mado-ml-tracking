@@ -88,7 +88,7 @@ export class RegistryService {
       `${modelSelect} WHERE m.project_id=$1 AND m.id=$2`,
       [projectId, modelId],
     );
-    if (!model) notFound('Model');
+    if (!model) notFound('model');
     return model;
   }
 
@@ -114,7 +114,7 @@ export class RegistryService {
           'UPDATE models SET description=COALESCE($3,description) WHERE project_id=$1 AND id=$2 RETURNING id',
           [projectId, modelId, input.description ?? null],
         );
-        if (!updated) notFound('Model');
+        if (!updated) notFound('model');
         await writeAuditEvent(connection, { ...draft, outcome: 'success' });
         return (await first<Model>(connection, `${modelSelect} WHERE m.id=$1`, [modelId]))!;
       }),
@@ -164,7 +164,7 @@ export class RegistryService {
       `${modelVersionSelect} WHERE v.project_id=$1 AND v.model_id=$2 AND v.id=$3`,
       [reference.projectId, reference.modelId, reference.versionId],
     );
-    if (!version) notFound('ModelVersion');
+    if (!version) notFound('model version');
     return version;
   }
 
@@ -221,7 +221,7 @@ export class RegistryService {
         'SELECT id FROM model_versions WHERE id=$1 AND project_id=$2 AND model_id=$3',
         [registration.versionId, projectId, registration.modelId],
       );
-      if (!version) notFound('ModelVersion');
+      if (!version) notFound('model version');
       await assignModelAlias(connection, {
         modelId: registration.modelId,
         alias: registration.alias,
@@ -258,7 +258,7 @@ export class RegistryService {
         reason: removal.reason,
         guard: manualAliasGuard(principal),
       });
-      if (!removed.length) notFound('Model alias');
+      if (!removed.length) notFound('model alias');
     });
   }
 
@@ -281,7 +281,7 @@ export class RegistryService {
         modelId: request.modelId,
       }))
     )
-      notFound('ModelAliasEvent cursor');
+      notFound('model alias event cursor');
     // Fetch one extra row to know whether another page exists without a count query.
     const events = await listModelAliasEvents(this.database, {
       modelId: request.modelId,
@@ -393,7 +393,7 @@ export class RegistryService {
       `${datasetSelect} WHERE d.project_id=$1 AND d.id=$2`,
       [projectId, datasetId],
     );
-    if (!dataset) notFound('Dataset');
+    if (!dataset) notFound('dataset');
     return dataset;
   }
 
@@ -429,7 +429,7 @@ export class RegistryService {
           WHERE project_id=$1 AND id=$2 RETURNING id`,
           [projectId, datasetId, input.description ?? null, input.archived ?? null],
         );
-        if (!updated) notFound('Dataset');
+        if (!updated) notFound('dataset');
         await writeAuditEvent(connection, { ...draft, outcome: 'success' });
         return (await first<Dataset>(connection, `${datasetSelect} WHERE d.id=$1`, [datasetId]))!;
       }),
@@ -506,11 +506,11 @@ export class RegistryService {
         content: input.content,
       });
       if (resolved.sourceRunId && input.sourceRunId && input.sourceRunId !== resolved.sourceRunId)
-        throw new DomainError(
-          422,
-          'sourceRunIdはfromRunArtifactsのRunと同じにしてください',
-          'dataset_source_run_mismatch',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'dataset_source_run_mismatch',
+          message: 'sourceRunId must be the same as the run of fromRunArtifacts',
+        });
       return registerDatasetVersion(connection, {
         ...common,
         content: { files: resolved.files },

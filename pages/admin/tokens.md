@@ -42,7 +42,7 @@ tokenで操作するときは、scopeに加えて、所有者の現在の実効R
 
 | 条件 | 外れたとき |
 | --- | --- |
-| 自分が持つscopeだけを付けられる（`admin`を持っていても、`tokens:manage`・`audit:read`・`users:manage`は自分が持つときだけ） | 403 `scope_exceeds_issuer` |
+| 自分が持つscopeだけを付けられる（`admin`を持っていても、`tokens:manage`・`audit:read`・`users:manage`は自分が持つときだけ） | 403 `token_authority_exceeded` |
 | Projectに限定したtokenは、同じProjectのtokenだけを扱える | 403 `project_forbidden` |
 | 自分の期限より後まで有効なtokenは作れない。期限なしや、省略して既定の365日になる場合も含みます | 403 `token_outlives_issuer` |
 

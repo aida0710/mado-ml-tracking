@@ -39,11 +39,11 @@ export class PreprocessingReportService {
       });
       const run = await findRun(connection, { projectId, id: request.runId, lock: true });
       if (run.kind !== 'processing')
-        throw new DomainError(
-          422,
-          '前処理のレポートはprocessing Runに記録してください',
-          'preprocessing_run_kind',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'preprocessing_run_kind',
+          message: 'record preprocessing reports on processing runs',
+        });
       const report = request.report;
       const sameReport = await first<{ runId: string }>(
         connection,
@@ -53,7 +53,11 @@ export class PreprocessingReportService {
       if (sameReport)
         return (await findPreprocessingReport(connection, { projectId, runId: run.id }))!;
       if (isTerminalStatus(run.status))
-        throw new DomainError(409, '終了したRunの前処理レポートは変更できません', 'run_finalized');
+        throw new DomainError({
+          status: 409,
+          code: 'run_finalized',
+          message: 'the preprocessing report of a finished run cannot be changed',
+        });
       if (report.sampleArtifactIds.length) {
         const samples = await rows<{ id: string }>(
           connection,
@@ -61,11 +65,11 @@ export class PreprocessingReportService {
           [projectId, run.id, report.sampleArtifactIds],
         );
         if (samples.length !== report.sampleArtifactIds.length)
-          throw new DomainError(
-            422,
-            '確認用サンプルはこのRunの保存済みArtifactを選んでください',
-            'preprocessing_samples_invalid',
-          );
+          throw new DomainError({
+            status: 422,
+            code: 'preprocessing_samples_invalid',
+            message: 'choose artifacts stored in this run as samples to check',
+          });
       }
       const revision = (await first<{ revision: number }>(
         connection,

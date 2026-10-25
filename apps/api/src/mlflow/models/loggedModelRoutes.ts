@@ -29,7 +29,7 @@ function modelId(context: ApiContext): string {
 }
 function assertBodyModelId(context: ApiContext, bodyId?: string): string {
   const id = modelId(context);
-  if (bodyId && bodyId !== id) invalidParameter('pathとbodyのmodel_idが一致しません');
+  if (bodyId && bodyId !== id) invalidParameter('model_id in the path and the body do not match');
   return id;
 }
 

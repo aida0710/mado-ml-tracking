@@ -16,7 +16,11 @@ export function healthRoutes(database: Database): Hono<ApiEnvironment> {
     try {
       await database.query('SELECT 1');
     } catch {
-      throw new DomainError(503, 'Databaseに接続できません', 'database_unavailable');
+      throw new DomainError({
+        status: 503,
+        code: 'database_unavailable',
+        message: 'database is unavailable',
+      });
     }
     return context.json(HEALTHY_BODY);
   });

@@ -217,11 +217,11 @@ export class OidcSessionVerifier {
           code: (error as { code?: unknown }).code ?? null,
         }),
       );
-      throw new DomainError(
-        503,
-        'SSOのログイン状態を確認できません。しばらくしてから再度お試しください',
-        'oidc_unavailable',
-      );
+      throw new DomainError({
+        status: 503,
+        code: 'oidc_unavailable',
+        message: 'cannot verify the SSO sign-in state; try again later',
+      });
     }
     return this.applyCurrentClaims(session, current);
   }

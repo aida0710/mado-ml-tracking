@@ -240,7 +240,7 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
       body: { name: 'token-made', role: 'viewer' },
     });
     expect(byToken.status).toBe(403);
-    expect(await errorCode(byToken)).toBe('insufficient_scope');
+    expect(await errorCode(byToken)).toBe('scope_required');
     const duplicate = await createServiceAccount(fixture, { name: 'READER', role: 'viewer' });
     expect(duplicate.status).toBe(409);
     const listed = await entity<{ items: ServiceAccount[] }>(
@@ -293,7 +293,7 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
 
     const strongerScope = await issue({ scopes: ['read', 'artifacts:write'], expiresAt: withinIssuer });
     expect(strongerScope.status).toBe(403);
-    expect(await errorCode(strongerScope)).toBe('scope_exceeds_issuer');
+    expect(await errorCode(strongerScope)).toBe('token_authority_exceeded');
     for (const outliving of [null, new Date(expiresAt.getTime() + DAY_MILLISECONDS).toISOString()]) {
       const response = await issue({ scopes: ['read'], expiresAt: outliving });
       expect(response.status).toBe(403);

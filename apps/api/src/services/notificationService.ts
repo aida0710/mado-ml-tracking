@@ -54,11 +54,11 @@ function validateDestination(settings: ChannelDestinationSettings): void {
         settings.urlEnv !== null &&
         (settings.kind === 'webhook' ? settings.secretEnv !== null : settings.secretEnv === null);
   if (!isValid)
-    throw new DomainError(
-      422,
-      '通知先の種類に合う設定を指定してください（Slackは urlEnv、Webhookは urlEnv と secretEnv、メールは recipients）',
-      'notification_channel_invalid',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'notification_channel_invalid',
+      message: 'specify the settings for the channel kind (urlEnv for Slack, urlEnv and secretEnv for webhook, recipients for email)',
+    });
 }
 
 /** Channels (global administrators), rules (Project admins), delivery history and test sends. */
@@ -182,7 +182,7 @@ export class NotificationService {
           `SELECT ${CHANNEL_COLUMNS} FROM notification_channels WHERE id=$1 FOR UPDATE`,
           [channelId],
         );
-        if (!current) notFound('通知先');
+        if (!current) notFound('notification channel');
         const settings = {
           kind: current.kind,
           urlEnv: input.urlEnv === undefined ? current.urlEnv : input.urlEnv,
@@ -244,7 +244,7 @@ export class NotificationService {
         `SELECT ${CHANNEL_COLUMNS} FROM notification_channels WHERE id=$1`,
         [channelId],
       );
-      if (!channel) notFound('通知先');
+      if (!channel) notFound('notification channel');
       const result = await this.sendTest(channel);
       await writeAuditEvent(this.options.database, {
         ...draft,
@@ -288,7 +288,7 @@ export class NotificationService {
           'SELECT id FROM notification_channels WHERE id=$1 AND (project_id IS NULL OR project_id=$2) FOR SHARE',
           [input.channelId, projectId],
         );
-        if (!channel) notFound('通知先');
+        if (!channel) notFound('notification channel');
         const experimentIds = input.filter?.experimentIds ?? [];
         if (experimentIds.length) {
           const found = await first<{ count: number }>(
@@ -296,7 +296,7 @@ export class NotificationService {
             'SELECT count(*)::int AS count FROM experiments WHERE project_id=$1 AND id=ANY($2::uuid[])',
             [projectId, experimentIds],
           );
-          if (found?.count !== new Set(experimentIds).size) notFound('Experiment');
+          if (found?.count !== new Set(experimentIds).size) notFound('experiment');
         }
         const created = (await first<NotificationRule>(
           connection,
@@ -350,7 +350,7 @@ export class NotificationService {
           RETURNING id,project_id,channel_id,event_types,filter,enabled,created_by,created_at`,
           [request.ruleId, projectId, request.enabled],
         );
-        if (!updated) notFound('通知ルール');
+        if (!updated) notFound('notification rule');
         await writeAuditEvent(connection, {
           ...draft,
           outcome: 'success',
@@ -432,7 +432,7 @@ export class NotificationService {
 
   private async requireProjectExists(connection: Connection, projectId: string): Promise<void> {
     const project = await first(connection, 'SELECT 1 FROM projects WHERE id=$1', [projectId]);
-    if (!project) notFound('Project');
+    if (!project) notFound('project');
   }
 
   private async requireUniqueName(
@@ -445,7 +445,11 @@ export class NotificationService {
       [channel.projectId, channel.name],
     );
     if (existing)
-      throw new DomainError(409, '同じ名前の通知先が既にあります', 'notification_channel_exists');
+      throw new DomainError({
+        status: 409,
+        code: 'notification_channel_exists',
+        message: 'a notification channel with the same name already exists',
+      });
   }
 
   private auditDraft(entry: {

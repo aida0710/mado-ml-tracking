@@ -60,11 +60,11 @@ When it fails, the error message says what to fix.
 
 | Error | What to fix |
 | --- | --- |
-| `ENDPOINT_NOT_FOUND: MLFLOW_TRACKING_URIにProjectのIDが入っていません` (MLFLOW_TRACKING_URI does not contain the Project ID) | Do not stop `MLFLOW_TRACKING_URI` at the site or at `/api/mlflow`; include `/api/mlflow/projects/<Project ID>` |
-| `UNAUTHENTICATED: API tokenが送られていません` (no API token was sent) | Put the token in `MLFLOW_TRACKING_TOKEN` (`MLFLOW_TRACKING_PASSWORD` for Basic authentication) |
+| `ENDPOINT_NOT_FOUND: MLFLOW_TRACKING_URI does not contain a project ID` | Do not stop `MLFLOW_TRACKING_URI` at the site or at `/api/mlflow`; include `/api/mlflow/projects/<Project ID>` |
+| `UNAUTHENTICATED: no API token was sent` | Put the token in `MLFLOW_TRACKING_TOKEN` (`MLFLOW_TRACKING_PASSWORD` for Basic authentication) |
 | `UNAUTHENTICATED` (the token is invalid or revoked) | Check the token's value and expiry, and issue a new one if needed |
-| `PERMISSION_DENIED: API tokenのscopeが不足しています` (the API token lacks a required scope) | The message names the missing scope. Issue a token with the purpose **Record from SDK or MLflow 3** |
-| `PERMISSION_DENIED: API tokenのprojectが一致しません` (the API token's Project does not match) | The message names the token's Project. Match the Project ID in the URI or the token you use |
+| `PERMISSION_DENIED: the API token lacks the scope ...` | The message names the missing scope. Issue a token with the purpose **Record from SDK or MLflow 3** |
+| `PERMISSION_DENIED: the API token belongs to project ...` | The message names the token's Project. Match the Project ID in the URI or the token you use |
 
 ## Connect with Basic authentication
 

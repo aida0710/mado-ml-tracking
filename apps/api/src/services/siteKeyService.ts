@@ -22,7 +22,7 @@ import {
 } from './siteAccess.js';
 
 function keyUnavailable(message: string): never {
-  throw new DomainError(422, message, 'site_key_unavailable');
+  throw new DomainError({ status: 422, code: 'site_key_unavailable', message });
 }
 
 /**
@@ -37,19 +37,19 @@ export async function siteKeyAccount(
   const { target } = request;
   const settings = await findSiteSettings(connection, target.id);
   if (target.submissionMode !== 'automatic' || !settings?.launcherId)
-    keyUnavailable('launcherが投入するコンピュータにだけ鍵があります');
+    keyUnavailable('only computers that a launcher submits to have a key');
   if (!request.personal) {
     requireTargetManager(principal, target);
-    if (settings.accountMode !== 'shared') keyUnavailable('このコンピュータは共用アカウントを使いません');
+    if (settings.accountMode !== 'shared') keyUnavailable('this computer does not use a shared account');
     return { userId: null, launcherId: settings.launcherId };
   }
   await requireTargetUser(connection, principal, target);
-  if (settings.accountMode !== 'personal') keyUnavailable('このコンピュータは共用アカウントで動きます');
+  if (settings.accountMode !== 'personal') keyUnavailable('this computer runs with a shared account');
   const personal = await findPersonalSettings(connection, {
     targetId: target.id,
     userId: principal.user.id,
   });
-  if (!personal?.accountName) keyUnavailable('先に「自分の設定」でアカウント名を登録してください');
+  if (!personal?.accountName) keyUnavailable('register your account name in "My settings" first');
   return { userId: principal.user.id, launcherId: settings.launcherId };
 }
 

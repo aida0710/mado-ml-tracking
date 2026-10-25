@@ -1,5 +1,4 @@
 import type {
-  ApiError,
   Artifact,
   ArtifactUpload,
   ArtifactUploadCreate,
@@ -17,6 +16,7 @@ import {
   projectPath,
   request,
   RequestError,
+  requestErrorFromBody,
   requestItems,
 } from './http';
 
@@ -82,12 +82,7 @@ function parseJson(body: string): unknown {
 function responseError(status: number, payload: unknown): RequestError {
   // A front proxy can reject with HTML before the API, so 413 is named by status alone.
   if (status === HTTP_PAYLOAD_TOO_LARGE) return new RequestError({ status, code: ARTIFACT_TOO_LARGE_CODE });
-  const apiError = payload as Partial<ApiError> | null;
-  return new RequestError({
-    status,
-    code: typeof apiError?.code === 'string' ? apiError.code : undefined,
-    serverMessage: typeof apiError?.error === 'string' ? apiError.error : undefined,
-  });
+  return requestErrorFromBody(status, payload);
 }
 
 export const artifactUploadsApi = {

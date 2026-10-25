@@ -175,17 +175,17 @@ export class SweepService {
         if (sweep.status !== 'paused') return false;
         const blocker = await this.controller.launchBlocker(connection, sweep);
         if (blocker === 'task_revision_changed')
-          throw new DomainError(
-            409,
-            'Sweepの作成後にTaskが更新されたため再開できません。新しいSweepを作成してください',
-            'task_revision_changed',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'task_revision_changed',
+            message: 'the task was updated after the sweep was created, so it cannot be resumed; create a new sweep',
+          });
         if (blocker === 'owner_forbidden')
-          throw new DomainError(
-            409,
-            'Sweepの作成者にProjectのeditor権限がないため再開できません',
-            'sweep_owner_forbidden',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'sweep_owner_forbidden',
+            message: 'the creator of the sweep does not have the editor role in the project, so it cannot be resumed',
+          });
         await updateSweepStatus(connection, { id: sweep.id, status: 'running', statusReason: null });
         await this.controller.tick(connection, { sweepId: sweep.id, applyEarlyStopping: false });
         return true;
@@ -240,11 +240,12 @@ export class SweepService {
         const maxTrials = input.maxTrials ?? sweep.maxTrials;
         const created = (await listSweepTrials(connection, sweep.id)).length;
         if (maxTrials < created)
-          throw new DomainError(
-            422,
-            `maxTrialsは作成済みの試行数（${created}）以上にしてください`,
-            'sweep_max_trials_below_created',
-          );
+          throw new DomainError({
+            status: 422,
+            code: 'sweep_max_trials_below_created',
+            message: `maxTrials must be at least the number of trials already created (${created})`,
+            details: { createdTrials: created },
+          });
         await updateSweepLimits(connection, {
           id: sweep.id,
           maxTrials,
@@ -290,18 +291,22 @@ export class SweepService {
         });
         const unlocked = await findSweep(connection, { projectId, id: sweepId });
         if (!controlsStartedWork({ role, userId: principal.user.id }, unlocked))
-          throw new DomainError(
-            403,
-            'Sweepを操作できるのは作成者かProject adminだけです',
-            'sweep_owner_required',
-          );
+          throw new DomainError({
+            status: 403,
+            code: 'sweep_owner_required',
+            message: 'only the creator of the sweep or a project admin can operate it',
+          });
         await operation.beforeLock?.(connection);
         await this.controller.lock(connection, sweepId);
         const sweep = await findSweep(connection, { projectId, id: sweepId, lock: true });
         if (TERMINAL_SWEEP_STATUSES.includes(sweep.status)) {
           if (operation.action === 'sweep.cancel' && sweep.status === 'canceled')
             return this.present(connection, operation.reference);
-          throw new DomainError(409, '終了したSweepは変更できません', 'sweep_finished');
+          throw new DomainError({
+            status: 409,
+            code: 'sweep_finished',
+            message: 'a finished sweep cannot be changed',
+          });
         }
         if (await operation.apply(connection, sweep))
           await writeAuditEvent(connection, { ...draft, outcome: 'success' });
@@ -334,7 +339,11 @@ export class SweepService {
     const { input, task } = launch;
     const targetId = input.targetId ?? task.targetId;
     if (!targetId)
-      throw new DomainError(422, '実行するComputeTargetを指定してください', 'target_required');
+      throw new DomainError({
+        status: 422,
+        code: 'target_required',
+        message: 'specify the computer to run on',
+      });
     const code = await findCodeVersion(connection, {
       projectId: launch.projectId,
       id: task.codeVersionId,

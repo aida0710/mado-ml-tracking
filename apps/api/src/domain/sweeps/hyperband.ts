@@ -1,6 +1,7 @@
 // ASHA（Asynchronous Successive Halving）式の非同期 Hyperband。
 // 同期式の Hyperband は bracket の全試行が rung に揃うまで待つが、Sweep の試行は worker ごとにばらばらに進むため、
 // 各試行が rung に達した時点で、その rung に既に達した試行とだけ比べて止めるかを決める。
+import type { ApiErrorDetails, SweepEarlyTerminateViolation } from '@mmt/contracts';
 import { DomainError } from '../errors.js';
 import { compareTrialsByObjective } from './trialObjective.js';
 import type { EarlyStoppingConfig, MetricPoint, SweepGoal } from './types.js';
@@ -39,18 +40,33 @@ export interface ShouldStopResult {
   reason: ShouldStopReason;
 }
 
-function invalid(message: string): never {
-  throw new DomainError(422, message, 'sweep_early_terminate_invalid');
+/** 違反の理由と、文に入る値を横の項目にして 422 sweep_early_terminate_invalid を投げる。 */
+function invalid(reason: SweepEarlyTerminateViolation, message: string, details: ApiErrorDetails): never {
+  throw new DomainError({
+    status: 422,
+    code: 'sweep_early_terminate_invalid',
+    message,
+    details: { reason, ...details },
+  });
 }
 
 export function validateEarlyStoppingConfig(config: EarlyStoppingConfig): void {
-  if (config.type !== 'hyperband') invalid(`early_terminate の type「${String(config.type)}」は使えません`);
+  if (config.type !== 'hyperband')
+    invalid('type_unsupported', `early_terminate type "${String(config.type)}" is not supported`, {
+      type: String(config.type),
+    });
   if (!Number.isFinite(config.minIter) || config.minIter <= 0)
-    invalid(`early_terminate の minIter は正の数である必要があります（minIter=${config.minIter}）`);
+    invalid('min_iter_positive', `early_terminate minIter must be a positive number (minIter=${config.minIter})`, {
+      minIter: String(config.minIter),
+    });
   if (!Number.isInteger(config.eta) || config.eta < 2)
-    invalid(`early_terminate の eta は2以上の整数である必要があります（eta=${config.eta}）`);
+    invalid('eta_integer', `early_terminate eta must be an integer of 2 or more (eta=${config.eta})`, {
+      eta: String(config.eta),
+    });
   if (config.maxIter !== undefined && (!Number.isFinite(config.maxIter) || config.maxIter <= config.minIter))
-    invalid(`early_terminate の maxIter は minIter より大きい必要があります（maxIter=${config.maxIter}）`);
+    invalid('max_iter_order', `early_terminate maxIter must be greater than minIter (maxIter=${config.maxIter})`, {
+      maxIter: String(config.maxIter),
+    });
 }
 
 /**

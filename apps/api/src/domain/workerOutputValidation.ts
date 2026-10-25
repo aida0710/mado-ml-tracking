@@ -90,21 +90,22 @@ export function countDeclarations(
 
 export function assertModelOutputsAllowed(run: { kind: RunKind }, counts: DeclarationCounts): void {
   if (counts.model > 0 && !OUTPUT_MODEL_RUN_KINDS.includes(run.kind))
-    throw new DomainError(
-      422,
-      '出力モデルを宣言できるのはtrainingまたはfinetuningのRunだけです',
-      'output_model_kind',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'output_model_kind',
+      message: 'only training or finetuning runs can declare output models',
+    });
 }
 
 // Limits apply to the Run as a whole, so a worker cannot exceed them by splitting requests.
 export function assertDeclarationLimits(counts: DeclarationCounts): void {
   if (counts.model > MAX_MODEL_DECLARATIONS || counts.dataset > MAX_DATASET_DECLARATIONS)
-    throw new DomainError(
-      422,
-      `出力の宣言はRunごとにモデル${MAX_MODEL_DECLARATIONS}件・データセット${MAX_DATASET_DECLARATIONS}件までです`,
-      'output_declaration_limit',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'output_declaration_limit',
+      message: `a run can declare at most ${MAX_MODEL_DECLARATIONS} model outputs and ${MAX_DATASET_DECLARATIONS} dataset outputs`,
+      details: { modelLimit: MAX_MODEL_DECLARATIONS, datasetLimit: MAX_DATASET_DECLARATIONS },
+    });
 }
 
 /**
@@ -119,18 +120,18 @@ export function chooseOutputModelId(choice: {
   const { declaredModelId, taskModelId } = choice;
   if (taskModelId) {
     if (declaredModelId && declaredModelId !== taskModelId)
-      throw new DomainError(
-        422,
-        'Taskの出力モデルと別のModelは宣言できません',
-        'output_model_conflict',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'output_model_conflict',
+        message: 'a model other than the output model of the task cannot be declared',
+      });
     return taskModelId;
   }
   if (!declaredModelId)
-    throw new DomainError(
-      422,
-      'Taskに出力モデルの設定が無いRunでは宣言にmodelIdが必要です',
-      'output_model_required',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'output_model_required',
+      message: 'a run whose task has no output model setting requires modelId in the declaration',
+    });
   return declaredModelId;
 }

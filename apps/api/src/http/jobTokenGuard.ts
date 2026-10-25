@@ -271,7 +271,11 @@ export function jobTokenAccessOf(method: string, path: string): 'write' | 'read'
 }
 
 function forbidden(): never {
-  throw new DomainError(403, 'Job tokenではこの操作はできません', 'job_token_forbidden');
+  throw new DomainError({
+    status: 403,
+    code: 'job_token_forbidden',
+    message: 'this operation is not allowed with a Job token',
+  });
 }
 
 async function readJsonObject(context: ApiContext): Promise<Record<string, unknown> | null> {

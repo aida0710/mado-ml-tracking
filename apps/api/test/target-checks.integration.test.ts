@@ -249,7 +249,7 @@ describe.skipIf(!testDatabaseUrl)('Computeの接続確認（独立PostgreSQL）'
     });
     for (const result of [
       withDetail(`Warning: Identity file ${SSH_KEY_PATH} not accessible`),
-      withDetail('MMT_API_TOKEN=mmt_abcdefghijklmnopqrstuvwxyz'),
+      withDetail('MMT_API_TOKEN=mado_mt_abcdefghijklmnopqrstuvwxyz'),
       withDetail('-----BEGIN OPENSSH PRIVATE KEY-----'),
     ]) {
       const response = await complete(fixture.workerToken, claimed.check.id, {

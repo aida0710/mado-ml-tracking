@@ -79,7 +79,7 @@ export class ProjectGroupBindingService {
         await requireProject(connection, principal, { projectId, role: 'admin', scope: 'admin' });
         const adminGrants = await lockProjectAdminGrants(connection, projectId);
         const previous = await findGroupBinding(connection, { projectId, group });
-        if (!previous) notFound('Group binding');
+        if (!previous) notFound('group binding');
         assertKeepsProjectAdmin(adminGrants, { kind: 'group_binding', groupName: group, role: null });
         await deleteGroupBinding(connection, { projectId, group });
         await writeAuditEvent(connection, {

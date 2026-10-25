@@ -42,7 +42,7 @@ A token with `tokens:manage` can issue and revoke tokens through the API, and cr
 
 | Rule | When broken |
 | --- | --- |
-| Only scopes it holds itself (even with `admin`, `tokens:manage`, `audit:read` and `users:manage` only when it holds them) | 403 `scope_exceeds_issuer` |
+| Only scopes it holds itself (even with `admin`, `tokens:manage`, `audit:read` and `users:manage` only when it holds them) | 403 `token_authority_exceeded` |
 | A token limited to a Project handles only tokens of the same Project | 403 `project_forbidden` |
 | No token that stays valid after its own expiry, including no expiry and an omitted expiry that defaults to 365 days | 403 `token_outlives_issuer` |
 

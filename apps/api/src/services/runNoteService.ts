@@ -42,9 +42,13 @@ export class RunNoteService {
           scope: 'runs:write',
         });
         const run = await lockRunForNote(connection, { projectId, runId });
-        if (!run) notFound('Run');
+        if (!run) notFound('run');
         if (run.lifecycleStage === 'deleted')
-          throw new DomainError(409, '削除済みのRunは編集できません', 'run_deleted');
+          throw new DomainError({
+            status: 409,
+            code: 'run_deleted',
+            message: 'a deleted run cannot be edited',
+          });
         await writeRunNote(connection, { runId, content: storedRunNote(content) });
         await writeAuditEvent(connection, { ...draft, outcome: 'success' });
         return { runId, content };

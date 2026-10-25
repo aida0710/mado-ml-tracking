@@ -30,7 +30,7 @@ function uniqueById<T extends { id: string }>(items: T[]): T[] {
 
 function inRequestOrder(found: ComparedRun[], runIds: string[]): ComparedRun[] {
   // Another Project's Run is reported like a missing one so its existence does not leak.
-  if (found.length !== runIds.length) notFound('Run');
+  if (found.length !== runIds.length) notFound('run');
   const foundById = new Map(found.map((compared) => [compared.run.id, compared]));
   return runIds.map((id) => foundById.get(id)!);
 }

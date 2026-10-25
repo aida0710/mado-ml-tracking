@@ -19,12 +19,12 @@ export const TOKEN_PURPOSE_SCOPES: Record<TokenPurpose, readonly TokenScope[]> =
 };
 
 /**
- * What the token dialog calls each purpose. The API names the same choice when a token lacks a
- * scope, so the person finds it on the screen.
+ * 各用途の英語の名前。API は token の scope が足りないとき、発行の画面のこの選択肢を名指しする。
+ * 画面の日本語の名前は apps/web/src/i18n/serviceAccounts.ts にある。
  */
 export const TOKEN_PURPOSE_LABELS: Record<TokenPurpose, string> = {
-  recording: 'SDK・MLflow 3から記録する',
-  jobSubmission: 'コマンドからJobを投入する',
-  worker: 'workerとしてJobを実行する',
-  readOnly: '読み取りだけ',
+  recording: 'Record from SDK or MLflow 3',
+  jobSubmission: 'Submit jobs from the command line',
+  worker: 'Run jobs as a worker',
+  readOnly: 'Read only',
 };

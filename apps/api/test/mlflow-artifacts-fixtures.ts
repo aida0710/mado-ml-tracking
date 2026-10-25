@@ -19,7 +19,7 @@ export function createArtifactTestApp(
       return context.json({ error: error.message, code: error.code }, error.status);
     if (error instanceof ArtifactRangeError) {
       context.header('Content-Range', `bytes */${error.totalSize}`);
-      return context.json({ code: 'invalid_range' }, 416);
+      return context.json({ code: 'range_not_satisfiable' }, 416);
     }
     throw error;
   });

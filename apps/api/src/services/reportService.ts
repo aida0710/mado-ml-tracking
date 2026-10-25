@@ -71,25 +71,26 @@ interface RevisionDraft {
 }
 
 function invalidReference(message: string): never {
-  throw new DomainError(422, message, 'report_reference_invalid');
+  throw new DomainError({ status: 422, code: 'report_reference_invalid', message });
 }
 
 function requireUnarchived(report: Report): void {
   if (report.archivedAt !== null)
-    throw new DomainError(
-      409,
-      'アーカイブ済みのレポートは編集できません。先にアーカイブを解除してください',
-      'report_archived',
-    );
+    throw new DomainError({
+      status: 409,
+      code: 'report_archived',
+      message: 'an archived report cannot be edited; unarchive it first',
+    });
 }
 
 function requireBaseRevision(report: Report, baseRevision: number): void {
   if (report.currentRevision !== baseRevision)
-    throw new DomainError(
-      409,
-      `ほかの編集がバージョン${report.currentRevision}として保存されています。最新のバージョンを開き直してから編集してください`,
-      'report_revision_conflict',
-    );
+    throw new DomainError({
+      status: 409,
+      code: 'report_revision_conflict',
+      message: `another edit was saved as version ${report.currentRevision}; reopen the latest version before editing`,
+      details: { currentRevision: report.currentRevision },
+    });
 }
 
 /**
@@ -112,7 +113,7 @@ export class ReportService {
     await this.requireViewer(principal, projectId);
     const page = await listReports(this.database, { projectId, ...query });
     if (!page.cursorFound)
-      throw new DomainError(400, 'cursorが不正です', 'invalid_cursor');
+      throw new DomainError({ status: 400, code: 'invalid_cursor', message: 'invalid cursor' });
     const hasMore = page.items.length > query.limit;
     const items = page.items.slice(0, query.limit);
     return { items, nextCursor: hasMore ? items.at(-1)!.id : null };
@@ -308,11 +309,11 @@ export class ReportService {
         const role = await this.requireEditor(connection, principal, reference.projectId);
         const report = await this.requireReport(connection, { ...reference, lock: true });
         if (report.createdBy.id !== principal.user.id && role !== 'admin')
-          throw new DomainError(
-            403,
-            'レポートのアーカイブと解除ができるのは作成者かProject管理者だけです',
-            'report_owner_required',
-          );
+          throw new DomainError({
+            status: 403,
+            code: 'report_owner_required',
+            message: 'only the author or a project admin can archive or unarchive a report',
+          });
         // Repeating the current state changes nothing and is not audited again.
         if ((report.archivedAt !== null) === reference.archived) return report;
         await updateReportArchive(connection, {
@@ -447,11 +448,11 @@ export class ReportService {
           };
       totalBytes += snapshot.sizeBytes;
       if (totalBytes > this.dependencies.snapshotMaxBytes)
-        throw new DomainError(
-          413,
-          '1つのバージョンの固定データの合計が上限を超えます。固定するブロックを減らしてください',
-          'report_snapshot_too_large',
-        );
+        throw new DomainError({
+          status: 413,
+          code: 'report_snapshot_too_large',
+          message: 'the pinned data of one version exceeds the limit; pin fewer blocks',
+        });
       snapshots.push(snapshot);
     }
     return snapshots;
@@ -484,19 +485,19 @@ export class ReportService {
     ];
     for (const [table, ids] of tables)
       if ((await countProjectRows(this.database, { table, projectId, ids })) !== ids.length)
-        invalidReference('レポートが参照するRun・Sweep・バージョンなどがこのProjectにありません');
+        invalidReference('a run, sweep, version or other item that the report references is not in this project');
     const views = await findSavedViewVisibilities(this.database, {
       projectId,
       savedViewIds: references.savedViewIds,
     });
     if (views.length !== references.savedViewIds.length)
-      invalidReference('レポートが参照する保存ビューがこのProjectにありません');
+      invalidReference('a saved view that the report references is not in this project');
     if (views.some((view) => view.visibility !== 'project'))
-      throw new DomainError(
-        422,
-        '非公開の保存ビューはレポートから参照できません。Projectに公開してから参照してください',
-        'report_saved_view_private',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'report_saved_view_private',
+        message: 'a private saved view cannot be referenced from a report; share it with the project first',
+      });
     for (const media of references.media)
       await this.requireMediaTable(principal, { projectId, ...media });
   }
@@ -508,12 +509,12 @@ export class ReportService {
   ): Promise<void> {
     const kind = await findRunMediaKind(this.database, media);
     if (kind === 'table') return;
-    if (kind !== undefined) invalidReference('レポートが参照するmediaは表ではありません');
+    if (kind !== undefined) invalidReference('media that the report references is not a table');
     try {
       await this.dependencies.runMedia.table(principal, media, { offset: 0, limit: 1 });
     } catch (error) {
       if (error instanceof DomainError && [404, 422].includes(error.status))
-        invalidReference('レポートが参照する表がこのRunにありません');
+        invalidReference('a table that the report references is not in this run');
       throw error;
     }
   }
@@ -535,7 +536,7 @@ export class ReportService {
     reference: ReportReference & { lock?: boolean },
   ): Promise<Report> {
     const report = await findReport(connection, reference);
-    if (!report) notFound('レポート');
+    if (!report) notFound('report');
     return report;
   }
 
@@ -544,7 +545,7 @@ export class ReportService {
     revision: { reportId: string; revision: number },
   ): Promise<ReportRevision> {
     const found = await findRevision(connection, revision);
-    if (!found) notFound('レポートのバージョン');
+    if (!found) notFound('report version');
     return found;
   }
 

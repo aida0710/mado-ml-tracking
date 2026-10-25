@@ -19,6 +19,7 @@ import {
   MAX_JSON_BODY_BYTES,
   SYNC_BATCH_MAX_BYTES,
 } from './http/requestBodyLimits.js';
+import { apiErrorBody, asDomainError } from './http/apiErrorResponse.js';
 import { isAllowedOrigin } from './http/originPolicy.js';
 import { clientAddress } from './http/requestMetadata.js';
 import { principal, type ApiContext, type ApiEnvironment } from './http/request.js';
@@ -439,42 +440,25 @@ export function createApplication(options: ApplicationOptions) {
         console.error(JSON.stringify({ event: 'mlflow_request_failed', name: error.name }));
       return context.json(response.body, response.status);
     }
-    if (error instanceof DomainError)
-      return context.json({ error: error.message, code: error.code }, error.status);
-    if (error instanceof ArtifactRangeError) {
+    if (error instanceof ArtifactRangeError)
       context.header('Content-Range', `bytes */${error.totalSize}`);
-      return context.json({ error: '要求されたRangeは読み込めません', code: 'invalid_range' }, 416);
-    }
-    const databaseCode = (error as { code?: string }).code;
-    if (databaseCode === '23505')
-      return context.json(
-        { error: '同じ名前またはバージョンが既に登録されています', code: 'already_exists' },
-        409,
-      );
-    if (databaseCode === '23503' || databaseCode === '23514')
-      return context.json(
-        { error: '参照または不変なバージョンの制約に違反しています', code: 'invalid_reference' },
-        422,
-      );
-    // SQL and provider exception details can include sensitive values.
-    console.error(
-      JSON.stringify({
-        event: 'api_request_failed',
-        name: error.name,
-        code: databaseCode ?? 'internal_error',
-      }),
-    );
-    return context.json({ error: 'リクエストの処理に失敗しました', code: 'internal_error' }, 503);
+    const failure = asDomainError(error);
+    return context.json(apiErrorBody(failure), failure.status);
   });
   app.notFound((context) => {
     if (isMlflowRequestWithoutProject(context.req.path))
       return answerMlflowRequestWithoutProject(context);
-    return isMlflowRequest(context.req.path)
-      ? context.json(
-          { error_code: 'ENDPOINT_NOT_FOUND', message: 'このMLflow APIは対応していません' },
-          404,
-        )
-      : context.json({ error: 'APIが見つかりません', code: 'not_found' }, 404);
+    if (isMlflowRequest(context.req.path))
+      return context.json(
+        { error_code: 'ENDPOINT_NOT_FOUND', message: 'this MLflow API is not supported' },
+        404,
+      );
+    const missingRoute = new DomainError({
+      status: 404,
+      code: 'not_found',
+      message: 'API route not found',
+    });
+    return context.json(apiErrorBody(missingRoute), missingRoute.status);
   });
   app.use(
     '/api/*',
@@ -505,7 +489,11 @@ export function createApplication(options: ApplicationOptions) {
       return bodyLimit({
         maxSize,
         onError: () => {
-          throw new DomainError(413, 'JSONの上限サイズを超えています', 'body_too_large');
+          throw new DomainError({
+            status: 413,
+            code: 'body_too_large',
+            message: 'the request body exceeds the size limit',
+          });
         },
       })(context, next);
     }

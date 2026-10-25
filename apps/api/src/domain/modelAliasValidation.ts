@@ -25,7 +25,7 @@ export const modelAliasAssignmentSchema = z
       !body.evaluationId ||
       !body.promotionEvaluationId ||
       body.evaluationId === body.promotionEvaluationId,
-    { message: 'evaluationIdとpromotionEvaluationIdが異なります' },
+    { message: 'evaluationId and promotionEvaluationId differ' },
   )
   .transform(({ promotionEvaluationId, ...body }) => ({
     ...body,

@@ -63,7 +63,7 @@ export class WorkflowExecutionService {
           [projectId, request.workflowId, request.cursor],
         )
       : undefined;
-    if (request.cursor && !boundary) notFound('WorkflowExecution cursor');
+    if (request.cursor && !boundary) notFound('workflow execution cursor');
     const page = await rows<WorkflowExecutionPage['items'][number]>(
       this.options.database,
       `SELECT ${workflowExecutionColumns} FROM workflow_executions WHERE project_id=$1 AND workflow_id=$2
@@ -112,11 +112,11 @@ export class WorkflowExecutionService {
       );
       if (existing) {
         if (existing.requestHash !== requestHash)
-          throw new DomainError(
-            409,
-            '同じ起動キーに異なる設定が指定されています',
-            'workflow_launch_mismatch',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'workflow_launch_mismatch',
+            message: 'different settings are given for the same launch key',
+          });
         return findWorkflowExecution(connection, { projectId, id: existing.id });
       }
       const version = await findWorkflowVersion(connection, {
@@ -239,11 +239,11 @@ export class WorkflowExecutionService {
       source.workflowVersionId !== request.version.id ||
       (source.status !== 'failed' && source.status !== 'canceled')
     )
-      throw new DomainError(
-        409,
-        '同じバージョンの失敗・停止した実行から再開してください',
-        'workflow_resume_invalid',
-      );
+      throw new DomainError({
+        status: 409,
+        code: 'workflow_resume_invalid',
+        message: 'resume from a failed or stopped execution of the same version',
+      });
     const completed: WorkflowStepExecution[] = [];
     for (const step of source.steps) {
       if (step.status !== 'finished') break;

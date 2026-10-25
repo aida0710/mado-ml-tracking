@@ -19,9 +19,9 @@ export async function logRunModels(
       'SELECT source_run_id FROM mlflow_logged_models WHERE project_id=$1 AND id=$2 AND deleted_at IS NULL FOR SHARE',
       [request.projectId, reference.model_id],
     );
-    if (!model) invalidParameter('同じProjectのLogged Modelが必要です');
+    if (!model) invalidParameter('a logged model of the same project is required');
     if (request.direction === 'output' && model.sourceRunId !== request.runId)
-      invalidParameter('出力モデルのsource_run_idがRunと一致しません');
+      invalidParameter('source_run_id of the output model does not match the run');
     if (request.direction === 'input') {
       await connection.query(
         'INSERT INTO mlflow_run_model_inputs(project_id,run_id,model_id) VALUES($1,$2,$3) ON CONFLICT DO NOTHING',

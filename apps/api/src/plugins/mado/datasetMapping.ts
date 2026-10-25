@@ -15,11 +15,11 @@ export function mapMadoDatasetVersion({
   const uri =
     (available.find((location) => location.isPrimary) ?? available[0])?.uri ?? version.manifestUri;
   if (!uri)
-    throw new DomainError(
-      422,
-      'このMadoバージョンには利用できる保存先がありません',
-      'plugin_dataset_unavailable',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'plugin_dataset_unavailable',
+      message: 'this Mado version has no storage that can be used',
+    });
   return {
     externalId: version.id,
     namespace,

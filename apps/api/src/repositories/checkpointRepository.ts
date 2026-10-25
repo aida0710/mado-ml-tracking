@@ -68,7 +68,7 @@ export async function findCheckpoint(
     `${checkpointSelect} WHERE c.project_id=$1 AND c.id=$2`,
     [reference.projectId, reference.id],
   );
-  if (!found) notFound('Checkpoint');
+  if (!found) notFound('checkpoint');
   return toCheckpoint(found);
 }
 
@@ -186,7 +186,7 @@ export async function findRunCodeLineage(
     WHERE r.project_id=$1 AND r.id=$2`,
     [reference.projectId, reference.runId],
   );
-  if (!found) notFound('Run');
+  if (!found) notFound('run');
   return found;
 }
 

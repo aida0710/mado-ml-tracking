@@ -37,10 +37,10 @@ export function pageOffset(pageToken: string | undefined, search: unknown): numb
       page.offset < 0 ||
       page.query !== searchFingerprint(search)
     )
-      invalidParameter('page_tokenが検索条件と一致しません');
+      invalidParameter('page_token does not match the search conditions');
     return page.offset;
   } catch {
-    invalidParameter('page_tokenが不正です');
+    invalidParameter('invalid page_token');
   }
 }
 export function nextPageToken(offset: number, search: unknown): string {

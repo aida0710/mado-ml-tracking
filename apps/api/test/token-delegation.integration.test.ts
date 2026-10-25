@@ -61,7 +61,7 @@ describe.skipIf(!testDatabaseUrl)('tokenからのtoken管理と全体の操作�
       { name: 'nested', projectId: fixture.project.id, scopes: ['read'] },
     );
     expect(response.status).toBe(403);
-    expect(await errorCode(response)).toBe('insufficient_scope');
+    expect(await errorCode(response)).toBe('scope_required');
   });
 
   it('tokens:manageのtokenは、自分のscope・Project・期限の範囲でだけtokenを発行できる', async () => {
@@ -87,7 +87,7 @@ describe.skipIf(!testDatabaseUrl)('tokenからのtoken管理と全体の操作�
     })).status).toBe(200);
 
     const refusals: Array<[Parameters<typeof postToken>[1], string]> = [
-      [{ name: 'stronger', projectId: fixture.project.id, scopes: ['runs:write'], expiresAt: inDays(7) }, 'scope_exceeds_issuer'],
+      [{ name: 'stronger', projectId: fixture.project.id, scopes: ['runs:write'], expiresAt: inDays(7) }, 'token_authority_exceeded'],
       [{ name: 'unbound', scopes: ['read'], expiresAt: inDays(7) }, 'project_forbidden'],
       [{ name: 'forever', projectId: fixture.project.id, scopes: ['read'], expiresAt: null }, 'token_outlives_issuer'],
       // An omitted expiry takes the server default (365 days), which outlives the issuer.
@@ -125,7 +125,7 @@ describe.skipIf(!testDatabaseUrl)('tokenからのtoken管理と全体の操作�
       request(harness.app, `/api/tokens/${target.item.id}`, { method: 'DELETE', token: issuer.token });
     const refused = await revoke(stronger);
     expect(refused.status).toBe(403);
-    expect(await errorCode(refused)).toBe('scope_exceeds_issuer');
+    expect(await errorCode(refused)).toBe('token_authority_exceeded');
     expect((await request(harness.app, `${fixture.basePath}/runs/search`, {
       token: stronger.token,
       method: 'POST',
@@ -146,7 +146,7 @@ describe.skipIf(!testDatabaseUrl)('tokenからのtoken管理と全体の操作�
     const adminOnly = await sessionToken(fixture, { name: 'admin only', scopes: ['admin'] });
     const withoutScope = await request(harness.app, '/api/audit-events', { token: adminOnly.token });
     expect(withoutScope.status).toBe(403);
-    expect(await errorCode(withoutScope)).toBe('insufficient_scope');
+    expect(await errorCode(withoutScope)).toBe('scope_required');
 
     const bound = await postToken(
       { cookie: fixture.administrator.cookie },
@@ -175,7 +175,7 @@ describe.skipIf(!testDatabaseUrl)('tokenからのtoken管理と全体の操作�
       body: account,
     });
     expect(refused.status).toBe(403);
-    expect(await errorCode(refused)).toBe('insufficient_scope');
+    expect(await errorCode(refused)).toBe('scope_required');
 
     const administrator = await sessionToken(fixture, {
       name: 'user administrator',

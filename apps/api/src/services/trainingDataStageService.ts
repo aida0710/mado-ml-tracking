@@ -61,17 +61,17 @@ export class TrainingDataStageService {
       await lockProjectLineage(connection, projectId);
       const run = await findRun(connection, { projectId, id: runId, lock: true });
       if (!isTrainingRunKind(run.kind))
-        throw new DomainError(
-          422,
-          '学習データの履歴はtrainingまたはfinetuningのRunに記録してください',
-          'training_data_run_kind',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'training_data_run_kind',
+          message: 'record the training data history on training or finetuning runs',
+        });
       if ((run as { lifecycleStage?: string }).lifecycleStage === 'deleted')
-        throw new DomainError(
-          422,
-          '削除済みRunには学習データを記録できません',
-          'source_run_deleted',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'source_run_deleted',
+          message: 'training data cannot be recorded on a deleted run',
+        });
       const stages = await listTrainingDataStages(connection, { projectId, runId });
       const existing = stages.find((stage) => stage.startStep === input.startStep);
       if (existing) {
@@ -83,11 +83,11 @@ export class TrainingDataStageService {
           ) ||
           !isDeepStrictEqual(existing.metadata, input.metadata)
         )
-          throw new DomainError(
-            409,
-            'このstepには別の学習データが記録されています',
-            'training_data_stage_conflict',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'training_data_stage_conflict',
+            message: 'different training data is already recorded for this step',
+          });
         return existing;
       }
       await assertRunRecordsWritable(connection, run);
@@ -98,19 +98,19 @@ export class TrainingDataStageService {
         input.startStep < initialStep ||
         (stages.length && input.startStep <= stages.at(-1)!.startStep)
       )
-        throw new DomainError(
-          409,
-          '記録済みのstepより後の学習データを追加してください',
-          'training_data_stage_order',
-        );
+        throw new DomainError({
+          status: 409,
+          code: 'training_data_stage_order',
+          message: 'add training data after the latest recorded step',
+        });
       if (input.checkpointId) {
         const checkpoint = await findCheckpoint(connection, { projectId, id: input.checkpointId });
         if (checkpoint.runId !== run.id || checkpoint.step >= input.startStep)
-          throw new DomainError(
-            422,
-            'このRunの開始stepより前のcheckpointを選んでください',
-            'training_data_stage_checkpoint',
-          );
+          throw new DomainError({
+            status: 422,
+            code: 'training_data_stage_checkpoint',
+            message: 'choose a checkpoint from before the start step of this run',
+          });
       }
       await assertInputDatasetVersionsUsable(connection, {
         projectId,
@@ -123,11 +123,11 @@ export class TrainingDataStageService {
           descendantIds: input.inputDatasetVersionIds,
         })
       )
-        throw new DomainError(
-          422,
-          'このRunの出力から作られたデータは入力に追加できません',
-          'training_data_stage_cycle',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'training_data_stage_cycle',
+          message: 'datasets created from the outputs of this run cannot be added as its inputs',
+        });
       const stage = (await first<TrainingDataStage>(
         connection,
         `INSERT INTO training_data_stages

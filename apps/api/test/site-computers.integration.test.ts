@@ -307,7 +307,7 @@ describe.skipIf(!testDatabaseUrl)('Webで足すコンピュータ（独立Postgr
       [waiting.id],
     );
     expect(failed.rows[0]).toMatchObject({ status: 'failed', end_reason: 'submit_failed' });
-    expect(failed.rows[0]!.error).toContain('鍵をまだ作っていません');
+    expect(failed.rows[0]!.error).toContain('has not created the key');
 
     const everyone = await entity<{ items: SitePersonalSettings[] }>(
       await request(harness.app, `/api/targets/${site.id}/personal-settings`, {

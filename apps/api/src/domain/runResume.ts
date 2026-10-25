@@ -47,17 +47,25 @@ export function decideRunResume(
   context: { hasJob: boolean },
 ): RunResumeDecision {
   if (run.lifecycleStage === 'deleted')
-    throw new DomainError(409, '削除済みのRunは再開できません', 'run_deleted');
+    throw new DomainError({
+      status: 409,
+      code: 'run_deleted',
+      message: 'a deleted run cannot be resumed',
+    });
   if (run.status === 'running') return { resume: false };
   if (!isTerminalStatus(run.status) || run.startedAt === null)
-    throw new DomainError(409, '開始していないRunは再開できません', 'run_not_started');
+    throw new DomainError({
+      status: 409,
+      code: 'run_not_started',
+      message: 'a run that has not started cannot be resumed',
+    });
   // The worker owns a Job's lifecycle and the ended Run is evidence for automation and evaluation.
   if (context.hasJob)
-    throw new DomainError(
-      409,
-      'Jobが終了したRunは再開できません。checkpointから新しいRunとして再開してください',
-      'run_finalized',
-    );
+    throw new DomainError({
+      status: 409,
+      code: 'run_finalized',
+      message: 'a run whose job has ended cannot be resumed; resume from a checkpoint as a new run',
+    });
   return { resume: true, previousStatus: run.status };
 }
 

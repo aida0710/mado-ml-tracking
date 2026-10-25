@@ -26,7 +26,7 @@ const BLOCKER_BY_CODE: Readonly<Record<string, ResumeBlocker>> = {
   upload_not_open: 'gone',
   not_found: 'gone',
   project_forbidden: 'permissionLost',
-  insufficient_scope: 'permissionLost',
+  scope_required: 'permissionLost',
   upload_forbidden: 'otherCredential',
   run_deleted: 'runDeleted',
 };

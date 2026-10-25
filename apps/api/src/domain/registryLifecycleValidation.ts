@@ -7,7 +7,7 @@ const descriptionSchema = z.string().max(20000);
 function requireSomeField(input: object): boolean {
   return Object.values(input).some((value) => value !== undefined);
 }
-const EMPTY_PATCH_MESSAGE = '変更する項目を1つ以上指定してください';
+const EMPTY_PATCH_MESSAGE = 'specify at least one field to change';
 
 // Name and family stay fixed: MLflow clients and automation rules find a Model by them.
 export const modelPatchSchema = z

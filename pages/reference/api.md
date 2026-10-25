@@ -50,24 +50,24 @@ API tokenの発行と失効、Service Account、全体の監査ログ、ユー�
 
 ## エラー
 
-エラーは次の形で返します。`error`は人が読むための文、`code`はプログラムで判定するための値です。判定には`code`を使ってください。
+エラーは次の形で返します。`error`は人が読むための英語の文、`code`はプログラムで判定するための値です。判定には`code`を使ってください。文に入る値（足りないscope、parameter名、上限など）は、`error`と`code`の横の項目にも入ります。画面は`code`と横の項目から日本語の文を作ります。
 
 ```json
-{"error": "API tokenのscopeが不足しています。この操作にはruns:writeが要ります。［プロジェクト設定］の［API tokenを発行］で用途「SDK・MLflow 3から記録する」を選び、tokenを発行し直してください", "code": "insufficient_scope"}
+{"error": "the API token lacks the scope runs:write required for this operation; issue a new token with the purpose \"Record from SDK or MLflow 3\" from Issue API token in Project settings", "code": "scope_required", "scope": "runs:write", "purpose": "recording"}
 ```
 
 | status | よくある`code` | 意味 |
 | --- | --- | --- |
-| 400 | `invalid_cursor`、`invalid_parameter_value` | 検索条件やcursorが正しくない |
+| 400 | `invalid_cursor`、`invalid_request` | 検索条件やcursorが正しくない |
 | 401 | `authentication_required`、`invalid_token` | ログインしていない、tokenが無効・失効・期限切れ |
 | 401 | `identity_sync_required` | SSOのユーザーが7日以上ブラウザでログインしていない（[Authentik（SSO）](/admin/sso)） |
-| 403 | `insufficient_scope` | tokenのscopeが足りない（`error`に足りないscopeと発行し直す場所が入る） |
-| 403 | `project_forbidden` | ProjectのRoleが足りない、またはtokenを限定したProjectと違う（`error`にtokenのProject名が入る） |
+| 403 | `scope_required` | tokenのscopeが足りない（`scope`に足りないscope、`purpose`に発行し直すときの用途が入る） |
+| 403 | `project_forbidden` | ProjectのRoleが足りない、またはtokenを限定したProjectと違う（後者は`tokenProjectName`にtokenのProject名が入る） |
 | 403 | `session_required` | ブラウザのsessionでだけ使える操作 |
 | 403 | `job_token_forbidden` | Job限定tokenで許されていない操作 |
 | 403 | `job_owner_required` | ほかの人が作成したJobの停止・再実行（作成者かProjectのAdminだけ） |
 | 403 | `password_change_required` | 初回ログインのパスワード変更が済んでいない |
-| 404 | — | 対象が無い、または別のProjectのもの |
+| 404 | `not_found` | 対象が無い、または別のProjectのもの |
 | 409 | `conflict`ほか | 状態の競合（最後のAdminを外す、終わったJobへの操作、Jobが動いているProjectのアーカイブ（`project_has_active_jobs`）、アーカイブしていないProjectの削除（`project_not_archived`）、使われているデータセットのバージョンの削除（`dataset_version_in_use`）など） |
 | 413 | `artifact_too_large` | Artifactが上限（既定200GiB）を超えた |
 | 422 | `invalid_request`ほか | 入力の形式や値が正しくない |

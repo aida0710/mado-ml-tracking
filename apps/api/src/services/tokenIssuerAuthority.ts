@@ -25,19 +25,24 @@ export function requireGrantWithinIssuer(principal: Principal, grant: TokenGrant
   if (!issuer) return;
   const beyondIssuer = grant.scopes.filter((scope) => !holdsScope(principal, scope));
   if (beyondIssuer.length)
-    throw new DomainError(
-      403,
-      `このtokenが持たないscopeのtokenは扱えません: ${beyondIssuer.join(', ')}`,
-      'scope_exceeds_issuer',
-    );
+    throw new DomainError({
+      status: 403,
+      code: 'token_authority_exceeded',
+      message: `tokens with scopes this token does not have cannot be managed: ${beyondIssuer.join(', ')}`,
+      details: { scopes: beyondIssuer },
+    });
   if (issuer.projectId && grant.projectId !== issuer.projectId)
-    throw new DomainError(403, 'このtokenのProjectの外のtokenは扱えません', 'project_forbidden');
+    throw new DomainError({
+      status: 403,
+      code: 'project_forbidden',
+      message: 'tokens outside the project of this token cannot be managed',
+    });
   if (issuer.expiresAt && expiryTime(grant.expiresAt) > expiryTime(issuer.expiresAt))
-    throw new DomainError(
-      403,
-      'このtokenより後まで有効なtokenは扱えません。有効期限をこのtokenの期限以前にしてください',
-      'token_outlives_issuer',
-    );
+    throw new DomainError({
+      status: 403,
+      code: 'token_outlives_issuer',
+      message: 'tokens valid longer than this token cannot be managed; set the expiry no later than that of this token',
+    });
 }
 
 /**
@@ -53,9 +58,10 @@ export function requireGlobalScopesUnrestricted(grant: {
     GLOBAL_TOKEN_SCOPES.includes(scope as TokenScope),
   );
   if (!globalScopes.length || (grant.projectId === null && grant.ownerIsAdmin)) return;
-  throw new DomainError(
-    422,
-    `${globalScopes.join(', ')}は、全体管理者がProjectを指定せずに発行するtokenだけが持てます`,
-    'global_scope_requires_unrestricted_token',
-  );
+  throw new DomainError({
+    status: 422,
+    code: 'global_scope_requires_unrestricted_token',
+    message: `${globalScopes.join(', ')} can be held only by tokens a global administrator issues without a project`,
+    details: { scopes: globalScopes },
+  });
 }

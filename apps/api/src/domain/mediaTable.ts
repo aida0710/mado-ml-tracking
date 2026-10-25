@@ -67,7 +67,12 @@ const URI_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:/i;
 const BYTE_ORDER_MARK = '﻿';
 
 function invalidTable(detail: string): never {
-  throw new DomainError(422, `表の形式が不正です: ${detail}`, 'media_table_invalid');
+  throw new DomainError({
+    status: 422,
+    code: 'media_table_invalid',
+    message: `invalid table format: ${detail}`,
+    details: { detail },
+  });
 }
 
 /** Parquet is MLflow's other log_table format; only the JSON split format is read. */
@@ -82,17 +87,17 @@ export function parseMediaTable(content: string): ParsedMediaTable {
   try {
     document = JSON.parse(text);
   } catch {
-    invalidTable('JSONとして読めません');
+    invalidTable('not valid JSON');
   }
   if (typeof document !== 'object' || document === null || Array.isArray(document))
-    invalidTable('{columns, data}のobjectが必要です');
+    invalidTable('an object of {columns, data} is required');
   const { columns, data } = document as { columns?: unknown; data?: unknown };
   if (!Array.isArray(columns) || !columns.every((name) => typeof name === 'string'))
-    invalidTable('columnsは文字列の配列が必要です');
-  if (!Array.isArray(data)) invalidTable('dataは配列が必要です');
+    invalidTable('columns must be an array of strings');
+  if (!Array.isArray(data)) invalidTable('data must be an array');
   data.forEach((row, index) => {
     if (!Array.isArray(row) || row.length !== columns.length)
-      invalidTable(`${index + 1}行目の列数がcolumnsと違います`);
+      invalidTable(`row ${index + 1} has a different number of values than columns`);
   });
   const rows = data as unknown[][];
   return {

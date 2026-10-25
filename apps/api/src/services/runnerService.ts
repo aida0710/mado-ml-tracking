@@ -81,9 +81,17 @@ export class RunnerService {
     return transaction(this.database, async (connection) => {
       const { job, runnerInstanceId } = await this.lockJob(connection, principal, reference);
       if (isTerminalStatus(job.status))
-        throw new DomainError(409, 'Jobは既に終了しています', 'job_not_startable');
+        throw new DomainError({
+          status: 409,
+          code: 'job_not_startable',
+          message: 'the job has already ended',
+        });
       if (runnerInstanceId && !sameId(runnerInstanceId, request.instanceId))
-        throw new DomainError(409, '別のrunnerがこのJobを実行しています', 'runner_conflict');
+        throw new DomainError({
+          status: 409,
+          code: 'runner_conflict',
+          message: 'another runner is running this job',
+        });
       const started = (await first<Job>(
         connection,
         `UPDATE jobs SET runner_instance_id=$2,runner_host=$3,gpu_ids=$4,phase=$5,heartbeat_at=now(),
@@ -172,20 +180,24 @@ export class RunnerService {
     request: RunnerFinishInput,
   ): Promise<RunnerFinishResult> {
     if (request.status === 'finished' && request.exitCode !== undefined && request.exitCode !== 0)
-      throw new DomainError(
-        422,
-        '非zeroのexitCodeでJobを成功にはできません',
-        'inconsistent_completion',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'inconsistent_completion',
+        message: 'a job cannot succeed with a nonzero exitCode',
+      });
     return transaction(this.database, async (connection) => {
       const { job, runnerInstanceId } = await this.lockJob(connection, principal, reference);
       if (!runnerInstanceId || !sameId(runnerInstanceId, request.instanceId))
-        throw new DomainError(409, '別のrunnerがこのJobを実行しています', 'runner_conflict');
+        throw new DomainError({
+          status: 409,
+          code: 'runner_conflict',
+          message: 'another runner is running this job',
+        });
       const timedOut = request.endReason === 'timed_out';
       const reported = timedOut ? 'failed' : request.status;
       const status = job.cancelRequested && reported !== 'finished' ? 'canceled' : reported;
       if (isTerminalStatus(job.status)) {
-        if (job.status !== status) conflict('完了済みJobと再送された状態が一致しません');
+        if (job.status !== status) conflict('the state sent again does not match the completed job');
         return { job, retryJobId: await this.findRetryJobId(connection, job.id) };
       }
       const previousRun = await findRun(connection, {
@@ -303,14 +315,22 @@ export class RunnerService {
       !sameId(binding.jobId, reference.jobId) ||
       !sameId(principal.token.projectId, reference.projectId)
     )
-      throw new DomainError(403, 'このJobのJob tokenが必要です', 'runner_token_required');
+      throw new DomainError({
+        status: 403,
+        code: 'runner_token_required',
+        message: 'the Job token of this job is required',
+      });
     const job = await findJob(connection, {
       projectId: reference.projectId,
       id: reference.jobId,
       lock: true,
     });
     if (job.phase === null)
-      throw new DomainError(403, 'runnerの報告はsiteのJobだけです', 'runner_token_required');
+      throw new DomainError({
+        status: 403,
+        code: 'runner_token_required',
+        message: 'runner reports are only for site jobs',
+      });
     const runner = (await first<{ runnerInstanceId: string | null }>(
       connection,
       'SELECT runner_instance_id FROM jobs WHERE id=$1',
@@ -326,8 +346,12 @@ export class RunnerService {
   ): Promise<Job> {
     const { job, runnerInstanceId } = await this.lockJob(connection, principal, reference);
     if (!runnerInstanceId || !sameId(runnerInstanceId, reference.instanceId))
-      throw new DomainError(409, '別のrunnerがこのJobを実行しています', 'runner_conflict');
-    if (isTerminalStatus(job.status)) conflict('Jobは既に終了しています');
+      throw new DomainError({
+        status: 409,
+        code: 'runner_conflict',
+        message: 'another runner is running this job',
+      });
+    if (isTerminalStatus(job.status)) conflict('the job has already ended');
     return job;
   }
 

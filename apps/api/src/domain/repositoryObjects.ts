@@ -17,11 +17,11 @@ export interface RepositoryBlob {
 }
 
 function invalidRepository(): never {
-  throw new DomainError(
-    422,
-    'Repositoryに安全に読み込めないファイルがあります',
-    'unsafe_repository',
-  );
+  throw new DomainError({
+    status: 422,
+    code: 'unsafe_repository',
+    message: 'the repository has a file that cannot be read safely',
+  });
 }
 
 export function parseRepositoryTree(tree: Buffer): RepositoryBlob[] {
@@ -34,11 +34,11 @@ export function parseRepositoryTree(tree: Buffer): RepositoryBlob[] {
   const entries = listing.split('\0');
   if (entries.pop() !== '') invalidRepository();
   if (entries.length > MAX_REPOSITORY_ENTRIES)
-    throw new DomainError(
-      413,
-      'Repositoryのファイル数が上限を超えています',
-      'repository_too_large',
-    );
+    throw new DomainError({
+      status: 413,
+      code: 'repository_too_large',
+      message: 'the repository has more files than the limit',
+    });
   const blobs: RepositoryBlob[] = [];
   const paths = new Set<string>();
   for (const entry of entries) {

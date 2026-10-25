@@ -153,26 +153,26 @@ server {
     proxy_set_header Cookie "";
 
     if ($mmt_runner_ambiguous_path) {
-        return 400 '{"error":"このpathは受け付けません","code":"invalid_path"}\n';
+        return 400 '{"error":"this path is not accepted","code":"invalid_path"}\n';
     }
 
     # API のヘルスチェックも、公開 hostname では Job token を持つ runner にだけ答える。
     location = /healthz {
         if ($mmt_runner_route = "") {
-            return 404 '{"error":"APIが見つかりません","code":"not_found"}\n';
+            return 404 '{"error":"API route not found","code":"not_found"}\n';
         }
         if ($mmt_runner_token_missing) {
-            return 401 '{"error":"このhostnameではJob tokenだけを受け付けます","code":"job_token_required"}\n';
+            return 401 '{"error":"this hostname accepts only Job tokens","code":"job_token_required"}\n';
         }
         proxy_pass http://${MMT_RUNNER_API_UPSTREAM};
     }
 
     location /api/ {
         if ($mmt_runner_route = "") {
-            return 404 '{"error":"APIが見つかりません","code":"not_found"}\n';
+            return 404 '{"error":"API route not found","code":"not_found"}\n';
         }
         if ($mmt_runner_token_missing) {
-            return 401 '{"error":"このhostnameではJob tokenだけを受け付けます","code":"job_token_required"}\n';
+            return 401 '{"error":"this hostname accepts only Job tokens","code":"job_token_required"}\n';
         }
         proxy_pass http://${MMT_RUNNER_API_UPSTREAM};
     }
@@ -181,7 +181,7 @@ server {
     # the edge only bounds the size and the rate per sender.
     location ~ ^/api/hooks/[^/]+/webhook$ {
         if ($mmt_runner_route = "") {
-            return 404 '{"error":"APIが見つかりません","code":"not_found"}\n';
+            return 404 '{"error":"API route not found","code":"not_found"}\n';
         }
         client_max_body_size 1m;
         limit_req zone=mmt_runner_webhooks burst=20 nodelay;
@@ -191,6 +191,6 @@ server {
     }
 
     location / {
-        return 404 '{"error":"APIが見つかりません","code":"not_found"}\n';
+        return 404 '{"error":"API route not found","code":"not_found"}\n';
     }
 }

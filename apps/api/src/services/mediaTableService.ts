@@ -46,15 +46,20 @@ export class MediaTableService {
       'SELECT * FROM artifacts WHERE id=$1 AND project_id=$2 AND deleted_at IS NULL',
       [location.artifactId, location.projectId],
     );
-    if (!artifact) notFound('Artifact');
+    if (!artifact) notFound('artifact');
     if (isParquetTable(artifact))
-      throw new DomainError(422, 'parquetの表は表示できません。JSONで記録してください', 'unsupported_table_format');
+      throw new DomainError({
+        status: 422,
+        code: 'unsupported_table_format',
+        message: 'parquet tables cannot be shown; log the table as JSON',
+      });
     if (artifact.size > MEDIA_TABLE_MAX_BYTES)
-      throw new DomainError(
-        413,
-        `表が${MEDIA_TABLE_MAX_BYTES / 1024 / 1024}MiBを超えています。Artifactをdownloadして開いてください`,
-        'media_table_too_large',
-      );
+      throw new DomainError({
+        status: 413,
+        code: 'media_table_too_large',
+        message: `the table exceeds ${MEDIA_TABLE_MAX_BYTES / 1024 / 1024} MiB; download the artifact to open it`,
+        details: { maxBytes: MEDIA_TABLE_MAX_BYTES },
+      });
     const content = await this.artifacts.readContent(artifact);
     return parseMediaTable(await readText(content.body));
   }

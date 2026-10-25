@@ -9,18 +9,18 @@ function rateLimitOr(error: unknown, fallback: (error: RequestError) => string |
   return fallback(error) ?? formatErrorMessage(error);
 }
 
-// 401 means wrong credentials and 429 means waiting is required; the screen tells them apart.
+// invalid_credentials は誤った認証情報、429 は待つ必要があることを表す。画面はこれを分けて伝える。
 export function localLoginErrorMessage(error: unknown): string {
   return rateLimitOr(error, (failure) =>
-    failure.status === 401 ? text.localLoginInvalid : undefined,
+    failure.code === 'invalid_credentials' ? text.localLoginInvalid : undefined,
   );
 }
 
 export function changePasswordErrorMessage(error: unknown): string {
   return rateLimitOr(error, (failure) => {
-    if (failure.status === 401) return text.currentPasswordInvalid;
+    if (failure.code === 'incorrect_password') return text.currentPasswordInvalid;
     if (failure.code === 'weak_password') return text.weakPassword;
-    if (failure.code === 'local_account_required') return text.localAccountRequired;
+    if (failure.code === 'local_credential_unavailable') return text.localAccountRequired;
     return undefined;
   });
 }

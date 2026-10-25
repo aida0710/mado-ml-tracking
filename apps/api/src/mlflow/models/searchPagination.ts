@@ -30,7 +30,7 @@ function pageOffset(token: string | undefined, fingerprint: string): number {
   } catch {
     /* Invalid input is translated to the same public validation error. */
   }
-  return invalidParameter('page_tokenが検索条件に一致しません');
+  return invalidParameter('page_token does not match the search conditions');
 }
 
 /**

@@ -1,4 +1,4 @@
-import type { ComputeTarget, SiteSettings, SiteSubmissionAccount } from '@mmt/contracts';
+import type { ApiErrorCode, ComputeTarget, SiteSettings, SiteSubmissionAccount } from '@mmt/contracts';
 import type { Connection } from '../db/database.js';
 import { DomainError } from '../domain/errors.js';
 import { isLiveLauncher } from '../repositories/launcherRepository.js';
@@ -7,8 +7,8 @@ import { findPersonalSettings } from '../repositories/sitePersonalSettingsReposi
 import { findSiteSettings } from '../repositories/siteSettingsRepository.js';
 import { canUseTarget, targetNotAvailable } from './siteAccess.js';
 
-function notReady(message: string, code: string): never {
-  throw new DomainError(422, message, code);
+function notReady(message: string, code: ApiErrorCode): never {
+  throw new DomainError({ status: 422, code, message });
 }
 
 /**
@@ -26,22 +26,22 @@ export async function assertTargetReadyForJobs(
     targetNotAvailable(422);
   if (target.executor !== 'site') return;
   const settings = await findSiteSettings(connection, target.id);
-  if (!settings?.jobShell) notReady('このコンピュータにはjob shellがありません', 'site_job_shell_missing');
+  if (!settings?.jobShell) notReady('this computer has no job shell', 'site_job_shell_missing');
   if (target.submissionMode !== 'automatic') return;
   if (!settings.launcherId || !(await isLiveLauncher(connection, settings.launcherId)))
-    notReady('このコンピュータを投入するlauncherがありません', 'site_launcher_missing');
+    notReady('no launcher submits to this computer', 'site_launcher_missing');
   if (settings.accountMode === 'personal') {
     const personal = await findPersonalSettings(connection, { targetId: target.id, userId: usage.userId });
     if (!personal?.accountName)
       notReady(
-        'このコンピュータは本人のアカウントで動きます。コンピュータの「自分の設定」でアカウント名を登録してください',
+        'this computer runs with personal accounts; register your account name in "My settings" of the computer',
         'site_account_required',
       );
   }
 }
 
 function submissionFailure(message: string): never {
-  throw new DomainError(422, message, 'site_submission_unready');
+  throw new DomainError({ status: 422, code: 'site_submission_unready', message });
 }
 
 /**
@@ -65,12 +65,12 @@ export async function resolveSubmissionAccount(
       ? await findPersonalSettings(connection, { targetId: target.id, userId })
       : undefined;
     if (userId && !personal?.accountName)
-      submissionFailure('依頼した人のこのコンピュータの個人設定（アカウント名）がありません');
+      submissionFailure('the person who requested it has no personal settings (account name) for this computer');
     const key = await findLiveSiteKey(connection, { targetId: target.id, userId });
     if (!key || key.status !== 'ready')
-      submissionFailure('launcherがこのアカウントの鍵をまだ作っていません');
+      submissionFailure('the launcher has not created the key of this account yet');
     const workDirectory = personal?.workDirectory || settings.workDirectory;
-    if (!workDirectory) submissionFailure('このコンピュータの作業ディレクトリが決まっていません');
+    if (!workDirectory) submissionFailure('the working directory of this computer is not set');
     return {
       mode: settings.accountMode,
       accountName: personal?.accountName ?? settings.sharedAccount,
