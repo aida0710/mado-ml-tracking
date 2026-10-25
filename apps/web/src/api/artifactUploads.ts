@@ -21,7 +21,7 @@ import {
 } from './http';
 
 const HTTP_PAYLOAD_TOO_LARGE = 413;
-// Same header name as apps/api/src/routes/artifactUploadRoutes.ts PART_SHA256_HEADER.
+// apps/api/src/routes/artifactUploadRoutes.tsのPART_SHA256_HEADERと同じヘッダー名。
 const PART_SHA256_HEADER = 'X-Part-SHA256';
 
 const uploadsPath = (projectId: string) => `${projectPath(projectId)}/artifact-uploads`;
@@ -30,13 +30,13 @@ const uploadPath = (projectId: string, uploadId: string) =>
 
 export interface TransferOptions {
   signal: AbortSignal;
-  /** Bytes of this request body sent so far. */
+  /** この要求の本文のうち、ここまでに送ったバイト数。 */
   onProgress: (sentBytes: number) => void;
 }
 
 /**
- * fetch() cannot report upload progress, so request bodies go through XMLHttpRequest.
- * Failures become the same RequestError as api/http.ts so lib/errorMessage.ts can show them.
+ * fetch()はアップロードの進み具合を知らせられないので、要求の本文はXMLHttpRequestで送る。
+ * 失敗はapi/http.tsと同じRequestErrorにして、lib/errorMessage.tsが画面に出せるようにする。
  */
 function sendWithProgress<T>(
   { method, path, body, headers }: { method: 'PUT'; path: string; body: Blob | ArrayBuffer; headers: Record<string, string> },
@@ -80,7 +80,7 @@ function parseJson(body: string): unknown {
 }
 
 function responseError(status: number, payload: unknown): RequestError {
-  // A front proxy can reject with HTML before the API, so 413 is named by status alone.
+  // 手前のプロキシがAPIより先にHTMLで断ることがあるため、413はstatusだけでコードを決める。
   if (status === HTTP_PAYLOAD_TOO_LARGE) return new RequestError({ status, code: ARTIFACT_TOO_LARGE_CODE });
   return requestErrorFromBody(status, payload);
 }
@@ -98,7 +98,7 @@ export const artifactUploadsApi = {
       uploadId: string;
       partNumber: number;
       body: Blob | ArrayBuffer;
-      /** Lowercase hex digest; omitted where the browser has no Web Crypto (plain http origins). */
+      /** 小文字の16進のdigest。ブラウザにWeb Cryptoが無いとき（平文のhttpのorigin）は付けない。 */
       sha256: string | null;
     },
     options: TransferOptions,
@@ -119,7 +119,7 @@ export const artifactUploadsApi = {
     request<ArtifactUpload>(`${uploadPath(projectId, uploadId)}/complete`, { method: 'POST', signal }),
   abort: (projectId: string, uploadId: string) =>
     request<ArtifactUpload>(uploadPath(projectId, uploadId), { method: 'DELETE' }),
-  /** The single PUT of `PUT .../artifacts?path=`, sent with progress for small files. */
+  /** 小さいファイル用の`PUT .../artifacts?path=`の1回のPUTを、進み具合つきで送る。 */
   putSingle: (
     { projectId, runId, path, file }: { projectId: string; runId: string | null; path: string; file: File },
     options: TransferOptions,
@@ -129,7 +129,7 @@ export const artifactUploadsApi = {
         method: 'PUT',
         path: `${runId ? `${projectPath(projectId)}/runs/${encodeId(runId)}` : projectPath(projectId)}/artifacts?${new URLSearchParams({ path })}`,
         body: file,
-        // The API infers the type from the path when the browser leaves File.type empty.
+        // ブラウザがFile.typeを空にしたときは、APIがパスから種類を推測する。
         headers: { 'Content-Type': file.type || 'application/octet-stream' },
       },
       options,

@@ -58,7 +58,7 @@ export const lineageRelationLabels = {
   reference: "Evidence reference",
 } satisfies Record<string, string>;
 
-// Text that embeds values. Kept apart from `text` so every `text` entry stays a plain string.
+// 値を埋め込む文言。`text`のどの項目もただの文字列のままにするため、`text`とは分けておく。
 export const textTemplates = {
   ...runsTextTemplates,
   ...uploadsTextTemplates,
@@ -213,7 +213,7 @@ export const text = {
   previousPage: "Previous page",
   nextPage: "Next page",
   details: "Details",
-  // Header of a table column that holds the row's buttons.
+  // 行のボタンを置く表の列の見出し。
   actions: "Actions",
   artifacts: 'Artifacts',
   systemMetrics: 'System metrics',

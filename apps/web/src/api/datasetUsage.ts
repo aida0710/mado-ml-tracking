@@ -1,7 +1,7 @@
 import type { RunDatasetUsage } from '@mmt/contracts';
 import { encodeId, projectPath, request } from './http';
 
-/** How a Run used its input dataset versions: role, mixing weight and selection conditions. */
+/** Runが入力のデータセットのバージョンをどう使ったか（役割、混合の重み、選択の条件）。 */
 export const datasetUsageApi = {
   forRun: async (projectId: string, runId: string, signal?: AbortSignal) =>
     (

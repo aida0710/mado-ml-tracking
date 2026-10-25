@@ -13,8 +13,8 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**
- * Creates a local account with an initial password the user must change at the first login.
- * After saving, the password is shown once so the administrator can hand it over.
+ * ローカルアカウントを作る。初回パスワードは、本人が初回ログインで変えなければならない。
+ * 保存後にパスワードを一度だけ出し、管理者が本人に渡せるようにする。
  */
 export function LocalUserDialog({
   onCreated,
@@ -31,7 +31,7 @@ export function LocalUserDialog({
   const [isAdmin, setIsAdmin] = useState(false);
   const [createdPassword, setCreatedPassword] = useState<string | null>(null);
   const mutation = useMutation();
-  // A local account can only sign in while the server offers local login (AUTH_MODE).
+  // ローカルアカウントは、サーバーがローカルログインを受け付ける間（AUTH_MODE）だけログインできる。
   const authConfig = useQuery({ key: 'auth-config', load: authApi.config });
   const isLocalLoginOff = authConfig.value !== undefined && !loginMethods(authConfig.value).local;
   if (createdPassword)

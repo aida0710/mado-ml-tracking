@@ -14,7 +14,7 @@ import { artifactsTextTemplates } from '../i18n/artifacts';
 
 const displayName = (name: string) => name || text.artifactUnnamed;
 
-/** One directory level of a Run's Artifacts: breadcrumbs, subdirectories, and files. */
+/** RunのArtifactのディレクトリ1階層分。パンくず、サブディレクトリ、ファイルを並べる。 */
 export function ArtifactTree({
   tree,
   files,
@@ -107,7 +107,7 @@ export function ArtifactTree({
           },
           {
             key: 'download',
-            // The column holds only an icon; a visible heading would be wider than the icons.
+            // この列はアイコンだけなので、見える見出しを付けるとアイコンより幅を取る。
             header: <span className="sr-only">{text.download}</span>,
             priority: 'primary',
             className: 'artifact-tree-download',

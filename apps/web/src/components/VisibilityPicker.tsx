@@ -5,7 +5,7 @@ import { VisibilityLabel } from './VisibilityLabel';
 type Visibility = ProjectVisibility | ComputeTargetVisibility;
 const VISIBILITIES: readonly Visibility[] = ['public', 'private'];
 
-/** Chooses Public or Private, with what each choice means (`hints`) under its name. */
+/** PublicかPrivateかを選ぶ。名前の下に、それぞれを選んだときの意味（`hints`）を出す。 */
 export function VisibilityPicker({
   name,
   legend,
@@ -13,7 +13,7 @@ export function VisibilityPicker({
   value,
   onChange,
 }: {
-  /** The radio group's name, unique in the form. */
+  /** ラジオボタンのグループの名前。フォームの中で一意にする。 */
   name: string;
   legend: string;
   hints: Record<Visibility, string>;

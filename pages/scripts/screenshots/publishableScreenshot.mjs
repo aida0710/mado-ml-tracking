@@ -1,16 +1,15 @@
-// Saves a documentation screenshot only when it is safe to publish: values of this machine (paths,
-// host name) are replaced with example values first, and the image is not written when anything
-// private is still on the screen.
+// ドキュメントのスクリーンショットを、公開しても安全なときだけ保存する。先にこのマシンの値（パス、
+// ホスト名）を例の値に置き換え、私的なものがまだ画面に残っていれば画像を書かない。
 import { mkdir } from 'node:fs/promises';
 import { homedir, hostname } from 'node:os';
 import path from 'node:path';
 import { LANGUAGES } from './screenshotEnvironment.mjs';
 
-// Where the mouse rests while a screenshot is taken: an empty spot of the top bar, so no hover
-// style from the previous action shows.
+// スクリーンショットを撮る間にマウスを置く場所。上部バーの空いたところに置き、直前の操作による
+// ホバーの見た目を出さない。
 const NEUTRAL_MOUSE_OFFSET = { fromRight: 8, top: 60 };
 const MOUSE_SETTLE_MS = 200;
-// The host name of a worker in the docs' examples.
+// ドキュメントの例に出るworkerのホスト名。
 const EXAMPLE_WORKER_HOST = 'worker-1.example.internal';
 const PRIVATE_ADDRESS = /\b(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)\b/;
 // token の一覧に出る先頭（mado_mt_AbC1… や mado_mtj_…）。
@@ -24,8 +23,8 @@ export async function outputDirectory(lang) {
 }
 
 /**
- * Text that must never be in a published image: the home directory, the host name, and the
- * comma-separated MMT_DOCS_FORBIDDEN_TEXT (for example a temporary directory or a real name).
+ * 公開する画像に決して入れてはいけない文字列。ホームディレクトリ、ホスト名と、カンマ区切りの
+ * MMT_DOCS_FORBIDDEN_TEXT（一時ディレクトリや実名など）。
  */
 function forbiddenText() {
   const extra = (process.env.MMT_DOCS_FORBIDDEN_TEXT ?? '').split(',').map((value) => value.trim());
@@ -33,7 +32,7 @@ function forbiddenText() {
 }
 
 async function replaceLocalValues(page, { replacements, maskTokens }) {
-  // Longer local values first, so a directory inside another one gets its own example.
+  // 長いローカルの値から置き換え、別のディレクトリの中にあるディレクトリにも専用の例を当てる。
   const pairs = [...replacements, [hostname(), EXAMPLE_WORKER_HOST]]
     .filter(([local]) => local)
     .sort(([left], [right]) => right.length - left.length);
@@ -59,10 +58,10 @@ async function replaceLocalValues(page, { replacements, maskTokens }) {
   );
 }
 
-// Kana and CJK ideographs: text of the Japanese UI or sample data on an English screen.
+// かなとCJKの漢字。英語の画面に残った日本語のUIや見本のデータの文字。
 const JAPANESE_TEXT = /[\u3040-\u30ff\u3400-\u9fff\uff01-\uff60]/;
 
-/** Lists Japanese lines of an English page (server messages may stay Japanese on purpose). */
+/** 英語のページにある日本語の行を並べる（サーバーのメッセージはわざと日本語のこともある）。 */
 async function reportJapaneseText(page, name) {
   const lines = (await page.evaluate(() => document.body.innerText)).split('\n');
   for (const line of lines) if (JAPANESE_TEXT.test(line)) console.log(`japanese text in ${name}: ${line.trim().slice(0, 120)}`);
@@ -78,11 +77,11 @@ async function assertPublishable(page) {
 }
 
 /**
- * Replaces local values, checks the screen and saves `<directory>/<name>.png`.
+ * ローカルの値を置き換え、画面を確かめてから`<directory>/<name>.png`を保存する。
  * @param {object} options
- * @param {string} options.lang the UI language; English pages list any Japanese text left
- * @param {[string, string][]} [options.replacements] local value → example value
- * @param {boolean} [options.maskTokens] hide token prefixes (token lists)
+ * @param {string} options.lang UIの言語。英語のページでは、残った日本語の文字を並べる
+ * @param {[string, string][]} [options.replacements] ローカルの値 → 例の値
+ * @param {boolean} [options.maskTokens] tokenの先頭を隠す（tokenの一覧）
  */
 export async function saveScreenshot(page, directory, name, { lang, replacements = [], maskTokens = false }) {
   const viewport = page.viewportSize();

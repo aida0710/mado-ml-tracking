@@ -17,7 +17,7 @@ export const lineageText = {
   lineageClearSelection: 'Clear selection',
   lineageNodeHelp: 'Press Enter to select an item. Follow its name link to open details.',
   lineageRelationHelp: 'A relationship between items. It is also available in the relations table.',
-  // Leaves the focus on one item; unlike lineageZoomFit, it changes which items are drawn.
+  // 1つの項目への絞り込みをやめる。lineageZoomFitと違い、描く項目そのものが変わる。
   lineageShowWhole: 'Show full graph',
   lineageOpenModel: 'Lineage for this model',
   lineageFocusMissing: 'The specified item is not in Lineage. Showing the full graph.',

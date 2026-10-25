@@ -1,8 +1,8 @@
 import type { WorkerCapability } from '@mmt/contracts';
 import { formatEnglishCount } from '../formatEnglishCount';
 
-// Whether a worker takes a computer's Jobs and connection checks (lib/workerCoverage), on the
-// Compute, Jobs, Sweep and Global settings → Computers screens and in the Job launch dialog.
+// workerがコンピュータのJobと接続確認を受け取るかどうか（lib/workerCoverage）。Compute、Jobs、
+// Sweep、全体設定 → コンピュータの画面と、Jobの起動のダイアログに出す。
 export const workerCoverageText = {
   workerCoverageColumn: "Worker",
   workerCoverageAnyProject: "Worker (any project)",
@@ -41,7 +41,7 @@ export const workerCapabilityLabels: Record<WorkerCapability, string> = {
     "Workflow steps (passing the dataset usage, weights and selection conditions to the execution code)",
 };
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const workerCoverageTextTemplates = {
   workerCoverageOnline: (count: number) => `${formatEnglishCount(count, 'worker')} online`,
   workerCoverageOfflineSince: (lastSeen: string) => `Last response: ${lastSeen}`,

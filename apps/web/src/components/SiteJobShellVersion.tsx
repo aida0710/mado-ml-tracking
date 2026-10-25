@@ -6,8 +6,8 @@ import { useLocale } from '../i18n/useLocale';
 import { siteComputersTextTemplates } from '../i18n/siteComputers';
 
 /**
- * The job shell version a site Job was submitted with, and the script itself to read. Versions
- * never change, so it shows exactly what ran even after the site's job shell was edited.
+ * siteのJobが投入されたときのjob shellのバージョンと、読むためのスクリプトそのもの。バージョンは
+ * 変わらないので、siteのjob shellが編集された後でも、実際に動いたものをそのまま示す。
  */
 export function SiteJobShellVersion({ targetId, jobShellId }: { targetId: string; jobShellId: string }) {
   useLocale();

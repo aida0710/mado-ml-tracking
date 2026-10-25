@@ -20,9 +20,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * One's own settings for a site: the account the launcher logs in as where each person uses their
- * own (then also the launcher's key for it and the login checks), and one's work directory and
- * variables. A site with a shared account has none.
+ * siteでの自分の設定。各人が自分のアカウントを使うsiteなら、ランチャーがログインに使うアカウント
+ * （とそのためのランチャーの鍵、ログインの確認）、そして自分の作業ディレクトリと変数。
+ * 共有アカウントのsiteには自分の設定が無い。
  */
 export function SitePersonalSettingsPanel({
   target,

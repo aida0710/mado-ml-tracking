@@ -4,15 +4,15 @@ import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 /**
- * A place under a block where a new block goes, so it need not be added at the end and moved up
- * block by block. It stays a small button until opened, to keep the editor readable.
+ * ブロックの下の、新しいブロックを入れる場所。末尾に足してから1つずつ上へ動かさなくて済む。
+ * 編集画面を読みやすく保つため、開くまでは小さなボタンのまま。
  */
 export function ReportBlockInsertPoint({
   position,
   onAddMarkdown,
   onAddEmbed,
 }: {
-  /** 1-based number of the block above, for the accessible name. */
+  /** 上のブロックの1始まりの番号。アクセシブルな名前に使う。 */
   position: number;
   onAddMarkdown: () => void;
   onAddEmbed: () => void;
@@ -39,7 +39,7 @@ export function ReportBlockInsertPoint({
   };
   return (
     <div className="report-insert-point open" role="group" aria-label={textTemplates.reportInsertBelow(position)}>
-      {/* Opening replaces the button that had focus; the first choice takes it over. */}
+      {/* 開くとフォーカスを持っていたボタンが置き換わるので、最初の選択肢がフォーカスを引き継ぐ。 */}
       <button type="button" className="button small" autoFocus onClick={() => add(onAddMarkdown)}>
         <FileText size={14} />
         {text.reportAddMarkdown}

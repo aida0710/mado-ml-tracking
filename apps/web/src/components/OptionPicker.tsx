@@ -3,13 +3,13 @@ import { useId, type ReactNode } from 'react';
 export interface PickerOption<T extends string> {
   value: T;
   label: ReactNode;
-  /** What the choice means, under its name. */
+  /** 選択肢の意味。名前の下に出す。 */
   hint?: string;
 }
 
 /**
- * Chooses one of a few options from a radio list with a bordered line per option (no browser
- * select), each with what it means under its name, and a hint about the choice under the list.
+ * 少しの選択肢から1つを、選択肢ごとに枠線で囲んだラジオボタンの一覧で選ぶ（ブラウザのselectは
+ * 使わない）。各選択肢の名前の下にその意味を、一覧の下に選択についての説明を出す。
  */
 export function OptionPicker<T extends string>({
   name,
@@ -21,14 +21,14 @@ export function OptionPicker<T extends string>({
   hint,
   className = '',
 }: {
-  /** The radio group's name, unique in the form. */
+  /** ラジオボタンのグループの名前。フォームの中で重複しないもの。 */
   name: string;
   legend: string;
   options: readonly PickerOption<T>[];
   value: T | null;
   onChange: (value: T) => void;
   disabled?: boolean;
-  /** About the whole choice (what was detected, what the choice does), read with the group. */
+  /** 選択全体の説明（何を検出したか、選ぶと何が起きるか）。グループと合わせて読み上げる。 */
   hint?: string;
   className?: string;
 }) {
@@ -41,7 +41,7 @@ export function OptionPicker<T extends string>({
     >
       <legend>{legend}</legend>
       {options.map((option, index) => {
-        // The option's name is its label alone; its hint is read as a description of it.
+        // 選択肢の名前はラベルだけにし、説明はその選択肢の説明文として読み上げる。
         const labelId = `${hintId}-${index}-label`;
         const optionHintId = `${hintId}-${index}-hint`;
         return (

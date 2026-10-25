@@ -1,18 +1,18 @@
-// Workflows for the browser tests: one workflow with more versions than GET /workflows/:id
-// returns, two pages of executions (one started by another editor), the Tasks they pin, and the
-// processing Run of a step. It answers before createBrowserApi's route and never touches the API.
+// ブラウザテスト用のワークフロー: GET /workflows/:idが返すより多くのバージョンを持つワークフロー
+// 1つ、2ページ分の実行（1つは別のeditorが開始）、それらが固定するTask、ステップの処理のRun。
+// createBrowserApiのrouteより先に答え、APIには一切触れない。
 
-// The API's newest-version page (contracts WORKFLOW_VERSIONS_PAGE_SIZE).
+// APIが返す最新のバージョンの1ページ分（contractsのWORKFLOW_VERSIONS_PAGE_SIZE）。
 const NEWEST_VERSIONS = 20;
 const VERSION_COUNT = 25;
-// Executions per history page here; the API pages by WORKFLOW_PAGE_SIZE, the screen by nextCursor.
+// ここでの履歴の1ページの実行の数。APIはWORKFLOW_PAGE_SIZEで、画面はnextCursorでページを分ける。
 const HISTORY_PAGE_SIZE = 3;
 const OLDER_VERSIONS_CURSOR = 'older-versions';
 
 export function createWorkflowMock(api) {
   const { project, user } = api.state;
   const now = '2026-10-12T00:00:00.000Z';
-  // The first block differs between ids, as in real UUIDs: the screens show it as the short id.
+  // 本物のUUIDと同じく、idごとに最初のブロックが違う。画面はそれを短いidとして出す。
   const FIRST_ID_BLOCK = 0xa0000000;
   const ids = { next: 1 };
   const id = (block) =>
@@ -195,7 +195,7 @@ export function createWorkflowMock(api) {
     launches: [],
     cancels: [],
     created: [],
-    /** The next launch is accepted but answered with 503, as when the answer is lost. */
+    /** 次の起動は受け付けるが、応答が失われたときと同じく503で答える。 */
     loseNextLaunchAnswer: false,
   };
   const summary = ({ steps: _steps, ...rest }) => rest;
@@ -212,7 +212,7 @@ export function createWorkflowMock(api) {
     const earlier = state.launches
       .slice(0, -1)
       .find((launched) => launched.idempotencyKey === body.idempotencyKey && launched.executionId);
-    // The same key again: the first execution, as the API's idempotent launch returns it.
+    // 同じキーがまた来た: APIの冪等な起動と同じく、最初の実行を返す。
     if (earlier) {
       state.launches.at(-1).executionId = earlier.executionId;
       return state.executions.find((item) => item.id === earlier.executionId);
@@ -228,7 +228,7 @@ export function createWorkflowMock(api) {
     return started;
   }
 
-  /** Answers a workflow request, or returns false for createBrowserApi to answer it. */
+  /** ワークフローの要求に答える。createBrowserApiに任せるときはfalseを返す。 */
   async function route(route) {
     const request = route.request();
     const url = new URL(request.url());
@@ -242,7 +242,7 @@ export function createWorkflowMock(api) {
     const body = () => request.postDataJSON();
     if (resource === 'tasks' && !key && method === 'GET')
       return reply({ items: [preprocessingTask, trainingTask] });
-    // Project members by name, for the creator a stop confirmation shows.
+    // 停止の確認に出す作成者のための、名前付きのProjectのメンバー。
     if (resource === 'members' && method === 'GET')
       return reply({
         items: [
@@ -252,7 +252,7 @@ export function createWorkflowMock(api) {
       });
     if (resource === 'workflows') {
       if (!key && method === 'GET') return reply({ items: [workflow] });
-      // A created workflow is answered as the existing one, so its page opens on known data.
+      // 作ったワークフローには既存のものを返し、そのページが既知のデータで開くようにする。
       if (!key && method === 'POST') {
         state.created.push(body());
         return reply({ workflow, versions: versions.slice(0, NEWEST_VERSIONS), olderVersionsCursor: OLDER_VERSIONS_CURSOR }, 201);

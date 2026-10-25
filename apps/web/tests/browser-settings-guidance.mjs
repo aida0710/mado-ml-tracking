@@ -1,9 +1,8 @@
-// Browser check of the guidance on the settings screens (fix plan 2026-10-11, 3段目 settings),
-// against the isolated mock API (tests/browserApi.mjs): notification rules without a channel and
-// the channel's variable names, a Mado connection whose credential storage is unavailable,
-// the Project settings, the way back from 全体設定 and the bell there, a link to a 全体管理
-// screen for someone else, and an archived Project's URL.
-// Start Vite on MMT_WEB_URL first; MMT_SCREENSHOT_DIR, when set, receives the screenshots.
+// 設定の画面の案内をブラウザで確かめる（修正計画2026-10-11、3段目のsettings）。分離したモックの
+// API（tests/browserApi.mjs）を使う: 通知先の無い通知ルールと通知先の変数名、認証情報を保存できない
+// 状態のmado S3 Data Catalogとの接続、Projectの設定、全体設定からの戻り方とそこでのベル、全体管理者
+// でない人が開いた全体管理の画面へのリンク、アーカイブしたProjectのURL。
+// 先にMMT_WEB_URLでViteを起動しておく。MMT_SCREENSHOT_DIRを設定すると、そこへスクリーンショットを保存する。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -19,7 +18,7 @@ const WIDE = { width: 1440, height: 900 };
 const NARROW = { width: 390, height: 844 };
 const ARCHIVED_PROJECT_ID = '00000000-0000-4000-8000-00000000d001';
 
-/** The shared mock API with two open alerts and an archived Project of the signed-in user. */
+/** 共有のモックのAPIに、未解決のアラート2件と、本人のアーカイブ済みのProjectを足したもの。 */
 function createGuidanceApi() {
   const api = createBrowserApi();
   api.state.loggedIn = true;
@@ -101,7 +100,7 @@ try {
     const createRule = page.getByRole('button', { name: '通知ルールを作成', exact: true });
     await createRule.waitFor();
     assert.equal(await createRule.isDisabled(), true, 'A rule cannot be made without a channel');
-    // The mock user is a global administrator, who is pointed at the button above.
+    // モックの利用者は全体管理者なので、上のボタンへ案内される。
     await page.getByText('先に上の［通知先を追加］で通知先を作成してください。').waitFor();
     await screenshot('01-notifications-without-channel');
 
@@ -135,7 +134,7 @@ try {
     assert.equal(await page.getByRole('button', { name: '接続を確認', exact: true }).isDisabled(), true);
     assert.equal(await page.getByLabel('データセットを検索', { exact: true }).count(), 0);
     await screenshot('03-mado-secret-storage-missing');
-    // Restoring credential storage enables a fresh explicit check before search.
+    // 認証情報を保存できるようになると、検索の前に、改めて明示的な接続確認ができる。
     plugin.tokenConfigured = true;
     plugin.secretStorageAvailable = true;
     plugin.configRevision++;
@@ -164,12 +163,12 @@ try {
     await page.getByRole('button', { name: 'ユーザーメニュー' }).click();
     await page.getByRole('menuitem', { name: '全体設定', exact: true }).click();
     await page.waitForURL(`${base}/settings/account`);
-    // The Project screen stays until the account page has loaded; its bell is not the one to open.
+    // アカウントの画面を読み込むまではProjectの画面が残る。そこのベルは開く対象ではない。
     await page.getByRole('heading', { name: 'アカウント', exact: true, level: 1 }).waitFor();
     const bell = page.getByRole('button', { name: '運用アラート 2件' });
     await bell.click();
     const popover = page.getByRole('dialog', { name: '運用アラート 2件' });
-    // The Project names are read when the list opens.
+    // Projectの名前は一覧を開いたときに読み込む。
     await popover.getByText(guidance.api.state.project.name).first().waitFor();
     await screenshot('04-settings-bell-and-way-back');
     await page.keyboard.press('Escape');

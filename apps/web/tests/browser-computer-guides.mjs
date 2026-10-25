@@ -1,11 +1,10 @@
-// The commands with a computer's ID filled in, against a development-mode API (AUTH_MODE=development)
-// behind the Web on MMT_WEB_URL: an ssh computer's details give its managers its ID and the
-// worker's install and environment with that ID, and those who only use it the ID and who sets
-// the worker up; a manual site's details, the Jobs notice and the launch review
-// give the submit command with the URL to connect to, how to install the command, and where and
-// with which scopes the token is issued (never the token itself). The token button of the Jobs
-// page issues a token with read and jobs:write, and a viewer gets no button. At 390px the pages
-// do not scroll sideways. MMT_SCREENSHOT_DIR, when set, receives screenshots.
+// コンピュータのIDを埋めたコマンドの確認。MMT_WEB_URLのWebの裏に開発モードのAPI
+// （AUTH_MODE=development）を置いて行う。sshのコンピュータの詳細は、管理する人にはIDと、そのIDを
+// 入れたworkerのインストールと環境を、使うだけの人にはIDとworkerを設定する人を示す。手動の
+// siteの詳細、Jobsの知らせ、起動前の確認は、接続先のURLを入れたsubmitコマンド、そのコマンドの
+// インストール方法、tokenをどこでどのscopeで発行するか（token自体は出さない）を示す。Jobsの画面の
+// tokenのボタンはreadとjobs:writeのtokenを発行し、Viewerにはボタンが出ない。390pxではどの画面も
+// 横にスクロールしない。MMT_SCREENSHOT_DIRを設定すると、そこにスクリーンショットを保存する。
 import assert from 'node:assert/strict';
 import { mkdir, readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -17,7 +16,7 @@ const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const adminEmail = process.env.MMT_DEVELOPMENT_ADMIN_EMAIL ?? 'admin@localhost';
 const outputDirectory = process.env.MMT_SCREENSHOT_DIR;
 if (outputDirectory) await mkdir(outputDirectory, { recursive: true });
-// Each run makes its own users, Project and computers, so runs do not see each other's records.
+// 実行ごとにユーザー、Project、コンピュータを作るので、実行どうしで互いの記録が見えない。
 const runKey = Date.now().toString(36);
 const DESKTOP = { width: 1440, height: 1000 };
 const PHONE = { width: 390, height: 844 };
@@ -75,7 +74,7 @@ async function assertNoSidewaysScroll(page, where) {
 async function screenshot(page, name, options = {}) {
   if (outputDirectory) await page.screenshot({ path: `${outputDirectory}/${name}.png`, ...options });
 }
-/** The submit setup tells where the token comes from and connects to this page's URL. */
+/** submitの準備の説明は、tokenの入手先を示し、このページのURLへ接続させる。 */
 async function assertSubmitSetup(page, scope) {
   const setup = scope.locator('details.submit-cli-setup');
   await setup.locator('summary').click();

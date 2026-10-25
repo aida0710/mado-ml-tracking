@@ -1,14 +1,14 @@
 import type { User } from '@mmt/contracts';
 import { text } from '../i18n/catalog';
 
-/** SSO users get their global role and display name from Authentik at every login. */
+/** SSOのユーザーは、ログインのたびに全体のロールと表示名をAuthentikから受け取る。 */
 export function isSsoUser(user: Pick<User, 'authSources'>): boolean {
   return user.authSources.includes('oidc');
 }
 
 /**
- * Login methods as shown in the users table and the account page. Service Accounts have no login
- * method and act only through tokens; development logins hold neither and are not Service Accounts.
+ * ユーザーの一覧とアカウントの画面に出すログイン方法。Service Accountはログイン方法を持たず、
+ * tokenでだけ操作する。開発用のログインはどちらも持たず、Service Accountでもない。
  */
 export function userAuthSourceLabels(user: Pick<User, 'authSources' | 'kind'>): string[] {
   if (user.kind === 'service') return [text.userAuthServiceToken];

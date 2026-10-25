@@ -1,11 +1,10 @@
-// Wide enough for one period of the longest line pattern (dash-dot, 17px), so the swatch shows the
-// pattern the line is drawn with.
+// 一番長い線種（一点鎖線、17px）の1周期が入る幅。見本に、線を描くときと同じ線種が出るようにする。
 const SWATCH_WIDTH = 20;
 const SWATCH_HEIGHT = 8;
 
 /**
- * A short sample of a chart line in its color and line pattern, beside its name in the legend and
- * the tooltip. Decorative: the name next to it says which line it is.
+ * 図の線の色と線種の短い見本。凡例とツールチップで名前の横に出す。飾りとして扱い、どの線かは
+ * 隣の名前が伝える。
  */
 export function SeriesSwatch({
   color,

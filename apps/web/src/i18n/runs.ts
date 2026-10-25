@@ -1,9 +1,9 @@
 import * as english from './en/runs';
 import { localized } from './localized';
-// Run list, server-side Run search, and its paging. native-run-search owns the entries.
-// Chart panels on the Run pages, system metrics and resumed segments: chart-panels-and-pages-web.
+// Runの一覧、サーバー側でのRunの検索、そのページ送り。項目はnative-run-searchが受け持つ。
+// Runの画面の図のパネル、システムメトリクス、再開した区間はchart-panels-and-pages-webが受け持つ。
 export const runsText = localized({
-  // Short enough to read whole in the search box; the full grammar is in the error messages.
+  // 検索欄で全体が読める短さにする。文法の全体はエラーメッセージで示す。
   queryHint: '名前、または metrics.loss < 0.1',
   searchWithSuggestion: 'この式で検索',
   filterEmpty: '検索式を入力してください。',
@@ -51,7 +51,7 @@ export const runsText = localized({
   resumeSegmentEnd: '終了',
   resumeSegmentFirstStep: '最初のstep',
   resumeSegmentEndStatus: '終了状態',
-  // Where nothing is recorded yet: the next step instead of "no match".
+  // まだ何も記録されていないところでは、「一致なし」でなく次にやることを示す。
   runsNoneInExperiment:
     'この実験にはまだRunがありません。［SDKで記録］の例を学習コードに入れて実行すると、Runが作られてここに並びます。',
   runsNoneInProject:
@@ -72,7 +72,7 @@ export const runsText = localized({
     '画面から作ったRunは「待機中」で始まり、そのままでは進みません。コードバージョンを選んでおくと、作成後にRunの詳細の［ジョブを起動］で実行できます。学習コードからmetricsを記録するときは、このフォームは使わずに［SDKで記録］の例を使います（Runは記録を始めたときに作られます）。',
 } as const, english.runsText);
 
-/** Panel titles of the system metrics tab, by category. */
+/** システムメトリクスのタブのパネルの見出し（分類ごと）。 */
 export const systemMetricCategoryLabels = localized({
   cpu: 'CPU',
   memory: 'メモリ',
@@ -82,7 +82,7 @@ export const systemMetricCategoryLabels = localized({
   other: 'その他',
 } as const, english.systemMetricCategoryLabels);
 
-/** Units of the system metrics panels. MLflow megabytes are drawn in bytes. */
+/** システムメトリクスのパネルの単位。MLflowのメガバイトはバイトにして描く。 */
 export const systemMetricUnitLabels = localized({
   percent: '%',
   bytes: 'bytes',
@@ -94,12 +94,12 @@ export const systemMetricUnitLabels = localized({
   value: '値',
 } as const, english.systemMetricUnitLabels);
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const runsTextTemplates = localized({
   runExecutionMode: (mode: string) => `実行モード: ${mode}`,
   filterUnexpectedAt: (position: number) =>
     `検索式の${position}文字目を確認してください。metrics / params / tags などの比較をANDでつなげ、文字列は引用符で囲みます（例: metrics.loss < 0.1 AND params.lr = '0.01'）。`,
-  // A comparison that does not suit its field: what the field holds, and the comparison fixed.
+  // 項目に合わない比較。その項目が持つ値の種類と、直した比較を示す。
   filterStringOperator: ({
     field,
     operator,

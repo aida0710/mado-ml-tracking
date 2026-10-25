@@ -1,6 +1,6 @@
 import * as english from './en/storage';
 import { localized } from './localized';
-// Artifact storage backends: the admin table, the backend dialog and the connection test.
+// Artifactの保存先。全体管理の表、保存先のダイアログ、接続テスト。
 export const storageText = localized({
   newStorageBackend: '保存先を追加',
   editStorageBackend: '保存先を変更',
@@ -64,7 +64,7 @@ export const storageText = localized({
     '既定にする前に接続テストを行い、失敗したときは既定にしません。',
   storageMakeDefaultTestFailed:
     '接続テストに失敗したため、既定の保存先にしませんでした。下の結果を見て設定を直してから、もう一度試してください。',
-  // The storage choice of a new Project: the default first, the others folded away.
+  // 新しいProjectの保存先の選択。既定の保存先を先に出し、ほかは畳んでおく。
   newProjectStorageOthers: 'ほかの保存先を選ぶ',
   newProjectStorageHint:
     '保存先は全体管理者が用意したものです。どこに保存されるかは全体管理者に確かめてください。あとから［プロジェクト設定］で変えられます（それまでのArtifactは元の保存先に残ります）。',

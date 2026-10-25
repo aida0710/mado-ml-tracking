@@ -2,8 +2,8 @@ import type { NotificationChannel, NotificationChannelKind } from '@mmt/contract
 import { getFieldValue, type FormValues } from './formValues';
 
 /**
- * The variable names a channel form refers to for its kind: Slack its URL, a webhook its URL and
- * signing key, email none (it sends through the server's SMTP settings).
+ * 通知先のフォームが種類ごとに参照する変数名。SlackはそのURL、webhookはURLと署名の鍵、メールは
+ * 無し（サーバーのSMTPの設定で送る）。
  */
 export function referencedEnvironmentNames(
   kind: NotificationChannelKind,
@@ -16,8 +16,8 @@ export function referencedEnvironmentNames(
 }
 
 /**
- * Referenced names the API server has no value for. While the server's list is still loading
- * (`available` undefined) nothing is reported, so the form does not warn before it knows.
+ * 参照している名前のうち、APIサーバーに値が無いもの。サーバーの一覧を読み込んでいる間
+ * （`available`がundefined）は何も挙げず、分かる前にフォームが警告しないようにする。
  */
 export function missingEnvironmentNames(
   referenced: string[],
@@ -27,7 +27,7 @@ export function missingEnvironmentNames(
   return referenced.filter((name) => !available.includes(name));
 }
 
-/** The channel a new rule starts with: the first one that can send, or else the first one. */
+/** 新しいルールで最初に選ぶ通知先。送れる最初のもの、無ければ一覧の最初のもの。 */
 export function defaultRuleChannelId(channels: NotificationChannel[]): string {
   return (channels.find((channel) => channel.configured) ?? channels[0])?.id ?? '';
 }

@@ -33,7 +33,7 @@ function renderFields({
   );
 }
 
-// The checked radio of the visibility picker, whatever order React writes its attributes in.
+// Reactが属性をどの順に書いても、公開範囲の選択でチェックされたラジオボタンを取り出す。
 const checkedVisibility = (html: string) =>
   html
     .match(/<input[^>]*name="target-visibility"[^>]*>/g)

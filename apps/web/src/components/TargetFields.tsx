@@ -31,10 +31,9 @@ const MAX_PORT = 65535;
 const MAX_CONCURRENT_JOBS = 128;
 
 /**
- * The target dialog's fields. ssh and local targets keep their connection here; a site also takes
- * its global settings (submission, connection, accounts, how it runs) and, when it is added, its
- * first job shell. Every computer has a visibility; whoever adds it becomes its owner. A
- * researcher adds sites only.
+ * コンピュータのダイアログの欄。sshとlocalのコンピュータはここで接続を保つ。siteは全体の設定
+ * （投入、接続、アカウント、動かし方）と、追加するときは最初のjob shellも受け取る。どのコンピュータ
+ * にも公開範囲があり、追加した人が所有者になる。研究者が追加できるのはsiteだけ。
  */
 export function TargetFields({
   values,
@@ -47,13 +46,13 @@ export function TargetFields({
 }: {
   values: FormValues;
   onChange: (values: FormValues) => void;
-  /** The target being edited; a new one when absent. */
+  /** 編集しているコンピュータ。無ければ新規。 */
   target?: ComputeTargetDetails;
-  /** A global administrator, who adds and keeps targets of every executor. */
+  /** 全体管理者。どのexecutorのコンピュータも追加・維持できる。 */
   canAddSshOrLocal: boolean;
   allowLocal: boolean;
   launchers: Launcher[];
-  /** The kind of computer being added (the two-step dialog's), shown after the name. */
+  /** 追加するコンピュータの種類（2段階のダイアログのもの）。名前の後に表示する。 */
   kindPicker?: ReactNode;
 }) {
   useLocale();
@@ -210,7 +209,7 @@ export function TargetFields({
     {
       name: 'siteWorkDirectory',
       label: text.siteWorkDirectory,
-      // A shared account has no personal settings, so the site's directory is the only one.
+      // 共有アカウントには個人の設定が無いので、siteのディレクトリが唯一のものになる。
       required: isAutomatic && isSharedAccount,
     },
     { name: 'runnerPython', label: text.runnerPython, required: true },
@@ -246,8 +245,8 @@ export function TargetFields({
       max: SITE_CLAIM_MAX_SUBMISSIONS,
     },
   ];
-  // These sit in a closed <details>, where the browser cannot point at an invalid field, so their
-  // ranges are checked when the form is saved (buildSiteSettingsInput) instead.
+  // これらは閉じた<details>の中にあり、ブラウザが不正な欄を指し示せないので、範囲は代わりに
+  // フォームを保存するとき（buildSiteSettingsInput）に検査する。
   const advancedFields: FormField[] = [
     { name: 'cancelGraceSeconds', label: text.cancelGraceSeconds, type: 'number' },
     { name: 'maxOutputFiles', label: text.maxOutputFiles, type: 'number' },

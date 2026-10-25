@@ -12,20 +12,20 @@ import {
 import { directoryListingOutcomeNotes } from '../i18n/computerSetup';
 import { text, textTemplates } from '../i18n/catalog';
 
-/** One directory a worker was asked to read, as the dialog remembers it. */
+/** workerに読ませた1つのディレクトリについて、ダイアログが覚えている状態。 */
 export type DirectoryListingState =
   | { status: 'loading' }
   | { status: 'read'; result: TargetDirectoryListingResult }
-  // The worker never answered (no claim, or no report in time).
+  // workerが答えなかった（どのworkerも受け取らなかったか、時間内に報告が無かった）。
   | { status: 'failed' };
 
-/** A path the check found, with the fact shown beside it (free space, a version). */
+/** 接続確認で見つかったパスと、その横に出す事実（空き容量、バージョン）。 */
 export interface KnownPath {
   path: string;
   detail: string;
 }
 
-/** Work directory candidates of a check, with whether they are writable and their free space. */
+/** 接続確認で見つかった作業ディレクトリの候補と、書き込めるかどうか、空き容量。 */
 export function knownDirectoryPaths(result: TargetCheckResult | null | undefined): KnownPath[] {
   return detectedDirectories(result).map((directory) => ({
     path: directory.path,
@@ -40,7 +40,7 @@ export function knownDirectoryPaths(result: TargetCheckResult | null | undefined
   }));
 }
 
-/** Python candidates of a check, with their versions. */
+/** 接続確認で見つかったPythonの候補と、そのバージョン。 */
 export function knownPythonPaths(result: TargetCheckResult | null | undefined): KnownPath[] {
   return detectedPythons(result).map((python) => ({
     path: python.path,
@@ -49,10 +49,10 @@ export function knownPythonPaths(result: TargetCheckResult | null | undefined): 
 }
 
 /**
- * The candidates of a path field on the computer: what the check found, and the entries of the
- * typed directory once a worker has read it. `directoryToRequest` names a directory that is typed
- * up to its last / and has not been asked for yet; the caller asks a worker to read it (only when
- * `canReadDirectories`: the computer is saved and a worker is chosen).
+ * コンピュータ上のパスの欄の候補。接続確認で見つかったものと、workerが読んだあとの、打ち込んだ
+ * ディレクトリの項目。`directoryToRequest`は、最後の/まで打ち込まれ、まだ依頼していない
+ * ディレクトリを指す。呼び出し側がworkerにそれを読ませる（`canReadDirectories`のとき、つまり
+ * コンピュータが保存済みでworkerを選んであるときだけ）。
  */
 export function targetPathSuggestions({
   value,
@@ -65,7 +65,7 @@ export function targetPathSuggestions({
   kind: PathCompletionKind;
   knownPaths: readonly KnownPath[];
   canReadDirectories: boolean;
-  /** What is known of reading a directory, undefined before it is asked for. */
+  /** ディレクトリの読み取りについて分かっていること。依頼する前はundefined。 */
   listingOf: (directory: string) => DirectoryListingState | undefined;
 }): FieldSuggestions & { directoryToRequest: string | null } {
   const details = Object.fromEntries(knownPaths.map((known) => [known.path, known.detail]));
@@ -75,7 +75,7 @@ export function targetPathSuggestions({
   );
   const directory = canReadDirectories ? directoryToRead(value) : null;
   const listing = directory ? listingOf(directory) : undefined;
-  // Only a path typed up to a / asks for the directory; a name being typed uses what was read.
+  // /まで打ったパスだけがディレクトリを依頼する。名前を打っている途中は、読んだ結果を使う。
   const directoryToRequest = directory && !listing && value.endsWith('/') ? directory : null;
   if (directoryToRequest || listing?.status === 'loading')
     return {

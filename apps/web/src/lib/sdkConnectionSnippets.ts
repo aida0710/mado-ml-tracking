@@ -4,23 +4,23 @@ import { pythonString } from './pythonSnippet';
 import { exportLine, joinLines, promptedSecretLines } from './shellSnippet';
 import { EXAMPLE_EXPERIMENT_NAME } from './tokenUsageSnippet';
 
-/** What the Python SDK tab of the SDK and MLflow guide offers to copy. */
+/** SDKとMLflowの案内の、Python SDKのタブでコピーできるもの。 */
 export interface SdkConnectionSnippets {
   install: string;
   environment: string;
   python: string;
 }
 
-// pages/tracking/sdk.md installs into a virtual environment next to the training code; telemetry
-// adds the GPU and memory metrics of system_metrics=True.
+// pages/tracking/sdk.mdは、学習コードの隣の仮想環境にインストールする。telemetryは
+// system_metrics=TrueのGPUとメモリのメトリクスを足す。
 const SDK_VENV_DIRECTORY = '.venv';
 const SDK_INSTALL_EXTRAS = ['telemetry'];
 const EXAMPLE_RUN_NAME = 'first-run';
 
 /**
- * The Mado SDK's settings for this Project, and for the chosen Experiment when there is one
- * (MMT_EXPERIMENT_ID). Without one, the example names an Experiment instead, which start_run
- * creates when it does not exist. The token is read from the terminal as in the MLflow example.
+ * Python SDK（mado-tracking）の、このProjectについての設定。選んだExperimentがあればその
+ * Experimentについての設定（MMT_EXPERIMENT_ID）も含む。無ければ例は代わりにExperimentの名前を
+ * 書き、start_runはそのExperimentが無ければ作る。tokenはMLflowの例と同じく端末から読み込む。
  */
 export function buildSdkConnectionSnippets(settings: {
   origin: string;

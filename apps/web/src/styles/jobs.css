@@ -1,4 +1,4 @@
-/* Jobs: the selected Job's heading, why a Job waits, and the log toolbar (Jobs page, Run Logs tab). */
+/* Job。選んだJobの見出し、Jobが待っている理由、ログの帯（Jobsの画面、RunのLogsのタブ）。 */
 .job-detail-heading {
   display: flex;
   flex-wrap: wrap;
@@ -8,10 +8,10 @@
 }
 .job-detail-heading h2 {
   margin: 0;
-  /* The heading takes focus when a Job is chosen; the outline would frame a text block. */
+  /* Jobを選ぶと見出しがフォーカスを受け取る。outlineを出すと文のかたまりを枠で囲んでしまう。 */
   outline: none;
 }
-/* A computer without a worker: what happens, then where the worker is set up. */
+/* workerのいないコンピュータ。何が起きるかを書き、その下にworkerを設定する場所を出す。 */
 .worker-missing,
 .queued-job-reason {
   flex-direction: column;

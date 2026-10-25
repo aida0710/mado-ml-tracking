@@ -3,15 +3,15 @@ import {
   notificationsTextTemplates,
 } from '../i18n/notifications';
 
-// Codes that carry a number from the destination (HTTP status or SMTP reply code).
+// 送り先から返った番号（HTTPのステータスかSMTPの応答コード）を含むコード。
 const HTTP_STATUS_CODE = /^notification_http_(\d{3})$/;
 const SMTP_REPLY_CODE = /^notification_smtp_(\d{3})$/;
-// `<kind>_sender_unavailable`: the API server has no sender for the channel kind.
+// `<kind>_sender_unavailable`: APIサーバーが、その種類の通知先へ送る手段を持っていない。
 const SENDER_UNAVAILABLE_CODE = /_sender_unavailable$/;
 
 /**
- * The reason a notification was not delivered, as shown in the test result and the delivery
- * history. The API stores only safe failure codes; an unknown code is kept so it can be reported.
+ * 通知が届かなかった理由。テストの結果と配信の履歴に出す。APIは安全な失敗コードだけを保存する。
+ * 知らないコードは、報告できるようにそのまま残す。
  */
 export function describeNotificationError(code: string): string {
   const known = notificationErrorLabels[code];

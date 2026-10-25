@@ -1,15 +1,15 @@
-// Records of TSV text: one record per line, fields split at every tab. TSV has no quoting (the
-// IANA text/tab-separated-values form), so a quote is part of the value and never spans lines.
+// TSVのテキストのレコード。1行が1レコードで、項目はタブごとに分ける。TSVには引用符の仕組みが
+// 無い（IANAのtext/tab-separated-valuesの形式）ので、引用符は値の一部で、行をまたがない。
 
 const TSV_DELIMITER = '\t';
 
 export interface TsvRecord {
-  /** 1-based line in the file. */
+  /** ファイル内の行番号（1始まり）。 */
   line: number;
   fields: string[];
 }
 
-/** Blank lines are skipped, as CSV skips them. */
+/** 空行は、CSVと同じく飛ばす。 */
 export function readTsvRecords(content: string): TsvRecord[] {
   const records: TsvRecord[] = [];
   content.split(/\r\n|\n|\r/).forEach((source, index) => {

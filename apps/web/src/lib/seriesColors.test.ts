@@ -40,7 +40,7 @@ describe('図の線の色と模様', () => {
   });
 
   it('9本以上でも24本までは線ごとに色相が重ならず、並べ替えても同じ色になる', () => {
-    // 24 hues 15 degrees apart; rounding to #rrggbb moves a hue by under a degree.
+    // 15度ずつ離れた24の色相。#rrggbbへの丸めで色相が動くのは1度未満。
     const ids = runIds(12);
     const styles = distinctSeriesStyles(ids, 'light');
     const hues = [...styles.values()].map((style) => hueOf(style.color));

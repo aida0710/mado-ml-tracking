@@ -22,8 +22,8 @@ import { checkpointSourceLabels } from '../i18n/checkpoints';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
- * A Run's checkpoints with their files, and resuming a stopped Run from one of them.
- * `canRetryJob`: whether the signed-in user may retry the Run's Job (lib/permissions canControlJob).
+ * Runのcheckpointとそのファイル、およびそのどれかから止まったRunを再開する操作。
+ * `canRetryJob`は、ログイン中の利用者がRunのJobを再実行できるか（lib/permissionsのcanControlJob）。
  */
 export function RunCheckpointList({
   run,
@@ -45,7 +45,7 @@ export function RunCheckpointList({
   const [includeHidden, setIncludeHidden] = useState(false);
   const [resumeTarget, setResumeTarget] = useState<RunCheckpoint | null>(null);
   const checkpoints = useRunCheckpoints({ projectId: run.projectId, runId: run.id, includeHidden });
-  // Only someone who may retry, looking at a stopped Run, can resume; only then is the Job looked up.
+  // 再開できるのは、再実行してよい人が止まったRunを見ているときだけ。そのときだけJobを引く。
   const runJob = useRunJob({
     projectId: run.projectId,
     runId: run.id,
@@ -222,7 +222,7 @@ export function RunCheckpointList({
   );
 }
 
-/** A native checkpoint is one tar; an MLflow one lists its files under a disclosure. */
+/** ネイティブのcheckpointは1つのtar。MLflowのcheckpointは開閉できる欄の中にファイルを並べる。 */
 function CheckpointArtifactLinks({
   projectId,
   artifacts,

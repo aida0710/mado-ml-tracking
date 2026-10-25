@@ -1,7 +1,7 @@
 import type { ReportBlockType, ReportEmbedMode } from '@mmt/contracts';
 import type { ReportBlockProblem } from '../../lib/reportBlocks';
 
-// Shared reports: the list, the report page with its embeds, the editor and the revision history.
+// 共有のレポート。一覧、埋め込みを含むレポートの画面、編集画面、バージョンの履歴。
 export const reportsText = {
   reports: 'Reports',
   reportNew: 'Create report',
@@ -126,7 +126,7 @@ export const reportBlockProblemLabels: Record<ReportBlockProblem, string> = {
   mediaTableEmpty: 'Select a run and table',
 };
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const reportsTextTemplates = {
   reportRevisionLabel: (revision: number) => `Version ${revision}`,
   reportInsertBelow: (position: number) => `Add here (below block ${position})`,

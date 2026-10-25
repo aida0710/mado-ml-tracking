@@ -1,5 +1,5 @@
-// Evaluation sample tables (jsonl / csv / tsv with audio, reference, prediction, score columns):
-// reading the rows, audio path resolution, sorting, and paging. Broken rows are counted, never repaired.
+// 評価サンプルの表（audio・reference・prediction・scoreの列を持つjsonl / csv / tsv）の、行の
+// 読み込み、audioのpathの解決、並べ替え、ページ分け。壊れた行は数えるだけで、直さない。
 
 import { parseTabularText, type TabularRowErrorReason, type TabularText, type TabularTextFormat } from './tabularText';
 import { diffCharacters, type TextDiffSegment } from './textDiff';
@@ -8,19 +8,19 @@ import { isUuid } from './uuid';
 export const EVALUATION_SAMPLES_PAGE_SIZE = 50;
 export const EVALUATION_SAMPLE_COLUMNS = ['audio', 'reference', 'prediction', 'score'] as const;
 type EvaluationSampleColumn = (typeof EVALUATION_SAMPLE_COLUMNS)[number];
-/** Cross-run references: mmt-artifact://runs/<runId>/<path>. */
+/** ほかのRunのArtifactを指す参照（mmt-artifact://runs/<runId>/<path>）。 */
 export const ARTIFACT_REFERENCE_SCHEME = 'mmt-artifact://';
 
 export type EvaluationSampleErrorReason = TabularRowErrorReason | 'invalid_audio' | 'invalid_text' | 'invalid_score';
 
 export interface EvaluationSample {
-  /** 1-based line in the file where the row starts. */
+  /** ファイルの中でその行が始まる行番号（1始まり）。 */
   line: number;
   audio: string | null;
-  /** Numbers and booleans (a duration, a count, a yes/no judgement) are shown as their text. */
+  /** 数値と真偽値（時間の長さ、個数、はい・いいえの判定など）は、その文字列として出す。 */
   reference: string | null;
   prediction: string | null;
-  /** Both were strings in the file, so a character diff between them means something. */
+  /** ファイルの中で両方とも文字列だった。このときだけ、文字単位の差分に意味がある。 */
   isTextPair: boolean;
   score: number | null;
 }
@@ -34,7 +34,7 @@ export interface EvaluationSampleTable {
   errors: EvaluationSampleError[];
 }
 
-/** A table is shown as evaluation samples when it has audio, or both reference and prediction. */
+/** audioの列か、referenceとpredictionの両方の列がある表を、評価サンプルとして出す。 */
 export function isEvaluationSampleTable(columns: readonly string[]): boolean {
   return columns.includes('audio') || (columns.includes('reference') && columns.includes('prediction'));
 }
@@ -46,7 +46,7 @@ function readAudio(value: unknown): string | null | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
-/** Objects and arrays have no single text to compare; they make the row unreadable. */
+/** オブジェクトと配列には比べる1つの文字列が無いので、その行は読めないものとする。 */
 function readComparedText(value: unknown): string | null | undefined {
   if (value === undefined || value === null) return null;
   if (typeof value === 'string') return value;
@@ -74,11 +74,11 @@ function toSample(line: number, valueOf: (column: EvaluationSampleColumn) => unk
   return { sample: { line, audio, reference, prediction, isTextPair, score } };
 }
 
-/** The rows of a table already read from its file, as evaluation samples. */
+/** ファイルから読み終えた表の行を、評価サンプルにする。 */
 export function toEvaluationSamples(table: TabularText): EvaluationSampleTable {
   const samples: EvaluationSample[] = [];
   const errors: EvaluationSampleError[] = [...table.errors];
-  // A CSV header may repeat a name; the first column of that name is read.
+  // CSVの見出しには同じ名前が2回出ることがある。その名前の最初の列を読む。
   const columnIndexes = new Map(EVALUATION_SAMPLE_COLUMNS.map((column) => [column, table.columns.indexOf(column)]));
   for (const record of table.records) {
     const valueOf = (column: EvaluationSampleColumn) => {
@@ -97,7 +97,7 @@ export function parseEvaluationSamples(content: string, format: TabularTextForma
   return toEvaluationSamples(parseTabularText(content, format));
 }
 
-/** The character diff of reference against prediction; null unless both were strings in the file. */
+/** referenceに対するpredictionの文字単位の差分。ファイルの中で両方とも文字列だったとき以外はnull。 */
 export function sampleTextDiff(sample: EvaluationSample): TextDiffSegment[] | null {
   if (!sample.isTextPair || sample.reference === null || sample.prediction === null) return null;
   return diffCharacters(sample.reference, sample.prediction);
@@ -105,7 +105,7 @@ export function sampleTextDiff(sample: EvaluationSample): TextDiffSegment[] | nu
 
 export type EvaluationSampleOrder = 'line' | 'score_asc' | 'score_desc';
 
-/** Rows without a score stay after scored rows in both directions; ties keep file order. */
+/** scoreの無い行は、昇順でも降順でもscoreのある行の後ろに置く。同じ値の行はファイルの順を保つ。 */
 export function sortEvaluationSamples(
   samples: readonly EvaluationSample[],
   order: EvaluationSampleOrder,
@@ -123,7 +123,7 @@ export function sortEvaluationSamples(
 
 export interface Page<T> {
   items: T[];
-  /** 0-based page after clamping to the available pages. */
+  /** 存在するページの範囲に収めた後のページ番号（0始まり）。 */
   page: number;
   pageCount: number;
 }
@@ -152,7 +152,7 @@ export type ArtifactReferenceResult =
 
 const URI_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:/i;
 
-/** Drops "." and empty segments. Paths are taken literally (no percent-decoding), like Artifact paths. */
+/** "."と空の区切りを捨てる。pathはArtifactのpathと同じく書いたとおりに扱う（パーセントデコードしない）。 */
 function normalizeArtifactPath(path: string): { path: string } | { error: ArtifactReferenceError } {
   if (path.startsWith('/')) return { error: 'absolute_path' };
   const segments = path.split('/').filter((segment) => segment !== '' && segment !== '.');
@@ -162,10 +162,10 @@ function normalizeArtifactPath(path: string): { path: string } | { error: Artifa
 }
 
 /**
- * Resolves an audio cell to a Run Artifact. A relative path names an Artifact of the Run that holds
- * the table, from that Run's artifact root. mmt-artifact://runs/<runId>/<path> names another Run;
- * the API then only finds Runs of the current Project. The longer form
- * mmt-artifact://projects/<projectId>/runs/<runId>/<path> is accepted only for the current Project.
+ * audioのセルをRunのArtifactに解決する。相対pathは、表を持つRunのArtifactを、そのRunの
+ * Artifactのルートから指す。mmt-artifact://runs/<runId>/<path>はほかのRunを指し、このとき
+ * APIは今のProjectのRunしか見つけない。長い形の
+ * mmt-artifact://projects/<projectId>/runs/<runId>/<path>は、今のProjectのときだけ受け付ける。
  */
 export function resolveArtifactReference(
   value: string,

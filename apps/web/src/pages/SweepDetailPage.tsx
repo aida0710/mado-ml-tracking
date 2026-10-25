@@ -78,7 +78,7 @@ export function SweepDetailPage() {
   );
 }
 
-/** The objective metric of each trial Run by step, overlaid in one chart. */
+/** 各試行のRunの目的関数をstepごとに、1つの図に重ねて描く。 */
 function TrialObjectiveHistory({ projectId, detail }: { projectId: string; detail: SweepDetail }) {
   useLocale();
   const { series, shownTrials, totalTrials } = useTrialObjectiveSeries(projectId, detail);

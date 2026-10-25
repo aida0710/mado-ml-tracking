@@ -2,7 +2,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-/** On a narrow screen the preview covers the file list; this returns to it. */
+/** 狭い画面ではプレビューがファイルの一覧を覆うので、このボタンで一覧に戻る。 */
 export function ArtifactBackToListButton({ onClick }: { onClick: () => void }) {
   useLocale();
   return (

@@ -1,6 +1,6 @@
-// The accessible names and visible texts the capture scripts look for, in each UI language.
-// Copied from apps/web/src/i18n/*.ts (ja) and apps/web/src/i18n/en/*.ts (en); the key is the
-// catalog key the text comes from. When the UI text changes, change it here as well.
+// 撮影のスクリプトが探すアクセシブルな名前と表示の文字を、UIの言語ごとに置く。
+// apps/web/src/i18n/*.ts（ja）とapps/web/src/i18n/en/*.ts（en）から写したもので、キーは
+// その文字の出どころのカタログのキー。UIの文言を変えたら、ここも変える。
 const JAPANESE = {
   // access.ts, admin.ts
   username: 'ユーザー名',
@@ -27,7 +27,7 @@ const JAPANESE = {
   save: '保存',
   // comments.ts
   comments: 'コメント',
-  // compute.ts: the heading of a check result is `${targetCheck}: ${computer name}`.
+  // compute.ts: 確認結果の見出しは`${targetCheck}: ${computer name}`の形。
   targetCheck: '接続確認',
   // computerSetup.ts
   checkAndContinue: '接続を確認して次へ',
@@ -35,7 +35,7 @@ const JAPANESE = {
   // connection.ts
   recordingConnection: 'SDK・MLflow 3から接続',
   recordingConnectionIssueToken: 'このProject用のAPI tokenを発行',
-  // media.ts: mediaCompareEvenly(count) is `均等に${count}列`.
+  // media.ts: mediaCompareEvenly(count)は`均等に${count}列`。
   mediaCompareEvenly: /^均等に\d+列$/,
   // models.ts
   modelVersionLineage: '学習Run → バージョン → 推論・評価Run',
@@ -85,7 +85,7 @@ const ENGLISH = {
   checkReached: 'Connection verified',
   recordingConnection: 'Connect from SDK or MLflow 3',
   recordingConnectionIssueToken: 'Issue API token for this project',
-  // mediaCompareEvenly(count) is '1 column' or `${count} equal columns`.
+  // mediaCompareEvenly(count)は'1 column'か`${count} equal columns`。
   mediaCompareEvenly: /^(1 column|\d+ equal columns)$/,
   modelVersionLineage: 'Training run → Version → Inference / Evaluation runs',
   evaluationResults: 'Evaluation results',

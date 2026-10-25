@@ -17,16 +17,16 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * Creates a Project: name, description, visibility (with members for a Private one) and storage.
- * The Project switcher, the admin Project list and the screen shown without Projects all open
- * this one dialog; the caller opens the created Project.
+ * Projectを作る。名前、説明、公開範囲（Privateならメンバーも）と保存先を決める。Projectの切り替え、
+ * 全体管理のProjectの一覧、Projectが無いときの画面は、どれもこの1つのダイアログを開く。
+ * 作ったProjectは呼び出し側が開く。
  */
 export function ProjectCreateDialog({
   existingNames,
   onClose,
   onCreated,
 }: {
-  /** Names of the Projects the user can see, to warn before a second one gets the same name. */
+  /** 利用者に見えるProjectの名前。2つ目のProjectに同じ名前が付く前に警告するため。 */
   existingNames: readonly string[];
   onClose: () => void;
   onCreated: (project: Project) => void;
@@ -66,10 +66,10 @@ function ProjectCreateForm({
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<ProjectVisibility>(DEFAULT_PROJECT_VISIBILITY);
   const [memberDrafts, setMemberDrafts] = useState<MemberGrantDraft[]>([]);
-  // New Projects start on the backend the global administrator chose as the default.
+  // 新しいProjectは、全体管理者が既定に選んだ保存先から始める。
   const [backend, setBackend] = useState(defaultBackend);
   const mutation = useMutation();
-  // A warning, not a refusal: the API allows the same name, and a team may mean to reuse one.
+  // 拒まずに警告だけする。APIは同じ名前を許し、チームがわざと同じ名前を使うこともある。
   const isNameTaken = isProjectNameTaken(name, existingNames);
   return (
     <Dialog title={text.newProject} onClose={onClose} dismissible={!mutation.pending}>

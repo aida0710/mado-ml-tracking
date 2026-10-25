@@ -12,7 +12,7 @@ import { text } from '../i18n/catalog';
 
 const MAX_PORT = 65535;
 
-/** Candidates from paths on the chosen worker's host, all of them before anything is typed. */
+/** 選んだworkerのホストにあるパスから出す候補。何も入力する前はすべてを出す。 */
 function suggestWorkerPaths(paths: readonly string[]) {
   return async (value: string): Promise<FieldSuggestions> => ({
     items: completeFromKnownPaths(paths, value),
@@ -20,9 +20,9 @@ function suggestWorkerPaths(paths: readonly string[]) {
 }
 
 /**
- * Step 1「接続」of an ssh or local computer: its name (and kind, from `kindPicker`), visibility,
- * where an SSH worker connects with which key and known_hosts on the worker's host, and the worker
- * that checks it. A local computer runs on the worker's host and has no SSH fields.
+ * sshかlocalのコンピュータの手順1「接続」。名前（と`kindPicker`による種類）、公開範囲、SSHのworkerが
+ * どこへ、workerのホストのどの鍵とknown_hostsで接続するか、確認するworker。localのコンピュータは
+ * workerのホストで動くので、SSHの欄は無い。
  */
 export function ComputerConnectionFields({
   values,
@@ -35,7 +35,7 @@ export function ComputerConnectionFields({
 }: {
   values: FormValues;
   onChange: (values: FormValues) => void;
-  /** SSH or Local (and Site while a computer is added), shown after the name. */
+  /** SSHかLocal（コンピュータを追加するときはSiteも）。名前の後に表示する。 */
   kindPicker?: ReactNode;
   workers: readonly TargetCheckWorkerPresence[];
   worker: TargetCheckWorker | null;
@@ -47,7 +47,7 @@ export function ComputerConnectionFields({
   const isSsh = executor === 'ssh';
   const sshFiles = findCheckWorker(workers, worker)?.sshFiles;
   const sshFileHint = sshFiles ? undefined : text.sshFileHintNoWorker;
-  // Another worker (or the first once the list arrives) offers other files.
+  // 別のworker（または一覧が届いたときの最初のworker）は別のファイルを候補に出す。
   const sshFilesKey = sshFiles && worker ? `${worker.tokenId}:${worker.workerId}` : '';
   const nameField: FormField[] = [{ name: 'name', label: text.name, required: true }];
   const sshFields: FormField[] = [

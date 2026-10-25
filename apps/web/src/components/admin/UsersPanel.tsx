@@ -21,8 +21,8 @@ interface PendingAction {
   action: UserAction;
 }
 
-// Each action is one confirmation: its title, message, button and the API call it makes. Acting
-// on oneself says so, since it signs the administrator out or takes 全体管理 away at once.
+// 操作ごとの確認の中身（タイトル、メッセージ、ボタン、呼ぶAPI）。自分自身への操作はその旨を
+// 書く。管理者がその場でログアウトしたり、全体管理を失ったりするため。
 function confirmation({ user, action }: PendingAction, isSelf: boolean) {
   const name = user.displayName;
   switch (action) {
@@ -73,12 +73,12 @@ function confirmation({ user, action }: PendingAction, isSelf: boolean) {
   }
 }
 
-/** The admin "users" section: search, local account creation, disabling and password resets. */
+/** 全体管理の「ユーザー」。検索、ローカルアカウントの作成、無効化、パスワードの再設定。 */
 export function UsersPanel() {
   useLocale();
   const { user: signedInUser } = useAuth();
   const { users, filter, setFilter } = useAdminUsers();
-  // Unfiltered, so the last global administrator is known whatever the table is narrowed to.
+  // 絞り込まずに読む。一覧をどう絞り込んでも、最後の全体管理者が分かるようにするため。
   const activePeople = useQuery({ key: 'admin-users:active-people', load: (signal) =>
     adminUsersApi.list({ status: 'active', kind: 'human' }, signal),
   });

@@ -2,14 +2,14 @@ import { useId, useRef, type CSSProperties } from 'react';
 import { useHiddenEdges } from '../hooks/useHiddenEdges';
 import { useRevealSelectedTab } from '../hooks/useRevealSelectedTab';
 
-// How far an end that hides tabs fades out (styles/tabs.css); the selected tab is kept this far
-// from the edges so it is never drawn faded.
+// タブが隠れている端をぼかす幅（styles/tabs.css）。選んだタブは端からこの距離だけ離し、
+// ぼけて描かれないようにする。
 const EDGE_FADE_PX = 32;
 const edgeFadeStyle = { '--tab-edge-fade': `${EDGE_FADE_PX}px` } as CSSProperties;
 
 /**
- * A row of tabs. When they do not fit (a phone), the row scrolls sideways: the selected tab is
- * scrolled into view, and an end that hides tabs fades out to show there are more.
+ * タブの並び。収まらないとき（スマートフォン）は横にスクロールする。選んだタブが見える位置まで
+ * スクロールし、タブが隠れている端はぼかして続きがあることを示す。
  */
 export function Tabs({
   tabs,
@@ -57,7 +57,7 @@ export function Tabs({
       {tabs.map((tab) => (
         <button
           key={tab.key}
-          // Tabs also sit inside forms (MarkdownEditor); switching must not submit them.
+          // タブはフォーム（MarkdownEditor）の中にも置かれるので、切り替えで送信させない。
           type="button"
           id={`${id}-${tab.key}`}
           className={`tab ${tab.key === selected ? 'active' : ''}`}

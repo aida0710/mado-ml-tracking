@@ -13,14 +13,14 @@ import {
 } from '../i18n/compute';
 import { formatList, formatNote } from '../i18n/textJoining';
 
-// Shown where a computer has nothing to tell (no connection, no facts from its check).
+// コンピュータについて出すものが無いところに出す（接続先が無い、確認で分かったことが無い）。
 const NO_VALUE = '—';
 
 /**
- * Where a target runs Jobs, for the Compute table. A local target runs on the worker's own host,
- * so its stored host and port (127.0.0.1:22 from the form defaults) are not shown as SSH. A site is
- * reached at its settings' connection, which only its owner and global administrators see; a
- * manual site has none, since each requester submits on it themselves.
+ * コンピュータの表に出す、そのコンピュータがJobを実行する場所。localのコンピュータはworker自身の
+ * ホストで動くので、保存されたホストとポート（フォームの既定値の127.0.0.1:22）をSSHとしては
+ * 出さない。siteには設定の接続先でつなぎ、それを見られるのは所有者と全体管理者だけ。手動の
+ * siteには接続先が無く、要求した人がそれぞれ自分で投入する。
  */
 export function formatTargetLocation(
   target: Pick<ComputeTargetDetails, 'executor' | 'host' | 'port' | 'username' | 'site'>,
@@ -35,33 +35,33 @@ export function formatTargetLocation(
   return target.host ? `${target.username}@${target.host}:${target.port}` : NO_VALUE;
 }
 
-/** A target in a select: the name and where it runs. */
+/** 選択肢に出すコンピュータ。名前と実行する場所。 */
 export function targetChoiceLabel(
   target: Pick<ComputeTarget, 'name' | 'executor' | 'host' | 'submissionMode'>,
 ): string {
-  // A local target runs on the worker's host and may have no host of its own.
+  // localのコンピュータはworkerのホストで動き、自分のホストを持たないことがある。
   if (target.executor === 'local') return `${target.name} · ${text.targetLocationLocal}`;
-  // The host is hidden from those who may not manage the computer; then the name stands alone.
+  // コンピュータを管理できない人にはホストを隠す。そのときは名前だけを出す。
   if (target.executor !== 'site') return target.host ? `${target.name} · ${target.host}` : target.name;
   const mode = submissionModeBadgeLabels[target.submissionMode];
   return `${target.name} · ${computeTargetExecutorLabels.site}${formatNote(mode)}`;
 }
 
-/** The GPUs a target offers: its GPU IDs, or for a site the count each Job asks for. */
+/** コンピュータが出すGPU。GPUのIDか、siteならJobごとに求める数。 */
 export function formatTargetGpus(target: Pick<ComputeTarget, 'executor' | 'gpuIds'>): string {
   if (target.executor === 'site') return text.targetGpuPerJob;
   return formatList(target.gpuIds) || text.cpuOnly;
 }
 
 /**
- * How the worker reaches an ssh or local target, as written above the connection check results.
- * Sites are checked by their launcher instead (SiteConnectionChecks).
+ * workerがsshやlocalのコンピュータにどうつなぐか。接続の確認の結果の上に書く文。
+ * siteは代わりにランチャーが確認する（SiteConnectionChecks）。
  */
 export function targetCheckHintFor(executor: ComputeTarget['executor']): string {
   return executor === 'local' ? text.targetCheckHintLocal : text.targetCheckHint;
 }
 
-/** The first check item is the SSH connection, or starting a command for a local target. */
+/** 確認の最初の項目はSSHの接続。localのコンピュータではコマンドの起動。 */
 export function targetCheckItemLabel(
   name: TargetCheckItemName,
   executor: ComputeTarget['executor'],
@@ -70,7 +70,7 @@ export function targetCheckItemLabel(
   return targetCheckItemLabels[name];
 }
 
-/** The machine a check reached in one line: `uname -m`, cores and memory, as far as it told. */
+/** 確認が届いたマシンを1行で出す。`uname -m`、コア数、メモリ量を、分かった範囲で。 */
 export function formatCheckedHost(host: TargetCheckHost): string {
   const facts = [
     host.machine,

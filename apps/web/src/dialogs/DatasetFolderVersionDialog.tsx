@@ -26,9 +26,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
- * Uploads a folder and creates a version of its files. A folder upload that stopped earlier is
- * listed first; choosing the same folder again continues it, so its stored files are not sent
- * twice and its half-sent files continue from the parts the server holds.
+ * フォルダをアップロードし、そのファイルでバージョンを作る。前に止まったフォルダのアップロードを
+ * 先に並べる。同じフォルダをもう一度選ぶとその続きになり、保存済みのファイルは送り直さず、
+ * 送りかけのファイルはサーバーにある部分から続ける。
  */
 export function DatasetFolderVersionDialog({
   title,
@@ -226,7 +226,7 @@ export function DatasetFolderVersionDialog({
   );
 }
 
-/** Under the chosen folder: whether it continues a stopped attempt, and the way out of that. */
+/** 選んだフォルダの下に出す。止まったアップロードの続きになるかどうかと、そうしない方法。 */
 function ContinuationNotice({
   isChecking,
   continuation,

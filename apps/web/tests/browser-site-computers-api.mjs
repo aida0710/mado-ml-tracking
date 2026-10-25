@@ -1,9 +1,7 @@
-// Browser check of computers added on the Web (launchers, sites, job shells, personal settings,
-// visibility, manual submission) against an isolated API in development mode (port 47140) and Vite
-// (47141). It creates a temporary schema in mmt_test, so the shared development API and DB are
-// untouched; the records are made through the screens, and through the API only where no screen
-// exists (Projects and their members, code versions, and what the launcher and
-// `mado-tracking submit` send).
+// Webで足すコンピュータ（ランチャー、site、job shell、各人の設定、公開範囲、手動投入）を、
+// 開発モードの分離したAPI（ポート47140）とVite（47141）でブラウザから確かめる。mmt_testに一時的な
+// schemaを作るので、共有の開発APIとDBには触れない。記録は画面から作り、画面の無いもの（Projectと
+// そのメンバー、コードバージョン、ランチャーと`mado-tracking submit`が送る内容）だけをAPIで作る。
 //
 //   (cd apps/web && MMT_WEB_API_PROXY_TARGET=http://127.0.0.1:47140 npx vite --port 47141 --strictPort --host 127.0.0.1) &
 //   MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55483/mmt_test \
@@ -12,11 +10,10 @@
 //   MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/site-computers-api-web \
 //   npx tsx apps/web/tests/browser-site-computers-api.mjs
 //
-// tsx is needed because the script starts the API from its TypeScript sources. Keep the Web's
-// files unchanged during the run: the dev server would hot-reload the open pages. Where they may
-// change, serve a build instead (`npx vite build --outDir <dir>`, then
-// `npx vite preview --outDir <dir> --port 47141 --strictPort --host 127.0.0.1` with the same
-// MMT_WEB_API_PROXY_TARGET).
+// スクリプトがAPIをTypeScriptのソースから起動するので、tsxが要る。実行中はWebのファイルを変えない
+// こと。開発サーバーが開いているページをホットリロードしてしまう。変わるかもしれないときは、代わりに
+// ビルドを配信する（`npx vite build --outDir <dir>`のあと、同じMMT_WEB_API_PROXY_TARGETで
+// `npx vite preview --outDir <dir> --port 47141 --strictPort --host 127.0.0.1`）。
 import assert from 'node:assert/strict';
 import { generateKeyPairSync, randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -37,20 +34,21 @@ const API_URL = `http://127.0.0.1:${API_PORT}`;
 const WEB_URL = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:47141';
 const DESKTOP = { width: 1440, height: 1000 };
 const PHONE_WIDTH = 390;
-// Keys and checks waiting for the launcher are read again every few seconds (EXECUTION_POLL_MS).
+// ランチャーを待っている鍵と接続確認は、数秒ごとに読み直される（EXECUTION_POLL_MS）。
 const LAUNCHER_ANSWER_TIMEOUT_MS = 20_000;
-// The global administrator of development mode (DEVELOPMENT_ADMIN_EMAIL's default).
+// 開発モードの全体管理者（DEVELOPMENT_ADMIN_EMAILの既定値）。
 const ADMIN_EMAIL = 'admin@localhost';
-// Any image pinned to a digest: no Job runs here, so it is never pulled.
+// digestで固定した任意のimage。ここではJobを実行しないので、pullされることはない。
 const DOCKER_IMAGE = `registry.example.invalid/mmt/site-job@sha256:${'a'.repeat(64)}`;
 const WORK_DIRECTORY_LABEL = '作業ディレクトリ（計算ノードからも同じパスで見える絶対パス）';
-// What the owner of a PC is told about --all, and what other members are told besides the command
-// (someone else's computer may be their PC or, say, a supercomputer each requester logs in to).
+// PCの所有者に--allについて伝える文と、ほかのメンバーにコマンドと一緒に伝える文（ほかの人の
+// コンピュータは、その人のPCのこともあれば、たとえば依頼する人がそれぞれログインする
+// スーパーコンピュータのこともある）。
 const ALL_SCOPE_NOTE = '--allで受け取るのは、使ったtokenのProjectのJobです。';
 const OWNER_SUBMITS_NOTE = (owner) =>
   `このコンピュータは${owner}さんのコンピュータです。所有者が--watch --allで待ち受けているコンピュータ（所有者のPCなど）では、所有者の側で投入されます。`;
 const PERSONAL_VARIABLES_LABEL = '変数（任意。NAME=VALUEを1行に1つ。コンピュータの変数より優先します）';
-// The templates the dialog offers are the deploy/sites examples as they are.
+// ダイアログが出す雛形は、deploy/sitesの例そのもの。
 const exampleJobShell = (key) =>
   readFileSync(new URL(`../../../deploy/sites/examples/${key}/job.sh`, import.meta.url), 'utf8');
 
@@ -82,7 +80,8 @@ const browser = await chromium.launch({
   args: ['--no-sandbox'],
 });
 const pageErrors = [];
-// A render error caught by the app's error boundary never reaches pageerror; React logs it here.
+// アプリのerror boundaryが捕まえた描画のエラーはpageerrorに届かない。Reactがコンソールに出す
+// エラーをここに集める。
 const consoleErrors = [];
 
 async function screenshot(page, name) {
@@ -91,7 +90,7 @@ async function screenshot(page, name) {
   await page.screenshot({ path: path.join(screenshotDirectory, `${name}.png`), fullPage: true });
 }
 
-/** An OpenSSH ed25519 public key line, as ssh-keygen and ssh-keyscan print one. */
+/** ssh-keygenやssh-keyscanが出すのと同じ形の、OpenSSHのed25519の公開鍵の行。 */
 function sshPublicKey(comment) {
   const { publicKey } = generateKeyPairSync('ed25519');
   const raw = publicKey.export({ format: 'der', type: 'spki' }).subarray(-32);
@@ -124,7 +123,7 @@ function apiClient(page) {
   };
 }
 
-/** What the launcher (or `mado-tracking submit`) sends with its own token, without a session. */
+/** ランチャー（または`mado-tracking submit`）が、sessionなしで自分のtokenを付けて送る要求。 */
 async function withToken(token, method, endpoint, body) {
   const response = await fetch(`${API_URL}/api${endpoint}`, {
     method,
@@ -149,7 +148,7 @@ async function signIn(email, displayName) {
   await page.getByLabel('表示名').fill(displayName);
   const loginButton = page.getByRole('button', { name: '開発モードでログイン', exact: true });
   await loginButton.click();
-  // A new user has no Project yet, so the app shell may not show navigation.
+  // 新しい利用者にはまだProjectが無いので、アプリの外枠にナビゲーションが出ないことがある。
   await loginButton.waitFor({ state: 'detached' });
   const api = apiClient(page);
   const { user } = await api.get('/auth/me');
@@ -167,7 +166,7 @@ async function assertNoSidewaysScroll(page, where) {
   assert.ok(overflow <= 0, `${where}: the page scrolls sideways by ${overflow}px`);
 }
 
-/** The launcher dialog after a token was issued: the token once, and launcher.toml without it. */
+/** tokenを発行したあとのランチャーのダイアログ: tokenを一度だけ表示し、launcher.tomlには含めない。 */
 async function readIssuedToken(page) {
   const dialog = openDialog(page);
   const field = dialog.getByLabel('ランチャーのtoken', { exact: true });
@@ -186,15 +185,15 @@ async function readIssuedToken(page) {
 const visibilityChoice = (dialog, name) => dialog.getByRole('radio', { name, exact: false });
 
 /**
- * Fills a global administrator's dialog for an automatic public site from a template, with the
- * values each example's README lists for the Web; the caller saves it.
+ * 全体管理者のダイアログで、自動投入のpublicなsiteを雛形から埋める。値は各例のREADMEがWeb向けに
+ * 挙げているもの。保存は呼び出し側が行う。
  */
 async function addPublicSite(page, site) {
   await page.getByRole('button', { name: 'コンピュータを追加', exact: true }).click();
   const dialog = openDialog(page);
-  // ssh and local computers are added in two steps; a site keeps its one form.
+  // sshとlocalのコンピュータは2段階で足す。siteは1つのフォームのまま。
   await dialog.getByRole('radio', { name: /^Site/ }).check();
-  // Private unless chosen otherwise; these serve everyone.
+  // 選ばなければPrivate。これらのsiteは全員が使う。
   assert.equal(await visibilityChoice(dialog, 'Private').isChecked(), true);
   await visibilityChoice(dialog, 'Public').check();
   await dialog.getByLabel('job shellの雛形').selectOption(site.template);
@@ -212,7 +211,7 @@ async function addPublicSite(page, site) {
   return dialog;
 }
 
-/** The Launch dialog's first step, then the choices of where the Job runs. */
+/** Jobの起動のダイアログで1段目を埋め、Jobを実行する場所の選択肢を読む。 */
 async function openTargetChoices(page, { project, runName }) {
   await page.goto(`${WEB_URL}/projects/${project.project.id}/jobs`);
   await page.getByRole('button', { name: 'ジョブを起動', exact: true }).click();
@@ -232,7 +231,7 @@ const isChoiceOf = (name) => (choice) => choice.startsWith(`${name} · `);
 
 try {
   await migrate(database);
-  // Made after the migrations, so its first read of the storage backends finds their table.
+  // migrationのあとで作るので、保存先の一覧を最初に読むときにはそのテーブルがある。
   application = createApplication({
     config,
     database,
@@ -265,7 +264,7 @@ try {
       await admin.api.put(`/projects/${project.id}/members/${member.user.id}`, { role: 'editor' });
     return { project, experiment, codeVersion };
   }
-  // Bob runs Jobs in both Projects; a public computer serves every Project alike.
+  // BobはどちらのProjectでもJobを実行する。publicなコンピュータはどのProjectにも同じように使える。
   const sharedProject = await createProject('Site computers A');
   const otherProject = await createProject('Site computers B');
   const computersPage = `${WEB_URL}/settings/computers`;
@@ -318,7 +317,7 @@ try {
     .getByText('このコンピュータの設定を保存した人はまだいません。')
     .waitFor();
   const abci = (await admin.api.get('/targets')).items.find((target) => target.name === 'ABCI');
-  // Whoever adds a computer owns it, a global administrator too.
+  // コンピュータを足した人がその所有者になる。全体管理者でも同じ。
   assert.equal(abci.ownerUserId, admin.user.id);
   assert.equal(abci.visibility, 'public');
   assert.equal(abci.submissionMode, 'automatic');
@@ -330,7 +329,7 @@ try {
   assert.equal(abci.site.gpuAssignment, 'scheduler');
   assert.equal(abci.site.workDirectory, '/groups/gaa00000/mmt');
   assert.equal(abci.site.jobShell.version, 1);
-  // Each person's key is asked for when they save their account; a new site has none yet.
+  // 各人の鍵は、その人が自分のアカウント名を保存したときに要求される。新しいsiteにはまだ無い。
   assert.deepEqual((await admin.api.get(`/targets/${abci.id}/keys`)).items, []);
 
   const gpuDialog = await addPublicSite(adminPage, {
@@ -349,7 +348,7 @@ try {
   const sharedKeys = adminDetails.getByRole('region', { name: '鍵と接続確認' });
   await sharedKeys.getByText('ランチャーが鍵を作るのを待っています', { exact: false }).waitFor();
   await sharedKeys.getByText('作成待ち', { exact: true }).waitFor();
-  // The API refuses a login check until the launcher has made the key (site_check_unavailable).
+  // ランチャーが鍵を作るまで、APIはログインの確認を断る（site_check_unavailable）。
   assert.equal(await sharedKeys.getByRole('button', { name: '接続を確認', exact: true }).isDisabled(), true);
   const gpuServer = (await admin.api.get('/targets')).items.find((target) => target.name === 'GPU server');
   assert.equal(gpuServer.siteAccountMode, 'shared');
@@ -408,7 +407,7 @@ try {
     .waitFor();
   await ownKey.getByText('作成済み', { exact: true }).waitFor();
   await ownKey.getByRole('button', { name: '接続を確認', exact: true }).click();
-  // The status badges start with a mark (●), so they match by the class and their text.
+  // 状態のバッジは印（●）で始まるので、classと文字で探す。
   await ownKey.locator('.status-badge', { hasText: '確認中' }).waitFor();
   const [check] = (await withToken(launcherToken, 'GET', '/launcher/config')).body.checks;
   assert.equal(check.targetId, abci.id);
@@ -425,7 +424,7 @@ try {
   await ownKey.getByText('Permission denied (publickey).').waitFor({ timeout: LAUNCHER_ANSWER_TIMEOUT_MS });
   await ownKey.locator('.status-badge', { hasText: '失敗' }).waitFor();
   await screenshot(alicePage, 'own-settings-key-ready');
-  // The site's managers see everyone's settings with the key's state.
+  // siteを管理する人には、全員の設定と鍵の状態が見える。
   await adminPage.goto(computersPage);
   await adminPage.getByTestId(`target-details-${abci.id}`).click();
   const everyone = adminDetails.getByRole('region', { name: '利用者の設定' });
@@ -541,7 +540,7 @@ try {
   await alicePage.getByTestId(`target-edit-${pc.id}`).click();
   const visibilityEdit = openDialog(alicePage);
   await visibilityChoice(visibilityEdit, 'Public').check();
-  // A Job on the PC may be unfinished; an edit that keeps how it runs is accepted.
+  // PCのJobが終わっていないことがある。実行のしかたを変えない編集なら受け付ける。
   await visibilityEdit.getByRole('button', { name: '保存', exact: true }).click();
   await waitForNoDialog(alicePage);
   await computerRow(alicePage, 'Alice PC').getByText('Public').waitFor();
@@ -562,7 +561,8 @@ try {
   await bobPage.goto(`${WEB_URL}/projects/${sharedProject.project.id}/jobs?job=${job.id}`);
   const waiting = bobPage.getByRole('region', { name: '手動投入を待っているJob' });
   await waiting.getByText('Alice PC: 1件').waitFor();
-  // Bob gets the command for his own Jobs, and that Alice's side submits them where she waits.
+  // Bobには自分のJobのためのコマンドと、Aliceが待ち受けているコンピュータではAliceの側で
+  // 投入されるという説明が出る。
   await waiting.getByText(`mado-tracking submit --site ${pc.id}`, { exact: true }).waitFor();
   await waiting.getByText(OWNER_SUBMITS_NOTE('Alice')).waitFor();
   const bobJob = bobPage.locator('.job-detail');
@@ -572,7 +572,7 @@ try {
   await bobJob.getByText(OWNER_SUBMITS_NOTE('Alice')).waitFor();
   assert.equal(await bobPage.locator('code', { hasText: '--all' }).count(), 0, 'only the owner may use --all');
   await screenshot(bobPage, 'manual-job-requester');
-  // The computer's details tell Bob the same next to the commands he may run.
+  // コンピュータの詳細でも、Bobが使えるコマンドの横に同じことが出る。
   await bobPage.goto(computersPage);
   await computerRow(bobPage, 'Alice PC').getByText('Alice', { exact: true }).waitFor();
   await bobPage.getByTestId(`target-details-${pc.id}`).click();
@@ -593,12 +593,12 @@ try {
   const ownerJob = alicePage.locator('.job-detail');
   await ownerJob.getByText(`mado-tracking submit --site ${pc.id} --watch --all`, { exact: true }).waitFor();
   await ownerJob.getByText(ALL_SCOPE_NOTE, { exact: false }).waitFor();
-  // The owner is not told that the owner submits.
+  // 所有者には、所有者の側で投入されるという説明は出ない。
   assert.equal(await alicePage.getByText('さんのコンピュータです。', { exact: false }).count(), 0);
   await screenshot(alicePage, 'manual-job-owner');
 
   console.log('Manual submission: `submit --all` by the owner records the job shell version it used');
-  // A token that writes belongs to one Project; --all takes that Project's Jobs on the PC.
+  // 書き込めるtokenは1つのProjectに属する。--allは、PCにあるそのProjectのJobを受け取る。
   const { token: aliceToken } = await alice.api.post('/tokens', {
     name: 'Alice PC submit',
     projectId: sharedProject.project.id,
@@ -663,7 +663,7 @@ try {
   await aliceDetails.locator('.site-personal-key').getByText(alicePublicKey).waitFor();
   await assertNoSidewaysScroll(alicePage, 'own settings and key');
   await screenshot(alicePage, 'phone-own-settings');
-  // The dialog fills the screen on a phone, so it must not be wider than the screen either.
+  // スマホではダイアログが画面いっぱいに出るので、画面より広くなってもいけない。
   await alicePage.getByRole('button', { name: 'コンピュータを追加', exact: true }).click();
   const phoneDialog = openDialog(alicePage);
   await phoneDialog.getByLabel('job shellの雛形').selectOption('pbs');
@@ -693,7 +693,7 @@ try {
   assert.deepEqual(pageErrors, []);
   console.log('Browser site computers against the real API passed');
 } catch (failure) {
-  // Keep what each open page showed when a step failed.
+  // 手順が失敗したとき、開いている各ページの表示を残す。
   for (const [index, page] of browser.contexts().flatMap((context) => context.pages()).entries()) {
     console.error(`failure at ${page.url()}`);
     await screenshot(page, `failure-${index}`).catch(() => undefined);

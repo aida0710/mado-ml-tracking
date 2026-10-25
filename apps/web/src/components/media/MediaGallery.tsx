@@ -36,9 +36,9 @@ function Caption({ media }: { media: RunMedia }) {
 }
 
 /**
- * The media of one key at one step: images in a grid, audio stacked in the viewer, videos and
- * tables below. Only one audio item sounds at a time, and all of them stop when the gallery
- * unmounts, which is how moving the step slider stops the previous step's audio.
+ * 1つのキーの1つのstepのメディア。画像はグリッド、音声はビューアに縦に積み、動画と表はその
+ * 下に出す。鳴る音声は一度に1つだけで、ギャラリーがアンマウントされるとすべて止まる。
+ * stepのスライダーを動かすと前のstepの音声が止まるのはこのため。
  */
 export function MediaGallery({ projectId, items }: { projectId: string; items: readonly RunMedia[] }) {
   useLocale();

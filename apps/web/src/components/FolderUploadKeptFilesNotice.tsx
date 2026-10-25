@@ -6,9 +6,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
- * After a discard of a stopped folder upload that kept files something uses: why they stayed (and
- * why the attempt is still listed), with a link to the Artifacts list of the folder, whose 所属
- * column names what uses each file.
+ * 止まったフォルダのアップロードを破棄したとき、何かが使っているファイルが残った場合の案内。
+ * 残った理由（と、そのアップロードがまだ一覧にある理由）を伝え、フォルダのArtifactの一覧への
+ * リンクを添える。その一覧の「所属」の列に、各ファイルを使っているものが出る。
  */
 export function FolderUploadKeptFilesNotice({
   projectId,

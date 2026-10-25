@@ -17,16 +17,16 @@ import { text } from '../i18n/catalog';
 type TargetDialogState = { mode: 'create' } | { mode: 'edit'; target: ComputeTargetDetails };
 
 /**
- * 全体設定 → コンピュータ (/settings/computers), open to everyone: every computer with its owner,
- * visibility and state. Anyone adds computers here and owns what they add; a computer one may use
- * or manage opens its details below the list.
+ * 全体設定 → コンピュータ（/settings/computers）。誰でも開け、すべてのコンピュータを所有者、
+ * 公開範囲、状態つきで並べる。誰でもここでコンピュータを足せて、足したものの所有者になる。
+ * 使える・管理できるコンピュータは、一覧の下に詳細を開く。
  */
 export function ComputersSettingsPage() {
   useLocale();
   const { user } = useAuth();
   const computers = useComputers();
   const [dialog, setDialog] = useState<TargetDialogState | null>(null);
-  // The open computer is in the URL, so other screens link to its details (computerDetailsPath).
+  // 開いているコンピュータはURLに持つので、ほかの画面からその詳細へリンクできる（computerDetailsPath）。
   const [params, setParams] = useSearchParams();
   const selectedTargetId = params.get(COMPUTER_DETAILS_PARAM);
   const setSelectedTargetId = (targetId: string) =>
@@ -82,12 +82,12 @@ export function ComputersSettingsPage() {
           target={dialog.mode === 'edit' ? dialog.target : undefined}
           onClose={() => {
             setDialog(null);
-            // Step 1 of adding a computer (and a re-check) saves before the dialog is finished.
+            // コンピュータを足す1段目（と再確認）は、ダイアログが終わる前に保存する。
             computers.reload();
           }}
           onSaved={(saved) => {
             setDialog(null);
-            // A saved computer opens its details, where a site's key and job shell are.
+            // 保存したコンピュータは詳細を開く。siteの鍵とjob shellはそこにある。
             setSelectedTargetId(saved.id);
             computers.reload();
           }}

@@ -1,6 +1,6 @@
 import { text } from '../i18n/catalog';
 
-/** Element ids of the Project settings page's parts; the page and its contents both read these. */
+/** Projectの設定ページの各部分の要素id。ページとその目次の両方が読む。 */
 export const PROJECT_SETTINGS_SECTION_IDS = {
   project: 'settings-project',
   usage: 'settings-usage',
@@ -14,16 +14,16 @@ export const PROJECT_SETTINGS_SECTION_IDS = {
   archive: 'settings-archive',
 } as const;
 
-/** A part of the Project settings page that the contents at its top links to. */
+/** Projectの設定ページで、上部の目次からリンクする部分。 */
 export interface ProjectSettingsSection {
   id: string;
   label: string;
 }
 
 const ids = PROJECT_SETTINGS_SECTION_IDS;
-// The page's parts in display order. Admin-only parts are shown to Project admins alone, as each
-// part decides for itself (Service Accounts, notifications, the audit log and archiving). Built on
-// each call so the labels follow the display language.
+// ページの部分を表示順に並べる。admin専用の部分は、各部分が自分で判断してProject adminにだけ
+// 出す（Service Account、通知、監査ログ、アーカイブ）。ラベルが表示言語に従うよう、呼ぶたびに
+// 作る。
 const getSections = (): (ProjectSettingsSection & { isAdminOnly: boolean })[] => [
   { id: ids.project, label: text.project, isAdminOnly: false },
   { id: ids.usage, label: text.artifactUsage, isAdminOnly: false },
@@ -37,7 +37,7 @@ const getSections = (): (ProjectSettingsSection & { isAdminOnly: boolean })[] =>
   { id: ids.archive, label: text.projectArchiveTitle, isAdminOnly: true },
 ];
 
-/** The parts of the Project settings page this user sees, for its contents. */
+/** この利用者に見える、Projectの設定ページの部分。目次に使う。 */
 export function projectSettingsSections(isProjectAdmin: boolean): ProjectSettingsSection[] {
   return getSections().filter((section) => isProjectAdmin || !section.isAdminOnly).map(
     ({ id, label }) => ({ id, label }),

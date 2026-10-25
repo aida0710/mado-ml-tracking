@@ -11,9 +11,9 @@ import { text } from '../i18n/catalog';
 import { projectAccessTextTemplates } from '../i18n/projectAccess';
 
 /**
- * Grants a role to an Authentik group, or changes the role of an existing binding.
- * The group name is the binding's key, so it can only be chosen when adding, and adding a name
- * that is already in `existingBindings` is refused instead of overwriting its role.
+ * AuthentikのgroupにRoleを付与する。または既存の付与のRoleを変える。
+ * group名は付与のキーなので選べるのは追加のときだけで、`existingBindings`に既にある名前の追加は、
+ * そのRoleを上書きせずに拒む。
  */
 export function GroupBindingDialog({
   binding,

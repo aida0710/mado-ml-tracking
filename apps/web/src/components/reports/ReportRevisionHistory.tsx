@@ -10,9 +10,9 @@ import { text, textTemplates } from '../../i18n/catalog';
 import { joinLabels } from '../../i18n/textJoining';
 
 /**
- * Revisions of a report, newest first. A past revision opens read-only; restoring copies it into a
- * new revision, so the history is never rewritten. Each revision can say what it changed from the
- * one before, and gives a link that keeps pointing at it.
+ * レポートのバージョンを新しい順に並べる。過去のバージョンは読み取り専用で開く。復元はその
+ * バージョンを新しいバージョンに写すので、履歴を書き換えることは無い。各バージョンは1つ前からの
+ * 変更を出せ、そのバージョンを指し続けるリンクを持つ。
  */
 export function ReportRevisionHistory({
   projectId,
@@ -28,15 +28,15 @@ export function ReportRevisionHistory({
   currentRevision: number;
   shownRevision: number;
   onShow: (revision: number) => void;
-  /** Absent when the reader may not edit. */
+  /** 読み手が編集できないときは無い。 */
   onRestore?: (revision: ReportRevisionSummary) => void;
-  /** The link that opens a revision, for sending it to someone. */
+  /** バージョンを開くリンク。ほかの人に送るためのもの。 */
   revisionUrl: (revision: number) => string;
 }) {
   useLocale();
   const revisions = useReportRevisions(projectId, reportId, currentRevision);
   const changesIdPrefix = useId();
-  // One summary at a time: each one reads two revisions.
+  // 要約は一度に1つだけ。それぞれ2つのバージョンを読むため。
   const [changesRevision, setChangesRevision] = useState<number | null>(null);
   return (
     <section className="report-history" aria-label={text.reportHistory}>

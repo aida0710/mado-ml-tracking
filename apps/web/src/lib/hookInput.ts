@@ -37,25 +37,25 @@ import { LocalizedError } from './localizedError';
 import { text } from '../i18n/catalog';
 import { hooksTextTemplates } from '../i18n/hooks';
 
-/** The model version select's value for "the triggering Run's version"; real values are uuids. */
+/** モデルバージョンのselectで「きっかけのRunのバージョン」を表す値。実際のバージョンの値はuuid。 */
 export const INHERIT_MODEL_VERSION = 'inherit';
-// Like automation rules, a hook retries only when more attempts are chosen.
+// 自動実行ルールと同じく、フックも試行回数を増やしたときだけ再試行する。
 const DEFAULT_HOOK_ATTEMPTS = 1;
 export const HOOK_RUN_END_STATUSES = ['finished', 'failed', 'canceled'] as const;
 
 export type HookFilterField = keyof HookFilter;
 
-// The API refuses a condition the trigger's event cannot match, so only these are offered.
+// きっかけのイベントが当てはまり得ない条件はAPIが断るので、ここに挙げたものだけを選ばせる。
 
 export const hookFilterFields = (trigger: HookTrigger): readonly HookFilterField[] =>
   HOOK_FILTER_FIELDS[trigger] ?? [];
-/** These triggers come from a Run (an array's first member), whose model version a start may take. */
+/** Run（arrayなら最初のJob）から起きるきっかけ。起動はそのRunのモデルバージョンを引き継げる。 */
 export const canInheritModelVersion = (trigger: HookTrigger): boolean =>
   trigger === 'run_finished' || trigger === 'array_finished' || trigger === 'checkpoint_saved';
-/** These triggers follow finished Runs, whose output DatasetVersions a start may take as inputs. */
+/** 完了したRunの後に起きるきっかけ。起動はそのRunの出力データセットバージョンを入力にできる。 */
 export const canInheritOutputDatasets = (trigger: HookTrigger): boolean =>
   trigger === 'run_finished' || trigger === 'array_finished';
-/** A model_registered start always runs on the version that was registered. */
+/** model_registeredの起動は、常に登録されたバージョンで実行する。 */
 export const usesRegisteredModelVersion = (trigger: HookTrigger): boolean =>
   trigger === 'model_registered';
 
@@ -95,9 +95,9 @@ export function createHookValues(): FormValues {
 }
 
 /**
- * A new hook's form filled from an existing hook ([複製して新しく作る]): every setting as it is,
- * under `name`. Settings are fixed once a hook exists, so changing one means a copy; a webhook copy
- * gets its own secret.
+ * 既存のフックから埋めた、新しいフックのフォーム（[複製して新しく作る]）。設定はすべてそのままで、
+ * 名前を`name`にする。フックの設定は作った後で変えられないので、変えるには複製する。webhookの
+ * 複製には別の秘密鍵が付く。
  */
 export function copyHookValues(hook: Hook, name: string): FormValues {
   const { filter, template } = hook;
@@ -135,14 +135,14 @@ export function copyHookValues(hook: Hook, name: string): FormValues {
     checkpointEvery: hook.checkpointEvery === null ? '' : String(hook.checkpointEvery),
     concurrency: hook.concurrency,
     maxStartsPerHour: String(hook.maxStartsPerHour),
-    // A hook of another trigger keeps the form's default signature, which it does not send.
+    // ほかのきっかけのフックは、フォームの既定の署名のままにする（送りはしない）。
     ...(hook.webhookSignature ? { webhookSignature: hook.webhookSignature } : {}),
   };
 }
 
 const triggerOf = (values: FormValues) => getFieldValue(values, 'trigger') as HookTrigger;
 
-/** Model families of the Project: those of its models and those its code versions support. */
+/** Projectのモデル系列。モデルの系列と、コードバージョンが対応する系列。 */
 export function hookModelFamilies(catalog: HookCatalog): string[] {
   const { models, codeVersions } = catalog.registry;
   return [
@@ -154,8 +154,8 @@ export function hookModelFamilies(catalog: HookCatalog): string[] {
 }
 
 /**
- * The families the code must run: a fixed model version's, or the filtered families when the
- * version comes from the event (registered or inherited). No family is known without a filter.
+ * コードが実行できなければならないモデル系列。モデルバージョンを固定していればその系列、バージョンが
+ * イベントから来る（登録か引き継ぎ）なら絞り込みの系列。絞り込みが無ければ系列は分からない。
  */
 function requiredFamilies(values: FormValues, catalog: HookCatalog): string[] {
   const modelVersionId = getFieldValue(values, 'modelVersionId');
@@ -176,7 +176,7 @@ export function isHookCodeCompatible(code: CodeVersion, values: FormValues, cata
   });
 }
 
-/** Input versions an array may split among its members: selected inputs that hold files. */
+/** arrayがJobごとに分けられる入力のバージョン。選んだ入力のうち、ファイルを持つもの。 */
 export function partitionCandidates(values: FormValues, catalog: HookCatalog) {
   const inputs = getSelectedValues(values, 'inputDatasetVersionIds');
   return catalog.registry.datasetVersions.filter(
@@ -184,7 +184,7 @@ export function partitionCandidates(values: FormValues, catalog: HookCatalog) {
   );
 }
 
-/** Clears selections a change made impossible, as the automation rule form does. */
+/** 変更で選べなくなった選択を外す。自動実行ルールのフォームと同じ。 */
 export function updateHookValues({
   previous,
   next,
@@ -229,7 +229,7 @@ function buildFilter(values: FormValues, trigger: HookTrigger): HookFilter {
   if (fields.includes('runStatuses') && selected('filterRunStatuses').length)
     filter.runStatuses = selected('filterRunStatuses') as HookFilter['runStatuses'];
   if (fields.includes('tags')) {
-    // A filter only reads tags, so the server's own tags may be matched as well.
+    // 絞り込みはタグを読むだけなので、サーバーが付けたタグに当てはめてもよい。
     const tags = parseStringMap(getFieldValue(values, 'filterTags'));
     if (Object.keys(tags).length) filter.tags = tags;
   }
@@ -253,7 +253,7 @@ function validateReferences(values: FormValues, catalog: HookCatalog) {
 
 const isChecked = (values: FormValues, name: string) => getFieldValue(values, name) === 'true';
 
-/** The site-only parts of a template: an array, the version it splits, and automatic retries. */
+/** templateのうちsiteだけの部分。array、arrayで分けるバージョン、自動の再実行。 */
 function buildSiteTemplate(values: FormValues, catalog: HookCatalog): Partial<HookJobTemplateInput> {
   const arraySize = parseArraySize(getFieldValue(values, 'arraySize'));
   const partitionId = getFieldValue(values, 'datasetPartitionVersionId') || null;
@@ -312,7 +312,7 @@ function parseBoundedInteger(value: string, max: number, describeTooLarge: () =>
   return number;
 }
 
-/** How a hook starts: the checkpoint rule, overlap, rate limit and the webhook's signature. */
+/** フックの起動の決まり。checkpointの規則、重なったときの扱い、回数の上限、webhookの署名。 */
 function buildStartRules(values: FormValues, trigger: HookTrigger): Omit<HookCreate, 'name' | 'trigger' | 'filter' | 'template'> {
   const rules: Omit<HookCreate, 'name' | 'trigger' | 'filter' | 'template'> = {
     concurrency: parseChoice<HookConcurrency>(
@@ -349,7 +349,7 @@ function buildStartRules(values: FormValues, trigger: HookTrigger): Omit<HookCre
   return rules;
 }
 
-/** The create request of the hook form; only the fields of the chosen trigger and target are sent. */
+/** フックのフォームの作成の要求。選んだきっかけと実行先の項目だけを送る。 */
 export function buildHookInput(values: FormValues, catalog: HookCatalog): HookCreate {
   const name = getFieldValue(values, 'name').trim();
   if (!name) throw new Error(text.hookNameError);

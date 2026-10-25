@@ -3,8 +3,8 @@ import { metricSeriesApi } from '../api/metricSeries';
 import { EXECUTION_POLL_MS, useQuery } from './useQuery';
 
 /**
- * Polls while the Run runs, since a running Run can end and be resumed again. readAt is when the
- * segments were read: a segment still running is drawn up to that moment.
+ * 実行中のRunは終わってからまた再開されることがあるので、Runが実行中の間はポーリングする。readAtは
+ * 区間を読んだ時刻で、まだ実行中の区間はその時刻まで描く。
  */
 export function useRunResumeEvents(projectId: string, runId: string, status: RunStatus | undefined) {
   return useQuery({

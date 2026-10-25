@@ -9,8 +9,8 @@ import { chunkMetricKeys, maxPointsForPlan, type ChartRequestPlan } from '../lib
 import { EXECUTION_POLL_MS, useQuery } from './useQuery';
 
 /**
- * The Runs a page draws. Series are always fetched by id; a grouped panel sends `search` when the
- * page has one, so the groups cover the whole search and not only the Runs listed.
+ * ページが描くRun。系列は常にidで取得する。グループ化したパネルは、ページに検索があれば`search`を
+ * 送り、一覧に出ているRunだけでなく検索全体をグループにまとめる。
  */
 export interface ChartRunSource {
   runIds: string[];
@@ -31,7 +31,7 @@ async function loadPlan(
   const maxPoints = maxPointsForPlan(plan, source.runIds.length);
   const range = xRange ? { xRange } : {};
   if (plan.kind === 'series') {
-    // A grouped page can have a search but no listed Runs; the API rejects an empty id list.
+    // グループ化したページは、検索があっても一覧のRunが無いことがある。APIは空のidの一覧を受け付けない。
     if (!source.runIds.length) return { kind: 'series', series: [] };
     const responses = await Promise.all(
       chunkMetricKeys(plan.keys).map((keys) =>
@@ -54,7 +54,7 @@ async function loadPlan(
       ),
     ),
   );
-  // Each key chunk returns the same groups; join their series by group.
+  // キーの塊ごとに同じグループが返るので、系列をグループごとにつなぐ。
   const groups = new Map<string, MetricGroup>();
   for (const group of responses.flatMap((response) => response.groups)) {
     const known = groups.get(group.groupKey);
@@ -63,7 +63,7 @@ async function loadPlan(
   return { kind: 'groups', groups: [...groups.values()] };
 }
 
-/** One response per request plan, keyed by plan id. Polls while any drawn Run is running. */
+/** 要求の計画ごとに1つの応答（計画のidがキー）。描いているRunのどれかが実行中の間はポーリングする。 */
 export function useChartPanelData({
   projectId,
   source,

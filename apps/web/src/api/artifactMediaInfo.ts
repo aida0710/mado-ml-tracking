@@ -10,7 +10,7 @@ function chunksOf<T>(items: T[], size: number): T[][] {
 }
 
 export const artifactMediaInfoApi = {
-  /** null when the server has no media info, e.g. a format it does not read headers of. */
+  /** サーバーにmedia情報が無いとき（ヘッダーを読まない形式など）はnull。 */
   get: async (projectId: string, artifactId: string, signal?: AbortSignal): Promise<ArtifactMediaInfo | null> => {
     try {
       return await request<ArtifactMediaInfo>(
@@ -22,7 +22,7 @@ export const artifactMediaInfoApi = {
       throw error;
     }
   },
-  /** Splits large lists into API-sized requests; Artifacts without media info are absent. */
+  /** 大きな一覧はAPIが受け付ける大きさの要求に分ける。media情報の無いArtifactは結果に無い。 */
   list: async (projectId: string, artifactIds: string[], signal?: AbortSignal): Promise<ArtifactMediaInfo[]> => {
     const pages = await Promise.all(
       chunksOf([...new Set(artifactIds)], ARTIFACT_MEDIA_INFO_BATCH_LIMIT).map((chunk) =>

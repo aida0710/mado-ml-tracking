@@ -1,30 +1,30 @@
-// Decides whether a chosen file is the file an unfinished upload session was sending, so its
-// remaining parts can follow without joining two different files into one Artifact.
+// 選んだファイルが、途中のアップロードセッションが送っていたファイルと同じかを判断する。同じなら
+// 残りのpartを続けて送れ、2つの違うファイルを1つのArtifactにつなげてしまうことが無い。
 //
-// The browser keeps no handle to a file across reloads, and the name and modification time change
-// when a file is copied, so the received parts are the evidence: the server stores each part's
-// SHA-256, and the chosen file must have the same bytes at those offsets.
+// ブラウザは再読み込みをまたいでファイルのハンドルを持たず、名前と更新時刻はファイルをコピーすると
+// 変わる。そこで受け取り済みのpartを証拠にする。サーバーは各partのSHA-256を保存しているので、
+// 選んだファイルはその位置で同じバイト列を持たなければならない。
 import type { ArtifactUploadDetail, ArtifactUploadListItem, ArtifactUploadPart } from '@mmt/contracts';
 import { sha256HexOnAnyOrigin } from './blobDigest';
 import { blockerFromFailure, blockerFromSession, type ResumeBlocker } from './uploadResumeBlocker';
 
 /**
- * Received parts compared with the chosen file. Two checkpoints of one model have the same size,
- * and a fine-tune that froze the embedding and output layers also keeps the first and last parts,
- * so evenly spaced middle parts are compared too. Four 16 MiB parts take about 0.6 s on a plain
- * http origin, where the hash runs in JavaScript; comparing every part would read gigabytes.
+ * 選んだファイルと比べる受け取り済みのpart。1つのモデルの2つのcheckpointは同じ大きさで、
+ * 埋め込み層と出力層を固定したファインチューニングでは最初と最後のpartも変わらないので、
+ * 等間隔に選んだ中間のpartも比べる。16 MiBのpartを4つ比べると、ハッシュをJavaScriptで計算する
+ * http（非HTTPS）のオリジンでは約0.6秒かかる。すべてのpartを比べるとギガバイト単位で読むことになる。
  */
 export const COMPARED_PART_LIMIT = 4;
 
 export type FileMatch =
-  | { kind: 'same'; /** Nothing is stored yet, so no bytes of another file can be joined. */ nothingSent: boolean }
+  | { kind: 'same'; /** まだ何も保存されていないので、別のファイルのバイトがつながることはない。 */ nothingSent: boolean }
   | { kind: 'sizeDiffers' }
   | { kind: 'contentDiffers' };
 
-/** SHA-256 hex of the file's bytes [start, end). */
+/** ファイルのバイト列[start, end)のSHA-256（16進）。 */
 export type PartDigestReader = (range: { start: number; end: number }) => Promise<string>;
 
-/** The first and last received parts and evenly spaced ones between them, at most `limit`. */
+/** 受け取り済みのpartの最初と最後と、その間で等間隔に選んだもの。最大で`limit`個。 */
 export function choosePartsToCompare(
   receivedParts: readonly ArtifactUploadPart[],
   limit: number = COMPARED_PART_LIMIT,
@@ -36,7 +36,7 @@ export function choosePartsToCompare(
   return [...indexes].map((index) => sorted[index]!);
 }
 
-/** Hashes each byte range once, since several sessions of the same file ask for the same parts. */
+/** バイト範囲ごとに一度だけハッシュを計算する。同じファイルの複数のセッションが同じpartを求めるため。 */
 export function createPartDigestReader(file: Blob): PartDigestReader {
   const digests = new Map<string, Promise<string>>();
   return ({ start, end }) => {
@@ -51,8 +51,8 @@ export function createPartDigestReader(file: Blob): PartDigestReader {
 }
 
 /**
- * Unfinished uploads worth comparing with a newly chosen file: same size and not expired. The ones
- * this browser started for a file of the same name and time come first, then the furthest along.
+ * 新しく選んだファイルと比べる価値のある途中のアップロード（大きさが同じで期限切れでないもの）。
+ * このブラウザが同じ名前・時刻のファイルで始めたものを先にし、そのあとは進んでいるものから並べる。
  */
 export function orderResumeCandidates({
   sessions,
@@ -96,9 +96,9 @@ export type SessionInspection =
   | { blocker: null; session: ArtifactUploadDetail; nothingSent: boolean };
 
 /**
- * Reads the session's current state and checks the file against it. Refusals that describe the
- * session (expired, gone, no permission) become blockers; a lost network or a server error throws,
- * since nothing is known about the session then.
+ * セッションの今の状態を読み、ファイルをそれと照らし合わせる。セッションのことを表す拒否
+ * （期限切れ、消えた、権限が無い）は続けられない理由（blocker）にする。ネットワークの切断や
+ * サーバーのエラーは、そのときセッションについて何も分からないので例外を投げる。
  */
 export async function inspectSessionForFile({
   uploadId,
@@ -113,7 +113,7 @@ export async function inspectSessionForFile({
   loadSession: (uploadId: string) => Promise<ArtifactUploadDetail>;
   readPartDigest: PartDigestReader;
   now: number;
-  /** The same File object that opened the session, or one already compared: only the size is checked. */
+  /** セッションを開いたのと同じFileオブジェクトか、すでに比べたもの。大きさだけを確かめる。 */
   isKnownSameFile?: boolean;
 }): Promise<SessionInspection> {
   let session: ArtifactUploadDetail;

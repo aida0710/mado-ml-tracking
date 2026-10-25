@@ -1,8 +1,8 @@
 import { CopyButton } from './CopyButton';
 
 /**
- * A value to paste elsewhere (an ID, a command, a public key, a webhook secret) with a button that
- * copies it exactly, since IDs are long and a double click selects only part of one.
+ * ほかの場所に貼り付ける値（ID、コマンド、公開鍵、webhookのsecret）と、それを正確にコピーする
+ * ボタン。IDは長く、ダブルクリックでは一部しか選択されないため。
  */
 export function CopyableValue({ value, label }: { value: string; label?: string }) {
   return (

@@ -24,7 +24,7 @@ export function AppShell() {
   const { projectId } = useParams();
   const auth = useAuth();
   const navigate = useNavigate();
-  // Right after archiving, "/" lists the Projects with a note instead of opening another one.
+  // アーカイブした直後の"/"は、別のProjectを開かず、Projectの一覧を案内付きで出す。
   const archivedProjectName = readArchivedProjectName(useLocation().state);
   const projects = useQuery({ key: 'projects', load: administrationApi.projects });
   const [isCreatingProject, setIsCreatingProject] = useState(false);
@@ -36,15 +36,15 @@ export function AppShell() {
     projects.reload();
     navigate(projectHomePath(project.id));
   };
-  // A Project id from the URL that the user cannot open gets no Project navigation or alerts.
+  // 利用者が開けないProjectのidがURLにあっても、Projectのナビゲーションもアラートも出さない。
   const openProject = projects.value?.find((project) => project.id === projectId);
   useEffect(() => {
     if (openProject) rememberLastProjectId(openProject.id);
   }, [openProject]);
   useRememberSettingsReturnScreen(openProject);
   const navigation = useNavigation(openProject?.id, openProject?.role);
-  // The Project switcher heads the full sidebar; with the rail or the drawer it is the bar under
-  // the header.
+  // Projectの切り替えは、サイドバーではその先頭に置く。レールやドロワーのときは上部バーの
+  // 下のバーになる。
   const inSidebar = navigation.layout.mode === 'sidebar';
   const projectPicker = projects.value?.length ? (
     <ProjectBar
@@ -71,8 +71,8 @@ export function AppShell() {
           <Resource query={projects}>
             {(items) => {
               const project = items.find((item) => item.id === projectId);
-              // A list being reloaded may still lack a Project just created, or still hold one
-              // just archived; wait for it instead of showing the wrong screen.
+              // 読み込み直し中の一覧には、作ったばかりのProjectがまだ無いことも、
+              // アーカイブしたばかりのProjectが残っていることもある。違う画面を出さずに待つ。
               if (!project && projects.loading) return <Loading />;
               const projectAtHome =
                 projectId || archivedProjectName

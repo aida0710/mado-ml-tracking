@@ -7,7 +7,7 @@ import { isJobStatus, JOB_STATUS_BADGE_CLASS } from '../lib/statusBadge';
 import { useLocale } from '../i18n/useLocale';
 import { lineageNodeKindLabels, text } from '../i18n/catalog';
 
-// Matches the previous graph's readable label length and keeps a long name's identifying tail.
+// 以前のグラフの読みやすいラベルの長さに合わせ、長い名前でも見分けに効く末尾を残す。
 const NODE_LABEL_MAX_LENGTH = 28;
 
 export function LineageFlowNode({ data, selected }: NodeProps<FlowNode>) {

@@ -7,8 +7,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * Notification channels, rules and recent deliveries of the current Project. Shown to Project
- * admins; channel editing is limited to global administrators as in the API.
+ * 今のProjectの通知先、通知のルール、最近の配信。Project adminに表示する。通知先の編集は、APIと
+ * 同じく全体管理者に限る。
  */
 export function NotificationSettings() {
   useLocale();

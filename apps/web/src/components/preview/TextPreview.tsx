@@ -11,8 +11,8 @@ import { textTemplates } from '../../i18n/catalog';
 import { joinSentences } from '../../i18n/textJoining';
 
 /**
- * Text previews are colored on the main thread; 1MiB stays well under a second. Larger files show
- * their first 1MiB, which is where a training log says how the run started.
+ * テキストのプレビューはメインスレッドで色を付ける。1MiBなら1秒を十分に下回る。大きい
+ * ファイルは先頭の1MiBを出す。学習のログなら、学習がどう始まったかはそこに書いてある。
  */
 export const TEXT_PREVIEW_MAX_BYTES = 1024 * 1024;
 
@@ -21,8 +21,8 @@ function isTextHeadOnly(artifact: Artifact): boolean {
 }
 
 /**
- * Says the text below is only the head of the file (and `reason`, why it is text at all), with the
- * download beside it. Nothing when the whole file is shown and there is no reason to give.
+ * 下のテキストがファイルの先頭だけであること（と`reason`、そもそもテキストで出す理由）を、
+ * ダウンロードとともに伝える。ファイル全体を出していて、伝える理由も無いときは何も出さない。
  */
 export function TextHeadNotice({ artifact, reason }: { artifact: Artifact; reason?: string }) {
   useLocale();
@@ -33,7 +33,7 @@ export function TextHeadNotice({ artifact, reason }: { artifact: Artifact; reaso
   return <PreviewDownloadNotice artifact={artifact} message={joinSentences([reason ?? '', headMessage])} />;
 }
 
-/** The text colored by its format; over TEXT_PREVIEW_MAX_BYTES only the head is read (a Range request). */
+/** 形式に合わせて色を付けたテキスト。TEXT_PREVIEW_MAX_BYTESを超えると先頭だけを読む（Rangeの要求）。 */
 export function TextPreview({ artifact, reason }: { artifact: Artifact; reason?: string }) {
   useLocale();
   const headOnly = isTextHeadOnly(artifact);

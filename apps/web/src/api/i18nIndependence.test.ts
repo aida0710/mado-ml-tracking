@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-// API clients report codes and server messages only; screen text is chosen in lib/errorMessage.ts.
+// APIクライアントはコードとサーバーのメッセージだけを伝え、画面の文はlib/errorMessage.tsが選ぶ。
 vi.mock('../i18n/catalog', () => {
   throw new Error('API clients must not import the i18n catalog');
 });

@@ -64,7 +64,7 @@ describe('Sweepの試行表の幅による切り替え', () => {
       text.status,
       text.showRowDetails,
     ]);
-    // Rows start closed: the Run link is reached by opening the row.
+    // 行は閉じた状態で始まる。Runのリンクには行を開いてたどり着く。
     expect(html).not.toContain('href="/projects/project/runs/run-1"');
     expect(html.match(/aria-expanded="false"/g)).toHaveLength(trials.length);
   });

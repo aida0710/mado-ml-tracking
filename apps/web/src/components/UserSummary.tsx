@@ -1,6 +1,6 @@
 import type { UserSearchResult } from '@mmt/contracts';
 
-/** A user's display name with their email under it, in search results and chosen members. */
+/** ユーザーの表示名と、その下のメールアドレス。検索結果と選んだメンバーに出す。 */
 export function UserSummary({ user }: { user: Pick<UserSearchResult, 'displayName' | 'email'> }) {
   return (
     <span className="user-summary">

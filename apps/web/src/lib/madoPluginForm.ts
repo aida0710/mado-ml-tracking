@@ -2,7 +2,7 @@ import type { MadoPluginConfig, MadoPluginCredentialsInput, PluginConnection } f
 import type { FormValues } from '../types/form';
 import { getFieldValue } from './formValues';
 
-// Stable defaults identify the tracking app in Mado's jobs and storage locations.
+// 既定値を固定して、mado S3 Data Catalogのジョブと保存場所でmado ML Trackingを見分ける。
 const DEFAULT_MADO_JOB_NAMESPACE = 'mado-model-tracking';
 const DEFAULT_MADO_STORAGE_SYSTEM_KEY = 'mado-model-tracking';
 
@@ -30,7 +30,7 @@ export function getMadoPluginConfig(values: FormValues): MadoPluginConfig {
   };
 }
 
-/** A blank token field keeps the saved token, so nothing is sent for it. */
+/** tokenの項目が空なら保存済みのtokenをそのまま使うので、tokenは何も送らない。 */
 export function getMadoPluginCredentials(values: FormValues): MadoPluginCredentialsInput | undefined {
   const accessToken = getFieldValue(values, 'accessToken');
   return accessToken ? { accessToken } : undefined;

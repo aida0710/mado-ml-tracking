@@ -1,6 +1,6 @@
-// Browser test of computers added on the Web (site settings, job shells, keys and checks, personal
-// settings, launchers) against the isolated mock API. Run it like the other browser tests, with
-// the dev server on MMT_WEB_URL; MMT_SCREENSHOT_DIR, when set, receives screenshots.
+// Webで足すコンピュータ（siteの設定、job shell、鍵と接続確認、各人の設定、ランチャー）を、分離した
+// モックのAPIでブラウザから確かめる。ほかのブラウザテストと同じく、開発サーバーをMMT_WEB_URLで
+// 動かして実行する。MMT_SCREENSHOT_DIRを設定すると、そこへスクリーンショットを保存する。
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -11,7 +11,7 @@ const modulePath = process.env.MMT_PLAYWRIGHT_MODULE;
 if (!modulePath) throw new Error('Set MMT_PLAYWRIGHT_MODULE to an installed Playwright index.mjs');
 const { chromium } = await import(pathToFileURL(modulePath).href);
 const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
-// The templates the dialog offers are the deploy/sites examples as they are.
+// ダイアログが出す雛形は、deploy/sitesの例そのもの。
 const exampleJobShell = (key) =>
   readFileSync(new URL(`../../../deploy/sites/examples/${key}/job.sh`, import.meta.url), 'utf8');
 const browser = await chromium.launch({
@@ -26,7 +26,7 @@ const now = '2026-10-10T00:00:00Z';
 let sequence = 5000;
 const id = () => `00000000-0000-4000-8000-${String(sequence++).padStart(12, '0')}`;
 
-// What the API keeps for sites beyond the targets: job shell versions, keys, checks, settings.
+// targetのほかにAPIがsiteについて持つもの: job shellのバージョン、鍵、接続確認、各人の設定。
 const site = { jobShells: new Map(), keys: [], checks: [], personal: new Map() };
 const summary = ({ content: _content, ...rest }) => rest;
 function saveJobShell(targetId, content) {
@@ -65,7 +65,7 @@ function requestKey(targetId, userId) {
   site.keys.push(key);
   return key;
 }
-// The launcher's part: after a read, the requested keys are made for the next one.
+// ランチャーの役: 読み出しに答えたあと、要求中の鍵を作っておき、次の読み出しで返す。
 function makeRequestedKeys() {
   for (const key of site.keys)
     if (key.status === 'requested')
@@ -97,7 +97,7 @@ await context.route(
       calls.push({ method, path, search: url.search, body });
     if (path === '/targets' && method === 'POST') {
       const { jobShell, site: settings, ...fields } = body;
-      // Whoever adds a computer owns it.
+      // コンピュータを足した人がその所有者になる。
       const target = {
         id: id(),
         ...fields,
@@ -218,7 +218,7 @@ page.on('pageerror', (error) => pageErrors.push(error.message));
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const projectBase = `${base}/projects/${api.state.project.id}`;
 const dialog = () => page.getByRole('dialog').last();
-// Labels of required fields end with an asterisk, so they match by their start like the suite does.
+// 必須の項目のラベルは末尾にアスタリスクが付くので、ほかのテストと同じくラベルの先頭で探す。
 const fill = (label, value) => dialog().getByLabel(label).fill(value);
 const select = (label, value) => dialog().getByLabel(label).selectOption(value);
 const jobShellEditor = (scope) => scope.getByRole('textbox', { name: 'job shell', exact: true });
@@ -253,7 +253,7 @@ await page.getByRole('dialog').waitFor({ state: 'hidden' });
 const mainLauncher = api.state.launchers[0];
 await page.getByRole('button', { name: 'tokenを作り直す', exact: true }).click();
 await dialog().getByRole('button', { name: 'tokenを作り直す', exact: true }).click();
-// The confirmation's title also starts with "ランチャーのtoken", so the field is matched exactly.
+// 確認のダイアログの題も「ランチャーのtoken」で始まるので、入力欄は完全一致で探す。
 const rotatedToken = page.getByLabel('ランチャーのtoken', { exact: true });
 await rotatedToken.waitFor();
 assert.equal(await rotatedToken.inputValue(), 'mado_mt_browser_rotated');
@@ -263,9 +263,9 @@ await dialog().getByRole('button', { name: '閉じる', exact: true }).last().cl
 console.log('Site computers: a global administrator adds a public Slurm site from its template');
 await page.goto(computersPage);
 await page.getByRole('button', { name: 'コンピュータを追加', exact: true }).click();
-// An ssh or local computer is added in two steps; a site keeps its one form.
+// sshとlocalのコンピュータは2段階で足す。siteは1つのフォームのまま。
 await dialog().getByRole('radio', { name: /^Site/ }).check();
-// Private unless chosen otherwise; the administrator opens this one to everyone.
+// 選ばなければPrivate。このsiteは管理者が全員に公開する。
 assert.equal(await visibilityChoice('Private').isChecked(), true);
 await visibilityChoice('Public').check();
 await select('job shellの雛形', 'slurm');
@@ -308,7 +308,7 @@ const details = page.getByTestId('site-computer-details');
 await details.getByRole('heading', { name: 'Slurm cluster' }).waitFor();
 await details.getByText('バージョン1を表示しています').waitFor();
 await details.getByText('自分の設定はありません', { exact: false }).waitFor();
-// The key requested with the site appears once the launcher has made it (the next poll).
+// siteと一緒に要求した鍵は、ランチャーが作ると（次のポーリングで）表示される。
 await details.getByText('mmt-launcher:main:', { exact: false }).waitFor({ timeout: 15000 });
 await details.getByText('共用アカウント（mmt-launcher）の~/.ssh/authorized_keys', { exact: false }).waitFor();
 assert.equal(await details.getByRole('region', { name: '利用者の設定' }).count(), 0);
@@ -425,7 +425,7 @@ api.state.user.isAdmin = false;
 await page.goto(computersPage);
 
 console.log('Site computers: on a site of personal accounts, a researcher saves theirs and gets a key');
-// As a researcher sees someone else's public site: its account mode, not its settings.
+// 研究者から見た、ほかの人のpublicなsite: アカウントの方式は見えるが、設定は見えない。
 const personalSite = {
   ...slurm,
   id: id(),
@@ -504,7 +504,7 @@ api.state.jobs.push(siteJob);
 await page.goto(`${projectBase}/jobs?job=${siteJob.id}`);
 await page.locator('.job-detail').getByText('job shellのバージョン').waitFor();
 await page.locator('.job-detail').getByText('v1', { exact: true }).waitFor();
-// Screens that choose where a Job runs read only the targets usable in the Project.
+// Jobを実行する場所を選ぶ画面は、そのProjectで使えるtargetだけを読む。
 assert.ok(
   calls.some(
     (call) =>

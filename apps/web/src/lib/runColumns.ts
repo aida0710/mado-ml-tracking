@@ -1,15 +1,15 @@
 import type { SavedViewColumn } from '@mmt/contracts';
 
-// The movable columns of the Run list: which are shown, in what order and how wide. Selection
-// and name stay first and are not part of this list.
+// Runの一覧の動かせる列。どれを表示し、どの順で、どの幅にするか。選択と名前は先頭に固定で、
+// この一覧には入らない。
 
-/** Shows the first line of the Run description (`mlflow.note.content`) instead of a tag column. */
+/** タグの列の代わりに、Runの説明（`mlflow.note.content`）の1行目を表示する。 */
 export const RUN_DESCRIPTION_COLUMN = 'description';
 export const RUN_BASE_COLUMNS = ['status', 'created', 'duration', 'user', 'kind'] as const;
-// Two of each keep the initial comparison readable before the user picks more columns.
+// それぞれ2つにして、利用者がさらに列を選ぶ前の最初の比較を読みやすく保つ。
 const DEFAULT_METRIC_COLUMNS = 2;
 const DEFAULT_PARAMETER_COLUMNS = 2;
-/** Narrower than this hides even a short number; wider than this pushes every other column away. */
+/** これより狭いと短い数でも隠れ、これより広いとほかの列をすべて押し出してしまう。 */
 export const MIN_COLUMN_WIDTH = 48;
 export const MAX_COLUMN_WIDTH = 1200;
 
@@ -28,14 +28,14 @@ export function defaultRunColumns(metricNames: string[], parameterNames: string[
   ].map((key) => ({ key }));
 }
 
-/** Hides a shown column, or shows a hidden one at the end. */
+/** 表示中の列なら隠し、隠れた列なら末尾に表示する。 */
 export function toggleColumn(columns: SavedViewColumn[], key: string): SavedViewColumn[] {
   return columns.some((column) => column.key === key)
     ? columns.filter((column) => column.key !== key)
     : [...columns, { key }];
 }
 
-/** Moves `key` to where `targetKey` is, shifting the columns between them. */
+/** `key`を`targetKey`の位置へ動かし、その間の列をずらす。 */
 export function moveColumn(
   columns: SavedViewColumn[],
   key: string,
@@ -50,7 +50,7 @@ export function moveColumn(
   return next;
 }
 
-/** Moves `key` one place left (-1) or right (1); the ends stay where they are. */
+/** `key`を1つ左（-1）か右（1）へ動かす。端の列はそのまま。 */
 export function shiftColumn(
   columns: SavedViewColumn[],
   key: string,
@@ -74,7 +74,7 @@ export function resizeColumn(
   );
 }
 
-/** The first non-empty line of a Markdown description, without heading or list markers. */
+/** Markdownの説明の、空でない最初の行。見出しやリストの記号は除く。 */
 export function descriptionSummary(description: string): string {
   const line = description.split('\n').find((candidate) => candidate.trim()) ?? '';
   return line.trim().replace(/^(?:#{1,6}\s+|[-*+]\s+|>\s*)/, '');

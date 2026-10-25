@@ -7,14 +7,14 @@ import { trackingApi } from '../api/tracking';
 import { getRunColumnNames } from '../components/runs/runColumnNames';
 import { useQuery } from './useQuery';
 
-/** The current data of a live embed, read with the reader's permissions. Pass null for none. */
+/** 最新データの埋め込みの今のデータ。読む人の権限で読む。無ければnullを渡す。 */
 export function useLiveBlockData(projectId: string, block: Exclude<ReportEmbedBlock, { type: 'media_table' }> | null) {
   return useQuery({ key: block ? `${projectId}:report-live:${JSON.stringify(block)}` : null, load: (signal) =>
     loadLiveBlockData(projectId, block!, signal),
   });
 }
 
-/** Runs, metric, param and tag names of a Run set, offered while an embed is configured. */
+/** 対象のRunと、そのメトリクス・パラメータ・タグの名前。埋め込みを設定する間に候補として出す。 */
 export function useRunSetFieldNames(projectId: string, runSet: ReportRunSet | null) {
   return useQuery({ key: runSet ? `${projectId}:report-run-set-names:${JSON.stringify(runSet)}` : null, load: async (signal) => {
     const runs = await loadRunSetSample(projectId, runSet!, signal);
@@ -23,17 +23,17 @@ export function useRunSetFieldNames(projectId: string, runSet: ReportRunSet | nu
   } });
 }
 
-/** Run set sources the picker offers besides listed Runs and a search. */
+/** 対象のRunの元として、ピッカーが一覧のRunと検索のほかに出すもの。 */
 export function useRunSetSources(projectId: string) {
   const savedViews = useQuery({ key: `${projectId}:report-saved-views`, load: (signal) => reportsApi.shareableSavedViews(projectId, signal) });
   const sweeps = useQuery({ key: `${projectId}:report-sweeps`, load: (signal) => sweepsApi.list(projectId, { signal }) });
   return { savedViews, sweeps };
 }
 
-// A table key rarely has more than a few steps; the picker lists the newest of them.
+// 表のキーが数個より多いstepを持つことはまれ。ピッカーはそのうち新しいものを出す。
 const TABLE_MEDIA_PER_KEY = 50;
 
-/** The tables (media of kind table) a Run recorded, for embedding one of them. */
+/** Runが記録した表（種類がtableのメディア）。そのどれかを埋め込むのに使う。 */
 export function useRunTableMedia(projectId: string, runId: string) {
   return useQuery({ key: runId ? `${projectId}:report-table-media:${runId}` : null, load: async (signal) => {
     const keys = (await runMediaApi.keys(projectId, runId, signal)).filter((summary) => summary.kind === 'table');
@@ -44,7 +44,7 @@ export function useRunTableMedia(projectId: string, runId: string) {
   } });
 }
 
-/** Where an embedded table comes from: its Run's name and the table's key and step. */
+/** 埋め込んだ表の出どころ。Runの名前と、表のキーとstep。 */
 export function useMediaTableSource(projectId: string, target: { runId: string; mediaId: string }) {
   const { runId, mediaId } = target;
   const run = useQuery({ key: runId ? `${projectId}:run:${runId}` : null, load: (signal) => trackingApi.run(projectId, runId, signal) });
@@ -53,7 +53,7 @@ export function useMediaTableSource(projectId: string, target: { runId: string; 
   return run.value && media ? { runName: run.value.name, key: media.key, step: media.step } : null;
 }
 
-/** Which of the Runs recorded media of the kind, so a picker can leave out Runs without any. */
+/** どのRunがその種類のメディアを記録したか。ピッカーが、1つも無いRunを外せるようにする。 */
 export function useRunsWithMediaKind(projectId: string, runIds: string[], kind: RunMediaKind | undefined) {
   return useQuery({ key: kind && runIds.length > 0 ? `${projectId}:runs-with-media:${kind}:${runIds.join(',')}` : null, load: async (signal) => {
     const keysOfRuns = await Promise.all(runIds.map((runId) => runMediaApi.keys(projectId, runId, signal)));
@@ -61,10 +61,10 @@ export function useRunsWithMediaKind(projectId: string, runIds: string[], kind: 
   } });
 }
 
-// One search page of candidates; narrowing by name finds older Runs.
+// 候補は検索1ページ分。名前で絞り込めば古いRunも見つかる。
 const RUN_CANDIDATE_LIMIT = 50;
 
-/** Runs to pick from by name, newest first. */
+/** 名前で選ぶRunの候補。新しい順。 */
 export function useRunCandidates(projectId: string, name: string) {
   const trimmed = name.trim();
   return useQuery({ key: `${projectId}:report-run-candidates:${trimmed}`, load: (signal) =>

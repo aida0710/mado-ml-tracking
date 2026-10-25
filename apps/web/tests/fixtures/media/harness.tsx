@@ -1,6 +1,6 @@
-// Renders the Run media components alone for tests/browser-media.mjs, served by the Vite dev
-// server at /tests/fixtures/media/harness.html. The pages that host them (RunDetailPage's media
-// tab, ComparePage's media tab) belong to chart-panels-and-pages-web.
+// tests/browser-media.mjsのために、Runのメディアのコンポーネントだけを描く。Viteの開発サーバーが
+// /tests/fixtures/media/harness.htmlで配信する。これらを載せるページ（RunDetailPageのメディアの
+// タブ、ComparePageのメディアのタブ）はchart-panels-and-pages-webの担当。
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -18,8 +18,8 @@ const parameters = new URLSearchParams(window.location.search);
 const projectId = parameters.get('projectId') ?? '';
 document.documentElement.dataset.theme = parameters.get('theme') === 'dark' ? 'dark' : 'light';
 
-// The components keep the chosen key and steps in the URL (hooks/useMediaLocation), as on the
-// Run and Compare pages, so they need a router; it adds them next to the harness parameters.
+// コンポーネントはRunとCompareのページと同じく、選んだキーとstepをURLに持つ（hooks/useMediaLocation）。
+// そのためrouterが要る。コンポーネントはそれらをharnessのパラメータの横に足す。
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>

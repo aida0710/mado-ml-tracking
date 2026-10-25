@@ -19,11 +19,11 @@ import { modelsTextTemplates } from '../i18n/models';
 import { text } from '../i18n/catalog';
 
 /**
- * Registers a version of `model` by hand, in the order the work goes: its number (left empty, the
- * API numbers it), the training Run that made it, the weights picked from that Run's Artifacts
- * (or the Project's, pasted as an id, or uploaded), then parents and the default code of the same
- * family. The upload dialog is a sibling of this one, not inside its form: a version is immutable,
- * and starting or closing the upload must not save it.
+ * `model`のバージョンを手で登録する。作業の順に、番号（空ならAPIが付ける）、それを作った学習Run、
+ * そのRunのArtifactから選ぶ重み（またはProjectのものをidで貼り付けるか、アップロードする）、
+ * そして親と、同じモデル系列の既定のコードを入れる。アップロードのダイアログはこのフォームの
+ * 中ではなく、このダイアログと並べて置く。バージョンは変えられないので、アップロードを
+ * 始めたり閉じたりしても、バージョンを保存してはいけない。
  */
 export function ModelVersionDialog({
   model,

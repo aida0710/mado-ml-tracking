@@ -5,8 +5,8 @@ import { useLocale } from '../../i18n/useLocale';
 import { textTemplates } from '../../i18n/catalog';
 
 /**
- * The values of the series at the hovered x. The chart passes the rows already ordered and cut to
- * the ones that fit; `hiddenRowCount` says how many more series have a value there.
+ * ホバーしたxでの各系列の値。行は図が並べ替え、入る分だけに切って渡す。`hiddenRowCount`は、
+ * そこに値を持つ系列がほかにいくつあるか。
  */
 export function ChartTooltip({
   xText,
@@ -17,7 +17,7 @@ export function ChartTooltip({
   xText: string;
   rows: readonly ChartValueAtX[];
   hiddenRowCount: number;
-  /** Pixels from the top-left of the chart; `alignRight` puts the box left of the pointer. */
+  /** 図の左上からのピクセル。`alignRight`なら箱をポインタの左に置く。 */
   position: { left: number; top: number; alignRight: boolean };
 }) {
   useLocale();

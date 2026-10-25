@@ -16,12 +16,12 @@ import {
   requestItems,
 } from './http';
 
-// The API maximum: one polled page holds a version's executions, or a rule's for a selector.
+// APIの最大値。バージョンの実行や、選択欄に出すルールの実行を、ポーリングの1ページで読み切る。
 export const AUTOMATION_EXECUTION_PAGE_MAX = 200;
-// The API default: the Project history shows this many at a time and reads more on demand.
+// APIの既定値。Projectの履歴はこの件数ずつ表示し、求められたら続きを読む。
 export const AUTOMATION_HISTORY_PAGE_SIZE = 100;
 
-/** Which executions to read: one rule's, one version's, or both; the cursor continues a page. */
+/** どの実行を読むか（1つのルール、1つのバージョン、またはその両方）。続きはcursorで読む。 */
 export interface AutomationExecutionFilter {
   ruleId?: string;
   modelVersionId?: string;
@@ -38,22 +38,22 @@ export const automationApi = {
       `${rulesPath(projectId)}/${encodeId(ruleId)}`,
       jsonRequest('PATCH', { enabled }),
     ),
-  // Metric keys the rule's Runs (or, before it has any, its code version's Runs) recorded.
+  // ルールのRun（まだ1つも無ければ、そのコードバージョンのRun）が記録したメトリクスのキー。
   ruleMetricKeys: (projectId: string, ruleId: string, signal?: AbortSignal) =>
     request<RuleMetricKeys>(`${rulesPath(projectId)}/${encodeId(ruleId)}/metric-keys`, { signal }),
-  // Applies a rule to an existing version (or upstream Run) by hand; Project admin only.
+  // 既存のバージョン（または上流のRun）にルールを手動で適用する。Project adminだけ。
   createExecution: (projectId: string, ruleId: string, body: CreateAutomationExecution) =>
     request<ModelAutomationExecution>(
       `${rulesPath(projectId)}/${encodeId(ruleId)}/executions`,
       jsonRequest('POST', body),
     ),
-  // Runs the rule as a Service Account of the Project; Project admin only.
+  // ルールをProjectのService Accountとして動かす。Project adminだけ。
   transferOwner: (projectId: string, ruleId: string, body: AutomationRuleOwnerTransfer) =>
     request<ModelAutomationRule>(
       `${rulesPath(projectId)}/${encodeId(ruleId)}/owner`,
       jsonRequest('PUT', body),
     ),
-  // A page of the Project's executions, newest first; nextCursor reads the next older page.
+  // Projectの実行の1ページ（新しい順）。nextCursorで次の古いページを読む。
   executionPage: async (
     projectId: string,
     {

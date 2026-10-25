@@ -1,6 +1,6 @@
 import type { Artifact, ArtifactDirectoryEntry, ArtifactTree } from '@mmt/contracts';
 
-/** One step of the path shown above a directory. The root has name '' and prefix ''. */
+/** ディレクトリの上に出すパスの1段。ルートはnameが''でprefixが''。 */
 export interface ArtifactBreadcrumb {
   name: string;
   prefix: string;
@@ -11,8 +11,8 @@ export type ArtifactBrowserRow =
   | { kind: 'file'; key: string; name: string; artifact: Artifact };
 
 /**
- * Root first. Segments are shown exactly as stored: `..` and empty segments are names, never
- * resolved, so each breadcrumb opens the same prefix the API listed.
+ * ルートが先頭。各段は保存されたとおりに出す。`..`や空の段も名前として扱って解決しないので、
+ * どのパンくずも、APIが一覧したのと同じprefixを開く。
  */
 export function artifactBreadcrumbs(prefix: string): ArtifactBreadcrumb[] {
   const breadcrumbs: ArtifactBreadcrumb[] = [{ name: '', prefix: '' }];
@@ -24,7 +24,7 @@ export function artifactBreadcrumbs(prefix: string): ArtifactBreadcrumb[] {
   return breadcrumbs;
 }
 
-/** The part of a path below the open directory; '' when nothing remains to show. */
+/** パスのうち、開いているディレクトリより下の部分。出すものが残らなければ''。 */
 export function artifactEntryName(path: string, prefix: string): string {
   return path.startsWith(prefix) ? path.slice(prefix.length) : path;
 }
@@ -33,13 +33,13 @@ function directoryName(directory: ArtifactDirectoryEntry, prefix: string): strin
   return artifactEntryName(directory.prefix, prefix).replace(/\/$/, '');
 }
 
-// Digits compare as numbers, so step-9 comes before step-19 as file managers show them.
+// 数字は数として比べるので、ファイルマネージャーの表示と同じくstep-9がstep-19より前に来る。
 const directoryNameCollator = new Intl.Collator('en', { numeric: true });
 
 /**
- * Directories first, then files, as file managers show them. A file and a directory with the
- * same name are both listed; their keys differ by kind. Directories arrive all at once and are
- * re-sorted by name; files keep the API's page order so loading the next page only appends.
+ * ファイルマネージャーの表示と同じく、ディレクトリが先でファイルが後。同じ名前のファイルと
+ * ディレクトリはどちらも出し、keyは種類で分ける。ディレクトリは一度に全部届くので名前で並べ直す。
+ * ファイルはAPIのページの順を保ち、次のページを読んでも後ろに足すだけで済むようにする。
  */
 export function artifactDirectoryRows(tree: ArtifactTree, files: Artifact[]): ArtifactBrowserRow[] {
   return [
@@ -60,7 +60,7 @@ export function artifactDirectoryRows(tree: ArtifactTree, files: Artifact[]): Ar
   ];
 }
 
-/** Older uploads at the same path, newest first, without the one being shown. */
+/** 同じパスにある前のアップロード。新しい順で、表示中のものは除く。 */
 export function previousArtifactVersions(versions: Artifact[], current: Artifact): Artifact[] {
   return versions.filter((item) => item.path === current.path && item.id !== current.id);
 }

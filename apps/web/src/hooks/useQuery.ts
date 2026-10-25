@@ -9,7 +9,7 @@ export interface QueryState<T> {
   error: string | null;
   reload: () => void;
 }
-// Keep active Run and job views current without making idle registry pages poll.
+// 動いているRunとJobの画面を最新に保ちつつ、動きの無いレジストリの画面にはポーリングさせない。
 export const EXECUTION_POLL_MS = 5000;
 
 /**

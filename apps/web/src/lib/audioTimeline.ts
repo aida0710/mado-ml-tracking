@@ -1,15 +1,15 @@
-// Time-axis math for the audio viewer: zooming, panning, pointer positions, and loop ranges.
+// 音声ビューアの時間軸の計算。拡大、移動、ポインターの位置、ループの範囲。
 
 export interface TimeRange {
   startSeconds: number;
   endSeconds: number;
 }
 
-// Below ~50ms a 1024-sample STFT frame at 16kHz (64ms) already covers the whole view.
+// 約50msより短いと、16kHzでの1024サンプルのSTFTフレーム（64ms）だけで表示全体を覆ってしまう。
 export const MIN_VIEW_SECONDS = 0.05;
 export const ZOOM_STEP = 2;
 
-/** Keeps the span (when it fits) and shifts the range back inside [0, duration]. */
+/** 幅は（収まるなら）保ち、範囲を[0, duration]の中へずらして戻す。 */
 export function clampTimeRange(range: TimeRange, durationSeconds: number): TimeRange {
   const span = Math.min(durationSeconds, Math.max(0, range.endSeconds - range.startSeconds));
   const start = Math.min(Math.max(0, range.startSeconds), durationSeconds - span);
@@ -17,8 +17,8 @@ export function clampTimeRange(range: TimeRange, durationSeconds: number): TimeR
 }
 
 /**
- * Scales the span by 1/factor (factor > 1 zooms in) around `focusSeconds`, keeping the focus at the
- * same relative position. Returns null when the result covers the whole duration.
+ * 幅を1/factor倍にする（factor > 1で拡大）。`focusSeconds`を中心にし、その相対位置を保つ。
+ * 結果が全体の長さを覆うときはnullを返す。
  */
 export function zoomTimeRange(
   range: TimeRange,
@@ -40,7 +40,7 @@ export function timeAtFraction(fraction: number, range: TimeRange): number {
   return range.startSeconds + clamped * (range.endSeconds - range.startSeconds);
 }
 
-/** Position of `seconds` in the range as 0..1; values outside the range fall outside 0..1. */
+/** 範囲の中での`seconds`の位置（0..1）。範囲の外の値は0..1の外になる。 */
 export function fractionOfTime(seconds: number, range: TimeRange): number {
   const span = range.endSeconds - range.startSeconds;
   return span > 0 ? (seconds - range.startSeconds) / span : 0;
@@ -50,7 +50,7 @@ export function loopRangeBetween(first: number, second: number): TimeRange {
   return { startSeconds: Math.min(first, second), endSeconds: Math.max(first, second) };
 }
 
-/** m:ss.cc, the precision needed to place a loop by ear. */
+/** m:ss.cc。耳を頼りにループの位置を決めるのに要る精度。 */
 export function formatAudioTime(seconds: number): string {
   const safe = Number.isFinite(seconds) && seconds > 0 ? seconds : 0;
   const totalCentiseconds = Math.round(safe * 100);

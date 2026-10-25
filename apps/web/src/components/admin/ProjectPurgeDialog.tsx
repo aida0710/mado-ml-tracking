@@ -10,8 +10,8 @@ import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 /**
- * Purges an archived Project for good. The Project's name must be typed first, because the Runs,
- * models and Artifact files go with it and nothing brings them back.
+ * アーカイブしたProjectを完全に削除する。先にProjectの名前を入力させる。Run、モデル、
+ * Artifactのファイルも一緒に消え、元に戻す方法が無いため。
  */
 export function ProjectPurgeDialog({
   project,
@@ -49,7 +49,7 @@ export function ProjectPurgeDialog({
         }}
       >
         <p>{textTemplates.projectPurgeConfirm(project.name)}</p>
-        {/* The name alone cannot tell two Projects of the same name apart. */}
+        {/* 名前だけでは、同じ名前の2つのProjectを見分けられない。 */}
         <p className="muted">
           {textTemplates.projectPurgeIdentity({
             createdAt: formatDate(project.createdAt),

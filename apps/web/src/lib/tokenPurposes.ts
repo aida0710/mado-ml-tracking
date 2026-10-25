@@ -8,30 +8,30 @@ import {
 import { scopesAllowedForRole } from './tokenScopes';
 
 /**
- * A choice of 用途 in the token dialog: a purpose (the scopes that use needs, from contracts), or
- * `custom`, choosing the scopes one by one.
+ * tokenのダイアログの「用途」の選択肢。用途（その使い方に要るscope。contractsで決める）か、
+ * scopeを1つずつ選ぶ`custom`。
  */
 export type TokenPurposeOption = TokenPurpose | 'custom';
 
-// The order the dialog lists them in: the purposes in their order, the free choice last.
+// ダイアログに並べる順。用途は決められた順に並べ、自由に選ぶものは最後。
 const TOKEN_PURPOSE_OPTION_ORDER: readonly TokenPurposeOption[] = [...TOKEN_PURPOSES, 'custom'];
 
-/** The purpose chosen in the token dialog and the scopes it stands for. */
+/** tokenのダイアログで選んだ用途と、それが表すscope。 */
 export interface TokenScopeChoice {
   purpose: TokenPurposeOption;
   scopes: TokenScope[];
 }
 
-/** Who receives the token: the signed-in person, or a Service Account of the Project. */
+/** tokenを受け取る人。ログインしている本人か、ProjectのService Account。 */
 export interface TokenOwnerKind {
   role: ProjectRole;
   isServiceAccount: boolean;
 }
 
 /**
- * The purposes this owner can be issued a token for: those whose every scope the owner's role
- * allows. A worker runs unattended, so it gets a Service Account's token rather than a person's,
- * which stops when that person leaves the Project.
+ * この持ち主にtokenを発行できる用途。持ち主のロールがすべてのscopeを許すもの。workerは人の手を
+ * 離れて動くので、人のtokenではなくService Accountのtokenを使う。人のtokenは、その人が
+ * Projectを抜けると止まる。
  */
 export function purposesForOwner(owner: TokenOwnerKind): TokenPurposeOption[] {
   const allowed = scopesAllowedForRole(owner.role);
@@ -42,7 +42,7 @@ export function purposesForOwner(owner: TokenOwnerKind): TokenPurposeOption[] {
   });
 }
 
-/** The purpose whose scopes are exactly `scopes` (in any order), or `custom`. */
+/** scopeが`scopes`とちょうど同じ（順不同）用途。無ければ`custom`。 */
 export function purposeForScopes(
   scopes: readonly TokenScope[],
   purposes: readonly TokenPurposeOption[],
@@ -56,7 +56,7 @@ export function purposeForScopes(
   return matching ?? 'custom';
 }
 
-/** The scopes a purpose selects; `custom` keeps what is selected now. */
+/** 用途が選ぶscope。`custom`は今選ばれているものを保つ。 */
 export function scopesForPurpose(
   purpose: TokenPurposeOption,
   currentScopes: readonly TokenScope[],
@@ -65,9 +65,9 @@ export function scopesForPurpose(
 }
 
 /**
- * The purpose the dialog starts with. Most tokens are issued to record from the SDKs, and a token
- * with `read` alone fails there with 403, so recording comes first whenever the role allows it;
- * an Admin Service Account usually runs a worker.
+ * ダイアログの最初の用途。tokenの多くはSDKから記録するために発行され、`read`だけのtokenでは
+ * そこで403になるので、ロールが許す限り記録を最初の用途にする。AdminのService Accountは、
+ * たいていworkerを動かすためのもの。
  */
 function defaultTokenPurpose(
   owner: TokenOwnerKind,
@@ -80,8 +80,8 @@ function defaultTokenPurpose(
 }
 
 /**
- * What the dialog starts with: the scopes a guide asked for (those above the owner's role left
- * out, as the API would refuse them), or the default purpose's.
+ * ダイアログの最初の状態。ガイドが求めたscope（持ち主のロールを超えるものは、APIが拒否するので
+ * 除く）か、既定の用途のscope。
  */
 export function initialTokenScopeChoice({
   owner,

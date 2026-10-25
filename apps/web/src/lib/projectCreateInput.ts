@@ -1,12 +1,12 @@
 import type { ArtifactBackend, ProjectCreate, ProjectVisibility } from '@mmt/contracts';
 import { toProjectMemberGrants, type MemberGrantDraft } from './projectMemberGrants';
 
-// The API's default as well: a new Project is open to everyone who can sign in.
+// APIの既定値とも同じ。新しいProjectは、サインインできる全員に公開する。
 export const DEFAULT_PROJECT_VISIBILITY: ProjectVisibility = 'public';
 
 /**
- * The POST /projects body from the creation dialog. Members are sent only for a Private Project,
- * where the field shows; a blank description is left out.
+ * 作成ダイアログから送るPOST /projectsの本文。メンバーは、その欄が出るPrivateのProjectのときだけ
+ * 送る。空の説明は省く。
  */
 export function buildProjectCreate({
   name,

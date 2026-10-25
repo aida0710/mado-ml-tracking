@@ -14,15 +14,15 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * The Run's Markdown description. It is the MLflow tag mlflow.note.content, so a description
- * written from an MLflow client shows here and one saved here is what MLflow reads.
+ * RunのMarkdownの説明。MLflowのタグmlflow.note.contentそのものなので、MLflowのクライアントから
+ * 書いた説明がここに出て、ここで保存した説明をMLflowが読む。
  */
 export function RunDescriptionEditor({ projectId, run }: RunDescriptionEditorProps) {
   useLocale();
   const { canEdit } = useProject();
   const runContent = run.tags[RUN_NOTE_TAG] ?? '';
-  // What this screen saved, remembered against the tag value it replaced. Once the page reads the
-  // Run again, the tag itself is the newer answer.
+  // この画面で保存した内容を、置き換えたタグの値と組にして覚えておく。ページがRunを読み直した後は、
+  // タグそのものの方が新しい答えになる。
   const [saved, setSaved] = useState<{ replacedContent: string; content: string } | null>(null);
   const content = saved && saved.replacedContent === runContent ? saved.content : runContent;
   const [isEditing, setIsEditing] = useState(false);
@@ -74,14 +74,14 @@ function RunDescriptionForm({
   const unsaved = useUnsavedChanges(draft !== initialContent, mutation.pending, {
     onNavigationDiscard: onClose,
   });
-  // The confirmation is a sibling of the form: inside it, the dialog's buttons and events would
-  // reach the form's submit and save the draft the person is about to discard.
+  // 確認のダイアログはフォームの兄弟に置く。中に置くと、ダイアログのボタンとイベントがフォームの
+  // 送信に届き、利用者が捨てようとしている下書きを保存してしまう。
   return (
     <>
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          // The API would answer 422; stopping here keeps the draft and says why.
+          // APIは422を返すので、ここで止めて下書きを残し、理由を伝える。
           if (isOverLimit) return;
           void mutation.run(() => save(draft)).then((note) => {
             if (note) onSaved(note.content);

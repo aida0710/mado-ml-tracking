@@ -6,16 +6,16 @@ import type {
   PromotionPolicy,
 } from '@mmt/contracts';
 
-// Mirrors the API's alias protection checks (aliasProtectionService.manualAliasGuard) so the
-// promotion dialog asks for what the API will require. The API stays the authority.
+// APIのaliasの保護の検査（aliasProtectionService.manualAliasGuard）に合わせ、昇格のダイアログで
+// APIが求めるものを入力させる。判断の正本はAPIのまま。
 
-/** What a manual change of one alias must satisfy once every matching protection is combined. */
+/** 当てはまる保護をすべて合わせたときに、1つのaliasを手で変えるのに満たすべき条件。 */
 export interface EffectiveAliasProtection {
   requiredRole: ModelAliasProtectionRole;
   requirePassedEvaluation: boolean;
 }
 
-/** The Project-wide and the Model protection combine into the stricter of each setting. */
+/** Project全体の保護とモデルの保護は、設定ごとに厳しい方を取って合わせる。 */
 export function effectiveAliasProtection(
   protections: readonly ModelAliasProtection[],
   target: { modelId: string; alias: string },
@@ -43,8 +43,8 @@ export function meetsProtectionRole(
 }
 
 /**
- * The role removing a protected alias takes: the protection's role, raised to admin when the
- * protection requires a passed decision, since no decision can justify a removal.
+ * 保護されたaliasを外すのに要るロール。保護のロールだが、保護が合格の判定を求めるならadminに
+ * 上げる。外すことを正当化できる判定は無いため。
  */
 export function roleToRemoveAlias(protection: EffectiveAliasProtection): ModelAliasProtectionRole {
   return protection.requirePassedEvaluation ? 'admin' : protection.requiredRole;
@@ -61,8 +61,8 @@ export function canRemoveAlias(
 }
 
 /**
- * The current decisions about the version under policies that target the alias: a later
- * re-evaluation of the same candidate Run replaces the earlier one, as the API judges it.
+ * そのaliasを対象にするpolicyでの、そのバージョンについての現在の判定。同じ候補のRunを後から
+ * 判定し直したものは、APIの判断と同じく前の判定を置き換える。
  */
 export function currentDecisionsForAlias(
   decisions: readonly PromotionEvaluation[],
@@ -84,9 +84,9 @@ export function currentDecisionsForAlias(
 }
 
 /**
- * What the dialog must collect. A protected alias needs a passed decision when the protection says
- * so, and otherwise a reason when no decision is named. Moving any alias to a version that failed
- * its promotion check needs a reason too, so the history says why it was promoted anyway.
+ * ダイアログで集めるべきもの。保護されたaliasには、保護がそう求めるなら合格の判定が要り、そうで
+ * なければ判定を挙げないときに理由が要る。昇格の検査に落ちたバージョンへaliasを動かすときは、
+ * どのaliasでも理由が要る。それでも昇格させた理由を履歴に残すため。
  */
 export function promotionEvidenceRequirement(state: {
   protection: EffectiveAliasProtection | null;
@@ -102,10 +102,10 @@ export function promotionEvidenceRequirement(state: {
 }
 
 /**
- * Whether the policy's baseline alias now points to another version than the one the decision was
- * judged against, e.g. a first-release pass (no baseline) after a later version became production.
- * Such a pass says nothing about the current baseline, so it is not offered as evidence. The API
- * still accepts it (aliasProtectionService.requirePassedEvidence checks the decision only).
+ * policyの基準aliasが、判定のときに比べたバージョンとは別のバージョンを今指しているか。例えば、
+ * 初回のリリースでの合格（基準なし）の後に、新しいバージョンがproductionになったとき。そうした
+ * 合格は今の基準について何も言えないので、根拠として出さない。APIはそれでも受け付ける
+ * （aliasProtectionService.requirePassedEvidenceは判定だけを確かめる）。
  */
 export function hasBaselineMoved(
   decision: Pick<PromotionEvaluation, 'baselineVersionId'>,

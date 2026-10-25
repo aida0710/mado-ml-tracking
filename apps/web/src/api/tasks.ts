@@ -4,7 +4,7 @@ import { encodeId, invalidResponseError, isNotFoundError, jsonRequest, projectPa
 
 const REGISTRATION_STATUSES: RunOutputRegistration['status'][] = ['registered', 'failed', 'skipped'];
 
-// Match the API's bounded default rather than polling the entire task history.
+// Taskの履歴全体をポーリングせず、上限のあるAPIの既定値に合わせる。
 const TASK_RUN_PAGE_SIZE = 50;
 
 const taskPath = (projectId: string, id?: string) =>
@@ -30,7 +30,7 @@ export const tasksApi = {
       throw invalidResponseError();
     return page;
   },
-  /** null until the Task-side registration has an outcome: the API answers 204 or 404 then. */
+  /** Task側の登録の結果が出るまではnull。それまでAPIは404を返す。 */
   runOutputRegistration: async (projectId: string, runId: string, signal?: AbortSignal) => {
     try {
       const registration = await request<RunOutputRegistration | undefined>(

@@ -7,9 +7,9 @@ import { useLocale } from '../../i18n/useLocale';
 
 
 /**
- * A text preview colored by its format (@mado/design-system/code). The format is detected from the
- * file name, media type and content; the select above the text overrides it for files with the
- * same extension.
+ * 形式に合わせて色を付けたテキストのプレビュー（@mado/design-system/code）。形式はファイル名、
+ * メディアタイプ、内容から判定する。同じ拡張子のファイルについては、テキストの上のselectで
+ * 上書きできる。
  */
 export function CodeView({
   content,
@@ -26,8 +26,8 @@ export function CodeView({
 }
 
 /**
- * The text colored as `code` says, under its format select. With `onShowTable` the select also
- * offers 「表」, for a file the preview can draw as a table.
+ * `code`のとおりに色を付けたテキストと、その上の形式のselect。`onShowTable`があると、表として
+ * 描けるファイルのためにselectに「表」も出す。
  */
 export function FormattedCode({
   content,
@@ -50,7 +50,7 @@ export function FormattedCode({
           onChange={(format) => (format === TABLE_PREVIEW_FORMAT ? onShowTable?.() : code.setChoice(format))}
         />
       </div>
-      {/* highlightCode escapes the text; the only markup it adds is the spans for the colors. */}
+      {/* highlightCodeは文字をエスケープする。足すマークアップは色のためのspanだけ。 */}
       <pre className="code-view">
         <code dangerouslySetInnerHTML={{ __html: html }} />
       </pre>

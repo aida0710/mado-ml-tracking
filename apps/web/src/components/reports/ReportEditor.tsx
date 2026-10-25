@@ -29,15 +29,15 @@ import {
 import { text } from '../../i18n/catalog';
 import { createRandomId } from '../../lib/randomId';
 
-/** An embed being configured before it is added, and where it goes in the list. */
+/** 追加する前に設定中の埋め込みと、一覧の中で入る位置。 */
 interface PendingEmbed {
   block: ReportEmbedBlock;
   index: number;
 }
 
 /**
- * Edits a report on top of one revision and saves the result as the next revision. When someone
- * else saved in between, the save is refused and the editor offers to load their revision.
+ * レポートを1つのバージョンの上で編集し、結果を次のバージョンとして保存する。間にほかの人が
+ * 保存していたら保存は拒まれ、編集画面はその人のバージョンを読み込むよう勧める。
  */
 export function ReportEditor({
   projectId,
@@ -49,11 +49,11 @@ export function ReportEditor({
 }: {
   projectId: string;
   document: ReportDetail;
-  /** Snapshots of the revision being edited. */
+  /** 編集中のバージョンのスナップショット。 */
   snapshots: readonly ReportBlockSnapshot[];
   onSaved: (document: ReportDetail) => void;
   onCancel: () => void;
-  /** Discards the edit and reads the current revision. */
+  /** 編集を捨て、今のバージョンを読む。 */
   onReloadLatest: () => void;
 }) {
   useLocale();
@@ -101,8 +101,8 @@ export function ReportEditor({
   }
 
   return (
-    // Not a form: the chart editor opened from an embed has its own form, and nested forms submit
-    // the page natively.
+    // フォームにしない。埋め込みから開く図の編集画面にもフォームがあり、入れ子のフォームは
+    // ブラウザがページごと送信する。
     <div className="report-editor">
       <div className="field">
         <label htmlFor={`${id}-title`}>{text.reportTitle}</label>
@@ -130,7 +130,7 @@ export function ReportEditor({
               onRemove={() => setBlocks(removeBlock(blocks, block.id))}
               onRefreshRequestedChange={(isRequested) => setRefreshRequested(block.id, isRequested)}
             />
-            {/* The buttons below the list add after the last block. */}
+            {/* 一覧の下のボタンは、最後のブロックの後に足す。 */}
             {index < blocks.length - 1 && (
               <ReportBlockInsertPoint
                 position={index + 1}
@@ -171,7 +171,7 @@ export function ReportEditor({
         </div>
       )}
       <ErrorNotice message={saving.error} />
-      {/* Kept at the bottom of the screen while editing, so a long report can be saved from anywhere. */}
+      {/* 編集中は画面の下に留め、長いレポートでもどこからでも保存できるようにする。 */}
       <footer className="report-editor-footer">
         {hasProblem && <span className="report-block-problem">{text.reportSaveBlocked}</span>}
         <button type="button" className="button" disabled={saving.pending} onClick={() => unsaved.requestAction(onCancel)}>

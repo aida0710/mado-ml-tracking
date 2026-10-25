@@ -17,7 +17,7 @@ const plugin = {
   credentialsConfigured: { accessToken: false }, accessTokenGrant: null,
   secretStorageAvailable: true, tokenConfigured: false, baseUrl: '', tokenEnv: '',
 };
-// What the fixture Mado reports for the saved access token at each connection check.
+// 接続確認のたびにフィクスチャのmado S3 Data Catalogが返す、保存済みのアクセストークンの内容。
 const accessTokenGrant = {
   name: 'ML Tracking', scopes: ['lineage:read', 'lineage:write', 'metrics:read'],
   namespaces: ['mado-model-tracking', 'review'], expiresAt: null,

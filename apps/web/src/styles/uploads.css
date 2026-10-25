@@ -1,4 +1,5 @@
-/* Artifact upload dialog: file and folder pickers, drop target, queue progress, resumable sessions. */
+/* Artifactのアップロードのダイアログ。ファイルとフォルダの選択、ドロップ先、待ち行列の
+   進み具合、再開できるアップロードセッション。 */
 .artifact-upload-form {
   display: grid;
   gap: 16px;
@@ -135,12 +136,12 @@
   margin: 0;
   font-size: var(--font-size-sm);
 }
-/* A picker inside a label cannot be :disabled, so the label dims like a disabled button. */
+/* labelの中のファイル選択は:disabledにできないので、labelを無効のボタンと同じように薄くする。 */
 .upload-resumable-row label.button[aria-disabled='true'] {
   opacity: 0.45;
   cursor: default;
 }
-/* The path field with, right under it, whether the chosen file continues an unfinished upload. */
+/* パスの欄と、そのすぐ下に、選んだファイルが途中のアップロードの続きになるかどうか。 */
 .upload-path-field {
   display: grid;
   gap: 8px;
@@ -152,7 +153,7 @@
 p.upload-resume-notice.muted {
   font-size: var(--font-size-sm);
 }
-/* The folder dialog's question after an upload stopped: the explanation, then its two answers. */
+/* アップロードが止まったあとのフォルダのダイアログの問い。説明と、その下に2つの答え。 */
 .notice.dataset-folder-choice {
   flex-direction: column;
   align-items: flex-start;
@@ -160,7 +161,7 @@ p.upload-resume-notice.muted {
 .dataset-folder-choice p {
   margin: 0;
 }
-/* Below 640px a long path wraps instead of hiding the part that tells files apart. */
+/* 640px未満では長いパスを折り返し、ファイルを見分ける部分を隠さない。 */
 @media (width < 640px) {
   .upload-queue-title {
     flex-wrap: wrap;
@@ -173,7 +174,7 @@ p.upload-resume-notice.muted {
     padding: 16px 12px;
   }
 }
-/* A folder upload: one bar for the whole folder above the few rows that need a look. */
+/* フォルダのアップロード。フォルダ全体で1本の進捗バーを、確認が要る少数の行の上に出す。 */
 .folder-upload-overall {
   display: grid;
   gap: 6px;
@@ -188,14 +189,14 @@ p.upload-resume-notice.muted {
   height: 8px;
   accent-color: var(--accent);
 }
-/* While a request waits to be sent again, the row says so in place of a frozen rate. */
+/* 要求の再送を待つ間は、止まった速度の代わりにそのことを行に出す。 */
 .upload-queue-retry {
   margin: 0;
   color: var(--warning);
   font-size: var(--font-size-sm);
 }
-/* After a discard that kept files: the reason, then (below it on a phone, .action-notice) the link
-   to those files. */
+/* ファイルを残して破棄したあと。理由と、そのファイルへのリンク（スマートフォンでは理由の下。
+   .action-notice）。 */
 .notice.folder-upload-kept-files {
   margin: 0;
 }

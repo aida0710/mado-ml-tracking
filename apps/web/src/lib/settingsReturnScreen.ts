@@ -1,10 +1,10 @@
-// The Project screen the user was on before opening 全体設定, so 全体設定 can lead back to it
-// rather than only to the Project's start page through the app name. Kept per browser tab
-// (sessionStorage): another tab may be in another Project.
+// 全体設定を開く前に利用者がいたProjectの画面。全体設定から、アプリ名を通じてProjectの最初の
+// ページへ戻るだけでなく、その画面へ戻れるようにする。ブラウザのタブごとに持つ（sessionStorage）。
+// 別のタブは別のProjectにいるかもしれない。
 const SETTINGS_RETURN_STORAGE_KEY = 'mmt.settings.returnScreen';
 
 export interface SettingsReturnScreen {
-  /** Path and query of the Project screen. */
+  /** Projectの画面のパスとクエリ。 */
   path: string;
   projectName: string;
 }
@@ -25,7 +25,7 @@ export function readSettingsReturnScreen(): SettingsReturnScreen | null {
     );
     return isReturnScreen(stored) ? stored : null;
   } catch {
-    // Blocked storage or a damaged value: 全体設定 then offers only the app name, as before.
+    // ストレージが使えないか値が壊れているとき。全体設定は以前と同じく、アプリ名だけを出す。
     return null;
   }
 }
@@ -34,6 +34,6 @@ export function rememberSettingsReturnScreen(screen: SettingsReturnScreen): void
   try {
     sessionStorage.setItem(SETTINGS_RETURN_STORAGE_KEY, JSON.stringify(screen));
   } catch {
-    /* Leading back is a convenience; the app works without it. */
+    /* 戻る案内は便利のためのもので、無くてもアプリは動く。 */
   }
 }

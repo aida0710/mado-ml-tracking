@@ -2,13 +2,13 @@ import { text } from '../i18n/catalog';
 
 const SECONDS_PER_MINUTE = 60;
 const SECONDS_PER_HOUR = 60 * SECONDS_PER_MINUTE;
-// Hours may exceed a day (72:00:00), as schedulers write a time limit.
+// スケジューラーが制限時間を書くときのように、時間は1日を超えてよい（72:00:00）。
 const CLOCK_DURATION_PATTERN = /^(\d+):([0-5]\d):([0-5]\d)$/;
 const TWO_DIGITS = 2;
 
 /**
- * Seconds of a duration written as HH:MM:SS (PBS walltime, Slurm --time); an empty value is null.
- * Anything else is refused rather than guessed, because the job shell passes it to the scheduler.
+ * HH:MM:SSで書いた長さ（PBSのwalltime、Slurmの--time）の秒数。空ならnull。job shellがそのまま
+ * スケジューラーに渡すので、それ以外の形は推測せずに拒む。
  */
 export function parseClockDuration(value: string): number | null {
   const trimmed = value.trim();
@@ -19,7 +19,7 @@ export function parseClockDuration(value: string): number | null {
   return hours * SECONDS_PER_HOUR + minutes * SECONDS_PER_MINUTE + seconds;
 }
 
-/** The HH:MM:SS form of a duration in seconds; null is the empty string. */
+/** 秒で表した長さのHH:MM:SSの形。nullは空文字列にする。 */
 export function formatClockDuration(seconds: number | null): string {
   if (seconds === null) return '';
   const pad = (value: number) => String(value).padStart(TWO_DIGITS, '0');

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 export interface CheckboxOption {
   value: string;
   label: ReactNode;
-  /** What the filter box matches; a plain-text label is used when this is left out. */
+  /** 絞り込みの欄が照合する文字。省いたときは文字列のラベルを使う。 */
   searchText?: string;
 }
 
@@ -12,8 +12,8 @@ function searchTextOf(option: CheckboxOption): string {
 }
 
 /**
- * The options whose text contains `query` (ignoring letter case). Checked options always stay, so
- * what is chosen never disappears behind the filter.
+ * 文字に`query`を含む選択肢（大文字と小文字は区別しない）。チェックした選択肢は常に残し、
+ * 選んだものが絞り込みで見えなくならないようにする。
  */
 export function filterCheckboxOptions({
   options,

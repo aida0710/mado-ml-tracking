@@ -30,14 +30,15 @@ function OutputModelDetails({ outputModel, catalog, base }: {
   ]} />;
 }
 
-// "code name / version": every code version of the sample is "v1", so the version alone says little.
+// 「<コード名> / <バージョン>」で示す。見本のコードバージョンはどれも「v1」なので、
+// バージョンだけではほとんど見分けられない。
 const codeVersionName = (version: CodeVersion, catalog: ExecutionCatalog) =>
   formatCodeVersionName(
     catalog.codes.find((item) => item.id === version.codeId)?.name ?? version.codeId,
     version.version,
   );
 
-// Versions not in the catalog (e.g. from another page of results) keep their id.
+// カタログに無いバージョン（結果の別のページにあるものなど）はidのまま。
 const optionLabel = (options: SelectOption[], id: string) =>
   options.find((option) => option.value === id)?.label ?? id;
 
@@ -50,7 +51,7 @@ export function TaskDetails({ task, catalog, targets }: {
   const code = catalog.codeVersions.find((item) => item.id === task.codeVersionId);
   const options = buildCatalogOptions(catalog);
   const target = targets.find((item) => item.id === task.targetId);
-  // A site Task asks for a GPU count and a time limit; other Tasks name their GPU IDs.
+  // siteのTaskはGPUの数と時間の上限を求め、ほかのTaskはGPUのIDを挙げる。
   const resourceEntries: Array<[string, ReactNode]> = isSiteTarget(target)
     ? [[text.gpuCount, task.gpuCount],
       [text.walltimeShort, formatClockDuration(task.walltimeSeconds) || text.walltimeUnset]]

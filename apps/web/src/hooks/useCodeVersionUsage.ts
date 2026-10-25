@@ -5,7 +5,7 @@ import { tasksApi } from '../api/tasks';
 import { findCodeVersionUsage } from '../lib/codeVersionUsage';
 import { useQuery } from './useQuery';
 
-/** The models a code version can run, and the Tasks and automation rules that chose it. */
+/** コードバージョンが実行できるモデルと、それを選んだTaskと自動実行ルール。 */
 export function useCodeVersionUsage(projectId: string, version: CodeVersion) {
   const sources = useQuery({ key: `${projectId}:code-version-usage-sources`, load: async (signal) => {
     const [models, tasks, rules] = await Promise.all([

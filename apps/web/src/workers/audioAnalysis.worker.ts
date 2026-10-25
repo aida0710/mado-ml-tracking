@@ -1,6 +1,6 @@
-// Computes waveform peaks and spectrograms off the main thread. The main thread decodes (Web Audio
-// decoding is not available in workers), then transfers the PCM here once; each view change only
-// sends a small request, so zooming and channel switches never copy the audio again.
+// 波形のピークとスペクトログラムをメインスレッドの外で計算する。デコードはメインスレッドで行い
+// （workerではWeb Audioのデコードを使えない）、PCMを1回だけここへ渡す。表示を変えるたびに送るのは
+// 小さな要求だけなので、拡大やチャンネルの切り替えで音声をもう一度コピーすることはない。
 import {
   computeSpectrogram,
   computeWaveformPeaks,
@@ -20,9 +20,9 @@ export interface AudioAnalysisLoadMessage {
 }
 export interface AudioAnalysisView {
   channel: AudioChannelSelection;
-  /** null analyzes the whole file. */
+  /** nullならファイル全体を解析する。 */
   range: TimeRange | null;
-  /** Drawn width in device pixels; peaks get one bucket per column. */
+  /** 描く幅（デバイスピクセル）。ピークは1列につき1区間で求める。 */
   columns: number;
   scale: SpectrogramScale;
 }
@@ -34,7 +34,7 @@ export type AudioAnalysisResponse =
   | { requestId: number; peaks: WaveformPeaks; spectrogram: Spectrogram }
   | { requestId: number; error: string };
 
-// The DOM lib types `self` as Window; this file only needs the worker side of postMessage.
+// DOMのlibは`self`をWindowとして型付けする。このファイルに要るのはworker側のpostMessageだけ。
 const workerScope = self as unknown as {
   onmessage: ((event: MessageEvent<AudioAnalysisLoadMessage | AudioAnalysisRequestMessage>) => void) | null;
   postMessage: (message: AudioAnalysisResponse, transfer: Transferable[]) => void;
@@ -42,7 +42,7 @@ const workerScope = self as unknown as {
 
 let channels: Float32Array[] = [];
 let sampleRate = 0;
-// Mixing a long stereo file costs a full pass, so the mix is kept for later requests.
+// 長いステレオのファイルのミックスは全体を1回走査するので、結果を後の要求のために取っておく。
 let mixedSamples: Float32Array | null = null;
 
 function samplesFor(selection: AudioChannelSelection): Float32Array {

@@ -22,8 +22,8 @@ interface PendingAction {
 }
 
 /**
- * The admin "projects" section: every Project (narrowed by name), creating one, archiving, and,
- * with archived ones shown, restoring or purging them.
+ * 全体管理の「プロジェクト」。すべてのProject（名前で絞り込める）、作成、アーカイブ、
+ * アーカイブしたものを表示したときの復元と完全な削除。
  */
 export function ProjectsPanel() {
   useLocale();
@@ -81,7 +81,7 @@ export function ProjectsPanel() {
         <ProjectCreateDialog
           existingNames={projects.value?.map((project) => project.name) ?? []}
           onClose={() => setIsCreating(false)}
-          // The Project screens load the list again, so the new Project is there when it opens.
+          // Projectの画面は一覧を読み直すので、開いたときには新しいProjectが一覧にある。
           onCreated={(project) => navigate(projectHomePath(project.id))}
         />
       )}

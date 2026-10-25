@@ -5,9 +5,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * What a requester sets up once on a manual site before `mado-tracking submit`: the command, the
- * URL it connects to and their own token. Folded, since it is needed only the first time. Where a
- * Project is open, `tokenButton` issues the token right here; elsewhere the text says where.
+ * 手動のsiteで、依頼する人が`mado-tracking submit`の前に一度だけ準備すること。コマンド、接続先の
+ * URL、自分のtoken。最初の1回にしか要らないので畳んでおく。Projectを開いているときは`tokenButton`で
+ * その場でtokenを発行でき、それ以外では文でどこで発行するかを伝える。
  */
 export function SubmitCliSetup({ tokenButton }: { tokenButton?: ReactNode }) {
   useLocale();

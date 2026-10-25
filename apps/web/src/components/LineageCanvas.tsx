@@ -21,7 +21,8 @@ import { LineageFlowEdge as FlowEdge } from './LineageFlowEdge';
 
 const nodeTypes = { lineage: FlowNode };
 const edgeTypes = { lineage: FlowEdge };
-// Match Data Catalog's initial fit, readable narrow view, navigation range and overview threshold.
+// 初期の全体表示、狭い画面でも読める表示、拡大縮小の範囲、概観に切り替えるしきい値を
+// mado S3 Data Catalogに合わせる。
 const WIDE_FIT_VIEW = { padding: 0.2, maxZoom: 1.15 };
 const NARROW_FIT_VIEW = { ...WIDE_FIT_VIEW, minZoom: 0.5 };
 const MIN_ZOOM = 0.18;
@@ -29,7 +30,7 @@ const MAX_ZOOM = 2;
 const MINIMAP_NODE_THRESHOLD = 8;
 const BACKGROUND_DOT_GAP = 22;
 const BACKGROUND_DOT_SIZE = 1;
-// Separate markers let highlighted edges follow the same theme color as their path.
+// markerを別にし、強調した線の矢印も線と同じテーマの色になるようにする。
 const PATH_MARKER_COLOR = 'var(--link)';
 
 function Canvas({

@@ -23,14 +23,13 @@ import { getFieldValue } from '../lib/formValues';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-// What the step 1 buttons ask for; both check the form's required fields first.
+// 1段目のボタンが求めること。どちらも先にフォームの必須の欄を確かめる。
 type ConnectionIntent = 'check' | 'skip';
 
 /**
- * A global administrator adds a computer. An ssh or local computer is added in two steps: 1「接続」
- * saves how a worker reaches it (disabled) and asks the chosen worker to check it, and 2「接続後の
- * 設定」fills its work directory, Python, CPU, runtimes and GPUs in from the check. A site is added
- * in one form, as before.
+ * 全体管理者がコンピュータを足す。ssh・localのコンピュータは2段で足す。1「接続」で
+ * workerがどう届くかを（無効のまま）保存して選んだworkerに確認を頼み、2「接続後の設定」で
+ * 作業ディレクトリ、Python、CPU、Runtime、GPUを確認の結果から入れる。siteは1つのフォームで足す。
  */
 export function NewComputerDialog({
   auth,
@@ -57,7 +56,7 @@ export function NewComputerDialog({
   });
   const paths = useTargetPathSuggestions({ check: steps.check.latestFinished, listings });
   const [concurrencyFollowsGpus, setConcurrencyFollowsGpus] = useState(true);
-  // The step's form, so a new step starts at the top of the dialog instead of where the last ended.
+  // 段のフォーム。新しい段を、前の段が終わった位置ではなくダイアログの先頭から見せるために使う。
   const stepForm = useRef<HTMLFormElement>(null);
   useEffect(() => {
     stepForm.current?.closest('dialog')?.scrollTo({ top: 0 });
@@ -71,7 +70,7 @@ export function NewComputerDialog({
       kinds={kinds}
       value={executor}
       onChange={(kind) => form.changeValues({ ...form.values, executor: kind })}
-      // Saved by step 1: it stays the kind it was saved as.
+      // 1段目で保存したら、保存したときの種類のまま変えない。
       disabled={steps.saved !== null}
     />
   );
@@ -122,7 +121,7 @@ export function NewComputerDialog({
     void steps.saveSetup().then(finish);
   };
   const isChecking = steps.isWaitingForCheck || steps.check.isInProgress;
-  // A check of the saved connection ended without reaching the computer.
+  // 保存した接続の確認が、コンピュータに届かずに終わった。
   const hasFailedCheck =
     steps.saved !== null &&
     !isChecking &&

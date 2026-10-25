@@ -1,4 +1,4 @@
-/* ChoiceField: a labelled listbox whose options can be longer than a native select shows. */
+/* ChoiceField。標準のselectでは出しきれない長い選択肢も並べられる、ラベル付きのリストボックス。 */
 .choice-field {
   position: relative;
   min-width: 0;

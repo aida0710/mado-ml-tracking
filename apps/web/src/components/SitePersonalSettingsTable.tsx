@@ -12,7 +12,7 @@ import { siteKeyStatusLabels } from '../i18n/siteComputers';
 
 const NOT_SET = '—';
 
-/** Everyone's settings for a site, for its owner and global administrators. */
+/** 所有者と全体管理者に向けた、siteでの全員の設定。 */
 export function SitePersonalSettingsTable({ targetId }: { targetId: string }) {
   useLocale();
   const settings = useQuery({ key: `site-personal-settings-list:${targetId}`, load: (signal) =>

@@ -1,8 +1,8 @@
-// Browser check of keyboard and screen reader use: the metric chart is one focus stop whose arrow
-// keys show values and whose + zooms; compared Runs differ in line pattern as well as color and
-// keep 3:1 on both themes, with axis text at 4.5:1; every screen names the browser tab; the user
-// menu, popovers and dialogs put the focus where the keyboard expects it; and, given
-// MMT_AXE_CORE_PATH (an axe.min.js), axe finds no WCAG 2.1 A/AA violation on the main screens.
+// キーボードとスクリーンリーダーでの使い方のブラウザでの確認。メトリクスの図はフォーカスの止まる所が
+// 1つで、矢印キーで値を出し、+で拡大する。比べるRunは色だけでなく線の種類でも見分けられ、どちらの
+// テーマでも3:1を保ち、軸の文字は4.5:1。どの画面もブラウザのタブに名前を付ける。ユーザーメニュー、
+// ポップオーバー、ダイアログは、キーボードで期待される位置にフォーカスを置く。MMT_AXE_CORE_PATH
+// （axe.min.js）を渡すと、axeが主な画面でWCAG 2.1 A/AAの違反を見つけない。
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { createBrowserApi } from './browserApi.mjs';
@@ -19,18 +19,18 @@ const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const axeCorePath = process.env.MMT_AXE_CORE_PATH;
 const DESKTOP = { width: 1440, height: 900 };
 const PHONE = { width: 390, height: 844 };
-// WCAG 2.1: 4.5:1 for text, 3:1 for lines and other graphics.
+// WCAG 2.1では、文字は4.5:1、線などの図形は3:1。
 const MIN_TEXT_CONTRAST = 4.5;
 const MIN_GRAPHIC_CONTRAST = 3;
 const POINTS_PER_SERIES = 40;
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
-// The avatar shows the user's initials and is named 「ユーザーメニュー」; whether initials count as a
-// visible label (WCAG 2.5.3) is left open, as other checks find the button by that exact name.
+// アバターは利用者のイニシャルを表示し、名前は「ユーザーメニュー」。イニシャルを見えるラベルと
+// みなすか（WCAG 2.5.3）は決めずにおく。ほかの確認がこの名前どおりにボタンを探すため。
 const AXE_RULES_LEFT_OPEN = { 'label-content-name-mismatch': { enabled: false } };
 
 const api = createBrowserApi();
 api.state.loggedIn = true;
-// One open alert, so the bell's popover has a link to Tab into.
+// 未解決のアラートを1件置き、ベルのポップオーバーにTabで移れるリンクを作る。
 const openAlert = {
   id: '00000000-0000-4000-8000-000000008999',
   projectId: api.state.project.id,
@@ -44,11 +44,11 @@ const openAlert = {
 const [firstRun, secondRun] = api.state.runs;
 const projectBase = `${base}/projects/${api.state.project.id}`;
 
-// The Run first by id logged no value of this key, so its chart draws the other Run alone; that Run
-// must keep the color and line pattern it has in the other charts.
+// idで先頭のRunはこのkeyの値を記録していないので、この図にはもう一方のRunだけが描かれる。その
+// Runも、ほかの図と同じ色と線の種類を保たなければならない。
 const KEY_WITHOUT_FIRST_RUN = 'val/cer';
 
-// A falling curve per Run, offset by the Run so the lines do not overlap.
+// Runごとに下がっていく曲線。線が重ならないよう、Runごとにずらす。
 function seriesOf(runId, key, index) {
   const points = Array.from({ length: POINTS_PER_SERIES }, (_, step) => {
     const value = Math.exp(-step / 10) + index * 0.1;
@@ -96,7 +96,7 @@ const activeElementText = (page) =>
     return element?.getAttribute('aria-label') ?? element?.textContent?.trim() ?? element?.tagName;
   });
 
-// Contrast of the chart's axis text and lines against the chart background, as the browser draws them.
+// ブラウザが実際に描いた、図の背景に対する軸の文字と線のコントラスト。
 function chartContrasts(page) {
   return page.evaluate(() => {
     const parse = (value) => value.match(/\d+(\.\d+)?/g).slice(0, 3).map(Number);
@@ -150,7 +150,7 @@ try {
     assert.ok(contrasts.minLine >= MIN_GRAPHIC_CONTRAST, `${theme}: lines ${contrasts.minLine}`);
     assert.equal(new Set(contrasts.strokes).size, 2, `${theme}: two colors`);
     assert.equal(new Set(contrasts.dashes).size, 2, `${theme}: two line patterns`);
-    // The legend shows each line's pattern beside its name.
+    // 凡例は各線の種類を名前の横に出す。
     const legendDashes = await page
       .locator('.chart-panel')
       .first()
@@ -220,7 +220,7 @@ try {
     await page.getByRole('button', { name: 'ズームを戻す' }).first().waitFor({ state: 'detached' });
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('.chart-tooltip').count(), 0, 'Escape hides the values');
-    // With Ctrl, Cmd or Alt the key is the browser's: page zoom, back and forward.
+    // Ctrl、Cmd、Altと一緒に押したキーはブラウザのもの（ページの拡大、戻る、進む）。
     const isTakenByChart = (key, modifiers) =>
       canvas.evaluate(
         (element, init) => {
@@ -268,7 +268,7 @@ try {
     await page.keyboard.press('Escape');
     assert.equal(await activeElementText(page), 'ユーザーメニュー', 'Escape goes back to the avatar');
     assert.equal(await page.getByRole('menu').count(), 0);
-    // Opened with a click, the focus stays on the avatar; ↓ and ↑ go into the menu from there.
+    // クリックで開いたときはフォーカスがアバターに残り、そこから↓と↑でメニューに入る。
     await avatar.click();
     await page.getByRole('menu').waitFor();
     await page.keyboard.press('ArrowDown');
@@ -306,7 +306,7 @@ try {
 
     await page.getByRole('button', { name: 'Runを作成', exact: true }).click();
     await page.locator('dialog[open]').waitFor();
-    // A form dialog opens on its first field.
+    // フォームのダイアログは、最初の欄にフォーカスを置いて開く。
     await page.waitForFunction(() => document.activeElement.labels?.[0]?.textContent === '名前 *');
     await page.keyboard.press('Escape');
     await context.close();
@@ -319,7 +319,7 @@ try {
     await page.getByRole('button', { name: 'Runを作成', exact: true }).click();
     const dialog = page.locator('dialog[open]');
     await dialog.waitFor();
-    // The dialog itself takes the focus, so no on-screen keyboard covers it on open.
+    // ダイアログ自身がフォーカスを取るので、開いたときにソフトウェアキーボードがダイアログを覆わない。
     await page.waitForFunction(() => document.activeElement.tagName === 'DIALOG');
     const footer = await dialog.locator('footer').first().evaluate((element) => element.getBoundingClientRect().bottom);
     assert.ok(footer <= PHONE.height, `保存 is in view (${footer})`);

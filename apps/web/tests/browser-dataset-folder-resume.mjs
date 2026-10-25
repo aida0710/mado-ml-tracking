@@ -1,7 +1,6 @@
-// Browser check of continuing and discarding a folder upload ("フォルダから作る") that stopped before
-// its version, and of the retry state of a dropped connection, against an isolated API (port
-// 48480) and Vite (48481). It creates a temporary schema in mmt_test, so the shared development
-// API and DB are untouched.
+// バージョンになる前に止まったフォルダのアップロード（「フォルダから作る」）の続行と破棄、切れた
+// 接続の再試行の状態のブラウザでの確認。分離したAPI（port 48480）とVite（48481）を相手にする。
+// mmt_testに一時的なschemaを作るので、共有の開発APIとDBには触れない。
 //
 //   (cd apps/web && MMT_WEB_API_PROXY_TARGET=http://127.0.0.1:48480 npx vite --port 48481 --strictPort --host 127.0.0.1) &
 //   MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55490/mmt_test \
@@ -9,7 +8,7 @@
 //   MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/<担当>/after \
 //   npx tsx apps/web/tests/browser-dataset-folder-resume.mjs
 //
-// tsx is needed because the script starts the API from its TypeScript sources.
+// スクリプトがTypeScriptのソースからAPIを起動するので、tsxが要る。
 import assert from 'node:assert/strict';
 import { createHash, randomBytes } from 'node:crypto';
 import { mkdir, mkdtemp, open, rm, writeFile } from 'node:fs/promises';
@@ -27,12 +26,12 @@ import { serverTimeouts } from '../../api/src/http/serverTimeouts.ts';
 const API_PORT = 48480;
 const WEB_URL = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:48481';
 const MIB = 1024 * 1024;
-// Above the 8 MiB single-PUT limit: two 16 MiB parts, so one can be stored and one held back.
+// 1回のPUTの上限8 MiBを超える大きさ。16 MiBのpart 2つにして、1つを保存させ、1つを止めておけるようにする。
 const LARGE_FILE_BYTES = 24 * MIB;
 const SMALL_FILE_COUNT = 5;
 const FOLDER_FILE_COUNT = SMALL_FILE_COUNT + 2;
 const VERSION_TIMEOUT_MS = 120_000;
-// Five attempts with backoff of at most 1 + 2 + 4 + 8 seconds before the file stops as failed.
+// ファイルが失敗で止まるまでに5回試し、間隔は最大で1 + 2 + 4 + 8秒。
 const RETRY_GIVE_UP_TIMEOUT_MS = 60_000;
 const DESKTOP = { width: 1440, height: 900 };
 const MOBILE = { width: 390, height: 844 };
@@ -71,8 +70,8 @@ const browser = await chromium.launch({
 const results = {};
 
 /**
- * Holds every part after the first in front of the API while `isHolding`, so a large file stops
- * with one part stored. The hold is on the server side, as in browser-upload-resume.mjs.
+ * `isHolding`の間は、最初より後のpartをすべてAPIの手前で止め、大きなファイルがpartを1つ保存した
+ * 状態で止まるようにする。browser-upload-resume.mjsと同じく、サーバー側で止める。
  */
 const partGate = { isHolding: false, release: () => undefined, released: Promise.resolve() };
 function holdLaterParts() {
@@ -103,7 +102,7 @@ async function writeRandomFile(filePath, size) {
   }
 }
 
-/** A speech corpus: small clips sent with one request each, and one large file sent in parts. */
+/** 音声コーパス。1回の要求で1つずつ送る小さな音声と、partに分けて送る大きなファイル1つ。 */
 async function writeCorpus(folder) {
   await mkdir(path.join(folder, 'train'), { recursive: true });
   for (let index = 1; index <= SMALL_FILE_COUNT; index += 1)
@@ -170,7 +169,7 @@ try {
   const page = await context.newPage();
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
-  // Reloading during an upload asks first (beforeunload); the check means to leave.
+  // アップロード中の再読み込みは先に確かめる（beforeunload）。この確認ではページを離れる方を選ぶ。
   page.on('dialog', (dialog) => void dialog.accept());
   const parts = watchPartRequests(page);
   await devLogin(page, 'admin@localhost', '検証管理者');
@@ -206,7 +205,7 @@ try {
     await dialog.waitFor();
   };
 
-  /** Starts the folder upload and reloads once the small files and the first large part are stored. */
+  /** フォルダのアップロードを始め、小さなファイルと大きなファイルの最初のpartが保存されたら再読み込みする。 */
   async function interruptFolderUpload() {
     holdLaterParts();
     await openFolderDialog();
@@ -253,7 +252,7 @@ try {
   const mark = parts.mark();
 
   console.log('3a. 照合の途中で［照合をやめる］を押すと、何も送らずに始める前へ戻る');
-  // Web Crypto's digest waits until released, so the comparison is caught while it runs.
+  // Web Cryptoのdigestを解放するまで待たせ、照合を実行中のところで捕まえる。
   await page.evaluate(() => {
     const digest = crypto.subtle.digest.bind(crypto.subtle);
     const held = [];

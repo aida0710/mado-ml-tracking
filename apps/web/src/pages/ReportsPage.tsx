@@ -16,7 +16,7 @@ import { text, textTemplates } from '../i18n/catalog';
 
 const SHOW_ARCHIVED_PARAM = 'archived';
 
-/** The Project's shared reports. Editors create one here and continue in its editor. */
+/** Projectの共有レポート。編集できる人はここで作り、そのままエディタで続ける。 */
 export function ReportsPage() {
   useLocale();
   const { project, canEdit } = useProject();

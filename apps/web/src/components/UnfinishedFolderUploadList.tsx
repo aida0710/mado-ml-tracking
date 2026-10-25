@@ -9,9 +9,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
- * Folder uploads of this dataset that stopped before their version. Each row continues with the
- * folder chosen again (stored files are not sent twice) or discards what the attempt left.
- * Render it outside the dialog's form: the discard confirmation is a dialog with its own form.
+ * バージョンになる前に止まった、このデータセットのフォルダのアップロード。各行では、フォルダを
+ * 選び直して続ける（保存済みのファイルは二度送らない）か、その試みが残したものを破棄する。
+ * ダイアログのフォームの外に描くこと。破棄の確認が、それ自身のフォームを持つダイアログだから。
  */
 export function UnfinishedFolderUploadList({
   uploads,
@@ -21,7 +21,7 @@ export function UnfinishedFolderUploadList({
   onDiscard,
 }: {
   uploads: UnfinishedFolderUpload[];
-  /** Project admins may delete stored files; anyone may discard their own open uploads. */
+  /** 保存済みのファイルの削除はProject adminだけ。自分の途中のアップロードはだれでも破棄できる。 */
   canDeleteStoredFiles: boolean;
   disabled: boolean;
   onContinue: (upload: UnfinishedFolderUpload, sources: UploadSource[]) => void;

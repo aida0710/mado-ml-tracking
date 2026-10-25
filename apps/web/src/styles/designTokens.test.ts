@@ -12,8 +12,8 @@ const resolvePackageFile = createRequire(import.meta.url).resolve;
 const readPackageFile = (name: string) =>
   withoutComments(readFileSync(resolvePackageFile(`@mado/design-system/${name}`), 'utf8'));
 const tokensCss = readPackageFile('tokens.css');
-// The shared element defaults, components, app frame and code view, which use the tokens like this
-// app does.
+// デザインシステムの要素の既定・部品・画面の枠・コードの表示・来歴のグラフ。どれもこのアプリと
+// 同じようにデザイントークンを使う。
 const sharedStylesheets = ['base.css', 'components.css', 'shell.css', 'code.css', 'lineage.css'].map((name) => ({
   name: `@mado/design-system/${name}`,
   css: readPackageFile(name),
@@ -26,8 +26,8 @@ const appTokensCss = readStylesheet(APP_TOKENS_STYLESHEET);
 const LIGHT_SELECTOR = ':root';
 const DARK_SELECTOR = ":root[data-theme='dark']";
 
-// Custom properties a component sets inline: ChartPanelGrid the chart row height, the app shells
-// the sidebar width the user dragged, Tabs the width of the fade at an end that hides tabs.
+// 部品がインラインで設定するカスタムプロパティ。ChartPanelGridが図の行の高さ、アプリの枠が
+// 利用者がドラッグしたサイドバーの幅、Tabsがタブを隠す端のフェードの幅を設定する。
 const PROPERTIES_SET_FROM_COMPONENTS = ['--chart-row-height', '--navigation-width', '--tab-edge-fade'];
 const LITERAL_COLOR =
   /#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(|(?<![\w-])(?:white|black)(?![\w-])/i;

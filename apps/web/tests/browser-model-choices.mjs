@@ -1,10 +1,9 @@
-// Browser check of the model screens that offer values instead of having them typed (fix plan
-// 2026-10-11, 2段目 B-2〜B-4), against the isolated mock API (tests/browserApi.mjs): a model
-// version's weights picked from its training Run (pasted as artifact://, or uploaded without saving
-// the version), the model family with candidates and a letter-case warning, why a Task offers no
-// code version, the default code version by name, and alias and metric names offered in the
-// promotion dialogs.
-// Start Vite on MMT_WEB_URL first; MMT_SCREENSHOT_DIR, when set, receives the screenshots.
+// 値を入力させずに候補から選ばせるモデルの画面のブラウザでの確認（2026-10-11の修正計画、2段目の
+// B-2〜B-4）。分離したモックのAPI（tests/browserApi.mjs）を相手にする。学習のRunから選ぶモデル
+// バージョンの重み（artifact://で貼り付ける、またはバージョンを保存せずにアップロードする）、候補と
+// 大文字・小文字の警告の付いたモデル系列、Taskがコードバージョンを出さない理由、名前で示す既定の
+// コードバージョン、昇格のダイアログで候補に出すaliasとメトリクスの名前。
+// 先にMMT_WEB_URLでViteを起動しておく。MMT_SCREENSHOT_DIRを設定すると、そこにスクリーンショットを保存する。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -22,10 +21,9 @@ const now = '2026-10-11T00:00:00Z';
 const RECORDED_METRICS = ['evaluation.duration_match_rate', 'evaluation.wer'];
 
 /**
- * The shared mock API with what these screens need on top: families qwen3 and qwen2 (a code
- * version lists `Qwen2`, a letter-case slip), a training Run's weights and an upload without a
- * Run, an evaluation rule whose Runs recorded two metrics, and the saves of models, versions and
- * promotion policies.
+ * 共通のモックのAPIに、これらの画面に要るものを足したもの。モデル系列qwen3とqwen2（あるコード
+ * バージョンは`Qwen2`と書いている。大文字・小文字の書き間違い）、学習のRunの重みとRunの無い
+ * アップロード、Runが2つのメトリクスを記録した評価ルール、モデル・バージョン・昇格policyの保存。
  */
 function createChoicesApi() {
   const api = createBrowserApi();
@@ -52,7 +50,7 @@ function createChoicesApi() {
   };
   state.models.push(qwen2Model);
   state.modelVersions.push({ ...modelVersion, id: id(), modelId: qwen2Model.id, family: 'qwen2' });
-  // Lists `Qwen2` where the Model says `qwen2`: the slip the Task screen explains.
+  // モデルが`qwen2`のところに`Qwen2`と書いている。Taskの画面が説明する書き間違い。
   state.codeVersions.push({
     ...codeVersion,
     id: id(),
@@ -97,7 +95,7 @@ function createChoicesApi() {
   const policies = [];
   const versionSaves = [];
   const modelSaves = [];
-  // A check may set `gate` to hold each file upload (PUT …/artifacts) and look at the form meanwhile.
+  // `gate`を設定すると、ファイルのアップロード（PUT …/artifacts）を1つずつ止め、その間にフォームを見られる。
   const heldUploads = { gate: null };
   async function route(route) {
     const request = route.request();
@@ -109,8 +107,8 @@ function createChoicesApi() {
     const notFound = (entity) => reply({ error: `${entity} not found`, code: 'not_found' }, 404);
     const projectPath = `/projects/${project.id}`;
     if (path === `${projectPath}/artifacts` && method === 'PUT') await heldUploads.gate;
-    // The shared mock answers the families and the code versions by name; the rule's metric keys
-    // are this check's own, with no evaluation Runs added to the lists the other checks read.
+    // モデル系列と、名前によるコードバージョンの照会には共通のモックが答える。ルールのメトリクスのkeyは
+    // この確認専用で、ほかの確認が読む一覧に評価のRunを足さない。
     const metricKeysMatch = path.match(/^\/projects\/[^/]+\/automation-rules\/([^/]+)\/metric-keys$/);
     if (metricKeysMatch && method === 'GET')
       return reply({ items: RECORDED_METRICS, source: 'rule_runs' });
@@ -149,7 +147,7 @@ function createChoicesApi() {
       state.modelVersions.push(created);
       return reply(created, 201);
     }
-    // The Tasks page lists Tasks; these checks start from none.
+    // Tasksの画面はTaskを並べる。この確認はTaskが無い状態から始める。
     if (path === `${projectPath}/tasks` && method === 'GET') return reply({ items: [] });
     if (path === `${projectPath}/promotion-policies` && method === 'GET') return reply({ items: policies });
     if (path === `${projectPath}/promotion-policies` && method === 'POST') {
@@ -215,7 +213,7 @@ try {
     await dialog.getByText('空欄なら 2 を付けます。', { exact: true }).waitFor();
     const runSelect = dialog.getByRole('combobox', { name: '生成元Run' });
     await runSelect.locator('option', { hasText: 'training-test-01' }).waitFor({ state: 'attached' });
-    // The source Runs are searched by kind (the catalog's own search lists every kind).
+    // 元のRunは種類で絞って検索する（カタログ自体の検索はすべての種類を並べる）。
     assert.ok(
       api.state.calls.some(
         (call) =>
@@ -228,7 +226,7 @@ try {
     await dialog.getByText('生成元RunのArtifactを表示しています', { exact: false }).waitFor();
     const runWeightsButton = dialog.getByRole('button', { name: /checkpoints\/model\.safetensors/ });
     await runWeightsButton.waitFor();
-    // Only the chosen Run's files are offered, not the upload without a Run.
+    // 候補には選んだRunのファイルだけが出て、Runの無いアップロードは出ない。
     assert.equal(await dialog.getByRole('button', { name: /weights-manual\.bin/ }).count(), 0);
     await weights.scrollIntoViewIfNeeded();
     await screenshot(`01-version-weights-from-run-${suffix}`);
@@ -249,8 +247,8 @@ try {
 
   for (const viewport of [WIDE, NARROW]) {
     const suffix = viewport === WIDE ? 'desktop' : 'mobile';
-    // The upload dialog once sat inside the version form, so its submit and its × also submitted
-    // the form and saved an immutable version without weights. Nothing may be saved before 保存.
+    // 以前はアップロードのダイアログがバージョンのフォームの中にあったので、その送信や×でフォームまで
+    // 送信され、重みの無い変更できないバージョンが保存された。保存を押す前には何も保存してはいけない。
     console.log(`Model version (${suffix}): uploading the weights from the form saves no version`);
     const choices = createChoicesApi();
     const { api, model } = choices;
@@ -271,7 +269,7 @@ try {
         buffer: Buffer.from(`weights uploaded from the version form: ${path}`),
       });
       await upload.getByRole('textbox', { name: '保存パス' }).fill(path);
-      // The start waits for the check against unfinished uploads; Enter before it does nothing.
+      // 開始は未完了のアップロードとの照合を待つ。照合が終わる前のEnterは何もしない。
       await upload.locator('footer button.primary:not([disabled])').waitFor();
     };
 
@@ -288,8 +286,8 @@ try {
     choices.heldUploads.gate = new Promise((resolve) => {
       releaseUpload = resolve;
     });
-    // Had the start reached the version form, the form would be saved (or the page submitted and
-    // reloaded) before the file goes out, so whichever comes first tells.
+    // 開始の操作がバージョンのフォームに届いていれば、ファイルが送られる前にフォームが保存される
+    // （またはページが送信されて読み直される）。どちらが先に起きるかで分かる。
     const firstOf = (waits) =>
       Promise.race(waits.map(([waiting, outcome]) => waiting.then(() => outcome, () => null)));
     const isFileUpload = (request) =>
@@ -311,7 +309,7 @@ try {
     assert.equal(choices.versionSaves.length, 0, 'the finished upload saved the version');
     await screenshot(`10-version-weights-uploaded-${suffix}`);
 
-    // Enter in the upload's path field submits only the upload.
+    // アップロードのパスの欄でEnterを押すと、アップロードだけを送信する。
     await dialog.getByRole('button', { name: '選び直す', exact: true }).click();
     const entered = await openUpload();
     await chooseFile(entered, 'uploads/weights-by-enter.bin');
@@ -338,18 +336,18 @@ try {
     await page.getByRole('button', { name: 'バージョンを作成', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: `${model.name} · バージョンを作成` });
     const weights = dialog.getByRole('searchbox', { name: '重みのArtifact' });
-    // Without a Run the Project's Artifacts are listed, the upload without a Run included.
+    // Runを選ばなければProjectのArtifactが並び、Runの無いアップロードも含まれる。
     await dialog.getByRole('button', { name: /weights-manual\.bin/ }).waitFor();
     await weights.fill('artifact://00000000-0000-4000-8000-0000000fffff');
     await dialog.getByText('このプロジェクトに、そのIDのArtifactはありません。', { exact: true }).waitFor();
-    // A search left without a pick is not saved silently.
+    // 検索したまま選んでいないものを、黙って保存しない。
     await dialog.getByRole('button', { name: '保存', exact: true }).click();
     await dialog.getByText('一覧から選んでください', { exact: false }).waitFor();
     assert.equal(choices.versionSaves.length, 0);
     await weights.fill(`artifact://${choices.uploadedWeights.id}`);
     await dialog.getByRole('button', { name: '選び直す', exact: true }).waitFor();
     await dialog.getByText('uploads/weights-manual.bin', { exact: true }).waitFor();
-    // An artifact:// typed as the weights URI is offered as the weights Artifact instead.
+    // 重みのURIにartifact://を入力すると、代わりに重みのArtifactとして選ぶよう勧める。
     await dialog.getByRole('button', { name: '選び直す', exact: true }).click();
     await dialog.getByRole('textbox', { name: '重みのURI' }).fill(`artifact://${choices.uploadedWeights.id}`);
     await dialog.getByRole('button', { name: '重みのArtifactとして選ぶ', exact: true }).click();
@@ -368,7 +366,7 @@ try {
     console.log('Models: the default code version shows by its name, also for a viewer');
     await page.getByRole('link', { name: 'v1', exact: true }).waitFor();
     await page.goto(`${base}/projects/${api.state.project.id}/models?id=${model.id}&version=${api.state.modelVersions[0].id}`);
-    // The version's own default code, not the family's code versions listed under the Model.
+    // モデルの下に並ぶ系列のコードバージョンではなく、そのバージョン自身の既定のコード。
     await page.locator('.version-detail').getByRole('link', { name: 'UI検証コード / v1', exact: true }).waitFor();
     await screenshot('04-registry-default-code-by-name', { fullPage: true });
     await context.close();
@@ -484,7 +482,7 @@ try {
     api.state.project.role = 'viewer';
     const { context, page } = await openPage({ choices });
     await page.goto(`${base}/projects/${api.state.project.id}/models?id=${model.id}`);
-    // The version's own default code, not the family's code versions listed under the Model.
+    // モデルの下に並ぶ系列のコードバージョンではなく、そのバージョン自身の既定のコード。
     await page.locator('.version-detail').getByRole('link', { name: 'UI検証コード / v1', exact: true }).waitFor();
     assert.equal(await page.getByRole('button', { name: 'バージョンを作成', exact: true }).count(), 0);
     await context.close();

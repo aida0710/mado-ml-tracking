@@ -3,11 +3,11 @@ import type { RunAnalysisMetricOptions } from '../api/runAnalysis';
 import type { AxisDefinition, ChartRunRow } from './parallelCoordinates';
 import { isSystemMetricKey } from './systemMetricKeys';
 
-// Turns the analysis table into the rows and fields the charts draw. Field keys carry the
-// namespace (params./metrics.) like MLflow search, so a param and a metric may share a name.
+// 分析の表を、図が描く行と項目に変える。項目のキーはMLflowの検索と同じく
+// 名前空間（params./metrics.）を含むので、パラメータとメトリクスが同じ名前でもよい。
 
 export const OBJECTIVE_FIELD_KEY = 'objective';
-// More axes than this crowd the chart; the rest can be turned on from the axis menu.
+// 軸がこれより多いと図が混み合う。残りは軸のメニューから表示できる。
 export const DEFAULT_PARAM_AXIS_COUNT = 6;
 
 export const paramFieldKey = (key: string) => `params.${key}`;
@@ -44,9 +44,9 @@ export function metricFields(table: RunAnalysisTableResponse, objectiveLabel: st
 }
 
 /**
- * The params shown first: the most important ones when importance is known, then the best covered
- * (ties by name). Importance may rank none (no Run has the target), which must not leave the
- * chart without param axes. Params the table did not return are skipped.
+ * 最初に表示するパラメータ。重要度が分かっていれば重要なものから、次に値のあるRunが多いもの
+ * （同じなら名前順）。重要度がどれにも順位を付けないこと（対象を持つRunが無い）もあり、その
+ * ときも図からパラメータの軸が無くなってはならない。表が返さなかったパラメータは飛ばす。
  */
 export function defaultParamAxisKeys(
   table: RunAnalysisTableResponse,
@@ -64,18 +64,18 @@ export function defaultParamAxisKeys(
 }
 
 /**
- * Metric names in the order they are offered: result metrics by name, then system metrics
- * (CPU, memory, ...), which describe the machine rather than the result and so never come first.
+ * 選択肢に出す順のメトリクス名。結果のメトリクスを名前順に、次にシステムメトリクス（CPU、
+ * メモリなど）。システムメトリクスは結果ではなくマシンを表すので、先頭には来ない。
  */
 export function orderAnalysisMetricKeys(keys: readonly string[]): string[] {
   const unique = [...new Set(keys)].sort();
   return [...unique.filter((key) => !isSystemMetricKey(key)), ...unique.filter(isSystemMetricKey)];
 }
 
-/** What the importance table explains: a metric's latest value, or a sweep's aggregated objective. */
+/** 重要度の表が説明する対象。メトリクスの最新の値か、Sweepの集約した目的値。 */
 export type AnalysisTarget = { source: 'sweep_objective' } | { source: 'latest_metric'; metric: string };
 
-/** The metrics requested for the table: the target first so it survives the API's cap. */
+/** 表のために要求するメトリクス。APIの上限で切られないよう、対象を先頭にする。 */
 export function tableMetricKeys(metricKeys: string[], target: AnalysisTarget | null): string[] {
   const targetMetric = target?.source === 'latest_metric' ? target.metric : null;
   const ordered = targetMetric ? [targetMetric, ...metricKeys.filter((key) => key !== targetMetric)] : metricKeys;
@@ -83,9 +83,8 @@ export function tableMetricKeys(metricKeys: string[], target: AnalysisTarget | n
 }
 
 /**
- * The chosen target while the Run set still offers it, otherwise the default: the sweep objective
- * when there is one, then the preferred metric, then the first offered metric (system metrics
- * come last in the order).
+ * Runの集合がまだ選べるうちは選んだ対象、そうでなければ既定の対象。Sweepの目的があればそれ、
+ * 次に優先するメトリクス、次に選択肢の最初のメトリクス（システムメトリクスは順の最後）。
  */
 export function resolveAnalysisTarget(
   chosen: AnalysisTarget | null,

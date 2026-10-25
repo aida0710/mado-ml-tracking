@@ -9,7 +9,7 @@ import {
   type LogEntry,
 } from '@mmt/contracts';
 
-// Jobs list and Run logs, with the site Job details (phase, scheduler, array, origin).
+// Jobの一覧とRunのログ。siteのJobの詳細（段階、スケジューラ、array、起動元）も含む。
 export const jobsText = localized({
   jobColumn: 'Job',
   jobRunColumn: 'Run',
@@ -32,7 +32,7 @@ export const jobsText = localized({
   gpuCount: 'GPU数',
   walltime: '制限時間（HH:MM:SS・任意）',
   walltimeShort: '制限時間',
-  // A bare 12:00:00 read as the value already set; empty means the site's default.
+  // 12:00:00だけでは設定済みの値に読めるため、空欄ならsiteの既定になることを示す。
   walltimePlaceholder: '空欄ならsiteの既定（例: 12:00:00）',
   walltimeUnset: 'siteの既定',
   jobRetryOnFailure: '失敗したら最初から再実行する',
@@ -57,7 +57,7 @@ export const jobsText = localized({
   arraySizeError: `arrayの個数は1〜${MAX_JOB_ARRAY_SIZE}の整数で指定してください。`,
   siteGpuIdsError: 'siteではGPU IDではなくGPU数を指定してください。',
   jobCreatedBy: '作成者',
-  // Shown in place of the stop and retry buttons, so it stays short enough for the actions column.
+  // 停止・再実行のボタンの代わりに出すので、操作の列に収まる短さにする。
   jobControlOwnerOnly: '停止・再実行は作成者かProject adminだけができます',
   jobCancelTitle: 'Jobの停止',
   jobCancelConfirm: '停止する',
@@ -91,7 +91,7 @@ export const jobsText = localized({
   launchFromTaskHint:
     '同じコード・パラメータ・コンピュータで何度も流すときは、Taskにしておくと既定値を入れたまま起動できます。',
   launchOpenTasks: 'Tasksを開く',
-  // maxAttempts bounds the automatic retries only (JobService.retry lets a person go past it).
+  // maxAttemptsが抑えるのは自動の再実行だけ（JobService.retryでは人がそれを超えて再実行できる）。
   maxAttemptsHint:
     '自動の再実行はこの回数までです。Jobsの［新しいRunで再実行］で人が流し直す分は数えません。',
 } as const, english.jobsText);
@@ -110,7 +110,7 @@ export const jobEndReasonLabels: Record<JobEndReason, string> = localized({
   submit_failed: '投入失敗',
 }, english.jobEndReasonLabels);
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const jobsTextTemplates = localized({
   gpuCount: (count: number) => `GPU ×${count}`,
   arrayMember: (index: number, size: number) => `${index} / ${size}`,
@@ -125,10 +125,10 @@ export const jobsTextTemplates = localized({
   logsShowingLatest: (shown: number, total: number) =>
     `最新の${shown.toLocaleString(intlLocaleOf('ja'))}行を表示しています（全${total.toLocaleString(intlLocaleOf('ja'))}行）。検索とレベルの絞り込みも、この範囲が対象です。ダウンロードはすべての行です。`,
   logsMatchCount: (count: number) => `${count.toLocaleString(intlLocaleOf('ja'))}行が一致`,
-  // One read returns at most this many lines; older ones are in the download.
+  // 1回の読み込みで返すのはこの行数まで。それより古い行はダウンロードで見る。
   logsReadLatestLines: (count: number) => `最新の${count.toLocaleString(intlLocaleOf('ja'))}行まで読み込む`,
   attempt: (attempt: number, maxAttempts: number) => `${attempt} / ${maxAttempts}`,
-  // A person retried past maxAttempts, which bounds the automatic retries only.
+  // 人がmaxAttemptsを超えて再実行したとき。maxAttemptsが抑えるのは自動の再実行だけ。
   attemptPastLimit: (attempt: number, maxAttempts: number) =>
     `${attempt}（自動の再実行は${maxAttempts}回目まで）`,
   jobSweepTrialOrigin: (sweepName: string, trialIndex: number) =>

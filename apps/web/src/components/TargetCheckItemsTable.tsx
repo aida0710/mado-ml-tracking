@@ -5,7 +5,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { targetCheckCodeHints, targetCheckOutcomeLabels } from '../i18n/compute';
 
-// Reuses the Job status colors: ok is green, ng red, the rest neutral.
+// Jobの状態の色を使い回す。okは緑、ngは赤、それ以外は中立の色。
 const outcomeBadgeClass: Record<TargetCheckItem['status'], string> = {
   ok: 'status-success',
   ng: 'status-danger',
@@ -13,7 +13,7 @@ const outcomeBadgeClass: Record<TargetCheckItem['status'], string> = {
   skipped: 'status-neutral',
 };
 
-/** The items of a connection check: what passed, what failed and how to fix it. */
+/** 接続の確認の項目。何が通り、何が失敗し、どう直すか。 */
 export function TargetCheckItemsTable({
   items,
   executor,

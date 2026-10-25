@@ -5,13 +5,13 @@ import { useProjectArtifacts } from './useProjectArtifacts';
 import { useQuery } from './useQuery';
 import { useSettledValue } from './useSettledValue';
 
-// A path search starts once typing pauses, so each keystroke does not list the Artifacts again.
+// パスの検索は入力が止まってから始め、キーを押すたびにArtifactを一覧し直さないようにする。
 export const ARTIFACT_SEARCH_DELAY_MS = 300;
 
 /**
- * The Artifacts a picker offers for what is typed in it. A pasted id or `artifact://<id>` is
- * looked up directly (`referenced`, with `referenceMissing` when the Project has no such Artifact);
- * anything else searches saved paths, within `runId`'s files when a Run is given.
+ * ピッカーに入力した内容に対して出すArtifact。貼り付けたidや`artifact://<id>`は直接引く
+ * （`referenced`。ProjectにそのArtifactが無ければ`referenceMissing`も付く）。それ以外は保存された
+ * パスを検索し、Runを渡したときは`runId`のファイルの中から探す。
  */
 export function useArtifactChoices({
   projectId,

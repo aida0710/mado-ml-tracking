@@ -8,7 +8,7 @@ export type TranslationShape<T> = {
 type CatalogPair = { ja: Record<string, unknown>; en: Record<string, unknown> };
 const catalogs = new WeakMap<object, CatalogPair>();
 
-/** Resolve strings and templates when read, including callers outside React. */
+/** 文字列とテンプレートを読んだ時点で解決する。Reactの外から呼ぶ場合も同じ。 */
 export function localized<T extends object>(japanese: T, english: TranslationShape<T>): TranslationShape<T> {
   const pair = { ja: japanese, en: english } as CatalogPair;
   for (const key of Object.keys(japanese)) {
@@ -27,7 +27,7 @@ export function localized<T extends object>(japanese: T, english: TranslationSha
   return translated;
 }
 
-/** Object spread would capture the language at module load instead of following later changes. */
+/** オブジェクトのスプレッドでは、モジュールの読み込み時の言語に固まり、あとの切り替えに追従しない。 */
 export function mergeTranslations<const T extends readonly object[]>(sources: T): TranslationShape<UnionToIntersection<T[number]>> {
   const japanese = {};
   const english = {};

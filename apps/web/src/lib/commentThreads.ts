@@ -1,14 +1,14 @@
 import type { Comment } from '@mmt/contracts';
 
-/** A thread root and its replies; replies are one level deep (docs/api-contract.md). */
+/** スレッドの先頭とその返信。返信は1段だけ（docs/api-contract.md）。 */
 export interface CommentThreadGroup {
   root: Comment;
   replies: Comment[];
 }
 
 /**
- * Combines the pages read from the API with comments posted, edited or deleted on this screen
- * since. The local copy wins because it is the API's answer to the later request.
+ * APIから読んだページと、その後にこの画面で投稿・編集・削除したコメントを合わせる。手元の写しは
+ * 後の要求に対するAPIの応答なので、こちらを優先する。
  */
 export function mergeComments(loaded: readonly Comment[], local: readonly Comment[]): Comment[] {
   const byId = new Map(loaded.map((comment) => [comment.id, comment]));
@@ -16,7 +16,7 @@ export function mergeComments(loaded: readonly Comment[], local: readonly Commen
   return [...byId.values()];
 }
 
-// The API's thread order: by createdAt, then id to break ties.
+// APIのスレッドの順。createdAtの順で、同じならidで決める。
 function compareByCreation(left: Comment, right: Comment): number {
   const byTime = Date.parse(left.createdAt) - Date.parse(right.createdAt);
   if (byTime !== 0) return byTime;
@@ -24,8 +24,8 @@ function compareByCreation(left: Comment, right: Comment): number {
 }
 
 /**
- * Groups comments into threads in the API's order. A reply whose root is not loaded is shown as
- * its own thread so it is never hidden.
+ * コメントをAPIの順にスレッドへまとめる。先頭を読み込んでいない返信は、隠れないように単独の
+ * スレッドとして出す。
  */
 export function groupCommentThreads(comments: readonly Comment[]): CommentThreadGroup[] {
   const roots = comments.filter((comment) => comment.parentCommentId === null);

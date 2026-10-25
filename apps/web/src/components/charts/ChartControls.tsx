@@ -4,10 +4,10 @@ import type { ChartDisplaySettings } from './chartProps';
 import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
-// The slider stops short of 1: EMA caps its weight at 0.999 and 1 would freeze the line.
+// スライダーは1の手前で止める。EMAは重みを0.999で頭打ちにし、1では線が動かなくなる。
 const SMOOTHING_WEIGHT_MAX = 0.99;
 const SMOOTHING_WEIGHT_STEP = 0.01;
-// Weight a newly chosen smoothing starts at, so the change is visible right away.
+// 平滑化を新しく選んだときの重み。変化がすぐ見えるようにする。
 const DEFAULT_SMOOTHING_WEIGHT = 0.6;
 
 const smoothingLabels: Record<ChartSmoothing['kind'], string> = {
@@ -26,8 +26,8 @@ const xAxisLabels: Record<ChartXAxis['kind'], string> = {
 const ALL_X_AXIS_KINDS = Object.keys(xAxisLabels) as ChartXAxis['kind'][];
 
 /**
- * Smoothing, axes and range settings of one chart. The panel owns the settings; this only edits
- * them. `metricKeys` are the choices for a metric x axis; `xAxisKinds` limits the x axes offered.
+ * 1つの図の平滑化、軸、範囲の設定。設定はパネルが持ち、これは編集するだけ。`metricKeys`は
+ * メトリクスをx軸にするときの選択肢、`xAxisKinds`は選択肢に出すx軸の種類を絞る。
  */
 export function ChartControls({
   settings,
@@ -49,7 +49,7 @@ export function ChartControls({
     const metricKey = xAxis.metricKey ?? metricKeys[0];
     change({
       xAxis: kind === 'metric' && metricKey ? { kind, metricKey } : { kind },
-      // Log x is offered for steps only; time and metric axes go back to linear.
+      // 対数のx軸はstepにだけ出す。時刻とメトリクスの軸では線形に戻す。
       xScale: kind === 'step' ? settings.xScale : 'linear',
     });
   }

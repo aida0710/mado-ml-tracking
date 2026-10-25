@@ -16,9 +16,9 @@ import { text } from '../i18n/catalog';
 import { jobShellTemplateLabels, siteComputersTextTemplates } from '../i18n/siteComputers';
 
 /**
- * A site's job shell: the current version's content, the versions before it, and for its owner
- * and global administrators an editor that saves the next version. Versions never change, and
- * each Job keeps the version it was submitted with.
+ * siteのjob shell。今のバージョンの内容と、それより前のバージョン、所有者と全体管理者には次の
+ * バージョンを保存するエディタ。バージョンは決して変わらず、各Jobは投入されたときのバージョンを
+ * 保つ。
  */
 export function SiteJobShellPanel({
   targetId,
@@ -27,7 +27,7 @@ export function SiteJobShellPanel({
 }: {
   targetId: string;
   canEdit: boolean;
-  /** A new version became the current one. */
+  /** 新しいバージョンが今のバージョンになった。 */
   onSaved: () => void;
 }) {
   useLocale();
@@ -37,7 +37,7 @@ export function SiteJobShellPanel({
   const [shownId, setShownId] = useState<string | null>(null);
   const [isEditing, setEditing] = useState(false);
   const [savedNotice, setSavedNotice] = useState<{ isUnchanged: boolean; version: number } | null>(null);
-  // The API lists versions newest first, and the newest one is what later submissions use.
+  // APIはバージョンを新しい順に返し、最新のものがこれからの投入で使われる。
   const current = versions.value?.[0];
   const finishEditing = (saved: SiteJobShell) => {
     setEditing(false);
@@ -111,7 +111,7 @@ export function SiteJobShellPanel({
   );
 }
 
-/** One version's script; versions never change, so it is read once. */
+/** 1つのバージョンのスクリプト。バージョンは変わらないので、1回だけ読む。 */
 function JobShellContent({
   targetId,
   summary,
@@ -146,7 +146,7 @@ function JobShellContent({
   );
 }
 
-/** Starts from the current version (or nothing on a new site) and saves the next one. */
+/** 今のバージョン（新しいsiteなら空）から始め、次のバージョンを保存する。 */
 function JobShellEditForm({
   targetId,
   currentId,
@@ -162,7 +162,7 @@ function JobShellEditForm({
   const current = useQuery({ key: currentId ? `site-job-shell:${currentId}` : null, load: (signal) =>
     siteComputersApi.jobShell(targetId, currentId!, signal),
   });
-  // A new version starts from the current one, so the editor waits for its content.
+  // 新しいバージョンは今のバージョンから始めるので、エディタはその内容を待つ。
   if (currentId && current.value === undefined)
     return <Resource query={current}>{() => null}</Resource>;
   return (

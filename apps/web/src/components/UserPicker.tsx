@@ -5,10 +5,10 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * Finds one user by the start of their name, email or username and shows the one picked. The
- * search field and the chosen user replace each other, so the one that appears takes the focus
- * (it would otherwise drop to the page). In a dialog that opens with this, the dialog still decides
- * the first focus: `autoFocus` runs before `showModal`, which moves the focus again.
+ * 名前・メールアドレス・ユーザー名の先頭でユーザーを1人探し、選んだ人を出す。検索欄と選んだ
+ * ユーザーは入れ替わるので、現れた方がフォーカスを受け取る（そうしないとフォーカスがページへ
+ * 落ちる）。これを含んで開くダイアログでも、最初のフォーカスはダイアログが決める。`autoFocus`は
+ * `showModal`より先に動き、`showModal`がフォーカスを動かし直すため。
  */
 export function UserPicker({
   label,
@@ -17,7 +17,7 @@ export function UserPicker({
   onSelect,
 }: {
   label: string;
-  /** Users listed in the search but not pickable, with the reason (UserSearchField). */
+  /** 検索に出るが選べないユーザーと、その理由（UserSearchField）。 */
   unavailableUsers?: ReadonlyMap<string, string>;
   selectedUser: UserSearchResult | null;
   onSelect: (user: UserSearchResult | null) => void;

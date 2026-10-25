@@ -85,7 +85,7 @@ export function PromotionPolicyTable({
         },
         {
           key: 'criteria',
-          // Long metric names would push the actions past the right edge; read in the opened row.
+          // 長いメトリクス名で操作のボタンが右端の外へ押し出されるので、開いた行の中で読ませる。
           priority: 'detail',
           header: text.promotionCriteria,
           render: (policy) => (
@@ -109,7 +109,7 @@ export function PromotionPolicyTable({
           key: 'owner',
           priority: 'secondary',
           header: text.promotionPolicyOwner,
-          // The run-as user, by name: a person until moved to a Service Account.
+          // 実行するユーザーを名前で示す。Service Accountへ移管するまでは人。
           render: (policy) => automationOwnerLabel(policy),
         },
         ...(canManage

@@ -9,9 +9,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * Every computer in 全体設定 → コンピュータ. A row one may use or manage opens its details; its
- * owner and global administrators also edit it, switch it on or off and check an ssh or local one.
- * Someone else's private computer is only its name, kind, owner, visibility and state.
+ * 全体設定 → コンピュータに並ぶすべてのコンピュータ。使えるか管理できる行は詳細を開ける。所有者と
+ * 全体管理者は、編集、有効と無効の切り替え、sshかlocalのものの確認もできる。ほかの人の非公開の
+ * コンピュータは、名前、種類、所有者、公開範囲、状態だけを表示する。
  */
 export function ComputerOverviewTable({
   targets,
@@ -25,9 +25,9 @@ export function ComputerOverviewTable({
   targets: ComputeTargetOverview[];
   user: Pick<User, 'id'>;
   selectedTargetId: string | null;
-  /** A change is being saved; the switches wait for it. */
+  /** 変更を保存している途中。スイッチは保存が終わるまで待つ。 */
   pending: boolean;
-  /** Opens the details below the list: a site's details, or an ssh or local target's check. */
+  /** 一覧の下に詳細を開く。siteなら詳細、sshかlocalなら確認。 */
   onOpen: (target: ComputeTargetOverview) => void;
   onEdit: (target: ComputeTargetOverview) => void;
   onToggleEnabled: (target: ComputeTargetOverview) => void;
@@ -86,7 +86,7 @@ export function ComputerOverviewTable({
             />
           ),
         },
-        // On a phone the row shows whether one may use the computer; visibility is in its details.
+        // スマートフォンでは、行にそのコンピュータを使えるかを出す。公開範囲は詳細に入る。
         {
           key: 'usable',
           priority: 'primary',
@@ -117,7 +117,7 @@ export function ComputerOverviewTable({
                       >
                         {target.enabled ? text.computerDisable : text.computerEnable}
                       </button>
-                      {/* A site's launcher checks its login in the site's details instead. */}
+                      {/* siteのランチャーは、代わりにsiteの詳細でログインを確認する。 */}
                       {target.executor !== 'site' && (
                         <button
                           className="button small"

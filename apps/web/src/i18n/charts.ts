@@ -1,6 +1,6 @@
 import * as english from './en/charts';
 import { localized } from './localized';
-// Metric chart, its controls, legend and tooltip. metrics-chart-core-web owns the entries.
+// メトリクスの図と、その操作・凡例・ツールチップ。項目はmetrics-chart-core-webが受け持つ。
 export const chartsText = localized({
   chartNoData: '表示できる値がありません',
   chartSmoothing: '平滑化',
@@ -29,7 +29,7 @@ export const chartsText = localized({
   chartGroupSuffix: '（平均）',
 } as const, english.chartsText);
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const chartsTextTemplates = localized({
   chartLogExcluded: (count: number) =>
     `対数軸に置けない0以下の値 ${count} 点を描いていません。`,

@@ -233,6 +233,6 @@ export default defineConfig({
         `${self.renderToken(tokens, index, options)}</div>\n`;
     },
   },
-  // mado のドキュメントと同じく、アプリの暗い枠と白い本文の一つの見た目にそろえ、テーマの切替は置かない。
+  // mado S3 Data Catalogのドキュメントと同じく、アプリの暗い枠と白い本文の一つの見た目にそろえ、テーマの切替は置かない。
   appearance: false,
 });

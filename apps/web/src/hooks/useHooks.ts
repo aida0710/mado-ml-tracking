@@ -2,14 +2,14 @@ import { hooksApi } from '../api/hooks';
 import { useCursorPages } from './useCursorPages';
 import { useQuery } from './useQuery';
 
-/** The Project's hooks, newest first. */
+/** Projectのフック。新しい順。 */
 export function useHookList(projectId: string) {
   return useQuery({ key: `${projectId}:hooks`, load: (signal) => hooksApi.list(projectId, signal) });
 }
 
 /**
- * Executions of one hook, or of every hook when hookId is empty, read page by page. Nothing is
- * requested while `enabled` is false (the executions tab is not shown).
+ * 1つのフックの実行、またはhookIdが空ならすべてのフックの実行を、ページごとに読む。`enabled`が
+ * falseの間（実行のタブを出していない）は何も要求しない。
  */
 export function useHookExecutions(projectId: string, { hookId, enabled }: { hookId: string; enabled: boolean }) {
   return useCursorPages(

@@ -1,4 +1,4 @@
-/* A custom duration and its unit share the available form width, including on phones. */
+/* 任意の期間の値と単位が、スマートフォンでもフォームの幅を分け合う。 */
 .token-expiry-duration {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

@@ -7,8 +7,8 @@ import { EXECUTION_POLL_MS, useQuery, type QueryState } from './useQuery';
 const activeStatuses: readonly RunStatus[] = ['queued', 'running'];
 
 /**
- * The comparison of the Runs from one API call. It is
- * refreshed while any compared Run can still change and stops once all have ended.
+ * 1回のAPI呼び出しで得るRunの比較。比べるRunのどれかがまだ変わりうる間は更新し、すべてが
+ * 終わったら止める。
  */
 export function useRunComparison(comparison: {
   projectId: string;
@@ -30,7 +30,7 @@ export function useRunComparison(comparison: {
     );
   const [pollMs, setPollMs] = useState<number | undefined>(EXECUTION_POLL_MS);
   const query = useQuery({ key, load: loader, pollMs });
-  // Decided only from a response, so a reload for another baseline keeps the current interval.
+  // 応答からだけ決めるので、別の基準Runのための読み直しでも今の間隔を保つ。
   const hasActiveRuns = query.value
     ? query.value.runs.some((run) => activeStatuses.includes(run.status))
     : null;

@@ -11,13 +11,13 @@ import type {
 import { buildDatasetAncestors } from './datasetLineage';
 import { getModelTrainingSourceRunId } from './modelTrainingSource';
 
-// The band shows the newest results only; the full list is in the tables below it.
+// 帯には最新の結果だけを出す。全部の一覧はその下の表にある。
 export const LINEAGE_RESULT_RUN_LIMIT = 20;
 
 /**
- * training Run → version → inference/evaluation Runs, in the shape LineageGraph draws. A result
- * Run hangs under its parent when the parent is also a result of the version (a chained stage),
- * otherwise under the version itself.
+ * 学習Run → バージョン → 推論・評価Runを、LineageGraphが描く形にしたもの。結果のRunは、親も
+ * そのバージョンの結果であれば（つながった段階）親の下に、そうでなければバージョンそのものの下に
+ * 置く。
  */
 export function buildModelVersionLineage(input: {
   model: Pick<Model, 'name'>;

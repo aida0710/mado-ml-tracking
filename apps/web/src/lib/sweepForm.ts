@@ -9,13 +9,13 @@ import {
 } from './sweepConfig';
 import { text } from '../i18n/catalog';
 
-/** The create dialog's inputs as typed. Numbers stay text until buildSweepCreate reads them. */
+/** 作成ダイアログに打ち込んだままの入力。数値は、buildSweepCreateが読むまで文字列のまま。 */
 export interface SweepFormValues {
   name: string;
   taskId: string;
-  /** '' uses the Task's target. */
+  /** ''ならTaskのコンピュータを使う。 */
   targetId: string;
-  /** GPU IDs of the chosen computer; none uses the Task's GPUs. */
+  /** 選んだコンピュータのGPU ID。無ければTaskのGPUを使う。 */
   gpuIds: string[];
   method: SweepMethod;
   metric: string;
@@ -27,14 +27,14 @@ export interface SweepFormValues {
   minIter: string;
   eta: string;
   maxIter: string;
-  /** '' lets the server pick the seed. */
+  /** ''ならサーバーがseedを決める。 */
   seed: string;
   rows: SearchSpaceRow[];
 }
 
 export type SweepFormField = 'name' | 'taskId' | 'metric' | 'maxTrials' | 'parallelism' | 'minIter' | 'eta' | 'maxIter' | 'seed';
 
-// Sensible first values: a short sweep that does not crowd a shared target.
+// 最初に入れておく無難な値。共有のコンピュータを混ませない、短いSweepにする。
 const DEFAULT_MAX_TRIALS = 10;
 const DEFAULT_PARALLELISM = 1;
 const DEFAULT_MIN_ITER = 1;
@@ -60,7 +60,7 @@ export function initialSweepForm(taskId: string, createRowId: () => string): Swe
   };
 }
 
-/** Replaces the search settings with those read from a W&B config; name, Task and target stay. */
+/** 探索設定を、W&Bのconfigから読んだもので置き換える。名前・Task・コンピュータはそのまま。 */
 export function applySearchSettings(
   form: SweepFormValues,
   settings: SweepSearchSettings,
@@ -84,11 +84,11 @@ export function applySearchSettings(
 }
 
 export interface SweepFormResult {
-  /** Set only when every input could be read. */
+  /** すべての入力を読めたときだけ設定する。 */
   input: SweepCreate | null;
   fieldErrors: Partial<Record<SweepFormField, string>>;
   rowErrors: Record<string, string>;
-  /** An error about the whole search space rather than one row. */
+  /** 1つの行ではなく、探索空間全体についてのエラー。 */
   searchSpaceError: string | null;
 }
 
@@ -102,8 +102,8 @@ function readInteger(value: string, minimum: number): number | null {
 }
 
 /**
- * Reads the form into the create body. Only the input form is checked here; the API's 422 decides
- * value ranges (maxTrials up to 10000, min < max and so on) so the two never disagree.
+ * フォームを読んで作成の本文にする。ここで確かめるのは入力の形だけで、値の範囲（maxTrialsは
+ * 10000まで、min < maxなど）はAPIの422が決める。そうすれば両者の判断が食い違わない。
  */
 export function buildSweepCreate(form: SweepFormValues): SweepFormResult {
   const fieldErrors: SweepFormResult['fieldErrors'] = {};
@@ -152,7 +152,7 @@ export function buildSweepCreate(form: SweepFormValues): SweepFormResult {
   };
 }
 
-/** The current search settings for the JSON editor, or null while the rows cannot be read. */
+/** JSONエディタに出す今の探索設定。行を読めない間はnull。 */
 export function formSearchSettings(form: SweepFormValues): SweepSearchSettings | null {
   const { searchSpace, rowErrors } = rowsToSearchSpace(form.rows, form.method);
   const maxTrials = readInteger(form.maxTrials, 1);

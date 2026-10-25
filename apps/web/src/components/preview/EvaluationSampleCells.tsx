@@ -8,15 +8,15 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 import { artifactReferenceErrorLabels } from '../../i18n/artifacts';
 
-// The pieces of one evaluation sample, shared by the table rows and the phone cards.
+// 1件の評価サンプルの部品。表の行とスマートフォンのカードで共有する。
 
-/** One page of samples as the table rows and the phone cards both draw it. */
+/** 表の行とスマートフォンのカードの両方が描く、1ページ分のサンプル。 */
 export interface EvaluationSampleListProps {
   samples: EvaluationSample[];
-  /** The audio of each sample, in the same order (useEvaluationSampleAudio). */
+  /** 各サンプルの音声。同じ順に並べる（useEvaluationSampleAudio）。 */
   audios: SampleAudio[];
   highlightDiff: boolean;
-  /** The line whose waveform is open, if any. */
+  /** 波形を開いている行番号。無ければnull。 */
   expandedLine: number | null;
   onToggleExpanded: (line: number) => void;
 }
@@ -27,7 +27,7 @@ const sampleAudioMessages = {
   get not_found() { return text.evaluationAudioNotFound; },
 } as const;
 
-/** The player of the sample's audio and the button that opens its waveform, or why there is none. */
+/** サンプルの音声のプレイヤーと、その波形を開くボタン。無いときはその理由。 */
 export function SampleAudioCell({
   source,
   audio,
@@ -56,7 +56,7 @@ export function SampleAudioCell({
     );
   return (
     <div className="sample-audio">
-      {/* preload="none": a page of 50 rows must not download 50 files before anyone presses play. */}
+      {/* preload="none"にする。50行のページで、誰も再生を押す前に50個のファイルを取りに行かないため。 */}
       <audio
         controls
         preload="none"
@@ -72,8 +72,8 @@ export function SampleAudioCell({
 }
 
 /**
- * reference or prediction. With `segments` (both were strings and 差分を強調 is on), the characters
- * the other side lacks are marked; `hidden` drops the other side's own changes.
+ * referenceまたはprediction。`segments`があると（両方が文字列で、差分を強調がオンのとき）、
+ * 相手側に無い文字に印を付ける。`hidden`は、相手側自身の変更を除く。
  */
 export function SampleComparedText({
   value,

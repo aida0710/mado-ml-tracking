@@ -1,14 +1,15 @@
-// What a report revision changed from the one before it, block by block. Blocks keep their id
-// across revisions, so an id tells an edited block from a removed one and a new one.
+// レポートのバージョンが、1つ前のバージョンから何を変えたかをブロックごとに表す。ブロックは
+// バージョンをまたいでidを保つので、idで編集したブロックと、消したブロック・新しいブロックを
+// 見分けられる。
 import type { ReportBlock, ReportBlockType } from '@mmt/contracts';
 
-/** The parts of a revision that the change summary compares. */
+/** 変更の要約が比べる、バージョンの部分。 */
 export interface ReportRevisionContent {
   title: string;
   blocks: readonly ReportBlock[];
 }
 
-/** One kind of block and how many of them, in the order the kinds first appear. */
+/** ブロックの種類1つとその数。種類が最初に現れた順。 */
 export interface BlockTypeCount {
   type: ReportBlockType;
   count: number;
@@ -19,7 +20,7 @@ export interface ReportRevisionChanges {
   added: BlockTypeCount[];
   removed: BlockTypeCount[];
   edited: BlockTypeCount[];
-  /** Blocks in both revisions stand in another order. */
+  /** 両方のバージョンにあるブロックの並びが変わった。 */
   isReordered: boolean;
 }
 

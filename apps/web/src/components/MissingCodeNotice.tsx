@@ -18,7 +18,7 @@ function describeMissingCode(reason: MissingCodeReason): string {
     : missing;
 }
 
-/** Why a code version list offers nothing, with the way to Code where one can be made. */
+/** コードバージョンの一覧に候補が無い理由と、作れる場所であるCodeへの案内。 */
 export function MissingCodeNotice({ reason }: { reason: MissingCodeReason }) {
   useLocale();
   const { project } = useProject();

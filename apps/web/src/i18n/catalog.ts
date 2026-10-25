@@ -59,7 +59,7 @@ export const lineageRelationLabels: Record<string, string> = localized({
   reference: '根拠・資料の参照',
 }, english.lineageRelationLabels);
 
-// Text that embeds values. Kept apart from `text` so every `text` entry stays a plain string.
+// 値を埋め込む文言。`text`のどの項目もただの文字列のままにするため、`text`とは分けておく。
 export const textTemplates = mergeTranslations([
   runsTextTemplates,
   uploadsTextTemplates,

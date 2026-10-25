@@ -6,12 +6,12 @@ import type { WorkflowLaunchIntent } from '../lib/workflowLaunchKeys';
 import { workflowsText as labels, workflowsTextTemplates } from '../i18n/workflows';
 import { useLocale } from '../i18n/useLocale';
 
-/** What the confirmation starts: a version of the workflow, or a failed or canceled execution again. */
+/** 確認で始めるもの。ワークフローのバージョンか、失敗・キャンセルした実行のやり直し。 */
 type LaunchTarget =
   | { kind: 'start'; workflowName: string; revision: number }
   | { kind: 'resume'; execution: WorkflowExecutionSummary };
 
-/** The confirmation's words, in the display language, and the start it sends. */
+/** 表示言語での確認の文言と、送る開始の要求。 */
 function describeLaunch(target: LaunchTarget) {
   if (target.kind === 'resume') {
     const { execution } = target;
@@ -33,9 +33,9 @@ function describeLaunch(target: LaunchTarget) {
 }
 
 /**
- * Asks before starting a version of the workflow, or before resuming a failed or canceled
- * execution in a new one, naming the version and what will run. A confirmation sent again after
- * a failure keeps its idempotency key (useWorkflowActions), so it cannot start two executions.
+ * ワークフローのバージョンを始める前、または失敗・キャンセルした実行を新しい実行で再開する前に、
+ * バージョンと動くものを示して尋ねる。失敗のあとで送り直した確認は同じidempotency keyを使う
+ * （useWorkflowActions）ので、実行が2つ始まることはない。
  */
 export function WorkflowLaunchDialog({
   launch,

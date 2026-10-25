@@ -25,10 +25,10 @@ describe('navigationLinks', () => {
     );
     expect(links[0]).toBe('/projects/p1/experiments');
     expect(links).toContain('/projects/p1/settings');
-    // Every member may read the hooks; creating and switching them is checked on the page.
+    // Hooksはどのメンバーも見られる。作成と切り替えの権限はページの側で確かめる。
     expect(links).toContain('/projects/p1/hooks');
     expect(links).not.toContain('/projects/p1/plugins');
-    // 全体設定 is opened from the user menu, not from a Project's sidebar.
+    // 全体設定はユーザーメニューから開き、Projectのサイドバーからは開かない。
     expect(links.filter((link) => link.startsWith('/settings/'))).toEqual([]);
   });
 
@@ -74,7 +74,7 @@ describe('navigationLinks', () => {
       { screen: 'plugins', to: '/projects/p1/plugins', label: text.plugins },
       { screen: 'settings', to: '/projects/p1/settings', label: text.settings },
     ]);
-    // Every Project screen appears exactly once across the groups.
+    // Projectの画面は、どれも組全体を通してちょうど1回ずつ出る。
     expect(new Set(paths(groups.flatMap((group) => group.links))).size).toBe(15);
   });
 

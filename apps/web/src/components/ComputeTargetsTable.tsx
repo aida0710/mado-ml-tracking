@@ -14,10 +14,10 @@ import { workerCoverageText } from '../i18n/workerCoverage';
 import { formatList } from '../i18n/textJoining';
 
 /**
- * The computers one may run Jobs on, for the Project's Compute page: read only, since adding and
- * managing them is in 全体設定 → コンピュータ. Where one is reached shows only for its managers.
- * Beside the state, whether a worker of the Project takes the computer's Jobs: an enabled computer
- * without one takes Jobs that never start.
+ * ProjectのComputeの画面に出す、Jobを動かせるコンピュータの一覧。追加と管理は
+ * 全体設定 → コンピュータで行うので、ここは読み取り専用。接続先は管理する人にだけ表示する。
+ * 状態の横に、ProjectのworkerがそのコンピュータのJobを受け取るかを示す。受け取るworkerが
+ * いない有効なコンピュータは、いつまでも始まらないJobを受け付けてしまう。
  */
 export function ComputeTargetsTable({
   targets,
@@ -25,7 +25,7 @@ export function ComputeTargetsTable({
   user,
 }: {
   targets: ComputeTargetDetails[];
-  /** The Project's workers; undefined while they load. */
+  /** Projectのworker。読み込み中はundefined。 */
   workers: WorkerPresence[] | undefined;
   user: Pick<User, 'id'>;
 }) {

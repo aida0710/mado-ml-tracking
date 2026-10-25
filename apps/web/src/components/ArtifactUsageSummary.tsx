@@ -5,7 +5,7 @@ import { ResponsiveTable } from './ResponsiveTable';
 import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
-/** Stored Artifacts of the Project per backend, with what deletion and old versions hold. */
+/** ProjectのArtifactの保存量を保存先ごとに示す。削除待ちと古い版が占める分も添える。 */
 export function ArtifactUsageSummary({ projectId }: { projectId: string }) {
   useLocale();
   const usage = useArtifactUsage(projectId);

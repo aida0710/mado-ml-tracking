@@ -97,7 +97,7 @@ export const workbenchText = {
   outputRegistrationLoadError: 'Could not retrieve output model registration results',
 } as const;
 
-// Keys are the stable codes the API stores in RunOutputRegistration.error.
+// キーは、APIがRunOutputRegistration.errorに保存する変わらないコード。
 export const outputRegistrationErrorLabels = {
   model_not_found: 'Destination model not found',
   model_deleted: 'Destination model was deleted',
@@ -109,7 +109,7 @@ export const outputRegistrationErrorLabels = {
   registration_failed: 'An error occurred during registration',
 } satisfies Record<string, string>;
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const workbenchTextTemplates = {
   taskLaunchRegistration: (modelLabel: string) =>
     `On success, a model version is registered in “${modelLabel}”. If any automation rules target its family, they then run inference and evaluation on the registered version automatically.`,

@@ -30,19 +30,19 @@ import { LocalizedError } from './localizedError';
 import { text } from '../i18n/catalog';
 import { siteComputersTextTemplates } from '../i18n/siteComputers';
 
-/** Every global setting of a site; the job shell is saved on its own, as a new version. */
+/** siteの全体設定のすべて。job shellはこれとは別に、新しいバージョンとして保存する。 */
 export type SiteSettingsValues = Omit<SiteSettings, 'jobShell'>;
 
 const MAX_PORT = 65535;
 const BYTES_PER_KIB = 1024;
-// The API's rules (the forms in contracts), checked here first to explain them in the form.
-// A known_hosts line is "<hosts> <key type> <key>"; lines starting with # are comments.
+// APIの規則（contractsにある形式）。フォームで説明できるよう、ここで先に確かめる。
+// known_hostsの行は"<hosts> <key type> <key>"の形で、#で始まる行はコメント。
 const KNOWN_HOSTS_LINE_FIELDS = 3;
-// Many people log in to a supercomputer with their own account, so a new site starts that way.
+// スパコンには多くの人が本人のアカウントでログインするので、新しいsiteは本人アカウントで始める。
 const DEFAULT_ACCOUNT_MODE: SiteAccountMode = 'personal';
 const DEFAULT_GPU_ASSIGNMENT: SiteGpuAssignment = 'scheduler';
 
-/** The form values of a site's global settings; a new site (null) starts from the API defaults. */
+/** siteの全体設定のフォームの値。新しいsite（null）はAPIの既定値から始める。 */
 export function siteSettingsFormValues(site: SiteSettings | null): FormValues {
   const connection = site?.connection;
   return {
@@ -66,7 +66,7 @@ export function siteSettingsFormValues(site: SiteSettings | null): FormValues {
   };
 }
 
-/** The fields read with parseIntegerInRange; the error names the field in the current language. */
+/** parseIntegerInRangeで読む欄。エラーの文は、今の表示言語で欄の名前を出す。 */
 type IntegerFieldLabel = 'sitePort' | 'maxActiveSubmissions' | 'cancelGraceSeconds' | 'maxOutputFiles';
 
 function parseIntegerInRange({
@@ -86,7 +86,7 @@ function parseIntegerInRange({
   return number;
 }
 
-/** A shared account or one's own account name on the site, as the launcher logs in with it. */
+/** siteの共用アカウント名、または本人のアカウント名。ランチャーはこの名前でログインする。 */
 export function parseAccountName(value: string, requiredMessage: string): string {
   const name = value.trim();
   if (!name) throw new Error(requiredMessage);
@@ -95,7 +95,7 @@ export function parseAccountName(value: string, requiredMessage: string): string
   return name;
 }
 
-/** An absolute directory on the site; empty leaves it to the other setting (site or person). */
+/** site上のディレクトリの絶対パス。空なら、もう一方の設定（siteか個人）に任せる。 */
 export function parseSiteDirectory(value: string): string {
   const directory = value.trim();
   if (directory && !SITE_PATH_PATTERN.test(directory)) throw new Error(text.siteWorkDirectoryError);
@@ -165,11 +165,10 @@ function parseLauncherId(values: FormValues): string {
 }
 
 /**
- * A site's global settings from the form. An automatic site needs the launcher that submits and
- * where it logs in; a manual site has neither, nor a shared account, since whoever runs
- * `mado-tracking submit` submits as themselves. A shared account runs everyone's Jobs in the
- * site's own work directory. Only a host without a scheduler (gpuAssignment 'lease') keeps the GPUs
- * its runners may choose from.
+ * フォームから作るsiteの全体設定。自動投入のsiteには、投入するランチャーとそのログイン先が要る。
+ * 手動投入のsiteにはどちらも無く、共用アカウントも無い。`mado-tracking submit`を実行した人が
+ * 本人として投入するため。共用アカウントは、全員のJobをsite自身の作業ディレクトリで動かす。
+ * runnerが選べるGPUを持つのは、スケジューラの無いホスト（gpuAssignment 'lease'）だけ。
  */
 export function buildSiteSettingsInput(values: FormValues): SiteSettingsValues {
   const isAutomatic = getFieldValue(values, 'submissionMode') === 'automatic';

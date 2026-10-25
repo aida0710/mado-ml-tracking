@@ -1,6 +1,6 @@
 import * as english from './en/savedViews';
 import { localized } from './localized';
-// Saved views of the Run list (menu, save dialog, notices) and the column controls they keep.
+// Runの一覧の保存ビュー（メニュー、保存のダイアログ、通知）と、保存ビューが持つ列の設定。
 export const savedViewsText = localized({
   savedViews: 'ビュー',
   savedViewDefault: '既定の表示',
@@ -32,7 +32,7 @@ export const savedViewsText = localized({
   runColumnMove: '列を移動（Alt+←/→）',
 } as const, english.savedViewsText);
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const savedViewsTextTemplates = localized({
   savedViewDeleteMessage: (name: string) =>
     `ビュー「${name}」を削除します。このビューのURLを開いた人には既定の表示が出ます。`,

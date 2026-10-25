@@ -88,7 +88,7 @@ const ARTIFACT_REFERENCE_LABELS: Readonly<Record<string, string>> = {
   preprocessing_report: '前処理のレポート',
 };
 
-// Mado のアクセストークンで許可してほしい権限（API の plugins/mado/accessTokenRequirements.ts）。
+// mado S3 Data Catalogのアクセストークンで許可してほしい権限（API の plugins/mado/accessTokenRequirements.ts）。
 const MADO_SCOPE_LABELS: Readonly<Record<string, string>> = {
   'lineage:read': 'DataLineageの読み取り',
   'lineage:write': 'DataLineageの送信',
@@ -442,7 +442,7 @@ export const japaneseApiErrorMessages: Partial<Record<ApiErrorCode, JapaneseApiE
   notification_channel_exists: '同じ名前の通知先が既にあります',
   notification_channel_invalid:
     '通知先の種類に合う設定を指定してください（Slackは urlEnv、Webhookは urlEnv と secretEnv、メールは recipients）',
-  // 連携（Mado）
+  // 連携（mado S3 Data Catalog）
   plugin_capability_unsupported: '容量の読み取りがアクセストークンで許可されていません。許可した後に接続を確認し直してください',
   plugin_credentials_required: 'Madoのアクセストークンを設定してから有効にしてください',
   plugin_dataset_identity_mismatch: 'MadoのバージョンまたはNamespaceが一致しません',

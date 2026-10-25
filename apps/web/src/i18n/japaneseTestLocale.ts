@@ -1,5 +1,5 @@
 import { setLocale } from './locale';
 
-// The web unit tests run outside a browser, where the app would start in English, and most of
-// them assert the Japanese text; tests that need English switch with setLocale('en').
+// Webの単体テストはブラウザの外で動き、そこではアプリが英語で始まる。テストの多くは日本語の
+// 文言を確かめる。英語が要るテストはsetLocale('en')で切り替える。
 setLocale('ja');

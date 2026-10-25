@@ -14,7 +14,7 @@ from mado_tracking.settings import ApiSettings
 from mado_tracking.worker.config import WorkerSettings
 from mado_tracking.worker.service import Worker
 
-# A dozen or so system.* points over a training Run of about 30 seconds.
+# 約30秒の学習Runの間に、system.*の点を十数個記録する間隔。
 TELEMETRY_SECONDS = 2.0
 
 

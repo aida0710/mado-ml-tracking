@@ -4,7 +4,7 @@ import { encodeId, invalidResponseError, projectPath, requestItems } from './htt
 import { trackingApi } from './tracking';
 
 export const artifactPreviewsApi = {
-  /** Previews the server generates for long audio and video; empty when none were needed. */
+  /** 長い音声・動画のためにサーバーが作ったプレビュー。要らなかったときは空。 */
   list: (projectId: string, artifactId: string, signal?: AbortSignal): Promise<ArtifactPreview[]> =>
     requestItems<ArtifactPreview>(`${projectPath(projectId)}/artifacts/${encodeId(artifactId)}/previews`, signal),
   waveform: async (projectId: string, peaksArtifactId: string, signal?: AbortSignal): Promise<ServerWaveform> => {

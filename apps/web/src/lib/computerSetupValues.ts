@@ -8,10 +8,10 @@ import type {
 import type { FormValues } from '../types/form';
 import { getFieldValue, splitLines, toggleValue } from './formValues';
 
-// The host runner and the SDK need Python 3.11 (pyproject.toml's requires-python).
+// ホストのランナーとSDKにはPython 3.11が要る（pyproject.tomlのrequires-python）。
 const MINIMUM_JOB_PYTHON: readonly [number, number] = [3, 11];
 
-/** The worker reached the computer: its result's connection item passed. */
+/** workerがコンピュータにつながった。結果の接続の項目が成功している。 */
 export function isConnectionReached(check: TargetCheck | undefined): boolean {
   return (
     check?.status === 'finished' &&
@@ -19,12 +19,12 @@ export function isConnectionReached(check: TargetCheck | undefined): boolean {
   );
 }
 
-/** Pythons the check found. */
+/** 確認で見つかったPython。 */
 export function detectedPythons(result: TargetCheckResult | null | undefined): TargetCheckPython[] {
   return result?.pythons ?? [];
 }
 
-/** Directories the check found that could hold the work directory. */
+/** 確認で見つかった、作業ディレクトリを置けそうなディレクトリ。 */
 export function detectedDirectories(
   result: TargetCheckResult | null | undefined,
 ): TargetCheckDirectory[] {
@@ -42,36 +42,36 @@ function meetsMinimumVersion(version: string | null): boolean {
   return major > minimumMajor || (major === minimumMajor && minor >= minimumMinor);
 }
 
-/** The first Python the check found that Jobs can use (the worker lists PATH's python3 first). */
+/** 確認で見つかったPythonのうち、Jobが使える最初のもの（workerはPATHのpython3を先頭に挙げる）。 */
 export function preferredPython(result: TargetCheckResult | null | undefined): string | null {
   return detectedPythons(result).find((python) => meetsMinimumVersion(python.version))?.path ?? null;
 }
 
-/** As many Jobs at once as the chosen GPUs, one per GPU; one on a CPU-only computer. */
+/** 同時に動かすJobの数。選んだGPUの数（GPUごとに1つ）で、CPUだけのコンピュータでは1。 */
 export function defaultConcurrentJobs(gpuIds: readonly string[]): string {
   return String(Math.max(1, gpuIds.length));
 }
 
-/** `next` with the concurrency following its GPUs, when the GPUs changed from `previous`. */
+/** GPUが`previous`から変わったとき、同時実行数をGPUに合わせた`next`。 */
 export function withConcurrencyFollowingGpus(previous: FormValues, next: FormValues): FormValues {
   if (getFieldValue(next, 'gpuIds') === getFieldValue(previous, 'gpuIds')) return next;
   return { ...next, maxConcurrentJobs: defaultConcurrentJobs(formGpuIds(next)) };
 }
 
-/** GPU IDs of the form, one per line. */
+/** フォームのGPUのID。1行に1つ。 */
 export function formGpuIds(values: FormValues): string[] {
   return splitLines(getFieldValue(values, 'gpuIds'));
 }
 
-/** The form with a GPU added or removed; manually typed IDs stay. */
+/** GPUを足すか外したフォーム。手で入力したIDは残す。 */
 export function toggleGpuId(values: FormValues, gpuId: string): FormValues {
   return { ...values, gpuIds: toggleValue(formGpuIds(values), gpuId).join('\n') };
 }
 
 /**
- * A new computer's setup filled in from its check: the CPU it reported, the runtimes that worked,
- * every GPU it found (Jobs choose GPUs by nvidia-smi index), a usable Python when none is typed,
- * and as many Jobs at once as GPUs. What the check could not tell stays as it was.
+ * 確認の結果で埋めた新しいコンピュータの設定。報告されたCPU、動いたランタイム、見つかった
+ * すべてのGPU（JobはGPUをnvidia-smiの番号で選ぶ）、未入力なら使えるPython、GPUと同じ数の
+ * 同時実行数。確認で分からなかったものは元のまま。
  */
 export function applyCheckToSetupValues(values: FormValues, result: TargetCheckResult): FormValues {
   const next = { ...values };

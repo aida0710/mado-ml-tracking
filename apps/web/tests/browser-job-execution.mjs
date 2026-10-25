@@ -1,16 +1,16 @@
-// The execution screens against a development-mode API (AUTH_MODE=development) behind the Web on
-// MMT_WEB_URL, with no worker running:
-// - a computer no worker takes is marked on Compute, in the launch dialog, above the Jobs list and
-//   on the waiting Job, and its details (opened from a link) warn before a connection check;
-// - choosing a Job brings its details into view; the log opens at the newest of the latest 2,000
-//   lines (of 3,000), with seconds, and can be searched, reversed, read in full (which stops
-//   reading it again every few seconds) and downloaded as a file the API streams;
-// - a Job past its maximum attempts is retried by the person who started it;
-// - a launch whose Job is refused leaves no Run, and the Run's page offers no second launch but
-//   links to its Job, also once the Run has stopped;
-// - a hook is copied into the create dialog with its settings.
-// At 390px the Jobs and Compute pages do not scroll sideways. MMT_SCREENSHOT_DIR, when set,
-// receives screenshots.
+// 実行の画面の確認。MMT_WEB_URLのWebの裏に開発モードのAPI（AUTH_MODE=development）を置き、
+// workerは動かさない。
+// - どのworkerも受け持たないコンピュータに、Compute、起動のダイアログ、Jobsの一覧の上、待っている
+//   Jobで印を付け、（リンクから開く）その詳細は接続の確認の前に警告する。
+// - Jobを選ぶとその詳細が見える位置に来る。ログは最新の2,000行（3,000行のうち）の最も新しい行で
+//   開き、秒まで出て、検索、逆順、全文の読み込み（数秒ごとの読み直しは止まる）、APIがストリームで
+//   返すファイルとしてのダウンロードができる。
+// - 最大の試行回数を超えたJobは、起動した本人が再試行できる。
+// - Jobを断られた起動ではRunが残らない。Runの画面は2回目の起動を勧めず、Runが止まった後も
+//   そのJobへのリンクを出す。
+// - フックは設定ごと作成のダイアログに写せる。
+// 390pxではJobsとComputeの画面が横にスクロールしない。MMT_SCREENSHOT_DIRを設定すると、そこに
+// スクリーンショットを保存する。
 import assert from 'node:assert/strict';
 import { mkdir, readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -22,15 +22,15 @@ const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const adminEmail = process.env.MMT_DEVELOPMENT_ADMIN_EMAIL ?? 'admin@localhost';
 const outputDirectory = process.env.MMT_SCREENSHOT_DIR;
 if (outputDirectory) await mkdir(outputDirectory, { recursive: true });
-// Each run makes its own users, Project and computer, so runs do not see each other's records.
+// 実行ごとにユーザー、Project、コンピュータを作るので、実行どうしで互いの記録が見えない。
 const runKey = Date.now().toString(36);
 const DESKTOP = { width: 1440, height: 900 };
 const PHONE = { width: 390, height: 844 };
-// More than the 2,000 lines the screen polls (RUN_LOG_TAIL_LINES), sent in batches the API takes.
+// 画面がポーリングする2,000行（RUN_LOG_TAIL_LINES）より多くし、APIが受け付ける件数ずつに分けて送る。
 const LOG_LINES = 3000;
 const LOG_BATCH = 1000;
 const SHOWN_LOG_LINES = 2000;
-// The screens poll every 5 seconds (EXECUTION_POLL_MS); waiting longer shows whether one is left.
+// 画面は5秒ごとにポーリングする（EXECUTION_POLL_MS）。それより長く待てば、ポーリングが残っているかが分かる。
 const LONGER_THAN_ONE_POLL_MS = 6000;
 
 const browser = await chromium.launch({
@@ -78,7 +78,7 @@ async function assertNoSidewaysScroll(page, where) {
   );
   assert.ok(overflow <= 0, `${where} scrolls sideways by ${overflow}px at 390px`);
 }
-/** One log line per second from 05:00:00, ending with a traceback, as a failing training writes. */
+/** 05:00:00から1秒ごとに1行のログ。失敗する学習が書くように、最後はtracebackで終わる。 */
 function logEntry(index) {
   const timestamp = new Date(Date.UTC(2026, 9, 11, 5, 0, index)).toISOString();
   if (index === LOG_LINES - 1)
@@ -129,7 +129,7 @@ try {
     await editor.post(`/projects/${project.id}/runs/${run.id}/logs`, {
       entries: Array.from({ length: LOG_BATCH }, (_, offset) => logEntry(start + offset)),
     });
-  // A hook's Job: one attempt, so before the change a person could not run it again.
+  // フックのJob。試行は1回なので、この変更の前は人が実行し直せなかった。
   const job = await editor.post(`/projects/${project.id}/jobs`, {
     runId: run.id,
     targetId: gpuHost.id,
@@ -186,7 +186,7 @@ try {
     (count) => document.querySelectorAll('.job-detail .log-entry').length === count,
     LOG_LINES,
   );
-  // The waiting Job is live, but every line is read once, not every few seconds.
+  // 待っているJobはまだ終わっていないが、全行は数秒ごとではなく1回だけ読む。
   const readsOfEveryLine = logReads.length;
   await page.waitForTimeout(LONGER_THAN_ONE_POLL_MS);
   assert.equal(logReads.length, readsOfEveryLine, 'the log was read again after reading every line');
@@ -242,7 +242,7 @@ try {
   await launch.getByText('このまま起動すると、Jobはworkerが動くまで待機中のままです。', { exact: false }).waitFor();
   await screenshot(page, '05-launch-worker-missing');
   await launch.getByRole('button', { name: '次へ', exact: true }).click();
-  // The computer stops taking Jobs while the dialog is open, so the API refuses the Job.
+  // ダイアログを開いている間にコンピュータがJobを受け付けなくなるので、APIはそのJobを断る。
   await admin.patch(`/targets/${gpuHost.id}`, { enabled: false });
   await launch.getByRole('button', { name: 'ジョブを起動', exact: true }).click();
   await launch.getByRole('alert').waitFor();

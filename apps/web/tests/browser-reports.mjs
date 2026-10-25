@@ -1,9 +1,8 @@
-// Shared reports against a development API (AUTH_MODE=development): a report with Markdown, a
-// grouped chart (mean and range) fixed at save time and the same chart live, parallel coordinates,
-// an audio comparison and a Run list from a Project saved view; metrics logged afterwards change
-// the live chart and not the fixed one; two tabs editing at once make the later save a conflict;
-// a past revision opens read-only and can be restored; comments; a viewer reads and sees comments
-// without any input.
+// 開発用のAPI（AUTH_MODE=development）で共有のレポートを確かめる: Markdown、保存時に固定した
+// グループ化の図（平均と範囲）と最新を反映する同じ図、平行座標、音声の比較、Projectの保存ビュー
+// から作ったRunの一覧を持つレポート。あとから記録したメトリクスは、最新を反映する図を変え、固定
+// した図は変えない。2つのタブで同時に編集すると後の保存が競合になる。過去のバージョンは読み取り
+// 専用で開き、元に戻せる。コメント。viewerは入力欄の無い画面でレポートとコメントを読める。
 import assert from 'node:assert/strict';
 import { mkdir, readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -45,7 +44,7 @@ function apiClient(request) {
   };
 }
 
-// --- Sessions -----------------------------------------------------------------------------------
+// --- セッション ---------------------------------------------------------------------------------
 async function signIn(email, displayName) {
   const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1100 } });
   const page = await context.newPage();
@@ -59,7 +58,7 @@ async function signIn(email, displayName) {
   return { context, page, api: apiClient(context.request) };
 }
 
-// --- Report editing helpers ---------------------------------------------------------------------
+// --- レポート編集の補助 -------------------------------------------------------------------------
 const embedDialog = (page) => page.getByRole('dialog', { name: '図や表を埋め込む' });
 
 async function addGroupedChart(page, { runNames, mode }) {
@@ -80,7 +79,7 @@ async function addGroupedChart(page, { runNames, mode }) {
 
 async function chartSignature(page, index) {
   const chart = page.locator('.report-embed[data-block-type=chart]').nth(index);
-  // The mean lines and range bands of the groups; the axes and icons do not depend on the data.
+  // グループごとの平均の線と範囲の帯。軸とアイコンはデータに左右されない。
   const lines = chart.locator('path.chart-line, path.chart-band');
   await lines.first().waitFor();
   return lines.evaluateAll((paths) => paths.map((path) => path.getAttribute('d')).join('|'));
@@ -192,7 +191,7 @@ try {
 
   await saveEdit(page, '最初のバージョン');
   await page.locator('.report-editor').waitFor({ state: 'detached' });
-  // Creating the report made revision 1 (empty); the first save is revision 2.
+  // レポートを作った時点でバージョン1（空）ができ、最初の保存がバージョン2になる。
   await page.getByText('バージョン 2・レポート管理者が').waitFor();
   await page.locator('.report-embed').nth(4).waitFor();
   assert.equal(await page.locator('.report-embed').count(), 5);
@@ -294,7 +293,7 @@ try {
   assert.deepEqual(errors, []);
   console.log('Reports verification passed');
 } catch (failure) {
-  // Keeps the screen at the failure for diagnosis.
+  // 原因を調べられるよう、失敗した時点の画面を残す。
   for (const context of browser.contexts()) for (const page of context.pages()) console.error(`failure at ${page.url()}`);
   for (const context of browser.contexts())
     for (const [index, page] of context.pages().entries()) await screenshot(page, `failure-${index}`).catch(() => undefined);

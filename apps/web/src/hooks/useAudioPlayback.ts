@@ -5,20 +5,20 @@ export interface LoopRange {
   endSeconds: number;
 }
 
-// Moves the playhead of the page's <audio> element: a DOM object, not React state, so it is
-// changed in place.
+// ページの<audio>要素の再生位置を動かす。React stateではなくDOMのオブジェクトなので、その場で
+// 書き換える。
 function moveAudioPlayhead(audio: HTMLAudioElement, seconds: number) {
   audio.currentTime = seconds;
 }
 
 /**
- * Follows an <audio> element's position every animation frame while it plays (timeupdate fires only
- * about 4 times a second, too coarse for a playhead) and keeps playback inside the loop range.
+ * 再生中は<audio>要素の位置をアニメーションのフレームごとに追い（timeupdateは1秒に4回ほどしか
+ * 起きず、再生位置の表示には粗すぎる）、再生をループの範囲の中に保つ。
  */
 export function useAudioPlayback(audio: HTMLAudioElement | null, loop: LoopRange | null) {
   const [currentTime, setCurrentTime] = useState(0);
   const [playing, setPlaying] = useState(false);
-  // Reads the loop range of the latest render on every frame.
+  // フレームごとに、最新のレンダリングのループ範囲を読む。
   const keepInsideLoop = useEffectEvent((element: HTMLAudioElement) => {
     if (loop && element.currentTime >= loop.endSeconds) moveAudioPlayhead(element, loop.startSeconds);
   });

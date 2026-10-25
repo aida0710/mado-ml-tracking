@@ -1,5 +1,5 @@
-// The read-only registry lookups of packages/contracts/src/registryLookups.ts for browser checks,
-// computed from the mock's state by the rules of apps/api/src/repositories/registryLookupRepository.ts.
+// packages/contracts/src/registryLookups.tsの読み取り専用のレジストリ参照を、ブラウザでの確認用に、
+// apps/api/src/repositories/registryLookupRepository.tsの規則でモックの状態から計算する。
 
 const byLowerNameThenName = (left, right) => {
   const [leftLower, rightLower] = [left.name.toLowerCase(), right.name.toLowerCase()];
@@ -8,8 +8,8 @@ const byLowerNameThenName = (left, right) => {
 };
 
 /**
- * GET /projects/:p/model-families: every family the Models have or the code versions list, with
- * how many of each use it, sorted case-insensitively so `Qwen3` sits next to `qwen3`.
+ * GET /projects/:p/model-families: モデルが持つか、コードバージョンが挙げるすべてのモデル系列と、
+ * それぞれを使っている数。大文字小文字を区別せずに並べるので、`Qwen3`は`qwen3`の隣に来る。
  */
 export function listModelFamilies(state) {
   const families = new Map();
@@ -25,7 +25,7 @@ export function listModelFamilies(state) {
   return [...families.values()].sort(byLowerNameThenName);
 }
 
-/** GET /projects/:p/code-versions/:id: the version with its code, or null when either is missing. */
+/** GET /projects/:p/code-versions/:id: コードと組にしたバージョン。どちらかが無ければnull。 */
 export function findCodeVersionDetail(state, versionId) {
   const version = state.codeVersions.find((item) => item.id === versionId);
   const code = version && state.codes.find((item) => item.id === version.codeId);
@@ -35,9 +35,9 @@ export function findCodeVersionDetail(state, versionId) {
 const sortedMetricKeys = (runs) => [...new Set(runs.flatMap((run) => Object.keys(run.latestMetrics)))].sort();
 
 /**
- * GET /projects/:p/automation-rules/:id/metric-keys: the keys the Runs the rule's executions
- * started recorded; before they recorded any, the keys of the Runs of the rule's kind that used its
- * code version.
+ * GET /projects/:p/automation-rules/:id/metric-keys: その自動実行ルールの実行が始めたRunが記録した
+ * キー。まだ何も記録していなければ、ルールの種類のRunのうち、ルールのコードバージョンを使ったものの
+ * キー。
  */
 export function ruleMetricKeys(state, rule) {
   const ruleRunIds = new Set(

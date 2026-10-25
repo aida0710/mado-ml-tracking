@@ -26,8 +26,8 @@ type ProjectScreen =
   | 'plugins'
   | 'settings';
 
-// Project screens in the groups the sidebar and the drawer show, in display order.
-// The 全体設定 screens have groups of their own, shown only away from a Project.
+// サイドバーとドロワーに出すProjectの画面の組。表示の順に並べる。
+// 全体設定の画面は別の組を持ち、Projectを開いていないときだけ出す。
 const SCREEN_GROUPS: { label: string; screens: ProjectScreen[] }[] = [
   { get label() { return text.navigationGroupTracking }, screens: ['experiments', 'sweeps', 'reports'] },
   { get label() { return text.navigationGroupModels }, screens: ['models', 'tasks', 'codes'] },
@@ -36,7 +36,7 @@ const SCREEN_GROUPS: { label: string; screens: ProjectScreen[] }[] = [
   { get label() { return text.navigationGroupProjectManagement }, screens: ['plugins', 'settings'] },
 ];
 
-/** A Project screen, or a 全体設定 screen (including the 全体管理 ones). */
+/** Projectの画面か、全体設定の画面（全体管理の画面を含む）。 */
 export type NavigationScreen = ProjectScreen | SettingsSection;
 
 export interface NavigationLink {
@@ -56,7 +56,7 @@ interface NavigationAccess {
   isGlobalAdmin: boolean;
 }
 
-/** Where a Project opens: its experiments. */
+/** Projectを開いたときの最初の画面。そのProjectのExperiments。 */
 export function projectHomePath(projectId: string): string {
   return `/projects/${projectId}/experiments`;
 }
@@ -70,10 +70,10 @@ function settingsLinks(sections: readonly SettingsSection[]): NavigationLink[] {
 }
 
 /**
- * The screens the main navigation offers, grouped. With a Project open: its screens (Plugins only
- * for those who may manage them); 全体設定 is reached from the user menu instead. Without one (the
- * 全体設定 screens, or no Project to open): 全体設定 for everyone and, for global admins, 全体管理.
- * Groups without a link are left out.
+ * メインのナビゲーションに出す画面を組に分けて返す。Projectを開いているときはその画面
+ * （Pluginsは管理できる人だけ）で、全体設定にはユーザーメニューから行く。開いていないとき
+ * （全体設定の画面や、開くProjectが無いとき）は、全員に全体設定を、全体管理者には全体管理も出す。
+ * リンクが1つも無い組は出さない。
  */
 export function navigationGroups({
   projectId,
@@ -98,7 +98,7 @@ function settingsGroups(isGlobalAdmin: boolean): NavigationGroup[] {
   return groups;
 }
 
-/** The same screens as navigationGroups, in one list. */
+/** navigationGroupsと同じ画面を、1つの一覧にして返す。 */
 export function navigationLinks(access: NavigationAccess): NavigationLink[] {
   return navigationGroups(access).flatMap((group) => group.links);
 }

@@ -12,8 +12,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * Lets a Project admin move an automation rule or a hook to a Service Account, so it keeps
- * starting Jobs after its creator leaves the Project. The caller names who may own it and how.
+ * Project adminが自動実行ルールやフックをService Accountへ移管できるようにし、作成者がProjectを
+ * 離れた後もJobを起動し続けられるようにする。所有者の候補と移管のしかたは呼び出し側が渡す。
  */
 export function ServiceAccountOwnerTransfer({
   projectId,

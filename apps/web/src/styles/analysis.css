@@ -1,4 +1,4 @@
-/* Run analysis panel: parallel coordinates, parameter importance and the param scatter plot. */
+/* Runの分析のパネル。平行座標、パラメータ重要度、パラメータの散布図。 */
 .analysis-panel {
   display: flex;
   flex-direction: column;
@@ -56,8 +56,8 @@
 .parallel-chart-hint {
   color: var(--muted);
 }
-/* The plot keeps a minimum distance between axes; when that is wider than the panel it scrolls
-   sideways here instead of widening the page. */
+/* 図は軸の間隔を一定以上に保つ。それがパネルより広くなると、ページを広げずにここで
+   横にスクロールする。 */
 .parallel-chart-scroll {
   width: 100%;
   min-width: 0;
@@ -89,7 +89,7 @@
   fill: var(--muted);
   font-size: var(--font-size-2xs);
   font-family: var(--mono);
-  /* A halo in the page color keeps labels readable over the lines. */
+  /* ページの地の色の縁取りで、線の上でもラベルを読めるようにする。 */
   paint-order: stroke;
   stroke: var(--background);
   stroke-width: 3px;
@@ -285,7 +285,7 @@
   font-size: var(--font-size-sm);
 }
 
-/* Narrow screens are touch screens: the axis controls and menus get a full tap target. */
+/* 狭い画面はタッチ画面なので、軸の操作とメニューに--tap-targetの大きさを持たせる。 */
 @media (width < 900px) {
   .parallel-axis-actions .icon-button {
     width: var(--tap-target);

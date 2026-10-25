@@ -1,14 +1,14 @@
-// Client-side failure codes. They never come from the API and are translated in lib/errorMessage.ts.
+// クライアント側の失敗のコード。APIからは来ず、lib/errorMessage.tsで画面の文に訳す。
 export const NETWORK_ERROR_CODE = 'network_error';
 export const INVALID_RESPONSE_CODE = 'invalid_response';
-// A front proxy may answer 413 with HTML before the API sees the upload, so the client names it.
+// 手前のプロキシがAPIより先にHTMLで413を返すことがあるので、クライアントでコードを付ける。
 export const ARTIFACT_TOO_LARGE_CODE = 'artifact_too_large';
-// Artifact content is fetched as raw bytes, so a failure carries no API error body to show.
+// Artifactの内容は生のバイトとして取るので、失敗しても見せられるAPIのエラー本文が無い。
 export const ARTIFACT_CONTENT_UNAVAILABLE_CODE = 'artifact_content_unavailable';
 
 /**
- * A failed API call. It carries only what the API (or the transport) reported;
- * lib/errorMessage.ts turns it into the text shown on screen.
+ * 失敗したAPI呼び出し。API（または通信路）が報告したことだけを持ち、
+ * lib/errorMessage.tsがそれを画面に出す文にする。
  */
 export class RequestError extends Error {
   readonly status: number;
@@ -59,7 +59,7 @@ export function invalidResponseError(status = 200): RequestError {
 
 const HTTP_NOT_FOUND = 404;
 
-/** Whether the API answered 404: the thing is gone, belongs elsewhere, or is hidden from the user. */
+/** APIが404を返したか。対象が無い、別の場所に属する、または利用者から隠されている。 */
 export function isNotFoundError(failure: unknown): boolean {
   return failure instanceof RequestError && failure.status === HTTP_NOT_FOUND;
 }
@@ -79,7 +79,7 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
   return payload as T;
 }
 
-// Cursor-paged responses carry the page items and the id to continue from (null on the last page).
+// cursorでページ分けした応答は、ページの項目と続きを読むためのid（最後のページではnull）を持つ。
 export function assertCursorPage(page: { items: unknown; nextCursor: unknown }): void {
   if (!Array.isArray(page.items) || (page.nextCursor !== null && typeof page.nextCursor !== 'string'))
     throw invalidResponseError();

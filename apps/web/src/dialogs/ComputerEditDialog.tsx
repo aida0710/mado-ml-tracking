@@ -23,9 +23,9 @@ import { text } from '../i18n/catalog';
 type ComputerEditTab = 'connection' | 'setup';
 
 /**
- * Edits an ssh or local computer in the two parts it was added with,「接続」and「接続後の設定」,
- * switched by tabs and saved together. ［再確認］asks the chosen worker to check it again (saving
- * a changed connection first) and refreshes the candidates of the paths, CPU and GPUs.
+ * ssh・localのコンピュータを、足したときと同じ2つの部分「接続」と「接続後の設定」で編集する。
+ * タブで切り替え、まとめて保存する。［再確認］は選んだworkerにもう一度確認を頼み（変えた接続は
+ * 先に保存する）、パス・CPU・GPUの候補を新しくする。
  */
 export function ComputerEditDialog({
   auth,
@@ -41,7 +41,7 @@ export function ComputerEditDialog({
   useLocale();
   const panelId = useId();
   const form = useTargetForm({ target, canAddSshOrLocal: true });
-  // The computer as saved: a re-check saves a changed connection before the worker reads it.
+  // 保存済みのコンピュータ。再確認では、workerが読む前に変えた接続を保存する。
   const [saved, setSaved] = useState(target);
   const [tab, setTab] = useState<ComputerEditTab>('connection');
   const check = useTargetCheck(target.id);

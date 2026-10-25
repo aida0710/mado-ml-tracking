@@ -90,7 +90,7 @@ export function buildStorageMetrics(samples: PrometheusSample[]): StorageConnect
     const field = prefixMetricFields[sample.name as keyof typeof prefixMetricFields];
     prefix[field] = sample;
   }
-  // Prefix samples are a partial top-level listing, so they are never summed into bucket totals.
+  // prefixのサンプルは最上位の一部だけの一覧なので、bucketの合計には決して足さない。
   return [...connections.values()]
     .map((connection) => ({
       ...connection,

@@ -6,12 +6,11 @@ import { remainingSuggestions } from '../lib/fieldSuggestions';
 import { isComposingKey } from '../lib/imeComposition';
 
 /**
- * A text field that offers candidates under itself as it is typed (an ARIA combobox). ↑↓ move
- * through the candidates, Enter or Tab takes the highlighted one, Esc hides the list without
- * closing the dialog around the field, and a click takes a candidate too. `suggest` decides where
- * the candidates come from; its note (for example that the path does not exist) shows below, and
- * a candidate's detail (a Python's version) beside it. With `offerWhenEmpty` the list opens on an
- * empty field too; a new `refreshKey` looks the typed value up again.
+ * 入力に応じて下に候補を出すテキストの欄（ARIAのcombobox）。↑↓で候補を移り、EnterかTabで強調した
+ * 候補を選び、Escは欄を囲むダイアログを閉じずに一覧だけを隠す。クリックでも候補を選べる。候補の
+ * 出どころは`suggest`が決める。その注記（たとえばパスが存在しないこと）は下に、候補の詳細（Pythonの
+ * バージョン）はその横に出す。`offerWhenEmpty`を付けると空の欄でも一覧を開く。`refreshKey`が
+ * 変わると、入力した値をもう一度引く。
  */
 export function SuggestionInput({
   id,
@@ -36,7 +35,7 @@ export function SuggestionInput({
   maxLength?: number;
   offerWhenEmpty?: boolean;
   refreshKey?: string | number;
-  /** The id of a hint about the field, read with it. */
+  /** 欄についての説明のid。欄と合わせて読み上げる。 */
   describedBy?: string;
 }) {
   const listId = useId();
@@ -60,7 +59,7 @@ export function SuggestionInput({
     hideList();
   };
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    // While Japanese input converts the text, Enter and ↑↓ belong to the input method.
+    // 日本語入力で変換している間は、Enterと↑↓は入力メソッドのもの。
     if (isComposingKey(event)) return;
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       if (!candidates.length) return;
@@ -76,13 +75,13 @@ export function SuggestionInput({
       return;
     }
     if ((event.key === 'Enter' || (event.key === 'Tab' && !event.shiftKey)) && activeCandidate) {
-      // Enter would submit the form and Tab would leave the field; both take the candidate instead.
+      // Enterはフォームを送信し、Tabは欄を離れてしまうので、どちらも代わりに候補を選ぶ。
       event.preventDefault();
       take(activeCandidate);
       return;
     }
     if (event.key === 'Escape' && isListShown) {
-      // Keeps the surrounding <dialog> open: Esc here only hides the candidates.
+      // 囲んでいる<dialog>は開いたままにする。ここでのEscは候補を隠すだけ。
       event.preventDefault();
       event.stopPropagation();
       hideList();
@@ -126,7 +125,7 @@ export function SuggestionInput({
               id={optionId(index)}
               role="option"
               aria-selected={index === activeIndex}
-              // Keeps the focus in the field, so the blur does not hide the list before the click.
+              // フォーカスを欄に留め、クリックの前にblurで一覧が隠れないようにする。
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => take(candidate)}
             >

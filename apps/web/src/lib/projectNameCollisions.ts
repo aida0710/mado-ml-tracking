@@ -1,20 +1,20 @@
 import type { Project } from '@mmt/contracts';
 
-// Names that look the same on screen count as the same: full-width and half-width letters, either
-// case, and spaces around the name.
+// 画面で同じに見える名前は同じとみなす。全角と半角の文字、大文字と小文字、名前の前後の空白を
+// 区別しない。
 function comparableName(name: string): string {
   return name.normalize('NFKC').trim().toLocaleLowerCase();
 }
 
-/** Whether a Project the user can see already has this name. */
+/** 利用者が見られるProjectに、この名前のものがすでにあるか。 */
 export function isProjectNameTaken(name: string, existingNames: readonly string[]): boolean {
   const typed = comparableName(name);
   return typed !== '' && existingNames.some((existing) => comparableName(existing) === typed);
 }
 
 /**
- * The Projects whose name another Project in the list shares, by id: those rows need their
- * creation date to be told apart, in the switcher and before one is purged.
+ * 一覧のほかのProjectと名前が重なるProjectのid。これらの行は、Projectの切り替えと完全な削除の
+ * 前で見分けられるよう、作成日を添える必要がある。
  */
 export function idsOfSharedNames(projects: readonly Pick<Project, 'id' | 'name'>[]): Set<string> {
   const countByName = new Map<string, number>();

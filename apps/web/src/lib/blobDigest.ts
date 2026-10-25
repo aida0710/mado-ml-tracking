@@ -1,7 +1,7 @@
-// SHA-256 of a file slice for the optional X-Part-SHA256 check and for matching a resumed file.
+// ファイルの一部分のSHA-256。任意のX-Part-SHA256の確認と、再開するファイルの照合に使う。
 import { computeSha256Hex } from './sha256';
 
-/** Web Crypto exists only in secure contexts; on a plain http LAN origin the check is skipped. */
+/** Web Cryptoはsecure contextでしか使えない。LANの素のhttpのoriginでは確認を省く。 */
 export function canDigest(): boolean {
   return typeof crypto !== 'undefined' && crypto.subtle !== undefined;
 }
@@ -12,8 +12,8 @@ export async function sha256Hex(bytes: ArrayBuffer): Promise<string> {
 }
 
 /**
- * Works on plain http origins too, through the bundled implementation (about 100 MB/s on the main
- * thread). That is fine for the few parts compared before a resume, not for every part sent.
+ * 同梱の実装を使うので、素のhttpのoriginでも動く（メインスレッドで約100MB/s）。再開の前に照合する
+ * いくつかの部分には十分だが、送るすべての部分に使うには遅い。
  */
 export async function sha256HexOnAnyOrigin(bytes: ArrayBuffer): Promise<string> {
   return canDigest() ? sha256Hex(bytes) : computeSha256Hex(new Uint8Array(bytes));

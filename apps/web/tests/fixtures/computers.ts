@@ -1,6 +1,6 @@
 import type { ComputeTargetOverview } from '@mmt/contracts';
 
-// Rows of 全体設定 → コンピュータ as Bob (a researcher) sees them.
+// 全体設定 → コンピュータの行。Bob（研究者）から見たもの。
 const row: ComputeTargetOverview = {
   id: 'target',
   name: 'Container worker',
@@ -17,10 +17,10 @@ const row: ComputeTargetOverview = {
   launcher: null,
 };
 
-/** A global administrator's public ssh target, which everyone may use. */
+/** 全体管理者のpublicなssh target。全員が使える。 */
 export const publicSshOverview: ComputeTargetOverview = row;
 
-/** Alice's private PC: Bob sees it exists, not how it is reached, and may not use it. */
+/** AliceのprivateなPC: Bobにはあることは見えるが、接続のしかたは見えず、使えない。 */
 export const privatePcOverview: ComputeTargetOverview = {
   ...row,
   id: 'pc',
@@ -33,7 +33,7 @@ export const privatePcOverview: ComputeTargetOverview = {
   usable: false,
 };
 
-/** A public automatic site whose launcher last asked at a known time. */
+/** ランチャーが最後に問い合わせた時刻が分かっている、publicで自動投入のsite。 */
 export const automaticSiteOverview: ComputeTargetOverview = {
   ...row,
   id: 'site',
@@ -44,7 +44,7 @@ export const automaticSiteOverview: ComputeTargetOverview = {
   launcher: { name: 'main', lastSeenAt: '2026-10-10T00:00:00Z', revoked: false },
 };
 
-/** Bob's own private site: he uses and manages it. */
+/** Bob自身のprivateなsite: 自分で使い、管理する。 */
 export const ownSiteOverview: ComputeTargetOverview = {
   ...row,
   id: 'bob-site',

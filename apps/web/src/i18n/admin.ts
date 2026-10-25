@@ -1,7 +1,7 @@
 import * as english from './en/admin';
 import { localized } from './localized';
-// 全体設定 (/settings/<section>): its two sidebar groups, the 全体管理 sections, the user menu and
-// the account page.
+// 全体設定（/settings/<section>）の文言。サイドバーの2つのまとまり、全体管理の各セクション、
+// ユーザーメニュー、アカウントの画面。
 export const adminText = localized({
   globalSettings: '全体設定',
   administration: '全体管理',

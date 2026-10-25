@@ -1,4 +1,4 @@
-/* Code workspace editor, file tree, tasks, and execution snapshots. */
+/* コードのワークスペースのエディタ、ファイルツリー、Task、実行時のスナップショット。 */
 .workspace-form-grid {
   display: grid;
   grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
@@ -83,7 +83,7 @@
   min-width: 0;
   position: relative;
 }
-/* A saved version's file in the read-only viewer: the colored text fills the pane. */
+/* 読むだけの表示での、保存したバージョンのファイル。色分けした本文で枠を埋める。 */
 .code-files-viewer .code-preview {
   padding: 8px;
 }
@@ -127,8 +127,8 @@
 .snapshot-artifacts {
   padding-left: 20px;
 }
-/* The download links sit among file paths and digests in text color; the underline tells them
-   apart without telling colors apart (axe link-in-text-block). */
+/* ダウンロードのリンクは、文字の色のファイルパスやダイジェストに混じって並ぶ。色を見分けなくても
+   下線で区別できるようにする（axeのlink-in-text-block）。 */
 .snapshot-artifacts a {
   text-decoration: underline;
 }

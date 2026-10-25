@@ -10,9 +10,9 @@ import {
 import type { useTargetDirectoryListings } from './useTargetDirectoryListings';
 
 /**
- * The lookups of the work directory and Python fields of a computer: the candidates of `check` (the
- * newest finished one), and what the chosen worker reads of a typed directory. `refreshKey`
- * changes when another check finishes or a reading ends, so the fields look their values up again.
+ * コンピュータの作業ディレクトリとPythonの欄の候補の引き方。`check`（終わった最新の確認）の候補と、
+ * 入力したディレクトリについて選んだworkerが読んだもの。別の確認が終わるか読み込みが終わると
+ * `refreshKey`が変わり、欄が値を問い合わせ直す。
  */
 export function useTargetPathSuggestions({
   check,

@@ -18,9 +18,9 @@ export const PROMOTION_DIRECTIONS: PromotionCriterionDirection[] = ['higher', 'l
 export const PROMOTION_MODES: PromotionCriterionMode[] = ['absolute', 'delta', 'relative_delta'];
 export const PROMOTION_MISSING_BASELINE_CHOICES: PromotionMissingBaseline[] = ['pass', 'fail'];
 
-/** One editable criterion row. threshold stays the typed text until the policy is saved. */
+/** 編集できる合否基準の1行。thresholdは、policyを保存するまで入力した文字列のまま持つ。 */
 export interface PromotionCriterionDraft {
-  // Stable React key; rows can be removed from the middle of the list.
+  // 変わらないReactのkey。一覧の途中の行を消せるため。
   key: string;
   metric: string;
   direction: PromotionCriterionDirection;
@@ -52,7 +52,7 @@ export function createCriterionDraft(): PromotionCriterionDraft {
   };
 }
 
-// The candidate usually replaces the baseline, so both aliases start at the comparison default.
+// 候補はたいてい基準を置き換えるので、両方のaliasを比較の既定値で始める。
 export function createPromotionPolicyDraft(modelId: string): PromotionPolicyDraft {
   return {
     name: '',
@@ -67,14 +67,14 @@ export function createPromotionPolicyDraft(modelId: string): PromotionPolicyDraf
   };
 }
 
-/** Evaluation rules whose automatic Runs can judge versions of this Model. */
+/** 自動のRunでこのモデルのバージョンを判定できる評価ルール。 */
 export function isEvaluationRuleEligible(rule: ModelAutomationRule, model: Model): boolean {
   return rule.kind === 'evaluation' && rule.enabled && rule.modelFamilies.includes(model.family);
 }
 
 /**
- * Why no evaluation rule can be chosen for the Model: none evaluates its family, or some do but
- * are disabled (enabling one is then enough, so the dialog says that instead of "create one").
+ * モデルに選べる評価ルールが無い理由。そのモデル系列を評価するルールが無いか、あっても無効に
+ * なっている（その場合は1つ有効にすれば足りるので、ダイアログは「作成する」の代わりにそう伝える）。
  */
 export function missingEvaluationRuleReason(
   rules: readonly ModelAutomationRule[],
@@ -85,7 +85,7 @@ export function missingEvaluationRuleReason(
   return rules.some((rule) => evaluatesFamily(rule) && !rule.enabled) ? 'disabled' : 'none';
 }
 
-/** Keeps the selected evaluation rule only while it can still evaluate the selected Model. */
+/** 選んだ評価ルールは、選んだモデルをまだ評価できるあいだだけ残す。 */
 export function updatePromotionPolicyDraft({
   next,
   models,
@@ -102,7 +102,7 @@ export function updatePromotionPolicyDraft({
   return next;
 }
 
-/** A finite number with its sign kept; the sign decides improvement versus allowed regression. */
+/** 符号を保った有限の数。符号で、改善を求めるのか後退を許すのかが決まる。 */
 export function parseCriterionThreshold(value: string): number {
   const trimmed = value.trim();
   const threshold = Number(trimmed);
@@ -122,7 +122,7 @@ function buildCriterion(draft: PromotionCriterionDraft): PromotionCriterion {
   };
 }
 
-/** The criterion a row would save as, or null while the row is still incomplete or invalid. */
+/** その行を保存したときの合否基準。行がまだ不完全か不正なあいだはnull。 */
 export function previewCriterion(draft: PromotionCriterionDraft): PromotionCriterion | null {
   try {
     return buildCriterion(draft);
@@ -168,9 +168,9 @@ export function buildPromotionPolicyInput({
 }
 
 /**
- * What the threshold's sign means for a comparison with the baseline. A 'lower' metric such as
- * WER improves by going down, so -0.01 there requires improvement while +0.01 tolerates a rise.
- * Absolute criteria have no baseline, so they have no meaning here (null).
+ * 基準バージョンとの比較で、しきい値の符号が何を意味するか。WERのような'lower'のメトリクスは
+ * 下がると改善なので、そこでは-0.01は改善を求め、+0.01は上昇を許す。絶対値の合否基準には
+ * 基準バージョンが無いので、ここでの意味も無い（null）。
  */
 export type CriterionThresholdMeaning =
   'improvement_required' | 'no_regression' | 'regression_allowed';
@@ -201,7 +201,7 @@ const getThresholdFormat = memoizePerIntlLocale(
     }),
 );
 
-/** relative_delta thresholds are ratios, shown as percentages. */
+/** relative_deltaのしきい値は比率で、百分率で表示する。 */
 export function formatCriterionThreshold(
   criterion: Pick<PromotionCriterion, 'mode' | 'threshold'>,
 ): string {
@@ -210,7 +210,7 @@ export function formatCriterionThreshold(
   return thresholdFormat.format(criterion.threshold);
 }
 
-/** One-line summary such as "werの基準との差 ≤ -0.01". */
+/** "werの基準との差 ≤ -0.01"のような1行の要約。 */
 export function summarizeCriterion(criterion: PromotionCriterion): string {
   const comparator = criterion.direction === 'higher' ? '≥' : '≤';
   return `${promotionTextTemplates.criterionSubject(criterion.metric, criterion.mode)} ${comparator} ${formatCriterionThreshold(criterion)}`;

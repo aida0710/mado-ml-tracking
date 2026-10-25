@@ -22,12 +22,12 @@ import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 type AnalysisTab = 'parallel' | 'importance' | 'scatter';
-// The selected-Run list under the chart stays short; the page's own list shows them all.
+// 図の下の絞り込んだRunの一覧は短く保つ。全部はページ自身の一覧に出る。
 const SELECTED_RUN_PREVIEW_COUNT = 20;
 const SWEEP_OBJECTIVE_OPTION = '';
 
 export interface RunAnalysisPanelOptions extends RunAnalysisPanelProps {
-  /** Run IDs inside the parallel coordinates brushes, e.g. to select them in the Run list. */
+  /** 平行座標の絞り込みの範囲に入るRunのID。Runの一覧で選択するときなどに使う。 */
   onSelectionChange?: (runIds: string[]) => void;
 }
 
@@ -35,13 +35,13 @@ function targetFieldKey(target: AnalysisTarget): string {
   return target.source === 'sweep_objective' ? OBJECTIVE_FIELD_KEY : metricFieldKey(target.metric);
 }
 
-/** Parallel coordinates, parameter importance and a scatter plot over one set of Runs. */
+/** 1つのRunの集合に対する平行座標、パラメータ重要度、散布図。 */
 export function RunAnalysisPanel({ projectId, runSet, onSelectionChange }: RunAnalysisPanelOptions) {
   useLocale();
   const navigate = useNavigate();
   const [tab, setTab] = useState<AnalysisTab>('parallel');
   const [chosenTarget, setChosenTarget] = useState<AnalysisTarget | null>(null);
-  // null follows the default (most important params); a list is the user's own choice.
+  // nullなら既定（重要度の高いパラメータ）に従う。配列なら利用者自身が選んだもの。
   const [chosenParamAxes, setChosenParamAxes] = useState<string[] | null>(null);
   const [selectedRunIds, setSelectedRunIds] = useState<string[] | null>(null);
 
@@ -104,7 +104,7 @@ export function RunAnalysisPanel({ projectId, runSet, onSelectionChange }: RunAn
                 {`${text.analysisSweepObjective} (${options.objectiveMetric})`}
               </option>
             )}
-            {/* A sweep's objective metric is offered once, as the objective above. */}
+            {/* Sweepの目的のメトリクスは、上の目的値として一度だけ出す。 */}
             {options.metricKeys
               .filter((key) => key !== options.objectiveMetric)
               .map((key) => (

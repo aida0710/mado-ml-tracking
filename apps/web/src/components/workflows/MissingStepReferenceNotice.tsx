@@ -3,9 +3,9 @@ import { workflowsTextTemplates } from '../../i18n/workflows';
 import { useLocale } from '../../i18n/useLocale';
 
 /**
- * Says that a step refers to an earlier step key that is no longer there (the step was removed or
- * moved below, or its key was cleared or renamed where the reference could not follow it), so the
- * empty choice is not taken for "none".
+ * ステップが、もう存在しない前のステップのキーを参照していることを伝える（ステップを消したか
+ * 下へ動かした、またはキーを空にしたか、参照が追従できない形で名前を変えた）。空の選択を
+ * 「なし」と取り違えないようにするため。
  */
 export function MissingStepReferenceNotice({
   stepKey,

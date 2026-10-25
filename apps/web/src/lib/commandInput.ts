@@ -1,6 +1,6 @@
 import { text } from '../i18n/catalog';
 
-// Keep both normal and test commands within the API's argv bounds.
+// 通常のコマンドもテストのコマンドも、APIのargvの上限に収める。
 const MAX_COMMAND_ARGUMENTS = 100;
 const MAX_COMMAND_ARGUMENT_LENGTH = 4000;
 

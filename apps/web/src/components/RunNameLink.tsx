@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { trackingApi } from '../api/tracking';
 import { useQuery } from '../hooks/useQuery';
 
-/** A link to a Run by its name, loaded on its own; the id stays until the name arrives or if it fails. */
+/** Runへの名前のリンク。名前は自分で読み込み、届くまで、または失敗したらidのまま表示する。 */
 export function RunNameLink({ projectId, runId }: { projectId: string; runId: string }) {
   const run = useQuery({ key: `${projectId}:run:${runId}`, load: (signal) =>
     trackingApi.run(projectId, runId, signal),

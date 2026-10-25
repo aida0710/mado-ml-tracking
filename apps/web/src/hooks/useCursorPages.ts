@@ -17,7 +17,7 @@ export interface CursorPagesState<T> {
 }
 
 interface LoadedPages<T> {
-  /** The key and reload count these pages belong to; a new pair starts over. */
+  /** これらのページがどのキーと読み直しの回数のものか。組が変わったら最初からにする。 */
   key: string | null;
   revision: number;
   items: T[];
@@ -30,8 +30,8 @@ function noPages<T>(key: string | null, revision: number): LoadedPages<T> {
 }
 
 /**
- * Reads the first page for a key and appends later pages on demand. A new key starts over, so
- * the key must cover every filter the loader uses. Pass null to send no request.
+ * キーに対して最初のページを読み、後のページは必要になったときに後ろへ足す。キーが変わると
+ * 最初からにするので、キーには読み込み関数が使う絞り込みをすべて含める。nullを渡すと要求を送らない。
  */
 export function useCursorPages<T>(
   key: string | null,
@@ -41,18 +41,18 @@ export function useCursorPages<T>(
   const { message: error, setFailure, clearFailure } = useFailureMessage();
   const [revision, setRevision] = useState(0);
   const [storedPages, setPages] = useState<LoadedPages<T>>(() => noPages(key, revision));
-  // A new key or a reload empties the list in this very render and marks its first page as loading.
+  // キーが変わるか読み直すと、このレンダリングの中で一覧を空にし、最初のページを読み込み中にする。
   const isStoredPagesCurrent = storedPages.key === key && storedPages.revision === revision;
   const pages = isStoredPagesCurrent ? storedPages : noPages<T>(key, revision);
   if (!isStoredPagesCurrent) {
     setPages(pages);
     clearFailure();
   }
-  // Aborts the in-flight page when the key changes or the list is reloaded.
+  // キーが変わるか一覧を読み直したら、読み込み中のページを中止する。
   const controllerRef = useRef<AbortController | null>(null);
 
-  // Callers mark the page as loading first: the render-time reset for the first page, loadMore
-  // for the next ones. This only requests it and stores the answer.
+  // ページを読み込み中にするのは呼び出し側（最初のページはレンダリング中のリセット、次のページは
+  // loadMore）。ここでは要求して応答を保存するだけ。
   const load = useCallback(async (cursor: string | undefined) => {
     controllerRef.current?.abort();
     const controller = new AbortController();

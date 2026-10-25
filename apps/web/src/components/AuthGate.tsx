@@ -23,7 +23,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   return (
     <Resource query={session}>
       {({ config, user, mustChangePassword }) =>
-        // The API refuses every other request until the password changes, so no app screen is shown.
+        // パスワードを変えるまでAPIはほかの要求をすべて断るので、アプリの画面は出さない。
         user && mustChangePassword ? (
           <RequiredPasswordChangePage onChanged={session.reload} />
         ) : user ? (

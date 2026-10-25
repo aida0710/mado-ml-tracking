@@ -92,7 +92,7 @@ describe('matchFileToSession', () => {
   it('最初と最後のpartが同じでも、間のpartが違えば続きにしない', async () => {
     const sent = randomBytes(PART_COUNT * PART_SIZE);
     const finetuned = Uint8Array.from(sent);
-    // Only the middle layers changed, as in a fine-tune that froze the embedding and output layers.
+    // 埋め込み層と出力層を固定したファインチューニングのように、中間の層だけが変わった。
     finetuned.set(randomBytes(PART_SIZE * 3), PART_SIZE * 3);
     const file = new Blob([finetuned]);
     expect(

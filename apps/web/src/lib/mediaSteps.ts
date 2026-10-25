@@ -1,13 +1,13 @@
-// Steps of Run media: the slider only stops at steps that were recorded, comparisons pick
-// columns from recorded steps, and switching between players keeps the playback position.
+// Runのメディアのstep。スライダーは記録したstepにだけ止まり、比較は記録したstepから列を選び、
+// プレーヤーを切り替えても再生位置を保つ。
 import { MEDIA_COMPARE_MAX_STEPS, type RunMedia } from '@mmt/contracts';
 
-/** Recorded steps in ascending order, without duplicates. */
+/** 記録したstepを、重複を除いて昇順に並べたもの。 */
 export function sortedSteps(steps: Iterable<number>): number[] {
   return [...new Set(steps)].sort((left, right) => left - right);
 }
 
-/** Media of one key grouped by step; the steps come out in ascending order. */
+/** 1つのキーのメディアをstepごとにまとめたもの。stepは昇順に出る。 */
 export function groupMediaByStep(items: readonly RunMedia[]): Map<number, RunMedia[]> {
   const groups = new Map<number, RunMedia[]>();
   for (const step of sortedSteps(items.map((item) => item.step))) groups.set(step, []);
@@ -16,9 +16,8 @@ export function groupMediaByStep(items: readonly RunMedia[]): Map<number, RunMed
 }
 
 /**
- * The recorded step closest to `target`. A tie goes to the earlier step so that moving to
- * another key never shows media from later in training than the user was looking at.
- * null when nothing was recorded.
+ * `target`に最も近い記録済みのstep。同じ近さなら前のstepを選び、ほかのキーへ移っても、利用者が
+ * 見ていたより学習の後のメディアを出さないようにする。何も記録していなければnull。
  */
 export function nearestStep(steps: readonly number[], target: number): number | null {
   let nearest: number | null = null;
@@ -27,13 +26,13 @@ export function nearestStep(steps: readonly number[], target: number): number | 
   return nearest;
 }
 
-// PageUp/PageDown move this many recorded steps, for keys logged at every step of a long run.
+// PageUp/PageDownで、記録したstepをこの数だけ移る。長いRunの毎stepで記録したキーのため。
 export const STEP_PAGE_JUMP = 10;
 
 /**
- * Index into `steps` after a key press on the step slider, or null for keys the slider ignores.
- * Movement stops at both ends instead of wrapping: wrapping would jump from the last checkpoint
- * back to the first without the user noticing.
+ * stepのスライダーでキーを押した後の`steps`の位置。スライダーが無視するキーではnull。
+ * 両端で止まり、反対の端へは回らない。回ると、利用者が気づかないうちに最後のcheckpointから
+ * 最初へ飛んでしまう。
  */
 export function stepIndexAfterKey(stepCount: number, currentIndex: number, key: string): number | null {
   if (stepCount === 0) return null;
@@ -60,8 +59,8 @@ export function stepIndexAfterKey(stepCount: number, currentIndex: number, key: 
 }
 
 /**
- * Up to `count` recorded steps spread evenly from the first to the last, always including both
- * ends. Only recorded steps are returned, so a comparison never asks for steps nobody logged.
+ * 最初から最後まで均等に散らした、最大`count`個の記録済みのstep。両端は必ず含める。記録した
+ * stepだけを返すので、比較が誰も記録していないstepを求めることはない。
  */
 export function evenlySpacedSteps(steps: readonly number[], count = MEDIA_COMPARE_MAX_STEPS): number[] {
   const sorted = sortedSteps(steps);
@@ -74,9 +73,9 @@ export function evenlySpacedSteps(steps: readonly number[], count = MEDIA_COMPAR
 }
 
 /**
- * Where the next player starts when switching cells for an A/B comparison: the same moment as the
- * previous player. When the next file is shorter than that moment, it starts from the beginning
- * instead of ending at once. An unknown duration (metadata not loaded yet) keeps the position.
+ * A/B比較でセルを切り替えたとき、次のプレーヤーが始まる位置。前のプレーヤーと同じ時点にする。
+ * 次のファイルがその時点より短ければ、すぐ終わってしまわないよう最初から始める。長さが
+ * 分からない（metadataをまだ読み込んでいない）ときは位置を保つ。
  */
 export function handoffPosition(previousSeconds: number, nextDurationSeconds: number | null): number {
   if (!Number.isFinite(previousSeconds) || previousSeconds <= 0) return 0;
@@ -84,7 +83,7 @@ export function handoffPosition(previousSeconds: number, nextDurationSeconds: nu
   return previousSeconds < nextDurationSeconds ? previousSeconds : 0;
 }
 
-/** A playing (or paused) position handed from the previous player to the next one. */
+/** 前のプレーヤーから次のプレーヤーへ渡す、再生中（または一時停止中）の位置。 */
 export interface PlaybackHandoff {
   seconds: number;
   playing: boolean;
@@ -95,13 +94,13 @@ export function playbackHandoffFrom(element: Pick<HTMLMediaElement, 'currentTime
   return { seconds: element.currentTime, playing: !element.paused };
 }
 
-/** A cell of the Run × step comparison grid. */
+/** Run × stepの比較の格子のセル。 */
 export interface GridPosition {
   row: number;
   column: number;
 }
 
-/** The cell after an arrow/Home/End key in the comparison grid, or null for other keys. */
+/** 比較の格子で矢印・Home・Endのキーを押した後のセル。ほかのキーではnull。 */
 export function gridPositionAfterKey(
   size: { rows: number; columns: number },
   current: GridPosition,
@@ -128,7 +127,7 @@ export function gridPositionAfterKey(
   }
 }
 
-/** A step kept in the URL; null when the parameter is missing or not a step, so the latest is shown. */
+/** URLに残したstep。パラメータが無いかstepでなければnullで、最新のstepを出す。 */
 export function parseStepParam(value: string | null): number | null {
   if (value === null || !/^\d+$/.test(value)) return null;
   const step = Number(value);

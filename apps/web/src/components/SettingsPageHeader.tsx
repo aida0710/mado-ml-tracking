@@ -9,9 +9,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * The heading of a 全体設定 screen: its name, with the sidebar group it belongs to (「全体設定」 or
- * 「全体管理」) above it, and its actions. A page inside a section, such as the password change in
- * the account section, passes its own title.
+ * 全体設定の画面の見出し。画面の名前と、その上に属するサイドバーのグループ（「全体設定」か
+ * 「全体管理」）、そして操作を置く。アカウントの区分の中のパスワードの変更のように、区分の中の
+ * ページは自分のタイトルを渡す。
  */
 export function SettingsPageHeader({
   section,

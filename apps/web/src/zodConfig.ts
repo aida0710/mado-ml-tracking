@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-// The screens run under a Content-Security-Policy without 'unsafe-eval' (deploy/nginx.conf). Zod
-// otherwise probes `new Function` when it builds an object schema, to compile a faster parser, and
-// the browser reports that probe as a violation even though Zod falls back. Parsing without the
-// compiled parser is fast enough for the responses the screens check. Zod reads this setting when
-// a schema is built, so main.tsx imports this module before anything that defines schemas.
+// 画面は'unsafe-eval'を含まないContent-Security-Policyの下で動く（deploy/nginx.conf）。この設定が
+// 無いと、Zodはobjectのschemaを作るときに、速いパーサーをコンパイルするため`new Function`を試す。
+// Zodはその後コンパイルしないパーサーで続けるが、ブラウザはその試みを違反として報告する。画面が
+// 確かめる応答の量なら、コンパイルしたパーサーが無くても十分に速い。Zodはこの設定をschemaを作る
+// ときに読むので、main.tsxはschemaを定義するどのモジュールよりも先にこのモジュールをimportする。
 z.config({ jitless: true });

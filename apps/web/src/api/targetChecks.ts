@@ -8,17 +8,17 @@ import { encodeId, jsonRequest, request, requestItems } from './http';
 
 const targetPath = (targetId: string) => `/targets/${encodeId(targetId)}`;
 
-// Checks and directory listings are global-administrator operations; the API answers 403 to others.
+// 接続確認とディレクトリの読み取りは全体管理者の操作。ほかの人にはAPIが403を返す。
 export const targetChecksApi = {
   list: (targetId: string, signal?: AbortSignal) =>
     requestItems<TargetCheck>(`${targetPath(targetId)}/checks`, signal),
-  /** Without `worker`, a worker whose MMT_WORKER_TARGET_IDS names the computer checks it. */
+  /** `worker`を省くと、MMT_WORKER_TARGET_IDSにそのコンピュータがあるworkerが確認する。 */
   request: (targetId: string, worker?: TargetCheckWorker) =>
     request<TargetCheck>(
       `${targetPath(targetId)}/checks`,
       worker ? jsonRequest('POST', { worker }) : { method: 'POST' },
     ),
-  /** Online workers one may ask, with the SSH files they found on their hosts. */
+  /** 依頼できるオンラインのworkerと、それぞれがホストで見つけたSSHのファイル。 */
   workers: (signal?: AbortSignal) =>
     requestItems<TargetCheckWorkerPresence>('/targets/check-workers', signal),
   requestDirectoryListing: (

@@ -150,7 +150,7 @@ try {
   saveGate = undefined;
   releaseSave();
   await (await completed).finished();
-  // Give React the next paint after the response body was consumed, without a timed sleep.
+  // 応答の本文を読み終えたあと、時間で待たずにReactへ次の描画の機会を与える。
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
   assert.equal(page.url(), currentUrl, 'The earlier Project save changed the current navigation');
   assert.equal(

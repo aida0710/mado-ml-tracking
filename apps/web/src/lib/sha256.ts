@@ -1,18 +1,19 @@
-// SHA-256 (FIPS 180-4) in plain JavaScript. Web Crypto exists only in secure contexts, and a LAN
-// server opened over plain http is not one, yet resuming an upload still has to compare parts.
+// 素のJavaScriptで書いたSHA-256（FIPS 180-4）。Web Cryptoは安全なコンテキストにしか無く、素の
+// httpで開いたLANのサーバーはそれに当たらないが、アップロードの再開ではやはりpartを比べる
+// 必要がある。
 
 const BLOCK_BYTES = 64;
 const WORD_BYTES = 4;
-// A block is read as 16 big-endian words, the first words of the message schedule.
+// ブロックを16個のビッグエンディアンの語として読み、メッセージスケジュールの先頭にする。
 const BLOCK_WORDS = BLOCK_BYTES / WORD_BYTES;
 const SCHEDULE_WORDS = 64;
 const BITS_PER_BYTE = 8;
-// The message length is appended as a 64-bit big-endian bit count after the 0x80 marker byte.
+// メッセージの長さは、0x80の目印のバイトの後に64ビットのビッグエンディアンのビット数で足す。
 const LENGTH_FIELD_BYTES = 8;
 const MARKER_BYTE = 0x80;
 const TWO_TO_32 = 2 ** 32;
 
-/** First 32 bits of the fractional parts of the cube roots of the first 64 primes. */
+/** 最初の64個の素数の立方根の小数部の、先頭32ビット。 */
 const ROUND_CONSTANTS = new Uint32Array([
   0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
   0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
@@ -23,31 +24,31 @@ const ROUND_CONSTANTS = new Uint32Array([
   0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
   0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
 ]);
-/** First 32 bits of the fractional parts of the square roots of the first 8 primes. */
+/** 最初の8個の素数の平方根の小数部の、先頭32ビット。 */
 const INITIAL_HASH = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
 
 const rotateRight = (word: number, bits: number) => (word >>> bits) | (word << (32 - bits));
 
 /**
- * The running hash, and the message schedule each block is expanded into. The schedule buffer is
- * reused for every block so that hashing a large part allocates nothing per block.
+ * 途中のハッシュ値と、各ブロックを展開するメッセージスケジュール。スケジュールのバッファはどの
+ * ブロックでも使い回し、大きなpartをハッシュしてもブロックごとの割り当てが起きないようにする。
  */
 interface HashState {
   hash: Uint32Array;
   schedule: Uint32Array;
 }
 
-/** Lowercase hex digest, the same form the API stores for each received part. */
+/** 小文字の16進のダイジェスト。APIが受け取ったpartごとに保存するのと同じ形。 */
 export function computeSha256Hex(bytes: Uint8Array): string {
   const hasher = createSha256();
   hasher.update(bytes);
   return hasher.digestHex();
 }
 
-/** A digest fed in pieces, so a file larger than memory is hashed one slice at a time. */
+/** 少しずつ与えるダイジェスト。メモリより大きなファイルも1切れずつハッシュできる。 */
 export interface Sha256Hasher {
   update(bytes: Uint8Array): void;
-  /** Ends the message; the hasher is not used afterwards. */
+  /** メッセージを終える。その後はこのhasherを使わない。 */
   digestHex(): string;
 }
 
@@ -56,7 +57,7 @@ export function createSha256(): Sha256Hasher {
     hash: Uint32Array.from(INITIAL_HASH),
     schedule: new Uint32Array(SCHEDULE_WORDS),
   };
-  // Bytes of an unfinished block, kept until the next update completes it.
+  // 未完成のブロックのバイト列。次のupdateで埋まるまで持っておく。
   const pending = new Uint8Array(BLOCK_BYTES);
   const pendingView = new DataView(pending.buffer);
   let pendingLength = 0;
@@ -94,10 +95,10 @@ export function createSha256(): Sha256Hasher {
   };
 }
 
-/** Folds the block at `offset` of `view` into the running hash. */
+/** `view`の`offset`にあるブロックを、途中のハッシュ値に畳み込む。 */
 function compressBlock({ hash, schedule }: HashState, view: DataView, offset: number) {
   for (let index = 0; index < BLOCK_WORDS; index += 1) schedule[index] = view.getUint32(offset + index * WORD_BYTES);
-  // Each later word mixes the words 16, 15, 7 and 2 places before it (FIPS 180-4, 6.2.2 step 1).
+  // 後ろの語はそれぞれ、16、15、7、2個前の語を混ぜる（FIPS 180-4、6.2.2のstep 1）。
   for (let index = BLOCK_WORDS; index < SCHEDULE_WORDS; index += 1) {
     const before15 = schedule[index - 15]!;
     const before2 = schedule[index - 2]!;

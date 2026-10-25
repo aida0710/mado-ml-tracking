@@ -8,7 +8,7 @@ describe('色のコントラスト', () => {
   });
 
   it('WCAG の例と同じ値になり、引数の順に依らない', () => {
-    // #767676 on white is the usual 4.5:1 boundary gray.
+    // 白地の#767676は、よく使われる4.5:1の境目の灰色。
     expect(contrastRatio(parseHexColor('#767676'), parseHexColor('#ffffff'))).toBeCloseTo(4.54, 2);
     expect(contrastRatio(parseHexColor('#ffffff'), parseHexColor('#767676'))).toBeCloseTo(4.54, 2);
   });

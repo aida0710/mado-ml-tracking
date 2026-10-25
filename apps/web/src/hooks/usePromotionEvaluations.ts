@@ -9,18 +9,18 @@ export interface PromotionEvaluationsState extends CursorPagesState<PromotionEva
   reevaluateError: string | null;
 }
 
-// Pages through one policy's evaluations, newest first. Pass policyId null when none is selected.
+// 1つの昇格policyの評価を、新しい順にページごとに読む。選んでいないときはpolicyIdにnullを渡す。
 export function usePromotionEvaluations(
   projectId: string,
   policyId: string | null,
 ): PromotionEvaluationsState {
   const mutation = useMutation();
-  // The key is null without a policy, so the loader only runs with one.
+  // 昇格policyが無いとキーがnullになるので、読み込み関数は昇格policyがあるときだけ動く。
   const pages = useCursorPages(
     policyId === null ? null : `${projectId}:promotion-evaluations:${policyId}`,
     (cursor, signal) => promotionApi.evaluations(projectId, { policyId: policyId!, cursor, signal }),
   );
-  // A re-evaluation appends a new row, so the first page is fetched again to show it on top.
+  // 再評価は新しい行を足すので、最初のページを取り直して一番上に出す。
   async function reevaluate(evaluationId: string) {
     const created = await mutation.run(() => promotionApi.reevaluate(projectId, evaluationId));
     if (created) pages.reload();

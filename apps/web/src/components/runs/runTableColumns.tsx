@@ -1,4 +1,4 @@
-/** The columns of the Run list that the saved view chose, and how each one is drawn. */
+/** 保存ビューが選んだRunの一覧の列と、各列の描き方。 */
 import type { ReactNode } from 'react';
 import { RUN_NOTE_TAG, type Run, type SavedViewColumn } from '@mmt/contracts';
 import { RunStatusBadge } from './RunStatusBadge';
@@ -16,10 +16,10 @@ interface RunColumn {
   className?: string;
 }
 
-/** A column of the saved view with how it is drawn. */
+/** 保存ビューの列と、その描き方。 */
 export interface ShownRunColumn extends RunColumn {
   key: string;
-  /** The width the user dragged the column to; undefined fits the content. */
+  /** 利用者がドラッグして決めた列の幅。undefinedなら中身に合わせる。 */
   width?: number;
 }
 
@@ -32,7 +32,7 @@ const groupLabel = (group: string, name: string) => (
   </>
 );
 
-/** How a movable column key is drawn; unknown keys from a newer client are skipped. */
+/** 移動できる列のキーの描き方。新しいクライアントが作った知らないキーは飛ばす。 */
 function runColumn(key: string): RunColumn | null {
   const [group, ...rest] = key.split('.');
   const name = rest.join('.');
@@ -48,7 +48,7 @@ function runColumn(key: string): RunColumn | null {
       render: (run) => <CompactValue value={getRunParameters(run)[name]} />,
       className: 'mono',
     };
-  // The description has its own column; as a tag it would fill the row with raw Markdown.
+  // 説明には専用の列がある。タグとして出すと、生のMarkdownで行が埋まってしまう。
   if (group === 'tags' && name && name !== RUN_NOTE_TAG)
     return {
       label: groupLabel(text.tags, name),
@@ -87,7 +87,7 @@ function runColumn(key: string): RunColumn | null {
   }
 }
 
-/** The saved view's columns this client knows how to draw, in their order and width. */
+/** 保存ビューの列のうち、このクライアントが描けるもの。その順と幅で並べる。 */
 export function shownRunColumns(columns: readonly SavedViewColumn[]): ShownRunColumn[] {
   return columns.flatMap((column) => {
     const definition = runColumn(column.key);

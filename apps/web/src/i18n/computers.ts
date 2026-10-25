@@ -2,13 +2,13 @@ import * as english from './en/computers';
 import { localized } from './localized';
 import type { ComputeTargetVisibility } from '@mmt/contracts';
 
-// 全体設定 → コンピュータ (/settings/computers): every computer with its visibility and state, and
-// the read-only list of the computers one may use on the Project's Compute page.
+// 全体設定 → コンピュータ（/settings/computers）の文言。すべてのコンピュータとその公開範囲・状態、
+// ProjectのComputeの画面に出す、利用者が使えるコンピュータを読むだけの一覧。
 export const computersText = localized({
   computersHint:
     'すべてのコンピュータが出ます。自分が使えないもの（他の人のPrivate）は、名前・種類・所有者・公開範囲・状態だけを出します。',
   noComputers: 'コンピュータはまだありません',
-  // When the computer of a Job, Task, hook or automation rule is no longer in the list of all computers.
+  // Job・Task・フック・自動実行ルールのコンピュータが、すべてのコンピュータの一覧にもう無いとき。
   computerDeleted: '削除されたコンピュータ',
   computerKind: '種類',
   computerOwner: '所有者',
@@ -33,7 +33,7 @@ export const computersText = localized({
     'このプロジェクトで自分が使えるコンピュータです。追加・設定・job shell・鍵は、全体設定の「コンピュータ」で扱います。',
   openComputerSettings: '全体設定の「コンピュータ」を開く',
   computerId: 'コンピュータID',
-  // A computer's details: the worker that takes its Jobs, with the computer's ID filled in.
+  // コンピュータの詳細。そのJobを受け取るworkerの設定を、コンピュータのIDを埋めて出す。
   workerSetupTitle: 'workerの設定',
   workerSetupHint:
     'このコンピュータのJobは、このIDを--target-ids（MMT_WORKER_TARGET_IDS）に含むworkerが実行します。workerのマシンで次のコマンドを実行します。ほかのコンピュータも受け持つworkerでは、IDをカンマで区切って並べます。',
@@ -45,7 +45,7 @@ export const computersText = localized({
   workerSetupEnvironmentCommands: '環境変数（tokenは実行時に入力）とworkerの起動',
 } as const, english.computersText);
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const computersTextTemplates = localized({
   computerLauncherSeen: (name: string, lastSeen: string) => `${name}（最終応答 ${lastSeen}）`,
   workerSetUpBy: (ownerName: string) => `所有者（${ownerName}さん）か全体管理者が設定します。`,

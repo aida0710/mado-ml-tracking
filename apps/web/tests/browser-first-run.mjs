@@ -1,11 +1,11 @@
-// A first-time user's path with a mocked API (usability audit A): a Project without Experiments
-// offers to create the first one instead of a Run; an Experiment without Runs opens the SDK guide
-// and says what to do next; a name already taken offers that Experiment; every token button opens
-// one dialog whose purpose chooses the scopes, and the issued token is copied apart from a settings
-// example that holds no token; a filter that does not suit its field shows the corrected filter
-// without a retry; a Run's page names its Experiment and copies its ID; a new Project states its
-// default storage and folds the others away. At 390px the empty Experiment list is not cut and
-// nothing scrolls sideways. MMT_SCREENSHOT_DIR receives screenshots.
+// モックのAPIを相手にした、初めての利用者がたどる道筋の確認（使いやすさの監査A）。Experimentの無い
+// ProjectはRunではなく最初のExperimentを作るよう勧める。Runの無いExperimentはSDKで記録する案内を
+// 開き、次にすることを伝える。使われている名前を入れるとそのExperimentを勧める。どのtokenのボタンも
+// 1つのダイアログを開き、用途でscopeが決まる。発行したtokenは、tokenを含まない設定の例とは別に
+// コピーする。欄に合わないフィルタは、再試行させずに直したフィルタを示す。Runの画面は所属する
+// Experimentを示し、IDをコピーできる。新しいProjectは既定の保存先を明示し、ほかは畳んでおく。
+// 390pxでは空のExperimentの一覧が切れず、横にスクロールするものも無い。MMT_SCREENSHOT_DIRに
+// スクリーンショットを保存する。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -20,7 +20,7 @@ const outputDirectory = process.env.MMT_SCREENSHOT_DIR;
 if (outputDirectory) await mkdir(outputDirectory, { recursive: true });
 const DESKTOP = { width: 1440, height: 960 };
 const PHONE = { width: 390, height: 844 };
-// What the mock answers for a filter the API cannot run, like the API's 400.
+// APIが実行できないフィルタへのモックの応答。APIの400と同じもの。
 const REJECTED_FILTER = 'attributes.unknown_attribute = 1';
 const REJECTION_MESSAGE = '未対応の検索属性です: unknown_attribute';
 
@@ -31,7 +31,7 @@ const browser = await chromium.launch({
 });
 const pageErrors = [];
 
-/** Opens `path(api)` of the mocked Project after `prepare(api.state)` shapes the data. */
+/** `prepare(api.state)`でデータを整えてから、モックのProjectの`path(api)`を開く。 */
 async function openPage({ path, prepare = () => {}, viewport = DESKTOP, role = 'admin' }) {
   const context = await browser.newContext({ locale: 'ja-JP', viewport });
   await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: base });
@@ -88,7 +88,7 @@ try {
     await header.getByRole('button', { name: '最初の実験を作成' }).waitFor();
     assert.equal(await header.getByRole('button', { name: 'Runを作成' }).count(), 0);
     await empty.page.getByText(/^まだ実験がありません。実験は、同じ目的のRunをまとめる単位です/).waitFor();
-    // The Experiment list says so in one short line that its box does not cut.
+    // Experimentの一覧も、枠で切れない短い1行でそう伝える。
     const sidebarEmpty = empty.page.locator('.experiment-sidebar-empty');
     await sidebarEmpty.waitFor();
     const [lineBox, sidebarBox] = await Promise.all([
@@ -112,7 +112,7 @@ try {
     await dialog.getByRole('button', { name: '保存' }).click();
     await dialog.waitFor({ state: 'detached' });
     await empty.page.waitForURL(/experiment=/);
-    // The new Experiment has no Run, so the guide to recording opens by itself.
+    // 新しいExperimentにはRunが無いので、SDKで記録する案内が自動で開く。
     await empty.page.locator('section.recording-connection').waitFor();
     assert.equal(
       await header.getByRole('button', { name: 'SDKで記録' }).getAttribute('aria-expanded'),
@@ -141,7 +141,7 @@ try {
   const toggle = firstRun.page.getByRole('button', { name: 'SDKで記録' });
   await toggle.click();
   assert.equal(await guide.count(), 0);
-  // An Experiment with Runs keeps the guide closed until asked.
+  // RunのあるExperimentでは、求められるまで案内を閉じておく。
   await firstRun.page
     .locator('.experiment-item', { hasText: firstRun.api.state.experiments[0].name })
     .click();
@@ -179,12 +179,12 @@ try {
     'the refused filter was sent',
   );
   await screenshot(firstRun.page, '04-filter-kind-error');
-  // A filter the API refuses is shown the same way, without a retry button.
+  // APIが断ったフィルタも同じように示し、再試行のボタンは出さない。
   await search.fill(REJECTED_FILTER);
   await search.press('Enter');
   await firstRun.page.getByText(REJECTION_MESSAGE).waitFor();
   assert.equal(await firstRun.page.getByRole('button', { name: '再試行' }).count(), 0);
-  // A comparison without metrics. is searched as a name, and the filter it meant is offered.
+  // metrics.の無い比較の式はRunの名前として探し、意図したはずのフィルタを示す。
   await search.fill('loss < 0.2');
   await search.press('Enter');
   await firstRun.page.getByText(/「loss < 0\.2」はRun名として探しました/).waitFor();
@@ -206,13 +206,13 @@ try {
       .evaluateAll((elements) =>
         elements.map((element) => element.closest('label').textContent.split(' — ')[0].trim()),
       );
-  // The plain button starts from recording too, so the token works with the SDKs as issued.
+  // 用途の付いていないボタンも記録から始まるので、発行したままのtokenがSDKで使える。
   assert.equal(
     await tokenDialog.getByRole('radio', { name: 'SDK・MLflow 3から記録する' }).isChecked(),
     true,
   );
   assert.deepEqual(await checkedScopes(), ['read', 'runs:write', 'registry:write', 'artifacts:write']);
-  // A person's token is not offered for a worker.
+  // 人に発行するtokenでは、worker用の用途を出さない。
   assert.equal(await tokenDialog.getByRole('radio', { name: 'workerとしてJobを実行する' }).count(), 0);
   await tokenDialog.getByRole('radio', { name: '読み取りだけ' }).check();
   assert.deepEqual(await checkedScopes(), ['read']);
@@ -267,7 +267,7 @@ try {
   assert.equal(await projectDialog.getByRole('radio', { name: /^s3/ }).count(), 0);
   await projectDialog.getByText('ほかの保存先を選ぶ', { exact: true }).click();
   await projectDialog.getByRole('radio', { name: /^s3/ }).check();
-  // Choosing the default again keeps the list open.
+  // 既定を選び直しても一覧は開いたまま。
   await projectDialog.getByRole('radio', { name: /^filesystem/ }).check();
   await projectDialog.getByRole('radio', { name: /^s3/ }).check();
   await screenshot(creation.page, '09-new-project-storage');

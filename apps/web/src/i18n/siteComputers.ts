@@ -8,8 +8,8 @@ import type {
 } from '@mmt/contracts';
 import type { JobShellTemplateKey } from '../lib/jobShellTemplates';
 
-// Computers added on the Web: the site settings of the target dialog, the owner in the lists, and
-// a site's details (job shell, keys and checks, personal settings, submit).
+// Webで追加したコンピュータ。コンピュータのダイアログのsiteの設定、一覧の所有者、siteの詳細
+// （job shell、鍵と確認、個人の設定、投入）。
 export const siteComputersText = localized({
   siteSubmissionSection: '投入と接続',
   siteExecutionSection: 'siteでの実行',
@@ -133,7 +133,7 @@ export const siteComputersText = localized({
     '所有者: Publicにしたコンピュータで、ほかの人のJobも待ち受けて投入する（あなたのアカウントで動きます）',
   manualGuideAllScope:
     '--allで受け取るのは、使ったtokenのProjectのJobです。複数のProjectのJobを受け取るときは、Projectごとに、そのProjectのtokenで--watch --allを動かします。',
-  // Set up once on a manual site before `mado-tracking submit`.
+  // 手動のsiteで、`mado-tracking submit`の前に一度だけ行う準備。
   submitSetupTitle: '初めて投入するとき（コマンドの導入・接続先・API token）',
   submitSetupInstall: 'mado-trackingを入れてPATHに足す（Python 3.11以上）',
   submitSetupToken:
@@ -142,10 +142,10 @@ export const siteComputersText = localized({
   submitSetupEnvironment: '接続先とAPI token（tokenは実行時に入力）',
 } as const, english.siteComputersText);
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const siteComputersTextTemplates = localized({
-  // Someone else's manual computer may be their PC (they take everyone's Jobs) or, for example, a
-  // supercomputer each requester submits to with their own account.
+  // ほかの人の手動のコンピュータは、その人のPC（全員のJobをその人が受け取る）のこともあれば、
+  // 依頼した人がそれぞれ自分のアカウントで投入するスーパーコンピュータなどのこともある。
   manualGuideOwnerSubmits: (owner: string) =>
     `このコンピュータは${owner}さんのコンピュータです。所有者が--watch --allで待ち受けているコンピュータ（所有者のPCなど）では、所有者の側で投入されます。`,
   siteJumpHostError: (value: string) =>

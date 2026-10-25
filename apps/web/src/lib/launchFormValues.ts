@@ -13,7 +13,7 @@ import { getFieldValue, getSelectedValues, parseJsonObject, parseStringMap } fro
 import { applyLaunchFormChange, type ClearedLaunchChoice } from './launchFormChanges';
 import { isTargetCompatible } from './runtimeValidation';
 
-/** What the launch form chooses from: the Project's code and model versions and its computers. */
+/** 実行のフォームで選ぶ元になるもの。Projectのコードバージョンとモデルバージョン、コンピュータ。 */
 export interface LaunchCandidates<Target extends ComputeTarget> {
   codeVersions: readonly CodeVersion[];
   modelVersions: readonly ModelVersion[];
@@ -21,21 +21,21 @@ export interface LaunchCandidates<Target extends ComputeTarget> {
   checkpointCodeId?: string | null;
 }
 
-/** What the form's values choose, and which code versions and computers fit those choices. */
+/** フォームの値が選んでいるものと、その選択に合うコードバージョンとコンピュータ。 */
 export interface LaunchChoices<Target extends ComputeTarget> {
   kind: RunKind;
   model: ModelVersion | undefined;
-  /** The code versions that run the chosen kind and model version. */
+  /** 選んだ種類とモデルバージョンを実行できるコードバージョン。 */
   compatibleCodes: CodeVersion[];
-  /** How many code versions the form leaves out because they do not. */
+  /** 実行できないためにフォームが外したコードバージョンの数。 */
   hiddenCodeCount: number;
   selectedCode: CodeVersion | undefined;
   target: Target | undefined;
-  /** The computers with the chosen code version's runtime; none until a code is chosen. */
+  /** 選んだコードバージョンのRuntimeを持つコンピュータ。コードを選ぶまでは無い。 */
   compatibleTargets: Target[];
 }
 
-/** The form for a new Run, or for the Job of an existing queued Run (its settings filled in). */
+/** 新しいRunのフォームか、既にある待機中のRunのJobのフォーム（Runの設定を埋めたもの）。 */
 export function initialLaunchValues(existingRun: Run | undefined): FormValues {
   return {
     name: existingRun?.name ?? '',
@@ -92,8 +92,8 @@ export function launchChoices<Target extends ComputeTarget>(
 }
 
 /**
- * Applies an edit of the form. A code version that no longer runs the chosen kind and model, or a
- * computer that lacks the chosen code's runtime, is dropped (applyLaunchFormChange says which).
+ * フォームの編集を当てる。選んだ種類とモデルを実行しなくなったコードバージョンや、選んだコードの
+ * Runtimeが無いコンピュータは外す（どれを外したかはapplyLaunchFormChangeが伝える）。
  */
 export function changeLaunchValues<Target extends ComputeTarget>({
   previous,
@@ -117,8 +117,8 @@ export function changeLaunchValues<Target extends ComputeTarget>({
 }
 
 /**
- * The Run the form describes. Throws the parse error of a JSON field that is not an object (or,
- * for tags, not a map of strings), so the setup step can stop there.
+ * フォームが表すRun。オブジェクトでないJSONの項目（タグなら文字列のマップでないもの）があれば、
+ * その読み取りのエラーを投げ、設定の手順をそこで止められるようにする。
  */
 export function launchRunInput(values: FormValues): CreateRun {
   return {

@@ -13,8 +13,8 @@ const groupingLabels: Record<GroupingKind, string> = {
 };
 
 /**
- * Chooses how Runs are grouped: by a tag, a param or the Experiment. `tagKeys` and `paramKeys`
- * are suggestions from the listed Runs; any key can be typed.
+ * Runをどうグループ化するかを選ぶ。タグ、パラメータ、Experimentのどれか。`tagKeys`と
+ * `paramKeys`は一覧のRunから作った候補で、どのキーでも入力できる。
  */
 export function RunGroupingControl({
   value,
@@ -36,7 +36,7 @@ export function RunGroupingControl({
     if (next === 'none') return onChange(undefined);
     if (next === 'experiment') return onChange({ kind: 'experiment' });
     const known = next === 'tag' ? tagKeys : paramKeys;
-    // A tag or param grouping needs a key; start from the first one the listed Runs have.
+    // タグかパラメータでのグループ化にはキーが要る。一覧のRunが持つ最初のキーから始める。
     const key = value?.kind === next ? value.key : known[0];
     onChange(key ? { kind: next, key } : { kind: next, key: '' });
   }

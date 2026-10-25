@@ -20,8 +20,8 @@ import {
 import { text } from '../i18n/catalog';
 import { formatNote } from '../i18n/textJoining';
 
-// Spells out the typed row, e.g. "werの基準との差 ≤ -0.01（改善が必要）", so the threshold's sign
-// is read the way the API will apply it. Nothing is shown until metric and threshold are valid.
+// 入力した行を「werの基準との差 ≤ -0.01（改善が必要）」のように文で書き出し、しきい値の符号を
+// APIが当てはめるとおりに読めるようにする。メトリクスとしきい値が正しくなるまでは何も出さない。
 function CriterionPreview({ draft }: { draft: PromotionCriterionDraft }) {
   useLocale();
   const parsed = previewCriterion(draft);
@@ -35,7 +35,7 @@ function CriterionPreview({ draft }: { draft: PromotionCriterionDraft }) {
   );
 }
 
-/** Candidates for a criterion's metric name, and when to look the typed name up again. */
+/** 基準のメトリクス名の候補と、入力した名前を引き直す時機。 */
 export interface MetricSuggestions {
   suggest: SuggestFieldValues;
   refreshKey: string;
@@ -129,8 +129,8 @@ function CriterionRow({
 }
 
 /**
- * Editable list of pass/fail criteria. Every criterion must hold for a pass. Metric names are
- * offered from what the evaluation Runs recorded; `metricHint` says where they come from.
+ * 合否の基準を編集する一覧。合格にはすべての基準を満たす必要がある。メトリクス名は評価のRunが
+ * 記録したものから候補を出し、`metricHint`でその出どころを伝える。
  */
 export function PromotionCriteriaFields({
   criteria,

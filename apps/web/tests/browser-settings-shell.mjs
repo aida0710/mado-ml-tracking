@@ -1,9 +1,9 @@
-// Browser check of 全体設定 (/settings/<section>) against the isolated mock API (tests/browserApi.mjs):
-// the 全体設定 group (アカウント, コンピュータ) for everyone and 全体管理 only for global
-// administrators in 全体設定's own sidebar, rail and drawer, and neither in a Project's; the
-// user menu (アカウント, パスワードの変更 for local accounts, 全体設定); each page's heading under its
-// group; and the URLs from before 全体設定 (/account, /admin/<section>) moving to the new ones.
-// Start Vite on MMT_WEB_URL first; MMT_SCREENSHOT_DIR, when set, receives the screenshots.
+// 分離したモックのAPI（tests/browserApi.mjs）で全体設定（/settings/<section>）をブラウザで確かめる:
+// 全体設定の組（アカウント、コンピュータ、このアプリについて）は全員に、全体管理は全体管理者だけに、
+// 全体設定自身のサイドバー・レール・ドロワーに出て、Projectのサイドバーにはどちらも出ないこと。
+// ユーザーメニュー（アカウント、ローカルアカウントのときのパスワードの変更、全体設定）。各画面の
+// 見出しが組の下に出ること。全体設定より前のURL（/account、/admin/<section>）が新しいURLへ移ること。
+// 先にMMT_WEB_URLでViteを起動しておく。MMT_SCREENSHOT_DIRを設定すると、そこへスクリーンショットを保存する。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -15,7 +15,7 @@ const { chromium } = await import(pathToFileURL(modulePath).href);
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
 if (screenshotDirectory) await mkdir(screenshotDirectory, { recursive: true });
-// The full sidebar from 1200px, the rail between 900px and 1200px, the drawer below 900px.
+// 1200px以上はサイドバーをすべて出し、900pxから1200pxの間はレール、900px未満はドロワーにする。
 const WIDE = { width: 1440, height: 1250 };
 const RAIL = { width: 1100, height: 800 };
 const NARROW = { width: 390, height: 844 };
@@ -46,7 +46,7 @@ const screenshot = async (page, name) => {
 const groupLabels = (scope) => scope.locator('.navigation-group-label').allInnerTexts();
 const groupLinks = (scope, name) =>
   scope.getByRole('group', { name, exact: true }).getByRole('link').allInnerTexts();
-// Navigation keeps the old screen until a lazily loaded page arrives, so wait for the mark to move.
+// 遅延読み込みのページが届くまで、画面の切り替えは前の画面を残すので、現在地の印が移るのを待つ。
 const waitForCurrentLink = (scope, name) =>
   scope.locator('a[aria-current="page"]').filter({ hasText: name }).waitFor();
 const waitForHeading = async (page, { eyebrow, title }) => {
@@ -54,15 +54,15 @@ const waitForHeading = async (page, { eyebrow, title }) => {
   assert.equal(await page.locator('.page-header .eyebrow').innerText(), eyebrow);
 };
 const openUserMenu = async (page) => {
-  // A menu opened while the screen's lists are still arriving was sometimes closed again by the
-  // redraw, and read as empty; open it once the page has settled.
+  // 画面の一覧がまだ届いている途中で開いたメニューが、再描画で閉じられて空と読まれることがあった。
+  // ページが落ち着いてから開く。
   await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'ユーザーメニュー', exact: true }).click();
   const menu = page.getByRole('menu', { name: 'ユーザーメニュー', exact: true });
   await menu.getByRole('menuitem').first().waitFor();
   return menu.getByRole('menuitem').allInnerTexts();
 };
-/** Opens a URL and waits for the 全体設定 screen it ends up on. */
+/** URLを開き、行き着いた全体設定の画面を待つ。 */
 const settle = async (page, path, expectedPath) => {
   await page.goto(`${base}${path}`);
   await page.waitForURL((url) => `${url.pathname}${url.search}` === expectedPath);
@@ -77,7 +77,7 @@ try {
   await page.goto(`${base}${projectPath}`);
   const sidebar = page.locator('.navigation-sidebar');
   await sidebar.getByRole('link', { name: 'Experiments', exact: true }).waitFor();
-  // A Project's sidebar has only its own screens; 全体設定 opens from the user menu.
+  // Projectのサイドバーには、そのProject自身の画面だけがある。全体設定はユーザーメニューから開く。
   const projectGroups = await groupLabels(sidebar);
   assert.equal(projectGroups.at(-1), 'プロジェクト管理');
   assert.ok(!projectGroups.includes('全体設定') && !projectGroups.includes('全体管理'));
@@ -98,7 +98,7 @@ try {
   await page.getByRole('menuitem', { name: 'パスワードの変更', exact: true }).click();
   await page.waitForURL(`${base}/settings/account/password`);
   await waitForHeading(page, { eyebrow: '全体設定', title: 'パスワードの変更' });
-  // The password change belongs to the account section, so アカウント stays marked.
+  // パスワードの変更はアカウントの区分に属するので、アカウントに印が付いたままになる。
   await waitForCurrentLink(sidebar, 'アカウント');
   await screenshot(page, '03-user-password-change');
 
@@ -113,7 +113,7 @@ try {
     ['/settings/unknown', '/settings/account'],
   ])
     await settle(page, path, expectedPath);
-  // The redirect replaces the old entry, so Back skips it.
+  // リダイレクトは古い履歴の項目を置き換えるので、ブラウザで戻るとそこは飛ばされる。
   await settle(page, '/settings/computers', '/settings/computers');
   await settle(page, '/account', '/settings/account');
   await page.goBack();

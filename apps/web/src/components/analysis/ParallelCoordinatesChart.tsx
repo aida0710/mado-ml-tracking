@@ -23,37 +23,37 @@ import { text, textTemplates } from '../../i18n/catalog';
 export interface ParallelCoordinatesChartProps {
   rows: ChartRunRow[];
   axes: AxisDefinition[];
-  /** The axis whose value colors the lines (the target metric); null draws one color. */
+  /** 値で線の色を決める軸（目的のメトリクス）。nullなら1色で描く。 */
   colorAxisKey: string | null;
-  /** Called with the Run IDs inside every brush once a drag ends (all Runs when none). */
+  /** ドラッグを終えるたびに、全絞り込みの範囲に入るRunのIDで呼ぶ（絞り込みが無ければ全Run）。 */
   onSelectionChange?: (runIds: string[]) => void;
   height?: number;
 }
 
-// SVG paths stay interactive up to a few hundred lines; beyond that the lines go to one canvas so
-// 5000 Runs still redraw within a frame while brushing.
+// SVGのpathで操作に応えられるのは数百本まで。それを超えると線を1枚のcanvasに描き、5000の
+// Runでも絞り込みのドラッグ中に1フレームで描き直せるようにする。
 export const PARALLEL_LINES_CANVAS_THRESHOLD = 500;
 const DEFAULT_HEIGHT = 380;
 const MARGIN_LEFT = 48;
 const MARGIN_RIGHT = 72;
-// Room for the HTML axis headers above the plot and the missing band below it.
+// プロットの上のHTMLの軸見出しと、下の「欠損」の段の分の余白。
 const PLOT_TOP = 76;
 const PLOT_BOTTOM_GAP = 60;
 const MISSING_BAND_GAP = 28;
 const AXIS_HIT_WIDTH = 28;
-// Closest the axes may be: their headers hold the label and the move and log controls side by
-// side. Narrow screens make those controls tap-sized (--tap-target), so the headers need more room.
+// 軸どうしを近づけられる限界。軸見出しにはラベルと、移動・対数の操作を横に並べる。狭い画面では
+// それらの操作をタップできる大きさ（--tap-target）にするので、見出しにもっと幅が要る。
 const MIN_AXIS_SPACING = 96;
 const NARROW_MIN_AXIS_SPACING = 148;
 const AXIS_HEADER_GAP = 8;
 const MIN_AXIS_HEADER_WIDTH = 60;
-// Tick labels are 10px monospace (styles/analysis.css): about 0.6em per character. The plate
-// behind a label hides the Run lines that cross it, which a text halo alone did not.
+// 目盛りのラベルは10pxの等幅（styles/analysis.css）で、1文字およそ0.6em。ラベルの後ろの
+// 下地は、ラベルを横切るRunの線を隠す。文字の縁取りだけでは隠せなかった。
 const TICK_CHARACTER_WIDTH = 6;
 const TICK_LABEL_OFFSET = 5;
 const TICK_PLATE_HEIGHT = 12;
 const TICK_PLATE_PADDING = 2;
-// A press without this much travel (as a share of the axis) is a click that clears the brush.
+// 押してからの移動がこれ（軸の長さに対する割合）未満ならクリックとみなし、絞り込みを解除する。
 const CLICK_TRAVEL = 0.01;
 // 絞り込みから外れた線の色（styles/base.css）。SVG の線は変数のまま描き、canvas は var() を解決しないので
 // 描くときに値を読む。
@@ -86,7 +86,7 @@ function yOf(layout: ChartLayout, position: number | null): number {
   return position === null ? layout.missingY : layout.plotBottom - position * (layout.plotBottom - layout.plotTop);
 }
 
-/** Axis order kept by key: removed axes drop out and newly shown ones are appended. */
+/** 軸の順番をキーで保つ。消えた軸は抜け、新しく表示した軸は末尾に足す。 */
 function orderAxes(axes: AxisDefinition[], order: string[]): AxisDefinition[] {
   const byKey = new Map(axes.map((axis) => [axis.key, axis]));
   const kept = order.flatMap((key) => byKey.get(key) ?? []);
@@ -153,7 +153,7 @@ export function ParallelCoordinatesChart({
     return flags;
   }, [rows.length, selectedIndexes]);
 
-  // Reported only for committed brushes so a drag does not re-render the page on every move.
+  // 確定した絞り込みだけを知らせる。ドラッグ中に動くたびにページを描き直さないため。
   const committedSelection = useMemo(
     () => selectRowIndexes(rows.length, positions, brushes).map((index) => rows[index]!.runId),
     [rows, positions, brushes],
@@ -191,7 +191,7 @@ export function ParallelCoordinatesChart({
       const unselectedLineColor = getComputedStyle(canvas)
         .getPropertyValue(UNSELECTED_CANVAS_LINE_COLOR_PROPERTY)
         .trim();
-      // One path per color: a few stroke calls instead of one per Run keeps 5000 lines in a frame.
+      // 色ごとに1本のpathにする。Runごとでなく数回のstrokeで済むので、5000本でも1フレームに収まる。
       const unselected: number[] = [];
       const selectedByColor = new Map<string, number[]>();
       for (let index = 0; index < rows.length; index += 1) {
@@ -204,7 +204,7 @@ export function ParallelCoordinatesChart({
         if (bucket) bucket.push(index);
         else selectedByColor.set(color, [index]);
       }
-      // Unselected lines first so the selected ones stay on top.
+      // 選ばれた線が上に来るよう、選ばれていない線を先に描く。
       for (const [color, indexes] of [[unselectedLineColor, unselected] as const, ...selectedByColor]) {
         context.strokeStyle = color;
         context.beginPath();
@@ -251,7 +251,7 @@ export function ParallelCoordinatesChart({
       if (!next.delete(axisKey)) next.add(axisKey);
       return next;
     });
-    // A brush is a range of positions, which mean different values on the other scale.
+    // 絞り込みは位置の範囲なので、もう一方のスケールでは別の値の範囲になってしまう。
     setBrushes((current) => current.filter((brush) => brush.axisKey !== axisKey));
   }
 

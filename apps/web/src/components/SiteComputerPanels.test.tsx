@@ -14,13 +14,14 @@ import { LaunchersTable } from './admin/LaunchersTable';
 import type { ManualSiteOwnership } from '../lib/manualSubmission';
 import { failedCheck, launcher, personalSettings, readyKey } from '../../tests/fixtures/siteComputers';
 
-// The scope of --all: the token's Project only, once per Project whose Jobs the PC takes.
+// --allの範囲は使ったtokenのProjectだけ。PCが受け取るJobのProjectごとに1つずつ動かす。
 const ALL_SCOPE_NOTE = '--allで受け取るのは、使ったtokenのProjectのJobです。';
-// Someone else's computer may be their PC or a site each requester logs in to: both are said.
+// ほかの人のコンピュータは、その人のPCのことも、依頼した人がそれぞれログインするsiteの
+// こともある。その両方を伝える。
 const OWNER_SUBMITS_NOTE =
   'このコンピュータはAliceさんのコンピュータです。所有者が--watch --allで待ち受けているコンピュータ（所有者のPCなど）では、所有者の側で投入されます。';
 const someoneElse: ManualSiteOwnership = { kind: 'someoneElse', ownerName: 'Alice' };
-// The setup of `mado-tracking submit` points it at the address the page was opened with.
+// `mado-tracking submit`の準備では、接続先をページを開いたときのアドレスにする。
 const PAGE_ORIGIN = 'https://mmt.example.test';
 const SUBMIT_ENVIRONMENT = `export MMT_API_URL=${PAGE_ORIGIN}\nprintf &#x27;API token: &#x27;; read -r -s MMT_API_TOKEN; echo`;
 const SUBMIT_TOKEN_WHERE =
@@ -81,8 +82,8 @@ describe('手動投入の案内', () => {
     expect(own).toContain('mado-tracking submit --site pc --watch --all</code>');
     expect(own).toContain('所有者: Publicにしたコンピュータで、ほかの人のJobも待ち受けて投入する');
     expect(own).toContain(ALL_SCOPE_NOTE);
-    // A supercomputer with OTP is submitted by each requester with their own account, so the
-    // command stays; where the owner waits on their PC, the owner's side submits it.
+    // OTPのあるスーパーコンピュータには依頼した人がそれぞれ自分のアカウントで投入するので、
+    // コマンドは残す。所有者がPCで待ち受けている場所では、所有者の側で投入する。
     const others = renderToStaticMarkup(<WaitingJobSubmission targetId="pc" ownership={someoneElse} />);
     expect(others).toContain('mado-tracking submit --site pc</code>');
     expect(others).not.toContain('--all</code>');
@@ -157,7 +158,7 @@ describe('launcherが作った鍵', () => {
       />,
     );
     expect(requested).toContain('ランチャーが鍵を作るのを待っています');
-    // The managers' table shows the same state, so one's own key does too while it waits.
+    // 管理する人の表にも同じ状態が出るので、自分の鍵も待っている間は同じ状態を出す。
     expect(requested).toContain('作成待ち');
     expect(requested).toContain('依頼日時');
     expect(requested).not.toContain('authorized_keys');

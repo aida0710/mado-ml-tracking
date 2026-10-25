@@ -95,7 +95,7 @@ describe('Jobsの一覧', () => {
     expect(html).toContain('作成者');
     expect(html).toContain('研究者B');
     expect(html.match(/停止を要求/g)).toHaveLength(1);
-    // A tooltip cannot be read by touch or keyboard, so the reason is the cell's own text.
+    // ツールチップはタッチやキーボードでは読めないので、理由はセル自身の文にする。
     expect(html).toContain('>停止・再実行は作成者かProject adminだけができます<');
     expect(html).not.toContain('title="停止・再実行は');
   });
@@ -159,7 +159,7 @@ describe('Jobsの一覧', () => {
   });
 
   it('手動投入を待つsiteごとに、本人が実行するコマンドを表示する', () => {
-    // The setup below the commands points `mado-tracking submit` at this page's address.
+    // コマンドの下の準備の案内は、`mado-tracking submit`の接続先をこのページのアドレスにする。
     vi.stubGlobal('window', { location: { origin: 'https://mmt.example.test' } });
     const html = renderToStaticMarkup(
       <ManualSubmissionNotice
@@ -170,7 +170,7 @@ describe('Jobsの一覧', () => {
     );
     expect(html).toContain('Miyabi: 2件');
     expect(html).toContain('mado-tracking submit --site site');
-    // The hint mentions an owner's --all; a site one does not own gets no such command.
+    // 説明の文は所有者の--allに触れるが、所有していないsiteにはそのコマンドを出さない。
     expect(html).not.toContain('--all</code>');
     expect(renderToStaticMarkup(<ManualSubmissionNotice groups={[]} />)).toBe('');
   });

@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import type { Project } from '@mmt/contracts';
 import { rememberSettingsReturnScreen } from '../lib/settingsReturnScreen';
 
-/** Keeps the Project screen being shown, so 全体設定 opened from it can lead back there. */
+/** 表示中のProjectの画面を覚えておき、そこから開いた全体設定から戻れるようにする。 */
 export function useRememberSettingsReturnScreen(openProject: Project | undefined): void {
   const location = useLocation();
   const path = `${location.pathname}${location.search}`;

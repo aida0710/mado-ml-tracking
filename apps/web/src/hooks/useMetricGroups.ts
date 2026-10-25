@@ -3,8 +3,8 @@ import { metricSeriesApi } from '../api/metricSeries';
 import { EXECUTION_POLL_MS, useQuery, type QueryState } from './useQuery';
 
 /**
- * Mean and min/max of Run groups for a chart. Pass null to fetch nothing. Polls while `live`, the
- * same as useMetricSeries.
+ * 図のための、Runのグループの平均と最小・最大。nullを渡すと何も取得しない。useMetricSeriesと
+ * 同じく、`live`の間はポーリングする。
  */
 export function useMetricGroups(
   projectId: string,

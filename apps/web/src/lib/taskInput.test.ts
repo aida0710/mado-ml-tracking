@@ -162,7 +162,7 @@ describe('siteで動かすTask', () => {
     expect(input).not.toHaveProperty('walltimeSeconds');
   });
   it('siteのTaskをsshで起動するときは、保存済みのGPU数と制限時間を空にして送る', () => {
-    // The API takes omitted fields from the Task, and refuses a GPU count for an ssh Job.
+    // APIは省略した項目をTaskから補い、sshのJobのGPU数は拒否する。
     const input = buildTaskLaunchInput({ task: siteTask, mode: 'run',
       values: { ...createTaskValues(siteTask), targetId: target.id, gpuIds: ['0'] }, catalog, targets: [target, site] });
     expect(input).toMatchObject({ targetId: 'target', gpuIds: ['0'], gpuCount: 0, walltimeSeconds: null });

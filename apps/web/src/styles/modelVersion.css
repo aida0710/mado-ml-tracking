@@ -1,4 +1,4 @@
-/* Model version page: summary, lineage band, automation, evaluation results; Run downstream list. */
+/* モデルバージョンの画面（概要、来歴の帯、自動実行、評価の結果）と、Runの下流の一覧。 */
 .model-version-section {
   padding-top: 24px;
 }
@@ -31,11 +31,11 @@
 .evaluation-origin-manual {
   color: var(--muted);
 }
-/* The sign is not coloured good or bad: which direction is better depends on the metric. */
+/* 符号は良し悪しで色分けしない。どちらの向きが良いかはメトリクスによる。 */
 .delta-sign {
   white-space: nowrap;
 }
-/* Metric columns can be many; the Run name keeps a readable width and the table scrolls instead. */
+/* メトリクスの列は多くなりうる。Run名は読める幅を保ち、代わりに表をスクロールする。 */
 .evaluation-run-name {
   min-width: 160px;
 }

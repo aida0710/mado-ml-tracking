@@ -10,24 +10,25 @@ import { LocalizedError } from './localizedError';
 import { text, textTemplates } from '../i18n/catalog';
 
 const MIB = 1024 * 1024;
-// S3 rejects parts below 5 MiB (except the last). The API caps parts at 512 MiB because it keeps
-// two of them in memory per upload (MAX_MULTIPART_PART_SIZE_BYTES in storageBackendConfig.ts).
+// S3は5 MiB未満のpartを拒否する（最後のpartを除く）。APIはアップロード1つにつきpartを2つ
+// メモリに置くので、partの上限を512 MiBにしている（storageBackendConfig.tsの
+// MAX_MULTIPART_PART_SIZE_BYTES）。
 export const MIN_MULTIPART_PART_SIZE_MIB = 5;
 export const MAX_MULTIPART_PART_SIZE_MIB = 512;
-// Same as the API's DEFAULT_MULTIPART_PART_SIZE_BYTES, so a backend saved without a size matches.
+// APIのDEFAULT_MULTIPART_PART_SIZE_BYTESと同じ。大きさを指定せず保存した保存先と合わせる。
 export const DEFAULT_MULTIPART_PART_SIZE_MIB = 8;
-// The S3 default region; most S3-compatible servers accept it too.
+// S3の既定のリージョン。S3互換のサーバーの多くもこれを受け付ける。
 export const DEFAULT_S3_REGION = 'us-east-1';
 
-// The backend name is stored on every artifact, so the API keeps it short and URL-safe.
+// 保存先の名前はArtifactごとに記録されるので、APIは短く、URLにそのまま使える形に限っている。
 const BACKEND_NAME_PATTERN = /^[a-z0-9][a-z0-9-]{0,62}$/;
-// S3 bucket naming rules (general purpose buckets).
+// S3のbucketの命名規則（汎用バケット）。
 const BUCKET_NAME_PATTERN = /^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/;
 const IPV4_PATTERN = /^\d{1,3}(\.\d{1,3}){3}$/;
-// The API accepts a CA bundle only as PEM certificates.
+// APIはCAバンドルをPEMの証明書でだけ受け付ける。
 export const PEM_CERTIFICATE_HEADER = '-----BEGIN CERTIFICATE-----';
 
-/** Form values for a new backend. */
+/** 新しい保存先のフォームの値。 */
 export function createStorageBackendValues(): FormValues {
   return {
     name: '',
@@ -51,7 +52,7 @@ export function createStorageBackendValues(): FormValues {
   };
 }
 
-/** Form values for editing a saved backend. Write-only values (secret, CA) start empty. */
+/** 保存済みの保存先を編集するフォームの値。書き込み専用の値（secret、CA）は空から始める。 */
 export function updateStorageBackendValues(backend: StorageBackend): FormValues {
   return {
     ...createStorageBackendValues(),
@@ -75,7 +76,7 @@ export function updateStorageBackendValues(backend: StorageBackend): FormValues 
 
 type BackendSettings = Omit<StorageBackendCreate, 'name' | 'kind' | 'caBundle' | 'secretAccessKey'>;
 
-/** Builds POST /admin/storage-backends. Throws with the text to show when a value is invalid. */
+/** POST /admin/storage-backendsの本文を作る。値が不正なら、画面に出す文で例外を投げる。 */
 export function buildStorageBackendCreate(values: FormValues): StorageBackendCreate {
   const name = getFieldValue(values, 'name').trim();
   if (!BACKEND_NAME_PATTERN.test(name)) throw new Error(text.storageNameError);
@@ -95,10 +96,10 @@ export function buildStorageBackendCreate(values: FormValues): StorageBackendCre
 }
 
 /**
- * Builds PATCH /admin/storage-backends/:name. A cleared endpoint or access key id is sent as null
- * (and a cleared prefix as '') so the stored value is removed; clearing the access key id removes
- * the secret with it. An empty secret or CA field instead leaves the stored value alone, because
- * the API never returns them for the form to show and send back.
+ * PATCH /admin/storage-backends/:nameの本文を作る。空にしたendpointとaccess key idはnullで
+ * 送り（空にしたprefixは''で送り）、保存済みの値を消す。access key idを消すとsecretも一緒に
+ * 消える。secretとCAの欄が空のときは、逆に保存済みの値をそのまま残す。APIはこれらを返さない
+ * ので、フォームに出して送り返すことができないため。
  */
 export function buildStorageBackendPatch(
   values: FormValues,
@@ -152,7 +153,7 @@ function buildS3Settings(values: FormValues): BackendSettings {
     pathStyle: isChecked(values, 'pathStyle'),
     signatureVersion: getSignatureVersion(values),
     tlsVerify: isChecked(values, 'tlsVerify'),
-    // The API stores v2 backends only with WHEN_REQUIRED, so v2 hides the choice and sends it.
+    // APIはv2の保存先をWHEN_REQUIREDでだけ保存するので、v2では選択肢を隠してこの値を送る。
     checksumMode: isSignatureV2(values)
       ? 'when_required'
       : (getFieldValue(values, 'checksumMode') as StorageBackend['checksumMode']),
@@ -163,7 +164,7 @@ function buildS3Settings(values: FormValues): BackendSettings {
   };
 }
 
-/** A new backend has nothing to clear, so optional values left empty are not sent. */
+/** 新しい保存先には消す値が無いので、空のままの任意の値は送らない。 */
 function omitUnset(settings: BackendSettings): BackendSettings {
   return Object.fromEntries(
     Object.entries(settings).filter(([, value]) => value !== '' && value !== null),
@@ -194,7 +195,7 @@ function isValidBucketName(bucket: string): boolean {
   return BUCKET_NAME_PATTERN.test(bucket) && !bucket.includes('..') && !IPV4_PATTERN.test(bucket);
 }
 
-/** Keys are joined as `<prefix>/<key>`, so surrounding slashes would make empty path segments. */
+/** キーは`<prefix>/<key>`の形でつなぐので、前後にスラッシュがあると空のパス要素ができてしまう。 */
 function normalizePrefix(prefix: string): string {
   return prefix.trim().replace(/^\/+|\/+$/g, '');
 }

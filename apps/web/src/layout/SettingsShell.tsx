@@ -7,9 +7,9 @@ import { SettingsReturnLink } from './SettingsReturnLink';
 import { AdminOnlyRedirectNotice } from './AdminOnlyRedirectNotice';
 
 /**
- * Layout for 全体設定 (/settings/<section>), the screens that belong to no Project. Its navigation
- * holds only the 全体設定 group and, for global administrators, 全体管理; above the screen is the
- * way back to the Project screen it was opened from.
+ * 全体設定（/settings/<section>）のレイアウト。どのProjectにも属さない画面をまとめる。
+ * ナビゲーションに出すのは、全体設定の組と、全体管理者向けの全体管理の組だけ。画面の上には、
+ * 開く前のProjectの画面へ戻るリンクを置く。
  */
 export function SettingsShell() {
   const navigation = useNavigation();

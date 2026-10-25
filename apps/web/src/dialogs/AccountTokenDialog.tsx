@@ -8,7 +8,7 @@ import { TokenDialog } from './TokenDialog';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-/** Chooses the Project before opening the shared token form outside a Project's settings. */
+/** Projectの設定の外から開くときに、Projectを選んでから共通のtokenのフォームを開く。 */
 export function AccountTokenDialog({
   projects,
   onClose,

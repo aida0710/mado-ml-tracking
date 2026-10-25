@@ -13,10 +13,9 @@ import { text } from '../i18n/catalog';
 import { siteComputersTextTemplates, siteKeyStatusLabels } from '../i18n/siteComputers';
 
 /**
- * A key the launcher made for logging in on the site: the public half to add to the account's
- * authorized_keys, or, while the launcher has not made it yet, its state and when it was asked
- * for. Rotating revokes it and asks the launcher for a new one; with no key yet, the request
- * needs no confirmation.
+ * siteへのログインのためにランチャーが作った鍵。アカウントのauthorized_keysに足す公開鍵、または、
+ * ランチャーがまだ作っていなければその状態と依頼した日時。作り直すと今の鍵を失効させ、ランチャーに
+ * 新しい鍵を頼む。まだ鍵が無ければ、依頼に確認は要らない。
  */
 export function SiteLoginKey({
   targetId,
@@ -27,7 +26,7 @@ export function SiteLoginKey({
 }: {
   targetId: string;
   siteKey: SiteKey | null;
-  /** One's own key for one's own account; otherwise the shared account's key. */
+  /** 自分のアカウントのための自分の鍵。そうでなければ共有アカウントの鍵。 */
   personal: boolean;
   accountName: string;
   onRequested: () => void;
@@ -36,7 +35,7 @@ export function SiteLoginKey({
   const [isConfirming, setConfirming] = useState(false);
   const mutation = useMutation();
   const rotate = () => siteComputersApi.rotateKey(targetId, { personal });
-  // A live key is revoked by the rotation, so that asks first; a first request has nothing to lose.
+  // 作り直しは使用中の鍵を失効させるので先に確かめる。最初の依頼では失うものが無い。
   const requestKey = () => {
     if (siteKey) {
       setConfirming(true);

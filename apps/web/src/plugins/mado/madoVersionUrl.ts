@@ -1,6 +1,7 @@
 import { isSameUuid, type DatasetVersion, type PluginAvailability } from '@mmt/contracts';
 
-// Mado assigns UUIDs to version nodes; names and untrusted metadata are not navigation IDs.
+// mado S3 Data CatalogはバージョンのノードにUUIDを振る。名前や信頼できないメタデータは
+// 遷移先のIDにしない。
 const VERSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function getMadoVersionUrl({
@@ -22,7 +23,7 @@ export function getMadoVersionUrl({
     if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password || base.search || base.hash)
       return null;
     const url = new URL(`${base.pathname.replace(/\/$/, '')}/lineage`, base);
-    // Mado's node selection compares its canonical UUID string with the route parameter.
+    // mado S3 Data Catalogのノードの選択は、正規形のUUIDの文字列とルートのパラメータを比べる。
     const versionId = reference.externalId.toLowerCase();
     url.searchParams.set('mode', 'versions');
     url.searchParams.set('versionId', versionId);

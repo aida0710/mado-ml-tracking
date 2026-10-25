@@ -6,7 +6,7 @@ import { ErrorNotice } from '../Feedback';
 import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
-/** 'fit' shrinks the image into the preview; 'actual' draws it pixel for pixel in a scrolling frame. */
+/** 'fit'は画像をプレビューに収まるよう縮める。'actual'はスクロールする枠の中に等倍で描く。 */
 type ImageScale = 'fit' | 'actual';
 
 interface ImageSize {
@@ -15,8 +15,8 @@ interface ImageSize {
 }
 
 /**
- * An image fitted to the preview, with its size in pixels and a toggle (the button, or a click on
- * the image) to the actual size: a wide spectrogram or a panorama is unreadable when shrunk.
+ * プレビューに合わせた画像と、そのピクセル数、実寸への切り替え（ボタンか画像のクリック）。
+ * 横に長いスペクトログラムやパノラマは、縮めると読めないため。
  */
 export function ImagePreview({ artifact }: { artifact: Artifact }) {
   useLocale();
@@ -36,14 +36,14 @@ export function ImagePreview({ artifact }: { artifact: Artifact }) {
           {scale === 'fit' ? text.imageShowActualSize : text.imageFitToFrame}
         </button>
       </div>
-      {/* Focusable at the actual size so a keyboard can scroll the frame. */}
+      {/* 実寸のときはフォーカスできるようにし、キーボードで枠をスクロールできるようにする。 */}
       <div
         className={`image-preview-frame image-preview-${scale}`}
         tabIndex={scale === 'actual' ? 0 : undefined}
         role={scale === 'actual' ? 'region' : undefined}
         aria-label={scale === 'actual' ? artifact.path : undefined}
       >
-        {/* The click is a pointer shortcut; the button above does the same for keyboards. */}
+        {/* クリックはポインタ用の近道。キーボードでは上のボタンが同じことをする。 */}
         <img
           className="artifact-image"
           src={trackingApi.artifactUrl(artifact.projectId, artifact.id)}

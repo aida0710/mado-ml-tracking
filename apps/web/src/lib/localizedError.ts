@@ -1,4 +1,4 @@
-/** Keep the values needed to describe a failure in the current language. */
+/** 失敗を今の言語で説明するのに要る値を持っておく。 */
 export class LocalizedError extends Error {
   override name = 'LocalizedError';
 

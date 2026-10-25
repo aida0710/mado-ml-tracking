@@ -9,7 +9,7 @@ import type {
 } from '@mmt/contracts';
 import type { SearchSpaceRowKind } from '../lib/sweepConfig';
 
-// Sweeps: the list, the create dialog with its search space editor, and the detail page.
+// Sweep。一覧、探索空間の編集を含む作成のダイアログ、詳細の画面。
 export const sweepsText = localized({
   sweeps: 'Sweeps',
   sweepNew: 'Sweepを作成',
@@ -97,7 +97,7 @@ export const sweepsText = localized({
   sweepTaskRevision: 'Taskの改訂番号',
 } as const, english.sweepsText);
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const sweepsTextTemplates = localized({
   sweepTrialProgress: (created: number, maxTrials: number) => `${created} / ${maxTrials}`,
   sweepGridEndsEarly: (combinations: number, maxTrials: number) =>

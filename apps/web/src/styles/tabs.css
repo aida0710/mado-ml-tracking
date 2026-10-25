@@ -1,8 +1,8 @@
 /*
- * The row of tabs (components/Tabs.tsx) when its tabs do not fit and it scrolls sideways. The end
- * that hides tabs fades out, so the cut-off tab reads as "more this way". Tabs sets
- * data-hidden-edges from the scroll position and --tab-edge-fade, the width of the fade.
- * A mask uses only the alpha of its colours: --text stands for "fully drawn", not for a colour.
+ * タブが収まらず横にスクロールするときのタブの列（components/Tabs.tsx）。タブを隠している端を
+ * フェードアウトさせ、切れたタブが「この先にもある」と読めるようにする。Tabsはスクロールの
+ * 位置からdata-hidden-edgesを、フェードの幅として--tab-edge-fadeを設定する。
+ * maskは色のアルファだけを使う。--textは色ではなく「完全に描く」の意味で使っている。
  */
 .tabs[data-hidden-edges='end'] {
   mask-image: linear-gradient(to left, transparent, var(--text) var(--tab-edge-fade));

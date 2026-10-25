@@ -12,10 +12,10 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * A site's details below 全体設定 → コンピュータ. Everyone who may use it reads its job shell, keeps
- * their own settings (and key, where the launcher logs in as each person) and, on a manual site,
- * sees how to submit. Its owner and global administrators also save job shell versions, authorize
- * the shared account's key and see everyone's settings.
+ * 全体設定 → コンピュータの下に出すsiteの詳細。使える人はだれでも、job shellを読み、自分の設定
+ * （ランチャーが各人としてログインするなら鍵も）を保ち、手動のsiteなら投入のしかたを見られる。
+ * 所有者と全体管理者は、job shellのバージョンの保存、共有アカウントの鍵の登録、全員の設定の確認も
+ * できる。
  */
 export function SiteComputerDetails({
   target,

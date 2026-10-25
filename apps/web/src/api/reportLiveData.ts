@@ -20,12 +20,12 @@ import {
   toAnalysisRunSet,
 } from '../lib/reportBlocks';
 
-// Reads what a live embed draws, with the reader's own permissions, in the same shape as a stored
-// snapshot so one view draws both. A media table pages through the API itself and is not read here.
+// 最新データの埋め込みが描くものを、読む人自身の権限で読む。保存したスナップショットと同じ形にして、
+// 1つの表示で両方を描けるようにする。メディアの表はAPIを自分でページ送りするので、ここでは読まない。
 
 type LiveBlock = Exclude<ReportEmbedBlock, { type: 'media_table' }>;
 
-/** The block's Run set with a saved view replaced by its current search. */
+/** ブロックのRunの集合。保存ビューは今の検索条件に置き換える。 */
 async function resolveRunSet(projectId: string, runSet: ReportRunSet, signal: AbortSignal): Promise<RunSet> {
   if (!('savedViewId' in runSet)) return runSet;
   const view = await savedViewsApi.get(projectId, runSet.savedViewId, signal);
@@ -38,12 +38,12 @@ async function runsByIds(projectId: string, runIds: string[], signal: AbortSigna
       trackingApi.searchRuns(projectId, { filter, limit: RUN_SEARCH_MAX_LIMIT }, signal),
     ),
   );
-  // Keep the order the report lists them in; a deleted or hidden Run is simply missing.
+  // レポートに並べた順を保つ。削除されたRunや見えないRunは単に抜ける。
   const byId = new Map(pages.flatMap((page) => page.items).map((run) => [run.id, run]));
   return runIds.flatMap((runId) => byId.get(runId) ?? []);
 }
 
-/** Up to `limit` Runs of the set: listed order, search order, or the newest sweep trials. */
+/** 集合のRunを最大`limit`件返す。並べた順、検索の順、またはSweepの新しい試行から。 */
 async function listRuns(projectId: string, runSet: RunSet, limit: number, signal: AbortSignal): Promise<Run[]> {
   if ('runIds' in runSet) return runsByIds(projectId, runSet.runIds.slice(0, limit), signal);
   if ('search' in runSet) {
@@ -67,7 +67,7 @@ async function loadChart(
   const common = { keys: panel.metricKeys, xAxis: panel.xAxis, maxPoints: DEFAULT_SERIES_POINTS };
   if (panel.groupBy) {
     const request = { groupBy: panel.groupBy, ...common };
-    // Groups take a search directly; listed Runs and sweep trials are grouped by id.
+    // グループは検索条件をそのまま受け取る。並べたRunとSweepの試行はidでグループにする。
     if ('search' in runSet) {
       const response = await metricSeriesApi.groups(projectId, { search: runSet.search, ...request }, signal);
       return { type: 'chart', runs: [], groups: response.groups };
@@ -120,10 +120,10 @@ export async function loadLiveBlockData(
   }
 }
 
-// Enough Runs to offer the names a set uses without reading the whole set.
+// 集合全体を読まずに、集合で使われている名前を候補に出せるだけのRunの数。
 const RUN_SET_SAMPLE_SIZE = 200;
 
-/** The first Runs of the set, from which the embed picker offers metric, param and tag names. */
+/** 集合の先頭のRun。埋め込みの選択欄は、ここからメトリクス・パラメータ・タグの名前を候補に出す。 */
 export async function loadRunSetSample(projectId: string, runSet: ReportRunSet, signal: AbortSignal): Promise<Run[]> {
   return listRuns(projectId, await resolveRunSet(projectId, runSet, signal), RUN_SET_SAMPLE_SIZE, signal);
 }

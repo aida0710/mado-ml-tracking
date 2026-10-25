@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { createBrowserApi } from './browserApi.mjs';
 import { openProjectSwitcher } from './projectSwitcher.mjs';
 
-// Reuse an installed Playwright without changing the shared workspace dependencies.
+// 共有のworkspaceの依存関係を変えずに、インストール済みのPlaywrightを使い回す。
 const modulePath = process.env.MMT_PLAYWRIGHT_MODULE;
 if (!modulePath) throw new Error('Set MMT_PLAYWRIGHT_MODULE to an installed Playwright index.mjs');
 const { chromium } = await import(pathToFileURL(modulePath).href);
@@ -22,7 +22,7 @@ page.on('pageerror', (error) => pageErrors.push(error.message));
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const projectBase = `${base}/projects/${api.state.project.id}`;
 const artifactsDirectory = process.env.MMT_SCREENSHOT_DIR;
-// Uploads one file in an open upload dialog and returns its queue row once it has completed.
+// 開いているアップロードのダイアログでファイルを1つアップロードし、完了したらキューのその行を返す。
 async function uploadOneFile(uploadDialog, file) {
   await uploadDialog.getByLabel('ファイルを選ぶ', { exact: true }).setInputFiles(file);
   await uploadDialog.getByRole('button', { name: 'アップロードを開始', exact: true }).click();
@@ -30,7 +30,7 @@ async function uploadOneFile(uploadDialog, file) {
   await row.and(page.locator('[data-status="completed"]')).waitFor();
   return row;
 }
-// A dialog that takes several files stays open after its uploads until it is closed.
+// 複数のファイルを受け付けるダイアログは、アップロードが終わっても閉じるまで開いたまま。
 const closeUploadDialog = (uploadDialog) =>
   uploadDialog.locator('footer').getByRole('button', { name: '閉じる', exact: true }).click();
 try {
@@ -72,9 +72,9 @@ try {
     await page.screenshot({ path: `${artifactsDirectory}/runs-light.png`, fullPage: true });
   }
 
-  // The API evaluates the filter, in MLflow syntax: a key with '/' goes in backticks and a param
-  // value is a quoted string. The mock lists every Run, so while the filter is applied this step
-  // answers the search the page sends with the Runs the API returns for that filter.
+  // フィルタはAPIがMLflowの構文で評価する: '/'を含むキーはバッククォートで囲み、パラメータの値は
+  // 引用符で囲んだ文字列にする。モックはすべてのRunを返すので、フィルタをかけている間は、ページが
+  // 送る検索に、そのフィルタでAPIが返すはずのRunをこの手順で答える。
   const filter = "metrics.`val/loss` < 0.16 and params.batch_size = '32'";
   const filteredRuns = api.state.runs.filter(
     (run) => run.latestMetrics['val/loss'] < 0.16 && String(run.parameters.batch_size) === '32',
@@ -106,8 +106,8 @@ try {
   const firstRun = api.state.runs[0];
   await page.goto(`${projectBase}/runs/${firstRun.id}`);
   await page.getByRole('heading', { name: firstRun.name, exact: true }).waitFor();
-  // The tab draws one panel per category of the Run's system metrics (browser-charts.mjs checks
-  // them); this Run has none among its latest metrics.
+  // このタブはRunのシステムメトリクスの分類ごとにパネルを1つ描く（browser-charts.mjsが確かめる）。
+  // このRunの最新のメトリクスにはシステムメトリクスが無い。
   await page.getByRole('tab', { name: 'System metrics' }).click();
   await page.getByText(/^システムメトリクスはまだありません。.*system_metrics=True/).waitFor();
   await page.getByRole('tab', { name: 'Artifacts', exact: true }).click();
@@ -147,7 +147,7 @@ try {
   }
   console.log('Browser check: model version');
   await page.goto(`${projectBase}/codes`);
-  // An Artifact without a Run: the finished file shows its artifact:// URI to copy.
+  // Runに属さないArtifact: 完了したファイルには、コピーできるartifact:// URIが出る。
   await page.getByRole('button', { name: 'Artifactをアップロード', exact: true }).click();
   const standaloneUploadDialog = page.getByRole('dialog');
   const sourceRow = await uploadOneFile(standaloneUploadDialog, {
@@ -160,15 +160,16 @@ try {
   await closeUploadDialog(standaloneUploadDialog);
   await page.goto(`${projectBase}/models`);
   await page.getByRole('button', { name: 'バージョンを作成', exact: true }).click();
-  // 'バージョン' is also part of '親のバージョン' and '既定のコードバージョン'; the exact accessible name picks the field.
+  // 'バージョン'は'親のバージョン'と'既定のコードバージョン'にも含まれるので、アクセシブルネームの
+  // 完全一致でその欄を選ぶ。
   await page.getByRole('dialog').getByRole('textbox', { name: 'バージョン', exact: true }).fill('v2');
   await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click();
-  // Each version in the list links to its own page.
+  // 一覧の各バージョンは、それぞれのページへのリンクになっている。
   await page.getByRole('link', { name: 'v2', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Aliasを設定' }).click();
   await page.getByRole('dialog').getByLabel('Alias').fill('candidate');
   await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click();
-  // The alias shows in the Alias column of the Model list and in the selected Model's aliases.
+  // aliasは、モデルの一覧のAlias列と、選んだモデルのaliasに出る。
   const aliasCells = page.getByRole('cell', { name: 'candidate', exact: true });
   await aliasCells.nth(0).waitFor();
   await aliasCells.nth(1).waitFor();
@@ -207,7 +208,7 @@ try {
   releaseMetrics();
   api.state.metricsGate = null;
   await storageMetrics.getByRole('heading', { name: 'UI検証ストレージ', exact: true }).waitFor();
-  // formatBytes shows one decimal (lib/format.ts): 3221225472 bytes is '3.0 GiB'.
+  // formatBytesは小数1桁で表す（lib/format.ts）。3221225472バイトは'3.0 GiB'になる。
   await storageMetrics.getByText('3.0 GiB', { exact: true }).waitFor();
   assert.equal(await storageMetrics.getByText('120万', { exact: true }).count(), 1);
   assert.deepEqual(
@@ -284,7 +285,7 @@ try {
   await page.getByText(/保存しました: UI検索データ/).waitFor();
   await page.getByRole('button', { name: 'イベントを再送' }).click();
   await page.getByText(/イベントをキューに追加しました: 2/).waitFor();
-  // Capacity Read is removed from the token in Mado; the next check no longer shows metrics.
+  // mado S3 Data Catalog側でtokenからCapacity Readを外す。次の接続確認からメトリクスは出なくなる。
   api.state.madoAccessTokenGrant = { ...api.state.madoAccessTokenGrant, scopes: ['lineage:read', 'lineage:write'] };
   api.state.plugins[0].configRevision++;
   api.state.plugins[0].manifest = null;
@@ -310,8 +311,7 @@ try {
 
   console.log('Browser check: tokens');
   await page.goto(`${projectBase}/settings`);
-  // The settings page holds this Project's own settings only; Projects are created from the
-  // switcher's last entry.
+  // 設定画面にはこのProject自身の設定だけがある。Projectは切り替えの最後の項目から作る。
   await page.getByRole('heading', { name: 'プロジェクト設定', exact: true }).waitFor();
   assert.equal(await page.getByRole('button', { name: 'プロジェクトを作成' }).count(), 0);
   const switcher = await openProjectSwitcher(page);
@@ -328,8 +328,8 @@ try {
     .getByRole('button', { name: '閉じる', exact: true })
     .last()
     .click();
-  // The token is limited to this Project, so a Project admin sees it twice: among their own tokens
-  // and in the Project's token list.
+  // tokenはこのProjectに限定しているので、Project adminには2か所に出る: 自分のtokenの中と、
+  // Projectのtokenの一覧。
   const tokenSection = (heading) =>
     page
       .locator('.settings-section')
@@ -367,8 +367,7 @@ try {
   await dialog.getByRole('button', { name: '次へ', exact: true }).click();
   await dialog.getByLabel('コンピュータ').selectOption(api.state.targets[0].id);
   await dialog.getByRole('button', { name: '次へ', exact: true }).click();
-  // The Run and its Job are made together: a refused Job leaves no queued Run, and the retry
-  // makes exactly one.
+  // RunとそのJobは一緒に作る。Jobが断られると待機中のRunは残らず、やり直すとちょうど1つ作られる。
   const runsBeforeLaunch = api.state.runs.length;
   api.state.failNextJob = true;
   await dialog.getByRole('button', { name: 'ジョブを起動', exact: true }).click();
@@ -380,7 +379,7 @@ try {
   assert.equal(api.state.jobs[0].gpuIds.length, 0, 'CPU selection must remain empty');
   await page.getByRole('button', { name: '停止を要求', exact: true }).click();
   await page.getByRole('dialog', { name: 'Jobの停止' }).getByRole('button', { name: '停止する', exact: true }).click();
-  // The launch opens the Job's detail, so both its row and its detail mark the request.
+  // 起動するとJobの詳細が開くので、その行と詳細の両方に停止の要求が出る。
   await page.getByRole('cell').getByText('停止要求済み', { exact: true }).waitFor();
   await page.locator('.job-detail').getByText('停止要求済み', { exact: true }).waitFor();
 

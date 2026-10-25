@@ -70,7 +70,7 @@ export const automationText = {
   disableSourceRule: (name: string) => `Disable “${name}” after creating`,
   disableSourceRuleHint:
     'If both stay enabled, both rules create jobs for the same version.',
-  // The copy was created; disabling the rule it came from failed afterwards.
+  // 複製は作成できたが、そのあと元のルールを無効にするのに失敗したとき。
   sourceRuleLeftEnabled: (rules: { copyName: string; sourceName: string }) =>
     `“${rules.copyName}” was created, but the original “${rules.sourceName}” could not be disabled. Both are now enabled, so both rules create jobs for the same version. Click “Disable” for “${rules.sourceName}” in the list.`,
   downstreamFollowsSource: (names: readonly string[]) =>

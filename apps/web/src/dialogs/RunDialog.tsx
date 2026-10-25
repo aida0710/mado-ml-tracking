@@ -54,7 +54,7 @@ export function RunDialog({
                 label: text.kind,
                 type: 'select',
                 required: true,
-                // The SDK's start_run records training by default too.
+                // SDKのstart_runも、既定では学習（training）として記録する。
                 defaultValue: 'training',
                 options: RUN_KINDS.map((kind) => ({ value: kind, label: text[kind] })),
               },

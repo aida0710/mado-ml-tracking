@@ -25,7 +25,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { artifactsTextTemplates } from '../i18n/artifacts';
 
-// Recent Runs offered in the Run filter; older Runs are reached from their own page's link.
+// Runの絞り込みに出す最近のRunの数。古いRunには、そのRunの画面のリンクから来る。
 const RUN_FILTER_OPTION_LIMIT = 200;
 const getMimeTypeOptions = () => [
   ['', text.artifactMimeAll],
@@ -37,8 +37,8 @@ const getMimeTypeOptions = () => [
 ] as const;
 
 /**
- * Project-wide Artifact search with type, Run and model version filters, kept in the URL. A
- * narrow screen shows the results or the chosen file's preview, one at a time.
+ * Project全体のArtifactの検索。種類、Run、モデルバージョンで絞り込み、条件はURLに持つ。
+ * 狭い画面では、結果と選んだファイルのプレビューを1つずつ見せる。
  */
 export function ArtifactsPage() {
   useLocale();
@@ -55,7 +55,7 @@ export function ArtifactsPage() {
   const { modelId } = filter;
   const [searchInput, setSearchInput] = useState(filter.query);
   const [selected, setSelected] = useState<Artifact>();
-  // The file just deleted, named until another file is chosen.
+  // 消したばかりのファイル。別のファイルを選ぶまで名前を出す。
   const [deleted, setDeleted] = useState<Artifact | null>(null);
   const { panes, containerRef, scrollBrowserIntoView } = useArtifactBrowserPanes(selected !== undefined);
   const catalog = useProjectArtifactCatalog(project.id, filter);
@@ -74,7 +74,7 @@ export function ArtifactsPage() {
   });
   const runNames = new Map(runs.value?.items.map((run) => [run.id, run.name]));
   const datasetsById = new Map((datasets.value ?? []).map((dataset) => [dataset.id, dataset]));
-  // Files without a Run are named by what lists them; a Run's files by the Run itself.
+  // Runの無いファイルは、それを参照しているもので示す。RunのファイルはRun自身で示す。
   const references = useArtifactReferences(
     project.id,
     catalog.items.filter((item) => item.runId === null).map((item) => item.id),
@@ -213,7 +213,7 @@ export function ArtifactsPage() {
         retry={runs.error ? runs.reload : models.error ? models.reload : references.reload}
       />
       {deleted && (
-        // Above both panes, so it is seen on a narrow screen too, where the list returns at once.
+        // 両方のペインの上に置き、すぐに一覧へ戻る狭い画面でも見えるようにする。
         <p className="notice artifact-deleted-notice" role="status" data-testid="artifact-deleted-notice">
           {artifactsTextTemplates.artifactDeleted(deleted.path)}
         </p>

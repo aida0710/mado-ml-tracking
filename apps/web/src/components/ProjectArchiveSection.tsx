@@ -8,9 +8,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * The end of the Project settings for its admin: archiving hides the Project and keeps its data,
- * which a global administrator can restore. Afterwards the Project list says it was archived
- * instead of another Project opening unannounced.
+ * Project adminに向けた、Projectの設定の末尾。アーカイブするとProjectは見えなくなるがデータは残り、
+ * 全体管理者が元に戻せる。アーカイブの後は、黙って別のProjectを開くのでなく、Projectの一覧で
+ * アーカイブしたことを伝える。
  */
 export function ProjectArchiveSection() {
   useLocale();

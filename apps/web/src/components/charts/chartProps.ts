@@ -10,11 +10,11 @@ import type {
 import type { ChartValueUnit } from '../../lib/chartTicks';
 
 /**
- * Props that connect the chart, analysis, media and comment components of the same release to the
- * pages that place them. Types only: the components live next to their owners.
+ * 同じリリースの図、分析、メディア、コメントの部品と、それらを置くページとをつなぐprops。
+ * 型だけを置く。部品自体は持ち主の隣にある。
  */
 
-/** One point of a drawn line. `min`/`max` give the band of a sampled bucket or of a Run group. */
+/** 描く線の1点。`min`/`max`は、間引いたバケットまたはRunのグループの範囲の帯を表す。 */
 export interface MetricsChartPoint {
   x: number;
   value: number;
@@ -22,27 +22,27 @@ export interface MetricsChartPoint {
   max?: number;
 }
 
-/** `run` is one Run's line; `group` is the mean line of a Run group with its min/max band. */
+/** `run`は1つのRunの線。`group`はRunのグループの平均の線で、min/maxの範囲の帯を持つ。 */
 export interface MetricsChartSeries {
   id: string;
   label: string;
   /**
-   * Omitted: lib/seriesColors.ts picks it by the line's style id among `MetricsChartProps.styleIds`
-   * (every Run of the page), so a Run has the same color in every chart of the page.
+   * 省略したときは、lib/seriesColors.tsが`MetricsChartProps.styleIds`（ページの全Run）の中の
+   * 線のstyle idから選ぶ。こうしてRunはページのどの図でも同じ色になる。
    */
   color?: string;
   /**
-   * The Run (or group) whose color and line pattern the line takes; omitted, `id`. The lines of
-   * several metric keys of one Run share the Run's color and are told apart by `dashPattern`.
+   * 線が色と線種を受け継ぐRun（またはグループ）。省略したときは`id`。1つのRunの複数の
+   * メトリクスのキーの線はRunの色を共有し、`dashPattern`で見分ける。
    */
   styleId?: string;
-  /** stroke-dasharray that replaces the style's pattern; null for a solid line. */
+  /** styleの線種の代わりに使うstroke-dasharray。実線ならnull。 */
   dashPattern?: string | null;
   points: MetricsChartPoint[];
   kind: 'run' | 'group';
 }
 
-/** A vertical line, such as where a Run was resumed. */
+/** 縦線。Runを再開した位置など。 */
 export interface MetricsChartMarker {
   x: number;
   label: string;
@@ -51,47 +51,47 @@ export interface MetricsChartMarker {
 export interface MetricsChartProps {
   series: MetricsChartSeries[];
   /**
-   * The ids whose order assigns colors and line patterns: every Run the page draws, so a Run keeps
-   * its style in each chart even where another Run logged nothing, and whether the palette of eight
-   * or the hue wheel is used depends on the page, not the chart. Lines whose style id is not among
-   * them (Run groups, the metric keys of a single Run) are styled among the chart's own lines.
+   * 並び順で色と線種を割り当てるid。ページが描く全Runを並べる。こうするとRunは、ほかのRunが
+   * 何も記録していない図でも同じstyleを保ち、8色のパレットと色相環のどちらを使うかも図でなく
+   * ページで決まる。style idがこの中に無い線（Runのグループ、単一のRunのメトリクスのキー）は、
+   * 図の中の線どうしでstyleを決める。
    */
   styleIds?: readonly string[];
   xAxis: ChartXAxis;
-  /** Log x is offered for the step axis; values at or below 0 are left out and counted. */
+  /** 対数のx軸はstepの軸にだけ出す。0以下の値は除き、その数を数える。 */
   xScale?: 'linear' | 'log';
   yScale: 'linear' | 'log';
-  /** How the value axis labels its ticks; omitted reads as plain numbers. */
+  /** 値の軸の目盛りのラベルの付け方。省略すると普通の数値として読む。 */
   valueUnit?: ChartValueUnit;
   smoothing: ChartSmoothing;
   showRange: boolean;
-  /** Draws the unsmoothed line faintly behind the smoothed one. */
+  /** 平滑化する前の線を、平滑化した線の後ろに薄く描く。 */
   showRaw: boolean;
   markers?: MetricsChartMarker[];
-  /** Pixels. */
+  /** ピクセル。 */
   height?: number;
   /**
-   * Called with the x interval the user dragged over, or null when the zoom is reset, so the panel
-   * can fetch finer buckets for it. The chart narrows its own x domain either way.
+   * 利用者がドラッグしたxの区間で呼ぶ。ズームをリセットしたときはnull。パネルがその区間の
+   * 細かいバケットを取得できるようにするため。図はどちらにしても自分のxの定義域を狭める。
    */
   onZoom?: (range: MetricXRange | null) => void;
 }
 
-/** The display settings ChartControls edits. The panel owns them and passes them to MetricsChart. */
+/** ChartControlsが編集する表示設定。パネルが持ち、MetricsChartへ渡す。 */
 export type ChartDisplaySettings = Pick<
   MetricsChartProps,
   'xAxis' | 'xScale' | 'yScale' | 'smoothing' | 'showRange' | 'showRaw'
 >;
 
-/** One panel of the chart grid: it fetches the series for its config and draws them. */
+/** 図のグリッドの1つのパネル。設定に合う系列を取得して描く。 */
 export interface ChartPanelProps {
   projectId: string;
   config: ChartPanelConfig;
-  /** The Runs to draw, unless the config groups Runs (then the group request uses these ids). */
+  /** 描くRun。ただし設定がRunをグループ化するときは、グループの要求にこのidを使う。 */
   runIds: string[];
-  /** Run names for the legend; a Run without one is shown by id. */
+  /** 凡例に出すRunの名前。名前の無いRunはidで出す。 */
   runLabels?: Record<string, string>;
-  /** Whether any of the Runs is still running, so the panel keeps polling. */
+  /** まだ実行中のRunがあるかどうか。あればパネルはポーリングを続ける。 */
   live?: boolean;
   onConfigChange?: (config: ChartPanelConfig) => void;
   onRemove?: () => void;

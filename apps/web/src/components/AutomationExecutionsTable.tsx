@@ -26,7 +26,7 @@ function outcomeLabel(execution: ModelAutomationExecution): string {
     : automationOutcomeLabels[execution.status];
 }
 
-/** The outcome, with the reason a rule failed under it, so no separate error column is needed. */
+/** 結果と、その下にルールが失敗した理由。これでエラーの列を別に設けずに済む。 */
 function OutcomeCell({ execution }: { execution: ModelAutomationExecution }) {
   useLocale();
   return (
@@ -43,7 +43,7 @@ function OutcomeCell({ execution }: { execution: ModelAutomationExecution }) {
   );
 }
 
-/** The started Run's and Job's states in one cell; a column each made the table too wide. */
+/** 開始したRunとJobの状態を1つのセルに出す。それぞれ列にすると表の幅が広くなりすぎた。 */
 function RunAndJobStatus({ execution }: { execution: ModelAutomationExecution }) {
   useLocale();
   if (!execution.runStatus && !execution.jobStatus) return <>—</>;
@@ -102,11 +102,11 @@ function ModelVersionLink({
   useLocale();
   const version = catalog?.modelVersions.find((item) => item.id === modelVersionId);
   const modelName = catalog?.models.find((model) => model.id === version?.modelId)?.name;
-  // The version page needs the Model id; without the catalog the registry resolves the version.
+  // バージョンの画面にはモデルのidが要る。カタログが無いときは、Modelsの画面にバージョンを探させる。
   if (!version || !modelName)
     return <Link to={`/projects/${projectId}/models?version=${modelVersionId}`}>{modelVersionId}</Link>;
   const label = formatModelVersionName(modelName, version.version);
-  // A long model name is cut after a few lines so one row does not fill a phone screen.
+  // 長いモデル名は数行で切り、1行がスマートフォンの画面を埋めないようにする。
   return (
     <Link
       title={label}
@@ -118,9 +118,9 @@ function ModelVersionLink({
 }
 
 /**
- * Automation executions grouped by pipeline. The 'project' variant lists every version; the
- * 'version' variant is one version's history, so it drops the version column and adds the rule's
- * kind and the Run's duration. onRerun is given only to Project admins, who may apply a rule again.
+ * 自動実行の実行履歴をパイプラインごとにまとめて並べる。'project'の表示はすべてのバージョンを
+ * 並べる。'version'の表示は1つのバージョンの履歴なので、バージョンの列を省き、ルールの種類と
+ * Runの所要時間を足す。onRerunは、ルールをもう一度適用してよいProject adminにだけ渡す。
  */
 export function AutomationExecutionsTable({
   executions,
@@ -160,9 +160,9 @@ export function AutomationExecutionsTable({
       : [
           {
             key: 'model',
-            // Kept in a phone's row too: rows of different versions otherwise look the same.
+            // スマートフォンの行にも残す。残さないと、違うバージョンの行が同じに見える。
             priority: 'primary',
-            // Each cell names the model, so the header needs only the shorter word.
+            // どのセルにもモデル名が入るので、見出しは短い語で足りる。
             header: text.version,
             render: column((execution) => (
               <ModelVersionLink

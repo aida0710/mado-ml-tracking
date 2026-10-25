@@ -28,7 +28,7 @@ export function ModelAutomationPanel({
   initialFamily?: string;
   historyFilter: AutomationExecutionFilter;
   onHistoryFilterChange: (filter: AutomationExecutionFilter) => void;
-  /** Opens the history tab narrowed to one rule. */
+  /** 1つのルールに絞り込んだ履歴のタブを開く。 */
   onShowRuleHistory: (ruleId: string) => void;
 }) {
   useLocale();

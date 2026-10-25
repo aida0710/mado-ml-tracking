@@ -8,8 +8,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * 全体設定 → アカウント → パスワードの変更 (/settings/account/password), for local accounts.
- * SSO users change theirs in the IdP, so they are sent to their account instead.
+ * 全体設定 → アカウント → パスワードの変更（/settings/account/password）。ローカルアカウント向け。
+ * SSOのユーザーはIdPで変えるので、代わりに本人のアカウントへ移す。
  */
 export function PasswordChangePage() {
   useLocale();

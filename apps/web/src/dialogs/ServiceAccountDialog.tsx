@@ -7,8 +7,8 @@ import { text } from '../i18n/catalog';
 const PROJECT_ROLES: ProjectRole[] = ['viewer', 'editor', 'admin'];
 
 /**
- * Creates a Service Account, or changes the description and role of an existing one.
- * The name identifies the account in the token list, so it is fixed after creation.
+ * Service Accountを作る。または既存のものの説明とRoleを変える。
+ * 名前はtokenの一覧でアカウントを見分けるものなので、作ったあとは変えられない。
  */
 export function ServiceAccountDialog({
   serviceAccount,

@@ -10,7 +10,7 @@ import {
 import { formatNumber, formatValue } from './format';
 import { formatList } from '../i18n/textJoining';
 
-// Same labels as the API's CSV, so the page and a downloaded file name versions alike.
+// APIのCSVと同じラベル。画面とダウンロードしたファイルで、バージョンの呼び方をそろえる。
 export const modelVersionLabel = (version: ComparedModelVersion) =>
   `${version.modelName}@${version.version}`;
 export const datasetVersionLabel = (version: ComparedDatasetVersion) =>
@@ -23,19 +23,19 @@ export interface ComparisonCellDelta {
   relativeDelta: number | null;
 }
 
-/** One table row: a field and one cell per Run, in the compared order. */
+/** 表の1行。項目と、比べる順に並べたRunごとのセル。 */
 export interface ComparisonTableRow {
   id: string;
   group: ComparisonRowGroup;
-  /** The key for params, metrics and tags; empty for the reference rows labelled by group. */
+  /** パラメータ、メトリクス、タグのキー。グループ名をラベルにする参照の行では空。 */
   key: string;
   values: RunComparisonValue[];
-  /** Present on metric rows when a baseline Run is chosen. */
+  /** 基準Runを選んだとき、メトリクスの行にだけある。 */
   deltas?: ComparisonCellDelta[];
   differs: boolean;
 }
 
-/** The Run IDs of the `runs` URL parameter, unique and in order. */
+/** URLのパラメータ`runs`にあるRunのID。重複を除き、順は保つ。 */
 export function parseComparedRunIds(parameter: string | null): string[] {
   return [...new Set((parameter ?? '').split(',').filter(Boolean))];
 }
@@ -43,12 +43,12 @@ export function parseComparedRunIds(parameter: string | null): string[] {
 export const isComparableRunCount = (count: number) =>
   count >= RUN_COMPARISON_MIN_RUNS && count <= RUN_COMPARISON_MAX_RUNS;
 
-/** A baseline is kept only while it is one of the compared Runs. */
+/** 基準Runは、比べているRunの1つである間だけ保つ。 */
 export function chooseBaselineRunId(runIds: string[], parameter: string | null): string | null {
   return parameter && runIds.includes(parameter) ? parameter : null;
 }
 
-// A missing key differs from any value, so null takes part in the comparison like a value.
+// キーが無いことはどの値とも異なるので、nullも値と同じように比較に加える。
 export const valuesDiffer = (values: RunComparisonValue[]) =>
   new Set(values.map((value) => JSON.stringify(value))).size > 1;
 
@@ -60,16 +60,16 @@ function referenceRow(
 }
 
 /**
- * A cell of the comparison table. Metric numbers are rounded to the six significant digits their
- * differences show, so one row reads alike; params and tags show what was recorded.
+ * 比較表のセル。メトリクスの数値は、差が見える有効数字6桁に丸め、1つの行が同じように読める
+ * ようにする。パラメータとタグは記録されたとおりに出す。
  */
 export function formatComparisonValue(group: ComparisonRowGroup, value: RunComparisonValue): string {
   return group === 'metrics' && typeof value === 'number' ? formatNumber(value) : formatValue(value);
 }
 
 /**
- * The rows of the comparison table: the ModelVersion and evaluation DatasetVersions each Run
- * used, then params, metrics and tags as the API ordered them.
+ * 比較表の行。各Runが使ったModelVersionと評価用のDatasetVersion、続いてAPIが並べた順の
+ * パラメータ、メトリクス、タグ。
  */
 export function buildComparisonTableRows(comparison: RunComparison): ComparisonTableRow[] {
   const modelVersions = new Map(comparison.modelVersions.map((version) => [version.id, version]));

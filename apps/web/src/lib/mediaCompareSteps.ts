@@ -1,11 +1,11 @@
-// Which steps a Run × step media comparison shows: the default columns, the recorded steps offered
-// as choices, the steps kept in the URL, and the grid laid out from a /media/compare response.
+// Run × stepのメディアの比較で出すstep。既定の列、選択肢に出す記録済みのstep、URLに残すstep、
+// /media/compareの応答から組み立てる格子。
 import { MEDIA_COMPARE_MAX_STEPS, type MediaCompareGrid, type RunMedia } from '@mmt/contracts';
 import { sortedSteps } from './mediaSteps';
 
 /**
- * Steps every Run recorded, ascending. Runs that recorded nothing for the key are left out: their
- * row is empty in any column, so they should not take the shared steps away from the others.
+ * すべてのRunが記録したstep（昇順）。そのキーで何も記録していないRunは除く。そうしたRunの行は
+ * どの列でも空なので、ほかのRunの共通のstepを減らさせない。
  */
 export function commonSteps(stepsByRun: readonly (readonly number[])[]): number[] {
   const recordingRuns = stepsByRun.filter((steps) => steps.length > 0);
@@ -15,28 +15,28 @@ export function commonSteps(stepsByRun: readonly (readonly number[])[]): number[
 }
 
 /**
- * The columns a comparison opens with: the latest step every Run recorded, so no cell of the
- * default grid is empty. [] (each Run's latest step) when the Runs share no step.
+ * 比較を開いたときの列。すべてのRunが記録した最新のstepにして、既定の格子に空のセルを作らない。
+ * Runに共通のstepが無ければ[]（各Runの最新のstep）。
  */
 export function defaultComparisonSteps(stepsByRun: readonly (readonly number[])[]): number[] {
   const latestCommon = commonSteps(stepsByRun).at(-1);
   return latestCommon === undefined ? [] : [latestCommon];
 }
 
-/** A recorded step and how many of the compared Runs recorded it. */
+/** 記録済みのstepと、比べるRunのうちそれを記録したRunの数。 */
 export interface StepCoverage {
   step: number;
   runCount: number;
 }
 
-/** Every step any Run recorded, ascending, with the number of Runs that recorded it. */
+/** どれかのRunが記録したすべてのstepを昇順に、それを記録したRunの数とともに並べたもの。 */
 export function stepCoverage(stepsByRun: readonly (readonly number[])[]): StepCoverage[] {
   const counts = new Map<number, number>();
   for (const steps of stepsByRun) for (const step of new Set(steps)) counts.set(step, (counts.get(step) ?? 0) + 1);
   return sortedSteps(counts.keys()).map((step) => ({ step, runCount: counts.get(step)! }));
 }
 
-/** The chosen steps with `step` checked or unchecked, ascending. */
+/** 選んだstepに`step`を入れるか外したもの（昇順）。 */
 export function withStepToggled(steps: readonly number[], step: number): number[] {
   return steps.includes(step) ? steps.filter((item) => item !== step) : sortedSteps([...steps, step]);
 }
@@ -44,9 +44,9 @@ export function withStepToggled(steps: readonly number[], step: number): number[
 export type StepListParseResult = { ok: true; steps: number[] } | { ok: false; error: 'invalid' | 'too_many' };
 
 /**
- * A comma separated step list ("0, 500, 1000"). Duplicates are dropped; more than
- * MEDIA_COMPARE_MAX_STEPS distinct steps is refused rather than cut, so the grid never silently
- * hides a step that was asked for.
+ * カンマ区切りのstepの一覧（"0, 500, 1000"）。重複は捨てる。異なるstepが
+ * MEDIA_COMPARE_MAX_STEPSを超えたら切り詰めずに断り、求めたstepを格子が黙って隠すことが
+ * ないようにする。
  */
 export function parseStepList(input: string): StepListParseResult {
   const parts = input
@@ -59,12 +59,12 @@ export function parseStepList(input: string): StepListParseResult {
   return { ok: true, steps };
 }
 
-/** The URL value that asks for each Run's latest step; a missing parameter means the default columns. */
+/** 各Runの最新のstepを求めるURLの値。パラメータが無ければ既定の列。 */
 export const LATEST_STEPS_PARAM_VALUE = 'latest';
 
 /**
- * Comparison steps kept in the URL: null for the default columns (also for a broken or too long
- * list), [] for each Run's latest step, otherwise the listed steps.
+ * URLに残した比較のstep。既定の列ならnull（壊れた一覧や長すぎる一覧もnull）、各Runの最新の
+ * stepなら[]、それ以外は一覧のstep。
  */
 export function parseStepsParam(value: string | null): number[] | null {
   if (value === null) return null;
@@ -73,16 +73,16 @@ export function parseStepsParam(value: string | null): number[] | null {
   return parsed.ok && parsed.steps.length > 0 ? parsed.steps : null;
 }
 
-/** The URL value of chosen steps; null removes the parameter (the default columns). */
+/** 選んだstepのURLの値。nullならパラメータを消す（既定の列）。 */
 export function stepsParamOf(steps: readonly number[] | null): string | null {
   if (steps === null) return null;
   return steps.length === 0 ? LATEST_STEPS_PARAM_VALUE : steps.join(',');
 }
 
-/** A column of the comparison grid: one step for every Run, or each Run's own latest step. */
+/** 比較の格子の列。全Runで同じ1つのstepか、各Runそれぞれの最新のstep。 */
 export type CompareColumn = { kind: 'step'; step: number } | { kind: 'latest' };
 
-/** A /media/compare response laid out as a rectangle: cells[runIndex][columnIndex]. */
+/** /media/compareの応答を長方形に並べたもの（cells[runIndex][columnIndex]）。 */
 export interface CompareTable {
   runIds: string[];
   columns: CompareColumn[];
@@ -90,10 +90,10 @@ export interface CompareTable {
 }
 
 /**
- * Lays out the comparison grid. With requested steps the rows already line up. Without them each
- * row holds its Run's latest step, and the latest steps share one column, each cell keeping the
- * step it was recorded at; spreading them over one column per step would leave every other cell
- * of a row empty. When all Runs ended at the same step, that column is simply that step.
+ * 比較の格子を組み立てる。求めたstepがあれば、行は既にそろっている。無ければ各行がそのRunの
+ * 最新のstepを持ち、最新のstepを1つの列にまとめて、各セルは記録したときのstepを持ったままにする。
+ * stepごとに1列ずつ広げると、行のほかのセルがすべて空になるため。すべてのRunが同じstepで
+ * 終わっていれば、その列は単にそのstep。
  */
 export function compareTableOf(grid: MediaCompareGrid): CompareTable {
   const runIds = grid.rows.map((row) => row.runId);

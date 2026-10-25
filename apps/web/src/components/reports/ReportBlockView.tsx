@@ -22,24 +22,24 @@ import { useLocale } from '../../i18n/useLocale';
 import { reportBlockTypeLabels } from '../../i18n/reports';
 import { text, textTemplates } from '../../i18n/catalog';
 
-// Chart and analysis heights inside a report, which is narrower than the Run list's chart grid.
+// レポートの中での図と分析の高さ。レポートはRunの一覧の図のグリッドより狭い。
 const REPORT_CHART_HEIGHT_PX = 2 * CHART_ROW_HEIGHT_PX;
 const REPORT_ANALYSIS_HEIGHT_PX = 360;
 
 /**
- * Where an embed's data comes from. `preview` is the editor's: a snapshot block whose stored data
- * is missing or outdated draws the current data until it is saved.
+ * 埋め込みのデータの出どころ。`preview`は編集画面用。保存したデータが無いか古い
+ * スナップショットのブロックは、保存されるまで今のデータを描く。
  */
 export interface ReportBlockViewProps {
   projectId: string;
   block: ReportBlock;
   snapshot: ReportBlockSnapshot | undefined;
-  /** The snapshot query failed or is still loading; only snapshot blocks wait for it. */
+  /** スナップショットの取得が失敗したか読み込み中。待つのはスナップショットのブロックだけ。 */
   snapshotState?: { loading: boolean; error: string | null; reload: () => void };
   preview?: boolean;
 }
 
-/** One block of a report: Markdown, or an embed drawn by the same components as the other pages. */
+/** レポートの1ブロック。Markdownか、ほかの画面と同じ部品で描く埋め込み。 */
 export function ReportBlockView({ projectId, block, snapshot, snapshotState, preview = false }: ReportBlockViewProps) {
   useLocale();
   if (block.type === 'markdown')
@@ -77,7 +77,7 @@ export function ReportBlockView({ projectId, block, snapshot, snapshotState, pre
   );
 }
 
-/** The Run and step of an embedded table; a snapshot's table rows alone do not say which they are. */
+/** 埋め込んだ表のRunとstep。スナップショットの表の行だけでは、どれのものか分からない。 */
 function MediaTableSource({ projectId, block }: { projectId: string; block: Extract<ReportEmbedBlock, { type: 'media_table' }> }) {
   useLocale();
   const source = useMediaTableSource(projectId, block);
@@ -120,7 +120,7 @@ function LiveEmbed({ projectId, block }: { projectId: string; block: Exclude<Rep
   return <EmbedContent projectId={projectId} block={block} data={data.value} />;
 }
 
-/** Draws stored or current data. Data of another type (a block edited since) is not drawn. */
+/** 保存したデータか今のデータを描く。種類の違うデータ（その後に編集したブロック）は描かない。 */
 function EmbedContent({ projectId, block, data }: { projectId: string; block: ReportEmbedBlock; data: ReportSnapshotData }) {
   useLocale();
   const navigate = useNavigate();
@@ -185,7 +185,7 @@ function EmbedContent({ projectId, block, data }: { projectId: string; block: Re
           projectId={projectId}
           runs={data.runs}
           columns={block.columns.map((key) => ({ key }))}
-          // The columns belong to the saved report; the editor's picker changes them, not the table.
+          // 列は保存したレポートのもの。変えるのは編集画面の選択で、表ではない。
           onColumnsChange={() => undefined}
           selectedIds={[]}
           onSelectedIdsChange={() => undefined}
@@ -199,7 +199,7 @@ function EmbedContent({ projectId, block, data }: { projectId: string; block: Re
   }
 }
 
-/** The first page of a table as it was stored; the cells still point at immutable Artifacts. */
+/** 保存したときのままの表の最初のページ。セルは変わらないArtifactを指したまま。 */
 function SnapshotMediaTable({ projectId, page }: { projectId: string; page: MediaTablePage }) {
   useLocale();
   const exclusiveAudio = useExclusiveAudio();
@@ -241,7 +241,7 @@ function SnapshotMediaTable({ projectId, page }: { projectId: string; page: Medi
   );
 }
 
-/** Keeps a failing embed from taking down the rest of the report. */
+/** 1つの埋め込みの失敗で、レポートのほかの部分まで落ちないようにする。 */
 class BlockErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {

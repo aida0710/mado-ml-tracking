@@ -1,15 +1,16 @@
-// Sorts system metrics recorded by the Mado worker/SDK (`system.cpu.percent`,
-// `system.gpu.0.utilization_percent`, ...) and by MLflow's system metrics logging
-// (`system/cpu_utilization_percentage`, `system/gpu_0_utilization_percentage`, ...) into the
-// same categories and units, so both kinds of Run open with the same panels. The name mapping is
-// the table in docs/worker.md「MLflowの`system/`名との対応」.
+// mado ML TrackingのworkerとPython SDK（mado-tracking）が記録するシステムメトリクス
+// （`system.cpu.percent`、`system.gpu.0.utilization_percent`、...）と、
+// MLflowのシステムメトリクスの記録（`system/cpu_utilization_percentage`、
+// `system/gpu_0_utilization_percentage`、...）を同じ分類と単位に振り分け、どちらのRunも
+// 同じパネルで開くようにする。名前の対応は
+// docs/worker.mdの「MLflowの`system/`名との対応」の表。
 
 import type { ChartValueUnit } from './chartTicks';
 
 export type SystemMetricCategory = 'cpu' | 'memory' | 'disk' | 'network' | 'gpu' | 'other';
 /**
- * `bytes_total` is MLflow's network counter: megabytes since monitoring started, not a rate, so it
- * gets its own panel instead of sharing one with the Mado per-second values.
+ * `bytes_total`はMLflowのネットワークのカウンタで、レートではなく監視開始からのメガバイト数。
+ * そのため、mado ML Trackingの毎秒の値とはパネルを共有せず、専用のパネルにする。
  */
 export type SystemMetricUnit =
   | 'percent'
@@ -24,10 +25,10 @@ export type SystemMetricUnit =
 export interface SystemMetricKey {
   key: string;
   category: SystemMetricCategory;
-  /** The nvidia-smi/NVML index for GPU metrics, null otherwise. */
+  /** GPUのメトリクスではnvidia-smi/NVMLのインデックス、それ以外はnull。 */
   gpuIndex: number | null;
   unit: SystemMetricUnit;
-  /** Multiplier from the recorded value to the unit; MLflow records megabytes (10^6 bytes). */
+  /** 記録された値から単位への倍率。MLflowはメガバイト（10^6バイト）で記録する。 */
   scale: number;
 }
 
@@ -36,7 +37,7 @@ const SYSTEM_PREFIX = /^system[./]/;
 
 export const isSystemMetricKey = (key: string) => SYSTEM_PREFIX.test(key);
 
-// Suffix of the last name part → unit. Longer suffixes first so `_bytes_per_second` wins.
+// 名前の最後の部分の接尾辞 → 単位。`_bytes_per_second`が勝つように、長い接尾辞を先に置く。
 const madoUnits: Array<[string, SystemMetricUnit]> = [
   ['bytes_per_second', 'bytes_per_second'],
   ['bytes', 'bytes'],
@@ -91,14 +92,14 @@ function classifyMlflowKey(key: string): SystemMetricKey {
   return { key, category, gpuIndex, unit: 'value', scale: 1 };
 }
 
-/** Null for a key that is not a system metric. */
+/** システムメトリクスでないキーにはnull。 */
 export function classifySystemMetricKey(key: string): SystemMetricKey | null {
   if (key.startsWith('system.')) return classifyMadoKey(key);
   if (key.startsWith('system/')) return classifyMlflowKey(key);
   return null;
 }
 
-/** Multiplier that converts a recorded value to the unit of its panel (1 for other metrics). */
+/** 記録された値を、そのパネルの単位に変換する倍率（ほかのメトリクスは1）。 */
 export const systemMetricValueScale = (key: string) => classifySystemMetricKey(key)?.scale ?? 1;
 
 const valueUnitOfSystemUnit: Partial<Record<SystemMetricUnit, ChartValueUnit>> = {
@@ -107,7 +108,7 @@ const valueUnitOfSystemUnit: Partial<Record<SystemMetricUnit, ChartValueUnit>> =
   bytes_per_second: 'bytes_per_second',
 };
 
-/** The unit the value axis of a panel shows: a byte unit only when every key measures bytes. */
+/** パネルの値の軸に出す単位。すべてのキーがバイトを測るときだけ、バイトの単位にする。 */
 export function chartValueUnit(keys: readonly string[]): ChartValueUnit {
   const units = new Set(
     keys.map((key) => {
@@ -119,7 +120,7 @@ export function chartValueUnit(keys: readonly string[]): ChartValueUnit {
 }
 
 export interface SystemMetricPanelGroup {
-  /** Stable across Runs with either naming, e.g. `gpu.0.percent`. */
+  /** どちらの命名のRunでも変わらないid。例: `gpu.0.percent`。 */
   id: string;
   category: SystemMetricCategory;
   gpuIndex: number | null;
@@ -140,9 +141,9 @@ const unitOrder: SystemMetricUnit[] = [
 ];
 
 /**
- * One group per category, GPU index and unit, in a fixed order (CPU, memory, disk, network, each
- * GPU, then the rest). Unrecognized system names each get their own group rather than being
- * mixed into a panel whose unit they may not share.
+ * 分類・GPUのインデックス・単位ごとに1つのグループを作り、決まった順（CPU、メモリ、ディスク、
+ * ネットワーク、各GPU、残り）に並べる。分類できないsystemの名前は、単位が合わないかもしれない
+ * パネルに混ぜず、それぞれ専用のグループにする。
  */
 export function groupSystemMetricKeys(keys: string[]): SystemMetricPanelGroup[] {
   const groups = new Map<string, SystemMetricPanelGroup>();

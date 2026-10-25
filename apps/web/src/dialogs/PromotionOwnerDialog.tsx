@@ -11,8 +11,8 @@ import { promotionTextTemplates } from '../i18n/promotion';
 import { text } from '../i18n/catalog';
 
 /**
- * Confirms moving a promotion policy's run-as user to a Service Account. Only accounts the API
- * accepts are offered: active ones of this Project with the admin role.
+ * 昇格policyの実行ユーザーをService Accountへ移すことを確かめる。APIが受け付けるアカウント
+ * （このProjectの有効なもので、adminのRoleを持つもの）だけを選択肢に出す。
  */
 export function PromotionOwnerDialog({
   projectId,

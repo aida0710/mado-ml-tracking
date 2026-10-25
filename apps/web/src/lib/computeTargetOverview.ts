@@ -3,16 +3,16 @@ import { formatDate } from './format';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
- * Whether a row of 全体設定 → コンピュータ opens its details: for those who may use the computer
- * (its job shell and their own settings) or manage it. Someone else's private computer stays a row.
+ * 全体設定 → コンピュータの行で詳細を開けるか。そのコンピュータを使える人（job shellと本人の
+ * 設定）か、管理できる人なら開ける。ほかの人のPrivateのコンピュータは行のまま。
  */
 export const canOpenTargetDetails = (
   target: Pick<ComputeTargetOverview, 'usable' | 'canManage'>,
 ): boolean => target.usable || target.canManage;
 
 /**
- * How the launcher of an automatic site stands, for the state column: none chosen, revoked, never
- * heard from, or when it last asked. Other computers have no launcher to report (null).
+ * 状態の列に出す、自動のsiteのランチャーの状況。未設定、失効、一度も応答が無い、または最後に
+ * 問い合わせた日時。ほかのコンピュータには報告するランチャーが無い（null）。
  */
 export function launcherStatusLabel(
   target: Pick<ComputeTargetOverview, 'executor' | 'submissionMode' | 'launcher'>,

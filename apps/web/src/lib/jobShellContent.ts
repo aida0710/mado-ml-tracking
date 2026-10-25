@@ -6,8 +6,8 @@ import { siteComputersTextTemplates } from '../i18n/siteComputers';
 const BYTES_PER_MIB = 1024 ** 2;
 
 /**
- * A job shell as the API stores it: the script itself, non-empty and at most MAX_JOB_SHELL_BYTES
- * of UTF-8. It is saved as written, so whitespace is never trimmed.
+ * APIが保存する形のjob shell。スクリプトそのもので、空でなく、UTF-8でMAX_JOB_SHELL_BYTES以下。
+ * 書いたとおりに保存するので、空白は決して削らない。
  */
 export function parseJobShellContent(content: string): string {
   if (!content.trim()) throw new Error(text.jobShellRequired);

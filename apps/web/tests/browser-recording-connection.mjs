@@ -1,8 +1,7 @@
-// The guide to recording from the Python SDK and MLflow 3 with a mocked API: on the Project
-// settings page it carries the Project's ID, on the Experiments page also the chosen Experiment's
-// (the heading's copy button, MMT_EXPERIMENT_ID, set_experiment with its name). The copy buttons
-// put the exact values on the clipboard, the token dialog opens with the recording scopes
-// selected, and a viewer gets no token button.
+// Python SDKとMLflow 3から記録するための案内を、モックのAPIで確かめる。Projectの設定画面では
+// ProjectのIDを、Experimentsの画面では選んだExperimentのIDも載せる（見出しのコピーボタン、
+// MMT_EXPERIMENT_ID、名前を渡すset_experiment）。コピーボタンはクリップボードへ値を正確に入れ、
+// tokenのダイアログは記録用のscopeを選んだ状態で開き、viewerにはtokenのボタンが出ない。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -28,7 +27,8 @@ async function openPage(role, path) {
   const api = createBrowserApi();
   api.state.loggedIn = true;
   api.state.project.role = role;
-  // The shared mock's member rows predate group bindings; the settings page needs `groups`.
+  // 設定画面はメンバーの行の`groups`を読む。このセッションのroleで、`groups`付きの行を返す
+  // （共有のモックも今は同じ形で返す）。
   const membersPath = `/api/projects/${api.state.project.id}/members`;
   await context.route(
     (url) => url.pathname.startsWith('/api/'),
@@ -65,7 +65,7 @@ async function copyValueOf(page, scope, name) {
 }
 
 try {
-  // Project settings: the Project's ID, the SDK first, then MLflow 3.
+  // Projectの設定: ProjectのID、SDKが先、MLflow 3がその後。
   const { context, page, api } = await openPage('admin', () => '/settings');
   const projectId = api.state.project.id;
   const guide = await guideOf(page);
@@ -76,7 +76,7 @@ try {
   assert.match(sdkEnvironment, new RegExp(`export MMT_PROJECT_ID=${projectId}\n`));
   assert.doesNotMatch(sdkEnvironment, /MMT_EXPERIMENT_ID/);
   assert.match(sdkEnvironment, /printf 'API token: '; read -r -s MMT_API_TOKEN; echo/);
-  // Without a chosen Experiment the example names one, which start_run creates when absent.
+  // Experimentを選んでいなければ、例はExperimentを名前で指定する。無ければstart_runが作る。
   assert.match(
     await copySnippet(page, guide, 'Pythonの例'),
     /start_run\(experiment_name="my-experiment", name="first-run"\)/,
@@ -104,7 +104,7 @@ try {
   await guide.getByRole('button', { name: 'このProject用のAPI tokenを発行' }).click();
   const dialog = page.getByRole('dialog');
   await dialog.waitFor();
-  // The guide's button opens the dialog with the recording purpose and its scopes checked.
+  // 案内のボタンは、記録の用途とそのscopeにチェックを入れた状態でダイアログを開く。
   assert.equal(
     await dialog.getByRole('radio', { name: 'SDK・MLflow 3から記録する' }).isChecked(),
     true,
@@ -124,7 +124,7 @@ try {
   await dialog.getByRole('button', { name: '閉じる' }).last().click();
   await context.close();
 
-  // Experiments page: the chosen Experiment's ID in the heading and in the examples.
+  // Experimentsの画面: 選んだExperimentのIDが見出しと例に入る。
   const experimentPage = await openPage('editor', (api) => `/experiments?experiment=${api.state.experiments[0].id}`);
   const experiment = experimentPage.api.state.experiments[0];
   const header = experimentPage.page.locator('header.page-header');
@@ -154,7 +154,7 @@ try {
   assert.equal(await experimentPage.page.locator('section.recording-connection').count(), 0);
   await experimentPage.context.close();
 
-  // A viewer reads the guide but cannot hold the write scopes, so gets no token button.
+  // viewerは案内を読めるが、書き込みのscopeを持てないので、tokenのボタンが出ない。
   const viewer = await openPage('viewer', () => '/settings');
   const viewerGuide = await guideOf(viewer.page);
   assert.equal(

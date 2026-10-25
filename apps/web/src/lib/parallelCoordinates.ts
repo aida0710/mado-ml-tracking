@@ -1,27 +1,27 @@
-// Pure logic behind the parallel coordinates chart: where a value sits on an axis, which Runs a
-// brush keeps, axis reordering and the single-hue color ramp. Positions are normalized: 0 is the
-// bottom of the value range, 1 the top, and null means the Run has no value (the "missing" band).
+// 平行座標の図の裏にある純粋なロジック。値が軸のどこに来るか、ブラシがどのRunを残すか、軸の
+// 並べ替え、単一色相のカラーランプを扱う。位置は正規化する。0が値の範囲の下端、1が上端で、
+// nullはRunに値が無いこと（「値なし」の帯）を表す。
 
 export type AxisScaleKind = 'linear' | 'log' | 'categorical';
 
-/** One vertical axis: a param, a metric or the sweep objective, identified by `key`. */
+/** 縦の軸1本。パラメータ、メトリクス、Sweepの目的のどれかで、`key`で見分ける。 */
 export interface AxisDefinition {
   key: string;
   label: string;
   kind: 'numeric' | 'categorical';
-  /** Categorical axes only: the category order from the API; values not listed are appended. */
+  /** カテゴリの軸だけ: APIから来たカテゴリの順。載っていない値は後ろに足す。 */
   categories?: string[];
 }
 
 export interface AxisScale {
   kind: AxisScaleKind;
-  /** null when the value is missing or cannot be placed on this axis. */
+  /** 値が無いか、この軸に置けないときはnull。 */
   position: (value: unknown) => number | null;
-  /** Labels at fixed positions, bottom to top. */
+  /** 決まった位置のラベル。下から上の順。 */
   ticks: { position: number; label: string }[];
 }
 
-/** A drag on one axis keeps the Runs whose position is within [from, to] (inclusive). */
+/** 1本の軸のドラッグは、位置が[from, to]（両端を含む）に入るRunを残す。 */
 export interface AxisBrush {
   axisKey: string;
   from: number;
@@ -33,19 +33,19 @@ export interface ParallelRow {
   values: Record<string, unknown>;
 }
 
-/** A Run as the analysis charts draw it: `values` is keyed by AxisDefinition.key. */
+/** 分析の図が描くRun。`values`のキーはAxisDefinition.key。 */
 export interface ChartRunRow extends ParallelRow {
   name: string;
 }
 
-// Same rule as the API (docs/api-contract.md): decimal and exponent forms only, so '0x10' and
-// 'Infinity' stay categorical.
+// APIと同じ規則（docs/api-contract.md）。10進と指数の形だけを数とみなすので、'0x10'や
+// 'Infinity'はカテゴリのままになる。
 const NUMERIC_STRING = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
 const NUMERIC_TICK_COUNT = 5;
-// A single category or a constant numeric axis sits in the middle instead of on an edge.
+// カテゴリが1つだけの軸や、数値が一定の軸は、端でなく中央に置く。
 const SINGLE_VALUE_POSITION = 0.5;
 
-/** The finite number a param or metric value stands for, or null. */
+/** パラメータやメトリクスの値が表す有限の数。無ければnull。 */
 export function numericValue(value: unknown): number | null {
   if (typeof value === 'number') return Number.isFinite(value) ? value : null;
   if (typeof value === 'string' && NUMERIC_STRING.test(value.trim())) {
@@ -55,7 +55,7 @@ export function numericValue(value: unknown): number | null {
   return null;
 }
 
-/** The category string of a value, matching the API's `values` (JSON for objects and arrays). */
+/** 値のカテゴリの文字列。APIの`values`に合わせる（オブジェクトと配列はJSON）。 */
 export function categoryLabel(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value === 'string') return value;
@@ -75,7 +75,7 @@ function finiteRange(values: unknown[]): { min: number; max: number } | null {
   return min <= max ? { min, max } : null;
 }
 
-/** Log scale is offered only when every value on the axis is positive. */
+/** 対数スケールは、軸の値がすべて正のときだけ選べる。 */
 export function canUseLogScale(values: unknown[]): boolean {
   const range = finiteRange(values);
   return range !== null && range.min > 0;
@@ -137,8 +137,8 @@ function createCategoricalScale(definition: AxisDefinition, values: unknown[]): 
 }
 
 /**
- * The scale of one axis over the values it shows. Numeric axes are linear, or log when requested
- * and every value is positive; categorical axes space their categories evenly.
+ * 1本の軸が表示する値に合わせたスケール。数値の軸は線形で、求められていて値がすべて正なら
+ * 対数にする。カテゴリの軸はカテゴリを等間隔に並べる。
  */
 export function createAxisScale(definition: AxisDefinition, values: unknown[], options: { log: boolean }): AxisScale {
   return definition.kind === 'numeric'
@@ -146,7 +146,7 @@ export function createAxisScale(definition: AxisDefinition, values: unknown[], o
     : createCategoricalScale(definition, values);
 }
 
-/** A brush never keeps a missing value: an absent value is not inside any range. */
+/** ブラシは無い値を残さない。無い値はどの範囲の中にも入らない。 */
 export function isWithinBrush(position: number | null, brush: AxisBrush): boolean {
   if (position === null) return false;
   const low = Math.min(brush.from, brush.to);
@@ -154,7 +154,7 @@ export function isWithinBrush(position: number | null, brush: AxisBrush): boolea
   return position >= low && position <= high;
 }
 
-/** Axis positions of every row, computed once per scale change so brushing only compares numbers. */
+/** すべての行の軸上の位置。スケールが変わるたびに1回だけ計算し、ブラシでは数の比較だけで済ませる。 */
 export function computePositions(
   rows: ParallelRow[],
   axes: { key: string; scale: AxisScale }[],
@@ -162,7 +162,7 @@ export function computePositions(
   return new Map(axes.map((axis) => [axis.key, rows.map((row) => axis.scale.position(row.values[axis.key]))]));
 }
 
-/** Indexes of the rows inside every brush (all rows without brushes). */
+/** すべてのブラシの中に入る行の添字（ブラシが無ければすべての行）。 */
 export function selectRowIndexes(
   rowCount: number,
   positions: Map<string, (number | null)[]>,
@@ -179,7 +179,7 @@ export function selectRowIndexes(
   return selected;
 }
 
-/** The axis order after moving `key` by `offset` places; out-of-range moves keep the order. */
+/** `key`を`offset`だけ動かした後の軸の順。範囲の外へ動かすときは順を変えない。 */
 export function moveAxis(order: string[], key: string, offset: number): string[] {
   const from = order.indexOf(key);
   const to = from + offset;
@@ -191,8 +191,8 @@ export function moveAxis(order: string[], key: string, offset: number): string[]
 }
 
 /**
- * The width to draw the plot at: the space it is given, or wider when that would put the axes
- * closer than `minAxisSpacing` (the plot then scrolls sideways inside its own box).
+ * 図を描く幅。与えられた幅を使い、それでは軸の間隔が`minAxisSpacing`より狭くなるときは広げる
+ * （そのとき図は自分の枠の中で横にスクロールする）。
  */
 export function parallelPlotWidth({
   availableWidth,
@@ -210,14 +210,14 @@ export function parallelPlotWidth({
   return Math.max(availableWidth, neededWidth);
 }
 
-// Single-hue blue ramp (dataviz reference palette). Light-on-dark reverses it so the best values
-// stay the most visible against either surface. Each end stops at the step that still keeps the 3:1
-// WCAG asks of lines against the chart background (step 400 on white, 500 on the dark theme).
+// 単一色相の青のランプ（datavizの参照パレット）。暗い背景に明るい線を描くときは順を逆にし、
+// 最もよい値がどちらの背景でもいちばん目立つようにする。両端は、図の背景に対する線にWCAGが
+// 求める3:1をまだ保てる段で止める（白の上では400、暗いテーマでは500）。
 const LIGHT_RAMP = ['#3987e5', '#2a78d6', '#256abf', '#1c5cab', '#104281', '#0d366b'];
 const DARK_RAMP = ['#256abf', '#3987e5', '#5598e7', '#6da7ec', '#9ec5f4', '#cde2fb'];
 export const MISSING_COLOR_VALUE = '#9a9a96';
 
-/** The line color for a normalized color value; null (no value) is a neutral gray. */
+/** 正規化した色の値に対応する線の色。null（値なし）は中立の灰色。 */
 export function rampColor(position: number | null, theme: 'light' | 'dark'): string {
   if (position === null) return MISSING_COLOR_VALUE;
   const ramp = theme === 'dark' ? DARK_RAMP : LIGHT_RAMP;
@@ -225,7 +225,7 @@ export function rampColor(position: number | null, theme: 'light' | 'dark'): str
   return ramp[Math.round(clamped * (ramp.length - 1))]!;
 }
 
-/** The ramp end points, for the legend gradient. */
+/** 凡例のグラデーションに使う、ランプのすべての段の色。 */
 export function rampStops(theme: 'light' | 'dark'): string[] {
   return theme === 'dark' ? [...DARK_RAMP] : [...LIGHT_RAMP];
 }

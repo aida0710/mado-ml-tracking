@@ -6,10 +6,10 @@ import { useLocale } from '../i18n/useLocale';
 import { runtimeLabels } from '../i18n/runtime';
 import { text } from '../i18n/catalog';
 
-// These reserved paths are the worker's immutable source capture, before the command runs.
+// これらの予約されたパスは、コマンドを動かす前にworkerが取る、変わらないソースの写し。
 const SOURCE_SNAPSHOT_PATHS = ['.mmt/source.zip', '.mmt/source-manifest.json'];
 
-// taskName is shown in place of the Task id when the caller already knows it.
+// 呼び出し側がTaskの名前を知っていれば、Taskのidの代わりにtaskNameを表示する。
 export function RunExecutionSnapshot({ run, artifacts, taskName }: {
   run: Run; artifacts?: Artifact[]; taskName?: string | null;
 }) {

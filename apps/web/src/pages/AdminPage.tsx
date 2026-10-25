@@ -15,7 +15,7 @@ import {
 } from '../layout/settingsSections';
 import type { AdminOnlyRedirectState } from '../layout/AdminOnlyRedirectNotice';
 
-// Each section heads itself (SettingsPageHeader) with its own actions; the sidebar switches them.
+// 各セクションは自分の見出し（SettingsPageHeader）と操作を持ち、サイドバーで切り替える。
 const ADMIN_SECTION_PANELS: Record<AdminSection, ComponentType> = {
   projects: ProjectsPanel,
   users: UsersPanel,
@@ -25,9 +25,8 @@ const ADMIN_SECTION_PANELS: Record<AdminSection, ComponentType> = {
 };
 
 /**
- * 全体設定 → 全体管理 (/settings/<section>), for global administrators. Anyone else, whom the API
- * would refuse, lands on the user's own account in 全体設定 with a note saying why; an unknown
- * section lands there without one.
+ * 全体設定 → 全体管理（/settings/<section>）。全体管理者向け。APIが拒むほかの人は、全体設定の
+ * 本人のアカウントへ移して理由を表示する。知らないセクションは、理由なしで同じ所へ移す。
  */
 export function AdminPage() {
   const auth = useAuth();

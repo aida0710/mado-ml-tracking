@@ -1,13 +1,13 @@
-// Records of CSV text, read as RFC 4180: quoted fields may hold commas, doubled quotes, and line
-// breaks.
+// RFC 4180に従って読んだ、CSVの文字列のレコード。引用符で囲んだフィールドには、カンマ、
+// 二重にした引用符、改行を含められる。
 
 const CSV_DELIMITER = ',';
 
 export interface CsvRecord {
-  /** 1-based line in the file where the record starts. */
+  /** レコードが始まるファイルの行（1始まり）。 */
   line: number;
   fields: string[];
-  /** The file ended inside a quoted field; the fields read so far are kept. */
+  /** 引用符で囲んだフィールドの途中でファイルが終わった。それまでに読んだフィールドは残す。 */
   unterminated: boolean;
 }
 

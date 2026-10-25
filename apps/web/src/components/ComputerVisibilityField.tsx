@@ -5,7 +5,7 @@ import { useLocale } from '../i18n/useLocale';
 import { computerVisibilityHints } from '../i18n/computers';
 import { text } from '../i18n/catalog';
 
-/** Who may run Jobs on a computer. */
+/** コンピュータでJobを動かせる人。 */
 export function ComputerVisibilityField({
   values,
   onChange,

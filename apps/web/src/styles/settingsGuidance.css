@@ -1,5 +1,5 @@
-/* Ways around the settings screens: back from 全体設定 to the Project screen it was opened from,
-   and the contents at the top of the long Project settings page. */
+/* 設定の画面の中の移動。全体設定から開く前にいたProjectの画面へ戻る道と、長い
+   プロジェクト設定の画面の先頭の目次。 */
 .settings-return-link {
   display: inline-flex;
   align-items: center;
@@ -21,7 +21,7 @@
   align-items: center;
   min-height: 28px;
 }
-/* A part reached from the contents starts below the header instead of under it. */
+/* 目次から移った部分は、上部バーに隠れずにその下から始まる。 */
 .settings-anchor {
   min-width: 0;
   scroll-margin-top: 16px;
@@ -31,12 +31,12 @@
     min-height: var(--tap-target);
   }
 }
-/* 全体管理 → プロジェクト: narrowing the list by name once there are many Projects. */
+/* 全体管理 → プロジェクト。Projectが多くなったときに名前で一覧を絞り込む欄。 */
 .admin-projects-search {
   width: min(100%, 320px);
   margin-bottom: 12px;
 }
-/* The audit log's filters, above its table in the Project settings and in 全体管理. */
+/* 監査ログの絞り込み。プロジェクト設定と全体管理で、表の上に置く。 */
 .audit-filters {
   display: flex;
   flex-wrap: wrap;
@@ -47,7 +47,7 @@
 .admin-audit .audit-label {
   white-space: nowrap;
 }
-/* On a phone the names wrap again, so the row keeps its button to open the event in view. */
+/* スマートフォンでは名前を再び折り返し、行のイベントを開くボタンを見えたままにする。 */
 @media (width < 900px) {
   .settings-stack .audit-label,
   .admin-audit .audit-label {

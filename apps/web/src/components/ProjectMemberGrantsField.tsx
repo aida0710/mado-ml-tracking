@@ -13,8 +13,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
- * The members a new Project starts with: users found by search, each with a role to change and a
- * button to take them off. The creator becomes the Project admin anyway, so they are not offered.
+ * 新しいProjectの最初のメンバー。検索で見つけたユーザーを、変えられるRoleと外すボタン付きで並べる。
+ * 作成者はいずれにせよProject adminになるので、候補に出さない。
  */
 export function ProjectMemberGrantsField({
   drafts,

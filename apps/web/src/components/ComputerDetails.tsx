@@ -18,10 +18,10 @@ import { workerCoverageText } from '../i18n/workerCoverage';
 import { formatList } from '../i18n/textJoining';
 
 /**
- * A computer's details below 全体設定 → コンピュータ, for those who may use or manage it: a site's
- * job shell, settings and submission; an ssh or local target's description with its ID. Setting the
- * computer up is for its owner and global administrators, so only they get its connection check and
- * how to run the worker that takes its Jobs; everyone else is told who sets the worker up.
+ * 全体設定 → コンピュータの下に出す、コンピュータの詳細。使える人と管理できる人に向ける。siteなら
+ * job shell、設定、投入。sshかlocalならIDを含む概要。コンピュータの設定は所有者と全体管理者が
+ * 行うので、接続の確認と、そのJobを受け取るworkerの動かし方はその人たちにだけ出す。ほかの人には、
+ * だれがworkerを設定するかを伝える。
  */
 export function ComputerDetails({
   target,
@@ -33,12 +33,13 @@ export function ComputerDetails({
   onTargetChanged: () => void;
 }) {
   useLocale();
-  // Only global administrators list every Project's workers; others read who runs the worker.
+  // すべてのProjectのworkerを一覧できるのは全体管理者だけ。ほかの人には、
+  // だれがworkerを動かすかを示す。
   const workers = useAllWorkers(target.executor !== 'site' && isGlobalAdmin(user));
   if (target.executor === 'site')
     return <SiteComputerDetails target={target} user={user} onTargetChanged={onTargetChanged} />;
   const canManage = canManageTarget(user, target);
-  // Every Project's workers: one of them answering does not mean this Project's Jobs start.
+  // 全Projectのworkerが対象。どれかが応答しても、このProjectのJobが始まるとは限らない。
   const workerEntry: Array<[string, ReactNode]> = workers.value
     ? [
         [
@@ -50,7 +51,7 @@ export function ComputerDetails({
         ],
       ]
     : [];
-  // In place of the worker setup, those who may not manage the computer read who sets it up.
+  // コンピュータを管理できない人には、workerの設定の代わりに、だれが設定するかを示す。
   const workerSetUpByEntry: Array<[string, ReactNode]> = canManage
     ? []
     : [

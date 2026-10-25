@@ -5,12 +5,12 @@ import { isCheckInProgress } from '../lib/targetCheckCandidates';
 import { useMutation } from './useMutation';
 import { useQuery } from './useQuery';
 
-// The worker polls for checks every two seconds and probes for up to two minutes.
+// workerは2秒ごとに確認を取りに来て、最長で2分ほど調べる。
 export const TARGET_CHECK_POLL_MS = 3000;
 
 /**
- * A computer's latest connection check, read again while a worker has it, and the request of a
- * new one. Without a computer (one not saved yet) nothing is read.
+ * コンピュータの最新の接続確認（workerが持っている間は読み直す）と、新しい確認の依頼。
+ * コンピュータが無い（まだ保存していない）ときは何も読まない。
  */
 export function useTargetCheck(targetId: string | null) {
   const mutation = useMutation();
@@ -21,13 +21,13 @@ export function useTargetCheck(targetId: string | null) {
     pollMs: isPolling ? TARGET_CHECK_POLL_MS : undefined,
   });
   const latest = checks.value?.[0];
-  // Poll only while the latest check waits for a worker; decided again for each answer.
+  // 最新の確認がworkerを待っている間だけポーリングする。応答のたびに決め直す。
   const [polledCheck, setPolledCheck] = useState(latest);
   if (polledCheck !== latest) {
     setPolledCheck(latest);
     setPolling(isCheckInProgress(latest));
   }
-  /** Asks for a check of `checkedTargetId` (the computer saved just now, before this hook has it). */
+  /** `checkedTargetId`の確認を頼む（useTargetCheckがまだ受け取っていない、今保存したコンピュータ）。 */
   function request({
     checkedTargetId = targetId,
     worker,
@@ -49,7 +49,7 @@ export function useTargetCheck(targetId: string | null) {
   return {
     checks,
     latest,
-    /** The newest check a worker finished: its candidates stay while a new check runs. */
+    /** workerが終えた最新の確認。新しい確認の実行中もその候補は残る。 */
     latestFinished: checks.value?.find((check) => check.status === 'finished'),
     isInProgress: isCheckInProgress(latest),
     request,

@@ -1,6 +1,6 @@
-/* Adding and editing an ssh or local computer in two steps (NewComputerDialog, ComputerEditDialog). */
+/* sshかlocalのコンピュータを2段階で追加・編集する（NewComputerDialog、ComputerEditDialog）。 */
 
-/* Where the check stands, with the button that checks again beside it. */
+/* 接続確認の状況と、その横のもう一度確認するボタン。 */
 .target-check-bar {
   display: flex;
   align-items: flex-start;
@@ -18,13 +18,13 @@
   margin-top: 0;
 }
 
-/* A worker per line; a site with many worker hosts scrolls inside the list. */
+/* 1行に1つのworker。workerのホストが多いsiteでは一覧の中でスクロールする。 */
 .check-worker-picker {
   max-height: 260px;
   overflow-y: auto;
 }
 
-/* Several checkboxes under a legend (runtimes, GPUs). */
+/* 見出し（legend）の下に並べる複数のチェックボックス（Runtime、GPU）。 */
 .checkbox-list {
   border: 0;
   margin: 0 0 12px;

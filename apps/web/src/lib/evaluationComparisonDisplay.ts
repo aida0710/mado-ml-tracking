@@ -2,7 +2,7 @@ import { DEFAULT_BASELINE_ALIAS, type MetricValueStatus } from '@mmt/contracts';
 import { memoizePerIntlLocale } from '../i18n/intlFormatterCache';
 import { evaluationText } from '../i18n/evaluation';
 
-// Prefers production, then the first alias by name. null lets the API apply its own default.
+// productionを優先し、無ければ名前順で最初のalias。nullならAPIが自分の既定を使う。
 export function defaultBaselineAlias(aliases: Record<string, string>): string | null {
   if (Object.hasOwn(aliases, DEFAULT_BASELINE_ALIAS)) return DEFAULT_BASELINE_ALIAS;
   return Object.keys(aliases).sort()[0] ?? null;
@@ -14,7 +14,7 @@ const RELATIVE_FRACTION_DIGITS = 2;
 const getMetricValueFormat = memoizePerIntlLocale(
   (intlLocale) => new Intl.NumberFormat(intlLocale, { maximumSignificantDigits: SIGNIFICANT_DIGITS }),
 );
-// Differences always show their sign so that a decrease is not mistaken for a value.
+// 差には常に符号を付け、減った分を値そのものと取り違えないようにする。
 const getDeltaFormat = memoizePerIntlLocale(
   (intlLocale) =>
     new Intl.NumberFormat(intlLocale, {

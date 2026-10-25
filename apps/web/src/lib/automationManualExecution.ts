@@ -14,7 +14,7 @@ import { automationText } from '../i18n/automation';
 
 type ManualRule = Pick<ModelAutomationRule, 'trigger' | 'upstreamRuleId' | 'modelFamilies'>;
 
-/** Versions of the rule's model families; the API rechecks weights and compatibility. */
+/** ルールのモデル系列のバージョン。重みと互換性はAPIが確かめ直す。 */
 export function manualVersionOptions(
   rule: ManualRule,
   registry: ExecutionCatalog,
@@ -30,8 +30,8 @@ export function manualVersionOptions(
 }
 
 /**
- * Finished Runs that the upstream rule created. Only those can start a chained rule, because the
- * API finds the upstream stage through the execution, never through Run tags.
+ * 上流のルールが作った、終了したRun。上流につないだルールを開始できるのはこれだけ。APIは上流の
+ * 段を実行からたどり、Runのタグからは決してたどらないため。
  */
 export function manualUpstreamRunOptions({
   rule,
@@ -67,7 +67,7 @@ export function manualExecutionRequest(
     : { modelVersionId: selectedId };
 }
 
-/** 409 means the same rule and version is still running; 422 means the rule cannot run now. */
+/** 409は同じルールとバージョンの実行が進行中、422はそのルールを今は実行できないことを表す。 */
 export function manualExecutionErrorMessage(failure: unknown): string {
   if (failure instanceof RequestError && failure.status === 409) return automationText.applyRunning;
   if (failure instanceof RequestError && failure.status === 422)

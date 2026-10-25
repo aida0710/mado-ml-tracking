@@ -3,9 +3,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * Picks a Project's storage backend from a list showing each name, kind and the default.
- * A current value missing from the choices (for example a disabled backend) stays listed so
- * saving other settings does not silently move the Project.
+ * Projectの保存先を、名前、種類、既定かどうかを示す一覧から選ぶ。選択肢に無い今の値（無効にした
+ * 保存先など）も一覧に残し、ほかの設定を保存したときにProjectの保存先が黙って移らないようにする。
  */
 export function StorageBackendPicker({
   name,

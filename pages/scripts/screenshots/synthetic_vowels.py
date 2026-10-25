@@ -10,7 +10,7 @@ import wave
 from pathlib import Path
 
 SAMPLE_RATE = 16000
-# First and second formants (Hz) of each vowel; only for telling the synthetic sounds apart.
+# 各母音の第1・第2フォルマント（Hz）。合成した音どうしを区別するためだけの値。
 VOWELS = {"a": (800, 1200), "i": (300, 2300), "u": (350, 1300), "e": (500, 1900), "o": (500, 900)}
 VOWEL_SECONDS = 0.8
 
@@ -22,7 +22,7 @@ def write_vowel(path: Path, formants: tuple[int, int], *, pitch: float, seconds:
         t = index / SAMPLE_RATE
         envelope = min(1.0, t / 0.05, (seconds - t) / 0.05)
         value = 0.0
-        # Harmonics of the voice pitch, boosted only near the formants: a crude vowel synthesis.
+        # 声の高さの倍音を、フォルマントの近くだけ強める。大まかな母音の合成。
         for harmonic in range(1, int(4000 / pitch)):
             frequency = harmonic * pitch
             gain = sum(math.exp(-(((frequency - formant) / 150) ** 2)) for formant in formants) + 0.02

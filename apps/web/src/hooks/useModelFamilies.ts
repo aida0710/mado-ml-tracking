@@ -4,8 +4,8 @@ import type { SuggestFieldValues } from '../types/form';
 import { useQuery } from './useQuery';
 
 /**
- * The Project's model families and a `suggest` for a family field. Until they load, or if they
- * cannot, the field takes any typed family; `refreshKey` offers them once they arrive.
+ * Projectのモデル系列と、系列の欄に渡す`suggest`。読み込むまでの間や読み込めないときは、欄は
+ * 入力したどの系列も受け付ける。届いたら`refreshKey`が候補を出し直させる。
  */
 export function useModelFamilies(projectId: string) {
   const families = useQuery({ key: `${projectId}:model-families`, load: (signal) =>

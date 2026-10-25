@@ -9,14 +9,14 @@ export const EXECUTION_RUNTIME_KINDS: ExecutionRuntimeKind[] = [
   'apptainer',
 ];
 
-// SHA256 values refer to the stored bytes, not an image tag or filename.
+// SHA256の値は、イメージのタグやファイル名ではなく、保存したバイト列を指す。
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
 const DOCKER_REPOSITORY_COMPONENT = '[a-z0-9]+(?:(?:[._]|__|-+)[a-z0-9]+)*';
 const DOCKER_REGISTRY_HOST = '[a-z0-9]+(?:[.-][a-z0-9]+)*(?::[0-9]{1,5})?';
 const DOCKER_IMAGE_PATTERN = new RegExp(
   `^(?:${DOCKER_REGISTRY_HOST}/)?${DOCKER_REPOSITORY_COMPONENT}(?:/${DOCKER_REPOSITORY_COMPONENT})*(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?@sha256:[a-f0-9]{64}$`,
 );
-// Keep input validation aligned with the API limits for stored runtime references.
+// 入力の検査は、保存するRuntimeの参照についてのAPIの上限とそろえる。
 const MAX_DOCKER_IMAGE_LENGTH = 2048;
 const MAX_CONTAINER_DIRECTORY_LENGTH = 4000;
 
