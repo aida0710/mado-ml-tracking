@@ -4,7 +4,10 @@ import { text } from '../../i18n/catalog';
 import { pluginsText } from '../../i18n/plugins';
 import { formatList } from '../../i18n/textJoining';
 
-/** Mado shows these scopes as feature permissions; other scopes keep Mado's own name. */
+/**
+ * mado S3 Data Catalogは、これらのscopeを機能の権限として表示する。ほかのscopeは、
+ * mado S3 Data Catalogでの名前のまま出す。
+ */
 function getScopeLabel(scope: string): string {
   switch (scope) {
     case MADO_SCOPES.lineageRead:

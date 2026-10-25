@@ -34,7 +34,7 @@ describe('ProjectSwitcher', () => {
     expect(button).toContain('aria-expanded="false"');
     expect(markup).toContain('>Speech</span>');
     expect(markup).not.toContain('role="listbox"');
-    // The native select is gone.
+    // ネイティブのselectはもう使っていない。
     expect(markup).not.toContain('<select');
   });
 

@@ -6,8 +6,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * The main navigation's links with their icons under the group labels, laid out by the sidebar,
- * the rail or the drawer. The rail hides the names on screen, so it shows them as tooltips.
+ * メインのナビゲーションのリンク。組の見出しの下にアイコン付きで並べ、配置はサイドバー・レール・
+ * ドロワーが決める。レールは画面に名前を出さないので、名前をツールチップで出す。
  */
 export function NavigationLinkList({
   groups,

@@ -5,20 +5,20 @@ export interface SelectOption {
   label: string;
 }
 
-/** Candidates that complete what is typed in a text field, and an optional note about the value. */
+/** テキストの欄に入力中の値を補う候補と、値についての注記（任意）。 */
 export interface FieldSuggestions {
   items: string[];
-  /** A short fact shown beside a candidate, keyed by the candidate (a Python's version). */
+  /** 候補の横に出す短い情報。候補をキーにする（Pythonのバージョンなど）。 */
   details?: Record<string, string>;
-  /** Shown under the field, for example that the typed path does not exist. */
+  /** 欄の下に出す。たとえば、入力したパスが存在しないこと。 */
   note?: string;
-  /** warning: the note points at a likely mistake (a name that differs only in letter case). */
+  /** warning: 注記が、誤りらしいもの（大文字と小文字だけが違う名前など）を指している。 */
   noteTone?: 'warning';
 }
 
 /**
- * Looks up the candidates for `value`. The caller decides where they come from (an API, a fixed
- * list); `signal` aborts a lookup that a newer value has replaced.
+ * `value`の候補を引く。候補をどこから持ってくるか（API、決まった一覧）は呼び出し側が決める。
+ * `signal`は、新しい値に置き換わった検索を中止する。
  */
 export type SuggestFieldValues = (value: string, signal: AbortSignal) => Promise<FieldSuggestions>;
 
@@ -34,7 +34,7 @@ export interface FormField {
     | 'textarea'
     | 'select'
     | 'multiselect'
-    /** Several values as a list of checkboxes (no Ctrl-click); long lists get a filter box. */
+    /** 複数の値をチェックボックスで選ぶ（Ctrlクリック不要）。長い一覧には絞り込み欄を付ける。 */
     | 'checkboxes'
     | 'datetime-local'
     | 'checkbox';
@@ -47,14 +47,14 @@ export interface FormField {
   max?: number;
   maxLength?: number;
   readOnly?: boolean;
-  /** Offers candidates under a text field as it is typed. */
+  /** 入力に合わせて、テキストの欄の下に候補を出す。 */
   suggest?: SuggestFieldValues;
-  /** Opens the candidates on an empty field too (a short list worth seeing before typing). */
+  /** 空の欄でも候補を開く（入力前に見ておく価値のある短い一覧）。 */
   offerSuggestionsWhenEmpty?: boolean;
-  /** A new value looks the field's value up again (candidates that arrived later). */
+  /** この値が変わると、欄の今の値で候補を引き直す（後から届いた候補を反映するため）。 */
   suggestionsRefreshKey?: string | number;
-  /** A line under the field about what to enter, read with the field. */
+  /** 欄の下に出す、何を入力するかの説明の1行。欄と一緒に読み上げる。 */
   hint?: string;
-  /** Shown by a 'checkboxes' field that has no options, in place of the empty list. */
+  /** 'checkboxes'の欄に選択肢が無いとき、空の一覧の代わりに出す。 */
   emptyText?: string;
 }
