@@ -5,9 +5,9 @@ import { userMenuLinks } from '../layout/userMenuLinks';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-// 項目はreact-routerのLinkで描き、ページを読み直さずに移る。項目は並びとして描かれるので、名前をkeyにする。
+// 項目はreact-routerのLinkで描き、ページを読み直さずに移る。
 const renderUserMenuLink: UserMenuLinkRenderer = (item, { children, ...props }) => (
-  <Link key={item.label} {...props} to={item.href}>
+  <Link {...props} to={item.href}>
     {children}
   </Link>
 );

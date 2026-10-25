@@ -5,22 +5,16 @@ const CODE_LANGUAGE_STORAGE_KEY = 'mmt.codeLanguage';
 
 /**
  * プレビューするテキストの形式（デザインシステムのuseCodeLanguage）。ファイル名・メディアタイプ・中身から
- * 判定し、利用者がこの種類のファイルに選び直した形式があればそれを使う。Artifactの名前とメディアタイプは
- * 無いことがあるので、ここで空として渡す。
+ * 判定し、利用者がこの種類のファイルに選び直した形式があればそれを使う。
  */
 export function useCodeLanguage({
   fileName,
   mimeType,
   text,
 }: {
-  fileName?: string | null;
-  mimeType?: string | null;
+  fileName: string;
+  mimeType?: string;
   text: string;
 }): CodeLanguageState {
-  return useDesignSystemCodeLanguage({
-    storageKey: CODE_LANGUAGE_STORAGE_KEY,
-    fileName: fileName ?? '',
-    mimeType: mimeType ?? undefined,
-    text,
-  });
+  return useDesignSystemCodeLanguage({ storageKey: CODE_LANGUAGE_STORAGE_KEY, fileName, mimeType, text });
 }

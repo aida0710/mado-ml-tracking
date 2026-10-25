@@ -167,8 +167,7 @@ export function ProjectSwitcher({
           ref={popoverRef}
           popover="manual"
           className="popover anchored-popover project-switcher-popover"
-          // .popoverの既定のtopを外し、useAnchoredPopoverが決めた上か下の一方だけを効かせる。
-          style={{ ...popoverStyle, top: popoverStyle?.top ?? 'auto', bottom: popoverStyle?.bottom ?? 'auto' }}
+          style={popoverStyle}
           onMouseDown={keepFocusOnPress}
         >
           {offersFilter && (

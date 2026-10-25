@@ -18,7 +18,7 @@
 
 フォント、色・影・角丸・書体・文字の大きさの変数、要素の既定、共通の部品（ボタン、入力欄、ダイアログ、タブ、表、状態バッジ、ページの見出し、メニュー、一覧の上の帯、パンくず）、画面の枠（上部バー、サイドバー、ドロワー、ログイン画面）、来歴のグラフ（`lineage.css`）はmado S3 Data Catalogと共有するデザインシステム（`@mado/design-system`、[aida0710/mado-design-systems](https://github.com/aida0710/mado-design-systems)）にあり、`apps/web/src/main.tsx`が日本語のNoto Sans JPとあわせて最初に読み込みます。両アプリ共通の処理（画面幅、表示言語、テーマ、書式、クリップボード、Monacoの配色、トークンの期限）とReactの部品（`Dialog`、`NavigationSidebar`、`NavigationDrawer`、`LanguagePicker`、`LoginHeader`、`ProductLogo`、`UserMenu`、読み込み中・失敗の表示、`useQuery`など）もデザインシステムから読み、このアプリは保存キー（`mmt.`で始まるもの）と文言を渡します。ファイルの分け方と決まり、バージョンの上げ方は[リポジトリのREADME](https://github.com/aida0710/mado-design-systems#readme)にあります。依存はGitHub Releaseのtarball（`apps/web/package.json`）で、バージョンを上げるときはそのURLを替えて`npm install`します。mado S3 Data Catalogも同じclass名を使うので、両方の見た目を変えるときはそのリポジトリを直してバージョンを上げ、このアプリだけの見た目は下の領域のファイルで上書きします。
 
-現在はGitHub Release v0.6.1のtarball（`mado-design-system-0.6.1.tgz`）を`apps/web`と`pages/`で使っています。HTTPSで取得するので、Gitを含まないWebビルド用コンテナでもインストールできます。
+現在はGitHub Release v0.6.2のtarball（`mado-design-system-0.6.2.tgz`）を`apps/web`と`pages/`で使っています。HTTPSで取得するので、Gitを含まないWebビルド用コンテナでもインストールできます。
 
 そのあと、`apps/web/src/styles/`に置いた領域別のファイルを次の順に読み込みます。
 

@@ -1,7 +1,7 @@
 import type { ModelAliasEventSource } from '@mmt/contracts';
+import { intlLocaleOf } from '@mado/design-system/locale';
 import { formatEnglishCount } from '../formatEnglishCount';
 import { formatEnglishQuotedList } from '../formatEnglishQuotedList';
-import { INTL_LOCALES } from '../locale';
 
 // Model registry labels: alias assignment, removal and alias history.
 export const modelsText = {
@@ -119,7 +119,7 @@ export const modelsTextTemplates = {
   codeCandidatesNoFamily: (family: string) =>
     `No code version supports the model family “${family}”. In Code, create a version whose “Supported model families” include “${family}”.`,
   versionsShown: (shown: number, total: number) =>
-    `Showing the ${shown.toLocaleString(INTL_LOCALES.en)} newest of ${formatEnglishCount(total, 'version')}.`,
+    `Showing the ${shown.toLocaleString(intlLocaleOf('en'))} newest of ${formatEnglishCount(total, 'version')}.`,
   familyCodeVersionsNone: (family: string) =>
     `None yet. In Code, create a code version whose “Supported model families” include “${family}” to use it for this model's tasks and automation.`,
   codeCandidatesNoCommonFamily: (families: readonly string[]) =>

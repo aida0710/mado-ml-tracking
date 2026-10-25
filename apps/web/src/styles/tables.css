@@ -62,22 +62,9 @@
 .toolbar {
   margin-bottom: 16px;
 }
-/* 検索欄の右端の「絞り込み」は、枠の無い入力欄の中のボタンとして、枠と地を持たせない。 */
-.toolbar-search > .button {
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-}
-/* 帯の中の選択欄は帯の地に溶け込ませ、項目の名前の横に並べる。 */
+/* 帯の中の項目の名前と選択欄は、折り返さず横に並べる。 */
 .toolbar-item {
   white-space: nowrap;
-}
-.toolbar-item > select {
-  max-width: 148px;
-  padding: 5px 4px;
-  border: 0;
-  background: transparent;
-  font-size: var(--font-size-sm);
 }
 .column-menu {
   position: relative;
@@ -169,17 +156,13 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* 帯が折り返すスマホの幅では、検索欄を1行に取り、操作はその下に並べる（mado S3 Data Catalogと同じ）。 */
+/* 帯が折り返すスマホの幅では、列のメニューもほかの項目（デザインシステムの.toolbar-item）と同じく、
+   上の行との間に線を引き、同じ行の項目の間にだけ左の線を引く。 */
 @media (width < 640px) {
-  .toolbar-search {
-    flex-basis: 100%;
-  }
-  .toolbar-item,
   .column-menu {
     border-left: 0;
     border-top: 1px solid var(--background);
   }
-  .toolbar-item + .toolbar-item,
   .toolbar-item + .column-menu,
   .column-menu + .toolbar-item {
     border-left: 1px solid var(--background);

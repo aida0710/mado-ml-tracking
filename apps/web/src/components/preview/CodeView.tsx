@@ -17,8 +17,8 @@ export function CodeView({
   mimeType,
 }: {
   content: string;
-  fileName?: string | null;
-  mimeType?: string | null;
+  fileName: string;
+  mimeType?: string;
 }) {
   useLocale();
   const code = useCodeLanguage({ fileName, mimeType, text: content });

@@ -84,7 +84,6 @@
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-  color: var(--text);
   box-shadow: var(--shadow-popover);
 }
 .project-switcher-popover:popover-open {

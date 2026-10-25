@@ -1,6 +1,6 @@
+import { intlLocaleOf } from '@mado/design-system/locale';
 import * as english from './en/artifacts';
 import { localized } from './localized';
-import { INTL_LOCALES } from './locale';
 // Artifact browser, preview, size limit, audio viewer, evaluation samples, and Artifact comparison labels.
 import type { EvaluationSampleErrorReason, ArtifactReferenceError } from '../lib/evaluationSamples';
 
@@ -99,12 +99,12 @@ export const artifactsTextTemplates = localized({
   artifactDatasetOwner: (datasetName: string) => `データセット ${datasetName}`,
   artifactFolder: (name: string) => `フォルダ ${name}`,
   artifactDirectorySummary: (fileCount: number, size: string) =>
-    `${fileCount.toLocaleString(INTL_LOCALES.ja)}件 · ${size}`,
+    `${fileCount.toLocaleString(intlLocaleOf('ja'))}件 · ${size}`,
   audioChannelNumber: (channel: number) => `チャンネル${channel}`,
-  audioSampleRateValue: (hertz: number) => `${hertz.toLocaleString(INTL_LOCALES.ja)} Hz`,
-  audioMaxFrequency: (hertz: number) => `${(hertz / 1000).toLocaleString(INTL_LOCALES.ja, { maximumFractionDigits: 1 })} kHz`,
-  evaluationSampleCount: (count: number) => `${count.toLocaleString(INTL_LOCALES.ja)}件のサンプル`,
-  evaluationBrokenRowCount: (count: number) => `読み取れない行 ${count.toLocaleString(INTL_LOCALES.ja)}件`,
+  audioSampleRateValue: (hertz: number) => `${hertz.toLocaleString(intlLocaleOf('ja'))} Hz`,
+  audioMaxFrequency: (hertz: number) => `${(hertz / 1000).toLocaleString(intlLocaleOf('ja'), { maximumFractionDigits: 1 })} kHz`,
+  evaluationSampleCount: (count: number) => `${count.toLocaleString(intlLocaleOf('ja'))}件のサンプル`,
+  evaluationBrokenRowCount: (count: number) => `読み取れない行 ${count.toLocaleString(intlLocaleOf('ja'))}件`,
   evaluationLine: (line: number) => `${line}行目`,
   evaluationPage: (page: number, pageCount: number) => `${page} / ${pageCount}ページ`,
 }, english.artifactsTextTemplates);
