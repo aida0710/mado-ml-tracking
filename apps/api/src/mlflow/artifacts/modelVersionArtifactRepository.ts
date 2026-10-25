@@ -39,7 +39,8 @@ export async function modelVersionArtifactManifest(
       code: 'invalid_reference',
       message: 'the artifact manifest of the registered model version is invalid',
     });
-  // Resolve only the immutable snapshot; source Run and Logged Model lifecycle do not affect a registered version.
+  // 不変のスナップショットだけを解決する。元のRunやLogged Modelのライフサイクルは、
+  // 登録済みのバージョンに影響しない。
   const artifacts = await rows<{ id: string; sha256: string; size: number }>(
     connection,
     'SELECT id,sha256,size FROM artifacts WHERE project_id=$1 AND id=ANY($2::uuid[])',

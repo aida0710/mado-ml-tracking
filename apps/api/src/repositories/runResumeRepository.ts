@@ -11,8 +11,8 @@ export interface LockedRunForResume {
   hasJob: boolean;
 }
 
-// FOR UPDATE matches the MLflow status change: it waits for output registration and serializes
-// concurrent resumes so only one of them records an event.
+// MLflowの状態の変更と同じくFOR UPDATEを取る。出力の登録を待ち、同時の再開を直列にして、
+// イベントを記録するのを1つだけにする。
 export async function lockRunForResume(
   connection: Connection,
   run: { projectId: string; runId: string },
@@ -26,7 +26,7 @@ export async function lockRunForResume(
   );
 }
 
-/** Reopens the Run; the previous end time and error belong to the ended segment. */
+/** Runを開き直す。前の終了時刻とerrorは終了した区間のもの。 */
 export async function markRunResumed(connection: Connection, runId: string): Promise<Run> {
   return (await first<Run>(
     connection,
@@ -36,7 +36,7 @@ export async function markRunResumed(connection: Connection, runId: string): Pro
 }
 
 interface RunResumeEventRow extends Omit<RunResumeEvent, 'maxStepAtResume'> {
-  // bigint arrives as a string from pg.
+  // pgからbigintは文字列で届く。
   maxStepAtResume: string | null;
 }
 
@@ -51,8 +51,8 @@ function toRunResumeEvent(row: RunResumeEventRow): RunResumeEvent {
 }
 
 /**
- * Records a resume in the caller's transaction, before the Run row changes. The largest metric
- * step is read here so every source (native, MLflow, sync) computes it the same way.
+ * 呼び出し側のトランザクションで、Runの行が変わる前に再開を記録する。メトリクスの最大のstepを
+ * ここで読み、どの経路（ネイティブ、MLflow、sync）でも同じ方法で計算する。
  */
 export async function insertRunResumeEvent(
   connection: Connection,
@@ -100,7 +100,7 @@ export async function listRunResumeEvents(
   return events.map(toRunResumeEvent);
 }
 
-/** Largest logged step per metric key, so a resumed client continues from the next step. */
+/** メトリクスのキーごとに記録した最大のstep。再開したクライアントはその次のstepから続ける。 */
 export async function findLastMetricSteps(
   connection: Connection,
   runId: string,

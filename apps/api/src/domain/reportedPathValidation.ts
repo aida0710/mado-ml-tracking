@@ -7,8 +7,8 @@ export function hasNoControlCharacters(value: string): boolean {
 }
 
 /**
- * A path a worker or a computer reports (a key file, a Python, a directory): one line, as long as
- * a person would type for a computer.
+ * workerやコンピュータが報告するパス（鍵のファイル、Python、ディレクトリ）。1行で、人が
+ * コンピュータ用に打ち込む程度の長さ。
  */
 export const reportedPathSchema = z
   .string()

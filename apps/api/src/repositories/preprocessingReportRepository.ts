@@ -1,7 +1,7 @@
 import type { PreprocessingReport } from '@mmt/contracts';
 import { first, type Connection } from '../db/database.js';
 
-/** All report-owned names let quality gates ignore values removed from the latest report. */
+/** レポートが持つ名前をすべて返す。これで品質ゲートは、最新のレポートから消えた値を無視できる。 */
 export async function findPreprocessingMetricNames(
   connection: Connection,
   reference: { projectId: string; runId: string },

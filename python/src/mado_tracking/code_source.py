@@ -1,4 +1,4 @@
-"""Validate CodeSource declarations before sending or materializing immutable code."""
+"""不変のコードを送る、または展開する前に、CodeSourceの宣言を検証する。"""
 
 from __future__ import annotations
 
@@ -7,7 +7,8 @@ from collections.abc import Mapping
 from typing import Any
 from urllib.parse import urlsplit
 
-# Bound inline text sources independently; the API enforces a smaller registry JSON budget.
+# インラインのテキストのsourceには独自に上限を設ける。APIはレジストリのJSONにもっと小さい
+# 上限を課す。
 MAX_SOURCE_TEXT_BYTES = 16 * 1024**2
 MAX_SOURCE_FILES = 100_000
 MAX_SOURCE_PATH_LENGTH = 1024

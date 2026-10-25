@@ -18,9 +18,8 @@ import { findSiteTarget, requireTargetManager, requireTargetUser } from './siteA
 import { requireSession } from './tokenService.js';
 
 /**
- * What each person sets for a site: their account, work directory and variables. On a site the
- * launcher logs in to with each requester's own account, saving an account name asks the
- * launcher for that person's key.
+ * 各人がsiteに設定するもの。アカウント、作業ディレクトリ、変数。launcherが依頼者ごとの
+ * アカウントでログインするsiteでは、アカウント名を保存すると、launcherにその人の鍵を求める。
  */
 export class SitePersonalSettingsService {
   constructor(private readonly database: Database) {}
@@ -50,7 +49,7 @@ export class SitePersonalSettingsService {
       await requireTargetUser(connection, principal, target);
       await lockSiteSettings(connection, targetId);
       const site = (await findSiteSettings(connection, targetId))!;
-      // A shared account's work directory and variables are its manager's alone.
+      // 共有のアカウントの作業ディレクトリと変数は、その管理者だけが決める。
       if (target.submissionMode === 'automatic' && site.accountMode === 'shared')
         throw new DomainError({
           status: 422,
@@ -97,7 +96,7 @@ export class SitePersonalSettingsService {
     });
   }
 
-  /** Deleting one's settings also revokes one's key for the site. */
+  /** 自分の設定を消すと、そのsiteでの自分の鍵も失効させる。 */
   async deleteOwn(principal: Principal, targetId: string, metadata: RequestMetadata): Promise<void> {
     requireSession(principal, 'changing your own computer settings');
     await transaction(this.database, async (connection) => {

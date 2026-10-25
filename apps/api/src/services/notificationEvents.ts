@@ -9,8 +9,8 @@ import type {
 import { first, rows, type Connection } from '../db/database.js';
 
 /**
- * What a rule filter is matched against. isAutomation is asked only when a matching rule has
- * automationOnly, because finding the automation behind a Run takes extra queries.
+ * ルールのfilterと照らし合わせる対象。isAutomationは、合うルールにautomationOnlyがあるときだけ
+ * 問い合わせる。Runの元になった自動実行を探すには追加のクエリが要るため。
  */
 export interface NotificationSubject {
   runKind?: RunKind;
@@ -18,7 +18,7 @@ export interface NotificationSubject {
   isAutomation?: () => Promise<boolean>;
 }
 
-/** The message part of an event, built only when at least one rule will receive it. */
+/** イベントのメッセージ部分。受け取るルールが1つ以上あるときだけ作る。 */
 export interface NotificationEventDescription {
   title: string;
   run: NotificationRunSummary | null;
@@ -30,7 +30,7 @@ export interface NotificationEventDescription {
 export interface NotificationEventSource {
   projectId: string;
   type: NotificationEventType;
-  /** Identifies the occurrence, such as `run.failed:<run id>`; repeating it queues nothing new. */
+  /** 出来事を識別する（`run.failed:<run id>`など）。繰り返しても新しくはキューに入れない。 */
   dedupeKey: string;
   subject: NotificationSubject;
   describe: () => Promise<NotificationEventDescription>;
@@ -58,10 +58,10 @@ export async function matchesNotificationFilter(
 }
 
 /**
- * Queues one outbox row per enabled rule of the Project that subscribes to the event and whose
- * filter matches, using the caller's connection so the rows commit or roll back with the change
- * that caused the event. Rules whose channel is disabled receive nothing. Returns rows added.
- * Monitoring and automation features call this for their own event types.
+ * イベントを購読していてfilterが合う、Projectの有効なルールごとに、outboxの行を1つキューに
+ * 入れる。呼び出し元の接続を使うので、行はイベントの元になった変更と一緒にコミットまたは
+ * ロールバックされる。通知先が無効なルールには何も届かない。足した行の数を返す。監視と
+ * 自動実行の機能は、自分のイベントの種類のためにこれを呼ぶ。
  */
 export async function enqueueNotificationEvent(
   connection: Connection,
@@ -101,7 +101,7 @@ export async function enqueueNotificationEvent(
   return added;
 }
 
-// Every rule receives the same immutable payload and event id, so receivers can deduplicate.
+// どのルールも同じ変わらないpayloadとイベントIDを受け取るので、受け取り側で重複を除ける。
 async function buildEvent(
   connection: Connection,
   source: NotificationEventSource,

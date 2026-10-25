@@ -1,4 +1,4 @@
-"""Step-specific data configurations recorded by the training code."""
+"""学習のコードが記録する、stepごとのデータの構成。"""
 
 from __future__ import annotations
 
@@ -21,10 +21,10 @@ def log_training_data_stage(
     checkpoint_id: str | None = None,
     metadata: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Record every dataset used from this step after the training loader changes.
+    """学習のローダーを変えたあと、このstepから使うすべてのデータセットを記録する。
 
-    Keep previous datasets in the list if they are still used. A resend is safe; a recorded
-    step cannot be replaced. This method needs the API and does not change the loader itself.
+    前のデータセットも、まだ使っているならリストに残す。再送しても問題ないが、記録済みのstepは
+    置き換えられない。このメソッドにはAPIが要り、ローダー自体は変えない。
     """
     if run.entity.get("kind") not in {"training", "finetuning"}:
         raise ConfigurationError("Training data stages require a training or finetuning Run")
@@ -48,5 +48,5 @@ def log_training_data_stage(
 
 
 def training_data_stages(run: Run) -> dict[str, Any]:
-    """Read initial datasets and every recorded data configuration in step order."""
+    """最初のデータセットと、記録したすべてのデータの構成をstep順に読む。"""
     return run.client.request("GET", f"{run.api_path}/training-data-stages", retryable=True)

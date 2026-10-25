@@ -8,9 +8,9 @@ import { first, type Database } from '../db/database.js';
 import { claimableCondition, LeasedOutbox, OutboxDeliveryError } from './leasedOutbox.js';
 import { PollingLoop } from './pollingLoop.js';
 
-// Old notifications lose their value; after 8 attempts (about 10 minutes of backoff) give up.
+// 古い通知は価値を失うので、8回試行したら（backoffでおよそ10分）あきらめる。
 export const NOTIFICATION_MAX_ATTEMPTS = 8;
-// The lease exceeds the 5-second send deadline so another dispatcher cannot send concurrently.
+// leaseを送信の期限の5秒より長くし、別のdispatcherが同時に送れないようにする。
 const DELIVERY_LEASE_SECONDS = 60;
 const FIRST_RETRY_SECONDS = 5;
 const MAX_RETRY_SECONDS = 3600;
@@ -31,8 +31,9 @@ interface NotificationDeliveryRow {
 }
 
 /**
- * Sends notification_outbox rows through the sender of each channel kind. Rows of a channel or
- * rule disabled after queuing fail without sending, so re-enabling does not flush stale alerts.
+ * notification_outboxの行を、通知先の種類ごとのsenderで送る。キューに入れたあとで
+ * 通知先か通知ルールが無効になった行は送らずに失敗させ、有効に戻したときに古い通知が
+ * まとめて出ないようにする。
  */
 export class NotificationDispatcher {
   private readonly outbox: LeasedOutbox;
@@ -93,7 +94,7 @@ export class NotificationDispatcher {
     if (!delivery.ruleEnabled)
       throw new OutboxDeliveryError('notification_rule_disabled', { permanent: true });
     const sender = this.options.senders[delivery.channelKind];
-    // Email is stored and matched before an SMTP sender exists; retrying cannot deliver it.
+    // メールの通知先はSMTPのsenderが無いうちから保存・照合される。再試行しても届けられない。
     if (!sender)
       throw new OutboxDeliveryError(`${delivery.channelKind}_sender_unavailable`, {
         permanent: true,

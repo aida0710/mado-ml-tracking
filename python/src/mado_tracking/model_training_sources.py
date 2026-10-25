@@ -1,4 +1,4 @@
-"""Attaching verified training provenance to existing model versions."""
+"""検証済みの学習の来歴を、既存のモデルバージョンに付ける。"""
 
 from __future__ import annotations
 
@@ -22,10 +22,10 @@ def associate_model_training_source(
     historical_run: Mapping[str, Any] | None = None,
     evidence: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Link a completed Run, or atomically record completed historical training and link it.
+    """完了したRunを紐付ける。または、完了した過去の学習を記録して紐付けるまでを不可分に行う。
 
-    historical_run uses native API field names, including exact inputDatasetVersionIds.
-    Unknown startedAt/endedAt should be omitted. Weights and existing version IDs stay fixed.
+    historical_runはネイティブAPIのフィールド名で書き、inputDatasetVersionIdsも正確に入れる。
+    分からないstartedAt/endedAtは省く。重みと既存のバージョンIDは変わらない。
     """
     from .client import path_id
 

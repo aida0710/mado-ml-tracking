@@ -1,4 +1,4 @@
-/** Verify official SDK records in the running dashboard and save review screenshots. */
+/** 公式SDKの記録を動いている画面で確かめ、レビュー用のスクリーンショットを保存する。 */
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';

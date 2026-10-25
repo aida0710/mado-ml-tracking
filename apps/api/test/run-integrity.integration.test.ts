@@ -212,7 +212,7 @@ describe.skipIf(!testDatabaseUrl)('予約tagと終端後のRun記録（独立Pos
       ),
     ).toEqual({ items: [] });
 
-    // Renaming and diagnostics logs are not evidence, so they stay available.
+    // 名前の変更と診断用のログは証拠ではないので、引き続きできる。
     await entity(
       await request(harness.app, `${fixture.basePath}/runs/${run.id}`, {
         method: 'PATCH',

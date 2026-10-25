@@ -1,9 +1,8 @@
-"""Driver Jobs: a Job's code starts child Jobs with its own Job token.
+"""ドライバーのJob。Jobのコードが、自分のJob tokenで子のJobを始める。
 
-The parent Job must have been created with allowChildJobs. Its code finds its Project and Job in
-MMT_PROJECT_ID and MMT_JOB_ID, and its Job token in MMT_API_TOKEN, so `Client()` is enough. Each
-child is created with an idempotency key: a driver that restarts gets back the children it
-already made instead of starting them twice.
+親のJobはallowChildJobsを付けて作られている必要がある。そのコードはProjectとJobを
+MMT_PROJECT_IDとMMT_JOB_IDから、Job tokenをMMT_API_TOKENから得るので、`Client()`だけで足りる。
+子はそれぞれ冪等キーを付けて作る。再起動したドライバーは、既に作った子を2回始めずに取り戻す。
 
     spec = ChildJobSpec(name="shard", kind="processing", code_version_id=..., target_id=...)
     jobs = map_shards(client, spec, [{"shard": i} for i in range(64)], key="generate-v1")
@@ -23,14 +22,14 @@ from .errors import ConfigurationError
 if TYPE_CHECKING:
     from .client import Client
 
-# Mirrors CHILD_JOB_WAIT_MAX_SECONDS: one wait request lasts at most this long.
+# CHILD_JOB_WAIT_MAX_SECONDSに合わせる。1回の待機のリクエストは最長でこの時間続く。
 CHILD_JOB_WAIT_MAX_SECONDS = 60
 MAX_IDEMPOTENCY_KEY_LENGTH = 200
 
 
 @dataclass(frozen=True)
 class ChildJobSpec:
-    """What one child is (ChildJobCreate without its key); unset options take the API's defaults."""
+    """1つの子の内容（キーを除いたChildJobCreate）。設定しないオプションはAPIの既定値になる。"""
 
     name: str
     kind: str
@@ -77,13 +76,13 @@ class ChildJobSpec:
             "retryOnTimeout": self.retry_on_timeout,
             "allowChildJobs": self.allow_child_jobs,
         }
-        # Left out when unset, so the API applies its own defaults (and the parent's experiment).
+        # 未設定なら送らず、APIに自分の既定値（と親の実験）を使わせる。
         body.update({name: value for name, value in optional.items() if value is not None})
         return body
 
 
 def driver_job(project_id: str | None = None, parent_job_id: str | None = None) -> tuple[str, str]:
-    """The Project and the driver's own Job: the arguments, else MMT_PROJECT_ID and MMT_JOB_ID."""
+    """ProjectとドライバーのJob自身。引数で渡されなければMMT_PROJECT_IDとMMT_JOB_IDから取る。"""
     project = project_id or os.environ.get("MMT_PROJECT_ID")
     job = parent_job_id or os.environ.get("MMT_JOB_ID")
     if not project or not job:
@@ -105,10 +104,10 @@ def submit_child_job(
     project_id: str | None = None,
     parent_job_id: str | None = None,
 ) -> dict[str, Any]:
-    """Create a child Job (or an array when spec.array_size is set); returns ChildJobCreated.
+    """子のJob（spec.array_sizeを設定したならarray）を作り、ChildJobCreatedを返す。
 
-    `created` is false when the key was used before: the response then names what the first
-    request created, so resending after a lost answer or a restart is safe.
+    キーが以前に使われていれば`created`はfalseになる。そのとき応答は最初のリクエストが作ったものを
+    示すので、応答が失われたあとや再起動のあとに送り直しても安全。
     """
     project, job = driver_job(project_id, parent_job_id)
     return client.request("POST", _children_path(client, project, job), json=spec.body(key), retryable=True)
@@ -131,10 +130,10 @@ def wait_for_child_jobs(
     project_id: str | None = None,
     parent_job_id: str | None = None,
 ) -> dict[str, Any]:
-    """Wait until every child has ended (or timeout_seconds passed); returns ChildJobWait.
+    """すべての子が終わる（またはtimeout_secondsが過ぎる）まで待ち、ChildJobWaitを返す。
 
-    Each request is one long poll of at most CHILD_JOB_WAIT_MAX_SECONDS, so a driver waiting for
-    hours keeps no request open longer than that.
+    各リクエストは最長CHILD_JOB_WAIT_MAX_SECONDSの1回のlong pollなので、何時間も待つドライバーでも、
+    それより長くリクエストを開いたままにしない。
     """
     project, job = driver_job(project_id, parent_job_id)
     deadline = None if timeout_seconds is None else time.monotonic() + timeout_seconds
@@ -146,7 +145,7 @@ def wait_for_child_jobs(
             _children_path(client, project, job, "wait"),
             params={"timeoutSeconds": str(seconds)},
             retryable=True,
-            # The server holds the request up to `seconds`; the client allows a little more.
+            # サーバーはリクエストを最長`seconds`秒保持する。クライアントはそれより少し長く待つ。
             timeout=seconds + CHILD_JOB_WAIT_MAX_SECONDS / 2,
         )
         if waited.get("done") is True or (deadline is not None and time.monotonic() >= deadline):
@@ -164,10 +163,10 @@ def map_shards(
     project_id: str | None = None,
     parent_job_id: str | None = None,
 ) -> list[dict[str, Any]]:
-    """One child per shard, its parameters updated with the shard's; keys are `<key>:<index>`.
+    """shardごとに1つの子を作り、そのparameterをshardの値で更新する。キーは`<key>:<index>`。
 
-    With wait=True the call returns once every child has ended. The returned Jobs are the
-    children's current state, in shard order (an array child contributes all its members).
+    wait=Trueなら、すべての子が終わってから返る。返すJobは子の今の状態で、shardの順に並ぶ
+    （arrayの子は、そのメンバーをすべて含める）。
     """
     project, job = driver_job(project_id, parent_job_id)
     created_ids: list[str] = []

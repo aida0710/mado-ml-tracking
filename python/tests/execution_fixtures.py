@@ -1,4 +1,4 @@
-"""Execution snapshots supplied by the current API in test fixtures."""
+"""テストのfixtureで使う、今のAPIが返す形の実行のスナップショット。"""
 
 import copy
 

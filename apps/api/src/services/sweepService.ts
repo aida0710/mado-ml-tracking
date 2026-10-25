@@ -48,7 +48,7 @@ interface SweepReference {
 
 type SweepChangeAction = 'sweep.pause' | 'sweep.resume' | 'sweep.cancel' | 'sweep.update';
 
-/** Sweep API: authorization, validation and audit around SweepController's state machine. */
+/** SweepのAPI。SweepControllerの状態機械の周りで、権限の確認、検証、監査を行う。 */
 export class SweepService {
   constructor(
     private readonly database: Database,
@@ -106,7 +106,7 @@ export class SweepService {
 
   async list(principal: Principal, projectId: string, query: SweepListQuery): Promise<SweepPage> {
     await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
-    // Fetch one extra row to know whether another page exists without a count query.
+    // 1行多く取り、件数を数えるクエリなしで次のページがあるかを知る。
     const stored = await listSweeps(this.database, { projectId, ...query, limit: query.limit + 1 });
     const items = await this.withTrialSummaries(this.database, stored.slice(0, query.limit));
     return { items, nextCursor: stored.length > query.limit ? items.at(-1)!.id : null };
@@ -205,7 +205,8 @@ export class SweepService {
       details: { cancelRunningTrials: reference.cancelRunningTrials },
       beforeLock: (connection) => this.lockTrialJobs(connection, reference),
       apply: async (connection, sweep) => {
-        // Set first so the completion handler, run for each canceled queued trial, launches nothing.
+        // 先に設定しておき、取り消した順番待ちのtrialごとに動く完了時のハンドラが、何も起動しない
+        // ようにする。
         await updateSweepStatus(connection, {
           id: sweep.id,
           status: 'canceled',
@@ -258,8 +259,8 @@ export class SweepService {
   }
 
   /**
-   * Shared flow of the creator-or-admin operations. apply returns false when the sweep is already
-   * in the requested state; the call then succeeds without an audit event.
+   * 作成者かadminが行う操作の共通の流れ。Sweepが既に求められた状態ならapplyはfalseを返し、
+   * そのとき呼び出しは監査のイベントなしで成功する。
    */
   private async change(
     principal: Principal,
@@ -315,8 +316,8 @@ export class SweepService {
     );
   }
 
-  // A worker completing a trial locks its Job and then waits for the sweep lock in the
-  // completion handler, so cancel takes the trial Job locks before the sweep lock.
+  // trialを完了させるworkerは、Jobをロックしてから完了時のハンドラでSweepのロックを待つ。
+  // そのため、取り消しもSweepのロックより先にtrialのJobのロックを取る。
   private async lockTrialJobs(connection: Connection, reference: SweepReference): Promise<void> {
     await connection.query(
       `SELECT j.id FROM jobs j JOIN sweep_trials t ON t.job_id=j.id
@@ -332,7 +333,7 @@ export class SweepService {
       projectId: string;
       input: SweepCreateInput;
       task: { targetId: string | null; gpuIds: string[]; codeVersionId: string };
-      // The Sweep's creator, whose Runs its trials are.
+      // Sweepの作成者。trialのRunはこの人のものになる。
       userId: string;
     },
   ): Promise<void> {

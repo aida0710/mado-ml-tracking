@@ -7,9 +7,9 @@ const arrayGroupColumns =
   'id,project_id,target_id,size,created_by,parent_job_id,hook_id,finished_at,created_at';
 
 /**
- * Marks an array finished when its last member ends and starts the array_finished hooks. A
- * member that is retried has its retry queued before its Run ends (RunnerService, automatic
- * retries), so an array with a retry still to run stays open.
+ * 最後のメンバーが終わったarrayを終了済みにし、array_finishedのフックを起動する。再試行される
+ * メンバーは、Runが終わる前に再試行がキューに入る（RunnerService、自動の再試行）ので、まだ動く
+ * 再試行があるarrayは開いたままになる。
  */
 export class JobArrayCompletionHandler implements RunCompletionHandler {
   readonly name = 'job-array-completion';
@@ -25,9 +25,9 @@ export class JobArrayCompletionHandler implements RunCompletionHandler {
     if (member?.arrayGroupId) await this.finishIfDone(connection, member.arrayGroupId);
   }
 
-  /** Also used by HookSweeper for arrays whose last Run ended without its Job (a Run PATCH). */
+  /** 最後のRunがJobを通さずに終わったarray（RunのPATCH）にも、HookSweeperが使う。 */
   async finishIfDone(connection: Connection, arrayGroupId: string): Promise<boolean> {
-    // The group lock orders members that end at the same time; the last one sees the others.
+    // グループをロックして同時に終わるメンバーを順に並べ、最後の1つがほかを見られるようにする。
     const group = await first<JobArrayGroup>(
       connection,
       `SELECT ${arrayGroupColumns} FROM job_array_groups WHERE id=$1 AND finished_at IS NULL FOR UPDATE`,
@@ -49,7 +49,7 @@ export class JobArrayCompletionHandler implements RunCompletionHandler {
     return true;
   }
 
-  /** Open arrays without an unfinished member, oldest first. */
+  /** 終わっていないメンバーが無いのに開いたままのarray。古い順。 */
   async listIdleGroups(connection: Connection, limit: number): Promise<string[]> {
     const idle = await rows<{ id: string }>(
       connection,

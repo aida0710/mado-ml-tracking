@@ -1,6 +1,7 @@
-"""Install, upgrade, and inspect a worker kept running by systemd on the worker host.
+"""workerホストで、systemdが動かし続けるworkerをインストール・アップグレードし、状態を確かめる。
 
-The API server never logs in to worker hosts (decisions.md); an operator runs these commands there.
+APIサーバーがworkerホストにログインすることは無い。
+運用担当者がそのホストでこれらのコマンドを実行する。
 """
 
 from __future__ import annotations
@@ -28,26 +29,27 @@ from .systemd_unit import (
     render_worker_unit,
 )
 
-# The worker ID names the systemd instance and the environment file, so it must be a plain file name.
+# worker IDはsystemdのインスタンス名と環境ファイルの
+# 名前になるので、普通のファイル名でなければならない。
 WORKER_ID_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}")
 SERVICE_USER_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_.-]{0,31}")
-# Same alphabet as the API's Bearer header check; anything else could never authenticate.
+# APIのBearerヘッダーの検査と同じ文字の集合。それ以外の文字では認証が通ることは無い。
 TOKEN_PATTERN = re.compile(r"[A-Za-z0-9_-]+")
 PACKAGE_VERSION_PATTERN = re.compile(r"[0-9][0-9A-Za-z.+!-]*")
-# systemd EnvironmentFile treats these specially; rejecting them avoids any quoting rules.
+# systemdのEnvironmentFileはこれらの文字を特別に扱う。断ることで、クォートの規則を考えずに済む。
 UNSAFE_ENVIRONMENT_CHARACTERS = frozenset("\"'\\$`\n\r\x00")
 ENVIRONMENT_FILE_MODE = 0o600
 PRIVATE_DIRECTORY_MODE = 0o700
 UNIT_FILE_MODE = 0o644
 PACKAGE_NAME = "mado-tracking"
 PACKAGE_EXTRAS = "telemetry"
-# JobJournal keeps the lock and one `<job-id>.json` per retained Job directly in the state directory.
+# JobJournalは、ロックと、残しているJobごとの`<job-id>.json`を、stateディレクトリの直下に置く。
 WORKER_LOCK_FILE = "worker.lock"
 JOURNAL_SUFFIX = ".json"
 
 
 class InstallerError(Exception):
-    """A step failed; the message is safe to print and never contains the token."""
+    """手順が失敗した。メッセージはそのまま表示してよく、tokenを含むことは無い。"""
 
 
 @dataclass(frozen=True)
@@ -68,7 +70,7 @@ def run_command(argv: Sequence[str]) -> CommandResult:
 
 @dataclass(frozen=True)
 class ServiceLayout:
-    """Where one scope keeps environment files, the unit, and default state."""
+    """1つのscopeが環境ファイル、unit、既定のstateを置く場所。"""
 
     scope: ServiceScope
     environment_directory: Path
@@ -109,7 +111,8 @@ class ServiceLayout:
     def default_state_directory(self, worker_id: str) -> Path:
         if self.scope is ServiceScope.SYSTEM:
             return self.state_root / worker_id
-        # Must match WorkerSettings.from_environment so a worker first started by hand keeps its journal.
+        # WorkerSettings.from_environmentと一致させる。最初に手で
+        # 起動したworkerが、同じjournalを使い続けられるようにするため。
         return self.state_root / hashlib.sha256(worker_id.encode()).hexdigest()[:16]
 
 
@@ -138,7 +141,7 @@ def format_environment_file(values: Mapping[str, str]) -> str:
 
 
 def parse_environment_file(path: Path) -> dict[str, str]:
-    """Read the file `install` wrote (plain KEY=value lines, comments allowed)."""
+    """`install`が書いたファイルを読む（KEY=valueの行だけ。コメントは書いてよい）。"""
     try:
         text = path.read_text()
     except FileNotFoundError:
@@ -155,7 +158,7 @@ def parse_environment_file(path: Path) -> dict[str, str]:
 
 
 def write_private_file(path: Path, content: str) -> None:
-    """Create the file as 0600 from the first byte, then swap it in, so the token is never exposed."""
+    """最初のバイトから0600でファイルを作ってから差し替え、tokenが読める瞬間を作らない。"""
     path.parent.mkdir(parents=True, exist_ok=True, mode=PRIVATE_DIRECTORY_MODE)
     temporary = path.with_name(f".{path.name}.tmp")
     temporary.unlink(missing_ok=True)
@@ -193,7 +196,7 @@ def worker_environment(request: InstallRequest, state_directory: Path) -> dict[s
     except ConfigurationError as error:
         raise InstallerError(str(error)) from None
     return {
-        # Keep the operator's form (origin or /api); ApiSettings accepts both.
+        # 運用担当者が書いた形（originか/apiまで）のままにする。ApiSettingsはどちらも受け付ける。
         "MMT_API_URL": request.api_url.rstrip("/"),
         "MMT_WORKER_ID": request.worker_id,
         "MMT_WORKER_TARGET_IDS": ",".join(request.target_ids),
@@ -208,7 +211,7 @@ def prepare_state_directory(path: Path, service_user: str | None) -> None:
     path.mkdir(parents=True, exist_ok=True, mode=PRIVATE_DIRECTORY_MODE)
     path.chmod(PRIVATE_DIRECTORY_MODE)
     if service_user and os.geteuid() == 0:
-        # A system install runs as root, but the worker must own its journal.
+        # systemへのインストールはrootで動くが、journalはworkerが所有していなければならない。
         shutil.chown(path, user=service_user)
 
 
@@ -254,7 +257,7 @@ def install_worker(request: InstallRequest, layout: ServiceLayout, run: CommandR
 
 
 def default_python_executable() -> Path:
-    # sys.executable inside a venv is the venv's interpreter; resolving the symlink would escape the venv.
+    # venvの中のsys.executableはvenvのインタープリタ。symlinkを解決するとvenvの外に出てしまう。
     return Path(sys.executable).absolute()
 
 
@@ -273,7 +276,7 @@ class WorkerStatus:
 
 
 def is_worker_lock_held(state_directory: Path) -> bool:
-    """Probe the journal's flock; a running worker holds it exclusively for its whole lifetime."""
+    """journalのflockを試す。動いているworkerは、動いている間ずっとこれを排他的に持つ。"""
     try:
         descriptor = os.open(state_directory / WORKER_LOCK_FILE, os.O_RDONLY)
     except FileNotFoundError:
@@ -334,7 +337,7 @@ def package_spec_for_version(version: str) -> str:
 
 
 def service_python_executable(layout: ServiceLayout) -> str:
-    """Upgrade the interpreter the unit actually runs, not whichever one invoked this command."""
+    """このコマンドを呼んだものでなく、unitが実際に動かすインタープリタをアップグレードする。"""
     try:
         unit_text = layout.unit_path.read_text()
     except FileNotFoundError:
@@ -358,10 +361,10 @@ class UpgradeResult:
 def upgrade_worker(
     worker_id: str, package_spec: str, layout: ServiceLayout, run: CommandRunner
 ) -> UpgradeResult:
-    """Install the new package beside the running worker, then restart only the worker process.
+    """新しいパッケージを動いているworkerの横にインストールし、workerのプロセスだけを再起動する。
 
-    Running Jobs are detached and keep running (KillMode=process); the new worker reattaches to them
-    from the journal, which this function never modifies.
+    実行中のJobは切り離されているので動き続ける（KillMode=process）。
+    新しいworkerはjournalからそれらにつなぎ直す。この関数はjournalを変更しない。
     """
     status = read_worker_status(worker_id, layout, run)
     if status.lock_held and not status.is_active:
@@ -370,7 +373,7 @@ def upgrade_worker(
             " stop the manually started worker first"
         )
     python_executable = service_python_executable(layout)
-    # Imports of the running worker are already loaded; it picks up the new code only after the restart.
+    # 動いているworkerはimportするモジュールを読み込み済み。新しいコードを使うのは再起動のあとだけ。
     check_command(run([python_executable, "-m", "pip", "install", "--upgrade", package_spec]), "pip install")
     check_command(
         run([*layout.systemctl, "restart", status.unit_name]), f"systemctl restart {status.unit_name}"

@@ -1,10 +1,10 @@
 import type { Run, RunKind, RunStatus } from './index.js';
 
 /**
- * Server-side Run search over the whole history. `filter` and `orderBy` use MLflow search syntax
- * (`metrics.loss < 0.1 AND params.lr = '0.01'`, `metrics.loss ASC`). Without `orderBy` the page is
- * ordered by creation time, newest first, and its cursor stays stable while new Runs arrive.
- * Limits (docs/api-contract.md): filter 2000 characters, orderBy 5 entries, limit 1-500 (default 100).
+ * 全履歴を対象にしたサーバー側のRunの検索。`filter`と`orderBy`はMLflowの検索構文を使う
+ * （`metrics.loss < 0.1 AND params.lr = '0.01'`、`metrics.loss ASC`）。`orderBy`が無ければ
+ * 作成日時の新しい順に並び、新しいRunが来てもカーソルはずれない。上限（docs/api-contract.md）:
+ * filterは2000文字、orderByは5個、limitは1〜500（既定100）。
  */
 export interface RunSearchRequest {
   experimentIds?: string[];
@@ -15,13 +15,13 @@ export interface RunSearchRequest {
   modelVersionIds?: string[];
   inputDatasetVersionIds?: string[];
   parentRunId?: string;
-  /** Case-insensitive substring of the Run name. */
+  /** Runの名前の部分文字列（大文字・小文字を区別しない）。 */
   name?: string;
   limit?: number;
-  /** `nextCursor` of the previous page. It is rejected if any other condition changed. */
+  /** 前のページの`nextCursor`。ほかの条件が変わっていれば拒否する。 */
   cursor?: string;
 }
-/** Items carry the polling summary of a Run, without `executionSnapshot`. */
+/** 項目はRunのポーリング用の要約で、`executionSnapshot`を含まない。 */
 export interface RunSearchPage {
   items: Run[];
   nextCursor: string | null;

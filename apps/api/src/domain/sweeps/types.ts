@@ -36,7 +36,7 @@ export interface DistributionParameter {
 
 export type ParameterDefinition = CategoricalParameter | ConstantParameter | DistributionParameter;
 
-/** parameter 名 → 定義 */
+/** parameter名 → 定義 */
 export type SearchSpace = Record<string, ParameterDefinition>;
 
 export type CompletedTrialState = 'finished' | 'failed' | 'early_stopped';

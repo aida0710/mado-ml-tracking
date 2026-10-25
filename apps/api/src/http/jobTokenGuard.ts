@@ -27,7 +27,7 @@ export interface JobTokenRequest {
 
 export interface JobTokenRule {
   methods: readonly string[];
-  // Path template in Hono syntax: `:name` matches one segment, a trailing `*` the rest.
+  // Honoの構文での経路のテンプレート。`:name`は1つのセグメントに、末尾の`*`は残り全部に一致する。
   route: string;
   allows: (request: JobTokenRequest) => boolean | Promise<boolean>;
 }
@@ -41,13 +41,13 @@ function sameId(value: unknown, expected: string): boolean {
   return typeof value === 'string' && value.toLowerCase() === expected.toLowerCase();
 }
 
-// Allowed for any request inside the token's Project (no Run to compare).
+// tokenのProjectの中ならどのリクエストも許す（比べるRunが無い）。
 export const allowWithinProject = () => true;
 const ownRunInPath = (request: JobTokenRequest) => sameId(request.params.r, request.job.runId);
 const ownJobInPath = (request: JobTokenRequest) => sameId(request.params.j, request.job.jobId);
 const ownRunInBody = (field: string) => async (request: JobTokenRequest) =>
   sameId((await request.body())?.[field], request.job.runId);
-// MLflow accepts run_uuid as an alias; the tracking validation rejects a mismatched pair.
+// MLflowは別名としてrun_uuidを受け付ける。食い違う組はtrackingのAPIの検証が拒む。
 const ownMlflowRunInBody = async (request: JobTokenRequest) => {
   const body = await request.body();
   const runId = body?.run_id ?? body?.run_uuid;
@@ -89,8 +89,8 @@ const ownArtifactLocation = (decode: (encodedPath: string) => ArtifactLocation) 
   });
 };
 
-// The registered files must come from this Run or one of its Logged Models; copying another
-// Run's files or another registered version under this Run's name is refused.
+// 登録するファイルは、このRunかそのLogged Modelのどれかから来なければならない。別のRunの
+// ファイルや別の登録済みバージョンを、このRunの名前で写すことは拒む。
 const ownRegistrationSource = async (request: JobTokenRequest) => {
   const body = await request.body();
   if (body?.run_id !== undefined && !sameId(body.run_id, request.job.runId)) return false;
@@ -118,7 +118,7 @@ const MLFLOW_RUN_WRITES = [
   'log-model',
 ];
 
-// The runner of a site Job reports for its own Job (RunnerService checks the instance ID).
+// siteのJobのrunnerは自分のJobについて報告する（RunnerServiceがインスタンスIDを確かめる）。
 const RUNNER_REPORTS = ['start', 'heartbeat', 'logs', 'metrics', 'outputs', 'finish'];
 
 export const JOB_TOKEN_WRITE_RULES: readonly JobTokenRule[] = [
@@ -128,7 +128,7 @@ export const JOB_TOKEN_WRITE_RULES: readonly JobTokenRule[] = [
     route: `${NATIVE}/jobs/:j/runner/${report}`,
     allows: ownJobInPath,
   })),
-  // A driver creates child Jobs under its own Job (ChildJobService checks allowChildJobs).
+  // driverは自分のJobの下に子Jobを作る（ChildJobServiceがallowChildJobsを確かめる）。
   { methods: ['POST'], route: `${NATIVE}/jobs/:j/children`, allows: ownJobInPath },
   { methods: ['POST'], route: `${NATIVE}/runs/:r/metrics`, allows: ownRunInPath },
   { methods: ['PUT'], route: `${NATIVE}/runs/:r/preprocessing-report`, allows: ownRunInPath },
@@ -149,7 +149,7 @@ export const JOB_TOKEN_WRITE_RULES: readonly JobTokenRule[] = [
     allows: ownArtifactUpload,
   },
   { methods: ['DELETE'], route: `${NATIVE}/artifact-uploads/:u`, allows: ownArtifactUpload },
-  // Creating the output Model lets a Task register into a model name that does not exist yet.
+  // 出力のModelを作れるようにして、Taskがまだ無いモデル名へ登録できるようにする。
   { methods: ['POST'], route: `${NATIVE}/models`, allows: allowWithinProject },
   {
     methods: ['POST'],
@@ -194,8 +194,8 @@ export const JOB_TOKEN_WRITE_RULES: readonly JobTokenRule[] = [
     route: `${MLFLOW_ARTIFACTS}/*`,
     allows: ownArtifactLocation(decodeArtifactLocation),
   },
-  // Part PUTs carry no Authorization (the part token is checked by the session), so only the
-  // session-opening and closing requests reach this guard.
+  // partのPUTはAuthorizationを持たない（part tokenはsessionが確かめる）ので、このガードに
+  // 届くのはsessionを開く・閉じるリクエストだけ。
   ...['create', 'complete', 'abort'].map((action) => ({
     methods: ['POST'],
     route: `${MLFLOW_MULTIPART}/${action}/*`,
@@ -203,10 +203,10 @@ export const JOB_TOKEN_WRITE_RULES: readonly JobTokenRule[] = [
   })),
 ];
 
-// Reads stay inside the token's Project; upstream Run artifacts are read this way.
-// The POST entries are searches that only read.
+// 読み取りはtokenのProjectの中に限る。上流のRunのArtifactはこうして読む。
+// POSTの項目は読むだけの検索。
 export const JOB_TOKEN_READ_RULES: readonly JobTokenRule[] = [
-  // The token's own scopes and job flag (CurrentApiToken), so code can tell it holds a Job token.
+  // tokenのscopeとjobのフラグ（CurrentApiToken）。コードがJob tokenを持っていると分かるようにする。
   { methods: ['GET', 'HEAD'], route: '/api/auth/token', allows: allowWithinProject },
   { methods: ['GET', 'HEAD'], route: NATIVE, allows: allowWithinProject },
   { methods: ['GET', 'HEAD'], route: `${NATIVE}/*`, allows: allowWithinProject },
@@ -260,9 +260,9 @@ function matchingRules(method: string, path: string) {
 }
 
 /**
- * Which rule list lets a Job token reach a route, for the OpenAPI document. The path may be a
- * route template (`/api/projects/:p/runs/:r`): each `:name` segment matches one path segment.
- * A match only opens the route; the rule's own check (for example "own Run") still applies.
+ * Job tokenがある経路に届けるのはどちらの規則の一覧か。OpenAPIのドキュメント用。pathは経路の
+ * テンプレート（`/api/projects/:p/runs/:r`）でもよく、`:name`のセグメントはパスの1セグメントに
+ * 一致する。一致しても経路が開くだけで、規則自体の検査（たとえば「自分のRun」）は引き続きかかる。
  */
 export function jobTokenAccessOf(method: string, path: string): 'write' | 'read' | null {
   const rules = matchingRules(method, path).map(({ rule }) => rule);
@@ -280,7 +280,7 @@ function forbidden(): never {
 
 async function readJsonObject(context: ApiContext): Promise<Record<string, unknown> | null> {
   try {
-    // Hono caches the parsed body, so the route handler still reads it afterwards.
+    // Honoは解析したbodyをキャッシュするので、経路のハンドラは後からでもbodyを読める。
     const body: unknown = await context.req.json();
     return body && typeof body === 'object' && !Array.isArray(body)
       ? (body as Record<string, unknown>)
@@ -295,11 +295,11 @@ export function jobTokenGuard(database: Database): MiddlewareHandler<ApiEnvironm
     const token = context.get('principal')?.token;
     if (!token?.job || !token.projectId) return next();
     const { job, projectId } = token;
-    // The raw path is matched so that a percent-encoded segment can only fail to match;
-    // only the artifact path itself is decoded, the same way its route decodes it.
+    // 生のパスで照合するので、パーセントエンコードしたセグメントは一致しなくなるだけで済む。
+    // デコードするのはArtifactのパスだけで、その経路と同じ方法でデコードする。
     const path = new URL(context.req.url).pathname;
     for (const { rule, params } of matchingRules(context.req.method, path)) {
-      // Routes outside a Project (health, the token's own description) have no :p to compare.
+      // Projectの外の経路（health、token自身の説明）には比べる:pが無い。
       if (params.p !== undefined && !sameId(params.p, projectId)) continue;
       const allowed = await rule.allows({
         projectId,

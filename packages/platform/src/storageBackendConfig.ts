@@ -12,11 +12,11 @@ export interface FilesystemBackendConfig {
 }
 export interface S3BackendConfig {
   kind: 's3';
-  /** Absent means the AWS endpoint for the region. */
+  /** 省略するとregionのAWSのエンドポイントを使う。 */
   endpoint?: string;
   region: string;
   bucket: string;
-  /** Normalized without leading or trailing slashes; empty means the bucket root. */
+  /** 先頭と末尾のスラッシュを除いた形に正規化する。空ならbucketの直下。 */
   prefix: string;
   pathStyle: boolean;
   signatureVersion: S3SignatureVersion;
@@ -24,14 +24,14 @@ export interface S3BackendConfig {
   checksumMode: S3ChecksumMode;
   multipartPartSizeBytes: number;
   /**
-   * false stores every Artifact with one PutObject, for S3-compatible services whose multipart
-   * API does not work.
+   * falseにすると、すべてのArtifactを1回のPutObjectで保存する。multipartのAPIが動かない
+   * S3互換サービス向け。
    */
   multipartEnabled: boolean;
 }
 export type StorageBackendConfig = FilesystemBackendConfig | S3BackendConfig;
 
-/** Everything optional so callers can pass request bodies; normalization fills the defaults. */
+/** 呼び出し側がリクエストの本文をそのまま渡せるよう、すべて省略可能。既定値は正規化で埋める。 */
 export interface StorageBackendConfigInput {
   kind: StorageBackendKind;
   rootPath?: string;
@@ -47,17 +47,19 @@ export interface StorageBackendConfigInput {
   multipartEnabled?: boolean;
 }
 
-// Two parts of this size are buffered per streamed upload, so the default bounds memory at 16 MiB.
+// ストリーミングのアップロード1つごとにこの大きさのパートを2つバッファに持つので、
+// 既定値ならメモリは16MiBまでに収まる。
 export const DEFAULT_MULTIPART_PART_SIZE_BYTES = 8 * 1024 * 1024;
-// put() keeps two parts in memory at once; 512 MiB parts already cost 1 GiB per upload.
+// put()は同時に2つのパートをメモリに持つ。512MiBのパートでも、アップロード1つで1GiBを使う。
 export const MAX_MULTIPART_PART_SIZE_BYTES = 512 * 1024 * 1024;
-// The AWS SDK needs some region for signing even when an S3-compatible endpoint ignores it.
+// S3互換のエンドポイントがregionを無視する場合でも、AWS SDKは署名に何らかのregionを必要とする。
 export const DEFAULT_S3_REGION = 'us-east-1';
-// AWS rejects object key prefixes above 1024 bytes; artifact keys need room below the prefix.
+// AWSは1024バイトを超えるオブジェクトキーのprefixを拒む。prefixの後ろにArtifactのキーが入る
+// 余地を残す。
 const MAX_S3_PREFIX_LENGTH = 512;
-// Backend names are stored in artifacts.backend and projects.artifact_backend, so they stay short.
+// 保存先の名前はartifacts.backendとprojects.artifact_backendに保存するので、短く保つ。
 const STORAGE_BACKEND_NAME_PATTERN = /^[a-z0-9][a-z0-9-]{0,62}$/;
-// S3 bucket naming rules: 3-63 characters of lowercase letters, digits, dots and hyphens.
+// S3のbucket名の規則。小文字の英字、数字、ドット、ハイフンで3〜63文字。
 const S3_BUCKET_NAME_PATTERN = /^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/;
 const S3_REGION_PATTERN = /^[a-z0-9-]{1,64}$/;
 const S3_PREFIX_SEGMENT_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
@@ -69,7 +71,7 @@ export type StorageBackendConfigErrorCode =
 export class StorageBackendConfigError extends Error {
   constructor(
     readonly code: StorageBackendConfigErrorCode,
-    /** Name of the offending field, safe to show: values are never part of the message. */
+    /** 問題のあるフィールドの名前。表示しても安全で、値はメッセージに含めない。 */
     readonly field: string,
   ) {
     super(`Invalid storage backend setting: ${field}`);
@@ -88,7 +90,7 @@ function invalid(field: string): never {
 function normalizeRootPath(rootPath: string | undefined): string {
   if (!rootPath || !path.isAbsolute(rootPath) || containsControlCharacter(rootPath))
     invalid('rootPath');
-  // A path with .. segments would hide where Artifacts really land.
+  // ..を含むパスでは、Artifactが実際にどこへ置かれるのかが分からなくなる。
   if (rootPath.split(/[\\/]/).includes('..')) invalid('rootPath');
   return path.normalize(rootPath);
 }
@@ -98,12 +100,12 @@ function normalizeEndpoint(endpoint: string | null | undefined): string | undefi
   if (!URL.canParse(endpoint)) invalid('endpoint');
   const url = new URL(endpoint);
   if (!['http:', 'https:'].includes(url.protocol)) invalid('endpoint');
-  // Credentials belong in the encrypted secret, never in a URL that is shown to administrators.
+  // 認証情報は暗号化したsecretに置く。管理者に表示されるURLには決して入れない。
   if (url.username || url.password || url.search || url.hash) invalid('endpoint');
   return url.toString().replace(/\/$/, '');
 }
 
-/** Accepts "a/b", "/a/b/" or "" and returns "a/b"; segments follow the artifact key rules. */
+/** "a/b"、"/a/b/"、""を受け付け、"a/b"の形で返す。各要素はArtifactのキーの規則に従う。 */
 export function normalizeS3Prefix(prefix: string | undefined): string {
   const segments = (prefix ?? '').split('/').filter(Boolean);
   if (!segments.every((segment) => S3_PREFIX_SEGMENT_PATTERN.test(segment))) invalid('prefix');
@@ -124,10 +126,10 @@ function normalizePartSize(size: number | undefined): number {
 }
 
 /**
- * Signature v2 signs no payload checksum, and the SDK's WHEN_SUPPORTED checksums arrive as
- * aws-chunked trailers that v2-only services cannot parse, so v2 accepts only WHEN_REQUIRED.
- * The region is still kept for v2: the SDK resolves the AWS endpoint from it, the signature
- * does not use it.
+ * 署名v2はpayloadのチェックサムを署名せず、SDKのWHEN_SUPPORTEDのチェックサムは、v2専用の
+ * サービスが解釈できないaws-chunkedのtrailerで届く。そのため、v2ではWHEN_REQUIREDだけを
+ * 受け付ける。v2でもregionは残す。SDKがregionからAWSのエンドポイントを決めるためで、署名には
+ * 使わない。
  */
 function normalizeChecksumMode(
   checksumMode: S3ChecksumMode | undefined,
@@ -139,7 +141,7 @@ function normalizeChecksumMode(
   return mode;
 }
 
-/** Validates an administrator's backend settings and fills defaults. */
+/** 管理者が入力した保存先の設定を検証し、既定値を埋める。 */
 export function normalizeStorageBackendConfig(
   input: StorageBackendConfigInput,
 ): StorageBackendConfig {
@@ -171,8 +173,8 @@ export function normalizeStorageBackendConfig(
 }
 
 /**
- * Fields that decide where existing objects live. Changing one while Artifacts point at the backend
- * would make those Artifacts unreadable.
+ * 既存のオブジェクトの置き場所を決めるフィールド。Artifactがこの保存先を指している間に変えると、
+ * それらのArtifactが読めなくなる。
  */
 export function storageLocationChanged(
   current: StorageBackendConfig,

@@ -1,4 +1,4 @@
-"""Start a manual hook (its payload reaches the Job as trigger-payload.json) or move a hook's owner."""
+"""手動のフックの開始（payloadはJobにtrigger-payload.jsonとして届く）と、フックの所有者の変更。"""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from .errors import ConfigurationError
 if TYPE_CHECKING:
     from .client import Client
 
-# Mirrors HOOK_PAYLOAD_MAX_BYTES.
+# HOOK_PAYLOAD_MAX_BYTESに合わせた値。
 HOOK_PAYLOAD_MAX_BYTES = 256 * 1024
 
 
@@ -24,10 +24,10 @@ def trigger_hook(
     payload: Mapping[str, Any] | None = None,
     idempotency_key: str | None = None,
 ) -> dict[str, Any]:
-    """Start the hook once; returns the HookExecution (queued, or skipped with its reason).
+    """フックを1回開始する。HookExecution（queued、または理由つきのskipped）を返す。
 
-    The idempotency key makes a resend find the first start; without one a random key is used,
-    so a retry after a lost answer still starts only one Job.
+    idempotency keyがあれば、送り直しても最初の開始が見つかる。無ければ乱数のキーを使うので、
+    応答が失われたあとの再試行でも、始まるJobは1つだけになる。
     """
     body: dict[str, Any] = {"idempotencyKey": idempotency_key or str(uuid.uuid4())}
     if payload is not None:
@@ -45,11 +45,10 @@ def trigger_hook(
 def transfer_hook_owner(
     client: Client, project_id: str, hook_id: str, *, service_account_id: str
 ) -> dict[str, Any]:
-    """Run the hook as a Service Account so it keeps starting Jobs when its creator leaves.
+    """フックをService Accountとして動かし、作成者が抜けてもJobを開始し続けられるようにする。
 
-    The account must be an active editor or admin of the Project. Returns the updated hook with
-    ``runAsUserId``. Setting the same owner again changes nothing, so the PUT is retried after a
-    lost response.
+    そのアカウントは、Projectの有効なeditorかadminである必要がある。``runAsUserId``を含む更新後の
+    フックを返す。同じ所有者を設定し直しても何も変わらないので、応答が失われたらPUTを再試行する。
     """
     return client.request(
         "PUT",

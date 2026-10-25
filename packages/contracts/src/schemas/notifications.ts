@@ -68,7 +68,7 @@ export const notificationRunSummarySchema = namedContractSchema(
     endedAt: timestampSchema.nullable(),
   }),
 );
-// Not a route body: what webhook channels POST to receivers, published so they can validate it.
+// ルートの本文ではない。webhookの通知先が受信側にPOSTする内容で、受信側が検証できるよう公開する。
 export const notificationEventSchema = namedContractSchema(
   'NotificationEvent',
   z.strictObject({

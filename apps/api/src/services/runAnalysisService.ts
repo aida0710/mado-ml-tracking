@@ -34,12 +34,12 @@ import {
 import { requireProject } from './accessService.js';
 import type { RunSearchService } from './runSearchService.js';
 
-// A fixed forest seed: the same Runs and params always give the same importance.
+// ランダムフォレストのseedを固定する。同じRunとparameterからは常に同じ重要度が出る。
 const IMPORTANCE_SEED = DEFAULT_IMPORTANCE_SEED;
 
 interface LoadedRunSet {
   sources: RunAnalysisSource[];
-  /** Set only when the Run set is a sweep. */
+  /** Runの集合がSweepのときだけ設定する。 */
   sweepObjective: SweepObjective | null;
 }
 
@@ -132,7 +132,8 @@ export class RunAnalysisService {
       sources.map((source) => source.parameters),
       query.params,
     );
-    // The forest bootstraps in input order; a fixed order makes runIds, search and sweep agree.
+    // フォレストは入力の順にブートストラップするので、順を固定して、runIds・検索・Sweepの
+    // 結果をそろえる。
     const ordered = [...sources].sort((left, right) =>
       left.runId < right.runId ? -1 : left.runId > right.runId ? 1 : 0,
     );
@@ -187,7 +188,7 @@ export class RunAnalysisService {
         runIds: runSet.runIds,
         metricKeys,
       });
-      // Another Project's Run is reported like a missing one so its existence does not leak.
+      // 別のProjectのRunは、存在が漏れないよう、無いRunと同じに報告する。
       if (sources.length !== runSet.runIds.length) notFound('run');
       return { sources, sweepObjective: null };
     }
@@ -195,7 +196,7 @@ export class RunAnalysisService {
       conditions: runSet.search,
       maxRuns: ANALYSIS_MAX_RUNS,
     });
-    // A Run deleted after the search simply drops out; the search itself was already authorized.
+    // 検索のあとで削除されたRunは単に抜ける。検索そのものの権限は既に確かめてある。
     const sources = runIds.length
       ? await readRunAnalysisSources(this.database, { projectId, runIds, metricKeys })
       : [];

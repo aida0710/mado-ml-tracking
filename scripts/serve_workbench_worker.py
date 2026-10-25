@@ -1,4 +1,4 @@
-"""Start the development CPU worker from a private local settings file."""
+"""非公開のローカル設定ファイルから、開発用のCPUのworkerを起動する。"""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ def main() -> None:
         if not isinstance(value, str):
             raise SystemExit("Worker settings must be strings")
         os.environ[name] = value
-    # The worker CLI has its own arguments; this wrapper's --settings has already been consumed.
+    # workerのCLIには独自の引数がある。このラッパーの--settingsは既に読み終えている。
     sys.argv = [sys.argv[0], "run"]
     runpy.run_module("mado_tracking.worker.cli", run_name="__main__")
 

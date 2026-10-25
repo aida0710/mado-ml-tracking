@@ -1,17 +1,17 @@
 import type { AdminProject, Project } from '@mmt/contracts';
 import { first, rows, type Connection } from '../db/database.js';
 
-/** A Project row as the API returns it, without the caller's role. */
+/** APIが返す形のProjectの行。呼び出し元のroleは含まない。 */
 export type ProjectRecord = Omit<Project, 'role' | 'isMember'>;
 
-// The Project fields of the API (Project without role); archive and purge columns stay internal.
+// APIのProjectのフィールド（roleを除いたProject）。アーカイブとpurgeの列は内部にとどめる。
 export const PROJECT_COLUMNS =
   'p.id,p.name,p.description,p.artifact_backend,p.visibility,p.created_at';
 
 /**
- * SQL that is true while the Project named by `projectParameter` (a placeholder such as `$2`) is
- * not archived. Owner checks of background work use it, so a global administrator's automation
- * stops with the Project as a member's does.
+ * `projectParameter`（`$2`のようなプレースホルダ）で指すProjectがアーカイブされていない間、
+ * 真になるSQL。裏で動く処理の所有者の検査に使い、全体管理者の自動実行もメンバーのものと同じく
+ * Projectとともに止まるようにする。
  */
 export function liveProjectSql(projectParameter: string): string {
   return `EXISTS(SELECT 1 FROM projects live_project WHERE live_project.id=${projectParameter} AND live_project.archived_at IS NULL)`;
@@ -51,8 +51,8 @@ export interface ProjectLifecycle {
 }
 
 /**
- * Locks a Project that has not been purged, archived or not, for an archive, restore or purge.
- * A purged Project is gone for every caller.
+ * アーカイブ、復元、purgeのために、purgeされていないProjectをアーカイブ済みかどうかによらず
+ * ロックする。purgeしたProjectは、どの呼び出し元からも無いものとして扱う。
  */
 export async function lockProjectLifecycle(
   connection: Connection,
@@ -66,8 +66,8 @@ export async function lockProjectLifecycle(
 }
 
 /**
- * Holds a live Project until the transaction ends, so creating a Job and archiving the Project
- * serialize: the archive then sees the Job (and refuses), or the Job sees the archive.
+ * アーカイブされていないProjectをトランザクションの終わりまで押さえ、Jobの作成とProjectの
+ * アーカイブを直列にする。アーカイブがJobを見て拒むか、Jobがアーカイブを見るかのどちらかになる。
  */
 export async function shareLiveProject(
   connection: Connection,
@@ -82,9 +82,9 @@ export async function shareLiveProject(
 }
 
 /**
- * Whether a Job of the Project is waiting or running (queued, claimed or running), or was canceled
- * while still in a site's scheduler queue and the launcher has not removed it there yet: the
- * launcher finds that queue entry through the Job's row, which a purge would delete.
+ * ProjectのJobが待機中か実行中（queued、claimed、running）か、siteのスケジューラのキューにある
+ * 間に取り消され、launcherがまだそこから消していないか。launcherはそのキューの項目をJobの行から
+ * 見つけるが、purgeするとその行が消える。
  */
 export async function hasActiveJobs(connection: Connection, projectId: string): Promise<boolean> {
   const active = await first(
@@ -112,7 +112,7 @@ export async function unarchiveProject(connection: Connection, projectId: string
   ]);
 }
 
-/** Turns an archived Project into its tombstone: only the id and the name stay. */
+/** アーカイブしたProjectを墓標にする。残るのはidと名前だけ。 */
 export async function markProjectPurged(
   connection: Connection,
   purge: { projectId: string; purgedBy: string },
@@ -123,8 +123,8 @@ export async function markProjectPurged(
   );
 }
 
-// Members are direct grants and group bindings (project_membership_roles), never public access;
-// Runs deleted through MLflow are not counted.
+// メンバーは直接の付与とグループの割り当て（project_membership_roles）で、公開による閲覧は
+// 含めない。MLflowから削除したRunは数えない。
 const adminProjectSelect = `SELECT ${PROJECT_COLUMNS},p.archived_at,
   (SELECT count(*)::int FROM project_membership_roles m WHERE m.project_id=p.id) AS member_count,
   ARRAY(SELECT u.display_name FROM project_membership_roles m JOIN users u ON u.id=m.user_id

@@ -3,9 +3,9 @@ import type { ReadableStream } from 'node:stream/web';
 import type { ApiContext } from './request.js';
 
 /**
- * The request body as a Node stream for storage writes. A client that disconnects while the
- * permission check runs destroys the stream before storage reads it; without a listener that
- * error is uncaught and stops the process. Storage still sees the destroyed stream and fails.
+ * 保存先へ書き込むための、Nodeのストリームとしてのリクエストの本文。権限の検査中にクライアントが
+ * 切断すると、保存先が読む前にストリームが破棄される。リスナーが無いとそのエラーは捕捉されず、
+ * プロセスが止まる。それでも保存先は破棄されたストリームに気づいて失敗する。
  */
 export function requestBodyStream(context: ApiContext): Readable {
   const body = context.req.raw.body;
@@ -14,7 +14,7 @@ export function requestBodyStream(context: ApiContext): Readable {
   return readable;
 }
 
-/** Content-Length of a raw upload; storage needs the size before reading the body. */
+/** 生のアップロードのContent-Length。保存先は本文を読む前に大きさを知る必要がある。 */
 export function declaredContentLength(context: ApiContext): number | undefined {
   const header = context.req.header('Content-Length');
   return header && /^\d+$/.test(header) ? Number(header) : undefined;

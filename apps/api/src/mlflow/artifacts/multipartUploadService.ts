@@ -21,16 +21,17 @@ import { MultipartUploadUnsupportedError } from './multipartUnsupported.js';
 import type { CheckpointService } from '../../services/checkpointService.js';
 import { indexMlflowMediaArtifact } from '../../services/runMediaIndexer.js';
 
-// The finalizer polls every second, so a shorter interval only adds queries.
+// finalizerは毎秒ポーリングするので、これより短い間隔はクエリを増やすだけ。
 const FINALIZE_POLL_MS = 250;
 
 type MultipartAccess = ArtifactAccess & { path: string };
 type WritableOwner = { kind: 'run' | 'model'; id: string };
 
 /**
- * MLflow's proxied multipart upload (mpu/create, part PUT, complete, abort) on top of artifact
- * upload sessions. The session holds the Artifact path owner; when the finalizer registers the
- * Artifact, mapRegisteredArtifact maps the MLflow path to it in the same transaction.
+ * Artifactのアップロードセッションの上に作った、MLflowのプロキシ経由のマルチパートアップロード
+ * （mpu/create、partのPUT、complete、abort）。sessionはArtifactのパスの所有者を持つ。finalizerが
+ * Artifactを登録するとき、mapRegisteredArtifactが同じトランザクションでMLflowのパスをそれに
+ * 対応付ける。
  */
 export class MlflowMultipartUploadService {
   constructor(
@@ -38,9 +39,9 @@ export class MlflowMultipartUploadService {
       database: Database;
       stores: ArtifactStores;
       uploads: ArtifactUploadService;
-      /** MMT_UPLOAD_FINALIZE_WAIT_MS: complete answers 503 when verification takes longer. */
+      /** MMT_UPLOAD_FINALIZE_WAIT_MS: 検証がこれより長くかかるとcompleteは503を返す。 */
       finalizeWaitMs: number;
-      // Same checkpoint registration as a single PUT of checkpoints/step-<N>/ files.
+      // checkpoints/step-<N>/のファイルを1回のPUTで送ったときと同じcheckpointの登録。
       checkpoints?: CheckpointService;
     },
   ) {}
@@ -49,7 +50,7 @@ export class MlflowMultipartUploadService {
     request: MultipartAccess & { partCount: number },
   ): Promise<{ uploadId: string; partToken: string; partCount: number }> {
     const location = writableLocation(request);
-    // An empty file has no parts; the SDK sends it as a plain PUT after this answer.
+    // 空のファイルにはpartが無い。SDKはこの応答の後、通常のPUTでそれを送る。
     if (request.partCount === 0) throw new MultipartUploadUnsupportedError();
     const nativePath = nativeArtifactPath(location);
     const authorized = await transaction(this.options.database, async (connection) => {
@@ -80,7 +81,7 @@ export class MlflowMultipartUploadService {
     }
   }
 
-  /** Authorized by the part token alone: the SDK sends part requests without Authorization. */
+  /** part tokenだけで認可する。SDKはpartのリクエストをAuthorizationなしで送る。 */
   async uploadPart(part: {
     projectId: string;
     uploadId: string;
@@ -94,8 +95,8 @@ export class MlflowMultipartUploadService {
   }
 
   /**
-   * MLflow treats complete as synchronous: the file must be listable when it returns. This waits
-   * for the finalizer, which may run in another API process, to register the Artifact.
+   * MLflowはcompleteを同期的なものとして扱う。戻ったときにはファイルが一覧に出ていなければ
+   * ならない。ここでは、別のAPIのプロセスで動くかもしれないfinalizerがArtifactを登録するのを待つ。
    */
   async complete(
     request: MultipartAccess & {
@@ -120,7 +121,7 @@ export class MlflowMultipartUploadService {
         await requireNonconflictingArtifactPath(connection, location);
       },
     });
-    // A retried complete skips authorize; it must still name the session's own target.
+    // 再試行したcompleteはauthorizeを飛ばすが、それでもsession自身の対象を指す必要がある。
     assertSessionTarget(upload, location);
     await this.waitUntilRegistered(location.projectId, upload.id);
   }
@@ -129,7 +130,7 @@ export class MlflowMultipartUploadService {
     await this.options.uploads.abortOwned(request.principal, request.projectId, request.uploadId);
   }
 
-  /** Finalizer hook: maps the MLflow path in the transaction that registers the Artifact. */
+  /** finalizerのフック。Artifactを登録するトランザクションの中でMLflowのパスを対応付ける。 */
   readonly mapRegisteredArtifact: ArtifactUploadRegisteredHook = async (
     connection,
     upload,
@@ -142,14 +143,14 @@ export class MlflowMultipartUploadService {
       `SELECT ${userColumns} FROM users u WHERE u.id=$1`,
       [upload.createdByUserId],
     );
-    // The owner checks read only the owner; the creator's access was checked at complete.
+    // 所有者の検査が読むのは所有者だけ。作成者のアクセスはcompleteのときに確かめた。
     const access: MultipartAccess = {
       principal: { user: creator!, method: 'session', token: null },
       projectId: upload.projectId,
       owner,
       path: mlflowArtifactPath(upload.path, owner),
     };
-    // Throwing keeps the session verifying; the finalizer retries and finally marks it failed.
+    // 例外を投げるとsessionは検証中のまま残る。finalizerが再試行し、最後には失敗にする。
     const { runId } = await requireArtifactOwner(connection, access, { write: true, lock: true });
     if (runId !== upload.runId)
       throw new DomainError({
@@ -166,7 +167,8 @@ export class MlflowMultipartUploadService {
         artifact,
         artifactPath: access.path,
       });
-      // Same media index as a single PUT, so a large log_image file shows up without a backfill.
+      // 1回のPUTと同じメディアの索引を作るので、大きいlog_imageのファイルもバックフィルなしで
+      // 表示に出る。
       await indexMlflowMediaArtifact(connection, {
         projectId: upload.projectId,
         runId: owner.id,
@@ -225,7 +227,7 @@ function writableLocation<T extends MultipartAccess>(request: T): T & { owner: W
   return { ...request, owner: { kind: owner.kind, id: owner.id } };
 }
 
-/** The Artifact path relative to its MLflow owner; Logged Model files live under models/<id>/. */
+/** MLflowの所有者から見たArtifactのパス。Logged Modelのファイルはmodels/<id>/の下にある。 */
 function mlflowArtifactPath(nativePath: string, owner: ArtifactOwner): string {
   return owner.kind === 'model' ? nativePath.slice(`models/${owner.id}/`.length) : nativePath;
 }

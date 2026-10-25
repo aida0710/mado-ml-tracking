@@ -4,15 +4,15 @@ import type { StorageTestResult, StorageTestStep } from '@mmt/contracts';
 import { ArtifactNotFoundError, type ArtifactStore } from '@mmt/platform';
 import { StorageBackendUnavailableError } from './artifactStoreRegistry.js';
 
-// Connection tests write only below this prefix, so leftovers are easy to find and remove.
+// 接続テストはこの前置きの下にだけ書くので、残ったものを見つけて消しやすい。
 const CONNECTION_TEST_PREFIX = 'mmt-connection-test';
-// Big enough for a meaningful range read, small enough to be cheap on any backend.
+// 範囲の読み取りを意味のある形で試せる大きさで、どの保存先でも安く済む小ささ。
 const CONNECTION_TEST_BYTES = 64;
 const CONNECTION_TEST_RANGE = { start: 8, end: 15 };
 const SKIPPED_STEP_ERROR = '前の段階が失敗したため実行していません';
 
-// Network failures from Node (error.code) and S3 error names, in words an administrator can act
-// on. The identifier stays in parentheses so it can still be searched for.
+// Nodeのネットワークの失敗（error.code）とS3のエラー名を、管理者が対処できる言葉にする。
+// 識別子は括弧の中に残し、検索できるようにする。
 const NETWORK_FAILURE_TEXT: Record<string, string> = {
   ECONNREFUSED: '接続を拒否されました。endpointのhostとportを確認してください',
   ECONNRESET: '接続が途中で切断されました',
@@ -41,7 +41,10 @@ const S3_FAILURE_TEXT: Record<string, string> = {
   TimeoutError: '保存先の応答がタイムアウトしました',
 };
 
-/** Error names, HTTP status and Node error codes only: SDK messages may echo signed headers. */
+/**
+ * エラー名、HTTPのステータス、Nodeのエラーコードだけを使う。SDKのメッセージには署名した
+ * ヘッダーがそのまま入ることがある。
+ */
 function describeStorageFailure(error: unknown): string {
   if (error instanceof ArtifactNotFoundError) return 'オブジェクトが見つかりません';
   if (error instanceof StorageBackendUnavailableError)
@@ -83,8 +86,8 @@ function expectBytes(actual: Buffer, expected: Buffer): void {
 }
 
 /**
- * Writes, reads, range-reads and deletes one probe object. Each step reports separately so an
- * administrator can tell missing write permission from a broken range read.
+ * 試験用のオブジェクトを1つ書き、読み、範囲で読み、消す。段階ごとに別々に報告し、書き込み権限が
+ * 無いのか、範囲の読み取りが壊れているのかを管理者が見分けられるようにする。
  */
 export async function runConnectionTest(
   openStore: () => ArtifactStore,
@@ -131,7 +134,7 @@ export async function runConnectionTest(
   let failed = false;
   let written = false;
   for (const [name, action] of stepActions) {
-    // Cleanup still runs after a failed read so the probe object does not stay behind.
+    // 読み取りが失敗しても後片付けは行い、試験用のオブジェクトを残さない。
     const mustRun = !failed || (name === 'delete' && written);
     if (!mustRun) {
       steps.push({ name, ok: false, error: SKIPPED_STEP_ERROR });

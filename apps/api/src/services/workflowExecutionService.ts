@@ -206,8 +206,8 @@ export class WorkflowExecutionService {
           active = true;
           continue;
         }
-        // The Job may have ended before the scheduler saw it, even successfully; its step keeps
-        // what the Run did, so a resumed execution reuses a step that succeeded.
+        // スケジューラが見る前にJobが終わっていることがある（成功していることもある）。stepには
+        // Runの結果を残し、再開した実行が成功したstepを使い回せるようにする。
         await this.options.executor.recordRunState(connection, {
           step,
           definition: version.steps[step.stepIndex]!,
@@ -220,7 +220,7 @@ export class WorkflowExecutionService {
     });
   }
 
-  /** The leading steps a resumed execution reuses; only those who may stop the source resume it. */
+  /** 再開した実行が使い回す先頭のstep。元の実行を止められる人だけが再開できる。 */
   private async completedStepsForResume(
     connection: Connection,
     request: {

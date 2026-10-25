@@ -33,7 +33,7 @@ import {
 } from './oidcSessionVerifier.js';
 import { OidcBackchannelLogout } from './oidcBackchannelLogout.js';
 
-// Short login lifetime bounds replay exposure of an unfinished OIDC login.
+// ログインの有効期間を短くし、終わっていないOIDCのログインが再利用される危険を抑える。
 export const LOGIN_LIFETIME_SECONDS = 10 * 60;
 
 export interface SessionLogin {
@@ -41,7 +41,7 @@ export interface SessionLogin {
   session: string;
 }
 
-// What the code exchange yields besides the claims: the tokens the session keeps for rechecks.
+// codeの交換でclaimのほかに得られるもの。sessionが再確認のために持つtoken。
 interface OidcLoginResult {
   claims: OidcClaims;
   tokens: SessionTokens;
@@ -49,17 +49,17 @@ interface OidcLoginResult {
 }
 
 export interface AuthServiceOptions {
-  // Tests move it forward to pass the recheck interval and token lifetimes without waiting.
+  // テストはこれを進めて、再確認の間隔やtokenの有効期間を待たずに過ぎさせる。
   clock?: () => Date;
 }
 
 export class AuthService {
   private provider: Promise<oidc.Configuration> | undefined;
-  // One limiter per process: local login, OIDC start, and password checks share its buckets.
+  // limiterはプロセスに1つで、ローカルのログイン、OIDCの開始、パスワードの確認がbucketを共有する。
   private readonly rateLimiter = new AuthRateLimiter();
   readonly local: LocalAuthService;
   private readonly clock: () => Date;
-  // Null when OIDC is off; then no session has IdP tokens and nothing is rechecked.
+  // OIDCが無効ならnull。そのときはどのsessionもIdPのtokenを持たず、何も再確認しない。
   private readonly sessionVerifier: OidcSessionVerifier | null;
   private readonly backchannel: OidcBackchannelLogout | null;
   constructor(
@@ -95,11 +95,11 @@ export class AuthService {
       this.config.session.idleSeconds,
     );
     if (!session) return null;
-    // An SSO session without OIDC configured cannot be confirmed, so it is not accepted.
+    // OIDCが設定されていないとSSOのsessionは確かめられないので、受け付けない。
     if (session.authMethod === 'oidc' && !this.sessionVerifier) return null;
     const verdict = this.sessionVerifier ? await this.sessionVerifier.verify(session) : 'current';
     if (verdict === 'revoked') return null;
-    // The recheck may have changed the user's global role, so the user is read again.
+    // 再確認で利用者の全体のroleが変わったかもしれないので、利用者を読み直す。
     const current =
       verdict === 'rechecked'
         ? await findActiveSession(
@@ -245,7 +245,7 @@ export class AuthService {
         code: 'invalid_oidc_state',
         message: 'cannot verify the browser or the state of the login',
       });
-    // Consuming the state is atomic. A mismatch cannot consume another browser's login.
+    // stateの消費はアトミックに行う。一致しなければ、別のブラウザのログインを消費することはない。
     const pending = await first<{ verifier: string; nonce: string }>(
       this.database,
       `DELETE FROM oidc_states WHERE state_hash=$1 AND binding_hash=$2 AND expires_at>now() RETURNING verifier,nonce`,
@@ -274,7 +274,7 @@ export class AuthService {
           issuer: this.config.oidc!.issuer,
           subject: idToken.sub,
           email,
-          // An unverified email is neither stored nor used for linking; provisioning refuses it.
+          // 確認されていないメールアドレスは保存せず、紐付けにも使わない。provisioningでは拒む。
           emailVerified: email !== '' && idToken.email_verified === true,
           displayName: typeof idToken.name === 'string' && idToken.name ? idToken.name : email,
           groups: Array.isArray(idToken.groups) ? idToken.groups : [],
@@ -286,7 +286,7 @@ export class AuthService {
         sid: typeof idToken.sid === 'string' && idToken.sid ? idToken.sid : null,
       };
     } catch (error) {
-      // Provider responses may contain codes or tokens, so never expose its exception.
+      // プロバイダの応答にはcodeやtokenが含まれうるので、その例外は決して外に出さない。
       console.error(
         JSON.stringify({
           event: 'oidc_authentication_failed',
@@ -354,10 +354,10 @@ export class AuthService {
     });
   }
 
-  // The provisioning transaction rolled back, so the denial is recorded on its own.
-  // The audit row names the SSO account so operators can tell who was refused.
-  // A known identity that the IdP no longer allows also loses its other sessions and groups,
-  // the same as when a session recheck finds it removed from the allowed groups.
+  // provisioningのトランザクションはロールバックしたので、拒否は単独で記録する。
+  // 誰が拒まれたかを運用者が分かるよう、監査の行にはSSOのアカウントを示す。
+  // IdPがもう許可しない既知の利用者は、ほかのsessionとグループも失う。sessionの再確認で
+  // 許可されたグループから外れたと分かったときと同じ。
   private async recordOidcDenial(
     denial: OidcLoginDeniedError,
     claims: OidcClaims,

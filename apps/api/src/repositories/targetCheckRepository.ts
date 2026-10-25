@@ -6,23 +6,23 @@ import type {
 } from '@mmt/contracts';
 import { first, type Connection } from '../db/database.js';
 
-// Workers poll for checks every few seconds while idle; five minutes without a claim means no
-// worker is in charge of the target (or none is running).
+// workerは手が空いている間、数秒ごとに確認をpollする。5分claimされなければ、そのコンピュータを
+// 担当するworkerがいない（または1つも動いていない）とみなす。
 const TARGET_CHECK_QUEUE_TIMEOUT_SECONDS = 300;
-// The worker's probe gives up after two minutes (target_probe.py); allow the report to arrive.
+// workerの検査は2分で打ち切られる（target_probe.py）。その報告が届くまでの余裕を見る。
 const TARGET_CHECK_CLAIM_TIMEOUT_SECONDS = 300;
-// A listing answers someone typing a path, and the chosen worker polls every two seconds: a
-// minute unclaimed means the worker is gone.
+// ディレクトリの一覧はパスを入力中の人に答えるもので、選ばれたworkerは2秒ごとにpollする。
+// 1分claimされなければ、そのworkerはいなくなったとみなす。
 const DIRECTORY_LISTING_QUEUE_TIMEOUT_SECONDS = 60;
-// The worker stops reading a directory after twenty seconds (directory_listing.py).
+// workerはディレクトリの読み取りを20秒で打ち切る（directory_listing.py）。
 const DIRECTORY_LISTING_CLAIM_TIMEOUT_SECONDS = 60;
-// The Web keeps what it read while the dialog is open; the rows are not history worth keeping.
+// 画面はダイアログを開いている間、読んだ内容を持っている。行は残す価値のある履歴ではない。
 const DIRECTORY_LISTING_RETENTION_SECONDS = 24 * 60 * 60;
 
 const assignedWorkerSql = `CASE WHEN assigned_token_id IS NULL THEN NULL
   ELSE json_build_object('tokenId',assigned_token_id,'workerId',assigned_worker_id) END AS assigned_worker`;
 
-// lease_id and worker_token_id authorize the worker and are never returned to the Web.
+// lease_idとworker_token_idはworkerを認可するためのもので、画面には返さない。
 export const CHECK_COLUMNS = `id,target_id,requested_by,status,worker_id,${assignedWorkerSql},result,
   failure_reason,created_at,claimed_at,finished_at`;
 const LISTING_COLUMNS = `id,target_id,directory_path AS path,${assignedWorkerSql},status,worker_id,
@@ -51,7 +51,7 @@ export async function findListing(
   );
 }
 
-/** The request as the worker sees it once claimed: the check's fields, its kind and directory. */
+/** claimしたあとにworkerが見るリクエスト。確認の項目と、その種類とディレクトリ。 */
 export async function findClaimedRequest(
   connection: Connection,
   checkId: string,
@@ -106,7 +106,7 @@ export async function insertListing(
   ))!;
 }
 
-/** Listings of the computer that wait for their worker: the same one again, and how many there are. */
+/** コンピュータでworkerを待っているディレクトリ一覧の要求のうち、同じパスのものと、要求の数。 */
 export async function findOpenListings(
   connection: Connection,
   listing: { targetId: string; path: string; worker: TargetCheckWorker },
@@ -128,8 +128,8 @@ export async function findOpenListings(
 }
 
 /**
- * Ends requests nobody will finish, so a computer is never stuck with an open check, and forgets
- * listings read long ago.
+ * 誰も終えない要求を終わらせ、コンピュータが開いたままの確認で止まらないようにする。あわせて、
+ * ずっと前に読んだディレクトリの一覧を消す。
  */
 export async function expireStaleChecks(connection: Connection): Promise<void> {
   await connection.query(

@@ -1,4 +1,4 @@
-"""In-memory localhost HTTP API for SDK/streaming/example integration tests."""
+"""SDK・ストリーミング・例の結合テスト用の、メモリ上で動くlocalhostのHTTP API。"""
 
 from __future__ import annotations
 
@@ -76,7 +76,7 @@ class TrackingServer:
                 elif path.endswith("/artifacts") and self.command == "GET":
                     run_id = path.split("/")[-2]
                     prefix = parse_qs(parsed.query).get("prefix", [""])[0]
-                    # Newest first, like the API's versions=latest listing.
+                    # APIのversions=latestの一覧と同じく、新しい順。
                     entity = {
                         "items": [
                             artifact

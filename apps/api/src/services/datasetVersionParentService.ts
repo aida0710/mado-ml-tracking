@@ -22,7 +22,7 @@ import {
 } from './auditService.js';
 import { lockDatasetsOfVersions } from './datasetVersionReferences.js';
 
-/** Supplements historical provenance without modifying content identity or training inputs. */
+/** 中身の同一性や学習の入力を変えずに、過去の由来の記録を補う。 */
 export class DatasetVersionParentService {
   constructor(private readonly database: Database) {}
 
@@ -54,7 +54,7 @@ export class DatasetVersionParentService {
       resourceType: 'dataset_version',
       resourceId: location.versionId,
       projectId: location.projectId,
-      // Evidence may include private URLs; it is held by the protected provenance record.
+      // evidenceには非公開のURLが含まれることがある。evidenceは保護された由来の記録の側で持つ。
       details: {
         datasetId: location.datasetId,
         parentDatasetVersionIds: input.parentDatasetVersionIds,

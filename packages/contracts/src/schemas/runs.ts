@@ -50,7 +50,7 @@ export const codeSourceSchema = namedContractSchema(
     z.strictObject({ kind: z.literal('artifact'), artifactId: idSchema }),
   ]),
 );
-// Kept here rather than in experimentTasks.ts: Run embeds both, and TaskExecution embeds Run.
+// experimentTasks.tsではなくここに置く。Runが両方を埋め込み、TaskExecutionがRunを埋め込むため。
 export const executionSnapshotSchema = namedContractSchema(
   'ExecutionSnapshot',
   z.strictObject({
@@ -131,8 +131,8 @@ export const runSchema = namedContractSchema(
     endedAt: timestampSchema.nullable(),
     error: z.string().nullable(),
     syncOrigin: z.string().nullable().optional(),
-    // The native API returns these MLflow bookkeeping columns although the Run type omits them;
-    // declared so the published schema matches the responses (reported to the contract owner).
+    // ネイティブのAPIは、Run型には無いこれらのMLflowの管理用の列を返す。公開するスキーマが
+    // 応答と一致するよう宣言している（契約の担当者に報告済み）。
     lifecycleStage: describedField(
       z.enum(['active', 'deleted']).optional(),
       'MLflowの削除状態。contractsのRun型には無いが、native APIの応答に含まれる',

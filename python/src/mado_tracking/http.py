@@ -1,4 +1,4 @@
-"""Synchronous and asynchronous HTTP primitives with bounded, selective retries."""
+"""同期・非同期のHTTPの基本処理。再試行は回数に上限を設け、対象を選んで行う。"""
 
 from __future__ import annotations
 
@@ -14,14 +14,14 @@ from .errors import ApiError
 from .security import SecretMasker
 from .settings import API_URL_HINT
 
-# Short retries cover temporary API failures without concealing a persistent outage.
+# 短い再試行でAPIの一時的な障害をしのぐ。障害が続いているときは、それを隠さない。
 DEFAULT_ATTEMPTS = 4
 BACKOFF_INITIAL_SECONDS = 0.25
 BACKOFF_MAX_SECONDS = 5.0
 REQUEST_TIMEOUT_SECONDS = 30.0
 RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
-# The API answers every unknown path with a JSON error. A 404 without one came from something else,
-# usually because MMT_API_URL points at a page of the web app or at another server.
+# APIは未知のパスにはすべてJSONのエラーで答える。JSONの無い404はほかから来たもので、
+# たいていはMMT_API_URLがWebの画面のページや別のサーバーを指している。
 NOT_FOUND_STATUS = 404
 
 
@@ -98,7 +98,7 @@ async def request_async(
     for attempt in range(attempts):
         response = None
         try:
-            # A streamed body is consumed by one attempt, so retries need a fresh one from the factory.
+            # ストリームの本文は1回の試行で読み切られるので、再試行ではfactoryから新しく作る。
             content = content_factory() if content_factory else options.pop("content", None)
             response = await client.request(method, path, content=content, **options)
             if response.status_code not in RETRYABLE_STATUS or attempt == attempts - 1:

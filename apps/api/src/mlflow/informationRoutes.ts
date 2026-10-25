@@ -4,7 +4,8 @@ import type { Database } from '../db/database.js';
 import { principal, uuidParam, type ApiEnvironment } from '../http/request.js';
 import { requireProject } from '../services/accessService.js';
 
-// MLflow 3.17+ reads <tracking URI>/api/3.0/mlflow/server-info; earlier clients used /server-info.
+// MLflow 3.17以降は<tracking URI>/api/3.0/mlflow/server-infoを読む。それより前の
+// クライアントは/server-infoを使っていた。
 const SERVER_INFO_PATHS = ['/server-info', '/api/3.0/mlflow/server-info'] as const;
 
 export function mlflowInformationRoutes(

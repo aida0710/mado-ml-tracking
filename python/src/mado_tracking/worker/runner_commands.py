@@ -1,7 +1,7 @@
-"""The target-side runner commands the worker's staging code calls.
+"""workerのステージングのコードが呼ぶ、コンピュータ側のrunnerのコマンド。
 
-JobExecutor sends them over SSH; a site's runner answers the same commands in its own process.
-`staged_inputs` collects what was staged, for the execution specification's stagedInputs.
+JobExecutorはこれをSSHで送る。siteのrunnerは同じコマンドに自分のプロセスの中で応える。
+`staged_inputs`は、実行仕様のstagedInputsのために、ステージングしたものを集める。
 """
 
 from __future__ import annotations

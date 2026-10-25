@@ -17,20 +17,20 @@ import { NATIVE_ROUTES } from '../src/http/openapi/routeCatalog.js';
 const CONTRACT_DOCUMENT = new URL('../../../docs/api-contract.md', import.meta.url);
 const GENERATED_DOCUMENT = new URL('../../../docs/openapi.json', import.meta.url);
 const ROOT_MANIFEST = new URL('../../../package.json', import.meta.url);
-// Never connected: building the app only reads the route table. The loopback port is closed.
+// 接続はしない。アプリを組み立てても経路の表を読むだけ。ループバックのこのポートは閉じている。
 const UNREACHABLE_DATABASE_URL = 'postgresql://mmt@127.0.0.1:1/mmt_unreachable';
 
-// Documented in api-contract.md but implemented by a route of the same wave that is not merged
-// into this branch yet. The parent removes an entry when it adds the route to the catalog.
+// api-contract.mdには書いてあるが、それを実装する同じwaveの経路がまだこのブランチに
+// マージされていないもの。取りまとめ役が経路を一覧に足すときに、ここから消す。
 const DOCUMENTED_ROUTES_PENDING_IMPLEMENTATION = new Set<string>();
-// Codes the contract names that no native route returns (MLflow responses, worker-side checks).
+// 契約に名前があるが、ネイティブの経路はどれも返さないコード（MLflowの応答、worker側の検査）。
 const DOCUMENTED_CODES_OUTSIDE_NATIVE_ROUTES = new Set([
-  // Returned through the MLflow Artifact API in its own error format.
+  // MLflowのArtifact APIから、その独自のエラー形式で返る。
   '409 checkpoint_finalized',
 ]);
 
 type MutuallyAssignable<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
-// The API's IssuedToken (not a contracts type) has the shape the document publishes.
+// APIのIssuedToken（contractsの型ではない）が、文書で公開している形と一致する。
 const issuedTokenMatches: MutuallyAssignable<IssuedToken, z.infer<typeof issuedTokenSchema>> = true;
 
 function routeKey(method: string, path: string): string {
@@ -46,13 +46,16 @@ function applicationRoutes(): Set<string> {
   const { app } = createApplication({ config, database, environment: {} });
   return new Set(
     app.routes
-      // Middleware registrations (app.use) appear with method ALL.
+      // ミドルウェアの登録（app.use）はメソッドALLとして現れる。
       .filter((route) => route.method !== 'ALL' && !route.path.startsWith('/api/mlflow/'))
       .map((route) => routeKey(route.method, route.path)),
   );
 }
 
-/** `/projects/:p/runs/:runId?x=` → `/projects/{}/runs/{}`, so the doc's parameter names do not matter. */
+/**
+ * `/projects/:p/runs/:runId?x=` → `/projects/{}/runs/{}`。文書のパスパラメータ名が違っても
+ * 同じとみなす。
+ */
 function normalizedPath(path: string): string {
   return path
     .replace(/[?#].*$/, '')
@@ -60,20 +63,20 @@ function normalizedPath(path: string): string {
     .replace(/:[A-Za-z_]+|\{[A-Za-z_]+\}/g, '{}');
 }
 
-/** Route mentions in docs/api-contract.md such as `GET /projects/:p/runs` or `GET/POST /x`. */
+/** docs/api-contract.mdにある経路の記述。`GET /projects/:p/runs`や`GET/POST /x`など。 */
 function documentedRoutes(contract: string): Set<string> {
   const mentions = new Set<string>();
   for (const [, methods, path] of contract.matchAll(
     /`((?:GET|POST|PUT|PATCH|DELETE)(?:\/(?:GET|POST|PUT|PATCH|DELETE))*) (\/[^`\s]*)/g,
   )) {
-    // MLflow paths (/api/2.0/..., /api/3.0/..., /server-info) belong to the MLflow section.
+    // MLflowのパス（/api/2.0/...、/api/3.0/...、/server-info）はMLflowの節で扱う。
     if (/^\/(api\/[23]\.0|server-info)/.test(path!)) continue;
     for (const method of methods!.split('/')) mentions.add(`${method} ${normalizedPath(path!)}`);
   }
   return mentions;
 }
 
-/** `409 \`run_finalized\``: a status and a code the contract promises somewhere. */
+/** `409 \`run_finalized\``のような、契約のどこかで約束しているステータスとコード。 */
 function documentedErrors(contract: string): Set<string> {
   const native = contract.split(/^## /m).filter((section) => !section.startsWith('MLflow'));
   return new Set(
@@ -116,7 +119,7 @@ describe('OpenAPI document of the native API', () => {
       method: route.method.toUpperCase(),
       path: normalizedPath(route.path.replace(/^\/api(?=\/)/, '')),
     }));
-    // The contract writes paths without /api and sometimes only their tail (`POST /runs/search`).
+    // 契約はパスを/apiなしで書き、末尾だけのこともある（`POST /runs/search`）。
     const undeclared = [...documentedRoutes(contract)].filter((mention) => {
       const [method, path] = mention.split(' ');
       return (

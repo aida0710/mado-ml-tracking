@@ -1,6 +1,9 @@
 import { createHash } from 'node:crypto';
 
-/** What the digest covers for each file; the Artifact ID is left out so re-uploads keep the digest. */
+/**
+ * digestがファイルごとに対象にする項目。ArtifactのIDは含めず、再アップロードしてもdigestが
+ * 変わらないようにする。
+ */
 export interface DatasetManifestEntry {
   path: string;
   sha256: string;
@@ -9,16 +12,17 @@ export interface DatasetManifestEntry {
 
 const DIGEST_PREFIX = 'sha256:';
 
-/** Orders paths by their UTF-8 bytes, the same order as PostgreSQL's C collation. */
+/** パスをUTF-8のバイト順に並べる。PostgreSQLのC照合順序と同じ順。 */
 export function compareManifestPaths(left: string, right: string): number {
   return Buffer.compare(Buffer.from(left, 'utf8'), Buffer.from(right, 'utf8'));
 }
 
 /**
- * `sha256:` + hex SHA-256 of the canonical manifest: a JSON array of `{"path","sha256","size"}`
- * objects in UTF-8 byte order of path, keys in that order, without whitespace, non-ASCII left
- * unescaped. Python reproduces it with `json.dumps(entries, separators=(",", ":"),
- * ensure_ascii=False)`, so clients can check a version against local files.
+ * 正規化したmanifestのSHA-256の16進に`sha256:`を付けたもの。正規化したmanifestは、
+ * `{"path","sha256","size"}`のオブジェクトをpathのUTF-8のバイト順に並べたJSON配列で、
+ * キーはこの順、空白なし、ASCII以外はエスケープしない。Pythonでは
+ * `json.dumps(entries, separators=(",", ":"), ensure_ascii=False)`で同じものを作れるので、
+ * クライアントは手元のファイルとバージョンを照合できる。
  */
 export function datasetManifestDigest(entries: readonly DatasetManifestEntry[]): string {
   const canonical = [...entries]

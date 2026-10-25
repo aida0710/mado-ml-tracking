@@ -1,8 +1,8 @@
-"""Rules for text a worker reports to the API about itself or a computer: paths and names.
+"""workerが自分自身やコンピュータについてAPIに報告する文字列（パスと名前）の規則。
 
-The API validates every reported string (apps/api/src/domain/targetCheckValidation.ts and
-reportedPathValidation.ts) and refuses a whole result for one bad string, so the worker drops such
-a string first instead of losing the result.
+APIは報告された文字列をすべて検証し（apps/api/src/domain/targetCheckValidation.tsと
+reportedPathValidation.ts）、不正な文字列が1つあるだけで結果全体を断る。
+そのためworkerは、結果を失わないよう、そのような文字列を先に取り除く。
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from typing import Any
 from ..security import SecretMasker
 
 CONTROL_CHARACTERS = re.compile(r"[\x00-\x1f\x7f]")
-# MAX_TARGET_PATH_LENGTH of the contract: paths a person types for a computer and paths a worker reports.
+# 契約のMAX_TARGET_PATH_LENGTH: 人がコンピュータ用に入力するパスと、workerが報告するパスの上限。
 MAX_TARGET_PATH_LENGTH = 1024
 # API は、API token（mado_mt_）・Job token（mado_mtj_）や PEM の秘密鍵を含む結果を断る。
 # 単語の境界は API の JavaScript の正規表現と同じく ASCII で見る。
@@ -25,7 +25,7 @@ API_SECRET_PATTERNS = (
 
 
 def javascript_length(text: str) -> int:
-    """The length the API's zod limits count: UTF-16 code units, two for a character beyond the BMP."""
+    """APIのzodの上限が数える長さ。UTF-16のコード単位で、BMPの外の文字は2と数える。"""
     return len(text.encode("utf-16-le")) // 2
 
 
@@ -34,10 +34,10 @@ def is_one_line_path(path: str) -> bool:
 
 
 def looks_like_secret(text: str, *, masker: SecretMasker) -> bool:
-    """A configured secret (the worker's token) or what the API takes for a token or private key."""
+    """設定された秘密情報（workerのtoken）、またはAPIがtokenや秘密鍵とみなすもの。"""
     return masker.mask(text) != text or any(pattern.search(text) for pattern in API_SECRET_PATTERNS)
 
 
 def json_size(value: Any) -> int:
-    """Bytes of `value` as the API measures it: Buffer.byteLength(JSON.stringify(value))."""
+    """APIが測るときの`value`のバイト数: Buffer.byteLength(JSON.stringify(value))。"""
     return len(json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode())

@@ -11,7 +11,7 @@ import { findModelVersion } from '../repositories/registryRepository.js';
 import type { ModelAutomationService } from './modelAutomationService.js';
 import type { RunCompletionHandler, RunStatusChange } from './runCompletionService.js';
 
-// Why a downstream rule did not start; the codes before ':' are part of the API contract.
+// 下流のルールが起動しなかった理由。':'より前のコードはAPI契約の一部。
 const UPSTREAM_SKIP_ERRORS = {
   unsuccessful: 'upstream_unsuccessful: 上流Runが成功しなかったため起動しません',
   outputsMissing: 'upstream_outputs_missing: 上流Runに出力DatasetVersionがないため起動しません',
@@ -24,10 +24,10 @@ function upstreamSkipError(run: Pick<Run, 'status' | 'outputDatasetVersionIds'>)
 }
 
 /**
- * Starts the rules chained after the rule that created a terminal Run. The upstream rule is found
- * through model_automation_executions (following manual Job retries), never through Run tags, so
- * Runs people created do not start a chain. Each (downstream rule, upstream Run) pair is handled
- * once, which keeps repeated completions and MLflow reopen/finish cycles from duplicating stages.
+ * 終了したRunを作ったルールの後ろに連鎖させたルールを起動する。上流のルールはRunのtagからでなく、
+ * 必ずmodel_automation_executions（人によるJobの再試行もたどる）から探すので、人が作った
+ * Runからは連鎖が始まらない。（下流のルール、上流のRun）の組はそれぞれ1回だけ扱う。これで、
+ * 完了が繰り返されたりMLflowで開き直して終えたりしても、段が重複しない。
  */
 export class AutomationChainHandler implements RunCompletionHandler {
   readonly name = 'automation-chain';
@@ -46,7 +46,7 @@ export class AutomationChainHandler implements RunCompletionHandler {
       id: upstream.ruleId,
       mode: 'share',
     });
-    // A disabled upstream rule stops its pipeline, including Runs it started before.
+    // 上流のルールが無効なら、それまでに起動したRunの分も含めて、そのパイプラインを止める。
     if (!upstreamRule?.enabled) return;
     const model = await findModelVersion(connection, {
       projectId: run.projectId,

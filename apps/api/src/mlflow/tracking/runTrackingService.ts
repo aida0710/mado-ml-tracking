@@ -36,12 +36,12 @@ import {
 } from './trackingTypes.js';
 import { invalidParameter } from './trackingValidation.js';
 
-// Keep names readable while the full UUID remains the Run's unique identity.
+// 名前は読みやすい長さにとどめる。Runを一意に識別するのは完全なUUID。
 const RUN_NAME_ID_LENGTH = 8;
-// Parent edits have their own namespace so they cannot block dataset registration locks.
+// 親の変更は専用の名前空間を使い、データセット登録のロックを妨げないようにする。
 const PARENT_RUN_LOCK_NAMESPACE = 4184;
 
-// MLflow reports user input errors as INVALID_PARAMETER_VALUE rather than native 422 reserved_tag.
+// MLflowは利用者の入力の誤りを、ネイティブの422 reserved_tagでなくINVALID_PARAMETER_VALUEで返す。
 function rejectReservedTags(keys: string[]): void {
   const reserved = findReservedRunTag(keys);
   if (reserved !== undefined) invalidParameter(reservedRunTagMessage(reserved));
@@ -204,7 +204,7 @@ export class RunTrackingService {
         if (resumed) await this.recordResume(connection, { principal, run });
         const tags = { ...run.tags };
         if (input.run_name !== undefined) tags['mlflow.runName'] = input.run_name;
-        // A resume clears the ended segment's error, as the native resume API does.
+        // ネイティブの再開APIと同じく、再開すると終了した区間のerrorを消す。
         const updated = (await first<TrackingRun>(
           connection,
           `UPDATE runs SET name=COALESCE($2,name),tags=$3::jsonb,status=$4,ended_at=$5,
@@ -218,7 +218,7 @@ export class RunTrackingService {
           });
         return serializeRunInfo(updated);
       },
-      // The Job's lifecycle guard in resolveTrackingLifecycle already covers finalized Runs.
+      // 確定したRunは、resolveTrackingLifecycleにあるJobのライフサイクルの検査で既に扱っている。
       { lockForStatusChange: true, allowFinalizedJobRun: true },
     );
   }
@@ -396,7 +396,7 @@ export class RunTrackingService {
     operation: (connection: Connection) => Promise<T>,
   ): Promise<T> {
     return transaction(this.database, async (connection) => {
-      // Get/search must expose params, metrics and inputs from the same committed batch.
+      // Get/searchは、parameter・メトリクス・入力を同じコミット済みのバッチから見せる必要がある。
       await connection.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');
       await requireProject(connection, principal, { projectId, role: 'viewer', scope: 'read' });
       return operation(connection);
@@ -410,7 +410,7 @@ export class RunTrackingService {
       lockParentage?: boolean;
       modelIds?: string[];
       lockForStatusChange?: boolean;
-      // Only lifecycle operations pass; every record write freezes once a Job-owned Run ends.
+      // 通すのはライフサイクルの操作だけ。Jobに属するRunが終わると、記録の書き込みはすべて止まる。
       allowFinalizedJobRun?: boolean;
     } = {},
   ): Promise<T> {
@@ -429,16 +429,17 @@ export class RunTrackingService {
       );
       if (experiment?.lifecycleStage !== 'active')
         invalidParameter('runs of a deleted experiment cannot be changed');
-      // Parent edits serialize before Run locks so simultaneous opposite edges cannot form a cycle.
+      // 親の変更はRunのロックより前に直列化し、同時に逆向きの辺を張って循環ができないようにする。
       if (options.lockParentage)
         await connection.query('SELECT pg_advisory_xact_lock($1,hashtext($2))', [
           PARENT_RUN_LOCK_NAMESPACE,
           existingRun.experimentId,
         ]);
-      // Artifact uploads also lock Run before model; NO KEY UPDATE permits Registry's Run FK lock.
-      // A status change instead takes FOR UPDATE, which waits for output model registration (it
-      // holds the Run FOR KEY SHARE), so the terminal event always lists the registered versions.
-      // It locks no model afterwards, so the Run-then-model order of outputs cannot deadlock it.
+      // ArtifactのアップロードもRunをモデルより先にロックする。NO KEY UPDATEなら、RegistryがRunの
+      // 外部キーに取るロックと両立する。状態の変更は代わりにFOR UPDATEを取り、出力のモデル登録
+      // （RunをFOR KEY SHAREで持つ）の完了を待つ。そのため終了イベントには登録したバージョンが必ず
+      // 載る。その後はモデルをロックしないので、出力がRun、モデルの順に取るロックとは
+      // デッドロックしない。
       const runLock = options.lockForStatusChange ? 'FOR UPDATE' : 'FOR NO KEY UPDATE';
       const run = await first<TrackingRun>(
         connection,
@@ -467,7 +468,7 @@ export class RunTrackingService {
     resume: { principal: Principal; run: TrackingRun },
   ): Promise<void> {
     const { principal, run } = resume;
-    // isTrackingResume already required an ended Run; this narrows previousStatus for the type.
+    // isTrackingResumeで終了したRunだと確かめ済み。ここでは型のためにpreviousStatusを絞り込む。
     if (!isTerminalStatus(run.status)) return;
     await insertRunResumeEvent(connection, {
       projectId: run.projectId,

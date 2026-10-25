@@ -17,7 +17,7 @@ import {
 } from './mockOidcProvider.js';
 
 const RECHECK_SECONDS = 60;
-// Past the mock's 300-second access token lifetime, so the next check has to refresh.
+// mockのaccess tokenの有効期間（300秒）を過ぎた時点。次の確認ではrefreshが要る。
 const PAST_TOKEN_EXPIRY_SECONDS = 400;
 const DAY_SECONDS = 24 * 60 * 60;
 
@@ -65,7 +65,7 @@ describe.skipIf(!testDatabaseUrl)(
       await harness?.close();
     });
 
-    // Runs the browser side of the Authorization Code flow and returns the session cookie.
+    // Authorization Code flowのブラウザ側を動かし、sessionのcookieを返す。
     async function ssoLogin(claims: Partial<MockOidcClaims> = {}): Promise<string> {
       provider.resetClaims();
       provider.setClaims(claims);
@@ -81,7 +81,7 @@ describe.skipIf(!testDatabaseUrl)(
       return sessionCookie(callback);
     }
 
-    // The callback also clears the login binding cookie, so the session cookie is picked by name.
+    // callbackはログインを結び付けるcookieも消すので、sessionのcookieを名前で選ぶ。
     function sessionCookie(response: Response): string {
       const cookie = response.headers
         .getSetCookie()
@@ -119,7 +119,7 @@ describe.skipIf(!testDatabaseUrl)(
       return sessions.rows;
     }
 
-    // Each save re-encrypts with a new nonce, so token changes are compared after decryption.
+    // 保存のたびに新しいnonceで暗号化し直すので、tokenの変化は復号してから比べる。
     async function storedTokens(): Promise<SessionTokens> {
       const session = await harness.database.query<{
         token_hash: string;
@@ -149,7 +149,7 @@ describe.skipIf(!testDatabaseUrl)(
       return events.rows.map((event) => event.reason);
     }
 
-    // Mints an API token row for the user; the value is hashed the same way as issued tokens.
+    // ユーザーのAPI tokenの行を作る。値は、発行したtokenと同じ方法でhashにする。
     async function insertToken(userId: string, token: string): Promise<void> {
       await harness.database.query(
         `INSERT INTO api_tokens(user_id,name,kind,token_hash,token_prefix,scopes)
@@ -234,7 +234,7 @@ describe.skipIf(!testDatabaseUrl)(
     });
 
     it('admin groupから外れるとis_adminがfalseになり、全体管理者の操作は403になる（sessionは続く）', async () => {
-      // Another active admin, so removing this one does not hit the last-admin rule.
+      // 有効なadminをもう1人置き、この人を外しても最後のadminの規則に当たらないようにする。
       await harness.database.query(
         "INSERT INTO users(email,display_name,is_admin) VALUES('other-admin@example.test','Other',true)",
       );
@@ -313,7 +313,7 @@ describe.skipIf(!testDatabaseUrl)(
       expect(session!.refresh_token_enc).toBeInstanceOf(Buffer);
       for (const stored of [session!.access_token_enc!, session!.refresh_token_enc!])
         expect(stored.toString('latin1')).not.toMatch(/mock-(access|refresh)-/);
-      // The same values come back with the session key, so they are encrypted, not discarded.
+      // sessionの鍵で同じ値が戻るので、捨てたのではなく暗号化して保存している。
       expect(await storedTokens()).toMatchObject({
         accessToken: expect.stringMatching(/^mock-access-/),
         refreshToken: expect.stringMatching(/^mock-refresh-/),
@@ -421,7 +421,7 @@ describe.skipIf(!testDatabaseUrl)(
           body: { name: 'robot key', scopes: ['read'] },
         }),
       );
-      // Even an SSO identity linked by hand, never synced, does not stop a Service Account.
+      // 手で結び付けて一度も同期していないSSOのidentityがあっても、Service Accountは止まらない。
       await harness.database.query(
         `INSERT INTO user_oidc_identities(issuer,subject,user_id,email_at_login,email_verified)
         VALUES($1,'robot-subject',$2,'robot@example.test',true)`,
@@ -444,7 +444,7 @@ describe.skipIf(!testDatabaseUrl)(
       expect((await me(`mmt_session=${localToken}`)).status).toBe(200);
       expect(provider.userInfoRequests).toBe(0);
 
-      // An SSO session from before migration 042 has no tokens; the user must log in again.
+      // migration 042より前のSSOのsessionにはtokenが無いので、利用者はログインし直す必要がある。
       const legacyToken = await createSession(harness.database, {
         userId: local.rows[0]!.id,
         authMethod: 'oidc',

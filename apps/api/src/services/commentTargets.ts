@@ -5,8 +5,8 @@ import { DomainError } from '../domain/errors.js';
 export type CommentTargetState = 'active' | 'deleted';
 
 /**
- * How comments attach to one kind of target. findState returns undefined when the target does not
- * exist in the Project, and should lock the target row so it cannot be deleted mid-transaction.
+ * 1種類の対象へのコメントの付け方。findStateは、対象がProjectに無ければundefinedを返す。また、
+ * トランザクションの途中で削除されないよう、対象の行をロックすること。
  */
 export interface CommentTargetDefinition {
   writeScope: string;
@@ -19,7 +19,7 @@ export interface CommentTargetDefinition {
 export class CommentTargetRegistry {
   private readonly definitions = new Map<CommentTargetType, CommentTargetDefinition>();
 
-  // Reports are registered by their own service, so their table is not referenced from here.
+  // レポートは自分のサービスが登録するので、ここからはそのテーブルを参照しない。
   registerCommentTarget(targetType: CommentTargetType, definition: CommentTargetDefinition): void {
     if (this.definitions.has(targetType))
       throw new Error(`Comment target already registered: ${targetType}`);
@@ -50,7 +50,7 @@ const runTarget: CommentTargetDefinition = {
   },
 };
 
-// A version is deleted when it or its registered model was deleted through the MLflow registry.
+// バージョンかその登録モデルがMLflowのレジストリで削除されていれば、そのバージョンは削除済み。
 const modelVersionTarget: CommentTargetDefinition = {
   writeScope: 'registry:write',
   async findState(connection, target) {

@@ -1,9 +1,9 @@
 import type { Code, CodeVersion } from './index.js';
 
 /**
- * GET /projects/:p/model-families: a model family the Project already uses, as a Model's family or
- * in a code version's supported families. Screens offer these so one family is not typed in two
- * spellings (`Qwen3` beside `qwen3`), which would keep the code from matching the model.
+ * GET /projects/:p/model-families: Projectで既に使われているモデル系列。Modelの系列として、または
+ * コードバージョンの対応モデル系列として使われているもの。画面はこれを候補に出し、同じ系列が
+ * 2通りの綴り（`Qwen3`と`qwen3`）で入力されてコードがモデルに対応しなくなるのを防ぐ。
  */
 export interface ModelFamilySummary {
   name: string;
@@ -11,21 +11,21 @@ export interface ModelFamilySummary {
   codeVersionCount: number;
 }
 
-/** GET /projects/:p/code-versions/:id: a code version with its code, to show it by name. */
+/** GET /projects/:p/code-versions/:id: コードバージョンとそのコード。名前で表示するのに使う。 */
 export interface CodeVersionDetail {
   code: Code;
   version: CodeVersion;
 }
 
 /**
- * Where the keys of GET /projects/:p/automation-rules/:id/metric-keys came from. rule_runs: Runs the
- * rule's automation produced (manual retries of their Jobs included). code_version_runs: the rule
- * has produced none with metrics yet, so Runs of the same kind that used the rule's code version.
- * none: neither has recorded a metric.
+ * GET /projects/:p/automation-rules/:id/metric-keysのキーの出どころ。rule_runs: ルールの自動実行が
+ * 作ったRun（そのJobを手動で再試行したものを含む）。code_version_runs: ルールがまだメトリクスのある
+ * Runを作っていないので、ルールのコードバージョンを使った同じ種類のRun。none: どちらもメトリクスを
+ * 記録していない。
  */
 export type RuleMetricKeySource = 'rule_runs' | 'code_version_runs' | 'none';
 
-/** Metric keys the latest Runs recorded, sorted; offered when writing promotion criteria. */
+/** 最新のRunが記録したメトリクスのキー（並べ替え済み）。昇格の基準を書くときの候補に出す。 */
 export interface RuleMetricKeys {
   items: string[];
   source: RuleMetricKeySource;

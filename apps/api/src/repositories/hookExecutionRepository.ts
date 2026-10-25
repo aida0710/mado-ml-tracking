@@ -2,8 +2,8 @@ import type { Job, JsonObject } from '@mmt/contracts';
 import { first, type Connection } from '../db/database.js';
 
 /**
- * WorkerJob.triggerPayload: what started the hook (a manual payload or a webhook body). The
- * execution names the first attempt or the array, so a retry walks back to its first attempt.
+ * WorkerJob.triggerPayload。フックを起動したもの（手動のpayloadかwebhookの本文）。実行記録が
+ * 指すのは最初の試行かarrayのグループなので、再試行は最初の試行までさかのぼる。
  */
 export async function findTriggerPayload(
   connection: Connection,

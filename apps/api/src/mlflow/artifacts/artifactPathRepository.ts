@@ -15,7 +15,8 @@ export async function listArtifactPaths(
   const parameters = [access.projectId, access.owner.kind, access.owner.id];
   if (access.owner.kind === 'model')
     return rows<ArtifactPathEntry>(connection, indexedSql, parameters);
-  // One statement keeps a single snapshot, so a mapping committing meanwhile cannot drop a file.
+  // 1つの文で1つのスナップショットを保ち、その間にコミットされた対応付けでファイルが抜け落ち
+  // ないようにする。
   const artifacts = await rows<ArtifactPathEntry>(
     connection,
     `SELECT a.path,a.id AS artifact_id,a.size FROM artifacts a
@@ -40,7 +41,7 @@ export async function findArtifactPath(
        WHERE project_id=$1 AND run_id=$3::uuid AND path=$4 AND deleted_at IS NULL
        AND NOT EXISTS(SELECT 1 FROM indexed) ORDER BY created_at DESC,id DESC LIMIT 1
      ) SELECT * FROM indexed UNION ALL SELECT * FROM native`;
-  // A mapping without an Artifact is a path removed by MLflow delete_artifacts.
+  // Artifactの無い対応付けは、MLflowのdelete_artifactsで消したパス。
   const artifact = await first<{ artifactId: string | null }>(connection, sql, [
     access.projectId,
     access.owner.kind,

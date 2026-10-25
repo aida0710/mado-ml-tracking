@@ -1,4 +1,4 @@
-"""What the worker reports in workerInfo on claim and resume, and older APIs that refuse its fields."""
+"""claimとresumeでworkerがworkerInfoに載せて報告するものと、その項目を拒否する古いAPI。"""
 
 from __future__ import annotations
 
@@ -15,13 +15,13 @@ from mado_tracking.errors import ApiError
 from mado_tracking.worker.api import WorkerApi
 
 API_TOKEN = "test-api-secret"
-# The API refuses a field its strict schema does not know without naming the field
-# (apps/api/src/http/request.ts reports only the path of the object that holds it).
+# APIは、厳密なスキーマが知らない項目を、項目名を示さずに拒否する
+# （apps/api/src/http/request.tsは、その項目を持つオブジェクトのパスしか返さない）。
 UNKNOWN_FIELD_REFUSAL = {"error": "入力が不正です: workerInfo", "code": "invalid_request"}
 
 
 class PresenceServer:
-    """Answers claim and resume; an older API refuses workerInfo with a field it does not know."""
+    """claimとresumeに応答する。古いAPIは、知らない項目を含むworkerInfoを拒否する。"""
 
     def __init__(self, *, unknown_fields: Collection[str] = ()):
         self.unknown_fields = frozenset(unknown_fields)
@@ -38,7 +38,7 @@ class PresenceServer:
 
 
 def run_presence(server: PresenceServer, *, ssh_directories: Sequence[Path] = ()) -> None:
-    """A worker starting up: resume what it held, then claim once."""
+    """起動するworker: 持っていたものをresumeし、そのあと1回claimする。"""
 
     async def scenario() -> None:
         api = WorkerApi(

@@ -16,17 +16,17 @@ import {
 import { registerStoredArtifact } from './artifactRegistration.js';
 import { PollingLoop } from './pollingLoop.js';
 
-// Verifying sessions are picked up within a second so clients polling GET see progress promptly.
+// GETでpollするクライアントがすぐ進み具合を見られるよう、verifyingのセッションは1秒以内に拾う。
 const IDLE_POLL_MS = 1000;
-// Renewed while the object is read; another API process takes over only after this lapses.
+// オブジェクトを読んでいる間は更新する。ほかのAPIのプロセスは、これが切れてから引き継ぐ。
 const LEASE_SECONDS = 120;
 const LEASE_RENEW_MS = 30_000;
-// Storage or database outages retry after the lease lapses; a session failing this often is
-// marked failed instead of being retried forever.
+// 保存先やデータベースの障害では、leaseが切れたあとに再試行する。この回数失敗したセッションは、
+// いつまでも再試行せずにfailedにする。
 const MAX_FINALIZE_ATTEMPTS = 5;
 const FINALIZE_BATCH_SIZE = 10;
 
-/** Failure codes stored in artifact_uploads.error; the stored bytes are removed for each. */
+/** artifact_uploads.errorに保存する失敗のコード。どのコードでも保存したバイト列は消す。 */
 type RejectionCode =
   | 'sha256_mismatch'
   | 'size_mismatch'
@@ -35,7 +35,7 @@ type RejectionCode =
   | 'run_deleted'
   | 'finalize_failed';
 
-/** Lets compatibility layers index the Artifact in the registering transaction. */
+/** 互換レイヤーが、登録のトランザクションの中でArtifactを索引に登録できるようにする。 */
 export type ArtifactUploadRegisteredHook = (
   connection: Connection,
   upload: ArtifactUploadRecord,
@@ -48,9 +48,9 @@ interface ClaimedUpload {
 }
 
 /**
- * Assembles each verifying session, hashes the whole object in one streaming read, and registers
- * the Artifact. The hash is computed from the assembled object rather than accumulated per part
- * because a hash state cannot be persisted, and a restarted API must still be able to finish.
+ * verifyingのセッションを1つずつ組み立て、オブジェクト全体を1回のストリーム読み取りで
+ * ハッシュし、Artifactを登録する。ハッシュはpartごとに積み上げず、組み立てたオブジェクトから
+ * 計算する。ハッシュの途中状態は保存できず、再起動したAPIでも完了させられる必要があるため。
  */
 export class ArtifactUploadFinalizer {
   private readonly loop = new PollingLoop({
@@ -75,7 +75,7 @@ export class ArtifactUploadFinalizer {
     return this.loop.stop();
   }
 
-  /** Finalizes verifying sessions whose lease is free; returns how many were processed. */
+  /** leaseの空いたverifyingのセッションを完了させ、処理した数を返す。 */
   async finalizeBatch(limit = FINALIZE_BATCH_SIZE): Promise<number> {
     let processed = 0;
     for (; processed < limit; processed++) {
@@ -118,7 +118,7 @@ export class ArtifactUploadFinalizer {
       const rejection = await this.register(claimed, verified);
       if (rejection) await this.reject(claimed, rejection);
     } catch {
-      // The session stays verifying; the next claim after the lease lapses retries it.
+      // セッションはverifyingのまま残り、leaseが切れたあとの次のclaimで再試行される。
       console.error(
         JSON.stringify({
           event: 'artifact_upload_finalize_failed',
@@ -148,7 +148,7 @@ export class ArtifactUploadFinalizer {
       });
     } catch (error) {
       if (error instanceof ArtifactPartTooSmallError) return { rejection: 'part_too_small' };
-      // An earlier attempt completed the backend upload before it stopped; verify that object.
+      // 前の試行が止まる前に、保存先へのアップロードを完了させていた。そのオブジェクトを検証する。
       if (!(error instanceof ArtifactUploadNotFoundError)) throw error;
     }
     let content;
@@ -172,7 +172,7 @@ export class ArtifactUploadFinalizer {
     return { size, sha256 };
   }
 
-  /** Returns a rejection when the Run was deleted while the object was verified. */
+  /** オブジェクトの検証中にRunが削除されていたら、拒否の理由を返す。 */
   private async register(
     claimed: ClaimedUpload,
     stored: { size: number; sha256: string },
@@ -185,7 +185,7 @@ export class ArtifactUploadFinalizer {
         AND status='verifying' FOR UPDATE`,
         [upload.id, claimed.leaseId],
       );
-      // Another finalizer took over after this lease lapsed; it registers the Artifact.
+      // このleaseが切れたあとに別のfinalizerが引き継いだ。Artifactはそちらが登録する。
       if (!current) return null;
       if (upload.runId) {
         const stage = await runLifecycleStage(connection, {
@@ -220,8 +220,8 @@ export class ArtifactUploadFinalizer {
   }
 
   /**
-   * Removes the bytes before recording the failure: if the process stops in between, the retry
-   * rejects the session again instead of leaving an unreferenced object behind.
+   * 失敗を記録する前にバイト列を消す。その間にプロセスが止まっても、再試行でセッションをもう一度
+   * 拒むので、参照されないオブジェクトが残らない。
    */
   private async reject(claimed: ClaimedUpload, rejection: RejectionCode): Promise<void> {
     const { database, stores } = this.options;

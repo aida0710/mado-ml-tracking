@@ -29,9 +29,8 @@ interface RelatedRunPage {
 }
 
 /**
- * Read model for the model version page: the version with its aliases, the Runs that used it, and
- * the Runs a Run started. Whether a Run came from automation is decided by its execution
- * (findExecutionForRun), never by its tags.
+ * モデルバージョンのページ用の読み取りモデル。aliasを付けたバージョン、それを使ったRun、Runが
+ * 始めたRun。Runが自動実行から来たかは、タグではなく実行（findExecutionForRun）で決める。
  */
 export class ModelEvaluationService {
   constructor(private readonly database: Database) {}

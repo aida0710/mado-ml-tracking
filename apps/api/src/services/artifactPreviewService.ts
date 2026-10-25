@@ -10,9 +10,9 @@ const ENQUEUE_SAVEPOINT = 'artifact_previews';
 const ARTIFACT_PREVIEW_COLUMNS = `artifact_id,kind,status,preview_artifact_id,error,attempts,updated_at`;
 
 /**
- * Queues the previews a just-registered Artifact needs, inside the registering transaction. A
- * preview is a convenience, so an insert failure is rolled back to a savepoint and logged instead
- * of failing the registration.
+ * 登録したばかりのArtifactに要るプレビューを、登録のトランザクションの中でキューに入れる。
+ * プレビューは補助的なものなので、挿入に失敗しても登録は失敗させず、savepointまで戻して
+ * ログに残す。
  */
 export async function enqueueArtifactPreviews(connection: Connection, artifact: Artifact): Promise<void> {
   const kinds = previewKindsFor({
@@ -45,7 +45,7 @@ export async function enqueueArtifactPreviews(connection: Connection, artifact: 
 export class ArtifactPreviewService {
   constructor(private readonly database: Database) {}
 
-  /** An Artifact that needs no previews has an empty list; an unknown or foreign one is 404. */
+  /** プレビューが要らないArtifactは空の一覧。存在しない、または別のProjectのArtifactは404。 */
   async list(
     principal: Principal,
     target: { projectId: string; artifactId: string },

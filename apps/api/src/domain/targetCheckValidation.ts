@@ -10,26 +10,26 @@ import { hasNoControlCharacters, reportedPathSchema } from './reportedPathValida
 import { runtimeKindSchema } from './runtimeValidation.js';
 import { uuidSchema } from './validation.js';
 
-// The result is a short summary; a larger body means the worker sent raw command output. Version 2
-// adds the candidate lists (pythons, directories), whose paths take most of this room.
+// 結果は短い要約で、これより大きい本体はworkerがコマンドの生の出力を送ったということ。
+// version 2で候補の一覧（pythons、directories）が加わり、そのパスがこの大きさの大半を占める。
 export const MAX_TARGET_CHECK_RESULT_BYTES = 32 * 1024;
-// A listing holds up to MAX_DIRECTORY_LISTING_ENTRIES names of up to a file name's length each.
+// 一覧にはMAX_DIRECTORY_LISTING_ENTRIES個までの名前が入り、それぞれファイル名の長さまで。
 export const MAX_DIRECTORY_LISTING_RESULT_BYTES = 64 * 1024;
-// Generous for one host (DGX-class machines have 8-16 GPUs).
+// 1台のホストには十分な数（DGX級のマシンでGPUは8〜16個）。
 const MAX_TARGET_CHECK_GPUS = 64;
-// Pythons on PATH, in /usr/bin and in a researcher's venvs and conda envs; more are not read.
+// PATH上、/usr/bin、研究者のvenvとconda環境にあるPython。これより多くは読まない。
 const MAX_TARGET_CHECK_PYTHONS = 20;
-// The home, the directories in it and the mounts that could hold a work directory.
+// ホーム、その中のディレクトリ、作業ディレクトリを置けるマウント。
 const MAX_TARGET_CHECK_DIRECTORIES = 40;
-// Enough to pick a directory while typing; a larger directory is marked truncated.
+// 入力しながらディレクトリを選ぶには足りる数。これより大きいディレクトリはtruncatedと印を付ける。
 const MAX_DIRECTORY_LISTING_ENTRIES = 200;
-// NAME_MAX of Linux file systems.
+// LinuxのファイルシステムのNAME_MAX。
 const MAX_DIRECTORY_ENTRY_NAME_LENGTH = 255;
-// Long enough for a version line or a GPU model name, too short for a log dump.
+// バージョンの行やGPUのモデル名には足り、ログを丸ごと入れるには短い長さ。
 const MAX_DETAIL_LENGTH = 200;
-// Matches the worker id of workers (migration 019) and of claims.
+// workers（migration 019）とclaimのworker idに合わせる。
 const MAX_WORKER_ID_LENGTH = 200;
-// A worker runs a couple of requests at once (MAX_PARALLEL_TARGET_CHECKS in the worker).
+// workerは同時に少数のリクエストを動かす（workerのMAX_PARALLEL_TARGET_CHECKS）。
 const MAX_ACTIVE_CHECKS_PER_WORKER = 16;
 
 const ITEM_NAMES = [
@@ -168,18 +168,18 @@ export const directoryListingResultSchema = z.strictObject({
 
 const workerIdSchema = z.string().min(1).max(MAX_WORKER_ID_LENGTH);
 
-/** The worker a request names: its token and MMT_WORKER_ID. */
+/** リクエストが指すworker。そのtokenとMMT_WORKER_ID。 */
 export const targetCheckWorkerSchema = z.strictObject({
   tokenId: uuidSchema,
   workerId: workerIdSchema,
 });
 
-/** Without a chosen worker, any worker assigned to the target may claim the check. */
+/** workerを選ばなければ、そのコンピュータに割り当てたどのworkerでも検査をclaimできる。 */
 export const targetCheckRequestSchema = z.strictObject({
   worker: targetCheckWorkerSchema.optional(),
 });
 
-// Absolute, or under the home directory of the SSH user (~ or ~/...): what the shell expands.
+// 絶対パスか、SSHユーザーのホームディレクトリの下（~または~/...）。シェルが展開する形。
 const directoryPathSchema = reportedPathSchema.refine(
   (path) => path.startsWith('/') || path === '~' || path.startsWith('~/'),
   'Must be absolute or start with ~/',
@@ -194,7 +194,7 @@ const uniqueValues = <T>(values: T[]) => new Set(values).size === values.length;
 
 export const targetCheckClaimSchema = z.strictObject({
   workerId: workerIdSchema,
-  // MMT_WORKER_TARGET_IDS; empty for a worker that takes only the requests assigned to it.
+  // MMT_WORKER_TARGET_IDS。自分に割り当てられたリクエストだけを受けるworkerでは空。
   targetIds: z
     .array(uuidSchema)
     .max(1000)
@@ -204,7 +204,7 @@ export const targetCheckClaimSchema = z.strictObject({
     .array(z.enum(TARGET_CHECK_KINDS))
     .min(1)
     .refine(uniqueValues, 'Kinds must be unique'),
-  // Requests the worker runs now; one it claimed but does not run is returned before a new one.
+  // workerが今動かしているリクエスト。claimしたのに動かしていないものは、新しいものより先に返す。
   activeCheckIds: z
     .array(uuidSchema)
     .max(MAX_ACTIVE_CHECKS_PER_WORKER)
@@ -215,7 +215,7 @@ export const targetCheckClaimSchema = z.strictObject({
 export const targetCheckCompleteSchema = z.strictObject({
   leaseId: uuidSchema,
   status: z.enum(['finished', 'failed']),
-  // Checked against the request's kind by the service.
+  // リクエストの種類との照合はサービスが行う。
   result: z.union([targetCheckResultSchema, directoryListingResultSchema]),
 });
 
@@ -249,7 +249,7 @@ function rejectSecretTexts(texts: string[], secretPaths: string[]): void {
     });
 }
 
-/** The target's own key files name the worker's credentials; a result must never carry them. */
+/** コンピュータ自身の鍵ファイルはworkerの認証情報を指すので、結果に決して含めない。 */
 export function rejectSecretsInResult(
   result: TargetCheckResult,
   target: { sshKeyPath: string; knownHostsPath: string },
@@ -259,8 +259,8 @@ export function rejectSecretsInResult(
 }
 
 /**
- * A listing names entries of the computer's directory, while the key paths name files on the
- * worker's host, so only tokens and PEM blocks are looked for.
+ * 一覧はコンピュータのディレクトリの項目を挙げ、鍵のパスはworkerのホストのファイルを指すので、
+ * tokenとPEMのブロックだけを探す。
  */
 export function rejectSecretsInListing(result: TargetDirectoryListingResult): void {
   rejectSecretTexts([result.path, ...result.entries.map((entry) => entry.name)], []);

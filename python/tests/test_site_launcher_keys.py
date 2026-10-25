@@ -1,4 +1,4 @@
-"""The launcher's SSH keys and connection checks: made with ssh-keygen, published, deleted, tried."""
+"""launcherのSSH鍵と接続確認: ssh-keygenで作る、公開する、削除する、試す。"""
 
 from __future__ import annotations
 
@@ -52,7 +52,7 @@ def test_keys_are_made_published_again_when_needed_and_deleted_once_unlisted(tmp
     api = FakeLauncherApi(launcher_name="GPU launcher 1")
     target_id = str(uuid4())
     requested = api.add_key(target_id)
-    # Ready on the API, but its files are gone from this host (a lost state volume): made anew.
+    # APIではreadyだが、このホストからファイルが消えている（stateのvolumeを失った）。作り直す。
     lost = api.add_key(target_id, user_id=str(uuid4()), status="ready", public_key="ssh-ed25519 AAAAold old")
     launcher = launcher_for(tmp_path, api)
     launcher.run_once()
@@ -78,19 +78,19 @@ def test_keys_are_made_published_again_when_needed_and_deleted_once_unlisted(tmp
     assert dict(api.published()) == public_keys
     assert all(key.startswith("ssh-ed25519 AAAA") for key in public_keys.values())
 
-    # Ready keys whose public half the API holds are left alone, whatever the comment says.
+    # 公開鍵をAPIが持っているreadyの鍵は、コメントが何であっても手を付けない。
     api.keys[0]["publicKey"] = public_keys[requested].rsplit(" ", 1)[0] + " edited comment"
     launcher.run_once()
     assert len(recorded_keygen_calls(keygen)) == 2 and len(api.published()) == 2
 
-    # Another public half on the API, or a key still requested, is published again unchanged.
+    # APIにある公開鍵が別物の鍵や、まだrequestedの鍵は、変えずにもう一度公開する。
     api.keys[0].update(publicKey="ssh-ed25519 AAAAsomethingelse")
     api.keys[1].update(status="requested", publicKey=None)
     launcher.run_once()
     assert api.published()[2:] == [(requested, public_keys[requested]), (lost, public_keys[lost])]
     assert len(recorded_keygen_calls(keygen)) == 2
 
-    # A key with half its files is made again; a key the API no longer lists is deleted.
+    # ファイルが片方だけの鍵は作り直す。APIの一覧から消えた鍵は削除する。
     (keys / f"{requested}.pub").unlink()
     api.keys = [key for key in api.keys if key["id"] != lost]
     (keys / "notes.txt").write_text("not a key")
@@ -110,7 +110,7 @@ def test_a_key_that_cannot_be_made_or_published_stops_neither_the_others_nor_the
     target_id = str(uuid4())
     api.assign_site({"id": target_id, "name": "ABCI"}, site_settings_document())
     revoked, kept = api.add_key(target_id), api.add_key(target_id, user_id=str(uuid4()))
-    # Revoked on the Web between the configuration and the publication.
+    # 設定してから公開するまでのあいだに、画面で失効させた。
     api.revoked.add(revoked)
     launcher = launcher_for(tmp_path, api)
     launcher.run_once()
@@ -118,7 +118,7 @@ def test_a_key_that_cannot_be_made_or_published_stops_neither_the_others_nor_the
     assert "was not published" in caplog.text and "the key was revoked" in caplog.text
     assert api.keys[1]["status"] == "ready"
 
-    # Without ssh-keygen a new key is not made, and the poll still claims.
+    # ssh-keygenが無ければ新しい鍵は作らないが、ポーリングはclaimを続ける。
     monkeypatch.setenv("PATH", str(tmp_path / "nowhere"))
     api.add_key(target_id, user_id=str(uuid4()))
     launcher.run_once()
@@ -130,7 +130,7 @@ def test_a_key_that_cannot_be_made_or_published_stops_neither_the_others_nor_the
 def test_key_comments_stay_one_word_whatever_the_launcher_is_called():
     key_id = str(uuid4())
     assert key_comment("研究室 launcher\t2", key_id) == f"mmt-launcher:研究室-launcher-2:{key_id}"
-    # The API keeps comments of up to 300 characters, whatever the launcher's name.
+    # launcherの名前が長くても、コメントはAPIが保存できる300文字までに収める。
     assert key_comment("x" * 200, key_id) == f"mmt-launcher:{'x' * 100}:{key_id}"
 
 
@@ -162,7 +162,7 @@ def test_connection_checks_log_in_on_their_own_and_report_what_ssh_said(tmp_path
     assert results[elsewhere] == {"outcome": "failed", "message": "This launcher does not submit to the site"}
     assert results[unknown_key]["outcome"] == "failed" and "SSH key" in results[unknown_key]["message"]
 
-    # ssh's own words go back, without the token, and no longer than the API keeps.
+    # sshが出した文言をそのまま返す。tokenは除き、長さはAPIが保存できる分までにする。
     refused, not_available = str(uuid4()), str(uuid4())
     logins.refusal = TransportError(
         "SSH connection to the site failed: " + "x" * 3000 + f" mmt@login: Permission denied {LAUNCHER_TOKEN}"

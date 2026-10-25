@@ -2,33 +2,33 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 import { transaction, type Database } from '../db/database.js';
 
-/** Outbox tables that share the claim/lease/backoff columns. */
+/** claim・lease・backoffの列を共有するoutboxのテーブル。 */
 export type LeasedOutboxTable = 'plugin_outbox' | 'notification_outbox';
 
 export interface LeasedOutboxPolicy {
   table: LeasedOutboxTable;
-  /** Longer than the sender's HTTP deadline so another dispatcher cannot send concurrently. */
+  /** 送信側のHTTPの期限より長くし、別のdispatcherが同時に送れないようにする。 */
   leaseSeconds: number;
   firstRetrySeconds: number;
   maxRetrySeconds: number;
-  /** After this many failed attempts the row becomes 'failed'. Unset retries forever. */
+  /** この回数だけ試行が失敗すると、行は'failed'になる。未設定なら再試行し続ける。 */
   maxAttempts?: number;
-  /** Stored as last_error when the sender throws something other than OutboxDeliveryError. */
+  /** 送信側がOutboxDeliveryError以外を投げたときに、last_errorとして保存する。 */
   defaultErrorCode: string;
 }
 
 export interface OutboxRow {
   id: string;
-  /** Attempts already made before this claim, as stored. */
+  /** このclaimより前に行った試行の数。保存されている値のまま。 */
   attempts: number;
 }
 
-/** A claimed row. attempt counts this attempt (1 for the first). */
+/** claimした行。attemptはこの試行を含めた回数（初回は1）。 */
 export type Lease<Row extends OutboxRow> = Row & { deliveryId: string; attempt: number };
 
 /**
- * A sender failure with a code that is safe to store: never a remote response or a URL.
- * permanent skips the remaining attempts, for failures a retry cannot fix.
+ * 保存しても安全なコードを持つ、送信側の失敗。相手の応答やURLは決して入れない。permanentは、
+ * 再試行では直らない失敗のために、残りの試行を飛ばす。
  */
 export class OutboxDeliveryError extends Error {
   constructor(
@@ -40,18 +40,18 @@ export class OutboxDeliveryError extends Error {
   }
 }
 
-/** Columns a delivered row stores besides the status, such as the receiver-facing delivery id. */
+/** 配信済みの行がstatusのほかに保存する列。受け取り側に見せる配信IDなど。 */
 export interface DeliveryReceipt {
   columns?: Readonly<Record<string, string>>;
 }
 
 const COLUMN_NAME = /^[a-z_]+$/;
-// Caps the exponent so the doubling stays within the integer range before the maxRetry cap.
+// 指数に上限を置き、maxRetryの上限をかける前の倍々の計算が整数の範囲に収まるようにする。
 const MAX_BACKOFF_EXPONENT = 10;
 
 /**
- * Selects rows that are due, or whose sending lease has expired. `alias` is the outbox table's
- * alias and `leaseParameter` the SQL parameter holding the lease seconds.
+ * 送る時刻になった行か、送信中のleaseが切れた行を選ぶ。`alias`はoutboxのテーブルに付けた別名、
+ * `leaseParameter`はleaseの秒数を入れたSQLのパラメーター。
  */
 export function claimableCondition(alias: string, leaseParameter: string): string {
   return `((${alias}.status='pending' AND ${alias}.next_attempt_at<=now()) OR (${alias}.status='sending' AND ${alias}.locked_at<now()-make_interval(secs=>${leaseParameter})))`;
@@ -65,10 +65,10 @@ export function retryDelaySeconds(policy: LeasedOutboxPolicy, attempt: number): 
 }
 
 /**
- * Claim → send → record for outbox tables, shared by plugin events and notifications.
- * A claim marks the row 'sending' with a fresh delivery id inside a transaction that selected it
- * with FOR UPDATE SKIP LOCKED; results are written only while that delivery id still holds, so a
- * dispatcher whose lease expired cannot overwrite the attempt that took over.
+ * outboxのテーブルのclaim → 送信 → 記録。pluginのイベントと通知で共有する。claimは、
+ * FOR UPDATE SKIP LOCKEDで行を選んだトランザクションの中で、新しい配信IDを付けて行を'sending'に
+ * する。結果はその配信IDがまだ有効な間だけ書くので、leaseが切れたdispatcherが、引き継いだ試行を
+ * 上書きすることはない。
  */
 export class LeasedOutbox {
   constructor(
@@ -77,8 +77,8 @@ export class LeasedOutbox {
   ) {}
 
   /**
-   * Sends up to `limit` rows one by one. `select` runs in the claim transaction and must lock the
-   * row it returns (FOR UPDATE … SKIP LOCKED, using claimableCondition). Returns delivered count.
+   * 最大`limit`行を1行ずつ送る。`select`はclaimのトランザクションの中で動き、返す行をロックする
+   * こと（claimableConditionを使ったFOR UPDATE … SKIP LOCKED）。配信できた数を返す。
    */
   async dispatchBatch<Row extends OutboxRow>(request: {
     limit: number;
@@ -133,7 +133,7 @@ export class LeasedOutbox {
     lease: { id: string; deliveryId: string; attempt: number },
     error: unknown,
   ): Promise<void> {
-    // Persist a safe failure code, never the remote service's response or credential-bearing URL.
+    // 保存するのは安全な失敗のコード。相手のサービスの応答や認証情報を含むURLは保存しない。
     const isKnown = error instanceof OutboxDeliveryError;
     const code = isKnown ? error.code : this.policy.defaultErrorCode;
     const { maxAttempts } = this.policy;

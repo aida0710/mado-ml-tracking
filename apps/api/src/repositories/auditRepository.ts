@@ -15,7 +15,8 @@ export interface AuditEventInput {
   userAgent?: string | null;
 }
 
-// Callers pass the business transaction's connection so the audit row commits or rolls back with it.
+// 呼び出し側は業務のトランザクションの接続を渡し、監査の行をそれと一緒にコミットまたは
+// ロールバックさせる。
 export async function writeAuditEvent(
   connection: Connection,
   event: AuditEventInput,
@@ -44,19 +45,19 @@ export interface AuditEventFilter {
   action?: string;
   actorUserId?: string;
   outcome?: AuditOutcome;
-  /** Actions left out of the page (sign-ins when the viewer hides them). */
+  /** ページから除く操作（閲覧者がサインインを隠しているときはサインイン）。 */
   excludedActions?: readonly string[];
-  // ID of the last event on the previous page; the page continues strictly after it.
+  // 前のページの最後のイベントのID。ページはそのイベントを含めず、その次から続く。
   cursor?: string;
   limit: number;
 }
 
-// Names are joined at read time: a renamed user or Project shows its current name in old events.
+// 名前は読むときに結合する。名前を変えた利用者やProjectは、古いイベントでも今の名前で表示する。
 const auditEventColumns = `a.id,a.occurred_at,a.actor_type,a.actor_user_id,u.display_name AS actor_name,
   a.actor_token_id,a.action,a.outcome,a.resource_type,a.resource_id,a.project_id,
   p.name AS project_name,a.details,a.ip_address,a.user_agent`;
 
-// Keyset pagination on (occurred_at,id) stays stable while new events are appended.
+// (occurred_at,id)によるキーセットのページ分けは、新しいイベントが追加されてもずれない。
 export async function listAuditEvents(
   connection: Connection,
   filter: AuditEventFilter,
@@ -82,7 +83,8 @@ export async function listAuditEvents(
   );
 }
 
-// A Project listing accepts only its own events as a cursor so IDs from other Projects are not probed.
+// Projectの一覧はそのProjectのイベントだけをcursorとして受け付け、ほかのProjectのIDを探られない
+// ようにする。
 export async function auditCursorExists(
   connection: Connection,
   cursor: { id: string; projectId?: string },

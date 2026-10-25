@@ -1,4 +1,4 @@
-"""`mado-tracking site-run <spec dir>`: the runner a site's job shell starts on a compute node."""
+"""`mado-tracking site-run <spec dir>`は、siteのjob shellが計算ノードで起動するrunner。"""
 
 from __future__ import annotations
 
@@ -24,6 +24,6 @@ def add_parser(commands: Any) -> None:
 
 
 def run(arguments: argparse.Namespace) -> int:
-    # The scheduler keeps the runner's stderr in the job's output file.
+    # スケジューラは、runnerのstderrをジョブの出力ファイルに残す。
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     return run_site_runner(arguments.spec_directory)

@@ -1,4 +1,4 @@
-"""Automation rules (inference / evaluation / processing after registration or an upstream Run)."""
+"""自動実行ルール（登録や上流のRunの後に行う推論・評価・処理）。"""
 
 from __future__ import annotations
 
@@ -36,11 +36,11 @@ def create_automation_rule(
     max_attempts: int = 1,
     enabled: bool = True,
 ) -> dict[str, Any]:
-    """Create a rule; settings are immutable afterwards, only ``enabled`` can change.
+    """ルールを作る。設定はあとから変えられず、変えられるのは``enabled``だけ。
 
-    ``trigger="upstream_run_finished"`` chains the rule after ``upstream_rule_id``: it starts when a
-    Run of that rule finishes with output DatasetVersions. ``summary_metrics`` are the metric names
-    listed first in the evaluation results of a model version.
+    ``trigger="upstream_run_finished"``は、ルールを``upstream_rule_id``の後ろにつなぐ。そのルールの
+    Runが出力DatasetVersionを持って終わると始まる。``summary_metrics``は、モデルバージョンの
+    評価結果で最初に並べるメトリクスの名前。
     """
     if kind not in AUTOMATION_RULE_KINDS:
         raise ConfigurationError("Automation supports inference, evaluation or processing")
@@ -67,7 +67,7 @@ def create_automation_rule(
     }
     body["upstreamRuleId"] = upstream_rule_id
     body["summaryMetrics"] = list(summary_metrics)
-    # Not retried: a resent create would add a second rule.
+    # 再試行しない。作成を送り直すと2つ目のルールができてしまう。
     return client.request("POST", client.project_path(project_id, "automation-rules"), json=body)
 
 
@@ -78,9 +78,9 @@ def list_automation_executions(
     model_version_id: str | None = None,
     rule_id: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Every matching ModelAutomationExecution, newest first, including pending registrations.
+    """条件に合うModelAutomationExecutionを、保留中の登録も含めて新しい順にすべて返す。
 
-    All pages are read; an API that predates paging returns its latest 100 rows in one page.
+    ページはすべて読む。ページングより前のAPIは、最新の100行を1ページで返す。
     """
     optional_values = {"modelVersionId": model_version_id, "ruleId": rule_id}
     conditions = {key: value for key, value in optional_values.items() if value is not None}
@@ -96,15 +96,15 @@ def apply_automation_rule(
     model_version_id: str | None = None,
     trigger_run_id: str | None = None,
 ) -> dict[str, Any]:
-    """Apply a rule by hand (Project admin): to a version, or for a chained rule to an upstream Run.
+    """ルールを手で適用する（Project admin）。対象はバージョンか、連鎖するルールなら上流のRun。
 
-    A rule triggered by registration takes ``model_version_id``; an ``upstream_run_finished`` rule
-    takes ``trigger_run_id``. Skipped or failed checks come back as the returned execution.
+    登録で動くルールは``model_version_id``を、``upstream_run_finished``のルールは
+    ``trigger_run_id``を取る。確認で飛ばされた場合や失敗した場合も、返す実行としてその結果が戻る。
     """
     if (model_version_id is None) == (trigger_run_id is None):
         raise ConfigurationError("Specify exactly one of model_version_id and trigger_run_id")
     body = {"modelVersionId": model_version_id} if model_version_id else {"triggerRunId": trigger_run_id}
-    # Not retried: each application starts another attempt.
+    # 再試行しない。適用のたびに新しい試行が始まる。
     return client.request(
         "POST",
         client.project_path(project_id, f"automation-rules/{path_id(rule_id)}/executions"),
@@ -115,10 +115,10 @@ def apply_automation_rule(
 def transfer_automation_rule_owner(
     client: Client, project_id: str, rule_id: str, *, service_account_id: str
 ) -> dict[str, Any]:
-    """Run the rule as a Service Account so it keeps working when its creator leaves.
+    """ルールをService Accountとして動かし、作成者がいなくなっても動き続けるようにする。
 
-    Returns the updated rule with ``runAsUserId``. Setting the same owner again changes nothing,
-    so the PUT is retried after a lost response.
+    ``runAsUserId``を持つ更新後のルールを返す。同じ所有者を設定し直しても何も変わらないので、応答が
+    失われたらPUTを再試行する。
     """
     return client.request(
         "PUT",

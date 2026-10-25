@@ -1,11 +1,12 @@
-"""Files that hold credentials for a launcher or `mado-tracking submit`.
+"""launcherや`mado-tracking submit`の認証情報を持つファイル。
 
-A file that its group or others can read is refused: what it holds may already have leaked.
+グループやほかのユーザーが読めるファイルは拒む。中身が既に漏れているかもしれないため。
 
-    token_file             the launcher's API token (launcher.toml)
-    registry_secret_file   JSON {"username", "password"}: the registry login runners pull images
-                           into SIFs with (launcher.toml, or `mado-tracking submit
-                           --registry-secret-file`); it reaches the runner as secrets.json
+    token_file             launcherのAPI token（launcher.toml）
+    registry_secret_file   JSON {"username", "password"}。runnerがイメージを取ってきてSIFに
+                           するときの、レジストリのログイン情報（launcher.toml、または
+                           `mado-tracking submit --registry-secret-file`）。runnerには
+                           secrets.jsonとして届く
 """
 
 from __future__ import annotations
@@ -21,7 +22,7 @@ SHARED_PERMISSION_BITS = 0o077
 
 
 def read_private_text(path: Path, *, label: str) -> str:
-    """The file's text; `label` names the setting that gave the path, for the error."""
+    """ファイルの中身の文字列。`label`は、エラーで示すための、パスを与えた設定の名前。"""
     try:
         if os.stat(path).st_mode & SHARED_PERMISSION_BITS:
             raise ConfigurationError(f"{label} {path} must not be readable by group or others")
@@ -31,7 +32,7 @@ def read_private_text(path: Path, *, label: str) -> str:
 
 
 def read_registry_secrets(path: Path, *, label: str) -> dict[str, Any]:
-    """The secrets.json document for the runners: {"registry": {"username", "password"}}."""
+    """runner向けのsecrets.jsonの文書。{"registry": {"username", "password"}}。"""
     text = read_private_text(path, label=label)
     try:
         registry = json.loads(text)

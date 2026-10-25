@@ -1,4 +1,4 @@
-"""Manual Run context, metrics/logs/artifact, and explicit training output registration."""
+"""手動でのRunのcontext、メトリクス・ログ・Artifact、学習の出力の明示的な登録。"""
 
 from __future__ import annotations
 

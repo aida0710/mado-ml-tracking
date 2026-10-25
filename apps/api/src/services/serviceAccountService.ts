@@ -37,8 +37,8 @@ interface ServiceAccountReference {
 }
 
 /**
- * Service Accounts of a Project and the tokens issued to them. Project admins manage them, in a
- * browser session or with a `tokens:manage` token; such a token issues only within its own grant.
+ * ProjectのService Accountと、それに発行したtoken。Project adminが、ブラウザのsessionか
+ * `tokens:manage`のtokenで管理する。そのtokenは、自分に許された範囲の中でだけ発行できる。
  */
 export class ServiceAccountService {
   private readonly database: Database;

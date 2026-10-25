@@ -8,8 +8,8 @@ import type { Principal } from '../auth/principal.js';
 import { first, rows, type Connection } from '../db/database.js';
 import { notFound } from '../domain/errors.js';
 
-// Only assignModelAlias and removeModelAliases write model_aliases, so every change leaves an event
-// and passes the caller's guard (alias protections) under the Model lock.
+// model_aliasesに書くのはassignModelAliasとremoveModelAliasesだけ。これにより、どの変更も
+// イベントを残し、Modelのロックの下で呼び出し側のガード（aliasの保護）を通る。
 
 export interface ModelAliasActor {
   userId: string | null;
@@ -20,7 +20,7 @@ export function modelAliasActor(principal: Principal): ModelAliasActor {
   return { userId: principal.user.id, tokenId: principal.token?.id ?? null };
 }
 
-/** One alias change as the guard sees it. versionId null is a removal. */
+/** ガードから見たaliasの変更1件。versionIdがnullなら削除。 */
 export interface GuardedModelAliasChange {
   projectId: string;
   modelId: string;
@@ -29,8 +29,8 @@ export interface GuardedModelAliasChange {
 }
 
 /**
- * Decides whether the change may happen and throws a DomainError when it may not. Called after the
- * Model lock, so the alias and its protections cannot move between the check and the write.
+ * 変更してよいかを決め、だめならDomainErrorを投げる。Modelのロックの後に呼ぶので、確認から
+ * 書き込みまでの間にaliasとその保護が変わることは無い。
  */
 export type ModelAliasGuard = (
   connection: Connection,
@@ -49,9 +49,9 @@ interface ModelAliasChange {
   actor: ModelAliasActor;
 }
 
-// Serializes every alias change of one Model. A row lock on model_aliases alone cannot cover the
-// first assignment (no row yet), and without this two concurrent first assignments would both
-// record previous_version_id NULL. Returns the Model's project for the event row.
+// 1つのModelのaliasの変更をすべて直列にする。model_aliasesの行ロックだけでは最初の割り当て
+// （まだ行が無い）を守れず、これが無いと同時の最初の割り当てが2つともprevious_version_id NULLを
+// 記録する。イベントの行のためにModelのProjectを返す。
 async function lockModel(connection: Connection, modelId: string): Promise<string> {
   const model = await first<{ projectId: string }>(
     connection,
@@ -68,8 +68,8 @@ async function appendModelAliasEvent(
 ): Promise<string> {
   const event = await first<{ id: string }>(
     connection,
-    // clock_timestamp, not the transaction start: the event is written after the Model lock, so
-    // created_at follows the lock order and the history reads as a previous -> next chain.
+    // トランザクションの開始時刻でなくclock_timestampを使う。イベントはModelのロックの後に
+    // 書くので、created_atがロックの順に並び、履歴を前の値から次の値への連なりとして読める。
     `INSERT INTO model_alias_events(project_id,model_id,alias,previous_version_id,version_id,source,
     reason,promotion_evaluation_id,actor_user_id,actor_token_id,created_at)
     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,clock_timestamp()) RETURNING id`,
@@ -90,9 +90,9 @@ async function appendModelAliasEvent(
 }
 
 /**
- * Points the alias at versionId. Re-assigning the version it already points at changes nothing and
- * records no event, so SDK retries of the same set_registered_model_alias do not grow the history.
- * Returns the recorded event's id, or null when the alias already pointed at versionId.
+ * aliasをversionIdに向ける。既に向いているバージョンを割り当て直しても何も変えずイベントも記録
+ * しないので、SDKが同じset_registered_model_aliasを再試行しても履歴は増えない。記録したイベントの
+ * idを返し、aliasが既にversionIdを向いていたらnullを返す。
  */
 export async function assignModelAlias(
   connection: Connection,
@@ -138,8 +138,8 @@ export async function assignModelAlias(
 }
 
 /**
- * Removes the Model's aliases narrowed by alias or versionId (neither: all of them) and records one
- * removal event per alias actually removed. Returns the removed alias names.
+ * aliasかversionIdで絞ったModelのaliasを消し（どちらも無ければすべて）、実際に消したaliasごとに
+ * 削除のイベントを1つ記録する。消したaliasの名前を返す。
  */
 export async function removeModelAliases(
   connection: Connection,
@@ -197,7 +197,7 @@ const modelAliasEventSelect = `SELECT e.id,e.project_id,e.model_id,e.alias,e.pre
   LEFT JOIN model_versions v ON v.id=e.version_id
   LEFT JOIN users u ON u.id=e.actor_user_id`;
 
-// Keyset pagination on (created_at,id) stays stable while new events are appended.
+// (created_at,id)によるキーセットのページ分けは、新しいイベントが追加されてもずれない。
 export function listModelAliasEvents(
   connection: Connection,
   filter: { modelId: string; alias?: string; cursor?: string; limit: number },
@@ -212,7 +212,7 @@ export function listModelAliasEvents(
   );
 }
 
-// A cursor must belong to the listed Model so event IDs of other Models cannot be probed.
+// ほかのModelのイベントのIDを探られないよう、cursorは一覧しているModelのものに限る。
 export async function modelAliasEventCursorExists(
   connection: Connection,
   cursor: { id: string; modelId: string },
@@ -225,7 +225,7 @@ export async function modelAliasEventCursorExists(
   );
 }
 
-/** The version the alias points at now, or null when it is unset. */
+/** aliasが今指しているバージョン。設定されていなければnull。 */
 export async function findModelAliasVersion(
   connection: Connection,
   reference: { modelId: string; alias: string },
@@ -238,18 +238,18 @@ export async function findModelAliasVersion(
   return current?.versionId ?? null;
 }
 
-/** Takes the lock every alias change of the Model takes, so aliases read afterwards stay put. */
+/** Modelのaliasの変更がすべて取るロックを取り、その後に読んだaliasが変わらないようにする。 */
 export async function lockModelAliases(connection: Connection, modelId: string): Promise<void> {
   await lockModel(connection, modelId);
 }
 
-// ---- Alias protections ----
+// ---- aliasの保護 ----
 
 const aliasProtectionColumns = `id,project_id,model_id,alias,required_role,require_passed_evaluation,
   created_by,created_at,updated_by,updated_at`;
 const aliasProtectionSelect = `SELECT ${aliasProtectionColumns} FROM model_alias_protections`;
 
-/** The Project-wide protections and, with modelId, that Model's protections (Project-wide first). */
+/** Project全体の保護と、modelIdがあればそのModelの保護（Project全体のものが先）。 */
 export function listModelAliasProtections(
   connection: Connection,
   filter: { projectId: string; modelId?: string },
@@ -263,7 +263,7 @@ export function listModelAliasProtections(
   );
 }
 
-/** Every protection that applies to the alias on the Model: the Project-wide one and the Model's own. */
+/** Modelのaliasに効く保護すべて。Project全体のものとModel自身のもの。 */
 export function findApplicableAliasProtections(
   connection: Connection,
   reference: { projectId: string; modelId: string; alias: string },
@@ -277,12 +277,12 @@ export function findApplicableAliasProtections(
 
 export interface AliasProtectionTarget {
   projectId: string;
-  /** null for the Project-wide protection. */
+  /** Project全体の保護ならnull。 */
   modelId: string | null;
   alias: string;
 }
 
-/** Creates or replaces the protection of the alias; created_by and created_at keep the first values. */
+/** aliasの保護を作るか置き換える。created_byとcreated_atは最初の値を保つ。 */
 export async function upsertModelAliasProtection(
   connection: Connection,
   protection: AliasProtectionTarget & {
@@ -291,7 +291,7 @@ export async function upsertModelAliasProtection(
     actorUserId: string;
   },
 ): Promise<ModelAliasProtection> {
-  // The two partial unique indexes cannot share one ON CONFLICT target, so update first.
+  // 2つの部分一意インデックスは1つのON CONFLICTの対象にまとめられないので、先にUPDATEを試す。
   const updated = await first<ModelAliasProtection>(
     connection,
     `UPDATE model_alias_protections SET required_role=$4,require_passed_evaluation=$5,updated_by=$6,
@@ -325,7 +325,7 @@ export async function upsertModelAliasProtection(
   ))!;
 }
 
-/** Returns the removed protection, or undefined when the alias was not protected at that level. */
+/** 消した保護を返す。aliasがその範囲で保護されていなかったらundefined。 */
 export function deleteModelAliasProtection(
   connection: Connection,
   target: AliasProtectionTarget,

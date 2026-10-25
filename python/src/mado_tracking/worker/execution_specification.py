@@ -1,7 +1,7 @@
-"""The instructions a target-side runner executes for one Job, built from its WorkerJob.
+"""1つのJobのためにコンピュータ側のrunnerが実行する指示。そのJobのWorkerJobから作る。
 
-The worker sends them to its SSH runner as spec.json; a site's runner builds them on the compute
-node. Both pass them to execute_registered_code, so a Job sees the same files and variables.
+workerはこれをspec.jsonとしてSSHのrunnerに送る。siteのrunnerは計算ノードの上でこれを作る。
+どちらもexecute_registered_codeに渡すので、Jobから見えるファイルと変数は同じになる。
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ def build_execution_specification(
         "upstreamRun": upstream_run_document(job.run, job.model_version),
         "resumeCheckpoint": resume_checkpoint_document(job.resume_checkpoint),
     }
-    # Hook inputs appear only on Jobs a hook started, so other Jobs keep their context unchanged.
+    # フックの入力は、フックが始めたJobにだけ現れる。ほかのJobのcontextは変わらない。
     if job.input_checkpoint is not None:
         context["inputCheckpoint"] = resume_checkpoint_document(job.input_checkpoint)
     if job.trigger_payload is not None:

@@ -21,7 +21,7 @@ PROJECT_ID = str(uuid4())
 SWEEP_ID = str(uuid4())
 TASK_ID = str(uuid4())
 EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
-# DEFAULT_PARAMETERS["epochs"] in examples/sweep_training.py.
+# examples/sweep_training.pyのDEFAULT_PARAMETERS["epochs"]。
 DEFAULT_EPOCHS = 9
 SWEEP_PATH = f"/api/projects/{PROJECT_ID}/sweeps/{SWEEP_ID}"
 
@@ -40,7 +40,7 @@ WANDB_CONFIG = {
 
 
 class FakeSweepApi:
-    """Records each request and answers from per-path queues; unknown paths are 404."""
+    """リクエストをすべて記録し、パスごとのキューから応答する。知らないパスは404。"""
 
     def __init__(self) -> None:
         self.requests: list[httpx.Request] = []

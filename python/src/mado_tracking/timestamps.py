@@ -1,4 +1,4 @@
-"""UTC timestamps shared by SDK and runner protocol payloads."""
+"""SDKとrunnerのプロトコルのペイロードで共有するUTCのタイムスタンプ。"""
 
 from datetime import UTC, datetime
 

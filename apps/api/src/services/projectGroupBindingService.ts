@@ -20,8 +20,8 @@ import {
   type AuditEventDraft,
 } from './auditService.js';
 
-// Project roles granted to SSO groups. The effective role of each user is the strongest of the
-// direct grant and these bindings (effective_project_roles).
+// SSOのグループに付与したProjectのrole。各利用者の実効のroleは、直接の付与とこれらの
+// 割り当てのうち最も強いもの（effective_project_roles）。
 export class ProjectGroupBindingService {
   constructor(private readonly database: Database) {}
 

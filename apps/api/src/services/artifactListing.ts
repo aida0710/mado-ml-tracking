@@ -8,15 +8,17 @@ import type {
 import { rows, type Connection } from '../db/database.js';
 import { DomainError } from '../domain/errors.js';
 
-// A tree level lists directories, not files; past this many the response says it was truncated.
+// ツリーの1階層にはファイルでなくディレクトリを並べる。この数を超えたら、切り詰めたことを
+// 応答で示す。
 export const MAX_TREE_DIRECTORIES = 1000;
 
 /**
- * SQL condition that is true for the Artifact a Run currently shows at its path. An MLflow path
- * mapping stays authoritative (a later native retry does not replace it), and a mapping without an
- * Artifact (MLflow delete_artifacts) shows nothing at the path; without a mapping the newest
- * Artifact not deleted wins, with the id breaking created_at ties. The MLflow artifact list uses
- * the same rule, so both APIs show the same file for a path. Callers exclude deleted Artifacts.
+ * Runがそのパスで今表示しているArtifactに対して真になるSQLの条件。
+ * MLflowのパスの対応付けは常に優先する（あとからnativeで再試行しても置き換わらない）。
+ * Artifactを持たない対応付け（MLflowのdelete_artifacts）があるパスには何も表示しない。
+ * 対応付けが無ければ、削除されていない最新のArtifactを採り、created_atが同じならidで決める。
+ * MLflowのArtifact一覧も同じ規則を使うので、どちらのAPIでも同じパスには同じファイルが出る。
+ * 削除済みのArtifactは呼び出し側で除く。
  */
 export function currentRunArtifactCondition(artifact: string): string {
   return `COALESCE(
@@ -30,7 +32,7 @@ export function currentRunArtifactCondition(artifact: string): string {
        AND (newer.created_at,newer.id)>(${artifact}.created_at,${artifact}.id)))`;
 }
 
-/** Run lists are in path order; versions of one path follow newest first. */
+/** Runの一覧はパスの順。同じパスのバージョンは新しい順に続く。 */
 interface RunArtifactCursor {
   kind: 'run';
   path: string;
@@ -38,7 +40,7 @@ interface RunArtifactCursor {
   id: string;
 }
 
-/** The Project catalog is newest first. */
+/** Projectのカタログは新しい順。 */
 interface CatalogCursor {
   kind: 'catalog';
   createdAt: string;
@@ -48,7 +50,7 @@ interface CatalogCursor {
 type ListingCursor = RunArtifactCursor | CatalogCursor;
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-// to_char output below; microseconds keep the keyset exact, which a JavaScript Date would round.
+// 下のto_charの出力。マイクロ秒まで持ってkeysetを正確に保つ。JavaScriptのDateでは丸められる。
 const CURSOR_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/;
 const CURSOR_TIMESTAMP_SQL = `to_char(a.created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
 
@@ -88,12 +90,12 @@ function escapeLikePattern(value: string): string {
   return value.replace(/[\\%_]/g, (character) => `\\${character}`);
 }
 
-/** LIKE pattern for paths starting with prefix; the C collation lets PostgreSQL scan it as a range. */
+/** prefixで始まるパスのLIKEパターン。C照合順序なので、PostgreSQLは範囲として走査できる。 */
 function startsWithPattern(prefix: string): string {
   return `${escapeLikePattern(prefix)}%`;
 }
 
-/** Tree levels are directories: '' is the root and any other prefix gets a trailing `/`. */
+/** ツリーの階層はディレクトリ。''はルートで、それ以外のprefixには末尾に`/`を付ける。 */
 export function directoryPrefix(prefix: string): string {
   return prefix === '' || prefix.endsWith('/') ? prefix : `${prefix}/`;
 }
@@ -114,9 +116,9 @@ function toPage(
 export interface RunArtifactQuery {
   projectId: string;
   runId: string;
-  /** Raw path prefix; a file name prefix is allowed, not only a directory. */
+  /** パスのprefixそのもの。ディレクトリだけでなく、ファイル名の前方部分でもよい。 */
   prefix: string;
-  /** Only files directly under prefix, as S3's `/` delimiter does. */
+  /** S3の`/`区切りと同じく、prefixの直下のファイルだけ。 */
   directFilesOnly: boolean;
   versions: ArtifactListVersions;
   limit: number;
@@ -163,7 +165,7 @@ export async function runArtifactTree(
   location: { projectId: string; runId: string; prefix: string },
 ): Promise<ArtifactTree> {
   const prefix = directoryPrefix(location.prefix);
-  // Direct files group under '' and each subdirectory under its first path segment.
+  // 直下のファイルは''に、サブディレクトリはパスの最初の要素ごとにまとめる。
   const groups = await rows<ArtifactTreeGroup>(
     connection,
     `SELECT child,count(*) AS file_count,sum(size) AS total_size FROM (
@@ -184,7 +186,7 @@ export async function runArtifactTree(
   return artifactTreeFromGroups(prefix, groups);
 }
 
-/** A row per child of a tree level: '' for the files directly in it, else a directory name. */
+/** ツリーの1階層の子ごとの行。直下のファイルは''、それ以外はディレクトリ名。 */
 export interface ArtifactTreeGroup {
   child: string;
   fileCount: string;
@@ -192,9 +194,9 @@ export interface ArtifactTreeGroup {
 }
 
 /**
- * Builds a tree level from groups in child order, fetched with a limit of MAX_TREE_DIRECTORIES + 2
- * (the direct files plus one directory more than shown, to tell that the list was truncated).
- * Dataset versions list their files with the same shape.
+ * 子の順に並んだグループからツリーの1階層を作る。グループはMAX_TREE_DIRECTORIES + 2件を上限に
+ * 取る（直下のファイルの分と、切り詰めたと分かるよう表示より1つ多いディレクトリの分）。
+ * データセットバージョンも同じ形でファイルを並べる。
  */
 export function artifactTreeFromGroups(prefix: string, groups: ArtifactTreeGroup[]): ArtifactTree {
   const files = groups.find((group) => group.child === '');
@@ -217,23 +219,23 @@ export function artifactTreeFromGroups(prefix: string, groups: ArtifactTreeGroup
 export interface ProjectArtifactQuery {
   projectId: string;
   limit: number;
-  /** Substring of the path. */
+  /** パスの部分文字列。 */
   query?: string;
-  /** `type/subtype`, or `type/*` for every subtype. */
+  /** `type/subtype`か、すべてのsubtypeなら`type/*`。 */
   mimeType?: string;
   runId?: string;
   /**
-   * The version's registered Artifact and the outputs of Runs that used the version
-   * (inference and evaluation Runs record it as their modelVersionId).
+   * そのモデルバージョンに登録したArtifactと、そのバージョンを使ったRunの出力（推論と評価のRunは
+   * modelVersionIdとしてバージョンを記録する）。
    */
   modelVersionId?: string;
-  /** Same as modelVersionId over every version of the Model. */
+  /** modelVersionIdと同じことを、登録モデルの全バージョンについて行う。 */
   modelId?: string;
   versions: ArtifactListVersions;
   cursor?: string;
 }
 
-/** Compared against the stored type without parameters such as `; charset=utf-8`. */
+/** `; charset=utf-8`のようなパラメータを除いた、保存した型と比べる。 */
 function mimeTypePattern(mimeType: string): string {
   const essence = mimeType.toLowerCase();
   return essence.endsWith('/*')

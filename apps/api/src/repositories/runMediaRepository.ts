@@ -9,7 +9,7 @@ import { first, rows, type Connection } from '../db/database.js';
 import { DomainError } from '../domain/errors.js';
 import { currentRunArtifactCondition } from '../services/artifactListing.js';
 
-/** A run_media row with the facts of its Artifact; RunMedia without the derived URLs. */
+/** run_mediaの行と、そのArtifactの情報。導出したURLを除いたRunMedia。 */
 export interface RunMediaRecord {
   id: string;
   projectId: string;
@@ -47,7 +47,7 @@ interface ListCursor {
   id: string;
 }
 
-// to_char keeps microseconds so the keyset is exact; a JavaScript Date would round them.
+// to_charでマイクロ秒を保ち、キーセットを正確にする。JavaScriptのDateだと丸められる。
 const CURSOR_TIMESTAMP_SQL = `to_char(m.created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
 const CURSOR_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -58,8 +58,8 @@ const RECORD_SELECT = `SELECT m.id,m.project_id,m.run_id,m.key,m.step::text AS s
   FROM run_media m JOIN artifacts a ON a.id=m.artifact_id AND a.project_id=m.project_id`;
 
 /**
- * MLflow rows follow the file the Run currently shows at the path, as the artifact list does, so
- * re-uploading an image path replaces the item instead of adding a second one.
+ * MLflowの行は、Artifactの一覧と同じく、Runがそのパスで今見せているファイルに従う。同じ画像の
+ * パスにアップロードし直すと、2つ目を足さずに項目を置き換える。
  */
 const VISIBLE_CONDITION = `(m.source='native' OR ${currentRunArtifactCondition('a')})`;
 
@@ -120,7 +120,7 @@ export async function findRunMedia(
   return found && toRecord(found);
 }
 
-/** Items of the Run that already hold one of the (key, step, artifactId) triples. */
+/** Runの項目のうち、(key, step, artifactId)の組のどれかを既に持つもの。 */
 export async function findRunMediaTriples(
   connection: Connection,
   query: { runId: string; items: readonly { key: string; step: number; artifactId: string }[] },
@@ -172,13 +172,13 @@ export interface RunMediaPageQuery {
   kind?: RunMediaKind;
   stepFrom?: number;
   stepTo?: number;
-  /** The media that point at this Artifact, e.g. the table a file in the Artifact tree belongs to. */
+  /** このArtifactを指すメディア。例えば、Artifactのツリーにあるファイルが属する表。 */
   artifactId?: string;
   cursor?: string;
   limit: number;
 }
 
-/** Step order; within a step by key, then oldest first. */
+/** stepの順。同じstepではkeyの順、次に古い順。 */
 export async function listRunMediaPage(
   connection: Connection,
   query: RunMediaPageQuery,
@@ -237,8 +237,8 @@ export async function listRunMediaKeys(
 }
 
 /**
- * The media of key for each Run at the given steps, or at each Run's latest step for the key when
- * steps is null. Ordered by Run, step, then oldest first.
+ * 各Runのkeyのメディアを、指定したstepで返す。stepsがnullなら、Runごとにそのkeyの最新のstepで
+ * 返す。Run、step、古い順に並べる。
  */
 export async function listComparedMedia(
   connection: Connection,
@@ -275,7 +275,7 @@ export async function listMediaInfo(
   );
 }
 
-/** Artifacts of the Project by id, for checking what a create request refers to. */
+/** idで引いたProjectのArtifact。作成のリクエストが何を参照しているかを確かめるのに使う。 */
 export async function findProjectArtifacts(
   connection: Connection,
   reference: { projectId: string; ids: readonly string[] },
@@ -298,8 +298,8 @@ export interface CurrentRunArtifact {
 }
 
 /**
- * The Artifact each Run currently shows at each path (the MLflow path mapping, else the newest
- * upload), limited to Runs of the Project. Missing paths are absent from the result.
+ * 各Runが各パスで今見せているArtifact（MLflowのパスの対応付け、無ければ最新のアップロード）。
+ * そのProjectのRunに限る。無いパスは結果に含まれない。
  */
 export async function findCurrentRunArtifacts(
   connection: Connection,
@@ -316,7 +316,7 @@ export async function findCurrentRunArtifacts(
   );
 }
 
-/** Artifact ids among ids that a run_media row already describes. */
+/** idsのうち、既にrun_mediaの行が説明しているArtifactのid。 */
 export async function findIndexedArtifactIds(
   connection: Connection,
   artifactIds: readonly string[],
@@ -330,7 +330,7 @@ export async function findIndexedArtifactIds(
   return new Set(found.map((row) => row.artifactId));
 }
 
-/** Inserts the image row of an MLflow log_image call; a repeated call keeps the existing row. */
+/** MLflowのlog_imageの呼び出しの画像の行を挿入する。同じ呼び出しを繰り返しても既存の行を残す。 */
 export async function insertMlflowImage(
   connection: Connection,
   image: {
@@ -359,7 +359,7 @@ export async function insertMlflowImage(
   );
 }
 
-/** Attaches a thumbnail to the MLflow image rows of the image Artifact at imagePath in the Run. */
+/** RunのimagePathにある画像のArtifactについて、MLflowの画像の行にサムネイルを付ける。 */
 export async function attachMlflowThumbnail(
   connection: Connection,
   thumbnail: { projectId: string; runId: string; imagePath: string; thumbnailArtifactId: string },
@@ -372,7 +372,10 @@ export async function attachMlflowThumbnail(
   );
 }
 
-/** Run artifacts under images/ in creation order, for indexing files saved before this feature. */
+/**
+ * images/の下にあるRunのArtifactを作成順に返す。この機能より前に保存したファイルを索引に
+ * 載せるため。
+ */
 export async function listRunImageArtifacts(
   connection: Connection,
   page: { after: { createdAt: string; id: string } | null; limit: number },
@@ -389,7 +392,7 @@ export async function listRunImageArtifacts(
   );
 }
 
-/** The tags of the Project's Runs among runIds; Runs of other Projects are absent. */
+/** runIdsのうちそのProjectのRunのタグ。ほかのProjectのRunは含まれない。 */
 export async function findRunTags(
   connection: Connection,
   query: { projectId: string; runIds: readonly string[] },

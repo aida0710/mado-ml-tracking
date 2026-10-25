@@ -4,14 +4,14 @@ const AUDIO_PREVIEW_KINDS: readonly ArtifactPreviewKind[] = ['waveform-peaks', '
 const VIDEO_PREVIEW_KINDS: readonly ArtifactPreviewKind[] = ['video-poster'];
 
 /**
- * The previews a newly registered Artifact needs. Audio gets them when the browser cannot analyze
- * it (over its size limit) or when only ffprobe can read its media info; small WAV/FLAC are
- * covered by the browser and the header probe. Video always gets a poster.
+ * 新しく登録したArtifactに要るプレビュー。音声は、ブラウザで解析できない（大きさの上限を超える）
+ * ときか、メディア情報をffprobeでしか読めないときに作る。小さなWAV/FLACはブラウザとヘッダーの
+ * 読み取りで足りる。動画には必ずポスター画像を作る。
  */
 export function previewKindsFor(artifact: {
   mimeType: string;
   size: number;
-  /** Whether registration reads this type's media info from its header. */
+  /** 登録のときに、この型のメディア情報をヘッダーから読むか。 */
   isHeaderProbed: boolean;
 }): readonly ArtifactPreviewKind[] {
   if (artifact.size === 0) return [];

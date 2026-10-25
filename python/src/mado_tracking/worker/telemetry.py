@@ -1,4 +1,4 @@
-"""Worker job telemetry on top of the shared system metrics collector; no secrets or environments."""
+"""共通のシステムメトリクスの収集を使う、workerのJobのテレメトリ。秘密情報や環境変数は扱わない。"""
 
 from __future__ import annotations
 
@@ -13,10 +13,10 @@ from ..system_metrics import SystemMetricsState, collect
 def collect_system_metrics(
     *, pid: int, gpu_ids: list[str], step: int, state_path: Path | None = None
 ) -> list[dict[str, Any]]:
-    """One telemetry sample for a job; jobs without GPUs never probe NVML or nvidia-smi.
+    """Jobのテレメトリのサンプルを1つ取る。GPUの無いJobはNVMLもnvidia-smiも調べない。
 
-    Each runner poll is a new process, so disk/network rates need `state_path` to persist the
-    previous counters between polls. Without it only instantaneous values are reported.
+    runnerのpollは毎回新しいプロセスなので、ディスクやネットワークの速度を出すには、
+    `state_path`で前回のカウンタをpollの間に保存しておく必要がある。無ければ瞬間の値だけを報告する。
     """
     state = _read_state(state_path)
     try:
@@ -45,5 +45,5 @@ def _write_state(path: Path | None, state: SystemMetricsState) -> None:
             json.dump(state.to_json(), content)
         os.replace(temporary_path, path)
     except OSError:
-        # Losing the previous counters only drops rates from the next sample.
+        # 前回のカウンタを失っても、次のサンプルから速度が抜けるだけ。
         pass

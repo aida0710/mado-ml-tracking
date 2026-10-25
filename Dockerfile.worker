@@ -1,10 +1,11 @@
-# Compute worker as a container: an alternative to the systemd unit (deploy/worker/) for SSH targets.
-# Jobs on a local executor run inside this container and stop with it; use systemd for those.
+# コンテナで動かす計算用のworker。SSHでつなぐコンピュータには、systemdのunit（deploy/worker/）の
+# 代わりに使える。local executorのJobはこのコンテナの中で動き、コンテナと一緒に止まるので、
+# その場合はsystemdを使う。
 # python:3.12-slim-bookworm
 FROM python:3.12-slim-bookworm@sha256:6a0e06f5ba0b373d051aabd3fffb9b873f27f9a2a3a14bcbe37dee6f0e3bbc70
 RUN apt-get update && apt-get install -y --no-install-recommends openssh-client git ca-certificates \
   && rm -rf /var/lib/apt/lists/*
-# Match the host owner of the mounted ssh key; ssh refuses a key owned by another uid.
+# マウントするssh鍵の、ホスト側の所有者に合わせる。sshは別のuidが所有する鍵を拒む。
 ARG WORKER_UID=10001
 ARG WORKER_GID=10001
 RUN groupadd --gid "${WORKER_GID}" worker \
@@ -14,7 +15,7 @@ COPY python /opt/mado-tracking/python
 RUN python -m venv /opt/mado-tracking-worker/venv \
   && /opt/mado-tracking-worker/venv/bin/pip install --no-cache-dir '/opt/mado-tracking/python[telemetry]' \
   && rm -rf /opt/mado-tracking/python
-# The token comes from a Docker secret file; it is never baked into the image or the environment.
+# tokenはDockerのsecretファイルから読む。イメージにも環境変数にも入れない。
 ENV PATH=/opt/mado-tracking-worker/venv/bin:$PATH \
   MMT_WORKER_STATE_DIR=/var/lib/mado-tracking-worker \
   MMT_API_TOKEN_FILE=/run/secrets/mmt_worker_token

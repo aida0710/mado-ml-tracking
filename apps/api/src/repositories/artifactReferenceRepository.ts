@@ -1,7 +1,7 @@
 import type { ArtifactReferences } from '@mmt/contracts';
 import { rows, type Connection } from '../db/database.js';
 
-/** Records that keep an Artifact's bytes alive; while any exists the Artifact cannot be deleted. */
+/** Artifactの中身を生かしておく記録。1つでもある間はArtifactを削除できない。 */
 export type ArtifactReferenceKind =
   | 'model_version'
   | 'code_version'
@@ -10,10 +10,10 @@ export type ArtifactReferenceKind =
   | 'preprocessing_report';
 
 /**
- * One SQL condition per reference kind, for an artifacts row aliased `artifact`. Registered model
- * versions point at an Artifact directly or through their immutable MLflow manifest. A checkpoint
- * protects its files while it is retained or a Run continues from it; hidden checkpoints
- * (retained=false) do not, which is how old checkpoint files become deletable.
+ * 参照の種類ごとのSQLの条件。`artifact`という別名を付けたartifactsの行に対して使う。登録した
+ * モデルバージョンは、Artifactを直接指すか、変更できないMLflowのmanifestを通して指す。
+ * checkpointは、残している間かRunがそこから続いている間はファイルを守る。隠したcheckpoint
+ * （retained=false）は守らないので、古いcheckpointのファイルは削除できるようになる。
  */
 function referenceConditions(artifact: string): Record<ArtifactReferenceKind, string> {
   return {
@@ -37,22 +37,22 @@ function referenceConditions(artifact: string): Record<ArtifactReferenceKind, st
   };
 }
 
-/** SQL condition that is true when nothing keeps the Artifact aliased `artifact`. */
+/** 別名`artifact`のArtifactを生かしているものが何も無いときに真になるSQLの条件。 */
 export function unreferencedArtifactCondition(artifact: string): string {
   return `NOT (${Object.values(referenceConditions(artifact)).join(' OR ')})`;
 }
 
 /**
- * The records behind each reference kind, by name, for every given live Artifact (an Artifact with
- * none has empty lists). Each query matches what referenceConditions counts, so a file shown here
- * as unused is one deletion accepts.
+ * 渡した削除されていないArtifactそれぞれについて、参照の種類ごとの元の記録を名前付きで返す
+ * （参照の無いArtifactは空の一覧）。どのクエリもreferenceConditionsが数えるものと一致させて
+ * いるので、ここで未使用と出したファイルは、削除を求めれば受け付けられる。
  */
 export async function listArtifactReferences(
   connection: Connection,
   location: { projectId: string; artifactIds: string[] },
 ): Promise<ArtifactReferences[]> {
   const parameters = [location.projectId, location.artifactIds];
-  // One query after another: inside a transaction they would share a single client.
+  // クエリは1つずつ順に投げる。トランザクションの中では1つのクライアントを共有するため。
   const artifacts = await rows<{ id: string }>(
     connection,
     'SELECT id FROM artifacts WHERE project_id=$1 AND id=ANY($2::uuid[]) AND deleted_at IS NULL',
@@ -92,7 +92,7 @@ export async function listArtifactReferences(
      ORDER BY code.name,version.created_at DESC`,
     parameters,
   );
-  // step is a bigint, which arrives as a string.
+  // stepはbigintなので文字列で届く。
   const checkpoints = await rows<
     ArtifactOwner<Omit<ArtifactReferences['checkpoints'][number], 'step'> & { step: string }>
   >(
@@ -119,7 +119,7 @@ export async function listArtifactReferences(
     listed.get(artifactId)?.datasetVersions.push(version);
   for (const { artifactId, ...version } of codeVersions)
     listed.get(artifactId)?.codeVersions.push(version);
-  // Checkpoint steps stay far below 2^53.
+  // checkpointのstepは2^53よりはるかに小さい。
   for (const { artifactId, step, ...checkpoint } of checkpoints)
     listed.get(artifactId)?.checkpoints.push({ ...checkpoint, step: Number(step) });
   const samples = await rows<ArtifactOwner<{ runId: string; runName: string }>>(
@@ -135,10 +135,10 @@ export async function listArtifactReferences(
   return [...listed.values()];
 }
 
-/** A referencing record with the Artifact it keeps. */
+/** 参照している記録と、それが生かしているArtifact。 */
 type ArtifactOwner<Referencing> = Referencing & { artifactId: string };
 
-/** The reference kinds of each given Artifact that has any; unreferenced Artifacts are absent. */
+/** 渡したArtifactのうち参照のあるものについて、参照の種類を返す。参照の無いArtifactは含めない。 */
 export async function findArtifactReferences(
   connection: Connection,
   location: { projectId: string; artifactIds: string[] },

@@ -39,12 +39,12 @@ import { assertInputDatasetVersionsUsable } from './datasetVersionReferences.js'
 import type { JobService } from './jobService.js';
 import type { RunService } from './runService.js';
 
-// Task launch and ordinary Job creation share the same retry policy.
+// Taskの起動と通常のJobの作成は、同じ再試行の方針を使う。
 const TASK_JOB_MAX_ATTEMPTS = 3;
-// Same kinds registerModelVersion accepts as an output model's source Run.
+// registerModelVersionが出力モデルの元のRunとして受け付ける種類と同じ。
 const OUTPUT_MODEL_TASK_KINDS: readonly RunKind[] = ['training', 'finetuning'];
 
-/** Launch overrides once the revision check is done. */
+/** revisionの確認が済んだあとの、起動時の上書き設定。 */
 export type TaskLaunchOptions = Omit<TaskLaunch, 'expectedRevision'>;
 
 export class TaskService {
@@ -151,9 +151,9 @@ export class TaskService {
   }
 
   /**
-   * Creates the Run and Job of one Task launch. The caller has authorized the launch, locked the
-   * Task's Experiment and checked its revision. serverTags are reserved tags (mmt.*) that only
-   * server-side launchers such as sweeps set; they are added on top of the Task's tags.
+   * Taskの1回の起動のRunとJobを作る。呼び出し元は、起動の権限を確かめ、Taskの実験をロックし、
+   * revisionを確かめてある。serverTagsは、Sweepのようなサーバー側の起動元だけが付ける予約済みの
+   * タグ（mmt.*）で、Taskのタグに加えて付ける。
    */
   async launchTaskInTransaction(
     connection: Connection,
@@ -222,7 +222,7 @@ export class TaskService {
     request: TaskHistoryQuery & { taskId: string },
   ): Promise<TaskRunPage> {
     await this.get(principal, projectId, request.taskId);
-    // Preserve PostgreSQL microseconds; JavaScript Date would truncate the keyset boundary.
+    // PostgreSQLのマイクロ秒を保つ。JavaScriptのDateではkeysetの境界が切り捨てられてしまう。
     const boundary = request.cursor
       ? await first<{ id: string; createdAt: string }>(
           this.database,
@@ -256,7 +256,7 @@ export class TaskService {
     reference: { projectId: string; id: string },
   ): Promise<ExperimentTask> {
     const task = await findTask(connection, reference);
-    // Experiment precedes Task and Run locks, matching MLflow lifecycle mutations.
+    // MLflowのライフサイクルの変更と同じく、実験のロックをTaskとRunのロックより先に取る。
     await lockActiveExperiment(connection, {
       projectId: reference.projectId,
       id: task.experimentId,
@@ -273,7 +273,7 @@ export class TaskService {
       });
   }
 
-  // userId: who saves the Task; launching it later checks the person who launches.
+  // userIdはTaskを保存する人。あとで起動するときは、起動する人を確かめる。
   private async validateDefaults(
     connection: Connection,
     registration: { projectId: string; input: TaskDefaults; userId: string },
@@ -307,8 +307,8 @@ export class TaskService {
       });
   }
 
-  // The registration itself runs later as the Run's creator; checking here turns a Task that
-  // could never register into a 422 at save time instead of a failed record after training.
+  // 登録そのものはあとでRunの作成者として動く。ここで確かめておけば、決して登録できないTaskは、
+  // 学習のあとに失敗の記録を残すのでなく、保存のときに422になる。
   private async validateOutputModel(
     connection: Connection,
     request: { projectId: string; kind: RunKind; code: CodeVersion; outputModel: TaskOutputModel },
@@ -347,7 +347,7 @@ async function familyOfExistingModel(
   return model.family;
 }
 
-// An existing Model with the same name is reused at registration, so its family must match.
+// 同じ名前の登録モデルが既にあれば登録のときにそれを使うので、familyが一致していなければならない。
 async function familyForNewModel(
   connection: Connection,
   request: { projectId: string; createModel: { name: string; family: string } },

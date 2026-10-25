@@ -1,4 +1,4 @@
-"""Path segments of the public /api contract."""
+"""公開の/api契約で使うパスの要素。"""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from .errors import ConfigurationError
 
 
 def path_id(identifier: str) -> str:
-    """Quote an entity ID as one path segment, so an ID can never add path levels."""
+    """エンティティのIDを1つのパスの要素としてエスケープし、IDでパスの階層が増えないようにする。"""
     if not identifier:
         raise ConfigurationError("An entity ID is required")
     return quote(identifier, safe="")

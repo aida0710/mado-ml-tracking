@@ -1,4 +1,4 @@
-"""Report missing target-side runtime tools without pretending execution started."""
+"""コンピュータ側にruntimeのツールが無いことを、実行が始まったふりをせずに報告する。"""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ class RuntimeUnavailable(RuntimeError):
 
 
 class ContainerStateUncertain(RuntimeError):
-    """Daemon ownership or resource release cannot be proven; retain the job lease."""
+    """daemonでの所有や資源の解放を証明できない。Jobのleaseを持ち続ける。"""
 
 
 def runtime_binary(kind: str) -> str:

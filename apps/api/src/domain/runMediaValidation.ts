@@ -11,7 +11,7 @@ import {
 import { z } from 'zod';
 import { jsonObjectSchema, uuidSchema } from './validation.js';
 
-// A page of media is a slider's worth of steps; the table page limit is in the contract.
+// メディアの1ページは、スライダーで動かす分のstep。表の1ページの上限はcontractにある。
 const DEFAULT_MEDIA_PAGE_LIMIT = 100;
 const MAX_MEDIA_PAGE_LIMIT = 500;
 const DEFAULT_TABLE_PAGE_LIMIT = 50;
@@ -19,7 +19,7 @@ const DEFAULT_TABLE_PAGE_LIMIT = 50;
 export const runMediaKindSchema = z.enum(['audio', 'image', 'video', 'table']);
 const stepSchema = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
 const queryStepSchema = z.coerce.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
-// Keys are shown as labels and used as filters, so control characters are refused.
+// keyはラベルとして表示し、フィルタにも使うので、制御文字を拒む。
 export const runMediaKeySchema = z
   .string()
   .min(1)
@@ -86,10 +86,10 @@ export const mediaTableQuerySchema = z.strictObject({
 });
 export type MediaTableQuery = z.infer<typeof mediaTableQuerySchema>;
 
-/** The MIME major type a media kind must not contradict; a generic type such as octet-stream passes. */
+/** メディアの種類と食い違ってはならないMIMEの主タイプ。octet-streamのような汎用の型は通す。 */
 const KIND_MIME_MAJOR_TYPES: Record<string, string> = { audio: 'audio', image: 'image', video: 'video' };
 
-/** false when the Artifact's MIME type names a different medium than the item's kind. */
+/** ArtifactのMIMEタイプが項目の種類と違うメディアを指していればfalse。 */
 export function isMediaKindCompatible(kind: string, mimeType: string): boolean {
   const major = mimeType.split('/')[0]!.trim().toLowerCase();
   const mediaMajorTypes = Object.values(KIND_MIME_MAJOR_TYPES);

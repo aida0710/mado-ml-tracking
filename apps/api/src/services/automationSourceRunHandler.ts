@@ -2,9 +2,9 @@ import type { Connection } from '../db/database.js';
 import type { RunCompletionHandler, RunStatusChange } from './runCompletionService.js';
 import type { ModelAutomationService } from './modelAutomationService.js';
 
-// Resolves automation for versions registered while their training Run was still running.
-// MLflow Runs can reopen (FINISHED → RUNNING → FINISHED), so this may run more than once per Run;
-// only events still pending are touched, which keeps repeated calls from starting duplicates.
+// 学習Runがまだ動いている間に登録されたバージョンについて、自動実行の扱いを決める。
+// MLflowのRunは開き直せる（FINISHED → RUNNING → FINISHED）ので、1つのRunでこれが2回以上
+// 動くことがある。まだ保留中のイベントだけを扱うので、繰り返し呼ばれても重複して起動しない。
 export class AutomationSourceRunHandler implements RunCompletionHandler {
   readonly name = 'automation-source-run';
 

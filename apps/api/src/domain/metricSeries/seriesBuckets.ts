@@ -1,17 +1,19 @@
 import type { MetricSeriesPoint, MetricXRange } from '@mmt/contracts';
 
-/** Where the x values of one series, or of one key across Runs, fall inside the requested range. */
+/** 1つの系列、またはRunをまたいだ1つのkeyのx値が、要求された範囲のどこにあるか。 */
 export interface SeriesExtent {
   xMin: number | null;
   xMax: number | null;
-  /** Points with an x value, NaN and infinite values included. */
+  /** x値を持つ点の数。NaNや無限大の値も含む。 */
   totalPoints: number;
 }
-/** `raw` returns every stored point; `buckets` splits [lower, upper] into `count` equal widths. */
+/**
+ * `raw`は保存されたすべての点を返す。`buckets`は[lower, upper]を`count`個の等しい幅に分ける。
+ */
 export type BucketPlan =
   | { kind: 'raw' }
   | { kind: 'buckets'; lower: number; upper: number; count: number };
-/** One SQL bucket before NaN-only buckets are removed; finite statistics are null for those. */
+/** NaNだけのバケットを除く前の、SQLの1バケット。そうしたバケットでは有限値の統計はnull。 */
 export interface SeriesBucketRow {
   x: number | null;
   step: number | null;
@@ -22,11 +24,11 @@ export interface SeriesBucketRow {
   nanCount: number;
 }
 
-// width_bucket needs distinct bounds; a single x value (one step, or xRange of one point) still
-// needs a bucket that contains it, and any positive width puts it in the first bucket.
+// width_bucketには異なる上下限が要る。x値が1つだけ（stepが1つ、または1点のxRange）でも、
+// それを含むバケットが要り、正の幅ならどれでも最初のバケットに入る。
 const SINGLE_VALUE_BUCKET_WIDTH = 1;
 
-/** The requested range wins over the data so that zooming in gives narrower buckets. */
+/** データより要求された範囲を優先し、拡大したときにバケットが細かくなるようにする。 */
 export function bucketBounds(
   extent: SeriesExtent,
   xRange: MetricXRange | null,
@@ -37,7 +39,7 @@ export function bucketBounds(
   return upper > lower ? { lower, upper } : { lower, upper: lower + SINGLE_VALUE_BUCKET_WIDTH };
 }
 
-/** A series of one Run is sampled only when it has more points than the chart can show. */
+/** 1つのRunの系列は、グラフが表示できるより点が多いときだけ間引く。 */
 export function planSeriesBuckets(
   extent: SeriesExtent,
   options: { maxPoints: number; xRange: MetricXRange | null },
@@ -49,8 +51,8 @@ export function planSeriesBuckets(
 }
 
 /**
- * Runs of a group are always bucketed on bounds shared by every Run of the key, so a bucket means
- * the same x interval in each Run and in each group.
+ * グループのRunは常に、そのkeyのすべてのRunで共通の上下限でバケットに分ける。これで、1つの
+ * バケットはどのRunでもどのグループでも同じxの区間を表す。
  */
 export function planSharedBuckets(
   extent: SeriesExtent,
@@ -61,7 +63,7 @@ export function planSharedBuckets(
   return bounds && { kind: 'buckets', ...bounds, count: options.maxPoints };
 }
 
-/** Drops buckets that held only NaN or infinite values and totals those values. */
+/** NaNか無限大の値しか無かったバケットを除き、その値の数を合計する。 */
 export function assembleSeriesPoints(rows: SeriesBucketRow[]): {
   points: MetricSeriesPoint[];
   nanCount: number;

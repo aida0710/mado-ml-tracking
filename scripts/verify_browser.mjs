@@ -1,4 +1,4 @@
-/** Read every screen from the real API, compare runs and seek a generated audio Artifact. */
+/** 本物のAPIからすべての画面を読み、Runを比べ、生成した音声のArtifactをシークする。 */
 import assert from 'node:assert/strict';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -79,7 +79,7 @@ try {
   const worker = JSON.parse(
     await readFile(`${artifactsDirectory}/worker-integration.json`, 'utf8'),
   );
-  // The switcher lists Projects by name, and the worker check records only the Project's ID.
+  // Projectの切り替えメニューはProjectを名前で出すが、workerの検査が記録するのはProjectのIDだけ。
   const projectsResponse = await page.request.get(`${base}/api/projects`);
   assert.equal(projectsResponse.ok(), true, `/projects: ${projectsResponse.status()}`);
   const workerProject = (await projectsResponse.json()).items.find(

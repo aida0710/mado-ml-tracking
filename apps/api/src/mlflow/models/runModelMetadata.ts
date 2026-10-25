@@ -7,10 +7,10 @@ import { readStoredMlmodel } from '../artifacts/mlmodelCapture.js';
 import type { ArtifactManifestEntry } from './types.js';
 
 /**
- * The MLmodel of a model directory in Run Artifacts, in the shape a Logged Model keeps it
- * (`{ mlmodel }`), so its flavors choose the model body the same way. Unlike Logged Model
- * uploads, Run uploads are not parsed on the way in (save_model() + log_artifacts() writes an
- * ordinary directory), so the stored file is read when the directory is registered.
+ * RunのArtifactにあるモデルのディレクトリのMLmodelを、Logged Modelが持つ形（`{ mlmodel }`）で
+ * 返す。こうしてflavorが同じ方法でモデルの本体を選べる。Logged Modelのアップロードと違い、Runの
+ * アップロードは受け取るときに解析しない（save_model() + log_artifacts()は普通のディレクトリを
+ * 書く）ので、ディレクトリを登録するときに保存済みのファイルを読む。
  */
 export async function readRunModelMetadata(
   connection: Connection,
@@ -29,7 +29,7 @@ export async function readRunModelMetadata(
       open: async () => (await source.artifacts.readContent(artifact)).body,
     });
   } catch (error) {
-    // A version must not be fixed to a guessed body because the descriptor could not be read.
+    // 記述ファイルを読めなかったときに、推測した本体にバージョンを固定してはならない。
     if (error instanceof DomainError) throw error;
     throw new DomainError({
       status: 503,

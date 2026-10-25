@@ -24,7 +24,8 @@ from mado_tracking.worker.service import Worker
 from mado_tracking.worker.session_outputs import receive_output_archive
 from mado_tracking.worker.transport import LocalTransport
 
-# Many small files exercise the per-file overhead that the old 64 KiB command protocol paid.
+# 小さなファイルを多く使い、以前の64KiBのコマンドのプロトコルが払っていた、
+# ファイルごとのオーバーヘッドを試す。
 BULK_OUTPUT_FILES = 5000
 BULK_JOB_TIMEOUT_SECONDS = 120
 
@@ -57,7 +58,7 @@ os.replace(outputs / "result.partial", os.environ["MMT_RESULT_FILE"])
 
 
 class OutputServer(WorkerServer):
-    """The worker API with Run Artifact saves and idempotent output declarations."""
+    """RunのArtifactの保存と、冪等な出力の宣言を受け付けるworker API。"""
 
     def __init__(self, payload: dict):
         super().__init__(payload)
@@ -98,7 +99,7 @@ class OutputServer(WorkerServer):
 
 
 class CountingTransport(LocalTransport):
-    """Records the runner command of every process the worker starts on the target."""
+    """workerがコンピュータで起動するすべてのプロセスについて、runnerのコマンドを記録する。"""
 
     def __init__(self) -> None:
         super().__init__(allow_local_executor=True, masker=SecretMasker([]))
@@ -134,7 +135,7 @@ def test_thousands_of_outputs_take_one_archive_command_and_register_the_declared
     assert len(server.uploads) == BULK_OUTPUT_FILES + 1
     assert len({path for path, _content in server.uploads}) == BULK_OUTPUT_FILES + 1
     assert dict(server.uploads)["container/audio/04999.wav"] == b"utterance-4999"
-    # The manifest and result.json describe outputs; they are not outputs themselves.
+    # manifestとresult.jsonは出力を説明するもので、それ自体は出力ではない。
     assert "container/artifacts.jsonl" not in dict(server.uploads)
     assert transport.commands.count("output-archive") == 1
     assert "output" not in transport.commands
@@ -149,7 +150,7 @@ def test_thousands_of_outputs_take_one_archive_command_and_register_the_declared
 
 
 class ArchiveExecutor:
-    """Serves output-archive streams built by a test instead of a remote runner."""
+    """リモートのrunnerの代わりに、テストが組み立てたoutput-archiveのストリームを返す。"""
 
     def __init__(self, build_stream):
         self.build_stream = build_stream
@@ -215,7 +216,7 @@ def test_interrupted_archive_is_resumed_with_only_the_unacknowledged_outputs(wor
     workspace = tmp_path / "workspace"
     results = write_outputs(workspace)
     first_full_archive = runner_archive(workspace, {"acknowledged": []})
-    # Cut the stream in the third file: two outputs are saved before the connection drops.
+    # 3つ目のファイルの途中でストリームを切る。接続が切れる前に2つの出力が保存される。
     third_offset = first_full_archive.index(b"generated audio 2")
     attempts = iter([first_full_archive[: third_offset + 10], None])
 
@@ -233,7 +234,7 @@ def test_interrupted_archive_is_resumed_with_only_the_unacknowledged_outputs(wor
     assert sorted(executor.requests[1]["acknowledged"]) == sorted(acknowledgments["artifacts"][:2])
     assert [path for path, _ in uploads] == [f"container/{number}.wav" for number in range(4)]
     assert len(acknowledgments["artifacts"]) == 4
-    # Everything acknowledged: no further connection is opened.
+    # すべて確認済み。新しい接続は開かない。
     collect(worker_job, results, executor, acknowledgments, tmp_path, uploads=uploads)
     assert len(executor.requests) == 2
 

@@ -34,7 +34,7 @@ describe.skipIf(!testDatabaseUrl)('Webで足すコンピュータ（独立Postgr
     return request(harness.app, '/api/targets', { method: 'POST', cookie, body });
   }
 
-  // A manual site the editor adds as their own computer (a PC that waits with submit --watch).
+  // editorが自分のコンピュータとして追加する手動のsite（submit --watchで待つPC）。
   async function ownComputer(overrides: Record<string, unknown> = {}): Promise<ComputeTargetDetails> {
     return entity<ComputeTargetDetails>(
       await createTarget(fixture.editor.cookie, {
@@ -133,7 +133,7 @@ describe.skipIf(!testDatabaseUrl)('Webで足すコンピュータ（独立Postgr
     expect(local.status).toBe(403);
     expect(await local.json()).toMatchObject({ code: 'target_admin_required' });
 
-    // Private: someone else does not get it among the computers they may use.
+    // 非公開。ほかの人が使えるコンピュータの一覧には出ない。
     expect((await listTargets(fixture.viewer.cookie)).map((target) => target.id)).not.toContain(own.id);
     const asAdministrator = (await listTargets(fixture.administrator.cookie)).find(
       (target) => target.id === own.id,
@@ -145,7 +145,7 @@ describe.skipIf(!testDatabaseUrl)('Webで足すコンピュータ（独立Postgr
     expect(hidden.status).toBe(403);
     expect(await hidden.json()).toMatchObject({ code: 'target_not_available' });
 
-    // Public: its users see what the computer is, not its settings, and may not change it.
+    // 公開。使う人にはコンピュータが何かは見えるが、設定は見えず、変更もできない。
     await entity(
       await request(harness.app, `/api/targets/${own.id}`, {
         method: 'PATCH',
@@ -239,7 +239,7 @@ describe.skipIf(!testDatabaseUrl)('Webで足すコンピュータ（独立Postgr
     );
     expect(saved).toMatchObject({ accountName: 'acb12345', key: { status: 'requested', userId: fixture.editor.userId } });
 
-    // The launcher makes the key and sends its public half; another launcher cannot.
+    // launcherが鍵を作り、公開鍵を送る。別のlauncherにはできない。
     const config = await entity<{ keys: { id: string; status: string }[] }>(
       await request(harness.app, '/api/launcher/config', { token: launcher.token }),
       200,
@@ -278,7 +278,7 @@ describe.skipIf(!testDatabaseUrl)('Webで足すコンピュータ（独立Postgr
     });
     expect(claimed.items[0]!.jobs[0]!.job).toMatchObject({ id: job.id, siteJobShellId: claimed.items[0]!.jobShell.id });
 
-    // A new key must be authorized again; until the launcher makes it, submissions fail.
+    // 新しい鍵はもう一度許可する必要がある。launcherが鍵を作るまで、投入は失敗する。
     const rotated = await entity<SiteKey>(
       await request(harness.app, `/api/targets/${site.id}/keys/rotate`, {
         method: 'POST',
@@ -331,7 +331,7 @@ describe.skipIf(!testDatabaseUrl)('Webで足すコンピュータ（独立Postgr
         jobShell: TEST_JOB_SHELL,
       }),
     );
-    // Its users see that it runs as one shared account, which takes no settings of theirs.
+    // 使う人には、共用アカウント1つで動くことが見える。共用アカウントは個人の設定を受け付けない。
     expect((await listTargets(fixture.editor.cookie)).find((target) => target.id === site.id)).toMatchObject({
       site: null,
       siteAccountMode: 'shared',
@@ -468,7 +468,7 @@ describe.skipIf(!testDatabaseUrl)('Webで足すコンピュータ（独立Postgr
       }),
     );
     expect((await request(harness.app, '/api/launcher/config', { token: launcher.token })).status).toBe(401);
-    // What the launcher submitted with its old token it reports with the new one.
+    // launcherは古いtokenで投入したものを、新しいtokenで報告する。
     const reported = await entity<{ items: Job[] }>(
       await request(harness.app, '/api/launcher/site-submissions/report', {
         method: 'POST',

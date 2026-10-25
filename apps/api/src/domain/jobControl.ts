@@ -3,8 +3,8 @@ import { DomainError } from './errors.js';
 import { controlsStartedWork } from './startedWorkControl.js';
 
 /**
- * Stopping or retrying a Job belongs to the creator of its Run and to Project admins, as with
- * Sweeps (controlsStartedWork).
+ * Jobの停止や再試行ができるのは、そのRunの作成者とProject adminで、Sweepと同じ
+ * （controlsStartedWork）。
  */
 export function assertControlsJob(
   caller: { role: ProjectRole; userId: string },

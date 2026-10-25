@@ -1,9 +1,9 @@
 import { DomainError } from './errors.js';
 
-// Environment settings express the default lifetime in days; timestamps use milliseconds.
+// 環境変数の設定は既定の有効期間を日数で表す。時刻はミリ秒を使う。
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 
-/** Explicit null never expires; omission preserves the configured default lifetime. */
+/** 明示的なnullは期限切れにならない。省略すると設定した既定の有効期間を使う。 */
 export function resolveTokenExpiry(request: {
   expiresAt: string | null | undefined;
   defaultLifetimeDays: number;

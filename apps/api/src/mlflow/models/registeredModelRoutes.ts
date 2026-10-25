@@ -23,7 +23,7 @@ import {
 } from './validation.js';
 
 const registryPath = '/api/2.0/mlflow/registered-models';
-// The SDK sends registry searches as GET with order_by repeated in the query string.
+// SDKはregistryの検索を、クエリ文字列でorder_byを繰り返すGETで送る。
 export function registrySearchQuery(
   context: ApiContext,
   schema: z.ZodType<SearchRegistry>,

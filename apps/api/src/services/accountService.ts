@@ -8,7 +8,7 @@ import {
 } from '../repositories/userAdministrationRepository.js';
 import { requireScope } from './accessService.js';
 
-/** The signed-in user's own profile for the /account screen. */
+/** /accountの画面に出す、ログイン中の利用者自身のプロフィール。 */
 export class AccountService {
   constructor(private readonly database: Database) {}
 

@@ -1,4 +1,4 @@
-"""Fixtures and HTTP helpers shared by the MLflow 3 SDK checks."""
+"""MLflow 3 SDKの検査で共有するfixtureとHTTPの補助関数。"""
 
 from __future__ import annotations
 
@@ -24,20 +24,21 @@ from mado_tracking import Client
 from mado_tracking.settings import ApiSettings
 from mado_tracking.worker.config import WorkerSettings
 
-# MLflow 3.0 sends Tracing requests to the 2.0 path and later releases to 3.0; both are deferred.
+# MLflow 3.0はTracingのリクエストを2.0のパスへ、それ以降の版は3.0のパスへ送る。どちらも未対応。
 TRACES_PATH_PREFIXES = ("api/2.0/mlflow/traces", "api/3.0/mlflow/traces")
 ARTIFACT_TRANSFER_PATH = "api/2.0/mlflow-artifacts/artifacts"
 HTTP_TIMEOUT_SECONDS = 30
-# Evaluation Jobs run unmodified SDK code; these only keep failures short and the log quiet.
+# 評価のJobは手を加えないSDKのコードを動かす。これらは失敗を短く済ませ、ログを静かにする
+# ためだけのもの。
 EVALUATION_JOB_ENVIRONMENT = {"MLFLOW_DISABLE_AGENT_HINT": "1", "MLFLOW_HTTP_REQUEST_MAX_RETRIES": "0"}
-# Native workers report final state only after the child process and output collection finish.
+# nativeのworkerは、子プロセスと出力の回収が終わってから最終状態を報告する。
 WORKER_HEARTBEAT_SECONDS = 0.2
 WORKER_POLL_SECONDS = 0.1
 WORKER_TELEMETRY_SECONDS = 1
 
 
 def linear_fixture() -> tuple[np.ndarray, np.ndarray]:
-    """Four points of y = 2a + 3b + 1, small enough that every check stays on CPU."""
+    """y = 2a + 3b + 1上の4点。どの検査もCPUで済む小ささ。"""
     features = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [2.0, 1.0]])
     return features, features[:, 0] * 2 + features[:, 1] * 3 + 1
 
@@ -57,7 +58,7 @@ def expect_mlflow_error(action: Callable[[], object], error_code: str) -> Mlflow
 
 @dataclass
 class RestCallLog:
-    """Requests the SDK sent, as (method, path relative to the tracking URI)."""
+    """SDKが送ったリクエスト。(method, tracking URIからの相対パス)の形。"""
 
     calls: list[tuple[str, str]] = field(default_factory=list)
 
@@ -68,10 +69,10 @@ class RestCallLog:
 
 @contextmanager
 def record_rest_calls() -> Iterator[RestCallLog]:
-    """Record every SDK request, including artifact transfers, without changing the response.
+    """Artifactの転送も含め、SDKのリクエストをすべて、応答を変えずに記録する。
 
-    The SDK routes REST and artifact traffic through requests.Session, so patching the class
-    observes calls made from helper threads too.
+    SDKはRESTもArtifactの通信もrequests.Sessionを通すので、このクラスに手を入れれば、補助の
+    スレッドからの呼び出しも見える。
     """
     log = RestCallLog()
     tracking_path = urlsplit(mlflow.get_tracking_uri()).path.rstrip("/") + "/"
@@ -94,12 +95,12 @@ def tracking_headers() -> dict[str, str]:
 
 
 def native_project_url() -> str:
-    """The native API base of the Project that the MLflow tracking URI points at."""
+    """MLflowのtracking URIが指すProjectの、native APIのベースURL。"""
     return mlflow.get_tracking_uri().replace("/api/mlflow/projects/", "/api/projects/", 1)
 
 
 def run_artifact_response(run_id: str, path: str, *, byte_range: str | None = None) -> httpx.Response:
-    """GET one Run artifact through the same transfer route the SDK downloads from."""
+    """SDKがダウンロードに使うのと同じ転送の経路で、Run Artifactを1つGETする。"""
     encoded = "/".join(quote(part, safe="") for part in path.split("/"))
     headers = tracking_headers() | ({"Range": byte_range} if byte_range else {})
     return httpx.get(
@@ -111,7 +112,7 @@ def run_artifact_response(run_id: str, path: str, *, byte_range: str | None = No
 
 @dataclass(frozen=True)
 class AutomationEnvironment:
-    """The verification Project, its CPU target and the write token shared by automation checks."""
+    """検証用のProject、そのCPUのtarget、自動実行の検査で共有する書き込み用のtoken。"""
 
     session: httpx.Client
     api_url: str
@@ -137,7 +138,7 @@ class AutomationEnvironment:
 def evaluation_rule(
     environment: AutomationEnvironment, *, name: str, main_source: str, model_family: str
 ) -> Iterator[dict]:
-    """Register inline evaluation code and an enabled rule for the family; disable it on exit."""
+    """インラインの評価コードと、そのモデル系列向けの有効なルールを登録し、終わると無効にする。"""
     with environment.native_client() as native:
         code = native.register_code(
             environment.project_id,
@@ -181,7 +182,7 @@ def evaluation_rule(
 
 
 def create_local_cpu_target(session: httpx.Client, *, name: str, work_directory: Path) -> dict:
-    """Register a ComputeTarget that runs Jobs with this interpreter on the local executor."""
+    """ローカルのexecutorで、このインタプリタを使ってJobを動かすComputeTargetを登録する。"""
     return session_request(
         session,
         "POST",
@@ -204,7 +205,7 @@ def create_local_cpu_target(session: httpx.Client, *, name: str, work_directory:
 
 
 def run_one_worker_job(*, api_url: str, token: str, target_id: str, state_directory: Path) -> None:
-    """Claim and finish exactly one queued Job for the target, as a real worker process would."""
+    """実際のworkerのプロセスと同じく、targetのキューにあるJobをちょうど1つclaimして終わらせる。"""
     settings = WorkerSettings(
         api=ApiSettings.from_environment(url=api_url, token=token),
         worker_id=f"mlflow3-{state_directory.name}",

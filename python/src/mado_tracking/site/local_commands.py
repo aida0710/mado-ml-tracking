@@ -1,7 +1,8 @@
-"""The runner's own answers to the dataset commands the shared staging code sends.
+"""共有のステージングのコードが送るデータセットのコマンドに、runner自身が答える。
 
-The worker's staging code (worker/dataset_staging.py) asks its target runner to fill the dataset
-cache; on a site the runner is this process, so the commands run here, in a daemon thread.
+workerのステージングのコード（worker/dataset_staging.py）は、対象のrunnerにデータセットの
+キャッシュを埋めるよう頼む。site上ではそのrunnerがこのプロセスなので、コマンドはここで、
+daemonスレッドとして動く。
 """
 
 from __future__ import annotations

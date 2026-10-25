@@ -17,7 +17,7 @@ import { assertAccessTokenCoversConnection } from './accessTokenRequirements.js'
 import { mapMadoDatasetVersion } from './datasetMapping.js';
 import { createOpenLineageEvent } from './openLineageEvent.js';
 
-// Bound the assembled search response across namespaces and dataset histories.
+// 名前空間とデータセットの履歴をまたいで組み立てた検索の応答の大きさを抑える。
 const MAX_SEARCH_RESULTS = 1000;
 export interface MadoConnectionCheck {
   manifest: PluginManifest;
@@ -28,9 +28,9 @@ export interface BuiltinPluginClient {
   searchDatasets(query: string): Promise<{ items: PluginDataset[] }>;
   metrics(): Promise<{ prometheus: string }>;
   sendEvent(event: PluginEvent): Promise<void>;
-  /** Reads the access token's grant from Mado, then confirms every read the integration relies on. */
+  /** access tokenのgrantをmado S3 Data Catalogから読み、連携に要る読み取りをすべて確かめる。 */
   checkConnection(): Promise<MadoConnectionCheck>;
-  /** The grant as Mado reports it now; it can differ from the one saved at the last check. */
+  /** mado S3 Data Catalogが今返すgrant。前回の確認で保存したものと違うことがある。 */
   accessTokenGrant(): Promise<MadoAccessTokenGrant>;
   datasetVersion(externalId: string): Promise<PluginDataset>;
   sendPayload(payload: string): Promise<void>;
@@ -48,7 +48,7 @@ export function madoManifest(grant: MadoAccessTokenGrant): PluginManifest {
     ],
   };
 }
-/** `null` stands for every namespace, which Mado searches in one request. */
+/** `null`はすべての名前空間を表し、mado S3 Data Catalogは1回のリクエストで検索する。 */
 function searchedNamespaces(grant: MadoAccessTokenGrant): (string | null)[] {
   return allowsAllMadoNamespaces(grant) ? [null] : grant.namespaces;
 }
@@ -64,7 +64,8 @@ export function createMadoPlugin({
   fetcher?: typeof fetch;
 }): BuiltinPluginClient {
   const client = createMadoClient({ config, credentials, fetcher });
-  // Every operation reads the grant first, so a Mado without the endpoint fails with this reason.
+  // どの操作も最初にgrantを読むので、そのエンドポイントの無いmado S3 Data Catalogではこの理由で
+  // 失敗する。
   async function readAccessTokenGrant(): Promise<MadoAccessTokenGrant> {
     try {
       return await client.accessTokenGrant();
@@ -78,7 +79,7 @@ export function createMadoPlugin({
       throw error;
     }
   }
-  // Connection checks are deliberate, read-only requests even while the integration is disabled.
+  // 接続の確認は、連携を無効にしている間でも、利用者が意図して行う読み取りだけのリクエスト。
   async function checkConnection(): Promise<MadoConnectionCheck> {
     const grant = await readAccessTokenGrant();
     assertAccessTokenCoversConnection(grant, config);

@@ -1,14 +1,14 @@
 import type { ArtifactBackend } from './index.js';
 
 /**
- * open: parts are accepted. verifying: complete was requested and the server assembles and hashes
- * the object. completed: the Artifact `artifactId` exists. aborted/expired/failed are terminal and
- * keep no stored bytes.
+ * open: partを受け付ける。verifying: completeが要求され、サーバーがオブジェクトを組み立てて
+ * ハッシュを計算している。completed: `artifactId`のArtifactがある。aborted・expired・failedは
+ * 終了状態で、保存したバイト列を残さない。
  */
 export type ArtifactUploadStatus =
   'open' | 'verifying' | 'completed' | 'aborted' | 'expired' | 'failed';
 
-/** Resumable upload session for one Artifact. Parts are numbered from 1 to partCount. */
+/** 1つのArtifactの、再開できるアップロードセッション。partには1からpartCountまで番号を振る。 */
 export interface ArtifactUpload {
   id: string;
   projectId: string;
@@ -18,13 +18,13 @@ export interface ArtifactUpload {
   mimeType: string;
   expectedSize: number;
   expectedSha256: string | null;
-  /** Every part except the last has exactly this size; the last holds the remainder. */
+  /** 最後以外のpartはちょうどこの大きさ。最後のpartには残りが入る。 */
   partSize: number;
   partCount: number;
   status: ArtifactUploadStatus;
-  /** The registered Artifact once completed. Its id equals the upload id. */
+  /** 完了後に登録したArtifact。そのidはアップロードのidと同じ。 */
   artifactId: string | null;
-  /** Failure code when status is failed, for example `sha256_mismatch`. */
+  /** statusがfailedのときの失敗のコード。たとえば`sha256_mismatch`。 */
   error: string | null;
   expiresAt: string;
   createdAt: string;
@@ -38,14 +38,20 @@ export interface ArtifactUploadPart {
   receivedAt: string;
 }
 
-/** GET of one session: the received parts tell a resuming client which parts to send again. */
+/**
+ * 1つのアップロードセッションのGET。再開するクライアントは、受け取り済みのpartを見て
+ * どのpartを送り直すかを決める。
+ */
 export interface ArtifactUploadDetail extends ArtifactUpload {
   receivedParts: ArtifactUploadPart[];
 }
 
-/** One row of the session list: how much is already stored, so a client can offer to continue. */
+/**
+ * アップロードセッションの一覧の1行。保存済みの量を示し、クライアントが続きからの
+ * アップロードを勧められるようにする。
+ */
 export interface ArtifactUploadListItem extends ArtifactUpload {
-  /** Sum of the received parts' sizes. */
+  /** 受け取ったpartの大きさの合計。 */
   receivedBytes: number;
 }
 

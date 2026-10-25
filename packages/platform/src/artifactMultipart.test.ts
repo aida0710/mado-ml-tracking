@@ -166,7 +166,7 @@ describe.skipIf(!endpoint)('S3の再開可能upload（S3 emulator）', () => {
     endpoint,
     region: 'us-east-1',
     forcePathStyle: true,
-    // These values authenticate only to the isolated emulator, never to real storage.
+    // これらの値は隔離したエミュレータでしか認証できず、実際のストレージには通らない。
     credentials: { accessKeyId: 'testing', secretAccessKey: 'testing' },
   });
   const store = createS3ArtifactStore({ multipartEnabled: true, client, bucket, prefix: 'artifacts' });

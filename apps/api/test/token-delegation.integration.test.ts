@@ -90,7 +90,7 @@ describe.skipIf(!testDatabaseUrl)('tokenからのtoken管理と全体の操作�
       [{ name: 'stronger', projectId: fixture.project.id, scopes: ['runs:write'], expiresAt: inDays(7) }, 'token_authority_exceeded'],
       [{ name: 'unbound', scopes: ['read'], expiresAt: inDays(7) }, 'project_forbidden'],
       [{ name: 'forever', projectId: fixture.project.id, scopes: ['read'], expiresAt: null }, 'token_outlives_issuer'],
-      // An omitted expiry takes the server default (365 days), which outlives the issuer.
+      // 有効期限を省くとサーバーの既定（365日）になり、発行者より長く有効になる。
       [{ name: 'default', projectId: fixture.project.id, scopes: ['read'] }, 'token_outlives_issuer'],
       [{ name: 'later', projectId: fixture.project.id, scopes: ['read'], expiresAt: inDays(31) }, 'token_outlives_issuer'],
     ];

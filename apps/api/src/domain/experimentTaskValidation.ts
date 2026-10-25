@@ -15,13 +15,13 @@ import {
 } from './validation.js';
 import { isValidVersionTemplate } from './outputModelVersionTemplate.js';
 
-// PostgreSQL stores task revisions as integer; never round a revision supplied by clients.
+// PostgreSQLはTaskのrevisionをintegerで持つ。クライアントから来たrevisionを丸めない。
 export const MAX_TASK_REVISION = 2_147_483_647;
 const revisionSchema = z.number().int().min(1).max(MAX_TASK_REVISION);
-// Bound polling and history navigation while allowing larger requested pages.
+// ポーリングと履歴の移動の負荷を抑えつつ、より大きなページの要求も許す。
 export const DEFAULT_TASK_HISTORY_LIMIT = 50;
 export const MAX_TASK_HISTORY_LIMIT = 200;
-// Artifact paths are stored with the same bound as MLflow artifact paths in the artifacts table.
+// Artifactのパスは、artifactsテーブルのMLflowのArtifactのパスと同じ上限で保存する。
 const MAX_OUTPUT_ARTIFACT_PATH_LENGTH = 1000;
 const outputModelSchema = z
   .strictObject({
@@ -55,7 +55,7 @@ const taskFields = {
   tags: tagsSchema,
   targetId: uuidSchema.nullable(),
   gpuIds: gpuIdsSchema,
-  // Site launches ask for a number of GPUs and a time limit instead of GPU IDs.
+  // siteでの起動は、GPUのIDでなくGPUの数と制限時間を求める。
   gpuCount: gpuCountSchema,
   walltimeSeconds: walltimeSecondsSchema.nullable(),
   outputModel: outputModelSchema.nullable(),
@@ -89,7 +89,7 @@ export const taskLaunchSchema = z.strictObject({
   parameters: jsonObjectSchema.optional(),
   modelVersionId: uuidSchema.nullable().optional(),
   inputDatasetVersionIds: uniqueIdsSchema.optional(),
-  // Continue a training/finetuning launch from a saved checkpoint (same Code and kind).
+  // 学習・ファインチューニングの起動を、保存したcheckpointから続ける（Codeと種類が同じもの）。
   resumeCheckpointId: uuidSchema.optional(),
 });
 export const taskHistoryQuerySchema = z.strictObject({
@@ -103,7 +103,7 @@ export const taskHistoryQuerySchema = z.strictObject({
 });
 
 export type TaskCreate = z.infer<typeof taskCreateSchema>;
-// Launch defaults as saved on a Task, whether they come from a create request or a patched row.
+// Taskに保存した起動の既定値。作成のリクエストから来たものも、更新した行から来たものも同じ形。
 export type TaskDefaults = Omit<TaskCreate, 'experimentId' | 'outputModel'> & {
   outputModel: TaskOutputModel | null;
 };

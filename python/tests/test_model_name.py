@@ -14,9 +14,9 @@ TOKEN = "model-name-test-secret"
 
 
 class FakeModelApi:
-    """GET/POST /models. Like the API, a POST saves the name and family without the white space at
-    their ends, a second POST of the same saved name answers 409, and GET ?name= matches the saved
-    name exactly. ``posts`` keeps the bodies as they were sent."""
+    """GET/POST /models。APIと同じく、POSTは名前とfamilyを両端の空白を除いて保存し、同じ保存名の
+    2回目のPOSTは409を返し、GET ?name=は保存した名前と完全に一致するものを返す。``posts``は
+    送られたままの本文を持つ。"""
 
     def __init__(self) -> None:
         self.models: list[dict] = []

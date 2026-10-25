@@ -1,4 +1,4 @@
-"""Exercise claim/resume scheduling with real detached local jobs and the updated API contract."""
+"""実際に切り離したローカルのJobと更新後のAPI契約で、claim/resumeのスケジューリングを確かめる。"""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from mado_tracking.worker.api import WorkerApi
 from mado_tracking.worker.contracts import TERMINAL_STATUSES
 from mado_tracking.worker.service import Worker
 
-# A missing scheduling/recovery notification must fail without leaving a hanging test.
+# スケジューリングや復旧の通知が来なければ、テストを止めたままにせず失敗させる。
 SCENARIO_TIMEOUT_SECONDS = 15
 
 
@@ -52,7 +52,7 @@ class ClaimServer:
         body = json.loads(request.content)
         path = request.url.path
         if "/target-checks/" in path:
-            # Every worker asks for connection checks and directory listings; none are queued here.
+            # どのworkerも接続確認とディレクトリの一覧を取りに来る。ここでは1つも積んでいない。
             return httpx.Response(200, json={"item": None})
         self.calls.append((path, body))
         active = [
@@ -164,7 +164,7 @@ def test_two_jobs_run_in_parallel_and_lost_claim_resumes_the_same_lease(
         try:
             async with asyncio.timeout(SCENARIO_TIMEOUT_SECONDS):
                 await asyncio.gather(server.ready[first_id].wait(), server.ready[second_id].wait())
-                # Both subprocesses reached their gates before either can finish.
+                # どちらかが終われるようになる前に、両方のサブプロセスがそれぞれのゲートに着いた。
                 assert len(worker.tasks) == 2
                 assert server.payloads[third_id]["job"]["status"] == "queued"
                 assert server.claims[0]["activeJobIds"] == []

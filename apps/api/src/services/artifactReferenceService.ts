@@ -4,11 +4,11 @@ import type { Database } from '../db/database.js';
 import { listArtifactReferences } from '../repositories/artifactReferenceRepository.js';
 import { requireProject } from './accessService.js';
 
-/** Where Artifacts are used, for the screens that show a file's owners and why it stays. */
+/** Artifactが使われている場所。ファイルを持つものと、残っている理由を表示する画面のため。 */
 export class ArtifactReferenceService {
   constructor(private readonly database: Database) {}
 
-  /** Unknown, deleted, and other Projects' IDs are left out rather than refused. */
+  /** 存在しない、削除済み、別のProjectのIDは、拒まずに結果から外す。 */
   async list(
     principal: Principal,
     location: { projectId: string; artifactIds: string[] },

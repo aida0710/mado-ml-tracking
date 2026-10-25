@@ -7,14 +7,15 @@ const optionalSetting = z.preprocess(
   (value) => (value === '' ? undefined : value),
   z.string().optional(),
 );
-// New uploads show their preview within a few seconds without the worker busy-polling the DB.
+// workerがDBを絶え間なくポーリングしなくても、新しいアップロードのプレビューが数秒以内に出る。
 const DEFAULT_POLL_INTERVAL_MS = 5000;
-// Decoding a multi-hour recording takes minutes; a tool still running after this is stuck.
+// 数時間の録音のデコードには数分かかる。これを過ぎても動いているツールは止まっているとみなす。
 const DEFAULT_TOOL_TIMEOUT_MS = 30 * 60 * 1000;
-// Must stay well below PREVIEW_LEASE_SECONDS (2 h), since one job runs up to three tools.
+// 1つのjobで最大3つのツールを動かすので、PREVIEW_LEASE_SECONDS（2時間）より十分短くする。
 const MAX_TOOL_TIMEOUT_MS = 40 * 60 * 1000;
-// A source is copied whole into the work directory, which is often on the system disk; a larger
-// one is skipped so one upload cannot fill that disk (MMT_ARTIFACT_MAX_BYTES allows 200 GiB).
+// 元のファイルは作業ディレクトリへ丸ごとコピーし、そこはシステムのディスクにあることが多い。
+// 1つのアップロードでそのディスクが埋まらないよう、これより大きいものは飛ばす
+// （MMT_ARTIFACT_MAX_BYTESは200 GiBまで許す）。
 const DEFAULT_MAX_SOURCE_BYTES = 10 * 1024 ** 3;
 
 const environmentSchema = z.object({
@@ -33,7 +34,7 @@ const environmentSchema = z.object({
   MMT_PREVIEW_MAX_SOURCE_BYTES: z.coerce.number().int().min(1).default(DEFAULT_MAX_SOURCE_BYTES),
 });
 
-/** Settings of the preview worker process (previewWorker.ts), separate from the API's. */
+/** プレビューのworkerのプロセス（previewWorker.ts）の設定。APIの設定とは別。 */
 export interface PreviewWorkerConfig {
   databaseUrl: string;
   storageSecretKey: SecretKey | null;
@@ -48,7 +49,7 @@ export interface PreviewWorkerConfig {
 export function loadPreviewWorkerConfig(
   environment: NodeJS.ProcessEnv = process.env,
 ): PreviewWorkerConfig {
-  // Report field names only: environment values can contain credentials.
+  // 環境変数の値には認証情報が含まれうるので、フィールド名だけを報告する。
   const parsed = environmentSchema.safeParse(environment);
   if (!parsed.success)
     throw new Error(

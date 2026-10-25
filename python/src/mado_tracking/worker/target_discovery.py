@@ -1,8 +1,7 @@
-"""Discover what the setup of a computer is filled in from: the machine, its Pythons, and the
-directories that could hold the work directory.
+"""コンピュータの設定の元になる、マシン、そのPython、作業ディレクトリを置けるディレクトリを調べる。
 
-One fixed POSIX sh script (posix_script.py) reports them; only its limits are arguments. Values
-are only what the computer reported; nothing is guessed.
+1つの固定のPOSIX shスクリプト（posix_script.py）がそれらを報告する。
+引数はその上限だけ。値はコンピュータが報告したものだけで、推測は一切しない。
 """
 
 from __future__ import annotations
@@ -16,31 +15,31 @@ from .posix_script import run_posix_script, terminated_tokens
 from .reported_text import is_one_line_path
 from .transport import CommandTransport
 
-# The API's limits (apps/api/src/domain/targetCheckValidation.ts).
+# APIの上限（apps/api/src/domain/targetCheckValidation.ts）。
 MAX_TARGET_CHECK_PYTHONS = 20
 MAX_TARGET_CHECK_DIRECTORIES = 40
-# Each candidate Python is started once to tell its version; one that hangs (a conda on a stale
-# network mount) is given up so that twenty of them still fit DISCOVERY_TIMEOUT_SECONDS.
+# 候補のPythonはそれぞれ1回起動してバージョンを聞く。応答しないネットワークマウント上の
+# condaのように止まるものは諦め、20個でもDISCOVERY_TIMEOUT_SECONDSに収まるようにする。
 PYTHON_VERSION_TIMEOUT_SECONDS = 2
-# df hangs on a stale network mount.
+# dfは応答しないネットワークマウントで止まる。
 DF_TIMEOUT_SECONDS = 5
-# Twenty Pythons and two df calls at their limits (50 seconds) and the shell's own work.
+# 20個のPythonと2回のdfがそれぞれ上限まで掛かった場合（50秒）と、シェル自身の処理の分。
 DISCOVERY_TIMEOUT_SECONDS = 60.0
 KIBIBYTE = 1024
-# `uname -m` values that are CpuArch values of the contract; any other machine has no cpuArch.
+# 契約のCpuArchの値になる`uname -m`の値。ほかのマシンにはcpuArchが無い。
 CPU_ARCH_BY_MACHINE = {"x86_64": "amd64", "amd64": "amd64", "aarch64": "arm64", "arm64": "arm64"}
-# TargetCheckPython.version as the API accepts it.
+# APIが受け付ける形のTargetCheckPython.version。
 PYTHON_VERSION = re.compile(r"\d{1,3}\.\d{1,3}\.\d{1,3}")
 DIRECTORY_SOURCES = frozenset({"home", "home_child", "mount"})
 WRITABLE_FLAGS = {"1": True, "0": False}
 
-# Arguments: the most Pythons, the most directories, seconds a Python may take to tell its
-# version, seconds df may take. Output: NUL-terminated tokens, a tag followed by its values:
+# 引数: Pythonの最大数、ディレクトリの最大数、Pythonがバージョンを答えるまでにかけてよい秒数、
+# dfにかけてよい秒数。出力: NULで終わるトークンで、タグのあとにその値が続く。
 #   machine <uname -m>   cpu_count <n>   memory_kib <MemTotal>   home_directory <$HOME>
 #   python <path> <version or empty>
 #   directory <home|home_child|mount> <path> <writable 1|0> <free KiB or empty>
-# Directories come in this order: the home, df's mounts, the usual HPC mount points, the home's
-# directories; the home's many directories are the first left out at the limit.
+# ディレクトリはこの順に並ぶ: ホーム、dfのマウント、HPCでよく使うマウントポイント、ホームの下の
+# ディレクトリ。上限に達したときは、数の多いホームの下のディレクトリから先に外す。
 DISCOVERY_SCRIPT = r"""
 main() {
     max_pythons=$1
@@ -143,7 +142,7 @@ MOUNTS
 main "$@" </dev/null
 """
 
-# How many values follow each tag of the discovery output.
+# 調査の出力で、各タグのあとに続く値の数。
 VALUE_COUNTS = {
     "machine": 1,
     "cpu_count": 1,
@@ -166,7 +165,7 @@ def empty_host() -> dict[str, Any]:
 
 @dataclass(frozen=True)
 class TargetDiscovery:
-    """TargetCheckHost, TargetCheckPython and TargetCheckDirectory values of the contract."""
+    """契約のTargetCheckHost、TargetCheckPython、TargetCheckDirectoryの値。"""
 
     host: dict[str, Any] = field(default_factory=empty_host)
     pythons: list[dict[str, Any]] = field(default_factory=list)
@@ -174,7 +173,7 @@ class TargetDiscovery:
 
 
 def decode_token(token: bytes) -> str | None:
-    # A path that is not UTF-8 could not be typed back into the Web; it is not offered.
+    # UTF-8でないパスは画面で入力し直せないので、候補に出さない。
     try:
         return token.decode()
     except UnicodeDecodeError:
@@ -182,7 +181,7 @@ def decode_token(token: bytes) -> str | None:
 
 
 def read_records(raw: bytes) -> list[tuple[str, list[str | None]]]:
-    """Tagged records; an unknown tag is skipped and a record cut short is dropped."""
+    """タグつきのレコード。知らないタグは飛ばし、途中で切れたレコードは捨てる。"""
     tokens = [decode_token(token) for token in terminated_tokens(raw)]
     records = []
     index = 0
@@ -260,7 +259,7 @@ def parse_directory(values: list[str | None]) -> dict[str, Any] | None:
 
 
 async def discover_target(transport: CommandTransport) -> TargetDiscovery:
-    """What the computer tells about itself; nothing when the discovery cannot run there."""
+    """コンピュータが自分について報告すること。そこで調査を実行できなければ何も返さない。"""
     try:
         raw = await run_posix_script(
             transport,
@@ -274,6 +273,6 @@ async def discover_target(transport: CommandTransport) -> TargetDiscovery:
             timeout=DISCOVERY_TIMEOUT_SECONDS,
         )
     except (TransportError, TimeoutError):
-        # The connection check still runs; the setup is then filled in by hand.
+        # 接続の確認はそのまま実行する。設定はその場合、手で埋める。
         return TargetDiscovery()
     return parse_discovery_output(raw)

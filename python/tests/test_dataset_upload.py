@@ -22,7 +22,7 @@ TOKEN = "dataset-upload-test-secret"
 
 
 class FakeDatasetApi:
-    """In-memory Artifacts, by-digest lookup and 'artifacts' version creation as the API contract states."""
+    """メモリ上のArtifact、digestでの検索、'artifacts'のバージョンの作成。API契約のとおりに動く。"""
 
     def __init__(self) -> None:
         self.artifacts: dict[str, dict] = {}
@@ -62,7 +62,7 @@ class FakeDatasetApi:
         if any(existing["version"] == version for existing in self.versions):
             return httpx.Response(409, json={"error": "exists", "code": "already_exists"})
         files = body["content"]["files"]
-        # The server's digest comes from the stored Artifacts, not from the client's files.
+        # サーバーのdigestは、クライアントのファイルではなく保存済みのArtifactから計算する。
         entries = sorted(
             (
                 {
@@ -167,7 +167,8 @@ def test_empty_directory_and_missing_directory_are_rejected_before_any_request(t
 
 
 def test_manifest_digest_matches_the_api_vector_and_ignores_file_order():
-    # Same vector as datasetManifestDigest.test.ts: UTF-8 byte order puts U+FF21 before U+1F600.
+    # datasetManifestDigest.test.tsと同じテストベクトル。
+    # UTF-8のバイト順では、U+FF21がU+1F600より前に来る。
     files = [
         LocalDatasetFile(path="\U0001f600.wav", source=Path("unused"), size=1, sha256="e" * 64),
         LocalDatasetFile(path="Ａ.wav", source=Path("unused"), size=2, sha256="f" * 64),

@@ -38,12 +38,12 @@ import type { RunCompletionService } from './runCompletionService.js';
 import { pinResumeCheckpoint } from './checkpointResume.js';
 import { assertInputDatasetVersionsUsable } from './datasetVersionReferences.js';
 
-// Lines read per query while a log file is downloading: about 1.5 MB at 300 bytes a line.
+// ログファイルのダウンロード中に1回のクエリで読む行数。1行300バイトとして約1.5MB。
 const LOG_FILE_BATCH_LINES = 5000;
 
 /**
- * Job-owned Runs are the evidence automation and evaluation compare, so their records freeze once
- * the Run is terminal. Runs without a Job stay writable after they end, as in MLflow.
+ * Jobが持つRunは自動実行や評価が比べる根拠なので、Runが終了状態になったら記録を固定する。
+ * Jobの無いRunは、MLflowと同じく終わったあとも書き込める。
  */
 export async function assertRunRecordsWritable(
   connection: Connection,
@@ -87,13 +87,14 @@ export class RunService {
   async insertRun(
     connection: Connection,
     registration: {
-      // Chosen by an offline client so a resend finds the same Run; the database picks one otherwise.
+      // オフラインのクライアントが選び、再送で同じRunが見つかるようにする。指定が無ければ
+      // DBが決める。
       id?: string;
       projectId: string;
       createdBy: string;
       input: RunCreate;
       task?: { id: string; revision: number };
-      // Inputs that came from an upstream Run's outputs (chained automation); a subset of the inputs.
+      // 上流のRunの出力から来た入力（自動実行の連鎖）。入力の一部。
       upstreamDatasetVersionIds?: string[];
     },
   ): Promise<Run> {
@@ -261,7 +262,7 @@ export class RunService {
     });
   }
 
-  /** Every line of the Run, or with `tail` only that many of the latest, oldest first. */
+  /** Runのすべての行。`tail`を指定したら最新のその行数だけ。古い順に返す。 */
   async logs(
     principal: Principal,
     projectId: string,
@@ -275,8 +276,8 @@ export class RunService {
   }
 
   /**
-   * Every line of the Run as a file, read in batches as the client takes them, so a long log is
-   * neither held in memory here nor in the browser.
+   * Runのすべての行をファイルとして返す。クライアントが受け取るのに合わせてまとめて読むので、
+   * 長いログをここでもブラウザでもメモリに抱えない。
    */
   async logFile(
     principal: Principal,
@@ -319,7 +320,7 @@ export class RunService {
     request: {
       projectId: string;
       runId: string;
-      // Logs are diagnostics nothing compares, so only records (metrics) freeze with the Job.
+      // ログは何とも比べない診断用の情報なので、Jobとともに固定するのは記録（メトリクス）だけ。
       isRunRecord: boolean;
       append: (connection: Connection) => Promise<void>;
     },

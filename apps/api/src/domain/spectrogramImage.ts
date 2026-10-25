@@ -1,8 +1,8 @@
 import { encodeRgbPng } from './pngEncoder.js';
 import { SPECTROGRAM_DB_FLOOR, type SpectrogramDecibels } from './spectrogramAccumulator.js';
 
-// The web viewer's magma-like ramp (components/preview/AudioSpectrogram.tsx): silence is
-// near-black and loud bins are pale, readable on both themes.
+// 画面のビューアのmagmaに似た色の段階（components/preview/AudioSpectrogram.tsx）。無音は
+// 黒に近く、大きいbinは淡い色で、どちらのテーマでも読める。
 const COLOR_STOPS: Array<[number, [number, number, number]]> = [
   [0, [0, 0, 4]],
   [0.25, [59, 15, 112]],
@@ -30,7 +30,7 @@ function buildColorTable(): Uint8Array {
 }
 const colorTable = buildColorTable();
 
-/** One pixel per column and bin, low frequencies at the bottom; the viewer stretches it. */
+/** 列とbinごとに1ピクセル。低い周波数が下。ビューアが引き伸ばす。 */
 export function renderSpectrogramPng(spectrogram: SpectrogramDecibels): Buffer {
   const width = Math.max(1, spectrogram.columnCount);
   const height = spectrogram.binCount;

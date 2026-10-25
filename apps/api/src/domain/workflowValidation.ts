@@ -13,7 +13,7 @@ export const workflowHistoryQuerySchema = z.strictObject({
   cursor: uuidSchema.optional(),
 });
 
-// The cursor is the id of the last version of the previous page, as in the execution history.
+// cursorは前のページの最後のバージョンのid。実行の履歴と同じ。
 export const workflowVersionsQuerySchema = z.strictObject({
   cursor: uuidSchema.optional(),
 });
@@ -43,10 +43,10 @@ export function validateWorkflowOrder(steps: WorkflowStepInput[]): void {
   }
 }
 
-// The checks below catch at save time what an execution would otherwise reveal only when it
-// reaches the step, possibly hours after the first one started.
+// 下の検査は、本来なら実行がそのステップに達したときに初めて分かること（最初のステップが
+// 始まってから何時間も後かもしれない）を、保存時に見つける。
 
-/** A preprocessing.* quality gate on a metric the API never records could never pass. */
+/** APIが記録しないメトリクスに対するpreprocessing.*の品質ゲートは、決して通らない。 */
 export function validateQualityGateMetrics(steps: readonly WorkflowStepInput[]): void {
   for (const gate of steps.flatMap((step) => step.qualityGates))
     if (
@@ -61,7 +61,7 @@ export function validateQualityGateMetrics(steps: readonly WorkflowStepInput[]):
       });
 }
 
-/** A step that takes its model from another needs that step's Task to register one. */
+/** モデルを別のステップから受け取るなら、そのステップのTaskがモデルを登録しなければならない。 */
 export function validateModelSources(steps: readonly WorkflowStep[]): void {
   const stepsByKey = new Map(steps.map((step) => [step.key, step]));
   for (const step of steps) {

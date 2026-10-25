@@ -11,8 +11,8 @@ import {
 } from '../repositories/jobTokenRepository.js';
 
 /**
- * Issues and authenticates the tokens a Job's code receives in place of the worker token.
- * The token acts as the Run's creator, so the code never gets more than that person's role.
+ * Jobのコードがworker tokenの代わりに受け取るtokenを発行し、認証する。このtokenはRunの作成者
+ * として動くので、コードがその人のroleより強い権限を得ることはない。
  */
 export class JobTokenService {
   constructor(private readonly database: Database) {}
@@ -32,7 +32,8 @@ export class JobTokenService {
         id: identity.tokenId,
         projectId: identity.projectId,
         scopes: [...JOB_TOKEN_SCOPES],
-        // A Job token's fixed scopes cannot issue tokens, so its lifetime never bounds another's.
+        // Job tokenの固定のscopeではtokenを発行できないので、その有効期限が
+        // ほかのtokenの期限の上限になることはない。
         expiresAt: null,
         job: identity.job,
       },
@@ -40,12 +41,13 @@ export class JobTokenService {
   }
 
   /**
-   * Returns a new token while the Job is still `claimed`, i.e. before any user process can hold
-   * one. A repeated claim/resume (for example after a lost claim response) revokes the earlier
-   * token. A `running` Job gets null: its process already has a token, kept in the worker journal.
+   * Jobがまだ`claimed`の間、つまりユーザーのプロセスがまだtokenを持ちえないうちに、新しいtokenを
+   * 返す。
+   * claim/resumeを繰り返すと（たとえばclaimの応答が失われたあと）、前のtokenは失効する。
+   * `running`のJobにはnullを返す。そのプロセスは既にtokenを持ち、worker journalに残っている。
    */
   async issueForWorker(connection: Connection, job: Job): Promise<string | null> {
-    // Locking the Job serializes concurrent resumes so only one issued token survives.
+    // Jobをロックして同時のresumeを1つずつ処理し、発行したtokenが1つだけ残るようにする。
     const current = await first<{
       status: Job['status'];
       leaseId: string | null;

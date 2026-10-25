@@ -6,8 +6,8 @@ import { satisfiesProjectRole } from '../domain/projectRoles.js';
 import { scopeRequiredError, tokenProjectMismatchError } from '../domain/tokenAccessErrors.js';
 
 /**
- * Whether the principal may act with `scope`. A browser session is limited by roles alone; a token
- * needs the scope itself or `admin`, which stands for every scope except the explicit ones.
+ * principalが`scope`で操作できるか。ブラウザのsessionはroleだけで制限する。tokenにはそのscope
+ * 自体か`admin`が要る。`admin`は、明示が要るscopeを除くすべてのscopeを表す。
  */
 export function holdsScope(principal: Principal, scope: string): boolean {
   if (principal.method === 'session') return true;
@@ -28,8 +28,8 @@ export async function requireProject(
   const { projectId } = permission;
   requireScope(principal, permission.scope);
   if (principal.token?.projectId && principal.token.projectId !== projectId) {
-    // The token's own Project is named so the person can tell which settings were mixed up; the
-    // token already gives access to that Project, so its name reveals nothing new.
+    // どの設定を取り違えたかが分かるよう、token自身のProjectの名前を示す。tokenはもともとその
+    // Projectにアクセスできるので、名前を出しても新しく明かすものは無い。
     const tokenProject = await first<{ name: string }>(
       connection,
       'SELECT name FROM projects WHERE id=$1',
@@ -37,8 +37,8 @@ export async function requireProject(
     );
     throw tokenProjectMismatchError(tokenProject?.name ?? null);
   }
-  // The effective role is the strongest of the direct grant, the user's group bindings and, on a
-  // public Project, editor. An archived Project is gone for everyone, global administrators too.
+  // 実効roleは、直接付与、利用者のgroup binding、公開Projectならeditor、のうち最も強いもの。
+  // アーカイブしたProjectは、全体管理者も含めて誰からも見えなくなる。
   const membership = await first<{ role: ProjectRole | null }>(
     connection,
     `SELECT e.role FROM projects p LEFT JOIN effective_project_roles e ON e.project_id=p.id AND e.user_id=$2
@@ -46,9 +46,9 @@ export async function requireProject(
     [projectId, principal.user.id],
   );
   if (!membership) return refuseMissingProject(connection, principal, projectId);
-  // A global administrator's session is admin in every live Project, also where public access or
-  // a weaker grant gives a role. Token access always requires current membership, including a
-  // global administrator's tokens.
+  // 全体管理者のsessionは、アーカイブされていないどのProjectでもadminになる。公開や弱い付与で
+  // roleが付く場合も同じ。
+  // tokenでのアクセスには、全体管理者のtokenも含め、常に今のmembershipが要る。
   const role = principal.method === 'session' && principal.user.isAdmin ? 'admin' : membership.role;
   if (!role || !satisfiesProjectRole(role, permission.role))
     throw new DomainError({
@@ -63,9 +63,9 @@ const PROJECT_ARCHIVED_MESSAGE =
   'this project is archived; a global administrator can restore it under Administration > Projects';
 
 /**
- * An archived Project is gone, but those who could open it before (its members and global
- * administrators' sessions) are told it was archived, so they ask for it back instead of hunting
- * for a wrong URL. Anyone else cannot tell it from a Project that never existed.
+ * アーカイブしたProjectは見えなくなるが、それまで開けた人（メンバーと全体管理者のsession）には
+ * アーカイブされたことを伝え、URLの誤りを探し回らずに復元を頼めるようにする。ほかの人には、
+ * 最初から無かったProjectと区別が付かない。
  */
 async function refuseMissingProject(
   connection: Connection,
@@ -120,7 +120,7 @@ export async function requireWorker(
   return { projectId: principal.token.projectId, tokenId: principal.token.id };
 }
 
-// Descriptions and comments are human records, so code running inside a Job may not write them.
+// 説明とコメントは人の記録なので、Jobの中で動くコードには書かせない。
 export function rejectJobToken(principal: Principal): void {
   if (principal.token?.job)
     throw new DomainError({

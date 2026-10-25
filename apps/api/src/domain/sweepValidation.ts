@@ -4,23 +4,23 @@ import { validateSearchSpace } from './sweeps/searchSpace.js';
 import type { EarlyStoppingConfig, SearchSpace } from './sweeps/types.js';
 import { gpuIdsSchema, nameSchema, uuidSchema } from './validation.js';
 
-// Bounds from the API contract: a sweep larger than this is better split, and more parallel
-// trials than this would exceed any ComputeTarget's max_concurrent_jobs anyway.
+// API契約の上限。これより大きいSweepは分けた方がよく、これより多い並列のtrialは、どのみち
+// どのComputeTargetのmax_concurrent_jobsも超える。
 export const MAX_SWEEP_TRIALS = 10000;
 export const MAX_SWEEP_PARALLELISM = 100;
 const DEFAULT_SWEEP_PARALLELISM = 1;
-// The suggestion PRNG (mulberry32) keeps 32 bits of state.
+// 候補を出すPRNG（mulberry32）は32ビットの状態を持つ。
 export const MAX_SWEEP_SEED = 4294967295;
-// Same bound as MLflow metric keys.
+// MLflowのメトリクスのキーと同じ上限。
 const MAX_OBJECTIVE_METRIC_LENGTH = 250;
-// Same bound as Run parameter keys (jsonObjectSchema).
+// Runのparameterのキーと同じ上限（jsonObjectSchema）。
 const MAX_PARAMETER_NAME_LENGTH = 200;
-// A categorical string becomes a Run parameter value, which MLflow limits to 6000 characters.
+// カテゴリの文字列はRunのparameterの値になり、MLflowはその値を6000文字までに制限している。
 const MAX_PARAMETER_STRING_LENGTH = 6000;
 const DEFAULT_SWEEP_PAGE_LIMIT = 50;
 const MAX_SWEEP_PAGE_LIMIT = 200;
 const DEFAULT_TRIAL_PAGE_LIMIT = 100;
-// One page covers a typical grid sweep without making a 10000-trial response.
+// 一般的なグリッドのSweepが1ページに収まり、それでいて10000 trialの応答にはならない大きさ。
 const MAX_TRIAL_PAGE_LIMIT = 500;
 
 const parameterValueSchema = z.union([
@@ -29,8 +29,8 @@ const parameterValueSchema = z.union([
   z.boolean(),
 ]);
 
-// Structure only; ranges, duplicates and grid limits are checked by validateSearchSpace so that
-// its messages name the offending parameter.
+// 構造だけを見る。範囲・重複・グリッドの上限はvalidateSearchSpaceが検査し、そのメッセージで
+// 問題のparameterを名指しする。
 const parameterDefinitionSchema = z.union([
   z.strictObject({ values: z.array(parameterValueSchema) }),
   z.strictObject({ value: parameterValueSchema }),
@@ -112,7 +112,7 @@ export type SweepCancelInput = z.infer<typeof sweepCancelSchema>;
 export type SweepListQuery = z.infer<typeof sweepListQuerySchema>;
 export type SweepTrialQuery = z.infer<typeof sweepTrialQuerySchema>;
 
-/** Semantic checks of the search definition (422 sweep_space_invalid / sweep_early_terminate_invalid). */
+/** 探索の定義の意味の検査（422 sweep_space_invalid / sweep_early_terminate_invalid）。 */
 export function validateSweepDefinition(input: SweepCreateInput): void {
   validateSearchSpace(input.searchSpace as SearchSpace, input.method);
   if (input.earlyStopping) validateEarlyStoppingConfig(input.earlyStopping as EarlyStoppingConfig);

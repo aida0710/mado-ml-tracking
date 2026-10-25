@@ -34,7 +34,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupの許可判定と全体roleの同�
     return createApplication({ config, database: harness.database, stores: harness.stores }).app;
   }
 
-  // Runs the browser side of the Authorization Code flow and returns the callback's status.
+  // Authorization Code flowのブラウザ側を動かし、callbackのステータスを返す。
   async function ssoLogin(app: Hono<ApiEnvironment>, claims: Partial<MockOidcClaims> = {}) {
     provider.resetClaims();
     provider.setClaims(claims);
@@ -85,7 +85,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupの許可判定と全体roleの同�
       [options.username, options.email, options.isAdmin ?? false],
     );
     const userId = user.rows[0]!.id;
-    // The hash is never verified here; these tests only log in through SSO.
+    // ここでhashを検証することは無い。このテストはSSOでしかログインしない。
     await harness.database.query(
       'INSERT INTO user_local_credentials(user_id,password_hash) VALUES($1,$2)',
       [userId, 'unused-password-hash'],
@@ -98,7 +98,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupの許可判定と全体roleの同�
     provider = await startMockOidcProvider();
   });
   beforeEach(async () => {
-    // TRUNCATE users cascades to the whole audit_events table, including system-actor denials.
+    // TRUNCATE usersはaudit_events全体に連鎖するので、システムを行為者とする拒否の記録も消える。
     await harness.reset();
   });
   afterAll(async () => {

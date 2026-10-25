@@ -3,14 +3,14 @@ import { DEFAULT_BASELINE_ALIAS, PROMOTION_CRITERIA_MAX } from '@mmt/contracts';
 import { nameSchema, uuidSchema } from './validation.js';
 
 const DEFAULT_PROMOTION_EVALUATION_LIMIT = 50;
-// Bounds one page of decisions; the Web table pages through longer histories.
+// 判定の1ページの上限。画面の表は、長い履歴をページ送りでたどる。
 const MAX_PROMOTION_EVALUATION_LIMIT = 200;
 
 const criterionSchema = z.strictObject({
   metric: nameSchema,
   direction: z.enum(['higher', 'lower']),
   mode: z.enum(['absolute', 'delta', 'relative_delta']),
-  // NaN and ±Infinity are rejected: a threshold must be comparable to every finite value.
+  // NaNと±Infinityは拒む。閾値はどの有限値とも比べられなければならない。
   threshold: z.number().finite(),
 });
 

@@ -11,7 +11,7 @@ import type {
 import { containerFixture } from './containerFixtures.js';
 import { entity, request, type Harness } from './harness.js';
 
-/** An OpenSSH ed25519 public key line, as `ssh-keygen` writes it into <key>.pub. */
+/** `ssh-keygen`が<key>.pubに書くのと同じ、OpenSSHのed25519の公開鍵の行。 */
 export function sshPublicKeyLine(comment = 'mmt-launcher:test'): string {
   const raw = Buffer.from(
     generateKeyPairSync('ed25519').publicKey.export({ format: 'jwk' }).x!,
@@ -26,7 +26,7 @@ export function sshPublicKeyLine(comment = 'mmt-launcher:test'): string {
   return `ssh-ed25519 ${blob.toString('base64')} ${comment}`;
 }
 
-/** The global settings of an automatic site with a shared account, submitted by `launcherId`. */
+/** 共用アカウントを使い、`launcherId`が投入する自動のsiteの全体設定。 */
 export function automaticSiteSettings(launcherId: string, overrides: Record<string, unknown> = {}) {
   return {
     launcherId,
@@ -44,7 +44,7 @@ export function automaticSiteSettings(launcherId: string, overrides: Record<stri
 
 export const TEST_JOB_SHELL = '#!/bin/sh\nset -eu\nqsub -- "$MMT_RUNNER" "$MMT_SPEC_DIR"\n';
 
-/** A site as tracking stores it: no connection settings, containers only. */
+/** mado ML Trackingが保存する形のsite。接続の設定は無く、コンテナだけ。 */
 export function siteTargetInput(overrides: Record<string, unknown> = {}) {
   return {
     name: 'Test site',
@@ -83,7 +83,7 @@ export async function siteFixture(harness: Harness, overrides: Record<string, un
       cookie: fixture.administrator.cookie,
       body: {
         ...siteTargetInput(overrides),
-        // A global administrator's site that the Project's members run their Jobs on.
+        // ProjectのメンバーがJobを動かす、全体管理者のsite。
         visibility: 'public',
         site: manual
           ? { accountMode: 'personal', workDirectory: '/work/mmt' }
@@ -98,7 +98,7 @@ export async function siteFixture(harness: Harness, overrides: Record<string, un
       200,
     );
   }
-  // The launcher makes the requested keys and sends their public halves.
+  // launcherが要求された鍵を作り、その公開鍵を送る。
   async function publishKeys(token = launcher.token): Promise<SiteKey[]> {
     const published: SiteKey[] = [];
     for (const key of (await launcherConfig(token)).keys.filter((item) => item.status === 'requested'))
@@ -115,7 +115,7 @@ export async function siteFixture(harness: Harness, overrides: Record<string, un
     return published;
   }
   await publishKeys();
-  // The requester's own token, as `mado-tracking submit` uses it.
+  // `mado-tracking submit`が使うのと同じ、依頼者自身のtoken。
   const personal = await entity<{ token: string }>(
     await request(harness.app, '/api/tokens', {
       method: 'POST',
@@ -188,7 +188,7 @@ export async function siteFixture(harness: Harness, overrides: Record<string, un
 
 export type SiteFixture = Awaited<ReturnType<typeof siteFixture>>;
 
-/** Calls a runner endpoint of the Job with its Job token. */
+/** JobのrunnerのエンドポイントをそのJob tokenで呼ぶ。 */
 export function runnerRequest(
   harness: Harness,
   fixture: SiteFixture,

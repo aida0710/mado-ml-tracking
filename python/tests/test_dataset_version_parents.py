@@ -1,4 +1,4 @@
-"""Dataset parent corrections retain the existing version and training configuration."""
+"""データセットの親を修正しても、既存のバージョンと学習の構成はそのまま保つ。"""
 
 import json
 

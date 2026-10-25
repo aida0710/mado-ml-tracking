@@ -16,5 +16,5 @@ python/build/
 .mypy_cache/
 .ruff_cache/
 
-# Screenshots that browser tests write when no output directory is given (run from apps/web).
+# 出力先を指定しないときにブラウザの検査が書くスクリーンショット（apps/webから実行したとき）。
 /apps/web/artifacts/

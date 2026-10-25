@@ -27,8 +27,8 @@ const MISSING_METRIC: MetricComparison = {
   source: { candidate: null, baseline: null },
 };
 
-// delta is computed in floating point (0.85 - 0.8 = 0.04999999999999993), so a value this close to
-// the threshold, relative to the magnitudes involved, counts as exactly on it.
+// deltaは浮動小数点で計算する（0.85 - 0.8 = 0.04999999999999993）ので、関わる値の大きさに
+// 対してこれほど閾値に近い値は、ちょうど閾値上にあるとみなす。
 const THRESHOLD_RELATIVE_TOLERANCE = 1e-12;
 
 function meetsThreshold(criterion: PromotionCriterion, observed: number): boolean {
@@ -51,7 +51,7 @@ function judgeAbsolute(criterion: PromotionCriterion, metric: MetricComparison):
   return compared(criterion, metric.candidate!);
 }
 
-// delta and relative_delta need a baseline value; how a missing baseline counts depends on why.
+// deltaとrelative_deltaにはベースラインの値が要る。無いときの扱いは、無い理由で変わる。
 function judgeAgainstBaseline(
   criterion: PromotionCriterion,
   judged: {
@@ -101,10 +101,10 @@ function overallDecision(
 }
 
 /**
- * Applies a policy's criteria to a baseline comparison. NaN, ±Infinity and missing metrics fail the
- * criterion with a reason instead of being skipped. Absolute criteria need no baseline and are
- * checked even for a first release; with no baseline version, baseline-relative criteria follow
- * missingBaseline ('pass' records baseline_missing_first_promotion, decisions.md).
+ * ポリシーの基準をベースラインとの比較に当てはめる。NaN、±Infinity、欠けたメトリクスは、
+ * 飛ばさずに理由を付けて基準を不合格にする。絶対値の基準はベースラインが要らず、最初のリリース
+ * でも確かめる。ベースラインのバージョンが無ければ、ベースラインに対する基準は
+ * missingBaselineに従う（'pass'ならbaseline_missing_first_promotionを記録する）。
  */
 export function evaluateCriteria(
   comparison: Pick<EvaluationComparison, 'status' | 'metrics'>,

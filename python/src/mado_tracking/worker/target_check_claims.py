@@ -1,4 +1,4 @@
-"""The API's WorkerTargetCheck: which request this worker claimed and what it asks for."""
+"""APIのWorkerTargetCheck。このworkerがどのリクエストを取得し、それが何を求めているか。"""
 
 from __future__ import annotations
 
@@ -10,9 +10,9 @@ from ..errors import ConfigurationError
 
 CONNECTION = "connection"
 DIRECTORY_LISTING = "directory_listing"
-# TARGET_CHECK_KINDS of the contract: what this worker runs.
+# 契約のTARGET_CHECK_KINDS。このworkerが実行するもの。
 TARGET_CHECK_KINDS = (CONNECTION, DIRECTORY_LISTING)
-# TargetCheckResult includes the host and the Python and directory candidates.
+# TargetCheckResultはホストと、Pythonとディレクトリの候補を含む。
 RESULT_VERSION = 2
 
 
@@ -22,7 +22,7 @@ class ClaimedTargetCheck:
     lease_id: str
     target: dict[str, Any]
     kind: str
-    # The directory a listing reads, as requested; None for a connection check.
+    # 一覧を読むディレクトリ。リクエストのとおり。接続の確認ではNone。
     directory_path: str | None
 
 
@@ -44,8 +44,8 @@ def parse_claimed_target_check(
         or not isinstance(target := item.get("target"), dict)
     ):
         raise ConfigurationError("Target check claim response is invalid")
-    # A request assigned to this worker may name a computer outside MMT_WORKER_TARGET_IDS (one that
-    # is being added); any other must be one of this worker's computers.
+    # このworkerに割り当てられたリクエストは、MMT_WORKER_TARGET_IDSに無いコンピュータ
+    # （追加中のもの）を指すことがある。それ以外は、このworkerのコンピュータでなければならない。
     if target.get("id") not in target_ids and not is_assigned_to(check, worker_id):
         raise ConfigurationError("Target check claim names a computer this worker is not in charge of")
     kind = item.get("kind")

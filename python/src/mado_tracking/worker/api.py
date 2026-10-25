@@ -1,4 +1,4 @@
-"""Worker API; lease credentials accompany every job mutation."""
+"""workerのAPI。Jobを変更するリクエストには必ずleaseの資格情報を付ける。"""
 
 from __future__ import annotations
 
@@ -21,8 +21,9 @@ from .target_check_claims import ClaimedTargetCheck, parse_claimed_target_check
 from .worker_info import WorkerInfo
 
 LEASE_REJECTED_STATUSES = {401, 403, 404, 409, 410}
-# Output declarations answer 403/404/409 for the declared Model, Dataset or scope; only these mean
-# the lease itself is gone (the other job routes treat every such status as a lost lease).
+# 出力の宣言は、宣言したモデル・データセット・scopeについて403/404/409を返す。lease自体が
+# 無くなったことを示すのはこれらだけ（ほかのJobの経路は、これらの状態コードをすべてleaseを
+# 失ったものとして扱う）。
 OUTPUT_LEASE_REJECTED_STATUSES = {401, 410}
 INVALID_LEASE_CODE = "invalid_lease"
 LOGGER = logging.getLogger(__name__)
@@ -74,7 +75,7 @@ class WorkerApi(ArtifactTransferApi):
     async def claim(
         self, worker_id: str, target_ids: Sequence[str], *, active_job_ids: Sequence[str] = ()
     ) -> WorkerJob | InvalidWorkerJob | None:
-        # A lost claim response is recovered through resume; replay could claim another job.
+        # 届かなかったclaimの応答はresumeで取り戻す。再送すると別のJobをclaimしかねない。
         payload: dict[str, Any] = {"workerId": worker_id, "activeJobIds": list(active_job_ids)}
         if target_ids:
             payload["targetIds"] = list(target_ids)
@@ -102,7 +103,7 @@ class WorkerApi(ArtifactTransferApi):
                     raise ConfigurationError("Resumed WorkerJob must be an object")
                 jobs.append(parse_worker_job_response(item, worker_id=worker_id))
             except ConfigurationError as error:
-                # Unverified identities cannot authorize a mutation of any lease in the batch.
+                # 確かめられていない識別情報では、まとめて受け取ったどのleaseも変更できない。
                 LOGGER.error(
                     "Resumed Job has no verified lease; no completion sent: %s", self.masker.mask(str(error))
                 )
@@ -116,7 +117,7 @@ class WorkerApi(ArtifactTransferApi):
         kinds: Sequence[str],
         active_check_ids: Sequence[str] = (),
     ) -> ClaimedTargetCheck | None:
-        """Claim a connection check or directory listing (a resent claim returns the same lease)."""
+        """接続確認かディレクトリの一覧の取得をclaimする（claimを再送すると同じleaseが返る）。"""
         payload: dict[str, Any] = {"workerId": worker_id, "targetIds": list(target_ids)}
         payload["kinds"] = list(kinds)
         payload["activeCheckIds"] = list(active_check_ids)
@@ -154,7 +155,7 @@ class WorkerApi(ArtifactTransferApi):
     async def declare_outputs(
         self, job: WorkerJob, declarations: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """Register result.json models/datasets; a resent index returns the stored registration."""
+        """result.jsonのモデル・データセットを登録する。再送したindexには保存済みの登録を返す。"""
         try:
             response = await self.request(
                 f"worker/jobs/{job.id}/outputs",
@@ -189,6 +190,6 @@ class WorkerApi(ArtifactTransferApi):
     async def upload_source_snapshot_artifact(
         self, job: WorkerJob, artifact: dict[str, Any], source: Path
     ) -> None:
-        # The lease is checked first so a lost Job never adds Artifacts to its Run.
+        # 先にleaseを確かめ、失ったJobがRunにArtifactを足すことが無いようにする。
         await self.heartbeat(job)
         await self.upload_snapshot_artifact(job, artifact, source)

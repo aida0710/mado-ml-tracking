@@ -1,1 +1,1 @@
-"""Lease-aware job execution on local development and SSH compute targets."""
+"""ローカルの開発用とSSHのコンピュータで、leaseを踏まえてJobを実行する。"""

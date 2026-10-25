@@ -187,7 +187,7 @@ describe.skipIf(!testDatabaseUrl)('Projectの公開範囲（独立PostgreSQL）'
     const leaver = await login(harness, 'leaver@localhost');
     await harness.database.query("UPDATE users SET status='disabled' WHERE id=$1", [leaver.userId]);
 
-    // The Service Account keeps exactly the role set on it, and gets nothing elsewhere.
+    // Service Accountは設定されたroleだけをそのまま持ち、ほかでは何も得ない。
     expect(await effectiveRole(project.id, serviceAccount.id)).toEqual({
       role: 'viewer',
       sources: ['direct'],
@@ -220,7 +220,7 @@ describe.skipIf(!testDatabaseUrl)('Projectの公開範囲（独立PostgreSQL）'
       ]),
     );
     expect(listed).toHaveLength(2);
-    // Their effective role is still the stronger public editor.
+    // 実効roleは、より強い、公開によるeditorのまま。
     expect(await visibleProjects(reader.cookie)).toEqual([
       expect.objectContaining({ id: project.id, role: 'editor' }),
     ]);
@@ -229,7 +229,7 @@ describe.skipIf(!testDatabaseUrl)('Projectの公開範囲（独立PostgreSQL）'
   it('全体管理者のsessionはpublicでeditorになるProjectでもadminとして扱う', async () => {
     const administrator = await login(harness);
     const project = await createProject(owner.cookie, { name: 'Administered' });
-    // isMember tells the Web not to enter it on its own: the administrator is not a member.
+    // isMemberは、画面が自分から中に入らないようにするためのもの。管理者はメンバーではない。
     expect(await visibleProjects(administrator.cookie)).toEqual([
       expect.objectContaining({ id: project.id, role: 'admin', isMember: false }),
     ]);
@@ -251,7 +251,7 @@ describe.skipIf(!testDatabaseUrl)('Projectの公開範囲（独立PostgreSQL）'
       members: [
         { userId: alice.userId, role: 'editor' },
         { userId: bob.userId, role: 'viewer' },
-        // The creator is always admin; this grant is ignored.
+        // 作成者は必ずadminなので、この付与は無視される。
         { userId: owner.userId, role: 'viewer' },
       ],
     });

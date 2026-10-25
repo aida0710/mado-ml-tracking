@@ -18,8 +18,8 @@ import { auditActor, NO_REQUEST_METADATA, recordDenial } from './auditService.js
 import type { RunCompletionService } from './runCompletionService.js';
 
 /**
- * Reopens an ended Run without a Job so the SDK can append to it (wandb resume, MLflow
- * start_run(run_id=)). Each reopening is kept as an append-only resume event.
+ * Jobの無い終わったRunを開き直し、SDKが続きを書き足せるようにする（wandbのresume、MLflowの
+ * start_run(run_id=)）。開き直すたびに、追記だけのresumeのイベントとして残す。
  */
 export class RunResumeService {
   constructor(
@@ -45,7 +45,7 @@ export class RunResumeService {
     };
     return recordDenial(this.database, draft, () =>
       transaction(this.database, async (connection) => {
-        // A Job's code may write its own Run but never reopen it: a Job-owned Run is final.
+        // Jobのコードは自分のRunに書けるが、開き直すことはできない。Jobが持つRunは確定している。
         rejectJobToken(principal);
         await requireProject(connection, principal, {
           projectId,
@@ -97,7 +97,7 @@ export class RunResumeService {
     target: { projectId: string; runId: string },
   ): Promise<RunResumeEventPage> {
     return transaction(this.database, async (connection) => {
-      // The events and the Run's current end must come from the same snapshot to form segments.
+      // 区間を作るには、イベントとRunの今の終了を同じスナップショットから読まなければならない。
       await connection.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');
       await requireProject(connection, principal, {
         projectId: target.projectId,

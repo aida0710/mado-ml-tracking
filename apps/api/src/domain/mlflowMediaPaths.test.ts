@@ -5,7 +5,7 @@ import {
   parseMlflowImagePath,
 } from './mlflowMediaPaths.js';
 
-// File names as MLflow 3.0.0 and 3.17.0 write them (the uuid of 3.0.0 starts with g-z).
+// MLflow 3.0.0と3.17.0が書くファイル名（3.0.0のuuidはg-zで始まる）。
 const V3_0_IMAGE = 'images/loss%step%12%timestamp%1728370000123%h1b2c3d4-0000-4000-8000-000000000001.png';
 const V3_17_IMAGE = 'images/loss+step+12+timestamp+1728370000123+a1b2c3d4-0000-4000-8000-000000000001.png';
 

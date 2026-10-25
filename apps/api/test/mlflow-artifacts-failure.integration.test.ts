@@ -11,7 +11,7 @@ import {
 } from './mlflow-artifacts-fixtures.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 
-// Exercise a stream larger than the JSON body limit using many bounded chunks.
+// 大きさを抑えた多数のchunkで、JSONの本文の上限より大きいstreamを試す。
 const STREAM_CHUNK_BYTES = 64 * 1024;
 const STREAM_CHUNK_COUNT = 96;
 

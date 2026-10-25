@@ -1,11 +1,11 @@
-"""What a launcher or `mado-tracking submit` does in a site's work directory.
+"""launcherや`mado-tracking submit`が、siteの作業ディレクトリで行う操作。
 
-    <work dir>/.mmt-runner/<version>/        mmt-runner.pyz and the mmt-runner wrapper
-    <work dir>/.mmt-job-shells/<sha256>/     job.sh, one directory per job shell content
-    <work dir>/.mmt-submissions/<name>/      one spec directory per submission
+    <work dir>/.mmt-runner/<version>/        mmt-runner.pyzとmmt-runnerのラッパー
+    <work dir>/.mmt-job-shells/<sha256>/     job.sh。job shellの内容ごとに1ディレクトリ
+    <work dir>/.mmt-submissions/<name>/      投入ごとに1つのspecディレクトリ
 
-Each step is one command through the site's transport, and files arrive on stdin as a tar, so
-no value is ever pasted into a shell script. Installed directories appear only when complete.
+各手順はsiteのtransportを通した1つのコマンドで、ファイルはtarとしてstdinで届く。そのため、どの値も
+シェルスクリプトに貼り込まない。インストールしたディレクトリは、そろったときにだけ現れる。
 """
 
 from __future__ import annotations
@@ -25,16 +25,16 @@ SUBMISSIONS_DIRECTORY = ".mmt-submissions"
 JOB_SHELL_NAME = "job.sh"
 JOB_SHELL_VERSION_CHARACTERS = 16
 SETUP_TIMEOUT_SECONDS = 300.0
-# Submitting must end well inside the API's 15 minutes for an unreported submission.
+# 投入は、APIが未報告の投入を待つ15分より十分前に終わらせる。
 JOB_SHELL_TIMEOUT_SECONDS = 600.0
 CANCEL_TIMEOUT_SECONDS = 120.0
-# Extract stdin's tar into <base>/<name>, publishing it by rename; keep an existing installation.
+# stdinのtarを<base>/<name>に展開し、renameで公開する。既にあるインストールはそのまま残す。
 INSTALL_SCRIPT = (
     'set -e; umask 077; mkdir -p "$1"; staging=$(mktemp -d "$1/.install.XXXXXX"); '
     'tar -x -f - -C "$staging"; '
     'if [ -e "$1/$2" ]; then rm -rf "$staging"; else mv "$staging" "$1/$2"; fi'
 )
-# Same, replacing what an interrupted earlier attempt of this submission left.
+# 同上。ただし、この投入の前の試行が途中で止まって残したものを置き換える。
 REPLACE_SCRIPT = (
     'set -e; umask 077; mkdir -p "$1"; staging=$(mktemp -d "$1/.write.XXXXXX"); '
     'tar -x -f - -C "$staging"; rm -rf "$1/$2"; mv "$staging" "$1/$2"'
@@ -68,7 +68,10 @@ class SiteOperations:
     def ensure_installed(
         self, base: str, name: str, files: Mapping[str, tuple[bytes, int]], *, probe: str
     ) -> str:
-        """Install files under base/name once; `probe` is the file whose presence proves it."""
+        """filesをbase/nameの下に一度だけインストールする。
+
+        `probe`は、あればインストール済みと分かるファイル。
+        """
         directory = posixpath.join(base, _checked_name(name))
         present = self.transport.run(
             ["test", "-f", posixpath.join(directory, probe)], timeout=SETUP_TIMEOUT_SECONDS
@@ -85,7 +88,7 @@ class SiteOperations:
         return directory
 
     def ensure_runner(self, installation: RunnerInstallation) -> str:
-        """Install the runner version once; returns MMT_RUNNER."""
+        """runnerのこのバージョンを一度だけインストールし、MMT_RUNNERを返す。"""
         directory = self.ensure_installed(
             self.path(RUNNER_DIRECTORY),
             installation.version,
@@ -98,7 +101,10 @@ class SiteOperations:
         return posixpath.join(directory, RUNNER_WRAPPER_NAME)
 
     def ensure_job_shell(self, content: bytes) -> str:
-        """Install this version of the job shell once; a Run's job shell is named by its content."""
+        """job shellのこのバージョンを一度だけインストールする。
+
+        Runのjob shellは内容から名前を付ける。
+        """
         version = hashlib.sha256(content).hexdigest()[:JOB_SHELL_VERSION_CHARACTERS]
         directory = self.ensure_installed(
             self.path(JOB_SHELL_DIRECTORY),
@@ -129,7 +135,7 @@ class SiteOperations:
     def run_job_shell(
         self, job_shell: str, *, spec_directory: str, environment: Mapping[str, str]
     ) -> CommandResult:
-        # `env` receives each NAME=value as its own argument; nothing is evaluated by a shell.
+        # `env`はNAME=valueを1つずつ別の引数で受け取る。シェルが評価するものは無い。
         assignments = [f"{name}={value}" for name, value in environment.items()]
         return self.transport.run(
             [
@@ -146,7 +152,7 @@ class SiteOperations:
         )
 
     def cancel(self, cancel_command: str, *, scheduler_job_id: str) -> CommandResult:
-        """Run the site's cancel command (shell text from its settings) for one scheduler job."""
+        """スケジューラの1つのジョブに対して、siteの取消コマンド（設定のシェルの文）を実行する。"""
         return self.transport.run(
             ["env", f"MMT_SCHEDULER_JOB_ID={scheduler_job_id}", "sh", "-c", cancel_command],
             timeout=CANCEL_TIMEOUT_SECONDS,

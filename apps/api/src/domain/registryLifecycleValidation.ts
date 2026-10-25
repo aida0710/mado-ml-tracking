@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { nameSchema } from './validation.js';
 
-// Same limit as namedEntitySchema, which these entities were created with.
+// これらのエンティティを作ったときのnamedEntitySchemaと同じ上限。
 const descriptionSchema = z.string().max(20000);
 
 function requireSomeField(input: object): boolean {
@@ -9,7 +9,7 @@ function requireSomeField(input: object): boolean {
 }
 const EMPTY_PATCH_MESSAGE = 'specify at least one field to change';
 
-// Name and family stay fixed: MLflow clients and automation rules find a Model by them.
+// 名前とfamilyは変えない。MLflowのクライアントと自動実行ルールは、これで登録モデルを探す。
 export const modelPatchSchema = z
   .strictObject({ description: descriptionSchema.optional() })
   .refine(requireSomeField, EMPTY_PATCH_MESSAGE);
@@ -25,7 +25,8 @@ export const datasetPatchSchema = z
   .refine(requireSomeField, EMPTY_PATCH_MESSAGE);
 export type DatasetPatch = z.infer<typeof datasetPatchSchema>;
 
-// Omitted lists every Dataset: the Datasets screen shows archived ones on request from that list.
+// 省くとすべてのデータセットを返す。データセットの画面は、求められたときにその一覧から
+// アーカイブしたものを出す。
 export const datasetListQuerySchema = z.strictObject({
   archived: z.enum(['true', 'false']).optional(),
 });

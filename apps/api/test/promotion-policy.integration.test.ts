@@ -11,8 +11,8 @@ import { createHarness, entity, request, testDatabaseUrl, type Harness } from '.
 import { madoPluginInput } from './pluginFixtures.js';
 import { promotionFixture, type PromotionFixture } from './promotionFixtures.js';
 
-// Lets one test make the run-as user's permission check fail with a database error inside the
-// policy's savepoint, the way an unexpected failure during judgement would.
+// 1つのテストで、実行名義のユーザーの権限の確認を、ポリシーのsavepointの中でデータベースの
+// エラーにより失敗させる。判定中の想定外の失敗と同じ形にする。
 const injectedFailures = vi.hoisted(() => ({ creatorAccess: false }));
 vi.mock('../src/repositories/promotionRepository.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../src/repositories/promotionRepository.js')>();
@@ -136,7 +136,8 @@ describe.skipIf(!testDatabaseUrl)('昇格policyと評価Run終端での自動判
     const rule = await fixture.registerEvaluationRule('Evaluation A');
     await fixture.createPolicy(rule);
     const version = await fixture.registerVersion('1');
-    // automation.* tags are reserved, so the Run looks like an automatic one in everything else.
+    // automation.*のタグは予約済みなので、タグ以外のすべての点で自動実行のものと同じに見える
+    // Runにする。
     const manual = await entity<Run>(
       await request(harness.app, `${fixture.basePath}/runs`, {
         method: 'POST',
@@ -492,7 +493,7 @@ describe.skipIf(!testDatabaseUrl)('昇格policyと評価Run終端での自動判
     const withoutAdminScope = await mintToken(fixture, ['read', 'registry:write']);
     expect((await request(harness.app, endpoint, { method: 'POST', token: withoutAdminScope })).status).toBe(403);
 
-    // The baseline alias now points at the candidate itself, so the delta is 0 and still passes.
+    // 基準のaliasが候補自身を指すようになったので、差は0で、それでも合格する。
     await fixture.setProductionAlias(first);
     const again = await entity<PromotionEvaluation>(
       await request(harness.app, endpoint, { method: 'POST', cookie: fixture.administrator.cookie }),

@@ -1,4 +1,4 @@
-"""Build the RunSearchRequest body shared by Run search and the search result CSV export."""
+"""Runの検索と、検索結果のCSVエクスポートで共有するRunSearchRequestの本文を組み立てる。"""
 
 from __future__ import annotations
 
@@ -20,10 +20,10 @@ def build_run_search_body(
     parent_run_id: str | None = None,
     name: str | None = None,
 ) -> dict[str, Any]:
-    """Map SDK keyword arguments to API field names, leaving out conditions that are not set.
+    """SDKのキーワード引数をAPIのフィールド名に対応させる。設定されていない条件は含めない。
 
-    ``filter`` and ``order_by`` use MLflow search syntax. An empty list does not narrow the search
-    on the API either, so omitting it keeps the request the same.
+    ``filter``と``order_by``はMLflowの検索構文を使う。空のリストはAPIでも検索を絞らないので、
+    省いてもリクエストの意味は変わらない。
     """
     list_conditions = {
         "orderBy": order_by,
@@ -33,7 +33,7 @@ def build_run_search_body(
         "modelVersionIds": model_version_ids,
         "inputDatasetVersionIds": input_dataset_version_ids,
     }
-    # A bare string is a Sequence too; iterating it would send one condition per character.
+    # ただの文字列もSequenceなので、そのまま回すと1文字ごとに1つの条件を送ってしまう。
     if any(isinstance(values, str) for values in list_conditions.values()):
         raise ConfigurationError(
             "order_by, experiment_ids, kinds, statuses, model_version_ids and "

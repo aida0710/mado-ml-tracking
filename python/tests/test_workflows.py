@@ -26,7 +26,7 @@ WORKFLOW_VARIABLES = {"MMT_DATASET_USAGE_FILE", "MMT_WORKFLOW_EXECUTION_ID"}
 def busy_once(
     response: httpx.Response,
 ) -> tuple[list[httpx.Request], Callable[[httpx.Request], httpx.Response]]:
-    """A responder that answers 503 to the first request and `response` to the rest."""
+    """最初のリクエストには503を、それ以降には`response`を返す応答関数。"""
     attempts: list[httpx.Request] = []
 
     def respond(request: httpx.Request) -> httpx.Response:
@@ -127,7 +127,7 @@ def test_an_offline_run_cannot_log_a_preprocessing_report_and_sends_nothing(tmp_
     )
     with pytest.raises(ConfigurationError, match="needs the API"):
         offline.log_preprocessing_report(input_count=1, output_count=1)
-    # mode="auto" keeps its client after switching to the spool; the report is still not sent.
+    # mode="auto"はspoolに切り替えたあともclientを持ち続けるが、それでもレポートは送らない。
     client, requests = recording_client()
     with client:
         switched = Run(client, "p", offline.entity, transport=offline.transport)
@@ -148,7 +148,7 @@ def test_preprocessing_report_rejects_nonfinite_values_before_http():
 def prepared_runtime(
     job_payload: dict[str, Any], worker_settings: Any, workspace: Path, runtime: str
 ) -> tuple[dict[str, str], Path]:
-    """The variables a Job gets on `runtime`, and where its dataset usage file would be on the host."""
+    """`runtime`でJobが受け取る変数と、データセットの使用状況ファイルがホストのどこに置かれるか。"""
     if runtime != "python":
         job_payload["target"]["runtimeKinds"] = [runtime]
         job_payload["codeVersion"].update(

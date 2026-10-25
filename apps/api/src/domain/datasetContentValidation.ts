@@ -9,14 +9,14 @@ import {
   uuidSchema,
 } from './validation.js';
 
-// Same bound as stored Artifact paths (artifactRegistration), so any Artifact path fits.
+// 保存するArtifactのパスと同じ上限（artifactRegistration）なので、どのArtifactのパスも収まる。
 const MAX_DATASET_FILE_PATH_LENGTH = 1024;
-// Cursors are base64url JSON holding one path, so they stay below a few kilobytes.
+// cursorはパスを1つ持つJSONをbase64urlにしたものなので、数KBに収まる。
 const MAX_CURSOR_LENGTH = 4096;
-// A page of the file list; the Web tree shows one directory level per page.
+// ファイル一覧の1ページ。画面のツリーは1ページに1階層のディレクトリを出す。
 const DEFAULT_FILE_PAGE_LIMIT = 1000;
 const MAX_FILE_PAGE_LIMIT = 1000;
-// Control characters make paths unsafe to write on the worker host and to show in the UI.
+// 制御文字を含むパスは、workerのホストに書くのも画面に出すのも危ない。
 
 export function isDatasetFilePath(path: string): boolean {
   return (
@@ -30,7 +30,7 @@ const datasetFilePathSchema = z
   .string()
   .refine(isDatasetFilePath, 'A relative file path without `.`/`..` segments is required');
 
-// A directory prefix: '' for the root, otherwise a safe relative path, with or without the `/`.
+// ディレクトリの前置き。ルートは''、それ以外は安全な相対パス（末尾の`/`はあってもなくてもよい）。
 const directoryPrefixSchema = z
   .string()
   .max(MAX_DATASET_FILE_PATH_LENGTH)
@@ -61,9 +61,9 @@ export const datasetVersionContentSchema = z.union([
 export type DatasetVersionContentInput = z.infer<typeof datasetVersionContentSchema>;
 
 /**
- * POST /projects/:p/datasets/:d/versions. Without content the request registers a reference
- * version (version, uri and digest required). With content the server sets uri and computes the
- * digest; a digest sent anyway must match it, and version may be omitted to take the next integer.
+ * POST /projects/:p/datasets/:d/versions。contentが無ければ参照型のバージョンを登録する
+ * （version・uri・digestが必須）。contentがあればサーバーがuriを決めてdigestを計算する。
+ * それでもdigestを送るなら計算結果と一致する必要があり、versionを省くと次の整数になる。
  */
 export const datasetVersionRequestSchema = z
   .strictObject({
@@ -82,7 +82,7 @@ export const datasetVersionRequestSchema = z
     for (const key of required)
       if (request[key] === undefined)
         context.addIssue({ code: 'custom', path: [key], message: `${key} is required` });
-    // The server owns the uri of an Artifact version, and plugin imports are reference versions.
+    // Artifactのバージョンのuriはサーバーが決め、pluginからの取り込みは参照型のバージョンになる。
     const forbidden = request.content ? (['uri', 'externalRef'] as const) : [];
     for (const key of forbidden)
       if (request[key] != null)
@@ -105,7 +105,7 @@ export type DatasetFileListQuery = z.infer<typeof datasetFileListQuerySchema>;
 
 export const datasetFileTreeQuerySchema = z.object({ prefix: directoryPrefixSchema });
 
-// SHA-256 of the whole Artifact in lowercase hex, as artifacts.sha256 stores it.
+// Artifact全体のSHA-256を小文字の16進で表したもの。artifacts.sha256の保存形式と同じ。
 export const artifactDigestQuerySchema = z.object({
   sha256: z.string().regex(/^[0-9a-f]{64}$/),
   size: z.coerce.number().int().min(0),

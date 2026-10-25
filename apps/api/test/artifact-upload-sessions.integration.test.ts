@@ -27,7 +27,7 @@ import { projectFixture } from './fixtures.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 
 const ORIGIN = 'http://127.0.0.1:5182';
-// Two full parts and a short last part, the smallest shape that has a "middle" part to lose.
+// 満杯のpartを2つと、短い最後のpart。抜け落ちうる「中間」のpartを持つ最小の形。
 const PART_SIZE = MULTIPART_MIN_PART_BYTES;
 const CONTENT = Buffer.concat([
   Buffer.alloc(PART_SIZE, 'a'),
@@ -203,7 +203,7 @@ describe.skipIf(!testDatabaseUrl)('再開可能なupload session（独立Postgre
       editor,
     );
     expect(Buffer.from(await downloaded.arrayBuffer()).equals(CONTENT)).toBe(true);
-    // Only the assembled object remains; part files and the session directory are gone.
+    // 組み立てたオブジェクトだけが残り、partのファイルとsessionのディレクトリは消えている。
     expect(await storedFiles()).toEqual(['content']);
   });
 
@@ -222,7 +222,7 @@ describe.skipIf(!testDatabaseUrl)('再開可能なupload session（独立Postgre
 
     await entity(await putPart(fixture, editor, upload, 1), 200);
     await entity(await putPart(fixture, editor, upload, 3), 200);
-    // A part rejected for its length is not stored, so it adds nothing.
+    // 長さで拒まれたpartは保存されないので、合計に何も足さない。
     await entity(
       await putPart(fixture, editor, upload, 2, { body: new Uint8Array(4), length: 4 }),
       422,
@@ -236,8 +236,8 @@ describe.skipIf(!testDatabaseUrl)('再開可能なupload session（独立Postgre
       }),
     ]);
 
-    // The list keeps the session API's access rules: a viewer gets nothing, and a project token
-    // sees only the sessions it opened itself, with their own received bytes.
+    // 一覧はsessionのAPIと同じアクセスの規則に従う。viewerには何も返らず、Projectのtokenには
+    // 自分で開いたsessionだけが、それぞれの受信済みのバイト数とともに見える。
     expect(
       await entity(
         await request(harness.app, `${fixture.basePath}/artifact-uploads?status=open`, {
@@ -439,7 +439,7 @@ describe.skipIf(!testDatabaseUrl)('再開可能なupload session（独立Postgre
     const upload = await entity<ArtifactUpload>(await createUpload(fixture, editor));
     await uploadAllParts(fixture, editor, upload);
     await entity(await uploadAction(fixture, editor, upload, 'complete'), 202);
-    // The first process assembles the object and then stops while reading it back.
+    // 1つ目のプロセスはオブジェクトを組み立て、読み戻している途中で止まる。
     const stopping = createApplication({
       config: harness.config,
       database: harness.database,
@@ -454,7 +454,7 @@ describe.skipIf(!testDatabaseUrl)('再開可能なupload session（独立Postgre
     expect(
       await entity<ArtifactUpload>(await uploadAction(fixture, editor, upload, 'get'), 200),
     ).toMatchObject({ status: 'verifying' });
-    // A live lease blocks a second finalizer until it lapses.
+    // leaseが生きている間は、それが切れるまで2つ目のfinalizerは進めない。
     const restarted = createApplication({
       config: harness.config,
       database: harness.database,
@@ -583,7 +583,7 @@ describe.skipIf(!testDatabaseUrl)('再開可能なupload session（独立Postgre
         endpoint: s3Endpoint,
         region: 'us-east-1',
         forcePathStyle: true,
-        // These values authenticate only to the isolated emulator, never to real storage.
+        // この値で認証できるのは隔離したエミュレータだけで、本物のストレージには使えない。
         credentials: { accessKeyId: 'testing', secretAccessKey: 'testing' },
       });
       const bucket = `mmt-upload-test-${Date.now()}`;

@@ -1,6 +1,6 @@
 import type { JsonObject } from './index.js';
 
-/** One file under /mmt/outputs. The worker saves it as the Run Artifact `container/<path>`. */
+/** /mmt/outputsの下の1つのファイル。workerはRunのArtifactの`container/<path>`として保存する。 */
 export interface ContainerResultArtifact {
   path: string;
   sha256: string;
@@ -15,15 +15,15 @@ export interface ContainerResultMetric {
   timestamp?: string;
 }
 
-/** A model the container produced; `path` is an output file listed in the result. */
+/** コンテナが作ったモデル。`path`は結果に挙げた出力ファイル。 */
 export interface ContainerResultModel {
   path: string;
-  /** Omitted when the Task's output model decides the destination. */
+  /** Taskの出力モデルが保存先を決めるときは省略する。 */
   modelId?: string;
   metadata?: JsonObject;
 }
 
-/** A dataset version the container produced: either an output file (`path`) or an external `uri`. */
+/** コンテナが作ったデータセットバージョン。出力ファイル（`path`）か外部の`uri`のどちらか。 */
 interface ContainerResultDatasetFields {
   datasetId: string;
   schema?: JsonObject;
@@ -36,9 +36,9 @@ export type ContainerResultDataset = ContainerResultDatasetFields & (
 );
 
 /**
- * /mmt/outputs/result.json version 2.
- * `artifactsManifest` names an output file in JSON Lines, one ContainerResultArtifact per line,
- * for outputs too many to list in result.json; its entries are added to `artifacts`.
+ * /mmt/outputs/result.jsonのバージョン2。
+ * `artifactsManifest`はJSON Lines形式の出力ファイルを指し、1行に1つContainerResultArtifactを
+ * 書く。result.jsonに挙げきれないほど多い出力のためのもので、そのエントリは`artifacts`に加える。
  */
 export interface ContainerResultV2 {
   version: 2;
@@ -51,8 +51,8 @@ export interface ContainerResultV2 {
 }
 
 /**
- * `index` identifies the declaration within its Run and makes resending safe. The worker numbers
- * result.json's `models` from 0 and continues with `datasets` (models.length + position).
+ * `index`はRunの中で宣言を識別し、送り直しても安全にする。workerはresult.jsonの`models`に0から
+ * 番号を振り、続けて`datasets`に振る（models.length + 位置）。
  */
 export type WorkerOutputDeclaration =
   | ({ index: number; kind: 'model' } & ContainerResultModel)
@@ -64,7 +64,7 @@ export interface WorkerOutputsRequest {
   declarations: WorkerOutputDeclaration[];
 }
 
-/** The version registered for one declaration. A resent index returns the stored row. */
+/** 1つの宣言に対して登録したバージョン。同じindexを送り直すと、保存済みの行を返す。 */
 export interface RunOutputDeclaration {
   index: number;
   kind: 'model' | 'dataset';

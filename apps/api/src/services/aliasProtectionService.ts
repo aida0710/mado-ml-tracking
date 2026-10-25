@@ -37,8 +37,8 @@ function aliasProtected(alias: string, message: string): never {
 }
 
 /**
- * The evidence must be the current decision of a policy for this very alias, Model and version,
- * and it must have passed. A later re-evaluation of the same candidate Run replaces it.
+ * 根拠は、まさにこのalias・登録モデル・バージョンに対するpolicyの現在の判定で、合格している
+ * 必要がある。同じ候補Runをあとで評価し直すと、判定はそれに置き換わる。
  */
 async function requirePassedEvidence(
   connection: Connection,
@@ -68,11 +68,11 @@ async function requirePassedEvidence(
 }
 
 /**
- * Guard of alias changes made by hand through the native API (Web, SDK, API tokens).
- * A protected alias needs the protection's role; an assignment also needs evidence: a passed
- * decision (always, with requirePassedEvaluation) or at least a reason. Removing an alias that
- * requires a passed decision takes Project admin, since no decision can justify a removal.
- * A named decision is checked even on an unprotected alias, because the alias event records it.
+ * native API（画面、SDK、API token）から手で行うaliasの変更の検査。保護されたaliasには、保護で
+ * 指定したroleが要る。割り当てにはさらに根拠が要る。合格した判定（requirePassedEvaluationなら
+ * 必ず）か、少なくとも理由。合格した判定を求めるaliasを外すにはProject adminが要る。外すことを
+ * 正当化できる判定は無いため。判定を指定したときは、保護されていないaliasでもその判定を確かめる。
+ * aliasのイベントに記録されるため。
  */
 export function manualAliasGuard(
   principal: Principal,
@@ -125,9 +125,8 @@ export function manualAliasGuard(
 }
 
 /**
- * Guard of the MLflow-compatible API. It can carry neither a reason nor a promotion decision, so
- * no protected alias can be changed or removed through it (decisions.md), including the removals
- * that deleting a ModelVersion or Registered Model would make.
+ * MLflow互換APIの検査。理由も昇格判定も渡せないので、このAPIからは保護されたaliasを変更も
+ * 削除もできない。ModelVersionや登録モデルを消したときに起きるaliasの削除も同じ。
  */
 export const mlflowAliasGuard: ModelAliasGuard = async (connection, change) => {
   if ((await findApplicableAliasProtections(connection, change)).length)
@@ -138,9 +137,9 @@ export const mlflowAliasGuard: ModelAliasGuard = async (connection, change) => {
 };
 
 /**
- * Guard of an automatic promotion. The policy acts only while its run-as user is Project admin or
- * a global administrator, which meets every requiredRole, and its passed decision for this alias
- * and version is the evidence a protection asks for. The authority is re-read under the Model lock.
+ * 自動昇格の検査。policyが動くのは、その実行ユーザーがProject adminか全体管理者である間だけで、
+ * これはどのrequiredRoleも満たす。このaliasとバージョンに対するpolicyの合格した判定が、保護の
+ * 求める根拠になる。権限は登録モデルのロックの下で読み直す。
  */
 export function promotionAliasGuard(policy: {
   projectId: string;
@@ -158,7 +157,7 @@ export function promotionAliasGuard(policy: {
 export class AliasProtectionService {
   constructor(private readonly database: Database) {}
 
-  /** Viewers may read the protections: the Web shows them before a change is attempted. */
+  /** viewerも保護を読める。画面は変更を試みる前にそれを表示する。 */
   async list(
     principal: Principal,
     filter: { projectId: string; modelId?: string },
@@ -231,7 +230,7 @@ export class AliasProtectionService {
     );
   }
 
-  // Same rule as promotion policies: Project admin or global administrator, admin scope for tokens.
+  // 昇格policyと同じ規則。Project adminか全体管理者で、tokenならadmin scopeが要る。
   private async requireProtectionAdmin(
     connection: Connection,
     principal: Principal,

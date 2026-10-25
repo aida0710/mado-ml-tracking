@@ -1,4 +1,4 @@
-"""Build a validated immutable CodeVersion registration payload."""
+"""検証済みで不変の、CodeVersionの登録のpayloadを組み立てる。"""
 
 from __future__ import annotations
 

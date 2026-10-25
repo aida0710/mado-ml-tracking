@@ -7,7 +7,7 @@ export function parameterString(value: JsonValue): string {
 }
 function matchesParameter(existing: JsonValue, value: string): boolean {
   if (parameterString(existing) === value) return true;
-  // Python's SDK stringifies booleans and None before sending params over REST.
+  // PythonのSDKは、真偽値とNoneを文字列にしてからRESTでparameterを送る。
   if (typeof existing === 'boolean') return value === (existing ? 'True' : 'False');
   return existing === null && value === 'None';
 }
@@ -18,7 +18,7 @@ export function appendParameters(
   run: Pick<TrackingRun, 'parameters' | 'recordedParameters'>,
   entries: KeyValue[],
 ): JsonObject {
-  // Metric/param keys are data, including names such as __proto__.
+  // メトリクスやparameterのキーは、__proto__のような名前も含めてデータとして扱う。
   const parameters: JsonObject = Object.assign(
     Object.create(null),
     run.parameters,

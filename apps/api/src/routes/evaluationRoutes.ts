@@ -4,12 +4,12 @@ import type { EvaluationService } from '../services/evaluationService.js';
 import { nameSchema, uuidSchema } from '../domain/validation.js';
 import { parse, principal, uuidParam, type ApiContext, type ApiEnvironment } from '../http/request.js';
 
-// Bounds the metric filter so one request cannot ask for an unbounded key list.
+// 1回のリクエストで際限なくkeyを求められないよう、メトリクスの絞り込みに上限を設ける。
 const MAX_COMPARED_METRICS = 200;
 const MAX_REFERENCE_DATASET_VERSIONS = 1000;
 
-// List parameters accept both repetition (?a=x&a=y) and commas (?a=x,y). A present but empty
-// parameter is an explicit empty list, which differs from omitting it (take it from the Run).
+// 一覧のクエリパラメータは、繰り返し（?a=x&a=y）とカンマ（?a=x,y）のどちらも受け付ける。
+// 値が空のクエリパラメータは明示した空の一覧で、省略した場合（Runから取る）とは違う。
 function listQuery(context: ApiContext, name: string): string[] | undefined {
   const values = context.req.queries(name);
   if (!values) return undefined;

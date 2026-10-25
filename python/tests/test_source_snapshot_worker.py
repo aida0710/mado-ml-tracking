@@ -21,7 +21,7 @@ from mado_tracking.worker.journal import JobJournal
 from mado_tracking.worker.runtime import JobExecutor
 from mado_tracking.worker.service import Worker
 
-# All code is executed on the CPU/local runner; no production SSH host or GPU is contacted.
+# コードはすべてCPUのローカルrunnerで実行する。本番のSSHホストやGPUには接続しない。
 JOB_TIMEOUT_SECONDS = 15
 
 

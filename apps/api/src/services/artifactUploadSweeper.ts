@@ -4,14 +4,16 @@ import { rows, type Database } from '../db/database.js';
 import { PollingLoop } from './pollingLoop.js';
 import { UPLOAD_SESSION_LIFETIME_MS } from './artifactUploadService.js';
 
-// Sessions expire after days, so a few minutes of delay in noticing it is harmless.
+// セッションの期限は日単位なので、気づくのが数分遅れても害は無い。
 const SWEEP_INTERVAL_MS = 10 * 60 * 1000;
 const EXPIRE_BATCH_SIZE = 100;
-// No session outlives its lifetime, and a single-request upload taking a week is not realistic,
-// so an older backend upload with no open or verifying session has no writer left.
+// 有効期間を超えて残るセッションは無く、1回のリクエストでのアップロードに1週間かかることも
+// 現実的でない。そのため、openかverifyingのセッションが無い、これより古い保存先の
+// アップロードには、書き手が残っていない。
 const ORPHANED_UPLOAD_AGE_MS = UPLOAD_SESSION_LIFETIME_MS;
-// Upload requests time out after 120 s without data (MMT_UPLOAD_IDLE_TIMEOUT_MS), so a staging
-// file untouched for a day belongs to a process that stopped mid-write.
+// アップロードのリクエストは、データが来ないまま120秒たつとタイムアウトする
+// （MMT_UPLOAD_IDLE_TIMEOUT_MS）。そのため、1日触られていないstagingのファイルは、書き込みの
+// 途中で止まったプロセスのもの。
 const ABANDONED_STAGING_IDLE_MS = 24 * 60 * 60 * 1000;
 
 export interface ArtifactUploadSweep {
@@ -20,7 +22,7 @@ export interface ArtifactUploadSweep {
   removedStagingFiles: number;
 }
 
-/** Expires stale sessions and removes storage left behind by interrupted or abandoned uploads. */
+/** 古いセッションを期限切れにし、中断・放置されたアップロードが残した保存領域を消す。 */
 export class ArtifactUploadSweeper {
   private readonly loop = new PollingLoop({
     intervalMs: SWEEP_INTERVAL_MS,
@@ -61,7 +63,7 @@ export class ArtifactUploadSweeper {
     return { expiredSessions, abortedOrphanedUploads, removedStagingFiles };
   }
 
-  /** Closes the session before discarding its parts, so no part request can land afterwards. */
+  /** partを捨てる前にセッションを閉じ、そのあとでpartのリクエストが届かないようにする。 */
   private async expireSessions(): Promise<number> {
     const expired = await rows<{
       id: string;
@@ -83,7 +85,7 @@ export class ArtifactUploadSweeper {
           backendUploadId: upload.backendUploadId,
         });
       } catch {
-        // The orphaned-upload pass retries it, because the session is no longer open.
+        // セッションはもうopenではないので、宙に浮いたアップロードの処理で再試行される。
         console.error(
           JSON.stringify({ event: 'artifact_upload_expire_abort_failed', uploadId: upload.id }),
         );

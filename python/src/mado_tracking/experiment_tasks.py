@@ -1,4 +1,4 @@
-"""SDK operations for editable Task defaults and revision-pinned launches."""
+"""編集できるTaskの既定値と、revisionを固定した起動のためのSDKの操作。"""
 
 from __future__ import annotations
 
@@ -10,12 +10,12 @@ from urllib.parse import quote
 from .errors import ApiError, ConfigurationError
 from .execution_snapshot import ExecutionMode, validate_execution_mode
 
-# Match the server's integer revision so a mistaken launch fails before any side effect.
+# サーバーの整数のrevisionに合わせ、誤った起動が副作用を起こす前に失敗するようにする。
 MAX_TASK_REVISION = 2_147_483_647
 
 
 class _Unset:
-    """Distinguish inheriting the Task model from explicitly clearing it with null."""
+    """Taskのモデルを引き継ぐことと、nullで明示的に消すことを区別する。"""
 
 
 UNSET = _Unset()
@@ -35,11 +35,11 @@ def task_output_model(
     default_code_version_id: str | None = None,
     metadata: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Build a Task ``outputModel``: register ``artifact_path`` when a Run of the Task finishes.
+    """Taskの``outputModel``を組み立てる。TaskのRunが終わると``artifact_path``を登録する。
 
-    Give either an existing ``model_id`` or ``create_model={"name": ..., "family": ...}``; a Model
-    with that name is reused, otherwise created. ``artifact_path`` is a file path in the Run's
-    Artifacts (worker outputs are uploaded under ``container/``).
+    既存の``model_id``か``create_model={"name": ..., "family": ...}``のどちらかを渡す。後者では、
+    その名前の登録モデルがあれば使い回し、無ければ作る。``artifact_path``はRunのArtifactの中の
+    ファイルのパス（workerの出力は``container/``の下にアップロードされる）。
     """
     if (model_id is None) == (create_model is None):
         raise ConfigurationError("Specify exactly one of model_id and create_model")
@@ -105,7 +105,7 @@ class ExperimentTasksClient(ABC):
         gpu_ids: Sequence[str] = (),
         output_model: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Create a Task. ``output_model`` comes from :func:`task_output_model`."""
+        """Taskを作る。``output_model``は:func:`task_output_model`で作る。"""
         payload: dict[str, Any] = {
             "experimentId": experiment_id,
             "name": name,
@@ -187,7 +187,7 @@ class ExperimentTasksClient(ABC):
                 payload[key] = value
         if not isinstance(model_version_id, _Unset):
             payload["modelVersionId"] = model_version_id
-        # A lost launch response must be reconciled through Task runs; replay could start a second Job.
+        # 起動の応答が失われたら、TaskのRunの一覧で突き合わせる。送り直すと2つ目のJobが始まりうる。
         return self.request("POST", self._task_path(project_id, task_id, "launch"), json=payload)
 
     def list_task_runs(self, project_id: str, task_id: str) -> list[dict[str, Any]]:
@@ -208,7 +208,7 @@ class ExperimentTasksClient(ABC):
             params = {"cursor": cursor}
 
     def get_output_registration(self, project_id: str, run_id: str) -> dict[str, Any] | None:
-        """Return the Task-side output model registration of a Run, or None before it is recorded."""
+        """RunについてTask側が行う出力モデルの登録を返す。記録される前はNone。"""
         if not run_id:
             raise ConfigurationError("A Run ID is required")
         path = self.project_path(project_id, f"runs/{quote(run_id, safe='')}/output-registration")

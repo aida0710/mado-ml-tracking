@@ -16,7 +16,7 @@ import { createHarness, entity, request, testDatabaseUrl, type Harness } from '.
 
 type Fixture = Awaited<ReturnType<typeof projectFixture>>;
 
-// Folder names a folder upload writes: its start time with ':' and '.' replaced.
+// フォルダのアップロードが書くフォルダ名。開始時刻の':'と'.'を置き換えたもの。
 const FIRST_FOLDER = '2026-10-11T05-52-01-123Z';
 const SECOND_FOLDER = '2026-10-11T06-10-44-001Z';
 
@@ -61,7 +61,7 @@ describe.skipIf(!testDatabaseUrl)('途中で止まったフォルダのアップ
     return `datasets/${target.id}/${folder}/${path}`;
   }
 
-  // The dataset ID as the URL spells it; PostgreSQL accepts a UUID in either case.
+  // URLに書かれたとおりのデータセットのID。PostgreSQLは大文字でも小文字でもUUIDを受け付ける。
   function folderUploadsPath(datasetId = dataset.id): string {
     return `${fixture.basePath}/datasets/${datasetId}/folder-uploads`;
   }
@@ -107,8 +107,8 @@ describe.skipIf(!testDatabaseUrl)('途中で止まったフォルダのアップ
     await storeRunless(folderFile(FIRST_FOLDER, 'a/1.txt'), 'one');
     await storeRunless(folderFile(FIRST_FOLDER, 'a/2.txt'), 'two!');
     await storeRunless(folderFile(SECOND_FOLDER, 'b.txt'), 'three');
-    // Not a folder upload: the SDK's own layout, a file directly below the root, a Run's file,
-    // and another dataset's folder.
+    // フォルダのアップロードではないもの。SDK自身の配置、ルート直下のファイル、Runのファイル、
+    // 別のデータセットのフォルダ。
     await storeRunless(`datasets/${dataset.id}/train/sdk.txt`, 'sdk');
     await storeRunless(`datasets/${dataset.id}/loose.txt`, 'loose');
     const other = await createDataset('other');
@@ -181,7 +181,7 @@ describe.skipIf(!testDatabaseUrl)('途中で止まったフォルダのアップ
       });
     expect((await content(unused)).status).toBe(404);
     expect((await content(weights)).status).toBe(200);
-    // The other attempt is untouched.
+    // もう一方の試行には手を付けない。
     expect((await content(later)).status).toBe(200);
     const audit = await entity<AuditEventPage>(
       await request(harness.app, `${fixture.basePath}/audit-events?action=dataset.folder_upload.delete`, {
@@ -326,7 +326,7 @@ describe.skipIf(!testDatabaseUrl)('途中で止まったフォルダのアップ
       checkpoints: [],
     });
 
-    // A checkpoint that is no longer retained does not keep its file, as for deletion.
+    // 削除のときと同じく、保持しなくなったcheckpointはファイルをつなぎ止めない。
     await harness.database.query('UPDATE run_checkpoints SET retained=false WHERE id=$1', [checkpoint!.id]);
     const released = await entity<{ items: ArtifactReferences[] }>(await readReferences([checkpointFile.id]), 200);
     expect(released.items[0]?.checkpoints).toEqual([]);

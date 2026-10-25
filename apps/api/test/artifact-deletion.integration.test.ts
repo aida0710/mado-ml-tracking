@@ -30,9 +30,9 @@ import { registeredVersionFixture } from './mlflow-artifacts-version-fixtures.js
 import { mlflowSdkPythonPath } from './mlflow-sdk-fixtures.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-// Past the default 7-day grace period of MMT_ARTIFACT_DELETE_GRACE_DAYS.
+// MMT_ARTIFACT_DELETE_GRACE_DAYSの既定の猶予期間（7日）を過ぎた時点。
 const AFTER_GRACE_MS = 8 * DAY_MS;
-// The task allows 47020-47029 for servers started by verification.
+// 検証で起動するサーバーには、作業の指示で47020-47029を使ってよいことになっている。
 const SDK_TEST_HTTP_PORT = Number(process.env.MMT_TEST_HTTP_PORT ?? 47027);
 
 describe.skipIf(!testDatabaseUrl)('Artifactの削除とgarbage collection（独立PostgreSQL）', () => {
@@ -122,7 +122,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactの削除とgarbage collection（独�
     ).toBe(404);
     expect(await fixture.listedPaths('all')).toEqual([]);
     expect((await fixture.deleteArtifact(artifact.id)).status).toBe(404);
-    // The blob waits for the grace period.
+    // blobは猶予期間が終わるまで残る。
     expect(await blobExists(artifact)).toBe(true);
 
     const audit = await harness.database.query<{ action: string; outcome: string }>(
@@ -232,7 +232,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactの削除とgarbage collection（独�
         })
       ).status,
     ).toBe(404);
-    // The DB refuses the reference even for a writer that skips the service's lookup.
+    // サービスの検索を飛ばして書き込む場合でも、DBがその参照を拒む。
     await expect(
       harness.database.query(
         `INSERT INTO mlflow_artifact_paths(project_id,owner_kind,owner_id,path,artifact_id)
@@ -358,7 +358,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactの削除とgarbage collection（独�
           totalBytes: 10,
           pendingDeletionCount: 0,
           pendingDeletionBytes: 0,
-          // Only the first a.txt: the older model.bin is referenced by the model version.
+          // 最初のa.txtだけ。古いmodel.binはモデルバージョンが参照している。
           unreferencedOldVersionCount: 1,
           unreferencedOldVersionBytes: 4,
         },
@@ -375,7 +375,8 @@ describe.skipIf(!testDatabaseUrl)('Artifactの削除とgarbage collection（独�
 
   it('MLflowのDELETEは参照されていないバージョンだけを消し、登録モデルバージョンのbytesは変わらない', async () => {
     const fixture = await registeredVersionFixture(harness, 'run');
-    // A newer upload replaces the registered bytes at the path; only the newer one is unreferenced.
+    // 新しいアップロードが、そのパスの登録済みの中身を置き換える。参照されていないのは
+    // 新しい方だけ。
     await entity(
       await request(
         harness.app,
@@ -432,7 +433,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactの削除とgarbage collection（独�
       [fixture.run.id],
     );
     expect(stored.rows).toEqual([{ deleted: 1, kept: 3 }]);
-    // Deleting the same path again succeeds, as on the MLflow server.
+    // MLflowのサーバーと同じく、同じパスをもう一度削除しても成功する。
     expect(
       (
         await request(harness.app, deleteUrl, {
@@ -564,7 +565,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactの削除とgarbage collection（独�
         endpoint: s3Endpoint,
         region: 'us-east-1',
         forcePathStyle: true,
-        // These values authenticate only to the isolated emulator, never to real storage.
+        // この値で認証できるのは隔離したエミュレータだけで、本物のストレージには使えない。
         credentials: { accessKeyId: 'testing', secretAccessKey: 'testing' },
       });
       const bucket = `mmt-gc-test-${Date.now()}`;

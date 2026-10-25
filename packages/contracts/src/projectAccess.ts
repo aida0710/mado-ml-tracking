@@ -1,6 +1,6 @@
 import type { ProjectRole, User } from './index.js';
 
-/** A Project role granted to everyone in an Authentik group (project_group_bindings). */
+/** Authentikのgroupに入っている全員に付与するProjectのrole（project_group_bindings）。 */
 export interface ProjectGroupBinding {
   projectId: string;
   group: string;
@@ -9,15 +9,15 @@ export interface ProjectGroupBinding {
   createdAt: string;
 }
 
-/** One group through which a member holds a Project role. */
+/** メンバーがProjectのroleを持つ元になっているgroupの1つ。 */
 export interface ProjectMemberGroupRole {
   group: string;
   role: ProjectRole;
 }
 
 /**
- * A user with a Project role. `role` is the effective role: the highest of the direct grant
- * (`directRole`, null when the user has none) and the roles of the group bindings in `groups`.
+ * Projectのroleを持つユーザー。`role`は実効role。直接付与（`directRole`。無ければnull）と、
+ * `groups`にあるgroupへの付与のroleのうち、最も高いもの。
  */
 export interface ProjectMember {
   user: User;
@@ -26,7 +26,7 @@ export interface ProjectMember {
   groups: ProjectMemberGroupRole[];
 }
 
-/** A user found by GET /users?query=. Carries only what is needed to pick the user. */
+/** GET /users?query=で見つかったユーザー。ユーザーを選ぶのに要る項目だけを持つ。 */
 export interface UserSearchResult {
   id: string;
   email: string;

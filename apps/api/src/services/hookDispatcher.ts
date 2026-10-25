@@ -36,39 +36,39 @@ import type { JobService } from './jobService.js';
 import type { ModelRegistrationListener } from './modelAutomationService.js';
 import type { RunService } from './runService.js';
 
-// Generated names follow the same limit as user-created Run names.
+// 生成する名前には、ユーザーが作るRunの名前と同じ上限をかける。
 const RUN_NAME_LIMIT = 200;
 const START_SAVEPOINT = 'hook_start';
 
-/** Where a Job stands in a chain of hooks and drivers (jobs.hook_chain, jobs.chain_depth). */
+/** フックとドライバーの連鎖の中でのJobの位置（jobs.hook_chain、jobs.chain_depth）。 */
 export interface JobChain {
   hookChain: string[];
   chainDepth: number;
 }
 
-// A person's start (manual, webhook) begins a new chain.
+// 人による起動（手動、webhook）は新しい連鎖を始める。
 const NEW_CHAIN: JobChain = { hookChain: [], chainDepth: 0 };
 
-/** One thing that happened, as the hooks see it. */
+/** フックから見た、起きた出来事1つ。 */
 export interface HookEvent {
   subjectKind: HookExecutionSubject;
   subjectId: string | null;
-  // Unique per hook: a repeated event (a resent webhook, a Run reopened and ended again) finds
-  // the execution it already has.
+  // フックごとに一意。繰り返されたイベント（再送されたwebhook、開き直して再び終わったRun）は、
+  // 既にある実行を見つける。
   eventKey: string;
   payload: JsonObject | null;
   requestedBy: string | null;
   chain: JobChain;
-  // Shown in the names of the Runs the start creates.
+  // 起動で作るRunの名前に出す。
   label: string;
   context: {
-    // What inheritModelVersion takes; model_registered always uses it.
+    // inheritModelVersionが取るもの。model_registeredは常にこれを使う。
     modelVersionId: string | null;
-    // What inheritOutputDatasets adds to the inputs.
+    // inheritOutputDatasetsが入力に足すもの。
     outputDatasetVersionIds: string[];
-    // The Run the started Runs hang under.
+    // 起動したRunをぶら下げる親のRun。
     parentRunId: string | null;
-    // checkpoint_saved: the checkpoint handed to the Job, and the Run that saved it.
+    // checkpoint_saved: Jobに渡すcheckpointと、それを保存したRun。
     checkpointId: string | null;
     sourceRunId: string | null;
   };
@@ -87,10 +87,10 @@ function unique(values: string[]): string[] {
 }
 
 /**
- * Starts hooks when their event happens (docs/hooks.md). Each start is a hook execution that
- * records whether a Job was created, why it was skipped, or which Run it waits for. Starts run
- * in the caller's transaction (a registration, a checkpoint, a Run's end) under a savepoint, so
- * a hook that cannot create its Job is recorded as failed without undoing the event.
+ * イベントが起きたらフックを起動する（docs/hooks.md）。起動の1回ずつがフックの実行で、Jobを
+ * 作ったか、飛ばした理由、どのRunを待っているかを記録する。起動は呼び出し元のトランザクション
+ * （登録、checkpoint、Runの終了）の中でsavepointを置いて動くので、Jobを作れないフックは、
+ * イベントを取り消さずに失敗として記録される。
  */
 export class HookDispatcher implements ModelRegistrationListener, CheckpointListener {
   readonly name = 'hooks';
@@ -138,7 +138,7 @@ export class HookDispatcher implements ModelRegistrationListener, CheckpointList
     const event = await this.checkpointEvent(connection, { checkpoint, run, payload: null });
     for (const hook of hooks) {
       if (!matchesHookFilter(hook.filter, subject)) continue;
-      // every_k counts this Run's checkpoints in step order; the others leave no execution.
+      // every_kはこのRunのcheckpointをstepの順に数える。それ以外のcheckpointでは実行を残さない。
       if (hook.checkpointMode === 'every_k') {
         const ordinal = await this.checkpointOrdinal(connection, checkpoint);
         if (ordinal % hook.checkpointEvery! !== 0) continue;
@@ -147,7 +147,7 @@ export class HookDispatcher implements ModelRegistrationListener, CheckpointList
     }
   }
 
-  /** A Run ended: release what waited for it, then start the run_finished hooks. */
+  /** Runが終わった。それを待っていたものを解放し、run_finishedのフックを起動する。 */
   async onRunEnded(connection: Connection, run: Run): Promise<void> {
     for (const pending of await lockPendingExecutions(connection, run.id))
       await this.releasePending(connection, pending);
@@ -177,14 +177,14 @@ export class HookDispatcher implements ModelRegistrationListener, CheckpointList
       if (matchesHookFilter(hook.filter, subject)) await this.dispatch(connection, { hook, event });
   }
 
-  /** Every member of the array has a final attempt (JobArrayCompletionHandler). */
+  /** arrayのすべてのメンバーに最後の試行がそろった（JobArrayCompletionHandler）。 */
   async onArrayFinished(connection: Connection, group: JobArrayGroup): Promise<void> {
     const hooks = await lockEnabledHooks(connection, {
       projectId: group.projectId,
       trigger: 'array_finished',
     });
     if (!hooks.length) return;
-    // The final attempt of each index; earlier attempts were retried.
+    // 各indexの最後の試行。それより前の試行は再試行された。
     const members = await rows<{ runId: string; status: string; chainDepth: number; hookChain: string[] }>(
       connection,
       `SELECT j.run_id,j.status,j.chain_depth,j.hook_chain FROM jobs j WHERE j.array_group_id=$1
@@ -223,7 +223,7 @@ export class HookDispatcher implements ModelRegistrationListener, CheckpointList
       if (matchesHookFilter(hook.filter, subject)) await this.dispatch(connection, { hook, event });
   }
 
-  /** A person's start: the manual trigger or a verified webhook delivery. */
+  /** 人による起動。手動の起動か、検証済みのwebhookの配信。 */
   async dispatchRequest(
     connection: Connection,
     request: {
@@ -255,7 +255,7 @@ export class HookDispatcher implements ModelRegistrationListener, CheckpointList
     });
   }
 
-  /** Pending executions whose Run never ended are skipped (HookSweeper). */
+  /** Runが終わらないままの保留中の実行を飛ばす（HookSweeper）。 */
   async expirePending(
     connection: Connection,
     expiry: { maxAgeHours: number; limit: number },
@@ -271,8 +271,8 @@ export class HookDispatcher implements ModelRegistrationListener, CheckpointList
   }
 
   /**
-   * Records one start of a hook and creates its Job (or array) when nothing holds it back. A
-   * pending execution passes its id to be decided again when the Run it waited for ends.
+   * フックの起動を1回記録し、止めるものが無ければそのJob（またはarray）を作る。保留中の実行は、
+   * 待っていたRunが終わったときに判定し直すため、自分のidを渡す。
    */
   private async dispatch(
     connection: Connection,
@@ -313,7 +313,7 @@ export class HookDispatcher implements ModelRegistrationListener, CheckpointList
         checkpointId: event.context.checkpointId,
         requestedBy: event.requestedBy,
       });
-      // A concurrent delivery of the same event recorded it first.
+      // 同じイベントを同時に配信したほうが先に記録した。
       if (!inserted)
         return (await findExecutionIdByEvent(connection, {
           hookId: hook.id,
@@ -346,11 +346,12 @@ export class HookDispatcher implements ModelRegistrationListener, CheckpointList
     const { hook, event } = start;
     if (!hook.enabled) return skip('hook_disabled');
     if (!(await hasHookOwnerAccess(connection, hook))) return skip('owner_access_revoked');
-    // A hook appears once per chain, so a hook started by its own Jobs' events stops there.
+    // 同じフックは1つの連鎖に1回しか出ないので、自分のJobのイベントで起動されたフックは
+    // そこで止まる。
     if (event.chain.hookChain.includes(hook.id)) return skip('loop_detected');
     if (event.chain.chainDepth + 1 > MAX_JOB_CHAIN_DEPTH) return skip('chain_too_deep');
     if (hook.trigger === 'model_registered' && event.context.sourceRunId) {
-      // A version registered during training waits until the training Run has finished.
+      // 学習中に登録されたバージョンは、学習Runが終わるまで待つ。
       const source = await findRun(connection, {
         projectId: hook.projectId,
         id: event.context.sourceRunId,
@@ -450,7 +451,7 @@ export class HookDispatcher implements ModelRegistrationListener, CheckpointList
         parentRunId: context.parentRunId,
         environment: {},
       },
-      // Inherited outputs stay apart from the hook's fixed inputs, like chained automation.
+      // 引き継いだ出力は、連鎖する自動実行と同じく、フックの固定の入力とは分けて持つ。
       upstreamDatasetVersionIds: inherited,
     });
     const job = await this.jobs.insertJob(connection, {
@@ -472,7 +473,7 @@ export class HookDispatcher implements ModelRegistrationListener, CheckpointList
     return { jobId: job.id, runId: run.id, arrayGroupId: null };
   }
 
-  // Under 'latest' only the newest checkpoint of a Run waits; the older ones are superseded.
+  // 'latest'では、Runの最新のcheckpointだけが待つ。古いものは置き換わったことにする。
   private async supersedeOlderPending(
     connection: Connection,
     newest: { hook: Hook; event: HookEvent; keepId: string },
@@ -492,7 +493,7 @@ export class HookDispatcher implements ModelRegistrationListener, CheckpointList
     await this.dispatch(connection, { hook, event, pendingId: pending.id });
   }
 
-  // A pending execution keeps its subject; the event is read again as it is now.
+  // 保留中の実行は対象を持ち続ける。イベントは今の状態で読み直す。
   private async rebuildEvent(
     connection: Connection,
     pending: PendingHookExecution,
@@ -584,7 +585,7 @@ export class HookDispatcher implements ModelRegistrationListener, CheckpointList
     };
   }
 
-  // A Run created by a person (or MLflow) has no Job and starts a new chain.
+  // 人（またはMLflow）が作ったRunにはJobが無く、新しい連鎖を始める。
   private async chainOfRun(connection: Connection, runId: string): Promise<JobChain> {
     const job = await first<JobChain>(
       connection,

@@ -1,9 +1,8 @@
-"""Diagnose a compute target over the worker's own transport before any Job runs there.
+"""Jobを動かす前に、worker自身のtransportでコンピュータを診断する。
 
-The worker discovers the machine (target_discovery.py), sends one fixed probe script to the
-target's Python, reads back raw facts as JSON, and turns them into the API's TargetCheckResult.
-Values are only what the target reported: a missing tool is reported as missing, never filled
-with a guessed version or GPU.
+workerはマシンを調べ（target_discovery.py）、固定の診断スクリプトを1つコンピュータのPythonに送り、
+生の事実をJSONで読み取って、APIのTargetCheckResultに変換する。値はコンピュータが
+報告したものだけ。無いツールは無いと報告し、推測したバージョンやGPUで埋めることは無い。
 """
 
 from __future__ import annotations
@@ -19,23 +18,23 @@ from .target_check_report import fit_result_size, sanitize_result
 from .target_discovery import TargetDiscovery, discover_target
 from .transport import CommandTransport, create_target_transport
 
-# The host runner and SDK need the same Python as pyproject.toml's requires-python.
+# host runnerとSDKには、pyproject.tomlのrequires-pythonと同じPythonが要る。
 MINIMUM_TARGET_PYTHON = (3, 11)
-# The probe runs several short commands (nvidia-smi, docker, the API request) on the target.
+# 診断はコンピュータの上で短いコマンド（nvidia-smi、docker、APIへのリクエスト）をいくつか実行する。
 PROBE_TIMEOUT_SECONDS = 90.0
-# What the probe checks for writing while a computer has no work directory yet; the shell's home.
+# コンピュータにまだ作業ディレクトリが無い間に、診断が書き込みを確かめる場所。シェルのホーム。
 HOME_DIRECTORY = "~"
-# `--nv` is needed only by GPU Jobs, but a check should tell whether GPU containers can run.
+# `--nv`が要るのはGPUのJobだけだが、確認ではGPUのコンテナを動かせるかどうかを示すべき。
 CONTAINER_EXEC_FLAGS = sorted(REQUIRED_SIF_FLAGS | {"--nv"})
 CONTAINER_KINDS = ("apptainer", "singularity")
 
-# Reports the interpreter before the probe itself runs, so a too-old or broken Python is
-# still identified. Kept to syntax every Python 3 accepts.
+# 診断の本体より前にインタープリタを報告するので、古すぎたり壊れていたりするPythonでも特定できる。
+# どのPython 3でも受け付ける構文だけで書く。
 PYTHON_IDENTITY = "import json, sys; print(json.dumps([list(sys.version_info[:3]), sys.executable]))"
 
-# Runs on the target with its own Python; only the standard library of Python 3.6+ is used so
-# that an old interpreter can still report what is missing. argv: work directory, health URL,
-# JSON list of container exec flags to look for.
+# コンピュータの上で、そのコンピュータのPythonで動く。古いインタープリタでも何が
+# 足りないかを報告できるよう、Python 3.6以上の標準ライブラリだけを使う。
+# argv: 作業ディレクトリ、ヘルスチェックのURL、探すコンテナのexecのフラグのJSONの配列。
 PROBE_SCRIPT = r"""
 import json, os, shutil, subprocess, sys, tempfile
 try:
@@ -162,7 +161,7 @@ def item(name: str, status: str, code: str | None = None, detail: str | None = N
 
 
 def failed_facts(name: str, code: str) -> dict[str, Any]:
-    """The facts of a check that stopped before the target could report its tools."""
+    """コンピュータがツールを報告する前に止まった確認の事実。"""
     return {
         "items": [item(name, "ng", code)],
         "gpus": None,
@@ -182,15 +181,18 @@ def version_2_result(facts: dict[str, Any], discovery: TargetDiscovery) -> dict[
 
 
 def failed_result(name: str, code: str) -> dict[str, Any]:
-    """A result for a check that stopped before the target could report anything."""
+    """コンピュータが何かを報告する前に止まった確認の結果。"""
     return version_2_result(failed_facts(name, code), TargetDiscovery())
 
 
 def parse_gpu_rows(rows: list[str]) -> list[dict[str, Any]]:
-    """Parse `nvidia-smi --query-gpu=index,uuid,name,memory.total --format=csv,noheader,nounits`."""
+    """次のコマンドの出力を解析する。
+
+    `nvidia-smi --query-gpu=index,uuid,name,memory.total --format=csv,noheader,nounits`
+    """
     gpus = []
     for row in rows:
-        # The model name may contain commas, so index/uuid come from the left and memory from the right.
+        # モデル名にはカンマが入り得るので、index・uuidは左から、メモリは右から取る。
         head = row.split(",", 2)
         if len(head) != 3:
             continue
@@ -234,7 +236,7 @@ def gpu_item(
     facts: dict[str, Any], *, gpus_expected: bool
 ) -> tuple[dict[str, Any], list[dict[str, Any]] | None]:
     if not facts.get("found"):
-        # A CPU-only target does not need nvidia-smi; one configured with GPUs does.
+        # CPUだけのコンピュータにはnvidia-smiは要らない。GPUを設定したコンピュータには要る。
         return item("gpu", "ng" if gpus_expected else "unavailable", "nvidia_smi_missing"), None
     if facts.get("exitCode") != 0:
         return item("gpu", "ng", "nvidia_smi_failed"), None
@@ -244,7 +246,7 @@ def gpu_item(
 
 def work_directory_item(facts: dict[str, Any], *, target: dict[str, Any]) -> dict[str, Any]:
     if not target.get("workDirectory"):
-        # The computer is being set up; its directory candidates are offered instead.
+        # コンピュータを設定している途中。代わりにディレクトリの候補を出す。
         return item("work_directory", "skipped", "work_directory_not_set")
     if facts.get("writable"):
         return item("work_directory", "ok")
@@ -254,14 +256,14 @@ def work_directory_item(facts: dict[str, Any], *, target: dict[str, Any]) -> dic
 def build_facts(
     identity: tuple[list[int], str], facts: dict[str, Any], *, target: dict[str, Any]
 ) -> dict[str, Any]:
-    """Turn the probe's raw facts into the items, GPUs and runtimes of a TargetCheckResult."""
+    """診断の生の事実を、TargetCheckResultの項目・GPU・runtimeに変換する。"""
     python = python_item(identity)
     venv = item("venv", "ok") if facts.get("venv") else item("venv", "ng", "venv_missing")
     pip_facts = facts.get("pip") or {}
     if pip_facts.get("found"):
         pip = item("pip", "ok", detail=pip_facts.get("version"))
     elif facts.get("ensurepip"):
-        # The host runner bootstraps pip into the Job's venv with ensurepip.
+        # host runnerはensurepipでJobのvenvにpipを入れる。
         pip = item("pip", "ok", detail="ensurepip")
     else:
         pip = item("pip", "ng", "pip_missing")
@@ -269,7 +271,7 @@ def build_facts(
     git = (
         item("git", "ok", detail=git_facts.get("version"))
         if git_facts.get("found") and git_facts.get("exitCode") == 0
-        # Only Git code sources need it; inline and Artifact sources run without git.
+        # 必要なのはGitのコードソースだけ。インラインとArtifactのソースはgitなしで動く。
         else item("git", "unavailable", "git_missing")
     )
     docker = docker_item(facts.get("docker") or {})
@@ -340,7 +342,7 @@ def parse_facts(raw: bytes) -> dict[str, Any]:
 
 
 def choose_python(pythons: list[dict[str, Any]]) -> str | None:
-    """For a computer without a Python yet: the first discovered 3.11+, else the first that answered."""
+    """まだPythonが無いコンピュータ用: 見つかった最初の3.11以上、無ければ最初に応答したもの。"""
     answered = [python for python in pythons if python["version"] is not None]
     for python in answered:
         if tuple(int(part) for part in python["version"].split(".")[:2]) >= MINIMUM_TARGET_PYTHON:
@@ -351,10 +353,10 @@ def choose_python(pythons: list[dict[str, Any]]) -> str | None:
 async def probe_target(
     target: dict[str, Any], *, transport: CommandTransport, health_url: str, masker: SecretMasker
 ) -> dict[str, Any]:
-    """Probe in steps so the first failing step names the problem.
+    """段階を踏んで診断し、最初に失敗した段階で問題を示す。
 
-    Transport error text can carry ssh's stderr (key paths, host names), so failures are
-    reported as codes only. A failed discovery only leaves the setup candidates empty.
+    transportのエラーの文にはsshのstderr（鍵のパスやホスト名）が含まれ得るので、
+    失敗はコードだけで報告する。調査に失敗しても、設定の候補が空になるだけ。
     """
     try:
         await transport.run(["true"])
@@ -391,7 +393,7 @@ async def probe_target(
             )
         )
     except (TransportError, TimeoutError):
-        # The interpreter answered but could not run the probe (often a very old Python).
+        # インタープリタは応答したが、診断を実行できなかった（とても古いPythonのことが多い）。
         failed = with_connection(failed_facts("python", "probe_failed"))
         failed["items"][1]["detail"] = python_item(identity)["detail"]
         return report(failed)
@@ -405,10 +407,11 @@ def with_connection(facts: dict[str, Any]) -> dict[str, Any]:
 async def check_target(
     target: dict[str, Any], *, allow_local_executor: bool, health_url: str, masker: SecretMasker
 ) -> tuple[str, dict[str, Any]]:
-    """Return the completion status and result; `failed` means the worker could not probe at all."""
+    """完了の状態と結果を返す。`failed`は、workerがまったく診断できなかったことを表す。"""
     try:
         transport = create_target_transport(target, allow_local_executor=allow_local_executor, masker=masker)
     except ConfigurationError:
-        # Missing key/known_hosts files on the worker host, or local execution not allowed here.
+        # workerホストに鍵やknown_hostsのファイルが無いか、
+        # ここではローカルでの実行が許されていない。
         return "failed", failed_result("connection", "ssh_configuration")
     return "finished", await probe_target(target, transport=transport, health_url=health_url, masker=masker)

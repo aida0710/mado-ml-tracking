@@ -39,7 +39,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
     await harness?.close();
   });
 
-  /** An application whose plugin client fails while `plugin.isUnavailable` is true. */
+  /** `plugin.isUnavailable`がtrueの間、pluginのクライアントが失敗するアプリ。 */
   function applicationWithPlugin() {
     const plugin = { isUnavailable: true, delivered: [] as string[] };
     const client = madoClientStub({
@@ -134,7 +134,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
     ).items;
   }
 
-  // Keeps the worker answering, so only the Job heartbeat is stale.
+  // workerは応答させたままにし、Jobのheartbeatだけが古くなるようにする。
   async function ageJobHeartbeat(jobId: string): Promise<void> {
     await harness.database.query(
       "UPDATE jobs SET heartbeat_at=now()-interval '61 seconds' WHERE id=$1",
@@ -191,10 +191,10 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
     });
     for (const identity of [fixture.viewer, fixture.administrator])
       expect(await visibleAlerts({ cookie: identity.cookie })).toEqual([opened]);
-    // The Project is private and the outsider has no role in it.
+    // Projectは非公開で、outsiderはそこでroleを持たない。
     expect(await visibleAlerts({ cookie: fixture.outsider.cookie })).toEqual([]);
 
-    // A token limited to another Project sees only that Project.
+    // 別のProjectに限定したtokenには、そのProjectのものしか見えない。
     const otherProject = await entity<{ id: string }>(
       await request(harness.app, '/api/projects', {
         method: 'POST',
@@ -211,15 +211,15 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
     );
     expect(await visibleAlerts({ token: limited.token })).toEqual([]);
 
-    // Public access is not membership: everyone may open a public Project, but its alerts ring
-    // only its members' bells.
+    // 公開によるアクセスはmembershipではない。公開Projectは誰でも開けるが、そのアラートは
+    // メンバーのベルしか鳴らさない。
     await harness.database.query("UPDATE projects SET visibility='public' WHERE id=$1", [
       fixture.project.id,
     ]);
     expect(await visibleAlerts({ cookie: fixture.outsider.cookie })).toEqual([]);
     expect(await visibleAlerts({ cookie: fixture.viewer.cookie })).toEqual([opened]);
 
-    // A global administrator's token acts for the person, so it needs membership like anyone's.
+    // 全体管理者のtokenはその人として動くので、ほかの人と同じくmembershipが要る。
     const administratorToken = await entity<{ token: string }>(
       await request(harness.app, '/api/tokens', {
         method: 'POST',
@@ -235,7 +235,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
     expect(await visibleAlerts({ token: administratorToken.token })).toEqual([]);
     expect(await visibleAlerts({ cookie: fixture.administrator.cookie })).toEqual([opened]);
 
-    // An archived Project's alerts are no longer shown, to global administrators either.
+    // アーカイブしたProjectのアラートは、全体管理者にももう出さない。
     await harness.database.query('UPDATE projects SET archived_at=now(),archived_by=$2 WHERE id=$1', [
       fixture.project.id,
       fixture.administrator.userId,
@@ -262,7 +262,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
       expect.objectContaining({ kind: 'job.heartbeat_stale', resolution: 'recovered' }),
     ]);
 
-    // A second outage is a new occurrence and notifies again.
+    // 2回目の停止は新しい発生として扱い、もう一度通知する。
     await ageJobHeartbeat(job.id);
     expect(await monitor().tick()).toMatchObject({ opened: 1 });
     expect(await queuedNotifications()).toHaveLength(3);
@@ -447,7 +447,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
     expect(await listAlerts(fixture, '?state=all')).toEqual([
       expect.objectContaining({ kind: 'plugin.delivery_stalled', resolution: 'inactive' }),
     ]);
-    // A disabled plugin still reports its backlog, without counting as stalled.
+    // 無効にしたpluginも未送信の件数は報告するが、滞っているとは数えない。
     expect(
       await entity<PluginOutboxSummary>(
         await request(application.app, `${fixture.basePath}/plugins/${connection.id}/outbox`, {
@@ -482,7 +482,7 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
         body: madoPluginInput(),
       }),
     );
-    // Public replies show whether credentials are saved, never their values.
+    // 公開する応答には認証情報が保存されているかどうかだけを出し、値は出さない。
     expect(connection.tokenConfigured).toBe(true);
     expect(JSON.stringify(connection)).not.toContain(MADO_CREDENTIALS_FIXTURE.accessToken!);
     const unconfigured = await entity<PluginConnection>(

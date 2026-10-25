@@ -1,15 +1,15 @@
-// Same window and floor as the web viewer (apps/web/src/lib/audioAnalysis.ts), so a server image
-// and a browser-drawn spectrogram of the same file look alike.
+// 画面のビューア（apps/web/src/lib/audioAnalysis.ts）と同じ窓と下限を使い、同じファイルなら
+// サーバーの画像とブラウザで描いたスペクトログラムが同じに見えるようにする。
 export const SPECTROGRAM_FFT_SIZE = 1024;
 export const SPECTROGRAM_DB_FLOOR = -100;
-// One column per pixel of a wide canvas; the image is stretched to the drawn width.
+// 広いcanvasの1ピクセルに1列。画像は描く幅に引き伸ばす。
 export const SPECTROGRAM_MAX_COLUMNS = 2048;
 
 export interface SpectrogramDecibels {
   columnCount: number;
-  /** fftSize / 2 + 1 linear bins from 0 Hz to Nyquist. */
+  /** 0 Hzからナイキスト周波数までの線形のbin。数はfftSize / 2 + 1。 */
   binCount: number;
-  /** Column-major: values[column * binCount + bin], between SPECTROGRAM_DB_FLOOR and 0. */
+  /** 列優先: values[column * binCount + bin]。値はSPECTROGRAM_DB_FLOORから0の間。 */
   values: Float32Array;
 }
 
@@ -25,7 +25,7 @@ interface TwiddleTable {
   sin: Float64Array;
 }
 
-/** cos/sin of -2πk/size for k < size/2, so the FFT never calls Math.cos per butterfly. */
+/** k < size/2での-2πk/sizeのcos/sin。FFTがbutterflyごとにMath.cosを呼ばずに済む。 */
 function createTwiddleTable(size: number): TwiddleTable {
   const cos = new Float64Array(size / 2);
   const sin = new Float64Array(size / 2);
@@ -36,7 +36,10 @@ function createTwiddleTable(size: number): TwiddleTable {
   return { cos, sin };
 }
 
-/** In-place iterative radix-2 FFT; `real.length` must be the power of two the table was made for. */
+/**
+ * in-placeで反復するradix-2のFFT。`real.length`は、テーブルを作ったときの2のべき乗で
+ * なければならない。
+ */
 function fft(real: Float64Array, imaginary: Float64Array, twiddles: TwiddleTable): void {
   const size = real.length;
   for (let index = 1, reversed = 0; index < size; index += 1) {
@@ -67,9 +70,9 @@ function fft(real: Float64Array, imaginary: Float64Array, twiddles: TwiddleTable
 }
 
 /**
- * Streams mono samples into an averaged power spectrogram of the whole file without holding the
- * audio. Non-overlapping Hann frames are summed into columns; when the column count reaches
- * `maxColumns`, neighbouring columns merge, as in WaveformPeaksAccumulator.
+ * モノラルのサンプルを流し込み、音声を保持せずにファイル全体の平均パワーのスペクトログラムを
+ * 作る。重ならないHannのフレームを列に足し合わせ、列の数が`maxColumns`に達したら、
+ * WaveformPeaksAccumulatorと同じく隣どうしの列をまとめる。
  */
 export class SpectrogramAccumulator {
   private readonly binCount: number;
@@ -98,7 +101,7 @@ export class SpectrogramAccumulator {
     this.window = createHannWindow(fftSize);
     this.twiddles = createTwiddleTable(fftSize);
     const windowSum = this.window.reduce((sum, value) => sum + value, 0);
-    // |X|^2 of a full-scale sine is (windowSum / 2)^2, so full scale reads about 0 dB.
+    // フルスケールの正弦波の|X|^2は(windowSum / 2)^2なので、フルスケールがおよそ0 dBになる。
     this.powerReference = (windowSum / 2) ** 2;
     this.frame = new Float64Array(fftSize);
     this.real = new Float64Array(fftSize);
@@ -121,7 +124,7 @@ export class SpectrogramAccumulator {
   }
 
   finish(): SpectrogramDecibels {
-    // Audio shorter than one frame still yields one zero-padded column; a longer tail is dropped.
+    // 1フレームより短い音声でも、ゼロ埋めした列を1つ作る。それより長い音声の端数は捨てる。
     if (!this.hasFrames && this.frameFill > 0) {
       this.frame.fill(0, this.frameFill);
       this.addFrame();

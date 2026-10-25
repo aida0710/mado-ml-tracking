@@ -13,7 +13,7 @@ import type { SiteJobShellService } from '../services/siteJobShellService.js';
 import type { SiteKeyService } from '../services/siteKeyService.js';
 import type { SitePersonalSettingsService } from '../services/sitePersonalSettingsService.js';
 
-// Mounted at /api/targets: what a site has besides its ComputeTarget fields.
+// /api/targetsに置く。siteがComputeTargetの項目のほかに持つもの。
 export function siteComputerRoutes(services: {
   jobShells: SiteJobShellService;
   personalSettings: SitePersonalSettingsService;

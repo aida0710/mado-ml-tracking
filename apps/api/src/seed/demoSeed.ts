@@ -42,7 +42,7 @@ export async function seedDemo(
       [DEMO_PROJECT_NAME],
     );
     if (complete) return { projectId: complete.projectId, alreadySeeded: true };
-    // A purged Project keeps only its name (a tombstone), which does not block a new seed.
+    // 完全に削除したProjectは名前だけを残す（墓標）が、それは新しいseedの妨げにならない。
     const incomplete = await first(
       database,
       'SELECT id FROM projects WHERE name=$1 AND purged_at IS NULL',
@@ -67,7 +67,7 @@ export async function seedDemo(
       name: DEMO_PROJECT_NAME,
       description: '明示許可で投入したデモ。CPU計算と生成音声は実データ、QwenのRunは未実行。',
       artifactBackend: 'filesystem',
-      // The seed gives editor and viewer their roles below; public access would make both editors.
+      // seedは下でeditorとviewerにそれぞれのroleを与える。公開にすると両方ともeditorになる。
       visibility: 'private',
       members: [],
     });
@@ -322,7 +322,7 @@ export async function seedDemo(
           cpuArch: 'amd64',
           supportsArray: false,
           queueTimeoutSeconds: null,
-          // The demo's Runs belong to its Project members, who all run on it.
+          // デモのRunはProjectのメンバーのもので、全員がこのコンピュータで実行する。
           visibility: 'public',
         }, NO_REQUEST_METADATA);
     }

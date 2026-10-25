@@ -1,4 +1,4 @@
-"""Private worker snapshots and acknowledged log cursors survive worker restart."""
+"""workerの非公開のスナップショットと、送信を確認したログのカーソルは、workerを再起動しても残る。"""
 
 from __future__ import annotations
 
@@ -16,10 +16,10 @@ from .contracts import WorkerJob
 from .host_state import read_json, write_json
 
 LOGGER = logging.getLogger(__name__)
-# Input dataset staging (dataset_staging.py): a request, a relayed archive, or one downloaded file
-# for the input at this index.
+# 入力データセットのステージング（dataset_staging.py）: このインデックスの入力についての、
+# リクエスト、中継したアーカイブ、またはダウンロードした1つのファイル。
 DATASET_TRANSFER_KIND = re.compile(r"^dataset-(?:request|archive|file)-\d+$")
-# Temporary files of one Job: inputs before they are relayed, and outputs before they are saved.
+# 1つのJobの一時ファイル: 中継する前の入力と、保存する前の出力。
 TRANSFER_KINDS = {"source", "weights", "sif", "output", "snapshot", "checkpoint", "input-checkpoint"}
 
 
@@ -31,7 +31,7 @@ def snapshot_payload(job: WorkerJob) -> dict[str, Any]:
         "codeVersion": job.code_version,
         "modelVersion": job.model_version,
         "inputDatasets": job.input_datasets,
-        # The state directory is private (0700/0600); the token is stored nowhere else.
+        # stateディレクトリは非公開（0700/0600）。tokenはほかのどこにも保存しない。
         "jobToken": job.job_token,
         "inputCheckpoint": job.input_checkpoint,
         "triggerPayload": job.trigger_payload,
@@ -39,7 +39,7 @@ def snapshot_payload(job: WorkerJob) -> dict[str, Any]:
 
 
 def with_saved_job_token(job: WorkerJob, record: dict[str, Any]) -> WorkerJob:
-    """Keep the token a started process already holds when the API returns none (resume)."""
+    """APIがtokenを返さないとき（再開）は、起動済みのプロセスが既に持っているtokenを使い続ける。"""
     snapshot = record.get("snapshot")
     if job.job_token is not None or not isinstance(snapshot, dict):
         return job

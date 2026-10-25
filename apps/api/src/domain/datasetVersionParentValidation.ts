@@ -1,11 +1,11 @@
 import { z } from 'zod';
 import { jsonObjectSchema, uuidSchema } from './validation.js';
 
-// Match the Run input bound; provenance references fit in a small configuration record.
+// Runの入力と同じ上限にする。来歴の参照は小さな設定のレコードに収まる。
 const MAX_PARENT_ADDITION_VERSIONS = 1000;
-// Evidence describes the comparison, rather than containing the compared files.
+// evidenceは比較を説明するもので、比べたファイルそのものを入れる場所ではない。
 const MAX_PARENT_ADDITION_EVIDENCE_BYTES = 64 * 1024;
-// A reason is a short explanation; longer proof belongs in structured evidence.
+// reasonは短い説明。長い裏付けは構造化したevidenceに書く。
 const MAX_PARENT_ADDITION_REASON_LENGTH = 2000;
 
 export const datasetVersionParentCreateSchema = z.strictObject({

@@ -1,11 +1,11 @@
-"""Immutable files shared by the Jobs of one site work directory: SIF images.
+"""1つのsiteのwork directoryのJobが共有する、変わらないファイル（SIFイメージ）。
 
-    <work dir>/.mmt-cache/<kind>/<name>        the file, read-only once complete
-    <work dir>/.mmt-cache/<kind>/<name>.json   {"sha256", "size"}, written last
-    <work dir>/.mmt-cache/<kind>/<name>.lock   flock held while the entry is checked or filled
+    <work dir>/.mmt-cache/<kind>/<name>:       ファイル本体。完成したら読み取り専用
+    <work dir>/.mmt-cache/<kind>/<name>.json:  {"sha256", "size"}。最後に書く
+    <work dir>/.mmt-cache/<kind>/<name>.lock:  項目を確かめる間、または埋める間に持つflock
 
-The Jobs of an array wait for one another on the lock, so a file is fetched or converted once.
-A Job links the file into its workspace, where it is verified again before the container starts.
+arrayのJobはロックで互いを待つので、ファイルの取得や変換は1回で済む。Jobはファイルを
+自分のworkspaceにリンクし、そこでコンテナの起動前にもう一度検証する。
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from ..worker.dataset_cache import CACHE_DIRECTORY
 from ..worker.host_state import read_json, write_json
 from .daemon_thread import run_in_daemon_thread
 
-# Waiting Jobs check the lock this often, so their heartbeats keep going meanwhile.
+# 待っているJobはこの間隔でロックを確かめる。その間もheartbeatは送り続ける。
 LOCK_POLL_SECONDS = 1.0
 READ_ONLY_FILE_MODE = 0o400
 
@@ -43,7 +43,7 @@ class SiteFileCache:
 
     @classmethod
     def in_work_directory(cls, work_directory: Path, kind: str) -> SiteFileCache:
-        # Beside the dataset cache (<work dir>/.mmt-cache/datasets).
+        # データセットのキャッシュ（<work dir>/.mmt-cache/datasets）の隣。
         return cls(work_directory / CACHE_DIRECTORY.parent / kind)
 
     @asynccontextmanager
@@ -68,7 +68,7 @@ class SiteFileCache:
         *,
         expected_sha256: str | None = None,
     ) -> CachedFile:
-        """The complete entry, filling it first when it is missing or was left incomplete."""
+        """完成した項目。無いか、途中のまま残っていれば、先に埋める。"""
         if not name or "/" in name or name.startswith("."):
             raise ConfigurationError(f"Invalid cache entry name {name!r}")
         path, marker = self.root / name, self.root / f"{name}.json"
@@ -79,7 +79,7 @@ class SiteFileCache:
                     expected_sha256 is None or record.get("sha256") == expected_sha256
                 ):
                     return CachedFile(path, str(record["sha256"]), int(record["size"]))
-            # Without its marker an entry is an interrupted fill; it is never used.
+            # markerの無い項目は、埋める途中で中断されたもの。決して使わない。
             marker.unlink(missing_ok=True)
             partial = self.root / f".{name}.partial"
             partial.unlink(missing_ok=True)
@@ -96,7 +96,7 @@ class SiteFileCache:
             return CachedFile(path, checksum, size)
 
     def link(self, cached: CachedFile, destination: Path) -> None:
-        """Put the file at destination: a hard link on the same filesystem, else a copy."""
+        """ファイルをdestinationに置く。同じファイルシステムならハードリンク、違えばコピー。"""
         destination.unlink(missing_ok=True)
         try:
             os.link(cached.path, destination)

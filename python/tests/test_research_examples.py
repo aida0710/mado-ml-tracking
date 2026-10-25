@@ -15,7 +15,7 @@ from mado_tracking.offline.sync import sync_run_directory
 
 EXAMPLE = Path(__file__).resolve().parent.parent / "examples" / "research_features.py"
 STEPS = 30
-# research_features.py evaluates every 10 steps.
+# research_features.pyは10stepごとに評価する。
 MEDIA_STEPS = [9, 19, 29]
 CHECKPOINT_MIB = 1
 
@@ -96,7 +96,7 @@ def test_syncing_the_example_sends_metrics_media_and_the_checkpoint_once(tmp_pat
         artifact for artifact in read_artifacts(directory) if artifact.path == "checkpoints/model.bin"
     ]
     assert stored["checkpoints/model.bin"]["sha256"] == spooled_checkpoint.sha256
-    # Every media item points at an Artifact of the same Run.
+    # どのメディアの項目も、同じRunのArtifactを指す。
     assert {item["artifactId"] for item in api.media.values()} <= set(api.artifacts)
     assert len(api.requests) == requests_after_first, "the second sync of a synced spool sent requests"
 

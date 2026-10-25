@@ -2,8 +2,8 @@ import { rows, type Connection } from '../db/database.js';
 import { DomainError } from '../domain/errors.js';
 import { assertProjectReferences } from '../repositories/registryRepository.js';
 
-// Saving a new reference to DatasetVersions (a Run's inputs, the inputs a Task, automation rule or
-// hook starts Runs with, a version's parents) while versions may be deleted or Datasets archived.
+// バージョンの削除やDatasetのアーカイブと並行して、DatasetVersionへの新しい参照（Runの入力、
+// Task・自動実行ルール・フックがRunを始めるときの入力、バージョンの親）を保存する。
 
 interface LockedDataset {
   id: string;
@@ -12,15 +12,16 @@ interface LockedDataset {
 }
 
 /**
- * Keeps the DatasetVersions this transaction is about to refer to from being deleted before it
- * commits, and checks again that they exist. DatasetVersionDeletionService locks the version's
- * Dataset FOR UPDATE before it counts references, so the two take turns on the Dataset row: a
- * deletion that comes second counts the new reference and answers 409, and one that committed
- * first leaves the version missing, which the check after the lock answers with 404.
+ * このトランザクションが参照しようとしているDatasetVersionが、コミットまでに削除されないように
+ * し、それらがあることを確かめ直す。DatasetVersionDeletionServiceは参照を数える前にバージョンの
+ * DatasetをFOR UPDATEでロックするので、両者はDatasetの行を順番に取る。後から来た削除は新しい
+ * 参照を数えて409を返し、先にコミットした削除はバージョンを消しているので、ロック後の確認が
+ * 404を返す。
  *
- * `numberingDatasetId` is a Dataset this transaction numbers a new version in, which needs the
- * Dataset to itself; every Dataset is then locked FOR UPDATE. Either way one statement takes the
- * locks in id order, so two transactions that lock each other's Datasets cannot deadlock.
+ * `numberingDatasetId`は、このトランザクションが新しいバージョンに番号を振るDatasetで、その
+ * Datasetを独占する必要がある。このときはすべてのDatasetをFOR UPDATEでロックする。どちらの場合も
+ * 1つの文でidの順にロックを取るので、互いのDatasetをロックし合う2つのトランザクションが
+ * デッドロックすることはない。
  */
 export async function lockDatasetsOfVersions(
   connection: Connection,
@@ -37,22 +38,22 @@ export async function lockDatasetsOfVersions(
     ORDER BY d.id ${lockMode} OF d`,
     [projectId, versionIds, numberingDatasetId ?? null],
   );
-  // A version deleted while this waited for a lock is gone now.
+  // ロックを待つ間に削除されたバージョンは、この時点で消えている。
   await assertProjectReferences(connection, { table: 'dataset_versions', projectId, ids: versionIds });
   return datasets;
 }
 
 /**
- * Refuses archived Datasets, and versions deleted meanwhile, as inputs of a new Run or of what
- * starts Runs later (Task, automation rule, hook). Existing Runs and Jobs keep their references;
- * only saving a new reference calls this.
+ * アーカイブ済みのDatasetと、その間に削除されたバージョンを、新しいRunや後でRunを始めるもの
+ * （Task・自動実行ルール・フック）の入力として拒む。既存のRunとJobは参照をそのまま持つ。これを
+ * 呼ぶのは新しい参照を保存するときだけ。
  */
 export async function assertInputDatasetVersionsUsable(
   connection: Connection,
   reference: { projectId: string; ids: string[] },
 ): Promise<void> {
-  // Every input Dataset is locked, not only archived ones, so an archive cannot slip in before
-  // commit (RegistryService.updateDataset updates the same row).
+  // アーカイブ済みのものだけでなく入力のDatasetをすべてロックし、コミット前にアーカイブが
+  // 割り込めないようにする（RegistryService.updateDatasetが同じ行を更新する）。
   const datasets = await lockDatasetsOfVersions(connection, {
     projectId: reference.projectId,
     versionIds: reference.ids,

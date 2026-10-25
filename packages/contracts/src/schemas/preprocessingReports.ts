@@ -20,7 +20,7 @@ import { idSchema, jsonObjectSchema, timestampSchema } from './primitives.js';
 import { namedContractSchema } from './schemaRegistry.js';
 
 const countSchema = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
-// The depth is checked before the JSON validation, which recurses into every level.
+// JSONの検証はすべての段に再帰するので、その前に深さを確かめる。
 const preprocessingMetadataSchema = z.preprocess(
   (metadata, context) => {
     if (isJsonNestedDeeperThan(metadata, PREPROCESSING_METADATA_MAX_DEPTH))

@@ -12,15 +12,15 @@ export interface SavedRunArtifact {
   projectId: string;
   runId: string;
   artifactId: string;
-  /** The path inside the Run's artifact root. */
+  /** RunのArtifactのルートの中でのパス。 */
   path: string;
 }
 
 /**
- * Indexes an MLflow log_image(key=, step=) file as run media, inside the transaction that
- * registers the Artifact. The compressed .webp becomes the thumbnail of the image row, whichever
- * of the two files arrives first. The index is a convenience, so a failure is rolled back to a
- * savepoint and logged instead of failing the Artifact save.
+ * MLflowのlog_image(key=, step=)のファイルを、Artifactを登録するトランザクションの中で、Runの
+ * メディアとして索引に入れる。2つのファイルのどちらが先に届いても、圧縮した.webpが画像の行の
+ * サムネイルになる。索引は補助的なものなので、失敗してもArtifactの保存は失敗させず、
+ * savepointまで巻き戻してログに残す。
  */
 export async function indexMlflowMediaArtifact(
   connection: Connection,
@@ -55,7 +55,7 @@ export async function indexMlflowMediaArtifact(
     await connection.query(`RELEASE SAVEPOINT ${INDEX_SAVEPOINT}`);
   } catch (error) {
     await connection.query(`ROLLBACK TO SAVEPOINT ${INDEX_SAVEPOINT}`);
-    // SQL details are not logged; the Artifact id identifies the file to index again by backfill.
+    // SQLの詳細はログに出さない。backfillで索引を作り直すファイルは、Artifactのidで分かる。
     console.error(
       JSON.stringify({
         event: 'run_media_index_failed',

@@ -5,8 +5,8 @@ import { datasetVersionParentIdsColumn } from './datasetVersionParentRepository.
 import { modelTrainingSourceRunIdColumn } from './modelTrainingSourceRepository.js';
 import { runColumns } from './runListProjection.js';
 
-// models.next_version is the numbering counter (modelVersionNumbering.ts). Models show it as
-// nextVersion, so the version form can tell which number a version without one will get.
+// models.next_versionは番号のカウンタ（modelVersionNumbering.ts）。ModelはこれをnextVersionとして
+// 見せ、バージョンのフォームが、番号を指定しないバージョンに何番が付くかを示せるようにする。
 export const modelColumns =
   'id,project_id,name,family,description,next_version::text AS next_version,created_at';
 export const modelSelect = `SELECT m.id,m.project_id,m.name,m.family,m.description,m.created_at,
@@ -63,8 +63,8 @@ export async function lockActiveExperiment(
 }
 
 /**
- * Returns the stored ID, which is the lowercase form of a UUID however the URL spelled it, so a
- * caller that builds stored text from the ID (a path prefix) matches what was stored.
+ * 保存しているIDを返す。URLでどう書かれていても、これはUUIDの小文字の形なので、IDから保存用の
+ * 文字列（パスの前置き）を組み立てる呼び出し側が、保存済みのものと一致させられる。
  */
 export async function assertProjectReference(
   connection: Connection,

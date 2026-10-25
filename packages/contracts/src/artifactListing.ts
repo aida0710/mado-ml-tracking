@@ -1,30 +1,33 @@
 import type { Artifact } from './index.js';
 
-/** latest: per path, the Artifact a Run currently shows. all: every stored upload, older ones included. */
+/**
+ * latest: パスごとに、Runが今見せているArtifact。all: 保存済みのアップロードすべて（古いものも
+ * 含む）。
+ */
 export type ArtifactListVersions = 'latest' | 'all';
 
-/** One page of an Artifact list. nextCursor is absent on the last page. */
+/** Artifactの一覧の1ページ。最後のページにはnextCursorが無い。 */
 export interface ArtifactPage {
   items: Artifact[];
   nextCursor?: string;
 }
 
-/** A directory directly under the requested prefix; counts include every file below it. */
+/** 指定したprefixの直下のディレクトリ。数にはその下のすべてのファイルを含む。 */
 export interface ArtifactDirectoryEntry {
-  /** Full directory path ending with `/`. */
+  /** `/`で終わる、ディレクトリの完全なパス。 */
   prefix: string;
   fileCount: number;
   totalSize: number;
 }
 
-/** GET /projects/:p/runs/:r/artifacts/tree: one directory level of a Run's latest Artifacts. */
+/** GET /projects/:p/runs/:r/artifacts/tree: Runの最新のArtifactのうち1階層分。 */
 export interface ArtifactTree {
-  /** '' for the root, otherwise the directory path ending with `/`. */
+  /** ルートなら''、それ以外は`/`で終わるディレクトリのパス。 */
   prefix: string;
   directories: ArtifactDirectoryEntry[];
-  /** True when more child directories exist than the response holds. */
+  /** 応答に入りきらない子ディレクトリがあるときtrue。 */
   directoriesTruncated: boolean;
-  /** Files directly in this directory, without subdirectories. */
+  /** このディレクトリの直下のファイル。サブディレクトリの中は含まない。 */
   fileCount: number;
   totalSize: number;
 }

@@ -2,7 +2,7 @@ import { first, type Connection } from '../db/database.js';
 import { conflict, notFound } from '../domain/errors.js';
 import { MAX_MODEL_VERSION_DIGITS, MAX_NUMERIC_MODEL_VERSION } from '../mlflow/models/limits.js';
 
-// Versions such as "v1" or numbers wider than the bigint counter stay valid but are not numbered.
+// "v1"のようなバージョンや、bigintのカウンタに収まらない数は、有効なままだが番号は振らない。
 const NUMBERED_VERSION_PATTERN = new RegExp(`^[0-9]{1,${MAX_MODEL_VERSION_DIGITS}}$`);
 
 function isNumberedVersion(version: string): boolean {
@@ -10,10 +10,10 @@ function isNumberedVersion(version: string): boolean {
 }
 
 /**
- * Locks the Model row and decides the version to insert.
- * An omitted version takes models.next_version; an explicit integer version moves the
- * counter past itself so later automatic numbers never collide or reuse deleted numbers.
- * The caller must insert the version in the same transaction that holds the lock.
+ * Modelの行をロックし、挿入するバージョンを決める。
+ * バージョンを省くとmodels.next_versionを使う。整数のバージョンを明示するとカウンタをその先へ
+ * 進め、後の自動の番号がぶつかったり、削除した番号を使い回したりしないようにする。
+ * 呼び出し側は、ロックを持つのと同じトランザクションでバージョンを挿入する必要がある。
  */
 export async function reserveModelVersion(
   connection: Connection,

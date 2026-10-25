@@ -3,13 +3,13 @@
 # フックの webhook だけ。画面・SSO・管理 API とほかの API の route は intranet の hostname に残す。
 # deploy/edge/README.md を参照。
 #
-# Rendered by the nginx image's template step (/etc/nginx/templates/*.template, envsubst):
-#   MMT_RUNNER_API_HOSTNAME   the public hostname, also the name of its Let's Encrypt certificate
-#   MMT_RUNNER_API_UPSTREAM   host:port of the tracking web nginx (compose: 127.0.0.1:5182), which
-#                             forwards /api/ to the API
-# Limit the substitution to these names (NGINX_ENVSUBST_FILTER=^MMT_RUNNER_API_), so that nginx's
-# own $variables stay as they are. The maps and zones below belong to the http block, which
-# includes conf.d/*.conf.
+# nginxイメージのtemplateの手順（/etc/nginx/templates/*.template、envsubst）で値を埋める:
+#   MMT_RUNNER_API_HOSTNAME   公開するhostname。Let's Encryptの証明書の名前にも使う
+#   MMT_RUNNER_API_UPSTREAM   trackingのwebのnginxのhost:port（composeなら127.0.0.1:5182）。
+#                             そのnginxが/api/をAPIへ転送する
+# nginx自身の$変数がそのまま残るよう、置き換えはこれらの名前に限る
+# （NGINX_ENVSUBST_FILTER=^MMT_RUNNER_API_）。下のmapとzoneはhttpブロックに属する。httpブロックが
+# conf.d/*.confを読み込む。
 
 # Job token は "Authorization: Bearer mado_mtj_<base64url>"。API token（mado_mt_）と session は通さない。
 map $http_authorization $mmt_runner_job_token {
@@ -17,9 +17,9 @@ map $http_authorization $mmt_runner_job_token {
     "~^Bearer mado_mtj_[A-Za-z0-9_-]+$"     1;
 }
 
-# Raw paths that nginx and the API could split differently: encoded '.', '/' or '\', a backslash
-# (URL parsers read it as '/'), empty segments and dot segments. The SDK and the runner never send
-# them. Only the part before '?' is checked.
+# nginxとAPIで区切り方が変わりうる生のパス: エンコードした'.'・'/'・'\'、バックスラッシュ
+# （URLのparserは'/'と読む）、空のセグメント、ドットのセグメント。SDKとrunnerはこれらを送らない。
+# 調べるのは'?'より前だけ。
 map $request_uri $mmt_runner_ambiguous_path {
     default                             0;
     "~*^[^?]*%(2e|2f|5c)"               1;
@@ -28,22 +28,22 @@ map $request_uri $mmt_runner_ambiguous_path {
     "~^[^?]*/\.\.?(/|\?|$)"             1;
 }
 
-# Routes by method and normalized path ($uri). "job" lines follow the Job token rules of
-# apps/api/src/http/jobTokenGuard.ts and the runner routes; the API still checks that the token's
-# own Project, Job and Run are the ones named. Anything else is not published here.
+# メソッドと正規化したパス（$uri）ごとのroute。"job"の行はapps/api/src/http/jobTokenGuard.tsの
+# Job tokenの決まりとrunnerのrouteに従う。指定されたProject・Job・Runがtoken自身のものかは、
+# 引き続きAPIが確かめる。それ以外はここでは公開しない。
 map "$request_method $uri" $mmt_runner_route {
     default                                                                             "";
     # ヘルスチェック（API では /api の外）と、token の説明（scope、Job token かどうか）。
     "~^(GET|HEAD) /healthz$"                                                            job;
     "~^(GET|HEAD) /api/auth/token$"                                                     job;
-    # Reads inside a Project: inputs, files, upstream Runs, child Jobs, upload sessions.
+    # Project内の読み取り: 入力、ファイル、上流のRun、子Job、アップロードセッション。
     "~^(GET|HEAD) /api/projects/[^/]+(/.*)?$"                                           job;
     "~^POST /api/projects/[^/]+/runs/search$"                                           job;
     "~^POST /api/projects/[^/]+/media/compare$"                                         job;
-    # The runner protocol, and child Jobs of a driver Job.
+    # runnerのプロトコルと、driver Jobの子Job。
     "~^POST /api/projects/[^/]+/jobs/[^/]+/runner/(start|heartbeat|logs|metrics|outputs|finish)$" job;
     "~^POST /api/projects/[^/]+/jobs/[^/]+/children$"                                   job;
-    # Writes to the Job's own Run: the Run, metrics, logs, media, checkpoints and artifacts.
+    # Job自身のRunへの書き込み: Run、メトリクス、ログ、メディア、checkpoint、Artifact。
     "~^PATCH /api/projects/[^/]+/runs/[^/]+$"                                           job;
     "~^POST /api/projects/[^/]+/runs/[^/]+/(metrics|logs|media|checkpoints)$"           job;
     "~^PUT /api/projects/[^/]+/runs/[^/]+/artifacts$"                                   job;
@@ -51,11 +51,12 @@ map "$request_method $uri" $mmt_runner_route {
     "~^PUT /api/projects/[^/]+/artifact-uploads/[^/]+/parts/[^/]+$"                     job;
     "~^POST /api/projects/[^/]+/artifact-uploads/[^/]+/complete$"                       job;
     "~^DELETE /api/projects/[^/]+/artifact-uploads/[^/]+$"                              job;
-    # Outputs registered from the Run: models and their versions, dataset versions.
+    # Runから登録する出力: モデルとそのバージョン、データセットバージョン。
     "~^POST /api/projects/[^/]+/models$"                                                job;
     "~^POST /api/projects/[^/]+/(models|datasets)/[^/]+/versions$"                      job;
-    # The MLflow-compatible API, which the Job's code reaches through MLFLOW_TRACKING_URI.
-    # Multipart part uploads (mlflow-artifacts/mpu) carry no Authorization and stay closed.
+    # MLflow互換API。JobのコードはMLFLOW_TRACKING_URIを通してここに届く。
+    # マルチパートのpartのアップロード（mlflow-artifacts/mpu）はAuthorizationを持たないので、
+    # 閉じたままにする。
     "~^(GET|HEAD) /api/mlflow/projects/[^/]+/.+$"                                       job;
     "~^POST /api/mlflow/projects/[^/]+/api/2\.0/mlflow/runs/(update|log-parameter|log-metric|log-batch|set-tag|delete-tag|log-inputs|outputs|log-model|search)$" job;
     "~^POST /api/mlflow/projects/[^/]+/api/2\.0/mlflow/(experiments/search|model-versions/create|registered-models/create|registered-models/get-latest-versions|logged-models|logged-models/search)$" job;
@@ -63,18 +64,18 @@ map "$request_method $uri" $mmt_runner_route {
     "~^DELETE /api/mlflow/projects/[^/]+/api/2\.0/mlflow/logged-models/[^/]+/tags/[^/]+$" job;
     "~^POST /api/mlflow/projects/[^/]+/api/2\.0/mlflow/logged-models/[^/]+/params$"    job;
     "~^PUT /api/mlflow/projects/[^/]+/api/2\.0/mlflow-artifacts/artifacts/.+$"          job;
-    # Hook webhooks carry no token: the API checks the sender's signature (X-Hub-Signature-256 or
-    # X-MMT-Signature).
+    # フックのwebhookはtokenを持たない。APIが送信元の署名（X-Hub-Signature-256か
+    # X-MMT-Signature）を確かめる。
     "~^POST /api/hooks/[^/]+/webhook$"                                                  webhook;
 }
 
-# 1 for a Job route without a Job token.
+# Job tokenの無いJobのrouteなら1。
 map "$mmt_runner_route:$mmt_runner_job_token" $mmt_runner_token_missing {
     default                             0;
     "job:0"                             1;
 }
 
-# A webhook never forwards an Authorization header, so no token can ride along with it.
+# webhookにはAuthorizationヘッダーを決して転送しないので、tokenが一緒に通ることはない。
 map $mmt_runner_route $mmt_runner_forwarded_authorization {
     default                             $http_authorization;
     webhook                             "";
@@ -82,12 +83,12 @@ map $mmt_runner_route $mmt_runner_forwarded_authorization {
 
 limit_req_zone $binary_remote_addr zone=mmt_runner_webhooks:10m rate=10r/s;
 
-# Query strings stay out of the access log.
+# query文字列はアクセスログに残さない。
 log_format mmt_runner_no_query '$remote_addr - [$time_local] "$request_method $uri $server_protocol" '
                                '$status $body_bytes_sent $request_time "$http_user_agent"';
 
-# Plain HTTP answers Let's Encrypt only. It neither serves nor redirects the API: a Job token sent
-# over http:// has already crossed the network in the clear, so the runner's URL must say https://.
+# 平文のHTTPはLet's Encryptにだけ答える。APIを出すこともリダイレクトすることもしない。http://で
+# 送られたJob tokenは既に平文でネットワークを通っているので、runnerのURLはhttps://で書く必要がある。
 server {
     listen 80;
     listen [::]:80;
@@ -123,15 +124,15 @@ server {
     add_header Referrer-Policy "no-referrer" always;
     add_header Cache-Control "no-store" always;
     access_log /dev/stdout mmt_runner_no_query;
-    # The JSON error bodies below; responses of the API keep their own type.
+    # 下のJSONのエラーの本文用。APIの応答は自分のtypeのまま。
     default_type application/json;
 
-    # Optional: accept only the sites' outgoing addresses (and the webhook senders, if used).
+    # 任意: siteの送信元アドレス（webhookを使うならその送信元も）だけを受け付ける。
     # allow 203.0.113.0/24;
     # deny all;
 
-    # Bodies stream to the API, which applies its own limits (MMT_ARTIFACT_MAX_BYTES, JSON size)
-    # and answers with its own errors. Timeouts are idle intervals, as on the intranet hostname.
+    # 本文はAPIへそのまま流す。上限（MMT_ARTIFACT_MAX_BYTES、JSONの大きさ）はAPIが当て、エラーも
+    # APIが返す。タイムアウトは、intranetのhostnameと同じく無通信の間隔。
     client_max_body_size 0;
     client_body_timeout 120s;
     client_header_timeout 30s;
@@ -141,7 +142,7 @@ server {
     proxy_buffering off;
     proxy_connect_timeout 5s;
     proxy_send_timeout 120s;
-    # Waits for the API to store a large artifact after the last byte, and for long polls.
+    # 最後のバイトのあとAPIが大きなArtifactを保存し終えるのと、long pollを待つ。
     proxy_read_timeout 3600s;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $remote_addr;
@@ -149,7 +150,7 @@ server {
     proxy_set_header X-Request-Id $request_id;
     proxy_set_header Connection "";
     proxy_set_header Authorization $mmt_runner_forwarded_authorization;
-    # A browser session never counts on this hostname.
+    # このhostnameでは、ブラウザのsessionを一切認めない。
     proxy_set_header Cookie "";
 
     if ($mmt_runner_ambiguous_path) {
@@ -177,8 +178,8 @@ server {
         proxy_pass http://${MMT_RUNNER_API_UPSTREAM};
     }
 
-    # The API caps a webhook body at 256 KiB (HOOK_PAYLOAD_MAX_BYTES) and limits starts per hook;
-    # the edge only bounds the size and the rate per sender.
+    # webhookの本文の上限256 KiB（HOOK_PAYLOAD_MAX_BYTES）とフックごとの起動の制限はAPIが持つ。
+    # edgeは大きさと送信元ごとの頻度だけを抑える。
     location ~ ^/api/hooks/[^/]+/webhook$ {
         if ($mmt_runner_route = "") {
             return 404 '{"error":"API route not found","code":"not_found"}\n';

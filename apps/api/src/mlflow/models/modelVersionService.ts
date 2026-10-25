@@ -23,7 +23,7 @@ export class ModelVersionService {
   constructor(
     private readonly database: Database,
     private readonly registry: RegistryService,
-    // Reads the MLmodel of a Run directory registered through runs:/ (see readRunModelMetadata).
+    // runs:/で登録したRunのディレクトリのMLmodelを読む（readRunModelMetadataを参照）。
     private readonly artifacts: ArtifactService,
   ) {}
 
@@ -204,7 +204,7 @@ export class ModelVersionService {
       { principal, projectId, name: reference.name },
       async (connection) => {
         const version = await findModelVersion(connection, { projectId, ...reference });
-        // Execution configuration was fixed at native registration; tags cannot change it later.
+        // 実行の設定はネイティブの登録時に固定した。後からtagで変えることはできない。
         if (
           ['mmt.model_family', 'mmt.code_version_id', 'mmt.weights_path'].includes(reference.key)
         ) {

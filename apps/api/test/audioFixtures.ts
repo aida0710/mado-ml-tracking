@@ -1,4 +1,4 @@
-// Builds minimal WAV and FLAC files for header probing tests; sample bytes are silence.
+// ヘッダーの読み取りのテストに使う最小のWAVとFLACを作る。サンプルのバイト列は無音。
 
 export interface WaveOptions {
   formatTag?: number;
@@ -6,9 +6,9 @@ export interface WaveOptions {
   sampleRate?: number;
   bitsPerSample?: number;
   frames?: number;
-  /** WAVE_FORMAT_EXTENSIBLE with this SubFormat code and valid bits. */
+  /** このSubFormatのコードと有効ビット数を持つWAVE_FORMAT_EXTENSIBLE。 */
   extensible?: { subFormat: number; validBits: number };
-  /** Chunk placed between fmt and data, e.g. a large LIST chunk. */
+  /** fmtとdataの間に置くchunk。大きなLIST chunkなど。 */
   paddingChunkBytes?: number;
 }
 
@@ -57,7 +57,7 @@ export function flacFile(options: { sampleRate: number; channels: number; bitsPe
   streamInfo[12] = ((sampleRate & 0x0f) << 4) | ((channels - 1) << 1) | ((bitsPerSample - 1) >> 4);
   streamInfo[13] = (((bitsPerSample - 1) & 0x0f) << 4) | Math.floor(totalSamples / 2 ** 32);
   streamInfo.writeUInt32BE(totalSamples % 2 ** 32, 14);
-  // Last-metadata-block flag set, type 0 (STREAMINFO), length 34.
+  // 最後のメタデータブロックの印を立て、種類0（STREAMINFO）、長さ34。
   const blockHeader = Buffer.from([0x80, 0, 0, 34]);
   return Buffer.concat([Buffer.from('fLaC', 'ascii'), blockHeader, streamInfo, Buffer.alloc(64)]);
 }

@@ -1,7 +1,7 @@
-"""Find the files on the worker's host a computer's SSH key and known_hosts paths may name.
+"""コンピュータのSSHの鍵とknown_hostsのパスが指し得る、workerのホスト上のファイルを探す。
 
-Only names and modes are looked at. A file's contents are never read, so nothing about a key
-leaves the host but its path.
+見るのは名前とモードだけ。ファイルの中身は読まないので、
+鍵についてはパス以外の何もホストの外に出ない。
 """
 
 from __future__ import annotations
@@ -16,18 +16,18 @@ from pathlib import Path
 from .doctor import GROUP_OR_OTHER_ACCESS_BITS
 from .reported_text import is_one_line_path
 
-# Where the worker's keys are when ~/.ssh is not (a worker started outside docker compose, which
-# mounts them at ~/.ssh).
+# ~/.sshに無いときのworkerの鍵の場所（docker composeの外で
+# 起動したworkerの場合。composeは鍵を~/.sshにマウントする）。
 SSH_DIRECTORY_VARIABLE = "MMT_WORKER_SSH_DIR"
-# MAX_WORKER_SSH_FILE_PATHS of the API; far more than a worker's ~/.ssh holds.
+# APIのMAX_WORKER_SSH_FILE_PATHS。workerの~/.sshにあるファイルの数よりずっと多い。
 MAX_WORKER_SSH_FILE_PATHS = 50
 KNOWN_HOSTS_PREFIX = "known_hosts"
-# Files ssh keeps beside the keys that are never keys themselves.
+# sshが鍵の横に置くが、それ自体は鍵ではないファイル。
 NOT_KEY_NAMES = frozenset({"config", "environment", "rc"})
 NOT_KEY_PREFIXES = ("authorized_keys", KNOWN_HOSTS_PREFIX)
 PUBLIC_KEY_SUFFIX = ".pub"
-# Names people give private keys. A file with another name counts when only its owner can read
-# it, the mode ssh itself demands of a private key.
+# 秘密鍵によく付けられる名前。それ以外の名前のファイルは、
+# 所有者だけが読める場合に数える。これはssh自身が秘密鍵に求めるモード。
 KEY_NAME_PATTERNS = ("id_*", "*.pem", "*.key")
 
 
@@ -37,7 +37,7 @@ class WorkerSshFiles:
     known_hosts_paths: tuple[str, ...] = ()
 
     def to_payload(self) -> dict[str, list[str]]:
-        """WorkerSshFiles of the contract."""
+        """契約のWorkerSshFiles。"""
         return {"keyPaths": list(self.key_paths), "knownHostsPaths": list(self.known_hosts_paths)}
 
 
@@ -50,7 +50,7 @@ def default_ssh_directories(environment: Mapping[str, str] = os.environ) -> tupl
 
 
 def find_ssh_files(directories: Iterable[Path]) -> WorkerSshFiles:
-    """Key and known_hosts candidates directly in `directories`, as sorted absolute paths."""
+    """`directories`の直下にある鍵とknown_hostsの候補を、並べ替えた絶対パスで返す。"""
     key_paths: set[str] = set()
     known_hosts_paths: set[str] = set()
     for directory in directories:
@@ -69,7 +69,7 @@ def find_ssh_files(directories: Iterable[Path]) -> WorkerSshFiles:
 
 
 def regular_files(directory: Path) -> list[tuple[str, int]]:
-    """Names and modes of the regular files in `directory` (a symlink counts by its target)."""
+    """`directory`にある通常のファイルの名前とモード（symlinkはリンク先で判断する）。"""
     try:
         with os.scandir(directory) as entries:
             found = []
@@ -77,13 +77,13 @@ def regular_files(directory: Path) -> list[tuple[str, int]]:
                 try:
                     mode = entry.stat().st_mode
                 except OSError:
-                    # A broken symlink or a file removed while listing.
+                    # 壊れたsymlinkか、一覧を取っている間に削除されたファイル。
                     continue
                 if stat.S_ISREG(mode):
                     found.append((entry.name, mode))
             return found
     except OSError:
-        # Missing, not a directory, or not readable by the worker: it offers nothing from there.
+        # 無い、ディレクトリでない、またはworkerが読めない。そこからは何も出さない。
         return []
 
 

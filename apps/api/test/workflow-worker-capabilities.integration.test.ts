@@ -60,7 +60,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローのJobとworkerの対応機
         body: { runId: run.id, targetId: fixture.target.id },
       }),
     );
-    // The workflow's Job is older, but a worker that does not pass dataset usage skips it.
+    // ワークフローのJobの方が古いが、データセットの使用状況を渡さないworkerはそれを飛ばす。
     const older = await claimedJob({ workerInfo: { ...workerInfo, version: '0.9.0' } });
     expect(older?.job.id).toBe(plainJob.id);
     expect(await claimedJob({ workerInfo, workerId: 'empty-capabilities' })).toBeNull();
@@ -83,7 +83,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローのJobとworkerの対応機
     expect((await workers()).map((worker) => worker.capabilities)).toEqual([
       ['workflowDatasetUsage'],
     ]);
-    // The same worker id restarted as an older version that names nothing.
+    // 同じworker idで、何も名乗らない古いバージョンとして再起動した。
     await claimedJob({ workerInfo: { ...workerInfo, version: '0.9.0' } });
     expect((await workers()).map((worker) => worker.capabilities)).toEqual([[]]);
   });
@@ -114,7 +114,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローのJobとworkerの対応機
       workflowExecution: { workflowId: definition.workflow.id, executionId },
       requiredWorkerCapabilities: ['workflowDatasetUsage'],
     });
-    // The resumed execution reuses the first step's Job; it was started by the first execution.
+    // 再開した実行は最初のステップのJobを使い回す。そのJobを始めたのは最初の実行。
     expect(listed.get(processing.job.id)).toMatchObject(startedBy(first.id));
     expect(listed.get(failedTraining.job.id)).toMatchObject(startedBy(first.id));
     expect(listed.get(resumed.steps[1]!.jobId!)).toMatchObject(startedBy(resumed.id));

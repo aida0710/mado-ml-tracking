@@ -1,4 +1,4 @@
-"""Argv-based local/OpenSSH transport; remote shell arguments are individually quoted."""
+"""argvで動くローカル・OpenSSHのtransport。リモートのシェルの引数は1つずつクォートする。"""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from typing import Any
 from ..errors import ConfigurationError, TransportError
 from ..security import SecretMasker
 
-# Runner protocol responses are small; reject accidental unbounded command output.
+# runnerのプロトコルの応答は小さい。うっかり上限の無いコマンドの出力が来たら断る。
 CONTROL_TIMEOUT_SECONDS = 30.0
 MAX_RESPONSE_BYTES = 2 * 1024**2
 TRANSFER_CHUNK_BYTES = 64 * 1024
@@ -31,7 +31,7 @@ class CommandTransport:
         command: Sequence[str],
         *,
         stdin: bytes | Path = b"",
-        timeout: float | None = CONTROL_TIMEOUT_SECONDS,  # noqa: ASYNC109 -- one complete transport operation
+        timeout: float | None = CONTROL_TIMEOUT_SECONDS,  # noqa: ASYNC109 -- 転送の操作1回全体にかける時間
     ) -> bytes:
         try:
             process = await asyncio.create_subprocess_exec(
@@ -147,7 +147,7 @@ class SSHTransport(CommandTransport):
 def create_target_transport(
     target: dict[str, Any], *, allow_local_executor: bool, masker: SecretMasker
 ) -> CommandTransport:
-    """The transport to a compute target; Jobs and target checks connect the same way."""
+    """コンピュータへのtransport。Jobもコンピュータの確認も同じ方法で接続する。"""
     if target["executor"] == "local":
         return LocalTransport(allow_local_executor=allow_local_executor, masker=masker)
     return SSHTransport(

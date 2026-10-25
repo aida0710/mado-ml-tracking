@@ -26,7 +26,7 @@ export interface ArtifactUpload extends ArtifactAccess {
 export interface ArtifactFile {
   path: string;
   is_dir: boolean;
-  // Protobuf JSON encodes int64 as a decimal string, including zero-byte files.
+  // Protobuf JSONはint64を10進の文字列で表す。0バイトのファイルも同じ。
   file_size?: string;
 }
 

@@ -25,7 +25,7 @@ export interface ModelVersionRegistrar {
   ): Promise<ModelVersion>;
 }
 
-// Stable codes stored in run_output_registrations.error; the Web maps them to messages.
+// run_output_registrations.errorに保存する変わらないコード。画面がメッセージに対応付ける。
 type OutputRegistrationErrorCode =
   | 'model_not_found'
   | 'model_deleted'
@@ -46,10 +46,10 @@ const REGISTRATION_SAVEPOINT = 'output_registration';
 const UNIQUE_VIOLATION = '23505';
 
 /**
- * Registers the Task's output model when a Run launched with one finishes successfully.
- * It runs inside the terminal transition, before pending automation, so the version it creates
- * starts downstream automation in the same completion. Failures are recorded, never thrown:
- * the Run stays finished (decisions.md) and a later completion of the same Run is a no-op.
+ * 出力モデルを指定したTaskから起動したRunが成功したら、そのTaskの出力モデルを登録する。
+ * 終了状態への遷移の中で、保留中の自動実行より前に動くので、作ったバージョンが同じ完了処理で
+ * 下流の自動実行を始める。失敗は記録するだけで投げない。Runはfinishedのままで、
+ * 同じRunが後でまた完了しても何もしない。
  */
 export class OutputRegistrationHandler implements RunCompletionHandler {
   readonly name = 'outputRegistration';
@@ -136,7 +136,7 @@ async function resolveModel(
     : await findOutputModelById(connection, { projectId, id: settings.modelId! });
   if (!model) throw new OutputRegistrationFailure('model_not_found');
   if (model.deleted) throw new OutputRegistrationFailure('model_deleted');
-  // A same-named Model may have been created with another family after the Task was saved.
+  // Taskを保存したあとで、同じ名前の登録モデルが別のfamilyで作られていることがある。
   if (settings.createModel && model.family !== settings.createModel.family)
     throw new OutputRegistrationFailure('model_family_mismatch');
   return model.id;
@@ -170,7 +170,7 @@ function failureCode(error: unknown, runId: string): OutputRegistrationErrorCode
   return 'registration_failed';
 }
 
-// Terminal transitions always run in a transaction; registration needs its client for savepoints.
+// 終了状態への遷移は必ずトランザクションの中で動く。登録はsavepointのためにそのclientを要する。
 function requireTransactionClient(connection: Connection): PoolClient {
   if (connection instanceof pg.Pool)
     throw new Error('Output registration must run inside the terminal-transition transaction');

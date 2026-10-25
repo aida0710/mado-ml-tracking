@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 /**
- * Response schemas that OpenAPI publishes as named components. The id is the contract type name
- * (`Run`, `ModelVersion`), so `#/components/schemas/<id>` points at the TypeScript type of the
- * same name in packages/contracts.
+ * OpenAPIが名前付きのコンポーネントとして公開する応答のスキーマ。idは契約の型名（`Run`、
+ * `ModelVersion`）なので、`#/components/schemas/<id>`はpackages/contractsの同じ名前の
+ * TypeScriptの型を指す。
  */
 export const contractSchemaRegistry = z.registry<{ id?: string; description?: string }>();
 
@@ -12,7 +12,7 @@ export function namedContractSchema<T extends z.ZodType>(id: string, schema: T):
   return schema;
 }
 
-/** A field whose meaning the type alone does not tell; the description appears in OpenAPI. */
+/** 型だけでは意味が分からないフィールド。説明はOpenAPIに載る。 */
 export function describedField<T extends z.ZodType>(schema: T, description: string): T {
   contractSchemaRegistry.add(schema, { description });
   return schema;

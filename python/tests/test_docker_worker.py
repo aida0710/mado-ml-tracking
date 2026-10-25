@@ -1,4 +1,4 @@
-"""Real local Docker daemon tests; opt in with an already-cached immutable image reference."""
+"""ローカルの実際のDocker daemonでのテスト。キャッシュ済みの不変のイメージ参照を渡すと動く。"""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ EXAMPLE_PATH = Path(__file__).resolve().parent.parent / "examples/container_fixt
 FIXTURE_SCRIPTS = runpy.run_path(str(EXAMPLE_PATH))
 FIXTURE_SCRIPT = FIXTURE_SCRIPTS["FIXTURE_SCRIPT"]
 BULK_OUTPUT_FIXTURE_SCRIPT = FIXTURE_SCRIPTS["BULK_OUTPUT_FIXTURE_SCRIPT"]
-# A leaked client/container fails promptly; cleanup runs against this test's job only.
+# 漏れたクライアントやコンテナはすぐに失敗させる。後片付けはこのテストのJobだけを対象にする。
 DOCKER_TEST_TIMEOUT_SECONDS = 20
 
 
@@ -567,5 +567,5 @@ def test_log_thread_failure_after_real_container_start_always_stops_and_removes_
         assert not container_exists(job_payload)
         assert owner.state["container"]["released"] is True
     finally:
-        # A regression leaves this job's daemon container running; never leave it behind after the assertion.
+        # 不具合があると、このJobのdaemonのコンテナが動いたまま残る。assertionのあとに残さない。
         owner.stop_and_remove()

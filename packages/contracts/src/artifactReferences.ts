@@ -1,7 +1,7 @@
 /**
- * GET /projects/:p/artifact-references: the records that keep each Artifact, by name, so a screen
- * can say where a file is used and why it cannot be deleted. The kinds are the ones that refuse
- * deletion with 409 artifact_in_use.
+ * GET /projects/:p/artifact-references: 各Artifactを残している記録を名前つきで返す。画面が、
+ * ファイルがどこで使われていて、なぜ削除できないかを示せるようにする。種類は、削除を
+ * 409 artifact_in_useで拒むものと同じ。
  */
 export interface ArtifactReferences {
   artifactId: string;
@@ -11,15 +11,15 @@ export interface ArtifactReferences {
     datasetId: string;
     datasetName: string;
     version: string;
-    /** The file's path inside the version. */
+    /** バージョンの中でのファイルのパス。 */
     path: string;
   }>;
   codeVersions: Array<{ id: string; codeId: string; codeName: string; version: string }>;
-  /** Checkpoints still retained, or that a Run continued from. */
+  /** まだ保持しているcheckpointか、Runが続きを始めたcheckpoint。 */
   checkpoints: Array<{ id: string; runId: string; runName: string; step: number }>;
-  /** Only present when a preprocessing report uses the Artifact as a review sample. */
+  /** 前処理のレポートがそのArtifactを確認用の見本に使っているときだけある。 */
   preprocessingReports?: Array<{ runId: string; runName: string }>;
 }
 
-/** Maximum artifactIds per request: one page of the Project's Artifact catalog. */
+/** 1リクエストで指定できるartifactIdsの最大数。ProjectのArtifactカタログの1ページ分。 */
 export const ARTIFACT_REFERENCES_BATCH_LIMIT = 100;

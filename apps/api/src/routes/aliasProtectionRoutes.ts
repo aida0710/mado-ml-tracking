@@ -15,7 +15,7 @@ import {
 import { requestMetadata } from '../http/requestMetadata.js';
 import type { AliasProtectionService } from '../services/aliasProtectionService.js';
 
-// ?modelId= names a Model's own protection; without it the protection covers the whole Project.
+// ?modelId=はその登録モデル自身の保護を指す。無ければ、保護はProject全体にかかる。
 function protectionTarget(context: ApiContext) {
   const { modelId } = parse(modelAliasProtectionQuerySchema, context.req.query());
   return {

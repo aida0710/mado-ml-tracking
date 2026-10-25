@@ -17,10 +17,10 @@ import {
 } from '../repositories/auditRepository.js';
 import { requireGlobalAdmin, requireProject, requireScope } from './accessService.js';
 
-// Internal callers such as the demo seed have no HTTP request to attribute.
+// デモのseedのような内部の呼び出し元には、結び付けるHTTPリクエストが無い。
 export const NO_REQUEST_METADATA: RequestMetadata = { ipAddress: null, userAgent: null };
 
-// Only authorization refusals are recorded as denied; validation and missing resources are not.
+// deniedとして記録するのは認可の拒否だけ。検証の失敗や存在しないリソースは記録しない。
 export const DENIED_STATUSES: ReadonlySet<number> = new Set([403, 409]);
 
 export type AuditEventDraft = Omit<AuditEventInput, 'outcome'>;
@@ -28,8 +28,8 @@ export type AuditEventDraft = Omit<AuditEventInput, 'outcome'>;
 export function auditActor(
   principal: Principal,
 ): Pick<AuditEventInput, 'actorType' | 'actorUserId' | 'actorTokenId'> {
-  // Job tokens live in job_tokens, while actorTokenId references api_tokens.
-  // The caller records the Job ID in details to attribute the automated write.
+  // Job tokenはjob_tokensにあり、actorTokenIdはapi_tokensを参照する。
+  // 自動で書いたことが分かるよう、呼び出し側がdetailsにJob IDを記録する。
   if (principal.token?.job)
     return { actorType: 'system', actorUserId: null, actorTokenId: null };
   return principal.token
@@ -38,9 +38,9 @@ export function auditActor(
 }
 
 /**
- * Runs an operation and records a 403/409 refusal as a denied audit event.
- * The denied row is written on the pool, outside the operation's transaction, because that
- * transaction has already rolled back when the refusal reaches this point.
+ * 操作を実行し、403・409の拒否をdeniedの監査イベントとして記録する。
+ * deniedの行は操作のトランザクションの外でpoolを使って書く。拒否がここまで届いたときには、
+ * そのトランザクションは既にロールバックしているため。
  */
 export async function recordDenial<T>(
   database: Database,
@@ -64,7 +64,7 @@ export class AuditService {
   constructor(readonly database: Database) {}
 
   async list(principal: Principal, query: AuditEventQuery): Promise<AuditEventPage> {
-    // The global log spans every Project, so a token needs the explicit audit:read besides admin.
+    // 全体のログはすべてのProjectにまたがるので、tokenにはadminに加えて明示のaudit:readが要る。
     requireScope(principal, 'audit:read');
     requireGlobalAdmin(principal);
     return this.page(query);
@@ -88,7 +88,7 @@ export class AuditService {
     const cursor = filter.cursor && { id: filter.cursor, projectId: filter.projectId };
     if (cursor && !(await auditCursorExists(this.database, cursor)))
       notFound('audit event cursor');
-    // Fetch one extra row to know whether another page exists without a count query.
+    // 件数のクエリを使わずに次のページの有無を知るため、1行多く取る。
     const events = await listAuditEvents(this.database, { ...filter, limit: filter.limit + 1 });
     const items = events.slice(0, filter.limit);
     return { items, nextCursor: events.length > filter.limit ? items.at(-1)!.id : null };

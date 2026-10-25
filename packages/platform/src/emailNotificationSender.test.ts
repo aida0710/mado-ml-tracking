@@ -58,7 +58,7 @@ interface JsonMail {
   headers: Record<string, string>;
 }
 
-/** A sender over nodemailer's JSON transport, with the composed messages it produced. */
+/** nodemailerのJSON transportを使うsenderと、それが組み立てたメッセージ。 */
 function jsonSender() {
   const messages: JsonMail[] = [];
   const transporter = nodemailer.createTransport({ jsonTransport: true });
@@ -96,7 +96,7 @@ describe('emailNotificationSender', () => {
     expect(mail!.text).toContain('jobId: j1');
     expect(mail!.text).toContain(failedRunEvent.url);
     expect(mail!.text).toContain('CUDA out of memory');
-    // The 5000-character error is cut so the body stays a notification, not a log.
+    // 5000文字のエラーは切り詰め、本文をログではなく通知の大きさにとどめる。
     expect(mail!.text.length).toBeLessThan(3000);
     expect(mail!.headers).toMatchObject({
       'X-MMT-Event': 'run.failed',
@@ -256,7 +256,7 @@ describe('emailNotificationSender（テスト用SMTPサーバー）', () => {
       from: 'mmt@example.com',
       to: mailChannel.recipients,
     });
-    // nodemailer normalizes the header name's case on the wire.
+    // nodemailerは、送るときにヘッダー名の大文字・小文字を正規化する。
     expect(received[0]!.data).toMatch(/^X-MMT-Event: run\.failed$/im);
   });
 
@@ -286,12 +286,12 @@ describe('emailNotificationSender（テスト用SMTPサーバー）', () => {
   });
 
   it('STARTTLSの証明書は既定で検証し、検証できなければ送らない', async () => {
-    // smtp-server offers STARTTLS with its built-in certificate, which no CA vouches for.
+    // smtp-serverは組み込みの証明書でSTARTTLSを提供するが、どのCAもそれを保証していない。
     const { port, received } = await startServer({ disabledCommands: [], authOptional: true });
     const sender = createEmailNotificationSender({
       smtp: { url: `smtp://127.0.0.1:${port}`, from: 'mmt@example.com' },
     });
-    // nodemailer reports a rejected certificate as a socket error, not as ETLS.
+    // nodemailerは、拒否された証明書をETLSではなくソケットのエラーとして報告する。
     expect(await sendError(sender.send(mailChannel, failedRunEvent))).toBe(
       'notification_destination_unavailable',
     );
@@ -299,7 +299,7 @@ describe('emailNotificationSender（テスト用SMTPサーバー）', () => {
   });
 
   it('接続先が応答しなければ締め切りでnotification_timeoutにする', async () => {
-    // The greeting never comes: the server holds every connection without answering.
+    // greetingが来ない。サーバーはどの接続にも応答しないまま保持する。
     const { createServer } = await import('node:net');
     const silent = createServer(() => undefined);
     await new Promise<void>((resolve) => silent.listen(0, '127.0.0.1', resolve));

@@ -25,12 +25,12 @@ import {
 import { jsonBody, parse, principal, uuidParam, type ApiEnvironment } from '../http/request.js';
 import { runSearchSchema } from './runSearchRoutes.js';
 
-// Without tail every line comes back (a download); a screen polls the latest lines only.
+// tailが無ければ全行を返す（ダウンロード）。画面は最新の行だけをpollする。
 export const runLogQuerySchema = z.strictObject({
   tail: z.coerce.number().int().min(1).max(MAX_RUN_LOG_TAIL).optional(),
 });
 
-// MLflow accepts metric keys up to 250 characters, longer than native metric names.
+// MLflowはメトリクスのkeyを250文字まで受け付け、nativeのメトリクス名より長い。
 const MAX_METRIC_KEY_LENGTH = 250;
 
 const comparedRunIdsSchema = z
@@ -61,7 +61,7 @@ export const runComparisonSchema = z
     includeHistory: z.boolean().default(false),
   })
   .refine(baselineInRunIds, BASELINE_NOT_COMPARED);
-// A GET link carries the Run IDs comma-separated, as the Compare page URL does.
+// 比較画面のURLと同じく、GETのリンクはRun IDをカンマ区切りで持つ。
 export const runComparisonCsvQuerySchema = z
   .strictObject({
     ...comparisonBaseSchema,
@@ -80,7 +80,7 @@ export function runRoutes(services: {
 }): Hono<ApiEnvironment> {
   const { runs, lineage, runComparison, runExport } = services;
   const routes = new Hono<ApiEnvironment>();
-  // Registered before /:p/runs/:r, which would otherwise take compare.csv as a Run ID.
+  // /:p/runs/:rより前に登録する。そうしないとcompare.csvをRun IDとして受け取ってしまう。
   routes.post('/:p/runs/compare', async (context) =>
     context.json(
       await runComparison.compare(
@@ -102,7 +102,7 @@ export function runRoutes(services: {
     });
   });
   routes.post('/:p/runs/search/export.csv', async (context) => {
-    // The body of POST /runs/search is accepted as is; paging fields do not apply to an export.
+    // POST /runs/searchの本文をそのまま受け付ける。ページ送りの項目はエクスポートには使わない。
     const {
       limit: _limit,
       cursor: _cursor,

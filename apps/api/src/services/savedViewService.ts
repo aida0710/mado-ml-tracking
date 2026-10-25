@@ -32,12 +32,13 @@ interface SavedViewReference {
   savedViewId: string;
 }
 
-// Saved views are display settings, so token writes use the same scope as Run list changes.
+// 保存ビューは表示の設定なので、tokenでの書き込みにはRunの一覧の変更と同じscopeを使う。
 const SAVED_VIEW_WRITE_SCOPE = 'runs:write';
-// Sharing a view with the Project changes what every member sees, like other editor actions.
+// ビューをProjectに共有するとすべてのメンバーの見るものが変わるので、ほかのeditorの
+// 操作と同じに扱う。
 const SHARED_VIEW_ROLE: ProjectRole = 'editor';
 
-// The unique indexes decide name conflicts, so concurrent saves of the same name cannot both win.
+// 名前の衝突は一意インデックスで決めるので、同じ名前の保存が同時に来ても両方は通らない。
 async function rejectNameConflict<T>(write: Promise<T>): Promise<T> {
   try {
     return await write;
@@ -62,9 +63,9 @@ function requireSharingRole(role: ProjectRole): void {
 }
 
 /**
- * Saved Run list views. A private view is a personal display setting: only its owner sees it and
- * it is not audited. A view shared with the Project is audited on create, update and delete,
- * including refusals, because it changes what other members open.
+ * Runの一覧の保存ビュー。非公開のビューは個人の表示の設定で、所有者だけが見え、監査に記録しない。
+ * Projectに共有したビューは、ほかのメンバーが開くものを変えるので、作成・更新・削除を、拒んだ
+ * ものも含めて監査に記録する。
  */
 export class SavedViewService {
   constructor(private readonly database: Database) {}
@@ -160,7 +161,7 @@ export class SavedViewService {
       ...reference,
       request,
     });
-    // Known only after the view is loaded; a refusal of a shared view is audited.
+    // ビューを読み込んでから分かる。共有されたビューへの操作を拒んだら監査に記録する。
     let shared = patch.visibility === 'project';
     return this.auditSharedDenial(
       draft,
@@ -173,7 +174,8 @@ export class SavedViewService {
           const isOwner = view.ownerUserId === principal.user.id;
           if (!isOwner) {
             this.requireProjectAdmin(role);
-            // Who can see a view is the owner's decision; an admin may tidy a shared view or delete it.
+            // ビューを誰が見られるかは所有者が決める。adminは共有されたビューを整えたり
+            // 削除したりできる。
             if (visibility !== view.visibility)
               throw new DomainError({
                 status: 403,
@@ -233,7 +235,7 @@ export class SavedViewService {
         transaction(this.database, async (connection) => {
           const { view, role } = await this.lockForChange(connection, principal, reference);
           shared = view.visibility === 'project';
-          // An owner may always remove their own view, even after losing the editor role.
+          // 所有者は、editorのroleを失ったあとでも、自分のビューをいつでも削除できる。
           const isOwner = view.ownerUserId === principal.user.id;
           if (!isOwner) this.requireProjectAdmin(role);
           await deleteSavedView(connection, view.id);
@@ -267,8 +269,8 @@ export class SavedViewService {
   }
 
   /**
-   * Like auditService.recordDenial, but only for shared views: whether the view is shared may be
-   * known only after it is loaded inside the operation, so the condition is read afterwards.
+   * auditService.recordDenialと同じだが、共有されたビューだけを対象にする。共有されているかは
+   * 操作の中でビューを読み込んでから分かることがあるので、条件はあとで読む。
    */
   private async auditSharedDenial<T>(
     draft: AuditEventDraft,
@@ -306,7 +308,7 @@ export class SavedViewService {
     return { view, role };
   }
 
-  // Another member's private view is reported as missing so its existence is not revealed.
+  // ほかのメンバーの非公開のビューは、存在が知られないよう、無いものとして報告する。
   private async requireVisible(
     connection: Connection,
     principal: Principal,
@@ -327,7 +329,7 @@ export class SavedViewService {
       });
   }
 
-  // A view refers to experiments by ID; one from another Project would never match a Run.
+  // ビューは実験をIDで参照する。別のProjectの実験では、どのRunにも一致しない。
   private async requireProjectExperiments(
     connection: Connection,
     view: { projectId: string; experimentIds: string[] },

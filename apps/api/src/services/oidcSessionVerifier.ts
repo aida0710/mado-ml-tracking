@@ -17,30 +17,29 @@ import { decryptSecret, encryptSecret, type SecretKey } from '../security/secret
 import { OidcLoginDeniedError, syncOidcIdentity, type OidcClaims } from './oidcProvisioning.js';
 
 /**
- * Keeps SSO browser sessions in step with the IdP. A session whose last check is older than
- * OIDC_RECHECK_SECONDS, or whose access token expired, asks UserInfo for the current groups
- * (refreshing the access token when needed) and applies them like a login does. Losing the
- * allowed group ends every session of the identity; an IdP that refuses the tokens ends this
- * session; an IdP that cannot be reached answers 503 and keeps the session (fail closed).
- * Same design as Mado's auth-oidc-session.ts.
+ * SSOのブラウザのsessionをIdPと合わせ続ける。最後の確認がOIDC_RECHECK_SECONDSより古いsessionや、
+ * access tokenが切れたsessionは、UserInfoに今のグループを問い合わせ（必要ならaccess tokenを
+ * 更新する）、ログインと同じように当てはめる。許可されたグループから外れたら、そのidentityの
+ * すべてのsessionを終える。IdPがtokenを拒んだら、このsessionを終える。IdPに届かなければ503を
+ * 返し、sessionは残す（fail closed）。mado S3 Data Catalogのauth-oidc-session.tsと同じ設計。
  */
 
-// Renew a little before the IdP's deadline so the token does not expire during the UserInfo call.
+// IdPの期限の少し前に更新し、UserInfoを呼んでいる間にtokenが切れないようにする。
 const TOKEN_EXPIRY_MARGIN_MS = 30_000;
 
 export interface SessionTokens {
   accessToken: string;
-  // Absent when the IdP does not issue refresh tokens (no offline_access); the session then ends
-  // when the access token expires.
+  // IdPがrefresh tokenを出さないとき（offline_accessが無い）は無い。そのときはaccess tokenが
+  // 切れるとsessionが終わる。
   refreshToken: string | null;
   expiresAt: Date | null;
 }
 
-// Why a session ended at recheck; recorded in the auth.oidc.recheck audit event.
+// 再確認でsessionを終えた理由。auth.oidc.recheckの監査イベントに記録する。
 export type OidcRecheckRevocationReason =
   'reauthentication_required' | 'idp_session_revoked' | OidcLoginDeniedError['reason'];
 
-// The context binds each ciphertext to its session row and token kind, so a copied value fails.
+// contextで暗号文をsessionの行とtokenの種類に結び付けるので、写した値は使えない。
 function tokenContext(tokenHash: string, kind: 'access' | 'refresh'): string {
   return `oidc-session:${tokenHash}:${kind}`;
 }
@@ -86,7 +85,7 @@ export function decryptSessionTokens({
   };
 }
 
-// A refresh response may omit refresh_token, which means the previous one stays valid.
+// 更新の応答にrefresh_tokenが無いことがある。それは前のものが引き続き有効という意味。
 export function sessionTokensFromResponse(
   response: oidc.TokenEndpointResponse & oidc.TokenEndpointResponseHelpers,
   { now, previousRefreshToken }: { now: Date; previousRefreshToken: string | null },
@@ -99,7 +98,7 @@ export function sessionTokensFromResponse(
   };
 }
 
-// The IdP answered and refused the tokens: the user signed out there, or the grant was revoked.
+// IdPが応答し、tokenを拒んだ。ユーザーがIdPでサインアウトしたか、認可が取り消された。
 function isRefusedByIdentityProvider(error: unknown): boolean {
   if (error instanceof oidc.WWWAuthenticateChallengeError) return error.status === 401;
   if (error instanceof oidc.ResponseBodyError)
@@ -118,7 +117,7 @@ class ReauthenticationRequiredError extends Error {
   }
 }
 
-// A session whose identity and tokens are all present, so the IdP can be asked about it.
+// identityとtokenがすべてそろっていて、IdPに問い合わせられるsession。
 type CheckableSession = OidcSessionState & {
   issuer: string;
   subject: string;
@@ -136,12 +135,12 @@ export interface OidcSessionVerifierOptions {
   clock: () => Date;
 }
 
-// current: no check was due. rechecked: the IdP confirmed it now, and the user's groups and
-// global role may have changed. revoked: the session must not be used any more.
+// current: 確認の時期ではなかった。rechecked: 今IdPが確かめ、ユーザーのグループと全体のroleが
+// 変わっているかもしれない。revoked: sessionはもう使ってはならない。
 export type OidcSessionVerdict = 'current' | 'rechecked' | 'revoked';
 
 export class OidcSessionVerifier {
-  // One check per session at a time; concurrent requests of the session wait for the same result.
+  // 1つのsessionにつき確認は一度に1つ。そのsessionへの同時のリクエストは同じ結果を待つ。
   private readonly checksInFlight = new Map<string, Promise<OidcSessionVerdict>>();
 
   constructor(private readonly options: OidcSessionVerifierOptions) {}
@@ -178,9 +177,9 @@ export class OidcSessionVerifier {
     const { database, settings } = this.options;
     const state = await findOidcSessionState(database, tokenHash);
     if (!state) return 'revoked';
-    // Another process checked it while this request waited.
+    // このリクエストが待っている間に、別のプロセスが確認した。
     if (state.tokens && this.isCurrent(state.checkedAt, state.tokens.expiresAt)) return 'rechecked';
-    // Sessions from before migration 042 or from another issuer have nothing to check with.
+    // migration 042より前のsessionや、別のissuerのsessionには、確認に使えるものが無い。
     if (!state.tokens || !state.issuer || state.issuer !== settings.issuer || !state.subject)
       return this.endSession(state, 'reauthentication_required');
     const session: CheckableSession = {
@@ -197,7 +196,7 @@ export class OidcSessionVerifier {
         encrypted: session.tokens,
       });
     } catch {
-      // Encrypted with a key that has since been replaced: only a new login can continue.
+      // 暗号化に使った鍵がその後差し替えられた。続けるには新たにログインするしかない。
       return this.endSession(state, 'reauthentication_required');
     }
     const provider = await this.options.provider();
@@ -209,7 +208,7 @@ export class OidcSessionVerifier {
         return this.endSession(session, 'reauthentication_required');
       if (isRefusedByIdentityProvider(error))
         return this.endSession(session, 'idp_session_revoked');
-      // Provider responses may contain tokens, so only the error's kind is logged.
+      // IdPの応答にはtokenが含まれうるので、ログにはエラーの種類だけを書く。
       console.error(
         JSON.stringify({
           event: 'oidc_session_check_failed',
@@ -243,7 +242,7 @@ export class OidcSessionVerifier {
         tokens: current,
       };
     } catch (error) {
-      // The IdP may stop accepting an access token before its stated expiry; renew it once.
+      // IdPは、示した期限より前にaccess tokenを受け付けなくなることがある。1回だけ更新する。
       if (refreshed || !current.refreshToken || !isRefusedByIdentityProvider(error)) throw error;
       current = await this.refresh(provider, current);
       return {
@@ -277,8 +276,8 @@ export class OidcSessionVerifier {
     const claims: OidcClaims = {
       issuer: settings.issuer,
       subject: state.subject,
-      // UserInfo may leave out profile claims; the stored ones stay.
-      // An unverified email is never stored.
+      // UserInfoはプロフィールのclaimを省くことがある。そのときは保存済みの値を残す。
+      // 確認されていないメールは決して保存しない。
       email: verifiedEmail ?? user.email,
       emailVerified: true,
       displayName: stringClaim(current.claims.name) ?? user.displayName,
@@ -303,7 +302,7 @@ export class OidcSessionVerifier {
         });
       });
       if (recorded) return 'rechecked';
-      // Another check stored newer tokens first, or the session ended meanwhile.
+      // 別の確認が先に新しいtokenを保存したか、その間にsessionが終わった。
       return (await findOidcSessionState(database, state.tokenHash)) ? 'rechecked' : 'revoked';
     } catch (error) {
       if (!(error instanceof OidcLoginDeniedError)) throw error;
@@ -311,7 +310,7 @@ export class OidcSessionVerifier {
     }
   }
 
-  // The identity may no longer use the app: every session of it ends and its groups are removed.
+  // このidentityはもうアプリを使えない。そのすべてのsessionを終え、グループを外す。
   private async withdrawIdentity(
     state: CheckableSession,
     denial: OidcLoginDeniedError,

@@ -307,7 +307,7 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
   it('Service Accountはローカルアカウントでも SSO でもloginできず、ユーザー検索にも出ない', async () => {
     const fixture = await projectFixture(harness);
     const account = await serviceAccount(fixture, { name: 'robot', role: 'editor' });
-    // Rows added by hand still must not open a login path.
+    // 手で足した行があっても、ログインの経路を開いてはいけない。
     const password = 'service-account-password';
     await harness.database.query("UPDATE users SET username='robot' WHERE id=$1", [account.id]);
     await harness.database.query(

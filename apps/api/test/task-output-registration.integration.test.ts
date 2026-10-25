@@ -107,7 +107,7 @@ describe.skipIf(!testDatabaseUrl)('Taskの成功時の出力モデル登録（�
     );
   }
 
-  // Launch → claim → upload weights → complete, as the worker does for a training Task.
+  // 学習のTaskでworkerがするように、起動→claim→重みのアップロード→完了と進める。
   async function runTask(
     fixture: Fixture,
     options: {
@@ -339,7 +339,7 @@ describe.skipIf(!testDatabaseUrl)('Taskの成功時の出力モデル登録（�
       error: 'artifact_not_found',
       reason: null,
     });
-    // The savepoint also rolls back the Model created for this attempt.
+    // savepointは、この試行で作った登録モデルもロールバックする。
     expect(
       (await harness.database.query("SELECT id FROM models WHERE name='Never created'")).rows,
     ).toEqual([]);

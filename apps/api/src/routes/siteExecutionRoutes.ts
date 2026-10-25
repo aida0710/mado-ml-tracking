@@ -19,7 +19,7 @@ function jobReference(context: ApiContext) {
   return { projectId: uuidParam(context, 'p'), jobId: uuidParam(context, 'j') };
 }
 
-// Mounted at /api/projects.
+// /api/projectsに置く。
 export function jobArrayRoutes(arrays: JobArrayService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.post('/:p/job-arrays', async (context) =>
@@ -40,7 +40,7 @@ export function jobArrayRoutes(arrays: JobArrayService): Hono<ApiEnvironment> {
   return routes;
 }
 
-// Mounted at /api: `mado-tracking submit` with the requester's own API token.
+// /apiに置く。`mado-tracking submit`が、依頼した本人のAPI tokenで呼ぶ。
 export function manualSubmissionRoutes(submissions: SiteSubmissionService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.get('/manual-submissions', async (context) =>
@@ -70,7 +70,7 @@ export function manualSubmissionRoutes(submissions: SiteSubmissionService): Hono
   return routes;
 }
 
-// Mounted at /api/projects: the runner on a site's compute node, with its Job token.
+// /api/projectsに置く。siteの計算ノードのrunnerが、そのJob tokenで呼ぶ。
 export function runnerRoutes(runner: RunnerService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.post('/:p/jobs/:j/runner/start', async (context) =>

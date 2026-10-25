@@ -2,8 +2,8 @@ import { isDeepStrictEqual } from 'node:util';
 import type { ComputeTarget, ExecutionRuntime, ExecutionRuntimeKind, JsonValue } from '@mmt/contracts';
 import { DomainError } from './errors.js';
 
-// A site's runner converts a docker image to a SIF itself (apptainer pull), so docker Code
-// also runs on a site that has only Apptainer or Singularity.
+// siteのrunnerはdockerイメージを自分でSIFに変換する（apptainer pull）ので、dockerのCodeは
+// ApptainerかSingularityしか無いsiteでも動く。
 const SIF_RUNTIME_KINDS: readonly ExecutionRuntimeKind[] = ['singularity', 'apptainer'];
 
 export function targetRunsRuntime(
@@ -45,7 +45,7 @@ export function validateTargetCompatibility(
       message: 'the computer does not support the runtime',
     });
   if (target.executor === 'site') {
-    // The site's scheduler or runner picks the GPUs; a Job asks only for how many (gpuCount).
+    // GPUはsiteのスケジューラかrunnerが選ぶ。Jobが求めるのは数（gpuCount）だけ。
     if (execution.gpuIds.length)
       throw new DomainError({
         status: 422,

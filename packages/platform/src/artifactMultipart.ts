@@ -2,12 +2,12 @@ import { createHash } from 'node:crypto';
 import { Transform, type TransformCallback } from 'node:stream';
 import type { MultipartCompletion } from './artifactTypes.js';
 
-// S3 rejects non-final parts below 5 MiB at completion; the same rule keeps sessions portable
-// between backends.
+// S3は完了時に、最後以外の5 MiB未満のパートを拒否する。同じ規則にすることで、アップロード
+// セッションがどの保存先でも同じように動く。
 export const MULTIPART_MIN_PART_BYTES = 5 * 1024 * 1024;
-// S3 UploadPart accepts at most 5 GiB per request.
+// S3のUploadPartが1リクエストで受け付けるのは5 GiBまで。
 export const MULTIPART_MAX_PART_BYTES = 5 * 1024 * 1024 * 1024;
-// S3 part numbers run from 1 to 10000.
+// S3のパート番号は1から10000まで。
 export const MULTIPART_MAX_PART_COUNT = 10_000;
 
 export class ArtifactPartMismatchError extends Error {
@@ -20,7 +20,7 @@ export class ArtifactPartMismatchError extends Error {
     this.name = 'ArtifactPartMismatchError';
   }
 }
-/** The backend no longer knows the multipart upload (completed, aborted or never created). */
+/** 保存先がそのマルチパートアップロードをもう知らない（完了した、中止した、作られていない）。 */
 export class ArtifactUploadNotFoundError extends Error {
   constructor() {
     super('Multipart upload does not exist');
@@ -35,8 +35,9 @@ export class ArtifactPartTooSmallError extends Error {
 }
 
 /**
- * Hashes a part while it streams to storage and fails the stream as soon as its length cannot
- * match the declared size, so a short or long body never becomes a stored part.
+ * パートをストレージへストリームで送りながらハッシュを取り、長さが宣言したサイズと合わなく
+ * なった時点でストリームを失敗させる。そのため、短すぎる本文や長すぎる本文が保存済みのパートに
+ * なることはない。
  */
 export class ArtifactPartCheck extends Transform {
   private readonly hash = createHash('sha256');
@@ -62,7 +63,7 @@ export class ArtifactPartCheck extends Transform {
     );
   }
 
-  /** Call after the stream finished; throws when the declared digest does not match. */
+  /** ストリームが終わってから呼ぶ。宣言したダイジェストと一致しなければ例外を投げる。 */
   finishCheck(): { size: number; sha256: string } {
     const sha256 = this.hash.digest('hex');
     if (this.expected.sha256 && this.expected.sha256 !== sha256)
@@ -71,7 +72,7 @@ export class ArtifactPartCheck extends Transform {
   }
 }
 
-/** Returns the parts in assembly order after checking the non-final part minimum. */
+/** 最後以外のパートの最小サイズを確かめてから、組み立てる順にパートを返す。 */
 export function orderedCompletionParts(
   completion: MultipartCompletion,
   minimumPartBytes: number,

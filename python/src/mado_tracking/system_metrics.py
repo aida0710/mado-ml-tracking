@@ -1,8 +1,8 @@
-"""Host system metrics shared by SDK runs and worker telemetry.
+"""SDKのRunとworkerの計測で共有する、ホストのシステムメトリクス。
 
-Every probe is optional: a missing psutil, NVML or nvidia-smi only removes the metrics it would
-have produced. Metric names follow the worker's historical `system.*` names so that existing run
-history and Web charts keep matching.
+どの計測も任意。psutil、NVML、nvidia-smiが無くても、それで取れるはずだったメトリクスが欠けるだけ。
+メトリクス名はworkerが以前から使う`system.*`の名前に合わせ、既存のRunの履歴や画面のグラフと
+一致し続けるようにする。
 """
 
 from __future__ import annotations
@@ -27,23 +27,24 @@ from .timestamps import utc_timestamp
 
 LOGGER = logging.getLogger(__name__)
 
-# A missing or slow nvidia-smi must not stall the caller's polling loop.
+# nvidia-smiが無い・遅いときに、呼び出し側のポーリングのループを止めてはいけない。
 NVIDIA_TIMEOUT_SECONDS = 3.0
-# Busy/idle CPU time needs two samples; a fresh process waits this long once for the second one.
+# CPUのbusy/idle時間には2回の測定が要る。起動したばかりのプロセスは、2回目のために一度だけ
+# この時間待つ。
 CPU_FIRST_SAMPLE_SECONDS = 0.1
-# Comparable to W&B; sampling every second would multiply stored metric rows for little insight.
+# W&Bと同程度。毎秒測ると、得るものは少ないのに保存するメトリクスの行が何倍にも増える。
 DEFAULT_SYSTEM_METRICS_SECONDS = 15.0
-# Below one second the sampling cost and metric volume outweigh the resolution gained.
+# 1秒未満では、細かくなる利点より測定の負荷とメトリクスの量が上回る。
 MIN_SYSTEM_METRICS_SECONDS = 1.0
-# /proc/diskstats always counts in 512-byte sectors, independent of the device's sector size.
+# /proc/diskstatsは、デバイスのセクタサイズによらず常に512バイトのセクタで数える。
 DISKSTATS_SECTOR_BYTES = 512
 MEBIBYTE = 1024**2
-# Module-level so tests can point the Linux fallbacks at a fake /proc tree.
+# テストでLinux用の代替処理を偽の/procに向けられるよう、モジュールの変数にしている。
 PROC_ROOT = Path("/proc")
 SYS_BLOCK_ROOT = Path("/sys/block")
-# Values of CUDA_VISIBLE_DEVICES that CUDA treats as "no device visible".
+# CUDAが「見えるデバイスが無い」と扱うCUDA_VISIBLE_DEVICESの値。
 CUDA_NO_DEVICE_VALUES = frozenset({"", "-1", "NoDevFiles"})
-# Virtual or aggregate block devices whose traffic is already counted on the member disks.
+# 仮想・集約のブロックデバイス。その転送量は、構成するディスクで既に数えている。
 AGGREGATE_DISK_PREFIXES = ("loop", "ram", "zram", "dm-", "md")
 NVIDIA_SMI_QUERY = "index,uuid,utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw"
 
@@ -53,7 +54,7 @@ MetricSink = Callable[[list[Metric]], None]
 
 @dataclass(frozen=True)
 class CounterSample:
-    """Monotonic counters read at `sampled_at` (wall-clock seconds, valid across processes)."""
+    """`sampled_at`の時点で読んだ単調増加のカウンタ（壁時計の秒で、プロセスをまたいで使える）。"""
 
     values: tuple[float, ...]
     sampled_at: float
@@ -61,7 +62,7 @@ class CounterSample:
 
 @dataclass
 class SystemMetricsState:
-    """Previous counter samples, so rates and CPU usage can be computed from differences."""
+    """前回のカウンタの値。差分から速度とCPU使用率を計算するために持つ。"""
 
     cpu: CounterSample | None = None
     disk_io: CounterSample | None = None
@@ -70,7 +71,7 @@ class SystemMetricsState:
     nvml: ModuleType | None = None
 
     def to_json(self) -> dict[str, Any]:
-        """Counters only; GPU backend handles belong to the current process."""
+        """カウンタだけ。GPUのバックエンドのハンドルは今のプロセスに属するもの。"""
         return {
             name: {"values": list(sample.values), "sampledAt": sample.sampled_at}
             for name, sample in (("cpu", self.cpu), ("diskIo", self.disk_io), ("network", self.network))
@@ -110,7 +111,7 @@ def _counter_sample_from_json(content: object) -> CounterSample | None:
 
 
 class MetricBuilder:
-    """Collects metrics of one sample with a shared step and timestamp."""
+    """1回の測定のメトリクスを、共通のstepとタイムスタンプで集める。"""
 
     def __init__(self, step: int):
         self.step = step
@@ -131,10 +132,10 @@ def collect(
     gpu_ids: list[str] | None = None,
     disk_path: str | Path | None = None,
 ) -> list[Metric]:
-    """Return one sample of system metrics; never raises.
+    """システムメトリクスを1回測って返す。例外は送出しない。
 
-    `gpu_ids=None` reads every GPU (narrowed by CUDA_VISIBLE_DEVICES), `[]` skips GPU probing.
-    Rates (disk/network) appear from the second sample on, since they need a previous sample.
+    `gpu_ids=None`ならすべてのGPU（CUDA_VISIBLE_DEVICESで絞る）を読み、`[]`ならGPUを調べない。
+    速度（ディスク・ネットワーク）は前回の値が要るので、2回目の測定から出る。
     """
     builder = MetricBuilder(step)
     psutil = _import_optional("psutil")
@@ -151,7 +152,8 @@ def collect(
         try:
             collector()
         except Exception:
-            # A process can exit or a pseudo-file can vanish mid-read; skip only that group.
+            # 読んでいる途中でプロセスが終わったり、疑似ファイルが消えたりすることがある。
+            # そのグループだけを飛ばす。
             LOGGER.debug("System metric collector failed", exc_info=True)
     return builder.metrics
 
@@ -164,7 +166,7 @@ def _import_optional(name: str) -> ModuleType | None:
 
 
 def _rate_values(previous: CounterSample | None, current: CounterSample) -> tuple[float, ...] | None:
-    """Per-second differences, or None on the first sample, a clock jump or a counter reset."""
+    """1秒あたりの差分。初回の測定、時計の飛び、カウンタのリセットのときはNone。"""
     if previous is None or len(previous.values) != len(current.values):
         return None
     elapsed = current.sampled_at - previous.sampled_at
@@ -196,7 +198,7 @@ def _collect_cpu(builder: MetricBuilder, state: SystemMetricsState, psutil: Modu
 
 
 def _read_cpu_times(psutil: ModuleType | None) -> CounterSample | None:
-    """(busy, total) CPU time; iowait counts as idle, guest time is already inside user time."""
+    """CPU時間の(busy, total)。iowaitはidleに数え、guestの時間は既にuserの時間に含まれている。"""
     if psutil is not None:
         times = psutil.cpu_times()
         idle = times.idle + getattr(times, "iowait", 0.0)
@@ -209,7 +211,7 @@ def _read_cpu_times(psutil: ModuleType | None) -> CounterSample | None:
     fields = first_line.split()
     if not fields or fields[0] != "cpu":
         return None
-    # user nice system idle iowait irq softirq steal; guest columns are included in user/nice.
+    # user nice system idle iowait irq softirq steal。guestの列はuser/niceに含まれている。
     values = [float(value) for value in fields[1:9]]
     if len(values) < 4:
         return None
@@ -219,7 +221,7 @@ def _read_cpu_times(psutil: ModuleType | None) -> CounterSample | None:
 
 
 def _collect_load_average(builder: MetricBuilder) -> None:
-    # Kept for continuity with history recorded by workers without psutil.
+    # psutilの無いworkerが記録した履歴とつながるように残している。
     try:
         builder.add("system.cpu.load1", os.getloadavg()[0])
     except (OSError, AttributeError):
@@ -242,7 +244,7 @@ def _collect_memory(builder: MetricBuilder, psutil: ModuleType | None) -> None:
 
 
 def _collect_process_memory(builder: MetricBuilder, psutil: ModuleType | None, pid: int | None) -> None:
-    """Resident memory of `pid` and all of its descendants."""
+    """`pid`とそのすべての子孫プロセスの常駐メモリ。"""
     if not pid:
         return
     if psutil is not None:
@@ -322,7 +324,7 @@ def _read_disk_io(psutil: ModuleType | None) -> CounterSample | None:
 
 
 def _is_physical_disk(name: str) -> bool:
-    # Partitions have no /sys/block entry, so counting only these avoids double counting.
+    # パーティションには/sys/blockのエントリが無いので、ここにあるものだけを数えれば二重に数えない。
     return not name.startswith(AGGREGATE_DISK_PREFIXES) and (SYS_BLOCK_ROOT / name).exists()
 
 
@@ -339,7 +341,10 @@ def _collect_network(builder: MetricBuilder, state: SystemMetricsState, psutil: 
 
 
 def _read_network(psutil: ModuleType | None) -> CounterSample | None:
-    """Bytes sent/received over every interface except loopback (local traffic is not network I/O)."""
+    """ループバック以外の全インターフェースで送受信したバイト数。
+
+    ローカルの通信はネットワークI/Oではない。
+    """
     sent = received = 0.0
     if psutil is not None:
         for name, counters in psutil.net_io_counters(pernic=True).items():
@@ -394,7 +399,7 @@ def _collect_gpus(builder: MetricBuilder, state: SystemMetricsState, gpu_ids: li
 
 
 def _selected_gpu_ids(gpu_ids: list[str] | None) -> set[str] | None:
-    """GPU indexes/UUIDs to report; None means every GPU."""
+    """報告するGPUのindex・UUID。NoneならすべてのGPU。"""
     if gpu_ids is not None:
         return {gpu_id.strip() for gpu_id in gpu_ids}
     visible = os.environ.get("CUDA_VISIBLE_DEVICES")
@@ -406,7 +411,7 @@ def _selected_gpu_ids(gpu_ids: list[str] | None) -> set[str] | None:
 
 
 def _read_gpus(state: SystemMetricsState) -> list[GpuReading]:
-    """NVML first, then nvidia-smi; a backend that fails is not retried in this state."""
+    """まずNVML、次にnvidia-smiを試す。失敗したバックエンドは、このstateでは再試行しない。"""
     for backend, reader in (("nvml", _read_gpus_nvml), ("nvidia-smi", _read_gpus_nvidia_smi)):
         if backend in state.unavailable_gpu_backends:
             continue
@@ -422,11 +427,11 @@ def _read_gpus(state: SystemMetricsState) -> list[GpuReading]:
 
 
 class GpuBackendUnavailable(Exception):
-    """The backend cannot work in this environment; fall through to the next one."""
+    """この環境ではバックエンドが動かない。次のバックエンドに移る。"""
 
 
 class TransientGpuReadError(Exception):
-    """The backend exists but this one sample failed (for example a timeout)."""
+    """バックエンドはあるが、今回の測定だけが失敗した（タイムアウトなど）。"""
 
 
 def _read_gpus_nvml(state: SystemMetricsState) -> list[GpuReading]:
@@ -471,7 +476,7 @@ def _read_nvml_device(nvml: ModuleType, handle: object, index: int) -> GpuReadin
 
 
 def _optional_nvml(read: Callable[[], Any]) -> Any:
-    # Consumer GPUs and MIG devices report NVML_ERROR_NOT_SUPPORTED for some fields.
+    # コンシューマ向けGPUやMIGのデバイスは、一部の項目でNVML_ERROR_NOT_SUPPORTEDを返す。
     try:
         return read()
     except Exception:
@@ -502,7 +507,7 @@ def _read_gpus_nvidia_smi(_state: SystemMetricsState) -> list[GpuReading]:
 def _parse_nvidia_smi_rows(rows: Iterable[list[str]]) -> Iterable[GpuReading]:
     for row in rows:
         values = [value.strip() for value in row]
-        # Older drivers or callers may omit power.draw; its column is optional.
+        # 古いドライバや呼び出し側はpower.drawを省くことがあるので、その列は任意。
         if len(values) not in (6, 7):
             continue
         yield GpuReading(
@@ -517,7 +522,7 @@ def _parse_nvidia_smi_rows(rows: Iterable[list[str]]) -> Iterable[GpuReading]:
 
 
 def _parse_number(raw_value: str) -> float | None:
-    # nvidia-smi prints "[N/A]" or "[Not Supported]" for fields the device cannot report.
+    # デバイスが報告できない項目には、nvidia-smiは"[N/A]"か"[Not Supported]"を出す。
     try:
         return float(raw_value)
     except ValueError:
@@ -529,10 +534,10 @@ def _scaled(value: float | None, scale: int) -> float | None:
 
 
 class SystemMetricsMonitor:
-    """Samples system metrics on a daemon thread and hands each sample to `sink`.
+    """daemonスレッドでシステムメトリクスを測り、測るたびに`sink`へ渡す。
 
-    Steps count up from 0 like worker telemetry. A failing sink is logged and counted; sampling
-    continues so a temporary upload error does not end monitoring for the rest of the run.
+    stepはworkerの計測と同じく0から数える。sinkが失敗したらログに残して数え、測定は続ける。
+    一時的なアップロードの失敗で、Runの残りの間の監視が終わらないようにするため。
     """
 
     def __init__(
@@ -563,7 +568,7 @@ class SystemMetricsMonitor:
         self._thread.start()
 
     def stop(self) -> None:
-        """Stop sampling and wait for the thread; no extra sample is sent after this call."""
+        """測定を止めてスレッドを待つ。この呼び出しのあとに余分な測定は送らない。"""
         self._stop_requested.set()
         thread = self._thread
         if thread is not None and thread is not threading.current_thread():

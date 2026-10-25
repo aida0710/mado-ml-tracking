@@ -1,13 +1,13 @@
 import type { ServerOptions } from 'node:http';
 import type { ApiConfig } from '../config.js';
 
-// Slowloris defence: a client must finish sending headers within this time even when the
-// whole-request deadline is disabled for multi-hour artifact uploads.
+// Slowlorisへの対策。何時間もかかるArtifactのアップロードのためにリクエスト全体の期限を
+// 無効にしていても、クライアントはこの時間内にヘッダーを送り終えなければならない。
 const HEADERS_TIMEOUT_MS = 60_000;
 
 export interface ServerTimeouts {
   serverOptions: Pick<ServerOptions, 'requestTimeout' | 'headersTimeout'>;
-  /** Socket inactivity limit; a stalled upload is cut instead of holding a connection forever. */
+  /** ソケットの無通信の上限。止まったアップロードは、接続を持ち続けずに切る。 */
   idleTimeoutMs: number;
 }
 
@@ -18,7 +18,7 @@ export function serverTimeouts(
   return {
     serverOptions: {
       requestTimeout,
-      // Node rejects a headers timeout longer than a non-zero request timeout.
+      // Nodeは、0でないリクエストのタイムアウトより長いヘッダーのタイムアウトを拒む。
       headersTimeout:
         requestTimeout > 0 ? Math.min(HEADERS_TIMEOUT_MS, requestTimeout) : HEADERS_TIMEOUT_MS,
     },
@@ -30,6 +30,6 @@ export function applyIdleTimeout(
   server: { setTimeout(milliseconds: number): unknown },
   timeouts: ServerTimeouts,
 ) {
-  // Without a 'timeout' listener Node destroys the idle socket, which aborts the upload stream.
+  // 'timeout'のリスナーが無いとNodeは無通信のソケットを破棄し、アップロードのストリームも中断する。
   server.setTimeout(timeouts.idleTimeoutMs);
 }

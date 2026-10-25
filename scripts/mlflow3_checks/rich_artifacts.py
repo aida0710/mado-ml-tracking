@@ -1,4 +1,4 @@
-"""log_table/log_image/log_dict/log_text/log_figure and audio files: listing, bytes and headers."""
+"""log_table/log_image/log_dict/log_text/log_figureと音声ファイル: 一覧、バイト列、ヘッダー。"""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from pathlib import Path
 import httpx
 import matplotlib
 
-matplotlib.use("Agg")  # Render figures without a display on headless verification hosts.
+matplotlib.use("Agg")  # ディスプレイの無い検証用ホストでも図を描けるようにする。
 import matplotlib.pyplot as plt
 import mlflow
 import numpy as np
@@ -30,11 +30,12 @@ from mlflow3_checks.common import (
 
 AUDIO_SAMPLE_RATE = 16000
 AUDIO_SAMPLE_COUNT = 1600
-# The canonical PCM WAV header is 44 bytes; ranges before and after it mimic a seeking player.
+# 標準的なPCMのWAVヘッダーは44バイト。その前と後の範囲を要求して、シークするプレーヤーをまねる。
 WAVE_HEADER_BYTES = 44
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 FALLBACK_MIME_TYPE = "application/octet-stream"
-# The server infers these when the SDK falls back to octet-stream (apps/api/src/domain/artifactMimeType.ts).
+# SDKがoctet-streamにフォールバックしたとき、サーバーはこれらの型を推定する
+# （apps/api/src/domain/artifactMimeType.ts）。
 SERVER_INFERRED_TYPES = {".wav": "audio/wav", ".flac": "audio/flac", ".png": "image/png"}
 
 
@@ -48,9 +49,10 @@ def write_sine_wave(path: Path) -> None:
 
 
 def write_header_only_flac(path: Path) -> None:
-    """A valid FLAC stream with STREAMINFO and no audio frames; enough for type and Range checks."""
+    """STREAMINFOだけで音声フレームの無い、正しいFLACのストリーム。型とRangeの確認には足りる。"""
     block_size = 4096
-    # 20-bit sample rate, 3-bit (channels - 1), 5-bit (bits per sample - 1), 36-bit sample count.
+    # 20ビットのサンプルレート、3ビットの（チャンネル数 - 1）、5ビットの（サンプルあたりの
+    # ビット数 - 1）、36ビットのサンプル数。
     packed = (AUDIO_SAMPLE_RATE << 44) | (0 << 41) | (15 << 36) | 0
     stream_info = (
         struct.pack(">HH", block_size, block_size) + bytes(6) + packed.to_bytes(8, "big") + bytes(16)
@@ -60,7 +62,7 @@ def write_header_only_flac(path: Path) -> None:
 
 
 def expected_content_type(filename: str) -> str:
-    """The type the SDK declares on upload, or the server's inference when it declares none."""
+    """SDKがアップロード時に宣言する型。宣言が無ければサーバーが推定した型。"""
     declared = mimetypes.guess_type(filename)[0] or FALLBACK_MIME_TYPE
     if declared != FALLBACK_MIME_TYPE:
         return declared
@@ -68,7 +70,7 @@ def expected_content_type(filename: str) -> str:
 
 
 def log_rich_artifacts(temporary: Path) -> tuple[str, dict[str, Path]]:
-    """Log every rich artifact type in one Run and return local copies of the audio sources."""
+    """リッチなArtifactを種類ごとに1つのRunへ記録し、音声の元ファイルのローカルの写しを返す。"""
     wave_file, flac_file = temporary / "sine.wav", temporary / "header-only.flac"
     write_sine_wave(wave_file)
     write_header_only_flac(flac_file)
@@ -92,7 +94,7 @@ def log_rich_artifacts(temporary: Path) -> tuple[str, dict[str, Path]]:
 
 
 def assert_audio_served(run_id: str, path: str, source: Path) -> dict:
-    """Whole download keeps bytes and type; a Range request returns 206 with the same type."""
+    """全体のダウンロードはバイト列と型を保つ。Rangeのリクエストは同じ型で206を返す。"""
     size = source.stat().st_size
     content_type = expected_content_type(source.name)
     whole = run_artifact_response(run_id, path)
@@ -107,7 +109,8 @@ def assert_audio_served(run_id: str, path: str, source: Path) -> dict:
 
 
 def assert_native_audio_preview(run_id: str, path: str, source: Path) -> dict:
-    """The native content URL used by the audio viewer serves the MLflow upload inline with Range."""
+    """音声ビューアが使うnativeのcontent URLは、MLflowでアップロードしたものを
+    inlineで、Rangeにも応じて返す。"""
     listing = httpx.get(
         f"{native_project_url()}/runs/{run_id}/artifacts",
         headers=tracking_headers(),

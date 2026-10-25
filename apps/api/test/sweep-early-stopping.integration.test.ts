@@ -33,7 +33,7 @@ describe.skipIf(!testDatabaseUrl)('Sweepの早期打ち切り（独立PostgreSQL
     );
     const byTrial = (trialIndex: number): WorkerJob =>
       claimed.find((item) => indexOf.get(item.run.id) === trialIndex)!;
-    // Trials 0-2 reach the first rung (step 2); trial 3 has only reached step 1.
+    // trial 0〜2は最初のrung（step 2）に達し、trial 3はまだstep 1までしか進んでいない。
     for (const [trialIndex, loss] of [
       [0, 0.1],
       [1, 0.5],
@@ -67,7 +67,8 @@ describe.skipIf(!testDatabaseUrl)('Sweepの早期打ち切り（独立PostgreSQL
     const counted = await fixture.getSweep(sweep.id);
     expect(counted.trialCounts).toMatchObject({ running: 2, early_stopped: 2 });
 
-    // The worker stops the process: the Run is canceled, the trial stays early_stopped with its objective.
+    // workerがプロセスを止める。Runはcanceledになり、trialは目的メトリクスの値を持ったまま
+    // early_stoppedで残る。
     await fixture.complete(byTrial(1), 'canceled');
     const stopped = (await fixture.listTrials(sweep.id))[1]!;
     expect(stopped).toMatchObject({
@@ -77,7 +78,7 @@ describe.skipIf(!testDatabaseUrl)('Sweepの早期打ち切り（独立PostgreSQL
       objectiveStep: 2,
     });
 
-    // The Jobs list tells the early stop from a cancel by a person and names the Run and Task.
+    // Jobの一覧は、早期停止を人による取り消しと区別し、RunとTaskの名前を示す。
     const jobs = await entity<{ items: JobListItem[] }>(
       await request(harness.app, `${fixture.basePath}/jobs`, { cookie: fixture.viewer.cookie }),
       200,
@@ -94,7 +95,7 @@ describe.skipIf(!testDatabaseUrl)('Sweepの早期打ち切り（独立PostgreSQL
     expect(jobOf(1).taskName).toEqual(expect.any(String));
     expect(jobOf(0).sweepEarlyStopped).toBe(false);
 
-    // A second tick does not stop the same trials again or stop the leader.
+    // 2回目のtickは、同じtrialをもう一度止めることも、首位のtrialを止めることもしない。
     await harness.sweepScheduler.tickAll();
     expect((await fixture.listTrials(sweep.id)).map((trial) => trial.state)).toEqual([
       'running',

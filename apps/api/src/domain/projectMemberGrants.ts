@@ -4,8 +4,8 @@ import { DomainError, notFound } from './errors.js';
 export type GrantableUserState = Pick<User, 'id' | 'kind' | 'status'>;
 
 /**
- * The members to add when a Project is created. A user listed twice refuses the request; the
- * creator is left out because the creator is always the Project admin.
+ * Projectを作るときに足すメンバー。同じ利用者が2回あればリクエストを拒む。作成者は常に
+ * Project adminなので除く。
  */
 export function initialMemberGrants(
   grants: readonly ProjectMemberGrant[],
@@ -26,8 +26,8 @@ export function initialMemberGrants(
 }
 
 /**
- * Refuses the whole request unless every grant names an active person: Service Accounts get their
- * role on the account itself, and launchers are never members.
+ * すべての付与が有効な人を指していなければ、リクエスト全体を拒む。Service Accountは
+ * アカウント自体にroleを持ち、launcherはメンバーにならない。
  */
 export function assertGrantableUsers(
   grants: readonly ProjectMemberGrant[],

@@ -35,13 +35,13 @@ import { requireGlobalAdmin, requireWorker } from './accessService.js';
 import { auditActor, recordDenial } from './auditService.js';
 import { findCheckableTarget, findTarget, requireCheckWorker } from './targetCheckAccess.js';
 
-// The Compute page shows recent history only.
+// コンピュータの画面には最近の履歴だけを出す。
 const TARGET_CHECK_LIST_LIMIT = 20;
 
 /**
- * What a worker may claim ($1 its token, $2 its MMT_WORKER_ID, $3 the kinds it runs, $4 its
- * MMT_WORKER_TARGET_IDS): a connection check nobody chose a worker for, of a computer it is in
- * charge of, or any request assigned to it.
+ * workerがclaimできるもの（$1はそのtoken、$2はMMT_WORKER_ID、$3は動かす種類、$4は
+ * MMT_WORKER_TARGET_IDS）。workerが受け持つコンピュータの、誰もworkerを選んでいない接続の
+ * 確認か、そのworkerに割り当てられたリクエスト。
  */
 function claimableSql(table: string): string {
   return `${table}.kind=ANY($3::text[]) AND (
@@ -50,8 +50,8 @@ function claimableSql(table: string): string {
 }
 
 /**
- * Connection checks of ssh and local computers, and the worker side of every request a worker runs
- * on a computer (connection checks and directory listings, TargetDirectoryListingService).
+ * sshとlocalのコンピュータの接続の確認と、workerがコンピュータで動かすすべてのリクエストの
+ * worker側の処理（接続の確認とディレクトリの一覧、TargetDirectoryListingService）。
  */
 export class TargetCheckService {
   constructor(
@@ -115,8 +115,8 @@ export class TargetCheckService {
   }
 
   /**
-   * Workers one may choose for a check: global administrators, who add ssh and local computers,
-   * see every Project's workers.
+   * 確認に選べるworker。sshとlocalのコンピュータを追加する全体管理者は、すべてのProjectの
+   * workerを見られる。
    */
   async checkWorkers(principal: Principal): Promise<TargetCheckWorkerPresence[]> {
     requireGlobalAdmin(principal);
@@ -129,12 +129,12 @@ export class TargetCheckService {
   ): Promise<WorkerTargetCheck | null> {
     return transaction(this.database, async (connection) => {
       const worker = await requireWorker(connection, principal);
-      // Serializes a worker's resent claims so one request cannot take two checks.
+      // workerが再送したclaimを1つずつ進め、1回のリクエストで2つの確認を取らないようにする。
       await connection.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
         `target-check:${worker.tokenId}:${request.workerId}`,
       ]);
       await expireStaleChecks(connection);
-      // A lost claim response is recovered by claiming again: the same lease comes back.
+      // claimの応答が失われても、もう一度claimすれば取り戻せる。同じleaseが返る。
       const held = await first<{ id: string }>(
         connection,
         `SELECT id FROM target_checks WHERE status='claimed' AND worker_token_id=$1 AND worker_id=$2
@@ -197,7 +197,7 @@ export class TargetCheckService {
           ? findListing(connection, { targetId: leased.targetId, listingId: checkId })
           : findCheck(connection, checkId);
       if (leased.status !== 'claimed') {
-        // A resent completion is safe; a timed-out request keeps its failure_reason.
+        // 完了の再送は安全。タイムアウトしたリクエストはfailure_reasonを保つ。
         if (leased.status === request.status && leased.failureReason === null)
           return (await recorded())!;
         throw new DomainError({

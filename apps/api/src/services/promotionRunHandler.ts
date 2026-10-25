@@ -2,9 +2,9 @@ import type { Connection } from '../db/database.js';
 import type { PromotionService } from './promotionService.js';
 import type { RunCompletionHandler, RunStatusChange } from './runCompletionService.js';
 
-// Judges a finished evaluation Run against the promotion policies of the rule that produced it,
-// inside the terminal transition (decisions.md: judged in the same transaction as the Run's end).
-// Its place in the wave-wide handler order is after automation chaining and before automatic retry.
+// 終わった評価Runを、それを作ったルールの昇格policyで判定する。判定は終了状態への遷移の中で
+// 行う（Runの終了と同じトランザクションで判定する）。全体のハンドラの順序では、
+// 自動実行の連鎖のあと、自動再試行の前に置く。
 export class PromotionRunHandler implements RunCompletionHandler {
   readonly name = 'promotion';
 

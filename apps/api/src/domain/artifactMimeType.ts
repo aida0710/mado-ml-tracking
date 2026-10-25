@@ -1,15 +1,16 @@
 export const FALLBACK_ARTIFACT_MIME_TYPE = 'application/octet-stream';
 
-// Inferred text types declare UTF-8 so inline previews of Japanese labels are not mis-decoded.
+// 推定したテキストの型にはUTF-8を明示し、日本語のラベルをその場でプレビューしても
+// 文字化けしないようにする。
 const UTF8_TEXT = '; charset=utf-8';
 
-// HTML, SVG, XML, and JavaScript are never inferred: a guessed active type must not reach a browser.
+// HTML、SVG、XML、JavaScriptは推定しない。推測で付けた実行可能な型をブラウザへ届けてはならない。
 const mimeTypesByExtension: Record<string, string> = {
   wav: 'audio/wav',
   flac: 'audio/flac',
   mp3: 'audio/mpeg',
   ogg: 'audio/ogg',
-  // Opus files are stored in an Ogg container; browsers play them through the Ogg type.
+  // OpusのファイルはOggのコンテナに入っている。ブラウザはOggの型で再生する。
   opus: 'audio/ogg',
   m4a: 'audio/mp4',
   aac: 'audio/aac',
@@ -30,7 +31,7 @@ const mimeTypesByExtension: Record<string, string> = {
   parquet: 'application/vnd.apache.parquet',
 };
 
-// Passive media and plain text only; every other type is served as an attachment.
+// 実行されないメディアとプレーンテキストだけ。それ以外の型は添付ファイル（attachment）として返す。
 const inlineMimeTypes = new Set([
   'text/plain',
   'text/csv',
@@ -70,7 +71,7 @@ export function inferMimeTypeFromPath(path: string): string | null {
   return mimeTypesByExtension[filename.slice(dot + 1).toLowerCase()] ?? null;
 }
 
-/** Keeps a specific client-declared type and infers from the extension only when none was given. */
+/** クライアントが具体的な型を宣言していればそれを使い、無いときだけ拡張子から推定する。 */
 export function resolveArtifactMimeType(upload: {
   path: string;
   declaredMimeType?: string;

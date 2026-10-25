@@ -37,7 +37,7 @@ import type { RunSearchService } from './runSearchService.js';
 
 const seriesKey = (runId: string, name: string) => `${runId}\u0000${name}`;
 
-// Map.groupBy is ES2024, beyond the ES2023 library of this build.
+// Map.groupByはES2024で、このビルドが使うES2023のライブラリには無い。
 function groupRowsBy<T>(items: T[], keyOf: (item: T) => string): Map<string, T[]> {
   const groups = new Map<string, T[]>();
   for (const item of items) {
@@ -49,7 +49,7 @@ function groupRowsBy<T>(items: T[], keyOf: (item: T) => string): Map<string, T[]
   return groups;
 }
 
-// Another Project's Run is reported like a missing one so its existence does not leak.
+// 別のProjectのRunは、存在が漏れないよう、無いRunと同じように報告する。
 function requireAllRuns(requested: string[], found: string[]): void {
   if (found.length !== requested.length) notFound('run');
 }

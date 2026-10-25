@@ -126,7 +126,7 @@ export function registryRoutes(
     );
   });
   routes.delete('/:p/models/:id/aliases/:alias', async (context) => {
-    // DELETE bodies are optional: a removal without a reason may send no body at all.
+    // DELETEの本文は省略できる。理由の無い削除では本文をまったく送らなくてよい。
     const removal = await optionalJsonBody(context, modelAliasRemovalSchema);
     await registry.removeAlias(principal(context), uuidParam(context, 'p'), {
       modelId: uuidParam(context, 'id'),
@@ -253,8 +253,8 @@ export function registryRoutes(
       }),
     ),
   );
-  // Registered with the registry so it precedes GET /:p/artifacts/:a, which would read
-  // `by-digest` as an Artifact ID.
+  // registryの経路と一緒に登録して、GET /:p/artifacts/:aより前に置く。そうしないと
+  // `by-digest`がArtifact IDとして読まれる。
   routes.get('/:p/artifacts/by-digest', async (context) =>
     context.json(
       await datasetContent.findArtifactByDigest(principal(context), {

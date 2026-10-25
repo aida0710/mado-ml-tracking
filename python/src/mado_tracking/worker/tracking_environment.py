@@ -1,4 +1,4 @@
-"""Connect recording clients to the worker's project and existing Run."""
+"""記録用のクライアントを、workerのProjectと既存のRunにつなぐ。"""
 
 from __future__ import annotations
 
@@ -8,10 +8,10 @@ from .contracts import WorkerJob
 
 
 def build_tracking_environment(job: WorkerJob, api: ApiSettings) -> dict[str, str]:
-    """Environment for the Job's code. It authenticates with the Job token, never the worker's.
+    """Jobのコード用の環境変数。workerのtokenではなく、Job tokenで認証する。
 
-    The worker token can claim other Jobs and write every Run in the Project, so a Job
-    without its own token is not started rather than falling back to the worker token.
+    worker tokenはほかのJobを取得でき、Projectの全Runに書き込めるので、
+    自分のtokenが無いJobはworker tokenで代用せず、起動しない。
     """
     if job.job_token is None:
         raise ConfigurationError("WorkerJob has no job token; refusing to start its code")

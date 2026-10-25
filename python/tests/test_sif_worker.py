@@ -1,4 +1,4 @@
-"""Use a target-side CLI fixture to exercise real owned processes without installing SIF runtimes."""
+"""SIFのruntimeを入れずに、target側のCLIのfixtureで、自分が所有する実際のプロセスを動かす。"""
 
 from __future__ import annotations
 

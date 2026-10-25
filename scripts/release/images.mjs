@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url';
-// These are the application services we publish; PostgreSQL and Forgejo keep their upstream images.
+// 公開するのはこのアプリケーションのサービス。PostgreSQLとForgejoは上流のイメージのまま使う。
 export const RELEASE_IMAGES = ['api', 'web', 'preview', 'worker', 'launcher'].map((service) => ({
   service,
   image: `mado-ml-tracking-${service}`,

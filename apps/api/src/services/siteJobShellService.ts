@@ -17,8 +17,8 @@ import { auditActor, recordDenial, type AuditEventDraft } from './auditService.j
 import { findSiteTarget, requireTargetManager, requireTargetUser } from './siteAccess.js';
 
 /**
- * A site's job shell, kept as immutable versions. Whoever may use the computer may read it (a
- * manual site runs it as themselves); its owner or a global administrator saves the next one.
+ * siteのjob shell。変更できないバージョンとして残す。コンピュータを使える人は読める（手動の
+ * siteでは本人としてそれを実行する）。次のバージョンを保存するのは所有者か全体管理者。
  */
 export class SiteJobShellService {
   constructor(private readonly database: Database) {}
@@ -39,7 +39,7 @@ export class SiteJobShellService {
     return shell;
   }
 
-  /** The next version; the same content as the current version returns it unchanged. */
+  /** 次のバージョンを作る。今のバージョンと同じ内容なら、今のものをそのまま返す。 */
   async create(
     principal: Principal,
     targetId: string,

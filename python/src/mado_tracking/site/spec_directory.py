@@ -1,14 +1,14 @@
-"""The spec directory: what a launcher or `mado-tracking submit` hands one job shell call.
+"""specディレクトリ。launcherや`mado-tracking submit`が、1回のjob shellの呼び出しに渡すもの。
 
     <spec dir>/          0700
-      submission.json    the SiteSubmission without Job tokens; of the job shell, its id,
-                         version and sha256 (the job shell itself is installed on its own)
-      api.json           {"apiUrl"}: the API as the compute nodes reach it
-      runner.json        the site's runner settings (RunnerSettings)
-      jobs/<i>.json      the WorkerJob of the i-th Job in array order, with its Job token (0600)
-      secrets.json       optional {"registry": {"username", "password"}} (0600)
+      submission.json    Job tokenを除いたSiteSubmission。job shellはid・version・sha256だけ
+                         （job shell自体は別にインストールする）
+      api.json           {"apiUrl"}。計算ノードから見たAPIのURL
+      runner.json        siteのrunnerの設定（RunnerSettings）
+      jobs/<i>.json      array順でi番目のJobのWorkerJobとそのJob token（0600）
+      secrets.json       {"registry": {"username", "password"}}。任意（0600）
 
-The runner reads jobs/<MMT_ARRAY_INDEX>.json; i is the scheduler's array number from 0.
+runnerはjobs/<MMT_ARRAY_INDEX>.jsonを読む。iはスケジューラのarray番号で、0から数える。
 """
 
 from __future__ import annotations
@@ -31,26 +31,26 @@ API_FILENAME = "api.json"
 RUNNER_SETTINGS_FILENAME = "runner.json"
 JOBS_DIRECTORY = "jobs"
 SECRETS_FILENAME = "secrets.json"
-# scheduler: the scheduler gave this node its GPUs (CUDA_VISIBLE_DEVICES). lease: a host without
-# a scheduler, where the runner picks free GPUs itself (Docker GPU servers).
+# schedulerは、スケジューラがこのノードにGPUを割り当てたもの（CUDA_VISIBLE_DEVICES）。leaseは、
+# スケジューラの無いホストでrunnerが空いているGPUを自分で選ぶもの（DockerのGPUサーバー）。
 GPU_ASSIGNMENTS = ("scheduler", "lease")
-# MAX_SITE_CANCEL_GRACE_SECONDS of the contracts, the most a site's settings on the Web allow. A
-# site should stay within its scheduler's kill delay after SIGTERM, or the scheduler kills first.
+# contractsのMAX_SITE_CANCEL_GRACE_SECONDS。画面のsiteの設定で許す最大値。siteでは、SIGTERMの
+# あとスケジューラがkillするまでの猶予に収める。超えるとスケジューラが先にkillする。
 MAX_CANCEL_GRACE_SECONDS = 3600.0
-# Spec documents are small; a larger file is not one this package wrote.
+# specの文書は小さい。これより大きいファイルは、このパッケージが書いたものではない。
 MAX_SPEC_FILE_BYTES = 64 * 1024**2
-# What submission.json keeps of the job shell version: which one it was, not its content (up to
-# 1 MiB, installed once per content under <work dir>/.mmt-job-shells/).
+# submission.jsonに残すjob shellのバージョンの情報。どのバージョンかだけを残し、内容は残さない
+# （内容は最大1MiBで、内容ごとに一度だけ<work dir>/.mmt-job-shells/の下にインストールする）。
 SUBMISSION_JOB_SHELL_FIELDS = ("id", "version", "sha256")
 
 
 @dataclass(frozen=True)
 class RunnerSettings:
-    """runner.json: how the runner works on this site, from the launcher's or submit's settings."""
+    """runner.json。launcherやsubmitの設定から作る、このsiteでのrunnerの動かし方。"""
 
     work_directory: str
     gpu_assignment: str = "scheduler"
-    # lease only: the GPUs the runner may choose from; empty means every GPU nvidia-smi lists.
+    # leaseのときだけ使う。runnerが選んでよいGPU。空なら、nvidia-smiが示すすべてのGPU。
     gpu_ids: tuple[str, ...] = ()
     cancel_grace_seconds: float = DEFAULT_CANCEL_GRACE_SECONDS
     max_output_files: int = DEFAULT_MAX_OUTPUT_FILES
@@ -101,14 +101,14 @@ class RunnerSettings:
 
 
 def ordered_jobs(submission: Mapping[str, Any]) -> list[dict[str, Any]]:
-    """WorkerJobs in array order; jobs/<i>.json and MMT_JOB_IDS follow it."""
+    """array順に並べたWorkerJob。jobs/<i>.jsonとMMT_JOB_IDSはこの順に従う。"""
     return sorted(
         submission["jobs"], key=lambda item: (item["job"].get("arrayIndex") or 0, str(item["job"]["id"]))
     )
 
 
 def secret_values_of(secrets: Mapping[str, Any]) -> list[str]:
-    """The values of a secrets.json document that no output may show: the registry password."""
+    """secrets.jsonの値のうち、どの出力にも出してはいけないもの（レジストリのパスワード）。"""
     registry = secrets.get("registry")
     if isinstance(registry, dict) and isinstance(registry.get("password"), str):
         return [registry["password"]]
@@ -126,7 +126,7 @@ def spec_files(
     settings: RunnerSettings,
     secrets: Mapping[str, Any] | None = None,
 ) -> dict[str, tuple[bytes, int]]:
-    """Every file of the spec directory as relative path -> (content, mode)."""
+    """specディレクトリの全ファイルを、相対パス -> (content, mode)の形で返す。"""
     jobs = ordered_jobs(submission)
     recorded = {**submission, "jobs": [{**job, "jobToken": None} for job in jobs]}
     job_shell = submission.get("jobShell")
@@ -147,7 +147,7 @@ def spec_files(
 
 
 class SpecDirectory:
-    """Read side, for the runner on the compute node."""
+    """読む側。計算ノードのrunnerが使う。"""
 
     def __init__(self, path: Path):
         if path.is_symlink() or not path.is_dir():

@@ -44,7 +44,7 @@ interface ChannelDestinationSettings {
 const CHANNEL_COLUMNS =
   'id,project_id,kind,name,url_env,secret_env,recipients,enabled,created_by,created_at,updated_at';
 
-// Mirrors the notification_channels CHECK so the API answers 422 with a reason instead of 23514.
+// notification_channelsのCHECKと同じ検査。APIが23514でなく理由つきの422を返せるようにする。
 function validateDestination(settings: ChannelDestinationSettings): void {
   const hasRecipients = settings.recipients.length > 0;
   const isValid =
@@ -61,7 +61,7 @@ function validateDestination(settings: ChannelDestinationSettings): void {
     });
 }
 
-/** Channels (global administrators), rules (Project admins), delivery history and test sends. */
+/** 通知先（全体管理者）、通知ルール（Project admin）、配信履歴、テスト送信。 */
 export class NotificationService {
   constructor(
     private readonly options: {
@@ -81,8 +81,8 @@ export class NotificationService {
   }
 
   /**
-   * Names of the API server's variables a channel may refer to (MMT_NOTIFICATION_*) that hold a
-   * value, so an administrator picks one instead of typing it. Values are never returned.
+   * 通知先が参照できるAPIサーバーの環境変数（MMT_NOTIFICATION_*）のうち、
+   * 値が入っているものの名前。管理者は打ち込む代わりにそこから選べる。値は決して返さない。
    */
   listEnvironmentNames(principal: Principal): string[] {
     requireGlobalAdmin(principal);
@@ -92,7 +92,7 @@ export class NotificationService {
       .sort();
   }
 
-  /** Channels a Project's rules may use: global ones and the Project's own. */
+  /** Projectの通知ルールが使える通知先。全体の通知先と、そのProjectのもの。 */
   async listProjectChannels(
     principal: Principal,
     projectId: string,
@@ -120,7 +120,7 @@ export class NotificationService {
       projectId: input.projectId ?? null,
     });
     return recordDenial(this.options.database, draft, async () => {
-      // Only the server administrator may choose where server-side secrets and Run data are sent.
+      // サーバー側のsecretやRunのデータを送る先を選べるのは、全体管理者だけ。
       requireGlobalAdmin(principal);
       const settings = {
         kind: input.kind,
@@ -224,7 +224,7 @@ export class NotificationService {
     });
   }
 
-  /** Sends a test message now, outside the outbox, and reports the outcome code. */
+  /** outboxを通さずに今すぐテストのメッセージを送り、結果のコードを返す。 */
   async testChannel(
     principal: Principal,
     channelId: string,
@@ -282,7 +282,7 @@ export class NotificationService {
     return recordDenial(this.options.database, draft, async () =>
       transaction(this.options.database, async (connection) => {
         await this.requireProjectAdmin(principal, projectId, connection);
-        // FOR SHARE keeps the channel from being changed while the rule is attached to it.
+        // FOR SHAREで、ルールを付けている間に通知先が変更されないようにする。
         const channel = await first<{ id: string }>(
           connection,
           'SELECT id FROM notification_channels WHERE id=$1 AND (project_id IS NULL OR project_id=$2) FOR SHARE',
@@ -401,7 +401,7 @@ export class NotificationService {
       });
       return { delivered: true, sentDeliveryId: deliveryId, error: null };
     } catch (error) {
-      // Unknown errors could carry the destination URL, so only known codes are shown.
+      // 不明なエラーには送り先のURLが含まれうるので、既知のコードだけを見せる。
       const code =
         error instanceof NotificationSendError ? error.code : 'notification_delivery_failed';
       return { delivered: false, sentDeliveryId: null, error: code };
@@ -411,7 +411,7 @@ export class NotificationService {
   private present(channel: ChannelRow): NotificationChannel {
     return {
       ...channel,
-      // Email has no variables of its own; it can send only while an SMTP sender is registered.
+      // メールには自分の環境変数が無い。SMTPのsenderが登録されている間だけ送れる。
       configured:
         this.options.senders[channel.kind] !== undefined &&
         isNotificationChannelConfigured(channel, this.options.environment),
@@ -470,7 +470,7 @@ export class NotificationService {
     };
   }
 
-  // Environment variable names are not secrets; their values and recipients are not recorded.
+  // 環境変数の名前は秘密ではない。その値と宛先は記録しない。
   private auditDetails(channel: ChannelRow): JsonObject {
     return {
       name: channel.name,

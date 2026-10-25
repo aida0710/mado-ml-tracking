@@ -1,4 +1,4 @@
-"""Materialize sources atomically without trusting archive paths, overlays, or links."""
+"""ソースを不可分に展開する。アーカイブのパス、overlay、リンクは信用しない。"""
 
 from __future__ import annotations
 
@@ -23,14 +23,14 @@ from .source_tree import (
     walk_source_entries,
 )
 
-# Copy binary sources in bounded chunks independently of archive compression.
+# バイナリのソースは、アーカイブの圧縮とは関係なく、上限のある大きさに区切ってコピーする。
 SOURCE_COPY_BYTES = 1024 * 1024
-# Missing POSIX directory metadata uses ordinary searchable source directories.
+# POSIXのディレクトリのメタデータが無いときは、普通の（中を辿れる）ソースのディレクトリにする。
 DEFAULT_DIRECTORY_MODE = 0o755
 
 
 def _archive_path(root: Path, name: str) -> Path:
-    # Standard tar includes './' prefixes and a '.' directory; never normalize '..' or empty parts.
+    # 標準のtarは'./'の接頭辞と'.'のディレクトリを含む。'..'や空の部分は決して正規化しない。
     while name.startswith("./"):
         name = name[2:]
     return root if name == "." else source_path(root, name)
@@ -111,13 +111,14 @@ def _extract_tar(archive: Path, destination: Path) -> None:
 
 
 def _apply_directory_modes(directory_modes: dict[Path, int]) -> None:
-    # Finish children before read-only chmod; the owner must still be able to walk restored sources.
+    # 読み取り専用にchmodする前に子を済ませる。所有者は復元したソースを辿れる必要がある。
     for path in sorted(directory_modes, key=lambda item: len(item.parts), reverse=True):
         path.chmod(directory_modes[path] | stat.S_IRUSR | stat.S_IXUSR)
 
 
 def _count_archive_paths(path: Path, root: Path, entry_paths: set[Path]) -> None:
-    # Implicit parents can outnumber explicit archive members; bound them before writing anything.
+    # 暗黙の親ディレクトリは、アーカイブに明示された
+    # メンバーより多くなり得る。何かを書く前に数を制限する。
     while path != root:
         entry_paths.add(path)
         if len(entry_paths) > MAX_SOURCE_ENTRIES:
@@ -148,7 +149,7 @@ def materialize_source(
     if destination.exists() and (not destination.is_dir() or any(destination.iterdir())):
         raise ValueError("Source is already materialized; refusing to overwrite an existing execution")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    # Only publish a complete tree; an interrupted setup never exposes partially applied edits.
+    # 完全なツリーだけを公開する。setupが中断しても、編集を途中まで適用したものは見えない。
     with tempfile.TemporaryDirectory(prefix=".source-", dir=destination.parent) as temporary:
         staged_directory = Path(temporary) / "source"
         staged_directory.mkdir(mode=0o700)

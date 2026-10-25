@@ -2,17 +2,17 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { createHarness } from '../apps/api/test/harness.js';
 
-// Isolate early SDK checks from the preview DB while migrations are still being reviewed.
+// migrationをまだレビューしているあいだは、初期のSDKの検査をpreview環境のDBから切り離す。
 const DEFAULT_VERIFICATION_PORT = 4184;
 const verificationPort = Number(process.env.MMT_VERIFY_API_PORT ?? DEFAULT_VERIFICATION_PORT);
 const harness = await createHarness();
-// MLflow's mpu/complete waits for the finalizer, which the server normally runs in the background.
+// MLflowのmpu/completeはfinalizerを待つ。finalizerは、通常はサーバーがバックグラウンドで動かす。
 harness.artifactUploadFinalizer.start();
-// Sweep early stopping (hyperband) runs in this scheduler; checks that use sweeps opt in.
+// Sweepの早期終了（hyperband）はこのスケジューラで動く。Sweepを使う検査だけが有効にする。
 const runsSweepScheduler = process.env.MMT_VERIFY_SWEEP_SCHEDULER === 'true';
 if (runsSweepScheduler) harness.sweepScheduler.start();
 const app = new Hono();
-// Multipart checks count the part requests the SDK sent; only the path and status are logged.
+// multipartの検査は、SDKが送ったpartのリクエストを数える。ログに出すのはパスとステータスだけ。
 app.use('/api/mlflow/*', async (context, next) => {
   await next();
   if (context.req.path.includes('/mlflow-artifacts/mpu/'))

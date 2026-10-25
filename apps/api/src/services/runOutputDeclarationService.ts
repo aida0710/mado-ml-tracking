@@ -26,12 +26,12 @@ import { registerDatasetVersion } from './datasetVersionRegistration.js';
 import { resolveDatasetContent } from './datasetContentService.js';
 import type { ModelVersionRegistrar } from './outputRegistrationHandler.js';
 
-// What every declaration of one request shares: the Job's Run and its Task output setting.
+// 1つのリクエストのすべての宣言が共有するもの。JobのRunと、そのTaskの出力の設定。
 interface DeclarationContext {
   projectId: string;
   run: Run;
   taskOutputModel: TaskOutputModel | null;
-  // Resolved on the first model declaration; createModel may insert the Model.
+  // 最初のモデルの宣言のときに解決する。createModelが登録モデルを作ることがある。
   taskModelId?: string | null;
 }
 
@@ -39,10 +39,10 @@ const declarationColumns =
   'declaration_index AS index,kind,model_version_id,dataset_version_id,created_at';
 
 /**
- * Registers the outputs a container declared in result.json version 2, as the Run's creator.
- * The caller has verified the worker's lease and holds the Job row, so one Job's requests run
- * one at a time. Registered versions start automation now; for a Run that is still running the
- * automation waits as pending and is released or skipped when the Run ends.
+ * コンテナがresult.jsonのversion 2で宣言した出力を、Runの作成者として登録する。呼び出し元は
+ * workerのleaseを確かめ、Jobの行を押さえているので、1つのJobのリクエストは1つずつ動く。
+ * 登録したバージョンはすぐに自動実行を始める。まだ実行中のRunでは、自動実行は保留として待ち、
+ * Runが終わったときに始めるか見送る。
  */
 export class RunOutputDeclarationService {
   constructor(private readonly registry: ModelVersionRegistrar) {}
@@ -153,7 +153,8 @@ async function registerDataset(
           }),
         }
       : { uri: declaration.uri, digest: declaration.digest };
-  // Pin the Artifact manifest so later workers can fetch the exact files through the dataset API.
+  // Artifactのmanifestを固定し、後のworkerがデータセットのAPIからまったく同じファイルを
+  // 取れるようにする。
   const version = await registerDatasetVersion(connection, {
     projectId,
     datasetId: declaration.datasetId,
@@ -168,8 +169,8 @@ async function registerDataset(
 }
 
 /**
- * The files of a dataset declared by `path`: the saved output file at that path, or, when the
- * path is a directory, every saved output under it with paths relative to that directory.
+ * `path`で宣言したデータセットのファイル。そのパスに保存された出力のファイル。パスが
+ * ディレクトリなら、その下に保存されたすべての出力（パスはそのディレクトリからの相対パス）。
  */
 async function resolveDatasetOutput(
   connection: Connection,
@@ -190,7 +191,7 @@ async function resolveDatasetOutput(
   const prefix = directoryPrefix(artifactPath);
   if (!(await hasRunArtifactsUnder(connection, { projectId, runId, prefix })))
     outputArtifactNotFound(outputPath);
-  // The listing stops at MAX_DATASET_VERSION_FILES, like a version made from a Run's Artifacts.
+  // RunのArtifactから作ったバージョンと同じく、一覧はMAX_DATASET_VERSION_FILESで止まる。
   return resolveDatasetContent(connection, {
     projectId,
     content: { kind: 'artifacts', fromRunArtifacts: { runId, prefix } },
@@ -212,7 +213,7 @@ async function resolveTaskModel(
         id: settings.modelId!,
       });
   assertUsableModel(model);
-  // A same-named Model may have been created with another family after the Task was saved.
+  // Taskを保存したあとで、同じ名前の登録モデルが別のfamilyで作られていることがある。
   if (settings.createModel && model.family !== settings.createModel.family)
     throw new DomainError({
       status: 422,
@@ -224,7 +225,8 @@ async function resolveTaskModel(
 
 function assertUsableModel(model: OutputModel | undefined): asserts model is OutputModel {
   if (!model) notFound('model');
-  // MLflow soft-deleted Models keep their row; registering would revive a Model the user removed.
+  // MLflowで論理削除した登録モデルは行が残る。登録すると、利用者が消した登録モデルを
+  // 生き返らせてしまう。
   if (model.deleted) throw new DomainError({
     status: 422,
     code: 'model_deleted',

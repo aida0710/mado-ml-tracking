@@ -19,9 +19,9 @@ const storedExecutionSelect = `SELECT e.id,e.project_id,e.rule_id,e.model_versio
   LEFT JOIN jobs j ON j.id=e.job_id AND j.project_id=e.project_id
   WHERE e.project_id=$1`;
 
-// A pending event has no stored execution yet, so each enabled registration rule of the version's
-// family is shown as the run it will become. The id is derived from (version, rule) to stay stable
-// between reads; the stored execution created on completion gets its own id.
+// 保留中のイベントにはまだ保存した実行が無いので、バージョンのfamilyの有効な登録時のルールを、
+// それぞれこれから行う実行として見せる。idは読むたびに変わらないよう(version, rule)から作る。
+// 完了時に作る保存した実行には別のidが付く。
 const pendingExecutionSelect = `SELECT md5(ev.model_version_id::text||rule.id::text)::uuid AS id,ev.project_id,
   rule.id AS rule_id,ev.model_version_id,NULL::uuid AS run_id,NULL::uuid AS job_id,'pending' AS status,
   NULL AS error,ev.pending_since AS created_at,ev.source_run_id,NULL AS run_status,NULL AS job_status,
@@ -35,7 +35,7 @@ const pendingExecutionSelect = `SELECT md5(ev.model_version_id::text||rule.id::t
     AND rule.trigger='model_registered' AND m.family=ANY(rule.model_families)
   WHERE ev.project_id=$1 AND ev.state='pending'`;
 
-// Stored and pending rows together; both selects take the project as $1.
+// 保存した行と保留中の行を合わせる。どちらのSELECTもProjectを$1で受け取る。
 const executionSource = `(${storedExecutionSelect} UNION ALL ${pendingExecutionSelect}) e`;
 
 export interface AutomationExecutionFilter {
@@ -44,8 +44,8 @@ export interface AutomationExecutionFilter {
   ruleId?: string;
 }
 
-// The (createdAt, id) of a cursor row, or undefined when it is not in the filtered list. The
-// timestamp stays text: JavaScript Date would drop PostgreSQL microseconds from the boundary.
+// cursorの行の(createdAt, id)。絞り込んだ一覧に無ければundefined。時刻は文字列のままにする。
+// JavaScriptのDateにすると、境界からPostgreSQLのマイクロ秒が落ちる。
 export async function findAutomationExecutionBoundary(
   connection: Connection,
   reference: AutomationExecutionFilter & { id: string },
@@ -92,8 +92,8 @@ export async function findAutomationExecution(
   ]);
 }
 
-// Manual applications compare with every attempt of the rule for the version: one still waiting or
-// running blocks another, and the next attempt number follows the highest one.
+// 手動の適用は、そのバージョンに対するルールのすべての試行と比べる。待機中か実行中のものがあれば
+// 次を止め、次の試行の番号は最大の番号の次にする。
 export async function summarizeRuleAttempts(
   connection: Connection,
   reference: { ruleId: string; modelVersionId: string },
@@ -122,7 +122,7 @@ export async function hasExecutionForTriggerRun(
   return execution !== undefined;
 }
 
-// FOR SHARE makes a concurrent enable/disable wait, so the rule set is the one at this moment.
+// FOR SHAREで同時の有効化・無効化を待たせ、この時点のルールの組を使う。
 export async function lockRegistrationRules(
   connection: Connection,
   model: { projectId: string; family: string },
@@ -154,8 +154,8 @@ export async function lockAutomationRule(
   connection: Connection,
   reference: { projectId: string; id: string; mode: 'share' | 'update' },
 ): Promise<ModelAutomationRule | undefined> {
-  // NO KEY UPDATE serializes manual applications of one rule without blocking execution inserts,
-  // which only take KEY SHARE on the rule through their foreign key.
+  // NO KEY UPDATEで1つのルールの手動の適用を直列にしつつ、実行の挿入は妨げない。挿入は外部キーを
+  // 通じてルールにKEY SHAREを取るだけ。
   const lock = reference.mode === 'share' ? 'FOR SHARE' : 'FOR NO KEY UPDATE';
   return first(
     connection,
@@ -165,9 +165,9 @@ export async function lockAutomationRule(
 }
 
 /**
- * Counts the rules from the first stage down to ruleId (a first-stage rule is 1). Rules are
- * immutable and must exist before a rule can name them, so a cycle cannot be stored; the path
- * check still reports one instead of recursing forever if the data were ever edited by hand.
+ * 最初の段からruleIdまでのルールの数を数える（最初の段のルールは1）。ルールは変更できず、ほかの
+ * ルールから名指しされる前に存在している必要があるので、循環は保存できない。それでも、データを
+ * 手で書き換えた場合に備え、経路の検査は無限に再帰せずに循環を報告する。
  */
 export async function measureRuleChain(
   connection: Connection,
@@ -193,7 +193,7 @@ export async function insertAutomationEvent(
   connection: Connection,
   event: { modelVersionId: string; projectId: string; sourceRunId: string | null; isPending: boolean },
 ): Promise<boolean> {
-  // ON CONFLICT waits for concurrent registration processing; a rollback leaves the event retryable.
+  // ON CONFLICTは同時に進む登録の処理を待つ。ロールバックすれば、イベントは再試行できる状態で残る。
   const inserted = await first(
     connection,
     `INSERT INTO model_automation_events(model_version_id,project_id,source_run_id,state,pending_since)
@@ -208,7 +208,8 @@ export async function insertAutomationEvent(
   return inserted !== undefined;
 }
 
-// Terminal handlers and the sweeper both lock pending events, so each one is resolved once.
+// 終了時のハンドラとsweeperはどちらも保留中のイベントをロックするので、各イベントは1回だけ
+// 処理される。
 export async function lockPendingAutomationEvents(
   connection: Connection,
   sourceRunId: string,
@@ -221,7 +222,7 @@ export async function lockPendingAutomationEvents(
   );
 }
 
-// SKIP LOCKED leaves events that a terminal handler is resolving right now to that handler.
+// SKIP LOCKEDにより、終了時のハンドラがちょうど処理しているイベントはそのハンドラに任せる。
 export async function lockExpiredAutomationEvents(
   connection: Connection,
   expiry: { maxAgeHours: number; limit: number },
@@ -248,7 +249,7 @@ export async function resolveAutomationEvent(
 }
 
 export interface AutomationExecutionInsert {
-  // Callers choosing the id can stamp it on the Run (automation.pipelineRoot) before the row exists.
+  // 呼び出し側がidを決めれば、行ができる前にそのidをRunに付けられる（automation.pipelineRoot）。
   id?: string;
   projectId: string;
   ruleId: string;
@@ -258,7 +259,7 @@ export interface AutomationExecutionInsert {
   status: Exclude<ModelAutomationExecution['status'], 'pending'>;
   error?: string;
   triggerRunId?: string | null;
-  // Omitted for a first stage; the database makes it its own pipeline root.
+  // 最初の段では省く。DBがその実行自身をpipelineの起点にする。
   pipelineRootExecutionId?: string | null;
   attempt?: number;
   source?: ModelAutomationExecution['source'];
@@ -296,9 +297,9 @@ export async function insertAutomationExecution(
 }
 
 /**
- * Whether the user a rule runs as may still run it: an active global administrator or an active
- * user whose Project role is admin (the higher of the direct membership and SSO group bindings).
- * Nobody can while the Project is archived.
+ * ルールを動かす名義の利用者が、今もそれを動かせるか。有効な全体管理者か、Projectのroleがadminの
+ * 有効な利用者（直接のmembershipとSSOのグループの割り当てのうち高い方）なら動かせる。Projectを
+ * アーカイブしている間は誰も動かせない。
  */
 export async function hasAutomationOwnerAccess(
   connection: Connection,
@@ -314,8 +315,8 @@ export async function hasAutomationOwnerAccess(
   return owner?.hasAccess === true;
 }
 
-// API responses name the owner, so the page can tell a person from a Service Account, and the
-// creator, so the rule detail does not show a bare user id.
+// APIの応答に所有者の名前を含めて画面が人とService Accountを見分けられるようにし、作成者の名前も
+// 含めてルールの詳細に利用者のidがそのまま出ないようにする。
 const ruleWithOwnerSelect = `SELECT r.*,u.kind AS run_as_kind,u.display_name AS run_as_name,
   c.display_name AS created_by_name
   FROM model_automation_rules r JOIN users u ON u.id=r.run_as_user_id
@@ -352,7 +353,7 @@ export async function updateAutomationRuleOwner(
   ]);
 }
 
-/** The execution that already retried the given one, if any; a retry is created once. */
+/** 渡した実行を既に再試行した実行（あれば）。再試行は1回だけ作る。 */
 export async function findAutomaticRetry(
   connection: Connection,
   executionId: string,

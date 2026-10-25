@@ -1,6 +1,6 @@
 import { isSameUuid, type MadoPluginConfig, type DatasetVersion, type PluginEvent } from '@mmt/contracts';
 
-// Bound error details carried with a Run event.
+// Runのイベントに載せるエラーの詳細の長さを抑える。
 const MAX_ERROR_MESSAGE_LENGTH = 4096;
 const EVENT_TYPES = {
   'run.started': 'START',
@@ -8,7 +8,7 @@ const EVENT_TYPES = {
   'run.failed': 'FAIL',
   'run.canceled': 'ABORT',
 } as const;
-// An external identity is only usable at the connection that imported it.
+// 外部の識別子は、それを取り込んだ接続でしか使えない。
 function datasetReference(
   dataset: DatasetVersion,
   projectId: string,
@@ -18,7 +18,7 @@ function datasetReference(
   },
 ) {
   const { config, pluginId } = options;
-  // Local names are unique within a Project; imported Mado identities remain unchanged.
+  // ローカルの名前はProjectの中で一意。mado S3 Data Catalogから取り込んだ識別子はそのまま使う。
   const externalRef =
     dataset.externalRef && (!pluginId || isSameUuid(pluginId, dataset.externalRef.pluginId))
       ? dataset.externalRef
@@ -46,7 +46,8 @@ function getStorageLocation(value: string, systemKey: string) {
   try {
     uri = new URL(value);
   } catch {
-    // Native references also accept local paths. An unavailable location must not abort a Run transition.
+    // ネイティブの参照はローカルのパスも受け付ける。場所が使えなくても、Runの状態の遷移を止めては
+    // ならない。
     return null;
   }
   return {

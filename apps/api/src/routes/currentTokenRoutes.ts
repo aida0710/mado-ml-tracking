@@ -3,7 +3,8 @@ import type { CurrentApiToken } from "@mmt/contracts";
 import { DomainError } from "../domain/errors.js";
 import { principal, type ApiEnvironment } from "../http/request.js";
 
-// Lets a token holder (e.g. `mado-tracking-worker doctor`) see its own scopes without listing tokens.
+// tokenを持つもの（`mado-tracking-worker doctor`など）が、tokenの一覧を見ずに自分のscopeを
+// 確かめられるようにする。
 export function currentTokenRoutes(): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.get("/", (context) => {

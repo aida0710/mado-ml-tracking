@@ -1,6 +1,6 @@
 /**
- * A response body that reads the next chunk only when the client asks for it (highWaterMark 0), so
- * nothing is read from the DB ahead of a slow download, and stops reading when it disconnects.
+ * クライアントが求めたときにだけ次のチャンクを読む応答の本文（highWaterMark 0）。遅いダウンロード
+ * より先にDBから読み進めることはなく、クライアントが切断すれば読むのをやめる。
  */
 export function textStream(chunks: AsyncIterable<string>): ReadableStream<Uint8Array> {
   const iterator = chunks[Symbol.asyncIterator]();

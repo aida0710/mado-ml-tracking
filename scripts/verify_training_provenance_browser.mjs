@@ -1,4 +1,4 @@
-/** Checks the training provenance UI against the isolated native API, without production data. */
+/** 本番のデータを使わずに、分離したnativeのAPIで学習の来歴の画面を確かめる。 */
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';

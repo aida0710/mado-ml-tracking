@@ -1,4 +1,4 @@
-"""Install a small stdlib runner plus SDK, then control a durable job by ID."""
+"""標準ライブラリだけで動く小さなrunnerとSDKをインストールし、永続的なJobをIDで制御する。"""
 
 from __future__ import annotations
 
@@ -19,10 +19,10 @@ from .output_archive import ARCHIVE_REJECTED_EXIT_CODE, OUTPUT_ARCHIVE_COMMAND
 from .transport import CONTROL_TIMEOUT_SECONDS, CommandTransport, create_target_transport
 
 StreamResult = TypeVar("StreamResult")
-# A refused stream keeps a short diagnostic; the runner writes one line to stderr.
+# 拒まれたストリームは短い診断を残す。runnerはstderrに1行書く。
 STREAM_DIAGNOSTIC_BYTES = 4096
-# host_runner answers JSON commands; the output archive writes binary tar to stdout, so the bundle
-# entry routes it to output_archive before host_runner reads stdin as a JSON request.
+# host_runnerはJSONのコマンドに応える。出力のアーカイブはバイナリのtarをstdoutに書くので、バンドルの
+# 入口は、host_runnerがstdinをJSONのリクエストとして読む前に、それをoutput_archiveへ振り分ける。
 RUNNER_MAIN = f"""import sys
 if sys.argv[1:2] == [{OUTPUT_ARCHIVE_COMMAND!r}]:
     from runtime.output_archive import run_output_archive_command
@@ -34,7 +34,7 @@ else:
 
 
 class StreamRejected(ConfigurationError):
-    """The runner refused a streamed command (for example, outputs changed after validation)."""
+    """runnerがストリームのコマンドを拒んだ（例: 検証のあとで出力が変わった）。"""
 
 
 BOOTSTRAP = """
@@ -126,7 +126,7 @@ def build_runtime_bundle() -> bytes:
 
 
 def execution_specification(job: WorkerJob, settings: WorkerSettings) -> dict[str, Any]:
-    """The worker's spec.json: the Job runs on the GPUs the API reserved for it."""
+    """workerのspec.json。Jobは、APIがそのJobのために予約したGPUで動く。"""
     return build_execution_specification(
         job,
         api=settings.api,
@@ -185,10 +185,10 @@ class JobExecutor:
         payload: dict[str, Any],
         consume: Callable[[asyncio.StreamReader], Awaitable[StreamResult]],
     ) -> StreamResult:
-        """One runner process whose stdout is consumed as a stream, without the response size cap.
+        """stdoutをストリームとして読む、runnerのプロセス1つ。応答のサイズの上限は掛けない。
 
-        A stream that ends early raises the consumer's error unless the runner exited with
-        ARCHIVE_REJECTED_EXIT_CODE, which becomes StreamRejected (retrying cannot succeed).
+        ストリームが早く終わると、読む側のエラーを送出する。ただしrunnerが
+        ARCHIVE_REJECTED_EXIT_CODEで終了していれば、StreamRejected（再試行しても成功しない）にする。
         """
         if self.workspace is None or self.runtime is None:
             raise ConfigurationError("Runtime must be installed before job control")
@@ -214,7 +214,7 @@ class JobExecutor:
                 process.stdin.close()
                 result = await consume(process.stdout)
             except (EOFError, BrokenPipeError, ConnectionResetError) as error:
-                # A runner that refused the request exits before reading or writing everything.
+                # リクエストを拒んだrunnerは、すべてを読み書きする前に終了する。
                 await self._raise_for_finished_exit(process, stderr_task)
                 if isinstance(error, EOFError):
                     raise
@@ -236,7 +236,7 @@ class JobExecutor:
                 exit_code = await process.wait()
                 stderr = await stderr_task
         except TimeoutError:
-            # A stalled runner is still alive; the caller's error stands and the process is killed.
+            # 止まったrunnerはまだ生きている。呼び出し側のエラーをそのまま使い、プロセスはkillする。
             return
         self._raise_for_exit(exit_code, stderr)
 
@@ -272,7 +272,7 @@ class JobExecutor:
 
 
 async def _read_bounded(reader: asyncio.StreamReader, maximum_bytes: int) -> bytes:
-    """Drain a pipe so the process never blocks on it, keeping only the first bytes."""
+    """パイプを読み切ってプロセスがそこで詰まらないようにし、先頭のバイトだけを残す。"""
     kept = bytearray()
     while chunk := await reader.read(STREAM_DIAGNOSTIC_BYTES):
         kept.extend(chunk[: max(0, maximum_bytes - len(kept))])

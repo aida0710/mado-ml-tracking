@@ -1,7 +1,7 @@
-"""Typed reading of the JSON documents the API hands a launcher or `mado-tracking submit`.
+"""APIがlauncherや`mado-tracking submit`に渡すJSONの文書を、型を確かめながら読む。
 
-Fields this package does not read are ignored, so the API may add some; a field it reads with
-the wrong type is a ConfigurationError that names the field.
+このパッケージが読まないフィールドは無視するので、APIはフィールドを足してよい。読む
+フィールドの型が違えば、そのフィールドの名前を示すConfigurationErrorになる。
 """
 
 from __future__ import annotations

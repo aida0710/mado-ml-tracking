@@ -23,8 +23,8 @@ import {
   updateOidcUserProfile,
 } from '../repositories/identityRepository.js';
 
-// Binds an SSO login to a user: finds the linked identity, optionally links a local account by
-// verified email, creates the user just in time, and syncs the global role and groups from the IdP.
+// SSOのログインをユーザーに結び付ける。リンク済みのidentityを探し、必要なら確認済みのメールで
+// ローカルのアカウントをリンクし、その場でユーザーを作り、全体のroleとグループをIdPから同期する。
 
 export interface OidcClaims {
   issuer: string;
@@ -32,12 +32,12 @@ export interface OidcClaims {
   email: string;
   emailVerified: boolean;
   displayName: string;
-  // Raw claim values; non-string entries are dropped by the policy.
+  // claimの生の値。文字列でない要素はpolicyが捨てる。
   groups: readonly unknown[];
 }
 
-// Why an SSO login was refused. Users get the same 401 for all of them; operators read the reason
-// in the log and in the auth.oidc.denied audit event.
+// SSOのログインを拒んだ理由。ユーザーにはどれも同じ401を返す。運用者はログと
+// auth.oidc.deniedの監査イベントで理由を読む。
 export type OidcLoginDenialReason =
   | 'email_not_verified'
   | 'group_not_allowed'
@@ -89,9 +89,9 @@ async function syncAccount(
   const { userId, claims } = input;
   const account = await lockAccount(connection, userId);
   if (!account) throw new Error('OIDC user is missing');
-  // A Service Account never logs in, even if an SSO identity was linked to it by hand.
+  // Service Accountは、SSOのidentityが手でリンクされていても、決してログインしない。
   if (account.kind !== 'human') throw new OidcLoginDeniedError('service_account', userId);
-  // Disabling is local to this app, so it overrides a still-valid SSO account.
+  // 無効化はこのアプリの中だけの設定なので、SSOのアカウントがまだ有効でも優先する。
   if (account.status !== 'active') throw new OidcLoginDeniedError('user_disabled', userId);
   const access = resolveOidcAccess(input.rolePolicy, claims.groups);
   if (!access.allowed) throw new OidcLoginDeniedError('group_not_allowed', userId);
@@ -118,7 +118,7 @@ async function syncAccount(
     globalRoleBefore !== access.globalRole ||
     groupsAdded.length > 0 ||
     groupsRemoved.length > 0;
-  // Role changes include promotions, so they are recorded in the same transaction as the sync.
+  // roleの変更には権限の引き上げも含まれるので、同期と同じトランザクションで記録する。
   if (changed)
     await writeAuditEvent(connection, {
       actorType: 'user',
@@ -139,8 +139,8 @@ async function syncAccount(
   return (await findUser(connection, userId))!;
 }
 
-// Applies the IdP's current groups to an already linked user. Session recheck calls this with
-// UserInfo claims; a denial means the user must lose access.
+// IdPの今のグループを、リンク済みのユーザーに当てはめる。sessionの再確認がUserInfoのclaimで
+// これを呼ぶ。拒否されたら、そのユーザーはアクセスを失う必要がある。
 export async function syncOidcIdentity(
   connection: PoolClient,
   input: OidcSyncInput,
@@ -153,7 +153,7 @@ async function findLinkableLocalUserId(
   email: string,
 ): Promise<string | undefined> {
   const candidates = await findAutoLinkCandidates(connection, email);
-  // Several local accounts with one email cannot be told apart, so none of them is linked.
+  // 同じメールのローカルアカウントが複数あると見分けられないので、どれもリンクしない。
   if (candidates.length !== 1) return undefined;
   const candidate = candidates[0]!;
   if (candidate.isPrivileged)
@@ -161,7 +161,7 @@ async function findLinkableLocalUserId(
   return candidate.id;
 }
 
-// Runs inside the caller's transaction so a denial leaves no user, identity or group rows behind.
+// 呼び出し元のトランザクションで動き、拒否したらユーザー、identity、グループの行を残さない。
 export async function provisionOidcLogin(
   connection: PoolClient,
   login: { claims: OidcClaims; policy: OidcProvisioningPolicy; metadata?: RequestMetadata },
@@ -170,7 +170,7 @@ export async function provisionOidcLogin(
   if (!claims.emailVerified) throw new OidcLoginDeniedError('email_not_verified');
   let userId = await findOidcIdentityUserId(connection, claims);
   const access = resolveOidcAccess(policy.rolePolicy, claims.groups);
-  // Checked before creating anyone, so a user outside the allowed groups never gets a row.
+  // 誰かを作る前に確かめるので、許可されたグループの外のユーザーには行が作られない。
   if (!access.allowed) throw new OidcLoginDeniedError('group_not_allowed', userId ?? null);
   const origin: AccountOrigin = { created: false, linkedExisting: false };
   if (!userId && policy.autoLinkVerifiedEmail) {

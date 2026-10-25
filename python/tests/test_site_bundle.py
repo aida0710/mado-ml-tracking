@@ -1,4 +1,4 @@
-"""The runner zipapp and the work directory steps a launcher or `submit` performs on a site."""
+"""runnerのzipappと、launcherや`submit`がsiteで行う作業ディレクトリの手順。"""
 
 from __future__ import annotations
 
@@ -49,7 +49,7 @@ def test_the_bundle_holds_the_package_and_httpx_and_runs_from_the_zip(tmp_path):
     wrapper = tmp_path / RUNNER_WRAPPER_NAME
     wrapper.write_bytes(installation.wrapper)
     wrapper.chmod(0o700)
-    # -I: only the zipapp's own copies of the package and httpx are importable.
+    # -I: importできるのは、zipappが自分で持つパッケージとhttpxの写しだけ。
     help_text = subprocess.run(
         [sys.executable, "-I", str(bundle), "site-run", "--help"],
         capture_output=True,
@@ -69,8 +69,8 @@ def test_the_bundle_holds_the_package_and_httpx_and_runs_from_the_zip(tmp_path):
 
 
 def test_the_bundle_is_the_same_whenever_a_process_builds_it(monkeypatch):
-    # Every launcher process and every `mado-tracking submit` builds the bundle anew; when the
-    # bytes changed with the clock, each of them installed another copy of the runner on the site.
+    # launcherのプロセスも`mado-tracking submit`も、毎回bundleを作り直す。バイト列が時刻で
+    # 変わっていたころは、そのたびにsiteへrunnerの別の写しを入れていた。
     first = build_runner_bundle()
     an_hour_later = time.time() + 3600
     monkeypatch.setattr(time, "time", lambda: an_hour_later)

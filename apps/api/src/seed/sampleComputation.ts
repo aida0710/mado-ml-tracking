@@ -8,7 +8,7 @@ export function trainLinearSample(): {
   let weight = 0;
   let bias = 0;
   const metrics: MetricPoint[] = [];
-  // This is a small actual CPU calculation, matching the bundled Python example.
+  // 同梱のPythonの例に合わせた、CPUでの小さな実際の計算。
   const learningRate = 0.2;
   const steps = 60;
   for (let step = 0; step < steps; step++) {

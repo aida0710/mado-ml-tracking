@@ -1,4 +1,4 @@
-"""Small CPU preprocessing job used by the workflow browser verification."""
+"""ワークフローのブラウザでの検証に使う、CPUで動く小さな前処理のJob。"""
 
 import hashlib
 import json
@@ -7,8 +7,8 @@ from pathlib import Path
 
 import mado_tracking
 
-# The output is split into shards under one directory, declared as one dataset version, the way
-# thousands of preprocessed audio files would be.
+# 前処理した数千の音声ファイルと同じように、出力を1つのディレクトリの下のshardに分け、
+# 1つのデータセットバージョンとして宣言する。
 SHARD_COUNT = 2
 
 context = json.loads(Path(os.environ["MMT_JOB_CONTEXT_FILE"]).read_text())
@@ -64,7 +64,7 @@ with mado_tracking.start_run() as run:
                 {
                     "datasetId": context["parameters"]["outputDatasetId"],
                     "path": "prepared",
-                    # The server computes a path declaration's digest from the files.
+                    # パスでの宣言のdigestは、サーバーがファイルから計算する。
                     "digest": "server-computed",
                 }
             ],

@@ -1,9 +1,9 @@
-// Reserved Run tags (mmt.* is server-only) that arrays and hooks set on the Runs they create.
-// Retries copy a Run's tags, so a retry keeps them too.
+// arrayとフックが作るRunに付ける予約のRun tag（mmt.*はサーバーだけが付ける）。
+// 再試行はRunのtagを写すので、再試行のRunにも残る。
 
 export const ARRAY_GROUP_TAG = 'mmt.arrayGroupId';
 export const ARRAY_INDEX_TAG = 'mmt.arrayIndex';
 export const HOOK_TAG = 'mmt.hookId';
 export const HOOK_EXECUTION_TAG = 'mmt.hookExecutionId';
-// The checkpoint a checkpoint_saved hook hands to its Job (WorkerJob.inputCheckpoint).
+// checkpoint_savedのフックがJobに渡すcheckpoint（WorkerJob.inputCheckpoint）。
 export const INPUT_CHECKPOINT_TAG = 'mmt.inputCheckpointId';

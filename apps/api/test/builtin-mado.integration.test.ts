@@ -10,7 +10,7 @@ import {
   MADO_ACCESS_TOKEN_GRANT_FIXTURE, MADO_CONFIG_FIXTURE, MADO_CREDENTIALS_FIXTURE, madoClientStub, madoPluginInput,
 } from './pluginFixtures.js';
 
-// Includes hex letters so uppercasing always changes the request's representation.
+// 16進の英字を含めて、大文字にすると必ずリクエスト上の表記が変わるようにする。
 const MADO_VERSION_ID_FIXTURE = 'e5aab0f8-acdc-40a4-8177-107b7ca5dba7';
 const MADO_PLUGIN_ID_FIXTURE = 'bdbd6443-ac2c-43b4-8071-a8b7efe83cc1';
 
@@ -34,7 +34,7 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
         sendPayload: async (payload) => { deliveredPayloads.push({ pluginId: options.pluginId, payload }); },
       }),
     });
-    // Seed an empty connection at a fixed UUID before encryption binds its credentials to that ID.
+    // 暗号化で認証情報がそのIDに結び付けられる前に、固定のUUIDで空の接続を入れておく。
     await harness.database.query(`INSERT INTO plugin_connections(id,project_id,name,kind,config,config_revision)
       VALUES($1,$2,'Mado','mado',$3::jsonb,1)`,
       [MADO_PLUGIN_ID_FIXTURE, fixture.project.id, JSON.stringify(MADO_CONFIG_FIXTURE)]);
@@ -199,7 +199,7 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
     expect(clientFactory).toHaveBeenCalledWith(expect.objectContaining({ credentials: MADO_CREDENTIALS_FIXTURE }));
     expect(sendPayload).not.toHaveBeenCalled();
     expect((await harness.database.query('SELECT id FROM plugin_outbox')).rows).toHaveLength(0);
-    // Saving a token again needs a fresh check: the saved grant described the replaced one.
+    // tokenを保存し直したら確認し直す必要がある。保存済みのgrantは置き換えた前のtokenのもの。
     const replaced = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins/${connection.id}`, {
       method: 'PATCH', cookie: fixture.administrator.cookie,
       body: { credentials: { accessToken: 'replaced-fixture-token' }, expectedRevision: checked.configRevision },

@@ -94,7 +94,7 @@ describe.skipIf(!testDatabaseUrl)('site実行先・投入・runner報告（独�
     });
     expect(manualSsh.status).toBe(422);
     expect(await manualSsh.json()).toMatchObject({ code: 'site_only_setting' });
-    // ssh needs where to connect; local runs on the worker's host, but needs its setup to be on.
+    // sshには接続先が要る。localはworkerのホストで動くが、その設定が有効である必要がある。
     const withoutHost = await create({
       ...siteTargetInput({ name: 'Hostless ssh' }),
       executor: 'ssh',
@@ -134,7 +134,7 @@ describe.skipIf(!testDatabaseUrl)('site実行先・投入・runner報告（独�
       body: { runId: localRun.id, targetId: fixture.target.id, gpuCount: 1 },
     });
     expect(await gpuCountOnLocal.json()).toMatchObject({ code: 'site_only_setting' });
-    // docker Code runs on an Apptainer-only site: the runner converts the image to a SIF.
+    // dockerのCodeもApptainerだけのsiteで動く。runnerがイメージをSIFに変換する。
     const job = await entity<Job>(
       await request(harness.app, `${fixture.basePath}/jobs`, {
         method: 'POST',
@@ -175,7 +175,7 @@ describe.skipIf(!testDatabaseUrl)('site実行先・投入・runner報告（独�
     );
     expect(reported.items[0]).toMatchObject({ phase: 'submitted', schedulerJobId: '12345.pbs' });
     expect(reported.items[0]!.heartbeatStale).toBe(false);
-    // A resend returns the same state.
+    // 送り直しても同じ状態を返す。
     expect((await fixture.report([job.id], { outcome: 'submitted', schedulerJobId: '12345.pbs' })).status).toBe(200);
 
     const { instanceId, state } = await startRunner(harness, fixture, workerJob, 'waiting_resources');
@@ -216,7 +216,7 @@ describe.skipIf(!testDatabaseUrl)('site実行先・投入・runner報告（独�
     );
     expect(finished).toMatchObject({ retryJobId: null, job: { status: 'finished', endReason: null } });
     expect(await findRunStatus(harness, job.runId)).toBe('finished');
-    // The Job token ends with its Job.
+    // Job tokenはJobの終了とともに使えなくなる。
     const afterEnd = await runnerRequest(harness, fixture, {
       jobId: job.id,
       token: workerJob.jobToken!,
@@ -280,7 +280,7 @@ describe.skipIf(!testDatabaseUrl)('site実行先・投入・runner報告（独�
       }),
       200,
     );
-    // The cancel command runs as the account that queued the Job.
+    // 取り消しのコマンドは、Jobをキューに入れたアカウントで動く。
     expect(cancellations.items).toEqual([
       {
         jobId: job.id,
@@ -357,7 +357,7 @@ describe.skipIf(!testDatabaseUrl)('site実行先・投入・runner報告（独�
         account: expect.objectContaining({ accountName: 'mmt', keyId: key!.id }),
       },
     ]);
-    // The launcher that queued it no longer submits there, so its report changes nothing.
+    // キューに入れたlauncherはもうそこへ投入しないので、その報告では何も変わらない。
     expect((await reportDone(fixture.launcherToken)).status).toBe(204);
     expect(await pendingFor(next.token)).toHaveLength(1);
     expect((await reportDone(next.token)).status).toBe(204);
@@ -413,7 +413,7 @@ describe.skipIf(!testDatabaseUrl)('site実行先・投入・runner報告（独�
     );
     expect(claimed.items).toHaveLength(1);
     expect(claimed.items[0]!.jobs[0]!.job).toMatchObject({ id: job.id, phase: 'submitting' });
-    // The submitter runs the site's job shell as themselves, with the site's work directory.
+    // 投入する人は、siteのjob shellを自分のアカウントで、siteの作業ディレクトリを使って動かす。
     expect(claimed.items[0]).toMatchObject({
       jobShell: { version: 1, content: TEST_JOB_SHELL },
       account: { mode: 'personal', accountName: '', workDirectory: '/work/mmt', keyId: null },

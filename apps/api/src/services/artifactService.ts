@@ -36,7 +36,7 @@ export interface ArtifactLimits {
   maxBytes: number;
 }
 
-// Test doubles that build the service directly opt out of the limit; the app passes the configured one.
+// サービスを直接作るテストダブルは上限を外す。アプリは設定した上限を渡す。
 const UNLIMITED: ArtifactLimits = { maxBytes: Number.POSITIVE_INFINITY };
 
 export class ArtifactService {
@@ -102,7 +102,7 @@ export class ArtifactService {
       runId?: string;
       path: string;
       mimeType?: string;
-      /** Content-Length from the request, when the client declared one. */
+      /** クライアントが宣言したときの、リクエストのContent-Length。 */
       declaredBytes?: number;
       body: Readable;
       onStored?: ArtifactStoredHook;
@@ -125,12 +125,12 @@ export class ArtifactService {
       declaredMimeType: upload.mimeType,
     });
     const sizeLimit = new ArtifactSizeLimit(this.limits.maxBytes);
-    // pipeline() destroys the request stream when the limit trips, so the rest is not read.
+    // 上限に達するとpipeline()がリクエストのストリームを破棄するので、残りは読まない。
     const limitedBody = pipeline(upload.body, sizeLimit, () => undefined);
     try {
       const stored = await this.stores.put({ ...reference, body: limitedBody, mimeType });
       return await transaction(this.database, async (connection) => {
-        // Permission and run references are checked again after a potentially long streaming write.
+        // ストリームでの書き込みは長くかかることがあるので、そのあとで権限とRunの参照を確かめ直す。
         await requireProject(connection, principal, {
           projectId,
           role: 'editor',
@@ -157,12 +157,12 @@ export class ArtifactService {
       try {
         await this.stores.remove(reference);
       } catch {
-        // No storage locations or credentials are logged; the immutable id identifies a cleanup task.
+        // 保存場所や認証情報はログに出さない。後片付けの対象は変わらないidで特定できる。
         console.error(
           JSON.stringify({ event: 'artifact_cleanup_failed', artifactId: id, projectId }),
         );
       }
-      // Stores may report the aborted pipeline as their own error instead of the limit's error.
+      // storeは中断されたpipelineを、上限のエラーでなく自分のエラーとして報告することがある。
       if (sizeLimit.isExceeded) throw artifactTooLargeError(this.limits.maxBytes);
       if (error instanceof DomainError) throw error;
       throw new DomainError({
@@ -182,7 +182,7 @@ export class ArtifactService {
     return { artifact, content: await this.readContent(artifact, download.range) };
   }
 
-  /** Reads an Artifact already authorized through getMetadata; callers must not skip that check. */
+  /** getMetadataで認可済みのArtifactを読む。呼び出し側はその確認を省いてはならない。 */
   async readContent(artifact: Artifact, range?: string): Promise<ArtifactContent> {
     try {
       return await this.stores.read({

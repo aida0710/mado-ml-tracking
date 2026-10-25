@@ -11,9 +11,9 @@ export type JsonValue =
 export type JsonObject = { [key: string]: JsonValue };
 export type ProjectRole = 'viewer' | 'editor' | 'admin';
 /**
- * public: every active human user may open the Project as an editor without being a member;
- * private: only members (direct grants and group bindings) may open it. The admin role always
- * comes from membership.
+ * public: 有効な人のユーザーなら誰でも、メンバーでなくてもeditorとしてProjectを開ける。
+ * private: メンバー（直接付与とgroupへの付与）だけが開ける。adminのroleは常にmembershipから
+ * 来る。
  */
 export type ProjectVisibility = 'public' | 'private';
 export type RunKind = 'inference' | 'evaluation' | 'training' | 'finetuning' | 'processing';
@@ -24,7 +24,7 @@ export * from './workerCapabilities.js';
 import type { WorkerCapability } from './workerCapabilities.js';
 export type RunStatus = 'queued' | 'running' | 'finished' | 'failed' | 'canceled';
 export type JobStatus = RunStatus | 'claimed';
-// Immutable backend name: 'filesystem' and 's3' from the environment, or one stored in the DB.
+// 変わらない保存先の名前。環境変数から来る'filesystem'と's3'か、DBに保存したもの。
 export type ArtifactBackend = string;
 export type { ExecutionRuntime, ExecutionRuntimeKind } from './executionRuntime.js';
 export type { ModelAutomationRule, ModelAutomationExecution } from './modelAutomation.js';
@@ -384,8 +384,8 @@ export interface User {
   username: string | null;
   status: 'active' | 'disabled';
   authSources: AuthSource[];
-  // 'service' is a Service Account: it has no login method and acts only through its tokens.
-  // 'launcher' is a launcher's user, which owns only the launcher's token.
+  // 'service'はService Account。ログインの方法を持たず、自分のtokenを通してだけ操作する。
+  // 'launcher'はlauncherのユーザーで、launcherのtokenだけを持つ。
   kind: UserKind;
 }
 export interface Project {
@@ -396,8 +396,8 @@ export interface Project {
   visibility: ProjectVisibility;
   role: ProjectRole;
   /**
-   * The user holds a role through a direct grant or a group binding. False when `role` comes only
-   * from public visibility or from a global administrator's session.
+   * ユーザーが直接付与かgroupへの付与でroleを持っている。`role`がpublicの公開設定か、全体管理者の
+   * sessionだけから来ているときはfalse。
    */
   isMember: boolean;
   createdAt: string;
@@ -422,14 +422,14 @@ export interface LogEntry {
   message: string;
 }
 /**
- * GET /projects/:p/runs/:r/logs: the Run's lines, oldest first. With `tail`, only that many of
- * the latest; totalCount says how many the Run has, so a screen knows what it left out.
+ * GET /projects/:p/runs/:r/logs: Runのログの行を古い順に返す。`tail`があれば最新のその行数
+ * だけ。totalCountはRunが持つ行数で、画面は省いた分を知ることができる。
  */
 export interface RunLogList {
   items: LogEntry[];
   totalCount: number;
 }
-// A screen polls the latest lines; a larger read is a download, which leaves `tail` out.
+// 画面は最新の行をポーリングする。それより多く読むのはダウンロードで、`tail`を付けない。
 export const MAX_RUN_LOG_TAIL = 10_000;
 export interface Run {
   id: string;
@@ -449,26 +449,26 @@ export interface Run {
   executionMode?: ExecutionMode;
   executionSnapshot?: ExecutionSnapshot | null;
   inputDatasetVersionIds: string[];
-  // Dataset versions used initially or recorded in step-specific training data stages.
+  // 最初に使ったデータセットバージョンと、stepごとの学習データの段階に記録したもの。
   trainingDatasetVersionIds?: string[];
-  // Subset of inputDatasetVersionIds produced by an upstream Run; fixed at creation.
+  // inputDatasetVersionIdsのうち、上流のRunが作ったもの。作成時に決まる。
   upstreamDatasetVersionIds: string[];
   outputDatasetVersionIds: string[];
   outputModelVersionIds: string[];
-  /** Task outputModel copied at launch; registration runs when the Run ends. */
+  /** 起動時に写したTaskのoutputModel。登録はRunが終わったときに行う。 */
   outputModelRegistration?: TaskOutputModel | null;
   parentRunId: string | null;
-  // The checkpoint this Run continues from; fixed at creation (environment.resume mirrors it).
+  // このRunが続きを始めるcheckpoint。作成時に決まる（environment.resumeにも同じ値が入る）。
   resumeCheckpointId?: string | null;
   environment: JsonObject;
   createdBy: string;
-  /** Display name of createdBy, for screens; null if the user record is gone. */
+  /** 画面に出すcreatedByの表示名。ユーザーの記録が無くなっていればnull。 */
   createdByName: string | null;
   createdAt: string;
   startedAt: string | null;
   endedAt: string | null;
   error: string | null;
-  // Label of the machine an offline-synced Run came from; null for Runs created online.
+  // オフラインで記録して同期したRunの元のマシンの名前。オンラインで作ったRunではnull。
   syncOrigin?: string | null;
 }
 export interface Model {
@@ -478,7 +478,7 @@ export interface Model {
   family: string;
   description: string;
   latestVersion: string | null;
-  /** The version the API gives the next version registered without one (ModelVersionCreate). */
+  /** バージョンを指定せずに次に登録したとき、APIが付けるバージョン（ModelVersionCreate）。 */
   nextVersion?: string;
   aliases: Record<string, string>;
   createdAt: string;
@@ -490,7 +490,7 @@ export interface ModelVersion {
   version: string;
   family: string;
   sourceRunId: string | null;
-  // Read projection of the registration source or an appended training-source association.
+  // 読み出し用の値。登録元か、後から足した学習元の関連づけから求める。
   trainingSourceRunId?: string | null;
   parentModelVersionIds: string[];
   weightsUri: string | null;
@@ -500,7 +500,7 @@ export interface ModelVersion {
   createdAt: string;
 }
 export interface ModelVersionCreate {
-  // Omitted versions are numbered by the API with the next MLflow-style integer.
+  // バージョンを省くと、APIがMLflowと同じ形の次の整数を振る。
   version?: string;
   parentModelVersionIds?: string[];
   sourceRunId?: string | null;
@@ -550,16 +550,17 @@ export interface Dataset {
   namespace: string;
   description: string;
   latestVersion: string | null;
-  // Set while archived: new Runs refuse its versions as inputs; existing Runs keep them.
+  // アーカイブしている間だけ入る。新しいRunはそのバージョンを入力として受け付けず、既存のRunは
+  // そのまま持つ。
   archivedAt: string | null;
   createdAt: string;
 }
-// PATCH bodies of the registry lifecycle; at least one field is required.
+// レジストリのライフサイクルのPATCHの本文。少なくとも1つの項目が要る。
 export interface ModelUpdate {
   description?: string;
 }
 export interface ExperimentUpdate {
-  // Unique within the Project.
+  // Projectの中で一意。
   name?: string;
   description?: string;
 }
@@ -582,7 +583,7 @@ export interface DatasetVersion {
   parentDatasetVersionIds: string[];
   externalRef: ExternalDatasetRef | null;
   contentKind: DatasetContentKind;
-  /** Files and their total bytes for 'artifacts' versions; null for 'reference' versions. */
+  /** 'artifacts'のバージョンのファイル数と合計バイト数。'reference'のバージョンではnull。 */
   fileCount: number | null;
   totalSize: number | null;
   createdAt: string;
@@ -598,13 +599,13 @@ export interface Artifact {
   size: number;
   sha256: string;
   createdAt: string;
-  /** Set once the Artifact is deleted; deleted Artifacts are not listed and their content is 404. */
+  /** Artifactを削除すると入る。削除したArtifactは一覧に出ず、中身は404になる。 */
   deletedAt?: string | null;
 }
 /**
- * ssh and local targets are driven by the worker over SSH. A site is only described here: its
- * launcher (or `mado-tracking submit`) and job shell hold the connection and scheduler settings,
- * so a site's host, username, key paths, work directory and Python are empty strings.
+ * sshとlocalのコンピュータは、workerがSSHで動かす。siteはここでは説明だけを持つ。接続と
+ * スケジューラの設定はlauncher（または`mado-tracking submit`）とjob shellが持つので、siteの
+ * host・username・鍵のパス・作業ディレクトリ・Pythonは空文字列。
  */
 export type ComputeTargetExecutor = 'ssh' | 'local' | 'site';
 export interface ComputeTarget {
@@ -622,20 +623,23 @@ export interface ComputeTarget {
   maxConcurrentJobs: number;
   enabled: boolean;
   executor: ComputeTargetExecutor;
-  /** Upper bound of the target's dataset cache (<workDirectory>/.mmt-cache/datasets). */
+  /** コンピュータのデータセットのキャッシュ（<workDirectory>/.mmt-cache/datasets）の上限。 */
   datasetCacheMaxBytes: number;
   datasetTransfer: DatasetTransferMode;
-  /** Sites: 'manual' when the requester submits with `mado-tracking submit` (logins with OTP). */
+  /**
+   * siteで、依頼した本人が`mado-tracking submit`で投入するときは'manual'（ログインにOTPを使う
+   * siteの場合）。
+   */
   submissionMode: SiteSubmissionMode;
-  /** CPU of the compute nodes; images and SIFs must be built for it. */
+  /** 計算ノードのCPU。イメージとSIFはこのCPU向けにビルドしなければならない。 */
   cpuArch: CpuArch;
-  /** Sites: the job shell submits an array in one call (MMT_ARRAY_SIZE). */
+  /** siteで、job shellがarrayを1回の呼び出しで投入する（MMT_ARRAY_SIZE）。 */
   supportsArray: boolean;
-  /** Sites: a Job still in the scheduler queue after this many seconds fails as queue_timeout. */
+  /** siteで、この秒数を過ぎてもスケジューラの待ち行列にあるJobはqueue_timeoutで失敗する。 */
   queueTimeoutSeconds: number | null;
-  /** Whoever added the computer. Its owner and global administrators change it. */
+  /** コンピュータを追加した人。所有者と全体管理者が変更できる。 */
   ownerUserId: string;
-  /** Public: every Project's Jobs; private: its owner's and their Service Accounts' only. */
+  /** public: すべてのProjectのJob。private: 所有者とその人のService AccountのJobだけ。 */
   visibility: ComputeTargetVisibility;
 }
 export interface Job {
@@ -656,12 +660,13 @@ export interface Job {
   heartbeatAt: string | null;
   exitCode: number | null;
   error: string | null;
-  // Derived: claimed/running with no heartbeat for 60 seconds. Display only; status is unchanged.
-  // Site Jobs that wait for submission or in a scheduler queue send no heartbeat and are not stale.
+  // 導出した値。claimedかrunningで、60秒heartbeatが無いもの。表示のためだけで、statusは
+  // 変えない。投入待ちかスケジューラの待ち行列にいるsiteのJobはheartbeatを送らないので、
+  // staleにはしない。
   heartbeatStale: boolean;
-  /** Site Jobs only: where the Job is between queued and its end. */
+  /** siteのJobだけ。queuedから終了までの間でJobがどこにいるか。 */
   phase: JobPhase | null;
-  /** GPUs requested; for ssh/local Jobs the number of gpuIds. */
+  /** 求めたGPUの数。ssh・localのJobではgpuIdsの数。 */
   gpuCount: number;
   walltimeSeconds: number | null;
   schedulerJobId: string | null;
@@ -671,22 +676,22 @@ export interface Job {
   arrayIndex: number | null;
   arraySize: number | null;
   endReason: JobEndReason | null;
-  /** The driver Job that created this one with its Job token. */
+  /** 自分のJob tokenでこのJobを作ったドライバーのJob。 */
   parentJobId: string | null;
-  /** Links from the first manual start through hooks and drivers to this Job. */
+  /** 最初の手動の開始から、フックとドライバーを経てこのJobに至るまでの段数。 */
   chainDepth: number;
   hookId: string | null;
   allowChildJobs: boolean;
   retryOnFailure: boolean;
   retryOnTimeout: boolean;
   datasetPartitionVersionId: string | null;
-  /** Site Jobs: the job shell version they were submitted with, once claimed. */
+  /** siteのJobで、投入に使ったjob shellのバージョン。claimされたあとに入る。 */
   siteJobShellId: string | null;
 }
 /**
- * A row of GET /projects/:p/jobs: the Job with the names of its Run and Task, so the list reads
- * without opening each Run. sweepEarlyStopped tells a Sweep's early stop (Run tag
- * mmt.sweepEarlyStopped) from a cancel by a person; both end as canceled.
+ * GET /projects/:p/jobsの1行。JobにRunとTaskの名前を添え、各Runを開かなくても一覧が読める
+ * ようにする。sweepEarlyStoppedは、Sweepによる早期停止（Runのタグmmt.sweepEarlyStopped）と
+ * 人による取り消しを区別する。どちらもcanceledで終わる。
  */
 export interface JobListItem extends Job {
   runName: string;
@@ -694,25 +699,31 @@ export interface JobListItem extends Job {
   taskId: string | null;
   taskName: string | null;
   sweepEarlyStopped: boolean;
-  /** The Job's creator: the creator of its Run. Only they or a Project admin stop or retry it. */
+  /**
+   * Jobの作成者（そのRunの作成者）。Jobを止めたり再試行したりできるのは、その人か
+   * Project adminだけ。
+   */
   createdBy: string;
-  /** Display name of createdBy; null if the user record is gone. */
+  /** createdByの表示名。ユーザーの記録が無くなっていればnull。 */
   createdByName: string | null;
   /**
-   * Retrying from the latest checkpoint has one to start from: the Run saved a checkpoint, or it
-   * resumed from one (JobService.retry with resumeFromLatestCheckpoint).
+   * 最新のcheckpointからの再試行で、始める元のcheckpointがある。Runがcheckpointを保存したか、
+   * checkpointから再開したRunである（resumeFromLatestCheckpointを付けたJobService.retry）。
    */
   hasResumeCheckpoint: boolean;
-  /** The Sweep trial the Job runs, when a Sweep started it; a person's retry of it has none. */
+  /** Sweepが始めたJobなら、そのJobが動かすSweepのtrial。人がそれを再試行したJobには無い。 */
   sweepTrial: JobSweepTrialOrigin | null;
-  /** The automation rule that started the Job (an attempt or an automatic retry of it). */
+  /** Jobを始めた自動実行ルール（試行か、その自動の再試行）。 */
   automationRule: JobAutomationRuleOrigin | null;
   /**
-   * The workflow execution whose step started the Job (not a later one that reuses its Run). Such
-   * a Job is resumed from the workflow, not retried on its own (409 workflow_retry_required).
+   * ステップでJobを始めたワークフローの実行（そのRunを使い回す後の実行ではない）。そのような
+   * Jobは単独で再試行せず、ワークフローから再開する（409 workflow_retry_required）。
    */
   workflowExecution: JobWorkflowExecutionOrigin | null;
-  /** What a worker must name in workerInfo.capabilities to take the Job (WorkerService.claim). */
+  /**
+   * workerがこのJobを取るために、workerInfo.capabilitiesで名乗る必要がある機能
+   * （WorkerService.claim）。
+   */
   requiredWorkerCapabilities: WorkerCapability[];
 }
 export interface JobWorkflowExecutionOrigin {
@@ -742,7 +753,7 @@ export interface WorkerPresence {
   lastSeenAt: string;
   status: WorkerPresenceStatus;
   activeJobCount: number;
-  /** What the worker named on its latest claim or resume. */
+  /** workerが最後のclaimかresumeで名乗った機能。 */
   capabilities: WorkerCapability[];
 }
 export interface WorkerJob {
@@ -755,11 +766,11 @@ export interface WorkerJob {
   // Job のコードに渡す token（mado_mtj_）。この claim・resume で新しく発行したときだけ入る。
   // 実行中の Job では null で、プロセスは worker が前に保存した token を使い続ける。
   jobToken: string | null;
-  // Set when the Run continues from a checkpoint; the worker verifies it before the entrypoint.
+  // Runがcheckpointから続きを始めるときに入る。workerはentrypointの前にそれを検証する。
   resumeCheckpoint?: WorkerResumeCheckpoint | null;
-  // A checkpoint handed to the code as an input (checkpoint_saved hooks); not a resume.
+  // コードに入力として渡すcheckpoint（checkpoint_savedのフック）。再開ではない。
   inputCheckpoint?: WorkerResumeCheckpoint | null;
-  // The webhook body or manual trigger payload of the hook start; trigger-payload.json in the Job.
+  // フックの開始のwebhookの本文か、手動のトリガーのpayload。Jobの中ではtrigger-payload.json。
   triggerPayload?: JsonObject | null;
 }
 export interface TokenSummary {
@@ -774,10 +785,10 @@ export interface TokenSummary {
   ownerType: 'user' | 'service_account';
   ownerId: string;
   ownerName: string;
-  // First 12 characters of the token value.
+  // tokenの値の先頭12文字。
   tokenPrefix: string;
 }
-// GET /auth/token: the authenticating API token itself (`job` is true for Job tokens).
+// GET /auth/token: 認証に使っているAPI tokenそのもの（Job tokenなら`job`がtrue）。
 export interface CurrentApiToken {
   id: string;
   projectId: string | null;
@@ -792,7 +803,7 @@ export interface PluginManifest {
   capabilities: string[];
 }
 export type PluginKind = 'mado';
-/** The namespaces come from the access token's grant in Mado; they are not entered here. */
+/** namespaceは、mado S3 Data Catalogがaccess tokenに与えたgrantから来る。ここでは入力しない。 */
 export interface MadoPluginConfig {
   apiUrl: string;
   webUrl: string;
@@ -800,7 +811,7 @@ export interface MadoPluginConfig {
   jobNamespace: string;
   storageSystemKey: string;
 }
-/** Secrets are accepted only in write requests. Omitting the token keeps the saved one. */
+/** シークレットは書き込みのリクエストでだけ受け付ける。tokenを省くと保存済みのものを残す。 */
 export interface MadoPluginCredentialsInput {
   accessToken?: string;
 }
@@ -835,15 +846,15 @@ export interface PluginConnection {
   configRevision: number;
   credentialsConfigured: { accessToken: boolean };
   secretStorageAvailable: boolean;
-  /** The Mado access token can be decrypted by this API server. */
+  /** mado S3 Data Catalogのaccess tokenを、このAPIサーバーで復号できる。 */
   tokenConfigured: boolean;
   enabled: boolean;
   manifest: PluginManifest | null;
-  /** Set by the last connection check and cleared when the destination or access token changes. */
+  /** 最後の接続確認で入り、接続先かaccess tokenが変わると消える。 */
   accessTokenGrant: MadoAccessTokenGrant | null;
   createdAt: string;
 }
-/** Safe for Project viewers: no credentials, token references or server-side API destinations. */
+/** Projectのviewerに見せてよい情報。認証情報・tokenの参照・サーバー側のAPIの接続先は含まない。 */
 export interface PluginAvailability {
   kind: 'mado';
   id: string | null;
