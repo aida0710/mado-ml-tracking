@@ -77,33 +77,13 @@
   flex: 0 0 auto;
   color: var(--muted);
 }
-/* A dropdown in the top layer (popover="manual") next to its button: the Project switcher and the
-   language picker. useAnchoredPopover sets where and how big. */
-.anchored-popover {
-  position: fixed;
-  inset: auto;
-  margin: 0;
-  min-width: 0;
-  z-index: 30;
-}
-/* Both language rows reserve the same checkmark space and avoid inline baseline alignment. */
-.language-picker-menu .button {
-  display: flex;
-  width: 100%;
-  justify-content: flex-start;
-  /* Native Japanese and English fonts have different normal line heights. */
-  line-height: 1.5;
-}
-.language-picker-menu [aria-checked='false'] .language-picker-check {
-  visibility: hidden;
-}
+/* プロジェクトの選択欄の一覧（デザインシステムの.popover.anchored-popover。置き場所と大きさは
+   useAnchoredPopoverが決める）。絞り込みの欄の下で一覧だけがスクロールするよう、縦に並べる。 */
 .project-switcher-popover {
   padding: 0;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-  border: 1px solid var(--border);
-  background: var(--background);
   color: var(--text);
   box-shadow: var(--shadow-popover);
 }

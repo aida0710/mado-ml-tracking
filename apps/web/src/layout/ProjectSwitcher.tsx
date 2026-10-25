@@ -7,17 +7,16 @@ import {
   type KeyboardEvent,
   type MouseEvent,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 import type { Project } from '@mmt/contracts';
-import { usePopover } from '../hooks/usePopover';
-import { useAnchoredPopover } from '../hooks/useAnchoredPopover';
+import { isListNavigationKey, moveActiveIndex } from '@mado/design-system/list-navigation';
+import { useAnchoredPopover, usePopover } from '@mado/design-system/react';
 import { VisibilityLabel } from '../components/VisibilityLabel';
 import { filterProjects, shouldOfferProjectFilter } from '../lib/projectFilter';
 import { memberProjectsFirst } from '../lib/projectListSections';
 import { idsOfSharedNames } from '../lib/projectNameCollisions';
 import { formatDate } from '../lib/format';
-import { isListNavigationKey, moveActiveIndex } from '../lib/listNavigation';
 import { isComposingKey } from '../lib/imeComposition';
 import { projectHomePath } from './navigationLinks';
 import { useLocale } from '../i18n/useLocale';
@@ -54,7 +53,8 @@ export function ProjectSwitcher({
   const valueId = `${idPrefix}-value`;
   const listboxId = `${idPrefix}-listbox`;
   const optionId = (index: number) => `${idPrefix}-option-${index}`;
-  const dropdown = usePopover();
+  const { pathname } = useLocation();
+  const dropdown = usePopover({ closeKey: pathname });
   const { container, isOpen, close } = dropdown;
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -166,8 +166,9 @@ export function ProjectSwitcher({
         <div
           ref={popoverRef}
           popover="manual"
-          className="anchored-popover project-switcher-popover"
-          style={popoverStyle}
+          className="popover anchored-popover project-switcher-popover"
+          // .popoverの既定のtopを外し、useAnchoredPopoverが決めた上か下の一方だけを効かせる。
+          style={{ ...popoverStyle, top: popoverStyle?.top ?? 'auto', bottom: popoverStyle?.bottom ?? 'auto' }}
           onMouseDown={keepFocusOnPress}
         >
           {offersFilter && (

@@ -1,8 +1,9 @@
 import { useId, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import type { Dataset } from '@mmt/contracts';
+import { useLocation } from 'react-router-dom';
+import { usePopover } from '@mado/design-system/react';
 import { registryApi } from '../api/registry';
-import { usePopover } from '../hooks/usePopover';
 import { ConfirmDialog } from './ConfirmDialog';
 import { FormDialog } from './FormDialog';
 import { getFieldValue } from '../lib/formValues';
@@ -22,7 +23,8 @@ export function DatasetActionsMenu({
 }) {
   useLocale();
   const menuId = useId();
-  const { container: popoverContainer, isOpen, toggle, close } = usePopover();
+  const { pathname } = useLocation();
+  const { container: popoverContainer, isOpen, toggle, close } = usePopover({ closeKey: pathname });
   const [dialog, setDialog] = useState<'description' | 'archive' | 'unarchive' | null>(null);
   const isArchived = dataset.archivedAt !== null;
   function choose(next: typeof dialog) {

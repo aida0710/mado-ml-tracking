@@ -1,10 +1,10 @@
 import { useId } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { OPERATIONS_ALERT_MAX_PAGE_SIZE } from '@mmt/contracts';
+import { usePopover } from '@mado/design-system/react';
 import { administrationApi } from '../api/administration';
 import { useOperationsAlerts } from '../hooks/useOperationsAlerts';
-import { usePopover } from '../hooks/usePopover';
 import { useQuery } from '../hooks/useQuery';
 import { describeOperationsAlertSubject } from '../lib/operationsAlertSubject';
 import { orderAlertsForProject } from '../lib/operationsAlertOrder';
@@ -29,7 +29,8 @@ export function OperationsAlertBadge({ openProjectId }: { openProjectId?: string
   useLocale();
   const alerts = useOperationsAlerts();
   const popoverId = useId();
-  const { container, isOpen, toggle } = usePopover();
+  const { pathname } = useLocation();
+  const { container, isOpen, toggle } = usePopover({ closeKey: pathname });
   // Names are looked up only once the list is shown; the count needs none.
   const projects = useQuery(
     isOpen ? 'operations-alert-projects' : null,

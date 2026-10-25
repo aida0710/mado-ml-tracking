@@ -1,8 +1,9 @@
 import { useId, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import type { Artifact } from '@mmt/contracts';
+import { useLocation } from 'react-router-dom';
+import { usePopover } from '@mado/design-system/react';
 import { artifactLifecycleApi } from '../api/artifactLifecycle';
-import { usePopover } from '../hooks/usePopover';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
@@ -26,7 +27,8 @@ export function ArtifactActionsMenu({
   useLocale();
   const menuId = useId();
   const reasonId = useId();
-  const { container: popoverContainer, isOpen, toggle, close } = usePopover();
+  const { pathname } = useLocation();
+  const { container: popoverContainer, isOpen, toggle, close } = usePopover({ closeKey: pathname });
   const [isConfirming, setIsConfirming] = useState(false);
   return (
     <div className="artifact-actions" ref={popoverContainer}>

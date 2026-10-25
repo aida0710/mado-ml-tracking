@@ -305,45 +305,6 @@
   user-select: all;
   overflow-wrap: anywhere;
 }
-.user-menu {
-  position: relative;
-}
-.user-menu-popover {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 20;
-  min-width: 220px;
-  display: flex;
-  flex-direction: column;
-  background: var(--background);
-  color: var(--text);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-popover);
-}
-.user-menu-identity {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-  overflow-wrap: anywhere;
-}
-.user-menu-identity .muted {
-  font-size: 11px;
-}
-.user-menu-popover a {
-  padding: 10px 14px;
-  color: var(--text);
-}
-.user-menu-popover a.user-menu-settings {
-  border-top: 1px solid var(--border);
-}
-.user-menu-popover a:hover,
-.user-menu-popover a:focus-visible {
-  background: var(--surface-hover);
-  text-decoration: none;
-}
 .account-page {
   display: flex;
   flex-direction: column;

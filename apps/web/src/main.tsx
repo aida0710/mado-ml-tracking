@@ -65,11 +65,11 @@ import './styles/siteComputers.css';
 import './styles/computerSetup.css';
 import './styles/tabs.css';
 import './styles/tapTargets.css';
-import { initializeLocale } from './i18n/locale';
+import { localeStore } from './i18n/locale';
 
 // The login screen and everything else start in the stored theme, or the operating system's.
 document.documentElement.dataset.theme = initialTheme(THEME_STORAGE_KEY);
-initializeLocale();
+localeStore.applyToDocument();
 
 // Keep the existing route tree while enabling blocked SPA navigation.
 const router = createBrowserRouter([{
