@@ -1,18 +1,17 @@
 /**
- * Drives the whole pipeline through the real Web UI against a real API in local login mode:
- * local login and the forced password change, the storage connection test, Project creation,
- * code versions, automation rules, a promotion policy, a training Task with an output model, a
- * CPU worker, the model version page (inference, evaluation, metrics, baseline comparison),
- * promotion with a reason, the alias history, and a viewer (through a group binding) who cannot
- * operate.
+ * ローカルログインのモードで動く実際のAPIを相手に、実際のWeb UIでパイプライン全体を動かす。
+ * ローカルログインと強制のパスワード変更、保存先の接続テスト、Projectの作成、コードバージョン、
+ * 自動実行ルール、昇格policy、出力モデルのある学習のTask、CPUのworker、モデルバージョンの画面
+ * （推論、評価、メトリクス、基準バージョンとの比較）、理由を付けた昇格、aliasの履歴、操作できない
+ * Viewer（groupの割り当てによる）。
  *
- * It starts its own server (tests/fixtures/pipeline/serve.ts: a fresh test schema in
- * MMT_TEST_DATABASE_URL and the built Web app on one port) and a worker process, and stops both.
- * Waits poll the text on screen; there are no fixed sleeps. Build the Web app first
- * (`npm run build -w @mmt/web`).
+ * 専用のサーバー（tests/fixtures/pipeline/serve.ts。MMT_TEST_DATABASE_URLに新しいテスト用schemaを
+ * 作り、ビルド済みのWebアプリを同じportで配信する）とworkerのプロセスを起動し、最後に両方を止める。
+ * 待ち合わせは画面の文字をポーリングし、固定のsleepは使わない。先にWebアプリをビルドしておく
+ * （`npm run build -w @mmt/web`）。
  *
- * Environment: MMT_PLAYWRIGHT_MODULE, MMT_CHROMIUM_PATH, MMT_TEST_DATABASE_URL, optional
- * MMT_SCREENSHOT_DIR and MMT_PIPELINE_PORT (47002).
+ * 環境変数はMMT_PLAYWRIGHT_MODULE、MMT_CHROMIUM_PATH、MMT_TEST_DATABASE_URL。任意で
+ * MMT_SCREENSHOT_DIRとMMT_PIPELINE_PORT（47002）。
  */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -26,13 +25,13 @@ const ROOT = path.resolve(fileURLToPath(import.meta.url), '../../../..');
 const EXAMPLES = path.join(ROOT, 'python/examples');
 const PYTHON = path.join(ROOT, 'python/.venv/bin/python');
 const WORKER = path.join(ROOT, 'python/.venv/bin/mado-tracking-worker');
-// Verification servers started by agents use 47000-47009; the running Web is 5182.
+// エージェントが起動する検証用のサーバーは47000〜47009を使う。稼働中のWebは5182。
 const PORT = Number(process.env.MMT_PIPELINE_PORT ?? 47002);
 const BASE = `http://127.0.0.1:${PORT}`;
 const SERVER_START_MS = 90_000;
-// A Job installs httpx into a fresh venv before the example runs.
+// Jobは例を実行する前に、新しいvenvへhttpxをインストールする。
 const JOB_MS = 180_000;
-// How often a wait re-reads a page that does not poll by itself.
+// 自分ではポーリングしない画面を、待ち合わせの間に読み直す間隔。
 const SCREEN_POLL_MS = 1_000;
 const MODEL_FAMILY = 'linear';
 const MODEL_NAME = 'browser-linear';
@@ -42,14 +41,14 @@ const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).forma
 const reportDirectory = path.join(ROOT, 'artifacts/verification', today, 'pipeline');
 const workDirectory = path.join(ROOT, 'var/verification-browser-pipeline', `${Date.now()}`);
 const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
-// Generated per run and handed to the server through its environment; never printed.
+// 実行ごとに作り、環境変数でサーバーに渡す。表示はしない。
 const passwords = {
   admin: randomBytes(12).toString('hex'),
   adminChanged: randomBytes(12).toString('hex'),
   viewer: randomBytes(12).toString('hex'),
 };
 
-// The inference outputs (WAV lengths) for x = 0, 1, 2 on y = 2x + 1.
+// y = 2x + 1でx = 0, 1, 2のときの推論の出力（WAVの長さ）。
 const referenceSamples = [0, 1, 2].map((x, index) => ({
   audio: `sample-${String(index).padStart(3, '0')}.wav`,
   durationSeconds: Math.round((2 * x + 1) * 0.1 * 1e6) / 1e6,
@@ -101,7 +100,7 @@ async function waitForServer() {
     try {
       if ((await fetch(`${BASE}/healthz`)).ok) return;
     } catch {
-      // Not listening yet.
+      // まだ待ち受けていない。
     }
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
@@ -140,7 +139,7 @@ async function screenshot(name) {
   await page.screenshot({ path: path.join(screenshotDirectory, `${name}.png`), fullPage: true });
 }
 
-// Setup that has no screen for the local executor (Compute offers it only in development mode).
+// 画面の無い、local executorのための準備（Computeは開発モードでだけlocal executorを出す）。
 async function api(method, resource, body) {
   const response = await page.request.fetch(`${BASE}/api${resource}`, {
     method,
@@ -151,7 +150,7 @@ async function api(method, resource, body) {
   return response.status() === 204 ? null : response.json();
 }
 
-/** Wait until `locator` shows, pressing the page's reload button between looks. */
+/** `locator`が出るまで、見直す合間に画面の再読み込みボタンを押しながら待つ。 */
 async function waitOnScreen(locator, { timeout = JOB_MS, reload } = {}) {
   const deadline = Date.now() + timeout;
   while (true) {
@@ -178,8 +177,8 @@ async function logout() {
 }
 
 /**
- * Paste text the way a user pastes a file into the code editor. Typing it (keyboard.insertText)
- * would let the editor auto-indent every new line and change the Python source.
+ * 利用者がコードエディタにファイルを貼り付けるのと同じように、テキストを貼り付ける。入力すると
+ * （keyboard.insertText）、エディタが改行のたびに自動で字下げし、Pythonのソースが変わってしまう。
  */
 async function pasteIntoFocusedEditor(content) {
   await page.evaluate((text) => {
@@ -191,7 +190,7 @@ async function pasteIntoFocusedEditor(content) {
   }, content);
 }
 
-// The checkbox labels of the run kinds (i18n/catalog.ts).
+// Runの種類のチェックボックスのラベル（i18n/catalog.ts）。
 const RUN_KIND_LABELS = { training: '学習', finetuning: 'ファインチューニング', inference: '推論', evaluation: '評価', processing: 'データ処理' };
 
 async function addCodeVersion({ name, version, files, entrypoint, taskType }) {
@@ -260,7 +259,7 @@ async function newestVersion(minimumCount) {
     const versions = (await api('GET', `/projects/${projectId}/models/${modelId}/versions`)).items;
     if (versions.length >= minimumCount)
       return versions.toSorted((left, right) => Number(right.version) - Number(left.version))[0];
-    // The Task registers the version once the training Run has finished on the worker.
+    // 学習のRunがworkerで終わると、Taskがバージョンを登録する。
     await page.getByText('完了').first().waitFor({ timeout: SCREEN_POLL_MS }).catch(() => {});
   }
   throw new Error(`The Task did not register version ${minimumCount}`);
@@ -269,7 +268,7 @@ async function newestVersion(minimumCount) {
 async function waitForAutomation(versionId) {
   await openVersionPage(versionId);
   const automation = page.getByRole('region', { name: '自動実行' });
-  // Inference and the chained evaluation both end Finished on the CPU worker.
+  // 推論と、それにつないだ評価は、どちらもCPUのworkerで「完了」になる。
   await waitOnScreen(automation.getByRole('row').filter({ hasText: '評価' }).filter({ hasText: '完了' }), {
     reload: reloadVersionPage,
   });
@@ -403,7 +402,7 @@ try {
     ids.evaluationCodeVersionId = (
       await addCodeVersion({ name: 'Browser evaluation', version: 'v1', files: { 'evaluation.py': await read('evaluation.py') }, entrypoint: ['python', 'evaluation.py'], taskType: 'evaluation' })
     ).id;
-    // Monaco must not have re-indented the Python sources.
+    // MonacoがPythonのソースを字下げし直していてはいけない。
     const trainingCode = (await api('GET', `/projects/${projectId}/codes`)).items.find((code) => code.name === 'Browser training');
     const stored = (await api('GET', `/projects/${projectId}/codes/${trainingCode.id}/versions`)).items[0];
     assertSameLines(stored.source.files['training.py'], await read('training.py'), 'training.py');
@@ -516,7 +515,7 @@ try {
   await stage('alias_history', 'Modelsの画面でaliasの履歴に2回の昇格と理由が残る', async () => {
     await page.goto(`${projectBase}/models`);
     await page.getByRole('button', { name: MODEL_NAME }).first().click();
-    // The history is the table under the heading 「Aliasの履歴」 (columns 旧バージョン → 新バージョン, 理由).
+    // 履歴は見出し「Aliasの履歴」の下の表（列は「旧バージョン → 新バージョン」、「理由」）。
     const history = page.getByRole('table').filter({ hasText: '理由' }).filter({ hasText: '経路' });
     await waitOnScreen(history.getByText('基準バージョンと同じ一致率を保ったため'), { timeout: 30_000 });
     await waitOnScreen(history.getByText('初回の評価で全サンプルの長さが一致したため'), { timeout: 5_000 });
@@ -542,7 +541,7 @@ try {
     await openVersionPage(ids.secondVersionId);
     await page.getByRole('region', { name: '評価結果' }).getByText('evaluation.duration_match_rate').first().waitFor();
     assert.equal(await page.getByRole('region', { name: '昇格の判定' }).count(), 0, 'a viewer sees the promotion card');
-    // The reload button is the only control left; it has an icon and an accessible name.
+    // 残る操作は再読み込みのボタンだけ。アイコンとaccessible nameを持つ。
     const versionPage = page.locator('.model-version-page');
     const buttons = await versionPage.getByRole('button').count();
     assert.equal(buttons, 1, 'a viewer has controls besides reload on the version page');
@@ -552,7 +551,7 @@ try {
     assert.equal(await page.getByRole('button', { name: '自動実行ルールを作成' }).count(), 0);
     await openModelsTab('昇格policy');
     assert.equal(await page.getByRole('button', { name: '昇格policyを作成' }).count(), 0);
-    // The API refuses what the screen hides.
+    // 画面が隠した操作は、APIも断る。
     const refused = await page.request.put(`${BASE}/api/projects/${projectId}/models/${modelId}/aliases/${PROMOTION_ALIAS}`, {
       headers: { Origin: BASE, 'Content-Type': 'application/json' },
       data: JSON.stringify({ versionId: ids.firstVersionId, reason: 'viewer attempt' }),

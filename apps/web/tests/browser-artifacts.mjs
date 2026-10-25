@@ -1,5 +1,5 @@
-// Browser check for the audio viewer, evaluation sample tables, and Artifact comparison.
-// Fixtures in tests/fixtures/audio/ were generated with ffmpeg:
+// 音声ビューア、評価サンプルの表、Artifactの比較のブラウザでの確認。
+// tests/fixtures/audio/のフィクスチャはffmpegで作った。
 //   ffmpeg -f lavfi -i "sine=frequency=440:sample_rate=16000:duration=2" -ac 1 -c:a pcm_s16le mono-16k.wav
 //   ffmpeg -f lavfi -i "sine=frequency=440:sample_rate=48000:duration=2" \
 //     -f lavfi -i "sine=frequency=1760:sample_rate=48000:duration=2" \
@@ -18,7 +18,7 @@ const { chromium } = await import(pathToFileURL(modulePath).href);
 const browser = await chromium.launch({
   headless: true,
   ...(process.env.MMT_CHROMIUM_PATH ? { executablePath: process.env.MMT_CHROMIUM_PATH } : {}),
-  // Loop and switch checks press play from scripts, not from a user gesture.
+  // ループと切り替えの確認は、利用者の操作ではなくスクリプトから再生を押す。
   args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'],
 });
 const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1000 } });
@@ -29,10 +29,10 @@ const fixtures = {
   wav: await readFile(new URL('mono-16k.wav', fixtureDirectory)),
   flac: await readFile(new URL('stereo-48k.flac', fixtureDirectory)),
   mp3: await readFile(new URL('tone-22k.mp3', fixtureDirectory)),
-  // A rising tone makes the screenshots show a readable spectrogram.
+  // 音程の上がる音にして、スクリーンショットのスペクトログラムが読み取れるようにする。
   chirp: await readFile(new URL('chirp-16k.wav', fixtureDirectory)),
 };
-// The viewer decides from Artifact.size, so a small body with a large declared size exercises the limit.
+// ビューアはArtifact.sizeで判断するので、中身は小さくsizeだけ大きく申告して上限を試す。
 const OVER_ANALYSIS_LIMIT_BYTES = 64 * 1024 * 1024 + 1;
 const EVALUATION_ROW_COUNT = 120;
 
@@ -106,7 +106,7 @@ await context.route(
     if (!entry) return api.route(route);
     contentRequests.push({ artifactId: entry.artifact.id, resourceType: route.request().resourceType() });
     const body = entry.artifact.id === broken.id && controls.brokenServesValid ? fixtures.wav : entry.body;
-    // Media elements only seek within ranges the server can serve, as the real API does (206).
+    // 実際のAPIと同じく（206）、メディアの要素はサーバーが返せる範囲の中でだけシークする。
     const range = route.request().headers().range?.match(/^bytes=(\d+)-(\d*)$/);
     if (!range)
       return route.fulfill({ status: 200, contentType: entry.artifact.mimeType, headers: { 'Accept-Ranges': 'bytes' }, body });
@@ -135,7 +135,7 @@ async function setTheme(theme) {
   await page.reload();
 }
 async function openArtifact(path) {
-  // The Run Artifacts tab is a folder tree; from the root, open each folder down to the file.
+  // RunのArtifactsタブはフォルダのツリーなので、ルートからファイルまで各フォルダを開いていく。
   const fileButton = page.getByRole('button', { name: path, exact: true });
   if (!(await fileButton.isVisible()))
     for (const folder of path.split('/').slice(0, -1))
@@ -146,7 +146,7 @@ async function openArtifact(path) {
 const viewer = () => page.locator('.artifact-preview .audio-viewer').first();
 const audioState = (locator) =>
   locator.locator('audio').evaluate((audio) => ({ currentTime: audio.currentTime, paused: audio.paused }));
-/** Spectrogram row with the most energy in the middle frame, counted from the bottom (= bin index). */
+/** 中央のフレームで最もエネルギーの大きいスペクトログラムの行。下から数える（= ビンの番号）。 */
 const loudestSpectrogramBin = (locator) =>
   locator.locator('canvas.audio-spectrogram').evaluate((canvas) => {
     const context = canvas.getContext('2d');
@@ -197,7 +197,7 @@ try {
   await page.mouse.up();
   await viewer().locator('.audio-loop-label', { hasText: '0:00.50–0:01.00' }).waitFor();
   await viewer().getByRole('button', { name: '再生', exact: true }).click();
-  // 1.5s of playback crosses the loop end at least twice; the position must stay inside the loop.
+  // 1.5秒再生するとループの終わりを少なくとも2回越える。再生位置はループの中にとどまらなければならない。
   const loopDeadline = Date.now() + 1500;
   while (Date.now() < loopDeadline) {
     const { currentTime, paused } = await audioState(viewer());
@@ -250,7 +250,7 @@ try {
   await openArtifact(evaluationTable.path);
   const samples = page.locator('.evaluation-samples');
   await samples.getByText(`${EVALUATION_ROW_COUNT}件のサンプル`).waitFor();
-  // The Run's first Artifact (an audio file) is previewed before the table is chosen; count from here.
+  // 表を選ぶ前に、Runの最初のArtifact（音声ファイル）がプレビューされるので、ここから数える。
   const requestsBeforeTable = contentRequests.length;
   await samples.getByText('読み取れない行 1件').waitFor();
   assert.equal(await samples.locator('tbody > tr').count(), 50);

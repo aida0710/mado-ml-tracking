@@ -1,6 +1,6 @@
-// Model version page with a mocked API: the version link in the registry opens the page, the
-// automation table follows queued → running → finished by polling, failed and skipped reasons are
-// shown, evaluation metrics are summarized against the baseline, and a viewer sees no operations.
+// モックのAPIを相手にしたモデルバージョンの画面の確認。レジストリのバージョンのリンクでこの画面が
+// 開く、自動実行の表がポーリングでqueued → running → finishedを追う、失敗とスキップの理由が出る、
+// 評価のメトリクスを基準バージョンと比べてまとめる、Viewerには操作が出ない。
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { createBrowserApi } from './browserApi.mjs';
@@ -66,8 +66,8 @@ const rules = [
   rule({ id: ids.skippedRule, name: '保留rule', kind: 'processing' }),
 ];
 
-// The test moves the evaluation through queued, running and finished; the page must pick each
-// state up by polling. executionReads counts the reads to check that polling stops.
+// テストは評価をqueued、running、finishedの順に進める。画面はポーリングでそれぞれの状態を拾わなければ
+// ならない。executionReadsは読み込みの回数を数え、ポーリングが止まることを確かめるのに使う。
 const evaluationStates = [
   { runStatus: 'queued', jobStatus: 'queued', runStartedAt: null, runEndedAt: null },
   { runStatus: 'running', jobStatus: 'running', runStartedAt: now, runEndedAt: null },
@@ -227,7 +227,7 @@ async function routeModelPipeline(route) {
       status: 'finished',
     });
   if (path === `${projectPath}/promotion-evaluations`) return reply({ items: [], nextCursor: null });
-  // The version page ends with its comment thread; nobody has commented on this version.
+  // バージョンの画面の最後にはコメントのスレッドがある。このバージョンにはまだだれもコメントしていない。
   if (path === `${projectPath}/comments`) return reply({ items: [], nextCursor: null });
   if (path.endsWith('/evaluation-comparison'))
     return reply({
@@ -252,9 +252,9 @@ page.on('pageerror', (error) => pageErrors.push(error.message));
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const versionPage = page.locator('.model-version-page');
 const automation = () => page.getByRole('region', { name: '自動実行' });
-// The page polls every 5 seconds while work is in progress.
+// 処理が進行中の間、画面は5秒ごとにポーリングする。
 const POLL_TIMEOUT_MS = 20000;
-// Graph selection and navigation are read-only; domain operations live outside the graph.
+// グラフの選択と移動は読み取りだけ。ドメインの操作はグラフの外に置く。
 const VIEW_ONLY_BUTTONS = ['再読み込み'];
 
 try {
@@ -280,7 +280,7 @@ try {
   await automation().getByText('起動せず（学習Runが失敗・停止）').waitFor();
   await automation().getByText('source_run_unsuccessful: 学習Runが成功しなかったため起動しません').waitFor();
   assert.ok(await automation().locator('tr', { hasText: '評価rule' }).getByText('0h 2m').count());
-  // Polling stops once nothing is in progress.
+  // 進行中のものが無くなると、ポーリングは止まる。
   const readsAfterFinish = executionReads;
   await page.waitForTimeout(6000);
   assert.ok(executionReads - readsAfterFinish <= 1, 'polling stops after the work has ended');
@@ -300,8 +300,8 @@ try {
 
   console.log('Model pipeline: a viewer sees no operations on the page');
   project.role = 'viewer';
-  // A global administrator may rerun automation in any Project (modelAutomationService), so the
-  // viewer here is an ordinary user.
+  // 全体管理者はどのProjectでも自動実行を再実行できる（modelAutomationService）ので、ここでの
+  // Viewerは普通のユーザーにする。
   api.state.user.isAdmin = false;
   await page.reload();
   await versionPage.getByRole('heading', { name: `${model.name} / ${version.version}` }).waitFor();

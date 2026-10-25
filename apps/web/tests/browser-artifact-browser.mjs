@@ -1,5 +1,5 @@
-// Browser check for the Run Artifact folder tree, earlier versions, the Project-wide catalog,
-// and a Run with 10,000 files whose first page must appear without loading everything.
+// RunのArtifactのフォルダのツリー、以前のバージョン、Project全体のカタログ、10,000ファイルのRunの
+// ブラウザでの確認。10,000ファイルのRunは、全部を読み込まずに最初のページを出さなければならない。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -16,10 +16,10 @@ const browser = await chromium.launch({
 const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1000 } });
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
-// Matches RUN_ARTIFACT_PAGE_SIZE in hooks/useRunArtifacts.ts.
+// hooks/useRunArtifacts.tsのRUN_ARTIFACT_PAGE_SIZEと同じ値。
 const RUN_ARTIFACT_PAGE_SIZE = 200;
 const LARGE_RUN_FILE_COUNT = 10_000;
-// The first page must not wait for all 10,000 files; generous for a loaded CI machine.
+// 最初のページは10,000ファイルを全部待たずに出す。負荷の高いCIのマシン向けに余裕を持たせた値。
 const FIRST_PAGE_BUDGET_MS = 5000;
 
 const api = createBrowserApi();
@@ -48,18 +48,18 @@ function addArtifact({ run, path, body, mimeType = 'text/plain; charset=utf-8', 
   contents.set(artifact.id, body);
   return artifact;
 }
-// The browserApi fixture Artifact would otherwise appear in every listing.
+// こうしないと、browserApiのフィクスチャのArtifactがどの一覧にも出てしまう。
 api.state.artifacts.length = 0;
 addArtifact({ run: firstRun, path: 'eval/notes.txt', body: 'first evaluation notes' });
 addArtifact({ run: firstRun, path: 'eval/summary.txt', body: 'summary of the evaluation' });
 addArtifact({ run: firstRun, path: 'eval/deep/a/b/c.txt', body: 'deep file' });
 addArtifact({ run: firstRun, path: 'config.txt', body: 'old config', createdAt: '2026-10-07T00:00:00Z' });
 const latestConfig = addArtifact({ run: firstRun, path: 'config.txt', body: 'new config' });
-// A file and a folder with the same name are both listed.
+// 同じ名前のファイルとフォルダは両方とも一覧に出る。
 addArtifact({ run: firstRun, path: 'data', body: 'file named data' });
 addArtifact({ run: firstRun, path: 'data/inside.txt', body: 'inside the data folder' });
 addArtifact({ run: secondRun, path: 'predictions/notes.txt', body: 'second run notes' });
-// Older than the files above so the newest-first catalog page starts with those.
+// 上のファイルより古くして、新しい順のカタログのページが上のファイルから始まるようにする。
 for (let index = 0; index < LARGE_RUN_FILE_COUNT; index += 1)
   addArtifact({
     run: largeRun,
@@ -132,8 +132,8 @@ try {
   await preview().getByText('new config').waitFor();
   assert.equal(await file('config.txt').count(), 1, 'the latest list shows one row per path');
   assert.equal(latestConfig.path, 'config.txt');
-  // An upload reloads the open folder. The Run's upload dialog takes several files, so it stays
-  // open with its queue until it is closed.
+  // アップロードすると、開いているフォルダを読み直す。Runのアップロードのダイアログは複数の
+  // ファイルを受け付けるので、閉じるまでキューを表示したまま開いている。
   await page.getByRole('button', { name: 'Artifactをアップロード' }).click();
   const uploadDialog = page.getByRole('dialog');
   await uploadDialog.getByLabel('ファイルを選ぶ', { exact: true }).setInputFiles({
@@ -183,7 +183,7 @@ try {
   assert.ok(elapsed < FIRST_PAGE_BUDGET_MS, `first page took ${elapsed}ms`);
   const fileRows = page.locator('.artifact-tree tbody tr');
   assert.equal(await fileRows.count(), RUN_ARTIFACT_PAGE_SIZE);
-  // Folder pages and the preview's version lookup are bounded; nothing lists the whole Run.
+  // フォルダのページもプレビューのバージョンの照会も件数に上限があり、Runの全部を一覧するものは無い。
   assert.ok(
     artifactListRequests.every((request) => /[?&]limit=\d+/.test(request)),
     `every list request is one page: ${artifactListRequests.join(', ')}`,

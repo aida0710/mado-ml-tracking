@@ -1,4 +1,4 @@
-// Isolated browser-test API. This module is never imported by production code.
+// ブラウザテスト用の分離したAPI。このモジュールを本番のコードがimportすることはない。
 import { createHash } from 'node:crypto';
 import { routeBuiltinPlugins } from './builtinPluginMock.mjs';
 import { listProjectArtifacts, listRunArtifacts, runArtifactTree } from './artifactListingMock.mjs';
@@ -6,12 +6,12 @@ import { createProjectAdministration } from './projectAdministrationMock.mjs';
 import { createComputerSetup } from './computerSetupMock.mjs';
 import { findCodeVersionDetail, listModelFamilies, ruleMetricKeys } from './registryLookupMock.mjs';
 import { pageAutomationExecutions } from './automationExecutionMock.mjs';
-// The API default of MMT_ARTIFACT_DELETE_GRACE_DAYS (apps/api/src/config.ts).
+// MMT_ARTIFACT_DELETE_GRACE_DAYSのAPIの既定値（apps/api/src/config.ts）。
 const DEFAULT_ARTIFACT_DELETE_GRACE_DAYS = 7;
-// TokenSummary.tokenPrefix: the first characters of the token value.
+// TokenSummary.tokenPrefix: tokenの値の先頭の文字。
 const TOKEN_PREFIX_LENGTH = 12;
-// Lists the Compute and Settings screens read when they open; the mock has none of these.
-// Tasks: the Code page lists the Tasks that use a code version (checks with Tasks route their own).
+// コンピュータと設定の画面が開くときに読む一覧。モックはどれも持たない。
+// tasks: コードの画面は、コードバージョンを使うTaskを並べる（Taskを使う確認は自前でrouteする）。
 const EMPTY_PROJECT_LISTS = [
   'workers',
   'group-bindings',
@@ -21,8 +21,8 @@ const EMPTY_PROJECT_LISTS = [
   'notification-deliveries',
   'tasks',
 ];
-// Whose Jobs a computer takes, as the API decides (targetUsableSql): everyone's on a public one,
-// its owner's on a private one. The mock has no Service Accounts.
+// コンピュータがだれのJobを受け取るか。APIの決め方（targetUsableSql）に合わせる: publicなら
+// 全員の、privateなら所有者のJob。モックにはService Accountが無い。
 function isTargetUsable(target, user) {
   return target.visibility === 'public' || target.ownerUserId === user.id;
 }
@@ -31,7 +31,7 @@ function isTargetManager(target, user) {
   return user.isAdmin || target.ownerUserId === user.id;
 }
 
-// GET /targets/overview: a row for every computer, with nothing of how it is reached.
+// GET /targets/overview: すべてのコンピュータの行。どう接続するかは一切含めない。
 function targetOverview(target, state) {
   const launcher =
     target.executor === 'site' && target.submissionMode === 'automatic' && target.site?.launcherId
@@ -75,10 +75,10 @@ export function createBrowserApi() {
     name: 'UI検証用プロジェクト',
     description: 'ブラウザテストのAPIデータ',
     artifactBackend: 'filesystem',
-    // Projects that existed before visibility stay private (migration 054).
+    // 公開範囲ができる前からあるProjectはprivateのまま（migration 054）。
     visibility: 'private',
     role: 'admin',
-    // The signed-in user created it, so "/" opens it.
+    // ログイン中の利用者が作ったので、"/"でこのProjectが開く。
     isMember: true,
     createdAt: now,
   };
@@ -166,11 +166,11 @@ export function createBrowserApi() {
     totalSize: null,
     createdAt: now,
   };
-  // A queued Job as POST /jobs makes it, for the fields the request does not send.
+  // POST /jobsが作るのと同じ待機中のJob。要求が送らない項目を埋める。
   const makeJob = (body) => ({
     id: id(),
     projectId: project.id,
-    // The Job fields of sites, arrays, hooks and drivers that an ssh Job leaves at their defaults.
+    // site・アレイジョブ・フック・ドライバー用のJobの項目。sshのJobでは既定値のまま。
     phase: null,
     gpuCount: body.gpuIds?.length ?? 0,
     walltimeSeconds: null,
@@ -275,15 +275,15 @@ export function createBrowserApi() {
     maxConcurrentJobs: 1,
     enabled: true,
     executor: 'ssh',
-    // The API defaults of migration 047.
+    // migration 047のAPIの既定値。
     datasetCacheMaxBytes: 107374182400,
     datasetTransfer: 'relay',
-    // The API defaults of migration 051 (sites).
+    // migration 051（site）のAPIの既定値。
     submissionMode: 'automatic',
     cpuArch: 'amd64',
     supportsArray: false,
     queueTimeoutSeconds: null,
-    // Migration 057: a target from before owners is public, and GET /targets lists it to everyone.
+    // migration 057: 所有者ができる前からあるtargetはpublicで、GET /targetsは全員に返す。
     ownerUserId: null,
     ownerName: null,
     visibility: 'public',
@@ -321,7 +321,7 @@ export function createBrowserApi() {
     sha256: createHash('sha256').update('Browser test artifact').digest('hex'),
     createdAt: now,
   };
-  // Computers read through `state.targets`, which tests may replace.
+  // コンピュータは`state.targets`から読む。テストがこれを差し替えることがある。
   const computerSetup = createComputerSetup({
     id,
     now,
@@ -331,9 +331,9 @@ export function createBrowserApi() {
   const state = {
     user,
     project,
-    // Every Project with its archive state, and the bodies POST /projects received.
+    // アーカイブの状態を含むすべてのProjectと、POST /projectsが受け取った本文。
     projectAdministration: projectAdministration.state,
-    // Workers, connection checks and directory listings of computers being set up.
+    // 用意中のコンピュータのworker、接続確認、ディレクトリの一覧。
     computerSetup: computerSetup.state,
     loggedIn: false,
     authMode: 'development',
@@ -351,7 +351,7 @@ export function createBrowserApi() {
     automationRules: [],
     automationExecutions: [],
     plugins: [plugin],
-    // What the fixture Mado reports for a saved access token when the connection is checked.
+    // 接続確認のとき、フィクスチャのmado S3 Data Catalogが保存済みのアクセストークンについて返す内容。
     madoAccessTokenGrant: {
       name: 'ML Tracking', scopes: ['lineage:read', 'lineage:write', 'metrics:read'], namespaces: ['test'], expiresAt: null,
     },
@@ -392,7 +392,7 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
     const reply = (payload, status = 200) =>
       route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(payload) });
     const list = (items) => reply({ items });
-    // The API's answer for an id it does not know (domain/errors.ts).
+    // APIが知らないidに返す応答（domain/errors.ts）。
     const notFound = (entity) => reply({ error: `${entity} not found`, code: 'not_found' }, 404);
     if (path === '/auth/config')
       return reply({
@@ -438,12 +438,12 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
     if (projectAnswer) return projectAnswer;
     const computerSetupAnswer = computerSetup.handle({ path, method, body, reply, list });
     if (computerSetupAnswer) return computerSetupAnswer;
-    // Every Project's workers, for a global administrator's computer details (state.workers).
+    // 全体管理者のコンピュータの詳細に出す、すべてのProjectのworker（state.workers）。
     if (path === '/workers' && method === 'GET') return list(state.workers ?? []);
     if (path === '/targets/overview' && method === 'GET')
       return list(state.targets.map((target) => targetOverview(target, state)));
     if (path === '/targets') {
-      // With projectId, the screens that create Jobs: only what the user may run on.
+      // projectIdがあればJobを作る画面からの要求: 利用者が実行に使えるものだけを返す。
       if (method === 'GET')
         return list(
           state.targets.filter(
@@ -452,7 +452,7 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
               (!url.searchParams.has('projectId') && isTargetManager(target, user)),
           ),
         );
-      // The first job shell is not part of the target; whoever adds it owns it.
+      // 最初のjob shellはtargetに含めない。足した人が所有者になる。
       const { jobShell: _jobShell, site, ...fields } = body;
       const target = {
         id: id(),
@@ -467,14 +467,14 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       return reply(target, 201);
     }
     if (path === '/launchers' && method === 'GET') return list(state.launchers);
-    // The header bell: alerts of every Project the user may open; the mock has none.
+    // 上部バーのベル: 利用者が開けるすべてのProjectのアラート。モックには無い。
     if (path === '/operations-alerts' && method === 'GET') return list([]);
-    // 全体管理 → 監査ログ; the mock keeps no events.
+    // 全体管理 → 監査ログ。モックはイベントを持たない。
     if (path === '/audit-events' && method === 'GET') return reply({ items: [], nextCursor: null });
-    // The variables a notification channel may name; the mock server has one.
+    // 通知先が名前で指定できる変数。モックのサーバーには1つある。
     if (path === '/notification-channels/environment-names' && method === 'GET')
       return list(['MMT_NOTIFICATION_SLACK_URL']);
-    // 全体設定 → アカウント (/settings/account), where the user menu and redirects land.
+    // 全体設定 → アカウント（/settings/account）。ユーザーメニューとリダイレクトの行き先。
     if (path === '/account' && method === 'GET')
       return reply({
         user: { ...user, lastLoginAt: now, createdAt: now },
@@ -484,7 +484,7 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       });
     if (path === '/tokens') {
       if (method === 'GET') return list(state.tokens);
-      // TokenSummary of a token the signed-in user issues for themselves.
+      // ログイン中の利用者が自分用に発行したtokenのTokenSummary。
       const value = 'browser-test-value-only';
       const token = {
         id: id(),
@@ -545,16 +545,16 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
     if (resource === 'automation-executions' && method === 'GET')
       return reply(pageAutomationExecutions(state.automationExecutions, url.searchParams));
     if (resource === 'audit-events' && method === 'GET') return reply({ items: [], nextCursor: null });
-    // The promotion dialog reads these before an alias is set; the mock has none of them.
+    // 昇格のダイアログはaliasを設定する前にこれらを読む。モックはどれも持たない。
     if (resource === 'alias-protections' && method === 'GET') return list([]);
     if (resource === 'promotion-policies' && method === 'GET') return list([]);
     if (resource === 'promotion-evaluations' && method === 'GET')
       return reply({ items: [], nextCursor: null });
     if (resource === 'operations-alerts' && method === 'GET') return list([]);
-    // The Project's workers (WorkerPresence); a test that needs one online sets state.workers.
+    // Projectのworker（WorkerPresence）。オンラインのworkerが要るテストはstate.workersを設定する。
     if (resource === 'workers' && !key && method === 'GET') return list(state.workers ?? []);
     if (EMPTY_PROJECT_LISTS.includes(resource) && !key && method === 'GET') return list([]);
-    // Where Artifacts are used: the mock's files are used nowhere, so each can be deleted.
+    // Artifactの使われている場所: モックのファイルはどこにも使われていないので、どれも削除できる。
     if (resource === 'artifact-references' && method === 'GET')
       return list(
         (url.searchParams.get('artifactIds') ?? '')
@@ -562,16 +562,16 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
           .filter(Boolean)
           .map((artifactId) => ({ artifactId, modelVersions: [], datasetVersions: [], codeVersions: [], checkpoints: [] })),
       );
-    // No folder upload of a mock dataset ever stopped before its version.
+    // モックのデータセットには、バージョンを作る前に止まったフォルダのアップロードは無い。
     if (resource === 'datasets' && key && subresource === 'folder-uploads' && method === 'GET') return list([]);
-    // The Settings screen's usage per storage backend; the mock reports none.
+    // 設定画面の保存先ごとの使用量。モックは何も返さない。
     if (resource === 'artifact-usage' && method === 'GET')
       return reply({ backends: [], deleteGraceDays: DEFAULT_ARTIFACT_DELETE_GRACE_DAYS });
-    // Every token limited to the Project, so one issued on Settings is listed here too.
+    // Projectに限定したtokenをすべて返すので、設定画面で発行したものもここに並ぶ。
     if (resource === 'tokens' && !key && method === 'GET')
       return list(state.tokens.filter((token) => token.projectId === project.id));
     if (resource === 'members') {
-      // ProjectMember: the mock grants the role directly and binds no SSO group.
+      // ProjectMember: モックはroleを直接与え、SSOのグループを結び付けない。
       if (method === 'GET')
         return list([{ user, role: project.role, directRole: project.role, groups: [] }]);
       return reply({ user, role: body.role, directRole: body.role, groups: [] });
@@ -598,10 +598,10 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
     }
     if (resource === 'runs') {
       const isRunList = (key === 'search' && method === 'POST') || (!key && method === 'GET');
-      // The Runs screen lists through the native search; both ways of listing fail together.
+      // Runの画面はネイティブの検索で一覧を出す。どちらの一覧の取り方も一緒に失敗させる。
       if (state.failRunList && isRunList)
         return reply({ error: 'UI verification: database unavailable' }, 503);
-      // Native search without filter parsing: enough for screens that list recent Runs.
+      // フィルタを解釈しないネイティブの検索。最近のRunを並べる画面にはこれで足りる。
       if (key === 'search' && method === 'POST')
         return reply({
           items: state.runs.filter(
@@ -626,7 +626,7 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
         state.runs.push(run);
         return reply(run);
       }
-      // RunComparison of the chosen Runs without rows: enough for the comparison's tabs to open.
+      // 選んだRunの、行を持たないRunComparison。比較のタブを開くにはこれで足りる。
       if (key === 'compare' && method === 'POST')
         return reply({
           runs: body.runIds.map((runId) => item(state.runs, runId)).filter(Boolean),
@@ -678,8 +678,8 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
         return reply(artifact);
       }
     }
-    // The upload dialog lists the user's open sessions to offer a resume. The mock keeps none: its
-    // files are below SINGLE_PUT_MAX_BYTES (src/lib/uploadPlan.ts) and go through the PUT below.
+    // アップロードのダイアログは、続きを送れるよう利用者の開いているセッションを並べる。モックは
+    // 持たない: そのファイルはSINGLE_PUT_MAX_BYTES（src/lib/uploadPlan.ts）より小さく、下のPUTで送る。
     if (resource === 'artifact-uploads' && !key && method === 'GET') return list([]);
     if (resource === 'artifacts' && !key && method === 'GET') {
       if (state.failProjectArtifacts)
@@ -705,7 +705,7 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       return reply(item(state.artifacts, key));
     if (resource === 'artifacts' && subresource === 'content')
       return route.fulfill({ contentType: 'text/plain', body: 'Browser test artifact' });
-    // The registry lookups the model screens offer values from (registryLookupMock.mjs).
+    // モデルの画面が値の候補に使う、レジストリの参照（registryLookupMock.mjs）。
     if (resource === 'model-families' && !key && method === 'GET') return list(listModelFamilies(state));
     if (resource === 'code-versions' && key && !subresource && method === 'GET') {
       const detail = findCodeVersionDetail(state, key);
@@ -764,12 +764,12 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
         item(collection, key).aliases[parts[3]] = body.versionId;
         return reply(item(collection, key));
       }
-      // The alias history of a Model; the mock records no events.
+      // モデルのaliasの履歴。モックはイベントを記録しない。
       if (subresource === 'alias-events' && method === 'GET')
         return reply({ items: [], nextCursor: null });
     }
     if (resource === 'jobs') {
-      // GET returns JobListItem: the Job with its Run and Task names (see api-contract.md).
+      // GETはJobListItemを返す: JobにRunとTaskの名前を足したもの（api-contract.mdを参照）。
       if (!key && method === 'GET')
         return list(
           state.jobs.map((job) => {
@@ -781,20 +781,20 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
               taskId: run?.taskId ?? null,
               taskName: null,
               sweepEarlyStopped: false,
-              // Who started the Job: its Run's creator (api-contract.md).
+              // Jobを始めた人: そのRunを作った人（api-contract.md）。
               createdBy: run?.createdBy ?? state.user.id,
               createdByName: run?.createdByName ?? state.user.displayName,
-              // A test that needs a checkpoint, a Sweep or a rule behind the Job sets it on the Job.
+              // checkpoint、Sweep、自動実行ルールが元にあるJobが要るテストは、それをJobに設定する。
               hasResumeCheckpoint: job.hasResumeCheckpoint ?? false,
               sweepTrial: job.sweepTrial ?? null,
               automationRule: job.automationRule ?? null,
-              // A test that needs a workflow step's Job sets these on the Job.
+              // ワークフローのステップのJobが要るテストは、これらをJobに設定する。
               workflowExecution: job.workflowExecution ?? null,
               requiredWorkerCapabilities: job.requiredWorkerCapabilities ?? [],
             };
           }),
         );
-      // A Run and its Job together (POST /jobs/launch): a refused Job keeps no Run.
+      // RunとそのJobを一緒に作る（POST /jobs/launch）。Jobが断られたらRunは残さない。
       if (key === 'launch' && method === 'POST') {
         if (state.failNextJob) {
           state.failNextJob = false;
@@ -831,8 +831,8 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
     }
     if (resource === 'plugins')
       return routeBuiltinPlugins({state, request: {method, key, subresource, parts, body}, reply, id, now, project, user, datasetVersion, manifest});
-    // Also said in the test's own output: a screen calling an API the mock lacks fails only checks
-    // that watch the console, and the missing route is easier to find here.
+    // テスト自身の出力にも出す。モックに無いAPIを画面が呼んでも、失敗するのはコンソールを見ている
+    // 確認だけなので、足りないrouteはここで見つけるほうが早い。
     console.warn(`[browserApi] 501 Unhandled test API: ${method} ${path}`);
     return reply({ error: `Unhandled test API: ${method} ${path}` }, 501);
   }

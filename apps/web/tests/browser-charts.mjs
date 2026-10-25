@@ -1,6 +1,6 @@
-// Browser check for the chart panels of Run detail, Compare and the Run list, system metrics
-// with worker and MLflow names, and resumed segments. The API is the isolated browser-test API
-// plus the metric series, groups, comparison and resume-event endpoints below.
+// Runの詳細、比較、Runの一覧の図のパネル、workerとMLflowの名前のシステムメトリクス、再開した区間の
+// ブラウザでの確認。APIは、ブラウザテスト用の分離したAPIに、下で定義するメトリクスの系列、
+// グループ、比較、再開イベントのendpointを足したもの。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -16,7 +16,7 @@ const browser = await chromium.launch({
 });
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
-// The acceptance bound for the first chart of a Run with 100,000 points per metric.
+// メトリクスごとに100,000点あるRunで、最初の図を描くまでにかけてよい時間の上限。
 const FIRST_DRAW_BUDGET_MS = 2000;
 const LARGE_RUN_POINTS = 100_000;
 const STEP_SECONDS = 2;
@@ -42,7 +42,7 @@ const addRun = (changes) => {
   api.state.runs.push(run);
   return run;
 };
-// Replace the fixture Runs so the list shows only the Runs of this check.
+// フィクスチャのRunを入れ替え、一覧にこの確認のRunだけが出るようにする。
 api.state.runs.length = 0;
 const trainingMetrics = { 'train/loss': 0.2, 'train/accuracy': 0.9, 'eval/loss': 0.3 };
 const largeRun = addRun({ name: 'large-run', tags: { model: 'conformer' }, latestMetrics: trainingMetrics });
@@ -90,7 +90,7 @@ const resumeEvents = {
 const totalPointsOf = (runId) => (runId === largeRun.id ? LARGE_RUN_POINTS : 1000);
 const seedOf = (runId) => Number.parseInt(runId.slice(-4), 10) % 7;
 
-// A smooth curve per Run and key, sampled into at most maxPoints buckets like the API does.
+// Runとkeyごとのなめらかな曲線。APIと同じく、最大maxPoints個のbucketに間引く。
 function sampledSeries(runId, key, xAxis, maxPoints) {
   const total = totalPointsOf(runId);
   const buckets = Math.min(total, maxPoints);
@@ -98,7 +98,7 @@ function sampledSeries(runId, key, xAxis, maxPoints) {
   const offset = seedOf(runId) * 0.05 + (key.startsWith('eval/') ? 0.1 : 0);
   const value = (step) =>
     key.includes('accuracy') ? 1 - Math.exp(-step / 200) * 0.9 : Math.exp(-step / 300) + offset;
-  // The resumed Run reaches RESUMED_AT_STEP when its second segment starts, an hour in.
+  // 再開したRunは、開始から1時間後に2つ目の区間が始まる時点でRESUMED_AT_STEPに達する。
   const stepSeconds = runId === resumedRun.id ? 3600 / RESUMED_AT_STEP : STEP_SECONDS;
   const xOf = (step) =>
     xAxis.kind === 'relative_time'
@@ -213,7 +213,7 @@ async function setTheme(theme) {
 const panels = () => page.locator('.chart-panel');
 const panel = (title) => page.locator('.chart-panel', { has: page.getByRole('heading', { name: title, exact: true }) });
 const panelTitles = () => page.locator('.chart-panel h3').allTextContents();
-// Classes of metrics-chart-core-web's chart: one path per line and per band, one group per marker.
+// metrics-chart-core-webの図のclass。線と帯ごとに1つのpath、マーカーごとに1つのgroup。
 const LINE = '.chart-line';
 const BAND = '.chart-band';
 const MARKER = '.chart-marker';
@@ -230,9 +230,9 @@ try {
   const firstDrawMs = Date.now() - started;
   console.log(`  first chart drawn in ${firstDrawMs} ms`);
   assert.ok(firstDrawMs <= FIRST_DRAW_BUDGET_MS, `first draw took ${firstDrawMs} ms`);
-  // Default layout: keys without a prefix, then eval/, then train/; one request for all panels.
+  // 既定の並びは、prefixの無いkey、eval/、train/の順。すべてのパネルで要求は1回。
   assert.deepEqual(await panelTitles(), ['eval/loss', 'train/accuracy', 'train/loss']);
-  // React's development StrictMode may send the same request twice; the bodies must be one.
+  // Reactの開発時のStrictModeは同じ要求を2回送ることがあるが、要求の本文は1種類でなければならない。
   assert.equal(new Set(seriesRequests.map((body) => JSON.stringify(body))).size, 1, 'all panels share one series request');
   assert.deepEqual(seriesRequests[0].keys.sort(), ['eval/loss', 'train/accuracy', 'train/loss']);
   await screenshot('run-detail-panels-light');

@@ -1,7 +1,7 @@
-// Browser check for the Run analysis panel (parallel coordinates, parameter importance, scatter
-// plot) on tests/fixtures/analysis-harness.html with a mocked API: brushing narrows the selection
-// handed to the Run list, the importance table sorts, a scatter point opens the Run, a sweep uses
-// its objective, and 5000 Runs stay responsive while dragging.
+// Runの分析パネル（平行座標、パラメータの重要度、散布図）のブラウザでの確認。モックのAPIを相手に
+// tests/fixtures/analysis-harness.htmlで描く。ブラッシングでRunの一覧へ渡す選択が絞られる、重要度の
+// 表が並べ替わる、散布図の点でRunが開く、SweepではSweepのobjectiveを使う、5000件のRunでも
+// ドラッグ中に遅れない。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -19,11 +19,11 @@ const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
 if (screenshotDirectory) await mkdir(screenshotDirectory, { recursive: true });
 const SMALL_RUN_COUNT = 300;
 const LARGE_RUN_COUNT = 5000;
-// The brief's target for one drag step at 5000 Runs, including the Playwright round trip.
+// 5000件のRunでドラッグ1回分にかけてよい時間（依頼の目標）。Playwrightとの往復を含む。
 const DRAG_STEP_BUDGET_MS = 200;
 const DRAG_STEPS = 12;
 
-// Deterministic pseudo-random numbers so every run of the check sees the same Runs.
+// 決まった値を返す疑似乱数。確認を何度実行しても同じRunになる。
 function random(seed) {
   let state = seed;
   return () => {
@@ -46,7 +46,7 @@ function syntheticRuns(count) {
       name: `trial-${String(index).padStart(4, '0')}`,
       experimentId: 'experiment',
       status: 'finished',
-      // Every 7th Run lacks dropout so the missing band is exercised.
+      // 7件ごとにdropoutの無いRunを置き、値の無い帯を試す。
       params: { lr, batch_size: batchSize, optimizer, ...(index % 7 === 0 ? {} : { dropout }) },
       metrics: { loss, accuracy: 1 - loss / 2 },
       objective: index % 11 === 0 ? null : loss,
@@ -169,12 +169,12 @@ async function dragOnAxis(page, axisKey, fromShare, toShare) {
 
 const results = {};
 try {
-  // 300 Runs: brushing, Run list selection, importance sorting and scatter navigation.
+  // 300件のRun。ブラッシング、Runの一覧での選択、重要度の並べ替え、散布図からの移動。
   {
     const { context, page, errors } = await openHarness('experimentId=exp-300');
     await page.getByTestId('parallel-selection-count').waitFor();
     assert.deepEqual(await selectionCount(page), { total: SMALL_RUN_COUNT, selected: SMALL_RUN_COUNT });
-    // Default axes follow importance: lr, optimizer, dropout, batch_size, then the target metric.
+    // 既定の軸は重要度の順。lr、optimizer、dropout、batch_size、最後に目的metric。
     const axisKeys = await page.locator('.parallel-axis').evaluateAll((nodes) => nodes.map((node) => node.dataset.axisKey));
     assert.deepEqual(axisKeys, ['params.lr', 'params.optimizer', 'params.dropout', 'params.batch_size', 'metrics.accuracy']);
     await screenshot(page, '01-parallel-300');
@@ -193,7 +193,7 @@ try {
     await screenshot(page, '02-parallel-brushed');
     results.brushing = { afterFirstBrush: brushed.selected, afterSecondBrush: twoBrushes.selected };
 
-    // Moving an axis keeps its brush; a click on an axis clears its brush.
+    // 軸を動かしてもブラシは残る。軸をクリックすると、その軸のブラシを消す。
     await page.getByRole('button', { name: 'lr: 右へ移動' }).click();
     const movedKeys = await page.locator('.parallel-axis').evaluateAll((nodes) => nodes.map((node) => node.dataset.axisKey));
     assert.equal(movedKeys[1], 'params.lr');
@@ -205,7 +205,7 @@ try {
       SMALL_RUN_COUNT,
     );
 
-    // Log scale on lr (every value is positive) relabels the ticks in powers of ten.
+    // lrを対数軸にすると（値はすべて正）、目盛りが10のべき乗の表記になる。
     await page.getByRole('checkbox', { name: 'lr: 対数' }).check();
     const ticks = await page.locator('[data-axis-key="params.lr"] .parallel-axis-tick').allTextContents();
     assert.ok(ticks.some((tick) => tick.includes('e-')), `log ticks ${ticks.join(',')}`);
@@ -234,14 +234,14 @@ try {
     assert.equal(await page.getByTestId('run-detail').textContent(), clickedRunId);
     results.scatterOpenedRun = clickedRunId;
 
-    // Only read endpoints: the panel works for viewers (the API allows viewer for all of them).
+    // 読み取りのendpointだけを使うので、Viewerでもパネルが動く（APIはどれもViewerに許している）。
     const writes = apiRequests.filter((line) => !/(\/runs\/analysis\/|\/runs\/search|\/runs\/compare|^GET )/.test(line));
     assert.deepEqual(writes, []);
     assert.deepEqual(errors, []);
     await context.close();
   }
 
-  // Sweep: the objective is the default target and gets its own axis.
+  // Sweepでは、Sweepのobjectiveが目的metricの既定になり、専用の軸を持つ。
   {
     const { context, page, errors } = await openHarness('sweepId=sweep-300');
     await page.getByTestId('parallel-selection-count').waitFor();
@@ -255,7 +255,7 @@ try {
     await context.close();
   }
 
-  // 5000 Runs: lines go to the canvas and each drag step answers within the budget.
+  // 5000件のRun。線はcanvasに描き、ドラッグの各回が決めた時間内に応答する。
   {
     const { context, page, errors } = await openHarness('experimentId=exp-5000&theme=dark');
     await page.getByTestId('parallel-selection-count').waitFor({ timeout: 30_000 });

@@ -1,11 +1,10 @@
-// Browser check of the model screens fixed in the third stage of the 2026-10-11 usability audit
-// (audit/b-models.md 5〜12), against the isolated mock API (tests/browserApi.mjs): checkboxes in
-// place of Ctrl-click lists, a rule made from another rule's settings, a disabled rule that offers
-// enabling instead of failing after the confirmation, the automation history beyond its first
-// page and narrowed to a rule (back to its newest page when the rule changes), tables that keep
-// their actions inside a 1440px window, a phone that scrolls to the chosen model, and a code
-// version's files readable without the version form.
-// Start Vite on MMT_WEB_URL first; MMT_SCREENSHOT_DIR, when set, receives the screenshots.
+// 2026-10-11の使いやすさの監査の3段目で直したモデルの画面のブラウザでの確認（audit/b-models.mdの
+// 5〜12）。分離したモックのAPI（tests/browserApi.mjs）を相手にする。Ctrlを押しながらクリックする
+// 一覧の代わりのチェックボックス、ほかのルールの設定から作るルール、確認の後で失敗させずに有効化を
+// 勧める無効のルール、最初のページより先まで読め、ルールで絞り込める自動実行の履歴（ルールを
+// 変えると最新のページへ戻る）、1440pxのウィンドウの中に操作を収める表、選んだモデルまで
+// スクロールするスマートフォンの画面、バージョンのフォームを開かずに読めるコードバージョンのファイル。
+// 先にMMT_WEB_URLでViteを起動しておく。MMT_SCREENSHOT_DIRを設定すると、そこにスクリーンショットを保存する。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -19,16 +18,15 @@ const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
 if (screenshotDirectory) await mkdir(screenshotDirectory, { recursive: true });
 const WIDE = { width: 1440, height: 900 };
 const NARROW = { width: 390, height: 844 };
-// More than the history's first page (AUTOMATION_HISTORY_PAGE_SIZE = 100).
+// 履歴の最初のページ（AUTOMATION_HISTORY_PAGE_SIZE = 100）より多い件数。
 const INFERENCE_EXECUTION_COUNT = 105;
 const EVALUATION_EXECUTION_COUNT = 3;
-// Models enough to push a phone's detail below the list.
+// スマートフォンで詳細が一覧より下へ押し出されるだけの数のモデル。
 const EXTRA_MODEL_COUNT = 12;
 
 /**
- * The shared mock API with three rules (registration inference, the evaluation after it, and a
- * disabled one), more executions than one page, many models, and a promotion policy with long
- * criteria owned by a Service Account.
+ * 共通のモックのAPIに、3つのルール（登録時の推論、その後の評価、無効のルール）、1ページより
+ * 多い実行、多数のモデル、Service Accountが所有する長い条件の昇格policyを足したもの。
  */
 function createAutomationApi() {
   const api = createBrowserApi();
@@ -133,7 +131,7 @@ function createAutomationApi() {
   const ruleSaves = [];
   const ruleToggles = [];
   const executionQueries = [];
-  // Enable and disable requests the API refuses from now on, as a failed save would.
+  // この先でAPIに断らせる有効化・無効化の要求の数。保存に失敗したときと同じ応答を返す。
   let refusedRuleToggles = 0;
   async function route(route) {
     const request = route.request();
@@ -197,7 +195,7 @@ async function openModelsTab(page, { projectId, tab }) {
   await page.getByRole('heading', { name: 'Models', exact: true }).waitFor();
   await page.getByRole('tab', { name: tab, exact: true }).click();
 }
-/** The table's last header cell ends inside the table's scroll frame (nothing cut on the right). */
+/** 表の最後の見出しのセルが、表のスクロール枠の中で終わる（右端が切れない）。 */
 async function assertLastColumnVisible(page, table, header) {
   const frame = await table.locator('xpath=ancestor::div[contains(@class,"table-scroll")][1]').boundingBox();
   const cell = await table.getByRole('columnheader', { name: header, exact: true }).boundingBox();
@@ -226,7 +224,7 @@ try {
       assert.equal(await dialog.locator('select[multiple]').count(), 0);
       await dialog.getByRole('group', { name: /対象モデル系列/ }).getByRole('checkbox').first().check();
       await dialog.getByLabel('実行種別').selectOption('processing');
-      // No code version runs processing: the empty list says why and where to make one.
+      // データ処理を実行できるコードバージョンが無い。空の一覧は理由と作る場所を示す。
       await dialog.getByText('実行種別「データ処理」に対応するコードバージョンがありません', { exact: false }).waitFor();
       await dialog.getByRole('link', { name: 'Codeを開く', exact: true }).waitFor();
       await screenshot(`01-rule-create-checkboxes-${suffix}`, { fullPage: true });
@@ -241,7 +239,7 @@ try {
       await openModelsTab(page, { projectId: projectOf(automation), tab: '自動実行ルール' });
       await page.getByRole('button', { name: inferRule.name, exact: true }).first().click();
       const detail = page.locator('.automation-rule-detail');
-      // The rule that follows this one is listed and can be opened.
+      // このルールの後に続くルールが並び、開くことができる。
       await detail.getByRole('button', { name: evaluateRule.name, exact: true }).waitFor();
       await detail.getByRole('button', { name: '複製して新しく作る', exact: true }).click();
       const dialog = page.getByRole('dialog', { name: `「${inferRule.name}」を複製して作成` });
@@ -249,7 +247,7 @@ try {
       assert.equal(await dialog.getByLabel('名前').inputValue(), `${inferRule.name}（複製）`);
       const disableSource = dialog.getByRole('checkbox', { name: `作成したら「${inferRule.name}」を無効にする` });
       assert.equal(await disableSource.isChecked(), true);
-      // Disabling the source stops the rule that follows it; the dialog says so.
+      // 元のルールを無効にすると、後に続くルールも止まる。ダイアログがそう伝える。
       await dialog.getByText(`「${evaluateRule.name}」は［上流rule］に元のルールを選んでいます`, { exact: false }).waitFor();
       await screenshot(`02-rule-copy-dialog-${suffix}`, { fullPage: true });
       await dialog.getByLabel('名前').fill('登録時に推論（v2のコード）');
@@ -294,12 +292,12 @@ try {
         .getByRole('alert')
         .filter({ hasText: `「登録時に推論（v2のコード）」は作成しましたが、元の「${inferRule.name}」を無効にできませんでした。` })
         .waitFor();
-      // The rule left enabled is the one shown, so the person can stop it from here.
+      // 有効のまま残ったルールを表示するので、利用者はここから止められる。
       await page.locator('.automation-rule-detail').getByRole('heading', { name: inferRule.name, exact: true }).waitFor();
       assert.deepEqual(automation.ruleToggles, [{ id: inferRule.id, enabled: false }]);
       await screenshot(`03-rule-copy-source-left-enabled-${suffix}`, { fullPage: true });
       if (viewport === WIDE) {
-        // Disabling it as the notice says ends the notice. (A phone keeps the button in the row.)
+        // 知らせのとおりに無効にすると、知らせは消える（スマートフォンではボタンが行の中にある）。
         await page.getByRole('button', { name: `${inferRule.name}: 無効にする`, exact: true }).click();
         await page.getByRole('alert').filter({ hasText: 'を無効にできませんでした' }).waitFor({ state: 'detached' });
       }
@@ -343,7 +341,7 @@ try {
       await page.getByText('新しい順に100件を表示しています。', { exact: true }).waitFor();
       assert.equal(await rows.count(), 100);
       if (viewport === WIDE) {
-        // The rerun column is the last one; it ends inside the frame at 1440px.
+        // 再実行の列は最後の列で、1440pxでは枠の中で終わる。
         await assertLastColumnVisible(page, page.locator('.automation-panel table.responsive-table'), '再実行');
       }
       await screenshot(`04-history-first-page-${suffix}`);
@@ -353,7 +351,7 @@ try {
         INFERENCE_EXECUTION_COUNT + EVALUATION_EXECUTION_COUNT,
       );
       assert.equal(await page.getByRole('button', { name: 'さらに表示', exact: true }).count(), 0);
-      // Another rule and back: the newest page again, not the list as it stood when it was left.
+      // 別のルールに切り替えて戻ると、離れたときの一覧ではなく、改めて最新のページを出す。
       await page.getByLabel('ルール').selectOption(evaluateRule.id);
       await page.waitForFunction(
         (count) => document.querySelectorAll('.automation-panel table.responsive-table > tbody > tr:not(.responsive-table-details)').length === count,
@@ -364,7 +362,7 @@ try {
       assert.equal(await rows.count(), 100);
       await page.getByRole('button', { name: 'さらに表示', exact: true }).waitFor();
       if (viewport === NARROW) {
-        // The closed row of a phone names the version, so the rows can be told apart.
+        // スマートフォンの閉じた行にもバージョンの名前が出るので、行を見分けられる。
         await rows.first().getByRole('link', { name: /UI検証モデル/ }).waitFor();
       }
       await context.close();
@@ -382,7 +380,7 @@ try {
         await assertLastColumnVisible(page, table, '操作');
         const transfer = await table.getByRole('button', { name: /所有者を移管/ }).boundingBox();
         assert.ok(transfer.x + transfer.width <= WIDE.width, 'the transfer button is inside the window');
-        // The long criteria are read in the opened row.
+        // 長い条件は、行を開いて読む。
         await table.getByRole('button', { name: '詳細を表示' }).first().click();
         await table.getByText('evaluation.duration_match_rate ≥ 0.99', { exact: false }).waitFor();
       } else {
@@ -404,10 +402,10 @@ try {
       await viewer.getByRole('button', { name: 'ファイル: lib/util.py' }).click();
       await viewer.locator('.editor-file-header', { hasText: 'lib/util.py' }).waitFor();
       await viewer.getByText('def helper():', { exact: false }).waitFor();
-      // The source is no longer a JSON string with \n in it, and the page loads no Monaco editor.
+      // ソースは\nを含むJSONの文字列としては出なくなり、画面はMonaco editorを読み込まない。
       assert.equal(await page.getByText('"kind": "inline"', { exact: false }).count(), 0);
       assert.equal(await page.locator('.monaco-editor').count(), 0);
-      // Where the version can run is listed with it.
+      // バージョンをどこで実行できるかが一緒に並ぶ。
       await page.getByRole('heading', { name: 'このコードバージョンの使われ方', exact: true }).waitFor();
       await screenshot(`06-code-files-${suffix}`, { fullPage: true });
       await context.close();

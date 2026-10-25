@@ -1,7 +1,7 @@
-// Saved views of the Run list against a development API (AUTH_MODE=development): the columns
-// (order, width, description), search, sort and chart layout saved as a shared view open the same
-// in another browser context for a viewer, another user's private view falls back to the default
-// display with a notice, and changes after opening show "unsaved changes" until overwritten.
+// 開発用のAPI（AUTH_MODE=development）でRunの一覧の保存ビューを確かめる: 共有のビューとして保存
+// した列（順番、幅、説明）、検索、並べ替え、図の配置は、別のブラウザのコンテキストのviewerにも
+// 同じに開く。ほかの利用者の非公開のビューは、お知らせを添えて既定の表示で開く。開いたあとの変更は、
+// 上書きするまで「未保存の変更」と出る。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -25,7 +25,7 @@ const errors = [];
 const pages = [];
 
 async function signIn(email, displayName) {
-  // A fresh context per user: nothing from the other user's localStorage can leak into the view.
+  // 利用者ごとに新しいコンテキストを使い、ほかの利用者のlocalStorageがビューへ紛れ込まないようにする。
   const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1100 } });
   const page = await context.newPage();
   pages.push(page);
@@ -81,7 +81,7 @@ async function toggleColumn(page, label) {
 }
 
 const DESCRIPTION = ['## 学習率を下げた比較', '', '- lr: **0.0005**', '- warmup: 500 step'].join('\n');
-// The chart arrangement the owner has in this browser before saving it into the view.
+// 所有者がビューに保存する前に、このブラウザで持っている図の配置。
 const ownerLayout = {
   version: 1,
   columns: 12,
@@ -160,7 +160,7 @@ try {
   await toggleColumn(owner, '説明');
   await toggleColumn(owner, 'tags.model');
   await toggleColumn(owner, '作成日時');
-  // Description moves two places left with the keyboard; loss gets 48px wider.
+  // 説明の列をキーボードで2つ左へ動かし、lossの列を48px広げる。
   const descriptionLabel = owner.locator('th[data-column="description"] .run-column-label');
   await descriptionLabel.focus();
   await owner.keyboard.press('Alt+ArrowLeft');
@@ -222,7 +222,7 @@ try {
   const overwritten = await ownerApi.get(`/projects/${project.id}/saved-views/${sharedViewId}`);
   assert.equal(overwritten.state.chartPanels.panels.length < 2, true, 'The removed panel is saved');
   const savedPanelTitles = overwritten.state.chartPanels.panels.map((panel) => panel.title);
-  // The owner's own stored layout is untouched by edits inside the view.
+  // ビューの中で編集しても、所有者自身が保存している配置は変わらない。
   const ownerStoredLayout = await owner.evaluate(
     (key) => JSON.parse(window.localStorage.getItem(key)),
     `mmt.chartPanels.v1:${project.id}:runList`,

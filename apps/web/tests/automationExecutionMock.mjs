@@ -1,8 +1,8 @@
-// GET /projects/:p/automation-executions for browser checks, by the rules of
-// apps/api/src/repositories/modelAutomationRepository.ts: newest first (createdAt, then id),
-// narrowed by ruleId and modelVersionId, `limit` rows per page and a cursor to the next one.
+// ブラウザでの確認に使うGET /projects/:p/automation-executions。
+// apps/api/src/repositories/modelAutomationRepository.tsの決まりどおり、新しい順（createdAt、
+// 次にid）に並べ、ruleIdとmodelVersionIdで絞り、1ページに`limit`行と次のページへのcursorを返す。
 
-// The API default page size (DEFAULT_AUTOMATION_EXECUTION_LIMIT).
+// APIの既定のページサイズ（DEFAULT_AUTOMATION_EXECUTION_LIMIT）。
 const DEFAULT_LIMIT = 100;
 
 const newestFirst = (left, right) =>
@@ -10,7 +10,7 @@ const newestFirst = (left, right) =>
     ? (left.id < right.id ? 1 : -1)
     : (left.createdAt < right.createdAt ? 1 : -1);
 
-/** One page of the executions; `nextCursor` is the last row's id while older rows remain. */
+/** 実行の1ページ分。古い行が残っている間は、`nextCursor`は最後の行のid。 */
 export function pageAutomationExecutions(executions, searchParams) {
   const ruleId = searchParams.get('ruleId');
   const modelVersionId = searchParams.get('modelVersionId');

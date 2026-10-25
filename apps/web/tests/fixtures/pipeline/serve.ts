@@ -1,13 +1,13 @@
 /**
- * Verification server for browser-pipeline.mjs: the API in local login mode on a fresh test
- * schema, plus the built Web app on the same origin. Never the running development API/DB.
+ * browser-pipeline.mjsの検証用サーバー: 新しいテスト用schemaでローカルログインのモードのAPIを
+ * 動かし、ビルドしたWebアプリを同じoriginで配信する。動いている開発用のAPI・DBは使わない。
  *
- * - AUTH_MODE=local. The local executor is allowed here only, so a CPU worker on this machine can
- *   run Jobs; the API normally allows it in development mode alone.
- * - Seeds a global admin (must change the password at first login) and a non-admin user whose
- *   group membership stands in for an Authentik group sync, so a Project group binding applies.
- * - Passwords come from the environment of the caller and are never printed.
- * - SIGTERM drops the schema.
+ * - AUTH_MODE=local。local executorはここでだけ許可し、このマシンのCPU workerがJobを実行
+ *   できるようにする。APIは通常、開発モードでしかこれを許さない。
+ * - 全体管理者（初回ログインでパスワードの変更が必要）と、全体管理者でない利用者を用意する。
+ *   後者のグループの所属はAuthentikのグループ同期の代わりで、Projectのgroup bindingが効く。
+ * - パスワードは呼び出し側の環境変数から受け取り、表示しない。
+ * - SIGTERMでschemaを削除する。
  */
 import { randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -31,7 +31,7 @@ if (!port || !adminPassword || !viewerPassword)
   throw new Error(
     'MMT_PIPELINE_PORT, MMT_PIPELINE_ADMIN_PASSWORD and MMT_PIPELINE_VIEWER_PASSWORD are required',
   );
-// Shared with browser-pipeline.mjs, which logs in as these users.
+// browser-pipeline.mjsと共有する。browser-pipeline.mjsはこれらの利用者でログインする。
 const users = JSON.parse(
   await readFile(new URL('./users.json', import.meta.url), 'utf8'),
 ) as {
@@ -47,7 +47,7 @@ const harness = await createHarness({
     AUTH_MODE: 'local',
     MMT_PUBLIC_URL: origin,
     MMT_WEB_ORIGIN: origin,
-    // Encrypts secrets of storage backends added in the admin screen; this schema is temporary.
+    // 全体管理の画面で足した保存先の秘密の値を暗号化する。このschemaは一時的なもの。
     MMT_STORAGE_SECRET_KEY: randomBytes(32).toString('base64'),
   },
   configure: (config) => ({ ...config, allowLocalExecutor: true }),
@@ -76,7 +76,7 @@ const indexHtml = await readFile(path.join(webRoot, 'index.html'), 'utf8');
 const app = new Hono();
 app.route('/', harness.app);
 app.use('/*', serveStatic({ root: path.relative(process.cwd(), webRoot) }));
-// Client-side routes (/projects/..., /admin) get the app shell.
+// クライアント側の経路（/projects/...、/admin）にはアプリの外枠を返す。
 app.get('*', (context) => context.html(indexHtml));
 const server = serve({ hostname: '127.0.0.1', port, fetch: app.fetch });
 console.log(`Pipeline verification server listening on ${origin}`);

@@ -1,6 +1,6 @@
-// Browser check: when a dialog closes (Esc, ×, or its cancel button), focus goes back to the button
-// that opened it, for a form dialog, a dialog of its own and a confirmation; and Enter in the
-// filter box of a long checkbox list inside a dialog's form narrows the list without submitting.
+// ブラウザでの確認。フォームのダイアログ、独自のダイアログ、確認のダイアログのどれでも、閉じたとき
+// （Esc、×、取消のボタン）に、開いたボタンへフォーカスが戻る。ダイアログのフォームの中にある長い
+// チェックボックスの一覧で、絞り込み欄でEnterを押すと、送信せずに一覧を絞り込む。
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
@@ -25,11 +25,11 @@ const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const projectBase = `${base}/projects/${api.state.project.id}`;
 const openDialog = page.locator('dialog[open]');
 
-// Opens the dialog from its button with the keyboard, closes it with `close`, and returns whether
-// the same button has focus afterwards.
+// ダイアログをそのボタンからキーボードで開き、`close`で閉じ、その後で同じボタンにフォーカスが
+// あるかを返す。
 async function focusReturnsAfter({ path, opener, close }) {
   await page.goto(path);
-  // Screens draw their buttons again as their lists arrive; mark the button once they have.
+  // 画面は一覧が届くたびにボタンを描き直すので、描き終えてからボタンに印を付ける。
   await page.waitForLoadState('networkidle');
   const button = opener();
   await button.waitFor();
@@ -74,7 +74,7 @@ try {
   console.log('Browser check: Enter in the filter of a long checkbox list does not submit the form');
   {
     const [firstVersion] = api.state.datasetVersions;
-    // More versions than a checkbox list shows without a filter box (FILTERABLE_OPTION_COUNT is 8).
+    // チェックボックスの一覧が絞り込み欄なしで出せる数より多いバージョン（FILTERABLE_OPTION_COUNTは8）。
     for (let index = 2; index <= 10; index += 1)
       api.state.datasetVersions.push({ ...firstVersion, id: randomUUID(), version: `v${index}` });
     const isVersionCreation = (request) =>
@@ -93,7 +93,7 @@ try {
     await filter.fill('v1');
     await filter.press('Enter');
     assert.equal(await openDialog.count(), 1, 'the dialog stays open');
-    // The save button is the only way the version is created; Enter before it sent nothing.
+    // バージョンを作るのは保存のボタンだけ。その前に押したEnterでは何も送っていない。
     const created = page.waitForRequest(isVersionCreation);
     await openDialog.locator('footer button.primary').click();
     await created;

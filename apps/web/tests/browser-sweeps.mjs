@@ -1,8 +1,7 @@
-// Browser check of the Sweeps screens against an isolated API (port 47130), Vite (47131) and a
-// real CPU worker with the local executor. A grid 2×2 sweep with parallelism 2 runs the SDK's
-// sweep_training.py example; the check covers a search space error shown on its row, pause and
-// resume, trials finishing in order with a best trial, and a viewer who sees no operations.
-// It creates a temporary schema in mmt_test, so the shared development API and DB are untouched.
+// 分離したAPI（ポート47130）、Vite（47131）、local executorで動く本物のCPU workerで、Sweepsの
+// 画面をブラウザから確かめる。並列数2で2×2のgridのSweepが、SDKの例sweep_training.pyを実行する。
+// 確かめるのは、行に出る探索空間のエラー、一時停止と再開、試行が順に終わって最良の試行が決まること、
+// 操作が出ないviewer。mmt_testに一時的なschemaを作るので、共有の開発APIとDBには触れない。
 //
 //   (cd apps/web && MMT_WEB_API_PROXY_TARGET=http://127.0.0.1:47130 npx vite --port 47131 --strictPort --host 127.0.0.1) &
 //   MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55490/mmt_test \
@@ -10,10 +9,9 @@
 //   MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/sweeps-web \
 //   npx tsx apps/web/tests/browser-sweeps.mjs
 //
-// tsx is needed because the script starts the API from its TypeScript sources. The worker and the
-// target's job setup use a temporary venv made with `uv venv --seed`: each trial installs httpx
-// into its job venv with that pip, and neither the system python3 nor the uv-managed python of
-// python/.venv has pip or ensurepip.
+// スクリプトがAPIをTypeScriptのソースから起動するので、tsxが要る。workerとtargetのjob setupは、
+// `uv venv --seed`で作った一時的なvenvを使う。各試行はそのpipでjob venvにhttpxを入れるが、
+// システムのpython3にも、python/.venvのuvが管理するpythonにも、pipとensurepipが無い。
 import assert from 'node:assert/strict';
 import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -34,7 +32,7 @@ const API_PORT = 47130;
 const API_URL = `http://127.0.0.1:${API_PORT}`;
 const WEB_URL = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:47131';
 const REPOSITORY = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-// A trial creates a venv and installs httpx before training; several trials run per sweep.
+// 試行は学習の前にvenvを作ってhttpxを入れる。1つのSweepで試行を何回か実行する。
 const SWEEP_TIMEOUT_MS = 240_000;
 const UI_TIMEOUT_MS = 30_000;
 const STATE_POLL_MS = 500;
@@ -60,7 +58,7 @@ const config = loadConfig({
   AUTH_MODE: 'development',
   PORT: String(API_PORT),
   MMT_WEB_ORIGIN: WEB_URL,
-  // The local executor runs trials on this machine; the API accepts it only in development mode.
+  // local executorはこのマシンで試行を実行する。APIがそれを受け付けるのは開発モードだけ。
   MMT_ALLOW_LOCAL_EXECUTOR: 'true',
 });
 const application = createApplication({
@@ -120,7 +118,7 @@ async function waitFor(description, read, isDone, timeout = SWEEP_TIMEOUT_MS) {
   throw new Error(`Timed out waiting for ${description}: ${JSON.stringify(value)}\n${workerLog.slice(-40).join('')}`);
 }
 
-/** The first failed trial's Run error and last log lines, so a failing check says why. */
+/** 確認が失敗したときに理由が分かるよう、最初に失敗した試行のRunのエラーとログの最後の行を返す。 */
 async function describeFailedTrial(api, { projectPath, sweepPath }) {
   const failed = (await api.get(`${sweepPath}/trials`)).items.find((trial) => trial.state === 'failed');
   if (!failed) return 'no failed trial';
@@ -129,7 +127,7 @@ async function describeFailedTrial(api, { projectPath, sweepPath }) {
   return `trial ${failed.trialIndex} failed: ${run.error}\n${logs.items.slice(-20).map((entry) => entry.message).join('')}`;
 }
 
-/** A venv with pip and this worktree's SDK, for the worker and the target's job setup. */
+/** workerとtargetのjob setupに使う、pipとこのworktreeのSDKを入れたvenv。 */
 async function installWorkerEnvironment() {
   const environment = path.join(workerDirectory, 'venv');
   const run = promisify(execFile);
@@ -139,7 +137,7 @@ async function installWorkerEnvironment() {
 }
 
 function startWorker({ executable, token, targetId }) {
-  // The token travels only in the child's environment, never in argv or logs.
+  // tokenは子プロセスの環境変数でだけ渡し、argvやログには出さない。
   const child = spawn(executable, ['run'], {
     env: {
       PATH: process.env.PATH,
@@ -173,7 +171,7 @@ try {
   page.on('pageerror', (error) => pageErrors.push(error.message));
   const api = apiClient(page);
 
-  // Fixtures: a Task that runs the SDK's sweep example on a local CPU target.
+  // フィクスチャ: ローカルのCPUのtargetでSDKのSweepの例を実行するTask。
   const project = await api.post('/projects', { name: 'Sweeps browser check' });
   const projectPath = `/projects/${project.id}`;
   const experiment = await api.post(`${projectPath}/experiments`, { name: 'lr search' });
@@ -217,7 +215,7 @@ try {
   });
   worker = startWorker({ executable: workerEnvironment.worker, token: issued.token, targetId: target.id });
 
-  // Create: a server-side 422 lands on its row, a W&B key the screen does not support is refused.
+  // 作成: サーバー側の422はその行に出て、画面が対応していないW&Bのキーは断られる。
   await page.goto(`${WEB_URL}${projectPath}/sweeps`);
   await page.getByRole('link', { name: 'Sweeps', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Sweepを作成' }).click();
@@ -265,21 +263,21 @@ try {
   assert.equal(created.trialCounts.total, PARALLELISM, 'Creation queues as many trials as the parallelism');
   assert.deepEqual(created.searchSpace, { lr: { values: [0.1, 0.05] }, batch_size: { values: [4, 8] } });
 
-  // Pause: the two trials in flight finish, no third trial is queued until resume.
+  // 一時停止: 実行中の2つの試行は最後まで進み、再開するまで3つ目の試行はキューに入らない。
   await page.getByRole('button', { name: '一時停止' }).click();
   await page.getByTestId('sweep-status-reason').getByText('利用者の操作').waitFor({ timeout: UI_TIMEOUT_MS });
   const paused = await waitFor('the paused trials to end', readSweep,
     (sweep) => sweep.trialCounts.queued + sweep.trialCounts.running === 0);
   assert.equal(paused.status, 'paused');
   assert.equal(paused.trialCounts.total, PARALLELISM, 'A paused sweep queues no new trial');
-  // Polling continues while paused trials are in flight, so the page catches up with the API.
+  // 一時停止した試行が実行中の間もポーリングが続くので、ページはAPIに追いつく。
   await page.locator('.sweep-state-counts').getByText(`完了 ${PARALLELISM}`).waitFor({ timeout: UI_TIMEOUT_MS });
   await page.getByTestId('sweep-trial-progress').getByText(`${PARALLELISM} / ${GRID_TRIALS}`).waitFor();
   await screenshot(page, 'sweep-paused');
 
   await page.getByRole('button', { name: '再開' }).click();
   const finished = await waitFor('the sweep to finish', readSweep, (sweep) => sweep.status === 'finished');
-  // maxTrials equals the grid size, so either limit may be the one recorded.
+  // maxTrialsはgridの大きさと同じなので、記録される理由はどちらの上限でもありうる。
   assert.ok(['max_trials_reached', 'search_space_exhausted'].includes(finished.statusReason), finished.statusReason);
   assert.equal(finished.trialCounts.finished, GRID_TRIALS, await describeFailedTrial(api, { projectPath, sweepPath }));
   assert.ok(finished.bestTrial, 'A finished sweep has a best trial');
@@ -300,7 +298,7 @@ try {
     `#${finished.bestTrial.trialIndex}`,
   );
   await page.locator('.sweep-progress-chart').waitFor();
-  // Ended sweeps offer no operations even to their creator.
+  // 終わったSweepには、作った本人にも操作が出ない。
   assert.equal(await page.getByRole('button', { name: '一時停止' }).count(), 0);
   await screenshot(page, 'sweep-finished');
 
@@ -308,8 +306,8 @@ try {
   await page.getByRole('link', { name: 'lr-grid' }).waitFor();
   await screenshot(page, 'sweeps-list');
 
-  // A viewer sees the list and the detail but no create or control buttons. A second sweep is
-  // kept running so the controls would show if the viewer were allowed to use them.
+  // viewerには一覧と詳細が見えるが、作成と操作のボタンは出ない。viewerに操作が許されていれば
+  // ボタンが出るよう、2つ目のSweepを終わらせずに残しておく。
   const runningSweep = await api.post(`${projectPath}/sweeps`, {
     name: 'viewer check',
     taskId: task.id,
@@ -330,7 +328,7 @@ try {
   for (const name of ['一時停止', '再開', 'Sweepを中止', '試行数・並列数を変更'])
     assert.equal(await viewerPage.getByRole('button', { name }).count(), 0, `viewer must not see ${name}`);
   await screenshot(viewerPage, 'sweep-viewer');
-  // The creator still sees resume on the same paused sweep.
+  // 作った本人には、同じ一時停止中のSweepで再開が引き続き出る。
   await page.goto(`${WEB_URL}${projectPath}/sweeps/${runningSweep.id}`);
   await page.getByRole('button', { name: '再開' }).waitFor();
   await api.post(`${projectPath}/sweeps/${runningSweep.id}/cancel`, { cancelRunningTrials: true });

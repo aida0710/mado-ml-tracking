@@ -1,12 +1,12 @@
-// Browser check for step media: the step slider, the Run × step comparison with A/B playback, and
-// media tables. The components are rendered by tests/fixtures/media/harness.html (served by the
-// Vite dev server) against an API mocked here from the contract in packages/contracts/src/runMedia.ts.
-// Fixtures in tests/fixtures/media/ were generated with ffmpeg:
+// stepごとのメディアのブラウザでの確認。stepのスライダー、A/B再生のできるRun × stepの比較、
+// メディアの表。コンポーネントはtests/fixtures/media/harness.html（Viteの開発サーバーが配信する）が
+// 描き、APIはpackages/contracts/src/runMedia.tsの契約をもとにここでモックする。
+// tests/fixtures/media/のフィクスチャはffmpegで作った。
 //   ffmpeg -f lavfi -i "sine=frequency=<f>:sample_rate=16000:duration=2" -ac 1 -c:a pcm_s16le run-<a|b>-step-<n>.wav
 //     (Run a: 300/600/900 Hz, Run b: 450/750/1050 Hz for steps 0/1/2)
 //   ffmpeg -f lavfi -i "color=c=<red|green|blue>:s=64x48:d=1" -frames:v 1 sample-step-<n>.png
 //   ffmpeg -f lavfi -i "color=c=gray:s=32x24:d=1" -frames:v 1 sample-thumbnail.png
-// mlflow-table.json is MLflow log_table's split format with an audio column added.
+// mlflow-table.jsonは、MLflowのlog_tableのsplit形式に音声の列を足したもの。
 import assert from 'node:assert/strict';
 import { mkdir, readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -17,7 +17,7 @@ const { chromium } = await import(pathToFileURL(modulePath).href);
 const browser = await chromium.launch({
   headless: true,
   ...(process.env.MMT_CHROMIUM_PATH ? { executablePath: process.env.MMT_CHROMIUM_PATH } : {}),
-  // Switch checks press play from scripts, not from a user gesture.
+  // 切り替えの確認は、利用者の操作ではなくスクリプトから再生を押す。
   args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'],
 });
 const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1000 } });
@@ -25,7 +25,7 @@ const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
 const fixtureDirectory = new URL('./fixtures/media/', import.meta.url);
 const readFixture = (name) => readFile(new URL(name, fixtureDirectory));
-// The table has more rows than one page (50) so paging is exercised.
+// 表の行を1ページ（50行）より多くして、ページの切り替えを試す。
 const TABLE_ROW_COUNT = 60;
 
 const projectId = '00000000-0000-4000-8000-000000000001';
@@ -82,8 +82,8 @@ for (const [run, letter] of [
     audioByRunStep.set(`${letter}:${step}`, artifact);
     addMedia({ run, key: 'eval/audio', step, kind: 'audio', artifact, caption: `Run ${letter} の step ${step}` });
   }
-// Run a also logged step 3, so the Runs end at different steps: the default comparison is their
-// latest common step (2), and "each Run's latest step" puts steps 3 and 2 in one column.
+// Run aはstep 3も記録しているので、Runごとに最後のstepが違う。既定の比較は共通する最新のstep（2）で、
+// 「各Runの最新step」ではstep 3と2が1つの列に並ぶ。
 const runAStep3 = addArtifact({ run: runA, path: 'audio/run-a-step-3.wav', mimeType: 'audio/wav', body: await readFixture('run-a-step-2.wav') });
 addMedia({ run: runA, key: 'eval/audio', step: 3, kind: 'audio', artifact: runAStep3 });
 
@@ -100,7 +100,7 @@ const tableSource = JSON.parse((await readFixture('mlflow-table.json')).toString
 const tableArtifact = addArtifact({ run: runA, path: 'eval_table.json', mimeType: 'application/json', body: Buffer.from(JSON.stringify(tableSource)) });
 const tableMedia = addMedia({ run: runA, key: 'eval_table.json', step: 0, kind: 'table', artifact: tableArtifact, source: 'mlflow' });
 
-// What the API does for /table: column types from the values, media cells resolved to Artifacts.
+// APIの/tableと同じ処理。値から列の型を決め、メディアのセルをArtifactに解決する。
 const TABLE_COLUMN_TYPES = { caption: 'text', image: 'image', audio: 'audio', score: 'number', meta: 'json' };
 function findArtifact(runId, path) {
   return [...artifacts.values()].find((artifact) => artifact.runId === runId && artifact.path === path);
@@ -149,7 +149,7 @@ function compareGrid({ runIds, key, steps }) {
     const items = ofKey.filter((item) => item.runId === runId && item.step === step);
     return items.length > 0 ? items : null;
   };
-  // Without steps each row has one cell, its Run's latest step. Missing cells stay null.
+  // stepsが無いときは、各行のセルはそのRunの最新stepの1つだけ。無いセルはnullのまま。
   return {
     key,
     steps: steps ?? null,
@@ -225,8 +225,8 @@ page.on('pageerror', (error) => pageErrors.push(error.message));
 const harness = (parameters) =>
   `${base}/tests/fixtures/media/harness.html?${new URLSearchParams({ projectId, ...parameters })}`;
 const contentUrl = (artifact) => `/api/projects/${projectId}/artifacts/${artifact.id}/content`;
-// The audio viewer plays through its own toolbar, so its <audio> has no controls and is never
-// visible; wait for the element to be in the page with the expected file instead.
+// 音声ビューアは自分のツールバーで再生するので、<audio>にはcontrolsが無く、画面に見えることも無い。
+// 代わりに、期待するファイルを指す要素がページに入るのを待つ。
 const waitForAudio = (scope, artifact) =>
   scope.locator(`audio[src="${contentUrl(artifact)}"]`).waitFor({ state: 'attached' });
 
@@ -250,10 +250,10 @@ const playingAudio = async () => (await audioStates()).filter((audio) => !audio.
 try {
   console.log('Browser check: the step slider moves between recorded steps and changes the audio');
   await page.goto(harness({ view: 'panel', runId: runA.id }));
-  // The first key ('eval_table.json' sorts before 'eval/audio') opens first; choose the audio key.
+  // 最初のkey（'eval_table.json'は'eval/audio'より前に並ぶ）が先に開くので、音声のkeyを選ぶ。
   await page.getByRole('button', { name: 'eval/audio', exact: true }).click();
   const slider = page.getByRole('slider', { name: '表示するstep' });
-  // The latest step is shown first.
+  // 最初は最新のstepを表示する。
   await page.locator('.media-step-value', { hasText: 'step 3（4 / 4）' }).waitFor();
   await waitForAudio(page.locator('.run-media-step'), runAStep3);
   await page.locator('.media-info', { hasText: '16,000 Hz' }).waitFor();
@@ -283,7 +283,7 @@ try {
   await page.keyboard.press('End');
   await page.locator('.media-step-value', { hasText: 'step 3（4 / 4）' }).waitFor();
   await page.getByRole('button', { name: 'samples', exact: true }).click();
-  // samples has steps 0–2, so step 3 snaps to 2.
+  // samplesにはstep 0〜2しか無いので、step 3は2に寄せる。
   await page.locator('.media-step-value', { hasText: 'step 2（3 / 3）' }).waitFor();
   await page.locator(`.media-image img[src="${contentUrl(imageByStep[2])}"]`).waitFor();
   await slider.focus();
@@ -297,7 +297,7 @@ try {
   const table = page.locator('.media-table');
   await table.getByText(`${TABLE_ROW_COUNT}行`).waitFor();
   assert.equal(await table.locator('tbody > tr').count(), 50);
-  // Every 4 rows hold one other-Project reference and one missing file: 12 + 12 in the first 50.
+  // 4行ごとに、別のProjectへの参照と見つからないファイルを1つずつ置く。最初の50行で12 + 12件。
   await table.getByText('表示できないセル 24件').waitFor();
   await table.getByText('別のプロジェクトのArtifactは参照できません').first().waitFor();
   await table.getByText('Artifactが見つかりません').first().waitFor();
@@ -305,14 +305,14 @@ try {
   const contentBeforePlay = contentRequests.filter((entry) => entry.resourceType === 'media').length;
   await page.waitForTimeout(300);
   assert.equal(contentRequests.filter((entry) => entry.resourceType === 'media').length, contentBeforePlay, 'table audio loaded before play');
-  // The first image cell shows the MLflow compressed thumbnail; opening it shows the full image.
+  // 最初の画像のセルはMLflowが圧縮したサムネイルを出し、開くと元の画像を出す。
   const firstRow = table.locator('tbody > tr').first();
   await firstRow.locator(`.media-thumbnail-button img[src="${contentUrl(thumbnail)}"]`).waitFor();
   await firstRow.locator('.media-thumbnail-button').click();
   await firstRow.locator(`.media-cell-detail img.artifact-image[src="${contentUrl(findArtifact(runA.id, 'table_images/step-0.png'))}"]`).waitFor();
   await firstRow.getByRole('button', { name: '再生', exact: true }).click();
   await waitUntil(async () => (await playingAudio()).length === 1, 'table audio did not play');
-  // Another row's audio stops the first one: one table audio at a time.
+  // 別の行の音声を鳴らすと最初の音声は止まる。表の音声は一度に1つだけ。
   const secondRow = table.locator('tbody > tr').nth(1);
   await secondRow.getByRole('button', { name: '再生', exact: true }).click();
   await waitUntil(async () => {
@@ -345,7 +345,7 @@ try {
   await grid.getByRole('button', { name: `${runB.name}、step 2、音声` }).waitFor();
 
   console.log('Browser check: 2 Runs × 3 steps, switching cells continues from the same position');
-  // The steps live in the URL, so each checkbox is ticked once the previous choice is applied.
+  // stepはURLに持つので、前の選択が反映されてから次のチェックボックスにチェックを入れる。
   for (const step of ['0', '1', '2']) {
     await stepChoices.getByRole('checkbox', { name: step, exact: true }).click();
     await stepChoices.getByRole('checkbox', { name: step, exact: true }).and(page.locator(':checked')).waitFor();
@@ -360,7 +360,7 @@ try {
   await page.waitForTimeout(700);
   const before = (await playingAudio())[0];
   assert.ok(before && before.src === contentUrl(audioByRunStep.get('a:1')), 'Run a step 1 is not playing');
-  // The play button took focus; arrow keys move within the grid once a cell has focus again.
+  // 再生のボタンがフォーカスを取ったので、セルにフォーカスを戻してから矢印キーで格子の中を移る。
   await grid.getByRole('button', { name: `${runA.name}、step 1、音声` }).focus();
   await page.keyboard.press('ArrowDown');
   await waitUntil(async () => {

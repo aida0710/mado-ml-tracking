@@ -1,10 +1,10 @@
-// The Project switcher at the top of the sidebar, or in the project bar on narrower screens.
+// サイドバーの上端、狭い画面ではプロジェクトバーにあるProjectの切り替え。
 
-/** The button that shows the open Project and opens the switcher. */
+/** 開いているProjectを示し、切り替えを開くボタン。 */
 export const projectSwitcherButton = (page) =>
   page.getByRole('button', { name: /^プロジェクト\s/ }).and(page.locator('[aria-haspopup="listbox"]'));
 
-/** Opens the switcher and returns its list of Projects. */
+/** 切り替えを開き、そのProjectの一覧を返す。 */
 export async function openProjectSwitcher(page) {
   await projectSwitcherButton(page).click();
   const listbox = page.getByRole('listbox', { name: 'プロジェクト', exact: true });
@@ -12,7 +12,7 @@ export async function openProjectSwitcher(page) {
   return listbox;
 }
 
-/** Opens another Project from the switcher by its name. */
+/** 切り替えから、名前で別のProjectを開く。 */
 export async function switchProject(page, name) {
   const listbox = await openProjectSwitcher(page);
   await listbox.getByRole('option').filter({ hasText: name }).first().click();
