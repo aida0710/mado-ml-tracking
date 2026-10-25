@@ -9,7 +9,7 @@ from mado_tracking import Client, artifact_downloads
 from mado_tracking.errors import ApiError, ConfigurationError
 from mado_tracking.run import Run
 
-# Large chunks expose whole-file buffering while keeping this test inexpensive.
+# chunkを大きくして、ファイル全体をバッファしていれば分かるようにしつつ、このテストを軽く保つ。
 CHUNK_BYTES = 1024 * 1024
 
 
@@ -53,7 +53,7 @@ def test_input_artifact_is_streamed_privately_and_takes_priority_over_the_weight
 
 
 def test_interrupted_input_download_keeps_the_previous_file_and_removes_partial_bytes(tmp_path, monkeypatch):
-    # Every resume attempt is interrupted too; skip the backoff between them.
+    # 再開の試行もすべて中断される。その間のbackoffは飛ばす。
     monkeypatch.setattr(artifact_downloads, "retry_delay", lambda *_arguments: 0)
 
     class InterruptedStream(httpx.SyncByteStream):

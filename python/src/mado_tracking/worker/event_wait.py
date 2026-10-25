@@ -1,4 +1,4 @@
-"""Wait for a shutdown event or the next heartbeat/poll interval."""
+"""終了のイベントか、次のheartbeat・ポーリングの間隔まで待つ。"""
 
 import asyncio
 

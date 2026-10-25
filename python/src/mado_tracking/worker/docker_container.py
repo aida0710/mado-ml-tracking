@@ -1,4 +1,4 @@
-"""Own one daemon container per durable Job; client exit never releases its resources."""
+"""永続的なJobごとにdaemonのコンテナを1つ持つ。クライアントが終了してもその資源は解放しない。"""
 
 from __future__ import annotations
 
@@ -20,7 +20,8 @@ from .host_execution import CommandExecution, ExecutionCanceled
 from .host_state import write_json
 from .runtime_capability import ContainerStateUncertain, RuntimeUnavailable, runtime_binary
 
-# Short daemon requests permit cancellation/reconnect; pulls use the owned setup process instead.
+# daemonへのリクエストは短く区切り、取り消しや再接続に応じられるようにする。
+# pullは代わりに、所有するsetupのプロセスで行う。
 DAEMON_CONTROL_SECONDS = 5.0
 DAEMON_POLL_SECONDS = 0.2
 INSPECT_FORMAT = (
@@ -28,7 +29,7 @@ INSPECT_FORMAT = (
     '"labels":{{json .Config.Labels}},"state":{{json .State}}}'
 )
 DaemonResponse = TypeVar("DaemonResponse")
-# Every container a runner creates carries the Job's ID; a site's GPU leases look for it.
+# runnerが作るコンテナには必ずJobのIDを付ける。siteのGPUのleaseはこれを手がかりにコンテナを探す。
 JOB_ID_LABEL = "io.mado-tracking.job-id"
 
 
@@ -70,7 +71,7 @@ class DockerContainer:
         write_json(self.workspace / "state.json", self.state)
 
     def inspect_owned(self) -> dict[str, Any] | None:
-        # Listing distinguishes an absent container from a daemon/permission failure.
+        # 一覧を取ることで、コンテナが無いことと、daemonや権限のエラーとを区別する。
         identifiers = self._control(
             ["container", "ls", "--all", "--filter", f"name=^/{self.name}$", "--format", "{{.ID}}"]
         ).split()
@@ -143,7 +144,7 @@ class DockerContainer:
         for key, value in self.labels.items():
             argv.extend(["--label", f"{key}={value}"])
         for mount in mounts:
-            # Docker parses --mount as CSV, including host directories that contain commas.
+            # Dockerは--mountをCSVとして解釈する。カンマを含むホストのディレクトリもその対象になる。
             buffer = io.StringIO()
             fields = ["type=bind", f"source={mount.host_path}", f"target={mount.container_path}"]
             if mount.readonly:
@@ -166,7 +167,8 @@ class DockerContainer:
             [self.binary, "image", "inspect", "--format", "{{.Id}}", self.image], capture=True
         )
         if exit_code:
-            # Docker verifies the immutable registry digest on pull; cached digest references work offline.
+            # Dockerはpullのときにレジストリの不変のdigestを検証する。
+            # キャッシュ済みのdigest参照はオフラインでも使える。
             self.execution.checked([self.binary, "image", "pull", self.image])
         environment = container_environment(self.specification)
         if any("\n" in value or "\r" in value for value in environment.values()):
@@ -215,7 +217,7 @@ class DockerContainer:
         try:
             self._control(["container", "start", container["id"]])
         except ContainerStateUncertain:
-            # A lost start response is resolved by daemon state; never replay docker start.
+            # startの応答が失われたときはdaemonの状態で判断する。docker startを繰り返さない。
             container = self._retry_inspection()
             if container is None or container["state"]["Status"] == "created":
                 self.stop_and_remove()
@@ -313,7 +315,7 @@ class DockerContainer:
                     exit_code = int(daemon_state["ExitCode"])
                     self.state["container"]["exitCode"] = exit_code
                     self._persist()
-                    # docker logs exits after all stopped-container logs have been sent.
+                    # docker logsは、停止したコンテナのログをすべて送り終えてから終了する。
                     follower.join(timeout=DAEMON_CONTROL_SECONDS)
                     if follower.is_alive():
                         logs_stopped.set()
@@ -322,19 +324,20 @@ class DockerContainer:
                         raise RuntimeError("Docker log collection failed") from log_failure[0]
                     return exit_code
                 if not follower.is_alive():
-                    # The daemon may have exited since the preceding inspect snapshot.
+                    # 直前のinspectで状態を取ったあとに、daemonのコンテナが終了したのかもしれない。
                     latest = self._retry_inspection()
                     if latest is not None and latest["state"].get("Running"):
                         raise RuntimeError("Docker log connection ended before container execution")
                 time.sleep(DAEMON_POLL_SECONDS)
         finally:
-            # A follower/client failure still requires daemon-side stop and absence confirmation.
+            # ログの追跡やクライアントが失敗しても、daemon側で停止し、
+            # コンテナが無くなったことを確かめる必要がある。
             try:
                 self.stop()
             finally:
                 try:
                     logs_stopped.set()
-                    # join() on a thread that failed to start would hide the original start error.
+                    # 開始に失敗したスレッドにjoin()すると、元の開始時のエラーが隠れる。
                     if follower is not None and follower_started:
                         follower.join()
                 finally:

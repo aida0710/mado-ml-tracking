@@ -1,6 +1,6 @@
-"""SSH key and known_hosts candidates in workerInfo: what is offered and how it reaches the API.
+"""workerInfoに載せるSSH鍵とknown_hostsの候補: 何を候補に出し、どうAPIへ届けるか。
 
-APIs that refuse workerInfo fields are in test_worker_info.py.
+workerInfoの項目を拒否するAPIのテストはtest_worker_info.pyにある。
 """
 
 from __future__ import annotations
@@ -21,7 +21,8 @@ from mado_tracking.worker.ssh_files import (
 )
 from mado_tracking.worker.worker_info import SSH_FILE_SCAN_INTERVAL_SECONDS, WorkerInfo
 
-# What the ssh_directory fixture offers as keys: by name (id_*, *.pem) or by owner-only mode.
+# ssh_directoryのfixtureが鍵として候補に出すもの。名前（id_*、*.pem）で選ぶか、所有者
+# だけが読めるパーミッションで選ぶ。
 EXPECTED_KEY_NAMES = ("gpu.pem", "id_ed25519", "id_linked", "lab-cluster")
 
 
@@ -62,7 +63,7 @@ def test_keys_are_offered_by_name_or_owner_only_mode_and_known_hosts_by_name(ssh
 def test_ssh_files_are_found_from_names_and_modes_without_opening_any(
     ssh_directory: Path, monkeypatch: pytest.MonkeyPatch
 ):
-    # A key only root could read is still offered: its name is all the worker looks at.
+    # rootしか読めない鍵も候補に出す。workerが見るのは名前だけ。
     write_file(ssh_directory / "id_unreadable", mode=0o000)
     real_open = builtins.open
 

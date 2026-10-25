@@ -1,7 +1,7 @@
-"""Await a blocking call that runs in a daemon thread.
+"""daemonスレッドで動くブロッキングな呼び出しをawaitする。
 
-asyncio.to_thread uses the loop's executor, whose threads the interpreter waits for at exit; a
-runner stopped by its scheduler must be able to finish while a download is still blocked.
+asyncio.to_threadはループのexecutorを使い、インタープリタは終了時にそのスレッドを待つ。
+スケジューラに止められたrunnerは、ダウンロードがブロックしたままでも終われる必要がある。
 """
 
 from __future__ import annotations
@@ -32,14 +32,14 @@ async def run_in_daemon_thread(function: Callable[[], Result], *, name: str = "m
         try:
             result = function()
         except BaseException as error:
-            # The error belongs to the awaiting coroutine, like asyncio.to_thread's.
+            # asyncio.to_threadと同じく、エラーはawaitしているコルーチンに渡す。
             outcome: tuple[Callable[..., None], Any] = (_set_exception, error)
         else:
             outcome = (_set_result, result)
         try:
             loop.call_soon_threadsafe(outcome[0], future, outcome[1])
         except RuntimeError:
-            # The loop closed while this thread ran; nobody waits for the result any more.
+            # このスレッドが動いている間にループが閉じた。もう誰も結果を待っていない。
             pass
 
     threading.Thread(target=target, name=name, daemon=True).start()

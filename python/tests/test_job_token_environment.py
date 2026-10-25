@@ -102,7 +102,7 @@ def test_job_code_sees_only_the_job_token_and_logs_never_contain_tokens(job_payl
     assert "job-token-match=True" in messages
     assert "[REDACTED]" in messages
     assert JOB_TOKEN not in messages and JOB_TOKEN not in caplog.text
-    # The process is reported running right after launch, before the regular heartbeat interval.
+    # プロセスは、通常のheartbeatの間隔を待たず、起動の直後にrunningとして報告される。
     statuses = [body.get("status") for path, body in server.calls if path.endswith("/heartbeat")]
     assert "running" in statuses
 
@@ -119,7 +119,7 @@ def test_token_reissued_while_preparing_is_the_one_the_code_receives(job_payload
         worker = Worker(worker_settings, api=server.client())
         try:
             worker.launch(WorkerJob.parse(pin_execution(job_payload)))
-            # A resume after a failed claim returns the same claimed Job with a new token.
+            # 取得に失敗したあとの再開は、同じ取得済みのJobを新しいtokenとともに返す。
             worker.launch(WorkerJob.parse(pin_execution({**job_payload, "jobToken": "mado_mtj_reissued"})))
             await asyncio.wait_for(worker.tasks[job_payload["job"]["id"]], 15)
             assert worker.reissued_job_tokens == {}

@@ -1,4 +1,4 @@
-"""Environment configuration shared by SDK and worker."""
+"""SDKとworkerで共有する、環境変数の設定。"""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from urllib.parse import urlsplit
 
 from .errors import ConfigurationError
 
-# Where the values come from, for the errors raised when one is missing: the web app shows both
-# under "SDK・MLflow 3から接続" (project settings, or [SDKで記録] on the Experiments page).
+# 値が無いときのエラーで示す、値の出どころ。画面ではどちらも"SDK・MLflow 3から接続"の下にある
+# （Projectの設定、または実験のページの[SDKで記録]）。
 API_URL_HINT = "set MMT_API_URL to the address of the web app, for example https://tracking.example.com"
 API_TOKEN_HINT = (
     "issue one in the web app (project settings or [SDKで記録] on the Experiments page) and enter it "
@@ -38,7 +38,7 @@ class ApiSettings:
             raise ConfigurationError("MMT_API_URL must not contain credentials, query, or fragment")
         if not api_token or any(character in api_token for character in "\r\n"):
             raise ConfigurationError(f"MMT_API_TOKEN is required; {API_TOKEN_HINT}")
-        # Both the origin and a full /api base URL are accepted.
+        # originだけでも、/apiまで含めたベースURLでも受け付ける。
         if not api_url.endswith(API_PATH):
             api_url += API_PATH
         return cls(api_url, api_token)

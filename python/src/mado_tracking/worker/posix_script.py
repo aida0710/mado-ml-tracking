@@ -1,10 +1,10 @@
-"""Run a fixed POSIX sh script on a computer and read back the tokens it prints.
+"""コンピュータで固定のPOSIX shスクリプトを実行し、それが出力するトークンを読み取る。
 
-The script goes to `sh -s` on stdin, so a csh login shell runs it the same way, and values reach it
-only as positional arguments, never as part of the script. Scripts print every token followed by a
-NUL byte (`printf '%s\\000'`), so a path with spaces or newlines arrives intact. A script keeps its
-body in a `main` function that the shell reads whole before running it with stdin from /dev/null;
-otherwise a command that reads stdin would swallow the rest of the script.
+スクリプトはstdinから`sh -s`に渡すので、cshのログインシェルでも同じように動く。
+値は位置引数としてだけ渡し、スクリプトの一部にはしない。スクリプトは各トークンのあとに
+NULバイトを出力する（`printf '%s\\000'`）ので、空白や改行を含むパスもそのまま届く。
+スクリプトは本体を`main`関数に入れ、シェルがそれを全部読んでから、stdinを/dev/nullにして
+実行する。そうしないと、stdinを読むコマンドがスクリプトの残りを飲み込んでしまう。
 """
 
 from __future__ import annotations
@@ -19,11 +19,11 @@ async def run_posix_script(
     script: str,
     arguments: Sequence[str],
     *,
-    timeout: float,  # noqa: ASYNC109 -- one complete transport operation, as in CommandTransport.run
+    timeout: float,  # noqa: ASYNC109 -- 転送の操作1回全体にかける時間。CommandTransport.runと同じ
 ) -> bytes:
     return await transport.run(["sh", "-s", "--", *arguments], stdin=script.encode(), timeout=timeout)
 
 
 def terminated_tokens(output: bytes) -> list[bytes]:
-    """The NUL-terminated tokens; whatever follows the last NUL was cut off and is dropped."""
+    """NULで終わるトークン。最後のNULより後ろは途中で切れたものなので捨てる。"""
     return output.split(b"\0")[:-1]

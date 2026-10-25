@@ -140,7 +140,7 @@ def write_results(rows: list[dict[str, Any]], path: Path) -> None:
 
 
 def write_result_manifest(outputs: Path, *, metrics: dict[str, float], results_path: Path) -> Path:
-    """result.json version 1: the results file and the metrics, published by rename."""
+    """result.json version 2: the results file and the metrics, published by rename."""
     relative = results_path.relative_to(outputs).as_posix()
     result = {
         "version": 2,

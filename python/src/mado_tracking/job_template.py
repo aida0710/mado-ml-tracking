@@ -1,15 +1,15 @@
-"""A job template, mmt-job.toml: the image, command and code a CodeVersion is registered from.
+"""Jobの雛形（mmt-job.toml）。CodeVersionの登録元になるイメージ、コマンド、コードを書く。
 
-name = "tts-gen"                          # optional; --code wins
-version = "2026-10"                       # optional; --version wins
-image = "forge.example.org/team/tts-gen:2026-10"   # a tag is resolved to its digest
+name = "tts-gen"                          # 任意。--codeを指定すればそちらが優先
+version = "2026-10"                       # 任意。--versionを指定すればそちらが優先
+image = "forge.example.org/team/tts-gen:2026-10"   # tagはdigestに解決する
 command = ["python", "-m", "gen.run", "--config", "configs/base.yaml"]
-working_directory = "/mmt/source"         # optional, absolute in the container
+working_directory = "/mmt/source"         # 任意。コンテナ内の絶対パス
 task_types = ["processing"]
 model_families = []
 description = "Synthetic speech generation"
 
-[source]                                  # optional: the git commit mounted at /mmt/source
+[source]                                  # 任意: /mmt/sourceにマウントするgitのcommit
 url = "https://forge.example.org/team/tts-gen.git"
 commit = "0123456789abcdef0123456789abcdef01234567"
 
@@ -41,7 +41,7 @@ TEMPLATE_KEYS = {
     "environment",
 }
 RUN_KINDS = {"inference", "evaluation", "training", "finetuning", "processing"}
-# Characters of a commit and an image digest that name a version when none is given.
+# バージョンの指定が無いとき、バージョン名に使うcommitとimage digestの文字数。
 DEFAULT_VERSION_CHARACTERS = 12
 
 
@@ -97,7 +97,7 @@ def load_job_template(path: Path) -> JobTemplate:
 
 
 def default_version(template: JobTemplate, image_digest: str) -> str:
-    """The template's version, else the commit and image digest it pins (stable for the same pair)."""
+    """templateのversion。無ければ、固定したcommitとimage digestから作る（同じ組なら同じ値）。"""
     if template.version:
         return template.version
     digest = image_digest.removeprefix("sha256:")[:DEFAULT_VERSION_CHARACTERS]

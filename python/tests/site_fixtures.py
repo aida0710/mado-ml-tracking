@@ -1,7 +1,7 @@
-"""Site Jobs, site submissions, spec directories and a fake Apptainer CLI for the site tests.
+"""siteのテスト用の、siteのJob、siteへの投入、specのディレクトリ、偽のApptainer CLI。
 
-The fake CLI runs the registered entrypoint for real with the bind mounts translated to host
-paths, so the runner's staging, execution and output collection all run unmodified.
+偽のCLIは、bind mountをホストのパスに読み替えて、登録したentrypointを実際に実行する。
+そのため、runnerのステージング、実行、出力の回収はどれも手を加えずに動く。
 """
 
 from __future__ import annotations
@@ -118,7 +118,7 @@ def site_job(
     cpu_arch: str = "amd64",
     environment: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    """A WorkerJob as a site submission carries it, with its Job token."""
+    """siteへの投入が運ぶ形のWorkerJob。Job tokenを含む。"""
     run_id, target_id, code_id, job_id = (str(uuid4()) for _ in range(4))
     datasets = input_datasets or []
     return pin_execution(
@@ -197,7 +197,7 @@ def site_job(
 
 
 def site_settings_document(**overrides: Any) -> dict[str, Any]:
-    """SiteSettings as the API hands them out; overrides take the contract's field names."""
+    """APIが渡す形のSiteSettings。overridesには契約のフィールド名を使う。"""
     settings = {
         "launcherId": str(uuid4()),
         "connection": {
@@ -224,7 +224,7 @@ def site_settings_document(**overrides: Any) -> dict[str, Any]:
 
 
 def job_shell_document(content: str, *, target_id: str, version: int = 1) -> dict[str, Any]:
-    """A SiteJobShell with its content, as a submission or a site configuration carries it."""
+    """内容つきのSiteJobShell。投入やsiteの設定が運ぶ形。"""
     data = content.encode()
     return {
         "id": str(uuid4()),
@@ -247,7 +247,7 @@ def account_document(
     key_id: str | None = None,
     mode: str = "personal",
 ) -> dict[str, Any]:
-    """A SiteSubmissionAccount; the defaults are a manual submission's (no SSH user, no key)."""
+    """SiteSubmissionAccount。既定値は手動の投入のもの（SSHのユーザーも鍵も無い）。"""
     return {
         "mode": mode,
         "accountName": account_name,
@@ -265,7 +265,7 @@ def submission_for(
     job_shell_version: int = 1,
     account: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """A SiteSubmission: the Jobs with the site's settings, job shell and account of the claim."""
+    """SiteSubmission。Jobと、その取得でのsiteの設定・job shell・アカウント。"""
     target_id = jobs[0]["target"]["id"]
     return {
         "target": jobs[0]["target"],

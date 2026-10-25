@@ -1,4 +1,4 @@
-"""Checkpoint save (SDK), staging and verification (worker), and a resumed training run."""
+"""checkpointの保存（SDK）、ステージングと検証（worker）、再開した学習のRun。"""
 
 from __future__ import annotations
 
@@ -75,7 +75,7 @@ def immediate_retries(monkeypatch, tmp_path):
 
 
 class CheckpointRegistrationApi(FakeUploadApi):
-    """Upload sessions plus POST /runs/:r/checkpoints, which records the registered body."""
+    """アップロードセッションと、登録された本文を記録するPOST /runs/:r/checkpoints。"""
 
     def __init__(self):
         super().__init__()
@@ -188,7 +188,7 @@ def checkpoint_payload(
 
 
 def native_checkpoint_payload(job_payload: dict, archive: bytes) -> tuple[dict, dict]:
-    """A Job resuming from one tar Artifact whose manifest lists CHECKPOINT_FILES."""
+    """1つのtarのArtifactから再開するJob。そのmanifestにはCHECKPOINT_FILESが並ぶ。"""
     artifact = {
         "id": str(uuid4()),
         "path": "checkpoints/step-20.tar",
@@ -200,7 +200,7 @@ def native_checkpoint_payload(job_payload: dict, archive: bytes) -> tuple[dict, 
 
 
 class CheckpointWorkerServer(WorkerServer):
-    """The worker API whose content endpoint serves several Artifacts by id."""
+    """contentエンドポイントが複数のArtifactをIDで返すworker API。"""
 
     def __init__(self, payload: dict, contents: dict[str, bytes]):
         super().__init__(payload)
@@ -412,7 +412,7 @@ def test_training_interrupted_and_resumed_from_its_checkpoint_matches_an_uninter
     checkpoint = interrupted.parent / "checkpoints" / "step-20"
     assert sorted(path.name for path in checkpoint.iterdir()) == ["model.json", "optimizer.json"]
 
-    # What the worker hands a resumed Job: the checkpoint directory, its step and the document.
+    # workerが再開したJobに渡すもの: checkpointのディレクトリ、そのstep、文書。
     document = tmp_path / "resume-checkpoint.json"
     document.write_text(json.dumps({"checkpointId": str(uuid4()), "sourceRunId": str(uuid4()), "step": 20}))
     resumed = tmp_path / "resumed" / "weights.json"

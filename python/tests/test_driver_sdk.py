@@ -1,4 +1,4 @@
-"""SDK calls for driver Jobs, manual hooks and Job arrays."""
+"""ドライバーのJob、手動のフック、Jobのarrayを扱うSDKの呼び出し。"""
 
 from __future__ import annotations
 

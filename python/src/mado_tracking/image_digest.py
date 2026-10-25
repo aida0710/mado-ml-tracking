@@ -1,8 +1,8 @@
-"""Resolve a container image tag to its immutable digest with the OCI distribution API.
+"""コンテナイメージのタグを、OCI distribution APIで変わらないdigestに解決する。
 
-GET /v2/<repository>/manifests/<tag> asks for an image index or a manifest. A 401 with a Bearer
-challenge is answered with a pull token from the registry's realm, anonymous or for
-MMT_REGISTRY_USERNAME and MMT_REGISTRY_PASSWORD. The digest is the sha256 of the bytes returned.
+GET /v2/<repository>/manifests/<tag>でimage indexかmanifestを求める。Bearerのchallengeつきの
+401には、レジストリのrealmから取ったpull tokenで答える（匿名、またはMMT_REGISTRY_USERNAMEと
+MMT_REGISTRY_PASSWORDで）。digestは返ってきたバイト列のsha256。
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ INDEX_MEDIA_TYPES = set(MANIFEST_MEDIA_TYPES[:2])
 DOCKER_HUB = "docker.io"
 DOCKER_HUB_API_HOST = "registry-1.docker.io"
 DEFAULT_TAG = "latest"
-# Registries reached over plain HTTP: only ones on this machine.
+# 平文のHTTPでつなぐレジストリ。このマシン上のものだけ。
 LOCAL_REGISTRY_HOSTS = {"localhost", "127.0.0.1", "[::1]"}
 REPOSITORY = re.compile(r"^[a-z0-9]+(?:(?:[._]|__|-+)[a-z0-9]+)*(?:/[a-z0-9]+(?:(?:[._]|__|-+)[a-z0-9]+)*)*$")
 TAG = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$")
@@ -60,12 +60,12 @@ class ImageReference:
 class ResolvedImage:
     image: str
     digest: str
-    # os/architecture[/variant] of an image index; empty for a single-platform manifest.
+    # image indexのos/architecture[/variant]。単一プラットフォームのmanifestなら空。
     platforms: list[str] = field(default_factory=list)
 
 
 def _hostname(registry: str) -> str:
-    """The registry without its port ([::1]:5000 -> [::1], localhost:5000 -> localhost)."""
+    """ポートを除いたレジストリ（[::1]:5000 -> [::1]、localhost:5000 -> localhost）。"""
     if registry.startswith("["):
         return registry.split("]", 1)[0] + "]"
     return registry.rsplit(":", 1)[0]
@@ -138,7 +138,7 @@ def resolve_image_digest(
     password: str | None = None,
     transport: httpx.BaseTransport | None = None,
 ) -> ResolvedImage:
-    """The image pinned to its digest; an image that already names a digest is returned as is."""
+    """digestに固定したイメージ。既にdigestを指定しているイメージはそのまま返す。"""
     reference = parse_image_reference(image)
     if reference.digest is not None:
         return ResolvedImage(reference.pinned(reference.digest), reference.digest)

@@ -1,4 +1,5 @@
-"""`mado-tracking-launcher --config launcher.toml`: submit the site Jobs assigned on the Web until stopped."""
+"""`mado-tracking-launcher --config launcher.toml`。画面で割り当てたsiteのJobを、
+止めるまで投入する。"""
 
 from __future__ import annotations
 

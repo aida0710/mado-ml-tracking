@@ -1,4 +1,4 @@
-"""Publish pre-execution source ZIP/manifest files and read only their declared bytes."""
+"""実行前のソースのZIP・manifestのファイルを公開し、宣言したバイト数だけを読む。"""
 
 from __future__ import annotations
 
@@ -22,16 +22,16 @@ from .source_tree import (
     walk_source_entries,
 )
 
-# Reserved Run Artifact paths never overlap the container's user-declared outputs.
+# 予約したRunのArtifactのパスは、コンテナでユーザーが宣言した出力と重ならない。
 SOURCE_ZIP_PATH = ".mmt/source.zip"
 SOURCE_MANIFEST_PATH = ".mmt/source-manifest.json"
 SNAPSHOT_DIRECTORY = "source-snapshot"
 SNAPSHOT_FILENAMES = {SOURCE_ZIP_PATH: "source.zip", SOURCE_MANIFEST_PATH: "source-manifest.json"}
-# File descriptors stay small in runner state; the detailed manifest is streamed as an artifact.
+# runnerのstateに置くファイルの記述子は小さく保つ。詳細なmanifestはArtifactとしてストリームで送る。
 MAX_MANIFEST_BYTES = 16 * 1024**2
-# A published ZIP must be accepted by the same bounded source archive extractor.
+# 公開するZIPは、同じ上限つきのソースアーカイブの展開処理が受け付けるものでなければならない。
 MAX_SNAPSHOT_BYTES = MAX_SOURCE_ARCHIVE_BYTES
-# ZIP readers use the DOS directory flag together with the POSIX type/mode.
+# ZIPを読むツールは、DOSのディレクトリのフラグをPOSIXの種類・モードと合わせて使う。
 ZIP_DIRECTORY_ATTRIBUTE = 0x10
 
 
@@ -123,7 +123,7 @@ def _write_source_zip(
             files.append({"path": name, "size": size, "sha256": checksum.hexdigest()})
         if destination.stat().st_size > MAX_SNAPSHOT_BYTES:
             raise ValueError("Source ZIP exceeds its size limit")
-    # Finish the ZIP central directory before hashing or publishing it.
+    # ハッシュを取ったり公開したりする前に、ZIPのセントラルディレクトリを書き終える。
     if destination.stat().st_size > MAX_SNAPSHOT_BYTES:
         raise ValueError("Source ZIP exceeds its size limit")
     with destination.open("rb") as content:

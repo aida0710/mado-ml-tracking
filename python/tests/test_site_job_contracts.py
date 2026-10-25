@@ -1,4 +1,4 @@
-"""WorkerJob rules for sites, hook inputs in the container layout, and dataset partitions."""
+"""siteでのWorkerJobの規則、コンテナ内の配置でのフックの入力、データセットの分割。"""
 
 from __future__ import annotations
 

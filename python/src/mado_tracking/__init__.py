@@ -1,4 +1,4 @@
-"""Python SDK for mado ML Tracking."""
+"""mado ML TrackingのPython SDK。"""
 
 import os
 from typing import Any
@@ -62,10 +62,10 @@ def start_run(
     mode: RunMode | None = None,
     **options: Any,
 ) -> Run:
-    """Use an existing worker Run, or create or resume a Run (see Client.start_run for options).
+    """既存のworkerのRunを使うか、Runを作るか再開する（オプションはClient.start_runを参照）。
 
-    experiment_name chooses the Experiment by name and creates it when absent. An offline Run
-    needs neither MMT_API_URL nor MMT_API_TOKEN, and takes experiment_id or MMT_EXPERIMENT_ID.
+    experiment_nameは名前で実験を選び、無ければ作る。オフラインのRunにはMMT_API_URLも
+    MMT_API_TOKENも要らず、experiment_idかMMT_EXPERIMENT_IDを使う。
     """
     if resolve_mode(mode, os.environ) == "offline":
         return start_run_offline(

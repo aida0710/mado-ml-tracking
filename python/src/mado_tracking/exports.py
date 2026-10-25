@@ -1,4 +1,4 @@
-"""Run comparison and CSV exports (search results and comparison tables) saved as files."""
+"""Runの比較と、ファイルに保存するCSVのエクスポート（検索結果と比較表）。"""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from .run_search_request import build_run_search_body
 if TYPE_CHECKING:
     from .client import Client
 
-# Mirror POST /runs/compare: 2 to 50 distinct Runs and at most 200 metric keys.
+# POST /runs/compareに合わせる。異なるRunを2〜50個、メトリクスのキーは最大200個。
 COMPARE_MIN_RUNS = 2
 COMPARE_MAX_RUNS = 50
 COMPARE_MAX_METRIC_KEYS = 200
@@ -42,9 +42,9 @@ def compare_runs(
     metric_keys: Sequence[str] | None = None,
     include_history: bool = False,
 ) -> dict[str, Any]:
-    """Return the RunComparison: one row per parameter / metric / tag with a value per Run.
+    """RunComparisonを返す。parameter・メトリクス・タグごとに1行で、Runごとの値を持つ。
 
-    Rows carry the difference from ``baseline_run_id`` when it is given. Runs keep the given order.
+    ``baseline_run_id``を渡すと、各行はそれとの差を持つ。Runは渡した順のまま。
     """
     body: dict[str, Any] = {"runIds": _validated_run_ids(run_ids)}
     if baseline_run_id is not None:
@@ -57,19 +57,18 @@ def compare_runs(
         body["metricKeys"] = list(metric_keys)
     if include_history:
         body["includeHistory"] = True
-    # Comparing only reads, so a lost response is retried without side effects.
+    # 比較は読むだけなので、応答が失われても副作用無しに再試行する。
     return client.request("POST", client.project_path(project_id, "runs/compare"), json=body, retryable=True)
 
 
 def export_runs_csv(
     client: Client, project_id: str, destination: str | os.PathLike[str], **search: Any
 ) -> Path:
-    """Save every Run matching the search as CSV (one Run per row) and return the file path.
+    """検索に合うRunをすべてCSV（1行に1つのRun）で保存し、ファイルのパスを返す。
 
-    ``search`` takes the conditions of ``Client.search_runs`` (``filter``, ``order_by``,
-    ``experiment_ids``, ``kinds``, ``statuses``, ...). The body is streamed to disk, and the file
-    appears only after the whole export arrived. The API stops at its row limit (50000 by default)
-    and marks the cut at the end of the CSV.
+    ``search``は``Client.search_runs``の条件（``filter``、``order_by``、``experiment_ids``、
+    ``kinds``、``statuses``など）を取る。本文はディスクへ流しながら書き、エクスポート全体が届いて
+    からファイルが現れる。APIは行数の上限（既定50000）で止め、CSVの最後に打ち切ったことを示す。
     """
     return _save_csv(
         client,
@@ -88,7 +87,7 @@ def export_comparison_csv(
     run_ids: Sequence[str],
     baseline_run_id: str | None = None,
 ) -> Path:
-    """Save the comparison table (row key × Run column) as CSV and return the file path."""
+    """比較表（行のキー×Runの列）をCSVで保存し、ファイルのパスを返す。"""
     params = {"runIds": ",".join(_validated_run_ids(run_ids))}
     if baseline_run_id is not None:
         params["baselineRunId"] = baseline_run_id
@@ -111,10 +110,10 @@ def _save_csv(
 
 
 def _stream_with_retries(client: Client, output: BinaryIO, *, method: str, path: str, **options: Any) -> None:
-    """Write a response body to ``output``; an interrupted or refused attempt starts over.
+    """応答の本文を``output``に書く。中断された、または拒まれた試行は最初からやり直す。
 
-    Both exports only read, so repeating them is safe. The bytes are written as received: the
-    CSV keeps its UTF-8 BOM and line endings.
+    どちらのエクスポートも読むだけなので、繰り返しても安全。バイト列は受け取ったとおりに書くので、
+    CSVのUTF-8のBOMと改行コードはそのまま残る。
     """
     for attempt in range(DEFAULT_ATTEMPTS):
         last_attempt = attempt == DEFAULT_ATTEMPTS - 1

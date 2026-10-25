@@ -1,9 +1,9 @@
-"""The launcher's side of the API in memory, a fake ssh-keygen, and logins that run locally.
+"""メモリ上のlauncher側のAPI、偽のssh-keygen、ローカルで動くログイン。
 
-The fake ssh-keygen writes a key pair the way OpenSSH does (private 0600, public 0644, never over
-an existing file) and records its argv. LocalLogins is the launcher's transport factory in
-tests: each "login" runs its commands on this machine and remembers the endpoint (account, key,
-known_hosts) the launcher would have logged in to.
+偽のssh-keygenはOpenSSHと同じように鍵の組を書き（秘密鍵は0600、公開鍵は0644、
+既存のファイルは上書きしない）、argvを記録する。LocalLoginsはテストでのlauncherの
+transportのファクトリ。各「ログイン」はコマンドをこのマシンで実行し、
+launcherがログインするはずだった接続先（アカウント、鍵、known_hosts）を覚えておく。
 """
 
 from __future__ import annotations
@@ -67,7 +67,7 @@ def recorded_keygen_calls(directory: Path) -> list[list[str]]:
 
 
 class FakeLauncherApi:
-    """GET /launcher/config and the /launcher endpoints, answered from what a test puts in."""
+    """GET /launcher/configと/launcherのエンドポイント。テストが入れたものから答える。"""
 
     def __init__(self, *, launcher_name: str = LAUNCHER_NAME):
         self.launcher = {"id": str(uuid4()), "name": launcher_name}
@@ -77,9 +77,9 @@ class FakeLauncherApi:
         self.submissions: list[dict[str, Any]] = []
         self.cancellations: list[dict[str, Any]] = []
         self.report_statuses: list[int] = []
-        # Keys revoked after the configuration listed them: publishing one is refused.
+        # 設定に載ったあとで失効した鍵。それを公開しようとすると断られる。
         self.revoked: set[str] = set()
-        # Claim fields this API does not know yet: an older API refuses a claim that has one.
+        # このAPIがまだ知らない取得のフィールド。古いAPIは、それを含む取得を断る。
         self.unknown_claim_fields: set[str] = set()
         self.calls: list[tuple[str, str, Any]] = []
 
@@ -182,7 +182,7 @@ class FakeLauncherApi:
 
 
 class LocalLogin(LocalSiteTransport):
-    """A launcher's site commands, run on this machine as if it had logged in to the endpoint."""
+    """launcherのsiteのコマンド。接続先にログインしたかのように、このマシンで実行する。"""
 
     def __init__(
         self,
@@ -192,7 +192,7 @@ class LocalLogin(LocalSiteTransport):
         refusal: Exception | CommandResult | None = None,
     ):
         super().__init__(masker=SecretMasker())
-        # What SshSiteTransport checks before it connects: the key and known_hosts files.
+        # SshSiteTransportが接続の前に確かめるもの: 鍵とknown_hostsのファイル。
         endpoint.check_files()
         self.endpoint = endpoint
         self.shared_connection = shared_connection
@@ -213,9 +213,9 @@ class LocalLogin(LocalSiteTransport):
 
 
 class LocalLogins:
-    """The launcher's transport factory in tests; set `refusal` to make the next logins fail.
+    """テストでのlauncherのtransportのファクトリ。`refusal`を設定すると次のログインが失敗する。
 
-    `refusals` names the refusal of the next logins as one account, over `refusal`.
+    `refusals`は、アカウントごとに次のログインの拒否を指定する。`refusal`より優先する。
     """
 
     def __init__(self) -> None:

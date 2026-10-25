@@ -1,4 +1,4 @@
-"""Connection checks: the fixed probe and its parsing into a version 2 TargetCheckResult."""
+"""接続確認: 固定のprobeと、その出力をversion 2のTargetCheckResultへ解析する処理。"""
 
 from __future__ import annotations
 
@@ -97,7 +97,7 @@ def healthy_facts(**overrides: Any) -> dict[str, Any]:
 
 
 def discovery_output(*tokens: str) -> bytes:
-    """What the discovery script prints: NUL-terminated tokens."""
+    """検出スクリプトが出力するもの: NUL終端の値の並び。"""
     return b"".join(token.encode() + b"\0" for token in tokens)
 
 
@@ -115,7 +115,7 @@ HEALTHY_DISCOVERY = discovery_output(
 
 
 class ScriptedSSHTransport(CommandTransport):
-    """Answers the probe steps as a remote host would, without opening a connection."""
+    """接続を開かずに、リモートのホストと同じようにprobeの各段階に応答する。"""
 
     def __init__(
         self,
@@ -139,7 +139,7 @@ class ScriptedSSHTransport(CommandTransport):
         command: Sequence[str],
         *,
         stdin: bytes | Path = b"",
-        timeout: float | None = None,  # noqa: ASYNC109 -- mirrors CommandTransport.run
+        timeout: float | None = None,  # noqa: ASYNC109 -- CommandTransport.runと同じ形にする
     ) -> bytes:
         self.commands.append(list(command))
         step = (
@@ -209,7 +209,7 @@ def test_healthy_ssh_target_reports_every_item_and_offers_detected_gpus_and_runt
     }
     assert items["python"]["detail"] == "3.11.9 /usr/bin/python3"
     assert items["singularity"]["code"] == "container_cli_missing"
-    # The GPU name containing a comma is kept whole.
+    # カンマを含むGPU名も切らずにそのまま保つ。
     assert result["gpus"] == [
         {
             "index": "0",
@@ -256,9 +256,9 @@ def test_computer_without_python_or_work_directory_is_checked_with_the_first_dis
     transport = ScriptedSSHTransport()
     result = run_probe(transport, ssh_target(pythonExecutable="", workDirectory=""))
     probe_command = transport.commands[-1]
-    # /usr/bin/python3 comes first but is 3.10; the venv's 3.11 is the one Jobs could use.
+    # /usr/bin/python3が先に来るが3.10。Jobが使えるのはvenvの3.11のほう。
     assert probe_command[:3] == ["/home/mmt/.venvs/train/bin/python", "-c", PROBE_SCRIPT]
-    # Writing is still tried somewhere real: the home the discovery reported.
+    # それでも書き込みは実在する場所で試す。検出が報告したホームディレクトリ。
     assert probe_command[3] == "/home/mmt"
     items = items_by_name(result)
     assert items["python"]["status"] == "ok"
@@ -295,7 +295,7 @@ def test_computer_without_any_python_is_python_missing_but_still_offers_its_cand
         ("connection", "ok", None),
         ("python", "ng", "python_missing"),
     ]
-    # Nothing was started with a guessed interpreter.
+    # 推測したインタプリタで起動したものは無い。
     assert [command[0] for command in transport.commands] == ["true", "sh"]
     assert result["host"]["cpuArch"] == "arm64"
     assert result["directories"] == [
@@ -322,7 +322,7 @@ def test_candidates_naming_key_files_or_tokens_are_dropped_and_others_kept():
         "directory", "home", "/home/mmt", "1", "1000",
     )  # fmt: skip
     result = run_probe(ScriptedSSHTransport(discovery=discovery))
-    # A machine name that had to be masked is not reported at all.
+    # マスクが必要だったマシン名は、まったく報告しない。
     assert result["host"]["machine"] is None and result["host"]["cpuArch"] is None
     assert [python["path"] for python in result["pythons"]] == ["/home/mmt/.venvs/train/bin/python"]
     assert [directory["path"] for directory in result["directories"]] == ["/home/mmt"]
@@ -331,7 +331,7 @@ def test_candidates_naming_key_files_or_tokens_are_dropped_and_others_kept():
 
 
 def test_candidates_beyond_the_api_size_drop_directories_first_then_pythons_from_the_end():
-    # Paths of multi-byte characters: 20 Pythons alone exceed the API's 32 KiB.
+    # マルチバイト文字のパス。20個のPythonだけでAPIの32KiBを超える。
     long_part = "研究" * 400
     pythons = [
         token
@@ -361,7 +361,7 @@ def test_candidates_beyond_the_api_size_keep_every_python_while_directories_can_
     result = run_probe(ScriptedSSHTransport(discovery=HEALTHY_DISCOVERY + discovery_output(*directories)))
     assert json_size(result) <= MAX_TARGET_CHECK_RESULT_BYTES
     assert len(result["pythons"]) == 2
-    # The home and the first mounts survive; the last mounts went.
+    # ホームディレクトリと最初のほうのマウントは残り、最後のほうのマウントは外れた。
     assert result["directories"][0]["source"] == "home"
     assert 3 < len(result["directories"]) < 43
 
@@ -396,7 +396,7 @@ def test_missing_nvidia_smi_old_python_and_denied_docker_socket_are_ng_without_g
     assert result["gpus"] is None
     assert items["docker"]["status"] == "ng"
     assert items["docker"]["code"] == "docker_socket_denied"
-    # Neither the too-old Python nor the unusable docker is offered as a runtime candidate.
+    # 古すぎるPythonも使えないdockerも、runtimeの候補には出さない。
     assert result["runtimeKinds"] == ["apptainer"]
 
 
@@ -479,7 +479,7 @@ def test_failed_steps_report_codes_and_never_the_transport_error_text(fail_step,
     if fail_step == "connection":
         assert result["host"] == EMPTY_HOST and result["pythons"] == [] and result["directories"] == []
     else:
-        # Once connected, the candidates the computer reported are kept.
+        # 接続できたあとは、コンピュータが報告した候補を残す。
         assert result["host"]["homeDirectory"] == "/home/mmt"
 
 
@@ -556,14 +556,14 @@ def test_local_transport_runs_the_real_probe_on_this_host(tmp_path: Path, health
     assert items["python"]["status"] == "ok"
     assert items["python"]["detail"].startswith(version)
     assert items["venv"]["status"] == "ok"
-    # A missing work directory counts as writable when the worker could create it.
+    # 作業ディレクトリが無くても、workerが作れるなら書き込み可とみなす。
     assert items["work_directory"]["status"] == "ok"
     assert not (tmp_path / "not-created-yet").exists()
     assert list(tmp_path.iterdir()) == []
     assert isinstance(result["workDirectoryFreeBytes"], int)
     assert items["api"]["status"] == "ok"
     assert "python" in result["runtimeKinds"]
-    # Whatever this host has, GPU values are either nvidia-smi rows or absent.
+    # このホストに何があっても、GPUの値はnvidia-smiの行か、無しのどちらか。
     assert result["gpus"] is None or all(gpu["uuid"] for gpu in result["gpus"])
     assert result["version"] == 2
     assert result["host"]["machine"] == platform.machine()
@@ -599,5 +599,5 @@ def test_local_computer_being_set_up_is_checked_with_a_python_found_on_it(
     assert home_candidate["path"] == str(home) and home_candidate["source"] == "home"
     experiments = {"path": str(home / "experiments"), "source": "home_child", "writable": True}
     assert {**experiments, "freeBytes": None} in other_candidates
-    # The writing check in the home leaves nothing behind.
+    # ホームディレクトリでの書き込みの確認は何も残さない。
     assert sorted(path.name for path in home.iterdir()) == ["experiments"]

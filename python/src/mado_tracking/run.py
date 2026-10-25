@@ -1,4 +1,4 @@
-"""Run lifecycle and logging; job-owned status is completed by the worker only."""
+"""Runのライフサイクルと記録。Jobが持つRunの状態を完了にするのは、workerだけ。"""
 
 from __future__ import annotations
 
@@ -42,10 +42,10 @@ __all__ = ["ARTIFACT_CHUNK_BYTES", "Run"]
 
 
 class Run:
-    """A Run's logging API. Writes go to its RunTransport: the API, the offline spool, or both in turn.
+    """Runの記録用API。書き込みはRunTransportへ行く（API、オフラインのspool、または両方を順に）。
 
-    ``last_steps`` is given when the Run was resumed: log_metrics without a step then continues each
-    metric key after its largest step instead of writing step 0.
+    ``last_steps``はRunを再開したときに渡される。そのとき、stepを指定しないlog_metricsは
+    step 0に書かず、メトリクスのキーごとに最大のstepの次から続ける。
     """
 
     log_preprocessing_report = log_preprocessing_report
@@ -83,7 +83,7 @@ class Run:
 
     @property
     def client(self) -> Client:
-        """The API client; an offline Run has none and only records locally."""
+        """APIのclient。オフラインのRunはclientを持たず、ローカルに記録するだけ。"""
         if self._client is None:
             raise ConfigurationError("This operation needs the API; an offline Run only records locally")
         return self._client
@@ -94,15 +94,16 @@ class Run:
 
     @property
     def offline_directory(self) -> Path | None:
-        """Where this Run is being recorded locally, or None while it writes to the API."""
+        """このRunをローカルに記録している場所。APIに書いている間はNone。"""
         return self.transport.offline_directory
 
     def last_step(self, key: str) -> int | None:
-        """The largest step logged for key, including steps recorded before the Run was resumed."""
+        """keyで記録した最大のstep。Runを再開する前に記録したstepも含む。"""
         return self._last_steps.get(key)
 
     def start_system_metrics(self, *, interval_seconds: float | None = None) -> None:
-        """Record GPU/CPU/memory/disk/network metrics (`system.*`) every interval until finish."""
+        """GPU/CPU/メモリ/ディスク/ネットワークのメトリクス（`system.*`）を、finishまで
+        間隔ごとに記録する。"""
         if self._system_metrics is not None:
             return
         monitor = SystemMetricsMonitor(
@@ -136,8 +137,8 @@ class Run:
                 self.finish()
                 return False
             try:
-                # The log goes first: finish closes the transport, and an offline spool sends logs
-                # before the terminal status.
+                # ログを先に送る。finishがtransportを閉じるうえ、オフラインのspoolは終了状態の前に
+                # ログを送るため。
                 self.log(str(exception), level="error")
                 self.finish(status="failed")
             except Exception as reporting_error:
@@ -159,7 +160,7 @@ class Run:
             raise ConfigurationError("A job-owned Run is completed by the worker")
         if status not in {"finished", "failed", "canceled"}:
             raise ConfigurationError("Run completion requires a terminal status")
-        # No system metrics sample may arrive after the terminal status.
+        # 終了状態のあとに、システムメトリクスのサンプルが届かないようにする。
         self.stop_system_metrics()
         try:
             self._apply_entity(self.transport.finish(status), {"status": status})
@@ -184,8 +185,8 @@ class Run:
     def log_metrics(
         self, metrics: Mapping[str, float], *, step: int | None = None, timestamp: str | None = None
     ) -> None:
-        """Log metrics at step. Without a step a new Run uses 0, and a resumed Run uses each key's
-        last step + 1 so its curves continue."""
+        """stepにメトリクスを記録する。stepを指定しなければ、新しいRunは0を使い、再開したRunは
+        曲線が続くよう、キーごとに最後のstep + 1を使う。"""
         if not metrics:
             return
         if step is not None and step < 0:
@@ -224,10 +225,11 @@ class Run:
         mime_type: str | None = None,
         copy: bool = True,
     ) -> dict[str, Any]:
-        """Online, files of SESSION_UPLOAD_THRESHOLD_BYTES or more use a resumable upload session.
+        """オンラインでは、SESSION_UPLOAD_THRESHOLD_BYTES以上のファイルを、再開できる
+        アップロードセッションで送る。
 
-        Offline, the file is copied into the spool; copy=False keeps only its path and sha256, and
-        sync refuses the file if it changed in the meantime.
+        オフラインでは、ファイルをspoolに写す。copy=Falseならパスとsha256だけを持ち、その間に
+        ファイルが変わっていたら、syncはそのファイルを拒む。
         """
         source = Path(source) if isinstance(source, str) else source
         if isinstance(source, Path):
@@ -239,8 +241,8 @@ class Run:
 
     @property
     def current_step(self) -> int:
-        """The step media is logged at without a step: the largest metric step logged so far
-        (continuing after a resume), else 0, as in W&B."""
+        """stepを指定せずにメディアを記録するときのstep。これまでに記録したメトリクスの最大のstep
+        （再開後はその続き）、無ければ0。W&Bと同じ。"""
         return max(self._last_steps.values(), default=0)
 
     def log_audio(
@@ -252,9 +254,9 @@ class Run:
         sample_rate: int | None = None,
         caption: str | None = None,
     ) -> dict[str, Any]:
-        """Log audio at step: a path, bytes, an Audio, or a numpy array with sample_rate (saved as WAV).
+        """stepに音声を記録する。パス、bytes、Audio、またはsample_rateつきのnumpy配列（WAVで保存）。
 
-        Online this returns the registered RunMedia; offline, the spooled media record.
+        オンラインでは登録したRunMediaを、オフラインではspoolに書いたメディアのレコードを返す。
         """
         audio = data if isinstance(data, Audio) else Audio(data, sample_rate=sample_rate)
         return self._log_media_value(key, audio, step=step, caption=caption)
@@ -262,22 +264,22 @@ class Run:
     def log_image(
         self, key: str, image: Any, *, step: int | None = None, caption: str | None = None
     ) -> dict[str, Any]:
-        """Log an image at step: a path, bytes, an Image, a PIL.Image or a numpy array (saved as PNG)."""
+        """stepに画像を記録する。パス、bytes、Image、PIL.Image、またはnumpy配列（PNGで保存）。"""
         value = image if isinstance(image, Image) else Image(image)
         return self._log_media_value(key, value, step=step, caption=caption)
 
     def log_video(
         self, key: str, video: Any, *, step: int | None = None, caption: str | None = None
     ) -> dict[str, Any]:
-        """Log an encoded video file (path, bytes or Video) at step; it is stored as it is."""
+        """エンコード済みの動画ファイル（パス、bytes、Video）をstepに記録する。そのまま保存する。"""
         value = video if isinstance(video, Video) else Video(video)
         return self._log_media_value(key, value, step=step, caption=caption)
 
     def log_table(self, key: str, table: Any, *, step: int | None = None) -> dict[str, Any]:
-        """Log a Table, {columns, data} or pandas.DataFrame at step as MLflow's split JSON.
+        """Table、{columns, data}、pandas.DataFrameを、MLflowのsplit形式のJSONとしてstepに記録する。
 
-        Audio/Image/Video cells are stored first as Artifacts next to the table and written as
-        {type, filepath} cells, the form MLflow uses for image cells.
+        Audio/Image/Videoのセルは、先に表の隣にArtifactとして保存し、{type, filepath}のセルとして
+        書く。MLflowが画像のセルに使う形。
         """
         validate_media_key(key)
         media_step = self._media_step(step)
@@ -331,16 +333,16 @@ class Run:
         return 0 if last is None else last + 1
 
     def _apply_entity(self, entity: dict[str, Any] | None, local_change: Mapping[str, Any]) -> None:
-        """Take the API's entity when there is one; offline, apply the change locally instead."""
+        """APIのエンティティがあればそれを使う。オフラインでは代わりに変更をローカルに適用する。"""
         self.entity = entity if entity is not None else {**self.entity, **local_change}
 
     def log_artifacts(self, directory: str | Path, *, path: str | None = None) -> list[dict[str, Any]]:
-        """Log every file under directory, keeping relative paths below the optional path prefix."""
+        """directory以下のすべてのファイルを記録する。相対パスは保ち、任意のpathを前に付ける。"""
         root = Path(directory)
         if not root.is_dir():
             raise ConfigurationError("log_artifacts requires a directory")
         prefix = path.strip("/") + "/" if path and path.strip("/") else ""
-        # rglob does not descend into symlinked directories, so the walk stays inside the tree.
+        # rglobはシンボリックリンクのディレクトリには入らないので、たどる範囲は木の中に留まる。
         files = sorted(file for file in root.rglob("*") if file.is_file())
         return [self.log_artifact(file, path=prefix + file.relative_to(root).as_posix()) for file in files]
 
@@ -353,7 +355,7 @@ class Run:
         framework: str | None = None,
         metadata: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Save directory as this Run's checkpoint at step; a later Run can continue from it."""
+        """directoryを、このRunのstepのcheckpointとして保存する。あとのRunはそこから続けられる。"""
         return log_checkpoint(
             self,
             directory,
@@ -364,9 +366,9 @@ class Run:
         )
 
     def resume_checkpoint(self) -> ResumeCheckpoint | None:
-        """The checkpoint this Job continues from (path and step), or None for a fresh start.
+        """このJobが続きから始めるcheckpoint（pathとstep）。最初から始めるならNone。
 
-        Log metrics from step + 1 onwards so the curve continues where the checkpoint was saved.
+        曲線がcheckpointを保存したところから続くよう、メトリクスはstep + 1以降に記録する。
         """
         return resume_checkpoint_from_environment()
 
@@ -385,7 +387,7 @@ class Run:
         )
 
     def register_output_model(self, *, version: str | None = None, **attributes: Any) -> dict[str, Any]:
-        """Register this Run's output; pass model_name= to reuse one Model across Runs."""
+        """このRunの出力を登録する。model_name=を渡すと、複数のRunで1つのモデルを使い回せる。"""
         if self.entity.get("kind") not in {"training", "finetuning"}:
             raise ConfigurationError("Output models require a training or finetuning Run")
         attributes.setdefault(

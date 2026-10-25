@@ -18,7 +18,7 @@ from mado_tracking.worker.host_execution import CommandExecution
 from mado_tracking.worker.host_state import process_identity, read_json, write_json
 from mado_tracking.worker.runtime import execution_specification
 
-# A successful fixture finishes after a short grace; a leaked 60-second child must fail promptly.
+# 成功するfixtureは短い猶予のあとに終わる。漏れた60秒の子プロセスはすぐに失敗させる。
 COMMAND_TIMEOUT_SECONDS = 5
 TEST_GRACE_SECONDS = 0.15
 TEST_SECRET = "background-fixture-secret"
@@ -49,7 +49,8 @@ def test_entrypoint_exit_stops_background_children_drains_logs_and_preserves_its
             actual_exit_code, captured = command.result(timeout=COMMAND_TIMEOUT_SECONDS)
         finally:
             if not command.done():
-                # The old bug still supports cancel; clean up a regression's real child process.
+                # 以前の不具合があってもcancelは効く。
+                # 不具合が再発したときに残る実際の子プロセスを片付ける。
                 (tmp_path / "cancel.request").touch()
     assert actual_exit_code == exit_code
     child_pid = int((tmp_path / "child.pid").read_text())
@@ -64,7 +65,7 @@ def test_entrypoint_exit_stops_background_children_drains_logs_and_preserves_its
 
 
 def _serve_python_job(tmp_path, monkeypatch, worker_job, worker_settings, entrypoint):
-    """Run host_runner.serve for a Python job whose entrypoint is replaced by ``entrypoint``."""
+    """entrypointを``entrypoint``に置き換えたPythonのJobで、host_runner.serveを実行する。"""
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     specification = execution_specification(worker_job, worker_settings)
@@ -79,7 +80,7 @@ def _serve_python_job(tmp_path, monkeypatch, worker_job, worker_settings, entryp
         return entrypoint(Path(execution.environment["MMT_OUTPUTS_DIR"]))
 
     monkeypatch.setattr(host_runner, "execute_registered_code", run_entrypoint)
-    # serve() installs supervisor signal handlers; keep pytest's own handlers intact.
+    # serve()はsupervisorのシグナルハンドラを設定する。pytest自身のハンドラはそのまま残す。
     monkeypatch.setattr(host_runner.signal, "signal", lambda *_arguments: None)
     host_runner.serve(workspace)
     return workspace, read_json(workspace / "state.json"), seen

@@ -1,4 +1,4 @@
-"""Project Service Accounts and the Project's API token list (Project admin operations)."""
+"""ProjectのService Accountと、ProjectのAPI tokenの一覧（Project adminの操作）。"""
 
 from __future__ import annotations
 
@@ -22,10 +22,10 @@ def list_service_accounts(client: Client, project_id: str) -> list[dict[str, Any
 def create_service_account(
     client: Client, project_id: str, *, name: str, role: str, description: str = ""
 ) -> dict[str, Any]:
-    """Create a Service Account: an account that belongs to the Project, not to a person."""
+    """Service Accountを作る。人ではなく、Projectに属するアカウント。"""
     if role not in SERVICE_ACCOUNT_ROLES:
         raise ConfigurationError("role must be viewer, editor or admin")
-    # Not retried: a resent create would add a second account.
+    # 再試行しない。作成を送り直すと、2つ目のアカウントができる。
     return client.request(
         "POST",
         client.project_path(project_id, "service-accounts"),
@@ -42,20 +42,21 @@ def create_service_account_token(
     scopes: Sequence[str],
     expires_at: datetime | None = None,
 ) -> dict[str, Any]:
-    """Issue an API token owned by the Service Account and return ``{token, item}``.
+    """Service Accountが所有するAPI tokenを発行し、``{token, item}``を返す。
 
-    The token value is returned only by this call. Scopes cannot exceed the account's role.
-    Without ``expires_at`` the API applies its maximum lifetime (365 days by default).
+    tokenの値を返すのはこの呼び出しだけ。scopeはアカウントのroleを超えられない。
+    ``expires_at``が無ければ、APIは有効期間の上限（既定は365日）を使う。
     """
     if isinstance(scopes, str) or not scopes:
         raise ConfigurationError("scopes must be a non-empty sequence of strings")
     body: dict[str, Any] = {"name": name, "scopes": list(scopes)}
     if expires_at is not None:
-        # A naive datetime has no defined instant, so the expiry would depend on the host clock zone.
+        # タイムゾーンの無いdatetimeは時刻が定まらず、期限がホストの時計のタイムゾーン次第になる。
         if expires_at.tzinfo is None:
             raise ConfigurationError("expires_at must be timezone-aware")
         body["expiresAt"] = expires_at.astimezone(UTC).isoformat().replace("+00:00", "Z")
-    # Not retried: a lost response would leave an unseen token behind a second one.
+    # 再試行しない。応答が失われたあとに送り直すと、値を誰も見ていないtokenが残ったまま
+    # 2つ目ができる。
     return client.request(
         "POST",
         client.project_path(project_id, f"service-accounts/{path_id(service_account_id)}/tokens"),
@@ -64,5 +65,5 @@ def create_service_account_token(
 
 
 def list_project_tokens(client: Client, project_id: str) -> list[dict[str, Any]]:
-    """Every personal and Service Account token of the Project, without the token values."""
+    """Projectの個人のtokenとService Accountのtokenのすべて。tokenの値は含まない。"""
     return client.list_project_items(project_id, "tokens")

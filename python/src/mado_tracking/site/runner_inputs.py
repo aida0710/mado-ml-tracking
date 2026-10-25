@@ -1,8 +1,8 @@
-"""Bring a site Job's inputs into its workspace with the Job token before the container starts.
+"""コンテナが起動する前に、siteのJobの入力をJob tokenでworkspaceへ持ってくる。
 
-The same staging code as the worker's 'direct' transfer is used, run in this process: the code
-archive, the SIF or a Docker image converted to one, the input weights, the resume and input
-checkpoints, and the input datasets (only the array member's share of a partitioned version).
+workerの'direct'転送と同じ配置のコードを、このプロセスの中で動かす。対象はコードのアーカイブ、
+SIF（またはSIFに変換したDockerイメージ）、入力の重み、再開用と入力のcheckpoint、入力のデータセット
+（分割したバージョンでは、arrayのメンバーが受け持つ分だけ）。
 """
 
 from __future__ import annotations
@@ -44,9 +44,9 @@ Notify = Callable[[str, str], None]
 
 @dataclass(frozen=True)
 class StagedInputs:
-    # The execution specification's stagedInputs.
+    # 実行仕様のstagedInputs。
     files: dict[str, Any]
-    # The runtime this host executes when it differs from the registered one (a converted SIF).
+    # 登録したruntimeと違うときに、このホストが実行するruntime（変換したSIF）。
     host_runtime: dict[str, Any] | None
 
 
@@ -119,7 +119,7 @@ class InputStaging:
     async def stage_container_inputs(self, files: dict[str, Any]) -> None:
         for container_input in container_inputs(self.job):
             if container_input.kind == "sif":
-                # One download per SIF for every Job of the site; the cache verifies its sha256.
+                # SIFはsiteの全Jobで1回だけダウンロードする。キャッシュがsha256を確かめる。
                 cached = await self.sif_cache.ensure(
                     f"artifact-{container_input.expected_sha256}.sif",
                     self.download_into(container_input),
@@ -187,7 +187,7 @@ class InputStaging:
             self.notify("info", notice)
 
     async def release_datasets(self) -> None:
-        """Drop this Job's dataset cache pins after a failure before launch (best effort)."""
+        """起動前に失敗したとき、このJobのデータセットのキャッシュのpinを外す（できる範囲で）。"""
         try:
             await self.commands.command("dataset-release")
         except (OSError, ValueError):

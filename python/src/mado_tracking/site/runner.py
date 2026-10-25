@@ -1,10 +1,10 @@
-"""The site runner: one Job on a compute node, reporting to the API itself with the Job token.
+"""siteのrunner。計算ノード上で1つのJobを動かし、Job tokenで自らAPIに報告する。
 
-runner/start → inputs → GPUs → phase running → container → outputs → metrics and declarations →
-runner/finish. A heartbeat every five seconds carries the phase and answers cancelRequested; a
-rejected heartbeat (401/410: the Job is over) stops the container and ends the runner without a
-finish. SIGTERM, the scheduler's time limit, stops the container and finishes as timed_out.
-The container runs through the worker's own execution code (execute_registered_code).
+runner/start → 入力 → GPU → phaseをrunningに → コンテナ → 出力 → メトリクスと宣言 →
+runner/finish。5秒ごとのheartbeatがphaseを運び、cancelRequestedに応える。heartbeatが
+拒まれると（401/410。Jobが終わっている）、コンテナを止め、finishせずにrunnerを終える。
+スケジューラの時間制限によるSIGTERMでは、コンテナを止めてtimed_outとしてfinishする。
+コンテナは、worker自身の実行のコード（execute_registered_code）で動かす。
 """
 
 from __future__ import annotations
@@ -48,13 +48,13 @@ from .runner_outputs import OutputSaver
 from .spec_directory import RunnerSettings, SpecDirectory, secret_values_of
 
 LOGGER = logging.getLogger(__name__)
-# Calls that must reach the API (start, finish, saving results) ride out an outage of minutes.
+# APIに届く必要がある呼び出し（開始、終了、結果の保存）は、数分の停止を乗り切る。
 API_ATTEMPTS = 8
 API_RETRY_INITIAL_SECONDS = 2.0
 API_RETRY_MAX_SECONDS = 30.0
-# After a stop, the container gets its grace period plus Docker's stop/remove round trips.
+# 止めたあと、コンテナには猶予時間に加え、Dockerのstop/removeのやり取りの分の時間を与える。
 STOP_MARGIN_SECONDS = 30.0
-# jobs.runner_host in the API's database.
+# APIのデータベースのjobs.runner_host。
 MAX_HOST_LENGTH = 253
 WORKSPACE_MODE = 0o700
 FIRST_PHASE = "waiting_resources"
@@ -62,7 +62,7 @@ FIRST_PHASE = "waiting_resources"
 EXIT_FINISHED = 0
 EXIT_FAILED = 1
 EXIT_CONFIGURATION_ERROR = 2
-# The API refused the Job (already ended, another runner, revoked token); nothing was reported.
+# APIがJobを拒んだ（既に終わった、別のrunnerが持っている、tokenが失効した）。何も報告していない。
 EXIT_NOT_RUN = 3
 
 Result = TypeVar("Result")
@@ -81,7 +81,7 @@ class StopReason(enum.Enum):
     CANCELED = "canceled"
     TIMED_OUT = "timed_out"
     INTERRUPTED = "interrupted"
-    # The API ended the Job or revoked its token: nothing more can be reported.
+    # APIがJobを終わらせたか、tokenを失効させた。もう何も報告できない。
     LOST = "lost"
 
 
@@ -122,7 +122,8 @@ def is_transient(error: Exception) -> bool:
 
 
 def scheduler_gpu_ids(environment: Mapping[str, str], count: int) -> list[str]:
-    """The GPUs a scheduler gave this node: CUDA_VISIBLE_DEVICES, else the first `count` ordinals."""
+    """スケジューラがこのノードに割り当てたGPU。CUDA_VISIBLE_DEVICES、無ければ先頭から
+    `count`個の番号。"""
     if count <= 0:
         return []
     visible = [value.strip() for value in environment.get("CUDA_VISIBLE_DEVICES", "").split(",")]
@@ -137,7 +138,7 @@ def array_index_from_environment(environment: Mapping[str, str]) -> int:
 
 
 class SiteRunner:
-    """Read the spec directory and run its Job; a Job that fails validation is failed at the API."""
+    """specディレクトリを読んでそのJobを動かす。検証に通らないJobは、APIで失敗にする。"""
 
     def __init__(
         self,
@@ -210,7 +211,7 @@ class SiteRunner:
     async def report_invalid_job(
         self, payload: dict[str, Any], api_settings: ApiSettings, error: ConfigurationError
     ) -> int:
-        """Fail a Job whose instructions do not validate instead of leaving it to wait in vain."""
+        """指示が検証に通らないJobを、無駄に待たせたままにせず失敗にする。"""
         LOGGER.error("The Job in the spec directory failed validation: %s", error)
         identity = payload.get("job")
         if not isinstance(identity, dict) or not identity.get("id") or not identity.get("projectId"):
@@ -241,7 +242,7 @@ class SiteRunner:
 
 
 class RunnerSession:
-    """One validated Job from runner/start to runner/finish."""
+    """runner/startからrunner/finishまでの、検証済みの1つのJob。"""
 
     def __init__(
         self,
@@ -288,7 +289,7 @@ class RunnerSession:
 
     async def run(self, *, handle_signals: bool) -> int:
         if handle_signals:
-            # Installed first: a time limit that strikes while the API is slow still ends as timed_out.
+            # 最初に入れる。APIが遅い間に時間制限が来ても、timed_outとして終わる。
             self.install_signal_handlers()
         try:
             started = await self.with_api_retries(
@@ -334,26 +335,26 @@ class RunnerSession:
         await self.flush_logs()
         return await self.finish(outcome)
 
-    # Stop requests -----------------------------------------------------------------------------
+    # 停止の要求 --------------------------------------------------------------------------------
 
     def install_signal_handlers(self) -> None:
         loop = asyncio.get_running_loop()
-        # The login session that started a direct-host runner may end; the Job does not.
+        # direct-hostのrunnerを起動したログインのsessionは終わることがあるが、Jobは終わらない。
         signal.signal(signal.SIGHUP, signal.SIG_IGN)
         loop.add_signal_handler(signal.SIGTERM, self.request_stop, StopReason.TIMED_OUT)
         loop.add_signal_handler(signal.SIGINT, self.request_stop, StopReason.INTERRUPTED)
 
     def request_stop(self, reason: StopReason) -> None:
-        # The first reason decides the finish, except that a lost Job cannot be finished at all.
+        # 最初の理由がfinishの内容を決める。ただし、lostのJobはそもそもfinishできない。
         if self.stop_reason is None or reason is StopReason.LOST:
             self.stop_reason = reason
         if self.workspace_ready:
-            # CommandExecution and DockerContainer stop the running command when this file appears.
+            # このファイルが現れると、CommandExecutionとDockerContainerは実行中のコマンドを止める。
             (self.workspace / "cancel.request").touch(mode=0o600)
         self.stopping.set()
 
     async def until_stopped(self, awaitable: Awaitable[Result]) -> Result:
-        """Await the operation, or raise Stopped as soon as a stop is requested."""
+        """処理をawaitする。停止が要求されたら、すぐにStoppedを投げる。"""
         task = asyncio.ensure_future(awaitable)
         stop = asyncio.ensure_future(self.stopping.wait())
         try:
@@ -367,7 +368,7 @@ class RunnerSession:
                 pending.cancel()
             await asyncio.gather(task, stop, return_exceptions=True)
 
-    # Background loops --------------------------------------------------------------------------
+    # 裏で回るループ ----------------------------------------------------------------------------
 
     async def heartbeat_loop(self) -> None:
         loop = asyncio.get_running_loop()
@@ -428,7 +429,7 @@ class RunnerSession:
         except LeaseRejected:
             pass
 
-    # The Job -----------------------------------------------------------------------------------
+    # Job ---------------------------------------------------------------------------------------
 
     async def execute(self) -> Outcome:
         staging = InputStaging(
@@ -528,7 +529,7 @@ class RunnerSession:
         stop.cancel()
         await asyncio.gather(stop, return_exceptions=True)
         if not running.done():
-            # cancel.request is in place; the container has its grace period to stop.
+            # cancel.requestは置いてある。コンテナには止まるまでの猶予時間がある。
             await asyncio.wait({running}, timeout=self.settings.cancel_grace_seconds + STOP_MARGIN_SECONDS)
         if not running.done():
             LOGGER.error("The container did not stop in time; finishing without waiting for it")
@@ -557,10 +558,10 @@ class RunnerSession:
         return Outcome("finished", exit_code=0), results
 
     async def save_results(self, outcome: Outcome, results: dict[str, Any] | None) -> Outcome:
-        """The snapshot records what ran, so it is saved for every end but a time limit."""
+        """snapshotは何を動かしたかの記録なので、時間制限とlost以外のどの終わり方でも保存する。"""
         if self.stop_reason in {StopReason.TIMED_OUT, StopReason.LOST}:
             return outcome
-        # After a cancel there is no deadline; before any stop, a later stop aborts the saving.
+        # 取り消しのあとは期限が無い。停止の前なら、あとから来た停止が保存を打ち切る。
         guard = self.until_stopped if self.stop_reason is None else _unguarded
         saver = OutputSaver(self.job, api=self.api, workspace=self.workspace)
         snapshot = self.state.get("sourceSnapshot")
@@ -598,7 +599,7 @@ class RunnerSession:
         raise AssertionError("API attempts exhausted")
 
     def record_terminal_state(self, status: str) -> None:
-        """A terminal state.json releases the Job's dataset cache pins."""
+        """終了状態のstate.jsonが、Jobのデータセットのキャッシュのピン留めを外す。"""
         if not self.workspace_ready:
             return
         self.state["status"] = status
@@ -632,7 +633,7 @@ async def _unguarded(awaitable: Awaitable[Result]) -> Result:
 
 
 def run_site_runner(spec_directory: Path, *, environment: Mapping[str, str] | None = None) -> int:
-    """`mado-tracking site-run <spec dir>`: run jobs/<MMT_ARRAY_INDEX>.json to its end."""
+    """`mado-tracking site-run <spec dir>`。jobs/<MMT_ARRAY_INDEX>.jsonを最後まで動かす。"""
     os.umask(0o077)
     values = os.environ if environment is None else environment
     try:

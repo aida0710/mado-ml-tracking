@@ -1,8 +1,9 @@
-"""Sites: computers added on the Web whose Jobs a job shell submits (ComputeTarget.executor='site').
+"""site。画面で追加したコンピュータのうち、そのJobをjob shellが投入するもの
+（ComputeTarget.executor='site'）。
 
-A site's connection, job shell and each person's account settings live in tracking. A launcher
-logs in with keys it makes itself and runs the site's job shell with a spec directory; where
-logins need a one-time password, or the site is a researcher's PC, the person runs
-`mado-tracking submit` there instead. The runner on the compute node then reports to the API
-itself with the Job token (docs/sites.md).
+siteの接続、job shell、各人のアカウント設定はmado ML Trackingが持つ。launcherは自分で作った
+鍵でログインし、specディレクトリを渡してsiteのjob shellを動かす。ログインにワンタイム
+パスワードが要るsiteや、研究者のPCであるsiteでは、代わりに本人がそこで
+`mado-tracking submit`を実行する。その後は、計算ノード上のrunnerがJob tokenで自らAPIに
+報告する（docs/sites.md）。
 """

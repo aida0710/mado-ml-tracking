@@ -1,4 +1,4 @@
-"""Resolve and verify the immutable execution instructions captured on a Run."""
+"""Runに記録された、変更できない実行の指示を解決して検証する。"""
 
 from __future__ import annotations
 

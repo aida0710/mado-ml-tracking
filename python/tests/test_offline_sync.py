@@ -21,7 +21,7 @@ TOKEN = "sync-test-secret"
 
 
 class FakeSyncApi:
-    """In-memory /sync, /artifact-uploads and /runs/:r/media with the contract's idempotency rules."""
+    """メモリ上の/sync、/artifact-uploads、/runs/:r/media。契約の冪等性の規則に従う。"""
 
     def __init__(self):
         self.runs: dict[str, dict] = {}
@@ -57,7 +57,7 @@ class FakeSyncApi:
         if segments[0] == "artifacts" and request.method == "GET":
             return httpx.Response(200, json=self.artifacts[segments[1]])
         if segments[0] == "runs" and segments[2:] == ["media"]:
-            # RunMediaCreate {items}; a resent id returns the stored item, still with 201.
+            # RunMediaCreate {items}。送り直したidには保存済みの項目を返す。そのときも201。
             items = json.loads(body)["items"]
             for item in items:
                 self.media.setdefault(item["id"], item)
@@ -160,7 +160,8 @@ def offline_environment(monkeypatch, tmp_path):
     monkeypatch.delenv("MMT_RUN_ID", raising=False)
     monkeypatch.delenv("MMT_MODE", raising=False)
     monkeypatch.setattr(http, "retry_delay", lambda *_arguments: 0)
-    # record_offline_run writes a metric and a log per loop, so each loop becomes one batch file.
+    # record_offline_runはループごとにメトリクスとログを1つずつ書くので、
+    # ループ1回が1つのバッチファイルになる。
     monkeypatch.setattr(spool, "SPOOL_BATCH_MAX_RECORDS", 2)
 
 
@@ -225,7 +226,7 @@ def test_disconnect_at_batch_three_resumes_without_resending_batches_one_and_two
     second = sync_run_directory(api.client(), directory)
 
     assert second.outcome == "completed" and second.batches == 2
-    # Batch 3 and 4, then the status as sequence 5; batches 1 and 2 are not sent again.
+    # バッチ3と4、続いてシーケンス番号5としてstatus。バッチ1と2は送り直さない。
     assert api.batch_sequences == [3, 4, 5]
     assert sorted(point["step"] for point in api.metrics) == [0, 1, 2, 3]
 
@@ -237,7 +238,7 @@ def test_syncing_the_same_directory_twice_adds_nothing_on_the_api(tmp_path):
     counts = (len(api.runs), len(api.batches), len(api.metrics), len(api.artifacts), len(api.uploads))
 
     again = sync_run_directory(api.client(), directory)
-    # Even a lost sync-state only costs resending: the API deduplicates by run, batch and sha256.
+    # sync-stateを失っても、送り直しの手間がかかるだけ。APIはRun、バッチ、sha256で重複を除く。
     (directory / "sync-state.json").unlink()
     after_lost_state = sync_run_directory(api.client(), directory)
 
@@ -338,7 +339,7 @@ def test_auto_mode_switches_to_the_spool_when_the_api_becomes_unreachable(tmp_pa
         if path == "runs":
             run_id = str(uuid4())
             online_runs[run_id] = {"id": run_id, "status": "queued", **body}
-            # The fake sync API knows the Run too, as the real API would.
+            # 本物のAPIと同じく、偽のsync APIもそのRunを知っている。
             api.runs[run_id] = {"id": run_id, "status": "queued", "params": {}, "tags": {}, **body}
             return httpx.Response(201, json=online_runs[run_id])
         run_id = path.split("/")[1]
@@ -369,7 +370,7 @@ def test_auto_mode_switches_to_the_spool_when_the_api_becomes_unreachable(tmp_pa
     report = sync_run_directory(api.client(), directory)
 
     assert report.outcome == "completed"
-    # The Run already exists, so sync does not PUT it, and step 0 sent online is not sent again.
+    # Runは既にあるのでsyncはPUTしない。オンラインで送ったstep 0も送り直さない。
     assert not [path for method, path in api.requests if method == "PUT"]
     assert sorted(point["step"] for point in api.metrics) == [0, 1, 2]
     assert api.runs[run.id]["status"] == "finished"

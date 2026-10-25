@@ -1,4 +1,4 @@
-"""Detached target-side runner. All credentials arrive via private stdin/spec files."""
+"""コンピュータ側で切り離して動くrunner。認証情報はすべて非公開のstdinかspecのファイルで届く。"""
 
 from __future__ import annotations
 
@@ -43,14 +43,14 @@ from .source_tree import MAX_SOURCE_ARCHIVE_BYTES
 from .telemetry import collect_system_metrics
 from .workflow_context import DATASET_USAGE_FILENAME, dataset_usage_document, workflow_context_environment
 
-# A single status request returns bounded log output, regardless of job duration.
+# 1回のstatusリクエストが返すログの量は、Jobの長さにかかわらず上限がある。
 STATUS_LOG_BYTES = 64 * 1024
 PROTOCOL_MAX_INPUT_BYTES = 32 * 1024**2
-# An orphan still uses the same cancellation grace as a supervised process.
+# supervisorを失ったプロセスにも、supervisorが見ているプロセスと同じ取り消しの猶予を使う。
 ORPHAN_CANCEL_GRACE_SECONDS = 10.0
-# These read their own stdin framing (a JSON line, then the relayed tar).
+# これらは自分でstdinの区切りを読む（JSONを1行、そのあとに中継されたtar）。
 DATASET_COMMANDS = {"dataset-materialize", "dataset-release"}
-# `upload` receives the source archive; `upload-<kind>` the other staged inputs.
+# `upload`はソースのアーカイブを、`upload-<kind>`はほかのステージングした入力を受け取る。
 UPLOAD_COMMANDS = {"upload", *(f"upload-{kind}" for kind in STAGED_INPUT_PATHS if kind != "source")}
 
 
@@ -102,7 +102,7 @@ def launch(workspace: Path, specification: dict[str, Any], runtime_path: Path) -
 
 
 def serve(workspace: Path) -> None:
-    # Parent and supervisor share the launch lock; the parent publishes PID before setup can start.
+    # 親とsupervisorは起動のロックを共有する。親がPIDを書き込むまで、setupは始まらない。
     with (workspace / "start.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         state = read_json(workspace / "state.json")
@@ -169,7 +169,7 @@ def serve(workspace: Path) -> None:
         status=status, exitCode=exit_code, error=failure, endedAt=time.time() if status != "unknown" else None
     )
     write_json(workspace / "state.json", state)
-    # Keep only nonsensitive execution metadata after terminal state has been persisted.
+    # 終了状態を保存したあとは、秘密を含まない実行のメタデータだけを残す。
     if status in {"finished", "failed", "canceled"}:
         (workspace / "spec.json").unlink(missing_ok=True)
         (workspace / "container.env").unlink(missing_ok=True)
@@ -207,13 +207,13 @@ def resume_docker_supervisor(workspace: Path) -> None:
 
 
 def _execution_environment(specification: dict[str, Any], workspace: Path) -> dict[str, str]:
-    # A local development job must not inherit the worker's unrelated secrets or SSH credentials.
+    # ローカル開発のJobに、workerの無関係な秘密情報やSSHの認証情報を引き継がせない。
     allowed_host_names = {"PATH", "HOME", "LANG", "LC_ALL", "LD_LIBRARY_PATH", "TMPDIR"}
     environment = {name: value for name, value in os.environ.items() if name in allowed_host_names}
     environment.update(specification["codeVersion"]["environment"])
     environment.update(specification["sdkEnvironment"])
-    # Python jobs use the same outputs contract as containers, so code without the SDK can hand
-    # files (for example Task output model weights) to the worker for upload.
+    # PythonのJobもコンテナと同じ出力の取り決めを使うので、SDKを使わないコードでも、
+    # ファイル（例: Taskの出力モデルの重み）をworkerに渡してアップロードさせられる。
     outputs = workspace / "outputs"
     if outputs.is_symlink():
         raise ValueError("Output directory must not be a symlink")
@@ -235,7 +235,8 @@ def _execution_environment(specification: dict[str, Any], workspace: Path) -> di
             [dataset["id"] for dataset in specification["context"]["inputDatasets"]]
         ),
     )
-    # Containers bind the datasets themselves (container_layout); symlinks would dangle there.
+    # コンテナはデータセットを自分でbindする（container_layout）。
+    # symlinkはコンテナの中ではリンク切れになる。
     is_host_python = specification["codeVersion"]["runtime"]["kind"] == "python"
     dataset_paths = staged_dataset_paths(workspace, specification) if is_host_python else None
     if dataset_paths is not None:
@@ -271,12 +272,12 @@ def _execution_environment(specification: dict[str, Any], workspace: Path) -> di
     if dataset_usage is not None:
         write_json(dataset_usage_file, dataset_usage)
     write_json(workspace / "parameters.json", specification["context"]["parameters"])
-    # Separate JSON files are objects even when a Run has no model / datasets.
+    # Runにモデルやデータセットが無くても、個別のJSONファイルはオブジェクトにする。
     write_json(workspace / "model-version.json", {"modelVersion": specification["context"]["modelVersion"]})
     write_json(
         workspace / "dataset-versions.json", {"inputDatasets": specification["context"]["inputDatasets"]}
     )
-    # A spec saved before upstream inputs existed has no upstreamRun key.
+    # 上流Runの入力の機能ができる前に保存されたspecには、upstreamRunのキーが無い。
     if specification["context"].get("upstreamRun") is not None:
         write_json(upstream_run_file, specification["context"]["upstreamRun"])
     if specification["context"].get("resumeCheckpoint") is not None:
@@ -304,7 +305,7 @@ def poll(workspace: Path, request: dict[str, Any]) -> dict[str, Any]:
             with path.open("rb") as content:
                 content.seek(offset)
                 raw = content.read(STATUS_LOG_BYTES)
-        # Retain any trailing incomplete UTF-8 sequence for the next status request.
+        # 末尾の途中で切れたUTF-8の並びは、次のstatusリクエストのために残す。
         while raw:
             try:
                 raw.decode("utf-8")
@@ -326,7 +327,8 @@ def poll(workspace: Path, request: dict[str, Any]) -> dict[str, Any]:
             pid=int(state.get("container", {}).get("pid", state.get("processPid", 0))),
             gpu_ids=context.get("gpuIds", []),
             step=int(request.get("step", 0)),
-            # Each poll is a new process; disk/network rates need the previous counters.
+            # pollのたびに新しいプロセスになる。ディスクや
+            # ネットワークの速度を出すには前回のカウンタが要る。
             state_path=workspace / "telemetry-state.json",
         )
     return {"state": state, "logs": logs, "metrics": metrics}

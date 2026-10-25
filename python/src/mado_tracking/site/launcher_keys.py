@@ -1,12 +1,12 @@
-"""The launcher's SSH keys: ssh-keygen makes them here, and only their public halves go to the API.
+"""launcherのSSHの鍵。ssh-keygenがここで作り、APIには公開鍵だけを送る。
 
     <state dir>/keys/        0700
-      <keyId>                the private key (0600); it never leaves this host
-      <keyId>.pub            its public half, as PUT /launcher/keys/:id sends it
+      <keyId>                0600の秘密鍵。このホストから出ない
+      <keyId>.pub            PUT /launcher/keys/:idで送る形の、その公開鍵
 
-Every poll compares the files with the keys GET /launcher/config lists. A listed key without
-files is made and published; a key still `requested`, or one whose published half is not the one
-on disk, is published again; the files of keys no longer listed (revoked or replaced) are deleted.
+pollのたびに、ファイルとGET /launcher/configが並べる鍵を比べる。一覧にあってファイルが無い
+鍵は、作って公開する。まだ`requested`の鍵や、公開済みの鍵がディスクのものと違う鍵は、
+公開し直す。一覧に無くなった鍵（失効したか、置き換えた）のファイルは消す。
 """
 
 from __future__ import annotations
@@ -27,19 +27,19 @@ from .launcher_assignment import LauncherKey
 LOGGER = logging.getLogger(__name__)
 KEYS_DIRECTORY = "keys"
 PUBLIC_KEY_SUFFIX = ".pub"
-# The API takes ed25519 keys only (invalid_public_key otherwise).
+# APIはed25519の鍵しか受け付けない（それ以外はinvalid_public_key）。
 KEY_TYPE = "ed25519"
 PUBLIC_KEY_LINE = re.compile(r"^ssh-ed25519 [A-Za-z0-9+/]+={0,2}(?: [^\r\n\x00]*)?$")
-# ssh-keygen needs well under a second for an ed25519 key.
+# ssh-keygenがed25519の鍵を作るのにかかる時間は、1秒よりずっと短い。
 KEYGEN_TIMEOUT_SECONDS = 60.0
-# The API takes comments of up to 300 characters; the name part keeps well inside that.
+# APIが受け付けるコメントは300文字まで。名前の部分は、それに十分収まる長さにする。
 MAX_COMMENT_NAME_CHARACTERS = 100
-# (keyId, public key line) -> None; raises ApiError when the API refuses it.
+# (keyId, 公開鍵の行) -> None。APIが拒んだらApiErrorを投げる。
 KeyPublisher = Callable[[str, str], None]
 
 
 def key_comment(launcher_name: str, key_id: str) -> str:
-    """mmt-launcher:<launcher name>:<keyId>, one word, so the key line keeps its three fields."""
+    """mmt-launcher:<launcher name>:<keyId>。鍵の行のフィールドが3つのままになるよう1語にする。"""
     name = "".join(
         character if character.isprintable() and not character.isspace() else "-"
         for character in launcher_name[:MAX_COMMENT_NAME_CHARACTERS]
@@ -48,7 +48,7 @@ def key_comment(launcher_name: str, key_id: str) -> str:
 
 
 def key_material(public_key: str) -> str:
-    """The key type and blob: a different comment does not make a different key."""
+    """鍵の種類とblob。コメントが違っても、別の鍵にはならない。"""
     return " ".join(public_key.split()[:2])
 
 
@@ -63,7 +63,7 @@ class LauncherKeys:
     def __init__(self, state_directory: Path, *, masker: SecretMasker):
         self.directory = state_directory / KEYS_DIRECTORY
         self.directory.mkdir(mode=PRIVATE_DIRECTORY_MODE, parents=True, exist_ok=True)
-        # An existing directory keeps its mode on mkdir; private keys need it closed.
+        # 既にあるディレクトリのモードはmkdirでは変わらない。秘密鍵を置くので閉じる必要がある。
         os.chmod(self.directory, PRIVATE_DIRECTORY_MODE)
         self.masker = masker
 
@@ -74,7 +74,7 @@ class LauncherKeys:
         return self.directory / f"{require_uuid(key_id, 'keyId')}{PUBLIC_KEY_SUFFIX}"
 
     def public_key(self, key_id: str) -> str | None:
-        """The public key line of a complete key on disk; None when either half is missing."""
+        """ディスク上の完全な鍵の、公開鍵の行。どちらかが欠けていればNone。"""
         if not self.private_key(key_id).is_file():
             return None
         try:
@@ -84,11 +84,11 @@ class LauncherKeys:
         return line if PUBLIC_KEY_LINE.fullmatch(line) else None
 
     def create(self, key_id: str, *, comment: str) -> str:
-        """Make the key with ssh-keygen, replacing an incomplete earlier attempt; returns its public half."""
+        """ssh-keygenで鍵を作り、以前の不完全な試行を置き換える。公開鍵を返す。"""
         private_key = self.private_key(key_id)
         private_key.unlink(missing_ok=True)
         self._public_key_file(key_id).unlink(missing_ok=True)
-        # Separate arguments, no shell: the comment carries the launcher's name from the Web.
+        # 引数は分けて渡し、シェルは通さない。コメントには画面で付けたlauncherの名前が入る。
         argv = ["ssh-keygen", "-q", "-t", KEY_TYPE, "-N", "", "-C", comment, "-f", str(private_key)]
         try:
             completed = subprocess.run(
@@ -114,7 +114,7 @@ class LauncherKeys:
         return public_key
 
     def synchronize(self, keys: Sequence[LauncherKey], *, launcher_name: str, publish: KeyPublisher) -> None:
-        """Make and publish what the API lists, then delete the keys it no longer lists."""
+        """APIが並べるものを作って公開し、そのあと一覧に無くなった鍵を消す。"""
         for key in keys:
             try:
                 self._synchronize(key, launcher_name=launcher_name, publish=publish)
@@ -126,7 +126,7 @@ class LauncherKeys:
                     self.masker.mask(str(error)),
                 )
             except ApiError as error:
-                # 409 site_key_revoked: the next configuration no longer lists it, and it is deleted.
+                # 409 site_key_revoked。次の設定ではもう一覧に無く、鍵は消される。
                 LOGGER.warning(
                     "Key %s for site %s was not published: %s",
                     key.id,

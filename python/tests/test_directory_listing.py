@@ -1,4 +1,4 @@
-"""Reading one directory of a computer: the real script on this host, its parsing and its limits."""
+"""コンピュータのディレクトリを1つ読む: このホストでの実際のスクリプト、その解析、その上限。"""
 
 from __future__ import annotations
 
@@ -75,7 +75,7 @@ def test_listing_reports_directories_executables_and_hidden_entries_with_spaces(
         ".env": {"name": ".env", "kind": "file", "executable": False},
         "..double": {"name": "..double", "kind": "file", "executable": False},
         "with space": {"name": "with space", "kind": "directory", "executable": False},
-        # A symlink counts as what it points to; a broken one is a file.
+        # symlinkはリンク先として数える。壊れたsymlinkはファイル。
         "linked-data": {"name": "linked-data", "kind": "directory", "executable": False},
         "dangling": {"name": "dangling", "kind": "file", "executable": False},
     }
@@ -127,7 +127,7 @@ def test_large_directory_lists_the_first_entries_and_says_it_was_truncated(tmp_p
 
 
 class LoginShellTransport(CommandTransport):
-    """Runs the command line through a shell, as sshd hands SSHTransport's command to the login shell."""
+    """sshdがSSHTransportのコマンドをログインシェルに渡すように、コマンドをシェルで実行する。"""
 
     def command_argv(self, command: Sequence[str]) -> list[str]:
         return ["sh", "-c", shlex.join(command)]
@@ -162,7 +162,7 @@ def test_script_goes_on_stdin_and_the_path_is_only_an_argument(monkeypatch: pyte
             command: Sequence[str],
             *,
             stdin: bytes | Path = b"",
-            timeout: float | None = None,  # noqa: ASYNC109 -- mirrors CommandTransport.run
+            timeout: float | None = None,  # noqa: ASYNC109 -- CommandTransport.runに合わせる
         ) -> bytes:
             calls.append((list(command), stdin))
             return b"missing\0/srv/$(id)\0"
@@ -251,7 +251,7 @@ def test_listing_beyond_the_api_size_drops_the_last_entries_and_says_it_was_trun
 def test_output_that_is_not_the_scripts_is_not_taken_for_a_listing():
     for banner in (b"", b"Welcome to gpu-host\n"):
         assert parse_listing_output(banner, requested_path="/srv", masker=SecretMasker()) is None
-    # An entry cut off at the end is left out; the complete ones stay.
+    # 末尾で切れたエントリは除き、完全なものは残す。
     cut = b"ok\0/srv\0" + entry_tokens(("d", "0", "complete")) + b"f\0" + b"1\0trunc"
     result = parse_listing_output(cut, requested_path="/srv", masker=SecretMasker())
     assert result is not None and [entry["name"] for entry in result["entries"]] == ["complete"]

@@ -1,4 +1,4 @@
-"""The SDK records actual training inputs and preserves imported model version identities."""
+"""SDKは実際の学習の入力を記録し、取り込んだモデルバージョンの識別情報を保つ。"""
 
 import json
 

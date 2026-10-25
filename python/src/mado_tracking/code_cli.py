@@ -1,7 +1,7 @@
-"""`mado-tracking code register --job-file mmt-job.toml --project <id>`: register a job template.
+"""`mado-tracking code register --job-file mmt-job.toml --project <id>`: job templateの登録。
 
-The template's image tag is resolved to its digest first, so the CodeVersion pins the exact
-image; the registry is asked anonymously, or as MMT_REGISTRY_USERNAME with MMT_REGISTRY_PASSWORD.
+templateのイメージのタグを先にdigestへ解決し、CodeVersionがイメージを正確に固定するようにする。
+レジストリへは匿名で、またはMMT_REGISTRY_USERNAMEとMMT_REGISTRY_PASSWORDで問い合わせる。
 """
 
 from __future__ import annotations

@@ -1,4 +1,4 @@
-"""Validate WorkerJob snapshots before using them as execution instructions."""
+"""WorkerJobのスナップショットを、実行の指示として使う前に検証する。"""
 
 from __future__ import annotations
 
@@ -14,17 +14,18 @@ from ..execution_snapshot import resolve_execution_snapshot
 
 RUN_KINDS = {"inference", "evaluation", "training", "finetuning", "processing"}
 TERMINAL_STATUSES = {"finished", "failed", "canceled"}
-# The worker drives ssh/local targets; a site's runner (mado_tracking.site) parses site Jobs.
+# workerはssh・localのコンピュータを動かす。siteのJobを解析するのは
+# siteのrunner（mado_tracking.site）。
 WORKER_EXECUTORS = frozenset({"local", "ssh"})
 SITE_EXECUTORS = frozenset({"site"})
 SIF_RUNTIME_KINDS = frozenset({"singularity", "apptainer"})
-# The Run tag the API sets on a Job started for a saved checkpoint (checkpoint_saved hooks).
+# 保存されたcheckpointのために起動したJobに、APIが付けるRunのタグ（checkpoint_savedのフック）。
 INPUT_CHECKPOINT_TAG = "mmt.inputCheckpointId"
 ENVIRONMENT_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-# Job tokens are what the Job's own code authenticates with; the worker token never reaches it.
+# Job tokenは、Job自身のコードが認証に使うもの。worker tokenがコードに届くことは無い。
 JOB_TOKEN = re.compile(r"^mado_mtj_[A-Za-z0-9_-]+$")
 SHA256 = re.compile(r"^[a-f0-9]{64}$")
-# An 'artifacts' DatasetVersion's digest is the server-computed manifest digest.
+# 'artifacts'のDatasetVersionのdigestは、サーバーが計算したmanifestのdigest。
 MANIFEST_DIGEST = re.compile(r"^sha256:[a-f0-9]{64}$")
 DATASET_TRANSFERS = {"relay", "direct"}
 
@@ -47,13 +48,13 @@ class WorkerJob:
     code_version: dict[str, Any]
     model_version: dict[str, Any] | None
     input_datasets: list[dict[str, Any]]
-    # Only claim/resume of a not-yet-started Job carries one; the journal keeps it afterwards.
+    # これを持つのは、まだ始まっていないJobのclaim・resumeだけ。その後はjournalが持つ。
     job_token: str | None = field(default=None, repr=False)
-    # The checkpoint the Run continues from; staged and verified before the entrypoint starts.
+    # Runが続きから始めるcheckpoint。entrypointが起動する前に配置して確かめる。
     resume_checkpoint: dict[str, Any] | None = None
-    # A checkpoint handed to the code as an input (checkpoint_saved hooks); not a resume.
+    # 入力としてコードに渡すcheckpoint（checkpoint_savedのフック）。再開ではない。
     input_checkpoint: dict[str, Any] | None = None
-    # The manual trigger payload or webhook body of the hook start (trigger-payload.json).
+    # フックの起動の、手動起動のペイロードかWebhookの本文（trigger-payload.json）。
     trigger_payload: dict[str, Any] | None = None
 
     @classmethod
@@ -172,7 +173,7 @@ class WorkerJob:
 
 
 def target_runs_runtime(executor: str, runtime_kinds: list[str], runtime_kind: str) -> bool:
-    """A target runs its registered runtimes; a site also runs a Docker image as a converted SIF."""
+    """コンピュータは登録したruntimeを動かす。siteはDockerイメージも、SIFに変換して動かす。"""
     if executor != "site":
         return runtime_kind in runtime_kinds
     if runtime_kind == "python":
@@ -187,7 +188,7 @@ def _is_positive_integer(value: Any) -> bool:
 
 
 def validate_dataset_content(dataset: dict[str, Any]) -> None:
-    """What the worker needs to fetch and verify a version."""
+    """workerがバージョンを取得して確かめるのに必要なもの。"""
     content_kind = dataset.get("contentKind")
     if content_kind == "artifacts":
         file_count = dataset.get("fileCount")
@@ -229,14 +230,14 @@ def _is_file_entry(entry: Any) -> bool:
 
 
 def validate_resume_checkpoint(checkpoint: dict[str, Any], *, run: dict[str, Any]) -> None:
-    """The checkpoint must be the one pinned to the Run, with Artifacts the worker can verify."""
+    """checkpointは、Runに固定されたもので、workerが確かめられるArtifactを持つものに限る。"""
     _validate_checkpoint_files(checkpoint, label="resumeCheckpoint")
     if checkpoint["id"] != run.get("resumeCheckpointId"):
         raise ConfigurationError("WorkerJob resumeCheckpoint is not the Run's pinned checkpoint")
 
 
 def validate_input_checkpoint(checkpoint: dict[str, Any], *, run: dict[str, Any]) -> None:
-    """An input checkpoint is verifiable like a resume one; the Run's tag, when set, names it."""
+    """入力のcheckpointも再開用と同じく確かめられる。Runのタグがあれば、それがcheckpointを指す。"""
     _validate_checkpoint_files(checkpoint, label="inputCheckpoint")
     tagged = (run.get("tags") or {}).get(INPUT_CHECKPOINT_TAG)
     if tagged is not None and tagged != checkpoint["id"]:

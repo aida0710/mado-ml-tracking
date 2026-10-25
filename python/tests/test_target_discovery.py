@@ -1,4 +1,4 @@
-"""Discovery of a computer's machine, Pythons and directories, on this host and from scripted output."""
+"""コンピュータのマシン、Python、ディレクトリの検出。このホスト上と、用意した出力から。"""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from mado_tracking.worker.target_discovery import (
 )
 from mado_tracking.worker.transport import CommandTransport, LocalTransport
 
-# Locations df lists on any Linux host that can never hold a work directory.
+# どのLinuxホストでもdfが出すが、作業ディレクトリには決してならない場所。
 SYSTEM_LOCATIONS = ("/proc", "/sys", "/dev", "/run", "/boot", "/snap", "/usr", "/etc")
 
 
@@ -35,7 +35,7 @@ def discover_here() -> TargetDiscovery:
 
 
 def write_python(path: Path, body: str, *, mode: int = 0o755) -> Path:
-    """A stand-in interpreter: a shell script that answers the version question its own way."""
+    """インタプリタの代役: バージョンの問い合わせに独自の答えを返すシェルスクリプト。"""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(f"#!/bin/sh\n{body}\n")
     path.chmod(mode)
@@ -81,7 +81,7 @@ def test_discovery_finds_venv_conda_and_pyenv_pythons_in_the_home_in_a_fixed_ord
     in_home = [path for path in found if path.startswith(str(home))]
     assert in_home == [str(garbled), str(train), str(conda_base), str(conda_env), str(pyenv)]
     assert found[str(train)] == "3.12.1"
-    # An interpreter that answers something else has no version rather than a guessed one.
+    # 別のことを答えるインタプリタは、推測したバージョンでなく「バージョンなし」にする。
     assert found[str(garbled)] is None
     assert found[str(conda_env)] == "3.11.2"
 
@@ -131,7 +131,7 @@ class RecordingTransport(CommandTransport):
         command: Sequence[str],
         *,
         stdin: bytes | Path = b"",
-        timeout: float | None = None,  # noqa: ASYNC109 -- mirrors CommandTransport.run
+        timeout: float | None = None,  # noqa: ASYNC109 -- CommandTransport.runと同じ形にする
     ) -> bytes:
         self.calls.append((list(command), stdin))
         if self.error is not None:
@@ -161,7 +161,7 @@ def test_paths_with_newlines_and_spaces_arrive_intact():
     )  # fmt: skip
     discovery = parse_discovery_output(output)
     assert discovery.host["homeDirectory"] == "/home/m m t"
-    # A path with a newline arrives whole, then is not offered: the API takes one-line paths only.
+    # 改行を含むパスは欠けずに届くが、候補には出さない。APIは1行のパスしか受け付けない。
     assert discovery.pythons == [] and discovery.directories == []
     spaced = parse_discovery_output(tokens("python", "/opt/my env/bin/python", "3.12.0"))
     assert spaced.pythons == [{"path": "/opt/my env/bin/python", "version": "3.12.0"}]
@@ -200,7 +200,7 @@ def test_output_cut_off_mid_record_keeps_only_the_complete_records():
     assert discovery.host["machine"] == "aarch64" and discovery.host["cpuArch"] == "arm64"
     assert discovery.pythons == [{"path": "/usr/bin/python3", "version": "3.12.3"}]
     assert discovery.directories == []
-    # A value cut in the middle (here "64" of "640") is never taken as a shorter number.
+    # 途中で切れた値（ここでは"640"の"64"）を、短い数として受け取ることはない。
     assert parse_discovery_output(b"cpu_count\x0064").host["cpuCount"] is None
 
 

@@ -1,16 +1,17 @@
-"""On-disk spool of an offline Run, written by the SDK and read back by `mado-tracking sync`.
+"""オフラインのRunをディスクに置くspool。SDKが書き、`mado-tracking sync`が読み戻す。
 
-Layout of ``<offline dir>/<runId>/`` (every file mode 600, directories 700, no token anywhere):
+``<offline dir>/<runId>/``の構成（ファイルはすべてモード600、ディレクトリは700、tokenは
+どこにも置かない）。
 
-- ``run.json``: what ``PUT /sync/runs/:runId`` needs to create the Run.
-- ``batches/<sequence>-<batchId>.jsonl``: one record per line (a metric point, a log entry, params
-  or tags). A file becomes one ``POST /sync/runs/:runId/batches``.
-- ``artifacts.jsonl``: ``{path, sha256, size, mimeType, copied, localPath}`` per logged file.
-  Copies live in ``artifact-files/<sha256>`` and ``localPath`` is relative to the run directory, so
-  the whole directory can be carried to another machine and synced there.
-- ``media.jsonl``: ``{id, key, step, kind, artifactPath, caption, metadata}`` per media item.
-- ``status.json``: the terminal status, sent last so terminal handlers see every Artifact.
-- ``sync-state.json``: what has already reached the API (written by sync and by the auto mode).
+- ``run.json``: ``PUT /sync/runs/:runId``でRunを作るのに要るもの。
+- ``batches/<sequence>-<batchId>.jsonl``: 1行に1レコード（メトリクスの点、ログ、parameter、
+  タグ）。1ファイルが1回の``POST /sync/runs/:runId/batches``になる。
+- ``artifacts.jsonl``: 記録したファイルごとの``{path, sha256, size, mimeType, copied, localPath}``。
+  写しは``artifact-files/<sha256>``に置き、``localPath``はrunのディレクトリからの相対パス。
+  そのため、ディレクトリごと別のマシンへ運んでそこでsyncできる。
+- ``media.jsonl``: メディアごとの``{id, key, step, kind, artifactPath, caption, metadata}``。
+- ``status.json``: 終了状態。終了状態のハンドラがすべてのArtifactを見られるよう、最後に送る。
+- ``sync-state.json``: 既にAPIへ届いたもの（syncとautoモードが書く）。
 """
 
 from __future__ import annotations
@@ -33,11 +34,11 @@ from uuid import uuid4
 from ..errors import ConfigurationError
 
 SPOOL_FORMAT_VERSION = 1
-# fsync is slow on network filesystems; a power loss can lose at most this many recent lines.
+# ネットワークファイルシステムではfsyncが遅い。電源断で失うのは、最大でこの行数の直近の行。
 SPOOL_FSYNC_EVERY = 50
-# Below the API's 10000 metrics and 10000 logs per batch, whatever the mix of records.
+# レコードの混ざり方によらず、APIの1バッチあたりのメトリクス10000件・ログ10000件を下回る。
 SPOOL_BATCH_MAX_RECORDS = 5000
-# Half of the API's 32MiB batch body limit leaves room for the JSON envelope.
+# APIのバッチ本文の上限32MiBの半分にして、JSONの外枠の分の余裕を残す。
 SPOOL_BATCH_MAX_BYTES = 16 * 1024 * 1024
 FILE_MODE = 0o600
 DIRECTORY_MODE = 0o700
@@ -57,11 +58,12 @@ BATCH_FILE_NAME = re.compile(r"^(?P<sequence>\d{8})-(?P<batch_id>[0-9a-f-]{36})\
 
 
 class SpoolError(ConfigurationError):
-    """The spool is missing, unreadable or no longer matches the files it refers to."""
+    """spoolが無い、読めない、または参照しているファイルと合わなくなった。"""
 
 
 def default_offline_directory() -> Path:
-    """MMT_OFFLINE_DIR, else ``$XDG_DATA_HOME/mado-tracking/offline`` (``~/.local/share/...``)."""
+    """MMT_OFFLINE_DIR、無ければ``$XDG_DATA_HOME/mado-tracking/offline``
+    （``~/.local/share/...``）。"""
     if configured := os.environ.get("MMT_OFFLINE_DIR"):
         return Path(configured).expanduser()
     data_home = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
@@ -70,7 +72,7 @@ def default_offline_directory() -> Path:
 
 @dataclass(frozen=True)
 class SpoolRunRecord:
-    """Contents of run.json; field names follow SyncRunCreate."""
+    """run.jsonの中身。フィールド名はSyncRunCreateに合わせる。"""
 
     run_id: str
     project_id: str
@@ -122,7 +124,7 @@ class SpoolRunRecord:
             raise SpoolError(f"run.json is missing {error.args[0]}") from None
 
     def sync_create_body(self) -> dict[str, Any]:
-        """Body of PUT /projects/:p/sync/runs/:runId."""
+        """PUT /projects/:p/sync/runs/:runIdの本文。"""
         return {
             "experimentId": self.experiment_id,
             "name": self.name,
@@ -137,11 +139,11 @@ class SpoolRunRecord:
 
 @dataclass
 class SyncState:
-    """Progress of sync for one run directory, so a rerun continues where the last one stopped."""
+    """1つのrunのディレクトリのsyncの進み具合。やり直したとき、前回止まったところから続ける。"""
 
     run_created: bool = False
     sent_batch_ids: list[str] = field(default_factory=list)
-    # artifacts.jsonl line number -> Artifact id; "present" entries were already on the API.
+    # artifacts.jsonlの行番号 -> Artifactのid。"present"の項目は既にAPIにあったもの。
     artifact_ids: dict[str, str | None] = field(default_factory=dict)
     sent_media_ids: list[str] = field(default_factory=list)
     status_sent: bool = False
@@ -206,7 +208,7 @@ class SpoolStatus:
 
 
 def write_private_json(path: Path, content: object) -> None:
-    """Replace path atomically with mode 600 so a crash never leaves half a state file."""
+    """パスをモード600で不可分に置き換える。クラッシュしても状態ファイルが半端に残らない。"""
     path.parent.mkdir(mode=DIRECTORY_MODE, parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".partial")
     try:
@@ -240,10 +242,10 @@ def _append_durable_line(path: Path, record: Mapping[str, Any]) -> None:
 
 
 class RunSpool:
-    """Appends one offline Run's records. Thread-safe: system metrics write from their own thread.
+    """1つのオフラインのRunのレコードを書き足す。スレッドセーフ（システムメトリクスは専用の
+    スレッドから書く）。
 
-    The writer holds an exclusive lock on writer.lock for its lifetime so that sync skips a Run
-    that is still recording.
+    writerは生きている間writer.lockの排他ロックを持ち、syncが記録中のRunを飛ばせるようにする。
     """
 
     def __init__(self, run_directory: Path, record: SpoolRunRecord):
@@ -265,7 +267,7 @@ class RunSpool:
 
     @classmethod
     def create(cls, root: Path, record: SpoolRunRecord, *, run_created: bool = False) -> RunSpool:
-        """Make ``root/<runId>``. run_created=True records that the API already has the Run."""
+        """``root/<runId>``を作る。run_created=Trueは、APIが既にRunを持っていることを記録する。"""
         run_directory = root / record.run_id
         if (run_directory / RUN_FILE).exists():
             raise SpoolError(f"An offline Run already exists in {run_directory}")
@@ -274,7 +276,7 @@ class RunSpool:
         (run_directory / BATCH_DIRECTORY).mkdir(mode=DIRECTORY_MODE, exist_ok=True)
         if run_created:
             SyncState(run_created=True).save(run_directory)
-        # run.json is written last: its presence is what marks a complete spool directory.
+        # run.jsonは最後に書く。これがあることで、spoolのディレクトリが完成していると分かる。
         write_private_json(run_directory / RUN_FILE, record.to_json())
         return cls(run_directory, record)
 
@@ -308,7 +310,7 @@ class RunSpool:
     def add_artifact(
         self, source: Path | BinaryIO, *, path: str, mime_type: str, copy: bool = True
     ) -> dict[str, Any]:
-        """Copy source into the spool, or with copy=False remember where it is and its sha256."""
+        """sourceをspoolに写す。copy=Falseなら、置き場所とsha256だけを覚える。"""
         if copy:
             sha256, size, local_path = self._copy_into_spool(source)
         elif isinstance(source, Path):
@@ -339,7 +341,7 @@ class RunSpool:
         metadata: Mapping[str, Any] | None = None,
         media_id: str | None = None,
     ) -> dict[str, Any]:
-        """Record a media item whose file was logged with add_artifact at artifact_path."""
+        """add_artifactでartifact_pathにファイルを記録したメディアを、1件記録する。"""
         entry = {
             "id": media_id or str(uuid4()),
             "key": key,
@@ -412,7 +414,7 @@ class RunSpool:
                 os.fsync(output.fileno())
             os.chmod(temporary, FILE_MODE)
             sha256 = digest.hexdigest()
-            # Content-addressed, so logging the same file twice keeps one copy.
+            # 内容のハッシュで置き場所を決めるので、同じファイルを2回記録しても写しは1つで済む。
             os.replace(temporary, files / sha256)
         finally:
             Path(temporary).unlink(missing_ok=True)
@@ -434,7 +436,7 @@ def is_run_directory(directory: Path) -> bool:
 
 
 def find_run_directories(directory: Path) -> list[Path]:
-    """directory itself when it is a run directory, else its run subdirectories in name order."""
+    """directory自身がrunのディレクトリならそれ、違えば名前順に並べたrunのサブディレクトリ。"""
     if is_run_directory(directory):
         return [directory]
     if not directory.is_dir():
@@ -458,10 +460,10 @@ def list_batches(run_directory: Path) -> list[SpoolBatch]:
 
 
 def read_batch_body(batch: SpoolBatch) -> dict[str, Any]:
-    """The SyncBatch body for one batch file.
+    """1つのバッチファイルのSyncBatchの本文。
 
-    A last line without a newline was cut by a crash mid-write and is dropped; any other
-    unreadable line means the spool was damaged and stops the sync.
+    改行で終わらない最後の行は、書き込み中のクラッシュで切れたものなので捨てる。それ以外の読めない
+    行はspoolが壊れていることを示すので、syncを止める。
     """
     metrics: list[dict[str, Any]] = []
     logs: list[dict[str, Any]] = []
@@ -549,7 +551,7 @@ def _read_jsonl(path: Path) -> Iterator[tuple[int, dict[str, Any]]]:
 
 @contextmanager
 def sync_lock(run_directory: Path) -> Iterator[bool]:
-    """Yield False while a writer is still recording the Run; sync must then skip it."""
+    """writerがまだRunを記録している間はFalseをyieldする。そのときsyncはそのRunを飛ばす。"""
     descriptor = os.open(run_directory / WRITER_LOCK_FILE, os.O_RDWR | os.O_CREAT, FILE_MODE)
     try:
         try:

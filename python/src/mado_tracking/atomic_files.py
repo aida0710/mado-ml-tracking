@@ -1,4 +1,4 @@
-"""Write a file under a temporary name and rename it, so a failed write leaves no partial file."""
+"""一時的な名前で書いてから名前を変え、書き込みに失敗しても書きかけのファイルを残さない。"""
 
 from __future__ import annotations
 
@@ -12,9 +12,9 @@ from typing import BinaryIO
 
 @contextmanager
 def atomic_output(target: Path) -> Iterator[BinaryIO]:
-    """Yield a seekable file that replaces ``target`` only when the block finishes without error.
+    """ブロックがエラー無しで終わったときだけ``target``を置き換える、シークできるファイルを返す。
 
-    The temporary file sits next to ``target`` so the final rename stays on one filesystem.
+    最後の名前の変更が1つのファイルシステムの中で済むよう、一時ファイルは``target``の隣に置く。
     """
     target.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(dir=target.parent, prefix=f".{target.name}.", suffix=".partial")

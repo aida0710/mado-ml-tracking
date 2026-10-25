@@ -1,13 +1,14 @@
-"""Target runner commands that put one input DatasetVersion into the dataset cache.
+"""入力のDatasetVersionを1つデータセットのキャッシュに入れる、コンピュータ用のrunnerのコマンド。
 
-`dataset-materialize` reads one JSON line, then (for relayed files) the worker's tar:
+`dataset-materialize`はJSONを1行読み、（中継するファイルなら）続けてworkerのtarを読む。
 
     {"key", "source": {"kind": ...}, "files": [...]|null, "totalSize": int|null, "maxCacheBytes": int}
 
-source.kind is `lookup` (report a complete entry or `missing`), `relay` (the tar follows),
-`api` (download with the Job token), `https`, `s3`, or `file` (an existing target path; no cache).
-Failures are answered as {"error", "retryable"} so the worker can tell a broken source from an
-interrupted one. `dataset-release` drops the Job's pins when it fails before launch.
+source.kindは`lookup`（完了したエントリか`missing`を報告）、`relay`（続けてtarが来る）、
+`api`（Job tokenでダウンロード）、`https`、`s3`、`file`（コンピュータ上の既存のパス。
+キャッシュしない）のどれか。失敗は{"error", "retryable"}で答え、workerが壊れた取得元と
+途中で止まった取得を見分けられるようにする。`dataset-release`は、Jobが起動前に失敗したときに
+そのJobのpinを外す。
 """
 
 from __future__ import annotations
@@ -30,7 +31,7 @@ from .dataset_downloads import (
     resolve_file_reference,
 )
 
-# The header carries up to MAX_DATASET_FILES entries (about 150 bytes each).
+# ヘッダーは最大MAX_DATASET_FILES件のエントリを運ぶ（1件あたり約150バイト）。
 MAX_REQUEST_HEADER_BYTES = 32 * 1024**2
 
 
@@ -50,7 +51,7 @@ def run_dataset_command(command: str, workspace: Path, stdin: IO[bytes]) -> dict
     except DatasetFetchError as error:
         return {"error": str(error), "retryable": error.retryable}
     except tarfile.TarError as error:
-        # A relayed tar that does not parse was cut or corrupted on the way.
+        # 解析できない中継のtarは、途中で切れたか壊れたもの。
         return {"error": f"Relayed dataset archive is invalid: {error}", "retryable": True}
     except (DatasetCacheError, OSError) as error:
         return {"error": str(error), "retryable": False}

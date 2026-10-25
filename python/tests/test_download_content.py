@@ -15,7 +15,7 @@ from mado_tracking.errors import ApiError
 from mado_tracking.worker.api import WorkerApi
 from mado_tracking.worker.session_inputs import download_external_weights
 
-# Repeated binary weights make the transfer and stored sizes intentionally different.
+# 同じ並びを繰り返したバイナリの重みにして、転送のサイズと保存のサイズをわざと違えている。
 WEIGHTS = bytes(range(256)) * 64
 
 
@@ -37,7 +37,8 @@ def download_server():
                 self.send_header("Content-Length", str(response["length"]))
             self.end_headers()
             body = response["body"]
-            # Split the encoded body so decoder completion crosses HTTP stream chunks.
+            # エンコード済みの本文を分割し、デコーダーの完了が
+            # HTTPのストリームのchunkをまたぐようにする。
             for offset in range(0, len(body), 17):
                 self.wfile.write(body[offset : offset + 17])
                 self.wfile.flush()

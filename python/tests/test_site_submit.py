@@ -1,5 +1,5 @@
-"""`mado-tracking submit`: the site's settings from the Web, claim, local job shell, report, --all
-and --watch."""
+"""`mado-tracking submit`: 画面で登録したsiteの設定、claim、ローカルのjob shell、報告、--all、
+--watch。"""
 
 from __future__ import annotations
 
@@ -37,14 +37,14 @@ JOB_SHELL = (
     'echo "Job 9001.miyabi submitted"\n'
     "echo 9001.miyabi\n"
 )
-# A manual site: no launcher logs in, and whoever runs `submit` submits.
+# 手動投入のsite: launcherはログインせず、`submit`を実行した人が投入する。
 MANUAL_SETTINGS = site_settings_document(
     launcherId=None, connection=None, accountMode="personal", sharedAccount=""
 )
 
 
 def web_account(tmp_path: Path, **options: Any) -> dict:
-    """One's own account on the site as the Web has it: work directory and variables."""
+    """画面に登録された、そのsiteでの自分のアカウント: 作業ディレクトリと変数。"""
     values = {"work_directory": str(tmp_path / "web-work"), "variables": {"GROUP": "web", "QUEUE": "gpu"}}
     return account_document(**{**values, **options})
 
@@ -61,7 +61,7 @@ def manual_submission(account: dict, target: dict | None = None) -> dict:
 
 
 class ManualApi:
-    """The manual-submission endpoints of one site, answered in memory."""
+    """1つのsiteの手動投入のエンドポイントに、メモリ上で応答する。"""
 
     def __init__(self, target: dict, account: dict, *, owner: bool = False):
         self.target = target
@@ -74,10 +74,10 @@ class ManualApi:
             "jobShell": job_shell_document(JOB_SHELL, target_id=target["id"], version=2),
             "account": account,
         }
-        # Statuses of the next GET /manual-submissions attempts (200 once they run out).
+        # 次からのGET /manual-submissionsの試行が返すステータス（使い切ったら200）。
         self.waiting_statuses: list[int] = []
         self.after_waiting: Callable[[int], None] | None = None
-        # Claim fields this API does not know yet: an older API refuses a claim that has one.
+        # このAPIがまだ知らないclaimの項目。古いAPIは、それを含むclaimを拒否する。
         self.unknown_claim_fields: set[str] = set()
         self.calls: list[tuple[str, str, Any]] = []
 
@@ -171,11 +171,11 @@ def test_submit_runs_the_job_shell_from_the_web_with_this_runs_overrides(tmp_pat
         ],
     }
     assert lines == ["Miyabi-G: 1 Job(s) wait for submission", f"submitted {job_id} as 9001.miyabi"]
-    # --work-dir and --var apply on top of one's settings on the Web, for this run only.
+    # --work-dirと--varは、画面での自分の設定の上に、この実行のときだけ重ねる。
     spec = tmp_path / "work/.mmt-submissions" / job_id
     assert (spec / "vars.env").read_text() == "MMT_VAR_GROUP=gxx50000\nMMT_VAR_QUEUE=gpu\n"
     assert [path.read_text() for path in (tmp_path / "work/.mmt-job-shells").glob("*/job.sh")] == [JOB_SHELL]
-    # The runner on the compute node reaches the API the person used.
+    # 計算ノードのrunnerは、本人が使ったAPIにつなぐ。
     assert json.loads((spec / "api.json").read_text()) == {"apiUrl": "https://mmt.example.invalid/api"}
     assert not (tmp_path / "web-work").exists()
     assert not list((tmp_path / "state/pending").iterdir())
@@ -205,7 +205,7 @@ def test_all_takes_everyones_jobs_on_a_computer_one_owns_and_only_there(tmp_path
     assert submitter_for(api, options, tmp_path, lines).run_once() == 0
     assert api.bodies("POST", "/claim")[0]["all"] is True
     assert lines[0] == "Miyabi-G: 1 Job(s) wait for submission" and lines[1].startswith("submitted ")
-    # Without --work-dir the work directory and variables are one's own from the Web.
+    # --work-dirが無ければ、作業ディレクトリと変数は画面での自分の設定を使う。
     spec = tmp_path / "web-work/.mmt-submissions" / of_bob["jobs"][0]["job"]["id"]
     assert (spec / "vars.env").read_text() == "MMT_VAR_GROUP=web\nMMT_VAR_QUEUE=gpu\n"
 
@@ -277,7 +277,7 @@ def test_watch_keeps_submitting_outlasts_temporary_failures_and_stops(tmp_path, 
     target_id, job_id = submission["target"]["id"], submission["jobs"][0]["job"]["id"]
     api = ManualApi(submission["target"], account)
     api.mine = [submission]
-    # Round 1 submits; round 2 meets an API that answers 503 to every retry; round 3 finds nothing.
+    # 1巡目は投入する。2巡目はどの再試行にも503を返すAPIに当たる。3巡目は何も見つけない。
     api.waiting_statuses = [200, 503, 503, 503, 503]
     stop = threading.Event()
     api.after_waiting = lambda calls: stop.set() if calls == 6 else None
@@ -292,7 +292,7 @@ def test_watch_keeps_submitting_outlasts_temporary_failures_and_stops(tmp_path, 
         f"{target_id}: 0 Job(s) wait for submission",
         "stopped",
     ]
-    # A refusal that a later round would meet again (a revoked token) ends the watch.
+    # 後の巡回でもまた受ける拒否（失効したtoken）なら、監視を終える。
     api.waiting_statuses = [401]
     with pytest.raises(ApiError):
         submitter.watch(threading.Event(), interval=0.01)

@@ -1,4 +1,4 @@
-"""Materialize a Run's pinned input ModelVersion through its Artifact or local URI."""
+"""Runが固定した入力のModelVersionを、そのArtifactかローカルのURIから手元に用意する。"""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from .errors import ConfigurationError
 if TYPE_CHECKING:
     from .client import Client
 
-# Local model files use the same bounded memory budget as Artifact uploads.
+# ローカルのモデルファイルにも、Artifactのアップロードと同じメモリの上限を使う。
 MODEL_COPY_CHUNK_BYTES = 1024 * 1024
 
 

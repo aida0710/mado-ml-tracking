@@ -1,4 +1,4 @@
-"""Offline recording: a Run written to a local spool and sent later with `mado-tracking sync`."""
+"""オフラインの記録。Runをローカルのspoolに書き、あとで`mado-tracking sync`で送る。"""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 __all__ = ["RunMode", "default_offline_directory", "resolve_mode", "start_offline_run"]
 
-# SyncRunCreate carries only these Run attributes; the rest need an online Run.
+# SyncRunCreateが運べるRunの属性はこれだけ。ほかはオンラインのRunでないと使えない。
 OFFLINE_RUN_ATTRIBUTES = frozenset({"parameters", "tags", "parent_run_id"})
 
 
@@ -33,7 +33,7 @@ def start_offline_run(
     offline_directory: Path | None = None,
     masker: SecretMasker | None = None,
 ) -> Run:
-    """Create a running Run in the spool under a new UUID; the API is not contacted."""
+    """新しいUUIDで、実行中のRunをspoolに作る。APIには接続しない。"""
     from ..run import Run
 
     if unsupported := sorted(set(attributes) - OFFLINE_RUN_ATTRIBUTES):

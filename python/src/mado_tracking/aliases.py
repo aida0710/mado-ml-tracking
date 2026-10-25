@@ -1,4 +1,4 @@
-"""Model alias assignment, removal and the append-only alias history."""
+"""モデルのaliasの割り当てと削除、追記だけのaliasの履歴。"""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from .pagination import iterate_listed_items
 if TYPE_CHECKING:
     from .client import Client
 
-# Mirrors GET /models/:id/alias-events: limit defaults to 50 and is capped at 200.
+# GET /models/:id/alias-eventsに合わせる。limitの既定は50で、上限は200。
 ALIAS_EVENT_MAX_PAGE_SIZE = 200
 
 
@@ -30,11 +30,11 @@ def set_model_alias(
     reason: str = "",
     evaluation_id: str | None = None,
 ) -> dict[str, Any]:
-    """Point ``alias`` at ``version_id`` and return the Model.
+    """``alias``を``version_id``に向け、登録モデルを返す。
 
-    Re-assigning the same version adds no alias event, so a lost response is safe to resend.
-    ``evaluation_id`` names the passed promotion evaluation that justifies changing a protected
-    alias; it is sent only when given.
+    同じバージョンを割り当て直してもaliasのイベントは増えないので、応答が失われても安全に
+    送り直せる。``evaluation_id``は、保護されたaliasの変更を正当化する、合格した昇格の評価を
+    指す。指定したときだけ送る。
     """
     body: dict[str, Any] = {"versionId": version_id}
     if reason:
@@ -47,7 +47,7 @@ def set_model_alias(
 def delete_model_alias(
     client: Client, project_id: str, model_id: str, alias: str, *, reason: str = ""
 ) -> None:
-    # Not retried: a resent removal of an alias that the first attempt already removed is a 404.
+    # 再試行しない。最初の試行で既に消えたaliasの削除を送り直すと404になる。
     client.request(
         "DELETE",
         _alias_path(client, project_id, model_id, alias),
@@ -63,7 +63,7 @@ def list_alias_events(
     alias: str | None = None,
     page_size: int | None = None,
 ) -> Iterator[dict[str, Any]]:
-    """Yield ModelAliasEvents newest first, requesting further pages only as they are used."""
+    """ModelAliasEventを新しい順に返す。次のページは使う段になって初めてリクエストする。"""
     if page_size is not None and not 1 <= page_size <= ALIAS_EVENT_MAX_PAGE_SIZE:
         raise ConfigurationError(f"page_size must be between 1 and {ALIAS_EVENT_MAX_PAGE_SIZE}")
     path = client.project_path(project_id, f"models/{path_id(model_id)}/alias-events")

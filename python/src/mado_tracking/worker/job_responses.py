@@ -1,4 +1,4 @@
-"""Identify rejected execution instructions without trusting their source or compute target."""
+"""検証で弾かれた実行の指示が、どのJobのものかを、sourceやコンピュータの値を信用せずに特定する。"""
 
 from __future__ import annotations
 

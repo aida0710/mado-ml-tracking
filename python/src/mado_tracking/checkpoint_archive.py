@@ -1,7 +1,7 @@
-"""The tar layout of a training checkpoint, shared by the SDK, the worker and the target runner.
+"""学習のcheckpointのtarの構成。SDK、worker、コンピュータ側のrunnerが共有する。
 
-Only the standard library is used: the target-side runner bundles this module without the SDK's
-dependencies. An archive holds regular files and directories only, with safe relative paths.
+標準ライブラリだけを使う。コンピュータ側のrunnerは、SDKの依存関係無しでこのモジュールを同梱する。
+アーカイブに入れるのは通常のファイルとディレクトリだけで、パスは安全な相対パスに限る。
 """
 
 from __future__ import annotations
@@ -15,20 +15,20 @@ from collections.abc import Iterable, Sequence
 from pathlib import Path, PurePosixPath
 from typing import Any, BinaryIO
 
-# Matches the API's MAX_CHECKPOINT_FILES so a manifest the API accepts can always be archived.
+# APIのMAX_CHECKPOINT_FILESに合わせ、APIが受け付けるmanifestなら必ずアーカイブにできるようにする。
 MAX_CHECKPOINT_FILES = 10000
 HASH_CHUNK_BYTES = 1024 * 1024
-# Owner-readable only: the code resuming from a checkpoint must not modify its input.
+# 所有者だけが読める。checkpointから再開するコードに入力を書き換えさせない。
 READ_ONLY_FILE_MODE = 0o400
 READ_ONLY_DIRECTORY_MODE = 0o500
 
 
 class CheckpointArchiveError(ValueError):
-    """A checkpoint's files do not match its manifest, or the archive is unsafe."""
+    """checkpointのファイルがmanifestと一致しない、またはアーカイブが安全でない。"""
 
 
 def is_safe_relative_path(path: str) -> bool:
-    """The API's rule for Artifact paths: relative, no backslash, control character or %XX."""
+    """APIのArtifactのパスの規則。相対パスで、バックスラッシュ・制御文字・%XXを含まない。"""
     return (
         bool(path)
         and not path.startswith("/")
@@ -47,7 +47,7 @@ def file_sha256(path: Path) -> tuple[str, int]:
 
 
 def directory_manifest(directory: Path) -> list[dict[str, Any]]:
-    """List every regular file under directory as {path, sha256, size}, sorted by path."""
+    """directoryの下の通常のファイルをすべて{path, sha256, size}としてパス順に並べる。"""
     root = Path(directory)
     if not root.is_dir() or root.is_symlink():
         raise CheckpointArchiveError("Checkpoint directory must be an existing directory")
@@ -67,10 +67,10 @@ def directory_manifest(directory: Path) -> list[dict[str, Any]]:
 
 
 def write_checkpoint_archive(files: Iterable[tuple[str, Path]], destination: BinaryIO) -> None:
-    """Write (relative path, local file) pairs as a tar with fixed owner, mode and time.
+    """（相対パス、ローカルのファイル）の組を、所有者・モード・時刻を固定したtarとして書く。
 
-    The fixed metadata keeps the archive of the same files byte-identical, so its sha256 depends
-    only on the content.
+    メタデータを固定すると、同じファイルのアーカイブはバイト単位で同じになり、sha256は中身だけで
+    決まる。
     """
     with tarfile.open(fileobj=destination, mode="w", format=tarfile.PAX_FORMAT) as archive:
         for relative_path, source in sorted(files):
@@ -129,7 +129,7 @@ def _check_member(member: tarfile.TarInfo, checksum: str, expected: dict[str, di
 
 
 def verify_checkpoint_archive(archive_path: Path, expected_files: Sequence[dict[str, Any]]) -> None:
-    """Check that the archive holds exactly the manifest's files with their sha256 and size."""
+    """アーカイブがmanifestのファイルを過不足なく、sha256と大きさも一致して持つか確かめる。"""
     expected = _expected_by_path(expected_files)
     seen = set()
     try:
@@ -148,7 +148,7 @@ def verify_checkpoint_archive(archive_path: Path, expected_files: Sequence[dict[
 def extract_checkpoint_archive(
     archive_path: Path, destination: Path, expected_files: Sequence[dict[str, Any]]
 ) -> None:
-    """Extract a verified archive into a new directory and make the result read-only."""
+    """検証したアーカイブを新しいディレクトリに展開し、その結果を読み取り専用にする。"""
     verify_checkpoint_archive(archive_path, expected_files)
     expected = _expected_by_path(expected_files)
     destination.mkdir(mode=0o700)
@@ -168,7 +168,7 @@ def extract_checkpoint_archive(
 
 
 def make_read_only(root: Path) -> None:
-    # Children first: a directory without write permission cannot have its entries changed.
+    # 子から先に処理する。書き込み権限の無いディレクトリでは、その中の項目を変えられない。
     for path in sorted(root.rglob("*"), key=lambda item: len(item.parts), reverse=True):
         mode = os.lstat(path).st_mode
         if stat.S_ISDIR(mode):

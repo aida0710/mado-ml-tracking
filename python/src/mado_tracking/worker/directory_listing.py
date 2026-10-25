@@ -1,7 +1,7 @@
-"""Read one directory of a computer for the Web, which completes paths while a person types them.
+"""コンピュータのディレクトリを1つ読む。画面は、人が入力している途中のパスをこれで補完する。
 
-One fixed POSIX sh script (posix_script.py) reads it. The path is an argument and never part of
-the script, so nothing typed in the Web runs as a command on the computer.
+固定のPOSIX shのスクリプト（posix_script.py）1つで読む。パスは引数で渡し、スクリプトには
+埋め込まないので、画面で入力したものがコンピュータ上でコマンドとして動くことは無い。
 """
 
 from __future__ import annotations
@@ -20,14 +20,14 @@ from .reported_text import (
 )
 from .transport import create_target_transport
 
-# The API's limits (apps/api/src/domain/targetCheckValidation.ts).
+# APIの上限（apps/api/src/domain/targetCheckValidation.ts）。
 MAX_DIRECTORY_LISTING_ENTRIES = 200
-# NAME_MAX of Linux file systems.
+# LinuxのファイルシステムのNAME_MAX。
 MAX_DIRECTORY_ENTRY_NAME_LENGTH = 255
 MAX_DIRECTORY_LISTING_RESULT_BYTES = 64 * 1024
-# A person waits for it while typing, and the API gives up 60 seconds after the claim.
+# 人が入力しながら待っており、APIはclaimから60秒で諦める。
 DIRECTORY_LISTING_TIMEOUT_SECONDS = 20.0
-# What the computer could tell about the directory; `unreachable` is the worker's own.
+# コンピュータがディレクトリについて答えられた結果。`unreachable`はworker自身が付ける。
 LISTED_OUTCOMES = frozenset({"ok", "missing", "not_directory", "denied"})
 UNREACHABLE = "unreachable"
 ENTRY_KINDS = {"d": "directory", "f": "file"}
@@ -35,10 +35,10 @@ EXECUTABLE_FLAGS = {"1": True, "0": False}
 ENTRY_FIELD_COUNT = 3
 NOT_ENTRY_NAMES = frozenset({".", ".."})
 
-# Arguments: the directory (absolute, ~ or ~/...), the most entries to print. Output:
-# NUL-terminated tokens, the outcome (ok, missing, not_directory, denied) and the directory with ~
-# expanded, then per entry its kind (d: directory, also through a symlink; f: anything else),
-# whether the user may execute it (1/0) and its name. Hidden entries are listed too.
+# 引数は、ディレクトリ（絶対パス、~、~/...）と、出力するエントリの最大数。出力はNULで終わる
+# トークンの並び。まず結果（ok、missing、not_directory、denied）と~を展開したディレクトリ、
+# 続いてエントリごとに種類（dはディレクトリで、シンボリックリンク経由のものも含む。fはそれ以外）、
+# ユーザーが実行できるか（1/0）、名前。隠しエントリも出す。
 LISTING_SCRIPT = r"""
 main() {
     directory=$1
@@ -97,7 +97,7 @@ def parse_entry(fields: list[bytes], *, masker: SecretMasker) -> dict[str, Any] 
     try:
         name = fields[2].decode()
     except UnicodeDecodeError:
-        # A name that is not UTF-8 could not be typed back into the Web.
+        # UTF-8でない名前は、画面に入力し直せない。
         return None
     if kind_flag not in ENTRY_KINDS or executable_flag not in EXECUTABLE_FLAGS:
         return None
@@ -107,7 +107,7 @@ def parse_entry(fields: list[bytes], *, masker: SecretMasker) -> dict[str, Any] 
 
 
 def parse_listing_output(raw: bytes, *, requested_path: str, masker: SecretMasker) -> dict[str, Any] | None:
-    """A TargetDirectoryListingResult; None when the output is not the script's."""
+    """TargetDirectoryListingResult。出力がスクリプトのものでなければNone。"""
     tokens = terminated_tokens(raw)
     outcome = tokens[0].decode(errors="replace") if tokens else None
     if len(tokens) < 2 or outcome not in LISTED_OUTCOMES:
@@ -141,19 +141,19 @@ def parse_listing_output(raw: bytes, *, requested_path: str, masker: SecretMaske
 async def list_directory(
     target: dict[str, Any], directory_path: str, *, allow_local_executor: bool, masker: SecretMasker
 ) -> tuple[str, dict[str, Any]]:
-    """Return the completion status and result; `failed` means the worker could not read the computer."""
+    """完了の状態と結果を返す。`failed`は、workerがコンピュータを読めなかったことを示す。"""
     try:
         transport = create_target_transport(target, allow_local_executor=allow_local_executor, masker=masker)
         raw = await run_posix_script(
             transport,
             LISTING_SCRIPT,
-            # One more than is listed, so a larger directory is known to be truncated.
+            # 一覧に出す数より1つ多く求め、大きいディレクトリは切り詰めたと分かるようにする。
             [directory_path, str(MAX_DIRECTORY_LISTING_ENTRIES + 1)],
             timeout=DIRECTORY_LISTING_TIMEOUT_SECONDS,
         )
     except (ConfigurationError, TransportError, TimeoutError):
-        # Missing key files on the worker host, or the computer did not answer in time. ssh's error
-        # text can name key paths, so only the outcome is reported.
+        # workerのホストに鍵のファイルが無いか、コンピュータが時間内に応答しなかった。
+        # sshのエラーの文は鍵のパスを含むことがあるので、結果だけを報告する。
         return "failed", unreachable_result(directory_path)
     result = parse_listing_output(raw, requested_path=directory_path, masker=masker)
     if result is None:
