@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { LogOut, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { authApi } from '../api/auth';
 import { useAuth } from '../hooks/useAuth';
 import { narrowerThan } from '@mado/design-system/layout';
@@ -17,7 +17,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * 上部バー: アプリ名、表示言語、テーマ、ログイン中の利用者とログアウト。画面の切り替えはサイドバーか
+ * 上部バー: アプリ名、表示言語、テーマ、ログイン中の利用者のメニュー（アカウント・全体設定・ログアウト）。画面の切り替えはサイドバーか
  * レールにあり、900px未満ではこのバーのメニューボタンからドロワーで開く。640px未満ではボタンに場所を
  * 譲り、アプリ名は印だけを見せる（mado S3 Data Catalogと同じ幅）。
  */
@@ -54,20 +54,15 @@ export function TopBar({ projectId, navigation }: { projectId?: string; navigati
           >
             {theme.theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}
           </button>
-          <UserMenu />
-          <button
-            className="icon-button"
-            disabled={mutation.pending}
-            aria-label={text.logout}
-            onClick={() =>
+          <UserMenu
+            isLoggingOut={mutation.pending}
+            onLogout={() =>
               void mutation.run(async () => {
                 await authApi.logout();
                 auth.reload();
               })
             }
-          >
-            <LogOut size={17} />
-          </button>
+          />
         </div>
       </header>
       <ErrorNotice message={mutation.error} />

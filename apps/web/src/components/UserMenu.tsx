@@ -14,9 +14,9 @@ const renderUserMenuLink: UserMenuLinkRenderer = (item, { children, ...props }) 
 
 /**
  * 上部バーの頭文字の丸と、そこから開くメニュー（デザインシステムのUserMenu）。ログイン中の利用者と、
- * アカウントの画面・全体設定へのリンク。画面を移ると閉じる。
+ * アカウントの画面・全体設定へのリンク、最後にログアウト。画面を移ると閉じる。
  */
-export function UserMenu() {
+export function UserMenu({ onLogout, isLoggingOut }: { onLogout: () => void; isLoggingOut: boolean }) {
   useLocale();
   const auth = useAuth();
   const { pathname } = useLocation();
@@ -25,7 +25,10 @@ export function UserMenu() {
       displayName={auth.user.displayName}
       email={auth.user.email}
       label={text.userMenu}
-      items={userMenuLinks(auth.user)}
+      items={[
+        ...userMenuLinks(auth.user),
+        { label: text.logout, onSelect: onLogout, disabled: isLoggingOut, startsGroup: true },
+      ]}
       renderLink={renderUserMenuLink}
       closeKey={pathname}
     />
