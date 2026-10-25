@@ -54,7 +54,7 @@ class StageError extends Error {
 
 /**
  * 表示中の範囲のために、音声のArtifactを取得・デコード・解析する。AUDIO_ANALYSIS_MAX_BYTESを
- * 超えるファイルはここでは取得しない（lib/audioAnalysis.tsを参照）。ビューアーはそれを<audio>で
+ * 超えるファイルはここでは取得しない（lib/audioAnalysis.tsを参照）。ビューアはそれを<audio>で
  * ストリーミングし、代わりにサーバーのプレビュー（useServerAudioPreview）を描く。`view`がnullの
  * 間は、描く幅が分かるまで待つ。
  */

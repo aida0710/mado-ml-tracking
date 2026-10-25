@@ -27,11 +27,11 @@ import { serverTimeouts } from '../../api/src/http/serverTimeouts.ts';
 const API_PORT = 47480;
 const WEB_URL = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:47481';
 const MIB = 1024 * 1024;
-// 点検で挙がった例: 150 MiBのcheckpointは16 MiBのパート10個になる（最後のパートは6 MiB）。
+// 点検で挙がった例: 150 MiBのcheckpointは16 MiBずつ10個のpartになる（最後のpartは6 MiB）。
 const CHECKPOINT_BYTES = 150 * MIB;
 const PART_BYTES = 16 * MIB;
 const PART_COUNT = Math.ceil(CHECKPOINT_BYTES / PART_BYTES);
-// ページを再読み込みする前にサーバーへ届くパートの数。
+// ページを再読み込みする前にサーバーへ届くpartの数。
 const PARTS_BEFORE_INTERRUPTION = 3;
 const COMPLETION_TIMEOUT_MS = 180_000;
 const DESKTOP = { width: 1440, height: 900 };
@@ -111,7 +111,7 @@ async function devLogin(page, email, name) {
   return (await response.json()).user;
 }
 
-/** ページが各アップロードセッションへ送るパートを、送った順に記録する。 */
+/** ページが各アップロードセッションへ送るpartを、送った順に記録する。 */
 function watchPartRequests(page) {
   const requests = [];
   let okResponses = 0;
@@ -126,7 +126,7 @@ function watchPartRequests(page) {
   return {
     /** partsSentSinceで数え始める位置。 */
     mark: () => requests.length,
-    /** `mark`のあとでそのセッションへ送ったパート番号を、重複を除いて昇順に並べたもの。 */
+    /** `mark`のあとでそのセッションへ送ったpart番号を、重複を除いて昇順に並べたもの。 */
     partsSentSince: (uploadId, mark = 0) =>
       [...new Set(requests.slice(mark).filter((item) => item.uploadId === uploadId).map((item) => item.partNumber))].sort(
         (left, right) => left - right,
@@ -136,7 +136,7 @@ function watchPartRequests(page) {
 }
 
 /**
- * `isHolding`の間、PARTS_BEFORE_INTERRUPTIONを超える番号のパートの要求をAPIの手前で止めておく。
+ * `isHolding`の間、PARTS_BEFORE_INTERRUPTIONを超える番号のpartの要求をAPIの手前で止めておく。
  * 止めるのをサーバー側にしたのは、Playwrightの要求の横取りを外したあと、ページのその後のフォントの
  * 要求が保留のまま残り、スクリーンショットがフォントを待ち続けたため。
  */
@@ -159,7 +159,7 @@ async function fetchThroughPartGate(request, ...rest) {
   return application.app.fetch(request, ...rest);
 }
 
-/** `filePath`を`artifactPath`へアップロードし始め、最初のパートが保存されたら再読み込みする。 */
+/** `filePath`を`artifactPath`へアップロードし始め、最初のpartが保存されたら再読み込みする。 */
 async function interruptUpload(page, parts, { openDialog, filePath, artifactPath }) {
   const okBefore = parts.okResponses();
   holdLaterParts();
@@ -181,7 +181,7 @@ try {
 
   const checkpoint = await writeRandomFile(path.join(fileDirectory, 'run', 'model-checkpoint-step-12000.bin'), CHECKPOINT_BYTES);
   const checkpointSha256 = await sha256OfFile(checkpoint);
-  // 大きさも名前の付け方も同じで、保存済みのパートが1つだけ違う: 同じモデルの次のcheckpoint。
+  // 大きさも名前の付け方も同じで、保存済みのpartが1つだけ違う: 同じモデルの次のcheckpoint。
   const nextCheckpointBytes = await readFile(checkpoint);
   nextCheckpointBytes.set(randomBytes(PART_BYTES), PART_BYTES);
   const nextCheckpoint = path.join(fileDirectory, 'run', 'model-checkpoint-step-13000.bin');

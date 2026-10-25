@@ -98,7 +98,7 @@ interface UploadJob {
   session: ArtifactUpload | null;
   verifiedUploadId: string | null;
   pendingParts: PartRange[];
-  /** 送信中の各パートの要求が、ここまでに送ったバイト数。 */
+  /** 送信中の各partの要求が、ここまでに送ったバイト数。 */
   inFlightParts: Map<number, number>;
   confirmedBytes: number;
   resumedBytes: number;
@@ -238,7 +238,7 @@ export function useArtifactUploadQueue({
       if (!session) return;
       try {
         await retrying(signal, async () => {
-          // 最初のawaitの前に入れ、最後に終わるパートから、ほかのパートが送信中だと分かるようにする。
+          // 最初のawaitの前に入れ、最後に終わるpartから、ほかのpartが送信中だと分かるようにする。
           job.inFlightParts.set(part.partNumber, 0);
           const slice = job.source.file.slice(part.start, part.end);
           const bytes = canDigest() ? await slice.arrayBuffer() : null;
@@ -268,7 +268,7 @@ export function useArtifactUploadQueue({
         return;
       }
       if (signal.aborted) return;
-      // パートが1つ通ったので、ほかのパートがまだ待っていても接続は戻っている。
+      // partが1つ通ったので、ほかのpartがまだ待っていても接続は戻っている。
       job.retry = null;
       job.inFlightParts.delete(part.partNumber);
       job.confirmedBytes += part.end - part.start;
@@ -419,7 +419,7 @@ export function useArtifactUploadQueue({
 
   const findJob = (id: string) => jobsRef.current.find((job) => job.id === id);
 
-  /** 送信を止めるがセッションは残すので、再開ではサーバーに無いパートだけを送る。 */
+  /** 送信を止めるがセッションは残すので、再開ではサーバーに無いpartだけを送る。 */
   const pause = useCallback(
     (id: string) => {
       const job = findJob(id);
@@ -557,7 +557,7 @@ function stopRequests(job: UploadJob) {
   job.samples = [];
 }
 
-/** キューの順で次に送る要求。準備は先に来たファイルから行い、空いた枠はパートで埋める。 */
+/** キューの順で次に送る要求。準備は先に来たファイルから行い、空いた枠はpartで埋める。 */
 function takeNextTask(
   jobs: UploadJob[],
   handlers: {
@@ -580,7 +580,7 @@ function takeNextTask(
 /**
  * 候補のセッションのうち、このファイルにまだ使える最初のものを選ぶ。このキューがこのファイル
  * そのもので開いたのではないセッション（手元の記録や、サーバーにだけ見つかったもの）は、同じ
- * パスとサイズの別のファイルのものかもしれないので、受け取ったパートが選んだファイルと一致する
+ * パスとサイズの別のファイルのものかもしれないので、受け取ったpartが選んだファイルと一致する
  * 必要がある。
  */
 async function findResumableSession({
@@ -608,7 +608,7 @@ async function findResumableSession({
       isKnownSameFile: isSameFile,
     });
     // 完了したセッションはそのArtifactを渡すので、確かめていないファイルがそれを受け取るのは、
-    // パートを比べた後だけ。まだパートの無いセッションは、ファイルについて何の裏付けにもならない。
+    // partを比べた後だけ。まだpartの無いセッションは、ファイルについて何の裏付けにもならない。
     const isUsable =
       inspection.blocker === null &&
       (isSameFile || inspection.session.status === 'open' || !inspection.nothingSent);

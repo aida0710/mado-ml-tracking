@@ -1,4 +1,4 @@
-// サイドバーの上端、狭い画面ではプロジェクトバーにあるProjectの切り替え。
+// サイドバーの上端、狭い画面ではProjectの帯にあるProjectの切り替え。
 
 /** 開いているProjectを示し、切り替えを開くボタン。 */
 export const projectSwitcherButton = (page) =>

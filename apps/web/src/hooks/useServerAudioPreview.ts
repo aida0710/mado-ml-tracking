@@ -27,7 +27,7 @@ export function useServerAudioPreview(
     pollMs: settledKey === listKey ? undefined : EXECUTION_POLL_MS,
   });
   const summary = previews.value ? summarizeServerAudioPreviews(previews.value) : null;
-  // 要求が失敗してもポーリングを止める。そのときビューアーはプレビュー無しでファイルを再生する。
+  // 要求が失敗してもポーリングを止める。そのときビューアはプレビュー無しでファイルを再生する。
   const isSettled = (summary !== null && summary.status !== 'pending') || previews.error !== null;
   if (isSettled && settledKey !== listKey) setSettledKey(listKey);
 

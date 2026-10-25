@@ -1,5 +1,5 @@
 // 素のJavaScriptで書いたSHA-256（FIPS 180-4）。Web Cryptoは安全なコンテキストにしか無く、素の
-// httpで開いたLANのサーバーはそれに当たらないが、アップロードの再開ではやはりパートを比べる
+// httpで開いたLANのサーバーはそれに当たらないが、アップロードの再開ではやはりpartを比べる
 // 必要がある。
 
 const BLOCK_BYTES = 64;
@@ -31,14 +31,14 @@ const rotateRight = (word: number, bits: number) => (word >>> bits) | (word << (
 
 /**
  * 途中のハッシュ値と、各ブロックを展開するメッセージスケジュール。スケジュールのバッファはどの
- * ブロックでも使い回し、大きなパートをハッシュしてもブロックごとの割り当てが起きないようにする。
+ * ブロックでも使い回し、大きなpartをハッシュしてもブロックごとの割り当てが起きないようにする。
  */
 interface HashState {
   hash: Uint32Array;
   schedule: Uint32Array;
 }
 
-/** 小文字の16進のダイジェスト。APIが受け取ったパートごとに保存するのと同じ形。 */
+/** 小文字の16進のダイジェスト。APIが受け取ったpartごとに保存するのと同じ形。 */
 export function computeSha256Hex(bytes: Uint8Array): string {
   const hasher = createSha256();
   hasher.update(bytes);

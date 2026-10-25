@@ -170,7 +170,7 @@ export function createBrowserApi() {
   const makeJob = (body) => ({
     id: id(),
     projectId: project.id,
-    // site・アレイジョブ・フック・ドライバー用のJobの項目。sshのJobでは既定値のまま。
+    // site・array・フック・ドライバー用のJobの項目。sshのJobでは既定値のまま。
     phase: null,
     gpuCount: body.gpuIds?.length ?? 0,
     walltimeSeconds: null,
