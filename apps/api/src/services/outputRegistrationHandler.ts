@@ -48,7 +48,7 @@ const UNIQUE_VIOLATION = '23505';
 /**
  * 出力モデルを指定したTaskから起動したRunが成功したら、そのTaskの出力モデルを登録する。
  * 終了状態への遷移の中で、保留中の自動実行より前に動くので、作ったバージョンが同じ完了処理で
- * 下流の自動実行を始める。失敗は記録するだけで投げない。Runはfinishedのまま（decisions.md）で、
+ * 下流の自動実行を始める。失敗は記録するだけで投げない。Runはfinishedのままで、
  * 同じRunが後でまた完了しても何もしない。
  */
 export class OutputRegistrationHandler implements RunCompletionHandler {

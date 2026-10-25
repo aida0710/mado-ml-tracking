@@ -3,7 +3,7 @@
  * 引用符で囲み、Excelが日本語を文字化けせずに読めるようUTF-8のBOMを付ける。
  */
 
-// decisions.mdでExcelのためにBOMを採用した。BOMなしのUTF-8で出すには''にする。
+// Excelで文字化けしないようBOMを付ける。BOMなしのUTF-8で出すには''にする。
 export const CSV_BYTE_ORDER_MARK = '\uFEFF';
 export const CSV_LINE_END = '\r\n';
 export const CSV_CONTENT_TYPE = 'text/csv; charset=utf-8';

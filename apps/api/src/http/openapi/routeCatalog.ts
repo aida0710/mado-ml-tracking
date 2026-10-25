@@ -302,7 +302,7 @@ const partHeaders = z.object({ [PART_SHA256_HEADER]: z.string().optional() });
 const RUNS_WRITE = projectEditor('runs:write');
 const REGISTRY_WRITE = projectEditor('registry:write');
 const ARTIFACTS_WRITE = projectEditor('artifacts:write');
-// 削除はProject adminだけ（decisions.md）。tokenにはartifacts:write（かadmin）が要る。
+// 削除はProject adminだけ。tokenにはartifacts:write（かadmin）が要る。
 const ARTIFACTS_DELETE: RouteAccess = { kind: 'project', role: 'admin', scope: 'artifacts:write' };
 const JOBS_WRITE = projectEditor('jobs:write');
 // siteのJobがコンピュータに求めること（gpuCount、再試行）、それがコンピュータのruntimeに

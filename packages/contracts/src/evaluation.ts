@@ -1,4 +1,4 @@
-// 呼び出し側がaliasもバージョンも指定しないときに比べる相手のalias（decisions.md）。
+// 呼び出し側がaliasもバージョンも指定しないときに比べる相手のalias。
 export const DEFAULT_BASELINE_ALIAS = 'production';
 
 // 「参照セット」は、Run.inputDatasetVersionIdsからRun.upstreamDatasetVersionIdsを除いたもの。

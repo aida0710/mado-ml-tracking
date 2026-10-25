@@ -6,7 +6,7 @@ import {
 } from '@mmt/contracts';
 import { JOB_HEARTBEAT_STALE_SECONDS, WORKER_OFFLINE_SECONDS } from './workerLiveness.js';
 
-// 合意した閾値（decisions.md）。イベントが15分届かないままか、1つのイベントを5回試行しても
+// 合意した閾値。イベントが15分届かないままか、1つのイベントを5回試行しても
 // 成功しないとき、pluginが止まっているとみなす。
 export const PLUGIN_STALL_SECONDS = 900;
 export const PLUGIN_STALL_ATTEMPTS = 5;

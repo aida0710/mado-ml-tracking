@@ -126,7 +126,7 @@ export function manualAliasGuard(
 
 /**
  * MLflow互換APIの検査。理由も昇格判定も渡せないので、このAPIからは保護されたaliasを変更も
- * 削除もできない（decisions.md）。ModelVersionや登録モデルを消したときに起きるaliasの削除も同じ。
+ * 削除もできない。ModelVersionや登録モデルを消したときに起きるaliasの削除も同じ。
  */
 export const mlflowAliasGuard: ModelAliasGuard = async (connection, change) => {
   if ((await findApplicableAliasProtections(connection, change)).length)

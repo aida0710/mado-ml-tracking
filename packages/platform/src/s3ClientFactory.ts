@@ -43,7 +43,7 @@ type RequestSigner = InstanceType<SignerConstructor>;
 
 /**
  * 多くのS3互換サービスは、新しいSDKが全リクエストに付けるCRCチェックサムを拒むので、既定では
- * APIが必須とする操作にだけチェックサムを送る（decisions.md）。
+ * APIが必須とする操作にだけチェックサムを送る。
  */
 function checksumSettings(
   mode: S3ChecksumMode,

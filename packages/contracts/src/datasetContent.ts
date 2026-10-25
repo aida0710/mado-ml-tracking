@@ -36,7 +36,7 @@ export interface DatasetVersionFilePage {
 }
 
 /**
- * 1つのDatasetVersionに入れられるファイル数の上限（decisions.md）。大きな音声コーパスは
+ * 1つのDatasetVersionに入れられるファイル数の上限。大きな音声コーパスは
  * 数万クリップになる。この上限で、1回の作成リクエストとそのトランザクションを、APIがメモリに
  * 載せられる大きさに抑える。
  */

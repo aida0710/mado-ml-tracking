@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 
 /**
  * S3用のAWS Signature Version 2（HMAC-SHA1）。AWS SDK v3はv4でしか署名しないので、ここで実装する。
- * S3互換サービスには、今もv2しか受け付けないものがある（decisions.md）。
+ * S3互換サービスには、今もv2しか受け付けないものがある。
  * 仕様: https://docs.aws.amazon.com/AmazonS3/latest/userguide/RESTAuthentication.html
  */
 

@@ -36,7 +36,7 @@ const MIN_SESSION_ABSOLUTE_SECONDS = 60 * 60;
 
 // 1つのArtifactにcheckpointの一式が入ることがある。運用者はこの上限を上げ下げできる。
 const DEFAULT_ARTIFACT_MAX_BYTES = 200 * 1024 ** 3;
-// 1週間あれば、実データが消える前に管理者が誤った削除に気づける（decisions.md）。
+// 1週間あれば、実データが消える前に管理者が誤った削除に気づける。
 const DEFAULT_ARTIFACT_DELETE_GRACE_DAYS = 7;
 // 0でリクエスト全体の期限を無くし、数時間かかるアップロードを無通信の時間だけで区切る。
 const DEFAULT_UPLOAD_REQUEST_TIMEOUT_MS = 0;
@@ -53,15 +53,15 @@ const tokenDefaultLifetimeDaysSchema = z.coerce.number().int().min(1)
   .max(MAX_TOKEN_DEFAULT_LIFETIME_DAYS).default(DEFAULT_TOKEN_LIFETIME_DAYS);
 // 前段のプロキシとWebのnginxで2つ。数個を超えるなら設定の誤り。
 const MAX_TRUSTED_PROXY_HOPS = 5;
-// 1回のCSV出力の行数（decisions.md）。これを超えるとExcelで扱うのが遅くなるので、絞り込みで減らす。
+// 1回のCSV出力の行数。これを超えるとExcelで扱うのが遅くなるので、絞り込みで減らす。
 const DEFAULT_CSV_EXPORT_MAX_ROWS = 50_000;
 // レポートの1つのバージョンのスナップショットデータ（50MiB）。原寸のグラフや表のブロックが数個入る。
 // すべてを固定するレポートは、代わりに一部のブロックを固定せずliveのまま残す。
 const DEFAULT_REPORT_SNAPSHOT_MAX_BYTES = 50 * 1024 * 1024;
-// SSOのsessionは、この間隔に1回までUserInfoに今のグループを問い合わせる（decisions.md: 60秒）。
+// SSOのsessionは、この間隔に1回までUserInfoに今のグループを問い合わせる（60秒）。
 // これで、グループから外された利用者は、使っている最中でも1分ほどでアクセスを失う。
 const DEFAULT_OIDC_RECHECK_SECONDS = 60;
-// SSOの利用者のAPI tokenは、最後のグループ同期がこれより古いと使えなくなる（decisions.md: 7日）。
+// SSOの利用者のAPI tokenは、最後のグループ同期がこれより古いと使えなくなる（7日）。
 const DEFAULT_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 // 1分より短いと、tokenのリクエストのたびにほぼ同期することになり、得るものが無い。
 const MIN_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS = 60;

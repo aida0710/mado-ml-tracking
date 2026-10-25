@@ -17,7 +17,7 @@ import { assertProjectReference } from '../repositories/registryRepository.js';
 import { requireProject } from './accessService.js';
 import { auditActor, NO_REQUEST_METADATA, recordDenial } from './auditService.js';
 
-/** 削除できる人。Project admin（decisions.md）で、tokenならArtifactを書けるもの。 */
+/** 削除できる人。Project adminで、tokenならArtifactを書けるもの。 */
 export const ARTIFACT_DELETE_PERMISSION = { role: 'admin', scope: 'artifacts:write' } as const;
 
 const referenceLabels: Record<ArtifactReferenceKind, string> = {

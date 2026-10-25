@@ -104,7 +104,7 @@ function overallDecision(
  * ポリシーの基準をベースラインとの比較に当てはめる。NaN、±Infinity、欠けたメトリクスは、
  * 飛ばさずに理由を付けて基準を不合格にする。絶対値の基準はベースラインが要らず、最初のリリース
  * でも確かめる。ベースラインのバージョンが無ければ、ベースラインに対する基準は
- * missingBaselineに従う（'pass'ならbaseline_missing_first_promotionを記録する。decisions.md）。
+ * missingBaselineに従う（'pass'ならbaseline_missing_first_promotionを記録する）。
  */
 export function evaluateCriteria(
   comparison: Pick<EvaluationComparison, 'status' | 'metrics'>,
