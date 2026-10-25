@@ -115,7 +115,7 @@ export const workflowsText = localized(
   english.workflowsText,
 );
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const workflowsTextTemplates = localized(
   {
     workflowVersionLabel: (revision: number) => `v${revision}`,

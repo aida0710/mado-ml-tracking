@@ -1,8 +1,8 @@
-/* Run comparison table on the Compare page. */
+/* 比較の画面のRunの比較表。 */
 
 /*
- * The table scrolls sideways inside its box. On narrow screens the row names wrap and stay pinned
- * to the left edge, so each value can still be read against its parameter or metric name.
+ * 表は枠の中で横にスクロールする。狭い画面では行の名前を折り返して左端に固定し、どの値も
+ * パラメータ名やメトリクス名と突き合わせて読めるようにする。
  */
 @media (width < 900px) {
   .comparison-table th:first-child {
@@ -15,7 +15,7 @@
     overflow-wrap: anywhere;
     box-shadow: 1px 0 0 var(--border);
   }
-  /* Values are numbers and ids: they stay on one line and the table scrolls to show them. */
+  /* 値は数値やidなので1行に収め、表をスクロールして見せる。 */
   .comparison-table td {
     white-space: nowrap;
   }

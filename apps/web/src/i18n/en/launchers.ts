@@ -34,7 +34,7 @@ export const launchersText = {
     'Optional: image-pull credentials shared by all sites (JSON {"username": ..., "password": ...}, mode 600)',
 } as const;
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const launchersTextTemplates = {
   launcherTokenTitle: (name: string) => `Token for launcher “${name}”`,
   launcherRotateConfirm: (name: string) =>

@@ -1,15 +1,14 @@
-/* The Run list on the Experiments page: row selection, the narrow list and the toolbar menus on
-   narrow screens. */
+/* Experimentsの画面のRunの一覧。行の選択、狭い画面での一覧と帯のメニュー。 */
 
-/* The selection checkbox of a Run row; on narrow (touch) screens its label is the tap target. */
+/* Runの行の選択のチェックボックス。狭い（タッチの）画面ではラベルをタップの対象にする。 */
 .run-select-target {
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-/* The Run list below 640px (NarrowRunTable): the name wraps instead of keeping the wide table's
-   180px column, so the selection, the name, the status and the open button fit a 320px phone. */
+/* 640px未満のRunの一覧（NarrowRunTable）。名前は広い表の180pxの列幅を保たずに折り返し、
+   選択・名前・状態・開くボタンが320pxのスマートフォンに収まるようにする。 */
 .narrow-run-table .responsive-table :is(th, td):is(.run-select-cell, .run-name-cell) {
   min-width: 0;
 }
@@ -18,8 +17,8 @@
   white-space: normal;
   overflow-wrap: anywhere;
 }
-/* In the opened row a metric sits next to its name, so it starts at the left like the other values
-   instead of lining up on the right as in a column of numbers. */
+/* 開いた行ではメトリクスがその名前の隣に並ぶので、数値の列のように右に揃えず、ほかの値と
+   同じく左から始める。 */
 .narrow-run-table .responsive-table-details dd.numeric {
   text-align: left;
 }

@@ -3,7 +3,7 @@ import { getLocale } from './locale';
 type MessagePair = { ja: string; en: string };
 const messages = new Map<string, MessagePair>();
 
-/** Notices may retain a translated string in state while the user changes language. */
+/** 通知は、利用者が表示言語を切り替える間も、訳した文字列をstateに持ったままのことがある。 */
 export function registerMessage(japanese: string, english: string): void {
   const pair = { ja: japanese, en: english };
   messages.set(japanese, pair);

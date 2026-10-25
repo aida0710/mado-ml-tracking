@@ -2,7 +2,7 @@ import * as english from './en/models';
 import { localized } from './localized';
 import type { ModelAliasEventSource } from '@mmt/contracts';
 
-// Model registry labels: alias assignment, removal and alias history.
+// モデルレジストリの文言。aliasの付与・解除と、aliasの履歴。
 export const modelsText = localized({
   aliasReason: '理由',
   aliasReasonPlaceholder: '例: 評価でWERが改善したため',
@@ -18,7 +18,7 @@ export const modelsText = localized({
   aliasActorSystem: 'システム',
   aliasActorToken: 'APIトークン',
   aliasUnassigned: '（なし）',
-  // Model version page: training Run → version → inference/evaluation Runs.
+  // モデルバージョンの画面。学習のRun → バージョン → 推論・評価のRun。
   modelVersionNotFound: 'モデルバージョンが見つかりません',
   modelVersionOpenPage: 'バージョンの詳細画面を開く',
   modelVersionArtifactOpen: 'Artifactsで開く',
@@ -48,15 +48,15 @@ export const modelsText = localized({
   runDownstream: 'このRunから起動したRun',
   runDownstreamEmpty: 'このRunから起動したRunはありません',
   loadMore: 'さらに読み込む',
-  // Model family: chosen from the families the Project uses (models and code versions).
+  // モデル系列。Projectで使っている系列（モデルとコードバージョンのもの）から選ぶ。
   familyHint:
     '既存の系列から選ぶか、新しい系列を入力します。コードバージョンの［対応モデル系列］と同じ文字列のとき、そのコードで動かせます。',
   familiesLoadFailed: '既存の系列を読み込めませんでした。系列はそのまま入力できます。',
   existingFamilies: '既存の系列（押すと追加）',
-  // Code versions a Task or a model version can use.
+  // Taskやモデルバージョンが使えるコードバージョン。
   openCodes: 'Codeを開く',
   codeCandidatesNone: 'コードバージョンがまだありません。Codeで登録すると選べます。',
-  // Model version form: weights chosen from the source Run's Artifacts.
+  // モデルバージョンのフォーム。重みは元のRunのArtifactから選ぶ。
   versionAutoNumberHint: '空欄なら自動で番号を付けます。',
   sourceRunHint:
     '学習・ファインチューニングのRunだけを選べます。選ぶと、そのRunのArtifactから重みを選べます。',
@@ -72,7 +72,7 @@ export const modelsText = localized({
   parentsHint: '同じ系列のバージョンだけを選べます。',
   parentsEmpty: '同じ系列のバージョンはまだありません。',
   defaultCodeHint: 'このバージョンの系列に対応するコードバージョンだけを選べます。',
-  // Which model runs on which code, shown on both the Models and the Code page.
+  // どのモデルがどのコードで動くか。ModelsとCodeの両方の画面に出す。
   familyCodeVersions: 'この系列に対応するコードバージョン',
   codeUsage: 'このコードバージョンの使われ方',
   codeUsageModels: '動かせるモデル',
@@ -81,7 +81,7 @@ export const modelsText = localized({
   codeUsageRules: '使っている自動実行ルール',
 } as const, english.modelsText);
 
-// The sign of candidate − baseline; better or worse depends on the metric and is not shown.
+// 候補 − 基準の符号。良くなったか悪くなったかはメトリクスによるので出さない。
 export const deltaSignLabels = localized({
   positive: '＋（基準より大きい）',
   negative: '－（基準より小さい）',
@@ -97,7 +97,7 @@ export const modelAliasSourceLabels: Record<ModelAliasEventSource, string> = loc
   model_deleted: 'モデルの削除',
 }, english.modelAliasSourceLabels);
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const modelsTextTemplates = localized({
   baselineValue: (alias: string) => `基準バージョン（${alias}）`,
   automaticByRule: (ruleName: string) => `自動評価（${ruleName}）`,

@@ -2,8 +2,8 @@ import * as english from './en/analysis';
 import { localized } from './localized';
 import type { ImportanceUnavailableReason, ParameterExclusionReason, ParameterImportanceResult } from '@mmt/contracts';
 
-// Exploring a set of Runs: parallel coordinates, parameter importance and the param scatter plot,
-// shared by the Run list, Compare and Sweep pages.
+// 複数のRunの探索結果の分析（平行座標、パラメータ重要度、パラメータの散布図）。Runの一覧・
+// 比較・Sweepの画面で共通に使う。
 export const analysisText = localized({
   analysisTitle: '探索結果の分析',
   analysisParallel: '平行座標',
@@ -46,7 +46,7 @@ export const analysisText = localized({
   analysisRunName: 'Run',
 } as const, english.analysisText);
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const analysisTextTemplates = localized({
   analysisSelectionCount: (selected: number, total: number) => `${total} 件中 ${selected} 件`,
   analysisRunCount: (runCount: number, skipped: number) =>

@@ -13,7 +13,7 @@ export const comparisonText = {
     'Matching runs exceeded the export limit. The export was truncated, as noted at the end of the CSV.',
 } as const;
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const comparisonTextTemplates = {
   comparisonRunCountOutOfRange: (minimum: number, maximum: number) =>
     `Select ${minimum}–${maximum} runs to compare.`,

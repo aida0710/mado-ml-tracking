@@ -1,4 +1,4 @@
-/* Sweeps: the list, the create dialog and its search space editor, and the detail page. */
+/* Sweep。一覧、作成のダイアログとその探索空間の編集、詳細の画面。 */
 
 .sweep-field-error {
   color: var(--error);
@@ -11,7 +11,7 @@
   border-color: var(--error);
 }
 
-/* Create dialog */
+/* 作成のダイアログ */
 .sweep-create-form fieldset {
   border: 0;
   margin: 0;
@@ -42,7 +42,7 @@
   margin: -8px 0 16px;
 }
 
-/* Search space editor */
+/* 探索空間の編集 */
 .sweep-editor-modes {
   display: flex;
   gap: 8px;
@@ -86,7 +86,7 @@
   margin-bottom: 8px;
 }
 
-/* Detail */
+/* 詳細 */
 .sweep-summary {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -121,7 +121,7 @@
   gap: 12px;
   color: var(--muted);
 }
-/* An h2, as it follows the page's h1; sized like the small heading it was. */
+/* ページのh1に続くのでh2にしたが、大きさは元の小さな見出しのままにする。 */
 .sweep-best h2 {
   font-size: var(--font-size-base);
   margin: 0 0 6px;
@@ -147,22 +147,22 @@
   background: var(--status-stopped-background);
   color: var(--status-stopped-text);
 }
-/* The best trial is named in its objective cell, which stays visible on narrow screens too. */
+/* 最良の試行は目的の値のセルで示す。そのセルは狭い画面でも見えたままになる。 */
 .sweep-best-marker {
   color: var(--link);
 }
 @media (width < 900px) {
-  /* A long objective metric name breaks inside its header, so the state and the row's toggle stay
-     on screen instead of past the table's right edge. */
+  /* 長い目的のメトリクス名は見出しの中で改行し、状態と行の開閉ボタンを表の右端の外へ出さずに
+     画面に残す。 */
   .sweep-trials th {
     white-space: normal;
     overflow-wrap: anywhere;
   }
-  /* Padding instead of a flex box keeps the summary's open/closed marker. */
+  /* flexboxにせず余白を使うことで、summaryの開閉の印を残す。 */
   .sweep-search-space > summary {
     padding-block: 11px;
   }
-  /* The full-screen dialog already has its margin; the fieldset padding would only narrow fields. */
+  /* 全画面のダイアログには既に余白があり、fieldsetの余白は入力欄を狭めるだけになる。 */
   .sweep-create-form > fieldset {
     padding: 0;
   }

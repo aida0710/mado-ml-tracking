@@ -1,4 +1,4 @@
-/* Saved views of the Run list and the column order, width and description cells they keep. */
+/* Runの一覧の保存ビューと、保存ビューが持つ列の順番・幅・説明のセル。 */
 .saved-views-bar {
   display: flex;
   flex-wrap: wrap;

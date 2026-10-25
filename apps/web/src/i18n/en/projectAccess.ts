@@ -44,7 +44,7 @@ export const projectAccessText = {
   grantedAt: 'Granted at',
 } as const;
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const projectAccessTextTemplates = {
   memberSourceGroup: (group: string) => `group ${group}`,
   memberPublicRole: (role: string) => `${role} (Public)`,

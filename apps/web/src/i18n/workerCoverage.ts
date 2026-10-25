@@ -1,11 +1,11 @@
 import type { WorkerCapability } from '@mmt/contracts';
 import * as english from './en/workerCoverage';
 import { localized } from './localized';
-// Whether a worker takes a computer's Jobs and connection checks (lib/workerCoverage), on the
-// Compute, Jobs, Sweep and 全体設定 → コンピュータ screens and in the Job launch dialog.
+// workerがコンピュータのJobと接続確認を受け取るかどうか（lib/workerCoverage）。Compute、Jobs、
+// Sweep、全体設定 → コンピュータの画面と、Jobの起動のダイアログに出す。
 export const workerCoverageText = localized({
   workerCoverageColumn: 'worker',
-  // 全体設定 counts every Project's workers, but a worker takes only its own Project's Jobs.
+  // 全体設定はすべてのProjectのworkerを数えるが、workerが受け取るのは自分のProjectのJobだけ。
   workerCoverageAnyProject: 'worker（いずれかのProject）',
   workerCoverageAnyProjectHint:
     'JobはそのProjectのworkerだけが受け取ります。Projectごとの状態は、各Projectの［Compute］で確かめてください。',
@@ -17,9 +17,9 @@ export const workerCoverageText = localized({
     'workerを動かすのは、このコンピュータの所有者（所有者がいなければ全体管理者）です。',
   queuedJobNotTaken:
     '担当するworkerは応答していますが、このJobをまだ受け取っていません。考えられる理由は次のとおりです。',
-  // The reasons a worker skips a queued Job (the API's claim), most common first. Typed as plain
-  // strings: under `as const` the list would be a tuple of these exact Japanese sentences, and
-  // TranslationShape would then demand the same sentences from the English catalog.
+  // workerが待ち行列のJobを受け取らない理由（APIのclaim）。よくあるものから並べる。型はただの
+  // stringにする。`as const`の下では、この一覧がこの日本語の文そのものからなるタプルになり、
+  // TranslationShapeが英語のカタログにも同じ文を求めてしまう。
   queuedJobNotTakenReasons: [
     'コンピュータの同時実行数が埋まっている',
     '選んだGPUをほかのJobが使っている',
@@ -40,12 +40,12 @@ export const workerCoverageText = localized({
     'このコンピュータを名指ししたworker（MMT_WORKER_TARGET_IDS）が応答していないため、接続確認を頼んでも5分後に失敗します。先にworkerを起動してください。',
 } as const, english.workerCoverageText);
 
-// What each feature a worker names (workerInfo.capabilities) lets it run.
+// workerが名乗る機能（workerInfo.capabilities）ごとに、それで何を実行できるか。
 export const workerCapabilityLabels = localized<Record<WorkerCapability, string>>({
   workflowDatasetUsage: 'ワークフローのステップ（データの用途・重み・抽出条件を実行コードへ渡す）',
 }, english.workerCapabilityLabels);
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const workerCoverageTextTemplates = localized({
   workerCoverageOnline: (count: number) => `workerオンライン ${count}`,
   workerCoverageOfflineSince: (lastSeen: string) => `最終応答 ${lastSeen}`,

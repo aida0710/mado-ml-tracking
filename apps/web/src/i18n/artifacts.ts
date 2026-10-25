@@ -1,7 +1,7 @@
 import { intlLocaleOf } from '@mado/design-system/locale';
 import * as english from './en/artifacts';
 import { localized } from './localized';
-// Artifact browser, preview, size limit, audio viewer, evaluation samples, and Artifact comparison labels.
+// Artifactブラウザ、プレビュー、サイズの上限、音声ビューア、評価サンプル、Artifactの比較の文言。
 import type { EvaluationSampleErrorReason, ArtifactReferenceError } from '../lib/evaluationSamples';
 
 export const artifactsText = localized({
@@ -83,7 +83,7 @@ export const artifactsText = localized({
   artifactOwner: '所属',
   artifactUnfinishedFolderUpload: '途中のアップロード',
   artifactBackToList: 'ファイル一覧へ戻る',
-  // Picking one Artifact in a form (ArtifactPickerField): search by path or paste its id.
+  // フォームでArtifactを1つ選ぶ欄（ArtifactPickerField）。保存パスで検索するか、idを貼り付ける。
   artifactPickerPlaceholder: '保存パスで検索、または ID・artifact://… を貼り付け',
   artifactPickerEmpty: 'Artifactはまだありません。',
   artifactPickerEmptyRun: 'このRunにはArtifactがありません。',

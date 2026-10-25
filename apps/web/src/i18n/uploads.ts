@@ -1,6 +1,7 @@
 import * as english from './en/uploads';
 import { localized } from './localized';
-// Artifact upload dialog and queue: progress, pause, cancel, resume. web-resumable-upload-manager owns the entries.
+// Artifactのアップロードのダイアログと待ち行列（進み具合、一時停止、取り消し、再開）。
+// 項目はweb-resumable-upload-managerが受け持つ。
 import type { UploadItemStatus } from '../hooks/useArtifactUploadQueue';
 import type { ResumeBlocker } from '../lib/uploadResumeBlocker';
 
@@ -50,7 +51,7 @@ export const uploadStatusLabels: Record<UploadItemStatus, string> = localized({
   completed: '完了',
 }, english.uploadStatusLabels);
 
-/** What stopped an unfinished upload from continuing. */
+/** 途中のアップロードを続けられなくなった理由。 */
 export const resumeBlockerReasons: Record<ResumeBlocker, string> = localized({
   expired: '期限（7日）が切れたため、送信済みの部分は使えません。',
   gone: 'このアップロードはサーバーに残っていません（破棄されたか、期限切れで消えました）。',
@@ -61,7 +62,7 @@ export const resumeBlockerReasons: Record<ResumeBlocker, string> = localized({
   contentDiffers: '選んだファイルは、送信済みの部分と中身が一致しません。別のファイルのようです。',
 }, english.resumeBlockerReasons);
 
-/** What the person can do next, next to the buttons of the unfinished upload's row. */
+/** 本人が次にできること。途中のアップロードの行のボタンの隣に出す。 */
 export const resumeBlockerNextSteps: Record<ResumeBlocker, string> = localized({
   expired: '［最初から送る］で、同じ保存パスへ送り直せます。',
   gone: '［最初から送る］で、同じ保存パスへ送り直せます。',
@@ -72,7 +73,7 @@ export const resumeBlockerNextSteps: Record<ResumeBlocker, string> = localized({
   contentDiffers: '同じファイルを選び直してください。このファイルを新しく送るときは、上の［ファイルを選ぶ］から選んでください。',
 }, english.resumeBlockerNextSteps);
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const uploadsTextTemplates = localized({
   uploadSelectedCount: (count: number, totalSize: string) => `${count}件（${totalSize}）`,
   uploadTransferRate: (rate: string) => `${rate}/秒`,

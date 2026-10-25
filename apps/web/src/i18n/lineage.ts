@@ -1,6 +1,6 @@
 import * as english from './en/lineage';
 import { localized } from './localized';
-// Lineage navigation, search and path selection.
+// Lineageの移動・検索・経路の選択。
 export const lineageText = localized({
   lineageZoomIn: '拡大',
   lineageZoomOut: '縮小',

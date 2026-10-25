@@ -1,7 +1,7 @@
-/* The Project switcher (in the sidebar or as the bar under the header) and the workspace height.
-   The header, sidebar, drawer, page header, tabs and login card come from
-   @mado/design-system/shell.css and components.css. The sidebar takes the header's dark colours in
-   both themes, so the switcher inside it uses the --header colours too. */
+/* Projectの切り替え（サイドバーの中か、上部バーの下の帯）と、作業領域の高さ。上部バー・
+   サイドバー・ドロワー・ページの見出し・タブ・ログインのカードは
+   @mado/design-system/shell.cssとcomponents.css。サイドバーはどちらのテーマでも上部バーの
+   暗い色を使うので、その中の切り替えも--headerの色を使う。 */
 .sidebar-project {
   display: grid;
   gap: 6px;
@@ -32,8 +32,8 @@
   gap: 12px;
   min-width: 0;
 }
-/* At 200% zoom the bar is 720px wide and the label broke into 「プロジェク」「ト」; the select
-   beside it shrinks instead. */
+/* 200%の拡大では帯の幅が720pxになり、ラベルが「プロジェク」「ト」に割れていた。代わりに横の
+   選択欄を縮める。 */
 .projectbar .project-switcher-label {
   flex: none;
   white-space: nowrap;
@@ -44,7 +44,7 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
-/* The button that opens the Project switcher looks like the select it replaces. */
+/* Projectの切り替えを開くボタンは、置き換えた選択欄と同じ見た目にする。 */
 .project-switcher-trigger {
   display: flex;
   align-items: center;
@@ -150,7 +150,7 @@
   font-size: var(--font-size-xs);
   font-weight: 400;
 }
-/* Creating a Project ends the list, under a line, so it never reads as one of the Projects. */
+/* Projectの作成は一覧の最後に線で区切って置き、Projectの1つに見えないようにする。 */
 .project-switcher-create {
   margin-top: 4px;
   border-top: 1px solid var(--border);
@@ -163,7 +163,7 @@
   flex: 0 0 auto;
   color: var(--muted);
 }
-/* The sidebar is dark in both themes (the header's colors); the dropdown keeps the page's. */
+/* サイドバーはどちらのテーマでも暗い（上部バーの色）。ドロップダウンはページの色のまま。 */
 .sidebar-project .project-switcher-label,
 .sidebar-project .project-role,
 .sidebar-project .project-switcher-chevron,
@@ -179,11 +179,11 @@
 .sidebar-project .project-switcher-trigger[aria-expanded='true'] {
   background: var(--header-control-hover);
 }
-/* The sidebar's focus mark is the header teal, too light on the dropdown's page background. */
+/* サイドバーのフォーカスの印は上部バーの青緑で、ドロップダウンのページの地の上では薄すぎる。 */
 .project-switcher-popover :focus-visible {
   outline-color: var(--accent);
 }
-/* The project bar shows whenever the sidebar is not full: the rail, the drawer, or collapsed. */
+/* Projectの帯は、サイドバーを広げていないとき（レール、ドロワー、畳んだ状態）にはいつも出す。 */
 .app-shell[data-project-bar='true'] {
   --chrome-height: calc(var(--topbar-height) + var(--projectbar-height));
 }
@@ -212,7 +212,7 @@
     display: none;
   }
 }
-/* What tells two rows apart: not being a member, or the creation date of a shared name. */
+/* 2つの行を見分ける手がかり。メンバーでないことか、同じ名前どうしの作成日。 */
 .project-switcher-note {
   margin-left: 6px;
   color: var(--muted);

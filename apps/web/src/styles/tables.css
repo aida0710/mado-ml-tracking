@@ -1,5 +1,5 @@
-/* Experiments sidebar, run toolbar and selection, and the run table. Generic tables, status badges
-   and the responsive table come from @mado/design-system/components.css. */
+/* Experimentsのサイドバー、Runの帯と選択、Runの表。汎用の表・状態のバッジ・レスポンシブな表は
+   @mado/design-system/components.css。 */
 .experiments-layout {
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
@@ -192,16 +192,16 @@
     margin-left: auto;
   }
 }
-/* English column names may wrap at their spaces, so a wide table (Jobs) narrows before it
-   scrolls. Japanese ones stay on one line: they would break between any two characters. */
+/* 英語の列名は空白で折り返してよいので、幅の広い表（Jobs）はスクロールする前に狭まる。
+   日本語の列名は1行のままにする。折り返すとどの文字の間でも切れてしまう。 */
 :lang(en) .responsive-table th:not(.nowrap) {
   white-space: normal;
 }
-/* Action buttons of a row opened by ResponsiveTable wrap under the secondary columns. */
+/* ResponsiveTableで開いた行の操作のボタンは、副次的な列の下で折り返す。 */
 .responsive-table-details dd :is(.access-actions, .user-actions, .storage-row-actions) {
   flex-wrap: wrap;
 }
-/* The Experiment list's own empty line, short enough for the list's box on a phone. */
+/* Experimentの一覧専用の空の表示。スマートフォンでも一覧の枠に収まる短さにする。 */
 .experiment-sidebar-empty {
   margin: 8px 16px;
   color: var(--muted);

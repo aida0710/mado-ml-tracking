@@ -1,11 +1,11 @@
 import { useMemo, type DependencyList } from 'react';
 import { useLocale } from './useLocale';
 
-/** Recompute cached labels when their catalogs change, while preserving the caller's inputs. */
+/** カタログが変わったら、呼び出し側の依存の指定を保ったまま、キャッシュした文言を計算し直す。 */
 export function useLocalizedMemo<Value>(calculate: () => Value, dependencies: DependencyList): Value {
   const { locale } = useLocale();
-  // The caller lists the dependencies, and exhaustive-deps checks that list at the call site
-  // (additionalHooks in eslint.config.js); only the catalog's language is added here.
-  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/use-memo -- forwards the caller's checked list
+  // 依存は呼び出し側が挙げ、exhaustive-depsが呼び出し側でその一覧を検査する（eslint.config.jsの
+  // additionalHooks）。ここではカタログの言語だけを足す。
+  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/use-memo -- 呼び出し側で検査済みの一覧をそのまま渡す
   return useMemo(calculate, [...dependencies, locale]);
 }

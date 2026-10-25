@@ -1,5 +1,5 @@
-// The guide to recording from the Mado Python SDK and the MLflow 3 SDK, on the Project settings
-// page and the Experiments page.
+// Python SDK（mado-tracking）とMLflow 3のSDKから記録する手順の案内。プロジェクト設定と
+// Experimentsの画面に出す。
 export const connectionText = {
   recordingConnection: 'Connect from SDK or MLflow 3',
   recordingConnectionIssueToken: 'Issue API token for this project',

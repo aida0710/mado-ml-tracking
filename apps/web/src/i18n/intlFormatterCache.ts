@@ -1,13 +1,13 @@
 import { getIntlLocale } from './locale';
 
 /*
- * Building an Intl formatter is far slower than using one, and some are used for every log line or
- * table cell. Each formatter is therefore built once per display language and reused.
+ * Intlのformatterは作るほうが使うよりはるかに遅く、ログの行や表のセルごとに使うものもある。
+ * そこで、formatterは表示言語ごとに1回だけ作って使い回す。
  */
 
 /**
- * Wraps `createFormatter` so that it runs once per Intl locale. The returned function gives the
- * formatter for the current display language, or for `intlLocale` when a caller needs a fixed one.
+ * `createFormatter`を、Intlのロケールごとに1回だけ動くように包む。返す関数は今の表示言語の
+ * formatterを返す。呼び出し側が言語を固定したいときは`intlLocale`のformatterを返す。
  */
 export function memoizePerIntlLocale<Formatter>(
   createFormatter: (intlLocale: string) => Formatter,

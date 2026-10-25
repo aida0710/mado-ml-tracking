@@ -1,6 +1,6 @@
 import * as english from './en/projects';
 import { localized } from './localized';
-// Projects themselves: the switcher, creation, visibility, archiving and the admin Project list.
+// Projectそのもの。切り替え、作成、公開範囲、アーカイブ、全体管理のProjectの一覧。
 export const projectsText = localized({
   projectSwitcherPlaceholder: 'プロジェクトを選択',
   projectSwitcherFilter: 'プロジェクトを絞り込み',
@@ -64,7 +64,7 @@ export const projectsText = localized({
   projectSettingsContents: 'プロジェクト設定の目次',
 } as const, english.projectsText);
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const projectsTextTemplates = localized({
   projectArchiveConfirm: (name: string) =>
     `「${name}」をアーカイブします。Run・モデル・Artifactのデータは残り、全体管理の「プロジェクト」から元に戻せます。`,

@@ -1,6 +1,6 @@
 import * as english from './en/evaluation';
 import { localized } from './localized';
-// Evaluation comparison panel. evaluation-baseline-comparison owns the entries.
+// 評価の比較のパネル。項目はevaluation-baseline-comparisonが受け持つ。
 export const evaluationText = localized({
   evaluationComparison: '基準バージョンとの評価比較',
   baselineAlias: '基準alias',

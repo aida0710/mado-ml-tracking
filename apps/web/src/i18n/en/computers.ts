@@ -1,7 +1,7 @@
 import type { ComputeTargetVisibility } from '@mmt/contracts';
 
-// 全体設定 → コンピュータ (/settings/computers): every computer with its visibility and state, and
-// the read-only list of the computers one may use on the Project's Compute page.
+// 全体設定 → コンピュータ（/settings/computers）の文言。すべてのコンピュータとその公開範囲・状態、
+// ProjectのComputeの画面に出す、利用者が使えるコンピュータを読むだけの一覧。
 export const computersText = {
   computersHint:
     "Lists every computer. Computers you cannot use (another user's private computers) show only their name, type, owner, visibility, and status.",
@@ -41,7 +41,7 @@ export const computersText = {
   workerSetupEnvironmentCommands: 'Environment variables (enter the token when running) and worker startup',
 } as const;
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const computersTextTemplates = {
   computerLauncherSeen: (name: string, lastSeen: string) => `${name} (last response: ${lastSeen})`,
   workerSetUpBy: (ownerName: string) => `Set up by the owner (${ownerName}) or a global administrator.`,

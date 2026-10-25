@@ -93,7 +93,7 @@
 }
 .lineage-canvas {
   --lineage-content-height: 180px;
-  /* Small model graphs leave room for their summary; large graphs use the same bounded viewport. */
+  /* 小さなモデルのグラフは要約の場所を残す。大きなグラフは同じ上限のある表示領域を使う。 */
   height: clamp(180px, var(--lineage-content-height), 640px);
   width: 100%;
 }

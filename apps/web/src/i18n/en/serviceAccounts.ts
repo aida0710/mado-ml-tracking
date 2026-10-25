@@ -1,7 +1,7 @@
 import { TOKEN_PURPOSE_LABELS, type TokenScope } from '@mmt/contracts';
 import type { TokenPurposeOption } from '../../lib/tokenPurposes';
 
-// Service Accounts, the Project token list and the token dialog on the settings page.
+// 設定の画面のService Account、Projectのtokenの一覧、tokenのダイアログ。
 export const serviceAccountsText = {
   serviceAccounts: 'Service accounts',
   serviceAccountsDescription:
@@ -73,7 +73,7 @@ export const tokenPurposeLabels: Record<TokenPurposeOption, { label: string; hin
   custom: { label: 'Choose scopes manually', hint: 'Select scopes one by one below' },
 };
 
-// One line per scope, shown next to the scope in the token dialog.
+// scopeごとに1行。tokenのダイアログでscopeの隣に出す。
 export const tokenScopeLabels: Record<TokenScope, string> = {
   read: 'read — Read',
   'runs:write': 'runs:write — Create and record runs',
@@ -87,7 +87,7 @@ export const tokenScopeLabels: Record<TokenScope, string> = {
   'users:manage': 'users:manage — Manage users',
 };
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const serviceAccountsTextTemplates = {
   tokenExpiryDays: (days: number) => `${days} days`,
   tokenExpiryTimezone: (timezone: string) => `Times use ${timezone}.`,

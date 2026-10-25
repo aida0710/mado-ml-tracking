@@ -1,5 +1,5 @@
-/* Project members, group bindings, the user picker on the settings page, and the members chosen
-   while creating a Project. */
+/* 設定の画面のProjectのメンバー、グループの割り当て、ユーザーの選択と、Projectの作成中に
+   選ぶメンバー。 */
 .user-summary {
   display: flex;
   flex-direction: column;
@@ -17,13 +17,13 @@
   align-items: center;
   gap: 6px;
 }
-/* Why the last admin's buttons are off; kept narrow so the table does not widen. */
+/* 最後の管理者のボタンが押せない理由。表が広がらないよう幅を狭く保つ。 */
 .access-locked-reason {
   flex-basis: 100%;
   max-width: 28em;
   font-size: var(--font-size-sm);
 }
-/* A bound group nobody has logged in with: likely a typo, and not counted as an admin. */
+/* 割り当てたが誰もログインしていないグループ。打ち間違いの可能性が高く、管理者としても数えない。 */
 .group-without-members {
   display: inline-block;
   margin-left: 6px;
@@ -34,7 +34,7 @@
   color: var(--muted);
   white-space: nowrap;
 }
-/* The members chosen while creating a Private Project: one row each with their role. */
+/* PrivateのProjectを作成中に選んだメンバー。1人1行でroleを添える。 */
 .member-grants {
   border: 0;
   margin: 0 0 16px;

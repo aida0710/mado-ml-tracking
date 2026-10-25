@@ -1,6 +1,6 @@
 import * as english from './en/shell';
 import { localized } from './localized';
-// The app frame shared by every screen: the navigation sidebar and drawer, and the responsive table.
+// どの画面にも共通のアプリの枠。ナビゲーションのサイドバーとドロワー、レスポンシブな表。
 export const shellText = localized({
   openNavigation: 'メニューを開く',
   closeNavigation: 'メニューを閉じる',

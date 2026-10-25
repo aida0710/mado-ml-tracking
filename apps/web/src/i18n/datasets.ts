@@ -1,6 +1,7 @@
 import * as english from './en/datasets';
 import { localized } from './localized';
-// Dataset version content: the folder upload in the version dialog and the version's file list.
+// データセットのバージョンの中身。バージョンのダイアログでのフォルダのアップロードと、
+// バージョンのファイル一覧。
 
 export const datasetsText = localized({
   datasetVersionFromFolder: 'フォルダから作る',

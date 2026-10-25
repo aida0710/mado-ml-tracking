@@ -6,8 +6,8 @@ import type {
 } from '@mmt/contracts';
 import type { JobShellTemplateKey } from '../../lib/jobShellTemplates';
 
-// Computers added on the Web: the site settings of the target dialog, the owner in the lists, and
-// a site's details (job shell, keys and checks, personal settings, submit).
+// Webで追加したコンピュータ。コンピュータのダイアログのsiteの設定、一覧の所有者、siteの詳細
+// （job shell、鍵と確認、個人の設定、投入）。
 export const siteComputersText = {
   siteSubmissionSection: 'Submission and connection',
   siteExecutionSection: 'Site execution',
@@ -139,10 +139,10 @@ export const siteComputersText = {
   submitSetupEnvironment: 'Connection URL and API token (enter the token when running)',
 } as const;
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const siteComputersTextTemplates = {
-  // Someone else's manual computer may be their PC (they take everyone's Jobs) or, for example, a
-  // supercomputer each requester submits to with their own account.
+  // ほかの人の手動のコンピュータは、その人のPC（全員のJobをその人が受け取る）のこともあれば、
+  // 依頼した人がそれぞれ自分のアカウントで投入するスーパーコンピュータなどのこともある。
   manualGuideOwnerSubmits: (owner: string) =>
     `This computer belongs to ${owner}. If the owner is listening with --watch --all (e.g. on their PC), jobs are submitted by the owner.`,
   siteJumpHostError: (value: string) =>

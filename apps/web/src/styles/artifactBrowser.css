@@ -1,4 +1,4 @@
-/* Run Artifact folder tree and the Project-wide Artifact catalog. */
+/* RunのArtifactのフォルダのツリーと、Project全体のArtifactのカタログ。 */
 /* フォルダーまでの道筋（デザインシステムの.breadcrumbs）。長い名前はどこででも折り返す。 */
 .artifact-breadcrumbs {
   margin-bottom: 10px;
@@ -9,7 +9,7 @@
   flex: none;
   margin: 0 4px;
 }
-/* The separator stays at the start of its name, so a long name wraps without leaving a lone '/'. */
+/* 区切りは名前の先頭に付けておき、長い名前が折り返しても'/'だけが行末に残らないようにする。 */
 .artifact-breadcrumb {
   display: inline-flex;
   align-items: baseline;
@@ -26,14 +26,14 @@
   flex: none;
   color: var(--muted);
 }
-/* Names wrap at any character, so without a floor a narrow pane breaks them every few letters. */
+/* 名前はどの文字でも折り返すので、最小幅が無いと狭い枠では数文字ごとに改行してしまう。 */
 .artifact-tree-name {
   min-width: 12em;
 }
 .artifact-tree-size {
   white-space: nowrap;
 }
-/* Folders with thousands of files scroll inside the pane so the preview stays in view. */
+/* 何千ものファイルがあるフォルダは枠の中でスクロールし、プレビューを見えたままにする。 */
 .artifact-tree .table-scroll,
 .artifact-catalog .artifact-layout .table-scroll {
   max-height: 70vh;
@@ -77,7 +77,7 @@
     max-width: none;
   }
 }
-/* The catalog table has more columns than the Run tree, so it takes the wider share. */
+/* カタログの表はRunのツリーより列が多いので、広いほうの幅を取る。 */
 .artifact-catalog .artifact-layout {
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
 }
@@ -85,7 +85,7 @@
   .artifact-catalog .artifact-layout {
     grid-template-columns: minmax(0, 1fr);
   }
-  /* One pane at a time below 900px: the list scrolls with the page instead of inside itself. */
+  /* 900px未満では枠を1つずつ出す。一覧は自分の中でなく、ページと一緒にスクロールする。 */
   .artifact-tree .table-scroll,
   .artifact-catalog .artifact-layout .table-scroll {
     max-height: none;
@@ -104,8 +104,8 @@
   width: 1%;
   text-align: center;
 }
-/* A dataset version's files sit in the narrow detail pane beside the dataset list, so the tree
-   takes the full width and the preview follows below it. */
+/* データセットのバージョンのファイルは、データセットの一覧の横の狭い詳細の枠にあるので、
+   ツリーは全幅を取り、プレビューはその下に続ける。 */
 .dataset-files.artifact-layout {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -113,7 +113,7 @@
 .artifact-catalog .artifact-layout > .artifact-preview {
   align-self: start;
 }
-/* The catalog's 所属 cell: the first owners of a file, each a link. */
+/* カタログの「所属」のセル。ファイルの持ち主を先頭から数件、それぞれリンクで出す。 */
 .artifact-owner-links {
   display: inline-flex;
   flex-wrap: wrap;

@@ -1,6 +1,6 @@
 import * as english from './en/projectAccess';
 import { localized } from './localized';
-// Project members, Authentik group bindings and the user picker on the settings page.
+// 設定の画面のProjectのメンバー、Authentikのグループの割り当て、ユーザーの選択。
 export const projectAccessText = localized({
   addMember: 'メンバーを追加',
   editMember: 'メンバーを編集',
@@ -47,7 +47,7 @@ export const projectAccessText = localized({
   grantedAt: '付与日時',
 } as const, english.projectAccessText);
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const projectAccessTextTemplates = localized({
   memberSourceGroup: (group: string) => `group ${group}`,
   memberPublicRole: (role: string) => `${role}（Public）`,

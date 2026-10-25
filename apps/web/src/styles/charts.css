@@ -1,6 +1,6 @@
-/* Metric chart (components/charts): controls, legend, plot layer and tooltip. */
+/* メトリクスの図（components/charts）。操作、凡例、描画の層、ツールチップ。 */
 
-/* A legend names its series in text colors; the mark beside the name carries the series color. */
+/* 凡例の系列名は文字の色で書き、名前の横の印に系列の色を付ける。 */
 .chart-legend-text {
   color: var(--text);
 }
@@ -60,7 +60,7 @@
   font-size: var(--font-size-sm);
 }
 
-/* 200 Runs make a long legend: it scrolls instead of pushing the plot down. */
+/* 200のRunでは凡例が長くなるので、図を下へ押し出さずにスクロールする。 */
 .chart-legend {
   display: flex;
   flex-wrap: wrap;
@@ -107,7 +107,7 @@
   stroke-width: 4;
 }
 
-/* 2px: a thinner dotted or dashed line fades into the grid. */
+/* 2px。これより細い点線や破線は目盛りの線に紛れる。 */
 .chart-line {
   fill: none;
   stroke-width: 2;
@@ -119,7 +119,7 @@
 .chart-line.highlighted {
   stroke-width: 3;
 }
-/* A value with no neighbor to draw a line to (logged once), filled in the line's color. */
+/* 線を引く相手の無い値（1回だけ記録したもの）。線の色で塗る。 */
 .chart-lone-points {
   stroke: none;
 }
@@ -162,7 +162,7 @@
 .chart-pointer-area {
   fill: transparent;
   cursor: crosshair;
-  /* A vertical swipe still scrolls the page; a sideways drag selects the range to zoom into. */
+  /* 縦のスワイプは変わらずページをスクロールし、横のドラッグで拡大する範囲を選ぶ。 */
   touch-action: pan-y;
 }
 
@@ -201,7 +201,7 @@
   color: var(--muted);
 }
 
-/* Narrow screens: the legend moves under the plot so the plot starts right below the title. */
+/* 狭い画面では凡例を図の下へ移し、見出しのすぐ下から図を始める。 */
 @media (width < 900px) {
   .metrics-chart > .chart-legend {
     order: 1;

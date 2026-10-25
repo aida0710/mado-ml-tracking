@@ -2,8 +2,8 @@ import * as english from './en/computerSetup';
 import { localized } from './localized';
 import type { TargetDirectoryListingOutcome } from '@mmt/contracts';
 
-// Adding and editing an ssh or local computer in two steps: 1「接続」(how a worker reaches it)
-// and 2「接続後の設定」(what its Jobs use), filled in from a worker's connection check.
+// sshかlocalのコンピュータを2段階で追加・編集する。1「接続」（workerがどうつなぐか）、
+// 2「接続後の設定」（そのJobが使うもの。workerの接続確認の結果で埋める）。
 export const computerSetupText = localized({
   setupStepConnection: '接続',
   setupStepSettings: '接続後の設定',

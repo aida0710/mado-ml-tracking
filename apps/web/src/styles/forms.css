@@ -1,19 +1,20 @@
-/* Dialogs of this app only, and the form controls they share: the radio list with a line per
-   choice and the text field with candidates. Dialogs, fields, wizard steps and details lists
-   themselves come from @mado/design-system/components.css. */
+/* このアプリだけのダイアログと、ダイアログが共有するフォームの部品（選択肢ごとに1行の
+   ラジオボタンの一覧と、候補付きのテキスト欄）。ダイアログ・入力欄・ウィザードの段階・
+   詳細の一覧そのものは@mado/design-system/components.css。 */
 .dialog.workspace-dialog {
   width: min(1280px, calc(100vw - 32px));
 }
 
-/* The dialog itself takes the focus on a touch screen (useModalDialog); it is not a control, so it
-   shows no focus ring. Tab moves on to its controls, which do. */
+/* タッチ画面ではダイアログ自身がフォーカスを受け取る（useModalDialog）。ダイアログは操作する
+   部品ではないので、フォーカスの枠を出さない。Tabで移る中の部品には出す。 */
 .dialog:focus {
   outline: none;
 }
 
-/* A long form (Run, Sweep, Job, hook, Task) keeps 保存 and キャンセル in view while its fields
-   scroll, as the header keeps the title; on a phone and at 200% zoom they were a long scroll away.
-   The padding keeps the buttons off the dialog's bottom edge while the footer sticks. */
+/* 長いフォーム（Run、Sweep、Job、フック、Task）では、上端の見出しがタイトルを残すのと同じく、
+   入力欄をスクロールしても保存とキャンセルを見えたままにする。スマートフォンや200%の拡大では、
+   ボタンまで長くスクロールする必要があった。footerが貼り付いている間も、余白でボタンを
+   ダイアログの下端から離す。 */
 .dialog footer {
   position: sticky;
   bottom: 0;
@@ -22,7 +23,7 @@
   background: var(--background);
 }
 
-/* A radio list with one bordered line per choice (storage backend, Project visibility). */
+/* 選択肢ごとに枠付きの1行を持つラジオボタンの一覧（保存先、Projectの公開範囲）。 */
 .choice-picker {
   border: 0;
   margin: 0 0 16px;
@@ -48,14 +49,14 @@
 .choice-picker-option:has(input:checked) {
   background: var(--surface);
 }
-/* A choice with a line of explanation under its name. */
+/* 名前の下に1行の説明がある選択肢。 */
 .choice-picker-option:has(.choice-picker-text) {
   align-items: flex-start;
 }
 .choice-picker-option:has(.choice-picker-text) input {
   margin-top: 2px;
 }
-/* A long explanation must not squeeze the radio button. */
+/* 長い説明でラジオボタンを押しつぶさない。 */
 .choice-picker-option input {
   flex: none;
 }
@@ -74,7 +75,7 @@
   font-weight: 600;
 }
 
-/* Search results to pick one from (users, Artifacts), and the picked one with［選び直す］. */
+/* 1つを選ぶ検索結果（ユーザー、Artifact）と、選んだものと［選び直す］。 */
 .picker-results {
   list-style: none;
   margin: 0;
@@ -97,7 +98,7 @@
 .picker-results button:focus-visible {
   background: var(--surface-hover);
 }
-/* A listed choice that cannot be picked, shown with the reason (an existing member). */
+/* 一覧にあるが選べない候補。理由を添えて出す（既にメンバーである人など）。 */
 .picker-results button:disabled {
   cursor: default;
   background: transparent;
@@ -115,21 +116,21 @@
   padding: 8px 10px;
   background: var(--surface);
 }
-/* An Artifact in the picker: its saved path, and its size and date under it. */
+/* 選択欄のArtifact。保存パスと、その下にサイズと日時。 */
 .artifact-choice {
   display: grid;
   gap: 2px;
   min-width: 0;
 }
-/* What to enter in a field, under it (FormField.hint). */
+/* 入力欄の下に出す、何を入れるかの説明（FormField.hint）。 */
 .field-hint {
   margin: 0;
   color: var(--muted);
   font-size: var(--font-size-xs);
 }
 
-/* A text field with candidates under it (SuggestionInput). The list stays in the flow of the form,
-   so a dialog's scrolling never clips it. */
+/* 下に候補を出すテキスト欄（SuggestionInput）。候補の一覧はフォームの流れの中に置くので、
+   ダイアログのスクロールで切れることがない。 */
 .suggestion-input {
   display: grid;
   gap: 4px;
@@ -158,7 +159,7 @@
 .suggestion-list li[aria-selected='true'] {
   background: var(--surface-hover);
 }
-/* A candidate with a short fact after it (a Python's version, a directory's free space). */
+/* 後ろに短い情報を添えた候補（Pythonのバージョン、ディレクトリの空き容量）。 */
 .suggestion-list li:has(.suggestion-detail) {
   display: flex;
   gap: 12px;
@@ -174,14 +175,14 @@
   color: var(--muted);
   font-size: var(--font-size-xs);
 }
-/* A note about a likely mistake; --warning only marks borders, so the text keeps its color. */
+/* 間違いらしいときの注記。--warningは枠線の印にだけ使うので、文字の色は変えない。 */
 .suggestion-note.warning {
   padding-left: 8px;
   border-left: 3px solid var(--warning);
   color: var(--text);
 }
-/* A notice with a button: below 640px the button goes under the text, so the explanation keeps
-   the full width instead of a narrow column beside a long label (English labels are longer). */
+/* ボタン付きの通知。640px未満ではボタンを文の下に回し、長いラベル（英語のラベルは長い）の横の
+   細い列にせず、説明に全幅を使わせる。 */
 @media (width < 640px) {
   .notice.action-notice {
     flex-direction: column;
@@ -196,7 +197,7 @@
   }
 }
 
-/* The filter box above a long checkbox list (CheckboxList). */
+/* 長いチェックボックスの一覧（CheckboxList）の上の絞り込みの欄。 */
 .checkbox-list-filter {
   display: block;
   width: 100%;
@@ -204,7 +205,7 @@
 }
 
 @media (width < 640px) {
-  /* Like every other dialog, the code workspace fills a phone's screen. */
+  /* ほかのダイアログと同じく、コードのワークスペースもスマートフォンでは画面いっぱいにする。 */
   .dialog.workspace-dialog.fullscreen-on-narrow {
     width: 100vw;
   }

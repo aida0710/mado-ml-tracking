@@ -49,7 +49,7 @@ export const uploadStatusLabels: Record<UploadItemStatus, string> = {
   completed: 'Completed',
 };
 
-/** What stopped an unfinished upload from continuing. */
+/** 途中のアップロードを続けられなくなった理由。 */
 export const resumeBlockerReasons: Record<ResumeBlocker, string> = {
   expired: 'The seven-day deadline has passed, so the parts already sent cannot be used.',
   gone: 'This upload is no longer on the server (it was discarded, or removed after it expired).',
@@ -60,7 +60,7 @@ export const resumeBlockerReasons: Record<ResumeBlocker, string> = {
   contentDiffers: 'The selected file does not match the parts already sent. It seems to be a different file.',
 };
 
-/** What the person can do next, next to the buttons of the unfinished upload's row. */
+/** 本人が次にできること。途中のアップロードの行のボタンの隣に出す。 */
 export const resumeBlockerNextSteps: Record<ResumeBlocker, string> = {
   expired: 'Use “Start over” to send it again to the same storage path.',
   gone: 'Use “Start over” to send it again to the same storage path.',
@@ -72,7 +72,7 @@ export const resumeBlockerNextSteps: Record<ResumeBlocker, string> = {
   contentDiffers: 'Choose the same file again. To upload this file as a new one, use “Choose files” above.',
 };
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const uploadsTextTemplates = {
   uploadSelectedCount: (count: number, totalSize: string) => `${formatEnglishCount(count, 'file')} (${totalSize})`,
   uploadTransferRate: (rate: string) => `${rate}/s`,

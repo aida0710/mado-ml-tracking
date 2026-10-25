@@ -14,7 +14,7 @@ import {
 
 const SECONDS_PER_MINUTE = 60;
 
-// The Hooks screen: the list, the create dialog, a hook's settings, manual starts and executions.
+// Hooksの画面。一覧、作成のダイアログ、フックの設定、手動の起動、実行。
 export const hooksText = localized({
   hooks: 'Hooks',
   hookList: 'フック',
@@ -117,7 +117,7 @@ export const hookWebhookSignatureLabels: Record<HookWebhookSignature, string> = 
   mmt: 'MMT（X-MMT-Signature）',
 }, english.hookWebhookSignatureLabels);
 
-// How the sender signs each delivery, shown next to the secret right after creation.
+// 送信側が配信ごとにどう署名するか。作成した直後に、署名の秘密鍵の隣に出す。
 export const hookWebhookSignatureHints: Record<HookWebhookSignature, string> = localized({
   github:
     'GitHubのWebhookでは、Content typeをapplication/jsonにし、この秘密鍵をSecretに設定します。X-GitHub-Deliveryが同じ再送は1回として扱います。',
@@ -152,7 +152,7 @@ export const hookExecutionSubjectLabels: Record<HookExecutionSubject, string> = 
   webhook: 'webhook',
 }, english.hookExecutionSubjectLabels);
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const hooksTextTemplates = localized({
   hookSkipped: (reason: string) => `起動せず（${reason}）`,
   hookTransferConfirm: (hookName: string, accountName: string) =>

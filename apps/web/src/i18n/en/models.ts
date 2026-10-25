@@ -3,7 +3,7 @@ import { intlLocaleOf } from '@mado/design-system/locale';
 import { formatEnglishCount } from '../formatEnglishCount';
 import { formatEnglishQuotedList } from '../formatEnglishQuotedList';
 
-// Model registry labels: alias assignment, removal and alias history.
+// モデルレジストリの文言。aliasの付与・解除と、aliasの履歴。
 export const modelsText = {
   aliasReason: 'Reason',
   aliasReasonPlaceholder: 'e.g. WER improved in evaluation',
@@ -19,7 +19,7 @@ export const modelsText = {
   aliasActorSystem: 'System',
   aliasActorToken: 'API token',
   aliasUnassigned: '(none)',
-  // Model version page: training Run → version → inference/evaluation Runs.
+  // モデルバージョンの画面。学習のRun → バージョン → 推論・評価のRun。
   modelVersionNotFound: 'Model version not found',
   modelVersionOpenPage: 'Open version details',
   modelVersionArtifactOpen: 'Open in Artifacts',
@@ -49,15 +49,15 @@ export const modelsText = {
   runDownstream: 'Runs launched from this run',
   runDownstreamEmpty: 'No runs launched from this run',
   loadMore: 'Load more',
-  // Model family: chosen from the families the Project uses (models and code versions).
+  // モデル系列。Projectで使っている系列（モデルとコードバージョンのもの）から選ぶ。
   familyHint:
     'Select an existing family or enter a new one. The model can run on code versions whose “Supported model families” contain exactly this string.',
   familiesLoadFailed: 'Could not load existing families. You can still type a family.',
   existingFamilies: 'Existing families (click to add)',
-  // Code versions a Task or a model version can use.
+  // Taskやモデルバージョンが使えるコードバージョン。
   openCodes: 'Open Code',
   codeCandidatesNone: 'No code versions yet. Register one in Code to select it here.',
-  // Model version form: weights chosen from the source Run's Artifacts.
+  // モデルバージョンのフォーム。重みは元のRunのArtifactから選ぶ。
   versionAutoNumberHint: 'Leave blank to number it automatically.',
   sourceRunHint:
     "Only training and fine-tuning runs can be selected. Selecting one lets you choose weights from that run's artifacts.",
@@ -73,7 +73,7 @@ export const modelsText = {
   parentsHint: 'Only versions in the same family can be selected.',
   parentsEmpty: 'No versions in the same family yet.',
   defaultCodeHint: "Only code versions supporting this version's model family can be selected.",
-  // Which model runs on which code, shown on both the Models and the Code page.
+  // どのモデルがどのコードで動くか。ModelsとCodeの両方の画面に出す。
   familyCodeVersions: 'Code versions for this family',
   codeUsage: 'How this code version is used',
   codeUsageModels: 'Models it can run',
@@ -82,7 +82,7 @@ export const modelsText = {
   codeUsageRules: 'Automation rules using it',
 } as const;
 
-// The sign of candidate − baseline; better or worse depends on the metric and is not shown.
+// 候補 − 基準の符号。良くなったか悪くなったかはメトリクスによるので出さない。
 export const deltaSignLabels = {
   positive: '+ (above baseline)',
   negative: '− (below baseline)',
@@ -98,7 +98,7 @@ export const modelAliasSourceLabels: Record<ModelAliasEventSource, string> = {
   model_deleted: 'Model deletion',
 };
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const modelsTextTemplates = {
   baselineValue: (alias: string) => `Baseline version (${alias})`,
   automaticByRule: (ruleName: string) => `Automatic evaluation (${ruleName})`,

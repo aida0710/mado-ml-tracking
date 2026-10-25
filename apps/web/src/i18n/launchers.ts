@@ -1,6 +1,6 @@
 import * as english from './en/launchers';
 import { localized } from './localized';
-// The launchers section of the global administration: registering launchers and their tokens.
+// 全体管理のランチャーの項目。ランチャーとそのtokenの登録。
 export const launchersText = localized({
   launchers: 'ランチャー',
   launchersDescription:
@@ -37,7 +37,7 @@ export const launchersText = localized({
     '任意: 全siteで共通の、imageをpullするためのtoken（JSON {"username": ..., "password": ...}、mode 600）',
 } as const, english.launchersText);
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const launchersTextTemplates = localized({
   launcherTokenTitle: (name: string) => `ランチャー「${name}」のtoken`,
   launcherRotateConfirm: (name: string) =>

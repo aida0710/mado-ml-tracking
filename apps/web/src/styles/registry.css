@@ -1,5 +1,5 @@
-/* Registry list/detail, automation panels, charts, logs, jobs, and the lineage graph. Section headings,
-   details lists and the JSON view come from @mado/design-system/components.css. */
+/* レジストリの一覧と詳細、自動実行のパネル、図、ログ、Job、来歴のグラフ。セクションの見出し・
+   詳細の一覧・JSONの表示は@mado/design-system/components.css。 */
 .registry-layout {
   display: grid;
   grid-template-columns: minmax(280px, 38%) minmax(0, 1fr);
@@ -23,7 +23,7 @@
 .automation-enabled {
   color: var(--link);
 }
-/* The links wrap inside their cell instead of widening the table past the page. */
+/* リンクはセルの中で折り返し、表をページより広げない。 */
 .automation-links {
   display: flex;
   flex-wrap: wrap;
@@ -38,7 +38,7 @@
   flex-direction: column;
   gap: 2px;
 }
-/* A failure reason under the outcome: two lines, the rest in the tooltip and the opened Job. */
+/* 結果の下の失敗の理由。2行まで出し、残りはツールチップと開いたJobで読む。 */
 .automation-error {
   display: -webkit-box;
   max-width: 260px;
@@ -71,8 +71,8 @@
   flex: 1 1 220px;
   max-width: 360px;
 }
-/* A reason in the history row: a readable width and three lines; the whole text is its tooltip,
-   and an automatic promotion's criteria are listed in full in the policy's decision history. */
+/* 履歴の行の理由。読める幅で3行まで出す。全文はツールチップに出し、自動の昇格の基準は
+   policyの判定の履歴にすべて並ぶ。 */
 td.alias-reason {
   min-width: 14em;
 }
@@ -82,10 +82,10 @@ td.alias-reason > span {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
-/* The alias history's long header wraps, so a phone keeps the column and the row's toggle. */
+/* aliasの履歴の長い見出しを折り返し、スマートフォンでもその列と行の開閉ボタンを残す。 */
 th.alias-version-change {
   white-space: normal;
-  /* Breaks at the spaces around the arrow, never inside バージョン. */
+  /* 矢印の前後の空白で改行し、「バージョン」の途中では切らない。 */
   word-break: keep-all;
 }
 .inline-links {
@@ -171,12 +171,12 @@ th.alias-version-change {
 .job-run-cell {
   min-width: 180px;
 }
-/* Why a Job has no stop or retry button: two lines wide, not a narrow column of three or more. */
+/* Jobに停止・再実行のボタンが無い理由。3行以上の細い列にせず、2行に収まる幅にする。 */
 .job-control-reason {
   display: inline-block;
   min-width: 14em;
 }
-/* Several short facts in one Jobs cell: runner host and scheduler ID, or hook, parent and array. */
+/* Jobsの1つのセルに並べる短い情報。実行したホストとスケジューラのID、またはフック・親・array。 */
 .job-cell-lines {
   display: flex;
   flex-direction: column;
@@ -189,7 +189,7 @@ th.alias-version-change {
 .job-arrays > p {
   margin: 0 0 8px;
 }
-/* Jobs waiting for `mado-tracking submit`: the sites and the command to run on their login node. */
+/* `mado-tracking submit`を待つJob。siteと、そのログインノードで実行するコマンド。 */
 .manual-submission {
   flex-direction: column;
   align-items: stretch;
@@ -205,11 +205,11 @@ th.alias-version-change {
 .manual-submission li + li {
   margin-top: 6px;
 }
-/* In the list, the owner's --all command keeps apart from the requester's own command. */
+/* 一覧では、所有者の--allのコマンドを依頼した本人のコマンドから離して置く。 */
 .manual-submission li .manual-submit-owner {
   margin-top: 8px;
 }
-/* Hooks: the one-time webhook secret and a hook's start form. */
+/* フック。一度だけ出すwebhookの署名の秘密鍵と、フックの起動のフォーム。 */
 .hook-detail-actions {
   display: flex;
   flex-wrap: wrap;
@@ -221,7 +221,7 @@ th.alias-version-change {
 .hook-start {
   margin-top: 20px;
 }
-/* A value to paste elsewhere (an ID, a command, a webhook secret) with its copy button. */
+/* ほかの場所に貼り付ける値（ID、コマンド、webhookの署名の秘密鍵）とコピーのボタン。 */
 .copyable-value {
   display: flex;
   flex-wrap: wrap;
@@ -240,12 +240,12 @@ th.alias-version-change {
   color: var(--muted);
   font-size: var(--font-size-sm);
 }
-/* Under a page title or in a details list the value sits in a line with its own spacing. */
+/* ページの見出しの下や詳細の一覧の中では、値は独自の間隔を持つ行の中に置かれる。 */
 .page-description .copyable-value,
 .details-list .copyable-value {
   margin-top: 0;
 }
-/* A protected alias in the Model's alias list: the lock and who may change it. */
+/* モデルのaliasの一覧の、保護したalias。鍵の印と、変更できる人。 */
 .alias-protection {
   display: inline-flex;
   align-items: center;
@@ -274,12 +274,12 @@ th.alias-version-change {
     border-left: 0;
     border-top: 1px solid var(--border);
     padding: 22px 0 0;
-    /* A choice in the list scrolls the detail up to just under the fixed header and project bar. */
+    /* 一覧で選ぶと、詳細を固定した上部バーとProjectの帯のすぐ下までスクロールする。 */
     scroll-margin-top: var(--chrome-height);
   }
 }
-/* The design system gives labels 150px; the longest ones (入力データセットバージョン: 13 characters at
-   12px) need about 160px, or their last character wraps alone. */
+/* デザインシステムはラベルに150pxを割り当てるが、最も長いラベル（入力データセットバージョン、
+   12pxで13文字）には約160pxが要り、足りないと最後の1文字だけが折り返す。 */
 .details-list > div {
   grid-template-columns: 170px minmax(0, 1fr);
 }
@@ -292,7 +292,7 @@ th.alias-version-change {
   }
 }
 
-/* Under a code version's family list: letter-case warnings and the families to add. */
+/* コードバージョンのモデル系列の一覧の下。大文字・小文字の違いの警告と、追加する系列。 */
 .model-family-hints {
   display: grid;
   gap: 6px;
@@ -304,8 +304,8 @@ th.alias-version-change {
   align-items: center;
   gap: 6px;
 }
-/* Why a code version list is empty, under the list and apart from the next field. Qualified by
-   .field-hint, which forms.css (loaded later) gives no margin. */
+/* コードバージョンの一覧が空の理由。一覧の下に、次の入力欄から離して出す。セレクタに
+   .field-hintを重ねるのは、あとで読み込むforms.cssが.field-hintの余白を0にするため。 */
 .field-hint.missing-code-notice {
   margin: -6px 0 14px;
 }

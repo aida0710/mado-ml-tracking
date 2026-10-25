@@ -1,4 +1,4 @@
-/* Markdown display and editing, the Run description and comment threads. */
+/* Markdownの表示と編集、Runの説明、コメントのスレッド。 */
 .markdown-view {
   line-height: 1.65;
   overflow-wrap: anywhere;
@@ -9,7 +9,7 @@
 .markdown-view > :last-child {
   margin-bottom: 0;
 }
-/* Headings are one level below the one written (MarkdownView); the level written sets the look. */
+/* 見出しは書いたレベルより1つ下の要素にする（MarkdownView）。見た目は書いたレベルで決める。 */
 .markdown-view [data-markdown-level='1'],
 .markdown-view [data-markdown-level='2'],
 .markdown-view [data-markdown-level='3'] {
@@ -37,7 +37,7 @@
 .markdown-view ol {
   padding-left: 1.5em;
 }
-/* GFM task list items carry their own disabled checkbox instead of a bullet. */
+/* GFMのタスクリストの項目は、行頭の記号の代わりに無効のチェックボックスを持つ。 */
 .markdown-view li.task-list-item {
   list-style: none;
   margin-left: -1.3em;
@@ -172,7 +172,7 @@
   gap: 8px;
   margin-top: 8px;
 }
-/* Narrow screens are touch screens: reply, edit and delete become full tap targets. */
+/* 狭い画面はタッチ画面なので、返信・編集・削除に--tap-targetの大きさを持たせる。 */
 @media (width < 900px) {
   .comment-actions {
     gap: 4px;

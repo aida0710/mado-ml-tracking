@@ -99,7 +99,7 @@ export const workbenchText = localized({
   outputRegistrationLoadError: '出力モデルの登録結果を取得できませんでした',
 } as const, english.workbenchText);
 
-// Keys are the stable codes the API stores in RunOutputRegistration.error.
+// キーは、APIがRunOutputRegistration.errorに保存する変わらないコード。
 export const outputRegistrationErrorLabels: Record<string, string> = localized({
   model_not_found: '登録先のモデルが見つかりません',
   model_deleted: '登録先のモデルは削除されています',
@@ -111,7 +111,7 @@ export const outputRegistrationErrorLabels: Record<string, string> = localized({
   registration_failed: '登録中にエラーが発生しました',
 }, english.outputRegistrationErrorLabels);
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const workbenchTextTemplates = localized({
   taskLaunchRegistration: (modelLabel: string) =>
     `成功すると「${modelLabel}」にモデルバージョンを登録します。その系列を対象にした自動実行ルールがあれば、登録したバージョンで推論・評価が続けて自動で動きます。`,
