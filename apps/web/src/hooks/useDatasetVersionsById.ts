@@ -20,9 +20,9 @@ export function useDatasetVersionsById({
   const known = new Map(loadedVersions.map((version) => [version.id, version]));
   const missingIds = ids.filter((id) => !known.has(id));
   const loadedDatasetIds = new Set(loadedVersions.map((version) => version.datasetId));
-  const others = useQuery(
-    missingIds.length > 0 ? `${projectId}:dataset-versions-by-id:${missingIds.join(',')}` : null,
-    async (signal) =>
+  const others = useQuery({
+    key: missingIds.length > 0 ? `${projectId}:dataset-versions-by-id:${missingIds.join(',')}` : null,
+    load: async (signal) =>
       (
         await Promise.all(
           datasets
@@ -30,7 +30,7 @@ export function useDatasetVersionsById({
             .map((dataset) => registryApi.datasetVersions(projectId, dataset.id, signal)),
         )
       ).flat(),
-  );
+  });
   for (const version of others.value ?? []) known.set(version.id, version);
   return known;
 }

@@ -59,19 +59,19 @@ export function ArtifactsPage() {
   const [deleted, setDeleted] = useState<Artifact | null>(null);
   const { panes, containerRef, scrollBrowserIntoView } = useArtifactBrowserPanes(selected !== undefined);
   const catalog = useProjectArtifactCatalog(project.id, filter);
-  const runs = useQuery(`${project.id}:artifact-filter-runs`, (signal) =>
+  const runs = useQuery({ key: `${project.id}:artifact-filter-runs`, load: (signal) =>
     trackingApi.searchRuns(project.id, { limit: RUN_FILTER_OPTION_LIMIT }, signal),
-  );
-  const models = useQuery(`${project.id}:artifact-filter-models`, (signal) =>
+  });
+  const models = useQuery({ key: `${project.id}:artifact-filter-models`, load: (signal) =>
     registryApi.models(project.id, signal),
-  );
-  const modelVersions = useQuery(
-    modelId ? `${project.id}:artifact-filter-versions:${modelId}` : null,
-    (signal) => registryApi.modelVersions(project.id, modelId, signal),
-  );
-  const datasets = useQuery(`${project.id}:artifact-owner-datasets`, (signal) =>
+  });
+  const modelVersions = useQuery({
+    key: modelId ? `${project.id}:artifact-filter-versions:${modelId}` : null,
+    load: (signal) => registryApi.modelVersions(project.id, modelId, signal),
+  });
+  const datasets = useQuery({ key: `${project.id}:artifact-owner-datasets`, load: (signal) =>
     registryApi.datasets(project.id, signal),
-  );
+  });
   const runNames = new Map(runs.value?.items.map((run) => [run.id, run.name]));
   const datasetsById = new Map((datasets.value ?? []).map((dataset) => [dataset.id, dataset]));
   // Files without a Run are named by what lists them; a Run's files by the Run itself.

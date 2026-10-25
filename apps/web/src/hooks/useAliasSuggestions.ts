@@ -19,13 +19,13 @@ export function useAliasSuggestions({
   models: readonly Model[];
   modelId: string | null;
 }) {
-  const policies = useQuery(`${projectId}:promotion-policies`, (signal) =>
+  const policies = useQuery({ key: `${projectId}:promotion-policies`, load: (signal) =>
     promotionApi.policies(projectId, signal),
-  );
+  });
   // Without a Model the API lists the Project-wide protections only.
-  const protections = useQuery(`${projectId}:alias-protections:${modelId ?? ''}`, (signal) =>
+  const protections = useQuery({ key: `${projectId}:alias-protections:${modelId ?? ''}`, load: (signal) =>
     registryApi.aliasProtections(projectId, modelId, signal),
-  );
+  });
   const known = collectKnownAliases({
     models,
     modelId,

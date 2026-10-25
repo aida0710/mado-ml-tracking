@@ -15,9 +15,9 @@ import { text, textTemplates } from '../i18n/catalog';
 export function DatasetVersionUsage({ version }: { version: DatasetVersion }) {
   useLocale();
   const base = `/projects/${encodeURIComponent(version.projectId)}`;
-  const lineage = useQuery(`${version.projectId}:lineage`, (signal) =>
+  const lineage = useQuery({ key: `${version.projectId}:lineage`, load: (signal) =>
     trackingApi.lineage(version.projectId, signal),
-  );
+  });
   return (
     <section className="dataset-version-usage" data-testid="dataset-version-usage">
       <div className="section-heading">

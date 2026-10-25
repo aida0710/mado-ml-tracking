@@ -11,9 +11,9 @@ import { text } from '../../i18n/catalog';
  */
 export function RunBreadcrumb({ run }: { run: Pick<Run, 'projectId' | 'experimentId'> }) {
   useLocale();
-  const experiments = useQuery(`${run.projectId}:experiments`, (signal) =>
+  const experiments = useQuery({ key: `${run.projectId}:experiments`, load: (signal) =>
     trackingApi.experiments(run.projectId, signal),
-  );
+  });
   const experimentName = experiments.value?.find((item) => item.id === run.experimentId)?.name;
   const experimentsPath = `/projects/${run.projectId}/experiments`;
   return (

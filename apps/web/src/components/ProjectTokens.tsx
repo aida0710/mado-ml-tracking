@@ -19,7 +19,7 @@ import { formatList } from '../i18n/textJoining';
 export function ProjectTokens({ projectTokens }: { projectTokens: QueryState<TokenSummary[]> }) {
   useLocale();
   const { project, isProjectAdmin } = useProject();
-  const personalTokens = useQuery('personal-tokens', administrationApi.tokens);
+  const personalTokens = useQuery({ key: 'personal-tokens', load: administrationApi.tokens });
   const [showCreate, setShowCreate] = useState(false);
   const [revokingToken, setRevokingToken] = useState<TokenSummary | null>(null);
   const reloadAll = () => {

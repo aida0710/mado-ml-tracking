@@ -81,9 +81,9 @@ function ComparedAudio({ runs, entry }: { runs: Run[]; entry: CommonArtifactPath
 export function ArtifactCompare({ projectId, runs }: { projectId: string; runs: Run[] }) {
   useLocale();
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
-  const artifacts = useQuery(`${projectId}:compare-artifacts:${runs.map((run) => run.id).join(',')}`, (signal) =>
+  const artifacts = useQuery({ key: `${projectId}:compare-artifacts:${runs.map((run) => run.id).join(',')}`, load: (signal) =>
     Promise.all(runs.map((run) => trackingApi.artifacts(projectId, run.id, signal))),
-  );
+  });
   return (
     <Resource query={artifacts}>
       {(artifactsByRun) => {

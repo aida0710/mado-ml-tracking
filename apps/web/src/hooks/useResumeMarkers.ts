@@ -18,11 +18,11 @@ export function useResumeMarkers(
   xAxis: ChartXAxis,
 ): QueryState<MetricsChartMarker[]> {
   const isFewRuns = runs.length > 0 && runs.length <= MAX_RESUME_MARKER_RUNS;
-  return useQuery(
-    isFewRuns
+  return useQuery({
+    key: isFewRuns
       ? `${projectId}:resume-markers:${xAxis.kind}:${runs.map((run) => run.id).join(',')}`
       : null,
-    async (signal) =>
+    load: async (signal) =>
       resumeMarkers(
         xAxis,
         await Promise.all(
@@ -32,5 +32,5 @@ export function useResumeMarkers(
           })),
         ),
       ),
-  );
+  });
 }

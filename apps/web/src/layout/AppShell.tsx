@@ -26,7 +26,7 @@ export function AppShell() {
   const navigate = useNavigate();
   // Right after archiving, "/" lists the Projects with a note instead of opening another one.
   const archivedProjectName = readArchivedProjectName(useLocation().state);
-  const projects = useQuery('projects', administrationApi.projects);
+  const projects = useQuery({ key: 'projects', load: administrationApi.projects });
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const startCreatingProject = canCreateProject(auth.user)
     ? () => setIsCreatingProject(true)

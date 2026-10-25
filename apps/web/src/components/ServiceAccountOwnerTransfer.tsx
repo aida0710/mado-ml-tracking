@@ -31,9 +31,9 @@ export function ServiceAccountOwnerTransfer({
   onTransferred: () => void;
 }) {
   useLocale();
-  const accounts = useQuery(`${projectId}:service-accounts:owner-transfer`, (signal) =>
+  const accounts = useQuery({ key: `${projectId}:service-accounts:owner-transfer`, load: (signal) =>
     accessApi.serviceAccounts(projectId, signal),
-  );
+  });
   const [values, setValues] = useState<Record<string, string>>({ serviceAccount: '' });
   const [isConfirming, setIsConfirming] = useState(false);
   const [isTransferred, setIsTransferred] = useState(false);

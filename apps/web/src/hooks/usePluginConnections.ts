@@ -6,7 +6,7 @@ import { getPluginConnectionsWithSavedResponses, getUnobservedPluginResponses } 
 import { useQuery } from './useQuery';
 
 export function usePluginConnections(projectId: string) {
-  const query = useQuery(`${projectId}:plugins`, (signal) => pluginsApi.connections(projectId, signal));
+  const query = useQuery({ key: `${projectId}:plugins`, load: (signal) => pluginsApi.connections(projectId, signal) });
   const [savedResponses, setSavedResponses] = useState<ReadonlyMap<string, PluginConnection>>(() => new Map());
   // A response is dropped during render once GET returns the connection it saved.
   const unobservedResponses = query.value

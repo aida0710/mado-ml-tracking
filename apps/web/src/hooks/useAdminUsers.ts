@@ -6,8 +6,8 @@ import { useQuery } from './useQuery';
 /** The admin users tab's list and the filter it was loaded with. */
 export function useAdminUsers() {
   const [filter, setFilter] = useState<AdminUserQuery>({});
-  const users = useQuery(`admin-users:${JSON.stringify(filter)}`, (signal) =>
+  const users = useQuery({ key: `admin-users:${JSON.stringify(filter)}`, load: (signal) =>
     adminUsersApi.list(filter, signal),
-  );
+  });
   return { users, filter, setFilter };
 }

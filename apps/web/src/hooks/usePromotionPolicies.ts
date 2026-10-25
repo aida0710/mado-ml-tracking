@@ -5,9 +5,9 @@ import { useMutation } from './useMutation';
 
 // The Project's promotion policies, the selected one, and enabling/disabling them.
 export function usePromotionPolicies(projectId: string) {
-  const policies = useQuery(`${projectId}:promotion-policies`, (signal) =>
+  const policies = useQuery({ key: `${projectId}:promotion-policies`, load: (signal) =>
     promotionApi.policies(projectId, signal),
-  );
+  });
   const [selectedPolicyId, setSelectedPolicyId] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const mutation = useMutation();

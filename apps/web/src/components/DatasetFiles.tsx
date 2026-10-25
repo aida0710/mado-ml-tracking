@@ -71,9 +71,9 @@ export function DatasetFiles({ version }: { version: DatasetVersion }) {
 /** The tree entry carries the dataset path; the preview needs the stored Artifact itself. */
 function DatasetFilePreview({ entry }: { entry: Artifact }) {
   useLocale();
-  const artifact = useQuery(`${entry.projectId}:artifact:${entry.id}`, (signal) =>
+  const artifact = useQuery({ key: `${entry.projectId}:artifact:${entry.id}`, load: (signal) =>
     trackingApi.artifact(entry.projectId, entry.id, signal),
-  );
+  });
   return (
     <section className="artifact-preview">
       <h3>{entry.path}</h3>

@@ -9,18 +9,18 @@ import { useQueryPolledWhileActive } from './useQueryPolledWhileActive';
 
 /** The version, its training Run, the Project's rules, and the version's automation executions. */
 export function useModelVersionDetail(projectId: string, versionId: string) {
-  const detail = useQuery(`${projectId}:model-version:${versionId}`, (signal) =>
+  const detail = useQuery({ key: `${projectId}:model-version:${versionId}`, load: (signal) =>
     registryApi.modelVersionDetail(projectId, versionId, signal),
-  );
+  });
   const sourceRunId = detail.value ? getModelTrainingSourceRunId(detail.value.version) : null;
   const sourceRun = useQueryPolledWhileActive<Run>(
     sourceRunId ? `${projectId}:run:${sourceRunId}` : null,
     (signal) => trackingApi.run(projectId, sourceRunId!, signal),
     (run) => hasActiveRun([run]),
   );
-  const rules = useQuery(`${projectId}:automation-rules`, (signal) =>
+  const rules = useQuery({ key: `${projectId}:automation-rules`, load: (signal) =>
     automationApi.rules(projectId, signal),
-  );
+  });
   const executions = useQueryPolledWhileActive(
     `${projectId}:model-version:${versionId}:executions`,
     (signal) =>

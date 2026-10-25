@@ -8,7 +8,7 @@ export function usePluginAvailability(projectId: string) {
     subscribePluginAvailability,
     () => getPluginAvailabilityRevision(projectId),
   );
-  return useQuery(`${projectId}:plugin-availability:${revision}`, (signal) =>
+  return useQuery({ key: `${projectId}:plugin-availability:${revision}`, load: (signal) =>
     pluginsApi.availability(projectId, signal),
-  );
+  });
 }

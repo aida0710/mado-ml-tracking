@@ -55,16 +55,16 @@ export function useAutomationHistory({
   }
   // A page that arrives after the filter changed still carries the filter it was read with.
   const pages = loaded?.filterKey === filterKey ? loaded : null;
-  const newestPage = useQuery(
-    enabled && !pages ? `${projectId}:automation-executions:${filterKey}` : null,
-    (signal) =>
+  const newestPage = useQuery({
+    key: enabled && !pages ? `${projectId}:automation-executions:${filterKey}` : null,
+    load: (signal) =>
       automationApi.executionPage(
         projectId,
         { filter, limit: AUTOMATION_HISTORY_PAGE_SIZE },
         signal,
       ),
-    EXECUTION_POLL_MS,
-  );
+    pollMs: EXECUTION_POLL_MS,
+  });
   const items = pages?.items ?? newestPage.value?.items ?? [];
   const nextCursor = pages ? pages.nextCursor : (newestPage.value?.nextCursor ?? null);
 

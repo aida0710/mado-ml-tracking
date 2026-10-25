@@ -36,7 +36,7 @@ export function TargetDialog({
 }) {
   useLocale();
   const { user } = useAuth();
-  const choices = useQuery('target-dialog-choices', loadTargetChoices);
+  const choices = useQuery({ key: 'target-dialog-choices', load: loadTargetChoices });
   const title = target ? text.editTarget : text.newTarget;
   return (
     <QueryDialog title={title} onClose={onClose} query={choices}>

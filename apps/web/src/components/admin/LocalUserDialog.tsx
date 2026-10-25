@@ -32,7 +32,7 @@ export function LocalUserDialog({
   const [createdPassword, setCreatedPassword] = useState<string | null>(null);
   const mutation = useMutation();
   // A local account can only sign in while the server offers local login (AUTH_MODE).
-  const authConfig = useQuery('auth-config', authApi.config);
+  const authConfig = useQuery({ key: 'auth-config', load: authApi.config });
   const isLocalLoginOff = authConfig.value !== undefined && !loginMethods(authConfig.value).local;
   if (createdPassword)
     return (

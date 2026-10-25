@@ -84,9 +84,9 @@ export function ExperimentsPage() {
     setSelectedForConditions(selectionConditions);
     setSelectedIds([]);
   }
-  const experiments = useQuery(`${project.id}:experiments`, (signal) =>
+  const experiments = useQuery({ key: `${project.id}:experiments`, load: (signal) =>
     trackingApi.experiments(project.id, signal),
-  );
+  });
   const cursor = cursorHistory.at(-1);
   const search: RunSearchRequest = {
     ...toRunSearchConditions(searchText),

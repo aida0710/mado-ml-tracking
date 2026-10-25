@@ -21,7 +21,7 @@ export function useModelVersionForm({ projectId, model }: { projectId: string; m
   const [draft, setDraft] = useState<ModelVersionDraft>(EMPTY_MODEL_VERSION_DRAFT);
   const [isUploadingWeights, setIsUploadingWeights] = useState(false);
   const catalog = useExecutionCatalog(projectId);
-  const sourceRuns = useQuery(`${projectId}:source-runs`, async (signal) =>
+  const sourceRuns = useQuery({ key: `${projectId}:source-runs`, load: async (signal) =>
     (
       await trackingApi.searchRuns(
         projectId,
@@ -29,7 +29,7 @@ export function useModelVersionForm({ projectId, model }: { projectId: string; m
         signal,
       )
     ).items,
-  );
+  });
   const mutation = useMutation();
   function change(changes: Partial<ModelVersionDraft>) {
     setDraft((previous) => ({ ...previous, ...changes }));

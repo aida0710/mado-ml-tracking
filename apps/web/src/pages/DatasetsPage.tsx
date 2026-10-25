@@ -405,7 +405,7 @@ function ParentVersionLinks({
 
 function SourceRunLink({ projectId, runId }: { projectId: string; runId: string }) {
   useLocale();
-  const run = useQuery(`${projectId}:run:${runId}`, (signal) => trackingApi.run(projectId, runId, signal));
+  const run = useQuery({ key: `${projectId}:run:${runId}`, load: (signal) => trackingApi.run(projectId, runId, signal) });
   return (
     <Link to={`/projects/${projectId}/runs/${runId}`}>
       {run.value?.name ?? shortRunId(runId)}

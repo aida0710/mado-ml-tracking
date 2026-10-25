@@ -32,10 +32,10 @@ export function OperationsAlertBadge({ openProjectId }: { openProjectId?: string
   const { pathname } = useLocation();
   const { container, isOpen, toggle } = usePopover({ closeKey: pathname });
   // Names are looked up only once the list is shown; the count needs none.
-  const projects = useQuery(
-    isOpen ? 'operations-alert-projects' : null,
-    administrationApi.projects,
-  );
+  const projects = useQuery({
+    key: isOpen ? 'operations-alert-projects' : null,
+    load: administrationApi.projects,
+  });
   const projectName = (projectId: string) =>
     projects.value?.find((project) => project.id === projectId)?.name ??
     text.operationsAlertUnknownProject;

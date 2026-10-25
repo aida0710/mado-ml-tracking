@@ -8,8 +8,8 @@ import { useQuery } from './useQuery';
  * is not shown.
  */
 export function useArtifactMediaInfo(artifact: Pick<Artifact, 'projectId' | 'id'>): ArtifactMediaInfo | null {
-  const query = useQuery(`${artifact.projectId}/${artifact.id}`, (signal) =>
+  const query = useQuery({ key: `${artifact.projectId}/${artifact.id}`, load: (signal) =>
     artifactMediaInfoApi.get(artifact.projectId, artifact.id, signal),
-  );
+  });
   return query.value ?? null;
 }

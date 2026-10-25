@@ -9,24 +9,24 @@ import { useQuery } from './useQuery';
 
 /** The current data of a live embed, read with the reader's permissions. Pass null for none. */
 export function useLiveBlockData(projectId: string, block: Exclude<ReportEmbedBlock, { type: 'media_table' }> | null) {
-  return useQuery(block ? `${projectId}:report-live:${JSON.stringify(block)}` : null, (signal) =>
+  return useQuery({ key: block ? `${projectId}:report-live:${JSON.stringify(block)}` : null, load: (signal) =>
     loadLiveBlockData(projectId, block!, signal),
-  );
+  });
 }
 
 /** Runs, metric, param and tag names of a Run set, offered while an embed is configured. */
 export function useRunSetFieldNames(projectId: string, runSet: ReportRunSet | null) {
-  return useQuery(runSet ? `${projectId}:report-run-set-names:${JSON.stringify(runSet)}` : null, async (signal) => {
+  return useQuery({ key: runSet ? `${projectId}:report-run-set-names:${JSON.stringify(runSet)}` : null, load: async (signal) => {
     const runs = await loadRunSetSample(projectId, runSet!, signal);
     const tagKeys = [...new Set(runs.flatMap((run) => Object.keys(run.tags)))].sort();
     return { runs, ...getRunColumnNames(runs), tagKeys };
-  });
+  } });
 }
 
 /** Run set sources the picker offers besides listed Runs and a search. */
 export function useRunSetSources(projectId: string) {
-  const savedViews = useQuery(`${projectId}:report-saved-views`, (signal) => reportsApi.shareableSavedViews(projectId, signal));
-  const sweeps = useQuery(`${projectId}:report-sweeps`, (signal) => sweepsApi.list(projectId, { signal }));
+  const savedViews = useQuery({ key: `${projectId}:report-saved-views`, load: (signal) => reportsApi.shareableSavedViews(projectId, signal) });
+  const sweeps = useQuery({ key: `${projectId}:report-sweeps`, load: (signal) => sweepsApi.list(projectId, { signal }) });
   return { savedViews, sweeps };
 }
 
@@ -35,19 +35,19 @@ const TABLE_MEDIA_PER_KEY = 50;
 
 /** The tables (media of kind table) a Run recorded, for embedding one of them. */
 export function useRunTableMedia(projectId: string, runId: string) {
-  return useQuery(runId ? `${projectId}:report-table-media:${runId}` : null, async (signal) => {
+  return useQuery({ key: runId ? `${projectId}:report-table-media:${runId}` : null, load: async (signal) => {
     const keys = (await runMediaApi.keys(projectId, runId, signal)).filter((summary) => summary.kind === 'table');
     const pages = await Promise.all(
       keys.map((summary) => runMediaApi.page(projectId, runId, { key: summary.key, kind: 'table', limit: TABLE_MEDIA_PER_KEY }, signal)),
     );
     return pages.flatMap((page) => page.items);
-  });
+  } });
 }
 
 /** Where an embedded table comes from: its Run's name and the table's key and step. */
 export function useMediaTableSource(projectId: string, target: { runId: string; mediaId: string }) {
   const { runId, mediaId } = target;
-  const run = useQuery(runId ? `${projectId}:run:${runId}` : null, (signal) => trackingApi.run(projectId, runId, signal));
+  const run = useQuery({ key: runId ? `${projectId}:run:${runId}` : null, load: (signal) => trackingApi.run(projectId, runId, signal) });
   const tables = useRunTableMedia(projectId, runId);
   const media = tables.value?.find((item) => item.id === mediaId);
   return run.value && media ? { runName: run.value.name, key: media.key, step: media.step } : null;
@@ -55,10 +55,10 @@ export function useMediaTableSource(projectId: string, target: { runId: string; 
 
 /** Which of the Runs recorded media of the kind, so a picker can leave out Runs without any. */
 export function useRunsWithMediaKind(projectId: string, runIds: string[], kind: RunMediaKind | undefined) {
-  return useQuery(kind && runIds.length > 0 ? `${projectId}:runs-with-media:${kind}:${runIds.join(',')}` : null, async (signal) => {
+  return useQuery({ key: kind && runIds.length > 0 ? `${projectId}:runs-with-media:${kind}:${runIds.join(',')}` : null, load: async (signal) => {
     const keysOfRuns = await Promise.all(runIds.map((runId) => runMediaApi.keys(projectId, runId, signal)));
     return new Set(runIds.filter((_runId, index) => keysOfRuns[index]!.some((summary) => summary.kind === kind)));
-  });
+  } });
 }
 
 // One search page of candidates; narrowing by name finds older Runs.
@@ -67,7 +67,7 @@ const RUN_CANDIDATE_LIMIT = 50;
 /** Runs to pick from by name, newest first. */
 export function useRunCandidates(projectId: string, name: string) {
   const trimmed = name.trim();
-  return useQuery(`${projectId}:report-run-candidates:${trimmed}`, (signal) =>
+  return useQuery({ key: `${projectId}:report-run-candidates:${trimmed}`, load: (signal) =>
     trackingApi.searchRuns(projectId, { ...(trimmed ? { name: trimmed } : {}), limit: RUN_CANDIDATE_LIMIT }, signal),
-  );
+  });
 }

@@ -12,18 +12,18 @@ import { useQuery } from './useQuery';
  * notification settings. Pass null when the user is not a Project admin: the API refuses them.
  */
 export function useNotificationSettings(projectId: string | null) {
-  const channels = useQuery(projectId && `${projectId}:notification-channels`, (signal) =>
+  const channels = useQuery({ key: projectId && `${projectId}:notification-channels`, load: (signal) =>
     notificationsApi.projectChannels(projectId!, signal),
-  );
-  const rules = useQuery(projectId && `${projectId}:notification-rules`, (signal) =>
+  });
+  const rules = useQuery({ key: projectId && `${projectId}:notification-rules`, load: (signal) =>
     notificationsApi.rules(projectId!, signal),
-  );
-  const deliveries = useQuery(projectId && `${projectId}:notification-deliveries`, (signal) =>
+  });
+  const deliveries = useQuery({ key: projectId && `${projectId}:notification-deliveries`, load: (signal) =>
     notificationsApi.deliveries(projectId!, signal),
-  );
-  const experiments = useQuery(projectId && `${projectId}:notification-experiments`, (signal) =>
+  });
+  const experiments = useQuery({ key: projectId && `${projectId}:notification-experiments`, load: (signal) =>
     trackingApi.experiments(projectId!, signal),
-  );
+  });
   return {
     channels,
     rules,

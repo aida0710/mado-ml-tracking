@@ -11,7 +11,7 @@ export function useQueryPolledWhileActive<T>(
   isActive: (value: T) => boolean,
 ): QueryState<T> {
   const [isPolling, setPolling] = useState(true);
-  const query = useQuery(key, loader, isPolling ? EXECUTION_POLL_MS : undefined);
+  const query = useQuery({ key, load: loader, pollMs: isPolling ? EXECUTION_POLL_MS : undefined });
   // While the key has no value yet, keep the previous decision.
   const shouldPoll = query.value === undefined ? isPolling : isActive(query.value);
   if (shouldPoll !== isPolling) setPolling(shouldPoll);

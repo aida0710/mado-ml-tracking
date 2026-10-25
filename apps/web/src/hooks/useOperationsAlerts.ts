@@ -9,5 +9,5 @@ export const OPERATIONS_ALERT_POLL_MS = 30_000;
  * so a stopped worker of another Project is seen without opening that Project first.
  */
 export function useOperationsAlerts() {
-  return useQuery('operations-alerts', operationsApi.openAlerts, OPERATIONS_ALERT_POLL_MS);
+  return useQuery({ key: 'operations-alerts', load: operationsApi.openAlerts, pollMs: OPERATIONS_ALERT_POLL_MS });
 }

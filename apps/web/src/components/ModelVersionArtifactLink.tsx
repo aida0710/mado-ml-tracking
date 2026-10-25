@@ -18,9 +18,9 @@ export function ModelVersionArtifactLink({
 }) {
   useLocale();
   const artifactId = version.artifactId;
-  const artifact = useQuery(artifactId ? `${projectId}:artifact:${artifactId}` : null, (signal) =>
+  const artifact = useQuery({ key: artifactId ? `${projectId}:artifact:${artifactId}` : null, load: (signal) =>
     trackingApi.artifact(projectId, artifactId!, signal),
-  );
+  });
   if (!artifactId) return <>—</>;
   const catalogUrl = `/projects/${projectId}/artifacts?modelId=${encodeURIComponent(
     version.modelId,

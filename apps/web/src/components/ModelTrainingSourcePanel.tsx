@@ -25,9 +25,9 @@ export function ModelTrainingSourcePanel({
   useLocale();
   const [open, setOpen] = useState(false);
   const location = { projectId, modelId: detail.model.id, versionId: detail.version.id };
-  const source = useQuery(`${projectId}:training-source:${detail.version.id}`, (signal) =>
+  const source = useQuery({ key: `${projectId}:training-source:${detail.version.id}`, load: (signal) =>
     trainingApi.source(location, signal),
-  );
+  });
   return (
     <section className="model-version-section" aria-label={trainingText.trainingSource}>
       <h2>{trainingText.trainingSource}</h2>
