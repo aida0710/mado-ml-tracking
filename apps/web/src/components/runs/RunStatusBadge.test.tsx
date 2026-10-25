@@ -7,7 +7,7 @@ describe('RunStatusBadge', () => {
   it('Sweepが打ち切った中止のRunは早期打ち切りと表示する', () => {
     const html = renderToStaticMarkup(<RunStatusBadge run={{ status: 'canceled', tags: { [SWEEP_EARLY_STOPPED_TAG]: 'true' } }} />);
     expect(html).toContain('早期打ち切り');
-    expect(html).toContain('status-early-stopped');
+    expect(html).toContain('status-stopped');
   });
 
   it('人が中止したRunは中止と表示する', () => {

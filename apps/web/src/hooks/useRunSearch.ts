@@ -19,9 +19,9 @@ export function useRunSearch(
   projectId: string,
   search: RunSearchRequest,
 ): { runs: QueryState<RunSearchPage>; filterRejection: string | null } {
-  const outcome = useQuery<RunSearchOutcome>(
-    `${projectId}:run-search:${JSON.stringify(search)}`,
-    async (signal) => {
+  const outcome = useQuery<RunSearchOutcome>({
+    key: `${projectId}:run-search:${JSON.stringify(search)}`,
+    load: async (signal) => {
       try {
         return { page: await trackingApi.searchRuns(projectId, search, signal) };
       } catch (failure) {
@@ -34,8 +34,8 @@ export function useRunSearch(
         throw failure;
       }
     },
-    EXECUTION_POLL_MS,
-  );
+    pollMs: EXECUTION_POLL_MS,
+  });
   const result = outcome.value;
   return {
     runs: { ...outcome, value: result && 'page' in result ? result.page : undefined },

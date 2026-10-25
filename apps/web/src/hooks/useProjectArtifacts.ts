@@ -21,9 +21,9 @@ export function useProjectArtifacts({
   search: string;
   runId?: string;
 }) {
-  const query = useQuery(
-    enabled ? `${projectId}:project-artifacts:${runId ?? ''}:${search}` : null,
-    (signal) =>
+  const query = useQuery({
+    key: enabled ? `${projectId}:project-artifacts:${runId ?? ''}:${search}` : null,
+    load: (signal) =>
       trackingApi.projectArtifacts(
         projectId,
         {
@@ -33,7 +33,7 @@ export function useProjectArtifacts({
         },
         signal,
       ),
-  );
+  });
   const [selectedArtifacts, setSelectedArtifacts] = useState<Artifact[]>([]);
   const items = [
     ...new Map(

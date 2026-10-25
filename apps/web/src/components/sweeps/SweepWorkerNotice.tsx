@@ -22,9 +22,9 @@ export function SweepWorkerNotice({ projectId, sweep }: { projectId: string; swe
 
 function WaitingTrialsWorkerNotice({ projectId, sweep }: { projectId: string; sweep: Sweep }) {
   useLocale();
-  const tasks = useQuery(`${projectId}:sweep-tasks`, (signal) =>
+  const tasks = useQuery({ key: `${projectId}:sweep-tasks`, load: (signal) =>
     tasksApi.list(projectId, undefined, signal),
-  );
+  });
   const targets = useProjectTargets(projectId);
   const workers = useProjectWorkers(projectId);
   if (!workers.value) return null;

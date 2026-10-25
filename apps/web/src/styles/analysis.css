@@ -34,7 +34,7 @@
   padding: 8px 12px;
   background: var(--surface);
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .parallel-chart-toolbar,
@@ -44,7 +44,7 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 4px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .scatter-chart-controls .chart-selector {
   margin: 0;
@@ -87,7 +87,7 @@
 .parallel-axis-tick,
 .parallel-missing-label {
   fill: var(--muted);
-  font-size: 10px;
+  font-size: var(--font-size-2xs);
   font-family: var(--mono);
   /* A halo in the page color keeps labels readable over the lines. */
   paint-order: stroke;
@@ -127,7 +127,7 @@
   align-items: center;
   gap: 2px;
   transform: translateX(-50%);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .parallel-axis-label {
   max-width: 100%;
@@ -150,7 +150,7 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   white-space: nowrap;
 }
 .parallel-color-legend {
@@ -175,7 +175,7 @@
 }
 .analysis-selected-runs {
   margin-top: 8px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .analysis-selected-runs ul {
   display: flex;
@@ -192,7 +192,7 @@
   align-items: center;
   gap: 8px 20px;
   margin-bottom: 8px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .importance-method {
   display: flex;
@@ -257,13 +257,13 @@
 .importance-value {
   min-width: 56px;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
 .importance-excluded {
   margin-top: 8px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .scatter-chart-canvas {
@@ -282,7 +282,7 @@
   padding: 8px 10px;
   border: 1px solid var(--border);
   background: var(--surface);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 /* Narrow screens are touch screens: the axis controls and menus get a full tap target. */

@@ -60,7 +60,7 @@ export function MemberDialog({
     <Dialog
       title={member ? text.editMember : text.addMember}
       onClose={onClose}
-      busy={mutation.pending}
+      dismissible={!mutation.pending}
     >
       <form
         onSubmit={(event) => {

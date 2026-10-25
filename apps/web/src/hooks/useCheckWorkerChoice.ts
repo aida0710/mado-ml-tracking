@@ -9,7 +9,7 @@ import { useQuery } from './useQuery';
  * one, the worker of the last check if it is online, or the only worker there is.
  */
 export function useCheckWorkerChoice(lastUsed: TargetCheckWorker | null) {
-  const workers = useQuery('target-check-workers', targetChecksApi.workers);
+  const workers = useQuery({ key: 'target-check-workers', load: targetChecksApi.workers });
   const [picked, setPicked] = useState<TargetCheckWorker | null>(null);
   const worker = picked ?? defaultCheckWorker(workers.value ?? [], lastUsed);
   return { workers, worker, choose: setPicked };

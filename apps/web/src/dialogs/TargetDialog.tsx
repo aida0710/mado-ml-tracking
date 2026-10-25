@@ -36,7 +36,7 @@ export function TargetDialog({
 }) {
   useLocale();
   const { user } = useAuth();
-  const choices = useQuery('target-dialog-choices', loadTargetChoices);
+  const choices = useQuery({ key: 'target-dialog-choices', load: loadTargetChoices });
   const title = target ? text.editTarget : text.newTarget;
   return (
     <QueryDialog title={title} onClose={onClose} query={choices}>
@@ -91,7 +91,7 @@ function TargetForm({
   const canAddSshOrLocal = canAddSshOrLocalTarget(user);
   const form = useTargetForm({ target, canAddSshOrLocal });
   return (
-    <Dialog title={title} onClose={onClose} busy={form.pending} wide>
+    <Dialog title={title} onClose={onClose} dismissible={!form.pending} size="wide">
       <form
         onSubmit={(event) => {
           event.preventDefault();

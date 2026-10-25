@@ -25,7 +25,7 @@ export function JobStatusBadges({
       {detail && <span className={`status-badge ${detail.className}`}>{detail.label}</span>}
       {isJobUnresponsive(job) && (
         // The red Job status color marks a silent worker; the Job status itself is unchanged.
-        <span className="status-badge status-failed" title={text.jobUnresponsiveHint}>
+        <span className="status-badge status-danger" title={text.jobUnresponsiveHint}>
           {text.jobUnresponsive}
         </span>
       )}

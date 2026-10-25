@@ -6,9 +6,9 @@ import { EXECUTION_POLL_MS, useQuery } from './useQuery';
  * any worker takes its Jobs and its connection check. Others may not list them (`enabled`).
  */
 export function useAllWorkers(enabled: boolean) {
-  return useQuery(
-    enabled ? 'all-workers' : null,
-    (signal) => executionApi.allWorkers(signal),
-    EXECUTION_POLL_MS,
-  );
+  return useQuery({
+    key: enabled ? 'all-workers' : null,
+    load: (signal) => executionApi.allWorkers(signal),
+    pollMs: EXECUTION_POLL_MS,
+  });
 }

@@ -37,8 +37,8 @@ export function LaunchDialog({
     <Dialog
       title={continuation ? trainingText.continueTraining : text.launchTitle}
       onClose={onClose}
-      busy={launch.pending}
-      wide
+      dismissible={!launch.pending}
+      size="wide"
     >
       <Resource query={catalog}>
         {(choices) => (

@@ -10,9 +10,9 @@ export function useEvaluationComparison(target: {
   baseline: BaselineChoice | null;
 }) {
   const { projectId, modelId, candidateVersionId, baseline } = target;
-  const comparison = useQuery(
-    `${projectId}:${modelId}:${candidateVersionId}:evaluation-comparison:${encodeBaselineChoice(baseline)}`,
-    (signal) =>
+  const comparison = useQuery({
+    key: `${projectId}:${modelId}:${candidateVersionId}:evaluation-comparison:${encodeBaselineChoice(baseline)}`,
+    load: (signal) =>
       evaluationApi.comparison(
         { projectId, modelId, candidateVersionId },
         baseline?.kind === 'version'
@@ -20,6 +20,6 @@ export function useEvaluationComparison(target: {
           : { baselineAlias: baseline?.alias },
         signal,
       ),
-  );
+  });
   return { comparison };
 }

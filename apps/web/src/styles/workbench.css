@@ -20,7 +20,7 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .workspace-toolbar select {
   min-width: 0;
@@ -55,7 +55,7 @@
   background: transparent;
   padding: 7px 8px;
   text-align: start;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   white-space: nowrap;
 }
 .code-file-tree button svg, .code-directory svg {
@@ -76,7 +76,7 @@
   border-bottom: 1px solid var(--border);
   padding: 9px 12px;
   overflow-wrap: anywhere;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .monaco-container {
   height: 470px;
@@ -94,12 +94,12 @@
 .code-deleted-files {
   margin: 0;
   padding-left: 20px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 .deleted-files {
   margin-top: 14px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .deleted-files > div {
   display: flex;
@@ -113,7 +113,7 @@
 .unsaved-indicator {
   margin-right: auto;
   align-self: center;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .task-actions {
   display: flex;
@@ -134,7 +134,7 @@
 }
 .snapshot-artifacts code {
   display: block;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   margin: 5px 0 12px;
 }
 .execution-snapshot {

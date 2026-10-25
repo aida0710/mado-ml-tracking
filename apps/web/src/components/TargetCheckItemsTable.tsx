@@ -7,10 +7,10 @@ import { targetCheckCodeHints, targetCheckOutcomeLabels } from '../i18n/compute'
 
 // Reuses the Job status colors: ok is green, ng red, the rest neutral.
 const outcomeBadgeClass: Record<TargetCheckItem['status'], string> = {
-  ok: 'status-finished',
-  ng: 'status-failed',
-  unavailable: 'status-queued',
-  skipped: 'status-queued',
+  ok: 'status-success',
+  ng: 'status-danger',
+  unavailable: 'status-neutral',
+  skipped: 'status-neutral',
 };
 
 /** The items of a connection check: what passed, what failed and how to fix it. */

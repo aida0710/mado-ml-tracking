@@ -77,7 +77,7 @@ function RuleCell({
       {execution.source === 'manual' && (
         <>
           {' '}
-          <span className="status-badge status-queued">{automationText.manual}</span>
+          <span className="status-badge status-neutral">{automationText.manual}</span>
         </>
       )}
       {execution.attempt > 1 && (

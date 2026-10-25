@@ -93,13 +93,13 @@ function EmbedModeMark({ block, snapshot }: { block: ReportEmbedBlock; snapshot:
   useLocale();
   if (block.mode === 'live')
     return (
-      <span className="report-mode-mark live">
+      <span className="status-badge status-accent" data-testid="report-live-mark">
         <Radio size={13} />
         {text.reportModeLive}
       </span>
     );
   return (
-    <span className="report-mode-mark snapshot" data-testid="report-snapshot-mark">
+    <span className="status-badge status-neutral" data-testid="report-snapshot-mark">
       <Pin size={13} />
       {snapshot ? textTemplates.reportSnapshotAt(formatDate(snapshot.capturedAt)) : text.reportSnapshotPending}
     </span>

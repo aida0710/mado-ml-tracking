@@ -19,9 +19,9 @@ export function useRunArtifacts(
 ) {
   const { projectId, runId, prefix } = location;
   const key = `${projectId}:${runId}:artifacts:${revision}:${prefix}`;
-  const tree = useQuery(`${key}:tree`, (signal) =>
+  const tree = useQuery({ key: `${key}:tree`, load: (signal) =>
     trackingApi.runArtifactTree(projectId, runId, prefix, signal),
-  );
+  });
   const files = useCursorPages(`${key}:files`, (cursor, signal) =>
     trackingApi.runArtifactPage(
       projectId,
@@ -35,16 +35,16 @@ export function useRunArtifacts(
 
 /** Earlier uploads to the path of `artifact`, newest first. */
 export function useArtifactVersions(artifact: Artifact | undefined) {
-  const versions = useQuery(
-    artifact?.runId ? `${artifact.runId}:artifact-versions:${artifact.id}` : null,
-    (signal) =>
+  const versions = useQuery({
+    key: artifact?.runId ? `${artifact.runId}:artifact-versions:${artifact.id}` : null,
+    load: (signal) =>
       trackingApi.runArtifactPage(
         artifact!.projectId,
         artifact!.runId!,
         { prefix: artifact!.path, versions: 'all', limit: ARTIFACT_VERSION_LIMIT },
         signal,
       ),
-  );
+  });
   return {
     ...versions,
     value:

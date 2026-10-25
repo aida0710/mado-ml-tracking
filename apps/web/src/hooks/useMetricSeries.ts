@@ -11,9 +11,9 @@ export function useMetricSeries(
   body: MetricSeriesRequest | null,
   live: boolean,
 ): QueryState<MetricSeriesResponse> {
-  return useQuery(
-    body ? `${projectId}:metric-series:${JSON.stringify(body)}` : null,
-    (signal) => metricSeriesApi.series(projectId, body!, signal),
-    live ? EXECUTION_POLL_MS : undefined,
-  );
+  return useQuery({
+    key: body ? `${projectId}:metric-series:${JSON.stringify(body)}` : null,
+    load: (signal) => metricSeriesApi.series(projectId, body!, signal),
+    pollMs: live ? EXECUTION_POLL_MS : undefined,
+  });
 }

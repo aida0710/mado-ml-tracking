@@ -1,8 +1,8 @@
 import { useId, useState, type KeyboardEvent } from 'react';
+import { moveActiveIndex } from '@mado/design-system/list-navigation';
 import type { SuggestFieldValues } from '../types/form';
 import { useFieldSuggestions } from '../hooks/useFieldSuggestions';
 import { remainingSuggestions } from '../lib/fieldSuggestions';
-import { moveActiveIndex } from '../lib/listNavigation';
 import { isComposingKey } from '../lib/imeComposition';
 
 /**

@@ -26,7 +26,7 @@ export function useArtifactReferences(projectId: string, artifactIds: readonly s
   const checked = state.projectId === projectId ? state : noCheckedReferences(projectId);
   const uncheckedIds = [...new Set(artifactIds)].filter((id) => !checked.checkedIds.has(id));
   const key = uncheckedIds.length ? `${projectId}:artifact-references:${uncheckedIds.join(',')}` : null;
-  const query = useQuery(key, async (signal) => {
+  const query = useQuery({ key, load: async (signal) => {
     const batches: string[][] = [];
     for (let start = 0; start < uncheckedIds.length; start += ARTIFACT_REFERENCES_BATCH_LIMIT)
       batches.push(uncheckedIds.slice(start, start + ARTIFACT_REFERENCES_BATCH_LIMIT));
@@ -35,7 +35,7 @@ export function useArtifactReferences(projectId: string, artifactIds: readonly s
     );
     // The API leaves out IDs it does not know; they count as asked, so they are not asked again.
     return { askedIds: uncheckedIds, items: pages.flat() };
-  });
+  } });
 
   // Each answer is merged once, during the render that first sees it.
   const fetched = query.value;

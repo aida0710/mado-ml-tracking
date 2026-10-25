@@ -17,9 +17,9 @@ export function MediaTableView({ projectId, runId, mediaId }: { projectId: strin
   useLocale();
   const [page, setPage] = useState(0);
   const exclusiveAudio = useExclusiveAudio();
-  const table = useQuery(`${projectId}:media-table:${runId}:${mediaId}:${page}`, (signal) =>
+  const table = useQuery({ key: `${projectId}:media-table:${runId}:${mediaId}:${page}`, load: (signal) =>
     runMediaApi.table(projectId, { runId, mediaId }, { offset: page * MEDIA_TABLE_PAGE_SIZE, limit: MEDIA_TABLE_PAGE_SIZE }, signal),
-  );
+  });
   return (
     <Resource query={table}>
       {(current) => {

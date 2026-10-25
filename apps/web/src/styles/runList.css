@@ -8,7 +8,7 @@
   justify-content: center;
 }
 
-/* The Run list below --bp-sm (NarrowRunTable): the name wraps instead of keeping the wide table's
+/* The Run list below 640px (NarrowRunTable): the name wraps instead of keeping the wide table's
    180px column, so the selection, the name, the status and the open button fit a 320px phone. */
 .narrow-run-table .responsive-table :is(th, td):is(.run-select-cell, .run-name-cell) {
   min-width: 0;
@@ -30,22 +30,22 @@
     min-height: var(--tap-target);
     margin: -10px -8px;
   }
-  /* The toolbar wraps, so the column menu may start anywhere on a line: its list opens across the
-     whole toolbar instead of from the menu's right edge, which could lie off screen. */
-  .run-toolbar {
+  /* 帯は折り返すので、列のメニューは行のどこからでも始まりうる。一覧はメニューの右端からでなく帯の幅
+     いっぱいに開き、画面の外にはみ出さない。 */
+  .toolbar {
     position: relative;
   }
-  .run-toolbar .column-menu {
+  .toolbar .column-menu {
     position: static;
   }
-  .run-toolbar .column-menu > .popover {
+  .toolbar .column-menu > .popover {
     left: 0;
     right: 0;
     min-width: 0;
   }
-  .run-toolbar .popover > label,
-  .run-toolbar .column-menu > summary,
-  .run-toolbar .toolbar-select {
+  .toolbar .popover > label,
+  .toolbar .column-menu > summary,
+  .toolbar .toolbar-item {
     min-height: var(--tap-target);
   }
 }

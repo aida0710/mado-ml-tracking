@@ -1,14 +1,14 @@
 import { useState, type ReactNode } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { useEvaluationSampleAudio } from '../../hooks/useEvaluationSampleAudio';
-import { narrowerThan } from '../../lib/breakpoints';
+import { narrowerThan } from '@mado/design-system/layout';
+import { useMediaQuery } from '@mado/design-system/react';
 import {
   paginate,
   sortEvaluationSamples,
   type EvaluationSampleOrder,
   type EvaluationSampleTable,
 } from '../../lib/evaluationSamples';
-import { useMediaQuery } from '../../lib/useMediaQuery';
 import { ErrorNotice } from '../Feedback';
 import { BrokenRowCount, BrokenRowsDetails } from './BrokenRowsDetails';
 import { EvaluationSampleCards } from './EvaluationSampleCards';
@@ -20,7 +20,7 @@ import { artifactsTextTemplates } from '../../i18n/artifacts';
 
 /**
  * Evaluation samples (audio, reference, prediction, score) with sorting, diff highlighting, and
- * pages of 50. Phones (below --bp-sm) get one card per sample instead of the five-column table.
+ * pages of 50. Phones (below 640px) get one card per sample instead of the five-column table.
  */
 export function EvaluationSamplesTable({
   artifact,

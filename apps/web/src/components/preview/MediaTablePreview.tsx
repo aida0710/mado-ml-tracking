@@ -10,9 +10,9 @@ import { TextPreview } from './TextPreview';
  * with the same audio and image cells as the Media tab. Other JSON files stay plain text.
  */
 export function MediaTablePreview({ artifact, runId }: { artifact: Artifact; runId: string }) {
-  const table = useQuery(`${artifact.projectId}:artifact-media-table:${artifact.id}`, (signal) =>
+  const table = useQuery({ key: `${artifact.projectId}:artifact-media-table:${artifact.id}`, load: (signal) =>
     runMediaApi.tableOfArtifact(artifact.projectId, { runId, artifactId: artifact.id }, signal),
-  );
+  });
   return (
     <Resource query={table}>
       {(media) =>

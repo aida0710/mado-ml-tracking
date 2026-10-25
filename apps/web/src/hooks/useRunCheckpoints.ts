@@ -12,9 +12,9 @@ export function useRunCheckpoints({
   runId: string;
   includeHidden: boolean;
 }): QueryState<RunCheckpointPage> {
-  return useQuery(
-    `${projectId}:${runId}:checkpoints:${includeHidden ? 'all' : 'retained'}`,
-    (signal) => executionApi.listRunCheckpoints(projectId, runId, { includeHidden }, signal),
-    EXECUTION_POLL_MS,
-  );
+  return useQuery({
+    key: `${projectId}:${runId}:checkpoints:${includeHidden ? 'all' : 'retained'}`,
+    load: (signal) => executionApi.listRunCheckpoints(projectId, runId, { includeHidden }, signal),
+    pollMs: EXECUTION_POLL_MS,
+  });
 }

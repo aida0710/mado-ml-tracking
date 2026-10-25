@@ -16,12 +16,12 @@ export function SettingsShell() {
   return (
     <div
       className="app-shell"
-      data-navigation={navigation.mode}
-      style={{ '--navigation-width': `${navigation.width}px` } as CSSProperties}
+      data-navigation={navigation.layout.mode}
+      style={{ '--navigation-width': `${navigation.layout.width}px` } as CSSProperties}
     >
       <TopBar navigation={navigation} />
       <div className="app-body">
-        {navigation.mode !== 'drawer' && <NavigationSidebar navigation={navigation} />}
+        {navigation.layout.mode !== 'drawer' && <NavigationSidebar navigation={navigation} />}
         <main id="content" className="page app-content">
           <SettingsReturnLink />
           <AdminOnlyRedirectNotice />

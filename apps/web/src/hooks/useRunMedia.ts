@@ -19,10 +19,10 @@ export function useRunMedia({
   selectedKey: string | null;
   items: QueryState<RunMediaOfKey>;
 } {
-  const keys = useQuery(`${projectId}:run-media-keys:${runId}`, (signal) => runMediaApi.keys(projectId, runId, signal));
+  const keys = useQuery({ key: `${projectId}:run-media-keys:${runId}`, load: (signal) => runMediaApi.keys(projectId, runId, signal) });
   const selectedKey = chosenKey ?? keys.value?.[0]?.key ?? null;
-  const items = useQuery(selectedKey === null ? null : `${projectId}:run-media:${runId}:${selectedKey}`, (signal) =>
+  const items = useQuery({ key: selectedKey === null ? null : `${projectId}:run-media:${runId}:${selectedKey}`, load: (signal) =>
     runMediaApi.list(projectId, runId, { key: selectedKey! }, signal),
-  );
+  });
   return { keys, selectedKey, items };
 }

@@ -13,9 +13,9 @@ export function useUserSearch(query: string) {
     USER_SEARCH_DEBOUNCE_MS,
   );
   // useQuery aborts the previous request when the key changes, so late answers never win.
-  const search = useQuery(settledQuery ? `user-search:${settledQuery}` : null, (signal) =>
+  const search = useQuery({ key: settledQuery ? `user-search:${settledQuery}` : null, load: (signal) =>
     accessApi.searchUsers(settledQuery, signal),
-  );
+  });
   return {
     users: isWaiting ? [] : (search.value ?? []),
     searching: trimmedQuery !== '' && (isWaiting || search.loading),

@@ -22,16 +22,16 @@ export function useRegistry<T extends RegistryItem, V extends RegistryVersion>(
   const [params, setParams] = useSearchParams();
   const requestedVersionId = params.get('version') ?? '';
   const requestedId = params.get('id') ?? '';
-  const list = useQuery(`${key}:list`, loaders.list);
-  const lookup = useQuery(
-    requestedVersionId && !requestedId && list.value ? `${key}:lookup:${requestedVersionId}` : null,
-    async (signal) => {
+  const list = useQuery({ key: `${key}:list`, load: loaders.list });
+  const lookup = useQuery({
+    key: requestedVersionId && !requestedId && list.value ? `${key}:lookup:${requestedVersionId}` : null,
+    load: async (signal) => {
       const versions = (
         await Promise.all((list.value ?? []).map((item) => loaders.versions(item.id, signal)))
       ).flat();
       return versions.find((version) => version.id === requestedVersionId) ?? null;
     },
-  );
+  });
   const selectedId =
     requestedId ||
     (requestedVersionId
@@ -40,9 +40,9 @@ export function useRegistry<T extends RegistryItem, V extends RegistryVersion>(
         : ''
       : (list.value?.[0]?.id ?? ''));
   const selected = list.value?.find((item) => item.id === selectedId);
-  const versions = useQuery(selected ? `${key}:versions:${selected.id}` : null, (signal) =>
+  const versions = useQuery({ key: selected ? `${key}:versions:${selected.id}` : null, load: (signal) =>
     loaders.versions(selectedId, signal),
-  );
+  });
   const selectedVersion = requestedVersionId
     ? versions.value?.find((version) => version.id === requestedVersionId)
     : versions.value?.[0];

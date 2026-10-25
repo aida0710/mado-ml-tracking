@@ -87,7 +87,7 @@ describe('英語と日本語の辞書', () => {
     const value = '2026-10-11T02:58:00Z';
     setLocale('ja');
     const japaneseDate = formatDate(value);
-    expect(formatRelativeTime(value, now)).toBe('2 分前');
+    expect(formatRelativeTime(value, now)).toBe('2分前');
     expect(formatCompactNumber(10000)).toBe('1万');
     setLocale('en');
     expect(formatDate(value)).not.toBe(japaneseDate);

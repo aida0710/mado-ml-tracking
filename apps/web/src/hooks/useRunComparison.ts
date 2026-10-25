@@ -29,7 +29,7 @@ export function useRunComparison(comparison: {
       signal,
     );
   const [pollMs, setPollMs] = useState<number | undefined>(EXECUTION_POLL_MS);
-  const query = useQuery(key, loader, pollMs);
+  const query = useQuery({ key, load: loader, pollMs });
   // Decided only from a response, so a reload for another baseline keeps the current interval.
   const hasActiveRuns = query.value
     ? query.value.runs.some((run) => activeStatuses.includes(run.status))

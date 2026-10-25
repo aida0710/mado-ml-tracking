@@ -61,7 +61,7 @@ export function ModelVersionDialog({
   const title = `${model.name} · ${text.newVersion}`;
   return (
     <>
-      <Dialog title={title} onClose={onClose} busy={form.pending}>
+      <Dialog title={title} onClose={onClose} dismissible={!form.pending}>
         <form
           onSubmit={(event) => {
             event.preventDefault();

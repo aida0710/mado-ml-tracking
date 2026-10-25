@@ -37,14 +37,14 @@ export function TextHeadNotice({ artifact, reason }: { artifact: Artifact; reaso
 export function TextPreview({ artifact, reason }: { artifact: Artifact; reason?: string }) {
   useLocale();
   const headOnly = isTextHeadOnly(artifact);
-  const content = useQuery(`${artifact.id}:${headOnly ? 'text-head' : 'text'}`, (signal) =>
+  const content = useQuery({ key: `${artifact.id}:${headOnly ? 'text-head' : 'text'}`, load: (signal) =>
     headOnly
       ? fetchArtifactTextHead(
           { projectId: artifact.projectId, artifactId: artifact.id, maxBytes: TEXT_PREVIEW_MAX_BYTES },
           signal,
         )
       : trackingApi.artifactText(artifact.projectId, artifact.id, signal),
-  );
+  });
   return (
     <>
       <TextHeadNotice artifact={artifact} reason={reason} />

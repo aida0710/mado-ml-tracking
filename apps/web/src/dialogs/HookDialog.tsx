@@ -86,8 +86,8 @@ export function HookDialog({
     <Dialog
       title={source ? text.hookCopyTitle : text.newHook}
       onClose={onClose}
-      busy={form.pending}
-      wide
+      dismissible={!form.pending}
+      size="wide"
     >
       <form
         onSubmit={(event) => {

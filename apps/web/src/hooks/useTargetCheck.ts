@@ -15,11 +15,11 @@ export const TARGET_CHECK_POLL_MS = 3000;
 export function useTargetCheck(targetId: string | null) {
   const mutation = useMutation();
   const [isPolling, setPolling] = useState(false);
-  const checks = useQuery(
-    targetId ? `target-checks:${targetId}` : null,
-    (signal) => targetChecksApi.list(targetId!, signal),
-    isPolling ? TARGET_CHECK_POLL_MS : undefined,
-  );
+  const checks = useQuery({
+    key: targetId ? `target-checks:${targetId}` : null,
+    load: (signal) => targetChecksApi.list(targetId!, signal),
+    pollMs: isPolling ? TARGET_CHECK_POLL_MS : undefined,
+  });
   const latest = checks.value?.[0];
   // Poll only while the latest check waits for a worker; decided again for each answer.
   const [polledCheck, setPolledCheck] = useState(latest);

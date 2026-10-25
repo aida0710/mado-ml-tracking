@@ -14,9 +14,9 @@ export function CodeVersionNameLink({
   projectId: string;
   codeVersionId: string;
 }) {
-  const detail = useQuery(`${projectId}:code-version:${codeVersionId}`, (signal) =>
+  const detail = useQuery({ key: `${projectId}:code-version:${codeVersionId}`, load: (signal) =>
     registryApi.codeVersionDetail(projectId, codeVersionId, signal),
-  );
+  });
   const codes = `/projects/${projectId}/codes`;
   return detail.value ? (
     <Link

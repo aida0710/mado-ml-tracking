@@ -26,14 +26,14 @@ export function PromotionPolicyPanel({ initialModelId }: { initialModelId: strin
   const { user } = useAuth();
   const canManage = canManagePromotionPolicies(project.role, user.isAdmin);
   const promotion = usePromotionPolicies(project.id);
-  const rules = useQuery(`${project.id}:automation-rules`, (signal) =>
+  const rules = useQuery({ key: `${project.id}:automation-rules`, load: (signal) =>
     automationApi.rules(project.id, signal),
-  );
+  });
   const catalog = useExecutionCatalog(project.id);
   // Only managers transfer owners, and listing Service Accounts is theirs too.
-  const serviceAccounts = useQuery(canManage ? `${project.id}:service-accounts` : null, (signal) =>
+  const serviceAccounts = useQuery({ key: canManage ? `${project.id}:service-accounts` : null, load: (signal) =>
     accessApi.serviceAccounts(project.id, signal),
-  );
+  });
   const [transferring, setTransferring] = useState<PromotionPolicy | null>(null);
   // Without an explicit choice the history follows the first (newest) policy.
   const policyId = promotion.selectedPolicyId || promotion.policies.value?.[0]?.id || null;

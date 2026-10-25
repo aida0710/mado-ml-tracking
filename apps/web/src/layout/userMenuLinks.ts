@@ -1,25 +1,20 @@
 import type { User } from '@mmt/contracts';
+import type { UserMenuLinkItem } from '@mado/design-system/react';
 import { canChangeOwnPassword } from '../lib/permissions';
 import { PASSWORD_CHANGE_PATH, settingsSectionPath } from './settingsSections';
 import { text } from '../i18n/catalog';
 
-export interface UserMenuLink {
-  to: string;
-  label: string;
-  /** Opens 全体設定 as a whole rather than one of the user's own pages; set apart by a rule. */
-  isSettingsEntry?: boolean;
-}
-
 /**
- * The user menu's links: the account, the password change for local accounts, and 全体設定 for
- * everyone. 全体設定 opens on the account; its sidebar leads on to コンピュータ and 全体管理.
+ * ユーザーメニューの項目: アカウント、ローカルアカウントならパスワードの変更、だれにでも全体設定。
+ * 全体設定は利用者自身のページでなく設定全体を開くので、区切りの線で分ける。全体設定はアカウントの
+ * 画面で開き、そのサイドバーからコンピュータと全体管理へ進む。
  */
-export function userMenuLinks(user: Pick<User, 'authSources'>): UserMenuLink[] {
+export function userMenuLinks(user: Pick<User, 'authSources'>): UserMenuLinkItem[] {
   const accountPath = settingsSectionPath('account');
-  const passwordChange = { to: PASSWORD_CHANGE_PATH, label: text.passwordChange };
+  const passwordChange = { href: PASSWORD_CHANGE_PATH, label: text.passwordChange };
   return [
-    { to: accountPath, label: text.account },
+    { href: accountPath, label: text.account },
     ...(canChangeOwnPassword(user) ? [passwordChange] : []),
-    { to: accountPath, label: text.globalSettings, isSettingsEntry: true },
+    { href: accountPath, label: text.globalSettings, startsGroup: true },
   ];
 }

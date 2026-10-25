@@ -39,7 +39,7 @@ export function ArtifactTree({
   const rows = artifactDirectoryRows(tree, files);
   return (
     <div className="artifact-tree">
-      <nav className="artifact-breadcrumbs" aria-label={text.artifactDirectoryPath}>
+      <nav className="breadcrumbs artifact-breadcrumbs" aria-label={text.artifactDirectoryPath}>
         {breadcrumbs.map((breadcrumb, index) => (
           <span key={breadcrumb.prefix} className="artifact-breadcrumb">
             {index > 0 && <span className="breadcrumb-separator">/</span>}

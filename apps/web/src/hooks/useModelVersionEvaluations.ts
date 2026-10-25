@@ -24,14 +24,14 @@ export function useModelVersionEvaluations(
   );
   // The version compared with itself has no difference to show.
   const comparedVersionId = baselineVersionId !== versionId ? baselineVersionId : null;
-  const baselineResults = useQuery(
-    comparedVersionId ? `${projectId}:model-version:${comparedVersionId}:evaluations` : null,
-    (signal) =>
+  const baselineResults = useQuery({
+    key: comparedVersionId ? `${projectId}:model-version:${comparedVersionId}:evaluations` : null,
+    load: (signal) =>
       registryApi.modelVersionEvaluations(projectId, comparedVersionId!, {
         kind: 'evaluation',
         signal,
       }),
-  );
+  });
   const promotionEvaluations = useCursorPages(
     versionId ? `${projectId}:promotion-evaluations:candidate:${versionId}` : null,
     (cursor, signal) =>

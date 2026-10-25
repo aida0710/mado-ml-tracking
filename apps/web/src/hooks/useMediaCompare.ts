@@ -47,18 +47,18 @@ export function useMediaCompareChoices({ projectId, runIds, chosenKey }: MediaCo
   stepsByRun: QueryState<number[][]>;
 } {
   const runKey = runIds.join(',');
-  const choices = useQuery(`${projectId}:media-compare-choices:${runKey}`, async (signal) => {
+  const choices = useQuery({ key: `${projectId}:media-compare-choices:${runKey}`, load: async (signal) => {
     const [runs, summaries] = await Promise.all([
       Promise.all(runIds.map((runId) => trackingApi.run(projectId, runId, signal))),
       Promise.all(runIds.map((runId) => runMediaApi.keys(projectId, runId, signal))),
     ]);
     return { runs, keys: mergeKeySummaries(summaries) };
-  });
+  } });
   const key = chosenKey ?? choices.value?.keys[0]?.key ?? null;
-  const stepsByRun = useQuery(key === null ? null : `${projectId}:media-compare-steps:${runKey}:${key}`, async (signal) => {
+  const stepsByRun = useQuery({ key: key === null ? null : `${projectId}:media-compare-steps:${runKey}:${key}`, load: async (signal) => {
     const lists = await Promise.all(runIds.map((runId) => runMediaApi.list(projectId, runId, { key: key! }, signal)));
     return lists.map((list) => sortedSteps(list.items.map((item) => item.step)));
-  });
+  } });
   return { choices, selectedKey: key, stepsByRun };
 }
 
@@ -76,16 +76,16 @@ export function useMediaCompare({ steps, ...target }: MediaCompareTarget & { ste
   const { choices, selectedKey, stepsByRun } = useMediaCompareChoices(target);
   const shownSteps = steps ?? (stepsByRun.value ? defaultComparisonSteps(stepsByRun.value) : null);
   const { projectId, runIds } = target;
-  const grid = useQuery(
-    selectedKey === null || shownSteps === null
+  const grid = useQuery({
+    key: selectedKey === null || shownSteps === null
       ? null
       : `${projectId}:media-compare:${runIds.join(',')}:${selectedKey}:${shownSteps.join(',')}`,
-    (signal) =>
+    load: (signal) =>
       runMediaApi.compare(
         projectId,
         { runIds, key: selectedKey!, ...(shownSteps!.length > 0 ? { steps: shownSteps! } : {}) },
         signal,
       ),
-  );
+  });
   return { choices, selectedKey, stepsByRun, shownSteps, grid };
 }

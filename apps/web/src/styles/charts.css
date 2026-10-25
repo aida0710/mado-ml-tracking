@@ -1,15 +1,5 @@
 /* Metric chart (components/charts): controls, legend, plot layer and tooltip. */
 
-/* Axes of every recharts chart (metrics, sweep progress, scatter). recharts writes #666 into the
-   SVG, which keeps only 3:1 on the dark background; the theme's muted text keeps 4.5:1 on both. */
-.recharts-cartesian-axis-tick-value,
-.recharts-label {
-  fill: var(--muted);
-}
-.recharts-cartesian-axis-line,
-.recharts-cartesian-axis-tick-line {
-  stroke: var(--muted);
-}
 /* A legend names its series in text colors; the mark beside the name carries the series color. */
 .chart-legend-text {
   color: var(--text);
@@ -20,7 +10,7 @@
   align-items: center;
   gap: 8px 18px;
   margin: 4px 0 12px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .chart-control {
   display: flex;
@@ -67,7 +57,7 @@
 }
 .chart-note {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 /* 200 Runs make a long legend: it scrolls instead of pushing the plot down. */
@@ -77,7 +67,7 @@
   gap: 2px 6px;
   max-height: 72px;
   overflow-y: auto;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .chart-legend-item {
   display: inline-flex;
@@ -157,7 +147,7 @@
 }
 .chart-marker text {
   fill: var(--muted);
-  font-size: 10px;
+  font-size: var(--font-size-2xs);
 }
 .chart-cursor {
   stroke: var(--muted);
@@ -183,7 +173,7 @@
   padding: 8px 10px;
   border: 1px solid var(--border);
   background: var(--surface);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   pointer-events: none;
 }
 .chart-tooltip-x {

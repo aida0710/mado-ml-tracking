@@ -117,9 +117,9 @@ function ConnectionStorageMetrics({ connection }: { connection: StorageConnectio
 export function PluginStorageMetrics({ pluginId }: { pluginId: string }) {
   useLocale();
   const { project } = useProject();
-  const metrics = useQuery(`${project.id}:plugin:${pluginId}:metrics`, (signal) =>
+  const metrics = useQuery({ key: `${project.id}:plugin:${pluginId}:metrics`, load: (signal) =>
     pluginsApi.metrics(project.id, pluginId, signal),
-  );
+  });
   return (
     <section className="storage-metrics" aria-label={text.storageMetrics}>
       <div className="section-heading">

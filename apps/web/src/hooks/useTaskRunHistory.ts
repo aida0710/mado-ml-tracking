@@ -5,8 +5,8 @@ import { EXECUTION_POLL_MS, useQuery } from './useQuery';
 export function useTaskRunHistory({ projectId, taskId }: { projectId: string; taskId?: string }) {
   const [params, setParams] = useSearchParams();
   const cursor = params.get('id') === taskId ? params.get('historyCursor') ?? '' : '';
-  const history = useQuery(taskId ? `${projectId}:task-runs:${taskId}:${cursor}` : null,
-    (signal) => tasksApi.runs(projectId, taskId!, { cursor: cursor || undefined, signal }), EXECUTION_POLL_MS);
+  const history = useQuery({ key: taskId ? `${projectId}:task-runs:${taskId}:${cursor}` : null,
+    load: (signal) => tasksApi.runs(projectId, taskId!, { cursor: cursor || undefined, signal }), pollMs: EXECUTION_POLL_MS });
   function changeCursor(nextCursor: string | null) {
     if (!taskId) return;
     setParams((previous) => {

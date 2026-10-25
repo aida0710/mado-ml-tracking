@@ -13,9 +13,9 @@ import {
 describe('Jobの段階と終了の理由', () => {
   it.each([
     ['queued', 'waiting_manual', '手動投入待ち', 'status-attention'],
-    ['claimed', 'submitting', '投入中', 'status-claimed'],
-    ['claimed', 'submitted', '待ち行列', 'status-claimed'],
-    ['claimed', 'waiting_resources', '準備・GPU待ち', 'status-claimed'],
+    ['claimed', 'submitting', '投入中', 'status-info'],
+    ['claimed', 'submitted', '待ち行列', 'status-info'],
+    ['claimed', 'waiting_resources', '準備・GPU待ち', 'status-info'],
   ] as const)('%s・%sのJobには「%s」を添える', (status, phase, label, className) => {
     expect(jobDetailBadge({ status, phase, endReason: null })).toEqual({ label, className });
   });
@@ -32,7 +32,7 @@ describe('Jobの段階と終了の理由', () => {
   ] as const)('終わったJobには段階ではなく終了の理由%sを添える', (endReason, label) => {
     expect(jobDetailBadge({ status: 'failed', phase: 'submitted', endReason })).toEqual({
       label,
-      className: 'status-failed',
+      className: 'status-danger',
     });
     expect(jobDetailBadge({ status: 'finished', phase: 'running', endReason: null })).toBeNull();
   });

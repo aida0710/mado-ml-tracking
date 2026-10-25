@@ -43,7 +43,7 @@ export function RunGroupingControl({
 
   return (
     <div className="run-grouping-control">
-      <label className="toolbar-select" htmlFor={`${id}-kind`}>
+      <label className="toolbar-item" htmlFor={`${id}-kind`}>
         <span>{text.chartGrouping}</span>
         <select
           id={`${id}-kind`}
@@ -58,7 +58,7 @@ export function RunGroupingControl({
         </select>
       </label>
       {(kind === 'tag' || kind === 'param') && (
-        <label className="toolbar-select" htmlFor={`${id}-key`}>
+        <label className="toolbar-item" htmlFor={`${id}-key`}>
           <span>{text.chartGroupingKey}</span>
           <input
             id={`${id}-key`}

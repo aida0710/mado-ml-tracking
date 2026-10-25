@@ -72,7 +72,7 @@
   border-radius: var(--radius-sm);
   background: var(--media-label-background);
   color: var(--media-label-text);
-  font-size: 10px;
+  font-size: var(--font-size-2xs);
   pointer-events: none;
 }
 .audio-playhead {
@@ -113,7 +113,7 @@
 }
 .audio-hint {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .evaluation-samples {
   display: grid;

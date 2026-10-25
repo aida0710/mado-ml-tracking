@@ -7,8 +7,8 @@ import { formatList } from '../i18n/textJoining';
 
 // Reuses the Job status colors: finished is the green badge and failed the red one.
 const workerStatusBadgeClass: Record<WorkerPresence['status'], string> = {
-  online: 'status-finished',
-  offline: 'status-failed',
+  online: 'status-success',
+  offline: 'status-danger',
 };
 
 function WorkerStatusBadge({ status }: { status: WorkerPresence['status'] }) {

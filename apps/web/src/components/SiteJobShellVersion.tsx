@@ -11,9 +11,9 @@ import { siteComputersTextTemplates } from '../i18n/siteComputers';
  */
 export function SiteJobShellVersion({ targetId, jobShellId }: { targetId: string; jobShellId: string }) {
   useLocale();
-  const shell = useQuery(`site-job-shell:${jobShellId}`, (signal) =>
+  const shell = useQuery({ key: `site-job-shell:${jobShellId}`, load: (signal) =>
     siteComputersApi.jobShell(targetId, jobShellId, signal),
-  );
+  });
   return (
     <Resource query={shell}>
       {(value) => (

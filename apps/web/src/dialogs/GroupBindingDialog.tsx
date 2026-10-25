@@ -40,7 +40,7 @@ export function GroupBindingDialog({
     <Dialog
       title={binding ? text.editGroupBinding : text.addGroupBinding}
       onClose={onClose}
-      busy={mutation.pending}
+      dismissible={!mutation.pending}
     >
       <form
         onSubmit={(event) => {

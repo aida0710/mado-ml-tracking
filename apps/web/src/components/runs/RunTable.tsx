@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import type { Run, SavedViewColumn } from '@mmt/contracts';
 import { Empty } from '../Feedback';
-import { narrowerThan } from '../../lib/breakpoints';
-import { useMediaQuery } from '../../lib/useMediaQuery';
+import { narrowerThan } from '@mado/design-system/layout';
+import { useMediaQuery } from '@mado/design-system/react';
 import {
   areAllShownRunsSelected,
   setShownRunsSelected,
@@ -15,11 +15,11 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**
- * The Run list of a page of Runs, with a checkbox per Run. On phones (below --bp-sm) it keeps the
+ * The Run list of a page of Runs, with a checkbox per Run. On phones (below 640px) it keeps the
  * main columns in the row and opens the rest beneath it (NarrowRunTable), like the other lists.
  * Wider screens show every column, movable and resizable (WideRunTable): from a tablet up, reading
  * metrics across Runs side by side is worth scrolling the table sideways, which the other lists,
- * switching at --bp-md, do not need.
+ * switching at 900px, do not need.
  */
 export function RunTable({
   projectId,

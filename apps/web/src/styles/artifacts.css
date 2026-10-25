@@ -28,7 +28,7 @@
   max-height: 460px;
   overflow: auto;
   padding: 14px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   line-height: 1.6;
 }
 /* Text previews: the format select above the colored text (@mado/design-system/code.css). */
@@ -56,30 +56,10 @@
   position: relative;
   flex: none;
 }
+/* ⋯のメニュー（デザインシステムの.popover.menu）。ボタンとの間を少し空け、表の行より前に出す。 */
 .artifact-actions-popover {
-  position: absolute;
   top: calc(100% + 4px);
-  right: 0;
   z-index: 20;
-  min-width: 140px;
-  display: flex;
-  flex-direction: column;
-  background: var(--background);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-popover);
-}
-.artifact-actions-popover button {
-  border: 0;
-  background: transparent;
-  padding: 10px 14px;
-  text-align: left;
-}
-.artifact-actions-popover button.danger {
-  color: var(--error);
-}
-.artifact-actions-popover button:hover,
-.artifact-actions-popover button:focus-visible {
-  background: var(--surface-hover);
 }
 .artifact-usage td {
   white-space: nowrap;
@@ -93,17 +73,13 @@
   flex: none;
   gap: 4px;
 }
-.artifact-actions-popover button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
 .artifact-actions-reason {
   margin: 0;
   padding: 0 14px 10px;
   width: 18em;
   max-width: 70vw;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .artifact-references h4 {
   margin: 12px 0 4px;
@@ -111,7 +87,7 @@
 .artifact-reference-links {
   margin: 0;
   padding-left: 18px;
-  font-size: 13px;
+  font-size: var(--font-size-base);
 }
 .artifact-reference-links li {
   padding: 2px 0;

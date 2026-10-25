@@ -25,9 +25,9 @@ export function ProjectArchiveDialog({
 }) {
   useLocale();
   // Read when the dialog opens, so the count is the one the click acts on.
-  const tokens = useQuery(`${project.id}:archive-tokens`, (signal) =>
+  const tokens = useQuery({ key: `${project.id}:archive-tokens`, load: (signal) =>
     accessApi.projectTokens(project.id, signal),
-  );
+  });
   const [openedAt] = useState(() => Date.now());
   const usableTokenCount = tokens.value && countUsableTokens(tokens.value, openedAt);
   const message = joinSentences([

@@ -14,7 +14,7 @@
 }
 .connection-values dt {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .connection-values dd {
   margin: 2px 0 0;
@@ -37,7 +37,7 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 6px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: var(--muted);
 }
 .code-snippet pre {
@@ -51,7 +51,7 @@
 }
 .connection-more summary {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   cursor: pointer;
 }
 .connection-more > p {

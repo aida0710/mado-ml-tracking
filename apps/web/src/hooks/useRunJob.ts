@@ -15,8 +15,8 @@ export function useRunJob({
   runId: string;
   enabled: boolean;
 }): QueryState<Job | null> {
-  return useQuery(
-    enabled ? `${projectId}:run-job:${runId}` : null,
-    async (signal) => (await executionApi.runJobs(projectId, runId, signal))[0] ?? null,
-  );
+  return useQuery({
+    key: enabled ? `${projectId}:run-job:${runId}` : null,
+    load: async (signal) => (await executionApi.runJobs(projectId, runId, signal))[0] ?? null,
+  });
 }

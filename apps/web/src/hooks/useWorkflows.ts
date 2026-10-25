@@ -7,9 +7,9 @@ import { useQuery } from './useQuery';
 import { useQueryPolledWhileActive } from './useQueryPolledWhileActive';
 
 export function useWorkflowDetail(projectId: string, workflowId: string) {
-  return useQuery(`workflow:${projectId}:${workflowId}`, (signal) =>
+  return useQuery({ key: `workflow:${projectId}:${workflowId}`, load: (signal) =>
     workflowsApi.get(projectId, workflowId, signal),
-  );
+  });
 }
 
 /**

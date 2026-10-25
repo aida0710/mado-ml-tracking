@@ -72,7 +72,7 @@ function ProjectCreateForm({
   // A warning, not a refusal: the API allows the same name, and a team may mean to reuse one.
   const isNameTaken = isProjectNameTaken(name, existingNames);
   return (
-    <Dialog title={text.newProject} onClose={onClose} busy={mutation.pending}>
+    <Dialog title={text.newProject} onClose={onClose} dismissible={!mutation.pending}>
       <form
         onSubmit={(event) => {
           event.preventDefault();

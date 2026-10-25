@@ -26,9 +26,9 @@ export function AliasProtectionSettings({ models }: { models: Model[] }) {
   const { project } = useProject();
   const { user } = useAuth();
   const canManage = canManageAliasProtections(project.role, user.isAdmin);
-  const protections = useQuery(`${project.id}:alias-protections`, (signal) =>
+  const protections = useQuery({ key: `${project.id}:alias-protections`, load: (signal) =>
     registryApi.aliasProtections(project.id, null, signal),
-  );
+  });
   const [editing, setEditing] = useState<ModelAliasProtection | 'new' | null>(null);
   // Any Model's aliases: the scope is chosen in the same form, and a name is protected per Model.
   const aliases = useAliasSuggestions({ projectId: project.id, models, modelId: null });

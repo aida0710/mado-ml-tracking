@@ -109,7 +109,7 @@ export function DatasetFolderVersionDialog({
   }
   const totalSize = sources.reduce((total, chosen) => total + chosen.file.size, 0);
   return (
-    <Dialog title={title} onClose={onClose} busy={busy} wide>
+    <Dialog title={title} onClose={onClose} dismissible={!busy} size="wide">
       {unfinished.discardWithKeptFiles && (
         <FolderUploadKeptFilesNotice
           projectId={project.id}
@@ -131,7 +131,7 @@ export function DatasetFolderVersionDialog({
       )}
       <ErrorNotice message={unfinished.error} retry={unfinished.reload} />
       <form
-        className="artifact-upload-form touch-targets"
+        className="artifact-upload-form"
         onSubmit={(event) => {
           event.preventDefault();
           if (canStart) start();

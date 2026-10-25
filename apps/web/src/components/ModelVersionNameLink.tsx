@@ -15,9 +15,9 @@ export function ModelVersionNameLink({
   projectId: string;
   versionId: string;
 }) {
-  const detail = useQuery(`${projectId}:model-version:${versionId}`, (signal) =>
+  const detail = useQuery({ key: `${projectId}:model-version:${versionId}`, load: (signal) =>
     registryApi.modelVersionDetail(projectId, versionId, signal),
-  );
+  });
   if (!detail.value)
     return (
       <Link className="mono" to={`/projects/${projectId}/models?version=${versionId}`}>

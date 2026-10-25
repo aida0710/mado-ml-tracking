@@ -1,5 +1,7 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { narrowerThan } from '@mado/design-system/layout';
+import { useDocumentTheme, useMediaQuery } from '@mado/design-system/react';
 import {
   canUseLogScale,
   computePositions,
@@ -14,10 +16,7 @@ import {
   type AxisScale,
   type ChartRunRow,
 } from '../../lib/parallelCoordinates';
-import { useDocumentTheme } from '../../hooks/useDocumentTheme';
 import { useElementWidth } from '../../hooks/useElementWidth';
-import { narrowerThan } from '../../lib/breakpoints';
-import { useMediaQuery } from '../../lib/useMediaQuery';
 import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
@@ -56,9 +55,10 @@ const TICK_PLATE_HEIGHT = 12;
 const TICK_PLATE_PADDING = 2;
 // A press without this much travel (as a share of the axis) is a click that clears the brush.
 const CLICK_TRAVEL = 0.01;
-const UNSELECTED_LINE_COLOR = 'rgba(128, 128, 128, 0.14)';
-// Thousands of overlapping canvas lines add up, so each one is fainter than an SVG line.
-const UNSELECTED_CANVAS_LINE_COLOR = 'rgba(128, 128, 128, 0.05)';
+// 絞り込みから外れた線の色（styles/base.css）。SVG の線は変数のまま描き、canvas は var() を解決しないので
+// 描くときに値を読む。
+const UNSELECTED_LINE_COLOR = 'var(--chart-unselected-line)';
+const UNSELECTED_CANVAS_LINE_COLOR_PROPERTY = '--chart-unselected-canvas-line';
 
 interface ChartLayout {
   width: number;
@@ -188,6 +188,9 @@ export function ParallelCoordinatesChart({
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
       context.clearRect(0, 0, width, height);
       context.lineWidth = 1;
+      const unselectedLineColor = getComputedStyle(canvas)
+        .getPropertyValue(UNSELECTED_CANVAS_LINE_COLOR_PROPERTY)
+        .trim();
       // One path per color: a few stroke calls instead of one per Run keeps 5000 lines in a frame.
       const unselected: number[] = [];
       const selectedByColor = new Map<string, number[]>();
@@ -202,7 +205,7 @@ export function ParallelCoordinatesChart({
         else selectedByColor.set(color, [index]);
       }
       // Unselected lines first so the selected ones stay on top.
-      for (const [color, indexes] of [[UNSELECTED_CANVAS_LINE_COLOR, unselected] as const, ...selectedByColor]) {
+      for (const [color, indexes] of [[unselectedLineColor, unselected] as const, ...selectedByColor]) {
         context.strokeStyle = color;
         context.beginPath();
         for (const index of indexes)

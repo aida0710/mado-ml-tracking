@@ -1,38 +1,31 @@
 import type { ReactNode } from 'react';
-import { AlertCircle, LoaderCircle, RefreshCw } from 'lucide-react';
+import { EmptyMessage, ErrorNotice as DesignSystemErrorNotice, LoadingMessage } from '@mado/design-system/react';
 import type { QueryState } from '../hooks/useQuery';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { localizeMessage } from '../i18n/messageTranslations';
 
+/**
+ * 読み込みや操作の失敗（デザインシステムのErrorNotice）。サーバーの文はこのアプリの訳に通して出す。
+ * `retry`を渡すと再試行のボタンを出す。
+ */
 export function ErrorNotice({ message, retry }: { message: string | null; retry?: () => void }) {
   useLocale();
-  if (!message) return null;
   return (
-    <div className="notice error" role="alert">
-      <AlertCircle size={16} />
-      <span>{localizeMessage(message)}</span>
-      {retry && (
-        <button type="button" className="button small" onClick={retry}>
-          <RefreshCw size={14} />
-          {text.retry}
-        </button>
-      )}
-    </div>
+    <DesignSystemErrorNotice
+      message={message === null ? null : localizeMessage(message)}
+      retry={retry}
+      retryLabel={text.retry}
+    />
   );
 }
 export function Loading() {
   useLocale();
-  return (
-    <div className="state-message" role="status">
-      <LoaderCircle className="spin" size={18} />
-      {text.loading}
-    </div>
-  );
+  return <LoadingMessage label={text.loading} />;
 }
 export function Empty({ children = text.empty }: { children?: ReactNode }) {
   useLocale();
-  return <div className="state-message">{children}</div>;
+  return <EmptyMessage>{children}</EmptyMessage>;
 }
 export function Resource<T>({
   query,

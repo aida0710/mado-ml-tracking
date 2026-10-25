@@ -15,7 +15,7 @@ const { chromium } = await import(pathToFileURL(modulePath).href);
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
 if (screenshotDirectory) await mkdir(screenshotDirectory, { recursive: true });
-// The full sidebar from --bp-lg, the rail between --bp-md and --bp-lg, the drawer below --bp-md.
+// The full sidebar from 1200px, the rail between 900px and 1200px, the drawer below 900px.
 const WIDE = { width: 1440, height: 1250 };
 const RAIL = { width: 1100, height: 800 };
 const NARROW = { width: 390, height: 844 };
@@ -81,13 +81,13 @@ try {
   const projectGroups = await groupLabels(sidebar);
   assert.equal(projectGroups.at(-1), 'プロジェクト管理');
   assert.ok(!projectGroups.includes('全体設定') && !projectGroups.includes('全体管理'));
-  assert.deepEqual(await openUserMenu(page), ['アカウント', 'パスワードの変更', '全体設定']);
+  assert.deepEqual(await openUserMenu(page), ['アカウント', 'パスワードの変更', '全体設定', 'ログアウト']);
   await screenshot(page, '01-user-project-sidebar-menu');
   await page.getByRole('menuitem', { name: '全体設定', exact: true }).click();
   await page.waitForURL(`${base}/settings/account`);
   await waitForHeading(page, { eyebrow: '全体設定', title: 'アカウント' });
   assert.deepEqual(await groupLabels(sidebar), ['全体設定']);
-  assert.deepEqual(await groupLinks(sidebar, '全体設定'), ['アカウント', 'コンピュータ']);
+  assert.deepEqual(await groupLinks(sidebar, '全体設定'), ['アカウント', 'コンピュータ', 'このアプリについて']);
   await screenshot(page, '02-user-settings-account');
 
   await sidebar.getByRole('link', { name: 'コンピュータ', exact: true }).click();
@@ -124,7 +124,7 @@ try {
   user.authSources = ['oidc'];
   page = await openPage(WIDE);
   await settle(page, '/settings/account/password', '/settings/account');
-  assert.deepEqual(await openUserMenu(page), ['アカウント', '全体設定']);
+  assert.deepEqual(await openUserMenu(page), ['アカウント', '全体設定', 'ログアウト']);
   await page.context().close();
 
   console.log('Settings: a global administrator also gets 全体管理');
@@ -136,7 +136,7 @@ try {
   await adminSidebar.getByRole('link', { name: 'Experiments', exact: true }).waitFor();
   const adminProjectGroups = await groupLabels(adminSidebar);
   assert.ok(!adminProjectGroups.includes('全体設定') && !adminProjectGroups.includes('全体管理'));
-  assert.deepEqual(await openUserMenu(page), ['アカウント', 'パスワードの変更', '全体設定']);
+  assert.deepEqual(await openUserMenu(page), ['アカウント', 'パスワードの変更', '全体設定', 'ログアウト']);
   await screenshot(page, '04-admin-project-sidebar-menu');
   await page.keyboard.press('Escape');
   await settle(page, '/admin', '/settings/projects');

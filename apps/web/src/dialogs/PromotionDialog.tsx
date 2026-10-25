@@ -141,7 +141,7 @@ export function PromotionDialog({
   }
 
   return (
-    <Dialog title={text.promotionDialogTitle} onClose={onClose} busy={mutation.pending}>
+    <Dialog title={text.promotionDialogTitle} onClose={onClose} dismissible={!mutation.pending}>
       <form
         onSubmit={(event) => {
           event.preventDefault();

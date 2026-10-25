@@ -5,6 +5,7 @@ import {
   type ModelVersionTrainingSourceCreate,
   type Run,
 } from '@mmt/contracts';
+import { parseLocalDateTimeInput } from '@mado/design-system/datetime-input';
 import type { FormValues } from '../types/form';
 import {
   getFieldValue,
@@ -13,7 +14,6 @@ import {
   parseJsonObject,
   parseStringMap,
 } from './formValues';
-import { parseLocalDateTimeInput } from './dateTimeInput';
 import { LocalizedError } from './localizedError';
 import { trainingText } from '../i18n/training';
 
