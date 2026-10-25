@@ -6,7 +6,7 @@
 
 | 受け付けるもの | 条件 |
 |---|---|
-| `GET`・`HEAD` `/api/health`、`/api/auth/token` | Job token |
+| `GET`・`HEAD` `/healthz`、`/api/auth/token` | Job token |
 | `GET`・`HEAD` `/api/projects/{p}/...`（入力、ファイル、上流のRun、子Job、upload session） | Job token |
 | `POST` `/api/projects/{p}/jobs/{j}/runner/{start,heartbeat,logs,metrics,outputs,finish}` | Job token |
 | `POST` `/api/projects/{p}/jobs/{j}/children`（ドライバーの子Job） | Job token |
@@ -32,7 +32,7 @@
 
 - DNS: 公開hostnameのA recordを、edgeのglobal IPv4へ向けます。AAAA recordは、IPv6の443番を開けるときだけ公開します。
 - 証明書: Let's EncryptのHTTP-01で取ります（webrootは`/var/www/letsencrypt`）。公開hostnameなので、HTTP-01が使えます。
-- 転送先: `compose.yml`の`web`（`127.0.0.1:5182`）です。`web`のnginxが`/api/`をAPIへ渡します。API自体のportは公開しません。
+- 転送先: `compose.yml`の`web`（`127.0.0.1:5182`）です。`web`のnginxが`/api/`と`/healthz`をAPIへ渡します。API自体のportは公開しません。
 - runner: 各サイトの`runner_api_url`（[launcherのサイト設定](../sites/README.md)）を`https://<公開hostname>`にします。計算ノードがproxy経由でしか外へ出られないサイトでは、batch scriptで`https_proxy`を設定します。
 
 ## edgeへの組み込み
@@ -88,10 +88,10 @@ sudo certbot certonly --webroot --webroot-path /var/www/letsencrypt --domain "$M
 
 ```bash
 H=mmt-runner.example.org
-curl -s "https://$H/api/health"                                   # 401 job_token_required
+curl -s "https://$H/healthz"                                      # 401 job_token_required
 curl -s "https://$H/api/auth/config"                              # 404 not_found
 curl -s "https://$H/"                                             # 404 not_found
-curl -s -o /dev/null -w '%{http_code}\n' "http://$H/api/health"   # 403
+curl -s -o /dev/null -w '%{http_code}\n' "http://$H/healthz"      # 403
 curl -s -o /dev/null -w '%{http_code}\n' -X POST -d '{}' "https://$H/api/hooks/<id>/webhook"   # 401 invalid_signature（APIの応答）
 ```
 

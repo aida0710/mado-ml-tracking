@@ -123,10 +123,10 @@ docker compose up -d
 docker compose ps
 ```
 
-Check that every `STATUS` is `Up` and that `postgres` shows `(healthy)`. Check the API with the following command.
+Check that every `STATUS` is `Up` and that `postgres` and `api` show `(healthy)`. Check the API with the following command.
 
 ```sh
-curl -fsS http://127.0.0.1:5182/api/health
+curl -fsS http://127.0.0.1:5182/healthz
 ```
 
 If it returns `{"status":"ok"}`, both the Web proxy and the API are running. If something does not start, check `docker compose logs api`. When a setting is missing, the log names the missing variable.
@@ -175,7 +175,7 @@ Open `MMT_PUBLIC_URL` in a browser and check that the sign-in screen appears. Wi
 | Native API | `https://tracking.example.com/api/` |
 | `MMT_API_URL` of the Python SDK | `https://tracking.example.com` (adding `/api` is the same) |
 | MLflow `MLFLOW_TRACKING_URI` | `https://tracking.example.com/api/mlflow/projects/<Project ID>` |
-| API health check | `https://tracking.example.com/api/health` |
+| API health check | `https://tracking.example.com/healthz` |
 
 The MLflow endpoint is separate for each Project. The Project URL is shown under **Connect from SDK or MLflow 3** in **Project settings**.
 

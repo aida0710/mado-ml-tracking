@@ -365,7 +365,7 @@ mado-tracking-worker status --worker-id gpu-host-1     # unit状態、worker loc
 journalctl --user -u mado-tracking-worker@gpu-host-1 -f
 ```
 
-doctorは、env fileとstate directoryのmode、APIへの到達（`/api/health`）、tokenのscope（`GET /api/auth/token`。Job tokenは不可）、`~/.ssh`・秘密鍵（group/otherの権限なし）・known_hosts（group/other書き込み不可）を確かめる。errorがあれば終了コード1。Compute画面の「Workers」にバージョンとホスト名が出ることも確認する。
+doctorは、env fileとstate directoryのmode、APIへの到達（`/healthz`）、tokenのscope（`GET /api/auth/token`。Job tokenは不可）、`~/.ssh`・秘密鍵（group/otherの権限なし）・known_hosts（group/other書き込み不可）を確かめる。errorがあれば終了コード1。Compute画面の「Workers」にバージョンとホスト名が出ることも確認する。
 
 ### 4. 更新する
 

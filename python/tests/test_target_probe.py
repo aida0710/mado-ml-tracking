@@ -167,7 +167,7 @@ def run_probe(transport: CommandTransport, target: dict[str, Any] | None = None)
         probe_target(
             target or ssh_target(),
             transport=transport,
-            health_url="http://mmt.internal:4182/api/health",
+            health_url="http://mmt.internal:4182/healthz",
             masker=SecretMasker([API_TOKEN]),
         )
     )
@@ -228,7 +228,7 @@ def test_healthy_ssh_target_reports_every_item_and_offers_detected_gpus_and_runt
     assert result["workDirectoryFreeBytes"] == 500_000_000_000
     probe_command = transport.commands[-1]
     assert probe_command[:3] == ["python3", "-c", PROBE_SCRIPT]
-    assert probe_command[3:5] == ["/srv/mmt", "http://mmt.internal:4182/api/health"]
+    assert probe_command[3:5] == ["/srv/mmt", "http://mmt.internal:4182/healthz"]
 
 
 def test_healthy_target_reports_its_machine_pythons_and_directory_candidates_as_version_2():
@@ -498,7 +498,7 @@ def test_missing_ssh_key_on_the_worker_fails_the_check_without_connecting(tmp_pa
         check_target(
             ssh_target(sshKeyPath=str(tmp_path / "missing"), knownHostsPath=str(tmp_path / "known_hosts")),
             allow_local_executor=False,
-            health_url="http://mmt.internal/api/health",
+            health_url="http://mmt.internal/healthz",
             masker=SecretMasker([API_TOKEN]),
         )
     )
@@ -521,7 +521,7 @@ def health_url() -> Iterator[str]:
             pass
 
         def do_GET(self) -> None:
-            status = 200 if self.path == "/api/health" else 404
+            status = 200 if self.path == "/healthz" else 404
             self.send_response(status)
             self.send_header("Content-Length", "2")
             self.end_headers()
@@ -531,7 +531,7 @@ def health_url() -> Iterator[str]:
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
-        yield f"http://127.0.0.1:{server.server_port}/api/health"
+        yield f"http://127.0.0.1:{server.server_port}/healthz"
     finally:
         server.shutdown()
         server.server_close()

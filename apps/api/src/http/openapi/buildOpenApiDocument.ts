@@ -220,9 +220,6 @@ function operation(route: NativeRoute, components: JsonSchemaComponents): Record
   };
 }
 
-// Paths outside /api (the root /health) get a prefix so they differ from their /api twins.
-const ROOT_OPERATION_PREFIX = 'Root';
-
 function operationId(route: NativeRoute): string {
   const isApiPath = route.path.startsWith('/api/');
   const words = route.path
@@ -232,7 +229,7 @@ function operationId(route: NativeRoute): string {
     .flatMap((segment) => segment.split(/[^A-Za-z0-9]+/))
     .filter(Boolean)
     .map(capitalize);
-  return `${route.method}${isApiPath ? '' : ROOT_OPERATION_PREFIX}${words.join('')}`;
+  return `${route.method}${words.join('')}`;
 }
 
 function capitalize(word: string): string {

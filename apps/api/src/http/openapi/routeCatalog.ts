@@ -381,18 +381,9 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
   // system
   {
     method: 'get',
-    path: '/health',
+    path: '/healthz',
     tag: 'system',
-    summary: 'Health check（DB接続を確認）',
-    access: { kind: 'public' },
-    responses: { 200: health },
-    errors: routeError(503, 'database_unavailable'),
-  },
-  {
-    method: 'get',
-    path: '/api/health',
-    tag: 'system',
-    summary: 'Health check（DB接続を確認）',
+    summary: 'ヘルスチェック（DBへの接続まで確かめる。/apiの外で、認証は要らない）',
     access: { kind: 'public' },
     responses: { 200: health },
     errors: routeError(503, 'database_unavailable'),

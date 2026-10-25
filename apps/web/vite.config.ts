@@ -34,6 +34,7 @@ export default defineConfig({
     strictPort: true,
     // Route API preflights to the API's Origin policy instead of Vite's asset CORS middleware.
     cors: false,
-    proxy: { '/api': apiProxyTarget },
+    // /healthz は API の /api の外にあるヘルスチェック。web の nginx と同じく API へ渡す。
+    proxy: { '/api': apiProxyTarget, '/healthz': apiProxyTarget },
   },
 });

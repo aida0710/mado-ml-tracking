@@ -8,7 +8,7 @@ prefix `/api`。WebはHttpOnly session cookie、SDKはBearer token。Cookieに�
 
 Originは`MMT_WEB_ORIGIN`/`MMT_PUBLIC_URL`の完全一致を許可し、`MMT_ALLOW_PRIVATE_ORIGINS=true`ならHTTP(S)のprivate/local/VPN IPとlocalhostも許可する。CORS・開発login/logout・sessionの変更で同じ判定を使う。設定省略時はfalse。null/欠落や未許可のOriginはsession変更操作で403 `invalid_origin`。BearerリクエストはOrigin不要。許可範囲とSSOの固定callbackは[運用手順](operations.md)を参照する。
 
-- `GET /health` → `{status:'ok'}`。DB障害は503 `database_unavailable`。
+- `GET /healthz`（`/api`の外。認証なし）→ `{status:'ok'}`。DBまで届くかを確かめ、DB障害は503 `database_unavailable`。composeのヘルスチェック、worker doctor、targetの診断が使う。webのnginxとedgeも`/healthz`をAPIへ渡す（edgeではJob tokenが要る）。
 - `GET /auth/config` → AuthConfig `{mode,methods:{local,oidc:{label,loginUrl}|null}}`。modeは`local`/`oidc`/`hybrid`/`development`。`methods.local`はローカルアカウントのloginを受け付けるか、`methods.oidc`はSSOの表示名と開始URL。`GET /auth/me` → AuthMe `{user:User,mustChangePassword:boolean}` (未認証401)。`POST /auth/dev-login` → `{user}`はdevelopment modeだけ。`GET /auth/login` / `GET /auth/callback` / `POST /auth/logout`。
 - Userは`username:string|null`（ローカルアカウントのlogin名。SSOのみはnull）、`status:'active'|'disabled'`、`authSources:('local'|'oidc')[]`、`kind:'human'|'service'`（`service`はService Account）を持つ。無効化したUserはsession・API tokenとも401。Userは物理削除しない。
 - `POST /auth/local-login` ({username,password}) → AuthMe、session cookieを発行する。`methods.local=false`なら404 `local_login_disabled`。Origin検証はdev-loginと同じ。存在しないusername・誤ったpassword・無効化Userは区別せず401 `invalid_credentials`。passwordはArgon2idで照合する。usernameと接続元の失敗回数を制限し、超過は429 `rate_limited`と`Retry-After`秒を返す。

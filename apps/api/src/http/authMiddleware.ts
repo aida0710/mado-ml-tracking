@@ -17,7 +17,6 @@ const PASSWORD_CHANGE_ALLOWED_REQUESTS = new Set([
   'GET /api/auth/me',
   'POST /api/auth/change-password',
   'POST /api/auth/logout',
-  'GET /api/health',
 ]);
 
 export function validateOrigin(origin: string | undefined, policy: OriginPolicy): void {

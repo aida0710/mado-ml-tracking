@@ -59,7 +59,7 @@ try {
   const deadline = Date.now() + API_STARTUP_TIMEOUT_MS;
   while (true) {
     try {
-      const health = requestFromApi('/api/health');
+      const health = requestFromApi('/healthz');
       assert.equal(health.status, 200);
       assert.equal(JSON.parse(health.text).status, 'ok');
       break;
@@ -73,7 +73,7 @@ try {
   assert.equal(auth.status, 200);
   assert.equal(JSON.parse(auth.text).methods.local, true);
   assert.match(runCompose(['exec', '-T', 'web', 'wget', '-qO-', 'http://127.0.0.1:8080/']), /<html/);
-  assert.match(runCompose(['exec', '-T', 'web', 'wget', '-qO-', 'http://127.0.0.1:8080/api/health']), /"status":"ok"/);
+  assert.match(runCompose(['exec', '-T', 'web', 'wget', '-qO-', 'http://127.0.0.1:8080/healthz']), /"status":"ok"/);
   const previewContainer = runCompose(['ps', '-q', 'preview']).trim();
   assert.equal(runCommand('docker', ['inspect', '--format', '{{.State.Running}}', previewContainer]).trim(), 'true');
   const references = await readReleaseImages({ tag, manifestDirectory, owner });

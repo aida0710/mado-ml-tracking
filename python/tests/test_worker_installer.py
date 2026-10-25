@@ -293,8 +293,8 @@ def test_status_reports_unit_state_worker_lock_and_retained_jobs(
 
 def token_api(scopes: list[str], *, job: bool = False, token_status: int = 200) -> httpx.MockTransport:
     def respond(request: httpx.Request) -> httpx.Response:
-        if request.url.path == "/api/health":
-            return httpx.Response(200, json={"ok": True})
+        if request.url.path == "/healthz":
+            return httpx.Response(200, json={"status": "ok"})
         if request.url.path == "/api/auth/token":
             assert request.headers["Authorization"] == f"Bearer {TOKEN}"
             return httpx.Response(
@@ -306,6 +306,13 @@ def token_api(scopes: list[str], *, job: bool = False, token_status: int = 200) 
 
 
 API = ApiSettings.from_environment(url="http://api.test", token=TOKEN)
+
+
+def test_health_url_is_outside_api_and_keeps_a_path_prefix():
+    assert API.health_url == "http://api.test/healthz"
+    behind_proxy = ApiSettings.from_environment(url="https://example.test/tracking/api/", token=TOKEN)
+    assert behind_proxy.url == "https://example.test/tracking/api"
+    assert behind_proxy.health_url == "https://example.test/tracking/healthz"
 
 
 def test_doctor_detects_missing_worker_scopes():

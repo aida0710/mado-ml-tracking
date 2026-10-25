@@ -544,7 +544,7 @@ ssh・localのコンピュータは、全体設定の「コンピュータ」（
 3. `pythonExecutable -c`でPythonのバージョンと実行パスを得る（無ければ`python_missing`、3.11未満は`python_too_old`）。コンピュータに`pythonExecutable`がまだ無いとき（追加の1段目）は、発見したPythonのうち3.11以上の最初のものを使う。
 4. 固定の確認スクリプト（`worker/target_probe.py`の`PROBE_SCRIPT`。Python 3.6以上の標準ライブラリだけ）を送り、構造化JSONで受け取る。各コマンドは15秒、全体は90秒で打ち切る。
 
-- 確認する項目: venvとensurepip、`python -m pip --version`、`git --version`、`docker --version`と`docker version`（daemonへの到達。届かないときはsocketの読み書き権限で`docker_socket_denied`と`docker_daemon_unreachable`を分ける）、`apptainer`/`singularity`のバージョンと`exec --help`の必須flag（`sif_container.py`の`REQUIRED_SIF_FLAGS`と`--nv`）、`nvidia-smi --query-gpu=index,uuid,name,memory.total`、`workDirectory`（無ければ一番近い既存の親）への書き込みと空き容量、targetから`MMT_API_URL/health`への到達。`workDirectory`がまだ無いときは、ホームで確かめたうえで作業ディレクトリの項目を`skipped`（`work_directory_not_set`）にする。
+- 確認する項目: venvとensurepip、`python -m pip --version`、`git --version`、`docker --version`と`docker version`（daemonへの到達。届かないときはsocketの読み書き権限で`docker_socket_denied`と`docker_daemon_unreachable`を分ける）、`apptainer`/`singularity`のバージョンと`exec --help`の必須flag（`sif_container.py`の`REQUIRED_SIF_FLAGS`と`--nv`）、`nvidia-smi --query-gpu=index,uuid,name,memory.total`、`workDirectory`（無ければ一番近い既存の親）への書き込みと空き容量、targetからAPIのヘルスチェック（`MMT_API_URL`の`/api`の外の`/healthz`）への到達。`workDirectory`がまだ無いときは、ホームで確かめたうえで作業ディレクトリの項目を`skipped`（`work_directory_not_set`）にする。
 - 結果はversion 2（マシン・Python・ディレクトリの候補つき。docs/api-contract.mdの「targetの接続確認」）。JSONで32KiBを超えるときはディレクトリ、次にPythonの候補を後ろから落とす。
 - 確認はtargetに何も残さない（作業ディレクトリも作らない。書き込み確認の一時ファイルはすぐ消す）。
 - GPUはnvidia-smiが報告した値だけを返す。nvidia-smiが無ければ`gpus=null`で、GPUを設定したtargetではNG、CPUだけのtargetでは「なし」。

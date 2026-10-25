@@ -206,7 +206,6 @@ export const JOB_TOKEN_WRITE_RULES: readonly JobTokenRule[] = [
 // Reads stay inside the token's Project; upstream Run artifacts are read this way.
 // The POST entries are searches that only read.
 export const JOB_TOKEN_READ_RULES: readonly JobTokenRule[] = [
-  { methods: ['GET', 'HEAD'], route: '/api/health', allows: allowWithinProject },
   // The token's own scopes and job flag (CurrentApiToken), so code can tell it holds a Job token.
   { methods: ['GET', 'HEAD'], route: '/api/auth/token', allows: allowWithinProject },
   { methods: ['GET', 'HEAD'], route: NATIVE, allows: allowWithinProject },

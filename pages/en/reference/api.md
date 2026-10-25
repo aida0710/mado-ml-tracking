@@ -75,7 +75,7 @@ Errors have this shape. `error` is a human-readable message; `code` is for progr
 | 422 | `invalid_request` and others | Invalid input |
 | 429 | `rate_limited` | Login attempt limit. Wait `Retry-After` seconds |
 | 503 | `oidc_unavailable` | Authentik is unreachable, so the SSO session cannot be checked |
-| 503 | `database_unavailable` | The database is unreachable (`GET /api/health`) |
+| 503 | `database_unavailable` | The database is unreachable (`GET /healthz`) |
 
 ## Feature groups
 
@@ -83,7 +83,7 @@ The OpenAPI document groups the API by tag.
 
 | Tag | Content |
 | --- | --- |
-| `system` | Health check (`GET /api/health`) and the OpenAPI document |
+| `system` | Health check (`GET /healthz`, outside `/api`) and the OpenAPI document |
 | `auth` | Login, sessions, your account |
 | `access` | Project members, group grants |
 | `tokens` | API tokens, Service Accounts |

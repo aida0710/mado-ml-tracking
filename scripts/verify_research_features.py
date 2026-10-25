@@ -893,7 +893,7 @@ def isolated_api(log_path: Path) -> Iterator[None]:
             start_new_session=True,
         )
         try:
-            wait_for_http(f"{API_URL}/api/health", server, log_path, API_START_SECONDS)
+            wait_for_http(f"{API_URL}/healthz", server, log_path, API_START_SECONDS)
             yield
         finally:
             # SIGTERM lets the harness drop its test schema.

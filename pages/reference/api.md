@@ -73,7 +73,7 @@ API tokenの発行と失効、Service Account、全体の監査ログ、ユー�
 | 422 | `invalid_request`ほか | 入力の形式や値が正しくない |
 | 429 | `rate_limited` | ログインの試行回数の上限。`Retry-After`秒待つ |
 | 503 | `oidc_unavailable` | AuthentikにつながらずSSOのsessionを確かめられない |
-| 503 | `database_unavailable` | DBにつながらない（`GET /api/health`） |
+| 503 | `database_unavailable` | DBにつながらない（`GET /healthz`） |
 
 ## 機能ごとの分類
 
@@ -81,7 +81,7 @@ OpenAPIでは、APIを次の分類（tag）に分けています。
 
 | 分類 | 内容 |
 | --- | --- |
-| `system` | 稼働確認（`GET /api/health`）とOpenAPI |
+| `system` | 稼働確認（`GET /healthz`。`/api`の外）とOpenAPI |
 | `auth` | ログイン、session、自分のアカウント |
 | `access` | Projectのメンバー、groupへの付与 |
 | `tokens` | API token、Service Account |

@@ -141,63 +141,13 @@
     }
   ],
   "paths": {
-    "/health": {
+    "/healthz": {
       "get": {
-        "operationId": "getRootHealth",
+        "operationId": "getHealthz",
         "tags": [
           "system"
         ],
-        "summary": "Health check（DB接続を確認）",
-        "security": [],
-        "x-mmt-access": {
-          "kind": "public"
-        },
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "const": "ok"
-                    }
-                  },
-                  "required": [
-                    "status"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "一時的に処理できない",
-            "x-mmt-error-codes": [
-              "database_unavailable",
-              "internal_error"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/health": {
-      "get": {
-        "operationId": "getHealth",
-        "tags": [
-          "system"
-        ],
-        "summary": "Health check（DB接続を確認）",
+        "summary": "ヘルスチェック（DBへの接続まで確かめる。/apiの外で、認証は要らない）",
         "security": [],
         "x-mmt-access": {
           "kind": "public"

@@ -214,6 +214,7 @@ import { notificationRoutes } from './routes/notificationRoutes.js';
 import { SavedViewService } from './services/savedViewService.js';
 import { savedViewRoutes } from './routes/savedViewRoutes.js';
 import { openapiRoutes } from './routes/openapiRoutes.js';
+import { healthRoutes } from './routes/healthRoutes.js';
 import { OperationsMonitor } from './services/operationsMonitor.js';
 import { OperationsAlertService } from './services/operationsAlertService.js';
 import { operationsOverviewRoutes, operationsRoutes } from './routes/operationsRoutes.js';
@@ -513,16 +514,7 @@ export function createApplication(options: ApplicationOptions) {
   app.use('/api/*', clientAddress(config.trustedProxyHops));
   app.use('/api/*', authentication(auth, jobTokens));
   app.use('/api/*', jobTokenGuard(database));
-  const health = async () => {
-    try {
-      await database.query('SELECT 1');
-      return { status: 'ok' as const };
-    } catch {
-      throw new DomainError(503, 'Databaseに接続できません', 'database_unavailable');
-    }
-  };
-  app.get('/health', async (context) => context.json(await health()));
-  app.get('/api/health', async (context) => context.json(await health()));
+  app.route('/', healthRoutes(database));
   app.route('/api/auth', authRoutes(auth));
   app.route('/api/auth/token', currentTokenRoutes());
   app.route('/api', auditRoutes(audit));
