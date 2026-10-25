@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { planDatasetFolder } from '../lib/datasetFolder';
 import {
   chooseFolderToContinue,
@@ -44,54 +44,72 @@ export function useFolderContinuation({
   // Both belong to one selection of files, so choosing another folder forgets them.
   const [chosenFolder, setChosenFolder] = useState<{ sources: UploadSource[]; folder: string } | null>(null);
   const [declinedSources, setDeclinedSources] = useState<UploadSource[] | null>(null);
-  const [check, setCheck] = useState<ContinuationCheck>({ status: 'idle' });
   const folder = chosenFolder?.sources === sources ? chosenFolder.folder : null;
   const isDeclined = declinedSources === sources;
   const uploadsKey = uploads.map((upload) => `${upload.folder}:${upload.storedFileCount}:${upload.openUploads.length}`).join(',');
+  const candidates = folder ? uploads.filter((upload) => upload.folder === folder) : uploads;
+  // Known without reading anything: no files chosen, the attempt declined, or none to continue.
+  const decidedCheck: ContinuationCheck | null =
+    sources.length === 0
+      ? { status: 'idle' }
+      : isDeclined || candidates.length === 0
+        ? { status: 'ready', continuation: null }
+        : null;
+  // The answer of the last comparison, with the selection it was made for.
+  const [measured, setMeasured] = useState<{
+    sources: UploadSource[];
+    folder: string | null;
+    uploadsKey: string;
+    check: ContinuationCheck;
+  } | null>(null);
+  const isMeasuredCurrent =
+    measured !== null &&
+    measured.sources === sources &&
+    measured.folder === folder &&
+    measured.uploadsKey === uploadsKey;
+  const check: ContinuationCheck =
+    decidedCheck ?? (isMeasuredCurrent ? measured.check : { status: 'checking' });
 
-  useEffect(() => {
-    if (sources.length === 0) {
-      setCheck({ status: 'idle' });
-      return;
-    }
-    const candidates = folder ? uploads.filter((upload) => upload.folder === folder) : uploads;
-    if (isDeclined || candidates.length === 0) {
-      setCheck({ status: 'ready', continuation: null });
-      return;
-    }
-    let isCurrent = true;
-    setCheck({ status: 'checking' });
-    void Promise.all(
+  // Reads the attempts of the latest render: uploads is compared by uploadsKey, so a reload with
+  // the same attempts changes nothing.
+  const measureCandidates = useEffectEvent(() =>
+    Promise.all(
       candidates.map(async (upload) => {
         const storedFiles = upload.storedFileCount > 0 ? await loadStoredFiles(upload.folder) : [];
         const entries = planDatasetFolder(sources, { datasetId, folder: upload.folder });
         const matchedCount = countContinuedFiles({ entries, storedFiles, openUploads: upload.openUploads });
         return { upload, storedFiles, matchedCount };
       }),
-    ).then(
-      (measured) => {
+    ),
+  );
+  const needsMeasuring = decidedCheck === null;
+  useEffect(() => {
+    if (!needsMeasuring) return;
+    let isCurrent = true;
+    const selection = { sources, folder, uploadsKey };
+    void measureCandidates().then(
+      (measuredCandidates) => {
         if (!isCurrent) return;
         // A named attempt is continued even when nothing matches yet; the notice then says so.
         const best = folder
-          ? measured[0]!
-          : measured.find(
+          ? measuredCandidates[0]!
+          : measuredCandidates.find(
               (candidate) =>
                 candidate.upload.folder ===
                 chooseFolderToContinue(
-                  measured.map(({ upload, matchedCount }) => ({ folder: upload.folder, matchedCount })),
+                  measuredCandidates.map(({ upload, matchedCount }) => ({ folder: upload.folder, matchedCount })),
                 )?.folder,
             );
-        setCheck({ status: 'ready', continuation: best ?? null });
+        setMeasured({ ...selection, check: { status: 'ready', continuation: best ?? null } });
       },
       (failure: unknown) => {
-        if (isCurrent) setCheck({ status: 'failed', failure });
+        if (isCurrent) setMeasured({ ...selection, check: { status: 'failed', failure } });
       },
     );
     return () => {
       isCurrent = false;
     };
-    // uploads is compared by uploadsKey; a reload with the same attempts changes nothing.
-  }, [datasetId, folder, isDeclined, loadStoredFiles, sources, uploadsKey]);
+  }, [datasetId, folder, loadStoredFiles, needsMeasuring, sources, uploadsKey]);
 
   return {
     continuation: check.status === 'ready' ? check.continuation : null,

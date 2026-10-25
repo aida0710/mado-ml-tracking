@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useEffectEvent, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import {
   canUseLogScale,
@@ -110,8 +110,6 @@ export function ParallelCoordinatesChart({
   const [logAxes, setLogAxes] = useState<ReadonlySet<string>>(new Set());
   const [brushes, setBrushes] = useState<AxisBrush[]>([]);
   const [draggingBrush, setDraggingBrush] = useState<AxisBrush | null>(null);
-  const onSelectionChangeRef = useRef(onSelectionChange);
-  onSelectionChangeRef.current = onSelectionChange;
 
   const orderedAxes = useMemo(() => orderAxes(axes, axisOrder), [axes, axisOrder]);
   const scaledAxes = useMemo(
@@ -160,8 +158,9 @@ export function ParallelCoordinatesChart({
     () => selectRowIndexes(rows.length, positions, brushes).map((index) => rows[index]!.runId),
     [rows, positions, brushes],
   );
+  const reportSelection = useEffectEvent((selection: string[]) => onSelectionChange?.(selection));
   useEffect(() => {
-    onSelectionChangeRef.current?.(committedSelection);
+    reportSelection(committedSelection);
   }, [committedSelection]);
 
   const width = parallelPlotWidth({

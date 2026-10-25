@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { WORKFLOW_MAX_STEPS, type WorkflowStep } from '@mmt/contracts';
 import { workflowsApi } from '../api/workflows';
 import { useMutation } from '../hooks/useMutation';
@@ -45,8 +45,8 @@ export function WorkflowDialog({
   );
   const [removingIndex, setRemovingIndex] = useState<number | null>(null);
   const draft = JSON.stringify({ name, description, steps });
-  const initialDraft = useRef(draft);
-  const unsaved = useUnsavedChanges(draft !== initialDraft.current, mutation.pending, {
+  const [initialDraft] = useState(draft);
+  const unsaved = useUnsavedChanges(draft !== initialDraft, mutation.pending, {
     onNavigationDiscard: onClose,
   });
   const close = () => unsaved.requestAction(onClose);

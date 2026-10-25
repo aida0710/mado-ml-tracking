@@ -40,7 +40,7 @@ export function RunListCharts({
   const topRuns = useQuery(`${projectId}:run-list-charts:${conditionsKey}`, (signal) =>
     trackingApi.searchRuns(projectId, { ...conditions, limit: RUN_LIST_CHART_LIMIT }, signal),
   );
-  const topItems = topRuns.value?.items ?? [];
+  const topItems = useMemo(() => topRuns.value?.items ?? [], [topRuns.value]);
   const knownRuns = useMemo(() => {
     const byId = new Map([...topItems, ...pageRuns].map((run) => [run.id, run]));
     return [...byId.values()];

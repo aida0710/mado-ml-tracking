@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { canAnalyzeAudio, type Spectrogram, type WaveformPeaks } from '../lib/audioAnalysis';
 import { readAudioSampleRate } from '../lib/audioSampleRate';
 import type {
@@ -72,11 +72,16 @@ export function useAudioAnalysis({
   const [state, setState] = useState<AudioAnalysisState>({ status: 'loading' });
   const workerRef = useRef<Worker | null>(null);
   const requestIdRef = useRef(0);
+  // Another file or a retry starts over from loading, during render.
+  const [analyzedFor, setAnalyzedFor] = useState({ url, analyzable, revision });
+  if (analyzedFor.url !== url || analyzedFor.analyzable !== analyzable || analyzedFor.revision !== revision) {
+    setAnalyzedFor({ url, analyzable, revision });
+    setState({ status: 'loading' });
+  }
 
   useEffect(() => {
     if (!analyzable) return;
     const controller = new AbortController();
-    setState({ status: 'loading' });
     void (async () => {
       try {
         const bytes = await fetchArtifactBytes(url, controller.signal).catch((error: unknown) => {
@@ -120,10 +125,11 @@ export function useAudioAnalysis({
   }, [url, analyzable, revision]);
 
   const ready = state.status === 'ready';
+  // viewKey stands for `view`, whose object identity changes on every render.
   const viewKey = view ? JSON.stringify(view) : null;
-  useEffect(() => {
-    const worker = workerRef.current;
-    if (!ready || !worker || !view) return;
+  const requestAnalysis = useEffectEvent((worker: Worker) => {
+    if (!view) return;
+    const requestedView = view;
     // Only the newest request is drawn; answers to superseded views are dropped.
     const requestId = ++requestIdRef.current;
     const listener = (event: MessageEvent<AudioAnalysisResponse>) => {
@@ -132,13 +138,20 @@ export function useAudioAnalysis({
       setState((previous) => {
         if (previous.status !== 'ready') return previous;
         if ('error' in response) return { status: 'error', reason: 'analysis' };
-        return { ...previous, analysis: { peaks: response.peaks, spectrogram: response.spectrogram, view } };
+        return {
+          ...previous,
+          analysis: { peaks: response.peaks, spectrogram: response.spectrogram, view: requestedView },
+        };
       });
     };
     worker.addEventListener('message', listener);
-    worker.postMessage({ type: 'analyze', requestId, ...view });
+    worker.postMessage({ type: 'analyze', requestId, ...requestedView });
     return () => worker.removeEventListener('message', listener);
-    // viewKey stands for `view`, whose object identity changes on every render.
+  });
+  useEffect(() => {
+    const worker = workerRef.current;
+    if (!ready || !worker || viewKey === null) return;
+    return requestAnalysis(worker);
   }, [ready, viewKey]);
 
   const retry = () => setRevision((value) => value + 1);

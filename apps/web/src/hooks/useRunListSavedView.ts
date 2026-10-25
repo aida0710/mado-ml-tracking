@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { ChartPanelLayout, SavedView, SavedViewColumn, SavedViewState } from '@mmt/contracts';
 import { readStoredChartPanelLayout, type ChartPanelLayoutSource } from './useChartPanelLayout';
@@ -43,7 +43,12 @@ export function useRunListSavedView({
   const [noticeReason, setNoticeReason] = useState<SavedViewUnavailableReason | null>(null);
   // The view a save just put into the URL. The router applies the URL after the state, so until
   // then the URL still names the previous view (or none) and must not be followed.
-  const savedViewIdRef = useRef<string | null>(null);
+  const [savedViewId, setSavedViewId] = useState<string | null>(null);
+  // The view last opened by following the URL; its conditions are then written to the URL.
+  const [viewOpenedFromUrl, setViewOpenedFromUrl] = useState<{
+    view: SavedView;
+    state: SavedViewState;
+  } | null>(null);
   const columns = customColumns ?? defaultColumns;
 
   function readCurrentState(): SavedViewState {
@@ -60,36 +65,52 @@ export function useRunListSavedView({
     [activeView, viewChartPanels],
   );
 
-  function applyView(view: SavedView, state: SavedViewState) {
+  /** Shows the view's columns and charts; the caller puts its conditions into the URL. */
+  function showView(view: SavedView, state: SavedViewState) {
     const display = toRunListDisplay(state);
-    setParams(runListParamsForView(view.id, display), { replace: true });
     setCustomColumns(display.columns.length ? display.columns : null);
     setViewChartPanels(display.chartPanels);
     setActiveView(view);
+  }
+  function applyView(view: SavedView, state: SavedViewState) {
+    showView(view, state);
+    setParams(runListParamsForView(view.id, toRunListDisplay(state)), { replace: true });
   }
   function leaveView() {
     setActiveView(null);
     setCustomColumns(null);
     setViewChartPanels(null);
   }
-  // Follows the URL: a newly loaded view is applied once, an unavailable one falls back to the
-  // default display with a notice, and removing `?view=` (back button) leaves the view.
-  useEffect(() => {
-    if (savedViewIdRef.current !== null) {
-      if (viewId !== savedViewIdRef.current) return;
-      savedViewIdRef.current = null;
-    }
+  // Follows the URL during render: a newly loaded view is shown once, an unavailable one falls
+  // back to the default display with a notice, and removing `?view=` (back button) leaves the view.
+  const isWaitingForSavedUrl = savedViewId !== null && viewId !== savedViewId;
+  if (savedViewId !== null && viewId === savedViewId) setSavedViewId(null);
+  if (!isWaitingForSavedUrl) {
     if (opened.status === 'ready' && activeView?.id !== opened.view.id) {
       setNoticeReason(null);
-      applyView(opened.view, opened.state);
-    } else if (opened.status === 'unavailable') {
+      showView(opened.view, opened.state);
+      setViewOpenedFromUrl({ view: opened.view, state: opened.state });
+    } else if (
+      opened.status === 'unavailable' &&
+      (noticeReason !== opened.reason || activeView || customColumns || viewChartPanels)
+    ) {
       setNoticeReason(opened.reason);
       leaveView();
-      setParams(new URLSearchParams(), { replace: true });
     } else if (opened.status === 'none' && activeView) {
       leaveView();
     }
-  });
+  }
+  // The URL is written after the render: the router's setter cannot run during one. The setter
+  // changes with every URL, so it is read through an Effect Event instead of being a dependency.
+  const replaceUrl = useEffectEvent((next: URLSearchParams) => setParams(next, { replace: true }));
+  useEffect(() => {
+    if (viewOpenedFromUrl)
+      replaceUrl(runListParamsForView(viewOpenedFromUrl.view.id, toRunListDisplay(viewOpenedFromUrl.state)));
+  }, [viewOpenedFromUrl]);
+  const isOpenedViewUnavailable = opened.status === 'unavailable';
+  useEffect(() => {
+    if (isOpenedViewUnavailable) replaceUrl(new URLSearchParams());
+  }, [isOpenedViewUnavailable]);
 
   /** Opens a view, or the default display for null. Opening the open view drops its changes. */
   function openView(id: string | null) {
@@ -108,7 +129,7 @@ export function useRunListSavedView({
       setViewChartPanels(toRunListDisplay(view.state).chartPanels);
     }
     setActiveView(view);
-    savedViewIdRef.current = view.id;
+    setSavedViewId(view.id);
     setParams((previous) => {
       const next = new URLSearchParams(previous);
       next.set(RUN_LIST_PARAMS.view, view.id);

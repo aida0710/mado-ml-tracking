@@ -26,23 +26,23 @@ export function ArtifactActionsMenu({
   useLocale();
   const menuId = useId();
   const reasonId = useId();
-  const popover = usePopover();
+  const { container: popoverContainer, isOpen, toggle, close } = usePopover();
   const [isConfirming, setIsConfirming] = useState(false);
   return (
-    <div className="artifact-actions" ref={popover.container}>
+    <div className="artifact-actions" ref={popoverContainer}>
       <button
         type="button"
         className="icon-button"
         aria-label={text.artifactActions}
         title={text.artifactActions}
         aria-haspopup="menu"
-        aria-expanded={popover.isOpen}
+        aria-expanded={isOpen}
         aria-controls={menuId}
-        onClick={popover.toggle}
+        onClick={toggle}
       >
         <MoreHorizontal size={17} />
       </button>
-      {popover.isOpen && (
+      {isOpen && (
         <div className="artifact-actions-popover" id={menuId} role="menu">
           <button
             type="button"
@@ -51,7 +51,7 @@ export function ArtifactActionsMenu({
             disabled={isReferenced === true}
             aria-describedby={isReferenced ? reasonId : undefined}
             onClick={() => {
-              popover.close();
+              close();
               setIsConfirming(true);
             }}
           >

@@ -22,28 +22,28 @@ export function DatasetActionsMenu({
 }) {
   useLocale();
   const menuId = useId();
-  const popover = usePopover();
+  const { container: popoverContainer, isOpen, toggle, close } = usePopover();
   const [dialog, setDialog] = useState<'description' | 'archive' | 'unarchive' | null>(null);
   const isArchived = dataset.archivedAt !== null;
   function choose(next: typeof dialog) {
-    popover.close();
+    close();
     setDialog(next);
   }
   return (
-    <div className="artifact-actions" ref={popover.container}>
+    <div className="artifact-actions" ref={popoverContainer}>
       <button
         type="button"
         className="icon-button"
         aria-label={text.datasetActions}
         title={text.datasetActions}
         aria-haspopup="menu"
-        aria-expanded={popover.isOpen}
+        aria-expanded={isOpen}
         aria-controls={menuId}
-        onClick={popover.toggle}
+        onClick={toggle}
       >
         <MoreHorizontal size={17} />
       </button>
-      {popover.isOpen && (
+      {isOpen && (
         <div className="artifact-actions-popover" id={menuId} role="menu">
           <button type="button" role="menuitem" onClick={() => choose('description')}>
             {text.datasetEditDescription}

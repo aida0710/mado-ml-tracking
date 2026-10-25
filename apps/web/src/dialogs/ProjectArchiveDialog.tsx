@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Project } from '@mmt/contracts';
 import { accessApi } from '../api/access';
 import { administrationApi } from '../api/administration';
@@ -27,7 +28,8 @@ export function ProjectArchiveDialog({
   const tokens = useQuery(`${project.id}:archive-tokens`, (signal) =>
     accessApi.projectTokens(project.id, signal),
   );
-  const usableTokenCount = tokens.value && countUsableTokens(tokens.value, Date.now());
+  const [openedAt] = useState(() => Date.now());
+  const usableTokenCount = tokens.value && countUsableTokens(tokens.value, openedAt);
   const message = joinSentences([
     textTemplates.projectArchiveConfirm(project.name),
     textTemplates.projectArchiveStops(usableTokenCount),

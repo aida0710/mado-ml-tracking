@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ARTIFACT_REFERENCES_BATCH_LIMIT, type ArtifactReferences } from '@mmt/contracts';
 import { artifactLifecycleApi } from '../api/artifactLifecycle';
 import { useQuery } from './useQuery';
@@ -37,9 +37,11 @@ export function useArtifactReferences(projectId: string, artifactIds: readonly s
     return { askedIds: uncheckedIds, items: pages.flat() };
   });
 
+  // Each answer is merged once, during the render that first sees it.
   const fetched = query.value;
-  useEffect(() => {
-    if (!fetched) return;
+  const [mergedAnswer, setMergedAnswer] = useState<typeof fetched>(undefined);
+  if (fetched && fetched !== mergedAnswer) {
+    setMergedAnswer(fetched);
     setState((previous) => {
       const kept = previous.projectId === projectId ? previous : noCheckedReferences(projectId);
       return {
@@ -51,7 +53,7 @@ export function useArtifactReferences(projectId: string, artifactIds: readonly s
         ]),
       };
     });
-  }, [fetched, projectId]);
+  }
 
   return {
     byArtifactId: checked.byArtifactId,

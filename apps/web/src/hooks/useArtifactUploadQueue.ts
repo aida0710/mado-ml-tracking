@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Artifact, ArtifactUpload, ArtifactUploadDetail, ArtifactUploadListItem } from '@mmt/contracts';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Artifact, ArtifactUpload, ArtifactUploadDetail } from '@mmt/contracts';
 import { artifactUploadsApi } from '../api/artifactUploads';
 import { RequestError } from '../api/http';
 import { trackingApi } from '../api/tracking';
@@ -31,6 +31,7 @@ import { findResumeRecord, removeResumeRecord, saveResumeRecord } from '../lib/u
 import { useQuery } from './useQuery';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
+import { useLatestRef } from './useLatestRef';
 
 /**
  * Requests in flight across the whole queue. Browsers allow six connections per origin over
@@ -124,15 +125,23 @@ export function useArtifactUploadQueue({
   const nextJobNumberRef = useRef(1);
   const renderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Sessions this queue has taken over; the server list is not reloaded, so they are hidden here.
-  const queuedSessionIdsRef = useRef(new Set<string>());
-  const onCompletedRef = useRef(onCompleted);
-  onCompletedRef.current = onCompleted;
+  const [queuedSessionIds, setQueuedSessionIds] = useState<ReadonlySet<string>>(() => new Set());
+  const rememberQueuedSession = useCallback(
+    (uploadId: string) =>
+      setQueuedSessionIds((previous) => (previous.has(uploadId) ? previous : new Set(previous).add(uploadId))),
+    [],
+  );
+  const onCompletedRef = useLatestRef(onCompleted);
   const [items, setItems] = useState<UploadItem[]>([]);
   const openSessions = useQuery(`${projectId}:artifact-uploads:open`, (signal) =>
     artifactUploadsApi.list(projectId, 'open', signal),
   );
-  const openSessionsRef = useRef<ArtifactUploadListItem[]>([]);
-  openSessionsRef.current = (openSessions.value ?? []).filter((session) => session.runId === runId);
+  const runOpenSessions = useMemo(
+    () => (openSessions.value ?? []).filter((session) => session.runId === runId),
+    [openSessions.value, runId],
+  );
+  // Read when a job starts, which may be long after the dialog last rendered.
+  const openSessionsRef = useLatestRef(runOpenSessions);
 
   const render = useCallback(() => {
     if (renderTimerRef.current) clearTimeout(renderTimerRef.current);
@@ -178,7 +187,7 @@ export function useArtifactUploadQueue({
       render();
       onCompletedRef.current(artifact);
     },
-    [render],
+    [onCompletedRef, render],
   );
 
   const finalize = useCallback(
@@ -337,7 +346,7 @@ export function useArtifactUploadQueue({
         );
         if (signal.aborted) return;
         job.session = session;
-        queuedSessionIdsRef.current.add(session.id);
+        rememberQueuedSession(session.id);
         saveResumeRecord({ uploadId: session.id, ...identity });
         if (session.status !== 'open') {
           void finalize(job, session);
@@ -359,27 +368,31 @@ export function useArtifactUploadQueue({
         if (!signal.aborted) failJob(job, failure);
       }
     },
-    [failJob, finalize, projectId, render, runId],
+    [failJob, finalize, openSessionsRef, projectId, rememberQueuedSession, render, runId],
   );
 
   const pump = useCallback(() => {
-    while (activeRequestsRef.current < MAX_CONCURRENT_REQUESTS) {
-      const task = takeNextTask(jobsRef.current, { prepareSession, sendPart, sendSingle });
-      if (!task) break;
-      activeRequestsRef.current += 1;
-      void task().finally(() => {
-        activeRequestsRef.current -= 1;
-        pump();
-      });
+    // Each finished request starts the next tasks.
+    function startTasks() {
+      while (activeRequestsRef.current < MAX_CONCURRENT_REQUESTS) {
+        const task = takeNextTask(jobsRef.current, { prepareSession, sendPart, sendSingle });
+        if (!task) break;
+        activeRequestsRef.current += 1;
+        void task().finally(() => {
+          activeRequestsRef.current -= 1;
+          startTasks();
+        });
+      }
+      render();
     }
-    render();
+    startTasks();
   }, [prepareSession, render, sendPart, sendSingle]);
 
   const enqueue = useCallback(
     (entries: UploadEntry[]) => {
       for (const { source, path, verifiedUploadId } of entries) {
         // Hidden from the unfinished list at once, not only after the session is read again.
-        if (verifiedUploadId) queuedSessionIdsRef.current.add(verifiedUploadId);
+        if (verifiedUploadId) rememberQueuedSession(verifiedUploadId);
         jobsRef.current.push({
           id: String(nextJobNumberRef.current++),
           source,
@@ -401,7 +414,7 @@ export function useArtifactUploadQueue({
       }
       pump();
     },
-    [pump],
+    [pump, rememberQueuedSession],
   );
 
   const findJob = (id: string) => jobsRef.current.find((job) => job.id === id);
@@ -507,7 +520,7 @@ export function useArtifactUploadQueue({
     resume,
     cancel,
     retryFailed,
-    resumableSessions: openSessionsRef.current.filter((session) => !queuedSessionIdsRef.current.has(session.id)),
+    resumableSessions: runOpenSessions.filter((session) => !queuedSessionIds.has(session.id)),
     resumableSessionsError: openSessions.error,
     discardSession,
   };

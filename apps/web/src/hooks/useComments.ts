@@ -31,10 +31,9 @@ export function useComments(projectId: string, target: CommentTarget): CommentsS
     key,
     comments: [],
   });
-  const localComments = localChanges.key === key ? localChanges.comments : [];
   const threads = useMemo(
-    () => groupCommentThreads(mergeComments(pages.items, localComments)),
-    [pages.items, localComments],
+    () => groupCommentThreads(mergeComments(pages.items, localChanges.key === key ? localChanges.comments : [])),
+    [pages.items, localChanges, key],
   );
 
   function keepLocally(comment: Comment) {

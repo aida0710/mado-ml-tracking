@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { artifactPreviewsApi } from '../api/artifactPreviews';
 import { trackingApi } from '../api/tracking';
@@ -29,9 +29,7 @@ export function useServerAudioPreview(
   const summary = previews.value ? summarizeServerAudioPreviews(previews.value) : null;
   // A failed request also stops polling: the viewer then plays the file without a preview.
   const isSettled = (summary !== null && summary.status !== 'pending') || previews.error !== null;
-  useEffect(() => {
-    if (isSettled) setSettledKey(listKey);
-  }, [isSettled, listKey]);
+  if (isSettled && settledKey !== listKey) setSettledKey(listKey);
 
   const peaksArtifactId = summary?.status === 'ready' ? summary.peaksArtifactId : null;
   const waveform = useQuery(peaksArtifactId, (signal) =>

@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState, type PointerEvent } from 'react';
+import { useEffect, useEffectEvent, useId, useMemo, useState, type PointerEvent } from 'react';
 import {
   useChartWidth,
   usePlotArea,
@@ -82,16 +82,17 @@ export function ChartPlotLayer({
   const keyboardPixelX = keyboardX === null || !scales ? undefined : scales.x(keyboardX);
   const plotTop = plotArea?.y;
   const chartWidth = useChartWidth();
+  // onHover is the parent's state setter; a new one does not move the cursor.
+  const showHover = useEffectEvent((hover: ChartHoverPosition) => onHover(hover));
   useEffect(() => {
     if (keyboardX === null || keyboardPixelX === undefined || !Number.isFinite(keyboardPixelX)) return;
     if (plotTop === undefined || chartWidth === undefined) return;
-    onHover({
+    showHover({
       x: keyboardX,
       pixelX: keyboardPixelX,
       pixelY: plotTop + KEYBOARD_TOOLTIP_TOP_PIXELS,
       chartWidth,
     });
-    // onHover is the parent's state setter.
   }, [keyboardX, keyboardPixelX, plotTop, chartWidth]);
   if (!scales || !invertX || !plotArea) return null;
 

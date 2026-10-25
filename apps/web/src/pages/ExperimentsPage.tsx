@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChartLine, Plus, RefreshCw, Terminal } from 'lucide-react';
 import type { RunSearchRequest, RunStatus } from '@mmt/contracts';
@@ -77,7 +77,13 @@ export function ExperimentsPage() {
   const mutation = useMutation();
   const csvExport = useMutation();
   const [isExportTruncated, setIsExportTruncated] = useState(false);
-  useEffect(() => setSelectedIds([]), [experimentId, searchText, status, kindsParam]);
+  // Other search conditions show other Runs, so the selection starts empty again.
+  const selectionConditions = JSON.stringify([experimentId, searchText, status, kindsParam]);
+  const [selectedForConditions, setSelectedForConditions] = useState(selectionConditions);
+  if (selectedForConditions !== selectionConditions) {
+    setSelectedForConditions(selectionConditions);
+    setSelectedIds([]);
+  }
   const experiments = useQuery(`${project.id}:experiments`, (signal) =>
     trackingApi.experiments(project.id, signal),
   );

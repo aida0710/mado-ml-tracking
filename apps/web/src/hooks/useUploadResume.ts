@@ -1,6 +1,6 @@
 // Resume decisions of the upload dialog: finds the unfinished upload of a newly chosen file so its
 // path is filled in, and continues or restarts the unfinished upload a person picked a file for.
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { ArtifactUploadListItem } from '@mmt/contracts';
 import { artifactUploadsApi } from '../api/artifactUploads';
 import type { UploadSource } from '../lib/droppedFiles';
@@ -27,6 +27,9 @@ export type SelectedFileResume =
   | { status: 'checking' }
   | { status: 'matched'; match: ResumeMatch };
 
+const IDLE_RESUME: SelectedFileResume = { status: 'idle' };
+const CHECKING_RESUME: SelectedFileResume = { status: 'checking' };
+
 export function useUploadResume({
   projectId,
   runId,
@@ -47,54 +50,64 @@ export function useUploadResume({
   enqueue: (entries: UploadEntry[]) => void;
   discardSession: (uploadId: string) => Promise<void>;
 }) {
-  const [selectedFileResume, setSelectedFileResume] = useState<SelectedFileResume>({ status: 'idle' });
-  const sessionsRef = useRef(sessions);
-  sessionsRef.current = sessions;
-  const onMatchedRef = useRef(onMatched);
-  onMatchedRef.current = onMatched;
   // A list reload compares the file again; the path is filled only for a new match, so a path the
   // person edited afterwards stays.
   const filledMatchRef = useRef<{ file: File; uploadId: string } | null>(null);
   // The list loads after the dialog opens, so a file chosen early is compared again once it arrives.
-  const sessionIdsKey = sessions.map((session) => session.id).join(',');
+  const comparedSessionsKey = `${projectId}:${runId}:${sessions.map((session) => session.id).join(',')}`;
+  const [comparison, setComparison] = useState<{
+    file: File;
+    comparedSessionsKey: string;
+    resume: SelectedFileResume;
+  } | null>(null);
+  // Only a session of the same size can hold the file; without one there is nothing to compare.
+  const hasSessionOfFileSize =
+    selectedFile !== null && sessions.some((session) => session.expectedSize === selectedFile.size);
+  const selectedFileResume: SelectedFileResume = !hasSessionOfFileSize
+    ? IDLE_RESUME
+    : comparison?.file === selectedFile && comparison.comparedSessionsKey === comparedSessionsKey
+      ? comparison.resume
+      : CHECKING_RESUME;
 
-  useEffect(() => {
-    if (!selectedFile) {
-      setSelectedFileResume({ status: 'idle' });
-      return;
-    }
+  const findSelectedFileMatch = useEffectEvent((file: File, signal: AbortSignal) => {
     const recordedUploadIds = findUploadIdsRecordedForFile({
       projectId,
       runId,
-      name: selectedFile.name,
-      size: selectedFile.size,
-      lastModified: selectedFile.lastModified,
+      name: file.name,
+      size: file.size,
+      lastModified: file.lastModified,
     });
     const candidates = orderResumeCandidates({
-      sessions: sessionsRef.current,
-      fileSize: selectedFile.size,
+      sessions,
+      fileSize: file.size,
       recordedUploadIds,
       now: Date.now(),
     });
-    if (candidates.length === 0) {
-      setSelectedFileResume({ status: 'idle' });
-      return;
-    }
+    return findMatchingSession({ projectId, file, candidates, recordedUploadIds, signal });
+  });
+  const fillMatchedPath = useEffectEvent((file: File, match: ResumeMatch) => {
+    const filled = filledMatchRef.current;
+    if (filled?.file === file && filled.uploadId === match.uploadId) return;
+    filledMatchRef.current = { file, uploadId: match.uploadId };
+    onMatched(match);
+  });
+  useEffect(() => {
+    if (!selectedFile || !hasSessionOfFileSize) return;
     const controller = new AbortController();
-    setSelectedFileResume({ status: 'checking' });
-    void findMatchingSession({ projectId, file: selectedFile, candidates, recordedUploadIds, signal: controller.signal })
+    void findSelectedFileMatch(selectedFile, controller.signal)
       // Without an answer from the server the file simply goes up as a new upload.
       .catch(() => null)
       .then((match) => {
         if (controller.signal.aborted) return;
-        setSelectedFileResume(match ? { status: 'matched', match } : { status: 'idle' });
-        const filled = filledMatchRef.current;
-        if (!match || (filled?.file === selectedFile && filled.uploadId === match.uploadId)) return;
-        filledMatchRef.current = { file: selectedFile, uploadId: match.uploadId };
-        onMatchedRef.current(match);
+        setComparison({
+          file: selectedFile,
+          comparedSessionsKey,
+          resume: match ? { status: 'matched', match } : IDLE_RESUME,
+        });
+        if (match) fillMatchedPath(selectedFile, match);
       });
     return () => controller.abort();
-  }, [projectId, runId, selectedFile, sessionIdsKey]);
+  }, [selectedFile, hasSessionOfFileSize, comparedSessionsKey]);
 
   /** Compares the file with the session and continues it, or tells why it cannot continue. */
   const continueSession = useCallback(
@@ -126,6 +139,7 @@ export function useUploadResume({
   return { selectedFileResume, continueSession, startOver };
 }
 
+// The first candidate session that holds this file's bytes, or null (at once with no candidates).
 async function findMatchingSession({
   projectId,
   file,
