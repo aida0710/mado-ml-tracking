@@ -37,14 +37,15 @@ export async function applyMigrationsBefore(
   }
 }
 
-const AUDIT_LOG_MIGRATION = '071_audit_failure_and_ip_address.sql';
+// 今のアプリケーションが書く行の形を決める migration。071 は監査ログの `failure` と `ip_address`、
+// 072 は token の前置き mado_mt_ と、一覧に残す先頭の長さ。
+const ROW_SHAPE_MIGRATIONS = ['071_audit_failure_and_ip_address.sql', '072_token_prefix.sql'];
 
 /**
- * Applies 071 (the audit log's `failure` outcome and `ip_address` column) ahead of the earlier
- * pending migrations. Tests of 068–070 create their rows through the current application, which
- * writes audit events in 071's shape; none of 068–070 reads what 071 changes. migrate() then skips
- * it as already applied.
+ * 071 と 072 を、それより前の未適用の migration より先に当てる。068〜070 のテストは行を今の
+ * アプリケーションで作り、アプリケーションは監査ログを 071 の形で、token を 072 の形で書くため。
+ * 068〜070 は 071・072 が変えるものを読まない。migrate() は当てた分を飛ばす。
  */
-export async function applyAuditLogMigrationAhead(database: pg.Pool): Promise<void> {
-  await applyMigrationFile(database, AUDIT_LOG_MIGRATION);
+export async function applyRowShapeMigrationsAhead(database: pg.Pool): Promise<void> {
+  for (const name of ROW_SHAPE_MIGRATIONS) await applyMigrationFile(database, name);
 }

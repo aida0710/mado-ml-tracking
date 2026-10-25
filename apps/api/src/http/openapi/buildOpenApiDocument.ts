@@ -22,7 +22,7 @@ const DESCRIPTION = [
   'MLflow 互換API（/api/mlflow/projects/{p}/...）は MLflow 公式の REST API・proto に従うので、この文書には含めない。',
   'JSONはcamelCase、IDはUUID、日時はISO 8601（UTC）。一覧は {items: T[]}。エラーは ApiError {error, code}。',
   `JSON本文の上限は既定で${MAX_JSON_BODY_BYTES}バイト。例外は requestBody の x-mmt-max-body-bytes に書く。`,
-  '各 operation の x-mmt-access は認可（Project role と API token の scope）、x-mmt-job-token は Job 限定 token（mmtj_）で呼べるか（write は token の Run に対する書き込みだけ）を示す。',
+  '各 operation の x-mmt-access は認可（Project role と API token の scope）、x-mmt-job-token は Job 限定 token（mado_mtj_）で呼べるか（write は token の Run に対する書き込みだけ）を示す。',
 ].join('\n\n');
 
 const TAGS: { name: string; description: string }[] = [
@@ -75,7 +75,7 @@ const SECURITY_SCHEMES = {
     type: 'http',
     scheme: 'bearer',
     description: [
-      'API token（mmt_）またはJob限定token（mmtj_）。operationのsecurityに並ぶ値は必要なscope。Project roleとtokenのProject制限も確認する。',
+      'API token（mado_mt_）またはJob限定token（mado_mtj_）。operationのsecurityに並ぶ値は必要なscope。Project roleとtokenのProject制限も確認する。',
       'Job限定tokenはtokenのProjectの読み出し（GET・runs/search）と、x-mmt-job-token=writeのrouteのうち自分のRunへの書き込みだけを許し、それ以外は403 job_token_forbidden。',
     ].join('\n'),
   },

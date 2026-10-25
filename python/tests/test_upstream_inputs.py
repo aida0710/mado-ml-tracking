@@ -36,7 +36,7 @@ from mado_tracking.worker.service import Worker
 
 PROJECT_ID = str(uuid4())
 UPSTREAM_RUN_ID = str(uuid4())
-JOB_TOKEN = "mmtj_upstream-reader"
+JOB_TOKEN = "mado_mtj_upstream-reader"
 
 
 def chained_payload(job_payload: dict) -> dict:

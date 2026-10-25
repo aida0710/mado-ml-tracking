@@ -12,7 +12,7 @@ export interface JobTokenBinding {
 export interface Principal {
   user: User;
   method: 'session' | 'token';
-  // `job` is set only for Job tokens (mmtj_); its `id` then refers to job_tokens, not api_tokens.
+  // `job` は Job token（mado_mtj_）のときだけ付く。そのときの `id` は api_tokens でなく job_tokens の行を指す。
   token: {
     id: string;
     projectId: string | null;

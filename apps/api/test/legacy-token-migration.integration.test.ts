@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { migrate } from '../src/db/migrate.js';
 import { createHarness, testDatabaseUrl } from './harness.js';
 import { projectFixture } from './fixtures.js';
-import { applyAuditLogMigrationAhead, applyMigrationsBefore } from './migrationFixtures.js';
+import { applyRowShapeMigrationsAhead, applyMigrationsBefore } from './migrationFixtures.js';
 
 const FIRST_PENDING = '068_revoke_legacy_tokens.sql';
 
@@ -12,7 +12,7 @@ describe.skipIf(!testDatabaseUrl)('旧形式のtokenの失効（独立PostgreSQL
     const harness = await createHarness({ applyMigrations: false });
     try {
       await applyMigrationsBefore(harness.database, FIRST_PENDING);
-      await applyAuditLogMigrationAhead(harness.database);
+      await applyRowShapeMigrationsAhead(harness.database);
       const fixture = await projectFixture(harness);
       async function insertToken(token: {
         name: string;
@@ -28,9 +28,9 @@ describe.skipIf(!testDatabaseUrl)('旧形式のtokenの失効（独立PostgreSQL
         );
         return inserted.rows[0]!.id;
       }
-      const personOwnedService = await insertToken({ name: 'Old worker', kind: 'service', prefix: 'mmt_oldworkr' });
+      const personOwnedService = await insertToken({ name: 'Old worker', kind: 'service', prefix: 'mado_mt_oldworkr' });
       const withoutPrefix = await insertToken({ name: 'Before prefixes', kind: 'personal', prefix: null });
-      const current = await insertToken({ name: 'Current', kind: 'personal', prefix: 'mmt_current1' });
+      const current = await insertToken({ name: 'Current', kind: 'personal', prefix: 'mado_mt_current1' });
       const revokedBefore = '2026-10-01T00:00:00.000Z';
       const alreadyRevoked = await insertToken({
         name: 'Revoked before', kind: 'service', prefix: null, revokedAt: revokedBefore,

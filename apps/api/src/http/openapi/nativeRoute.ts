@@ -23,7 +23,7 @@ export type RouteAccess =
   | { kind: 'worker' }
   // The token of a launcher registered on the Web (`launcher:execute`); sessions get 403.
   | { kind: 'launcher' }
-  // The Job token (mmtj_) of the Job in the path: a site's runner, or driver code in the Job.
+  // path の Job の Job token（mado_mtj_）。site の runner か、Job の中のドライバーのコード。
   | { kind: 'jobToken' }
   // The requester's own API token with `scope`; browser sessions and Job tokens get 403.
   | { kind: 'apiToken'; scope: TokenScope };

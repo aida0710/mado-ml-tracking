@@ -325,11 +325,13 @@ APIで行う場合（Project adminのbrowser session、または`tokens:manage`�
 - `POST /api/projects/:p/service-accounts` `{name, description, role:'admin'}`
 - `POST /api/projects/:p/service-accounts/:id/tokens` `{name, scopes:['read','worker:execute','artifacts:write'], expiresAt?}`
 
-確認: `mado-tracking-worker doctor` が `GET /api/auth/token` で scope を表示する。「プロジェクト設定」の「Projectのtoken一覧」に、所有者 Service Account・先頭12文字・最終使用（5分ごとに更新）が出る。
+確認: `mado-tracking-worker doctor` が `GET /api/auth/token` で scope を表示する。「プロジェクト設定」の「Projectのtoken一覧」に、所有者 Service Account・先頭16文字・最終使用（5分ごとに更新）が出る。
 
 止めるとき: Service Accountを「無効化」すると、そのtokenは次の要求から401になる。1本だけ止めるときは「Projectのtoken一覧」で失効する。期限が近づいたら新しいtokenを発行し、`mado-tracking-worker install --token-file` で差し替える。
 
 個人が所有するservice tokenと、先頭12文字を保存する前に発行したtokenは、migration 068で失効した（理由は監査ログの`token.revoke`の`details.reason`）。使っていたものはService Accountか個人のtokenを発行し直す。
+
+前置きが`mado_mt_`（Job tokenは`mado_mtj_`）になる前に発行したtokenは、migration 072ですべて失効した（監査ログの`token.revoke`の`details.reason`は`token_prefix_changed`）。worker・launcher・SDK・スクリプトのtokenは発行し直して差し替える。
 
 ### 2. venvへ入れてinstallする（user unit）
 

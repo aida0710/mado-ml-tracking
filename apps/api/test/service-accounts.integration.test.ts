@@ -99,7 +99,7 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
       ownerType: 'service_account',
       ownerId: worker.id,
       ownerName: 'gpu-worker',
-      tokenPrefix: issued.token.slice(0, 12),
+      tokenPrefix: issued.token.slice(0, 16),
     });
     const run = await fixture.newRun('Inference');
     const job = await entity<Job>(
@@ -389,12 +389,12 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
       ownerType: 'user',
       ownerId: fixture.editor.userId,
       ownerName: 'editor@localhost',
-      tokenPrefix: personal.token.slice(0, 12),
+      tokenPrefix: personal.token.slice(0, 16),
     });
     expect(byName.get('evaluator key')).toMatchObject({
       ownerType: 'service_account',
       ownerId: account.id,
-      tokenPrefix: accountToken.token.slice(0, 12),
+      tokenPrefix: accountToken.token.slice(0, 16),
     });
     expect(byName.get('Test Worker')).toMatchObject({
       kind: 'personal',

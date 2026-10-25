@@ -173,7 +173,7 @@ async function readIssuedToken(page) {
   const field = dialog.getByLabel('ランチャーのtoken', { exact: true });
   await field.waitFor();
   const token = await field.inputValue();
-  assert.match(token, /^mmt_/);
+  assert.match(token, /^mado_mt_/);
   const example = await dialog.getByTestId('launcher-config-example').textContent();
   assert.ok(example.includes(`api_url = "${WEB_URL}"`), example);
   assert.ok(!example.includes(token), 'launcher.toml names the token file instead of the token');

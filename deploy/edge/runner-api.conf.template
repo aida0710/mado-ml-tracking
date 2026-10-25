@@ -1,7 +1,7 @@
-# Edge nginx server blocks for the public runner API hostname. Runners on compute nodes outside
-# the LAN reach tracking through it with their Job token (mmtj_): only the routes a Job token can
-# use pass, plus signed hook webhooks. The browser UI, SSO, admin and every other API route stay
-# on the intranet hostname. See deploy/edge/README.md.
+# runner 用 API の公開 hostname の edge nginx の server block。LAN の外の計算ノードの runner は、
+# Job token（mado_mtj_）でこれを通って tracking に届く。通すのは Job token で使える route と、署名付きの
+# フックの webhook だけ。画面・SSO・管理 API とほかの API の route は intranet の hostname に残す。
+# deploy/edge/README.md を参照。
 #
 # Rendered by the nginx image's template step (/etc/nginx/templates/*.template, envsubst):
 #   MMT_RUNNER_API_HOSTNAME   the public hostname, also the name of its Let's Encrypt certificate
@@ -11,10 +11,10 @@
 # own $variables stay as they are. The maps and zones below belong to the http block, which
 # includes conf.d/*.conf.
 
-# A Job token: "Authorization: Bearer mmtj_<base64url>". API tokens (mmt_) and sessions never pass.
+# Job token は "Authorization: Bearer mado_mtj_<base64url>"。API token（mado_mt_）と session は通さない。
 map $http_authorization $mmt_runner_job_token {
-    default                             0;
-    "~^Bearer mmtj_[A-Za-z0-9_-]+$"     1;
+    default                                 0;
+    "~^Bearer mado_mtj_[A-Za-z0-9_-]+$"     1;
 }
 
 # Raw paths that nginx and the API could split differently: encoded '.', '/' or '\', a backslash

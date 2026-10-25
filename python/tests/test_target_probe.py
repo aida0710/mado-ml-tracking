@@ -31,7 +31,7 @@ from mado_tracking.worker.target_probe import (
 )
 from mado_tracking.worker.transport import CommandTransport, LocalTransport
 
-API_TOKEN = "mmt_test-worker-secret-value"
+API_TOKEN = "mado_mt_test-worker-secret-value"
 SSH_KEY_PATH = "/home/worker/.ssh/id_gpu_host"
 EMPTY_HOST = {
     "machine": None,
@@ -315,7 +315,7 @@ def test_candidates_naming_key_files_or_tokens_are_dropped_and_others_kept():
     discovery = discovery_output(
         "machine", f"x86_64 {API_TOKEN}",
         "home_directory", "/home/mmt",
-        "python", "/home/mmt/mmt_0123456789abcdef/bin/python", "3.11.9",
+        "python", "/home/mmt/mado_mt_0123456789abcdef/bin/python", "3.11.9",
         "python", "/home/mmt/.venvs/train/bin/python", "3.11.9",
         "directory", "home_child", "/home/worker/.ssh/id_gpu_host.d", "1", "",
         "directory", "home_child", f"/home/mmt/{API_TOKEN}", "1", "",

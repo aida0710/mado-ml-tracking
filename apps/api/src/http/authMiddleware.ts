@@ -25,8 +25,9 @@ export function validateOrigin(origin: string | undefined, policy: OriginPolicy)
     throw new DomainError(403, 'リクエストのOriginが許可されていません', 'invalid_origin');
 }
 
-// API tokens (mmt_) and Job tokens (mmtj_) are the prefix and base64url of a random secret.
-const API_TOKEN_FORMAT = /^mmtj?_[A-Za-z0-9_-]+$/;
+// API token（mado_mt_）と Job token（mado_mtj_）は、前置きと乱数の base64url。この形でない値は
+// DB を引かずに断る。
+const API_TOKEN_FORMAT = /^mado_mtj?_[A-Za-z0-9_-]+$/;
 
 /**
  * Reads the API token from the Authorization header. Bearer works everywhere. Basic is accepted
@@ -38,8 +39,12 @@ export function apiTokenFromAuthorization(
   authorization: string,
   request: { path: string },
 ): string {
-  const bearer = /^Bearer ([A-Za-z0-9_-]+)$/.exec(authorization);
-  if (bearer) return bearer[1]!;
+  const bearer = /^Bearer (\S+)$/.exec(authorization);
+  if (bearer) {
+    if (!API_TOKEN_FORMAT.test(bearer[1]!))
+      throw new DomainError(401, 'Authorization headerが不正です', 'invalid_token');
+    return bearer[1]!;
+  }
   const basic = /^Basic ([A-Za-z0-9+/]+=*)$/i.exec(authorization);
   if (!basic) throw new DomainError(401, 'Authorization headerが不正です', 'invalid_token');
   if (!isMlflowRequest(request.path))

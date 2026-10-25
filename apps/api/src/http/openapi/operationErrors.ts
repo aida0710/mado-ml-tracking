@@ -60,8 +60,8 @@ export function errorsOf(route: NativeRoute): RouteError[] {
 }
 
 /**
- * How a Job token (mmtj_) reaches the route: 'read' and 'write' follow the guard's allow lists
- * ('write' still requires the token's own Run), null means 403 job_token_forbidden.
+ * Job token（mado_mtj_）でその route に届くか。'read' と 'write' は jobTokenGuard の許可表に従い
+ * （'write' でも token 自身の Run に限る）、null は 403 job_token_forbidden。
  */
 export function jobTokenAccess(route: NativeRoute): 'read' | 'write' | null {
   if (route.access.kind === 'public' || route.access.kind === 'session') return null;

@@ -3,7 +3,7 @@
   "info": {
     "title": "mado ML Tracking native API",
     "version": "0.4.0",
-    "description": "mado ML Tracking の独自API（native API）。\n\n振る舞いの正本は docs/api-contract.md（文章）で、この文書はその形式（route・認可・入出力・エラーコード）を機械可読にしたもの。両者の食い違いは apps/api/test/openapi-coverage.test.ts が検出する。\n\nMLflow 互換API（/api/mlflow/projects/{p}/...）は MLflow 公式の REST API・proto に従うので、この文書には含めない。\n\nJSONはcamelCase、IDはUUID、日時はISO 8601（UTC）。一覧は {items: T[]}。エラーは ApiError {error, code}。\n\nJSON本文の上限は既定で4194304バイト。例外は requestBody の x-mmt-max-body-bytes に書く。\n\n各 operation の x-mmt-access は認可（Project role と API token の scope）、x-mmt-job-token は Job 限定 token（mmtj_）で呼べるか（write は token の Run に対する書き込みだけ）を示す。"
+    "description": "mado ML Tracking の独自API（native API）。\n\n振る舞いの正本は docs/api-contract.md（文章）で、この文書はその形式（route・認可・入出力・エラーコード）を機械可読にしたもの。両者の食い違いは apps/api/test/openapi-coverage.test.ts が検出する。\n\nMLflow 互換API（/api/mlflow/projects/{p}/...）は MLflow 公式の REST API・proto に従うので、この文書には含めない。\n\nJSONはcamelCase、IDはUUID、日時はISO 8601（UTC）。一覧は {items: T[]}。エラーは ApiError {error, code}。\n\nJSON本文の上限は既定で4194304バイト。例外は requestBody の x-mmt-max-body-bytes に書く。\n\n各 operation の x-mmt-access は認可（Project role と API token の scope）、x-mmt-job-token は Job 限定 token（mado_mtj_）で呼べるか（write は token の Run に対する書き込みだけ）を示す。"
   },
   "servers": [
     {
@@ -68838,7 +68838,7 @@
       "bearerToken": {
         "type": "http",
         "scheme": "bearer",
-        "description": "API token（mmt_）またはJob限定token（mmtj_）。operationのsecurityに並ぶ値は必要なscope。Project roleとtokenのProject制限も確認する。\nJob限定tokenはtokenのProjectの読み出し（GET・runs/search）と、x-mmt-job-token=writeのrouteのうち自分のRunへの書き込みだけを許し、それ以外は403 job_token_forbidden。"
+        "description": "API token（mado_mt_）またはJob限定token（mado_mtj_）。operationのsecurityに並ぶ値は必要なscope。Project roleとtokenのProject制限も確認する。\nJob限定tokenはtokenのProjectの読み出し（GET・runs/search）と、x-mmt-job-token=writeのrouteのうち自分のRunへの書き込みだけを許し、それ以外は403 job_token_forbidden。"
       },
       "mlflowBasic": {
         "type": "http",

@@ -12,10 +12,9 @@ import {
 import type { ApiContext, ApiEnvironment } from './request.js';
 
 /**
- * Limits what a Job token (mmtj_) can reach. The code a Job runs is not trusted with its
- * creator's full role: it may read its Project and write only its own Run, that Run's
- * artifacts, and registrations whose source is that Run. Everything else is refused, so a
- * route added later stays closed to Job tokens until it is listed here.
+ * Job token（mado_mtj_）で届く範囲を絞る。Job が動かすコードには作成者の role をそのまま任せず、
+ * Project の読み取りと、自分の Run・その Run の Artifact・その Run を出どころにする登録への書き込み
+ * だけを許す。ほかはすべて断るので、後から足した route はここに載せるまで Job token では使えない。
  */
 
 export interface JobTokenRequest {

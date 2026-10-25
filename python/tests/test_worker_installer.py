@@ -33,7 +33,7 @@ from mado_tracking.worker.systemd_unit import (
     render_worker_unit,
 )
 
-TOKEN = "mmt_installer_test_secret_value"
+TOKEN = "mado_mt_installer_test_secret_value"
 WORKER_ID = "gpu-host-1"
 UNIT_NAME = "mado-tracking-worker@gpu-host-1.service"
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]

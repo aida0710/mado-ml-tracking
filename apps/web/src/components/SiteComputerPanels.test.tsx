@@ -213,7 +213,7 @@ describe('launcherの一覧', () => {
         onRevoke={() => undefined}
       />,
     );
-    expect(html).toContain('mmt_abcdefgh…');
+    expect(html).toContain('mado_mt_abcdefgh…');
     expect(html).toContain('まだ応答がありません');
     expect(html).toContain('>失効</span>');
     expect(html.match(/tokenを作り直す/g)).toHaveLength(1);

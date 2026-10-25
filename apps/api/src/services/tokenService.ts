@@ -1,7 +1,7 @@
 import type { TokenSummary } from '@mmt/contracts';
 import type { z } from 'zod';
 import type { Principal } from '../auth/principal.js';
-import { hashSecret, randomSecret } from '../auth/secrets.js';
+import { createApiTokenSecret } from '../auth/apiTokens.js';
 import { first, transaction, type Connection, type Database } from '../db/database.js';
 import { DomainError, notFound } from '../domain/errors.js';
 import { requiredProjectRoleForScopes } from '../domain/tokenScopes.js';
@@ -26,9 +26,6 @@ import {
   type AuditEventDraft,
 } from './auditService.js';
 
-// Long enough to tell tokens apart in a list, far too short to guess the rest of the value.
-const TOKEN_PREFIX_LENGTH = 12;
-
 export interface IssuedToken {
   token: string;
   item: TokenSummary;
@@ -39,13 +36,13 @@ export async function issueApiToken(
   connection: Connection,
   token: Omit<TokenInsert, 'tokenHash' | 'tokenPrefix'>,
 ): Promise<IssuedToken> {
-  const value = `mmt_${randomSecret()}`;
+  const secret = createApiTokenSecret();
   const item = await insertToken(connection, {
     ...token,
-    tokenHash: hashSecret(value),
-    tokenPrefix: value.slice(0, TOKEN_PREFIX_LENGTH),
+    tokenHash: secret.tokenHash,
+    tokenPrefix: secret.tokenPrefix,
   });
-  return { token: value, item };
+  return { token: secret.token, item };
 }
 
 /** Audit details of an issued token. The value and its hash never enter the audit log. */

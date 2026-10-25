@@ -95,7 +95,8 @@ describe.skipIf(!testDatabaseUrl)('MLflow互換APIのBasic認証（独立Postgre
     const fixture = await projectFixture(harness);
     for (const headers of [
       basic('correct horse battery staple', 'admin'),
-      basic('mmt_'),
+      basic('mado_mt_'),
+      basic('mmt_0123456789abcdef'),
       { Authorization: `Basic ${Buffer.from('no-separator').toString('base64')}` },
       { Authorization: 'Basic !!!' },
     ]) {

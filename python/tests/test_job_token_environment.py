@@ -15,7 +15,7 @@ from mado_tracking.worker.service import Worker
 from mado_tracking.worker.tracking_environment import build_tracking_environment
 
 WORKER_TOKEN = "test-api-secret"
-JOB_TOKEN = "mmtj_test-job-token"
+JOB_TOKEN = "mado_mtj_test-job-token"
 
 
 def test_sdk_environment_carries_the_job_token_and_never_the_worker_token(worker_job, worker_settings):
@@ -72,8 +72,8 @@ def test_saved_token_of_another_lease_is_not_reused(job_payload, tmp_path: Path)
 def test_reissued_token_replaces_the_saved_one(job_payload, tmp_path: Path):
     journal = JobJournal(tmp_path / "state")
     journal.save(WorkerJob.parse(pin_execution(job_payload)))
-    reissued = WorkerJob.parse(pin_execution({**job_payload, "jobToken": "mmtj_reissued"}))
-    assert with_saved_job_token(reissued, journal.load(reissued.id)).job_token == "mmtj_reissued"
+    reissued = WorkerJob.parse(pin_execution({**job_payload, "jobToken": "mado_mtj_reissued"}))
+    assert with_saved_job_token(reissued, journal.load(reissued.id)).job_token == "mado_mtj_reissued"
 
 
 def test_job_code_sees_only_the_job_token_and_logs_never_contain_tokens(job_payload, worker_settings, caplog):
@@ -110,7 +110,7 @@ def test_job_code_sees_only_the_job_token_and_logs_never_contain_tokens(job_payl
 def test_token_reissued_while_preparing_is_the_one_the_code_receives(job_payload, worker_settings):
     job_payload["codeVersion"]["source"]["files"]["main.py"] = (
         "import os\n"
-        "print('reissued-match=' + str(os.environ['MMT_API_TOKEN'] == 'mmtj_reissued'), flush=True)\n"
+        "print('reissued-match=' + str(os.environ['MMT_API_TOKEN'] == 'mado_mtj_reissued'), flush=True)\n"
         "print(os.environ['MMT_API_TOKEN'], flush=True)\n"
     )
     server = WorkerServer(job_payload)
@@ -120,7 +120,7 @@ def test_token_reissued_while_preparing_is_the_one_the_code_receives(job_payload
         try:
             worker.launch(WorkerJob.parse(pin_execution(job_payload)))
             # A resume after a failed claim returns the same claimed Job with a new token.
-            worker.launch(WorkerJob.parse(pin_execution({**job_payload, "jobToken": "mmtj_reissued"})))
+            worker.launch(WorkerJob.parse(pin_execution({**job_payload, "jobToken": "mado_mtj_reissued"})))
             await asyncio.wait_for(worker.tasks[job_payload["job"]["id"]], 15)
             assert worker.reissued_job_tokens == {}
         finally:
@@ -132,4 +132,4 @@ def test_token_reissued_while_preparing_is_the_one_the_code_receives(job_payload
         entry["message"] for path, body in server.calls if path.endswith("/logs") for entry in body["entries"]
     )
     assert "reissued-match=True" in messages
-    assert "mmtj_reissued" not in messages
+    assert "mado_mtj_reissued" not in messages

@@ -195,14 +195,14 @@ await context.route(
         createdAt: now,
         lastSeenAt: null,
         revokedAt: null,
-        tokenPrefix: 'mmt_abcdefgh',
+        tokenPrefix: 'mado_mt_abcdefgh',
       };
       api.state.launchers.push(launcher);
-      return reply({ launcher, token: `mmt_browser_launcher_${launcher.id.slice(-4)}` }, 201);
+      return reply({ launcher, token: `mado_mt_browser_launcher_${launcher.id.slice(-4)}` }, 201);
     }
     if (parts[0] === 'launchers' && parts[2] === 'token' && method === 'POST')
       return reply(
-        { launcher: api.state.launchers.find((item) => item.id === parts[1]), token: 'mmt_browser_rotated' },
+        { launcher: api.state.launchers.find((item) => item.id === parts[1]), token: 'mado_mt_browser_rotated' },
         201,
       );
     if (parts[0] === 'launchers' && parts.length === 2 && method === 'DELETE') {
@@ -242,7 +242,7 @@ await dialog().getByRole('button', { name: '作成', exact: true }).click();
 const tokenField = dialog().getByLabel('ランチャーのtoken', { exact: true });
 await tokenField.waitFor();
 const token = await tokenField.inputValue();
-assert.match(token, /^mmt_browser_launcher_/);
+assert.match(token, /^mado_mt_browser_launcher_/);
 const config = await dialog().getByTestId('launcher-config-example').textContent();
 assert.ok(config.includes(`api_url = "${base}"`), config);
 assert.ok(config.includes('token_file = "/run/secrets/mado-tracking-launcher/launcher.token"'));
@@ -256,7 +256,7 @@ await dialog().getByRole('button', { name: 'tokenを作り直す', exact: true }
 // The confirmation's title also starts with "ランチャーのtoken", so the field is matched exactly.
 const rotatedToken = page.getByLabel('ランチャーのtoken', { exact: true });
 await rotatedToken.waitFor();
-assert.equal(await rotatedToken.inputValue(), 'mmt_browser_rotated');
+assert.equal(await rotatedToken.inputValue(), 'mado_mt_browser_rotated');
 assert.equal(lastCall('POST', /\/token$/).path, `/launchers/${mainLauncher.id}/token`);
 await dialog().getByRole('button', { name: '閉じる', exact: true }).last().click();
 

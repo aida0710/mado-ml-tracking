@@ -1,11 +1,9 @@
 import type { Launcher } from '@mmt/contracts';
-import { hashSecret, randomSecret } from '../auth/secrets.js';
+import { createApiTokenSecret } from '../auth/apiTokens.js';
 import { first, rows, type Connection } from '../db/database.js';
 
 // The scope only launcher tokens carry; personal and Service Account tokens cannot ask for it.
 export const LAUNCHER_SCOPE = 'launcher:execute';
-// Like other API tokens (tokenService): `mmt_` and a random secret; the first characters are kept.
-const LAUNCHER_TOKEN_PREFIX_LENGTH = 12;
 
 const launcherColumns = `l.id,l.name,l.created_by,l.created_at,l.last_seen_at,l.revoked_at,
   (SELECT t.token_prefix FROM api_tokens t WHERE t.user_id=l.user_id AND t.revoked_at IS NULL
@@ -63,19 +61,19 @@ export async function replaceLauncherToken(
   launcher: { userId: string; createdBy: string },
 ): Promise<string> {
   await revokeLauncherTokens(connection, launcher.userId);
-  const value = `mmt_${randomSecret()}`;
+  const secret = createApiTokenSecret();
   await connection.query(
     `INSERT INTO api_tokens(user_id,created_by_user_id,project_id,name,kind,token_hash,token_prefix,scopes)
     VALUES($1,$2,NULL,'launcher','launcher',$3,$4,$5)`,
     [
       launcher.userId,
       launcher.createdBy,
-      hashSecret(value),
-      value.slice(0, LAUNCHER_TOKEN_PREFIX_LENGTH),
+      secret.tokenHash,
+      secret.tokenPrefix,
       [LAUNCHER_SCOPE],
     ],
   );
-  return value;
+  return secret.token;
 }
 
 export async function revokeLauncherTokens(connection: Connection, userId: string): Promise<void> {

@@ -122,7 +122,7 @@ compute targetからも`MMT_API_URL`に到達できる必要がある。SSH targ
 
 ## 実行コードにはJob限定tokenを渡す
 
-実行コードの`MMT_API_TOKEN`と`MLFLOW_TRACKING_TOKEN`には、APIがJobごとに発行するJob限定token（`mmtj_`で始まる）が入る。worker自身のtokenは実行コードの環境変数に入らない。
+実行コードの`MMT_API_TOKEN`と`MLFLOW_TRACKING_TOKEN`には、APIがJobごとに発行するJob限定token（`mado_mtj_`で始まる）が入る。worker自身のtokenは実行コードの環境変数に入らない。
 
 - 権限はRunの作成者のもの。scopeは`read`・`runs:write`・`artifacts:write`・`registry:write`で、Project権限は作成者の現在のmembershipで決まる（editorが投入したコードはeditorの権限で動く。作成者をProjectから外すと403）。
 - 書けるのは対象Run（metrics・params・tags・logs・入力Dataset・Artifact）、そのRunをsourceとするモデル・データセットのバージョン、そのRunのLogged Model、出力先Modelの作成だけ。同じProjectの別Run、worker API、token発行、Project設定、自動実行rule、Runの説明文とコメントは403。読み出しは同じProject内なら可能（上流RunのArtifact取得など）。
@@ -234,7 +234,7 @@ Dataset記述子の`contentKind`は必須。欠損した記述子は実行前に
 ### 転送方式（targetの`datasetTransfer`）
 
 - `relay`（既定）: workerがworker tokenでAPIからArtifactを取得し（Range再開・sha256照合）、HTTPSも取得して、1本のtarでtargetへ送る。GPUコンピュータがAPIへ届かなくてよい。worker側の一時ファイルはstate directory配下のjournalに置き、送信後に消す（worker側にも一時的にバージョン1つ分の空きが要る）。
-- `direct`: targetがJob token（`mmtj_`）で`GET /projects/:p/artifacts/:a/content`を呼ぶ。HTTPSもtargetが取得する。worker tokenはtargetへ渡さない。Job tokenはrunnerのstdinで渡し（worker側では権限600の一時ファイルを経由して送信後に消す）、argvやtarget上のファイルに残さない。targetから`MMT_API_URL`（workerのAPI URL）へ届く必要がある。
+- `direct`: targetがJob token（`mado_mtj_`）で`GET /projects/:p/artifacts/:a/content`を呼ぶ。HTTPSもtargetが取得する。worker tokenはtargetへ渡さない。Job tokenはrunnerのstdinで渡し（worker側では権限600の一時ファイルを経由して送信後に消す）、argvやtarget上のファイルに残さない。targetから`MMT_API_URL`（workerのAPI URL）へ届く必要がある。
 - `s3://`と`file://`は方式によらずtarget側で扱う。S3の認証情報はtargetのSSH非対話シェル（local executorならworker process）の環境変数に置く。APIやworkerには置かない。
 
 target側の取得がネットワークやサーバー側の理由で失敗したら、2秒・4秒あけて最大3回まで試す。404・照合の不一致・上限超過はすぐ失敗にする。

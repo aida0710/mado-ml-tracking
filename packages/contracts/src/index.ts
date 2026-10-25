@@ -747,8 +747,8 @@ export interface WorkerJob {
   codeVersion: CodeVersion;
   modelVersion: ModelVersion | null;
   inputDatasets: DatasetVersion[];
-  // Token for the Job's code (mmtj_). Set only when this claim/resume issued a new one; null
-  // for a running Job, whose process keeps the token the worker saved earlier.
+  // Job のコードに渡す token（mado_mtj_）。この claim・resume で新しく発行したときだけ入る。
+  // 実行中の Job では null で、プロセスは worker が前に保存した token を使い続ける。
   jobToken: string | null;
   // Set when the Run continues from a checkpoint; the worker verifies it before the entrypoint.
   resumeCheckpoint?: WorkerResumeCheckpoint | null;
