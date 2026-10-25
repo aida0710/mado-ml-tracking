@@ -190,7 +190,7 @@ export function RunDetailPage() {
               </div>
             )}
             {resumeEvents.value && (
-              <RunResumeTimeline segments={resumeEvents.value.segments} now={Date.now()} />
+              <RunResumeTimeline segments={resumeEvents.value.segments} now={resumeEvents.value.readAt} />
             )}
             <Tabs
               tabs={tabs

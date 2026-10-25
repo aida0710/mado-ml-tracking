@@ -1,4 +1,5 @@
 import type { JsonObject } from '@mmt/contracts';
+import { containsControlCharacter } from '@mmt/contracts';
 import { conflict } from '../../domain/errors.js';
 import { invalidParameter } from './validation.js';
 import type { ArtifactManifestEntry, SavedModelArtifacts } from './types.js';
@@ -54,7 +55,7 @@ export function artifactPath(path: string): string {
     !path ||
     path.startsWith('/') ||
     path.includes('\\') ||
-    /[\x00-\x1f\x7f]/.test(path) ||
+    containsControlCharacter(path) ||
     path.split('/').some((part) => !part || part === '.' || part === '..')
   )
     invalidParameter('weightsのArtifact相対pathが不正です');

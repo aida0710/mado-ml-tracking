@@ -10,7 +10,7 @@ export async function explainLastProjectAdminConflict<T>(change: Promise<T>): Pr
     return await change;
   } catch (failure) {
     if (failure instanceof RequestError && failure.status === 409)
-      throw new Error(text.lastProjectAdminConflict);
+      throw new Error(text.lastProjectAdminConflict, { cause: failure });
     throw failure;
   }
 }

@@ -1,8 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useState } from 'react';
 
 export interface LoopRange {
   startSeconds: number;
   endSeconds: number;
+}
+
+// Moves the playhead of the page's <audio> element: a DOM object, not React state, so it is
+// changed in place.
+function moveAudioPlayhead(audio: HTMLAudioElement, seconds: number) {
+  audio.currentTime = seconds;
 }
 
 /**
@@ -12,15 +18,16 @@ export interface LoopRange {
 export function useAudioPlayback(audio: HTMLAudioElement | null, loop: LoopRange | null) {
   const [currentTime, setCurrentTime] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const loopRef = useRef(loop);
-  loopRef.current = loop;
+  // Reads the loop range of the latest render on every frame.
+  const keepInsideLoop = useEffectEvent((element: HTMLAudioElement) => {
+    if (loop && element.currentTime >= loop.endSeconds) moveAudioPlayhead(element, loop.startSeconds);
+  });
 
   useEffect(() => {
     if (!audio) return;
     let frame = 0;
     const tick = () => {
-      const range = loopRef.current;
-      if (range && audio.currentTime >= range.endSeconds) audio.currentTime = range.startSeconds;
+      keepInsideLoop(audio);
       setCurrentTime(audio.currentTime);
       frame = requestAnimationFrame(tick);
     };
@@ -51,7 +58,7 @@ export function useAudioPlayback(audio: HTMLAudioElement | null, loop: LoopRange
   const seek = useCallback(
     (seconds: number) => {
       if (!audio) return;
-      audio.currentTime = Math.max(0, seconds);
+      moveAudioPlayhead(audio, Math.max(0, seconds));
       setCurrentTime(audio.currentTime);
     },
     [audio],

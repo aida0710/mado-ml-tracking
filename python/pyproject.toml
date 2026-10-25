@@ -1,5 +1,6 @@
 [build-system]
-requires = ["setuptools>=75"]
+# 77 is the first release that reads the SPDX `license` string and `license-files` (PEP 639).
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,6 +8,8 @@ name = "mado-tracking"
 version = "0.4.0"
 description = "mado ML Tracking Python SDK and durable compute worker"
 readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = ["httpx>=0.27,<1"]
 

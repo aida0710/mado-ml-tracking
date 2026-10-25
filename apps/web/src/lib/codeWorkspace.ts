@@ -1,11 +1,12 @@
 import type { CodeSource, RepositoryFiles } from '@mmt/contracts';
+import { containsControlCharacter } from '@mmt/contracts';
 import type { CodeWorkspace, GitRepository } from '../types/codeWorkspace';
 import type { FormValues } from '../types/form';
 import { text } from '../i18n/catalog';
 
 export function validateFilePath(path: string) {
   if (
-    !path || path.startsWith('/') || /^[A-Za-z]:/.test(path) || /[\\\u0000-\u001f\u007f]/.test(path) ||
+    !path || path.startsWith('/') || /^[A-Za-z]:/.test(path) || path.includes('\\') || containsControlCharacter(path) ||
     path.split('/').some((part) => !part || part === '.' || part === '..' || part.toLowerCase() === '.git')
   ) throw new Error(text.invalidFilePath);
 }
@@ -24,7 +25,7 @@ export function validateFilePaths(paths: string[]) {
 export function validateGitRepository(repository: GitRepository) {
   if (!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/i.test(repository.commit))
     throw new Error(text.pinnedCommitError);
-  if (/[\s\u0000-\u001f\u007f]/.test(repository.url)) throw new Error(text.gitUrlError);
+  if (/\s/.test(repository.url) || containsControlCharacter(repository.url)) throw new Error(text.gitUrlError);
   if (/^git@[\w.-]+:[^\s]+$/.test(repository.url)) return;
   try {
     const url = new URL(repository.url);

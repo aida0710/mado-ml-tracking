@@ -16,9 +16,8 @@ describe('API tokenの有効期限', () => {
     expect(resolveTokenExpiry({ ...request, expiresAt: '2046-10-12T00:00:00Z' }))
       .toEqual(new Date('2046-10-12T00:00:00Z'));
   });
-  it.each(['2026-10-11T00:00:00Z', now.toISOString(), '', 'invalid'])
-    ('過去・現在・無効な期限%sは拒否する', expiresAt => {
-      expect(() => resolveTokenExpiry({ ...request, expiresAt }))
-        .toThrow(expect.objectContaining({ status: 422, code: 'invalid_expiry' }));
-    });
+  it.each(['2026-10-11T00:00:00Z', now.toISOString(), '', 'invalid'])('過去・現在・無効な期限%sは拒否する', expiresAt => {
+    expect(() => resolveTokenExpiry({ ...request, expiresAt }))
+      .toThrow(expect.objectContaining({ status: 422, code: 'invalid_expiry' }));
+  });
 });

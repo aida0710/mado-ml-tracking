@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import type { FieldSuggestions, SuggestFieldValues } from '../types/form';
 
 // Waits for typing to pause so each keystroke does not start its own lookup.
@@ -24,18 +24,16 @@ export function useFieldSuggestions(
   }: { offerWhenEmpty?: boolean; refreshKey?: string | number } = {},
 ): FieldSuggestions {
   // The field definitions are rebuilt on every render; only the value decides when to look up.
-  const suggestRef = useRef(suggest);
-  suggestRef.current = suggest;
+  const lookUp = useEffectEvent((typed: string, signal: AbortSignal) => suggest!(typed, signal));
   const hasSuggest = suggest !== undefined;
+  const isLookingUp = hasSuggest && (value !== '' || offerWhenEmpty);
   const [answer, setAnswer] = useState<{ value: string; suggestions: FieldSuggestions } | null>(
     null,
   );
+  // Forgotten while nothing is looked up, so old candidates do not come back with the next value.
+  if (!isLookingUp && answer !== null) setAnswer(null);
   useEffect(() => {
-    const lookUp = suggestRef.current;
-    if (!lookUp || (!value && !offerWhenEmpty)) {
-      setAnswer(null);
-      return;
-    }
+    if (!isLookingUp) return;
     const controller = new AbortController();
     const timer = setTimeout(() => {
       lookUp(value, controller.signal).then(
@@ -52,8 +50,8 @@ export function useFieldSuggestions(
       clearTimeout(timer);
       controller.abort();
     };
-  }, [value, hasSuggest, offerWhenEmpty, refreshKey]);
-  if (!answer || (!value && !offerWhenEmpty)) return NO_SUGGESTIONS;
+  }, [value, isLookingUp, refreshKey]);
+  if (!answer || !isLookingUp) return NO_SUGGESTIONS;
   return answer.value === value
     ? answer.suggestions
     : { items: answer.suggestions.items, details: answer.suggestions.details };

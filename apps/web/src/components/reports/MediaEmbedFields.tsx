@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { MEDIA_COMPARE_MAX_RUNS, type ReportMediaBlock } from '@mmt/contracts';
 import { useMediaCompareChoices } from '../../hooks/useMediaCompare';
 import { defaultComparisonSteps } from '../../lib/mediaCompareSteps';
@@ -31,20 +31,23 @@ export function MediaEmbedFields({
     runIds: block.runIds,
     chosenKey: block.key || null,
   });
-  const [isAwaitingDefaultSteps, setAwaitingDefaultSteps] = useState(false);
+  // Whether the Runs or the key changed and their default steps are still to be chosen.
+  const isAwaitingDefaultStepsRef = useRef(false);
   const recordedSteps = block.key && selectedKey === block.key ? stepsByRun.value : undefined;
 
   // The default steps come from the recorded steps, which load after the key or the Runs change.
-  useEffect(() => {
-    if (!isAwaitingDefaultSteps || !recordedSteps) return;
-    setAwaitingDefaultSteps(false);
+  // A layout effect applies them before the browser paints, so the step checklist is never shown
+  // without them and a tick cannot be overwritten.
+  useLayoutEffect(() => {
+    if (!isAwaitingDefaultStepsRef.current || !recordedSteps) return;
+    isAwaitingDefaultStepsRef.current = false;
     onChange({ ...block, steps: mediaStepsOrLatest(defaultComparisonSteps(recordedSteps)) });
-  }, [isAwaitingDefaultSteps, recordedSteps, block, onChange]);
+  }, [recordedSteps, block, onChange]);
 
   function changeTarget(target: Pick<ReportMediaBlock, 'runIds' | 'key'>) {
     // Steps recorded for the previous Runs or key may not exist for the new ones.
+    isAwaitingDefaultStepsRef.current = target.key !== '';
     onChange({ ...block, ...target, steps: undefined });
-    setAwaitingDefaultSteps(target.key !== '');
   }
 
   const keys = choices.value?.keys;
@@ -80,8 +83,7 @@ export function MediaEmbedFields({
           {runsWithoutKey.length > 0 && (
             <p className="muted report-media-runs-without-key">{textTemplates.reportMediaRunsWithoutKey(formatList(runsWithoutKey))}</p>
           )}
-          {/* Shown once the default steps are in, so a tick made meanwhile is not overwritten. */}
-          {recordedSteps && !isAwaitingDefaultSteps && (
+          {recordedSteps && (
             <MediaStepChecklist
               legend={text.reportMediaSteps}
               stepsByRun={recordedSteps}

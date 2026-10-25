@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { TargetCheckWorker } from '@mmt/contracts';
 import { targetChecksApi } from '../api/targetChecks';
 import { isCheckInProgress } from '../lib/targetCheckCandidates';
@@ -21,8 +21,12 @@ export function useTargetCheck(targetId: string | null) {
     isPolling ? TARGET_CHECK_POLL_MS : undefined,
   );
   const latest = checks.value?.[0];
-  // Poll only while the latest check waits for a worker.
-  useEffect(() => setPolling(isCheckInProgress(latest)), [latest]);
+  // Poll only while the latest check waits for a worker; decided again for each answer.
+  const [polledCheck, setPolledCheck] = useState(latest);
+  if (polledCheck !== latest) {
+    setPolledCheck(latest);
+    setPolling(isCheckInProgress(latest));
+  }
   /** Asks for a check of `checkedTargetId` (the computer saved just now, before this hook has it). */
   function request({
     checkedTargetId = targetId,

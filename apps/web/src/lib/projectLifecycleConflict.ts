@@ -17,7 +17,7 @@ export async function explainProjectLifecycleConflict<T>(change: Promise<T>): Pr
       failure instanceof RequestError && failure.status === 409 && failure.code
         ? conflictText[failure.code]
         : undefined;
-    if (known) throw new Error(known);
+    if (known) throw new Error(known, { cause: failure });
     throw failure;
   }
 }

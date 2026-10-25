@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { ComputeTargetDetails, TargetCheckWorker } from '@mmt/contracts';
 import { executionApi } from '../api/execution';
 import {
@@ -37,17 +37,17 @@ export function useNewComputerSteps({
   const check = useTargetCheck(saved?.id ?? null);
   const mutation = useMutation();
 
-  // Runs when the check changes; the values are read as they stand when it ends, and typing does
-  // not apply the check again.
-  useEffect(() => {
-    const latest = check.latest;
-    if (!awaitedCheckId || latest?.id !== awaitedCheckId || isCheckInProgress(latest)) return;
+  // Applied during the render that sees the awaited check end; the values are read as they stand
+  // then, and since the check is no longer awaited afterwards, typing does not apply it again.
+  const latest = check.latest;
+  if (awaitedCheckId !== null && latest?.id === awaitedCheckId && !isCheckInProgress(latest)) {
     setAwaitedCheckId(null);
-    if (!isConnectionReached(latest) || !latest.result) return;
-    changeValues(applyCheckToSetupValues(values, latest.result));
-    setFilledFromCheck(true);
-    setStep('setup');
-  }, [check.latest, awaitedCheckId]);
+    if (isConnectionReached(latest) && latest.result) {
+      changeValues(applyCheckToSetupValues(values, latest.result));
+      setFilledFromCheck(true);
+      setStep('setup');
+    }
+  }
 
   function saveConnection() {
     return mutation.run(() =>

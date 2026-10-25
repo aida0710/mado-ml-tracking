@@ -1,4 +1,5 @@
 export { isSameUuid } from './uuidIdentity.js';
+export { containsControlCharacter } from './controlCharacters.js';
 
 export type JsonValue =
   | string

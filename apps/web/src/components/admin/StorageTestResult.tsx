@@ -2,6 +2,7 @@ import type { StorageTestResult as StorageTestResultValue } from '@mmt/contracts
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
+import { hasStorageTestPassed } from '../../lib/storageTestResult';
 
 // The API names the steps; names it adds later are shown as sent.
 const stepLabels: Record<string, string> = {
@@ -10,10 +11,6 @@ const stepLabels: Record<string, string> = {
   get range() { return text.storageTestStepRange; },
   get delete() { return text.storageTestStepDelete; },
 };
-
-export function hasStorageTestPassed(result: StorageTestResultValue): boolean {
-  return result.steps.every((step) => step.ok);
-}
 
 /**
  * Shows each step of a connection test with OK/NG and the API's short error. A failure leads on

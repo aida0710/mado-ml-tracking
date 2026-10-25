@@ -1,7 +1,6 @@
 import type {
   ArtifactMediaInfo,
   JsonObject,
-  RunMedia,
   RunMediaKeySummary,
   RunMediaKind,
   RunMediaSource,

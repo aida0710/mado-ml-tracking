@@ -1,7 +1,7 @@
 import type { JsonObject } from './index.js';
 
 export type AuditActorType = 'user' | 'token' | 'system';
-export type AuditOutcome = 'success' | 'denied' | 'failed';
+export type AuditOutcome = 'success' | 'denied' | 'failure';
 
 export interface AuditEvent {
   id: string;
@@ -18,7 +18,7 @@ export interface AuditEvent {
   projectId: string | null;
   projectName: string | null;
   details: JsonObject;
-  ip: string | null;
+  ipAddress: string | null;
   userAgent: string | null;
 }
 

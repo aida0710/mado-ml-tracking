@@ -10,20 +10,22 @@ import { useLocation } from 'react-router-dom';
 export function usePopover<Container extends HTMLElement = HTMLDivElement>() {
   const location = useLocation();
   const container = useRef<Container>(null);
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => setIsOpen(false), [location.pathname]);
+  // The page the popover was opened on: it is open only there, so a new page never shows it open,
+  // and it is forgotten on the first render elsewhere, so coming back does not reopen it.
+  const [openPathname, setOpenPathname] = useState<string | null>(null);
+  const isOpen = openPathname === location.pathname;
+  if (openPathname !== null && !isOpen) setOpenPathname(null);
   useEffect(() => {
     if (!isOpen) return;
     const closeOutside = (event: PointerEvent) => {
-      if (!container.current?.contains(event.target as Node)) setIsOpen(false);
+      if (!container.current?.contains(event.target as Node)) setOpenPathname(null);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       const element = container.current;
       if (element?.contains(document.activeElement))
         element.querySelector<HTMLElement>('[aria-expanded]')?.focus();
-      setIsOpen(false);
+      setOpenPathname(null);
     };
     document.addEventListener('pointerdown', closeOutside);
     document.addEventListener('keydown', closeOnEscape);
@@ -36,8 +38,8 @@ export function usePopover<Container extends HTMLElement = HTMLDivElement>() {
   return {
     container,
     isOpen,
-    toggle: () => setIsOpen((open) => !open),
-    open: () => setIsOpen(true),
-    close: () => setIsOpen(false),
+    toggle: () => setOpenPathname((open) => (open === location.pathname ? null : location.pathname)),
+    open: () => setOpenPathname(location.pathname),
+    close: () => setOpenPathname(null),
   };
 }

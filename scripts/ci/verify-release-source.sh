@@ -15,14 +15,7 @@ git merge-base --is-ancestor "$release_sha" origin/main || {
   echo 'Release commit is not part of main' >&2
   exit 1
 }
-gh api --paginate \
-  "repos/$RELEASE_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$release_sha&per_page=100" \
-  | jq -s -e --arg sha "$release_sha" '
-    any(.[].workflow_runs[];
-      .head_sha == $sha and .head_branch == "main" and
-      (.event == "push" or .event == "workflow_dispatch") and
-      .status == "completed" and .conclusion == "success")
-  ' >/dev/null || {
+"$(dirname "$0")/main-ci-succeeded.sh" "$RELEASE_REPOSITORY" "$release_sha" || {
   echo 'The release commit has not passed CI on main' >&2
   exit 1
 }

@@ -71,7 +71,9 @@ function ResumableUploadRow({
   const check = useMutation();
   const discard = useMutation();
   const originalFile = useMemo(() => findResumeRecordByUploadId(session.id), [session.id]);
-  const isExpired = blockerFromSession(session, Date.now()) === 'expired';
+  // Judged when the row appears; the server refuses an expired session anyway.
+  const [shownAt] = useState(() => Date.now());
+  const isExpired = blockerFromSession(session, shownAt) === 'expired';
   const blocker = refused?.blocker ?? (isExpired ? 'expired' : null);
   const picker = choosePicker({ blocker, hasRefusedFile: refused !== null });
 

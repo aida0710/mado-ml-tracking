@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import type { ComputeTarget, ExperimentTask } from '@mmt/contracts';
 import type { ExecutionCatalog } from '../types/executionCatalog';
 import { useProject } from '../hooks/useProject';
@@ -20,8 +20,8 @@ export function TaskEditDialog({ task, experimentId, catalog, targets, onClose, 
   useLocale();
   const { project } = useProject();
   const form = useTaskForm({ projectId: project.id, task, experimentId, catalog, targets });
-  const initialValues = useRef(JSON.stringify(form.values));
-  const unsaved = useUnsavedChanges(JSON.stringify(form.values) !== initialValues.current, form.pending, { onNavigationDiscard: onClose });
+  const [initialValues] = useState(() => JSON.stringify(form.values));
+  const unsaved = useUnsavedChanges(JSON.stringify(form.values) !== initialValues, form.pending, { onNavigationDiscard: onClose });
   const [showCodeEditor, setShowCodeEditor] = useState(false);
   const selectedVersion = form.catalog.codeVersions.find((version) => version.id === form.values.codeVersionId);
   const selectedCode = form.catalog.codes.find((code) => code.id === selectedVersion?.codeId);

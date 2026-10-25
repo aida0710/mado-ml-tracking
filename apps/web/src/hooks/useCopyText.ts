@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { copyText } from '../lib/clipboard';
 import { useMutation } from './useMutation';
 
@@ -6,11 +6,13 @@ import { useMutation } from './useMutation';
 export function useCopyText(value: string) {
   const [isCopied, setIsCopied] = useState(false);
   const mutation = useMutation();
-  const { clearError } = mutation;
-  useEffect(() => {
+  // A new value starts without the feedback of the previous one.
+  const [feedbackValue, setFeedbackValue] = useState(value);
+  if (feedbackValue !== value) {
+    setFeedbackValue(value);
     setIsCopied(false);
-    clearError();
-  }, [value, clearError]);
+    mutation.clearError();
+  }
 
   function copy() {
     setIsCopied(false);

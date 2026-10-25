@@ -31,7 +31,9 @@ export default function MonacoCodeEditor({ path, value, onChange, readOnly = fal
   // Keep Undo inside each file, then release every model owned by this dialog.
   const visitedModelPaths = useRef(new Set<string>());
   const modelPath = monaco.Uri.from({ scheme: 'mmt-code', path: `/${editorId}/${path}` }).toString();
-  visitedModelPaths.current.add(modelPath);
+  useEffect(() => {
+    visitedModelPaths.current.add(modelPath);
+  }, [modelPath]);
   useEffect(() => () => {
     for (const visitedPath of visitedModelPaths.current)
       monaco.editor.getModel(monaco.Uri.parse(visitedPath))?.dispose();

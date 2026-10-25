@@ -44,8 +44,8 @@ async function readDirectory(
 
 /**
  * Directories of a computer read by the chosen worker, remembered by path while the dialog is
- * open. `version` changes whenever a reading ends, so path fields look their value up again.
- * Another computer or worker starts from nothing.
+ * open. `version` changes whenever a reading ends or another computer or worker is chosen, so
+ * path fields look their value up again. Another computer or worker starts from nothing.
  */
 export function useTargetDirectoryListings({
   targetId,
@@ -56,18 +56,17 @@ export function useTargetDirectoryListings({
 }) {
   const scope = targetId && worker ? `${targetId}:${worker.tokenId}:${worker.workerId}` : null;
   const listings = useRef(new Map<string, DirectoryListingState>());
-  const [version, setVersion] = useState(0);
+  const [readingCount, setReadingCount] = useState(0);
   const controller = useRef<AbortController | null>(null);
   useEffect(() => {
     listings.current = new Map();
     controller.current = new AbortController();
-    setVersion((current) => current + 1);
     return () => controller.current?.abort();
   }, [scope]);
 
   function remember(path: string, state: DirectoryListingState) {
     listings.current.set(path, state);
-    setVersion((current) => current + 1);
+    setReadingCount((current) => current + 1);
   }
 
   function request(path: string): void {
@@ -92,6 +91,6 @@ export function useTargetDirectoryListings({
     isAvailable: scope !== null,
     listingOf: (path: string) => listings.current.get(path),
     request,
-    version,
+    version: `${scope ?? ''}:${readingCount}`,
   };
 }

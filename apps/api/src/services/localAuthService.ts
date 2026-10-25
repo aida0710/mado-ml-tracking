@@ -68,7 +68,7 @@ export class LocalAuthService {
     const username = input.username.trim().toLowerCase();
     const usernameKey = `local-login:username:${username}`;
     this.rateLimiter.consumeOrThrow(
-      `local-login:ip:${metadata.ip ?? 'unknown'}`,
+      `local-login:ip:${metadata.ipAddress ?? 'unknown'}`,
       LOCAL_LOGIN_IP_LIMIT,
     );
     this.rateLimiter.checkOrThrow(usernameKey, LOCAL_LOGIN_USERNAME_FAILURE_LIMIT);
@@ -90,7 +90,7 @@ export class LocalAuthService {
       await writeAuditEvent(this.database, {
         ...loginAudit('local', metadata),
         actorType: 'system',
-        outcome: 'failed',
+        outcome: 'failure',
         resourceId: credential?.userId ?? null,
         details: { method: 'local', username },
       });
@@ -169,7 +169,7 @@ export class LocalAuthService {
       ...metadata,
     };
     if (!newPasswordHash) {
-      await writeAuditEvent(this.database, { ...changeAudit, outcome: 'failed' });
+      await writeAuditEvent(this.database, { ...changeAudit, outcome: 'failure' });
       throw new DomainError(401, '現在のパスワードが正しくありません', 'invalid_credentials');
     }
     await transaction(this.database, async (connection) => {

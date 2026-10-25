@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import type { SweepObjective, SweepTrial } from '@mmt/contracts';
 import { ResponsiveTableView } from '../ResponsiveTable';
-import { sweepTrialColumns } from './SweepTrialsTable';
+import { sweepTrialColumns } from './sweepTrialColumns';
 import { text } from '../../i18n/catalog';
 
 const objective: SweepObjective = { metric: 'val_loss', goal: 'minimize', aggregation: 'last' };

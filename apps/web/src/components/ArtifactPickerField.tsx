@@ -1,4 +1,4 @@
-import { useEffect, useId, type KeyboardEvent } from 'react';
+import { useEffect, useEffectEvent, useId, type KeyboardEvent } from 'react';
 import type { Artifact } from '@mmt/contracts';
 import { Upload } from 'lucide-react';
 import { useArtifactChoices } from '../hooks/useArtifactChoices';
@@ -58,10 +58,14 @@ export function ArtifactPickerField({
   const resultsId = useId();
   const choices = useArtifactChoices({ projectId, runId, input });
   const referenced = choices.referenceId ? choices.artifacts[0] : undefined;
-  useEffect(() => {
-    // A pasted id names one Artifact, so it is taken without another click.
+  // A pasted id names one Artifact, so it is taken without another click, once per Artifact.
+  const selectReferenced = useEffectEvent(() => {
     if (referenced && !selected) onSelect(referenced);
-  }, [referenced?.id]);
+  });
+  const referencedId = referenced?.id;
+  useEffect(() => {
+    if (referencedId) selectReferenced();
+  }, [referencedId]);
   const chooseAgain = () => {
     // Emptied too, or a pasted id would pick the same Artifact again at once.
     onInputChange('');

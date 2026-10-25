@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { AuthGate } from './hooks/useAuth';
+import { AuthGate } from './components/AuthGate';
 import { AppShell } from './layout/AppShell';
 import { SettingsShell } from './layout/SettingsShell';
 import { MlflowUiRedirect } from './layout/MlflowUiRedirect';

@@ -5,10 +5,9 @@ import type {
   ModelVersion,
   Run,
   RunLogList,
-  RunStatus,
 } from '@mmt/contracts';
 import type { Principal } from '../auth/principal.js';
-import { first, rows, transaction, type Connection, type Database } from '../db/database.js';
+import { first, transaction, type Connection, type Database } from '../db/database.js';
 import { conflict, DomainError } from '../domain/errors.js';
 import { createExecutionSnapshot } from '../domain/executionSnapshot.js';
 import { assertNoReservedRunTags } from '../domain/reservedRunTags.js';
@@ -19,7 +18,6 @@ import { validateCodeArtifacts } from '../repositories/runtimeArtifactRepository
 import { runColumns } from '../repositories/runListProjection.js';
 import { isTerminalStatus, validateRunTransition } from '../domain/runTransitions.js';
 import {
-  assertProjectReference,
   findCodeVersion,
   findModelVersion,
   findRun,

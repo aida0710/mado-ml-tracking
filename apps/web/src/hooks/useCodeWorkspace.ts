@@ -3,7 +3,7 @@ import type { CodeSource } from '@mmt/contracts';
 import { repositoryApi } from '../api/repository';
 import { addWorkspaceFile, createCodeWorkspace, deleteWorkspaceFile, loadWorkspaceRepository,
   restoreWorkspaceFile, validateGitRepository } from '../lib/codeWorkspace';
-import type { CodeWorkspace, GitRepository } from '../types/codeWorkspace';
+import type { GitRepository } from '../types/codeWorkspace';
 import { useMutation } from './useMutation';
 
 export function useCodeWorkspace({ projectId, initialSource, repository }: {

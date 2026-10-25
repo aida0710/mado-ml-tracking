@@ -36,6 +36,8 @@ import { formatList, formatNote } from '../../i18n/textJoining';
 
 // The API names the offending parameter in this 422's message (domain/sweeps/searchSpace.ts).
 const SPACE_INVALID_CODE = 'sweep_space_invalid';
+// The one row the form opens with; rows added later are `row-<n>`, so the ids never collide.
+const INITIAL_SEARCH_SPACE_ROW_ID = 'row-initial';
 
 /** A 422 about the search space: shown on the row it names, or above the rows. */
 interface SpaceError {
@@ -59,9 +61,12 @@ export function CreateSweepDialog({
   onCreated: (sweep: Sweep) => void;
 }) {
   useLocale();
+  // Rows added later are numbered from the counter, which only event handlers advance.
   const nextRowId = useRef(0);
   const createRowId = () => `row-${nextRowId.current++}`;
-  const [form, setForm] = useState<SweepFormValues>(() => initialSweepForm(tasks[0]?.id ?? '', createRowId));
+  const [form, setForm] = useState<SweepFormValues>(() =>
+    initialSweepForm(tasks[0]?.id ?? '', () => INITIAL_SEARCH_SPACE_ROW_ID),
+  );
   const [isSubmitted, setSubmitted] = useState(false);
   const [spaceError, setSpaceError] = useState<SpaceError | null>(null);
   const mutation = useMutation();

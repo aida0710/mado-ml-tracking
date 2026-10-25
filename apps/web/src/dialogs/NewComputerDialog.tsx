@@ -158,7 +158,6 @@ export function NewComputerDialog({
             <ComputerConnectionFields
               values={form.values}
               onChange={form.changeValues}
-              target={steps.saved ?? undefined}
               kindPicker={kindPicker}
               workers={choice.workers.value ?? []}
               worker={choice.worker}

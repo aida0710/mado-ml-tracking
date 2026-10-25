@@ -108,7 +108,6 @@ export function ComputerEditDialog({
               <ComputerConnectionFields
                 values={form.values}
                 onChange={form.changeValues}
-                target={target}
                 kindPicker={
                   <ComputerKindPicker
                     kinds={kinds}

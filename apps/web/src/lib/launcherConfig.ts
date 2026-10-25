@@ -7,6 +7,8 @@ const EXAMPLE_STATE_DIRECTORY = '/var/lib/mado-tracking-launcher';
 const EXAMPLE_REGISTRY_SECRET_FILE = '/run/secrets/mado-tracking-launcher/registry.json';
 // How often the launcher reads its configuration and claims submissions, as in deploy/sites.
 const EXAMPLE_POLL_SECONDS = 10;
+// Replaced in the comment line and escaped in TOML strings, where they would break the file.
+// eslint-disable-next-line no-control-regex -- matching control characters is the point here
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/g;
 const UNICODE_ESCAPE_DIGITS = 4;
 const HEXADECIMAL = 16;

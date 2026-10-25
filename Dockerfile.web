@@ -1,4 +1,6 @@
-FROM node:22-bookworm-slim AS build
+# Dependabot updates the pinned digests.
+# node:22-bookworm-slim
+FROM node:22-bookworm-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436 AS build
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY apps ./apps
@@ -6,7 +8,10 @@ COPY packages ./packages
 # The Web offers these job shells as templates and reads them at build time.
 COPY deploy/sites/examples ./deploy/sites/examples
 RUN npm ci && npm run build --workspace @mmt/web
-FROM nginx:1.28-alpine
+
+# nginxinc/nginx-unprivileged:1.28-alpine, as Mado's web image. nginx runs as its own user (uid 101)
+# instead of root, so it listens on 8080: ports below 1024 need root.
+FROM nginxinc/nginx-unprivileged:1.28-alpine@sha256:7377697a821c131a924a7105fafbe7414db4e9fcc77a6f08f776f33f141ec3f8
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
-EXPOSE 80
+EXPOSE 8080

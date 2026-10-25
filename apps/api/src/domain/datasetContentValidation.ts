@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MAX_DATASET_VERSION_FILES } from '@mmt/contracts';
+import { containsControlCharacter, MAX_DATASET_VERSION_FILES } from '@mmt/contracts';
 import {
   externalDatasetRefSchema,
   isRelativeFilePath,
@@ -17,13 +17,12 @@ const MAX_CURSOR_LENGTH = 4096;
 const DEFAULT_FILE_PAGE_LIMIT = 1000;
 const MAX_FILE_PAGE_LIMIT = 1000;
 // Control characters make paths unsafe to write on the worker host and to show in the UI.
-const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/;
 
 export function isDatasetFilePath(path: string): boolean {
   return (
     path.length <= MAX_DATASET_FILE_PATH_LENGTH &&
     isRelativeFilePath(path) &&
-    !CONTROL_CHARACTER_PATTERN.test(path)
+    !containsControlCharacter(path)
   );
 }
 

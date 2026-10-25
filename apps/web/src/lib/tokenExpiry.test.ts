@@ -20,18 +20,16 @@ describe('API tokenの有効期間の指定', () => {
   ] as const)('任意の%s単位の期間%sを未来の日時へ変換する', (unit, duration, expiresAt) => {
     expect(resolveTokenExpiryTimestamp({ ...custom, unit, duration }, now)).toBe(expiresAt);
   });
-  it.each(['', '0', '-1', 'NaN', 'Infinity', '100000000000000'])
-    ('使用できない期間%sは発行前に拒否する', duration => {
-      expect(resolveTokenExpiryTimestamp({ ...custom, duration }, now)).toBeUndefined();
-    });
+  it.each(['', '0', '-1', 'NaN', 'Infinity', '100000000000000'])('使用できない期間%sは発行前に拒否する', duration => {
+    expect(resolveTokenExpiryTimestamp({ ...custom, duration }, now)).toBeUndefined();
+  });
   it('カレンダーの日時はブラウザの現地時刻としてAPIのUTC日時へ変換する', () => {
     expect(resolveTokenExpiryTimestamp({ ...custom, option: 'calendar', dateTime: '2046-10-12T16:30' }, now))
       .toBe(new Date(2046, 9, 12, 16, 30).toISOString());
   });
-  it.each(['', '2000-01-01T00:00', '2046-02-30T12:00', '2046-10-12T25:00', 'invalid'])
-    ('過去・存在しないカレンダーの日時%sは発行前に拒否する', dateTime => {
-      expect(resolveTokenExpiryTimestamp({ ...custom, option: 'calendar', dateTime }, now)).toBeUndefined();
-    });
+  it.each(['', '2000-01-01T00:00', '2046-02-30T12:00', '2046-10-12T25:00', 'invalid'])('過去・存在しないカレンダーの日時%sは発行前に拒否する', dateTime => {
+    expect(resolveTokenExpiryTimestamp({ ...custom, option: 'calendar', dateTime }, now)).toBeUndefined();
+  });
   it('カレンダーへ切り替えると既に選んだ有効期間の期限が入る', () => {
     const selection = changeTokenExpiryOption({ ...custom, option: '7' }, 'calendar', now);
     expect(selection.dateTime).toBe(formatLocalDateTimeInput(new Date('2026-10-19T00:00:00Z')));

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { containsControlCharacter } from '@mmt/contracts';
 import { hasAncestorPathConflict } from './codePathConflicts.js';
 
 // Registry JSON is limited to 4 MiB; leave space for commands and metadata.
@@ -12,7 +13,8 @@ export function isSafeCodePath(path: string): boolean {
     !!path &&
     !path.startsWith('/') &&
     !/^[A-Za-z]:/.test(path) &&
-    !/[\\\x00-\x1f\x7f]/.test(path) &&
+    !path.includes('\\') &&
+    !containsControlCharacter(path) &&
     path
       .split('/')
       .every((part) => !!part && part !== '.' && part !== '..' && part.toLowerCase() !== '.git')
@@ -26,7 +28,7 @@ export const codeFilePathSchema = z
   .refine(isSafeCodePath, 'A safe relative code path outside .git is required');
 
 export function isGitSourceUrl(value: string): boolean {
-  if (/[\s\x00-\x1f\x7f]/.test(value)) return false;
+  if (/\s/.test(value) || containsControlCharacter(value)) return false;
   if (/^git@[\w.-]+:[^\s\0]+$/.test(value)) return true;
   try {
     const url = new URL(value);

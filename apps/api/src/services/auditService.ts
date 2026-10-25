@@ -18,7 +18,7 @@ import {
 import { requireGlobalAdmin, requireProject, requireScope } from './accessService.js';
 
 // Internal callers such as the demo seed have no HTTP request to attribute.
-export const NO_REQUEST_METADATA: RequestMetadata = { ip: null, userAgent: null };
+export const NO_REQUEST_METADATA: RequestMetadata = { ipAddress: null, userAgent: null };
 
 // Only authorization refusals are recorded as denied; validation and missing resources are not.
 export const DENIED_STATUSES: ReadonlySet<number> = new Set([403, 409]);

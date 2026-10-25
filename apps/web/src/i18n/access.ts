@@ -34,7 +34,7 @@ export const accessText = localized({
   auditActorSystem: 'システム',
   auditOutcomeSuccess: '成功',
   auditOutcomeDenied: '拒否',
-  auditOutcomeFailed: '失敗',
+  auditOutcomeFailure: '失敗',
   auditOutcomeAll: 'すべての結果',
   auditHideSignIns: 'ログイン・ログアウトの記録を隠す',
   auditProject: 'Project',

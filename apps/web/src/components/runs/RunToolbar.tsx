@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Columns3, Download, Search } from 'lucide-react';
 import type { RunKind, RunStatus } from '@mmt/contracts';
 import { ErrorNotice } from '../Feedback';
@@ -59,10 +59,13 @@ export function RunToolbar({
   // The filter the last search refused; its message is put into words on each render, so it
   // follows a change of display language.
   const [rejectedFilter, setRejectedFilter] = useState<string | null>(null);
-  useEffect(() => {
+  // A search applied elsewhere (a saved view, the address) replaces what is typed here.
+  const [appliedSearchText, setAppliedSearchText] = useState(searchText);
+  if (appliedSearchText !== searchText) {
+    setAppliedSearchText(searchText);
     setSearchInput(searchText);
     setRejectedFilter(null);
-  }, [searchText]);
+  }
   const kindValue = kinds.join(KIND_OPTION_SEPARATOR);
   const sortedMetric = parseMetricRunSort(sort);
   // Keep the current metric order selectable even when this page lacks that metric.

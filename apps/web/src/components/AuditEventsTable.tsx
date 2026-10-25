@@ -9,7 +9,7 @@ import { accessText } from '../i18n/access';
 const outcomeLabels: Record<AuditEvent['outcome'], string> = {
   get success() { return accessText.auditOutcomeSuccess; },
   get denied() { return accessText.auditOutcomeDenied; },
-  get failed() { return accessText.auditOutcomeFailed; },
+  get failure() { return accessText.auditOutcomeFailure; },
 };
 
 /** Audit events, newest first. `showProject` adds the Project column for the global log. */

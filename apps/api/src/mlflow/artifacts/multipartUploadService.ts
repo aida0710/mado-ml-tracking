@@ -2,7 +2,7 @@ import type { Readable } from 'node:stream';
 import { setTimeout as delay } from 'node:timers/promises';
 import type { User } from '@mmt/contracts';
 import type { ArtifactStores } from '@mmt/platform';
-import { first, transaction, type Connection, type Database } from '../../db/database.js';
+import { first, transaction, type Database } from '../../db/database.js';
 import { DomainError } from '../../domain/errors.js';
 import { userColumns } from '../../repositories/identityRepository.js';
 import type { ArtifactUploadRecord } from '../../repositories/artifactUploadRepository.js';

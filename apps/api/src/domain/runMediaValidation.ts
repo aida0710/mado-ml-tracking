@@ -1,4 +1,5 @@
 import {
+  containsControlCharacter,
   MEDIA_COMPARE_MAX_RUNS,
   MEDIA_COMPARE_MAX_STEPS,
   MEDIA_TABLE_PAGE_MAX_ROWS,
@@ -23,7 +24,7 @@ export const runMediaKeySchema = z
   .string()
   .min(1)
   .max(RUN_MEDIA_KEY_MAX_LENGTH)
-  .refine((key) => !/[\u0000-\u001f\u007f]/.test(key), 'Control characters are not allowed');
+  .refine((key) => !containsControlCharacter(key), 'Control characters are not allowed');
 
 const runMediaCreateItemSchema = z.strictObject({
   id: uuidSchema.transform((id) => id.toLowerCase()).optional(),

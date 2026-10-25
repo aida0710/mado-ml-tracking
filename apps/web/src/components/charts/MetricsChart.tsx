@@ -80,7 +80,10 @@ export function MetricsChart({
       ),
     [visibleLines, xScale],
   );
-  const xDomain = zoomRange ? ([zoomRange.min, zoomRange.max] as [number, number]) : fullXExtent;
+  const xDomain = useMemo(
+    () => (zoomRange ? ([zoomRange.min, zoomRange.max] as [number, number]) : fullXExtent),
+    [zoomRange, fullXExtent],
+  );
   const yDomain = useMemo(
     () =>
       xDomain &&

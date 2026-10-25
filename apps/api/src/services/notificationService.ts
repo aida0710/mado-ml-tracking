@@ -249,7 +249,7 @@ export class NotificationService {
       await writeAuditEvent(this.options.database, {
         ...draft,
         projectId: channel.projectId,
-        outcome: result.delivered ? 'success' : 'failed',
+        outcome: result.delivered ? 'success' : 'failure',
         details: { kind: channel.kind, error: result.error },
       });
       return result;

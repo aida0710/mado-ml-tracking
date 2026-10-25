@@ -38,7 +38,7 @@ description: ログイン、権限、token、ユーザー、保存先、通知�
 - 権限不足（403）と競合（409）で断った操作は、「拒否」として`details.code`（APIのエラーコード）つきで残します。
 - 入力の誤りや、存在しない対象への操作は記録しません。ログインの回数制限で断った試行も記録しません。
 - パスワード、tokenの値とハッシュ、シークレット、通知先のメールアドレスは記録しません。
-- 接続元のIPアドレスとUser-Agentを残します。IPアドレスはAPIが受けた接続の相手です。前段のproxyを通す構成では、proxyのアドレスになります（`X-Forwarded-For`などのヘッダーは信用しません）。
+- 接続元のIPアドレスとUser-Agentを残します。IPアドレスは、APIの前にある`MMT_TRUSTED_PROXY_HOPS`段のproxyが`X-Forwarded-For`に足した接続元です（それより左の値は利用者が書き換えられるので読みません。[環境変数](/reference/environment)）。
 
 ## 主な操作
 
@@ -82,7 +82,7 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" \
 | --- | --- |
 | `action` | `auth.oidc.denied` |
 | `actorUserId` | 操作したユーザーのID |
-| `outcome` | `success`、`denied`、`failed` |
+| `outcome` | `success`、`denied`、`failure` |
 | `hideSignIns` | `true`で、ログイン・ログアウトとIdPの同期・再確認（`auth.login`、`auth.logout`、`auth.oidc.sync`、`auth.oidc.recheck`）を除く |
 | `projectId`（全体の一覧だけ） | ProjectのID |
 

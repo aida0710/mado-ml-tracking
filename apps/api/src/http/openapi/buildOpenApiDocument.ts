@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import { apiErrorSchema, jsonValueSchema } from '@mmt/contracts/schemas';
 import { DATASET_FOLDER_UPLOAD_FOLDER_PATTERN } from '@mmt/contracts';
+import { APPLICATION_VERSION } from '../../applicationVersion.js';
 import { SESSION_COOKIE } from '../authMiddleware.js';
 import { MAX_JSON_BODY_BYTES } from '../requestBodyLimits.js';
 import { JsonSchemaComponents, type JsonSchema } from './jsonSchemaComponents.js';
@@ -14,8 +15,6 @@ import { errorsOf, jobTokenAccess } from './operationErrors.js';
 import { NATIVE_ROUTES } from './routeCatalog.js';
 
 export const OPENAPI_VERSION = '3.1.0';
-// The contract version of docs/api-contract.md ("API契約 v0.1").
-const API_CONTRACT_VERSION = '0.1';
 
 const DESCRIPTION = [
   'mado ML Tracking の独自API（native API）。',
@@ -183,7 +182,8 @@ export function buildOpenApiDocument(
     openapi: OPENAPI_VERSION,
     info: {
       title: 'mado ML Tracking native API',
-      version: API_CONTRACT_VERSION,
+      // The document describes the API of this release, so it carries the release version.
+      version: APPLICATION_VERSION,
       description: DESCRIPTION,
     },
     servers: [{ url: '/' }],

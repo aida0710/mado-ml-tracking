@@ -29,7 +29,6 @@ const readFixture = (name) => readFile(new URL(name, fixtureDirectory));
 const TABLE_ROW_COUNT = 60;
 
 const projectId = '00000000-0000-4000-8000-000000000001';
-const otherProjectId = '99999999-9999-4999-8999-999999999999';
 const runA = { id: '00000000-0000-4000-8000-0000000000a1', name: 'run-a（lr=1e-3）' };
 const runB = { id: '00000000-0000-4000-8000-0000000000b1', name: 'run-b（lr=3e-4）' };
 let sequence = 1000;

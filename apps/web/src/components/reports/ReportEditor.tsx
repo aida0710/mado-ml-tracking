@@ -1,5 +1,5 @@
 import { useLocale } from '../../i18n/useLocale';
-import { Fragment, useId, useMemo, useRef, useState } from 'react';
+import { Fragment, useId, useMemo, useState } from 'react';
 import { FileText, LayoutGrid } from 'lucide-react';
 import {
   REPORT_MESSAGE_MAX_LENGTH,
@@ -65,8 +65,8 @@ export function ReportEditor({
   const [refreshIds, setRefreshIds] = useState<ReadonlySet<string>>(new Set());
   const [newEmbed, setNewEmbed] = useState<PendingEmbed | null>(null);
   const saving = useReportSave(projectId, document.report.id);
-  const initial = useRef(JSON.stringify([base.title, base.blocks]));
-  const isDirty = JSON.stringify([title, blocks]) !== initial.current || message !== '' || refreshIds.size > 0;
+  const [initialContent] = useState(() => JSON.stringify([base.title, base.blocks]));
+  const isDirty = JSON.stringify([title, blocks]) !== initialContent || message !== '' || refreshIds.size > 0;
   const unsaved = useUnsavedChanges(isDirty, saving.pending, { onNavigationDiscard: onCancel });
 
   const savedBlocks = useMemo(() => new Map(base.blocks.map((block) => [block.id, JSON.stringify(block)])), [base.blocks]);

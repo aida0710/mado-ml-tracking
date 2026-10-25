@@ -41,9 +41,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      - run: npm run lint
       - run: npm run build
       - run: npm test
       - run: node --test scripts/release/bundle.node-test.mjs
+      # As in Mado's CI: known vulnerabilities in the dependencies that ship (devDependencies excluded).
+      - run: npm audit --omit=dev
 
   python:
     name: Python SDK and worker

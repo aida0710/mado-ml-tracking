@@ -154,7 +154,7 @@ With `--worker-id` it reads the installed environment file; without it, the curr
 
 ## API server commands
 
-Run these in the API server's repository. With Docker Compose, prefix them with `docker compose run --rm api`.
+Run these in the API server's repository. With Docker Compose, prefix them with `docker compose run --rm api`. When running from source without Compose, build the API first with `npm run build -w @mmt/api`.
 
 | Command | Content |
 | --- | --- |

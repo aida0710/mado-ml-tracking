@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 import type { ChartPanelLayout } from '@mmt/contracts';
+import { useLatestRef } from './useLatestRef';
 import { parseChartPanelLayout } from '../lib/chartPanelLayout';
 
 // The chart panels a user arranged, per Project and page, kept in this browser. Viewers arrange
@@ -62,8 +63,8 @@ export function useChartPanelLayout(
   const storedLayout = stored.key === key ? stored.layout : null;
   const chosenLayout = source ? source.layout : storedLayout;
   const layout = chosenLayout ?? defaultLayout;
-  const layoutRef = useRef(layout);
-  layoutRef.current = layout;
+  // updateLayout also writes the ref, so two changes before the next render build on each other.
+  const layoutRef = useLatestRef(layout);
 
   const saveLayout = useCallback(
     (next: ChartPanelLayout | null) => {
@@ -82,7 +83,7 @@ export function useChartPanelLayout(
       layoutRef.current = next;
       saveLayout(next);
     },
-    [saveLayout],
+    [layoutRef, saveLayout],
   );
   const resetLayout = useCallback(() => saveLayout(null), [saveLayout]);
   return {

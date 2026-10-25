@@ -1,7 +1,8 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { Dialog, dialogClassName } from './Dialog';
+import { Dialog } from './Dialog';
+import { dialogClassName } from './dialogClassName';
 
 describe('dialogClassName', () => {
   it('既定では狭い幅で全画面になる', () => {

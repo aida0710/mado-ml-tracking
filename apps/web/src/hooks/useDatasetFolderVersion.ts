@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { Dataset, DatasetVersion, JsonObject } from '@mmt/contracts';
 import { registryApi } from '../api/registry';
 import {
@@ -12,6 +12,7 @@ import type { UploadSource } from '../lib/droppedFiles';
 import { sha256OfFile } from '../lib/fileSha256';
 import { useArtifactUploadQueue } from './useArtifactUploadQueue';
 import { useMutation } from './useMutation';
+import { useLatestRef } from './useLatestRef';
 
 /** Version fields sent with the file list once every upload has finished. */
 export interface DatasetFolderVersionFields {
@@ -57,8 +58,8 @@ export function useDatasetFolderVersion({
   const fieldsRef = useRef<DatasetFolderVersionFields | null>(null);
   const attemptedRef = useRef(false);
   const matchingControllerRef = useRef<AbortController | null>(null);
-  const onCreatedRef = useRef(onCreated);
-  onCreatedRef.current = onCreated;
+  // Read after the request: the dialog may have re-rendered with a new callback meanwhile.
+  const onCreatedRef = useLatestRef(onCreated);
 
   const { storedArtifactIds, unfinishedItemIds, isUploaded } = datasetFolderProgress(entries, queue.items);
   const isWaitingForChoice = !queue.isActive && unfinishedItemIds.length > 0;
@@ -140,9 +141,12 @@ export function useDatasetFolderVersion({
     setEntries((previous) => previous.filter((entry) => storedArtifactIds.has(entry.artifactPath)));
   }
 
+  // Reads the latest entries and queue state; it runs once when the uploads finish.
+  const createOnceUploaded = useEffectEvent(() => {
+    if (!attemptedRef.current) void create();
+  });
   useEffect(() => {
-    if (isUploaded && !attemptedRef.current) void create();
-    // create reads the latest entries and queue state; it runs once when the uploads finish.
+    if (isUploaded) createOnceUploaded();
   }, [isUploaded]);
 
   // Closing the dialog stops reading files for the comparison.

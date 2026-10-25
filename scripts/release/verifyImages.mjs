@@ -72,8 +72,8 @@ try {
   const auth = requestFromApi('/api/auth/config');
   assert.equal(auth.status, 200);
   assert.equal(JSON.parse(auth.text).methods.local, true);
-  assert.match(runCompose(['exec', '-T', 'web', 'wget', '-qO-', 'http://127.0.0.1/']), /<html/);
-  assert.match(runCompose(['exec', '-T', 'web', 'wget', '-qO-', 'http://127.0.0.1/api/health']), /"status":"ok"/);
+  assert.match(runCompose(['exec', '-T', 'web', 'wget', '-qO-', 'http://127.0.0.1:8080/']), /<html/);
+  assert.match(runCompose(['exec', '-T', 'web', 'wget', '-qO-', 'http://127.0.0.1:8080/api/health']), /"status":"ok"/);
   const previewContainer = runCompose(['ps', '-q', 'preview']).trim();
   assert.equal(runCommand('docker', ['inspect', '--format', '{{.State.Running}}', previewContainer]).trim(), 'true');
   const references = await readReleaseImages({ tag, manifestDirectory, owner });

@@ -29,7 +29,6 @@ import { createHarness, entity, request, testDatabaseUrl, type Harness } from '.
 // falls back to a plain PUT only when the message starts with this exact text.
 const SDK_FALLBACK_MESSAGE =
   'Multipart upload is not supported for the current artifact repository';
-const PART_TOKEN_HEADER = 'X-MMT-Upload-Token';
 // One full part and a short final part, as the SDK splits a file just over one chunk.
 const CONTENT = Buffer.concat([Buffer.alloc(MULTIPART_MIN_PART_BYTES, 'w'), Buffer.from('tail')]);
 

@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { containsControlCharacter } from '@mmt/contracts';
 import { MULTIPART_MIN_PART_BYTES } from './artifactMultipart.js';
 
 export type StorageBackendKind = 'filesystem' | 's3';
@@ -85,7 +86,7 @@ function invalid(field: string): never {
 }
 
 function normalizeRootPath(rootPath: string | undefined): string {
-  if (!rootPath || !path.isAbsolute(rootPath) || /[\x00-\x1f\x7f]/.test(rootPath))
+  if (!rootPath || !path.isAbsolute(rootPath) || containsControlCharacter(rootPath))
     invalid('rootPath');
   // A path with .. segments would hide where Artifacts really land.
   if (rootPath.split(/[\\/]/).includes('..')) invalid('rootPath');

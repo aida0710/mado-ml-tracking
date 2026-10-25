@@ -46,6 +46,8 @@ export async function buildReleaseBundle({
     await writeFile(join(bundleDirectory, 'compose.yml'), stringify(compose));
     for (const [source, destination] of [
       ['deploy/release/README.md', 'README.md'],
+      ['LICENSE', 'LICENSE'],
+      ['NOTICE', 'NOTICE'],
       ['deploy/release/.env.example', '.env.example'],
       ['compose.filesystem-storage.yml', 'compose.filesystem-storage.yml'],
       ['deploy/sites', 'deploy/sites'],

@@ -48,7 +48,7 @@ describe.skipIf(!testDatabaseUrl)('監査ログの保存（独立PostgreSQL）',
         outcome: 'success',
         resourceType: 'project',
         details: { name: 'Example' },
-        ip: '192.0.2.1',
+        ipAddress: '192.0.2.1',
         userAgent: 'vitest',
       }),
     );
@@ -59,7 +59,7 @@ describe.skipIf(!testDatabaseUrl)('監査ログの保存（独立PostgreSQL）',
     await writeAuditEvent(harness.database, {
       actorType: 'system',
       action: 'fixture.appendOnly',
-      outcome: 'failed',
+      outcome: 'failure',
       resourceType: 'run',
     });
     await expect(

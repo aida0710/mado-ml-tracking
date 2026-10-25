@@ -1,13 +1,28 @@
-# Preview worker: the API code plus ffmpeg/ffprobe. Kept apart from Dockerfile.api so the API image
-# carries no media decoders; see apps/api/src/previewWorker.ts.
-FROM node:22-bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg ca-certificates && rm -rf /var/lib/apt/lists/*
+# Preview worker: the compiled API code plus ffmpeg/ffprobe. Kept apart from Dockerfile.api so the
+# API image carries no media decoders; see apps/api/src/previewWorker.ts. The build stage is the
+# same as Dockerfile.api's. Dependabot updates the pinned digests.
+# node:22-bookworm-slim
+FROM node:22-bookworm-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436 AS build
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY apps/api ./apps/api
 COPY apps/web/package.json ./apps/web/package.json
 COPY packages ./packages
-RUN npm ci && mkdir -p /app/var/artifacts /app/var/preview-work && chown -R node:node /app/var
+RUN npm ci && npm run build --workspace @mmt/api \
+  && rm -rf node_modules && npm ci --omit=dev --workspace @mmt/api \
+  && rm -rf apps/api/src apps/api/test apps/api/tsconfig*.json packages/*/src packages/*/tsconfig*.json
+
+# node:22-bookworm-slim
+FROM node:22-bookworm-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436 AS release
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY --from=build /app/package.json /app/package-lock.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/apps ./apps
+COPY --from=build /app/packages ./packages
+RUN mkdir -p /app/var/artifacts /app/var/preview-work && chown -R node:node /app/var
 ENV NODE_ENV=production MMT_PREVIEW_WORK_DIR=/app/var/preview-work
 USER node
-CMD ["npm", "run", "preview-worker", "--workspace", "@mmt/api"]
+# The same working directory as `npm run preview-worker --workspace @mmt/api`.
+WORKDIR /app/apps/api
+CMD ["node", "--conditions=compiled", "dist/previewWorker.js"]

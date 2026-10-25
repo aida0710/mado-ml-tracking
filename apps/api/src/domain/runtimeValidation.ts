@@ -1,11 +1,13 @@
 import { z } from 'zod';
+import { containsControlCharacter } from '@mmt/contracts';
 
 export const runtimeKindSchema = z.enum(['python', 'docker', 'singularity', 'apptainer']);
 
 function isContainerAbsolutePath(value: string): boolean {
   return (
     value.startsWith('/') &&
-    !/[\\\x00-\x1f\x7f]/.test(value) &&
+    !value.includes('\\') &&
+    !containsControlCharacter(value) &&
     value.split('/').every((part) => part !== '.' && part !== '..')
   );
 }

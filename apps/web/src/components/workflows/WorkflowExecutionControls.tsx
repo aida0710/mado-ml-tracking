@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useId, useState } from 'react';
 import type { WorkflowExecution, WorkflowExecutionSummary } from '@mmt/contracts';
 import { WorkflowLaunchDialog } from '../../dialogs/WorkflowLaunchDialog';
 import { WorkflowCancelDialog } from '../../dialogs/WorkflowCancelDialog';
@@ -54,9 +54,7 @@ export function WorkflowExecutionControls({
   // A confirmation belongs to the execution and the state it was opened for. Once the execution
   // ends, is stopped from elsewhere or another one is shown, it closes and does not come back.
   const isConfirming = confirming?.executionId === execution.id && confirming.action === action;
-  useEffect(() => {
-    if (confirming && !isConfirming) setConfirming(null);
-  }, [confirming, isConfirming]);
+  if (confirming && !isConfirming) setConfirming(null);
   if (!canEdit || !action) return null;
   const confirm = () => setConfirming({ action, executionId: execution.id });
   const close = () => setConfirming(null);

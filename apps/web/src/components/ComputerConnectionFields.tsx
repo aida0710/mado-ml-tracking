@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { ComputeTarget, TargetCheckWorker, TargetCheckWorkerPresence } from '@mmt/contracts';
+import type { TargetCheckWorker, TargetCheckWorkerPresence } from '@mmt/contracts';
 import type { FieldSuggestions, FormField, FormValues } from '../types/form';
 import { CheckWorkerPicker } from './CheckWorkerPicker';
 import { ComputerVisibilityField } from './ComputerVisibilityField';
@@ -27,7 +27,6 @@ function suggestWorkerPaths(paths: readonly string[]) {
 export function ComputerConnectionFields({
   values,
   onChange,
-  target,
   kindPicker,
   workers,
   worker,
@@ -36,8 +35,6 @@ export function ComputerConnectionFields({
 }: {
   values: FormValues;
   onChange: (values: FormValues) => void;
-  /** The computer being edited, or the one step 1 saved; absent before. */
-  target?: Pick<ComputeTarget, 'ownerUserId'>;
   /** SSH or Local (and Site while a computer is added), shown after the name. */
   kindPicker?: ReactNode;
   workers: readonly TargetCheckWorkerPresence[];
