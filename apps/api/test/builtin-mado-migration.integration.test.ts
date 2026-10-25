@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { migrate } from '../src/db/migrate.js';
 import { createHarness, request, testDatabaseUrl } from './harness.js';
 import { projectFixture } from './fixtures.js';
-import { applyMigrationsBefore } from './migrationFixtures.js';
+import { applyAuditLogMigrationAhead, applyMigrationsBefore } from './migrationFixtures.js';
 import { MADO_CONFIG_FIXTURE } from './pluginFixtures.js';
 
 describe.skipIf(!testDatabaseUrl)('Madoの現行形式への移行（独立PostgreSQL）', () => {
@@ -11,6 +11,7 @@ describe.skipIf(!testDatabaseUrl)('Madoの現行形式への移行（独立Postg
     const harness = await createHarness({ applyMigrations: false });
     try {
       await applyMigrationsBefore(harness.database, '069_require_current_protocol.sql');
+      await applyAuditLogMigrationAhead(harness.database);
       const fixture = await projectFixture(harness);
       const oldPlugin = randomUUID();
       const pendingPlugin = randomUUID();

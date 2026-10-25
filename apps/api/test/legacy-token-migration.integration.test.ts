@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { migrate } from '../src/db/migrate.js';
 import { createHarness, testDatabaseUrl } from './harness.js';
 import { projectFixture } from './fixtures.js';
-import { applyMigrationsBefore } from './migrationFixtures.js';
+import { applyAuditLogMigrationAhead, applyMigrationsBefore } from './migrationFixtures.js';
 
 const FIRST_PENDING = '068_revoke_legacy_tokens.sql';
 
@@ -12,6 +12,7 @@ describe.skipIf(!testDatabaseUrl)('旧形式のtokenの失効（独立PostgreSQL
     const harness = await createHarness({ applyMigrations: false });
     try {
       await applyMigrationsBefore(harness.database, FIRST_PENDING);
+      await applyAuditLogMigrationAhead(harness.database);
       const fixture = await projectFixture(harness);
       async function insertToken(token: {
         name: string;

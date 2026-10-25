@@ -349,7 +349,7 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独
       expect(limited.status).toBe(429);
       expect(Number(limited.headers.get('Retry-After'))).toBeGreaterThan(0);
       expect((await auditRows('auth.password.change')).map((row) => row.outcome)).toEqual(
-        Array(10).fill('failed'),
+        Array(10).fill('failure'),
       );
     });
 
