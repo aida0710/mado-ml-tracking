@@ -12,10 +12,10 @@ import {
 import {
   RunNameCell,
   RunSelectCheckbox,
-  shownRunColumns,
   ShownRunsCheckbox,
   type RunListSelection,
 } from './RunTableCells';
+import { shownRunColumns } from './runTableColumns';
 import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 

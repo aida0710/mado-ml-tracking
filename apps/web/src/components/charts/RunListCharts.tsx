@@ -1,7 +1,8 @@
 import { useId, useMemo, useState } from 'react';
 import type { Run, RunGroupBy, RunSearchRequest } from '@mmt/contracts';
 import { ChartPanelGrid, type ChartLayoutChange } from './ChartPanelGrid';
-import { isCompleteGrouping, RunGroupingControl } from './RunGroupingControl';
+import { RunGroupingControl } from './RunGroupingControl';
+import { isCompleteGrouping } from '../../lib/runGrouping';
 import { RunAnalysisPanel } from '../analysis/RunAnalysisPanel';
 import { trackingApi } from '../../api/tracking';
 import { useChartPanelLayout } from '../../hooks/useChartPanelLayout';
