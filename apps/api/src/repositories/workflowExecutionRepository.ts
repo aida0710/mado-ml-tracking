@@ -107,7 +107,7 @@ export async function findWorkflowExecutionSummary(
     `SELECT ${workflowExecutionColumns} FROM workflow_executions WHERE project_id=$1 AND id=$2 ${reference.lock ? 'FOR UPDATE' : ''}`,
     [reference.projectId, reference.id],
   );
-  if (!execution) notFound('WorkflowExecution');
+  if (!execution) notFound('workflow execution');
   return execution;
 }
 

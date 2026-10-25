@@ -106,7 +106,7 @@ function createChoicesApi() {
     const method = request.method();
     const reply = (payload, status = 200) =>
       route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(payload) });
-    const notFound = (entity) => reply({ error: `${entity}が見つかりません`, code: 'not_found' }, 404);
+    const notFound = (entity) => reply({ error: `${entity} not found`, code: 'not_found' }, 404);
     const projectPath = `/projects/${project.id}`;
     if (path === `${projectPath}/artifacts` && method === 'PUT') await heldUploads.gate;
     // The shared mock answers the families and the code versions by name; the rule's metric keys

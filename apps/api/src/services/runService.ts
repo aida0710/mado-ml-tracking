@@ -52,7 +52,11 @@ export async function assertRunRecordsWritable(
   if (!isTerminalStatus(run.status)) return;
   const job = await first(connection, 'SELECT id FROM jobs WHERE run_id=$1', [run.id]);
   if (job)
-    throw new DomainError(409, 'Jobが終了したRunには記録を追加・変更できません', 'run_finalized');
+    throw new DomainError({
+      status: 409,
+      code: 'run_finalized',
+      message: 'records cannot be added to or changed in a run whose job has ended',
+    });
 }
 
 export class RunService {
@@ -118,7 +122,11 @@ export class RunService {
     }
     const mode = input.executionMode ?? 'run';
     if (!code && mode === 'test')
-      throw new DomainError(422, 'テストにはCodeVersionが必要です', 'code_required');
+      throw new DomainError({
+        status: 422,
+        code: 'code_required',
+        message: 'a test requires a code version',
+      });
     const snapshot = code ? createExecutionSnapshot(code, mode) : null;
     return (await first<Run>(
       connection,
@@ -170,18 +178,18 @@ export class RunService {
         (input.parameters || input.environment) &&
         (await findOriginStepExecutionOfRun(connection, { projectId, runId: run.id }))
       )
-        throw new DomainError(
-          409,
-          'ワークフローの実行設定は固定されています。新しいバージョンを作成してください',
-          'workflow_run_fixed',
-        );
+        throw new DomainError({
+          status: 409,
+          code: 'workflow_run_fixed',
+          message: 'the execution settings of the workflow are fixed; create a new version',
+        });
       if (input.tags || input.parameters) await assertRunRecordsWritable(connection, run);
       const isMlflowManaged = (run as Run & { mlflowManaged?: boolean }).mlflowManaged === true;
       if (isMlflowManaged && input.parameters) {
         for (const [key, value] of Object.entries(input.parameters)) {
-          if (typeof value !== 'string') conflict('MLflowのparamはstringで記録してください');
+          if (typeof value !== 'string') conflict('log MLflow params as strings');
           if (Object.hasOwn(run.parameters, key) && run.parameters[key] !== value)
-            conflict('記録済みMLflowのparamは変更できません');
+            conflict('logged MLflow params cannot be changed');
         }
       }
       let tags = input.tags && { ...input.tags };
@@ -206,9 +214,9 @@ export class RunService {
         [run.id],
       );
       if (job && job.status !== 'queued' && (input.parameters || input.environment))
-        conflict('Job実行開始後は実行設定を変更できません');
+        conflict('execution settings cannot be changed after the job has started');
       if (input.status) {
-        if (job) conflict('Jobが管理するRunの状態は変更できません');
+        if (job) conflict('the status of a run managed by a job cannot be changed');
         validateRunTransition(run.status, status);
       }
       const updated = (await first<Run>(

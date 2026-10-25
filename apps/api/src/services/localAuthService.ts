@@ -32,11 +32,11 @@ export interface LocalLogin {
 
 // One body for unknown users, wrong passwords, and disabled users so responses reveal nothing.
 function invalidCredentials(): DomainError {
-  return new DomainError(
-    401,
-    'ユーザー名またはパスワードが正しくありません',
-    'invalid_credentials',
-  );
+  return new DomainError({
+    status: 401,
+    code: 'invalid_credentials',
+    message: 'incorrect username or password',
+  });
 }
 
 export class LocalAuthService {
@@ -64,7 +64,11 @@ export class LocalAuthService {
     metadata: RequestMetadata,
   ): Promise<LocalLogin> {
     if (!this.config.localLoginEnabled)
-      throw new DomainError(404, 'ローカルアカウントのloginは無効です', 'local_login_disabled');
+      throw new DomainError({
+        status: 404,
+        code: 'local_login_disabled',
+        message: 'local account login is disabled',
+      });
     const username = input.username.trim().toLowerCase();
     const usernameKey = `local-login:username:${username}`;
     this.rateLimiter.consumeOrThrow(
@@ -136,24 +140,28 @@ export class LocalAuthService {
     metadata: RequestMetadata,
   ): Promise<void> {
     if (!principal.session)
-      throw new DomainError(403, 'パスワードの変更にはloginが必要です', 'session_required');
+      throw new DomainError({
+        status: 403,
+        code: 'session_required',
+        message: 'changing the password requires a signed-in session',
+      });
     const userId = principal.user.id;
     const credential = await findLocalCredential(this.database, userId);
     if (!credential)
-      throw new DomainError(
-        403,
-        'ローカルアカウントを持たないユーザーです',
-        'local_account_required',
-      );
+      throw new DomainError({
+        status: 403,
+        code: 'local_credential_unavailable',
+        message: 'the user has no local account',
+      });
     if (
       !isAcceptablePasswordLength(input.newPassword) ||
       input.newPassword === input.currentPassword
     )
-      throw new DomainError(
-        422,
-        '新しいパスワードは現在と異なる12〜1024 byteにしてください',
-        'weak_password',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'weak_password',
+        message: 'the new password must differ from the current one and be 12 to 1024 bytes',
+      });
     this.rateLimiter.consumeOrThrow(`current-password:user:${userId}`, CURRENT_PASSWORD_LIMIT);
     const newPasswordHash = await this.rateLimiter.passwordCheck(async () =>
       (await this.passwordHasher.verify(credential.passwordHash, input.currentPassword))
@@ -170,7 +178,11 @@ export class LocalAuthService {
     };
     if (!newPasswordHash) {
       await writeAuditEvent(this.database, { ...changeAudit, outcome: 'failure' });
-      throw new DomainError(401, '現在のパスワードが正しくありません', 'invalid_credentials');
+      throw new DomainError({
+        status: 400,
+        code: 'incorrect_password',
+        message: 'current password is incorrect',
+      });
     }
     await transaction(this.database, async (connection) => {
       const isReplaced = await replaceLocalPassword(connection, {
@@ -180,11 +192,11 @@ export class LocalAuthService {
         mustChangePassword: false,
       });
       if (!isReplaced)
-        throw new DomainError(
-          409,
-          'パスワードが別の操作で変更されました。もう一度loginしてください',
-          'password_changed_concurrently',
-        );
+        throw new DomainError({
+          status: 409,
+          code: 'password_changed_concurrently',
+          message: 'the password was changed by another operation; sign in again',
+        });
       await revokeOtherSessions(connection, {
         userId,
         keepTokenHash: principal.session!.tokenHash,

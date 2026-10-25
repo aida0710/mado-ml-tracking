@@ -24,7 +24,7 @@ export async function reserveModelVersion(
     'SELECT next_version::text AS next_version FROM models WHERE id=$1 AND project_id=$2 FOR UPDATE',
     [reservation.modelId, reservation.projectId],
   );
-  if (!model) notFound('Model');
+  if (!model) notFound('model');
   const requested = reservation.version;
   if (requested !== undefined) {
     if (isNumberedVersion(requested))
@@ -35,7 +35,7 @@ export async function reserveModelVersion(
     return requested;
   }
   if (BigInt(model.nextVersion) > MAX_NUMERIC_MODEL_VERSION)
-    conflict('モデルバージョンの採番上限に達しました');
+    conflict('the model version number has reached its limit');
   await connection.query('UPDATE models SET next_version=next_version+1 WHERE id=$1', [
     reservation.modelId,
   ]);

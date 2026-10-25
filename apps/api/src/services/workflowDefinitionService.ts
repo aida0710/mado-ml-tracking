@@ -132,11 +132,11 @@ export class WorkflowDefinitionService {
         lock: true,
       });
       if (workflow.latestRevision !== request.input.expectedRevision)
-        throw new DomainError(
-          409,
-          'ワークフローが更新されています。最新のバージョンを開いてください',
-          'workflow_revision_conflict',
-        );
+        throw new DomainError({
+          status: 409,
+          code: 'workflow_revision_conflict',
+          message: 'the workflow has been updated; open the latest version',
+        });
       const steps = await this.pinSteps(connection, { projectId, inputs: request.input.steps });
       return insertWorkflowVersion(connection, {
         workflow,
@@ -159,7 +159,7 @@ export class WorkflowDefinitionService {
       'SELECT * FROM experiment_tasks WHERE project_id=$1 AND id=ANY($2::uuid[]) ORDER BY id',
       [request.projectId, ids],
     );
-    if (candidates.length !== ids.length) notFound('Task');
+    if (candidates.length !== ids.length) notFound('task');
     // Task edits lock Experiment before Task; definitions use the same order.
     for (const experimentId of [...new Set(candidates.map((task) => task.experimentId))].sort())
       await lockActiveExperiment(connection, { projectId: request.projectId, id: experimentId });
@@ -181,17 +181,17 @@ export class WorkflowDefinitionService {
     const steps = request.inputs.map((step) => {
       const task = byId.get(step.taskId.toLowerCase())!;
       if (task.revision !== step.expectedTaskRevision)
-        throw new DomainError(
-          409,
-          'Taskが更新されています。最新の設定で保存してください',
-          'task_revision_conflict',
-        );
+        throw new DomainError({
+          status: 409,
+          code: 'task_revision_conflict',
+          message: 'the task has been updated; save with the latest settings',
+        });
       if (!task.targetId)
-        throw new DomainError(
-          422,
-          '各Taskに実行するコンピュータを設定してください',
-          'target_required',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'target_required',
+          message: 'set the computer to run on for each task',
+        });
       const { taskId: _taskId, expectedTaskRevision: _revision, ...definition } = step;
       return {
         ...definition,

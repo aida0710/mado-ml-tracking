@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { API_ERROR_CODES } from '../apiErrors.js';
 import type {
-  ApiError,
+  ApiErrorBody,
   AuthConfig,
   AuthMe,
   CurrentApiToken,
@@ -98,13 +99,12 @@ export const issuedTokenSchema = namedContractSchema(
   'IssuedToken',
   z.strictObject({ token: z.string(), item: tokenSummarySchema }),
 );
-/** Every native error body. `code` names the reason; `issues` is not filled by native routes. */
+/** 独自 API のエラー応答の本文。code ごとに、文に入る値を横の項目として足す。 */
 export const apiErrorSchema = namedContractSchema(
-  'ApiError',
-  z.strictObject({
+  'ApiErrorBody',
+  z.looseObject({
     error: z.string(),
-    code: z.string().optional(),
-    issues: z.unknown().optional(),
+    code: z.enum(API_ERROR_CODES),
   }),
 );
 
@@ -117,4 +117,4 @@ type _TokenSummary = Expect<MutuallyAssignable<z.infer<typeof tokenSummarySchema
 type _CurrentApiToken = Expect<
   MutuallyAssignable<z.infer<typeof currentApiTokenSchema>, CurrentApiToken>
 >;
-type _ApiError = Expect<MutuallyAssignable<z.infer<typeof apiErrorSchema>, ApiError>>;
+type _ApiErrorBody = Expect<MutuallyAssignable<z.infer<typeof apiErrorSchema>, ApiErrorBody>>;

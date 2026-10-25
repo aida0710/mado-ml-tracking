@@ -131,7 +131,7 @@ export function createProjectAdministration({ id, now, user, mainProject }) {
     // GET /projects/:p: an archived Project tells its members why it cannot be opened.
     if (projectMatch && !projectMatch[2] && method === 'GET') {
       const project = find(projectMatch[1]);
-      if (!project) return reply({ error: 'Projectが見つかりません', code: 'not_found' }, 404);
+      if (!project) return reply({ error: 'project not found', code: 'not_found' }, 404);
       if (project.archivedAt)
         return reply(
           {

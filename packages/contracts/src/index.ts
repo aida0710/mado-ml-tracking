@@ -84,6 +84,8 @@ export type { ServiceAccount, ServiceAccountCreate, ServiceAccountTokenCreate, S
 export { EXPLICIT_TOKEN_SCOPES, GLOBAL_TOKEN_SCOPES, TOKEN_SCOPE_REQUIRED_ROLE, TOKEN_SCOPES } from './serviceAccounts.js';
 export type { TokenPurpose } from './tokenPurposes.js';
 export { TOKEN_PURPOSE_LABELS, TOKEN_PURPOSE_SCOPES, TOKEN_PURPOSES } from './tokenPurposes.js';
+export { API_ERROR_CODES } from './apiErrors.js';
+export type { ApiErrorBody, ApiErrorCode, ApiErrorDetails, ApiErrorDetailValue } from './apiErrors.js';
 export type {
   PromotionCriterion,
   PromotionCriterionDirection,
@@ -187,7 +189,10 @@ export type {
   SweepTrialCounts,
   SweepTrialPage,
   SweepTrialState,
+  SweepEarlyTerminateViolation,
+  SweepSpaceViolation,
 } from './sweeps.js';
+export { SWEEP_EARLY_TERMINATE_VIOLATIONS, SWEEP_SPACE_VIOLATIONS } from './sweeps.js';
 export type {
   ImportanceUnavailableReason,
   ParameterExclusionReason,
@@ -747,8 +752,8 @@ export interface WorkerJob {
   codeVersion: CodeVersion;
   modelVersion: ModelVersion | null;
   inputDatasets: DatasetVersion[];
-  // Token for the Job's code (mmtj_). Set only when this claim/resume issued a new one; null
-  // for a running Job, whose process keeps the token the worker saved earlier.
+  // Job のコードに渡す token（mado_mtj_）。この claim・resume で新しく発行したときだけ入る。
+  // 実行中の Job では null で、プロセスは worker が前に保存した token を使い続ける。
   jobToken: string | null;
   // Set when the Run continues from a checkpoint; the worker verifies it before the entrypoint.
   resumeCheckpoint?: WorkerResumeCheckpoint | null;
@@ -895,11 +900,6 @@ export interface AuthConfig {
 export interface AuthMe {
   user: User;
   mustChangePassword: boolean;
-}
-export interface ApiError {
-  error: string;
-  code?: string;
-  issues?: unknown;
 }
 export type { TargetCheck, TargetCheckDirectory, TargetCheckDirectorySource, TargetCheckFailureReason, TargetCheckGpu, TargetCheckHost, TargetCheckItem, TargetCheckItemCode, TargetCheckItemName, TargetCheckItemStatus, TargetCheckKind, TargetCheckPython, TargetCheckRequest, TargetCheckResult, TargetCheckResultV2, TargetCheckStatus, TargetCheckWorker, TargetCheckWorkerPresence, TargetDirectoryEntry, TargetDirectoryListing, TargetDirectoryListingOutcome, TargetDirectoryListingRequest, TargetDirectoryListingResult, WorkerSshFiles, WorkerTargetCheck, WorkerTargetCheckClaim, WorkerTargetCheckComplete } from './targetChecks.js';
 export { MAX_TARGET_PATH_LENGTH, TARGET_CHECK_KINDS } from './targetChecks.js';

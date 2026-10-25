@@ -21,7 +21,11 @@ export interface RepositoryCommand {
 export type RepositoryCommandRunner = (command: RepositoryCommand) => Promise<Buffer>;
 
 function repositoryTimeoutError(): DomainError {
-  return new DomainError(502, 'Repositoryの読み込みがタイムアウトしました', 'repository_timeout');
+  return new DomainError({
+    status: 502,
+    code: 'repository_timeout',
+    message: 'reading the repository timed out',
+  });
 }
 
 async function validateDirectorySize(
@@ -37,11 +41,11 @@ async function validateDirectorySize(
     for (const entry of await readdir(current, { withFileTypes: true })) {
       if (Date.now() >= deadlineAt) throw repositoryTimeoutError();
       if (++entries > MAX_DIRECTORY_ENTRIES)
-        throw new DomainError(
-          413,
-          'Repositoryのファイル数が上限を超えています',
-          'repository_too_large',
-        );
+        throw new DomainError({
+          status: 413,
+          code: 'repository_too_large',
+          message: 'the repository has more files than the limit',
+        });
       const entryPath = path.join(current, entry.name);
       if (entry.isDirectory()) {
         directories.push(entryPath);
@@ -54,11 +58,11 @@ async function validateDirectorySize(
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
       }
       if (bytes > maxBytes)
-        throw new DomainError(
-          413,
-          'Repositoryの取得サイズが上限を超えています',
-          'repository_too_large',
-        );
+        throw new DomainError({
+          status: 413,
+          code: 'repository_too_large',
+          message: 'the repository download exceeds the size limit',
+        });
     }
   }
 }
@@ -100,11 +104,11 @@ export const runRepositoryCommand: RepositoryCommandRunner = async (command) => 
         terminate(
           error instanceof DomainError
             ? error
-            : new DomainError(
-                502,
-                'Repositoryの取得サイズを確認できません',
-                'repository_read_failed',
-              ),
+            : new DomainError({
+              status: 502,
+              code: 'repository_read_failed',
+              message: 'cannot check the repository download size',
+            }),
         ),
       )
       .finally(() => {
@@ -115,11 +119,11 @@ export const runRepositoryCommand: RepositoryCommandRunner = async (command) => 
     outputBytes += chunk.length;
     if (outputBytes > command.maxOutputBytes) {
       terminate(
-        new DomainError(
-          413,
-          'Repositoryの読み込みサイズが上限を超えています',
-          'repository_too_large',
-        ),
+        new DomainError({
+          status: 413,
+          code: 'repository_too_large',
+          message: 'the repository read exceeds the size limit',
+        }),
       );
       return;
     }
@@ -132,7 +136,11 @@ export const runRepositoryCommand: RepositoryCommandRunner = async (command) => 
   try {
     const exitCode = await new Promise<number | null>((resolve) => {
       child.once('error', () => {
-        failure ??= new DomainError(502, 'Repositoryを読み込めません', 'repository_read_failed');
+        failure ??= new DomainError({
+          status: 502,
+          code: 'repository_read_failed',
+          message: 'cannot read the repository',
+        });
       });
       child.once('close', (code) => {
         isClosed = true;
@@ -142,11 +150,11 @@ export const runRepositoryCommand: RepositoryCommandRunner = async (command) => 
     await directoryInspection;
     if (failure) throw failure;
     if (exitCode !== 0)
-      throw new DomainError(
-        502,
-        'Repositoryの固定commitを読み込めません',
-        'repository_read_failed',
-      );
+      throw new DomainError({
+        status: 502,
+        code: 'repository_read_failed',
+        message: 'cannot read the pinned commit of the repository',
+      });
     await validateDirectorySize(command.directory, command.maxDirectoryBytes, deadlineAt);
     if (failure) throw failure;
     return Buffer.concat(chunks, outputBytes);

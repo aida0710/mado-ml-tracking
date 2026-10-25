@@ -68,12 +68,12 @@ describe('内蔵Mado連携の接続確認と検索（アクセストークンの
 
   it('送信または読み取りを許可していないトークンは、データを参照する前に理由を示して拒否する', async () => {
     for (const [scopes, missing] of [
-      [['lineage:read'], 'DataLineageの送信'],
-      [['lineage:write', 'metrics:read'], 'DataLineageの読み取り'],
+      [['lineage:read'], 'lineage:write'],
+      [['lineage:write', 'metrics:read'], 'lineage:read'],
     ] as const) {
       const { plugin, requests } = madoFixture({ ...READ_AND_SEND, scopes: [...scopes] });
       await expect(plugin.checkConnection()).rejects.toMatchObject({
-        status: 422, code: 'plugin_token_scope_missing', message: expect.stringContaining(missing),
+        status: 422, code: 'plugin_token_scope_missing', details: { scopes: [missing] },
       });
       expect(requests().map((url) => url.pathname)).toEqual(['/api/mado/access-token']);
     }
@@ -83,7 +83,7 @@ describe('内蔵Mado連携の接続確認と検索（アクセストークンの
     const { plugin } = madoFixture({ ...READ_AND_SEND, namespaces: ['speech'] });
     await expect(plugin.checkConnection()).rejects.toMatchObject({
       status: 422, code: 'plugin_job_namespace_not_allowed',
-      message: expect.stringContaining(MADO_CONFIG_FIXTURE.jobNamespace),
+      details: { namespace: MADO_CONFIG_FIXTURE.jobNamespace },
     });
   });
 

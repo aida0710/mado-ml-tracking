@@ -11,7 +11,11 @@ const MAX_ARTIFACT_PATH_LENGTH = 1024;
 
 export function assertArtifactPath(path: string): void {
   if (!isRelativeFilePath(path) || path.length > MAX_ARTIFACT_PATH_LENGTH)
-    throw new DomainError(422, 'Artifactには安全な相対パスが必要です', 'invalid_artifact_path');
+    throw new DomainError({
+      status: 422,
+      code: 'invalid_artifact_path',
+      message: 'an artifact requires a safe relative path',
+    });
 }
 
 /** New Artifacts go to the Project's current backend, which must be configured on this server. */
@@ -26,7 +30,11 @@ export async function projectArtifactBackend(
     [projectId],
   ))!;
   if (!stores.backends().includes(project.artifactBackend))
-    throw new DomainError(503, 'Artifact保存先が設定されていません', 'backend_unavailable');
+    throw new DomainError({
+      status: 503,
+      code: 'backend_unavailable',
+      message: 'artifact storage is not configured',
+    });
   return project.artifactBackend;
 }
 

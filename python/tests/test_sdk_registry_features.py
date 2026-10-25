@@ -376,7 +376,7 @@ def test_owner_transfers_put_the_service_account_on_the_rule_the_policy_and_the_
 
 def test_service_account_token_expiry_is_sent_in_utc():
     client, requests = recording_client(
-        lambda _request: httpx.Response(201, json={"token": "mmt_value", "item": {"id": "token-1"}})
+        lambda _request: httpx.Response(201, json={"token": "mado_mt_value", "item": {"id": "token-1"}})
     )
     tokyo = timezone(timedelta(hours=9))
     with client:

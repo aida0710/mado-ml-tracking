@@ -62,7 +62,7 @@ export class ProjectService {
   async get(principal: Principal, projectId: string): Promise<Project> {
     await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
     const [project] = await this.selectOpenableProjects(principal, projectId);
-    if (!project) notFound('Project');
+    if (!project) notFound('project');
     return project;
   }
 
@@ -104,11 +104,11 @@ export class ProjectService {
       transaction(this.database, async (connection) => {
         requireScope(principal, 'admin');
         if (principal.token?.projectId)
-          throw new DomainError(
-            403,
-            'Project限定tokenではProjectを作成できません',
-            'project_forbidden',
-          );
+          throw new DomainError({
+            status: 403,
+            code: 'project_forbidden',
+            message: 'a token limited to a project cannot create projects',
+          });
         this.validateBackend(input.artifactBackend);
         const grants = initialMemberGrants(input.members, principal.user.id);
         assertGrantableUsers(
@@ -205,13 +205,13 @@ export class ProjectService {
         // Job creation shares this row lock (shareLiveProject), so no Job appears after the check.
         const project = await lockProjectLifecycle(connection, projectId);
         // Another archive may have committed since requireProject read the Project.
-        if (!project || project.archivedAt) notFound('Project');
+        if (!project || project.archivedAt) notFound('project');
         if (await hasActiveJobs(connection, projectId))
-          throw new DomainError(
-            409,
-            '待機中・実行中のJobがあるProjectはアーカイブできません',
-            'project_has_active_jobs',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'project_has_active_jobs',
+            message: 'a project with waiting or running jobs cannot be archived',
+          });
         await archiveProject(connection, { projectId, archivedBy: principal.user.id });
         await writeAuditEvent(connection, {
           ...draft,
@@ -248,7 +248,7 @@ export class ProjectService {
         await requireProject(connection, principal, { projectId, role: 'admin', scope: 'admin' });
         const adminGrants = await lockProjectAdminGrants(connection, projectId);
         const user = await findUser(connection, userId);
-        if (!user) notFound('User');
+        if (!user) notFound('user');
         const previousRole = await findDirectRole(connection, { projectId, userId });
         assertKeepsProjectAdmin(adminGrants, { kind: 'member', userId, role });
         await connection.query(
@@ -286,7 +286,7 @@ export class ProjectService {
         await requireProject(connection, principal, { projectId, role: 'admin', scope: 'admin' });
         const adminGrants = await lockProjectAdminGrants(connection, projectId);
         const previousRole = await findDirectRole(connection, { projectId, userId });
-        if (!previousRole) notFound('Projectメンバー');
+        if (!previousRole) notFound('project member');
         assertKeepsProjectAdmin(adminGrants, { kind: 'member', userId, role: null });
         await connection.query('DELETE FROM project_members WHERE project_id=$1 AND user_id=$2', [
           projectId,
@@ -322,7 +322,7 @@ export class ProjectService {
       `${experimentSelect} WHERE e.project_id=$1 AND e.id=$2 AND e.lifecycle_stage='active'`,
       [projectId, experimentId],
     );
-    if (!experiment) notFound('Experiment');
+    if (!experiment) notFound('experiment');
     return experiment;
   }
 
@@ -358,8 +358,8 @@ export class ProjectService {
           'SELECT name,lifecycle_stage FROM experiments WHERE project_id=$1 AND id=$2 FOR UPDATE',
           [projectId, experimentId],
         );
-        if (!current) notFound('Experiment');
-        if (current.lifecycleStage !== 'active') conflict('削除済みExperimentは変更できません');
+        if (!current) notFound('experiment');
+        if (current.lifecycleStage !== 'active') conflict('a deleted experiment cannot be changed');
         if (input.name !== undefined && input.name !== current.name) {
           const duplicate = await first(
             connection,
@@ -438,6 +438,10 @@ export class ProjectService {
 
   private validateBackend(backend: ArtifactBackend): void {
     if (!this.backends().includes(backend))
-      throw new DomainError(422, 'Artifact保存先が設定されていません', 'backend_unavailable');
+      throw new DomainError({
+        status: 422,
+        code: 'backend_unavailable',
+        message: 'artifact storage is not configured',
+      });
   }
 }

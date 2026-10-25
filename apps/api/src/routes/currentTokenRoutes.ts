@@ -9,11 +9,11 @@ export function currentTokenRoutes(): Hono<ApiEnvironment> {
   routes.get("/", (context) => {
     const { token } = principal(context);
     if (!token)
-      throw new DomainError(
-        400,
-        "API tokenで認証してください",
-        "api_token_required",
-      );
+      throw new DomainError({
+        status: 400,
+        code: "api_token_required",
+        message: 'authenticate with an API token',
+      });
     const current: CurrentApiToken = {
       id: token.id,
       projectId: token.projectId,

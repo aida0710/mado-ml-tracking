@@ -39,6 +39,10 @@ export class UserDirectoryService {
       projectId: principal.token?.projectId ?? null,
     });
     if (!isProjectAdmin)
-      throw new DomainError(403, 'Project管理者の権限が必要です', 'project_forbidden');
+      throw new DomainError({
+        status: 403,
+        code: 'project_forbidden',
+        message: 'project admin permission required',
+      });
   }
 }

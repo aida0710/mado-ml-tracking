@@ -56,7 +56,7 @@ def test_job_files_follow_the_array_order_and_only_they_hold_the_job_token():
     }
     for index in range(3):
         job = json.loads(files[f"jobs/{index}.json"][0])
-        assert job["job"]["arrayIndex"] == index and job["jobToken"].startswith("mmtj_")
+        assert job["job"]["arrayIndex"] == index and job["jobToken"].startswith("mado_mtj_")
     assert json.loads(files["api.json"][0]) == {"apiUrl": "https://runner.example.org"}
 
 

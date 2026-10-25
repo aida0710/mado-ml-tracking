@@ -75,9 +75,10 @@ export function assertNotFutureTimestamp(
   check: { now: Date; field: 'startedAt' | 'endedAt' },
 ): void {
   if (Date.parse(timestamp) - check.now.getTime() > SYNC_CLOCK_SKEW_SECONDS * 1000)
-    throw new DomainError(
-      422,
-      `${check.field}が現在時刻より${SYNC_CLOCK_SKEW_SECONDS}秒以上先です。記録したコンピュータの時計を確認してください`,
-      'sync_timestamp_in_future',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'sync_timestamp_in_future',
+      message: `${check.field} is ${SYNC_CLOCK_SKEW_SECONDS} seconds or more ahead of the current time; check the clock of the computer that recorded it`,
+      details: { field: check.field, maxSkewSeconds: SYNC_CLOCK_SKEW_SECONDS },
+    });
 }

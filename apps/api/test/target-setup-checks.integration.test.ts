@@ -423,7 +423,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
     };
     const leakedToken: TargetCheckResult = {
       ...setupResult,
-      pythons: [{ path: '/opt/mmt_abcdefghijklmnop/bin/python', version: null }],
+      pythons: [{ path: '/opt/mado_mtj_abcdefghijklmnop/bin/python', version: null }],
     };
     for (const result of [leaked, leakedToken]) {
       const response = await complete(fixture.setupToken, claimed.check.id, {

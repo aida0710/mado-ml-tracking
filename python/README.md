@@ -326,7 +326,7 @@ siteは、スーパーコンピュータやGPUサーバー、研究者のPCの�
 
 **launcher（`mado-tracking-launcher --config launcher.toml`）**
 
-launcherは全体管理者がWebで登録し、そのとき一度だけ表示されるtoken（`mmt_…`）をファイルに置きます。どのsiteを担当するかは、Webでsiteの設定にlauncherを選んで決めます。`launcher.toml`（`--config`か`MMT_LAUNCHER_CONFIG`）には起動に要るものだけを書きます。相対pathはこのファイルのディレクトリから読みます。
+launcherは全体管理者がWebで登録し、そのとき一度だけ表示されるtoken（`mado_mt_…`）をファイルに置きます。どのsiteを担当するかは、Webでsiteの設定にlauncherを選んで決めます。`launcher.toml`（`--config`か`MMT_LAUNCHER_CONFIG`）には起動に要るものだけを書きます。相対pathはこのファイルのディレクトリから読みます。
 
 ```toml
 api_url = "https://tracking.example.org"     # launcherから見たAPI

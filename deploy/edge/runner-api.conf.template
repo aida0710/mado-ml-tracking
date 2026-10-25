@@ -1,7 +1,7 @@
-# Edge nginx server blocks for the public runner API hostname. Runners on compute nodes outside
-# the LAN reach tracking through it with their Job token (mmtj_): only the routes a Job token can
-# use pass, plus signed hook webhooks. The browser UI, SSO, admin and every other API route stay
-# on the intranet hostname. See deploy/edge/README.md.
+# runner 用 API の公開 hostname の edge nginx の server block。LAN の外の計算ノードの runner は、
+# Job token（mado_mtj_）でこれを通って tracking に届く。通すのは Job token で使える route と、署名付きの
+# フックの webhook だけ。画面・SSO・管理 API とほかの API の route は intranet の hostname に残す。
+# deploy/edge/README.md を参照。
 #
 # Rendered by the nginx image's template step (/etc/nginx/templates/*.template, envsubst):
 #   MMT_RUNNER_API_HOSTNAME   the public hostname, also the name of its Let's Encrypt certificate
@@ -11,10 +11,10 @@
 # own $variables stay as they are. The maps and zones below belong to the http block, which
 # includes conf.d/*.conf.
 
-# A Job token: "Authorization: Bearer mmtj_<base64url>". API tokens (mmt_) and sessions never pass.
+# Job token は "Authorization: Bearer mado_mtj_<base64url>"。API token（mado_mt_）と session は通さない。
 map $http_authorization $mmt_runner_job_token {
-    default                             0;
-    "~^Bearer mmtj_[A-Za-z0-9_-]+$"     1;
+    default                                 0;
+    "~^Bearer mado_mtj_[A-Za-z0-9_-]+$"     1;
 }
 
 # Raw paths that nginx and the API could split differently: encoded '.', '/' or '\', a backslash
@@ -33,8 +33,8 @@ map $request_uri $mmt_runner_ambiguous_path {
 # own Project, Job and Run are the ones named. Anything else is not published here.
 map "$request_method $uri" $mmt_runner_route {
     default                                                                             "";
-    # Liveness, and the token's description (scopes, Job token or not).
-    "~^(GET|HEAD) /api/health$"                                                         job;
+    # ヘルスチェック（API では /api の外）と、token の説明（scope、Job token かどうか）。
+    "~^(GET|HEAD) /healthz$"                                                            job;
     "~^(GET|HEAD) /api/auth/token$"                                                     job;
     # Reads inside a Project: inputs, files, upstream Runs, child Jobs, upload sessions.
     "~^(GET|HEAD) /api/projects/[^/]+(/.*)?$"                                           job;
@@ -153,15 +153,26 @@ server {
     proxy_set_header Cookie "";
 
     if ($mmt_runner_ambiguous_path) {
-        return 400 '{"error":"このpathは受け付けません","code":"invalid_path"}\n';
+        return 400 '{"error":"this path is not accepted","code":"invalid_path"}\n';
+    }
+
+    # API のヘルスチェックも、公開 hostname では Job token を持つ runner にだけ答える。
+    location = /healthz {
+        if ($mmt_runner_route = "") {
+            return 404 '{"error":"API route not found","code":"not_found"}\n';
+        }
+        if ($mmt_runner_token_missing) {
+            return 401 '{"error":"this hostname accepts only Job tokens","code":"job_token_required"}\n';
+        }
+        proxy_pass http://${MMT_RUNNER_API_UPSTREAM};
     }
 
     location /api/ {
         if ($mmt_runner_route = "") {
-            return 404 '{"error":"APIが見つかりません","code":"not_found"}\n';
+            return 404 '{"error":"API route not found","code":"not_found"}\n';
         }
         if ($mmt_runner_token_missing) {
-            return 401 '{"error":"このhostnameではJob tokenだけを受け付けます","code":"job_token_required"}\n';
+            return 401 '{"error":"this hostname accepts only Job tokens","code":"job_token_required"}\n';
         }
         proxy_pass http://${MMT_RUNNER_API_UPSTREAM};
     }
@@ -170,7 +181,7 @@ server {
     # the edge only bounds the size and the rate per sender.
     location ~ ^/api/hooks/[^/]+/webhook$ {
         if ($mmt_runner_route = "") {
-            return 404 '{"error":"APIが見つかりません","code":"not_found"}\n';
+            return 404 '{"error":"API route not found","code":"not_found"}\n';
         }
         client_max_body_size 1m;
         limit_req zone=mmt_runner_webhooks burst=20 nodelay;
@@ -180,6 +191,6 @@ server {
     }
 
     location / {
-        return 404 '{"error":"APIが見つかりません","code":"not_found"}\n';
+        return 404 '{"error":"API route not found","code":"not_found"}\n';
     }
 }

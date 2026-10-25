@@ -13,7 +13,7 @@ The SDK, MLflow, workers, and CI authenticate to the API with API tokens. There 
 | Service Account token | A Service Account (not tied to a person) | **Service accounts** in **Project settings** | Long-running workers, automation, CI |
 | Job token | The creator of the Run | Workers receive one automatically for each Job | Recording to the Run from the running code. Nobody issues these by hand |
 
-The token value is shown only once, when it is issued. The database keeps only a hash and the first 12 characters, and no list shows the value.
+The token value is shown only once, when it is issued. The database keeps only a hash and the first 16 characters (`mado_mt_` and the next 8), and no list shows the value.
 
 ## Scopes
 
@@ -42,7 +42,7 @@ A token with `tokens:manage` can issue and revoke tokens through the API, and cr
 
 | Rule | When broken |
 | --- | --- |
-| Only scopes it holds itself (even with `admin`, `tokens:manage`, `audit:read` and `users:manage` only when it holds them) | 403 `scope_exceeds_issuer` |
+| Only scopes it holds itself (even with `admin`, `tokens:manage`, `audit:read` and `users:manage` only when it holds them) | 403 `token_authority_exceeded` |
 | A token limited to a Project handles only tokens of the same Project | 403 `project_forbidden` |
 | No token that stays valid after its own expiry, including no expiry and an omitted expiry that defaults to 365 days | 403 `token_outlives_issuer` |
 
@@ -153,7 +153,7 @@ Service Accounts also appear in **Administration** → **Users** as **Service ac
 ## Revoke a token
 
 - Your own tokens: click **Revoke** under **My API tokens** in **Project settings**, or under the same heading on the **Account** page.
-- Project tokens: in **Project tokens**, a Project Admin sees the tokens of every user and Service Account limited to the Project, and can revoke them with **Revoke**. The list shows the owner, the first 12 characters, scopes, expiry, and last use (updated every 5 minutes).
+- Project tokens: in **Project tokens**, a Project Admin sees the tokens of every user and Service Account limited to the Project, and can revoke them with **Revoke**. The list shows the owner, the first 16 characters, scopes, expiry, and last use (updated every 5 minutes).
 
 A revoked token returns 401 from the next request and cannot be restored. Issuing and revoking are recorded in the audit log as `token.create` and `token.revoke`.
 
@@ -161,7 +161,7 @@ While a Project is archived, tokens limited to it (including those of Service Ac
 
 ## Job tokens
 
-For each Job, the worker receives a token valid only for that Job (starting with `mmtj_`) and passes it to the running code as `MMT_API_TOKEN` and `MLFLOW_TRACKING_TOKEN`. The worker's own token is never passed to the code. Nobody issues or manages Job tokens by hand.
+For each Job, the worker receives a token valid only for that Job (starting with `mado_mtj_`) and passes it to the running code as `MMT_API_TOKEN` and `MLFLOW_TRACKING_TOKEN`. The worker's own token is never passed to the code. Nobody issues or manages Job tokens by hand.
 
 - Permissions follow the Run creator's current effective role. The scopes are `read`, `runs:write`, `artifacts:write`, and `registry:write`.
 - The token can write only to the target Run (metrics, params, tags, logs, input datasets, Artifacts), model and dataset versions whose source is that Run, the Run's Logged Models, and the creation of the output Model. Writing to other Runs in the Project, issuing tokens, Project settings, and automation rules return 403 `job_token_forbidden`.

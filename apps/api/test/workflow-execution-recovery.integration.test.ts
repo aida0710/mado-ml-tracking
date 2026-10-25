@@ -171,7 +171,11 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの停止と起動の失敗
     const launches = vi
       .spyOn(harness.services.tasks, 'launchTaskInTransaction')
       .mockRejectedValueOnce(
-        new DomainError(503, 'imageのregistryに問い合わせられません', 'image_registry_unavailable'),
+        new DomainError({
+          status: 503,
+          code: 'image_registry_unavailable',
+          message: 'the image registry cannot be queried',
+        }),
       );
     const unavailable = await fixture.launch(definition, { idempotencyKey: 'registry-down' });
     expect(unavailable).toMatchObject({ status: 'running', error: null });
@@ -183,16 +187,20 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの停止と起動の失敗
     expect((await fixture.execution(unavailable.id)).steps[0]!.status).toBe('queued');
 
     launches.mockRejectedValueOnce(
-      new DomainError(403, '実行した利用者の権限が無効になっています', 'workflow_owner_unavailable'),
+      new DomainError({
+        status: 403,
+        code: 'workflow_owner_unavailable',
+        message: 'the permission of the user who ran it is no longer valid',
+      }),
     );
     const refused = await fixture.launch(definition, { idempotencyKey: 'owner-gone' });
     expect(refused).toMatchObject({
       status: 'failed',
-      error: '実行した利用者の権限が無効になっています',
+      error: 'the permission of the user who ran it is no longer valid',
     });
     expect(refused.steps[0]).toMatchObject({
       status: 'failed',
-      error: '実行した利用者の権限が無効になっています',
+      error: 'the permission of the user who ran it is no longer valid',
     });
   });
 

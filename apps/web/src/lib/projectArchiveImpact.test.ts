@@ -17,7 +17,7 @@ function token(id: string, expiresAt: string | null): TokenSummary {
     ownerType: 'service_account',
     ownerId: 'worker-account',
     ownerName: 'gpu-worker',
-    tokenPrefix: 'mmt_abcdefgh',
+    tokenPrefix: 'mado_mt_abcdefgh',
   };
 }
 

@@ -53,7 +53,7 @@ export class CommentService {
       query.cursor &&
       !(await commentCursorExists(this.database, { ...target, commentId: query.cursor }))
     )
-      notFound('Comment cursor');
+      notFound('comment cursor');
     // Fetch one extra row to know whether another page exists without a count query.
     const stored = await listThreadComments(this.database, {
       ...target,
@@ -94,11 +94,11 @@ export class CommentService {
           scope: definition.writeScope,
         });
         if ((await this.requireTargetState(connection, target)) === 'deleted')
-          throw new DomainError(
-            409,
-            '削除済みの対象にはコメントできません',
-            'comment_target_deleted',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'comment_target_deleted',
+            message: 'a deleted target cannot be commented on',
+          });
         const parentCommentId = input.parentCommentId
           ? await this.threadRootId(connection, { ...target, commentId: input.parentCommentId })
           : null;
@@ -129,13 +129,17 @@ export class CommentService {
       transaction(this.database, async (connection) => {
         const { comment } = await this.lockForChange(connection, principal, reference);
         if (comment.authorUserId !== principal.user.id)
-          throw new DomainError(
-            403,
-            'コメントを編集できるのは作成者だけです',
-            'comment_author_required',
-          );
+          throw new DomainError({
+            status: 403,
+            code: 'comment_author_required',
+            message: 'only the author can edit a comment',
+          });
         if (comment.deletedAt)
-          throw new DomainError(409, '削除済みのコメントは編集できません', 'comment_deleted');
+          throw new DomainError({
+            status: 409,
+            code: 'comment_deleted',
+            message: 'a deleted comment cannot be edited',
+          });
         await updateCommentBody(connection, { commentId: comment.id, body: reference.body });
         await writeAuditEvent(connection, {
           ...draft,
@@ -158,11 +162,11 @@ export class CommentService {
         const { comment, role } = await this.lockForChange(connection, principal, reference);
         const isAuthor = comment.authorUserId === principal.user.id;
         if (!isAuthor && role !== 'admin')
-          throw new DomainError(
-            403,
-            'コメントを削除できるのは作成者かProject管理者だけです',
-            'comment_delete_forbidden',
-          );
+          throw new DomainError({
+            status: 403,
+            code: 'comment_delete_forbidden',
+            message: 'only the author or a project admin can delete a comment',
+          });
         // Deleting twice is a no-op so a retried request does not add a second audit row.
         if (comment.deletedAt) return;
         await markCommentDeleted(connection, {
@@ -210,7 +214,7 @@ export class CommentService {
       scope: 'read',
     });
     const comment = await findComment(connection, { ...reference, lock: true });
-    if (!comment) notFound('Comment');
+    if (!comment) notFound('comment');
     requireScope(principal, this.targets.definition(comment.targetType).writeScope);
     return { comment, role };
   }
@@ -219,7 +223,7 @@ export class CommentService {
     const state = await this.targets
       .definition(target.targetType)
       .findState(connection, { projectId: target.projectId, targetId: target.targetId });
-    if (!state) notFound('コメントの対象');
+    if (!state) notFound('comment target');
     return state;
   }
 
@@ -229,13 +233,13 @@ export class CommentService {
     parent: CommentTarget & { commentId: string },
   ): Promise<string> {
     const comment = await findComment(connection, parent);
-    if (!comment) notFound('返信先のComment');
+    if (!comment) notFound('parent comment');
     if (comment.targetType !== parent.targetType || comment.targetId !== parent.targetId)
-      throw new DomainError(
-        422,
-        '返信先のコメントは同じ対象に付いていません',
-        'comment_parent_mismatch',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'comment_parent_mismatch',
+        message: 'the parent comment is not on the same target',
+      });
     return comment.parentCommentId ?? comment.id;
   }
 }

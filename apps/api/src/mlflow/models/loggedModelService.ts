@@ -44,7 +44,7 @@ export class LoggedModelService {
           [projectId, experimentId],
         ))
       )
-        notFound('Experiment');
+        notFound('experiment');
       if (input.source_run_id) {
         const run = await findRun(connection, { projectId, id: input.source_run_id });
         if (
@@ -54,9 +54,9 @@ export class LoggedModelService {
             [projectId, run.id],
           ))
         )
-          notFound('Run');
+          notFound('run');
         if (run.experimentId !== experimentId)
-          conflict('source RunとモデルのExperimentが一致しません');
+          conflict('the experiment of the source run and the model do not match');
       }
       const id = `m-${randomUUID().replaceAll('-', '')}`;
       return (await first<LoggedModelRecord>(
@@ -95,13 +95,13 @@ export class LoggedModelService {
     projectId: string,
     input: { id: string; status: LoggedModelStatus },
   ) {
-    if (input.status === 'PENDING') conflict('finalizeにはREADYまたはFAILEDを指定してください');
+    if (input.status === 'PENDING') conflict('finalize requires READY or FAILED');
     return mutateLoggedModel(
       this.database,
       { principal, projectId, id: input.id },
       async (connection, model) => {
         if (model.status === input.status) return this.protocol(connection, model);
-        if (model.status !== 'PENDING') conflict('確定済みモデルのstatusは変更できません');
+        if (model.status !== 'PENDING') conflict('the status of a finalized model cannot be changed');
         if (input.status === 'READY')
           validateReadyModel(await loggedModelArtifacts(connection, model));
         const updated = (await first<LoggedModelRecord>(
@@ -176,7 +176,7 @@ export class LoggedModelService {
         const params = keyValueMap(input.params);
         for (const [key, value] of Object.entries(params)) {
           if (Object.hasOwn(model.params, key) && model.params[key] !== value)
-            conflict('記録済みモデルparamは変更できません');
+            conflict('logged model params cannot be changed');
         }
         await connection.query(
           'UPDATE mlflow_logged_models SET params=params || $2::jsonb,updated_at=now() WHERE id=$1',

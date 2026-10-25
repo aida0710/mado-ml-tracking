@@ -209,9 +209,10 @@ describe('探索空間の行', () => {
     expect(rowsToSearchSpace(searchSpaceToRows(space, () => `row-${id++}`), 'random').searchSpace).toEqual(space);
   });
 
-  it('APIの422のmessageが「名前」で指すparameterの行を返し、指さないmessageはnullを返す', () => {
+  it('APIの422の横の項目parameterが指す行を返し、parameterの無い違反はnullを返す', () => {
     const rows = [row({ name: 'lr' }, 'lr-row'), row({ name: 'batch' }, 'batch-row')];
-    expect(rowIdForSpaceError('parameter「batch」は min < max である必要があります（min=2, max=1）', rows)).toBe('batch-row');
-    expect(rowIdForSpaceError('grid の組み合わせ数は10000までです（20000通り）', rows)).toBeNull();
+    expect(rowIdForSpaceError('batch', rows)).toBe('batch-row');
+    expect(rowIdForSpaceError(undefined, rows)).toBeNull();
+    expect(rowIdForSpaceError('missing', rows)).toBeNull();
   });
 });

@@ -46,18 +46,16 @@
 
 ## エラー文言の層
 
-- `api/*.ts`（APIクライアント）は`i18n`を読み込みません。失敗は`RequestError`（status、code、サーバーのerror文字列`serverMessage`）で返します。`api/i18nIndependence.test.ts`がAPIクライアントのi18n importを検出します。
-- 画面に出す文言への変換は`lib/errorMessage.ts`の`formatErrorMessage`が行い、`useMutation`と`useQuery`が描画時にこれを使います。APIのエラー文（`serverMessage`）は日本語で、操作を具体的に書きます（例:「削除済みのRunは編集できません」）。codeは次の3つに分けて扱います。
+- `api/*.ts`（APIクライアント）は`i18n`を読み込みません。失敗は`RequestError`（status、code、APIの英語の文`serverMessage`、`error`・`code`の横の項目`details`）で返します。エラー本文の読み取りは`api/http.ts`の`requestErrorFromBody`にまとめています。`api/i18nIndependence.test.ts`がAPIクライアントのi18n importを検出します。
+- 画面に出す文言への変換は`lib/errorMessage.ts`の`formatErrorMessage`が行い、`useMutation`と`useQuery`が描画時にこれを使います。APIのエラー文（`serverMessage`）は英語で、文に入る値は`details`にもあります。codeは次のように扱います。
   - Webが文言を持つcode: どちらの言語でもWebの文言を現在の言語で出します。
     - `network_error`: APIへ接続できなかった
     - `invalid_response`: 応答の形が契約と違う（`invalidResponseError()`で投げる）
     - `artifact_too_large`: uploadの413。前段proxyがHTMLで拒否した場合も同じ文言にする
     - `artifact_content_unavailable`: Artifactの中身を取得できなかった（raw bytesの取得でAPIのエラー本文が無い）
-    - `sweep_space_invalid`: `lib/sweepSpaceError.ts`がAPIの既知の全文だけを照合して翻訳します。parameter名・値は原文のまま埋め込み、未知の制約はサーバーの説明を保ちます。API側の探索空間エラーを変えるときは照合と日英辞書も確認します。
-  - 英語の画面でだけ置き換えるAPIのcode: 日本語の画面ではサーバーの文をそのまま出し、英語の画面では`i18n/errors.ts`の英語の文を出します。サーバーの文が無いときは、日本語の画面でも`i18n/errors.ts`の日本語の文を出します。
-    - `internal_error`・`database_unavailable`・`plugin_request_failed`・`plugin_disabled`: リクエスト、データベース、Pluginの共通の失敗
-    - `upload_not_open`・`upload_expired`・`artifact_save_failed`・`part_checksum_mismatch`・`run_deleted`・`body_too_large`: アップロード、Run、サイズ制限の失敗。英語の文はcodeから決まる一般的な言い方なので、`run_deleted`（Artifactの登録・Runの説明の編集などで使う）のように複数の操作で使うcodeでは、特定の操作だけを指す文言にしません。
-  - そのほかのcode: どちらの言語でもサーバーの文をそのまま出します。
+    - `dataset_parent_cycle`: 親の追加で来歴が循環する
+    - `sweep_space_invalid`: `lib/sweepSpaceError.ts`が`details.reason`（contractsの`SWEEP_SPACE_VIOLATIONS`）と`parameter`・`limit`などから`i18n/errors.ts`の日英の文を作ります。parameter名・値は原文のまま埋め込みます。
+  - そのほかのAPIのcode（`lib/apiErrorMessage.ts`）: 英語の画面はAPIの文をそのまま出します。日本語の画面は`i18n/apiErrors.ts`の`japaneseApiErrorMessages`でcodeから訳し（文に入る値は`details`から読む）、辞書に無いcodeはAPIの英語の文を出します。`invalid_request`・`conflict`・`not_found`のように理由の幅が広いcodeは、`japaneseApiErrorLeads`の日本語の文のあとにAPIの英語の文を括弧で添えます（例:「入力内容を確認してください。（invalid request: name）」）。
 
 ## 権限判定
 

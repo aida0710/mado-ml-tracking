@@ -53,7 +53,7 @@ export class RunResumeService {
           scope: 'runs:write',
         });
         const locked = await lockRunForResume(connection, { projectId, runId });
-        if (!locked) notFound('Run');
+        if (!locked) notFound('run');
         const lastSteps = await findLastMetricSteps(connection, runId);
         const decision = decideRunResume(locked, { hasJob: locked.hasJob });
         if (!decision.resume)

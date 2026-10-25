@@ -1,3 +1,4 @@
+import type { ApiErrorCode } from '@mmt/contracts';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { ArtifactRangeError } from '@mmt/platform';
 import { DomainError } from '../domain/errors.js';
@@ -8,12 +9,10 @@ interface MlflowErrorResponse {
   body: { error_code: string; message: string };
 }
 
-const domainErrorCodes: Record<string, string> = {
+// 独自 API の code に対応する MLflow の error_code。無い code は HTTP status から選ぶ。
+const domainErrorCodes: Partial<Record<ApiErrorCode, string>> = {
   already_exists: 'RESOURCE_ALREADY_EXISTS',
-  resource_already_exists: 'RESOURCE_ALREADY_EXISTS',
   not_found: 'RESOURCE_DOES_NOT_EXIST',
-  resource_does_not_exist: 'RESOURCE_DOES_NOT_EXIST',
-  invalid_parameter_value: 'INVALID_PARAMETER_VALUE',
   invalid_request: 'INVALID_PARAMETER_VALUE',
   invalid_json: 'MALFORMED_REQUEST',
   not_implemented: 'NOT_IMPLEMENTED',
@@ -25,9 +24,9 @@ const domainErrorCodes: Record<string, string> = {
 };
 
 // The native API's text speaks of signing in; an MLflow client is told which MLflow setting to fix.
-const mlflowClientMessages: Record<string, string> = {
+const mlflowClientMessages: Partial<Record<ApiErrorCode, string>> = {
   authentication_required:
-    'API tokenが送られていません。MLFLOW_TRACKING_TOKEN（Basic認証ならMLFLOW_TRACKING_PASSWORD）に、このProjectのAPI tokenを設定してください。tokenは［プロジェクト設定］の「SDK・MLflow 3から接続」で発行できます',
+    'no API token was sent; set MLFLOW_TRACKING_TOKEN (MLFLOW_TRACKING_PASSWORD for Basic authentication) to an API token of this project. Issue one under "Connect from SDK or MLflow 3" in Project settings',
 };
 
 // The MLflow client appends /api/2.0/mlflow/... (or /api/3.0/..., .../mlflow-artifacts/...) to
@@ -46,7 +45,7 @@ export function mlflowProjectMissingError(publicUrl: string): MlflowErrorRespons
     status: 404,
     body: {
       error_code: 'ENDPOINT_NOT_FOUND',
-      message: `MLFLOW_TRACKING_URIにProjectのIDが入っていません。${publicUrl}/api/mlflow/projects/<ProjectのID> にしてください。［プロジェクト設定］またはExperimentsの［SDKで記録］の「SDK・MLflow 3から接続」に、IDを入れたURIが表示されます`,
+      message: `MLFLOW_TRACKING_URI does not contain a project ID; use ${publicUrl}/api/mlflow/projects/<project ID>. The URI with the ID is shown under "Connect from SDK or MLflow 3" in Project settings, or in "Record with SDK" on the Experiments page`,
     },
   };
 }
@@ -94,7 +93,7 @@ export function formatMlflowError(error: Error): MlflowErrorResponse {
   if (error instanceof ArtifactRangeError) {
     return {
       status: 416,
-      body: { error_code: 'INVALID_PARAMETER_VALUE', message: '要求されたRangeは読み込めません' },
+      body: { error_code: 'INVALID_PARAMETER_VALUE', message: 'the requested range is not satisfiable' },
     };
   }
   const databaseCode = (error as { code?: string }).code;
@@ -103,18 +102,18 @@ export function formatMlflowError(error: Error): MlflowErrorResponse {
       status: 409,
       body: {
         error_code: 'RESOURCE_ALREADY_EXISTS',
-        message: '同じ名前またはバージョンが既に登録されています',
+        message: 'the same name or version is already registered',
       },
     };
   }
   if (['23503', '23514', '22P02'].includes(databaseCode ?? '')) {
     return {
       status: 400,
-      body: { error_code: 'INVALID_PARAMETER_VALUE', message: '参照または入力値が不正です' },
+      body: { error_code: 'INVALID_PARAMETER_VALUE', message: 'invalid reference or input value' },
     };
   }
   return {
     status: 503,
-    body: { error_code: 'TEMPORARILY_UNAVAILABLE', message: 'リクエストの処理に失敗しました' },
+    body: { error_code: 'TEMPORARILY_UNAVAILABLE', message: 'failed to process the request' },
   };
 }

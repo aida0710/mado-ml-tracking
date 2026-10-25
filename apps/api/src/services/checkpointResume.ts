@@ -36,7 +36,11 @@ export async function selectRetryCheckpoint(
       runId: previousRun.id,
     })) ?? previousRun.resumeCheckpointId;
   if (!latest)
-    throw new DomainError(422, '再開できるcheckpointがありません', 'checkpoint_not_found');
+    throw new DomainError({
+      status: 422,
+      code: 'checkpoint_not_found',
+      message: 'there is no checkpoint to resume from',
+    });
   return latest;
 }
 
@@ -114,9 +118,9 @@ async function workerCheckpoint(
 // Artifact rows are only written after their content is stored, so a missing row is a lost file.
 function assertCheckpointArtifactsSaved(checkpoint: RunCheckpoint): void {
   if (checkpoint.artifacts.length !== checkpoint.artifactIds.length)
-    throw new DomainError(
-      422,
-      'checkpointのArtifactが保存されていません',
-      'checkpoint_artifact_missing',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'checkpoint_artifact_missing',
+      message: 'the artifact of the checkpoint is not stored',
+    });
 }

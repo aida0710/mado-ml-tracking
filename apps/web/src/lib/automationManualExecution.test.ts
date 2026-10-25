@@ -97,11 +97,11 @@ describe('既存のバージョンへの手動適用', () => {
       manualExecutionErrorMessage(
         new RequestError({
           status: 422,
-          code: 'invalid_request',
-          serverMessage: 'Rule is disabled',
+          code: 'automation_rule_disabled',
+          serverMessage: 'a disabled rule cannot be applied',
         }),
       ),
-    ).toBe('Rule is disabled');
+    ).toBe('無効なルールは適用できません');
     expect(manualExecutionErrorMessage(new RequestError({ status: 422 }))).toBe(
       automationText.applyInvalidRule,
     );

@@ -10,7 +10,7 @@ export function resolveTrackingLifecycle(
 ) {
   if (input.hasJob) {
     if (input.status === 'SCHEDULED' && run.status !== 'queued')
-      conflict('Jobが管理するRunをキューへ戻せません');
+      conflict('a run managed by a job cannot be returned to the queue');
     // SDK start/end only changes its local context; the worker owns a Job's lifecycle.
     return { status: run.status, startedAt: run.startedAt, endedAt: run.endedAt };
   }

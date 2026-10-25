@@ -222,7 +222,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立Pos
     await transfer(await serviceAccount(fixture.administrator.cookie, 'Admin hook bot'));
     const refused = await trigger();
     expect(refused).toMatchObject({ status: 'failed', jobId: null });
-    expect(refused.error).toContain('Private');
+    expect(refused.error).toContain('private');
     await transfer(await serviceAccount(owner.cookie, 'Owner hook bot'));
     expect(await trigger()).toMatchObject({ status: 'queued' });
 
@@ -342,7 +342,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立Pos
     expect(claimed.item).toBeNull();
     const failedLocal = await jobRow(queued.id);
     expect(failedLocal).toMatchObject({ status: 'failed', end_reason: 'submit_failed' });
-    expect(failedLocal.error).toContain('Private');
+    expect(failedLocal.error).toContain('private');
 
     // A site: the submission fails it, as for a requester without an account there.
     const computer = await ownerComputer({ visibility: 'public' });
@@ -373,7 +373,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立Pos
     expect(submitted.items).toEqual([]);
     const failedSite = await jobRow(waiting.id);
     expect(failedSite).toMatchObject({ status: 'failed', end_reason: 'submit_failed' });
-    expect(failedSite.error).toContain('Private');
+    expect(failedSite.error).toContain('private');
   });
 });
 

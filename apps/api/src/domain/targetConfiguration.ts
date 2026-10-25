@@ -26,42 +26,46 @@ export function validateTargetConfiguration(
 ): void {
   if (target.executor === 'site') {
     if (!hasSiteOnlyDescription(target))
-      throw new DomainError(
-        422,
-        'siteには接続設定・GPU ID・python runtimeを登録できません（runtimeはコンテナ、datasetTransferはdirect）',
-        'site_target_settings',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'site_target_settings',
+        message: 'a site cannot have connection settings, GPU IDs or a python runtime (its runtime is a container and datasetTransfer is direct)',
+      });
     return;
   }
   if (target.submissionMode !== 'automatic' || target.supportsArray || target.queueTimeoutSeconds !== null)
-    throw new DomainError(
-      422,
-      '手動投入・array・待ち行列の上限時間はsiteだけの設定です',
-      'site_only_setting',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'site_only_setting',
+      message: 'manual submission, arrays and the queue time limit are settings of sites only',
+    });
   if (target.executor === 'local' && !allowLocalExecutor)
-    throw new DomainError(
-      422,
-      'Local executorにはdevelopment modeでの明示許可が必要です',
-      'local_executor_disabled',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'local_executor_disabled',
+      message: 'the local executor requires explicit permission in development mode',
+    });
   // A local target runs on the worker's own host, so it has no address or account of its own.
   if (target.executor === 'ssh' && (!target.host || !target.username))
-    throw new DomainError(422, 'SSHのhostとusernameが必要です', 'target_connection_required');
+    throw new DomainError({
+      status: 422,
+      code: 'target_connection_required',
+      message: 'SSH host and username are required',
+    });
   if (target.executor === 'ssh' && (!target.sshKeyPath || !target.knownHostsPath))
-    throw new DomainError(
-      422,
-      'SSHのコンピュータには鍵とknown_hostsのパスが必要です',
-      'ssh_config_required',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'ssh_config_required',
+      message: 'an SSH computer requires paths to the key and known_hosts',
+    });
   // A computer is added disabled with its connection, checked, and then set up (its work directory
   // and Python come from the check); only an enabled one takes Jobs and needs them.
   if (target.enabled && (!target.workDirectory || !target.pythonExecutable))
-    throw new DomainError(
-      422,
-      '有効にするには作業ディレクトリとPython実行パスが必要です',
-      'target_setup_incomplete',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'target_setup_incomplete',
+      message: 'a working directory and a Python executable path are required to enable it',
+    });
 }
 
 // These fields affect queued launches and reattachment of existing remote processes. The dataset

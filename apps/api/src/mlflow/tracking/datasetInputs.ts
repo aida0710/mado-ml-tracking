@@ -59,7 +59,7 @@ async function registerDataset(
   if (saved) {
     for (const key of ['schema', 'profile'] as const)
       if (saved.dataset[key] !== dataset[key])
-        invalidParameter('既存Datasetとschema/profileが一致しません');
+        invalidParameter('schema or profile does not match the existing dataset');
     return saved.datasetVersionId;
   }
   requireScope(request.principal, 'registry:write');

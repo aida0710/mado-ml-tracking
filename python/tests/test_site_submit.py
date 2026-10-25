@@ -29,7 +29,7 @@ from mado_tracking.errors import ApiError, ConfigurationError
 from mado_tracking.site.manual_submit import ManualSubmitter, SubmitOptions, submitter_id, with_variables
 from mado_tracking.site.submit_cli import stop_on_signals
 
-API_TOKEN = "mmt_personal-token-of-alice"
+API_TOKEN = "mado_mt_personal-token-of-alice"
 RUNTIME = {"kind": "apptainer", "artifactId": "artifact", "sha256": "0" * 64}
 JOB_SHELL = (
     "#!/bin/sh\n"

@@ -11,7 +11,7 @@ export async function findWorkflow(
     `SELECT * FROM workflows WHERE project_id=$1 AND id=$2 ${reference.lock ? 'FOR UPDATE' : ''}`,
     [reference.projectId, reference.id],
   );
-  if (!workflow) notFound('Workflow');
+  if (!workflow) notFound('workflow');
   return workflow;
 }
 
@@ -24,7 +24,7 @@ export async function findWorkflowVersion(
     'SELECT * FROM workflow_versions WHERE project_id=$1 AND workflow_id=$2 AND revision=$3',
     [reference.projectId, reference.workflowId, reference.revision],
   );
-  if (!version) notFound('WorkflowVersion');
+  if (!version) notFound('workflow version');
   return version;
 }
 
@@ -55,7 +55,7 @@ export async function findWorkflowVersionById(
     'SELECT * FROM workflow_versions WHERE project_id=$1 AND workflow_id=$2 AND id=$3',
     [reference.projectId, reference.workflowId, reference.id],
   );
-  if (!version) notFound('WorkflowVersion');
+  if (!version) notFound('workflow version');
   return version;
 }
 

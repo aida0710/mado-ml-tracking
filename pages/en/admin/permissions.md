@@ -121,7 +121,7 @@ An Admin grant to a group nobody has signed in with yet does not count: with a m
 
 For requests with an API token, both the token's scopes and the owner's current effective role are checked. If either is insufficient, the request returns 403.
 
-- Missing scope: 403 `insufficient_scope`
+- Missing scope: 403 `scope_required`
 - Insufficient role, or a Project other than the token's: 403 `project_forbidden`
 
 When the owner is removed from the Project, the owner's tokens stop working in that Project from the next request. See [API tokens and Service Accounts](/en/admin/tokens) for the scopes and roles.

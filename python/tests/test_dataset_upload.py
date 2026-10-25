@@ -43,7 +43,7 @@ class FakeDatasetApi:
         for artifact in reversed(self.artifacts.values()):
             if artifact["sha256"] == sha256 and artifact["size"] == size:
                 return httpx.Response(200, json=artifact)
-        return httpx.Response(404, json={"error": "Artifactが見つかりません", "code": "not_found"})
+        return httpx.Response(404, json={"error": "artifact not found", "code": "not_found"})
 
     def store(self, path: str, body: bytes, mime_type: str) -> httpx.Response:
         self.uploaded_paths.append(path)

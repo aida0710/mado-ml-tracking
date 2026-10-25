@@ -209,6 +209,6 @@ describe('suggestTrial', () => {
         completedTrials: [],
         pendingParameters: [],
       }),
-    ).toThrow('連続分布: x');
+    ).toThrow('continuous distributions: x');
   });
 });

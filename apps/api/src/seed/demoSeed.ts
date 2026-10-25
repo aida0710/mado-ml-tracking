@@ -27,11 +27,11 @@ export async function seedDemo(
   options: ApplicationOptions,
 ): Promise<{ projectId: string; alreadySeeded: boolean }> {
   if (!options.config.allowSeed)
-    throw new DomainError(
-      403,
-      'Seedにはdevelopment modeとMMT_ALLOW_SEED=trueが必要です',
-      'seed_disabled',
-    );
+    throw new DomainError({
+      status: 403,
+      code: 'seed_disabled',
+      message: 'seeding requires development mode and MMT_ALLOW_SEED=true',
+    });
   const { database, config } = options;
   const seedLock = await database.connect();
   try {
@@ -49,11 +49,11 @@ export async function seedDemo(
       [DEMO_PROJECT_NAME],
     );
     if (incomplete)
-      throw new DomainError(
-        409,
-        '同名のProjectまたは未完了のseedがあります。内容を確認してから再実行してください',
-        'incomplete_seed',
-      );
+      throw new DomainError({
+        status: 409,
+        code: 'incomplete_seed',
+        message: 'a project with the same name or an unfinished seed exists; check it before running again',
+      });
     const services = createApplication(options).services;
     const administrator = await upsertIdentity(database, {
       issuer: 'development',

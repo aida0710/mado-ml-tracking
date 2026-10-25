@@ -16,7 +16,7 @@ description: mado ML Trackingが守るもの、認証情報とシークレット
 
 ## API token
 
-- tokenの値はDBに保存しません。SHA-256のハッシュと、見分けるための先頭12文字だけを保存します。値は発行時に1回だけ表示します。
+- tokenの値はDBに保存しません。SHA-256のハッシュと、見分けるための先頭16文字（`mado_mt_`と続く8文字）だけを保存します。値は発行時に1回だけ表示します。
 - 個人とService Accountのtokenは、有効期限または無期限を選べます。scopeと、所有者の現在のProjectのRoleを、要求のたびに確かめます。
 - SSOのユーザーのtokenは、ブラウザでのログインから7日を過ぎると止まります。groupから外したことを確かめるためです。
 - 実行コードには、worker自身のtokenではなく、そのJobの間だけ使えるJob限定tokenを渡します。書き込めるのは対象のRunとその出力だけです（[API tokenとService Account](/admin/tokens)）。

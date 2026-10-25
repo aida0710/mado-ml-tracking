@@ -3,7 +3,7 @@ import { inClauseSql } from '../search/inClauseSql.js';
 
 // Both the native and the MLflow API map this code to their own 400 response.
 function invalidParameter(message: string): never {
-  throw new DomainError(400, message, 'invalid_parameter_value');
+  throw new DomainError({ status: 400, code: 'invalid_request', message });
 }
 
 export type SearchEntity = 'run' | 'experiment';
@@ -32,8 +32,8 @@ function fieldLabel(field: SearchField): string {
 function unsupportedOperatorMessage(field: SearchField, operator: string): string {
   const label = fieldLabel(field);
   return field.kind === 'number'
-    ? `未対応の比較演算子です: ${operator}。${label}は数値として比べるので、= != > >= < <= を使います（例: ${label} < 0.1）`
-    : `未対応の比較演算子です: ${operator}。${label}は文字列として比べるので、= != LIKE ILIKE を使います（例: ${label} = '0.01'）`;
+    ? `unsupported comparison operator: ${operator}; ${label} is compared as a number, so use = != > >= < <= (for example ${label} < 0.1)`
+    : `unsupported comparison operator: ${operator}; ${label} is compared as a string, so use = != LIKE ILIKE (for example ${label} = '0.01')`;
 }
 
 // MLflow sorts numeric metrics before NaN and missing metrics in both directions.
@@ -85,7 +85,7 @@ function mlflowRunStatus(value: string): string {
   const mapped = nativeStatusToMlflow[value.toLowerCase()];
   if (mapped) return mapped;
   invalidParameter(
-    `未対応のstatusです: ${value}（使える値: ${[...MLFLOW_RUN_STATUSES, ...Object.keys(nativeStatusToMlflow)].join(', ')}）`,
+    `unsupported status: ${value} (allowed: ${[...MLFLOW_RUN_STATUSES, ...Object.keys(nativeStatusToMlflow)].join(', ')})`,
   );
 }
 
@@ -110,7 +110,7 @@ function tokenize(text: string): Token[] {
   while (offset < text.length) {
     pattern.lastIndex = offset;
     const match = pattern.exec(text);
-    if (!match) invalidParameter(`検索syntaxに未対応です（位置${offset}）`);
+    if (!match) invalidParameter(`unsupported search syntax at position ${offset}`);
     const value = match[0];
     offset = pattern.lastIndex;
     if (/^\s/.test(value)) continue;
@@ -151,7 +151,7 @@ class SearchCompiler {
   }
   private take(): Token {
     const token = this.tokens[this.offset++];
-    if (!token) invalidParameter('検索式が途中で終わっています');
+    if (!token) invalidParameter('the search expression ends unexpectedly');
     return token;
   }
   private accept(value: string): boolean {
@@ -162,17 +162,17 @@ class SearchCompiler {
   }
   private field(): SearchField {
     const first = this.take();
-    if (!['word', 'quoted'].includes(first.kind)) invalidParameter('検索属性が不正です');
+    if (!['word', 'quoted'].includes(first.kind)) invalidParameter('invalid search attribute');
     let group = 'attributes';
     let key = first.value;
     if (this.accept('.')) {
       group = first.value.toLowerCase();
       const property = this.take();
-      if (!['word', 'quoted'].includes(property.kind)) invalidParameter('検索keyが不正です');
+      if (!['word', 'quoted'].includes(property.kind)) invalidParameter('invalid search key');
       key = property.value;
       while (this.accept('.')) {
         const suffix = this.take();
-        if (!['word', 'quoted'].includes(suffix.kind)) invalidParameter('検索keyが不正です');
+        if (!['word', 'quoted'].includes(suffix.kind)) invalidParameter('invalid search key');
         key += `.${suffix.value}`;
       }
     }
@@ -185,7 +185,7 @@ class SearchCompiler {
       if (['created', 'Created'].includes(key)) key = 'start_time';
       if (['run name', 'Run name', 'Run Name'].includes(key)) key = 'run_name';
       const attributes = this.entity === 'run' ? runAttributes : experimentAttributes;
-      if (!Object.hasOwn(attributes, key)) invalidParameter(`未対応の検索属性です: ${key}`);
+      if (!Object.hasOwn(attributes, key)) invalidParameter(`unsupported search attribute: ${key}`);
       const attribute = attributes[key]!;
       return { ...attribute, group, key };
     }
@@ -219,20 +219,20 @@ class SearchCompiler {
         key,
       };
     }
-    invalidParameter(`未対応の検索対象です: ${group}`);
+    invalidParameter(`unsupported search target: ${group}`);
   }
   private literal(field: SearchField): string | number {
     const token = this.take();
     if (field.kind === 'number') {
       if (token.kind !== 'number' || !Number.isFinite(Number(token.value)))
         invalidParameter(
-          `${fieldLabel(field)}の値は数値で書きます（例: ${fieldLabel(field)} < 0.1）`,
+          `the value of ${fieldLabel(field)} must be a number (for example ${fieldLabel(field)} < 0.1)`,
         );
       return Number(token.value);
     }
     if (token.kind !== 'quoted')
       invalidParameter(
-        `${fieldLabel(field)}の値は文字列なので、引用符で囲みます（例: ${fieldLabel(field)} = '${token.value}'）`,
+        `the value of ${fieldLabel(field)} is a string, so put it in quotes (for example ${fieldLabel(field)} = '${token.value}')`,
       );
     return token.value;
   }
@@ -240,26 +240,26 @@ class SearchCompiler {
     const field = this.field();
     const token = this.take();
     let operator = token.value.toUpperCase();
-    if (token.kind === 'quoted') invalidParameter('比較演算子が不正です');
+    if (token.kind === 'quoted') invalidParameter('invalid comparison operator');
     if (operator === 'IS') {
       if (!['params', 'tags'].includes(field.group))
-        invalidParameter('IS NULLはparams/tagsだけに対応しています');
+        invalidParameter('IS NULL is supported only for params and tags');
       const negative = this.accept('NOT');
-      if (!this.accept('NULL')) invalidParameter('IS NULLまたはIS NOT NULLが必要です');
+      if (!this.accept('NULL')) invalidParameter('IS NULL or IS NOT NULL is required');
       return `(${field.expression}) IS ${negative ? 'NOT ' : ''}NULL`;
     }
     if (operator === 'NOT') {
-      if (!this.accept('IN')) invalidParameter('NOT IN以外には対応していません');
+      if (!this.accept('IN')) invalidParameter('NOT is supported only as NOT IN');
       operator = 'NOT IN';
     }
     let comparison: string;
     if (operator === 'IN' || operator === 'NOT IN') {
       if (field.group !== 'datasets' && !(field.group === 'attributes' && field.key === 'run_id'))
-        invalidParameter('IN/NOT INはrun_idまたはdatasets属性だけに対応しています');
-      if (!this.accept('(')) invalidParameter('INには括弧付きの値一覧が必要です');
+        invalidParameter('IN and NOT IN are supported only for the run_id and datasets attributes');
+      if (!this.accept('(')) invalidParameter('IN requires a list of values in parentheses');
       const values: unknown[] = [this.literal(field)];
       while (this.accept(',')) values.push(this.literal(field));
-      if (!this.accept(')')) invalidParameter('INの閉じ括弧が必要です');
+      if (!this.accept(')')) invalidParameter('IN requires a closing parenthesis');
       comparison = inClauseSql({
         expression: field.expression,
         operator,
@@ -295,7 +295,7 @@ class SearchCompiler {
     if (!this.tokens.length) return 'TRUE';
     const clauses = [this.comparison()];
     while (this.offset < this.tokens.length) {
-      if (!this.accept('AND')) invalidParameter('検索式の結合はANDだけに対応しています');
+      if (!this.accept('AND')) invalidParameter('only AND can combine search conditions');
       clauses.push(this.comparison());
     }
     return clauses.map((clause) => `(${clause})`).join(' AND ');
@@ -310,10 +310,10 @@ class SearchCompiler {
         field.group === 'datasets' ||
         (this.entity === 'experiment' && field.group !== 'attributes')
       )
-        invalidParameter('この対象のorder_byには対応していません');
+        invalidParameter('order_by is not supported for this target');
       const direction = this.accept('DESC') ? 'DESC' : 'ASC';
       if (direction === 'ASC') this.accept('ASC');
-      if (this.offset !== this.tokens.length) invalidParameter('order_byのsyntaxが不正です');
+      if (this.offset !== this.tokens.length) invalidParameter('invalid order_by syntax');
       if (field.group === 'metrics') {
         clauses.push(
           `CASE WHEN (${field.expression}) = 'NaN'::double precision THEN ${METRIC_SORT_PRIORITY.nan}

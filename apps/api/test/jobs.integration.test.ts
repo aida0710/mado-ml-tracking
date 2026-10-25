@@ -577,7 +577,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
     await harness.database.query('UPDATE jobs SET attempt=100 WHERE id=$1', [retried.job.id]);
     const refused = await retryOf(retried.job.id);
     expect(refused.status).toBe(409);
-    expect(((await refused.json()) as { error: string }).error).toContain('100回目まで');
+    expect(await refused.json()).toMatchObject({ code: 'conflict', maxAttempts: 100 });
   });
 
   it('Jobの停止・再実行は作成者かProject adminだけができ、一覧に作成者が出る', async () => {

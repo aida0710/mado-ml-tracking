@@ -107,7 +107,11 @@ export class GitRepositoryReader {
     // Also validate callers that bypass HTTP; a repository URL never becomes a command option.
     const parsed = repositoryFilesSchema.safeParse(input);
     if (!parsed.success)
-      throw new DomainError(422, 'RepositoryのURLまたはcommitが不正です', 'invalid_repository');
+      throw new DomainError({
+        status: 422,
+        code: 'invalid_repository',
+        message: 'invalid repository URL or commit',
+      });
     const request = parsed.data;
     const directory = await mkdtemp(path.join(tmpdir(), 'mmt-repository-'));
     const deadline = Date.now() + REPOSITORY_TIMEOUT_MS;
@@ -164,11 +168,11 @@ export class GitRepositoryReader {
         .toString('ascii')
         .trim();
       if (commit !== request.commit)
-        throw new DomainError(
-          422,
-          'Repositoryのcommitが指定と一致しません',
-          'repository_commit_mismatch',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'repository_commit_mismatch',
+          message: 'the repository commit does not match the specified one',
+        });
       const tree = await git(['ls-tree', '-r', '-t', '-l', '-z', commit], MAX_TREE_BYTES);
       const { selected, omittedPaths } = selectRepositoryBlobs(parseRepositoryTree(tree));
       const contents = selected.length
@@ -181,7 +185,11 @@ export class GitRepositoryReader {
       return decodeRepositoryBlobs({ commit, selected, omittedPaths, contents });
     } catch (error) {
       if (error instanceof DomainError) throw error;
-      throw new DomainError(502, 'Repositoryを読み込めません', 'repository_read_failed');
+      throw new DomainError({
+        status: 502,
+        code: 'repository_read_failed',
+        message: 'cannot read the repository',
+      });
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

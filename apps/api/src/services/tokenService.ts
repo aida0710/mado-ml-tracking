@@ -1,7 +1,7 @@
 import type { TokenSummary } from '@mmt/contracts';
 import type { z } from 'zod';
 import type { Principal } from '../auth/principal.js';
-import { hashSecret, randomSecret } from '../auth/secrets.js';
+import { createApiTokenSecret } from '../auth/apiTokens.js';
 import { first, transaction, type Connection, type Database } from '../db/database.js';
 import { DomainError, notFound } from '../domain/errors.js';
 import { requiredProjectRoleForScopes } from '../domain/tokenScopes.js';
@@ -26,9 +26,6 @@ import {
   type AuditEventDraft,
 } from './auditService.js';
 
-// Long enough to tell tokens apart in a list, far too short to guess the rest of the value.
-const TOKEN_PREFIX_LENGTH = 12;
-
 export interface IssuedToken {
   token: string;
   item: TokenSummary;
@@ -39,13 +36,13 @@ export async function issueApiToken(
   connection: Connection,
   token: Omit<TokenInsert, 'tokenHash' | 'tokenPrefix'>,
 ): Promise<IssuedToken> {
-  const value = `mmt_${randomSecret()}`;
+  const secret = createApiTokenSecret();
   const item = await insertToken(connection, {
     ...token,
-    tokenHash: hashSecret(value),
-    tokenPrefix: value.slice(0, TOKEN_PREFIX_LENGTH),
+    tokenHash: secret.tokenHash,
+    tokenPrefix: secret.tokenPrefix,
   });
-  return { token: value, item };
+  return { token: secret.token, item };
 }
 
 /** Audit details of an issued token. The value and its hash never enter the audit log. */
@@ -152,7 +149,7 @@ export class TokenService {
     };
     await recordDenial(this.database, draft, async () => requireScope(principal, 'tokens:manage'));
     const target = await findActiveTokenOwnership(this.database, tokenId);
-    if (!target) notFound('Token');
+    if (!target) notFound('token');
     const ownerType = target.ownerKind === 'service' ? 'service_account' : 'user';
     // Recorded under the token's Project so its administrators see refused revocations too.
     const projectDraft: AuditEventDraft = {
@@ -164,7 +161,11 @@ export class TokenService {
       transaction(this.database, async (connection) => {
         if (target.ownerUserId !== principal.user.id) {
           if (!target.projectId)
-            throw new DomainError(403, '他の利用者のtokenは変更できません', 'token_forbidden');
+            throw new DomainError({
+              status: 403,
+              code: 'token_forbidden',
+              message: 'tokens of other users cannot be changed',
+            });
           await requireProject(connection, principal, {
             projectId: target.projectId,
             role: 'admin',
@@ -174,7 +175,7 @@ export class TokenService {
         requireGrantWithinIssuer(principal, target);
         const revoked = await revokeToken(connection, tokenId);
         // A concurrent revocation won the race; report it the same way as an unknown token.
-        if (!revoked) notFound('Token');
+        if (!revoked) notFound('token');
         await writeAuditEvent(connection, {
           ...projectDraft,
           outcome: 'success',
@@ -194,10 +195,18 @@ export class TokenService {
     const projectId = input.projectId ?? null;
     requireGlobalScopesUnrestricted({ scopes: input.scopes, projectId, ownerIsAdmin: principal.user.isAdmin });
     if (input.scopes.includes('worker:execute') && !projectId)
-      throw new DomainError(422, 'worker tokenにはProjectが必要です', 'project_required');
+      throw new DomainError({
+        status: 422,
+        code: 'project_required',
+        message: 'a worker token requires a project',
+      });
     if (!projectId) {
       if (input.scopes.some((scope) => scope !== 'read') && !principal.user.isAdmin)
-        throw new DomainError(403, '書き込みtokenはProjectを指定してください', 'project_required');
+        throw new DomainError({
+          status: 403,
+          code: 'project_required',
+          message: 'specify a project for a write token',
+        });
       return;
     }
     await requireProject(connection, principal, {
@@ -212,11 +221,11 @@ export class TokenService {
       [projectId, principal.user.id],
     );
     if (!membership)
-      throw new DomainError(
-        403,
-        'Tokenの所有者はProjectのメンバーである必要があります',
-        'membership_required',
-      );
+      throw new DomainError({
+        status: 403,
+        code: 'membership_required',
+        message: 'the owner of the token must be a member of the project',
+      });
   }
 }
 
@@ -227,5 +236,9 @@ function ownTokenKind(principal: Principal): TokenSummary['kind'] {
 
 export function requireSession(principal: Principal, operation: string): void {
   if (principal.method !== 'session')
-    throw new DomainError(403, `${operation}にはブラウザでのloginが必要です`, 'session_required');
+    throw new DomainError({
+      status: 403,
+      code: 'session_required',
+      message: `${operation} requires signing in with a browser`,
+    });
 }

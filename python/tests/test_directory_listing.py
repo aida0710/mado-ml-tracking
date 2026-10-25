@@ -25,7 +25,7 @@ from mado_tracking.worker.directory_listing import (
 from mado_tracking.worker.reported_text import json_size
 from mado_tracking.worker.transport import CommandTransport
 
-API_TOKEN = "mmt_listing-worker-secret"
+API_TOKEN = "mado_mt_listing-worker-secret"
 
 
 def local_target() -> dict[str, Any]:
@@ -62,7 +62,7 @@ def test_listing_reports_directories_executables_and_hidden_entries_with_spaces(
     (tmp_path / "linked-data").symlink_to(tmp_path / "data")
     (tmp_path / "dangling").symlink_to(tmp_path / "missing")
     (tmp_path / API_TOKEN).write_text("")
-    (tmp_path / "mmt_0123456789abcdef").write_text("")
+    (tmp_path / "mado_mt_0123456789abcdef").write_text("")
 
     status, result = list_here(str(tmp_path))
     assert status == "finished"
@@ -225,7 +225,7 @@ def test_names_the_api_would_refuse_are_dropped_and_others_kept():
         ("f", "0", "tab\there"),
         ("d", "0", "."),
         ("d", "0", ".."),
-        ("f", "0", "mmt_0123456789abcdef"),
+        ("f", "0", "mado_mt_0123456789abcdef"),
         ("x", "0", "unknown-kind"),
         ("f", "maybe", "unknown-flag"),
         ("d", "0", "kept"),

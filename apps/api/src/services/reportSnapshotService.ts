@@ -48,11 +48,12 @@ interface CaptureRequest {
 }
 
 function tooManyRuns(maxRuns: number): never {
-  throw new DomainError(
-    422,
-    `図に固定できるRunは${maxRuns}件までです。Run集合を絞ってください`,
-    'too_many_runs',
-  );
+  throw new DomainError({
+    status: 422,
+    code: 'too_many_runs',
+    message: `a chart can pin at most ${maxRuns} runs; narrow down the runs`,
+    details: { limit: maxRuns },
+  });
 }
 
 /**
@@ -73,11 +74,12 @@ export class ReportSnapshotService {
     const data = await this.read(request, block);
     const sizeBytes = Buffer.byteLength(JSON.stringify(data));
     if (sizeBytes > REPORT_SNAPSHOT_BLOCK_MAX_BYTES)
-      throw new DomainError(
-        413,
-        `ブロック${block.id}の固定データが5MiBを超えます。Run集合や系列を絞るか、最新データで描く設定にしてください`,
-        'report_snapshot_too_large',
-      );
+      throw new DomainError({
+        status: 413,
+        code: 'report_snapshot_too_large',
+        message: `the pinned data of block ${block.id} exceeds 5 MiB; narrow down the runs or series, or draw it with the latest data`,
+        details: { blockId: block.id },
+      });
     return { data, sizeBytes };
   }
 
@@ -188,7 +190,7 @@ export class ReportSnapshotService {
         projectId,
         sweepId: block.runSet.sweepId,
       });
-      if (!objective) notFound('Sweep');
+      if (!objective) notFound('sweep');
       metrics = [objective.metric];
     }
     return {
@@ -255,7 +257,7 @@ export class ReportSnapshotService {
       savedViewId: runSet.savedViewId,
     });
     // The save checked that the view is shared; one made private since then is not read.
-    if (!view || view.visibility !== 'project') notFound('保存ビュー');
+    if (!view || view.visibility !== 'project') notFound('saved view');
     const { experimentIds, filter, orderBy, statuses, kinds } = view.state;
     return {
       search: runSearchConditionsSchema.parse({ experimentIds, filter, orderBy, statuses, kinds }),

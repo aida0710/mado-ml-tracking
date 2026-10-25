@@ -42,7 +42,7 @@ export async function importPluginDataset(
       existing.digest !== imported.digest ||
       existing.uri !== imported.uri
     )
-      conflict('既存のDatasetVersionと連携先のバージョンが一致しません');
+      conflict('the existing dataset version does not match the version in the integration');
     return existing;
   }
   return registry.insertDatasetVersion(connection, projectId, {

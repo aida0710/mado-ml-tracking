@@ -27,14 +27,18 @@ export async function modelVersionArtifactManifest(
      WHERE v.id=$1 AND v.project_id=$2 AND vm.deleted_at IS NULL AND mm.deleted_at IS NULL`,
     [access.owner.id, access.projectId],
   );
-  if (!version) notFound('ModelVersion');
+  if (!version) notFound('model version');
   const manifest = manifestSchema.safeParse(version.metadata.mlflow?.artifactManifest);
   if (
     !manifest.success ||
     !manifest.data.length ||
     new Set(manifest.data.map((entry) => entry.path)).size !== manifest.data.length
   )
-    throw new DomainError(409, '登録モデルバージョンのArtifact manifestが不正です', 'invalid_reference');
+    throw new DomainError({
+      status: 409,
+      code: 'invalid_reference',
+      message: 'the artifact manifest of the registered model version is invalid',
+    });
   // Resolve only the immutable snapshot; source Run and Logged Model lifecycle do not affect a registered version.
   const artifacts = await rows<{ id: string; sha256: string; size: number }>(
     connection,
@@ -44,9 +48,13 @@ export async function modelVersionArtifactManifest(
   const saved = new Map(artifacts.map((artifact) => [artifact.id, artifact]));
   for (const entry of manifest.data) {
     const artifact = saved.get(entry.artifactId);
-    if (!artifact) notFound('Artifact');
+    if (!artifact) notFound('artifact');
     if (artifact.sha256 !== entry.sha256 || artifact.size !== entry.size)
-      throw new DomainError(409, '登録モデルバージョンのArtifact参照が一致しません', 'invalid_reference');
+      throw new DomainError({
+        status: 409,
+        code: 'invalid_reference',
+        message: 'the artifact reference of the registered model version does not match',
+      });
   }
   return manifest.data;
 }

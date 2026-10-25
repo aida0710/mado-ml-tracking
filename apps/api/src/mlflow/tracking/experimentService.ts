@@ -23,7 +23,7 @@ export async function findTrackingExperiment(
     `SELECT * FROM experiments WHERE project_id=$1 AND id=$2 ${reference.lock ? 'FOR UPDATE' : ''}`,
     [reference.projectId, id],
   );
-  if (!experiment) notFound('Experiment');
+  if (!experiment) notFound('experiment');
   return experiment;
 }
 
@@ -41,7 +41,7 @@ async function unrecordedDefaultExperiment(
     'SELECT created_at FROM projects WHERE id=$1',
     [projectId],
   );
-  if (!project) notFound('Project');
+  if (!project) notFound('project');
   return {
     id: DEFAULT_EXPERIMENT_ID,
     projectId,
@@ -72,7 +72,7 @@ export class ExperimentService {
       });
       // The project's configured Artifact store is the sole writer for SDK artifacts.
       if (input.artifact_location !== undefined)
-        unsupported('artifact_locationの指定は対応していません');
+        unsupported('artifact_location is not supported');
       const experiment = await first<TrackingExperiment>(
         connection,
         `INSERT INTO experiments(project_id,name,tags) VALUES($1,$2,$3::jsonb)
@@ -104,7 +104,7 @@ export class ExperimentService {
       'SELECT * FROM experiments WHERE project_id=$1 AND name=$2',
       [projectId, name],
     );
-    if (!experiment) notFound('Experiment');
+    if (!experiment) notFound('experiment');
     return experiment;
   }
   async search(
@@ -150,7 +150,7 @@ export class ExperimentService {
         lock: true,
       });
       if (experiment.lifecycleStage !== 'active')
-        invalidParameter('削除済みExperimentは変更できません');
+        invalidParameter('a deleted experiment cannot be changed');
       const duplicate = await first(
         connection,
         'SELECT id FROM experiments WHERE project_id=$1 AND name=$2 AND id<>$3',
@@ -176,7 +176,7 @@ export class ExperimentService {
         lock: true,
       });
       if (experiment.lifecycleStage === input.lifecycleStage)
-        invalidParameter(`Experimentは既に${input.lifecycleStage}です`);
+        invalidParameter(`the experiment is already ${input.lifecycleStage}`);
       const runs = await rows<{ id: string }>(
         connection,
         'SELECT id FROM runs WHERE project_id=$1 AND experiment_id=$2 ORDER BY id FOR UPDATE',
@@ -188,7 +188,7 @@ export class ExperimentService {
           "SELECT id FROM jobs WHERE run_id=ANY($1::uuid[]) AND status NOT IN ('finished','failed','canceled')",
           [runs.map((run) => run.id)],
         );
-        if (managed) conflict('実行中のJobを含むExperimentは削除できません');
+        if (managed) conflict('an experiment with running jobs cannot be deleted');
       }
       await connection.query(
         'UPDATE experiments SET lifecycle_stage=$2,updated_at=now() WHERE id=$1',
@@ -212,9 +212,9 @@ export class ExperimentService {
         lock: true,
       });
       if (experiment.lifecycleStage !== 'active')
-        invalidParameter('削除済みExperimentは変更できません');
+        invalidParameter('a deleted experiment cannot be changed');
       if (input.value === undefined && !Object.hasOwn(experiment.tags, input.key))
-        notFound('Experiment Tag');
+        notFound('experiment tag');
       const tags =
         input.value === undefined
           ? { ...experiment.tags }

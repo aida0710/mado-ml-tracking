@@ -15,11 +15,11 @@ export class PluginCredentials {
   ): MadoCredentials {
     if (!plugin.encryptedCredentials || !plugin.secretKeyId) return {};
     if (!this.key)
-      throw new DomainError(
-        503,
-        '連携キーの保存用の鍵が設定されていません',
-        'plugin_secret_key_unavailable',
-      );
+      throw new DomainError({
+        status: 503,
+        code: 'plugin_secret_key_unavailable',
+        message: 'the key for storing integration credentials is not set',
+      });
     let saved: MadoCredentials;
     try {
       saved = JSON.parse(
@@ -30,11 +30,11 @@ export class PluginCredentials {
         }),
       ) as MadoCredentials;
     } catch {
-      throw new DomainError(
-        503,
-        '保存済みの連携キーを復号できません。保存用の鍵を確認してください',
-        'plugin_secret_decryption_failed',
-      );
+      throw new DomainError({
+        status: 503,
+        code: 'plugin_secret_decryption_failed',
+        message: 'the stored integration credentials cannot be decrypted; check the storage key',
+      });
     }
     // Per-purpose keys saved before migration 067 are ignored; the access token is entered again.
     return saved.accessToken ? { accessToken: saved.accessToken } : {};
@@ -62,11 +62,11 @@ export class PluginCredentials {
         credentialsConfigured: plugin.credentialsConfigured,
       };
     if (!this.key)
-      throw new DomainError(
-        503,
-        'MMT_PLUGIN_SECRET_KEYをAPI serverに設定してください',
-        'plugin_secret_key_unavailable',
-      );
+      throw new DomainError({
+        status: 503,
+        code: 'plugin_secret_key_unavailable',
+        message: 'set MMT_PLUGIN_SECRET_KEY on the API server',
+      });
     // A new token replaces the saved value, which also recovers from loss of the old encryption key.
     const credentials: MadoCredentials = { accessToken: input.accessToken };
     const encrypted = encryptSecret({

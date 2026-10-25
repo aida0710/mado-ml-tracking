@@ -33,7 +33,7 @@ interface Bucket {
 // Routes copy retryAfterSeconds into the Retry-After header before the shared error handler responds.
 export class RateLimitedError extends DomainError {
   constructor(readonly retryAfterSeconds: number) {
-    super(429, '試行回数の上限に達しました。しばらく待ってから再試行してください', 'rate_limited');
+    super({ status: 429, code: 'rate_limited', message: 'too many attempts; wait and try again' });
   }
 }
 

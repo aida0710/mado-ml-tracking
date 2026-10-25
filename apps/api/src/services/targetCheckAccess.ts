@@ -11,7 +11,7 @@ export async function findTarget(connection: Connection, targetId: string): Prom
     'SELECT * FROM compute_targets WHERE id=$1',
     [targetId],
   );
-  if (!target) notFound('ComputeTarget');
+  if (!target) notFound('computer');
   return target;
 }
 
@@ -28,11 +28,11 @@ export async function findCheckableTarget(
   const target = await findTarget(connection, targetId);
   // No worker connects to a site, so a request would only wait and fail as no_worker.
   if (target.executor === 'site')
-    throw new DomainError(
-      422,
-      'siteにはtrackingから接続しないため、接続確認はできません',
-      'site_check_unsupported',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'site_check_unsupported',
+      message: 'tracking does not connect to sites, so they cannot be checked',
+    });
   return target;
 }
 
@@ -42,9 +42,9 @@ export async function requireCheckWorker(
   worker: TargetCheckWorker,
 ): Promise<void> {
   if (!(await isCheckWorker(connection, worker)))
-    throw new DomainError(
-      422,
-      '選んだworkerはオンラインでないか、接続確認を受けられないバージョンです',
-      'target_check_worker_unavailable',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'target_check_worker_unavailable',
+      message: 'the chosen worker is not online or its version cannot run connection checks',
+    });
 }

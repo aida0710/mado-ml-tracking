@@ -53,7 +53,7 @@ const CURSOR_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/
 const CURSOR_TIMESTAMP_SQL = `to_char(a.created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
 
 function invalidCursor(): never {
-  throw new DomainError(400, 'cursorが不正です', 'invalid_cursor');
+  throw new DomainError({ status: 400, code: 'invalid_cursor', message: 'invalid cursor' });
 }
 
 function encodeCursor(cursor: ListingCursor): string {

@@ -11,9 +11,9 @@ export function assertControlsJob(
   run: { createdBy: string },
 ): void {
   if (controlsStartedWork(caller, run)) return;
-  throw new DomainError(
-    403,
-    'Jobを停止・再実行できるのは、作成者かProject adminだけです',
-    'job_owner_required',
-  );
+  throw new DomainError({
+    status: 403,
+    code: 'job_owner_required',
+    message: 'only the creator of the job or a project admin can stop or retry it',
+  });
 }

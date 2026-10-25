@@ -1330,7 +1330,7 @@ def isolated_api(log_path: Path, port: int) -> Iterator[str]:
                 if server.poll() is not None:
                     raise SystemExit(f"The isolated API exited early; see {log_path}")
                 try:
-                    if httpx.get(f"{url}/api/health", timeout=2).is_success:
+                    if httpx.get(f"{url}/healthz", timeout=2).is_success:
                         break
                 except httpx.TransportError:
                     pass

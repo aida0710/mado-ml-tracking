@@ -215,7 +215,7 @@ describe.skipIf(!testDatabaseUrl)('監査ログの記録と参照（独立Postgr
       expect.objectContaining({
         actorType: 'token',
         actorTokenId: adminToken.item.id,
-        details: expect.objectContaining({ name: 'Nested', code: 'insufficient_scope' }),
+        details: expect.objectContaining({ name: 'Nested', code: 'scope_required' }),
       }),
     ]);
     expect(

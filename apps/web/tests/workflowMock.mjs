@@ -267,7 +267,7 @@ export function createWorkflowMock(api) {
       if (subresource === 'versions' && method === 'GET')
         return url.searchParams.get('cursor') === OLDER_VERSIONS_CURSOR
           ? reply({ items: versions.slice(NEWEST_VERSIONS), nextCursor: null })
-          : reply({ error: 'cursor が不正です', code: 'invalid_cursor' }, 400);
+          : reply({ error: 'invalid cursor', code: 'invalid_cursor' }, 400);
       if (subresource === 'executions' && method === 'GET')
         return reply(historyPage(url.searchParams.get('cursor')));
       if (subresource === 'launch' && method === 'POST') {

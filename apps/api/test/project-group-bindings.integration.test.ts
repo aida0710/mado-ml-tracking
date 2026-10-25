@@ -370,7 +370,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
     const removal = await deleteMember(fixture, administratorId);
     expect(removal.status).toBe(409);
     expect(((await removal.json()) as { error: string }).error).toContain(
-      'まだ誰も入っていないgroupのAdminは数えません',
+      'admins of groups that nobody has joined yet are not counted',
     );
     const demotion = await request(harness.app, `${fixture.basePath}/members/${administratorId}`, {
       method: 'PUT',
@@ -451,7 +451,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
     });
     const response = await putBinding(fixture, { role: 'viewer', token: writeToken });
     expect(response.status).toBe(403);
-    expect(((await response.json()) as { code: string }).code).toBe('insufficient_scope');
+    expect(((await response.json()) as { code: string }).code).toBe('scope_required');
 
     const adminToken = await projectToken(fixture.administrator, {
       projectId: fixture.project.id,

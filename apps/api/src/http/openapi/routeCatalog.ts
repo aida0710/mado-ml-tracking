@@ -359,9 +359,9 @@ const RUNNER_ERRORS = [
 const SERVICE_ACCOUNT_ADMIN: RouteAccess = { kind: 'project', role: 'admin', scope: 'tokens:manage' };
 // A token issues or revokes only within its own scopes, Project and expiry (tokenIssuerAuthority.ts).
 // Changing accounts can create an administrator login, so a token also needs every scope
-// (UserAdministrationService); a missing one is insufficient_scope like any other.
+// (UserAdministrationService); a missing one is scope_required like any other.
 const USER_ADMINISTRATION: RouteAccess = { kind: 'globalAdmin', scope: 'users:manage' };
-const TOKEN_ISSUER_ERRORS = [...routeError(403, 'scope_exceeds_issuer', 'token_outlives_issuer')];
+const TOKEN_ISSUER_ERRORS = [...routeError(403, 'token_authority_exceeded', 'token_outlives_issuer')];
 
 // Saving a revision captures its snapshot blocks through the series, analysis and media services.
 const REPORT_SNAPSHOT_ERRORS = [
@@ -381,18 +381,9 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
   // system
   {
     method: 'get',
-    path: '/health',
+    path: '/healthz',
     tag: 'system',
-    summary: 'Health check（DB接続を確認）',
-    access: { kind: 'public' },
-    responses: { 200: health },
-    errors: routeError(503, 'database_unavailable'),
-  },
-  {
-    method: 'get',
-    path: '/api/health',
-    tag: 'system',
-    summary: 'Health check（DB接続を確認）',
+    summary: 'ヘルスチェック（DBへの接続まで確かめる。/apiの外で、認証は要らない）',
     access: { kind: 'public' },
     responses: { 200: health },
     errors: routeError(503, 'database_unavailable'),
@@ -457,8 +448,8 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     body: changePasswordSchema,
     responses: { 204: null },
     errors: [
-      ...routeError(401, 'invalid_credentials'),
-      ...routeError(403, 'local_account_required'),
+      ...routeError(400, 'incorrect_password'),
+      ...routeError(403, 'local_credential_unavailable'),
       ...routeError(409, 'password_changed_concurrently'),
       ...routeError(422, 'weak_password'),
       ...routeError(429, 'rate_limited'),
@@ -709,7 +700,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     access: RUNS_WRITE,
     body: experimentPatchSchema,
     responses: { 200: contract.experimentSchema },
-    errors: routeError(409, 'resource_already_exists'),
+    errors: routeError(409, 'already_exists'),
   },
   {
     method: 'get',
@@ -1324,7 +1315,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     access: PROJECT_VIEWER,
     body: runSearchSchema,
     responses: { 200: contract.runSearchPageSchema },
-    errors: routeError(400, 'invalid_parameter_value', 'invalid_cursor'),
+    errors: routeError(400, 'invalid_request', 'invalid_cursor'),
   },
   {
     method: 'get',
@@ -1700,7 +1691,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     access: PROJECT_VIEWER,
     headers: artifactRangeHeaders,
     responses: { 200: artifactBytes, 206: artifactBytes, 304: null },
-    errors: [...routeError(416, 'invalid_range'), ...routeError(503, 'artifact_read_failed')],
+    errors: [...routeError(416, 'range_not_satisfiable'), ...routeError(503, 'artifact_read_failed')],
   },
   {
     method: 'delete',
@@ -3247,7 +3238,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     body: adminUserPatchSchema,
     responses: { 200: contract.adminUserSchema },
     errors: [
-      ...routeError(409, 'last_global_admin'),
+      ...routeError(409, 'last_active_admin'),
       ...routeError(422, 'admin_role_managed_by_sso', 'service_account_admin_forbidden'),
     ],
   },
@@ -3258,7 +3249,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     summary: '一時passwordを発行',
     access: USER_ADMINISTRATION,
     responses: { 200: contract.adminUserPasswordResetSchema },
-    errors: routeError(422, 'local_account_required'),
+    errors: routeError(422, 'local_credential_unavailable'),
   },
 
   // notifications

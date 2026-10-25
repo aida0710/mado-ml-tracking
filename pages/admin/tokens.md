@@ -13,7 +13,7 @@ SDK、MLflow、worker、CIからAPIを使うときは、API tokenで認証しま
 | Service Accountのtoken | Service Account（人に紐付かない） | ［プロジェクト設定］の「Service Accounts」 | worker、自動実行、CIなど長く動くもの |
 | Job限定token | Runの作成者 | workerがJobごとに自動で受け取る | 実行コードの中からRunへ記録する。人が発行することはありません |
 
-tokenの値は発行したときに1回だけ表示されます。DBにはハッシュと先頭12文字だけを保存し、どの一覧にも値は表示しません。
+tokenの値は発行したときに1回だけ表示されます。DBにはハッシュと先頭16文字（`mado_mt_`と続く8文字）だけを保存し、どの一覧にも値は表示しません。
 
 ## scope
 
@@ -42,7 +42,7 @@ tokenで操作するときは、scopeに加えて、所有者の現在の実効R
 
 | 条件 | 外れたとき |
 | --- | --- |
-| 自分が持つscopeだけを付けられる（`admin`を持っていても、`tokens:manage`・`audit:read`・`users:manage`は自分が持つときだけ） | 403 `scope_exceeds_issuer` |
+| 自分が持つscopeだけを付けられる（`admin`を持っていても、`tokens:manage`・`audit:read`・`users:manage`は自分が持つときだけ） | 403 `token_authority_exceeded` |
 | Projectに限定したtokenは、同じProjectのtokenだけを扱える | 403 `project_forbidden` |
 | 自分の期限より後まで有効なtokenは作れない。期限なしや、省略して既定の365日になる場合も含みます | 403 `token_outlives_issuer` |
 
@@ -153,7 +153,7 @@ Service Accountは「全体管理」→［ユーザー］にも「Service Accoun
 ## tokenを失効させる
 
 - 自分のtoken: ［プロジェクト設定］の「自分のAPI token」、または［アカウント］の「自分のAPI token」で［失効］を押します。
-- Projectのtoken: ProjectのAdminは「Projectのtoken一覧」で、そのProjectに限定された全員とService Accountのtokenを確認し、［失効］で止められます。一覧には所有者、先頭12文字、scope、有効期限、最終使用（5分ごとに更新）が表示されます。
+- Projectのtoken: ProjectのAdminは「Projectのtoken一覧」で、そのProjectに限定された全員とService Accountのtokenを確認し、［失効］で止められます。一覧には所有者、先頭16文字、scope、有効期限、最終使用（5分ごとに更新）が表示されます。
 
 失効させたtokenは次の要求から401になり、元に戻せません。発行と失効は監査ログに「API tokenの発行」（`token.create`）、「API tokenの失効」（`token.revoke`）として残ります。
 
@@ -161,7 +161,7 @@ Projectをアーカイブすると、そのProjectに限定したtoken（Service
 
 ## Job限定token
 
-workerはJobを実行するたびに、そのJobだけで使えるtoken（`mmtj_`で始まる）をAPIから受け取り、実行コードの`MMT_API_TOKEN`と`MLFLOW_TRACKING_TOKEN`に渡します。worker自身のtokenは実行コードに渡しません。人がJob限定tokenを発行・管理することはありません。
+workerはJobを実行するたびに、そのJobだけで使えるtoken（`mado_mtj_`で始まる）をAPIから受け取り、実行コードの`MMT_API_TOKEN`と`MLFLOW_TRACKING_TOKEN`に渡します。worker自身のtokenは実行コードに渡しません。人がJob限定tokenを発行・管理することはありません。
 
 - 権限はRunの作成者の現在の実効Roleで決まります。scopeは`read`、`runs:write`、`artifacts:write`、`registry:write`です。
 - 書き込めるのは、対象のRun（metrics、params、tags、ログ、入力Dataset、Artifact）、そのRunを生成元とするモデル・データセットのバージョン、そのRunのLogged Model、出力先のModelの作成だけです。同じProjectの別のRun、token発行、Projectの設定、自動実行ルールへの書き込みは403 `job_token_forbidden`になります。

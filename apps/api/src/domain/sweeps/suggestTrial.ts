@@ -7,7 +7,7 @@ import type { SuggestInput, SuggestResult } from './types.js';
 /** method に応じて次の試行の parameter を提案する。探索空間はここでも検証する */
 export function suggestTrial(input: SuggestInput): SuggestResult {
   if (!Number.isInteger(input.trialIndex) || input.trialIndex < 0)
-    throw new RangeError(`trialIndex は0以上の整数である必要があります（${input.trialIndex}）`);
+    throw new RangeError(`trialIndex must be a non-negative integer (${input.trialIndex})`);
   validateSearchSpace(input.space, input.method);
   switch (input.method) {
     case 'grid':

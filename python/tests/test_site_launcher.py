@@ -249,7 +249,7 @@ def test_a_claimed_submission_runs_as_its_account_and_is_reported_then_canceled_
     # The job shell is the submission's version; work directory and variables are the account's.
     spec = tmp_path / "alice-work/.mmt-submissions" / job_id
     assert mode_of(spec) == 0o700 and mode_of(spec / "jobs/0.json") == 0o600
-    assert json.loads((spec / "jobs/0.json").read_text())["jobToken"].startswith("mmtj_")
+    assert json.loads((spec / "jobs/0.json").read_text())["jobToken"].startswith("mado_mtj_")
     recorded = json.loads((spec / "submission.json").read_text())
     assert recorded["jobs"][0]["jobToken"] is None
     # Which job shell version it was, not its content: that is installed once, on its own.

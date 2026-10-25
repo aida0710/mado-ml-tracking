@@ -16,7 +16,11 @@ const ownerCollections: Record<ArtifactOwner['kind'], string> = {
 };
 
 function invalidPath(): never {
-  throw new DomainError(422, 'Artifactには安全な相対パスが必要です', 'invalid_parameter_value');
+  throw new DomainError({
+    status: 422,
+    code: 'invalid_request',
+    message: 'an artifact requires a safe relative path',
+  });
 }
 
 export function validateArtifactPath(path: string, options: { directory?: boolean } = {}): string {
@@ -91,7 +95,11 @@ export function artifactRootUri(owner: ArtifactOwner): string {
 
 export function nativeArtifactPath(location: ArtifactLocation): string {
   if (location.owner.kind === 'model-version')
-    throw new DomainError(409, '登録モデルバージョンのArtifactは変更できません', 'conflict');
+    throw new DomainError({
+      status: 409,
+      code: 'conflict',
+      message: 'artifacts of a registered model version cannot be changed',
+    });
   const path =
     location.owner.kind === 'run' ? location.path : `models/${location.owner.id}/${location.path}`;
   return validateArtifactPath(path);

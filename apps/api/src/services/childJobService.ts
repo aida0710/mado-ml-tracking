@@ -70,7 +70,11 @@ export class ChildJobService {
       !principal.token?.projectId ||
       !sameId(principal.token.projectId, reference.projectId)
     )
-      throw new DomainError(403, '子Jobは親JobのJob tokenで作成します', 'driver_token_required');
+      throw new DomainError({
+        status: 403,
+        code: 'driver_token_required',
+        message: 'create child jobs with the Job token of the parent job',
+      });
     assertNoReservedRunTags(input.tags);
     return transaction(this.database, async (connection) => {
       // The Job token acts as the parent Run's creator, who must still be an editor.
@@ -86,7 +90,11 @@ export class ChildJobService {
         lock: true,
       });
       if (!parent.allowChildJobs)
-        throw new DomainError(403, 'このJobは子Jobを作成できません', 'child_jobs_not_allowed');
+        throw new DomainError({
+          status: 403,
+          code: 'child_jobs_not_allowed',
+          message: 'this job cannot create child jobs',
+        });
       const existing = await this.findByKey(connection, {
         projectId: reference.projectId,
         parentJobId: parent.id,
@@ -94,11 +102,12 @@ export class ChildJobService {
       });
       if (existing) return existing;
       if (parent.chainDepth + 1 > MAX_JOB_CHAIN_DEPTH)
-        throw new DomainError(
-          422,
-          `Jobの連鎖は${MAX_JOB_CHAIN_DEPTH}段までです`,
-          'chain_too_deep',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'chain_too_deep',
+          message: `jobs can be chained at most ${MAX_JOB_CHAIN_DEPTH} levels deep`,
+          details: { limit: MAX_JOB_CHAIN_DEPTH },
+        });
       await this.assertWithinLimits(connection, { parentJobId: parent.id, adding: input.arraySize ?? 1 });
       const parentRun = await findRun(connection, {
         projectId: reference.projectId,
@@ -263,11 +272,12 @@ export class ChildJobService {
       counted.total + request.adding > MAX_CHILD_JOBS_PER_PARENT ||
       counted.active + request.adding > MAX_ACTIVE_CHILD_JOBS
     )
-      throw new DomainError(
-        409,
-        `子Jobは1つの親につき${MAX_CHILD_JOBS_PER_PARENT}件、同時に${MAX_ACTIVE_CHILD_JOBS}件までです`,
-        'child_job_limit',
-      );
+      throw new DomainError({
+        status: 409,
+        code: 'child_job_limit',
+        message: `a parent can have at most ${MAX_CHILD_JOBS_PER_PARENT} child jobs, ${MAX_ACTIVE_CHILD_JOBS} of them at a time`,
+        details: { limit: MAX_CHILD_JOBS_PER_PARENT, activeLimit: MAX_ACTIVE_CHILD_JOBS },
+      });
   }
 
   // The current attempt of each child: a retried attempt is counted through its retry.

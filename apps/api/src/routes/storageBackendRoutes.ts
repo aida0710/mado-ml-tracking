@@ -22,7 +22,7 @@ function backendName(context: ApiContext): string {
   const name = context.req.param('name');
   // Anything outside the stored name rule cannot name an existing backend.
   if (!name || !isValidStorageBackendName(name))
-    throw new DomainError(404, '保存先が見つかりません', 'not_found');
+    throw new DomainError({ status: 404, code: 'not_found', message: 'storage backend not found' });
   return name;
 }
 

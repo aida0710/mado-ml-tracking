@@ -111,7 +111,7 @@ export function createComputerSetup({ id, now, projectId, targets }) {
     if (!match || match[1] === 'overview') return undefined;
     const [, targetId, resource, key] = match;
     const target = targets().find((item) => item.id === targetId);
-    if (!target) return reply({ error: 'ComputeTargetが見つかりません', code: 'not_found' }, 404);
+    if (!target) return reply({ error: 'computer not found', code: 'not_found' }, 404);
     if (!resource && method === 'PATCH') {
       Object.assign(target, body);
       return reply(target);

@@ -55,15 +55,21 @@ export function computeParameterImportance(input: {
   seed?: number;
 }): ParameterImportanceResult {
   if (input.runs.length > MAX_IMPORTANCE_RUNS) {
-    throw new DomainError(422, `重要度の計算に使える Run は ${MAX_IMPORTANCE_RUNS} 件までです`, 'too_many_runs');
+    throw new DomainError({
+      status: 422,
+      code: 'too_many_runs',
+      message: `parameter importance can use at most ${MAX_IMPORTANCE_RUNS} runs`,
+      details: { limit: MAX_IMPORTANCE_RUNS },
+    });
   }
   const parameterNames = input.parameterNames ?? collectParameterNames(input.runs);
   if (parameterNames.length > MAX_IMPORTANCE_PARAMETERS) {
-    throw new DomainError(
-      422,
-      `重要度の計算に使える parameter は ${MAX_IMPORTANCE_PARAMETERS} 個までです`,
-      'too_many_parameters',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'too_many_parameters',
+      message: `parameter importance can use at most ${MAX_IMPORTANCE_PARAMETERS} parameters`,
+      details: { limit: MAX_IMPORTANCE_PARAMETERS },
+    });
   }
 
   const matrix = buildParameterMatrix({ runs: input.runs, objectiveMetric: input.objectiveMetric, parameterNames });

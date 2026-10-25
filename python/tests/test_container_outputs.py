@@ -426,7 +426,7 @@ def test_lost_declaration_response_is_resent_by_index_without_registering_twice(
 
 @pytest.mark.parametrize(
     ("status", "code", "lease_lost"),
-    [(409, "invalid_lease", True), (403, "insufficient_scope", False), (404, "not_found", False)],
+    [(409, "invalid_lease", True), (403, "scope_required", False), (404, "not_found", False)],
 )
 def test_declaration_errors_fail_the_run_unless_the_lease_itself_is_gone(
     worker_job, status, code, lease_lost

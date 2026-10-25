@@ -12,9 +12,9 @@ export function assertControlsWorkflowExecution(
   execution: { createdBy: string },
 ): void {
   if (controlsStartedWork(caller, execution)) return;
-  throw new DomainError(
-    403,
-    'ワークフローの実行を停止・再開できるのは、作成者かProject adminだけです',
-    'workflow_control_forbidden',
-  );
+  throw new DomainError({
+    status: 403,
+    code: 'workflow_control_forbidden',
+    message: 'only the creator of the workflow execution or a project admin can stop or resume it',
+  });
 }

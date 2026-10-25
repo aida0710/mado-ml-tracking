@@ -39,7 +39,7 @@ migration 010はsessionに`auth_method`を必須で追加します。migration�
 
 1. 全体管理者がブラウザでサイドバーの「全体管理」→「ユーザー」（`/settings/users`）を開き、対象の行で「無効化」を押します。そのユーザーのsessionは直ちに終了し、API token（MLflow互換APIを含む）も直ちに401になります。SSOユーザーはAuthentik側でもgroupから外します。外さずに再有効化すると、次回loginでgroup由来の全体roleに戻ります。
 2. 戻すときは同じ行で「有効化」を押します。API tokenは再び使えますが、終了したsessionは戻りません（再loginが必要）。
-3. 最後の有効な全体管理者は無効化・降格できません（409 `last_global_admin`）。先に別の管理者を用意します。
+3. 最後の有効な全体管理者は無効化・降格できません（409 `last_active_admin`）。先に別の管理者を用意します。
 4. ユーザーは削除しません。Runやモデルバージョンの作成者の記録を保つためです。
 
 ### ローカルアカウントのパスワードを忘れた
@@ -325,11 +325,13 @@ APIで行う場合（Project adminのbrowser session、または`tokens:manage`�
 - `POST /api/projects/:p/service-accounts` `{name, description, role:'admin'}`
 - `POST /api/projects/:p/service-accounts/:id/tokens` `{name, scopes:['read','worker:execute','artifacts:write'], expiresAt?}`
 
-確認: `mado-tracking-worker doctor` が `GET /api/auth/token` で scope を表示する。「プロジェクト設定」の「Projectのtoken一覧」に、所有者 Service Account・先頭12文字・最終使用（5分ごとに更新）が出る。
+確認: `mado-tracking-worker doctor` が `GET /api/auth/token` で scope を表示する。「プロジェクト設定」の「Projectのtoken一覧」に、所有者 Service Account・先頭16文字・最終使用（5分ごとに更新）が出る。
 
 止めるとき: Service Accountを「無効化」すると、そのtokenは次の要求から401になる。1本だけ止めるときは「Projectのtoken一覧」で失効する。期限が近づいたら新しいtokenを発行し、`mado-tracking-worker install --token-file` で差し替える。
 
 個人が所有するservice tokenと、先頭12文字を保存する前に発行したtokenは、migration 068で失効した（理由は監査ログの`token.revoke`の`details.reason`）。使っていたものはService Accountか個人のtokenを発行し直す。
+
+前置きが`mado_mt_`（Job tokenは`mado_mtj_`）になる前に発行したtokenは、migration 072ですべて失効した（監査ログの`token.revoke`の`details.reason`は`token_prefix_changed`）。worker・launcher・SDK・スクリプトのtokenは発行し直して差し替える。
 
 ### 2. venvへ入れてinstallする（user unit）
 
@@ -363,7 +365,7 @@ mado-tracking-worker status --worker-id gpu-host-1     # unit状態、worker loc
 journalctl --user -u mado-tracking-worker@gpu-host-1 -f
 ```
 
-doctorは、env fileとstate directoryのmode、APIへの到達（`/api/health`）、tokenのscope（`GET /api/auth/token`。Job tokenは不可）、`~/.ssh`・秘密鍵（group/otherの権限なし）・known_hosts（group/other書き込み不可）を確かめる。errorがあれば終了コード1。Compute画面の「Workers」にバージョンとホスト名が出ることも確認する。
+doctorは、env fileとstate directoryのmode、APIへの到達（`/healthz`）、tokenのscope（`GET /api/auth/token`。Job tokenは不可）、`~/.ssh`・秘密鍵（group/otherの権限なし）・known_hosts（group/other書き込み不可）を確かめる。errorがあれば終了コード1。Compute画面の「Workers」にバージョンとホスト名が出ることも確認する。
 
 ### 4. 更新する
 

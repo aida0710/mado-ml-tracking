@@ -25,6 +25,7 @@ import {
   projectPath,
   request,
   RequestError,
+  requestErrorFromBody,
   requestItems,
 } from './http';
 
@@ -136,18 +137,9 @@ async function exportRunSearchCsv(
     if (error instanceof DOMException && error.name === 'AbortError') throw error;
     throw new RequestError({ status: 0, code: NETWORK_ERROR_CODE });
   }
-  // Same error shape as request() in http.ts, which only reads JSON bodies.
-  if (!response.ok) {
-    const apiError = (await response.json().catch(() => null)) as {
-      error?: unknown;
-      code?: unknown;
-    } | null;
-    throw new RequestError({
-      status: response.status,
-      code: typeof apiError?.code === 'string' ? apiError.code : undefined,
-      serverMessage: typeof apiError?.error === 'string' ? apiError.error : undefined,
-    });
-  }
+  // 失敗は JSON のエラー本文なので、request()（http.ts）と同じく読む。
+  if (!response.ok)
+    throw requestErrorFromBody(response.status, await response.json().catch(() => null));
   return {
     blob: await response.blob(),
     fileName: attachmentFileName(response.headers.get('Content-Disposition')),

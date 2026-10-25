@@ -12,11 +12,16 @@ export function findReservedRunTag(keys: Iterable<string>): string | undefined {
 }
 
 export function reservedRunTagMessage(key: string): string {
-  return `${key}はサーバーが管理する予約tagのため変更できません`;
+  return `${key} is a reserved tag managed by the server and cannot be changed`;
 }
 
 export function assertNoReservedRunTags(tags: Record<string, string>): void {
   const reserved = findReservedRunTag(Object.keys(tags));
   if (reserved !== undefined)
-    throw new DomainError(422, reservedRunTagMessage(reserved), 'reserved_tag');
+    throw new DomainError({
+      status: 422,
+      code: 'reserved_tag',
+      message: reservedRunTagMessage(reserved),
+      details: { tag: reserved },
+    });
 }

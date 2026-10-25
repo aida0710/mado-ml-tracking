@@ -20,11 +20,11 @@ export class RunOutputRegistrationService {
     await findRun(this.database, { projectId, id: runId });
     const registration = await findRunOutputRegistration(this.database, { projectId, runId });
     if (!registration)
-      throw new DomainError(
-        404,
-        'Taskの出力モデル登録の記録がありません',
-        'output_registration_not_found',
-      );
+      throw new DomainError({
+        status: 404,
+        code: 'output_registration_not_found',
+        message: 'there is no record of output model registration by the task',
+      });
     return registration;
   }
 }

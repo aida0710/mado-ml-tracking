@@ -981,7 +981,11 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
       .spyOn(harness.services.automation, 'processRegistration')
       .mockImplementation(async (connection, reference) => {
         await processRegistration(connection, reference);
-        throw new DomainError(503, 'Fixture registration failure', 'fixture_failure');
+        throw new DomainError({
+          status: 503,
+          code: 'internal_error',
+          message: 'Fixture registration failure',
+        });
       });
     try {
       expect(

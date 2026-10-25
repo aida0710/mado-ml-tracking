@@ -60,11 +60,11 @@ with mlflow.start_run(run_name="hello"):
 
 | エラー | 直す所 |
 | --- | --- |
-| `ENDPOINT_NOT_FOUND: MLFLOW_TRACKING_URIにProjectのIDが入っていません` | `MLFLOW_TRACKING_URI`をサイトや`/api/mlflow`で止めず、`/api/mlflow/projects/<ProjectのID>`まで入れる |
-| `UNAUTHENTICATED: API tokenが送られていません` | `MLFLOW_TRACKING_TOKEN`（Basic認証なら`MLFLOW_TRACKING_PASSWORD`）にtokenを入れる |
+| `ENDPOINT_NOT_FOUND: MLFLOW_TRACKING_URI does not contain a project ID` | `MLFLOW_TRACKING_URI`をサイトや`/api/mlflow`で止めず、`/api/mlflow/projects/<ProjectのID>`まで入れる |
+| `UNAUTHENTICATED: no API token was sent` | `MLFLOW_TRACKING_TOKEN`（Basic認証なら`MLFLOW_TRACKING_PASSWORD`）にtokenを入れる |
 | `UNAUTHENTICATED`（tokenが無効または失効） | tokenの値か期限を確かめ、必要なら発行し直す |
-| `PERMISSION_DENIED: API tokenのscopeが不足しています` | 足りないscopeが書いてある。用途「SDK・MLflow 3から記録する」でtokenを発行し直す |
-| `PERMISSION_DENIED: API tokenのprojectが一致しません` | tokenがどのProject用かが書いてある。URIのProject IDか、使うtokenを合わせる |
+| `PERMISSION_DENIED: the API token lacks the scope ...` | 足りないscopeが書いてある。用途「SDK・MLflow 3から記録する」でtokenを発行し直す |
+| `PERMISSION_DENIED: the API token belongs to project ...` | tokenがどのProject用かが書いてある。URIのProject IDか、使うtokenを合わせる |
 
 ## Basic認証で接続する
 

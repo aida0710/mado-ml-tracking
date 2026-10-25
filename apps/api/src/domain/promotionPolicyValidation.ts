@@ -22,7 +22,7 @@ const criteriaSchema = z
     (criteria) =>
       new Set(criteria.map((item) => `${item.metric}\u0000${item.mode}\u0000${item.direction}`))
         .size === criteria.length,
-    { message: '同じmetric・mode・directionの基準が重複しています' },
+    { message: 'criteria with the same metric, mode and direction are duplicated' },
   );
 
 export const promotionPolicyCreateSchema = z.strictObject({

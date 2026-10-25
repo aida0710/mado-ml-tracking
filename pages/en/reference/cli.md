@@ -146,7 +146,7 @@ mado-tracking-worker doctor --worker-id gpu-host-1 --ssh-key ~/.ssh/gpu_key --kn
 It checks:
 
 - The permissions of the environment file and the state directory
-- Reachability of the API server (`/api/health`)
+- Reachability of the API server (`/healthz`)
 - The token's scopes (`GET /api/auth/token`; Job tokens are not accepted)
 - `~/.ssh`, private keys (no group or other permissions), and known_hosts (not writable by group or other)
 

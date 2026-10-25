@@ -16,10 +16,10 @@ from ..security import SecretMasker
 CONTROL_CHARACTERS = re.compile(r"[\x00-\x1f\x7f]")
 # MAX_TARGET_PATH_LENGTH of the contract: paths a person types for a computer and paths a worker reports.
 MAX_TARGET_PATH_LENGTH = 1024
-# The API refuses results carrying an API token (mmt_/mmtj_) or a PEM private key. ASCII word
-# boundaries, as in the API's JavaScript patterns.
+# API は、API token（mado_mt_）・Job token（mado_mtj_）や PEM の秘密鍵を含む結果を断る。
+# 単語の境界は API の JavaScript の正規表現と同じく ASCII で見る。
 API_SECRET_PATTERNS = (
-    re.compile(r"\bmmtj?_[A-Za-z0-9_-]{8,}", re.ASCII),
+    re.compile(r"\bmado_mtj?_[A-Za-z0-9_-]{8,}", re.ASCII),
     re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
 )
 

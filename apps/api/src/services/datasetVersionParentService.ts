@@ -85,11 +85,11 @@ export class DatasetVersionParentService {
             descendantIds: addedParents,
           }))
         )
-          throw new DomainError(
-            422,
-            '親の追加によってデータの来歴が循環します',
-            'dataset_parent_cycle',
-          );
+          throw new DomainError({
+            status: 422,
+            code: 'dataset_parent_cycle',
+            message: 'adding the parent makes the data lineage circular',
+          });
         await connection.query(
           `INSERT INTO dataset_version_parent_additions
         (project_id,dataset_version_id,parent_dataset_version_id,reason,evidence,created_by)

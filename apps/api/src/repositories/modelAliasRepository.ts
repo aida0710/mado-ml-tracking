@@ -58,7 +58,7 @@ async function lockModel(connection: Connection, modelId: string): Promise<strin
     'SELECT project_id FROM models WHERE id=$1 FOR UPDATE',
     [modelId],
   );
-  if (!model) notFound('Model');
+  if (!model) notFound('model');
   return model.projectId;
 }
 

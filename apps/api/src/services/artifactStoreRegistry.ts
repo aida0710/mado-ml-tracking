@@ -44,11 +44,11 @@ async function translateDisabled<T>(operation: () => Promise<T>): Promise<T> {
     return await operation();
   } catch (error) {
     if (error instanceof ArtifactBackendDisabledError)
-      throw new DomainError(
-        409,
-        'この保存先は無効になっているため新しいArtifactを保存できません',
-        'storage_backend_disabled',
-      );
+      throw new DomainError({
+        status: 409,
+        code: 'storage_backend_disabled',
+        message: 'this storage backend is disabled and cannot store new artifacts',
+      });
     throw error;
   }
 }

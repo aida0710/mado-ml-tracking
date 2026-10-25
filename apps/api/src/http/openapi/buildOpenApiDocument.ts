@@ -20,9 +20,9 @@ const DESCRIPTION = [
   'mado ML Tracking の独自API（native API）。',
   '振る舞いの正本は docs/api-contract.md（文章）で、この文書はその形式（route・認可・入出力・エラーコード）を機械可読にしたもの。両者の食い違いは apps/api/test/openapi-coverage.test.ts が検出する。',
   'MLflow 互換API（/api/mlflow/projects/{p}/...）は MLflow 公式の REST API・proto に従うので、この文書には含めない。',
-  'JSONはcamelCase、IDはUUID、日時はISO 8601（UTC）。一覧は {items: T[]}。エラーは ApiError {error, code}。',
+  'JSONはcamelCase、IDはUUID、日時はISO 8601（UTC）。一覧は {items: T[]}。エラーは ApiErrorBody {error, code}（error は英語の文、code は理由の名前。文に入る値は横の項目に置く）。',
   `JSON本文の上限は既定で${MAX_JSON_BODY_BYTES}バイト。例外は requestBody の x-mmt-max-body-bytes に書く。`,
-  '各 operation の x-mmt-access は認可（Project role と API token の scope）、x-mmt-job-token は Job 限定 token（mmtj_）で呼べるか（write は token の Run に対する書き込みだけ）を示す。',
+  '各 operation の x-mmt-access は認可（Project role と API token の scope）、x-mmt-job-token は Job 限定 token（mado_mtj_）で呼べるか（write は token の Run に対する書き込みだけ）を示す。',
 ].join('\n\n');
 
 const TAGS: { name: string; description: string }[] = [
@@ -75,7 +75,7 @@ const SECURITY_SCHEMES = {
     type: 'http',
     scheme: 'bearer',
     description: [
-      'API token（mmt_）またはJob限定token（mmtj_）。operationのsecurityに並ぶ値は必要なscope。Project roleとtokenのProject制限も確認する。',
+      'API token（mado_mt_）またはJob限定token（mado_mtj_）。operationのsecurityに並ぶ値は必要なscope。Project roleとtokenのProject制限も確認する。',
       'Job限定tokenはtokenのProjectの読み出し（GET・runs/search）と、x-mmt-job-token=writeのrouteのうち自分のRunへの書き込みだけを許し、それ以外は403 job_token_forbidden。',
     ].join('\n'),
   },
@@ -167,7 +167,7 @@ export function buildOpenApiDocument(
   const components = new JsonSchemaComponents();
   // Converted first so recursive JSON values in request schemas reuse the JsonValue component.
   components.convert(jsonValueSchema, 'output');
-  // Every error response refers to ApiError.
+  // エラーの応答はすべて ApiErrorBody を参照する。
   components.convert(apiErrorSchema, 'output');
   const paths: Record<string, Record<string, unknown>> = {};
   for (const route of routes) {
@@ -220,9 +220,6 @@ function operation(route: NativeRoute, components: JsonSchemaComponents): Record
   };
 }
 
-// Paths outside /api (the root /health) get a prefix so they differ from their /api twins.
-const ROOT_OPERATION_PREFIX = 'Root';
-
 function operationId(route: NativeRoute): string {
   const isApiPath = route.path.startsWith('/api/');
   const words = route.path
@@ -232,7 +229,7 @@ function operationId(route: NativeRoute): string {
     .flatMap((segment) => segment.split(/[^A-Za-z0-9]+/))
     .filter(Boolean)
     .map(capitalize);
-  return `${route.method}${isApiPath ? '' : ROOT_OPERATION_PREFIX}${words.join('')}`;
+  return `${route.method}${words.join('')}`;
 }
 
 function capitalize(word: string): string {
@@ -341,7 +338,7 @@ function errorResponses(errors: RouteError[]): Record<string, unknown> {
         {
           description: errorDescription(status),
           'x-mmt-error-codes': codes,
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiError' } } },
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiErrorBody' } } },
         },
       ]),
   );
