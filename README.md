@@ -68,3 +68,7 @@ uv run pytest
 ```
 
 実際のAuthentik client、SSH GPU接続先、S3保存先は環境に合わせて設定します。外部サービスに接続していないテスト結果を、本番接続の確認として扱わないでください。
+
+## License
+
+mado ML Tracking is licensed under the [Apache License 2.0](LICENSE).

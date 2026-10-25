@@ -20,7 +20,7 @@ async function createFixture() {
     'package.json', 'package-lock.json', 'apps/api/package.json', 'apps/web/package.json',
     'packages/contracts/package.json', 'packages/platform/package.json', 'python/pyproject.toml',
     `docs/releases/${TAG}.md`, 'compose.yml', 'compose.filesystem-storage.yml',
-    'deploy/release', 'deploy/sites', 'deploy/worker', 'deploy/forgejo',
+    'deploy/release', 'deploy/sites', 'deploy/worker', 'deploy/forgejo', 'LICENSE', 'NOTICE',
   ]) {
     await cp(join(REPOSITORY_ROOT, path), join(repositoryRoot, path), { recursive: true });
   }
@@ -49,6 +49,8 @@ test('配布物は固定イメージから起動し、任意の実行サービ�
     const entries = execFileSync('tar', ['-tzf', bundle.archive], { encoding: 'utf8' });
     assert.doesNotMatch(entries, /\/\.env\n|node_modules|private-fixture-value/);
     assert.match(entries, /\.env\.example/);
+    assert.match(entries, /\/LICENSE\n/);
+    assert.match(entries, /\/NOTICE\n/);
     execFileSync('tar', ['-xzf', bundle.archive, '-C', fixture.outputDirectory]);
     const extracted = join(fixture.outputDirectory, `mado-ml-tracking-${TAG}`);
     const compose = parse(await readFile(join(extracted, 'compose.yml'), 'utf8'));
