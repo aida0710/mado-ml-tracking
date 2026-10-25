@@ -1,4 +1,4 @@
-# API契約 v0.1
+# API契約
 
 本体はTypeScript/Hono＋PostgreSQL、React/Vite、Python worker/SDK。Mado連携は本体に標準搭載し、Projectごとに初期無効。JSONはcamelCase。成功時はentityを直接返す。一覧は`{items: T[]}`。エラーは`{error:string,code?:string}`で適切な4xx/5xx。IDはUUID、日時はISO UTC。バージョンとRunの参照は不変。外部のサンプルを自動で本番へseedしない。
 
