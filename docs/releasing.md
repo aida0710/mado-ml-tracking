@@ -6,18 +6,21 @@
 
 mainの同じcommitでCIが成功し、アプリ・SDK・タグのバージョンが一致することが条件です。本文は`docs/releases/<tag>.md`に置きます。
 
+版を上げるときは、ルート・`apps/*`・`packages/*`の`package.json`（`npm install --package-lock-only`でlockfileも）、`python/pyproject.toml`の版をそろえ、`npm run openapi:generate`で`docs/openapi.json`の版も更新します。忘れるとCIの`openapi-coverage`が落ちます。
+
 ```sh
 npm ci
 node scripts/release/version.mjs v0.1.0
 node --test scripts/release/bundle.node-test.mjs
 ```
 
-変更をmainへ入れ、自動検査が成功した後でannotated tagを作ります。
+## タグを作る
+
+変更をmainへ入れ、自動検査が成功した後で、mainのcheckoutから`scripts/release/publish.sh`を実行します。mainの最新commitであること、作業ツリーに変更が無いこと、そのcommitでmainのCIが成功していること、版とリリースノート、同じタグがまだ無いことを確かめ、タグ名を入力するとannotated tagを作ってpushします。`--verify-only`を付けると確認だけで止まります。2つ目の引数は、タグのメッセージに添える1行の要約です。
 
 ```sh
-git fetch origin
-git tag -a v0.1.0 origin/main -m '初回の0.1.0リリース'
-git push origin v0.1.0
+scripts/release/publish.sh --verify-only v0.1.0
+scripts/release/publish.sh v0.1.0 '初回のリリース'
 ```
 
 ## 配布処理
