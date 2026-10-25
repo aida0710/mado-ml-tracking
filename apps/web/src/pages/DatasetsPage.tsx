@@ -45,7 +45,7 @@ export function DatasetsPage() {
     parentId: (version) => version.datasetId,
   });
   return (
-    <section className="page datasets-page touch-targets">
+    <section className="page datasets-page">
       <PageHeader
         title={text.datasets}
         eyebrow={project.name}
@@ -95,7 +95,7 @@ export function DatasetsPage() {
                           <button className="link-button" onClick={() => registry.selectItem(item.id)}>
                             {item.name}
                           </button>
-                          {item.archivedAt && <span className="report-badge">{text.datasetArchived}</span>}
+                          {item.archivedAt && <span className="status-badge status-accent">{text.datasetArchived}</span>}
                         </span>
                       ),
                     },
@@ -122,7 +122,7 @@ export function DatasetsPage() {
                   <h2>
                     {registry.selected.name}
                     {registry.selected.archivedAt && (
-                      <span className="report-badge">{text.datasetArchived}</span>
+                      <span className="status-badge status-accent">{text.datasetArchived}</span>
                     )}
                   </h2>
                   {canEdit && (

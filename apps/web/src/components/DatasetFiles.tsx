@@ -32,7 +32,7 @@ export function DatasetFiles({ version }: { version: DatasetVersion }) {
     scrollBrowserIntoView();
   }
   return (
-    <div ref={containerRef} className="artifact-layout artifact-browser dataset-files touch-targets">
+    <div ref={containerRef} className="artifact-layout artifact-browser dataset-files">
       {panes.showList && (
         <div>
           <Resource query={tree}>

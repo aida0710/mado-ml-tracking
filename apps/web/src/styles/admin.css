@@ -119,19 +119,6 @@
   align-items: center;
   gap: 8px;
 }
-.storage-tag {
-  display: inline-block;
-  border-radius: var(--radius-pill);
-  padding: 2px 8px;
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 10px;
-  white-space: nowrap;
-}
-.storage-tag.storage-default {
-  background: var(--accent-tint);
-  color: var(--link);
-}
 .storage-location code {
   font-family: var(--mono);
   font-size: 11px;
@@ -243,15 +230,7 @@
 }
 /* The signed-in administrator's own row, which the actions affect at once. */
 .user-self-tag {
-  display: inline-block;
   margin-left: 8px;
-  white-space: nowrap;
-  border-radius: var(--radius-pill);
-  padding: 1px 8px;
-  background: var(--accent-tint);
-  color: var(--link);
-  font-size: 10px;
-  font-weight: 600;
 }
 .user-locked-reason {
   flex-basis: 100%;

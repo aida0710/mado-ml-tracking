@@ -46,11 +46,11 @@ export function DatasetActionsMenu({
         <MoreHorizontal size={17} />
       </button>
       {isOpen && (
-        <div className="artifact-actions-popover" id={menuId} role="menu">
-          <button type="button" role="menuitem" onClick={() => choose('description')}>
+        <div className="popover menu artifact-actions-popover" id={menuId} role="menu">
+          <button type="button" role="menuitem" className="menu-item" onClick={() => choose('description')}>
             {text.datasetEditDescription}
           </button>
-          <button type="button" role="menuitem" onClick={() => choose(isArchived ? 'unarchive' : 'archive')}>
+          <button type="button" role="menuitem" className="menu-item" onClick={() => choose(isArchived ? 'unarchive' : 'archive')}>
             {isArchived ? text.datasetUnarchive : text.datasetArchive}
           </button>
         </div>

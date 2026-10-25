@@ -74,7 +74,7 @@ const rowNames = (page) => page.locator('table.run-table tbody .run-name').allTe
 const unsavedBadge = (page) => page.locator('.saved-views-bar').getByText('未保存の変更');
 
 async function toggleColumn(page, label) {
-  const menu = page.locator('.run-toolbar .column-menu');
+  const menu = page.locator('.toolbar .column-menu');
   if (!(await menu.evaluate((element) => element.open))) await menu.locator('summary').click();
   await menu.getByLabel(label, { exact: true }).click();
   await menu.locator('summary').click();

@@ -131,7 +131,7 @@ export function DatasetFolderVersionDialog({
       )}
       <ErrorNotice message={unfinished.error} retry={unfinished.reload} />
       <form
-        className="artifact-upload-form touch-targets"
+        className="artifact-upload-form"
         onSubmit={(event) => {
           event.preventDefault();
           if (canStart) start();

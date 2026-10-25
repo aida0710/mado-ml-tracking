@@ -88,7 +88,7 @@ export function RunListCharts({
         {...(isCustomized ? { onResetLayout: resetLayout } : {})}
         toolbar={
           <>
-            <label className="toolbar-select" htmlFor={`${id}-target`}>
+            <label className="toolbar-item" htmlFor={`${id}-target`}>
               <span>{text.chartTarget}</span>
               <select
                 id={`${id}-target`}

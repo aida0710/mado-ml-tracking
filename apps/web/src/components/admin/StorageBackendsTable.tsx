@@ -36,7 +36,7 @@ export function StorageBackendsTable({
             <span className="storage-name">
               <strong>{backend.name}</strong>
               {backend.name === defaultBackend && (
-                <span className="storage-tag storage-default">{text.storageDefaultMark}</span>
+                <span className="status-badge status-accent">{text.storageDefaultMark}</span>
               )}
             </span>
           ),

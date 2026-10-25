@@ -57,56 +57,27 @@
   font-weight: 400;
   margin-top: 4px;
 }
-/* The controls wrap to a second line whenever they do not fit beside the search, which also
-   happens on wide screens once the navigation sidebar and the Experiments list take their width. */
-.run-toolbar {
-  background: var(--surface);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
+/* 一覧の上の帯（デザインシステムの.toolbar・.toolbar-search・.toolbar-item）。このアプリの帯はどれも表や
+   グラフの上に置くので、その間を空ける。入りきらない操作は次の行へ折り返す。 */
+.toolbar {
   margin-bottom: 16px;
-  min-height: 40px;
 }
-.search-field {
-  display: flex;
-  align-items: center;
-  flex: 1 1 360px;
-  gap: 12px;
-  padding: 0 12px;
-  min-width: 180px;
-  border-bottom: 1px solid var(--input-border);
-}
-.search-field > input {
-  flex: 1;
-  width: 100%;
-  border: 0;
-  background: transparent;
-  padding: 10px 0;
-  font-family: var(--mono);
-  font-size: 11px;
-}
-.search-field .button {
+/* 検索欄の右端の「絞り込み」は、枠の無い入力欄の中のボタンとして、枠と地を持たせない。 */
+.toolbar-search > .button {
   border: 0;
   background: transparent;
   color: var(--muted);
-  padding: 3px 4px;
 }
-.toolbar-select {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  border-left: 1px solid var(--background);
-  padding: 0 10px;
-  gap: 6px;
-  font-size: 11px;
+/* 帯の中の選択欄は帯の地に溶け込ませ、項目の名前の横に並べる。 */
+.toolbar-item {
   white-space: nowrap;
 }
-.toolbar-select select {
-  background: transparent;
-  border: 0;
-  padding: 5px 0;
+.toolbar-item > select {
   max-width: 148px;
-  font-size: 12px;
+  padding: 5px 4px;
+  border: 0;
+  background: transparent;
+  font-size: var(--font-size-sm);
 }
 .column-menu {
   position: relative;
@@ -198,14 +169,20 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-@media (width < 1200px) {
-  .search-field {
+/* 帯が折り返すスマホの幅では、検索欄を1行に取り、操作はその下に並べる（mado S3 Data Catalogと同じ）。 */
+@media (width < 640px) {
+  .toolbar-search {
     flex-basis: 100%;
-    min-height: 40px;
   }
-  .toolbar-select,
+  .toolbar-item,
   .column-menu {
-    min-height: 36px;
+    border-left: 0;
+    border-top: 1px solid var(--background);
+  }
+  .toolbar-item + .toolbar-item,
+  .toolbar-item + .column-menu,
+  .column-menu + .toolbar-item {
+    border-left: 1px solid var(--background);
   }
 }
 @media (width < 900px) {

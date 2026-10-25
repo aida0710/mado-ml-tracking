@@ -65,7 +65,7 @@ export function UsersTable({
               <strong>
                 {user.displayName}
                 {user.id === currentUserId && (
-                  <span className="user-self-tag">{text.userIsYou}</span>
+                  <span className="status-badge status-accent user-self-tag">{text.userIsYou}</span>
                 )}
               </strong>
               {user.username && <span className="muted mono">{user.username}</span>}

@@ -99,7 +99,7 @@ export function ArtifactUploadDialog({
   return (
     <Dialog title={text.uploadArtifact} onClose={onClose} dismissible={!queue.isActive} size="wide">
       <form
-        className="artifact-upload-form touch-targets"
+        className="artifact-upload-form"
         onSubmit={(event) => {
           event.preventDefault();
           if (canStart) start();

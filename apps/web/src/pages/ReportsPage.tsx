@@ -28,7 +28,7 @@ export function ReportsPage() {
   const reportPath = (report: Report) => `/projects/${project.id}/reports/${report.id}`;
 
   return (
-    <section className="page reports-page touch-targets" data-testid="reports-page">
+    <section className="page reports-page" data-testid="reports-page">
       <PageHeader
         title={text.reports}
         eyebrow={project.name}

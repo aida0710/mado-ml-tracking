@@ -97,7 +97,7 @@ export function ArtifactsPage() {
   }
 
   return (
-    <section className="page artifact-catalog touch-targets">
+    <section className="page artifact-catalog">
       <PageHeader
         title={text.artifacts}
         eyebrow={project.name}
@@ -115,9 +115,9 @@ export function ArtifactsPage() {
           </button>
         }
       />
-      <div className="run-toolbar artifact-catalog-toolbar">
+      <div className="toolbar artifact-catalog-toolbar">
         <form
-          className="search-field"
+          className="toolbar-search"
           onSubmit={(event) => {
             event.preventDefault();
             updateParams({ query: searchInput.trim() });
@@ -135,7 +135,7 @@ export function ArtifactsPage() {
             {text.search}
           </button>
         </form>
-        <label className="toolbar-select">
+        <label className="toolbar-item">
           <span>{text.artifactMimeType}</span>
           <select
             aria-label={text.artifactMimeType}
@@ -149,7 +149,7 @@ export function ArtifactsPage() {
             ))}
           </select>
         </label>
-        <label className="toolbar-select">
+        <label className="toolbar-item">
           <span>{text.artifactRun}</span>
           <select
             aria-label={text.artifactRun}
@@ -167,7 +167,7 @@ export function ArtifactsPage() {
             ))}
           </select>
         </label>
-        <label className="toolbar-select">
+        <label className="toolbar-item">
           <span>{text.artifactModelFilter}</span>
           <select
             aria-label={text.artifactModelFilter}
@@ -183,7 +183,7 @@ export function ArtifactsPage() {
           </select>
         </label>
         {modelId && (
-          <label className="toolbar-select">
+          <label className="toolbar-item">
             <span>{text.artifactModelVersionFilter}</span>
             <select
               aria-label={text.artifactModelVersionFilter}
@@ -199,7 +199,7 @@ export function ArtifactsPage() {
             </select>
           </label>
         )}
-        <label className="toolbar-select">
+        <label className="toolbar-item">
           <input
             type="checkbox"
             checked={filter.includePreviousVersions}

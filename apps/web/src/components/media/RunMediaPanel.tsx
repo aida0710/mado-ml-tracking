@@ -80,7 +80,7 @@ export function RunMediaPanel({ projectId, runId }: RunMediaPanelProps) {
         keys.length === 0 || selectedKey === null ? (
           <Empty>{text.mediaNoKeys}</Empty>
         ) : (
-          <div className="run-media-panel touch-targets">
+          <div className="run-media-panel">
             <section aria-label={text.mediaKeys}>
               <KeyList keys={keys} selectedKey={selectedKey} onSelect={setKey} />
             </section>

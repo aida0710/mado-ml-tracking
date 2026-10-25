@@ -1,15 +1,5 @@
 /* Metric chart (components/charts): controls, legend, plot layer and tooltip. */
 
-/* Axes of every recharts chart (metrics, sweep progress, scatter). recharts writes #666 into the
-   SVG, which keeps only 3:1 on the dark background; the theme's muted text keeps 4.5:1 on both. */
-.recharts-cartesian-axis-tick-value,
-.recharts-label {
-  fill: var(--muted);
-}
-.recharts-cartesian-axis-line,
-.recharts-cartesian-axis-tick-line {
-  stroke: var(--muted);
-}
 /* A legend names its series in text colors; the mark beside the name carries the series color. */
 .chart-legend-text {
   color: var(--text);

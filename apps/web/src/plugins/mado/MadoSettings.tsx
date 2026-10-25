@@ -35,7 +35,7 @@ export function MadoSettings({ plugin, onSaved }: PluginSettingsProps) {
   return <>
     <div className="section-heading">
       <h2>{plugin?.name ?? 'Mado'}</h2>
-      <span className="report-badge">{plugin?.enabled ? text.enabled : text.disabled}</span>
+      <span className="status-badge status-accent">{plugin?.enabled ? text.enabled : text.disabled}</span>
     </div>
     {!plugin && <p className="notice">{user.isAdmin ? pluginsText.madoNotConfigured : pluginsText.madoAskAdmin}</p>}
     {ready && !plugin.tokenConfigured && <p className="notice warning">{pluginsText.madoCredentialsMissing}</p>}

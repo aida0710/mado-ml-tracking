@@ -84,14 +84,15 @@ export function SavedViewsMenu({
           <Bookmark size={14} />
           {activeView ? textTemplates.savedViewCurrent(activeView.name) : text.savedViewDefault}
         </summary>
-        <div className="popover" role="menu" aria-label={text.savedViews}>
+        <div className="popover menu" role="menu" aria-label={text.savedViews}>
           <button
             type="button"
             role="menuitemradio"
+            className="menu-item"
             aria-checked={!activeView}
             onClick={() => open(null)}
           >
-            {!activeView && <Check size={13} />}
+            {!activeView && <Check size={15} aria-hidden="true" />}
             {text.savedViewDefault}
           </button>
           <ErrorNotice message={views.error} retry={views.reload} />
@@ -104,10 +105,11 @@ export function SavedViewsMenu({
                   key={view.id}
                   type="button"
                   role="menuitemradio"
+                  className="menu-item"
                   aria-checked={activeView?.id === view.id}
                   onClick={() => open(view.id)}
                 >
-                  {activeView?.id === view.id && <Check size={13} />}
+                  {activeView?.id === view.id && <Check size={15} aria-hidden="true" />}
                   {view.name}
                 </button>
               ))}
@@ -116,7 +118,7 @@ export function SavedViewsMenu({
         </div>
       </details>
       {activeView?.visibility === 'project' && (
-        <span className="saved-view-tag">{text.savedViewShared}</span>
+        <span className="status-badge status-accent">{text.savedViewShared}</span>
       )}
       {activeView && hasUnsavedChanges && (
         <span className="saved-view-unsaved" role="status">

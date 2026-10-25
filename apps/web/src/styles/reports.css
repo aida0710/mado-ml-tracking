@@ -47,23 +47,6 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.report-mode-mark {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 8px;
-  border-radius: var(--radius-pill);
-  font-size: 11px;
-  white-space: nowrap;
-}
-.report-mode-mark.live {
-  color: var(--link);
-  background: var(--accent-tint);
-}
-.report-mode-mark.snapshot {
-  color: var(--text);
-  background: var(--surface-hover);
-}
 .report-chart h3 {
   margin: 0 0 6px;
   font-size: 13px;
@@ -85,14 +68,6 @@
 }
 .report-conflict p {
   margin: 0;
-}
-.report-badge {
-  display: inline-block;
-  padding: 2px 7px;
-  border-radius: var(--radius-pill);
-  font-size: 10px;
-  color: var(--link);
-  background: var(--accent-tint);
 }
 
 /* Editor */

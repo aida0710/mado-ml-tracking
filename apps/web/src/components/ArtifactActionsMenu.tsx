@@ -45,11 +45,11 @@ export function ArtifactActionsMenu({
         <MoreHorizontal size={17} />
       </button>
       {isOpen && (
-        <div className="artifact-actions-popover" id={menuId} role="menu">
+        <div className="popover menu artifact-actions-popover" id={menuId} role="menu">
           <button
             type="button"
             role="menuitem"
-            className="danger"
+            className="menu-item danger"
             disabled={isReferenced === true}
             aria-describedby={isReferenced ? reasonId : undefined}
             onClick={() => {

@@ -27,43 +27,24 @@
   right: auto;
   min-width: 260px;
 }
-.saved-views-menu .popover button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  min-height: 30px;
-  padding: 4px 6px 4px 22px;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  text-align: left;
-  font-size: 12px;
-}
-.saved-views-menu .popover button[aria-checked='true'] {
-  padding-left: 3px;
+/* 選んでいる表示の名前は太字。共有とマイの見出しと、空・失敗の一文は、項目と同じ左端にそろえる。 */
+.saved-views-menu .menu-item[aria-checked='true'] {
   font-weight: 600;
-}
-.saved-views-menu .popover button:hover {
-  background: var(--surface-hover);
 }
 .saved-views-menu .popover small {
   display: block;
   margin: 10px 0 4px;
+  padding: 0 14px;
   color: var(--muted);
   font-size: 10px;
 }
-.saved-view-tag,
+.saved-views-menu .popover > p {
+  margin: 8px 14px;
+}
 .saved-view-unsaved {
   padding: 2px 8px;
   font-size: 11px;
   white-space: nowrap;
-}
-.saved-view-tag {
-  background: var(--accent-tint);
-  color: var(--link);
-}
-.saved-view-unsaved {
   border: 1px solid var(--accent);
   color: var(--link);
   font-weight: 600;
@@ -145,8 +126,7 @@
   white-space: normal;
 }
 @media (width < 900px) {
-  .saved-views-menu > summary,
-  .saved-views-menu .popover button {
+  .saved-views-menu > summary {
     min-height: var(--tap-target);
   }
 }
