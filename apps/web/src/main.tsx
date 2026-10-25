@@ -1,3 +1,5 @@
+// Must stay the first import: it configures Zod before any schema is built.
+import './zodConfig';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
