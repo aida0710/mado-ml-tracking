@@ -18,7 +18,7 @@
 
 フォント、色・影・角丸・書体の変数、要素の既定、共通の部品（ボタン、入力欄、ダイアログ、タブ、表、状態バッジ、ページの見出し）、画面の枠（上部バー、サイドバー、ドロワー、ログイン画面）はMadoと共有するデザインシステム（`@mado/design-system`、[aida0710/mado-design-systems](https://github.com/aida0710/mado-design-systems)）にあり、`apps/web/src/main.tsx`が日本語のNoto Sans JPとあわせて最初に読み込みます。ファイルの分け方と決まり、バージョンの上げ方は[リポジトリのREADME](https://github.com/aida0710/mado-design-systems#readme)にあります。依存はGitHub Releaseのtarball（`apps/web/package.json`）で、バージョンを上げるときはそのURLを替えて`npm install`します。Madoも同じclass名を使うので、両方の見た目を変えるときはそのリポジトリを直してバージョンを上げ、このアプリだけの見た目は下の領域のファイルで上書きします。
 
-ログインヘッダーの変更は[共有デザインのPR #1](https://github.com/aida0710/mado-design-systems/pull/1)でレビュー中です。現在は0.5.2のコミット`4e7259949cb9f8d1baa63799f154d05b06a17449`のHTTPS tarballを両アプリで固定しています。Gitを含まないWebビルド用コンテナでもインストールできます。Release公開後は同じ版のRelease tarballへ変更します。`LoginHeader`はロゴと`LanguagePicker`を共有の`.login-header`で並べ、ログインと初回パスワード変更の両画面から使います。
+現在はGitHub Release v0.5.2のtarball（`mado-design-system-0.5.2.tgz`）を両アプリで使っています。HTTPSで取得するので、Gitを含まないWebビルド用コンテナでもインストールできます。`LoginHeader`はロゴと`LanguagePicker`を共有の`.login-header`で並べ、ログインと初回パスワード変更の両画面から使います。
 
 そのあと、`apps/web/src/styles/`に置いた領域別のファイルを次の順に読み込みます。
 
