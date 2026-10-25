@@ -216,7 +216,7 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独
       expect(bodies[0].code).toBe('invalid_credentials');
       expect(responses.some((response) => response.headers.get('Set-Cookie'))).toBe(false);
       const audit = await auditRows('auth.login');
-      expect(audit.map((row) => row.outcome)).toEqual(['failed', 'failed', 'failed']);
+      expect(audit.map((row) => row.outcome)).toEqual(['failure', 'failure', 'failure']);
       for (const row of audit) {
         expect(row.actor_type).toBe('system');
         expect(row.details).not.toContain('wrong password value');

@@ -1651,7 +1651,7 @@
               "enum": [
                 "success",
                 "denied",
-                "failed"
+                "failure"
               ]
             }
           },
@@ -1832,7 +1832,7 @@
               "enum": [
                 "success",
                 "denied",
-                "failed"
+                "failure"
               ]
             }
           },
@@ -55553,7 +55553,7 @@
             "enum": [
               "success",
               "denied",
-              "failed"
+              "failure"
             ]
           },
           "resourceType": {
@@ -55585,7 +55585,7 @@
           "details": {
             "$ref": "#/components/schemas/JsonObject"
           },
-          "ip": {
+          "ipAddress": {
             "type": [
               "string",
               "null"
@@ -55612,7 +55612,7 @@
           "projectId",
           "projectName",
           "details",
-          "ip",
+          "ipAddress",
           "userAgent"
         ],
         "additionalProperties": false

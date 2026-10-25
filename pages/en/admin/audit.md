@@ -38,13 +38,13 @@ Records are listed newest first. Load older ones with **Load more** at the botto
 - Operations refused for lack of permission (403) or a conflict (409) are recorded as denied, with `details.code` (the API error code).
 - Invalid input, missing targets, and login attempts refused by the rate limit are not recorded.
 - Passwords, token values and hashes, secrets, and notification email addresses are not recorded.
-- The source IP address and User-Agent are kept. The IP address is the peer of the connection the API received; behind a proxy it is the proxy's address (headers such as `X-Forwarded-For` are not trusted).
+- The source IP address and User-Agent are kept. The IP address is the client that the `MMT_TRUSTED_PROXY_HOPS` proxies in front of the API appended to `X-Forwarded-For` (entries further left can be written by the client and are not read; see [Environment variables](/en/reference/environment)).
 
 ## Main actions
 
 | Action | Main details |
 | --- | --- |
-| `auth.login` | `method` (`local`, `oidc`, `development`). Failures have the failed outcome |
+| `auth.login` | `method` (`local`, `oidc`, `development`). Failures have the failure outcome |
 | `auth.logout` | |
 | `auth.password.change` | |
 | `auth.bootstrap_admin` | |
@@ -82,7 +82,7 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" \
 | --- | --- |
 | `action` | `auth.oidc.denied` |
 | `actorUserId` | The ID of the user who acted |
-| `outcome` | `success`, `denied`, `failed` |
+| `outcome` | `success`, `denied`, `failure` |
 | `hideSignIns` | `true` leaves out sign-ins, sign-outs, and the identity provider's syncs and rechecks (`auth.login`, `auth.logout`, `auth.oidc.sync`, `auth.oidc.recheck`) |
 | `projectId` (global list only) | A Project ID |
 

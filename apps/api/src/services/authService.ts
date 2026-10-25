@@ -172,7 +172,7 @@ export class AuthService {
   async beginLogin(metadata: RequestMetadata): Promise<{ url: string; binding: string }> {
     if (!this.config.oidc) throw new DomainError(404, 'OIDC loginは無効です', 'oidc_disabled');
     this.rateLimiter.consumeOrThrow(
-      `oidc-start:ip:${metadata.ip ?? 'unknown'}`,
+      `oidc-start:ip:${metadata.ipAddress ?? 'unknown'}`,
       OIDC_START_IP_LIMIT,
     );
     const provider = await this.oidcProvider();
@@ -210,7 +210,7 @@ export class AuthService {
         await writeAuditEvent(this.database, {
           ...loginAudit('oidc', metadata),
           actorType: 'system',
-          outcome: 'failed',
+          outcome: 'failure',
           details: { method: 'oidc', reason: error.code },
         });
       throw error;
