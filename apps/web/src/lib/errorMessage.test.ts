@@ -7,13 +7,13 @@ import { setLocale } from '../i18n/locale';
 afterEach(() => setLocale('ja'));
 
 describe('formatErrorMessage', () => {
-  it('APIが返した理由をそのまま表示する', () => {
+  it('辞書に無いcodeは、APIの英語の文をそのまま表示する', () => {
     const failure = new RequestError({
       status: 503,
       code: 'storage_failed',
-      serverMessage: '保存できません',
+      serverMessage: 'cannot store the file',
     });
-    expect(formatErrorMessage(failure)).toBe('保存できません');
+    expect(formatErrorMessage(failure)).toBe('cannot store the file');
   });
   it('未知のcodeでもサーバーの文字列を使う', () => {
     const failure = new RequestError({
@@ -48,32 +48,37 @@ describe('formatErrorMessage', () => {
       `${text.requestError} (502)`,
     );
   });
-  it('日本語の画面では、既知のcodeでもAPIの具体的な日本語の理由をそのまま出す', () => {
+  it('日本語の画面では、辞書にあるcodeを日本語の文に訳す', () => {
     const failure = new RequestError({
       status: 409,
       code: 'run_deleted',
-      serverMessage: '削除済みのRunは編集できません',
+      serverMessage: 'a deleted run cannot be edited',
     });
-    expect(formatErrorMessage(failure)).toBe('削除済みのRunは編集できません');
+    expect(formatErrorMessage(failure)).toBe('削除済みのRunにはこの操作を行えません');
   });
-  it('英語の画面では、既知のcodeのAPIの日本語の理由を英語の文に置き換える', () => {
+  it('英語の画面では、辞書にあるcodeでもAPIの英語の文をそのまま出す', () => {
     setLocale('en');
     const failure = new RequestError({
       status: 409,
       code: 'run_deleted',
-      serverMessage: '削除済みのRunは編集できません',
+      serverMessage: 'a deleted run cannot be edited',
     });
-    expect(formatErrorMessage(failure)).toBe('This operation is not available for a deleted run.');
+    expect(formatErrorMessage(failure)).toBe('a deleted run cannot be edited');
   });
-  it('既知のcodeでAPIが理由を返さなかったときは、日本語の画面でもカタログの文を出す', () => {
+  it('辞書にあるcodeでAPIが理由を返さなかったときも、日本語の画面は辞書の文を出す', () => {
     expect(formatErrorMessage(new RequestError({ status: 409, code: 'run_deleted' }))).toBe(
       '削除済みのRunにはこの操作を行えません',
     );
   });
-  it('英語の画面でも、未知のcodeのAPIの理由はそのまま出す', () => {
-    setLocale('en');
-    const failure = new RequestError({ status: 409, code: 'something_new', serverMessage: '新しい理由' });
-    expect(formatErrorMessage(failure)).toBe('新しい理由');
+  it('理由の幅広いcodeは、日本語の文のあとにAPIの英語の文を括弧で添える', () => {
+    const failure = new RequestError({
+      status: 409,
+      code: 'conflict',
+      serverMessage: 'jobs can be created only for queued runs',
+    });
+    expect(formatErrorMessage(failure)).toBe(
+      '今の状態ではこの操作はできません。（jobs can be created only for queued runs）',
+    );
   });
   it('画面側の検証エラーとError以外の値も表示できる', () => {
     expect(formatErrorMessage(new Error(text.jsonError))).toBe(text.jsonError);

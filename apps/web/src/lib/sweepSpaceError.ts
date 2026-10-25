@@ -1,93 +1,48 @@
+import type { SweepSpaceViolation } from '@mmt/contracts';
 import { errorText, errorTextTemplates } from '../i18n/errors';
 
-interface ErrorPattern {
-  pattern: RegExp;
-  describe: (match: RegExpExecArray) => string;
+type SweepSpaceDetails = Readonly<Record<string, unknown>>;
+
+/** 横の項目の値。parameter 名と値は API が受け取ったものをそのまま出す。 */
+function shown(value: unknown): string {
+  if (Array.isArray(value)) return value.map(String).join(', ');
+  return value === undefined || value === null ? '' : String(value);
 }
 
-// These complete messages are defined by domain/sweeps/searchSpace.ts.
-// Captures are data, so parameter names and values are preserved verbatim.
-const errorPatterns: ErrorPattern[] = [
-  {
-    pattern: /^parameter「(.*)」の values が空です$/s,
-    describe: (match) => errorTextTemplates.sweepValuesEmpty(match[1]!),
-  },
-  {
-    pattern: /^parameter「(.*)」の values は([0-9]+)個までです（([0-9]+)個）$/s,
-    describe: (match) => errorTextTemplates.sweepValuesLimit(match[1]!, match[2]!, match[3]!),
-  },
-  {
-    pattern: /^parameter「(.*)」の values には文字列・有限の数値・真偽値だけを使えます$/s,
-    describe: (match) => errorTextTemplates.sweepValuesTypes(match[1]!),
-  },
-  {
-    pattern: /^parameter「(.*)」の values に重複した値 (.*) があります$/s,
-    describe: (match) => errorTextTemplates.sweepValuesDuplicate(match[1]!, match[2]!),
-  },
-  {
-    pattern: /^parameter「(.*)」の distribution「(.*)」は使えません$/s,
-    describe: (match) => errorTextTemplates.sweepDistributionUnsupported(match[1]!, match[2]!),
-  },
-  {
-    pattern: /^parameter「(.*)」の min と max には有限の数値が必要です$/s,
-    describe: (match) => errorTextTemplates.sweepRangeFinite(match[1]!),
-  },
-  {
-    pattern: /^parameter「(.*)」は min < max である必要があります（min=(.*), max=(.*)）$/s,
-    describe: (match) => errorTextTemplates.sweepRangeOrder(match[1]!, match[2]!, match[3]!),
-  },
-  {
-    pattern: /^parameter「(.*)」は log_uniform なので min > 0 である必要があります（min=(.*)）$/s,
-    describe: (match) => errorTextTemplates.sweepLogUniformPositive(match[1]!, match[2]!),
-  },
-  {
-    pattern: /^parameter「(.*)」は int_uniform なので min と max は整数である必要があります$/s,
-    describe: (match) => errorTextTemplates.sweepRangeIntegers(match[1]!),
-  },
-  {
-    pattern: /^parameter「(.*)」の q は q_uniform のときだけ指定できます$/s,
-    describe: (match) => errorTextTemplates.sweepQuantumDistribution(match[1]!),
-  },
-  {
-    pattern: /^parameter「(.*)」の q は正の数である必要があります（q=(.*)）$/s,
-    describe: (match) => errorTextTemplates.sweepQuantumPositive(match[1]!, match[2]!),
-  },
-  {
-    pattern: /^parameter「(.*)」の q が min から max までの幅より大きいです（q=(.*)）$/s,
-    describe: (match) => errorTextTemplates.sweepQuantumWidth(match[1]!, match[2]!),
-  },
-  {
-    pattern: /^parameter「(.*)」の定義がありません$/s,
-    describe: (match) => errorTextTemplates.sweepDefinitionMissing(match[1]!),
-  },
-  {
-    pattern: /^parameter「(.*)」には values・value・distribution のどれか1つだけを指定してください$/s,
-    describe: (match) => errorTextTemplates.sweepDefinitionAmbiguous(match[1]!),
-  },
-  {
-    pattern: /^parameter「(.*)」の value には文字列・有限の数値・真偽値だけを使えます$/s,
-    describe: (match) => errorTextTemplates.sweepValueTypes(match[1]!),
-  },
-  {
-    pattern: /^parameter は([0-9]+)個までです（([0-9]+)個）$/s,
-    describe: (match) => errorTextTemplates.sweepParameterLimit(match[1]!, match[2]!),
-  },
-  {
-    pattern: /^grid では values か value の parameter だけを使えます（連続分布: (.*)）$/s,
-    describe: (match) => errorTextTemplates.sweepGridContinuous(match[1]!),
-  },
-  {
-    pattern: /^grid の組み合わせ数は([0-9]+)までです（([0-9]+)通り）$/s,
-    describe: (match) => errorTextTemplates.sweepGridLimit(match[1]!, match[2]!),
-  },
-];
+// 422 sweep_space_invalid の理由（apps/api/src/domain/sweeps/searchSpace.ts）ごとの文。
+const VIOLATION_TEXT: Record<SweepSpaceViolation, (details: SweepSpaceDetails) => string> = {
+  parameters_empty: () => errorText.sweepParametersEmpty,
+  parameter_limit: (details) => errorTextTemplates.sweepParameterLimit(shown(details.limit), shown(details.count)),
+  parameter_name_empty: () => errorText.sweepParameterNameEmpty,
+  definition_missing: (details) => errorTextTemplates.sweepDefinitionMissing(shown(details.parameter)),
+  definition_ambiguous: (details) => errorTextTemplates.sweepDefinitionAmbiguous(shown(details.parameter)),
+  values_empty: (details) => errorTextTemplates.sweepValuesEmpty(shown(details.parameter)),
+  values_limit: (details) =>
+    errorTextTemplates.sweepValuesLimit(shown(details.parameter), shown(details.limit), shown(details.count)),
+  values_types: (details) => errorTextTemplates.sweepValuesTypes(shown(details.parameter)),
+  values_duplicate: (details) =>
+    errorTextTemplates.sweepValuesDuplicate(shown(details.parameter), shown(details.value)),
+  value_types: (details) => errorTextTemplates.sweepValueTypes(shown(details.parameter)),
+  distribution_unsupported: (details) =>
+    errorTextTemplates.sweepDistributionUnsupported(shown(details.parameter), shown(details.distribution)),
+  range_finite: (details) => errorTextTemplates.sweepRangeFinite(shown(details.parameter)),
+  range_order: (details) =>
+    errorTextTemplates.sweepRangeOrder(shown(details.parameter), shown(details.min), shown(details.max)),
+  log_uniform_positive: (details) =>
+    errorTextTemplates.sweepLogUniformPositive(shown(details.parameter), shown(details.min)),
+  range_integers: (details) => errorTextTemplates.sweepRangeIntegers(shown(details.parameter)),
+  quantum_distribution: (details) => errorTextTemplates.sweepQuantumDistribution(shown(details.parameter)),
+  quantum_positive: (details) => errorTextTemplates.sweepQuantumPositive(shown(details.parameter), shown(details.q)),
+  quantum_width: (details) => errorTextTemplates.sweepQuantumWidth(shown(details.parameter), shown(details.q)),
+  grid_continuous: (details) => errorTextTemplates.sweepGridContinuous(shown(details.parameters)),
+  grid_limit: (details) => errorTextTemplates.sweepGridLimit(shown(details.limit), shown(details.count)),
+};
 
-export function formatSweepSpaceError(message: string): string | null {
-  if (message === 'parameter 名が空です') return errorText.sweepParameterNameEmpty;
-  if (message === 'parameter が1つもありません') return errorText.sweepParametersEmpty;
-  for (const entry of errorPatterns) {
-    const match = entry.pattern.exec(message);
-    if (match) return entry.describe(match);
-  }
-  return null;
+function isViolation(reason: unknown): reason is SweepSpaceViolation {
+  return typeof reason === 'string' && Object.hasOwn(VIOLATION_TEXT, reason);
+}
+
+/** 422 sweep_space_invalid の横の項目から、今の言語の文を作る。知らない理由なら null。 */
+export function formatSweepSpaceError(details: SweepSpaceDetails): string | null {
+  return isViolation(details.reason) ? VIOLATION_TEXT[details.reason](details) : null;
 }

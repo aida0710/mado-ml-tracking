@@ -1,30 +1,9 @@
 import * as english from './en/errors';
 import { localized } from './localized';
 
-// Text for API errors (lib/errorMessage.ts, lib/sweepSpaceError.ts). For the codes, the Japanese screen
-// shows the server's own message when there is one, so these Japanese entries are its fallback.
+// Sweep の探索空間の誤りの文（lib/sweepSpaceError.ts が API の 422 の理由から、lib/sweepConfig.ts が
+// W&B の設定の読み込みで使う）。ほかの API のエラーの日本語は apiErrors.ts にある。
 export const errorText = localized({
-  modelTrainingSourceConflict: 'このモデル版には別の学習元が記録されています',
-  modelTrainingSourceNotTerminal: '終了済みの学習Runを選んでください',
-  modelTrainingSourceCycle: 'モデル版が学習元の入力や祖先になっています',
-  trainingDataRunKind: '学習データの履歴は学習Runに記録してください',
-  trainingDataStageConflict: 'このstepには別の学習データが記録されています',
-  trainingDataStageOrder: '記録済みのstepより後の学習データを追加してください',
-  trainingDataStageCheckpoint: 'このRunの開始stepより前のcheckpointを選んでください',
-  trainingDataStageCycle: 'このRunの出力から作られたデータは入力に追加できません',
-  internalError: 'リクエストの処理に失敗しました',
-  databaseUnavailable: 'データベースに接続できません',
-  pluginRequestFailed: '連携先との通信に失敗しました',
-  pluginDisabled: '連携は無効です',
-  pluginTokenScopeMissing: 'Madoのアクセストークンに、DataLineageの読み取りと送信を許可してください',
-  pluginJobNamespaceNotAllowed: 'RunのNamespaceをMadoのアクセストークンで許可してください',
-  pluginMadoAccessTokenUnsupported: 'このMadoはアクセストークンの許可範囲の取得に対応していません。Madoを更新してください',
-  uploadNotOpen: 'このアップロードはデータを受け付けていません',
-  uploadExpired: 'アップロードの有効期限が切れています',
-  artifactSaveFailed: 'Artifactを保存できませんでした',
-  partChecksumMismatch: 'アップロードしたpartのSHA-256が一致しません',
-  runDeleted: '削除済みのRunにはこの操作を行えません',
-  bodyTooLarge: 'リクエストが上限サイズを超えています',
   sweepParameterNameEmpty: 'parameter 名が空です',
   sweepParametersEmpty: 'parameter が1つもありません',
   sweepRangeFields: 'min・max',

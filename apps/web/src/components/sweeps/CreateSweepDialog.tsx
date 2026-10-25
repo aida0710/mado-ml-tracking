@@ -34,7 +34,7 @@ import { sweepAggregationLabels, sweepGoalLabels, sweepMethodLabels } from '../.
 import { text, textTemplates } from '../../i18n/catalog';
 import { formatList, formatNote } from '../../i18n/textJoining';
 
-// The API names the offending parameter in this 422's message (domain/sweeps/searchSpace.ts).
+// API はこの 422 の横の項目 `parameter` に、該当する parameter を置く（domain/sweeps/searchSpace.ts）。
 const SPACE_INVALID_CODE = 'sweep_space_invalid';
 // The one row the form opens with; rows added later are `row-<n>`, so the ids never collide.
 const INITIAL_SEARCH_SPACE_ROW_ID = 'row-initial';
@@ -131,8 +131,7 @@ export function CreateSweepDialog({
         return await sweepsApi.create(projectId, input);
       } catch (error) {
         if (!(error instanceof RequestError) || error.code !== SPACE_INVALID_CODE) throw error;
-        // The API's original parameter name still identifies the row after localization.
-        const rowId = rowIdForSpaceError(error.serverMessage ?? error.message, form.rows);
+        const rowId = rowIdForSpaceError(error.details.parameter, form.rows);
         setSpaceError({ rowId, failure: error });
         return undefined;
       }

@@ -78,13 +78,20 @@ describe('Sweep APIのpathとbody', () => {
     await expect(sweepsApi.list('project')).rejects.toBeInstanceOf(RequestError);
   });
 
-  it('探索空間の422はcodeとサーバーのmessageを保って返す', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json(
-      { error: 'parameter「lr」は min < max である必要があります（min=1, max=0）', code: 'sweep_space_invalid' }, 422)));
+  it('探索空間の422はcodeとサーバーのmessage、横の項目を保って返す', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({
+      error: 'parameter "lr" requires min < max (min=1, max=0)',
+      code: 'sweep_space_invalid',
+      reason: 'range_order',
+      parameter: 'lr',
+      min: '1',
+      max: '0',
+    }, 422)));
     const failure = await sweepsApi.create('project', {} as SweepCreate).catch((error: unknown) => error);
     expect(failure).toBeInstanceOf(RequestError);
     expect((failure as RequestError).code).toBe('sweep_space_invalid');
-    expect((failure as RequestError).serverMessage).toContain('「lr」');
+    expect((failure as RequestError).serverMessage).toContain('"lr"');
+    expect((failure as RequestError).details).toEqual({ reason: 'range_order', parameter: 'lr', min: '1', max: '0' });
   });
 
   it('目的メトリクスの重ね描きは試行RunのstepをPOST /metrics/seriesで読む', async () => {

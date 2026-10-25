@@ -151,7 +151,7 @@ function createAutomationApi() {
       ruleToggles.push({ id: toggle[1], ...request.postDataJSON() });
       if (refusedRuleToggles > 0) {
         refusedRuleToggles -= 1;
-        return reply({ error: 'リクエストの処理に失敗しました', code: 'internal_error' }, 503);
+        return reply({ error: 'failed to process the request', code: 'internal_error' }, 503);
       }
     }
     if (path === `${projectPath}/promotion-policies` && method === 'GET') return reply({ items: [policy] });
