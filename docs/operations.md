@@ -292,7 +292,7 @@ DBとArtifactsは同時点でバックアップします。DBだけのrestoreで
 64MiBを超える音声、ヘッダーでmedia情報を読めない音声（mp3、m4a、ogg、opusなど）、動画について、波形・スペクトログラム・posterをAPIとは別のpreview workerが作ります。API imageにはffmpegを入れません。
 
 - compose: `docker compose up -d preview`（`Dockerfile.preview`、ffmpeg入り）。DBとArtifact保存先（`artifacts` volume、S3の環境変数）をAPIと共有します。DB由来の保存先を使う場合は`MMT_STORAGE_SECRET_KEY`をAPIと同じ値で`.env`に入れます。
-- compose以外: ffmpeg/ffprobeを入れたホストで`npm run preview-worker -w @mmt/api`。systemdで動かす場合もAPIと同じ`.env`を読みます。
+- compose以外: ffmpeg/ffprobeを入れたホストで`npm run build -w @mmt/api`の後に`npm run preview-worker -w @mmt/api`。systemdで動かす場合もAPIと同じ`.env`を読みます。
 - 設定: `MMT_PREVIEW_FFMPEG_PATH`／`MMT_PREVIEW_FFPROBE_PATH`（既定`ffmpeg`／`ffprobe`）、`MMT_PREVIEW_POLL_INTERVAL_MS`（既定5000）、`MMT_PREVIEW_TOOL_TIMEOUT_MS`（1回のffprobe/ffmpegの上限。既定30分、最大40分）、`MMT_PREVIEW_WORK_DIR`（本体を一時的に置く場所。`MMT_PREVIEW_MAX_SOURCE_BYTES`が入る空きが要る。既定はOSの一時ディレクトリ、composeでは`preview-work` volume）、`MMT_PREVIEW_MAX_SOURCE_BYTES`（これより大きいArtifactは取り寄せず`skipped`・`source_too_large`。既定10 GiB）。
 - 複数台を同時に動かせます（`FOR UPDATE SKIP LOCKED`）。停止（SIGTERM）は処理中のArtifactを終えてから抜けます。composeの`stop_grace_period`は30秒なので、長い処理の途中で止めた行は2時間後に別のworkerが引き継ぎます。
 - 状態の確認: `SELECT kind,status,error,count(*) FROM artifact_previews GROUP BY 1,2,3;`。`ffmpeg_unavailable`が増えたらworkerのffmpegを確認します。`failed`の`storage_failed`・`source_unreadable`は保存先の障害、`probe_failed`・`render_failed`はファイル側の問題です。

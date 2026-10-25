@@ -27,7 +27,7 @@ docker run -d --name mmt-dev-postgres \
   -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_USER=mmt -e POSTGRES_DB=mmt \
   -p 127.0.0.1:55483:5432 -v mmt-dev-postgres:/var/lib/postgresql/data postgres:16-alpine
 docker exec mmt-dev-postgres createdb -U mmt mmt_test
-npm run db:migrate
+npm run db:migrate:dev
 npm run dev
 ```
 
