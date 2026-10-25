@@ -9,10 +9,15 @@
   /* Runの一覧の横のExperimentsの一覧。 */
   --sidebar-width: 240px;
 
-  /* 系列の色以外のデータの印。重要度の正と負と、値の無い点。 */
+  /* 系列の色以外のデータの印。重要度の正と負、値の無い点、Sweepの目的の値と、それまでの最良の値。 */
   --chart-positive: #2a78d6;
   --chart-negative: #d03b3b;
   --chart-missing: #9a9a96;
+  --chart-objective: #647ee5;
+  --chart-best: #008c88;
+  /* 平行座標で、絞り込みから外れたRunの線。canvas の線は何千本も重なるので、SVG の線より薄くする。 */
+  --chart-unselected-line: rgb(128 128 128 / 14%);
+  --chart-unselected-canvas-line: rgb(128 128 128 / 5%);
   /* Sweepが早く止めたRunの状態バッジ。人が取り消したものと見分ける。 */
   --status-stopped-text: #8a5300;
   --status-stopped-background: #fde7c4;
@@ -29,6 +34,8 @@
 :root[data-theme='dark'] {
   --chart-positive: #3987e5;
   --chart-negative: #e66767;
+  --chart-objective: #8fa2ee;
+  --chart-best: #4ac5bf;
   --status-stopped-text: #f6cf8e;
   --status-stopped-background: #5a4220;
 }
