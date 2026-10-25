@@ -12,36 +12,34 @@
 
 通知は、件数・バージョン・結果などを保持して描画時に翻訳します。エラーは元の`RequestError`や`LocalizedError`を保持し、`formatErrorMessage`を描画時に呼びます。翻訳した文字列を状態に保存すると、後から言語を変えても元の表示が残ります。英語の件数には`formatEnglishCount`を使い、1件のときの名詞・動詞・代名詞も合わせます。
 
-`i18n/locale.ts`が`mmt.locale`に選択を保存します。辞書と初期言語は`i18n/*.test.ts`、切り替え中の入力保持・別タブ同期・モバイル表示は`tests/browser-i18n.mjs`で確認します。
+`i18n/locale.ts`がデザインシステムの`createLocaleStore`で、`mmt.locale`に選択を保存します。辞書と初期言語は`i18n/*.test.ts`、切り替え中の入力保持・別タブ同期・モバイル表示は`tests/browser-i18n.mjs`で確認します。
 
 ## スタイルシート
 
-フォント、色・影・角丸・書体の変数、要素の既定、共通の部品（ボタン、入力欄、ダイアログ、タブ、表、状態バッジ、ページの見出し）、画面の枠（上部バー、サイドバー、ドロワー、ログイン画面）はMadoと共有するデザインシステム（`@mado/design-system`、[aida0710/mado-design-systems](https://github.com/aida0710/mado-design-systems)）にあり、`apps/web/src/main.tsx`が日本語のNoto Sans JPとあわせて最初に読み込みます。ファイルの分け方と決まり、バージョンの上げ方は[リポジトリのREADME](https://github.com/aida0710/mado-design-systems#readme)にあります。依存はGitHub Releaseのtarball（`apps/web/package.json`）で、バージョンを上げるときはそのURLを替えて`npm install`します。Madoも同じclass名を使うので、両方の見た目を変えるときはそのリポジトリを直してバージョンを上げ、このアプリだけの見た目は下の領域のファイルで上書きします。
+フォント、色・影・角丸・書体・文字の大きさの変数、要素の既定、共通の部品（ボタン、入力欄、ダイアログ、タブ、表、状態バッジ、ページの見出し、メニュー、一覧の上の帯、パンくず）、画面の枠（上部バー、サイドバー、ドロワー、ログイン画面）、来歴のグラフ（`lineage.css`）はmado S3 Data Catalogと共有するデザインシステム（`@mado/design-system`、[aida0710/mado-design-systems](https://github.com/aida0710/mado-design-systems)）にあり、`apps/web/src/main.tsx`が日本語のNoto Sans JPとあわせて最初に読み込みます。両アプリ共通の処理（画面幅、表示言語、テーマ、書式、クリップボード、Monacoの配色、トークンの期限）とReactの部品（`Dialog`、`NavigationSidebar`、`NavigationDrawer`、`LanguagePicker`、`LoginHeader`、`ProductLogo`、`UserMenu`、読み込み中・失敗の表示、`useQuery`など）もデザインシステムから読み、このアプリは保存キー（`mmt.`で始まるもの）と文言を渡します。ファイルの分け方と決まり、バージョンの上げ方は[リポジトリのREADME](https://github.com/aida0710/mado-design-systems#readme)にあります。依存はGitHub Releaseのtarball（`apps/web/package.json`）で、バージョンを上げるときはそのURLを替えて`npm install`します。mado S3 Data Catalogも同じclass名を使うので、両方の見た目を変えるときはそのリポジトリを直してバージョンを上げ、このアプリだけの見た目は下の領域のファイルで上書きします。
 
-現在はGitHub Release v0.5.2のtarball（`mado-design-system-0.5.2.tgz`）を両アプリで使っています。HTTPSで取得するので、Gitを含まないWebビルド用コンテナでもインストールできます。`LoginHeader`はロゴと`LanguagePicker`を共有の`.login-header`で並べ、ログインと初回パスワード変更の両画面から使います。
+現在はGitHub Release v0.6.1のtarball（`mado-design-system-0.6.1.tgz`）を`apps/web`と`pages/`で使っています。HTTPSで取得するので、Gitを含まないWebビルド用コンテナでもインストールできます。
 
 そのあと、`apps/web/src/styles/`に置いた領域別のファイルを次の順に読み込みます。
 
 | ファイル | 対象 |
 |---|---|
-| breakpoints | 画面幅の切り替え点（`--bp-sm`・`--bp-md`・`--bp-lg`） |
-| base | このアプリの高さと幅（プロジェクトバー、Experimentsの実験一覧）、描画に失敗したときの画面 |
+| base | このアプリだけの変数（プロジェクトバーとExperimentsの実験一覧の大きさ、グラフの印・早期打ち切りのバッジ・上部バーの通知の数などの色）、描画に失敗したときの画面 |
 | layout | Projectの切り替え（サイドバーの一番上とプロジェクトバーのボタン、そのドロップダウン）、公開範囲（ProjectとコンピュータのPublic・Private）の鍵の印（`.visibility-label`）、作業領域の高さ |
-| tables | Experimentsの実験一覧、Runのツールバー・選択バー、Runの表 |
+| tables | Experimentsの実験一覧、一覧の上の帯（デザインシステムの`.toolbar`）の余白と選択欄、選択バー、Runの表 |
 | registry | Registryの一覧・詳細、詳細リスト、自動実行パネル、グラフ、ログ、Job |
 | lineage | Lineageの図・検索・経路選択・関係一覧 |
 | artifacts | Artifactの一覧・プレビュー・アップロード結果 |
 | forms | このアプリだけのダイアログの幅、ダイアログの下のボタンの固定、ダイアログの中の詳細リスト、1行ずつの選択肢（`choice-picker`。保存先と公開範囲）、候補つきの入力欄 |
 | workbench | コード編集、ファイルツリー、Task、実行スナップショット |
-| admin | 設定のセクション（最下部のアーカイブを含む）、plugin検索、容量メトリクス、全体管理の保存先とプロジェクト一覧、ユーザーメニュー |
+| admin | 設定のセクション（最下部のアーカイブを含む）、plugin検索、容量メトリクス、全体管理の保存先とプロジェクト一覧 |
 | uploads | Artifactのアップロードダイアログ、ドロップ領域、進み具合、途中のアップロード |
 | siteComputers | 全体設定 → コンピュータのsiteの詳細（job shellのバージョン、鍵と接続確認、自分の設定、利用者の設定、手動投入の案内）とjob shellの編集欄 |
 | tabs | タブの並び（`components/Tabs.tsx`）が入りきらず横にずれるときの、隠れている側の端の薄まり |
-| tapTargets | スマホ（`--bp-sm`未満）で、表の中とページの見出しの上のリンクの押せる範囲と、class の無い summary の高さ。最後に読み込む |
 
 - 新しいCSSは、そのclassが属する領域のファイルへ足します。`styles.css`のような何でも入るファイルを作り直しません。
-- 色・影・角丸は`@mado/design-system`の変数で書き、領域のファイルに色の値を直接書きません。合う変数が無いときは、役割の名前でデザインシステムに足し、ライトとダークの両方の値を決めます。リンクなど文字に使う青緑は`--link`、選択中の印や枠は`--accent`です。
-- 画面幅による上書き（`@media`）は、対象の領域ファイルの末尾にまとめます。切り替え点は下の「画面幅への対応」の4つだけを使います。
+- 色・影・角丸・文字の大きさは`@mado/design-system`の変数で書き、領域のファイルに色の値を直接書きません。両アプリで使う色は役割の名前でデザインシステムに足します。このアプリだけが使う色は`styles/base.css`の変数の定義（`:root`と`:root[data-theme='dark']`）にだけ値で書き、ダークでも見えるかを確かめます（`styles/designTokens.test.ts`が値の置き場所とコントラストを確かめます）。状態バッジは役割の名前（`.status-success`・`.status-info`・`.status-danger`・`.status-neutral`・`.status-attention`・`.status-accent`）を使い、Run・Jobの状態からの対応は`lib/statusBadge.ts`にあります。リンクなど文字に使う青緑は`--link`、選択中の印や枠は`--accent`です。
+- 画面幅による上書き（`@media`）は、対象の領域ファイルの末尾にまとめます。切り替え点は下の「画面幅への対応」の3つだけを使います。
 - 詳細度が同じルールは読み込み順で勝ち負けが決まります。新しい領域ファイルを作るときは`main.tsx`の末尾に足し、既存の順番を入れ替えません。
 
 ## エラー文言の層
@@ -63,9 +61,9 @@
 
 ## 画面の枠
 
-- `layout/TopBar.tsx`: 上部バー（アプリ名、テーマ、ユーザー表示、ログアウト）。画面の切り替えは置きません。`--bp-xs`未満ではボタンと並べるとアプリ名が入りきらないので、印だけを見せ、名前は読み上げとリンクの名前に残します（`ProductLogo`の`isNameVisuallyHidden`）。それより広い幅でも、入りきらなければ名前を「…」で縮め、画面の外へはみ出させません（`styles/productLogo.css`）。ユーザー表示のメニュー（`components/UserMenu.tsx`。項目は`layout/userMenuLinks.ts`）は、「アカウント」、ローカルアカウントの利用者だけ「パスワードの変更」（`/settings/account/password`）、全員に「全体設定」（`/settings/account`）です。テーマ（`hooks/useTheme.ts`）は、利用者が切り替えるまでOSの設定（`prefers-color-scheme`）に合わせ、切り替えたらブラウザの`localStorage`（`mmt.theme`）に保存します。`main.tsx`がログイン画面を含む最初の描画の前に`<html data-theme>`へ書きます。
-- 画面の切り替え: 切り替え先と組（記録・モデル・データ・実行・プロジェクト管理、その下に全員の全体設定、全体管理者にはさらに全体管理）は`layout/navigationLinks.ts`の`navigationGroups`が、各画面のアイコン（lucide-react）は`layout/navigationIcons.ts`が決めます。広い幅では左のサイドバー（`layout/NavigationSidebar.tsx`）に、狭い幅では`layout/NavigationDrawer.tsx`に、組の見出しを付けて並べます。サイドバーは、名前とアイコンを並べる`sidebar`と、アイコンだけの細い列の`rail`の2つの形を持ちます。どの形にするか、畳んだかどうか、幅は`hooks/useNavigation.ts`が決めて覚えます。幅を変える境目は`layout/NavigationResizeHandle.tsx`、幅の範囲は`lib/navigationWidth.ts`です。
-- `layout/AppShell.tsx`: Projectの画面の枠。`layout/ProjectBar.tsx`はProjectの切り替え（`layout/ProjectSwitcher.tsx`）と自分の権限を置き、広い幅ではサイドバーの一番上、狭い幅では上部バーの下の1行（プロジェクトバー）に出します。参加しているProjectが無いときは出しません。切り替えはブラウザのselectではなく自前のドロップダウン（listbox）で、各行に名前・公開範囲（Privateは鍵）・自分の権限を出し、開くと今のProjectを選んだ状態から↑↓・Home・End・Enter・Escで操作できます。Projectが8件以上（`lib/projectFilter.ts`の`PROJECT_FILTER_THRESHOLD`）になると絞り込みの入力を出します。一番下の「プロジェクトを作成」は作成できる人だけに出し、`dialogs/ProjectCreateDialog.tsx`を開きます。ドロップダウンはPopover API（`popover="manual"`）で最上位の層に出し、`hooks/useAnchoredPopover.ts`と`lib/dropdownPlacement.ts`が画面の内側に収めます。"/"で開くProjectは`lib/lastOpenedProject.ts`が決め、このブラウザで最後に開いたもの、次に自分がメンバー（直接付与・group。`Project.isMember`）のもので、他人のPublicや全体管理者として見えるだけのProjectには自分から開くまで入りません。どちらも無いとき・URLのProjectを開けないときは、プロジェクトの一覧（`pages/ProjectListPage.tsx`。参加しているもの、メンバーでなくても入れるPublic、［プロジェクトを作成］）を出します。作成できない人には管理者への依頼を表示します。
+- `layout/TopBar.tsx`: 上部バー（アプリ名、表示言語、運用アラート、テーマ、ユーザーメニュー）。画面の切り替えは置きません。640px未満ではボタンと並べるとアプリ名が入りきらないので、印だけを見せ、名前は読み上げとリンクの名前に残します（`ProductLogo`の`compact`。mado S3 Data Catalogと同じ幅）。それより広い幅でも、入りきらなければ名前を「…」で縮めます（デザインシステムの`shell.css`）。ユーザーメニュー（デザインシステムの`UserMenu`を包む`components/UserMenu.tsx`。リンクは`layout/userMenuLinks.ts`）は、「アカウント」、ローカルアカウントの利用者だけ「パスワードの変更」（`/settings/account/password`）、全員に「全体設定」（`/settings/account`）、最後に「ログアウト」です。全体設定の［このアプリについて］（`pages/AboutPage.tsx`）は、Webの版とビルドしたコミット（`lib/buildInfo.ts`。`vite.config.ts`がgitかビルド引数`VITE_GIT_COMMIT`・`VITE_GIT_DATE`から入れる）を出します。テーマ（デザインシステムの`useTheme`、保存キーは`lib/theme.ts`）は、利用者が切り替えるまでOSの設定（`prefers-color-scheme`）に合わせ、切り替えたらブラウザの`localStorage`（`mmt.theme`）に保存します。`main.tsx`がログイン画面を含む最初の描画の前に`<html data-theme>`へ書きます。
+- 画面の切り替え: 切り替え先と組（記録・モデル・データ・実行・プロジェクト管理、その下に全員の全体設定、全体管理者にはさらに全体管理）は`layout/navigationLinks.ts`の`navigationGroups`が、各画面のアイコン（lucide-react）は`layout/navigationIcons.ts`が決めます。広い幅では左のサイドバー（デザインシステムの`NavigationSidebar`を包む`layout/NavigationSidebar.tsx`）に、狭い幅では上部バーから開くデザインシステムの`NavigationDrawer`に、組の見出しを付けて並べます（リンクは`layout/NavigationLinkList.tsx`）。サイドバーは、名前とアイコンを並べる`sidebar`と、アイコンだけの細い列の`rail`の2つの形を持ちます。どの形にするか、畳んだかどうか、幅はデザインシステムの`useNavigationLayout`が決めて覚え、`hooks/useNavigation.ts`はそれと開ける画面のリンクをまとめて返します。
+- `layout/AppShell.tsx`: Projectの画面の枠。`layout/ProjectBar.tsx`はProjectの切り替え（`layout/ProjectSwitcher.tsx`）と自分の権限を置き、広い幅ではサイドバーの一番上、狭い幅では上部バーの下の1行（プロジェクトバー）に出します。参加しているProjectが無いときは出しません。切り替えはブラウザのselectではなく自前のドロップダウン（listbox）で、各行に名前・公開範囲（Privateは鍵）・自分の権限を出し、開くと今のProjectを選んだ状態から↑↓・Home・End・Enter・Escで操作できます。Projectが8件以上（`lib/projectFilter.ts`の`PROJECT_FILTER_THRESHOLD`）になると絞り込みの入力を出します。一番下の「プロジェクトを作成」は作成できる人だけに出し、`dialogs/ProjectCreateDialog.tsx`を開きます。ドロップダウンはPopover API（`popover="manual"`）で最上位の層に出し、デザインシステムの`useAnchoredPopover`が画面の内側に収めます。"/"で開くProjectは`lib/lastOpenedProject.ts`が決め、このブラウザで最後に開いたもの、次に自分がメンバー（直接付与・group。`Project.isMember`）のもので、他人のPublicや全体管理者として見えるだけのProjectには自分から開くまで入りません。どちらも無いとき・URLのProjectを開けないときは、プロジェクトの一覧（`pages/ProjectListPage.tsx`。参加しているもの、メンバーでなくても入れるPublic、［プロジェクトを作成］）を出します。作成できない人には管理者への依頼を表示します。
 - プロジェクトの作成（`dialogs/ProjectCreateDialog.tsx`）: 切り替え・全体管理のプロジェクト一覧・Projectが無いときの画面で共通の1つのダイアログです。公開範囲の既定はPublicで、Privateを選んだときだけ「メンバー（任意）」を出します。見られるProjectに同じ名前があれば名前の欄の下で警告します（作成は止めない。`lib/projectNameCollisions.ts`）。作成後は呼び出し側がそのProjectを開きます。プロジェクト設定（`pages/SettingsPage.tsx`）はそのProjectの設定だけを置き、Projectの一覧と作成はありません。先頭に節の目次（`components/ProjectSettingsContents.tsx`。節とidは`lib/projectSettingsSections.ts`、各節はSettingsPageがidのある要素で包む）を置きます。最下部のアーカイブ（`components/ProjectArchiveSection.tsx`）はProject adminだけに出します。アーカイブの確認（`dialogs/ProjectArchiveDialog.tsx`。全体管理の一覧と共通）は、止まるもの（使えるProjectのtokenの本数、Sweep・フック・自動実行・自動の昇格）を書きます。設定からアーカイブすると"/"へ`state.archivedProjectName`つきで移り、AppShellはほかのProjectを自動で開かずにプロジェクトの一覧に完了を出します（`lib/archivedProjectState.ts`）。開けないProjectのURLでは`GET /projects/:p`で理由を問い、アーカイブ済みならそう出します（`hooks/useUnreachableProjectReason.ts`）。
 - SDK・MLflowの接続の案内（`components/RecordingConnectionGuide.tsx`）: プロジェクト設定と、Experimentsの見出しの［SDKで記録］で開く同じ部品です。プロジェクトID（Experimentsでは選んだ実験のIDも）を［コピー］つきで出し、［Python SDK（mado-tracking）］と［MLflow 3］のタブに、そのIDと画面のURLを入れた例を出します（`lib/sdkConnectionSnippets.ts`、`lib/tokenUsageSnippet.ts`。tokenは`read -s`で端末から受け取り、例に書かない）。実験を選んでいないSDKの例は`experiment_name`で実験を名前で指定します。tokenの発行ボタン（`components/ProjectTokenButton.tsx`）はeditor以上に出します。値とコピーの組は`components/CopyableValue.tsx`、コピーできるコードは`components/CodeSnippet.tsx`です。
 - API tokenの発行（`dialogs/TokenDialog.tsx`）: 発行のボタン（「自分のAPI token」、アカウント、「SDK・MLflow 3から接続」、Jobsの投入用、Service Account）はどれもこのダイアログを開きます。用途（`lib/tokenPurposes.ts`、`components/TokenPurposeFields.tsx`）を選ぶとscopeが決まり、scopeはチェックボックスで確かめて変えられます。用途は所有者のRoleで持てるscopeのものだけを出し、workerはService Accountだけです。既定は記録の用途（AdminのService Accountはworker）で、案内のボタンは`initialScopes`で用途を選んだ状態にします。発行後（`dialogs/IssuedTokenDialog.tsx`）はtokenの値と［tokenをコピー］、tokenを含まない設定例（`components/TokenUsageSnippet.tsx`。tokenは`read -s`で受け取る）と［設定例をコピー］を出します。
@@ -85,25 +83,25 @@
 
 ## 画面幅への対応
 
-切り替え点は`styles/breakpoints.css`の`--bp-xs`（390px）・`--bp-sm`（640px）・`--bp-md`（900px）・`--bp-lg`（1200px）です。`--bp-xs`はこのアプリだけのもので、上部バーのアプリ名を隠す幅です（デザインシステムは残りの3つを使います）。CSSの変数は`@media`の中に書けないので、メディアクエリは同じ値を範囲の書き方で`@media (width < 640px)`・`(width < 900px)`・`(width < 1200px)`と書きます。スクリプトで幅を見るときは`lib/breakpoints.ts`の`narrowerThan('md')`を`lib/useMediaQuery.ts`に渡します。`lib/breakpoints.test.ts`が、CSSの変数とTSの値の一致と、ほかの数値のメディアクエリが無いことを確かめます。幅の広いタッチ画面も対象にするときだけ、`(width < 1200px), (pointer: coarse)`のように`(pointer: coarse)`を併記できます。
+切り替え点はデザインシステムと同じ640px（sm）・900px（md）・1200px（lg）の3つです。メディアクエリは範囲の書き方で`@media (width < 640px)`・`(width < 900px)`・`(width < 1200px)`と書きます。スクリプトで幅を見るときは、`@mado/design-system/layout`の`narrowerThan('md')`をデザインシステムの`useMediaQuery`に渡します。`styles/designTokens.test.ts`が、ほかの数値のメディアクエリが無いことを確かめます。幅の広いタッチ画面も対象にするときだけ、`(width < 1200px), (pointer: coarse)`のように`(pointer: coarse)`を併記できます。
 
-- 画面の切り替え: `--bp-lg`以上では左のサイドバーに名前とアイコンを並べます。サイドバーの下のボタンでアイコンだけの列（幅`--navigation-rail-width`、名前はツールチップと読み上げで伝えます）に畳め、右の境目をドラッグするか、境目にフォーカスして左右の矢印キーで幅（`--navigation-width`）を160〜360pxの間で変えられます。ダブルクリックかEnterで既定の192pxに戻ります。畳んだかどうかと幅は、ブラウザの`localStorage`（`mmt.navigation.collapsed`・`mmt.navigation.width`）に保存します。`--bp-md`以上`--bp-lg`未満では、サイドバーとExperimentsの実験一覧が並ぶとRunの表の幅が足りないので、いつもアイコンだけの列にします。`--bp-md`未満では上部バーのメニューボタンから左に出るドロワー（`layout/NavigationDrawer.tsx`）へ移します。メニューボタンは`aria-expanded`で開閉を示し、Esc、ドロワーの外側のタップ、リンクの選択で閉じます。
+- 画面の切り替え: 1200px以上では左のサイドバーに名前とアイコンを並べます。サイドバーの下のボタンでアイコンだけの列（幅`--navigation-rail-width`、名前はツールチップと読み上げで伝えます）に畳め、右の境目をドラッグするか、境目にフォーカスして左右の矢印キーで幅（`--navigation-width`）を160〜360pxの間で変えられます。ダブルクリックかEnterで既定の192pxに戻ります。畳んだかどうかと幅は、ブラウザの`localStorage`（`mmt.navigation.collapsed`・`mmt.navigation.width`）に保存します。900px以上1200px未満では、サイドバーとExperimentsの実験一覧が並ぶとRunの表の幅が足りないので、いつもアイコンだけの列にします。900px未満では上部バーのメニューボタンから左に出るドロワー（デザインシステムの`NavigationDrawer`）へ移します。メニューボタンは`aria-expanded`で開閉を示し、Esc、ドロワーの外側のタップ、リンクの選択で閉じます。
 - プロジェクトバー: サイドバーを名前つきで広げていないとき（アイコンだけの列とドロワー）に出し、どの幅でも1行です。狭い幅ではProjectの切り替えのボタンが縮み、名前を省略します。サイドバーはライト・ダークのどちらでも上部バーと同じ暗い地なので、サイドバーの中の切り替えのボタン・ラベル・権限は`--header-*`の色を使い、ドロップダウンは画面と同じ面の色にします。画面の上に並ぶものの高さは`--chrome-height`（上部バーと、出ていればプロジェクトバー）です。
-- タップ領域: `--bp-md`未満では、ボタン・アイコンボタン・入力欄・選択欄の高さを`--tap-target`（40px）以上にします（パッケージの`base.css`と`components.css`）。リンクボタン・summary・チェックボックスのラベル・スライダーも広げる画面は、根元の要素に`touch-targets`のclassを付けます（`components.css`）。スマホでは、表の中とページの見出しの上（パンくず）のリンクは文字の位置を変えずに押せる範囲だけを広げ（インラインの余白と、横は同じ幅の負のマージン）、classの無いsummary（実行snapshotの［Source］など）は`--tap-target`の高さにします（`styles/tapTargets.css`）。
-- 表: 狭い幅で列を減らす一覧は`components/ResponsiveTable.tsx`を使います。列ごとに`priority: 'primary' | 'secondary'`を指定し、`--bp-md`未満では`primary`の列だけを行に残して、行の右端のボタンで`secondary`の列を行の下に開きます。`selectedKey`で選択中の行に印を付け、`empty`で行が無いときの表示を渡します。テストでは幅を引数で受ける`ResponsiveTableView`を描画します。`onRowClick`はポインタ用の近道なので、キーボードで開けるリンクかボタンを`primary`の列に置きます。チェックでまとめて選ぶ表は`isSelected`で選んだ行すべてに印を付けます。`components/DataTable.tsx`は表の中だけで横にスクロールします。
-- Runの一覧: `components/runs/RunTable.tsx`も同じ考え方で、スマホ（`--bp-sm`未満）では選択・Run名・状態だけを行に残し、保存ビューで選んだ残りの列は行を開いて見ます（`NarrowRunTable.tsx`が`ResponsiveTableView`で描く）。ほかの一覧と違って`--bp-md`ではなく`--bp-sm`で切り替えるのは、タブレットの幅ならMetricsを横に並べて比べられるほうが役に立つからです。それより広い幅（`WideRunTable.tsx`）は全部の列を並べ、見出しのドラッグ（Alt+←→）で列を動かし、境目のドラッグ（←→）で幅を変えます。2つが共有するセルは`RunTableCells.tsx`、保存ビューの列の描き方は`runTableColumns.tsx`、選択の計算は`lib/runSelection.ts`です。
+- タップ領域: 900px未満では、ボタン・アイコンボタン・入力欄・選択欄の高さを`--tap-target`（40px）以上にします（パッケージの`base.css`と`components.css`）。アプリの根の要素（`index.html`の`#root`）にデザインシステムの`touch-targets`のclassを付けてあるので、リンクボタン・summary・チェックボックスのラベル・スライダーも広がります。スマホでは、表の中とページの見出しの上（パンくず）のリンクは文字の位置を変えずに押せる範囲だけを広げ、classの無いsummary（実行snapshotの［Source］など）は`--tap-target`の高さにします（どれもデザインシステムの`components.css`）。
+- 表: 狭い幅で列を減らす一覧は`components/ResponsiveTable.tsx`を使います。列ごとに`priority: 'primary' | 'secondary'`を指定し、900px未満では`primary`の列だけを行に残して、行の右端のボタンで`secondary`の列を行の下に開きます。`selectedKey`で選択中の行に印を付け、`empty`で行が無いときの表示を渡します。テストでは幅を引数で受ける`ResponsiveTableView`を描画します。`onRowClick`はポインタ用の近道なので、キーボードで開けるリンクかボタンを`primary`の列に置きます。チェックでまとめて選ぶ表は`isSelected`で選んだ行すべてに印を付けます。`components/DataTable.tsx`は表の中だけで横にスクロールします。
+- Runの一覧: `components/runs/RunTable.tsx`も同じ考え方で、スマホ（640px未満）では選択・Run名・状態だけを行に残し、保存ビューで選んだ残りの列は行を開いて見ます（`NarrowRunTable.tsx`が`ResponsiveTableView`で描く）。ほかの一覧と違って900pxではなく640pxで切り替えるのは、タブレットの幅ならMetricsを横に並べて比べられるほうが役に立つからです。それより広い幅（`WideRunTable.tsx`）は全部の列を並べ、見出しのドラッグ（Alt+←→）で列を動かし、境目のドラッグ（←→）で幅を変えます。2つが共有するセルは`RunTableCells.tsx`、保存ビューの列の描き方は`runTableColumns.tsx`、選択の計算は`lib/runSelection.ts`です。
 - タブ: `components/Tabs.tsx`は、入りきらないと横にずれます。選んだタブ（URLで開いたもの、半分切れていて押したもの、矢印キーで選んだもの）は端から少し離して見える位置へ動かし（`hooks/useRevealSelectedTab.ts`）、隠れているタブがある側の端を薄くして続きがあることを示します（`hooks/useHiddenEdges.ts`、`styles/tabs.css`）。
-- 運用アラート（上部バーのベル。`components/OperationsAlertBadge.tsx`）: `GET /operations-alerts`で、開けるすべてのProjectのアラートを数え、Projectの画面でも全体設定でも出します。一覧の各行にProject名（開いたときに`GET /projects`で引く）を付け、開いているProjectのものを先に並べます（`lib/operationsAlertOrder.ts`）。`--bp-sm`未満では一覧をベルの下に吊るさず、上部バーのすぐ下に画面の左右16pxを空けて出します（`styles/operations.css`）。
+- 運用アラート（上部バーのベル。`components/OperationsAlertBadge.tsx`）: `GET /operations-alerts`で、開けるすべてのProjectのアラートを数え、Projectの画面でも全体設定でも出します。一覧の各行にProject名（開いたときに`GET /projects`で引く）を付け、開いているProjectのものを先に並べます（`lib/operationsAlertOrder.ts`）。640px未満では一覧をベルの下に吊るさず、上部バーのすぐ下に画面の左右16pxを空けて出します（`styles/operations.css`）。
 - 音声の波形: タッチでは縦のスワイプ（とピンチ）はページのスクロールと拡大に使い、横のドラッグだけが再生位置の移動とループ範囲の選択になります（`styles/audio.css`の`touch-action`）。サーバーが作った全体の波形は、押した瞬間ではなくクリック（タップ）で移動します。
 - Runの比較の［Artifacts］: 各Runの表示は枠の幅に収め、長い1行のテキストはその表示の中だけで横にスクロールします。
-- ダイアログ: `components/Dialog.tsx`は`--bp-sm`未満で全画面になります。`fullScreenOnNarrow={false}`を渡すと、全画面ではなく下から出るシートになります（`ConfirmDialog`はシート）。閉じると（Esc、×、キャンセル、保存）、開いたときにフォーカスがあった要素（開いたボタン）へフォーカスを戻します（`hooks/useModalDialog.ts`）。呼び出し側は開いたダイアログを外す（`{open && <XxxDialog />}`）ので、ブラウザが`close()`で戻す仕組みは使えないためです。開いたボタンが閉じるまでに画面から消えたとき（閉じたメニューの項目など）は戻しません。開いたときは最初の入力欄にフォーカスを置き（入力欄が無いときは×）、タッチ画面（`(pointer: coarse)`）では画面のキーボードが出てダイアログを隠さないよう、ダイアログそのものに置きます。長いフォームでも［保存］［キャンセル］が見えるよう、`footer`をダイアログの下端に固定します（`styles/forms.css`）。
+- ダイアログ: `components/Dialog.tsx`はデザインシステムの`Dialog`に閉じるボタンの名前を入れたもので、640px未満で全画面になります。`narrowLayout="sheet"`を渡すと、全画面ではなく下から出るシートになります（`ConfirmDialog`はシート）。幅は`size`（`wide`など）、処理中に閉じさせないときは`dismissible={false}`です。閉じると（Esc、×、キャンセル、保存）、開いたときにフォーカスがあった要素（開いたボタン）へフォーカスを戻します（デザインシステムの`useModalDialog`）。呼び出し側は開いたダイアログを外す（`{open && <XxxDialog />}`）ので、ブラウザが`close()`で戻す仕組みは使えないためです。開いたボタンが閉じるまでに画面から消えたとき（閉じたメニューの項目など）は戻しません。開いたときは最初の入力欄にフォーカスを置き（入力欄が無いときは×）、タッチ画面（`(pointer: coarse)`）では画面のキーボードが出てダイアログを隠さないよう、ダイアログそのものに置きます。長いフォームでも［保存］［キャンセル］が見えるよう、`footer`をダイアログの下端に固定します（`styles/forms.css`）。
 
 ## キーボードと読み上げ
 
 - ページのタイトル: `components/PageHeader.tsx`が、見出しと、その上の小さな行（Projectの名前、「全体設定」など）の文字から、ブラウザのタブのタイトル「見出し · Project · mado ML Tracking」を付けます（`hooks/usePageDocumentTitle.ts`、`lib/documentTitle.ts`）。見出しを要素で組んだ画面（Runの詳細）も、読める文字のとおりになります。
 - メトリクスの図（`components/charts/MetricsChart.tsx`）: 図そのものが1つのフォーカスの止まり先（`role="application"`）で、recharts自身のキーボードの層は切っています。←→・Home・Endで値を出す位置を動かし（ツールチップに出る）、+と-で拡大・縮小、Escで値を隠します。Ctrl・Cmd・Altと一緒のキーはブラウザの操作（ページの拡大・縮小、戻る・進む）なので受け取りません（`isBrowserShortcut`）。recharts の描画領域の中の線・帯・ドラッグは`components/charts/ChartPlotLayer.tsx`です。止まり先と拡大の計算は`lib/chartKeyboard.ts`、読み上げの要約（線ごとの最新の値と最小・最大）は`lib/chartSummary.ts`です。拡大した範囲を取り直す間も`ChartPanel`は前の線を描いたままにし、図を外しません（外すと拡大を忘れ、［ズームを戻す］が消えるため）。SweepとRunの分析の散布図はrechartsのキーボードの層（←→で点を移る）を使い、`title`で名前を付けます。
 - 線の色と形: `lib/seriesColors.ts`が、8本までは色覚に配慮した順の8色（ライトとダークで別の段）と、実線・破線・点線・一点鎖線をこの順に割り当てます。どれも図の背景に対して3:1以上で、`lib/seriesColors.test.ts`が確かめます。9本以上はIDから色相を決め、背景とのコントラストで明るさを決めます。割り当ては図ごとではなく、`MetricsChart`の`styleIds`（`ChartPanel`が渡す画面のRun全体）の並びで決めるので、ある指標を記録していないRunがあっても同じRunはどの図でも同じ色と形です。8本を超えるかも画面のRun数で決めます。複数のmetricを重ねた図では、色がRun（`styleId`）、線の形がmetricの順です。グループの線や1つのRunのmetricの線のように画面のRunに無い線は、その図の線の中で決めます。凡例とツールチップの見本（`components/charts/SeriesSwatch.tsx`）も同じ形で描きます。軸の文字と線は`--muted`です（`styles/charts.css`）。平行座標の青の段階も、両端を3:1以上の段に詰めています（`lib/parallelCoordinates.ts`）。
-- 開いて閉じる欄: 上部バーのポップオーバー（`hooks/usePopover.ts`）は、中にフォーカスがあるときのEscで開いたボタンへ戻します。ユーザーメニューは↓↑で開いて項目を移れるメニューボタンです。ページの上に浮く`<details>`（［表示する列］、保存ビュー、図の［配置］、分析の軸）は、`lib/detailsPopover.ts`の処理でEscとTabで外へ出たときに閉じます。
+- 開いて閉じる欄: 上部バーのポップオーバー（デザインシステムの`usePopover`。画面を移ると閉じるよう`closeKey`にpathnameを渡す）は、中にフォーカスがあるときのEscで開いたボタンへ戻します。ユーザーメニューは↓↑で開いて項目を移れるメニューボタンです。ページの上に浮く`<details>`（［表示する列］、保存ビュー、図の［配置］、分析の軸）は、`lib/detailsPopover.ts`の処理でEscとTabで外へ出たときに閉じます。
 - 自動の検査: `apps/web/tests/browser-accessibility.mjs`は、環境変数`MMT_AXE_CORE_PATH`にaxe-coreの`axe.min.js`を渡すと、主な画面でWCAG 2.1 A/AAの違反が無いことも確かめます（axe-coreはこのリポジトリの依存にしていません）。
 
 ## 候補つきの入力欄
@@ -116,10 +114,10 @@
 
 ## テキストのプレビュー
 
-Artifactのテキストのプレビュー（`components/preview/CodeView.tsx`）は、形式に合わせて色を付けます。形式の判定と色付けは、Madoと共有する`@mado/design-system/code`（highlight.jsと、CSV・TSV・ログの色付け）にあります。対応する形式と判定の順は[デザインシステムのREADME](https://github.com/aida0710/mado-design-systems#テキストの色付け)にあります。
+Artifactのテキストのプレビュー（`components/preview/CodeView.tsx`）は、形式に合わせて色を付けます。形式の判定と色付けは、mado S3 Data Catalogと共有する`@mado/design-system/code`（highlight.jsと、CSV・TSV・ログの色付け）にあります。対応する形式と判定の順は[デザインシステムのREADME](https://github.com/aida0710/mado-design-systems#テキストの色付け)にあります。
 
 - 形式は、ファイル名、メディアタイプ、中身の先頭の順に決めます。どれにも当たらなければ色を付けません。
-- プレビューの上の「表示形式」で形式を選び直せます。選んだ形式は拡張子ごとにブラウザの`localStorage`（`mmt.codeLanguage`）に保存し（`hooks/useCodeLanguage.ts`）、同じ拡張子のファイルを次に開いたときにも使います。「自動」に戻すと保存を消します。`.env`と`Dockerfile`は名前で覚えます。何でも入る`.txt`と、拡張子の無いほかのファイルは覚えません。
+- プレビューの上の「表示形式」で形式を選び直せます。選んだ形式は拡張子ごとにブラウザの`localStorage`（`mmt.codeLanguage`）に保存し（デザインシステムの`useCodeLanguage`を包む`hooks/useCodeLanguage.ts`）、同じ拡張子のファイルを次に開いたときにも使います。「自動」に戻すと保存を消します。`.env`と`Dockerfile`は名前で覚えます。何でも入る`.txt`と、拡張子の無いほかのファイルは覚えません。
 - プレビューできる大きさは1MiBまで（`TEXT_PREVIEW_MAX_BYTES`）で、色を付けるのは先頭の200,000文字までです。
 - 表示は、テーマにかかわらずログと同じ暗い地（`--code-background`）です。
 
