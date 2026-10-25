@@ -1,5 +1,5 @@
-// Hyperparameter sweeps. The search space and early-stopping terms follow the W&B sweep config
-// (values / value / distribution+min+max+q, metric.goal, early_terminate hyperband).
+// ハイパーパラメータのSweep。探索空間と早期終了の項目はW&Bのsweepの設定に従う
+// （values / value / distribution+min+max+q、metric.goal、early_terminateのhyperband）。
 import type { JobStatus, RunStatus } from './index.js';
 
 export type SweepMethod = 'grid' | 'random' | 'bayes';
@@ -43,9 +43,9 @@ export type SweepEarlyTerminateViolation = (typeof SWEEP_EARLY_TERMINATE_VIOLATI
 export type SweepParameterValue = string | number | boolean;
 
 /**
- * One searched parameter: exactly one of `values` (choose one), `value` (constant) or
- * `distribution` with min/max. log_uniform takes the values themselves as min/max
- * (W&B log_uniform_values); q is only for q_uniform.
+ * 探索する1つのparameter。`values`（1つを選ぶ）、`value`（定数）、min/maxつきの`distribution`の
+ * ちょうど1つを持つ。log_uniformはmin/maxに値そのものを取る（W&Bのlog_uniform_values）。qは
+ * q_uniformだけで使う。
  */
 export type SweepParameterDefinition =
   | { values: SweepParameterValue[] }
@@ -58,14 +58,14 @@ export type SweepParameterDefinition =
     };
 
 export interface SweepObjective {
-  /** Run metric name, read in step order. */
+  /** Runのメトリクスの名前。stepの順に読む。 */
   metric: string;
   goal: 'minimize' | 'maximize';
-  /** How a trial's metric history becomes one value. last is the value at the largest step. */
+  /** trialのメトリクスの履歴を1つの値にする方法。lastは最大のstepでの値。 */
   aggregation: 'last' | 'min' | 'max';
 }
 
-/** Asynchronous Hyperband (ASHA): rungs at minIter×eta^k steps keep the top 1/eta of trials. */
+/** 非同期のHyperband（ASHA）: minIter×eta^kのstepにあるrungが、trialの上位1/etaを残す。 */
 export interface SweepEarlyStopping {
   type: 'hyperband';
   minIter: number;
@@ -76,10 +76,10 @@ export interface SweepEarlyStopping {
 export type SweepStatus = 'running' | 'paused' | 'finished' | 'canceled' | 'failed';
 
 /**
- * Why the sweep has its status. paused: user_requested, task_revision_changed (the Task was
- * edited after the sweep was created), owner_forbidden (the creator is no longer a Project
- * editor), launch_failed (a trial could not be queued). finished: max_trials_reached,
- * search_space_exhausted (grid). canceled: user_requested. failed: suggestion_failed.
+ * Sweepが今のstatusになった理由。paused: user_requested、task_revision_changed（Sweepの作成後に
+ * Taskが編集された）、owner_forbidden（作成者がもうProjectのeditorではない）、launch_failed
+ * （trialをキューに入れられなかった）。finished: max_trials_reached、search_space_exhausted
+ * （grid）。canceled: user_requested。failed: suggestion_failed。
  */
 export type SweepStatusReason =
   | 'user_requested'
@@ -106,10 +106,10 @@ export interface SweepTrial {
   runId: string;
   jobId: string;
   state: SweepTrialState;
-  /** Aggregated objective; null while running or when the metric was never finite. */
+  /** 集計した目的の値。実行中や、メトリクスが一度も有限でなかったときはnull。 */
   objectiveValue: number | null;
   objectiveStep: number | null;
-  /** For early_stopped: the hyperband rung, e.g. "hyperband_rung_9". */
+  /** early_stoppedのとき: hyperbandのrung（例: "hyperband_rung_9"）。 */
   stopReason: string | null;
   runStatus: RunStatus;
   jobStatus: JobStatus;
@@ -134,7 +134,7 @@ export interface Sweep {
   parallelism: number;
   earlyStopping: SweepEarlyStopping | null;
   seed: number;
-  /** null uses the Task's target and GPUs. */
+  /** nullならTaskのコンピュータとGPUを使う。 */
   targetId: string | null;
   gpuIds: string[] | null;
   status: SweepStatus;
@@ -156,7 +156,7 @@ export interface SweepCreate {
   maxTrials: number;
   parallelism?: number;
   earlyStopping?: SweepEarlyStopping | null;
-  /** 0〜4294967295. Omitted: the server picks one and returns it. */
+  /** 0〜4294967295。省略時はサーバーが選んで返す。 */
   seed?: number;
   targetId?: string | null;
   gpuIds?: string[] | null;
@@ -168,7 +168,7 @@ export interface SweepPatch {
 }
 
 export interface SweepCancel {
-  /** true also requests cancellation of running trials; queued trials are always canceled. */
+  /** trueなら実行中のtrialの取り消しも求める。queuedのtrialは常に取り消す。 */
   cancelRunningTrials: boolean;
 }
 

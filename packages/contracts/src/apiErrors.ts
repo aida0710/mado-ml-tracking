@@ -180,7 +180,7 @@ export const API_ERROR_CODES = [
   'checkpoint_kind_mismatch',
   'checkpoint_not_found',
   'checkpoint_run_kind',
-  // media
+  // メディア
   'media_artifact_run',
   'media_artifact_unavailable',
   'media_conflict',
@@ -316,7 +316,7 @@ export const API_ERROR_CODES = [
   // 通知
   'notification_channel_exists',
   'notification_channel_invalid',
-  // 連携（Mado）
+  // mado S3 Data Catalog連携
   'plugin_capability_unsupported',
   'plugin_credentials_required',
   'plugin_dataset_identity_mismatch',
@@ -331,7 +331,7 @@ export const API_ERROR_CODES = [
   'plugin_secret_key_unavailable',
   'plugin_token_scope_missing',
   'plugin_token_unavailable',
-  // Repository
+  // リポジトリ
   'invalid_repository',
   'unsafe_repository',
   'repository_commit_mismatch',

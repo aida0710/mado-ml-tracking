@@ -3,23 +3,23 @@ import type { SiteJobShell, SiteSettings, SiteSubmissionAccount } from './siteCo
 import type { WorkerOutputDeclaration } from './workerOutputs.js';
 
 /**
- * Sites (ComputeTarget.executor='site') are computers a launcher submits to, or the requester with
- * `mado-tracking submit` where logins need a one-time password. Their settings and job shells are
- * edited on the Web (siteComputers.ts); the runner on the compute node reports back with the Job
- * token (docs/sites.md).
+ * site（ComputeTarget.executor='site'）は、launcherが投入するコンピュータ、またはログインに
+ * ワンタイムパスワードが要るため依頼者が`mado-tracking submit`で投入するコンピュータ。設定と
+ * job shellはWebの画面で編集し（siteComputers.ts）、計算ノードのrunnerがJob tokenで報告を
+ * 返す（docs/sites.md）。
  */
 export type SiteSubmissionMode = 'automatic' | 'manual';
 export const SITE_SUBMISSION_MODES: readonly SiteSubmissionMode[] = ['automatic', 'manual'];
 
-/** CPU of a site's compute nodes; container images and SIFs must be built for it. */
+/** siteの計算ノードのCPU。コンテナイメージとSIFはこれに合わせてビルドする必要がある。 */
 export type CpuArch = 'amd64' | 'arm64';
 export const CPU_ARCHES: readonly CpuArch[] = ['amd64', 'arm64'];
 
 /**
- * Where a site Job is between queued and its end:
- * waiting_manual (queued; the requester submits it by hand), submitting (claimed for submission),
- * submitted (in the scheduler queue), waiting_resources (the runner prepares the inputs and waits
- * for free GPUs), running (the container runs). ssh and local Jobs have no phase.
+ * siteのJobが、queuedから終わるまでのどこにいるか:
+ * waiting_manual（queued。依頼者が手で投入する）、submitting（投入のためにclaimされた）、
+ * submitted（スケジューラのキューにいる）、waiting_resources（runnerが入力を用意し、空いた
+ * GPUを待つ）、running（コンテナが動いている）。sshとlocalのJobにはphaseが無い。
  */
 export type JobPhase =
   | 'waiting_manual'
@@ -36,32 +36,32 @@ export const JOB_PHASES: readonly JobPhase[] = [
 ];
 
 /**
- * Phases in which a launcher or the requester holds a site Job and no runner reports yet: it is
- * being submitted or waits in the scheduler queue. Nothing runs, so stopping ends it at once.
+ * launcherか依頼者がsiteのJobを持ち、まだrunnerが報告していないphase。投入中か、スケジューラの
+ * キューで待っている。何も動いていないので、止めるとすぐに終わる。
  */
 export const JOB_SUBMISSION_PHASES: readonly JobPhase[] = ['submitting', 'submitted'];
 
 /**
- * Why a site Job ended beyond its status: the scheduler stopped it at its time limit (timed_out),
- * it waited in the queue longer than the site allows (queue_timeout), or the job shell refused it
- * (submit_failed).
+ * siteのJobが終わった、statusより詳しい理由。スケジューラが時間の上限で止めた（timed_out）、
+ * siteが許すより長くキューで待った（queue_timeout）、job shellが拒んだ（submit_failed）の
+ * どれか。
  */
 export type JobEndReason = 'timed_out' | 'queue_timeout' | 'submit_failed';
 export const JOB_END_REASONS: readonly JobEndReason[] = ['timed_out', 'queue_timeout', 'submit_failed'];
 
-/** Members of one array; each index is its own Run and Job. */
+/** 1つのarrayのメンバー数。各インデックスがそれぞれのRunとJobになる。 */
 export const MAX_JOB_ARRAY_SIZE = 10000;
-/** GPUs one Job may request; also the database limit of jobs.gpu_count. */
+/** 1つのJobが要求できるGPUの数。jobs.gpu_countのDBでの上限でもある。 */
 export const MAX_JOB_GPU_COUNT = 64;
-/** The longest time limit a Job may request (30 days); the site's job shell may allow less. */
+/** Jobが要求できる最長の時間の上限（30日）。siteのjob shellはこれより短くしてもよい。 */
 export const MAX_JOB_WALLTIME_SECONDS = 30 * 24 * 60 * 60;
-/** Submissions one claim returns; an array counts as one submission. */
+/** 1回のclaimが返すsubmissionの数。arrayは1つのsubmissionと数える。 */
 export const SITE_CLAIM_MAX_SUBMISSIONS = 50;
-/** A claimed submission without a report for this long is failed as submit_failed. */
+/** claimされたあと、この時間報告が無いsubmissionはsubmit_failedとして失敗にする。 */
 export const SITE_SUBMISSION_REPORT_TIMEOUT_SECONDS = 15 * 60;
 /**
- * Bounds of ComputeTarget.queueTimeoutSeconds. A shorter limit would fail Jobs before a
- * scheduler reports them; the longest matches MAX_JOB_WALLTIME_SECONDS.
+ * ComputeTarget.queueTimeoutSecondsの範囲。これより短いと、スケジューラが報告する前にJobが
+ * 失敗してしまう。最長はMAX_JOB_WALLTIME_SECONDSに合わせる。
  */
 export const MIN_QUEUE_TIMEOUT_SECONDS = 60;
 export const MAX_QUEUE_TIMEOUT_SECONDS = 30 * 24 * 60 * 60;
@@ -74,12 +74,12 @@ export interface JobArrayGroup {
   createdBy: string;
   parentJobId: string | null;
   hookId: string | null;
-  /** Set when every member has a terminal attempt and no retry remains to start. */
+  /** すべてのメンバーが終了状態の試行を持ち、始める再試行が残っていないときに入る。 */
   finishedAt: string | null;
   createdAt: string;
 }
 
-/** POST /projects/:p/job-arrays: one Run and Job per index, submitted together to the site. */
+/** POST /projects/:p/job-arrays: インデックスごとに1つのRunとJobを作り、まとめてsiteに投入する。 */
 export interface JobArrayCreate {
   experimentId: string;
   name: string;
@@ -97,7 +97,7 @@ export interface JobArrayCreate {
   retryOnFailure?: boolean;
   retryOnTimeout?: boolean;
   allowChildJobs?: boolean;
-  /** An 'artifacts' input version whose files are split among the members (docs/sites.md). */
+  /** ファイルをメンバーに分ける'artifacts'の入力のバージョン（docs/sites.md）。 */
   datasetPartitionVersionId?: string | null;
 }
 
@@ -106,35 +106,35 @@ export interface JobArrayCreated {
   jobs: Job[];
 }
 
-/** Who the submission runs for; the launcher picks that person's account on personal sites. */
+/** 誰のためのsubmissionか。本人のアカウントで動くsiteでは、launcherがその人のアカウントを選ぶ。 */
 export interface SiteSubmissionRequester {
   id: string;
   email: string;
   username: string | null;
 }
 
-/** One job shell call: a single Job, or every member of an array on a site that takes arrays. */
+/** job shellの1回の呼び出し。1つのJob、またはarrayを受け付けるsiteではarrayの全メンバー。 */
 export interface SiteSubmission {
   target: ComputeTarget;
   arrayGroupId: string | null;
   requester: SiteSubmissionRequester;
   jobs: WorkerJob[];
-  /** The site's settings at claim time. */
+  /** claimした時点のsiteの設定。 */
   settings: SiteSettings;
-  /** The job shell version the Jobs recorded (Job.siteJobShellId). */
+  /** Jobが記録したjob shellのバージョン（Job.siteJobShellId）。 */
   jobShell: SiteJobShell;
   account: SiteSubmissionAccount;
 }
 
-/** POST /launcher/site-submissions/claim with the launcher's token: its sites only. */
+/** launcherのtokenで呼ぶPOST /launcher/site-submissions/claim。そのlauncherのsiteだけ。 */
 export interface SiteSubmissionClaim {
   targetIds?: string[];
   limit?: number;
 }
 
 /**
- * POST /manual-submissions/claim with one's own API token. `all` takes every waiting Job of a
- * computer one owns (a PC that waits with `mado-tracking submit --watch`), not only one's own.
+ * 自分のAPI tokenで呼ぶPOST /manual-submissions/claim。`all`は、自分が所有するコンピュータ
+ * （`mado-tracking submit --watch`で待つPC）の待っているJobを、自分のもの以外もすべて取る。
  */
 export interface ManualSubmissionClaim {
   targetId: string;
@@ -146,7 +146,7 @@ export interface ManualSubmissionClaim {
 export interface SiteSubmissionResult {
   jobIds: string[];
   outcome: 'submitted' | 'failed';
-  /** The scheduler's ID printed by the job shell; null on direct hosts without a scheduler. */
+  /** job shellが出力したスケジューラのジョブID。スケジューラの無い直接のホストではnull。 */
   schedulerJobId?: string | null;
   error?: string | null;
 }
@@ -160,21 +160,21 @@ export interface ManualSubmissionReport {
   results: SiteSubmissionResult[];
 }
 
-/** GET /manual-submissions: the requester's Jobs waiting for `mado-tracking submit`, per site. */
+/** GET /manual-submissions: `mado-tracking submit`を待っている依頼者のJob（siteごと）。 */
 export interface ManualSubmissionWaiting {
   targetId: string;
   targetName: string;
   waitingJobs: number;
-  /** Every waiting Job of a computer one owns (what `--all` claims); null on other sites. */
+  /** 自分が所有するコンピュータで待つJobすべて（`--all`がclaimするもの）。ほかのsiteではnull。 */
   allWaitingJobs: number | null;
 }
 
-/** A Job canceled while it waited in the scheduler queue; the launcher runs the cancel command. */
+/** スケジューラのキューで待っている間に取り消されたJob。launcherが取り消しのコマンドを実行する。 */
 export interface SiteSchedulerCancellation {
   jobId: string;
   targetId: string;
   schedulerJobId: string;
-  /** The account that queued it, which the cancel command must run as. */
+  /** それをキューに入れたアカウント。取り消しのコマンドはこのアカウントで実行する必要がある。 */
   account: SiteSubmissionAccount;
 }
 
@@ -182,11 +182,11 @@ export interface SiteSchedulerCancellationReport {
   jobIds: string[];
 }
 
-/** Runner protocol (POST /projects/:p/jobs/:j/runner/*) with the Job token. */
+/** Job tokenで呼ぶrunnerのプロトコル（POST /projects/:p/jobs/:j/runner/*）。 */
 export type RunnerPhase = 'waiting_resources' | 'running';
 
 export interface RunnerStart {
-  /** Chosen by the runner once; another runner of the same Job is refused (runner_conflict). */
+  /** runnerが1回だけ決める。同じJobの別のrunnerは拒否する（runner_conflict）。 */
   instanceId: string;
   host: string;
   gpuIds: string[];
@@ -225,12 +225,12 @@ export interface RunnerFinish {
   status: 'finished' | 'failed' | 'canceled';
   exitCode?: number;
   error?: string;
-  /** timed_out: the scheduler's termination signal arrived (time limit). */
+  /** timed_out: スケジューラの終了シグナルが届いた（時間の上限）。 */
   endReason?: 'timed_out';
 }
 
 export interface RunnerFinishResult {
   job: Job;
-  /** The automatic retry this end started (retryOnFailure / retryOnTimeout); null if none. */
+  /** この終了が始めた自動の再試行（retryOnFailure / retryOnTimeout）。無ければnull。 */
   retryJobId: string | null;
 }

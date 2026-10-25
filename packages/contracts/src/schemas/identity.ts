@@ -92,8 +92,8 @@ export const currentApiTokenSchema = namedContractSchema(
   }),
 );
 /**
- * POST /tokens and POST /projects/:p/service-accounts/:id/tokens: the secret is shown only in
- * this response. The API's `IssuedToken` (tokenService.ts) is checked against it there.
+ * POST /tokensとPOST /projects/:p/service-accounts/:id/tokens: secretはこの応答でだけ表示する。
+ * APIの`IssuedToken`（tokenService.ts）は、そのファイルでこのスキーマと照合している。
  */
 export const issuedTokenSchema = namedContractSchema(
   'IssuedToken',

@@ -20,7 +20,7 @@ export const artifactPreviewSchema = namedContractSchema(
     updatedAt: timestampSchema,
   }),
 );
-// Not a route body: the content of a 'waveform-peaks' Artifact, which the web viewer fetches.
+// ルートの本文ではない。'waveform-peaks'のArtifactの中身で、Webの画面のビューアが取得する。
 export const waveformPeaksPreviewSchema = namedContractSchema(
   'WaveformPeaksPreview',
   z.strictObject({

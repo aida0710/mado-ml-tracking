@@ -18,20 +18,20 @@ export interface S3ClientSettings {
     | 'tlsVerify'
     | 'checksumMode'
   >;
-  /** Absent means the SDK's default chain (instance role, environment, profile). */
+  /** 省略するとSDKの既定のチェーン（インスタンスロール、環境変数、プロファイル）を使う。 */
   credentials?: S3Credentials;
-  /** PEM bundle of a private CA. When set, Node trusts only these roots for this client. */
+  /** プライベートCAのPEMバンドル。指定すると、Nodeはこのクライアントでこのルートだけを信頼する。 */
   caBundle?: string;
 }
 
-// An unreachable endpoint should fail a connection test promptly instead of hanging the request.
+// 到達できないエンドポイントでは、リクエストを止めたままにせず、接続テストをすぐ失敗させる。
 const S3_CONNECTION_TIMEOUT_MS = 10_000;
 
 /**
- * Headers that belong to v4 payload signing or flexible checksums. Services that only speak v2
- * predate them and may reject the request, so they are removed before the v2 signer runs.
- * WHEN_REQUIRED adds a checksum only to operations S3 refuses without one (DeleteObjects), and
- * those carry an in-memory XML body, so Content-MD5 takes the removed checksum's place.
+ * v4のpayload署名かflexible checksumsに属するヘッダー。v2しか扱えないサービスはそれより古く、
+ * リクエストを拒むことがあるので、v2の署名処理の前に取り除く。
+ * WHEN_REQUIREDは、S3がチェックサム無しでは拒む操作（DeleteObjects）にだけチェックサムを付ける。
+ * その操作の本文はメモリ上のXMLなので、取り除いたチェックサムの代わりにContent-MD5を付ける。
  */
 const V4_ONLY_HEADER_PATTERN =
   /^x-amz-(checksum-.+|sdk-checksum-algorithm|content-sha256|decoded-content-length|trailer)$/i;
@@ -42,8 +42,8 @@ type SignerOptions = ConstructorParameters<SignerConstructor>[0];
 type RequestSigner = InstanceType<SignerConstructor>;
 
 /**
- * Many S3-compatible services reject the CRC checksums newer SDKs add to every request, so the
- * default sends checksums only where the API requires them (decisions.md).
+ * 多くのS3互換サービスは、新しいSDKが全リクエストに付けるCRCチェックサムを拒むので、既定では
+ * APIが必須とする操作にだけチェックサムを送る（decisions.md）。
  */
 function checksumSettings(
   mode: S3ChecksumMode,
@@ -53,8 +53,8 @@ function checksumSettings(
 }
 
 /**
- * The SDK constructs the signer with its resolved credential provider, so v2 uses the same
- * credentials as v4 would: the static key when configured, otherwise the default chain.
+ * SDKは解決済みの認証情報プロバイダーを渡して署名処理を作るので、v2もv4と同じ認証情報を使う。
+ * 固定のキーを設定していればそれを、無ければ既定のチェーンを使う。
  */
 function signatureV2SignerConstructor({
   bucket,
@@ -122,7 +122,7 @@ export function replaceV4OnlyHeaders(request: {
   request.headers['content-md5'] = createHash('md5').update(body).digest('base64');
 }
 
-/** Runs right before signing, after the checksum middleware has added its headers. */
+/** チェックサムのmiddlewareがヘッダーを足したあと、署名の直前に動く。 */
 function removeV4OnlyHeaders(client: S3Client): void {
   client.middlewareStack.addRelativeTo(
     <Args extends { request: unknown }, Result>(next: (args: Args) => Promise<Result>) =>

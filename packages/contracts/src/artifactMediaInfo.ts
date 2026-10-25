@@ -1,18 +1,18 @@
 /**
- * Audio properties of an Artifact. 'header' is read from WAV/FLAC headers at registration without
- * decoding; 'ffprobe' is added later by the preview worker for other formats and never replaces it.
+ * Artifactの音声の属性。'header'は登録時にWAV/FLACのヘッダーからデコードせずに読む。'ffprobe'は
+ * それ以外の形式についてプレビューのworkerが後から足すもので、'header'を置き換えることは無い。
  */
 export interface ArtifactMediaInfo {
   artifactId: string;
   durationSeconds: number;
   sampleRate: number;
   channels: number;
-  /** null for codecs without a fixed sample width. */
+  /** サンプルのビット幅が決まっていないコーデックではnull。 */
   bitsPerSample: number | null;
-  /** ffprobe codec_name, e.g. pcm_s16le or flac. */
+  /** ffprobeのcodec_name。pcm_s16leやflacなど。 */
   codec: string;
   source: 'header' | 'ffprobe';
 }
 
-/** Maximum artifactIds per GET /projects/:p/artifact-media-info request. */
+/** GET /projects/:p/artifact-media-infoの1リクエストで指定できるartifactIdsの最大数。 */
 export const ARTIFACT_MEDIA_INFO_BATCH_LIMIT = 200;

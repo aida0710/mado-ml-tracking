@@ -1,30 +1,34 @@
 /**
- * A folder upload ("フォルダから作る" in the Web) stores each file as a Runless Artifact at
- * `datasets/<datasetId>/<folder>/<path in the dataset>` and lists them in a new version once all
- * are stored. The folder is the time the upload started, so the files of each attempt stay apart.
+ * フォルダのアップロード（画面の"フォルダから作る"）は、各ファイルをRunを持たないArtifactとして
+ * `datasets/<datasetId>/<folder>/<path in the dataset>`に保存し、すべて保存し終えたら新しい
+ * バージョンに並べる。folderはアップロードを始めた時刻なので、試行ごとのファイルは混ざらない。
  */
 
 /**
- * The folder name: the start time as an ISO string with ':' and '.' replaced by '-'
- * (2026-10-08T14-19-08-955Z). Written with [0-9] so PostgreSQL and JavaScript read it alike.
+ * folderの名前。開始時刻のISO文字列の':'と'.'を'-'に置き換えたもの（2026-10-08T14-19-08-955Z）。
+ * PostgreSQLとJavaScriptで同じに解釈されるよう、[0-9]で書く。
  */
 export const DATASET_FOLDER_UPLOAD_FOLDER_PATTERN =
   '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{3}Z$';
 
-/** The Artifact path every folder upload of the dataset starts with; each attempt is a folder below. */
+/**
+ * そのデータセットのすべてのフォルダのアップロードに共通する、Artifactのパスの先頭。試行ごとに
+ * その下の1つのフォルダになる。
+ */
 export function datasetFolderUploadRoot(datasetId: string): string {
   return `datasets/${datasetId}/`;
 }
 
-/** The Artifact path every file of one folder upload starts with. */
+/** 1回のフォルダのアップロードのファイルすべてに共通する、Artifactのパスの先頭。 */
 export function datasetFolderUploadPrefix(location: { datasetId: string; folder: string }): string {
   return `${datasetFolderUploadRoot(location.datasetId)}${location.folder}/`;
 }
 
 /**
- * GET /projects/:p/datasets/:d/folder-uploads: a folder upload that stopped before its version,
- * so no version of any dataset lists its stored files. Upload sessions still open under the
- * prefix are not counted here; each person lists their own with GET /artifact-uploads.
+ * GET /projects/:p/datasets/:d/folder-uploads: バージョンを作る前に止まったフォルダの
+ * アップロード。そのため、保存済みのファイルはどのデータセットのバージョンにも並んでいない。
+ * prefixの下でまだ開いているアップロードセッションはここでは数えない。各自が
+ * GET /artifact-uploadsで自分のものを一覧する。
  */
 export interface DatasetFolderUpload {
   folder: string;
@@ -36,8 +40,8 @@ export interface DatasetFolderUpload {
 }
 
 /**
- * DELETE /projects/:p/datasets/:d/folder-uploads/:folder. Files something started to use in the
- * meantime (a version, a model version, ...) are kept and counted apart.
+ * DELETE /projects/:p/datasets/:d/folder-uploads/:folder。その間にほかのもの（バージョン、
+ * モデルバージョンなど）が使い始めたファイルは残し、別に数える。
  */
 export interface DatasetFolderUploadDiscard {
   deletedFileCount: number;

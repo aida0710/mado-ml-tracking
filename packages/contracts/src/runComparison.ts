@@ -1,36 +1,39 @@
 import type { MetricSeries } from './metricSeries.js';
 import type { Run } from './index.js';
 
-// Limits published in docs/api-contract.md.
+// 上限はdocs/api-contract.mdで公開している。
 export const RUN_COMPARISON_MIN_RUNS = 2;
 export const RUN_COMPARISON_MAX_RUNS = 50;
 export const RUN_COMPARISON_MAX_METRIC_KEYS = 200;
-// Response header of the search CSV export; "true" when the row limit cut the export short.
+// 検索のCSVエクスポートの応答ヘッダー。行数の上限でエクスポートが途中で切れたとき"true"になる。
 export const RUN_EXPORT_TRUNCATED_HEADER = 'X-MMT-Export-Truncated';
 
-/** POST /projects/:p/runs/compare. runIds keep their order in every array of the response. */
+/** POST /projects/:p/runs/compare。runIdsは、応答のどの配列でもその順を保つ。 */
 export interface RunComparisonRequest {
   runIds: string[];
-  /** One of runIds. Metric rows then carry the difference of every Run from this one. */
+  /** runIdsのどれか1つ。指定すると、メトリクスの行に各RunとこのRunとの差が付く。 */
   baselineRunId?: string;
-  /** Metric rows to return, in this order. Without it every logged metric key, by name. */
+  /** 返すメトリクスの行（この順）。省略時は、記録されたすべてのメトリクスキーを名前の順に返す。 */
   metricKeys?: string[];
-  /** Adds downsampled step series of the first 50 metric rows (same as POST /metrics/series). */
+  /** 先頭50個のメトリクスの行に、間引いたstepの系列を加える（POST /metrics/seriesと同じ）。 */
   includeHistory?: boolean;
 }
 
 export type RunComparisonNamespace = 'params' | 'metrics' | 'tags';
-/** Parameters keep their JSON type; objects and arrays arrive as JSON text. NaN metrics arrive as 'NaN'. */
+/**
+ * parameterはJSONの型を保つ。オブジェクトと配列はJSONのテキストで届く。
+ * NaNのメトリクスは'NaN'で届く。
+ */
 export type RunComparisonValue = string | number | boolean | null;
 
 export interface RunComparisonRow {
   namespace: RunComparisonNamespace;
   key: string;
-  /** One value per Run in runIds order; null when the Run has no such key. */
+  /** runIdsの順に、Runごとに1つの値。Runにそのキーが無ければnull。 */
   values: RunComparisonValue[];
-  /** Metrics with a baseline only: value − baseline per Run, null unless both are finite. */
+  /** ベースラインがあるメトリクスだけ: Runごとの値−ベースライン。両方が有限でなければnull。 */
   deltaFromBaseline?: (number | null)[];
-  /** delta ÷ |baseline| per Run, null when the delta is null or the baseline is 0. */
+  /** Runごとのdelta ÷ |baseline|。deltaがnullかベースラインが0ならnull。 */
   relativeDeltaFromBaseline?: (number | null)[];
 }
 
@@ -51,12 +54,12 @@ export interface ComparedModelVersion {
 }
 
 export interface RunComparison {
-  /** Polling summaries without executionSnapshot, in runIds order. */
+  /** ポーリング用の要約（executionSnapshotなし）。runIdsの順。 */
   runs: Run[];
   baselineRunId: string | null;
-  /** Input DatasetVersions referenced by the Runs (evaluation datasets), first use first. */
+  /** Runが参照する入力のDatasetVersion（評価データセット）。最初に使われた順。 */
   datasetVersions: ComparedDatasetVersion[];
-  /** ModelVersions the Runs used (Run.modelVersionId), first use first. */
+  /** Runが使ったModelVersion（Run.modelVersionId）。最初に使われた順。 */
   modelVersions: ComparedModelVersion[];
   rows: RunComparisonRow[];
   history?: MetricSeries[];

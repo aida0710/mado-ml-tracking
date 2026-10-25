@@ -1,6 +1,6 @@
 import type { JsonObject } from './index.js';
 
-/** The full dataset configuration used from a training step, rather than just the added IDs. */
+/** 学習のあるstepから使ったデータセットの設定の全体。追加したIDだけではない。 */
 export interface TrainingDataStage {
   id: string;
   projectId: string;

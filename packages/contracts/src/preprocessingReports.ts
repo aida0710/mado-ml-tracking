@@ -1,16 +1,16 @@
 import type { JsonObject } from './index.js';
 
-// Keep reports small enough to inspect alongside a Run; detailed item lists belong in Artifacts.
+// レポートはRunと並べて確かめられる小ささに保つ。項目の詳しい一覧はArtifactに置く。
 export const PREPROCESSING_MAX_REASONS = 100;
 export const PREPROCESSING_MAX_SAMPLES = 20;
 export const PREPROCESSING_REASON_MAX_LENGTH = 1000;
 export const PREPROCESSING_MAX_METRICS = 100;
-// Match the native Run metric-name limit; this prefix belongs to the report's computed summary.
+// ネイティブのRunのメトリクス名の上限に合わせる。この接頭辞は、レポートから計算したサマリーが使う。
 export const PREPROCESSING_MAX_METRIC_NAME_LENGTH = 250;
 export const PREPROCESSING_METRIC_PREFIX = 'preprocessing.';
 /**
- * The summary metrics the API computes from a report; no other preprocessing.* name is ever
- * recorded, so a quality gate on one could never pass.
+ * APIがレポートから計算するサマリーのメトリクス。これ以外のpreprocessing.*の名前は記録され
+ * ないので、それに対する品質ゲートは決して通らない。
  */
 export const PREPROCESSING_SUMMARY_METRIC_NAMES = [
   'preprocessing.input_count',
@@ -22,10 +22,10 @@ export const PREPROCESSING_SUMMARY_METRIC_NAMES = [
   'preprocessing.output_duration_seconds',
 ] as const;
 export type PreprocessingSummaryMetricName = (typeof PREPROCESSING_SUMMARY_METRIC_NAMES)[number];
-// Every workflow execution lists its steps' reports, so metadata stays a short note, as large as
-// Run media metadata; detailed lists belong in Artifacts.
+// ワークフローの実行はどれもステップのレポートを並べるので、metadataはRunのメディアの
+// metadataと同じ大きさの短いメモにとどめる。詳しい一覧はArtifactに置く。
 export const PREPROCESSING_METADATA_MAX_BYTES = 16 * 1024;
-// A short note needs little nesting.
+// 短いメモなら、入れ子は浅くて足りる。
 export const PREPROCESSING_METADATA_MAX_DEPTH = 10;
 
 export interface PreprocessingReason {

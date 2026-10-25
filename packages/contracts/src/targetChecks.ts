@@ -2,29 +2,30 @@ import type { ExecutionRuntimeKind } from './executionRuntime.js';
 import type { ComputeTarget } from './index.js';
 import type { CpuArch } from './siteExecution.js';
 
-// What a worker does on a ComputeTarget for the Web, over its own SSH key: a connection check, or
-// reading one directory while the computer is set up. The API never connects to the target; it
-// only queues the request and stores the result.
+// workerが画面のために、自分のSSH鍵でComputeTarget上で行うこと。接続確認か、コンピュータの
+// 設定中に1つのディレクトリを読むこと。APIはコンピュータに接続せず、リクエストをキューに入れて
+// 結果を保存するだけ。
 export type TargetCheckKind = 'connection' | 'directory_listing';
 export const TARGET_CHECK_KINDS: readonly TargetCheckKind[] = ['connection', 'directory_listing'];
 
 export type TargetCheckStatus = 'queued' | 'claimed' | 'finished' | 'failed';
 
-// Why a check ended without a result from the worker.
-// no_worker: no worker in charge of the target (or the chosen worker) claimed it in time.
-// claim_timeout: the claiming worker did not report back in time.
+// workerからの結果なしに確認が終わった理由。
+// no_worker: そのコンピュータを担当するworker（または選ばれたworker）が時間内にclaimしなかった。
+// claim_timeout: claimしたworkerが時間内に報告しなかった。
 export type TargetCheckFailureReason = 'no_worker' | 'claim_timeout';
 
-/** A worker as the API keeps it (WorkerPresence): its worker token and its MMT_WORKER_ID. */
+/** APIが保持するworker（WorkerPresence）: そのworker tokenとMMT_WORKER_ID。 */
 export interface TargetCheckWorker {
   tokenId: string;
   workerId: string;
 }
 
 /**
- * POST /targets/:id/checks. With `worker`, only that worker claims the check, whether or not its
- * MMT_WORKER_TARGET_IDS names the computer (a computer being added is in no worker's settings).
- * Without it, a worker whose MMT_WORKER_TARGET_IDS names the computer does, as before.
+ * POST /targets/:id/checks。`worker`を指定すると、そのworkerのMMT_WORKER_TARGET_IDSがコンピュータ
+ * を挙げているかどうかにかかわらず、そのworkerだけが確認をclaimする（追加中のコンピュータは
+ * どのworkerの設定にも無い）。指定しなければ、従来どおりMMT_WORKER_TARGET_IDSがコンピュータを
+ * 挙げているworkerがclaimする。
  */
 export interface TargetCheckRequest {
   worker?: TargetCheckWorker;
@@ -43,12 +44,12 @@ export type TargetCheckItemName =
   | 'work_directory'
   | 'api';
 
-// ng is a problem for Jobs that need the item; unavailable means the item is optional
-// (for example docker on a Python-only target) and was not found.
+// ngはその項目を必要とするJobにとっての問題。unavailableは、その項目が任意（Pythonだけの
+// コンピュータでのdockerなど）で、見つからなかったことを表す。
 export type TargetCheckItemStatus = 'ok' | 'ng' | 'unavailable' | 'skipped';
 
-// Machine-readable reason for ng/unavailable/skipped; the Web shows a fix hint per code.
-// work_directory_not_set: the computer has no work directory yet (skipped while it is set up).
+// ng/unavailable/skippedの機械可読な理由。Webの画面はコードごとに直し方のヒントを出す。
+// work_directory_not_set: コンピュータにまだ作業ディレクトリが無い（設定中はskipped）。
 export type TargetCheckItemCode =
   | 'ssh_failed'
   | 'ssh_configuration'
@@ -74,11 +75,11 @@ export interface TargetCheckItem {
   name: TargetCheckItemName;
   status: TargetCheckItemStatus;
   code: TargetCheckItemCode | null;
-  // Short fact such as a version string; never a key path, token or command output dump.
+  // バージョン文字列のような短い事実。鍵のパス、token、コマンドの出力をそのまま入れることはない。
   detail: string | null;
 }
 
-// One row of `nvidia-smi --query-gpu=index,uuid,name,memory.total`.
+// `nvidia-smi --query-gpu=index,uuid,name,memory.total`の1行。
 export interface TargetCheckGpu {
   index: string;
   uuid: string;
@@ -86,28 +87,28 @@ export interface TargetCheckGpu {
   memoryTotalMiB: number;
 }
 
-/** The machine the worker reached, as it reported itself; null for what it did not tell. */
+/** workerが到達したマシン。マシン自身が報告したとおりの値で、報告しなかったものはnull。 */
 export interface TargetCheckHost {
-  /** `uname -m`, such as x86_64 or aarch64. */
+  /** `uname -m`。x86_64やaarch64など。 */
   machine: string | null;
-  /** `machine` as a CpuArch; null when it is none the contract knows. */
+  /** `machine`をCpuArchにしたもの。契約が知らない値ならnull。 */
   cpuArch: CpuArch | null;
   cpuCount: number | null;
   memoryTotalBytes: number | null;
   homeDirectory: string | null;
 }
 
-/** A Python interpreter found on the computer (on PATH, in /usr/bin, in venvs and conda envs). */
+/** コンピュータで見つかったPythonのインタープリタ（PATH上、/usr/bin、venvやconda環境の中）。 */
 export interface TargetCheckPython {
   path: string;
-  /** Such as "3.11.9"; null when the interpreter did not answer. */
+  /** "3.11.9"など。インタープリタが応答しなかったときはnull。 */
   version: string | null;
 }
 
-/** Where a directory candidate was found. */
+/** ディレクトリの候補が見つかった場所。 */
 export type TargetCheckDirectorySource = 'home' | 'home_child' | 'mount';
 
-/** A directory that could hold the work directory: the home, a directory in it, or a mount. */
+/** 作業ディレクトリを置けるディレクトリ。ホーム、その中のディレクトリ、またはマウント。 */
 export interface TargetCheckDirectory {
   path: string;
   source: TargetCheckDirectorySource;
@@ -117,16 +118,16 @@ export interface TargetCheckDirectory {
 
 interface TargetCheckFacts {
   items: TargetCheckItem[];
-  // null when nvidia-smi is unavailable; GPU values are only what nvidia-smi reported.
+  // nvidia-smiが使えなければnull。GPUの値は、nvidia-smiが報告したものだけ。
   gpus: TargetCheckGpu[] | null;
-  // Runtime kinds whose checks passed; offered as candidates, never applied automatically.
+  // 確認に通ったランタイムの種類。候補として出すだけで、自動では適用しない。
   runtimeKinds: ExecutionRuntimeKind[];
   workDirectoryFreeBytes: number | null;
 }
 
 /**
- * Version 2 adds what the setup of a computer is filled in from: the machine, its Pythons and the
- * directories that could hold the work directory. Candidates are only offered, never applied.
+ * バージョン2は、コンピュータの設定に入れる値の出どころを加える。マシン、そのPython、作業
+ * ディレクトリを置けるディレクトリ。候補は出すだけで、適用はしない。
  */
 export interface TargetCheckResultV2 extends TargetCheckFacts {
   version: 2;
@@ -142,9 +143,9 @@ export interface TargetCheck {
   targetId: string;
   requestedBy: string;
   status: TargetCheckStatus;
-  /** The worker that claimed the check. */
+  /** 確認をclaimしたworker。 */
   workerId: string | null;
-  /** The worker the requester chose; null when any worker in charge of the computer may claim it. */
+  /** 依頼者が選んだworker。コンピュータを担当するどのworkerでもclaimしてよいときはnull。 */
   assignedWorker: TargetCheckWorker | null;
   result: TargetCheckResult | null;
   failureReason: TargetCheckFailureReason | null;
@@ -153,18 +154,18 @@ export interface TargetCheck {
   finishedAt: string | null;
 }
 
-// Paths a person types for a computer (directories to read) and paths a worker reports.
+// 人がコンピュータについて入力するパス（読むディレクトリ）と、workerが報告するパス。
 export const MAX_TARGET_PATH_LENGTH = 1024;
 
-/** POST /targets/:id/directory-listings: read one directory of the computer through `worker`. */
+/** POST /targets/:id/directory-listings: `worker`を通してコンピュータの1つのディレクトリを読む。 */
 export interface TargetDirectoryListingRequest {
-  /** Absolute, or starting with ~ for the home directory of the SSH user. */
+  /** 絶対パス、またはSSHユーザーのホームディレクトリを指す~で始まるパス。 */
   path: string;
   worker: TargetCheckWorker;
 }
 
-// ok: listed. missing/not_directory/denied: the computer could not read it as a directory.
-// unreachable: the worker could not connect (the listing ends as failed).
+// ok: 一覧を取れた。missing/not_directory/denied: コンピュータがディレクトリとして読めなかった。
+// unreachable: workerが接続できなかった（一覧の取得はfailedで終わる）。
 export type TargetDirectoryListingOutcome =
   | 'ok'
   | 'missing'
@@ -173,27 +174,27 @@ export type TargetDirectoryListingOutcome =
   | 'unreachable';
 
 export interface TargetDirectoryEntry {
-  /** The entry's name in the directory, without the directory. */
+  /** ディレクトリの中でのエントリの名前（ディレクトリの部分は含まない）。 */
   name: string;
   kind: 'directory' | 'file';
-  /** A file the SSH user may execute (a Python interpreter is one). */
+  /** SSHユーザーが実行できるファイル（Pythonのインタープリタなど）。 */
   executable: boolean;
 }
 
 export interface TargetDirectoryListingResult {
-  /** The directory the computer read, with ~ expanded. */
+  /** コンピュータが読んだディレクトリ。~は展開済み。 */
   path: string;
   outcome: TargetDirectoryListingOutcome;
-  /** In the computer's order; only the first ones of a large directory. */
+  /** コンピュータが返した順。大きいディレクトリでは先頭の一部だけ。 */
   entries: TargetDirectoryEntry[];
-  /** The directory had more entries than were listed. */
+  /** ディレクトリには、一覧にしたより多くのエントリがあった。 */
   truncated: boolean;
 }
 
 export interface TargetDirectoryListing {
   id: string;
   targetId: string;
-  /** As requested. */
+  /** リクエストのとおり。 */
   path: string;
   assignedWorker: TargetCheckWorker;
   status: TargetCheckStatus;
@@ -205,9 +206,9 @@ export interface TargetDirectoryListing {
 }
 
 /**
- * Files a worker found in its own ~/.ssh (and MMT_WORKER_SSH_DIR): candidates for a computer's
- * key and known_hosts paths, which name files on the worker's host. Paths only, never contents or
- * fingerprints.
+ * workerが自分の~/.ssh（とMMT_WORKER_SSH_DIR）で見つけたファイル。コンピュータの鍵と
+ * known_hostsのパスの候補で、これらはworkerのホスト上のファイルを指す。パスだけで、中身や
+ * 指紋は含まない。
  */
 export interface WorkerSshFiles {
   keyPaths: string[];
@@ -215,8 +216,8 @@ export interface WorkerSshFiles {
 }
 
 /**
- * GET /targets/check-workers: an online worker one may ask to check a computer and to read its
- * directories. Only workers that report their SSH files take checks assigned to them.
+ * GET /targets/check-workers: コンピュータの確認とディレクトリの読み取りを頼めるオンラインの
+ * worker。割り当てられた確認を引き受けるのは、SSHのファイルを報告するworkerだけ。
  */
 export interface TargetCheckWorkerPresence {
   tokenId: string;
@@ -231,32 +232,32 @@ export interface TargetCheckWorkerPresence {
 
 export interface WorkerTargetCheckClaim {
   workerId: string;
-  /** MMT_WORKER_TARGET_IDS: unassigned connection checks of these computers. May be empty. */
+  /** MMT_WORKER_TARGET_IDS: これらのコンピュータの、割り当てのない接続確認。空でもよい。 */
   targetIds?: string[];
-  /** What the worker does. */
+  /** workerが行うこと。 */
   kinds: TargetCheckKind[];
   /**
-   * Requests the worker is running now. A request it claimed but is not running (a lost claim
-   * response) comes back with the same lease before a new one is claimed.
+   * workerが今実行しているリクエスト。claimしたが実行していないリクエスト（claimの応答が
+   * 失われたもの）は、新しいものをclaimする前に同じleaseで返ってくる。
    */
   activeCheckIds?: string[];
 }
 
-// The lease is returned only to the claiming worker and must accompany the completion.
-// `check` is the request as it stands when claimed (no result yet), for both kinds.
+// leaseはclaimしたworkerにだけ返し、完了の報告に付けなければならない。
+// `check`はclaimした時点のリクエスト（まだ結果は無い）で、どちらの種類でも同じ。
 export interface WorkerTargetCheck {
   check: TargetCheck;
   leaseId: string;
   target: ComputeTarget;
   kind: TargetCheckKind;
-  /** directory_listing: the directory to read, as requested; null for a connection check. */
+  /** directory_listing: リクエストのとおりの読むディレクトリ。接続確認ではnull。 */
   directoryPath: string | null;
 }
 
 export interface WorkerTargetCheckComplete {
   leaseId: string;
-  // failed: the worker could not run the probe or reach the computer (its result explains why).
+  // failed: workerがプローブを動かせなかったか、コンピュータに届かなかった（理由はresultにある）。
   status: 'finished' | 'failed';
-  // A TargetCheckResult for a connection check, a TargetDirectoryListingResult for a listing.
+  // 接続確認ならTargetCheckResult、一覧の取得ならTargetDirectoryListingResult。
   result: TargetCheckResult | TargetDirectoryListingResult;
 }

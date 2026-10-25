@@ -2,8 +2,8 @@ import type { Job, JobStatus, JsonObject, RunKind } from './index.js';
 import type { UserKind } from './adminUsers.js';
 
 /**
- * Hooks start a Job when something happens in a Project (docs/hooks.md). They generalize the
- * model automation rules: any trigger, any target, and the Job runs as the hook's owner.
+ * フックは、Projectで何かが起きたときにJobを始める（docs/hooks.md）。モデルの自動実行ルールを
+ * 一般化したもので、トリガーもコンピュータも自由に選べ、Jobはフックの所有者として動く。
  */
 export type HookTrigger =
   | 'manual'
@@ -22,8 +22,9 @@ export const HOOK_TRIGGERS: readonly HookTrigger[] = [
 ];
 
 /**
- * Which saved checkpoints of one Run start the hook: every one, every k-th, only the newest while
- * an earlier one is still evaluated (latest), or none while one runs (skip_if_running).
+ * 1つのRunで保存されたcheckpointのうち、どれがフックを始めるか。すべて（every）、k個ごと
+ * （every_k）、前のものを評価している間は最新のものだけ（latest）、実行中は何も始めない
+ * （skip_if_running）。
  */
 export type HookCheckpointMode = 'every' | 'every_k' | 'latest' | 'skip_if_running';
 export const HOOK_CHECKPOINT_MODES: readonly HookCheckpointMode[] = [
@@ -33,29 +34,29 @@ export const HOOK_CHECKPOINT_MODES: readonly HookCheckpointMode[] = [
   'skip_if_running',
 ];
 
-/** k of checkpointMode 'every_k'; also the database bound of hooks.checkpoint_every. */
+/** checkpointMode 'every_k'のkの上限。hooks.checkpoint_everyのデータベースでの上限でもある。 */
 export const MAX_HOOK_CHECKPOINT_EVERY = 100000;
 
-/** queue: start every event; skip_if_running: skip while a Job of the hook has not ended. */
+/** queue: すべてのイベントで始める。skip_if_running: フックのJobが終わっていない間は飛ばす。 */
 export type HookConcurrency = 'queue' | 'skip_if_running';
 export const HOOK_CONCURRENCY_MODES: readonly HookConcurrency[] = ['queue', 'skip_if_running'];
 
-/** github: X-Hub-Signature-256 and X-GitHub-Delivery; mmt: X-MMT-Signature and X-MMT-Delivery. */
+/** github: X-Hub-Signature-256とX-GitHub-Delivery。mmt: X-MMT-SignatureとX-MMT-Delivery。 */
 export type HookWebhookSignature = 'github' | 'mmt';
 export const HOOK_WEBHOOK_SIGNATURES: readonly HookWebhookSignature[] = ['github', 'mmt'];
 
-/** Links along one chain of hooks and driver Jobs; deeper starts are skipped (chain_too_deep). */
+/** フックとドライバーのJobの1つの連鎖の段数の上限。それより深い開始は飛ばす（chain_too_deep）。 */
 export const MAX_JOB_CHAIN_DEPTH = 10;
 export const DEFAULT_HOOK_MAX_STARTS_PER_HOUR = 60;
 export const MAX_HOOK_MAX_STARTS_PER_HOUR = 10000;
-/** A webhook body or a manual trigger payload; it reaches the Job as trigger-payload.json. */
+/** webhookの本文か、手動のトリガーのpayload。Jobにはtrigger-payload.jsonとして届く。 */
 export const HOOK_PAYLOAD_MAX_BYTES = 256 * 1024;
-/** A version whose training Run has not ended waits this long before it is skipped. */
+/** 学習のRunが終わっていないバージョンは、この時間だけ待ってから飛ばす。 */
 export const HOOK_PENDING_MAX_AGE_HOURS = 7 * 24;
-/** The mmt signature's timestamp may differ from the server clock by this much. */
+/** mmtの署名のタイムスタンプは、サーバーの時計とこれだけずれてもよい。 */
 export const HOOK_WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS = 5 * 60;
 
-/** Events outside the filter do not start the hook and leave no execution. */
+/** filterに合わないイベントはフックを始めず、実行の記録も残さない。 */
 export interface HookFilter {
   modelFamilies?: string[];
   experimentIds?: string[];
@@ -65,10 +66,9 @@ export interface HookFilter {
 }
 
 /**
- * The conditions each trigger's event can be filtered on; a hook with another condition is
- * refused at creation, since it could never match. A model registration is described by its
- * training Run (no end status yet), a checkpoint by the Run that is still training, an array by
- * its first member and the status of all members; manual and webhook starts are not filtered.
+ * トリガーごとに、イベントを絞り込める条件。ほかの条件を持つフックは決して一致しないので、
+ * 作成時に拒む。モデルの登録はその学習のRun（終了状態はまだ無い）、checkpointはまだ学習中の
+ * Run、arrayは先頭の要素と全要素の状態で表す。手動とwebhookによる開始は絞り込まない。
  */
 export const HOOK_FILTER_FIELDS: Readonly<Record<HookTrigger, readonly (keyof HookFilter)[]>> = {
   manual: [],
@@ -79,22 +79,22 @@ export const HOOK_FILTER_FIELDS: Readonly<Record<HookTrigger, readonly (keyof Ho
   checkpoint_saved: ['modelFamilies', 'experimentIds', 'runKinds', 'tags'],
 };
 
-/** Where a webhook hook receives deliveries (unauthenticated POST, checked by its signature). */
+/** webhookのフックが配信を受ける場所（認証なしのPOSTで、署名で確かめる）。 */
 export function hookWebhookPath(hookId: string): string {
   return `/api/hooks/${encodeURIComponent(hookId)}/webhook`;
 }
 
-/** What one start creates. ssh/local targets take gpuIds; sites take gpuCount. */
+/** 1回の開始で作るもの。ssh・localのコンピュータはgpuIds、siteはgpuCountを受け取る。 */
 export interface HookJobTemplate {
   experimentId: string;
   kind: RunKind;
   codeVersionId: string;
-  /** A fixed version; model_registered uses the registered version instead. */
+  /** 固定のバージョン。model_registeredでは代わりに登録されたバージョンを使う。 */
   modelVersionId: string | null;
-  /** Take the triggering Run's model version (run_finished, checkpoint_saved). */
+  /** きっかけになったRunのモデルバージョンを使う（run_finished、checkpoint_saved）。 */
   inheritModelVersion: boolean;
   inputDatasetVersionIds: string[];
-  /** Add the triggering Run's output DatasetVersions as inputs (marked as upstream outputs). */
+  /** きっかけになったRunの出力のDatasetVersionを入力に足す（上流の出力として印を付ける）。 */
   inheritOutputDatasets: boolean;
   parameters: JsonObject;
   tags: Record<string, string>;
@@ -102,7 +102,7 @@ export interface HookJobTemplate {
   gpuIds: string[];
   gpuCount: number;
   walltimeSeconds: number | null;
-  /** null starts one Job; a number starts an array of that size (sites only). */
+  /** nullならJobを1つ始め、数ならその大きさのarrayを始める（siteだけ）。 */
   arraySize: number | null;
   datasetPartitionVersionId: string | null;
   maxAttempts: number;
@@ -125,7 +125,7 @@ export interface Hook {
   filter: HookFilter;
   template: HookJobTemplate;
   checkpointMode: HookCheckpointMode;
-  /** k of every_k; null otherwise. */
+  /** every_kのk。それ以外ではnull。 */
   checkpointEvery: number | null;
   concurrency: HookConcurrency;
   maxStartsPerHour: number;
@@ -147,11 +147,11 @@ export interface HookCreate {
   checkpointEvery?: number | null;
   concurrency?: HookConcurrency;
   maxStartsPerHour?: number;
-  /** Required for trigger 'webhook'. */
+  /** トリガーが'webhook'のときは必須。 */
   webhookSignature?: HookWebhookSignature;
 }
 
-/** The webhook secret is shown once, at creation; the server keeps it encrypted. */
+/** webhookのシークレットは作成時に1回だけ見せる。サーバーは暗号化して持つ。 */
 export interface HookCreated {
   hook: Hook;
   webhookSecret: string | null;
@@ -163,14 +163,17 @@ export interface HookToggle {
 }
 
 /**
- * PUT /projects/:p/hooks/:id/owner (Project admins): the hook runs as this Service Account from
- * now on, so it keeps starting after its creator leaves. It must be an active editor or admin.
+ * PUT /projects/:p/hooks/:id/owner（Project admin）: 以後、フックはこのService Accountとして
+ * 動き、作成者が抜けたあとも始まり続ける。Service Accountは有効なeditorかadminでなければならない。
  */
 export interface HookOwnerTransfer {
   serviceAccountId: string;
 }
 
-/** POST /projects/:p/hooks/:id/trigger (trigger 'manual'); a resend with the key finds the start. */
+/**
+ * POST /projects/:p/hooks/:id/trigger（トリガーが'manual'）。同じキーで送り直すと、その開始を
+ * 返す。
+ */
 export interface HookTriggerRequest {
   payload?: JsonObject;
   idempotencyKey?: string;
@@ -218,7 +221,7 @@ export interface HookExecution {
   jobId: string | null;
   arrayGroupId: string | null;
   runId: string | null;
-  /** The Run a pending execution waits for. */
+  /** 保留中の実行が待っているRun。 */
   waitingRunId: string | null;
   checkpointId: string | null;
   requestedBy: string | null;
@@ -232,13 +235,13 @@ export interface HookExecutionPage {
   nextCursor: string | null;
 }
 
-/** Driver Jobs: POST /projects/:p/jobs/:j/children with the Job token of :j. */
+/** ドライバーのJob: :jのJob tokenでPOST /projects/:p/jobs/:j/childrenを呼ぶ。 */
 export const MAX_CHILD_JOBS_PER_PARENT = 10000;
 export const MAX_ACTIVE_CHILD_JOBS = 2000;
 export const CHILD_JOB_WAIT_MAX_SECONDS = 60;
 
 export interface ChildJobCreate {
-  /** A resend with the same key returns the Jobs it created (also after the driver restarts). */
+  /** 同じキーで送り直すと、そのキーで作ったJobを返す（ドライバーが再起動したあとも）。 */
   idempotencyKey: string;
   experimentId?: string;
   name: string;
@@ -261,7 +264,7 @@ export interface ChildJobCreate {
 }
 
 export interface ChildJobCreated {
-  /** false when the key had been used: the response is what the first request created. */
+  /** キーが使用済みならfalse。応答は最初のリクエストが作ったもの。 */
   created: boolean;
   arrayGroupId: string | null;
   jobs: Job[];
@@ -277,7 +280,7 @@ export interface JobStatusCounts {
   total: number;
 }
 
-/** GET /projects/:p/jobs/:j/children/wait: returns when every child ended or the wait timed out. */
+/** GET /projects/:p/jobs/:j/children/wait: すべての子が終わるか、待ち時間が尽きたら返る。 */
 export interface ChildJobWait {
   done: boolean;
   counts: JobStatusCounts;

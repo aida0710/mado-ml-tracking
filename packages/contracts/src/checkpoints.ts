@@ -1,12 +1,12 @@
 import type { JsonObject } from './index.js';
 
 /**
- * native: one tar Artifact registered by the SDK (log_checkpoint); manifest lists its contents.
- * mlflow: the files MLflow logged under checkpoints/step-<N>/, one Artifact per file.
+ * native: SDKが登録した1つのtarのArtifact（log_checkpoint）。manifestにその中身を並べる。
+ * mlflow: MLflowがcheckpoints/step-<N>/の下に記録したファイル。1ファイルが1つのArtifact。
  */
 export type RunCheckpointSource = 'native' | 'mlflow';
 
-/** A file inside the checkpoint directory; path is relative to that directory. */
+/** checkpointのディレクトリの中のファイル。pathはそのディレクトリからの相対パス。 */
 export interface RunCheckpointFile {
   path: string;
   sha256: string;
@@ -19,7 +19,7 @@ export interface RunCheckpointManifest {
   framework: string | null;
 }
 
-/** A saved Artifact of the checkpoint. For an MLflow checkpoint, path is relative to step-<N>/. */
+/** checkpointの保存済みのArtifact。MLflowのcheckpointでは、pathはstep-<N>/からの相対パス。 */
 export interface RunCheckpointArtifact {
   id: string;
   path: string;
@@ -37,9 +37,9 @@ export interface RunCheckpoint {
   artifacts: RunCheckpointArtifact[];
   manifest: RunCheckpointManifest;
   metadata: JsonObject;
-  // false once newer checkpoints exceed the keep count; still usable for a resume.
+  // 新しいcheckpointが保持する数を超えるとfalseになる。それでも再開には使える。
   retained: boolean;
-  // Sum of the saved Artifacts' sizes.
+  // 保存済みのArtifactの大きさの合計。
   totalSize: number;
   createdAt: string;
 }
@@ -48,7 +48,7 @@ export interface RunCheckpointPage {
   items: RunCheckpoint[];
 }
 
-/** POST /projects/:p/runs/:r/checkpoints; artifactId is a saved tar Artifact of the same Run. */
+/** POST /projects/:p/runs/:r/checkpoints。artifactIdは同じRunの保存済みのtarのArtifact。 */
 export interface RunCheckpointCreate {
   step: number;
   artifactId: string;
@@ -60,21 +60,21 @@ export interface RunCheckpointCreate {
   metadata?: JsonObject;
 }
 
-/** Body of POST /projects/:p/jobs/:j/retry; both omitted starts the new Run from scratch. */
+/** POST /projects/:p/jobs/:j/retryの本文。両方を省くと、新しいRunを最初から始める。 */
 export interface JobRetryRequest {
   checkpointId?: string;
-  // Picks the largest step of the retried Run's checkpoints.
+  // 再試行するRunのcheckpointのうち、stepが最も大きいものを選ぶ。
   resumeFromLatestCheckpoint?: boolean;
 }
 
-/** Run.environment.resume, written by the server when a Run is pinned to a checkpoint. */
+/** Run.environment.resume。Runをcheckpointに固定したときにサーバーが書く。 */
 export interface RunResumeCheckpointRecord {
   checkpointId: string;
   sourceRunId: string;
   step: number;
 }
 
-/** WorkerJob.resumeCheckpoint: what the worker downloads, verifies and mounts read-only. */
+/** WorkerJob.resumeCheckpoint: workerがダウンロードして検証し、読み取り専用でマウントするもの。 */
 export interface WorkerResumeCheckpoint {
   id: string;
   runId: string;
@@ -85,7 +85,7 @@ export interface WorkerResumeCheckpoint {
   metadata: JsonObject;
 }
 
-// MMT_CHECKPOINT_KEEP_COUNT default: retained checkpoints per Run.
+// MMT_CHECKPOINT_KEEP_COUNTの既定値。Runごとに保持するcheckpointの数。
 export const DEFAULT_CHECKPOINT_KEEP_COUNT = 5;
-// MLflow artifacts under this prefix (checkpoints/step-<N>/...) become checkpoints automatically.
+// この接頭辞（checkpoints/step-<N>/...）の下のMLflowのArtifactは、自動でcheckpointになる。
 export const MLFLOW_CHECKPOINT_PATH_PREFIX = 'checkpoints/step-';

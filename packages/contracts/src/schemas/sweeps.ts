@@ -29,7 +29,7 @@ export const sweepParameterValueSchema = namedContractSchema(
   'SweepParameterValue',
   z.union([z.string(), z.number(), z.boolean()]),
 );
-// Not a discriminated union: the three forms are told apart by which key is present.
+// 判別共用体ではない。3つの形は、どのキーがあるかで見分ける。
 export const sweepParameterDefinitionSchema = namedContractSchema(
   'SweepParameterDefinition',
   z.union([
@@ -51,7 +51,7 @@ export const sweepObjectiveSchema = namedContractSchema(
     aggregation: z.enum(['last', 'min', 'max']),
   }),
 );
-// minIter and eta are not restricted to integers by the API's sweep validation.
+// APIのSweepの検証は、minIterとetaを整数に限っていない。
 export const sweepEarlyStoppingSchema = namedContractSchema(
   'SweepEarlyStopping',
   z.strictObject({
@@ -99,7 +99,7 @@ export const sweepTrialSchema = namedContractSchema(
     endedAt: timestampSchema.nullable(),
   }),
 );
-// Spelled out per state so the published schema lists every count as a required property.
+// 状態ごとに書き出し、公開するスキーマがすべての件数を必須のプロパティとして挙げるようにする。
 export const sweepTrialCountsSchema = namedContractSchema(
   'SweepTrialCounts',
   z.strictObject({

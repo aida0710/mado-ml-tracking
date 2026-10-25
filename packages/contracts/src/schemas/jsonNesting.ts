@@ -1,8 +1,7 @@
 /**
- * Whether arrays and objects in a parsed JSON value nest deeper than `maxDepth` (`{}` and `[]` are
- * one level, a scalar none). It walks without recursion and stops at the first level too deep, so
- * a value nested thousands deep is refused instead of overflowing the stack of the recursive JSON
- * validation that runs after it.
+ * 解析済みのJSONの値で、配列とオブジェクトの入れ子が`maxDepth`より深いか（`{}`と`[]`は1段、
+ * スカラーは0段）。再帰を使わずにたどり、深すぎる最初の段で止まる。そのため、数千段の入れ子の
+ * 値は、あとに続く再帰的なJSONの検証でスタックをあふれさせる前に拒否される。
  */
 export function isJsonNestedDeeperThan(value: unknown, maxDepth: number): boolean {
   const pending: { value: unknown; depth: number }[] = [{ value, depth: 0 }];

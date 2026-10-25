@@ -1,19 +1,19 @@
-// The alias compared against when the caller names neither an alias nor a version (decisions.md).
+// 呼び出し側がaliasもバージョンも指定しないときに比べる相手のalias（decisions.md）。
 export const DEFAULT_BASELINE_ALIAS = 'production';
 
-// "Reference set" = Run.inputDatasetVersionIds minus Run.upstreamDatasetVersionIds: the fixed
-// evaluation data (ground truth, test audio) as opposed to outputs of an upstream Run.
+// 「参照セット」は、Run.inputDatasetVersionIdsからRun.upstreamDatasetVersionIdsを除いたもの。
+// 上流のRunの出力ではなく、固定の評価データ（正解、テスト音声）を指す。
 export type EvaluationComparisonStatus =
   | 'ok'
   | 'baseline_missing'
   | 'baseline_not_evaluated'
   | 'candidate_not_evaluated';
 
-// dataset_context: the latest MLflow metric point logged with a reference DatasetVersion digest.
-// run_latest: the Run's latestMetrics, which folds every dataset context into one value.
+// dataset_context: 参照のDatasetVersionのdigestをつけて記録した、MLflowのメトリクスの最新の点。
+// run_latest: RunのlatestMetrics。すべてのデータセットのcontextを1つの値にまとめたもの。
 export type MetricValueSource = 'dataset_context' | 'run_latest';
 
-// not_finite covers NaN and ±Infinity, which JSON cannot carry as numbers.
+// not_finiteはNaNと±Infinityを含む。JSONではこれらを数値として運べない。
 export type MetricValueStatus = 'present' | 'missing' | 'not_finite';
 
 export interface MetricComparison {
@@ -22,9 +22,9 @@ export interface MetricComparison {
   baseline: number | null;
   candidateStatus: MetricValueStatus;
   baselineStatus: MetricValueStatus;
-  // candidate − baseline. null unless both values are present.
+  // candidate − baseline。両方の値があるとき以外はnull。
   delta: number | null;
-  // delta ÷ |baseline|. null when delta is null or the baseline is 0.
+  // delta ÷ |baseline|。deltaがnullか、baselineが0のときはnull。
   relativeDelta: number | null;
   source: { candidate: MetricValueSource | null; baseline: MetricValueSource | null };
 }
@@ -33,12 +33,12 @@ export interface EvaluationComparison {
   status: EvaluationComparisonStatus;
   modelId: string;
   candidateVersionId: string;
-  // The alias that selected the baseline, or null when baselineVersionId was given directly.
+  // baselineを選んだalias。baselineVersionIdを直接指定したときはnull。
   baselineAlias: string | null;
   baselineVersionId: string | null;
   candidateRunId: string | null;
   baselineRunId: string | null;
-  // The conditions both evaluation Runs had to match. Empty/null when they could not be decided.
+  // 両方の評価のRunがそろえるべき条件。決められなかったときは空またはnull。
   referenceDatasetVersionIds: string[];
   codeVersionId: string | null;
   evaluationRuleId: string | null;

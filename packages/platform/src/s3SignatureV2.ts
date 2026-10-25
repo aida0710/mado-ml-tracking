@@ -1,18 +1,18 @@
 import { createHmac } from 'node:crypto';
 
 /**
- * AWS Signature Version 2 for S3 (HMAC-SHA1), implemented here because the AWS SDK v3 signs only
- * with v4. Some S3-compatible services still accept only v2 (decisions.md).
- * Specification: https://docs.aws.amazon.com/AmazonS3/latest/userguide/RESTAuthentication.html
+ * S3用のAWS Signature Version 2（HMAC-SHA1）。AWS SDK v3はv4でしか署名しないので、ここで実装する。
+ * S3互換サービスには、今もv2しか受け付けないものがある（decisions.md）。
+ * 仕様: https://docs.aws.amazon.com/AmazonS3/latest/userguide/RESTAuthentication.html
  */
 
-/** The parts of a request v2 signs; structurally the same as @smithy's HttpRequest. */
+/** v2が署名するリクエストの部分。構造は@smithyのHttpRequestと同じ。 */
 export interface S3SignableRequest {
   method: string;
   hostname: string;
-  /** The URI-encoded path exactly as sent; v2 signs it literally. */
+  /** 送るとおりのURIエンコード済みのパス。v2はそれをそのまま署名する。 */
   path: string;
-  /** Decoded query values; null or "" means a name without "=". */
+  /** デコード済みのクエリの値。nullか""は、"="の無い名前を表す。 */
   query?: Record<string, string | string[] | null>;
   headers: Record<string, string>;
 }
@@ -24,9 +24,9 @@ export interface S3SignatureV2Credentials {
 }
 
 /**
- * Query parameters that are part of CanonicalizedResource. The AWS list (acl ... website, delete,
- * response-*) extended with the newer subresources botocore's HmacV1Auth signs, so tagging or
- * restore requests verify on services that implement them.
+ * CanonicalizedResourceに含めるクエリパラメータ。AWSの一覧（acl ... website、delete、
+ * response-*）に、botocoreのHmacV1Authが署名する新しいsubresourceを足したもの。これで、
+ * taggingやrestoreのリクエストも、それを実装したサービスで検証が通る。
  */
 const SIGNED_SUBRESOURCES = new Set([
   'accelerate',
@@ -74,7 +74,7 @@ function headerValue(headers: Record<string, string>, name: string): string {
   return values.join(',');
 }
 
-/** "Unfolds" folded header lines into single spaces, as the specification requires. */
+/** 仕様どおり、折り返したヘッダーの行を1つの空白に「展開（unfold）」する。 */
 function unfold(value: string): string {
   return value.replace(/\s*\r?\n\s*/g, ' ').trim();
 }
@@ -92,7 +92,7 @@ export function canonicalizedAmzHeaders(headers: Record<string, string>): string
     .join('');
 }
 
-/** Subresource values are signed decoded, sorted by name. */
+/** subresourceの値はデコードした形で、名前順に並べて署名する。 */
 function canonicalizedSubresources(query: S3SignableRequest['query'] = {}): string {
   const pairs = Object.keys(query)
     .filter((name) => SIGNED_SUBRESOURCES.has(name))
@@ -106,8 +106,8 @@ function canonicalizedSubresources(query: S3SignableRequest['query'] = {}): stri
 }
 
 /**
- * `hostBucket` is the bucket named by the Host header (virtual-hosted style or a CNAME); for
- * path-style requests the bucket is already the first path segment.
+ * `hostBucket`はHostヘッダーが指すbucket（virtual-hosted styleかCNAME）。path-styleの
+ * リクエストでは、bucketは既にパスの最初の要素になっている。
  */
 export function canonicalizedResource(
   request: Pick<S3SignableRequest, 'path' | 'query'>,
@@ -117,7 +117,7 @@ export function canonicalizedResource(
   return `${bucketPart}${request.path || '/'}${canonicalizedSubresources(request.query)}`;
 }
 
-/** When x-amz-date is present S3 ignores Date, so its position is signed as "". */
+/** x-amz-dateがあるとS3はDateを無視するので、Dateの位置は""として署名する。 */
 export function stringToSign(request: S3SignableRequest, hostBucket?: string): string {
   const { headers } = request;
   const date = headerValue(headers, 'x-amz-date') ? '' : headerValue(headers, 'date');
@@ -146,8 +146,8 @@ export function signatureV2Authorization({
 }
 
 /**
- * Finds the bucket a virtual-hosted request names in its Host. Requests the SDK sends path-style
- * (forcePathStyle, or bucket names that are not DNS-compatible) leave the host as the endpoint.
+ * virtual-hostedのリクエストがHostで指すbucketを探す。SDKがpath-styleで送るリクエスト
+ * （forcePathStyle、またはDNSで使えないbucket名）では、ホストはエンドポイントのまま。
  */
 export function hostBucketOf({
   hostname,
@@ -162,7 +162,7 @@ export function hostBucketOf({
   return hostname === bucket || hostname.startsWith(`${bucket}.`) ? bucket : undefined;
 }
 
-/** HTTP-date (RFC 7231 IMF-fixdate), which every S3 implementation parses. */
+/** HTTP-date（RFC 7231のIMF-fixdate）。どのS3の実装でも解釈できる。 */
 function httpDate(date: Date): string {
   return date.toUTCString();
 }
@@ -170,8 +170,8 @@ function httpDate(date: Date): string {
 type CredentialSource = S3SignatureV2Credentials | (() => Promise<S3SignatureV2Credentials>);
 
 /**
- * Adds Date, x-amz-security-token (temporary credentials) and Authorization to a copy of the
- * request. Earlier attempts' Authorization and Date are replaced, so SDK retries re-sign cleanly.
+ * リクエストの写しにDate、x-amz-security-token（一時的な認証情報）、Authorizationを足す。
+ * 前の試行のAuthorizationとDateは置き換えるので、SDKが再試行しても正しく署名し直せる。
  */
 export async function signS3RequestV2<Request extends S3SignableRequest>({
   request,
