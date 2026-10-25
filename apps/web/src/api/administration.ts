@@ -16,14 +16,14 @@ import {
 export const administrationApi = {
   projects: (signal?: AbortSignal) => requestItems<Project>('/projects', signal),
   /**
-   * One Project the user may open. A Project that cannot be opened fails with the reason; an
-   * archived one answers 404 project_archived to its members and global administrators.
+   * 利用者が開けるProjectを1つ読む。開けないProjectは理由つきで失敗する。アーカイブしたProjectは、
+   * そのメンバーと全体管理者に404 project_archivedを返す。
    */
   project: (id: string, signal?: AbortSignal) => request<Project>(projectPath(id), { signal }),
   createProject: (body: ProjectCreate) => request<Project>('/projects', jsonRequest('POST', body)),
   updateProject: (id: string, body: ProjectPatch) =>
     request<Project>(projectPath(id), jsonRequest('PATCH', body)),
-  /** Hides the Project and keeps its data; a global administrator can restore it. */
+  /** Projectを隠し、データは残す。全体管理者が元に戻せる。 */
   archiveProject: (id: string) =>
     request<void>(`${projectPath(id)}/archive`, { method: 'POST' }),
   tokens: (signal?: AbortSignal) => requestItems<TokenSummary>('/tokens', signal),

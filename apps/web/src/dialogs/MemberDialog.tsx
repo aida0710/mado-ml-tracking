@@ -13,10 +13,10 @@ import { text } from '../i18n/catalog';
 import { projectAccessTextTemplates } from '../i18n/projectAccess';
 
 /**
- * Adds a member by searching users, or changes the direct role of an existing member.
- * Pass `member` to edit; its direct role is the starting value because only that is edited here.
- * Adding cannot pick someone who already has a direct grant: saving would overwrite their role
- * (PUT sets it), so they are listed as already added and changed from the list instead.
+ * ユーザーを検索してメンバーを追加する。または既存のメンバーの直接付与のRoleを変える。
+ * 編集なら`member`を渡す。ここで編集するのは直接付与のRoleだけなので、それが初期値になる。
+ * 既に直接付与のある人は、追加では選べない。保存するとそのRoleを上書きする（PUTで設定する）
+ * ため、追加済みとして並べ、一覧から変えてもらう。
  */
 export function MemberDialog({
   member,
@@ -35,7 +35,7 @@ export function MemberDialog({
   const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(
     member ? member.user : null,
   );
-  // A new member starts as in the creation dialog, so the two ways of adding agree.
+  // 新しいメンバーは作成のダイアログと同じRoleから始め、2つの追加の方法をそろえる。
   const [role, setRole] = useState<ProjectRole>(member?.directRole ?? DEFAULT_MEMBER_GRANT_ROLE);
   const alreadyAdded = useLocalizedMemo(
     () =>

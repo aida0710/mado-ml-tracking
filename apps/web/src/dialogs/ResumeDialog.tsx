@@ -8,8 +8,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
- * Confirms resuming training as a new Run by retrying the Job, then opens that Run.
- * Without `checkpoint` the API picks the retried Run's checkpoint with the largest step.
+ * Jobを再実行して新しいRunとして学習を再開することを確かめ、そのRunを開く。
+ * `checkpoint`が無ければ、APIが再実行するRunのcheckpointのうちstepが最も大きいものを選ぶ。
  */
 export function ResumeDialog({
   projectId,

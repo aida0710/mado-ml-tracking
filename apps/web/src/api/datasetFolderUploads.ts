@@ -9,20 +9,20 @@ import { trackingApi } from './tracking';
 
 const folderUploadsPath = (projectId: string, datasetId: string) =>
   `${projectPath(projectId)}/datasets/${encodeId(datasetId)}/folder-uploads`;
-// The catalog's largest page, so a corpus of thousands of files takes few requests.
+// Artifactカタログの最大のページ。数千ファイルのコーパスでも少ない要求で読み終わる。
 const STORED_FILE_PAGE_SIZE = 500;
 
-/** Folder uploads of a dataset that stopped before their version (GET/DELETE …/folder-uploads). */
+/** バージョンを作る前に止まった、データセットのフォルダのアップロード（GET/DELETE …/folder-uploads）。 */
 export const datasetFolderUploadsApi = {
   list: (projectId: string, datasetId: string, signal?: AbortSignal) =>
     requestItems<DatasetFolderUpload>(folderUploadsPath(projectId, datasetId), signal),
-  /** Project admins only; files something uses are kept and counted. */
+  /** Project adminだけ。何かが使っているファイルは残し、その数を数える。 */
   discard: (projectId: string, upload: { datasetId: string; folder: string }) =>
     request<DatasetFolderUploadDiscard>(
       `${folderUploadsPath(projectId, upload.datasetId)}/${encodeId(upload.folder)}`,
       { method: 'DELETE' },
     ),
-  /** Every file an attempt stored, read page by page from the Project's Artifact catalog. */
+  /** そのアップロードで保存したすべてのファイル。ProjectのArtifactカタログから1ページずつ読む。 */
   storedFiles: async (
     projectId: string,
     upload: { datasetId: string; folder: string },
@@ -37,7 +37,7 @@ export const datasetFolderUploadsApi = {
         { limit: STORED_FILE_PAGE_SIZE, query: prefix, versions: 'latest', cursor },
         signal,
       );
-      // The catalog matches the text anywhere in the path; only the attempt's own files count.
+      // カタログはパスの途中の一致も返すので、そのアップロード自身のファイルだけを拾う。
       for (const artifact of page.items)
         if (artifact.runId === null && artifact.path.startsWith(prefix))
           files.push({ id: artifact.id, path: artifact.path, size: artifact.size, sha256: artifact.sha256 });

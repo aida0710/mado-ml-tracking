@@ -11,7 +11,7 @@ export interface DatasetVersionLocation {
 }
 
 export const datasetContentApi = {
-  /** Files directly in `prefix` (a directory ending with `/`, or '' for the root), in path order. */
+  /** `prefix`（`/`で終わるディレクトリ。ルートは''）の直下のファイルを、パスの順に返す。 */
   directoryFiles: (
     location: DatasetVersionLocation,
     page: { prefix: string; limit: number; cursor?: string },

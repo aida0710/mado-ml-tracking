@@ -22,17 +22,16 @@ import { serviceAccountsTextTemplates } from '../i18n/serviceAccounts';
 type IssuedToken = { token: string; item: TokenSummary };
 export type TokenRequest = { name: string; scopes: TokenScope[]; expiresAt: string | null };
 
-/** A Service Account that receives the token, and how to issue a token to it. */
+/** tokenを受け取るService Accountと、そこへtokenを発行する方法。 */
 export interface ServiceAccountTokenOwner {
   serviceAccount: ServiceAccount;
   issue: (request: TokenRequest) => Promise<IssuedToken>;
 }
 
 /**
- * Issues a token for the signed-in user, or for a Service Account when `owner` is set, and then
- * shows it once. Every button that issues a token opens this dialog: one chooses what the token is
- * for and the scopes follow (`initialScopes` lets a guide choose for them). The scopes on offer
- * stop at the owner's Project role, as the API does.
+ * ログインしている本人に、または`owner`があればService Accountにtokenを発行し、一度だけ見せる。
+ * tokenを発行するボタンはどれもこのダイアログを開く。tokenの用途を選ぶとscopeが決まる
+ * （`initialScopes`でガイドが代わりに選べる）。出すscopeは、APIと同じく持ち主のProjectのRoleまで。
  */
 export function TokenDialog({
   project,

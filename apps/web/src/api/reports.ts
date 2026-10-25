@@ -10,7 +10,7 @@ import type {
 import { assertCursorPage, encodeId, invalidResponseError, jsonRequest, projectPath, request, RequestError, requestItems } from './http';
 import { savedViewsApi } from './savedViews';
 
-/** The API's answer when the edit started from a revision that is no longer current. */
+/** 編集を始めたバージョンがもう最新でないときのAPIの応答。 */
 export const REPORT_REVISION_CONFLICT_CODE = 'report_revision_conflict';
 
 export function isReportRevisionConflict(failure: unknown): boolean {
@@ -43,7 +43,7 @@ export const reportsApi = {
     assertCursorPage(page);
     return page;
   },
-  /** The current revision, or the given one (read-only history). */
+  /** 最新のバージョン、または指定したバージョン（読み取り専用の履歴）。 */
   get: async (projectId: string, reportId: string, { revision, signal }: { revision?: number; signal?: AbortSignal } = {}) =>
     assertDetail(
       await request<ReportDetail>(
@@ -63,7 +63,7 @@ export const reportsApi = {
   },
   create: async (projectId: string, input: ReportCreate) =>
     assertDetail(await request<ReportDetail>(reportsPath(projectId), jsonRequest('POST', input))),
-  /** Rejects with 409 report_revision_conflict (isReportRevisionConflict) instead of overwriting. */
+  /** 上書きせず、409 report_revision_conflict（isReportRevisionConflict）で拒む。 */
   update: async (projectId: string, reportId: string, input: ReportUpdate) =>
     assertDetail(await request<ReportDetail>(reportPath(projectId, reportId), jsonRequest('PUT', input))),
   restore: async (projectId: string, reportId: string, input: ReportRestore) =>
@@ -75,8 +75,8 @@ export const reportsApi = {
   unarchive: (projectId: string, reportId: string) =>
     request<unknown>(`${reportPath(projectId, reportId)}/unarchive`, { method: 'POST' }),
   /**
-   * Saved Run list views a report may embed. A private view is left out: other readers of the
-   * report could not open it, so the API rejects it.
+   * レポートに埋め込めるRunの一覧の保存ビュー。privateのビューは、レポートのほかの読者が開けず
+   * APIが拒むので除く。
    */
   shareableSavedViews: async (projectId: string, signal?: AbortSignal) =>
     (await savedViewsApi.list(projectId, 'runs', signal)).filter((view) => view.visibility === 'project'),

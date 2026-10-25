@@ -13,7 +13,7 @@ const backendPath = (name?: string) =>
   `/admin/storage-backends${name === undefined ? '' : `/${encodeId(name)}`}`;
 
 export const storageApi = {
-  /** Names a Project may use, for any signed-in user. */
+  /** Projectが使える保存先の名前。ログインしている人なら誰でも読める。 */
   choices: async (signal?: AbortSignal) => {
     const payload = await request<StorageBackendChoices>('/storage/backends', { signal });
     if (!Array.isArray(payload.items) || typeof payload.defaultBackend !== 'string')
@@ -36,7 +36,7 @@ export const storageApi = {
     request<StorageSettings>('/admin/storage-settings', { signal }),
   updateSettings: (body: StorageSettings) =>
     request<StorageSettings>('/admin/storage-settings', jsonRequest('PUT', body)),
-  /** Directories on the API server that complete a filesystem backend's root path as typed. */
+  /** filesystemの保存先のルートのパスを、入力に続けて補完するAPIサーバー上のディレクトリ。 */
   directorySuggestions: async (path: string, signal?: AbortSignal) => {
     const payload = await request<DirectorySuggestions>(
       `/admin/storage-directories?${new URLSearchParams({ path })}`,

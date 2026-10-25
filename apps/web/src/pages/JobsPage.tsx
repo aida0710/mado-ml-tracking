@@ -57,11 +57,11 @@ export function JobsPage() {
     pollMs: EXECUTION_POLL_MS,
   });
   const targets = useProjectTargets(project.id);
-  // Hook names for the origin column; without them the column shows the hook's id.
+  // 起動元の列に出すフックの名前。無ければ列にはフックのidを出す。
   const hooks = useQuery({ key: `${project.id}:job-hooks`, load: (signal) => hooksApi.list(project.id, signal) });
   const resumedRunIds = useResumedRunIds(project.id, jobs.value);
   const selected = jobs.value?.find((job) => job.id === selectedId);
-  // Looked up again on every poll, so the dialog shows the Job as it is now.
+  // ポーリングのたびに探し直し、ダイアログには今のJobを見せる。
   const jobForAction = jobAction && jobs.value?.find((job) => job.id === jobAction.id);
   const selectedRun = useQuery({ key: selected ? `${project.id}:job-run:${selected.runId}` : null,
     load: (signal) => trackingApi.run(project.id, selected!.runId, signal), pollMs: EXECUTION_POLL_MS });
@@ -73,14 +73,14 @@ export function JobsPage() {
     enabled: Boolean(selected),
     isLive: Boolean(selected && isActiveJob(selected)),
   });
-  // Until the workers load, no Job is said to lack one.
+  // workerを読み込むまでは、どのJobにもworkerがいないとは言わない。
   const workers = useProjectWorkers(project.id);
   const detailHeading = useRef<HTMLHeadingElement>(null);
   const shownJobId = useRef<string | null>(null);
   const selectedJobId = selected?.id ?? null;
-  // The details sit below the list, so choosing a Job (or arriving with ?job=) brings them into
-  // view once and moves the focus there. Only ?job= forgets that: a failed poll hides the details
-  // for a moment, and the next success must not take the scroll and focus again.
+  // 詳細は一覧の下にあるので、Jobを選ぶ（または?job=つきで来る）と一度だけ詳細を見える位置へ
+  // 送り、フォーカスを移す。それを忘れるのは?job=が変わったときだけ。ポーリングの失敗で詳細が
+  // 一瞬隠れても、次の成功でスクロールとフォーカスをまた奪ってはいけない。
   useEffect(() => {
     if (shownJobId.current !== selectedId) shownJobId.current = null;
   }, [selectedId]);
@@ -235,7 +235,7 @@ export function JobsPage() {
               tokenButton={submitTokenButton}
             />
           )}
-          {/* The log comes before the long execution snapshot: it is what a failed Job is opened for. */}
+          {/* ログは長い実行snapshotより前に置く。失敗したJobを開くのはログを見るためだから。 */}
           <h3>{text.logs}</h3>
           <RunLogs logs={logs} />
           <Resource query={selectedRun}>

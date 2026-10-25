@@ -20,14 +20,14 @@ import { REPORT_REVISION_PARAM, parseRevisionParam, reportRevisionUrl } from '..
 import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
-/** Navigation state that opens the editor right away, set when a report is created. */
+/** すぐにエディタを開くための遷移のstate。レポートを作ったときに付ける。 */
 export interface ReportPageLocationState {
   edit?: boolean;
 }
 
 /**
- * A report: its blocks, the revision history and the comment thread. `?revision=` shows a past
- * revision read-only. Editors edit the current revision in place.
+ * レポート。ブロック、バージョンの履歴、コメントのスレッド。`?revision=`は過去のバージョンを
+ * 読み取り専用で見せる。編集できる人は最新のバージョンをその場で編集する。
  */
 export function ReportPage() {
   useLocale();
@@ -51,7 +51,7 @@ export function ReportPage() {
   function afterSave() {
     setEditing(false);
     showRevision(undefined);
-    // Read the saved revision with its snapshots, which the save response does not carry.
+    // 保存したバージョンをスナップショットごと読み直す。保存の応答にはスナップショットが無い。
     document.reload();
   }
 
@@ -129,7 +129,7 @@ export function ReportPage() {
                 <div className="report-body">
                   {isEditorOpen ? (
                     <ReportEditor
-                      // A reloaded revision starts a fresh edit.
+                      // 読み直したバージョンでは新しく編集を始める。
                       key={revision.revision}
                       projectId={project.id}
                       document={{ report, revision }}
@@ -168,8 +168,8 @@ export function ReportPage() {
                   </aside>
                 )}
               </div>
-              {/* Hidden, not unmounted, while editing: its buttons read like the editor's, and a comment
-                  draft must survive opening the editor. */}
+              {/* 編集中は外さず隠す。ボタンがエディタのものと紛らわしく、コメントの下書きは
+                  エディタを開いても残す必要があるため。 */}
               <div hidden={isEditorOpen}>
                 <CommentThread projectId={project.id} targetType="report" targetId={report.id} />
               </div>

@@ -125,8 +125,8 @@ function AccountTokens({
 }
 
 /**
- * 全体設定 → アカウント (/settings/account): the signed-in user's profile, SSO groups, password and
- * API tokens.
+ * 全体設定 → アカウント（/settings/account）。ログインしている本人のプロフィール、SSOのgroup、
+ * パスワード、API token。
  */
 export function AccountPage() {
   useLocale();

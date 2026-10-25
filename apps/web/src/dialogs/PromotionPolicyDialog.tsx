@@ -26,7 +26,7 @@ import { useLocale } from '../i18n/useLocale';
 import { promotionMissingBaselineLabels, promotionTextTemplates } from '../i18n/promotion';
 import { text } from '../i18n/catalog';
 
-// The rule's fixed inputs and code version are the evaluation conditions; they are shown, not edited.
+// ルールの固定の入力とコードバージョンが評価の条件になる。見せるだけで、編集はさせない。
 function EvaluationConditions({
   rule,
   catalog,

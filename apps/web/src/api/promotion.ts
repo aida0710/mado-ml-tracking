@@ -13,7 +13,7 @@ import {
   requestItems,
 } from './http';
 
-// One server page per "load more"; the API caps limit at 200.
+// 続きを読むたびにサーバーの1ページを取る。APIはlimitを200までに抑える。
 export const PROMOTION_EVALUATION_PAGE_SIZE = 50;
 
 const policiesPath = (projectId: string) => `${projectPath(projectId)}/promotion-policies`;
@@ -29,7 +29,7 @@ export const promotionApi = {
       `${policiesPath(projectId)}/${encodeId(policyId)}`,
       jsonRequest('PATCH', { enabled }),
     ),
-  // Filtered by a policy, by a candidate version (the version page), or both.
+  // 昇格policy、候補のバージョン（バージョンの画面）、またはその両方で絞り込む。
   evaluations: async (
     projectId: string,
     {

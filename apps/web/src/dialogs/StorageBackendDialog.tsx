@@ -24,7 +24,7 @@ import { text } from '../i18n/catalog';
 const isS3 = (values: FormValues) => getFieldValue(values, 'kind') === 's3';
 const isFilesystem = (values: FormValues) => !isS3(values);
 
-/** Creates a storage backend, or edits one saved from the screen (`backend`). */
+/** 保存先を作る。または画面から保存した保存先（`backend`）を編集する。 */
 export function StorageBackendDialog({
   backend,
   onClose,
@@ -54,7 +54,7 @@ export function StorageBackendDialog({
       >
         <fieldset disabled={mutation.pending}>
           <FormFields fields={buildFields(backend)} values={values} onChange={setValues} />
-          {/* What most S3 setups leave as is, folded so Endpoint, Bucket and the keys stand out. */}
+          {/* 多くのS3の設定でそのままにする項目。Endpoint、Bucketとアクセスキーが目立つよう折りたたむ。 */}
           {isS3(values) && (
             <details className="storage-advanced">
               <summary>{text.storageAdvancedSettings}</summary>
@@ -86,11 +86,11 @@ function saveBackend(values: FormValues, backend?: StorageBackend) {
     : storageApi.createBackend(buildStorageBackendCreate(values));
 }
 
-// An empty field lists the top level, where the disks for data are (the API leaves out the
-// operating system's own directories).
+// 欄が空なら最上位を並べる。データ用のディスクはそこにある（OS自身のディレクトリは
+// APIが除く）。
 const EMPTY_ROOT_PATH_LISTING = '/';
 
-/** Directories on the API server that complete the typed root path. */
+/** 入力中のルートのパスを補完する、APIサーバー上のディレクトリ。 */
 async function suggestRootDirectories(
   path: string,
   signal: AbortSignal,
@@ -107,7 +107,7 @@ function buildFields(backend?: StorageBackend): FormField[] {
       name: 'kind',
       label: text.storageBackendKind,
       type: 'select',
-      // The kind decides how stored keys are read, so a saved backend keeps its kind.
+      // 種類によって保存キーの読み方が決まるので、保存した保存先は種類を変えない。
       options: (backend ? [backend.kind] : (['s3', 'filesystem'] as const)).map((kind) => ({
         value: kind,
         label: text[kind],
@@ -145,7 +145,7 @@ function buildFields(backend?: StorageBackend): FormField[] {
   ];
 }
 
-/** S3 settings most backends keep at their defaults: signing, TLS, checksums and multipart. */
+/** 多くの保存先が既定のままにするS3の設定（署名、TLS、チェックサム、multipart）。 */
 function buildAdvancedS3Fields(backend?: StorageBackend): FormField[] {
   return [
     {

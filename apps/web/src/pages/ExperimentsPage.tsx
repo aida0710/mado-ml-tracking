@@ -50,10 +50,10 @@ import {
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-// A compact page keeps wide parameter and metric columns usable on a laptop.
+// 1ページを小さくし、幅の広いパラメータやメトリクスの列をノートPCでも使えるようにする。
 const RUNS_PER_PAGE = 25;
-// URL parameter holding the cursors that led to the shown page, oldest first. Cursors are
-// base64url, so a comma never appears inside one.
+// 表示中のページまでたどったcursorを古い順に持つURLのパラメータ。cursorはbase64urlなので、
+// 中にカンマは現れない。
 const CURSOR_HISTORY_PARAM = 'cursors';
 const CURSOR_SEPARATOR = ',';
 
@@ -72,12 +72,12 @@ export function ExperimentsPage() {
     .filter(Boolean);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [dialog, setDialog] = useState<'experiment' | 'run' | 'tag' | null>(null);
-  // null until the guide's button is pressed; until then the guide follows whether Runs exist.
+  // ガイドのボタンが押されるまではnull。それまで、ガイドはRunがあるかどうかに従う。
   const [recordingGuideChoice, setRecordingGuideChoice] = useState<boolean | null>(null);
   const mutation = useMutation();
   const csvExport = useMutation();
   const [isExportTruncated, setIsExportTruncated] = useState(false);
-  // Other search conditions show other Runs, so the selection starts empty again.
+  // 検索の条件が変わると出るRunも変わるので、選択を空に戻す。
   const selectionConditions = JSON.stringify([experimentId, searchText, status, kindsParam]);
   const [selectedForConditions, setSelectedForConditions] = useState(selectionConditions);
   if (selectedForConditions !== selectionConditions) {
@@ -101,7 +101,7 @@ export function ExperimentsPage() {
   const { limit: _limit, cursor: _cursor, ...searchConditions } = search;
   async function exportSearchCsv() {
     setIsExportTruncated(false);
-    // The export covers the whole search; paging fields would be ignored by the API anyway.
+    // 書き出しは検索全体が対象。ページ送りの項目は、どのみちAPIが無視する。
     const exported = await csvExport.run(() =>
       trackingApi.exportRunSearchCsv(project.id, searchConditions),
     );
@@ -110,7 +110,7 @@ export function ExperimentsPage() {
     setIsExportTruncated(exported.truncated);
   }
   const experiment = experiments.value?.find((item) => item.id === experimentId);
-  // With nothing recorded yet, recording from the SDKs is the next step, so the guide starts open.
+  // まだ何も記録していなければ、次にやることはSDKからの記録なので、ガイドを開いた状態で始める。
   const isRecordingGuideOpen =
     recordingGuideChoice ?? recordedRunCount(experiments.value, experimentId) === 0;
   const hasNoExperiments = experiments.value?.length === 0;
@@ -122,7 +122,7 @@ export function ExperimentsPage() {
     defaultColumns: defaultRunColumns(metricNames, parameterNames),
   });
   const { columns } = savedView;
-  // Columns of a saved view stay selectable even when no Run on this page has them.
+  // 保存ビューの列は、このページのどのRunにも無くても選べるようにしておく。
   const columnNames = [
     ...new Set([
       ...RUN_BASE_COLUMNS,
@@ -134,7 +134,7 @@ export function ExperimentsPage() {
     ]),
   ];
   const isColumnVisible = (name: string) => columns.some((column) => column.key === name);
-  // Any change of conditions starts again from the first page; a cursor belongs to one search.
+  // 条件を変えたら最初のページからやり直す。cursorは1つの検索のものだから。
   function updateParams(updates: Record<string, string>) {
     setParams((previous) => {
       const next = new URLSearchParams(previous);
@@ -191,7 +191,7 @@ export function ExperimentsPage() {
                 <Terminal size={15} />
                 {text.recordingGuideToggle}
               </button>
-              {/* A Run needs an Experiment, so a Project without one starts by creating it. */}
+              {/* RunにはExperimentが要るので、Experimentの無いProjectはそれを作るところから始める。 */}
               {canEdit && hasNoExperiments && (
                 <button className="button primary" onClick={() => setDialog('experiment')}>
                   <Plus size={15} />
@@ -354,7 +354,7 @@ export function ExperimentsPage() {
           ]}
           onClose={() => setDialog(null)}
           onSubmit={async (values) => {
-            // Fetch current tags before merging so a stale polling snapshot cannot erase another edit.
+            // マージの前に今のタグを読み、ポーリングで得た古い状態でほかの編集を消さないようにする。
             for (const id of selectedIds) {
               const run = await trackingApi.run(project.id, id);
               await trackingApi.updateRun(project.id, id, {

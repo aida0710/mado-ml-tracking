@@ -14,16 +14,15 @@ import { canAddSshOrLocalTarget } from '../lib/permissions';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-/** What the dialog reads before it opens: whether local targets exist here, and the launchers. */
+/** ダイアログを開く前に読むもの。この環境でlocalのコンピュータを使えるかと、ランチャー。 */
 async function loadTargetChoices(signal: AbortSignal) {
   const [auth, launchers] = await Promise.all([authApi.config(signal), launchersApi.list(signal)]);
   return { auth, launchers };
 }
 
 /**
- * Adds or edits a computer and chooses its visibility. Whoever adds one owns it: a global
- * administrator adds ssh, local and site targets (ssh and local in two steps, NewComputerDialog),
- * a researcher sites.
+ * コンピュータを足す・編集し、公開範囲を選ぶ。足した人が所有者になる。全体管理者はssh、local、
+ * siteを足し（ssh・localは2段で。NewComputerDialog）、研究者はsiteを足す。
  */
 export function TargetDialog({
   onClose,
@@ -41,7 +40,7 @@ export function TargetDialog({
   return (
     <QueryDialog title={title} onClose={onClose} query={choices}>
       {({ auth, launchers }) => {
-        // ssh and local computers are set up in two parts from a worker's check; sites in one form.
+        // ssh・localのコンピュータはworkerの確認をもとに2つの部分で設定し、siteは1つのフォームで設定する。
         if (target && target.executor !== 'site')
           return (
             <ComputerEditDialog auth={auth} target={target} onClose={onClose} onSaved={onSaved} />
@@ -70,7 +69,7 @@ export function TargetDialog({
   );
 }
 
-/** A site's form, in one step; also the form of a researcher who adds one. */
+/** siteのフォーム（1段）。研究者がsiteを足すときもこのフォーム。 */
 function TargetForm({
   title,
   target,

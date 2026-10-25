@@ -7,8 +7,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * Creates an Experiment. While the name typed is one the Project already has, it says so and
- * offers to open that Experiment instead, since the API would refuse the name.
+ * Experimentを作る。入力中の名前がProjectに既にあるうちはそう伝え、代わりにそのExperimentを
+ * 開くよう勧める（APIがその名前を拒むため）。
  */
 export function ExperimentDialog({
   projectId,
@@ -18,7 +18,7 @@ export function ExperimentDialog({
   onOpenExisting,
 }: {
   projectId: string;
-  /** The Project's Experiments as listed; undefined while they load. */
+  /** 一覧に出ているProjectのExperiment。読み込み中はundefined。 */
   experiments: readonly Experiment[] | undefined;
   onClose: () => void;
   onCreated: (experiment: Experiment) => void;

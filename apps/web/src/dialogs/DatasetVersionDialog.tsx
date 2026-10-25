@@ -16,7 +16,7 @@ import {
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-/** 'reference' registers a uri and digest; 'folder' uploads a folder and lists its Artifacts. */
+/** 'reference'はuriとdigestを登録し、'folder'はフォルダをアップロードしてそのArtifactを並べる。 */
 export type DatasetVersionSource = 'reference' | 'folder';
 
 export function DatasetVersionDialog({

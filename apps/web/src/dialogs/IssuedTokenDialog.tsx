@@ -6,8 +6,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * A token just issued, shown this once: its value with its own copy button, and the settings
- * example for this Project, which reads the token at a prompt instead of holding it.
+ * 発行したばかりのtokenを、この一度だけ見せる。値とそのコピーのボタン、このProjectの設定の例
+ * （tokenを書き込まず、プロンプトで読み込む）。
  */
 export function IssuedTokenDialog({
   title,

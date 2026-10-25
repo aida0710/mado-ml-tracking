@@ -13,8 +13,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * Starts a Job: a new Run and its Job, or the Job of an existing queued Run (`existingRun`, the
- * Run's page). The form waits for the Project's code, models and computers to load.
+ * Jobを始める。新しいRunとそのJob、または既存のqueuedのRunのJob（`existingRun`、Runの画面から）。
+ * フォームはProjectのコード、モデル、コンピュータが読み込まれるのを待つ。
  */
 export function LaunchDialog({
   existingRun,

@@ -17,7 +17,7 @@ function searchParameters(query: AdminUserQuery): string {
   return encoded ? `?${encoded}` : '';
 }
 
-/** The global administrator's user management (/admin/users). */
+/** 全体管理者のユーザー管理（/admin/users）。 */
 export const adminUsersApi = {
   list: (query: AdminUserQuery, signal?: AbortSignal) =>
     requestItems<AdminUser>(`${userPath()}${searchParameters(query)}`, signal),

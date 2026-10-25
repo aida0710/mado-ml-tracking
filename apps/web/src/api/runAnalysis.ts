@@ -15,17 +15,17 @@ import { encodeId, invalidResponseError, jsonRequest, projectPath, request } fro
 import { orderAnalysisMetricKeys } from '../lib/runAnalysisFields';
 import { SWEEP_ID_TAG } from '../lib/sweepRunTags';
 
-// One search page is enough to offer metric names; the API reads every page for the analysis.
+// メトリクスの名前を候補に出すには検索の1ページで足りる。分析ではAPIがすべてのページを読む。
 const METRIC_KEY_SAMPLE_RUNS = 500;
 
-/** The metric names offered for a Run set, and the sweep objective when the set is a sweep. */
+/** Runの集合について候補に出すメトリクスの名前と、集合がSweepならその目的関数。 */
 export interface RunAnalysisMetricOptions {
-  /** Result metrics by name first, then system metrics. */
+  /** 結果のメトリクスを名前順に並べ、その後にシステムメトリクス。 */
   metricKeys: string[];
   objectiveMetric: string | null;
   /**
-   * The metric a set of listed Runs opens with: the objective of the sweep they all are trials
-   * of, since their latest value of it is what the sweep compared. Null otherwise.
+   * 並べたRunの集合を開いたときのメトリクス。すべてが同じSweepの試行なら、その目的関数にする
+   * （Sweepが比べたのは、その最新の値だから）。それ以外はnull。
    */
   preferredMetric?: string | null;
 }
@@ -36,7 +36,7 @@ function postAnalysis<T>(projectId: string, path: string, body: unknown, signal?
 
 interface ComparedKeys {
   metricKeys: string[];
-  /** The sweep every compared Run is a trial of, if they share one. */
+  /** 比べるRunがすべて同じSweepの試行なら、そのSweep。 */
   sweepId: string | null;
 }
 
@@ -97,8 +97,8 @@ async function listedRunMetricOptions(
   const compared = await comparedKeys(projectId, runIds, signal);
   const metricKeys = orderAnalysisMetricKeys(compared.metricKeys);
   if (!compared.sweepId) return { metricKeys, objectiveMetric: null };
-  // Only the default choice depends on the sweep; a sweep that cannot be read (deleted) must not
-  // keep the Runs from being analysed.
+  // Sweepで変わるのは最初の選択だけ。読めない（削除された）Sweepのせいで、Runの分析を
+  // 止めてはいけない。
   const sweep = await request<Sweep>(sweepPath(projectId, compared.sweepId), { signal }).catch(
     (error: unknown) => {
       if (signal?.aborted) throw error;
@@ -121,9 +121,9 @@ export const runAnalysisApi = {
     return result;
   },
   /**
-   * The analysis endpoints need metric names up front, so they are sampled from the Runs: the
-   * first search page, up to 50 listed Runs (through compare), or the sweep objective and the
-   * first trials. A metric only on Runs outside the sample is not offered.
+   * 分析のエンドポイントは最初にメトリクスの名前が要るので、Runから抜き出す。検索なら最初の
+   * ページ、並べたRunなら最大50件（compareで）、SweepならSweepの目的関数と最初の試行から取る。
+   * 抜き出した範囲の外のRunにしか無いメトリクスは候補に出ない。
    */
   metricOptions: async (projectId: string, runSet: RunSet, signal?: AbortSignal): Promise<RunAnalysisMetricOptions> => {
     if ('sweepId' in runSet) {

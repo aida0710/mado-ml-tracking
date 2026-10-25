@@ -25,7 +25,7 @@ describe('Projectの監査ログ取得', () => {
     expect(fetch.mock.calls[0]?.[0]).toBe('/api/audit-events?limit=50&cursor=last-event');
   });
   it('結果とログインを隠す条件はAPIへ渡し、続きのページも同じ条件で読む', async () => {
-    // A Response body is read once, so each call gets its own.
+    // Responseの本文は1回しか読めないので、呼ぶたびに別のResponseを作る。
     const fetch = vi
       .fn()
       .mockImplementation(
