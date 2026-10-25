@@ -10,10 +10,10 @@ import { text, textTemplates } from '../i18n/catalog';
 import { errorText, errorTextTemplates } from '../i18n/errors';
 
 /**
- * The three forms of a sweep's search settings: the W&B sweep config pasted as JSON, the editor
- * rows of the create dialog, and the API body. The W&B conversion follows docs/sweeps.md ("W&B 形式
- * の config の変換規則") and python/src/mado_tracking/sweep_config.py; change all three together.
- * Unknown keys are errors rather than ignored, because a dropped key would run a different search.
+ * Sweepの探索設定の3つの形。JSONで貼り付けるW&Bのsweep config、作成ダイアログのエディタの行、
+ * APIの本文。W&Bからの変換はdocs/sweeps.md（"W&B 形式の config の変換規則"）と
+ * python/src/mado_tracking/sweep_config.pyに従う。変えるときは、ここを含めた3か所を一緒に
+ * 変える。知らないキーは無視せずエラーにする。キーを落とすと別の探索を実行してしまうため。
  */
 
 export type SweepSearchSettings = Pick<
@@ -21,7 +21,7 @@ export type SweepSearchSettings = Pick<
   'method' | 'searchSpace' | 'objective' | 'maxTrials' | 'parallelism' | 'earlyStopping'
 >;
 
-/** A config the screen cannot convert; the message names the key or parameter. */
+/** 画面で変換できないconfig。メッセージにはキーかパラメータの名前を出す。 */
 export class SweepConfigError extends LocalizedError {
   override name = 'SweepConfigError';
 }
@@ -29,8 +29,8 @@ export class SweepConfigError extends LocalizedError {
 const SWEEP_METHODS: readonly SweepMethod[] = ['grid', 'random', 'bayes'];
 const METRIC_GOALS = ['minimize', 'maximize'] as const;
 const OBJECTIVE_AGGREGATIONS = ['last', 'min', 'max'] as const;
-// W&B distribution name → API distribution. log_uniform_values takes the values themselves, which
-// is what the API's log_uniform means; W&B's own log_uniform (exponents) is rejected.
+// W&Bの分布の名前 → APIの分布。log_uniform_valuesは値そのものを取り、これがAPIのlog_uniformの
+// 意味に当たる。W&B自身のlog_uniform（指数を取る）は拒否する。
 const WANDB_DISTRIBUTIONS = {
   uniform: 'uniform',
   int_uniform: 'int_uniform',
@@ -39,9 +39,9 @@ const WANDB_DISTRIBUTIONS = {
 } as const;
 export type SweepDistribution = (typeof WANDB_DISTRIBUTIONS)[keyof typeof WANDB_DISTRIBUTIONS];
 export const SWEEP_DISTRIBUTIONS: readonly SweepDistribution[] = Object.values(WANDB_DISTRIBUTIONS);
-// W&B's default eta for hyperband.
+// hyperbandのetaのW&Bでの既定値。
 export const DEFAULT_HYPERBAND_ETA = 3;
-/** The API's grid limit (apps/api/src/domain/sweeps/searchSpace.ts MAX_GRID_COMBINATIONS). */
+/** APIのgridの上限（apps/api/src/domain/sweeps/searchSpace.tsのMAX_GRID_COMBINATIONS）。 */
 export const MAX_GRID_COMBINATIONS = 10000;
 
 const CONFIG_KEYS = ['early_terminate', 'method', 'metric', 'parallelism', 'parameters', 'run_cap'];
@@ -79,7 +79,7 @@ function oneOf<T extends string>(key: string, value: unknown, allowed: readonly 
   return value as T;
 }
 
-/** Converts a W&B sweep config (already parsed from JSON) into the API's search settings. */
+/** W&Bのsweep config（JSONから読み取ったもの）を、APIの探索設定に変換する。 */
 export function convertWandbSweepConfig(config: unknown): SweepSearchSettings {
   if (!isRecord(config)) throw new SweepConfigError(() => textTemplates.sweepConfigNotObject('sweep config'));
   rejectUnknownKeys('sweep config', config, CONFIG_KEYS);
@@ -103,7 +103,7 @@ function convertMetric(metric: unknown): SweepSearchSettings['objective'] {
     metric: metric.name,
     goal: oneOf('metric.goal', metric.goal, METRIC_GOALS),
   };
-  // aggregation is a Mado extension; omitted means the server default (last).
+  // aggregationはmado ML Trackingの拡張。省略するとサーバーの既定（last）になる。
   if ('aggregation' in metric)
     objective.aggregation = oneOf('metric.aggregation', metric.aggregation, OBJECTIVE_AGGREGATIONS);
   return objective;
@@ -154,8 +154,8 @@ function convertParameter(name: string, definition: unknown): SweepParameterDefi
 }
 
 /**
- * W&B infers the distribution from min/max: both integers → int_uniform, otherwise uniform.
- * JSON.parse reads 1.0 as 1, so "1.0" counts as an integer here (the SDK sees a float).
+ * W&Bはmin/maxから分布を推定する。どちらも整数ならint_uniform、それ以外はuniform。
+ * JSON.parseは1.0を1と読むので、ここでは"1.0"も整数として扱う（SDKにはfloatに見える）。
  */
 function inferredDistribution(name: string, definition: JsonRecord): string {
   if (!('min' in definition) || !('max' in definition))
@@ -177,7 +177,7 @@ function convertEarlyTerminate(earlyTerminate: unknown): SweepEarlyStopping {
   return stopping;
 }
 
-/** The W&B config for the API's settings: what the JSON editor shows for the current form. */
+/** APIの設定に対応するW&Bのconfig。今のフォームの内容としてJSONエディタに出すもの。 */
 export function toWandbSweepConfig(settings: SweepSearchSettings): JsonRecord {
   const metric: JsonRecord = { name: settings.objective.metric, goal: settings.objective.goal };
   if (settings.objective.aggregation) metric.aggregation = settings.objective.aggregation;
@@ -200,12 +200,12 @@ export function toWandbSweepConfig(settings: SweepSearchSettings): JsonRecord {
 function toWandbParameter(definition: SweepParameterDefinition): JsonRecord {
   if ('values' in definition) return { values: definition.values };
   if ('value' in definition) return { value: definition.value };
-  // The distribution is always written: W&B would infer int_uniform for an integer uniform range.
+  // 分布は必ず書く。書かないと、整数のuniformの範囲をW&Bがint_uniformと推定してしまう。
   const distribution = definition.distribution === 'log_uniform' ? 'log_uniform_values' : definition.distribution;
   return { distribution, min: definition.min, max: definition.max, ...(definition.q !== undefined ? { q: definition.q } : {}) };
 }
 
-/** Grid combinations, or null when a continuous parameter makes the space impossible to enumerate. */
+/** gridの組み合わせの数。連続のパラメータがあって数え上げられないときはnull。 */
 export function countGridCombinations(space: Record<string, SweepParameterDefinition>): number | null {
   let count = 1;
   for (const definition of Object.values(space)) {
@@ -215,11 +215,11 @@ export function countGridCombinations(space: Record<string, SweepParameterDefini
   return count;
 }
 
-// ---- Editor rows ----
+// ---- エディタの行 ----
 
 export type SearchSpaceRowKind = 'values' | 'range' | 'constant';
 
-/** One parameter as typed into the editor; every field stays text until the form is submitted. */
+/** エディタに打ち込んだ1つのパラメータ。フォームを送るまで、どの欄も文字列のまま。 */
 export interface SearchSpaceRow {
   id: string;
   name: string;
@@ -238,7 +238,7 @@ export function createSearchSpaceRow(id: string): SearchSpaceRow {
 
 const NUMBER_PATTERN = /^[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?$/;
 
-/** Reads one typed value: numbers and true/false keep their type, "quoted" text stays a string. */
+/** 打ち込んだ値を1つ読む。数値とtrue/falseはその型にし、"で囲んだ値は文字列のままにする。 */
 export function parseParameterValue(token: string): SweepParameterValue {
   const trimmed = token.trim();
   if (NUMBER_PATTERN.test(trimmed)) return Number(trimmed);
@@ -247,7 +247,7 @@ export function parseParameterValue(token: string): SweepParameterValue {
   return trimmed;
 }
 
-/** Comma separated values, or a JSON array when a value itself contains a comma. */
+/** カンマ区切りの値。値自体にカンマを含むときはJSONの配列。 */
 export function parseParameterValues(input: string): SweepParameterValue[] {
   const trimmed = input.trim();
   if (trimmed.startsWith('[')) {
@@ -255,13 +255,13 @@ export function parseParameterValues(input: string): SweepParameterValue[] {
       const parsed: unknown = JSON.parse(trimmed);
       if (Array.isArray(parsed) && parsed.every(isParameterValue)) return parsed;
     } catch {
-      // Not JSON: fall back to the comma separated form below.
+      // JSONではない。下のカンマ区切りの形として読む。
     }
   }
   return trimmed ? trimmed.split(',').map(parseParameterValue).filter((value) => value !== '') : [];
 }
 
-/** The text form of values that parseParameterValues reads back to the same values. */
+/** parseParameterValuesで読み戻すと同じ値になる、値の文字列の形。 */
 export function formatParameterValues(values: SweepParameterValue[]): string {
   const isAmbiguous = (value: SweepParameterValue) =>
     typeof value === 'string' &&
@@ -294,11 +294,11 @@ export function searchSpaceToRows(
 
 export interface SearchSpaceFromRows {
   searchSpace: Record<string, SweepParameterDefinition>;
-  /** Input errors by row id. The search space is only sent when this is empty. */
+  /** 行のidごとの入力エラー。これが空のときだけ探索空間を送る。 */
   rowErrors: Record<string, string>;
 }
 
-/** Builds the API search space; value checks such as min < max are left to the API's 422. */
+/** APIの探索空間を作る。min < maxのような値の検査は、APIの422に任せる。 */
 export function rowsToSearchSpace(rows: SearchSpaceRow[], method: SweepMethod): SearchSpaceFromRows {
   const searchSpace: Record<string, SweepParameterDefinition> = {};
   const rowErrors: Record<string, string> = {};
@@ -318,7 +318,7 @@ export function rowsToSearchSpace(rows: SearchSpaceRow[], method: SweepMethod): 
   return { searchSpace, rowErrors };
 }
 
-/** The row's definition, or the input error to show on the row. */
+/** 行の定義、または行に出す入力エラー。 */
 function rowDefinition(row: SearchSpaceRow): SweepParameterDefinition | string {
   if (row.kind === 'values') {
     const values = parseParameterValues(row.values);

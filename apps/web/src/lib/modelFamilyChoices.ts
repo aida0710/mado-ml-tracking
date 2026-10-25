@@ -3,8 +3,8 @@ import type { FieldSuggestions } from '../types/form';
 import { modelsTextTemplates } from '../i18n/models';
 
 /**
- * Families spelled like `family` apart from letter case (`Qwen3` for `qwen3`). Families compare
- * exactly everywhere (code compatibility, automation rules), so such a pair never matches.
+ * 大文字と小文字の違いだけで`family`と綴りが異なる系列（`qwen3`に対する`Qwen3`）。系列はどこでも
+ * （コードの対応、自動実行ルール）完全一致で比べるので、こうした組は決して一致しない。
  */
 export function findFamilyCaseVariants(family: string, families: readonly string[]): string[] {
   const typed = family.trim();
@@ -13,9 +13,9 @@ export function findFamilyCaseVariants(family: string, families: readonly string
 }
 
 /**
- * Candidates for a model family field: the Project's families that contain what is typed (letter
- * case ignored), each with how many Models and code versions use it. The note tells that the typed
- * family is new, or warns when it differs from an existing one only in letter case.
+ * モデル系列の項目の入力候補。Projectの系列のうち、入力した文字を含むもの（大文字と小文字は区別
+ * しない）と、それぞれを使うモデルとコードバージョンの数。添える注意では、入力した系列が新しい
+ * ことを伝えるか、既存の系列と大文字と小文字だけが違うときに警告する。
  */
 export function suggestModelFamilies(
   value: string,

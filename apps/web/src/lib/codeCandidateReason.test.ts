@@ -43,7 +43,7 @@ describe('コードバージョンが候補に出ない理由', () => {
       explainMissingCodeCandidates({
         codeVersions: [
           code({ supportedModelFamilies: ['Qwen3', 'linear'] }),
-          // Runs another kind, so its family is not the cause.
+          // 別の種類を実行するコードなので、系列は原因ではない。
           code({ supportedModelFamilies: ['QWEN3'], taskTypes: ['training'] }),
         ],
         taskType: 'inference',

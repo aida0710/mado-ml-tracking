@@ -12,16 +12,16 @@ import { formatClockDuration } from './clockDuration';
 import { buildJobResources, isSiteTarget } from './siteExecutionInput';
 import { text } from '../i18n/catalog';
 
-// Only these kinds produce weights, so only they may carry Task.outputModel.
+// 重みを出すのはこの種類だけなので、Task.outputModelを持てるのもこれらだけ。
 export const OUTPUT_MODEL_KINDS: readonly RunKind[] = ['training', 'finetuning'];
-// The conventional directory for weights, also used by the training code sample.
-// The API registers one Artifact file. This is where the training sample logs its weights;
-// files a Job leaves in MMT_OUTPUTS_DIR are stored under `container/` instead.
+// 重みを置く慣例のパス（ファイル）。学習のコード例も同じパスを使う。
+// APIが登録するのはArtifactのファイル1つ。ここは学習のコード例が重みを記録する場所で、
+// JobがMMT_OUTPUTS_DIRに残したファイルは、代わりに`container/`の下に保存される。
 export const DEFAULT_OUTPUT_MODEL_ARTIFACT_PATH = 'model/weights.json';
 
 export const hasOutputModel = (kind: RunKind) => OUTPUT_MODEL_KINDS.includes(kind);
 
-/** The Model a Task registers into: an existing one by name, or the one it will create. */
+/** Taskが登録する先のモデル。名前で指定した既存のものか、これから作るもの。 */
 export function outputModelLabel(
   outputModel: Pick<TaskOutputModel, 'modelId' | 'createModel'>,
   catalog: Pick<ExecutionCatalog, 'models'>,
@@ -61,8 +61,8 @@ export function createTaskValues(task?: ExperimentTask, experimentId = ''): Form
 type TaskResources = Pick<CreateTask, 'gpuIds' | 'gpuCount' | 'walltimeSeconds'>;
 
 /**
- * A Task stores GPU IDs for ssh/local targets and a GPU count and time limit for sites; the kind
- * its target does not take stays empty, as the API stores it.
+ * Taskは、ssh/localのコンピュータにはGPU IDを、siteにはGPU数と制限時間を保存する。Taskの
+ * コンピュータが受け取らない種類は、APIの保存と同じく空のままにする。
  */
 function buildTaskResources(target: ComputeTarget | undefined, values: FormValues): TaskResources {
   if (!target) {
@@ -86,7 +86,7 @@ function validateTaskVersions(input: CreateTask, catalog: ExecutionCatalog) {
   return code;
 }
 
-/** Families the training code can emit; the registered version must be runnable by such code. */
+/** 学習のコードが出力できるモデル系列。登録するバージョンは、そのようなコードで動かせる必要がある。 */
 export function getOutputModelFamilies(code: CodeVersion | undefined): string[] {
   return code?.supportedModelFamilies ?? [];
 }
@@ -96,7 +96,7 @@ export function getOutputModelCandidates(models: Model[], code: CodeVersion | un
   return models.filter((model) => families.includes(model.family));
 }
 
-/** The family the registered version will have: the chosen Model's, or the new Model's. */
+/** 登録するバージョンが持つモデル系列。選んだモデルのものか、新しいモデルのもの。 */
 export function getOutputModelFamily(values: FormValues, models: Model[]): string {
   if (getFieldValue(values, 'outputModelTarget') === 'create') return getFieldValue(values, 'outputModelFamily');
   return models.find((model) => model.id === getFieldValue(values, 'outputModelId'))?.family ?? '';
@@ -118,14 +118,14 @@ function buildEnabledOutputModel({ values, catalog, code, previous }: {
   if (isCreating ? !name || !family : !catalog.models.some((model) => model.id === modelId))
     throw new Error(text.outputModelTargetError);
   if (!families.includes(family)) throw new Error(text.outputModelFamilyError);
-  // A version holds one Artifact file, so a directory path such as `model/` is refused.
+  // バージョンが持つのはArtifactのファイル1つなので、`model/`のようなディレクトリのパスは拒否する。
   const artifactPath = getFieldValue(values, 'outputModelArtifactPath').trim();
   validateFilePath(artifactPath);
   const defaultCodeVersionId = getFieldValue(values, 'outputModelDefaultCodeVersionId') || null;
   if (defaultCodeVersionId && !getDefaultCodeCandidates(catalog.codeVersions, family)
     .some((version) => version.id === defaultCodeVersionId)) throw new Error(text.outputModelCodeError);
   return {
-    // Fields without form controls are kept as saved so editing the Task does not drop them.
+    // フォームの部品が無い項目は保存されたまま残し、Taskを編集しても失われないようにする。
     ...(previous?.versionTemplate !== undefined && { versionTemplate: previous.versionTemplate }),
     ...(previous?.metadata !== undefined && { metadata: previous.metadata }),
     modelId: isCreating ? null : modelId,
@@ -135,8 +135,8 @@ function buildEnabledOutputModel({ values, catalog, code, previous }: {
 }
 
 /**
- * undefined means the field is not sent. Other kinds never send it, except null to clear a
- * setting saved before the kind changed, because PATCH keeps omitted fields.
+ * undefinedはこの項目を送らないことを表す。ほかの種類では送らない。ただし、種類を変える前に
+ * 保存した設定を消すときはnullを送る。PATCHは省略した項目を残すため。
  */
 export function buildTaskOutputModel({ values, catalog, code, kind, previous }: {
   values: FormValues; catalog: ExecutionCatalog; code: CodeVersion | undefined; kind: RunKind;
@@ -170,9 +170,9 @@ export function buildTaskInput({ values, catalog, targets, task }: {
 }
 
 /**
- * The resource fields of a launch; the API fills omitted ones from the Task. On a site the Task's
- * count and time limit apply unless they were changed here, and GPU IDs saved for an ssh target are
- * cleared (sites refuse them); an ssh/local launch clears a count and limit saved for a site.
+ * 起動の資源の項目。省略した項目はAPIがTaskから補う。siteでは、ここで変えない限りTaskのGPU数と
+ * 制限時間を使い、sshのコンピュータ用に保存したGPU IDは空にする（siteは拒否する）。ssh/localでの
+ * 起動では、site用に保存したGPU数と制限時間を空にする。
  */
 function buildLaunchResources(task: ExperimentTask, chosen: TaskResources, isSite: boolean):
   Pick<LaunchTask, 'gpuIds' | 'gpuCount' | 'walltimeSeconds'> {
@@ -196,7 +196,7 @@ export function buildTaskLaunchInput({ task, mode, values, catalog, targets }: {
   const launchDefaults = buildTaskInput({ values: {
     ...createTaskValues(task), ...values,
     codeVersionId: task.codeVersionId, experimentId: task.experimentId, kind: task.kind,
-    // Launch copies the saved output setting on the API side and never sends it.
+    // 起動では、保存済みの出力の設定をAPI側で写すので、画面からは送らない。
     outputModelEnabled: 'false',
   }, catalog, targets });
   if (!launchDefaults.targetId) throw new Error(text.runtimeTargetError);
@@ -226,7 +226,7 @@ export function updateTaskValues({ previous, next, catalog, targets }: {
   return clearUnsupportedOutputModel(updated, catalog, selectedCode);
 }
 
-// A code change can drop families, so selections the new code cannot run are cleared.
+// コードを変えるとモデル系列が減ることがあるので、新しいコードで動かせない選択は空にする。
 function clearUnsupportedOutputModel(values: FormValues, catalog: ExecutionCatalog, code: CodeVersion | undefined): FormValues {
   const updated = { ...values };
   const families = getOutputModelFamilies(code);

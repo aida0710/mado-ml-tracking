@@ -7,23 +7,23 @@ import type {
   JobStatus,
 } from '@mmt/contracts';
 
-// Only interrupted training has something to continue; a finished Run is retried from scratch.
-// A Job and its Run end with the same status, so the rule reads either one.
+// 続きがあるのは中断した学習だけ。終了したRunは最初から再試行する。
+// JobとそのRunは同じ状態で終わるので、この判定はどちらを読んでもよい。
 const RESUMABLE_STATUSES: readonly JobStatus[] = ['failed', 'canceled'];
 
-/** Whether a Run or Job with this status can continue from one of the Run's checkpoints. */
+/** この状態のRunやJobが、Runのcheckpointのどれかから続けられるか。 */
 export function isResumableStatus(status: JobStatus): boolean {
   return RESUMABLE_STATUSES.includes(status);
 }
 
-/** What the checkpoint list shows for resuming; see getCheckpointResumeOffer. */
+/** checkpointの一覧が再開について出すもの。getCheckpointResumeOfferを参照。 */
 export type CheckpointResumeOffer = 'resume' | 'creatorOnly' | 'none';
 
 /**
- * What the checkpoint list offers for a stopped Run: 'resume' buttons, or 'creatorOnly' (the
- * reason in their place) for someone who may not retry the Run's Job; 'none' otherwise. Resuming
- * retries the Job, which only its creator and Project admins may (lib/permissions canControlJob
- * with the Run's createdBy), and needs a Job that has stopped too. The API stays the authority.
+ * 停止したRunについてcheckpointの一覧が出すもの。'resume'のボタンか、RunのJobを再試行できない
+ * 人には'creatorOnly'（ボタンの代わりに理由を出す）。それ以外は'none'。再開はJobの再試行で、
+ * できるのはJobの作成者とProject adminだけ（lib/permissionsのcanControlJobにRunのcreatedByを渡す）。
+ * Jobも停止している必要がある。最終的な判断はAPIが行う。
  */
 export function getCheckpointResumeOffer({
   run,
@@ -40,8 +40,8 @@ export function getCheckpointResumeOffer({
 }
 
 /**
- * Reads Run.environment.resume, which the server writes when the Run is pinned to a checkpoint.
- * Returns null for an ordinary Run or a record that does not have the contract's shape.
+ * Run.environment.resumeを読む。Runをcheckpointに固定したときにサーバーが書く。ふつうのRunや、
+ * 契約の形をしていない記録ではnullを返す。
  */
 export function getResumeCheckpointRecord(
   run: Pick<Run, 'environment'>,
@@ -54,19 +54,19 @@ export function getResumeCheckpointRecord(
   return { checkpointId, sourceRunId, step };
 }
 
-/** Whether a Run (a full Run or a search summary) continues from a checkpoint. */
+/** Run（Runそのものか、検索結果の要約）がcheckpointから続いているか。 */
 export function isResumedRun(run: Pick<Run, 'resumeCheckpointId'>): boolean {
   return Boolean(run.resumeCheckpointId);
 }
 
-/** Ids of the Runs among `runs` that continue from a checkpoint. */
+/** `runs`のうち、checkpointから続いているRunのid。 */
 export function collectResumedRunIds(
   runs: readonly Pick<Run, 'id' | 'resumeCheckpointId'>[],
 ): Set<string> {
   return new Set(runs.filter(isResumedRun).map((run) => run.id));
 }
 
-/** File name offered when downloading a checkpoint Artifact; its path may contain folders. */
+/** checkpointのArtifactをダウンロードするときに付けるファイル名。パスにはフォルダが含まれうる。 */
 export function getCheckpointArtifactFileName(
   artifact: Pick<RunCheckpointArtifact, 'path'>,
 ): string {

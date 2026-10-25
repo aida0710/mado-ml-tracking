@@ -1,7 +1,6 @@
 /**
- * The URL the SDKs, the `mado-tracking` CLI and the worker are pointed at (MMT_API_URL): the
- * address this page was opened with, since the Web server forwards /api to the API. They accept
- * the origin as well as .../api.
+ * SDK、`mado-tracking`のCLI、workerに指定するURL（MMT_API_URL）。WebサーバーがAPIへ/apiを転送
+ * するので、このページを開いたアドレスそのものになる。どれもoriginでも.../apiでも受け付ける。
  */
 export function clientApiUrl(origin: string): string {
   return origin.replace(/\/+$/, '');

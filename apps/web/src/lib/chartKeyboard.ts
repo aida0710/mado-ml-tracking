@@ -2,14 +2,14 @@ import type { MetricXRange } from '@mmt/contracts';
 import type { ChartScale } from './chartScale';
 import type { ChartLine } from './metricSeries';
 
-// "+" shows this share of the current x range around the cursor; "-" shows the inverse.
+// "+"は、現在のxの範囲のうちこの割合をカーソルの周りに表示する。"-"はその逆数の割合を表示する。
 const KEYBOARD_ZOOM_FACTOR = 0.5;
 
-/** The keys the metric chart answers while it has focus, beside the pointer's hover and drag. */
+/** メトリクスの図がフォーカスを持つ間に応えるキー。ポインターのホバーとドラッグとは別。 */
 export type ChartCursorKey = 'ArrowLeft' | 'ArrowRight' | 'Home' | 'End';
 export type ChartZoomKey = '+' | '-';
 
-/** The modifier keys held with a key press, as a keyboard event reports them. */
+/** キーを押したときに押さえていた修飾キー。キーボードイベントが報告するとおり。 */
 export interface ChartKeyModifiers {
   ctrlKey: boolean;
   metaKey: boolean;
@@ -17,19 +17,19 @@ export interface ChartKeyModifiers {
 }
 
 /**
- * Whether the key press is the browser's, which the chart leaves alone: Ctrl or Cmd with + and -
- * zoom the page, Alt with ← and → go back and forward. Shift is not counted, as typing "+" needs it.
+ * ブラウザのショートカットで、図が手を出さないキー操作か。Ctrl/Cmdと+・-はページの拡大縮小、
+ * Altと←・→は戻る・進む。"+"の入力にShiftが要るので、Shiftは数えない。
  */
 export const isBrowserShortcut = ({ ctrlKey, metaKey, altKey }: ChartKeyModifiers): boolean =>
   ctrlKey || metaKey || altKey;
 
 export const isChartCursorKey = (key: string): key is ChartCursorKey =>
   key === 'ArrowLeft' || key === 'ArrowRight' || key === 'Home' || key === 'End';
-// "=" is "+" without Shift on most keyboards.
+// 多くのキーボードでは、"="はShiftなしの"+"。
 export const chartZoomKeyOf = (key: string): ChartZoomKey | null =>
   key === '+' || key === '=' ? '+' : key === '-' ? '-' : null;
 
-/** Where the keyboard cursor can stop: every x a drawn line has inside the shown range, sorted. */
+/** キーボードのカーソルが止まれる位置。表示範囲の中で、描いた線が持つすべてのx（昇順）。 */
 export function chartCursorStops(
   lines: readonly ChartLine[],
   [minX, maxX]: readonly [number, number],
@@ -41,8 +41,8 @@ export function chartCursorStops(
 }
 
 /**
- * The next x of the cursor. The first arrow press starts at the end it points away from, so → shows
- * the first value and ← the last; null when there is nothing to show.
+ * カーソルの次のx。最初の矢印キーは、その向きと反対の端から始めるので、→は最初の値、←は最後の
+ * 値を出す。出すものが無ければnull。
  */
 export function moveChartCursor({
   stops,
@@ -64,8 +64,8 @@ export function moveChartCursor({
 }
 
 /**
- * The x range after "+" (half as wide, around `center`) or "-" (twice as wide). Null means the whole
- * x extent: zooming out past it resets the zoom. A log axis zooms by factors so the cursor stays put.
+ * "+"（`center`を中心に半分の幅）か"-"（2倍の幅）の後のxの範囲。nullはxの全体の範囲を表し、
+ * それを超えて縮小すると拡大を解く。対数軸は比で拡大するので、カーソルの位置は動かない。
  */
 export function zoomedChartRange({
   shown,

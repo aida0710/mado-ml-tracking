@@ -12,14 +12,14 @@ export function datasetRoleLabel(role: DatasetUsageRole): string {
   }[role];
 }
 
-/** How a step uses a dataset, in a definition and in an execution: 「学習・混合比率の重み: 2」. */
+/** ステップがデータセットをどう使うか。定義でも実行でも使う。例:「学習・混合比率の重み: 2」。 */
 export function datasetUsageLabel({ role, weight }: { role: DatasetUsageRole; weight: number }): string {
   return joinLabels([datasetRoleLabel(role), `${workflowsText.workflowWeight}: ${weight}`]);
 }
 
 /**
- * A status in the words of Jobs and Runs (待機中, 実行中, …). Only a step waiting for the one before
- * it has its own words; an execution waiting for its running Job to stop is 「停止要求済み」 as a Job.
+ * JobとRunの言葉での状態（待機中、実行中、…）。独自の言葉を持つのは、前のステップを待つ
+ * ステップだけ。動いているJobの停止を待つ実行は、Jobと同じく「停止要求済み」。
  */
 export function workflowStatusLabel(status: WorkflowStepStatus | WorkflowExecutionStatus): string {
   if (status === 'pending') return workflowsText.workflowPending;

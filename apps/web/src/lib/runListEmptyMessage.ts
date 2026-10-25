@@ -1,12 +1,12 @@
 import { text } from '../i18n/catalog';
 
 /**
- * What an empty Run list says. Narrowed by a search or past the first page, nothing matched; with
- * no conditions, nothing is recorded yet, and the message names the next step for this person.
+ * 空のRunの一覧に出す文。検索で絞ったか最初のページより先なら、一致するものが無かった。条件が
+ * 無ければまだ何も記録されておらず、この利用者が次にすることを示す。
  */
 export function runListEmptyMessage(state: {
   isNarrowed: boolean;
-  /** How many Experiments the Project has; undefined while they load. */
+  /** ProjectにあるExperimentの数。読み込み中はundefined。 */
   experimentCount: number | undefined;
   isExperimentChosen: boolean;
   canEdit: boolean;

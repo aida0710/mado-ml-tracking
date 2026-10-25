@@ -1,5 +1,5 @@
 import type { ExecutionRuntimeKind, SiteGpuAssignment } from '@mmt/contracts';
-// The examples of deploy/sites, read as they are so the Web offers exactly what is documented.
+// deploy/sitesの例。そのまま読み込み、Webが文書のとおりのものを出すようにする。
 import directApptainerJobShell from '../../../../deploy/sites/examples/direct-apptainer/job.sh?raw';
 import directDockerJobShell from '../../../../deploy/sites/examples/direct-docker/job.sh?raw';
 import fujitsuTcsJobShell from '../../../../deploy/sites/examples/fujitsu-tcs/job.sh?raw';
@@ -16,9 +16,8 @@ export type JobShellTemplateKey =
   | 'direct-apptainer';
 
 /**
- * A job shell to start a site from, with the settings that go with it: how its scheduler removes
- * a queued job, whether it submits an array in one call, who picks the GPUs and which container
- * runtime its compute nodes offer.
+ * siteを作り始めるためのjob shellと、それに合う設定。スケジューラが待ち行列のジョブを外す方法、
+ * arrayを1回で投入するか、GPUを誰が選ぶか、計算ノードにあるコンテナのRuntime。
  */
 export interface JobShellTemplate {
   key: JobShellTemplateKey;
@@ -29,8 +28,8 @@ export interface JobShellTemplate {
   runtimeKinds: ExecutionRuntimeKind[];
 }
 
-// The settings each example's README lists for the Web: the cancel command of its scheduler (a
-// host without one has no queue to remove a job from) and the runtime its batch script loads.
+// 各例のREADMEがWeb向けに挙げる設定。スケジューラの取消コマンド（スケジューラの無いホストには
+// ジョブを外す待ち行列が無い）と、バッチスクリプトが読み込むRuntime。
 export const JOB_SHELL_TEMPLATES: readonly JobShellTemplate[] = [
   {
     key: 'pbs',
@@ -68,7 +67,7 @@ export const JOB_SHELL_TEMPLATES: readonly JobShellTemplate[] = [
     key: 'direct-docker',
     content: directDockerJobShell,
     cancelCommand: null,
-    // Members come one by one, each waiting for free GPUs (examples/direct-docker/README.md).
+    // arrayのJobは1つずつ来て、それぞれ空いたGPUを待つ（examples/direct-docker/README.md）。
     supportsArray: false,
     gpuAssignment: 'lease',
     runtimeKinds: ['docker'],

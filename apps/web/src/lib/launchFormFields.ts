@@ -11,7 +11,7 @@ import { text } from '../i18n/catalog';
 import { jobsTextTemplates } from '../i18n/jobs';
 import { workerCoverageTextTemplates } from '../i18n/workerCoverage';
 
-/** The first step: what to run (the Run's settings). */
+/** 最初の手順。何を実行するか（Runの設定）。 */
 export function launchSetupFields<Target extends ComputeTarget>({
   options,
   choices,
@@ -52,7 +52,7 @@ export function launchSetupFields<Target extends ComputeTarget>({
           compatibleCodes.some((version) => version.id === option.value),
         ),
       ),
-      // Codes for other kinds are not offered; say so, or a training code seems lost.
+      // ほかの種類のコードは選ばせないので、そう伝える。伝えないと、学習のコードが消えたように見える。
       hint:
         hiddenCodeCount > 0
           ? jobsTextTemplates.launchCodesHidden(text[kind], hiddenCodeCount)
@@ -70,7 +70,7 @@ export function launchSetupFields<Target extends ComputeTarget>({
   ];
 }
 
-/** A computer in the select, marked when no worker of the Project takes its Jobs. */
+/** selectに出すコンピュータ。ProjectのworkerがそのJobを引き受けないときは印を付ける。 */
 function targetChoiceWithWorkers(label: string, coverage: WorkerCoverage | undefined): string {
   return coverage && isWorkerMissing(coverage)
     ? workerCoverageTextTemplates.targetChoiceWorkerMissing(label, workerCoverageLabel(coverage))
@@ -78,15 +78,15 @@ function targetChoiceWithWorkers(label: string, coverage: WorkerCoverage | undef
 }
 
 /**
- * The second step: where and with what it runs. A site takes a GPU count, a time limit and
- * automatic retries instead of GPU IDs.
+ * 2つ目の手順。どこで、何を使って実行するか。siteではGPU IDの代わりに、GPUの数、制限時間、
+ * 自動の再実行を受け取る。
  */
 export function launchResourceFields<Target extends ComputeTarget>({
   choices,
   coverageOf,
 }: {
   choices: LaunchChoices<Target>;
-  /** Which workers take a computer's Jobs; undefined until the workers are read. */
+  /** コンピュータのJobをどのworkerが引き受けるか。workerを読み込むまではundefined。 */
   coverageOf: (target: Target) => WorkerCoverage | undefined;
 }): FormField[] {
   const { target, compatibleTargets } = choices;
@@ -110,7 +110,7 @@ export function launchResourceFields<Target extends ComputeTarget>({
       type: 'checkboxes',
       options: (target?.gpuIds ?? []).map((id) => ({ value: id, label: id })),
       emptyText: text.gpuNoneOnTarget,
-      // Until a computer is chosen there are no GPUs to offer.
+      // コンピュータを選ぶまでは、選ばせるGPUが無い。
       visible: () => Boolean(target) && !isSite,
     },
     {

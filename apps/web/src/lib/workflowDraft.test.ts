@@ -32,7 +32,7 @@ describe('Task からの入力の初期値', () => {
   });
 });
 
-/** prepare → train → evaluate; the evaluation takes the trained model and the training's output. */
+/** prepare → train → evaluate。評価のステップは、学習したモデルと学習の出力を受け取る。 */
 function threeStepDraft(): WorkflowStepDraft[] {
   const fromTraining = newDatasetInput('', 'test');
   fromTraining.binding.source = { kind: 'step', stepKey: 'train', datasetName: null };
@@ -47,7 +47,7 @@ function threeStepDraft(): WorkflowStepDraft[] {
   return [...savableWorkflowDraft(), evaluate];
 }
 
-/** Types `to` into the key of the step at `stepIndex` and leaves the field, as the dialog does. */
+/** `stepIndex`のステップのキーに`to`を打ち込んで欄を離れる。ダイアログでの操作と同じ。 */
 function renameKey(steps: WorkflowStepDraft[], stepIndex: number, to: string): WorkflowStepDraft[] {
   const from = steps[stepIndex]!.key;
   const typed = steps.map((step, index) => (index === stepIndex ? { ...step, key: to } : step));
@@ -67,7 +67,7 @@ describe('ステップのキーの変更', () => {
 
   it('変えたステップより前のステップの参照は、同じキーでも付け替えない', () => {
     const draft = threeStepDraft();
-    // A step cannot refer to a later one; the draft keeps such a reference until it is chosen again.
+    // ステップは後のステップを参照できない。そうした参照は、選び直すまで下書きに残る。
     draft[0]!.modelFromStepKey = 'train';
     const renamed = renameKey(draft, 1, 'fit');
     expect(renamed[0]!.modelFromStepKey).toBe('train');
@@ -76,13 +76,13 @@ describe('ステップのキーの変更', () => {
   });
 
   it('キーを前のステップと同じにしてから直しても、ほかのステップの参照を書き換えない', () => {
-    // train is mistyped as prepare (the key of step 1), then corrected to train2.
+    // trainをprepare（ステップ1のキー）と打ち間違え、そのあとtrain2に直す。
     const mistyped = renameKey(threeStepDraft(), 1, 'prepare');
     expect(mistyped[2]!.modelFromStepKey).toBe('train');
     const corrected = renameKey(mistyped, 1, 'train2');
-    // Step 2 still reads step 1's output, not its own.
+    // ステップ2は、自分自身ではなく、引き続きステップ1の出力を読む。
     expect(firstInputSourceOf(corrected[1])).toMatchObject({ stepKey: 'prepare' });
-    // The evaluation's references stay as they were and show as missing, to be chosen again.
+    // 評価の参照は元のままで、無いものとして表示され、選び直すのを待つ。
     expect(corrected[2]!.modelFromStepKey).toBe('train');
     expect(firstInputSourceOf(corrected[2])).toMatchObject({ stepKey: 'train' });
   });

@@ -1,19 +1,19 @@
 import type { Project } from '@mmt/contracts';
 
-// From this many Projects the switcher's list no longer fits without scrolling, so it offers a
-// field to narrow the list by name.
+// Projectがこの数以上になると、Projectの切り替えの一覧がスクロールなしに収まらないので、
+// 名前で一覧を絞り込む欄を出す。
 export const PROJECT_FILTER_THRESHOLD = 8;
 
 export function shouldOfferProjectFilter(projectCount: number): boolean {
   return projectCount >= PROJECT_FILTER_THRESHOLD;
 }
 
-// Full-width and half-width letters and either case match each other.
+// 全角と半角の文字、大文字と小文字を区別せずに一致させる。
 function normalizeForMatching(value: string): string {
   return value.normalize('NFKC').toLocaleLowerCase();
 }
 
-/** The Projects whose name contains every word of `query`, in their original order. */
+/** 名前に`query`のすべての語を含むProject。元の順のまま。 */
 export function filterProjects<T extends Pick<Project, 'name'>>(projects: T[], query: string): T[] {
   const words = normalizeForMatching(query).split(/\s+/).filter(Boolean);
   if (!words.length) return projects;

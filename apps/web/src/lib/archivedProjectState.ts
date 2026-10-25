@@ -1,6 +1,6 @@
 /**
- * The navigation state left by archiving a Project from its settings: "/" then shows the Project
- * list with a note, rather than opening another Project by itself.
+ * 設定からProjectをアーカイブしたときに残すナビゲーションのstate。"/"では、ほかのProjectを
+ * 勝手に開かず、注記付きのProjectの一覧を出す。
  */
 export interface ArchivedProjectState {
   archivedProjectName: string;

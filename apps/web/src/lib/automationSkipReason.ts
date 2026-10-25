@@ -1,7 +1,7 @@
 import type { ModelAutomationExecution } from '@mmt/contracts';
 
-// Error codes the API records when automation did not start because an earlier step did not
-// succeed: the training Run behind the version, or the upstream stage of a chained rule.
+// 前の段階が成功せず、自動実行が始まらなかったときにAPIが記録するエラーコード。前の段階は、
+// バージョンの元になった学習のRunか、上流につないだルールの上流の段。
 const AUTOMATION_SKIP_REASONS = [
   'source_run_unsuccessful',
   'source_run_timeout',
@@ -10,7 +10,7 @@ const AUTOMATION_SKIP_REASONS = [
 ] as const;
 export type AutomationSkipReason = (typeof AUTOMATION_SKIP_REASONS)[number];
 
-// Stored errors are "<code>: <message>"; only the code is a stable contract.
+// 保存されたエラーは"<code>: <message>"の形。安定した契約はコードの部分だけ。
 export function automationSkipReason(
   execution: Pick<ModelAutomationExecution, 'status' | 'error'>,
 ): AutomationSkipReason | null {

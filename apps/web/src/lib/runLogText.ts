@@ -1,6 +1,6 @@
 import type { LogEntry, RunLogList } from '@mmt/contracts';
 
-/** Which lines the log view shows: a level, words in the message, and which end comes first. */
+/** ログの表示に出す行の条件。レベルと、メッセージに含む語。 */
 export interface LogViewFilter {
   level: LogEntry['level'] | '';
   search: string;
@@ -9,8 +9,8 @@ export interface LogViewFilter {
 export type LogOrder = 'oldestFirst' | 'newestFirst';
 
 /**
- * What a terminal shows for a line written with carriage returns (a tqdm progress bar redraws
- * itself with `\r`): the text after the last one. A trailing `\r` ends a write and is ignored.
+ * 復帰文字で書いた行（tqdmの進捗バーは`\r`で自分を描き直す）を端末が表示する内容。最後の`\r`の
+ * 後ろの文字列。末尾の`\r`は書き込みの終わりなので無視する。
  */
 export function displayedLogMessage(message: string): string {
   const withoutTrailing = message.replace(/\r+$/, '');
@@ -18,22 +18,22 @@ export function displayedLogMessage(message: string): string {
   return lastReturn < 0 ? withoutTrailing : withoutTrailing.slice(lastReturn + 1);
 }
 
-/** A read line and its place in the Run's whole log (0 is the Run's first line). */
+/** 読んだ1行と、Runのログ全体の中での位置（0がRunの最初の行）。 */
 export interface NumberedLogEntry {
   lineNumber: number;
   entry: LogEntry;
 }
 
 /**
- * Numbers the read lines by their place in the whole log, which stays the same as the window of
- * latest lines moves, so a view keyed by it keeps the lines it already shows.
+ * 読んだ行に、ログ全体の中での位置で番号を振る。この番号は最新の行の範囲が動いても変わらない
+ * ので、これをキーにした表示はすでに出している行を保てる。
  */
 export function numberLogEntries(list: RunLogList): NumberedLogEntry[] {
   const firstLineNumber = list.totalCount - list.items.length;
   return list.items.map((entry, index) => ({ lineNumber: firstLineNumber + index, entry }));
 }
 
-/** The lines that match the level and contain the search words (case-insensitive). */
+/** レベルが合い、検索の語を含む行（大文字と小文字を区別しない）。 */
 export function filterLogEntries(
   lines: readonly NumberedLogEntry[],
   filter: LogViewFilter,

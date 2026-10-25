@@ -1,9 +1,9 @@
-// Tags the sweep controller sets on trial Runs (apps/api services/sweepController.ts).
+// Sweepのコントローラが試行のRunに付けるタグ（apps/apiのservices/sweepController.ts）。
 
-/** The sweep a trial Run belongs to. */
+/** 試行のRunが属するSweep。 */
 export const SWEEP_ID_TAG = 'mmt.sweepId';
 /**
- * Set on a trial the sweep stopped early. The Run itself ends canceled, as MLflow has no
- * early-stopped status, so the tag tells the two apart.
+ * Sweepが早期終了した試行に付ける。MLflowには早期終了の状態が無いのでRun自体はcanceledで
+ * 終わり、このタグで2つを見分ける。
  */
 export const SWEEP_EARLY_STOPPED_TAG = 'mmt.sweepEarlyStopped';

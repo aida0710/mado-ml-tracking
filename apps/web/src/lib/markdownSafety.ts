@@ -1,31 +1,31 @@
-// Decides which URLs written in Markdown (Run descriptions, comments, reports) may become live
-// links or images. The Markdown comes from any project member and from MLflow clients, so a URL
-// is shown as plain text unless it is known to be harmless.
+// Markdown（Runの説明、コメント、レポート）に書いたURLのうち、生きたリンクや画像にしてよいものを
+// 決める。MarkdownはProjectのどのメンバーからも、MLflowのクライアントからも来るので、無害と
+// 分かっているもの以外のURLはただの文字列として出す。
 
-// Schemes that cannot run script in the page or embed content. Anything else (javascript:,
-// data:, vbscript:, file:, ...) is refused rather than listed, so new schemes stay refused.
+// ページでスクリプトを動かせず、内容を埋め込めないスキーム。ほか（javascript:、data:、vbscript:、
+// file:など）は禁止として一覧に挙げるのではなくすべて断るので、新しいスキームも断ったままになる。
 const ALLOWED_LINK_SCHEMES = new Set(['http', 'https', 'mailto']);
 const URL_SCHEME_PATTERN = /^([a-z][a-z0-9+.-]*):/i;
-// Browsers drop ASCII whitespace and control characters inside a scheme ("java\tscript:"),
-// so the scheme is read with them removed.
-// eslint-disable-next-line no-control-regex -- matching control characters is the point here
+// ブラウザはスキームの中のASCIIの空白と制御文字を捨てる（"java\tscript:"）ので、それらを除いて
+// スキームを読む。
+// eslint-disable-next-line no-control-regex -- 制御文字に一致させるのがここの目的
 const IGNORED_URL_CHARACTERS = /[\u0000- \u007f]/g;
-// The API path that streams one Artifact's bytes (api/tracking.ts artifactContentPath).
+// 1つのArtifactの中身を流すAPIのpath（api/tracking.tsのartifactContentPath）。
 const ARTIFACT_CONTENT_PATH_PATTERN = /^\/api\/projects\/[^/]+\/artifacts\/[^/]+\/content$/;
 
-/** Returns the href to link to, or null when the URL must stay plain text. */
+/** リンク先のhrefを返す。URLをただの文字列のままにすべきときはnull。 */
 export function getSafeLinkHref(url: string): string | null {
   const href = url.trim();
   if (!href) return null;
   const scheme = URL_SCHEME_PATTERN.exec(href.replace(IGNORED_URL_CHARACTERS, ''))?.[1];
-  // No scheme means a relative path, a query or a fragment within this application.
+  // スキームが無ければ、このアプリの中の相対パス、クエリ、フラグメントのどれか。
   if (scheme === undefined) return href;
   return ALLOWED_LINK_SCHEMES.has(scheme.toLowerCase()) ? href : null;
 }
 
 /**
- * The Markdown parser percent-encodes URLs ("%22" for a quote). A refused URL is shown as text,
- * so it is decoded back to what the author wrote when that is possible.
+ * Markdownのパーサーは、URLをパーセントエンコードする（引用符なら"%22"）。断ったURLは文字列として
+ * 出すので、できるときは書いた人が書いたとおりにデコードし直す。
  */
 export function formatUrlForDisplay(url: string): string {
   try {
@@ -35,7 +35,7 @@ export function formatUrlForDisplay(url: string): string {
   }
 }
 
-/** True when the link leaves this application, so it opens in a new tab without a referrer. */
+/** リンクがこのアプリの外へ出るときtrue。そのときは新しいタブで、referrerを付けずに開く。 */
 export function isExternalLink(href: string, origin: string): boolean {
   if (href.toLowerCase().startsWith('mailto:')) return false;
   try {
@@ -51,8 +51,8 @@ export type MarkdownImageDisplay =
   | { kind: 'text' };
 
 /**
- * Only Artifact content served by this origin is drawn as an image. Loading any other image
- * would tell its host who read the page and when, so it becomes a link the reader may follow.
+ * 画像として描くのは、このoriginが配信するArtifactの中身だけ。ほかの画像を読み込むと、誰がいつ
+ * ページを読んだかがその画像のホストに伝わってしまうので、読む人が自分で開けるリンクにする。
  */
 export function getMarkdownImageDisplay(src: string, origin: string): MarkdownImageDisplay {
   const href = getSafeLinkHref(src);

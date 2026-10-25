@@ -18,7 +18,7 @@ describe('接続後の設定の自動入力', () => {
       cpuArch: 'arm64',
       runtimeKinds: ['python', 'docker'],
       gpuIds: '0\n1',
-      // 3.9 comes first on the computer, but Jobs need 3.11 or later.
+      // そのコンピュータでは3.9が先に見つかるが、Jobには3.11以降が要る。
       pythonExecutable: '/usr/bin/python3',
       maxConcurrentJobs: '2',
     });

@@ -121,7 +121,7 @@ describe('フックの作成の入力', () => {
       runStatuses: ['finished'],
       tags: { 'mmt.arrayGroupId': 'group' },
     });
-    // A registration knows its training Run but no end status; a checkpoint's Run has not ended.
+    // 登録では学習Runは分かるが、終了の状態は無い。checkpointのRunはまだ終わっていない。
     expect(buildHookInput({ ...filtered, trigger: 'model_registered' }, catalog).filter).toEqual({
       modelFamilies: ['Qwen3'],
       experimentIds: ['experiment'],
@@ -215,7 +215,7 @@ describe('フックの作成の入力', () => {
 });
 
 describe('フックの複製', () => {
-  // A hook as the API returns it, with every template field filled in.
+  // APIが返す形のフック。templateの項目はすべて埋まっている。
   const asStoredHook = (input: ReturnType<typeof buildHookInput>): Hook => ({
     id: 'hook',
     projectId: 'project',

@@ -1,10 +1,10 @@
-// The API's passwordHasher accepts 12-1024 UTF-8 bytes; checking the minimum here gives an
-// immediate message instead of a 422 after submitting.
+// APIのpasswordHasherは12〜1024バイト（UTF-8）を受け付ける。ここで最小値を確かめると、送信後の
+// 422ではなく、その場でメッセージを出せる。
 const PASSWORD_MIN_BYTES = 12;
-// 18 random bytes give 24 base64url characters, the same as the API's reset password.
+// ランダムな18バイトはbase64urlで24文字になり、APIがリセットで作るパスワードと同じ長さになる。
 const GENERATED_PASSWORD_BYTES = 18;
 
-/** A random initial password the administrator can hand over once. */
+/** 管理者が一度だけ渡せる、ランダムな初期パスワード。 */
 export function generateTemporaryPassword(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(GENERATED_PASSWORD_BYTES));
   return btoa(String.fromCharCode(...bytes))

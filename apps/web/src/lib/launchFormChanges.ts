@@ -1,15 +1,15 @@
 import type { FormValues } from '../types/form';
 import { getFieldValue, getSelectedValues } from './formValues';
 
-/** A choice the launch form dropped because something it depends on changed. */
+/** 依存するものが変わったために、実行のフォームが外した選択。 */
 export type ClearedLaunchChoice = 'codeVersion' | 'target' | 'gpus';
 
 /**
- * Applies an edit of the launch form. A choice that no longer fits what it depends on is dropped,
- * and only then, so the screen can say which one to choose again:
- * - the code version, when the kind or the model version changes and the code does not run them;
- * - the computer (and its GPUs), when the code changes and the computer lacks its runtime;
- * - the GPUs, when the computer changes, since GPU IDs belong to one computer.
+ * 実行のフォームの編集を当てる。依存するものに合わなくなった選択だけを外し、どれを選び直せばよいかを
+ * 画面が伝えられるようにする。
+ * - コードバージョン: 種類かモデルバージョンが変わり、コードがそれを実行しないとき。
+ * - コンピュータ（とそのGPU）: コードが変わり、コンピュータにそのRuntimeが無いとき。
+ * - GPU: コンピュータが変わったとき。GPU IDは1台のコンピュータのものだから。
  */
 export function applyLaunchFormChange({
   previous,
@@ -19,9 +19,9 @@ export function applyLaunchFormChange({
 }: {
   previous: FormValues;
   next: FormValues;
-  /** The chosen code version runs the chosen kind and model version. */
+  /** 選んだコードバージョンが、選んだ種類とモデルバージョンを実行できる。 */
   isCodeAllowed: (values: FormValues) => boolean;
-  /** The chosen computer has the chosen code version's runtime. */
+  /** 選んだコンピュータに、選んだコードバージョンのRuntimeがある。 */
   isTargetAllowed: (values: FormValues) => boolean;
 }): { values: FormValues; cleared: ClearedLaunchChoice[] } {
   const values = { ...next };
@@ -41,7 +41,7 @@ export function applyLaunchFormChange({
   }
   if (changed('targetId') && getSelectedValues(values, 'gpuIds').length) {
     values.gpuIds = [];
-    // Dropping the computer already says its GPUs went with it.
+    // コンピュータを外したと伝えれば、そのGPUも外れたことは伝わる。
     if (!cleared.includes('target')) cleared.push('gpus');
   }
   return { values, cleared };

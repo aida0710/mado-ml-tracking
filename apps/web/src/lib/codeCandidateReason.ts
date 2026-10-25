@@ -3,10 +3,11 @@ import { meetsCodeRequirement } from './executionValidation';
 import { findFamilyCaseVariants } from './modelFamilyChoices';
 
 /**
- * Why no code version is offered. no_code_versions: none registered. no_task_type: none runs the
- * kind. no_family: some run the kind but none supports `family`; caseVariants are the families
- * they list that differ from it only in letter case, the usual slip. no_common_family: each of
- * several families is supported somewhere, but no one code version supports them all.
+ * コードバージョンが候補に出ない理由。no_code_versions: 1つも登録されていない。
+ * no_task_type: その種類を実行するものが無い。no_family: その種類を実行するものはあるが、
+ * どれも`family`に対応していない。caseVariantsは、それらが挙げる系列のうち、`family`と
+ * 大文字・小文字だけが違うもの（よくある打ち間違い）。no_common_family: 各系列はどこかで
+ * 対応しているが、全部に対応するコードバージョンは1つも無い。
  */
 export type MissingCodeReason =
   | { kind: 'no_code_versions' }
@@ -15,10 +16,10 @@ export type MissingCodeReason =
   | { kind: 'no_common_family'; families: string[] };
 
 /**
- * The reason no code version fits, or null when one does. It asks meetsCodeRequirement, the same
- * check that decides which code versions are offered, so the reason cannot drift from the list:
- * the code version must run `taskType` and support every family of `families` (the model's, or an
- * automation rule's). Without `taskType` any kind counts (a model version's default code).
+ * どのコードバージョンも合わない理由。合うものがあればnull。候補を決めるのと同じ判定である
+ * meetsCodeRequirementに問い合わせるので、理由が一覧とずれることはない。コードバージョンは
+ * `taskType`を実行でき、`families`（モデルのもの、または自動実行ルールのもの）のすべての系列に
+ * 対応していなければならない。`taskType`が無ければどの種類でもよい（モデルバージョンの既定のコード）。
  */
 export function explainMissingCodeCandidates({
   codeVersions,

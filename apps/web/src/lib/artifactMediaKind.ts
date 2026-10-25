@@ -1,5 +1,5 @@
-// Mirrors the API's inline MIME list (apps/api/src/domain/artifactMimeType.ts): the browser can only
-// render what the server serves inline, so both sides must change together.
+// APIがinlineで返すMIMEタイプの一覧（apps/api/src/domain/artifactMimeType.ts）と同じにしている。
+// ブラウザはサーバーがinlineで返すものしか表示できないので、両方を一緒に変える。
 export type ArtifactMediaKind = 'text' | 'image' | 'audio' | 'video' | 'unsupported';
 
 const mediaKindsByMimeType: Record<string, ArtifactMediaKind> = {

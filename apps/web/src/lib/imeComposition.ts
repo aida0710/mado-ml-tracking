@@ -1,26 +1,26 @@
-/** The parts of a React keyboard event that tell whether an input method is composing text. */
+/** Reactのキーボードイベントのうち、IMEが変換中かどうかを示す部分。 */
 export type CompositionAwareKeyEvent = {
   key: string;
   keyCode: number;
   nativeEvent: { isComposing: boolean };
 };
 
-// Chrome and Safari report keys handled by an input method with this keyCode ("Process"); Safari
-// sends the Enter that confirms the conversion this way after compositionend, with isComposing false.
+// ChromeとSafariは、IMEが処理したキーをこのkeyCode（"Process"）で知らせる。Safariは変換を確定する
+// Enterを、compositionendの後にisComposingがfalseのままこの形で送る。
 const IME_PROCESS_KEY_CODE = 229;
 
 /**
- * Whether the key belongs to an input method converting text (Japanese input, for example): the
- * Enter that confirms the conversion or the ↑↓ that move through its candidates. Key handlers return
- * early on these, so confirming a word does not also choose an entry or submit a form.
+ * キーが、変換中のIMEのもの（日本語入力など）か。変換を確定するEnterや、候補を移る↑↓がそれに
+ * 当たる。キーの処理はこれらでは早めに戻るので、単語を確定しても、項目を選んだりフォームを
+ * 送ったりはしない。
  */
 export function isComposingKey(event: CompositionAwareKeyEvent): boolean {
   return event.nativeEvent.isComposing || event.keyCode === IME_PROCESS_KEY_CODE;
 }
 
 /**
- * Whether the key is an Enter typed to act (submit the form around the field, pick an entry), not
- * the Enter that confirms an input method's conversion.
+ * キーが、操作のために打ったEnter（周りのフォームを送る、項目を選ぶ）で、IMEの変換を確定する
+ * Enterではないか。
  */
 export function isEnterOutsideComposition(event: CompositionAwareKeyEvent): boolean {
   return event.key === 'Enter' && !isComposingKey(event);

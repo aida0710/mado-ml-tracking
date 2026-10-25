@@ -4,12 +4,12 @@ import { runtimeLabels } from '../i18n/runtime';
 import { text } from '../i18n/catalog';
 import { qualifiedDatasetVersionLabel } from './datasetVersionLabel';
 
-/** How screens name a code version: "code name / version". */
+/** 画面でのコードバージョンの呼び方。「<コード名> / <バージョン>」の形。 */
 export function formatCodeVersionName(codeName: string, version: string): string {
   return `${codeName} / ${version}`;
 }
 
-/** How screens name a model version: "model name / version". */
+/** 画面でのモデルバージョンの呼び方。「<モデル名> / <バージョン>」の形。 */
 export function formatModelVersionName(modelName: string, version: string): string {
   return `${modelName} / ${version}`;
 }

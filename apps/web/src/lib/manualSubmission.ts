@@ -2,18 +2,18 @@ import type { ComputeTarget, ComputeTargetDetails, Job, User } from '@mmt/contra
 import { isTargetOwner } from './permissions';
 
 /**
- * Whose a manual site is, as the viewer sees it. Each requester runs `mado-tracking submit` for
- * their own Jobs with their own account; the owner of a computer may also take everyone's
- * (`--all`). Someone else's computer may be their PC, where they wait with `--watch --all`, or a
- * site each requester logs in to themselves (one with OTP, say): the screen cannot tell, so both
- * are said. A site no longer listed counts as a global one.
+ * 手動投入のsiteが、見ている人から見て誰のものか。依頼した本人が、自分のアカウントで自分のJobに
+ * `mado-tracking submit`を実行する。コンピュータの所有者は全員のJobを引き受けることもできる
+ * （`--all`）。ほかの人のコンピュータは、その人のPC（`--watch --all`で待つ）のことも、依頼した
+ * 本人がそれぞれログインするsite（OTPを使うものなど）のこともある。画面からは区別できないので、
+ * 両方を伝える。一覧に無くなったsiteは全体のものとして扱う。
  */
 export type ManualSiteOwnership =
   | { kind: 'global' }
   | { kind: 'own' }
   | { kind: 'someoneElse'; ownerName: string };
 
-/** Jobs of one manual site that wait for `mado-tracking submit`. */
+/** 1つの手動投入のsiteで、`mado-tracking submit`を待っているJob。 */
 export interface ManualSubmissionGroup {
   targetId: string;
   targetName: string;
@@ -21,7 +21,7 @@ export interface ManualSubmissionGroup {
   ownership: ManualSiteOwnership;
 }
 
-/** A site whose Jobs wait until their requester runs `mado-tracking submit` on it. */
+/** 依頼した本人がそこで`mado-tracking submit`を実行するまで、Jobが待つsite。 */
 export const isManualSite = (
   target: Pick<ComputeTarget, 'executor' | 'submissionMode'> | undefined,
 ): boolean => target?.executor === 'site' && target.submissionMode === 'manual';
@@ -30,9 +30,9 @@ export const isWaitingManualSubmission = (job: Pick<Job, 'status' | 'phase'>): b
   job.status === 'queued' && job.phase === 'waiting_manual';
 
 /**
- * How `mado-tracking submit` runs: `watch` keeps waiting for new Jobs until it is stopped (a PC
- * that is the computer itself), and `all` takes everyone's waiting Jobs, which only the
- * computer's owner may do.
+ * `mado-tracking submit`の動かし方。`watch`は止めるまで新しいJobを待ち続け（PCがそのまま
+ * コンピュータであるとき）、`all`は全員の待っているJobを引き受ける。`all`はコンピュータの
+ * 所有者だけができる。
  */
 export interface ManualSubmitOptions {
   watch?: boolean;
@@ -40,15 +40,15 @@ export interface ManualSubmitOptions {
 }
 
 /**
- * How the owner of a public PC submits everyone's Jobs: waiting on the PC itself and taking all of
- * them (others get 403 site_owner_required for `--all`). It takes the Jobs of its token's Project,
- * so the Jobs of several Projects need one wait per Project.
+ * 公開したPCの所有者が全員のJobを投入する方法。PCの上で待ち、すべてを引き受ける（ほかの人が
+ * `--all`を使うと403 site_owner_requiredになる）。引き受けるのはtokenのProjectのJobなので、
+ * 複数のProjectのJobには、Projectごとに1つずつ待ちが要る。
  */
 export const OWNER_SUBMIT_OPTIONS: ManualSubmitOptions = { watch: true, all: true };
 
 /**
- * The command the requester runs on the site (its login node, or the PC itself); it claims their
- * waiting Jobs of the site and submits them through the site's job shell (one call per array).
+ * 依頼した本人がsite（そのログインノードか、PCそのもの）で実行するコマンド。そのsiteで待っている
+ * 本人のJobを引き受け、siteのjob shellで投入する（arrayは1回で）。
  */
 export function manualSubmitCommand(targetId: string, options: ManualSubmitOptions = {}): string {
   return [
@@ -58,7 +58,7 @@ export function manualSubmitCommand(targetId: string, options: ManualSubmitOptio
   ].join(' ');
 }
 
-/** Whose the manual site is for the viewer; a site no longer listed is treated as a global one. */
+/** 手動投入のsiteが、見ている人から見て誰のものか。一覧に無くなったsiteは全体のものとして扱う。 */
 export function manualSiteOwnership(
   target: Pick<ComputeTargetDetails, 'ownerUserId' | 'ownerName'> | undefined,
   viewer: Pick<User, 'id'>,
@@ -69,8 +69,8 @@ export function manualSiteOwnership(
 }
 
 /**
- * Waiting Jobs per manual site, in the order the sites first appear in the list, with whose each
- * site is for the viewer.
+ * 手動投入のsiteごとの待っているJob。siteが一覧に初めて出た順に並べ、見ている人から見て各siteが
+ * 誰のものかを添える。
  */
 export function manualSubmissionGroups(
   jobs: ReadonlyArray<Pick<Job, 'status' | 'phase' | 'targetId'>>,

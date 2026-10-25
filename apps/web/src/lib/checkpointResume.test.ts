@@ -28,7 +28,7 @@ describe('checkpointからの再開の出し方', () => {
   });
 
   it('作成者でないeditorには、再開の代わりに作成者とProject adminだけができると示す', () => {
-    // The API answers 403 job_owner_required to a retry from anyone else.
+    // ほかの人の再試行には、APIが403 job_owner_requiredを返す。
     const editor = { role: 'editor', userId: 'editor-b' } as const;
     const run = { ...stopped, createdBy: 'editor-a' };
     const canRetryJob = canControlJob(editor.role, editor.userId, run);

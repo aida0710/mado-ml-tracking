@@ -1,4 +1,4 @@
-// The model version page. Pages that only know a version id keep linking to models?version=.
+// モデルバージョンの画面。バージョンのidしか知らない画面は、引き続きmodels?version=へリンクする。
 export function modelVersionPath(
   projectId: string,
   version: { modelId: string; versionId: string },

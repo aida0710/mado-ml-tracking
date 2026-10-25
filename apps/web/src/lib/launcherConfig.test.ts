@@ -14,7 +14,7 @@ describe('launcher.tomlの例', () => {
     expect(config).toContain('state_directory = "/var/lib/mado-tracking-launcher"\n');
     expect(config).toContain('poll_seconds = 10\n');
     expect(config).toContain('# registry_secret_file = ');
-    // The old per-Project and per-site tables are gone: the launcher reads them from the Web.
+    // 以前あったProjectごと・siteごとの表はもう無い。ランチャーはそれらをWebから読む。
     expect(config).not.toMatch(/\[\[(projects|sites)\]\]|launcher_id/);
     expect(config.endsWith('\n')).toBe(true);
   });

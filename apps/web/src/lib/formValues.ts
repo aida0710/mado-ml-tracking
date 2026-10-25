@@ -3,7 +3,7 @@ import type { FormField, FormValues } from '../types/form';
 import { text } from '../i18n/catalog';
 
 export type { FormValues } from '../types/form';
-/** Fields whose value is a list of the chosen options rather than one string. */
+/** 値が1つの文字列ではなく、選んだ選択肢の一覧になる項目。 */
 export const isMultiValueField = (field: Pick<FormField, 'type'>) =>
   field.type === 'multiselect' || field.type === 'checkboxes';
 export function createInitialValues(fields: FormField[]): FormValues {
@@ -20,7 +20,7 @@ export const getSelectedValues = (values: FormValues, name: string): string[] =>
   Array.isArray(values[name]) ? (values[name] as string[]) : [];
 export const getOptionalValue = (values: FormValues, name: string) =>
   getFieldValue(values, name).trim() || undefined;
-/** `values` with `value` added or removed (a checkbox of a list), keeping the order of the rest. */
+/** `values`に`value`を足すか外したもの（一覧のチェックボックス）。残りの順は保つ。 */
 export function toggleValue<T extends string>(values: readonly T[], value: T): T[] {
   return values.includes(value) ? values.filter((entry) => entry !== value) : [...values, value];
 }
@@ -43,7 +43,7 @@ export function parseJsonObject(value: string): JsonObject {
     throw new Error(text.jsonObjectError);
   return parsed as JsonObject;
 }
-/** A JSON object written in a field (empty means {}), or null for anything else. */
+/** 項目に書いたJSONのオブジェクト（空なら{}）。それ以外はnull。 */
 export function parseJsonObjectOrNull(value: string): JsonObject | null {
   try {
     return parseJsonObject(value);
@@ -67,7 +67,7 @@ export function parseStringArray(value: string): string[] {
     throw new Error(text.stringArrayError);
   return parsed as string[];
 }
-/** A select's value as one of its choices; anything else is refused with `message`. */
+/** selectの値を、その選択肢の1つとして返す。それ以外は`message`で断る。 */
 export function parseChoice<T extends string>(
   value: string,
   choices: readonly T[],

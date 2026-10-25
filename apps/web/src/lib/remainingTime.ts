@@ -1,4 +1,4 @@
-// Time left of an upload in the display language: 47秒, 1分5秒, 2時間3分 in Japanese.
+// アップロードの残り時間を表示言語で表す。日本語なら47秒、1分5秒、2時間3分。
 import { textTemplates } from '../i18n/catalog';
 
 const SECONDS_PER_MINUTE = 60;

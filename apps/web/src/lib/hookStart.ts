@@ -6,8 +6,8 @@ import { hooksTextTemplates } from '../i18n/hooks';
 const BYTES_PER_KIB = 1024;
 
 /**
- * The request of a manual start: the payload is an optional JSON object that reaches the Job as
- * trigger-payload.json, within the API's size limit.
+ * 手動の起動の要求。payloadは任意のJSONオブジェクトで、APIの大きさの上限の範囲でJobに
+ * trigger-payload.jsonとして届く。
  */
 export function buildHookStartRequest(payload: string, idempotencyKey: string): HookTriggerRequest {
   if (!payload.trim()) return { idempotencyKey };

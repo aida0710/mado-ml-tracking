@@ -1,16 +1,16 @@
 /**
- * The Run list's selection: the ids stay across pages of the list, while the header checkbox acts on
- * the Runs shown on this page.
+ * Runの一覧の選択。idは一覧のページをまたいで保ち、見出しのチェックボックスはこのページに
+ * 表示しているRunに対して働く。
  */
 
-/** The selected ids after one Run's checkbox is clicked. */
+/** 1つのRunのチェックボックスを押した後の、選択中のid。 */
 export function toggleRunSelection(selectedIds: readonly string[], runId: string): string[] {
   return selectedIds.includes(runId)
     ? selectedIds.filter((selected) => selected !== runId)
     : [...selectedIds, runId];
 }
 
-/** The selected ids after the header checkbox selects or clears the shown Runs; others stay. */
+/** 見出しのチェックボックスで表示中のRunを選択または解除した後の、選択中のid。ほかはそのまま。 */
 export function setShownRunsSelected(
   selectedIds: readonly string[],
   shownRunIds: readonly string[],
@@ -21,7 +21,7 @@ export function setShownRunsSelected(
     : selectedIds.filter((id) => !shownRunIds.includes(id));
 }
 
-/** Whether the header checkbox is checked: every shown Run is selected. */
+/** 見出しのチェックボックスがオンか。表示中のRunがすべて選択されていればオン。 */
 export function areAllShownRunsSelected(
   selectedIds: readonly string[],
   shownRunIds: readonly string[],

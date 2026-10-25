@@ -47,7 +47,7 @@ describe('Run検索の入力', () => {
     );
     expect(findRunFilterSyntaxError("metrics.loss < '0.2'")).toContain('metrics.lossの値は数値で書きます');
     expect(findRunFilterSyntaxError("Metrics.loss LIKE '0.%'")).toContain('数値として比べる');
-    // Attributes differ by name (start_time is a number, status a string), so the API decides.
+    // 属性は名前によって型が違う（start_timeは数、statusは文字列）ので、APIに判断を任せる。
     expect(findRunFilterSyntaxError('attributes.start_time > 1700000000000')).toBeNull();
   });
 

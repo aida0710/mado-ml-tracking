@@ -3,7 +3,7 @@ import { MarkerType, Position } from '@xyflow/react';
 import type { LineageFlowElements } from '../types/lineage';
 import { GRAPH_NODE_HEIGHT, GRAPH_NODE_WIDTH } from './lineageLayout';
 
-// Matches Data Catalog's arrows while retaining MMT's relation identities.
+// 矢印の大きさはmado S3 Data Catalogに合わせ、関係の種類はmado ML Trackingのものを残す。
 const LINEAGE_ARROW_SIZE = 15;
 
 export function toLineageFlowElements({
@@ -18,7 +18,7 @@ export function toLineageFlowElements({
     nodes: graph.nodes.map((node) => ({
       id: node.id,
       type: 'lineage',
-      // The card contains a detail link; keep the focusable selection group separate from that link.
+      // カードの中には詳細へのリンクがある。フォーカスできる選択用のgroupは、そのリンクと分けておく。
       ariaRole: 'group',
       position: { x: 0, y: 0 },
       sourcePosition: Position.Right,
@@ -31,7 +31,7 @@ export function toLineageFlowElements({
       nodeIds.has(edge.source) && nodeIds.has(edge.target)
         ? [
             {
-              // Parallel relations must stay distinct even when their endpoints are the same.
+              // 両端が同じでも、並行する関係はそれぞれ別のものとして残す。
               id: `lineage-edge:${index}`,
               source: edge.source,
               target: edge.target,

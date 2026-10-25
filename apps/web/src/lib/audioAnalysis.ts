@@ -1,26 +1,26 @@
-// Pure audio analysis for the artifact viewer: waveform peaks and STFT spectrograms (linear or mel).
-// Runs inside workers/audioAnalysis.worker.ts and in unit tests, so it must not touch the DOM.
+// Artifactのビューアで使う純粋な音声解析。波形のピークと、STFTのスペクトログラム（線形かmel）。
+// workers/audioAnalysis.worker.tsの中と単体テストで動くので、DOMに触れてはいけない。
 
 import { BROWSER_AUDIO_ANALYSIS_MAX_BYTES } from '@mmt/contracts';
 
 /**
- * The viewer fetches the whole file and decodes it into Float32 PCM. Decoded PCM is several times
- * the compressed size (a 64MiB MP3 can expand past 1GiB at 48kHz stereo), and a browser tab is
- * usually killed around 2-4GiB, so files above this size are played without analysis. The server
- * makes previews above the same size.
+ * ビューアはファイル全体を取得し、Float32のPCMにデコードする。デコードしたPCMは圧縮時の数倍の
+ * 大きさになり（64MiBのMP3は48kHzのステレオで1GiBを超えることがある）、ブラウザのタブは
+ * たいてい2〜4GiBあたりで落とされるので、この大きさを超えるファイルは解析せずに再生する。
+ * サーバーは同じ大きさを超えるものにプレビューを作る。
  */
 export const AUDIO_ANALYSIS_MAX_BYTES = BROWSER_AUDIO_ANALYSIS_MAX_BYTES;
 export const STFT_FFT_SIZE = 1024;
-// Minimum hop. Long ranges use a larger hop so the frame count stays near the drawn width.
+// ホップの最小値。長い範囲ではホップを大きくして、フレーム数を描画の幅の近くに保つ。
 export const STFT_HOP_SIZE = 256;
-// A spectrogram never needs more columns than a wide canvas has pixels.
+// スペクトログラムの列が、幅の広いcanvasのピクセル数より多く要ることはない。
 export const SPECTROGRAM_MAX_FRAMES = 2048;
-// Quieter bins are clamped here so silence draws as the darkest color instead of -Infinity.
+// これより静かなビンはこの値まで引き上げ、無音を-Infinityでなく最も暗い色で描く。
 export const SPECTROGRAM_DB_FLOOR = -100;
 export const MEL_BAND_COUNT = 80;
 
 export type SpectrogramScale = 'linear' | 'mel';
-/** 'mix' averages all channels; a number selects one channel (0-based). */
+/** 'mix'は全チャンネルの平均。数値は1つのチャンネルを選ぶ（0始まり）。 */
 export type AudioChannelSelection = 'mix' | number;
 
 export interface WaveformPeaks {
@@ -32,9 +32,9 @@ export interface Spectrogram {
   frameCount: number;
   binCount: number;
   hopSize: number;
-  /** Row-major frames: values[frame * binCount + bin], in dB between SPECTROGRAM_DB_FLOOR and 0. */
+  /** 行優先のフレーム。values[frame * binCount + bin]で、値はSPECTROGRAM_DB_FLOORから0までのdB。 */
   values: Float32Array;
-  /** Highest frequency the last bin represents (Nyquist). */
+  /** 最後のビンが表す最高の周波数（ナイキスト周波数）。 */
   maxFrequency: number;
 }
 
@@ -61,7 +61,7 @@ export function selectChannelSamples(
   return mixed;
 }
 
-/** Minimum and maximum sample of each of `bucketCount` equal slices. Empty slices read as 0. */
+/** `bucketCount`個に等分した区間それぞれの、サンプルの最小値と最大値。空の区間は0とする。 */
 export function computeWaveformPeaks(samples: Float32Array, bucketCount: number): WaveformPeaks {
   const count = Math.max(0, Math.floor(bucketCount));
   const min = new Float32Array(count);
@@ -90,7 +90,7 @@ export function createHannWindow(size: number): Float32Array {
   return window;
 }
 
-/** In-place iterative radix-2 FFT. `real.length` must be a power of two. */
+/** 配列をその場で書き換える反復型のradix-2 FFT。`real.length`は2のべき乗でなければならない。 */
 export function fftInPlace(real: Float32Array, imaginary: Float32Array): void {
   const size = real.length;
   if ((size & (size - 1)) !== 0) throw new RangeError('FFT size must be a power of two');
@@ -127,7 +127,7 @@ export function fftInPlace(real: Float32Array, imaginary: Float32Array): void {
   }
 }
 
-/** Power ratio to dB, clamped to `floorDb`. A reference of 1 means full scale reads 0dB. */
+/** パワー比をdBに変え、`floorDb`を下限にする。基準を1とするので、フルスケールが0dBになる。 */
 export function powerToDecibels(power: number, floorDb = SPECTROGRAM_DB_FLOOR): number {
   if (!(power > 0)) return floorDb;
   return Math.max(floorDb, Math.min(0, 10 * Math.log10(power)));
@@ -136,7 +136,7 @@ export function powerToDecibels(power: number, floorDb = SPECTROGRAM_DB_FLOOR): 
 const hertzToMel = (hertz: number) => 2595 * Math.log10(1 + hertz / 700);
 const melToHertz = (mel: number) => 700 * (10 ** (mel / 2595) - 1);
 
-/** Triangular HTK mel filters over the `fftSize / 2 + 1` linear bins. filters[band][bin]. */
+/** `fftSize / 2 + 1`個の線形のビンにかける、三角形のHTKのmelフィルタ。filters[band][bin]。 */
 export function createMelFilterBank(
   sampleRate: number,
   fftSize: number,
@@ -171,9 +171,9 @@ export interface SpectrogramOptions {
 }
 
 /**
- * Hann-windowed STFT power spectrogram in dB. A full-scale sine reads about 0dB because the power is
- * normalized by the window's coherent gain. When the range would yield more than `maxFrames`
- * frames, the hop grows so the frames stay evenly spread across the whole range.
+ * Hann窓をかけたSTFTのパワースペクトログラム（dB）。パワーを窓のコヒーレントゲインで正規化する
+ * ので、フルスケールの正弦波は約0dBになる。範囲から`maxFrames`を超えるフレームができるときは
+ * ホップを広げ、フレームが範囲全体に均等に並ぶようにする。
  */
 export function computeSpectrogram(samples: Float32Array, options: SpectrogramOptions): Spectrogram {
   const fftSize = options.fftSize ?? STFT_FFT_SIZE;
@@ -189,7 +189,7 @@ export function computeSpectrogram(samples: Float32Array, options: SpectrogramOp
       : minimumHop;
   const window = createHannWindow(fftSize);
   const windowSum = window.reduce((sum, value) => sum + value, 0);
-  // |X|^2 of a full-scale sine is (windowSum / 2)^2, so this maps it to a power ratio of 1.
+  // フルスケールの正弦波の|X|^2は(windowSum / 2)^2なので、これで割るとパワー比が1になる。
   const powerReference = (windowSum / 2) ** 2;
   const melFilters =
     scale === 'mel'
@@ -220,7 +220,7 @@ export function computeSpectrogram(samples: Float32Array, options: SpectrogramOp
   return { frameCount, binCount, hopSize, values, maxFrequency: options.sampleRate / 2 };
 }
 
-/** Converts a time range in seconds to clamped sample indexes [start, end). */
+/** 秒で表した時間の範囲を、範囲内に収めたサンプルの添字[start, end)に変える。 */
 export function secondsToSampleRange(
   range: { startSeconds: number; endSeconds: number },
   sampleRate: number,

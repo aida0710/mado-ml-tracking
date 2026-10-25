@@ -26,7 +26,7 @@ describe('実行するコードの互換性', () => {
     expect(meetsCodeRequirement(code, { taskType: 'inference', families: ['Qwen3', 'Qwen2'] })).toBe(
       false,
     );
-    // Nothing to check: a default code of a model version without a kind, or no model chosen.
+    // 確かめるものが無い。種類を指定しないモデルバージョンの既定のコードや、モデルを選んでいないとき。
     expect(meetsCodeRequirement(code, {})).toBe(true);
     expect(meetsCodeRequirement(code, { families: ['qwen3'] })).toBe(false);
   });

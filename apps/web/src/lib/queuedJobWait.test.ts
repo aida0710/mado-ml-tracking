@@ -40,7 +40,7 @@ describe('待機中のJobが始まらない理由', () => {
     expect(queuedJobWait(workflowStep('cpu'), cpu, [onlineOnCpu, updated])).toEqual({
       kind: 'notTaken',
     });
-    // An offline updated worker does not take it either: the online one has to be updated.
+    // 更新済みでもオフラインのworkerは受け取らない。オンラインのworkerを更新する必要がある。
     const offlineUpdated = { ...updated, status: 'offline' as const };
     expect(queuedJobWait(workflowStep('cpu'), cpu, [onlineOnCpu, offlineUpdated])).toMatchObject({
       kind: 'workerUpdate',

@@ -1,7 +1,7 @@
 import type { JsonObject } from '@mmt/contracts';
 import { formatValue } from './format';
 
-// Keeps a table cell to one line; the full JSON stays available in the cell title.
+// 表のセルを1行に収める。JSONの全体はセルのtitleで見られる。
 const MAX_DETAILS_SUMMARY_LENGTH = 120;
 
 function formatDetailValue(value: unknown): string {

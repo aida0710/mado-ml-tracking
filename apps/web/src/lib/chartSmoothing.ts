@@ -1,18 +1,18 @@
 import type { ChartSmoothing } from '@mmt/contracts';
 
-// W&B caps the EMA weight below 1 so the line still moves with new values.
+// W&BはEMAの重みを1未満に抑え、新しい値で線がまだ動くようにしている。
 export const MAX_EMA_WEIGHT = 0.999;
-// At weight 1 the Gaussian kernel spans about ±60 points, a few percent of a 1000-point series.
+// 重み1でガウスカーネルは約±60点にわたる。1000点の系列の数%。
 const GAUSSIAN_MAX_SIGMA_POINTS = 20;
-// The kernel is cut at 3 sigma, where its weight is below 0.5% of the center.
+// カーネルは3シグマで切る。そこでの重みは中心の0.5%未満。
 const GAUSSIAN_CUTOFF_SIGMAS = 3;
-// At weight 1 the running average covers the last 100 points.
+// 重み1で、移動平均は直前の100点をとる。
 const RUNNING_AVERAGE_MAX_WINDOW = 100;
 
 /**
- * Smooths values in point order and returns one value per input. Non-finite inputs stay NaN in the
- * output and are skipped, so they neither reset nor pull the smoothed line. Uneven x spacing is
- * not weighted: like W&B, each method works on the order of the points.
+ * 値を点の順に平滑化し、入力1つにつき1つの値を返す。有限でない入力は出力でもNaNのままにして
+ * 飛ばすので、平滑化した線をリセットも引き寄せもしない。xの間隔の不揃いは重みに入れない。
+ * W&Bと同じく、どの方法も点の順序だけで計算する。
  */
 export function smoothValues(values: readonly number[], smoothing: ChartSmoothing): number[] {
   const weight = Math.min(Math.max(smoothing.weight, 0), 1);
@@ -23,9 +23,8 @@ export function smoothValues(values: readonly number[], smoothing: ChartSmoothin
 }
 
 /**
- * Debiased exponential moving average, the same formula as W&B and TensorBoard:
- * `last = last * w + (1 - w) * y`, shown as `last / (1 - w^n)` after n finite values, so the first
- * points are not pulled toward 0.
+ * バイアスを補正した指数移動平均。W&BやTensorBoardと同じ式で、`last = last * w + (1 - w) * y`を、
+ * n個の有限な値の後に`last / (1 - w^n)`として出すので、最初の点が0へ引き寄せられない。
  */
 function smoothEma(values: readonly number[], weight: number): number[] {
   const w = Math.min(weight, MAX_EMA_WEIGHT);
@@ -40,8 +39,8 @@ function smoothEma(values: readonly number[], weight: number): number[] {
 }
 
 /**
- * Gaussian kernel over the neighboring finite points. At the ends the kernel is cut and renormalized
- * over the points that exist, so a constant series stays constant instead of bending toward 0.
+ * 隣接する有限な点にかけるガウスカーネル。両端ではカーネルを切り、存在する点で正規化し直すので、
+ * 一定の系列は0へ曲がらず一定のままになる。
  */
 function smoothGaussian(values: readonly number[], weight: number): number[] {
   const sigma = weight * GAUSSIAN_MAX_SIGMA_POINTS;
@@ -66,7 +65,7 @@ function smoothGaussian(values: readonly number[], weight: number): number[] {
   return output;
 }
 
-/** Mean of the current finite point and the finite points before it, up to the window size. */
+/** 今の有限な点と、それより前の有限な点の平均。窓の大きさの分まで。 */
 function smoothRunningAverage(values: readonly number[], weight: number): number[] {
   const windowSize = 1 + Math.round(weight * (RUNNING_AVERAGE_MAX_WINDOW - 1));
   const window: number[] = [];

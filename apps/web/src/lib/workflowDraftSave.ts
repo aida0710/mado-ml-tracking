@@ -13,16 +13,16 @@ import { LocalizedError } from './localizedError';
 import type { WorkflowInputDraft, WorkflowStepDraft } from './workflowDraft';
 
 /*
- * What a workflow draft becomes when it is saved, or the first reason it cannot be, checked here
- * before the API checks it again.
+ * ワークフローの下書きを保存するとどうなるか、または保存できない最初の理由。APIがもう一度
+ * 確かめる前に、ここで確かめる。
  */
 
-/** Describes a problem in the language shown when it is read. */
+/** 読まれたときの表示言語で問題を説明する。 */
 type DescribeProblem = () => string;
 
 const SUMMARY_METRIC_NAMES: ReadonlySet<string> = new Set(PREPROCESSING_SUMMARY_METRIC_NAMES);
 
-/** What keeps the step itself (not its inputs or conditions) from being saved. */
+/** ステップ自体（入力や条件ではなく）を保存できなくしている理由。 */
 function stepProblem(
   step: WorkflowStepDraft,
   { task, earlierKeys }: { task: ExperimentTask | undefined; earlierKeys: readonly string[] },
@@ -37,7 +37,7 @@ function stepProblem(
   return null;
 }
 
-/** What keeps one input from being saved. */
+/** 1つの入力を保存できなくしている理由。 */
 function inputProblem(
   input: WorkflowInputDraft,
   earlierKeys: readonly string[],
@@ -55,8 +55,8 @@ function inputProblem(
 }
 
 /**
- * What keeps one quality condition from being saved. A preprocessing.* name must be one the
- * report computes; any other name is the code's own metric.
+ * 1つの品質条件を保存できなくしている理由。preprocessing.*の名前は、レポートが計算するもので
+ * なければならない。それ以外の名前はコード自身のメトリクス。
  */
 function gateProblem(gate: WorkflowQualityGate): DescribeProblem | null {
   if (!workflowQualityGateSchema.safeParse(gate).success)
@@ -70,8 +70,8 @@ function gateProblem(gate: WorkflowQualityGate): DescribeProblem | null {
 }
 
 /**
- * The first reason the draft cannot be saved, naming the step (and its input or quality
- * condition) by its position from 1, or null. A step refers only to the steps before it.
+ * 下書きを保存できない最初の理由。ステップ（とその入力か品質条件）を1からの位置で示す。無ければ
+ * null。ステップは前のステップだけを参照する。
  */
 function findWorkflowDraftProblem(
   steps: WorkflowStepDraft[],
@@ -110,8 +110,8 @@ function findWorkflowDraftProblem(
 }
 
 /**
- * The steps to save, each with the current revision of its task (the version pins it). Throws a
- * LocalizedError that names the step and the field to fix.
+ * 保存するステップ。それぞれにTaskの今のリビジョンを付ける（バージョンがそれを固定する）。
+ * 直すステップと項目を示すLocalizedErrorを投げる。
  */
 export function pinWorkflowDrafts(
   steps: WorkflowStepDraft[],
@@ -129,7 +129,7 @@ export function pinWorkflowDrafts(
       })),
       expectedTaskRevision: task.revision,
     });
-    // Limits the checks above do not repeat (lengths, counts) still name the step.
+    // 上の検査で繰り返さない上限（長さ、個数）の違反でも、ステップを示す。
     if (!parsed.success)
       throw new LocalizedError(() =>
         workflowsTextTemplates.workflowDraftStepProblem(

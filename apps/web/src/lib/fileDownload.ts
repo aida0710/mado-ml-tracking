@@ -1,7 +1,7 @@
-// Revoking right after click() can cancel the download in some browsers, so it waits a moment.
+// click()の直後にobject URLを解放すると、ブラウザによってはダウンロードが取り消されるので、少し待つ。
 const OBJECT_URL_REVOKE_DELAY_MS = 10_000;
 
-/** Hands a fetched file to the browser's download, as a link with `download` would. */
+/** 取得したファイルを、`download`付きのリンクと同じようにブラウザのダウンロードへ渡す。 */
 export function downloadBlob(blob: Blob, fileName: string): void {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');

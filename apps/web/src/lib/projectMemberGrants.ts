@@ -1,16 +1,16 @@
 import type { ProjectMemberGrant, ProjectRole, UserSearchResult } from '@mmt/contracts';
 
-// A member added while creating a Project or from the member list can record Runs; the admin
-// changes it per member.
+// Projectの作成時やメンバーの一覧から追加したメンバーはRunを記録できる。adminがメンバーごとに
+// 変える。
 export const DEFAULT_MEMBER_GRANT_ROLE: ProjectRole = 'editor';
 
-/** A member chosen in the creation dialog, with the name shown in its row. */
+/** 作成ダイアログで選んだメンバーと、その行に出す名前。 */
 export interface MemberGrantDraft {
   user: UserSearchResult;
   role: ProjectRole;
 }
 
-/** Adds `user` with the default role; a user already in the list keeps their row. */
+/** `user`を既定のロールで足す。すでに一覧にいる利用者は元の行のまま。 */
 export function addMemberGrant(
   drafts: MemberGrantDraft[],
   user: UserSearchResult,
@@ -30,7 +30,7 @@ export function removeMemberGrant(drafts: MemberGrantDraft[], userId: string): M
   return drafts.filter((draft) => draft.user.id !== userId);
 }
 
-/** The grants POST /projects takes. */
+/** POST /projectsが受け取る付与。 */
 export function toProjectMemberGrants(drafts: MemberGrantDraft[]): ProjectMemberGrant[] {
   return drafts.map(({ user, role }) => ({ userId: user.id, role }));
 }

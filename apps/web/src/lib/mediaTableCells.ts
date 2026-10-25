@@ -1,5 +1,5 @@
-// Cells of a Run media table (MLflow log_table's split format plus audio and video columns):
-// what each cell shows, and which media cells the API could not resolve.
+// Runのメディアの表（MLflowのlog_tableのsplit形式に、audioとvideoの列を足したもの）のセル。
+// 各セルに何を出すかと、APIが解決できなかったメディアのセル。
 import type { MediaTableColumn, MediaTableColumnType, MediaTableReferenceError } from '@mmt/contracts';
 import { formatValue } from './format';
 
@@ -9,9 +9,9 @@ export type MediaCellType = 'audio' | 'image' | 'video';
 const MEDIA_COLUMN_TYPES: readonly MediaTableColumnType[] = ['audio', 'image', 'video'];
 
 /**
- * 'unresolved' is a media cell that is not the API's resolved form (for example an MLflow
- * {type, filepath} cell or a bare mmt-artifact:// string): it names no Artifact, so the Web does
- * not guess one from the path.
+ * 'unresolved'は、APIが解決した形になっていないメディアのセル（MLflowの{type, filepath}の
+ * セルや、文字列のままのmmt-artifact://参照など）。Artifactを指していないので、Webはpathから
+ * 推測しない。
  */
 export type MediaTableCellFailure = MediaTableReferenceError | 'unresolved';
 
@@ -69,7 +69,7 @@ function describeMediaCell(columnType: MediaCellType, value: unknown): MediaTabl
     return { kind: 'error', reason, path };
   }
   if (typeof value.artifactId !== 'string' || value.artifactId === '') return { kind: 'error', reason: 'unresolved', path };
-  // A cell whose own type disagrees with its column (an image in an audio column) is shown as what it is.
+  // セル自身の種類が列と食い違うとき（audioの列にある画像）は、セル自身の種類で出す。
   const type = MEDIA_COLUMN_TYPES.includes(value.type as MediaTableColumnType) ? (value.type as MediaCellType) : columnType;
   return {
     kind: 'media',
@@ -83,7 +83,7 @@ function describeMediaCell(columnType: MediaCellType, value: unknown): MediaTabl
   };
 }
 
-/** How one cell is shown, decided by its column's type and then by the value itself. */
+/** 1つのセルの出し方。列の種類で決め、次に値そのもので決める。 */
 export function describeTableCell(column: MediaTableColumn, value: unknown): MediaTableCellView {
   if (isMediaColumnType(column.type)) return describeMediaCell(column.type, value);
   if (value === null || value === undefined) return { kind: 'empty' };
@@ -93,7 +93,7 @@ export function describeTableCell(column: MediaTableColumn, value: unknown): Med
   return { kind: 'json', text: JSON.stringify(value) };
 }
 
-/** Media cells on the page that could not be shown, counted so the table can say how many. */
+/** そのページで出せなかったメディアのセル。いくつあるかを表が伝えられるように数える。 */
 export function countErrorCells(columns: readonly MediaTableColumn[], rows: readonly unknown[][]): number {
   let errors = 0;
   for (const row of rows)
@@ -103,7 +103,7 @@ export function countErrorCells(columns: readonly MediaTableColumn[], rows: read
   return errors;
 }
 
-/** Pages of an offset-paged table; an empty table still has one (empty) page. */
+/** offsetでページを分ける表のページ数。空の表でも（空の）ページが1つある。 */
 export function tablePageCount(totalRows: number, pageSize = MEDIA_TABLE_PAGE_SIZE): number {
   return Math.max(1, Math.ceil(totalRows / pageSize));
 }

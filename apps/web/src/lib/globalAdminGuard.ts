@@ -1,13 +1,13 @@
 import type { AdminUser } from '@mmt/contracts';
 
-// The API returns at most this many users per list (ADMIN_USER_LIST_LIMIT in
-// apps/api/src/domain/adminUserValidation.ts); a full page may have left some out.
+// APIが1回の一覧で返すユーザーはこの数まで（apps/api/src/domain/adminUserValidation.tsの
+// ADMIN_USER_LIST_LIMIT）。満杯のページでは、漏れたユーザーがいるかもしれない。
 export const ADMIN_USER_LIST_LIMIT = 500;
 
 /**
- * The one active global administrator, whom the API refuses to disable or demote (409), so the
- * screen can say so before the click. `activePeople` are the active people (not Service
- * Accounts). Null when there are several, or when the list may be cut and so cannot tell.
+ * 有効な全体管理者が1人だけのときの、その人。APIはこの人の無効化や権限の取り下げを断る（409）ので、
+ * 押す前に画面でそう伝えられる。`activePeople`は有効な人（Service Accountを除く）。複数いる
+ * ときや、一覧が切れているかもしれず判断できないときはnull。
  */
 export function findLastActiveGlobalAdminId(
   activePeople: readonly AdminUser[] | undefined,

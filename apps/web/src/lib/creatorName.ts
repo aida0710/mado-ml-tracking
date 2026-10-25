@@ -1,3 +1,3 @@
-/** Who created a record (a Run, an automation rule); the id once the user record is gone. */
+/** 記録（Run、自動実行ルール）を作った人。ユーザーの記録が無くなった後はid。 */
 export const creatorName = (record: { createdBy: string; createdByName: string | null }) =>
   record.createdByName ?? record.createdBy;

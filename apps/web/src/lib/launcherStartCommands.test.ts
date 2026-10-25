@@ -8,7 +8,7 @@ describe('ランチャーの入れ方と起動のコマンド', () => {
     expect(lines[1]).toContain("pip install 'mado-tracking @ git+https://");
     expect(lines.at(-1)).toMatch(/\/bin\/mado-tracking-launcher --config /);
     expect(lines.at(-1)).toContain(EXAMPLE_LAUNCHER_CONFIG_PATH);
-    // The token stays in token_file; the commands never hold it.
+    // tokenはtoken_fileに置いたままにし、コマンドには決して含めない。
     expect(buildLauncherStartCommands()).not.toMatch(/token/i);
   });
 });

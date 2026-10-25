@@ -134,7 +134,7 @@ describe('描く前の系列の準備', () => {
     const run = (id: string) => ({ id, label: id, kind: 'run' as const, points: [] });
     const options = { xScale: 'linear' as const, yScale: 'linear' as const, smoothing: { kind: 'none' as const, weight: 0 }, theme: 'light' as const, styleIds: ['a', 'b', 'c'] };
     const everyRun = prepareChartLines([run('a'), run('b'), run('c')], options);
-    // Run a logged no value of this key, so the chart has only b and c.
+    // Run aはこのキーの値を記録していないので、図にはbとcだけがある。
     const withoutA = prepareChartLines([run('b'), run('c')], options);
     expect(withoutA.map((line) => [line.color, line.dashPattern])).toEqual(
       everyRun.slice(1).map((line) => [line.color, line.dashPattern]),

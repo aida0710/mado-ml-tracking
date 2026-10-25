@@ -1,13 +1,13 @@
 /**
- * How important a table column is: primary columns stay visible on narrow screens, secondary ones
- * show on wide screens only, and detail ones (long text, such as criteria) only in an opened row.
+ * 表の列の重要度。primaryの列は狭い画面でも表示し、secondaryは広い画面でだけ、detail（合否基準
+ * のような長い文）は開いた行の中でだけ表示する。
  */
 export type ColumnPriority = 'primary' | 'secondary' | 'detail';
 
 /**
- * Splits columns into those shown in the row and those shown only when a row is opened. Wide
- * screens show every column but the detail ones; narrow screens keep the primary ones in the row.
- * A table with no primary column keeps its first column so a narrow row is never empty.
+ * 列を、行に出すものと、行を開いたときだけ出すものに分ける。広い画面ではdetail以外のすべての
+ * 列を出し、狭い画面ではprimaryの列を行に残す。primaryの列が無い表は、狭い画面の行が空に
+ * ならないよう最初の列を残す。
  */
 export function splitColumnsByPriority<T extends { priority: ColumnPriority }>(
   columns: readonly T[],

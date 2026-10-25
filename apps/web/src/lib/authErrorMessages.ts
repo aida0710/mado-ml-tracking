@@ -2,7 +2,7 @@ import { RequestError } from '../api/http';
 import { formatErrorMessage } from './errorMessage';
 import { text } from '../i18n/catalog';
 
-// Failures the sign-in screens do not name themselves read like any other failure, in the display language.
+// ログインの画面が個別の文を持たない失敗は、ほかの失敗と同じく表示言語の文で出す。
 function rateLimitOr(error: unknown, fallback: (error: RequestError) => string | undefined) {
   if (!(error instanceof RequestError)) return formatErrorMessage(error);
   if (error.status === 429) return text.loginRateLimited;

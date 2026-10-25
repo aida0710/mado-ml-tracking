@@ -1,24 +1,24 @@
-// Why an unfinished upload cannot continue, read from the session's state or from the API's
-// refusal, so the screen can say what happened and what to do next instead of a raw error.
+// 途中のアップロードを続けられない理由。セッションの状態かAPIの拒否から読み取り、画面が生の
+// エラーではなく、何が起きて次に何をすればよいかを言えるようにする。
 import type { ArtifactUpload } from '@mmt/contracts';
 import { RequestError } from '../api/http';
 
 export type ResumeBlocker =
-  /** Past the 7-day deadline; the received parts are discarded. */
+  /** 7日の期限を過ぎた。受け取ったpartは捨てられる。 */
   | 'expired'
-  /** Discarded, failed verification, or no longer on the server. */
+  /** 破棄された、検証に失敗した、またはもうサーバーに無い。 */
   | 'gone'
-  /** The user no longer has editor access to the Project, or the token lacks the scope. */
+  /** 利用者がProjectのEditorの権限をもう持っていないか、tokenにそのscopeが無い。 */
   | 'permissionLost'
-  /** Started by another user or another credential (a token, a Job); only that one may continue. */
+  /** ほかの利用者か、ほかの認証情報（token、Job）が始めたもの。続けられるのはそれだけ。 */
   | 'otherCredential'
   | 'runDeleted'
   | 'sizeDiffers'
   | 'contentDiffers';
 
-// The session can never continue from here, while the file can still go up from the first byte.
+// アップロードセッションはここからは続けられないが、ファイルは最初のバイトから送り直せる。
 const UNUSABLE_SESSION_BLOCKERS: ReadonlySet<ResumeBlocker> = new Set(['expired', 'gone', 'otherCredential']);
-// These belong to the chosen file, so choosing another file can clear them.
+// これらは選んだファイルに属するので、別のファイルを選べば解消しうる。
 const FILE_BLOCKERS: ReadonlySet<ResumeBlocker> = new Set(['sizeDiffers', 'contentDiffers']);
 
 const BLOCKER_BY_CODE: Readonly<Record<string, ResumeBlocker>> = {
@@ -31,7 +31,7 @@ const BLOCKER_BY_CODE: Readonly<Record<string, ResumeBlocker>> = {
   run_deleted: 'runDeleted',
 };
 
-/** `now` is epoch milliseconds; an open session past its deadline is expired before the sweeper marks it. */
+/** `now`はエポックからのミリ秒。期限を過ぎた開いたセッションは、掃除の処理が印を付ける前から期限切れとする。 */
 export function blockerFromSession(
   session: Pick<ArtifactUpload, 'status' | 'expiresAt'>,
   now: number,
@@ -42,12 +42,12 @@ export function blockerFromSession(
   return null;
 }
 
-/** Null for failures that say nothing about the session, such as a lost network. */
+/** ネットワークの切断のように、セッションについて何も表さない失敗にはnull。 */
 export function blockerFromFailure(failure: unknown): ResumeBlocker | null {
   if (!(failure instanceof RequestError) || !failure.code) return null;
   return BLOCKER_BY_CODE[failure.code] ?? null;
 }
 
-/** True when the session itself is done for; the file can be sent again from the first byte. */
+/** セッション自体がもう使えないときにtrue。ファイルは最初のバイトから送り直せる。 */
 export const isSessionUnusable = (blocker: ResumeBlocker) => UNUSABLE_SESSION_BLOCKERS.has(blocker);
 export const canChooseAnotherFileAfter = (blocker: ResumeBlocker) => FILE_BLOCKERS.has(blocker);

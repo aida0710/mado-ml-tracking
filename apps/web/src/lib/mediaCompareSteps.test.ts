@@ -33,7 +33,7 @@ function media(id: string, step: number, runId: string): RunMedia {
   };
 }
 
-// The audit's case: a 20-step Run logged at 9 and 19, a 60-step Run every 10 steps from 9.
+// 監査で挙がった例。20 stepのRunは9と19で記録し、60 stepのRunは9から10 stepごとに記録した。
 const shortRun = [9, 19];
 const longRun = [9, 19, 29, 39, 49, 59];
 

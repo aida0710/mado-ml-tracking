@@ -6,21 +6,21 @@ import type {
   RunGroupBy,
 } from '@mmt/contracts';
 
-// Panel placement on the 12-column grid. Pure functions: every change returns a new layout whose
-// panels never overlap and are pulled up as far as they fit, so a removed panel leaves no hole.
+// 12列のグリッドでのパネルの配置。純粋な関数で、どの変更も新しいレイアウトを返す。そのパネルは
+// 重ならず、収まる限り上へ詰めるので、パネルを消しても穴が残らない。
 
 export const CHART_GRID_COLUMNS = 12;
-/** More lines than this make one panel unreadable; the editor stops the selection here. */
+/** 線がこれより多いとパネルが読めなくなる。エディタはここで選択を止める。 */
 export const MAX_PANEL_METRIC_KEYS = 10;
-/** A metric-rich Run would otherwise open with hundreds of panels and one huge series request. */
+/** これが無いと、メトリクスの多いRunは数百のパネルと1つの巨大な系列の要求で開いてしまう。 */
 export const MAX_DEFAULT_PANELS = 24;
-/** The x axis and smoothing a new panel starts with: W&B's default view of a training curve. */
+/** 新しいパネルの最初のx軸と平滑化。W&Bの学習曲線の既定の表示。 */
 export const DEFAULT_PANEL_X_AXIS: ChartXAxis = { kind: 'step' };
 export const DEFAULT_PANEL_SMOOTHING: ChartSmoothing = { kind: 'none', weight: 0 };
 
 export const PANEL_WIDTHS = { third: 4, half: 6, full: 12 } as const;
 export type PanelWidth = keyof typeof PANEL_WIDTHS;
-/** Grid rows; one row is CHART_ROW_HEIGHT_PX in styles/chartPanels.css. */
+/** グリッドの行数。1行の高さはCHART_ROW_HEIGHT_PX（ChartPanel.tsx）で、styles/chartPanels.cssに渡る。 */
 export const PANEL_HEIGHTS = { normal: 2, tall: 3 } as const;
 export type PanelHeight = keyof typeof PANEL_HEIGHTS;
 export type PanelMoveDirection = 'up' | 'down' | 'left' | 'right';
@@ -55,8 +55,8 @@ const readingOrder = (left: ChartPanelConfig, right: ChartPanelConfig) =>
   left.layout.y - right.layout.y || left.layout.x - right.layout.x;
 
 /**
- * Places panels in order, pushing each below whatever it overlaps, then pulls every panel up as
- * far as it fits. `priorityId` keeps its requested place and the others give way to it.
+ * パネルを順に置き、重なるものがあればその下へ押し下げてから、全パネルを収まる限り上へ詰める。
+ * `priorityId`は求めた位置を保ち、ほかのパネルがそれに譲る。
  */
 function settlePanels(panels: ChartPanelConfig[], priorityId?: string): ChartPanelConfig[] {
   const ordered = [...panels].sort(
@@ -92,7 +92,7 @@ const withPanels = (layout: ChartPanelLayout, panels: ChartPanelConfig[]): Chart
   panels,
 });
 
-/** The first free place in reading order (top row first, then left to right). */
+/** 読む順（上の行から、行の中は左から右）で最初に空いている位置。 */
 export function findFreePosition(
   panels: ChartPanelConfig[],
   size: { w: number; h: number },
@@ -153,7 +153,7 @@ const sharesRows = (left: PanelRect, right: PanelRect) =>
 const sharesColumns = (left: PanelRect, right: PanelRect) =>
   left.x < right.x + right.w && right.x < left.x + left.w;
 
-/** The closest panel next to `rect` on the given side, or undefined at the edge. */
+/** `rect`の指定した側で最も近い隣のパネル。端ならundefined。 */
 function findNeighbor(
   panels: ChartPanelConfig[],
   rect: PanelRect,
@@ -177,8 +177,8 @@ function findNeighbor(
 }
 
 /**
- * Swaps the panel with its neighbor on that side, the keyboard equivalent of dragging it there.
- * Without a neighbor a horizontal move slides the panel to the grid edge and a vertical one stays.
+ * パネルをその側の隣と入れ替える。そこへドラッグする操作のキーボード版。隣が無いとき、
+ * 横の移動はパネルをグリッドの端まで寄せ、縦の移動は動かない。
  */
 export function movePanel(
   layout: ChartPanelLayout,
@@ -212,12 +212,12 @@ export function movePanel(
     const next = moved.get(panel.id);
     return next ? { ...panel, layout: next } : panel;
   });
-  // A vertical move to the neighbor's row gives way to the panel that took the upper place.
+  // 隣の行への縦の移動では、上の位置に入ったパネルを優先し、ほかがそれに譲る。
   const priorityId = direction === 'down' && neighbor ? neighbor.id : moving.id;
   return withPanels(layout, settlePanels(panels, priorityId));
 }
 
-/** Applies one grouping to every panel; the Run list's grouping control sets it for all charts. */
+/** 1つのグループ化を全パネルに当てる。Runの一覧のグループ化の操作が、全部の図に設定する。 */
 export function setPanelsGroupBy(
   layout: ChartPanelLayout,
   groupBy: RunGroupBy | undefined,
@@ -228,15 +228,15 @@ export function setPanelsGroupBy(
   );
 }
 
-/** The section a key belongs to: the part before the first '/', as W&B groups `train/` and `eval/`. */
+/** キーが属する区分。最初の'/'より前の部分で、W&Bが`train/`と`eval/`をまとめるのと同じ。 */
 export function metricKeySection(key: string): string {
   const slash = key.indexOf('/');
   return slash > 0 ? key.slice(0, slash) : '';
 }
 
 /**
- * One panel per metric key, keys of the same prefix side by side and each prefix starting a new
- * row. Keys without a prefix come first. Stops at MAX_DEFAULT_PANELS.
+ * メトリクスのキーごとに1つのパネル。同じprefixのキーは横に並べ、prefixごとに新しい行から始める。
+ * prefixの無いキーが先頭。MAX_DEFAULT_PANELSで止める。
  */
 export function createDefaultLayout(
   metricKeys: string[],
@@ -274,12 +274,12 @@ export function createDefaultLayout(
   return withPanels(emptyChartPanelLayout(), panels);
 }
 
-/** Every metric key the panels draw, in first-use order; the series request asks for these. */
+/** パネルが描くすべてのメトリクスのキー（最初に使った順）。系列の要求はこれを求める。 */
 export const getPanelMetricKeys = (layout: ChartPanelLayout) => [
   ...new Set(layout.panels.flatMap((panel) => panel.metricKeys)),
 ];
 
-// ---- Validation of stored JSON (localStorage today, saved views later) ----
+// ---- 保存したJSONの検証（localStorageと保存ビュー） ----
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -356,8 +356,8 @@ function parsePanel(value: unknown): ChartPanelConfig | null {
 }
 
 /**
- * Accepts a stored layout only when every panel is valid; a partly broken layout is rejected
- * whole rather than silently losing panels. Overlaps from a hand-edited layout are settled.
+ * 保存されたレイアウトは、全パネルが正しいときだけ受け入れる。一部が壊れたレイアウトは、黙って
+ * パネルを失うのでなく、まるごと拒む。手で編集したレイアウトの重なりは解消する。
  */
 export function parseChartPanelLayout(value: unknown): ChartPanelLayout | null {
   if (!isRecord(value) || value.version !== 1 || value.columns !== CHART_GRID_COLUMNS) return null;
