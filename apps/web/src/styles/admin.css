@@ -43,7 +43,7 @@
   gap: 8px;
 }
 .member-name .user-status {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .plugin-search {
   display: flex;
@@ -77,13 +77,13 @@
   flex-wrap: wrap;
   gap: 8px 20px;
   margin: 12px 0;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--muted);
 }
 .storage-metrics th,
 .storage-metrics td {
   padding: 9px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .storage-label {
   max-width: 160px;
@@ -99,7 +99,7 @@
 .raw-metrics {
   margin: 18px 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 /* The two-column settings stack below 1200px, before either column gets too narrow. */
 @media (width < 1200px) {
@@ -121,7 +121,7 @@
 }
 .storage-location code {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   overflow-wrap: anywhere;
 }
 .storage-readonly {
@@ -149,7 +149,7 @@
 }
 .storage-test-summary {
   margin: 0 0 10px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .storage-test-summary.ok,
 .storage-test-result li.ok svg {
@@ -172,7 +172,7 @@
   grid-template-columns: 16px 12em 3em minmax(0, 1fr);
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .storage-test-error {
   color: var(--muted);
@@ -202,7 +202,7 @@
 }
 .storage-picker-name {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   overflow-wrap: anywhere;
 }
 
@@ -226,7 +226,7 @@
   gap: 2px;
 }
 .user-admin .muted {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 /* The signed-in administrator's own row, which the actions affect at once. */
 .user-self-tag {
@@ -234,7 +234,7 @@
 }
 .user-locked-reason {
   flex-basis: 100%;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .user-actions {
   display: flex;
@@ -268,7 +268,7 @@
 }
 .temporary-password .field-label {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .temporary-password-value {
   display: flex;
@@ -316,5 +316,5 @@
   padding: 3px 8px;
   background: var(--surface);
   border: 1px solid var(--border);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }

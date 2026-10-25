@@ -6,7 +6,7 @@
 .lineage-legend {
   color: var(--muted);
   margin: 0 0 16px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .lineage-graph-tools {
   display: flex;
@@ -45,12 +45,12 @@
   overflow-wrap: anywhere;
 }
 .lineage-search-results .menu-item strong {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 .lineage-search-results .menu-item span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .lineage-search-results p {
   margin: 0;
@@ -63,10 +63,10 @@
 }
 .lineage-direction button {
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-none);
   background: transparent;
   padding: 6px 12px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .lineage-direction button[aria-pressed="true"] {
   color: var(--link);
@@ -79,7 +79,7 @@
   gap: 8px;
   width: 100%;
   min-width: 0;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .lineage-selection > span {
   flex: 1;

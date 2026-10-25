@@ -28,7 +28,7 @@
   max-height: 460px;
   overflow: auto;
   padding: 14px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   line-height: 1.6;
 }
 /* Text previews: the format select above the colored text (@mado/design-system/code.css). */
@@ -79,7 +79,7 @@
   width: 18em;
   max-width: 70vw;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .artifact-references h4 {
   margin: 12px 0 4px;
@@ -87,7 +87,7 @@
 .artifact-reference-links {
   margin: 0;
   padding-left: 18px;
-  font-size: 13px;
+  font-size: var(--font-size-base);
 }
 .artifact-reference-links li {
   padding: 2px 0;

@@ -10,11 +10,11 @@
 }
 .site-computer-section h3 {
   margin: 0 0 10px;
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }
 .site-computer-section h4 {
   margin: 16px 0 8px;
-  font-size: 13px;
+  font-size: var(--font-size-base);
 }
 .site-computer-section > .section-heading h3 {
   margin: 0;
@@ -43,19 +43,19 @@
 }
 .site-command-list span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 /* A job shell is a script: whole lines, monospaced, scrolled inside its own box. */
 .job-shell-content {
   max-height: 480px;
   margin: 0 0 16px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   white-space: pre;
 }
 .job-shell-editor {
   min-height: 320px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 1.5;
   tab-size: 2;
 }
@@ -72,7 +72,7 @@
 @media (width < 640px) {
   .job-shell-content,
   .job-shell-editor {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
   }
   .job-shell-content {
     max-height: 360px;

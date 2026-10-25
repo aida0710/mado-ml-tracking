@@ -27,7 +27,7 @@
 }
 .tabular-preview-note {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .tabular-table-scroll {
   overflow: auto;
@@ -124,7 +124,7 @@
 }
 .evaluation-sample-card dt {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .evaluation-sample-card dd {
   min-width: 0;
@@ -174,7 +174,7 @@
   margin-top: -8px;
   overflow: hidden;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--font-size-2xs);
 }
 .audio-time-tick {
   position: absolute;
@@ -186,5 +186,5 @@
   white-space: nowrap;
 }
 .audio-visible-range {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }

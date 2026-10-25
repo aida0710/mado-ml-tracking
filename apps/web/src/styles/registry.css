@@ -45,7 +45,7 @@
   overflow: hidden;
   overflow-wrap: anywhere;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -102,7 +102,7 @@ th.alias-version-change {
 .automation-settings summary {
   cursor: pointer;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .version-link {
   display: block;
@@ -118,7 +118,7 @@ th.alias-version-change {
   align-items: center;
   gap: 12px;
   margin: 4px 0 16px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 .chart-selector span {
   color: var(--muted);
@@ -132,7 +132,7 @@ th.alias-version-change {
   background: var(--code-background);
   color: var(--code-text);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   line-height: 1.6;
   max-height: 520px;
   overflow: auto;
@@ -238,7 +238,7 @@ th.alias-version-change {
 }
 .copyable-value-label {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 /* Under a page title or in a details list the value sits in a line with its own spacing. */
 .page-description .copyable-value,
@@ -251,7 +251,7 @@ th.alias-version-change {
   align-items: center;
   gap: 4px;
   margin-left: 8px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: var(--muted);
   white-space: nowrap;
 }
