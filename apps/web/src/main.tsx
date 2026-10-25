@@ -46,7 +46,6 @@ import './styles/uploads.css';
 import './styles/modelVersion.css';
 import './styles/checkpoints.css';
 import './styles/connection.css';
-import './styles/copyButton.css';
 import './styles/tokenExpiry.css';
 import './styles/operations.css';
 import './styles/charts.css';

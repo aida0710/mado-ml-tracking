@@ -5,6 +5,7 @@ import { savedViewsApi } from '../../api/savedViews';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { ErrorNotice } from '../Feedback';
 import { SaveViewDialog } from './SaveViewDialog';
+import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import { useMutation } from '../../hooks/useMutation';
 import type { QueryState } from '../../hooks/useQuery';
 import {
@@ -15,7 +16,6 @@ import {
   type SavedViewActor,
 } from '../../lib/savedViewPermissions';
 import { detailsPopoverHandlers } from '../../lib/detailsPopover';
-import { copyText } from '../../lib/clipboard';
 import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
@@ -52,7 +52,7 @@ export function SavedViewsMenu({
   useLocale();
   const menuRef = useRef<HTMLDetailsElement>(null);
   const [dialog, setDialog] = useState<MenuDialog>(null);
-  const [isUrlCopied, setIsUrlCopied] = useState(false);
+  const urlCopy = useCopyFeedback();
   const mutation = useMutation();
   const items = views.value ?? [];
   const groups = [
@@ -62,7 +62,6 @@ export function SavedViewsMenu({
 
   function open(viewId: string | null) {
     if (menuRef.current) menuRef.current.open = false;
-    setIsUrlCopied(false);
     onOpen(viewId);
   }
   async function overwrite(view: SavedView) {
@@ -75,13 +74,6 @@ export function SavedViewsMenu({
     setDialog(null);
     views.reload();
     onSaved(saved);
-  }
-  async function copyUrl(view: SavedView) {
-    const copied = await mutation.run(async () => {
-      await copyText(viewUrl(view.id));
-      return true;
-    });
-    setIsUrlCopied(Boolean(copied));
   }
 
   const canChange = activeView ? canChangeSavedView(activeView, actor) : false;
@@ -147,9 +139,13 @@ export function SavedViewsMenu({
       </button>
       {activeView && (
         <>
-          <button type="button" className="button small" onClick={() => void copyUrl(activeView)}>
+          <button type="button" className="button small" onClick={() => void urlCopy.copy(viewUrl(activeView.id))}>
             <Link2 size={13} />
-            {isUrlCopied ? text.savedViewUrlCopied : text.savedViewCopyUrl}
+            {urlCopy.copied === null
+              ? text.savedViewCopyUrl
+              : urlCopy.copied
+                ? text.savedViewUrlCopied
+                : text.copyFailed}
           </button>
           {canChange && (
             <button type="button" className="button small" onClick={() => setDialog('rename')}>

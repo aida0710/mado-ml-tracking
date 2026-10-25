@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import type { Project, ProjectRole, ServiceAccount, TokenScope, TokenSummary } from '@mmt/contracts';
+import { DEFAULT_TOKEN_EXPIRY_SELECTION, resolveTokenExpiryTimestamp } from '@mado/design-system/token-expiry';
 import { administrationApi } from '../api/administration';
 import { Dialog } from '../components/Dialog';
 import { ErrorNotice } from '../components/Feedback';
@@ -8,7 +9,6 @@ import { TokenExpiryFields } from '../components/TokenExpiryFields';
 import { IssuedTokenDialog } from './IssuedTokenDialog';
 import { useMutation } from '../hooks/useMutation';
 import { scopesAllowedForRole } from '../lib/tokenScopes';
-import { DEFAULT_TOKEN_EXPIRY_SELECTION, resolveTokenExpiryTimestamp } from '../lib/tokenExpiry';
 import {
   initialTokenScopeChoice,
   purposesForOwner,

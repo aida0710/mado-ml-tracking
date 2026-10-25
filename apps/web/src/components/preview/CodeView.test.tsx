@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CodeView, FormattedCode, type CodeLanguageState } from './CodeView';
+import type { CodeLanguageState } from '@mado/design-system/react';
+import { CodeView, FormattedCode } from './CodeView';
 
 function storage(values: Record<string, string>) {
   const items = new Map(Object.entries(values));

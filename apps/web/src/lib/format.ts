@@ -1,4 +1,6 @@
+import { formatBytes as formatBytesInLocale } from '@mado/design-system/format';
 import { memoizePerIntlLocale } from '../i18n/intlFormatterCache';
+import { getIntlLocale } from '../i18n/locale';
 
 const getDateTimeFormat = memoizePerIntlLocale(
   (intlLocale) => new Intl.DateTimeFormat(intlLocale, { dateStyle: 'short', timeStyle: 'short' }),
@@ -35,31 +37,8 @@ export const formatCompactNumber = (value: number) =>
   value !== 0 && Math.abs(value) < SCIENTIFIC_NOTATION_THRESHOLD
     ? getScientificNumberFormat().format(value)
     : getCompactNumberFormat().format(value);
-// The divisor is binary, so the displayed units must be KiB/MiB rather than KB/MB.
-const BYTES_PER_BINARY_UNIT = 1024;
-const BINARY_BYTE_UNITS = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB'];
-// One decimal place in every unit above bytes, so sizes in a column and "sent / total" line up.
-const BYTE_UNIT_FRACTION_DIGITS = 1;
-const getByteUnitNumberFormat = memoizePerIntlLocale(
-  (intlLocale) =>
-    new Intl.NumberFormat(intlLocale, {
-      minimumFractionDigits: BYTE_UNIT_FRACTION_DIGITS,
-      maximumFractionDigits: BYTE_UNIT_FRACTION_DIGITS,
-    }),
-);
-const roundToShownDigits = (value: number) =>
-  Math.round(value * 10 ** BYTE_UNIT_FRACTION_DIGITS) / 10 ** BYTE_UNIT_FRACTION_DIGITS;
-export function formatBytes(bytes: number): string {
-  let unitIndex = Math.min(
-    Math.floor(Math.log(Math.max(bytes, 1)) / Math.log(BYTES_PER_BINARY_UNIT)),
-    BINARY_BYTE_UNITS.length - 1,
-  );
-  if (unitIndex === 0) return `${Math.round(bytes)} B`;
-  // 1023.96 KiB would round to "1024.0 KiB"; it reads as 1.0 MiB instead.
-  if (roundToShownDigits(bytes / BYTES_PER_BINARY_UNIT ** unitIndex) >= BYTES_PER_BINARY_UNIT)
-    unitIndex = Math.min(unitIndex + 1, BINARY_BYTE_UNITS.length - 1);
-  return `${getByteUnitNumberFormat().format(bytes / BYTES_PER_BINARY_UNIT ** unitIndex)} ${BINARY_BYTE_UNITS[unitIndex]}`;
-}
+/** バイト数を今の表示言語で（"1.5 MiB"）。1024で割り、2進の単位で書く（デザインシステムのformatBytes）。 */
+export const formatBytes = (bytes: number): string => formatBytesInLocale(bytes, getIntlLocale());
 export function formatDuration(start: string | null, end: string | null): string {
   if (!start) return '—';
   const seconds = Math.max(
