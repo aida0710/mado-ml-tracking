@@ -961,7 +961,7 @@ describe.skipIf(!testDatabaseUrl)('公式MLflow 3 tracking契約（隔離Postgre
     const pending = (await models.createLogged()).model.info.model_id;
     const ready = (await models.readyModel({ name: 'registry-source' })).model.info.model_id;
     await entity(await models.createRegistered(), 200);
-    // Enough overlapping requests to contend for the Run and both model rows.
+    // Runと両方のモデルの行を取り合うのに十分な数の、重なったリクエスト。
     const parallelWrites = 6;
     const responses = await Promise.all(
       Array.from({ length: parallelWrites }, (_, step) => [

@@ -4,7 +4,7 @@ import { conflict } from '../../domain/errors.js';
 import { invalidParameter } from './validation.js';
 import type { ArtifactManifestEntry, SavedModelArtifacts } from './types.js';
 
-// MLmodel fields used by the installed sklearn, pyfunc, PyTorch, TensorFlow and transformers flavors.
+// 入っているsklearn、pyfunc、PyTorch、TensorFlow、transformersのflavorが使うMLmodelのフィールド。
 const MODEL_BODY_PATH_FIELDS = [
   'pickled_model',
   'python_model',
@@ -17,9 +17,9 @@ const MODEL_BODY_PATH_FIELDS = [
   'model_binary',
   'local_base_model_path',
 ];
-// Default filenames are used only when the MLmodel could not be read (over the capture limit,
-// invalid YAML) or has no body path fields. model.skops and data/model.pt2 are what
-// mlflow.sklearn and mlflow.pytorch save by default in MLflow 3.17.
+// 既定のファイル名は、MLmodelを読めなかった（取り込みの上限を超えた、YAMLが不正）か、本体の
+// パスのフィールドが無いときだけ使う。model.skopsとdata/model.pt2は、MLflow 3.17で
+// mlflow.sklearnとmlflow.pytorchが既定で保存するもの。
 const DEFAULT_WEIGHT_PATHS = [
   'model.pkl',
   'model.skops',

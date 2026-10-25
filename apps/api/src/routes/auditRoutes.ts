@@ -3,7 +3,7 @@ import type { AuditService } from '../services/auditService.js';
 import { auditEventQuerySchema, projectAuditEventQuerySchema } from '../domain/auditValidation.js';
 import { parse, principal, uuidParam, type ApiEnvironment } from '../http/request.js';
 
-// Mounted at /api so both the global and the Project-scoped listings live here.
+// /apiに置き、全体の一覧とProjectごとの一覧の両方をここに持つ。
 export function auditRoutes(audit: AuditService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.get('/audit-events', async (context) =>

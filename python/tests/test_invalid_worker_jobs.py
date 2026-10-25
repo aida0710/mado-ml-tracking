@@ -1,4 +1,4 @@
-"""Malformed instructions must not execute or release an uncertain active execution."""
+"""不正な指示は実行しない。また、状態の不確かな動作中の実行を手放さない。"""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from mado_tracking.worker.job_responses import InvalidWorkerJob, parse_worker_jo
 from mado_tracking.worker.journal import JobJournal
 from mado_tracking.worker.service import Worker
 
-# Fail missing process/monitoring notifications without leaving detached fixture processes behind.
+# プロセスや監視の通知が来なければ、切り離されたfixtureのプロセスを残さずに失敗させる。
 SCENARIO_TIMEOUT_SECONDS = 15
 
 

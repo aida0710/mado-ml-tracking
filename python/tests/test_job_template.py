@@ -1,4 +1,4 @@
-"""Job templates: mmt-job.toml, tag → digest through the OCI distribution API, registration."""
+"""Jobのテンプレート: mmt-job.toml、OCI distribution APIでのtag → digestの解決、登録。"""
 
 from __future__ import annotations
 
@@ -99,7 +99,7 @@ def test_image_references_are_split_like_docker(image, registry, repository, tag
 
 
 class Registry:
-    """A registry that wants a Bearer token from its realm, like Docker Hub and Forgejo."""
+    """Docker HubやForgejoのように、realmからBearer tokenを要求するレジストリ。"""
 
     def __init__(self, *, announced_digest: str | None = None, require_login: bool = False):
         self.body = json.dumps(INDEX).encode()

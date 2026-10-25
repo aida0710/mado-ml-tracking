@@ -1,16 +1,16 @@
-"""The launcher's TOML: how it starts. Its sites, job shells, accounts and keys live on the Web.
+"""launcherのTOML。起動の仕方を書く。site、job shell、アカウント、鍵は画面で設定する。
 
-    api_url = "https://mmt.example.org"        # the API as the launcher reaches it
+    api_url = "https://mmt.example.org"        # launcherから見たAPIの場所
     token_file = "/run/secrets/mado-tracking-launcher/launcher.token"   # mode 600
     state_directory = "/var/lib/mado-tracking-launcher"
     poll_seconds = 10
-    registry_secret_file = "/run/secrets/mado-tracking-launcher/forge-pull.json"   # optional
+    registry_secret_file = "/run/secrets/mado-tracking-launcher/forge-pull.json"   # 任意
 
-token_file holds the token the Web shows once when a global administrator registers the launcher.
-The state directory keeps the launcher's private SSH keys and the reports not yet delivered: keep
-it across restarts and give every launcher its own. registry_secret_file is JSON
-{"username", "password"} (mode 600) that the runners of every site use to pull images into SIFs.
-Relative paths start from the directory of the TOML file.
+token_fileには、全体管理者がlauncherを登録したときに画面が1回だけ表示するtokenを入れる。
+stateディレクトリは、launcherのSSHの秘密鍵と、まだ届けていない報告を持つ。再起動をまたいで
+残し、launcherごとに別にする。registry_secret_fileはJSONの{"username", "password"}
+（モード600）で、どのsiteのrunnerも、イメージを取ってきてSIFにするときに使う。
+相対パスは、TOMLファイルのディレクトリから数える。
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ from .credential_files import read_private_text, read_registry_secrets
 
 DEFAULT_POLL_SECONDS = 10.0
 SETTINGS = {"api_url", "token_file", "state_directory", "poll_seconds", "registry_secret_file"}
-# What launcher.toml held before sites were set on the Web.
+# siteを画面で設定するようになる前に、launcher.tomlが持っていたもの。
 RETIRED_SETTINGS = {"launcher_id", "projects", "sites"}
 
 
@@ -47,7 +47,7 @@ class LauncherConfig:
     registry_secret_file: Path | None = None
 
     def spec_secrets(self) -> dict[str, Any] | None:
-        """secrets.json for the runners (the registry login), read for each submission to apply edits."""
+        """runner向けのsecrets.json（レジストリのログイン情報）。編集が効くよう、投入ごとに読む。"""
         if self.registry_secret_file is None:
             return None
         return read_registry_secrets(self.registry_secret_file, label="registry_secret_file")
@@ -78,6 +78,6 @@ def load_launcher_config(path: Path) -> LauncherConfig:
         poll_seconds=reader.number("poll_seconds", default=DEFAULT_POLL_SECONDS),
         registry_secret_file=reader.optional_path("registry_secret_file"),
     )
-    # A broken registry login shows at start, not at the first submission that needs it.
+    # レジストリのログイン情報が壊れていれば、それを使う最初の投入ではなく、起動時に分かる。
     config.spec_secrets()
     return config

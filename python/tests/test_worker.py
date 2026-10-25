@@ -357,7 +357,7 @@ def test_fake_ssh_transport_preserves_argv_and_detached_runner_state(job_payload
             ssh_argv = super().command_argv(command)
             assert "StrictHostKeyChecking=yes" in ssh_argv
             assert shlex.split(ssh_argv[-1]) == command
-            # Simulate the remote login shell locally; never contact an SSH host.
+            # リモートのログインシェルをローカルで模す。SSHホストには決して接続しない。
             return ["sh", "-c", ssh_argv[-1]]
 
     def executor(job, settings):

@@ -1,6 +1,6 @@
 import type { JsonObject } from './index.js';
 
-/** Historical provenance added to an existing version, separate from training data changes. */
+/** 既存のバージョンに後から足した過去の由来。学習データの変更とは別に扱う。 */
 export interface DatasetVersionParentAddition {
   id: string;
   projectId: string;

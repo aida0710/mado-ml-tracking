@@ -16,12 +16,13 @@ import {
 } from '../domain/repositoryObjects.js';
 import { runRepositoryCommand, type RepositoryCommandRunner } from './repositoryProcess.js';
 
-// One editor request must finish promptly and cannot occupy unbounded disk or memory.
+// editorの1回のリクエストはすぐに終わらなければならず、ディスクやメモリを際限なく使ってはならない。
 const REPOSITORY_TIMEOUT_MS = 30_000;
 const MAX_REPOSITORY_BYTES = 64 * 1024 * 1024;
 const MAX_TREE_BYTES = 2 * 1024 * 1024;
 const MAX_GIT_METADATA_BYTES = 4096;
-// Each batch header contains an object ID, size, type and newline; allow 128 bytes per file.
+// batchのヘッダーはそれぞれ、オブジェクトID、大きさ、種類、改行を含む。1ファイルあたり
+// 128バイトまで認める。
 const MAX_BATCH_HEADER_BYTES = 128 * MAX_CODE_FILES;
 
 const isolatedGitArguments = [
@@ -83,11 +84,11 @@ function repositorySshCommand(settings: ApiConfig['repositorySsh']): string {
   const arguments_ = [
     ...isolatedSshArguments,
     `-oUserKnownHostsFile="${(settings?.knownHostsPath ?? '/dev/null').replace(/["\\]/g, '\\$&')}"`,
-    // IdentityFile also suppresses default keys when the configured file is absent.
+    // IdentityFileは、設定したファイルが無いときに既定の鍵を使わせない働きもする。
     `-oIdentityFile="${(settings?.keyPath ?? 'none').replace(/["\\]/g, '\\$&')}"`,
     `-oPreferredAuthentications=${settings ? 'publickey' : 'none'}`,
   ];
-  // Git passes this operator-only command through a shell; quote every argument, including paths.
+  // gitはこの運用者だけが設定するコマンドをシェルに渡すので、パスも含めすべての引数をクォートする。
   return arguments_.map((argument) => `'${argument.replaceAll("'", "'\\''")}'`).join(' ');
 }
 
@@ -104,7 +105,7 @@ export class GitRepositoryReader {
   }
 
   async read(input: RepositoryFilesRequest): Promise<RepositoryFiles> {
-    // Also validate callers that bypass HTTP; a repository URL never becomes a command option.
+    // HTTPを通らない呼び出し元も検証する。リポジトリのURLを決してコマンドのオプションにしない。
     const parsed = repositoryFilesSchema.safeParse(input);
     if (!parsed.success)
       throw new DomainError({
@@ -115,7 +116,8 @@ export class GitRepositoryReader {
     const request = parsed.data;
     const directory = await mkdtemp(path.join(tmpdir(), 'mmt-repository-'));
     const deadline = Date.now() + REPOSITORY_TIMEOUT_MS;
-    // Build a fresh child environment. Never inherit tokens, SSH agents, Git config or HTTP helpers.
+    // 子プロセスの環境変数は新しく組み立てる。token、SSHエージェント、Gitの設定、HTTPのヘルパーは
+    // 決して引き継がない。
     const environment: NodeJS.ProcessEnv = {
       PATH: '/usr/bin:/bin',
       HOME: directory,

@@ -1,4 +1,4 @@
-// Writes docs/openapi.json from the native route catalog: npm run openapi:generate.
+// nativeの経路の一覧からdocs/openapi.jsonを書き出す: npm run openapi:generate
 import { writeFile } from 'node:fs/promises';
 import {
   buildOpenApiDocument,

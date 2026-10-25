@@ -17,8 +17,8 @@ import {
 } from './auditService.js';
 
 /**
- * Deletes a DatasetVersion nothing refers to, such as one registered with a mistyped URI
- * (DELETE /projects/:p/datasets/:d/versions/:v). Editors may, as they may register one.
+ * どこからも参照されていないDatasetVersionを削除する。URIを打ち間違えて登録したものなど
+ * （DELETE /projects/:p/datasets/:d/versions/:v）。登録できるのと同じく、editorが削除できる。
  */
 export class DatasetVersionDeletionService {
   constructor(private readonly database: Database) {}
@@ -45,10 +45,10 @@ export class DatasetVersionDeletionService {
           role: 'editor',
           scope: 'registry:write',
         });
-        // A new reference kept in an array or JSON (the inputs of a Run, Task, rule or hook, a
-        // version's parents) locks the version's Dataset first (lockDatasetsOfVersions), so it is
-        // either counted below or waits and then finds the version gone. References with a
-        // foreign key (Job partitions, output declarations, MLflow inputs) are the database's.
+        // 配列やJSONに持つ新しい参照（Run・Task・ルール・フックの入力、バージョンの親）は、
+        // 先にバージョンのDatasetをロックする（lockDatasetsOfVersions）。そのため、下で
+        // 数えられるか、待ったあとでバージョンが消えていると分かるかのどちらかになる。外部キーを
+        // 持つ参照（Jobのpartition、出力の宣言、MLflowのinputs）はDBに任せる。
         const dataset = await first(
           connection,
           'SELECT id FROM datasets WHERE project_id=$1 AND id=$2 FOR UPDATE',
@@ -65,8 +65,8 @@ export class DatasetVersionDeletionService {
           await countDatasetVersionReferences(connection, { projectId, id: versionId }),
         );
         await deleteDatasetVersionWithFiles(connection, { projectId, id: versionId });
-        // The audit log keeps every event for good, and a URI may carry a signed query, so the
-        // event names the version without it.
+        // 監査ログはすべてのイベントをずっと残し、URIには署名つきのクエリが付くことがあるので、
+        // イベントにはURIを入れずにバージョンを書く。
         await writeAuditEvent(connection, {
           ...draft,
           outcome: 'success',

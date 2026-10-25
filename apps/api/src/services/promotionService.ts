@@ -83,7 +83,7 @@ function skippedJudgement(reason: 'creator_access_revoked' | 'evaluation_error')
   };
 }
 
-// The alias versions an automatic promotion must still find under the Model lock.
+// 自動昇格が登録モデルのロックを取ったあとも、aliasが変わらずに指していなければならないバージョン。
 interface PromotionAliasSnapshot {
   baselineVersionId: string | null;
   targetVersionId: string | null;
@@ -107,7 +107,7 @@ async function readPromotionAliases(
   return { baselineVersionId, targetVersionId };
 }
 
-/** The alias event's reason: which policy passed the version and on what numbers. */
+/** aliasのイベントの理由。どのpolicyが、どの数値でバージョンを合格にしたか。 */
 function automaticPromotionReason(policy: PromotionPolicy, judgement: Judgement): string {
   const firstRelease = judgement.reason === 'baseline_missing_first_promotion' ? '（基準バージョンなし）' : '';
   const reason = `昇格policy「${policy.name}」の合格判定による自動昇格${firstRelease}: ${judgement.criteriaResults
@@ -117,9 +117,9 @@ function automaticPromotionReason(policy: PromotionPolicy, judgement: Judgement)
 }
 
 /**
- * Compares the candidate Run with the baseline under the policy's rule. Both sides are limited to
- * Runs the rule's automation produced, and the conditions are the rule's fixed reference set and
- * evaluation CodeVersion, so a hand-made evaluation Run can neither be judged nor serve as baseline.
+ * 候補のRunを、policyのルールのもとで基準と比べる。両方とも、そのルールの自動実行が作ったRunに
+ * 限り、条件はルールが固定した参照セットと評価のCodeVersionとする。そのため、手で作った評価Runは
+ * 判定されることも、基準になることもない。
  */
 async function judgeCandidate(
   connection: Connection,
@@ -226,9 +226,9 @@ export class PromotionService {
   }
 
   /**
-   * Makes the policy act as a Service Account of the Project, so judgements and automatic
-   * promotions go on after the human owner leaves. The account must be active and hold the admin
-   * role, the authority every judgement re-checks. Naming the current owner again changes nothing.
+   * policyをProjectのService Accountとして動かし、人の所有者が抜けたあとも判定と自動昇格が続く
+   * ようにする。そのアカウントは有効で、adminのroleを持っていなければならない。判定のたびに
+   * 確かめ直すのはこの権限。今の所有者をもう一度指定しても何も変わらない。
    */
   async transferPolicyOwner(
     principal: Principal,
@@ -281,7 +281,7 @@ export class PromotionService {
       !(await promotionEvaluationCursorExists(this.database, { projectId, id: query.cursor }))
     )
       notFound('promotion evaluation cursor');
-    // Fetch one extra row to know whether another page exists without a count query.
+    // 1行多く取り、件数を数えるクエリなしで次のページがあるかを知る。
     const items = await listPromotionEvaluations(this.database, {
       ...query,
       projectId,
@@ -292,8 +292,8 @@ export class PromotionService {
   }
 
   /**
-   * Judges the same candidate Run again under the same policy and appends the result as the next
-   * sequence. The requester's current Project admin authority stands in for the run-as user's.
+   * 同じ候補のRunを同じpolicyでもう一度判定し、結果を次のsequenceとして足す。実行ユーザーの
+   * 権限の代わりに、リクエストした人の今のProject adminの権限を使う。
    */
   async reevaluate(
     principal: Principal,
@@ -359,12 +359,12 @@ export class PromotionService {
   }
 
   /**
-   * Called inside the transaction that moved an evaluation Run to finished. Only Runs produced by an
-   * automation rule (including manual retries of its Jobs) are judged, by the enabled policies of
-   * that rule and the Run's Model. Each policy's failure is recorded as skipped and never thrown, so
-   * the Run's terminal status and outbox event commit regardless. A Run already judged by a policy
-   * (an MLflow Run reopened and finished again) is not judged again; re-evaluation is explicit.
-   * A pass of an autoPromote policy also moves its targetAlias (recordWithAutomaticPromotion).
+   * 評価Runをfinishedへ移したトランザクションの中で呼ばれる。判定するのは自動実行ルールが作った
+   * Run（そのJobを手で再試行したものを含む）だけで、そのルールとRunの登録モデルの有効なpolicyで
+   * 判定する。policyごとの失敗はskippedとして記録し、例外にしない。そのため、Runの終了状態と
+   * outboxのイベントは失敗にかかわらずコミットされる。あるpolicyで判定済みのRun（開き直して
+   * もう一度終えたMLflowのRun）は判定し直さない。再評価は明示的に行う。autoPromoteのpolicyで
+   * 合格すると、そのtargetAliasも動かす（recordWithAutomaticPromotion）。
    */
   async processFinishedRun(connection: Connection, run: Run): Promise<void> {
     if (run.kind !== 'evaluation' || run.status !== 'finished' || !run.modelVersionId) return;
@@ -402,7 +402,7 @@ export class PromotionService {
     const { policy, candidate } = judged;
     const reference = { policyId: policy.id, candidateRunId: candidate.runId };
     if (await hasPromotionEvaluation(connection, reference)) return;
-    // Read before judging: a manual change committed after this point must stop the promotion.
+    // 判定の前に読む。ここより後に手での変更がコミットされたら、昇格を止めなければならない。
     const aliasesAtJudgement = policy.autoPromote
       ? await readPromotionAliases(connection, policy)
       : null;
@@ -438,12 +438,12 @@ export class PromotionService {
   }
 
   /**
-   * Moves targetAlias to the passed candidate and records the decision with the alias event, in
-   * one savepoint. Under the Model lock the baseline and target aliases must still point where the
-   * judgement found them; a concurrent manual change wins and the decision records
-   * baseline_changed. A candidate that already holds targetAlias changes nothing. A refused change
-   * (the run-as user's authority under alias protections) records promotion_denied. Only automatic
-   * decisions promote; a re-evaluation leaves the alias to a person (PromotionDialog).
+   * 1つのsavepointの中で、targetAliasを合格した候補へ動かし、判定をaliasのイベントと一緒に
+   * 記録する。登録モデルのロックの下で、基準と昇格先のaliasが判定のときと同じバージョンを指して
+   * いなければならない。並行した手での変更があればそちらを優先し、判定にはbaseline_changedを
+   * 記録する。候補が既にtargetAliasを持っていれば何も変えない。変更が拒まれた場合（aliasの保護の
+   * もとでの実行ユーザーの権限による）はpromotion_deniedを記録する。昇格するのは自動の判定だけで、
+   * 再評価ではaliasを動かすのを人に任せる（PromotionDialog）。
    */
   private async recordWithAutomaticPromotion(
     connection: Connection,
@@ -470,8 +470,8 @@ export class PromotionService {
         await connection.query(`RELEASE SAVEPOINT ${AUTO_PROMOTION_SAVEPOINT}`);
         return;
       }
-      // The alias event points at this decision before it exists; that foreign key is deferred.
-      // The assignment always records an event: under this lock the alias points elsewhere.
+      // aliasのイベントは、まだ存在しないこの判定を指す。その外部キーは遅延させてある。
+      // このロックの下ではaliasは別のバージョンを指しているので、割り当ては必ずイベントを記録する。
       const evaluationId = randomUUID();
       const aliasEventId = (await assignModelAlias(connection, {
         modelId: policy.modelId,
@@ -483,7 +483,7 @@ export class PromotionService {
         evaluationId,
         guard: promotionAliasGuard(policy),
       }))!;
-      // A concurrent judgement of the same Run already recorded its decision; undo this alias move.
+      // 同じRunを並行して判定した側が、既に結果を記録している。このaliasの移動を取り消す。
       const recorded = await insertPromotionEvaluation(connection, {
         ...record,
         promotion: { id: evaluationId, aliasEventId },
@@ -517,7 +517,7 @@ export class PromotionService {
         code: 'promotion_rule_not_evaluation',
         message: 'the evaluation rule must be an automation rule of kind evaluation',
       });
-    // A rule that never runs for this Model's family would leave the policy without candidates.
+    // この登録モデルのfamilyで動かないルールでは、policyに候補が来ない。
     if (!rule.modelFamilies.includes(family))
       throw new DomainError({
         status: 422,
@@ -545,7 +545,7 @@ export class PromotionService {
     };
   }
 
-  // Same rule as automation rules: Project admin or global administrator, admin scope for tokens.
+  // 自動実行ルールと同じ規則。Project adminか全体管理者で、tokenならadmin scopeが要る。
   private async requirePolicyAdmin(
     connection: Connection,
     principal: Principal,

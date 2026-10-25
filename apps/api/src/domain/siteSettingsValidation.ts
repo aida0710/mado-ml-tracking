@@ -39,9 +39,9 @@ import {
   uuidSchema,
 } from './validation.js';
 
-// The forms are in contracts (the Web checks them first).
+// 書式はcontractsにある（画面が先に検査する）。
 const SINGLE_LINE = /^[^\r\n\0]*$/;
-// The anchored form, or '' for an unset value.
+// アンカー付きの書式。未設定の値なら''。
 const formOrEmpty = (form: RegExp) => new RegExp(`^(?:${form.source.replace(/^\^|\$$/g, '')})?$`);
 const hostSchema = z
   .string()
@@ -141,7 +141,7 @@ export const launcherConnectionCheckResultSchema = z.strictObject({
   message: z.string().max(2000).nullish(),
 });
 
-/** A site's settings without the job shell, which is versioned on its own. */
+/** job shellを除いたsiteの設定。job shellは別にバージョンを持つ。 */
 export type SiteSettingsValues = Omit<SiteSettings, 'jobShell'>;
 
 export const DEFAULT_SITE_SETTINGS: SiteSettingsValues = {
@@ -161,7 +161,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsValues = {
   maxActiveSubmissions: DEFAULT_SITE_MAX_ACTIVE_SUBMISSIONS,
 };
 
-/** The stored settings with the given fields replaced. */
+/** 保存済みの設定の、指定したフィールドを置き換えたもの。 */
 export function mergeSiteSettings(
   previous: SiteSettingsValues,
   input: SiteSettingsInputValues,
@@ -177,8 +177,8 @@ function invalidSettings(message: string): never {
 }
 
 /**
- * What a launcher or `mado-tracking submit` needs from a site of this submission mode. A manual
- * site runs as whoever submits, so it names no launcher, connection or shared account.
+ * このsubmission modeのsiteについて、launcherや`mado-tracking submit`が必要とするもの。手動の
+ * siteは投入した人として動くので、launcher・接続・共用アカウントを指定しない。
  */
 export function validateSiteSettings(
   target: Pick<ComputeTarget, 'submissionMode'>,
@@ -205,7 +205,7 @@ export function validateSiteSettings(
     invalidSettings('allowed GPUs can be set only for a site whose runner chooses GPUs (lease)');
 }
 
-// POST /targets and PATCH /targets/:id take a site's settings with the ComputeTarget fields.
+// POST /targetsとPATCH /targets/:idは、ComputeTargetのフィールドと一緒にsiteの設定を受け取る。
 export const targetCreateSchema = targetSchema.extend({
   site: siteSettingsInputSchema.optional(),
   jobShell: jobShellContentSchema.optional(),

@@ -6,7 +6,7 @@ import type { DatasetFolderUploadService } from '../services/datasetFolderUpload
 import { requestMetadata } from '../http/requestMetadata.js';
 import { parse, principal, uuidParam, type ApiEnvironment } from '../http/request.js';
 
-// Only folder names a folder upload writes; anything else is not one of its attempts.
+// フォルダのアップロードが書くフォルダ名だけを受け付ける。それ以外はその試行のものではない。
 export const datasetFolderUploadFolderSchema = z
   .string()
   .regex(new RegExp(DATASET_FOLDER_UPLOAD_FOLDER_PATTERN));

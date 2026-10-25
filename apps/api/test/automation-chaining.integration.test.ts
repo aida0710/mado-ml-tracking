@@ -86,7 +86,7 @@ describe.skipIf(!testDatabaseUrl)('自動実行の多段連鎖と既存バージ
     });
   }
 
-  // Inference rule A on registration and evaluation rule B chained after A, the usual pipeline.
+  // 登録時に動く推論のルールAと、Aのあとに連鎖する評価のルールB。よくあるパイプライン。
   async function inferenceAndEvaluationRules(
     fixture: ChainFixture,
   ): Promise<{ inference: ModelAutomationRule; evaluation: ModelAutomationRule }> {
@@ -113,7 +113,7 @@ describe.skipIf(!testDatabaseUrl)('自動実行の多段連鎖と既存バージ
     );
   }
 
-  // Stored executions of one rule, oldest first.
+  // 1つのルールについて保存された実行。古い順。
   async function storedExecutions(
     fixture: ContainerFixture,
     ruleId: string,
@@ -166,8 +166,8 @@ describe.skipIf(!testDatabaseUrl)('自動実行の多段連鎖と既存バージ
     );
   }
 
-  // Runs the queued Job of a Run on the test worker; an output DatasetVersion is registered while
-  // the Run is still running, as an inference container's result would be.
+  // RunのキューにあるJobをテスト用のworkerで動かす。推論コンテナの結果と同じく、出力の
+  // DatasetVersionはRunがまだ実行中のうちに登録する。
   async function runJob(
     fixture: ChainFixture,
     job: { runId: string; status: 'finished' | 'failed'; output?: string },
@@ -284,7 +284,7 @@ describe.skipIf(!testDatabaseUrl)('自動実行の多段連鎖と既存バージ
       'automation.pipelineRoot': inferenceExecution!.id,
     });
 
-    // A resent completion must not chain a second evaluation.
+    // 完了を送り直しても、2つ目の評価を連鎖させてはいけない。
     const inferenceJob = (
       await harness.database.query<{ id: string; lease_id: string }>(
         'SELECT id,lease_id FROM jobs WHERE run_id=$1',
@@ -463,8 +463,8 @@ describe.skipIf(!testDatabaseUrl)('自動実行の多段連鎖と既存バージ
         upstreamRuleId: first.id,
       }),
     );
-    // Immutable rules cannot form a cycle through the API; edit the rows directly to prove the
-    // depth walk still reports one instead of recursing.
+    // ルールは変更できないのでAPIでは循環を作れない。行を直接書き換え、深さをたどる処理が
+    // 再帰し続けずに循環を報告することを確かめる。
     await harness.database.query(
       'ALTER TABLE model_automation_rules DISABLE TRIGGER automation_rules_immutable',
     );
@@ -534,7 +534,7 @@ describe.skipIf(!testDatabaseUrl)('自動実行の多段連鎖と既存バージ
     expect(active.status).toBe(409);
     expect(await errorCode(active)).toBe('automation_execution_active');
 
-    // The manually started inference still chains into evaluation when it succeeds.
+    // 手動で始めた推論も、成功すれば評価へ連鎖する。
     await runJob(fixture, { runId: first.runId!, status: 'finished', output: 'predictions' });
     const [chained] = await storedExecutions(fixture, evaluation.id);
     expect(chained).toMatchObject({
@@ -620,7 +620,7 @@ describe.skipIf(!testDatabaseUrl)('自動実行の多段連鎖と既存バージ
       upstreamDatasetVersionIds: [output!.id],
     });
 
-    // A Run the upstream rule did not create cannot stand in for the upstream stage.
+    // 上流のルールが作っていないRunは、上流の段の代わりにならない。
     const handMade = await entity<Run>(
       await request(harness.app, `${fixture.basePath}/runs`, {
         method: 'POST',

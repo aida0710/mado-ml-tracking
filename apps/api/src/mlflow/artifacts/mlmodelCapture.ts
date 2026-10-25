@@ -3,9 +3,10 @@ import { pipeline } from 'node:stream/promises';
 import { parseDocument } from 'yaml';
 import type { Connection } from '../../db/database.js';
 
-// MLmodel contains metadata, not weights. Oversized files still stream to storage without capture.
+// MLmodelが持つのはメタデータで、重みではない。大きすぎるファイルも、取り込みはせずに
+// 保存先へストリームで送る。
 export const MAX_MLMODEL_METADATA_BYTES = 64 * 1024;
-// Limit YAML alias expansion before serializing the document into PostgreSQL JSON.
+// ドキュメントをPostgreSQLのJSONにシリアライズする前に、YAMLのaliasの展開を制限する。
 const MAX_MLMODEL_YAML_ALIASES = 32;
 
 export class MlmodelCapture extends Transform {
@@ -38,8 +39,8 @@ export class MlmodelCapture extends Transform {
 }
 
 /**
- * Parses an MLmodel that is already stored. An oversized file yields null without being read,
- * the same rule as the capture during upload.
+ * 保存済みのMLmodelを解析する。大きすぎるファイルは読まずにnullを返す。アップロード中の
+ * 取り込みと同じ規則。
  */
 export async function readStoredMlmodel(file: {
   size: number;
@@ -52,7 +53,7 @@ export async function readStoredMlmodel(file: {
   return capture.metadata();
 }
 
-/** Stores the parsed MLmodel on the Logged Model; null removes metadata an earlier MLmodel left. */
+/** 解析したMLmodelをLogged Modelに保存する。nullなら、前のMLmodelが残したメタデータを消す。 */
 export async function saveLoggedModelMlmodel(
   connection: Connection,
   model: { projectId: string; id: string; metadata: Record<string, unknown> | null },

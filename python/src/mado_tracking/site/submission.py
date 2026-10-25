@@ -1,12 +1,12 @@
-"""Submit one SiteSubmission through a site's job shell and describe the outcome for the API.
+"""siteのjob shellを通して1つのSiteSubmissionを投入し、その結果をAPI向けにまとめる。
 
-Shared by the launcher (over SSH) and `mado-tracking submit` (on the login node or PC). Setting up
-the work directory is retried, unless the site refused the login: another attempt would only be
-another failed login, and sites lock accounts after a few. The job shell itself runs once, because
-a lost answer may mean the scheduler already holds the job, and a second submission would run it
-twice. The Job tokens and the registry login in the spec directory are masked in every error the
-result carries. The outcome also says when the site could not be reached at all, so that a
-launcher does not log in again through the same login for the rest of its poll.
+launcher（SSH経由）と`mado-tracking submit`（ログインノードかPCの上）が共有する。作業ディレクトリの
+準備は再試行する。ただし、siteがログインを拒んだときは再試行しない。もう一度試してもログインの失敗が
+1回増えるだけで、siteは数回の失敗でアカウントをロックするため。job shell自体は1回だけ動かす。
+応答が届かなくても、スケジューラが既にジョブを受け取っているかもしれず、2回目の投入ではジョブが
+2回動くため。結果に含めるどのエラーでも、specディレクトリにあるJob tokenとレジストリのログイン情報は
+隠す。siteにまったく届かなかったときも結果に示し、launcherが今回のポーリングの残りで、同じログインを
+使って再びログインしないようにする。
 """
 
 from __future__ import annotations
@@ -33,11 +33,11 @@ Result = TypeVar("Result")
 
 @dataclass(frozen=True)
 class SubmissionPlan:
-    """How one site submits: its job shell, runner and the values the job shell receives."""
+    """1つのsiteの投入方法。job shell、runner、job shellが受け取る値。"""
 
     job_shell: bytes
     runner_python: str
-    # The API as the compute nodes reach it (often another host name than the launcher uses).
+    # 計算ノードから見たAPIのURL（launcherが使うものと別のホスト名であることが多い）。
     api_url: str
     runner_settings: RunnerSettings
     variables: Mapping[str, str] = field(default_factory=dict)
@@ -46,11 +46,11 @@ class SubmissionPlan:
 
 @dataclass(frozen=True)
 class SubmissionOutcome:
-    """The SiteSubmissionResult to report, and whether the site could be reached to prepare it."""
+    """報告するSiteSubmissionResultと、準備のときにsiteに届いたかどうか。"""
 
     result: dict[str, Any]
-    # Why the site could not be reached while preparing (a TransportError, masked): another
-    # submission through the same login would fail alike. None once the site was reached.
+    # 準備中にsiteへ届かなかった理由（秘密を隠したTransportError）。同じログインでほかの投入をしても
+    # 同じく失敗する。siteに届いたあとはNone。
     connection_failure: str | None = None
 
 
@@ -83,11 +83,12 @@ def submit_to_site(
     masker: SecretMasker,
     sleep: Callable[[float], None] = time.sleep,
 ) -> SubmissionOutcome:
-    """Prepare the work directory, run the job shell once, and say what to report."""
+    """作業ディレクトリを準備し、job shellを1回だけ動かして、報告する内容を返す。"""
     job_ids = submission_job_ids(submission)
     jobs = ordered_jobs(submission)
     target_id = str(submission["target"]["id"])
-    # The spec directory holds the Job tokens and the registry login, and a job shell may print them.
+    # specディレクトリにはJob tokenとレジストリのログイン情報があり、job shellがそれを出力する
+    # かもしれない。
     job_tokens = [job["jobToken"] for job in jobs if isinstance(job.get("jobToken"), str)]
     masker = SecretMasker([*masker.secrets, *job_tokens, *secret_values_of(plan.secrets or {})])
 
@@ -115,7 +116,7 @@ def submit_to_site(
             job_shell, spec_directory=spec_directory, environment=environment
         )
     except TransportError as error:
-        # The site was reached and prepared, so this says nothing about the next login.
+        # siteには届いて準備も済んでいるので、これは次のログインについて何も示さない。
         LOGGER.error("Job shell for %s lost its connection: %s", ", ".join(job_ids), masker.mask(str(error)))
         return SubmissionOutcome(
             failed_result(

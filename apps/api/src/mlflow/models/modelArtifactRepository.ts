@@ -65,7 +65,7 @@ export async function runModelArtifacts(
   )
     notFound('run');
   const prefix = input.directory ? `${artifactPath(input.directory)}/` : '';
-  // Native uploads have no index entry; an existing index entry remains authoritative.
+  // ネイティブのアップロードには索引の項目が無い。既にある索引の項目は引き続き正とする。
   const manifest = await rows<ArtifactManifestEntry>(
     connection,
     `WITH saved AS (

@@ -1,17 +1,17 @@
-// Analysis of a set of Runs: the params x metrics table behind parallel coordinates and scatter
-// plots, and parameter importance. Run list, Compare and Sweep pages share these endpoints.
+// Runの集合の分析: 平行座標と散布図のもとになるparameter×メトリクスの表と、parameterの重要度。
+// Runの一覧・比較・Sweepの各ページがこれらのエンドポイントを共有する。
 import type { JsonValue, RunStatus } from './index.js';
 import type { RunSearchRequest } from './runSearch.js';
 import type { SweepObjective } from './sweeps.js';
 
-/** Bounds browser rendering and the importance computation (docs/api-contract.md). */
+/** ブラウザでの描画と重要度の計算を抑える上限（docs/api-contract.md）。 */
 export const ANALYSIS_MAX_RUNS = 5000;
 export const ANALYSIS_MAX_PARAMS = 100;
 export const ANALYSIS_MAX_METRICS = 50;
 
 /**
- * Exactly one source. `search` reads every page of POST /runs/search (active Runs only);
- * `sweepId` reads the trials of one sweep in trial order.
+ * 取得元はちょうど1つ。`search`はPOST /runs/searchの全ページを読み（アクティブなRunだけ）、
+ * `sweepId`は1つのSweepのtrialをtrialの順に読む。
  */
 export type RunSet =
   | { runIds: string[] }
@@ -20,9 +20,12 @@ export type RunSet =
 
 export interface RunAnalysisTableRequest {
   runSet: RunSet;
-  /** Omitted: every param with a value; the ANALYSIS_MAX_PARAMS best covered if there are more. */
+  /**
+   * 省略時: 値のあるすべてのparameter。それより多ければ、値を持つRunの割合が高い順に
+   * ANALYSIS_MAX_PARAMS個。
+   */
   params?: string[];
-  /** 1 to ANALYSIS_MAX_METRICS keys, read from the latest metric values. */
+  /** 1からANALYSIS_MAX_METRICS個までのキー。メトリクスの最新の値から読む。 */
   metrics: string[];
 }
 
@@ -31,13 +34,13 @@ export interface RunAnalysisRow {
   name: string;
   experimentId: string;
   status: RunStatus;
-  /** Present when the Run is a sweep trial. */
+  /** RunがSweepのtrialのときにある。 */
   sweepTrialIndex?: number;
-  /** Selected params with a value; recorded (SDK) values win over execution parameters. */
+  /** 選んだparameterのうち値のあるもの。記録した値（SDK）が実行時のparameterより優先する。 */
   params: Record<string, JsonValue>;
-  /** Selected metrics the Run logged; null when the latest value is NaN or infinite. */
+  /** 選んだメトリクスのうちRunが記録したもの。最新の値がNaNか無限大ならnull。 */
   metrics: Record<string, number | null>;
-  /** Only for a sweepId set: the trial's aggregated objective, null until it has one. */
+  /** sweepIdの集合のときだけ: trialの集計した目的の値。値が出るまではnull。 */
   objective?: number | null;
 }
 
@@ -45,16 +48,16 @@ export type RunAnalysisParamKind = 'numeric' | 'categorical';
 
 export interface RunAnalysisParam {
   key: string;
-  /** numeric when every value is a number or a numeric string such as '1e-4'. */
+  /** すべての値が数値か、'1e-4'のような数値の文字列ならnumeric。 */
   kind: RunAnalysisParamKind;
-  /** Only for categorical: the distinct values as strings, in code unit order. */
+  /** categoricalのときだけ: 異なる値を文字列にしたもの。コード単位の順。 */
   values?: string[];
-  /** Share of the Runs that have a value. */
+  /** 値を持つRunの割合。 */
   coverage: number;
 }
 
 export interface RunAnalysisRange {
-  /** null when no Run has a finite value. */
+  /** 有限の値を持つRunが無ければnull。 */
   min: number | null;
   max: number | null;
 }
@@ -69,15 +72,15 @@ export interface RunAnalysisTableResponse {
   runs: RunAnalysisRow[];
   params: RunAnalysisParam[];
   metrics: RunAnalysisMetric[];
-  /** Only for a sweepId set. */
+  /** sweepIdの集合のときだけ。 */
   objective?: RunAnalysisObjective;
 }
 
 export interface ParameterImportanceRequest {
   runSet: RunSet;
-  /** Latest metric value to explain. Required unless runSet is a sweep (then its objective). */
+  /** 説明するメトリクスの最新の値。runSetがSweepでなければ必須（Sweepならその目的の値）。 */
   targetMetric?: string;
-  /** Omitted: chosen as for the table. */
+  /** 省略時: 表と同じ方法で選ぶ。 */
   params?: string[];
 }
 
@@ -85,11 +88,11 @@ export interface ParameterImportanceEntry {
   param: string;
   kind: RunAnalysisParamKind;
   correlation: number | null;
-  /** Impurity decrease, summing to 1 over the params. null when there are too few Runs. */
+  /** 不純度の減少量。全parameterで合計1になる。Runが少なすぎるときはnull。 */
   importance: number | null;
-  /** Out-of-bag permutation importance (drop in R²). null when there are too few Runs. */
+  /** out-of-bagでのpermutation importance（R²の低下量）。Runが少なすぎるときはnull。 */
   permutationImportance: number | null;
-  /** Share of the Runs with a target value that have this param. */
+  /** 対象の値があるRunのうち、このparameterを持つRunの割合。 */
   coverage: number;
 }
 
@@ -98,16 +101,16 @@ export type ImportanceUnavailableReason = 'too_few_runs';
 
 export interface ParameterImportanceResult {
   targetMetric: string;
-  /** latest_metric: the Run's latest value. sweep_objective: the trial's aggregated objective. */
+  /** latest_metric: Runの最新の値。sweep_objective: trialの集計した目的の値。 */
   targetSource: 'latest_metric' | 'sweep_objective';
-  /** Runs with a finite target value, used for the computation. */
+  /** 対象の値が有限で、計算に使ったRunの数。 */
   runCount: number;
-  /** Runs whose target value is missing or not finite. */
+  /** 対象の値が無いか有限でないRunの数。 */
   skippedRunCount: number;
-  /** Most important first (by |correlation| while importance is null). */
+  /** 重要な順（importanceがnullの間は|correlation|の順）。 */
   entries: ParameterImportanceEntry[];
   excluded: { param: string; reason: ParameterExclusionReason }[];
   importanceUnavailableReason: ImportanceUnavailableReason | null;
-  /** Out-of-bag R² of the forest: how far the importance can be trusted. */
+  /** フォレストのout-of-bagのR²。重要度をどこまで信頼できるかの目安。 */
   outOfBagR2: number | null;
 }

@@ -3,10 +3,11 @@ import type { ComputeTarget, Sweep, SweepTrial, SweepTrialPage, WorkerJob } from
 import { entity, request, type Harness } from './harness.js';
 import { workbenchFixture } from './workbenchFixtures.js';
 
-// More than any sweep in these tests runs at once, so claims are never limited by the target.
+// これらのテストのどのSweepが同時に動かす数よりも多い。そのためclaimがコンピュータの上限で
+// 止まることは無い。
 const SWEEP_TARGET_MAX_CONCURRENT_JOBS = 10;
 
-/** A Task whose trials run on a CPU target that accepts every parallel trial. */
+/** 並列のtrialをすべて受け付けるCPUのコンピュータでtrialを動かすTask。 */
 export async function sweepFixture(harness: Harness) {
   const fixture = await workbenchFixture(harness);
   const target = await entity<ComputeTarget>(
@@ -61,7 +62,7 @@ export async function sweepFixture(harness: Harness) {
     return page.items;
   }
 
-  /** Claims one queued Job as a new worker; null when nothing can be claimed. */
+  /** 新しいworkerとして、順番待ちのJobを1つclaimする。claimできるものが無ければnull。 */
   async function claim(): Promise<WorkerJob | null> {
     workerCount += 1;
     const claimed = await entity<{ item: WorkerJob | null }>(

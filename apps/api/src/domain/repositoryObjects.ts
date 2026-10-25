@@ -7,7 +7,7 @@ import {
   MAX_CODE_TEXT_BYTES,
 } from './codeSourceValidation.js';
 
-// Trees include directories so even empty .git and unsafe directory names are rejected.
+// treeにはディレクトリも含めるので、空の.gitや安全でないディレクトリ名も拒める。
 const MAX_REPOSITORY_ENTRIES = 10_000;
 const utf8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 export interface RepositoryBlob {

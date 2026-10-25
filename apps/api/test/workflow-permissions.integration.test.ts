@@ -10,7 +10,7 @@ import { referenceDigest } from './fixtures.js';
 import { createHarness, entity, login, request, testDatabaseUrl, type Harness } from './harness.js';
 import { workflowFixture, type WorkflowFixture } from './workflowFixtures.js';
 
-/** How a request authenticates: a person's session or an API token. */
+/** リクエストの認証の仕方。人のsessionか、API token。 */
 type Caller = { cookie: string } | { token: string };
 
 describe.skipIf(!testDatabaseUrl)('ワークフローの権限（独立PostgreSQL）', () => {
@@ -65,7 +65,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの権限（独立PostgreSQ
     return ((await response.json()) as { code: string }).code;
   }
 
-  /** An execution whose training step failed, so it can be resumed. */
+  /** 学習のステップが失敗し、再開できる状態の実行。 */
   async function failedExecution(workflowId: string): Promise<WorkflowExecution> {
     const execution = await entity<WorkflowExecution>(
       await launch(workflowId, fixture.editor, { idempotencyKey: 'failing' }),
@@ -121,7 +121,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの権限（独立PostgreSQ
       }),
     );
     expect(resumedByCreator.steps[0]!.reused).toBe(true);
-    // The colleague still starts executions of their own and stops them.
+    // 同僚は、自分の実行を始めて止めることは引き続きできる。
     const own = await entity<WorkflowExecution>(
       await launch(workflowId, colleague, { idempotencyKey: 'colleague-own' }),
     );
@@ -133,7 +133,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの権限（独立PostgreSQ
   it('アーカイブしたProjectのワークフローは操作できず、ステップの間にあった実行は次を起動せずに終わる', async () => {
     const definition = await fixture.createWorkflow();
     const execution = await fixture.launch(definition);
-    // A Project with a queued or running Job cannot be archived; between steps there is none.
+    // 順番待ちか実行中のJobがあるProjectはアーカイブできない。ステップの合間にはそのJobが無い。
     const processing = await fixture.claim();
     await fixture.output(processing.run.id);
     await fixture.complete(processing);
@@ -211,7 +211,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの権限（独立PostgreSQ
       }),
     );
 
-    // This Project's workflow and execution under the other Project's path.
+    // このProjectのワークフローと実行を、別のProjectのパスの下で指定する。
     for (const response of [
       await request(harness.app, `${otherPath}/workflows/${definition.workflow.id}`, {
         cookie: fixture.editor.cookie,
@@ -223,7 +223,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの権限（独立PostgreSQ
       }),
     ])
       expect(response.status).toBe(404);
-    // The other Project's dataset version as a pinned input of this Project's workflow.
+    // 別のProjectのデータセットバージョンを、このProjectのワークフローの固定の入力にする。
     const mixedInput = await request(harness.app, `${fixture.basePath}/workflows`, {
       method: 'POST',
       cookie: fixture.editor.cookie,
@@ -312,7 +312,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの権限（独立PostgreSQ
     const started = await entity<WorkflowExecution>(
       await launch(definition.workflow.id, enough, { idempotencyKey: 'enough' }),
     );
-    // The Service Account controls what it started, and not what a person started.
+    // Service Accountは自分が始めたものを操作でき、人が始めたものは操作できない。
     expect(await errorCode(await cancel(execution.id, enough), 403)).toBe(
       'workflow_control_forbidden',
     );

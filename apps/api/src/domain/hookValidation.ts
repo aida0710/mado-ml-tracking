@@ -28,11 +28,11 @@ import {
   walltimeSecondsSchema,
 } from './validation.js';
 
-// Executions shown per page; the history is kept, so the list pages backwards.
+// 1ページに出す実行の数。履歴は残すので、一覧は新しい方から古い方へページを送る。
 const DEFAULT_EXECUTION_PAGE_SIZE = 50;
 const MAX_EXECUTION_PAGE_SIZE = 200;
 const DEFAULT_CHILD_WAIT_SECONDS = 30;
-// Chosen by the caller (a driver's loop counter, a CI build ID); bounded like other keys.
+// 呼び出し側が決める（ドライバのループの番号、CIのビルドIDなど）。ほかのkeyと同じく長さを抑える。
 const idempotencyKeySchema = z.string().min(1).max(200);
 const arraySizeSchema = z.number().int().min(1).max(MAX_JOB_ARRAY_SIZE);
 const runStatusesSchema = z
@@ -148,7 +148,7 @@ function invalidHook(message: string, details?: ApiErrorDetails): never {
   throw new DomainError({ status: 422, code: 'invalid_request', message, details });
 }
 
-/** Settings that depend on each other; the schema checks each field alone. */
+/** 互いに依存する設定を確かめる。スキーマは各項目を単独でしか検査しない。 */
 export function validateHookSettings(input: HookCreateInput): void {
   if ((input.trigger === 'webhook') !== (input.webhookSignature !== undefined))
     invalidHook('webhookSignature can be set only when trigger is webhook');
@@ -156,12 +156,12 @@ export function validateHookSettings(input: HookCreateInput): void {
     invalidHook('checkpointEvery can be set only when checkpointMode is every_k');
   if (input.trigger !== 'checkpoint_saved' && input.checkpointMode !== 'every')
     invalidHook('checkpointMode can be set only when trigger is checkpoint_saved');
-  // The registered version is the input; a fixed one would silently be ignored.
+  // 登録されたバージョンが入力になる。固定のバージョンを指定しても黙って無視されてしまう。
   if (input.trigger === 'model_registered' && input.template.modelVersionId !== null)
     invalidHook('a model_registered hook uses the registered version, so do not set modelVersionId');
   if (input.template.datasetPartitionVersionId && input.template.arraySize === null)
     invalidHook('set datasetPartitionVersionId together with arraySize');
-  // A condition on a fact the trigger's event does not have would never match.
+  // triggerのイベントが持たない事実に対する条件は、決して合わない。
   const allowed = HOOK_FILTER_FIELDS[input.trigger];
   const unusable = (Object.keys(input.filter) as (keyof HookFilter)[]).filter(
     (field) => input.filter[field] !== undefined && !allowed.includes(field),

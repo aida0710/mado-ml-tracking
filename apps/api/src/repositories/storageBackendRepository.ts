@@ -20,7 +20,7 @@ export function listStorageBackendRows(connection: Connection): Promise<StorageB
   return rows(connection, `SELECT ${storageBackendColumns} FROM storage_backends ORDER BY name`);
 }
 
-/** Locks the row when called inside a transaction, so concurrent updates apply one at a time. */
+/** トランザクションの中で呼ぶと行をロックし、同時の更新を1つずつ適用させる。 */
 export function findStorageBackendRowForUpdate(
   connection: Connection,
   name: string,
@@ -87,7 +87,10 @@ export async function updateStorageBackend(
   ))!;
 }
 
-/** Artifacts and upload sessions both keep the backend name to read or finish their bytes. */
+/**
+ * Artifactはバイト列を読むため、アップロードセッションはバイト列を完成させるために、どちらも
+ * 保存先の名前を持っている。
+ */
 export async function isStorageBackendReferenced(
   connection: Connection,
   name: string,

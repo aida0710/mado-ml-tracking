@@ -165,10 +165,10 @@ describe.skipIf(!testDatabaseUrl)('共有レポートのバージョンと権限
       archivedAt: null,
     });
     expect(created.revision).toMatchObject({ revision: 1, restoredFromRevision: null });
-    // Responses have exactly the published shape (docs/openapi.json).
+    // 応答は公開した形（docs/openapi.json）と完全に一致する。
     reportDetailSchema.parse(created);
 
-    // Any Project editor may save; the revision records who did.
+    // Projectのeditorなら誰でも保存でき、バージョンには誰が保存したかが残る。
     const edited = await entity<ReportDetail>(
       await putReport(
         created.report.id,
@@ -270,7 +270,7 @@ describe.skipIf(!testDatabaseUrl)('共有レポートのバージョンと権限
     expect(await listed()).toEqual([]);
     expect(await listed('?includeArchived=true')).toEqual([created.report.id]);
 
-    // The Project admin may unarchive a report someone else created.
+    // Project adminは、ほかの人が作ったレポートのアーカイブを解除できる。
     const unarchived = await entity<Report>(
       await reportAction(created.report.id, 'unarchive', fixture.administrator),
       200,
@@ -282,7 +282,7 @@ describe.skipIf(!testDatabaseUrl)('共有レポートのバージョンと権限
   it('一覧は更新の新しい順にcursorで辿れる', async () => {
     const reports: ReportDetail[] = [];
     for (let index = 0; index < 3; index += 1) reports.push(await createReport());
-    // Saving a revision moves the report to the top.
+    // バージョンを保存するとレポートが先頭に来る。
     await entity(await putReport(reports[0]!.report.id, { baseRevision: 1, blocks: [] }), 200);
     const firstPage = await entity<ReportPage>(
       await request(harness.app, `${reportsPath}?limit=2`, { cookie: fixture.viewer.cookie }),
@@ -333,7 +333,7 @@ describe.skipIf(!testDatabaseUrl)('共有レポートのバージョンと権限
       expect(response.status, JSON.stringify(block)).toBe(422);
       expect(await errorCode(response)).toBe('report_reference_invalid');
     }
-    // The sweep exists, but in this report's Project only.
+    // Sweepは存在するが、このレポートのProjectにしか無い。
     const otherProjectReport = await request(harness.app, `${other.basePath}/reports`, {
       method: 'POST',
       cookie: fixture.administrator.cookie,
@@ -395,7 +395,7 @@ describe.skipIf(!testDatabaseUrl)('共有レポートのバージョンと権限
     await entity(await reportAction(created.report.id, 'restore', fixture.editor, { revision: 1 }));
     await reportAction(created.report.id, 'archive', secondEditor);
     await entity(await reportAction(created.report.id, 'archive', fixture.editor), 200);
-    // Archiving again changes nothing and adds no event.
+    // もう一度アーカイブしても何も変わらず、イベントも増えない。
     await entity(await reportAction(created.report.id, 'archive', fixture.editor), 200);
     await entity(await reportAction(created.report.id, 'unarchive', fixture.editor), 200);
     const events = await harness.database.query<{

@@ -1,4 +1,4 @@
-"""Worker identity, claim/recovery queue, and process-lifetime coordination."""
+"""workerの識別、Jobの取得・復旧のキュー、プロセスの寿命にわたる調整。"""
 
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ class Worker:
         self.stopping = asyncio.Event()
         self.tasks: dict[str, asyncio.Task[None]] = {}
         self.retained_job_ids: set[str] = set()
-        # Tokens the API re-issued for Jobs whose task already runs (resume after a failed claim).
+        # タスクが既に動いているJobのために、APIが発行し直したtoken（取得に失敗したあとの再開）。
         self.reissued_job_tokens: dict[str, str] = {}
         self.resume_available = True
         self.target_checks = TargetCheckRunner(settings, self.api)
@@ -109,13 +109,13 @@ class Worker:
             or job.id in self.retained_job_ids
             or self.journal.has_job(job.id)
         ):
-            # A response cannot prove a previously started execution stopped. Keep saved monitoring.
+            # 応答では、以前に始めた実行が止まったことを証明できない。保存済みの監視は続ける。
             LOGGER.error(
                 "Job %s instructions failed validation; lease retained for monitoring/recovery: %s",
                 job.id,
                 self.api.masker.mask(job.error),
             )
-            # Exclude retained leases from claim replay without declaring their executions stopped.
+            # 残しているleaseは、その実行が止まったとは報告せずに、取得のやり直しの対象から外す。
             self.retained_job_ids.add(job.id)
             return
         try:
@@ -128,7 +128,8 @@ class Worker:
         if job.id not in self.tasks:
             self.tasks[job.id] = asyncio.create_task(self.run_job(job))
         elif job.job_token is not None:
-            # Re-issuing revoked the token the task holds; it adopts this one before launching code.
+            # 発行し直したことで、タスクが持つtokenは無効になった。
+            # タスクはコードを起動する前にこのtokenに切り替える。
             self.reissued_job_tokens[job.id] = job.job_token
 
     def collect_finished(self) -> None:
@@ -176,7 +177,7 @@ class Worker:
                 await wait_interval(self.stopping, self.settings.poll_seconds)
         finally:
             await self.target_checks.stop()
-            # Worker shutdown leaves detached executions running and preserves their journals.
+            # workerが終了しても、切り離された実行は動き続け、そのjournalも残る。
             for task in self.tasks.values():
                 task.cancel()
             await asyncio.gather(*self.tasks.values(), return_exceptions=True)

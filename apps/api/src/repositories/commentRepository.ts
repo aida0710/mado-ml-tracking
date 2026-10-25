@@ -7,7 +7,7 @@ export interface CommentTarget {
   targetId: string;
 }
 
-/** A stored comment including fields the API does not expose. */
+/** APIでは見せないフィールドも含めた、保存したままのコメント。 */
 export interface StoredComment {
   id: string;
   projectId: string;
@@ -26,7 +26,7 @@ const storedCommentSelect = `SELECT c.id,c.project_id,c.target_type,c.target_id,
   c.body,c.author_user_id,u.display_name AS author_display_name,c.created_at,c.edited_at,c.deleted_at
   FROM comments c JOIN users u ON u.id=c.author_user_id`;
 
-// A deleted comment keeps its place in the thread but never exposes its body.
+// 削除したコメントはスレッドの中の位置を保つが、本文は決して見せない。
 export function toComment(stored: StoredComment): Comment {
   const deleted = stored.deletedAt !== null;
   return {
@@ -97,8 +97,8 @@ export async function markCommentDeleted(
   );
 }
 
-// Thread order: roots by (created_at,id), each followed by its replies by (created_at,id).
-// thread_depth keeps a root ahead of a reply that has the same created_at.
+// スレッドの順序。起点のコメントを(created_at,id)の順に並べ、それぞれの後ろに返信を
+// (created_at,id)の順に続ける。thread_depthにより、同じcreated_atの返信より起点が前に来る。
 const threadOrderedComments = `WITH ordered AS (
   SELECT c.id,COALESCE(root.created_at,c.created_at) AS thread_created_at,
     COALESCE(root.id,c.id) AS thread_id,(c.parent_comment_id IS NOT NULL)::int AS thread_depth,
@@ -120,7 +120,7 @@ export async function commentCursorExists(
   );
 }
 
-// Keyset pagination stays stable when comments are added to earlier threads between pages.
+// キーセットのページ分けなので、ページを読む合間に前のスレッドへコメントが足されてもずれない。
 export async function listThreadComments(
   connection: Connection,
   page: CommentTarget & { cursor: string | null; limit: number },

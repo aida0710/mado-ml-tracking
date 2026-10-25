@@ -40,7 +40,7 @@ async function getPage<T = ArtifactPage>(
   return entity<T>(await request(harness.app, url, { cookie }), 200);
 }
 
-/** Follows nextCursor until the last page and returns every item in page order. */
+/** 最後のページまでnextCursorをたどり、すべての項目をページの順に返す。 */
 async function readAllPages(harness: Harness, cookie: string, url: string): Promise<Artifact[]> {
   const items: Artifact[] = [];
   let cursor: string | undefined;
@@ -57,7 +57,7 @@ async function readAllPages(harness: Harness, cookie: string, url: string): Prom
   return items;
 }
 
-/** Rows without blobs: listing reads only the catalog, never the stored content. */
+/** blobの無い行。一覧はカタログだけを読み、保存した中身は読まない。 */
 async function insertArtifactRows(
   harness: Harness,
   rows: { projectId: string; runId: string | null; path: string; createdAt: string }[],
@@ -120,7 +120,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactブラウザの一覧・tree・catalo
     expect(latest.items).toHaveLength(1);
     expect(latest.items[0]!.size).toBe(Buffer.byteLength('SDK mapped'));
     expect(latest.items[0]!.id).not.toBe(later.id);
-    // The MLflow list goes through the same rule and serves the same Artifact.
+    // MLflowの一覧も同じ規則に従い、同じArtifactを返す。
     expect(await (await request(fixture.app, url, { cookie: fixture.viewer.cookie })).text()).toBe(
       'SDK mapped',
     );
@@ -150,7 +150,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactブラウザの一覧・tree・catalo
       fileCount: 2,
       totalSize: 1 + 4,
     });
-    // The prefix is a directory with or without the trailing slash, and only its direct children appear.
+    // prefixは末尾のスラッシュの有無にかかわらずディレクトリとして扱い、直下の子だけを出す。
     const audio = await getPage<ArtifactTree>(
       harness,
       fixture.viewer.cookie,
@@ -227,7 +227,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactブラウザの一覧・tree・catalo
     const list = `${fixture.basePath}/runs/${fixture.run.id}/artifacts`;
     const all = await readAllPages(harness, fixture.viewer.cookie, `${list}?versions=all&limit=7`);
     expect(all.map((item) => item.id)).toEqual(stored.map((row) => row.id));
-    // With tied timestamps the highest id is the latest version of each path.
+    // 時刻が同じなら、idが最も大きいものを各パスの最新のバージョンとする。
     const latest = await readAllPages(harness, fixture.viewer.cookie, `${list}?limit=4`);
     const firstPerPath = stored.filter(
       (row, index) => index === 0 || stored[index - 1]!.path !== row.path,
@@ -326,7 +326,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactブラウザの一覧・tree・catalo
     expect(await ids(`modelVersionId=${version.id}&versions=latest`)).toEqual(
       [weights.id, replaced.id].sort(),
     );
-    // modelId alone covers every version of that Model and nothing of another Model.
+    // modelIdだけを指定すると、そのModelの全バージョンが入り、ほかのModelのものは入らない。
     const secondWeights = await entity<Artifact>(
       await request(harness.app, `${fixture.basePath}/artifacts?path=weights-v2.bin`, {
         method: 'PUT',
@@ -377,7 +377,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactブラウザの一覧・tree・catalo
       expect((await request(harness.app, url, { cookie: fixture.outsider.cookie })).status).toBe(
         403,
       );
-    // The Run belongs to another Project, so the other Project's path cannot list it.
+    // Runは別のProjectに属するので、もう一方のProjectの経路からは一覧できない。
     for (const url of [
       `/api/projects/${other.id}/runs/${fixture.run.id}/artifacts`,
       `/api/projects/${other.id}/runs/${fixture.run.id}/artifacts/tree`,

@@ -1,4 +1,4 @@
-// Storage keys are application-generated IDs. The original filename belongs in metadata.
+// ストレージのキーはアプリケーションが生成するID。元のファイル名はメタデータに入れる。
 const MAX_STORAGE_KEY_LENGTH = 1024;
 export function validateArtifactKey(key: string): void {
   if (

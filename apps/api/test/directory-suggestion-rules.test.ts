@@ -66,7 +66,7 @@ describe('保存先ディレクトリ候補の規則', () => {
       expect(isSuggestedName(name, root)).toBe(false);
     for (const name of ['home', 'srv', 'mnt', 'large', 'var', 'opt'])
       expect(isSuggestedName(name, root)).toBe(true);
-    // Only the top level is the operating system's; the same name deeper down is a user's.
+    // OSのものは最上位の階層だけ。同じ名前でも、もっと深い階層にあれば利用者のもの。
     expect(isSuggestedName('tmp', planDirectorySuggestions('/large/', WORKING_DIRECTORY))).toBe(
       true,
     );

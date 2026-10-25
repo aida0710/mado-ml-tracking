@@ -1,4 +1,4 @@
-"""A tiny tracking workload that changes its file after execution starts."""
+"""実行が始まってから自分のファイルを書き換える、小さなtrackingのワークロード。"""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 VERSION = 1
-# A handful of points makes the native metric history visible in the browser.
+# 数点あれば、ブラウザでnativeのメトリクスの履歴が見える。
 DEMO_STEPS = 5
 
 
@@ -25,7 +25,7 @@ def main() -> None:
         run.log_artifact(
             output, path="results/prediction.json", mime_type="application/json"
         )
-    # The saved source must describe what started, even if a workload edits itself.
+    # ワークロードが自分を書き換えても、保存したソースは起動したときの内容でなければならない。
     Path(__file__).write_text("# modified during execution\n", encoding="utf-8")
 
 

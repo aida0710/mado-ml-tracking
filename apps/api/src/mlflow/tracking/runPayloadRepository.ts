@@ -26,7 +26,7 @@ export async function loadRunRecords(
   if (!runs.length) return new Map();
   const runIds = runs.map((run) => run.id);
   const projectId = runs[0]!.projectId;
-  // A page uses four bounded queries instead of querying each Run separately.
+  // Runごとに問い合わせず、1ページを件数の限られた4つのクエリで読む。
   const metrics = await rows<MetricRow & { runId: string }>(
     connection,
     `SELECT DISTINCT ON(run_id,name) run_id,${metricColumns} FROM metrics WHERE run_id=ANY($1::uuid[])

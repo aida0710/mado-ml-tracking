@@ -2,9 +2,9 @@ import type { Artifact } from '@mmt/contracts';
 import type { ArtifactContent } from '@mmt/platform';
 import { isInlineArtifactMimeType } from '../domain/artifactMimeType.js';
 
-// Artifact ids never change content, so a year-long private cache is safe for native content URLs.
+// Artifactのidが指す中身は変わらないので、ネイティブの中身のURLは1年間のprivateキャッシュで安全。
 export const IMMUTABLE_ARTIFACT_CACHE_CONTROL = 'private, max-age=31536000, immutable';
-// MLflow paths can be re-pointed to another Artifact, so their responses must not be cached.
+// MLflowのパスは別のArtifactを指し直せるので、その応答をキャッシュしてはならない。
 export const MUTABLE_ARTIFACT_CACHE_CONTROL = 'private, no-store';
 
 export type ArtifactDisposition = 'inline-when-safe' | 'attachment';
@@ -14,7 +14,7 @@ export function artifactEntityTag(artifact: Pick<Artifact, 'sha256'>): string {
 }
 
 function encodeFilename(filename: string): string {
-  // RFC 5987 leaves these characters unreserved, but some clients mis-parse them in filename*.
+  // RFC 5987ではこれらの文字は予約されていないが、filename*の中で誤って解釈するクライアントがある。
   return encodeURIComponent(filename).replace(
     /['()*]/g,
     (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`,
@@ -28,7 +28,7 @@ function contentDisposition(artifact: Artifact, disposition: ArtifactDisposition
   return `${isInline ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeFilename(filename)}`;
 }
 
-/** Headers shared by full, partial, and not-modified responses for one Artifact. */
+/** 1つのArtifactの全体・部分・not-modifiedの応答で共通のヘッダー。 */
 export function artifactValidatorHeaders(
   artifact: Artifact,
   cacheControl: string,
@@ -60,7 +60,7 @@ function entityTagList(header: string): string[] {
   return header.split(',').map((tag) => tag.trim());
 }
 
-/** If-None-Match uses weak comparison, so a W/ prefix from an intermediary still matches. */
+/** If-None-Matchは弱い比較を使うので、中継者が付けたW/の前置きがあっても一致する。 */
 export function matchesIfNoneMatch(header: string | undefined, artifact: Artifact): boolean {
   if (!header) return false;
   const entityTag = artifactEntityTag(artifact);
@@ -68,8 +68,8 @@ export function matchesIfNoneMatch(header: string | undefined, artifact: Artifac
 }
 
 /**
- * If-Range requires strong comparison. Artifacts expose no Last-Modified, so a date never matches
- * and the client receives the whole representation, which is always correct.
+ * If-Rangeは強い比較が必要。ArtifactはLast-Modifiedを出さないので日付は決して一致せず、
+ * クライアントは全体の表現を受け取る。それは常に正しい。
  */
 export function shouldServeRange(ifRangeHeader: string | undefined, artifact: Artifact): boolean {
   if (!ifRangeHeader) return true;

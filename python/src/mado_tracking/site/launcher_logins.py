@@ -1,9 +1,9 @@
-"""Where the launcher logs in for one site and account: an SshEndpoint and the files it names.
+"""1つのsiteとアカウントについて、launcherがログインする先。SshEndpointと、それが指すファイル。
 
-    <state dir>/known-hosts/<targetId>   the site's known_hosts from the Web (0600)
+    <state dir>/known-hosts/<targetId>   siteのknown_hosts。画面から取る（0600）
 
-The account's key is <state dir>/keys/<keyId> (launcher_keys.py). Host keys come only from the
-site's settings, so a host whose key the Web does not list is never accepted.
+アカウントの鍵は<state dir>/keys/<keyId>（launcher_keys.py）。ホスト鍵はsiteの設定からだけ
+取るので、画面に鍵が無いホストは決して受け入れない。
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ class SiteLogins:
         )
 
     def known_hosts(self, target_id: str, content: str) -> Path:
-        """The site's known_hosts file, rewritten only when the Web's lines changed."""
+        """siteのknown_hostsファイル。画面の行が変わったときだけ書き直す。"""
         if not content.strip():
             raise ConfigurationError(
                 "The site's known_hosts is empty; list the host keys of the site and of its jump hosts "

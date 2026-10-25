@@ -4,7 +4,7 @@ import { first, rows, type Connection } from '../db/database.js';
 const keyColumns =
   'id,target_id,user_id,launcher_id,status,public_key,fingerprint,requested_at,ready_at';
 
-/** Live keys of a site, the shared account's first. */
+/** siteの有効な鍵。共用アカウントの鍵を先に並べる。 */
 export async function listLiveSiteKeys(connection: Connection, targetId: string): Promise<SiteKey[]> {
   return rows<SiteKey>(
     connection,
@@ -32,7 +32,7 @@ export async function revokeSiteKey(connection: Connection, keyId: string): Prom
   ]);
 }
 
-/** Asks the site's launcher for a new key for this account. */
+/** このアカウント用の新しい鍵をsiteのlauncherに依頼する。 */
 export async function requestSiteKey(
   connection: Connection,
   key: { targetId: string; userId: string | null; launcherId: string },
@@ -45,9 +45,9 @@ export async function requestSiteKey(
 }
 
 /**
- * Keeps one live key per account the site's launcher logs in as: the shared account, or every
- * person with an account name on a personal site. Keys of another launcher, or of accounts the
- * site no longer uses, are revoked; a manual site has none.
+ * siteのlauncherがログインに使うアカウントごとに、有効な鍵を1つずつ保つ。対象は共用アカウントか、
+ * 本人アカウントのsiteならアカウント名を設定した全員。別のlauncherの鍵や、siteがもう使わない
+ * アカウントの鍵は失効させる。手動投入のsiteには鍵が無い。
  */
 export async function reconcileSiteKeys(
   connection: Connection,
@@ -74,7 +74,7 @@ export async function reconcileSiteKeys(
       await requestSiteKey(connection, { targetId: site.targetId, userId, launcherId });
 }
 
-/** Every live key the launcher holds or must make. */
+/** launcherが持っている、または作るべき有効な鍵のすべて。 */
 export async function listLauncherKeys(
   connection: Connection,
   launcherId: string,
@@ -87,7 +87,9 @@ export async function listLauncherKeys(
   );
 }
 
-/** Records the public half of a key the launcher made; undefined if the key is not its live one. */
+/**
+ * launcherが作った鍵の公開鍵を記録する。その鍵がlauncherの有効な鍵でなければundefined。
+ */
 export async function publishSiteKey(
   connection: Connection,
   key: { keyId: string; launcherId: string; publicKey: string; fingerprint: string },

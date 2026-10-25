@@ -1,9 +1,10 @@
-"""Bring each input DatasetVersion's files to the target's dataset cache before the Job starts.
+"""Jobの開始前に、入力の各DatasetVersionのファイルをコンピュータのデータセットのキャッシュへ運ぶ。
 
-'artifacts' versions are verified against their manifest digest and per-file sha256. 'reference'
-versions are fetched by URI scheme: file:// (in place on the target), https:// and s3://. The
-target's datasetTransfer decides who downloads API files and HTTPS URLs: the worker, relaying
-one tar to the target ('relay'), or the target itself with the Job token ('direct').
+'artifacts'のバージョンは、manifestのdigestとファイルごとのsha256で確かめる。'reference'の
+バージョンはURIのスキームごとに取得する。file://（コンピュータ上でその場で読む）、https://、s3://。
+APIのファイルとHTTPSのURLを誰がダウンロードするかは、コンピュータのdatasetTransferで決まる。
+workerがダウンロードして1つのtarでコンピュータへ中継するか（'relay'）、コンピュータ自身が
+Job tokenで取得するか（'direct'）。
 """
 
 from __future__ import annotations
@@ -35,23 +36,23 @@ from .dataset_partition import DatasetPartition, partition_cache_key, partition_
 from .download_content import DOWNLOAD_ACCEPT_ENCODING, write_downloaded_content
 from .runner_commands import RunnerCommands
 
-# The files API's largest page.
+# ファイルのAPIのページの最大の大きさ。
 FILE_PAGE_LIMIT = 1000
-# A target-side fetch that failed on the network is tried again before the Job fails.
+# コンピュータ側の取得が通信の失敗で止まったら、Jobを失敗にする前にもう一度試す。
 DATASET_FETCH_ATTEMPTS = 3
 DATASET_FETCH_RETRY_SECONDS = 2.0
-# Labels Mado itself writes for data that the Job's code reads another way (the upstream Run's
-# Artifacts through the SDK, or a verification fixture); there is nothing to download.
+# mado ML Tracking自身が、Jobのコードが別の方法で読むデータに付けるラベル（SDKで読む上流のRunの
+# Artifactや、検証用のデータ）。ダウンロードするものは無い。
 DESCRIPTOR_ONLY_SCHEMES = {"urn", "mmt-artifact"}
 FETCHED_REFERENCE_SCHEMES = {"file", "https", "s3"}
 
-# Jobs of one worker that need the same cache entry wait for each other, so a relayed entry is
-# downloaded once; the target's lock covers Jobs of different workers.
+# 同じキャッシュのエントリが要る1つのworkerのJob同士は互いに待つので、中継するエントリの
+# ダウンロードは1回で済む。別々のworkerのJob同士は、コンピュータ側のロックで待ち合わせる。
 _CACHE_ENTRY_LOCKS: dict[tuple[str, str], asyncio.Lock] = {}
 
 
 class DatasetStagingError(ConfigurationError):
-    """An input dataset cannot be brought to the target; the Job fails before it starts."""
+    """入力のデータセットをコンピュータへ持ってこられない。Jobは始まる前に失敗する。"""
 
 
 @dataclass(frozen=True)
@@ -67,19 +68,19 @@ class DatasetSource:
 
 @dataclass
 class StagedDatasets:
-    # versionId -> {"path": target path, "key": cache key or None for a file:// reference}
+    # versionId -> {"path": コンピュータ上のパス, "key": キャッシュのキー（file://の参照ならNone）}
     paths: dict[str, dict[str, Any]] = field(default_factory=dict)
-    # Facts for the Run's log (data left to the Job's code, a cache above its limit).
+    # Runのログに残す事実（Jobのコードに任せたデータ、上限を超えたキャッシュ）。
     notices: list[str] = field(default_factory=list)
 
 
 def indexed_transfer_path(transfer_path: Callable[[str], Path], index: int) -> Callable[[str], Path]:
-    # Each input gets its own temporary files in the worker's journal directory.
+    # 入力ごとに、workerのjournalのディレクトリに別々の一時ファイルを作る。
     return lambda name: transfer_path(f"{name}-{index}")
 
 
 def reference_cache_key(uri: str, digest: str) -> str:
-    # A reference digest is whatever the client recorded, so the URI is part of the key.
+    # 参照のdigestはクライアントが記録した任意の値なので、URIもキーに含める。
     return "r-" + hashlib.sha256(f"{uri}\n{digest}".encode()).hexdigest()
 
 
@@ -114,7 +115,7 @@ async def list_dataset_files(api: ArtifactTransferApi, dataset: dict[str, Any]) 
 
 
 async def plan_dataset(api: ArtifactTransferApi, dataset: dict[str, Any]) -> DatasetSource | None:
-    """How to obtain one version, or None when it is a descriptor only."""
+    """1つのバージョンの取得方法。記述だけのものならNone。"""
     version_id, uri, digest = dataset["id"], str(dataset.get("uri") or ""), str(dataset.get("digest") or "")
     content_kind = dataset.get("contentKind")
     if content_kind not in {"artifacts", "reference"}:
@@ -147,7 +148,7 @@ async def plan_dataset(api: ArtifactTransferApi, dataset: dict[str, Any]) -> Dat
 
 
 def partition_source(source: DatasetSource, partition: DatasetPartition) -> DatasetSource:
-    """The array member's share of a verified 'artifacts' version, as its own cache entry."""
+    """確かめた'artifacts'のバージョンの、arrayのメンバーの受け持ち分（専用のエントリにする）。"""
     if source.kind != "artifacts" or source.files is None:
         raise DatasetStagingError(
             f"DatasetVersion {source.version_id} is split among array members, so it must hold Artifacts"
@@ -172,7 +173,7 @@ async def stage_input_datasets(
     api_url: str,
     partition: DatasetPartition | None = None,
 ) -> StagedDatasets:
-    """Stage every input; the version named by `partition` brings only the member's share."""
+    """すべての入力を配置する。`partition`が指すバージョンは、メンバーの受け持ち分だけを運ぶ。"""
     staged = StagedDatasets()
     for index, dataset in enumerate(job.input_datasets):
         source = await plan_dataset(api, dataset)
@@ -239,7 +240,7 @@ class _DatasetStaging:
             "maxCacheBytes": self.max_bytes,
         }
         if self.relayed and source.kind in {"artifacts", "https"}:
-            # The file list is only needed to fill the entry; a lookup sends no list.
+            # ファイルの一覧はエントリを埋めるときにだけ要る。lookupでは一覧を送らない。
             cached = await self.command({**request, "files": None, "source": {"kind": "lookup"}})
             if cached.get("status") == "cached":
                 return cached
@@ -269,7 +270,7 @@ class _DatasetStaging:
     async def relay(self, source: DatasetSource, request: dict[str, Any]) -> dict[str, Any]:
         archive = self.transfer_path("dataset-archive")
         try:
-            # HTTPS sizes and sha256 are only known after the download; the target computes them.
+            # HTTPSのサイズとsha256はダウンロードするまで分からないので、コンピュータが計算する。
             files = source.files or [{"path": reference_file_name(source.uri), "sha256": None, "size": None}]
             write_request_header(archive, {**request, "files": files, "source": {"kind": "relay"}})
             await self.append_archive(source, files, archive)
@@ -278,10 +279,10 @@ class _DatasetStaging:
             archive.unlink(missing_ok=True)
 
     async def send(self, request_path: Path) -> dict[str, Any]:
-        """One dataset-materialize call per attempt, retrying network failures the target reports.
+        """試行ごとにdataset-materializeを1回呼ぶ。コンピュータが報告した通信の失敗は再試行する。
 
-        The request is a file on stdin: a file has no control timeout (a direct fetch can take
-        hours), and the Job token never appears in argv.
+        リクエストはstdinに渡すファイルにする。ファイルなら制御用のタイムアウトがかからず（directの
+        取得は何時間もかかることがある）、Job tokenがargvに出ることも無い。
         """
         for attempt in range(DATASET_FETCH_ATTEMPTS):
             response = await self.executor.command("dataset-materialize", stdin_file=request_path)
@@ -293,7 +294,7 @@ class _DatasetStaging:
         raise DatasetStagingError(f"Input dataset could not be prepared on the target: {response['error']}")
 
     async def append_archive(self, source: DatasetSource, files: list[dict[str, Any]], path: Path) -> None:
-        """Download each file once, verify it, and append it to the tar sent to the target."""
+        """各ファイルを1回だけダウンロードして確かめ、コンピュータへ送るtarに追加する。"""
         download = self.transfer_path("dataset-file")
         try:
             with path.open("ab") as output:
@@ -343,7 +344,7 @@ def validate_https_uri_or_fail(source: DatasetSource) -> None:
 
 
 async def download_https_reference(uri: str, destination: BinaryIO, *, maximum_bytes: int) -> dict[str, Any]:
-    # A separate client: the API token and cookies are never sent to a dataset URL.
+    # 別のクライアントを使う。APIのtokenやcookieをデータセットのURLに送らないため。
     async with httpx.AsyncClient(
         timeout=REQUEST_TIMEOUT_SECONDS,
         follow_redirects=False,

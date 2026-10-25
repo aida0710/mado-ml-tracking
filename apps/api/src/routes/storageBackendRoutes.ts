@@ -20,13 +20,13 @@ import type { StorageDirectoryService } from '../services/storageDirectoryServic
 
 function backendName(context: ApiContext): string {
   const name = context.req.param('name');
-  // Anything outside the stored name rule cannot name an existing backend.
+  // 保存する名前の規則に合わないものは、既存の保存先の名前になりえない。
   if (!name || !isValidStorageBackendName(name))
     throw new DomainError({ status: 404, code: 'not_found', message: 'storage backend not found' });
   return name;
 }
 
-// Mounted at /api/admin; every operation requires a global administrator.
+// /api/adminに置く。どの操作も全体管理者に限る。
 export function storageBackendRoutes(
   storage: StorageBackendService,
   directories: StorageDirectoryService,

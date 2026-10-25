@@ -1,8 +1,8 @@
-"""Check that official MLflow 3 log_image(key=, step=) and log_table appear in the native media API.
+"""公式のMLflow 3のlog_image(key=, step=)とlog_tableが、nativeのメディアAPIに出ることを確かめる。
 
-Standalone: logs to mado ML Tracking's MLflow API (dev login, temporary project token revoked at
-the end), then reads the Run back through GET /runs/:r/media and the table API. Run it once with
-MLflow 3.0.0 ('%' file names) and once with 3.17.0 ('+' file names).
+単独で動く。mado ML TrackingのMLflow APIに記録し（開発用ログインと、最後に失効させる一時的な
+Projectのtoken）、GET /runs/:r/mediaと表のAPIでRunを読み戻す。
+MLflow 3.0.0（ファイル名に'%'）と3.17.0（ファイル名に'+'）で1回ずつ実行する。
 
     python scripts/mlflow3_checks/media_steps.py --mado-api-url http://127.0.0.1:47080
 """
@@ -22,7 +22,7 @@ os.environ["MLFLOW_HTTP_REQUEST_MAX_RETRIES"] = "0"
 os.environ["MLFLOW_DISABLE_AGENT_HINT"] = "1"
 os.environ["MLFLOW_ENABLE_SYSTEM_METRICS_LOGGING"] = "false"
 
-# MLflow reads these variables at import time, so the imports follow the environment setup.
+# MLflowはこれらの変数をimportの時点で読むので、importは環境変数の設定のあとに置く。
 import httpx  # noqa: E402
 import mlflow  # noqa: E402
 import numpy as np  # noqa: E402
@@ -30,14 +30,15 @@ import pandas as pd  # noqa: E402
 from PIL import Image  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
-# No "/": MLflow 3.0 turns it into "#" and sends that unescaped, so the server only sees "images/<prefix>".
+# "/"は使わない。MLflow 3.0は"/"を"#"に変え、エスケープせずに送るので、サーバーには
+# "images/<prefix>"しか届かない。
 IMAGE_KEY = "eval_mel"
 LOGGED_STEPS = [0, 5, 10]
 TABLE_FILE = "tables/eval.json"
 TABLE_ROWS = 2
 TOKEN_LIFETIME = timedelta(hours=1)
 HTTP_TIMEOUT_SECONDS = 30
-# Same default as the API's MMT_WEB_ORIGIN; only sent as a header, never connected to.
+# APIのMMT_WEB_ORIGINと同じ既定値。ヘッダーとして送るだけで、接続はしない。
 DEFAULT_WEB_ORIGIN = "http://127.0.0.1:5182"
 
 

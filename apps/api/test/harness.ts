@@ -16,7 +16,7 @@ export const testDatabaseUrl =
 export async function createHarness(
   options: {
     applyMigrations?: boolean;
-    // Verification servers (for example a local-login browser check) start from other settings.
+    // 検証用のサーバー（ローカルログインをブラウザで確かめるものなど）は、別の設定から始める。
     environment?: NodeJS.ProcessEnv;
     configure?: (config: ApiConfig) => ApiConfig;
   } = {},
@@ -39,7 +39,7 @@ export async function createHarness(
   const artifactDirectory = await mkdtemp(path.join(tmpdir(), 'mmt-api-artifacts-'));
   const loadedConfig = loadConfig({
     MMT_DATABASE_URL: testDatabaseUrl,
-    // Synthetic key for encrypted integration fixtures; no machine or production secret is read.
+    // 暗号化した結合テストのfixtureのための架空の鍵。マシンや本番の秘密は読まない。
     MMT_PLUGIN_SECRET_KEY: Buffer.alloc(32, 1).toString('base64'),
     AUTH_MODE: 'development',
     MMT_ALLOW_LOCAL_EXECUTOR: 'true',
@@ -119,7 +119,7 @@ export async function login(
   return { cookie: response.headers.get('Set-Cookie')!.split(';')[0]!, userId: entity.user.id };
 }
 
-/** The `code` of an error response. */
+/** エラー応答の`code`。 */
 export async function errorCode(response: Response): Promise<string> {
   return ((await response.json()) as { code: string }).code;
 }

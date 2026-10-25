@@ -14,7 +14,7 @@ import { runSummarySelect } from '../repositories/runListProjection.js';
 import { assertProjectReference } from '../repositories/registryRepository.js';
 import { requireProject } from './accessService.js';
 
-/** A validated search request; absent list conditions are empty and absent values null. */
+/** 検証済みの検索のリクエスト。指定の無い一覧の条件は空、指定の無い値はnullになる。 */
 export interface RunSearchQuery {
   experimentIds: string[];
   filter: string;
@@ -30,17 +30,19 @@ export interface RunSearchQuery {
 }
 export type RunSearchConditions = Omit<RunSearchQuery, 'limit' | 'cursor'>;
 
-// The largest page the search serves, so collecting every match needs the fewest pages.
+// 検索が返すページの最大の大きさ。一致したものをすべて集めるのに要るページを最も少なくする。
 const COLLECT_PAGE_SIZE = 500;
 
-// Matches the partial index of migration 020, so the newest-first keyset reads it directly.
+// migration 020の部分インデックスに合わせ、新しい順のkeysetがそのインデックスを直接
+// 読めるようにする。
 const CREATION_ORDER = 'r.created_at DESC,r.id DESC';
 
 function escapeLikePattern(value: string): string {
   return value.replace(/[\\%_]/g, (character) => `\\${character}`);
 }
 
-// Sorting set-like conditions keeps a cursor valid when a client reorders the same filter values.
+// 集合のような条件は並べ替えておき、クライアントが同じ絞り込みの値を並べ替えてもカーソルが
+// 有効なままにする。
 function normalizeConditions(query: RunSearchQuery): RunSearchConditions {
   const sortedUnique = <T extends string>(values: T[]) => [...new Set(values)].sort();
   return {
@@ -71,7 +73,8 @@ export class RunSearchService {
     const fingerprint = runSearchConditionsFingerprint({ projectId, ...conditions });
     const mode = conditions.orderBy.length ? 'offset' : 'keyset';
     const cursor = query.cursor ? decodeRunSearchCursor(query.cursor, { fingerprint, mode }) : null;
-    // Both reads see one snapshot so a Run deleted between them cannot leave a hole in the page.
+    // 2回の読み取りは同じスナップショットを見るので、その間に削除されたRunがページに
+    // 穴を空けることはない。
     return transaction(this.database, async (connection) => {
       await connection.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');
       const runIds = await this.findPageRunIds(connection, {
@@ -96,8 +99,8 @@ export class RunSearchService {
   }
 
   /**
-   * Every Run ID the conditions match, in search order, for endpoints that read a whole Run set
-   * (metric groups, analysis, report snapshots). More than maxRuns is 422 too_many_runs.
+   * 条件に一致するすべてのRunのID（検索の順）。Runの集合を丸ごと読むエンドポイント（メトリクスの
+   * グループ、分析、レポートのスナップショット）が使う。maxRunsを超えたら422 too_many_runs。
    */
   async collectRunIds(
     principal: Principal,

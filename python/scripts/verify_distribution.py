@@ -1,4 +1,4 @@
-"""Exercise the installed wheel's remote zipapp without an API or external SSH host."""
+"""インストールしたwheelのremote zipappを、APIや外部のSSHホスト無しで動かして確かめる。"""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ import mado_tracking
 from mado_tracking.execution_snapshot import resolve_execution_snapshot
 from mado_tracking.worker.runtime import build_runtime_bundle
 
-# Catch broken distribution/runner imports promptly and keep protocol calls bounded.
+# 配布物やrunnerのimportが壊れていればすぐに検出し、プロトコルの呼び出しが長引かないようにする。
 VERIFICATION_TIMEOUT_SECONDS = 20
 POLL_SECONDS = 0.1
 REQUIRED_RUNTIME_MODULES = {

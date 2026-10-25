@@ -128,8 +128,8 @@ def test_offline_evaluation_scores_real_inference_wav_lengths_against_the_refere
         text=True,
         timeout=10,
     )
-    # y = 2x + 1 for x = 0, 1, 2 lasts 0.1 s per unit; the third reference is deliberately wrong
-    # and a fourth reference sample has no WAV at all.
+    # x = 0, 1, 2に対するy = 2x + 1を、1単位あたり0.1秒の長さにする。
+    # 3つ目の参照はわざと間違えてあり、4つ目の参照のサンプルにはWAVがまったく無い。
     reference = write_reference(tmp_path / "reference.json", [0.1, 0.3, 0.9, 0.2])
     results = tmp_path / "results.jsonl"
     completed = subprocess.run(
@@ -191,8 +191,8 @@ def test_evaluation_job_reads_the_upstream_runs_wavs_and_records_metrics_over_ht
             "sample-001.wav",
             "sample-002.wav",
         }
-        # The worker hands the evaluation Job its Run (whose upstream inputs are the inference
-        # output), the input DatasetVersion descriptors and the upstream Run ID.
+        # workerは評価のJobに、そのRun（上流の入力は推論の出力）、入力DatasetVersionの記述子、
+        # 上流RunのIDを渡す。
         reference_set = {
             "id": "reference-set",
             "metadata": json.loads(write_reference(tmp_path / "reference.json", [0.1, 0.3, 0.6]).read_text()),
@@ -234,7 +234,7 @@ def test_evaluation_job_reads_the_upstream_runs_wavs_and_records_metrics_over_ht
         assert results["path"] == "eval/results.jsonl"
         rows = [json.loads(line) for line in server.artifacts[results["id"]].decode().splitlines()]
         assert rows[0]["audio"] == f"mmt-artifact://runs/{inference_run_id}/inference/audio/sample-000.wav"
-        # The worker, not the Job's code, completes a worker-managed Run.
+        # worker管理のRunを完了させるのは、Jobのコードではなくworker。
         assert server.runs[evaluation_run_id]["status"] == "running"
 
 
@@ -256,7 +256,7 @@ def test_inference_result_json_declares_the_output_dataset_the_worker_accepts(tm
         timeout=10,
         cwd=tmp_path,
     )
-    # The worker's own validation: every file declared with its checksum, nothing extra.
+    # worker自身の検証: 宣言されたファイルにはすべてチェックサムがあり、余分なものは無い。
     summary = validate_results(outputs)
     assert summary is not None and summary["version"] == 2
     assert summary["artifactCount"] == 4
@@ -301,7 +301,7 @@ def test_inference_result_json_without_an_output_dataset_fails_before_writing_a_
 
 
 def test_evaluation_reads_a_staged_reference_and_result_json_wavs_and_writes_result_json(tmp_path):
-    """The second path: a reference staged by the worker and inference outputs under container/."""
+    """2つ目の経路: workerがステージングした参照と、container/の下の推論の出力。"""
     weights = tmp_path / "weights.json"
     weights.write_text(json.dumps({"family": "linear", "weight": 2.0, "bias": 1.0}))
     inference_outputs = tmp_path / "inference" / "outputs"
@@ -329,7 +329,7 @@ def test_evaluation_reads_a_staged_reference_and_result_json_wavs_and_writes_res
     declared = json.loads((inference_outputs / "result.json").read_text())
     with TrackingServer() as server:
         inference_run_id = "inference-run"
-        # What the worker uploaded from the inference outputs: Run Artifacts under container/.
+        # workerが推論の出力からアップロードしたもの: container/の下のRunのArtifact。
         for artifact in declared["artifacts"]:
             artifact_id = f"artifact-{len(server.artifact_entities)}"
             server.artifacts[artifact_id] = (inference_outputs / artifact["path"]).read_bytes()
@@ -338,8 +338,8 @@ def test_evaluation_reads_a_staged_reference_and_result_json_wavs_and_writes_res
             )
         (dataset_declaration,) = declared["datasets"]
         inference_output = {"id": "inference-output-version", "metadata": dataset_declaration["metadata"]}
-        # A reference version uploaded as files, staged read-only by the worker. Its metadata has
-        # no samples, so scoring proves the staged file was read.
+        # ファイルとしてアップロードし、workerが読み取り専用でステージングした参照のバージョン。
+        # metadataにはサンプルが無いので、スコアが出ればステージングしたファイルを読んだと分かる。
         staged_reference = tmp_path / "inputs" / "datasets" / "reference-set"
         staged_reference.mkdir(parents=True)
         write_reference(staged_reference / "reference.json", [0.1, 0.3, 0.5])
@@ -379,7 +379,7 @@ def test_evaluation_reads_a_staged_reference_and_result_json_wavs_and_writes_res
             text=True,
             timeout=15,
         )
-        # The code only read: the metrics travel in result.json, not through the SDK.
+        # コードは読んだだけ。メトリクスはSDKではなくresult.jsonで渡る。
         assert not server.metrics
         assert {method for method, _path in server.operations} == {"GET"}
     summary = json.loads(completed.stdout)
@@ -388,7 +388,8 @@ def test_evaluation_reads_a_staged_reference_and_result_json_wavs_and_writes_res
     result = validate_results(evaluation_outputs)
     assert result is not None and result["artifactCount"] == 1
     metrics = {metric["name"]: metric["value"] for metric in result["metrics"]}
-    # y = 2x + 1 for x = 0, 1, 2 lasts 0.1, 0.3 and 0.5 seconds: every staged reference matches.
+    # x = 0, 1, 2に対するy = 2x + 1は、0.1秒、0.3秒、0.5秒の長さになる。
+    # ステージングした参照はすべて一致する。
     assert metrics["evaluation.samples"] == 3
     assert metrics["evaluation.duration_match_rate"] == 1.0
     results = (evaluation_outputs / "eval" / "results.jsonl").read_text().splitlines()

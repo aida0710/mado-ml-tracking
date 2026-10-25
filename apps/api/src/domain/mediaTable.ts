@@ -6,14 +6,14 @@ import type {
 import { DomainError } from './errors.js';
 
 /**
- * Media tables are pandas' orient='split' JSON ({columns, data}) as MLflow log_table writes it.
- * A media cell is MLflow's {type:'image', filepath, compressed_filepath?}, the same object with
- * type 'audio' or 'video' (native tables), or a string mmt-artifact:// reference to a file.
+ * メディアの表は、MLflowのlog_tableが書くpandasのorient='split'のJSON（{columns, data}）。
+ * メディアのセルは、MLflowの{type:'image', filepath, compressed_filepath?}、同じ形でtypeが
+ * 'audio'か'video'のもの（ネイティブの表）、またはファイルを指すmmt-artifact://の文字列の参照。
  *
- * Paths follow the evaluation sample rule of the Web (apps/web/src/lib/evaluationSamples.ts,
- * resolveArtifactReference): a relative path is an Artifact of the Run holding the table, and
- * mmt-artifact://runs/<runId>/<path> (or .../projects/<projectId>/runs/...) names another Run
- * of the same Project. The rule is restated here because the API cannot import Web code.
+ * パスは画面の評価サンプルの規則（apps/web/src/lib/evaluationSamples.tsの
+ * resolveArtifactReference）に従う。相対パスは表を持つRunのArtifactで、
+ * mmt-artifact://runs/<runId>/<path>（または.../projects/<projectId>/runs/...）は同じ
+ * Projectの別のRunを指す。APIは画面のコードをimportできないので、規則をここにも書く。
  */
 
 export type MediaCellType = 'audio' | 'image' | 'video';
@@ -32,17 +32,17 @@ export type ArtifactReferenceResult =
   | { ok: true; reference: ArtifactReference }
   | { ok: false; error: MediaTableReferenceError };
 
-/** What a media cell points at, before the Artifacts are looked up. */
+/** Artifactを引く前の、メディアのセルが指す先。 */
 export interface MediaCellReference {
   type: MediaCellType;
   file: ArtifactReferenceResult;
-  /** MLflow's compressed_filepath; null when the cell has none. */
+  /** MLflowのcompressed_filepath。セルに無ければnull。 */
   thumbnail: ArtifactReferenceResult | null;
 }
 
 export const ARTIFACT_REFERENCE_SCHEME = 'mmt-artifact://';
 const MEDIA_CELL_TYPES: readonly MediaCellType[] = ['audio', 'image', 'video'];
-// The kind of a string reference comes from its extension; other files stay plain text.
+// 文字列の参照の種類は拡張子で決める。ほかのファイルはただのテキストのまま。
 const EXTENSION_CELL_TYPES: Record<string, MediaCellType> = {
   wav: 'audio',
   flac: 'audio',
@@ -75,7 +75,7 @@ function invalidTable(detail: string): never {
   });
 }
 
-/** Parquet is MLflow's other log_table format; only the JSON split format is read. */
+/** ParquetはMLflowのlog_tableのもう1つの形式。読むのはJSONのsplit形式だけ。 */
 export function isParquetTable(table: { path: string; mimeType: string }): boolean {
   const essence = table.mimeType.split(';')[0]!.trim().toLowerCase();
   return table.path.toLowerCase().endsWith('.parquet') || essence === 'application/vnd.apache.parquet';
@@ -109,7 +109,7 @@ export function parseMediaTable(content: string): ParsedMediaTable {
   };
 }
 
-/** The media type a single cell holds, or null for any other value. */
+/** 1つのセルが持つメディアの種類。それ以外の値はnull。 */
 export function mediaCellType(cell: unknown): MediaCellType | null {
   if (typeof cell === 'string') {
     if (!cell.startsWith(ARTIFACT_REFERENCE_SCHEME)) return null;
@@ -123,7 +123,7 @@ export function mediaCellType(cell: unknown): MediaCellType | null {
     : null;
 }
 
-/** A column is a media column when every value is media of one type; null values are skipped. */
+/** すべての値が同じ種類のメディアなら、その列はメディアの列。nullの値は飛ばす。 */
 function columnType(values: unknown[]): MediaTableColumnType {
   const present = values.filter((value) => value !== null && value !== undefined);
   if (present.length === 0) return 'text';
@@ -135,7 +135,7 @@ function columnType(values: unknown[]): MediaTableColumnType {
   return 'json';
 }
 
-/** The file (and MLflow thumbnail) a cell of a media column names, relative to the table's Run. */
+/** メディアの列のセルが指すファイル（とMLflowのサムネイル）。表のRunを基準にする。 */
 export function mediaCellReference(
   cell: unknown,
   context: { projectId: string; tableRunId: string },
@@ -156,7 +156,7 @@ export function mediaCellReference(
   };
 }
 
-/** Drops "." and empty segments. Paths are taken literally (no percent-decoding), like Artifact paths. */
+/** "."と空の要素を除く。Artifactのパスと同じく文字どおりに扱う（パーセントデコードしない）。 */
 function normalizeArtifactPath(path: string): { path: string } | { error: MediaTableReferenceError } {
   if (path.startsWith('/')) return { error: 'absolute_path' };
   const segments = path.split('/').filter((segment) => segment !== '' && segment !== '.');
@@ -165,7 +165,7 @@ function normalizeArtifactPath(path: string): { path: string } | { error: MediaT
   return { path: segments.join('/') };
 }
 
-/** Same rule as resolveArtifactReference in apps/web/src/lib/evaluationSamples.ts. */
+/** apps/web/src/lib/evaluationSamples.tsのresolveArtifactReferenceと同じ規則。 */
 export function resolveArtifactReference(
   value: string,
   context: { projectId: string; tableRunId: string },

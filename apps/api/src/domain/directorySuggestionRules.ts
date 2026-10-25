@@ -1,20 +1,20 @@
 import path from 'node:path';
 
-/** Where to look for directories that complete a typed path, and which names qualify. */
+/** 入力中のパスを補完するディレクトリをどこで探し、どの名前を候補にするか。 */
 export interface DirectorySuggestionPlan {
-  /** The typed path made absolute, as the filesystem backend resolves its rootPath. */
+  /** 入力したパスの絶対パス。filesystemの保存先がrootPathを解決するのと同じ方法で求める。 */
   resolvedPath: string;
-  /** The directory whose children are the candidates. */
+  /** 子が候補になるディレクトリ。 */
   listedDirectory: string;
-  /** What a candidate's name starts with: the typed last segment, empty after a trailing "/". */
+  /** 候補の名前が始まる文字列。入力の最後の要素で、末尾が"/"のときは空。 */
   namePrefix: string;
-  /** Hidden names (starting with ".") only when the typed last segment starts with ".". */
+  /** 隠し名（"."で始まる）を含めるのは、入力の最後の要素が"."で始まるときだけ。 */
   includesHidden: boolean;
 }
 
 /**
- * "/data/" lists the children of /data; "/data/ex" lists the children of /data that start with
- * "ex". A relative path is resolved from `workingDirectory`, like the filesystem backend does.
+ * "/data/"は/dataの子を、"/data/ex"は/dataの子のうち"ex"で始まるものを並べる。相対パスは、
+ * filesystemの保存先と同じく`workingDirectory`から解決する。
  */
 export function planDirectorySuggestions(
   typedPath: string,
@@ -31,9 +31,9 @@ export function planDirectorySuggestions(
 }
 
 /**
- * Top-level directories of the operating system (the Linux filesystem hierarchy). Artifacts must
- * not go there, and listing them first buries the disks meant for data (/srv, /mnt, /home, ...).
- * Typing one of these paths in full still works; it is only not offered.
+ * OSの最上位のディレクトリ（Linuxのファイルシステム階層）。Artifactを置く場所ではなく、
+ * 先に並べるとデータ用のディスク（/srv、/mnt、/homeなど）が埋もれる。これらのパスを全部
+ * 打ち込めば使えるが、候補には出さない。
  */
 const SYSTEM_DIRECTORY_NAMES: ReadonlySet<string> = new Set([
   'bin',
@@ -61,7 +61,7 @@ export function isSuggestedName(name: string, plan: DirectorySuggestionPlan): bo
   return name.startsWith(plan.namePrefix) && (plan.includesHidden || !name.startsWith('.'));
 }
 
-/** Code point order, so the order does not depend on the server's locale. */
+/** UTF-16のコード単位の順。サーバーのロケールで順序が変わらないようにする。 */
 export function compareDirectoryNames(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }

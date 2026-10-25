@@ -17,8 +17,9 @@ export function mutateRegisteredModel<T>(
       name: access.name,
       lock: true,
     });
-    // A waiter must reread supplemental lifecycle metadata after the native Model lock.
-    // The delete transaction can update metadata without changing the locked native tuple.
+    // 待っていた側は、ネイティブのModelのロックを取った後に補助のライフサイクルのメタデータを
+    // 読み直さなければならない。削除のトランザクションは、ロックしたネイティブの行を変えずに
+    // メタデータを更新できる。
     await requireModelsWrite(connection, access);
     const model = await findRegisteredModel(connection, {
       projectId: access.projectId,

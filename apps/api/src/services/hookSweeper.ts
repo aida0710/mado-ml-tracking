@@ -4,16 +4,16 @@ import type { HookDispatcher } from './hookDispatcher.js';
 import type { JobArrayCompletionHandler } from './jobArrayCompletionHandler.js';
 import { PollingLoop } from './pollingLoop.js';
 
-// Pending starts expire after days, and an idle array is a rare leftover; minutes are enough.
+// 保留中の起動は数日で期限が切れ、止まったままのarrayはまれな残りものなので、数分おきで足りる。
 const SWEEP_INTERVAL_MS = 10 * 60 * 1000;
 const SWEEP_BATCH_SIZE = 100;
-// Shared by every API process on the same schema so only one of them sweeps at a time.
+// 同じスキーマのすべてのAPIプロセスで共有し、一度に1つだけが掃除するようにする。
 const SWEEPER_LOCK_NAME = 'hook_sweeper';
 
 /**
- * Upkeep the hooks cannot do at an event: pending starts whose Run never ended are skipped
- * (source_run_timeout), and arrays whose last member ended without a Job transition (a Run
- * ended by PATCH while its Job kept running) are finished.
+ * フックがイベントの時点ではできない後始末。Runが終わらないままの保留中の起動を飛ばし
+ * （source_run_timeout）、最後のメンバーがJobの状態遷移なしに終わったarray（Jobが動き続けている
+ * 間にPATCHで終わらせたRun）を終わらせる。
  */
 export class HookSweeper {
   private readonly loop: PollingLoop;
@@ -39,7 +39,7 @@ export class HookSweeper {
     await this.loop.stop();
   }
 
-  /** Returns how many executions expired and arrays finished; 0 when another process sweeps. */
+  /** 期限切れにした実行と終わらせたarrayの数を返す。ほかのプロセスが掃除しているときは0。 */
   async sweep(): Promise<number> {
     return transaction(this.database, async (connection) => {
       const lock = await connection.query<{ acquired: boolean }>(

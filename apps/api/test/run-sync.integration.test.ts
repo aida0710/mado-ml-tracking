@@ -277,7 +277,7 @@ describe.skipIf(!testDatabaseUrl)('オフライン記録の後送り（独立Pos
     expect(response.status).toBe(409);
     expect(await errorCode(response)).toBe('sync_param_conflict');
     expect(await runMetrics(run.id)).toHaveLength(1);
-    // The refused batch left no record of its ID, so it is refused again rather than "duplicate".
+    // 拒まれたbatchはIDの記録を残さないので、"duplicate"ではなく再び拒まれる。
     expect((await postBatch(run.id, contradicting)).status).toBe(409);
     expect((await nativeRun(run.id)).parameters).toEqual({ lr: 0.001 });
   });
@@ -302,7 +302,7 @@ describe.skipIf(!testDatabaseUrl)('オフライン記録の後送り（独立Pos
     const older = await entity<SyncBatchResult>(await postBatch(run.id, metricBatch(1, [10])), 200);
     expect(older.applied).toBe(true);
     expect((await runMetrics(run.id)).map((metric) => metric.step)).toEqual([10, 20]);
-    // Resending the end in a new batch changes nothing; a different end is refused.
+    // 同じ終了を新しいbatchで送り直しても何も変わらない。違う終了は拒む。
     const sameEnd = { ...metricBatch(3, []), status: last.status };
     expect((await postBatch(run.id, sameEnd)).status).toBe(200);
     const otherEnd = {
@@ -403,7 +403,7 @@ describe.skipIf(!testDatabaseUrl)('オフライン記録の後送り（独立Pos
       200,
     );
     expect(differentSize.present).toEqual([]);
-    // A newer upload at the same path replaces what the Run shows, so the old digest is stale.
+    // 同じパスに新しくアップロードするとRunが示す中身が置き換わるので、前のdigestはもう合わない。
     await entity(
       await request(
         harness.app,
@@ -481,7 +481,7 @@ describe.skipIf(!testDatabaseUrl)('オフライン記録の後送り（独立Pos
     expect(run.status).toBe('queued');
     expect(run.startedAt).toBeNull();
     expect((await nativeRun(run.id)).syncOrigin).toBeNull();
-    // Only the sync route accepts a client-chosen ID.
+    // クライアントが選んだIDを受け付けるのはsyncの経路だけ。
     const withId = await request(harness.app, `${fixture.basePath}/runs`, {
       method: 'POST',
       cookie: fixture.editor.cookie,

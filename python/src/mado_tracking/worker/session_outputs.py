@@ -1,4 +1,4 @@
-"""Relay runner Artifact files to the API and acknowledge each successful save in the journal."""
+"""runnerのArtifactのファイルをAPIへ中継し、保存できたものを1つずつjournalで確認済みにする。"""
 
 from __future__ import annotations
 
@@ -32,10 +32,10 @@ from .output_archive import (
 from .runtime import JobExecutor
 from .source_snapshot import MAX_MANIFEST_BYTES, MAX_SNAPSHOT_BYTES, SNAPSHOT_FILENAMES, SOURCE_MANIFEST_PATH
 
-# Journal rewrites while saving many outputs are batched to at most one per interval.
+# 多くの出力を保存する間のjournalの書き直しは、1つの間隔に最大1回にまとめる。
 ACKNOWLEDGMENT_PERSIST_SECONDS = 1.0
-# A target that sends nothing for this long is treated as disconnected; uploads in between do not
-# count because the worker is not reading then.
+# これだけの時間何も送ってこないコンピュータは、切断されたものとみなす。
+# その間のアップロードの時間は数えない。workerはその間読んでいないため。
 OUTPUT_STREAM_IDLE_SECONDS = 300.0
 
 
@@ -49,7 +49,7 @@ async def forward_container_outputs(
     persist: Callable[[], None],
     temporary_path: Path,
 ) -> None:
-    """Save outputs, then metrics, then result.json declarations; each step is acknowledged once."""
+    """出力、メトリクス、result.jsonの宣言の順に保存する。各手順は1回だけ確認済みにする。"""
     await receive_output_archive(
         job,
         results,
@@ -64,7 +64,7 @@ async def forward_container_outputs(
             await api.metrics(job, results["metrics"])
         acknowledgments["metrics"] = True
         persist()
-    # Declarations name saved Artifacts, so they are sent only after every output is saved.
+    # 宣言は保存済みのArtifactを指すので、すべての出力を保存してから送る。
     registered = acknowledgments.setdefault("declarations", [])
     remaining = [item for item in results.get("declarations", []) if item["index"] not in registered]
     if remaining:
@@ -85,10 +85,10 @@ async def receive_output_archive(
     persist: Callable[[], None],
     temporary_path: Path,
 ) -> None:
-    """Fetch every unacknowledged output in one tar stream, verifying and saving file by file.
+    """確認されていない出力を1本のtarストリームで受け取り、ファイルごとに検証して保存する。
 
-    An interrupted stream raises TransportError; the session retries and this call requests only
-    the outputs whose save was not yet acknowledged.
+    ストリームが途中で切れるとTransportErrorを送出する。JobSessionが再試行し、
+    この呼び出しは保存がまだ確認されていない出力だけを要求する。
     """
     try:
         validate_output_summary(results)
@@ -107,8 +107,8 @@ async def receive_output_archive(
         key = artifact_key(artifact)
         uploaded.append(key)
         acknowledged.add(key)
-        # Rewriting the journal per file is quadratic for 10000 outputs; a crash re-saves at most
-        # one interval of files, which only adds an identical Artifact version.
+        # 1万個の出力でファイルごとにjournalを書き直すと、時間が二乗で増える。クラッシュしても
+        # 保存し直すのは最大1間隔分のファイルで、同じ内容のArtifactのバージョンが1つ増えるだけ。
         if time.monotonic() - persisted_at >= ACKNOWLEDGMENT_PERSIST_SECONDS:
             persist()
             persisted_at = time.monotonic()
@@ -169,7 +169,7 @@ async def _write_verified_member(
 
 
 def validated_snapshot_artifacts(job: WorkerJob, snapshot: dict[str, Any]) -> list[dict[str, Any]]:
-    """The snapshot's ZIP and manifest descriptors, or an error when either is missing or invalid."""
+    """スナップショットのZIPとmanifestの記述子。どちらかが無いか不正ならエラー。"""
     artifacts = snapshot.get("artifacts")
     expected_paths = (
         set(SNAPSHOT_FILENAMES) if job.execution_snapshot["source"] is not None else {SOURCE_MANIFEST_PATH}

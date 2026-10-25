@@ -11,9 +11,9 @@ import type {
 import { namedContractSchema } from './schemaRegistry.js';
 import type { Expect, MutuallyAssignable } from './typeAssertions.js';
 
-// Any 8-4-4-4-12 hex ID: fixtures and imported rows are not always RFC 4122 variants.
+// 8-4-4-4-12の16進のIDなら何でもよい。fixtureや取り込んだ行は、RFC 4122のvariantとは限らない。
 export const idSchema = z.guid();
-// Timestamps leave the API as ISO 8601 strings from Date.toISOString().
+// タイムスタンプは、Date.toISOString()によるISO 8601の文字列としてAPIから出ていく。
 export const timestampSchema = z.iso.datetime({ offset: true });
 export const jsonValueSchema = namedContractSchema('JsonValue', z.json());
 export const jsonObjectSchema = namedContractSchema(
@@ -33,12 +33,12 @@ export const runKindSchema = z.enum([
 export const runStatusSchema = z.enum(['queued', 'running', 'finished', 'failed', 'canceled']);
 export const jobStatusSchema = z.enum([...runStatusSchema.options, 'claimed']);
 
-/** `{items: T[]}`: the shape of every plain list response. */
+/** `{items: T[]}`: ページ分けしない一覧の応答に共通の形。 */
 export function itemsOf<T extends z.ZodType>(item: T) {
   return z.strictObject({ items: z.array(item) });
 }
 
-/** A keyset page whose last page has `nextCursor: null`. */
+/** keysetでページ分けしたページ。最後のページは`nextCursor: null`。 */
 export function cursorPageOf<T extends z.ZodType>(item: T) {
   return z.strictObject({ items: z.array(item), nextCursor: z.string().nullable() });
 }

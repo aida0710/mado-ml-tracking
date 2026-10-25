@@ -1,23 +1,25 @@
-// Reads duration, sample rate, and channel count from WAV and FLAC headers without decoding.
-// Anything that cannot be read from the header alone returns null instead of an estimate.
+// WAVとFLACのヘッダーから、デコードせずに長さ、サンプルレート、チャンネル数を読む。
+// ヘッダーだけで読めないものは、推定せずにnullを返す。
 
-/** Only this many leading bytes are read; WAV chunks or FLAC blocks beyond it are not followed. */
+/** 先頭からこのバイト数だけ読む。その先にあるWAVのchunkやFLACのblockはたどらない。 */
 export const AUDIO_HEADER_PROBE_BYTES = 64 * 1024;
 
 export interface AudioHeaderInfo {
   durationSeconds: number;
   sampleRate: number;
   channels: number;
-  /** Valid bits per sample; null for codecs whose samples have no fixed width. */
+  /** サンプルあたりの有効ビット数。サンプルの幅が決まっていないコーデックではnull。 */
   bitsPerSample: number | null;
-  /** ffprobe codec_name, so header and ffprobe results share one vocabulary. */
+  /** ffprobeのcodec_name。ヘッダーとffprobeの結果で同じ名前を使うため。 */
   codec: string;
 }
 
 export interface AudioHeaderProbeInput {
-  /** The first bytes of the file, at most AUDIO_HEADER_PROBE_BYTES are inspected. */
+  /** ファイルの先頭のバイト列。調べるのは最大AUDIO_HEADER_PROBE_BYTESまで。 */
   header: Uint8Array;
-  /** Size of the whole file, used to bound a data chunk whose declared size runs past the end. */
+  /**
+   * ファイル全体の大きさ。宣言された大きさがファイルの末尾を超えるdata chunkを切り詰めるのに使う。
+   */
   totalSize: number;
 }
 
@@ -26,21 +28,21 @@ const WAVE_FORMAT_IEEE_FLOAT = 0x0003;
 const WAVE_FORMAT_ALAW = 0x0006;
 const WAVE_FORMAT_MULAW = 0x0007;
 const WAVE_FORMAT_EXTENSIBLE = 0xfffe;
-// RIFF chunk header: 4-byte id and 4-byte little-endian size.
+// RIFFのchunkのヘッダー: 4バイトのidと、4バイトのリトルエンディアンの大きさ。
 const RIFF_CHUNK_HEADER_BYTES = 8;
-// The first chunk follows "RIFF", the RIFF size, and "WAVE".
+// 最初のchunkは、"RIFF"、RIFFの大きさ、"WAVE"のあとに続く。
 const RIFF_FIRST_CHUNK_OFFSET = 12;
-// WAVEFORMAT fields up to wBitsPerSample.
+// WAVEFORMATの、wBitsPerSampleまでの項目。
 const WAVE_FORMAT_MIN_BYTES = 16;
-// WAVEFORMATEXTENSIBLE: cbSize (2) + 22 bytes of extension ending with the SubFormat GUID.
+// WAVEFORMATEXTENSIBLE: cbSize（2）+ SubFormatのGUIDで終わる22バイトの拡張。
 const WAVE_FORMAT_EXTENSIBLE_MIN_BYTES = 40;
 const WAVE_EXTENSIBLE_VALID_BITS_OFFSET = 18;
-// The first two bytes of the SubFormat GUID carry the format code.
+// SubFormatのGUIDの先頭2バイトがフォーマットのコード。
 const WAVE_EXTENSIBLE_SUBFORMAT_OFFSET = 24;
 
 const FLAC_STREAMINFO_TYPE = 0;
 const FLAC_STREAMINFO_BYTES = 34;
-// "fLaC" (4) + metadata block header (4).
+// "fLaC"（4）+ metadata blockのヘッダー（4）。
 const FLAC_STREAMINFO_OFFSET = 8;
 const UINT32_RANGE = 2 ** 32;
 
@@ -78,12 +80,12 @@ function readWaveFormat(view: DataView, offset: number, size: number): WaveForma
   return {
     ...format,
     formatCode: view.getUint16(offset + WAVE_EXTENSIBLE_SUBFORMAT_OFFSET, true),
-    // Zero means the writer did not narrow the container width.
+    // 0は、書いた側がコンテナの幅より狭めていないことを表す。
     validBits: validBits || containerBits,
   };
 }
 
-/** Maps a WAV format to the ffprobe codec name; null for compressed or unknown formats. */
+/** WAVのフォーマットをffprobeのコーデック名に対応させる。圧縮形式や不明な形式はnull。 */
 function waveCodec(format: WaveFormat): string | null {
   const bits = format.containerBits;
   if (format.formatCode === WAVE_FORMAT_PCM) {
@@ -108,11 +110,11 @@ function probeWave(view: DataView, totalSize: number): AudioHeaderInfo | null {
       format = readWaveFormat(view, body, size);
       if (!format) return null;
     } else if (id === 'data') {
-      // A data chunk before fmt is malformed; the sample layout is unknown.
+      // fmtより前にあるdata chunkは形式の誤り。サンプルの並びが分からない。
       if (!format) return null;
       return waveInfo(format, Math.min(size, Math.max(0, totalSize - body)));
     }
-    // Chunks are padded to an even length.
+    // chunkは偶数の長さになるよう詰め物をしてある。
     offset = body + size + (size % 2);
   }
   return null;
@@ -135,11 +137,12 @@ function waveInfo(format: WaveFormat, dataBytes: number): AudioHeaderInfo | null
 function probeFlac(view: DataView): AudioHeaderInfo | null {
   if (ascii(view, 0, 4) !== 'fLaC' || FLAC_STREAMINFO_OFFSET + FLAC_STREAMINFO_BYTES > view.byteLength)
     return null;
-  // STREAMINFO must be the first metadata block.
+  // STREAMINFOは最初のmetadata blockでなければならない。
   const blockType = view.getUint8(4) & 0x7f;
   const blockLength = (view.getUint8(5) << 16) | (view.getUint8(6) << 8) | view.getUint8(7);
   if (blockType !== FLAC_STREAMINFO_TYPE || blockLength !== FLAC_STREAMINFO_BYTES) return null;
-  // Byte 10 of STREAMINFO onward: 20-bit rate, 3-bit channels-1, 5-bit bits-1, 36-bit samples.
+  // STREAMINFOの10バイト目から: 20ビットのレート、3ビットのチャンネル数-1、5ビットのビット数-1、
+  // 36ビットのサンプル数。
   const fields = FLAC_STREAMINFO_OFFSET + 10;
   const byte0 = view.getUint8(fields);
   const byte1 = view.getUint8(fields + 1);
@@ -149,7 +152,7 @@ function probeFlac(view: DataView): AudioHeaderInfo | null {
   const channels = ((byte2 >> 1) & 0x07) + 1;
   const bitsPerSample = (((byte2 & 0x01) << 4) | (byte3 >> 4)) + 1;
   const totalSamples = (byte3 & 0x0f) * UINT32_RANGE + view.getUint32(fields + 4, false);
-  // A zero sample count means the encoder did not know the length.
+  // サンプル数が0なのは、エンコーダが長さを知らなかったことを表す。
   if (sampleRate < 1 || totalSamples === 0) return null;
   return { durationSeconds: totalSamples / sampleRate, sampleRate, channels, bitsPerSample, codec: 'flac' };
 }

@@ -1,21 +1,21 @@
-"""Dataset usage and workflow identity supplied to every execution runtime.
+"""どの実行のruntimeにも渡す、データセットの使用状況とワークフローの識別情報。
 
-An API from before workflows sends neither, and a Job then gets no file and no variable, so code
-can test for their presence.
+ワークフローより前のAPIはどちらも送らない。その場合Jobにはファイルも変数も渡らないので、
+コードはそれらがあるかどうかで判断できる。
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-# The file matches GET runs/:id/dataset-usage, so code can consume the same document either way.
+# このファイルはGET runs/:id/dataset-usageと同じ形なので、コードはどちらからでも同じ文書を扱える。
 DATASET_USAGE_FILENAME = "dataset-usage.json"
 
 
 def workflow_context_fields(run_environment: Any) -> dict[str, Any]:
-    """The Run environment's datasetUsage (a list) and workflow (an object) for the Job context.
+    """Jobのcontext用の、Runのenvironmentの中のdatasetUsage（配列）とworkflow（オブジェクト）。
 
-    A value of another type is left out as if the API had not sent it.
+    ほかの型の値は、APIが送らなかったものとして除く。
     """
     if not isinstance(run_environment, dict):
         return {}
@@ -28,7 +28,7 @@ def workflow_context_fields(run_environment: Any) -> dict[str, Any]:
 
 
 def dataset_usage_document(context: dict[str, Any]) -> dict[str, Any] | None:
-    """The contents of MMT_DATASET_USAGE_FILE, or None when the Job has no dataset usage."""
+    """MMT_DATASET_USAGE_FILEの中身。Jobにデータセットの使用状況が無ければNone。"""
     if "datasetUsage" not in context:
         return None
     return {"items": context["datasetUsage"]}

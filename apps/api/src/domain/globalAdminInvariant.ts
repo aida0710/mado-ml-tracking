@@ -1,14 +1,14 @@
-// The app must always keep one active global administrator (local or SSO) who can recover access.
+// アプリには、アクセスを復旧できる有効な全体管理者（ローカルかSSO）が常に1人いなければならない。
 
 export interface GlobalAdminChange {
   userId: string;
-  // The values after the change; omitted fields stay as they are.
+  // 変更後の値。省いた項目はそのまま。
   isAdmin?: boolean;
   status?: 'active' | 'disabled';
 }
 
-// activeAdminIds are the users who are active global administrators before the change.
-// The caller reads them under a lock so two concurrent demotions cannot both pass.
+// activeAdminIdsは、変更前に有効な全体管理者である利用者。
+// 呼び出し側はロックを取って読み、同時に起きた2つの降格が両方通らないようにする。
 export function removesLastGlobalAdmin(
   activeAdminIds: readonly string[],
   change: GlobalAdminChange,

@@ -14,7 +14,8 @@ import httpx
 import pytest
 from execution_fixtures import pin_execution
 
-# docker_image is the shared fixture that skips unless MMT_TEST_DOCKER_IMAGE names a cached image.
+# docker_imageは共有のfixtureで、MMT_TEST_DOCKER_IMAGEがキャッシュ済みのイメージを指して
+# いなければskipする。
 from test_docker_worker import ContainerServer, docker_job, execute_job, workspace_for
 from test_docker_worker import docker_image as docker_image  # noqa: F401
 from test_worker import WorkerServer
@@ -40,7 +41,7 @@ JOB_TOKEN = "mado_mtj_upstream-reader"
 
 
 def chained_payload(job_payload: dict) -> dict:
-    """An evaluation Run chained after an inference Run that produced one input DatasetVersion."""
+    """入力のDatasetVersionを1つ作った推論のRunのあとに連鎖する評価のRun。"""
     dataset_id = str(uuid4())
     job_payload["run"].update(
         parentRunId=UPSTREAM_RUN_ID,
@@ -85,7 +86,7 @@ def test_host_python_job_receives_the_upstream_run_id_and_upstream_run_json(
         "runId": UPSTREAM_RUN_ID,
         "outputDatasetVersionIds": payload["run"]["upstreamDatasetVersionIds"],
     }
-    # The descriptor still reaches the code through dataset-versions.json as before.
+    # 記述子はこれまでどおりdataset-versions.jsonを通してコードに届く。
     datasets = json.loads((tmp_path / "dataset-versions.json").read_text())["inputDatasets"]
     assert [dataset["id"] for dataset in datasets] == payload["run"]["upstreamDatasetVersionIds"]
 
@@ -157,7 +158,7 @@ def test_上流Runがないspecでもコンテナを準備できる(job_payload,
 
 
 class ArtifactApi:
-    """Run Artifact listing with cursor pages or a single final page."""
+    """cursorでページを送るか、最後の1ページだけを返すRun Artifactの一覧。"""
 
     def __init__(self, artifacts: list[dict], contents: dict[str, bytes], *, paged: bool):
         self.artifacts = artifacts
@@ -285,7 +286,7 @@ class UpstreamArtifactHandler(BaseHTTPRequestHandler):
     artifacts: list[dict] = []
     contents: dict[str, bytes] = {}
 
-    def do_GET(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler's method name
+    def do_GET(self) -> None:  # noqa: N802 - BaseHTTPRequestHandlerのメソッド名
         path = urlsplit(self.path).path
         if path.endswith(f"/runs/{UPSTREAM_RUN_ID}/artifacts"):
             body = json.dumps({"items": self.artifacts, "nextCursor": None}).encode()
@@ -309,7 +310,7 @@ def test_chained_host_job_downloads_the_upstream_wavs_with_the_same_paths(job_pa
     UpstreamArtifactHandler.contents = {
         item["id"]: wavs[item["path"]] for item in UpstreamArtifactHandler.artifacts
     }
-    # The test worker skips pip, so the Job reuses this interpreter's httpx instead of installing it.
+    # テスト用のworkerはpipを省くので、Jobはhttpxを入れずに、このインタプリタのものを使う。
     site_packages = str(Path(httpx.__file__).resolve().parent.parent)
     payload["codeVersion"]["source"]["files"]["main.py"] = (
         f"import sys; sys.path.append({site_packages!r})\n"

@@ -37,10 +37,10 @@ import { runColumns } from '../repositories/runListProjection.js';
 import { canRunQueuedJob, TARGET_NOT_AVAILABLE_MESSAGE } from './siteAccess.js';
 import { failUnstartedJob } from './siteJobEnding.js';
 
-// A busy target should not block claims for other targets in the same queue.
+// 1つのコンピュータが混んでいても、同じキューのほかのコンピュータのJobは取得できるようにする。
 const CLAIM_CANDIDATE_LIMIT = 100;
-// Site Jobs (executor 'site', a phase once claimed) belong to launchers and runners
-// (SiteSubmissionService, RunnerService); a worker neither claims nor reports for them.
+// siteのJob（executorが'site'で、取得後はphaseを持つ）はlauncherとrunnerが扱う
+// （SiteSubmissionService、RunnerService）。workerはそれらを取得も報告もしない。
 
 export class WorkerService {
   private readonly database: Database;
@@ -91,7 +91,8 @@ export class WorkerService {
   ): Promise<WorkerJob | null> {
     return transaction(this.database, async (connection) => {
       const worker = await requireWorker(connection, principal);
-      // Serializes a worker's duplicate HTTP requests, while other workers can use SKIP LOCKED.
+      // 同じworkerから重複して届いたHTTPリクエストを1つずつ処理する。ほかのworkerは
+      // SKIP LOCKEDを使える。
       await connection.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
         `${worker.tokenId}:${request.workerId}`,
       ]);
@@ -126,8 +127,8 @@ export class WorkerService {
       }
       const skipped: string[] = [];
       for (let candidateIndex = 0; candidateIndex < CLAIM_CANDIDATE_LIMIT; candidateIndex++) {
-        // A Job that needs a capability the worker did not name in this request waits for one
-        // that did, rather than run without what the capability passes to its code.
+        // このリクエストでworkerが挙げなかったcapabilityが要るJobは、それを挙げたworkerを待つ。
+        // capabilityがコードに渡すものが無いまま動かさない。
         const job = await first<Job>(
           connection,
           `SELECT ${jobColumns('j')} FROM jobs j JOIN compute_targets t ON t.id=j.target_id
@@ -157,8 +158,8 @@ export class WorkerService {
           [job.targetId],
         );
         if (!target) continue;
-        // The computer may have turned private since the Job was created; the Job fails rather
-        // than wait for a computer that will never take it, as a site submission does.
+        // Jobを作ったあとでコンピュータが非公開になったかもしれない。siteへの投入と同じく、
+        // 受け取ることのないコンピュータを待たず、Jobを失敗にする。
         if (!(await canRunQueuedJob(connection, job))) {
           await failUnstartedJob(connection, this.runCompletion, {
             job,
@@ -243,7 +244,7 @@ export class WorkerService {
     });
   }
 
-  // Registering versions is a registry write, so the worker token needs registry:write as well.
+  // バージョンの登録はregistryへの書き込みなので、workerのtokenにはregistry:writeも要る。
   async outputs(
     principal: Principal,
     jobId: string,

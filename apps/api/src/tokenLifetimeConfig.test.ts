@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { loadConfig } from './config.js';
 
 describe('token期限の既定日数の設定', () => {
-  // Config validation does not connect to this synthetic database.
+  // 設定の検証は、この架空のデータベースには接続しない。
   const environment = { AUTH_MODE: 'development', MMT_DATABASE_URL: 'postgresql://test@127.0.0.1:1/unused' };
   it('設定がなければ365日になる', () => {
     expect(loadConfig(environment).tokenDefaultLifetimeDays).toBe(365);

@@ -4,17 +4,18 @@ import type { RunSearchService } from '../services/runSearchService.js';
 import { runKindSchema, runStatusSchema, uuidSchema } from '../domain/validation.js';
 import { jsonBody, principal, uuidParam, type ApiEnvironment } from '../http/request.js';
 
-// Limits published in docs/api-contract.md. 500 summaries stay well below the polling budget.
+// docs/api-contract.mdで公開している上限。要約500件なら、pollで許容する量を十分下回る。
 const DEFAULT_PAGE_SIZE = 100;
 const MAX_PAGE_SIZE = 500;
 const MAX_FILTER_LENGTH = 2000;
 const MAX_ORDER_BY = 5;
 const MAX_ORDER_BY_LENGTH = 500;
-// Bounds each bound array; the UI sends a handful of IDs and SDK callers can page instead.
+// クエリに渡す配列にはそれぞれ上限を設ける。画面が送るIDは数個で、SDKの呼び出し側は代わりに
+// ページ送りできる。
 const MAX_ID_CONDITIONS = 100;
-// Equal to the existing GET /runs name query.
+// 既存のGET /runsの名前のクエリと同じ。
 const MAX_NAME_LENGTH = 200;
-// A cursor carries a UUID or an offset with a SHA-256 fingerprint, far below this.
+// cursorが持つのはUUIDか、オフセットとSHA-256のフィンガープリントで、これよりずっと短い。
 const MAX_CURSOR_LENGTH = 1000;
 
 const uuidListSchema = z.array(uuidSchema).max(MAX_ID_CONDITIONS).default([]);

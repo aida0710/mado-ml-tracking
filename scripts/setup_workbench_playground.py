@@ -1,4 +1,4 @@
-"""Create a development Playground project for the real browser/worker walkthrough."""
+"""実際のブラウザとworkerで一通り操作するための、開発用のPlayground Projectを作る。"""
 
 from __future__ import annotations
 

@@ -1,7 +1,7 @@
 import type { ComputeTarget, JobPhase } from '@mmt/contracts';
 import { DomainError } from './errors.js';
 
-/** What a Job asks of a site beyond its runtime; ssh and local Jobs name exact GPU IDs instead. */
+/** Jobがruntimeのほかにsiteへ求めるもの。sshとlocalのJobは代わりに具体的なGPU IDを指定する。 */
 export interface SiteJobOptions {
   gpuCount: number;
   retryOnFailure: boolean;
@@ -21,7 +21,7 @@ export function validateSiteJobOptions(
     });
 }
 
-/** A manual site's Jobs wait for `mado-tracking submit`; everything else starts without a phase. */
+/** 手動のsiteのJobは`mado-tracking submit`を待つ。それ以外はphaseなしで始まる。 */
 export function initialJobPhase(
   target: Pick<ComputeTarget, 'executor' | 'submissionMode'>,
 ): JobPhase | null {

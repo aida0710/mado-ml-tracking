@@ -4,7 +4,7 @@ import type { Database } from '../db/database.js';
 import { listProjectAlerts, listVisibleAlerts } from '../repositories/operationsAlertRepository.js';
 import { requireProject, requireScope } from './accessService.js';
 
-/** Reads the alerts OperationsMonitor keeps; everyone who may open a Project sees its alerts. */
+/** OperationsMonitorが持つアラートを読む。Projectを開ける人は誰でもそのアラートを見られる。 */
 export class OperationsAlertService {
   constructor(private readonly database: Database) {}
 
@@ -18,9 +18,9 @@ export class OperationsAlertService {
   }
 
   /**
-   * Alerts of every Project the principal is a member of (GET /operations-alerts), so a stopped
-   * worker elsewhere shows before that Project is opened. Global administrators' sessions see all;
-   * their tokens act for the person and see only the Projects they are a member of.
+   * principalがメンバーであるすべてのProjectのアラート（GET /operations-alerts）。ほかのProjectで
+   * 止まったworkerが、そのProjectを開く前に見えるようにする。全体管理者のsessionはすべてを見る。
+   * 全体管理者のtokenはその人として動き、その人がメンバーであるProjectだけを見る。
    */
   async listVisible(
     principal: Principal,

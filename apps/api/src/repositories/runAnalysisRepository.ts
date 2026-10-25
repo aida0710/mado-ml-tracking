@@ -1,10 +1,10 @@
 import type { JsonValue, RunStatus, SweepObjective } from '@mmt/contracts';
 import { first, rows, type Connection } from '../db/database.js';
 
-// The same merge as the run search compiler: SDK-recorded parameters win over execution parameters.
+// Run検索のコンパイラと同じ合わせ方。SDKで記録したparameterを実行時のparameterより優先する。
 const RUN_PARAMETERS_SQL = '(r.parameters||r.recorded_parameters)';
 
-/** One Run with only what the analysis needs; executionSnapshot and the rest stay in the DB. */
+/** 分析に要るものだけを持つRun1件。executionSnapshotなどほかはDBに残す。 */
 export interface RunAnalysisSource {
   runId: string;
   name: string;
@@ -13,7 +13,7 @@ export interface RunAnalysisSource {
   sweepTrialIndex: number | null;
   sweepObjectiveValue: number | null;
   parameters: Record<string, JsonValue>;
-  /** Raw latest_metrics entries of the requested keys; non-finite values arrive as strings. */
+  /** 求めたキーのlatest_metricsの項目をそのまま持つ。有限でない値は文字列で届く。 */
   latestMetrics: Record<string, unknown>;
 }
 
@@ -23,7 +23,7 @@ const selectColumns = (parameters: string) => `r.id AS run_id,r.name,r.experimen
   (SELECT COALESCE(jsonb_object_agg(e.key,e.value),'{}') FROM jsonb_each(r.latest_metrics) e
     WHERE e.key=ANY($3::text[])) AS latest_metrics`;
 
-/** Only Runs of the Project are returned, so a missing row means another Project or no Run. */
+/** そのProjectのRunだけを返すので、行が無ければ別のProjectのRunか、Runが存在しない。 */
 export async function readRunAnalysisSources(
   connection: Connection,
   runs: { projectId: string; runIds: string[]; metricKeys: string[] },
@@ -39,8 +39,8 @@ export async function readRunAnalysisSources(
 }
 
 /**
- * The trials of one sweep whose Run is active, in trial order, at most `limit` of them. The
- * trial's own values win over the Run's, since the Run may record them again as strings.
+ * 1つのSweepのtrialのうち、Runが削除されていないものをtrialの順に最大`limit`件返す。Runが同じ
+ * 値を文字列で記録し直すことがあるので、trial自身の値をRunの値より優先する。
  */
 export async function readSweepAnalysisSources(
   connection: Connection,

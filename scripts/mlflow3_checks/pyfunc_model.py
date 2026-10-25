@@ -1,4 +1,5 @@
-"""Custom pyfunc models with several artifact files: alias load, models:/ download, search_runs."""
+"""複数のArtifactファイルを持つ独自のpyfuncモデル: aliasでの読み込み、models:/のダウンロード、
+search_runs。"""
 
 from __future__ import annotations
 
@@ -19,7 +20,7 @@ SAMPLE_INPUT = pd.DataFrame({"a": [0.0, 1.0, 2.0], "b": [1.0, 0.0, 3.0]})
 
 
 class ScaledLinearModel(mlflow.pyfunc.PythonModel):
-    """Reads coefficients and an offset from separate artifact files, like a split checkpoint."""
+    """分割したcheckpointのように、係数とオフセットを別々のArtifactファイルから読む。"""
 
     def load_context(self, context: mlflow.pyfunc.PythonModelContext) -> None:
         self.coefficients = json.loads(Path(context.artifacts["coefficients"]).read_text())
@@ -37,7 +38,7 @@ def expected_predictions() -> np.ndarray:
 
 
 def write_model_files(directory: Path) -> dict[str, Path]:
-    """Lay out one JSON file and a directory tree, so the version must keep the whole set."""
+    """JSONファイル1つとディレクトリの木を置き、バージョンが一式を丸ごと保つ必要がある形にする。"""
     coefficients = directory / "coefficients.json"
     coefficients.write_text(json.dumps({"a": 2.0, "b": 3.0}))
     bundle = directory / "bundle"

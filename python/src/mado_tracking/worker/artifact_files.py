@@ -1,4 +1,4 @@
-"""Read a declared regular file without following any directory, symlink, or hardlink."""
+"""宣言された通常ファイルを、ディレクトリ・シンボリックリンク・ハードリンクをたどらずに読む。"""
 
 from __future__ import annotations
 

@@ -22,8 +22,8 @@ type Caller = { cookie?: string; token?: string };
 describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立PostgreSQL）', () => {
   let harness: Harness;
   let fixture: ContainerFixture;
-  // The researcher who adds the private computer; a Project admin, so they create Service
-  // Accounts, rules and hook owners of their own.
+  // 非公開のコンピュータを追加する研究者。Project adminなので、自分のService Account、
+  // ルール、フックの所有者を自分で作る。
   let owner: { cookie: string; userId: string };
   let colleague: { cookie: string; userId: string };
   beforeAll(async () => {
@@ -52,7 +52,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立Pos
     );
   }
 
-  // The owner's PC: a manual site that runs containers.
+  // 所有者のPC。コンテナを動かす手動のsite。
   async function ownerComputer(overrides: Record<string, unknown> = {}): Promise<ComputeTargetDetails> {
     return entity<ComputeTargetDetails>(
       await request(harness.app, '/api/targets', {
@@ -176,7 +176,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立Pos
       ),
     );
 
-    // A global administrator may open it to everyone without being able to use it before.
+    // 全体管理者は、それまで自分では使えなかったコンピュータでも全員に公開できる。
     await entity(await patchTarget(computer.id, fixture.administrator.cookie, { visibility: 'public' }), 200);
     await entity<Job>(await createJob({ cookie: colleague.cookie }, computer.id));
     await entity<Job>(await createJob({ cookie: fixture.administrator.cookie }, computer.id));
@@ -209,7 +209,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立Pos
       );
     expect(await trigger()).toMatchObject({ status: 'queued' });
 
-    // Moved to a Service Account someone else created, the hook runs as someone who may not use it.
+    // 別の人が作ったService Accountへ移すと、フックはそのコンピュータを使えない名義で動く。
     const transfer = async (account: ServiceAccount) =>
       entity<Hook>(
         await request(harness.app, `${fixture.basePath}/hooks/${hook.id}/owner`, {
@@ -226,7 +226,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立Pos
     await transfer(await serviceAccount(owner.cookie, 'Owner hook bot'));
     expect(await trigger()).toMatchObject({ status: 'queued' });
 
-    // A rule runs as whoever creates it.
+    // ルールは作成者の名義で動く。
     const createRule = (cookie: string) =>
       request(harness.app, `${fixture.basePath}/automation-rules`, {
         method: 'POST',
@@ -294,7 +294,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立Pos
       canManage: true,
     });
     expect((await seenBy(owner.cookie))[computer.id]).toMatchObject({ usable: true, canManage: true });
-    // The administrator manages it, so its details are theirs to see; its job shell too.
+    // 管理者はこのコンピュータを管理するので、詳細もjob shellも見られる。
     expect((await listTargets(fixture.administrator.cookie)).find((target) => target.id === computer.id))
       .toMatchObject({ site: { workDirectory: '/home/owner/mmt' } });
   });
@@ -308,7 +308,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立Pos
       await entity<ComputeTargetDetails>(await patchTarget(computer.id, owner.cookie, { visibility: 'public' }), 200),
     ).toMatchObject({ visibility: 'public' });
     await entity(await patchTarget(computer.id, fixture.administrator.cookie, { visibility: 'private' }), 200);
-    // Saving the same visibility is not a change.
+    // 同じ公開範囲を保存しても変更にはならない。
     await entity(await patchTarget(computer.id, owner.cookie, { name: 'Owner PC 2', visibility: 'private' }), 200);
     expect(await visibilityAudits(computer.id)).toEqual([
       { outcome: 'denied', details: expect.objectContaining({ code: 'target_owner_required' }) },
@@ -328,7 +328,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立Pos
   });
 
   it('待機中のJobのコンピュータがあとでPrivateになると、Jobは投入のときに失敗する', async () => {
-    // ssh/local: the worker's claim fails it instead of running it.
+    // ssh/local。workerが取得するときに、動かさずに失敗にする。
     const queued = await entity<Job>(await createJob({ cookie: colleague.cookie }, fixture.target.id));
     await entity(await patchTarget(fixture.target.id, fixture.administrator.cookie, { visibility: 'private' }), 200);
     const claimed = await entity<{ item: WorkerJob | null }>(
@@ -344,7 +344,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲（独立Pos
     expect(failedLocal).toMatchObject({ status: 'failed', end_reason: 'submit_failed' });
     expect(failedLocal.error).toContain('private');
 
-    // A site: the submission fails it, as for a requester without an account there.
+    // site。そこにアカウントの無い依頼者のときと同じく、投入の時点で失敗にする。
     const computer = await ownerComputer({ visibility: 'public' });
     const waiting = await entity<Job>(await createJob({ cookie: colleague.cookie }, computer.id));
     expect(waiting.phase).toBe('waiting_manual');
@@ -420,7 +420,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの公開範囲の移行（
       "SELECT to_regclass('compute_target_projects')::text AS table",
     );
     expect(sharing.rows[0]!.table).toBeNull();
-    // An owner is no longer a site's alone, and a private computer needs one.
+    // 所有者を持てるのはもうsiteだけではなく、非公開のコンピュータには所有者が要る。
     await harness.database.query('UPDATE compute_targets SET owner_user_id=$2 WHERE id=$1', [globalId, ownerId]);
     await expect(
       harness.database.query(

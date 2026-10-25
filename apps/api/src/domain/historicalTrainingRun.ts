@@ -3,7 +3,7 @@ import type { Run } from '@mmt/contracts';
 import type { z } from 'zod';
 import type { historicalTrainingRunSchema } from './modelTrainingSourceValidation.js';
 
-/** A resend may reuse its recorded history; another recipe must not replace the association. */
+/** 再送なら記録済みの履歴を使ってよい。別のレシピで関連付けを置き換えてはならない。 */
 export function matchesHistoricalTrainingRun(
   run: Run,
   input: z.infer<typeof historicalTrainingRunSchema>,

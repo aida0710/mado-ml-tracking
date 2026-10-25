@@ -54,7 +54,8 @@ describe.skipIf(!testDatabaseUrl)('既存Registryとtargetのruntime移行（独
     ]);
     await migrate(harness.database);
     await migrate(harness.database);
-    // SSO users keep their user.id through user_oidc_identities; development users are not SSO identities.
+    // SSOユーザーはuser_oidc_identitiesを通してuser.idを保つ。developmentのユーザーは
+    // SSOのidentityではない。
     expect(
       (
         await harness.database.query(

@@ -1,5 +1,5 @@
-"""The launcher's poll with logins that run locally: claim → spec directory → job shell → report,
-cancellations in the scheduler queue, its TOML, and the SSH command lines it would run."""
+"""ローカルで動くログインを使ったlauncherのポーリング（claim → specディレクトリ → job shell →
+報告）、スケジューラのキューでのキャンセル、launcherのTOML、実行するはずのSSHのコマンドライン。"""
 
 from __future__ import annotations
 
@@ -55,7 +55,7 @@ def keygen(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def write_config(tmp_path: Path, **settings: str) -> Path:
-    """launcher.toml beside the launcher's token file; `settings` are TOML values by key."""
+    """launcherのtokenファイルの隣に置くlauncher.toml。`settings`はキーごとのTOMLの値。"""
     token_file = tmp_path / "launcher.token"
     token_file.write_text(LAUNCHER_TOKEN + "\n")
     token_file.chmod(0o600)
@@ -79,7 +79,7 @@ def launcher_for(
     clock: Callable[[], float] = time.monotonic,
     **settings: str,
 ) -> Launcher:
-    """A launcher with a launcher.toml of `settings` (TOML values by key) on top of the defaults."""
+    """既定値に`settings`（キーごとのTOMLの値）を重ねたlauncher.tomlを持つlauncher。"""
     return Launcher(
         load_launcher_config(write_config(tmp_path, **settings)),
         client_factory=api.client,
@@ -114,7 +114,7 @@ def queue_on_assigned_site(
     variables: dict[str, str] | None = None,
     **settings,
 ) -> dict:
-    """Assign the submission's site to the launcher with a key for its account, and queue it."""
+    """投入のsiteを、そのアカウントの鍵とともにlauncherへ割り当て、投入をキューに積む。"""
     target = submission["target"]
     site_settings = site_settings_document(**settings)
     api.assign_site(target, site_settings)
@@ -222,8 +222,8 @@ def test_a_claimed_submission_runs_as_its_account_and_is_reported_then_canceled_
     )
     launcher = launcher_for(tmp_path, api, logins)
     launcher.run_once()
-    # The API knows the launcher by its token: no request names it.
-    # It names what the runner it installs passes to a Job, so it is given workflow steps too.
+    # APIはlauncherをtokenで見分けるので、launcherを名指しするリクエストは無い。launcherは、
+    # 自分が入れるrunnerがJobに渡すものを伝えるので、ワークフローのstepも渡される。
     assert api.bodies("POST", "launcher/site-submissions/claim") == [
         {"targetIds": [target_id], "limit": 7, "capabilities": ["workflowDatasetUsage"]}
     ]
@@ -232,8 +232,8 @@ def test_a_claimed_submission_runs_as_its_account_and_is_reported_then_canceled_
         "results": [{"jobIds": [job_id], "outcome": "submitted", "schedulerJobId": "4242.pbs", "error": None}]
     }
 
-    # It logged in as the account the submission names, with that account's key and the
-    # site's known_hosts from the Web.
+    # 投入が指定するアカウントとして、そのアカウントの鍵と、画面で登録したsiteのknown_hostsで
+    # ログインした。
     state = tmp_path / "state"
     [login] = logins.shared()
     assert (login.endpoint.host, login.endpoint.port, login.endpoint.user) == (
@@ -246,13 +246,13 @@ def test_a_claimed_submission_runs_as_its_account_and_is_reported_then_canceled_
     assert login.endpoint.known_hosts.read_text() == submission["settings"]["connection"]["knownHosts"]
     assert mode_of(login.endpoint.known_hosts) == 0o600
 
-    # The job shell is the submission's version; work directory and variables are the account's.
+    # job shellは投入が指すバージョンのもの。作業ディレクトリと変数はアカウントのもの。
     spec = tmp_path / "alice-work/.mmt-submissions" / job_id
     assert mode_of(spec) == 0o700 and mode_of(spec / "jobs/0.json") == 0o600
     assert json.loads((spec / "jobs/0.json").read_text())["jobToken"].startswith("mado_mtj_")
     recorded = json.loads((spec / "submission.json").read_text())
     assert recorded["jobs"][0]["jobToken"] is None
-    # Which job shell version it was, not its content: that is installed once, on its own.
+    # 記録するのはjob shellのどのバージョンかで、中身ではない。中身は別に1回だけ入れる。
     assert recorded["jobShell"] == {key: submission["jobShell"][key] for key in ("id", "version", "sha256")}
     assert json.loads((spec / "api.json").read_text()) == {"apiUrl": "https://runner.example.invalid"}
     runner_settings = json.loads((spec / "runner.json").read_text())
@@ -275,7 +275,7 @@ def test_a_claimed_submission_runs_as_its_account_and_is_reported_then_canceled_
     record = json.loads((state / "submissions" / f"{job_id}.json").read_text())
     assert (record["accountName"], record["keyId"]) == ("alice", account["keyId"])
 
-    # Canceled in the queue: the site's cancel command runs as the account the API names.
+    # キューの中でキャンセル: siteのキャンセルコマンドは、APIが指定するアカウントで動く。
     api.cancellations = [
         {"jobId": job_id, "targetId": target_id, "schedulerJobId": "4242.pbs", "account": account}
     ]
@@ -340,7 +340,8 @@ def test_an_unreported_result_is_kept_and_resent_by_the_next_poll(tmp_path, keyg
     api.report_statuses = [503] * 4
     launcher = launcher_for(tmp_path, api, logins)
     pending = tmp_path / "state/pending-reports"
-    # Left by a launcher of one Project's worker token, whose reports the API takes no more.
+    # 1つのProjectのworker tokenで動いていたlauncherが残したもの。この報告はAPIがもう
+    # 受け付けない。
     old_job_id = str(uuid4())
     (pending / "old.json").write_text(json.dumps({"project": "speech", "result": {"jobIds": [old_job_id]}}))
     launcher.run_once()
@@ -400,14 +401,14 @@ def test_cancellations_run_as_the_account_the_api_names_or_stay_queued(tmp_path,
         scheduler_job_id="1.pbs",
     )
     api.cancellations = [
-        # The person changed their account since: it runs as the new one, and the log says so.
+        # その後、本人がアカウントを変えた。新しいアカウントで実行し、ログにもそう出る。
         {
             "jobId": renamed,
             "targetId": target_id,
             "schedulerJobId": "1.pbs",
             "account": account_document(account_name="alice2", key_id=key_id),
         },
-        # The API no longer knows the account: the Job stays queued, and its runner ends at start.
+        # APIがそのアカウントをもう知らない。Jobはキューに残り、そのrunnerは起動時に終わる。
         {"jobId": forgotten, "targetId": target_id, "schedulerJobId": "2.pbs", "account": account_document()},
         {
             "jobId": elsewhere,
@@ -425,7 +426,7 @@ def test_cancellations_run_as_the_account_the_api_names_or_stay_queued(tmp_path,
         {"jobIds": [renamed, forgotten, elsewhere]}
     ]
 
-    # A lost connection leaves the cancellation for the next poll.
+    # 接続が切れたら、キャンセルは次のポーリングに回す。
     logins.refusal = TransportError("SSH connection to the site failed: Connection timed out")
     other_key = api.add_key(target_id, user_id=str(uuid4()))
     api.cancellations = [
@@ -465,13 +466,13 @@ def test_a_cancel_whose_login_fails_leaves_that_login_alone_for_a_while(tmp_path
             "account": account_document(account_name="other", key_id=key_id),
         },
     ]
-    # The key is not in authorized_keys yet (the launcher changed a moment ago, say).
+    # 鍵がまだauthorized_keysに無い（たとえば、少し前にlauncherが替わった）。
     logins.refusal = TransportError(
         "SSH connection to the site failed: mmt@login: Permission denied (publickey)"
     )
     api.cancellations = list(cancellations)
     launcher.run_once()
-    # One failed login per login, not per Job: the second Job of the same login is not tried.
+    # 失敗するログインはJobごとでなくログインごとに1回。同じログインの2つ目のJobは試さない。
     assert [(login.endpoint.user, len(login.commands)) for login in logins.shared()] == [
         ("mmt", 1),
         ("other", 1),
@@ -479,7 +480,7 @@ def test_a_cancel_whose_login_fails_leaves_that_login_alone_for_a_while(tmp_path
     assert f"Cancel of Job {first} deferred" in caplog.text and "again in 600 seconds" in caplog.text
     assert f"Cancel of Job {second} deferred" not in caplog.text
 
-    # The next polls inside the pause log in nowhere and report nothing.
+    # 休止中の次のポーリングは、どこにもログインせず、何も報告しない。
     for seconds in (10.0, 590.0):
         now[0] = 1000.0 + seconds
         api.cancellations = list(cancellations)
@@ -487,7 +488,7 @@ def test_a_cancel_whose_login_fails_leaves_that_login_alone_for_a_while(tmp_path
     assert len(logins.made) == 2 and sum(len(login.commands) for login in logins.made) == 2
     assert api.bodies("POST", "launcher/site-submissions/cancellations/report") == []
 
-    # After the pause each login is tried again; it works now, and every Job leaves the queue.
+    # 休止が明けると各ログインをもう一度試す。今度は成功し、すべてのJobがキューから外れる。
     logins.refusal = None
     now[0] = 1000.0 + 601.0
     api.cancellations = list(cancellations)
@@ -528,7 +529,7 @@ def test_after_a_failed_login_the_polls_later_submissions_through_it_fail_untrie
     queued = str(uuid4())
     cancellation = {"jobId": queued, "targetId": target["id"], "schedulerJobId": "9.pbs", "account": mmt}
     api.cancellations = [cancellation]
-    # mmt's key is not in authorized_keys yet; the connection as `other` is lost on the way.
+    # mmtの鍵はまだauthorized_keysに無い。`other`としての接続は途中で切れる。
     refused = "SSH connection to the site failed: mmt@login: Permission denied (publickey)."
     lost = "SSH connection to the site failed: Connection closed by 192.0.2.1 port 22"
     logins.refusals = {"mmt": LoginRefused(refused), "other": TransportError(lost)}
@@ -539,22 +540,22 @@ def test_after_a_failed_login_the_polls_later_submissions_through_it_fail_untrie
     assert [errors[job_id] for job_id in job_ids] == [
         f"The site could not be prepared: {refused}",
         untried,
-        # Another account is another login: it is tried.
+        # 別のアカウントは別のログインなので、試す。
         f"The site could not be prepared: {lost}",
         untried,
     ]
-    # One failed login per refused login and poll; a lost connection is tried three times. The
-    # poll's later submissions through either login do not log in at all.
+    # 拒否されるログインは、ログインとポーリングごとに1回だけ失敗する。切れた接続は3回試す。
+    # そのポーリングの後続の投入は、どちらのログインを通るものも一切ログインしない。
     assert [(login.endpoint.user, len(login.commands)) for login in logins.shared()] == [
         ("mmt", 1),
         ("other", 3),
     ]
-    # The cancel through the failed login waits too, in this poll and the ones after.
+    # 失敗したログインを通るキャンセルも、このポーリングでもその後のポーリングでも待つ。
     assert (
         not canceled.exists() and api.bodies("POST", "launcher/site-submissions/cancellations/report") == []
     )
 
-    # The next poll tries the login again; it works now, so the cancel no longer waits either.
+    # 次のポーリングでログインをもう一度試す。今度は成功するので、キャンセルももう待たない。
     logins.refusals = {}
     for login in logins.made:
         login.refusal = None
@@ -569,14 +570,14 @@ def test_after_a_failed_login_the_polls_later_submissions_through_it_fail_untrie
 
 
 def refuse_logins(logins: LocalLogins, refusal: Exception | None) -> None:
-    """From now on every login fails with `refusal` (None: they work), the made ones too."""
+    """これ以降、作成済みのものも含め、すべてのログインを`refusal`で失敗させる（Noneなら成功）。"""
     logins.refusal = refusal
     for login in logins.made:
         login.refusal = refusal
 
 
 def waiting_notices(caplog: pytest.LogCaptureFixture) -> list[str]:
-    """What the launcher said, at INFO or above, about cancels that wait for a failed login."""
+    """失敗したログインを待つキャンセルについて、launcherがINFO以上で出したメッセージ。"""
     return [
         record.getMessage()
         for record in caplog.records
@@ -598,20 +599,20 @@ def test_a_connection_check_that_logs_in_lets_the_waiting_cancels_go_ahead(tmp_p
     cancellation = {"jobId": job_id, "targetId": target_id, "schedulerJobId": "1.pbs", "account": mmt}
     now = [1000.0]
     launcher = launcher_for(tmp_path, api, logins, clock=lambda: now[0])
-    # The key is not in authorized_keys yet: the cancel fails, and its warning says when it retries.
+    # 鍵がまだauthorized_keysに無い。キャンセルは失敗し、警告にいつ再試行するかが出る。
     refuse_logins(logins, LoginRefused("SSH connection to the site failed: mmt@login: Permission denied"))
     api.cancellations = [cancellation]
     launcher.run_once()
     assert f"Cancel of Job {job_id} deferred" in caplog.text
 
-    # Someone registers the key. Without a check the cancel waits out its pause, quietly.
+    # 誰かが鍵を登録する。接続確認が無ければ、キャンセルは何も言わずに休止が明けるまで待つ。
     refuse_logins(logins, None)
     now[0] += 10.0
     api.cancellations = [cancellation]
     launcher.run_once()
     assert not canceled.exists() and waiting_notices(caplog) == []
 
-    # A connection check that logs in as the account lets the cancel go ahead in that same poll.
+    # そのアカウントでログインする接続確認があれば、同じポーリングのうちにキャンセルが進む。
     check_id = str(uuid4())
     api.checks = [{"id": check_id, "targetId": target_id, "account": mmt}]
     now[0] += 10.0
@@ -644,7 +645,7 @@ def test_cancels_held_back_by_a_failed_submission_say_why_once_until_the_login_w
     launcher = launcher_for(tmp_path, api, logins, clock=lambda: now[0])
 
     def poll(cancel_job_id: str, *, refusal: Exception | None) -> list[str]:
-        """One poll with a submission and one cancel through mmt; its notices of waiting cancels."""
+        """mmtを通る投入1つとキャンセル1つで1回ポーリングし、待っているキャンセルの通知を返す。"""
         refuse_logins(logins, refusal)
         submission = site_submission()
         submission.update(
@@ -668,14 +669,15 @@ def test_cancels_held_back_by_a_failed_submission_say_why_once_until_the_login_w
         return waiting_notices(caplog)
 
     first, second = str(uuid4()), str(uuid4())
-    # The poll's submission fails to log in, so the cancel waits: the log says why, and until when.
+    # そのポーリングの投入がログインに失敗するので、キャンセルは待つ。ログには理由と、いつまで
+    # 待つかが出る。
     [notice] = poll(first, refusal=LoginRefused(refused))
     assert notice.startswith(f"Cancel of Job {first} waits: logging in as mmt on site")
     assert refused in notice and "again in 600 seconds" in notice
-    # While the login keeps failing, the polls after that wait without saying it again.
+    # ログインが失敗し続けるあいだ、その後のポーリングは同じことを繰り返し出さずに待つ。
     assert poll(first, refusal=LoginRefused(refused)) == []
     assert not canceled.exists()
-    # A submission that logs in ends the wait; a later failure is told once more.
+    # ログインできた投入があれば待ちは終わる。その後にまた失敗すれば、もう一度だけ知らせる。
     assert poll(first, refusal=None) == []
     assert canceled.read_text() == f"{first}.pbs\n"
     [again] = poll(second, refusal=LoginRefused(refused))
@@ -719,7 +721,7 @@ def test_ssh_sites_share_one_connection_and_jump_hosts_get_the_same_settings(tmp
         with pytest.raises(ConfigurationError):
             SshEndpoint(**{**endpoint.__dict__, **invalid})
 
-    # A connection check logs in on its own: no shared connection is used or left behind.
+    # 接続確認は単独でログインする。共有の接続を使わず、残しもしない。
     alone = SshSiteTransport(
         endpoint, state_directory=ssh_state_directory, masker=SecretMasker(), shared_connection=False
     )
@@ -732,9 +734,9 @@ def test_ssh_sites_share_one_connection_and_jump_hosts_get_the_same_settings(tmp
 
 
 def test_launcher_job_shell_and_installed_runner_complete_a_job(tmp_path, monkeypatch, keygen):
-    """The whole chain on a direct host: the job shell starts MMT_RUNNER, which reports by itself."""
+    """スケジューラなしのホストでの全工程: job shellがMMT_RUNNERを起動し、runnerが自ら報告する。"""
     install_fake_sif_cli(tmp_path, monkeypatch)
-    # The installed zipapp must not borrow this checkout's package.
+    # 入れたzipappが、このチェックアウトのパッケージを借りてはいけない。
     monkeypatch.delenv("PYTHONPATH", raising=False)
     direct_shell = (
         "#!/bin/sh\nset -eu\n"

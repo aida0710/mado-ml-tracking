@@ -61,7 +61,7 @@ def test_offline_media_is_copied_into_the_spool_and_written_to_media_jsonl():
         artifact = artifacts[item["artifactPath"]]
         copy = directory / artifact["localPath"]
         assert artifact["copied"] and file_digest(copy)[0] == artifact["sha256"]
-    # The table's audio cell is a spooled Artifact too, referred to by its path.
+    # 表の音声のセルもspoolされたArtifactで、パスで参照される。
     table = json.loads((directory / artifacts[media[2]["artifactPath"]]["localPath"]).read_bytes())
     cell_path = table["data"][0][0]["filepath"]
     assert table["data"][0][0]["type"] == "audio" and cell_path in artifacts
@@ -83,7 +83,7 @@ def test_sync_registers_spooled_media_with_their_ids_and_a_second_sync_adds_noth
         sent = api.media[item["id"]]
         assert artifact_paths[sent["artifactId"]] == item["artifactPath"]
         assert (sent["key"], sent["step"], sent["kind"]) == (item["key"], item["step"], item["kind"])
-    assert len(api.artifacts) == 4  # three media files and the table's audio cell
+    assert len(api.artifacts) == 4  # メディアファイル3つと表の音声のセル
     assert second.outcome == "completed" and second.media == 0
     assert api.media == media_after_first
     assert api.runs[run.id]["status"] == "finished"

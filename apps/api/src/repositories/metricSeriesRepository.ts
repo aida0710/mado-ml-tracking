@@ -8,15 +8,15 @@ import type {
   SeriesExtent,
 } from '../domain/metricSeries/seriesBuckets.js';
 
-// A chart request is interactive; a slower aggregation means the request is too large to serve.
+// グラフのリクエストは対話的なので、これより遅い集計はリクエストが大きすぎて応じられないとみなす。
 const SERIES_QUERY_TIMEOUT_MS = 10000;
-// MLflow stores NaN and infinities; PostgreSQL treats NaN as equal to itself, so NOT IN matches it.
+// MLflowはNaNと無限大を保存する。PostgreSQLはNaNをNaN自身と等しいとみなすので、NOT INで判定できる。
 const finiteValue = (column: string) =>
   `${column} NOT IN ('NaN'::float8,'Infinity'::float8,'-Infinity'::float8)`;
-// The same merge as the run search compiler: SDK-recorded parameters win over execution parameters.
+// Run検索のコンパイラと同じ合わせ方。SDKで記録したparameterを実行時のparameterより優先する。
 const RUN_PARAMETERS_SQL = '(r.parameters||r.recorded_parameters)';
 
-/** Which stored points to read, before any bucketing. */
+/** バケットに分ける前に、保存したどの点を読むか。 */
 export interface MetricPointSelection {
   runIds: string[];
   keys: string[];
@@ -55,33 +55,34 @@ function xExpression(xAxis: MetricXAxis): string {
   switch (xAxis.kind) {
     case 'step':
       return 'm.step::float8';
-    // date_part returns float8 directly; EXTRACT returns numeric, measured 1.4-1.8 times slower.
+    // date_partはfloat8をそのまま返す。EXTRACTはnumericを返し、測ると1.4〜1.8倍遅かった。
     case 'wall_time':
       return "date_part('epoch',m.timestamp)*1000";
     case 'relative_time':
       return "date_part('epoch',m.timestamp-ro.origin)";
     case 'metric':
-      // A NaN x cannot be placed on the axis, so it counts as missing.
+      // NaNのxは軸に置けないので、欠損として数える。
       return `CASE WHEN ${finiteValue('xv.value')} THEN xv.value END`;
   }
 }
 
-/** `WITH ... points AS (id, run_id, name, step, value, x)`; x is NULL when the point has none. */
+/** `WITH ... points AS (id, run_id, name, step, value, x)`。点にxが無いときはNULL。 */
 function pointsCte(selection: MetricPointSelection, parameters: SqlParameters): string {
   const runIds = parameters.bind(selection.runIds);
   const keys = parameters.bind(selection.keys);
   const ctes: string[] = [];
   let join = '';
   if (selection.xAxis.kind === 'relative_time') {
-    // COALESCE evaluates the subquery only for Runs that never started. Inlined, the planner ran
-    // that subquery once per metric point (minutes for 100k points), so each origin is computed once.
+    // COALESCEは、開始しなかったRunに限ってサブクエリを評価する。インラインにすると、プランナーは
+    // そのサブクエリをメトリクスの点ごとに実行した（10万点で数分）。そこで起点はRunごとに1回だけ
+    // 計算する。
     ctes.push(`run_origins AS MATERIALIZED (SELECT r.id AS run_id,
       COALESCE(r.started_at,(SELECT min(o.timestamp) FROM metrics o WHERE o.run_id=r.id)) AS origin
       FROM runs r WHERE r.id=ANY(${runIds}::uuid[]))`);
     join = 'JOIN run_origins ro ON ro.run_id=m.run_id';
   }
   if (selection.xAxis.kind === 'metric') {
-    // Materialized for the same reason: one x per Run and step, read once.
+    // 同じ理由でMATERIALIZEDにする。xはRunとstepごとに1つで、1回だけ読む。
     ctes.push(`x_values AS MATERIALIZED (SELECT DISTINCT ON(run_id,step) run_id,step,value FROM metrics
       WHERE run_id=ANY(${runIds}::uuid[]) AND name=${parameters.bind(selection.xAxis.metricKey)}
       ORDER BY run_id,step,timestamp DESC,id DESC)`);
@@ -98,18 +99,18 @@ function pointsCte(selection: MetricPointSelection, parameters: SqlParameters): 
 }
 
 function bucketExpression(plan: string): string {
-  // width_bucket puts x equal to the upper bound in count+1; it belongs to the last bucket.
+  // width_bucketは上限と等しいxをcount+1に入れるが、それは最後のバケットに属する。
   return `LEAST(width_bucket(p.x,${plan}.lower_bound,${plan}.upper_bound,${plan}.bucket_count),${plan}.bucket_count)`;
 }
 
-/** Reads every series in one snapshot and gives up after SERIES_QUERY_TIMEOUT_MS per statement. */
+/** すべての系列を1つのスナップショットで読み、1文ごとにSERIES_QUERY_TIMEOUT_MSで諦める。 */
 export async function beginSeriesSnapshot(connection: Connection): Promise<void> {
   await connection.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');
   await connection.query(`SET LOCAL statement_timeout=${SERIES_QUERY_TIMEOUT_MS}`);
 }
 
 export function isSeriesQueryTimeout(error: unknown): boolean {
-  // query_canceled, raised when statement_timeout expires.
+  // query_canceled。statement_timeoutが切れたときに起きる。
   return (error as { code?: string }).code === '57014';
 }
 
@@ -125,7 +126,7 @@ export async function findProjectRunIds(
   return found.map((run) => run.id);
 }
 
-/** Only Runs of the Project are returned, so a missing row means another Project or no Run. */
+/** そのProjectのRunだけを返すので、行が無ければ別のProjectのRunか、Runが存在しない。 */
 export async function readRunGroupValues(
   connection: Connection,
   runs: { projectId: string; runIds: string[]; groupBy: RunGroupBy },
@@ -164,7 +165,7 @@ export async function readSeriesExtents(
   );
 }
 
-/** Groups by point ID for raw plans, so their rows are the stored points. */
+/** rawの計画では点のIDでまとめるので、その行は保存した点そのものになる。 */
 export async function readSeriesBuckets(
   connection: Connection,
   query: {
@@ -204,7 +205,7 @@ export async function readSeriesBuckets(
   );
 }
 
-/** The x extent of each key over every selected Run, for bucket bounds shared by groups. */
+/** 選んだすべてのRunにわたる各キーのxの範囲。グループ間で共有するバケットの境界に使う。 */
 export async function readKeyExtents(
   connection: Connection,
   selection: MetricPointSelection,
@@ -220,9 +221,8 @@ export async function readKeyExtents(
 }
 
 /**
- * Averages each Run within a bucket first, then takes statistics across those Run means, so a Run
- * that logged more often does not outweigh the others. Runs without a finite value in a bucket
- * are not counted there.
+ * まずバケットの中でRunごとに平均し、そのRunの平均値をまたいで統計を取る。記録の多いRunがほかの
+ * Runより重く数えられないようにするため。バケットに有限の値が無いRunは、そのバケットでは数えない。
  */
 export async function readGroupBuckets(
   connection: Connection,

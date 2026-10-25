@@ -8,7 +8,7 @@ import { setTimeout } from 'node:timers/promises';
 import { parse, stringify } from 'yaml';
 import { buildReleaseBundle, readReleaseImages } from './buildBundle.mjs';
 
-// Covers a cold database/API startup, and fails instead of waiting indefinitely for a broken image.
+// DBとAPIのコールドスタートに足りる時間。壊れたイメージを際限なく待たずに失敗させる。
 const API_STARTUP_TIMEOUT_MS = 90_000;
 const API_POLL_INTERVAL_MS = 1_000;
 const COMMAND_TIMEOUT_MS = 180_000;
@@ -44,7 +44,7 @@ try {
   const composeFile = join(composeDirectory, 'compose.yml');
   const composeSettings = parse(await readFile(composeFile, 'utf8'));
   assert.ok(Object.values(composeSettings.services).every((service) => !service.build));
-  // Verification uses the internal network, leaving every host listener and development DB alone.
+  // 検証は内部ネットワークを使い、ホストで待ち受けるポートや開発用DBには一切触れない。
   delete composeSettings.services.web.ports;
   await writeFile(composeFile, stringify(composeSettings));
   await writeFile(join(composeDirectory, '.env'), [
@@ -82,7 +82,7 @@ try {
   }
   process.stdout.write('Release images: migrations, HTTP, authentication, preview and worker/launcher CLI passed\n');
 } catch (error) {
-  // Fixture credentials are generated for this verification; omit even those from diagnostic output.
+  // fixtureの認証情報はこの検証のために作ったものだが、それも診断の出力には出さない。
   const diagnostics = String(error.stderr ?? error.message)
     .replaceAll(fixturePassword, '[redacted]').replaceAll(fixtureStorageKey, '[redacted]');
   process.stderr.write(`${diagnostics}\n`);

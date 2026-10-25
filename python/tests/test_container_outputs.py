@@ -303,7 +303,7 @@ def test_json_lines_manifest_adds_outputs_beyond_result_json_and_is_not_an_outpu
         "mimeType": "application/octet-stream",
     }
     assert "artifacts.jsonl" not in {artifact["path"] for artifact in index}
-    # The job state holds only the summary, whatever the number of files.
+    # ファイルの数にかかわらず、Jobの状態が持つのは要約だけ。
     assert "artifacts" not in results and len(json.dumps(results)) < 1024
 
 
@@ -375,7 +375,7 @@ def forward_declarations(worker_job, serve, acknowledgments, persisted):
                 worker_job,
                 declaration_results(),
                 api=api,
-                executor=None,  # artifactCount=0: no archive is fetched
+                executor=None,  # artifactCount=0: アーカイブは取得しない
                 acknowledgments=acknowledgments,
                 persist=lambda: persisted.append(json.loads(json.dumps(acknowledgments))),
                 temporary_path=Path("/nonexistent"),
@@ -419,7 +419,7 @@ def test_lost_declaration_response_is_resent_by_index_without_registering_twice(
     assert requests == [[0, 1], [0, 1]]
     assert registered == {0: "version-0", 1: "version-1"}
     assert persisted[-1]["declarations"] == [0, 1]
-    # A worker restarted after the journal write sends nothing again.
+    # journalに書いたあとで再起動したworkerは、何も送り直さない。
     forward_declarations(worker_job, serve, acknowledgments, persisted)
     assert len(requests) == 2
 

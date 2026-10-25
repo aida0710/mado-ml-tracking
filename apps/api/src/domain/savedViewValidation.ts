@@ -12,12 +12,12 @@ import { DomainError } from './errors.js';
 import { groupBySchema } from './metricSeries/metricSeriesValidation.js';
 import { compileSearchExpression } from './runSearch/runSearchCompiler.js';
 
-/** The only SavedViewState.version this API reads and writes. */
+/** このAPIが読み書きする唯一のSavedViewState.version。 */
 const SAVED_VIEW_STATE_VERSION = 1;
-// Column keys name a metric, param or tag (MLflow allows 250 characters) with a short prefix.
+// 列のキーは、メトリクス・parameter・tag（MLflowでは250文字まで）の名前に短い前置きを付けたもの。
 const MAX_COLUMN_KEY_LENGTH = 300;
 const MIN_COLUMN_WIDTH = 20;
-// Wider than any screen; only rejects values the list cannot lay out.
+// どの画面よりも広い。一覧が並べられない値だけを拒む。
 const MAX_COLUMN_WIDTH = 4000;
 
 const savedViewVisibilitySchema = z.enum(['private', 'project']);
@@ -38,7 +38,7 @@ const savedViewColumnsSchema = z
     'column keys must be unique',
   );
 
-// The search conditions share RunSearchRequest's limits so a view always opens as a search.
+// 検索条件はRunSearchRequestと同じ上限を使い、ビューがいつでも検索として開けるようにする。
 const savedViewSearchSchema = runSearchSchema.pick({
   experimentIds: true,
   filter: true,
@@ -58,7 +58,7 @@ export const savedViewCreateSchema = z.strictObject({
   visibility: savedViewVisibilitySchema,
   page: savedViewPageSchema.default('runs'),
   name: savedViewNameSchema,
-  // Checked by validateSavedViewState, which reports size, version and filter errors by code.
+  // validateSavedViewStateが検査し、大きさ・version・filterのエラーをコードで報告する。
   state: z.unknown(),
 });
 
@@ -86,8 +86,8 @@ function invalidState(message: string, code: ApiErrorCode): never {
 }
 
 /**
- * Validates a submitted state and returns it normalized (defaults filled). The filter and order
- * are compiled now so that a view that cannot be searched is rejected when saved, not when opened.
+ * 送られたstateを検査し、正規化して（既定値を埋めて）返す。filterと並び順はここでコンパイルし、
+ * 検索できないビューを、開くときでなく保存するときに拒む。
  */
 export function validateSavedViewState(input: unknown): SavedViewState {
   if (Buffer.byteLength(JSON.stringify(input) ?? '', 'utf8') > SAVED_VIEW_STATE_MAX_BYTES)

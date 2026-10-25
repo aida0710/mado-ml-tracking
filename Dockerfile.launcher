@@ -1,12 +1,12 @@
-# Site launcher as a container: claims the site Jobs of the computers assigned to it on the Web
-# and runs each site's job shell over SSH (deploy/sites/README.md). It keeps no connection to the
-# Jobs; the runner on the compute node reports back by itself. OpenSSH makes its keys too.
+# コンテナで動かすsite launcher。画面で割り当てたコンピュータのsite Jobを受け取り、siteごとの
+# job shellをSSHで実行する（deploy/sites/README.md）。Jobとの接続は持ち続けない。計算ノードの
+# runnerが自分で報告する。鍵の作成にもOpenSSHを使う。
 # python:3.12-slim-bookworm
 FROM python:3.12-slim-bookworm@sha256:6a0e06f5ba0b373d051aabd3fffb9b873f27f9a2a3a14bcbe37dee6f0e3bbc70
 RUN apt-get update && apt-get install -y --no-install-recommends openssh-client ca-certificates tini \
   && rm -rf /var/lib/apt/lists/*
-# Match the host owner of the mounted token files: they must be mode 600 and readable by the
-# launcher's user.
+# マウントするtokenファイルの、ホスト側の所有者に合わせる。ファイルはmode 600で、launcherの
+# ユーザーが読める必要がある。
 ARG LAUNCHER_UID=10002
 ARG LAUNCHER_GID=10002
 RUN groupadd --gid "${LAUNCHER_GID}" launcher \
@@ -16,14 +16,14 @@ COPY python /opt/mado-tracking/python
 RUN python -m venv /opt/mado-tracking-launcher/venv \
   && /opt/mado-tracking-launcher/venv/bin/pip install --no-cache-dir /opt/mado-tracking/python \
   && rm -rf /opt/mado-tracking/python
-# launcher.toml names the API, the token file and the state directory; it and the token file are
-# mounted read-only at run time, never baked into the image. Its state_directory is
-# /var/lib/mado-tracking-launcher, the one directory the launcher writes (keys included).
+# launcher.tomlにはAPI、tokenファイル、状態ディレクトリを書く。launcher.tomlとtokenファイルは実行時に
+# 読み取り専用でマウントし、イメージには入れない。state_directoryは/var/lib/mado-tracking-launcherで、
+# launcherが書き込む唯一のディレクトリ（鍵も含む）。
 ENV PATH=/opt/mado-tracking-launcher/venv/bin:$PATH \
   MMT_LAUNCHER_CONFIG=/etc/mado-tracking-launcher/launcher.toml
 USER launcher
 WORKDIR /home/launcher
-# The shared SSH connections run in the background (`ssh -f`), so each one that ends is left to
-# the container's PID 1 to reap. tini reaps them (-s: also below another init, as with
-# `docker run --init`) and passes SIGTERM on, so the launcher still stops after its poll.
+# 共有のSSH接続はバックグラウンドで動く（`ssh -f`）ので、終わった接続の回収はコンテナのPID 1に
+# 任される。tiniがそれを回収し（-s: `docker run --init`のように別のinitの下でも回収する）、
+# SIGTERMも渡すので、launcherはこれまでどおりポーリングを終えてから止まる。
 ENTRYPOINT ["tini", "-s", "--", "mado-tracking-launcher"]

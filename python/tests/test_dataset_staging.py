@@ -1,4 +1,4 @@
-"""Input DatasetVersion files reach the target's cache, verified, before a Job starts."""
+"""入力DatasetVersionのファイルが、Jobの開始前に、検証されてコンピュータのキャッシュに届く。"""
 
 from __future__ import annotations
 
@@ -60,7 +60,7 @@ AUDIO_FILES = {"audio/0001.wav": b"RIFF-first", "audio/nested/0002.wav": b"RIFF-
 
 
 class DatasetContent:
-    """Stored Artifacts of 'artifacts' DatasetVersions; shared by the fake APIs of several Jobs."""
+    """'artifacts'のDatasetVersionの保存済みのArtifact。複数のJobの偽のAPIで共有する。"""
 
     def __init__(self) -> None:
         self.files: dict[str, list[dict[str, Any]]] = {}
@@ -112,7 +112,7 @@ class DatasetServer(WorkerServer):
         if request.method == "GET" and "/versions/" in path and path.endswith("/files"):
             assert request.headers["Authorization"] == "Bearer test-api-secret"
             items = self.content.files[path.split("/")[-2]]
-            # One file per page, so the worker must follow nextCursor.
+            # 1ページに1ファイルなので、workerはnextCursorを辿る必要がある。
             start = int(request.url.params.get("cursor", "0"))
             page: dict[str, Any] = {"items": items[start : start + 1]}
             if start + 1 < len(items):
@@ -143,7 +143,7 @@ def reader_job(payload: dict, datasets: list[dict], *, gpu_ids: tuple[str, ...] 
 
 
 def another_job(payload: dict) -> dict:
-    """The same pinned inputs in a new Job and Run on the same target."""
+    """同じ固定した入力を持つ、同じコンピュータでの新しいJobとRun。"""
     copied = copy.deepcopy(payload)
     run_id = str(uuid4())
     copied["job"].update(id=str(uuid4()), runId=run_id, leaseId=str(uuid4()))
@@ -192,7 +192,7 @@ def test_relayed_files_are_verified_read_only_and_a_second_job_hits_the_cache(jo
     asyncio.run(run_jobs(worker_settings, [second]))
     assert second.completions[-1]["status"] == "finished"
     assert "file=meta.jsonl:{}" in second.messages()
-    # The cache entry is complete, so nothing was downloaded again.
+    # キャッシュのエントリが完全なので、何もダウンロードし直していない。
     assert sum(content.downloads.values()) == len(AUDIO_FILES)
 
 
@@ -249,7 +249,7 @@ def test_an_unsupported_scheme_fails_before_start_and_completes_so_the_api_frees
     server = DatasetServer(reader_job(job_payload, [dataset], gpu_ids=("0",)), DatasetContent())
     asyncio.run(run_jobs(worker_settings, [server]))
 
-    # complete(failed) is what releases the Job's GPU reservation on the API side.
+    # API側でJobのGPUの予約を解放するのはcomplete(failed)。
     completion = server.completions[-1]
     assert completion["status"] == "failed" and "gs" in completion["error"]
     assert "supported: file://, https://, s3://" in server.messages()
@@ -301,12 +301,12 @@ def test_a_file_reference_is_linked_in_place_and_a_missing_path_fails(job_payloa
 
 
 class JobTokenArtifactHandler(BaseHTTPRequestHandler):
-    """The API as the target sees it in 'direct' transfer: only the Job token may read."""
+    """'direct'の転送でコンピュータから見えるAPI。読めるのはJob tokenだけ。"""
 
     content: DatasetContent
     authorizations: list[str] = []
 
-    def do_GET(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler's method name
+    def do_GET(self) -> None:  # noqa: N802 - BaseHTTPRequestHandlerのメソッド名
         self.authorizations.append(self.headers.get("Authorization", ""))
         if self.headers.get("Authorization") != "Bearer mado_mtj_test-job-token":
             self.send_response(401)
@@ -344,7 +344,7 @@ def test_direct_transfer_downloads_on_the_target_with_the_job_token(job_payload,
     assert server.completions[-1]["status"] == "finished", server.completions[-1]
     assert "file=audio/nested/0002.wav:RIFF-second" in server.messages()
     assert JobTokenArtifactHandler.authorizations == ["Bearer mado_mtj_test-job-token"] * len(AUDIO_FILES)
-    # The worker token is never sent there, and the worker did not download anything itself.
+    # worker tokenはそこに送らず、worker自身も何もダウンロードしていない。
     assert "test-api-secret" not in "".join(JobTokenArtifactHandler.authorizations)
 
 
@@ -396,7 +396,7 @@ def test_a_dataset_larger_than_the_cache_limit_fails_before_download(job_payload
     assert not content.downloads
 
 
-# --- the target-side cache ---------------------------------------------------------------------
+# --- コンピュータ側のキャッシュ ----------------------------------------------------------------
 
 
 def job_workspace(work_directory: Path, status: str | None) -> Path:
@@ -465,7 +465,8 @@ def test_two_processes_filling_the_same_key_fetch_once(tmp_path):
     results: list[dict[str, Any]] = []
 
     def materialize() -> None:
-        # Separate DatasetCache objects open their own lock files, as two runner processes do.
+        # 別々のDatasetCacheのオブジェクトは、2つのrunnerの
+        # プロセスと同じく、それぞれ自分のロックファイルを開く。
         results.append(
             DatasetCache(tmp_path / "cache").materialize(
                 "shared",
@@ -518,7 +519,7 @@ def test_over_the_limit_the_least_recently_used_unused_entries_are_deleted_first
         fill=write_files({"a": b"1234"}),
     )
     assert response["overLimit"] is False
-    # Room for 4 more bytes: the in-use oldest entry stays, the older unused one goes.
+    # あと4バイト分の空き: 使用中の最も古いエントリは残り、使われていない古いほうが消える。
     assert cache.is_complete("oldest-in-use") and cache.is_complete("newer-done")
     assert not cache.entry("older-done").exists()
 
@@ -554,7 +555,7 @@ def test_entries_in_use_are_kept_even_when_the_cache_stays_over_its_limit(tmp_pa
     assert response["overLimit"] is True
     assert cache.is_complete("in-use") and cache.is_complete("staged")
 
-    # A Job that failed before launch releases its pins; the entry can then be deleted.
+    # 起動前に失敗したJobはpinを解放する。そのあとはエントリを削除できる。
     cache.release(unstarted)
     cache.materialize(
         "last", files=None, total_size=6, max_bytes=13, workspace=running, fill=write_files({"a": b"123456"})
@@ -569,7 +570,7 @@ def test_a_dataset_larger_than_the_limit_is_refused_by_the_target(tmp_path):
         )
 
 
-# --- containers --------------------------------------------------------------------------------
+# --- コンテナ ----------------------------------------------------------------------------------
 
 
 def staged_container_specification(job_payload, worker_settings, tmp_path) -> tuple[dict, Path, str]:
@@ -617,7 +618,7 @@ def test_containers_bind_each_dataset_read_only_and_get_container_paths(
     ]
     environment = container_environment(specification)
     assert json.loads(environment["MMT_INPUT_DATASET_DIRS"]) == {version_id: f"/mmt/datasets/{version_id}"}
-    # The upstream and descriptor variables are kept for existing code.
+    # 上流Runと記述子の変数は、既存のコードのために残している。
     assert json.loads(environment["MMT_INPUT_DATASET_VERSION_IDS"]) == [version_id]
 
 
@@ -646,7 +647,7 @@ def test_docker_container_reads_audio_from_mmt_input_dataset_dirs_read_only(
     payload["codeVersion"]["entrypoint"] = [
         "/bin/sh",
         "-c",
-        # MMT_INPUT_DATASET_DIRS is {"<id>": "/mmt/datasets/<id>"}; the image has no JSON parser.
+        # MMT_INPUT_DATASET_DIRSは{"<id>": "/mmt/datasets/<id>"}。イメージにはJSONのパーサーが無い。
         'dir=$(echo "$MMT_INPUT_DATASET_DIRS" | sed \'s/.*": "\\([^"]*\\)".*/\\1/\'); '
         'echo "dir=$dir"; cat "$dir/clips/0001.wav"; echo; '
         'if touch "$dir/new" 2>/dev/null; then echo writable; else echo read-only; fi',
@@ -660,11 +661,11 @@ def test_docker_container_reads_audio_from_mmt_input_dataset_dirs_read_only(
     assert "RIFF-in-container" in messages and "read-only" in messages and "writable" not in messages
 
 
-# --- reference downloads on the target ---------------------------------------------------------
+# --- コンピュータ上での参照先のダウンロード ----------------------------------------------------
 
 
 def test_s3_requests_are_signed_like_the_aws_sdk():
-    # Expected values from @smithy/signature-v4 (the AWS SDK for JavaScript) for the same request.
+    # 同じリクエストに対する@smithy/signature-v4（JavaScriptのAWS SDK）の期待値。
     environment = {
         "AWS_ACCESS_KEY_ID": "AKIDEXAMPLE",
         "AWS_SECRET_ACCESS_KEY": "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY",
@@ -703,7 +704,7 @@ class FakeS3Handler(BaseHTTPRequestHandler):
     objects: dict[str, bytes] = {}
     authorized: list[bool] = []
 
-    def do_GET(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler's method name
+    def do_GET(self) -> None:  # noqa: N802 - BaseHTTPRequestHandlerのメソッド名
         self.authorized.append(
             self.headers.get("Authorization", "").startswith("AWS4-HMAC-SHA256 Credential=AKID/")
         )

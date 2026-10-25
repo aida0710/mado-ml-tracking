@@ -11,7 +11,8 @@ import { isAllowedOrigin, type OriginPolicy } from './originPolicy.js';
 export const SESSION_COOKIE = 'mmt_session';
 export const LOGIN_BINDING_COOKIE = 'mmt_login_binding';
 
-// A session that must change its password may only read who it is, change the password, or leave.
+// パスワードの変更が必要なsessionにできるのは、自分が誰かを読む・パスワードを変える・
+// ログアウトすることだけ。
 const PASSWORD_CHANGE_ALLOWED_REQUESTS = new Set([
   'GET /api/auth/config',
   'GET /api/auth/me',
@@ -33,10 +34,10 @@ export function validateOrigin(origin: string | undefined, policy: OriginPolicy)
 const API_TOKEN_FORMAT = /^mado_mtj?_[A-Za-z0-9_-]+$/;
 
 /**
- * Reads the API token from the Authorization header. Bearer works everywhere. Basic is accepted
- * only on the MLflow API, where in-house tools that set MLFLOW_TRACKING_USERNAME/PASSWORD send
- * it: the password must be an API token and the username is ignored. A local account password
- * is never accepted, so Basic cannot be used to guess passwords.
+ * AuthorizationヘッダーからAPI tokenを読む。Bearerはどこでも使える。BasicはMLflowのAPIでだけ
+ * 受け付ける。MLFLOW_TRACKING_USERNAME/PASSWORDを設定した社内のツールがBasicで送ってくるため。
+ * パスワードはAPI tokenでなければならず、ユーザー名は無視する。ローカルアカウントのパスワードは
+ * 決して受け付けないので、Basicでパスワードを推測することはできない。
  */
 export function apiTokenFromAuthorization(
   authorization: string,
@@ -76,7 +77,7 @@ export function apiTokenFromAuthorization(
   return password;
 }
 
-// Without jobTokens (test fixtures that mount only part of the API) Job tokens are rejected.
+// jobTokensが無いとき（APIの一部だけを載せるテストのfixture）は、Job tokenを拒む。
 export function authentication(
   auth: AuthService,
   jobTokens?: JobTokenService,

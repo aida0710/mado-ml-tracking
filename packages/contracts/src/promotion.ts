@@ -1,16 +1,16 @@
 import type { MetricValueStatus } from './evaluation.js';
 
-// Upper bound on criteria per policy; matches the model_promotion_policies CHECK.
+// 1つのpolicyの条件の数の上限。model_promotion_policiesのCHECKと同じ。
 export const PROMOTION_CRITERIA_MAX = 50;
 
 export type PromotionCriterionDirection = 'higher' | 'lower';
 export type PromotionCriterionMode = 'absolute' | 'delta' | 'relative_delta';
 
 /**
- * One pass condition. The observed value depends on mode: absolute = the candidate's value,
- * delta = candidate − baseline, relative_delta = (candidate − baseline) ÷ |baseline|.
- * direction 'higher' passes when observed ≥ threshold, 'lower' when observed ≤ threshold.
- * The threshold itself passes in both directions.
+ * 合格の条件1つ。observedの値はmodeで決まる。absoluteでは候補の値、deltaでは
+ * candidate − baseline、relative_deltaでは(candidate − baseline) ÷ |baseline|。
+ * directionが'higher'ならobserved ≥ thresholdで、'lower'ならobserved ≤ thresholdで合格する。
+ * しきい値ちょうどは、どちらの向きでも合格する。
  */
 export interface PromotionCriterion {
   metric: string;
@@ -19,15 +19,14 @@ export interface PromotionCriterion {
   threshold: number;
 }
 
-/** What a policy decides when the baseline alias points at no version (the first release). */
+/** baselineのaliasがどのバージョンも指していないとき（最初のリリース）にpolicyが下す判定。 */
 export type PromotionMissingBaseline = 'pass' | 'fail';
 
 /**
- * Judges evaluation Runs that the automation rule evaluationRuleId produced for modelId.
- * The reference set and evaluation CodeVersion are that rule's fixed inputs and code version.
- * Settings are immutable; only enabled and the owner (runAsUserId) can change. With autoPromote a
- * passed automatic decision moves targetAlias, but only while the baseline is still the version the
- * decision compared against.
+ * 自動実行ルールevaluationRuleIdがmodelIdについて作った評価のRunを判定する。参照セットと評価の
+ * CodeVersionは、そのルールの固定の入力とコードバージョン。設定は変えられず、変えられるのは
+ * enabledと所有者（runAsUserId）だけ。autoPromoteがあれば、合格した自動の判定がtargetAliasを
+ * 動かす。ただし、baselineが判定で比べたバージョンのままである間に限る。
  */
 export interface PromotionPolicy {
   id: string;
@@ -43,18 +42,18 @@ export interface PromotionPolicy {
   autoPromote: boolean;
   createdBy: string;
   /**
-   * The user the policy acts as: its current Project admin authority is checked at each judgement,
-   * and it is the actor of automatic promotions. Starts as createdBy; a Project admin can move it
-   * to an active Service Account of the Project with the admin role.
+   * policyがその人として動くユーザー。判定のたびに、今もProject adminの権限を持つかを確かめ、
+   * 自動の昇格の実行者もこのユーザーになる。最初はcreatedByで、Project adminは、adminのroleを
+   * 持つProjectの有効なService Accountに移せる。
    */
   runAsUserId: string;
-  // Who runAsUserId is, for display; the policy list includes them, other responses may not.
+  // 表示用の、runAsUserIdが誰かを示す値。policyの一覧には入るが、ほかの応答には無いことがある。
   runAsKind?: 'human' | 'service';
   runAsName?: string;
   createdAt: string;
 }
 
-/** Body of PUT /projects/:p/promotion-policies/:id/owner. */
+/** PUT /projects/:p/promotion-policies/:id/ownerの本文。 */
 export interface PromotionPolicyOwnerTransfer {
   serviceAccountId: string;
 }
@@ -64,7 +63,7 @@ export interface PromotionPolicyCreate {
   enabled?: boolean;
   modelId: string;
   targetAlias: string;
-  /** Defaults to DEFAULT_BASELINE_ALIAS ('production'). */
+  /** 既定はDEFAULT_BASELINE_ALIAS（'production'）。 */
   baselineAlias?: string;
   evaluationRuleId: string;
   criteria: PromotionCriterion[];
@@ -77,20 +76,20 @@ export interface PromotionPolicyPatch {
 }
 
 /**
- * passed / failed: every criterion could be judged (or the first release rule applied).
- * insufficient: a needed evaluation is missing, e.g. the baseline version has no evaluation by
- * the policy's rule. skipped: the policy could not judge (its run-as user lost Project admin, or
- * the judgement raised an error).
+ * passed・failed: すべての条件を判定できた（または最初のリリースの決まりを当てはめた）。
+ * insufficient: 必要な評価が無い。たとえばbaselineのバージョンに、policyのルールによる評価が
+ * 無い。skipped: policyが判定できなかった（run-asのユーザーがProject adminでなくなった、または
+ * 判定でエラーが起きた）。
  */
 export type PromotionDecision = 'passed' | 'failed' | 'insufficient' | 'skipped';
 
 export type PromotionCriterionOutcome = 'passed' | 'failed' | 'insufficient';
 
 /**
- * Why a criterion did not simply compare: candidate_metric_missing, candidate_metric_not_finite,
- * baseline_metric_missing, baseline_metric_not_finite, baseline_zero (relative_delta against 0),
- * baseline_missing (no baseline version; outcome follows missingBaseline),
- * baseline_not_evaluated. null when the observed value was compared with the threshold.
+ * 条件をそのまま比べられなかった理由。candidate_metric_missing、candidate_metric_not_finite、
+ * baseline_metric_missing、baseline_metric_not_finite、baseline_zero（0に対するrelative_delta）、
+ * baseline_missing（baselineのバージョンが無い。outcomeはmissingBaselineに従う）、
+ * baseline_not_evaluated。observedの値をthresholdと比べたときはnull。
  */
 export type PromotionCriterionReason =
   | 'candidate_metric_missing'
@@ -106,20 +105,19 @@ export interface PromotionCriterionResult extends PromotionCriterion {
   baseline: number | null;
   candidateStatus: MetricValueStatus;
   baselineStatus: MetricValueStatus;
-  /** The value compared with threshold (see PromotionCriterion). null when it could not be computed. */
+  /** thresholdと比べた値（PromotionCriterionを参照）。計算できなかったときはnull。 */
   observed: number | null;
   outcome: PromotionCriterionOutcome;
   reason: PromotionCriterionReason | null;
 }
 
 /**
- * Why the whole decision came out as it did: baseline_missing_first_promotion (passed because no
- * baseline version exists and missingBaseline='pass'), baseline_missing, criteria_failed,
- * candidate_not_evaluated, baseline_not_evaluated, creator_access_revoked (the run-as user is no
- * longer Project admin), evaluation_error. On a passed decision of an autoPromote policy that did
- * not promote: baseline_changed (the baseline or target alias moved after the judgement read it)
- * or promotion_denied (the alias change was refused, e.g. by an alias protection).
- * null for an ordinary pass.
+ * 判定全体がその結果になった理由。baseline_missing_first_promotion（baselineのバージョンが
+ * 無く、missingBaseline='pass'なので合格）、baseline_missing、criteria_failed、
+ * candidate_not_evaluated、baseline_not_evaluated、creator_access_revoked（run-asのユーザーが
+ * もうProject adminではない）、evaluation_error。autoPromoteのpolicyで合格したのに昇格しなかった
+ * 判定では、baseline_changed（判定が読んだあとでbaselineか対象のaliasが動いた）か
+ * promotion_denied（aliasの変更が、aliasの保護などで拒まれた）。普通の合格ではnull。
  */
 export type PromotionEvaluationReason =
   | 'baseline_missing_first_promotion'
@@ -132,10 +130,10 @@ export type PromotionEvaluationReason =
   | 'baseline_changed'
   | 'promotion_denied';
 
-/** Reason recorded on a passed evaluation that had no baseline because the alias was unset. */
+/** aliasが未設定でbaselineが無かった、合格の判定に記録する理由。 */
 export const PROMOTION_FIRST_RELEASE_REASON: PromotionEvaluationReason = 'baseline_missing_first_promotion';
 
-/** One append-only decision. A re-evaluation of the same candidate Run has sequence + 1. */
+/** 追記だけの判定1件。同じ候補のRunを判定し直すと、sequenceが1増える。 */
 export interface PromotionEvaluation {
   id: string;
   projectId: string;
@@ -148,16 +146,16 @@ export interface PromotionEvaluation {
   decision: PromotionDecision;
   criteriaResults: PromotionCriterionResult[];
   reason: PromotionEvaluationReason | null;
-  /** Whether this decision moved targetAlias (automatic promotion). aliasEventId is that change. */
+  /** この判定がtargetAliasを動かしたか（自動の昇格）。aliasEventIdはその変更。 */
   promoted: boolean;
   aliasEventId: string | null;
   sequence: number;
-  /** null for the automatic decision made when the evaluation Run finished. */
+  /** 評価のRunが終わったときの自動の判定ではnull。 */
   requestedBy: string | null;
   createdAt: string;
 }
 
-/** One keyset page of decisions, newest first. nextCursor is the id to pass as `cursor` next. */
+/** 判定のkeysetページングの1ページ（新しい順）。nextCursorは次に`cursor`として渡すid。 */
 export interface PromotionEvaluationPage {
   items: PromotionEvaluation[];
   nextCursor: string | null;

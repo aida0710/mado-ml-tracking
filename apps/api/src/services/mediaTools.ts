@@ -1,11 +1,11 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 
-/** ffprobe or ffmpeg is not installed; previews are skipped instead of failing. */
+/** ffprobeかffmpegが入っていない。失敗にせず、プレビューを作らずに済ませる。 */
 export class MediaToolUnavailableError extends Error {
   override readonly name = 'MediaToolUnavailableError';
 }
 
-/** The tool exited non-zero, was killed by the timeout, or produced unusable output. */
+/** ツールが0以外で終わった、タイムアウトで止められた、または使えない出力を出した。 */
 export class MediaToolFailedError extends Error {
   override readonly name = 'MediaToolFailedError';
   constructor(readonly reason: 'exit' | 'timeout' | 'output') {
@@ -14,21 +14,21 @@ export class MediaToolFailedError extends Error {
 }
 
 export interface MediaToolRun {
-  /** Executable name or absolute path; arguments are passed as argv, never through a shell. */
+  /** 実行ファイルの名前か絶対パス。引数はargvとして渡し、シェルは決して通さない。 */
   command: string;
   args: readonly string[];
   timeoutMs: number;
-  /** Receives stdout chunks; without it stdout is collected and returned (up to maxOutputBytes). */
+  /** stdoutをチャンクごとに受け取る。無ければstdoutを集めて返す（maxOutputBytesまで）。 */
   onStdout?: (chunk: Buffer) => void;
   maxOutputBytes?: number;
 }
 
-// ffprobe JSON for a file with many streams and chapters stays well below this.
+// ストリームやチャプターの多いファイルでも、ffprobeのJSONはこれを十分に下回る。
 const DEFAULT_MAX_OUTPUT_BYTES = 4 * 1024 * 1024;
 
 /**
- * Runs ffprobe/ffmpeg and resolves with collected stdout on exit code 0. stderr is discarded:
- * it repeats file paths and container metadata, which must not reach logs or the DB.
+ * ffprobe/ffmpegを動かし、終了コードが0なら集めたstdoutで解決する。stderrは捨てる。ファイルの
+ * パスやコンテナのメタデータを繰り返し含み、それらをログやDBに届けてはならないため。
  */
 export function runMediaTool(run: MediaToolRun): Promise<Buffer> {
   const maxOutputBytes = run.maxOutputBytes ?? DEFAULT_MAX_OUTPUT_BYTES;

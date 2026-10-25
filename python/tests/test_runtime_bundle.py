@@ -1,4 +1,4 @@
-"""The runtime bundle the worker installs on a target runs without the mado_tracking package."""
+"""workerがコンピュータに入れるruntimeのバンドルは、mado_trackingのパッケージなしで動く。"""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ from pathlib import Path
 
 from mado_tracking.worker.runtime import build_runtime_bundle
 
-# Imports every bundled module and prints the top-level packages that came from outside the
-# bundle and the standard library; a target has only Python, not the worker's environment.
+# バンドルしたモジュールをすべてimportし、バンドルと標準ライブラリ以外から来たトップレベルの
+# パッケージを出力する。コンピュータにあるのはPythonだけで、workerの環境は無い。
 IMPORT_PROBE = """
 import importlib, json, sys
 bundle, modules = sys.argv[1], json.loads(sys.argv[2])

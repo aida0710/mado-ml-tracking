@@ -26,9 +26,9 @@ function evaluatedMetrics(run: Run): EvaluatedMetrics {
 }
 
 /**
- * Lines up params, metrics and tags of the Runs (one value per Run, in the given order).
- * Metric rows follow metricKeys when given, otherwise every logged key by name; with a baseline
- * they also carry each Run's difference from it, computed like evaluation comparisons.
+ * Runのparameter、メトリクス、tagを並べる（Runごとに値を1つ、渡された順に）。メトリクスの行は
+ * metricKeysがあればそれに従い、無ければ記録されたすべてのkeyを名前順に出す。ベースラインが
+ * あれば、評価の比較と同じ方法で計算した各Runとの差も持たせる。
  */
 export function buildComparisonRows(comparison: {
   runs: readonly Run[];
@@ -47,7 +47,7 @@ export function buildComparisonRows(comparison: {
   const baseline = runs.find((run) => run.id === baselineRunId);
   if (baseline) {
     const baselineMetrics = evaluatedMetrics(baseline);
-    // compareMetrics answers per Run for every key; rows need the transpose.
+    // compareMetricsはRunごとに全keyの結果を返す。行にするには転置が要る。
     const differences = runs.map((run) =>
       compareMetrics({
         candidate: evaluatedMetrics(run),

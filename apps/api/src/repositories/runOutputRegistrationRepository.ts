@@ -55,8 +55,8 @@ export async function findOutputRegistrationSource(
   );
 }
 
-// MLflow soft-deleted registered models keep their row; registering into them would revive a
-// Model the user removed, so they are reported instead of used.
+// MLflowで論理削除した登録モデルは行が残る。そこへ登録すると利用者が消したModelを生き返らせて
+// しまうので、使わずに報告する。
 const outputModelSelect = `SELECT m.id,m.family,(mm.deleted_at IS NOT NULL) AS deleted
   FROM models m LEFT JOIN mlflow_registered_model_metadata mm ON mm.model_id=m.id`;
 
@@ -81,8 +81,8 @@ export async function findOutputModelByName(
   );
 }
 
-// Same reuse rule as the SDK's model_name=: an existing Model with the name is used as is, and a
-// concurrent creation of the same name resolves to the row that won.
+// SDKのmodel_name=と同じ使い回しの決まり。その名前のModelがあればそのまま使い、同じ名前を同時に
+// 作ったときは先に作れた方の行に決まる。
 export async function findOrCreateOutputModel(
   connection: Connection,
   request: { projectId: string; name: string; family: string },
@@ -95,8 +95,8 @@ export async function findOrCreateOutputModel(
   return (await findOutputModelByName(connection, request))!;
 }
 
-// A version the Run registered itself (SDK register_output_model or MLflow
-// log_model(registered_model_name=…)) makes the Task-side registration redundant.
+// Runが自分で登録したバージョン（SDKのregister_output_modelか、MLflowの
+// log_model(registered_model_name=…)）があれば、Task側での登録は要らない。
 export async function findVersionRegisteredByRun(
   connection: Connection,
   reference: { projectId: string; runId: string; modelId: string },
@@ -112,7 +112,8 @@ export async function findVersionRegisteredByRun(
   return version?.id;
 }
 
-// Worker outputs and MLflow log_artifact can upload the same path again; the last upload wins.
+// workerの出力とMLflowのlog_artifactは、同じパスへアップロードし直すことがある。最後の
+// アップロードを使う。
 export async function findLatestRunArtifact(
   connection: Connection,
   reference: { projectId: string; runId: string; path: string },
@@ -126,7 +127,7 @@ export async function findLatestRunArtifact(
   return artifact?.id;
 }
 
-/** Whether the Run has a saved Artifact under `prefix`, a directory path ending in `/`. */
+/** Runが、`prefix`（`/`で終わるディレクトリのパス）の下に保存済みのArtifactを持つか。 */
 export async function hasRunArtifactsUnder(
   connection: Connection,
   reference: { projectId: string; runId: string; prefix: string },

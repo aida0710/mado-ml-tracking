@@ -1,4 +1,4 @@
-"""One job's lease, source transfer, cancellation, and durable output forwarding."""
+"""1つのJobのlease、ソースの転送、取り消し、再起動しても続けられる出力の転送。"""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class PreparationCanceled(Exception):
-    """A source transfer was canceled before the entrypoint could be launched."""
+    """entrypointを起動する前に、ソースの転送が取り消された。"""
 
 
 class JobSession:
@@ -91,7 +91,7 @@ class JobSession:
         if self.saved_completion is not None:
             await self.complete(self.saved_completion)
             return
-        # Lease validation is mandatory even when this workspace already contains an execution.
+        # このworkspaceに既に実行があっても、leaseの検証は必ず行う。
         if await self.api.heartbeat(self.job):
             self.cancel_requested.set()
         heartbeat_task = asyncio.create_task(self.heartbeat())
@@ -139,7 +139,7 @@ class JobSession:
                     archive_path.unlink(missing_ok=True)
             if not await self.prepare_job_inputs():
                 return
-            # Bootstrap/download may be slow. Validate ownership immediately before launching.
+            # bootstrapやダウンロードは時間がかかることがある。起動する直前に所有を確かめ直す。
             if self.lease_rejected.is_set():
                 raise LeaseRejected("Lease rejected before execution")
             if await self.api.heartbeat(self.job) or self.cancel_requested.is_set():
@@ -160,8 +160,8 @@ class JobSession:
         self.persist()
 
     async def report_started(self) -> None:
-        # The API re-issues the Job token while the Job is still `claimed`; reporting `running`
-        # right after launch keeps a worker restart from revoking the token the process holds.
+        # APIは、Jobがまだ`claimed`の間はJob tokenを発行し直す。起動の直後に`running`を報告して、
+        # workerが再起動してもプロセスが持つtokenが無効にされないようにする。
         try:
             if await self.api.heartbeat(self.job, running=True):
                 self.cancel_requested.set()
@@ -173,7 +173,7 @@ class JobSession:
             )
 
     async def prepare_job_inputs(self) -> bool:
-        """Stage every input before launch; a failure fails the Job without starting its code."""
+        """起動前にすべての入力をステージングする。失敗したらコードを始めずにJobを失敗にする。"""
         try:
             await self.transfer_before_start(
                 lambda: self.retry_transport(
@@ -216,7 +216,7 @@ class JobSession:
         return self.journal.transfer_path(self.job.id, kind)
 
     async def release_input_datasets(self) -> None:
-        # Best effort: a pin left behind expires once the unstarted workspace is old enough.
+        # できる範囲で行う。残ったpinは、起動していないworkspaceが十分古くなれば期限切れになる。
         try:
             await self.executor.command("dataset-release")
         except (TransportError, OSError, TimeoutError, ConfigurationError) as error:
@@ -225,7 +225,7 @@ class JobSession:
             )
 
     async def log_preparation(self, level: str, message: str) -> None:
-        # The Run's log is where its owner looks; Job.error alone is easy to miss.
+        # Runの所有者が見るのはRunのログ。Job.errorだけでは見落としやすい。
         try:
             await self.api.logs(
                 self.job,

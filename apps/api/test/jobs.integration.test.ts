@@ -531,7 +531,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
       }),
       200,
     );
-    // maxAttempts (2) bounds automatic retries only; the person who started it may go on.
+    // maxAttempts（2）が抑えるのは自動の再試行だけ。始めた本人は続けて再試行できる。
     const pastMaxAttempts = await entity<{ run: Run; job: Job }>(
       await request(harness.app, `${fixture.basePath}/jobs/${retry.job.id}/retry`, {
         method: 'POST',
@@ -566,7 +566,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
     const retried = await entity<{ run: Run; job: Job }>(await retryOf(job.id));
     expect(retried.job).toMatchObject({ attempt: 2, maxAttempts: 1, status: 'queued' });
 
-    // A chain that reached the last attempt the retry lookup follows is refused, whoever asks.
+    // 再試行の検索がたどれる最後の試行に達した連鎖は、誰が頼んでも拒む。
     await entity(
       await request(harness.app, `${fixture.basePath}/jobs/${retried.job.id}/cancel`, {
         method: 'POST',
@@ -608,7 +608,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
     expect(listed).toMatchObject({
       createdBy: fixture.editor.userId,
       createdByName: expect.any(String),
-      // A Job a person started has no Sweep or rule behind it and no checkpoint yet.
+      // 人が始めたJobには、背後にSweepもルールも無く、checkpointもまだ無い。
       sweepTrial: null,
       automationRule: null,
       hasResumeCheckpoint: false,
@@ -621,7 +621,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
       expect(refused.status).toBe(403);
       expect(((await refused.json()) as { code: string }).code).toBe('job_owner_required');
     }
-    // The Project admin stops it; the editor who started it retries it.
+    // Project adminが止め、始めたeditorが再試行する。
     expect((await jobAction('cancel', fixture.administrator.cookie)).status).toBe(200);
     expect((await jobAction('retry', fixture.editor.cookie)).status).toBe(201);
   });
@@ -674,7 +674,8 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
   it('logのダウンロードは、読み込みの区切りをまたいでも全行を古い順にファイルで返す', async () => {
     const fixture = await executionFixture(harness);
     const run = await fixture.newRun('train: long/log');
-    // More lines than one read of the download (5000), so the file is built from two reads.
+    // ダウンロードで1回に読む行数（5000）より多くし、ファイルが2回の読み出しから
+    // 組み立てられるようにする。
     const lineCount = 5003;
     await harness.database.query(
       `INSERT INTO run_logs(run_id,timestamp,level,message)
@@ -823,7 +824,7 @@ describe.skipIf(!testDatabaseUrl)('Job・GPU予約・worker lease（独立Postgr
     expect(launched.job).toMatchObject({ runId: launched.run.id, status: 'queued', attempt: 1 });
     expect(launched.run).toMatchObject({ status: 'queued', createdBy: fixture.editor.userId });
 
-    // A GPU the computer does not have refuses the Job, and the Run goes with it.
+    // コンピュータに無いGPUを指定するとJobは拒まれ、Runも一緒に作られない。
     const refused = await request(harness.app, `${fixture.basePath}/jobs/launch`, {
       method: 'POST',
       cookie: fixture.editor.cookie,

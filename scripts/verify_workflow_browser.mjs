@@ -1,4 +1,4 @@
-/** Exercise workflow creation, CPU execution, version editing, quality stops and narrow layouts. */
+/** ワークフローの作成、CPUでの実行、バージョンの編集、品質による停止、狭い画面の配置を確かめる。 */
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -19,7 +19,7 @@ const verificationDate = new Intl.DateTimeFormat('en-CA', {
 }).format(new Date());
 const artifacts = path.resolve(`artifacts/workflows/${verificationDate}`);
 await mkdir(artifacts, { recursive: true });
-// Pipeline startup installs a local Python environment, with a separate finite deadline.
+// パイプラインの起動ではローカルのPython環境を入れるので、別に有限の期限を設ける。
 const EXECUTION_DEADLINE_MS = 180_000;
 const EXECUTION_POLL_MS = 500;
 const browser = await chromium.launch({

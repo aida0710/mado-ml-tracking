@@ -1,4 +1,4 @@
-"""Online preprocessing reports recorded before a processing Run finishes."""
+"""processingのRunが終わる前に記録する、オンラインの前処理レポート。"""
 
 from __future__ import annotations
 
@@ -27,10 +27,11 @@ def log_preprocessing_report(
     sample_artifact_ids: Sequence[str] = (),
     metadata: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Replace the report atomically. Reason counts must sum to each excluded/failed total.
+    """レポートを不可分に置き換える。理由ごとの件数の合計は、excluded/failedの各総数と一致させる。
 
-    Output count may exceed input count when records are segmented. Identical resends retain the
-    report revision. This method requires an online Run; offline logging has no report transport.
+    レコードを分割した場合、出力件数は入力件数を超えてよい。同じ内容を送り直しても、レポートの
+    revisionは変わらない。このメソッドにはオンラインのRunが要る。オフラインの記録には、
+    レポートを送る手段が無い。
     """
     if run.offline_directory is not None:
         raise ConfigurationError(

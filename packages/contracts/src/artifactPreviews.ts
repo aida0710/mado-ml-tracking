@@ -1,11 +1,12 @@
-/** Derived files the preview worker generates for long audio and for video. */
+/** プレビューのworkerが長い音声と動画について生成する派生ファイル。 */
 export const ARTIFACT_PREVIEW_KINDS = ['waveform-peaks', 'spectrogram', 'video-poster'] as const;
 export type ArtifactPreviewKind = (typeof ARTIFACT_PREVIEW_KINDS)[number];
 export type ArtifactPreviewStatus = 'queued' | 'running' | 'ready' | 'failed' | 'skipped';
 
 /**
- * Browsers decode and analyze audio up to this size themselves (the web viewer's
- * AUDIO_ANALYSIS_MAX_BYTES); header-readable audio above it gets server previews instead.
+ * この大きさまでの音声はブラウザが自分でデコードして解析する（画面のビューアの
+ * AUDIO_ANALYSIS_MAX_BYTES）。ヘッダーを読める音声でこれより大きいものは、代わりにサーバーで
+ * プレビューを作る。
  */
 export const BROWSER_AUDIO_ANALYSIS_MAX_BYTES = 64 * 1024 * 1024;
 
@@ -13,22 +14,22 @@ export interface ArtifactPreview {
   artifactId: string;
   kind: ArtifactPreviewKind;
   status: ArtifactPreviewStatus;
-  /** The generated file, an Artifact without a Run; set only when status is 'ready'. */
+  /** 生成したファイル（Runを持たないArtifact）。statusが'ready'のときだけ入る。 */
   previewArtifactId: string | null;
-  /** A short code such as render_failed or ffmpeg_unavailable; null unless failed or skipped. */
+  /** render_failedやffmpeg_unavailableのような短いコード。failedかskippedのとき以外はnull。 */
   error: string | null;
   attempts: number;
   updatedAt: string;
 }
 
-/** Content of a 'waveform-peaks' preview Artifact (application/json). */
+/** 'waveform-peaks'のプレビューのArtifactの中身（application/json）。 */
 export interface WaveformPeaksPreview {
   version: 1;
-  /** Rate the audio was decoded at; the spectrogram image spans 0 Hz to half of it. */
+  /** 音声をデコードしたサンプルレート。スペクトログラムの画像は0 Hzからその半分までを表す。 */
   sampleRate: number;
   durationSeconds: number;
   samplesPerPeak: number;
-  /** Mono mix, one pair per equal slice of the whole file, between -1 and 1. */
+  /** モノラルに混ぜた値。ファイル全体を等分した区間ごとに1組で、-1から1の間。 */
   min: number[];
   max: number[];
 }

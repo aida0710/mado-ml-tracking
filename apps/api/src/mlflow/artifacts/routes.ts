@@ -49,7 +49,7 @@ const runListQuery = z.strictObject({
   run_id: uuidSchema.optional(),
   run_uuid: uuidSchema.optional(),
   path: z.string().default(''),
-  // Listings return all direct children, so there is no next-page token to accept.
+  // 一覧は直下の子をすべて返すので、受け付ける次のページのtokenは無い。
   page_token: z.literal('').optional(),
 });
 const modelListQuery = z.strictObject({
@@ -84,7 +84,7 @@ function transferLocation(
   );
 }
 
-/** The Artifact named by an mpu URL's directory and the request body's local file path. */
+/** mpuのURLのディレクトリと、リクエストの本文のローカルのファイルパスが指すArtifact。 */
 function multipartLocation(
   context: ApiContext,
   action: MultipartAction,
@@ -115,7 +115,7 @@ function mlflowMultipartRoutes(multipart: MlflowMultipartUploadService): Hono<Ap
     );
   });
 
-  // No Authorization: the session's part token in PART_TOKEN_HEADER is the credential.
+  // Authorizationは無い。PART_TOKEN_HEADERにあるsessionのpart tokenが認証情報になる。
   routes.put(MULTIPART_PART_ROUTE, async (context) => {
     const stored = await multipart.uploadPart({
       projectId: uuidParam(context, 'p'),
@@ -157,10 +157,10 @@ function mlflowMultipartRoutes(multipart: MlflowMultipartUploadService): Hono<Ap
 export function mlflowArtifactRoutes(options: {
   database: Database;
   artifacts: ArtifactService;
-  /** Absent when MMT_MLFLOW_MULTIPART_UPLOADS=false: mpu/* then answers the SDK's fallback 501. */
+  /** MMT_MLFLOW_MULTIPART_UPLOADS=falseなら無い。そのときmpu/*はSDKが切り替えに使う501を返す。 */
   multipart?: MlflowMultipartUploadService;
   checkpoints?: CheckpointService;
-  /** Defaults to a service on the same database; the app passes the one its native routes use. */
+  /** 既定では同じデータベースのサービスを使う。アプリはネイティブの経路と同じものを渡す。 */
   deletions?: ArtifactDeletionService;
 }): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
@@ -175,7 +175,7 @@ export function mlflowArtifactRoutes(options: {
     const query = parse(proxyListQuery, context.req.query());
     const location = parseArtifactLocation(query.path, { directory: true });
     const files = await transfers.list(artifactAccess(context, location));
-    // HttpArtifactRepository prefixes the directory itself; this API returns basenames.
+    // HttpArtifactRepositoryはディレクトリを自分で前に付けるので、このAPIはbasenameを返す。
     return context.json({
       files: files.map((file) => ({ ...file, path: file.path.split('/').at(-1)! })),
     });
@@ -191,7 +191,8 @@ export function mlflowArtifactRoutes(options: {
     return context.json({});
   });
 
-  // HttpArtifactRepository.delete_artifacts sends a file or directory path, or none for the root.
+  // HttpArtifactRepository.delete_artifactsは、ファイルかディレクトリのパスを送る。
+  // ルートなら何も送らない。
   routes.delete(`${ARTIFACT_TRANSFER_ROOT}/*`, async (context) => {
     await transfers.delete(artifactAccess(context, transferLocation(context, { directory: true })));
     return context.json({});
@@ -240,7 +241,7 @@ export function mlflowArtifactRoutes(options: {
     options.multipart ? mlflowMultipartRoutes(options.multipart) : multipartUnsupportedRoutes(),
   );
 
-  // The official UI uses the files query route; SDK downloads use the transfer GET above.
+  // 公式のUIはfilesのクエリの経路を使う。SDKのダウンロードは上の転送用のGETを使う。
   routes.get('/api/2.0/mlflow/logged-models/:model_id/artifacts/files', async (context) => {
     const query = parse(modelFileQuery, context.req.query());
     const owner = validateArtifactOwner({ kind: 'model', id: context.req.param('model_id') });

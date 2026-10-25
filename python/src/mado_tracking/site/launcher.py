@@ -1,20 +1,21 @@
-"""The launcher: submit the site Jobs of the automatic sites assigned to it on the Web.
+"""launcher。画面でこのlauncherに割り当てた自動のsiteについて、siteのJobを投入する。
 
-One poll:
+1回のpollの流れ。
 
-    1. resend the reports that have not reached the API (pending_reports.py)
-    2. GET /launcher/config: the sites, keys and connection checks of this launcher
-    3. make and publish the listed keys, delete the others (launcher_keys.py)
-    4. answer each connection check: log in as its account with its key and run `true`
-    5. per site: claim, run each submission through the job shell once, report the result
-    6. run the site's cancel command for Jobs canceled in the queue, as the account the API names
+    1. APIに届いていない報告を送り直す（pending_reports.py）
+    2. GET /launcher/config: このlauncherのsite、鍵、接続確認
+    3. 一覧にある鍵を作って公開し、ほかの鍵を消す（launcher_keys.py）
+    4. 各接続確認に答える。そのアカウントとして、その鍵でログインし`true`を実行する
+    5. siteごとに、claimし、各投入をjob shellで1回ずつ実行し、結果を報告する
+    6. 待ち行列にいる間に取り消されたJobについて、APIが指定するアカウントでsiteの取り消し
+       コマンドを実行する
 
-It never watches a Job afterwards; the runner on the compute node reports for itself. When a
-submission or a cancel fails to log in (site, account, key), the poll's later submissions through
-that login are failed with its reason without trying, and cancels leave it alone for a while
-(login_failures.py); the next poll submits through it again, and a login that works is forgotten.
-A connection check that logs in works too: after someone registers the key and checks it, the
-waiting cancels go ahead in that same poll.
+その後はJobを見張らない。計算ノード上のrunnerが自分で報告する。投入か取り消しでログイン
+（site、アカウント、鍵）に失敗すると、そのpollのうち同じログインを使うあとの投入は、試さずに
+その理由で失敗させる。取り消しは、しばらくそのログインを使わない（login_failures.py）。次の
+pollではまたそのログインで投入し、うまくいったログインの失敗は忘れる。ログインできた接続確認
+も、うまくいったログインとして扱う。誰かが鍵を登録して確認すれば、待っていた取り消しは
+そのpollの中で進む。
 """
 
 from __future__ import annotations
@@ -49,13 +50,13 @@ from .transport import (
 )
 
 LOGGER = logging.getLogger(__name__)
-# A connection check runs this and nothing else.
+# 接続確認では、これだけを実行する。
 CONNECTION_CHECK_COMMAND = ("true",)
 CONNECTION_CHECK_TIMEOUT_SECONDS = 60.0
-# site_connection_checks.message holds this much; the end of ssh's error says what went wrong.
+# site_connection_checks.messageに入る長さ。何が悪かったかは、sshのエラーの末尾に出る。
 MAX_CHECK_MESSAGE_CHARACTERS = 2000
-# After a login (site, account, key) fails, cancels through it wait this long, rather than
-# failing again at every poll until the key is in authorized_keys.
+# ログイン（site、アカウント、鍵）に失敗したら、そのログインを使う取り消しはこの時間だけ待つ。
+# 鍵がauthorized_keysに入るまで、pollのたびに失敗し直さないようにするため。
 CANCEL_LOGIN_PAUSE_SECONDS = 600.0
 PENDING_REPORTS_DIRECTORY = "pending-reports"
 LEDGER_DIRECTORY = "submissions"
@@ -78,7 +79,7 @@ class Launcher:
         self.config = config
         self.client = client_factory(api_url=config.api_url, api_token=config.token)
         self.api = LauncherApi(self.client)
-        # The client's masker knows the launcher's token; keys, transports and logs share it.
+        # clientのmaskerはlauncherのtokenを知っている。鍵、transport、ログはこれを共有する。
         self.masker = self.client.masker
         state = config.state_directory
         state.mkdir(mode=PRIVATE_DIRECTORY_MODE, parents=True, exist_ok=True)
@@ -113,7 +114,7 @@ class Launcher:
         )
 
     def transport_for(self, endpoint: SshEndpoint) -> SiteTransport:
-        """The shared connection of one site, account and key, kept while polls use it."""
+        """1つのsite、アカウント、鍵の組で共有する接続。pollが使っている間は持ち続ける。"""
         self.endpoints_in_use.add(endpoint)
         if endpoint not in self.transports:
             self.transports[endpoint] = self.transport_factory(endpoint, shared_connection=True)
@@ -162,7 +163,7 @@ class Launcher:
         finally:
             self.close_unused_transports()
 
-    # Connection checks -------------------------------------------------------------------------
+    # 接続確認 ----------------------------------------------------------------------------------
 
     def answer_connection_check(self, assignment: LauncherAssignment, check: ConnectionCheck) -> None:
         failure = self.try_login(assignment.sites.get(check.target_id), check.account)
@@ -177,20 +178,20 @@ class Launcher:
         try:
             self.api.report_connection_check(check.id, failure=failure)
         except ApiError as error:
-            # Still queued: the next poll checks again. Answered or expired: nothing is left to do.
+            # まだqueuedなら次のpollでもう一度確かめる。答え済みか期限切れなら、することは無い。
             LOGGER.warning("Connection check %s was not reported: %s", check.id, self.masker.mask(str(error)))
 
     def try_login(self, site: AssignedSite | None, account: SubmissionAccount) -> str | None:
-        """Log in on the site as the account and run `true`: why it failed, None when it ran.
+        """siteにそのアカウントでログインし`true`を実行する。失敗した理由を返し、実行できたらNone。
 
-        A login that gets through is forgotten among the recent failures, whatever `true` did, as
-        after a submission or a cancel: the cancels waiting for it go ahead in this poll.
+        ログインが通れば、`true`の結果によらず、投入や取り消しのあとと同じく最近の失敗から忘れる。
+        そのログインを待っていた取り消しは、このpollで進む。
         """
         if site is None:
             return "This launcher does not submit to the site"
         try:
             endpoint = self.logins.endpoint(site.target_id, site.settings.connection, account)
-            # A login of its own: a shared connection would hide a key the site no longer takes.
+            # 専用のログインを使う。共有の接続だと、siteがもう受け付けない鍵が隠れてしまう。
             transport = self.transport_factory(endpoint, shared_connection=False)
         except ConfigurationError as error:
             return self.masker.mask(str(error))
@@ -208,7 +209,7 @@ class Launcher:
             )
         return None
 
-    # Submissions -------------------------------------------------------------------------------
+    # 投入 --------------------------------------------------------------------------------------
 
     def submit_claimed(self, site: AssignedSite) -> None:
         try:
@@ -220,7 +221,7 @@ class Launcher:
             try:
                 result = self.submit(site, submission)
             except (KeyError, TypeError, ValueError) as error:
-                # Without readable Job IDs nothing can be reported; the API fails them in time.
+                # 読めるJob IDが無いと、何も報告できない。それらのJobは、APIがいずれ失敗にする。
                 LOGGER.error("A submission for site %s is malformed: %s", site.label, error)
                 continue
             self.pending.report(result)
@@ -242,7 +243,8 @@ class Launcher:
             )
         earlier = self.login_failures.in_this_poll(endpoint)
         if earlier is not None:
-            # Up to 50 submissions a site and poll would each fail the same login, with retries.
+            # 放っておくと、siteとpollごとに最大50件の投入が、それぞれ再試行しながら同じログインで
+            # 失敗する。
             return failed_result(
                 job_ids,
                 "Not tried: logging in to the site failed for an earlier submission of this poll: "
@@ -271,7 +273,7 @@ class Launcher:
             )
         return result
 
-    # Cancellations in the scheduler queue ------------------------------------------------------
+    # スケジューラの待ち行列での取り消し --------------------------------------------------------
 
     def cancel_in_queue(self, assignment: LauncherAssignment) -> None:
         if not assignment.sites:
@@ -293,7 +295,7 @@ class Launcher:
             self.ledger.forget(job_id)
 
     def cancel(self, assignment: LauncherAssignment, cancellation: SchedulerCancellation) -> bool:
-        """Remove one Job from its scheduler queue; False leaves it for the next poll."""
+        """1つのJobをスケジューラの待ち行列から外す。Falseなら次のpollに残す。"""
         job_id, site = cancellation.job_id, assignment.sites.get(cancellation.target_id)
         try:
             queued_id = scheduler_job_id(cancellation.scheduler_job_id.encode())
@@ -316,7 +318,7 @@ class Launcher:
             return self.cancel_impossible(job_id, error)
         failure = self.login_failures.recent(endpoint, CANCEL_LOGIN_PAUSE_SECONDS)
         if failure is not None:
-            # The login failed a moment ago, for a submission or a cancel; this cancel waits.
+            # 投入か取り消しで、ついさっきログインに失敗した。この取り消しは待つ。
             self.say_why_cancels_wait(job_id, site, endpoint, failure)
             return False
         try:
@@ -326,7 +328,7 @@ class Launcher:
             )
         except TransportError as error:
             reason = self.masker.mask(str(error))
-            # The warning below tells the cancels through this login why they wait.
+            # 下の警告で、このログインを使う取り消しに、待つ理由を知らせる。
             self.login_failures.record(endpoint, reason, cancels_told=True)
             LOGGER.warning(
                 "Cancel of Job %s deferred: %s; cancels log in as %s on site %s again in %.0f seconds",
@@ -341,7 +343,7 @@ class Launcher:
             return self.cancel_impossible(job_id, error)
         self.login_failures.forget(endpoint)
         if result.exit_code:
-            # Usually the job already left the queue; retrying would only repeat the refusal.
+            # たいていはジョブが既に待ち行列から出ている。再試行しても、同じ拒否を繰り返すだけ。
             LOGGER.warning(
                 "Cancel command for Job %s exited with %s: %s",
                 job_id,
@@ -353,7 +355,7 @@ class Launcher:
     def say_why_cancels_wait(
         self, job_id: str, site: AssignedSite, endpoint: SshEndpoint, failure: LoginFailure
     ) -> None:
-        """Once per failed login (until it works again): why its cancels wait, and for how long."""
+        """失敗したログインごとに1回（また動くまで）、その取り消しが待つ理由と待つ時間を出す。"""
         if not self.login_failures.tell_cancels_once(endpoint):
             LOGGER.debug("Cancel of Job %s waits: logging in as %s failed recently", job_id, endpoint.user)
             return
@@ -368,8 +370,8 @@ class Launcher:
         )
 
     def cancel_impossible(self, job_id: str, error: ConfigurationError) -> bool:
-        """Report the Job as done: no later poll could remove it either."""
-        # Without a usable account or login the Job stays queued; its runner ends when it starts.
+        """Jobを済んだものとして報告する。あとのpollでも外せないため。"""
+        # 使えるアカウントやログインが無いと、Jobは待ち行列に残る。そのrunnerは開始時に終わる。
         LOGGER.error("Cancel of Job %s impossible: %s", job_id, self.masker.mask(str(error)))
         return True
 

@@ -6,7 +6,7 @@ import { isRelativeFilePath } from '../domain/validation.js';
 import { recordArtifactMediaInfo } from './artifactMediaInfoService.js';
 import { enqueueArtifactPreviews } from './artifactPreviewService.js';
 
-// Matches the MLflow artifact path index column.
+// MLflowのArtifactのパスの索引列に合わせる。
 const MAX_ARTIFACT_PATH_LENGTH = 1024;
 
 export function assertArtifactPath(path: string): void {
@@ -18,7 +18,9 @@ export function assertArtifactPath(path: string): void {
     });
 }
 
-/** New Artifacts go to the Project's current backend, which must be configured on this server. */
+/**
+ * 新しいArtifactはProjectの今の保存先に置く。その保存先はこのサーバーに設定されている必要がある。
+ */
 export async function projectArtifactBackend(
   connection: Connection,
   projectId: string,
@@ -38,7 +40,7 @@ export async function projectArtifactBackend(
   return project.artifactBackend;
 }
 
-/** Runs inside the registering transaction, so a failed mapping leaves no visible Artifact. */
+/** 登録のトランザクションの中で動くので、対応付けに失敗すると見えるArtifactは残らない。 */
 export type ArtifactStoredHook = (connection: Connection, artifact: Artifact) => Promise<void>;
 
 export interface StoredArtifactRecord {
@@ -54,16 +56,16 @@ export interface StoredArtifactRecord {
 }
 
 export interface ArtifactRegistrationOptions {
-  /** The stores holding the bytes; registration reads audio headers back from them. */
+  /** バイト列を持つstore。登録のときにここから音声ヘッダーを読み戻す。 */
   stores: ArtifactStores;
   onStored?: ArtifactStoredHook;
 }
 
 /**
- * Registers bytes already written to storage. Single-request uploads and upload sessions both
- * end here, so they produce identical Artifacts, run the same compatibility hooks, and record
- * the same audio media info. Previews are queued after the header probe; the preview worker
- * fills media info only where the header probe left none.
+ * 保存先に書き終えたバイト列を登録する。リクエスト1回でのアップロードも、アップロードセッションも
+ * ここで終わるので、同じArtifactを作り、同じ互換のためのフックを動かし、同じ音声のメディア情報を
+ * 記録する。プレビューはヘッダーの読み取りのあとでキューに入れる。プレビューのworkerは、
+ * ヘッダーの読み取りでメディア情報が残らなかったときだけそれを埋める。
  */
 export async function registerStoredArtifact(
   connection: Connection,

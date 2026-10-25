@@ -18,13 +18,13 @@ import { requireProject, requireScope } from './accessService.js';
 import type { JobPlacement, JobService } from './jobService.js';
 import type { RunService } from './runService.js';
 
-/** Where an array comes from beyond the request: a hook, a driver Job, or neither. */
+/** リクエストのほかに、arrayがどこから来たか。フック、ドライバーのJob、またはどちらでもない。 */
 export interface JobArrayOrigin {
   createdBy: string;
   parentRunId?: string | null;
   serverTags?: Record<string, string>;
   placement?: Omit<JobPlacement, 'arrayGroupId' | 'arrayIndex' | 'datasetPartitionVersionId'>;
-  // A driver's key; it names the group so the driver's resend finds the same array.
+  // ドライバーのキー。グループに付け、ドライバーが送り直しても同じarrayが見つかるようにする。
   idempotencyKey?: string | null;
 }
 
@@ -32,9 +32,9 @@ const arrayGroupColumns =
   'id,project_id,target_id,size,created_by,parent_job_id,hook_id,finished_at,created_at';
 
 /**
- * Arrays: one Run and Job per index on a site, submitted together where the site takes arrays
- * (docs/sites.md). Members carry reserved tags with the group and index, and their retries keep
- * the index, so the group ends when every index has a final attempt.
+ * array。siteで、indexごとに1つのRunとJobを作り、siteがarrayを受け付けるならまとめて投入する
+ * （docs/sites.md）。メンバーはグループとindexを予約済みのタグに持ち、その再試行もindexを
+ * 引き継ぐので、すべてのindexに最後の試行がそろうとグループが終わる。
  */
 export class JobArrayService {
   private readonly database: Database;
@@ -90,7 +90,7 @@ export class JobArrayService {
     return { arrayGroup, jobs };
   }
 
-  /** Creates the group and every member. Authorization and reserved-tag checks are the caller's. */
+  /** グループとすべてのメンバーを作る。権限と予約済みタグの確認は呼び出し元が行う。 */
   async insertArray(
     connection: Connection,
     request: { projectId: string; input: JobArrayCreateInput; origin: JobArrayOrigin },
@@ -200,7 +200,7 @@ export class JobArrayService {
 
 }
 
-/** The members split the files of one 'artifacts' input among themselves (docs/sites.md). */
+/** メンバーは、1つの'artifacts'の入力のファイルを分け合う（docs/sites.md）。 */
 export async function assertPartitionVersion(
   connection: Connection,
   partition: { projectId: string; partitionId: string; inputIds: string[] },

@@ -42,7 +42,7 @@ def clock(monkeypatch):
 
 
 def install_fake_psutil(monkeypatch, counters: dict[str, float]):
-    """psutil whose counters are read from `counters`, so tests advance them explicitly."""
+    """カウンタを`counters`から読むpsutil。テストがカウンタを明示的に進める。"""
     psutil = types.ModuleType("psutil")
 
     class NoSuchProcess(Exception):
@@ -66,7 +66,7 @@ def install_fake_psutil(monkeypatch, counters: dict[str, float]):
 
 
 def remove_module(monkeypatch, name: str) -> None:
-    # A None entry in sys.modules makes `import name` raise ImportError.
+    # sys.modulesの値がNoneだと、`import name`はImportErrorになる。
     monkeypatch.setitem(sys.modules, name, None)
 
 
@@ -161,7 +161,7 @@ def test_psutil_metrics_use_worker_names_and_rates_start_from_the_second_sample(
     assert second["system.cpu.percent"] == pytest.approx(60.0)
     assert second["system.disk.read_bytes_per_second"] == 100.0
     assert second["system.disk.write_bytes_per_second"] == 50.0
-    # Loopback traffic is excluded from network throughput.
+    # ループバックの通信はネットワークのスループットに含めない。
     assert second["system.network.sent_bytes_per_second"] == 200.0
     assert second["system.network.received_bytes_per_second"] == 400.0
 
@@ -206,7 +206,7 @@ def test_nvml_failure_falls_back_to_nvidia_smi(monkeypatch, clock, tmp_path, fai
     assert metrics["system.gpu.1.memory_used_bytes"] == 900 * 1024**2
     assert "system.gpu.1.power_watts" not in metrics
     assert len(nvidia_smi_calls) == 1
-    # The failed backend is not retried on the next sample.
+    # 失敗したバックエンドは、次のサンプルで再試行しない。
     collect(state, gpu_ids=None, disk_path=tmp_path)
     assert "nvml" in state.unavailable_gpu_backends and len(nvidia_smi_calls) == 2
 
@@ -222,7 +222,7 @@ def test_missing_gpu_tooling_still_reports_cpu_memory_and_disk(monkeypatch, cloc
     assert {"system.memory.used_bytes", "system.disk.used_bytes"} <= metrics.keys()
     assert not any(name.startswith("system.gpu.") for name in metrics)
     unavailable_logs = [record for record in caplog.records if "unavailable" in record.getMessage()]
-    # The reason for each missing backend is logged once, not on every sample.
+    # 使えないバックエンドの理由は、サンプルごとでなく1回だけログに出す。
     assert len(unavailable_logs) == 2
 
 
@@ -317,7 +317,7 @@ def test_proc_fallback_computes_cpu_from_stat_differences_and_counts_whole_disks
     write_fake_proc(proc_root, cpu=(130, 970), disk_sectors=(8, 16), net=(800, 400))
     second = by_name(collect(state, disk_path=tmp_path))
     assert second["system.cpu.percent"] == pytest.approx(30.0)
-    # Only sda counts: the partition and the loop device would double count.
+    # 数えるのはsdaだけ。パーティションやloopデバイスまで数えると二重に数えてしまう。
     assert second["system.disk.read_bytes_per_second"] == 8 * 512 / 4
     assert second["system.disk.write_bytes_per_second"] == 16 * 512 / 4
     assert second["system.network.received_bytes_per_second"] == 200.0

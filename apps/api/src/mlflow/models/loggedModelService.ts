@@ -119,7 +119,7 @@ export class LoggedModelService {
       this.database,
       { principal, projectId, id },
       async (connection, model) => {
-        // Existing immutable model versions retain their snapshots and artifacts.
+        // 既存の不変のモデルバージョンは、スナップショットとArtifactを持ち続ける。
         await connection.query(
           'UPDATE mlflow_logged_models SET deleted_at=now(),updated_at=now() WHERE id=$1',
           [model.id],

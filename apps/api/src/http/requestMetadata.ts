@@ -7,22 +7,22 @@ export interface RequestMetadata {
   userAgent: string | null;
 }
 
-// Matches the audit_events column limits so oversized client headers cannot fail the INSERT.
+// audit_eventsの列の上限に合わせ、大きすぎるクライアントのヘッダーでINSERTが失敗しないようにする。
 const MAX_USER_AGENT_LENGTH = 1000;
 
 function socketAddress(context: ApiContext): string | null {
   try {
     return getConnInfo(context).remote.address ?? null;
   } catch {
-    // In-process requests such as app.request() in tests have no Node socket.
+    // テストのapp.request()のようなプロセス内のリクエストにはNodeのソケットが無い。
     return null;
   }
 }
 
 /**
- * The client's address behind `trustedProxyHops` reverse proxies that each append the address they
- * saw to X-Forwarded-For. Entries left of those are written by the client and ignored, so a
- * forged header cannot pick the address; with 0 hops the header is not read at all.
+ * `trustedProxyHops`段のリバースプロキシの後ろにいるクライアントのアドレス。各プロキシは見た
+ * アドレスをX-Forwarded-Forに追記する。それより左の項目はクライアントが書いたものなので無視し、
+ * 偽のヘッダーでアドレスを選べないようにする。0段ならヘッダーをまったく読まない。
  */
 export function clientAddressOf(request: {
   socketAddress: string | null;
@@ -35,7 +35,7 @@ export function clientAddressOf(request: {
   return client || request.socketAddress;
 }
 
-/** Resolves the client address once per request for requestMetadata (audit, rate limits). */
+/** requestMetadata（監査、レート制限）用に、クライアントのアドレスをリクエストごとに1回求める。 */
 export function clientAddress(trustedProxyHops: number): MiddlewareHandler<ApiEnvironment> {
   return async (context, next) => {
     context.set(

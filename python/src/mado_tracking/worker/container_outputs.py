@@ -1,4 +1,4 @@
-"""Validate complete container results and record the index of declared, regular output files."""
+"""完了したコンテナの結果を検証し、宣言された通常の出力ファイルのindexを記録する。"""
 
 from __future__ import annotations
 
@@ -19,32 +19,35 @@ from ..execution_runtime import SHA256_PATTERN
 from ..timestamps import utc_timestamp
 from .artifact_files import open_regular_file
 
-# Bound protocol metadata and each SSH response; artifact contents remain streamed.
+# プロトコルのメタデータとSSHの各応答に上限を設ける。Artifactの中身はストリームのまま流す。
 MAX_RESULT_BYTES = 1024 * 1024
-# Audio inference writes one file per utterance; 10000 covers a test set while keeping the index
-# (at most MAX_ARTIFACT_LINE_BYTES per file) small enough to hold in memory. MMT_WORKER_MAX_OUTPUT_FILES
-# changes it per worker.
+# 音声の推論は発話ごとに1ファイルを書く。10000あればテストセットを収められ、index（1ファイル
+# あたり最大MAX_ARTIFACT_LINE_BYTES）もメモリに持てる小ささに収まる。
+# MMT_WORKER_MAX_OUTPUT_FILESでworkerごとに変えられる。
 DEFAULT_MAX_OUTPUT_FILES = 10_000
-# A descriptor line is a 1024-byte path, a sha256, a size and a 255-byte mimeType with JSON quoting.
+# 記述の1行は、1024バイトのパス、sha256、大きさ、255バイトのmimeTypeを、JSONのクォート込みで
+# 並べたもの。
 MAX_ARTIFACT_LINE_BYTES = 4096
 MAX_MIME_TYPE_LENGTH = 255
 MAX_OUTPUT_PATH_LENGTH = 1024
 MAX_METRIC_POINTS = 1000
-# The API's per-Run declaration limits (apps/api/src/domain/workerOutputValidation.ts).
+# APIでの、Runごとの宣言の上限（apps/api/src/domain/workerOutputValidation.ts）。
 MAX_MODEL_DECLARATIONS = 16
 MAX_DATASET_DECLARATIONS = 64
-# A dataset declared by a directory becomes one DatasetVersion of every file under it; the API takes
-# at most MAX_DATASET_VERSION_FILES (packages/contracts/src/datasetContent.ts) files per version.
+# ディレクトリで宣言したデータセットは、その下の全ファイルからなる1つのDatasetVersionになる。
+# APIが1バージョンで受け付けるのは、最大MAX_DATASET_VERSION_FILES
+# （packages/contracts/src/datasetContent.ts）ファイル。
 MAX_DATASET_VERSION_FILES = 100_000
 MAX_DATASET_URI_LENGTH = 4000
 MAX_DATASET_DIGEST_LENGTH = 1000
 OUTPUT_CHUNK_BYTES = 64 * 1024
 HASH_CHUNK_BYTES = 1024 * 1024
 RESULT_FILENAME = "result.json"
-# Written beside outputs/ (never inside it) so the job state stays small for any number of files.
+# outputs/の中ではなく隣に書き、ファイルがいくつあってもJobの状態が小さいままになるようにする。
 OUTPUT_INDEX_FILENAME = "output-index.jsonl"
 SPEC_FILENAME = "spec.json"
-# Match the API's ISO timestamp and JavaScript integer contract before uploading any artifacts.
+# Artifactをアップロードする前に、APIの契約（ISOのタイムスタンプ、JavaScriptの整数）に合うか
+# 確かめる。
 ISO_TIMESTAMP_PATTERN = re.compile(r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$")
 MAX_METRIC_STEP = 2**53 - 1
 RESULT_VERSION_FIELDS = {
@@ -82,7 +85,7 @@ def file_checksum(content: BinaryIO) -> tuple[str, int]:
 
 
 def artifact_key(artifact: dict[str, Any]) -> str:
-    """The journal acknowledges each saved output by path and content."""
+    """journalは、保存した各出力をパスと内容で受領済みにする。"""
     return f"{artifact['path']}:{artifact['sha256']}"
 
 
@@ -97,14 +100,14 @@ def _output_files(root: Path, *, max_files: int) -> set[str]:
             path = (Path(directory) / name).relative_to(root).as_posix()
             output_path_parts(path)
             paths.add(path)
-            # result.json and an artifactsManifest are the only files beyond the declared outputs.
+            # 宣言された出力のほかにあるファイルは、result.jsonとartifactsManifestだけ。
             if len(paths) > max_files + 2:
                 raise ValueError(f"Too many container output files (limit {max_files})")
     return paths
 
 
 def configured_max_output_files(workspace: Path) -> int:
-    """The worker's MMT_WORKER_MAX_OUTPUT_FILES, which reaches the runner in spec.json."""
+    """workerのMMT_WORKER_MAX_OUTPUT_FILES。spec.jsonでrunnerに届く。"""
     spec_path = workspace / SPEC_FILENAME
     if not spec_path.exists():
         return DEFAULT_MAX_OUTPUT_FILES
@@ -115,10 +118,10 @@ def configured_max_output_files(workspace: Path) -> int:
 
 
 def validate_results(root: Path, *, max_files: int | None = None) -> dict[str, Any] | None:
-    """Verify every declared output, then save its index beside ``root`` and return a summary.
+    """宣言されたすべての出力を確かめてから、そのindexを``root``の隣に保存し、要約を返す。
 
-    The summary (counts, the index sha256, metrics and output declarations) is what the job state
-    keeps; the per-file list lives in the index so that poll responses stay bounded.
+    Jobの状態に残すのは要約（数、indexのsha256、メトリクス、出力の宣言）。ファイルごとの一覧は
+    indexに置き、pollの応答の大きさに上限が保たれるようにする。
     """
     if root.is_symlink():
         raise ValueError("Output directory must not be a symlink")
@@ -164,7 +167,7 @@ def validate_results(root: Path, *, max_files: int | None = None) -> dict[str, A
         raise ValueError("Container outputs contain undeclared or incomplete files")
     metrics = _validated_metrics(result.get("metrics", []))
     declarations = _output_declarations(result, declared)
-    # The index is the last step, so a rejected result never leaves one for the archive command.
+    # indexは最後に書くので、拒んだ結果がarchiveのコマンド向けのindexを残すことは無い。
     index = encode_output_index(artifacts)
     _write_private_file(workspace / OUTPUT_INDEX_FILENAME, index)
     return {
@@ -258,7 +261,7 @@ def _validated_metrics(metrics: Any) -> list[dict[str, Any]]:
 
 
 def _output_declarations(result: dict[str, Any], declared_paths: set[str]) -> list[dict[str, Any]]:
-    """WorkerOutputDeclaration list: `models` are indexed from 0, `datasets` continue after them."""
+    """WorkerOutputDeclarationのリスト。`models`は0から番号を振り、`datasets`はその続きから振る。"""
     models, datasets = result.get("models", []), result.get("datasets", [])
     if not isinstance(models, list) or len(models) > MAX_MODEL_DECLARATIONS:
         raise ValueError(f"result.json models must be a list of at most {MAX_MODEL_DECLARATIONS}")
@@ -316,10 +319,10 @@ def _require_declared_path(path: Any, declared_paths: set[str]) -> None:
 
 
 def _require_dataset_path(path: Any, declared_paths: set[str]) -> None:
-    """A listed output file, or a directory: the API registers every listed file under it.
+    """一覧にある出力ファイルか、ディレクトリ（その下の一覧にあるファイルをAPIがすべて登録する）。
 
-    Every regular file in the outputs is listed (undeclared files fail validation), and symlinks
-    and `..` are refused before this, so a directory cannot reach outside the outputs.
+    出力の中の通常ファイルはすべて一覧にある（宣言の無いファイルは検証で失敗する）。シンボリック
+    リンクと`..`はこれより前に拒むので、ディレクトリが出力の外を指すことは無い。
     """
     if isinstance(path, str) and path in declared_paths:
         return
@@ -345,7 +348,7 @@ def _require_json_object(declaration: dict[str, Any], name: str) -> None:
 
 
 def encode_output_index(artifacts: list[dict[str, Any]]) -> bytes:
-    """JSON Lines of verified descriptors; its sha256 binds the index to the job state."""
+    """確かめた記述のJSON Lines。そのsha256で、indexとJobの状態を結び付ける。"""
     return b"".join(
         json.dumps(artifact, ensure_ascii=False, separators=(",", ":")).encode() + b"\n"
         for artifact in artifacts
@@ -372,7 +375,7 @@ def parse_output_index(raw: bytes) -> list[dict[str, Any]]:
 
 
 def validate_output_summary(results: dict[str, Any]) -> None:
-    """Require the index identity before reading any outputs, including an empty result."""
+    """出力を読む前に、indexの識別情報を必ず求める。結果が空でも同じ。"""
     if "artifacts" in results:
         raise ValueError("Results require an output index, not inline artifacts")
     if type(results.get("artifactCount")) is not int or results["artifactCount"] < 0:
@@ -383,7 +386,7 @@ def validate_output_summary(results: dict[str, Any]) -> None:
 
 
 def read_output_index(workspace: Path, results: dict[str, Any]) -> bytes:
-    """The index saved by validate_results, checked against the summary in the job state."""
+    """validate_resultsが保存したindex。Jobの状態にある要約と照らし合わせる。"""
     validate_output_summary(results)
     maximum_bytes = (results["artifactCount"] + 1) * MAX_ARTIFACT_LINE_BYTES
     with open_regular_file(workspace, [OUTPUT_INDEX_FILENAME]) as content:
@@ -401,7 +404,7 @@ def finished_results(state: dict[str, Any]) -> dict[str, Any]:
 
 
 def read_output_chunk(workspace: Path, request: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
-    """One bounded chunk of a declared output (the runner's `output` command)."""
+    """宣言された出力の、大きさに上限のある1つのチャンク（runnerの`output`コマンド）。"""
     results = finished_results(state)
     artifact = next(
         (

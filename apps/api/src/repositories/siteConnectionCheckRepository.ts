@@ -1,12 +1,12 @@
 import { SITE_CONNECTION_CHECK_TIMEOUT_SECONDS, type SiteConnectionCheck } from '@mmt/contracts';
 import { first, rows, type Connection } from '../db/database.js';
 
-// The Compute page shows recent history only.
+// Compute画面には直近の履歴だけを出す。
 const CHECK_LIST_LIMIT = 10;
 const checkColumns = 'id,target_id,user_id,requested_by,status,message,created_at,finished_at';
 const NO_LAUNCHER_MESSAGE = 'launcherが応答しませんでした（止まっているか、このコンピュータの担当ではありません）';
 
-/** Checks no launcher answered in time fail, so a stopped launcher is visible. */
+/** 時間内にlauncherが応答しなかった確認は失敗にして、止まったlauncherが分かるようにする。 */
 export async function expireStaleConnectionChecks(connection: Connection): Promise<void> {
   await connection.query(
     `UPDATE site_connection_checks SET status='failed',message=$2,finished_at=now()
@@ -15,7 +15,7 @@ export async function expireStaleConnectionChecks(connection: Connection): Promi
   );
 }
 
-/** undefined: a check of this account is already waiting. */
+/** undefined: このアカウントの確認が既に待機中。 */
 export async function insertConnectionCheck(
   connection: Connection,
   check: { targetId: string; userId: string | null; requestedBy: string },
@@ -42,7 +42,7 @@ export async function listConnectionChecks(
   );
 }
 
-/** Waiting checks of the sites this launcher submits to. */
+/** このlauncherが投入するsiteの、待機中の確認。 */
 export async function listLauncherConnectionChecks(
   connection: Connection,
   launcherId: string,
@@ -56,7 +56,7 @@ export async function listLauncherConnectionChecks(
   );
 }
 
-/** false: the check already ended, or belongs to another launcher's site. */
+/** false: 確認が既に終わっているか、別のlauncherのsiteのもの。 */
 export async function finishConnectionCheck(
   connection: Connection,
   result: { checkId: string; launcherId: string; succeeded: boolean; message: string | null },

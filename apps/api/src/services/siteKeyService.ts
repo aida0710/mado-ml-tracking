@@ -26,8 +26,8 @@ function keyUnavailable(message: string): never {
 }
 
 /**
- * The account a key or connection check is for: the shared account (personal=false, the site's
- * manager) or the caller's own account on a site that logs in as each requester.
+ * 鍵や接続の確認の対象になるアカウント。共有のアカウント（personal=false、siteの管理者が扱う）
+ * か、依頼者ごとにログインするsiteでの呼び出し元自身のアカウント。
  */
 export async function siteKeyAccount(
   connection: Connection,
@@ -53,11 +53,11 @@ export async function siteKeyAccount(
   return { userId: principal.user.id, launcherId: settings.launcherId };
 }
 
-/** Keys the launcher made for a site; only their public halves exist in tracking. */
+/** launcherがsiteのために作った鍵。trackingには公開鍵だけがある。 */
 export class SiteKeyService {
   constructor(private readonly database: Database) {}
 
-  /** The site's manager sees every live key; anyone else only their own. */
+  /** siteの管理者は有効なすべての鍵を見られる。ほかの人は自分のものだけ。 */
   async list(principal: Principal, targetId: string): Promise<SiteKey[]> {
     requireScope(principal, 'read');
     const target = await findSiteTarget(this.database, targetId);
@@ -67,7 +67,7 @@ export class SiteKeyService {
     return keys.filter((key) => key.userId === principal.user.id);
   }
 
-  /** Revokes the account's key and asks the launcher for a new one, to be authorized again. */
+  /** アカウントの鍵を失効させ、launcherに新しい鍵を求める。新しい鍵はもう一度許可してもらう。 */
   async rotate(
     principal: Principal,
     targetId: string,

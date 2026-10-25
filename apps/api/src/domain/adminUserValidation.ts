@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-// Same rule as the users.username CHECK in 010_local_accounts.sql.
+// 010_local_accounts.sqlのusers.usernameのCHECKと同じ規則。
 const USERNAME_PATTERN = /^[a-z0-9][a-z0-9_.-]{0,63}$/;
-// Generous bound: the password hasher enforces the real 12-1024 byte rule.
+// 余裕を持たせた上限。実際の12〜1024バイトの規則はパスワードのハッシュ処理が確かめる。
 const MAX_PASSWORD_INPUT_LENGTH = 4096;
 const MAX_DISPLAY_NAME_LENGTH = 200;
 const MAX_EMAIL_LENGTH = 254;
 const MAX_QUERY_LENGTH = 200;
-// The admin table shows one page; operators narrow it with the search box instead of paging.
+// 管理画面の表は1ページだけを出す。運用者はページ送りでなく検索欄で絞り込む。
 export const ADMIN_USER_LIST_LIMIT = 500;
 
 const displayNameSchema = z.string().trim().min(1).max(MAX_DISPLAY_NAME_LENGTH);

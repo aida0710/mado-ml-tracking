@@ -1,7 +1,7 @@
-"""Localhost fake of the API a site runner talks to: the runner protocol, Artifacts and dataset files.
+"""site runnerが話すAPIの、localhostの偽物。runnerのプロトコル、Artifact、データセットのファイル。
 
-It speaks real HTTP, so both the runner's httpx client and its urllib dataset downloads reach it.
-Every call is recorded in order, which lets tests check the protocol sequence.
+実際のHTTPで話すので、runnerのhttpxクライアントも、urllibによるデータセットのダウンロードも
+ここに届く。呼び出しはすべて順に記録するので、テストでプロトコルの順序を確かめられる。
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ class SiteApi:
         self.uploads: list[tuple[str, bytes]] = []
         self.log_lines: list[tuple[str, str]] = []
         self.log_seen: dict[str, threading.Event] = {}
-        # Behaviour switches the tests flip.
+        # テストが切り替える動作のスイッチ。
         self.cancel_requested = False
         self.cancel_after_log: str | None = None
         self.heartbeat_status_after_log: tuple[str, int] | None = None
@@ -71,7 +71,7 @@ class SiteApi:
         self.server.server_close()
         self.thread.join()
 
-    # Fixture content ---------------------------------------------------------------------------
+    # fixtureの中身 -----------------------------------------------------------------------------
 
     def add_artifact(self, content: bytes) -> str:
         artifact_id = str(uuid4())

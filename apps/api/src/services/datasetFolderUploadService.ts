@@ -6,8 +6,8 @@ import { listUnfinishedFolderUploads } from '../repositories/datasetFolderUpload
 import { requireProject } from './accessService.js';
 
 /**
- * Folder uploads of a dataset that stopped before their version, so the Web can continue one or
- * discard it (ArtifactDeletionService.deleteDatasetFolderUpload) instead of leaving its files.
+ * バージョンを作る前に止まった、データセットのフォルダアップロード。画面はそれを続けるか捨てる
+ * （ArtifactDeletionService.deleteDatasetFolderUpload）ことができ、ファイルを放置せずに済む。
  */
 export class DatasetFolderUploadService {
   constructor(private readonly database: Database) {}

@@ -2,7 +2,7 @@ import type { Connection } from '../db/database.js';
 import type { HookDispatcher } from './hookDispatcher.js';
 import type { RunCompletionHandler, RunStatusChange } from './runCompletionService.js';
 
-/** Starts run_finished hooks and what waited for the Run to end (pending executions). */
+/** run_finishedのフックと、Runの終わりを待っていたもの（保留中の実行）を起動する。 */
 export class HookRunHandler implements RunCompletionHandler {
   readonly name = 'hooks';
 

@@ -1,18 +1,19 @@
-"""Research features in one training script: system metrics, media every few steps, a large
-checkpoint, offline recording with a later sync, and resuming the same Run.
+"""研究向けの機能を1つの学習スクリプトで使う。システムのメトリクス、数stepごとのメディア、
+大きなcheckpoint、オフラインでの記録とあとからの同期、同じRunの再開。
 
-The "model" is media_logging.py's toy that learns a 440 Hz tone. Needs numpy
-(``pip install 'mado-tracking[media]'``) and, for CPU/memory metrics, psutil.
+「モデル」はmedia_logging.pyと同じ、440Hzの音を学ぶおもちゃ。numpy
+（``pip install 'mado-tracking[media]'``）と、CPU・メモリのメトリクスのためにpsutilが要る。
 
-    # online: system.* every second, audio/spectrogram/table every 10 steps
+    # オンライン: system.*を毎秒、音声・スペクトログラム・表を10 stepごとに記録する
     MMT_PROJECT_ID=... MMT_EXPERIMENT_ID=... python research_features.py --steps 30
-    # continue the same Run; steps continue after the last recorded one
+    # 同じRunを続ける。stepは最後に記録したものの次から続く
     python research_features.py --resume <runId> --steps 10
-    # no API: record into the spool (MMT_OFFLINE_DIR), with a 65 MiB checkpoint, then send it later
+    # APIなし: 65 MiBのcheckpointとともにspool（MMT_OFFLINE_DIR）へ記録し、あとで送る
     MMT_MODE=offline python research_features.py --checkpoint-mib 65
     mado-tracking sync
 
-The last stdout line is JSON ``{"runId", "mode", "offlineDirectory", "lastStep"}`` for scripts.
+stdoutの最後の行は、スクリプトから使うためのJSON
+``{"runId", "mode", "offlineDirectory", "lastStep"}``。
 """
 
 from __future__ import annotations
@@ -28,16 +29,16 @@ from media_logging import SAMPLE_RATE, TARGET_HZ, evaluation_table, spectrogram,
 import mado_tracking
 from mado_tracking import Run
 
-# Evaluate every 10 steps so a 30-step run gives the media slider three positions.
+# 10 stepごとに評価し、30 stepのRunでメディアのスライダーの位置が3つになるようにする。
 EVALUATION_EVERY = 10
-# Checkpoints of 64 MiB and more go through a resumable upload session (sync resumes them too).
+# 64MiB以上のcheckpointは、再開できるアップロードセッションで送る（syncもそれを再開する）。
 MEBIBYTE = 1024 * 1024
 LEARNING_RATE = 0.05
 INITIAL_HZ = 200.0
 
 
 def write_checkpoint(directory: Path, *, size_mib: int, frequency: float) -> Path:
-    """A placeholder weights file of size_mib MiB whose bytes depend on the trained frequency."""
+    """size_mib MiBの仮の重みファイル。中身のバイト列は学習した周波数で決まる。"""
     path = directory / "model.bin"
     block = f"{frequency:.6f}".encode().ljust(64, b"\0") * (MEBIBYTE // 64)
     with path.open("wb") as file:
@@ -47,9 +48,9 @@ def write_checkpoint(directory: Path, *, size_mib: int, frequency: float) -> Pat
 
 
 def train(run: Run, *, steps: int, step_seconds: float) -> float:
-    """Log loss every step and media every EVALUATION_EVERY steps; returns the trained frequency.
+    """毎stepでlossを、EVALUATION_EVERY stepごとにメディアを記録し、学習した周波数を返す。
 
-    A resumed Run continues after its last step, and the toy recomputes where training stood then.
+    再開したRunは最後のstepの次から続け、おもちゃのモデルはその時点の学習の状態を計算し直す。
     """
     last_step = run.last_step("loss")
     first_step = 0 if last_step is None else last_step + 1
@@ -61,7 +62,7 @@ def train(run: Run, *, steps: int, step_seconds: float) -> float:
         )
         if step % EVALUATION_EVERY == EVALUATION_EVERY - 1:
             audio = synthesize(frequency)
-            # No step: media goes to the last metric step, as in W&B.
+            # stepは渡さない。W&Bと同じく、メディアはメトリクスの最後のstepに入る。
             run.log_audio("inference/tone", audio, sample_rate=SAMPLE_RATE, caption=f"{frequency:.1f} Hz")
             run.log_image("inference/spectrogram", spectrogram(audio))
             run.log_table("evaluation/samples", evaluation_table(frequency))
@@ -96,7 +97,7 @@ def main() -> None:
                 checkpoint = write_checkpoint(
                     Path(directory), size_mib=arguments.checkpoint_mib, frequency=frequency
                 )
-                # Offline Runs copy the file into the spool, so the temporary file may go away.
+                # オフラインのRunはファイルをspoolにコピーするので、一時ファイルは消えてかまわない。
                 run.log_artifact(checkpoint, path="checkpoints/model.bin")
     offline_directory = run.offline_directory
     print(

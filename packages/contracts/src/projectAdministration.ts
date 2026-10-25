@@ -1,15 +1,15 @@
 import type { ArtifactBackend, ProjectRole, ProjectVisibility } from './index.js';
 
-/** A user to add as a direct member when the Project is created. */
+/** Projectの作成時に、直接付与のメンバーとして加えるユーザー。 */
 export interface ProjectMemberGrant {
   userId: string;
   role: ProjectRole;
 }
 
 /**
- * POST /projects. The creator becomes the Project admin; visibility defaults to 'public'. The
- * Project and its members are created together: an unknown or non-human user refuses the whole
- * request. A grant for the creator is ignored (the creator is always admin).
+ * POST /projects。作成者がProject adminになる。visibilityの既定は'public'。Projectとメンバーは
+ * まとめて作るので、存在しないユーザーや人でないユーザーが1人でもいると、リクエスト全体を拒む。
+ * 作成者への付与は無視する（作成者は常にadmin）。
  */
 export interface ProjectCreate {
   name: string;
@@ -19,7 +19,7 @@ export interface ProjectCreate {
   members?: ProjectMemberGrant[];
 }
 
-/** PATCH /projects/:p, by the Project admin or a global administrator. */
+/** PATCH /projects/:p。Project adminか全体管理者が使う。 */
 export interface ProjectPatch {
   description?: string;
   artifactBackend?: ArtifactBackend;
@@ -27,9 +27,9 @@ export interface ProjectPatch {
 }
 
 /**
- * A Project as the global administrator sees it (GET /admin/projects).
- * POST /projects/:p/archive hides a Project and keeps its data; POST /admin/projects/:p/restore
- * brings it back; DELETE /admin/projects/:p removes an archived Project and its data for good.
+ * 全体管理者から見たProject（GET /admin/projects）。
+ * POST /projects/:p/archiveはProjectを隠してデータは残す。POST /admin/projects/:p/restoreで
+ * 元に戻す。DELETE /admin/projects/:pはアーカイブ済みのProjectとそのデータを完全に消す。
  */
 export interface AdminProject {
   id: string;
@@ -38,19 +38,19 @@ export interface AdminProject {
   artifactBackend: ArtifactBackend;
   visibility: ProjectVisibility;
   /**
-   * Users with a direct grant or a group binding, Service Accounts included. Access through public
-   * visibility is not counted.
+   * 直接付与かgroupへの付与を持つユーザーの数（Service Accountを含む）。publicの公開設定による
+   * アクセスは数えない。
    */
   memberCount: number;
-  /** Display names of the people (not Service Accounts) who are Project admin, by name. */
+  /** Project adminである人（Service Accountは除く）の表示名。名前の順。 */
   adminNames: string[];
-  /** Active (not MLflow-deleted) Runs. */
+  /** 有効な（MLflowで削除されていない）Runの数。 */
   runCount: number;
   createdAt: string;
   archivedAt: string | null;
 }
 
 export interface AdminProjectQuery {
-  /** Archived Projects are left out unless this is true. */
+  /** これがtrueでなければ、アーカイブ済みのProjectは含めない。 */
   includeArchived?: boolean;
 }

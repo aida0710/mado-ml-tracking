@@ -1,4 +1,4 @@
-"""Save a training checkpoint to a Run, and find the checkpoint a resumed Job starts from."""
+"""学習のcheckpointをRunに保存し、再開したJobが始める元のcheckpointを探す。"""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from .run import Run
 
 CHECKPOINT_ARCHIVE_MIME_TYPE = "application/x-tar"
-# Set by the worker when the Job's Run continues from a checkpoint (see docs/worker.md).
+# JobのRunがcheckpointから続くときにworkerが設定する（docs/worker.mdを参照）。
 RESUME_CHECKPOINT_DIR_VARIABLE = "MMT_RESUME_CHECKPOINT_DIR"
 RESUME_STEP_VARIABLE = "MMT_RESUME_STEP"
 RESUME_CHECKPOINT_FILE_VARIABLE = "MMT_RESUME_CHECKPOINT_FILE"
@@ -26,7 +26,7 @@ RESUME_CHECKPOINT_FILE_VARIABLE = "MMT_RESUME_CHECKPOINT_FILE"
 
 @dataclass(frozen=True)
 class ResumeCheckpoint:
-    """A verified, read-only checkpoint directory and the step it was saved at."""
+    """検証済みで読み取り専用のcheckpointのディレクトリと、それを保存したstep。"""
 
     path: Path
     step: int
@@ -49,7 +49,7 @@ def log_checkpoint(
     framework: str | None = None,
     metadata: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Archive directory as one tar Artifact (resumable upload session) and register it."""
+    """directoryを1つのtarのArtifactにして（再開できるアップロードセッションで送り）登録する。"""
     if isinstance(step, bool) or not isinstance(step, int) or step < 0:
         raise ConfigurationError("Checkpoint step must be a non-negative integer")
     root = Path(directory)
@@ -58,7 +58,7 @@ def log_checkpoint(
         archive_path = Path(staging) / "checkpoint.tar"
         with archive_path.open("wb") as archive:
             write_checkpoint_archive(((file["path"], root / file["path"]) for file in files), archive)
-        # Always a session upload: a checkpoint is the one file a long Job must not lose halfway.
+        # 常にアップロードセッションを使う。checkpointは、長いJobが途中で失ってはならないファイル。
         artifact = upload_file_sync(
             run.client,
             target=UploadTarget(
@@ -86,7 +86,7 @@ def log_checkpoint(
 def resume_checkpoint_from_environment(
     environment: Mapping[str, str] | None = None,
 ) -> ResumeCheckpoint | None:
-    """The checkpoint the worker staged for this Job, or None when the Run starts from scratch."""
+    """workerがこのJobのために用意したcheckpoint。Runを最初から始めるときはNone。"""
     variables = os.environ if environment is None else environment
     directory = variables.get(RESUME_CHECKPOINT_DIR_VARIABLE)
     if not directory:

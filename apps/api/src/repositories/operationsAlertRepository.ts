@@ -9,12 +9,12 @@ import { first, rows, type Connection } from '../db/database.js';
 import type { OpenAlertReference, OperationsAlertDetail } from '../domain/operationsAlerts.js';
 
 const ALERT_COLUMNS = 'id,project_id,kind,subject_id,opened_at,resolved_at,resolution,detail';
-// The same columns read through the alias `a`, for queries that join the Project.
+// 同じ列を別名`a`を通して読む形。Projectを結合するクエリに使う。
 const ALERT_COLUMNS_OF_A = ALERT_COLUMNS.split(',')
   .map((column) => `a.${column}`)
   .join(',');
 
-/** A claimed or running Job with its heartbeat age measured on the database clock. */
+/** claimedかrunningのJobと、DBの時計で測ったそのheartbeatからの経過時間。 */
 export interface ActiveJobHeartbeat {
   jobId: string;
   projectId: string;
@@ -27,7 +27,7 @@ export interface ActiveJobHeartbeat {
   heartbeatAgeSeconds: number;
 }
 
-/** A worker whose token can still authenticate, with its silence measured on the database clock. */
+/** tokenがまだ認証に使えるworkerと、DBの時計で測った無応答の時間。 */
 export interface WorkerSilence {
   projectId: string;
   tokenId: string;
@@ -39,7 +39,7 @@ export interface WorkerSilence {
   activeJobCount: number;
 }
 
-/** Undelivered events (pending and sending) of one plugin connection. */
+/** 1つのPlugin接続の未配信のイベント（pendingとsending）。 */
 export interface PluginBacklog {
   pluginId: string;
   projectId: string;
@@ -60,7 +60,7 @@ export async function listOpenAlerts(connection: Connection): Promise<OpenAlertR
   );
 }
 
-/** Returns undefined when the subject already has an open alert. */
+/** 対象に既に未解決のアラートがあればundefinedを返す。 */
 export async function insertOpenAlert(
   connection: Connection,
   alert: {
@@ -78,7 +78,7 @@ export async function insertOpenAlert(
   );
 }
 
-/** Returns undefined when the alert was already resolved. */
+/** アラートが既に解決済みならundefinedを返す。 */
 export async function resolveAlert(
   connection: Connection,
   request: { alertId: string; resolution: OperationsAlertResolution },
@@ -91,7 +91,7 @@ export async function resolveAlert(
   );
 }
 
-/** Newest first. state 'open' lists unresolved alerts only. */
+/** 新しい順。stateが'open'なら未解決のアラートだけを並べる。 */
 export async function listProjectAlerts(
   connection: Connection,
   filter: { projectId: string; state: OperationsAlertState; limit: number },
@@ -106,11 +106,11 @@ export async function listProjectAlerts(
 }
 
 /**
- * Alerts of every live Project the user is a member of (a direct grant or a group binding),
- * newest first, or of all of them when `seesEveryProject` (a global administrator's session).
- * Public access does not count: every person may open a public Project, and its stopped workers
- * would otherwise ring everyone's bell. `onlyProjectId` keeps a Project-limited token inside its
- * Project.
+ * 利用者がメンバーである（直接の付与かグループの割り当て）アーカイブされていないProjectすべての
+ * アラートを新しい順に返す。`seesEveryProject`（全体管理者のsession）なら、アーカイブされて
+ * いないすべてのProjectのアラート。公開による閲覧は数えない。公開のProjectは誰でも開けるので、
+ * 数えるとその止まったworkerが全員の通知ベルを鳴らしてしまう。`onlyProjectId`は、Projectに
+ * 限定したtokenをそのProjectの中にとどめる。
  */
 export async function listVisibleAlerts(
   connection: Connection,
@@ -154,8 +154,7 @@ export async function listActiveJobHeartbeats(
   );
 }
 
-// Workers of revoked or expired tokens cannot come back under the same identity, so they are
-// not watched.
+// 失効したか期限切れのtokenのworkerは、同じ身元で戻ってこられないので見張らない。
 export async function listWorkerSilences(connection: Connection): Promise<WorkerSilence[]> {
   return rows<WorkerSilence>(
     connection,
@@ -168,7 +167,7 @@ export async function listWorkerSilences(connection: Connection): Promise<Worker
   );
 }
 
-// The LEFT JOIN keeps plugins with an empty backlog, so their open alert resolves as recovered.
+// LEFT JOINで未配信の無いPluginも残し、その未解決のアラートを回復として解決できるようにする。
 const PLUGIN_BACKLOG_SELECT = `SELECT p.id AS plugin_id,p.project_id,p.name AS plugin_name,(p.enabled) AS enabled,
     count(o.id) FILTER (WHERE o.status='pending')::int AS pending,
     count(o.id) FILTER (WHERE o.status='sending')::int AS sending,
@@ -186,7 +185,7 @@ export async function listEnabledPluginBacklogs(connection: Connection): Promise
   );
 }
 
-/** undefined when the plugin does not belong to the Project. */
+/** PluginがそのProjectのものでなければundefined。 */
 export async function findPluginBacklog(
   connection: Connection,
   reference: { projectId: string; pluginId: string },

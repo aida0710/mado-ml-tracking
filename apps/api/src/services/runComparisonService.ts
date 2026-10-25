@@ -15,7 +15,7 @@ import { readComparedRuns, type ComparedRun } from '../repositories/runCompariso
 import { requireProject } from './accessService.js';
 import type { MetricSeriesService } from './metricSeriesService.js';
 
-/** A validated comparison request; baselineRunId is one of runIds. */
+/** 検証済みの比較のリクエスト。baselineRunIdはrunIdsのどれか。 */
 export interface RunComparisonQuery {
   runIds: string[];
   baselineRunId: string | null;
@@ -23,13 +23,13 @@ export interface RunComparisonQuery {
   includeHistory: boolean;
 }
 
-// Several Runs often share one evaluation DatasetVersion or ModelVersion; list each once.
+// 複数のRunが評価用の同じDatasetVersionやModelVersionを使うことが多いので、それぞれ1回だけ並べる。
 function uniqueById<T extends { id: string }>(items: T[]): T[] {
   return [...new Map(items.map((item) => [item.id, item])).values()];
 }
 
 function inRequestOrder(found: ComparedRun[], runIds: string[]): ComparedRun[] {
-  // Another Project's Run is reported like a missing one so its existence does not leak.
+  // 別のProjectのRunは、存在が漏れないよう、無いRunと同じに報告する。
   if (found.length !== runIds.length) notFound('run');
   const foundById = new Map(found.map((compared) => [compared.run.id, compared]));
   return runIds.map((id) => foundById.get(id)!);
@@ -96,7 +96,7 @@ export class RunComparisonService {
   ): Promise<MetricSeries[]> {
     const { runIds, keys } = selection;
     if (!keys.length) return [];
-    // 50 Runs x 50 keys at the default density would exceed the series response limit.
+    // Run50件×キー50個を既定の密度で返すと、系列の応答の上限を超える。
     const maxPoints = Math.min(
       DEFAULT_SERIES_POINTS,
       Math.floor(MAX_RESPONSE_POINTS / (runIds.length * keys.length)),

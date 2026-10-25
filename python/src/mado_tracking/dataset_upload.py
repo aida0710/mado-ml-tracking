@@ -1,8 +1,8 @@
-"""Create an 'artifacts' DatasetVersion from a local directory.
+"""ローカルのディレクトリから'artifacts'のDatasetVersionを作る。
 
-Each file becomes a Project Artifact, then one request lists them as the version's files. A file
-whose sha256 and size match an Artifact the Project already stored is not uploaded again; its
-Artifact is listed instead, so re-running after an interruption sends only what is missing.
+各ファイルをProjectのArtifactにしてから、1回のリクエストでそれらをバージョンのファイルとして
+並べる。Projectが既に保存したArtifactとsha256と大きさが一致するファイルはアップロードし直さず、
+そのArtifactを並べる。そのため、中断のあとでやり直しても、足りない分だけを送る。
 """
 
 from __future__ import annotations
@@ -23,18 +23,18 @@ from .errors import ApiError, ConfigurationError
 if TYPE_CHECKING:
     from .client import Client
 
-# Same bound as the API's MAX_DATASET_VERSION_FILES; checked before anything is uploaded.
+# APIのMAX_DATASET_VERSION_FILESと同じ上限。何かをアップロードする前に確かめる。
 MAX_DATASET_VERSION_FILES = 100_000
-# Reads files in pieces so hashing a large audio file does not load it into memory.
+# ファイルを少しずつ読み、大きな音声ファイルのハッシュ計算でも全体をメモリに載せない。
 HASH_CHUNK_BYTES = 1024 * 1024
-# Artifacts of a dataset are stored under this folder of the Project's standalone Artifacts.
+# データセットのArtifactは、Projectの単独のArtifactのうち、このフォルダの下に保存する。
 DATASET_ARTIFACT_FOLDER = "datasets"
 NOT_FOUND = 404
 
 
 @dataclass(frozen=True)
 class LocalDatasetFile:
-    """A file below the directory: its path inside the dataset and its content digest."""
+    """ディレクトリの下のファイル。データセットの中でのパスと、中身のdigestを持つ。"""
 
     path: str
     source: Path
@@ -51,10 +51,10 @@ def file_sha256(source: Path) -> str:
 
 
 def scan_dataset_directory(directory: Path) -> list[LocalDatasetFile]:
-    """Every file below directory with its relative POSIX path, in path order."""
+    """directoryの下の全ファイルと、その相対のPOSIXパス。パス順。"""
     if not directory.is_dir():
         raise ConfigurationError(f"{directory} is not a directory")
-    # rglob does not descend into symlinked directories, so the walk stays inside the tree.
+    # rglobはシンボリックリンクのディレクトリの中へは降りないので、走査はツリーの中にとどまる。
     sources = sorted(file for file in directory.rglob("*") if file.is_file())
     if not sources:
         raise ConfigurationError(f"{directory} has no files")
@@ -72,14 +72,14 @@ def scan_dataset_directory(directory: Path) -> list[LocalDatasetFile]:
 
 
 def dataset_manifest_digest(files: list[LocalDatasetFile]) -> str:
-    """The digest the API computes for an 'artifacts' version (see datasetManifestDigest.ts)."""
+    """APIが'artifacts'のバージョンについて計算するdigest（datasetManifestDigest.tsを参照）。"""
     return manifest_entries_digest(
         [{"path": file.path, "sha256": file.sha256, "size": file.size} for file in files]
     )
 
 
 def manifest_entries_digest(entries: list[dict[str, Any]]) -> str:
-    """Same digest from `{path, sha256, size}` entries, such as a version's listed files."""
+    """同じdigestを、バージョンに並べたファイルのような`{path, sha256, size}`の項目から計算する。"""
     canonical_entries = [
         {"path": entry["path"], "sha256": entry["sha256"], "size": entry["size"]}
         for entry in sorted(entries, key=lambda entry: str(entry["path"]).encode("utf-8"))
@@ -89,7 +89,7 @@ def manifest_entries_digest(entries: list[dict[str, Any]]) -> str:
 
 
 def find_stored_artifact(client: Client, project_id: str, file: LocalDatasetFile) -> str | None:
-    """ID of a stored Project Artifact with the same content, or None when there is none."""
+    """同じ中身を持つ、保存済みのProjectのArtifactのID。無ければNone。"""
     try:
         artifact = client.request(
             "GET",
@@ -105,7 +105,7 @@ def find_stored_artifact(client: Client, project_id: str, file: LocalDatasetFile
 
 
 def upload_dataset_file(client: Client, project_id: str, dataset_id: str, file: LocalDatasetFile) -> str:
-    """Stores the file as a standalone Artifact and returns its ID."""
+    """ファイルを単独のArtifactとして保存し、そのIDを返す。"""
     path = f"{DATASET_ARTIFACT_FOLDER}/{dataset_id}/{file.path}"
     mime_type = mimetypes.guess_type(file.path)[0] or "application/octet-stream"
     if file.size >= SESSION_UPLOAD_THRESHOLD_BYTES:
@@ -142,10 +142,10 @@ def upload_dataset_directory(
     metadata: Mapping[str, Any] | None = None,
     schema: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Upload a directory and create a DatasetVersion of its files; version None takes the next integer.
+    """ディレクトリをアップロードしてそのファイルのDatasetVersionを作る。versionがNoneなら次の整数。
 
-    The locally computed digest is sent with the request, so the API rejects the version if the
-    stored Artifacts differ from the files on disk.
+    ローカルで計算したdigestをリクエストと一緒に送るので、保存されたArtifactがディスク上のファイルと
+    違えば、APIはそのバージョンを拒む。
     """
     files = scan_dataset_directory(Path(directory))
     listed = [

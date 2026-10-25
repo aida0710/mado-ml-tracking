@@ -32,17 +32,18 @@ import {
   type AuditEventDraft,
 } from './auditService.js';
 
-// 18 random bytes encode to 24 base64url characters, well above the 12-byte minimum.
+// 18バイトの乱数はbase64urlで24文字になり、最低の12バイトを十分に上回る。
 const TEMPORARY_PASSWORD_BYTES = 18;
 
-// A global administrator's session, or an unrestricted administrator token with `users:manage`.
+// 全体管理者のsessionか、`users:manage`を持つ制限の無い管理者のtoken。
 function requireUserReader(principal: Principal): void {
   requireScope(principal, 'users:manage');
   requireGlobalAdmin(principal);
 }
 
-// Changing accounts can create an administrator login, which holds every scope; a token may do it
-// only when it already holds every scope itself, so it cannot reach more than it has.
+// アカウントを変えると、すべてのscopeを持つ管理者のログインを作れてしまう。そのため、tokenで
+// 行えるのは、そのtoken自身が既にすべてのscopeを持つときだけにし、持っている以上の範囲に
+// 届かないようにする。
 function requireUserAdministrator(principal: Principal): void {
   requireUserReader(principal);
   const missingScopes = TOKEN_SCOPES.filter((scope) => !holdsScope(principal, scope));
@@ -55,12 +56,12 @@ function requireUserAdministrator(principal: Principal): void {
     });
 }
 
-// SSO users get their global role and display name from the IdP at every login.
+// SSOの利用者は、ログインのたびに全体のroleと表示名をIdPから受け取る。
 function isSsoUser(user: AdminUser): boolean {
   return user.authSources.includes('oidc');
 }
 
-/** The global administrator's user management: local accounts, disabling and password resets. */
+/** 全体管理者が行う利用者の管理。ローカルアカウント、無効化、パスワードの再設定。 */
 export class UserAdministrationService {
   constructor(
     private readonly options: { database: Database; passwordHasher: PasswordHasher },
@@ -76,7 +77,7 @@ export class UserAdministrationService {
     input: AdminUserCreateInput,
     request: RequestMetadata = NO_REQUEST_METADATA,
   ): Promise<AdminUser> {
-    // The temporary password never enters the audit log.
+    // 一時パスワードは監査ログに入れない。
     const draft = this.auditDraft(principal, request, 'admin.user.create', null, {
       username: input.username,
       isAdmin: input.isAdmin,
@@ -124,7 +125,7 @@ export class UserAdministrationService {
           isAdmin: patch.isAdmin ?? current.isAdmin,
         };
         this.validateChange(current, next);
-        // Order from the global admin invariant: the user's row first, then the admin lock.
+        // 全体管理者についての不変条件から決まる順序。利用者の行が先で、そのあとで管理者のロック。
         const activeAdminIds = await lockActiveGlobalAdminIds(connection);
         if (removesLastGlobalAdmin(activeAdminIds, { userId, ...next }))
           throw new DomainError({
@@ -133,10 +134,10 @@ export class UserAdministrationService {
             message: 'the last active global administrator cannot be disabled or demoted',
           });
         await updateAdminUser(connection, { userId, ...next });
-        // A Service Account disabled here reads the same as one disabled from Project settings.
+        // ここで無効にしたService Accountは、Projectの設定から無効にしたものと同じに見える。
         if (current.kind === 'service' && next.status !== current.status)
           await setServiceAccountStatus(connection, { serviceAccountId: userId, status: next.status });
-        // Tokens stop through the users.status check; sessions are revoked so they do not return.
+        // tokenはusers.statusの確認で止まる。sessionは、再び使えるようにならないよう失効させる。
         if (next.status === 'disabled' && current.status !== 'disabled')
           await revokeAllForUser(connection, userId);
         await writeAuditEvent(connection, {

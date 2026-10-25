@@ -116,7 +116,7 @@ describe.skipIf(!testDatabaseUrl)('Computeの接続確認（独立PostgreSQL）'
       expect((await request(harness.app, path, { method: 'POST', cookie })).status).toBe(403);
       expect((await request(harness.app, path, { cookie })).status).toBe(403);
     }
-    // A worker token cannot queue SSH sessions either.
+    // worker tokenでもSSHセッションを順番待ちに入れられない。
     expect(
       (await request(harness.app, path, { method: 'POST', token: fixture.workerToken })).status,
     ).toBe(403);
@@ -150,11 +150,11 @@ describe.skipIf(!testDatabaseUrl)('Computeの接続確認（独立PostgreSQL）'
     expect(
       await claimItem(fixture.workerToken, { workerId: 'host-1', targetIds: [fixture.target.id] }),
     ).toBeNull();
-    // A worker without MMT_WORKER_TARGET_IDS is in charge of no target; it only takes the checks
-    // someone chose it for (target-setup-checks.integration.test.ts).
+    // MMT_WORKER_TARGET_IDSの無いworkerはどのコンピュータも担当しない。誰かがそのworkerを選んだ
+    // 確認だけを取る（target-setup-checks.integration.test.ts）。
     expect(await claimItem(fixture.workerToken, { workerId: 'host-1' })).toBeNull();
     expect(await claimItem(fixture.workerToken, { workerId: 'host-1', targetIds: [] })).toBeNull();
-    // Session users (even administrators) cannot claim.
+    // sessionでログインしたユーザーは（管理者でも）claimできない。
     expect(
       (
         await request(harness.app, '/api/worker/target-checks/claim', {
@@ -178,7 +178,7 @@ describe.skipIf(!testDatabaseUrl)('Computeの接続確認（独立PostgreSQL）'
     expect(claims).toHaveLength(1);
     const claimed = claims[0]!;
     expect(claimed.check).toMatchObject({ id: check.id, status: 'claimed' });
-    // The worker needs the full target (key path on its own host) to connect.
+    // workerが接続するには、コンピュータの設定がすべて要る（そのworkerのホスト上の鍵のパスも）。
     expect(claimed.target.sshKeyPath).toBe(SSH_KEY_PATH);
 
     const winnerToken = first ? fixture.workerToken : fixture.secondWorkerToken;
@@ -213,7 +213,7 @@ describe.skipIf(!testDatabaseUrl)('Computeの接続確認（独立PostgreSQL）'
       leaseId: '00000000-0000-4000-8000-000000000000',
     });
     expect(wrongLease.status).toBe(409);
-    // Another worker token cannot complete with a stolen lease either.
+    // ほかのworker tokenも、盗んだleaseで完了にはできない。
     expect((await complete(fixture.secondWorkerToken, claimed.check.id, body)).status).toBe(409);
 
     const finished = await entity<TargetCheck>(
@@ -232,7 +232,7 @@ describe.skipIf(!testDatabaseUrl)('Computeの接続確認（独立PostgreSQL）'
       status: 'failed',
     });
     expect(changed.status).toBe(409);
-    // A finished check frees the target for the next request.
+    // 確認が終わると、そのコンピュータは次のリクエストを受けられるようになる。
     await requestCheck(fixture.administrator.cookie, fixture.sshTarget.id);
   });
 
@@ -282,7 +282,7 @@ describe.skipIf(!testDatabaseUrl)('Computeの接続確認（独立PostgreSQL）'
     expect(((await oversized.json()) as { code: string }).code).toBe(
       'target_check_result_too_large',
     );
-    // Unknown fields and free-form output are rejected by the schema.
+    // 未知の項目と自由形式の出力はスキーマが拒む。
     const rawOutput = await complete(fixture.workerToken, claimed.check.id, {
       leaseId: claimed.leaseId,
       status: 'finished',

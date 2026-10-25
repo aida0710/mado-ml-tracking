@@ -4,7 +4,7 @@ export function listArtifactDirectory(
   artifacts: ArtifactPathEntry[],
   path: string,
 ): ArtifactFile[] {
-  // A file is never also a directory; the service rejects conflicting uploads.
+  // ファイルが同時にディレクトリであることは無い。食い違うアップロードはサービスが拒む。
   if (artifacts.some((artifact) => artifact.path === path)) return [];
   const prefix = path ? `${path}/` : '';
   const children = new Map<string, ArtifactFile>();

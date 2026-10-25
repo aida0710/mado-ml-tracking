@@ -1,8 +1,9 @@
-"""Resume interrupted Artifact downloads with Range while proving the version never changed.
+"""中断したArtifactのダウンロードをRangeで再開し、バージョンが変わっていないことを確かめる。
 
-Range resumption only applies to identity-encoded bodies: a byte offset into compressed content
-has no meaning for the stored file. The content endpoint's strong ETag `"sha256-<hex>"` names the
-Artifact version, so a resumed request carries `If-Range` and a changed version restarts from zero.
+Rangeでの再開は、identityエンコーディングの本文にだけ使える。圧縮した中身の中のバイト位置は、
+保存されたファイルにとって意味が無い。contentのエンドポイントが返す強いETag `"sha256-<hex>"`が
+Artifactのバージョンを表すので、再開のリクエストには`If-Range`を付け、バージョンが変わって
+いれば最初からやり直す。
 """
 
 from __future__ import annotations
@@ -20,7 +21,7 @@ from .errors import ApiError
 from .http import RETRYABLE_STATUS, check_response, retry_delay
 from .security import SecretMasker
 
-# Interruptions are retried from the received offset; the cap stops a link that never recovers.
+# 中断したら受け取った位置から再試行する。上限は、回復しない回線で止めるためのもの。
 DOWNLOAD_RESUME_ATTEMPTS = 6
 IDENTITY_HEADERS = {"Accept-Encoding": "identity"}
 SHA256_ENTITY_TAG = re.compile(r'^"sha256-([0-9a-f]{64})"$')
@@ -32,7 +33,7 @@ EncodedFallback = Callable[[httpx.Response], Awaitable[dict[str, Any]]]
 
 
 class ResumableDownload:
-    """Bytes of one Artifact version received so far into a seekable destination."""
+    """シークできる書き込み先へ、これまでに受け取ったArtifactの1バージョン分のバイト列。"""
 
     def __init__(self, destination: BinaryIO, *, label: str, maximum_bytes: int | None = None):
         self.destination = destination
@@ -50,11 +51,11 @@ class ResumableDownload:
         return {**IDENTITY_HEADERS, "Range": f"bytes={self.received}-", "If-Range": self.entity_tag}
 
     def can_resume(self) -> bool:
-        # Without a strong validator a resumed body could belong to another version.
+        # 強い検証子が無いと、再開した本文が別のバージョンのものかもしれない。
         return self.received > 0 and self.entity_tag is not None
 
     def accept_response(self, status_code: int, headers: Mapping[str, str]) -> None:
-        """Validate the response before any of its bytes are written."""
+        """応答のバイト列を1つも書く前に、応答を検証する。"""
         if not is_identity_encoded(headers):
             raise ApiError(f"{self.label} download must use identity encoding to be resumable")
         entity_tag = strong_entity_tag(headers.get("etag"))
@@ -64,7 +65,8 @@ class ResumableDownload:
                 raise ApiError(f"{self.label} download returned an unexpected byte range")
             self.total_size = total
         elif status_code == 200:
-            # If-Range did not match (the version changed) or the server ignored Range: start over.
+            # If-Rangeが一致しなかった（バージョンが変わった）か、サーバーがRangeを無視した。
+            # 最初からやり直す。
             if self.received:
                 self.restart()
             self.entity_tag = entity_tag
@@ -89,7 +91,7 @@ class ResumableDownload:
         self.received += len(chunk)
 
     def finish(self) -> dict[str, Any]:
-        # Without a declared size, a body that ended without an error is the whole entity.
+        # 大きさの宣言が無ければ、エラー無しで終わった本文を全体とみなす。
         if self.total_size is not None and self.received != self.total_size:
             raise ApiError(f"{self.label} download transfer size mismatch")
         digest = self.checksum.hexdigest()
@@ -125,15 +127,16 @@ def parse_content_range(header: str | None) -> tuple[int, int]:
 
 
 def should_resume_after(error: ApiError, download: ResumableDownload) -> bool:
-    # A failed first request is the caller's to retry; only received bytes are worth resuming.
+    # 最初のリクエストの失敗は呼び出し側が再試行する。再開する価値があるのは受け取ったバイト列だけ。
     return download.can_resume() and error.status_code in RETRYABLE_STATUS
 
 
 def raw_chunks(response: httpx.Response) -> Iterable[bytes]:
-    # Response(content=...) reads its body eagerly; replay the original bytes it still holds.
+    # Response(content=...)は本文を先に読み切るので、まだ持っている元のバイト列を流し直す。
     if response.is_stream_consumed and isinstance(response.stream, httpx.SyncByteStream):
         return response.stream
-    # No chunk_size: buffering toward a size would lose the buffered bytes when the link drops.
+    # chunk_sizeは指定しない。一定の大きさまでバッファに溜めると、回線が切れたときに
+    # 溜めていたバイト列を失う。
     return response.iter_raw()
 
 
@@ -162,7 +165,7 @@ def download_resumable_sync(
                 download.accept_response(response.status_code, response.headers)
                 for chunk in raw_chunks(response):
                     download.write(chunk)
-            # A body that ended without a transport error is final; a short one is a mismatch.
+            # 通信エラー無しで終わった本文はそれで完結とみなす。短ければ大きさの不一致とする。
             return download.finish()
         except INTERRUPTIONS:
             pass
@@ -184,7 +187,7 @@ async def download_resumable_async(
     maximum_bytes: int | None = None,
     encoded_fallback: EncodedFallback | None = None,
 ) -> dict[str, Any]:
-    """`encoded_fallback` writes a compressed body in one pass; such a body cannot be resumed."""
+    """`encoded_fallback`は圧縮された本文を1回で書く。そのような本文は再開できない。"""
     download = ResumableDownload(destination, label=label, maximum_bytes=maximum_bytes)
     for attempt in range(DOWNLOAD_RESUME_ATTEMPTS):
         try:
@@ -198,7 +201,7 @@ async def download_resumable_async(
                 download.accept_response(response.status_code, response.headers)
                 async for chunk in raw_chunks_async(response):
                     download.write(chunk)
-            # A body that ended without a transport error is final; a short one is a mismatch.
+            # 通信エラー無しで終わった本文はそれで完結とみなす。短ければ大きさの不一致とする。
             return download.finish()
         except INTERRUPTIONS:
             pass

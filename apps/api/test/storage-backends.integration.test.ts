@@ -15,9 +15,10 @@ import { createApplication } from '../src/app.js';
 import { parseSecretKey } from '../src/security/secretEncryption.js';
 import { createHarness, entity, login, request, testDatabaseUrl, type Harness } from './harness.js';
 
-// Only identifies this test's ciphertext and log checks; it authenticates to nothing real.
+// このテストの暗号文とログを確かめるときの目印にするだけの値。実在するどのサービスの認証にも
+// 使えない。
 const SECRET_ACCESS_KEY = `test-secret-${randomBytes(12).toString('hex')}`;
-// Nothing listens on this loopback port, so the connection test must fail at its first step.
+// このループバックのポートでは何も待ち受けていないので、接続テストは必ず最初の手順で失敗する。
 const UNREACHABLE_ENDPOINT = 'http://127.0.0.1:47119';
 const s3Endpoint = process.env.MMT_TEST_S3_ENDPOINT;
 
@@ -43,7 +44,7 @@ describe.skipIf(!testDatabaseUrl)('Artifact保存先の全体設定（独立Post
   });
   beforeEach(async () => {
     await harness.reset();
-    // reset() truncates storage_backends through the users foreign key.
+    // reset()は、usersへの外部キーをたどってstorage_backendsも空にする。
     await app.services.artifactStores.reload();
     admin = await login(harness);
     member = await login(harness, 'member@localhost');
@@ -173,7 +174,7 @@ describe.skipIf(!testDatabaseUrl)('Artifact保存先の全体設定（独立Post
       ['filesystem', 'environment'],
       ['remote', 'database'],
     ]);
-    // Updating other fields without the secret keeps the stored one.
+    // シークレットを送らずにほかの項目を更新しても、保存済みのシークレットはそのまま残る。
     const updated = await entity<StorageBackend>(
       await call('/api/admin/storage-backends/remote', {
         method: 'PATCH',
@@ -194,7 +195,7 @@ describe.skipIf(!testDatabaseUrl)('Artifact保存先の全体設定（独立Post
     ]);
     expect(JSON.stringify(tested)).not.toContain(SECRET_ACCESS_KEY);
     expect(JSON.stringify(tested)).not.toContain('remote-access-key');
-    // Nothing listens on the endpoint, so the reason names the refusal in Japanese.
+    // endpointでは何も待ち受けていないので、失敗の理由は接続を拒否されたことを日本語で示す。
     expect(tested.steps[0]!.error).toBe(
       '接続を拒否されました。endpointのhostとportを確認してください（ECONNREFUSED）',
     );
@@ -272,14 +273,14 @@ describe.skipIf(!testDatabaseUrl)('Artifact保存先の全体設定（独立Post
     );
     expect(choices).toEqual({ items: ['filesystem', 'archive'], defaultBackend: 'archive' });
 
-    // The Web form preselects defaultBackend; the API stores what the form sends.
+    // 画面のフォームはdefaultBackendを最初から選んでおき、APIはフォームが送った値を保存する。
     const newProject = await createProject(choices.defaultBackend);
     const newArtifact = await entity<Artifact>(await uploadArtifact(newProject, 'after switch'));
     expect(newArtifact.backend).toBe('archive');
     await expect(stat(path.join(root, newArtifact.storageKey))).resolves.toBeDefined();
     expect(await readArtifact(newProject, newArtifact)).toBe('after switch');
 
-    // Moving the old Project to the new backend affects new Artifacts only.
+    // 古いProjectを新しい保存先に移しても、影響するのは新しいArtifactだけ。
     await entity(
       await call(`/api/projects/${oldProject.id}`, {
         method: 'PATCH',
@@ -451,7 +452,7 @@ describe.skipIf(!testDatabaseUrl)('Artifact保存先の全体設定（独立Post
         endpoint: s3Endpoint,
         region: 'us-east-1',
         forcePathStyle: true,
-        // These values authenticate only to the isolated emulator, never to real storage.
+        // これらの値で認証できるのは隔離したエミュレータだけで、実際のストレージでは使えない。
         credentials: { accessKeyId: 'testing', secretAccessKey: 'testing' },
       });
       await client.send(new CreateBucketCommand({ Bucket: bucket }));
@@ -502,7 +503,7 @@ describe.skipIf(!testDatabaseUrl)('Artifact保存先の全体設定（独立Post
         body: { bucket: `${bucket}-other` },
       });
       expect(moved.status).toBe(409);
-      // Non-location settings may change; the replaced store keeps reading the same objects.
+      // 置き場所以外の設定は変えてよい。置き換えたstoreも同じオブジェクトを読み続ける。
       await entity(
         await call('/api/admin/storage-backends/moto', {
           method: 'PATCH',

@@ -1,7 +1,7 @@
 import type { SearchLoggedModels } from './validation.js';
 import type { SearchField, SqlParameters } from './searchSyntax.js';
 
-// PostgreSQL treats NaN as greater than numbers; use explicit IEEE comparisons and sort ranks.
+// PostgreSQLはNaNを数値より大きいものとして扱うので、明示的なIEEEの比較と並びの順位を使う。
 const NAN_SQL = "'NaN'::double precision";
 const metricSortRank = { value: 0, nan: 1, missing: 2 } as const;
 
@@ -32,7 +32,7 @@ export function loggedModelMetricField(
     numeric: true,
     compileComparison: ({ operator, valueParameter }) => {
       const comparison = `${expression} ${operator} ${valueParameter}`;
-      // A model matches when any saved point satisfies this clause, including older evaluations.
+      // 保存したどれか1点がこの条件を満たせばモデルは一致する。古い評価も含む。
       const valueCondition =
         operator === '!='
           ? `(${expression}=${NAN_SQL} OR ${comparison})`
@@ -50,7 +50,8 @@ export function loggedModelMetricOrder(
 ): string {
   const key = parameters.add(order.key);
   const dataset = loggedModelDatasetCondition(parameters, order.datasets);
-  // Logged Model evaluation recency is timestamp first, unlike Run latest metrics' step first.
+  // Logged Modelの評価の新しさはtimestampを先に見る。Runの最新のメトリクスがstepを先に
+  // 見るのとは違う。
   const expression = `(SELECT metric.value FROM mlflow_logged_model_metrics metric
     WHERE metric.project_id=l.project_id AND metric.model_id=l.id AND metric.key=${key} AND ${dataset}
     ORDER BY metric.timestamp_ms DESC,metric.step DESC,metric.run_id ASC,metric.id ASC LIMIT 1)`;

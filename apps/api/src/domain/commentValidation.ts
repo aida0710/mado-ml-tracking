@@ -3,12 +3,12 @@ import { COMMENT_MAX_LENGTH } from '@mmt/contracts';
 import { uuidSchema } from './validation.js';
 
 const DEFAULT_COMMENT_PAGE_LIMIT = 100;
-// Bounds one page so a long discussion is fetched in steps instead of in one response.
+// 1ページの上限。長い議論は1回の応答でなく、何回かに分けて取る。
 const MAX_COMMENT_PAGE_LIMIT = 200;
 
 export const commentTargetTypeSchema = z.enum(['run', 'model_version', 'report']);
 
-// A body of only whitespace would render as an empty comment.
+// 空白だけの本文は、空のコメントとして表示されてしまう。
 const commentBodySchema = z
   .string()
   .max(COMMENT_MAX_LENGTH)

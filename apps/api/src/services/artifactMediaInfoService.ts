@@ -7,7 +7,7 @@ import { AUDIO_HEADER_PROBE_BYTES, probeAudioHeader } from '../domain/audioHeade
 import { notFound } from '../domain/errors.js';
 import { requireProject } from './accessService.js';
 
-// MIME types whose headers audioHeaderProbe understands; other audio waits for ffprobe.
+// audioHeaderProbeがヘッダーを読めるMIMEタイプ。ほかの音声はffprobeを待つ。
 const HEADER_PROBED_MIME_TYPES = new Set([
   'audio/wav',
   'audio/x-wav',
@@ -49,9 +49,9 @@ async function readAudioHeader(stores: ArtifactStores, artifact: Artifact): Prom
 }
 
 /**
- * Stores the audio header properties of a just-registered Artifact inside the registering
- * transaction. Media info is a convenience, so a read or insert failure is rolled back to a
- * savepoint and logged instead of failing the Artifact registration.
+ * 登録したばかりのArtifactの音声ヘッダーの情報を、登録のトランザクションの中で保存する。
+ * メディア情報は補助的なものなので、読み取りや挿入に失敗してもArtifactの登録は失敗させず、
+ * savepointまで戻してログに残す。
  */
 export async function recordArtifactMediaInfo(
   connection: Connection,
@@ -80,7 +80,7 @@ export async function recordArtifactMediaInfo(
     await connection.query(`RELEASE SAVEPOINT ${MEDIA_INFO_SAVEPOINT}`);
   } catch (error) {
     await connection.query(`ROLLBACK TO SAVEPOINT ${MEDIA_INFO_SAVEPOINT}`);
-    // Storage locations and SQL details are not logged; the Artifact id identifies the file.
+    // 保存場所とSQLの詳細はログに出さない。ファイルはArtifactのidで特定できる。
     console.error(
       JSON.stringify({
         event: 'artifact_media_info_failed',
@@ -113,7 +113,7 @@ export class ArtifactMediaInfoService {
     return info;
   }
 
-  /** Artifacts without media info, or in another Project, are left out instead of failing. */
+  /** メディア情報の無いArtifactや別のProjectのArtifactは、失敗にせず結果から外す。 */
   async list(
     principal: Principal,
     target: { projectId: string; artifactIds: string[] },

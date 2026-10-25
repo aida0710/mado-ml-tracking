@@ -3,7 +3,7 @@ import type { ExecutionRuntime } from './executionRuntime.js';
 
 export type ExecutionMode = 'run' | 'test';
 
-/** Immutable instructions captured at Run creation, including repository edits. */
+/** Runの作成時に記録した、変更できない実行の指示。リポジトリへの編集も含む。 */
 export interface ExecutionSnapshot {
   codeVersionId: string;
   version: string;
@@ -15,7 +15,7 @@ export interface ExecutionSnapshot {
   environment: Record<string, string>;
 }
 
-/** Editable launch defaults; previous Runs retain their revision and fixed code. */
+/** 編集できる起動の既定値。以前のRunは、そのときのrevisionと固定したコードを持ち続ける。 */
 export interface ExperimentTask {
   id: string;
   projectId: string;
@@ -30,18 +30,18 @@ export interface ExperimentTask {
   tags: Record<string, string>;
   targetId: string | null;
   gpuIds: string[];
-  /** GPUs a site Job asks for (sites take a count; ssh/local targets take gpuIds). */
+  /** siteのJobが求めるGPUの数（siteは数を、ssh・localのコンピュータはgpuIdsを受け取る）。 */
   gpuCount: number;
-  /** Time limit a site Job asks for; null leaves it to the site's job shell. */
+  /** siteのJobが求める制限時間。nullならsiteのjob shellに任せる。 */
   walltimeSeconds: number | null;
-  /** Registration target for a successful training/finetuning Run; null means none. */
+  /** 成功した学習・ファインチューニングのRunの登録先。nullなら登録しない。 */
   outputModel?: TaskOutputModel | null;
   revision: number;
   createdAt: string;
   updatedAt: string;
 }
 
-/** Exactly one of modelId and createModel is set. */
+/** modelIdとcreateModelのどちらか一方だけが入る。 */
 export interface TaskOutputModel {
   modelId: string | null;
   createModel: { name: string; family: string } | null;
@@ -51,7 +51,7 @@ export interface TaskOutputModel {
   metadata?: JsonObject;
 }
 
-/** Result of the Task-side registration after the Run ends. */
+/** Runの終了後にTaskの側で行った登録の結果。 */
 export interface RunOutputRegistration {
   status: 'registered' | 'failed' | 'skipped';
   modelVersionId: string | null;
@@ -64,13 +64,13 @@ export interface TaskExecution {
   job: Job;
 }
 
-/** A bounded history page; full execution snapshots are read from Run details. */
+/** 件数に上限のある履歴の1ページ。実行のスナップショットの全体はRunの詳細から読む。 */
 export interface TaskRunPage {
   items: Run[];
   nextCursor: string | null;
 }
 
-/** Text files from an exact commit; skipped paths remain in the repository. */
+/** 特定のcommitのテキストファイル。省いたパスもリポジトリには残っている。 */
 export interface RepositoryFiles {
   commit: string;
   files: Record<string, string>;

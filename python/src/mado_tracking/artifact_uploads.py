@@ -1,9 +1,9 @@
-"""Upload large Artifacts through resumable upload sessions (`/projects/:p/artifact-uploads`).
+"""大きなArtifactを、再開できるアップロードセッション（`/projects/:p/artifact-uploads`）で送る。
 
-The whole file is hashed first so the session carries `expectedSha256` and every part carries
-`X-Part-SHA256`. A local state file remembers the session id; rerunning the same upload asks the
-API which parts it already holds and sends only the missing ones. The SDK is synchronous and the
-worker is asyncio, so the session protocol below is shared and only the two drivers differ.
+最初にファイル全体のハッシュを取り、セッションに`expectedSha256`を、各パートに`X-Part-SHA256`を
+付ける。ローカルの状態ファイルがセッションのIDを覚えておき、同じアップロードをやり直すと、APIに
+既に持っているパートを問い合わせて、足りないものだけを送る。SDKは同期、workerはasyncioなので、
+下のセッションの手順は共有し、2つのドライバーだけを分ける。
 """
 
 from __future__ import annotations
@@ -29,37 +29,38 @@ from .security import SecretMasker
 if TYPE_CHECKING:
     from .client import Client
 
-# Below this size one PUT is cheap to resend; above it a dropped connection wastes real time.
+# これより小さければ1回のPUTは送り直しても安く済む。大きいと、接続が切れたときにかなりの時間を失う。
 SESSION_UPLOAD_THRESHOLD_BYTES = 64 * 1024 * 1024
-# The API's default part size; larger files grow it so the part count stays within the limit.
+# APIの既定のパートの大きさ。大きいファイルでは、パート数が上限に収まるよう大きくする。
 DEFAULT_PART_SIZE_BYTES = 16 * 1024 * 1024
-# Mirrors MULTIPART_MAX_PART_COUNT in @mmt/platform (S3 allows at most 10000 parts).
+# @mmt/platformのMULTIPART_MAX_PART_COUNTに合わせる（S3のパートは最大10000個）。
 MAX_PART_COUNT = 10_000
 PART_SIZE_ALIGNMENT_BYTES = 1024 * 1024
-# Four parts in flight keep a link busy while bounding memory and server-side staging.
+# 同時に4パートを送り、回線を遊ばせずに、メモリとサーバー側の一時保存の量を抑える。
 UPLOAD_PART_CONCURRENCY = 4
-# Each read holds at most one MiB, the same memory budget as single-PUT uploads.
+# 1回の読み込みで持つのは最大1MiB。1回のPUTでのアップロードと同じメモリの目安。
 UPLOAD_CHUNK_BYTES = 1024 * 1024
-# The finalizer concatenates and rehashes the object; a 200 GiB Artifact needs tens of minutes.
+# 仕上げの処理はオブジェクトを連結してハッシュを取り直す。200GiBのArtifactでは数十分かかる。
 VERIFY_TIMEOUT_SECONDS = 2 * 60 * 60
 VERIFY_POLL_INITIAL_SECONDS = 0.5
 VERIFY_POLL_MAX_SECONDS = 5.0
 PART_SHA256_HEADER = "X-Part-SHA256"
 UPLOAD_STATE_VERSION = 1
-# A session that is still usable; aborted, expired and failed sessions start over.
+# まだ使えるセッション。中止・期限切れ・失敗のセッションでは最初からやり直す。
 REUSABLE_STATUSES = {"open", "verifying", "completed"}
-# The API answers these when the session belongs to another credential or no longer exists.
+# セッションが別の認証情報のものか、もう存在しないときに、APIがこれを返す。
 LOST_SESSION_STATUSES = {403, 404}
-# The part does not match what was hashed: the file changed after the upload started.
+# パートがハッシュを取ったときと一致しない。アップロードを始めたあとでファイルが変わった。
 CHANGED_PART_CODES = {"part_size_mismatch", "part_checksum_mismatch"}
 
 
-# One JSON request to the API with the worker's retries; the async driver's only HTTP primitive.
+# workerの再試行つきでAPIへ送る1つのJSONリクエスト。非同期のドライバーがHTTPに使う
+# 唯一の基本操作。
 SessionRequest = Callable[..., Awaitable[dict[str, Any]]]
 
 
 class UploadSessionFailed(ApiError):
-    """The API finished verification without registering the Artifact."""
+    """APIが検証を終えたが、Artifactを登録しなかった。"""
 
 
 @dataclass(frozen=True)
@@ -114,7 +115,7 @@ def choose_part_size(size: int) -> int:
 
 
 def describe_local_file(source: Path, *, part_size: int | None = None) -> LocalFile:
-    """Hash the whole file and each part in one read."""
+    """1回の読み込みで、ファイル全体と各パートのハッシュを取る。"""
     size = source.stat().st_size
     if size <= 0:
         raise ConfigurationError("An upload session requires a non-empty file")
@@ -133,7 +134,7 @@ def default_state_directory() -> Path:
 
 
 class UploadStateStore:
-    """`<sha256>.json` per file. The token is never written; only the session id and its target."""
+    """ファイルごとの`<sha256>.json`。tokenは書かず、セッションのIDとその送り先だけを書く。"""
 
     def __init__(self, directory: Path | None = None):
         self.directory = directory or default_state_directory()
@@ -202,7 +203,7 @@ def is_reusable(upload: dict[str, Any], target: UploadTarget, local: LocalFile) 
 
 
 def missing_parts(upload: dict[str, Any], local: LocalFile) -> list[int]:
-    """Parts the API does not hold with exactly this file's bytes."""
+    """このファイルとまったく同じバイト列ではAPIが持っていないパート。"""
     received = {
         part.get("partNumber")
         for part in upload.get("receivedParts", [])
@@ -216,7 +217,7 @@ def missing_parts(upload: dict[str, Any], local: LocalFile) -> list[int]:
 
 
 def completed_artifact_id(upload: dict[str, Any]) -> str | None:
-    """The registered Artifact id, None while verifying, or an error for a terminal failure."""
+    """登録されたArtifactのID。検証中ならNoneを返し、終了状態の失敗ならエラーにする。"""
     status = upload.get("status")
     if status == "completed" and isinstance(upload.get("artifactId"), str):
         return str(upload["artifactId"])
@@ -318,7 +319,7 @@ def _resume_or_create_sync(
         except ApiError as error:
             if error.status_code not in LOST_SESSION_STATUSES:
                 raise
-    # A lost create response leaves an orphan session; the API expires it with its staged parts.
+    # 作成の応答が失われると、孤立したセッションが残る。APIは一時保存したパートごと期限切れにする。
     upload = client.request("POST", paths.sessions, json=session_create_body(target, local), retryable=True)
     store.save(local, target, upload["id"])
     return upload
@@ -361,7 +362,7 @@ async def upload_file_async(
             raise ConfigurationError("API returned a non-object response")
         return payload
 
-    # Hashing a multi-gigabyte file must not stall heartbeats on the event loop.
+    # 数GBのファイルのハッシュ計算で、イベントループ上のheartbeatを止めないようにする。
     local = await asyncio.to_thread(describe_local_file, source, part_size=part_size)
     store = state_store or UploadStateStore()
     paths = UploadPaths(target.project_id)
@@ -428,7 +429,7 @@ async def _send_parts_async(
                 content_factory=lambda: local.read_part_async(part_number),
             )
 
-    # A failed part cancels the others; the state file lets the next run resume.
+    # 1つのパートが失敗すると、ほかのパートを取り消す。状態ファイルがあるので次の実行で再開できる。
     try:
         async with asyncio.TaskGroup() as group:
             for number in part_numbers:

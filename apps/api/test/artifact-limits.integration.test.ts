@@ -11,7 +11,7 @@ import { DomainError } from '../src/domain/errors.js';
 import { artifactFixture, transferUrl } from './mlflow-artifacts-fixtures.js';
 import { createHarness, testDatabaseUrl, type Harness } from './harness.js';
 
-// Small enough that a few short strings cross it, so tests stay fast.
+// 短い文字列をいくつか送れば超える小ささにして、テストを速く保つ。
 const TEST_MAX_BYTES = 16;
 
 async function drain(source: Readable, limit: ArtifactSizeLimit): Promise<Buffer> {
@@ -106,7 +106,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactのサイズ上限（独立PostgreSQL
   });
   beforeEach(async () => {
     await harness.reset();
-    // reset() clears only the database; earlier uploads would otherwise look like leftovers.
+    // reset()はデータベースしか消さない。ここで消さないと、前のアップロードが消し残しに見える。
     for (const entry of await readdir(harness.artifactDirectory))
       await rm(path.join(harness.artifactDirectory, entry), { recursive: true, force: true });
     storedWrites = 0;

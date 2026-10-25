@@ -1,4 +1,4 @@
-"""Load a registered weight and record its evaluation through the official SDK."""
+"""登録した重みを読み込み、公式SDKでその評価を記録する。"""
 
 import json
 import os

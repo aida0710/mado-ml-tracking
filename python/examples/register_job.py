@@ -1,4 +1,4 @@
-"""Register the bundled CPU scripts and submit a real training job to a chosen target."""
+"""同梱のCPU用スクリプトを登録し、選んだコンピュータに実際の学習のJobを投入する。"""
 
 from __future__ import annotations
 

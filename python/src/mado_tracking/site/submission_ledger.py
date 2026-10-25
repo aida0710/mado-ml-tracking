@@ -1,12 +1,12 @@
-"""Which account queued which Job: the launcher's own record of what it submitted.
+"""どのアカウントがどのJobをキューに入れたか。launcherが投入したものを自分で記録する。
 
     <state dir>/submissions/<jobId>.json
         {"targetId", "accountName", "keyId", "schedulerJobId", "submittedAt"}
 
-A cancellation from the API names the account its cancel command runs as. When the record names
-another one (the person changed their account on the Web since), the scheduler may refuse the
-cancel, and the launcher says why. Entries outlive any scheduler queue (30 days at most,
-queueTimeoutSeconds' limit) and are pruned after.
+APIからの取り消しは、取消コマンドを動かすアカウントを指定する。記録にあるアカウントがそれと違うとき
+（その後に本人が画面でアカウントを変えたとき）は、スケジューラが取り消しを拒むことがあり、launcherは
+その理由を示す。エントリはどのスケジューラのキューよりも長く残し（最大30日。queueTimeoutSecondsの
+上限）、その後に消す。
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from ..worker.contracts import require_uuid
 from ..worker.host_state import read_json, write_json
 from .site_settings import SubmissionAccount
 
-# A Job waits in a scheduler queue for at most MAX queueTimeoutSeconds (30 days).
+# Jobがスケジューラのキューで待つのは、最大でもqueueTimeoutSecondsの上限（30日）まで。
 LEDGER_RETENTION_SECONDS = 31 * 24 * 3600
 
 
@@ -52,7 +52,7 @@ class SubmissionLedger:
             )
 
     def account_name_for(self, job_id: str) -> str | None:
-        """The account the Job was queued as; None when this launcher kept no record of it."""
+        """Jobをキューに入れたアカウント。このlauncherに記録が無ければNone。"""
         try:
             account_name = read_json(self._path(job_id)).get("accountName")
         except (OSError, ValueError):

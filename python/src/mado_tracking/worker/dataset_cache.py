@@ -1,16 +1,16 @@
-"""Target-side cache of input DatasetVersion files, shared by every Job of one work directory.
+"""入力のDatasetVersionのファイルのキャッシュ（コンピュータ側）。作業ディレクトリの全Jobで共有する。
 
-Layout under <workDirectory>/.mmt-cache/datasets:
+<workDirectory>/.mmt-cache/datasetsの下の構成：
 
-    <key>.lock            flock held while an entry is checked, filled, or deleted
-    .cache.lock           flock held while the cache's total size is computed and reduced
-    <key>/data/           the files, read-only once complete (what Jobs read)
-    <key>/files.json      the verified paths, sizes and sha256 values
-    <key>/complete.json   completion marker; an entry without it is an interrupted fill
-    <key>/last-used       mtime orders least-recently-used deletion
-    <key>/users/<jobId>   pin: the Job workspace that reads the entry
+    <key>.lock            flock。エントリを確かめる・埋める・消す間に持つ
+    .cache.lock           flock。キャッシュの合計サイズを計算して減らす間に持つ
+    <key>/data/           ファイル。そろったら読み取り専用になる（Jobが読むもの）
+    <key>/files.json      sha256の値を含む、確かめたパスとサイズ
+    <key>/complete.json   fillの完了の目印。これが無いエントリは、fillが途中で止まったもの
+    <key>/last-used       mtimeで、使われていない期間が長いものから消す順を決める
+    <key>/users/<jobId>   pin。エントリを読むJobのworkspace
 
-Runs inside the target runner bundle, so it uses the standard library only.
+コンピュータ用のrunnerのバンドルの中で動くので、標準ライブラリだけを使う。
 """
 
 from __future__ import annotations
@@ -33,21 +33,21 @@ from .host_state import read_json, write_json
 CACHE_DIRECTORY = Path(".mmt-cache") / "datasets"
 DATA_DIRECTORY = "data"
 COMPLETE_MARKER = "complete.json"
-# The verified file list, kept apart so size accounting never reads a 100k-entry document.
+# 確かめたファイルの一覧。サイズの集計で10万件の文書を読まずに済むよう、別のファイルにしておく。
 FILES_DOCUMENT = "files.json"
 LAST_USED_FILE = "last-used"
 USERS_DIRECTORY = "users"
 CACHE_LOCK_FILE = ".cache.lock"
 KEY_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]{0,99}$")
 TERMINAL_JOB_STATUSES = {"finished", "failed", "canceled"}
-# Staging runs right before launch, so a workspace that stayed unstarted this long was abandoned
-# (for example the worker failed the Job on a later input and the release did not arrive).
+# 配置は起動の直前に行うので、これだけの間始まらなかったworkspaceは放置されたもの（たとえば、
+# 後の入力でworkerがJobを失敗にし、releaseが届かなかったとき）。
 UNSTARTED_PIN_MAX_AGE_SECONDS = 24 * 3600
 HASH_CHUNK_BYTES = 1024 * 1024
 
 
 class DatasetCacheError(ValueError):
-    """The files do not match what the DatasetVersion promises, or the cache cannot hold them."""
+    """ファイルがDatasetVersionの示す内容と合わない、またはキャッシュに収まらない。"""
 
 
 def file_checksum(path: Path) -> tuple[str, int]:
@@ -60,7 +60,7 @@ def file_checksum(path: Path) -> tuple[str, int]:
 
 
 def verify_files(data_directory: Path, expected: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Every expected file and nothing else. A None sha256 is computed and returned instead."""
+    """期待するファイルがすべてあり、ほかには無いこと。sha256がNoneなら、代わりに計算して返す。"""
     found = {
         path.relative_to(data_directory).as_posix(): path
         for path in data_directory.rglob("*")
@@ -83,7 +83,7 @@ def verify_files(data_directory: Path, expected: list[dict[str, Any]]) -> list[d
 
 
 def _make_read_only(directory: Path) -> None:
-    # Host-python Jobs read through a symlink rather than a read-only mount.
+    # ホストのpythonで動くJobは、読み取り専用のマウントではなくシンボリックリンクを通して読む。
     for path in directory.rglob("*"):
         path.chmod(0o500 if path.is_dir() else 0o400)
     directory.chmod(0o500)
@@ -104,7 +104,7 @@ class DatasetCache:
 
     @classmethod
     def for_workspace(cls, workspace: Path) -> DatasetCache:
-        # A Job workspace is <workDirectory>/<jobId>, so the cache sits beside the workspaces.
+        # Jobのworkspaceは<workDirectory>/<jobId>なので、キャッシュはworkspaceの隣に置く。
         return cls(workspace.parent / CACHE_DIRECTORY)
 
     def entry(self, key: str) -> Path:
@@ -139,14 +139,14 @@ class DatasetCache:
         workspace: Path,
         fill: Callable[[Path], list[dict[str, Any]]] | None,
     ) -> dict[str, Any]:
-        """Return the complete entry, filling it with `fill` when it is missing.
+        """完了したエントリを返す。無ければ`fill`で埋める。
 
-        `files` is the list the filled data must match; when it is None (a reference whose
-        contents are only known after the download) the list `fill` returns is used.
+        `files`は、埋めたデータが一致すべき一覧。Noneのとき（ダウンロードするまで中身が
+        分からない参照）は、`fill`が返す一覧を使う。
 
-        Holding the key's lock for the whole fill makes a second Job with the same key wait and
-        then find the completed entry, so the files are fetched once. Without `fill` a missing
-        entry is reported as such (the worker relays the files in a second command).
+        fillの間ずっとキーのロックを持つので、同じキーの2つ目のJobは待ってから、完了した
+        エントリを見つける。そのためファイルの取得は1回で済む。`fill`が無ければ、エントリが
+        無いことをそのまま報告する（workerは2つ目のコマンドでファイルを中継する）。
         """
         if total_size is not None and total_size > max_bytes:
             raise DatasetCacheError("The DatasetVersion is larger than the target's dataset cache limit")
@@ -157,7 +157,7 @@ class DatasetCache:
                 return {"status": "cached", "path": str(entry / DATA_DIRECTORY)}
             if fill is None:
                 return {"status": "missing"}
-            # No marker means an earlier fill was interrupted; its files are not trusted.
+            # 目印が無いのは、前のfillが途中で止まったということ。そのファイルは信用しない。
             _remove_tree(entry)
             over_limit = self._evict(max_bytes=max_bytes, needed=total_size or 0, keep=key)
             (entry / DATA_DIRECTORY).mkdir(mode=0o700, parents=True)
@@ -172,7 +172,7 @@ class DatasetCache:
             size = sum(file["size"] for file in verified)
             _make_read_only(entry / DATA_DIRECTORY)
             write_json(entry / FILES_DOCUMENT, {"files": verified})
-            # Written last: its presence is what makes the entry usable.
+            # 最後に書く。これがあることで、エントリが使えるようになる。
             write_json(
                 entry / COMPLETE_MARKER,
                 {"key": key, "totalSize": size, "fileCount": len(verified), "completedAt": time.time()},
@@ -181,7 +181,7 @@ class DatasetCache:
         return {"status": "fetched", "path": str(entry / DATA_DIRECTORY), "overLimit": over_limit}
 
     def release(self, workspace: Path) -> None:
-        """Drop this Job's pins (it failed before launch and will not read its inputs)."""
+        """このJobのpinを外す（起動前に失敗したので、入力を読まない）。"""
         if not self.root.is_dir():
             return
         for pin in self.root.glob(f"*/{USERS_DIRECTORY}/{workspace.name}"):
@@ -201,10 +201,10 @@ class DatasetCache:
         return any(_pin_is_live(pin) for pin in users.iterdir())
 
     def _evict(self, *, max_bytes: int, needed: int, keep: str) -> bool:
-        """Delete least-recently-used unpinned entries until `needed` more bytes fit.
+        """pinの無いエントリを使われていない期間が長い順に、`needed`バイトがさらに入るまで消す。
 
-        Returns True when the entries still in use keep the cache above the limit; the fill
-        then goes ahead, because failing a Job for other Jobs' inputs would only move the wait.
+        使用中のエントリのせいでキャッシュが上限を超えたままならTrueを返す。その場合もfillは
+        進める。ほかのJobの入力のためにJobを失敗させても、待ちが移るだけだから。
         """
         with self._lock(CACHE_LOCK_FILE):
             complete: list[tuple[float, int, str]] = []
@@ -213,7 +213,7 @@ class DatasetCache:
                     continue
                 marker = entry / COMPLETE_MARKER
                 if not marker.is_file():
-                    # An interrupted fill whose lock nobody holds is garbage.
+                    # 誰もロックを持っていない、途中で止まったfillはゴミ。
                     with self._lock(f"{entry.name}.lock", blocking=False) as acquired:
                         if acquired and not marker.is_file():
                             _remove_tree(entry)
@@ -234,7 +234,7 @@ class DatasetCache:
 
 
 def _pin_is_live(pin: Path) -> bool:
-    """A pin holds while its Job may still read: not yet terminal, and not long abandoned."""
+    """Jobがまだ読むかもしれない間はpinを保つ。終了状態でなく、長く放置されてもいないこと。"""
     try:
         workspace = Path(pin.read_text())
         state_path = workspace / "state.json"
@@ -242,5 +242,5 @@ def _pin_is_live(pin: Path) -> bool:
             return json.loads(state_path.read_text()).get("status") not in TERMINAL_JOB_STATUSES
         return workspace.is_dir() and time.time() - pin.stat().st_mtime < UNSTARTED_PIN_MAX_AGE_SECONDS
     except (OSError, ValueError):
-        # An unreadable pin is kept: deleting files a Job reads is worse than a full cache.
+        # 読めないpinは残す。Jobが読んでいるファイルを消すほうが、キャッシュが一杯になるより悪い。
         return True

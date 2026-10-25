@@ -87,7 +87,7 @@ const SECURITY_SCHEMES = {
   },
 };
 
-// Descriptions of the path parameters used by the catalog; every `:name` must be listed here.
+// カタログで使うパスパラメータの説明。`:name`はすべてここに挙げなければならない。
 const PATH_PARAMETERS: Record<string, { description: string; schema: JsonSchema }> = {
   p: { description: 'Project ID', schema: { type: 'string', format: 'uuid' } },
   projectId: { description: 'Project ID', schema: { type: 'string', format: 'uuid' } },
@@ -136,7 +136,7 @@ const SUCCESS_DESCRIPTIONS: Record<number, string> = {
   304: '変更なし（If-None-Match）',
 };
 
-// Error responses carry the codes in x-mmt-error-codes; the description names the status only.
+// エラーの応答はx-mmt-error-codesにコードを持つ。descriptionはステータスだけを表す。
 const ERROR_DESCRIPTIONS: Record<number, string> = {
   400: '要求を読めない',
   401: '認証されていない',
@@ -160,12 +160,13 @@ export interface OpenApiDocument {
   components: { schemas: Record<string, JsonSchema>; securitySchemes: typeof SECURITY_SCHEMES };
 }
 
-/** Builds the OpenAPI 3.1 document of the native API from the route catalog. */
+/** 経路のカタログから、ネイティブAPIのOpenAPI 3.1のドキュメントを作る。 */
 export function buildOpenApiDocument(
   routes: readonly NativeRoute[] = NATIVE_ROUTES,
 ): OpenApiDocument {
   const components = new JsonSchemaComponents();
-  // Converted first so recursive JSON values in request schemas reuse the JsonValue component.
+  // 最初に変換しておき、リクエストのスキーマ中の再帰的なJSONの値がJsonValueのcomponentを
+  // 使い回すようにする。
   components.convert(jsonValueSchema, 'output');
   // エラーの応答はすべて ApiErrorBody を参照する。
   components.convert(apiErrorSchema, 'output');
@@ -182,7 +183,7 @@ export function buildOpenApiDocument(
     openapi: OPENAPI_VERSION,
     info: {
       title: 'mado ML Tracking native API',
-      // The document describes the API of this release, so it carries the release version.
+      // ドキュメントはこのリリースのAPIを表すので、リリースのバージョンを持つ。
       version: APPLICATION_VERSION,
       description: DESCRIPTION,
     },
@@ -241,7 +242,7 @@ function security(route: NativeRoute): Record<string, string[]>[] {
   if (access.kind === 'public') return [];
   if (access.kind === 'session' || ('sessionOnly' in access && access.sessionOnly))
     return [{ sessionCookie: [] }];
-  // A Job token carries fixed scopes (read, runs:write, artifacts:write, registry:write).
+  // Job tokenは固定のscopeを持つ（read、runs:write、artifacts:write、registry:write）。
   if (access.kind === 'jobToken') return [{ bearerToken: [] }];
   if (access.kind === 'apiToken') return [{ bearerToken: [access.scope] }];
   if (access.kind === 'launcher') return [{ bearerToken: ['launcher:execute'] }];
@@ -350,7 +351,7 @@ function errorDescription(status: number): string {
   return description;
 }
 
-/** The text of docs/openapi.json; the coverage test compares the committed file with it. */
+/** docs/openapi.jsonの本文。coverageのテストは、コミットしたファイルをこれと比べる。 */
 export function formatOpenApiDocument(document: OpenApiDocument): string {
   return `${JSON.stringify(document, null, 2)}\n`;
 }

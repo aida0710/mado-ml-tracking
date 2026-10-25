@@ -76,8 +76,8 @@ export async function appendTrackingMetrics(
   );
 }
 
-// Pages longer than this are cut and continued with next_page_token, as MLflow sets no upper
-// bound; the SDK's get_metric_history asks for 25000 points per page.
+// MLflowには上限が無いが、これより長いページは切ってnext_page_tokenで続ける。SDKの
+// get_metric_historyは1ページに25000点を求める。
 const MAX_METRIC_HISTORY_PAGE_SIZE = 50000;
 
 export async function metricHistory(
@@ -97,7 +97,7 @@ export async function metricHistory(
     key: request.metricKey,
   };
   const offset = pageOffset(request.pageToken, query);
-  // Without max_results MLflow returns the whole history in one response.
+  // max_resultsが無いと、MLflowは履歴全体を1回の応答で返す。
   const pageSize =
     request.maxResults === undefined
       ? undefined

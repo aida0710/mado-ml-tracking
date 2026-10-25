@@ -1,4 +1,4 @@
-"""Check a worker host's configuration without starting the worker or printing secrets."""
+"""workerを起動せず、秘密情報も表示せずに、workerホストの設定を確かめる。"""
 
 from __future__ import annotations
 
@@ -12,14 +12,15 @@ import httpx
 
 from ..settings import ApiSettings
 
-# The worker claims Jobs and saves code snapshots and outputs as Run Artifacts (docs/worker.md).
+# workerはJobを取得し、コードのスナップショットと出力を
+# RunのArtifactとして保存する（docs/worker.md）。
 REQUIRED_WORKER_SCOPES = ("read", "worker:execute", "artifacts:write")
-# Diagnostics should answer quickly; a slow API is itself worth reporting.
+# 診断はすぐに答えるべき。APIが遅いこと自体が報告に値する。
 DOCTOR_TIMEOUT_SECONDS = 10.0
-# Secrets (token file, journal, ssh private keys) must not be reachable by group or others;
-# ssh itself refuses such private keys.
+# 秘密情報（tokenファイル、journal、sshの秘密鍵）は、グループやほかの
+# ユーザーからアクセスできてはならない。sshもそのような秘密鍵は使わない。
 GROUP_OR_OTHER_ACCESS_BITS = 0o077
-# Files that decide which host or key is trusted must not be writable by group or others.
+# どのホストや鍵を信頼するかを決めるファイルは、グループやほかのユーザーが書き込めてはならない。
 GROUP_OR_OTHER_WRITE_BITS = 0o022
 
 
@@ -72,7 +73,7 @@ def check_api(api: ApiSettings, transport: httpx.BaseTransport | None = None) ->
         try:
             health = client.get(api.health_url)
         except httpx.HTTPError as error:
-            # The exception names the URL only; the token is in a header and is never formatted.
+            # この例外が示すのはURLだけ。tokenはヘッダーにあり、メッセージに入ることは無い。
             return [DoctorCheck("api", CheckLevel.ERROR, f"Cannot reach {api.url}: {type(error).__name__}")]
         if not health.is_success:
             return [DoctorCheck("api", CheckLevel.ERROR, f"{api.health_url} returned {health.status_code}")]
@@ -133,7 +134,7 @@ def check_known_hosts(path: Path) -> DoctorCheck:
         return DoctorCheck(name, CheckLevel.ERROR, f"{path} does not exist; the worker rejects unknown hosts")
     mode = file_mode(path)
     if mode & GROUP_OR_OTHER_WRITE_BITS:
-        # Anyone who can write it can make the worker trust a different host key.
+        # これに書き込める人なら、workerに別のホスト鍵を信頼させられる。
         return DoctorCheck(name, CheckLevel.ERROR, f"{path} is mode {mode:o}; run chmod 644 {path}")
     return DoctorCheck(name, CheckLevel.OK, f"{path} is mode {mode:o}")
 
@@ -147,7 +148,7 @@ def default_private_keys(ssh_directory: Path) -> list[Path]:
 def check_ssh_files(
     ssh_directory: Path, key_paths: Sequence[Path], known_hosts_paths: Sequence[Path]
 ) -> list[DoctorCheck]:
-    """Check the files compute targets name in sshKeyPath / knownHostsPath (defaults: ~/.ssh)."""
+    """コンピュータのsshKeyPath・knownHostsPathが指すファイルを確かめる（既定は~/.ssh）。"""
     checks = [check_ssh_directory(ssh_directory)]
     keys = list(key_paths) or default_private_keys(ssh_directory)
     checks += [check_private_key(path) for path in keys]

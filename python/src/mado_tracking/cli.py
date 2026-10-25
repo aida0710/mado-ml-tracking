@@ -1,7 +1,7 @@
-"""`mado-tracking` command line.
+"""`mado-tracking`のコマンドライン。
 
-`sync` sends offline Runs to the API, `submit` submits Jobs waiting for a manual site, `site-run`
-is the runner a site's job shell starts, and `code register` registers a job template's image.
+`sync`はオフラインのRunをAPIへ送り、`submit`は手動のsiteを待つJobを投入する。`site-run`は
+siteのjob shellが起動するrunner、`code register`はjob templateのイメージを登録する。
 """
 
 from __future__ import annotations

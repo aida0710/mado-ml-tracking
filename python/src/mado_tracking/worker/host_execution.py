@@ -1,4 +1,4 @@
-"""Execute each setup/entrypoint command in its own cancelable process group."""
+"""setup・entrypointのコマンドを、それぞれ取り消せる専用のプロセスグループで実行する。"""
 
 from __future__ import annotations
 
@@ -17,7 +17,8 @@ from typing import Any, BinaryIO, cast
 from ..security import SecretMasker, StreamMasker
 from .host_state import is_owned_process_group, process_identity, write_json
 
-# Bounded reads and selector wakeups detect entrypoint exit/cancel independently of pipe EOF.
+# 読み込みの量を区切り、selectorを定期的に起こして、
+# パイプのEOFとは関係なくentrypointの終了や取り消しに気づく。
 READ_CHUNK_BYTES = 64 * 1024
 CANCEL_POLL_SECONDS = 0.1
 
@@ -89,8 +90,8 @@ class CommandExecution:
         return exit_code, captured
 
     def _terminate_descendants(self, process_group: int, *, terminate_started: float | None) -> None:
-        # Closed pipes do not prove that redirected background children have stopped.
-        # Reuse the first SIGTERM deadline so cleanup never adds a second grace period.
+        # パイプが閉じても、リダイレクトされたバックグラウンドの子プロセスが止まったとは限らない。
+        # 最初のSIGTERMの期限を使い回し、後片付けで猶予を2回取らないようにする。
         if terminate_started is None:
             terminate_started = time.monotonic()
             _signal_process_group(process_group, signal.SIGTERM)
@@ -98,13 +99,13 @@ class CommandExecution:
         while _has_live_process_group_members(process_group):
             if time.monotonic() >= deadline:
                 _signal_process_group(process_group, signal.SIGKILL)
-            # Signal delivery is asynchronous; do not release the job while a child is still alive.
+            # シグナルの配送は非同期。子プロセスが生きている間はJobを手放さない。
             time.sleep(CANCEL_POLL_SECONDS)
 
     def checked(self, argv: list[str], *, cwd: Path | None = None) -> str:
         exit_code, captured = self.run(argv, cwd=cwd, capture=True)
         if exit_code:
-            # Command arguments can carry secrets; the command itself is intentionally omitted.
+            # コマンドの引数には秘密情報が含まれ得るので、意図してコマンド自体は書かない。
             raise RuntimeError(f"Source/setup command exited with status {exit_code}")
         return captured
 
@@ -132,7 +133,8 @@ class CommandExecution:
             while selector.get_map() or process.poll() is None:
                 should_stop = stop_requested() if stop_requested is not None else self.is_canceled()
                 if terminate_started is None and (should_stop or process.poll() is not None):
-                    # Children can keep output pipes open after the leader exits; do not wait for EOF.
+                    # リーダーのプロセスが終了しても、子プロセスが出力の
+                    # パイプを開いたままにすることがある。EOFは待たない。
                     terminate_started = time.monotonic()
                     _signal_process_group(process.pid, signal.SIGTERM)
                 if (
@@ -148,7 +150,8 @@ class CommandExecution:
                     if text:
                         streams[stream].write(text.encode("utf-8"))
                         if capture and stream is process.stdout:
-                            # Only rev-parse needs captured stdout; bound setup output in memory.
+                            # 標準出力を取っておく必要があるのはrev-parseだけ。
+                            # setupの出力はメモリに溜める量に上限を設ける。
                             capture_size += len(text)
                             if capture_size < READ_CHUNK_BYTES:
                                 captured_parts.append(text)
@@ -173,7 +176,8 @@ class CommandExecution:
                 self.checked([str(python), "-m", "ensurepip", "--upgrade"])
                 pip_prefix = [str(python), "-m", "pip"]
             else:
-                # --python can install into a venv created without pip (e.g. Debian's minimal Python).
+                # --pythonを使うと、pip無しで作ったvenv（例: Debianの
+                # 最小構成のPython）にもインストールできる。
                 pip_prefix = [sys.executable, "-m", "pip", "--python", str(python)]
             if not all(
                 isinstance(value, str)
@@ -210,13 +214,14 @@ def _has_live_process_group_members(process_group: int) -> bool:
         return False
     except PermissionError:
         return True
-    # Orphan zombies can keep killpg(0) true; they no longer execute or own GPU resources.
+    # 親のいないゾンビがkillpg(0)を成功させ続けることがある。
+    # ゾンビはもう実行しておらず、GPUの資源も持たない。
     for process_directory in Path("/proc").iterdir():
         if not process_directory.name.isdigit():
             continue
         try:
             process_stat = (process_directory / "stat").read_text()
-            # comm may contain spaces or ')'; state and pgrp follow its final ')'.
+            # commには空白や')'が入り得る。stateとpgrpは最後の')'のあとに続く。
             process_fields = process_stat[process_stat.rfind(")") + 2 :].split()
             if int(process_fields[2]) == process_group and process_fields[0] not in {"Z", "X"}:
                 return True

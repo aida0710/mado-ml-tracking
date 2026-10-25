@@ -5,7 +5,7 @@ import { uuidSchema } from '../domain/validation.js';
 import { parse, principal, uuidParam, type ApiEnvironment } from '../http/request.js';
 import type { ArtifactMediaInfoService } from '../services/artifactMediaInfoService.js';
 
-// artifactIds is one comma-separated value so a sample table fits its whole page in one URL.
+// artifactIdsはカンマ区切りの1つの値で、サンプルの表の1ページ分が1つのURLに収まる。
 export const artifactMediaInfoQuerySchema = z.object({
   artifactIds: z
     .string()

@@ -1,7 +1,7 @@
-"""Read the upstream Run's Artifacts from a Job's code (for example inference WAVs in evaluation).
+"""Jobのコードから上流のRunのArtifactを読む（評価で推論のWAVを読むなど）。
 
-The worker sets MMT_UPSTREAM_RUN_ID when the Run has a parent Run. Listing and download use the
-Job token in MMT_API_TOKEN, which may read any Run in the same Project.
+Runに親のRunがあるとき、workerがMMT_UPSTREAM_RUN_IDを設定する。一覧とダウンロードには
+MMT_API_TOKENのJob tokenを使う。このtokenは同じProjectのどのRunも読める。
 """
 
 from __future__ import annotations
@@ -18,19 +18,19 @@ from .errors import ConfigurationError
 from .pagination import iterate_listed_items
 
 UPSTREAM_RUN_ID_VARIABLE = "MMT_UPSTREAM_RUN_ID"
-# Matches the API's maximum page size so a large Run is listed in few requests.
+# APIのページの最大の大きさに合わせ、大きなRunも少ないリクエストで一覧できるようにする。
 ARTIFACT_PAGE_LIMIT = 500
 
 
 def upstream_run_id() -> str | None:
-    """The upstream Run ID from the worker, or None when this Job has no upstream."""
+    """workerから渡された上流のRunのID。このJobに上流が無ければNone。"""
     return os.environ.get(UPSTREAM_RUN_ID_VARIABLE) or None
 
 
 def list_upstream_artifacts(
     prefix: str | None = None, *, client: Client | None = None
 ) -> list[dict[str, Any]]:
-    """Latest Artifact per path of the upstream Run, optionally under a path prefix."""
+    """上流のRunのパスごとの最新のArtifact。パスの前置きで絞ることもできる。"""
     run_id = upstream_run_id()
     if run_id is None:
         return []
@@ -41,7 +41,7 @@ def list_upstream_artifacts(
 def download_upstream_artifacts(
     destination: str | os.PathLike[str], prefix: str | None = None, *, client: Client | None = None
 ) -> list[Path]:
-    """Save the upstream Run's Artifacts under destination, keeping their relative paths."""
+    """上流のRunのArtifactを、相対パスを保ったままdestinationの下に保存する。"""
     run_id = upstream_run_id()
     if run_id is None:
         return []
@@ -49,13 +49,13 @@ def download_upstream_artifacts(
     project_id = _project_id()
     with _client_scope(client) as api:
         artifacts = _list_latest_artifacts(api, project_id, run_id, prefix)
-        # Every path is checked before the first write so a hostile listing writes nothing.
+        # 最初に書き込む前にすべてのパスを確かめ、悪意のある一覧では何も書かないようにする。
         targets = [
             (artifact, root.joinpath(*_safe_artifact_parts(artifact["path"]))) for artifact in artifacts
         ]
         saved = []
         for artifact, target in targets:
-            # A dropped connection resumes with Range, and the file appears only once it is complete.
+            # 接続が切れたらRangeで再開し、ファイルはそろってから初めて現れる。
             with atomic_output(target) as output:
                 api.download_artifact_to(project_id, artifact["id"], output)
             saved.append(target)
@@ -95,7 +95,7 @@ def _list_latest_artifacts(
 
 
 def _safe_artifact_parts(path: str) -> list[str]:
-    # A relative path of plain segments cannot leave the destination directory.
+    # 普通の要素だけからなる相対パスは、出力先のディレクトリの外に出られない。
     parts = path.split("/")
     if any(part in {"", ".", ".."} or "\\" in part or "\x00" in part for part in parts):
         raise ConfigurationError(f"Unsafe upstream Artifact path: {path!r}")

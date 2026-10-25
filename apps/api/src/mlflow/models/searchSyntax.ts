@@ -15,28 +15,28 @@ export class SqlParameters {
 export interface SearchField {
   expression: string;
   numeric: boolean;
-  // MLflow accepts IN / NOT IN only for string attributes of model version search.
+  // MLflowは、モデルバージョン検索の文字列の属性に限ってIN / NOT INを受け付ける。
   acceptsInList?: boolean;
-  // MLflow converts a quoted version_number with int(), so version_number = '3' also matches.
+  // MLflowは引用符付きのversion_numberをint()で変換するので、version_number = '3'でも一致する。
   acceptsQuotedInteger?: boolean;
   compileComparison?: (comparison: { operator: string; valueParameter: string }) => string;
 }
 type ResolveField = (field: string) => SearchField;
-// PostgreSQL epoch values use seconds; protobuf and JavaScript dates use whole milliseconds.
+// PostgreSQLのepochの値は秒単位で、protobufとJavaScriptの日時は整数のミリ秒単位。
 const MILLISECONDS_PER_SECOND = 1000;
 
 export function timestampInMillisecondsSql(column: string): string {
   return `(floor(extract(epoch FROM ${column})*${MILLISECONDS_PER_SECOND}))::bigint`;
 }
 
-// Tokenize one clause at a time so AND inside a quoted tag value remains a literal.
+// 句を1つずつトークンに分け、引用符で囲んだタグの値の中のANDをリテラルのまま扱う。
 const FIELD_AND_OPERATOR_PATTERN =
   /\s*([A-Za-z_][A-Za-z_0-9]*(?:\.(?:`[^`]+`|"[^"]+"|'[^']+'|[A-Za-z_0-9./-]+))?)\s*(!=|>=|<=|=|>|<|ILIKE\b|LIKE\b|NOT\s+IN\b|IN\b)\s*/iy;
 const LITERAL_PATTERN =
   /('(?:[^']|'')*'|"(?:[^"]|"")*"|[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)/y;
 const LIST_START_PATTERN = /\(\s*/y;
 const LIST_ITEM_PATTERN = /('(?:[^']|'')*'|"(?:[^"]|"")*")\s*(,\s*|\))/y;
-// An optionally signed run of digits, the quoted form Python's int() reads.
+// 符号を付けてもよい数字の並び。Pythonのint()が読める引用符付きの形。
 const QUOTED_INTEGER_PATTERN = /^[+-]?\d+$/;
 
 interface CompiledComparison {
@@ -107,7 +107,7 @@ function compileValueComparison(input: ComparisonInput & { operator: string }): 
   ) {
     invalidParameter('the type of the search field does not match the comparison operator');
   }
-  // Preserve integer precision; PostgreSQL infers the numeric type from the compared field.
+  // 整数の精度を保つ。数値の型はPostgreSQLが比べる相手のフィールドから推論する。
   const valueParameter = input.parameters.add(value);
   return {
     sql: field.compileComparison

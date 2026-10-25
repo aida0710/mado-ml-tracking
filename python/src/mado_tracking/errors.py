@@ -1,8 +1,8 @@
-"""Errors carry sanitized diagnostics, never HTTP request credentials."""
+"""エラーは無害化した診断情報を持ち、HTTPリクエストの認証情報は決して含めない。"""
 
 
 class ConfigurationError(ValueError):
-    """Required SDK / worker configuration is missing or unsafe."""
+    """SDK・workerに必要な設定が無いか、安全でない。"""
 
 
 class ApiError(RuntimeError):
@@ -13,8 +13,8 @@ class ApiError(RuntimeError):
 
 
 class LeaseRejected(ApiError):
-    """The API refused ownership; starting or mutating a job is forbidden."""
+    """APIが所有を拒んだ。Jobを始めることも変更することも許されない。"""
 
 
 class TransportError(RuntimeError):
-    """A transport operation failed; an existing remote process may still be alive."""
+    """transportの操作が失敗した。既存のリモートのプロセスはまだ動いているかもしれない。"""

@@ -127,7 +127,7 @@ describe('通知の送信部品', () => {
 
   it('deadlineを超えた送信はnotification_timeoutで打ち切る', async () => {
     const url = await listen(() => {
-      // Never responds.
+      // 応答しない。
     });
     const senders = createNotificationSenders({ deadlineMs: 100 });
     const started = Date.now();

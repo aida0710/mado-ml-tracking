@@ -1,12 +1,12 @@
-"""Logins that failed lately, so that the launcher does not keep failing them; this process only.
+"""最近失敗したログイン。launcherが同じ失敗を繰り返さないように覚える。このプロセスの中だけ。
 
-A site may lock an account or an address after repeated failed logins. Until a key is in the
-account's authorized_keys (just after a launcher or a key changed, say), every submission and
-every cancel would otherwise log in and fail again, up to hundreds of times a poll. A login is one
-SshEndpoint (site, account, key). The launcher stops trying a failed login for the rest of the
-poll's submissions, and for a while for cancels; a login that works again (a submission, a cancel
-or a connection check) is forgotten. The cancels a failed login holds back are told why once,
-not at every poll, until the login works again.
+siteは、ログインの失敗が続くとアカウントやアドレスをロックすることがある。鍵がアカウントの
+authorized_keysに入るまで（例えばlauncherや鍵を変えた直後）、放っておくと投入と取り消しの
+たびにログインして失敗し直し、1回のpollで数百回にもなる。ログインは1つのSshEndpoint
+（site、アカウント、鍵）。launcherは失敗したログインを、そのpollの残りの投入では試さず、
+取り消しではしばらく試さない。また動いたログイン（投入、取り消し、接続確認）の失敗は忘れる。
+失敗したログインが止めている取り消しには、そのログインがまた動くまで、pollのたびではなく
+1回だけ理由を知らせる。
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from .transport import SshEndpoint
 
 @dataclass(frozen=True)
 class LoginFailure:
-    # What ssh said, masked: it becomes the error of the submissions not tried after it.
+    # sshが出したメッセージを伏せたもの。そのあと試さなかった投入のエラーになる。
     reason: str
     at: float
     poll: int
@@ -30,14 +30,14 @@ class LoginFailures:
         self.clock = clock
         self.poll = 0
         self.failures: dict[SshEndpoint, LoginFailure] = {}
-        # Failed logins whose waiting cancels have been told why, since the login last worked.
+        # 最後にログインが通ってから、待っている取り消しに理由を知らせ済みの、失敗したログイン。
         self.cancels_told: set[SshEndpoint] = set()
 
     def start_poll(self) -> None:
         self.poll += 1
 
     def record(self, endpoint: SshEndpoint, reason: str, *, cancels_told: bool = False) -> None:
-        """`cancels_told`: the caller has already said that cancels through the login wait."""
+        """`cancels_told`: そのログインを使う取り消しが待つことを、呼び出し側が既に知らせた。"""
         self.failures[endpoint] = LoginFailure(reason=reason, at=self.clock(), poll=self.poll)
         if cancels_told:
             self.cancels_told.add(endpoint)
@@ -51,7 +51,7 @@ class LoginFailures:
         return failure if failure is not None and failure.poll == self.poll else None
 
     def recent(self, endpoint: SshEndpoint, seconds: float) -> LoginFailure | None:
-        """The login's failure, if it was less than `seconds` ago."""
+        """`seconds`秒以内に起きていれば、そのログインの失敗。"""
         failure = self.failures.get(endpoint)
         return failure if failure is not None and self.since(failure) < seconds else None
 
@@ -59,7 +59,7 @@ class LoginFailures:
         return self.clock() - failure.at
 
     def tell_cancels_once(self, endpoint: SshEndpoint) -> bool:
-        """True the first time cancels wait for the failed login: the caller says why, once."""
+        """失敗したログインを取り消しが初めて待つときにTrue。呼び出し側が理由を1回だけ知らせる。"""
         if endpoint in self.cancels_told:
             return False
         self.cancels_told.add(endpoint)

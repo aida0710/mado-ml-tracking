@@ -32,7 +32,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow Artifact転送（隔離PostgreSQL）',
         runCompletion: harness.services.runCompletion,
       }),
     );
-    // Several concurrent writes exercise the shared source Run and model lock order.
+    // 同時にいくつか書き込み、共有する元のRunとモデルのロックの順序を試す。
     const parallelWrites = 6;
     const responses = await Promise.all(
       Array.from({ length: parallelWrites }, (_, index) => [
@@ -532,7 +532,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow Artifact転送（隔離PostgreSQL）',
 
   it('ProjectのS3選択を既存ArtifactStoresへ渡し、同じbackendでstream read/Rangeを実行する', async () => {
     const fixture = await artifactFixture(harness);
-    // This store fixture verifies backend dispatch; it does not claim a real S3 connection.
+    // このstoreのfixtureで確かめるのは保存先の振り分けで、実際にS3へ接続できることではない。
     const stores = createArtifactStores({
       s3: createFilesystemArtifactStore(harness.artifactDirectory),
     });
@@ -566,7 +566,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow Artifact転送（隔離PostgreSQL）',
   it('SDKが送った音声のContent-Typeを全体取得・Rangeの206・nativeのinline表示で保つ', async () => {
     const fixture = await artifactFixture(harness);
     const wave = pcmWaveBytes(64);
-    // Python's mimetypes reports audio/x-wav for .wav; the official SDK sends that value as is.
+    // Pythonのmimetypesは.wavをaudio/x-wavとし、公式のSDKはその値をそのまま送る。
     for (const [path, mimeType] of [
       ['audio/sample.wav', 'audio/x-wav'],
       ['audio/sample.flac', 'audio/flac'],
@@ -613,7 +613,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow Artifact転送（隔離PostgreSQL）',
 
   it('汎用のContent-Typeで送った音声は拡張子からaudio/flacとaudio/wavを推定する', async () => {
     const fixture = await artifactFixture(harness);
-    // MLflow falls back to application/octet-stream when the client's mimetypes table lacks .flac.
+    // クライアントのmimetypesの表に.flacが無いと、MLflowはapplication/octet-streamにする。
     for (const [path, inferred] of [
       ['fallback/sample.flac', 'audio/flac'],
       ['fallback/sample.wav', 'audio/wav'],
@@ -635,7 +635,10 @@ describe.skipIf(!testDatabaseUrl)('MLflow Artifact転送（隔離PostgreSQL）',
   });
 });
 
-/** A 16-bit mono PCM WAV with a canonical 44-byte header, so Range offsets match real files. */
+/**
+ * 標準的な44バイトのヘッダーを持つ16ビット・モノラルのPCMのWAV。Rangeの位置が実際のファイルと
+ * 合う。
+ */
 function pcmWaveBytes(sampleCount: number): Uint8Array<ArrayBuffer> {
   const dataSize = sampleCount * 2;
   const header = Buffer.alloc(44);

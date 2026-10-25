@@ -4,7 +4,7 @@ import { first, rows, type Connection } from '../db/database.js';
 const savedViewSelect = `SELECT id,project_id,owner_user_id,visibility,page,name,state,created_at,updated_at
   FROM saved_views`;
 
-/** PostgreSQL unique_violation: a view of the same name exists for the owner or the Project. */
+/** PostgreSQLのunique_violation。所有者かProjectに同じ名前の保存ビューがある。 */
 const UNIQUE_VIOLATION = '23505';
 
 export function isSavedViewNameConflict(error: unknown): boolean {
@@ -22,7 +22,7 @@ export async function findSavedView(
   );
 }
 
-/** The viewer's own views (private and shared) and every view shared with the Project. */
+/** 閲覧者自身の保存ビュー（非公開と共有）と、Projectに共有したすべての保存ビュー。 */
 export async function listVisibleSavedViews(
   connection: Connection,
   query: { projectId: string; page: SavedViewPage; viewerUserId: string },

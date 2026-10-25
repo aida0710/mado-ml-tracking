@@ -1,8 +1,8 @@
-"""Convert a W&B-style sweep config into the fields of POST /projects/:p/sweeps.
+"""W&B形式のSweepの設定を、POST /projects/:p/sweepsの項目に変換する。
 
-The rules are listed in docs/sweeps.md ("SDK" section) so that the Web form (sweeps-web) converts
-the same config to the same request. Unknown keys are rejected instead of ignored: a silently
-dropped ``early_terminate`` or ``probabilities`` would run a different search than the user wrote.
+規則はdocs/sweeps.md（"SDK"の節）に書いてあり、画面のフォーム（sweeps-web）も同じ設定を同じ
+リクエストに変換する。未知のキーは無視せずに拒む。``early_terminate``や``probabilities``を
+黙って捨てると、利用者が書いたものとは違う探索が動いてしまう。
 """
 
 from __future__ import annotations
@@ -15,15 +15,15 @@ from .errors import ConfigurationError
 SWEEP_METHODS = ("grid", "random", "bayes")
 METRIC_GOALS = ("minimize", "maximize")
 OBJECTIVE_AGGREGATIONS = ("last", "min", "max")
-# W&B distribution name → API distribution. log_uniform_values takes the values themselves, which
-# is what the API's log_uniform means; W&B's own log_uniform (exponents) is rejected below.
+# W&Bの分布名 → APIの分布。log_uniform_valuesは値そのものを取り、これがAPIのlog_uniformの意味に
+# 当たる。W&B自体のlog_uniform（指数を取る）は後で拒む。
 DISTRIBUTIONS = {
     "uniform": "uniform",
     "int_uniform": "int_uniform",
     "q_uniform": "q_uniform",
     "log_uniform_values": "log_uniform",
 }
-# W&B's default eta for hyperband.
+# W&Bのhyperbandでのetaの既定値。
 DEFAULT_HYPERBAND_ETA = 3
 
 CONFIG_KEYS = frozenset({"method", "metric", "parameters", "early_terminate", "run_cap", "parallelism"})
@@ -32,8 +32,8 @@ EARLY_TERMINATE_KEYS = frozenset({"type", "min_iter", "eta", "max_iter"})
 
 
 def convert_sweep_config(config: Mapping[str, Any]) -> dict[str, Any]:
-    """Return ``method``, ``searchSpace``, ``objective``, ``maxTrials`` and the optional
-    ``parallelism`` / ``earlyStopping`` for a sweep create request."""
+    """Sweepを作るリクエストの``method``、``searchSpace``、``objective``、``maxTrials``と、任意の
+    ``parallelism`` / ``earlyStopping``を返す。"""
     if not isinstance(config, Mapping):
         raise ConfigurationError("Sweep config must be a mapping")
     _reject_unknown_keys("sweep config", config, CONFIG_KEYS)
@@ -124,7 +124,7 @@ def _parameter_definition(name: str, definition: object) -> dict[str, Any]:
 
 
 def _inferred_distribution(name: str, definition: Mapping[str, Any]) -> str:
-    """W&B infers the distribution from min/max: both integers → int_uniform, otherwise uniform."""
+    """W&Bはmin/maxから分布を推定する。両方が整数ならint_uniform、それ以外はuniform。"""
     if "min" not in definition or "max" not in definition:
         raise ConfigurationError(f"Sweep parameter {name!r} needs values, value, or min and max")
     if all(

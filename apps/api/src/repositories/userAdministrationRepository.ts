@@ -2,7 +2,7 @@ import type { AdminUser, AdminUserQuery } from '@mmt/contracts';
 import { first, rows, type Connection } from '../db/database.js';
 import { userColumns } from './identityRepository.js';
 
-// A Service Account names its Project so administrators can tell what disabling it stops.
+// 無効にしたら何が止まるかを管理者が分かるよう、Service AccountにはそのProjectを示す。
 const adminUserColumns = `${userColumns},u.kind,u.last_login_at,u.created_at,
   (SELECT json_build_object('id',p.id,'name',p.name) FROM service_account_details d
     JOIN projects p ON p.id=d.project_id WHERE d.user_id=u.id) AS service_account_project`;
@@ -35,7 +35,7 @@ export async function findAdminUser(
   connection: Connection,
   userId: string,
 ): Promise<AdminUser | undefined> {
-  // A launcher's user is managed with its launcher (launcherService), not as a user.
+  // launcherのusers行は、利用者としてではなくlauncherと一緒に管理する（launcherService）。
   return first<AdminUser>(
     connection,
     `SELECT ${adminUserColumns} FROM users u WHERE u.id=$1 AND u.kind<>'launcher'`,
@@ -43,7 +43,7 @@ export async function findAdminUser(
   );
 }
 
-// Locks the row so a concurrent change to the same user waits for this transaction.
+// 行をロックし、同じ利用者への同時の変更がこのトランザクションを待つようにする。
 export async function lockAdminUser(
   connection: Connection,
   userId: string,
@@ -90,7 +90,7 @@ export async function updateAdminUser(
   );
 }
 
-// Unlike a self-service change this does not compare the old hash: the administrator replaces it.
+// 本人による変更と違い、古いハッシュとは比べない。管理者が置き換えるため。
 export async function resetLocalPassword(
   connection: Connection,
   reset: { userId: string; passwordHash: string },

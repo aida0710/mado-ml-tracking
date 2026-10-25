@@ -64,7 +64,7 @@ describe('imageのCPU照合', () => {
     const runtime = { kind: 'docker' as const, image: `registry.example/team/infer@${DIGEST}` };
     await checker.assertRunsOn(runtime, { cpuArch: 'arm64' });
     expect(requested.some((url) => url.includes('scope=repository%3Ateam%2Finfer%3Apull'))).toBe(true);
-    // A pinned image is looked up once.
+    // 固定したイメージは1回だけ調べる。
     const before = requested.length;
     await checker.assertRunsOn(runtime, { cpuArch: 'amd64' });
     expect(requested).toHaveLength(before);

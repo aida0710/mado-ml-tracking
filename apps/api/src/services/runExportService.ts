@@ -15,20 +15,20 @@ import { readComparedVersions } from '../repositories/runComparisonRepository.js
 import type { RunComparisonQuery, RunComparisonService } from './runComparisonService.js';
 import type { RunSearchQuery, RunSearchService } from './runSearchService.js';
 
-// The largest page run search serves; each page is its own short transaction.
+// Runの検索が返すページの最大の大きさ。ページごとに短いトランザクションを分ける。
 const SEARCH_PAGE_SIZE = 500;
 
 export type RunExportConditions = Omit<RunSearchQuery, 'limit' | 'cursor'>;
 
 export interface RunSearchExport {
   fileName: string;
-  /** More Runs matched than the row limit; the CSV ends with a notice line. */
+  /** 行の上限より多くのRunが一致した。CSVの最後に知らせの行が付く。 */
   truncated: boolean;
-  /** CSV text in pieces (BOM and header first). Reading it pulls one search page at a time. */
+  /** 分割したCSVのテキスト（最初にBOMとヘッダー）。読み進めるたびに検索の1ページ分を取る。 */
   chunks: AsyncIterable<string>;
 }
 
-// UTC keeps file names sortable and identical for every viewer of the same export.
+// UTCにして、ファイル名を並べ替えられるようにし、同じエクスポートなら誰が見ても同じ名前にする。
 const fileTimestamp = (now: Date) => now.toISOString().replace(/[-:]/g, '').slice(0, 15);
 
 export class RunExportService {
@@ -62,10 +62,10 @@ export class RunExportService {
   }
 
   /**
-   * Reads the search twice: first to learn the columns, the row count and whether the limit
-   * cuts it (so the response headers are exact and errors answer before streaming starts), then
-   * page by page while the client reads. No DB connection is held between pages, so a slow
-   * download does not occupy the pool. Runs created between the passes are left out.
+   * 検索を2回読む。1回目で列、行数、上限で切れるかを知り（応答のヘッダーを正確にし、エラーを
+   * ストリーミングの前に返すため）、2回目はクライアントが読むのに合わせてページごとに読む。
+   * ページの間はDBの接続を持たないので、遅いダウンロードがプールを占めることはない。2回の間に
+   * 作られたRunは含めない。
    */
   async exportSearch(
     principal: Principal,

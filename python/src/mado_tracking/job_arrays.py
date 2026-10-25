@@ -1,4 +1,4 @@
-"""Job arrays on a site: one Run and Job per index, submitted together by the site's job shell."""
+"""site上のJob array。インデックスごとに1つのRunとJobを作り、siteのjob shellがまとめて投入する。"""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from .errors import ConfigurationError
 if TYPE_CHECKING:
     from .client import Client
 
-# Mirrors MAX_JOB_ARRAY_SIZE.
+# MAX_JOB_ARRAY_SIZEに合わせた値。
 MAX_JOB_ARRAY_SIZE = 10000
 
 
@@ -37,11 +37,11 @@ def create_job_array(
     allow_child_jobs: bool | None = None,
     dataset_partition_version_id: str | None = None,
 ) -> dict[str, Any]:
-    """POST /projects/:p/job-arrays; returns JobArrayCreated {arrayGroup, jobs}.
+    """POST /projects/:p/job-arrays。JobArrayCreated {arrayGroup, jobs}を返す。
 
-    `dataset_partition_version_id` names an input version whose files are split among the members
-    (member i reads the files at positions p with p % size == i, in path order). Not retried: a
-    resent create would start a second array.
+    `dataset_partition_version_id`は、ファイルをメンバーで分け合う入力バージョンを指す
+    （メンバーiは、パス順でp % size == iとなる位置pのファイルを読む）。再試行しない。作成を
+    送り直すと2つ目のarrayが始まるため。
     """
     if type(size) is not int or not 1 <= size <= MAX_JOB_ARRAY_SIZE:
         raise ConfigurationError(f"size must be an integer from 1 to {MAX_JOB_ARRAY_SIZE}")
@@ -71,7 +71,7 @@ def create_job_array(
 
 
 def get_job_array(client: Client, project_id: str, array_group_id: str) -> dict[str, Any]:
-    """The array and its Jobs as they are now (JobArrayCreated)."""
+    """arrayとそのJobの今の状態（JobArrayCreated）。"""
     return client.request(
         "GET", client.project_path(project_id, f"job-arrays/{path_id(array_group_id)}"), retryable=True
     )

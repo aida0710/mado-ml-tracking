@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import { containsControlCharacter } from '@mmt/contracts';
 
-// A full public CA bundle is about 200 KiB; a private CA chain is far smaller.
+// 公開CAのバンドル全体で約200 KiB。プライベートCAのチェーンはずっと小さい。
 const MAX_CA_BUNDLE_LENGTH = 1024 * 1024;
-// AWS access key ids are 20 characters; S3-compatible services use up to about 128.
+// AWSのアクセスキーIDは20文字。S3互換のサービスは128文字程度まで使う。
 const MAX_ACCESS_KEY_ID_LENGTH = 256;
 const MAX_SECRET_ACCESS_KEY_LENGTH = 1024;
 const MAX_SETTING_LENGTH = 2000;
@@ -12,7 +12,8 @@ const caBundleSchema = z
   .string()
   .max(MAX_CA_BUNDLE_LENGTH)
   .refine((pem) => pem.includes('-----BEGIN CERTIFICATE-----'));
-// Detailed format rules live in @mmt/platform normalizeStorageBackendConfig; this bounds sizes.
+// 細かい書式の規則は@mmt/platformのnormalizeStorageBackendConfigにある。
+// ここでは大きさだけを制限する。
 const backendSettingsShape = {
   kind: z.enum(['filesystem', 's3']),
   rootPath: z.string().min(1).max(MAX_SETTING_LENGTH),
@@ -42,8 +43,8 @@ export const storageSettingsSchema = z.strictObject({ defaultBackend: z.string()
 export type StorageBackendCreateInput = z.infer<typeof storageBackendCreateSchema>;
 export type StorageBackendPatchInput = z.infer<typeof storageBackendPatchSchema>;
 
-// GET /admin/storage-directories?path=: what is typed into a filesystem backend's rootPath, with
-// the same length bound. Control characters (NUL above all) could not name a directory.
+// GET /admin/storage-directories?path=: filesystemの保存先のrootPathに入力する値で、長さの
+// 上限も同じ。制御文字（特にNUL）ではディレクトリを指せない。
 export const storageDirectoryQuerySchema = z.object({
   path: backendSettingsShape.rootPath.refine(
     (typed) => !containsControlCharacter(typed),

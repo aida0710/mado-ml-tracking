@@ -39,7 +39,7 @@ export interface ReportSnapshotSources {
   runMedia: RunMediaService;
 }
 
-/** What the analysis services accept: a saved view is turned into its search conditions. */
+/** 分析のサービスが受け付ける形。保存ビューはその検索条件に変える。 */
 type SearchableRunSet = Exclude<RunSet, { search: unknown }> | { search: RunSearchConditions };
 
 interface CaptureRequest {
@@ -57,9 +57,9 @@ function tooManyRuns(maxRuns: number): never {
 }
 
 /**
- * Captures the data a snapshot block is drawn from, by calling the same services the live block
- * calls from the browser, with the saving editor's permissions. Each block is bounded by
- * REPORT_SNAPSHOT_BLOCK_MAX_BYTES (413 report_snapshot_too_large).
+ * スナップショットのブロックを描くもとのデータを取る。最新データのブロックがブラウザから呼ぶのと
+ * 同じサービスを、保存するeditorの権限で呼ぶ。ブロックごとの上限は
+ * REPORT_SNAPSHOT_BLOCK_MAX_BYTES（413 report_snapshot_too_large）。
  */
 export class ReportSnapshotService {
   constructor(
@@ -157,7 +157,7 @@ export class ReportSnapshotService {
     }
     const runIds = await this.resolveRunIds(request, block.runSet, MAX_SERIES_RUNS);
     if (!runIds.length) return { type: 'chart', runs: [], series: [] };
-    // Many Runs and keys share the response budget the series endpoint allows.
+    // Runやキーが多いときは、系列のエンドポイントが許す応答の量をそれらで分け合う。
     const maxPoints = Math.max(
       1,
       Math.min(
@@ -184,7 +184,7 @@ export class ReportSnapshotService {
     const { principal, projectId } = request;
     const keys = scatterTableKeys(block);
     let metrics = keys.metrics;
-    // Only an objective is plotted: the table needs a metric, and the objective's own one is read.
+    // 目的メトリクスだけを描く場合。表にはメトリクスが要るので、目的メトリクスそのものを読む。
     if (!metrics.length && 'sweepId' in block.runSet) {
       const objective = await findSweepObjective(this.database, {
         projectId,
@@ -203,7 +203,7 @@ export class ReportSnapshotService {
     };
   }
 
-  /** The first `limit` Runs of the set, in its order (the search order for a search). */
+  /** 集合の先頭から`limit`件のRun。順は集合の順（検索なら検索の並び順）。 */
   private async readRunTable(request: CaptureRequest, block: ReportRunTableBlock) {
     const { principal, projectId } = request;
     const runSet = await this.searchableRunSet(request, block.runSet);
@@ -222,7 +222,7 @@ export class ReportSnapshotService {
     return readRunSummaries(this.database, { projectId, runIds: runIds.slice(0, block.limit) });
   }
 
-  /** An empty list for a search that matches nothing. */
+  /** 何にも一致しない検索では空の一覧を返す。 */
   private async resolveRunIds(
     request: CaptureRequest,
     reportRunSet: ReportRunSet,
@@ -245,7 +245,7 @@ export class ReportSnapshotService {
     return runIds;
   }
 
-  /** A saved view becomes its search conditions; a search gets the defaults it left out. */
+  /** 保存ビューはその検索条件に変え、検索には省かれた項目の既定値を補う。 */
   private async searchableRunSet(
     request: CaptureRequest,
     runSet: ReportRunSet,
@@ -256,7 +256,7 @@ export class ReportSnapshotService {
       projectId: request.projectId,
       savedViewId: runSet.savedViewId,
     });
-    // The save checked that the view is shared; one made private since then is not read.
+    // 保存のときにビューが共有されていることは確かめた。その後に非公開にされたビューは読まない。
     if (!view || view.visibility !== 'project') notFound('saved view');
     const { experimentIds, filter, orderBy, statuses, kinds } = view.state;
     return {

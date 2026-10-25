@@ -7,8 +7,8 @@ import type {
 import { first, rows, type Connection } from '../db/database.js';
 import { notFound } from '../domain/errors.js';
 
-// A WorkflowStepExecution is stored as a row of workflow_step_runs: one per step of an execution,
-// naming the Run and Job that ran the step (or, when reused, an earlier execution's).
+// WorkflowStepExecutionはworkflow_step_runsの行として保存する。実行のステップごとに1行で、
+// そのステップを実行したRunとJob（再利用したときは前の実行のRunとJob）を指す。
 
 export const workflowExecutionColumns =
   'id,project_id,workflow_id,workflow_version_id,revision,status,created_by,created_at,ended_at,error,resume_from_execution_id';
@@ -45,8 +45,8 @@ export async function insertWorkflowExecution(
 }
 
 /**
- * A new step waits as pending; a step resumed from an earlier execution starts as finished with
- * that execution's Run, Job, inputs and outputs (reused).
+ * 新しいステップはpendingで待つ。前の実行から再開したステップは、その実行のRun、Job、入力、
+ * 出力を持ったfinished（再利用）として始まる。
  */
 export async function insertWorkflowStepExecution(
   connection: Connection,
@@ -84,7 +84,7 @@ export async function insertWorkflowStepExecution(
   );
 }
 
-/** Counts a failed launch of a pending step and returns how many of its launches have failed. */
+/** pendingのステップの起動失敗を数え、そのステップの起動が何回失敗したかを返す。 */
 export async function recordWorkflowStepLaunchFailure(
   connection: Connection,
   stepId: string,
@@ -129,8 +129,8 @@ export async function listWorkflowStepExecutions(
 }
 
 /**
- * The step a workflow started the Run for, or null for a Run no workflow started. Steps of later
- * executions that reuse the Run are not its origin.
+ * ワークフローがRunを始めたステップ。ワークフローが始めたRunでなければnull。そのRunを再利用した
+ * 後の実行のステップは、Runの起点とはみなさない。
  */
 export async function findOriginStepExecutionOfRun(
   connection: Connection,

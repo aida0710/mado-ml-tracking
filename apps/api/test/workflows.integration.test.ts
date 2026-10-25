@@ -146,7 +146,7 @@ describe.skipIf(!testDatabaseUrl)('前処理から学習までのワークフロ
       await fixture.createWorkflow([
         fixture.steps[0]!,
         { ...fixture.steps[1]!, taskId: training.id, expectedTaskRevision: training.revision },
-        // Reads the data two steps back and the model of the step before it.
+        // 2つ前のステップのデータと、1つ前のステップのモデルを読む。
         { ...evaluationStep, key: 'evaluate', name: '評価', inputs: [preparedInput] },
         { ...evaluationStep, key: 'score', name: '採点', inputs: [] },
         { ...fixture.steps[0]!, key: 'recheck', name: '再確認' },

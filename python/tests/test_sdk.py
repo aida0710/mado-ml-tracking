@@ -124,7 +124,7 @@ def test_http_permission_failure_is_sanitized_and_not_retried():
 
 
 def registry_server(*, existing_models=(), lose_create_race=False):
-    """Serve the native Model registry with name lookup and automatic version numbering."""
+    """名前での検索とバージョンの自動の採番を備えた、ネイティブのモデルレジストリとして応答する。"""
     models = {model["name"]: dict(model) for model in existing_models}
     versions: list[dict] = []
     calls = []
@@ -137,7 +137,7 @@ def registry_server(*, existing_models=(), lose_create_race=False):
             return httpx.Response(200, json={"items": [models[name]] if name in models else []})
         if request.url.path == "/api/projects/p/models" and request.method == "POST":
             if lose_create_race:
-                # Another worker created the same Model between our lookup and POST.
+                # こちらが検索してからPOSTするまでの間に、別のworkerが同じ登録モデルを作った。
                 models[body["name"]] = {"id": "model-race", "name": body["name"], "family": body["family"]}
             if body["name"] in models:
                 return httpx.Response(409, json={"error": "exists", "code": "already_exists"})
@@ -297,7 +297,7 @@ CSV_BYTES = '﻿id,name,metrics.wer\r\nrun-1,"評価, 1",0.12\r\nrun-2,\'=cmd,0.
 
 
 class ChunkedCsv(httpx.SyncByteStream):
-    """Serves the CSV in small chunks, optionally dropping the connection part way through."""
+    """CSVを小さなchunkに分けて返す。途中で接続を切ることもできる。"""
 
     def __init__(self, content: bytes, *, drop_after: int | None = None):
         self.content = content

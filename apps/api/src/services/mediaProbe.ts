@@ -1,6 +1,6 @@
 import { MediaToolFailedError, runMediaTool } from './mediaTools.js';
 
-/** What the preview worker needs from ffprobe; values outside sane ranges are left out. */
+/** プレビューのworkerがffprobeから必要とする情報。ありえない範囲の値は入れない。 */
 export interface MediaProbe {
   durationSeconds: number | null;
   audio: {
@@ -12,16 +12,16 @@ export interface MediaProbe {
   video: { codec: string; width: number; height: number } | null;
 }
 
-// Bounds reject garbage from damaged containers instead of storing it as media info.
+// 壊れたコンテナから出たでたらめな値を、メディア情報として保存せずに範囲の上限で弾く。
 const MAX_DURATION_SECONDS = 31 * 24 * 60 * 60;
-// DSD files decode to 352.8 kHz; 768 kHz is the highest PCM rate in use.
+// DSDのファイルは352.8 kHzにデコードされる。768 kHzは実際に使われるPCMの最高のレート。
 const MAX_SAMPLE_RATE = 768_000;
-// ffmpeg's own channel layout limit for ambisonics and multichannel arrays.
+// ambisonicsやマルチチャンネルのアレイに対する、ffmpeg自身のチャンネルレイアウトの上限。
 const MAX_CHANNELS = 1024;
 const MAX_BITS_PER_SAMPLE = 64;
-// 16K video is 15360 wide; anything larger is a corrupt header.
+// 16Kの動画は幅15360。それより大きければヘッダーが壊れている。
 const MAX_VIDEO_DIMENSION = 16_384;
-// ffprobe codec_name values are short identifiers such as pcm_s16le, mp3, opus, h264.
+// ffprobeのcodec_nameの値は、pcm_s16le、mp3、opus、h264のような短い識別子。
 const CODEC_NAME = /^[a-z0-9_.-]{1,32}$/;
 
 type JsonObject = Record<string, unknown>;
@@ -30,7 +30,7 @@ function isObject(value: unknown): value is JsonObject {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-/** ffprobe prints most numbers as strings ("44100", "12.345000"); both forms are accepted. */
+/** ffprobeはほとんどの数値を文字列で出す（"44100"、"12.345000"）。どちらの形も受け付ける。 */
 function numberField(source: JsonObject, key: string): number | null {
   const value = source[key];
   const parsed = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
@@ -58,7 +58,7 @@ function parseAudioStream(stream: JsonObject): MediaProbe['audio'] {
   const sampleRate = integerInRange(stream, 'sample_rate', MAX_SAMPLE_RATE);
   const channels = integerInRange(stream, 'channels', MAX_CHANNELS);
   if (!codec || !sampleRate || !channels) return null;
-  // Lossy codecs report 0 here; PCM reports bits_per_sample, FLAC bits_per_raw_sample.
+  // 非可逆のコーデックはここで0を返す。PCMはbits_per_sample、FLACはbits_per_raw_sampleを返す。
   const bitsPerSample =
     integerInRange(stream, 'bits_per_raw_sample', MAX_BITS_PER_SAMPLE) ??
     integerInRange(stream, 'bits_per_sample', MAX_BITS_PER_SAMPLE);
@@ -69,15 +69,15 @@ function parseVideoStream(stream: JsonObject): MediaProbe['video'] {
   const codec = codecField(stream);
   const width = integerInRange(stream, 'width', MAX_VIDEO_DIMENSION);
   const height = integerInRange(stream, 'height', MAX_VIDEO_DIMENSION);
-  // Cover art in MP3/M4A is a one-frame "video" stream; it is not a playable video.
+  // MP3/M4Aのカバー画像は1フレームの"video"ストリームで、再生できる動画ではない。
   const disposition = isObject(stream.disposition) ? stream.disposition : {};
   if (!codec || !width || !height || disposition.attached_pic === 1) return null;
   return { codec, width, height };
 }
 
 /**
- * Validates `ffprobe -print_format json -show_format -show_streams` output. Returns null when
- * the output is not that shape at all; individual implausible values are dropped.
+ * `ffprobe -print_format json -show_format -show_streams`の出力を検証する。出力がその形に
+ * まったく合わなければnullを返す。個々のありえない値は捨てる。
  */
 export function parseFfprobeOutput(output: string): MediaProbe | null {
   let document: unknown;

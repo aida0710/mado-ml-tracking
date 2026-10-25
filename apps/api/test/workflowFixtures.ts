@@ -134,7 +134,7 @@ export async function workflowFixture(harness: Harness) {
       }),
     );
   }
-  /** A claim by a worker that names `capabilities`; a current worker names them all. */
+  /** `capabilities`を名乗るworkerによるclaim。今のバージョンのworkerはすべてを名乗る。 */
   async function claimAs(capabilities: WorkerCapability[]): Promise<WorkerJob | null> {
     return (
       await entity<{ item: WorkerJob | null }>(
@@ -150,7 +150,7 @@ export async function workflowFixture(harness: Harness) {
   async function claim(): Promise<WorkerJob> {
     return (await claimAs([...WORKER_CAPABILITIES]))!;
   }
-  /** The worker reports the Job's end; the scheduler has not seen it yet. */
+  /** workerがJobの終了を報告する。schedulerはまだそれを見ていない。 */
   async function complete(job: WorkerJob, status: 'finished' | 'failed' = 'finished') {
     await entity(
       await request(harness.app, `/api/worker/jobs/${job.job.id}/complete`, {

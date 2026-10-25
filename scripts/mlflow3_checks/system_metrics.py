@@ -1,8 +1,8 @@
-"""Check that official MLflow 3 system metrics logging produces readable `system/` metric histories.
+"""公式のMLflow 3のシステムメトリクス記録が、読める`system/`の履歴を作ることを確かめる。
 
-Standalone: by default it logs to a temporary local MLflow store, which shows what the official
-client records. With `--mado-api-url` it logs to mado ML Tracking's MLflow API instead (dev
-login, temporary project token revoked at the end) and reads the history back through it.
+単独で動く。既定では一時的なローカルのMLflowストアに記録し、公式クライアントが何を記録するかを
+見る。`--mado-api-url`を付けると、代わりにmado ML TrackingのMLflow APIに記録し
+（開発用ログインと、最後に失効させる一時的なProjectのtoken）、そのAPIで履歴を読み戻す。
 """
 
 from __future__ import annotations
@@ -19,25 +19,25 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-# Sample every second and flush every sample so a short run produces several history points.
+# 毎秒サンプリングし、サンプルごとに書き出して、短いRunでも履歴の点がいくつもできるようにする。
 SAMPLING_INTERVAL_SECONDS = 1
 os.environ["MLFLOW_SYSTEM_METRICS_SAMPLING_INTERVAL"] = str(SAMPLING_INTERVAL_SECONDS)
 os.environ["MLFLOW_SYSTEM_METRICS_SAMPLES_BEFORE_LOGGING"] = "1"
 os.environ["MLFLOW_HTTP_REQUEST_MAX_RETRIES"] = "0"
 os.environ["MLFLOW_DISABLE_AGENT_HINT"] = "1"
 
-# MLflow reads these variables at import time, so the imports follow the environment setup.
+# MLflowはこれらの変数をimportの時点で読むので、importは環境変数の設定のあとに置く。
 import httpx  # noqa: E402
 import mlflow  # noqa: E402
 from mlflow import MlflowClient  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 SYSTEM_METRIC_PREFIX = "system/"
-# Long enough for at least two flushed samples after MLflow's monitor thread starts.
+# MLflowの監視スレッドが始まってから、書き出したサンプルが少なくとも2つできる長さ。
 DEFAULT_RUN_SECONDS = 5.0
 MINIMUM_HISTORY_POINTS = 2
 TOKEN_LIFETIME = timedelta(hours=1)
-# Same default as the API's MMT_WEB_ORIGIN; only sent as a header, never connected to.
+# APIのMMT_WEB_ORIGINと同じ既定値。ヘッダーとして送るだけで、接続はしない。
 DEFAULT_WEB_ORIGIN = "http://127.0.0.1:5182"
 
 
@@ -78,7 +78,7 @@ def log_run_with_system_metrics(client: MlflowClient, *, run_seconds: float) -> 
     try:
         experiment_id = client.create_experiment(f"system-metrics-check-{time.time_ns()}")
         with mlflow.start_run(experiment_id=experiment_id) as run:
-            # Busy work so CPU utilization is visibly non-zero while MLflow samples.
+            # MLflowがサンプリングするあいだCPU使用率が目に見えて0を超えるよう、空回りの計算をする。
             deadline = time.monotonic() + run_seconds
             while time.monotonic() < deadline:
                 sum(index * index for index in range(10_000))

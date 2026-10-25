@@ -1,18 +1,17 @@
 /**
- * Metric chart panels. `relative_time` is seconds since the Run started (or its first metric
- * point), `wall_time` is epoch milliseconds and `metric` uses the value of `metricKey` at the same
- * step.
+ * メトリクスのグラフのパネル。`relative_time`はRunの開始（またはメトリクスの最初の点）からの
+ * 秒数、`wall_time`はエポックからのミリ秒、`metric`は同じstepでの`metricKey`の値を使う。
  */
 export interface ChartXAxis {
   kind: 'step' | 'relative_time' | 'wall_time' | 'metric';
   metricKey?: string;
 }
-/** `weight` is the smoothing strength from 0 (none) to 1 for the selected kind. */
+/** `weight`は選んだ種類の平滑化の強さで、0（平滑化しない）から1まで。 */
 export interface ChartSmoothing {
   kind: 'none' | 'ema' | 'gaussian' | 'running_average';
   weight: number;
 }
-/** `key` names the tag or param; it is absent for `experiment`. */
+/** `key`はタグかparameterの名前。`experiment`では無い。 */
 export interface RunGroupBy {
   kind: 'tag' | 'param' | 'experiment';
   key?: string;
@@ -24,10 +23,10 @@ export interface ChartPanelConfig {
   xAxis: ChartXAxis;
   yScale: 'linear' | 'log';
   smoothing: ChartSmoothing;
-  /** Draws the min/max band of sampled buckets or of a Run group. */
+  /** 間引いたバケットか、Runのグループの最小・最大の帯を描く。 */
   showRange: boolean;
   groupBy?: RunGroupBy;
-  /** Grid cell in the 12-column layout. */
+  /** 12列のレイアウトでのグリッドのセル。 */
   layout: { x: number; y: number; w: number; h: number };
 }
 export interface ChartPanelLayout {

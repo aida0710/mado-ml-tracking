@@ -32,7 +32,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
     await harness?.close();
   });
 
-  // Stands in for the SSO login sync, which writes user_groups (auth-oidc-group-policy).
+  // SSOのログイン時の同期の代わり。同期はuser_groupsに書く（auth-oidc-group-policy）。
   async function joinGroup(userId: string, group = ML_TEAM): Promise<void> {
     await harness.database.query(
       'INSERT INTO user_groups(user_id,group_name) VALUES($1,$2) ON CONFLICT DO NOTHING',
@@ -155,7 +155,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
       await request(harness.app, '/api/projects', { cookie: member.cookie }),
       200,
     );
-    // A role through a group makes the user a member, so "/" opens this Project for them.
+    // グループ経由のroleでもメンバーになるので、"/"ではこのProjectが開く。
     expect(projects.items.map((project) => [project.id, project.role, project.isMember])).toEqual([
       [fixture.project.id, 'editor', true],
     ]);
@@ -234,7 +234,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
       body: {},
     })).status).toBe(401);
 
-    // The token was not revoked: rejoining the group makes it usable again.
+    // tokenは失効していない。グループに入り直せば再び使える。
     await joinGroup(member.userId);
     expect((await request(harness.app, `${fixture.basePath}/runs/search`, {
       token,
@@ -365,7 +365,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
   it('まだ誰もloginしていないgroupのadmin bindingは数えず、最後の直接adminは外せも下げられもしない', async () => {
     const fixture = await projectFixture(harness);
     const administratorId = fixture.administrator.userId;
-    // A mistyped group name: nobody holds it, so it cannot keep the Project manageable.
+    // 打ち間違えたグループ名。誰も入っていないので、Projectを管理できる状態を保つ役に立たない。
     await bindGroup(fixture, 'admin', 'ml-team-typo');
     const removal = await deleteMember(fixture, administratorId);
     expect(removal.status).toBe(409);
@@ -379,7 +379,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
     });
     expect(demotion.status).toBe(409);
 
-    // The empty binding itself is not the last admin, so it can be fixed or removed.
+    // 空のbinding自体は最後のadminではないので、直すことも消すこともできる。
     expect((await deleteBinding(fixture, 'ml-team-typo')).status).toBe(204);
     expect((await members(fixture)).find((entry) => entry.user.id === administratorId)?.role).toBe(
       'admin',
@@ -430,7 +430,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
       }),
       200,
     );
-    // The global administrator keeps session access after losing the direct grant.
+    // 全体管理者は直接の付与を失っても、sessionでのアクセスは残る。
     const statuses = await Promise.all([
       deleteMember(fixture, fixture.administrator.userId),
       deleteMember(fixture, second.userId),
@@ -515,7 +515,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupのProject権限（独立PostgreSQL�
         .items,
     ).toHaveLength(20);
 
-    // A Project admin who is not a global administrator, holding the role through a group.
+    // 全体管理者ではなく、グループ経由でroleを持つProject admin。
     const lead = await login(harness, 'lead@localhost');
     await joinGroup(lead.userId);
     await bindGroup(fixture, 'admin');

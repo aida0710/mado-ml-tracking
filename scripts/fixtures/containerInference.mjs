@@ -1,4 +1,4 @@
-/** A dependency-free inference image command used by the real Docker verification. */
+/** 実際のDockerでの検証で使う、依存の無い推論用イメージのコマンド。 */
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -16,7 +16,7 @@ if (!Number.isFinite(weights.weight) || !Number.isFinite(weights.bias)) {
 }
 console.log('container started');
 
-// Exercise forced container cancellation with a process that ignores graceful shutdown.
+// グレースフルシャットダウンを無視するプロセスで、コンテナの強制キャンセルを確かめる。
 if (parameters.hold) {
   process.on('SIGTERM', () => {});
   await new Promise(() => setInterval(() => {}, MILLISECONDS_PER_SECOND));

@@ -10,11 +10,11 @@ import { DomainError } from './errors.js';
 import { isSafeArtifactPath } from '../mlflow/artifacts/artifactPath.js';
 import { jsonObjectSchema, uuidSchema } from './validation.js';
 
-/** Only Runs that train weights save and continue from checkpoints. */
+/** checkpointを保存し、そこから続けるのは重みを学習するRunだけ。 */
 export const CHECKPOINT_RUN_KINDS: readonly RunKind[] = TRAINING_RUN_KINDS;
-// A checkpoint directory is model weights plus a few state files; this bounds the manifest row.
+// checkpointのディレクトリはモデルの重みと少数の状態ファイル。manifestの行の大きさをこれで抑える。
 export const MAX_CHECKPOINT_FILES = 10000;
-// metadata is a small description (epoch, loss, ...), not a place for training state.
+// metadataは小さな説明（epoch、lossなど）で、学習の状態を置く場所ではない。
 const MAX_CHECKPOINT_METADATA_BYTES = 64 * 1024;
 const MAX_FRAMEWORK_LENGTH = 100;
 
@@ -67,8 +67,8 @@ function hasUniquePaths(files: readonly RunCheckpointFile[]): boolean {
 }
 
 /**
- * Splits an MLflow Run artifact path such as checkpoints/step-12/model/weights.pt into the step
- * and the path inside the checkpoint directory; null for every other path.
+ * checkpoints/step-12/model/weights.ptのような、MLflowのRunのArtifactのパスを、stepと
+ * checkpointのディレクトリ内のパスに分ける。それ以外のパスはnull。
  */
 export function parseMlflowCheckpointPath(
   path: string,
@@ -91,8 +91,8 @@ export function assertCheckpointRunKind(kind: RunKind): void {
 }
 
 /**
- * A Run may continue from a checkpoint only when it trains the same kind of weights with code
- * from the same Code (any version of it): another kind or code reads the files differently.
+ * Runがcheckpointから続けられるのは、同じ種類の重みを同じCode（バージョンは問わない）の
+ * コードで学習するときだけ。種類やコードが違うと、ファイルの読み方が変わる。
  */
 export function assertResumableFrom(
   checkpointRun: { kind: RunKind; codeId: string | null },

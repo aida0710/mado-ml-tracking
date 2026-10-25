@@ -3,9 +3,10 @@ import { readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { DomainError } from '../domain/errors.js';
 
-// Poll downloads as they grow, including temporary packfiles that git has not renamed yet.
+// ダウンロード中に大きくなっていくファイルを定期的に見る。gitがまだ名前を変えていない
+// 一時的なpackfileも含める。
 const DIRECTORY_CHECK_INTERVAL_MS = 100;
-// Bound metadata work too, so a repository with many loose objects cannot stall the monitor.
+// メタデータの処理にも上限を設け、loose objectの多いリポジトリで監視が止まらないようにする。
 const MAX_DIRECTORY_ENTRIES = 20_000;
 
 export interface RepositoryCommand {
@@ -54,7 +55,7 @@ async function validateDirectorySize(
       try {
         bytes += (await stat(entryPath)).size;
       } catch (error) {
-        // Git can rename packfiles between readdir and stat.
+        // gitはreaddirとstatの間にpackfileの名前を変えることがある。
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
       }
       if (bytes > maxBytes)
@@ -86,7 +87,8 @@ export const runRepositoryCommand: RepositoryCommandRunner = async (command) => 
     failure ??= error;
     if (!child.pid || isClosed) return;
     try {
-      // Kill git and its SSH/HTTP descendants before cleaning up their shared workspace.
+      // gitと、その子孫のSSH・HTTPのプロセスを強制終了してから、それらが共有する
+      // workspaceを片付ける。
       process.kill(-child.pid, 'SIGKILL');
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ESRCH') child.kill('SIGKILL');
@@ -129,7 +131,8 @@ export const runRepositoryCommand: RepositoryCommandRunner = async (command) => 
     }
     if (!failure) chunks.push(chunk);
   });
-  // Provider errors can contain remote URLs or secrets. Drain stderr without retaining it.
+  // プロバイダーのエラーにはリモートのURLや秘密の値が含まれることがある。stderrは読み捨てて
+  // 保持しない。
   child.stderr.resume();
   child.stdin.on('error', () => undefined);
   child.stdin.end(command.stdin);

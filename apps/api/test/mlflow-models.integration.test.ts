@@ -14,7 +14,7 @@ import {
 } from './mlflow-models-fixtures.js';
 import { mlflowSdkPythonPath } from './mlflow-sdk-fixtures.js';
 
-// 0 lets the OS choose; set it to keep the SDK test on an allowed port range.
+// 0ならOSが選ぶ。SDKのテストを許された範囲のポートで動かすときは設定する。
 const SDK_TEST_HTTP_PORT = Number(process.env.MMT_TEST_HTTP_PORT ?? 0);
 
 describe.skipIf(!testDatabaseUrl)('MLflow 3 Logged Models / native Model Registry', () => {
@@ -923,7 +923,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow 3 Logged Models / native Model Registr
       databaseQuery.mockRestore();
     }
   });
-  // Two registered versions with champion on version 1, protected Project-wide for admins.
+  // 登録済みの2つのバージョンで、championはバージョン1。Project全体の保護でadminに限る。
   async function protectedChampion(): Promise<void> {
     await entity(await fixture.createRegistered(), 200);
     for (const weights of ['first-weights', 'second-weights']) {
@@ -976,7 +976,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow 3 Logged Models / native Model Registr
       expect(error.message).toContain('protected alias "champion"');
     }
     expect(await championVersion()).toBe('1');
-    // Unprotected aliases keep working through MLflow.
+    // 保護していないaliasは、MLflowからも引き続き使える。
     await entity(
       await request(harness.app, `${fixture.registryEndpoint}/alias`, {
         method: 'POST',

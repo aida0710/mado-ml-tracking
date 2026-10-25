@@ -21,7 +21,7 @@ def read_wav(content: bytes) -> tuple:
 
 
 def png_chunks(content: bytes) -> list[tuple[bytes, bytes, int]]:
-    """(type, body, crc) of every chunk after the signature."""
+    """シグネチャのあとにある各chunkの(type, body, crc)。"""
     chunks = []
     offset = len(PNG_SIGNATURE)
     while offset < len(content):
@@ -70,7 +70,7 @@ def test_int16_stereo_samples_are_written_as_they_are_interleaved():
 @pytest.mark.parametrize(
     ("samples", "sample_rate"),
     [
-        (np.zeros((2, 16000)), 16000),  # channels first
+        (np.zeros((2, 16000)), 16000),  # チャンネルが先頭の次元
         (np.zeros(10, dtype=np.int32), 16000),
         (np.zeros(10), 0),
     ],

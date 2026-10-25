@@ -54,7 +54,8 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
     await harness?.close();
   });
 
-  // The application composes no terminal handlers yet, so tests compose services around their own.
+  // アプリケーションが組み込む終了時のハンドラとは別に、テストは自前のハンドラで
+  // サービスを組み立てる。
   function servicesWith(handlers: RunCompletionHandler[]) {
     const { database, config } = harness;
     const runCompletion = new RunCompletionService(handlers);
@@ -429,7 +430,7 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
       await registration.query('COMMIT');
       await finishing;
       expect(handler.outputs).toEqual([[version.id]]);
-      // The registration saw a running Run, so only the terminal transition wrote run.finished.
+      // 登録時にはRunが実行中だったので、run.finishedを書いたのは終了状態への遷移だけ。
       expect(await finishedEventOutputModels(runId)).toEqual([[version.id]]);
     } finally {
       await registration.query('ROLLBACK').catch(() => undefined);

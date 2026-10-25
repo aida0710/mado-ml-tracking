@@ -2,16 +2,16 @@ import type { ComputeTargetOverview } from '@mmt/contracts';
 import { rows, type Connection } from '../db/database.js';
 
 /**
- * Whose Jobs may run on a computer, in SQL over compute_targets `t`: everyone's on a public one;
- * on a private one its owner's, and those of the Service Accounts its owner created. $user is
- * whom the Jobs run as (a Run's creator, or a rule's, hook's, Task's or Sweep's owner).
+ * コンピュータで誰のJobを動かせるかを、compute_targets `t`に対するSQLで表す。公開のものでは全員の
+ * Job、非公開のものでは所有者と、所有者が作ったService AccountのJob。$userはJobを動かす名義
+ * （Runの作成者、またはルール・フック・Task・Sweepの所有者）。
  */
 export function targetUsableSql(user: string): string {
   return `(t.visibility='public' OR t.owner_user_id=${user} OR EXISTS(
     SELECT 1 FROM service_account_details sa WHERE sa.user_id=${user} AND sa.created_by=t.owner_user_id))`;
 }
 
-/** An overview row before the caller's management right, which the service decides. */
+/** 呼び出し元が管理できるか（サービスが決める）を付ける前の概要の行。 */
 export type TargetOverviewRow = Omit<ComputeTargetOverview, 'canManage' | 'launcher'> & {
   launcherName: string | null;
   launcherLastSeenAt: string | null;
@@ -19,8 +19,8 @@ export type TargetOverviewRow = Omit<ComputeTargetOverview, 'canManage' | 'launc
 };
 
 /**
- * Every computer with whether `userId` may run Jobs on it, and for an automatic site the
- * launcher that submits its Jobs. No column says how a computer is reached.
+ * すべてのコンピュータと、`userId`がそこでJobを動かせるか、自動のsiteならそのJobを投入する
+ * launcher。コンピュータへの接続方法を示す列は無い。
  */
 export async function listTargetOverviewRows(
   connection: Connection,

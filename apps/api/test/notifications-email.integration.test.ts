@@ -21,11 +21,11 @@ interface ReceivedMail {
   data: string;
 }
 
-/** A loopback SMTP server that accepts the test credentials and records each message. */
+/** テスト用の認証情報を受け付け、届いたメッセージを記録するループバックのSMTPサーバー。 */
 async function startSmtpServer() {
   const received: ReceivedMail[] = [];
   const server = new SMTPServer({
-    // The test server has no trusted certificate; TLS verification is covered by the unit tests.
+    // テストのサーバーには信頼された証明書が無い。TLSの検証は単体テストで確かめている。
     disabledCommands: ['STARTTLS'],
     allowInsecureAuth: true,
     logger: false,
@@ -72,7 +72,7 @@ describe.skipIf(!testDatabaseUrl)('メール通知（テスト用SMTPサーバ�
     await harness?.close();
   });
 
-  /** The same database and stores as the harness, with MMT_SMTP_URL and MMT_SMTP_FROM set. */
+  /** harnessと同じデータベースとstoreに、MMT_SMTP_URLとMMT_SMTP_FROMを設定したもの。 */
   function smtpApplication() {
     const config = loadConfig({
       MMT_DATABASE_URL: testDatabaseUrl,
@@ -112,7 +112,7 @@ describe.skipIf(!testDatabaseUrl)('メール通知（テスト用SMTPサーバ�
     );
   }
 
-  /** A failed training Run whose completion queues one run.failed notification. */
+  /** 失敗した学習のRun。その完了でrun.failedの通知が1件キューに積まれる。 */
   async function failRun(fixture: Awaited<ReturnType<typeof executionFixture>>) {
     const run = await fixture.newRun('train-large', 'training');
     const editorSession = fixture.editor.cookie.slice(fixture.editor.cookie.indexOf('=') + 1);

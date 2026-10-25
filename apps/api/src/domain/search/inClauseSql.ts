@@ -1,9 +1,9 @@
 export type InListOperator = 'IN' | 'NOT IN';
 
 /**
- * Compiles an MLflow `IN (...)` / `NOT IN (...)` comparison against one bound text[] parameter.
- * Binding the whole list keeps the SQL shape fixed regardless of how many values are given.
- * NOT IN follows SQL semantics: rows whose expression is NULL match neither IN nor NOT IN.
+ * MLflowの`IN (...)`・`NOT IN (...)`の比較を、text[]のバインドパラメータ1つと比べる形に
+ * コンパイルする。リスト全体をバインドするので、値がいくつあってもSQLの形は変わらない。
+ * NOT INはSQLの意味論に従う。式がNULLの行はINにもNOT INにも一致しない。
  */
 export function inClauseSql(comparison: {
   expression: string;

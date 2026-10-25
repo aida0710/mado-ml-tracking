@@ -4,10 +4,10 @@ import type {
   PromotionCriterionResult,
 } from '@mmt/contracts';
 
-// The alias history shows this text as stored, so it is written for people here, in the same
-// words as the Web's promotion screens (promotionModeLabels and the criterion reasons).
+// aliasの履歴はこの文を保存したまま表示するので、人が読む文としてここで書く。言葉はWebの
+// 昇格の画面（promotionModeLabelsと基準の理由）と同じにする。
 
-// Enough digits to tell two evaluations apart without the float noise of a subtraction.
+// 引き算の浮動小数点の誤差を出さずに、2つの評価を見分けられるだけの桁数。
 const SIGNIFICANT_DIGITS = 6;
 
 const modeSuffixes: Record<PromotionCriterionMode, string> = {
@@ -30,7 +30,10 @@ export function formatReasonNumber(value: number): string {
   return String(Number(value.toPrecision(SIGNIFICANT_DIGITS)));
 }
 
-/** One criterion as `metricの基準との差=-0.000395833 ≤ 0`, or `… ≤ 0: 値なし（基準バージョンなし）`. */
+/**
+ * 1つの基準を`metricの基準との差=-0.000395833 ≤ 0`や`… ≤ 0: 値なし（基準バージョンなし）`の
+ * 形で表す。
+ */
 export function describeCriterionResult(result: PromotionCriterionResult): string {
   const comparator = result.direction === 'higher' ? '≥' : '≤';
   const subject = `${result.metric}${modeSuffixes[result.mode]}`;

@@ -1,11 +1,11 @@
-"""Run argv commands on a site: locally, or over OpenSSH with one shared connection per account.
+"""siteでargvのコマンドを動かす。ローカルか、アカウントごとに1本の共有接続でOpenSSHを使う。
 
-The SSH settings live in a private ssh_config the launcher writes, so jump hosts (`-J`) get the
-same known_hosts, key and BatchMode as the login host; a ControlMaster keeps one connection per
-(site, account, key) open between commands. A connection check logs in on its own instead.
+SSHの設定はlauncherが書く非公開のssh_configに置くので、経由するホスト（`-J`）にもログイン先と
+同じknown_hosts、鍵、BatchModeが効く。ControlMasterが（site、アカウント、鍵）ごとに1本の接続を
+コマンドの間も開いておく。接続確認だけは接続を共有せず、自分でログインする。
 
-A login the site refuses fails once: the commands do not log in again after their master, and
-LoginRefused tells callers that another attempt would only be another failed login.
+siteが拒んだログインは1回だけ失敗する。masterが失敗したあと、コマンドは自分でログインし直さない。
+またLoginRefusedで、もう一度試してもログインの失敗が増えるだけだと呼び出し側に伝える。
 """
 
 from __future__ import annotations
@@ -24,30 +24,30 @@ from ..errors import ConfigurationError, TransportError
 from ..security import SecretMasker
 from ..worker.transport import SSH_CONNECT_TIMEOUT_SECONDS
 
-# A launcher waits this long for one site command unless the caller sets its own limit.
+# 呼び出し側が上限を決めないとき、launcherがsiteの1つのコマンドを待つ時間。
 DEFAULT_COMMAND_TIMEOUT_SECONDS = 600.0
-# The shared connection closes this long after its last command.
+# 共有の接続は、最後のコマンドからこの時間が経つと閉じる。
 CONTROL_PERSIST_SECONDS = 60
 SERVER_ALIVE_INTERVAL_SECONDS = 30
-# OpenSSH exits 255 when the connection itself failed.
+# 接続そのものに失敗したとき、OpenSSHは255で終わる。
 SSH_CONNECTION_FAILED_EXIT_CODE = 255
 DIAGNOSTIC_CHARACTERS = 2000
-# What OpenSSH says when the site turns the key away or a host key is not one known_hosts lists:
-# until someone changes authorized_keys or known_hosts, every attempt fails the same way.
+# siteが鍵を拒んだとき、またはホスト鍵がknown_hostsに無いときのOpenSSHの文言。誰かが
+# authorized_keysかknown_hostsを変えるまで、何度試しても同じように失敗する。
 LOGIN_REFUSALS = ("Permission denied", "Host key verification failed")
-# <state dir>/ssh/<endpoint key>.config and .socket: one endpoint's ssh_config and control socket.
+# <state dir>/ssh/<endpoint key>.configと.socket。1つの接続先のssh_configとcontrol socket。
 SSH_DIRECTORY = "ssh"
 ENDPOINT_KEY_CHARACTERS = 16
-# sockaddr_un holds 108 bytes on Linux, and ssh first binds a control socket at its path plus "."
-# and 16 random characters: under a deeper state directory no connection can be shared.
+# Linuxのsockaddr_unは108バイトまでで、sshはまずcontrol socketのパスに"."と16文字の乱数を足した
+# 場所でbindする。これより深い状態ディレクトリの下では接続を共有できない。
 MAX_CONTROL_PATH_BYTES = 90
-# [user@]host[:port] of a jump host.
+# 経由するホストの[user@]host[:port]。
 JUMP_HOST = re.compile(r"^(?:[A-Za-z0-9._-]+@)?[A-Za-z0-9.-]+(?::\d{1,5})?$")
 UNSAFE_CONFIG_CHARACTERS = '"\r\n\x00'
 
 
 class LoginRefused(TransportError):
-    """The site refused the login (or its host key was unknown); retrying at once cannot help."""
+    """siteがログインを拒んだ（またはホスト鍵が未知だった）。すぐに再試行しても意味が無い。"""
 
 
 @dataclass(frozen=True)
@@ -58,7 +58,7 @@ class CommandResult:
 
 
 class SiteTransport:
-    """Runs argv as given; subclasses wrap it (SSH) and tell connection failures apart."""
+    """argvをそのまま動かす。サブクラスはargvを包み（SSH）、接続の失敗を見分ける。"""
 
     def __init__(self, *, masker: SecretMasker):
         self.masker = masker
@@ -70,8 +70,8 @@ class SiteTransport:
         self, argv: Sequence[str], *, stdin: bytes = b"", timeout: float = DEFAULT_COMMAND_TIMEOUT_SECONDS
     ) -> CommandResult:
         try:
-            # Its own session: a Ctrl-C meant for `mado-tracking submit --watch` must not cut a
-            # job shell off in the middle of a submission.
+            # 独立したsessionで動かす。`mado-tracking submit --watch`に向けたCtrl-Cで、投入の途中の
+            # job shellを切ってはいけない。
             completed = subprocess.run(
                 self.command_argv(argv),
                 input=stdin,
@@ -89,17 +89,17 @@ class SiteTransport:
         return result
 
     def check_connection(self, result: CommandResult) -> None:
-        """Raise TransportError when the result says the connection, not the command, failed."""
+        """コマンドではなく接続が失敗したと結果から分かるとき、TransportErrorを送出する。"""
 
     def diagnostic(self, stderr: bytes) -> str:
         return self.masker.mask(stderr.decode("utf-8", "replace"))[-DIAGNOSTIC_CHARACTERS:].strip()
 
     def close(self) -> None:
-        """Release a shared connection; local transports hold nothing."""
+        """共有の接続を解放する。ローカルのtransportは何も持たない。"""
 
 
 class LocalSiteTransport(SiteTransport):
-    """Commands run on this machine: `mado-tracking submit` on a login node or on the PC it serves."""
+    """このマシンでコマンドを動かす。ログインノードや対象のPCの上で動く`mado-tracking submit`用。"""
 
 
 @dataclass(frozen=True)
@@ -144,18 +144,18 @@ def control_path(state_directory: Path, endpoint_key: str) -> Path:
 
 
 def connections_can_be_shared(state_directory: Path) -> bool:
-    """Whether control sockets fit under the state directory; else each command logs in alone."""
+    """control socketが状態ディレクトリに収まるか。収まらなければ各コマンドが単独でログインする。"""
     path = control_path(state_directory, "0" * ENDPOINT_KEY_CHARACTERS)
     return len(os.fsencode(path)) <= MAX_CONTROL_PATH_BYTES
 
 
 def _config_path(path: Path) -> str:
-    # ssh_config expands %-tokens in these values; a literal % is written twice.
+    # ssh_configはこれらの値の%トークンを展開するので、文字としての%は2つ重ねて書く。
     return '"' + str(path).replace("%", "%%") + '"'
 
 
 def ssh_config_text(endpoint: SshEndpoint) -> str:
-    """Settings for the login host and every jump host (`ssh -F` passes the file on to jumps)."""
+    """ログイン先と経由する全ホストの設定（`ssh -F`は経由するホストにもこのファイルを渡す）。"""
     return "\n".join(
         [
             "Host *",
@@ -174,9 +174,9 @@ def ssh_config_text(endpoint: SshEndpoint) -> str:
 
 
 class SshSiteTransport(SiteTransport):
-    """`shared_connection=False` logs in anew for each command, as a connection check must.
+    """`shared_connection=False`ならコマンドごとに新しくログインする。接続確認にはこれが要る。
 
-    So does every transport under a state directory too deep for a control socket.
+    control socketを置けないほど深い状態ディレクトリの下のtransportも、すべて同じように動く。
     """
 
     def __init__(
@@ -201,7 +201,8 @@ class SshSiteTransport(SiteTransport):
 
     def _base_argv(self) -> list[str]:
         argv = ["ssh", "-F", str(self.config_file)]
-        # Without a ControlPath ssh shares nothing: -F keeps ~/.ssh/config from naming one.
+        # ControlPathが無ければsshは何も共有しない。-Fを付けているので、~/.ssh/configがControlPathを
+        # 指定することも無い。
         if self.shared_connection:
             argv += ["-o", f"ControlPath={self.control_path}"]
         argv += ["-p", str(self.endpoint.port), "-l", self.endpoint.user]
@@ -211,7 +212,7 @@ class SshSiteTransport(SiteTransport):
 
     def command_argv(self, argv: Sequence[str]) -> list[str]:
         sharing = ["-o", "ControlMaster=no"] if self.shared_connection else []
-        # The remote login shell parses the command line; every argument is quoted on its own.
+        # リモートのログインシェルがコマンドラインを解釈するので、引数は1つずつクォートする。
         return [*self._base_argv(), *sharing, "--", self.endpoint.host, shlex.join(argv)]
 
     def run(
@@ -222,11 +223,11 @@ class SshSiteTransport(SiteTransport):
         return super().run(argv, stdin=stdin, timeout=timeout)
 
     def master_answers(self) -> bool:
-        """Whether a master serves the control socket; a socket left without one is removed.
+        """control socketにmasterが応答するか。masterのいないsocketが残っていれば消す。
 
-        A master killed with the launcher (SIGKILL, or the container's end) leaves its socket in
-        the state directory. Every command would try it and then log in on its own, and no new
-        master could start at that path.
+        launcherと一緒に止められたmaster（SIGKILLやコンテナの終了）は、状態ディレクトリに
+        socketを残す。残ったままだと、どのコマンドもそのsocketを試してから単独でログインすることに
+        なり、そのパスで新しいmasterを起動できない。
         """
         if not self.control_path.exists():
             return False
@@ -236,7 +237,7 @@ class SshSiteTransport(SiteTransport):
         return False
 
     def control(self, command: str) -> int | None:
-        """`ssh -O <command>` to the master over its socket; the exit status, None if it did not run."""
+        """socketを通してmasterに`ssh -O <command>`を送る。終了コードを返し、動かなければNone。"""
         try:
             return subprocess.run(
                 [*self._base_argv(), "-O", command, "--", self.endpoint.host],
@@ -250,12 +251,12 @@ class SshSiteTransport(SiteTransport):
             return None
 
     def start_master(self) -> None:
-        """Log in once and keep the connection open in the background for the commands.
+        """1回ログインし、コマンドのために接続をバックグラウンドで開いたままにする。
 
-        A master started by a command with captured output could hold those pipes open until
-        ControlPersist ends, so it starts on its own, and its stderr goes to a file rather than
-        a pipe for the same reason. When it cannot log in, the error is raised here: the command
-        would otherwise log in once more on its own and fail again.
+        出力を捕まえているコマンドがmasterを起動すると、ControlPersistが切れるまでmasterが
+        そのパイプを開いたままにすることがある。そのためmasterは単独で起動し、同じ理由でstderrも
+        パイプではなくファイルに送る。ログインできなければここでエラーを送出する。そうしないと、
+        コマンドが自分でもう一度ログインして、また失敗する。
         """
         timeout = SSH_CONNECT_TIMEOUT_SECONDS * (len(self.endpoint.jump_hosts) + 2)
         with tempfile.TemporaryFile() as errors:
@@ -293,7 +294,7 @@ class SshSiteTransport(SiteTransport):
             raise self.connection_failure(result.stderr)
 
     def connection_failure(self, stderr: bytes) -> TransportError:
-        """The error for a failed connection: LoginRefused when the site turned the login away."""
+        """接続に失敗したときのエラー。siteがログインを拒んだときはLoginRefused。"""
         detail = self.diagnostic(stderr)
         message = f"SSH connection to the site failed: {detail}"
         if any(refusal in detail for refusal in LOGIN_REFUSALS):

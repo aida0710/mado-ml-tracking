@@ -1,4 +1,4 @@
-"""Follow `{items, nextCursor}` pages until the API stops returning a cursor."""
+"""APIがcursorを返さなくなるまで、`{items, nextCursor}`のページをたどる。"""
 
 from __future__ import annotations
 
@@ -14,11 +14,11 @@ PageFetcher = Callable[[str | None], dict[str, Any]]
 
 
 def iterate_cursor_pages(fetch_page: PageFetcher, *, label: str) -> Iterator[dict[str, Any]]:
-    """Yield every item, requesting the next page only when the previous one is used up.
+    """すべての項目をyieldする。次のページは、前のページを使い切ってから要求する。
 
-    ``fetch_page`` receives None for the first page and the previous ``nextCursor`` afterwards.
-    A missing or null ``nextCursor`` ends the walk, which also covers APIs that predate paging.
-    A repeated cursor would loop forever, so it stops the walk with an error.
+    ``fetch_page``は、最初のページではNoneを、以降は前の``nextCursor``を受け取る。
+    ``nextCursor``が無いかnullなら走査を終える。ページングより前からあるAPIもこれで扱える。
+    同じcursorが繰り返されると永遠に回り続けるので、エラーにして走査を止める。
     """
     cursor: str | None = None
     visited_cursors: set[str] = set()
@@ -42,11 +42,11 @@ def iterate_cursor_pages(fetch_page: PageFetcher, *, label: str) -> Iterator[dic
 def iterate_listed_items(
     client: Client, path: str, *, params: Mapping[str, str], label: str
 ) -> Iterator[dict[str, Any]]:
-    """Walk a GET list whose next page is requested with ``?cursor=`` and the same conditions."""
+    """次のページを``?cursor=``と同じ条件で要求する、GETの一覧をたどる。"""
 
     def fetch_page(cursor: str | None) -> dict[str, Any]:
         page_params = {**params, "cursor": cursor} if cursor else dict(params)
-        # Listing only reads, so a lost response is retried without side effects.
+        # 一覧は読むだけなので、応答が失われても副作用なく再試行できる。
         return client.request("GET", path, params=page_params, retryable=True)
 
     return iterate_cursor_pages(fetch_page, label=label)

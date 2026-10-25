@@ -67,7 +67,7 @@ async function evaluationFixture(harness: Harness) {
     200,
   );
 
-  // Upstream outputs are set only by the automation chain, so tests insert evaluation Runs directly.
+  // 上流の出力は自動実行の連鎖でしか設定されないので、テストでは評価のRunを直接入れる。
   async function insertEvaluationRun(run: {
     modelVersionId: string;
     inputs: string[];
@@ -343,7 +343,7 @@ describe.skipIf(!testDatabaseUrl)('評価結果の基準バージョンとの比
         [fixture.project.id, ruleId, version.id, runId, job.rows[0]!.id],
       );
       automatedRuns[version.id] = runId;
-      // A newer manual evaluation of the same version under the same conditions.
+      // 同じバージョンを同じ条件で手動評価した、より新しい評価。
       await fixture.insertEvaluationRun({
         modelVersionId: version.id,
         inputs,
@@ -456,7 +456,7 @@ describe.skipIf(!testDatabaseUrl)('評価結果の基準バージョンとの比
       step: 2,
       datasetDigest: fixture.referenceA.digest,
     });
-    // A later point on another dataset is what latest_metrics folded in; it must not win.
+    // latest_metricsに取り込まれたのは、別のデータセットでのより後の点。これを採ってはいけない。
     await fixture.insertMetricPoint({
       runId: candidateRunId,
       name: 'accuracy',

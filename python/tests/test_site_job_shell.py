@@ -1,4 +1,4 @@
-"""The job shell contract: the environment it receives and the scheduler ID it prints."""
+"""job shellの契約: 受け取る環境変数と、出力するスケジューラのジョブID。"""
 
 from __future__ import annotations
 

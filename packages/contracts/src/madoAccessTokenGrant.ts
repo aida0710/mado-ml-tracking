@@ -1,16 +1,22 @@
-/** What the saved Mado access token allows, as Mado reported it at the last connection check. */
+/**
+ * 保存済みのmado S3 Data Catalogのaccess tokenで許されていること。最後の接続確認で
+ * mado S3 Data Catalogが報告した内容。
+ */
 export interface MadoAccessTokenGrant {
   name: string;
-  /** Mado scopes, such as those in {@link MADO_SCOPES}. */
+  /** mado S3 Data Catalogのscope。{@link MADO_SCOPES}にあるものなど。 */
   scopes: string[];
-  /** `['*']` ({@link ALL_MADO_NAMESPACES}) allows every namespace. */
+  /** `['*']`（{@link ALL_MADO_NAMESPACES}）ならすべてのnamespaceを許す。 */
   namespaces: string[];
   expiresAt: string | null;
 }
 
-/** Mado's namespace entry that allows every namespace. */
+/** すべてのnamespaceを許す、mado S3 Data Catalogのnamespaceの指定。 */
 export const ALL_MADO_NAMESPACES = '*';
-/** The Mado scopes the integration uses; Mado derives them from the token's feature permissions. */
+/**
+ * 連携が使うmado S3 Data Catalogのscope。mado S3 Data Catalogは、tokenの機能ごとの権限から
+ * これを導く。
+ */
 export const MADO_SCOPES = {
   lineageRead: 'lineage:read',
   lineageWrite: 'lineage:write',

@@ -8,7 +8,7 @@ import { jsonBody, parse, principal, uuidParam, type ApiEnvironment } from '../h
 import { requestMetadata } from '../http/requestMetadata.js';
 import type { UserAdministrationService } from '../services/userAdministrationService.js';
 
-// Mounted at /api/admin; every operation requires a global administrator's browser session.
+// /api/adminに置く。どの操作も全体管理者のブラウザのsessionが要る。
 export function adminUserRoutes(users: UserAdministrationService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.get('/users', async (context) =>

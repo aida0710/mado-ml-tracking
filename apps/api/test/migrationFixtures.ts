@@ -4,7 +4,7 @@ import type pg from 'pg';
 
 const MIGRATIONS = new URL('../src/db/migrations/', import.meta.url);
 
-/** Applies one independent migration while preserving migrate()'s checksum ledger. */
+/** 独立したmigrationを1つ適用し、migrate()のチェックサムの台帳も保つ。 */
 export async function applyMigrationFile(database: pg.Pool, name: string): Promise<void> {
   const sql = await readFile(new URL(name, MIGRATIONS), 'utf8');
   await database.query(sql);
@@ -15,10 +15,10 @@ export async function applyMigrationFile(database: pg.Pool, name: string): Promi
 }
 
 /**
- * Applies the migrations that sort before `firstPending` and records them as migrate() does, so a
- * test can insert rows of the older schema and then let migrate() apply the rest. A later call with
- * a later file applies only the migrations not recorded yet. The harness must be created with
- * applyMigrations: false.
+ * `firstPending`より前に並ぶmigrationを適用し、migrate()と同じように記録する。テストは古い
+ * スキーマの行を入れてから、残りをmigrate()に適用させられる。あとでより後のファイルを指定して
+ * 呼ぶと、まだ記録されていないmigrationだけを適用する。harnessはapplyMigrations: falseで
+ * 作っておく必要がある。
  */
 export async function applyMigrationsBefore(
   database: pg.Pool,

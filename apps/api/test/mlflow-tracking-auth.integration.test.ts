@@ -6,7 +6,7 @@ import { executionFixture, projectFixture } from './fixtures.js';
 
 type ProjectFixture = Awaited<ReturnType<typeof projectFixture>>;
 
-// What the MLflow SDK sends when MLFLOW_TRACKING_USERNAME and MLFLOW_TRACKING_PASSWORD are set.
+// MLFLOW_TRACKING_USERNAMEとMLFLOW_TRACKING_PASSWORDを設定したときにMLflowのSDKが送るもの。
 function basic(password: string, username = 'any-user'): Record<string, string> {
   return {
     Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,

@@ -20,7 +20,7 @@ SAMPLE_WAIT_SECONDS = 10
 
 
 class RecordingMonitor:
-    """Stands in for SystemMetricsMonitor; tests push samples through its sink by hand."""
+    """SystemMetricsMonitorの代わり。テストはそのsinkから手でサンプルを流し込む。"""
 
     instances: list[RecordingMonitor] = []
 
@@ -94,7 +94,7 @@ def test_monitor_starts_with_the_run_sends_to_the_api_and_stops_at_finish(record
         {"metrics": [{"name": "system.cpu.utilization", "value": 12.5, "step": 0, "timestamp": "t"}]}
     ]
     assert monitor.stopped
-    # The monitor stops before the terminal status, so no sample can follow it.
+    # モニターは終了状態の前に止まるので、そのあとにサンプルが続くことは無い。
     assert calls[-1][2] == {"status": "finished"}
 
 
@@ -163,7 +163,7 @@ def test_real_monitor_writes_system_metrics_into_the_offline_spool():
         system_metrics=True,
         system_metrics_interval=1,
     )
-    # The first sample is taken right after start; wait for its line instead of sleeping blindly.
+    # 最初のサンプルは開始の直後に取る。闇雲にsleepせず、その行を待つ。
     deadline = time.monotonic() + SAMPLE_WAIT_SECONDS
     while not list_batches(run.offline_directory) and time.monotonic() < deadline:
         time.sleep(0.05)

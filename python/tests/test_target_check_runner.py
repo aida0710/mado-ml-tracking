@@ -1,4 +1,4 @@
-"""The worker's loop for connection checks and directory listings: claims, parallel runs, old APIs."""
+"""接続確認とディレクトリの一覧のworkerのループ: claim、並列の実行、古いAPI。"""
 
 from __future__ import annotations
 
@@ -24,9 +24,9 @@ from mado_tracking.worker.target_probe import failed_result
 
 API_TOKEN = "mado_mt_test-worker-secret-value"
 WORKER_ID = "probe-worker"
-# A missing completion must fail the test instead of hanging it.
+# 完了が来なければ、テストを止めたままにせず失敗させる。
 SCENARIO_TIMEOUT_SECONDS = 20
-# Idle Job claims that show the loop went round without claiming a check.
+# 接続確認をclaimせずにループが回ったことを示す、空振りのJobのclaimの回数。
 IDLE_ITERATIONS = 5
 
 ClaimAnswer = dict[str, Any] | None
@@ -56,7 +56,7 @@ def claimed_check(
     directory_path: str | None = None,
     assigned: bool = True,
 ) -> dict[str, Any]:
-    """A WorkerTargetCheck; kind=None is the response of an API from before directory listings."""
+    """WorkerTargetCheck。kind=Noneは、ディレクトリの一覧ができる前のAPIの応答。"""
     check = {"id": str(uuid4()), "targetId": target["id"]}
     if kind is not None:
         check["assignedWorker"] = {"tokenId": str(uuid4()), "workerId": WORKER_ID} if assigned else None
@@ -67,7 +67,7 @@ def claimed_check(
 
 
 class TargetCheckServer:
-    """Hands out the scripted claim answers in turn, then nothing; records every report."""
+    """用意したclaimの応答を順に返し、尽きたら何も返さない。報告はすべて記録する。"""
 
     def __init__(
         self,
@@ -141,7 +141,7 @@ def run_until(worker: Worker, scenario: Callable[[], Awaitable[None]]) -> None:
 
 
 class GatedCheck:
-    """Stands in for check_target: each check waits until the test releases it."""
+    """check_targetの代わり。各確認は、テストが解放するまで待つ。"""
 
     def __init__(self) -> None:
         self.started: list[str] = []
@@ -253,7 +253,7 @@ def test_claim_of_a_computer_neither_assigned_to_the_worker_nor_in_its_target_id
     for item in (unassigned, assigned_elsewhere, claimed_check(target, kind=None)):
         with pytest.raises(ConfigurationError):
             parse_claimed_target_check(item, worker_id=WORKER_ID, target_ids=())
-    # The same requests are this worker's when the computer is one of its targets.
+    # コンピュータがこのworkerのtargetの1つなら、同じリクエストもこのworkerのものになる。
     for item in (unassigned, assigned_elsewhere):
         claimed = parse_claimed_target_check(item, worker_id=WORKER_ID, target_ids=(target["id"],))
         assert claimed is not None and claimed.kind == "connection"

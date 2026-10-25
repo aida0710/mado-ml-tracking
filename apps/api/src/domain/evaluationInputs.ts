@@ -1,16 +1,16 @@
 import type { Run } from '@mmt/contracts';
 
 /**
- * An evaluation Run's inputs have two roles:
- * - upstream outputs (Run.upstreamDatasetVersionIds): DatasetVersions produced by an upstream Run
- *   such as the predictions of an inference Run. They differ for every model version.
- * - the reference set (正解セット): every other input, i.e. the fixed evaluation data such as
- *   ground-truth transcripts and test audio. This plays the role of MLflow's dataset context.
+ * 評価のRunの入力には2つの役割がある。
+ * - 上流の出力（Run.upstreamDatasetVersionIds）: 推論のRunの予測のように、上流のRunが作った
+ *   DatasetVersion。モデルバージョンごとに違う。
+ * - 正解セット（reference set）: それ以外のすべての入力。正解の書き起こしやテスト用の音声の
+ *   ような固定の評価データ。MLflowのdataset contextに当たる。
  *
- * Two evaluations are comparable only when their reference sets are equal; comparing the full
- * input lists would never match because the upstream outputs always differ. The automation chain
- * (automation-stage-chaining-api) fills upstreamDatasetVersionIds. Manually created Runs leave it
- * empty, so all of their inputs form the reference set.
+ * 2つの評価を比べられるのは、正解セットが等しいときだけ。上流の出力は必ず違うので、入力の
+ * 一覧全体を比べると一致しない。upstreamDatasetVersionIdsは自動実行の連鎖
+ * （automation-stage-chaining-api）が埋める。手で作ったRunでは空なので、入力のすべてが
+ * 正解セットになる。
  */
 export function referenceDatasetVersionIds(
   run: Pick<Run, 'inputDatasetVersionIds' | 'upstreamDatasetVersionIds'>,

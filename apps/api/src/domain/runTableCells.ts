@@ -5,12 +5,12 @@ import type {
   RunComparisonValue,
 } from '@mmt/contracts';
 
-// Joins several DatasetVersions in one cell; neither character appears in a version label.
+// 1つのセルに複数のDatasetVersionをつなぐ。どちらの文字もバージョンのラベルには現れない。
 export const DATASET_VERSION_SEPARATOR = '; ';
 
 /**
- * Parameters of a Run as table cells. Native parameters win over the SDK's recorded strings so
- * numbers stay numbers; nested objects and arrays become JSON text.
+ * Runのparameterを表のセルにしたもの。ネイティブのparameterをSDKが記録した文字列より優先し、
+ * 数値を数値のまま保つ。入れ子のオブジェクトと配列はJSONの文字列にする。
  */
 export function getRunParameterCells(
   run: Pick<Run, 'parameters' | 'recordedParameters'>,
@@ -25,8 +25,8 @@ export function getRunParameterCells(
 }
 
 /**
- * PostgreSQL writes non-finite doubles of latest_metrics as the JSON strings 'NaN', 'Infinity'
- * and '-Infinity'. They are turned back into numbers; anything else is not a metric value.
+ * PostgreSQLはlatest_metricsの有限でないdoubleを、JSONの文字列'NaN'・'Infinity'・'-Infinity'
+ * として書く。これらは数値に戻す。それ以外はメトリクスの値ではない。
  */
 export function parseMetricValue(value: unknown): number | null {
   if (typeof value === 'number') return value;

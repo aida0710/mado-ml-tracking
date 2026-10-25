@@ -12,19 +12,19 @@ import type { SweepCreateInput } from '../domain/sweepValidation.js';
 import type { MetricPoint, TrialParameters } from '../domain/sweeps/types.js';
 import { liveProjectSql } from './projectRepository.js';
 
-/** A sweeps row without the per-trial aggregates that the API adds. */
+/** sweepsの行。APIが足すtrialごとの集計は含まない。 */
 export type StoredSweep = Omit<Sweep, 'trialCounts' | 'bestTrial'>;
 
 export const ACTIVE_TRIAL_STATES: readonly SweepTrialState[] = ['queued', 'running'];
 export const TERMINAL_SWEEP_STATUSES: readonly SweepStatus[] = ['finished', 'canceled', 'failed'];
 
-// seed is bigint, which pg returns as a string.
+// seedはbigintで、pgは文字列で返す。
 const sweepColumns = `id,project_id,name,task_id,task_revision,experiment_id,method,search_space,
   objective,max_trials,parallelism,early_stopping,seed::float8 AS seed,target_id,gpu_ids,status,
   status_reason,created_by,created_at,updated_at,finished_at`;
 
-// A queued trial whose Run a worker has claimed is reported as running before the next tick
-// stores it, so reads do not lag the scheduler interval.
+// workerがRunをclaimしたqueuedのtrialは、次のtickで保存される前からrunningとして返す。
+// こうして、読み取りがスケジューラの間隔ぶん遅れないようにする。
 const effectiveTrialState = `CASE WHEN t.state='queued' AND r.status='running' THEN 'running' ELSE t.state END`;
 
 const trialColumns = `t.id,t.sweep_id,t.trial_index,t.parameters,t.run_id,t.job_id,
@@ -34,8 +34,8 @@ const trialColumns = `t.id,t.sweep_id,t.trial_index,t.parameters,t.run_id,t.job_
 const trialSource = 'sweep_trials t JOIN runs r ON r.id=t.run_id JOIN jobs j ON j.id=t.job_id';
 const trialSelect = `SELECT ${trialColumns} FROM ${trialSource}`;
 
-// Orders trials best first with plain row comparison: trials without an objective go last, and
-// maximize is turned into ascending order by negating the value.
+// 単純な行の比較でtrialを良い順に並べる。目的メトリクスの値が無いtrialは最後にし、maximizeは
+// 値の符号を反転して昇順に直す。
 const objectiveSortKey = `(t.objective_value IS NULL)::int,
   COALESCE(CASE WHEN s.objective->>'goal'='maximize' THEN -t.objective_value ELSE t.objective_value END,0),
   t.trial_index`;
@@ -90,7 +90,7 @@ export async function findSweep(
   return sweep;
 }
 
-/** For server-side callers that only know the id; undefined when the sweep does not exist. */
+/** idしか知らないサーバー側の呼び出し元向け。Sweepが無ければundefined。 */
 export async function lockSweepById(
   connection: Connection,
   sweepId: string,
@@ -130,7 +130,7 @@ export async function listSweeps(
   connection: Connection,
   filter: { projectId: string; status?: SweepStatus; cursor?: string; limit: number },
 ): Promise<StoredSweep[]> {
-  // Preserve PostgreSQL microseconds; JavaScript Date would truncate the keyset boundary.
+  // PostgreSQLのマイクロ秒を保つ。JavaScriptのDateではkeysetの境界が切り捨てられる。
   const boundary = filter.cursor
     ? await first<{ id: string; createdAt: string }>(
         connection,
@@ -154,9 +154,9 @@ export async function listSweeps(
   );
 }
 
-/** Ids of sweeps the scheduler should visit. */
+/** スケジューラが見に行くべきSweepのid。 */
 export async function listSchedulableSweepIds(connection: Connection): Promise<string[]> {
-  // Sweeps of an archived Project wait untouched until it is restored.
+  // アーカイブしたProjectのSweepは、復元されるまで手を付けずに待たせる。
   const found = await rows<{ id: string }>(
     connection,
     `SELECT s.id FROM sweeps s JOIN projects p ON p.id=s.project_id AND p.archived_at IS NULL
@@ -197,8 +197,8 @@ export async function countTrialsBySweep(
 }
 
 /**
- * Best trial per sweep among trials that ran to an objective (finished or early_stopped).
- * Failed and canceled trials are left out: their last value reflects an interrupted run.
+ * Sweepごとに、目的メトリクスの値が出るまで走ったtrial（finishedかearly_stopped）のうち最良のもの。
+ * failedとcanceledのtrialは除く。その最後の値は中断された実行のものにすぎないため。
  */
 export async function findBestTrials(
   connection: Connection,
@@ -239,7 +239,7 @@ export async function insertTrial(
   );
 }
 
-/** Every trial of a sweep in trial order, for the controller. */
+/** Sweepの全trialをtrialの順に返す。コントローラ用。 */
 export async function listSweepTrials(
   connection: Connection,
   sweepId: string,
@@ -292,9 +292,9 @@ export async function markTrialsRunning(connection: Connection, sweepId: string)
 }
 
 /**
- * Stores the outcome of a trial whose Run reached a terminal status. An early-stopped trial keeps
- * its state and reason. Repeating this (an MLflow Run reopened and ended again) overwrites the
- * objective with the latest metrics.
+ * Runが終了状態になったtrialの結果を保存する。早期打ち切りしたtrialは状態と理由をそのまま残す。
+ * 繰り返し呼ばれると（MLflowのRunを開き直して再び終えたとき）、目的メトリクスの値を最新の
+ * メトリクスで上書きする。
  */
 export async function finishTrial(
   connection: Connection,
@@ -322,7 +322,7 @@ export async function markTrialEarlyStopped(
   );
 }
 
-/** Objective metric history per Run in step order. */
+/** Runごとの目的メトリクスの履歴。step順。 */
 export async function listObjectiveHistories(
   connection: Connection,
   request: { runIds: readonly string[]; metric: string },
@@ -339,9 +339,9 @@ export async function listObjectiveHistories(
 }
 
 /**
- * Whether the sweep's creator may still launch trials: an active user who is a Project editor or
- * admin by the effective role (direct grant, group binding or public visibility), or a global
- * administrator (who can act on any Project in a session). Nobody can in an archived Project.
+ * Sweepの作成者がまだtrialを起動できるか。起動できるのは、実効role（直接付与、group binding、
+ * Projectの公開のどれによるものでもよい）でProjectのeditorかadminである有効な利用者と、
+ * 全体管理者（sessionではどのProjectでも操作できる）。アーカイブしたProjectでは誰もできない。
  */
 export async function hasSweepOwnerAccess(
   connection: Connection,

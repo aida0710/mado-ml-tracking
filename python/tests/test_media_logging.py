@@ -28,7 +28,7 @@ MEDIA_PATH = re.compile(r"^media/(?P<key>.+)/step-(?P<step>\d+)/(?P<uuid>[0-9a-f
 
 
 class FakeMediaApi:
-    """In-memory PUT /runs/:r/artifacts, POST /runs/:r/media (idempotent by id) and /metrics."""
+    """メモリ上のPUT /runs/:r/artifacts、POST /runs/:r/media（idで冪等）、/metrics。"""
 
     def __init__(self):
         self.artifacts: list[dict] = []
@@ -141,7 +141,7 @@ def test_a_retried_registration_resends_the_same_media_id(api, run):
     ids = [request["items"][0]["id"] for request in api.media_requests]
     assert len(ids) == 3 and len(set(ids)) == 1
     assert list(api.media) == ids[:1]
-    # The file is uploaded once; only the registration is retried.
+    # ファイルは1回だけアップロードする。再試行するのは登録だけ。
     assert len(api.artifacts) == 1
 
 
@@ -180,7 +180,7 @@ def test_table_media_cells_become_artifacts_and_filepath_cells_in_split_json(api
 
 
 class FakeDataFrame:
-    """The part of pandas.DataFrame that log_table uses."""
+    """log_tableが使うpandas.DataFrameの部分。"""
 
     columns = ["image", "label"]
 

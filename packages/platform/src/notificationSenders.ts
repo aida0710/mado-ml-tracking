@@ -2,14 +2,14 @@ import { createHmac, randomUUID } from 'node:crypto';
 import type { NotificationChannelKind, NotificationEvent } from '@mmt/contracts';
 import { createEmailNotificationSender, type SmtpSettings } from './emailNotificationSender.js';
 
-// A slow receiver must not hold the outbox dispatcher or the channel test request.
+// 受信側が遅くても、outboxの配信処理や通知先のテストのリクエストを止めたままにしない。
 export const NOTIFICATION_DEADLINE_MS = 5000;
-// Slack rejects section text over 3000 characters; long Run errors are cut well below that.
+// Slackはsectionのテキストが3000文字を超えると拒む。長いRunのエラーはそれより十分短く切る。
 const MAX_SLACK_ERROR_LENGTH = 500;
-// Kept from before the product was renamed (mado ML Tracking): receivers may allow-list it.
+// 製品名をmado ML Trackingに変える前の値のまま。受信側が許可リストに入れていることがある。
 const USER_AGENT = 'mado-model-tracking-notifications';
 
-/** A channel with its environment variables resolved, as the senders need it. */
+/** 環境変数を解決した通知先。送信処理が必要とする形。 */
 export interface NotificationDestination {
   kind: NotificationChannelKind;
   name: string;
@@ -18,7 +18,7 @@ export interface NotificationDestination {
   recipients: string[];
 }
 
-/** Stored channel settings that name environment variables instead of holding the values. */
+/** 保存した通知先の設定。値そのものではなく、値を持つ環境変数の名前を持つ。 */
 export interface NotificationChannelSettings {
   kind: NotificationChannelKind;
   name: string;
@@ -27,15 +27,15 @@ export interface NotificationChannelSettings {
   recipients: string[];
 }
 
-/** deliveryId is sent to the receiver (X-MMT-Delivery for webhooks) and stored with the attempt. */
+/** deliveryIdは受信側へ送り（webhookならX-MMT-Delivery）、試行と一緒に保存する。 */
 export interface NotificationSender {
   send(channel: NotificationDestination, event: NotificationEvent): Promise<{ deliveryId: string }>;
 }
 
-/** Senders by channel kind. A kind without a sender (email while SMTP is unset) cannot deliver. */
+/** 通知先の種類ごとの送信処理。送信処理の無い種類（SMTPが未設定のときのemail）は配信できない。 */
 export type NotificationSenders = Partial<Record<NotificationChannelKind, NotificationSender>>;
 
-/** A failure with a code that is safe to store and show: never the URL or the remote response. */
+/** 保存・表示しても安全なコードを持つ失敗。URLや相手の応答は決して含めない。 */
 export class NotificationSendError extends Error {
   constructor(readonly code: string) {
     super(code);
@@ -74,12 +74,12 @@ export function resolveNotificationDestination(
   };
 }
 
-/** The X-MMT-Signature value: HMAC-SHA256 of the exact request body with the channel secret. */
+/** X-MMT-Signatureの値。リクエストの本文そのままを、通知先のsecretで計算したHMAC-SHA256。 */
 export function webhookSignature(secret: string, body: string): string {
   return `sha256=${createHmac('sha256', secret).update(body).digest('hex')}`;
 }
 
-// Slack treats &, < and > as control characters in mrkdwn.
+// Slackはmrkdwnの中の&、<、>を制御文字として扱う。
 function escapeSlack(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -88,7 +88,7 @@ function shorten(value: string, maxLength: number): string {
   return value.length > maxLength ? `${value.slice(0, maxLength - 1)}…` : value;
 }
 
-/** Incoming webhook payload: `text` is the notification fallback, blocks the formatted message. */
+/** Incoming Webhookのpayload。`text`は通知用の代替テキスト、blocksは整形したメッセージ。 */
 export function slackMessage(event: NotificationEvent): { text: string; blocks: unknown[] } {
   const title = escapeSlack(event.title);
   const heading = event.url ? `*<${event.url}|${title}>*` : `*${title}*`;
@@ -102,7 +102,7 @@ export function slackMessage(event: NotificationEvent): { text: string; blocks: 
   for (const [key, value] of Object.entries(event.details))
     fields.push(`*${escapeSlack(key)}*\n${escapeSlack(String(value))}`);
   const blocks: unknown[] = [{ type: 'section', text: { type: 'mrkdwn', text: heading } }];
-  // Slack allows at most 10 fields in one section.
+  // Slackの1つのsectionに入るfieldsは最大10個。
   if (fields.length)
     blocks.push({
       type: 'section',
@@ -143,7 +143,7 @@ async function postJson(
       headers: { 'Content-Type': 'application/json', 'User-Agent': USER_AGENT, ...request.headers },
       body: request.body,
       signal: AbortSignal.timeout(options.deadlineMs),
-      // A redirect could move the payload to a host the administrator did not choose.
+      // リダイレクトに従うと、管理者が選んでいないホストへpayloadが送られうる。
       redirect: 'manual',
     });
   } catch (error) {
@@ -153,7 +153,7 @@ async function postJson(
       isTimeout ? 'notification_timeout' : 'notification_destination_unavailable',
     );
   }
-  // The response body is not used; release the connection without reading it.
+  // 応答の本文は使わないので、読まずに接続を解放する。
   await response.body?.cancel().catch(() => undefined);
   if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400))
     throw new NotificationSendError('notification_redirect_refused');
@@ -203,7 +203,7 @@ export function createNotificationSenders(
         return { deliveryId };
       },
     },
-    // Email is sent only when MMT_SMTP_URL is set; otherwise its deliveries fail as unavailable.
+    // emailはMMT_SMTP_URLを設定したときだけ送る。未設定なら、その配信は利用不可として失敗する。
     ...(options.smtp ? { email: createEmailNotificationSender({ smtp: options.smtp }) } : {}),
   };
 }

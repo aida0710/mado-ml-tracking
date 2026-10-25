@@ -1,10 +1,9 @@
-"""What the API gives a launcher to do, besides the submissions it claims.
+"""claimする投入のほかに、APIがlauncherに渡す仕事。
 
-GET /launcher/config lists the sites, keys and connection checks assigned to this launcher; the
-launcher reads it at the start of every poll, so a site edited on the Web applies from the next
-poll on. A claimed submission still carries the settings of its own claim (site_settings.py); the
-assignment's settings serve the connection checks and the cancellations, the Jobs to remove from
-a scheduler queue (POST /launcher/site-submissions/cancellations).
+GET /launcher/configは、このlauncherに割り当てたsite、鍵、接続確認を並べる。launcherはpollの
+始めに毎回これを読むので、画面で編集したsiteは次のpollから効く。claimした投入は、引き続き
+そのclaimの時点の設定を持つ（site_settings.py）。割り当ての設定は、接続確認と取り消し
+（スケジューラの待ち行列から外すJob、POST /launcher/site-submissions/cancellations）に使う。
 """
 
 from __future__ import annotations
@@ -17,7 +16,7 @@ from ..errors import ConfigurationError
 from .api_documents import DocumentReader
 from .site_settings import SiteSettings, SubmissionAccount
 
-# SiteKeyStatus: 'requested' until the launcher has published the key's public half.
+# SiteKeyStatus。launcherが公開鍵を公開するまでは'requested'。
 KEY_REQUESTED = "requested"
 KEY_STATUSES = (KEY_REQUESTED, "ready")
 
@@ -39,18 +38,18 @@ class AssignedSite:
 
     @property
     def label(self) -> str:
-        """How logs name the site: its name for people, its ID to find it."""
+        """ログでのsiteの呼び方。人向けの名前と、探すためのID。"""
         return f"{self.name} ({self.target_id})"
 
 
 @dataclass(frozen=True)
 class LauncherKey:
-    """A live key of this launcher: a site's shared account's, or one person's for their own."""
+    """このlauncherの有効な鍵。siteの共用アカウントの鍵か、ある人が自分用に持つ鍵。"""
 
     id: str
     target_id: str
     status: str
-    # The public half the API holds; None until the launcher has published one.
+    # APIが持つ公開鍵。launcherが公開するまではNone。
     public_key: str | None
 
     @classmethod
@@ -72,7 +71,7 @@ class LauncherKey:
 
 @dataclass(frozen=True)
 class ConnectionCheck:
-    """Log in once as the account with its key and run `true`; nothing is submitted."""
+    """そのアカウントとして、その鍵で1回ログインし`true`を実行する。何も投入しない。"""
 
     id: str
     target_id: str
@@ -89,12 +88,12 @@ class ConnectionCheck:
 
 @dataclass(frozen=True)
 class SchedulerCancellation:
-    """A Job that ended while it waited in the scheduler queue, which this launcher queued."""
+    """スケジューラの待ち行列で待っている間に終わったJobのうち、このlauncherが投入したもの。"""
 
     job_id: str
     target_id: str
     scheduler_job_id: str
-    # The account its cancel command runs as; '' and no key when the API no longer knows it.
+    # 取り消しコマンドを実行するアカウント。APIがもう知らなければ''で、鍵も無い。
     account: SubmissionAccount
 
     @classmethod

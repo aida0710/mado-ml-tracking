@@ -133,7 +133,7 @@ describe.skipIf(!testDatabaseUrl)('Logged Model metricsの履歴・filter・orde
     const validation = [{ dataset_name: 'validation', dataset_digest: 'v1' }];
     const scoped = await search({ filter, datasets: validation });
     expect(modelIds(scoped)).toEqual([id]);
-    // Dataset search limits matching models, while each returned model still exposes its history.
+    // データセットでの検索は合うモデルを絞るが、返った各モデルは履歴をすべて出す。
     expect(scoped.models[0]?.data.metrics).toHaveLength(4);
     expect(
       modelIds(

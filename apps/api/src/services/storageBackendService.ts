@@ -52,7 +52,7 @@ interface StoredCredentials {
   secretKeyId: string | null;
 }
 
-/** Picks the location and protocol settings; credentials and enabled are stored separately. */
+/** 保存場所と通信方式の設定を取り出す。認証情報とenabledは別に保存する。 */
 function configInput(
   input: StorageBackendPatchInput & { kind: StorageBackendConfigInput['kind'] },
 ): StorageBackendConfigInput {
@@ -86,7 +86,7 @@ function normalizedConfig(input: StorageBackendConfigInput): StorageBackendConfi
   }
 }
 
-/** Response shape: settings without the secret, only whether one is stored. */
+/** 応答の形。秘密の値を除いた設定で、秘密の値は保存されているかどうかだけを示す。 */
 function publicDatabaseBackend(row: StorageBackendRow): StorageBackend {
   const { config } = row;
   const common = {
@@ -111,7 +111,7 @@ function publicDatabaseBackend(row: StorageBackendRow): StorageBackend {
   return { ...common, ...config };
 }
 
-/** Environment backends keep the SDK defaults createArtifactStoresFromEnv always used. */
+/** 環境変数の保存先は、createArtifactStoresFromEnvがずっと使ってきたSDKの既定値を保つ。 */
 function publicEnvironmentBackend(description: EnvironmentBackendDescription): StorageBackend {
   const common = {
     source: 'environment' as const,
@@ -166,7 +166,7 @@ export class StorageBackendService {
           code: 'invalid_storage_backend_name',
           message: 'use lowercase letters, digits and hyphens for the storage backend name',
         });
-      // Environment names are reserved even when that backend is not configured right now.
+      // 環境変数の保存先の名前は、その保存先を今設定していなくても予約しておく。
       if (['filesystem', 's3'].includes(input.name)) this.nameTaken();
       const config = normalizedConfig(configInput(input));
       const credentials = this.storedCredentials({
@@ -216,7 +216,7 @@ export class StorageBackendService {
         if (!current) notFound('storage backend');
         const kind = patch.kind ?? current.config.kind;
         const kindChanged = kind !== current.config.kind;
-        // Settings and credentials of another kind do not carry over; a kind change takes only the patch.
+        // 別の種類の設定と認証情報は引き継がない。種類を変えるときはpatchの内容だけを使う。
         const base = kindChanged ? { kind } : current.config;
         const config = normalizedConfig(configInput({ ...base, ...patch, kind }));
         if (
@@ -245,7 +245,7 @@ export class StorageBackendService {
         await writeAuditEvent(connection, {
           ...draft,
           outcome: 'success',
-          // Field names only: the patch itself may carry the secret.
+          // 項目名だけを残す。patchそのものには秘密の値が含まれることがある。
           details: { ...this.auditDetails(updated), changedFields: Object.keys(patch).sort() },
         });
         return updated;
@@ -270,7 +270,7 @@ export class StorageBackendService {
       } else {
         const row = await findStorageBackendRow(database, name);
         if (!row) notFound('storage backend');
-        // A fresh store tests the saved settings, including those of a disabled backend.
+        // 新しく作ったstoreで保存済みの設定を試す。無効にした保存先の設定も試す。
         openStore = () => registry.buildStore(row);
       }
       const result = await runConnectionTest(openStore);
@@ -308,7 +308,7 @@ export class StorageBackendService {
       await registry.ensureLoaded();
       await transaction(database, async (connection) => {
         const backend = settings.defaultBackend;
-        // The row lock orders this against a concurrent PATCH that disables the backend.
+        // 行のロックで、保存先を無効にする並行したPATCHとの順を決める。
         const row = registry.isEnvironmentBackend(backend)
           ? null
           : await findStorageBackendRowForUpdate(connection, backend);
@@ -358,7 +358,7 @@ export class StorageBackendService {
     };
   }
 
-  /** Settings without the secret, the access key id or the CA bundle text. */
+  /** 秘密の値、access key id、CAバンドルの本文を除いた設定。 */
   private auditDetails(row: StorageBackendRow) {
     return {
       name: row.name,
@@ -370,8 +370,8 @@ export class StorageBackendService {
   }
 
   /**
-   * Merges the request into the stored credentials. An omitted secret keeps the stored one,
-   * null clears it, and the access key id and secret must end up set or cleared together.
+   * リクエストを保存済みの認証情報に重ねる。秘密の値を省けば保存済みのものを保ち、nullなら消す。
+   * access key idと秘密の値は、最後に両方とも設定されているか、両方とも消えていなければならない。
    */
   private storedCredentials({
     config,

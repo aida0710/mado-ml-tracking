@@ -43,7 +43,7 @@ const publicJobColumns = [
 export function jobColumns(alias = ''): string {
   const prefix = alias ? `${alias}.` : '';
   const columns = publicJobColumns.map((column) => `${prefix}${column}`);
-  // Array members show the size of their group; the group row keeps it once.
+  // arrayの各Jobはグループの大きさを示す。値はグループの行に1回だけ持つ。
   const arraySize = `(SELECT g.size FROM job_array_groups g WHERE g.id=${prefix}array_group_id) AS array_size`;
   return [...columns, arraySize, `${jobHeartbeatStaleSql(alias)} AS heartbeat_stale`].join(',');
 }

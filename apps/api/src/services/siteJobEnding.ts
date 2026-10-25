@@ -6,18 +6,19 @@ import { runColumns } from '../repositories/runListProjection.js';
 import type { RunCompletionService } from './runCompletionService.js';
 
 /**
- * Counts submissions among a target's Jobs: the members of an array are one submission where the
- * site takes arrays (the boolean parameter supportsArray), and one each where it does not.
+ * コンピュータのJobのうち、投入の数を数える。siteがarrayを扱えるなら（真偽値の引数
+ * supportsArray）arrayの要素をまとめて1回、扱えないなら要素ごとに1回と数える。
  */
 export function submissionCountSql(supportsArray: string, filter = ''): string {
   return `count(DISTINCT CASE WHEN ${supportsArray}::boolean THEN COALESCE(array_group_id,id) ELSE id END)${filter}::int`;
 }
 
 /**
- * Fails a Job whose runner never started: a site's job shell refused it, no result came back, or
- * it waited in the scheduler queue too long; or its requester may no longer use the computer (an
- * ssh or local Job too, when a worker would claim it). A Job still in a scheduler queue is also
- * marked for the launcher to remove (scheduler_cancel_state). The caller holds the Job's row lock.
+ * runnerが始まらなかったJobを失敗にする。siteのjob shellが拒んだ、結果が返ってこなかった、
+ * スケジューラのキューで長く待ちすぎた、のいずれか。または、依頼者がもうそのコンピュータを
+ * 使えない場合（workerがclaimしようとしたときの、sshやlocalのJobも含む）。まだスケジューラの
+ * キューにいるJobには、launcherが取り除くよう印も付ける（scheduler_cancel_state）。
+ * 呼び出し元はJobの行のロックを持っている。
  */
 export async function failUnstartedJob(
   connection: Connection,

@@ -2,7 +2,8 @@ import { isDeepStrictEqual } from 'node:util';
 import type { ComputeTarget } from '@mmt/contracts';
 import { DomainError } from './errors.js';
 
-// What tracking stores for a site beyond its name: no address, account, keys or GPU IDs.
+// mado ML Trackingがsiteについて名前のほかに保存するもの。アドレス・アカウント・鍵・
+// GPU IDは持たない。
 function hasSiteOnlyDescription(target: Omit<ComputeTarget, 'id' | 'ownerUserId'>): boolean {
   const connection = [
     target.host,
@@ -45,7 +46,7 @@ export function validateTargetConfiguration(
       code: 'local_executor_disabled',
       message: 'the local executor requires explicit permission in development mode',
     });
-  // A local target runs on the worker's own host, so it has no address or account of its own.
+  // localのコンピュータはworker自身のホストで動くので、自分のアドレスやアカウントを持たない。
   if (target.executor === 'ssh' && (!target.host || !target.username))
     throw new DomainError({
       status: 422,
@@ -58,8 +59,8 @@ export function validateTargetConfiguration(
       code: 'ssh_config_required',
       message: 'an SSH computer requires paths to the key and known_hosts',
     });
-  // A computer is added disabled with its connection, checked, and then set up (its work directory
-  // and Python come from the check); only an enabled one takes Jobs and needs them.
+  // コンピュータは接続設定とともに無効の状態で追加し、検査してから設定する（作業ディレクトリと
+  // Pythonは検査の結果から決める）。それらが要るのは、Jobを受ける有効なコンピュータだけ。
   if (target.enabled && (!target.workDirectory || !target.pythonExecutable))
     throw new DomainError({
       status: 422,
@@ -68,9 +69,10 @@ export function validateTargetConfiguration(
     });
 }
 
-// These fields affect queued launches and reattachment of existing remote processes. The dataset
-// settings decide where a claimed Job's inputs come from and which cache entries may be deleted.
-// A site's submission mode, arrays and CPU decide how its queued Jobs are submitted and built.
+// これらのフィールドは、キューにある起動と、既存のリモートプロセスへの再接続に影響する。
+// データセットの設定は、claimしたJobの入力をどこから取るかと、どのキャッシュの項目を
+// 消してよいかを決める。siteのsubmission mode・array・CPUは、キューにあるJobをどう投入し、
+// どう組み立てるかを決める。
 const executionFields = [
   'host',
   'port',

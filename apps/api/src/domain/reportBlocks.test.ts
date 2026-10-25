@@ -134,7 +134,7 @@ describe('レポートのブロックの検証', () => {
       steps: Array.from({ length: 51 }, (_, index) => index),
       mode: 'live',
     });
-    // Exactly one source per Run set, and only the known modes.
+    // Runの集合ごとに取得元はちょうど1つで、modeは既知のものだけ。
     expectRejected({
       type: 'chart',
       id: 'c',
@@ -170,7 +170,7 @@ describe('レポートのブロックの検証', () => {
       y: 'objective',
       mode: 'live',
     });
-    // Two params alone give no value to plot.
+    // parameterが2つだけでは、描く値が無い。
     expectRejected({
       type: 'scatter',
       id: 's',

@@ -10,8 +10,8 @@ import { rejectJobToken, requireProject } from './accessService.js';
 import { auditActor, NO_REQUEST_METADATA, recordDenial } from './auditService.js';
 
 /**
- * Edits the Run description stored in the mlflow.note.content tag.
- * A description is not an experiment result, so it stays editable after a Job's Run has ended.
+ * mlflow.note.contentのタグに保存したRunの説明を編集する。
+ * 説明は実験の結果ではないので、JobのRunが終わったあとも編集できる。
  */
 export class RunNoteService {
   constructor(private readonly database: Database) {}
@@ -22,7 +22,7 @@ export class RunNoteService {
     request: RequestMetadata = NO_REQUEST_METADATA,
   ): Promise<RunNote> {
     const { projectId, runId, content } = note;
-    // The audit trail records the length only; the description itself may contain anything.
+    // 監査ログには長さだけを記録する。説明そのものには何が書かれているか分からない。
     const details = { length: content.length };
     const draft = {
       ...auditActor(principal),

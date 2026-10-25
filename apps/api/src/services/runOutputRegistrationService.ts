@@ -9,8 +9,8 @@ import { requireProject } from './accessService.js';
 export class RunOutputRegistrationService {
   constructor(private readonly database: Database) {}
 
-  // A Run without a record either has no Task output setting or has not finished yet; the Run's
-  // own outputModelRegistration tells the two apart.
+  // 記録の無いRunは、Taskの出力の設定が無いか、まだ終わっていないかのどちらか。Run自身の
+  // outputModelRegistrationで見分ける。
   async get(
     principal: Principal,
     reference: { projectId: string; runId: string },

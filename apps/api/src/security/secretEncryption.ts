@@ -1,29 +1,30 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 
 /**
- * AES-256-GCM for secrets the server must read back (storage credentials, later OIDC tokens).
- * Each use passes its own key: a leaked or rotated key then exposes only that kind of secret,
- * and a row of one kind can never be decrypted as another.
+ * サーバーが読み戻す必要のある秘密（保存先の認証情報、SSOのsessionが持つOIDCのtoken、連携の
+ * access token、webhookの秘密）のためのAES-256-GCM。用途ごとに別の鍵を渡す。こうすると、
+ * 漏れた鍵や切り替えた鍵で影響を受けるのはその種類の秘密だけになり、ある種類の行を別の種類
+ * として復号することもできない。
  */
 
 const ALGORITHM = 'aes-256-gcm';
 const KEY_BYTES = 32;
-// 96-bit nonces are the GCM standard size; a fresh random one per encryption.
+// 96ビットのnonceはGCMの標準の長さ。暗号化のたびに新しい乱数で作る。
 const NONCE_BYTES = 12;
 const TAG_BYTES = 16;
-// Payload layout version, so a later format change can still read rows written today.
+// payloadの形式のバージョン。あとで形式を変えても、今書いた行を読めるようにする。
 const FORMAT_VERSION = 1;
-// Enough of the key's SHA-256 to tell keys apart without revealing anything about the key.
+// 鍵について何も明かさずに鍵を見分けられるだけの、鍵のSHA-256の先頭部分。
 const KEY_ID_HEX_LENGTH = 16;
 
 export interface SecretKey {
-  /** Fingerprint stored next to each ciphertext to report a key change clearly. */
+  /** 鍵が変わったことをはっきり伝えるため、暗号文ごとに並べて保存するフィンガープリント。 */
   id: string;
   material: Buffer;
 }
 export interface EncryptedSecret {
   keyId: string;
-  /** version (1 byte) + nonce + ciphertext + tag. */
+  /** バージョン（1バイト）+ nonce + 暗号文 + tag。 */
   payload: Buffer;
 }
 
@@ -33,14 +34,14 @@ export class SecretKeyFormatError extends Error {
     this.name = 'SecretKeyFormatError';
   }
 }
-/** The ciphertext was encrypted with another key, for example before a key rotation. */
+/** 暗号文が別の鍵で暗号化されている（鍵を切り替える前のものなど）。 */
 export class SecretKeyMismatchError extends Error {
   constructor() {
     super('Secret was encrypted with a different key');
     this.name = 'SecretKeyMismatchError';
   }
 }
-/** The payload or its context was altered, or the payload is not in a known format. */
+/** payloadかそのcontextが改変された、またはpayloadが既知の形式でない。 */
 export class SecretDecryptionError extends Error {
   constructor() {
     super('Secret could not be decrypted');
@@ -50,7 +51,7 @@ export class SecretDecryptionError extends Error {
 
 export function parseSecretKey(base64: string): SecretKey {
   const material = Buffer.from(base64, 'base64');
-  // Buffer.from ignores invalid characters, so the round trip proves the text was clean base64.
+  // Buffer.fromは不正な文字を無視するので、往復して一致すれば正しいbase64だったと確かめられる。
   if (material.length !== KEY_BYTES || material.toString('base64') !== base64.trim())
     throw new SecretKeyFormatError();
   const id = createHash('sha256').update(material).digest('hex').slice(0, KEY_ID_HEX_LENGTH);
@@ -58,8 +59,8 @@ export function parseSecretKey(base64: string): SecretKey {
 }
 
 /**
- * The context (for example "storage-backend:<name>") is authenticated but not stored, so a
- * ciphertext copied to another row fails to decrypt there.
+ * context（"storage-backend:<name>"など）は認証の対象にするが保存はしない。そのため、別の行へ
+ * 写した暗号文はそこでは復号できない。
  */
 function additionalData(keyId: string, context: string): Buffer {
   return Buffer.from(JSON.stringify([FORMAT_VERSION, keyId, context]));

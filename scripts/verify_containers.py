@@ -1,4 +1,4 @@
-"""Verify model automation and a real CPU Docker job against the local API."""
+"""ローカルのAPIで、モデルの自動実行と、CPUで動く実際のDockerのJobを確かめる。"""
 
 from __future__ import annotations
 
@@ -34,21 +34,22 @@ ARTIFACT_DIRECTORY = (
     / datetime.now(ZoneInfo("Asia/Tokyo")).strftime("%Y-%m-%d")
     / "containers"
 )
-# This already available image has Node and needs no package installation for the fixture.
+# このイメージは既に手元にあり、Nodeを含むので、fixtureのためにパッケージを入れる必要が無い。
 DEFAULT_IMAGE = (
     "node@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392"
 )
-# Keep the recovery job alive long enough to interrupt the monitor after its first log.
+# 最初のログのあとに監視を中断できるよう、復旧用のJobを十分長く動かしておく。
 RECOVERY_DELAY_SECONDS = 5
 EXPECTED_SAMPLES = 4
-# Allow the Docker stop/kill confirmation and final API acknowledgement to complete.
+# Dockerのstop/killの確認と、APIの最終的な受領の確認が終わるまでの時間を取る。
 CANCEL_TIMEOUT_SECONDS = 60
-# Frequent local polling keeps the reconnect/cancel scenarios short without changing worker defaults.
+# ローカルで頻繁にポーリングし、workerの既定値を変えずに再接続やキャンセルの場面を短く済ませる。
 HEARTBEAT_SECONDS = 0.2
 POLL_SECONDS = 0.1
 TELEMETRY_SECONDS = 1
 CANCEL_GRACE_SECONDS = 0.5
-# Local API calls can include streamed artifacts; tokens remain bounded even if cleanup is interrupted.
+# ローカルのAPIの呼び出しには、ストリームで送るArtifactも含まれうる。tokenは、後片付けが
+# 中断されても有効期間が限られる。
 REQUEST_TIMEOUT_SECONDS = 30
 TOKEN_LIFETIME = timedelta(hours=1)
 

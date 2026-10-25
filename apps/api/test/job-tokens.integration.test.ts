@@ -129,7 +129,7 @@ describe.skipIf(!testDatabaseUrl)('Job限定token（独立PostgreSQL）', () => 
       body: { name: 'Job Output', family: 'qwen2' },
     });
     expect(outputModel.status).toBe(201);
-    // Reads stay possible inside the Project, for example upstream Run details.
+    // Projectの中の読み取り（上流のRunの詳細など）は引き続きできる。
     expect((await request(harness.app, `${fixture.basePath}/runs/${run.id}`, { token: jobToken })).status).toBe(200);
   });
 
@@ -150,7 +150,7 @@ describe.skipIf(!testDatabaseUrl)('Job限定token（独立PostgreSQL）', () => 
     expect(stored.rows[0].created_by_token_id).toBeNull();
     expect(stored.rows[0].created_by_job_token_id).not.toBeNull();
     const uploadPath = `${fixture.basePath}/artifact-uploads/${upload.id}`;
-    // The Run creator's own session did not open it, so it cannot continue the upload.
+    // Runの作成者自身のsessionで開いたものではないので、作成者はこのアップロードを続けられない。
     const byCreator = await request(harness.app, uploadPath, { cookie: fixture.editor.cookie });
     expect(await errorCode(byCreator)).toBe('upload_forbidden');
     const part = await request(harness.app, `${uploadPath}/parts/1`, {
@@ -293,7 +293,7 @@ describe.skipIf(!testDatabaseUrl)('Job限定token（独立PostgreSQL）', () => 
     );
     expect(current).toMatchObject({ projectId: fixture.project.id, job: true });
     expect(current.scopes).toEqual(['read', 'runs:write', 'artifacts:write', 'registry:write']);
-    // Other routes outside a Project stay closed.
+    // Projectの外にあるほかの経路は閉じたまま。
     expect((await request(harness.app, '/api/auth/me', { token: jobToken })).status).toBe(403);
     expect((await request(harness.app, '/api/projects', { token: jobToken })).status).toBe(403);
   });
@@ -313,7 +313,7 @@ describe.skipIf(!testDatabaseUrl)('Job限定token（独立PostgreSQL）', () => 
     const checked: string[] = [];
     for (const [key, route] of routes) {
       if (unconditional.has(key)) continue;
-      // Foreign ids: rules that check the Run, upload, or Logged Model must refuse them.
+      // 無関係のid。Run、アップロード、Logged Modelを確かめる規則はこれを拒まなければならない。
       const path = route.path
         .replace(':p', fixture.project.id)
         .replace(/:model_id/g, `m-${'0'.repeat(32)}`)

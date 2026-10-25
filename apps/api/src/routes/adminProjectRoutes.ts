@@ -4,7 +4,7 @@ import { parse, principal, uuidParam, type ApiEnvironment } from '../http/reques
 import { requestMetadata } from '../http/requestMetadata.js';
 import type { ProjectAdministrationService } from '../services/projectAdministrationService.js';
 
-// Mounted at /api/admin; every operation requires a global administrator.
+// /api/adminに置く。どの操作も全体管理者に限る。
 export function adminProjectRoutes(projects: ProjectAdministrationService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.get('/projects', async (context) =>

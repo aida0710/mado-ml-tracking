@@ -10,15 +10,15 @@ export function artifactTooLargeError(maxBytes: number): DomainError {
   });
 }
 
-/** Rejects a declared Content-Length before any byte is written to storage. */
+/** 保存先に1バイトも書く前に、宣言されたContent-Lengthで拒む。 */
 export function assertDeclaredArtifactSize(declaredBytes: number | undefined, maxBytes: number) {
   if (declaredBytes !== undefined && declaredBytes > maxBytes)
     throw artifactTooLargeError(maxBytes);
 }
 
 /**
- * Passes bytes through until the limit, then fails the stream so the storage pipeline aborts.
- * Chunked uploads have no Content-Length, so this is the only bound on them.
+ * 上限まではバイト列をそのまま通し、超えたらストリームを失敗させて保存のpipelineを中断させる。
+ * chunkedのアップロードにはContent-Lengthが無いので、上限はこれだけになる。
  */
 export class ArtifactSizeLimit extends Transform {
   private receivedBytes = 0;

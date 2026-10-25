@@ -9,7 +9,7 @@ import { buildReleaseBundle } from './buildBundle.mjs';
 import { RELEASE_IMAGES } from './images.mjs';
 import { REPOSITORY_ROOT } from './version.mjs';
 
-// The fixture uses the repository's own manifests, so its tag follows the current version.
+// fixtureはリポジトリ自身のmanifestを使うので、そのタグは現在のバージョンに従う。
 const VERSION = JSON.parse(await readFile(join(REPOSITORY_ROOT, 'package.json'), 'utf8')).version;
 const TAG = `v${VERSION}`;
 const FIXTURE_DIGEST = `sha256:${'1'.repeat(64)}`;

@@ -1,4 +1,4 @@
-"""Check real CPU fine-tuning from input weights, output lineage, and visible failures."""
+"""入力の重みからの実際のCPUでのファインチューニング、出力のlineage、目に見える失敗を確かめる。"""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from fake_http_api import TrackingServer
 from mado_tracking import Client
 
 TRAINING_SCRIPT = Path(__file__).resolve().parent.parent / "examples" / "training.py"
-# A stalled example or HTTP fixture should fail without blocking the test suite.
+# 止まった例やHTTPのfixtureは、テストスイートを止めずに失敗させる。
 EXAMPLE_TIMEOUT_SECONDS = 15
 INPUT_MODEL_ID = "pinned-parent-version"
 INPUT_WEIGHTS = {"family": "linear", "weight": 1.0, "bias": 0.5}
@@ -52,7 +52,7 @@ def run_training(environment: dict[str, str], output: Path, *, offline: bool = F
 
 def assert_finetuned_weights(output: Path) -> None:
     weights = json.loads(output.read_text())
-    # One actual gradient step from weight=1,bias=0.5 is weight=1.35,bias=0.7.
+    # weight=1,bias=0.5から実際に勾配降下を1回行うと、weight=1.35,bias=0.7になる。
     assert weights["weight"] == pytest.approx(1.35)
     assert weights["bias"] == pytest.approx(0.7)
 

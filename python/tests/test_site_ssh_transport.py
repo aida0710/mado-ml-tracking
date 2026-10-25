@@ -1,8 +1,9 @@
-"""SshSiteTransport against a fake `ssh` on PATH: how often it logs in, and its shared connection.
+"""PATHに置いた偽の`ssh`を相手にしたSshSiteTransport: ログインの回数と共有の接続。
 
-The fake records each call. A master (`ControlMaster=yes`) creates the control socket and marks
-itself alive; `-O check` and `-O exit` answer only while it is; a command reports whether it ran
-over the shared connection. A `refusal` file beside it makes every login fail with its text.
+偽のsshは呼び出しをすべて記録する。master（`ControlMaster=yes`）はcontrol socketを作り、
+自分が生きている印を付ける。`-O check`と`-O exit`はmasterが生きているあいだだけ応答する。
+コマンドは、共有の接続を通って実行したかを報告する。隣に`refusal`ファイルを置くと、すべての
+ログインがその文面で失敗する。
 """
 
 from __future__ import annotations
@@ -73,7 +74,7 @@ def fake_ssh(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def calls(fake_ssh: Path) -> list[str]:
-    """What each ssh call was: a master, a command, or the -O control command it sent."""
+    """各sshの呼び出しの種類: master、コマンド、または送った-Oの制御コマンド。"""
     log = fake_ssh / "ssh.jsonl"
     kinds = []
     for line in log.read_text().splitlines() if log.exists() else []:
@@ -103,13 +104,13 @@ def test_a_refused_login_fails_once_and_says_that_retrying_cannot_help(
     (fake_ssh / "refusal").write_text(REFUSED_KEY)
     with pytest.raises(LoginRefused, match=r"Permission denied \(publickey\)"):
         transport.run(["true"])
-    # The master's failed login is the only one: the command does not log in again on its own.
+    # 失敗したログインはmasterのものだけ。コマンドが自分でもう一度ログインすることはない。
     assert calls(fake_ssh) == ["master"]
 
     (fake_ssh / "refusal").write_text(UNKNOWN_HOST_KEY)
     with pytest.raises(LoginRefused, match="Host key verification failed"):
         transport.run(["true"])
-    # A host that does not answer may answer later: that is no refusal.
+    # 応答しないホストは、あとで応答するかもしれない。それは拒否ではない。
     (fake_ssh / "refusal").write_text(UNREACHABLE)
     with pytest.raises(TransportError, match="Connection timed out") as unreachable:
         transport.run(["true"])
@@ -125,7 +126,7 @@ def test_one_login_serves_the_commands_and_a_socket_left_by_a_killed_master_is_r
     assert transport.run(["true"]).stdout == b"shared\n"
     assert calls(fake_ssh) == ["master", "command", "check", "command"]
 
-    # The master died with a killed launcher; its socket stayed in the state directory.
+    # launcherが強制終了されてmasterも終わり、そのsocketがstateディレクトリに残った。
     (fake_ssh / "master-alive").unlink()
     assert transport.control_path.exists()
     assert transport.run(["true"]).stdout == b"shared\n"
@@ -141,7 +142,7 @@ def test_under_a_state_directory_too_deep_for_a_control_socket_each_command_logs
     deep = ssh_state_directory / ("d" * MAX_CONTROL_PATH_BYTES)
     assert connections_can_be_shared(ssh_state_directory) and not connections_can_be_shared(deep)
     transport = transport_under(tmp_path, deep)
-    # OpenSSH could not bind the socket, so no master is started: the commands log in alone.
+    # OpenSSHがsocketをbindできないのでmasterは起動しない。コマンドはそれぞれ単独でログインする。
     assert transport.run(["true"]).stdout == b"alone\n"
     assert transport.run(["true"]).stdout == b"alone\n"
     assert calls(fake_ssh) == ["command", "command"]

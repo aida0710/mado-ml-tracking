@@ -1,4 +1,4 @@
-/** Verifies parent corrections against the isolated API, including existing model lineage. */
+/** 分離したAPIで、既存のモデルのlineageも含めて親の修正を確かめる。 */
 import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';

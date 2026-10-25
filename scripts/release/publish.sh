@@ -1,7 +1,7 @@
 #!/bin/sh
-# Creates and pushes the annotated release tag once the release source is ready, which starts the
-# release workflow (.github/workflows/release.yml). See docs/releasing.md.
-# Usage: publish.sh [--verify-only] <tag> [<one-line summary for the tag message>]
+# リリースのソースの準備ができたら、注釈付きのリリースのtagを作ってpushする。これでリリースの
+# workflow（.github/workflows/release.yml）が始まる。docs/releasing.mdを参照。
+# 使い方: publish.sh [--verify-only] <tag> [<tagのメッセージに入れる1行の要約>]
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)

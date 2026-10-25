@@ -28,7 +28,7 @@ export async function findWorkflowVersion(
   return version;
 }
 
-/** Newest first, from the revision below `beforeRevision` (from the newest when null). */
+/** 新しい順。`beforeRevision`より前のrevisionから返す（nullなら最新から）。 */
 export async function listWorkflowVersions(
   connection: Connection,
   reference: {

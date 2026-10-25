@@ -31,7 +31,7 @@ export interface PluginDeliveryPayload {
   destinationUrl: string;
 }
 
-/** Project authorization and domain operations of the application's compiled-in plugins. */
+/** アプリに組み込まれたpluginの、Projectの権限確認とドメインの操作。 */
 export class PluginService {
   private readonly database: Database;
   private readonly registry: RegistryService;
@@ -66,7 +66,9 @@ export class PluginService {
     return this.connections.patch(principal, projectId, request);
   }
 
-  /** Reads the access token's grant from Mado and saves it with the manifest for this revision. */
+  /**
+   * access tokenのgrantをmado S3 Data Catalogから読み、このrevisionのmanifestと一緒に保存する。
+   */
   async check(
     principal: Principal,
     projectId: string,
@@ -139,7 +141,7 @@ export class PluginService {
       );
       if (plugin.configRevision !== request.expectedRevision)
         conflict('the integration settings have changed; search again');
-      // The server resolves the immutable version itself; browser-supplied URI/digest are never trusted.
+      // 変更できないバージョンはサーバーが自分で解決し、ブラウザが送ったURI/digestは信用しない。
       const client = this.client(plugin);
       const imported = await this.callPlugin(() => client.datasetVersion(request.externalId));
       const grant = await this.callPlugin(() => client.accessTokenGrant());

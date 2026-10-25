@@ -5,24 +5,25 @@ export interface RateLimit {
   windowMs: number;
 }
 
-// Limits per API process. They are memory-only: a restart resets them, which is acceptable
-// because they slow online guessing rather than enforce an account lockout.
-// A shared office NAT can send many legitimate logins from one address within a minute.
+// APIのプロセスごとの上限。メモリにしか持たないので再起動で戻るが、アカウントのロックではなく
+// オンラインでの推測を遅らせるためのものなので、それでかまわない。
+// オフィスの共有NATからは、1つのアドレスから1分間に正当なログインが多数来ることがある。
 export const LOCAL_LOGIN_IP_LIMIT: RateLimit = { attempts: 30, windowMs: 60_000 };
-// Guessing one account from many addresses is bounded by failures on that username.
+// 多数のアドレスから1つのアカウントを推測する攻撃は、そのユーザー名での失敗回数で抑える。
 export const LOCAL_LOGIN_USERNAME_FAILURE_LIMIT: RateLimit = {
   attempts: 10,
   windowMs: 15 * 60_000,
 };
-// Each OIDC start stores a state row; this bounds rows one address can create.
+// OIDCの開始ごとにstateの行を1つ保存する。1つのアドレスが作れる行数をこれで抑える。
 export const OIDC_START_IP_LIMIT: RateLimit = { attempts: 20, windowMs: 60_000 };
-// A stolen session must not be able to brute-force the current password.
+// 盗まれたsessionで現在のパスワードを総当たりできないようにする。
 export const CURRENT_PASSWORD_LIMIT: RateLimit = { attempts: 10, windowMs: 15 * 60_000 };
-// One Argon2id check uses about 19 MiB; four keep login bursts from exhausting API memory.
+// Argon2idの検査1回で約19MiBを使う。4つまでにして、ログインが集中してもAPIのメモリを
+// 使い切らないようにする。
 export const MAX_CONCURRENT_PASSWORD_CHECKS = 4;
-// Clients retry a busy password check after this many seconds.
+// パスワードの検査が混んでいるとき、クライアントはこの秒数のあとに再試行する。
 export const PASSWORD_CHECK_BUSY_RETRY_SECONDS = 1;
-// Bounds the bucket map when many addresses or usernames are tried.
+// 多数のアドレスやユーザー名が試されたときのbucketのMapの大きさを抑える。
 const MAX_BUCKETS = 2_000;
 
 interface Bucket {
@@ -30,7 +31,7 @@ interface Bucket {
   resetAt: number;
 }
 
-// Routes copy retryAfterSeconds into the Retry-After header before the shared error handler responds.
+// 共通のエラーハンドラが応答する前に、経路側でretryAfterSecondsをRetry-Afterヘッダーに写す。
 export class RateLimitedError extends DomainError {
   constructor(readonly retryAfterSeconds: number) {
     super({ status: 429, code: 'rate_limited', message: 'too many attempts; wait and try again' });
@@ -51,19 +52,19 @@ export class AuthRateLimiter {
     if (maxBuckets < 1) throw new Error('maxBuckets must be at least 1');
   }
 
-  // Counts one attempt, throwing RateLimitedError once the window's allowance is used up.
+  // 試行を1回数え、期間内の許容回数を使い切っていればRateLimitedErrorを投げる。
   consumeOrThrow(key: string, limit: RateLimit): void {
     const decision = this.consume(key, limit);
     if (!decision.allowed) throw new RateLimitedError(decision.retryAfterSeconds);
   }
 
-  // Throws RateLimitedError when the key is exhausted, without counting an attempt.
+  // 試行を数えずに、keyの許容回数が尽きていればRateLimitedErrorを投げる。
   checkOrThrow(key: string, limit: RateLimit): void {
     const decision = this.check(key, limit);
     if (!decision.allowed) throw new RateLimitedError(decision.retryAfterSeconds);
   }
 
-  // Counts one attempt and refuses it once the window's allowance is used up.
+  // 試行を1回数え、期間内の許容回数を使い切っていれば拒否する。
   consume(key: string, limit: RateLimit): RateLimitDecision {
     const exhausted = this.check(key, limit);
     if (!exhausted.allowed) return exhausted;
@@ -71,7 +72,7 @@ export class AuthRateLimiter {
     return { allowed: true };
   }
 
-  // Reports whether the key is exhausted without counting an attempt.
+  // 試行を数えずに、keyの許容回数が尽きているかを返す。
   check(key: string, limit: RateLimit): RateLimitDecision {
     const bucket = this.liveBucket(key);
     if (!bucket || bucket.count < limit.attempts) return { allowed: true };
@@ -81,11 +82,11 @@ export class AuthRateLimiter {
     };
   }
 
-  // Counts an attempt, for limits that only count failures.
+  // 試行を1回数える。失敗だけを数える上限で使う。
   record(key: string, limit: RateLimit): void {
     const bucket = this.liveBucket(key);
     if (bucket) {
-      // Map insertion order doubles as recency so eviction removes the least recently used key.
+      // Mapの挿入順を新しさの順に兼用し、追い出しで最も長く使われていないkeyを消す。
       this.buckets.delete(key);
       this.buckets.set(key, bucket);
       bucket.count += 1;
@@ -95,7 +96,7 @@ export class AuthRateLimiter {
     this.buckets.set(key, { count: 1, resetAt: this.now() + limit.windowMs });
   }
 
-  // Runs a password hash or verification, refusing with 429 when too many already run.
+  // パスワードのハッシュ化か検証を実行する。既に多く動いているときは429で拒否する。
   async passwordCheck<T>(task: () => Promise<T>): Promise<T> {
     if (this.activePasswordChecks >= this.maxConcurrentPasswordChecks)
       throw new RateLimitedError(PASSWORD_CHECK_BUSY_RETRY_SECONDS);

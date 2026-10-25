@@ -1,4 +1,4 @@
-"""Atomic durable job state and Linux process identity checks on the compute target."""
+"""コンピュータ上でのJobの状態の不可分で永続的な保存と、Linuxのプロセスの同一性の確認。"""
 
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ def process_identity(pid: int) -> str | None:
         return None
     try:
         process_stat = Path(f"/proc/{pid}/stat").read_text()
-        # comm can contain spaces or ')'; fields after its final ')' start at field 3.
+        # commには空白や')'が入り得る。最後の')'より後ろのフィールドは3番目から始まる。
         process_fields = process_stat[process_stat.rfind(")") + 2 :].split()
         if process_fields[0] == "Z":
             return None
@@ -63,7 +63,7 @@ def is_process_group_present(pid: int) -> bool:
     except ProcessLookupError:
         return False
     except PermissionError:
-        # Absence cannot be proven; retain the lease rather than risk another execution on this GPU.
+        # 無いことを証明できない。このGPUで別の実行が動く危険を冒すより、leaseを持ち続ける。
         return True
 
 
@@ -72,7 +72,8 @@ def is_owned_process_group(pid: int, expected_identity: str | None) -> bool:
         return False
     if is_same_process(pid, expected_identity):
         return True
-    # A dead leader can leave children in its session. A reused live leader invalidates ownership.
+    # リーダーが終了しても、そのセッションに子プロセスが残ることがある。
+    # リーダーのPIDを再利用した別のプロセスが生きていれば、所有していないとみなす。
     if process_identity(pid) is not None:
         return False
     try:
@@ -108,7 +109,8 @@ def read_state(workspace: Path) -> dict[str, Any]:
             state["status"] = "unknown"
             state["error"] = "Supervisor disappeared; the existing execution must not be restarted"
         if state["status"] == "unknown":
-            # A supervisor interrupted between intent and PID publication may have spawned a child.
+            # 実行の意図を記録してからPIDを書き込むまでの間に中断された
+            # supervisorは、子プロセスを起動済みかもしれない。
             state["processAlive"] = (
                 supervisor_alive
                 or process_alive

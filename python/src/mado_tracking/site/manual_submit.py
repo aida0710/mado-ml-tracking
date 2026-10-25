@@ -1,13 +1,12 @@
-"""`mado-tracking submit`: submit the Jobs that wait for a manual site (logins with OTP, or a PC).
+"""`mado-tracking submit`。手動のsite（OTPつきのログインやPC）で待っているJobを投入する。
 
-Run where the job shell can submit (the site's login node, or the PC that is the site) with one's
-own API token (MMT_API_URL, MMT_API_TOKEN). The site's settings and job shell, and one's own work
-directory and variables, come from the Web (GET /manual-submissions/sites/:id); --work-dir and
---var change them for this run only, and --registry-secret-file hands the runners a registry login.
-A round claims the waiting Jobs, writes their spec directories, runs the job shell once per
-submission and reports the scheduler job IDs. Without --watch the command is one round and nothing
-keeps running; with --watch it repeats a round every --interval seconds until it is stopped, and
-outlasts the API's temporary failures.
+job shellが投入できる場所（siteのログインノード、またはsiteであるPC）で、自分のAPI token
+（MMT_API_URL、MMT_API_TOKEN）を使って実行する。siteの設定とjob shell、自分のwork directory
+と変数は画面から取る（GET /manual-submissions/sites/:id）。--work-dirと--varはこの実行だけ
+それらを変え、--registry-secret-fileはrunnerにレジストリのログイン情報を渡す。1巡で、
+待っているJobをclaimし、それぞれのspecディレクトリを書き、投入ごとにjob shellを1回実行し、
+スケジューラのジョブIDを報告する。--watchが無ければコマンドは1巡で終わり、何も動き続けない。
+--watchがあれば、止めるまで--interval秒ごとに1巡を繰り返し、APIの一時的な障害も乗り切る。
 """
 
 from __future__ import annotations
@@ -33,10 +32,10 @@ from .submission import failed_result, submission_job_ids, submit_to_site
 from .submission_api import ManualSubmissionApi, refused_for_good
 from .transport import LocalSiteTransport
 
-# The API returns at most this many submissions per claim (SITE_CLAIM_MAX_SUBMISSIONS).
+# 1回のclaimでAPIが返す投入の最大数（SITE_CLAIM_MAX_SUBMISSIONS）。
 MAX_SUBMISSIONS = 50
 DEFAULT_WATCH_INTERVAL_SECONDS = 10.0
-# Jobs wait for minutes, not seconds; a shorter interval would only load the API.
+# Jobは秒ではなく分の単位で待つ。間隔を短くしても、APIの負荷が増えるだけ。
 MIN_WATCH_INTERVAL_SECONDS = 1.0
 EXIT_OK = 0
 EXIT_SUBMISSION_FAILED = 1
@@ -49,19 +48,19 @@ def default_state_directory(target_id: str) -> Path:
 
 
 def submitter_id() -> str:
-    """Stable per account and host, so a later run can recognize its own reports."""
+    """アカウントとホストごとに変わらない値。あとの実行が、自分の報告を見分けられるようにする。"""
     return f"{getpass.getuser()}@{socket.gethostname()}"
 
 
 @dataclass(frozen=True)
 class SubmitOptions:
     target_id: str
-    # Every waiting Job of a computer one owns, not only one's own (the API's `all`).
+    # 自分の分だけでなく、自分が所有するコンピュータで待っているJobすべて（APIの`all`）。
     all_jobs: bool = False
-    # This run's work directory and variables, on top of one's settings on the Web.
+    # この実行のwork directoryと変数。画面での自分の設定に上乗せする。
     work_dir: str | None = None
     variables: Mapping[str, str] = field(default_factory=dict)
-    # JSON {"username", "password"} (mode 600) the runners pull images into SIFs with.
+    # runnerがイメージを取ってきてSIFにするときに使う、JSONの{"username", "password"}（モード600）。
     registry_secret_file: Path | None = None
     limit: int = MAX_SUBMISSIONS
     dry_run: bool = False
@@ -81,7 +80,7 @@ class SubmitOptions:
                 raise ConfigurationError(f"--var {name} must be one line")
 
     def account_for(self, account: SubmissionAccount) -> SubmissionAccount:
-        """The account with this run's --work-dir and --var on top."""
+        """この実行の--work-dirと--varを上乗せしたアカウント。"""
         return replace(
             account,
             work_directory=self.work_dir or account.work_directory,
@@ -117,11 +116,11 @@ class ManualSubmitter:
             send=self.api.report,
             notice=print_line,
         )
-        # The waiting count last shown: a watch prints it again only when it changes.
+        # 最後に表示した待ちの件数。watchでは、変わったときだけ表示し直す。
         self.shown_waiting: int | None = None
 
     def run_once(self) -> int:
-        """One round; EXIT_SUBMISSION_FAILED when a claimed submission failed."""
+        """1巡。claimした投入が失敗したらEXIT_SUBMISSION_FAILED。"""
         if not self.options.dry_run:
             self.pending.resend()
         name, waiting = self.waiting_jobs()
@@ -133,7 +132,7 @@ class ManualSubmitter:
         configuration = self.api.site_configuration(self.options.target_id)
         account = self.options.account_for(configuration.account)
         if configuration.job_shell is None:
-            # A claim now would only fail the waiting Jobs.
+            # 今claimしても、待っているJobを失敗させるだけ。
             raise ConfigurationError(
                 f"{configuration.target_name} has no job shell yet; its owner saves one on the Web"
             )
@@ -142,7 +141,7 @@ class ManualSubmitter:
                 f"No work directory for {configuration.target_name}: set yours in its settings on the "
                 "Web, or give --work-dir"
             )
-        # Read every round, so an edit applies to the next one and a broken file stops any claim.
+        # 巡ごとに読むので、編集は次の巡から効き、壊れたファイルはclaimを止める。
         secrets = self.spec_secrets()
         if self.options.dry_run:
             self.print_line(
@@ -158,7 +157,7 @@ class ManualSubmitter:
             try:
                 result = self.submit(submission, secrets=secrets)
             except (KeyError, TypeError, ValueError) as error:
-                # Without readable Job IDs nothing can be reported; the API fails them in time.
+                # 読めるJob IDが無いと、何も報告できない。それらのJobは、APIがいずれ失敗にする。
                 failures += 1
                 self.print_line(f"a claimed submission is malformed: {error}")
                 continue
@@ -172,7 +171,7 @@ class ManualSubmitter:
         return EXIT_SUBMISSION_FAILED if failures else EXIT_OK
 
     def waiting_jobs(self) -> tuple[str, int]:
-        """The site's name, and how many of the Jobs this run would claim wait for it."""
+        """siteの名前と、この実行がclaimするJobのうち、そのsiteを待っている数。"""
         entry = next(
             (item for item in self.api.waiting() if item.get("targetId") == self.options.target_id), None
         )
@@ -189,7 +188,8 @@ class ManualSubmitter:
         return name, reader.integer("allWaitingJobs")
 
     def spec_secrets(self) -> dict[str, Any] | None:
-        """secrets.json for the runners: the registry login of --registry-secret-file, if given."""
+        """runner向けのsecrets.json。指定があれば、--registry-secret-fileのレジストリの
+        ログイン情報。"""
         path = self.options.registry_secret_file
         return None if path is None else read_registry_secrets(path, label="--registry-secret-file")
 
@@ -210,7 +210,7 @@ class ManualSubmitter:
         return submit_to_site(submission, operations=operations, plan=plan, masker=masker).result
 
     def watch(self, stop: threading.Event, *, interval: float) -> int:
-        """A round every `interval` seconds until `stop` is set; a temporary failure waits for the next."""
+        """`stop`が立つまで`interval`秒ごとに1巡する。一時的な失敗のときは次の巡を待つ。"""
         self.print_line(f"Watching {self.options.target_id} every {interval:g} seconds; Ctrl-C stops")
         while not stop.is_set():
             try:

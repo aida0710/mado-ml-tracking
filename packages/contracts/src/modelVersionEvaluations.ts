@@ -1,16 +1,16 @@
 import type { JsonObject, Model, ModelVersion, RunKind, RunStatus } from './index.js';
 
-/** GET /projects/:p/model-versions/:id: one version with its Model and the aliases on it. */
+/** GET /projects/:p/model-versions/:id: 1つのバージョンと、その登録モデル・alias。 */
 export interface ModelVersionDetail {
   version: ModelVersion;
   model: Model;
-  // Aliases of the Model that point at this version, sorted by name.
+  // 登録モデルのaliasのうち、このバージョンを指すもの。名前の順。
   aliases: string[];
 }
 
 /**
- * A Run seen from the version page or from its upstream Run. automatic tells whether an automation
- * execution created it (a manual Job retry of such a Run counts); Run tags are never consulted.
+ * バージョンのページか、上流のRunから見たRun。automaticは自動実行がそのRunを作ったかを示す
+ * （そのようなRunのJobを人が再試行したものも含む）。Runのタグは見ない。
  */
 export interface AutomatedRunSummary {
   id: string;
@@ -22,14 +22,14 @@ export interface AutomatedRunSummary {
   parentRunId: string | null;
   latestMetrics: Record<string, number>;
   parameters: JsonObject;
-  // The fixed evaluation data (ground truth): inputDatasetVersionIds minus the upstream outputs.
+  // 固定の評価データ（正解）。inputDatasetVersionIdsから上流の出力を除いたもの。
   referenceDatasetVersionIds: string[];
-  // Inputs that an upstream Run produced, such as inference outputs fed to an evaluation.
+  // 上流のRunが作った入力。評価に渡す推論の出力など。
   upstreamDatasetVersionIds: string[];
   automatic: boolean;
   ruleId: string | null;
   executionId: string | null;
-  // The first-stage execution of the automation pipeline; null for Runs a person created.
+  // 自動実行のパイプラインの最初の段の実行。人が作ったRunではnull。
   pipelineRootExecutionId: string | null;
   createdAt: string;
   startedAt: string | null;
@@ -43,13 +43,13 @@ export interface ModelVersionEvaluationSummary {
   nextCursor: string | null;
 }
 
-/** GET /projects/:p/runs/:r/downstream?limit=&cursor=: Runs whose parentRunId is the Run. */
+/** GET /projects/:p/runs/:r/downstream?limit=&cursor=: parentRunIdがそのRunであるRun。 */
 export interface RunDownstreamPage {
   runId: string;
   items: AutomatedRunSummary[];
   nextCursor: string | null;
 }
 
-// Run kinds the version page treats as results of a version (not producers of one).
+// バージョンのページが、バージョンの結果として扱う（バージョンを作る側ではない）Runの種類。
 export const MODEL_VERSION_RESULT_RUN_KINDS = ['inference', 'evaluation', 'processing'] as const;
 export type ModelVersionResultRunKind = (typeof MODEL_VERSION_RESULT_RUN_KINDS)[number];

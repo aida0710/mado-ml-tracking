@@ -14,10 +14,10 @@ import { entity, request, type Harness } from './harness.js';
 import { automationRuleInput, containerFixture } from './containerFixtures.js';
 import { referenceDigest } from './fixtures.js';
 
-// A Project with an evaluation reference set, a worker, and helpers that drive promotion policies
-// and automatic evaluation Jobs to completion. Shared by the promotion and auto-promotion tests.
+// 評価用の参照セットとworkerを持つProjectと、昇格ポリシーと自動評価のJobを完了まで進める
+// 補助関数。昇格と自動昇格のテストで共有する。
 
-// Enough parallel claims for every automatic Job a test starts.
+// テストが始める自動実行のJobをすべて並行して取得できる数。
 const TEST_TARGET_CONCURRENCY = 20;
 
 export async function promotionFixture(harness: Harness) {
@@ -139,7 +139,7 @@ export async function promotionFixture(harness: Harness) {
     return { runId: execution.rows[0]!.run_id, jobId: execution.rows[0]!.job_id };
   }
 
-  // Claims every queued Job, each under its own worker id, so any of them can be completed.
+  // キューにあるJobをそれぞれ別のworker idで全部取得し、どれでも完了させられるようにする。
   const claimed = new Map<string, WorkerJob>();
   let workerSequence = 0;
   async function claimQueuedJobs(): Promise<void> {
@@ -190,7 +190,7 @@ export async function promotionFixture(harness: Harness) {
     await sendCompletion(jobId, outcome.status);
   }
 
-  // A worker that lost the response sends the same completion again.
+  // 応答を受け取れなかったworkerは、同じ完了をもう一度送る。
   async function sendCompletion(jobId: string, status: 'finished' | 'failed'): Promise<void> {
     await entity(
       await request(harness.app, `/api/worker/jobs/${jobId}/complete`, {

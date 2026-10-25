@@ -1,9 +1,9 @@
 import { first, type Connection } from '../db/database.js';
 import type { DatasetVersionReferenceCounts } from '../domain/datasetVersionUsage.js';
 
-// What deleting a DatasetVersion reads and writes (DatasetVersionDeletionService).
+// DatasetVersionの削除で読み書きするもの（DatasetVersionDeletionService）。
 
-/** How many of each kind refer to the version, all within its Project. */
+/** そのバージョンを参照しているものの種類ごとの数。どれもそのProjectの中に限る。 */
 export async function countDatasetVersionReferences(
   connection: Connection,
   version: { projectId: string; id: string },
@@ -30,7 +30,7 @@ export async function countDatasetVersionReferences(
   ))!;
 }
 
-/** Removes the version and its file list; the caller has checked that nothing refers to it. */
+/** バージョンとそのファイル一覧を消す。何も参照していないことは呼び出し側が確かめ済み。 */
 export async function deleteDatasetVersionWithFiles(
   connection: Connection,
   version: { projectId: string; id: string },

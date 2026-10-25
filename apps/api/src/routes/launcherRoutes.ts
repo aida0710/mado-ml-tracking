@@ -15,7 +15,7 @@ import { requestMetadata } from '../http/requestMetadata.js';
 import type { LauncherService } from '../services/launcherService.js';
 import type { SiteSubmissionService } from '../services/siteSubmissionService.js';
 
-// Mounted at /api/launchers: global administrators register launchers and issue their tokens.
+// /api/launchersに置く。全体管理者がlauncherを登録し、そのtokenを発行する。
 export function launcherAdminRoutes(launchers: LauncherService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.get('/', async (context) =>
@@ -47,7 +47,7 @@ export function launcherAdminRoutes(launchers: LauncherService): Hono<ApiEnviron
   return routes;
 }
 
-// Mounted at /api/launcher: the launcher itself, with its own token.
+// /api/launcherに置く。launcher自身が自分のtokenで呼ぶ。
 export function launcherRuntimeRoutes(services: {
   launchers: LauncherService;
   submissions: SiteSubmissionService;

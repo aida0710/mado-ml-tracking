@@ -1,6 +1,6 @@
 import type { ProjectRole } from './index.js';
 
-/** Scopes an API token can hold, in the order screens list them. */
+/** API tokenが持てるscope。画面が並べる順。 */
 export const TOKEN_SCOPES = [
   'read',
   'runs:write',
@@ -16,21 +16,21 @@ export const TOKEN_SCOPES = [
 export type TokenScope = (typeof TOKEN_SCOPES)[number];
 
 /**
- * Scopes that `admin` does not include: a token holds them only when they are named. They let a
- * token issue credentials, read the whole audit log or manage accounts, so an existing `admin`
- * token does not gain them, and a token cannot grant them onward unless it holds them itself.
+ * `admin`に含まれないscope。名前を挙げたときだけtokenが持つ。認証情報の発行、監査ログ全体の
+ * 読み取り、アカウントの管理ができるので、既存の`admin`のtokenがこれらを得ることはなく、
+ * token自身が持っていなければ、ほかへ与えることもできない。
  */
 export const EXPLICIT_TOKEN_SCOPES: readonly TokenScope[] = ['tokens:manage', 'audit:read', 'users:manage'];
 
 /**
- * Scopes for operations over the whole server. Only a global administrator's token without a
- * Project restriction may hold them; a Project-bound token would have nothing to use them on.
+ * サーバー全体に対する操作のscope。Projectの制限が無い、全体管理者のtokenだけが持てる。
+ * Projectに縛られたtokenでは、これらを使う対象が無い。
  */
 export const GLOBAL_TOKEN_SCOPES: readonly TokenScope[] = ['audit:read', 'users:manage'];
 
 /**
- * The Project role a token's owner needs to hold a scope. The API checks it when a token is
- * issued; screens use it to offer only the scopes the owner can receive.
+ * tokenの所有者がscopeを持つのに必要なProjectのrole。APIはtokenの発行時にこれを確かめ、
+ * 画面は所有者が受け取れるscopeだけを候補に出すのに使う。
  */
 export const TOKEN_SCOPE_REQUIRED_ROLE: Record<TokenScope, ProjectRole> = {
   read: 'viewer',
@@ -40,16 +40,16 @@ export const TOKEN_SCOPE_REQUIRED_ROLE: Record<TokenScope, ProjectRole> = {
   'jobs:write': 'editor',
   'worker:execute': 'admin',
   admin: 'admin',
-  // A token manages only tokens within its own scopes, so holding this needs no stronger role.
+  // tokenは自分のscopeの範囲のtokenだけを管理するので、これを持つのに強いroleは要らない。
   'tokens:manage': 'viewer',
   'audit:read': 'admin',
   'users:manage': 'admin',
 };
 
 /**
- * An account that belongs to a Project instead of a person (users.kind='service'). Its tokens
- * keep working when the people who issued them leave the Project. `role` is its direct Project
- * grant, null when the grant was removed through the members API.
+ * 人ではなくProjectに属するアカウント（users.kind='service'）。発行した人がProjectを離れても、
+ * そのtokenは使い続けられる。`role`はProjectでの直接の付与で、membersのAPIで付与を外した
+ * ときはnull。
  */
 export interface ServiceAccount {
   id: string;
@@ -76,6 +76,6 @@ export interface ServiceAccountUpdate {
 export interface ServiceAccountTokenCreate {
   name: string;
   scopes: TokenScope[];
-  /** Explicit null never expires; omission uses the server's default lifetime. */
+  /** 明示的にnullにすると期限が無い。省略するとサーバーの既定の有効期間を使う。 */
   expiresAt?: string | null;
 }

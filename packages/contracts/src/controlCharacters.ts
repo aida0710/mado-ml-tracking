@@ -1,7 +1,7 @@
-// ASCII control characters (U+0000–U+001F) and DEL (U+007F). Names, paths, keys and URLs that the
-// API stores or a worker runs must not carry them: they are invisible on screen and in logs, and
-// shells and file systems treat several of them specially.
-// eslint-disable-next-line no-control-regex -- matching control characters is the point here
+// ASCIIの制御文字（U+0000〜U+001F）とDEL（U+007F）。APIが保存する、またはworkerが実行する
+// 名前・パス・キー・URLには含めてはならない。画面にもログにも見えず、いくつかはシェルや
+// ファイルシステムが特別に扱うため。
+// eslint-disable-next-line no-control-regex -- ここでは制御文字に一致させること自体が目的
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/;
 
 export function containsControlCharacter(value: string): boolean {

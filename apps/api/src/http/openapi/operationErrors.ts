@@ -2,9 +2,9 @@ import { jobTokenAccessOf } from '../jobTokenGuard.js';
 import { isNonJsonContent, routeError, type NativeRoute, type RouteError } from './nativeRoute.js';
 
 /**
- * Errors every route of a kind can return, derived from its access, its input and the shared
- * middleware (app.ts, authMiddleware.ts, jobTokenGuard.ts), so the catalog lists only the
- * errors particular to a route.
+ * ある種類のすべての経路が返しうるエラー。アクセス、入力、共有のmiddleware（app.ts、
+ * authMiddleware.ts、jobTokenGuard.ts）から導き、カタログにはその経路に固有のエラーだけを
+ * 挙げる。
  */
 export function genericErrorsOf(route: NativeRoute): RouteError[] {
   const errors: RouteError[] = [];
@@ -20,16 +20,16 @@ export function genericErrorsOf(route: NativeRoute): RouteError[] {
     );
     errors.push(...routeError(403, 'password_change_required'));
     if (route.method !== 'get') errors.push(...routeError(403, 'invalid_origin'));
-    // An SSO session is rechecked against the IdP's UserInfo; an unreachable IdP fails closed.
+    // SSOのsessionはIdPのUserInfoで確かめ直す。IdPに届かなければ通さない側に倒す。
     errors.push(...routeError(503, 'oidc_unavailable'));
   }
   const isSessionOnly = access.kind === 'session' || ('sessionOnly' in access && access.sessionOnly);
   if (isSessionOnly) errors.push(...routeError(403, 'session_required'));
-  // An SSO user's API token stops when the user's group sync is older than the allowed age.
+  // SSOユーザーのAPI tokenは、そのユーザーのグループの同期が許される古さを超えると止まる。
   else if (access.kind !== 'public') errors.push(...routeError(401, 'identity_sync_required'));
   if (access.kind === 'signedIn' || access.kind === 'project' || access.kind === 'globalAdmin')
     errors.push(...routeError(403, 'scope_required'));
-  // project_archived: an archived Project opened by one of its members or a global administrator.
+  // project_archived: アーカイブしたProjectを、そのメンバーか全体管理者が開いたとき。
   if (access.kind === 'project')
     errors.push(
       ...routeError(403, 'project_forbidden'),
@@ -48,7 +48,7 @@ export function genericErrorsOf(route: NativeRoute): RouteError[] {
   return errors;
 }
 
-/** Route-specific errors first, then the generic ones, without repeating a status and code. */
+/** 経路に固有のエラーを先に、続いて一般的なものを、ステータスとコードの重複なしで並べる。 */
 export function errorsOf(route: NativeRoute): RouteError[] {
   const seen = new Set<string>();
   return [...(route.errors ?? []), ...genericErrorsOf(route)].filter((error) => {

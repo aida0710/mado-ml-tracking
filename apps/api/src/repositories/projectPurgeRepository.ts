@@ -1,6 +1,6 @@
 import type { Connection } from '../db/database.js';
 
-/** One table's part of a purge: which of its rows belong to the purged Project ($1). */
+/** purgeでの1つのテーブルの担当分。その中のどの行がpurgeするProject（$1）のものか。 */
 export interface ProjectPurgeStep {
   table: string;
   rowsOfProject: string;
@@ -13,11 +13,11 @@ function byParent(column: string, parentTable: string): string {
 }
 
 /**
- * Every table that holds rows of a Project, in deletion order. Tables without a project_id column
- * find their rows through the parent, so they come before it; the others may go in any order
- * because the purge defers foreign key checks to its commit (migration 055). Children are still
- * listed before their parents so that no ON DELETE action has to touch them.
- * project-purge.integration.test.ts fails when a table that references a purged one is missing.
+ * Projectの行を持つすべてのテーブルを削除の順に並べる。project_id列の無いテーブルは親を通して
+ * 行を見つけるので、親より前に置く。それ以外はどの順でもよい。purgeは外部キーの検査をコミット
+ * まで遅らせるため（migration 055）。それでも、ON DELETEの動作が子に触れずに済むよう、子は親より
+ * 前に並べる。purgeするテーブルを参照するテーブルが抜けていると、
+ * project-purge.integration.test.tsが失敗する。
  */
 export const PROJECT_PURGE_STEPS: readonly ProjectPurgeStep[] = [
   { table: 'metrics', rowsOfProject: byParent('run_id', 'runs') },
@@ -27,7 +27,7 @@ export const PROJECT_PURGE_STEPS: readonly ProjectPurgeStep[] = [
   { table: 'plugin_outbox', rowsOfProject: byParent('plugin_id', 'plugin_connections') },
   { table: 'report_block_snapshots', rowsOfProject: byParent('report_id', 'reports') },
   { table: 'report_revisions', rowsOfProject: byParent('report_id', 'reports') },
-  // artifact_upload_parts goes with artifact_uploads (ON DELETE CASCADE).
+  // artifact_upload_partsはartifact_uploadsと一緒に消える（ON DELETE CASCADE）。
   ...[
     'comments',
     'preprocessing_report_samples',
@@ -100,8 +100,8 @@ export const PROJECT_PURGE_STEPS: readonly ProjectPurgeStep[] = [
 ];
 
 /**
- * Tables with a project_id that keep the purged Project's rows, and why. Users are never
- * deleted; audit events and the API tokens they name as actors are the record of what happened.
+ * project_idを持つが、purgeしたProjectの行を残すテーブルとその理由。利用者は決して削除しない。
+ * 監査イベントと、それが操作者として指すAPI tokenは、起きたことの記録になる。
  */
 export const PROJECT_PURGE_KEPT_TABLES: Readonly<Record<string, string>> = {
   projects: 'the tombstone row (name only) that the kept rows below point at',
@@ -113,9 +113,9 @@ export const PROJECT_PURGE_KEPT_TABLES: Readonly<Record<string, string>> = {
 };
 
 /**
- * Queues the blobs of the Project's Artifacts and upload sessions for the garbage collector,
- * except those it already removed. A session's key may hold a blob its finalizer wrote before the
- * Artifact was registered; removing a key with no blob succeeds.
+ * ProjectのArtifactとアップロードセッションのblobを、ガベージコレクタが既に消したものを除いて
+ * キューに入れる。セッションのキーには、Artifactを登録する前にfinalizerが書いたblobがあるかも
+ * しれない。blobの無いキーを消しても成功する。
  */
 async function queueProjectBlobs(connection: Connection, projectId: string): Promise<number> {
   const queued = await connection.query(
@@ -131,7 +131,7 @@ async function queueProjectBlobs(connection: Connection, projectId: string): Pro
   return queued.rowCount ?? 0;
 }
 
-// Kept rows stop working: tokens are revoked and Service Accounts disabled.
+// 残す行は使えなくする。tokenは失効させ、Service Accountは無効にする。
 async function retireKeptIdentities(connection: Connection, projectId: string): Promise<void> {
   await connection.query(
     'UPDATE api_tokens SET revoked_at=now() WHERE project_id=$1 AND revoked_at IS NULL',
@@ -148,8 +148,8 @@ async function retireKeptIdentities(connection: Connection, projectId: string): 
 }
 
 /**
- * Deletes every row of a Project whose projects row this transaction has already marked purged
- * (the history triggers of migration 055 check that). Returns what it queued and deleted.
+ * このトランザクションでprojectsの行を既にpurge済みにしたProjectの行をすべて削除する（それは
+ * migration 055の履歴のトリガーが確かめる）。キューに入れた数と削除した数を返す。
  */
 export async function purgeProjectRows(
   connection: Connection,
@@ -160,7 +160,7 @@ export async function purgeProjectRows(
   await retireKeptIdentities(connection, projectId);
   let deletedRows = 0;
   for (const step of PROJECT_PURGE_STEPS) {
-    // Table names and conditions are constants of this module, never request input.
+    // テーブル名と条件はこのモジュールの定数で、リクエストの入力ではない。
     const deleted = await connection.query(
       `DELETE FROM ${step.table} WHERE ${step.rowsOfProject}`,
       [projectId],

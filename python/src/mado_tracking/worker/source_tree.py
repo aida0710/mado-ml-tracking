@@ -1,4 +1,4 @@
-"""Walk bounded source trees without accepting links, special files, or Git metadata."""
+"""リンク、特殊ファイル、Gitのメタデータを受け付けずに、上限のあるソースツリーを辿る。"""
 
 from __future__ import annotations
 
@@ -10,13 +10,14 @@ from pathlib import Path
 
 from ..code_source import MAX_SOURCE_FILES, MAX_SOURCE_PATH_LENGTH, validate_source_file_name
 
-# Include implicit and empty directories in the same bound as archive members.
+# 暗黙のディレクトリや空のディレクトリも、アーカイブのメンバーと同じ上限で数える。
 MAX_SOURCE_ENTRIES = MAX_SOURCE_FILES
 MAX_SOURCE_BYTES = 4 * 1024**3
 MAX_SOURCE_FILE_BYTES = 256 * 1024**2
-# ZIP repeats UTF-8 names and adds ZIP64 headers; reserve framing per entry.
+# ZIPはUTF-8の名前を繰り返し持ち、ZIP64のヘッダーを足す。エントリごとにその分を見込む。
 ZIP_MEMBER_METADATA_BYTES = 2 * (4 * MAX_SOURCE_PATH_LENGTH + 1) + 256
-# Deflate may expand incompressible source; this budget exceeds its block overhead.
+# Deflateは圧縮できないソースを大きくすることがある。
+# この見込みはブロックのオーバーヘッドより大きい。
 ZIP_COMPRESSION_OVERHEAD_BYTES = MAX_SOURCE_BYTES // 1000
 ZIP_END_RECORD_BYTES = 1024
 MAX_SOURCE_ARCHIVE_BYTES = (

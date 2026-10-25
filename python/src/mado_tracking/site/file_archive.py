@@ -1,4 +1,4 @@
-"""Pack files into one tar so a single command on a site can write them with their modes."""
+"""ファイルを1つのtarにまとめ、site上の1つのコマンドでモードごと書けるようにする。"""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ PRIVATE_DIRECTORY_MODE = 0o700
 
 
 def pack_files(files: Mapping[str, tuple[bytes, int]]) -> bytes:
-    """A tar of relative path -> (content, mode); parent directories are added as 0700."""
+    """相対パス -> (content, mode)のtar。親ディレクトリは0700で足す。"""
     buffer = io.BytesIO()
     now = int(time.time())
     directories: set[str] = set()

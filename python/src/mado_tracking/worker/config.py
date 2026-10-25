@@ -1,4 +1,4 @@
-"""Worker identity, polling, and explicitly enabled development execution."""
+"""workerの識別情報、ポーリング、明示的に有効にした開発用の実行。"""
 
 from __future__ import annotations
 
@@ -12,13 +12,13 @@ from ..settings import ApiSettings
 from .container_outputs import DEFAULT_MAX_OUTPUT_FILES
 from .ssh_files import default_ssh_directories
 
-# Poll frequently enough to respond to cancellation without excessive API/SSH requests.
+# APIやSSHへのリクエストを増やしすぎずに、取り消しにすぐ応じられる頻度でポーリングする。
 DEFAULT_HEARTBEAT_SECONDS = 5.0
 DEFAULT_POLL_SECONDS = 1.0
 DEFAULT_TELEMETRY_SECONDS = 10.0
 DEFAULT_CANCEL_GRACE_SECONDS = 10.0
 DEFAULT_PARALLEL_JOBS = 2
-# The output index and acknowledgments are held in memory (about 4 KiB per file at most).
+# 出力のindexと受領の確認はメモリに持つ（1ファイルあたり最大で約4KiB）。
 MAX_CONFIGURABLE_OUTPUT_FILES = 1_000_000
 
 
@@ -36,8 +36,8 @@ class WorkerSettings:
     parallel_jobs: int = DEFAULT_PARALLEL_JOBS
     install_dependencies: bool = True
     max_output_files: int = DEFAULT_MAX_OUTPUT_FILES
-    # Where workerInfo looks for the SSH key and known_hosts candidates it reports (~/.ssh and
-    # MMT_WORKER_SSH_DIR); none outside from_environment.
+    # workerInfoで報告するSSHの鍵とknown_hostsの候補を探す場所（~/.sshとMMT_WORKER_SSH_DIR）。
+    # from_environmentの外では空。
     ssh_directories: tuple[Path, ...] = ()
 
     @classmethod

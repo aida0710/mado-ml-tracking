@@ -1,16 +1,19 @@
 import type { Artifact, ArtifactPreviewKind } from '@mmt/contracts';
 import { first, rows, transaction, type Connection, type Database } from '../db/database.js';
 
-// A claim older than this belongs to a worker that died: the whole job (download, probe, decode,
-// poster) is bounded by a few tool timeouts (MMT_PREVIEW_TOOL_TIMEOUT_MS, default 30 min each).
+// これより古いclaimは止まったworkerのものとみなす。処理全体（ダウンロード、調査、デコード、
+// ポスター）は、ツールのタイムアウト（MMT_PREVIEW_TOOL_TIMEOUT_MS、既定は各30分）の
+// 数回分に収まる。
 export const PREVIEW_LEASE_SECONDS = 2 * 60 * 60;
-// Storage hiccups and worker crashes are retried; a file ffmpeg cannot read fails at once.
+// 保存先の一時的な不調やworkerの異常終了は再試行する。ffmpegが読めないファイルはすぐ失敗にする。
 export const PREVIEW_MAX_ATTEMPTS = 3;
 
-/** The unfinished previews of one Artifact, claimed together so its file is downloaded once. */
+/**
+ * 1つのArtifactの未完了のプレビュー。ファイルのダウンロードが1回で済むよう、まとめてclaimする。
+ */
 export interface PreviewJob {
   artifact: Artifact;
-  /** attempts after this claim, per kind; finishing a kind requires the same value. */
+  /** 種類ごとの、このclaim後のattempts。種類を終えるときは同じ値でなければならない。 */
   attempts: Map<ArtifactPreviewKind, number>;
 }
 
@@ -20,12 +23,12 @@ export interface PreviewOutcome {
   attempts: number;
 }
 
-/** Queued, or claimed by a worker whose lease ($1 seconds) ran out. */
+/** queued、またはlease（$1秒）の切れたworkerがclaimしたもの。 */
 function claimableCondition(table: string): string {
   return `(${table}.status='queued' OR (${table}.status='running' AND ${table}.updated_at < now() - make_interval(secs => $1)))`;
 }
 
-/** Gives up on previews whose worker died too many times, so they do not loop forever. */
+/** workerが何度も止まったプレビューは、いつまでも繰り返さないよう諦める。 */
 async function failExhaustedClaims(database: Database): Promise<void> {
   await database.query(
     `UPDATE artifact_previews SET status='failed',error='lease_expired',updated_at=now()
@@ -37,8 +40,8 @@ async function failExhaustedClaims(database: Database): Promise<void> {
 export async function claimNextPreviewJob(database: Database): Promise<PreviewJob | null> {
   await failExhaustedClaims(database);
   return transaction(database, async (connection) => {
-    // SKIP LOCKED lets several workers claim different Artifacts; the outer WHERE is re-checked
-    // after locking, so a row another worker claimed in between is not claimed twice.
+    // SKIP LOCKEDで、複数のworkerが別々のArtifactをclaimできる。外側のWHEREはロックのあとで
+    // 確かめ直すので、その間に別のworkerがclaimした行を二重にclaimしない。
     const claimed = await rows<{ artifactId: string; kind: ArtifactPreviewKind; attempts: number }>(
       connection,
       `WITH target AS (
@@ -61,7 +64,7 @@ export async function claimNextPreviewJob(database: Database): Promise<PreviewJo
   });
 }
 
-/** False when the claim was lost (lease expired and another worker took over). */
+/** claimを失った（leaseが切れて別のworkerが引き継いだ）ときはfalse。 */
 export async function markPreviewReady(
   connection: Connection,
   outcome: PreviewOutcome & { previewArtifactId: string },
@@ -85,7 +88,7 @@ export async function markPreviewFinished(
   );
 }
 
-/** Puts a preview back in the queue after a transient failure, or fails it after the last try. */
+/** 一時的な失敗のあとプレビューをキューに戻す。最後の試行だったら失敗にする。 */
 export async function retryPreviewLater(
   database: Database,
   outcome: PreviewOutcome & { error: string },

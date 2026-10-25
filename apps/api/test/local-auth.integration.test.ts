@@ -12,14 +12,14 @@ import { startMockOidcProvider, TEST_SESSION_ENCRYPTION_KEY } from './mockOidcPr
 
 const PASSWORD = 'correct horse battery staple';
 const NEW_PASSWORD = 'a different long passphrase';
-// Move stored session timestamps instead of waiting for the default seven-day lifetime.
+// 既定の有効期間（7日）を待たず、保存したsessionの時刻をずらす。
 const DAY_SECONDS = 24 * 60 * 60;
 
 describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独立PostgreSQL）', () => {
   let harness: Harness;
   let provider: Awaited<ReturnType<typeof startMockOidcProvider>>;
 
-  // Each app has its own rate limiter, so tests do not share attempt counts.
+  // アプリごとにレート制限を持つので、テスト同士で試行回数を共有しない。
   function application(mode: 'local' | 'oidc' | 'hybrid'): Hono<ApiEnvironment> {
     const config = loadConfig({
       MMT_DATABASE_URL: testDatabaseUrl,
@@ -110,7 +110,7 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独
           AUTH_SESSION_ABSOLUTE_SECONDS: '43200',
         }),
       ).toThrow(/AUTH_SESSION_IDLE_SECONDS/);
-      // local mode ignores leftover OIDC settings instead of opening an SSO path.
+      // localモードは、残っているOIDCの設定でSSOの経路を開かず、無視する。
       const local = loadConfig({ ...base, AUTH_MODE: 'local', OIDC_ISSUER_URL: 'not a url' });
       expect(local.oidc).toBeNull();
       expect(local.session).toEqual({ idleSeconds: 604800, absoluteSeconds: 604800 });
@@ -229,7 +229,7 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独
       vi.setSystemTime(new Date('2026-10-08T00:00:00Z'));
       const app = application('local');
       await createLocalUser('alice');
-      // Unknown usernames spread failures so only the per-address limit applies.
+      // 知らないユーザー名に失敗を散らし、アドレスごとの上限だけが効くようにする。
       for (let attempt = 0; attempt < 30; attempt += 1)
         expect((await localLogin(app, `nobody${attempt}`)).status).toBe(401);
       const limited = await localLogin(app, 'alice');

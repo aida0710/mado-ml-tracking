@@ -22,7 +22,10 @@ const VERSION = {
   locations: [{ uri: 's3://fixture/corpus', storageKind: 's3', status: 'available', isPrimary: true }],
 };
 
-/** Answers the token's own grant like Mado and every other request with `respond`. */
+/**
+ * token自身の権限の問い合わせにはmado S3 Data Catalogと同じ形で答え、ほかのリクエストには
+ * `respond`で答える。
+ */
 function madoFetcher(respond: (url: URL) => Response | Promise<Response>, grant: unknown = GRANT) {
   return vi.fn<typeof fetch>(async (input) => {
     const url = new URL(String(input));

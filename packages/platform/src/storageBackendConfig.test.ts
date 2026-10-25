@@ -229,8 +229,8 @@ interface SentRequest {
 }
 
 /**
- * Answers every request right after signing, so the test sees exactly the headers that would go
- * over the wire without any server. Responses are empty 200s with an XML body for batch deletes.
+ * 署名の直後にすべてのリクエストへ応答し、サーバー無しで、実際に送られるヘッダーをそのまま
+ * テストで見られるようにする。応答は空の200で、一括削除にはXMLの本文を付ける。
  */
 function captureSentRequests(client: S3Client): SentRequest[] {
   const sent: SentRequest[] = [];
@@ -251,7 +251,7 @@ function captureSentRequests(client: S3Client): SentRequest[] {
 }
 
 describe('S3 clientの署名', () => {
-  // These values authenticate to nothing; the captured requests never leave the process.
+  // この値ではどこにも認証できない。捕まえたリクエストはプロセスの外に出ない。
   const credentials = { accessKeyId: 'test-access-key', secretAccessKey: 'test-secret-key' };
   const v2Config = normalizeStorageBackendConfig({
     ...s3Input,
@@ -276,7 +276,7 @@ describe('S3 clientの署名', () => {
           Body: 'part',
         }),
       );
-      // The one operation in this list for which WHEN_REQUIRED still adds a checksum header.
+      // この一覧の中で、WHEN_REQUIREDでもチェックサムのヘッダーが付くただ1つの操作。
       await client.send(
         new DeleteObjectsCommand({
           Bucket: 'mmt-artifacts',
@@ -298,7 +298,7 @@ describe('S3 clientの署名', () => {
     expect(sent[1]).toMatchObject({
       path: '/mmt-artifacts/p/b.bin',
       query: { partNumber: '3', uploadId: 'upload-1' },
-    }); // S3 refuses DeleteObjects without a checksum; v2-era services expect Content-MD5.
+    }); // S3はチェックサムの無いDeleteObjectsを拒み、v2時代のサービスはContent-MD5を求める。
     expect(sent[2]!.headers['content-md5']).toMatch(/^[A-Za-z0-9+/]{22}==$/);
     expect(sent[0]!.headers['content-md5']).toBeUndefined();
   });
@@ -326,7 +326,7 @@ describe('S3 clientの署名', () => {
 describe('S3 storeのpart size', () => {
   it('単一putは設定したpart sizeでmultipartに分割する', async () => {
     const uploadedPartSizes: number[] = [];
-    // Records commands instead of talking to S3; only the calls put() makes are answered.
+    // S3と通信する代わりにコマンドを記録する。応答するのはput()が呼ぶ操作だけ。
     const client = {
       send: async (command: { constructor: { name: string }; input: Record<string, unknown> }) => {
         switch (command.constructor.name) {

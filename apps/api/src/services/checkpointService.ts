@@ -27,9 +27,9 @@ import { assertRunRecordsWritable } from './runService.js';
 type RunReference = { projectId: string; runId: string };
 
 /**
- * Told about a checkpoint saved through POST /runs/:r/checkpoints (hooks with trigger
- * checkpoint_saved). MLflow checkpoints are not announced: their files arrive one by one and
- * nothing tells when the last one has arrived.
+ * POST /runs/:r/checkpointsで保存されたcheckpointの通知を受ける（triggerがcheckpoint_savedの
+ * フック）。MLflowのcheckpointは通知しない。ファイルが1つずつ届き、最後の1つが届いたことを
+ * 知らせるものが無いため。
  */
 export interface CheckpointListener {
   readonly name: string;
@@ -43,7 +43,7 @@ export class CheckpointService {
   constructor(
     private readonly database: Database,
     private readonly retention: { keepCount: number },
-    // Kept by reference: app.ts adds the hooks once they are built.
+    // 参照で持つ。app.tsがフックを作り終えてから足す。
     private readonly listeners: readonly CheckpointListener[] = [],
   ) {}
 
@@ -120,9 +120,9 @@ export class CheckpointService {
   }
 
   /**
-   * Called from the MLflow artifact save hook, inside the transaction that registers the file.
-   * The first file of checkpoints/step-<N>/ creates the checkpoint, later ones extend its
-   * manifest. Once the Run has ended the checkpoint is final and further files are refused.
+   * MLflowのArtifactを保存するときのフックから、ファイルを登録するトランザクションの中で呼ばれる。
+   * checkpoints/step-<N>/の最初のファイルがcheckpointを作り、後のファイルはそのmanifestに足す。
+   * Runが終わるとcheckpointは確定し、それ以降のファイルは拒む。
    */
   async recordMlflowArtifact(
     connection: Connection,
@@ -131,7 +131,7 @@ export class CheckpointService {
     const location = parseMlflowCheckpointPath(saved.artifactPath);
     if (!location) return;
     const run = await findRun(connection, { projectId: saved.projectId, id: saved.runId });
-    // Another kind of Run may use the same directory name for unrelated files.
+    // ほかの種類のRunが、同じ名前のディレクトリを無関係なファイルに使うことがある。
     if (!CHECKPOINT_RUN_KINDS.includes(run.kind)) return;
     const file = {
       path: location.relativePath,
@@ -158,7 +158,7 @@ export class CheckpointService {
       });
       return;
     }
-    // A native checkpoint already owns this step; the MLflow files stay ordinary Artifacts.
+    // このstepには既にネイティブのcheckpointがある。MLflowのファイルは普通のArtifactのままにする。
     if (await checkpointStepExists(connection, { runId: run.id, step: location.step })) return;
     await insertCheckpoint(connection, {
       projectId: saved.projectId,
@@ -175,7 +175,7 @@ export class CheckpointService {
     });
   }
 
-  // Re-logging a path replaces that file, as MLflow overwrites the artifact at the same path.
+  // 同じパスを記録し直すとそのファイルを置き換える。MLflowの同じパスのArtifactの上書きに合わせる。
   private async replaceMlflowCheckpointFile(
     connection: Connection,
     update: {
@@ -207,9 +207,8 @@ export class CheckpointService {
 }
 
 /**
- * Users need runs:write as an editor. Code inside a Job reaches here with its Job token, which
- * the Job token guard already limits to its own Run. A worker token may register for a Run whose
- * Job it currently holds.
+ * ユーザーにはeditorとしてのruns:writeが要る。Jobの中のコードはJob tokenでここに来るが、Job tokenの
+ * ガードが既に自分のRunだけに絞っている。worker tokenは、今持っているJobのRunに登録してよい。
  */
 async function requireCheckpointWriter(
   connection: Connection,

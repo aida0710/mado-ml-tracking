@@ -1,5 +1,5 @@
 [build-system]
-# 77 is the first release that reads the SPDX `license` string and `license-files` (PEP 639).
+# SPDXの`license`の文字列と`license-files`（PEP 639）を読む最初の版が77。
 requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
@@ -15,9 +15,9 @@ dependencies = ["httpx>=0.27,<1"]
 
 [project.optional-dependencies]
 telemetry = ["psutil>=5.9,<8", "nvidia-ml-py>=12,<14"]
-# Optional: Run.log_audio / log_image accept numpy arrays and PIL images when these are installed.
+# 任意: これらを入れると、Run.log_audio・log_imageがnumpyの配列とPILの画像を受け付ける。
 media = ["numpy>=1.24", "Pillow>=10"]
-# The tests encode numpy arrays and PIL images, so they install the media extra's packages too.
+# テストはnumpyの配列とPILの画像をエンコードするので、media extraのpackageも入れる。
 test = ["pytest>=8,<10", "mypy>=1.11,<2", "ruff>=0.9,<1", "numpy>=1.24", "Pillow>=10"]
 
 [project.scripts]

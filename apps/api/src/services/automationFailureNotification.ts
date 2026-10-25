@@ -2,19 +2,19 @@ import type { ModelAutomationRule, ModelVersion } from '@mmt/contracts';
 import type { Connection } from '../db/database.js';
 import { enqueueNotificationEvent } from './notificationEvents.js';
 
-/** An execution that ended without starting a Run: the rule could not run for the version. */
+/** Runを始めずに終わった実行。ルールがそのバージョンに対して動けなかった。 */
 export interface UnstartedAutomationExecution {
   executionId: string;
   rule: Pick<ModelAutomationRule, 'id' | 'name' | 'kind' | 'experimentId'>;
   model: Pick<ModelVersion, 'id' | 'modelId' | 'projectId' | 'version'>;
   status: 'failed' | 'skipped';
-  // Stored as '<code>: <message>'; only the code goes into the notification.
+  // '<code>: <message>'の形で保存する。通知に入れるのはコードだけ。
   error: string;
 }
 
 /**
- * Queues automation.failed in the caller's transaction. The subject carries the rule's Run kind
- * and Experiment, so rules filtered on them still match although no Run exists.
+ * 呼び出し側のトランザクションの中でautomation.failedをキューに入れる。subjectにはルールの
+ * Runの種類と実験を入れるので、それで絞り込んだ通知ルールは、Runが無くても一致する。
  */
 export async function enqueueAutomationFailure(
   connection: Connection,

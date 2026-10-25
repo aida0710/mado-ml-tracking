@@ -5,12 +5,12 @@ import { WaveformPeaksAccumulator } from '../domain/waveformPeaksAccumulator.js'
 import { MediaToolFailedError, runMediaTool } from './mediaTools.js';
 
 const FLOAT32_BYTES = 4;
-// Wide enough for a detail view; larger frames only make the poster slower to load.
+// 詳細の表示には十分な幅。これより大きいフレームはポスター画像の読み込みを遅くするだけ。
 const POSTER_MAX_WIDTH = 1280;
-// Skips black lead-in frames without seeking past the end of short clips.
+// 冒頭の黒いフレームを飛ばしつつ、短い動画の終わりを越えてシークしないようにする。
 const POSTER_SEEK_SECONDS = 1;
 const POSTER_SEEK_FRACTION = 0.1;
-// A PNG of a 1280-wide frame is a few MiB at most.
+// 幅1280のフレームのPNGは、大きくても数MiB。
 const POSTER_MAX_BYTES = 32 * 1024 * 1024;
 
 export interface MediaToolPaths {
@@ -23,22 +23,22 @@ export interface AudioPreviews {
   spectrogramPng: Buffer;
 }
 
-/** Splits a byte stream into Float32 samples, carrying a partial sample over to the next chunk. */
+/** バイト列のストリームをFloat32のサンプルに分ける。半端なサンプルは次のチャンクへ持ち越す。 */
 function float32Reader(onSamples: (samples: Float32Array) => void): (chunk: Buffer) => void {
   let carry = Buffer.alloc(0);
   return (chunk) => {
     const bytes = carry.length > 0 ? Buffer.concat([carry, chunk]) : chunk;
     const usable = bytes.length - (bytes.length % FLOAT32_BYTES);
     carry = Buffer.from(bytes.subarray(usable));
-    // Copy so the Float32Array is aligned regardless of the chunk's offset in its pool.
+    // コピーし、チャンクがプールの中のどの位置にあってもFloat32Arrayがアラインされるようにする。
     const aligned = new Uint8Array(bytes.subarray(0, usable));
     onSamples(new Float32Array(aligned.buffer, 0, usable / FLOAT32_BYTES));
   };
 }
 
 /**
- * Decodes the first audio stream once, as a mono mix at its own sample rate, and streams it into
- * both the peaks and the spectrogram so a multi-GB file never sits in memory.
+ * 最初の音声ストリームを、元のサンプルレートのままモノラルにミックスして1回だけデコードし、
+ * ピークとスペクトログラムの両方へ流し込む。数GBのファイルでもメモリに載せずに済む。
  */
 export async function renderAudioPreviews(render: {
   tools: MediaToolPaths;

@@ -1,25 +1,26 @@
 /**
- * 'reference': uri and digest describe data stored elsewhere (MLflow log_inputs, plugin imports).
- * 'artifacts': the version is the listed Artifacts; uri is `mmt-dataset://<versionId>` and digest
- * is the manifest digest the server computed.
+ * 'reference': uriとdigestが、ほかの場所に保存されたデータを表す（MLflowのlog_inputs、
+ * 連携からの取り込み）。
+ * 'artifacts': バージョンの中身は列挙したArtifact。uriは`mmt-dataset://<versionId>`で、digestは
+ * サーバーが計算したmanifestのdigest。
  */
 export type DatasetContentKind = 'reference' | 'artifacts';
 
-/** One file of a version to create: its path inside the dataset and a stored Artifact. */
+/** 作るバージョンの1ファイル。データセットの中でのパスと、保存済みのArtifact。 */
 export interface DatasetVersionFileInput {
   path: string;
   artifactId: string;
 }
 
 /**
- * CreateDatasetVersion.content. `fromRunArtifacts` takes the Run's latest Artifact at each path
- * below `prefix` (a directory; '' for all) and stores each path relative to it.
+ * CreateDatasetVersion.content。`fromRunArtifacts`は、`prefix`（ディレクトリ。''ならすべて）の
+ * 下の各パスにあるRunの最新のArtifactを取り、パスは`prefix`からの相対パスで保存する。
  */
 export type DatasetVersionContent =
   | { kind: 'artifacts'; files: DatasetVersionFileInput[] }
   | { kind: 'artifacts'; fromRunArtifacts: { runId: string; prefix?: string } };
 
-/** A file of an 'artifacts' DatasetVersion. size and sha256 are the Artifact's, fixed at creation. */
+/** 'artifacts'のDatasetVersionのファイル。sizeとsha256はArtifactのもので、作成時に決まる。 */
 export interface DatasetVersionFile {
   path: string;
   artifactId: string;
@@ -28,14 +29,15 @@ export interface DatasetVersionFile {
   mimeType: string;
 }
 
-/** GET /projects/:p/datasets/:d/versions/:v/files. nextCursor is absent on the last page. */
+/** GET /projects/:p/datasets/:d/versions/:v/files。最後のページにはnextCursorが無い。 */
 export interface DatasetVersionFilePage {
   items: DatasetVersionFile[];
   nextCursor?: string;
 }
 
 /**
- * Files per DatasetVersion (decisions.md). Large audio corpora reach tens of thousands of clips;
- * the bound keeps one creation request and its transaction to a size the API can hold in memory.
+ * 1つのDatasetVersionに入れられるファイル数の上限。大きな音声コーパスは
+ * 数万クリップになる。この上限で、1回の作成リクエストとそのトランザクションを、APIがメモリに
+ * 載せられる大きさに抑える。
  */
 export const MAX_DATASET_VERSION_FILES = 100_000;

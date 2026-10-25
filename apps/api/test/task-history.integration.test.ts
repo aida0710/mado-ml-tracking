@@ -5,11 +5,11 @@ import { createHarness, entity, request, testDatabaseUrl, type Harness } from '.
 import { workbenchFixture } from './workbenchFixtures.js';
 import { projectFixture } from './fixtures.js';
 
-// The page contract is default 50/max 200; exceed it to detect an unbounded query.
+// ページングの契約は既定50件・最大200件。上限の無いクエリを見つけるため、それを超える数を作る。
 const DEFAULT_PAGE_LIMIT = 50;
 const MAX_PAGE_LIMIT = 200;
 const HISTORY_RUN_COUNT = MAX_PAGE_LIMIT + 1;
-// Uneven pages exercise both continuation and the final short page.
+// 割り切れないページの大きさにして、続きの取得と最後の短いページの両方を試す。
 const TEST_PAGE_LIMIT = 17;
 const SHARED_CREATED_AT = '2026-10-08 00:00:00.123456+00';
 type TaskFixture = Awaited<ReturnType<typeof workbenchFixture>>;

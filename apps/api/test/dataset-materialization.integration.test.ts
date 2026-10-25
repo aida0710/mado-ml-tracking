@@ -14,7 +14,7 @@ import { DEFAULT_DATASET_CACHE_MAX_BYTES } from '@mmt/contracts';
 import { executionFixture, referenceDigest } from './fixtures.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 
-// The reference version's digest, which the worker receives unchanged in its claim.
+// 参照バージョンのdigest。workerは取得時にこれをそのまま受け取る。
 const REFERENCE_DIGEST = referenceDigest('corpus-eval');
 
 type Fixture = Awaited<ReturnType<typeof executionFixture>>;
@@ -162,7 +162,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる入力Datasetの取得設定�
     );
     expect((await patchTarget({ datasetTransfer: 'ftp' })).status).toBe(422);
     expect((await patchTarget({ datasetCacheMaxBytes: 0 })).status).toBe(422);
-    // A bigint column must come back as a number, also from the list.
+    // bigintの列は、一覧からも数値で返らなければならない。
     const targets = await entity<{ items: ComputeTarget[] }>(
       await request(harness.app, '/api/targets', { cookie: fixture.viewer.cookie }),
       200,
@@ -177,7 +177,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる入力Datasetの取得設定�
     const transfer = await patchTarget({ datasetTransfer: 'direct' });
     expect(transfer.status).toBe(409);
     expect((await patchTarget({ datasetCacheMaxBytes: 1024 ** 3 })).status).toBe(409);
-    // Sending the unchanged values is not a change.
+    // 変わっていない値を送っても変更にはならない。
     expect(
       (
         await patchTarget({
@@ -225,13 +225,14 @@ describe.skipIf(!testDatabaseUrl)('workerによる入力Datasetの取得設定�
         expect.objectContaining({ path: 'clips/0001.wav', artifactId: clip.id }),
       ]);
     }
-    // 'direct' transfer: the target reads the content with the Job token.
+    // 'direct'の転送。コンピュータがJob tokenで中身を読む。
     const content = await request(harness.app, `${fixture.basePath}/artifacts/${clip.id}/content`, {
       token: claimed.jobToken!,
     });
     expect(content.status).toBe(200);
     expect(await content.text()).toBe('RIFF-0001');
-    // The files API needs the `read` scope, which docs/worker.md lists for worker tokens.
+    // ファイルのAPIには`read`のscopeが要る。docs/worker.mdにも、workerのtokenに要るscopeとして
+    // 載っている。
     const withoutRead = await mintWorkerToken(['worker:execute']);
     expect((await request(harness.app, filesPath, { token: withoutRead })).status).toBe(403);
   });
@@ -242,7 +243,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる入力Datasetの取得設定�
     const workerToken = await mintWorkerToken(['worker:execute', 'read']);
     const claimed = await claim(workerToken);
     await queueJob([version.id], ['0']);
-    // The second Job waits for GPU 0.
+    // 2つ目のJobはGPU 0を待つ。
     expect(
       (
         await entity<{ item: WorkerJob | null }>(

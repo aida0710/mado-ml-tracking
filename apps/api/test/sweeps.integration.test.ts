@@ -68,7 +68,7 @@ describe.skipIf(!testDatabaseUrl)('Sweep（独立PostgreSQL）', () => {
       { batch: 16, lr: 0.1 },
       { batch: 16, lr: 0.01 },
     ]);
-    // The Jobs list names the Sweep and the trial each Job runs.
+    // Jobの一覧は、各Jobが動かすSweepとtrialを示す。
     const listedJobs = await entity<{ items: JobListItem[] }>(
       await request(harness.app, `${fixture.basePath}/jobs`, { cookie: fixture.viewer.cookie }),
       200,
@@ -206,7 +206,7 @@ describe.skipIf(!testDatabaseUrl)('Sweep（独立PostgreSQL）', () => {
     await fixture.complete(first!);
     expect((await fixture.getSweep(sweep.id)).trialCounts).toMatchObject({ total: 1, finished: 1 });
 
-    // Project admin may operate on another member's sweep.
+    // Project adminは、ほかのメンバーのSweepも操作できる。
     const resumed = await entity<Sweep>(
       await request(harness.app, `${fixture.sweepsPath}/${sweep.id}/resume`, {
         method: 'POST',
@@ -245,7 +245,7 @@ describe.skipIf(!testDatabaseUrl)('Sweep（独立PostgreSQL）', () => {
     const queuedTrial = trials.find((trial) => trial.runId !== running!.run.id)!;
     expect(queuedTrial).toMatchObject({ state: 'canceled', runStatus: 'canceled' });
 
-    // The worker reports the canceled process; no new trial starts after cancellation.
+    // workerが取り消されたプロセスを報告する。取り消したあとは新しいtrialを始めない。
     await fixture.complete(running!, 'canceled');
     const after = await fixture.getSweep(sweep.id);
     expect(after.trialCounts).toMatchObject({ total: 2, canceled: 2 });
@@ -538,7 +538,8 @@ describe.skipIf(!testDatabaseUrl)('Sweep（独立PostgreSQL）', () => {
       parallelism: 1,
     });
     const [trial] = await fixture.listTrials(sweep.id);
-    // Simulate a terminal transition whose handler did not run (e.g. it failed and rolled back).
+    // 終了状態への遷移のうち、ハンドラが動かなかったもの（失敗してロールバックしたなど）を
+    // 再現する。
     await harness.database.query(
       "UPDATE jobs SET status='failed',ended_at=now() WHERE id=$1",
       [trial!.jobId],

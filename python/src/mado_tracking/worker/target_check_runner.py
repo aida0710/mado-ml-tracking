@@ -1,6 +1,6 @@
-"""Claim and run the connection checks and directory listings the Web asks of this worker.
+"""画面がこのworkerに求める、接続の確認とディレクトリの一覧を取得して実行する。
 
-They run beside Job monitoring: the Job loop calls `poll` while it has nothing to claim.
+これらはJobの監視と並んで動く。Jobのループは、取得するものが無い間に`poll`を呼ぶ。
 """
 
 from __future__ import annotations
@@ -17,10 +17,10 @@ from .target_check_claims import DIRECTORY_LISTING, TARGET_CHECK_KINDS, ClaimedT
 from .target_probe import check_target
 
 LOGGER = logging.getLogger(__name__)
-# A directory listing is asked while a person types a path in the Web, so requests are claimed
-# every couple of seconds; still half the rate of the one-second Job claim loop.
+# ディレクトリの一覧は、画面で人がパスを入力している間に求められるので、
+# 2秒ほどごとにリクエストを取得する。それでも1秒ごとのJobの取得のループの半分の頻度。
 TARGET_CHECK_POLL_SECONDS = 2.0
-# A listing must not wait behind a connection check, which may take minutes.
+# 一覧を、数分かかることもある接続の確認の後ろで待たせない。
 MAX_PARALLEL_TARGET_CHECKS = 2
 
 
@@ -32,7 +32,7 @@ class TargetCheckRunner:
         self.next_poll = 0.0
 
     async def poll(self) -> None:
-        """Claim one request when a slot is free and the poll interval has passed."""
+        """空きがあり、ポーリングの間隔が過ぎていれば、リクエストを1つ取得する。"""
         self.collect_finished()
         if len(self.running) >= MAX_PARALLEL_TARGET_CHECKS:
             return
@@ -53,7 +53,7 @@ class TargetCheckRunner:
         except ConfigurationError as error:
             LOGGER.error("Target check claim was rejected: %s", self.api.masker.mask(str(error)))
             return
-        # A claim the API hands back while it still runs here is never started twice.
+        # ここでまだ動いている間にAPIが返したリクエストを、2回始めることは無い。
         if claimed is not None and claimed.check_id not in self.running:
             self.running[claimed.check_id] = asyncio.create_task(self.run(claimed))
 
@@ -62,7 +62,7 @@ class TargetCheckRunner:
         try:
             await self.api.complete_target_check(claimed, status=status, result=result)
         except ApiError as error:
-            # The API expires an unreported request, so the Web can ask again.
+            # APIは報告の無いリクエストを期限切れにするので、画面はもう一度求められる。
             LOGGER.error("Target check %s report failed: %s", claimed.check_id, str(error))
 
     async def perform(self, claimed: ClaimedTargetCheck) -> tuple[str, dict[str, Any]]:

@@ -27,10 +27,10 @@ const registeredModelFields: Record<string, SearchField> = {
     numeric: true,
   },
   last_updated_timestamp: registeredModelUpdatedAt,
-  // MLflow's recommended order key for registered models; it sorts by the last update.
+  // MLflowが登録モデルに勧める並び順のキー。最後の更新で並べる。
   timestamp: registeredModelUpdatedAt,
 };
-// Versions that are not plain digits never match a numeric comparison.
+// 数字だけでないバージョンは、数値の比較に決して一致しない。
 const versionNumberField: SearchField = {
   expression: "CASE WHEN v.version ~ '^[0-9]+$' THEN v.version::numeric END",
   numeric: true,
@@ -51,20 +51,20 @@ const modelVersionFields: Record<string, SearchField> = {
     numeric: true,
   },
 };
-// MLflow's registry search accepts the attribute., tag. and tags. prefixes (SearchModelUtils,
-// SearchModelVersionUtils).
+// MLflowのregistryの検索は、attribute.・tag.・tags.の前置きを受け付ける（SearchModelUtils、
+// SearchModelVersionUtils）。
 const REGISTRY_FIELD_KINDS: Record<string, 'attribute' | 'tag'> = {
   attribute: 'attribute',
   tag: 'tag',
   tags: 'tag',
 };
-// MLflow 3 clients append tag.`mlflow.prompt.is_prompt` != 'true' to every registered model
-// search, and MLflow reads a model without this tag as not a prompt. Comparing a missing tag as
-// 'false' keeps plain models in those results; this API has no Prompt Registry entries to exclude.
+// MLflow 3のクライアントは、登録モデルの検索すべてにtag.`mlflow.prompt.is_prompt` != 'true'を
+// 足し、MLflowはこのtagの無いモデルをプロンプトでないものとして読む。無いtagを'false'として
+// 比べると、普通のモデルがその結果に残る。このAPIには除外すべきPrompt Registryの項目が無い。
 const PROMPT_TAG_KEY = 'mlflow.prompt.is_prompt';
 const MISSING_PROMPT_TAG_VALUE = 'false';
 
-/** The filter, order and page of one registry search, ready to follow a WHERE clause. */
+/** 1つのregistry検索のfilter・並び順・ページ。WHERE句の後ろにそのまま続けられる形。 */
 function registrySearch(
   input: SearchRegistry,
   reference: { projectId: string; kind: 'model' | 'version' },
@@ -78,7 +78,8 @@ function registrySearch(
   const fields = reference.kind === 'model' ? registeredModelFields : modelVersionFields;
   const tagsColumn = reference.kind === 'model' ? 'mm.tags' : 'vm.tags';
   const resolveField = (field: string): SearchField => {
-    // splitSearchField names an unprefixed field `attributes`, a prefix only Run search accepts.
+    // splitSearchFieldは前置きの無いフィールドを`attributes`とするが、これはRunの検索だけが
+    // 受け付ける前置き。
     const { kind, key } = field.includes('.')
       ? splitSearchField(field)
       : { kind: 'attribute', key: field };

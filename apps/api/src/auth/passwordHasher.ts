@@ -1,14 +1,15 @@
 import argon2 from 'argon2';
 
-// Lengths are UTF-8 bytes: one Japanese character is 3 bytes, and Argon2 limits bytes.
+// 長さはUTF-8のバイト数で数える。日本語は1文字3バイトで、Argon2が制限するのはバイト数のため。
 export const PASSWORD_MIN_BYTES = 12;
-// Bounds the work an attacker can force into one hash computation.
+// 攻撃者が1回のハッシュ計算に負わせられる仕事量を抑える。
 export const PASSWORD_MAX_BYTES = 1024;
 
-// Local accounts depend only on this interface so the algorithm (for example scrypt) can be swapped.
+// ローカルアカウントはこのインターフェースだけに依存させ、アルゴリズム（たとえばscrypt）を
+// 差し替えられるようにする。
 export interface PasswordHasher {
   hash(password: string): Promise<string>;
-  // Returns false for malformed or foreign hashes instead of throwing.
+  // 形式の壊れたハッシュや別方式のハッシュには、例外を投げずにfalseを返す。
   verify(passwordHash: string, password: string): Promise<boolean>;
   needsRehash(passwordHash: string): boolean;
 }
@@ -18,8 +19,8 @@ export function isAcceptablePasswordLength(password: string): boolean {
   return bytes >= PASSWORD_MIN_BYTES && bytes <= PASSWORD_MAX_BYTES;
 }
 
-// OWASP Password Storage Cheat Sheet minimum for Argon2id. Encoded hashes carry their
-// parameters and salt, so raising these values later still verifies older hashes.
+// OWASP Password Storage Cheat SheetにあるArgon2idの最低値。符号化したハッシュは設定値と
+// saltを含むので、あとでこの値を上げても古いハッシュを検証できる。
 const ARGON2ID_OPTIONS = {
   type: argon2.argon2id,
   memoryCost: 19_456,

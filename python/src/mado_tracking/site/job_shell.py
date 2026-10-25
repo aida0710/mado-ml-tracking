@@ -1,8 +1,8 @@
-"""The job shell contract: the variables a site's job shell receives and the line it prints.
+"""job shellの契約。siteのjob shellが受け取る変数と、job shellが出力する行。
 
-The job shell turns MMT_GPU_COUNT, MMT_WALLTIME and MMT_ARRAY_SIZE into the site's scheduler
-options, submits `"$MMT_RUNNER" "$MMT_SPEC_DIR"`, and prints the scheduler's job ID as the last
-line of its standard output (nothing, or an empty line, on a host without a scheduler).
+job shellはMMT_GPU_COUNT、MMT_WALLTIME、MMT_ARRAY_SIZEをsiteのスケジューラのオプションに
+変え、`"$MMT_RUNNER" "$MMT_SPEC_DIR"`を投入し、スケジューラのジョブIDを標準出力の最後の行に
+出す（スケジューラの無いホストでは、何も出さないか空の行）。
 """
 
 from __future__ import annotations
@@ -14,24 +14,24 @@ from typing import Any
 from ..errors import ConfigurationError
 from ..security import SecretMasker
 
-# jobs.scheduler_job_id in the API's database.
+# APIのデータベースのjobs.scheduler_job_id。
 MAX_SCHEDULER_JOB_ID_LENGTH = 200
 SECONDS_PER_HOUR = 3600
 SECONDS_PER_MINUTE = 60
-# Job.error keeps the end of the job shell's stderr, which is where schedulers explain a refusal.
+# Job.errorにはjob shellのstderrの末尾を残す。スケジューラが拒んだ理由はそこに出る。
 JOB_SHELL_ERROR_CHARACTERS = 1000
 VARIABLE_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 VARIABLE_PREFIX = "MMT_VAR_"
-# Characters a value cannot carry through the remote shell's command line or an environment.
+# リモートのシェルのコマンドラインや環境変数で、値として運べない文字。
 FORBIDDEN_VALUE_CHARACTERS = "\r\n\x00"
 
 
 class JobShellOutputError(ValueError):
-    """The job shell's last line is not a scheduler job ID."""
+    """job shellの最後の行が、スケジューラのジョブIDになっていない。"""
 
 
 def format_walltime(seconds: int | None) -> str:
-    """HH:MM:SS with hours past 24 (72:00:00), or empty when the Job sets no limit."""
+    """HH:MM:SS（24時間を超えてもそのまま数える。72:00:00）。Jobに上限が無ければ空。"""
     if seconds is None:
         return ""
     hours, remainder = divmod(int(seconds), SECONDS_PER_HOUR)
@@ -53,7 +53,7 @@ def job_shell_environment(
     target_id: str,
     variables: Mapping[str, str],
 ) -> dict[str, str]:
-    """The environment of one job shell call; `jobs` are the submission's WorkerJobs in array order."""
+    """1回のjob shellの呼び出しの環境変数。`jobs`は、その投入のWorkerJobをarrayの順に並べたもの。"""
     if not jobs:
         raise ConfigurationError("A submission needs at least one Job")
     first = jobs[0]["job"]
@@ -78,7 +78,7 @@ def job_shell_environment(
 
 
 def scheduler_job_id(stdout: bytes) -> str | None:
-    """The scheduler's job ID from the last line of the job shell's stdout; None when it is empty."""
+    """job shellのstdoutの最後の行から取る、スケジューラのジョブID。空ならNone。"""
     text = stdout.decode("utf-8", "replace")
     lines = text.split("\n")
     if text.endswith("\n"):

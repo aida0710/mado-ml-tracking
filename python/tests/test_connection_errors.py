@@ -1,4 +1,4 @@
-"""The errors a first connection runs into say which setting to fix (usability audit A-07)."""
+"""最初の接続で出会うエラーが、どの設定を直せばよいかを示す（使い勝手の監査A-07）。"""
 
 from __future__ import annotations
 

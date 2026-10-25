@@ -189,7 +189,7 @@ describe.skipIf(!testDatabaseUrl)('Run・モデルバージョンのスレッド
     expect(
       (await changeComment(root.id, { method: 'DELETE', cookie: fixture.editor.cookie })).status,
     ).toBe(204);
-    // A retried deletion succeeds without recording a second deletion.
+    // 削除を再試行しても成功し、2回目の削除は記録されない。
     expect(
       (await changeComment(root.id, { method: 'DELETE', cookie: fixture.editor.cookie })).status,
     ).toBe(204);
@@ -248,7 +248,7 @@ describe.skipIf(!testDatabaseUrl)('Run・モデルバージョンのスレッド
     expect(runResponse.status).toBe(409);
     expect(((await runResponse.json()) as { code: string }).code).toBe('comment_target_deleted');
 
-    // MLflow addresses versions by number, so delete an auto-numbered version.
+    // MLflowはバージョンを番号で指すので、自動で番号を振ったバージョンを削除する。
     const numbered = await entity<ModelVersion>(
       await request(harness.app, `${fixture.basePath}/models/${fixture.model.id}/versions`, {
         method: 'POST',
@@ -302,7 +302,7 @@ describe.skipIf(!testDatabaseUrl)('Run・モデルバージョンのスレッド
     const roots: Comment[] = [];
     for (const body of ['a', 'b', 'c', 'd', 'e']) roots.push(await createComment({ body }));
     const reply = await createComment({ parentCommentId: roots[0]!.id, body: 'a-reply' });
-    // Same created_at for every comment, so ordering falls back to the thread and comment ids.
+    // すべてのコメントのcreated_atを同じにし、順序がスレッドとコメントのidで決まるようにする。
     await harness.database.query(
       "UPDATE comments SET created_at='2026-10-08T00:00:00Z' WHERE project_id=$1",
       [fixture.project.id],
@@ -319,7 +319,7 @@ describe.skipIf(!testDatabaseUrl)('Run・モデルバージョンのスレッド
 
     expect(seen).toHaveLength(6);
     expect(new Set(seen).size).toBe(6);
-    // The reply directly follows its root even though both share the same created_at.
+    // created_atが同じでも、返信はスレッドの起点のコメントのすぐあとに並ぶ。
     expect(seen[seen.indexOf(roots[0]!.id) + 1]).toBe(reply.id);
     const rootOrder = roots.map((root) => root.id).sort();
     expect(seen.filter((id) => id !== reply.id)).toEqual(rootOrder);

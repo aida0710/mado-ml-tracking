@@ -1,5 +1,5 @@
-// Zod schemas of the contract types, for the OpenAPI document and response conformance tests.
-// Imported as '@mmt/contracts/schemas' so the Web bundle, which uses only the types, stays without zod.
+// 契約の型のZodスキーマ。OpenAPIの文書と、応答が契約に合うかのテストに使う。Webのバンドルは
+// 型しか使わないので、zodを含めずに済むよう'@mmt/contracts/schemas'としてimportする。
 export * from './adminUsers.js';
 export * from './artifactMediaInfo.js';
 export * from './artifactPreviews.js';

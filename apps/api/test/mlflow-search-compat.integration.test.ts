@@ -8,16 +8,16 @@ import { createHarness, entity, request, testDatabaseUrl, type Harness } from '.
 import { modelFixture, type ModelFixture, type VersionResponse } from './mlflow-models-fixtures.js';
 import { mlflowSdkPythonPath } from './mlflow-sdk-fixtures.js';
 
-// 0 lets the OS choose; set it to keep the SDK test on an allowed port range.
+// 0ならOSが選ぶ。SDKのテストを許された範囲のポートで動かすときは設定する。
 const SDK_TEST_HTTP_PORT = Number(process.env.MMT_TEST_HTTP_PORT ?? 0);
-// The page sizes this API serves (MAX_MODEL_PAGE_SIZE, metric history's page size).
+// このAPIが返すページの大きさ（MAX_MODEL_PAGE_SIZEと、メトリクスの履歴のページの大きさ）。
 const MODEL_PAGE_SIZE = 1000;
 const METRIC_HISTORY_PAGE_SIZE = 50000;
-// What the official client sends without max_results (MLflow 3.0.0 to 3.17.0).
+// max_resultsを指定しないときに公式のクライアントが送る値（MLflow 3.0.0〜3.17.0）。
 const SDK_MODEL_VERSION_MAX_RESULTS = '10000';
 const SDK_REGISTERED_MODEL_MAX_RESULTS = '100';
 const SDK_METRIC_HISTORY_MAX_RESULTS = '25000';
-// The filter MLflow 3 clients append to every search_registered_models call.
+// MLflow 3のクライアントが、search_registered_modelsを呼ぶたびに付け足す絞り込み。
 const SDK_PROMPT_EXCLUSION = "tag.`mlflow.prompt.is_prompt` != 'true'";
 
 type VersionPage = { model_versions: VersionResponse['model_version'][]; next_page_token?: string };
@@ -37,7 +37,8 @@ describe.skipIf(!testDatabaseUrl)('公式MLflowライブラリが送る形の検
     await harness?.close();
   });
 
-  // Registering one version runs the whole native flow, so paging checks add plain version rows.
+  // バージョンを1つ登録するとネイティブの処理が一通り動くので、ページ送りの確認では
+  // バージョンの行だけを足す。
   async function addVersionRows(modelName: string, count: number): Promise<void> {
     await harness.database.query(
       `INSERT INTO model_versions(model_id,project_id,version)
@@ -71,7 +72,7 @@ describe.skipIf(!testDatabaseUrl)('公式MLflowライブラリが送る形の検
     );
     expect(first.model_versions).toHaveLength(MODEL_PAGE_SIZE);
     expect(first.next_page_token).toEqual(expect.any(String));
-    // mlflow.search_model_versions(max_results=N) asks for the remainder on the next page.
+    // mlflow.search_model_versions(max_results=N)は、残りを次のページで求める。
     for (const maxResults of [SDK_MODEL_VERSION_MAX_RESULTS, '9000']) {
       const rest = await entity<VersionPage>(
         await searchVersions({
@@ -99,7 +100,7 @@ describe.skipIf(!testDatabaseUrl)('公式MLflowライブラリが送る形の検
     const loggedModels = await request(fixture.app, `${fixture.modelEndpoint}/search`, {
       method: 'POST',
       cookie: fixture.viewer.cookie,
-      // mlflow.search_logged_models(max_results=5000) sends it as is; MLflow has no upper bound.
+      // mlflow.search_logged_models(max_results=5000)はその値をそのまま送る。MLflowに上限は無い。
       body: { experiment_ids: [fixture.experiment.id], max_results: 5000 },
     });
     expect(loggedModels.status).toBe(200);
@@ -139,7 +140,7 @@ describe.skipIf(!testDatabaseUrl)('公式MLflowライブラリが送る形の検
     }
     expect(await modelNames(SDK_PROMPT_EXCLUSION)).toEqual(['Classifier', 'Regressor']);
     expect(await modelNames(`name LIKE 'C%' AND ${SDK_PROMPT_EXCLUSION}`)).toEqual(['Classifier']);
-    // MLflow reads a missing prompt tag as 'false'; this API has no prompts to ask for.
+    // MLflowはpromptのタグが無ければ'false'とみなす。このAPIには求められるpromptが無い。
     expect(await modelNames("tags.`mlflow.prompt.is_prompt` = 'false'")).toEqual([
       'Classifier',
       'Regressor',
@@ -204,7 +205,7 @@ describe.skipIf(!testDatabaseUrl)('公式MLflowライブラリが送る形の検
   it('登録モデルは MLflow が勧める timestamp（最後の更新）で並べられる', async () => {
     await entity(await fixture.createRegistered('Older'), 200);
     await entity(await fixture.createRegistered('Newer'), 200);
-    // Set the update times apart so that two requests in the same millisecond cannot tie.
+    // 2つのリクエストが同じミリ秒に入っても同着にならないよう、更新時刻を離しておく。
     await harness.database.query(
       `UPDATE mlflow_registered_model_metadata mm SET updated_at=now()+interval '1 hour'
       FROM models m WHERE m.id=mm.model_id AND m.name='Older'`,

@@ -1,8 +1,7 @@
-"""Experiments looked up by name, and which Experiment a new Run goes into.
+"""名前で探す実験と、新しいRunがどの実験に入るか。
 
-Choosing an Experiment by name follows MLflow's ``set_experiment``: the Experiment with that name
-is used, and created when it does not exist yet. ``Client.ensure_model`` reuses or creates a Model
-by name the same way.
+名前での実験の選び方はMLflowの``set_experiment``に従う。その名前の実験を使い、まだ無ければ作る。
+``Client.ensure_model``も同じやり方で、名前で登録モデルを使い回すか作る。
 """
 
 from __future__ import annotations
@@ -16,26 +15,25 @@ from .names import trim_name
 if TYPE_CHECKING:
     from .client import Client
 
-# Set by the worker for a Job's Run, and by people who record into one Experiment from a shell.
+# JobのRunではworkerが設定する。シェルから1つの実験に記録する人も設定する。
 EXPERIMENT_ID_VARIABLE = "MMT_EXPERIMENT_ID"
 
 
 def find_experiment(client: Client, project_id: str, *, name: str) -> dict[str, Any] | None:
-    """The active Experiment named exactly ``name``, or None.
+    """名前がちょうど``name``である、有効な実験。無ければNone。
 
-    Deleted (MLflow soft-deleted) Experiments are not listed, as in the Web list.
+    画面の一覧と同じく、削除された（MLflowで論理削除された）実験は含めない。
     """
     experiments = client.list_project_items(project_id, "experiments")
     return next((experiment for experiment in experiments if experiment.get("name") == name), None)
 
 
 def ensure_experiment(client: Client, project_id: str, *, name: str, description: str = "") -> dict[str, Any]:
-    """Return the Experiment named ``name``, creating it when absent.
+    """``name``という名前の実験を返す。無ければ作る。
 
-    White space at either end is dropped first, as the API does when it saves and compares names.
-    A concurrent creator can win between the lookup and the POST; the 409 is then resolved by
-    reading the Experiment it created. A deleted Experiment keeps its name, so it is reported
-    instead of being silently replaced.
+    APIが名前を保存・比較するときと同じく、両端の空白を先に取り除く。検索とPOSTの間に別の作成者が
+    先に作ることがあり、そのときは409を受けて、作られた実験を読んで解決する。削除された実験も
+    名前を持ち続けるので、黙って置き換えずに報告する。
     """
     name = trim_name(name)
     if not name:
@@ -68,9 +66,9 @@ def experiment_id_for_new_run(
     experiment_id: str | None,
     experiment_name: str | None,
 ) -> str | None:
-    """The Experiment a new Run goes into: the given ID, the one named (created when absent), or
-    MMT_EXPERIMENT_ID. An argument wins over the environment, so a name in the code is used even
-    inside a worker Job, whose MMT_EXPERIMENT_ID is the Job's own Experiment.
+    """新しいRunが入る実験。渡されたID、名前で指定したもの（無ければ作る）、または
+    MMT_EXPERIMENT_ID。引数が環境変数より優先するので、workerのJobの中でも、コードに書いた名前を
+    使う。JobのMMT_EXPERIMENT_IDはJob自身の実験を指す。
     """
     validate_experiment_choice(experiment_id, experiment_name)
     if experiment_name is not None:

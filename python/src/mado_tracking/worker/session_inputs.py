@@ -1,4 +1,4 @@
-"""Download Job inputs before launch and relay verified, complete bytes to the target."""
+"""起動の前にJobの入力をダウンロードし、検証済みの完全なバイト列をコンピュータへ中継する。"""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ from .runner_commands import RunnerCommands
 
 @dataclass(frozen=True)
 class ContainerInput:
-    """One file a container needs before it starts: its SIF or the input model's weights."""
+    """コンテナが開始前に必要とするファイル1つ。SIFか、入力モデルの重み。"""
 
     kind: str
     artifact_id: str | None
@@ -38,10 +38,10 @@ class ContainerInput:
 
 @dataclass(frozen=True)
 class CheckpointInput:
-    """A checkpoint staged as one verified tar: the resume checkpoint or a hook's input checkpoint."""
+    """検証済みの1つのtarとしてステージングするcheckpoint。再開用か、フックの入力のcheckpoint。"""
 
     checkpoint: dict[str, Any]
-    # The runner command suffix (upload-<kind>) and the stagedInputs key that records its tar.
+    # runnerのコマンドの接尾辞（upload-<kind>）と、そのtarを記録するstagedInputsのキー。
     kind: str
     staged_key: str
 
@@ -58,7 +58,7 @@ async def download_external_weights(uri: str, destination: Any) -> dict[str, Any
             raise ConfigurationError("External weights require an HTTP(S) URI without embedded credentials")
     except ValueError:
         raise ConfigurationError("Invalid input weights URI") from None
-    # Never reuse the authenticated API client or forward its token/headers to a weights URI.
+    # 認証済みのAPIクライアントを使い回したり、そのtokenやヘッダーを重みのURIへ送ったりしない。
     async with httpx.AsyncClient(
         timeout=REQUEST_TIMEOUT_SECONDS,
         follow_redirects=False,
@@ -74,7 +74,7 @@ async def download_external_weights(uri: str, destination: Any) -> dict[str, Any
 
 
 def container_inputs(job: WorkerJob) -> list[ContainerInput]:
-    """The SIF of a SIF runtime and the weights of the input ModelVersion, unless already local."""
+    """SIFのruntimeならそのSIFと、入力ModelVersionの重み。既にローカルにあるものは除く。"""
     runtime = job.runtime
     inputs: list[ContainerInput] = []
     if runtime["kind"] in {"singularity", "apptainer"}:
@@ -86,7 +86,7 @@ def container_inputs(job: WorkerJob) -> list[ContainerInput]:
             raise ConfigurationError("Container input ModelVersion has no saved weights")
         if not artifact_id and not isinstance(weights_uri, str):
             raise ConfigurationError("Container input ModelVersion has an invalid weights URI")
-        # A file:// URI names a file on the target, which copies it itself before launch.
+        # file://のURIはコンピュータ上のファイルを指し、コンピュータが起動前に自分でコピーする。
         if artifact_id or urlsplit(str(weights_uri)).scheme != "file":
             inputs.append(ContainerInput("weights", artifact_id, weights_uri, None))
     return inputs
@@ -95,7 +95,7 @@ def container_inputs(job: WorkerJob) -> list[ContainerInput]:
 async def download_container_input(
     container_input: ContainerInput, *, api: ArtifactTransferApi, project_id: str, destination: Path
 ) -> dict[str, Any]:
-    """Write one input to destination and return its {sha256, size}; a SIF must match its sha256."""
+    """1つの入力をdestinationに書き、その{sha256, size}を返す。SIFはsha256が一致する必要がある。"""
     with destination.open("wb") as output:
         if container_input.artifact_id:
             descriptor = await api.download_artifact(project_id, container_input.artifact_id, output)
@@ -147,7 +147,7 @@ async def stage_job_inputs(
     executor: RunnerCommands,
     transfer_path: Callable[[str], Path],
 ) -> None:
-    """Container runtimes need their image and weights; any runtime may get checkpoints."""
+    """コンテナのruntimeにはイメージと重みが要る。checkpointはどのruntimeにも渡り得る。"""
     if job.runtime["kind"] != "python":
         await stage_container_inputs(job, api=api, executor=executor, transfer_path=transfer_path)
     for checkpoint_input in checkpoint_inputs(job):
@@ -168,10 +168,10 @@ async def _download_verified_artifact(
 async def download_checkpoint_archive(
     checkpoint: dict[str, Any], *, api: ArtifactTransferApi, project_id: str, archive_path: Path
 ) -> dict[str, Any]:
-    """Download the checkpoint as one tar verified against its manifest; returns {sha256, size}.
+    """checkpointを、manifestと照合した1つのtarとしてダウンロードする。{sha256, size}を返す。
 
-    A native checkpoint already is that tar. An MLflow checkpoint's files are packed into one
-    after each is verified. Any mismatch fails the Job before its entrypoint is started.
+    ネイティブのcheckpointは、既にそのtarになっている。MLflowのcheckpointは、ファイルを1つずつ
+    検証してから1つのtarにまとめる。どこかが一致しなければ、entrypointを始める前にJobを失敗させる。
     """
     if checkpoint["source"] == "native":
         await _download_verified_artifact(
@@ -201,7 +201,7 @@ async def stage_checkpoint(
     executor: RunnerCommands,
     transfer_path: Callable[[str], Path],
 ) -> None:
-    """Send the verified tar to the target, which checks and extracts it again before launch."""
+    """検証済みのtarをコンピュータへ送る。コンピュータは起動の前にもう一度確かめてから展開する。"""
     archive_path = transfer_path(checkpoint_input.kind)
     try:
         descriptor = await download_checkpoint_archive(

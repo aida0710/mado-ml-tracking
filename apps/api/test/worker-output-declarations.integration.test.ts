@@ -298,7 +298,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
     const claimed = await launchTraining(fixture, token);
     const first = await uploadOutput(fixture, claimed, 'prepared/a.wav');
     const nested = await uploadOutput(fixture, claimed, 'prepared/speaker-2/b.wav');
-    // A sibling that only shares the name's beginning is not inside the directory.
+    // 名前の先頭が同じだけの隣のパスは、そのディレクトリの中に入らない。
     await uploadOutput(fixture, claimed, 'prepared-report.json');
     const response = await entity<WorkerOutputsResponse>(
       await declare(token, claimed, [
@@ -314,7 +314,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
       ),
       200,
     );
-    // Paths are relative to the declared directory, like a version made from a Run's Artifacts.
+    // パスは宣言したディレクトリからの相対パス。RunのArtifactから作ったバージョンと同じ。
     expect(files.items.map((file) => [file.path, file.artifactId])).toEqual([
       ['a.wav', first.id],
       ['speaker-2/b.wav', nested.id],
@@ -365,7 +365,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
     );
     expect(second).toEqual(first);
     expect(await runVersions(fixture, fixture.model.id, claimed.run.id)).toHaveLength(1);
-    // A resend after completion (the response was lost) still answers from the stored rows.
+    // 完了後に送り直しても（応答が失われた場合）、保存済みの行から答える。
     await complete(token, claimed);
     expect(
       await entity<WorkerOutputsResponse>(await declare(token, claimed, [declaration]), 200),
@@ -500,7 +500,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
         422,
       ),
     ).toBe('output_artifact_not_found');
-    // A file uploaded outside container/ is not an output of this Job.
+    // container/の外にアップロードしたファイルは、このJobの出力ではない。
     await uploadFixtureArtifact(harness, fixture, {
       path: 'elsewhere.bin',
       runId: claimed.run.id,
@@ -511,7 +511,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
     expect(
       await errorCode(await declare(token, claimed, [{ ...valid, path: '../escape.bin' }]), 422),
     ).toBe('invalid_request');
-    // The request is one transaction: the valid declaration above was rolled back as well.
+    // リクエストは1つのトランザクションなので、上の正しい宣言もロールバックされている。
     expect(await runVersions(fixture, fixture.model.id, claimed.run.id)).toEqual([]);
     expect((await harness.database.query('SELECT 1 FROM run_output_declarations')).rows).toEqual(
       [],
@@ -546,7 +546,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
     await saveTaskOutputModel(fixture, fixture.model.id);
     const claimed = await launchTraining(fixture, token, 2);
     await uploadOutput(fixture, claimed, WEIGHTS_OUTPUT);
-    // Without modelId the declaration goes to the Task's output model.
+    // modelIdが無ければ、宣言はTaskの出力先のモデルに入る。
     const declared = await entity<WorkerOutputsResponse>(
       await declare(token, claimed, [{ index: 0, kind: 'model', path: WEIGHTS_OUTPUT }]),
       200,
@@ -681,7 +681,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
     const claimed = await launchTraining(fixture, token);
     await uploadOutput(fixture, claimed, WEIGHTS_OUTPUT);
     await uploadOutput(fixture, claimed, SPLIT_OUTPUT);
-    // The creator keeps the editor role only through the Project's public visibility.
+    // 作成者は、Projectの公開設定を通してだけeditorのroleを持ち続ける。
     await harness.database.query("UPDATE projects SET visibility='public' WHERE id=$1", [
       fixture.project.id,
     ]);

@@ -5,18 +5,18 @@ export type JsonSchema = Record<string, unknown>;
 
 const COMPONENT_REF_PREFIX = '#/components/schemas/';
 const LOCAL_DEF_REF_PREFIX = '#/$defs/';
-// zod names the definitions it extracts without a registry id `__schema0`, `__schema1`, ... per
-// conversion, so the same name means different schemas in different conversions.
+// zodはregistryのidが無いまま取り出した定義に、変換ごとに`__schema0`、`__schema1`、...と
+// 名前を付けるので、同じ名前でも変換が違えば別のスキーマを指す。
 const UNNAMED_DEFINITION = /^__schema\d+$/;
 const UNNAMED_COMPONENT_PREFIX = 'Inline';
-// zod spells these formats out as long regular expressions as well; the format alone says it.
+// zodはこれらのformatも長い正規表現で書き出すが、formatだけで意味が伝わる。
 const SELF_DESCRIBING_FORMATS = new Set(['uuid', 'date-time', 'email']);
 
 /**
- * Converts zod schemas to OpenAPI 3.1 (JSON Schema 2020-12) and collects the shared definitions
- * as `components.schemas`. Contract schemas registered with an id become `$ref`s to the
- * component of that name. Definitions zod extracts without an id (recursive values such as
- * z.json()) are shared by content: identical definitions get one component.
+ * zodのスキーマをOpenAPI 3.1（JSON Schema 2020-12）に変換し、共有する定義を
+ * `components.schemas`として集める。idを付けて登録した契約のスキーマは、その名前のcomponentへの
+ * `$ref`になる。zodがidなしで取り出す定義（z.json()のような再帰的な値）は中身で共有し、同じ
+ * 定義にはcomponentを1つだけ割り当てる。
  */
 export class JsonSchemaComponents {
   private readonly schemas = new Map<string, JsonSchema>();
@@ -28,7 +28,7 @@ export class JsonSchemaComponents {
       target: 'draft-2020-12',
       metadata: contractSchemaRegistry,
       io,
-      // Transforms (comma-separated query lists) have no JSON Schema output; their input is kept.
+      // transform（カンマ区切りのクエリのリスト）にはJSON Schemaの出力が無いので、入力の形を残す。
       unrepresentable: 'any',
     }) as JsonSchema;
     const {
@@ -40,7 +40,7 @@ export class JsonSchemaComponents {
     return rewriteRefs(root, renames) as JsonSchema;
   }
 
-  /** Components sorted by name so the generated document does not depend on route order. */
+  /** 生成するドキュメントが経路の順序に左右されないよう、componentを名前順に並べる。 */
   components(): Record<string, JsonSchema> {
     return Object.fromEntries(
       [...this.schemas].sort(([left], [right]) => left.localeCompare(right)),
@@ -68,7 +68,7 @@ export class JsonSchemaComponents {
       if (existing && JSON.stringify(existing) !== JSON.stringify(rewritten))
         throw new Error(`OpenAPI component ${component} has two different definitions`);
       this.schemas.set(component, rewritten);
-      // A named component whose content matches a later unnamed definition is reused for it.
+      // 名前付きのcomponentの中身が後の名前の無い定義と一致すれば、それにも使い回す。
       const content = contentKey(definition, name, renames);
       if (!this.namesByContent.has(content)) this.namesByContent.set(content, component);
     }
@@ -88,7 +88,7 @@ function withoutFormatPatterns(value: unknown): unknown {
   );
 }
 
-// Self references become '' so that one recursive shape has one key whatever its name.
+// 自分への参照は''にし、1つの再帰的な形が名前にかかわらず1つのキーを持つようにする。
 function contentKey(definition: JsonSchema, name: string, renames: Map<string, string>): string {
   return JSON.stringify(rewriteRefs(definition, new Map([...renames, [name, '']]), false));
 }

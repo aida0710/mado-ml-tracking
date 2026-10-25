@@ -15,7 +15,7 @@ interface RunCheckpointRow extends Omit<RunCheckpoint, 'artifacts'> {
   artifacts: RunCheckpointArtifact[];
 }
 
-/** A saved Artifact as the checkpoint checks it; path is the Run artifact path. */
+/** checkpointが確かめる形の保存済みArtifact。pathはRunのArtifactのパス。 */
 export interface SavedArtifact {
   id: string;
   runId: string | null;
@@ -24,7 +24,7 @@ export interface SavedArtifact {
   sha256: string;
 }
 
-// bigint step and summed sizes are read as float8 so they map to JSON numbers.
+// bigintのstepと合計したサイズは、JSONの数値になるようfloat8で読む。
 const checkpointSelect = `SELECT c.id,c.project_id,c.run_id,c.step::float8 AS step,c.source,c.artifact_ids,
   c.manifest,c.metadata,c.retained,c.created_at,
   COALESCE((SELECT jsonb_agg(jsonb_build_object('id',a.id,'path',a.path,'size',a.size,'sha256',a.sha256)
@@ -34,7 +34,7 @@ const checkpointSelect = `SELECT c.id,c.project_id,c.run_id,c.step::float8 AS st
     WHERE a.id=ANY(c.artifact_ids) AND a.project_id=c.project_id) AS total_size
   FROM run_checkpoints c`;
 
-/** An MLflow checkpoint's Artifacts are listed by their path inside step-<N>/, like its manifest. */
+/** MLflowのcheckpointのArtifactは、そのmanifestと同じくstep-<N>/の中のパスで並べる。 */
 function toCheckpoint(row: RunCheckpointRow): RunCheckpoint {
   if (row.source !== 'mlflow') return row;
   return {
@@ -72,7 +72,7 @@ export async function findCheckpoint(
   return toCheckpoint(found);
 }
 
-/** The largest step, hidden or not: hiding only trims the list, the files stay usable. */
+/** 隠したかどうかによらず最大のstep。隠すのは一覧から外すだけで、ファイルは使えるまま。 */
 export async function findLatestCheckpointId(
   connection: Connection,
   reference: { projectId: string; runId: string },
@@ -149,7 +149,7 @@ export async function updateMlflowCheckpointFiles(
   ]);
 }
 
-/** Hides every checkpoint of the Run below the keepCount largest steps. */
+/** Runのcheckpointのうち、stepの大きい順にkeepCount個より後ろのものをすべて隠す。 */
 export async function hideCheckpointsBeyond(
   connection: Connection,
   retention: { runId: string; keepCount: number },
@@ -161,7 +161,7 @@ export async function hideCheckpointsBeyond(
   );
 }
 
-/** Saved Artifacts in the Project; an Artifact row exists only after its content is stored. */
+/** Projectの保存済みArtifact。Artifactの行は中身を保存した後にしかできない。 */
 export async function findSavedArtifacts(
   connection: Connection,
   reference: { projectId: string; ids: readonly string[] },
@@ -174,7 +174,7 @@ export async function findSavedArtifacts(
   );
 }
 
-/** The facts a resume compares: the Run's kind and the Code its CodeVersion belongs to. */
+/** 再開で比べる事実。Runの種類と、そのCodeVersionが属するCode。 */
 export async function findRunCodeLineage(
   connection: Connection,
   reference: { projectId: string; runId: string },

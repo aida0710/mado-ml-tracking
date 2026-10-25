@@ -1,6 +1,6 @@
-"""Typed, strict reading of TOML tables for the launcher, `mado-tracking submit` and job templates.
+"""launcher、`mado-tracking submit`、Jobのテンプレート向けに、TOMLのテーブルを型どおり厳密に読む。
 
-Unknown keys are refused, so a misspelt setting fails at startup instead of being ignored.
+未知のキーは拒むので、綴りを間違えた設定は無視されずに起動時に失敗する。
 """
 
 from __future__ import annotations
@@ -96,7 +96,7 @@ class TableReader:
         return self._value(key, default)
 
     def path(self, key: str, *, default: Any = _REQUIRED) -> Path:
-        """A local path; `~` is expanded and a relative path is read from the file's directory."""
+        """ローカルのパス。`~`は展開し、相対パスはファイルのあるディレクトリから解決する。"""
         if key not in self.table and default is not _REQUIRED:
             return Path(default)
         path = Path(self.string(key)).expanduser()

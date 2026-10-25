@@ -1,4 +1,4 @@
-"""Install, upgrade, status, and doctor on a worker host, with systemctl and pip replaced by a recorder."""
+"""workerのホストでのinstall、upgrade、status、doctor。systemctlとpipは記録用の代役にする。"""
 
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
 
 class RecordingRunner:
-    """Stands in for systemctl and pip; answers `show` with the configured unit state."""
+    """systemctlとpipの代わり。`show`には設定したunitの状態を返す。"""
 
     def __init__(self, *, active_state: str = "active", failing_program: str | None = None):
         self.calls: list[list[str]] = []
@@ -152,7 +152,7 @@ def test_system_unit_matches_the_deploy_template():
         )
     )
     template = (REPOSITORY_ROOT / "deploy/worker/mado-tracking-worker@.service").read_text()
-    # The deploy copy only adds a usage header before [Unit].
+    # deploy/にある写しは、[Unit]の前に使い方の見出しを足しているだけ。
     assert template[template.index("[Unit]") :] == rendered
 
 
@@ -327,7 +327,7 @@ def test_doctor_accepts_a_complete_service_token_and_rejects_job_tokens():
     assert check_api(API, token_api(complete))[1].level is CheckLevel.OK
     assert check_api(API, token_api(complete, job=True))[1].level is CheckLevel.ERROR
     assert check_api(API, token_api([], token_status=401))[1].level is CheckLevel.ERROR
-    # An API without GET /auth/token cannot be checked, which is not the token's fault.
+    # GET /auth/tokenが無いAPIは確かめられないが、それはtokenのせいではない。
     assert check_api(API, token_api([], token_status=404))[1].level is CheckLevel.WARNING
 
 

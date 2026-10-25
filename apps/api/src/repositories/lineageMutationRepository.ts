@@ -1,6 +1,6 @@
 import { first, type Connection } from '../db/database.js';
 
-/** Serializes new provenance edges so concurrent associations cannot jointly create a cycle. */
+/** 新しい来歴の辺を直列に追加し、同時の関連付けが合わさって循環を作らないようにする。 */
 export async function lockProjectLineage(connection: Connection, projectId: string): Promise<void> {
   await connection.query(
     "SELECT pg_advisory_xact_lock(hashtextextended('model-training-source:'||$1||':'||current_schema(),0))",
@@ -8,7 +8,7 @@ export async function lockProjectLineage(connection: Connection, projectId: stri
   );
 }
 
-/** Checks an ancestor across the pinned Run, dataset and model lineage. */
+/** 固定したRun・データセット・モデルのlineageをまたいで祖先を確かめる。 */
 export async function hasLineageAncestor(
   connection: Connection,
   reference: { projectId: string; ancestorId: string; descendantIds: string[] },

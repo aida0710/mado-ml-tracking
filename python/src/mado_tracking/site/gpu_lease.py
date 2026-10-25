@@ -1,8 +1,10 @@
-"""Pick free GPUs on a host without a scheduler (gpu_assignment = "lease", Docker GPU servers).
+"""スケジューラの無いホストで、空いているGPUを選ぶ（gpu_assignment = "lease"、
+DockerのGPUサーバー）。
 
-One runner at a time chooses, under a host-wide lock. A GPU is busy while another live runner
-leases it, or while a Docker container of a Mado Job holds it: containers outlive a runner that
-crashed, so the lease files alone could hand the same GPU out twice.
+選ぶのは、ホスト全体のロックの下で一度に1つのrunnerだけ。ほかの生きているrunnerがleaseして
+いるGPU、またはmado ML TrackingのJobのDockerコンテナが持っているGPUは使用中とみなす。
+コンテナはクラッシュしたrunnerより長く残るので、leaseのファイルだけでは同じGPUを2回渡して
+しまうことがある。
 
     <work dir>/.mmt-cache/gpu-leases/<hostname>/lock
     <work dir>/.mmt-cache/gpu-leases/<hostname>/<index>.json   {"jobId", "pid", "identity"}
@@ -27,7 +29,7 @@ from ..worker.host_state import is_same_process, process_identity, read_json, wr
 GPU_LISTING_ARGV = ["nvidia-smi", "--query-gpu=index,uuid", "--format=csv,noheader"]
 LEASE_DIRECTORY = "gpu-leases"
 LOCK_FILENAME = "lock"
-# Docker states in which a container keeps (or is about to get) its GPUs.
+# コンテナがGPUを持ち続ける（またはこれから得る）Dockerの状態。
 HOLDING_CONTAINER_STATES = {"created", "running", "paused", "restarting", "removing"}
 CONTAINER_DEVICES_FORMAT = "{{json .State.Status}}\t{{json .HostConfig.DeviceRequests}}"
 HOST_COMMAND_TIMEOUT_SECONDS = 30.0
@@ -36,7 +38,7 @@ CommandRunner = Callable[[list[str]], str]
 
 
 class GpuLeaseError(RuntimeError):
-    """The host's GPUs or containers could not be listed, so no GPU can be proven free."""
+    """ホストのGPUかコンテナを一覧できず、どのGPUも空いていると確かめられない。"""
 
 
 @dataclass(frozen=True)
@@ -46,7 +48,7 @@ class GpuDevice:
 
 
 def parse_gpu_listing(text: str) -> list[GpuDevice]:
-    """`nvidia-smi --query-gpu=index,uuid --format=csv,noheader` lines: `0, GPU-...`."""
+    """`nvidia-smi --query-gpu=index,uuid --format=csv,noheader`の行（`0, GPU-...`）。"""
     devices = []
     for line in text.splitlines():
         if not line.strip():
@@ -59,7 +61,7 @@ def parse_gpu_listing(text: str) -> list[GpuDevice]:
 
 
 def parse_container_devices(text: str) -> set[str]:
-    """GPU indexes and UUIDs held by containers, from CONTAINER_DEVICES_FORMAT lines."""
+    """CONTAINER_DEVICES_FORMATの行から求めた、コンテナが持っているGPUのインデックスとUUID。"""
     held: set[str] = set()
     for line in text.splitlines():
         if not line.strip():
@@ -79,7 +81,7 @@ def parse_container_devices(text: str) -> set[str]:
 def choose_gpus(
     devices: Sequence[GpuDevice], *, busy: set[str], count: int, candidates: Sequence[str] = ()
 ) -> list[str] | None:
-    """The `count` lowest free GPU indexes among the candidates, or None when too few are free."""
+    """候補のうち空いているGPUのインデックスを、小さい順に`count`個。空きが足りなければNone。"""
     allowed = [
         device
         for device in devices
@@ -160,14 +162,14 @@ class GpuLeases:
                 continue
             owner_alive = is_same_process(int(lease.get("pid", 0)), lease.get("identity"))
             if lease.get("jobId") == self.job_id or not owner_alive:
-                # Our own earlier lease, or one whose runner is gone (its container is checked apart).
+                # 自分の以前のlease、またはrunnerがもういないlease（そのコンテナは別に確かめる）。
                 path.unlink(missing_ok=True)
                 continue
             busy.add(path.stem)
         return busy
 
     def try_acquire(self, count: int, candidates: Sequence[str] = ()) -> list[str] | None:
-        """Lease `count` free GPUs, or return None when they are not free yet."""
+        """空いているGPUを`count`個leaseする。まだ空いていなければNoneを返す。"""
         self.directory.mkdir(mode=0o700, parents=True, exist_ok=True)
         with (self.directory / LOCK_FILENAME).open("a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)

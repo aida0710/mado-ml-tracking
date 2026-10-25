@@ -19,7 +19,7 @@ import {
 import type { ChildJobService } from '../services/childJobService.js';
 import type { HookService } from '../services/hookService.js';
 
-// Mounted at /api/projects.
+// /api/projectsに置く。
 export function hookRoutes(hooks: HookService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.get('/:p/hooks', async (context) =>
@@ -73,7 +73,7 @@ export function hookRoutes(hooks: HookService): Hono<ApiEnvironment> {
   return routes;
 }
 
-// Mounted at /api: no session or token; the delivery's signature is checked instead.
+// /apiに置く。sessionもtokenも使わず、代わりに配信の署名を確かめる。
 export function webhookRoutes(hooks: HookService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.post('/hooks/:id/webhook', async (context) =>
@@ -89,7 +89,7 @@ export function webhookRoutes(hooks: HookService): Hono<ApiEnvironment> {
   return routes;
 }
 
-// Mounted at /api/projects: a driver Job's code with its Job token.
+// /api/projectsに置く。ドライバーのJobのコードが、そのJob tokenで呼ぶ。
 export function childJobRoutes(children: ChildJobService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.post('/:p/jobs/:j/children', async (context) => {

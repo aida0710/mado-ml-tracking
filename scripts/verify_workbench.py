@@ -1,4 +1,4 @@
-"""Verify task revisions, fixed Git edits, test Jobs and saved execution sources."""
+"""Taskのrevision、固定したGitのコミットへの編集、テストのJob、保存した実行時のソースを確かめる。"""
 
 from __future__ import annotations
 
@@ -23,17 +23,17 @@ from verify_worker import run_next_job, session_request
 ROOT = Path(__file__).resolve().parents[1]
 API_URL = os.environ.get("MMT_VERIFY_API_URL", "http://127.0.0.1:4182")
 WEB_ORIGIN = os.environ.get("MMT_VERIFY_WEB_ORIGIN", "http://127.0.0.1:5182")
-# Git preview has a 30-second deadline; the HTTP caller leaves time for cleanup.
+# Gitのプレビューには30秒の期限がある。HTTPの呼び出し側は後片付けの時間を残す。
 REQUEST_DEADLINE_SECONDS = 45
-# A CPU fixture reports progress promptly while leaving dependency setup time to the Job deadline.
+# CPUのfixtureは進み具合をすぐ報告し、依存の準備にかかる時間はJobの期限に任せる。
 HEARTBEAT_SECONDS = 0.2
 POLL_SECONDS = 0.1
 TELEMETRY_SECONDS = 1
 CANCEL_GRACE_SECONDS = 0.5
 TOKEN_LIFETIME = timedelta(hours=1)
-# Five completed Jobs span several pages, so the real API's cursor ordering is exercised.
+# 完了したJob 5つが複数ページにまたがるので、実際のAPIのcursorの順序を確かめられる。
 HISTORY_PAGE_SIZE = 2
-# A small public fixture checks real Git fetching without private credentials.
+# 小さな公開のfixtureで、非公開の認証情報なしに実際のGitの取得を確かめる。
 REPOSITORY_URL = "https://github.com/octocat/Hello-World.git"
 REPOSITORY_COMMIT = "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d"
 FIXTURE_DIRECTORY = ROOT / "scripts/fixtures/workbench"
@@ -216,7 +216,8 @@ async def verify_task_history(scenario: TaskScenario) -> dict[str, Any]:
     await run_next_job(scenario.settings)
     failed = scenario.verify_completed_source(failed_test, version=2, status="failed")
     assert failed["parameters"] == {"expected_version": 2, "fail_test": True}
-    # Moving a task back must not change the fixed retry of its earlier failed test.
+    # Taskを元に戻しても、以前に失敗したテストの再試行は、
+    # そのときの内容のまま変わってはいけない。
     scenario.request(
         "PATCH",
         f"tasks/{first_task['id']}",

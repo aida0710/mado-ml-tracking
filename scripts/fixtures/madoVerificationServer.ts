@@ -20,7 +20,10 @@ async function listen(app: Hono) {
   };
 }
 
-/** Real Mado HTTP routes with isolated Registry responses; no production API or DB is contacted. */
+/**
+ * 本物のmado S3 Data CatalogのHTTPの経路と、分離したRegistryの応答。本番のAPIやDBには
+ * 接続しない。
+ */
 export async function startMadoVerificationServer() {
   const madoRoot = process.env.MMT_VERIFY_MADO_ROOT ?? path.resolve('../mado');
   const { mountServiceLineageRoutes } = await import(
@@ -70,7 +73,8 @@ export async function startMadoVerificationServer() {
     createdAt: version.createdAt,
     versions: [version],
   };
-  // One access token reads datasets, sends run records and reads capacity, like Mado's ML Tracking preset.
+  // mado S3 Data CatalogのML Trackingプリセットと同じく、1つのaccess tokenでデータセットを読み、
+  // Runの記録を送り、容量を読む。
   const accessToken = randomBytes(24).toString('hex');
   const principal = {
     serviceAccountId: randomUUID(),
@@ -78,7 +82,7 @@ export async function startMadoVerificationServer() {
     keyName: 'ML Tracking verification',
     scopes: ['lineage:read', 'lineage:write', 'metrics:read'],
     namespaces: ['speech', 'mado-model-tracking', 'local'],
-    // Capacity metrics read only the connections a token lists; this one has all of them.
+    // 容量のメトリクスはtokenに載っている接続だけを読む。このtokenはすべての接続を持つ。
     connections: ['*'],
     expiresAt: null,
   };

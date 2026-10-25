@@ -54,10 +54,13 @@ interface ReportReference {
   reportId: string;
 }
 
-// Reports are shared pages about Runs, so token writes use the same scope as Run changes.
+// レポートはRunについての共有ページなので、tokenでの書き込みにはRunの変更と同じscopeを使う。
 const REPORT_WRITE_SCOPE = 'runs:write';
 
-/** A saved revision with its snapshots, whose unchanged snapshot blocks the next save carries over. */
+/**
+ * 保存済みのバージョンとそのスナップショット。次の保存は、変わっていないブロックのスナップショットを
+ * ここから引き継ぐ。
+ */
 interface CarriedRevision {
   revision: ReportRevision;
   snapshots: ReportBlockSnapshot[];
@@ -94,9 +97,10 @@ function requireBaseRevision(report: Report, baseRevision: number): void {
 }
 
 /**
- * Shared reports and their immutable revisions. Any Project editor may save a new revision; the
- * revision records who saved it. A save fails with 409 instead of overwriting another editor's
- * revision. Reports are archived instead of deleted, by their creator or a Project admin.
+ * 共有のレポートと、その変更できないバージョン。Projectのeditorなら誰でも新しいバージョンを
+ * 保存でき、バージョンには保存した人を記録する。ほかのeditorのバージョンを上書きする代わりに、
+ * 保存は409で失敗する。レポートは削除せずにアーカイブする。アーカイブできるのは作成者か
+ * Project admin。
  */
 export class ReportService {
   constructor(
@@ -104,7 +108,7 @@ export class ReportService {
     private readonly dependencies: {
       snapshots: ReportSnapshotService;
       runMedia: RunMediaService;
-      /** MMT_REPORT_SNAPSHOT_MAX_BYTES: the snapshot data of one revision. */
+      /** 1つのバージョンのスナップショットデータの上限（MMT_REPORT_SNAPSHOT_MAX_BYTES）。 */
       snapshotMaxBytes: number;
     },
   ) {}
@@ -241,7 +245,7 @@ export class ReportService {
     });
   }
 
-  /** Saves the content of an earlier revision as a new revision; the history stays as it is. */
+  /** 前のバージョンの内容を新しいバージョンとして保存する。履歴はそのまま残る。 */
   async restore(
     principal: Principal,
     reference: ReportReference & { revision: number },
@@ -253,9 +257,11 @@ export class ReportService {
       const report = await this.requireReport(this.database, reference);
       requireUnarchived(report);
       const source = await this.readCarriedRevision(report.id, reference.revision);
-      // Saved views or Runs may have changed since; the restored content must still be shareable.
+      // その後に保存ビューやRunが変わっていることがある。復元する内容は今も共有できる
+      // ものでなければならない。
       await this.requireReferences(principal, reference.projectId, source.revision.blocks);
-      // The restored blocks are the source's own, so their snapshots keep the source's data.
+      // 復元するブロックは元のバージョンのものそのままなので、スナップショットも元のバージョンの
+      // データを保つ。
       const snapshots = await this.prepareSnapshots(principal, {
         projectId: reference.projectId,
         blocks: source.revision.blocks,
@@ -314,7 +320,7 @@ export class ReportService {
             code: 'report_owner_required',
             message: 'only the author or a project admin can archive or unarchive a report',
           });
-        // Repeating the current state changes nothing and is not audited again.
+        // 今の状態をもう一度指定しても何も変えず、監査にも記録し直さない。
         if ((report.archivedAt !== null) === reference.archived) return report;
         await updateReportArchive(connection, {
           reportId: report.id,
@@ -330,7 +336,7 @@ export class ReportService {
     );
   }
 
-  /** Writes revision baseRevision+1 unless another save or an archive got there first. */
+  /** ほかの保存やアーカイブが先に済んでいなければ、baseRevision+1のバージョンを書く。 */
   private async saveNextRevision(
     principal: Principal,
     save: {
@@ -402,8 +408,8 @@ export class ReportService {
   }
 
   /**
-   * Snapshot data of the snapshot-mode blocks. A block whose content equals the carried revision's
-   * block keeps that snapshot (and its capture time) unless it is asked to be refreshed.
+   * スナップショットのモードのブロックのスナップショットデータ。引き継ぐバージョンのブロックと内容が
+   * 同じブロックは、作り直しを求められない限り、そのスナップショット（と取得した日時）を保つ。
    */
   private async prepareSnapshots(
     principal: Principal,
@@ -466,9 +472,9 @@ export class ReportService {
   }
 
   /**
-   * Everything a revision names must be in the report's Project, so a shared page never shows
-   * another Project's data. Saved views must be shared with the Project: other members could not
-   * open a private one.
+   * バージョンが参照するものは、すべてレポートのProjectのものでなければならない。共有のページに別の
+   * Projectのデータを出さないため。保存ビューはProjectに共有されていなければならない。非公開の
+   * ものはほかのメンバーが開けないため。
    */
   private async requireReferences(
     principal: Principal,
@@ -502,7 +508,7 @@ export class ReportService {
       await this.requireMediaTable(principal, { projectId, ...media });
   }
 
-  // Tables logged by MLflow have no run_media row; opening their first row checks they exist.
+  // MLflowが記録した表にはrun_mediaの行が無い。最初の行を開いて、表があることを確かめる。
   private async requireMediaTable(
     principal: Principal,
     media: { projectId: string; runId: string; mediaId: string },

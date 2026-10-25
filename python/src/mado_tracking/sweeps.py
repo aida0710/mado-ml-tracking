@@ -1,8 +1,8 @@
-"""Sweeps from Python: create and control a sweep, and read a trial's parameters in training code.
+"""PythonからSweepを扱う。Sweepを作って操作し、学習のコードでtrialのparameterを読む。
 
-``SweepsClient`` wraps the public ``Client.request`` so that client.py stays with its owner.
-Writes (create, pause, resume, cancel) are not idempotent and are sent once without retry; reads
-are retried like the other SDK reads.
+``SweepsClient``は公開の``Client.request``を包む。client.pyは担当者の管理のまま変えない。
+書き込み（作成、一時停止、再開、取り消し）は冪等ではないので、再試行せずに1回だけ送る。
+読み出しはSDKのほかの読み出しと同じく再試行する。
 """
 
 from __future__ import annotations
@@ -19,21 +19,21 @@ from .sweep_config import convert_sweep_config
 
 PARAMETERS_JSON_VARIABLE = "MMT_PARAMETERS_JSON"
 PARAMETERS_FILE_VARIABLE = "MMT_PARAMETERS_FILE"
-# Mirrors GET /projects/:p/sweeps: limit defaults to 50 and is capped at 200.
+# GET /projects/:p/sweepsに合わせる。limitは既定50、上限200。
 SWEEP_LIST_MAX_PAGE_SIZE = 200
 SWEEP_LIST_DEFAULT_PAGE_SIZE = 50
-# Mirrors GET /projects/:p/sweeps/:s/trials: limit defaults to 100 and is capped at 500.
+# GET /projects/:p/sweeps/:s/trialsに合わせる。limitは既定100、上限500。
 TRIAL_LIST_MAX_PAGE_SIZE = 500
 TRIAL_LIST_DEFAULT_PAGE_SIZE = 100
 TRIAL_ORDERS = ("trial_index", "objective")
 
 
 def trial_parameters(defaults: Mapping[str, Any] | None = None) -> dict[str, Any]:
-    """The Run's parameters from the worker laid over ``defaults``.
+    """workerから渡されたRunのparameterを、``defaults``に重ねたもの。
 
-    MMT_PARAMETERS_JSON wins over the file named by MMT_PARAMETERS_FILE. Outside the worker neither
-    is set and ``defaults`` is returned, so the same script can be tried locally. Values keep their
-    JSON types: the string ``"0.1"`` stays a string.
+    MMT_PARAMETERS_JSONは、MMT_PARAMETERS_FILEが指すファイルより優先する。workerの外ではどちらも
+    設定されず``defaults``を返すので、同じスクリプトを手元で試せる。値はJSONの型のまま。文字列の
+    ``"0.1"``は文字列のまま残る。
     """
     merged = dict(defaults or {})
     merged.update(_worker_parameters())
@@ -76,9 +76,9 @@ class SweepsClient:
         gpu_ids: list[str] | None = None,
         seed: int | None = None,
     ) -> dict[str, Any]:
-        """Create a sweep from a W&B-style config (see docs/sweeps.md for the conversion rules).
+        """W&B形式の設定からSweepを作る（変換の規則はdocs/sweeps.mdを参照）。
 
-        The trial Runs go to the Task's Experiment; ``target_id`` / ``gpu_ids`` None use the Task's.
+        trialのRunはTaskの実験に入る。``target_id`` / ``gpu_ids``がNoneなら、Taskの値を使う。
         """
         body: dict[str, Any] = {
             "name": name,
@@ -97,7 +97,7 @@ class SweepsClient:
     def iter_sweeps(
         self, project_id: str, *, status: str | None = None, page_size: int = SWEEP_LIST_DEFAULT_PAGE_SIZE
     ) -> Iterator[dict[str, Any]]:
-        """Every sweep of the Project, newest first. Pages are requested lazily."""
+        """ProjectのすべてのSweepを新しい順に返す。ページは必要になってから取得する。"""
         _check_page_size(page_size, SWEEP_LIST_MAX_PAGE_SIZE)
         query: dict[str, Any] = {"limit": page_size}
         if status is not None:
@@ -112,7 +112,7 @@ class SweepsClient:
         order_by: str = "trial_index",
         page_size: int = TRIAL_LIST_DEFAULT_PAGE_SIZE,
     ) -> Iterator[dict[str, Any]]:
-        """Every trial of the sweep. ``objective`` order puts the best first and unscored trials last."""
+        """Sweepのすべてのtrial。``objective``の順では最良が先頭、スコアの無いtrialが最後になる。"""
         if order_by not in TRIAL_ORDERS:
             raise ConfigurationError(f"order_by must be one of {', '.join(TRIAL_ORDERS)}")
         _check_page_size(page_size, TRIAL_LIST_MAX_PAGE_SIZE)
@@ -121,7 +121,7 @@ class SweepsClient:
         )
 
     def best_trial(self, project_id: str, sweep_id: str) -> dict[str, Any] | None:
-        """The finished or early-stopped trial with the best objective, or None while there is none."""
+        """終了または早期停止したtrialのうち、目的メトリクスが最良のもの。まだ無ければNone。"""
         best = self.get_sweep(project_id, sweep_id).get("bestTrial")
         if best is not None and not isinstance(best, dict):
             raise ConfigurationError("Sweep response has an invalid bestTrial")
@@ -136,7 +136,7 @@ class SweepsClient:
     def cancel(
         self, project_id: str, sweep_id: str, *, cancel_running_trials: bool = False
     ) -> dict[str, Any]:
-        """Stop the sweep. Queued trials are always canceled; running ones only when asked."""
+        """Sweepを止める。順番待ちのtrialは必ず取り消し、実行中のものは指定時だけ取り消す。"""
         return self.client.request(
             "POST",
             self._sweep_path(project_id, sweep_id, "cancel"),

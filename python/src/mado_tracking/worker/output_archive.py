@@ -1,8 +1,8 @@
-"""Container outputs as one uncompressed tar stream: the runner writes it, the worker reads it.
+"""コンテナの出力を、圧縮しない1本のtarストリームにする。runnerが書き、workerが読む。
 
-The first member is the output index (JSON Lines of the verified descriptors); the declared files
-follow in index order, skipping the ones the worker has already acknowledged. Only PAX extended
-headers and regular files are accepted, so links, directories and devices can never be extracted.
+最初のメンバーは出力のインデックス（検証済みの記述子のJSON Lines）。宣言したファイルが
+インデックスの順に続き、workerが確認済みのものは飛ばす。受け付けるのはPAXの拡張ヘッダーと
+通常のファイルだけなので、リンク・ディレクトリ・デバイスが展開されることは無い。
 """
 
 from __future__ import annotations
@@ -28,25 +28,25 @@ from .container_outputs import (
 from .host_state import read_state
 
 OUTPUT_ARCHIVE_COMMAND = "output-archive"
-# The reader identifies the index by its position (always first); the name only helps `tar tvf`.
+# 読む側はインデックスを位置（常に先頭）で見分ける。名前は`tar tvf`で見るときの手がかりにすぎない。
 INDEX_MEMBER_NAME = ".mmt/output-index.jsonl"
-# sysexits EX_DATAERR: the runner refused the outputs, so retrying the transfer cannot succeed.
+# sysexitsのEX_DATAERR: runnerが出力を拒んだので、転送を再試行しても成功しない。
 ARCHIVE_REJECTED_EXIT_CODE = 65
-# Bounded copy buffer on both ends; file contents are never held in memory as a whole.
+# 両端でコピーのバッファに上限を設ける。ファイルの中身を丸ごとメモリに持つことは無い。
 ARCHIVE_CHUNK_BYTES = 1024 * 1024
-# PAX headers carry one long path (at most 1024 bytes) and a size; anything larger is malformed.
+# PAXヘッダーが持つのは長いパス1つ（最大1024バイト）とサイズ。それより大きいものは不正。
 MAX_PAX_HEADER_BYTES = 64 * 1024
-# The acknowledged keys of every output fit in this many bytes per file (path, sha256, quoting).
+# どの出力も、確認済みのキー（パス、sha256、クォート）は1ファイルあたりこのバイト数に収まる。
 MAX_ACKNOWLEDGED_KEY_BYTES = 4096
 REGULAR_FILE_TYPES = {tarfile.REGTYPE, tarfile.AREGTYPE}
 
 
 class ArchiveFormatError(ValueError):
-    """The stream is not an output archive this protocol produces; retrying will not help."""
+    """このストリームは、このプロトコルが作る出力のアーカイブではない。再試行しても直らない。"""
 
 
 class ArchiveTruncated(EOFError):
-    """The stream ended or stalled early; the transfer may be retried for unacknowledged files."""
+    """ストリームが早く終わったか止まった。確認されていないファイルについて転送を再試行してよい。"""
 
 
 @dataclass(frozen=True)
@@ -86,7 +86,7 @@ class _BytesReader:
 
 
 def run_output_archive_command(argv: list[str]) -> None:
-    """Runner entry: `output-archive <workspace>` with `{"acknowledged": [...]}` on stdin."""
+    """runnerの入口: `output-archive <workspace>`。stdinに`{"acknowledged": [...]}`を渡す。"""
     try:
         workspace = Path(argv[2]).expanduser().resolve()
         if not workspace.is_dir():
@@ -123,7 +123,7 @@ class OutputArchiveReader:
         return b"".join([chunk async for chunk in self.content(member)])
 
     async def next_member(self) -> ArchiveMember | None:
-        """The next regular file; None after the end-of-archive marker."""
+        """次の通常のファイル。アーカイブの終端の印のあとはNone。"""
         if self.remaining:
             raise ArchiveFormatError("The previous member was not read completely")
         extended: dict[str, str] = {}
@@ -166,7 +166,8 @@ class OutputArchiveReader:
         await self._read_exactly(_padded(member.size) - member.size)
 
     async def _finish(self) -> None:
-        # Python's tar writer pads to a 10 KiB record; only zero blocks may follow the marker.
+        # Pythonのtarの書き込みは10KiBのレコードまで埋める。
+        # 終端の印のあとに続いてよいのはゼロのブロックだけ。
         trailer = await self._read_to_end(maximum_bytes=tarfile.RECORDSIZE)
         if trailer.strip(b"\x00"):
             raise ArchiveFormatError("Output archive has data after its end marker")
@@ -196,7 +197,7 @@ def _padded(size: int) -> int:
 
 
 def _parse_pax_records(raw: bytes) -> dict[str, str]:
-    """`<length> <key>=<value>\\n` records (POSIX pax extended header)."""
+    """`<length> <key>=<value>\\n`のレコード（POSIXのpax拡張ヘッダー）。"""
     records: dict[str, str] = {}
     offset = 0
     while offset < len(raw):

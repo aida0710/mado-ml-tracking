@@ -28,7 +28,7 @@ interface StoredReport {
   archivedByName: string | null;
 }
 
-// The editor of a report is the author of its current revision.
+// レポートの更新者は、今のバージョンの作成者とする。
 const reportSelect = `SELECT r.id,r.project_id,r.title,r.current_revision,
   r.created_by AS created_by_id,cu.display_name AS created_by_name,r.created_at,
   cv.created_by AS updated_by_id,uu.display_name AS updated_by_name,r.updated_at,
@@ -68,7 +68,7 @@ export async function findReport(
   return stored && toReport(stored);
 }
 
-/** Locks the report row so it cannot be archived while a comment is written. */
+/** コメントを書いている間にアーカイブされないよう、レポートの行をロックする。 */
 export async function findReportArchiveState(
   connection: Connection,
   report: { projectId: string; reportId: string },
@@ -80,7 +80,7 @@ export async function findReportArchiveState(
   );
 }
 
-/** Newest first by the last change. `cursor` is the ID of the last report of the previous page. */
+/** 最後に変更した時刻の新しい順。`cursor`は前のページの最後のレポートのID。 */
 export async function listReports(
   connection: Connection,
   query: { projectId: string; includeArchived: boolean; cursor?: string; limit: number },
@@ -130,7 +130,7 @@ export async function updateReportHead(
   );
 }
 
-/** archivedBy null unarchives. */
+/** archivedByがnullならアーカイブを解除する。 */
 export async function updateReportArchive(
   connection: Connection,
   archive: { reportId: string; archivedBy: string | null },
@@ -209,7 +209,7 @@ export async function findRevision(
   return stored && { ...toRevisionSummary(stored), blocks: stored.blocks! };
 }
 
-/** Newest first; the history is never trimmed. */
+/** 新しい順。履歴は決して切り詰めない。 */
 export async function listRevisions(
   connection: Connection,
   reportId: string,
@@ -226,7 +226,7 @@ export async function listRevisions(
 export interface SnapshotRow {
   blockId: string;
   data: ReportSnapshotData;
-  /** null for data captured by this save: the transaction time is stored. */
+  /** この保存で取り込んだデータならnull。トランザクションの時刻を保存する。 */
   capturedAt: string | null;
   capturedRevision: number;
   sizeBytes: number;
@@ -270,7 +270,7 @@ export async function listSnapshots(
   );
 }
 
-// Tables a report may refer to by ID; each has project_id.
+// レポートがIDで参照できるテーブル。どれもproject_idを持つ。
 export type ReportReferenceTable = 'runs' | 'sweeps' | 'experiments' | 'model_versions' | 'dataset_versions';
 
 export async function countProjectRows(
@@ -298,7 +298,7 @@ export async function findSavedViewVisibilities(
   );
 }
 
-/** The kind of a run_media row of the Run; undefined when there is none. */
+/** Runのrun_mediaの行の種類。無ければundefined。 */
 export async function findRunMediaKind(
   connection: Connection,
   media: { projectId: string; runId: string; mediaId: string },
@@ -311,7 +311,10 @@ export async function findRunMediaKind(
   return found?.kind;
 }
 
-/** Trial Runs of a sweep whose Run is active, in trial order (as the analysis API reads them). */
+/**
+ * SweepのtrialのRunのうち、Runが削除されていないものをtrialの順に返す（分析のAPIが読むのと
+ * 同じ）。
+ */
 export async function listSweepTrialRunIds(
   connection: Connection,
   sweep: { projectId: string; sweepId: string },
@@ -325,7 +328,7 @@ export async function listSweepTrialRunIds(
   return found.map((trial) => trial.runId);
 }
 
-/** Run summaries in the given order; Runs of other Projects are left out. */
+/** 渡した順のRunの概要。ほかのProjectのRunは除く。 */
 export async function readRunSummaries(
   connection: Connection,
   runs: { projectId: string; runIds: string[] },

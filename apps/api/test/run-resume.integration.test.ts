@@ -13,9 +13,9 @@ import { executionFixture } from './fixtures.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 import { trackingClient } from './mlflow-tracking-fixtures.js';
 
-// update-run bodies MLflow 3.0.0 and 3.17.0 send for `with mlflow.start_run(run_id=X):`, captured
-// from the real SDKs (artifacts/verification/2026-10-08/run-resume-api/). The reopening request
-// carries the previous end_time; the closing one carries the new end time.
+// `with mlflow.start_run(run_id=X):`でMLflow 3.0.0と3.17.0が送るupdate-runの本文。実際の
+// SDKから取得した（artifacts/verification/2026-10-08/run-resume-api/）。開き直すリクエストは
+// 前のend_timeを持ち、閉じるリクエストは新しい終了時刻を持つ。
 const START_RUN_REOPEN = { status: 'RUNNING', end_time: 1700000005000 };
 const START_RUN_CLOSE = { status: 'FINISHED', end_time: 1791450259535 };
 const NOW = '2026-10-08T00:00:00.000Z';
@@ -69,7 +69,7 @@ describe.skipIf(!testDatabaseUrl)('Runの再開（独立PostgreSQL）', () => {
     return ((await response.json()) as { code?: string }).code;
   }
 
-  // Moves a Run without a Job through the native PATCH, like an SDK that reports its own status.
+  // 自分で状態を報告するSDKのように、Jobの無いRunの状態をネイティブのPATCHで進める。
   async function patchStatus(runId: string, status: RunStatus): Promise<void> {
     await entity(
       await request(harness.app, `${fixture.basePath}/runs/${runId}`, {

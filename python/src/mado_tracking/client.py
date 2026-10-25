@@ -1,4 +1,4 @@
-"""Authenticated SDK operations using the public /api contract."""
+"""公開の/api契約を使う、認証つきのSDKの操作。"""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ __all__ = ["Client", "ResumeMode", "path_id", "start_run_offline"]
 
 ResumeMode = Literal["never", "allow", "must"]
 RESUME_MODES: tuple[ResumeMode, ...] = ("never", "allow", "must")
-# Values of MMT_SYSTEM_METRICS that turn off system metrics requested in code.
+# コードで要求したシステムのメトリクスを止めるMMT_SYSTEM_METRICSの値。
 SYSTEM_METRICS_DISABLED_VALUES = frozenset({"0", "false", "no", "off"})
 
 MISSING_RUN_TARGET_MESSAGE = "experiment_id (or experiment_name) and name are required to create a Run"
@@ -52,16 +52,16 @@ MISSING_RESUMED_RUN_TARGET_MESSAGE = (
     "experiment_id (or experiment_name) and name are required when resume='allow' creates the Run"
 )
 
-# Mirrors POST /projects/:p/runs/search: limit defaults to 100 and is capped at 500.
+# POST /projects/:p/runs/searchに合わせる。limitの既定は100で、上限は500。
 RUN_SEARCH_DEFAULT_PAGE_SIZE = 100
 RUN_SEARCH_MAX_PAGE_SIZE = 500
 
 
 class Client(ExperimentTasksClient):
-    """Native API client. Feature operations live in their own modules and are bound here as methods.
+    """ネイティブAPIのクライアント。各機能の操作は個別のモジュールに置き、ここでメソッドにする。
 
-    Each bound function takes the Client as its first argument, so ``client.set_model_alias(...)``
-    and ``aliases.set_model_alias(client, ...)`` are the same call with the same documentation.
+    メソッドにした各関数は最初の引数にClientを取るので、``client.set_model_alias(...)``と
+    ``aliases.set_model_alias(client, ...)``は、同じドキュメントを持つ同じ呼び出しになる。
     """
 
     find_experiment = experiments.find_experiment
@@ -137,7 +137,8 @@ class Client(ExperimentTasksClient):
         try:
             payload = response.json()
         except ValueError:
-            # A web page (the app's HTML) instead of JSON: MMT_API_URL is a page URL, not the site.
+            # JSONではなくWebのページ（アプリのHTML）が返った。MMT_API_URLが、サイトではなく
+            # ページのURLになっている。
             raise ConfigurationError(f"API returned a response that is not JSON; {API_URL_HINT}") from None
         if not isinstance(payload, dict):
             raise ConfigurationError("API returned a non-object response")
@@ -207,13 +208,13 @@ class Client(ExperimentTasksClient):
         page_size: int = RUN_SEARCH_DEFAULT_PAGE_SIZE,
         **search: Any,
     ) -> Iterator[dict[str, Any]]:
-        """Yield every matching Run summary, following ``nextCursor`` page by page.
+        """条件に合うRunの概要をすべて、``nextCursor``をたどってページごとに返す。
 
-        ``search`` takes ``filter``, ``order_by``, ``experiment_ids``, ``kinds``, ``statuses``,
-        ``model_version_ids``, ``input_dataset_version_ids``, ``parent_run_id`` and ``name``.
-        ``filter`` and ``order_by`` use MLflow search syntax, for example
-        ``metrics.loss < 0.1 AND params.lr = '0.01'`` and ``metrics.loss ASC``.
-        Pages are requested lazily, so stopping the iteration stops the requests.
+        ``search``は``filter``、``order_by``、``experiment_ids``、``kinds``、``statuses``、
+        ``model_version_ids``、``input_dataset_version_ids``、``parent_run_id``、``name``を取る。
+        ``filter``と``order_by``はMLflowの検索構文を使う。例えば
+        ``metrics.loss < 0.1 AND params.lr = '0.01'``や``metrics.loss ASC``。
+        ページは必要になってからリクエストするので、反復をやめるとリクエストも止まる。
         """
         if not 1 <= page_size <= RUN_SEARCH_MAX_PAGE_SIZE:
             raise ConfigurationError(f"page_size must be between 1 and {RUN_SEARCH_MAX_PAGE_SIZE}")
@@ -222,7 +223,7 @@ class Client(ExperimentTasksClient):
 
         def fetch_page(cursor: str | None) -> dict[str, Any]:
             body = {**conditions, "cursor": cursor} if cursor else conditions
-            # Search only reads, so a lost response can be retried without side effects.
+            # 検索は読むだけなので、応答が失われても副作用無しに再試行できる。
             return self.request("POST", path, json=body, retryable=True)
 
         return iterate_cursor_pages(fetch_page, label="Run search")
@@ -242,14 +243,14 @@ class Client(ExperimentTasksClient):
         system_metrics_interval: float | None = None,
         **attributes: Any,
     ) -> Run:
-        """Create and start a Run, resume one by run_id, or use the worker's Run (MMT_RUN_ID).
+        """Runを作って始めるか、run_idのRunを再開するか、workerのRun（MMT_RUN_ID）を使う。
 
-        The new Run goes into experiment_id, or the Experiment named experiment_name (created when
-        it does not exist, like MLflow's set_experiment), or MMT_EXPERIMENT_ID.
-        resume: 'never' creates a new Run, 'must' reopens run_id and fails when it does not exist,
-        'allow' reopens run_id or creates a Run with that ID. mode (else MMT_MODE): 'online' writes
-        to the API, 'offline' to the local spool, 'auto' to the API until it becomes unreachable.
-        system_metrics=True records `system.*` metrics every system_metrics_interval seconds.
+        新しいRunは、experiment_id、またはexperiment_nameという名前の実験（無ければMLflowの
+        set_experimentと同じく作る）、またはMMT_EXPERIMENT_IDに入る。
+        resume: 'never'は新しいRunを作り、'must'はrun_idを開き直して、無ければ失敗する。'allow'は
+        run_idを開き直すか、そのIDでRunを作る。mode（無ければMMT_MODE）: 'online'はAPIに書き、
+        'offline'はローカルのspoolに書き、'auto'はAPIに届かなくなるまでAPIに書く。
+        system_metrics=Trueなら、system_metrics_interval秒ごとに`system.*`のメトリクスを記録する。
         """
         run_mode = resolve_mode(mode, os.environ)
         validate_experiment_choice(experiment_id, experiment_name)
@@ -317,7 +318,7 @@ class Client(ExperimentTasksClient):
                 self, project_id, experiment_id=experiment_id, experiment_name=experiment_name
             )
         except ApiError as error:
-            # Recording offline needs the Experiment's ID, which only the API knows for a name.
+            # オフラインで記録するには実験のIDが要るが、名前からIDを知っているのはAPIだけ。
             if run_mode == "auto" and is_api_unreachable(error):
                 raise ConfigurationError(
                     "The API is unreachable, so experiment_name cannot be looked up; "
@@ -361,14 +362,14 @@ class Client(ExperimentTasksClient):
         kind: str,
         attributes: Mapping[str, Any],
     ) -> Run:
-        """POST /runs/:r/resume; with resume='allow' a missing Run is created under run_id."""
+        """POST /runs/:r/resume。resume='allow'なら、無いRunをrun_idで作る。"""
         if os.environ.get("MMT_RUN_ID") or os.environ.get("MMT_JOB_ID"):
             raise ConfigurationError(
                 "A worker-managed Run cannot be resumed; retry its Job from a checkpoint "
                 "and continue with run.resume_checkpoint()"
             )
         try:
-            # Resuming a running Run changes nothing, so a lost response can be retried.
+            # 実行中のRunを再開しても何も変わらないので、応答が失われたら再試行できる。
             result = self.request(
                 "POST",
                 self.project_path(project_id, f"runs/{path_id(run_id)}/resume"),
@@ -418,7 +419,7 @@ class Client(ExperimentTasksClient):
         kind: str,
         attributes: Mapping[str, Any],
     ) -> dict[str, Any]:
-        """PUT /sync/runs/:runId is the only way to create a Run under a client-chosen ID."""
+        """クライアントが選んだIDでRunを作れるのは、PUT /sync/runs/:runIdだけ。"""
         if not name:
             raise ConfigurationError(MISSING_RESUMED_RUN_TARGET_MESSAGE)
         if unsupported := sorted(set(attributes) - OFFLINE_RUN_ATTRIBUTES):
@@ -440,7 +441,7 @@ class Client(ExperimentTasksClient):
                 "parentRunId": attributes.get("parent_run_id"),
                 "startedAt": utc_timestamp(),
             },
-            # The PUT returns the existing Run unchanged, so a lost response can be retried.
+            # PUTは既存のRunを変えずに返すので、応答が失われたら再試行できる。
             retryable=True,
         )
 
@@ -473,10 +474,9 @@ class Client(ExperimentTasksClient):
         default_code_version_id: str | None = None,
         metadata: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Register a ModelVersion; an omitted version is numbered by the API (1, 2, 3, ...).
+        """ModelVersionを登録する。versionを省くと、APIが番号を振る（1、2、3、...）。
 
-        ``model_name`` reuses the Model with that name and creates it
-        only when it does not exist yet.
+        ``model_name``は、その名前の登録モデルを使い回し、まだ無いときだけ作る。
         """
         if model_id is None:
             if not model_name:
@@ -506,11 +506,11 @@ class Client(ExperimentTasksClient):
     def ensure_model(
         self, project_id: str, *, name: str, family: str | None = None, description: str = ""
     ) -> dict[str, Any]:
-        """Return the Model named ``name``, creating it when absent.
+        """``name``という名前の登録モデルを返す。無ければ作る。
 
-        White space at either end of ``name`` and ``family`` is dropped first, as the API does
-        when it saves and compares them. A concurrent creator can win between the lookup and the
-        POST; the 409 is then resolved by reading the Model it created.
+        APIが保存・比較するときと同じく、``name``と``family``の両端の空白を先に取り除く。
+        検索とPOSTの間に別の作成者が先に作ることがあり、そのときは409を受けて、作られた
+        登録モデルを読んで解決する。
         """
         name = trim_name(name)
         if not name:
@@ -554,13 +554,13 @@ class Client(ExperimentTasksClient):
         parent_dataset_version_ids: Sequence[str] = (),
         external_ref: Mapping[str, str] | None = None,
     ) -> dict[str, Any]:
-        """Register a DatasetVersion that refers to ``uri``, or upload the directory ``files``.
+        """``uri``を指すDatasetVersionを登録するか、ディレクトリ``files``をアップロードする。
 
-        With ``files`` the directory is uploaded as Artifacts and the API computes the uri and
-        digest; unchanged files already in the Project are not sent again. Without ``files``,
-        ``version``, ``uri`` and ``digest`` are required, and ``digest`` is the SHA-256 as 64
-        lowercase hex digits, with or without a ``sha256:`` prefix, unless ``external_ref`` is given
-        (the API refuses other forms and stores the digest as given).
+        ``files``を渡すと、ディレクトリをArtifactとしてアップロードし、APIがuriとdigestを計算する。
+        Projectに既にある変わっていないファイルは送り直さない。``files``を渡さないときは
+        ``version``、``uri``、``digest``が必須で、``external_ref``を渡さない限り、``digest``は
+        64桁の小文字の16進数のSHA-256（``sha256:``の前置きは有っても無くてもよい）にする（APIは
+        ほかの形を拒み、digestを渡されたとおりに保存する）。
         """
         if files is not None:
             if uri is not None or digest is not None:
@@ -696,7 +696,7 @@ class Client(ExperimentTasksClient):
     def list_project_items(
         self, project_id: str, resource: str, *, params: Mapping[str, str] | None = None
     ) -> list[dict[str, Any]]:
-        """Items of a Project list endpoint that answers in one page ``{items}``."""
+        """1ページ``{items}``で答える、Projectの一覧のエンドポイントの項目。"""
         payload = self.request("GET", self.project_path(project_id, resource), retryable=True, params=params)
         items = payload.get("items")
         if not isinstance(items, list) or not all(isinstance(item, dict) for item in items):
@@ -726,9 +726,9 @@ class Client(ExperimentTasksClient):
     def download_artifact_to(
         self, project_id: str, artifact_id: str, destination: BinaryIO
     ) -> dict[str, Any]:
-        """Write an Artifact into a seekable stream, resuming with Range after an interruption.
+        """Artifactをシークできるstreamに書く。中断したらRangeで再開する。
 
-        Returns the received {sha256, size}; the sha256 is already checked against the version's ETag.
+        受け取った{sha256, size}を返す。sha256は、バージョンのETagと照合済み。
         """
         return download_resumable_sync(
             self.http,
@@ -765,7 +765,7 @@ def validate_resume(resume: str, run_id: str | None) -> None:
 
 
 def system_metrics_enabled(environment: Mapping[str, str]) -> bool:
-    """False inside a worker Job (the worker records the same metrics) or with MMT_SYSTEM_METRICS=false."""
+    """workerのJobの中（同じメトリクスをworkerが記録する）か、MMT_SYSTEM_METRICS=falseならFalse。"""
     if environment.get("MMT_JOB_ID"):
         return False
     return environment.get("MMT_SYSTEM_METRICS", "").strip().lower() not in SYSTEM_METRICS_DISABLED_VALUES
@@ -786,9 +786,9 @@ def start_run_offline(
     masker: SecretMasker | None = None,
     **attributes: Any,
 ) -> Run:
-    """Client.start_run(mode='offline') without an API URL or token; nothing contacts the API."""
+    """APIのURLやtokenを使わないClient.start_run(mode='offline')。APIには一切接続しない。"""
     if os.environ.get("MMT_JOB_ID"):
-        # Job tokens cannot use /sync, and the worker records the Job's Run online.
+        # Job tokenは/syncを使えず、JobのRunはworkerがオンラインで記録する。
         raise ConfigurationError("A worker Job records online; do not set MMT_MODE=offline for a Job")
     project_id = require_project_id(project_id)
     validate_resume(resume, run_id)
@@ -796,7 +796,7 @@ def start_run_offline(
         raise ConfigurationError("An offline Run cannot be resumed; resume it online, then log offline")
     validate_experiment_choice(experiment_id, experiment_name)
     if experiment_name is not None:
-        # Only the API knows which Experiment a name means, and offline nothing contacts it.
+        # 名前がどの実験を指すかはAPIしか知らず、オフラインではAPIに接続しない。
         raise ConfigurationError(
             "experiment_name needs the API; an offline Run takes experiment_id or MMT_EXPERIMENT_ID"
         )

@@ -1,7 +1,7 @@
-"""Save what a site Job left: its source snapshot, its outputs, their metrics and declarations.
+"""siteのJobが残したもの（ソースのスナップショット、出力、そのメトリクスと宣言）を保存する。
 
-Each saved item is remembered, so a retry after an interrupted save sends only what is missing.
-Outputs are read through the descriptor validate_results checked, never by path again.
+保存した項目は覚えておくので、保存が途中で止まったあとの再試行では足りない分だけを送る。
+出力は、validate_resultsが確かめたディスクリプタを通して読み、パスでは開き直さない。
 """
 
 from __future__ import annotations
@@ -18,13 +18,14 @@ from ..worker.session_outputs import validated_snapshot_artifacts
 from ..worker.source_snapshot import SNAPSHOT_DIRECTORY, SNAPSHOT_FILENAMES
 from .runner_api import RunnerApi
 
-# Linux names an open file here; reading it again reads that file even if its path changed.
+# Linuxでは、開いているファイルがここに名前を持つ。ここから読み直すと、パスが変わっていても
+# そのファイルを読む。
 OPEN_FILE_DIRECTORY = Path("/proc/self/fd")
 
 
 @contextmanager
 def opened_output(outputs: Path, path: str) -> Iterator[Path]:
-    """A path that reads exactly the regular file open_output opened."""
+    """open_outputが開いた通常ファイルそのものを読むパス。"""
     with open_output(outputs, path) as content:
         if OPEN_FILE_DIRECTORY.is_dir():
             yield OPEN_FILE_DIRECTORY / str(content.fileno())
@@ -51,7 +52,7 @@ class OutputSaver:
             self.saved.add(key)
 
     async def save_outputs(self, results: dict[str, Any]) -> None:
-        """Outputs as Run Artifacts `container/<path>`, then metrics, then result.json declarations."""
+        """出力（RunのArtifact `container/<path>`）、メトリクス、result.jsonの宣言の順に送る。"""
         outputs = self.workspace / "outputs"
         for artifact in parse_output_index(read_output_index(self.workspace, results)):
             key = artifact_key(artifact)
@@ -64,7 +65,7 @@ class OutputSaver:
             if results["metrics"]:
                 await self.api.metrics(results["metrics"])
             self.metrics_sent = True
-        # Declarations name saved Artifacts, so they are sent only after every output is saved.
+        # 宣言は保存済みのArtifactを名指しするので、すべての出力を保存してから送る。
         remaining = [item for item in results.get("declarations", []) if item["index"] not in self.registered]
         if remaining:
             items = await self.api.declare_outputs(remaining)

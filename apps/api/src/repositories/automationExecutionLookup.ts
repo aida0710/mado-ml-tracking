@@ -17,18 +17,17 @@ export type AutomationExecutionRecord = Pick<
 >;
 
 /**
- * Finds the automation execution that created a Run. A Run created by a manual Job retry has no
- * execution of its own, so the lookup follows jobs.retry_of_job_id back to the original Job's Run.
- * Returns null for Runs a person created. Run tags are never consulted: automation.* tags on old
- * Runs could have been written by users before reserved tags were enforced.
+ * Runを作った自動実行の実行記録を探す。手動のJobの再試行で作ったRunには自分の実行記録が無いので、
+ * jobs.retry_of_job_idをたどって元のJobのRunまで戻る。人が作ったRunにはnullを返す。Runのタグは
+ * 見ない。予約タグを強制する前の古いRunには、利用者がautomation.*タグを書いていた可能性がある。
  */
 export async function findExecutionForRun(
   connection: Connection,
   reference: { projectId: string; runId: string },
 ): Promise<AutomationExecutionRecord | null> {
   let runId: string | null = reference.runId;
-  // A retry chain has at most MAX_JOB_ATTEMPTS Jobs, so this reaches the first attempt; the bound
-  // also stops a corrupted chain from looping.
+  // 再試行の連なりのJobはMAX_JOB_ATTEMPTS個までなので、これで最初の試行に届く。この上限は、
+  // 壊れた連なりで無限に回ることも防ぐ。
   for (let step = 0; runId !== null && step <= MAX_JOB_ATTEMPTS; step += 1) {
     const execution = await first<AutomationExecutionRecord>(
       connection,
@@ -43,7 +42,7 @@ export async function findExecutionForRun(
   return null;
 }
 
-// The Run whose Job the given Run's Job retried, or null when the Run did not come from a retry.
+// 渡したRunのJobが再試行した元のJobのRun。再試行で作られたRunでなければnull。
 async function findRetriedRunId(
   connection: Connection,
   reference: { projectId: string; runId: string },

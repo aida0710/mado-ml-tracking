@@ -3,8 +3,8 @@ import type { RunKind, RunStatus } from './index.js';
 export type NotificationChannelKind = 'slack_webhook' | 'webhook' | 'email';
 
 /**
- * Events a rule can subscribe to. run.* are queued by the Run completion handler; the others are
- * queued by the monitoring and automation features that detect them.
+ * ルールが購読できるイベント。run.*はRunの完了のハンドラがキューに入れ、それ以外は、それを
+ * 検知する監視と自動実行の機能がキューに入れる。
  */
 export type NotificationEventType =
   | 'run.failed'
@@ -27,17 +27,17 @@ export const NOTIFICATION_EVENT_TYPES: readonly NotificationEventType[] = [
   'plugin.delivery_stalled',
 ];
 
-/** Environment variable names a channel may refer to must start with this prefix. */
+/** 通知先が参照できる環境変数の名前は、この接頭辞で始まらなければならない。 */
 export const NOTIFICATION_ENV_PREFIX = 'MMT_NOTIFICATION_';
-/** Upper bound on email recipients per channel; matches the notification_channels CHECK. */
+/** 1つの通知先のメールの宛先の上限。notification_channelsのCHECKと同じ。 */
 export const NOTIFICATION_RECIPIENTS_MAX = 50;
 
 /**
- * A destination. The webhook URL and the signing secret are never stored: urlEnv and secretEnv
- * name server environment variables, and configured tells whether those variables are set. An
- * email channel lists up to NOTIFICATION_RECIPIENTS_MAX addresses (no display names) in recipients;
- * it is configured only while the server has MMT_SMTP_URL and MMT_SMTP_FROM.
- * projectId null means every Project's rules may use the channel.
+ * 通知先。webhookのURLと署名のシークレットは保存しない。urlEnvとsecretEnvはサーバーの環境変数の
+ * 名前で、configuredはそれらの変数が設定されているかを示す。メールの通知先はrecipientsに
+ * NOTIFICATION_RECIPIENTS_MAX件までのアドレス（表示名なし）を並べ、サーバーにMMT_SMTP_URLと
+ * MMT_SMTP_FROMがある間だけconfiguredになる。projectIdがnullなら、すべてのProjectのルールが
+ * この通知先を使える。
  */
 export interface NotificationChannel {
   id: string;
@@ -62,19 +62,19 @@ export interface NotificationChannelCreate {
   recipients?: string[];
   enabled?: boolean;
 }
-/** kind and projectId are fixed at creation so existing rules keep a valid channel. */
+/** 既存のルールが有効な通知先を持ち続けるよう、kindとprojectIdは作成時に決まる。 */
 export type NotificationChannelPatch = Partial<
   Omit<NotificationChannelCreate, 'kind' | 'projectId'>
 >;
 
 /**
- * Narrows which events of the selected types are sent. Every given condition must hold; a
- * condition on Runs (runKinds, experimentIds) never matches an event without a Run.
+ * 選んだ種類のイベントのうち、送るものを絞り込む。指定した条件はすべて満たす必要がある。
+ * Runについての条件（runKinds、experimentIds）は、Runの無いイベントには一致しない。
  */
 export interface NotificationRuleFilter {
   runKinds?: RunKind[];
   experimentIds?: string[];
-  /** Only Runs started by a model automation rule (including their manual Job retries). */
+  /** モデルの自動実行ルールが始めたRunだけ（そのJobを人が再試行したものも含む）。 */
   automationOnly?: boolean;
 }
 export interface NotificationRule {
@@ -93,7 +93,7 @@ export interface NotificationRuleCreate {
   filter?: NotificationRuleFilter;
   enabled?: boolean;
 }
-/** Settings are fixed after creation; only enabled can be switched. */
+/** 設定は作成後に変えられない。切り替えられるのはenabledだけ。 */
 export interface NotificationRulePatch {
   enabled: boolean;
 }
@@ -105,13 +105,13 @@ export interface NotificationRunSummary {
   status: RunStatus;
   experimentId: string;
   experimentName: string;
-  /** The Run's error, shortened; never execution snapshots, parameters or environment. */
+  /** Runのエラーを短くしたもの。実行のスナップショット、parameter、environmentは入れない。 */
   error: string | null;
   startedAt: string | null;
   endedAt: string | null;
 }
 
-/** The body of a webhook delivery and the source of Slack and email messages. */
+/** webhookで配信する本文。Slackとメールのメッセージの元にもなる。 */
 export interface NotificationEvent {
   schemaVersion: 1;
   id: string;
@@ -120,9 +120,9 @@ export interface NotificationEvent {
   title: string;
   project: { id: string; name: string } | null;
   run: NotificationRunSummary | null;
-  /** Event-specific scalar values such as a worker or Job id. Never secrets. */
+  /** workerやJobのidのような、イベントごとのスカラー値。シークレットは入れない。 */
   details: Record<string, string | number | boolean | null>;
-  /** Web page about the event, built from MMT_WEB_ORIGIN. */
+  /** イベントについての画面のページ。MMT_WEB_ORIGINから組み立てる。 */
   url: string | null;
 }
 
@@ -140,9 +140,9 @@ export interface NotificationDelivery {
   status: NotificationDeliveryStatus;
   attempts: number;
   nextAttemptAt: string;
-  /** A failure code such as notification_http_500; never the remote response or the URL. */
+  /** notification_http_500のような失敗のコード。相手の応答やURLは入れない。 */
   lastError: string | null;
-  /** Sent as X-MMT-Delivery so receivers can correlate their logs. */
+  /** X-MMT-Deliveryとして送り、受け手が自分のログと突き合わせられるようにする。 */
   sentDeliveryId: string | null;
   createdAt: string;
   deliveredAt: string | null;

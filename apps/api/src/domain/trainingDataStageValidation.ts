@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import { jsonObjectSchema, uuidSchema } from './validation.js';
 
-// A stage is a configuration record, not a dataset manifest or a training log.
+// stageは構成の記録で、データセットのmanifestや学習のログではない。
 const MAX_STAGE_METADATA_BYTES = 64 * 1024;
-// Match the existing Run input limit.
+// 既存のRunの入力の上限に合わせる。
 const MAX_STAGE_DATASETS = 1000;
 
 export const trainingDataStageCreateSchema = z.strictObject({

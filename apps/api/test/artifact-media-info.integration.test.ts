@@ -28,7 +28,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactのmedia情報（独立PostgreSQL）'
     return request(options.app ?? harness.app, endpoint, {
       method: 'PUT',
       cookie: fixture.editor.cookie,
-      // A Uint8Array body keeps fetch from adding its own text/plain Content-Type.
+      // 本文をUint8Arrayにすると、fetchが独自にtext/plainのContent-Typeを付けない。
       binary: new Uint8Array(body),
       headers: options.mimeType ? { 'Content-Type': options.mimeType } : {},
     });
@@ -145,7 +145,7 @@ describe.skipIf(!testDatabaseUrl)('Artifactのmedia情報（独立PostgreSQL）'
       await request(harness.app, `${fixture.basePath}/artifact-uploads/${session.id}/parts/1`, {
         method: 'PUT',
         cookie: fixture.editor.cookie,
-        // app.request does not derive Content-Length, which the part size check requires.
+        // app.requestはContent-Lengthを付けないが、partの大きさの検査にはそれが要る。
         headers: { 'Content-Length': String(content.length) },
         binary: new Uint8Array(content),
       }),

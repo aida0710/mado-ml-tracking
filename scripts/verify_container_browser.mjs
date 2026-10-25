@@ -1,4 +1,4 @@
-/** Verify container registration and automation controls against the running local API. */
+/** 動いているローカルのAPIで、コンテナの登録と自動実行の操作を確かめる。 */
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -28,7 +28,7 @@ let createdRuleId;
 page.on('pageerror', (error) => pageErrors.push(error.message));
 
 function getRequiredField(dialog, label) {
-  // Required fields include the marker in their label text, unlike optional controls.
+  // 任意の入力欄と違い、必須の入力欄はラベルの文字列に印を含む。
   return dialog.getByLabel(`${label} *`, { exact: true });
 }
 

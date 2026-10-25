@@ -32,9 +32,9 @@ import {
 import { failUnstartedJob, submissionCountSql } from './siteJobEnding.js';
 import { resolveSubmissionAccount } from './siteReadiness.js';
 
-// Who holds claimed submissions: a launcher, or the requester with their own API token. A report
-// must come from the same holder: the same ID, with any token of the same owner (a launcher whose
-// token was replaced still reports what it submitted).
+// claimした投入を持つ者。launcherか、自分のAPI tokenを使う依頼者。報告は同じ持ち主から
+// 来なければならない。IDが同じで、tokenは同じ所有者のものならどれでもよい（tokenを差し替えた
+// launcherも、自分が投入したものを報告できる）。
 interface SubmissionHolder {
   tokenId: string;
   holderId: string;
@@ -43,33 +43,33 @@ interface SubmissionHolder {
 interface ClaimScope {
   holder: SubmissionHolder;
   mode: SiteSubmissionMode;
-  // A person's token may be limited to one Project; a launcher's spans every Project.
+  // 人のtokenは1つのProjectに限られていることがある。launcherのtokenはすべてのProjectに及ぶ。
   projectId: string | null;
   targetIds: string[] | null;
-  // A launcher claims only the sites assigned to it.
+  // launcherは割り当てられたsiteだけをclaimする。
   launcherId: string | null;
-  // Manual submissions take the requester's own Runs in Projects where they edit, unless the
-  // owner of the computer takes all of them.
+  // 手動の投入は、依頼者がeditorであるProjectの、依頼者自身のRunを取る。コンピュータの
+  // 所有者がすべてを取る場合は除く。
   requesterId: string | null;
-  // Whoever runs the job shell of a manual submission; their settings apply.
+  // 手動の投入でjob shellを実行する人。その人の設定が使われる。
   submittingUserId: string | null;
-  // What the runner the holder installs passes to a Job's code, as the claim named it. A Job that
-  // needs more waits for a holder whose runner has it, as with workers (WorkerService.claim).
+  // 持ち主が入れるrunnerがJobのコードに渡すもの（claimが挙げたとおり）。それ以上を要するJobは、
+  // workerと同じく（WorkerService.claim）、それを持つrunnerの持ち主を待つ。
   capabilities: WorkerCapability[];
   limit: number;
 }
 
-// The tokens of the holder's owner, in SQL; $token is the request's token.
+// 持ち主の所有者のtokenを求めるSQL。$tokenはリクエストのtoken。
 const HOLDER_TOKENS_SQL = (token: string) =>
   `(SELECT o.id FROM api_tokens o WHERE o.user_id=(SELECT t.user_id FROM api_tokens t WHERE t.id=${token}))`;
 
-// The Job `j` is on an automatic site that the launcher $launcher submits for now, in SQL.
+// Job `j`が、launcher $launcherが今投入を受け持つ自動のsiteにあることを表すSQL。
 const ASSIGNED_SITE_SQL = (launcher: string) =>
   `EXISTS(SELECT 1 FROM compute_targets t JOIN site_settings s ON s.target_id=t.id
     WHERE t.id=j.target_id AND t.submission_mode='automatic' AND s.launcher_id=${launcher})`;
 
 const SUBMISSION_SAVEPOINT = 'site_submission';
-// Cancellations one launcher request returns; the launcher asks again for the rest.
+// launcherの1回のリクエストに返す取り消しの数。残りはlauncherがもう一度尋ねる。
 const CANCELLATION_LIST_LIMIT = 1000;
 const TERMINAL_STATUSES = ['finished', 'failed', 'canceled'];
 
@@ -77,8 +77,8 @@ function invalidSubmission(message: string): never {
   throw new DomainError({ status: 409, code: 'invalid_submission', message });
 }
 
-// A manual submission is the requester's own act on a site, so it needs their own API token: a
-// browser session cannot run `mado-tracking submit`, and a Job token is the Job's, not theirs.
+// 手動の投入は依頼者自身がsiteで行うことなので、本人のAPI tokenが要る。ブラウザのsessionでは
+// `mado-tracking submit`を実行できず、Job tokenは本人のものではなくJobのもの。
 function requireSubmitterToken(principal: Principal, scope: string): { tokenId: string } {
   if (principal.method !== 'token' || !principal.token || principal.token.job)
     throw new DomainError({
@@ -91,9 +91,9 @@ function requireSubmitterToken(principal: Principal, scope: string): { tokenId: 
 }
 
 /**
- * Hands site Jobs to whoever submits them (docs/sites.md). A claim moves queued Jobs to
- * claimed/submitting and issues their Job tokens; the report records what the site's job shell
- * did. The Run stays queued until its runner starts the container.
+ * siteのJobを、それを投入する者に渡す（docs/sites.md）。claimは順番待ちのJobを
+ * claimed/submittingへ移し、Job tokenを発行する。報告はsiteのjob shellが行ったことを記録する。
+ * runnerがコンテナを始めるまで、Runは順番待ちのまま。
  */
 export class SiteSubmissionService {
   private readonly database: Database;
@@ -142,9 +142,9 @@ export class SiteSubmissionService {
   }
 
   /**
-   * Jobs that ended while still in the scheduler queue of a site this launcher submits for now,
-   * whichever launcher queued them: after a site moves to another launcher, the new one logs in
-   * with its own key and removes them.
+   * このlauncherが今投入を受け持つsiteで、スケジューラのキューに入ったまま終わったJob。どの
+   * launcherがキューに入れたかは問わない。siteが別のlauncherに移ったら、新しいlauncherが自分の
+   * 鍵でログインして取り除く。
    */
   async cancellations(
     principal: Principal,
@@ -186,8 +186,8 @@ export class SiteSubmissionService {
   }
 
   /**
-   * Manual sites with Jobs waiting for `mado-tracking submit`: one's own Jobs, and every waiting
-   * Job of the computers one owns (what `--all` takes).
+   * `mado-tracking submit`を待つJobのある手動のsite。自分のJobと、自分が持つコンピュータで
+   * 待っているすべてのJob（`--all`が取るもの）。
    */
   async listManual(principal: Principal): Promise<ManualSubmissionWaiting[]> {
     requireSubmitterToken(principal, 'read');
@@ -210,7 +210,7 @@ export class SiteSubmissionService {
     );
   }
 
-  /** What `mado-tracking submit` needs before it claims: settings, job shell, one's account. */
+  /** `mado-tracking submit`がclaimする前に要るもの。設定、job shell、自分のアカウント。 */
   async manualConfiguration(principal: Principal, targetId: string): Promise<ManualSiteConfiguration> {
     requireSubmitterToken(principal, 'read');
     return transaction(this.database, async (connection) => {
@@ -290,8 +290,8 @@ export class SiteSubmissionService {
     return target;
   }
 
-  // The account that queued a Job, which its cancel command runs as; best effort, since the
-  // person's settings may have changed since (the launcher then leaves the Job in the queue).
+  // Jobをキューに入れたアカウント。取り消しのコマンドはこのアカウントで動く。その後に本人の
+  // 設定が変わっていることがあるので、できる範囲で求める（その場合、launcherはJobをキューに残す）。
   private async cancellationAccount(
     connection: Connection,
     job: { targetId: string; requesterId: string },
@@ -317,7 +317,7 @@ export class SiteSubmissionService {
     }
   }
 
-  // Serializes a holder's duplicate HTTP requests, while other holders can use SKIP LOCKED.
+  // 同じ持ち主からの重複したHTTPのリクエストを1つずつ進める。ほかの持ち主はSKIP LOCKEDを使える。
   private async lockHolder(connection: Connection, holder: SubmissionHolder): Promise<void> {
     await connection.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
       `site:${holder.tokenId}:${holder.holderId}`,
@@ -331,11 +331,11 @@ export class SiteSubmissionService {
     const waitingPhase: JobPhase | null = scope.mode === 'manual' ? 'waiting_manual' : null;
     const submissions: SiteSubmission[] = [];
     const seen: string[] = [];
-    // Targets that are at their limit, or that another claim is filling right now.
+    // 上限に達したコンピュータと、別のclaimが今まさに埋めているコンピュータ。
     const unavailableTargets: string[] = [];
     while (submissions.length < scope.limit) {
-      // The first member of an array stands for the rest: a workflow step, the one kind of Job
-      // that needs a capability, is never an array (a Task starts one Job).
+      // arrayの最初の要素が残りを代表する。capabilityを要する唯一の種類のJobである
+      // ワークフローのstepは、arrayにならない（Taskは1つのJobを始める）。
       const candidate = await first<Job>(
         connection,
         `SELECT ${jobColumns('j')} FROM jobs j JOIN compute_targets t ON t.id=j.target_id
@@ -390,9 +390,9 @@ export class SiteSubmissionService {
   }
 
   /**
-   * Locks the site while its Jobs are claimed and checks its limit. maxConcurrentJobs counts
-   * submissions on a site (an array is one where the site takes arrays), since the scheduler,
-   * not tracking, places them.
+   * Jobをclaimする間siteをロックし、上限を確かめる。siteではmaxConcurrentJobsは投入の数を数える
+   * （siteがarrayを扱えるならarrayは1つ）。Jobを配置するのは、trackingではなくスケジューラで
+   * あるため。
    */
   private async reserveTargetCapacity(
     connection: Connection,
@@ -413,9 +413,8 @@ export class SiteSubmissionService {
     return occupancy.count < target.maxConcurrentJobs ? target : undefined;
   }
 
-  // A Job that cannot be described to the site (for example a deleted checkpoint, a requester
-  // without an account on it, or one who may no longer use a private site) fails instead of
-  // blocking the queue on every claim.
+  // siteに伝えられないJob（削除されたcheckpoint、siteにアカウントの無い依頼者、非公開のsiteを
+  // もう使えない依頼者など）は、claimのたびにキューを詰まらせないよう失敗にする。
   private async submit(
     connection: Connection,
     submission: {
@@ -428,7 +427,7 @@ export class SiteSubmissionService {
     const { target, members, holder } = submission;
     await connection.query(`SAVEPOINT ${SUBMISSION_SAVEPOINT}`);
     try {
-      // Every member of an array has the same requester.
+      // arrayの要素の依頼者はすべて同じ。
       if (!(await canRunQueuedJob(connection, members[0]!))) targetNotAvailable(422);
       const settings = await findSiteSettings(connection, target.id);
       const jobShell = settings ? await findCurrentJobShell(connection, target.id) : undefined;
@@ -520,9 +519,9 @@ export class SiteSubmissionService {
         WHERE id=$1 RETURNING ${jobColumns()}`,
         [job.id, schedulerJobId],
       ))!;
-    // A resend, a direct host whose runner reported before the job shell returned, or a Job that
-    // ended first: only the scheduler ID is filled in. A Job that ended before its runner started
-    // still has a scheduler job in the queue, which the launcher then removes.
+    // 再送、job shellが戻る前にrunnerが報告した直接実行するホスト、または先に終わったJob。
+    // このときはスケジューラのIDだけを埋める。runnerが始まる前に終わったJobは、まだキューに
+    // スケジューラのジョブが残っているので、launcherがそれを取り除く。
     return (await first<Job>(
       connection,
       `UPDATE jobs SET scheduler_job_id=COALESCE(scheduler_job_id,$2),submitted_at=COALESCE(submitted_at,now()),
@@ -548,7 +547,7 @@ export class SiteSubmissionService {
       });
     if (job.status === 'claimed' && job.phase === 'submitted')
       invalidSubmission('a job reported as submitted cannot be failed');
-    // A resend, or a Job that already ended or whose runner reports for itself.
+    // 再送か、既に終わったJob、またはrunnerが自分で報告するJob。
     return job;
   }
 }

@@ -14,7 +14,7 @@ describe.skipIf(!testDatabaseUrl)('Artifact content配信（独立PostgreSQL）'
       await request(harness.app, `${fixture.basePath}/artifacts?path=${encodeURIComponent(path)}`, {
         method: 'PUT',
         cookie: fixture.editor.cookie,
-        // A Uint8Array body keeps fetch from adding its own text/plain Content-Type.
+        // 本文をUint8Arrayにすると、fetchが独自にtext/plainのContent-Typeを付けない。
         binary: new Uint8Array(options.body ?? AUDIO_BYTES),
         headers: options.mimeType ? { 'Content-Type': options.mimeType } : {},
       }),

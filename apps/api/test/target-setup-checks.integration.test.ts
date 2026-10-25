@@ -83,7 +83,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
     );
   }
 
-  /** A worker reports itself (and its SSH files) with its Job claim, as the worker loop does. */
+  /** workerのループと同じく、workerがJobのclaimとともに自分（とSSHのファイル）を報告する。 */
   async function reportPresence(
     token: string,
     workerId: string,
@@ -101,7 +101,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
 
   async function setup() {
     const fixture = await executionFixture(harness);
-    // Step 1 of adding a computer: its connection only, saved disabled.
+    // コンピュータを追加する手順1。接続先だけを入れ、無効のまま保存する。
     const newTarget = await entity<ComputeTarget>(
       await request(harness.app, '/api/targets', {
         method: 'POST',
@@ -189,7 +189,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
       200,
     );
     expect(configured).toMatchObject({ enabled: true, workDirectory: '/large/mmt' });
-    // A local target has no address or account of its own.
+    // localのコンピュータには、自分のアドレスもアカウントも無い。
     const local = await entity<ComputeTarget>(
       await request(harness.app, '/api/targets', {
         method: 'POST',
@@ -212,7 +212,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
       }),
     );
     expect(local).toMatchObject({ runtimeKinds: ['python'], executor: 'local', host: '', enabled: false });
-    // ssh still needs where to connect.
+    // sshでは接続先が引き続き必要。
     const sshWithoutHost = await request(harness.app, '/api/targets', {
       method: 'POST',
       cookie: fixture.administrator.cookie,
@@ -238,7 +238,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
 
   it('SSHの候補が空でも接続確認のworker一覧に含まれ、一覧は全体管理者だけが見られる', async () => {
     const fixture = await setup();
-    // An empty SSH file list is a complete report, including for local checks.
+    // SSHのファイルの一覧が空でも、完全な報告として扱う。localの確認でも同じ。
     await reportPresence(fixture.workerToken, 'empty-ssh-host');
     for (const cookie of [fixture.editor.cookie, fixture.viewer.cookie]) {
       expect((await request(harness.app, '/api/targets/check-workers', { cookie })).status).toBe(
@@ -276,7 +276,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
       'setup-host',
     ]);
     expect(JSON.stringify(projectWorkers.items)).not.toContain('.ssh');
-    // Gone quiet for over two minutes: offline, no longer offered.
+    // 2分を超えて連絡が無いworkerはofflineになり、候補に出なくなる。
     await harness.database.query(
       "UPDATE workers SET last_seen_at=now()-interval '121 seconds' WHERE worker_id IN ('setup-host','empty-ssh-host')",
     );
@@ -295,7 +295,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
       await requestCheck(fixture.administrator.cookie, fixture.newTarget.id, fixture.setupWorker),
     );
     expect(check).toMatchObject({ status: 'queued', assignedWorker: fixture.setupWorker });
-    // Another worker in charge of the computer does not take a check chosen for someone else.
+    // そのコンピュータを担当するほかのworkerは、別のworkerを選んだ確認を取らない。
     expect(
       await claimItem(fixture.workerToken, {
         workerId: 'host-1',
@@ -303,7 +303,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
         kinds: ['connection', 'directory_listing'],
       }),
     ).toBeNull();
-    // Same MMT_WORKER_ID under another token is another worker.
+    // 同じMMT_WORKER_IDでも、別のtokenなら別のworkerになる。
     expect(
       await claimItem(fixture.workerToken, { workerId: 'setup-host', kinds: ['connection'] }),
     ).toBeNull();
@@ -483,7 +483,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
       assignedWorker: fixture.setupWorker,
       result: null,
     });
-    // The same path waited for again returns the same listing.
+    // 同じパスをもう一度待つと、同じ一覧を返す。
     const again = await entity<TargetDirectoryListing>(
       await requestListing(fixture.administrator.cookie, fixture.newTarget.id, {
         path,
@@ -492,7 +492,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
       200,
     );
     expect(again.id).toBe(listing.id);
-    // The listing is not part of the connection check history.
+    // 一覧の取得は接続確認の履歴に含めない。
     const checks = await entity<{ items: TargetCheck[] }>(
       await request(harness.app, `/api/targets/${fixture.newTarget.id}/checks`, {
         cookie: fixture.administrator.cookie,
@@ -500,7 +500,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
       200,
     );
     expect(checks.items).toEqual([]);
-    // A worker that asks for connection checks only does not receive directory listings.
+    // 接続確認だけを求めるworkerには、ディレクトリの一覧の取得を渡さない。
     expect(await claimItem(fixture.setupToken, { workerId: 'setup-host', kinds: ['connection'] })).toBeNull();
     const claimed = (await claimItem(fixture.setupToken, {
       workerId: 'setup-host',
@@ -582,7 +582,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
       { outcome: 'denied', count: 2 },
       { outcome: 'success', count: 8 },
     ]);
-    // A site has no worker connection to read through.
+    // siteには、読み出しに使うworkerの接続が無い。
     const site = await harness.database.query<{ id: string }>(
       `INSERT INTO compute_targets(name,host,port,username,ssh_key_path,known_hosts_path,work_directory,
         python_executable,gpu_ids,max_concurrent_jobs,enabled,executor,runtime_kinds,dataset_transfer,owner_user_id,visibility)
@@ -617,7 +617,7 @@ describe.skipIf(!testDatabaseUrl)('コンピュータの追加の接続確認と
       200,
     );
     expect(expired).toMatchObject({ status: 'failed', failureReason: 'no_worker', result: null });
-    // A connection check waits five minutes, not one.
+    // 接続確認は1分ではなく5分待つ。
     const check = await entity<TargetCheck>(
       await requestCheck(fixture.administrator.cookie, fixture.newTarget.id, fixture.setupWorker),
     );

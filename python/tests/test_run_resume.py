@@ -15,7 +15,7 @@ PROJECT_PATH = f"/api/projects/{PROJECT_ID}"
 
 
 class FakeResumeApi:
-    """POST /runs/:r/resume, PUT /sync/runs/:r and the Run write endpoints."""
+    """POST /runs/:r/resume、PUT /sync/runs/:r、Runへの書き込みのエンドポイント。"""
 
     def __init__(self):
         self.runs: dict[str, dict] = {}

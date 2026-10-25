@@ -1,4 +1,4 @@
-"""Evaluation results against a baseline version, promotion policies and their judgements."""
+"""ベースラインのバージョンに対する評価結果、昇格ポリシーとその判定。"""
 
 from __future__ import annotations
 
@@ -13,16 +13,16 @@ if TYPE_CHECKING:
     from .client import Client
     from .run import Run
 
-# Mirrors GET /promotion-evaluations: limit defaults to 50 and is capped at 200.
+# GET /promotion-evaluationsに合わせる。limitの既定は50で、上限は200。
 PROMOTION_EVALUATION_MAX_PAGE_SIZE = 200
 PROMOTION_CRITERION_FIELDS = {"metric", "direction", "mode", "threshold"}
 
 
 def reference_dataset_version_ids(run: Run | Mapping[str, Any]) -> list[str]:
-    """The reference (ground truth) DatasetVersions of a Run, in input order.
+    """Runの正解データ（ground truth）のDatasetVersion。入力の順に並ぶ。
 
-    The reference set is ``inputDatasetVersionIds`` minus ``upstreamDatasetVersionIds``: a chained
-    evaluation Run also takes the upstream Run's outputs (for example inference results) as inputs.
+    正解セットは``inputDatasetVersionIds``から``upstreamDatasetVersionIds``を除いたもの。連鎖した
+    評価のRunは、上流のRunの出力（例えば推論の結果）も入力として受け取るため。
     """
     entity = run if isinstance(run, Mapping) else run.entity
     inputs = entity.get("inputDatasetVersionIds") or []
@@ -43,11 +43,11 @@ def compare_to_baseline(
     evaluation_rule_id: str | None = None,
     metrics: Sequence[str] | None = None,
 ) -> dict[str, Any]:
-    """Return the EvaluationComparison of a candidate version with its baseline.
+    """候補のバージョンとそのベースラインを比べたEvaluationComparisonを返す。
 
-    Without a baseline the API compares with the ``production`` alias. A comparison that cannot be
-    made is reported in ``status`` (for example ``baseline_missing``), not raised.
-    ``reference_dataset_version_ids=[]`` is sent as an explicit empty set, unlike None.
+    ベースラインを指定しなければ、APIは``production``のaliasと比べる。比べられないときは例外にせず、
+    ``status``で知らせる（例えば``baseline_missing``）。
+    ``reference_dataset_version_ids=[]``は、Noneと違って明示的な空の集合として送る。
     """
     if baseline_alias is not None and baseline_version_id is not None:
         raise ConfigurationError("Specify either baseline_alias or baseline_version_id, not both")
@@ -61,7 +61,7 @@ def compare_to_baseline(
         "evaluationRuleId": evaluation_rule_id,
     }
     params.update({key: value for key, value in optional_values.items() if value is not None})
-    # The API reads lists as comma separated; a present empty value means an empty list.
+    # APIは一覧をカンマ区切りで読む。値が空でも指定があれば空の一覧を意味する。
     if reference_dataset_version_ids is not None:
         params["referenceDatasetVersionIds"] = ",".join(reference_dataset_version_ids)
     if metrics is not None:
@@ -87,10 +87,10 @@ def create_promotion_policy(
     auto_promote: bool | None = None,
     enabled: bool = True,
 ) -> dict[str, Any]:
-    """Create a PromotionPolicy; omitted options take the API defaults.
+    """PromotionPolicyを作る。省いたオプションはAPIの既定値になる。
 
-    Each criterion is ``{"metric", "direction": "higher"|"lower",
-    "mode": "absolute"|"delta"|"relative_delta", "threshold"}``.
+    各条件は``{"metric", "direction": "higher"|"lower",
+    "mode": "absolute"|"delta"|"relative_delta", "threshold"}``。
     """
     if not criteria or any(set(criterion) != PROMOTION_CRITERION_FIELDS for criterion in criteria):
         raise ConfigurationError(
@@ -110,7 +110,7 @@ def create_promotion_policy(
         "autoPromote": auto_promote,
     }
     body.update({key: value for key, value in optional_values.items() if value is not None})
-    # Not retried: a resent create would add a second policy.
+    # 再試行しない。作成を送り直すと2つ目のポリシーができてしまう。
     return client.request("POST", client.project_path(project_id, "promotion-policies"), json=body)
 
 
@@ -131,7 +131,7 @@ def list_promotion_evaluations(
     candidate_version_id: str | None = None,
     page_size: int | None = None,
 ) -> Iterator[dict[str, Any]]:
-    """Yield PromotionEvaluations newest first, requesting further pages only as they are used."""
+    """PromotionEvaluationを新しい順に返す。次のページは使う段になって初めてリクエストする。"""
     if page_size is not None and not 1 <= page_size <= PROMOTION_EVALUATION_MAX_PAGE_SIZE:
         raise ConfigurationError(f"page_size must be between 1 and {PROMOTION_EVALUATION_MAX_PAGE_SIZE}")
     optional_values = {
@@ -148,10 +148,10 @@ def list_promotion_evaluations(
 def transfer_promotion_policy_owner(
     client: Client, project_id: str, policy_id: str, *, service_account_id: str
 ) -> dict[str, Any]:
-    """Run the policy as a Service Account so it keeps working when its creator leaves.
+    """ポリシーをService Accountとして動かし、作成者がいなくなっても動き続けるようにする。
 
-    Returns the updated policy with ``runAsUserId``. Setting the same owner again changes nothing,
-    so the PUT is retried after a lost response.
+    ``runAsUserId``を持つ更新後のポリシーを返す。同じ所有者を設定し直しても何も変わらないので、
+    応答が失われたらPUTを再試行する。
     """
     return client.request(
         "PUT",

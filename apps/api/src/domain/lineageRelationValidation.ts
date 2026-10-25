@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { jsonObjectSchema, uuidSchema } from './validation.js';
 
-// Historical evidence is a small proof record; payloads remain in artifact storage.
+// 過去の関係のevidenceは小さな証拠の記録。中身のデータはArtifactの保存先に置いたままにする。
 const MAX_EVIDENCE_BYTES = 64 * 1024;
 const MAX_REASON_LENGTH = 2000;
 const nodeKind = z.enum(['run', 'modelVersion', 'datasetVersion']);

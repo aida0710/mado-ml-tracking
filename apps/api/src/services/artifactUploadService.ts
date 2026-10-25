@@ -37,20 +37,20 @@ import { assertArtifactPath, projectArtifactBackend } from './artifactRegistrati
 import { artifactTooLargeError } from './artifactSizeLimit.js';
 import type { ArtifactLimits } from './artifactService.js';
 
-// Large enough that a 200 GiB Artifact fits in the 10000-part limit with headroom, small enough
-// that resending one failed part over a slow link takes seconds rather than minutes.
+// 200GiBのArtifactでも10000 partの上限に余裕を持って収まる大きさで、遅い回線で失敗したpartを
+// 1つ送り直しても数分でなく数秒で済む小ささ。
 export const DEFAULT_UPLOAD_PART_BYTES = 16 * 1024 * 1024;
-// Adopted decision (2026-10-08): an unfinished session keeps its parts for 7 days.
+// 採用した決定（2026-10-08）: 終わっていないセッションはpartを7日間残す。
 export const UPLOAD_SESSION_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 
 const PERMISSION = { role: 'editor', scope: 'artifacts:write' } as const;
-// 256 bits: the token alone authorizes part requests for the session's lifetime.
+// 256ビット。セッションが生きている間、このtokenだけでpartのリクエストを認可するため。
 const PART_TOKEN_BYTES = 32;
 
-/** Native sessions belong to the artifact-uploads API; MLflow sessions to the mpu endpoints. */
+/** nativeのセッションはartifact-uploadsのAPIの、MLflowのセッションはmpuのエンドポイントのもの。 */
 type UploadProtocol = 'native' | 'mlflow';
 
-/** Columns written when a session is opened; MLflow sessions leave the sizes unknown. */
+/** セッションを開くときに書く列。MLflowのセッションでは大きさは不明のまま。 */
 interface SessionFields {
   path: string;
   runId: string | null;
@@ -111,8 +111,9 @@ export class ArtifactUploadService {
   }
 
   /**
-   * Opens an MLflow multipart session for an Artifact path owner. The caller has authorized the
-   * owner; the returned part token is shown once and authorizes this session's part requests.
+   * Artifactのパスの持ち主（owner）のために、MLflowのmultipartセッションを開く。ownerの認可は
+   * 呼び出し側で済んでいる。返すpartのtokenは一度だけ示し、このセッションのpartのリクエストを
+   * 認可する。
    */
   async createOwned(
     principal: Principal,
@@ -158,7 +159,7 @@ export class ArtifactUploadService {
     const multipart = this.multipartStore(backend);
     const id = randomUUID();
     const credential = uploadCredential(principal);
-    // The Artifact registered on completion reuses this id, so the key matches single uploads.
+    // 完了時に登録するArtifactはこのidを使い回すので、キーは1回でのアップロードと同じ形になる。
     const storageKey = `${projectId}/${id}/content`;
     const { backendUploadId } = await multipart.createMultipart({
       key: storageKey,
@@ -201,7 +202,7 @@ export class ArtifactUploadService {
     }
   }
 
-  /** Lists only the caller's own sessions: another user's or token's parts are not resumable. */
+  /** 呼び出し元自身のセッションだけを返す。別の利用者やtokenのpartからは再開できない。 */
   async listOwn(
     principal: Principal,
     projectId: string,
@@ -246,14 +247,14 @@ export class ArtifactUploadService {
     };
   }
 
-  /** Stores one part. Sending the same part number again replaces the earlier bytes. */
+  /** partを1つ保存する。同じpart番号をもう一度送ると、前のバイト列を置き換える。 */
   async putPart(
     principal: Principal,
     projectId: string,
     part: {
       uploadId: string;
       partNumber: number;
-      /** Content-Length of the request; required because S3 needs it before the body. */
+      /** リクエストのContent-Length。S3は本文より先にこれを必要とするので必須。 */
       declaredBytes?: number;
       sha256?: string;
       body: Readable;
@@ -278,8 +279,8 @@ export class ArtifactUploadService {
   }
 
   /**
-   * Stores one part of an MLflow session, authorized by its part token alone. Part sizes are not
-   * known in advance, so only the backend limits apply: non-final parts need the S3 minimum.
+   * MLflowのセッションのpartを1つ保存する。認可はpartのtokenだけで行う。partの大きさは前もって
+   * 分からないので、保存先の制限だけがかかる。最後以外のpartはS3の最小値以上が要る。
    */
   async putPartWithToken(
     projectId: string,
@@ -320,7 +321,7 @@ export class ArtifactUploadService {
         message: `parts other than the last must be ${MULTIPART_MIN_PART_BYTES} bytes or more`,
         details: { minBytes: MULTIPART_MIN_PART_BYTES },
       });
-    // Every non-final part has the client's chunk size, so this is a lower bound of the total.
+    // 最後以外のpartはどれもクライアントのchunkの大きさなので、これは合計の下限になる。
     if (!isFinalPart && size * (upload.partCount - 1) > this.limits.maxBytes)
       throw artifactTooLargeError(this.limits.maxBytes);
     return this.storePart(upload, { ...part, size });
@@ -358,8 +359,8 @@ export class ArtifactUploadService {
       });
     } catch (error) {
       part.body.destroy();
-      // S3 replaces a part before its digest is known, so the recorded part may no longer match
-      // the stored bytes. Forgetting it makes the client send this part again.
+      // S3はダイジェストが分かる前にpartを置き換えるので、記録したpartが保存されたバイト列と
+      // もう一致しないかもしれない。記録を消して、クライアントにこのpartを送り直させる。
       await this.database.query(
         `DELETE FROM artifact_upload_parts WHERE upload_id=$1 AND part_number=$2
         AND EXISTS (SELECT 1 FROM artifact_uploads WHERE id=$1 AND status='open')`,
@@ -369,7 +370,7 @@ export class ArtifactUploadService {
     }
   }
 
-  /** Moves a fully received session to verifying; the finalizer registers the Artifact. */
+  /** すべて受け取ったセッションをverifyingにする。Artifactはfinalizerが登録する。 */
   async complete(
     principal: Principal,
     projectId: string,
@@ -382,7 +383,7 @@ export class ArtifactUploadService {
         lock: true,
         protocol: 'native',
       });
-      // A retried complete (for example after a lost response) reports the current state.
+      // 再試行されたcomplete（応答が失われたあとなど）には、今の状態を返す。
       if (upload.status === 'verifying' || upload.status === 'completed')
         return publicArtifactUpload(upload);
       assertAcceptsParts(upload);
@@ -412,15 +413,15 @@ export class ArtifactUploadService {
   }
 
   /**
-   * Moves a fully received MLflow session to verifying and records its sizes, which are known only
-   * now. `authorize` runs in the same transaction so the Artifact owner is checked under lock.
+   * すべて受け取ったMLflowのセッションをverifyingにし、ここで初めて分かる大きさを記録する。
+   * `authorize`は同じトランザクションの中で動くので、Artifactの持ち主はロックの下で確かめる。
    */
   async completeOwned(
     principal: Principal,
     projectId: string,
     input: {
       uploadId: string;
-      /** The parts the client reports; a reported SHA-256 must match the stored part. */
+      /** クライアントが報告するpart。報告されたSHA-256は保存したpartと一致しなければならない。 */
       parts: { partNumber: number; sha256: string | null }[];
       authorize: (connection: Connection, upload: ArtifactUploadRecord) => Promise<void>;
     },
@@ -432,7 +433,7 @@ export class ArtifactUploadService {
         lock: true,
         protocol: 'mlflow',
       });
-      // A retried complete (for example after a lost response) reports the current state.
+      // 再試行されたcomplete（応答が失われたあとなど）には、今の状態を返す。
       if (upload.status === 'verifying' || upload.status === 'completed') return upload;
       assertAcceptsParts(upload);
       if (upload.runId) await assertRunAcceptsArtifacts(connection, projectId, upload.runId);
@@ -471,7 +472,7 @@ export class ArtifactUploadService {
     );
   }
 
-  /** Aborts an MLflow session; only its creator through the same credential may abort it. */
+  /** MLflowのセッションを中止する。中止できるのは、作った本人が同じ認証情報を使うときだけ。 */
   async abortOwned(
     principal: Principal,
     projectId: string,
@@ -510,7 +511,7 @@ export class ArtifactUploadService {
         backendUploadId: aborted.backendUploadId,
       });
     } catch {
-      // The sweeper aborts unreferenced backend uploads later; the session is already closed.
+      // 参照されない保存先のアップロードはあとでsweeperが中止する。セッションは既に閉じている。
       console.error(
         JSON.stringify({ event: 'artifact_upload_abort_failed', uploadId: aborted.id, projectId }),
       );
@@ -530,7 +531,7 @@ export class ArtifactUploadService {
   }
 }
 
-/** The token a session belongs to; a Job token's id refers to job_tokens, not api_tokens. */
+/** セッションが属するtoken。Job tokenのidはapi_tokensではなくjob_tokensを指す。 */
 function uploadCredential(principal: Principal): {
   apiTokenId: string | null;
   jobTokenId: string | null;
@@ -542,7 +543,9 @@ function uploadCredential(principal: Principal): {
     : { apiTokenId: token.id, jobTokenId: null };
 }
 
-/** Only the creating user through the same credential (session, API token or Job token) may use it. */
+/**
+ * 使えるのは、作った利用者が同じ認証情報（session、API token、Job token）を使うときだけ。
+ */
 async function loadOwnUpload(
   connection: Connection,
   principal: Principal,
@@ -550,7 +553,7 @@ async function loadOwnUpload(
 ): Promise<ArtifactUploadRecord> {
   await requireProject(connection, principal, { projectId: reference.projectId, ...PERMISSION });
   const upload = await findArtifactUpload(connection, reference);
-  // Each session is completed through the API that opened it; the other API does not see it.
+  // セッションは開いたAPIから完了させる。もう一方のAPIからは見えない。
   if ((upload.ownerKind !== null) !== (reference.protocol === 'mlflow')) notFound('upload session');
   const credential = uploadCredential(principal);
   if (
@@ -570,7 +573,7 @@ function hashPartToken(partToken: string): string {
   return createHash('sha256').update(partToken).digest('hex');
 }
 
-/** An MLflow session whose part token matches; the token is the only credential of part requests. */
+/** partのtokenが一致するMLflowのセッション。partのリクエストの認証情報はこのtokenだけ。 */
 async function findTokenUpload(
   connection: Connection,
   reference: { projectId: string; id: string; partToken: string | undefined },
@@ -609,7 +612,7 @@ function assertPartNumber(upload: ArtifactUploadRecord, partNumber: number): voi
     });
 }
 
-/** A reported part whose digest differs was replaced after the client sent it. */
+/** ダイジェストが違う報告されたpartは、クライアントが送ったあとに置き換えられている。 */
 function assertReportedParts(
   received: { partNumber: number; sha256: string }[],
   reported: { partNumber: number; sha256: string | null }[],
@@ -651,7 +654,7 @@ function uploadNotOpenError(): DomainError {
 
 function assertAcceptsParts(upload: ArtifactUploadRecord): void {
   if (upload.status !== 'open') throw uploadNotOpenError();
-  // The sweeper marks expired sessions periodically; until then the deadline still applies.
+  // sweeperは期限切れのセッションを定期的に記録する。それまでの間も期限はここで効かせる。
   if (new Date(upload.expiresAt) <= new Date())
     throw new DomainError({
       status: 409,

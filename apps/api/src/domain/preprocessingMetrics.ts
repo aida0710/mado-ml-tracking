@@ -1,6 +1,6 @@
 import type { PreprocessingReportInput } from '@mmt/contracts';
 
-/** Stable metric names shared by reports, Run charts and workflow quality gates. */
+/** レポート、Runのグラフ、ワークフローの品質ゲートで共有する、変わらないメトリクス名。 */
 export function preprocessingMetrics(report: PreprocessingReportInput): Record<string, number> {
   return {
     ...report.metrics,

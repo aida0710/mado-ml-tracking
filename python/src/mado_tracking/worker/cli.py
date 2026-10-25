@@ -1,4 +1,4 @@
-"""Worker entrypoint and host-side service commands; diagnostics are sanitized and never dump config."""
+"""workerの起動点とホスト側のサービスのコマンド。診断の出力は秘密を除き、設定を丸ごと出さない。"""
 
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ from .job_responses import InvalidWorkerJob
 from .service import Worker
 from .systemd_unit import ServiceScope
 
-# Containers receive the token as a Docker secret file instead of an environment value.
+# コンテナはtokenを環境変数ではなく、Dockerのsecretのファイルで受け取る。
 TOKEN_FILE_VARIABLE = "MMT_API_TOKEN_FILE"
 
 
@@ -76,7 +76,7 @@ async def run(settings: WorkerSettings, *, once: bool) -> None:
 
 
 def load_token_file() -> None:
-    """Expose a mounted token file as MMT_API_TOKEN, exactly like systemd's EnvironmentFile does."""
+    """マウントしたtokenのファイルを、systemdのEnvironmentFileと同じくMMT_API_TOKENとして渡す。"""
     token_file = os.environ.get(TOKEN_FILE_VARIABLE)
     if not token_file or os.environ.get("MMT_API_TOKEN"):
         return
@@ -100,7 +100,7 @@ def service_layout(arguments: argparse.Namespace) -> ServiceLayout:
 
 
 def read_install_token(arguments: argparse.Namespace, stdin: TextIO) -> str:
-    # The token is never accepted as an argument: argv is visible to every user through /proc.
+    # tokenは引数では受け付けない。argvは/procを通してすべてのユーザーから見える。
     if arguments.token_file:
         return read_token(Path(arguments.token_file).read_text())
     if stdin.isatty():
@@ -144,7 +144,7 @@ def status_command(arguments: argparse.Namespace, run_systemctl: CommandRunner) 
         print(json.dumps({**asdict(status), "is_active": status.is_active}))
     else:
         print_status(status)
-    # Same convention as `systemctl status`: 3 means the unit is not running.
+    # `systemctl status`と同じ決まり。3はunitが動いていないことを示す。
     return 0 if status.is_active else 3
 
 

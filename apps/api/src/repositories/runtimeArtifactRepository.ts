@@ -6,7 +6,7 @@ export async function findSavedArtifact(
   connection: Connection,
   reference: { projectId: string; artifactId: string },
 ): Promise<Artifact> {
-  // Artifact rows are inserted only after the streaming store write has completed.
+  // Artifactの行は、保存先へのストリーミングの書き込みが終わってから挿入する。
   const artifact = await first<Artifact>(
     connection,
     'SELECT * FROM artifacts WHERE id=$1 AND project_id=$2 AND deleted_at IS NULL',

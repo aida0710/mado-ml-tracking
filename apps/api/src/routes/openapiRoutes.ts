@@ -6,10 +6,10 @@ import {
 import { principal, type ApiEnvironment } from '../http/request.js';
 import { requireScope } from '../services/accessService.js';
 
-// Mounted at /api: GET /openapi.json serves the native API document to any signed-in user.
+// /apiに置く。GET /openapi.jsonは、ログインしている誰にでもnative APIの文書を返す。
 export function openapiRoutes(): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
-  // The catalog does not change while the process runs, so the document is built once.
+  // プロセスの実行中にカタログは変わらないので、文書は1回だけ作る。
   let document: OpenApiDocument | undefined;
   routes.get('/openapi.json', (context) => {
     requireScope(principal(context), 'read');

@@ -8,7 +8,7 @@ import {
   type S3SignableRequest,
 } from './s3SignatureV2.js';
 
-// The example key pair published in the AWS documentation; it authenticates to nothing.
+// AWSのドキュメントに載っている例のキーペア。どこにも認証できない。
 const credentials = {
   accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
   secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
@@ -22,7 +22,7 @@ function authorization(request: S3SignableRequest, pathStyle = false): string {
   return signatureV2Authorization({ request, credentials, ...(hostBucket ? { hostBucket } : {}) });
 }
 
-// Expected values are the Authorization headers of the "Authentication examples" in
+// 期待値は、次のページの"Authentication examples"にあるAuthorizationヘッダー。
 // https://docs.aws.amazon.com/AmazonS3/latest/userguide/RESTAuthentication.html
 describe('署名v2: AWSの公開ドキュメントの例', () => {
   it('GET object（virtual-host）', () => {
@@ -87,7 +87,8 @@ describe('署名v2: AWSの公開ドキュメントの例', () => {
         'x-amz-acl': 'public-read',
         'content-type': 'application/x-download',
         'Content-MD5': '4gJE4saaMU4BqNR0kLY+lw==',
-        // A header bag cannot repeat a key, so the two ReviewedBy values differ only in case.
+        // ヘッダーのオブジェクトでは同じキーを繰り返せないので、2つのReviewedByは
+        // 大文字小文字だけを変えてある。
         'X-Amz-Meta-ReviewedBy': 'joe@awsexamplebucket1.net',
         'x-amz-meta-reviewedby': 'jane@awsexamplebucket1.net',
         'X-Amz-Meta-FileChecksum': '0x02661779',
@@ -134,9 +135,9 @@ describe('署名v2: AWSの公開ドキュメントの例', () => {
 });
 
 describe('署名v2: x-amz-date', () => {
-  // The documentation's Delete example puts the x-amz-date value in the Date position, which
-  // contradicts its own rule ("use the empty string for the Date"). S3 follows the rule, so this
-  // expects the rule; the signature was computed independently with Python's hmac module.
+  // ドキュメントのDeleteの例はx-amz-dateの値をDateの位置に入れているが、これはドキュメント自身の
+  // 決まり（"use the empty string for the Date"）と矛盾する。S3は決まりのほうに従うので、ここでも
+  // 決まりどおりの値を期待する。署名はPythonのhmacモジュールで別に計算した。
   it('x-amz-dateがあるとDateの位置を空にし、x-amz-dateをamzヘッダーとして署名する', () => {
     const request: S3SignableRequest = {
       method: 'DELETE',
@@ -158,7 +159,7 @@ describe('署名v2: x-amz-date', () => {
   });
 });
 
-// Signatures computed independently with Python's hmac module from the string shown in each test.
+// 署名は、各テストに示した文字列から、Pythonのhmacモジュールで別に計算した。
 describe('署名v2: multipartのsubresource', () => {
   const date = 'Tue, 27 Mar 2007 21:20:26 +0000';
 
@@ -216,7 +217,7 @@ describe('署名v2: path-style と virtual-host', () => {
       undefined,
     );
     expect(hostBucketOf({ hostname: 'mmt.internal', bucket: 'mmt', pathStyle: false })).toBe('mmt');
-    // A dotted bucket over a plain endpoint is sent path-style by the SDK even without the flag.
+    // 普通のエンドポイントでは、ドットを含むbucketはフラグが無くてもSDKがpath-styleで送る。
     expect(hostBucketOf({ hostname: 'minio.internal', bucket: 'a.b', pathStyle: false })).toBe(
       undefined,
     );

@@ -15,12 +15,12 @@ TOKEN = "experiment-name-test-secret"
 
 
 class FakeExperimentApi:
-    """GET/POST /experiments, POST /runs, PUT /sync/runs/:r and the start PATCH of a Run.
+    """GET/POST /experiments、POST /runs、PUT /sync/runs/:r、Runを開始するPATCH。
 
-    ``deleted_names`` keep their name in the API (POST answers 409) but are not listed, like an
-    MLflow soft-deleted Experiment. ``rival_names`` are created by someone else between this
-    client's lookup and its POST. Like the API, a POST saves the name without the white space at
-    its ends; ``posted_names`` keeps the names as they were sent.
+    ``deleted_names``はAPIに名前が残る（POSTは409を返す）が、MLflowで論理削除した
+    Experimentのように一覧には出ない。``rival_names``は、このクライアントが
+    探してからPOSTするまでの間に、ほかの誰かが作る。APIと同じく、POSTは名前を
+    両端の空白を除いて保存する。``posted_names``は送られたままの名前を持つ。
     """
 
     def __init__(

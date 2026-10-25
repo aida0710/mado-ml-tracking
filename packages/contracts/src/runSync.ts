@@ -1,11 +1,11 @@
 import type { JsonObject, LogEntry, MetricPoint, RunKind } from './index.js';
 
 /**
- * Offline sync: a client records a Run where the API is unreachable and sends it later. The
- * client chooses the Run ID and each batch ID, so resending after a failure never duplicates.
+ * オフライン同期: クライアントはAPIに届かない場所でRunを記録し、あとで送る。RunのIDと各バッチの
+ * IDはクライアントが決めるので、失敗のあとに送り直しても重複しない。
  */
 
-/** PUT /projects/:p/sync/runs/:runId. Creates the Run with that ID or returns the existing one. */
+/** PUT /projects/:p/sync/runs/:runId。そのIDでRunを作るか、既にあるRunを返す。 */
 export interface SyncRunCreate {
   experimentId: string;
   name: string;
@@ -13,9 +13,9 @@ export interface SyncRunCreate {
   parameters?: JsonObject;
   tags?: Record<string, string>;
   parentRunId?: string | null;
-  // When the client started the Run; up to SYNC_CLOCK_SKEW_SECONDS in the future is accepted.
+  // クライアントがRunを始めた日時。SYNC_CLOCK_SKEW_SECONDSまでの未来は受け付ける。
   startedAt: string;
-  // Label of the machine that recorded the Run, stored as Run.syncOrigin.
+  // Runを記録したマシンのラベル。Run.syncOriginとして保存する。
   origin?: string | null;
 }
 
@@ -27,10 +27,10 @@ export interface SyncBatchStatus {
   error?: string | null;
 }
 
-/** POST /projects/:p/sync/runs/:runId/batches. A batchId already received is not applied again. */
+/** POST /projects/:p/sync/runs/:runId/batches。既に受け取ったbatchIdはもう一度適用しない。 */
 export interface SyncBatch {
   batchId: string;
-  // Client order of the batch; stored for diagnosis, gaps are neither rejected nor filled.
+  // クライアント側でのバッチの順番。診断のために保存し、抜けは拒否も補完もしない。
   sequence: number;
   metrics?: MetricPoint[];
   params?: JsonObject;
@@ -46,7 +46,7 @@ export interface SyncBatchCounts {
   logs: number;
 }
 
-/** duplicate=true means the batchId was already applied; counts are from that first time. */
+/** duplicate=trueはbatchIdが既に適用済みだったこと。countsは最初に適用したときのもの。 */
 export interface SyncBatchResult {
   applied: boolean;
   duplicate: boolean;
@@ -64,7 +64,7 @@ export interface ArtifactPresenceCheck {
   items: ArtifactPresenceItem[];
 }
 
-/** Paths whose stored Artifact on the Run has the same sha256 and size; the rest must be uploaded. */
+/** Runの保存済みのArtifactとsha256・サイズが同じパス。残りはアップロードが要る。 */
 export interface ArtifactPresence {
   present: string[];
 }

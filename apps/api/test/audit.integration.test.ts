@@ -81,7 +81,7 @@ describe.skipIf(!testDatabaseUrl)('監査ログの記録と参照（独立Postgr
   });
 
   it('token発行と失効で1件ずつ増え、detailsにtoken原文もhashも入らない', async () => {
-    // Within the default 365-day lifetime limit.
+    // 既定の有効期限の上限（365日）に収まる。
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
     const minted = await mintToken(fixture.administrator.cookie, {
       name: 'Audit CI',
@@ -128,7 +128,7 @@ describe.skipIf(!testDatabaseUrl)('監査ログの記録と参照（独立Postgr
   });
 
   it('業務transactionがcommit前に失敗するとrole変更も監査も残らない', async () => {
-    // A deferred trigger fails at COMMIT, after both the membership and the audit row were written.
+    // membershipと監査の行をどちらも書いたあと、遅延トリガーがCOMMITの時点で失敗する。
     await harness.database.query(`CREATE FUNCTION fail_commit() RETURNS trigger LANGUAGE plpgsql AS $$
       BEGIN RAISE EXCEPTION 'commit failure'; END; $$`);
     await harness.database.query(`CREATE CONSTRAINT TRIGGER fail_member_commit AFTER INSERT ON audit_events
@@ -255,7 +255,7 @@ describe.skipIf(!testDatabaseUrl)('監査ログの記録と参照（独立Postgr
       }),
       200,
     );
-    // Newest first: the role change, then the creation of the Project.
+    // 新しい順。roleの変更、次にProjectの作成。
     expect(otherPage.items.map(({ projectId, action }) => ({ projectId, action }))).toEqual([
       { projectId: other.id, action: 'project.member.set' },
       { projectId: other.id, action: 'project.create' },
@@ -308,7 +308,7 @@ describe.skipIf(!testDatabaseUrl)('監査ログの記録と参照（独立Postgr
     expect(new Set(projectScoped.map((event) => event.projectId))).toEqual(
       new Set([fixture.project.id, other.id]),
     );
-    // Login events belong to no Project, so only the global list can show them.
+    // ログインのイベントはどのProjectにも属さないので、全体の一覧にしか出せない。
     const projectless = all.items.filter((event) => event.projectId === null);
     expect(projectless.length).toBeGreaterThan(0);
     expect(projectless.every((event) => event.action.startsWith('auth.'))).toBe(true);
@@ -322,7 +322,7 @@ describe.skipIf(!testDatabaseUrl)('監査ログの記録と参照（独立Postgr
       { projectId: other.id, action: 'project.member.set' },
       { projectId: other.id, action: 'project.create' },
     ]);
-    // Screens show who acted and in which Project by name, not by UUID.
+    // 画面では、誰がどのProjectで操作したかをUUIDでなく名前で出す。
     expect(filtered.items[0]).toMatchObject({
       actorUserId: fixture.outsider.userId,
       actorName: expect.any(String),
@@ -337,7 +337,7 @@ describe.skipIf(!testDatabaseUrl)('監査ログの記録と参照（独立Postgr
   });
 
   it('hideSignIns=trueではログイン・ログアウト・IdPの同期を除き、ほかの操作は残す', async () => {
-    // projectFixture logged four users in and set two members.
+    // projectFixtureは4人のユーザーをログインさせ、メンバーを2人設定した。
     const listed = async (query: string) =>
       (
         await entity<AuditEventPage>(
@@ -395,7 +395,7 @@ describe.skipIf(!testDatabaseUrl)('監査ログの記録と参照（独立Postgr
       seen.push(...page.items);
       cursor = page.nextCursor;
     } while (cursor);
-    // The fixture sets two members, then this test changes the role three times.
+    // fixtureがメンバーを2人設定し、このテストがroleを3回変える。
     expect(seen).toHaveLength(5);
     expect(new Set(seen.map((event) => event.id)).size).toBe(5);
     expect(seen[0]!.details).toMatchObject({ previousRole: 'viewer', role: 'editor' });

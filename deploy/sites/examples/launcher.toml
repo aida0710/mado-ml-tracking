@@ -1,20 +1,19 @@
-# Settings of mado-tracking-launcher (--config, or MMT_LAUNCHER_CONFIG): only what it needs to
-# start. Its sites, job shells, accounts and keys are set on the Web and read from the API on each
-# poll, so changing them needs no restart. Every value is an example. Relative paths start from
-# the directory of this file.
+# mado-tracking-launcherの設定（--configかMMT_LAUNCHER_CONFIGで指定）。起動に要るものだけを書く。
+# site、job shell、アカウント、鍵は画面で設定し、ポーリングのたびにAPIから読むので、変えても
+# 再起動は要らない。値はすべて例。相対パスはこのファイルのディレクトリから数える。
 
-# The API as the launcher reaches it. Inside the compose project: http://api:4182.
+# launcherから見たAPIの場所。composeのprojectの中ならhttp://api:4182。
 api_url = "http://api:4182"
-# The token the Web showed once when a global administrator registered this launcher, alone in a
-# file with mode 600 owned by the launcher's user. It reaches only /api/launcher/*.
+# 全体管理者がこのlauncherを登録したときに画面が一度だけ表示したtoken。launcherのユーザーが所有する
+# mode 600のファイルに、tokenだけを書いて置く。このtokenで届くのは/api/launcher/*だけ。
 token_file = "/run/secrets/mado-tracking-launcher/launcher.token"
-# The private SSH keys the launcher makes, the known_hosts of its sites, submissions in flight and
-# reports not yet delivered. Keep it across restarts (the compose service mounts a volume here)
-# and give every launcher its own: losing it means new keys to authorize again.
+# launcherが作るSSHの秘密鍵、siteのknown_hosts、投入中のsubmission、まだ届けていない報告を置く。
+# 再起動しても残し（composeのserviceはここにvolumeをマウントする）、launcherごとに別のものにする。
+# 失うと鍵が新しくなり、許可し直す必要がある。
 state_directory = "/var/lib/mado-tracking-launcher"
-# Seconds between polls.
+# ポーリングの間隔（秒）。
 poll_seconds = 10
-# Optional: a read-only registry token for pulling images into SIFs, used by the runners of every
-# site, as JSON {"username": ..., "password": ...} in a mode-600 file. It reaches apptainer pull
-# only through the runner's environment.
+# 任意: イメージをSIFへpullするための、読み取り専用のregistryのtoken。すべてのsiteのrunnerが使う。
+# mode 600のファイルにJSON {"username": ..., "password": ...}で書く。apptainer pullにはrunnerの
+# 環境変数を通してだけ渡る。
 # registry_secret_file = "/run/secrets/mado-tracking-launcher/registry.json"

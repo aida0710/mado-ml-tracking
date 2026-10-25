@@ -2,8 +2,8 @@ import { findReportArchiveState } from '../repositories/reportRepository.js';
 import type { CommentTargetDefinition } from './commentTargets.js';
 
 /**
- * Comments on a report. An archived report keeps its comments readable but takes no new ones
- * (409 comment_target_deleted), like a deleted Run. Writing needs the same scope as editing.
+ * レポートへのコメント。アーカイブしたレポートのコメントは読めるが、削除したRunと同じく新しい
+ * コメントは受け付けない（409 comment_target_deleted）。書き込みには編集と同じscopeが要る。
  */
 export const reportCommentTarget: CommentTargetDefinition = {
   writeScope: 'runs:write',

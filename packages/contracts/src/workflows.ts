@@ -2,16 +2,16 @@ import type { DatasetUsage, DatasetUsageRole } from './datasetUsage.js';
 import type { ExperimentTask, JsonObject } from './index.js';
 import type { PreprocessingReport } from './preprocessingReports.js';
 
-// Match the existing maximum Job chain depth so a workflow stays a small, inspectable sequence.
+// 既存のJobの連鎖の深さの上限に合わせ、ワークフローを小さく見通せる手順の並びにとどめる。
 export const WORKFLOW_MAX_STEPS = 10;
 export const WORKFLOW_MAX_INPUTS = 100;
-// One page of an execution history.
+// 実行履歴の1ページ。
 export const WORKFLOW_PAGE_SIZE = 50;
-// Versions pin whole Task snapshots, so a workflow's detail carries only the newest ones and the
-// rest come a page at a time (GET /workflows/:id/versions).
+// バージョンはTaskのスナップショット全体を固定するので、ワークフローの詳細には最新のものだけを
+// 入れ、残りは1ページずつ返す（GET /workflows/:id/versions）。
 export const WORKFLOW_VERSIONS_PAGE_SIZE = 20;
 export const WORKFLOW_MAX_QUALITY_GATES = 20;
-// Match PostgreSQL revision storage and existing registry field limits.
+// revisionを保存するPostgreSQLの列と、既存のレジストリのフィールドの上限に合わせる。
 export const WORKFLOW_MAX_REVISION = 2_147_483_647;
 export const WORKFLOW_MAX_NAME_LENGTH = 200;
 export const WORKFLOW_MAX_STEP_KEY_LENGTH = 100;
@@ -77,13 +77,13 @@ export interface WorkflowVersion {
 
 export interface WorkflowDetail {
   workflow: Workflow;
-  /** The newest WORKFLOW_VERSIONS_PAGE_SIZE versions, newest first. */
+  /** 最新のWORKFLOW_VERSIONS_PAGE_SIZE個のバージョン。新しい順。 */
   versions: WorkflowVersion[];
-  /** Cursor for GET /workflows/:id/versions; null when `versions` holds them all. */
+  /** GET /workflows/:id/versionsのカーソル。`versions`にすべて入っているときはnull。 */
   olderVersionsCursor: string | null;
 }
 
-/** Older versions of a workflow, newest first. */
+/** ワークフローの古いバージョン。新しい順。 */
 export interface WorkflowVersionPage {
   items: WorkflowVersion[];
   nextCursor: string | null;
@@ -103,7 +103,7 @@ export interface WorkflowVersionCreate {
 export interface WorkflowLaunch {
   revision: number;
   idempotencyKey: string;
-  /** A failed/canceled execution of this version; completed steps keep their exact Run outputs. */
+  /** このバージョンのfailed/canceledの実行。完了したstepは、そのRunの出力をそのまま保つ。 */
   resumeFromExecutionId?: string;
 }
 

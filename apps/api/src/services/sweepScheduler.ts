@@ -3,11 +3,11 @@ import { listSchedulableSweepIds } from '../repositories/sweepRepository.js';
 import { PollingLoop } from './pollingLoop.js';
 import type { SweepController } from './sweepController.js';
 
-// Early stopping compares metrics that workers send every few seconds to tens of seconds, so a
-// shorter interval would mostly re-evaluate the same points.
+// 早期終了は、workerが数秒から数十秒ごとに送るメトリクスを比べる。これより短い間隔では、
+// ほとんど同じ点を評価し直すだけになる。
 export const SWEEP_TICK_INTERVAL_MS = 15000;
 
-/** Periodically ticks running and paused sweeps: early stopping and recovery of missed launches. */
+/** 実行中と一時停止中のSweepを定期的に進める。早期終了と、起動し損ねたtrialの回復を行う。 */
 export class SweepScheduler {
   private readonly loop: PollingLoop;
 
@@ -31,17 +31,17 @@ export class SweepScheduler {
     await this.loop.stop();
   }
 
-  /** One pass over every schedulable sweep. A failing sweep is logged and does not stop the others. */
+  /** 進められるすべてのSweepを1回ずつ見る。失敗したSweepはログに残し、ほかのSweepは止めない。 */
   async tickAll(): Promise<void> {
     for (const sweepId of await listSchedulableSweepIds(this.database)) {
       try {
         await transaction(this.database, async (connection) => {
-          // Another process or the completion handler is already advancing this sweep.
+          // 別のプロセスか完了時のハンドラが、既にこのSweepを進めている。
           if (!(await this.controller.tryLock(connection, sweepId))) return;
           await this.controller.tick(connection, { sweepId, applyEarlyStopping: true });
         });
       } catch {
-        // Error details can include SQL text; the sweep id is enough to find it.
+        // エラーの詳細にはSQLの文が含まれることがある。探すにはSweepのidで足りる。
         console.error(JSON.stringify({ event: 'sweep_tick_failed', sweepId }));
       }
     }

@@ -25,7 +25,7 @@ def entity_tag(content: bytes) -> str:
 
 
 class CutStream(httpx.SyncByteStream, httpx.AsyncByteStream):
-    """Delivers a prefix of the body, then drops the connection like a lost link."""
+    """本文の先頭の一部を届けたあと、回線が切れたように接続を切る。"""
 
     def __init__(self, body: bytes, cut_after: int | None):
         self.body, self.cut_after = body, cut_after
@@ -46,7 +46,7 @@ class CutStream(httpx.SyncByteStream, httpx.AsyncByteStream):
 
 
 class ContentServer:
-    """The content endpoint's Range / If-Range rules with injectable interruptions."""
+    """contentエンドポイントのRange・If-Rangeの規則。途中での切断を差し込める。"""
 
     def __init__(self, content: bytes = CONTENT, *, with_entity_tag: bool = True):
         self.content = content
@@ -168,7 +168,7 @@ def test_worker_download_resumes_with_range():
 
 
 class StagingExecutor:
-    """Stands in for the target: records the bytes it received for each staged input."""
+    """コンピュータの代わり。ステージングした入力ごとに、受け取ったバイト列を記録する。"""
 
     def __init__(self):
         self.staged_inputs: dict = {}

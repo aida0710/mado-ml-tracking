@@ -5,7 +5,7 @@ import { unreferencedArtifactCondition } from '../repositories/artifactReference
 import { requireProject } from './accessService.js';
 import { currentRunArtifactCondition } from './artifactListing.js';
 
-/** Stored bytes of a Project per backend, for the Project settings page. */
+/** Projectの保存先ごとの保存バイト数。Projectの設定画面用。 */
 export class ArtifactUsageService {
   constructor(
     private readonly database: Database,
@@ -14,7 +14,7 @@ export class ArtifactUsageService {
 
   async usage(principal: Principal, projectId: string): Promise<ArtifactUsage> {
     await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
-    // bigint sums arrive as strings; float8 keeps them numbers up to 2^53 bytes (8 PiB).
+    // bigintの合計は文字列で届く。float8にすれば2^53バイト（8PiB）まで数値のまま扱える。
     const backends = await rows<ArtifactBackendUsage>(
       this.database,
       `SELECT a.backend,

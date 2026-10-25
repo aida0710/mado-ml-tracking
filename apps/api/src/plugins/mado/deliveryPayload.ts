@@ -11,7 +11,8 @@ export function prepareMadoDelivery({
   config: MadoPluginConfig;
   pluginId?: string;
 }) {
-  // The exact text survives JSONB key reordering and credential rotations, preserving the delivery hash.
+  // 文字列そのものを残せば、JSONBのキーの並べ替えや認証情報の更新があっても配信のハッシュが
+  // 変わらない。
   const payload = JSON.stringify(createOpenLineageEvent(event, { config, pluginId }));
   return { payload, payloadHash: createHash('sha256').update(payload).digest('hex') };
 }

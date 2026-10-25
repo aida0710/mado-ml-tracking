@@ -1,7 +1,7 @@
 import type { TokenSummary } from '@mmt/contracts';
 import { first, rows, type Connection } from '../db/database.js';
 
-// Who owns a token decides how it is shown: a Service Account, or a person.
+// tokenの見せ方は、所有者がService Accountか人かで決まる。
 const tokenSummarySelect = `SELECT t.id,t.name,t.kind,t.project_id,t.scopes,t.expires_at,t.last_used_at,
   t.created_at,CASE WHEN o.kind='service' THEN 'service_account' ELSE 'user' END AS owner_type,
   o.id AS owner_id,o.display_name AS owner_name,t.token_prefix
@@ -57,7 +57,7 @@ export async function findTokenSummary(
   return first<TokenSummary>(connection, `${tokenSummarySelect} WHERE t.id=$1`, [tokenId]);
 }
 
-/** Unrevoked tokens the user owns; projectId narrows them to one Project. */
+/** 利用者が所有する、失効していないtoken。projectIdで1つのProjectに絞る。 */
 export async function listOwnedTokens(
   connection: Connection,
   owner: { userId: string; projectId: string | null },
@@ -70,7 +70,7 @@ export async function listOwnedTokens(
   );
 }
 
-/** Every unrevoked token limited to the Project, whoever owns it. */
+/** そのProjectに限定した、失効していないtokenすべて。所有者は問わない。 */
 export async function listProjectTokens(
   connection: Connection,
   projectId: string,
@@ -95,7 +95,7 @@ export async function findActiveTokenOwnership(
   );
 }
 
-/** Returns what the audit record needs, or undefined when another request revoked it first. */
+/** 監査の記録に要るものを返す。別のリクエストが先に失効させていたらundefined。 */
 export async function revokeToken(
   connection: Connection,
   tokenId: string,

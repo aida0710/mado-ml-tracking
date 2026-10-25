@@ -43,7 +43,7 @@ import type { MediaTableService } from './mediaTableService.js';
 import { assertRunRecordsWritable } from './runService.js';
 
 type RunReference = { projectId: string; runId: string };
-// PostgreSQL unique_violation.
+// PostgreSQLのunique_violation。
 const UNIQUE_VIOLATION = '23505';
 type RunTags = { id: string; tags: Record<string, string> };
 
@@ -52,12 +52,12 @@ function contentUrl(projectId: string, artifactId: string): string {
 }
 
 /**
- * A stable id for a table listed in the mlflow.loggedArtifacts tag, which has no run_media row:
- * the same Run and path always give the same id, so the table URL keeps working.
+ * mlflow.loggedArtifactsのタグに載った表の、変わらないid。この表にはrun_mediaの行が無い。
+ * 同じRunとパスからは常に同じidが出るので、表のURLは使い続けられる。
  */
 function loggedTableMediaId(runId: string, path: string): string {
   const digest = createHash('sha256').update(`mlflow-table\n${runId}\n${path}`).digest('hex');
-  // RFC 9562 version 8 (custom) with the variant bits set, so it passes UUID validation.
+  // RFC 9562のversion 8（カスタム）にし、variantのビットも立てて、UUIDの検証を通るようにする。
   return [
     digest.slice(0, 8),
     digest.slice(8, 12),
@@ -99,8 +99,8 @@ export class RunMediaService {
   ) {}
 
   /**
-   * Registers media of a Run. Items whose id is already stored with the same content are returned
-   * as they are, so an offline resend succeeds even after the Run has ended.
+   * Runのメディアを登録する。同じidで同じ内容が既に保存されている項目はそのまま返すので、
+   * オフラインからの再送はRunが終わったあとでも成功する。
    */
   async create(principal: Principal, reference: RunReference, input: RunMediaCreateInput): Promise<RunMedia[]> {
     assertNoDuplicateItems(input.items);
@@ -110,7 +110,7 @@ export class RunMediaService {
         role: 'editor',
         scope: 'runs:write',
       });
-      // The Run lock serializes registrations of one Run, so the duplicate checks below hold.
+      // Runのロックで同じRunへの登録を1つずつ進めるので、下の重複の確認が成り立つ。
       const run = await findRun(connection, { projectId: reference.projectId, id: reference.runId, lock: true });
       const items = input.items.map((item) => ({ ...item, id: item.id ?? randomUUID() }));
       const stored = new Map(
@@ -141,7 +141,7 @@ export class RunMediaService {
             newItems.map((item) => ({ ...item, projectId: reference.projectId, runId: run.id })),
           );
         } catch (error) {
-          // Another Run took the same client-chosen id meanwhile.
+          // その間に、クライアントが選んだ同じidを別のRunが取った。
           if ((error as { code?: string }).code === UNIQUE_VIOLATION)
             throw new DomainError({
               status: 409,
@@ -176,7 +176,7 @@ export class RunMediaService {
     );
     for (const item of request.items) {
       const artifact = artifacts.get(item.artifactId);
-      // An upload session that has not completed has no Artifact yet.
+      // 完了していないアップロードのsessionには、まだArtifactが無い。
       if (!artifact)
         throw new DomainError({
           status: 422,
@@ -214,8 +214,8 @@ export class RunMediaService {
   }
 
   /**
-   * Step order. Tables from the mlflow.loggedArtifacts tag are step 0 and come at the start of the
-   * first page, outside the limit, since they have no row to page by.
+   * stepの順。mlflow.loggedArtifactsのタグから来た表はstep 0として、limitの外で最初のページの
+   * 先頭に置く。ページ分けに使う行が無いため。
    */
   async list(principal: Principal, query: RunReference & RunMediaListQuery): Promise<RunMediaPage> {
     const run = await this.requireRunReader(principal, query);
@@ -258,7 +258,7 @@ export class RunMediaService {
         return found.length > 0 ? found : null;
       };
       if (input.steps) return { runId, cells: input.steps.map(atStep) };
-      // Without steps each Run shows its own latest step; a Run without the key has one null cell.
+      // stepsが無ければ、各Runは自分の最新のstepを出す。そのキーが無いRunはnullのセル1つになる。
       const latest = ofRun.length > 0 ? Math.max(...ofRun.map((item) => item.step)) : null;
       return { runId, cells: [latest === null ? null : atStep(latest)] };
     });
@@ -299,7 +299,7 @@ export class RunMediaService {
     return findRun(this.database, { projectId: reference.projectId, id: reference.runId });
   }
 
-  /** Tables listed in the Runs' mlflow.loggedArtifacts tags whose file exists and has no row. */
+  /** Runのmlflow.loggedArtifactsのタグに載った表のうち、ファイルがあり、行が無いもの。 */
   private async loggedTables(connection: Connection, projectId: string, runs: readonly RunTags[]): Promise<RunMediaRecord[]> {
     const files = runs.flatMap((run) =>
       parseLoggedTablePaths(run.tags[MLFLOW_LOGGED_ARTIFACTS_TAG]).map((path) => ({ runId: run.id, path })),

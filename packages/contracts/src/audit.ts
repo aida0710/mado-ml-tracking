@@ -8,7 +8,7 @@ export interface AuditEvent {
   occurredAt: string;
   actorType: AuditActorType;
   actorUserId: string | null;
-  // Current display name of actorUserId, so screens do not show the bare UUID.
+  // actorUserIdの今の表示名。画面がUUIDをそのまま出さずに済むようにする。
   actorName: string | null;
   actorTokenId: string | null;
   action: string;
@@ -22,7 +22,7 @@ export interface AuditEvent {
   userAgent: string | null;
 }
 
-/** One keyset page of audit events, newest first. nextCursor is the id to pass as `cursor` next. */
+/** 監査イベントのkeysetページングの1ページ（新しい順）。nextCursorは次に`cursor`として渡すid。 */
 export interface AuditEventPage {
   items: AuditEvent[];
   nextCursor: string | null;

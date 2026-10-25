@@ -37,15 +37,15 @@ export const runKindSchema = z.enum([
 export const runStatusSchema = z.enum(['queued', 'running', 'finished', 'failed', 'canceled']);
 export const roleSchema = z.enum(['viewer', 'editor', 'admin']);
 export const roleAssignmentSchema = z.strictObject({ role: roleSchema });
-// Same bounds as user_groups.group_name (migration 012); names come from Authentik as-is.
+// user_groups.group_name（migration 012）と同じ上限。名前はAuthentikからそのまま来る。
 export const groupNameSchema = z
   .string()
   .min(1)
   .max(256)
   .refine((value) => !containsControlCharacter(value), 'Control characters are not allowed');
-// Query string of GET /users: a prefix of an email, username, or display name.
+// GET /usersのクエリ文字列。メールアドレス・ユーザー名・表示名の前方一致。
 export const userSearchQuerySchema = z.object({ query: z.string().trim().min(1).max(200) });
-// Environment backends ('filesystem', 's3') or a name an administrator stored in storage_backends.
+// 環境変数の保存先（'filesystem'、's3'）か、管理者がstorage_backendsに保存した名前。
 export const artifactBackendSchema = z.string().refine(isValidStorageBackendName);
 export const scopeSchema = z.enum(TOKEN_SCOPES);
 export const uniqueScopesSchema = z
@@ -57,7 +57,7 @@ export const uniqueIdsSchema = z
   .array(uuidSchema)
   .max(1000)
   .refine((values) => new Set(values).size === values.length, 'IDs must be unique');
-// A rule or code version can explicitly name up to 100 compatible model families.
+// ルールやコードバージョンは、互換性のあるモデル系列を明示的に100個まで指定できる。
 const MAX_MODEL_FAMILIES = 100;
 export const modelFamiliesSchema = z
   .array(nameSchema)
@@ -82,7 +82,7 @@ export const modelCreateSchema = namedEntitySchema.extend({ family: nameSchema }
 export const datasetCreateSchema = namedEntitySchema.extend({
   namespace: nameSchema.default('local'),
 });
-// Commands use argv rather than a shell; bound arguments before handing them to workers.
+// コマンドはシェルでなくargvを使う。workerに渡す前に引数の大きさを制限する。
 const commandArgumentSchema = z
   .string()
   .min(1)
@@ -123,7 +123,7 @@ export const codeVersionSchema = z
       });
   });
 export const modelVersionSchema = z.strictObject({
-  // Omitted versions are numbered by the API (registerModelVersion).
+  // 省略したバージョンにはAPIが番号を振る（registerModelVersion）。
   version: nameSchema.optional(),
   parentModelVersionIds: uniqueIdsSchema.default([]),
   sourceRunId: uuidSchema.nullish(),
@@ -161,7 +161,7 @@ export const runCreateSchema = z.strictObject({
   inputDatasetVersionIds: uniqueIdsSchema.default([]),
   parentRunId: uuidSchema.nullish(),
   environment: jsonObjectSchema.default({}),
-  // Continue from a saved checkpoint; fixed at creation (see checkpointService).
+  // 保存したcheckpointから続ける。作成時に固定する（checkpointServiceを参照）。
   resumeCheckpointId: uuidSchema.optional(),
 });
 export const runPatchSchema = z.strictObject({
@@ -182,7 +182,7 @@ export const logSchema = z.strictObject({
   level: z.enum(['info', 'warning', 'error']),
   message: z.string().max(200000),
 });
-// Batches are bounded to keep write transactions short while supporting SDK uploads.
+// SDKのアップロードに応えつつ書き込みのトランザクションを短く保つため、バッチの大きさを制限する。
 export const metricBatchSchema = z.strictObject({
   metrics: z.array(metricSchema).min(1).max(1000),
 });
@@ -201,8 +201,8 @@ export const maxAttemptsSchema = z
   .default(DEFAULT_JOB_ATTEMPTS);
 export const walltimeSecondsSchema = z.number().int().min(1).max(MAX_JOB_WALLTIME_SECONDS);
 export const gpuCountSchema = z.number().int().min(0).max(MAX_JOB_GPU_COUNT);
-// Connection settings are for ssh and local targets; a site leaves them empty, and
-// validateTargetConfiguration checks which of them each executor needs.
+// 接続設定はsshとlocalのコンピュータ用。siteでは空のままにし、executorごとにどれが要るかは
+// validateTargetConfigurationが検査する。
 export const targetSchema = z.strictObject({
   name: nameSchema,
   host: z
@@ -230,7 +230,7 @@ export const targetSchema = z.strictObject({
     .min(MIN_DATASET_CACHE_MAX_BYTES)
     .max(Number.MAX_SAFE_INTEGER)
     .default(DEFAULT_DATASET_CACHE_MAX_BYTES),
-  // Omitted: relay for ssh and local, direct for a site (its runner downloads with the Job token).
+  // 省略時: sshとlocalはrelay、siteはdirect（runnerがJob tokenでダウンロードする）。
   datasetTransfer: z.enum(DATASET_TRANSFER_MODES).optional(),
   submissionMode: z.enum(SITE_SUBMISSION_MODES).default('automatic'),
   cpuArch: z.enum(CPU_ARCHES).default('amd64'),
@@ -242,11 +242,11 @@ export const targetSchema = z.strictObject({
     .max(MAX_QUEUE_TIMEOUT_SECONDS)
     .nullable()
     .default(null),
-  // Private unless chosen: a new computer serves its owner until they open it to everyone.
+  // 選ばなければprivate。新しいコンピュータは、所有者が全員に開くまで所有者だけが使う。
   visibility: z.enum(COMPUTE_TARGET_VISIBILITIES).default('private'),
 });
 export const jobListQuerySchema = z.strictObject({ runId: uuidSchema.optional() });
-// gpuCount, retryOnFailure and retryOnTimeout are for site Jobs (validateSiteJobOptions).
+// gpuCount・retryOnFailure・retryOnTimeoutはsiteのJob用（validateSiteJobOptions）。
 export const jobCreateSchema = z.strictObject({
   runId: uuidSchema,
   targetId: uuidSchema,
@@ -258,7 +258,7 @@ export const jobCreateSchema = z.strictObject({
   retryOnTimeout: z.boolean().default(false),
   allowChildJobs: z.boolean().default(false),
 });
-// A Run and its Job in one request, so a refused Job leaves no queued Run behind.
+// RunとそのJobを1つのリクエストで作り、Jobが断られたときにキュー待ちのRunが残らないようにする。
 export const jobLaunchSchema = z.strictObject({
   run: runCreateSchema,
   job: jobCreateSchema.omit({ runId: true }),
@@ -291,23 +291,23 @@ export const pluginDatasetSchema = z.strictObject({
   schema: jsonObjectSchema,
   metadata: jsonObjectSchema,
 });
-// A worker reports at most this many parallel jobs; larger values are a misconfiguration.
+// workerが報告する並列のJob数はこれが上限。これより大きい値は設定の誤り。
 const MAX_WORKER_PARALLEL_JOBS = 1000;
-// The ~/.ssh of a worker host rarely holds more; the candidates are only offered.
+// workerのホストの~/.sshにこれより多いことはまず無い。候補として出すだけ。
 export const MAX_WORKER_SSH_FILE_PATHS = 50;
-// A worker names each capability it has once.
+// workerは持っているcapabilityをそれぞれ1回ずつ挙げる。
 const MAX_WORKER_CAPABILITIES = WORKER_CAPABILITIES.length;
 /**
- * What the code that runs a Job passes to it beyond the base protocol, named by a worker in
- * workerInfo and by a launcher or `mado-tracking submit` in a site claim (for the runner it
- * installs). A Job that needs one goes only to a claim that names it.
+ * Jobを動かすコードが基本のプロトコルを超えてJobに渡すもの。workerはworkerInfoで、launcherや
+ * `mado-tracking submit`はsiteのclaimで（自分が入れるrunnerの分を）挙げる。それを要するJobは、
+ * それを挙げたclaimにだけ渡る。
  */
 export const workerCapabilitiesSchema = z
   .array(workerCapabilitySchema)
   .max(MAX_WORKER_CAPABILITIES)
   .refine((names) => new Set(names).size === names.length, 'capabilities must be unique');
-// Self-reported by the worker host and never used for authorization. sshFiles are paths on the
-// worker's host, never the files' contents, offered for a computer's key paths.
+// workerのホストが自分で報告するもので、認可には使わない。sshFilesはworkerのホスト上のパスで、
+// ファイルの中身ではない。コンピュータの鍵のパスの候補として出す。
 export const workerInfoSchema = z.strictObject({
   version: z.string().trim().min(1).max(200),
   hostname: z.string().trim().min(1).max(255),

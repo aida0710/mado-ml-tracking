@@ -201,7 +201,7 @@ describe.skipIf(!testDatabaseUrl)('alias変更の履歴（独立PostgreSQL）', 
         version,
       });
     expect((await setAlias('champion', '1')).status).toBe(200);
-    // SDK retries of the same alias call must not grow the history.
+    // SDKが同じaliasの呼び出しを再試行しても、履歴が増えてはいけない。
     expect((await setAlias('champion', '1')).status).toBe(200);
     expect(
       (
@@ -397,7 +397,7 @@ describe.skipIf(!testDatabaseUrl)('alias変更の履歴（独立PostgreSQL）', 
         })
       ).status,
     ).toBe(404);
-    // A version of another Model cannot be assigned either.
+    // 別のModelのバージョンも割り当てられない。
     expect(
       (
         await putAlias(harness, fixture, {
@@ -453,7 +453,7 @@ describe.skipIf(!testDatabaseUrl)('alias変更の履歴（独立PostgreSQL）', 
     const secondTransaction = transaction(harness.database, (connection) =>
       assignModelAlias(connection, assign(second!.id)),
     );
-    // Release the first transaction only after the second is blocked on the Model lock.
+    // 2つ目がModelのロックで止まってから、1つ目のトランザクションを解放する。
     while (
       !(
         await harness.database.query(

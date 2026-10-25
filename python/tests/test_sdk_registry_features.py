@@ -1,5 +1,5 @@
-"""Registry features of the native API through the SDK: aliases, evaluation, promotion, automation,
-Service Accounts and owner transfers, checked against a recording fake HTTP API."""
+"""ネイティブAPIのレジストリの機能をSDKから試す: alias、評価、昇格、自動実行、
+Service Account、所有者の移転。記録する偽のHTTP APIと照らし合わせて確かめる。"""
 
 from __future__ import annotations
 
@@ -25,12 +25,12 @@ Responder = Callable[[httpx.Request], httpx.Response]
 
 
 def recording_client(respond: Responder | None = None) -> tuple[Client, Recorded]:
-    """A Client whose requests are recorded as (method, encoded path, query, json body)."""
+    """リクエストを(method, encoded path, query, json body)として記録するClient。"""
     requests: Recorded = []
 
     def serve(request: httpx.Request) -> httpx.Response:
         body = json.loads(request.content) if request.content else None
-        # The raw path keeps percent-encoding, so a quoted path segment stays visible.
+        # 生のパスはパーセントエンコードを保つので、クォートしたパスのセグメントが見えるまま残る。
         raw_path = request.url.raw_path.decode().split("?", 1)[0]
         requests.append((request.method, raw_path, dict(request.url.params), body))
         if respond is not None:

@@ -20,7 +20,10 @@ export const MADO_CREDENTIALS_FIXTURE: MadoPluginCredentialsInput = {
   accessToken: 'fixture-mado-access-token',
 };
 
-/** What Mado reports for the fixture token: reading and sending in two namespaces, no capacity. */
+/**
+ * fixtureのtokenについてmado S3 Data Catalogが返す内容。2つのnamespaceで読み取りと送信ができ、
+ * capacityは無し。
+ */
 export const MADO_ACCESS_TOKEN_GRANT_FIXTURE: MadoAccessTokenGrant = {
   name: 'ML Tracking',
   scopes: ['lineage:read', 'lineage:write'],
@@ -28,7 +31,9 @@ export const MADO_ACCESS_TOKEN_GRANT_FIXTURE: MadoAccessTokenGrant = {
   expiresAt: null,
 };
 
-/** Existing Run tests explicitly enable delivery; omission in the public API still means disabled. */
+/**
+ * 既存のRunのテストは配信を明示的に有効にする。公開APIでは、省略すれば今も無効の意味になる。
+ */
 export function madoPluginInput({
   name = 'Mado',
   enabled = true,

@@ -1,4 +1,4 @@
-"""Mask configured secret values, including values split across output chunks."""
+"""設定された秘密の値を伏せる。出力の区切りをまたいで分かれた値も伏せる。"""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ class SecretMasker:
         self.secrets = tuple(sorted({value for value in secrets if value}, key=len, reverse=True))
 
     def add(self, secret: str) -> None:
-        # Maskers are shared by reference with transports, so a secret learned later covers all output.
+        # maskerはtransportと参照で共有するので、あとで知った秘密もすべての出力に効く。
         self.secrets = tuple(sorted({*self.secrets, secret} - {""}, key=len, reverse=True))
 
     def mask(self, message: str) -> str:
@@ -28,7 +28,7 @@ class SecretMasker:
 
 
 class StreamMasker:
-    """Retain possible secret prefixes so no partial token is emitted on a chunk boundary."""
+    """秘密の値の先頭になりうる部分を残し、区切りの境目でtokenの一部を出力しないようにする。"""
 
     def __init__(self, masker: SecretMasker):
         self.masker = masker
@@ -43,7 +43,7 @@ class StreamMasker:
         cursor = 0
         maximum_secret_length = max((len(value) for value in self.masker.secrets), default=0)
         while cursor < len(self.pending):
-            # A shorter secret can be a prefix of a longer secret that spans two chunks.
+            # 短い秘密が、2つの区切りにまたがる長い秘密の先頭部分になっていることがある。
             remaining = len(self.pending) - cursor
             if remaining < maximum_secret_length:
                 suffix = self.pending[cursor:]

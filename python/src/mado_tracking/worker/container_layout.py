@@ -1,7 +1,7 @@
-"""Prepare only the container's input, context, optional source, and output mounts.
+"""コンテナの入力、context、任意のsource、出力のマウントだけを用意する。
 
-Also places the resume and input checkpoints, which sit under inputs for every runtime, and
-exposes the staged input datasets (MMT_INPUT_DATASET_DIRS) to every runtime.
+再開用と入力のcheckpointも置く（どのruntimeでもinputsの下）。配置した入力のデータセット
+（MMT_INPUT_DATASET_DIRS）も、どのruntimeにも見せる。
 """
 
 from __future__ import annotations
@@ -28,19 +28,20 @@ OUTPUTS_PATH = "/mmt/outputs"
 SOURCE_PATH = "/mmt/source"
 WEIGHTS_FILENAME = "weights"
 UPSTREAM_RUN_FILENAME = "upstream-run.json"
-# The checkpoint is extracted to inputs/checkpoint (read-only /mmt/inputs/checkpoint in a container).
+# checkpointはinputs/checkpointに展開する（コンテナの中では読み取り専用の/mmt/inputs/checkpoint）。
 RESUME_CHECKPOINT_DIRECTORY = "checkpoint"
 RESUME_CHECKPOINT_FILENAME = "resume-checkpoint.json"
 RESUME_CHECKPOINT_ARCHIVE = "checkpoint.tar"
-# A checkpoint handed to the code as an input (checkpoint_saved hooks) takes the same place,
-# /mmt/inputs/checkpoint. A Job that also resumes keeps that place for its resume checkpoint and
-# reads the input checkpoint from inputs/input-checkpoint; MMT_INPUT_CHECKPOINT_DIR names either.
+# 入力としてコードに渡すcheckpoint（checkpoint_savedのフック）も同じ場所
+# （/mmt/inputs/checkpoint）に置く。再開もするJobでは、その場所を再開用のcheckpointに使い、
+# 入力のcheckpointはinputs/input-checkpointから読む。MMT_INPUT_CHECKPOINT_DIRはどちらの場合も
+# その場所を指す。
 INPUT_CHECKPOINT_FALLBACK_DIRECTORY = "input-checkpoint"
 INPUT_CHECKPOINT_FILENAME = "input-checkpoint.json"
 INPUT_CHECKPOINT_ARCHIVE = "input-checkpoint.tar"
-# The manual trigger payload or webhook body that started the Job (hooks).
+# Jobを起動した手動起動のペイロード、またはWebhookの本文（フック）。
 TRIGGER_PAYLOAD_FILENAME = "trigger-payload.json"
-# Where each staged input file sits in the Job workspace; `upload-<kind>` writes it there.
+# 配置した各入力ファイルの、Jobのworkspaceでの場所。`upload-<kind>`がそこに書く。
 STAGED_INPUT_PATHS = {
     "source": "source.archive",
     "sif": "runtime.sif",
@@ -48,10 +49,11 @@ STAGED_INPUT_PATHS = {
     "checkpoint": RESUME_CHECKPOINT_ARCHIVE,
     "input-checkpoint": INPUT_CHECKPOINT_ARCHIVE,
 }
-# Containers get each dataset as its own read-only bind. It is not nested below the read-only
-# /mmt/inputs bind, whose host directory could not hold the mount points.
+# コンテナには、データセットごとに別の読み取り専用のbindで渡す。読み取り専用の/mmt/inputsの
+# bindの下に入れ子にはしない。そのホスト側のディレクトリにはマウントポイントを作れないため。
 INPUT_DATASETS_PATH = "/mmt/datasets"
-# Host python reads <workspace>/inputs/datasets/<versionId>, a symlink into the dataset cache.
+# ホストのpythonは<workspace>/inputs/datasets/<versionId>を読む。これはデータセットの
+# キャッシュへのシンボリックリンク。
 INPUT_DATASETS_DIRECTORY = "datasets"
 
 
@@ -63,10 +65,10 @@ class ContainerMount:
 
 
 def host_runtime(specification: dict[str, Any]) -> dict[str, Any]:
-    """The runtime this host executes: the registered one, or the SIF a site converted it to.
+    """このホストが実行するruntime。登録したruntimeか、siteがそれを変換したSIF。
 
-    The executionSnapshot keeps the registered runtime either way, so the Run records what was
-    registered while the host runs its local equivalent (a Docker image pulled into a SIF).
+    どちらの場合もexecutionSnapshotには登録したruntimeを残す。そのためRunには登録した内容が
+    記録され、ホストではそれに相当するローカルのもの（DockerイメージをpullしたSIF）を動かす。
     """
     converted = specification.get("hostRuntime")
     if converted is not None:
@@ -75,18 +77,17 @@ def host_runtime(specification: dict[str, Any]) -> dict[str, Any]:
 
 
 def host_environment() -> dict[str, str]:
-    # Container variables must not select the CLI binary, daemon, or the host's credentials.
+    # コンテナ用の変数で、CLIのバイナリ、デーモン、ホストの認証情報を選べてはいけない。
     allowed_names = {"PATH", "HOME", "LANG", "LC_ALL", "LD_LIBRARY_PATH", "TMPDIR"}
     return {name: value for name, value in os.environ.items() if name in allowed_names}
 
 
 def upstream_run_document(run: dict[str, Any], model_version: dict[str, Any] | None) -> dict[str, Any] | None:
-    """Describe the Run whose outputs this Job consumes, or None when it has no upstream.
+    """このJobが出力を使うRunを説明する。上流が無ければNone。
 
-    The parent Run is the upstream: deferred automation links the training Run and stage
-    chaining links the upstream inference Run. WorkerJob carries no snapshot of that Run, so
-    only the facts visible from this Run are included and the rest (for example its kind)
-    are omitted instead of guessed.
+    親のRunが上流になる。保留していた自動実行は学習のRunを、自動実行の連鎖は上流の推論のRunを
+    親としてつなぐ。WorkerJobはそのRunのスナップショットを持たないので、このRunから見える事実だけを
+    含め、残り（Runの種類など）は推測せずに省く。
     """
     parent_run_id = run.get("parentRunId")
     if not parent_run_id:
@@ -94,7 +95,7 @@ def upstream_run_document(run: dict[str, Any], model_version: dict[str, Any] | N
     if not isinstance(parent_run_id, str):
         raise ValueError("WorkerJob run.parentRunId must be a string")
     document: dict[str, Any] = {"runId": parent_run_id}
-    # Only the upstream outputs that this Run takes as inputs; the parent may have produced more.
+    # 上流の出力のうち、このRunが入力に取るものだけ。親はほかにも出力を作っているかもしれない。
     upstream_dataset_ids = run.get("upstreamDatasetVersionIds") or []
     if upstream_dataset_ids:
         document["outputDatasetVersionIds"] = list(upstream_dataset_ids)
@@ -104,7 +105,7 @@ def upstream_run_document(run: dict[str, Any], model_version: dict[str, Any] | N
 
 
 def upstream_environment(context: dict[str, Any], upstream_run_file: str) -> dict[str, str]:
-    # A Job without an upstream gets no variables, so code can test for their presence.
+    # 上流の無いJobには変数を渡さない。コードは変数の有無で判断できる。
     upstream_run = context.get("upstreamRun")
     if upstream_run is None:
         return {}
@@ -112,7 +113,7 @@ def upstream_environment(context: dict[str, Any], upstream_run_file: str) -> dic
 
 
 def resume_checkpoint_document(checkpoint: dict[str, Any] | None) -> dict[str, Any] | None:
-    """What the Job's code reads about its checkpoint (MMT_RESUME_CHECKPOINT_FILE)."""
+    """Jobのコードがcheckpointについて読む内容（MMT_RESUME_CHECKPOINT_FILE）。"""
     if checkpoint is None:
         return None
     manifest = checkpoint["manifest"]
@@ -131,7 +132,7 @@ def resume_checkpoint_document(checkpoint: dict[str, Any] | None) -> dict[str, A
 def resume_checkpoint_environment(
     context: dict[str, Any], *, checkpoint_directory: str, document_file: str
 ) -> dict[str, str]:
-    # A Job that starts from scratch gets no variables, so code can test for their presence.
+    # 最初から始めるJobには変数を渡さない。コードは変数の有無で判断できる。
     document = context.get("resumeCheckpoint")
     if document is None:
         return {}
@@ -143,7 +144,10 @@ def resume_checkpoint_environment(
 
 
 def input_checkpoint_directory(context: dict[str, Any]) -> str:
-    """Directory under inputs that holds the input checkpoint (see INPUT_CHECKPOINT_FALLBACK_DIRECTORY)."""
+    """inputsの下で入力のcheckpointを置くディレクトリ。
+
+    INPUT_CHECKPOINT_FALLBACK_DIRECTORYを参照。
+    """
     if context.get("resumeCheckpoint") is not None:
         return INPUT_CHECKPOINT_FALLBACK_DIRECTORY
     return RESUME_CHECKPOINT_DIRECTORY
@@ -152,7 +156,7 @@ def input_checkpoint_directory(context: dict[str, Any]) -> str:
 def input_checkpoint_environment(
     context: dict[str, Any], *, inputs_directory: str, document_file: str
 ) -> dict[str, str]:
-    # A Job without an input checkpoint gets no variables, so code can test for their presence.
+    # 入力のcheckpointが無いJobには変数を渡さない。コードは変数の有無で判断できる。
     if context.get("inputCheckpoint") is None:
         return {}
     return {
@@ -168,9 +172,9 @@ def trigger_payload_environment(context: dict[str, Any], *, document_file: str) 
 
 
 def staged_dataset_paths(workspace: Path, specification: dict[str, Any]) -> dict[str, Path]:
-    """Target paths of the staged input datasets, checked again right before launch."""
+    """配置した入力のデータセットの、コンピュータ上のパス。起動の直前にもう一度確かめる。"""
     staged = specification["stagedInputs"]["datasets"]
-    # Descriptor-only versions (urn:, mmt-artifact:) have nothing staged and are left out.
+    # 記述だけのバージョン（urn:、mmt-artifact:）は配置するものが無いので除く。
     if not set(staged) <= {dataset["id"] for dataset in specification["context"]["inputDatasets"]}:
         raise ValueError("Staged datasets are not the Job's inputs")
     cache = DatasetCache.for_workspace(workspace)
@@ -187,7 +191,10 @@ def staged_dataset_paths(workspace: Path, specification: dict[str, Any]) -> dict
 
 
 def link_input_datasets(workspace: Path, paths: dict[str, Path]) -> dict[str, str]:
-    """Symlink each dataset under inputs/datasets for host python; returns MMT_INPUT_DATASET_DIRS."""
+    """ホストのpython用に、各データセットへのシンボリックリンクをinputs/datasetsの下に作る。
+
+    戻り値はMMT_INPUT_DATASET_DIRS。
+    """
     directory = workspace / "inputs" / INPUT_DATASETS_DIRECTORY
     if directory.parent.is_symlink() or directory.is_symlink():
         raise ValueError("Input dataset directory must not be a symlink")
@@ -202,7 +209,7 @@ def link_input_datasets(workspace: Path, paths: dict[str, Path]) -> dict[str, st
 
 
 def install_resume_checkpoint(workspace: Path, specification: dict[str, Any]) -> None:
-    """Extract the staged checkpoint tar, verifying it again on the target, as read-only files."""
+    """配置したcheckpointのtarをコンピュータ上で確かめ直し、読み取り専用で展開する。"""
     _install_checkpoint(
         workspace,
         specification,
@@ -215,7 +222,7 @@ def install_resume_checkpoint(workspace: Path, specification: dict[str, Any]) ->
 
 
 def install_input_checkpoint(workspace: Path, specification: dict[str, Any]) -> None:
-    """Extract the staged input checkpoint the same way, beside a resume checkpoint if any."""
+    """配置した入力のcheckpointを同じように展開する。再開用のcheckpointがあればその隣に置く。"""
     _install_checkpoint(
         workspace,
         specification,
@@ -387,7 +394,7 @@ def container_environment(specification: dict[str, Any]) -> dict[str, str]:
     environment.update(
         trigger_payload_environment(context, document_file=f"{CONTEXT_PATH}/{TRIGGER_PAYLOAD_FILENAME}")
     )
-    # A Docker-selected GPU UUID/index is remapped to a container-local CUDA ordinal.
+    # Dockerで選んだGPUのUUID・indexは、コンテナの中でのCUDAの番号に振り直す。
     gpu_ids = specification["gpuIds"]
     runtime_kind = host_runtime(specification).get("kind")
     environment["CUDA_VISIBLE_DEVICES"] = (

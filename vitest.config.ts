@@ -1,11 +1,12 @@
 import { configDefaults, defineConfig } from 'vitest/config';
 
-// API integration files share the loopback mmt_test database (max_connections=100). Each file
-// creates its own schema and a pool of up to 12 connections, and migrations and DROP SCHEMA ...
-// CASCADE take hundreds of locks. With one file per CPU the run hit "too many clients" and "out
-// of shared memory", so these files run at most this many at a time; everything else stays parallel.
+// APIの結合テストのファイルは、loopbackのmmt_testデータベース（max_connections=100）を
+// 共有する。各ファイルが自分のschemaと最大12接続のpoolを作り、migrationとDROP SCHEMA ...
+// CASCADEは数百のロックを取る。CPUごとに1ファイルを動かすと"too many clients"や
+// "out of shared memory"になったので、これらのファイルは同時にこの数までしか動かさない。
+// ほかはすべて並列のまま。
 const DATABASE_TEST_FILE_CONCURRENCY = 6;
-// The hosted runner shares CPU and storage with PostgreSQL; avoid six concurrent migration runs.
+// CIのホスト型のrunnerはCPUとストレージをPostgreSQLと共有するので、migrationを6つ同時に走らせない。
 const CI_DATABASE_TEST_FILE_CONCURRENCY = 2;
 const databaseTestFiles = ['apps/api/test/**/*.integration.test.ts'];
 const webTestFiles = ['apps/web/**/*.{test,spec}.?(c|m)[jt]s?(x)'];
@@ -18,7 +19,7 @@ export default defineConfig({
         test: {
           name: 'unit',
           exclude: [...configDefaults.exclude, ...databaseTestFiles, ...webTestFiles],
-          // Projects with different maxWorkers must run as separate groups; unit tests go first.
+          // maxWorkersが違うvitestのprojectは、別々のグループで動かす必要がある。unitを先に動かす。
           sequence: { groupOrder: 0 },
         },
       },

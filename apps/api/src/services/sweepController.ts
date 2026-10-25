@@ -31,23 +31,23 @@ import {
 import type { JobService } from './jobService.js';
 import type { TaskService } from './taskService.js';
 
-// Reserved Run tags (mmt.* is server-only) that tie a trial Run to its sweep.
+// trialのRunをそのSweepに結びつける、予約済みのRunのタグ（mmt.*はサーバーだけが書く）。
 export const SWEEP_ID_TAG = 'mmt.sweepId';
 export const SWEEP_TRIAL_INDEX_TAG = 'mmt.sweepTrialIndex';
 export const SWEEP_EARLY_STOPPED_TAG = 'mmt.sweepEarlyStopped';
-// Generated Run names follow the same limit as user-created Run names.
+// 生成するRunの名前にも、利用者が作るRunの名前と同じ上限を当てる。
 const RUN_NAME_LIMIT = 200;
 const TRIAL_LAUNCH_SAVEPOINT = 'sweep_trial_launch';
-// Shared by every API process on the same schema, like the other background locks.
+// ほかのバックグラウンドのロックと同じく、同じスキーマのすべてのAPIのプロセスで共有する。
 const SWEEP_LOCK_PREFIX = 'sweep';
 
 const COMPLETED_TRIAL_STATES = new Set(['finished', 'failed', 'early_stopped']);
 
 /**
- * The sweep state machine: launches trials up to parallelism and max_trials, stops trials that
- * hyperband ranks below the rung cutoff, records trial outcomes and finishes the sweep. Every
- * entry point runs inside the caller's transaction while holding the sweep's advisory lock, so
- * the scheduler, the completion handler and the API never launch the same trial index twice.
+ * Sweepの状態機械。parallelismとmax_trialsまでtrialを起動し、hyperbandがrungの足切りより下に
+ * 順位付けたtrialを止め、trialの結果を記録してSweepを終える。どの入口も、呼び出し元の
+ * トランザクションの中でSweepのadvisory lockを持って動くので、スケジューラ、完了時のハンドラ、
+ * APIが同じtrialの番号を2回起動することはない。
  */
 export class SweepController {
   constructor(
@@ -55,7 +55,10 @@ export class SweepController {
     private readonly jobs: JobService,
   ) {}
 
-  /** Waits for the sweep's lock until the transaction ends. Re-entrant within one transaction. */
+  /**
+   * Sweepのロックを取れるまで待ち、トランザクションの終わりまで持つ。同じトランザクションの
+   * 中では再入できる。
+   */
   async lock(connection: Connection, sweepId: string): Promise<void> {
     await connection.query(
       "SELECT pg_advisory_xact_lock(hashtextextended($1||':'||$2||':'||current_schema(),0))",
@@ -63,7 +66,7 @@ export class SweepController {
     );
   }
 
-  /** false when another transaction is advancing the sweep; the scheduler then skips it. */
+  /** 別のトランザクションがSweepを進めているときはfalse。スケジューラはそのSweepを飛ばす。 */
   async tryLock(connection: Connection, sweepId: string): Promise<boolean> {
     const lock = await connection.query<{ acquired: boolean }>(
       "SELECT pg_try_advisory_xact_lock(hashtextextended($1||':'||$2||':'||current_schema(),0)) AS acquired",
@@ -73,8 +76,8 @@ export class SweepController {
   }
 
   /**
-   * Brings the sweep up to date. Early stopping cancels other trials' Jobs, so only the scheduler
-   * asks for it; the completion handler, which already holds a finished trial's Run lock, does not.
+   * Sweepを最新の状態にする。早期終了はほかのtrialのJobを取り消すので、それを求めるのは
+   * スケジューラだけ。終わったtrialのRunのロックを既に持っている完了時のハンドラは求めない。
    */
   async tick(
     connection: Connection,
@@ -84,7 +87,7 @@ export class SweepController {
     if (!sweep || TERMINAL_SWEEP_STATUSES.includes(sweep.status)) return;
     await markTrialsRunning(connection, sweep.id);
     const trials = await listSweepTrials(connection, sweep.id);
-    // Normally the completion handler records outcomes; this catches a handler that failed.
+    // 普段は完了時のハンドラが結果を記録する。ここでは、そのハンドラが失敗した分を拾う。
     for (const trial of trials)
       if (ACTIVE_TRIAL_STATES.includes(trial.state) && isTerminalStatus(trial.runStatus))
         await this.recordOutcome(connection, { sweep, trial });
@@ -93,7 +96,7 @@ export class SweepController {
     if (sweep.status === 'running') await this.launchTrials(connection, sweep);
   }
 
-  /** Called from the terminal handler when a trial's Run ends: record it and refill the free slot. */
+  /** trialのRunが終わったときに終了時のハンドラから呼ばれる。結果を記録し、空いた枠を埋める。 */
   async recordTrialEnd(connection: Connection, trial: SweepTrial): Promise<void> {
     await this.lock(connection, trial.sweepId);
     const sweep = await lockSweepById(connection, trial.sweepId);
@@ -102,12 +105,12 @@ export class SweepController {
     await this.tick(connection, { sweepId: sweep.id, applyEarlyStopping: false });
   }
 
-  /** Why trials cannot be launched right now, or null. Also used before resuming. */
+  /** 今trialを起動できない理由。起動できるならnull。再開の前にも使う。 */
   async launchBlocker(
     connection: Connection,
     sweep: StoredSweep,
   ): Promise<'owner_forbidden' | 'task_revision_changed' | null> {
-    // Like automation rules, the creator's access is rechecked at launch time.
+    // 自動実行ルールと同じく、起動するときに作成者の権限を確かめ直す。
     if (!(await hasSweepOwnerAccess(connection, sweep))) return 'owner_forbidden';
     const task = await findTask(connection, { projectId: sweep.projectId, id: sweep.taskId });
     return task.revision === sweep.taskRevision ? null : 'task_revision_changed';
@@ -171,14 +174,15 @@ export class SweepController {
     stop: { sweep: StoredSweep; trial: SweepTrial; stopReason: string },
   ): Promise<void> {
     const { sweep, trial } = stop;
-    // A worker completing this Job holds its lock and then waits for this sweep's lock in the
-    // completion handler; waiting here would deadlock, so the trial is left for the next tick.
+    // このJobを完了させるworkerは、Jobのロックを持ったまま、完了時のハンドラでこのSweepの
+    // ロックを待つ。ここで待つとデッドロックになるので、そのtrialは次のtickに回す。
     const job = await first<{ status: string }>(
       connection,
       'SELECT status FROM jobs WHERE id=$1 FOR UPDATE SKIP LOCKED',
       [trial.jobId],
     );
-    // Only claimed/running Jobs: cancelling a queued Job would end its Run inside this tick.
+    // claimed・runningのJobだけを取り消す。順番待ちのJobを取り消すと、このtickの中で
+    // Runが終わってしまう。
     if (!job || job.status === 'queued' || isTerminalStatus(job.status)) return;
     await this.jobs.requestCancelInTransaction(connection, {
       projectId: sweep.projectId,
@@ -248,7 +252,7 @@ export class SweepController {
         completedTrials,
         pendingParameters: request.pendingParameters,
       });
-      // Grid exhaustion is detected before suggesting, so this is unreachable for valid sweeps.
+      // gridを使い切ったことは提案の前に検出するので、正しいSweepではここに来ない。
       return 'parameters' in suggestion ? suggestion.parameters : null;
     } catch (error) {
       console.error(
@@ -262,8 +266,8 @@ export class SweepController {
     }
   }
 
-  // Returns false when the Task launch is rejected (disabled target, deleted Experiment, ...);
-  // the savepoint keeps the trial outcome already recorded in this transaction.
+  // Taskの起動が拒まれたら（無効なコンピュータ、削除された実験など）falseを返す。savepointにより、
+  // このトランザクションで既に記録したtrialの結果は残る。
   private async launchTrial(
     connection: Connection,
     launch: { sweep: StoredSweep; trialIndex: number; parameters: TrialParameters },
@@ -325,7 +329,7 @@ export class SweepController {
   }
 }
 
-/** Step of the point that produced the objective, or null when there is no objective. */
+/** 目的の値を出した点のstep。目的の値が無ければnull。 */
 function findObjectiveStep(
   history: readonly MetricPoint[],
   objective: { objectiveValue: number | null; aggregation: 'last' | 'min' | 'max' },

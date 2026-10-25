@@ -1,4 +1,4 @@
-"""Register a CPU Docker fixture that needs no SDK inside its image."""
+"""イメージの中にSDKが要らない、CPU用のDocker fixtureを登録する。"""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import os
 
 from mado_tracking import Client, DockerRuntime
 
-# The shell uses only BusyBox tools; it closes input-copy.json before publishing the manifest.
+# シェルはBusyBoxのコマンドだけを使う。manifestを公開する前にinput-copy.jsonを閉じる。
 FIXTURE_SCRIPT = r"""
 set -eu
 test -r "$MMT_JOB_CONTEXT_FILE"
@@ -31,8 +31,8 @@ printf '{"version":2,"complete":true,'\
 mv "$MMT_OUTPUTS_DIR/manifest.partial" "$MMT_RESULT_FILE"
 """
 
-# Audio inference writes one file per utterance: 1000 outputs listed in a JSON Lines manifest, plus
-# a model declared in result.json version 2 so that a training Run registers it without the SDK.
+# 音声の推論は発話ごとに1ファイルを書く。JSON Linesのmanifestに並べた1000個の出力に加え、
+# result.json version 2でモデルを宣言し、学習のRunがSDK無しでそれを登録できるようにする。
 BULK_OUTPUT_FIXTURE_SCRIPT = r"""
 set -eu
 mkdir -p "$MMT_OUTPUTS_DIR/audio" "$MMT_OUTPUTS_DIR/model"

@@ -4,31 +4,31 @@ import type { ProjectRole, TokenScope } from '@mmt/contracts';
 export type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
 /**
- * Who may call a route, as the service checks it. OpenAPI shows it per operation
- * (`x-mmt-access`) and derives the generic 401/403 responses from it.
+ * 誰が経路を呼べるか。サービスが検査するとおりに表す。OpenAPIでは操作ごとに示し
+ * （`x-mmt-access`）、そこから一般的な401・403の応答を導く。
  */
 export type RouteAccess =
-  // No authentication: health, auth configuration and the login flow.
+  // 認証なし: health、認証の設定、ログインの流れ。
   | { kind: 'public' }
-  // Any signed-in user; an API token also needs `scope`.
+  // サインインしたどのユーザーでもよい。API tokenには`scope`も要る。
   | { kind: 'signedIn'; scope: TokenScope }
-  // A browser session of any user (API tokens get 403 session_required).
+  // どのユーザーのブラウザのsessionでもよい（API tokenは403 session_required）。
   | { kind: 'session' }
-  // Effective Project role (direct grant or group binding) and, for API tokens, the scope.
+  // 実効のProjectのrole（直接の付与かグループの割り当て）と、API tokenではscope。
   | { kind: 'project'; role: ProjectRole; scope: TokenScope }
-  // A global administrator; an API token needs `admin`, no Project restriction and, when given,
-  // `scope` too (one `admin` does not include). sessionOnly: API tokens get 403 session_required.
+  // 全体管理者。API tokenには`admin`が要り、Projectの制限が無く、指定があれば`scope`も
+  // 要る（`admin`には含まれない）。sessionOnly: API tokenは403 session_required。
   | { kind: 'globalAdmin'; scope?: TokenScope; sessionOnly?: boolean }
-  // A Project-bound API token with `worker:execute` (the worker process).
+  // `worker:execute`を持つ、Projectに結びついたAPI token（workerのプロセス）。
   | { kind: 'worker' }
-  // The token of a launcher registered on the Web (`launcher:execute`); sessions get 403.
+  // 画面で登録したlauncherのtoken（`launcher:execute`）。sessionは403。
   | { kind: 'launcher' }
   // path の Job の Job token（mado_mtj_）。site の runner か、Job の中のドライバーのコード。
   | { kind: 'jobToken' }
-  // The requester's own API token with `scope`; browser sessions and Job tokens get 403.
+  // リクエストした本人のAPI tokenで`scope`を持つもの。ブラウザのsessionとJob tokenは403。
   | { kind: 'apiToken'; scope: TokenScope };
 
-/** A body that is not JSON: raw bytes, CSV, a redirect target. */
+/** JSONでない本文。生のバイト列、CSV、リダイレクト先。 */
 export interface NonJsonContent {
   contentType: string;
   description: string;
@@ -37,15 +37,15 @@ export interface NonJsonContent {
 export type SuccessStatus = 200 | 201 | 202 | 204 | 206 | 302 | 304;
 export type ResponseContent = z.ZodType | NonJsonContent | null;
 
-/** An error the route documents beyond the generic ones its access and input imply. */
+/** アクセスと入力から導かれる一般的なもの以外に、その経路が文書化するエラー。 */
 export interface RouteError {
   status: number;
   code: string;
 }
 
 /**
- * One native route. Paths use the Hono template of the app (`/api/projects/:p/runs/:r`), so the
- * coverage test compares them with `app.routes` without translation.
+ * 1つのネイティブの経路。パスはアプリのHonoのテンプレート（`/api/projects/:p/runs/:r`）を使い、
+ * coverageのテストが変換なしで`app.routes`と比べられるようにする。
  */
 export interface NativeRoute {
   method: HttpMethod;
@@ -54,12 +54,12 @@ export interface NativeRoute {
   summary: string;
   access: RouteAccess;
   query?: z.ZodType;
-  // Request headers the route reads, as an object schema keyed by header name.
+  // 経路が読むリクエストヘッダー。ヘッダー名をキーにしたobjectのスキーマで表す。
   headers?: z.ZodType;
   body?: z.ZodType | NonJsonContent;
-  // A JSON body limit other than MAX_JSON_BODY_BYTES (see requestBodyLimits.ts).
+  // MAX_JSON_BODY_BYTES以外のJSONの本文の上限（requestBodyLimits.tsを参照）。
   maxBodyBytes?: number;
-  // Body is optional (an empty body means the defaults), as for job retry and alias removal.
+  // 本文は省略できる（空の本文は既定値を意味する）。Jobの再試行やaliasの削除がそう。
   bodyOptional?: boolean;
   responses: Partial<Record<SuccessStatus, ResponseContent>>;
   errors?: readonly RouteError[];
@@ -81,7 +81,7 @@ export function routeError(status: number, ...codes: string[]): RouteError[] {
 }
 
 export function isNonJsonContent(content: unknown): content is NonJsonContent {
-  // zod schemas carry their internals under `_zod`; NonJsonContent is a plain object.
+  // zodのスキーマは内部を`_zod`の下に持つ。NonJsonContentはただのオブジェクト。
   return (
     typeof content === 'object' &&
     content !== null &&

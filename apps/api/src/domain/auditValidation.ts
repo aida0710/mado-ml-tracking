@@ -2,12 +2,12 @@ import { z } from 'zod';
 import { uuidSchema } from './validation.js';
 
 const DEFAULT_AUDIT_EVENT_LIMIT = 50;
-// Bounds one page so a global administrator cannot request the whole unbounded log at once.
+// 1ページの上限。全体管理者でも、際限のないログ全体を一度に求められないようにする。
 const MAX_AUDIT_EVENT_LIMIT = 200;
 
 /**
- * Sign-ins, sign-outs and the identity provider's syncs and rechecks: written on every session, so
- * they bury the changes people look for. hideSignIns=true leaves them out.
+ * サインイン、サインアウト、IdPとの同期と再確認。sessionのたびに書かれるので、利用者が探したい
+ * 変更を埋もれさせる。hideSignIns=trueで除く。
  */
 export const SIGN_IN_AUDIT_ACTIONS = [
   'auth.login',
@@ -18,7 +18,7 @@ export const SIGN_IN_AUDIT_ACTIONS = [
 
 const projectAuditEventQueryFields = {
   action: z.string().min(1).max(200).optional(),
-  // Query values are strings; only the literal "true" hides them.
+  // クエリの値は文字列。文字どおり"true"のときだけ隠す。
   hideSignIns: z
     .enum(['true', 'false'])
     .optional()

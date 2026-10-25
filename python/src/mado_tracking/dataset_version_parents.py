@@ -1,4 +1,4 @@
-"""Verified parent provenance added after a dataset version was registered."""
+"""データセットバージョンを登録したあとに足す、確認済みの親の来歴。"""
 
 from __future__ import annotations
 
@@ -22,10 +22,10 @@ def add_dataset_version_parents(
     reason: str,
     evidence: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """Add confirmed sources without changing the version's content or training references.
+    """バージョンの中身や学習での参照を変えずに、確認済みの出どころを足す。
 
-    Repeating a parent returns its original reason, evidence and author. This records a
-    provenance correction, not a change to the data used during a training run.
+    同じ親をもう一度指定すると、最初の理由・根拠・作成者を返す。これは来歴の訂正を記録するもので、
+    学習のRunで使ったデータを変えるものではない。
     """
     from .client import path_id
 
@@ -52,7 +52,7 @@ def add_dataset_version_parents(
 def dataset_version_parents(
     client: Client, project_id: str, dataset_id: str, version_id: str
 ) -> dict[str, Any]:
-    """Read registered parents and append-only historical provenance."""
+    """登録された親と、追記だけの過去の来歴を読む。"""
     from .client import path_id
 
     return client.request(

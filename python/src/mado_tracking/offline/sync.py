@@ -1,11 +1,11 @@
-"""Send spooled offline Runs to the API (`mado-tracking sync`).
+"""spoolにあるオフラインのRunをAPIへ送る（`mado-tracking sync`）。
 
-Order per Run: ``PUT /sync/runs/:id`` → batches in sequence order → Artifacts that
-``/artifacts/check`` does not report present, through resumable upload sessions → media →
-the terminal status last, so terminal handlers (output registration, automation) see every
-Artifact. sync-state.json is saved after every step: a failure stops the Run, and the next sync
-continues from there. The API also deduplicates by Run ID, batchId, Artifact sha256 and media id,
-so a lost sync-state only costs resending.
+Runごとの順番は、``PUT /sync/runs/:id`` → バッチをsequence順に → ``/artifacts/check``が
+presentと報告しないArtifactを、再開できるアップロードセッションで → メディア → 最後に終了状態。
+終了状態を最後にするのは、終了状態のハンドラ（出力の登録、自動実行）がすべてのArtifactを
+見られるようにするため。sync-state.jsonは各段階のあとに保存する。失敗するとそのRunは止まり、
+次のsyncがそこから続ける。APIもRunのID、batchId、Artifactのsha256、メディアのidで重複を
+除くので、sync-stateを失っても送り直しが増えるだけで済む。
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ from .spool import (
 if TYPE_CHECKING:
     from ..client import Client
 
-# POST /sync/runs/:id/artifacts/check accepts up to 1000 items (SYNC_ARTIFACT_CHECK_MAX_ITEMS).
+# POST /sync/runs/:id/artifacts/checkが受け付けるのは最大1000件（SYNC_ARTIFACT_CHECK_MAX_ITEMS）。
 ARTIFACT_CHECK_MAX_ITEMS = 1000
 
 SyncOutcome = Literal["completed", "partial", "recording", "failed", "pending", "filtered"]
@@ -47,7 +47,7 @@ SyncOutcome = Literal["completed", "partial", "recording", "failed", "pending", 
 
 @dataclass
 class RunSyncReport:
-    """What one Run's sync did. 'partial' means everything was sent but the Run has no end yet."""
+    """1つのRunのsyncで行ったこと。'partial'は、すべて送ったがRunがまだ終わっていないことを表す。"""
 
     run_directory: Path
     run_id: str
@@ -69,7 +69,7 @@ def sync_offline_directories(
     project_id: str | None = None,
     prune: bool = False,
 ) -> list[RunSyncReport]:
-    """Sync every run directory found in directories; the client is made only when needed."""
+    """directoriesにあるrunのディレクトリをすべてsyncする。clientは必要になったときだけ作る。"""
     run_directories = [run for directory in directories for run in find_run_directories(directory)]
     reports: list[RunSyncReport] = []
     client: Client | None = None
@@ -89,7 +89,7 @@ def sync_offline_directories(
 
 
 def describe_pending(run_directory: Path) -> RunSyncReport:
-    """What sync would send, read from the spool only."""
+    """syncが送るもの。spoolだけを読んで求める。"""
     record = load_run_record(run_directory)
     state = SyncState.load(run_directory)
     if state.completed:
@@ -162,7 +162,7 @@ class _RunSync:
     def _create_run(self) -> None:
         if self.state.run_created:
             return
-        # 201 creates the Run, 200 returns the one created by an earlier attempt unchanged.
+        # 201ならRunを作った。200なら、前の試行で作ったRunを変えずに返す。
         self.client.request("PUT", self.sync_path, json=self.record.sync_create_body(), retryable=True)
         self.state.run_created = True
         self._save()
@@ -174,14 +174,14 @@ class _RunSync:
                 continue
             body = read_batch_body(batch)
             if set(body) - {"batchId", "sequence"}:
-                # Always 200; duplicate=true means an earlier attempt already applied this batchId.
+                # 常に200。duplicate=trueは、前の試行が既にこのbatchIdを適用したことを表す。
                 self.client.request("POST", f"{self.sync_path}/batches", json=body, retryable=True)
                 self.report.batches += 1
             self.state.sent_batch_ids.append(batch.batch_id)
             self._save()
 
     def _send_artifacts(self) -> dict[str, str | None]:
-        """Upload what the API does not hold yet; returns path -> Artifact id of the latest entry."""
+        """APIにまだ無いものをアップロードする。パスごとに、最新の項目のArtifactのidを返す。"""
         artifacts = read_artifacts(self.directory)
         pending = [
             artifact for artifact in artifacts if str(artifact.line_number) not in self.state.artifact_ids
@@ -193,8 +193,8 @@ class _RunSync:
         latest_lines = {artifact.line_number for artifact in latest}
         store = UploadStateStore(self.directory / UPLOAD_SESSION_DIRECTORY)
         for artifact in pending:
-            # A path logged twice is only "present" for its latest content, so every older entry is
-            # uploaded first and the latest one stays the Run's current Artifact.
+            # 2回記録したパスでpresentになるのは最新の内容だけ。古い項目を先にすべてアップロードし、
+            # 最新のものがRunの今のArtifactとして残るようにする。
             artifact_id: str | None
             if artifact.line_number in latest_lines and artifact.path in present:
                 artifact_id = None
@@ -249,7 +249,7 @@ class _RunSync:
                 "caption": media.get("caption"),
                 "metadata": media.get("metadata", {}),
             }
-            # The media id makes the POST idempotent, so a lost response can be retried.
+            # メディアのidでPOSTが冪等になるので、応答が失われても再試行できる。
             self.client.request(
                 "POST", f"{self.run_path}/media", json={"items": [item]}, retryable=True
             )
@@ -262,7 +262,7 @@ class _RunSync:
             raise SpoolError(f"Media refers to {path!r}, which was not logged as an Artifact of this Run")
         if known := artifact_ids[path]:
             return known
-        # The Artifact was already present, so its id comes from the Run's current listing.
+        # Artifactは既にあったので、idはRunの今の一覧から取る。
         listing = self.client.request(
             "GET", f"{self.run_path}/artifacts", params={"prefix": path}, retryable=True
         )
@@ -293,7 +293,7 @@ class _RunSync:
 
 
 def _latest_entries(artifacts: list[SpoolArtifact]) -> list[SpoolArtifact]:
-    """The last entry of each path, in spool order."""
+    """パスごとの最後の項目。spoolの順に並べる。"""
     latest_by_path = {artifact.path: artifact for artifact in artifacts}
     return [artifact for artifact in artifacts if latest_by_path[artifact.path] is artifact]
 

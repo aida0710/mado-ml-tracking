@@ -1,4 +1,4 @@
-/** Exercise the real workbench UI, CPU worker and local HTTP plugin. */
+/** 実際のworkbenchの画面、CPUのworker、ローカルのHTTPのpluginを動かして確かめる。 */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { chmod, mkdir, open, readFile, writeFile } from 'node:fs/promises';
@@ -17,13 +17,13 @@ const summaryPath = `${artifactDirectory}/playground.json`;
 const summary = JSON.parse(await readFile(summaryPath, 'utf8'));
 const projectBase = `${base}/projects/${summary.projectId}`;
 const projectApi = `projects/${summary.projectId}`;
-// Compute names are global; separate Playground projects need separate target names.
+// コンピュータの名前は全体で一意なので、Playgroundの各Projectには別々のtarget名が要る。
 const playgroundTargetName = `Playground CPU ${summary.projectId.slice(0, 8)}`;
-// Real venv setup and Git fetching are bounded independently by the worker and API.
+// 実際のvenvの準備とGitの取得には、workerとAPIがそれぞれ別に上限を設けている。
 const JOB_DEADLINE_MS = 120_000;
 const JOB_POLL_MS = 250;
 const SERVICE_TOKEN_DAYS = 7;
-// The sample's final input is 3: changing its coefficient from 2 to 3 changes 7 to 10.
+// サンプルの最後の入力は3。係数を2から3に変えると、7が10になる。
 const SDK_LAST_VALUE_V1 = 7;
 const SDK_LAST_VALUE_V2 = 10;
 const pythonExecutable = path.resolve('python/.venv/bin/python');
@@ -70,7 +70,8 @@ async function replaceEditorFile({ filePath, content }) {
   await textbox.focus();
   await page.keyboard.press('Control+Home');
   await page.keyboard.press('Control+Shift+End');
-  // Clipboard paste preserves a complete Python file's indentation; typing each newline auto-indents.
+  // クリップボードから貼り付ければ、Pythonファイル全体の字下げがそのまま残る。打ち込むと
+  // 改行のたびに自動で字下げされる。
   await textbox.evaluate((element, text) => {
     const clipboard = new DataTransfer();
     clipboard.setData('text/plain', text);

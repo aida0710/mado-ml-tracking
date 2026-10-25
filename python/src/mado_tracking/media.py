@@ -1,8 +1,8 @@
-"""Media values for Run.log_audio / log_image / log_video / log_table, and where they are stored.
+"""Run.log_audio / log_image / log_video / log_tableに渡すメディアの値と、その保存先。
 
-Each value turns its input (a path, bytes, a numpy array, a PIL image) into a MediaFile when it is
-created, so a bad input fails at the call site. numpy, Pillow and pandas are recognized by their
-methods and never imported: path and bytes inputs work without them.
+各値は作られた時点で入力（パス、bytes、numpy配列、PILの画像）をMediaFileに変えるので、不正な
+入力は呼び出した場所で失敗する。numpy、Pillow、pandasはメソッドで見分け、importしない。
+パスとbytesの入力は、それらが無くても動く。
 """
 
 from __future__ import annotations
@@ -33,18 +33,18 @@ from .media_encoding import (
 __all__ = ["Audio", "Image", "MediaKind", "Table", "Video", "artifact_reference"]
 
 MediaKind = Literal["audio", "image", "video", "table"]
-# RunMedia.key in the API: 1-250 characters without control characters.
+# APIのRunMedia.key。制御文字を含まない1〜250文字。
 MEDIA_KEY_MAX_LENGTH = 250
 MEDIA_ROOT = "media"
 TABLE_MIME_TYPE = "application/json"
-# Pillow modes that PNG stores as they are; others (CMYK, YCbCr, ...) are converted to RGBA.
+# PNGがそのまま保存できるPillowのモード。ほか（CMYK、YCbCr、...）はRGBAに変換する。
 PNG_PIL_MODES = {"1", "L", "LA", "I", "I;16", "P", "RGB", "RGBA"}
 UNSAFE_KEY_CHARACTERS = re.compile(r"[\\\x00-\x1f\x7f]|%[0-9a-fA-F]{2}")
 
 
 @dataclass(frozen=True)
 class MediaFile:
-    """One file to store as an Artifact: an existing path or encoded content."""
+    """Artifactとして保存する1つのファイル。既存のパスか、エンコード済みの内容。"""
 
     mime_type: str
     extension: str
@@ -54,7 +54,7 @@ class MediaFile:
 
     @contextmanager
     def local_path(self) -> Iterator[Path]:
-        """A path to read the file from; content is written to a temporary file for the duration."""
+        """ファイルを読むためのパス。内容は、使っている間だけ一時ファイルに書き出す。"""
         if self.path is not None:
             yield self.path
             return
@@ -65,7 +65,7 @@ class MediaFile:
 
 
 class MediaValue:
-    """An audio, image or video value; the Run stores its file and registers it as media."""
+    """音声・画像・動画の値。Runがそのファイルを保存し、メディアとして登録する。"""
 
     kind: ClassVar[MediaKind]
 
@@ -75,8 +75,8 @@ class MediaValue:
 
 
 class Audio(MediaValue):
-    """A path, bytes (WAV/FLAC/MP3/OGG/M4A) or a numpy array (float in [-1, 1] or int16, mono or
-    stereo as (frames,) / (frames, channels)). An array needs sample_rate and becomes a 16-bit WAV."""
+    """パス、bytes（WAV/FLAC/MP3/OGG/M4A）、またはnumpy配列（[-1, 1]のfloatかint16、モノラルか
+    ステレオで(frames,) / (frames, channels)）。配列にはsample_rateが要り、16ビットのWAVになる。"""
 
     kind = "audio"
 
@@ -92,7 +92,7 @@ class Audio(MediaValue):
 
 
 class Image(MediaValue):
-    """A path, bytes, a PIL.Image or a numpy array (HxW / HxWx3 / HxWx4; uint8, or float in [0, 1])."""
+    """パス、bytes、PIL.Image、またはnumpy配列（HxW / HxWx3 / HxWx4。uint8か、[0, 1]のfloat）。"""
 
     kind = "image"
 
@@ -108,7 +108,7 @@ class Image(MediaValue):
 
 
 class Video(MediaValue):
-    """A path or bytes of an already encoded video; mp4 (H.264) or webm plays in every browser."""
+    """エンコード済みの動画のパスかbytes。mp4（H.264）かwebmなら、どのブラウザでも再生できる。"""
 
     kind = "video"
 
@@ -117,9 +117,9 @@ class Video(MediaValue):
 
 
 class Table:
-    """Rows of cells under named columns. Audio/Image/Video cells are stored as their own Artifacts,
-    and a string ``mmt-artifact://runs/<runId>/<path>`` (see artifact_reference) refers to another
-    Run's Artifact."""
+    """名前つきの列の下に並ぶ、セルの行。Audio/Image/Videoのセルはそれぞれ別のArtifactとして
+    保存する。文字列``mmt-artifact://runs/<runId>/<path>``（artifact_referenceを参照）は、別の
+    RunのArtifactを指す。"""
 
     def __init__(self, columns: Sequence[str], rows: Sequence[Sequence[Any]]):
         self.columns = [str(column) for column in columns]
@@ -132,7 +132,7 @@ class Table:
 
     @classmethod
     def from_value(cls, table: Any) -> Table:
-        """A Table, a {columns, data} mapping (MLflow's split JSON) or a pandas.DataFrame."""
+        """Table、{columns, data}のmapping（MLflowのsplit形式のJSON）、またはpandas.DataFrame。"""
         if isinstance(table, Table):
             return table
         if isinstance(table, Mapping) and "columns" in table and "data" in table:
@@ -143,7 +143,7 @@ class Table:
         raise ConfigurationError("log_table needs a Table, a {columns, data} mapping or a pandas.DataFrame")
 
     def media_cells(self) -> list[tuple[int, int, MediaValue]]:
-        """(row, column, value) of every Audio/Image/Video cell."""
+        """Audio/Image/Videoのセルすべての(row, column, value)。"""
         return [
             (row_index, column_index, cell)
             for row_index, row in enumerate(self.rows)
@@ -152,7 +152,7 @@ class Table:
         ]
 
     def split_json(self, stored_cells: Mapping[tuple[int, int], dict[str, str]]) -> bytes:
-        """MLflow's orient='split' JSON with each media cell replaced by its stored {type, filepath}."""
+        """MLflowのorient='split'のJSON。メディアのセルは、保存した{type, filepath}に置き換える。"""
         data = [
             [
                 stored_cells[(row_index, column_index)]
@@ -174,12 +174,12 @@ class Table:
 
 
 def artifact_reference(run_id: str, path: str) -> str:
-    """A table cell that refers to an Artifact of another Run in the same Project."""
+    """同じProjectの別のRunのArtifactを指す、表のセル。"""
     return f"mmt-artifact://runs/{run_id}/{path.lstrip('/')}"
 
 
 def media_artifact_path(key: str, step: int, extension: str) -> str:
-    """media/<key>/step-<step>/<uuid>.<ext>; a '/' in key becomes a directory in the Artifact browser."""
+    """media/<key>/step-<step>/<uuid>.<ext>。keyの'/'は、Artifactブラウザでディレクトリになる。"""
     validate_media_key(key)
     return f"{MEDIA_ROOT}/{key}/step-{step}/{uuid4()}.{extension}"
 
@@ -201,7 +201,7 @@ def validate_step(step: int) -> int:
 
 
 def file_from_source(source: Any, *, kind: MediaKind) -> MediaFile:
-    """A MediaFile for a path or bytes, typed by the file extension, else by its first bytes."""
+    """パスかbytesのMediaFile。種類はファイルの拡張子で、無ければ先頭のバイト列で決める。"""
     if isinstance(source, (bytes, bytearray, memoryview)):
         content = bytes(source)
         mime_type = sniff_mime_type(content[:SIGNATURE_BYTES])
@@ -226,7 +226,7 @@ def file_from_source(source: Any, *, kind: MediaKind) -> MediaFile:
 
 
 def check_kind(mime_type: str, kind: MediaKind) -> None:
-    # The API refuses an audio/* Artifact registered as an image (media_kind_mismatch); fail first.
+    # APIはimageとして登録されたaudio/*のArtifactを拒む（media_kind_mismatch）。先に失敗させる。
     if not mime_type.startswith(f"{kind}/"):
         raise ConfigurationError(f"A {mime_type} file cannot be logged as {kind}")
 
@@ -245,14 +245,14 @@ def png_from_pil(image: Any) -> MediaFile:
 
 
 def json_cell(cell: Any) -> Any:
-    """NaN and infinity become null, as pandas writes them in to_json."""
+    """NaNと無限大はnullにする。pandasのto_jsonと同じ書き方。"""
     if isinstance(cell, float) and not math.isfinite(cell):
         return None
     return cell
 
 
 def json_cell_fallback(cell: Any) -> Any:
-    """numpy scalars and arrays (item / tolist), which json cannot serialize itself."""
+    """jsonが自分では変換できない、numpyのスカラーと配列（item / tolist）。"""
     if hasattr(cell, "item") and getattr(cell, "shape", None) == ():
         return json_cell(cell.item())
     if hasattr(cell, "tolist"):

@@ -25,17 +25,17 @@ from mado_tracking.worker import artifact_transfer
 from mado_tracking.worker.api import WorkerApi
 from mado_tracking.worker.contracts import WorkerJob
 
-# Worker jobs validate their ids as UUIDs.
+# workerのJobはIDをUUIDとして検証する。
 PROJECT_ID = str(uuid4())
 RUN_ID = str(uuid4())
 TOKEN = "upload-test-secret"
-# Small parts keep the tests fast; the fake API does not enforce the real 5 MiB minimum.
+# partを小さくしてテストを速くする。偽のAPIは実際の最小値の5MiBを強制しない。
 PART_SIZE = 1024
 PART_COUNT = 5
 
 
 class FakeUploadApi:
-    """In-memory /artifact-uploads with the contract's part, complete and verification rules."""
+    """メモリ上の/artifact-uploads。契約のpart・complete・検証の規則に従う。"""
 
     def __init__(self):
         self.sessions: dict[str, dict] = {}

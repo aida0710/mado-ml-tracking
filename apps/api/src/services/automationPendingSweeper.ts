@@ -1,13 +1,13 @@
 import { transaction, type Database } from '../db/database.js';
 import type { ModelAutomationService } from './modelAutomationService.js';
 
-// Longer than any expected training Run, yet short enough that pending automation left behind by
-// Runs that never report an end (unknown worker state, MLflow Runs without end_run) is cleared weekly.
+// 想定されるどの学習Runよりも長く、それでいて、終了を報告しないRun（workerの状態が分からない
+// もの、end_runの無いMLflowのRun）が残した保留中の自動実行を、毎週片付けられる程度に短い。
 export const AUTOMATION_PENDING_MAX_AGE_HOURS = 168;
-// Expiry is measured in days, so a coarse interval keeps the query load negligible.
+// 期限は日単位なので、粗い間隔にしてクエリの負荷を無視できる程度に抑える。
 const SWEEP_INTERVAL_MS = 10 * 60 * 1000;
 const SWEEP_BATCH_SIZE = 100;
-// Shared by every API process on the same schema so only one of them sweeps at a time.
+// 同じスキーマを使うすべてのAPIのプロセスで共有し、一度に1つだけが片付けるようにする。
 const SWEEPER_LOCK_NAME = 'automation_pending_sweeper';
 
 export class AutomationPendingSweeper {
@@ -33,7 +33,7 @@ export class AutomationPendingSweeper {
     await this.active?.catch(() => undefined);
   }
 
-  // Returns the number of expired events; 0 also when another process holds the sweep lock.
+  // 期限切れにしたイベントの数を返す。別のプロセスが片付けのロックを持っているときも0。
   async sweep(): Promise<number> {
     let expired = 0;
     for (;;) {

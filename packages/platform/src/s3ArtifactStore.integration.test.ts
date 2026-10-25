@@ -11,7 +11,7 @@ const client = new S3Client({
   endpoint,
   region: 'us-east-1',
   forcePathStyle: true,
-  // These values authenticate only to the isolated emulator, never to real storage.
+  // この値で認証できるのは隔離したエミュレーターだけで、本物のストレージには通らない。
   credentials: { accessKeyId: 'testing', secretAccessKey: 'testing' },
 });
 const store = createS3ArtifactStore({ multipartEnabled: true, client, bucket, prefix: 'artifacts' });
@@ -31,7 +31,7 @@ describe.skipIf(!endpoint)('S3 protocol integration', () => {
   });
 
   it('stores a multipart stream, preserves its digest and supports media seeking', async () => {
-    // More than two upload parts forces multipart protocol rather than a small PUT.
+    // パートが2つを超えるので、小さなPUTではなくmultipartの手順になる。
     const part = Buffer.alloc(1024 * 1024, 'weights');
     const chunks = Array.from({ length: 18 }, () => part);
     const expectedDigest = createHash('sha256');

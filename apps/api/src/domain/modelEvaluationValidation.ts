@@ -2,8 +2,8 @@ import { z } from 'zod';
 import { MODEL_VERSION_RESULT_RUN_KINDS } from '@mmt/contracts';
 import { uuidSchema } from './validation.js';
 
-// One page holds the results of a version's automation pipelines; the cap bounds the per-Run
-// automation lookups a single request makes.
+// 1ページには、1つのバージョンの自動実行のパイプラインの結果が収まる。上限で、1回のリクエストが
+// Runごとに行う自動実行の参照の数を抑える。
 export const DEFAULT_RELATED_RUN_LIMIT = 50;
 export const MAX_RELATED_RUN_LIMIT = 200;
 

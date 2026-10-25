@@ -56,8 +56,8 @@ export class ProjectService {
   }
 
   /**
-   * One Project as GET /projects lists it (GET /projects/:p). A Project the user cannot open
-   * answers why, archived included (requireProject).
+   * GET /projectsの一覧と同じ形のProject1件（GET /projects/:p）。利用者が開けないProjectは、
+   * アーカイブされたものも含めて、開けない理由を返す（requireProject）。
    */
   async get(principal: Principal, projectId: string): Promise<Project> {
     await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
@@ -70,8 +70,9 @@ export class ProjectService {
     principal: Principal,
     onlyProjectId: string | null,
   ): Promise<Project[]> {
-    // A global administrator's session sees every live Project as admin (requireProject agrees).
-    // isMember tells the Projects the user was let into from those open to everyone.
+    // 全体管理者のsessionは、アーカイブされていないすべてのProjectをadminとして見る
+    // （requireProjectと一致する）。isMemberは、利用者が入れてもらったProjectと、誰にでも
+    // 公開されたProjectを見分ける。
     return rows<Project>(
       this.database,
       `SELECT ${PROJECT_COLUMNS},CASE WHEN $2 THEN 'admin' ELSE e.role END AS role,
@@ -85,8 +86,9 @@ export class ProjectService {
   }
 
   /**
-   * The creator becomes the Project admin. The members named in the request are added in the same
-   * transaction, each audited like PUT /members, so a refused member leaves no Project behind.
+   * 作成者がProject adminになる。リクエストで指定したメンバーは同じトランザクションで加え、
+   * それぞれPUT /membersと同じように監査に記録する。そのため、拒まれたメンバーがいればProjectも
+   * 残らない。
    */
   async create(
     principal: Principal,
@@ -182,9 +184,9 @@ export class ProjectService {
   }
 
   /**
-   * Hides the Project from everyone and keeps its data (POST /projects/:p/archive). A global
-   * administrator restores it or purges it (ProjectAdministrationService). Refused while a Job
-   * waits or runs, because nothing would be left to see or stop it.
+   * Projectを全員から隠し、データは残す（POST /projects/:p/archive）。全体管理者が復元するか
+   * 完全に削除する（ProjectAdministrationService）。Jobが順番待ちか実行中の間は拒む。アーカイブ
+   * すると、そのJobを見ることも止めることもできなくなるため。
    */
   async archive(
     principal: Principal,
@@ -202,9 +204,10 @@ export class ProjectService {
     await recordDenial(this.database, draft, () =>
       transaction(this.database, async (connection) => {
         await requireProject(connection, principal, { projectId, role: 'admin', scope: 'admin' });
-        // Job creation shares this row lock (shareLiveProject), so no Job appears after the check.
+        // Jobの作成はこの行のロックを共有で取る（shareLiveProject）ので、確認のあとで
+        // Jobは増えない。
         const project = await lockProjectLifecycle(connection, projectId);
-        // Another archive may have committed since requireProject read the Project.
+        // requireProjectがProjectを読んだあとで、別のアーカイブがコミットされていることがある。
         if (!project || project.archivedAt) notFound('project');
         if (await hasActiveJobs(connection, projectId))
           throw new DomainError({
@@ -227,7 +230,7 @@ export class ProjectService {
     return listMembers(this.database, projectId);
   }
 
-  // Sets the direct grant only; group bindings are managed by ProjectGroupBindingService.
+  // 直接の付与だけを設定する。グループの割り当てはProjectGroupBindingServiceが管理する。
   async setMember(
     principal: Principal,
     membership: { projectId: string; userId: string; role: ProjectRole },
@@ -265,7 +268,7 @@ export class ProjectService {
     );
   }
 
-  // Removes the direct grant. A user who also holds a bound group keeps that role.
+  // 直接の付与を外す。割り当てたグループにも入っている利用者は、そのroleを持ち続ける。
   async removeMember(
     principal: Principal,
     membership: { projectId: string; userId: string },
@@ -310,7 +313,7 @@ export class ProjectService {
     );
   }
 
-  // Deleted (MLflow soft-deleted) Experiments are hidden here as in the list.
+  // 削除した（MLflowで論理削除した）実験は、一覧と同じくここでも隠す。
   async experiment(
     principal: Principal,
     projectId: string,
@@ -327,8 +330,8 @@ export class ProjectService {
   }
 
   /**
-   * Uses the scope that created the Experiment (runs:write). Names stay unique in the Project;
-   * the lock order (Project, then Experiment) matches MLflow rename and Artifact PUT.
+   * 実験を作るときと同じscope（runs:write）を使う。名前はProjectの中で一意に保つ。ロックの順
+   * （Project、次に実験）は、MLflowの名前の変更やArtifactのPUTと同じ。
    */
   async updateExperiment(
     principal: Principal,
@@ -398,7 +401,7 @@ export class ProjectService {
         role: 'editor',
         scope: 'runs:write',
       });
-      // SDK creation and rename also lock the Project to keep names unambiguous.
+      // SDKからの作成と名前の変更もProjectをロックし、名前が重ならないようにしている。
       await connection.query('SELECT id FROM projects WHERE id=$1 FOR UPDATE', [projectId]);
       const duplicate = await first(
         connection,
@@ -414,7 +417,7 @@ export class ProjectService {
     });
   }
 
-  // Each grant is audited as PUT /projects/:p/members/:userId audits it.
+  // 付与ごとに、PUT /projects/:p/members/:userIdと同じ形で監査に記録する。
   private async grantInitialMembers(
     connection: Connection,
     creation: { grants: readonly ProjectMemberGrant[]; draft: AuditEventDraft },

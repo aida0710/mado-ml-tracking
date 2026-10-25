@@ -22,7 +22,7 @@ interface PluginDelivery {
   plugin: PluginConnectionRecord;
 }
 
-/** Sends plugin_outbox events to each Project's plugin connections. Retries without a limit. */
+/** plugin_outboxのイベントを、各Projectのpluginの接続へ送る。回数の上限なしに再試行する。 */
 export class OutboxDispatcher {
   private readonly outbox: LeasedOutbox;
   private readonly loop: PollingLoop;
@@ -65,7 +65,7 @@ export class OutboxDispatcher {
           [leaseSeconds],
         );
         if (!delivery) return undefined;
-        // Serialize the claim with plugin edits; already claimed HTTP calls can finish.
+        // claimとpluginの編集を同時に進めない。既にclaimしたHTTPの呼び出しは最後まで進めてよい。
         const plugin = await first<PluginConnectionRecord>(
           connection,
           `SELECT * FROM plugin_connections WHERE id=$1 AND enabled FOR SHARE SKIP LOCKED`,

@@ -54,7 +54,7 @@ describe.skipIf(!testDatabaseUrl)('Projectの完全な削除（独立PostgreSQL�
     return found.rows;
   }
 
-  /** Rows of each purged table that belong to the Project, by the purge's own conditions. */
+  /** 完全削除する各表のうち、そのProjectに属する行。完全削除自身の条件で数える。 */
   async function rowCounts(projectId: string): Promise<Record<string, number>> {
     const counts: Record<string, number> = {};
     for (const step of PROJECT_PURGE_STEPS) {
@@ -86,10 +86,9 @@ describe.skipIf(!testDatabaseUrl)('Projectの完全な削除（独立PostgreSQL�
   }
 
   /**
-   * A Project with rows in the tables that need care: history that only a purge may delete
-   * (checkpoints, resume events, alias events, report revisions), rows without project_id
-   * (metrics, logs, aliases), a pending Artifact deletion, a canceled Job, Service Account and
-   * Project-limited tokens, and a group binding.
+   * 注意の要る表に行を持つProject。完全削除でしか消せない履歴（checkpoint、再開のイベント、
+   * aliasのイベント、レポートのバージョン）、project_idの無い行（メトリクス、ログ、alias）、
+   * 削除待ちのArtifact、止めたJob、Service AccountのtokenとProject限定のtoken、group binding。
    */
   async function populatedProject() {
     const fixture = await executionFixture(harness);
@@ -237,7 +236,7 @@ describe.skipIf(!testDatabaseUrl)('Projectの完全な削除（独立PostgreSQL�
     return { ...fixture, robot };
   }
 
-  /** Another Project with a Run, a metric and an Artifact, which a purge must not touch. */
+  /** Run、メトリクス、Artifactを持つ別のProject。完全削除はこれに触れてはいけない。 */
   async function bystanderProject() {
     const fixture = await projectFixture(harness);
     const run = await entity<Run>(
@@ -282,21 +281,21 @@ describe.skipIf(!testDatabaseUrl)('Projectの完全な削除（独立PostgreSQL�
   it('削除する行を指す外部キーは削除の対象の表からだけで、commitまで検査を遅らせられる', async () => {
     const keys = await foreignKeys();
     const intoPurged = keys.filter((key) => PURGED_TABLES.has(key.parent));
-    // A row outside the purge (a kept table) pointing at a purged row would block the commit; only
-    // an ON DELETE CASCADE child may be left to the database.
+    // 完全削除の外（残す表）の行が消す行を指していると、コミットが止まる。データベースに任せて
+    // よいのはON DELETE CASCADEの子だけ。
     expect(
       intoPurged
         .filter((key) => !PURGED_TABLES.has(key.child) && key.onDelete !== 'c')
         .map((key) => `${key.child}.${key.name}`),
     ).toEqual([]);
-    // Rows of a Project reference each other in cycles; the purge needs every check deferrable.
+    // Projectの行は循環して参照し合うので、完全削除にはすべての検査が遅延可能である必要がある。
     expect(intoPurged.filter((key) => !key.deferrable).map((key) => key.name)).toEqual([]);
   });
 
   it('削除の対象の表へ向かう外部キーには、参照する列で引ける索引がある', async () => {
-    // Without one, each deferred check of the purge reads the whole referencing table (056). An
-    // index serves the key when its leading columns are the key's columns in any order, or when
-    // it starts with the key's first column (the referencing id).
+    // 索引が無いと、完全削除の遅延した検査のたびに参照する側の表全体を読む（056）。索引の先頭の
+    // 列が順不同でキーの列と一致するか、索引がキーの最初の列（参照する側のid）から始まれば、
+    // その索引がキーに使われる。
     const unindexed = await harness.database.query<{ name: string }>(
       `SELECT c.conrelid::regclass::text || '.' || c.conname AS name FROM pg_constraint c
       WHERE c.contype='f' AND c.connamespace=current_schema()::regnamespace
@@ -357,13 +356,13 @@ describe.skipIf(!testDatabaseUrl)('Projectの完全な削除（独立PostgreSQL�
         })
       ).status,
     ).toBe(204);
-    // Archived is not enough: history rows still refuse to be deleted outside a purge.
+    // アーカイブだけでは足りない。履歴の行は、完全削除の外では削除を拒み続ける。
     await expect(
       harness.database.query('DELETE FROM model_alias_events WHERE project_id=$1', [projectId]),
     ).rejects.toMatchObject({ code: '23514' });
     expect((await purge(projectId, purged.administrator.cookie)).status).toBe(204);
 
-    // Every row of the purged Project is gone, and the other Project still has all of its rows.
+    // 完全削除したProjectの行はすべて消え、もう一方のProjectの行はすべて残っている。
     expect(await totalCounts()).toEqual(bystanderRows);
     expect(await rowCounts(bystander.project.id)).toEqual(bystanderRows);
     const tombstone = await harness.database.query(
@@ -397,7 +396,7 @@ describe.skipIf(!testDatabaseUrl)('Projectの完全な削除（独立PostgreSQL�
       },
     });
 
-    // Gone for the administrators too: not listed, not restorable, not purgeable twice.
+    // 管理者からも消えている。一覧に出ず、戻せず、2回目の完全削除もできない。
     const listed = await entity<{ items: AdminProject[] }>(
       await request(harness.app, '/api/admin/projects?includeArchived=true', {
         cookie: purged.administrator.cookie,
@@ -415,7 +414,7 @@ describe.skipIf(!testDatabaseUrl)('Projectの完全な削除（独立PostgreSQL�
     ).toBe(404);
     expect((await purge(projectId, purged.administrator.cookie)).status).toBe(404);
 
-    // The blobs wait out the grace period like deleted Artifacts, then the collector removes them.
+    // blobは削除したArtifactと同じく猶予期間を待ち、そのあとガベージコレクタが消す。
     const collector = harness.artifactGarbageCollector;
     expect(await collector.collect(new Date())).toMatchObject({ removedBlobs: 0 });
     for (const key of purgedKeys) expect(await blobExists(key)).toBe(true);

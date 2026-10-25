@@ -30,7 +30,7 @@ import {
 } from '../http/request.js';
 import { requestMetadata } from '../http/requestMetadata.js';
 
-// Clients from before checkpoints send the retry without a body; that means "from scratch".
+// checkpointに対応する前のクライアントは、本文なしで再試行を送る。これは「最初から」の意味。
 async function retryRequestBody(context: ApiContext): Promise<JobRetryInput> {
   const declaredLength = context.req.header('content-length');
   if (!context.req.header('content-type') && (!declaredLength || declaredLength === '0')) return {};
@@ -47,7 +47,7 @@ export function targetRoutes(targets: TargetService): Hono<ApiEnvironment> {
       ),
     }),
   );
-  // Ahead of every /:id route; a GET /:id added later must come after it.
+  // どの/:idの経路よりも前に置く。あとで足すGET /:idは、これより後ろに置く。
   routes.get('/overview', async (context) =>
     context.json({ items: await targets.overview(principal(context)) }),
   );
@@ -117,7 +117,7 @@ export function jobRoutes(jobs: JobService): Hono<ApiEnvironment> {
   return routes;
 }
 
-// Mounted at /api: project members see their project's workers, global administrators see all.
+// /apiに置く。Projectのメンバーは自分のProjectのworkerを、全体管理者はすべてを見られる。
 export function workerPresenceRoutes(worker: WorkerService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.get('/projects/:p/workers', async (context) =>

@@ -3,9 +3,9 @@ import { z } from 'zod';
 import { runSearchSchema } from '../routes/runSearchRoutes.js';
 import { uuidSchema } from './validation.js';
 
-// MLflow accepts metric keys up to 250 characters, longer than native metric names.
+// MLflowはメトリクスのkeyを250文字まで受け付け、ネイティブのメトリクス名より長い。
 const MAX_METRIC_KEY_LENGTH = 250;
-// MLflow param keys are bounded at 250 characters as well.
+// MLflowのparameterのkeyも250文字まで。
 const MAX_PARAM_KEY_LENGTH = 250;
 
 const uniqueKeys = (keyLength: number) =>
@@ -14,9 +14,8 @@ const uniqueKeys = (keyLength: number) =>
     .refine((keys) => new Set(keys).size === keys.length, 'keys must be unique');
 
 /**
- * runIds has no element limit here: more than ANALYSIS_MAX_RUNS is answered with the same
- * 422 too_many_runs as a search or sweep that matches too many. The JSON body limit bounds
- * parsing.
+ * ここではrunIdsの要素数に上限を置かない。ANALYSIS_MAX_RUNSを超えたら、条件に合うRunが多すぎる
+ * 検索やSweepと同じ422 too_many_runsを返す。パースの量はJSONの本文の上限で抑える。
  */
 const runSetSchema = z.union([
   z.strictObject({
@@ -25,7 +24,7 @@ const runSetSchema = z.union([
       .min(1)
       .refine((ids) => new Set(ids).size === ids.length, 'runIds must be unique'),
   }),
-  // The analysis reads every matching Run, so paging conditions do not apply.
+  // 分析では条件に合うRunをすべて読むので、ページ送りの条件は使わない。
   z.strictObject({ search: runSearchSchema.omit({ limit: true, cursor: true }) }),
   z.strictObject({ sweepId: uuidSchema }),
 ]);

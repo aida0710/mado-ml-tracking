@@ -33,12 +33,12 @@ import {
   type IncompleteMultipartUpload,
 } from './artifactTypes.js';
 
-// Two parts in flight bound streaming upload memory to twice the part size.
+// 同時に送るパートを2つにして、ストリーミングのアップロードのメモリをパートの大きさの2倍に抑える。
 const MULTIPART_CONCURRENCY = 2;
-// S3 refuses a single PutObject above 5 GiB; larger Artifacts need multipart.
+// S3は5GiBを超える1回のPutObjectを拒む。それより大きいArtifactにはmultipartが要る。
 export const MAX_SINGLE_PUT_BYTES = 5 * 1024 * 1024 * 1024;
 
-/** A single PUT would exceed what S3 accepts, and multipart is disabled for the backend. */
+/** 1回のPUTではS3が受け付ける大きさを超え、しかもその保存先ではmultipartが無効になっている。 */
 export class SinglePutTooLargeError extends Error {
   constructor() {
     super(`Artifact exceeds the ${MAX_SINGLE_PUT_BYTES}-byte limit of a single S3 PUT`);
@@ -68,11 +68,14 @@ export function createS3ArtifactStore({
   client: S3Client;
   bucket: string;
   prefix?: string;
-  /** Part size of streamed single-request uploads; upload sessions choose their own part size. */
+  /**
+   * 1リクエストで流すアップロードのパートの大きさ。アップロードセッションはパートの大きさを
+   * 自分で決める。
+   */
   multipartPartSizeBytes?: number;
   /**
-   * false sends every put() as one PutObject and offers no multipart store, so upload sessions
-   * are refused for the backend. For S3-compatible services whose multipart API fails.
+   * falseにすると、put()をすべて1回のPutObjectで送り、multipartのstoreを提供しない。そのため、
+   * この保存先ではアップロードセッションを拒む。multipartのAPIが失敗するS3互換サービス向け。
    */
   multipartEnabled: boolean;
 }): ArtifactStore {
@@ -96,9 +99,9 @@ export function createS3ArtifactStore({
     },
     async putPart({ key, backendUploadId, partNumber, body, size, sha256 }) {
       const check = new ArtifactPartCheck({ size, sha256 });
-      // The SDK wraps the body in streams of its own that rethrow a body error as an uncaught
-      // exception, and it keeps waiting for a body that ended short. So the SDK reads a separate
-      // stream that never errors, and a size mismatch or broken source aborts the request instead.
+      // SDKは本文を自前のstreamで包み、本文のエラーを捕捉されない例外として投げ直す。また、途中で
+      // 終わった本文を待ち続ける。そのため、SDKにはエラーを出さない別のstreamを読ませ、大きさの
+      // 不一致や元のstreamの破損があればリクエストを中止する。
       const forwarded = new PassThrough();
       const request = new AbortController();
       let streamError: unknown;
@@ -121,7 +124,8 @@ export function createS3ArtifactStore({
           { abortSignal: request.signal },
         );
         if (!uploaded.ETag) throw new Error('S3 did not return a part ETag');
-        // A digest mismatch leaves this part stored; the caller must not complete with it.
+        // digestが一致しなくても、このパートは保存されたまま残る。呼び出し側はこのパートで
+        // 完了しないこと。
         return { ...check.finishCheck(), etag: uploaded.ETag };
       } catch (error) {
         check.destroy();
@@ -190,13 +194,14 @@ export function createS3ArtifactStore({
       } while (keyMarker);
       return uploads;
     },
-    // S3 never exposes partial objects; interrupted writes remain only as incomplete uploads.
+    // S3は書きかけのオブジェクトを見せない。中断した書き込みは未完了のアップロードとしてだけ残る。
     removeAbandonedStaging: async () => 0,
   };
 
   /**
-   * Streams small objects as one PutObject and larger ones as a multipart upload. On failure the
-   * AbortMultipartUpload is sent and awaited before rejecting, so no parts outlive the request.
+   * 小さなオブジェクトは1回のPutObjectで、大きなものはmultipartアップロードで流す。失敗したら
+   * AbortMultipartUploadを送って終わるのを待ってからrejectするので、リクエストの後にパートが
+   * 残らない。
    */
   async function putObject(key: string, body: Readable, mimeType: string) {
     const digest = createHash('sha256');
@@ -216,7 +221,7 @@ export function createS3ArtifactStore({
           parts.push({ partNumber, size: bytes.length, etag });
         })
         .finally(() => inFlight.delete(sending));
-      // Failures surface through the race or the final Promise.all, not as unhandled rejections.
+      // 失敗はraceか最後のPromise.allから伝わる。unhandled rejectionにはしない。
       sending.catch(() => undefined);
       inFlight.add(sending);
       if (inFlight.size >= MULTIPART_CONCURRENCY) await Promise.race(inFlight);
@@ -259,8 +264,8 @@ export function createS3ArtifactStore({
   }
 
   /**
-   * PutObject needs the length before sending, and Artifacts can be far larger than memory, so the
-   * body is spooled to a temporary file first. The file is removed whether or not the PUT succeeds.
+   * PutObjectは送る前に長さが要り、Artifactはメモリよりはるかに大きいことがあるので、本文を先に
+   * 一時ファイルへ書き出す。PUTが成功しても失敗しても、そのファイルは消す。
    */
   async function putSingleObject(key: string, body: Readable, mimeType: string) {
     const digest = createHash('sha256');

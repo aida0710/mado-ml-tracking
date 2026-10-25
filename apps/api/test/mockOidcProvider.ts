@@ -2,14 +2,14 @@ import { createServer } from 'node:http';
 import { createHash, randomBytes } from 'node:crypto';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
 
-// base64 of 32 bytes for MMT_SESSION_ENCRYPTION_KEY, which oidc and hybrid configurations require.
+// MMT_SESSION_ENCRYPTION_KEYに使う32バイトのbase64。oidcとhybridの設定で必須。
 export const TEST_SESSION_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString('base64');
 
 const BACKCHANNEL_LOGOUT_EVENT = 'http://schemas.openid.net/event/backchannel-logout';
-// Authentik's default access token lifetime is 5 minutes.
+// Authentikのaccess tokenの既定の有効期間は5分。
 const DEFAULT_ACCESS_TOKEN_LIFETIME_SECONDS = 300;
 
-// Fields of a back-channel logout token; tests break one at a time to check the validation.
+// back-channel logout tokenの項目。テストでは1つずつ壊して検証を確かめる。
 export interface MockLogoutToken {
   subject?: string;
   sid?: string;
@@ -22,7 +22,7 @@ export interface MockLogoutToken {
   signWithWrongKey?: boolean;
 }
 
-// ID token claims the provider returns. Tests swap them to act as different IdP accounts.
+// providerが返すID tokenのclaim。テストではこれを差し替えて、IdPの別のアカウントとして振る舞う。
 export interface MockOidcClaims {
   subject: string;
   email: string | undefined;
@@ -58,12 +58,12 @@ export async function startMockOidcProvider() {
   let refreshRequests = 0;
   let userInfoRequests = 0;
   let claims: MockOidcClaims = { ...DEFAULT_CLAIMS };
-  // Token value -> subject it was issued to. Removing an entry is how the IdP revokes it.
+  // tokenの値から、発行先のsubjectへの対応。項目を消すことでIdPがtokenを失効させる。
   const accessTokens = new Map<string, string>();
   const refreshTokens = new Map<string, string>();
   let issuesRefreshTokens = true;
   let accessTokenLifetimeSeconds = DEFAULT_ACCESS_TOKEN_LIFETIME_SECONDS;
-  // While true the UserInfo and token endpoints drop the connection, as if the IdP were down.
+  // trueの間は、IdPが落ちているかのように、UserInfoとtokenのエンドポイントが接続を切る。
   let isUnavailable = false;
   let lastSid: string | null = null;
   const issueTokens = (subject: string) => {
@@ -154,7 +154,7 @@ export async function startMockOidcProvider() {
           if (isUnavailable) return request.socket.destroy();
           const refreshToken = body.get('refresh_token') ?? '';
           const subject = refreshTokens.get(refreshToken);
-          // Rotation as in Authentik: a refresh token works once.
+          // Authentikと同じローテーション。refresh tokenは1回しか使えない。
           refreshTokens.delete(refreshToken);
           if (!subject) return json({ error: 'invalid_grant' }, 400);
           return json(issueTokens(subject));
@@ -221,21 +221,21 @@ export async function startMockOidcProvider() {
     get userInfoRequests() {
       return userInfoRequests;
     },
-    // The sid of the most recent ID token, which back-channel logout tokens may name.
+    // 最新のID tokenのsid。back-channel logout tokenがこれを指すことがある。
     get lastSid() {
       return lastSid;
     },
     unavailable(value: boolean) {
       isUnavailable = value;
     },
-    // false acts as an IdP without offline_access: no refresh token is issued.
+    // falseにするとoffline_accessの無いIdPとして振る舞い、refresh tokenを発行しない。
     issueRefreshTokens(value: boolean) {
       issuesRefreshTokens = value;
     },
     accessTokenLifetime(seconds: number) {
       accessTokenLifetimeSeconds = seconds;
     },
-    // As when the user signs out at the IdP: issued tokens stop working.
+    // 利用者がIdPでサインアウトしたときと同じく、発行済みのtokenが使えなくなる。
     revokeAllTokens() {
       accessTokens.clear();
       refreshTokens.clear();
@@ -264,14 +264,14 @@ export async function startMockOidcProvider() {
     wrongSignature(value: boolean) {
       shouldSignWithWrongKey = value;
     },
-    // Changes apply to the next token response; resetClaims returns to the default account.
+    // 変更は次のtokenの応答から効く。resetClaimsで既定のアカウントに戻る。
     setClaims(change: Partial<MockOidcClaims>) {
       claims = { ...claims, ...change };
     },
     resetClaims() {
       claims = { ...DEFAULT_CLAIMS };
     },
-    // Back to a healthy IdP that issues refresh tokens, for test isolation.
+    // テスト同士が影響し合わないよう、refresh tokenを発行する正常なIdPに戻す。
     resetBehavior() {
       isUnavailable = false;
       issuesRefreshTokens = true;

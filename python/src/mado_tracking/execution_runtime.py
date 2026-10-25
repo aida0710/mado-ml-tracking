@@ -1,4 +1,4 @@
-"""CodeVersion runtime types and validation shared by the SDK and compute runner."""
+"""SDKとコンピュータのrunnerが共有する、CodeVersionのruntimeの型と検証。"""
 
 from __future__ import annotations
 

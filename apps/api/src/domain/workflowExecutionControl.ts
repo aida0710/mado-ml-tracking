@@ -3,9 +3,9 @@ import { DomainError } from './errors.js';
 import { controlsStartedWork } from './startedWorkControl.js';
 
 /**
- * Stopping a workflow execution, or resuming from it, belongs to the person who started it and to
- * Project admins, as with Jobs and Sweeps (controlsStartedWork): resuming replaces retrying the
- * step's Job, which only they may do.
+ * ワークフローの実行を止める・そこから再開するのは、JobやSweepと同じく（controlsStartedWork）、
+ * 始めた人とProject adminだけ。再開はステップのJobの再試行の代わりになり、再試行もその人たち
+ * しかできないため。
  */
 export function assertControlsWorkflowExecution(
   caller: { role: ProjectRole; userId: string },

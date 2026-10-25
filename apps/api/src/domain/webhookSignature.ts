@@ -4,7 +4,7 @@ import {
   type HookWebhookSignature,
 } from '@mmt/contracts';
 
-// The headers each signature style sends (GitHub's documented names, and this API's own).
+// 署名の方式ごとに送られるヘッダー（GitHubが文書化している名前と、このAPI独自のもの）。
 export const WEBHOOK_HEADERS = {
   github: { signature: 'x-hub-signature-256', delivery: 'x-github-delivery' },
   mmt: { signature: 'x-mmt-signature', delivery: 'x-mmt-delivery' },
@@ -21,9 +21,9 @@ function sameHex(expected: string, received: string): boolean {
 }
 
 /**
- * github: `X-Hub-Signature-256: sha256=<hex HMAC-SHA256(secret, body)>`.
- * mmt: `X-MMT-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256(secret, "<t>.<body>")>`, with the
- * timestamp within the tolerance so a captured request cannot be replayed later.
+ * github: `X-Hub-Signature-256: sha256=<hex HMAC-SHA256(secret, body)>`。
+ * mmt: `X-MMT-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256(secret, "<t>.<body>")>`。
+ * 時刻は許容範囲内でなければならないので、傍受したリクエストを後から再送できない。
  */
 export function verifyWebhookSignature(request: {
   style: HookWebhookSignature;

@@ -2,11 +2,11 @@ import type { TargetCheckWorker, TargetCheckWorkerPresence } from '@mmt/contract
 import { first, rows, type Connection } from '../db/database.js';
 import { workerOfflineSql } from '../domain/workerLiveness.js';
 
-// A worker host or two per site; the dialog lists them in one dropdown.
+// workerのホストはsiteごとに1、2台で、ダイアログはそれを1つのドロップダウンに並べる。
 const MAX_CHECK_WORKERS = 100;
 
-// Online, reporting its SSH files (so it claims what is assigned to it), and still holding a live
-// token: a worker one may ask to check a computer.
+// オンラインで、SSHのファイルを報告していて（つまり割り当てられたものをclaimする）、まだ有効な
+// tokenを持っている。これがコンピュータの確認を頼めるworkerの条件。
 const checkWorkerConditionSql = `NOT ${workerOfflineSql('w')}
   AND t.revoked_at IS NULL AND (t.expires_at IS NULL OR t.expires_at > now())`;
 

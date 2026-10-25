@@ -76,13 +76,13 @@ def test_batch_lines_are_flushed_each_time_and_fsynced_every_fifty_lines(no_netw
 
     for step in range(SPOOL_FSYNC_EVERY * 2 + 10):
         run.log_metrics({"loss": 1.0}, step=step)
-        # Flushed: another reader already sees every line written so far.
+        # flush済み: 別の読み手には、ここまで書いたすべての行が既に見える。
         batch_file = list_batches(run.offline_directory)[0].path
         assert batch_file.read_text().count("\n") == step + 1
 
     assert len(fsync_calls) == 2
     run.finish()
-    # Closing the batch and writing status.json each fsync once more.
+    # バッチを閉じるときとstatus.jsonを書くときに、それぞれもう1回fsyncする。
     assert len(fsync_calls) == 4
 
 

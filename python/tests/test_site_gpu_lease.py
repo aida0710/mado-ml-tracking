@@ -1,4 +1,5 @@
-"""GPU leasing on hosts without a scheduler: free GPUs, live leases and Mado containers."""
+"""スケジューラなしのホストでのGPUのlease: 空いているGPU、生きているlease、mado ML Trackingの
+Jobのコンテナ。"""
 
 from __future__ import annotations
 
@@ -75,7 +76,7 @@ def test_live_leases_and_mado_containers_keep_gpus_busy_until_released(tmp_path)
     host = Host("0, GPU-aaa\n1, GPU-bbb\n2, GPU-ccc\n", containers='"running"\t[{"DeviceIDs":["2"]}]\n')
     first, second, third = (leases(tmp_path, host, f"job-{name}") for name in "abc")
     assert first.try_acquire(1) == ["0"]
-    # GPU 2 is held by a container that outlived its runner.
+    # GPU 2は、runnerが終わったあとも残ったコンテナが持っている。
     assert second.try_acquire(1) == ["1"]
     assert third.try_acquire(1) is None
     first.release()

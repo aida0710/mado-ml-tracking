@@ -1,4 +1,5 @@
-"""The site runner on a direct Docker host with a real daemon; opt in with MMT_TEST_DOCKER_IMAGE."""
+"""スケジューラなしのDockerホストで、実際のデーモンを使うsiteのrunner。
+MMT_TEST_DOCKER_IMAGEを設定すると動く。"""
 
 from __future__ import annotations
 

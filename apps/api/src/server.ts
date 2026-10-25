@@ -23,8 +23,8 @@ const {
   config,
   database,
 });
-// Background tasks share the server lifetime; stop() waits for the run in progress.
-// The garbage collector runs the artifact upload sweeper as part of each collection.
+// バックグラウンドの処理はサーバーと同じ期間動く。stop()は実行中の1回を待つ。
+// garbage collectorは、毎回の回収の一部としてArtifactのアップロードのsweeperを動かす。
 const backgroundTasks = [
   outbox,
   automationSweeper,
@@ -43,7 +43,7 @@ const server = serve(
     fetch: app.fetch,
     hostname: config.host,
     port: config.port,
-    // Node's default 5-minute requestTimeout would cut long single-PUT artifact uploads.
+    // Nodeの既定のrequestTimeout（5分）では、1回のPUTで送る長いArtifactのアップロードが切れる。
     serverOptions: timeouts.serverOptions,
   },
   (address) => console.log(`API listening on ${config.host}:${address.port}`),

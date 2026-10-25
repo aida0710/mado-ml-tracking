@@ -1,54 +1,57 @@
 /**
- * Where an alias change came from. version_deleted / model_deleted are removals the server
- * makes because the target ModelVersion or Registered Model was deleted through MLflow.
+ * aliasの変更の出どころ。version_deletedとmodel_deletedは、対象のModelVersionか登録モデルが
+ * MLflowで削除されたために、サーバーが行う取り外し。
  */
 export type ModelAliasEventSource =
   'web' | 'api' | 'mlflow' | 'promotion_policy' | 'version_deleted' | 'model_deleted';
 
-/** One append-only alias change. versionId null is a removal; previousVersionId null is a first assignment. */
+/**
+ * 追記だけのaliasの変更1件。versionIdがnullなら取り外し、previousVersionIdがnullなら最初の
+ * 割り当て。
+ */
 export interface ModelAliasEvent {
   id: string;
   projectId: string;
   modelId: string;
   alias: string;
   previousVersionId: string | null;
-  /** Version label of previousVersionId, e.g. "3". */
+  /** previousVersionIdのバージョン名（"3"など）。 */
   previousVersion: string | null;
   versionId: string | null;
   version: string | null;
   source: ModelAliasEventSource;
   reason: string;
   promotionEvaluationId: string | null;
-  /** null for changes made without a user (the migration snapshot and system-driven changes). */
+  /** ユーザーによらない変更（migrationが記録したスナップショットと、システムの変更）ではnull。 */
   actor: { userId: string; displayName: string; tokenId: string | null } | null;
   createdAt: string;
 }
 
-/** One keyset page of alias events, newest first. nextCursor is the id to pass as `cursor` next. */
+/** aliasの変更のkeysetページングの1ページ（新しい順）。nextCursorは次に`cursor`として渡すid。 */
 export interface ModelAliasEventPage {
   items: ModelAliasEvent[];
   nextCursor: string | null;
 }
 
-/** Body of PUT /projects/:p/models/:id/aliases/:alias. */
+/** PUT /projects/:p/models/:id/aliases/:aliasの本文。 */
 export interface ModelAliasAssignment {
   versionId: string;
   reason?: string;
   /**
-   * A passed promotion decision for this alias and version, recorded as the change's evidence.
-   * Required for an alias protected with requirePassedEvaluation.
+   * このaliasとバージョンについての、合格した昇格の判定。変更の根拠として記録する。
+   * requirePassedEvaluationで保護したaliasでは必須。
    */
   evaluationId?: string;
 }
 
-/** The weakest current Project role that may change a protected alias by hand. */
+/** 保護したaliasを手で変更できる、今のProjectのroleのうち最も弱いもの。 */
 export type ModelAliasProtectionRole = 'editor' | 'admin';
 
 /**
- * Restricts manual changes of an alias. modelId null protects the alias on every Model of the
- * Project; when a Project-wide and a Model protection both match, the stricter setting of each
- * applies. Changes through the MLflow-compatible API are always rejected (PERMISSION_DENIED)
- * because they cannot carry a reason or a promotion decision.
+ * aliasの手動の変更を制限する。modelIdがnullなら、Projectのすべての登録モデルでそのaliasを
+ * 保護する。Project全体と登録モデルの保護の両方が一致したときは、項目ごとに厳しい方を
+ * 適用する。MLflow互換のAPIからの変更は、理由も昇格の判定も渡せないので常に拒む
+ * （PERMISSION_DENIED）。
  */
 export interface ModelAliasProtection {
   id: string;
@@ -56,7 +59,7 @@ export interface ModelAliasProtection {
   modelId: string | null;
   alias: string;
   requiredRole: ModelAliasProtectionRole;
-  /** A manual assignment must name a passed decision (evaluationId) for this alias and version. */
+  /** 手動の割り当てには、このaliasとバージョンについての合格した判定（evaluationId）が要る。 */
   requirePassedEvaluation: boolean;
   createdBy: string;
   createdAt: string;
@@ -64,7 +67,7 @@ export interface ModelAliasProtection {
   updatedAt: string;
 }
 
-/** Body of PUT /projects/:p/alias-protections/:alias?modelId=. */
+/** PUT /projects/:p/alias-protections/:alias?modelId=の本文。 */
 export interface ModelAliasProtectionInput {
   requiredRole: ModelAliasProtectionRole;
   requirePassedEvaluation?: boolean;

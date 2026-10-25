@@ -12,22 +12,22 @@ import {
   type ArtifactStore,
   type StorageBackendConfigInput,
 } from '@mmt/platform';
-// Test-only oracle: the proxy recomputes each signature from the bytes that reached it.
+// テストでだけ使う正解の計算。プロキシは、届いたバイト列から各署名を計算し直す。
 import { signatureV2Authorization } from '../../../packages/platform/src/s3SignatureV2.js';
 import { createApplication } from '../src/app.js';
 import { parseSecretKey } from '../src/security/secretEncryption.js';
 import { createHarness, entity, login, request, testDatabaseUrl, type Harness } from './harness.js';
 
 const s3Endpoint = process.env.MMT_TEST_S3_ENDPOINT;
-// When set, the observed requests (method, subresources, Authorization scheme) are written here.
+// 設定すると、観測したリクエスト（メソッド、subresource、Authorizationの方式）をここに書く。
 const recordPath = process.env.MMT_TEST_S3_V2_RECORD;
-// These values authenticate only to the isolated emulator, never to real storage. The SDK adds
-// attribution fields to a credentials object it is given, so every caller gets its own copy.
+// この値で認証できるのは隔離したエミュレータだけで、本物のストレージには使えない。SDKは
+// 渡された認証情報のオブジェクトに帰属情報の項目を足すので、呼び出しごとに別の複製を渡す。
 const credentials = () => ({ accessKeyId: 'testing', secretAccessKey: 'testing' });
 const MIB = 1024 * 1024;
-// S3 requires every part but the last to be at least 5 MiB.
+// S3では、最後以外のpartはどれも5 MiB以上でなければならない。
 const PART_SIZE = 5 * MIB;
-// Moto takes several seconds per multi-MiB part on a loaded machine.
+// 負荷の高いマシンでは、Motoは数MiBのpart 1つに数秒かかる。
 const MULTIPART_TEST_TIMEOUT_MS = 120_000;
 
 interface ObservedRequest {
@@ -44,8 +44,8 @@ function decodedQuery(search: URLSearchParams): Record<string, string> {
 }
 
 /**
- * Forwards to the emulator and records what each request carried. Moto does not check signatures,
- * so the proxy recomputes the v2 signature from the received method, path, query and headers.
+ * エミュレータへ転送し、各リクエストが運んだものを記録する。Motoは署名を検査しないので、
+ * プロキシが受け取ったメソッド、パス、クエリ、ヘッダーからv2の署名を計算し直す。
  */
 function startRecordingProxy(target: URL, observed: ObservedRequest[]): Promise<http.Server> {
   const server = http.createServer((incoming, outgoing) => {

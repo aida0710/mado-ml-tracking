@@ -33,7 +33,7 @@ function hasMediaTools(): boolean {
 const mediaToolsInstalled = hasMediaTools();
 const installedTools: PreviewTools = { ffmpegPath: 'ffmpeg', ffprobePath: 'ffprobe', timeoutMs: TOOL_TIMEOUT_MS };
 
-/** Encodes test media with the local ffmpeg; the files are tiny and generated from lavfi sources. */
+/** 手元のffmpegでテスト用のメディアを作る。lavfiの入力から作るごく小さなファイル。 */
 async function encodeFixture(directory: string, fileName: string, args: string[]): Promise<Buffer> {
   const output = path.join(directory, fileName);
   execFileSync('ffmpeg', ['-v', 'error', ...args, '-y', output], { stdio: 'ignore' });
@@ -128,7 +128,7 @@ describe.skipIf(!testDatabaseUrl)('長い音声・動画のサーバー側previe
       expect(peaks).toMatchObject({ version: 1, sampleRate: 44100 });
       expect(peaks.min.length).toBe(peaks.max.length);
       expect(peaks.min.length).toBeGreaterThan(0);
-      // A 440 Hz tone at ffmpeg's default amplitude (1/8) peaks well above silence.
+      // ffmpegの既定の振幅（1/8）の440 Hzの音は、無音より十分に大きいピークになる。
       expect(Math.max(...peaks.max)).toBeGreaterThan(0.1);
       expect(peaks.durationSeconds).toBeGreaterThan(1.9);
 
@@ -143,7 +143,7 @@ describe.skipIf(!testDatabaseUrl)('長い音声・動画のサーバー側previe
         channels: 2,
         bitsPerSample: null,
       });
-      // The generated files are Artifacts of the same Project without a Run.
+      // 作られたファイルは、同じProjectの、Runに属さないArtifactになる。
       const {
         rows: [stored],
       } = await harness.database.query<{ run_id: string | null; path: string; project_id: string }>(
@@ -155,9 +155,9 @@ describe.skipIf(!testDatabaseUrl)('長い音声・動画のサーバー側previe
         path: `.previews/${artifact.id}/spectrogram.png`,
         project_id: fixture.project.id,
       });
-      // Preview files are not audio or video, so they queue nothing themselves.
+      // プレビューのファイルは音声でも動画でもないので、それ自体は何もキューに積まない。
       expect(await processor().processNext()).toBe(false);
-      // The Project's Artifact list shows the source but not the generated files.
+      // ProjectのArtifactの一覧には元のファイルが出て、作られたファイルは出ない。
       const catalog = await entity<{ items: Artifact[] }>(
         await request(harness.app, `${fixture.basePath}/artifacts`, { cookie: fixture.viewer.cookie }),
         200,
@@ -170,9 +170,9 @@ describe.skipIf(!testDatabaseUrl)('長い音声・動画のサーバー側previe
     const artifact = await entity<Artifact>(
       await upload('eval/sample.wav', waveFile({ sampleRate: 16000, channels: 1, frames: 16000 })),
     );
-    // A small WAV is analyzed in the browser, so nothing is queued for it.
+    // 小さなWAVはブラウザで解析するので、何もキューに積まれない。
     expect(await entity(await previews(artifact.id), 200)).toEqual({ items: [] });
-    // Stand in for a WAV over the browser limit, which registration would queue.
+    // ブラウザの上限を超えるWAVの代わり。そうしたWAVは登録時にキューに積まれる。
     await harness.database.query(
       `INSERT INTO artifact_previews(artifact_id,project_id,kind) VALUES($1,$2,'waveform-peaks')`,
       [artifact.id, fixture.project.id],
@@ -201,7 +201,7 @@ describe.skipIf(!testDatabaseUrl)('長い音声・動画のサーバー側previe
     const response = await content(artifact.id);
     expect(response.status).toBe(200);
     expect(Buffer.from(await response.arrayBuffer())).toEqual(broken);
-    // A deterministic failure is not retried.
+    // 何度やっても同じ結果になる失敗は再試行しない。
     expect(await processor().processNext()).toBe(false);
   });
 

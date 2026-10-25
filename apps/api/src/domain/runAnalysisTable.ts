@@ -4,7 +4,7 @@ import {
   type RunAnalysisParam,
   type RunAnalysisRange,
 } from '@mmt/contracts';
-// The importance calculation's rule, so the table and the importance agree on which params are numeric.
+// 重要度の計算と同じ規則を使い、どのparameterを数値とみなすかで表と重要度を一致させる。
 import { NUMERIC_STRING_PATTERN } from './analysis/parameterMatrix.js';
 
 export type RunParameters = Record<string, JsonValue>;
@@ -14,7 +14,7 @@ function hasValue(value: JsonValue | undefined): value is JsonValue {
 }
 
 function compareCodeUnits(left: string, right: string): number {
-  // localeCompare would depend on the server locale.
+  // localeCompareだとサーバーのロケールに左右される。
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
@@ -23,7 +23,7 @@ function isNumericValue(value: JsonValue): boolean {
   return typeof value === 'string' && NUMERIC_STRING_PATTERN.test(value.trim());
 }
 
-/** The string a categorical value is shown and grouped by, as parameterMatrix.ts compares them. */
+/** カテゴリの値を表示し、グループにまとめるときの文字列。parameterMatrix.tsの比べ方に合わせる。 */
 function categoryLabel(value: JsonValue): string {
   if (typeof value === 'string') return value;
   return typeof value === 'object' ? JSON.stringify(value) : String(value);
@@ -35,8 +35,8 @@ function coverageOf(runs: RunParameters[], key: string): number {
 }
 
 /**
- * The requested params, or every param with a value. When more than ANALYSIS_MAX_PARAMS have a
- * value, the best covered ones are kept (ties by name) and returned in name order.
+ * 求められたparameter、または値のあるすべてのparameter。値のあるものがANALYSIS_MAX_PARAMSより
+ * 多ければ、値のあるRunが多いものを残し（同数なら名前順）、名前順で返す。
  */
 export function selectAnalysisParams(
   runs: RunParameters[],
@@ -66,21 +66,21 @@ export function describeAnalysisParams(runs: RunParameters[], keys: string[]): R
   });
 }
 
-/** Keeps only the selected params that have a value. */
+/** 選んだparameterのうち、値のあるものだけを残す。 */
 export function pickParams(parameters: RunParameters, keys: string[]): RunParameters {
   return Object.fromEntries(
     keys.flatMap((key) => (hasValue(parameters[key]) ? [[key, parameters[key]]] : [])),
   );
 }
 
-/** PostgreSQL turns non-finite doubles into JSON strings when building latest_metrics. */
+/** PostgreSQLはlatest_metricsを作るとき、有限でないdoubleをJSONの文字列にする。 */
 export function parseLatestMetricValue(value: unknown): number | undefined {
   if (typeof value === 'number') return value;
   if (value === 'NaN' || value === 'Infinity' || value === '-Infinity') return Number(value);
   return undefined;
 }
 
-/** JSON has no NaN or infinity, so a logged but non-finite value becomes null. */
+/** JSONにはNaNも無限大も無いので、記録されていても有限でない値はnullにする。 */
 export function toResponseMetric(value: number): number | null {
   return Number.isFinite(value) ? value : null;
 }

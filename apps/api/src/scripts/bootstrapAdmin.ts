@@ -13,7 +13,7 @@ import {
   type PasswordHasher,
 } from '../auth/passwordHasher.js';
 
-// Same rule as the users.username CHECK in migration 010.
+// migration 010のusers.usernameのCHECKと同じ規則。
 const USERNAME_PATTERN = /^[a-z0-9][a-z0-9_.-]{0,63}$/;
 const CONTROL_C = '\u0003';
 const DELETE = '\u007f';
@@ -24,8 +24,8 @@ export interface BootstrapTerminal {
   output: Writable;
 }
 
-// Asks questions one line at a time. Characters typed ahead are kept for the next question.
-// Hidden questions switch the terminal to raw mode so it does not echo the password.
+// 質問を1行ずつ尋ねる。先に打たれた文字は次の質問のために取っておく。入力を隠す質問では
+// ターミナルをrawモードにして、パスワードを表示しないようにする。
 export function createPrompter(terminal: BootstrapTerminal) {
   const { input, output } = terminal;
   const pendingCharacters: string[] = [];
@@ -44,7 +44,7 @@ export function createPrompter(terminal: BootstrapTerminal) {
         while (pendingCharacters.length > 0) {
           const character = pendingCharacters.shift()!;
           if (character === '\r' || character === '\n') {
-            // A CRLF pair ends one line, not two.
+            // CRLFの組は2行ではなく1行の終わり。
             if (character === '\r' && pendingCharacters[0] === '\n') pendingCharacters.shift();
             deliver = undefined;
             return resolve(value);
@@ -99,12 +99,12 @@ export async function bootstrapAdministrator(options: {
   const user = await transaction(database, async (connection) => {
     const administrator = await upsertLocalAdministrator(connection, {
       username,
-      // users.email is required; a local placeholder keeps it out of real mail domains.
+      // users.emailは必須。ローカルの仮の値にして、実在のメールドメインにならないようにする。
       email: `${username}@localhost`,
       displayName: username,
       passwordHash,
     });
-    // Resetting a password ends every session that knew the previous one.
+    // パスワードをリセットしたら、前のパスワードでログインしたsessionをすべて終える。
     await connection.query(
       'UPDATE sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL',
       [administrator.id],
@@ -136,7 +136,7 @@ async function main(): Promise<void> {
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   main().catch((error: unknown) => {
-    // Only the message: errors from the database driver must not echo connection settings.
+    // メッセージだけを出す。データベースドライバのエラーに接続設定を表示させない。
     console.error(error instanceof Error ? error.message : 'Bootstrap failed');
     process.exitCode = 1;
   });

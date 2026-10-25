@@ -3,7 +3,7 @@ import { userSearchQuerySchema } from '../domain/validation.js';
 import { parse, principal, type ApiEnvironment } from '../http/request.js';
 import type { UserDirectoryService } from '../services/userDirectoryService.js';
 
-// Mounted at /api: GET /users and GET /auth/groups back the Project access settings.
+// /apiに置く。GET /usersとGET /auth/groupsは、Projectのアクセス設定の画面が使う。
 export function userRoutes(directory: UserDirectoryService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.get('/users', async (context) => {

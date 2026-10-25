@@ -1,4 +1,4 @@
-"""`mado-tracking submit --site <targetId>`: argument parsing and stopping for manual site submission."""
+"""`mado-tracking submit --site <targetId>`。siteの手動投入の、引数の解析と停止の扱い。"""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from .manual_submit import (
 )
 
 EXIT_CONFIGURATION_ERROR = 2
-# 128 + SIGINT, as a shell reports a command stopped by Ctrl-C.
+# 128 + SIGINT。Ctrl-Cで止まったコマンドをシェルが報告するときと同じ値。
 EXIT_INTERRUPTED = 130
 STOP_SIGNALS = (signal.SIGINT, signal.SIGTERM)
 
@@ -84,14 +84,14 @@ def watch_interval(arguments: argparse.Namespace) -> float:
         return DEFAULT_WATCH_INTERVAL_SECONDS
     if not arguments.watch:
         raise ConfigurationError("--interval goes with --watch")
-    # Written so that NaN is refused too.
+    # NaNも拒むように、この書き方にしている。
     if not arguments.interval >= MIN_WATCH_INTERVAL_SECONDS:
         raise ConfigurationError(f"--interval must be at least {MIN_WATCH_INTERVAL_SECONDS:g} (seconds)")
     return float(arguments.interval)
 
 
 def stop_on_signals(stop: threading.Event) -> None:
-    """The first SIGINT or SIGTERM ends the watch after its round; a second one stops at once."""
+    """最初のSIGINTかSIGTERMでは、その回を終えてから監視を終える。2回目ではすぐに止める。"""
     previous = {number: signal.getsignal(number) for number in STOP_SIGNALS}
 
     def handle(_number: int, _frame: FrameType | None) -> None:

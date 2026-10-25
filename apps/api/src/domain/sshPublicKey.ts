@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 import { DomainError } from './errors.js';
 
-// The launcher makes ed25519 keys only (ssh-keygen -t ed25519).
+// launcherはed25519の鍵だけを作る（ssh-keygen -t ed25519）。
 const KEY_TYPE = 'ssh-ed25519';
 const PUBLIC_KEY_LINE = /^(ssh-ed25519) ([A-Za-z0-9+/]+={0,2})(?: ([^\r\n\0]{0,300}))?$/;
-// An ed25519 key blob: the length-prefixed type name and the 32-byte key.
+// ed25519の鍵のblob。長さを前に付けた型名と、32バイトの鍵。
 const ED25519_KEY_BYTES = 32;
 
 function invalidPublicKey(): never {
@@ -24,8 +24,8 @@ function readString(blob: Buffer, offset: number): { value: Buffer; next: number
 }
 
 /**
- * Checks an OpenSSH public key line and returns it with its fingerprint as `ssh-keygen -l` prints
- * it (SHA256 of the key blob, base64 without padding).
+ * OpenSSHの公開鍵の行を検査し、`ssh-keygen -l`が出す形のfingerprint（鍵のblobのSHA256を
+ * パディングなしのbase64にしたもの）と一緒に返す。
  */
 export function parseSshPublicKey(line: string): { publicKey: string; fingerprint: string } {
   const match = PUBLIC_KEY_LINE.exec(line.trim());

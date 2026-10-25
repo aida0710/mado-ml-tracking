@@ -1,7 +1,6 @@
-"""What the worker tells the API about itself in workerInfo on claim and resume.
+"""取得と再開のときに、workerがworkerInfoでAPIに伝える自分自身の情報。
 
-Display and the choice of a worker for a computer's checks or a Job only; the API never authorizes
-by it.
+表示と、コンピュータの確認やJobにどのworkerを使うかの選択にだけ使う。APIはこれで認可を判断しない。
 """
 
 from __future__ import annotations
@@ -17,15 +16,15 @@ from ..errors import ConfigurationError
 from .capabilities import WORKER_CAPABILITIES
 from .ssh_files import find_ssh_files
 
-# The distribution name in pyproject.toml; its version is what operators compare across hosts.
+# pyproject.tomlのディストリビューション名。運用担当者はそのバージョンをホスト間で比べる。
 DISTRIBUTION_NAME = "mado-tracking"
-# A key someone just added shows up as a candidate within a minute, and a worker that claims every
-# second still lists its SSH directories only once a minute.
+# 誰かが追加した鍵は1分以内に候補に現れる。また、毎秒取得を行うworkerでも、
+# SSHのディレクトリの一覧を取るのは1分に1回だけ。
 SSH_FILE_SCAN_INTERVAL_SECONDS = 60.0
 
 
 def describe_host() -> dict[str, str]:
-    """The worker host's name and installed version."""
+    """workerホストの名前と、インストールされたバージョン。"""
     description: dict[str, str] = {"hostname": socket.gethostname()}
     try:
         description["version"] = metadata.version(DISTRIBUTION_NAME)

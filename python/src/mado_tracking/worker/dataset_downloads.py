@@ -1,8 +1,8 @@
-"""Target-side downloads of dataset files into a cache entry's data directory.
+"""データセットのファイルを、コンピュータ側のキャッシュのエントリのdataディレクトリへ取得する。
 
-Sources: a relayed tar from the worker, the API with the Job token ('direct' transfer), an
-unauthenticated HTTPS URL, and S3 with the target's own AWS_* environment. Runs inside the
-target runner bundle, so it uses the standard library only.
+取得元は、workerが中継するtar、Job tokenを使うAPI（'direct'転送）、認証の無いHTTPSのURL、
+コンピュータ自身のAWS_*環境変数を使うS3。コンピュータ用のrunnerのバンドルの中で動くので、
+標準ライブラリだけを使う。
 """
 
 from __future__ import annotations
@@ -25,23 +25,23 @@ from urllib.parse import quote, unquote, urlsplit
 from ..checkpoint_archive import is_safe_relative_path
 
 DOWNLOAD_CHUNK_BYTES = 1024 * 1024
-# A stalled socket fails the fetch instead of holding the Job's GPU reservation indefinitely.
+# ソケットが止まったら、JobのGPUの予約をいつまでも持ち続けずに取得を失敗させる。
 SOCKET_TIMEOUT_SECONDS = 60.0
-# Same bound as an 'artifacts' DatasetVersion (MAX_DATASET_VERSION_FILES in contracts).
+# 'artifacts'のDatasetVersionと同じ上限（contractsのMAX_DATASET_VERSION_FILES）。
 MAX_DATASET_FILES = 100_000
-# A URL whose path has no usable last segment is stored under this name.
+# パスの最後の要素が使えないURLは、この名前で保存する。
 DEFAULT_REFERENCE_FILE_NAME = "data"
 S3_NAMESPACE = "{http://s3.amazonaws.com/doc/2006-03-01/}"
 S3_DEFAULT_REGION = "us-east-1"
-# Bucket names that are valid DNS labels can use the virtual-hosted AWS endpoint.
+# DNSのラベルとして正しいバケット名は、AWSの仮想ホスト形式のエンドポイントを使える。
 S3_VIRTUAL_HOST_BUCKET = re.compile(r"^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$")
 S3_UNSIGNED_PAYLOAD = "UNSIGNED-PAYLOAD"
-# Only a reference digest in this form says which bytes the downloaded file must have.
+# ダウンロードしたファイルがどのバイト列であるべきかを示すのは、この形の参照のdigestだけ。
 SHA256_DIGEST = re.compile(r"^(?:sha256:)?([a-f0-9]{64})$")
 
 
 class DatasetFetchError(Exception):
-    """A dataset source refused or failed. `retryable` marks network and server-side failures."""
+    """データセットの取得元が拒んだか失敗した。`retryable`は通信とサーバー側の失敗を示す。"""
 
     def __init__(self, message: str, *, retryable: bool = False):
         super().__init__(message)
@@ -49,7 +49,7 @@ class DatasetFetchError(Exception):
 
 
 class _RefuseRedirect(urllib.request.HTTPRedirectHandler):
-    # A redirect could send the Job token, or the target's S3 signature, to another host.
+    # リダイレクトされると、Job tokenやコンピュータのS3の署名が別のホストに送られかねない。
     def redirect_request(self, *_arguments: Any, **_options: Any) -> None:
         raise DatasetFetchError("Dataset download refused an HTTP redirect")
 
@@ -115,7 +115,7 @@ def _download(
 
 
 def receive_relayed_tar(stream: IO[bytes], data_directory: Path, files: list[dict[str, Any]]) -> None:
-    """Extract the worker's tar of regular files; only the listed paths are accepted."""
+    """workerが送る通常ファイルのtarを展開する。一覧にあるパスだけを受け付ける。"""
     expected = {file["path"]: file for file in files}
     with tarfile.open(fileobj=stream, mode="r|") as archive:
         for member in archive:
@@ -129,7 +129,7 @@ def receive_relayed_tar(stream: IO[bytes], data_directory: Path, files: list[dic
 def fetch_api_files(
     data_directory: Path, files: list[dict[str, Any]], *, api_url: str, project_id: str, token: str
 ) -> None:
-    """'direct' transfer: the target reads each Artifact with the Job token."""
+    """'direct'転送。コンピュータが各ArtifactをJob tokenで読む。"""
     for file in files:
         request = urllib.request.Request(
             f"{api_url.rstrip('/')}/projects/{quote(project_id)}/artifacts/{quote(file['artifactId'])}/content",
@@ -139,13 +139,13 @@ def fetch_api_files(
 
 
 def reference_file_name(uri: str) -> str:
-    """The file name an HTTPS reference is stored under: the URL's last path segment."""
+    """HTTPSの参照を保存するときのファイル名。URLのパスの最後の要素。"""
     name = PurePosixPath(unquote(urlsplit(uri).path)).name
     return name if is_safe_relative_path(name) else DEFAULT_REFERENCE_FILE_NAME
 
 
 def expected_reference_sha256(digest: str) -> str | None:
-    """The sha256 an HTTPS reference must have, when its digest is written as one."""
+    """digestがsha256の形で書かれているときの、HTTPSの参照が持つべきsha256。"""
     match = SHA256_DIGEST.fullmatch(digest)
     return match.group(1) if match else None
 
@@ -165,7 +165,7 @@ def fetch_https(data_directory: Path, uri: str, *, maximum_bytes: int) -> dict[s
 
 
 def resolve_file_reference(uri: str) -> Path:
-    """A file:// reference names data already on the target; it is read in place, not copied."""
+    """file://の参照は、コンピュータに既にあるデータを指す。コピーせず、その場で読む。"""
     location = urlsplit(uri)
     if location.netloc not in {"", "localhost"} or location.query or location.fragment:
         raise DatasetFetchError("file:// dataset references must name a local absolute path")
@@ -180,7 +180,7 @@ def resolve_file_reference(uri: str) -> Path:
 
 
 class S3Location:
-    """Where to send requests for s3://bucket/key, configured from the target's environment."""
+    """s3://bucket/keyへのリクエストの送り先。コンピュータの環境変数から設定する。"""
 
     def __init__(self, uri: str, environment: Mapping[str, str]):
         location = urlsplit(uri)
@@ -193,7 +193,7 @@ class S3Location:
         )
         endpoint = environment.get("AWS_ENDPOINT_URL_S3") or environment.get("AWS_ENDPOINT_URL")
         if endpoint:
-            # Self-hosted S3-compatible stores (MinIO and the like) usually only route paths.
+            # 自前で運用するS3互換のストレージ（MinIOなど）は、たいていパス形式しか扱わない。
             self.base_url, self.bucket_path = endpoint.rstrip("/"), "/" + quote(self.bucket, safe="")
         elif S3_VIRTUAL_HOST_BUCKET.fullmatch(self.bucket):
             self.base_url, self.bucket_path = f"https://{self.bucket}.s3.{self.region}.amazonaws.com", ""
@@ -238,7 +238,7 @@ def sign_s3_request(
     session_token: str | None,
     now: datetime.datetime,
 ) -> dict[str, str]:
-    """AWS Signature Version 4 headers for a body-less S3 request (UNSIGNED-PAYLOAD)."""
+    """本文の無いS3のリクエストに付ける、AWS Signature Version 4のヘッダー（UNSIGNED-PAYLOAD）。"""
     location = urlsplit(url)
     amz_date = now.strftime("%Y%m%dT%H%M%SZ")
     date = amz_date[:8]
@@ -300,7 +300,7 @@ def _list_s3_objects(location: S3Location, prefix: str) -> list[tuple[str, int]]
 
 
 def plan_s3_files(location: S3Location) -> list[dict[str, Any]]:
-    """One object when the key names it exactly; otherwise every object below key/ (a folder)."""
+    """keyがオブジェクトをちょうど指せばその1つ。違えばkey/の下の全オブジェクト（フォルダ）。"""
     if location.key and not location.key.endswith("/"):
         exact = [size for key, size in _list_s3_objects(location, location.key) if key == location.key]
         if exact:
@@ -309,7 +309,7 @@ def plan_s3_files(location: S3Location) -> list[dict[str, Any]]:
     files = [
         {"key": key, "path": key[len(prefix) :], "size": size}
         for key, size in _list_s3_objects(location, prefix)
-        # Zero-byte keys ending in '/' are folder markers that consoles create.
+        # '/'で終わる0バイトのキーは、管理画面が作るフォルダの目印。
         if not key.endswith("/")
     ]
     if not files:

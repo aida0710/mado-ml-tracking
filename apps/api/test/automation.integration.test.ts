@@ -169,7 +169,7 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
       ).status,
     ).toBe(403);
     expect((await request(harness.app, `${fixture.basePath}/automation-rules`)).status).toBe(401);
-    // A global admin remains authorized even with an explicit lower project role.
+    // 全体管理者は、Projectでより低いroleを明示的に与えられていても権限を持ち続ける。
     await harness.database.query(
       "UPDATE project_members SET role='viewer' WHERE project_id=$1 AND user_id=$2",
       [fixture.project.id, fixture.administrator.userId],
@@ -481,7 +481,7 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
         }),
       }),
     );
-    // Registered after training ended, so the rules run at registration.
+    // 学習が終わったあとに登録するので、ルールは登録の時点で動く。
     await finishWithoutJob(fixture, sourceRun.id);
     const model = await registerModel(fixture, {
       sourceRunId: sourceRun.id,
@@ -530,7 +530,7 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
       maxAttempts: 4,
       gpuIds: ['0'],
       targetId: fixture.target.id,
-      // The Jobs list says which rule started the Job.
+      // Jobの一覧には、どのルールがJobを始めたかが出る。
       automationRule: { ruleId: inference.id, ruleName: inference.name },
       sweepTrial: null,
     });
@@ -873,7 +873,8 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
   it('登録transactionが先に始まっていても、登録時点の有効ruleを実行する', async () => {
     const fixture = await containerFixture(harness);
     await transaction(harness.database, async (connection) => {
-      // PostgreSQL now() uses transaction start, which must not determine rule eligibility.
+      // PostgreSQLのnow()はトランザクションの開始時刻になる。ルールの対象かどうかを
+      // それで決めてはいけない。
       await registerRule(fixture);
       const inserted = await connection.query(
         `INSERT INTO model_versions(model_id,project_id,version,weights_uri)
@@ -924,7 +925,7 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
         body: { name: 'Foreign input' },
       }),
     );
-    // Simulate an invalid external writer only inside the isolated fixture schema.
+    // 不正な書き込みをする外部の処理を、隔離したfixtureのスキーマの中でだけ再現する。
     await harness.database.query(
       'ALTER TABLE dataset_versions DISABLE TRIGGER dataset_versions_immutable',
     );
@@ -1194,7 +1195,7 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
     expect(await executionHistory(fixture)).toEqual([
       expect.objectContaining({ ruleId: createdLater.id, modelVersionId: model.id, status: 'queued' }),
     ]);
-    // A version registered after its source Run ended does not wait.
+    // 元のRunが終わったあとに登録したバージョンは待たない。
     const afterFinish = await registerOutput(fixture, {
       sourceRunId: sourceRun.id,
       version: 'after-finish',
@@ -1312,7 +1313,7 @@ describe.skipIf(!testDatabaseUrl)('モデル登録後の自動推論・評価（
     }
     expect(await eventState(fresh.id)).toBe('pending');
 
-    // Training that succeeds after the expiry no longer starts automation.
+    // 期限が切れたあとで学習が成功しても、もう自動実行は始まらない。
     await finishWithoutJob(fixture, staleRun.id);
     expect((await executionHistory(fixture)).filter((execution) => execution.modelVersionId === stale.id)).toHaveLength(1);
     expect(await automaticRuns()).toEqual([]);

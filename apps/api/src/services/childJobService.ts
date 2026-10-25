@@ -24,7 +24,7 @@ interface JobReference {
   jobId: string;
 }
 
-// A waiting driver asks the database about once a second; children take minutes to hours.
+// 待っているドライバーはおよそ1秒に1回DBに問い合わせる。子のJobは数分から数時間かかる。
 const WAIT_POLL_INTERVAL_MS = 1000;
 const ACTIVE_STATUSES = ['queued', 'claimed', 'running'];
 
@@ -37,9 +37,9 @@ function sleep(milliseconds: number): Promise<void> {
 }
 
 /**
- * Drivers (docs/hooks.md): code inside a Job creates further Jobs with its Job token, waits for
- * them and reads their results, instead of a pipeline definition. Children run as the parent
- * Run's creator, hang under the parent Run, and end when the parent is canceled.
+ * ドライバー（docs/hooks.md）。Jobの中のコードが、パイプラインの定義の代わりに、Job tokenで別の
+ * Jobを作り、その終わりを待って結果を読む。子のJobは親Runの作成者として動き、親Runの下に
+ * ぶら下がり、親が取り消されると終わる。
  */
 export class ChildJobService {
   private readonly database: Database;
@@ -77,13 +77,13 @@ export class ChildJobService {
       });
     assertNoReservedRunTags(input.tags);
     return transaction(this.database, async (connection) => {
-      // The Job token acts as the parent Run's creator, who must still be an editor.
+      // Job tokenは親Runの作成者として動く。その作成者が今もeditorである必要がある。
       await requireProject(connection, principal, {
         projectId: reference.projectId,
         role: 'editor',
         scope: 'runs:write',
       });
-      // Locking the parent orders its children's creation: limits and keys see each other.
+      // 親をロックして子の作成を1つずつ進める。上限とキーの確認が、互いの作成を見られるようにする。
       const parent = await findJob(connection, {
         projectId: reference.projectId,
         id: reference.jobId,
@@ -209,7 +209,7 @@ export class ChildJobService {
     );
   }
 
-  /** Returns once no child is queued or running, or when the wait runs out. */
+  /** 順番待ち・実行中の子が無くなるか、待つ時間が尽きたら返る。 */
   async wait(
     principal: Principal,
     reference: JobReference & { timeoutSeconds: number },
@@ -234,7 +234,7 @@ export class ChildJobService {
     }
   }
 
-  // A key names one creation: a single Job, or an array (its group carries the key).
+  // キーは1回の作成を指す。1つのJobか、array（キーはそのグループが持つ）。
   private async findByKey(
     connection: Connection,
     key: { projectId: string; parentJobId: string; idempotencyKey: string },
@@ -280,7 +280,7 @@ export class ChildJobService {
       });
   }
 
-  // The current attempt of each child: a retried attempt is counted through its retry.
+  // 各子の今の試行を数える。再試行された試行は、その再試行の側で数える。
   private async countChildren(connection: Connection, parentJobId: string): Promise<JobStatusCounts> {
     const grouped = await rows<{ status: keyof Omit<JobStatusCounts, 'total'>; count: number }>(
       connection,

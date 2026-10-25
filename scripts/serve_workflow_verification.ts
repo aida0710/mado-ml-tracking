@@ -6,7 +6,7 @@ import type { Artifact, Dataset, DatasetVersion, WorkflowStepInput } from '@mmt/
 import { createHarness, entity, request } from '../apps/api/test/harness.js';
 import { workflowFixture } from '../apps/api/test/workflowFixtures.js';
 
-// Dedicated loopback ports keep this verification away from the shared preview and its worker.
+// 専用のloopbackのポートを使い、この検証を共有のpreview環境とそのworkerから離す。
 const API_PORT = 47160;
 const WEB_PORT = 47161;
 const root = path.resolve('var/workflow-verification');
@@ -115,7 +115,7 @@ const steps: WorkflowStepInput[] = [
 ];
 const workflow = await fixture.createWorkflow(steps);
 const execution = await fixture.launch(workflow);
-// Only this private file contains the ephemeral test worker credential; never copy it to reports.
+// 一時的なテスト用workerの認証情報を持つのは、この非公開のファイルだけ。報告には決して写さない。
 const workerSettingsPath = path.join(root, 'worker-settings.json');
 const workerCredential = await entity<{ token: string }>(
   await request(harness.app, '/api/tokens', {
@@ -163,7 +163,10 @@ const worker = spawn(
   { stdio: ['ignore', 'inherit', 'inherit'] },
 );
 console.log(`Workflow verification API listening on 127.0.0.1:${API_PORT}`);
-/** A worker killed by a signal has no exit code, only a signal code; either means it has ended. */
+/**
+ * シグナルで終了したworkerには終了コードが無く、シグナルのコードだけがある。どちらかが
+ * あれば終わっている。
+ */
 function workerEnded(): Promise<void> {
   if (worker.exitCode !== null || worker.signalCode !== null) return Promise.resolve();
   return new Promise((resolve) => worker.once('exit', () => resolve()));
@@ -180,7 +183,7 @@ async function shutdown() {
     await harness.artifactUploadFinalizer.stop();
     await harness.close();
   } finally {
-    // The worker's token must not outlive the verification, even when a step above fails.
+    // 上の段階が失敗しても、workerのtokenを検証より長く残してはいけない。
     await rm(workerSettingsPath, { force: true });
   }
 }

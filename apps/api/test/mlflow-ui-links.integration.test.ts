@@ -8,7 +8,7 @@ import { projectFixture } from './fixtures.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 import { mlflowSdkPythonPath } from './mlflow-sdk-fixtures.js';
 
-// 0 lets the OS choose; set it to keep the SDK test on an allowed port range.
+// 0ならOSが選ぶ。SDKのテストを許された範囲のポートで動かすときは設定する。
 const SDK_TEST_HTTP_PORT = Number(process.env.MMT_TEST_HTTP_PORT ?? 0);
 
 describe.skipIf(!testDatabaseUrl)('MLflowライブラリが出す画面のリンク', () => {
@@ -28,7 +28,8 @@ describe.skipIf(!testDatabaseUrl)('MLflowライブラリが出す画面のリン
   it('トラッキング URI を開くと、末尾の / の有無にかかわらず Web の MLflow リンクの入口へ移る', async () => {
     const trackingUri = `/api/mlflow/projects/${fixture.project.id}`;
     for (const path of [`${trackingUri}/`, trackingUri]) {
-      // A browser following a "View run" link sends no credentials the API could check yet.
+      // "View run"のリンクをたどったブラウザは、この時点ではAPIが確かめられる認証情報を
+      // 何も送らない。
       const response = await request(harness.app, path);
       expect(response.status, path).toBe(302);
       expect(response.headers.get('Location'), path).toBe(

@@ -6,7 +6,7 @@ import { uuidSchema } from '../domain/validation.js';
 import { declaredContentLength, requestBodyStream } from '../http/requestBodyStream.js';
 import { jsonBody, parse, principal, uuidParam, type ApiEnvironment } from '../http/request.js';
 
-/** Optional lowercase hex SHA-256 of one part; a mismatch rejects the part without storing it. */
+/** 1つのpartのSHA-256（小文字の16進、省略可）。一致しなければpartを保存せずに拒む。 */
 export const PART_SHA256_HEADER = 'X-Part-SHA256';
 
 const sha256Schema = z

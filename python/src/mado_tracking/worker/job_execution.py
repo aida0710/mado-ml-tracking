@@ -1,4 +1,4 @@
-"""Execute one pinned CodeVersion through its selected runtime backend."""
+"""固定したCodeVersionを1つ、選んだruntimeのバックエンドで実行する。"""
 
 from __future__ import annotations
 
@@ -26,9 +26,9 @@ def execute_registered_code(
 ) -> int:
     specification["executionSnapshot"] = resolve_runner_execution_snapshot(specification)
     if specification.get("recoverOnly"):
-        # Recovery observes/removes the existing daemon container without repeating setup or start.
+        # 復旧では、setupやstartを繰り返さずに、既存のdaemonのコンテナを観察・削除する。
         return DockerContainer(workspace, specification, execution).run([], recover_only=True)
-    # A checkpoint that fails verification fails the Job before any of its code runs.
+    # 検証に失敗したcheckpointは、Jobのコードが動き始める前にJobを失敗させる。
     install_resume_checkpoint(workspace, specification)
     install_input_checkpoint(workspace, specification)
     source_directory = workspace / "source"

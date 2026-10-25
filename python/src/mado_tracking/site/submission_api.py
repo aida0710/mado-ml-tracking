@@ -1,8 +1,8 @@
-"""The site endpoints: a launcher's (its own token) and `mado-tracking submit`'s (one's own token).
+"""siteのエンドポイント。launcher用（自身のtoken）と`mado-tracking submit`用（本人のtoken）。
 
-The API knows a launcher by its token, so no request names the launcher. Claims are never
-retried: a lost answer leaves the Jobs `submitting` until the API fails them, while a resent
-claim would take further Jobs instead.
+APIはtokenでlauncherを見分けるので、リクエストにlauncherの名前は入れない。claimは再試行しない。
+応答が届かなかったJobは、APIが失敗にするまで`submitting`のまま残る。一方、claimを再送すると
+別のJobをさらに取ってしまう。
 """
 
 from __future__ import annotations
@@ -17,13 +17,13 @@ from ..worker.capabilities import WORKER_CAPABILITIES
 from .launcher_assignment import LauncherAssignment, SchedulerCancellation
 from .site_settings import ManualSiteConfiguration
 
-# Client errors that a later attempt may not repeat: a request timeout and a rate limit.
+# 後で試せば起きないかもしれないクライアントエラー。リクエストのタイムアウトとレート制限。
 TEMPORARY_CLIENT_ERRORS = frozenset({408, 429})
 CLIENT_ERROR_STATUSES = range(400, 500)
 
 
 def refused_for_good(error: ApiError) -> bool:
-    """The API would answer the same request the same way later (a 4xx but 408 and 429)."""
+    """同じリクエストには後でもAPIが同じ応答を返す（408と429を除く4xx）。"""
     status = error.status_code
     return status is not None and status in CLIENT_ERROR_STATUSES and status not in TEMPORARY_CLIENT_ERRORS
 
@@ -48,7 +48,7 @@ class LauncherApi:
         )
 
     def report_connection_check(self, check_id: str, *, failure: str | None) -> None:
-        """`failure` is why the login failed; None reports a success."""
+        """`failure`はログインが失敗した理由。Noneなら成功を報告する。"""
         self.client.request(
             "POST",
             f"launcher/connection-checks/{path_id(check_id)}",
@@ -105,7 +105,7 @@ class ManualSubmissionApi:
         )
 
     def claim(self, target_id: str, *, limit: int, all_jobs: bool) -> list[dict[str, Any]]:
-        """`all_jobs` takes every waiting Job of a computer one owns, not only one's own."""
+        """`all_jobs`なら、自分が所有するコンピュータで待つJobを、自分のものに限らずすべて取る。"""
         body = {"targetId": target_id, "submitterId": self.submitter_id, "limit": limit, "all": all_jobs}
         response = self.client.request(
             "POST", "manual-submissions/claim", json={**body, "capabilities": list(WORKER_CAPABILITIES)}

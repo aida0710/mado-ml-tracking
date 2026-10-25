@@ -3,12 +3,12 @@ import { first, rows, type Connection } from '../db/database.js';
 import { notFound } from '../domain/errors.js';
 
 /**
- * The session as stored, including the backend references and creator that clients never see.
- * expectedSize and partSize are null only while an MLflow session (ownerKind set) is not yet
- * completed by the client; native sessions always have them.
+ * 保存したままのセッション。クライアントには見せない保存先側の参照と作成者も含む。expectedSizeと
+ * partSizeがnullになるのは、MLflowのセッション（ownerKindあり）をクライアントがまだ完了して
+ * いない間だけ。ネイティブのセッションには必ずある。
  */
 export interface ArtifactUploadRecord extends ArtifactUpload {
-  /** Set for MLflow multipart sessions: the Artifact path owner mapped on completion. */
+  /** MLflowのmultipartのセッションで設定する。完了時に対応付けるArtifactのパスの持ち主。 */
   ownerKind: 'run' | 'model' | null;
   ownerId: string | null;
   storageKey: string;
@@ -19,14 +19,14 @@ export interface ArtifactUploadRecord extends ArtifactUpload {
   finalizerAttempts: number;
 }
 
-// bigint columns are cast so the mapped record holds numbers; sizes stay below 2^53.
+// bigintの列はキャストし、対応付けた記録が数値を持つようにする。サイズは2^53未満に収まる。
 export const artifactUploadColumns = `id,project_id,run_id,path,backend,storage_key,mime_type,
   expected_size::float8 AS expected_size,expected_sha256,part_size::float8 AS part_size,part_count,
   status,backend_upload_id,created_by_user_id,created_by_token_id,created_by_job_token_id,artifact_id,
   error,owner_kind,owner_id,
   finalizer_attempts,expires_at,created_at,updated_at`;
 
-/** Added to a SELECT from artifact_uploads: the bytes stored so far, for the session list. */
+/** artifact_uploadsからのSELECTに足す列。セッションの一覧に出す、これまでに保存したバイト数。 */
 export const receivedBytesColumn = `(SELECT coalesce(sum(part.size),0)::float8
   FROM artifact_upload_parts part WHERE part.upload_id=artifact_uploads.id) AS received_bytes`;
 
@@ -77,7 +77,7 @@ export function publicArtifactUpload(upload: ArtifactUploadRecord): ArtifactUplo
   };
 }
 
-/** Every part except the last has the session's part size; the last holds the remainder. */
+/** 最後以外のpartはセッションのpart sizeちょうどで、最後のpartが残りを持つ。 */
 export function expectedPartBytes(
   upload: Pick<ArtifactUpload, 'expectedSize' | 'partSize' | 'partCount'>,
   partNumber: number,
@@ -87,7 +87,7 @@ export function expectedPartBytes(
     : upload.expectedSize - upload.partSize * (upload.partCount - 1);
 }
 
-/** Null when the Run does not exist in the Project. */
+/** RunがProjectに無いときはnull。 */
 export async function runLifecycleStage(
   connection: Connection,
   reference: { projectId: string; runId: string },

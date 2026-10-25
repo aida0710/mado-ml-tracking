@@ -17,7 +17,7 @@ import {
 } from './validation.js';
 import { outputDeclarationsSchema } from './workerOutputValidation.js';
 
-// Chosen by `mado-tracking submit`, like a worker's workerId; a launcher is known by its token.
+// workerのworkerIdと同じく`mado-tracking submit`が決める。launcherはtokenで見分ける。
 const holderIdSchema = z.string().min(1).max(200);
 const claimLimitSchema = z
   .number()
@@ -25,13 +25,13 @@ const claimLimitSchema = z
   .min(1)
   .max(SITE_CLAIM_MAX_SUBMISSIONS)
   .default(SITE_CLAIM_MAX_SUBMISSIONS);
-// An array is reported as one submission, so a result may name every member.
+// arrayは1つのsubmissionとして報告するので、結果に全メンバーを挙げてよい。
 const submissionJobIdsSchema = z
   .array(uuidSchema)
   .min(1)
   .max(MAX_JOB_ARRAY_SIZE)
   .refine((values) => new Set(values).size === values.length, 'IDs must be unique');
-// What the job shell printed as the scheduler's job ID (qsub, sbatch, pjsub).
+// job shellがスケジューラのジョブIDとして出力したもの（qsub、sbatch、pjsub）。
 const schedulerJobIdSchema = z
   .string()
   .trim()
@@ -93,9 +93,9 @@ export const jobArrayCreateSchema = z.strictObject({
   datasetPartitionVersionId: uuidSchema.nullable().default(null),
 });
 
-// The runner picks its instance ID once (uuid4) and sends it with every report.
+// runnerはインスタンスIDを一度だけ決め（uuid4）、毎回の報告で送る。
 const runnerPhaseSchema = z.enum(['waiting_resources', 'running']);
-// The host name the compute node reports, for display (jobs.runner_host).
+// 計算ノードが報告するホスト名。表示用（jobs.runner_host）。
 const runnerHostSchema = z.string().trim().min(1).max(253);
 export const runnerStartSchema = z.strictObject({
   instanceId: uuidSchema,

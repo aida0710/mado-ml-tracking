@@ -1,7 +1,7 @@
-"""The runner protocol (POST /projects/:p/jobs/:j/runner/*) with the Job token.
+"""Job tokenで話すrunnerのプロトコル（POST /projects/:p/jobs/:j/runner/*）。
 
-Besides the protocol, the runner downloads its inputs and saves the Run's Artifacts with the same
-token through the shared ArtifactTransferApi.
+runnerはプロトコルのほかに、共通のArtifactTransferApiを通して同じtokenで入力をダウンロードし、
+RunのArtifactを保存する。
 """
 
 from __future__ import annotations
@@ -19,13 +19,13 @@ from ..security import SecretMasker
 from ..worker.artifact_transfer import ArtifactTransferApi
 from ..worker.contracts import WorkerJob
 
-# The Job ended or its token was revoked (401/410), it belongs to another runner (409
-# runner_conflict, job_not_startable), or the token is not this Job's (403/404).
+# Jobが終わったかtokenが取り消された（401/410）、別のrunnerのJobになっている（409の
+# runner_conflict、job_not_startable）、またはtokenがこのJobのものではない（403/404）。
 RUNNER_REJECTED_STATUSES = {401, 403, 404, 409, 410}
-# Output declarations answer 403/404/409/422 for the declared Model or Dataset; only these mean
-# the runner itself lost the Job.
+# 出力の宣言は、宣言したモデルやデータセットについて403/404/409/422を返す。runner自身がJobを
+# 失ったことを示すのはこれらだけ。
 OUTPUT_REJECTED_STATUSES = {401, 410}
-# RunnerFinish.error's limit at the API; the end of a long message is the part that explains it.
+# APIでのRunnerFinish.errorの上限。長いメッセージで原因を説明しているのは末尾の部分。
 MAX_FINISH_ERROR_CHARACTERS = 20000
 
 
@@ -43,7 +43,7 @@ class RunnerApi(ArtifactTransferApi):
     ):
         super().__init__(url=url, token=token, transport=transport, upload_state_store=upload_state_store)
         if masker is not None:
-            # The runner's masker also covers the registry password and the code's secrets.
+            # runnerのmaskerは、レジストリのパスワードとコードのシークレットも隠す。
             masker.add(token)
             self.masker = masker
         self.job = job
@@ -79,12 +79,12 @@ class RunnerApi(ArtifactTransferApi):
         return body
 
     async def start(self, *, host: str, gpu_ids: list[str], phase: str) -> dict[str, Any]:
-        # The API records the first instanceId, so resending the same start is safe.
+        # APIは最初のinstanceIdを記録するので、同じstartを再送しても問題ない。
         state = await self._post("start", {"host": host, "gpuIds": gpu_ids, "phase": phase}, retryable=True)
         return _runner_state(state)
 
     async def heartbeat(self, *, phase: str, gpu_ids: list[str]) -> dict[str, Any]:
-        # A lost heartbeat is replaced by the next one five seconds later.
+        # 届かなかったheartbeatは、5秒後の次のheartbeatが代わりになる。
         state = await self._post("heartbeat", {"phase": phase, "gpuIds": gpu_ids}, retryable=False)
         return _runner_state(state)
 
@@ -95,7 +95,7 @@ class RunnerApi(ArtifactTransferApi):
         await self._post("metrics", {"metrics": metrics}, retryable=True)
 
     async def declare_outputs(self, declarations: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Register result.json models/datasets; a resent index returns the stored registration."""
+        """result.jsonのモデル・データセットを登録する。再送したindexには保存済みの登録を返す。"""
         response = await self._post(
             "outputs",
             {"version": 2, "declarations": declarations},
@@ -120,7 +120,7 @@ class RunnerApi(ArtifactTransferApi):
             payload["error"] = masked[-MAX_FINISH_ERROR_CHARACTERS:]
         if end_reason is not None:
             payload["endReason"] = end_reason
-        # A resend of the same finish returns what the first one stored.
+        # 同じfinishを再送すると、最初のfinishが保存した内容が返る。
         return await self._post("finish", payload, retryable=True)
 
 
@@ -131,5 +131,5 @@ def _runner_state(state: dict[str, Any]) -> dict[str, Any]:
 
 
 def upload_state_directory(workspace: Path) -> Path:
-    # Upload sessions resume from the workspace, never from a shared home directory cache.
+    # アップロードセッションはworkspaceから再開し、共有のホームディレクトリのキャッシュは使わない。
     return workspace / ".uploads"

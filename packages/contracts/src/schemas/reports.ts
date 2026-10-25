@@ -29,7 +29,7 @@ import type { Expect, MutuallyAssignable } from './typeAssertions.js';
 
 const embedModeSchema = z.enum(['live', 'snapshot']);
 
-// RunSearchRequest without paging, as stored in a block (the API fills absent conditions).
+// ページ分けを除いたRunSearchRequest。ブロックに保存する形（無い条件はAPIが埋める）。
 const reportRunSearchSchema = z.strictObject({
   experimentIds: z.array(idSchema).optional(),
   filter: z.string().optional(),
@@ -191,7 +191,7 @@ export const reportBlockSnapshotSchema = namedContractSchema(
         importance: parameterImportanceResultSchema,
       }),
       z.strictObject({ type: z.literal('scatter'), table: runAnalysisTableResponseSchema }),
-      // Run summaries carry the extra columns of native Run responses (see runSchema).
+      // Runの要約は、ネイティブのRunの応答にある追加の列を持つ（runSchemaを参照）。
       z.strictObject({ type: z.literal('run_table'), runs: z.array(runSchema) }),
       z.strictObject({
         type: z.literal('media'),

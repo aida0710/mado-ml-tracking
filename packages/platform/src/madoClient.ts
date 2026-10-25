@@ -14,7 +14,8 @@ import {
   type MadoCredentials,
 } from './madoTypes.js';
 
-// Bound both transfer time and response size; an unavailable catalog cannot occupy a worker forever.
+// 転送時間と応答のサイズの両方を制限する。使えないカタログがworkerをいつまでも占有できない
+// ようにする。
 const MADO_REQUEST_DEADLINE_MS = 8000;
 const MADO_RESPONSE_LIMIT_BYTES = 4 * 1024 * 1024;
 const SEARCH_PAGE_SIZE = 50;
@@ -98,7 +99,7 @@ export function createMadoClient({
       throw new MadoApiError(502);
     }
   }
-  // One client serves one operation, so a grant changed in Mado applies from the next operation.
+  // 1つのclientは1つの操作に使うので、mado S3 Data Catalogで変えた権限は次の操作から効く。
   let grantRequest: Promise<MadoAccessTokenGrant> | null = null;
   function accessTokenGrant(): Promise<MadoAccessTokenGrant> {
     grantRequest ??= readJson(
@@ -112,13 +113,14 @@ export function createMadoClient({
   }
   return {
     accessTokenGrant,
-    /** `namespace: null` searches every namespace and requires a token that allows all of them. */
+    /** `namespace: null`はすべてのnamespaceを検索し、そのすべてを許すtokenが要る。 */
     async catalog(namespace: string | null, query: string) {
       const grant = await accessTokenGrant();
       const isAllowed =
         namespace === null ? allowsAllMadoNamespaces(grant) : allowsMadoNamespace(grant, namespace);
       if (!isAllowed) throw new MadoApiError(403);
-      // Mado answers within the requested namespace, or within the grant when searching all.
+      // mado S3 Data Catalogは、指定したnamespaceの中か、すべてを検索するときは権限の範囲の中で
+      // 答える。
       const isRequested = (candidate: string) =>
         namespace === null ? allowsMadoNamespace(grant, candidate) : candidate === namespace;
       const url = new URL('api/mado/lineage/catalog', readOrigin);

@@ -30,7 +30,8 @@ export interface LocalLogin {
   mustChangePassword: boolean;
 }
 
-// One body for unknown users, wrong passwords, and disabled users so responses reveal nothing.
+// 存在しないユーザー、間違ったパスワード、無効なユーザーに同じ本文を返し、応答から
+// 何も分からないようにする。
 function invalidCredentials(): DomainError {
   return new DomainError({
     status: 401,
@@ -44,7 +45,7 @@ export class LocalAuthService {
   private readonly config: ApiConfig;
   private readonly rateLimiter: AuthRateLimiter;
   private readonly passwordHasher: PasswordHasher;
-  // Verifying against this hash when the user is unknown keeps response times alike.
+  // ユーザーが存在しないときもこのハッシュと照合し、応答時間をそろえる。
   private dummyPasswordHash: Promise<string> | undefined;
 
   constructor(dependencies: {
@@ -83,7 +84,7 @@ export class LocalAuthService {
         input.password,
       ),
     );
-    // A Service Account acts only through its tokens, even if a password row was added to it.
+    // Service Accountは、パスワードの行が足されていても、tokenを通してだけ動く。
     if (
       !credential ||
       !isPasswordValid ||
@@ -104,7 +105,7 @@ export class LocalAuthService {
       ? await this.rateLimiter.passwordCheck(() => this.passwordHasher.hash(input.password))
       : undefined;
     return transaction(this.database, async (connection) => {
-      // A password changed during verification must not open a session with the old one.
+      // 照合の間にパスワードが変わったら、古いパスワードでsessionを開かせない。
       const current = await findLocalCredential(connection, credential.userId);
       if (current?.passwordHash !== credential.passwordHash || current.status !== 'active')
         throw invalidCredentials();
@@ -133,7 +134,7 @@ export class LocalAuthService {
     });
   }
 
-  // Keeps the calling session and revokes the user's other sessions.
+  // 呼び出したsessionは残し、そのユーザーのほかのsessionを失効させる。
   async changePassword(
     principal: Principal,
     input: { currentPassword: string; newPassword: string },

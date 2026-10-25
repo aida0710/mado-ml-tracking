@@ -20,7 +20,7 @@ import type { ArtifactService } from './artifactService.js';
 
 export interface MediaTableLocation {
   projectId: string;
-  /** The Run holding the table; relative cell paths name its Artifacts. */
+  /** 表を持つRun。セルの相対パスはこのRunのArtifactを指す。 */
   runId: string;
   artifactId: string;
 }
@@ -35,11 +35,11 @@ function fileKey(runId: string, path: string): string {
   return `${runId}\n${path}`;
 }
 
-/** Reads media tables (MLflow's split JSON) and resolves their media cells to Artifacts. */
+/** メディアの表（MLflowのsplit形式のJSON）を読み、メディアのセルをArtifactに解決する。 */
 export class MediaTableService {
   constructor(private readonly artifacts: ArtifactService) {}
 
-  /** The parsed table; 413 when it is too large to page here, 422 when it is not a split JSON. */
+  /** 解析した表。ここでページ分けするには大きすぎれば413、split形式のJSONでなければ422。 */
   async load(connection: Connection, location: Omit<MediaTableLocation, 'runId'>): Promise<ParsedMediaTable> {
     const artifact = await first<Artifact>(
       connection,

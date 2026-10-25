@@ -83,7 +83,7 @@ describe('probeAudioHeader', () => {
   it('壊れたヘッダー・未対応の形式はnull', () => {
     expect(probe(Buffer.from('0123456789abcdef'))).toBeNull();
     expect(probe(waveFile().subarray(0, 30))).toBeNull();
-    // MPEG Layer III inside WAV is compressed and has no fixed frame size.
+    // WAVの中のMPEG Layer IIIは圧縮されていて、フレームの大きさが決まっていない。
     expect(probe(waveFile({ formatTag: 0x55 }))).toBeNull();
     const inconsistentBlockAlign = waveFile();
     inconsistentBlockAlign.writeUInt16LE(3, 32);

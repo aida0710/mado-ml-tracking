@@ -13,18 +13,19 @@ import {
 import { auditActor, recordDenial } from './auditService.js';
 import { findCheckableTarget, requireCheckWorker } from './targetCheckAccess.js';
 
-// Someone typing paths opens a few listings at once; more means a client stuck in a loop.
+// パスを入力している人が同時に開く一覧は数個。それより多ければ、クライアントがループから
+// 抜けられなくなっている。
 const MAX_OPEN_DIRECTORY_LISTINGS = 8;
 
 /**
- * Reading one directory of an ssh or local computer through a chosen worker, so the work directory
- * and Python of a computer being set up can be completed beyond what its check found. The worker
- * side (claim, complete) is TargetCheckService's, as for connection checks.
+ * 選んだworkerを通して、sshかlocalのコンピュータのディレクトリを1つ読む。設定中のコンピュータの
+ * 作業ディレクトリとPythonを、確認で見つかったもの以外にも補完できるようにする。worker側
+ * （claim、完了）は、接続の確認と同じくTargetCheckServiceが受け持つ。
  */
 export class TargetDirectoryListingService {
   constructor(private readonly database: Database) {}
 
-  /** The listing to wait for, and whether it was created now or already waited for this path. */
+  /** 待つ対象の一覧と、それを今作ったのか、このパスのために既に待っていたものか。 */
   async request(
     principal: Principal,
     targetId: string,
@@ -48,7 +49,7 @@ export class TargetDirectoryListingService {
         await findCheckableTarget(connection, principal, targetId);
         await requireCheckWorker(connection, request.worker);
         await expireStaleChecks(connection);
-        // Serializes requests for one computer so the open listings are counted once.
+        // 1つのコンピュータへのリクエストを1つずつ進め、開いている一覧を重ねて数えないようにする。
         await connection.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
           `directory-listing:${targetId}`,
         ]);

@@ -1,7 +1,7 @@
 import { DomainError } from '../errors.js';
 import { inClauseSql } from '../search/inClauseSql.js';
 
-// Both the native and the MLflow API map this code to their own 400 response.
+// ネイティブAPIもMLflow APIも、このコードをそれぞれの400の応答に変換する。
 function invalidParameter(message: string): never {
   throw new DomainError({ status: 400, code: 'invalid_request', message });
 }
@@ -23,12 +23,12 @@ export interface CompiledSearch {
   parameters: unknown[];
 }
 
-// The field as it is written in a filter, for messages that show a corrected filter.
+// フィルタに書くときの項目の形。直したフィルタを示すメッセージで使う。
 function fieldLabel(field: SearchField): string {
   return `${field.group}.${field.key}`;
 }
 
-// Says how the field is compared, since `params.lr > 0.1` reads naturally but params are strings.
+// 項目がどう比べられるかを伝える。`params.lr > 0.1`は自然に読めるが、paramsは文字列のため。
 function unsupportedOperatorMessage(field: SearchField, operator: string): string {
   const label = fieldLabel(field);
   return field.kind === 'number'
@@ -36,7 +36,7 @@ function unsupportedOperatorMessage(field: SearchField, operator: string): strin
     : `unsupported comparison operator: ${operator}; ${label} is compared as a string, so use = != LIKE ILIKE (for example ${label} = '0.01')`;
 }
 
-// MLflow sorts numeric metrics before NaN and missing metrics in both directions.
+// MLflowは、昇順でも降順でも、数値のメトリクスをNaNや欠けたメトリクスより前に並べる。
 const METRIC_SORT_PRIORITY = { number: 0, nan: 1, missing: 2 } as const;
 
 const runAttributes: Record<string, { expression: string; kind: 'string' | 'number' }> = {
@@ -67,8 +67,8 @@ const runAttributes: Record<string, { expression: string; kind: 'string' | 'numb
   },
   lifecycle_stage: { expression: 'r.lifecycle_stage', kind: 'string' },
 };
-// attributes.status compares MLflow names. The native screens show this API's own names, so those
-// (and either case) are accepted too; an unknown name is an error rather than a silent 0 hits.
+// attributes.statusはMLflowの名前で比べる。ネイティブの画面はこのAPI自身の名前を出すので、
+// そちら（大文字小文字どちらも）も受け付ける。知らない名前は、黙って0件にせずエラーにする。
 const MLFLOW_RUN_STATUSES = ['SCHEDULED', 'RUNNING', 'FINISHED', 'FAILED', 'KILLED'] as const;
 const nativeStatusToMlflow: Record<string, (typeof MLFLOW_RUN_STATUSES)[number]> = {
   queued: 'SCHEDULED',
@@ -283,7 +283,7 @@ class SearchCompiler {
       return `EXISTS (SELECT 1 FROM mlflow_run_dataset_inputs i JOIN mlflow_datasets d ON d.project_id=i.project_id AND d.dataset_version_id=i.dataset_version_id WHERE i.project_id=r.project_id AND i.run_id=r.id AND ${comparison})`;
     }
     if (field.group === 'metrics') {
-      // PostgreSQL treats NaN as larger than every number; the SDK only matches NaN with !=.
+      // PostgreSQLはNaNをどの数より大きいものとして扱う。SDKは!=のときだけNaNに合わせる。
       const nan = `(${field.expression}) = 'NaN'::double precision`;
       return operator === '!=' ? `(${nan}) OR (${comparison})` : `NOT (${nan}) AND (${comparison})`;
     }
@@ -333,16 +333,16 @@ class SearchCompiler {
   }
 }
 
-/** A filter and order in MLflow search syntax, before compilation to SQL. */
+/** SQLに変換する前の、MLflowの検索構文で書いたフィルタと並び順。 */
 export interface SearchExpression {
   filter: string;
   orderBy: string[];
 }
 
 /**
- * Compiles MLflow search syntax to SQL over `runs r` or `experiments e`. Values are always bound
- * after `parameters`, so callers place their own placeholders first. Run params merge the
- * execution parameters with SDK-recorded parameters, the latter winning, as MLflow reads them.
+ * MLflowの検索構文を、`runs r`か`experiments e`に対するSQLに変換する。値は常に`parameters`の
+ * 後ろに足すので、呼び出し側は自分のプレースホルダーを先に置く。RunのparameterはMLflowの
+ * 読み方と同じく、実行のparameterとSDKが記録したparameterを合わせ、後者を優先する。
  */
 export function compileSearchExpression(
   entity: SearchEntity,

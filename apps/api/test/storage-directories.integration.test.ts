@@ -6,7 +6,7 @@ import type { DirectorySuggestions } from '@mmt/contracts';
 import { DIRECTORY_SUGGESTION_LIMIT } from '../src/services/storageDirectoryService.js';
 import { createHarness, entity, login, request, testDatabaseUrl, type Harness } from './harness.js';
 
-// The rootPath bound of storage backends (storageBackendValidation.ts).
+// 保存先のrootPathの上限（storageBackendValidation.ts）。
 const MAX_TYPED_PATH_LENGTH = 2000;
 
 describe.skipIf(!testDatabaseUrl)('保存先ディレクトリの候補（独立PostgreSQL）', () => {
@@ -51,7 +51,7 @@ describe.skipIf(!testDatabaseUrl)('保存先ディレクトリの候補（独立
     expect(await suggestions(`${root}/`)).toEqual({
       resolvedPath: root,
       status: 'directory',
-      // alink is a symlink to a directory; abroken leads nowhere and afile is a file.
+      // alinkはディレクトリへのシンボリックリンク。abrokenはどこも指しておらず、afileはファイル。
       items: at('alink', 'alpha', 'alpine', 'beta', 'many'),
       truncated: false,
     });

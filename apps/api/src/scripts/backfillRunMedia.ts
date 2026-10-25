@@ -4,13 +4,13 @@ import { createDatabase, transaction, type Database } from '../db/database.js';
 import { listRunImageArtifacts } from '../repositories/runMediaRepository.js';
 import { indexMlflowMediaArtifact } from '../services/runMediaIndexer.js';
 
-// Each page is one short transaction, so the backfill does not hold locks on a busy server.
+// 1ページごとに短いトランザクションにし、忙しいサーバーでbackfillがロックを握り続けないようにする。
 const BACKFILL_PAGE_SIZE = 500;
 
 /**
- * Indexes MLflow log_image(key=, step=) files that were saved before run media existed, with the
- * same rule as the save hook. Already indexed files are kept, so running it again adds nothing.
- * Returns the number of image Artifacts examined.
+ * Runのメディアの仕組みができる前に保存されたMLflowのlog_image(key=, step=)のファイルを、
+ * 保存時のフックと同じ規則で索引に登録する。登録済みのファイルはそのまま残すので、再実行しても
+ * 何も増えない。調べた画像Artifactの数を返す。
  */
 export async function backfillRunMedia(database: Database): Promise<number> {
   let after: { createdAt: string; id: string } | null = null;

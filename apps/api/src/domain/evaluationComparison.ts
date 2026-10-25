@@ -1,7 +1,7 @@
 import type { MetricComparison, MetricValueSource, MetricValueStatus } from '@mmt/contracts';
 
-// A metric value as read from storage. value may be NaN or ±Infinity; compareMetrics reports
-// those as not_finite instead of computing differences from them.
+// 保存されたとおりに読んだメトリクスの値。valueはNaNや±Infinityのことがあり、compareMetricsは
+// それらから差を計算せずにnot_finiteとして返す。
 export interface EvaluatedMetricValue {
   value: number;
   source: MetricValueSource;
@@ -22,9 +22,9 @@ function describeMetric(metric: EvaluatedMetricValue | undefined): MetricSide {
 }
 
 /**
- * Lines up candidate and baseline metrics by key. Without metricKeys, every key logged on either
- * side is compared in name order. A side that is null (no evaluation Run) counts as missing.
- * Whether a larger value is better is not decided here; promotion policies define direction.
+ * 候補とベースラインのメトリクスをkeyでそろえる。metricKeysが無ければ、どちらかで記録された
+ * すべてのkeyを名前順に比べる。nullの側（評価のRunが無い）は欠損として扱う。値が大きい方が
+ * よいかはここでは決めない。向きは昇格ポリシーが決める。
  */
 export function compareMetrics(comparison: {
   candidate: EvaluatedMetrics | null;
@@ -42,7 +42,7 @@ export function compareMetrics(comparison: {
       candidateSide.value !== null && baselineSide.value !== null
         ? candidateSide.value - baselineSide.value
         : null;
-    // Dividing by |baseline| keeps the sign of delta, so a negative ratio always means "decreased".
+    // |baseline|で割るとdeltaの符号が保たれるので、比が負なら必ず「減った」を意味する。
     const relativeDelta =
       delta !== null && baselineSide.value !== 0 ? delta / Math.abs(baselineSide.value!) : null;
     return {

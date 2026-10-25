@@ -90,7 +90,7 @@ describe('保存ビューの状態の検証', () => {
     expect(rejectionCode(layout([panel({ smoothing: { kind: 'ema', weight: 1.5 } })]))).toBe(
       'invalid_request',
     );
-    // The metric axis needs the key it plots against, as in the metric series API.
+    // 横軸の種類がmetricのときは、メトリクス系列のAPIと同じく、横軸にするキーが要る。
     expect(rejectionCode(layout([panel({ xAxis: { kind: 'metric' } })]))).toBe('invalid_request');
     expect(
       rejectionCode(layout([panel({ xAxis: { kind: 'metric', metricKey: 'epoch' } })])),

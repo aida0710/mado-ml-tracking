@@ -1,10 +1,10 @@
-"""A site's settings as the API hands them out, and the SubmissionPlan of one claimed submission.
+"""APIが渡すsiteの設定と、claimした1つの投入のSubmissionPlan。
 
-Every SiteSubmission carries the site's settings at claim time (`settings`), the job shell
-version its Jobs recorded (`jobShell`) and whose account it runs as (`account`: the SSH user, the
-work directory and the variables, the person's own on top of the site's), so one submission never
-mixes the settings of two moments. `mado-tracking submit` reads the same shapes from
-GET /manual-submissions/sites/:id before it claims.
+どのSiteSubmissionも、claimした時点のsiteの設定（`settings`）、そのJobが記録したjob shellの
+バージョン（`jobShell`）、どのアカウントで動かすか（`account`。SSHのユーザーと、作業ディレクトリ・
+変数。後の2つはsiteの値に本人の値を重ねたもの）を持つ。そのため1つの投入で2つの時点の設定が
+混ざることは無い。`mado-tracking submit`は、claimする前にGET /manual-submissions/sites/:idから
+同じ形を読む。
 """
 
 from __future__ import annotations
@@ -20,13 +20,13 @@ from .submission import SubmissionPlan
 
 @dataclass(frozen=True)
 class SiteConnection:
-    """Where a launcher logs in (automatic sites only)."""
+    """launcherがログインする先（自動投入のsiteだけ）。"""
 
     host: str
     port: int
-    # [user@]host[:port] of each host to pass through, in order.
+    # 経由する各ホストの[user@]host[:port]を順に並べたもの。
     jump_hosts: tuple[str, ...]
-    # known_hosts lines of the host and every jump host; no other host key is accepted.
+    # 接続先と経由する全ホストのknown_hostsの行。これ以外のホスト鍵は受け入れない。
     known_hosts: str
 
     @classmethod
@@ -41,13 +41,14 @@ class SiteConnection:
 
 @dataclass(frozen=True)
 class SiteSettings:
-    """The parts of a site's global settings that a launcher or `mado-tracking submit` uses."""
+    """siteの全体設定のうち、launcherや`mado-tracking submit`が使う部分。"""
 
     connection: SiteConnection | None
     runner_python: str
-    # The API as compute nodes reach it; None for the URL the launcher or submit uses.
+    # 計算ノードから見たAPIのURL。Noneなら、launcherかsubmitが使うURLを使う。
     runner_api_url: str | None
-    # Shell text that removes one queued scheduler job (MMT_SCHEDULER_JOB_ID); None without a queue.
+    # キューにある1つのスケジューラのジョブ（MMT_SCHEDULER_JOB_ID）を取り除くシェルの文。
+    # キューが無ければNone。
     cancel_command: str | None
     gpu_assignment: str
     lease_gpu_ids: tuple[str, ...]
@@ -73,14 +74,14 @@ class SiteSettings:
 
 @dataclass(frozen=True)
 class SubmissionAccount:
-    """Whose account one job shell call runs as, with the work directory and variables for it."""
+    """1回のjob shellの呼び出しをどのアカウントで動かすか。その作業ディレクトリと変数も持つ。"""
 
-    # The SSH user a launcher logs in as; '' for manual submissions, which run as whoever submits.
+    # launcherがログインするSSHのユーザー。手動投入では''で、投入した人のアカウントで動く。
     account_name: str
     work_directory: str
-    # The site's variables with the person's own on top.
+    # siteの変数に本人の変数を重ねたもの。
     variables: Mapping[str, str]
-    # The launcher key to log in with; None for manual submissions.
+    # ログインに使うlauncherの鍵。手動投入ではNone。
     key_id: str | None
 
     @classmethod
@@ -95,7 +96,7 @@ class SubmissionAccount:
 
 @dataclass(frozen=True)
 class JobShell:
-    """One version of a site's job shell; versions never change once saved on the Web."""
+    """siteのjob shellの1つのバージョン。画面で保存したバージョンは二度と変わらない。"""
 
     version: int
     content: bytes = field(repr=False)
@@ -107,7 +108,7 @@ class JobShell:
 
 @dataclass(frozen=True)
 class SubmissionSetup:
-    """How one claimed SiteSubmission is submitted: the site's settings, job shell and account."""
+    """claimした1つのSiteSubmissionの投入方法。siteの設定、job shell、アカウント。"""
 
     settings: SiteSettings
     job_shell: JobShell
@@ -123,7 +124,7 @@ class SubmissionSetup:
         )
 
     def plan(self, *, api_url: str, secrets: Mapping[str, Any] | None = None) -> SubmissionPlan:
-        """`api_url` is the API as the caller reaches it; runnerApiUrl replaces it for the runner."""
+        """`api_url`は呼び出し側から見たAPIのURL。runnerApiUrlがあれば、runnerにはそちらを渡す。"""
         return SubmissionPlan(
             job_shell=self.job_shell.content,
             runner_python=self.settings.runner_python,
@@ -142,12 +143,13 @@ class SubmissionSetup:
 
 @dataclass(frozen=True)
 class ManualSiteConfiguration:
-    """GET /manual-submissions/sites/:id: what `mado-tracking submit` checks before it claims."""
+    """GET /manual-submissions/sites/:id。`mado-tracking submit`がclaimする前に確かめる内容。"""
 
     target_name: str
-    # None until the site's owner saves one; a claim would then only fail the waiting Jobs.
+    # siteの所有者がjob shellを保存するまではNone。その間にclaimしても、
+    # 待っているJobを失敗させるだけ。
     job_shell: JobShell | None
-    # The caller's own work directory and variables on this site.
+    # このsiteでの、呼び出した本人の作業ディレクトリと変数。
     account: SubmissionAccount
 
     @classmethod

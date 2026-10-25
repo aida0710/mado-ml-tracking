@@ -45,7 +45,7 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: node --test scripts/release/bundle.node-test.mjs
-      # As in Mado's CI: known vulnerabilities in the dependencies that ship (devDependencies excluded).
+      # mado S3 Data CatalogのCIと同じく、配布する依存（devDependenciesを除く）の既知の脆弱性を調べる。
       - run: npm audit --omit=dev
 
   python:

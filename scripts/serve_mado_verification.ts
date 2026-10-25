@@ -1,4 +1,7 @@
-/** A disposable real Tracking API + DB, alongside real Mado routes with a Registry fixture. */
+/**
+ * 使い捨ての本物のmado ML TrackingのAPIとDB。Registryのfixtureを付けた本物の
+ * mado S3 Data Catalogの経路と並べて動かす。
+ */
 import { randomBytes } from 'node:crypto';
 import { mkdir, writeFile, unlink } from 'node:fs/promises';
 import path from 'node:path';
@@ -7,7 +10,7 @@ import type { Experiment, Project } from '@mmt/contracts';
 import { createHarness, entity, request } from '../apps/api/test/harness.js';
 import { startMadoVerificationServer } from './fixtures/madoVerificationServer.js';
 
-// Dedicated ports keep this verifier separate from the shared development servers.
+// 専用のポートを使い、共有の開発用サーバーとこの検証を分ける。
 const DEFAULT_VERIFICATION_API_PORT = 6083;
 const DEFAULT_VERIFICATION_WEB_PORT = 6084;
 const port = Number(process.env.MMT_VERIFY_API_PORT ?? DEFAULT_VERIFICATION_API_PORT);
@@ -64,7 +67,8 @@ try {
       body: { name: 'MadoへのRun送信' },
     }),
   );
-  // A local browser verifier reads these short-lived fixture credentials. They are never printed or photographed.
+  // ローカルのブラウザでの検証が、この短期間だけ有効なfixtureの認証情報を読む。コンソールへの
+  // 出力やスクリーンショットには決して出さない。
   await mkdir(path.dirname(settingsFile), { recursive: true, mode: 0o700 });
   await writeFile(
     settingsFile,

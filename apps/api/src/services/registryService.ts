@@ -57,7 +57,7 @@ import type { ModelAliasEventQuery } from '../domain/modelAliasValidation.js';
 import { manualAliasGuard } from './aliasProtectionService.js';
 import { assertReferenceDigest } from '../domain/datasetReferenceDigest.js';
 
-// Browser sessions are the Web UI; API tokens are scripts and the SDK's native client.
+// ブラウザのsessionは画面から、API tokenはスクリプトやSDKのネイティブのクライアントから来る。
 function nativeAliasSource(principal: Principal): ModelAliasEventSource {
   return principal.method === 'session' ? 'web' : 'api';
 }
@@ -153,7 +153,8 @@ export class RegistryService {
     );
   }
 
-  // Same version as GET /model-versions/:id, but a version of another Model is not found.
+  // GET /model-versions/:idと同じバージョンを返す。ただし、別の登録モデルのバージョンは
+  // 見つからないものとして扱う。
   async modelVersion(
     principal: Principal,
     reference: { projectId: string; modelId: string; versionId: string },
@@ -190,7 +191,7 @@ export class RegistryService {
     );
   }
 
-  // Internal entry point for MLflow, Run completion, and worker registrations.
+  // MLflow、Runの完了、workerからの登録が使う内部の入口。
   registerModelVersion(
     connection: PoolClient,
     registration: ModelVersionRegistration,
@@ -282,7 +283,7 @@ export class RegistryService {
       }))
     )
       notFound('model alias event cursor');
-    // Fetch one extra row to know whether another page exists without a count query.
+    // 1行多く取り、件数を数えるクエリなしで次のページがあるかを知る。
     const events = await listModelAliasEvents(this.database, {
       modelId: request.modelId,
       alias: query.alias,
@@ -398,8 +399,8 @@ export class RegistryService {
   }
 
   /**
-   * Archiving keeps the first archive time when repeated and deletes no version. The row lock
-   * waits for Runs being created with this Dataset (see assertInputDatasetVersionsUsable).
+   * アーカイブを繰り返しても最初のアーカイブ日時を保ち、バージョンは1つも消さない。行のロックは、
+   * このデータセットを使って作成中のRunを待つ（assertInputDatasetVersionsUsableを参照）。
    */
   async updateDataset(
     principal: Principal,
@@ -469,8 +470,8 @@ export class RegistryService {
   }
 
   /**
-   * Native version creation. Artifact content is resolved after the write check, so a caller
-   * without access learns nothing about the Project's Artifacts or Runs.
+   * ネイティブのAPIでのバージョンの作成。Artifactの中身は書き込み権限を確かめたあとで解決するので、
+   * 権限の無い呼び出し元には、ProjectのArtifactやRunについて何も伝わらない。
    */
   async createDatasetVersion(
     principal: Principal,
@@ -490,8 +491,8 @@ export class RegistryService {
         actor: { type: 'callerAuthorized' as const },
       };
       if (!input.content) {
-        // The request schema requires uri and digest when content is absent. An external
-        // reference keeps the digest its source system gives (docs/plugins.md).
+        // contentが無いとき、リクエストのスキーマはuriとdigestを必須にしている。外部の参照は、
+        // 元のシステムが与えたdigestをそのまま持つ（docs/plugins.md）。
         if (!input.externalRef) assertReferenceDigest(input.digest!);
         return registerDatasetVersion(connection, {
           ...common,
@@ -521,8 +522,8 @@ export class RegistryService {
   }
 
   /**
-   * Reference versions for callers that authorized the principal themselves: MLflow log_inputs
-   * and plugin imports.
+   * 参照のバージョンを作る。principalの権限を自分で確かめた呼び出し元（MLflowのlog_inputsと
+   * pluginの取り込み）が使う。
    */
   insertDatasetVersion(
     connection: Connection,

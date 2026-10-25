@@ -1,4 +1,4 @@
-"""Run a verified local SIF with a cancelable owned process group and selected CUDA GPUs."""
+"""検証済みのローカルのSIFを、取り消せる所有のプロセスグループと、選んだCUDAのGPUで実行する。"""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from .host_execution import CommandExecution
 from .host_state import write_json
 from .runtime_capability import RuntimeUnavailable, runtime_binary
 
-# These flags are needed for input isolation and literal environment/argv handling.
+# 入力の隔離と、環境変数・argvを文字どおりに扱うために、これらのフラグが要る。
 REQUIRED_SIF_FLAGS = {"--cleanenv", "--containall", "--no-eval", "--no-home", "--no-mount", "--pwd"}
 
 
@@ -34,7 +34,7 @@ def execute_sif(
         )
     execution.state["runtimeCapability"] = {"kind": kind, "available": True}
     write_json(workspace / "state.json", execution.state)
-    # Passing prefix variables avoids shell/env-file expansion of secrets and puts no values in argv.
+    # 接頭辞つきの変数で渡すと、秘密情報がシェルやenvファイルで展開されず、argvにも値が載らない。
     prefix = "APPTAINERENV_" if kind == "apptainer" else "SINGULARITYENV_"
     for name, value in container_environment(specification).items():
         execution.environment[prefix + name] = value
@@ -62,7 +62,7 @@ def execute_sif(
         directory = "/mmt/source"
     if directory is not None:
         argv.extend(["--pwd", directory])
-    # exec bypasses the image runscript and uses exactly the registered entrypoint argv.
+    # execはイメージのrunscriptを通らず、登録したentrypointのargvをそのまま使う。
     argv.extend([str(workspace / "runtime.sif"), *specification["executionSnapshot"]["entrypoint"]])
     exit_code, _captured = execution.run(argv)
     return exit_code

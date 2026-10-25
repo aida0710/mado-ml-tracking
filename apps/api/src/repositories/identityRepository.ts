@@ -2,7 +2,7 @@ import type { ProjectMember, ProjectRole, User, UserSearchResult } from '@mmt/co
 import type { ProjectAdminGrants } from '../domain/projectAdminInvariant.js';
 import { first, rows, type Connection } from '../db/database.js';
 
-// auth_sources lists the login methods the user holds; development logins hold neither.
+// auth_sourcesは利用者が持つログイン方法の一覧。開発用のログインはどちらも持たない。
 export const userColumns = `u.id,u.email,u.display_name,u.is_admin,u.username,u.status,u.kind,
   ARRAY_REMOVE(ARRAY[
     CASE WHEN EXISTS(SELECT 1 FROM user_local_credentials lc WHERE lc.user_id=u.id) THEN 'local' END,
@@ -17,7 +17,7 @@ export interface LocalCredential {
   kind: User['kind'];
 }
 
-// Development logins and the demo seed identify users by (issuer, subject) on users itself.
+// 開発用のログインとデモのseedは、users自体の(issuer, subject)で利用者を見分ける。
 export async function upsertIdentity(
   connection: Connection,
   identity: {
@@ -41,7 +41,7 @@ export async function findUser(connection: Connection, userId: string): Promise<
   return first<User>(connection, `SELECT ${userColumns} FROM users u WHERE u.id=$1`, [userId]);
 }
 
-/** Kind and status of the users that exist among `userIds`; unknown ids are left out. */
+/** `userIds`のうち存在する利用者の種類と状態。知らないidは除く。 */
 export async function listUserStates(
   connection: Connection,
   userIds: readonly string[],
@@ -73,7 +73,8 @@ export interface LockedAccount {
 
 export interface AutoLinkCandidate {
   id: string;
-  // Global admin or admin of any project: linking such an account by email would hand it over.
+  // 全体管理者か、いずれかのProjectのadmin。こうしたアカウントをメールアドレスで結び付けると、
+  // アカウントを明け渡すことになる。
   isPrivileged: boolean;
 }
 
@@ -89,7 +90,7 @@ export async function findOidcIdentityUserId(
   return linked?.userId;
 }
 
-// Local accounts with this email that no SSO identity has claimed yet.
+// このメールアドレスを持ち、まだどのSSOのidentityにも結び付いていないローカルのアカウント。
 export async function findAutoLinkCandidates(
   connection: Connection,
   email: string,
@@ -128,9 +129,9 @@ export async function lockAccount(
   );
 }
 
-// Every change that can remove a global administrator takes this lock before reading the admins,
-// so two concurrent demotions cannot both see the other as the remaining admin. An advisory
-// lock avoids deadlocks with transactions that already hold their own user row.
+// 全体管理者を減らしうる変更は、管理者を読む前に必ずこのロックを取る。同時に2人を降格しても、
+// 互いに相手を残る管理者と見なすことが無いようにするため。advisory lockにすると、既に自分の
+// usersの行を持っているトランザクションとデッドロックしない。
 const GLOBAL_ADMIN_INVARIANT_LOCK = 'mmt.global_admin_invariant';
 
 export async function lockActiveGlobalAdminIds(connection: Connection): Promise<string[]> {
@@ -176,7 +177,7 @@ export async function listUserGroups(connection: Connection, userId: string): Pr
   return groups.map((group) => group.groupName);
 }
 
-// Makes user_groups equal to groups and refreshes synced_at, also for groups that did not change.
+// user_groupsをgroupsと同じにし、変わらなかったグループも含めてsynced_atを更新する。
 export async function replaceUserGroups(
   connection: Connection,
   userId: string,
@@ -194,7 +195,8 @@ export async function replaceUserGroups(
   );
 }
 
-// Marks a successful group sync of the identity; API tokens of its user stay usable from here on.
+// そのidentityのグループの同期に成功したことを記録する。これ以降、その利用者のAPI tokenは
+// 使えるままになる。
 export async function recordOidcGroupSync(
   connection: Connection,
   identity: { issuer: string; subject: string },
@@ -206,8 +208,8 @@ export async function recordOidcGroupSync(
 }
 
 /**
- * The IdP refused the identity (for example it left the allowed groups). Its groups are removed so
- * Project group bindings stop at once, and the missing sync time stops the user's API tokens.
+ * IdPがそのidentityを拒んだ（例えば許可したグループから外れた）。グループを消してProjectの
+ * グループの割り当てをすぐに止め、同期時刻が無いことで利用者のAPI tokenも止める。
  */
 export async function withdrawOidcIdentityAccess(
   connection: Connection,
@@ -246,7 +248,7 @@ export async function findLocalCredential(
   );
 }
 
-// Compare-and-set on the verified hash: a concurrent password change makes this return false.
+// 確かめたハッシュでcompare-and-setする。同時にパスワードが変わっていればfalseを返す。
 export async function replaceLocalPassword(
   connection: Connection,
   change: {
@@ -264,7 +266,7 @@ export async function replaceLocalPassword(
   return updated.rowCount === 1;
 }
 
-// Rehashing keeps password_changed_at because the password itself did not change.
+// ハッシュを作り直してもパスワード自体は変わらないので、password_changed_atはそのままにする。
 export async function rehashLocalPassword(
   connection: Connection,
   change: { userId: string; verifiedPasswordHash: string; newPasswordHash: string },
@@ -280,7 +282,7 @@ export async function recordLogin(connection: Connection, userId: string): Promi
   await connection.query('UPDATE users SET last_login_at=now() WHERE id=$1', [userId]);
 }
 
-// Creates or resets a local administrator. The password must be changed at the next login.
+// ローカルの管理者を作るか、リセットする。次のログインでパスワードの変更を求める。
 export async function upsertLocalAdministrator(
   connection: Connection,
   administrator: { username: string; email: string; displayName: string; passwordHash: string },
@@ -310,20 +312,20 @@ export async function upsertLocalAdministrator(
   return (await findUser(connection, user!.id))!;
 }
 
-// Recording every use would write a row on each request, so last_used_at advances at most this often.
+// 使うたびに記録するとリクエストごとに行を書くので、last_used_atはこの間隔より頻繁には進めない。
 export const TOKEN_LAST_USED_WRITE_INTERVAL_SECONDS = 5 * 60;
 
 export interface TokenIdentity {
   user: User;
   token: { id: string; projectId: string | null; scopes: string[]; expiresAt: string | null };
-  // The owner has an SSO identity whose groups were not synced recently enough; the token must not be used.
+  // 所有者のSSOのidentityのグループが最近同期されていない。このtokenは使わせてはならない。
   isIdentitySyncStale: boolean;
 }
 
 /**
- * A token of a user with an SSO identity is only as current as the user's last group sync, which
- * happens at browser login and session recheck. When none of the user's identities synced after
- * `syncedAfter`, the token is reported stale. Service Accounts have no SSO identity.
+ * SSOのidentityを持つ利用者のtokenは、その利用者の最後のグループの同期の時点の情報でしかない。
+ * 同期はブラウザでのログインとsessionの再確認で行う。どのidentityも`syncedAfter`より後に
+ * 同期していなければ、tokenを古いと報告する。Service AccountにはSSOのidentityが無い。
  */
 export async function tokenIdentity(
   connection: Connection,
@@ -352,8 +354,8 @@ export async function tokenIdentity(
   );
   if (!identity) return undefined;
   const { tokenId, projectId, scopes, expiresAt, usageIsStale, isIdentitySyncStale, ...user } = identity;
-  // A stale token is refused, so its use is not recorded.
-  // The condition is repeated so concurrent requests write the timestamp only once.
+  // 古いtokenは拒否するので、その使用は記録しない。
+  // 同時のリクエストが時刻を1回だけ書くよう、条件をUPDATEでも繰り返す。
   if (usageIsStale && !isIdentitySyncStale)
     await connection.query(
       `UPDATE api_tokens SET last_used_at=now() WHERE id=$1
@@ -363,8 +365,8 @@ export async function tokenIdentity(
   return { user, token: { id: tokenId, projectId, scopes, expiresAt }, isIdentitySyncStale };
 }
 
-// Direct members and users who hold a bound group. Users who reach a public Project only through
-// its visibility are not members and are left out.
+// 直接のメンバーと、割り当てたグループに入っている利用者。公開のProjectに公開設定だけで
+// 入れる利用者はメンバーではないので除く。
 export async function listMembers(
   connection: Connection,
   projectId: string,
@@ -402,7 +404,7 @@ function toProjectMember({ role, directRole, groups, ...user }: MemberRow): Proj
   return { user, role, directRole, groups };
 }
 
-/** True when the user holds a role through a direct grant or a group binding. */
+/** 直接の付与かグループの割り当てでroleを持っていればtrue。 */
 export async function isProjectMember(
   connection: Connection,
   member: { projectId: string; userId: string },
@@ -428,8 +430,8 @@ export async function findDirectRole(
   return membership?.role ?? null;
 }
 
-// Locks the Project row first so every change that can remove an admin grant serializes.
-// Service Accounts are left out: they cannot manage the Project, so people must keep an admin grant.
+// adminの付与を外しうる変更をすべて直列にするため、最初にProjectの行をロックする。
+// Service Accountは除く。Projectを管理できないので、adminの付与は人が持ち続ける必要がある。
 export async function lockProjectAdminGrants(
   connection: Connection,
   projectId: string,
@@ -441,7 +443,8 @@ export async function lockProjectAdminGrants(
     WHERE m.project_id=$1 AND m.role='admin' AND u.kind='human' ORDER BY m.user_id`,
     [projectId],
   );
-  // The share lock keeps a login's group sync from emptying a group before this change commits.
+  // share lockにより、この変更をコミットする前に、ログイン時のグループの同期がグループを空に
+  // するのを防ぐ。
   const adminGroupMembers = await rows<{ groupName: string }>(
     connection,
     `SELECT g.group_name FROM project_group_bindings b
@@ -456,9 +459,9 @@ export async function lockProjectAdminGrants(
   };
 }
 
-// Holds the rows a user's effective role is computed from until the transaction ends, so a
-// membership change or a group sync cannot revoke access in the middle of a write.
-// Binding changes are already excluded by the caller's share lock on the Project row.
+// 利用者の実際のroleを計算する元の行をトランザクションの終わりまで押さえ、書き込みの途中で
+// membershipの変更やグループの同期によって権限が取り消されないようにする。割り当ての変更は、
+// 呼び出し側がProjectの行に取ったshare lockで既に防いでいる。
 export async function lockProjectRoleSources(
   connection: Connection,
   member: { projectId: string; userId: string },
@@ -484,8 +487,8 @@ export async function holdsAnyProjectAdminRole(
   return !!role;
 }
 
-// Prefix match on email, username, and display name, ignoring case. Disabled users are omitted
-// because they cannot be given access, and Service Accounts because their role is set on them.
+// メールアドレス、ユーザー名、表示名を、大文字と小文字を区別せずに前方一致で探す。無効にした
+// 利用者は権限を与えられないので除き、Service Accountはroleをそのアカウント自体に設定するので除く。
 export async function searchActiveUsers(
   connection: Connection,
   search: { query: string; limit: number },

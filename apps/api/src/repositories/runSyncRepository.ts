@@ -11,9 +11,9 @@ export interface SyncRunOwnership {
 }
 
 /**
- * Serializes PUTs for one client-chosen Run ID, so two concurrent first sends cannot both miss
- * the Run and race on its primary key. The schema is part of the key because integration tests
- * share one database across schemas.
+ * クライアントが決めた1つのRun IDへのPUTを直列にし、同時の最初の送信が2つともRunを見つけられずに
+ * 主キーを取り合うことが無いようにする。結合テストはスキーマをまたいで1つのDBを共有するので、
+ * スキーマもキーに含める。
  */
 export async function lockSyncRunId(connection: Connection, runId: string): Promise<void> {
   await connection.query(
@@ -22,7 +22,7 @@ export async function lockSyncRunId(connection: Connection, runId: string): Prom
   );
 }
 
-/** Looks the ID up in every Project: a client-chosen ID can collide with any existing Run. */
+/** IDをすべてのProjectで探す。クライアントが決めたIDは既存のどのRunともぶつかりうる。 */
 export async function findSyncRunOwnership(
   connection: Connection,
   runId: string,
@@ -37,7 +37,7 @@ export async function findSyncRunOwnership(
   );
 }
 
-/** A synced Run was already running on the client, so it starts at the client's time. */
+/** syncしたRunはクライアントで既に動いていたので、クライアントの時刻で開始する。 */
 export async function markSyncRunStarted(
   connection: Connection,
   run: { runId: string; startedAt: string; origin: string | null },
@@ -66,8 +66,8 @@ function toSyncBatchCounts(row: SyncBatchCountsRow): SyncBatchCounts {
 }
 
 /**
- * Claims the batch ID. Returns false when it was already received: ON CONFLICT waits for a
- * concurrent insert of the same key to commit, so only one of two simultaneous sends applies.
+ * バッチのIDを確保する。既に受け取っていればfalseを返す。ON CONFLICTは同じキーの同時の挿入が
+ * コミットされるのを待つので、同時の2つの送信のうち反映されるのは1つだけ。
  */
 export async function claimSyncBatch(
   connection: Connection,
@@ -97,7 +97,7 @@ export async function claimSyncBatch(
   return inserted !== undefined;
 }
 
-/** Marks the batch whose status ended the Run, so the end can be traced to one send. */
+/** Runを終わらせた状態を持つバッチに印を付け、終了をどの送信によるものかたどれるようにする。 */
 export async function recordSyncBatchStatus(
   connection: Connection,
   batch: { runId: string; batchId: string; status: string },
@@ -121,7 +121,7 @@ export async function findSyncBatchCounts(
   return toSyncBatchCounts(row);
 }
 
-/** Keys already recorded with a different value; jsonb equality ignores formatting and key order. */
+/** 既に違う値で記録したキー。jsonbの等価比較は書式とキーの順序を無視する。 */
 export async function findChangedParamKeys(
   connection: Connection,
   change: { runId: string; params: JsonObject },
@@ -158,9 +158,8 @@ export async function markSyncRunEnded(
 }
 
 /**
- * Paths whose current Artifact (the newest upload at that path, as the Run's Artifact list shows)
- * has the same content. An older upload with the same digest does not count: the client's file
- * would not be what the Run shows.
+ * 今のArtifact（RunのArtifactの一覧と同じく、そのパスへの最新のアップロード）が同じ内容のパス。
+ * 同じdigestの古いアップロードは数えない。クライアントのファイルがRunの見せるものにならないため。
  */
 export async function findPresentArtifactPaths(
   connection: Connection,

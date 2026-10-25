@@ -1,12 +1,12 @@
 import type { WorkflowStep, WorkflowStepExecution } from '@mmt/contracts';
 
 /**
- * The Run a step's Run records as its parent, which the worker hands to the step as its upstream
- * Run (MMT_UPSTREAM_RUN_ID, upstream-run.json):
- * 1. the closest earlier step whose output datasets the step reads, so that the upstream Run is
- *    one whose outputs the Run records in upstreamDatasetVersionIds;
- * 2. otherwise the step that supplies its model (modelFromStepKey);
- * 3. otherwise none: a step that reads only pinned datasets and models has no upstream Run.
+ * ステップのRunが親として記録するRun。workerはこれを上流のRunとしてステップに渡す
+ * （MMT_UPSTREAM_RUN_ID、upstream-run.json）。
+ * 1. 出力データセットをこのステップが読む前のステップのうち、いちばん近いもの。こうして上流の
+ *    Runは、RunがupstreamDatasetVersionIdsに出力を記録しているRunになる。
+ * 2. それが無ければ、モデルを渡すステップ（modelFromStepKey）。
+ * 3. それも無ければ無し。固定したデータセットとモデルだけを読むステップには上流のRunが無い。
  */
 export function workflowParentRunId(
   step: Pick<WorkflowStep, 'inputs' | 'modelFromStepKey'>,

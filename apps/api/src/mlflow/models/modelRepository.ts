@@ -26,7 +26,7 @@ export async function findLoggedModel(
   reference: { projectId: string; id: string; lock?: boolean; allowDeleted?: boolean },
 ): Promise<LoggedModelRecord> {
   if (reference.lock) {
-    // Lock the Experiment before the model so lifecycle deletion cannot race finalization.
+    // 実験をモデルより先にロックし、ライフサイクルの削除が確定処理と競合しないようにする。
     const experiment = await first<{ sourceRunId: string | null }>(
       connection,
       `SELECT l.source_run_id FROM experiments e JOIN mlflow_logged_models l ON l.experiment_id=e.id AND l.project_id=e.project_id
@@ -35,8 +35,9 @@ export async function findLoggedModel(
     );
     if (!experiment) notFound('logged model');
     if (experiment.sourceRunId) {
-      // Match Tracking and Artifact's source Run -> model order before native INSERT takes
-      // its source Run FK lock. Taking a Run lock after the model can deadlock with outputs.
+      // ネイティブのINSERTが元のRunへのFKのロックを取る前に、trackingとArtifactの
+      // 「元のRun→モデル」の順序に合わせる。モデルの後でRunのロックを取ると、出力の処理と
+      // デッドロックしうる。
       await connection.query('SELECT id FROM runs WHERE project_id=$1 AND id=$2 FOR KEY SHARE', [
         reference.projectId,
         experiment.sourceRunId,
@@ -103,7 +104,8 @@ export async function activeModelVersions(
   return versionsByModel.get(model.id) ?? [];
 }
 
-// Loads every listed Model's versions in one query so list responses do not issue one per Model.
+// 一覧のModelのバージョンを1つのクエリでまとめて読み、一覧の応答がModelごとにクエリを
+// 出さないようにする。
 export async function activeModelVersionsByModel(
   connection: Connection,
   models: { projectId: string; modelIds: string[] },

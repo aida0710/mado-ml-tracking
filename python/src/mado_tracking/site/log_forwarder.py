@@ -1,8 +1,8 @@
-"""Send the Job's stdout/stderr to the Run log line by line, with the runner's own messages.
+"""JobのstdoutとstderrをRunのログに1行ずつ送る。runner自身のメッセージもいっしょに送る。
 
-CommandExecution writes the masked output of every command (image pull, git, the container) to
-stdout.log and stderr.log in the workspace; the forwarder follows both from the last sent byte.
-A carriage return starts a line over, as on a terminal, so a progress bar leaves its last state.
+CommandExecutionは各コマンド（イメージのpull、git、コンテナ）の伏せ字済みの出力を、
+workspaceのstdout.logとstderr.logに書く。forwarderは両方を、最後に送ったバイトから追う。
+復帰文字はターミナルと同じく行を最初から書き直すので、進捗バーは最後の状態だけが残る。
 """
 
 from __future__ import annotations
@@ -19,12 +19,12 @@ from ..security import SecretMasker
 from ..timestamps import utc_timestamp
 
 LOGGER = logging.getLogger(__name__)
-# The API's log batch limit.
+# APIのログのバッチの上限。
 MAX_ENTRIES_PER_REQUEST = 1000
-# A longer line, or a progress bar that never ends its line, is sent in parts of this size.
+# これより長い行や、いつまでも行を終えない進捗バーは、この大きさに分けて送る。
 MAX_LINE_CHARACTERS = 16 * 1024
 READ_CHUNK_BYTES = 1024 * 1024
-# While the API is unreachable the oldest lines are dropped beyond this many.
+# APIにつながらない間は、これを超えた分を古い行から捨てる。
 MAX_PENDING_ENTRIES = 20_000
 STREAM_LEVELS = {"stdout": "info", "stderr": "error"}
 
@@ -40,7 +40,7 @@ class _Stream:
 
 
 def terminal_line(line: str) -> str:
-    """What a terminal shows for the line: the text after its last carriage return."""
+    """ターミナルがその行として表示するもの。最後の復帰文字のあとの文字列。"""
     return line.rstrip("\r").rsplit("\r", 1)[-1]
 
 
@@ -54,11 +54,11 @@ class LogForwarder:
         self.dropped = 0
 
     def add(self, level: str, message: str) -> None:
-        """Queue one of the runner's own messages; it goes out with the next forward()."""
+        """runner自身のメッセージを1つ積む。次のforward()で送られる。"""
         self._append(level, message)
 
     def _append(self, level: str, message: str) -> None:
-        # Masked before splitting, so no secret can straddle two parts unmasked.
+        # 分割する前に伏せるので、秘密が2つの部分にまたがって伏せられずに残ることは無い。
         masked = self.masker.mask(message)
         for start in range(0, len(masked), MAX_LINE_CHARACTERS):
             part = masked[start : start + MAX_LINE_CHARACTERS]
@@ -99,7 +99,7 @@ class LogForwarder:
                 stream.buffer = stream.buffer[MAX_LINE_CHARACTERS:]
 
     async def forward(self, *, final: bool = False) -> None:
-        """Send everything written so far; `final` also sends unfinished last lines."""
+        """ここまでに書かれたものをすべて送る。`final`なら、終わっていない最後の行も送る。"""
         for name in self.streams:
             self._read(name, final=final)
         if self.dropped:
@@ -124,7 +124,7 @@ class LogForwarder:
                     and 400 <= error.status_code < 500
                     and error.status_code not in {408, 429}
                 ):
-                    # The API refuses this batch for good; keeping it would block every later line.
+                    # APIはこのバッチを今後も拒む。残しておくと、あとのすべての行が詰まってしまう。
                     LOGGER.warning("Run log batch refused: %s", self.masker.mask(str(error)))
                     del self.pending[: len(batch)]
                     continue

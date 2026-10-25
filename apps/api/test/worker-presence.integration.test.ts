@@ -54,7 +54,7 @@ describe.skipIf(!testDatabaseUrl)('workerの在籍登録とheartbeat途絶（独
     await claim(fixture.workerToken, { workerId: 'host-1', workerInfo });
     expect(await lastSeenAt('host-1')).toEqual(firstSeen);
 
-    // Age the row past the write interval instead of waiting in real time.
+    // 実際に待つ代わりに、行の時刻を書き込みの間隔より古くする。
     await harness.database.query(
       "UPDATE workers SET last_seen_at=now()-interval '16 seconds' WHERE worker_id='host-1'",
     );
@@ -94,7 +94,7 @@ describe.skipIf(!testDatabaseUrl)('workerの在籍登録とheartbeat途絶（独
     [worker] = await listWorkers(`${fixture.basePath}/workers`, fixture.viewer.cookie);
     expect(worker!.status).toBe('offline');
 
-    // Coming back restarts the displayed uptime.
+    // 復帰すると、表示する稼働時間は最初から数え直す。
     await harness.database.query("UPDATE workers SET started_at=now()-interval '1 day'");
     await request(harness.app, '/api/worker/resume', {
       method: 'POST',
@@ -213,7 +213,7 @@ describe.skipIf(!testDatabaseUrl)('workerの在籍登録とheartbeat途絶（独
         })
       ).status,
     ).toBe(403);
-    // The worker token has worker:execute but not read.
+    // worker tokenはworker:executeを持つが、readは持たない。
     const scopeDenied = await request(harness.app, `${fixture.basePath}/workers`, {
       token: fixture.workerToken,
     });

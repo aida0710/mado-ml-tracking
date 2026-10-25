@@ -1,7 +1,7 @@
-"""Artifact downloads and Run Artifact uploads shared by the worker and a site's runner.
+"""workerとsiteのrunnerで共有する、Artifactのダウンロードと、RunのArtifactのアップロード。
 
-Both authenticate with one bearer token (the worker token, or the Job token on a site) and use
-the SDK's resumable transfers: Range downloads, and upload sessions for large files.
+どちらも1つのbearer token（worker token、siteではJob token）で認証し、SDKの再開できる転送を使う。
+ダウンロードはRange、大きなファイルのアップロードはアップロードセッションで再開する。
 """
 
 from __future__ import annotations
@@ -25,9 +25,9 @@ from ..security import SecretMasker
 from .contracts import WorkerJob
 from .download_content import write_downloaded_content
 
-# Artifact uploads share the SDK's bounded one-MiB memory budget.
+# Artifactのアップロードは、SDKと同じ1MiBまでのメモリの枠を使う。
 ARTIFACT_CHUNK_BYTES = 1024 * 1024
-# Container outputs are saved under this Run Artifact prefix (`container/<path>`).
+# コンテナの出力は、RunのArtifactのこの前置きの下に保存する（`container/<path>`）。
 CONTAINER_OUTPUT_PREFIX = "container/"
 
 
@@ -56,7 +56,7 @@ class ArtifactTransferApi:
     async def download_artifact(
         self, project_id: str, artifact_id: str, destination: BinaryIO, *, maximum_bytes: int | None = None
     ) -> dict[str, Any]:
-        """Resume an interrupted download with Range; the destination must be seekable."""
+        """中断したダウンロードをRangeで再開する。destinationはseekできるものに限る。"""
 
         async def write_encoded(response: httpx.Response) -> dict[str, Any]:
             try:
@@ -64,7 +64,7 @@ class ArtifactTransferApi:
                     response, destination, label="Artifact", maximum_bytes=maximum_bytes
                 )
             except (httpx.TransportError, httpx.DecodingError, httpx.StreamError):
-                # An encoded body has no byte offset to resume from.
+                # エンコードされた本文には、再開に使えるバイト位置が無い。
                 raise ApiError("Artifact download interrupted or invalid; retry from the beginning") from None
 
         return await download_resumable_async(
@@ -73,7 +73,8 @@ class ArtifactTransferApi:
             destination,
             masker=self.masker,
             maximum_bytes=maximum_bytes,
-            # Bounded code archives stay identity-only; write_downloaded_content rejects encodings.
+            # 上限のあるコードのアーカイブはidentityだけで受け取る。エンコードは
+            # write_downloaded_contentが拒む。
             encoded_fallback=write_encoded,
         )
 
@@ -82,7 +83,7 @@ class ArtifactTransferApi:
         await self.upload_run_artifact(job, artifact, source, path=path)
 
     async def upload_snapshot_artifact(self, job: WorkerJob, artifact: dict[str, Any], source: Path) -> None:
-        """Save a source snapshot file under its reserved `.mmt/` Artifact path."""
+        """ソースのスナップショットのファイルを、予約済みの`.mmt/`のArtifactのパスに保存する。"""
         from .source_snapshot import SNAPSHOT_FILENAMES
 
         if artifact.get("path") not in SNAPSHOT_FILENAMES:
@@ -117,7 +118,7 @@ class ArtifactTransferApi:
     async def put_run_artifact(
         self, *, project_id: str, run_id: str, artifact: dict[str, Any], source: Path, path: str
     ) -> dict[str, Any]:
-        """One PUT; a failure resends the whole file, so only small Artifacts take this path."""
+        """1回のPUTで送る。失敗時はファイル全体を再送するので、小さいArtifactだけがここを通る。"""
 
         async def chunks() -> AsyncIterator[bytes]:
             with source.open("rb") as content:

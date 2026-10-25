@@ -2,7 +2,7 @@ import type { Run, RunKind } from '@mmt/contracts';
 import { first, rows, type Connection } from '../db/database.js';
 import { runSummarySelect } from './runListProjection.js';
 
-// The relation a page of Runs is read through. The column comes from this closed set, never from input.
+// Runのページをたどる関係。列はこの決まった組から選び、入力からは取らない。
 export type RunRelation =
   | { column: 'model_version_id'; id: string }
   | { column: 'parent_run_id'; id: string };
@@ -12,8 +12,8 @@ export interface RelatedRunBoundary {
   createdAt: string;
 }
 
-// The (createdAt, id) of a cursor Run, or undefined when it is not related. The timestamp stays
-// text: JavaScript Date would drop PostgreSQL microseconds from the boundary.
+// cursorのRunの(createdAt, id)。関係が無ければundefined。時刻は文字列のままにする。
+// JavaScriptのDateにすると、境界からPostgreSQLのマイクロ秒が落ちる。
 export async function findRelatedRunBoundary(
   connection: Connection,
   reference: { projectId: string; relation: RunRelation; runId: string },
@@ -26,7 +26,7 @@ export async function findRelatedRunBoundary(
   );
 }
 
-// Active (not soft-deleted) related Runs, newest first. kinds null means every kind.
+// 論理削除されていない関係するRunを新しい順に返す。kindsがnullならすべての種類。
 export async function listRelatedRuns(
   connection: Connection,
   page: {

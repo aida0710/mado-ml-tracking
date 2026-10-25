@@ -103,7 +103,7 @@ def worker_settings(tmp_path: Path) -> WorkerSettings:
 
 @pytest.fixture
 def ssh_state_directory() -> Iterator[Path]:
-    """A launcher state directory short enough for SSH control sockets, which tmp_path is often not."""
+    """SSHのcontrol socketに使える短いlauncherのstateディレクトリ。tmp_pathは長すぎることが多い。"""
     directory = Path(tempfile.mkdtemp(prefix="mmt-", dir="/tmp"))
     yield directory
     shutil.rmtree(directory, ignore_errors=True)

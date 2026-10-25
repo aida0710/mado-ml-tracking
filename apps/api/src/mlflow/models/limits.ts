@@ -1,34 +1,34 @@
-// Share the native registry's name limit so SDK and native names remain interchangeable.
+// ネイティブのregistryと名前の上限をそろえ、SDKとネイティブの名前を相互に使えるようにする。
 export const MAX_MODEL_NAME_LENGTH = 200;
-// MLflow's keys and tag values can include paths, long text, and serialized metadata.
+// MLflowのキーとtagの値には、パス、長い文章、シリアライズしたメタデータが入りうる。
 export const MAX_MODEL_KEY_LENGTH = 250;
 export const MAX_MODEL_VALUE_LENGTH = 8000;
-// Bound batch work under the application's JSON body limit.
+// アプリケーションのJSONの本文の上限に収まるよう、バッチの処理量を制限する。
 export const MAX_MODEL_KEY_VALUE_BATCH = 1000;
-// Bound search parsing, sorting, and SQL parameter counts.
+// 検索の解析・並べ替え・SQLのパラメータの数を制限する。
 export const MAX_MODEL_FILTER_LENGTH = 10000;
 export const MAX_MODEL_SEARCH_EXPERIMENTS = 1000;
 export const MAX_MODEL_SEARCH_DATASETS = 100;
 export const MAX_MODEL_ORDER_FIELDS = 20;
 export const MAX_MODEL_ORDER_FIELD_LENGTH = 500;
-// Keep each page bounded while preserving MLflow's usual 100 item default. A larger max_results
-// is served page by page with next_page_token (see searchPagination.ts), not rejected.
+// MLflowのいつもの既定の100件を保ちつつ、各ページの大きさを制限する。これより大きい
+// max_resultsは拒まず、next_page_tokenでページごとに返す（searchPagination.tsを参照）。
 export const MAX_MODEL_PAGE_SIZE = 1000;
 export const DEFAULT_MODEL_PAGE_SIZE = 100;
-// MLflow 3.17's server rejects a larger max_results with INVALID_PARAMETER_VALUE, and so does
-// this API.
+// MLflow 3.17のサーバーはこれより大きいmax_resultsをINVALID_PARAMETER_VALUEで拒み、
+// このAPIも同じ。
 export const MLFLOW_MAX_REGISTERED_MODEL_RESULTS = 1000;
 export const MLFLOW_MAX_MODEL_VERSION_RESULTS = 200_000;
-// MLflow sets no upper bound for search_logged_models, so any safe integer is a valid request.
+// MLflowはsearch_logged_modelsに上限を設けていないので、安全な整数ならどれも正しいリクエスト。
 export const MLFLOW_MAX_LOGGED_MODEL_RESULTS = Number.MAX_SAFE_INTEGER;
 export const MAX_MODEL_PAGE_TOKEN_LENGTH = 2000;
-// Match the native URI limit and keep registry descriptions bounded independently of artifacts.
+// ネイティブのURIの上限に合わせ、registryの説明にもArtifactとは別に上限を設ける。
 export const MAX_MODEL_URI_LENGTH = 4000;
 export const MAX_MODEL_DESCRIPTION_LENGTH = 10000;
 export const MAX_MODEL_DATASET_DIGEST_LENGTH = 1000;
-// Eighteen digit numeric ordinals fit PostgreSQL bigint and are always returned as strings.
+// 18桁の数値の番号はPostgreSQLのbigintに収まり、常に文字列で返す。
 export const MAX_MODEL_VERSION_DIGITS = 18;
 export const MAX_NUMERIC_MODEL_VERSION = 10n ** BigInt(MAX_MODEL_VERSION_DIGITS) - 1n;
-// Official service_pb2.LoggedModelStatus numbers, also accepted by protobuf JSON parsers.
+// 公式のservice_pb2.LoggedModelStatusの番号。protobufのJSONパーサーも受け付ける。
 export const READY_LOGGED_MODEL_STATUS = 2;
 export const FAILED_LOGGED_MODEL_STATUS = 3;

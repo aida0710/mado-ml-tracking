@@ -1,19 +1,19 @@
 import type { TokenScope } from './serviceAccounts.js';
 
 /**
- * What an API token is issued for, in the order the token dialog lists them (the most common use
- * first). Each stands for the scopes that use needs (pages/admin/tokens.md), so people choose what
- * they will do instead of recalling scope names.
+ * API tokenを発行する目的。tokenのダイアログが並べる順（よく使うものが先）。それぞれがその用途に
+ * 必要なscopeを表し（pages/admin/tokens.md）、scopeの名前を思い出す代わりに、何をするかで
+ * 選べるようにする。
  */
 export const TOKEN_PURPOSES = ['recording', 'jobSubmission', 'worker', 'readOnly'] as const;
 export type TokenPurpose = (typeof TOKEN_PURPOSES)[number];
 
 export const TOKEN_PURPOSE_SCOPES: Record<TokenPurpose, readonly TokenScope[]> = {
-  // Both SDKs look an Experiment or a Model up before they write; runs:write does not imply read.
+  // どちらのSDKも、書き込む前に実験やModelを調べる。runs:writeはreadを含まない。
   recording: ['read', 'runs:write', 'registry:write', 'artifacts:write'],
-  // `mado-tracking submit` claims one's waiting Jobs (jobs:write) and shows how many wait (read).
+  // `mado-tracking submit`は自分の待つJobをclaimし（jobs:write）、待っている数を出す（read）。
   jobSubmission: ['read', 'jobs:write'],
-  // A worker claims Jobs and stores their outputs.
+  // workerはJobをclaimし、その出力を保存する。
   worker: ['read', 'worker:execute', 'artifacts:write'],
   readOnly: ['read'],
 };

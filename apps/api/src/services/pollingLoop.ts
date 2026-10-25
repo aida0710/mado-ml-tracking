@@ -1,6 +1,6 @@
 /**
- * Runs one background task repeatedly with a pause between runs, never overlapping itself.
- * stop() waits for the running task, so server shutdown does not cut a database write short.
+ * 1つのバックグラウンドの処理を、間を空けながら繰り返し動かす。前の回と重なることはない。
+ * stop()は動いている処理を待つので、サーバーを止めてもDBへの書き込みが途中で切れない。
  */
 export class PollingLoop {
   private isStopped = true;
@@ -11,7 +11,7 @@ export class PollingLoop {
     private readonly options: {
       intervalMs: number;
       run: () => Promise<unknown>;
-      /** Logged without error details, which can include storage locations. */
+      /** エラーの詳細は保存先の場所を含みうるので、詳細を付けずにログに書く。 */
       failureEvent: string;
     },
   ) {}

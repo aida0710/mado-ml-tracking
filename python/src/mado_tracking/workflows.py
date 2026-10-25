@@ -1,4 +1,4 @@
-"""Pinned multi-step workflow definitions and their durable executions."""
+"""固定した複数stepのワークフローの定義と、その永続的な実行。"""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 def create_workflow(
     client: Client, project_id: str, *, name: str, steps: Sequence[Mapping[str, Any]], description: str = ""
 ) -> dict[str, Any]:
-    """Save the current Task revisions; each step specifies expectedTaskRevision and input bindings."""
+    """今のTaskの改訂を保存する。各stepはexpectedTaskRevisionと入力の割り当てを指定する。"""
     return client.request(
         "POST",
         client.project_path(project_id, "workflows"),
@@ -25,14 +25,14 @@ def create_workflow(
 
 
 def get_workflow(client: Client, project_id: str, workflow_id: str) -> dict[str, Any]:
-    """The workflow with its newest versions; list_workflow_versions walks every version."""
+    """最新のバージョンを含むワークフロー。すべてのバージョンはlist_workflow_versionsで辿る。"""
     return client.request(
         "GET", client.project_path(project_id, f"workflows/{path_id(workflow_id)}"), retryable=True
     )
 
 
 def list_workflow_versions(client: Client, project_id: str, workflow_id: str) -> Iterator[dict[str, Any]]:
-    """Every saved version, newest first, each with its pinned Task settings."""
+    """保存されたすべてのバージョン。新しい順で、それぞれ固定したTaskの設定を持つ。"""
     return iterate_listed_items(
         client,
         client.project_path(project_id, f"workflows/{path_id(workflow_id)}/versions"),
@@ -65,7 +65,7 @@ def launch_workflow(
     idempotency_key: str | None = None,
     resume_from_execution_id: str | None = None,
 ) -> dict[str, Any]:
-    """Start once; reuse the idempotency key after a lost response or across process retries."""
+    """1回だけ開始する。応答が失われたあとやプロセスの再試行でも、同じidempotency keyを使う。"""
     body: dict[str, Any] = {"revision": revision, "idempotencyKey": idempotency_key or str(uuid4())}
     if resume_from_execution_id is not None:
         body["resumeFromExecutionId"] = resume_from_execution_id

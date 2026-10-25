@@ -67,7 +67,7 @@ export function createArtifactStoresFromEnv(env: NodeJS.ProcessEnv = process.env
   };
   const s3 = readEnvironmentS3Settings(env);
   if (s3) {
-    // Environment backends keep the SDK defaults they always had; DB backends use s3ClientFactory.
+    // 環境変数の保存先は従来どおりSDKの既定値を使う。DBの保存先はs3ClientFactoryを使う。
     const client = new S3Client({
       region: s3.region,
       ...(s3.endpoint ? { endpoint: s3.endpoint } : {}),
@@ -79,7 +79,7 @@ export function createArtifactStoresFromEnv(env: NodeJS.ProcessEnv = process.env
   return createArtifactStores(stores);
 }
 
-/** Non-secret facts about an environment backend, shown read-only to administrators. */
+/** 環境変数の保存先の、秘密でない情報。管理者に読み取り専用で表示する。 */
 export type EnvironmentBackendDescription =
   | { name: string; kind: 'filesystem'; rootPath: string }
   | {
@@ -114,7 +114,7 @@ export function describeEnvironmentBackends(
   return descriptions;
 }
 
-/** Builds the store for one DB-configured backend. The caller decrypts the secret beforehand. */
+/** DBで設定した1つの保存先のストアを作る。secretは呼び出し側が先に復号しておく。 */
 export function createArtifactStoreFromConfig({
   config,
   credentials,
@@ -134,7 +134,7 @@ export function createArtifactStoreFromConfig({
   });
 }
 
-/** The backend exists but an administrator disabled it; its Artifacts stay readable. */
+/** 保存先はあるが、管理者が無効にしたもの。そのArtifactは引き続き読める。 */
 export class ArtifactBackendDisabledError extends Error {
   constructor(readonly backend: ArtifactBackend) {
     super('Artifact backend does not accept new writes');
@@ -147,9 +147,9 @@ export interface ArtifactStoreEntry {
   acceptsWrites: boolean;
 }
 export interface ReplaceableArtifactStores extends ArtifactStores {
-  /** Backends that take new Artifacts; backends() also lists read-only ones. */
+  /** 新しいArtifactを受け付ける保存先。backends()は読み取り専用のものも挙げる。 */
   writableBackends(): ArtifactBackend[];
-  /** Later calls use the new entry; operations already started finish on the previous store. */
+  /** 以後の呼び出しは新しいエントリを使う。既に始まった操作は前のストアで最後まで進む。 */
   replace(backend: ArtifactBackend, entry: ArtifactStoreEntry): void;
   delete(backend: ArtifactBackend): void;
 }
@@ -167,10 +167,10 @@ function readOnlyMultipart(
 }
 
 /**
- * Name to store mapping that can change while the server runs. Each call looks up the entry once
- * and keeps that reference, so a replaced store is never mixed into an operation in progress.
- * Disabled backends refuse put() and new multipart uploads; parts of an upload already opened
- * may still finish, so a session started before disabling is not stranded.
+ * サーバーの実行中に変わりうる、名前からストアへの対応。各呼び出しはエントリを1回だけ引いて
+ * その参照を持ち続けるので、置き換えたストアが進行中の操作に混ざることはない。無効にした
+ * 保存先はput()と新しいマルチパートアップロードを拒否する。既に開いたアップロードのパートは
+ * 最後まで進められるので、無効にする前に始めたアップロードセッションが行き場を失うことはない。
  */
 export function createReplaceableArtifactStores(
   initial: Record<ArtifactBackend, ArtifactStoreEntry> = {},

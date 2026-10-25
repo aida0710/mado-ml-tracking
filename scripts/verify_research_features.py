@@ -1,15 +1,15 @@
-"""End-to-end check of the research features on an isolated API, the Python SDK and a local worker.
+"""研究向けの機能を、分離したAPI、Python SDK、ローカルのworkerで端から端まで確かめる。
 
-system metrics -> media at three steps -> resume='must' -> offline recording and an interrupted
-`mado-tracking sync` -> Sweep (grid 2x2, parallelism 2, hyperband) with analysis -> Run note and
-MLflow's mlflow.note.content, comments -> saved view -> report live/snapshot. With
-MMT_PLAYWRIGHT_MODULE set, the Web (Vite on its own port) is checked on the same data by
-apps/web/tests/browser-research.mjs. Each stage's result and duration go to
-artifacts/verification/<JST date>/research/research-integration.json.
+システムメトリクス → 3つのstepでのメディア → resume='must' → オフラインの記録と、途中で
+切れる`mado-tracking sync` → Sweep（grid 2x2、並列数2、hyperband）と分析 → Runのメモと
+MLflowのmlflow.note.content、コメント → 保存ビュー → レポートのliveとsnapshot。
+MMT_PLAYWRIGHT_MODULEを設定すると、同じデータで画面（Viteを専用のポートで動かす）を
+apps/web/tests/browser-research.mjsで確かめる。各段階の結果と所要時間は
+artifacts/verification/<JST date>/research/research-integration.jsonに書く。
 
-The API is a fresh test schema in MMT_TEST_DATABASE_URL (scripts/serve_mlflow_verification.ts),
-never the running development API/DB. The schema is dropped when the script stops the API;
-`--hold` keeps the API (and the Web) running until Ctrl+C to look at the data.
+APIはMMT_TEST_DATABASE_URLの新しいテスト用schema（scripts/serve_mlflow_verification.ts）で、
+動いている開発用のAPIやDBは使わない。スクリプトがAPIを止めるときにschemaを削除する。
+`--hold`を付けると、データを見られるよう、Ctrl+CまでAPI（と画面）を動かし続ける。
 """
 
 from __future__ import annotations
@@ -45,13 +45,14 @@ from mado_tracking.worker.service import Worker
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES = ROOT / "python/examples"
 JST = ZoneInfo("Asia/Tokyo")
-# This package's servers use 47010-47019 only; the running API/Web are 4182/5182.
+# この検証のサーバーは47010〜47019だけを使う。動いているAPIとWebは4182と5182。
 API_PORT = int(os.environ.get("MMT_VERIFY_RESEARCH_API_PORT", "47010"))
 WEB_PORT = int(os.environ.get("MMT_VERIFY_RESEARCH_WEB_PORT", "47011"))
 RELAY_PORT = int(os.environ.get("MMT_VERIFY_RESEARCH_RELAY_PORT", "47012"))
 API_URL = f"http://127.0.0.1:{API_PORT}"
 WEB_URL = f"http://127.0.0.1:{WEB_PORT}"
-# The harness API accepts cookie requests from this Origin only; it is a header, nothing connects.
+# harnessのAPIは、このOriginからのcookieのリクエストだけを受け付ける。ヘッダーにすぎず、
+# どこにも接続しない。
 API_WEB_ORIGIN = "http://127.0.0.1:5182"
 API_START_SECONDS = 90
 WEB_START_SECONDS = 60
@@ -61,28 +62,30 @@ WORK_DIRECTORY = ROOT / "var/verification-research" / datetime.now(JST).strftime
 TERMINAL_STATUSES = {"finished", "failed", "canceled"}
 SWEEP_TERMINAL_STATUSES = {"finished", "failed", "canceled"}
 
-# "Tens of seconds" of training with a sample every second gives each system.* key ~30 points.
+# 「数十秒」の学習で毎秒サンプルを取れば、system.*の各キーに約30点できる。
 TRAINING_STEPS = 30
 STEP_SECONDS = 1.0
 SYSTEM_METRICS_INTERVAL_SECONDS = 1.0
 MINIMUM_SYSTEM_POINTS = 10
 RESUMED_STEPS = 10
-# research_features.py logs media every 10 steps: steps 9, 19, 29 for a 30-step Run.
+# research_features.pyは10stepごとにメディアを記録する。30stepのRunならstep 9、19、29。
 MEDIA_STEPS = [9, 19, 29]
 MEDIA_KEYS = {"inference/tone": "audio", "inference/spectrogram": "image", "evaluation/samples": "table"}
-# Just over the SDK's 64 MiB session threshold, so the offline checkpoint uses an upload session.
+# SDKがアップロードセッションに切り替える64MiBを少し超え、オフラインのcheckpointが
+# アップロードセッションを使うようにする。
 CHECKPOINT_MIB = 65
-# The relay drops every connection when the 65 MiB checkpoint's last part starts: some of its
-# 16 MiB parts have arrived, the session is not complete, and the Run has no end yet.
+# 65MiBのcheckpointの最後のpartが始まったところで、relayはすべての接続を切る。
+# 16MiBのpartのいくつかは届いているが、アップロードセッションは完了しておらず、
+# Runもまだ終わっていない。
 RELAY_CUT_ON_REQUEST = b"/parts/5 HTTP/1.1"
 SYNC_TIMEOUT_SECONDS = 300
-# Sweep trials log val_loss each epoch and sleep between epochs, so the API's 15 s hyperband
-# tick sees two trials between rungs.
+# Sweepのtrialはepochごとにval_lossを記録し、epochの合間にスリープするので、APIが15秒ごとに回す
+# hyperbandの判定は、rungの間で2つのtrialを見る。
 SWEEP_EPOCHS = 8
 SWEEP_EPOCH_SECONDS = 3
 SWEEP_DEADLINE_SECONDS = 600
 WORKER_HEARTBEAT_SECONDS = 0.5
-# The point the report check logs after saving: the step after the resumed training.
+# レポートの検査が保存後に記録する点。resumeした学習の次のstep。
 REPORT_EXTRA_STEP = TRAINING_STEPS + RESUMED_STEPS
 OUT_OF_SCOPE = ["実GPU", "実SSO（Authentik）", "実S3", "外部の実コンピュータ", "実SSH target", "コンテナruntime"]
 
@@ -116,7 +119,7 @@ with start_run() as run:
 
 @dataclass
 class Research:
-    """What the stages share: the admin session, the SDK token and the Runs made so far."""
+    """各段階が共有するもの: 管理者のsession、SDKのtoken、それまでに作ったRun。"""
 
     session: httpx.Client
     api: ProjectApi
@@ -143,7 +146,7 @@ class Research:
 
 
 def run_example(environment: dict[str, str], *arguments: str) -> dict[str, Any]:
-    """Run python/examples/research_features.py and return its final JSON line."""
+    """python/examples/research_features.pyを実行し、最後のJSONの行を返す。"""
     completed = subprocess.run(
         [sys.executable, str(EXAMPLES / "research_features.py"), *arguments],
         env=environment,
@@ -157,7 +160,7 @@ def run_example(environment: dict[str, str], *arguments: str) -> dict[str, Any]:
     return json.loads(completed.stdout.strip().splitlines()[-1])
 
 
-# --- (1) system metrics, (4) media, (2) resume --------------------------------------------------
+# --- （1）システムメトリクス、（4）メディア、（2）resume ----------------------------------------
 def verify_system_metrics(research: Research, details: dict[str, Any]) -> None:
     result = run_example(
         research.sdk_environment(),
@@ -247,9 +250,9 @@ def verify_resume(research: Research, details: dict[str, Any]) -> None:
     expect(research.api.run(run_id)["status"] == "finished", "the resumed Run did not finish again")
 
 
-# --- (3) offline recording and an interrupted sync ----------------------------------------------
+# --- （3）オフラインの記録と、途中で切れるsync --------------------------------------------------
 class CuttableRelay:
-    """A loopback TCP relay to the API that can drop every connection, like the API going away."""
+    """APIへのloopbackのTCPのrelay。APIが消えたときのように、すべての接続を切れる。"""
 
     def __init__(self, *, listen_port: int, target_port: int):
         self.target_port = target_port
@@ -321,7 +324,8 @@ class CuttableRelay:
             self.request_bytes = 0
 
     def close(self) -> None:
-        # shutdown wakes the accept thread; close alone leaves the port listening until exit.
+        # shutdownでacceptのスレッドを起こす。closeだけだと、終了するまでポートが
+        # 待ち受けたままになる。
         try:
             self.listener.shutdown(socket.SHUT_RDWR)
         except OSError:
@@ -405,7 +409,7 @@ def verify_offline_sync(research: Research, details: dict[str, Any]) -> None:
             "stdout": resumed.stdout.strip()[-500:],
         }
         expect(resumed.returncode == 0 and " completed " in resumed.stdout, f"resumed sync: {resumed.stdout}")
-        # Resuming the session sends only the parts that did not arrive before the cut.
+        # アップロードセッションを再開すると、切断前に届かなかったpartだけを送る。
         expect(relay.request_bytes < checkpoint.size, "the resumed sync re-sent the whole checkpoint")
     finally:
         relay.close()
@@ -426,7 +430,7 @@ def verify_offline_sync(research: Research, details: dict[str, Any]) -> None:
     expect(
         second.returncode == 0 and details["secondSync"]["counts"] == expected, "the second sync added data"
     )
-    # Without sync-state.json everything is sent again; the API's idempotency keeps the counts.
+    # sync-state.jsonが無ければすべてを送り直すが、APIの冪等性で件数は変わらない。
     (directory / "sync-state.json").unlink()
     third = run_sync(research.sdk_environment(), directory)
     details["resendWithoutSyncState"] = {
@@ -439,7 +443,7 @@ def verify_offline_sync(research: Research, details: dict[str, Any]) -> None:
     )
 
 
-# --- (5) Sweep on the local worker ---------------------------------------------------------------
+# --- （5）ローカルのworkerでのSweep --------------------------------------------------------------
 def register_sweep_task(research: Research) -> str:
     code = research.api.post("codes", {"name": "Research sweep trial", "description": "research features"})
     version = research.api.post(
@@ -594,7 +598,7 @@ def verify_sweep(research: Research, details: dict[str, Any]) -> None:
     expect({entry["param"] for entry in importance["entries"]} == {"lr", "batch_size"}, "importance entries")
 
 
-# --- (6) note and comments, (7) saved view, (8) report -------------------------------------------
+# --- （6）メモとコメント、（7）保存ビュー、（8）レポート -----------------------------------------
 def mlflow_request(research: Research, method: str, endpoint: str, **options: Any) -> Any:
     response = research.session.request(
         method,
@@ -848,7 +852,7 @@ def browser_fixture(research: Research) -> dict[str, Any]:
     return {"projectId": research.project_id, "experimentId": research.experiment_id, **research.ids}
 
 
-# --- Processes and setup -------------------------------------------------------------------------
+# --- プロセスと準備 ------------------------------------------------------------------------------
 def wait_for_http(url: str, process: subprocess.Popen[bytes], log_path: Path, seconds: float) -> None:
     deadline = time.monotonic() + seconds
     while True:
@@ -875,7 +879,7 @@ def stop_process(process: subprocess.Popen[bytes]) -> None:
 
 @contextmanager
 def isolated_api(log_path: Path) -> Iterator[None]:
-    """Like verify_pipeline_smoke's, on this package's port and with the Sweep scheduler running."""
+    """verify_pipeline.pyと同じで、この検証のポートを使い、Sweepのスケジューラも動かす。"""
     if not os.environ.get("MMT_TEST_DATABASE_URL"):
         raise SystemExit("MMT_TEST_DATABASE_URL (the dedicated loopback mmt_test DB) is required")
     for port in (API_PORT, WEB_PORT, RELAY_PORT):
@@ -896,7 +900,7 @@ def isolated_api(log_path: Path) -> Iterator[None]:
             wait_for_http(f"{API_URL}/healthz", server, log_path, API_START_SECONDS)
             yield
         finally:
-            # SIGTERM lets the harness drop its test schema.
+            # SIGTERMを送れば、harnessがテスト用のschemaを削除できる。
             stop_process(server)
 
 
@@ -984,7 +988,7 @@ STAGES = [
     ("saved_view", "保存ビュー（Project公開、グループ化と図の配置）の作成と取得", verify_saved_view),
     ("report", "レポートのliveとsnapshot。metricsを足してもsnapshotは変わらない", verify_report),
 ]
-# Stages that read data earlier stages made; the others still run after a failure.
+# 前の段階が作ったデータを読む段階。それ以外の段階は、失敗のあとでも動く。
 DEPENDS_ON = {
     "media": ("system_metrics",),
     "resume": ("system_metrics",),
@@ -1026,8 +1030,8 @@ def hold(research: Research) -> None:
     fixture_path.write_text(json.dumps(browser_fixture(research), ensure_ascii=False, indent=2) + "\n")
     with web_server(OUTPUT_DIRECTORY / "web.log"):
         print(f"Holding API {API_URL} and Web {WEB_URL}; fixture {fixture_path}. Ctrl+C to stop.", flush=True)
-        # The Sweep's worker ran an asyncio loop that took over SIGINT, so install handlers anew;
-        # returning normally lets the API drop its schema.
+        # Sweepのworkerが動かしたasyncioのループがSIGINTを奪ったので、ハンドラを入れ直す。
+        # 普通にreturnすれば、APIがschemaを削除できる。
         stop = threading.Event()
         for signal_number in (signal.SIGINT, signal.SIGTERM):
             signal.signal(signal_number, lambda *_arguments: stop.set())

@@ -1,49 +1,49 @@
 /**
- * MLflow log_image(key=, step=) file names. The official SDK writes one full-resolution image and
- * one compressed .webp per call, with a layout that changed between releases:
+ * MLflowのlog_image(key=, step=)のファイル名。公式のSDKは1回の呼び出しで原寸の画像と、圧縮した
+ * .webpを1つずつ書く。名前の形はリリースの間で変わった。
  *   3.0.0:  images/<key>%step%<step>%timestamp%<ms>%<uuid>.png  and  ...%compressed.webp
- *           ('/' in the key becomes '#')
+ *           （keyの'/'は'#'になる）
  *   3.17.0: images/<key>+step+<step>+timestamp+<ms>+<uuid>.png  and  ...+compressed.webp
- *           ('/' in the key becomes '~')
+ *           （keyの'/'は'~'になる）
  */
 
 export interface MlflowImagePath {
   key: string;
   step: number;
-  /** Milliseconds the SDK put in the name. */
+  /** SDKが名前に入れたミリ秒。 */
   timestamp: number;
-  /** '%' for MLflow 3.0, '+' for later releases. */
+  /** MLflow 3.0は'%'、それより後のリリースは'+'。 */
   separator: '%' | '+';
-  /** The uuid the SDK put in the name. */
+  /** SDKが名前に入れたuuid。 */
   fileId: string;
-  /** true for the compressed .webp that MLflow shows as the thumbnail. */
+  /** MLflowがサムネイルとして表示する、圧縮した.webpならtrue。 */
   compressed: boolean;
-  /** The path of the full-resolution image of the same call (itself when not compressed). */
+  /** 同じ呼び出しで書かれた原寸の画像のパス（圧縮版でなければ自分自身）。 */
   imagePath: string;
-  /** The path of the compressed image of the same call (itself when compressed). */
+  /** 同じ呼び出しで書かれた圧縮した画像のパス（圧縮版なら自分自身）。 */
   compressedPath: string;
 }
 
 const IMAGE_DIRECTORY = 'images/';
 const COMPRESSED_EXTENSION = '.webp';
 const IMAGE_EXTENSION = '.png';
-// The key's '/' replacement for each separator, as the SDK release that used it wrote it.
+// 区切り文字ごとの、keyの'/'の置き換え先。その区切り文字を使ったSDKのリリースが書いたとおり。
 const KEY_SLASH_REPLACEMENT: Record<string, string> = { '%': '#', '+': '~' };
-// The SDK accepts keys of [a-zA-Z0-9_\-./ ]; only the separator itself is excluded here.
+// SDKは[a-zA-Z0-9_\-./ ]からなるkeyを受け付ける。ここでは区切り文字そのものだけを除く。
 const FILE_NAME_PATTERN =
   /^(?<key>[^/%+]+)(?<separator>[%+])step\k<separator>(?<step>0|[1-9]\d*)\k<separator>timestamp\k<separator>(?<timestamp>0|[1-9]\d*)\k<separator>(?<id>[0-9a-z-]+?)(?<compressed>\k<separator>compressed)?(?<extension>\.png|\.webp)$/;
 
-// MLflow 3.0 starts the uuid with g-z so that a separator is never followed by two hex digits.
+// MLflow 3.0はuuidをg-zで始め、区切り文字のあとに16進の2桁が続かないようにしている。
 const PERCENT_FILE_ID_PATTERN = /^[g-z]/;
 
-/** The parts of an MLflow log_image(key=, step=) path, or null for any other path. */
+/** MLflowのlog_image(key=, step=)のパスの各部分。それ以外のパスはnull。 */
 export function parseMlflowImagePath(path: string): MlflowImagePath | null {
   if (!path.startsWith(IMAGE_DIRECTORY)) return null;
   const match = FILE_NAME_PATTERN.exec(path.slice(IMAGE_DIRECTORY.length));
   if (!match?.groups) return null;
   const { separator, id, extension } = match.groups as Record<string, string>;
   const compressed = match.groups.compressed !== undefined;
-  // The SDK writes the full image as .png and the compressed one as .webp, nothing else.
+  // SDKは原寸の画像を.png、圧縮した画像を.webpで書き、ほかの形式は使わない。
   if (extension !== (compressed ? COMPRESSED_EXTENSION : IMAGE_EXTENSION))
     return null;
   const step = Number(match.groups.step);
@@ -64,9 +64,9 @@ export function parseMlflowImagePath(path: string): MlflowImagePath | null {
 }
 
 /**
- * true for an MLflow 3.0 log_image file name. Its '%' separators are literal characters in the
- * decoded path, so the artifact path check lets exactly these names keep '%' before digits
- * (step and timestamp) instead of treating them as a second layer of percent-encoding.
+ * MLflow 3.0のlog_imageのファイル名ならtrue。その'%'の区切りはデコード後のパスでも文字そのもの
+ * なので、Artifactのパスの検査は、ちょうどこの名前に限って、数字（stepとtimestamp）の前の'%'を
+ * 二重のパーセントエンコードとみなさずに残す。
  */
 export function isMlflowPercentImagePath(path: string): boolean {
   const image = parseMlflowImagePath(path);
@@ -74,9 +74,9 @@ export function isMlflowPercentImagePath(path: string): boolean {
 }
 
 /**
- * The table paths MLflow log_table lists in the mlflow.loggedArtifacts tag
- * ([{"path": "tables/x.json", "type": "table"}, ...]). A malformed tag or entry is skipped, not an
- * error: the tag is written by clients and the files themselves stay listed as Artifacts.
+ * MLflowのlog_tableがmlflow.loggedArtifactsのtagに並べる表のパス
+ * （[{"path": "tables/x.json", "type": "table"}, ...]）。形式の壊れたtagや要素はエラーにせず
+ * 飛ばす。tagはクライアントが書くもので、ファイル自体はArtifactとして一覧に残る。
  */
 export function parseLoggedTablePaths(tagValue: string | undefined): string[] {
   if (!tagValue) return [];
@@ -90,7 +90,7 @@ export function parseLoggedTablePaths(tagValue: string | undefined): string[] {
   const paths = entries.flatMap((entry: unknown) => {
     if (typeof entry !== 'object' || entry === null) return [];
     const { path, type } = entry as { path?: unknown; type?: unknown };
-    // Paths are only compared with stored Artifact paths, so an unsafe one simply matches nothing.
+    // パスは保存済みのArtifactのパスと比べるだけなので、安全でないパスは何にも合わないだけで済む。
     return type === 'table' && typeof path === 'string' && path !== '' ? [path] : [];
   });
   return [...new Set(paths)];

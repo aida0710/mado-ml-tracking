@@ -1,5 +1,5 @@
-"""Where a Run's writes go: the API (online), the local spool (offline), or online until the API
-is unreachable (auto). Run only talks to a RunTransport, so it has no mode branches of its own.
+"""Runの書き込みの行き先。API（online）、ローカルのspool（offline）、またはAPIにつながらなく
+なるまでonline（auto）。RunはRunTransportとだけやり取りするので、自分ではモードで分岐しない。
 """
 
 from __future__ import annotations
@@ -28,9 +28,9 @@ if TYPE_CHECKING:
 
 RunMode = Literal["online", "offline", "auto"]
 RUN_MODES: tuple[RunMode, ...] = ("online", "offline", "auto")
-# Keep uploads bounded even for multi-gigabyte model artifacts.
+# 数GBのモデルのArtifactでも、アップロードに使うメモリを一定に抑える。
 ARTIFACT_CHUNK_BYTES = 1024 * 1024
-# Run.syncOrigin accepts up to 200 characters (SYNC_ORIGIN_MAX_LENGTH).
+# Run.syncOriginは200文字まで（SYNC_ORIGIN_MAX_LENGTH）。
 SYNC_ORIGIN_MAX_LENGTH = 200
 
 Result = TypeVar("Result")
@@ -38,8 +38,8 @@ Result = TypeVar("Result")
 
 @dataclass(frozen=True)
 class RunMediaItem:
-    """A media item to register after its file is stored at artifact_path. The id is chosen by the
-    SDK so a resent registration, online or from the spool, does not add a second item."""
+    """ファイルをartifact_pathに保存したあとで登録するメディア。idはSDKが決めるので、登録を
+    送り直しても（オンラインでもspoolからでも）2つ目の項目は増えない。"""
 
     id: str
     key: str
@@ -52,11 +52,11 @@ class RunMediaItem:
 
 
 class RunTransport(Protocol):
-    """The write side of a Run. Methods that change the Run return its new entity when known."""
+    """Runの書き込み側。Runを変えるメソッドは、分かれば新しいエンティティを返す。"""
 
     @property
     def offline_directory(self) -> Path | None:
-        """The spool directory once records go there, else None."""
+        """レコードの書き先がspoolになったらそのディレクトリ、そうでなければNone。"""
 
     def start(self) -> dict[str, Any] | None: ...
 
@@ -75,13 +75,13 @@ class RunTransport(Protocol):
     ) -> dict[str, Any]: ...
 
     def log_media(self, source: Path, media: RunMediaItem) -> dict[str, Any]:
-        """Store source as the Artifact media.artifact_path, then register it as Run media."""
+        """sourceをArtifactのmedia.artifact_pathとして保存し、Runのメディアとして登録する。"""
 
     def close(self) -> None: ...
 
 
 def resolve_mode(mode: str | None, environment: Mapping[str, str]) -> RunMode:
-    """The explicit mode, else MMT_MODE, else online (W&B's WANDB_MODE plays the same role)."""
+    """明示されたモード、無ければMMT_MODE、それも無ければonline（W&BのWANDB_MODEと同じ役割）。"""
     chosen = mode or environment.get("MMT_MODE") or "online"
     for known in RUN_MODES:
         if chosen == known:
@@ -94,7 +94,7 @@ def machine_origin() -> str:
 
 
 def spool_record_from_entity(entity: Mapping[str, Any], *, project_id: str, api_url: str) -> SpoolRunRecord:
-    """run.json for a Run the API already created, so sync's PUT finds it and changes nothing."""
+    """APIが作成済みのRunのrun.json。syncのPUTがそのRunを見つけ、何も変えずに済むようにする。"""
     return SpoolRunRecord(
         run_id=str(entity["id"]),
         project_id=project_id,
@@ -111,14 +111,14 @@ def spool_record_from_entity(entity: Mapping[str, Any], *, project_id: str, api_
 
 
 def is_api_unreachable(error: ApiError) -> bool:
-    """A lost connection or a 5xx left after retries; a 4xx is a real answer and is raised."""
+    """接続が切れたか、再試行しても5xxのまま。4xxは本当の応答なので、例外として投げる。"""
     if isinstance(error, UploadSessionFailed):
         return False
     return error.status_code is None or error.status_code >= 500
 
 
 class HttpRunTransport:
-    """Sends every write to the native API right away."""
+    """すべての書き込みを、すぐにネイティブAPIへ送る。"""
 
     def __init__(self, client: Client, project_id: str, run_id: str):
         self.client = client
@@ -153,7 +153,8 @@ class HttpRunTransport:
     def log_artifact(
         self, source: Path | BinaryIO, *, path: str, mime_type: str, copy: bool
     ) -> dict[str, Any]:
-        """Files of SESSION_UPLOAD_THRESHOLD_BYTES or more use a resumable upload session."""
+        """SESSION_UPLOAD_THRESHOLD_BYTES以上のファイルは、再開できるアップロードセッションを
+        使う。"""
         if isinstance(source, Path) and source.stat().st_size >= SESSION_UPLOAD_THRESHOLD_BYTES:
             return upload_file_sync(
                 self.client,
@@ -195,7 +196,7 @@ class HttpRunTransport:
             "caption": media.caption,
             "metadata": media.metadata,
         }
-        # The media id makes the POST idempotent, so a lost response can be retried.
+        # メディアのidでPOSTが冪等になるので、応答が失われても再試行できる。
         created = self.client.request(
             "POST", f"{self.run_path}/media", json={"items": [item]}, retryable=True
         )
@@ -206,7 +207,7 @@ class HttpRunTransport:
 
 
 class SpoolRunTransport:
-    """Appends every write to the local spool; nothing contacts the API."""
+    """すべての書き込みをローカルのspoolに書き足す。APIには何も接続しない。"""
 
     def __init__(self, spool: RunSpool):
         self.spool = spool
@@ -216,7 +217,7 @@ class SpoolRunTransport:
         return self.spool.directory
 
     def start(self) -> dict[str, Any] | None:
-        # A spooled Run is created running by PUT /sync/runs/:runId.
+        # spoolに書いたRunは、PUT /sync/runs/:runIdが実行中の状態で作る。
         return None
 
     def finish(self, status: str) -> dict[str, Any] | None:
@@ -259,11 +260,11 @@ class SpoolRunTransport:
 
 
 class AutoRunTransport:
-    """Online until a write cannot reach the API, then the spool for the rest of the Run.
+    """書き込みがAPIに届かなくなるまではonline、そのあとはRunが終わるまでspool。
 
-    Writes that reached the API before the switch are not spooled again; the spool's sync-state
-    records that the Run exists, so sync only sends what came after. The failed write itself is
-    spooled: it may have reached the API, and resending it is preferred to losing it.
+    切り替え前にAPIに届いた書き込みは、spoolに書き直さない。spoolのsync-stateがRunの存在を
+    記録しているので、syncは切り替え後のものだけを送る。失敗した書き込み自体はspoolに書く。
+    APIに届いていたかもしれないが、失うよりは送り直す方を選ぶ。
     """
 
     def __init__(self, online: HttpRunTransport, open_spool: Callable[[], RunSpool]):
@@ -298,7 +299,7 @@ class AutoRunTransport:
         self, source: Path | BinaryIO, *, path: str, mime_type: str, copy: bool
     ) -> dict[str, Any]:
         if not isinstance(source, Path):
-            # A stream read by a failed upload cannot be read again for the spool.
+            # 失敗したアップロードが読んだストリームは、spoolのためにもう一度読むことはできない。
             return self._send(
                 lambda transport: transport.log_artifact(source, path=path, mime_type=mime_type, copy=copy),
                 retry_offline=False,
@@ -308,7 +309,8 @@ class AutoRunTransport:
         )
 
     def log_media(self, source: Path, media: RunMediaItem) -> dict[str, Any]:
-        # Spooling stores the file again: sync needs it in the spool even if the upload succeeded.
+        # spoolに書くときはファイルを保存し直す。アップロードが成功していても、syncにはspoolの
+        # ファイルが要る。
         return self._send(lambda transport: transport.log_media(source, media))
 
     def close(self) -> None:

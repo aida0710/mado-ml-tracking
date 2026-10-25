@@ -1,9 +1,9 @@
-"""Submission results whose report has not reached the API yet, kept on disk until it does.
+"""報告がまだAPIに届いていない投入の結果。届くまでディスクに置いておく。
 
-The job shell has already submitted these Jobs; without a report the API fails them after
-SITE_SUBMISSION_REPORT_TIMEOUT_SECONDS while their runners may already be queued. A result is
-saved before it is sent, so a crash in between loses nothing, and it stays saved until the API has
-it or refuses it for good (409: an earlier copy arrived, or the Jobs left `submitting` meanwhile).
+job shellはこれらのJobを既に投入している。報告が無いと、runnerが既に待ち行列にいるかも
+しれないのに、APIはSITE_SUBMISSION_REPORT_TIMEOUT_SECONDSのあとにJobを失敗にする。結果は
+送る前に保存するので、その間にクラッシュしても何も失わない。APIが受け取るか、今後も拒む
+（409。前の写しが届いたか、その間にJobが`submitting`から移った）まで、保存したままにする。
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ class PendingReports:
         self.notice = notice
 
     def report(self, result: dict[str, Any]) -> None:
-        # Saved first: the job shell has submitted, so the report must survive a crash from here.
+        # 先に保存する。job shellは投入済みなので、ここからは報告がクラッシュしても残る必要がある。
         path = self.directory / f"{uuid.uuid4()}.json"
         write_json(path, result)
         if self._deliver(result):
@@ -44,14 +44,14 @@ class PendingReports:
     def resend(self) -> None:
         for path, saved in self._saved():
             if not _is_result(saved):
-                # Saved by a launcher of one Project's worker token; the API takes those no more.
+                # 1つのProjectのworker tokenを使うlauncherが保存したもの。APIはもう受け付けない。
                 self.notice(f"Dropped the saved report {path.name}, which this version cannot send")
                 self._discard(path)
             elif self._deliver(saved):
                 self._discard(path)
 
     def _deliver(self, result: dict[str, Any]) -> bool:
-        """True when the report needs no resend (delivered, or refused for good)."""
+        """報告を送り直す必要が無ければ（届いたか、今後も拒まれる）True。"""
         jobs = ",".join(result["jobIds"])
         try:
             self.send([result])
@@ -69,7 +69,7 @@ class PendingReports:
             try:
                 saved.append((path, read_json(path)))
             except (OSError, ValueError, json.JSONDecodeError):
-                # A torn write is not a report; dropping it leaves the API to fail those Jobs.
+                # 書きかけで切れたものは報告ではない。捨てれば、それらのJobはAPIが失敗にする。
                 path.unlink(missing_ok=True)
         return saved
 

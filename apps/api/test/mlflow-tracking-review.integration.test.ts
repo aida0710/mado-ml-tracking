@@ -49,7 +49,7 @@ function pauseLockQuery(database: Database, plan: { pattern: RegExp; occurrence:
     entered.resolve();
     await released.promise;
   };
-  // Control the conflicting HTTP operations without replacing PostgreSQL's real locks.
+  // PostgreSQLの本物のロックを置き換えずに、競合するHTTPの操作の進み方を制御する。
   const pausedDatabase = new Proxy(database, {
     get(pool, property) {
       if (property !== 'connect') return boundMember(pool, property);
@@ -157,14 +157,14 @@ describe.skipIf(!testDatabaseUrl)('MLflow tracking reviewの回帰検証（隔�
       });
       let rename: Promise<Response> | undefined;
       try {
-        // PUT has Project SHARE but has not requested Experiment SHARE yet.
+        // PUTはProjectのSHAREを取ったが、ExperimentのSHAREはまだ求めていない。
         await uploadBarrier.entered;
         rename = trackingClient(app, fixture).post('/experiments/update', {
           experiment_id: fixture.experiment.id,
           new_name: 'renamed during PUT',
         });
         await renameBarrier.entered;
-        // The old rename held Experiment UPDATE here, creating the reported cycle.
+        // 以前の名前の変更はここでExperimentのUPDATEを持っていて、報告された循環を生んでいた。
         renameBarrier.release();
         uploadBarrier.release();
         const outcomes = await Promise.allSettled([rename, upload]);

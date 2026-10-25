@@ -5,16 +5,16 @@ import { enqueueRunEvent } from './outboxEvents.js';
 
 export interface RunStatusChange {
   readonly previousStatus: RunStatus;
-  // The Run as stored after the change, including its new status.
+  // 変更後に保存されたRun。新しい状態を含む。
   readonly run: Run;
 }
 
 export interface RunCompletionHandler {
-  // Stable name used in logs and to document the registration order in app.ts.
+  // 変わらない名前。ログで使い、app.tsでの登録の順を書き表すのにも使う。
   readonly name: string;
-  // Runs inside the transaction that moved the Run to a terminal status, once per transition.
-  // A thrown error is rolled back to a savepoint and logged; handlers that must keep a failure
-  // record write it to their own table instead of throwing.
+  // Runを終了状態へ移したトランザクションの中で、遷移1回につき1回動く。投げたエラーは
+  // savepointまで巻き戻してログに残す。失敗の記録を残す必要があるハンドラは、例外を投げずに
+  // 自分のテーブルへ書く。
   handle(connection: Connection, change: RunStatusChange): Promise<void>;
 }
 
@@ -23,16 +23,16 @@ const HANDLER_SAVEPOINT = 'run_completion_handler';
 export class RunCompletionService {
   constructor(private readonly handlers: readonly RunCompletionHandler[]) {}
 
-  // Every Run status change goes through here. Plugin outbox events stay per change (including
-  // run.started), while terminal handlers only run on the non-terminal → terminal transition.
+  // Runの状態の変更はすべてここを通る。pluginのoutboxのイベントは変更ごとに出す（run.startedを
+  // 含む）が、終了時のハンドラは、終了していない状態から終了状態への遷移でだけ動く。
   async recordStatusChange(connection: Connection, change: RunStatusChange): Promise<void> {
     await enqueueRunEvent(connection, change.run);
     if (isTerminalStatus(change.previousStatus) || !isTerminalStatus(change.run.status)) return;
     for (const handler of this.handlers) await this.runHandler(connection, { handler, change });
   }
 
-  // A handler bug must not block worker completion: the Run/Job would stay non-terminal and
-  // gpu_reservations would never be released.
+  // ハンドラの不具合でworkerの完了を妨げてはならない。妨げると、Run・Jobが終了状態にならず、
+  // gpu_reservationsが解放されなくなる。
   private async runHandler(
     connection: Connection,
     invocation: { handler: RunCompletionHandler; change: RunStatusChange },

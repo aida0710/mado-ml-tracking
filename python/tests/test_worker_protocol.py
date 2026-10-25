@@ -15,7 +15,7 @@ from mado_tracking.worker.journal import JobJournal
 from mado_tracking.worker.service import Worker
 from mado_tracking.worker.worker_info import describe_host
 
-# What a worker without SSH directories (WorkerApi's default) reports about itself.
+# SSHのディレクトリを持たないworker（WorkerApiの既定）が自分について報告する内容。
 WORKER_INFO_WITHOUT_SSH_FILES = {
     **describe_host(),
     "parallelJobs": 2,

@@ -4,7 +4,7 @@ import { hashSecret, randomSecret } from '../auth/secrets.js';
 import type { SessionAuthMethod } from '../auth/principal.js';
 import { userColumns } from './identityRepository.js';
 
-// last_seen_at is written at most once per minute so reads do not each cost a write.
+// 読み取りのたびに書き込みが起きないよう、last_seen_atは1分に1回までしか書かない。
 const LAST_SEEN_UPDATE_INTERVAL_SECONDS = 60;
 
 export interface ActiveSession {
@@ -12,12 +12,12 @@ export interface ActiveSession {
   tokenHash: string;
   authMethod: SessionAuthMethod;
   mustChangePassword: boolean;
-  // When the IdP last confirmed an SSO session; null for other sessions and tokenless SSO sessions.
+  // IdPがSSOのsessionを最後に確かめた時刻。ほかのsessionやtokenの無いSSOのsessionではnull。
   oidcCheckedAt: Date | null;
   tokenExpiresAt: Date | null;
 }
 
-// The IdP tokens an SSO session holds, each encrypted with the same session encryption key.
+// SSOのsessionが持つIdPのtoken。どれも同じsession暗号鍵で暗号化する。
 export interface EncryptedSessionTokens {
   keyId: string;
   accessToken: Buffer;
@@ -31,7 +31,7 @@ export interface OidcSessionBinding {
   sid: string | null;
 }
 
-// What a session recheck reads: the identity to ask UserInfo about and the tokens to ask with.
+// sessionの再確認で読むもの。UserInfoに問い合わせる利用者と、問い合わせに使うtoken。
 export interface OidcSessionState {
   tokenHash: string;
   userId: string;
@@ -41,16 +41,16 @@ export interface OidcSessionState {
   checkedAt: Date | null;
 }
 
-// Clears the stored IdP tokens together with revoking, so a revoked session keeps no credential.
+// 失効と同時に保存したIdPのtokenを消し、失効したsessionに認証情報を残さない。
 const REVOKE_SET =
   'revoked_at=now(),token_key_id=NULL,access_token_enc=NULL,refresh_token_enc=NULL';
 
-// Rows arrive with timestamps as ISO strings (see mapColumns); the recheck compares Dates.
+// 行の時刻はISO形式の文字列で届く（mapColumnsを参照）。再確認ではDateで比べる。
 function toDate(value: string | null): Date | null {
   return value === null ? null : new Date(value);
 }
 
-// The token is chosen before the row exists, so callers can bind encrypted data to its hash.
+// 呼び出し側が暗号化したデータをtokenのハッシュに結び付けられるよう、tokenは行を作る前に決める。
 export function newSessionToken(): { token: string; tokenHash: string } {
   const token = randomSecret();
   return { token, tokenHash: hashSecret(token) };
@@ -92,7 +92,7 @@ export async function createSession(
   return token;
 }
 
-// A session is usable while it is unrevoked, within its absolute and idle limits, and its user is active.
+// sessionが使えるのは、失効しておらず、絶対期限とアイドル期限の内にあり、利用者が有効な間。
 export async function findActiveSession(
   connection: Connection,
   token: string,
@@ -141,7 +141,7 @@ export async function findActiveSession(
   };
 }
 
-// Read again just before asking the IdP, so a check that waited uses tokens another check renewed.
+// IdPに問い合わせる直前に読み直し、待たされた確認が、別の確認が更新したtokenを使うようにする。
 export async function findOidcSessionState(
   connection: Connection,
   tokenHash: string,
@@ -182,9 +182,9 @@ export async function findOidcSessionState(
 }
 
 /**
- * Stores the result of a successful recheck. The previous check time acts as a version: if
- * another check already replaced the tokens, this one is dropped and returns false, which keeps
- * a refresh token that the IdP rotated from being overwritten by an older one.
+ * 成功した再確認の結果を保存する。前回の確認時刻をバージョンとして使う。別の確認が既にtokenを
+ * 置き換えていたら、この結果は捨ててfalseを返す。こうして、IdPがローテーションした
+ * refresh tokenを古いもので上書きしないようにする。
  */
 export async function recordOidcSessionCheck(
   connection: Connection,
@@ -226,7 +226,8 @@ export async function revokeSessionByHash(
   );
 }
 
-// Every browser session of the SSO identity: a group removal, or a back-channel logout by sub.
+// SSOの利用者が持つブラウザのsessionすべて。グループから外されたときと、subを指定した
+// back-channel logoutで使う。
 export async function revokeOidcIdentitySessions(
   connection: Connection,
   identity: { issuer: string; subject: string },
@@ -239,7 +240,8 @@ export async function revokeOidcIdentitySessions(
   return revoked.rowCount ?? 0;
 }
 
-// Back-channel logout by IdP session id; the subject narrows it when the logout token names one.
+// IdPのsession idによるback-channel logout。logout tokenがsubjectを示しているときは、
+// subjectでも絞り込む。
 export async function revokeOidcSidSessions(
   connection: Connection,
   logout: { issuer: string; sid: string; subject: string | null },
@@ -263,7 +265,8 @@ export async function revokeOtherSessions(
   );
 }
 
-// Used when an administrator disables a user or resets their password: every session ends now.
+// 管理者が利用者を無効にしたときや、パスワードをリセットしたときに使う。すべてのsessionを
+// すぐに終える。
 export async function revokeAllForUser(connection: Connection, userId: string): Promise<void> {
   await connection.query(
     `UPDATE sessions SET ${REVOKE_SET} WHERE user_id=$1 AND revoked_at IS NULL`,
@@ -271,7 +274,7 @@ export async function revokeAllForUser(connection: Connection, userId: string): 
   );
 }
 
-// Records a back-channel logout token's jti; false when the same token was accepted before.
+// back-channel logout tokenのjtiを記録する。同じtokenを前に受け付けていたらfalse。
 export async function consumeLogoutTokenId(
   connection: Connection,
   logout: { issuer: string; jti: string; now: Date; expiresAt: Date },

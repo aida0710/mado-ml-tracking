@@ -2,9 +2,9 @@ import { createHash } from 'node:crypto';
 import { DomainError } from '../errors.js';
 
 /**
- * Where the next page starts. The default creation order uses a keyset (the last Run of the
- * previous page) so Runs created while a user pages through the history do not shift later pages.
- * Any other order has no stable unique key in SQL, so it falls back to an absolute offset.
+ * 次のページの始まり。既定の作成順ではkeyset（前のページの最後のRun）を使い、利用者が履歴を
+ * めくっている間に作られたRunで後ろのページがずれないようにする。ほかの並び順にはSQLで安定した
+ * 一意のキーが無いので、絶対的なoffsetに戻る。
  */
 export type RunSearchCursor =
   { mode: 'keyset'; afterRunId: string } | { mode: 'offset'; offset: number };
@@ -23,8 +23,8 @@ function invalidCursor(message: string): never {
 }
 
 /**
- * Identifies the search conditions a cursor belongs to. The page size is excluded because
- * changing it does not move the start of the next page in either mode.
+ * cursorがどの検索条件のものかを表す。ページの大きさは含めない。大きさを変えても、どちらの
+ * モードでも次のページの始まりは動かないため。
  */
 export function runSearchConditionsFingerprint(conditions: unknown): string {
   return createHash('sha256').update(JSON.stringify(conditions)).digest('hex');

@@ -1,7 +1,7 @@
-"""Media file formats: encode numpy-like arrays to WAV/PNG and recognize files by their first bytes.
+"""メディアのファイル形式。numpy風の配列のWAV/PNGへのエンコードと、先頭のバイト列による判別。
 
-Only the standard library is used. Arrays are handled through their own methods (``dtype``,
-``shape``, ``clip``, ``astype``, ``tobytes``), so numpy is never imported here.
+標準ライブラリだけを使う。配列は自身のメソッド（``dtype``、``shape``、``clip``、``astype``、
+``tobytes``）で扱うので、ここでnumpyはimportしない。
 """
 
 from __future__ import annotations
@@ -17,12 +17,12 @@ from .errors import ConfigurationError
 
 PCM16_MAX = 32767
 PIXEL_MAX = 255
-# WAV, like the Web audio viewer, plays one (mono) or two (stereo) channels.
+# WAVは画面の音声ビューアーと同じく、1チャンネル（モノラル）か2チャンネル（ステレオ）を扱う。
 MAX_AUDIO_CHANNELS = 2
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
-# PNG color types for 8-bit grayscale, RGB and RGBA (PNG specification, IHDR).
+# 8ビットのグレースケール、RGB、RGBAに当たるPNGのcolor type（PNGの仕様、IHDR）。
 PNG_COLOR_TYPES = {1: 0, 3: 2, 4: 6}
-# Enough of a file to recognize every format in FILE_SIGNATURES.
+# FILE_SIGNATURESのどの形式も見分けられるだけの、ファイルの先頭の長さ。
 SIGNATURE_BYTES = 16
 
 
@@ -34,14 +34,14 @@ class EncodedMedia:
 
 
 def is_array(value: object) -> bool:
-    """A numpy array or anything shaped like one, recognized without importing numpy."""
+    """numpy配列か、それと同じ作りのもの。numpyをimportせずに見分ける。"""
     return hasattr(value, "dtype") and hasattr(value, "shape") and hasattr(value, "astype")
 
 
 def encode_wav(samples: Any, *, sample_rate: int) -> EncodedMedia:
-    """16-bit PCM WAV from an int16 array, or a float array in [-1, 1] (outside values are clipped).
+    """int16の配列か、[-1, 1]のfloatの配列から作る16ビットPCMのWAV（範囲外の値は切り詰める）。
 
-    The array is (frames,) for mono or (frames, channels) for mono/stereo.
+    配列は、モノラルなら(frames,)、モノラル・ステレオなら(frames, channels)。
     """
     if isinstance(sample_rate, bool) or not isinstance(sample_rate, int) or sample_rate <= 0:
         raise ConfigurationError("sample_rate must be a positive integer for an audio array")
@@ -71,9 +71,9 @@ def encode_wav(samples: Any, *, sample_rate: int) -> EncodedMedia:
 
 
 def encode_png(pixels: Any) -> EncodedMedia:
-    """8-bit PNG from a uint8 array, or a float array in [0, 1] (outside values are clipped).
+    """uint8の配列か、[0, 1]のfloatの配列から作る8ビットのPNG（範囲外の値は切り詰める）。
 
-    The array is HxW (grayscale), HxWx1, HxWx3 (RGB) or HxWx4 (RGBA).
+    配列はHxW（グレースケール）、HxWx1、HxWx3（RGB）、HxWx4（RGBA）のいずれか。
     """
     shape = tuple(pixels.shape)
     if len(shape) == 2:
@@ -96,7 +96,7 @@ def encode_png(pixels: Any) -> EncodedMedia:
 
 
 def png_bytes(raw_pixels: bytes, *, width: int, height: int, color_type: int) -> bytes:
-    """A minimal PNG: IHDR, one zlib-compressed IDAT with filter 0 on every row, and IEND."""
+    """最小限のPNG。IHDR、全行にフィルタ0をかけてzlibで圧縮した1つのIDAT、IEND。"""
     row_bytes = len(raw_pixels) // height
     scanlines = b"".join(
         b"\x00" + raw_pixels[row * row_bytes : (row + 1) * row_bytes] for row in range(height)
@@ -124,13 +124,13 @@ FILE_SIGNATURES: tuple[tuple[bytes, str], ...] = (
     (b"GIF87a", "image/gif"),
     (b"GIF89a", "image/gif"),
     (b"BM", "image/bmp"),
-    # Matroska and WebM share the EBML header; browsers play both as WebM.
+    # MatroskaとWebMは同じEBMLヘッダーを持つ。ブラウザはどちらもWebMとして再生する。
     (b"\x1a\x45\xdf\xa3", "video/webm"),
 )
 
 
 def sniff_mime_type(head: bytes) -> str | None:
-    """The MIME type of an audio, image or video file from its first SIGNATURE_BYTES bytes."""
+    """先頭のSIGNATURE_BYTESバイトから判別した、音声・画像・動画ファイルのMIMEタイプ。"""
     if head.startswith(b"RIFF") and head[8:12] == b"WAVE":
         return "audio/wav"
     if head.startswith(b"RIFF") and head[8:12] == b"WEBP":
@@ -143,13 +143,13 @@ def sniff_mime_type(head: bytes) -> str | None:
     for signature, mime_type in FILE_SIGNATURES:
         if head.startswith(signature):
             return mime_type
-    # An MP3 without an ID3 tag starts with an MPEG audio frame sync.
+    # ID3タグの無いMP3は、MPEGオーディオのフレーム同期から始まる。
     if len(head) >= 2 and head[0] == 0xFF and head[1] & 0xE0 == 0xE0:
         return "audio/mpeg"
     return None
 
 
-# The file extension saved for each MIME type; the Web tells media kinds apart by extension.
+# MIMEタイプごとに保存するファイルの拡張子。画面はメディアの種類を拡張子で見分ける。
 EXTENSIONS = {
     "audio/wav": "wav",
     "audio/x-wav": "wav",

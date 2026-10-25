@@ -29,11 +29,11 @@ import {
   type IncompleteMultipartUpload,
 } from './artifactTypes.js';
 
-// Artifact keys must start with an alphanumeric character, so this directory never collides.
+// Artifactのキーは英数字で始まる必要があるので、このディレクトリとは衝突しない。
 const MULTIPART_DIRECTORY = '.uploads';
 const MULTIPART_METADATA_FILE = 'upload.json';
 const BACKEND_UPLOAD_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-// Staging names written by writeAtKey (whole objects) and putPart (single parts).
+// writeAtKey（オブジェクト全体）とputPart（1つのパート）が書くステージング用のファイルの名前。
 const STAGING_FILE_PATTERN =
   /\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(upload|tmp)$/;
 
@@ -67,7 +67,10 @@ export function createFilesystemArtifactStore(directory: string): ArtifactStore 
       throw error;
     }
   }
-  /** Writes through a staging file beside the key so readers never see a partial object. */
+  /**
+   * キーの隣のステージング用のファイルを通して書き、読む側が書きかけのオブジェクトを見ないように
+   * する。
+   */
   async function writeAtKey<T>(key: string, write: (stagingPath: string) => Promise<T>) {
     validateArtifactKey(key);
     const realRoot = await rootPath();
@@ -118,7 +121,7 @@ export function createFilesystemArtifactStore(directory: string): ArtifactStore 
       try {
         await pipeline(body, check, createWriteStream(stagingPath, { flags: 'wx', mode: 0o600 }));
         const stored = check.finishCheck();
-        // A resent part replaces the earlier one only after it has been fully verified.
+        // 送り直されたパートは、完全に検証してから前のパートを置き換える。
         await rename(stagingPath, partFilename(uploadDirectory, partNumber));
         return { ...stored, etag: stored.sha256 };
       } catch (error) {
@@ -128,7 +131,7 @@ export function createFilesystemArtifactStore(directory: string): ArtifactStore 
     },
     async completeMultipart(completion) {
       const uploadDirectory = await multipartDirectory(completion.backendUploadId);
-      // The filesystem has no part minimum; the API applies the S3 rule to every backend.
+      // ファイルシステムにはパートの最小サイズが無い。APIがS3の規則をすべての保存先に当てはめる。
       const parts = orderedCompletionParts(completion, 0);
       for (const part of parts) {
         const stored = await stat(partFilename(uploadDirectory, part.partNumber)).catch(() => null);
@@ -176,7 +179,8 @@ export function createFilesystemArtifactStore(directory: string): ArtifactStore 
             initiatedAt: new Date(metadata.initiatedAt),
           });
         } catch {
-          // A crash between mkdir and the metadata write leaves an unnamed directory; age it by mtime.
+          // mkdirとメタデータの書き込みの間でクラッシュすると、キー名の分からないディレクトリが
+          // 残る。経過時間はmtimeで測る。
           const created = await stat(path.join(uploadsRoot, backendUploadId)).catch(() => null);
           if (created) uploads.push({ key: '', backendUploadId, initiatedAt: created.mtime });
         }

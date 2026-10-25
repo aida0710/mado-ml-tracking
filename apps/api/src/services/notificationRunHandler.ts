@@ -4,7 +4,7 @@ import { findExecutionForRun } from '../repositories/automationExecutionLookup.j
 import { enqueueNotificationEvent } from './notificationEvents.js';
 import type { RunCompletionHandler, RunStatusChange } from './runCompletionService.js';
 
-// Worker errors can be long tracebacks; a notification only needs the start of one.
+// workerのエラーは長いトレースバックのことがある。通知には先頭だけあれば足りる。
 const MAX_RUN_ERROR_LENGTH = 1000;
 
 const RUN_EVENT_TITLES: Record<'run.failed' | 'run.canceled' | 'run.finished', string> = {
@@ -21,10 +21,10 @@ function runEventType(run: Run): keyof typeof RUN_EVENT_TITLES | null {
 }
 
 /**
- * Queues run.failed / run.canceled / run.finished notifications in the terminal-transition
- * transaction, so a rolled-back completion leaves no notification. It is the last terminal
- * handler. The dedupe key is the event type and Run id, so a repeated completion or a Run that
- * MLflow resumed and ended the same way again does not notify twice.
+ * run.failed / run.canceled / run.finishedの通知を、終了状態へ移るトランザクションの中で
+ * キューに入れる。完了がロールバックされれば通知も残らない。終了時のハンドラの最後に動く。
+ * 重複除去のキーはイベントの種類とRunのidなので、完了が繰り返されても、MLflowが再開したRunが
+ * 同じ終わり方をしても、2回は通知しない。
  */
 export class NotificationRunHandler implements RunCompletionHandler {
   readonly name = 'notification';
@@ -55,7 +55,7 @@ export class NotificationRunHandler implements RunCompletionHandler {
     });
   }
 
-  // Only names and outcome: execution snapshots, parameters, tags and environment stay out.
+  // 名前と結果だけを入れる。実行のスナップショット、parameter、タグ、environmentは入れない。
   private async summarize(connection: Connection, run: Run): Promise<NotificationRunSummary> {
     const experiment = await first<{ name: string }>(
       connection,

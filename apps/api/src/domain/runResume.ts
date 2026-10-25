@@ -9,15 +9,15 @@ import { DomainError } from './errors.js';
 import { isTerminalStatus } from './runTransitions.js';
 
 /**
- * Rules for reopening an ended Run so later records continue the same Run, as MLflow's
- * start_run(run_id=) does. Native resume and MLflow update-run RUNNING share these rules.
+ * 終わったRunを開き直し、あとの記録が同じRunに続くようにするときの規則。MLflowの
+ * start_run(run_id=)と同じ動き。ネイティブのresumeとMLflowのupdate-run RUNNINGで共有する。
  */
 
 export const runResumeRequestSchema = z.strictObject({
   reason: z.string().max(RUN_RESUME_REASON_MAX_LENGTH).optional(),
 });
 
-/** A blank reason is the same as no reason, so the event never stores an empty string. */
+/** 空白だけの理由は理由なしと同じに扱い、イベントに空文字列を保存しない。 */
 export function storedResumeReason(reason: string | undefined): string | null {
   return reason?.trim() || null;
 }
@@ -32,8 +32,8 @@ export type RunResumeDecision =
   { resume: true; previousStatus: 'finished' | 'failed' | 'canceled' } | { resume: false };
 
 /**
- * A resume reopens a running segment that actually happened. A Run canceled before it started
- * has no segment to continue, so moving it to running is a first start, not a resume.
+ * 再開は、実際にあった実行中の区間を開き直す。始まる前に取り消したRunには続ける区間が無いので、
+ * runningにするのは最初の開始で、再開ではない。
  */
 export function isResumeTransition(
   run: Pick<ResumableRun, 'status' | 'startedAt'>,
@@ -59,7 +59,7 @@ export function decideRunResume(
       code: 'run_not_started',
       message: 'a run that has not started cannot be resumed',
     });
-  // The worker owns a Job's lifecycle and the ended Run is evidence for automation and evaluation.
+  // Jobのライフサイクルはworkerが持ち、終わったRunは自動実行と評価の根拠になる。
   if (context.hasJob)
     throw new DomainError({
       status: 409,
@@ -69,7 +69,7 @@ export function decideRunResume(
   return { resume: true, previousStatus: run.status };
 }
 
-/** Splits a Run into running segments; events must be ordered by resumedAt. */
+/** Runを実行中の区間に分ける。eventsはresumedAtの順に並んでいる必要がある。 */
 export function buildRunSegments(
   run: { status: RunStatus; startedAt: string; endedAt: string | null },
   events: readonly Pick<

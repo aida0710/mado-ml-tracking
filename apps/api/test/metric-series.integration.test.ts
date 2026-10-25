@@ -11,9 +11,9 @@ import type {
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 import { projectFixture } from './fixtures.js';
 
-// A long training Run: the series endpoint has to stay interactive at this size.
+// 長い学習のRun。この大きさでも系列のエンドポイントは対話的に使える速さでなければならない。
 const LONG_RUN_POINTS = 100_000;
-// The acceptance budget for sampling one long series, measured inside the API process.
+// 長い系列を1つ間引くのに許す時間。APIのプロセスの中で測る。
 const SERIES_RESPONSE_BUDGET_MS = 1000;
 const RUN_START = '2026-01-01T00:00:00.000Z';
 
@@ -69,7 +69,7 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
       }),
     );
   }
-  /** Logs points through SQL; `value` may be 'NaN' or 'Infinity' as MLflow stores them. */
+  /** SQLで点を記録する。MLflowの保存のしかたに合わせ、`value`は'NaN'や'Infinity'でもよい。 */
   async function insertPoints(
     runId: string,
     points: { name?: string; step: number; value: number | string; seconds?: number }[],
@@ -92,7 +92,8 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
       ],
     );
   }
-  // A smooth curve between -1 and 1 with one spike up and one down that sampling must keep.
+  // -1から1の間のなめらかな曲線と、上向き・下向きに1つずつのスパイク。間引いても
+  // スパイクは残さなければならない。
   async function insertLongRun(runId: string): Promise<void> {
     await harness.database.query(
       `INSERT INTO metrics(run_id,name,value,step,timestamp)
@@ -124,15 +125,15 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
     expect(Math.max(...series.points.map((point) => point.max))).toBe(1000);
     expect(Math.min(...series.points.map((point) => point.min))).toBe(-1000);
     const spike = series.points.find((point) => point.max === 1000)!;
-    // The spike stays inside its bucket's range while the mean stays near the curve.
+    // スパイクはそのbucketの範囲に収まり、平均は曲線の近くにとどまる。
     expect(spike.value).toBeLessThan(20);
     expect(spike.step).toBeGreaterThanOrEqual(54321);
-    // The last point of the Run lands in the last bucket, not past it.
+    // Runの最後の点は最後のbucketに入り、その先にはみ出さない。
     expect(series.points.at(-1)!.step).toBe(LONG_RUN_POINTS - 1);
     const steps = series.points.map((point) => point.step);
     expect(steps).toEqual([...steps].sort((left, right) => left - right));
 
-    // Every x axis reads the same points; relative time once took minutes through a bad plan.
+    // どのx軸でも同じ点を読む。相対時刻は、以前まずい実行計画で数分かかったことがある。
     for (const xAxis of [{ kind: 'relative_time' }, { kind: 'wall_time' }] as const) {
       const axisStartedAt = performance.now();
       const sampled = onlySeries(await readSeries({ runIds: [run.id], xAxis }));
@@ -162,7 +163,7 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
         { x: 2, step: 2, value: 1.25, min: 1.25, max: 1.25, count: 1 },
       ],
     });
-    // A Run without the key still answers, with an empty series.
+    // そのキーの無いRunも、空の系列で応答する。
     const missing = onlySeries(await readSeries({ runIds: [run.id], keys: ['accuracy'] }));
     expect(missing).toMatchObject({ points: [], totalPoints: 0, sampled: false });
   });
@@ -178,7 +179,7 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
       { step: 1, value: 2, seconds: 3 },
     ]);
     const neverStarted = await createRun({ name: 'never-started' });
-    // The first point of any key is the origin, not the first point of the requested key.
+    // 原点は、求めたキーの最初の点ではなく、すべてのキーで最初の点。
     await insertPoints(neverStarted.id, [
       { name: 'lr', step: 0, value: 0.1, seconds: 10 },
       { step: 0, value: 1, seconds: 12 },
@@ -205,7 +206,7 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
       ...[0, 1, 2, 3, 4].map((step) => ({ step, value: 10 - step })),
       { name: 'epoch', step: 0, value: 0.5, seconds: 0 },
       { name: 'epoch', step: 1, value: 0.9, seconds: 1 },
-      // A later write at the same step replaces the earlier x.
+      // 同じstepにあとから書くと、前のxを置き換える。
       { name: 'epoch', step: 1, value: 1, seconds: 2 },
       { name: 'epoch', step: 2, value: 'NaN', seconds: 2 },
       { name: 'epoch', step: 3, value: 3, seconds: 3 },
@@ -218,7 +219,7 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
       [1, 1, 9],
       [3, 3, 7],
     ]);
-    // Step 2 has a NaN x and step 4 none at all.
+    // step 2はxがNaNで、step 4はxがまったく無い。
     expect(series.droppedPoints).toBe(2);
     expect(series.totalPoints).toBe(3);
   });
@@ -235,7 +236,7 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
     expect(zoomed.points).toHaveLength(100);
     expect(zoomed.points.every((point) => point.count === 100)).toBe(true);
     expect(zoomed.points.at(-1)!.step).toBe(9999);
-    // The spike at step 7777 is inside the zoomed range and survives there too.
+    // step 7777のスパイクは拡大した範囲の中にあり、そこでも残る。
     expect(Math.min(...zoomed.points.map((point) => point.min))).toBe(-1000);
 
     const raw = onlySeries(
@@ -258,7 +259,7 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
     expect(loss!.points.map((point) => point.value)).toEqual([1, 3]);
     expect(loss).toMatchObject({ nanCount: 2, totalPoints: 4 });
     expect(diverged).toMatchObject({ points: [], nanCount: 2, totalPoints: 2 });
-    // Sampled buckets leave the NaN out of the mean as well.
+    // 間引いたbucketでも、NaNは平均に含めない。
     const sampled = onlySeries(await readSeries({ runIds: [run.id], maxPoints: 1 }));
     expect(sampled.points).toEqual([{ x: 1, step: 2, value: 2, min: 1, max: 3, count: 2 }]);
     expect(sampled.nanCount).toBe(2);
@@ -277,7 +278,7 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
     const steps = (values: number[]) => values.map((value, step) => ({ step, value }));
     await insertPoints(adam[0]!.id, steps([1, 2, 3]));
     await insertPoints(adam[1]!.id, steps([3, 4, 5]));
-    // Two points at step 1 are averaged inside the Run before Runs are combined.
+    // step 1の2つの点は、Runをまとめる前にRunの中で平均する。
     await insertPoints(adam[2]!.id, [...steps([5, 6]), { step: 1, value: 8, seconds: 1.5 }]);
     for (const run of sgd) await insertPoints(run.id, steps([10, 20, 30]));
     await insertPoints(untagged.id, steps([7, 7, 7]));
@@ -306,7 +307,7 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
     expect(adamPoints[1]!.mean).toBeCloseTo(13 / 3, 12);
     expect(adamPoints[1]).toMatchObject({ min: 2, max: 7 });
     expect(adamPoints[1]!.stddev).toBeCloseTo(stddev([2, 4, 7]), 12);
-    // The third adam Run has no value at step 2 and is not counted there.
+    // 3つ目のadamのRunはstep 2に値が無いので、そこでは数えない。
     expect(adamPoints[2]).toMatchObject({ mean: 4, min: 3, max: 5, runCount: 2 });
     expect(adamPoints[2]!.stddev).toBeCloseTo(1, 12);
     expect(groups[1]!.series[0]!.points.map((point) => [point.mean, point.stddev])).toEqual([
@@ -316,7 +317,7 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
     ]);
     expect(groups[2]!.series[0]!.points.map((point) => point.mean)).toEqual([7, 7, 7]);
 
-    // search selects the same Runs through the run search filter.
+    // searchは、Runの検索の絞り込みで同じRunを選ぶ。
     const searched = await readGroups({
       search: { filter: "tags.optimizer = 'adam'" },
       groupBy: { kind: 'tag', key: 'optimizer' },
@@ -367,7 +368,7 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
     const response = await postGroups({ search: {}, groupBy: { kind: 'experiment' } });
     expect(response.status).toBe(422);
     expect((await response.json()).code).toBe('too_many_runs');
-    // A search matching nothing has no groups.
+    // 何にも合わない検索ではグループが無い。
     expect(
       await readGroups({ search: { name: 'no-such-run' }, groupBy: { kind: 'experiment' } }),
     ).toEqual([]);
@@ -430,7 +431,7 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
     const groupBy = { kind: 'experiment' } as const;
     expect((await postGroups({ runIds: [run.id], groupBy }, { token: readable })).status).toBe(200);
 
-    // A viewer may not mint write tokens, so an editor's write-only token checks the scope.
+    // viewerは書き込みのtokenを発行できないので、editorの書き込み専用のtokenでscopeを確かめる。
     const writeOnly = await mintToken(
       { projectId: fixture.project.id, scopes: ['runs:write'] },
       fixture.editor,

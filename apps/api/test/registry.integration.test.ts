@@ -999,7 +999,7 @@ describe.skipIf(!testDatabaseUrl)('バージョンcounterの移行（独立Postg
         );
       return model.id;
     };
-    // MLflow already numbered 1..9 for this Model and some versions were deleted afterwards.
+    // MLflowはこのModelで既に1〜9の番号を振っていて、そのあといくつかのバージョンが削除された。
     const mlflowAhead = await createModel('MLflow ahead', ['3', 'v9', '12345678901234567890'], 10);
     const nativeAhead = await createModel('Native ahead', ['5', '01'], 2);
     const empty = await createModel('Empty', []);

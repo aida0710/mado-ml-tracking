@@ -13,8 +13,8 @@ import { createHash } from 'node:crypto';
 import { entity, login, request, type Harness } from './harness.js';
 
 /**
- * A digest a reference DatasetVersion accepts (`sha256:` and 64 hex digits), different for each
- * seed so tests can tell versions apart.
+ * 参照のDatasetVersionが受け付けるdigest（`sha256:`と64桁の16進数）。テストでバージョンを
+ * 見分けられるよう、seedごとに違う値になる。
  */
 export function referenceDigest(seed: string): string {
   return `sha256:${createHash('sha256').update(seed).digest('hex')}`;
@@ -29,7 +29,7 @@ export async function projectFixture(harness: Harness) {
     await request(harness.app, '/api/projects', {
       method: 'POST',
       cookie: administrator.cookie,
-      // Private, so access comes only from the roles granted below (outsider has none).
+      // 非公開なので、アクセスは下で与えるroleからしか生じない（outsiderには何も無い）。
       body: { name: 'Test Project', visibility: 'private' },
     }),
   );
@@ -113,7 +113,7 @@ export async function executionFixture(harness: Harness) {
         maxConcurrentJobs: 2,
         enabled: true,
         executor: 'local',
-        // The Project's members run their Jobs on it.
+        // ProjectのメンバーはこのコンピュータでJobを動かす。
         visibility: 'public',
       },
     }),

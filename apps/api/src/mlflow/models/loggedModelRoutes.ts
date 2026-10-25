@@ -44,7 +44,7 @@ export function loggedModelRoutes(models: LoggedModelService): Hono<ApiEnvironme
       ),
     }),
   );
-  // Search is registered before the dynamic id route.
+  // searchは動的なidの経路より先に登録する。
   routes.post(`${loggedModelPath}/search`, async (context) =>
     context.json(
       await models.search(

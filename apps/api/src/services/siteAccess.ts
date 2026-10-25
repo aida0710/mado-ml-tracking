@@ -6,7 +6,7 @@ import { targetUsableSql } from '../repositories/computeTargetAccessRepository.j
 import { requireGlobalAdmin } from './accessService.js';
 import { requireSession } from './tokenService.js';
 
-/** requireGlobalAdmin as a question: an administrator's session or unrestricted admin token. */
+/** requireGlobalAdminを問いの形にしたもの。全体管理者のsessionか、制限の無いadminのtokenか。 */
 export function isGlobalAdministrator(principal: Principal): boolean {
   try {
     requireGlobalAdmin(principal);
@@ -18,8 +18,8 @@ export function isGlobalAdministrator(principal: Principal): boolean {
 }
 
 /**
- * The settings, visibility, job shell and shared key of a computer are its manager's: a global
- * administrator, or whoever owns it, in a browser session.
+ * コンピュータの設定、公開範囲、job shell、共有の鍵を扱うのは、その管理者。つまり、ブラウザの
+ * sessionでの全体管理者か所有者。
  */
 export function requireTargetManager(principal: Principal, target: ComputeTarget): void {
   if (isGlobalAdministrator(principal)) return;
@@ -39,7 +39,7 @@ export function isTargetManager(
   return isGlobalAdministrator(principal) || target.ownerUserId === principal.user.id;
 }
 
-/** Whether Jobs that run as the user may run on the computer (targetUsableSql). */
+/** その利用者として動くJobを、そのコンピュータで動かしてよいか（targetUsableSql）。 */
 export async function canUseTarget(
   connection: Connection,
   usage: { targetId: string; userId: string },
@@ -52,8 +52,8 @@ export async function canUseTarget(
 }
 
 /**
- * Whether a queued Job's requester (its Run's creator) may still use its computer: the computer
- * may have turned private, or changed owner, since the Job was created.
+ * 順番待ちのJobの依頼者（Runの作成者）が、今もそのコンピュータを使えるか。Jobを作ったあとで、
+ * コンピュータが非公開になったり、所有者が変わったりしていることがある。
  */
 export async function canRunQueuedJob(
   connection: Connection,
@@ -69,7 +69,7 @@ export async function canRunQueuedJob(
 export const TARGET_NOT_AVAILABLE_MESSAGE =
   'this computer is private; only jobs of its owner and of service accounts the owner created run on it';
 
-/** Refuses Jobs of someone who may not use a private computer (the Job's, rule's or hook's owner). */
+/** 非公開のコンピュータを使えない人（Job・ルール・フックの所有者）のJobを拒む。 */
 export function targetNotAvailable(status: 403 | 422): never {
   throw new DomainError({
     status: status,
@@ -79,8 +79,8 @@ export function targetNotAvailable(status: 403 | 422): never {
 }
 
 /**
- * Anyone sees that a computer exists (GET /targets/overview), but its job shell, keys and
- * personal settings are for those who may use or manage it.
+ * コンピュータがあることは誰でも見える（GET /targets/overview）が、job shell、鍵、個人の設定は、
+ * それを使える人・管理できる人のためのもの。
  */
 export async function requireTargetUser(
   connection: Connection,

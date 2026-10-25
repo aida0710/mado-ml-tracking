@@ -3,7 +3,7 @@ import { operationsAlertQuerySchema } from '../domain/operationsAlerts.js';
 import { parse, principal, uuidParam, type ApiEnvironment } from '../http/request.js';
 import type { OperationsAlertService } from '../services/operationsAlertService.js';
 
-/** Mounted at /api/projects. */
+/** /api/projectsに置く。 */
 export function operationsRoutes(alerts: OperationsAlertService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.get('/:p/operations-alerts', async (context) => {
@@ -15,7 +15,7 @@ export function operationsRoutes(alerts: OperationsAlertService): Hono<ApiEnviro
   return routes;
 }
 
-/** Mounted at /api: the alerts of every Project the caller may open, for the header bell. */
+/** /apiに置く。呼び出し元が開けるすべてのProjectのアラート。ヘッダーのベル用。 */
 export function operationsOverviewRoutes(alerts: OperationsAlertService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.get('/operations-alerts', async (context) => {

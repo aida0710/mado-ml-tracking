@@ -57,7 +57,7 @@ describe.skipIf(!testDatabaseUrl)('登録画面の候補と表示名の問い合
       await request(harness.app, `${basePath}/model-families`, { cookie: fixture.viewer.cookie }),
       200,
     );
-    // The published (strict) schema, so a field the document lacks fails here.
+    // 公開した（strictな）スキーマなので、文書に無い項目があればここで失敗する。
     families.items.forEach((family) => modelFamilySummarySchema.parse(family));
     expect(families.items).toEqual([
       { name: 'qwen2', modelCount: 1, codeVersionCount: 2 },
@@ -79,7 +79,7 @@ describe.skipIf(!testDatabaseUrl)('登録画面の候補と表示名の問い合
     const paths = [`${basePath}/model-families`, `${basePath}/code-versions/${fixture.codeVersion.id}`];
     for (const path of paths)
       expect((await request(harness.app, path, { token: minted.token })).status).toBe(200);
-    // A viewer Service Account reads them with its read token, like a person.
+    // viewerのService Accountも、人と同じく読み取りのtokenでこれらを読める。
     const account = await entity<{ id: string }>(
       await request(harness.app, `${basePath}/service-accounts`, {
         method: 'POST',
@@ -118,7 +118,7 @@ describe.skipIf(!testDatabaseUrl)('登録画面の候補と表示名の問い合
       expect((await request(harness.app, path, { cookie: fixture.outsider.cookie })).status).toBe(
         403,
       );
-      // The worker token of the fixture holds only worker:execute.
+      // fixtureのworkerのtokenはworker:executeしか持たない。
       expect((await request(harness.app, path, { token: fixture.workerToken })).status).toBe(403);
     }
   });
@@ -170,7 +170,7 @@ describe.skipIf(!testDatabaseUrl)('登録画面の候補と表示名の問い合
       }),
     );
     expect(numbered.version).toBe(before.nextVersion);
-    // An explicit integer moves the counter past itself.
+    // 整数を明示すると、カウンタはその値の次へ進む。
     await entity<ModelVersion>(
       await request(harness.app, `${modelPath}/versions`, {
         method: 'POST',
@@ -197,7 +197,7 @@ describe.skipIf(!testDatabaseUrl)('登録画面の候補と表示名の問い合
       source: 'none',
     });
 
-    // A hand-made evaluation with the rule's code version stands in until the rule has Runs.
+    // ルールにRunができるまでは、ルールのコードバージョンで手作りした評価が代わりになる。
     const manual = await entity<Run>(
       await request(harness.app, `${basePath}/runs`, {
         method: 'POST',

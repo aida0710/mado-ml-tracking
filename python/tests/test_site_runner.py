@@ -1,6 +1,6 @@
-"""The site runner against a localhost API: protocol order, finish semantics and stops.
+"""localhostのAPIを相手にしたsiteのrunner: プロトコルの順序、終了の意味、停止。
 
-The container runs through a fake Apptainer CLI that executes the registered source for real.
+コンテナは、登録したソースを実際に実行する偽のApptainer CLIで動かす。
 """
 
 from __future__ import annotations
@@ -233,7 +233,7 @@ for version, directory in json.loads(os.environ["MMT_FAKE_DATASET_DIRS"]).items(
     member_files = sorted(
         line.split(" ", 1)[1] for line in api.messages().splitlines() if line.startswith("member-file ")
     )
-    # Positions 1 and 4 of the path order belong to member 1 of 3.
+    # パス順で1番目と4番目は、3つのメンバーのうちメンバー1が受け持つ。
     assert member_files == ["a/1.wav=a/1.wav", "c/4.wav=c/4.wav"]
     downloaded = {entry["path"] for entry in entries if api.downloads[entry["artifactId"]]}
     assert downloaded == {"a/1.wav", "c/4.wav"}
@@ -413,7 +413,7 @@ def test_a_docker_image_is_converted_once_per_digest_and_cpu_with_registry_crede
         call["sif"] == f"fake SIF of docker://{image} for arm64" for call in executions
     )
     assert (tmp_path / "work/.mmt-cache/sif" / f"{'a' * 64}-arm64.sif").exists()
-    # The Run records the registered image; the SIF is this site's way to run it.
+    # Runには登録したイメージを記録する。SIFは、このsiteでそれを動かすための手段。
     assert manifest["runtime"]["kind"] == "docker" and manifest["runtime"]["image"] == image
     assert "registry-password-value" not in api.messages()
 
@@ -481,7 +481,7 @@ print("payload " + json.load(open(os.environ["MMT_TRIGGER_PAYLOAD_FILE"]))["ref"
 
 
 class BusyThenFreeHost:
-    """nvidia-smi lists one GPU; a Mado container holds it for the first few looks."""
+    """nvidia-smiはGPUを1つ出す。最初の数回は、mado ML TrackingのJobのコンテナが持っている。"""
 
     def __init__(self, busy_looks: int):
         self.busy_looks = busy_looks

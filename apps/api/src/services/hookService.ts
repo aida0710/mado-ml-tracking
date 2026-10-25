@@ -49,9 +49,9 @@ import type { HookDispatcher } from './hookDispatcher.js';
 import { assertPartitionVersion } from './jobArrayService.js';
 import type { JobService } from './jobService.js';
 
-// 32 random bytes, the length GitHub recommends for webhook secrets.
+// 32バイトの乱数。GitHubがwebhookのsecretに勧める長さ。
 const WEBHOOK_SECRET_BYTES = 32;
-// Starting a hook needs an editor (hasHookOwnerAccess), so its owner must be one too.
+// フックの起動にはeditorが要る（hasHookOwnerAccess）ので、所有者もeditorである必要がある。
 const HOOK_OWNER_ROLES = ['editor', 'admin'];
 
 function webhookSecretContext(hookId: string): string {
@@ -67,22 +67,21 @@ function payloadTooLarge(): never {
   });
 }
 
-// A JSON object reaches the Job as it was sent; anything else is kept as text under `body`.
+// JSONのオブジェクトは送られたままJobに届く。それ以外は`body`の下に文字列として持つ。
 function webhookPayload(body: Buffer): JsonObject {
   const text = body.toString('utf8');
   try {
     const parsed: unknown = JSON.parse(text);
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed as JsonObject;
   } catch {
-    // Form-encoded or plain bodies are not JSON.
+    // フォーム形式や平文のbodyはJSONではない。
   }
   return { body: text };
 }
 
 /**
- * Hooks of a Project (docs/hooks.md): settings fixed at creation except enabled and the owner,
- * the manual trigger, signed webhooks and the execution history. The starts themselves are
- * HookDispatcher's.
+ * Projectのフック（docs/hooks.md）。enabledと所有者のほかは作成時に固定する設定、手動の起動、
+ * 署名つきのwebhook、実行履歴を扱う。起動そのものはHookDispatcherが受け持つ。
  */
 export class HookService {
   private readonly database: Database;
@@ -109,10 +108,10 @@ export class HookService {
     return listHooks(this.database, projectId);
   }
 
-  /** The hook runs as its creator, who must stay an editor of the Project for it to start. */
+  /** フックは作成者として動く。起動には、作成者がProjectのeditorであり続ける必要がある。 */
   async create(principal: Principal, projectId: string, input: HookCreateInput): Promise<HookCreated> {
     validateHookSettings(input);
-    // Template tags are copied onto every Run the hook starts, so they obey the Run tag rule.
+    // テンプレートのタグはフックが起動するすべてのRunに写すので、Runのタグと同じ規則に従う。
     assertNoReservedRunTags(input.template.tags);
     const secretKey = this.config.hookSecretKey;
     if (input.trigger === 'webhook' && !secretKey)
@@ -182,10 +181,10 @@ export class HookService {
   }
 
   /**
-   * Moves the user a hook runs as to a Service Account of the same Project, so the hook keeps
-   * starting when its creator leaves. Like an automation rule's owner, only a Project admin may
-   * move it; the account must be active and an editor or admin. created_by keeps the creator.
-   * Setting the same owner again changes nothing and is not audited again.
+   * フックが動くときのユーザーを同じProjectのService Accountに移し、作成者が抜けてもフックが
+   * 起動し続けるようにする。自動実行ルールの所有者と同じく、移せるのはProject adminだけ。移す先の
+   * アカウントは有効で、editorかadminである必要がある。created_byには作成者が残る。同じ所有者を
+   * 設定し直しても何も変わらず、監査にも再び記録しない。
    */
   async transferOwner(
     principal: Principal,
@@ -203,7 +202,7 @@ export class HookService {
     };
     return recordDenial(this.database, draft, () =>
       transaction(this.database, async (connection) => {
-        // Global administrators still obey token scope, project restrictions and membership.
+        // 全体管理者でも、tokenのscope、Projectの制限、membershipには従う。
         await requireProject(connection, principal, {
           projectId,
           role: principal.user.isAdmin ? 'viewer' : 'admin',
@@ -288,8 +287,8 @@ export class HookService {
   }
 
   /**
-   * A delivery from outside (GitHub, CI, another service). The signature is the only check, so
-   * the hook's state is told only to a caller that holds the secret.
+   * 外部（GitHub、CI、別のサービス）からの配信。確かめるのは署名だけなので、フックの状態は
+   * secretを持つ呼び出し元にだけ知らせる。
    */
   async receiveWebhook(delivery: {
     hookId: string;
@@ -345,7 +344,7 @@ export class HookService {
       const executionId = await this.dispatcher.dispatchRequest(connection, {
         hook,
         subjectKind: 'webhook',
-        // Without a delivery ID every request is its own event.
+        // 配信IDが無ければ、リクエストごとに別のイベントとする。
         eventKey: `webhook:${deliveryId || randomUUID()}`,
         payload: webhookPayload(delivery.body),
         requestedBy: null,
@@ -354,10 +353,10 @@ export class HookService {
     });
   }
 
-  // Checks what each start would check, so a hook that can never start fails at creation.
+  // 起動のたびに確かめることをここでも確かめ、決して起動できないフックを作成の時点で失敗させる。
   private async validateTemplate(
     connection: Connection,
-    // userId: the hook's creator, whom it runs as.
+    // userId: フックの作成者。フックはこのユーザーとして動く。
     creation: { projectId: string; input: HookCreateInput; userId: string },
   ): Promise<void> {
     const { projectId, input } = creation;

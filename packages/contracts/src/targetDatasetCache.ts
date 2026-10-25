@@ -1,14 +1,14 @@
 /**
- * How a worker brings an input DatasetVersion's files to the target. 'relay': the worker downloads
- * from the API and forwards them (GPU hosts often cannot reach the API). 'direct': the target
- * downloads from the API itself with the Job token.
+ * workerが入力のDatasetVersionのファイルをコンピュータへ運ぶ方法。'relay': workerがAPIから
+ * ダウンロードして転送する（GPUのホストはAPIに届かないことが多い）。'direct': コンピュータが
+ * Job tokenで自らAPIからダウンロードする。
  */
 export type DatasetTransferMode = 'relay' | 'direct';
 
 export const DATASET_TRANSFER_MODES: readonly DatasetTransferMode[] = ['relay', 'direct'];
 
-/** Same as the migration default: room for typical audio corpora next to model weights. */
+/** migrationの既定値と同じ。モデルの重みに加えて、よくある音声コーパスが入る大きさ。 */
 export const DEFAULT_DATASET_CACHE_MAX_BYTES = 100 * 1024 ** 3;
 
-/** Below this a cache could not hold even a small evaluation set; it is most likely a typo. */
+/** これより小さいとキャッシュに小さな評価セットすら入らないので、ほぼ確実に打ち間違い。 */
 export const MIN_DATASET_CACHE_MAX_BYTES = 1024 ** 2;

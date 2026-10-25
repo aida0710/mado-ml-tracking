@@ -1,6 +1,6 @@
 import type { JsonObject } from './index.js';
 
-/** A model version's training Run, recorded at registration or appended later. */
+/** モデルバージョンの学習のRun。登録時に記録するか、後から足す。 */
 export interface ModelVersionTrainingSource {
   projectId: string;
   modelId: string;
@@ -24,7 +24,7 @@ export interface HistoricalTrainingRunCreate {
   parameters?: JsonObject;
   tags?: Record<string, string>;
   environment?: JsonObject;
-  // Unknown historical times stay null rather than being replaced with registration time.
+  // 分からない過去の時刻は、登録の時刻で置き換えずnullのままにする。
   startedAt?: string | null;
   endedAt?: string | null;
 }

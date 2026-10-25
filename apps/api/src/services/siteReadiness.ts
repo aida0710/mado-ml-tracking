@@ -12,10 +12,10 @@ function notReady(message: string, code: ApiErrorCode): never {
 }
 
 /**
- * Checked when a Job is created (and when a rule, hook, Task or Sweep names the computer): the
- * Jobs' user (the Run's creator, or the rule's, hook's, Task's or Sweep's owner) may use the
- * computer, and a site has what a submission needs. The launcher's key is not checked here; it
- * may be made or registered later.
+ * Jobを作るとき（とルール・フック・Task・Sweepがコンピュータを指定するとき）に確かめる。Jobの
+ * 利用者（Runの作成者、またはルール・フック・Task・Sweepの所有者）がそのコンピュータを使える
+ * こと、siteに投入に要るものがそろっていること。launcherの鍵はここでは確かめない。あとで
+ * 作ったり登録したりすることがある。
  */
 export async function assertTargetReadyForJobs(
   connection: Connection,
@@ -45,9 +45,9 @@ function submissionFailure(message: string): never {
 }
 
 /**
- * Whose account one job shell call runs as. A launcher logs in as the shared account or as the
- * requester with the launcher's key for them; a manual submission runs as whoever submits, with
- * their own work directory and variables. A DomainError fails the submission with its message.
+ * job shellの1回の呼び出しを、誰のアカウントで動かすか。launcherは、共有のアカウントか、
+ * 依頼者のためにlauncherが持つ鍵で依頼者としてログインする。手動の投入は、投入した人として、
+ * その人の作業ディレクトリと変数で動く。DomainErrorは、そのメッセージで投入を失敗にする。
  */
 export async function resolveSubmissionAccount(
   connection: Connection,

@@ -29,7 +29,7 @@ describe('CSVの符号化', () => {
     expect(encodeCsvCell('-2')).toBe("'-2");
     expect(encodeCsvCell('@SUM(A1)')).toBe("'@SUM(A1)");
     expect(encodeCsvCell('\tcmd')).toBe("'\tcmd");
-    // CR also needs quoting, so the guard and the quotes are both applied.
+    // CRは引用符で囲む必要もあるので、数式対策の印と引用符の両方を付ける。
     expect(encodeCsvCell('\rcmd')).toBe(`"'\rcmd"`);
   });
 

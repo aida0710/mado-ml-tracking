@@ -3,15 +3,15 @@ import { z } from 'zod';
 import { DomainError } from './errors.js';
 import { isRelativeFilePath, jsonObjectSchema, uuidSchema } from './validation.js';
 
-// Each model version starts every matching automation rule (inference and evaluation Jobs), so a
-// container may not flood the queue; a training Run outputs a few checkpoints or variants.
+// モデルバージョンはそれぞれ一致するすべての自動実行ルール（推論と評価のJob）を始めるので、
+// コンテナがキューをあふれさせないようにする。学習Runが出力するのは少数のcheckpointや派生版だけ。
 export const MAX_MODEL_DECLARATIONS = 16;
-// Dataset versions are reference rows, but each one is registered in the request's transaction;
-// 64 covers per-split and per-language outputs while keeping that transaction short.
+// データセットバージョンは参照の行だが、それぞれリクエストのトランザクションの中で登録する。
+// 64個あれば分割ごと・言語ごとの出力をまかなえ、そのトランザクションも短く保てる。
 export const MAX_DATASET_DECLARATIONS = 64;
-// Matches the worker's output path limit (python/src/mado_tracking/worker/container_outputs.py).
+// workerの出力パスの上限に合わせる（python/src/mado_tracking/worker/container_outputs.py）。
 const MAX_OUTPUT_PATH_LENGTH = 1024;
-// The worker saves /mmt/outputs/<path> as this Run Artifact path.
+// workerは/mmt/outputs/<path>を、この前置きを付けたRunのArtifactのパスに保存する。
 const CONTAINER_ARTIFACT_PREFIX = 'container/';
 const OUTPUT_MODEL_RUN_KINDS: readonly RunKind[] = ['training', 'finetuning'];
 
@@ -53,7 +53,7 @@ const datasetDeclarationSchema = z.union([
   }),
 ]);
 
-// Shared by the worker (with its lease) and the site runner (with its instance ID).
+// worker（leaseで）とsiteのrunner（インスタンスIDで）が共有する。
 export const outputDeclarationsSchema = z
   .array(z.union([modelDeclarationSchema, datasetDeclarationSchema]))
   .min(1)
@@ -97,7 +97,7 @@ export function assertModelOutputsAllowed(run: { kind: RunKind }, counts: Declar
     });
 }
 
-// Limits apply to the Run as a whole, so a worker cannot exceed them by splitting requests.
+// 上限はRun全体にかかるので、workerがリクエストを分けて上限を超えることはできない。
 export function assertDeclarationLimits(counts: DeclarationCounts): void {
   if (counts.model > MAX_MODEL_DECLARATIONS || counts.dataset > MAX_DATASET_DECLARATIONS)
     throw new DomainError({
@@ -109,9 +109,8 @@ export function assertDeclarationLimits(counts: DeclarationCounts): void {
 }
 
 /**
- * The Task's output model wins: a declaration naming another Model is rejected because a reader
- * could not tell which Model holds the Run's output. Without a Task setting the container must
- * name the Model itself.
+ * Taskの出力モデルを優先する。別のModelを指定した宣言は拒む。どのModelがRunの出力を持つのか、
+ * 読む人に分からなくなるため。Taskに設定が無ければ、コンテナ自身がModelを指定しなければならない。
  */
 export function chooseOutputModelId(choice: {
   declaredModelId: string | undefined;

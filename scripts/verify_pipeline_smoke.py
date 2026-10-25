@@ -1,8 +1,8 @@
-"""Thin smoke of the automated pipeline: the success path up to the automatic promotion and the
-failed training, without the second round, the result.json path or containers.
+"""自動化したパイプラインの軽いsmoke。自動の昇格までの成功の経路と失敗する学習を確かめ、
+2回目の学習、result.jsonの経路、コンテナは含めない。
 
-It is scripts/verify_pipeline.py with fewer stages; the report goes to
-artifacts/verification/<JST date>/pipeline-smoke/pipeline-smoke.json.
+段階を減らしたscripts/verify_pipeline.pyで、報告は
+artifacts/verification/<JST date>/pipeline-smoke/pipeline-smoke.jsonに書く。
 """
 
 from __future__ import annotations

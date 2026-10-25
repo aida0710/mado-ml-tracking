@@ -68,10 +68,10 @@ import { notifyListener } from './eventListeners.js';
 import type { JobService } from './jobService.js';
 import type { RunService } from './runService.js';
 
-// Generated names follow the same limit as user-created Run names.
+// 生成する名前には、ユーザーが作るRunの名前と同じ上限をかける。
 const RUN_NAME_LIMIT = 200;
 
-// Why a pending registration ended without running its rules; the codes are part of the API contract.
+// 保留中の登録が、ルールを動かさずに終わった理由。コードはAPI契約の一部。
 const UNSUCCESSFUL_SOURCE_ERRORS = {
   source_unsuccessful: 'source_run_unsuccessful: 学習Runが成功しなかったため起動しません',
   source_timeout:
@@ -82,13 +82,13 @@ type UnsuccessfulSourceState = keyof typeof UNSUCCESSFUL_SOURCE_ERRORS;
 const OWNER_ACCESS_REVOKED_ERROR =
   'creator_access_revoked: ルールの実行者（所有者）の管理者権限が失効しています';
 
-// A chain longer than this is far beyond inference → evaluation → report; the limit keeps a
-// mistaken setup from fanning out an unbounded number of Jobs from one model registration.
+// これより長い連鎖は、推論 → 評価 → レポートをはるかに超える。この上限で、設定を誤ったときに
+// 1回のモデルの登録から際限なくJobが広がるのを防ぐ。
 export const MAX_AUTOMATION_CHAIN_DEPTH = 5;
 
 /**
- * What started one execution of a rule. A first stage has no trigger Run; a chained stage receives
- * the upstream Run, its output DatasetVersions, and the first-stage execution of the pipeline.
+ * ルールの1回の実行を起動したもの。1段目にはきっかけのRunが無い。連鎖した段は、上流のRun、
+ * その出力のDatasetVersion、パイプラインの1段目の実行を受け取る。
  */
 export interface AutomationTrigger {
   run: Pick<Run, 'id' | 'outputDatasetVersionIds'> | null;
@@ -98,7 +98,7 @@ export interface AutomationTrigger {
   requestedBy: string | null;
 }
 
-/** Told about every new ModelVersion after the rules (hooks with trigger model_registered). */
+/** ルールの後、新しいModelVersionのたびに通知を受ける（triggerがmodel_registeredのフック）。 */
 export interface ModelRegistrationListener {
   readonly name: string;
   onModelRegistered(connection: Connection, model: ModelVersion): Promise<void>;
@@ -116,9 +116,9 @@ export class ModelAutomationService {
   private readonly database: Database;
   private readonly runs: RunService;
   private readonly jobs: JobService;
-  // Links in automation.failed notifications point at the Web app.
+  // automation.failedの通知に入れるリンクは、Webの画面を指す。
   private readonly webOrigin: string;
-  // Kept by reference: app.ts adds the hooks once they are built from this service's peers.
+  // 参照で持つ。フックはこのサービスと並ぶサービスから作るので、app.tsが作り終えてから足す。
   private readonly registrationListeners: readonly ModelRegistrationListener[];
   constructor(options: {
     database: Database;
@@ -150,7 +150,7 @@ export class ModelAutomationService {
   ): Promise<ModelAutomationRule> {
     return transaction(this.database, async (connection) => {
       await this.requireRuleAdmin(connection, principal, projectId);
-      // Rule tags are copied onto every Run the rule starts, so they obey the Run tag rule.
+      // ルールのタグはルールが起動するすべてのRunに写すので、Runのタグと同じ規則に従う。
       assertNoReservedRunTags(input.tags);
       assertRuleTrigger(input);
       if (input.upstreamRuleId !== null)
@@ -208,8 +208,8 @@ export class ModelAutomationService {
     });
   }
 
-  // The upstream must be an enabled rule of the same Project, and the new rule must stay within
-  // the chain depth limit.
+  // 上流は同じProjectの有効なルールである必要があり、新しいルールは連鎖の深さの上限に
+  // 収まる必要がある。
   private async assertUpstreamRule(
     connection: Connection,
     upstream: { projectId: string; ruleId: string },
@@ -264,10 +264,10 @@ export class ModelAutomationService {
   }
 
   /**
-   * Moves the user a rule runs as to a Service Account of the same Project, so the rule keeps
-   * running when its creator leaves. The account must be active and a Project admin, which is
-   * what running a rule requires. created_by keeps the creator. Setting the same owner again
-   * changes nothing and is not audited again.
+   * ルールが動くときのユーザーを同じProjectのService Accountに移し、作成者が抜けてもルールが
+   * 動き続けるようにする。移す先のアカウントは有効で、Project adminである必要がある。ルールを
+   * 動かすにはそれが要るため。created_byには作成者が残る。同じ所有者を設定し直しても何も
+   * 変わらず、監査にも再び記録しない。
    */
   async transferOwner(
     principal: Principal,
@@ -348,9 +348,10 @@ export class ModelAutomationService {
       projectId: reference.projectId,
       id: reference.modelVersionId,
     });
-    // registerModelVersion holds a key-share lock on the source Run, so its status cannot become terminal
-    // until this transaction ends; a still-running Run may yet fail, so its versions wait for
-    // AutomationSourceRunHandler instead of starting inference on unfinished training.
+    // registerModelVersionは元のRunにkey-shareのロックをかけているので、この
+    // トランザクションが終わるまでRunのstatusは終了状態にならない。まだ動いているRunはこれから
+    // 失敗することがあるので、そのバージョンは、終わっていない学習で推論を始めずに
+    // AutomationSourceRunHandlerを待つ。
     const sourceRun = model.sourceRunId
       ? await findRun(connection, { projectId: model.projectId, id: model.sourceRunId })
       : null;
@@ -362,7 +363,7 @@ export class ModelAutomationService {
       isPending,
     });
     if (isNewEvent && !isPending) await this.executeEnabledRules(connection, model);
-    // Listeners keep their own records of repeated and pending registrations.
+    // 繰り返しの登録や保留中の登録は、listenerがそれぞれ自分で記録する。
     for (const listener of this.registrationListeners)
       await notifyListener(connection, {
         listener: listener.name,
@@ -371,7 +372,7 @@ export class ModelAutomationService {
       });
   }
 
-  // The source Run finished: run the rules enabled at this moment for every version it registered.
+  // 元のRunが終わった。そのRunが登録したすべてのバージョンについて、今有効なルールを動かす。
   async releasePendingRegistrations(connection: Connection, sourceRunId: string): Promise<void> {
     for (const event of await lockPendingAutomationEvents(connection, sourceRunId)) {
       const model = await findModelVersion(connection, {
@@ -393,7 +394,7 @@ export class ModelAutomationService {
     });
   }
 
-  // Returns the number of expired events so the sweeper can keep going while a backlog remains.
+  // 期限切れにしたイベントの数を返し、残りがある間はsweeperが続けられるようにする。
   async expirePendingRegistrations(
     connection: Connection,
     expiry: { maxAgeHours: number; limit: number },
@@ -421,7 +422,7 @@ export class ModelAutomationService {
           status: 'skipped' as const,
           error: UNSUCCESSFUL_SOURCE_ERRORS[resolution.state],
         };
-        // A failed source Run is announced as run.failed already; only the timeout is new news.
+        // 元のRunの失敗は既にrun.failedとして知らせている。新たに知らせるのは期限切れだけ。
         if (resolution.state === 'source_timeout')
           await this.recordUnstarted(connection, { execution, rule, model });
         else await insertAutomationExecution(connection, execution);
@@ -439,9 +440,9 @@ export class ModelAutomationService {
   }
 
   /**
-   * Starts one rule for one version and records the outcome as an execution; shared by
-   * registrations, chained stages, and manual applications. Failures are recorded, not thrown, so
-   * the caller's other rules and the registration itself are kept. Returns the execution id.
+   * 1つのバージョンに1つのルールを起動し、結果を実行として記録する。登録、連鎖した段、手動の
+   * 適用で共有する。失敗は投げずに記録するので、呼び出し元のほかのルールと登録そのものは残る。
+   * 実行のidを返す。
    */
   async executeRule(
     connection: Connection,
@@ -508,10 +509,10 @@ export class ModelAutomationService {
               : {}),
           },
           environment: { automationRuleId: rule.id },
-          // A chained stage hangs under the upstream Run, which the worker hands to the container.
+          // 連鎖した段は上流のRunの下にぶら下がる。workerはそのRunをコンテナに渡す。
           parentRunId: trigger.run?.id ?? model.sourceRunId,
         },
-        // Evaluation conditions are matched on the rule's fixed inputs only (the reference set).
+        // 評価の条件は、ルールの固定の入力（参照用のセット）だけで照らし合わせる。
         upstreamDatasetVersionIds: upstreamOutputIds,
       });
       const job = await this.jobs.insertJob(connection, {
@@ -520,8 +521,8 @@ export class ModelAutomationService {
           runId: run.id,
           targetId: rule.targetId,
           gpuIds: rule.gpuIds,
-          // A rule's maxAttempts bounds automatic attempts (1, the default, means no automatic
-          // retry); people may retry an automated Job by hand past either limit (JobService.retry).
+          // ルールのmaxAttemptsは自動の試行の上限（既定の1は自動で再試行しない）。
+          // 人はどちらの上限も超えて、自動実行のJobを手で再試行できる（JobService.retry）。
           maxAttempts: Math.max(rule.maxAttempts, DEFAULT_JOB_ATTEMPTS),
         },
         attempt: 1,
@@ -545,11 +546,10 @@ export class ModelAutomationService {
   }
 
   /**
-   * Starts the next attempt of an automated Run that failed: a new execution that points at the
-   * failed one, with a Run and Job made by the Job retry (retry_of_job_id). It runs as the rule's
-   * current owner and never resumes from a checkpoint (resuming is a manual choice). Whether the
-   * failure deserves a retry is the caller's decision. Returns the new execution id, or null
-   * when the execution was already retried or its rule allows no further attempt.
+   * 失敗した自動実行のRunの次の試行を始める。失敗した実行を指す新しい実行で、RunとJobはJobの
+   * 再試行（retry_of_job_id）で作る。ルールの今の所有者として動き、checkpointから再開することは
+   * ない（再開は人が選ぶもの）。その失敗を再試行すべきかは呼び出し元が決める。新しい実行のidを
+   * 返す。実行が既に再試行されているか、ルールがこれ以上の試行を許さなければnullを返す。
    */
   async retryExecution(
     connection: Connection,
@@ -561,7 +561,7 @@ export class ModelAutomationService {
       id: execution.ruleId,
       mode: 'share',
     });
-    // A disabled rule stops its pipeline, including the retries of Runs it started before.
+    // 無効にしたルールはそのパイプラインを止める。前に始めたRunの再試行も含む。
     if (!rule?.enabled || execution.attempt >= rule.maxAttempts) return null;
     if (job.attempt >= job.maxAttempts) return null;
     if (await findAutomaticRetry(connection, execution.id)) return null;
@@ -614,7 +614,7 @@ export class ModelAutomationService {
     return retry.id;
   }
 
-  // An execution that did not start a Run is stored and announced as automation.failed.
+  // Runを始めなかった実行は保存し、automation.failedとして知らせる。
   private async recordUnstarted(
     connection: Connection,
     unstarted: {
@@ -640,9 +640,9 @@ export class ModelAutomationService {
   }
 
   /**
-   * Applies a rule by hand to an existing version (registration rules) or to a finished upstream
-   * Run (chained rules), for example after fixing evaluation code in a new rule. Only Project
-   * admins may do this; the run is recorded as a new attempt with source 'manual'.
+   * 既存のバージョン（登録のルール）や、終わった上流のRun（連鎖のルール）にルールを手で適用する。
+   * たとえば新しいルールで評価のコードを直したあとに使う。できるのはProject adminだけ。この実行は
+   * sourceが'manual'の新しい試行として記録する。
    */
   async applyRule(
     principal: Principal,
@@ -785,7 +785,7 @@ export class ModelAutomationService {
     principal: Principal,
     projectId: string,
   ): Promise<void> {
-    // Global administrators still obey token scope, project restrictions, and current token membership.
+    // 全体管理者でも、tokenのscope、Projectの制限、tokenの今のmembershipには従う。
     await requireProject(connection, principal, {
       projectId,
       role: principal.user.isAdmin ? 'viewer' : 'admin',

@@ -22,8 +22,8 @@ import {
 } from './auditService.js';
 
 /**
- * What a global administrator does with every Project (/admin/projects): list them with their
- * archived ones, restore an archived Project, and purge one for good.
+ * 全体管理者がすべてのProjectに対して行う操作（/admin/projects）。アーカイブしたものも含めた
+ * 一覧、アーカイブしたProjectの復元、Projectの完全な削除。
  */
 export class ProjectAdministrationService {
   constructor(private readonly database: Database) {}
@@ -33,7 +33,7 @@ export class ProjectAdministrationService {
     return listAdminProjects(this.database, query);
   }
 
-  /** Brings an archived Project back as it was; restoring a live Project changes nothing. */
+  /** アーカイブしたProjectを元の状態に戻す。アーカイブされていないProjectの復元は何もしない。 */
   async restore(
     principal: Principal,
     projectId: string,
@@ -59,9 +59,9 @@ export class ProjectAdministrationService {
   }
 
   /**
-   * Deletes an archived Project's rows in one transaction and queues its blobs, which the
-   * ArtifactGarbageCollector removes from storage after the commit (see projectPurgeRepository).
-   * It cannot be undone, so like user administration it takes a browser session, not a token.
+   * アーカイブしたProjectの行を1つのトランザクションで削除し、blobをキューに入れる。blobは
+   * コミットのあとでArtifactGarbageCollectorがストレージから消す（projectPurgeRepositoryを参照）。
+   * 元に戻せないので、利用者の管理と同じく、tokenではなくブラウザのsessionを要する。
    */
   async purge(
     principal: Principal,
@@ -81,7 +81,7 @@ export class ProjectAdministrationService {
             code: 'project_not_archived',
             message: 'a project that is not archived cannot be permanently deleted',
           });
-        // Marked first: the history triggers let only a purged Project's rows be deleted.
+        // 先に完全削除の印を付ける。履歴のトリガーは、その印が付いたProjectの行しか削除させない。
         await markProjectPurged(connection, { projectId, purgedBy: principal.user.id });
         const purged = await purgeProjectRows(connection, projectId);
         await writeAuditEvent(connection, {

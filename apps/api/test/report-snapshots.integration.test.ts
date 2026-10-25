@@ -94,7 +94,7 @@ describe.skipIf(!testDatabaseUrl)('レポートの作成時点での固定（独
       ),
       200,
     );
-    // Every kind of snapshot data has exactly the published shape (docs/openapi.json).
+    // どの種類の固定データも、公開した形（docs/openapi.json）と完全に一致する。
     return reportSnapshotListSchema.parse(list);
   }
 
@@ -124,7 +124,7 @@ describe.skipIf(!testDatabaseUrl)('レポートの作成時点での固定（独
   it('snapshotのブロックは保存後にmetricsを足しても変わらず、liveのデータは変わる', async () => {
     const created = await entity<ReportDetail>(await createReport([chart('snapshot'), chart('live')]));
     const before = await readSnapshots(created.report.id);
-    // Only snapshot blocks are captured.
+    // 固定のブロックだけを取り込む。
     expect(before.items.map((item) => item.blockId)).toEqual(['chart-snapshot']);
     const fixed = snapshotOf(before, 'chart-snapshot');
     expect(fixed).toMatchObject({ capturedRevision: 1 });
@@ -171,12 +171,12 @@ describe.skipIf(!testDatabaseUrl)('レポートの作成時点での固定（独
       Date.parse(snapshotOf(first, 'refreshed').capturedAt),
     );
     expect(pointCount(refreshed)).toBe(10);
-    // The earlier revision keeps its own data.
+    // 前のバージョンは、そのバージョンのデータを持ち続ける。
     expect(snapshotOf(await readSnapshots(created.report.id, 1), 'refreshed')).toEqual(
       snapshotOf(first, 'refreshed'),
     );
 
-    // Changing a block's content captures it again even without refresh.
+    // ブロックの内容を変えると、refreshを指定しなくても取り込み直す。
     const changed = created.revision.blocks.map((block) =>
       block.id === 'kept' && block.type === 'chart'
         ? { ...block, panel: { ...block.panel, title: 'Loss' } }
@@ -325,7 +325,7 @@ describe.skipIf(!testDatabaseUrl)('レポートの作成時点での固定（独
   });
 
   it('5MiBを超えるブロックの固定は413で、バージョンを作らない', async () => {
-    // 500 Runs with 12KB of parameters each make a Run table snapshot of about 6MB.
+    // 1つあたり12KBのparameterを持つRunが500あると、Runの表の固定データは約6MBになる。
     await harness.database.query(
       `INSERT INTO runs(project_id,experiment_id,name,kind,status,parameters,created_by)
       SELECT $1,$2,'bulk-'||n,'training','finished',jsonb_build_object('notes',repeat('x',12000)),$3
@@ -343,7 +343,7 @@ describe.skipIf(!testDatabaseUrl)('レポートの作成時点での固定（独
     const response = await createReport([table]);
     expect(response.status).toBe(413);
     expect(((await response.json()) as { code: string }).code).toBe('report_snapshot_too_large');
-    // The same block drawn live stores nothing and is accepted.
+    // 同じブロックでもliveで描くなら何も保存せず、受け付けられる。
     expect((await createReport([{ ...table, mode: 'live' }])).status).toBe(201);
     const stored = await harness.database.query(
       'SELECT count(*)::int AS count FROM report_block_snapshots',
@@ -354,7 +354,7 @@ describe.skipIf(!testDatabaseUrl)('レポートの作成時点での固定（独
   it('1つのバージョンの固定データの合計がMMT_REPORT_SNAPSHOT_MAX_BYTESを超えると413', async () => {
     const created = await entity<ReportDetail>(await createReport([chart('snapshot', 'one')]));
     const [snapshot] = (await readSnapshots(created.report.id)).items;
-    // A limit that holds one chart but not two.
+    // グラフ1つは収まるが2つは収まらない上限。
     const limited = createApplication({
       config: { ...harness.config, reportSnapshotMaxBytes: Math.floor(snapshot!.sizeBytes * 1.5) },
       database: harness.database,

@@ -25,7 +25,7 @@ export function modelEvaluationRoutes(evaluations: ModelEvaluationService): Hono
       ),
     ),
   );
-  // Kept here rather than in runRoutes: the downstream list belongs to the version page's reads.
+  // runRoutesではなくここに置く。下流の一覧はモデルバージョンの画面が読むもの。
   routes.get('/:p/runs/:r/downstream', async (context) =>
     context.json(
       await evaluations.downstream(

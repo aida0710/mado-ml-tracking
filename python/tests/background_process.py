@@ -1,4 +1,4 @@
-"""Real process fixtures whose children retain their entrypoint's output pipes."""
+"""子プロセスがentrypointの出力のパイプを持ち続ける、実際のプロセスのfixture。"""
 
 from __future__ import annotations
 

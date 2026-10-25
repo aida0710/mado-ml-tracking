@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { jsonObjectSchema, runCreateSchema, uuidSchema } from './validation.js';
 
-// Evidence holds a recipe reference and checksums, rather than the training files themselves.
+// evidenceにはレシピの参照とチェックサムを入れ、学習のファイルそのものは入れない。
 const MAX_TRAINING_SOURCE_EVIDENCE_BYTES = 64 * 1024;
 
 const evidenceSchema = jsonObjectSchema
