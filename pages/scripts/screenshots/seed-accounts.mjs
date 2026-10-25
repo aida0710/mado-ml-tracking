@@ -1,16 +1,16 @@
-// Seeds the accounts environment (local login) with the users, Projects and computers that the
-// screenshots of capture-accounts.mjs show.
+// capture-accounts.mjsのスクリーンショットに映るユーザー、Project、コンピュータを、accountsの環境
+// （ローカルのログイン）に入れる。
 //   node pages/scripts/screenshots/seed-accounts.mjs [--lang en]
-// The administrator signs in with the password serve-environment.mjs generated and changes it, as
-// the first sign-in requires. New passwords go to 600 files in the environment directory and are
-// never printed. A rerun on a seeded environment does nothing; after a failure halfway, drop the
-// environment (serve-environment.mjs drop accounts) and start again.
+// 全体管理者はserve-environment.mjsが生成したパスワードでログインし、最初のログインで求められる
+// とおりにパスワードを変える。新しいパスワードは環境のディレクトリのmode 600のファイルに書き、
+// 出力はしない。データを入れ済みの環境で再実行しても何もしない。途中で失敗したら、環境を消して
+// （serve-environment.mjs drop accounts）やり直す。
 import { randomBytes } from 'node:crypto';
 import { access, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { REPOSITORY_ROOT, environmentDirectory, parseArguments, readEnvironment } from './screenshotEnvironment.mjs';
 
-// 16 random bytes in hex: within the API's password length limits.
+// 16バイトの乱数を16進数で表す。APIのパスワードの長さの制限に収まる。
 const PASSWORD_BYTES = 16;
 const JOB_SHELL_EXAMPLE = path.join(REPOSITORY_ROOT, 'deploy/sites/examples/direct-docker/job.sh');
 const ABCI_KNOWN_HOSTS = 'login.abci.example.invalid ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleHostKeyForDocs';
@@ -19,7 +19,7 @@ const PEOPLE = {
   ja: { aoki: '青木 研究員', ishii: '石井 研究員', ueda: '上田 研究員' },
   en: { aoki: 'Ken Aoki', ishii: 'Mei Ishii', ueda: 'Yui Ueda' },
 };
-// In creation order: the lists show the newest first.
+// 作る順に並べる。一覧は新しいものを先に出す。
 const PROJECTS = {
   ja: {
     oldBaseline: { name: '旧ベースライン', description: '2026年春の比較用。' },
@@ -60,7 +60,7 @@ async function call(method, resource, { body, cookie } = {}) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const text = await response.text();
-  // Only the status and the API's message: request bodies may hold passwords.
+  // ステータスとAPIのメッセージだけを出す。要求の本文にはパスワードが入っていることがある。
   if (!response.ok) throw new Error(`${method} ${resource}: ${response.status} ${text.slice(0, 300)}`);
   return { body: text ? JSON.parse(text) : null, cookie: response.headers.get('set-cookie')?.split(';')[0] };
 }
@@ -77,7 +77,7 @@ async function writePassword(name, password) {
   await writeFile(path.join(directory, name), password, { mode: 0o600 });
 }
 
-/** Signs in with a temporary password, sets a new one as the first sign-in requires, and keeps it. */
+/** 仮のパスワードでログインし、最初のログインで求められる新しいパスワードを設定して保存する。 */
 async function signInChangingPassword(username, temporaryPassword) {
   const cookie = await signIn(username, temporaryPassword);
   const password = newPassword();
@@ -103,7 +103,7 @@ for (const [username, displayName] of Object.entries(PEOPLE[lang])) {
     body: { username, displayName, email: `${username}@example.invalid`, password: temporaryPassword, isAdmin: false },
   });
   userIds[username] = body.id;
-  // Aoki signs in for the screenshots taken as a regular user.
+  // 一般の利用者として撮るスクリーンショットのために、Aokiがログインする。
   if (username === 'aoki') aoki = await signInChangingPassword('aoki', temporaryPassword);
 }
 
@@ -125,14 +125,14 @@ await createProject('ttsProduction', {
 });
 await createProject('speechRecognition', { visibility: 'public' });
 await call('POST', `/projects/${projectIds.oldBaseline}/archive`, { cookie: admin });
-// The Service Account whose token dialog the docs show.
+// ドキュメントでtokenのダイアログを見せるService Account。
 await call('POST', `/projects/${projectIds.speechRecognition}/service-accounts`, {
   cookie: admin,
   body: { name: 'gpu-host-1-worker', description: WORKER_ACCOUNT_DESCRIPTION[lang], role: 'admin' },
 });
 
-// Computers: a public site with personal accounts, a private and a public SSH server of the
-// administrator, and Aoki's private PC that Aoki submits to by hand.
+// コンピュータ。個人のアカウントで使うPublicのsite、全体管理者のPrivateとPublicのSSHサーバー、
+// Aokiが手で投入するAokiのPrivateのPC。
 const noConnection = { host: '', port: 22, username: '', sshKeyPath: '', knownHostsPath: '', workDirectory: '', pythonExecutable: '' };
 const { body: createdLauncher } = await call('POST', '/launchers', { cookie: admin, body: { name: 'docs-launcher' } });
 await call('POST', '/targets', {
@@ -192,7 +192,7 @@ await call('POST', '/targets', {
     visibility: 'public',
   }),
 });
-// What the "direct-docker" job shell template of the add dialog fills in.
+// 追加ダイアログでjob shellのひな形「direct-docker」を選んだときに入る内容。
 await call('POST', '/targets', {
   cookie: aoki,
   body: {

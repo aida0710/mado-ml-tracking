@@ -1,7 +1,7 @@
-// Takes the documentation screenshots of the sample Project (development login), from the
-// environment that serve-environment.mjs started and seed_sample_project.py seeded.
+// 見本のProject（開発用のログイン）のドキュメント用スクリーンショットを、serve-environment.mjsが
+// 起動し、seed_sample_project.pyがデータを入れた環境で撮る。
 //   node pages/scripts/screenshots/capture-sample-project.mjs [--lang en] [name ...]
-// Nothing is saved or created: dialogs are opened and filled in, then closed.
+// 何も保存せず、作りもしない。ダイアログは開いて入力し、閉じる。
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { launchBrowser, newDocsContext, signInForDevelopment } from './browserSession.mjs';
@@ -10,11 +10,11 @@ import { outputDirectory, saveScreenshot } from './publishableScreenshot.mjs';
 import { runCaptures } from './runCaptures.mjs';
 import { parseArguments, readEnvironment, readSeedState } from './screenshotEnvironment.mjs';
 
-// Charts (canvas) and audio analysis keep drawing after the network is idle.
+// 図（canvas）と音声の解析は、ネットワークが落ち着いた後も描画を続ける。
 const RENDER_SETTLE_MS = 1500;
-// A panel or dialog opened by a click, or a list filtered by a choice, to finish appearing.
+// クリックで開いたパネルやダイアログ、選択で絞り込んだ一覧が表示し終わるまで。
 const SHORT_SETTLE_MS = 800;
-// Smooth scrolling and the sticky headers to settle.
+// スムーズスクロールと、追従する見出しが落ち着くまで。
 const SCROLL_SETTLE_MS = 500;
 
 const { options, positional: only } = parseArguments(process.argv.slice(2));
@@ -42,13 +42,13 @@ async function apiGet(resource) {
   return response.json();
 }
 
-// The local paths of this environment shown on the screens, and what the docs show instead.
+// 画面に出るこの環境のローカルのパスと、ドキュメントで代わりに見せるパス。
 const sampleComputer = (await apiGet('targets')).items.find((target) => target.id === state.targetId);
 const replacements = [
   [artifactsDirectory, '/srv/mmt/artifacts'],
   [state.archiveDirectory, '/srv/mmt/archive'],
   [state.jobsDirectory, '/srv/mmt/jobs'],
-  // The virtual environment of the worker's Python (bin/python, lib/.../pip).
+  // workerのPythonの仮想環境（bin/python、lib/.../pip）。
   [path.dirname(path.dirname(sampleComputer.pythonExecutable)), '/opt/mmt/venv'],
 ];
 
@@ -94,7 +94,7 @@ const finishedSweepRuns = sweepRuns.filter((run) => run.status === 'finished').m
 const otherSweepRuns = sweepRuns.filter((run) => run.status !== 'finished').map((run) => run.id);
 
 const captures = {
-  // Getting started
+  // はじめる
   'guide-runs': () => open(trainingExperiment),
   'guide-model-version': () => open(versionPath),
   'guide-model-version-automation': async () => {
@@ -106,7 +106,7 @@ const captures = {
     await page.getByRole('tab', { name: 'MLflow 3', exact: true }).click();
     await scrollToHeading(label.recordingConnection, 8);
   },
-  // Tracking
+  // 実験の記録と分析
   'tracking-runs': () => open(trainingExperiment),
   'tracking-runs-search': () => open(`${projectPath}/experiments?q=${encodeURIComponent('metrics.val_loss < 0.1')}`),
   'tracking-saved-views': async () => {
@@ -152,7 +152,7 @@ const captures = {
     await page.getByRole('tab', { name: 'MLflow 3', exact: true }).click();
     await scrollToHeading(label.recordingConnection, 24);
   },
-  // Data and storage
+  // データと保存先
   'data-artifacts-run': async () => {
     await open(dataRunArtifacts);
     await page.getByText('data', { exact: true }).first().click();
@@ -170,7 +170,7 @@ const captures = {
     await page.getByRole('button', { name: label.uploadArtifact }).click();
     await page.waitForTimeout(SCROLL_SETTLE_MS);
     const files = (await readdir(state.audioSampleDirectory)).map((name) => path.join(state.audioSampleDirectory, name));
-    // Only chooses the files; the upload is not started.
+    // ファイルを選ぶだけで、アップロードは始めない。
     await page.locator('input[type=file]').first().setInputFiles(files);
     await page.waitForTimeout(SHORT_SETTLE_MS);
   },
@@ -192,7 +192,7 @@ const captures = {
   },
   'data-storage': () => open('/settings/storage'),
   'data-reports': () => open(`${projectPath}/reports/${state.reportId}`),
-  // Models and automation
+  // モデルと自動実行
   'models-registry': async () => {
     await open(`${projectPath}/models`);
     await page.getByText('voice-tts-demo', { exact: true }).first().click();
@@ -213,7 +213,7 @@ const captures = {
     await open(`${projectPath}/codes`);
     await page.getByRole('button', { name: names.trainingCode, exact: true }).first().click();
     await page.waitForTimeout(SHORT_SETTLE_MS);
-    // Opens the dialog that would create a new version, without saving.
+    // 新しいバージョンを作るダイアログを開くだけで、保存はしない。
     await page.getByRole('button', { name: label.newVersion, exact: true }).first().click();
     await page.waitForTimeout(RENDER_SETTLE_MS);
     await page.getByRole('dialog').getByText('voice_training.py', { exact: true }).first().click();
@@ -232,19 +232,19 @@ const captures = {
     await page.waitForTimeout(SHORT_SETTLE_MS);
     await page.getByRole('button', { name: label.assignAlias }).first().click();
     await page.waitForTimeout(SHORT_SETTLE_MS);
-    // The focused alias field lists the existing aliases; the docs show the empty form.
+    // alias欄にフォーカスがあると既存のaliasが並ぶ。ドキュメントでは空のフォームを見せる。
     await page.evaluate(() => document.activeElement?.blur());
   },
-  // Compute
+  // 実行環境
   'compute-targets': () => open(`${projectPath}/compute`),
   'compute-target-check': async () => {
-    // Opens the result of the check the seed ran; "Check connection" is not pressed.
+    // seedが実行した確認の結果を開く。「接続を確認」は押さない。
     await open('/settings/computers');
     await page.getByRole('button', { name: names.computer, exact: true }).first().click();
     await page.waitForTimeout(SHORT_SETTLE_MS);
     await scrollToHeading(`${label.targetCheck}: ${names.computer}`, 24);
   },
-  // Administration (Project settings)
+  // 管理と権限（Projectの設定）
   'admin-permissions': async () => {
     await open(`${projectPath}/settings`);
     await scrollToHeading(label.members, 72);

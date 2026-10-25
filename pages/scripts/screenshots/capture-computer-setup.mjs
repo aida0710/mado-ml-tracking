@@ -1,8 +1,9 @@
-// Takes the three screenshots of the two-step "Add computer" dialog with the browser tests' mock
-// API (apps/web/tests/browserApi.mjs), so a worker can report GPUs and directories that this
-// machine does not have. Any running Web dev server works: every /api/ request is answered here.
+// 2段階の「コンピュータを追加」ダイアログのスクリーンショット3枚を、ブラウザテストのモックAPI
+// （apps/web/tests/browserApi.mjs）で撮る。こうすると、このマシンに無いGPUやディレクトリを
+// workerが報告したことにできる。動いているWebの開発サーバーならどれでもよい。/api/への要求は
+// すべてここで答える。
 //   node pages/scripts/screenshots/capture-computer-setup.mjs [--lang en] [name ...]
-// The Web of the sample environment is used unless --web-url is given.
+// --web-urlを指定しなければ、見本の環境のWebを使う。
 import { createBrowserApi } from '../../../apps/web/tests/browserApi.mjs';
 import { launchBrowser, newDocsContext } from './browserSession.mjs';
 import { labelsFor } from './labels.mjs';
@@ -10,7 +11,7 @@ import { outputDirectory, saveScreenshot } from './publishableScreenshot.mjs';
 import { assertKnownCaptures, runCaptures } from './runCaptures.mjs';
 import { parseArguments, readEnvironment } from './screenshotEnvironment.mjs';
 
-// The mock finishes a check at the next poll, and the dialog polls every 3 seconds.
+// モックは次のポーリングで確認を終え、ダイアログは3秒ごとにポーリングする。
 const CHECK_WAIT_MS = 15_000;
 const EXAMPLE_KEY = '/home/worker/.ssh/mmt_worker_ed25519';
 const EXAMPLE_KNOWN_HOSTS = '/home/worker/.ssh/mmt_known_hosts';
@@ -23,7 +24,7 @@ const webUrl = options['web-url'] ?? (await readEnvironment(lang, 'sample')).web
 
 const api = createBrowserApi();
 api.state.loggedIn = true;
-// The avatar shows "AD" as in the other images.
+// ほかの画像と同じく、アバターに「AD」を出す。
 api.state.user.displayName = 'admin';
 const [existingComputer] = api.state.targets;
 Object.assign(existingComputer, {
@@ -47,7 +48,7 @@ setup.checkWorkers = [
     },
   },
 ];
-// A server with two GPUs on which every runtime ran (check result version 2).
+// GPUを2つ積み、すべてのRuntimeが動いたサーバー（確認結果のversion 2）。
 setup.nextCheckResult = {
   version: 2,
   items: [
@@ -79,7 +80,7 @@ setup.nextCheckResult = {
     { path: '/data', source: 'mount', writable: true, freeBytes: 9_000_000_000_000 },
   ],
 };
-// What the worker reads under /data/ (the docs' example working directory is /data/mmt-jobs).
+// workerが/data/の下で読むもの（ドキュメントの例の作業ディレクトリは/data/mmt-jobs）。
 const DOCS_DIRECTORIES = {
   '/data/': [
     { name: 'mmt-jobs', kind: 'directory', executable: true },
@@ -115,13 +116,13 @@ page.on('pageerror', (error) => pageErrors.push(error.message));
 
 const dialog = () => page.getByRole('dialog').last();
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-// Required fields carry " *" after the label.
+// 必須の欄は、ラベルの後ろに" *"が付く。
 const field = (name) => dialog().getByLabel(new RegExp(`^${escapeRegExp(name)}(?: \\*)?$`));
 const button = (name) => dialog().getByRole('button', { name, exact: true });
 const option = (name) => dialog().getByRole('option', { name, exact: false });
 const blurActive = () => page.evaluate(() => document.activeElement?.blur());
 
-// The three images are steps of one walk through the dialog, so each continues the previous one.
+// 3枚の画像はダイアログを1回通して進める中の各段階なので、それぞれ前の画像の続きから始める。
 const captures = {
   'compute-target-dialog': async () => {
     await page.goto(`${webUrl}/settings/computers`);
@@ -131,28 +132,28 @@ const captures = {
     await dialog().getByRole('radio', { name: new RegExp(`^${label.public}`) }).check();
     await field(label.host).fill('gpu-host-1.example.internal');
     await field(label.sshUsername).fill('mmt');
-    // The key and known_hosts are chosen from the paths the worker reported.
+    // 鍵とknown_hostsは、workerが報告したパスから選ぶ。
     await field(label.sshKeyPath).fill('/home/worker/.ssh/');
     await option(EXAMPLE_KEY).click();
     await field(label.knownHostsPath).fill('/home/worker/.ssh/mmt_k');
     await option(EXAMPLE_KNOWN_HOSTS).click();
     await blurActive();
-    // Step 1 is shown from below: the SSH fields, the worker for the connection and the buttons.
+    // 手順1は下の方を見せる。SSHの欄、接続に使うworker、ボタン。
     await button(label.checkAndContinue).scrollIntoViewIfNeeded();
   },
   'compute-target-setup': async () => {
     await button(label.checkAndContinue).click();
     await dialog().getByTestId('computer-setup-step').waitFor({ timeout: CHECK_WAIT_MS });
     await dialog().getByText(label.checkReached).waitFor({ timeout: CHECK_WAIT_MS });
-    // The top of step 2: the check result and completion from the directories the worker read.
+    // 手順2の上の方。確認の結果と、workerが読んだディレクトリからの補完。
     await field(label.workDirectory).fill('/data/');
     await option(EXAMPLE_WORK_DIRECTORY).waitFor({ timeout: CHECK_WAIT_MS });
   },
   'compute-target-setup-gpus': async () => {
     await option(EXAMPLE_WORK_DIRECTORY).click();
     await blurActive();
-    // The bottom of step 2: GPUs found, GPU IDs typed by hand and concurrent Jobs. The buttons
-    // stay in view, so the dialog's scrolling body is moved to its end.
+    // 手順2の下の方。見つかったGPU、手で入力したGPUのID、同時に動かすJobの数。ボタンは見えた
+    // ままなので、ダイアログのスクロールする本文を最後まで送る。
     await dialog().evaluate((element) => {
       for (const node of [element, ...element.querySelectorAll('*')])
         if (node.scrollHeight > node.clientHeight) node.scrollTop = node.scrollHeight;
@@ -162,7 +163,7 @@ const captures = {
 
 assertKnownCaptures(captures, only);
 try {
-  // Every step runs; only the named ones are saved.
+  // どの手順も実行し、名前を指定したものだけを保存する。
   const failed = await runCaptures(captures, [], async (name, prepare) => {
     await prepare();
     if (only.length === 0 || only.includes(name)) await saveScreenshot(page, directory, name, { lang });

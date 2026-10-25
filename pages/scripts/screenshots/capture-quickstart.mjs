@@ -1,5 +1,5 @@
-// Takes the two screenshots of "6. Check on screen" in the quickstart, from the Runs that
-// seed_quickstart.py recorded in the sample environment. Read only.
+// クイックスタートの「6. 画面で確かめる」のスクリーンショット2枚を、見本の環境で
+// seed_quickstart.pyが記録したRunから撮る。見るだけ。
 //   node pages/scripts/screenshots/capture-quickstart.mjs [--lang en] [name ...]
 import { launchBrowser, newDocsContext, signInForDevelopment } from './browserSession.mjs';
 import { labelsFor } from './labels.mjs';
@@ -7,7 +7,7 @@ import { outputDirectory, saveScreenshot } from './publishableScreenshot.mjs';
 import { runCaptures } from './runCaptures.mjs';
 import { parseArguments, readEnvironment, readSeedState } from './screenshotEnvironment.mjs';
 
-// Charts (canvas) keep drawing after the network is idle.
+// 図（canvas）は、ネットワークが落ち着いた後も描画を続ける。
 const RENDER_SETTLE_MS = 1500;
 
 const { options, positional: only } = parseArguments(process.argv.slice(2));
@@ -35,7 +35,7 @@ const captures = {
     await page.getByRole('button', { name: label.showCharts }).click();
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(RENDER_SETTLE_MS);
-    // At 1440 px the parallel coordinates wrap below the charts; scroll so both are in view.
+    // 1440 pxでは平行座標プロットが図の下へ折り返すので、両方が見えるようにスクロールする。
     await page
       .getByText(label.chartTarget, { exact: true })
       .first()

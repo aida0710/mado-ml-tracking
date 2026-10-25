@@ -45,7 +45,7 @@ FAMILY = "linear"
 ALIAS = "production"
 INFERENCE_VALUES = (0.0, 1.0, 2.0)
 SECONDS_PER_PREDICTION_UNIT = 0.1
-# The first version trains briefly and keeps a small error; the second trains longer and beats it.
+# 1つ目のバージョンは短く学習して小さな誤差を残し、2つ目は長く学習してそれを上回る。
 ROUND_PARAMETERS = {
     1: {"steps": 20, "learning_rate": 0.05, "momentum": 0.5, "step_seconds": 1.0},
     2: {"steps": 60, "learning_rate": 0.1, "momentum": 0.5, "step_seconds": 0.5},
@@ -53,12 +53,12 @@ ROUND_PARAMETERS = {
 JOB_DEADLINE_SECONDS = 600
 SWEEP_DEADLINE_SECONDS = 900
 WORKER_ID = "preview-voice-cpu"
-# Environment variable names only: the channel shows "not set" because no value is configured.
+# 環境変数の名前だけ。値を設定していないので、通知先には「未設定」と出る。
 NOTIFICATION_URL_ENV = "MMT_NOTIFICATION_TEAM_WEBHOOK_URL"
 NOTIFICATION_SECRET_ENV = "MMT_NOTIFICATION_TEAM_WEBHOOK_SECRET"
 ARCHIVE_STORAGE_NAME = "archive-fs"
 S3_STORAGE_NAME = "lab-minio"
-# An S3 storage that is never reached: the Storage page only lists it.
+# 一度も接続しないS3の保存先。ストレージの画面に一覧で出すだけ。
 S3_STORAGE_SETTINGS = {
     "endpoint": "https://minio.example.internal:9000",
     "region": "us-east-1",
@@ -79,9 +79,9 @@ class Seed:
     def __init__(self, environment: Environment, text: SampleText):
         self.environment = environment
         self.text = text
-        # What capture-sample-project.mjs reads: IDs, local paths and the names used.
+        # capture-sample-project.mjsが読むもの。ID、ローカルのパス、使った名前。
         self.state_file = environment.directory / "seed-state.json"
-        # Jobs, the worker's state and the generated audio files.
+        # Job、workerの状態、生成した音声ファイル。
         self.seed_directory = environment.directory / "seed"
         self.state: dict[str, Any] = (
             json.loads(self.state_file.read_text()) if self.state_file.exists() else {}
@@ -131,7 +131,7 @@ def wait_runs(api: Api, run_ids: list[str]) -> list[dict[str, Any]]:
     return wait_for(f"Runs {run_ids}", done)
 
 
-# --- Project, people, computer ------------------------------------------------------------------
+# --- Project、利用者、コンピュータ --------------------------------------------------------------
 def ensure_project(api: Api, seed: Seed) -> None:
     if "projectId" not in seed.state:
         project = api.call(
@@ -152,7 +152,7 @@ def ensure_project(api: Api, seed: Seed) -> None:
 def ensure_people(api: Api, seed: Seed, sessions: dict[str, httpx.Client]) -> None:
     """Development-login researcher and reviewer, SSO group bindings and a local account."""
     state = seed.state
-    # Signed in on every run: a rerun posts the researcher's comment with this session.
+    # 毎回ログインする。再実行では、このセッションでresearcherのコメントを投稿する。
     people = {
         key: Api(sessions[key]).call("POST", "auth/dev-login", json={"email": email})["user"]["id"]
         for key, email in (("researcher", "researcher@example.test"), ("reviewer", "reviewer@example.test"))
@@ -168,7 +168,8 @@ def ensure_people(api: Api, seed: Seed, sessions: dict[str, httpx.Client]) -> No
         state["groupBindings"] = ["mmt-voice-researchers", "mmt-voice-reviewers"]
         seed.save()
     if "localAccountId" not in state:
-        # A throwaway random password that is never shown; reset it on the Users page to sign in.
+        # 使い捨てのランダムなパスワードで、どこにも出さない。ログインするには、ユーザーの画面で
+        # パスワードを再設定する。
         try:
             created = api.call(
                 "POST",
@@ -218,7 +219,7 @@ def ensure_service_accounts(api: Api, seed: Seed) -> None:
 
 def ensure_target_and_experiments(api: Api, seed: Seed) -> None:
     state = seed.state
-    # The capture script replaces this local path with the docs' example on the screens.
+    # 撮影のスクリプトが、画面に出るこのローカルのパスをドキュメントの例に置き換える。
     jobs = seed.seed_directory / "jobs"
     jobs.mkdir(parents=True, exist_ok=True)
     state["jobsDirectory"] = str(jobs)
@@ -507,7 +508,7 @@ def ensure_tasks(api: Api, seed: Seed) -> None:
 
 # --- worker -------------------------------------------------------------------------------------
 def worker_pid_file(seed: Seed) -> Path:
-    # serve-environment.mjs stop ends every process with a .pid file in the environment directory.
+    # serve-environment.mjs stopは、環境のディレクトリに.pidファイルがあるプロセスをすべて終わらせる。
     return seed.environment.directory / "worker.pid"
 
 
@@ -538,7 +539,7 @@ def jobs_remaining(seed: Seed) -> bool:
 def ensure_worker(api: Api, seed: Seed) -> None:
     state = seed.state
     if not jobs_remaining(seed):
-        # A rerun on a seeded environment adds no second worker token to the token lists.
+        # データを入れ済みの環境で再実行しても、tokenの一覧に2つ目のworkerのtokenを足さない。
         return
     if worker_running(seed):
         log("the worker is running")
@@ -584,7 +585,7 @@ def ensure_target_check(api: Api, seed: Seed) -> None:
     state = seed.state
     if state.get("targetCheckDone"):
         return
-    # A check names a worker that is online; a freshly started worker appears after its heartbeat.
+    # 確認ではオンラインのworkerを指定する。起動したばかりのworkerは、ハートビートを送ってから現れる。
     wait_for(
         "the worker to be online",
         lambda: any(
@@ -612,7 +613,7 @@ def ensure_target_check(api: Api, seed: Seed) -> None:
     seed.save()
 
 
-# --- training → registration → inference → evaluation → promotion --------------------------------
+# --- 学習 → 登録 → 推論 → 評価 → 昇格 ------------------------------------------------------------
 def run_round(api: Api, seed: Seed, round_number: int) -> None:
     state = seed.state
     key = f"round{round_number}"
@@ -736,7 +737,7 @@ def run_sweep(api: Api, seed: Seed) -> None:
     log(f"Sweep: {state['sweep']}")
 
 
-# --- audio data ---------------------------------------------------------------------------------
+# --- 音声データ ---------------------------------------------------------------------------------
 def seed_audio_data(api: Api, seed: Seed, token: str) -> None:
     state = seed.state
     if state.get("audioDone"):
@@ -764,7 +765,7 @@ def seed_audio_data(api: Api, seed: Seed, token: str) -> None:
             version="v2",
             metadata={"sampleRate": SAMPLE_RATE, "note": second_note},
         )
-        # The data preparation Run keeps the WAV files too, to play them from the Run's Artifacts.
+        # データ準備のRunにもWAVファイルを残し、RunのArtifactsから再生できるようにする。
         run = client.start_run(
             project_id=api.project_id,
             experiment_id=state["experiments"]["data"],
@@ -791,7 +792,7 @@ def seed_audio_data(api: Api, seed: Seed, token: str) -> None:
     log(f"audio data: dataset {first['datasetId']} v1/v2, Run {run.id}")
 
 
-# --- notes, comments, saved view, report --------------------------------------------------------
+# --- メモ、コメント、保存ビュー、レポート -------------------------------------------------------
 def seed_notes(api: Api, seed: Seed, researcher: Api) -> None:
     state = seed.state
     if state.get("notesDone"):
@@ -815,7 +816,8 @@ def seed_notes(api: Api, seed: Seed, researcher: Api) -> None:
             "body": seed.text.admin_reply,
         },
     )
-    # A deleted comment stays as a placeholder in the thread, as the comments page describes.
+    # 削除したコメントは、ドキュメントのコメントのページの説明どおり、スレッドに
+    # 代わりの表示として残る。
     deleted = api.p(
         "POST", "comments", json={"targetType": "run", "targetId": second, "body": seed.text.deleted_comment}
     )
@@ -950,7 +952,7 @@ def seed_report(api: Api, seed: Seed) -> None:
     seed.save()
 
 
-# --- global settings: storage and notifications -------------------------------------------------
+# --- 保存先（全体管理）と通知先（Project） ------------------------------------------------------
 def seed_storage(api: Api, seed: Seed) -> None:
     """A second filesystem storage and an S3 storage next to the default one."""
     state = seed.state
@@ -973,7 +975,7 @@ def seed_storage(api: Api, seed: Seed) -> None:
                 "name": S3_STORAGE_NAME,
                 "kind": "s3",
                 **S3_STORAGE_SETTINGS,
-                # Never used to connect; a random value so that no real-looking secret is stored.
+                # 接続には使わない。本物らしく見える秘密の値を保存しないよう、ランダムな値にする。
                 "secretAccessKey": secrets.token_urlsafe(30),
             },
         )
@@ -1026,7 +1028,7 @@ def main() -> int:
     environment = load_environment(arguments.lang, "sample")
     seed = Seed(environment, SAMPLE_TEXTS[arguments.lang])
     save_names(seed)
-    # The API checks Origin on cookie requests; it is the Web origin, not a connection target.
+    # APIはcookieを使う要求のOriginを確かめる。Originに入れるのはWebのoriginで、接続先ではない。
     headers = {"Origin": environment.web_url}
     base_url = f"{environment.api_url}/api/"
     with (

@@ -1,7 +1,7 @@
-// Takes the documentation screenshots of sign-in, Projects, users, accounts, tokens and computers,
-// from the accounts environment (local login) that seed-accounts.mjs seeded.
+// ログイン、Project、ユーザー、アカウント、token、コンピュータのドキュメント用スクリーンショットを、
+// seed-accounts.mjsがデータを入れたaccountsの環境（ローカルのログイン）で撮る。
 //   node pages/scripts/screenshots/capture-accounts.mjs [--lang en] [name ...]
-// Nothing is created or saved: dialogs are filled in and closed.
+// 何も作らず、保存もしない。ダイアログは入力してから閉じる。
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { DOCS_VIEWPORT, launchBrowser, newDocsContext, signInLocally } from './browserSession.mjs';
@@ -10,19 +10,19 @@ import { outputDirectory, saveScreenshot } from './publishableScreenshot.mjs';
 import { runCaptures } from './runCaptures.mjs';
 import { environmentDirectory, parseArguments, readEnvironment, readSeedState } from './screenshotEnvironment.mjs';
 
-// The token dialog is taller than the 900 px viewport; these two images show all of it.
+// tokenのダイアログは900 pxのビューポートより高いので、この2枚の画像で全体を見せる。
 const TOKEN_DIALOG_VIEWPORT = { width: DOCS_VIEWPORT.width, height: 1000 };
-// A menu or dialog finishes its opening transition and the typed text is drawn.
+// メニューやダイアログが開くときの遷移を終え、入力した文字が描かれるまで。
 const SHORT_SETTLE_MS = 200;
-// A computer's details load below the list and the page scrolls to them.
+// コンピュータの詳細が一覧の下に読み込まれ、ページがそこまでスクロールするまで。
 const DETAILS_SETTLE_MS = 500;
-// What the docs type into the dialogs (pages/guide/quickstart.md, pages/admin/projects.md).
+// ドキュメントがダイアログに入力する値（pages/guide/quickstart.md、pages/admin/projects.md）。
 const EXAMPLE_INPUT = {
   ja: {
     quickstartProject: '音声認識の実験',
     privateProject: '話者分離の検証',
     privateProjectDescription: '話者分離モデルの比較。結果を確かめるまで関係者だけで使う。',
-    // The start of a name or a username, as typed in "Add member".
+    // 名前かユーザー名の先頭。「メンバーを追加」で入力するとおりの文字。
     memberSearches: [{ typed: '青', username: 'aoki' }, { typed: 'ueda', username: 'ueda' }],
   },
   en: {
@@ -49,7 +49,7 @@ async function readPassword(username) {
   return (await readFile(file, 'utf8')).trim();
 }
 
-/** A page signed in as the user (or signed out), opened at the route. */
+/** そのユーザーでログインした（またはログインしていない）ページを、指定のルートで開く。 */
 async function openAs(username, route, { viewport } = {}) {
   const context = await newDocsContext(browser, { lang, viewport });
   if (username) await signInLocally(context, webUrl, { username, password: await readPassword(username) });
@@ -65,7 +65,7 @@ async function openProjectSwitcher(page) {
   await page.waitForTimeout(SHORT_SETTLE_MS);
 }
 
-// Opens a computer's details below the list (read only).
+// コンピュータの詳細を一覧の下に開く（見るだけ）。
 async function openComputerDetails(page, name) {
   await page.getByRole('button', { name, exact: true }).first().click();
   await page.waitForLoadState('networkidle');
@@ -89,7 +89,7 @@ const captures = {
     return page;
   },
   'admin-project-switcher': async () => {
-    // A regular user sees Public Projects and the Private ones they are a member of.
+    // 一般の利用者には、PublicのProjectと、参加しているPrivateのProjectが見える。
     const page = await openAs('aoki', experimentsOf(speechRecognition));
     await openProjectSwitcher(page);
     return page;
@@ -131,7 +131,7 @@ const captures = {
   'admin-users': () => openAs('admin', '/settings/users'),
   'admin-account': () => openAs('admin', '/settings/account'),
   'guide-token-dialog': async () => {
-    // The recording purpose is chosen when the dialog opens from "Connect from SDK or MLflow 3".
+    // 「SDK・MLflow 3から接続」から開いたダイアログでは、記録の用途を選んだ状態になる。
     const page = await openAs('admin', `/projects/${speechRecognition}/settings`, { viewport: TOKEN_DIALOG_VIEWPORT });
     await page.getByRole('button', { name: label.recordingConnectionIssueToken }).click();
     const dialog = page.getByRole('dialog');
@@ -150,17 +150,17 @@ const captures = {
     return page;
   },
   'admin-user-menu': async () => {
-    // A regular user's menu: account, password change and global settings.
+    // 一般の利用者のメニュー。アカウント、パスワードの変更、全体設定。
     const page = await openAs('aoki', experimentsOf(speechRecognition));
     await page.getByRole('button', { name: label.userMenu }).click();
     await page.getByRole('menu').waitFor();
     await page.waitForTimeout(SHORT_SETTLE_MS);
     return page;
   },
-  // A regular user's view: someone else's Private computer is listed but cannot be used.
+  // 一般の利用者の見え方。ほかの人のPrivateのコンピュータは一覧に出るが、使えない。
   'compute-computers': () => openAs('aoki', '/settings/computers'),
   'compute-site-details': async () => {
-    // A regular user opens a Public site that runs Jobs under the user's own account.
+    // 一般の利用者が、Jobを本人のアカウントで動かすPublicのsiteを開く。
     const page = await openAs('aoki', '/settings/computers');
     await openComputerDetails(page, 'ABCI');
     return page;
