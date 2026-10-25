@@ -24,7 +24,7 @@ export async function findDatasetVersionParents(
     'SELECT parent_dataset_version_ids FROM dataset_versions WHERE project_id=$1 AND dataset_id=$2 AND id=$3',
     [location.projectId, location.datasetId, location.versionId],
   );
-  if (!registration) notFound('DatasetVersion');
+  if (!registration) notFound('dataset version');
   const additions = await rows<DatasetVersionParentAddition>(
     connection,
     `SELECT a.*,u.display_name AS created_by_name FROM dataset_version_parent_additions a

@@ -35,7 +35,7 @@ export class SiteJobShellService {
     const target = await findSiteTarget(this.database, reference.targetId);
     await requireTargetUser(this.database, principal, target);
     const shell = await findJobShell(this.database, { targetId: target.id, id: reference.shellId });
-    if (!shell) notFound('SiteJobShell');
+    if (!shell) notFound('site job shell');
     return shell;
   }
 

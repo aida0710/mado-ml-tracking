@@ -60,7 +60,11 @@ export async function requireLauncher(
       ? await findLauncherByUser(connection, principal.user.id)
       : undefined;
   if (!launcher || !token)
-    throw new DomainError(403, 'launcherのtokenが必要です', 'launcher_token_required');
+    throw new DomainError({
+      status: 403,
+      code: 'launcher_token_required',
+      message: 'a launcher token is required',
+    });
   return { launcherId: launcher.id, launcherName: launcher.name, tokenId: token.id };
 }
 
@@ -86,7 +90,11 @@ export class LauncherService {
         'SELECT 1 FROM launchers WHERE lower(name)=lower($1) AND revoked_at IS NULL',
         [request.name],
       );
-      if (taken) throw new DomainError(409, '同じ名前のlauncherがあります', 'launcher_name_taken');
+      if (taken) throw new DomainError({
+        status: 409,
+        code: 'launcher_name_taken',
+        message: 'a launcher with the same name exists',
+      });
       const launcherId = await insertLauncher(connection, {
         name: request.name,
         createdBy: principal.user.id,
@@ -198,7 +206,11 @@ export class LauncherService {
         ...parsed,
       });
       if (!published)
-        throw new DomainError(409, 'この鍵は失効したか、別のlauncherの鍵です', 'site_key_revoked');
+        throw new DomainError({
+          status: 409,
+          code: 'site_key_revoked',
+          message: 'this key has been revoked or belongs to another launcher',
+        });
       if (published.previousFingerprint !== parsed.fingerprint)
         await writeAuditEvent(connection, {
           ...auditActor(principal),
@@ -230,13 +242,13 @@ export class LauncherService {
         succeeded: result.outcome === 'succeeded',
         message: result.message?.trim() || null,
       });
-      if (!finished) notFound('SiteConnectionCheck');
+      if (!finished) notFound('site connection check');
     });
   }
 
   private async liveLauncher(connection: Connection, launcherId: string) {
     const launcher = await findLauncher(connection, launcherId);
-    if (!launcher || launcher.revokedAt) notFound('Launcher');
+    if (!launcher || launcher.revokedAt) notFound('launcher');
     return launcher;
   }
 

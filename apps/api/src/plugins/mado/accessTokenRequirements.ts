@@ -8,8 +8,8 @@ import { DomainError } from '../../domain/errors.js';
 
 // Searching datasets and sending run records are the integration itself; capacity is optional.
 const REQUIRED_SCOPES = [
-  { scope: MADO_SCOPES.lineageRead, label: 'DataLineageの読み取り' },
-  { scope: MADO_SCOPES.lineageWrite, label: 'DataLineageの送信' },
+  { scope: MADO_SCOPES.lineageRead, label: 'DataLineage read' },
+  { scope: MADO_SCOPES.lineageWrite, label: 'DataLineage send' },
 ] as const;
 
 /** Rejects a token that cannot search or cannot record this connection's runs in Mado. */
@@ -19,15 +19,17 @@ export function assertAccessTokenCoversConnection(
 ): void {
   const missing = REQUIRED_SCOPES.filter(({ scope }) => !grant.scopes.includes(scope));
   if (missing.length)
-    throw new DomainError(
-      422,
-      `Madoのアクセストークンに${missing.map(({ label }) => label).join('と')}を許可してください`,
-      'plugin_token_scope_missing',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'plugin_token_scope_missing',
+      message: `allow ${missing.map(({ label }) => label).join(' and ')} on the Mado access token`,
+      details: { scopes: missing.map(({ scope }) => scope) },
+    });
   if (!allowsMadoNamespace(grant, config.jobNamespace))
-    throw new DomainError(
-      422,
-      `RunのNamespace「${config.jobNamespace}」をMadoのアクセストークンで許可してください`,
-      'plugin_job_namespace_not_allowed',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'plugin_job_namespace_not_allowed',
+      message: `allow the run namespace "${config.jobNamespace}" on the Mado access token`,
+      details: { namespace: config.jobNamespace },
+    });
 }

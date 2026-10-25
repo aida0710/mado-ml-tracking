@@ -47,7 +47,11 @@ export function decodeMultipartDirectory(encodedPath: string): ArtifactLocation 
   try {
     decodedPath = decodeURIComponent(encodedPath);
   } catch {
-    throw new DomainError(422, 'Artifactパスが不正です', 'invalid_parameter_value');
+    throw new DomainError({
+      status: 422,
+      code: 'invalid_request',
+      message: 'invalid artifact path',
+    });
   }
   return parseArtifactLocation(decodedPath, { directory: true });
 }
@@ -56,7 +60,11 @@ export function decodeMultipartDirectory(encodedPath: string): ArtifactLocation 
 export function encodedMultipartTarget(requestPath: string, action: MultipartAction): string {
   const prefix = `${MULTIPART_UPLOAD_ROOT}/${action}/`;
   const position = requestPath.indexOf(prefix);
-  if (position < 0) throw new DomainError(422, 'Artifactパスが不正です', 'invalid_parameter_value');
+  if (position < 0) throw new DomainError({
+    status: 422,
+    code: 'invalid_request',
+    message: 'invalid artifact path',
+  });
   return requestPath.slice(position + prefix.length);
 }
 
@@ -82,7 +90,11 @@ export function partEtag(sha256: string): string {
 export function partSha256FromEtag(etag: string | null | undefined): string | null {
   if (!etag) return null;
   const digest = /^"?([0-9a-f]{64})"?$/i.exec(etag)?.[1];
-  if (!digest) throw new DomainError(422, 'partのETagが不正です', 'invalid_parameter_value');
+  if (!digest) throw new DomainError({
+    status: 422,
+    code: 'invalid_request',
+    message: 'invalid part ETag',
+  });
   return digest.toLowerCase();
 }
 

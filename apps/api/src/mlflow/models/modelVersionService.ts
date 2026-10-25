@@ -38,14 +38,14 @@ export class ModelVersionService {
           artifacts: this.artifacts,
         });
         if (input.run_id && input.run_id !== source.sourceRunId)
-          conflict('run_idと保存済みモデルのsource Runが一致しません');
+          conflict('run_id does not match the source run of the stored model');
         const tags = { ...model.tags, ...source.tags, ...keyValueMap(input.tags) };
         const requestedFamily = tags['mmt.model_family'];
         if (
           requestedFamily !== undefined &&
           (!requestedFamily || requestedFamily.length > MAX_MODEL_NAME_LENGTH)
         )
-          invalidParameter('mmt.model_familyが不正です');
+          invalidParameter('invalid mmt.model_family');
         if (requestedFamily && requestedFamily !== model.family) {
           const existing = await first<{ present: boolean }>(
             connection,
@@ -53,7 +53,7 @@ export class ModelVersionService {
             [model.id],
           );
           if (existing?.present || model.tags['mmt.model_family'] || model.family !== 'mlflow')
-            conflict('mmt.model_familyがnative Modelの系列と一致しません');
+            conflict('mmt.model_family does not match the family of the native model');
           await connection.query('UPDATE models SET family=$2 WHERE id=$1', [
             model.id,
             requestedFamily,
@@ -132,7 +132,7 @@ export class ModelVersionService {
     await requireModelsRead(this.database, { principal, projectId });
     const version = await findModelVersion(this.database, { projectId, ...reference });
     if (!version.artifactUri)
-      invalidParameter('このnativeモデルバージョンにはMLflowモデル一式がありません');
+      invalidParameter('this native model version has no MLflow model files');
     return version.artifactUri;
   }
 
@@ -209,7 +209,7 @@ export class ModelVersionService {
           ['mmt.model_family', 'mmt.code_version_id', 'mmt.weights_path'].includes(reference.key)
         ) {
           if (reference.value !== version.tags[reference.key])
-            conflict('登録済みバージョンの実行設定tagは変更できません');
+            conflict('execution setting tags of a registered version cannot be changed');
           return;
         }
         await this.ensureMetadata(connection, version);
@@ -240,7 +240,7 @@ export class ModelVersionService {
         await this.ensureMetadata(connection, version);
         if (reference.archive_existing_versions) {
           if (!['Staging', 'Production'].includes(reference.stage))
-            invalidParameter('archive_existing_versionsはStaging/Productionに指定してください');
+            invalidParameter('archive_existing_versions requires Staging or Production');
           await connection.query(
             `UPDATE mlflow_model_version_metadata vm SET current_stage='Archived',updated_at=now()
           FROM model_versions v WHERE v.id=vm.version_id AND v.model_id=$1 AND vm.current_stage=$2 AND vm.version_id<>$3 AND vm.deleted_at IS NULL`,

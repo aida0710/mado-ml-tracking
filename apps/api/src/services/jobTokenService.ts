@@ -20,7 +20,11 @@ export class JobTokenService {
   async authenticate(bearer: string): Promise<Principal> {
     const identity = await jobTokenIdentity(this.database, hashSecret(bearer));
     if (!identity)
-      throw new DomainError(401, 'Job tokenが無効または失効しています', 'invalid_token');
+      throw new DomainError({
+        status: 401,
+        code: 'invalid_token',
+        message: 'the Job token is invalid or revoked',
+      });
     return {
       user: identity.user,
       method: 'token',

@@ -64,17 +64,17 @@ function withoutConnection(target: TargetRow): TargetRow {
 }
 
 function siteOnly(message: string): never {
-  throw new DomainError(422, message, 'site_only_setting');
+  throw new DomainError({ status: 422, code: 'site_only_setting', message });
 }
 
 // ssh and local targets reach hosts through the workers' own SSH keys, so only global
 // administrators add or keep them; everyone else adds sites.
 function targetAdminRequired(): never {
-  throw new DomainError(
-    403,
-    '全体管理者でない人が持てるコンピュータはsiteだけです',
-    'target_admin_required',
-  );
+  throw new DomainError({
+    status: 403,
+    code: 'target_admin_required',
+    message: 'people other than global administrators can own only site computers',
+  });
 }
 
 async function findTarget(
@@ -87,7 +87,7 @@ async function findTarget(
     `SELECT * FROM compute_targets WHERE id=$1${options.lock ? ' FOR UPDATE' : ''}`,
     [targetId],
   );
-  if (!target) notFound('ComputeTarget');
+  if (!target) notFound('computer');
   return target;
 }
 
@@ -144,7 +144,7 @@ export class TargetService {
   ): Promise<ComputeTargetDetails> {
     const { site, jobShell, ...fields } = request;
     if (!isGlobalAdministrator(principal)) {
-      requireSession(principal, 'コンピュータの追加');
+      requireSession(principal, 'adding a computer');
       if (fields.executor !== 'site') targetAdminRequired();
     }
     // A site's runner downloads inputs itself with the Job token; ssh/local relay through the worker.
@@ -154,7 +154,7 @@ export class TargetService {
     };
     validateTargetConfiguration(input, this.config.allowLocalExecutor);
     if (input.executor !== 'site' && (site || jobShell))
-      siteOnly('全体設定・job shellはsiteだけの設定です');
+      siteOnly('global settings and job shells are settings of sites only');
     const settings = mergeSiteSettings(DEFAULT_SITE_SETTINGS, site ?? {});
     if (input.executor === 'site') validateSiteSettings(input, settings);
     return transaction(this.database, async (connection) => {
@@ -247,7 +247,7 @@ export class TargetService {
         const updated = { ...target, ...input };
         validateTargetConfiguration(updated, this.config.allowLocalExecutor);
         if (!isGlobalAdministrator(principal) && updated.executor !== 'site') targetAdminRequired();
-        if (site && updated.executor !== 'site') siteOnly('全体設定はsiteだけの設定です');
+        if (site && updated.executor !== 'site') siteOnly('global settings are settings of sites only');
         const occupancy = (await first<{ pending: number; active: number }>(
           connection,
           `SELECT count(*)::int AS pending,
@@ -256,9 +256,9 @@ export class TargetService {
           [targetId, target.supportsArray],
         ))!;
         if (occupancy.pending && hasTargetExecutionChanges(target, updated))
-          conflict('未完了JobがあるComputeTargetの実行設定は変更できません');
+          conflict('the execution settings of a computer with unfinished jobs cannot be changed');
         if (updated.maxConcurrentJobs < occupancy.active)
-          conflict('同時実行数を実行中Jobの数より小さくできません');
+          conflict('the concurrency cannot be lower than the number of running jobs');
         await connection.query(
           `UPDATE compute_targets SET name=$2,host=$3,port=$4,username=$5,ssh_key_path=$6,known_hosts_path=$7,
           work_directory=$8,python_executable=$9,gpu_ids=$10,max_concurrent_jobs=$11,enabled=$12,executor=$13,runtime_kinds=$14,
@@ -317,7 +317,7 @@ export class TargetService {
     const { target } = change;
     await lockSiteSettings(connection, target.id);
     const stored = await findSiteSettings(connection, target.id);
-    if (!stored && !change.creating) notFound('SiteSettings');
+    if (!stored && !change.creating) notFound('site settings');
     const settings = mergeSiteSettings(
       stored ? siteSettingsValues(stored) : DEFAULT_SITE_SETTINGS,
       change.site ?? {},
@@ -339,7 +339,11 @@ export class TargetService {
   ): Promise<void> {
     if (target.submissionMode !== 'automatic' || !settings.launcherId) return;
     if (!(await isLiveLauncher(connection, settings.launcherId)))
-      throw new DomainError(422, '選んだlauncherはありません（失効しています）', 'site_launcher_invalid');
+      throw new DomainError({
+        status: 422,
+        code: 'site_launcher_invalid',
+        message: 'the chosen launcher does not exist (it has been revoked)',
+      });
   }
 
   private async detail(

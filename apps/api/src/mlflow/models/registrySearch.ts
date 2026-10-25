@@ -95,14 +95,14 @@ function registrySearch(
     }
     const attribute =
       fieldKind === 'attribute' && Object.hasOwn(fields, key) ? fields[key] : undefined;
-    if (!attribute) invalidParameter(`検索field ${field} に対応していません`);
+    if (!attribute) invalidParameter(`unsupported search field: ${field}`);
     return attribute;
   };
   const filter = compileFilter({ filter: input.filter, parameters, resolveField });
   const orders = input.order_by.map((order) => {
     const parsed = /^([a-z_]+)(?:\s+(ASC|DESC))?$/i.exec(order.trim());
     const field = parsed && Object.hasOwn(fields, parsed[1]!) ? fields[parsed[1]!] : undefined;
-    if (!field) invalidParameter('Model Registryのorder fieldに対応していません');
+    if (!field) invalidParameter('unsupported order field for the Model Registry');
     return `${field.expression} ${parsed?.[2]?.toUpperCase() ?? 'ASC'} NULLS LAST`;
   });
   const order = [

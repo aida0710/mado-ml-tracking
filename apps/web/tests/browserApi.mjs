@@ -393,7 +393,7 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(payload) });
     const list = (items) => reply({ items });
     // The API's answer for an id it does not know (domain/errors.ts).
-    const notFound = (entity) => reply({ error: `${entity}が見つかりません`, code: 'not_found' }, 404);
+    const notFound = (entity) => reply({ error: `${entity} not found`, code: 'not_found' }, 404);
     if (path === '/auth/config')
       return reply({
         mode: state.authMode,

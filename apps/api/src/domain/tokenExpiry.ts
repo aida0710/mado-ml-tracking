@@ -14,6 +14,10 @@ export function resolveTokenExpiry(request: {
     ? new Date(request.now.getTime() + request.defaultLifetimeDays * DAY_MILLISECONDS)
     : new Date(request.expiresAt);
   if (!Number.isFinite(expiresAt.getTime()) || expiresAt <= request.now)
-    throw new DomainError(422, 'Tokenの期限は未来の日時を指定してください', 'invalid_expiry');
+    throw new DomainError({
+      status: 422,
+      code: 'invalid_expiry',
+      message: 'the token expiry must be in the future',
+    });
   return expiresAt;
 }

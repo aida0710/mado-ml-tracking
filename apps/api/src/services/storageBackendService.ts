@@ -77,7 +77,12 @@ function normalizedConfig(input: StorageBackendConfigInput): StorageBackendConfi
     return normalizeStorageBackendConfig(input);
   } catch (error) {
     if (!(error instanceof StorageBackendConfigError)) throw error;
-    throw new DomainError(422, `保存先の設定が不正です: ${error.field}`, error.code);
+    throw new DomainError({
+      status: 422,
+      code: error.code,
+      message: `invalid storage backend settings: ${error.field}`,
+      details: { field: error.field },
+    });
   }
 }
 
@@ -156,11 +161,11 @@ export class StorageBackendService {
     return recordDenial(this.options.database, draft, async () => {
       requireGlobalAdmin(principal);
       if (!isValidStorageBackendName(input.name))
-        throw new DomainError(
-          422,
-          '保存先の名前は小文字英数字とハイフンで指定してください',
-          'invalid_storage_backend_name',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'invalid_storage_backend_name',
+          message: 'use lowercase letters, digits and hyphens for the storage backend name',
+        });
       // Environment names are reserved even when that backend is not configured right now.
       if (['filesystem', 's3'].includes(input.name)) this.nameTaken();
       const config = normalizedConfig(configInput(input));
@@ -201,14 +206,14 @@ export class StorageBackendService {
     return recordDenial(this.options.database, draft, async () => {
       requireGlobalAdmin(principal);
       if (this.options.registry.isEnvironmentBackend(name))
-        throw new DomainError(
-          409,
-          '環境変数で設定した保存先は画面やAPIから変更できません',
-          'storage_backend_read_only',
-        );
+        throw new DomainError({
+          status: 409,
+          code: 'storage_backend_read_only',
+          message: 'storage backends set by environment variables cannot be changed from the screen or the API',
+        });
       const row = await transaction(this.options.database, async (connection) => {
         const current = await findStorageBackendRowForUpdate(connection, name);
-        if (!current) notFound('保存先');
+        if (!current) notFound('storage backend');
         const kind = patch.kind ?? current.config.kind;
         const kindChanged = kind !== current.config.kind;
         // Settings and credentials of another kind do not carry over; a kind change takes only the patch.
@@ -218,18 +223,18 @@ export class StorageBackendService {
           storageLocationChanged(current.config, config) &&
           (await isStorageBackendReferenced(connection, name))
         )
-          throw new DomainError(
-            409,
-            'この保存先を参照するArtifactがあるため、種類・bucket・endpoint・prefix・rootPathは変更できません',
-            'storage_backend_in_use',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'storage_backend_in_use',
+            message: 'artifacts reference this storage backend, so the kind, bucket, endpoint, prefix and rootPath cannot be changed',
+          });
         const enabled = patch.enabled ?? current.enabled;
         if (!enabled && (await readDefaultBackend(connection)) === name)
-          throw new DomainError(
-            409,
-            '既定の保存先は無効にできません。先に既定を切り替えてください',
-            'storage_backend_is_default',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'storage_backend_is_default',
+            message: 'the default storage backend cannot be disabled; switch the default first',
+          });
         const updated = await updateStorageBackend(connection, {
           name,
           config,
@@ -264,7 +269,7 @@ export class StorageBackendService {
         openStore = () => registry.environmentStore(name);
       } else {
         const row = await findStorageBackendRow(database, name);
-        if (!row) notFound('保存先');
+        if (!row) notFound('storage backend');
         // A fresh store tests the saved settings, including those of a disabled backend.
         openStore = () => registry.buildStore(row);
       }
@@ -309,11 +314,11 @@ export class StorageBackendService {
           : await findStorageBackendRowForUpdate(connection, backend);
         const usable = registry.isEnvironmentBackend(backend) || (row?.enabled ?? false);
         if (!usable || !registry.writableBackends().includes(backend))
-          throw new DomainError(
-            422,
-            '既定には有効な保存先だけを指定できます',
-            'storage_backend_unavailable',
-          );
+          throw new DomainError({
+            status: 422,
+            code: 'storage_backend_unavailable',
+            message: 'only an enabled storage backend can be the default',
+          });
         const previous = (await readDefaultBackend(connection)) ?? FALLBACK_DEFAULT_BACKEND;
         await writeDefaultBackend(connection, {
           defaultBackend: backend,
@@ -330,7 +335,11 @@ export class StorageBackendService {
   }
 
   private nameTaken(): never {
-    throw new DomainError(409, '同じ名前の保存先が既にあります', 'storage_backend_exists');
+    throw new DomainError({
+      status: 409,
+      code: 'storage_backend_exists',
+      message: 'a storage backend with the same name already exists',
+    });
   }
 
   private auditDraft(
@@ -388,11 +397,11 @@ export class StorageBackendService {
     if (patch.secretAccessKey) {
       const key = this.options.secretKey;
       if (!key)
-        throw new DomainError(
-          422,
-          'MMT_STORAGE_SECRET_KEYが設定されていないためsecretを保存できません',
-          'storage_secret_key_missing',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'storage_secret_key_missing',
+          message: 'the secret cannot be stored because MMT_STORAGE_SECRET_KEY is not set',
+        });
       const encrypted = encryptSecret({
         key,
         plaintext: patch.secretAccessKey,
@@ -401,17 +410,17 @@ export class StorageBackendService {
       secret = { secretEncrypted: encrypted.payload, secretKeyId: encrypted.keyId };
     }
     if (config.kind === 'filesystem' && (caBundle || accessKeyId || secret.secretEncrypted))
-      throw new DomainError(
-        422,
-        'filesystemの保存先には認証情報とCAを設定できません',
-        'invalid_storage_backend_config',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'invalid_storage_backend_config',
+        message: 'a filesystem storage backend cannot have credentials or a CA',
+      });
     if ((accessKeyId === null) !== (secret.secretEncrypted === null))
-      throw new DomainError(
-        422,
-        'access key idとsecret access keyは両方指定するか、両方とも空にしてください',
-        'storage_credentials_incomplete',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'storage_credentials_incomplete',
+        message: 'specify both the access key ID and the secret access key, or leave both empty',
+      });
     return { caBundle, accessKeyId, ...secret };
   }
 }

@@ -17,16 +17,20 @@ const PASSWORD_CHANGE_ALLOWED_REQUESTS = new Set([
   'GET /api/auth/me',
   'POST /api/auth/change-password',
   'POST /api/auth/logout',
-  'GET /api/health',
 ]);
 
 export function validateOrigin(origin: string | undefined, policy: OriginPolicy): void {
   if (!isAllowedOrigin(origin, policy))
-    throw new DomainError(403, 'リクエストのOriginが許可されていません', 'invalid_origin');
+    throw new DomainError({
+      status: 403,
+      code: 'invalid_origin',
+      message: 'the request origin is not allowed',
+    });
 }
 
-// API tokens (mmt_) and Job tokens (mmtj_) are the prefix and base64url of a random secret.
-const API_TOKEN_FORMAT = /^mmtj?_[A-Za-z0-9_-]+$/;
+// API token（mado_mt_）と Job token（mado_mtj_）は、前置きと乱数の base64url。この形でない値は
+// DB を引かずに断る。
+const API_TOKEN_FORMAT = /^mado_mtj?_[A-Za-z0-9_-]+$/;
 
 /**
  * Reads the API token from the Authorization header. Bearer works everywhere. Basic is accepted
@@ -38,25 +42,37 @@ export function apiTokenFromAuthorization(
   authorization: string,
   request: { path: string },
 ): string {
-  const bearer = /^Bearer ([A-Za-z0-9_-]+)$/.exec(authorization);
-  if (bearer) return bearer[1]!;
+  const bearer = /^Bearer (\S+)$/.exec(authorization);
+  if (bearer) {
+    if (!API_TOKEN_FORMAT.test(bearer[1]!))
+      throw new DomainError({
+        status: 401,
+        code: 'invalid_token',
+        message: 'invalid Authorization header',
+      });
+    return bearer[1]!;
+  }
   const basic = /^Basic ([A-Za-z0-9+/]+=*)$/i.exec(authorization);
-  if (!basic) throw new DomainError(401, 'Authorization headerが不正です', 'invalid_token');
+  if (!basic) throw new DomainError({
+    status: 401,
+    code: 'invalid_token',
+    message: 'invalid Authorization header',
+  });
   if (!isMlflowRequest(request.path))
-    throw new DomainError(
-      401,
-      'Basic認証はMLflow互換APIだけで使えます。Bearer tokenを使ってください',
-      'basic_auth_unsupported',
-    );
+    throw new DomainError({
+      status: 401,
+      code: 'basic_auth_unsupported',
+      message: 'Basic authentication works only on the MLflow-compatible API; use a Bearer token',
+    });
   const credentials = Buffer.from(basic[1]!, 'base64').toString('utf8');
   const separator = credentials.indexOf(':');
   const password = separator < 0 ? '' : credentials.slice(separator + 1);
   if (!API_TOKEN_FORMAT.test(password))
-    throw new DomainError(
-      401,
-      'Basic認証のpasswordにはAPI tokenを指定してください',
-      'invalid_token',
-    );
+    throw new DomainError({
+      status: 401,
+      code: 'invalid_token',
+      message: 'use an API token as the Basic authentication password',
+    });
   return password;
 }
 
@@ -83,16 +99,20 @@ export function authentication(
       identity?.session?.mustChangePassword &&
       !PASSWORD_CHANGE_ALLOWED_REQUESTS.has(`${context.req.method} ${context.req.path}`)
     )
-      throw new DomainError(
-        403,
-        'パスワードを変更してから操作してください',
-        'password_change_required',
-      );
+      throw new DomainError({
+        status: 403,
+        code: 'password_change_required',
+        message: 'change your password before continuing',
+      });
     await next();
   };
 }
 
 function authenticateJobToken(jobTokens: JobTokenService | undefined, bearer: string) {
-  if (!jobTokens) throw new DomainError(401, 'Job tokenは使用できません', 'invalid_token');
+  if (!jobTokens) throw new DomainError({
+    status: 401,
+    code: 'invalid_token',
+    message: 'Job tokens cannot be used here',
+  });
   return jobTokens.authenticate(bearer);
 }

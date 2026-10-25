@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { ARTIFACT_CONTENT_UNAVAILABLE_CODE, RequestError } from '../api/http';
+import { ARTIFACT_CONTENT_UNAVAILABLE_CODE, RequestError, requestErrorFromBody } from '../api/http';
 import { formatErrorMessage } from './errorMessage';
 import { convertWandbSweepConfig, SweepConfigError } from './sweepConfig';
 import { formatUploadFailure } from './uploadFailure';
@@ -9,7 +9,6 @@ import { globalSiteDetails } from '../../tests/fixtures/siteComputers';
 import type { UploadFailure } from '../types/uploadFailure';
 import { setLocale } from '../i18n/locale';
 import { text } from '../i18n/catalog';
-import { errorText } from '../i18n/errors';
 import { siteComputersTextTemplates } from '../i18n/siteComputers';
 
 afterEach(() => setLocale('ja'));
@@ -31,28 +30,20 @@ describe('retained failures follow the display language', () => {
     expect(formatErrorMessage(failure)).not.toBe(japanese);
   });
 
-  it('known API codes keep the server message in Japanese and switch to the catalog in English', () => {
-    const failure = new RequestError({ status: 503, code: 'artifact_save_failed', serverMessage: 'partの保存に失敗しました' });
+  it('known API codes are translated from the code in Japanese and keep the API sentence in English', () => {
+    const failure = new RequestError({ status: 503, code: 'artifact_save_failed', serverMessage: 'failed to save the part' });
     setLocale('ja');
-    expect(formatErrorMessage(failure)).toBe('partの保存に失敗しました');
+    expect(formatErrorMessage(failure)).toBe('Artifactを保存できませんでした');
     setLocale('en');
-    expect(formatErrorMessage(failure)).toBe(errorText.artifactSaveFailed);
+    expect(formatErrorMessage(failure)).toBe('failed to save the part');
   });
 
-  it('a known API code without a server message uses the catalog in either language', () => {
-    const failure = new RequestError({ status: 503, code: 'internal_error' });
-    setLocale('ja');
-    expect(formatErrorMessage(failure)).toBe('リクエストの処理に失敗しました');
+  it('a code missing from the dictionary shows the API sentence in either language', () => {
+    const failure = new RequestError({ status: 422, code: 'future_service_code', serverMessage: 'the new reason' });
     setLocale('en');
-    expect(formatErrorMessage(failure)).toBe('Could not process the request');
-  });
-
-  it('an unknown server explanation preserves user text in either language', () => {
-    const failure = new RequestError({ status: 422, code: 'future_service_code', serverMessage: '保存しました' });
-    setLocale('en');
-    expect(formatErrorMessage(failure)).toBe('保存しました');
+    expect(formatErrorMessage(failure)).toBe('the new reason');
     setLocale('ja');
-    expect(formatErrorMessage(failure)).toBe('保存しました');
+    expect(formatErrorMessage(failure)).toBe('the new reason');
   });
 
   it('a captured conversion error updates its explanation and retains the parameter name', () => {
@@ -106,8 +97,14 @@ describe('retained failures follow the display language', () => {
 
   it('a captured API search-space error retains its row name and both limits', () => {
     const name = '日本語.[x]';
-    const failure = new RequestError({ status: 422, code: 'sweep_space_invalid',
-      serverMessage: `parameter「${name}」の values は1000個までです（1001個）` });
+    const failure = requestErrorFromBody(422, {
+      error: `parameter "${name}" values exceed the limit of 1000 (received: 1001)`,
+      code: 'sweep_space_invalid',
+      reason: 'values_limit',
+      parameter: name,
+      limit: 1000,
+      count: 1001,
+    });
     setLocale('ja');
     expect(formatErrorMessage(failure)).toContain('1000個までです');
     setLocale('en');

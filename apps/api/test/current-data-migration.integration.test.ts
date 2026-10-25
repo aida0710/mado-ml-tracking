@@ -3,14 +3,14 @@ import { describe, expect, it } from 'vitest';
 import { migrate } from '../src/db/migrate.js';
 import { createHarness, testDatabaseUrl } from './harness.js';
 import { executionFixture } from './fixtures.js';
-import { applyAuditLogMigrationAhead, applyMigrationsBefore } from './migrationFixtures.js';
+import { applyRowShapeMigrationsAhead, applyMigrationsBefore } from './migrationFixtures.js';
 
 describe.skipIf(!testDatabaseUrl)('現行データの制約への移行（独立PostgreSQL）', () => {
   it('所有者の無いコンピュータは作成監査の作成者を所有者にし、以後は所有者を必須にする', async () => {
     const harness = await createHarness({ applyMigrations: false });
     try {
       await applyMigrationsBefore(harness.database, '069_require_current_protocol.sql');
-      await applyAuditLogMigrationAhead(harness.database);
+      await applyRowShapeMigrationsAhead(harness.database);
       const fixture = await executionFixture(harness);
       await harness.database.query('UPDATE compute_targets SET owner_user_id=NULL WHERE id=$1', [fixture.target.id]);
       await migrate(harness.database);
@@ -26,7 +26,7 @@ describe.skipIf(!testDatabaseUrl)('現行データの制約への移行（独立
     const harness = await createHarness({ applyMigrations: false });
     try {
       await applyMigrationsBefore(harness.database, '069_require_current_protocol.sql');
-      await applyAuditLogMigrationAhead(harness.database);
+      await applyRowShapeMigrationsAhead(harness.database);
       const fixture = await executionFixture(harness);
       const unknownId = randomUUID();
       const siteId = randomUUID();
@@ -50,7 +50,7 @@ describe.skipIf(!testDatabaseUrl)('現行データの制約への移行（独立
     const harness = await createHarness({ applyMigrations: false });
     try {
       await applyMigrationsBefore(harness.database, '069_require_current_protocol.sql');
-      await applyAuditLogMigrationAhead(harness.database);
+      await applyRowShapeMigrationsAhead(harness.database);
       const fixture = await executionFixture(harness);
       const run = await fixture.newRun();
       const token = (await harness.database.query('SELECT id FROM api_tokens WHERE token_hash IS NOT NULL LIMIT 1')).rows[0];

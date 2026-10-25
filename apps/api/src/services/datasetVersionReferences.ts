@@ -61,9 +61,10 @@ export async function assertInputDatasetVersionsUsable(
     .filter((dataset) => dataset.archivedAt)
     .map((dataset) => dataset.name);
   if (archivedNames.length)
-    throw new DomainError(
-      422,
-      `archive済みDatasetのバージョンは新しいRunの入力に使えません: ${archivedNames.join(', ')}`,
-      'dataset_archived',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'dataset_archived',
+      message: `versions of archived datasets cannot be inputs of new runs: ${archivedNames.join(', ')}`,
+      details: { datasets: archivedNames },
+    });
 }

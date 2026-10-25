@@ -58,7 +58,7 @@ class DriverApi:
     def client(self) -> Client:
         return Client(
             api_url="http://api.invalid",
-            api_token="mmtj_job-token",
+            api_token="mado_mtj_job-token",
             transport=httpx.MockTransport(self.serve),
         )
 

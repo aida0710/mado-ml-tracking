@@ -218,7 +218,7 @@ export class PromotionService {
           id: policyId,
           enabled,
         });
-        if (!policy) notFound('PromotionPolicy');
+        if (!policy) notFound('promotion policy');
         await writeAuditEvent(connection, { ...draft, outcome: 'success', details: { enabled } });
         return policy;
       }),
@@ -246,14 +246,14 @@ export class PromotionService {
       transaction(this.database, async (connection) => {
         await this.requirePolicyAdmin(connection, principal, projectId);
         const policy = await lockPromotionPolicyForUpdate(connection, { projectId, id: policyId });
-        if (!policy) notFound('PromotionPolicy');
+        if (!policy) notFound('promotion policy');
         const account = await findServiceAccount(connection, { projectId, serviceAccountId });
         if (!account || account.status !== 'active' || account.role !== 'admin')
-          throw new DomainError(
-            422,
-            '移管先には、このProjectの有効なService Account（roleがadmin）を指定してください',
-            'promotion_owner_invalid',
-          );
+          throw new DomainError({
+            status: 422,
+            code: 'promotion_owner_invalid',
+            message: 'the new owner must be an active service account of this project (role admin)',
+          });
         if (policy.runAsUserId === account.id) return policy;
         const updated = await setPromotionPolicyRunAsUser(connection, {
           projectId,
@@ -280,7 +280,7 @@ export class PromotionService {
       query.cursor &&
       !(await promotionEvaluationCursorExists(this.database, { projectId, id: query.cursor }))
     )
-      notFound('PromotionEvaluation cursor');
+      notFound('promotion evaluation cursor');
     // Fetch one extra row to know whether another page exists without a count query.
     const items = await listPromotionEvaluations(this.database, {
       ...query,
@@ -313,7 +313,7 @@ export class PromotionService {
       transaction(this.database, async (connection) => {
         await this.requirePolicyAdmin(connection, principal, projectId);
         const previous = await findPromotionEvaluation(connection, { projectId, id: evaluationId });
-        if (!previous) notFound('PromotionEvaluation');
+        if (!previous) notFound('promotion evaluation');
         const policy = (await lockPromotionPolicy(connection, {
           projectId,
           id: previous.policyId,
@@ -340,7 +340,7 @@ export class PromotionService {
           sequence,
           requestedBy: principal.user.id,
         });
-        if (!id) conflict('同じ判定が同時に再実行されました');
+        if (!id) conflict('the same evaluation was re-run at the same time');
         await writeAuditEvent(connection, {
           ...draft,
           outcome: 'success',
@@ -508,22 +508,22 @@ export class PromotionService {
   ): Promise<void> {
     const { projectId, input } = policy;
     const family = await findActiveModelFamily(connection, { projectId, id: input.modelId });
-    if (!family) notFound('Model');
+    if (!family) notFound('model');
     const rule = await findEvaluationRule(connection, { projectId, id: input.evaluationRuleId });
-    if (!rule) notFound('ModelAutomationRule');
+    if (!rule) notFound('automation rule');
     if (rule.kind !== 'evaluation')
-      throw new DomainError(
-        422,
-        '評価ruleにはkind=evaluationの自動実行ruleを指定してください',
-        'promotion_rule_not_evaluation',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'promotion_rule_not_evaluation',
+        message: 'the evaluation rule must be an automation rule of kind evaluation',
+      });
     // A rule that never runs for this Model's family would leave the policy without candidates.
     if (!rule.modelFamilies.includes(family))
-      throw new DomainError(
-        422,
-        '評価ruleの対象系列にModelの系列が含まれていません',
-        'promotion_rule_family_mismatch',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'promotion_rule_family_mismatch',
+        message: 'the model families of the evaluation rule do not include the family of the model',
+      });
   }
 
   private policyDraft(

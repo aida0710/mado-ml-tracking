@@ -178,7 +178,7 @@ async function start() {
     cwd: path.join(REPOSITORY_ROOT, 'apps/web'),
     env: serverEnvironment({ MMT_WEB_API_PROXY_TARGET: apiUrl }),
   });
-  await waitUntilAnswering(`${apiUrl}/api/health`);
+  await waitUntilAnswering(`${apiUrl}/healthz`);
   await waitUntilAnswering(webUrl);
   const description = {
     lang: options.lang,

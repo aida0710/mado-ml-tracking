@@ -81,8 +81,9 @@ export interface JobPlacement {
  * that follows retries back to their automation execution ends.
  */
 function assertRetryable(job: Job): void {
-  if (!isTerminalStatus(job.status)) conflict('実行中または状態未確認のJobは再実行できません');
-  if (job.attempt >= MAX_JOB_ATTEMPTS) conflict(`Jobの再実行は${MAX_JOB_ATTEMPTS}回目までです`);
+  if (!isTerminalStatus(job.status)) conflict('a running job or a job of unknown status cannot be retried');
+  if (job.attempt >= MAX_JOB_ATTEMPTS)
+    conflict(`a job can be retried up to attempt ${MAX_JOB_ATTEMPTS}`, { maxAttempts: MAX_JOB_ATTEMPTS });
 }
 
 /**
@@ -222,19 +223,23 @@ export class JobService {
     const placement = registration.placement ?? {};
     // Every Job, whether a person, a hook, automation or a sweep starts it, passes here; an
     // archived Project gets none, and an archive waiting on this lock then sees the new Job.
-    if (!(await shareLiveProject(connection, run.projectId))) notFound('Project');
+    if (!(await shareLiveProject(connection, run.projectId))) notFound('project');
     const activeRun = await first(
       connection,
       "SELECT id FROM runs WHERE id=$1 AND project_id=$2 AND lifecycle_stage='active'",
       [run.id, run.projectId],
     );
-    if (!activeRun) conflict('削除済みRunにはJobを作成できません');
-    if (run.status !== 'queued') conflict('JobはqueuedのRunにだけ作成できます');
+    if (!activeRun) conflict('jobs cannot be created for a deleted run');
+    if (run.status !== 'queued') conflict('jobs can be created only for queued runs');
     // Reject duplicates before taking a target lock: a worker locks target before this existing Run.
     const existing = await first(connection, 'SELECT id FROM jobs WHERE run_id=$1', [run.id]);
-    if (existing) conflict('Runには既にJobがあります');
+    if (existing) conflict('the run already has a job');
     if (!run.codeVersionId)
-      throw new DomainError(422, '実行するCodeVersionが必要です', 'code_required');
+      throw new DomainError({
+        status: 422,
+        code: 'code_required',
+        message: 'a code version to run is required',
+      });
     const code = await findCodeVersion(connection, {
       projectId: run.projectId,
       id: run.codeVersionId,
@@ -313,7 +318,7 @@ export class JobService {
       'SELECT * FROM compute_targets WHERE id=$1 AND enabled=true FOR SHARE',
       [execution.targetId],
     );
-    if (!target) notFound('ComputeTarget');
+    if (!target) notFound('computer');
     validateTargetCompatibility(target, {
       runtime: execution.runtime,
       gpuIds: execution.gpuIds,
@@ -423,11 +428,11 @@ export class JobService {
       const previousRun = await findRun(connection, { projectId, id: previousJob.runId });
       assertControlsJob({ role, userId: principal.user.id }, previousRun);
       if (await findOriginStepExecutionOfRun(connection, { projectId, runId: previousRun.id }))
-        throw new DomainError(
-          409,
-          'ワークフローの実行画面から再開してください',
-          'workflow_retry_required',
-        );
+        throw new DomainError({
+          status: 409,
+          code: 'workflow_retry_required',
+          message: 'resume it from the workflow execution page',
+        });
       const existingRetry = await first<Job>(
         connection,
         `SELECT ${jobColumns()} FROM jobs WHERE retry_of_job_id=$1`,
@@ -550,7 +555,11 @@ export class JobService {
     if (!request.checkpointId && !request.resumeFromLatestCheckpoint) return;
     const requested = await selectRetryCheckpoint(connection, retry);
     if ((retry.retryRun.resumeCheckpointId ?? null) !== requested)
-      throw new DomainError(409, 'このJobは別の条件で再実行済みです', 'job_already_retried');
+      throw new DomainError({
+        status: 409,
+        code: 'job_already_retried',
+        message: 'this job has already been retried with different conditions',
+      });
   }
 
   async getWorkerJob(connection: Connection, job: Job): Promise<WorkerJob> {
@@ -561,7 +570,11 @@ export class JobService {
       [job.targetId],
     );
     if (!target || !run.codeVersionId)
-      throw new DomainError(503, 'Jobの実行設定を確認できません', 'invalid_job');
+      throw new DomainError({
+        status: 503,
+        code: 'invalid_job',
+        message: 'cannot verify the execution settings of the job',
+      });
     const codeVersion = await findCodeVersion(connection, {
       projectId: job.projectId,
       id: run.codeVersionId,

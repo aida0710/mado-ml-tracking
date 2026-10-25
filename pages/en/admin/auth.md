@@ -100,7 +100,7 @@ When someone leaves or changes teams, a global administrator uses **Administrati
 2. For SSO users, also remove the user from the Authentik groups. If you re-enable the user without doing so, the next login restores the global role derived from the groups.
 3. To restore the user, click **Enable** on the same row. API tokens work again, but ended sessions do not come back; the user signs in again.
 
-Users cannot be deleted, so that the creators of Runs and model versions stay on record. The last active global administrator cannot be disabled or demoted (409 `last_global_admin`); on the screen, that row's **Disable** and **Remove administrator** are disabled with the reason. Prepare another global administrator first.
+Users cannot be deleted, so that the creators of Runs and model versions stay on record. The last active global administrator cannot be disabled or demoted (409 `last_active_admin`); on the screen, that row's **Disable** and **Remove administrator** are disabled with the reason. Prepare another global administrator first.
 
 - Your own row is marked **You**. Disabling or demoting yourself is confirmed with a warning that you are signed out (or lose global administration) at once, and that only another global administrator can undo it.
 - A Service Account's row shows **Service account (Project name)**, which opens **Service accounts** in that Project's settings. Disabling it also stops the tokens its workers use.

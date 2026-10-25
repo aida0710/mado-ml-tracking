@@ -44,11 +44,12 @@ interface LoadedRunSet {
 }
 
 function tooManyRuns(): never {
-  throw new DomainError(
-    422,
-    `分析できるRunは${ANALYSIS_MAX_RUNS}件までです。条件を絞ってください`,
-    'too_many_runs',
-  );
+  throw new DomainError({
+    status: 422,
+    code: 'too_many_runs',
+    message: `analysis can use at most ${ANALYSIS_MAX_RUNS} runs; narrow down the conditions`,
+    details: { limit: ANALYSIS_MAX_RUNS },
+  });
 }
 
 function readMetricValue(source: RunAnalysisSource, key: string): number | undefined {
@@ -116,7 +117,11 @@ export class RunAnalysisService {
     await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
     const isSweep = 'sweepId' in query.runSet;
     if (!isSweep && query.targetMetric === undefined)
-      throw new DomainError(422, 'targetMetricを指定してください', 'target_metric_required');
+      throw new DomainError({
+        status: 422,
+        code: 'target_metric_required',
+        message: 'specify targetMetric',
+      });
     const { sources, sweepObjective } = await this.loadRunSet(principal, projectId, {
       runSet: query.runSet,
       metricKeys: query.targetMetric === undefined ? [] : [query.targetMetric],
@@ -166,7 +171,7 @@ export class RunAnalysisService {
     if ('sweepId' in runSet) {
       const sweep = { projectId, sweepId: runSet.sweepId };
       const sweepObjective = await findSweepObjective(this.database, sweep);
-      if (!sweepObjective) notFound('Sweep');
+      if (!sweepObjective) notFound('sweep');
       const sources = await readSweepAnalysisSources(this.database, {
         ...sweep,
         metricKeys,
@@ -183,7 +188,7 @@ export class RunAnalysisService {
         metricKeys,
       });
       // Another Project's Run is reported like a missing one so its existence does not leak.
-      if (sources.length !== runSet.runIds.length) notFound('Run');
+      if (sources.length !== runSet.runIds.length) notFound('run');
       return { sources, sweepObjective: null };
     }
     const runIds = await this.runSearch.collectRunIds(principal, projectId, {

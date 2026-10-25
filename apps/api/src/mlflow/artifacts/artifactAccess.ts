@@ -17,11 +17,19 @@ export async function requireArtifactProject(
     `SELECT ${userColumns} FROM users u WHERE u.id=$1 ${lock}`,
     [access.principal.user.id],
   );
-  if (!user) throw new DomainError(401, 'Loginが無効です', 'authentication_required');
+  if (!user) throw new DomainError({
+    status: 401,
+    code: 'authentication_required',
+    message: 'the session is invalid',
+  });
   let token = access.principal.token;
   if (token?.job) {
     if (!(await isJobTokenActive(connection, { id: token.id, userId: user.id, lock: options.lock })))
-      throw new DomainError(401, 'Job tokenが無効または失効しています', 'invalid_token');
+      throw new DomainError({
+        status: 401,
+        code: 'invalid_token',
+        message: 'the Job token is invalid or revoked',
+      });
   } else if (access.principal.method === 'token') {
     token =
       (await first<NonNullable<Principal['token']>>(
@@ -30,7 +38,11 @@ export async function requireArtifactProject(
        AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>clock_timestamp()) ${lock}`,
         [token?.id, user.id],
       )) ?? null;
-    if (!token) throw new DomainError(401, 'API tokenが無効または失効しています', 'invalid_token');
+    if (!token) throw new DomainError({
+      status: 401,
+      code: 'invalid_token',
+      message: 'the API token is invalid or revoked',
+    });
   }
   const identity: Principal = { ...access.principal, user, token };
   if (options.lock) {
@@ -56,14 +68,14 @@ export async function requireArtifactOwner(
     `SELECT experiment_id${access.owner.kind === 'model' ? ',source_run_id' : ''} FROM ${table} WHERE id=$1 AND project_id=$2`,
     [access.owner.id, access.projectId],
   );
-  if (!reference) notFound(access.owner.kind === 'run' ? 'Run' : 'Logged Model');
+  if (!reference) notFound(access.owner.kind === 'run' ? 'run' : 'logged model');
   // Experiments are locked before owners to serialize with experiment deletion.
   const experiment = await first<{ lifecycleStage: string }>(
     connection,
     `SELECT lifecycle_stage FROM experiments WHERE id=$1 AND project_id=$2 ${options.lock ? 'FOR SHARE' : ''}`,
     [reference.experimentId, access.projectId],
   );
-  if (!experiment || experiment.lifecycleStage !== 'active') notFound('Experiment');
+  if (!experiment || experiment.lifecycleStage !== 'active') notFound('experiment');
   // Run outputs lock the source Run before the model. Uploads must follow that same order.
   if (options.write && access.owner.kind === 'model' && reference.sourceRunId) {
     const sourceRun = await first<{ lifecycleStage: string }>(
@@ -71,7 +83,7 @@ export async function requireArtifactOwner(
       `SELECT lifecycle_stage FROM runs WHERE id=$1 AND project_id=$2 ${options.lock ? 'FOR NO KEY UPDATE' : ''}`,
       [reference.sourceRunId, access.projectId],
     );
-    if (!sourceRun || sourceRun.lifecycleStage !== 'active') notFound('Run');
+    if (!sourceRun || sourceRun.lifecycleStage !== 'active') notFound('run');
   }
   // Run FK inserts hold KEY SHARE; NO KEY UPDATE avoids an upgrade deadlock between uploads.
   const ownerLock = options.lock
@@ -91,11 +103,19 @@ export async function requireArtifactOwner(
     [access.owner.id, access.projectId],
   );
   if (!owner || owner.lifecycleStage === 'deleted' || owner.deletedAt)
-    notFound(access.owner.kind === 'run' ? 'Run' : 'Logged Model');
+    notFound(access.owner.kind === 'run' ? 'run' : 'logged model');
   if (options.write && access.owner.kind === 'model' && owner.status !== 'PENDING')
-    throw new DomainError(409, 'PENDINGのLogged ModelだけArtifactを書き込めます', 'conflict');
+    throw new DomainError({
+      status: 409,
+      code: 'conflict',
+      message: 'artifacts can be written only to a PENDING logged model',
+    });
   const runId = access.owner.kind === 'run' ? access.owner.id : (owner.sourceRunId ?? null);
   if (options.write && access.owner.kind === 'model' && runId !== (reference.sourceRunId ?? null))
-    throw new DomainError(409, 'Artifactのsource Runが変更されました', 'conflict');
+    throw new DomainError({
+      status: 409,
+      code: 'conflict',
+      message: 'the source run of the artifact has changed',
+    });
   return { runId };
 }

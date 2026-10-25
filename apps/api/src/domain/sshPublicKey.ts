@@ -8,7 +8,11 @@ const PUBLIC_KEY_LINE = /^(ssh-ed25519) ([A-Za-z0-9+/]+={0,2})(?: ([^\r\n\0]{0,3
 const ED25519_KEY_BYTES = 32;
 
 function invalidPublicKey(): never {
-  throw new DomainError(422, 'ssh-ed25519の公開鍵（1行）を送ってください', 'invalid_public_key');
+  throw new DomainError({
+    status: 422,
+    code: 'invalid_public_key',
+    message: 'send an ssh-ed25519 public key (one line)',
+  });
 }
 
 function readString(blob: Buffer, offset: number): { value: Buffer; next: number } {

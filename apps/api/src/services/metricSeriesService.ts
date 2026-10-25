@@ -51,7 +51,7 @@ function groupRowsBy<T>(items: T[], keyOf: (item: T) => string): Map<string, T[]
 
 // Another Project's Run is reported like a missing one so its existence does not leak.
 function requireAllRuns(requested: string[], found: string[]): void {
-  if (found.length !== requested.length) notFound('Run');
+  if (found.length !== requested.length) notFound('run');
 }
 
 export class MetricSeriesService {
@@ -133,17 +133,18 @@ export class MetricSeriesService {
       const valuesByRun = new Map(values.map((value) => [value.runId, value]));
       const assignments = groupRuns(runIds.map((runId) => valuesByRun.get(runId)!));
       if (assignments.length > MAX_SERIES_GROUPS)
-        throw new DomainError(
-          422,
-          `グループが${MAX_SERIES_GROUPS}件を超えています`,
-          'too_many_groups',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'too_many_groups',
+          message: `more than ${MAX_SERIES_GROUPS} groups`,
+          details: { limit: MAX_SERIES_GROUPS },
+        });
       if (assignments.length * query.keys.length * query.maxPoints > MAX_RESPONSE_POINTS)
-        throw new DomainError(
-          422,
-          '応答の点数が上限を超えます。maxPointsかkeysを減らしてください',
-          'too_many_points',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'too_many_points',
+          message: 'the response would have more points than the limit; reduce maxPoints or keys',
+        });
       const selection: MetricPointSelection = {
         runIds,
         keys: query.keys,
@@ -187,11 +188,11 @@ export class MetricSeriesService {
       });
     } catch (error) {
       if (isSeriesQueryTimeout(error))
-        throw new DomainError(
-          503,
-          'メトリクスの集計が時間内に終わりませんでした。Runかkeyを減らしてください',
-          'series_query_timeout',
-        );
+        throw new DomainError({
+          status: 503,
+          code: 'series_query_timeout',
+          message: 'aggregating the metrics did not finish in time; reduce the runs or keys',
+        });
       throw error;
     }
   }

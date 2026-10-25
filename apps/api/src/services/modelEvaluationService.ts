@@ -50,7 +50,7 @@ export class ModelEvaluationService {
       `${modelSelect} WHERE m.project_id=$1 AND m.id=$2`,
       [reference.projectId, version.modelId],
     );
-    if (!model) notFound('Model');
+    if (!model) notFound('model');
     const aliases = Object.entries(model.aliases)
       .filter(([, versionId]) => versionId === version.id)
       .map(([alias]) => alias)
@@ -106,7 +106,7 @@ export class ModelEvaluationService {
     const after = request.cursor
       ? await findRelatedRunBoundary(this.database, { projectId, relation, runId: request.cursor })
       : undefined;
-    if (request.cursor && !after) notFound('Run cursor');
+    if (request.cursor && !after) notFound('run cursor');
     const runs = await listRelatedRuns(this.database, {
       projectId,
       relation,

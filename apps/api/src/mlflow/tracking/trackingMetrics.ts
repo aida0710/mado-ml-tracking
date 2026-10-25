@@ -13,9 +13,9 @@ export async function appendTrackingMetrics(
 ): Promise<void> {
   if (!metrics.length) return;
   if (metrics.some((point) => point.dataset_digest && !point.dataset_name))
-    invalidParameter('dataset_digestにはdataset_nameが必要です');
+    invalidParameter('dataset_digest requires dataset_name');
   if (metrics.some((point) => point.run_id && point.run_id !== runId))
-    invalidParameter('metricのrun_idが一致しません');
+    invalidParameter('run_id of the metric does not match');
   const modelIds = [
     ...new Set(metrics.map((point) => point.model_id).filter((id): id is string => !!id)),
   ];
@@ -27,7 +27,7 @@ export async function appendTrackingMetrics(
       [runId, modelIds],
     );
     if (models.length !== modelIds.length)
-      invalidParameter('metricのmodel_idがこのProjectに存在しません');
+      invalidParameter('model_id of the metric does not exist in this project');
   }
   for (const point of metrics.filter((point) => point.model_id)) {
     const modelMetric = await connection.query(
@@ -60,7 +60,7 @@ export async function appendTrackingMetrics(
         String(point.value),
       ],
     );
-    if (!unchanged.rowCount) conflict('記録済みモデルmetric pointのvalueは変更できません');
+    if (!unchanged.rowCount) conflict('values of logged model metric points cannot be changed');
   }
   await connection.query(
     `INSERT INTO metrics(run_id,name,value,step,timestamp,mlflow_logged,mlflow_model_id,mlflow_dataset_name,mlflow_dataset_digest)

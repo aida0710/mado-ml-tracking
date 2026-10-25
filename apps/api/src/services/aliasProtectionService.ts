@@ -31,8 +31,9 @@ import {
   type AuditEventDraft,
 } from './auditService.js';
 
-function aliasProtected(message: string): never {
-  throw new DomainError(403, message, 'alias_protected');
+/** 保護 alias を変えられない失敗。どの alias かを横の項目に置く。 */
+function aliasProtected(alias: string, message: string): never {
+  throw new DomainError({ status: 403, code: 'alias_protected', message, details: { alias } });
 }
 
 /**
@@ -47,23 +48,23 @@ async function requirePassedEvidence(
     projectId: evidence.projectId,
     id: evidence.evaluationId,
   });
-  if (!decision) notFound('PromotionEvaluation');
+  if (!decision) notFound('promotion evaluation');
   if (
     decision.modelId !== evidence.modelId ||
     decision.candidateVersionId !== evidence.versionId ||
     decision.targetAlias !== evidence.alias
   )
-    throw new DomainError(
-      422,
-      '根拠の判定は、同じModel・同じバージョン・同じaliasを対象にしたものを指定してください',
-      'alias_evaluation_mismatch',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'alias_evaluation_mismatch',
+      message: 'the evaluation given as the basis must target the same model, version and alias',
+    });
   if (decision.decision !== 'passed' || !decision.isLatest)
-    throw new DomainError(
-      409,
-      '根拠の判定が合格ではありません（再判定で置き換わった判定も使えません）',
-      'alias_evaluation_not_passed',
-    );
+    throw new DomainError({
+      status: 409,
+      code: 'alias_evaluation_not_passed',
+      message: 'the evaluation given as the basis has not passed (an evaluation replaced by a re-evaluation cannot be used either)',
+    });
 }
 
 /**
@@ -89,11 +90,13 @@ export function manualAliasGuard(
       });
       if (!satisfiesProjectRole(role, protection.requiredRole))
         aliasProtected(
-          `保護alias「${change.alias}」の変更にはProjectの${protection.requiredRole}権限が必要です`,
+          change.alias,
+          `changing the protected alias "${change.alias}" requires the ${protection.requiredRole} role in the project`,
         );
       if (change.versionId === null && protection.requirePassedEvaluation && role !== 'admin')
         aliasProtected(
-          `合格判定が必要な保護alias「${change.alias}」の解除にはProject adminが必要です`,
+          change.alias,
+          `removing the protected alias "${change.alias}", which requires a passing evaluation, requires a project admin`,
         );
     }
     if (change.versionId === null) return;
@@ -105,17 +108,19 @@ export function manualAliasGuard(
       });
     if (!protection || evidence.evaluationId) return;
     if (protection.requirePassedEvaluation)
-      throw new DomainError(
-        422,
-        `保護alias「${change.alias}」を変更するには、このバージョンの合格判定（evaluationId）を指定してください`,
-        'alias_evaluation_required',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'alias_evaluation_required',
+        message: `to change the protected alias "${change.alias}", specify a passing evaluation of this version (evaluationId)`,
+        details: { alias: change.alias },
+      });
     if (!evidence.reason?.trim())
-      throw new DomainError(
-        422,
-        `保護alias「${change.alias}」を合格判定なしで変更するには理由を入力してください`,
-        'alias_reason_required',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'alias_reason_required',
+        message: `enter a reason to change the protected alias "${change.alias}" without a passing evaluation`,
+        details: { alias: change.alias },
+      });
   };
 }
 
@@ -127,7 +132,8 @@ export function manualAliasGuard(
 export const mlflowAliasGuard: ModelAliasGuard = async (connection, change) => {
   if ((await findApplicableAliasProtections(connection, change)).length)
     aliasProtected(
-      `保護alias「${change.alias}」はMLflow互換APIから変更できません。Webかnative APIで理由か合格判定を付けて変更してください`,
+      change.alias,
+      `the protected alias "${change.alias}" cannot be changed through the MLflow-compatible API; change it from the Web or the native API with a reason or a passing evaluation`,
     );
 };
 
@@ -143,7 +149,8 @@ export function promotionAliasGuard(policy: {
   return async (connection, change) => {
     if (!(await hasPromotionRunAsAccess(connection, policy)))
       aliasProtected(
-        `昇格policyの実行ユーザーには保護alias「${change.alias}」を変更する権限がありません`,
+        change.alias,
+        `the user running the promotion policy is not allowed to change the protected alias "${change.alias}"`,
       );
   };
 }
@@ -209,7 +216,7 @@ export class AliasProtectionService {
       transaction(this.database, async (connection) => {
         await this.requireProtectionAdmin(connection, principal, target);
         const removed = await deleteModelAliasProtection(connection, target);
-        if (!removed) notFound('ModelAliasProtection');
+        if (!removed) notFound('model alias protection');
         await writeAuditEvent(connection, {
           ...draft,
           outcome: 'success',

@@ -122,7 +122,7 @@ compute targetからも`MMT_API_URL`に到達できる必要がある。SSH targ
 
 ## 実行コードにはJob限定tokenを渡す
 
-実行コードの`MMT_API_TOKEN`と`MLFLOW_TRACKING_TOKEN`には、APIがJobごとに発行するJob限定token（`mmtj_`で始まる）が入る。worker自身のtokenは実行コードの環境変数に入らない。
+実行コードの`MMT_API_TOKEN`と`MLFLOW_TRACKING_TOKEN`には、APIがJobごとに発行するJob限定token（`mado_mtj_`で始まる）が入る。worker自身のtokenは実行コードの環境変数に入らない。
 
 - 権限はRunの作成者のもの。scopeは`read`・`runs:write`・`artifacts:write`・`registry:write`で、Project権限は作成者の現在のmembershipで決まる（editorが投入したコードはeditorの権限で動く。作成者をProjectから外すと403）。
 - 書けるのは対象Run（metrics・params・tags・logs・入力Dataset・Artifact）、そのRunをsourceとするモデル・データセットのバージョン、そのRunのLogged Model、出力先Modelの作成だけ。同じProjectの別Run、worker API、token発行、Project設定、自動実行rule、Runの説明文とコメントは403。読み出しは同じProject内なら可能（上流RunのArtifact取得など）。
@@ -234,7 +234,7 @@ Dataset記述子の`contentKind`は必須。欠損した記述子は実行前に
 ### 転送方式（targetの`datasetTransfer`）
 
 - `relay`（既定）: workerがworker tokenでAPIからArtifactを取得し（Range再開・sha256照合）、HTTPSも取得して、1本のtarでtargetへ送る。GPUコンピュータがAPIへ届かなくてよい。worker側の一時ファイルはstate directory配下のjournalに置き、送信後に消す（worker側にも一時的にバージョン1つ分の空きが要る）。
-- `direct`: targetがJob token（`mmtj_`）で`GET /projects/:p/artifacts/:a/content`を呼ぶ。HTTPSもtargetが取得する。worker tokenはtargetへ渡さない。Job tokenはrunnerのstdinで渡し（worker側では権限600の一時ファイルを経由して送信後に消す）、argvやtarget上のファイルに残さない。targetから`MMT_API_URL`（workerのAPI URL）へ届く必要がある。
+- `direct`: targetがJob token（`mado_mtj_`）で`GET /projects/:p/artifacts/:a/content`を呼ぶ。HTTPSもtargetが取得する。worker tokenはtargetへ渡さない。Job tokenはrunnerのstdinで渡し（worker側では権限600の一時ファイルを経由して送信後に消す）、argvやtarget上のファイルに残さない。targetから`MMT_API_URL`（workerのAPI URL）へ届く必要がある。
 - `s3://`と`file://`は方式によらずtarget側で扱う。S3の認証情報はtargetのSSH非対話シェル（local executorならworker process）の環境変数に置く。APIやworkerには置かない。
 
 target側の取得がネットワークやサーバー側の理由で失敗したら、2秒・4秒あけて最大3回まで試す。404・照合の不一致・上限超過はすぐ失敗にする。
@@ -544,7 +544,7 @@ ssh・localのコンピュータは、全体設定の「コンピュータ」（
 3. `pythonExecutable -c`でPythonのバージョンと実行パスを得る（無ければ`python_missing`、3.11未満は`python_too_old`）。コンピュータに`pythonExecutable`がまだ無いとき（追加の1段目）は、発見したPythonのうち3.11以上の最初のものを使う。
 4. 固定の確認スクリプト（`worker/target_probe.py`の`PROBE_SCRIPT`。Python 3.6以上の標準ライブラリだけ）を送り、構造化JSONで受け取る。各コマンドは15秒、全体は90秒で打ち切る。
 
-- 確認する項目: venvとensurepip、`python -m pip --version`、`git --version`、`docker --version`と`docker version`（daemonへの到達。届かないときはsocketの読み書き権限で`docker_socket_denied`と`docker_daemon_unreachable`を分ける）、`apptainer`/`singularity`のバージョンと`exec --help`の必須flag（`sif_container.py`の`REQUIRED_SIF_FLAGS`と`--nv`）、`nvidia-smi --query-gpu=index,uuid,name,memory.total`、`workDirectory`（無ければ一番近い既存の親）への書き込みと空き容量、targetから`MMT_API_URL/health`への到達。`workDirectory`がまだ無いときは、ホームで確かめたうえで作業ディレクトリの項目を`skipped`（`work_directory_not_set`）にする。
+- 確認する項目: venvとensurepip、`python -m pip --version`、`git --version`、`docker --version`と`docker version`（daemonへの到達。届かないときはsocketの読み書き権限で`docker_socket_denied`と`docker_daemon_unreachable`を分ける）、`apptainer`/`singularity`のバージョンと`exec --help`の必須flag（`sif_container.py`の`REQUIRED_SIF_FLAGS`と`--nv`）、`nvidia-smi --query-gpu=index,uuid,name,memory.total`、`workDirectory`（無ければ一番近い既存の親）への書き込みと空き容量、targetからAPIのヘルスチェック（`MMT_API_URL`の`/api`の外の`/healthz`）への到達。`workDirectory`がまだ無いときは、ホームで確かめたうえで作業ディレクトリの項目を`skipped`（`work_directory_not_set`）にする。
 - 結果はversion 2（マシン・Python・ディレクトリの候補つき。docs/api-contract.mdの「targetの接続確認」）。JSONで32KiBを超えるときはディレクトリ、次にPythonの候補を後ろから落とす。
 - 確認はtargetに何も残さない（作業ディレクトリも作らない。書き込み確認の一時ファイルはすぐ消す）。
 - GPUはnvidia-smiが報告した値だけを返す。nvidia-smiが無ければ`gpus=null`で、GPUを設定したtargetではNG、CPUだけのtargetでは「なし」。

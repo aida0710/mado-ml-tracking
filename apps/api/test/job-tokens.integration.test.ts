@@ -95,10 +95,10 @@ describe.skipIf(!testDatabaseUrl)('Job限定token（独立PostgreSQL）', () => 
     return body.code ?? body.error_code ?? '';
   }
 
-  it('claimでmmtj_ tokenを発行し、DBにはhashだけを保存する', async () => {
+  it('claimでmado_mtj_ tokenを発行し、DBにはhashだけを保存する', async () => {
     const fixture = await executionFixture(harness);
     const { jobToken, run, job } = await startedJob(fixture);
-    expect(jobToken).toMatch(/^mmtj_[A-Za-z0-9_-]{43}$/);
+    expect(jobToken).toMatch(/^mado_mtj_[A-Za-z0-9_-]{43}$/);
     const stored = await harness.database.query('SELECT * FROM job_tokens');
     expect(stored.rows).toHaveLength(1);
     const row = stored.rows[0];
@@ -383,7 +383,7 @@ describe.skipIf(!testDatabaseUrl)('Job限定token（独立PostgreSQL）', () => 
     const { jobToken: lostToken, run, job } = await startedJob(fixture);
     const reclaimed = await claim(fixture);
     expect(reclaimed.job.id).toBe(job.id);
-    expect(reclaimed.jobToken).toMatch(/^mmtj_/);
+    expect(reclaimed.jobToken).toMatch(/^mado_mtj_/);
     expect(reclaimed.jobToken).not.toBe(lostToken);
     expect((await nativeMetric(fixture, run.id, lostToken)).status).toBe(401);
     expect((await nativeMetric(fixture, run.id, reclaimed.jobToken!)).status).toBe(204);

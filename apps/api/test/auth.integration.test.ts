@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApplication } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
-import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
+import { createHarness, entity, errorCode, request, testDatabaseUrl, type Harness } from './harness.js';
 import { startMockOidcProvider, TEST_SESSION_ENCRYPTION_KEY } from './mockOidcProvider.js';
 import type { ApiEnvironment } from '../src/http/request.js';
 import type { Hono } from 'hono';
@@ -138,12 +138,17 @@ describe.skipIf(!testDatabaseUrl)(
       expect((await request(app, '/api/auth/me', { cookie: session })).status).toBe(401);
     });
 
-    it('DB障害時のhealthは503になる', async () => {
+    it('GET /healthzは認証なしで{status:ok}を返し、DB障害時は503 database_unavailableになる', async () => {
+      const healthy = await request(app, '/healthz');
+      expect(healthy.status).toBe(200);
+      expect(await healthy.json()).toEqual({ status: 'ok' });
       const failure = vi
         .spyOn(harness.database, 'query')
         .mockRejectedValueOnce(new Error('Test database failure'));
       try {
-        expect((await request(app, '/api/health')).status).toBe(503);
+        const unhealthy = await request(app, '/healthz');
+        expect(unhealthy.status).toBe(503);
+        expect(await errorCode(unhealthy)).toBe('database_unavailable');
       } finally {
         failure.mockRestore();
       }

@@ -51,7 +51,7 @@ export async function findCodeVersionDetail(
     reference.projectId,
     version.codeId,
   ]);
-  if (!code) notFound('Code');
+  if (!code) notFound('code');
   return { code, version };
 }
 
@@ -70,7 +70,7 @@ export async function findMetricKeyRule(
     'SELECT id,kind,code_version_id FROM model_automation_rules WHERE project_id=$1 AND id=$2',
     [reference.projectId, reference.ruleId],
   );
-  if (!rule) notFound('ModelAutomationRule');
+  if (!rule) notFound('automation rule');
   return rule;
 }
 

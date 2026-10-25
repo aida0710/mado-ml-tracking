@@ -195,7 +195,7 @@ def test_register_adds_a_version_to_the_named_code_with_the_pinned_image(tmp_pat
     )
     api = RegistryApi([{"id": "code-old", "name": "tts-gen"}] if existing else [])
     with Client(
-        api_url="http://api.invalid", api_token="mmt_token", transport=httpx.MockTransport(api.serve)
+        api_url="http://api.invalid", api_token="mado_mt_token", transport=httpx.MockTransport(api.serve)
     ) as client:
         version = register_template(
             client, "project-1", template, resolved, code_name="tts-gen", version="v1"

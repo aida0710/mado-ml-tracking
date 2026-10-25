@@ -114,11 +114,12 @@ export class RunSearchService {
       });
       runIds.push(...page.items.map((run) => run.id));
       if (runIds.length > request.maxRuns)
-        throw new DomainError(
-          422,
-          `検索に一致するRunが${request.maxRuns}件を超えています。条件を絞ってください`,
-          'too_many_runs',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'too_many_runs',
+          message: `more than ${request.maxRuns} runs match the search; narrow down the conditions`,
+          details: { limit: request.maxRuns },
+        });
       cursor = page.nextCursor;
     } while (cursor);
     return runIds;
@@ -160,7 +161,11 @@ export class RunSearchService {
         projectId,
         cursor.afterRunId,
       ]);
-      if (!after) throw new DomainError(400, 'cursorのRunが見つかりません', 'invalid_cursor');
+      if (!after) throw new DomainError({
+        status: 400,
+        code: 'invalid_cursor',
+        message: 'the run of the cursor was not found',
+      });
       where.push(
         `(r.created_at,r.id) < (SELECT c.created_at,c.id FROM runs c WHERE c.project_id=$1 AND c.id=${bind(cursor.afterRunId)})`,
       );

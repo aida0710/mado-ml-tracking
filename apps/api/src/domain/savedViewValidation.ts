@@ -2,6 +2,7 @@ import {
   SAVED_VIEW_MAX_COLUMNS,
   SAVED_VIEW_NAME_MAX_LENGTH,
   SAVED_VIEW_STATE_MAX_BYTES,
+  type ApiErrorCode,
   type SavedViewState,
 } from '@mmt/contracts';
 import { z } from 'zod';
@@ -80,8 +81,8 @@ export type SavedViewCreateInput = z.infer<typeof savedViewCreateSchema>;
 export type SavedViewPatchInput = z.infer<typeof savedViewPatchSchema>;
 export type SavedViewListQuery = z.infer<typeof savedViewListQuerySchema>;
 
-function invalidState(message: string, code: string): never {
-  throw new DomainError(422, message, code);
+function invalidState(message: string, code: ApiErrorCode): never {
+  throw new DomainError({ status: 422, code, message });
 }
 
 /**
@@ -90,17 +91,17 @@ function invalidState(message: string, code: string): never {
  */
 export function validateSavedViewState(input: unknown): SavedViewState {
   if (Buffer.byteLength(JSON.stringify(input) ?? '', 'utf8') > SAVED_VIEW_STATE_MAX_BYTES)
-    invalidState('保存ビューの状態が上限の64KiBを超えています', 'saved_view_state_too_large');
+    invalidState('the saved view state exceeds the 64 KiB limit', 'saved_view_state_too_large');
   const version = (input as { version?: unknown } | null)?.version;
   if (version !== SAVED_VIEW_STATE_VERSION)
     invalidState(
-      '保存ビューの状態のversionに対応していません',
+      'unsupported saved view state version',
       'saved_view_state_unsupported_version',
     );
   const parsed = savedViewStateSchema.safeParse(input);
   if (!parsed.success)
     invalidState(
-      `保存ビューの状態が不正です: ${parsed.error.issues.map((issue) => ['state', ...issue.path].join('.')).join(', ')}`,
+      `invalid saved view state: ${parsed.error.issues.map((issue) => ['state', ...issue.path].join('.')).join(', ')}`,
       'invalid_request',
     );
   const state = parsed.data;
@@ -108,7 +109,7 @@ export function validateSavedViewState(input: unknown): SavedViewState {
     compileSearchExpression('run', { filter: state.filter, orderBy: state.orderBy }, []);
   } catch (error) {
     if (error instanceof DomainError)
-      invalidState(`保存ビューの検索条件が不正です: ${error.message}`, 'saved_view_filter_invalid');
+      invalidState(`invalid saved view search: ${error.message}`, 'saved_view_filter_invalid');
     throw error;
   }
   return state;

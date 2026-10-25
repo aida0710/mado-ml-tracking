@@ -66,7 +66,7 @@ export class TaskService {
         'SELECT id FROM experiments WHERE id=$1 AND project_id=$2',
         [experimentId, projectId],
       );
-      if (!experiment) notFound('Experiment');
+      if (!experiment) notFound('experiment');
     }
     return rows(
       this.database,
@@ -110,7 +110,7 @@ export class TaskService {
       });
       const task = await this.lockTask(connection, { projectId, id: request.taskId });
       this.validateRevision(task, request.input.expectedRevision);
-      if (task.revision === MAX_TASK_REVISION) conflict('Taskのrevision上限に達しました');
+      if (task.revision === MAX_TASK_REVISION) conflict('the task has reached the revision limit');
       const { expectedRevision: _expectedRevision, ...changes } = request.input;
       const updated = {
         ...task,
@@ -169,7 +169,11 @@ export class TaskService {
     const { task, input } = launch;
     const targetId = input.targetId ?? task.targetId;
     if (!targetId)
-      throw new DomainError(422, '実行するComputeTargetを指定してください', 'target_required');
+      throw new DomainError({
+        status: 422,
+        code: 'target_required',
+        message: 'specify the computer to run on',
+      });
     const insertedRun = await this.runs.insertRun(connection, {
       projectId: task.projectId,
       createdBy: launch.createdBy,
@@ -226,7 +230,7 @@ export class TaskService {
           [projectId, request.taskId, request.cursor],
         )
       : undefined;
-    if (request.cursor && !boundary) notFound('Run cursor');
+    if (request.cursor && !boundary) notFound('run cursor');
     const page = await rows<Run>(
       this.database,
       `${runSummarySelect} WHERE project_id=$1 AND task_id=$2 AND lifecycle_stage='active'
@@ -262,11 +266,11 @@ export class TaskService {
 
   private validateRevision(task: ExperimentTask, expectedRevision: number): void {
     if (task.revision !== expectedRevision)
-      throw new DomainError(
-        409,
-        'Taskが更新されています。最新のrevisionを確認してください',
-        'task_revision_conflict',
-      );
+      throw new DomainError({
+        status: 409,
+        code: 'task_revision_conflict',
+        message: 'the task has been updated; check the latest revision',
+      });
   }
 
   // userId: who saves the Task; launching it later checks the person who launches.
@@ -311,11 +315,11 @@ export class TaskService {
   ): Promise<void> {
     const { projectId, code, outputModel } = request;
     if (!OUTPUT_MODEL_TASK_KINDS.includes(request.kind))
-      throw new DomainError(
-        422,
-        '出力モデルはtrainingまたはfinetuningのTaskでのみ設定できます',
-        'output_model_kind',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'output_model_kind',
+        message: 'output models can be set only for training or finetuning tasks',
+      });
     const family = outputModel.createModel
       ? await familyForNewModel(connection, { projectId, createModel: outputModel.createModel })
       : await familyOfExistingModel(connection, { projectId, id: outputModel.modelId! });
@@ -333,9 +337,13 @@ async function familyOfExistingModel(
   reference: { projectId: string; id: string },
 ): Promise<string> {
   const model = await findOutputModelById(connection, reference);
-  if (!model) notFound('Model');
+  if (!model) notFound('model');
   if (model.deleted)
-    throw new DomainError(422, 'MLflowで削除したModelは登録先にできません', 'model_deleted');
+    throw new DomainError({
+      status: 422,
+      code: 'model_deleted',
+      message: 'a model deleted through MLflow cannot be the destination',
+    });
   return model.family;
 }
 
@@ -350,10 +358,11 @@ async function familyForNewModel(
     name: createModel.name,
   });
   if (existing && existing.family !== createModel.family)
-    throw new DomainError(
-      422,
-      `同じ名前のModelが系列${existing.family}で登録されています`,
-      'model_family_mismatch',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'model_family_mismatch',
+      message: `a model with the same name is registered in family ${existing.family}`,
+      details: { modelFamily: existing.family },
+    });
   return createModel.family;
 }

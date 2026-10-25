@@ -90,7 +90,7 @@ export class PluginService {
         plugin.configRevision,
       ],
     );
-    if (!saved) conflict('連携の接続設定が変更されています。再確認してください');
+    if (!saved) conflict('the connection settings of the integration have changed; check them again');
     return this.connections.present(saved);
   }
 
@@ -116,11 +116,11 @@ export class PluginService {
   ): Promise<{ prometheus: string }> {
     const plugin = await this.connections.authorize(principal, { projectId, pluginId });
     if (!plugin.accessTokenGrant?.scopes.includes(MADO_SCOPES.metricsRead))
-      throw new DomainError(
-        422,
-        '容量の読み取りがアクセストークンで許可されていません。許可した後に接続を確認し直してください',
-        'plugin_capability_unsupported',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'plugin_capability_unsupported',
+        message: 'the access token does not allow reading capacity; check the connection again after allowing it',
+      });
     const metrics = await this.callPlugin(() => this.client(plugin).metrics());
     await this.connections.assertRevision(plugin);
     return metrics;
@@ -138,7 +138,7 @@ export class PluginService {
         connection,
       );
       if (plugin.configRevision !== request.expectedRevision)
-        conflict('連携設定が変更されています。検索し直してください');
+        conflict('the integration settings have changed; search again');
       // The server resolves the immutable version itself; browser-supplied URI/digest are never trusted.
       const client = this.client(plugin);
       const imported = await this.callPlugin(() => client.datasetVersion(request.externalId));
@@ -147,11 +147,11 @@ export class PluginService {
         !isSameUuid(request.externalId, imported.externalId) ||
         !allowsMadoNamespace(grant, imported.namespace)
       )
-        throw new DomainError(
-          422,
-          'MadoのバージョンまたはNamespaceが一致しません',
-          'plugin_dataset_identity_mismatch',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'plugin_dataset_identity_mismatch',
+          message: 'the Mado version or namespace does not match',
+        });
       return importPluginDataset(connection, this.registry, {
         projectId,
         pluginId: plugin.id,
@@ -186,7 +186,7 @@ export class PluginService {
   ): Promise<PluginOutboxSummary> {
     await requireProject(this.database, principal, { projectId, role: 'admin', scope: 'admin' });
     const backlog = await findPluginBacklog(this.database, { projectId, pluginId });
-    if (!backlog) notFound('連携');
+    if (!backlog) notFound('integration');
     return {
       pending: backlog.pending,
       sending: backlog.sending,
@@ -201,7 +201,11 @@ export class PluginService {
   client(plugin: PluginConnectionRecord) {
     const credentials = this.connections.credentials.read(plugin);
     if (!credentials.accessToken)
-      throw new DomainError(503, 'Madoのアクセストークンが未設定です', 'plugin_token_unavailable');
+      throw new DomainError({
+        status: 503,
+        code: 'plugin_token_unavailable',
+        message: 'the Mado access token is not set',
+      });
     return this.clientFactory({ config: plugin.config, credentials, pluginId: plugin.id });
   }
 
@@ -213,11 +217,11 @@ export class PluginService {
       delivery.destinationUrl !== plugin.config?.lineageUrl ||
       createHash('sha256').update(delivery.payload).digest('hex') !== delivery.payloadHash
     )
-      throw new DomainError(
-        409,
-        '連携の送信先または内容が一致しません',
-        'plugin_delivery_identity_mismatch',
-      );
+      throw new DomainError({
+        status: 409,
+        code: 'plugin_delivery_identity_mismatch',
+        message: 'the destination or content of the integration does not match',
+      });
     await this.client(plugin).sendPayload(delivery.payload);
   }
 
@@ -227,8 +231,16 @@ export class PluginService {
     } catch (error) {
       if (error instanceof DomainError) throw error;
       if (error instanceof MadoApiError && error.status === 404)
-        throw new DomainError(404, 'Madoのバージョンを参照できません', 'plugin_dataset_not_found');
-      throw new DomainError(502, 'Madoとの通信に失敗しました', 'plugin_request_failed');
+        throw new DomainError({
+          status: 404,
+          code: 'plugin_dataset_not_found',
+          message: 'cannot get the Mado version',
+        });
+      throw new DomainError({
+        status: 502,
+        code: 'plugin_request_failed',
+        message: 'failed to communicate with Mado',
+      });
     }
   }
 }

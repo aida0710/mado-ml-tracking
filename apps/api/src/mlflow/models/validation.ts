@@ -178,16 +178,16 @@ export function keyValueMap(entries: { key: string; value: string }[]): Record<s
   const values = new Map<string, string>();
   for (const { key, value } of entries) {
     if (values.has(key) && values.get(key) !== value)
-      invalidParameter('同じkeyに異なる値が指定されています');
+      invalidParameter('different values are given for the same key');
     values.set(key, value);
   }
   return Object.fromEntries(values);
 }
 
 export function invalidParameter(message: string): never {
-  throw new DomainError(422, message, 'invalid_parameter_value');
+  throw new DomainError({ status: 422, code: 'invalid_request', message });
 }
 
 export function unsupported(message: string): never {
-  throw new DomainError(422, message, 'not_implemented');
+  throw new DomainError({ status: 422, code: 'not_implemented', message });
 }

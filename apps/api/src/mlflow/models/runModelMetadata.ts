@@ -31,7 +31,11 @@ export async function readRunModelMetadata(
   } catch (error) {
     // A version must not be fixed to a guessed body because the descriptor could not be read.
     if (error instanceof DomainError) throw error;
-    throw new DomainError(503, 'MLmodelを読み込めません', 'artifact_read_failed');
+    throw new DomainError({
+      status: 503,
+      code: 'artifact_read_failed',
+      message: 'cannot read MLmodel',
+    });
   }
   return mlmodel ? { mlmodel: mlmodel as JsonObject } : {};
 }

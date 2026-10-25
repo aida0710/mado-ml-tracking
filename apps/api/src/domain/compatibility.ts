@@ -6,17 +6,19 @@ export function validateCodeCompatibility(
   execution: { model: Pick<ModelVersion, 'family'> | null; kind?: RunKind },
 ): void {
   if (execution.model && !code.supportedModelFamilies.includes(execution.model.family)) {
-    throw new DomainError(
-      422,
-      `モデル系列${execution.model.family}に対応していないCodeVersionです`,
-      'incompatible_model_family',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'incompatible_model_family',
+      message: `the code version does not support model family ${execution.model.family}`,
+      details: { modelFamily: execution.model.family },
+    });
   }
   if (execution.kind && !code.taskTypes.includes(execution.kind)) {
-    throw new DomainError(
-      422,
-      `Run kind ${execution.kind}に対応していないCodeVersionです`,
-      'incompatible_task_type',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'incompatible_task_type',
+      message: `the code version does not support run kind ${execution.kind}`,
+      details: { runKind: execution.kind },
+    });
   }
 }

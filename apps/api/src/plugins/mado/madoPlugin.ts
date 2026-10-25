@@ -70,11 +70,11 @@ export function createMadoPlugin({
       return await client.accessTokenGrant();
     } catch (error) {
       if (error instanceof MadoApiError && error.status === 404)
-        throw new DomainError(
-          502,
-          'このMadoはアクセストークンの許可範囲の取得（/api/mado/access-token）に対応していません。Madoを更新してください',
-          'plugin_mado_access_token_unsupported',
-        );
+        throw new DomainError({
+          status: 502,
+          code: 'plugin_mado_access_token_unsupported',
+          message: 'this Mado cannot report the permissions of its access token (/api/mado/access-token); update Mado',
+        });
       throw error;
     }
   }

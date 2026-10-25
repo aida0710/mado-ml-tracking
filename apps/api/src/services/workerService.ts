@@ -104,11 +104,11 @@ export class WorkerService {
           [activeJobIds, worker.projectId, worker.tokenId, request.workerId],
         );
         if (monitored.length !== activeJobIds.length)
-          throw new DomainError(
-            409,
-            '監視中Jobのworkerまたはprojectが一致しません',
-            'invalid_active_jobs',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'invalid_active_jobs',
+            message: 'the worker or project of the monitored job does not match',
+          });
       }
       const active = await first<Job>(
         connection,
@@ -119,9 +119,9 @@ export class WorkerService {
       );
       if (active) {
         if (request.targetIds && !request.targetIds.includes(active.targetId))
-          conflict('Workerには指定したコンピュータ以外の未完了Jobがあります');
+          conflict('the worker has unfinished jobs on computers other than the specified ones');
         if (await this.localExecutorDisabled(connection, active.targetId))
-          conflict('未完了のlocal Jobがありますがlocal executorは無効です');
+          conflict('there are unfinished local jobs but the local executor is disabled');
         return this.jobs.getWorkerJob(connection, active);
       }
       const skipped: string[] = [];
@@ -199,7 +199,7 @@ export class WorkerService {
         jobId,
         leaseId: request.leaseId,
       });
-      if (isTerminalStatus(job.status)) conflict('Jobは既に終了しています');
+      if (isTerminalStatus(job.status)) conflict('the job has already ended');
       await touchWorkerLastSeen(connection, { jobId: job.id });
       await connection.query(
         'UPDATE jobs SET heartbeat_at=now(),status=COALESCE($2,status) WHERE id=$1',
@@ -272,18 +272,18 @@ export class WorkerService {
     request: z.infer<typeof completeSchema>,
   ): Promise<Job> {
     if (request.status === 'finished' && request.exitCode !== undefined && request.exitCode !== 0)
-      throw new DomainError(
-        422,
-        '非zeroのexitCodeでJobを成功にはできません',
-        'inconsistent_completion',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'inconsistent_completion',
+        message: 'a job cannot succeed with a nonzero exitCode',
+      });
     return transaction(this.database, async (connection) => {
       const job = await this.verifyLease(connection, principal, {
         jobId,
         leaseId: request.leaseId,
       });
       if (isTerminalStatus(job.status)) {
-        if (job.status !== request.status) conflict('完了済みJobと再送された状態が一致しません');
+        if (job.status !== request.status) conflict('the state sent again does not match the completed job');
         return job;
       }
       const previousRun = await findRun(connection, {
@@ -337,7 +337,11 @@ export class WorkerService {
       AND phase IS NULL FOR UPDATE`,
       [lease.jobId, worker.projectId, worker.tokenId, lease.leaseId],
     );
-    if (!job) throw new DomainError(409, 'Jobのleaseが無効です', 'invalid_lease');
+    if (!job) throw new DomainError({
+      status: 409,
+      code: 'invalid_lease',
+      message: 'the lease of the job is invalid',
+    });
     return job;
   }
 
@@ -351,7 +355,7 @@ export class WorkerService {
   ): Promise<void> {
     await transaction(this.database, async (connection) => {
       const job = await this.verifyLease(connection, principal, request);
-      if (isTerminalStatus(job.status)) conflict('Jobは既に終了しています');
+      if (isTerminalStatus(job.status)) conflict('the job has already ended');
       await findRun(connection, { projectId: job.projectId, id: job.runId, lock: true });
       await request.append(connection, job.runId);
     });

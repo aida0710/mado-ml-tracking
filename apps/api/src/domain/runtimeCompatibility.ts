@@ -23,7 +23,11 @@ export function validatePinnedRuntime(
   snapshot: JsonValue | undefined,
 ): void {
   if (!isDeepStrictEqual(runtime, snapshot))
-    throw new DomainError(422, 'Runの固定runtimeがCodeVersionと一致しません', 'runtime_mismatch');
+    throw new DomainError({
+      status: 422,
+      code: 'runtime_mismatch',
+      message: 'the pinned runtime of the run does not match the code version',
+    });
 }
 
 export function validateTargetCompatibility(
@@ -35,19 +39,31 @@ export function validateTargetCompatibility(
   },
 ): void {
   if (!targetRunsRuntime(target, execution.runtime.kind))
-    throw new DomainError(422, 'Targetがruntimeに対応していません', 'incompatible_runtime');
+    throw new DomainError({
+      status: 422,
+      code: 'incompatible_runtime',
+      message: 'the computer does not support the runtime',
+    });
   if (target.executor === 'site') {
     // The site's scheduler or runner picks the GPUs; a Job asks only for how many (gpuCount).
     if (execution.gpuIds.length)
-      throw new DomainError(
-        422,
-        'siteではGPU IDを指定できません（gpuCountで数を指定します）',
-        'site_gpu_ids',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'site_gpu_ids',
+        message: 'GPU IDs cannot be specified for a site (specify the number with gpuCount)',
+      });
     return;
   }
   if (target.executor === 'local' && !execution.allowLocalExecutor)
-    throw new DomainError(422, 'Local executorは無効です', 'local_executor_disabled');
+    throw new DomainError({
+      status: 422,
+      code: 'local_executor_disabled',
+      message: 'the local executor is disabled',
+    });
   if (execution.gpuIds.some((gpu) => !target.gpuIds.includes(gpu)))
-    throw new DomainError(422, 'Targetに存在しないGPUが指定されています', 'unknown_gpu');
+    throw new DomainError({
+      status: 422,
+      code: 'unknown_gpu',
+      message: 'a GPU that the computer does not have is specified',
+    });
 }

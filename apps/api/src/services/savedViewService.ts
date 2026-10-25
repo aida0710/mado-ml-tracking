@@ -43,18 +43,22 @@ async function rejectNameConflict<T>(write: Promise<T>): Promise<T> {
     return await write;
   } catch (error) {
     if (isSavedViewNameConflict(error))
-      throw new DomainError(409, '同じ名前の保存ビューが既にあります', 'saved_view_name_conflict');
+      throw new DomainError({
+        status: 409,
+        code: 'saved_view_name_conflict',
+        message: 'a saved view with the same name already exists',
+      });
     throw error;
   }
 }
 
 function requireSharingRole(role: ProjectRole): void {
   if (!satisfiesProjectRole(role, SHARED_VIEW_ROLE))
-    throw new DomainError(
-      403,
-      'Project公開の保存ビューを作成・変更できるのはeditor以上です',
-      'saved_view_share_forbidden',
-    );
+    throw new DomainError({
+      status: 403,
+      code: 'saved_view_share_forbidden',
+      message: 'only editors or higher can create or change saved views shared with the project',
+    });
 }
 
 /**
@@ -171,11 +175,11 @@ export class SavedViewService {
             this.requireProjectAdmin(role);
             // Who can see a view is the owner's decision; an admin may tidy a shared view or delete it.
             if (visibility !== view.visibility)
-              throw new DomainError(
-                403,
-                '保存ビューの公開範囲を変更できるのは作成者だけです',
-                'saved_view_owner_required',
-              );
+              throw new DomainError({
+                status: 403,
+                code: 'saved_view_owner_required',
+                message: 'only the creator can change who a saved view is shared with',
+              });
           } else if (visibility === 'project') requireSharingRole(role);
           const state =
             patch.state === undefined ? view.state : validateSavedViewState(patch.state);
@@ -310,17 +314,17 @@ export class SavedViewService {
   ): Promise<SavedView> {
     const view = await findSavedView(connection, reference);
     if (!view || (view.visibility === 'private' && view.ownerUserId !== principal.user.id))
-      notFound('保存ビュー');
+      notFound('saved view');
     return view;
   }
 
   private requireProjectAdmin(role: ProjectRole): void {
     if (role !== 'admin')
-      throw new DomainError(
-        403,
-        '他人の保存ビューを変更・削除できるのはProject管理者だけです',
-        'saved_view_owner_required',
-      );
+      throw new DomainError({
+        status: 403,
+        code: 'saved_view_owner_required',
+        message: 'only project admins can change or delete saved views of others',
+      });
   }
 
   // A view refers to experiments by ID; one from another Project would never match a Run.
@@ -335,10 +339,10 @@ export class SavedViewService {
       [view.projectId, view.experimentIds],
     );
     if (found!.count !== new Set(view.experimentIds).size)
-      throw new DomainError(
-        422,
-        '保存ビューのexperimentがこのProjectにありません',
-        'saved_view_experiment_not_found',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'saved_view_experiment_not_found',
+        message: 'the experiment of the saved view is not in this project',
+      });
   }
 }

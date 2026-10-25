@@ -57,7 +57,11 @@ export class ArtifactTransferService {
     try {
       upload = { ...upload, owner: validateArtifactOwner(upload.owner) };
       if (upload.owner.kind === 'model-version')
-        throw new DomainError(409, '登録モデルバージョンのArtifactは変更できません', 'conflict');
+        throw new DomainError({
+          status: 409,
+          code: 'conflict',
+          message: 'artifacts of a registered model version cannot be changed',
+        });
       validateArtifactPath(upload.path);
       const path = nativeArtifactPath(upload);
       const authorized = await transaction(this.database, async (connection) => {
@@ -71,7 +75,11 @@ export class ArtifactTransferService {
       });
       // A destroyed source cannot emit a second error/end to a newly attached capture stream.
       if (upload.body.errored || (upload.body.destroyed && !upload.body.readableEnded))
-        throw new DomainError(503, 'Artifactの入力streamが切断されました', 'artifact_save_failed');
+        throw new DomainError({
+          status: 503,
+          code: 'artifact_save_failed',
+          message: 'the artifact input stream was disconnected',
+        });
       capture =
         upload.owner.kind === 'model' && upload.path === 'MLmodel' ? new MlmodelCapture() : null;
       if (capture) {
@@ -89,7 +97,11 @@ export class ArtifactTransferService {
           await requireArtifactProject(connection, upload, { write: true, lock: true });
           const owner = await requireArtifactOwner(connection, upload, { write: true, lock: true });
           if (owner.runId !== authorized.runId)
-            throw new DomainError(409, 'Artifactのsource Runが変更されました', 'conflict');
+            throw new DomainError({
+              status: 409,
+              code: 'conflict',
+              message: 'the source run of the artifact has changed',
+            });
           await requireNonconflictingArtifactPath(connection, upload);
           await replaceArtifactPath(connection, { ...upload, artifact, runId: authorized.runId });
           if (upload.owner.kind === 'run') {
@@ -116,7 +128,11 @@ export class ArtifactTransferService {
       });
     } catch (error) {
       if (error instanceof DomainError) throw error;
-      throw new DomainError(503, 'Artifactの保存参照を更新できません', 'artifact_save_failed');
+      throw new DomainError({
+        status: 503,
+        code: 'artifact_save_failed',
+        message: 'the stored reference of the artifact cannot be updated',
+      });
     } finally {
       // Destroying a failed stream also cancels the incoming request instead of reading its remainder.
       capture?.destroy();
@@ -131,7 +147,7 @@ export class ArtifactTransferService {
     if (access.owner.kind === 'model-version') {
       const manifest = await modelVersionArtifactManifest(this.database, access);
       const artifact = manifest.find((entry) => entry.path === access.path);
-      if (!artifact) notFound('Artifact');
+      if (!artifact) notFound('artifact');
       return this.artifacts.content(identity, access.projectId, {
         artifactId: artifact.artifactId,
         range: access.range,
@@ -151,7 +167,11 @@ export class ArtifactTransferService {
   async delete(access: ArtifactAccess & { path: string }): Promise<void> {
     access = { ...access, owner: validateArtifactOwner(access.owner) };
     if (access.owner.kind === 'model-version')
-      throw new DomainError(409, '登録モデルバージョンのArtifactは削除できません', 'conflict');
+      throw new DomainError({
+        status: 409,
+        code: 'conflict',
+        message: 'artifacts of a registered model version cannot be deleted',
+      });
     const path = validateArtifactPath(access.path, { directory: true });
     await transaction(this.database, async (connection) => {
       const identity = await requireArtifactProject(connection, access, { lock: true });

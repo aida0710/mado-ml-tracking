@@ -364,7 +364,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow 3 Logged Models / native Model Registr
     await entity(await fixture.createRegistered(), 200);
     const duplicate = await fixture.createRegistered();
     expect(duplicate.status).toBe(409);
-    expect((await duplicate.json()).code).toBe('resource_already_exists');
+    expect((await duplicate.json()).code).toBe('already_exists');
   });
 
   it('PENDING/FAILEDモデルや任意URIはnativeバージョンとautomationを作らない', async () => {
@@ -973,7 +973,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow 3 Logged Models / native Model Registr
       expect(response.status).toBe(403);
       const error = (await response.json()) as { error_code: string; message: string };
       expect(error.error_code).toBe('PERMISSION_DENIED');
-      expect(error.message).toContain('保護alias「champion」');
+      expect(error.message).toContain('protected alias "champion"');
     }
     expect(await championVersion()).toBe('1');
     // Unprotected aliases keep working through MLflow.

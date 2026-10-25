@@ -109,7 +109,7 @@ export class ArtifactMediaInfoService {
       `SELECT ${MEDIA_INFO_COLUMNS} FROM artifact_media_info WHERE project_id=$1 AND artifact_id=$2`,
       [target.projectId, target.artifactId],
     );
-    if (!info) notFound('Artifactのmedia情報');
+    if (!info) notFound('artifact media info');
     return info;
   }
 

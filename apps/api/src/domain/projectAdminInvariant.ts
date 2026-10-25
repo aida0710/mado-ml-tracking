@@ -36,7 +36,7 @@ export function removesLastProjectAdmin(
 }
 
 // The group sentence answers why an admin binding that is still listed did not count.
-const EMPTY_ADMIN_GROUP_NOTE = 'まだ誰も入っていないgroupのAdminは数えません';
+const EMPTY_ADMIN_GROUP_NOTE = 'admins of groups that nobody has joined yet are not counted';
 
 /** Refuses (409) a member or binding change that would leave the Project without an admin. */
 export function assertKeepsProjectAdmin(
@@ -46,7 +46,7 @@ export function assertKeepsProjectAdmin(
   if (!removesLastProjectAdmin(grants, change)) return;
   conflict(
     change.role === null
-      ? `最後のProject管理者は外せません。${EMPTY_ADMIN_GROUP_NOTE}`
-      : `最後のProject管理者は権限を下げられません。${EMPTY_ADMIN_GROUP_NOTE}`,
+      ? `the last project admin cannot be removed; ${EMPTY_ADMIN_GROUP_NOTE}`
+      : `the role of the last project admin cannot be lowered; ${EMPTY_ADMIN_GROUP_NOTE}`,
   );
 }

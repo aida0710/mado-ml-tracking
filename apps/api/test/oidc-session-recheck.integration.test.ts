@@ -153,8 +153,8 @@ describe.skipIf(!testDatabaseUrl)(
     async function insertToken(userId: string, token: string): Promise<void> {
       await harness.database.query(
         `INSERT INTO api_tokens(user_id,name,kind,token_hash,token_prefix,scopes)
-        VALUES($1,'recheck test','personal',encode(sha256($2::bytea),'hex'),left($2::text,12),'{read}')`,
-        [userId, token],
+        VALUES($1,'recheck test','personal',encode(sha256($2::bytea),'hex'),$3,'{read}')`,
+        [userId, token, token.slice(0, 16)],
       );
     }
 
@@ -209,8 +209,8 @@ describe.skipIf(!testDatabaseUrl)(
       const first = await ssoLogin({ groups: ['mmt-users', 'team-a'] });
       const second = await ssoLogin({ groups: ['mmt-users', 'team-a'] });
       const userId = await ssoUserId();
-      await insertToken(userId, 'mmt_recheck_member');
-      expect((await request(app, '/api/auth/me', { token: 'mmt_recheck_member' })).status).toBe(
+      await insertToken(userId, 'mado_mt_recheck_member');
+      expect((await request(app, '/api/auth/me', { token: 'mado_mt_recheck_member' })).status).toBe(
         200,
       );
 
@@ -227,7 +227,7 @@ describe.skipIf(!testDatabaseUrl)(
         userId,
       ]);
       expect(groups.rows).toHaveLength(0);
-      const tokenUse = await request(app, '/api/auth/me', { token: 'mmt_recheck_member' });
+      const tokenUse = await request(app, '/api/auth/me', { token: 'mado_mt_recheck_member' });
       expect(tokenUse.status).toBe(401);
       expect(await errorCode(tokenUse)).toBe('identity_sync_required');
       expect(await recheckAuditReasons()).toEqual(['group_not_allowed']);
@@ -377,17 +377,17 @@ describe.skipIf(!testDatabaseUrl)(
     it('group同期が期限より古いSSOユーザーのtokenは401 identity_sync_requiredで、ブラウザのloginで戻る', async () => {
       await ssoLogin({ groups: ['mmt-users'] });
       const userId = await ssoUserId();
-      await insertToken(userId, 'mmt_recheck_stale');
+      await insertToken(userId, 'mado_mt_recheck_stale');
       await harness.database.query(
         "UPDATE user_oidc_identities SET groups_synced_at=now()-interval '8 days' WHERE user_id=$1",
         [userId],
       );
-      const stale = await request(app, '/api/auth/me', { token: 'mmt_recheck_stale' });
+      const stale = await request(app, '/api/auth/me', { token: 'mado_mt_recheck_stale' });
       expect(stale.status).toBe(401);
       expect(await errorCode(stale)).toBe('identity_sync_required');
 
       await ssoLogin({ groups: ['mmt-users'] });
-      expect((await request(app, '/api/auth/me', { token: 'mmt_recheck_stale' })).status).toBe(200);
+      expect((await request(app, '/api/auth/me', { token: 'mado_mt_recheck_stale' })).status).toBe(200);
     });
 
     it('sessionの再確認でもgroup同期の時刻が進み、tokenの期限が延びる', async () => {
@@ -399,8 +399,8 @@ describe.skipIf(!testDatabaseUrl)(
       );
       advance(RECHECK_SECONDS + 1);
       expect((await me(cookie)).status).toBe(200);
-      await insertToken(userId, 'mmt_recheck_synced');
-      expect((await request(app, '/api/auth/me', { token: 'mmt_recheck_synced' })).status).toBe(
+      await insertToken(userId, 'mado_mt_recheck_synced');
+      expect((await request(app, '/api/auth/me', { token: 'mado_mt_recheck_synced' })).status).toBe(
         200,
       );
     });

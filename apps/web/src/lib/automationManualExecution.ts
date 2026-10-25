@@ -6,6 +6,7 @@ import type {
 import type { ExecutionCatalog } from '../types/executionCatalog';
 import type { SelectOption } from '../types/form';
 import { RequestError } from '../api/http';
+import { apiErrorMessage } from './apiErrorMessage';
 import { buildCatalogOptions } from './catalogOptions';
 import { formatErrorMessage } from './errorMessage';
 import { formatDate } from './format';
@@ -70,6 +71,6 @@ export function manualExecutionRequest(
 export function manualExecutionErrorMessage(failure: unknown): string {
   if (failure instanceof RequestError && failure.status === 409) return automationText.applyRunning;
   if (failure instanceof RequestError && failure.status === 422)
-    return failure.serverMessage ?? automationText.applyInvalidRule;
+    return apiErrorMessage(failure) ?? automationText.applyInvalidRule;
   return formatErrorMessage(failure);
 }

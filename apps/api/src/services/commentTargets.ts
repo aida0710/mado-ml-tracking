@@ -29,11 +29,11 @@ export class CommentTargetRegistry {
   definition(targetType: CommentTargetType): CommentTargetDefinition {
     const definition = this.definitions.get(targetType);
     if (!definition)
-      throw new DomainError(
-        422,
-        'この種類の対象にはまだコメントできません',
-        'comment_target_unsupported',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'comment_target_unsupported',
+        message: 'this kind of target cannot be commented on yet',
+      });
     return definition;
   }
 }

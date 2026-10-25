@@ -258,16 +258,25 @@ export function isSnapshotBlock(block: ReportBlock): block is ReportEmbedBlock {
 /** Limits on the whole list, which zod cannot report with their own codes. */
 export function validateReportBlocks(blocks: readonly ReportBlock[]): void {
   if (blocks.length > REPORT_MAX_BLOCKS)
-    throw new DomainError(
-      422,
-      `レポートのブロックは${REPORT_MAX_BLOCKS}個までです`,
-      'report_too_many_blocks',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'report_too_many_blocks',
+      message: `a report can have at most ${REPORT_MAX_BLOCKS} blocks`,
+      details: { limit: REPORT_MAX_BLOCKS },
+    });
   if (Buffer.byteLength(JSON.stringify(blocks)) > REPORT_BLOCKS_MAX_BYTES)
-    throw new DomainError(422, 'レポートの内容が1MiBを超えています', 'report_blocks_too_large');
+    throw new DomainError({
+      status: 422,
+      code: 'report_blocks_too_large',
+      message: 'the report content exceeds 1 MiB',
+    });
   const ids = blocks.map((block) => block.id);
   if (new Set(ids).size !== ids.length)
-    throw new DomainError(422, 'ブロックのidが重複しています', 'report_block_id_duplicate');
+    throw new DomainError({
+      status: 422,
+      code: 'report_block_id_duplicate',
+      message: 'block ids must be unique',
+    });
 }
 
 /** IDs a revision refers to, all of which must belong to the report's Project. */

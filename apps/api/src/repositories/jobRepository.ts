@@ -57,6 +57,6 @@ export async function findJob(
     `SELECT ${jobColumns()} FROM jobs WHERE project_id=$1 AND id=$2 ${reference.lock ? 'FOR UPDATE' : ''}`,
     [reference.projectId, reference.id],
   );
-  if (!job) notFound('Job');
+  if (!job) notFound('job');
   return job;
 }

@@ -183,7 +183,7 @@ describe('固定commitのrepository preview', () => {
     });
     await expect(failing.read({ url: URL, commit: OBJECT_ID })).rejects.toMatchObject({
       code: 'repository_read_failed',
-      message: 'Repositoryを読み込めません',
+      message: 'cannot read the repository',
     });
     await expect(stat(directory)).rejects.toMatchObject({ code: 'ENOENT' });
   });
@@ -209,7 +209,11 @@ describe('固定commitのrepository preview', () => {
       ssh: { keyPath: "/fixture/read key'file", knownHostsPath: '/fixture/known hosts' },
       execute: async (command) => {
         sshCommand = command.environment.GIT_SSH_COMMAND!;
-        throw new DomainError(502, 'Fixture stop', 'repository_read_failed');
+        throw new DomainError({
+          status: 502,
+          code: 'repository_read_failed',
+          message: 'Fixture stop',
+        });
       },
     });
     await expect(
@@ -340,7 +344,7 @@ describe('repository child processの停止と上限', () => {
         ),
       ),
     ).rejects.toMatchObject({
-      message: 'Repositoryの固定commitを読み込めません',
+      message: 'cannot read the pinned commit of the repository',
       code: 'repository_read_failed',
     });
     await expect(

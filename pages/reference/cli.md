@@ -146,7 +146,7 @@ mado-tracking-worker doctor --worker-id gpu-host-1 --ssh-key ~/.ssh/gpu_key --kn
 確かめる内容は次のとおりです。
 
 - 環境変数のファイルと記録のディレクトリの権限
-- API serverへの到達（`/api/health`）
+- API serverへの到達（`/healthz`）
 - tokenのscope（`GET /api/auth/token`。Job限定tokenは使えません）
 - `~/.ssh`、秘密鍵（group・otherに権限が無いこと）、known_hosts（group・otherが書き込めないこと）
 

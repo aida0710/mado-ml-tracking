@@ -50,11 +50,12 @@ export async function resolveDatasetContent(
   const artifactsById = new Map(artifacts.map((artifact) => [artifact.id, artifact]));
   const missing = artifactIds.filter((id) => !artifactsById.has(id));
   if (missing.length)
-    throw new DomainError(
-      422,
-      `このProjectに保存済みのArtifactではありません: ${missing.slice(0, 5).join(', ')}`,
-      'dataset_artifact_not_found',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'dataset_artifact_not_found',
+      message: `not artifacts stored in this project: ${missing.slice(0, 5).join(', ')}`,
+      details: { artifactIds: missing.slice(0, 5) },
+    });
   return {
     files: content.files.map((file) => {
       const artifact = artifactsById.get(file.artifactId)!;
@@ -81,7 +82,11 @@ async function resolveRunArtifacts(
   });
   if (page.nextCursor) tooManyFiles();
   if (!page.items.length)
-    throw new DomainError(422, 'prefixの下にRunのArtifactがありません', 'dataset_content_empty');
+    throw new DomainError({
+      status: 422,
+      code: 'dataset_content_empty',
+      message: 'there are no artifacts of the run under the prefix',
+    });
   return {
     files: page.items.map((artifact) => ({
       path: artifact.path.slice(prefix.length),
@@ -94,11 +99,12 @@ async function resolveRunArtifacts(
 }
 
 function tooManyFiles(): never {
-  throw new DomainError(
-    422,
-    `DatasetVersionのファイル数は${MAX_DATASET_VERSION_FILES}件までです`,
-    'dataset_too_many_files',
-  );
+  throw new DomainError({
+    status: 422,
+    code: 'dataset_too_many_files',
+    message: `a dataset version can have at most ${MAX_DATASET_VERSION_FILES} files`,
+    details: { limit: MAX_DATASET_VERSION_FILES },
+  });
 }
 
 interface DatasetVersionLocation {
@@ -122,7 +128,7 @@ function decodeFileCursor(token: string): string {
   } catch {
     // Reported below like any other malformed cursor.
   }
-  throw new DomainError(400, 'cursorが不正です', 'invalid_cursor');
+  throw new DomainError({ status: 400, code: 'invalid_cursor', message: 'invalid cursor' });
 }
 
 /** Reads the files of DatasetVersions and finds stored Artifacts by content. */
@@ -190,7 +196,7 @@ export class DatasetContentService {
        ORDER BY created_at DESC,id DESC LIMIT 1`,
       [request.projectId, request.sha256, request.size],
     );
-    if (!artifact) notFound('Artifact');
+    if (!artifact) notFound('artifact');
     return artifact;
   }
 
@@ -200,7 +206,7 @@ export class DatasetContentService {
       'SELECT 1 FROM dataset_versions WHERE id=$1 AND dataset_id=$2 AND project_id=$3',
       [location.versionId, location.datasetId, location.projectId],
     );
-    if (!version) notFound('DatasetVersion');
+    if (!version) notFound('dataset version');
   }
 
   private async requireReadAccess(principal: Principal, projectId: string): Promise<void> {

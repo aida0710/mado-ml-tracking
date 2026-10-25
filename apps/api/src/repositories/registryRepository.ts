@@ -35,6 +35,20 @@ type ReferenceTable =
   | 'artifacts'
   | 'plugin_connections';
 
+// 参照先が見つからないときの文で使う、表の行の呼び名。
+const REFERENCE_RESOURCE_NAMES: Record<ReferenceTable, string> = {
+  experiments: 'experiment',
+  runs: 'run',
+  models: 'model',
+  codes: 'code',
+  datasets: 'dataset',
+  model_versions: 'model version',
+  code_versions: 'code version',
+  dataset_versions: 'dataset version',
+  artifacts: 'artifact',
+  plugin_connections: 'integration',
+};
+
 export async function lockActiveExperiment(
   connection: Connection,
   reference: { projectId: string; id: string },
@@ -44,8 +58,8 @@ export async function lockActiveExperiment(
     'SELECT lifecycle_stage FROM experiments WHERE project_id=$1 AND id=$2 FOR SHARE',
     [reference.projectId, reference.id],
   );
-  if (!experiment) notFound('Experiment');
-  if (experiment.lifecycleStage !== 'active') conflict('削除済みExperimentは変更・実行できません');
+  if (!experiment) notFound('experiment');
+  if (experiment.lifecycleStage !== 'active') conflict('a deleted experiment cannot be changed or run');
 }
 
 /**
@@ -61,7 +75,7 @@ export async function assertProjectReference(
     `SELECT id FROM ${reference.table} WHERE id=$1 AND project_id=$2`,
     [reference.id, reference.projectId],
   );
-  if (!entity) notFound(reference.table);
+  if (!entity) notFound(REFERENCE_RESOURCE_NAMES[reference.table]);
   return entity.id;
 }
 
@@ -76,7 +90,7 @@ export async function assertProjectReferences(
     [reference.projectId, reference.ids],
   );
   if (new Set(entities.map((entity) => entity.id)).size !== new Set(reference.ids).size)
-    notFound(reference.table);
+    notFound(REFERENCE_RESOURCE_NAMES[reference.table]);
 }
 
 export async function findCodeVersion(
@@ -88,7 +102,7 @@ export async function findCodeVersion(
     'SELECT * FROM code_versions WHERE project_id=$1 AND id=$2',
     [reference.projectId, reference.id],
   );
-  if (!version) notFound('CodeVersion');
+  if (!version) notFound('code version');
   return version;
 }
 
@@ -101,7 +115,7 @@ export async function findModelVersion(
     `${modelVersionSelect} WHERE v.project_id=$1 AND v.id=$2`,
     [reference.projectId, reference.id],
   );
-  if (!version) notFound('ModelVersion');
+  if (!version) notFound('model version');
   return version;
 }
 
@@ -114,7 +128,7 @@ export async function findDatasetVersions(
     `${datasetVersionSelect} WHERE v.project_id=$1 AND v.id=ANY($2::uuid[])`,
     [reference.projectId, reference.ids],
   );
-  if (versions.length !== new Set(reference.ids).size) notFound('DatasetVersion');
+  if (versions.length !== new Set(reference.ids).size) notFound('dataset version');
   const versionsById = new Map(versions.map((version) => [version.id, version]));
   return reference.ids.map((id) => versionsById.get(id)!);
 }
@@ -128,6 +142,6 @@ export async function findRun(
     `SELECT ${runColumns} FROM runs WHERE project_id=$1 AND id=$2 ${reference.lock ? 'FOR UPDATE' : ''}`,
     [reference.projectId, reference.id],
   );
-  if (!run) notFound('Run');
+  if (!run) notFound('run');
   return run;
 }

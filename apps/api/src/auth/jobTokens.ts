@@ -1,9 +1,8 @@
 import { hashSecret, randomSecret } from './secrets.js';
 
-// Job tokens carry their own prefix so authentication can route them to the job_tokens table
-// without first probing api_tokens, and so a leaked value is recognizable as Job-scoped.
-// Regular API tokens start with `mmt_`, which never matches `mmtj_`.
-export const JOB_TOKEN_PREFIX = 'mmtj_';
+// Job token は専用の前置きを持つ。認証が api_tokens を引かずに job_tokens へ振り分けられ、
+// 漏れた値が Job 限定のものだと分かる。API token の mado_mt_ は mado_mtj_ に一致しない。
+export const JOB_TOKEN_PREFIX = 'mado_mtj_';
 
 // What a Job's code may do with its token; the write guard narrows it further to one Run.
 export const JOB_TOKEN_SCOPES = ['read', 'runs:write', 'artifacts:write', 'registry:write'];

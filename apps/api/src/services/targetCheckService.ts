@@ -85,11 +85,11 @@ export class TargetCheckService {
           worker,
         });
         if (!created)
-          throw new DomainError(
-            409,
-            'このコンピュータの接続確認は実行中です',
-            'target_check_in_progress',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'target_check_in_progress',
+            message: 'a connection check of this computer is already running',
+          });
         await writeAuditEvent(connection, {
           ...draft,
           outcome: 'success',
@@ -186,7 +186,11 @@ export class TargetCheckService {
         WHERE id=$1 AND worker_token_id=$2 AND lease_id=$3 FOR UPDATE`,
         [checkId, worker.tokenId, request.leaseId],
       );
-      if (!leased) throw new DomainError(409, '接続確認のleaseが無効です', 'invalid_lease');
+      if (!leased) throw new DomainError({
+        status: 409,
+        code: 'invalid_lease',
+        message: 'the lease of the connection check is invalid',
+      });
       const isListing = leased.kind === 'directory_listing';
       const recorded = () =>
         isListing
@@ -196,14 +200,18 @@ export class TargetCheckService {
         // A resent completion is safe; a timed-out request keeps its failure_reason.
         if (leased.status === request.status && leased.failureReason === null)
           return (await recorded())!;
-        throw new DomainError(409, '接続確認は既に終了しています', 'target_check_finished');
+        throw new DomainError({
+          status: 409,
+          code: 'target_check_finished',
+          message: 'the connection check has already ended',
+        });
       }
       if (isListing !== isDirectoryListingResult(request.result))
-        throw new DomainError(
-          422,
-          '依頼の種類と結果の形が一致しません',
-          'target_check_result_kind',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'target_check_result_kind',
+          message: 'the result does not match the kind of the request',
+        });
       if (isDirectoryListingResult(request.result)) {
         rejectOversizedResult(request.result, MAX_DIRECTORY_LISTING_RESULT_BYTES);
         rejectSecretsInListing(request.result);

@@ -83,11 +83,11 @@ export function parseMlflowCheckpointPath(
 
 export function assertCheckpointRunKind(kind: RunKind): void {
   if (!isTrainingRunKind(kind))
-    throw new DomainError(
-      422,
-      'checkpointはtrainingまたはfinetuningのRunにだけ登録できます',
-      'checkpoint_run_kind',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'checkpoint_run_kind',
+      message: 'checkpoints can be registered only on training or finetuning runs',
+    });
 }
 
 /**
@@ -99,15 +99,15 @@ export function assertResumableFrom(
   run: { kind: RunKind; codeId: string | null },
 ): void {
   if (!isTrainingRunKind(run.kind) || run.kind !== checkpointRun.kind)
-    throw new DomainError(
-      422,
-      'checkpointは元のRunと同じ種類（trainingまたはfinetuning）のRunでだけ再開できます',
-      'checkpoint_kind_mismatch',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'checkpoint_kind_mismatch',
+      message: 'a checkpoint can be resumed only in a run of the same kind as its original run (training or finetuning)',
+    });
   if (!checkpointRun.codeId || checkpointRun.codeId !== run.codeId)
-    throw new DomainError(
-      422,
-      'checkpointは元のRunと同じCodeのバージョンで再開してください',
-      'checkpoint_code_mismatch',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'checkpoint_code_mismatch',
+      message: 'resume a checkpoint with the same code version as its original run',
+    });
 }

@@ -165,7 +165,7 @@ describe.skipIf(!testDatabaseUrl)('site実行先・投入・runner報告（独�
     });
     const workerJob = submission!.jobs[0]!;
     expect(workerJob.job).toMatchObject({ id: job.id, status: 'claimed', phase: 'submitting' });
-    expect(workerJob.jobToken).toMatch(/^mmtj_/);
+    expect(workerJob.jobToken).toMatch(/^mado_mtj_/);
     expect(await findRunStatus(harness, job.runId)).toBe('queued');
     expect(await fixture.claim()).toEqual([]);
 

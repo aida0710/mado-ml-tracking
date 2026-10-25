@@ -51,7 +51,7 @@ async function openPage({ path, prepare = () => {}, viewport = DESKTOP, role = '
           return route.fulfill({
             status: 400,
             contentType: 'application/json',
-            body: JSON.stringify({ error: REJECTION_MESSAGE, code: 'invalid_parameter_value' }),
+            body: JSON.stringify({ error: REJECTION_MESSAGE, code: 'invalid_request' }),
           });
       }
       return api.route(route);

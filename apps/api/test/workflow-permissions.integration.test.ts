@@ -166,7 +166,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの権限（独立PostgreSQ
     );
     expect(stopped.rows[0]).toMatchObject({
       status: 'failed',
-      error: expect.stringContaining('アーカイブ'),
+      error: expect.stringContaining('archived'),
     });
     expect(
       (await harness.database.query('SELECT count(*)::int AS count FROM jobs')).rows[0].count,
@@ -271,8 +271,8 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの権限（独立PostgreSQ
           await launch(definition.workflow.id, caller, { idempotencyKey: 'scoped' }),
           403,
         ),
-      ).toBe('insufficient_scope');
-      expect(await errorCode(await cancel(execution.id, caller), 403)).toBe('insufficient_scope');
+      ).toBe('scope_required');
+      expect(await errorCode(await cancel(execution.id, caller), 403)).toBe('scope_required');
     }
     expect(
       await errorCode(
@@ -283,7 +283,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの権限（独立PostgreSQ
         }),
         403,
       ),
-    ).toBe('insufficient_scope');
+    ).toBe('scope_required');
 
     const account = await entity<ServiceAccount>(
       await request(harness.app, `${fixture.basePath}/service-accounts`, {
@@ -307,7 +307,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの権限（独立PostgreSQ
         await launch(definition.workflow.id, narrow, { idempotencyKey: 'narrow' }),
         403,
       ),
-    ).toBe('insufficient_scope');
+    ).toBe('scope_required');
     const enough = await serviceAccountToken(['read', 'runs:write', 'jobs:write']);
     const started = await entity<WorkflowExecution>(
       await launch(definition.workflow.id, enough, { idempotencyKey: 'enough' }),

@@ -224,7 +224,7 @@ describe.skipIf(!testDatabaseUrl)('Projectのアーカイブと全体管理（�
     ];
     for (const [credentials, code] of [
       [{ cookie: owner.cookie }, 'admin_required'],
-      [{ token: readToken.token }, 'insufficient_scope'],
+      [{ token: readToken.token }, 'scope_required'],
     ] as const)
       for (const response of await Promise.all(attempts(credentials))) {
         expect(response.status).toBe(403);

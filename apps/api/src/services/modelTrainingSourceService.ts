@@ -80,7 +80,7 @@ export class ModelTrainingSourceService {
           projectId: location.projectId,
           id: location.versionId,
         });
-        if (version.modelId !== location.modelId) notFound('ModelVersion');
+        if (version.modelId !== location.modelId) notFound('model version');
         const existing = await findModelTrainingSource(connection, location);
         if (existing) {
           const sameRun = existingRunId
@@ -92,11 +92,11 @@ export class ModelTrainingSourceService {
                 historicalInput,
               );
           if (!sameRun)
-            throw new DomainError(
-              409,
-              'このモデル版には別の学習元が記録されています',
-              'model_training_source_conflict',
-            );
+            throw new DomainError({
+              status: 409,
+              code: 'model_training_source_conflict',
+              message: 'another training source is already recorded for this model version',
+            });
           return existing;
         }
         let runId = existingRunId;
@@ -119,18 +119,18 @@ export class ModelTrainingSourceService {
           id: runId!,
         });
         if (!isTerminalStatus(run.status))
-          throw new DomainError(
-            422,
-            '終了済みの学習Runを選んでください',
-            'model_training_source_not_terminal',
-          );
+          throw new DomainError({
+            status: 422,
+            code: 'model_training_source_not_terminal',
+            message: 'choose a finished training run',
+          });
         const deletedVersion = await first(
           connection,
           `SELECT 1 FROM mlflow_model_version_metadata
         WHERE version_id=$1 AND deleted_at IS NOT NULL`,
           [version.id],
         );
-        if (deletedVersion) notFound('ModelVersion');
+        if (deletedVersion) notFound('model version');
         if (
           await hasLineageAncestor(connection, {
             projectId: location.projectId,
@@ -138,11 +138,11 @@ export class ModelTrainingSourceService {
             descendantIds: [run.id],
           })
         )
-          throw new DomainError(
-            422,
-            'モデル版が学習元の入力や祖先になっています',
-            'model_training_source_cycle',
-          );
+          throw new DomainError({
+            status: 422,
+            code: 'model_training_source_cycle',
+            message: 'the model version is an input or an ancestor of the training source',
+          });
         await connection.query(
           `INSERT INTO model_version_training_sources(model_version_id,project_id,run_id,evidence,created_by)
         VALUES($1,$2,$3,$4,$5)`,
@@ -173,6 +173,6 @@ export class ModelTrainingSourceService {
       projectId: location.projectId,
       id: location.versionId,
     });
-    if (version.modelId !== location.modelId) notFound('ModelVersion');
+    if (version.modelId !== location.modelId) notFound('model version');
   }
 }

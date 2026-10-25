@@ -77,9 +77,9 @@ export function assertRuleTrigger(
   rule: Pick<ModelAutomationRuleCreate, 'trigger' | 'upstreamRuleId'>,
 ): void {
   if ((rule.trigger === 'upstream_run_finished') !== (rule.upstreamRuleId !== null))
-    throw new DomainError(
-      422,
-      'upstreamRuleIdはtriggerがupstream_run_finishedのときだけ、必ず指定します',
-      'invalid_automation_trigger',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'invalid_automation_trigger',
+      message: 'upstreamRuleId is required when trigger is upstream_run_finished, and only then',
+    });
 }

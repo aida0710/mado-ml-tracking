@@ -81,7 +81,7 @@ export class JobArrayService {
       `SELECT ${arrayGroupColumns} FROM job_array_groups WHERE project_id=$1 AND id=$2`,
       [reference.projectId, reference.groupId],
     );
-    if (!arrayGroup) notFound('JobArrayGroup');
+    if (!arrayGroup) notFound('job array group');
     const jobs = await rows<Job>(
       connection,
       `SELECT ${jobColumns()} FROM jobs WHERE array_group_id=$1 ORDER BY array_index,attempt`,
@@ -101,9 +101,13 @@ export class JobArrayService {
       'SELECT * FROM compute_targets WHERE id=$1 AND enabled=true',
       [input.targetId],
     );
-    if (!target) notFound('ComputeTarget');
+    if (!target) notFound('computer');
     if (target.executor !== 'site')
-      throw new DomainError(422, 'arrayはsiteでだけ実行できます', 'site_target_required');
+      throw new DomainError({
+        status: 422,
+        code: 'site_target_required',
+        message: 'arrays can run only on sites',
+      });
     if (input.datasetPartitionVersionId)
       await assertPartitionVersion(connection, {
         projectId,
@@ -206,9 +210,9 @@ export async function assertPartitionVersion(
     ids: [partition.partitionId],
   })) as [DatasetVersion];
   if (!partition.inputIds.includes(version.id) || version.contentKind !== 'artifacts')
-    throw new DomainError(
-      422,
-      '分割するDatasetVersionは、入力に含まれるartifactsのバージョンにしてください',
-      'dataset_partition_invalid',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'dataset_partition_invalid',
+      message: 'the dataset version to partition must be an artifacts version among the inputs',
+    });
 }

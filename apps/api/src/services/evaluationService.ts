@@ -52,7 +52,7 @@ async function assertModelVersion(
     'SELECT id FROM model_versions WHERE id=$1 AND model_id=$2 AND project_id=$3',
     [version.id, version.modelId, version.projectId],
   );
-  if (!found) notFound('ModelVersion');
+  if (!found) notFound('model version');
 }
 
 async function assertAutomationRule(
@@ -64,7 +64,7 @@ async function assertAutomationRule(
     'SELECT id FROM model_automation_rules WHERE id=$1 AND project_id=$2',
     [rule.id, rule.projectId],
   );
-  if (!found) notFound('ModelAutomationRule');
+  if (!found) notFound('automation rule');
 }
 
 async function validateReferences(
@@ -73,11 +73,11 @@ async function validateReferences(
   request: EvaluationComparisonRequest,
 ): Promise<void> {
   if (request.baselineAlias !== undefined && request.baselineVersionId !== undefined)
-    throw new DomainError(
-      422,
-      '基準はbaselineAliasとbaselineVersionIdのどちらか一方で指定してください',
-      'invalid_request',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'invalid_request',
+      message: 'specify the baseline with either baselineAlias or baselineVersionId',
+    });
   await assertProjectReference(connection, { table: 'models', projectId, id: request.modelId });
   await assertModelVersion(connection, {
     projectId,

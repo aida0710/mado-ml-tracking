@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildLauncherConfigExample } from './launcherConfig';
 
-const TOKEN = 'mmt_launcher-secret';
+const TOKEN = 'mado_mt_launcher-secret';
 
 describe('launcher.tomlの例', () => {
   it('起動に要るapi_url・token_file・state_directory・poll_secondsだけを書き、registryは任意として残す', () => {
@@ -21,7 +21,7 @@ describe('launcher.tomlの例', () => {
 
   it('tokenは例に書かず、token_fileに置く', () => {
     expect(buildLauncherConfigExample({ apiUrl: 'http://127.0.0.1:5182', launcherName: TOKEN })).not.toMatch(
-      /^(?!#).*mmt_launcher-secret/m,
+      /^(?!#).*mado_mt_launcher-secret/m,
     );
   });
 

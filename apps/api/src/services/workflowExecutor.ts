@@ -263,11 +263,11 @@ export class WorkflowExecutor {
       [execution.createdBy],
     );
     if (!user)
-      throw new DomainError(
-        403,
-        '実行した利用者の権限が無効になっています',
-        'workflow_owner_unavailable',
-      );
+      throw new DomainError({
+        status: 403,
+        code: 'workflow_owner_unavailable',
+        message: 'the permission of the user who ran it is no longer valid',
+      });
     const principal: Principal = { user, method: 'session', token: null };
     await requireProject(connection, principal, {
       projectId: execution.projectId,

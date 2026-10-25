@@ -54,13 +54,13 @@ export class DatasetVersionDeletionService {
           'SELECT id FROM datasets WHERE project_id=$1 AND id=$2 FOR UPDATE',
           [projectId, datasetId],
         );
-        if (!dataset) notFound('Dataset');
+        if (!dataset) notFound('dataset');
         const version = await first<{ version: string; digest: string }>(
           connection,
           'SELECT version,digest FROM dataset_versions WHERE project_id=$1 AND dataset_id=$2 AND id=$3 FOR UPDATE',
           [projectId, datasetId, versionId],
         );
-        if (!version) notFound('DatasetVersion');
+        if (!version) notFound('dataset version');
         assertDatasetVersionUnused(
           await countDatasetVersionReferences(connection, { projectId, id: versionId }),
         );

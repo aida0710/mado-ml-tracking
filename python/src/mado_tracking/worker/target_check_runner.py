@@ -76,7 +76,7 @@ class TargetCheckRunner:
         status, result = await check_target(
             claimed.target,
             allow_local_executor=self.settings.allow_local_executor,
-            health_url=f"{self.settings.api.url}/health",
+            health_url=self.settings.api.health_url,
             masker=self.api.masker,
         )
         return status, result

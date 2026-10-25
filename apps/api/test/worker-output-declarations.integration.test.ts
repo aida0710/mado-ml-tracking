@@ -403,7 +403,7 @@ describe.skipIf(!testDatabaseUrl)('workerによる出力の宣言と登録（独
       await errorCode(await declare(token, claimed, [declaration], crypto.randomUUID()), 409),
     ).toBe('invalid_lease');
     expect(await errorCode(await declare(token, claimed, [declaration]), 403)).toBe(
-      'insufficient_scope',
+      'scope_required',
     );
     expect(await runVersions(fixture, fixture.model.id, claimed.run.id)).toEqual([]);
   });

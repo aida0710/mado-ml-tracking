@@ -99,7 +99,7 @@ async function waitForServer() {
   while (Date.now() < deadline) {
     if (server.exitCode !== null) throw new Error('The verification server exited early');
     try {
-      if ((await fetch(`${BASE}/api/health`)).ok) return;
+      if ((await fetch(`${BASE}/healthz`)).ok) return;
     } catch {
       // Not listening yet.
     }

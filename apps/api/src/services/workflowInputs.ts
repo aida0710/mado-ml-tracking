@@ -24,11 +24,11 @@ export async function resolveWorkflowInputs(
     else {
       const source = completedByKey.get(binding.source.stepKey);
       if (!source || source.status !== 'finished')
-        throw new DomainError(
-          422,
-          '入力元のステップが完了していません',
-          'workflow_source_not_finished',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'workflow_source_not_finished',
+          message: 'the source step has not finished',
+        });
       const outputs = await rows<{ id: string; name: string }>(
         connection,
         `SELECT v.id,d.name FROM dataset_versions v JOIN datasets d ON d.id=v.dataset_id
@@ -43,17 +43,17 @@ export async function resolveWorkflowInputs(
         )
         .map((output) => output.id);
       if (!ids.length)
-        throw new DomainError(
-          422,
-          '指定した出力データセットがありません',
-          'workflow_outputs_missing',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'workflow_outputs_missing',
+          message: 'the specified output dataset does not exist',
+        });
       if (binding.source.datasetName !== null && ids.length > 1)
-        throw new DomainError(
-          422,
-          '同じ名前の出力データセットが複数あります。出力を一つにしてください',
-          'workflow_outputs_ambiguous',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'workflow_outputs_ambiguous',
+          message: 'there are multiple output datasets with the same name; keep one output',
+        });
       upstreamDatasetVersionIds.push(...ids);
     }
     usage.push(
@@ -66,16 +66,20 @@ export async function resolveWorkflowInputs(
     );
   }
   if (usage.length > WORKFLOW_MAX_INPUTS)
-    throw new DomainError(422, '入力データセットの数が上限を超えています', 'workflow_inputs_limit');
+    throw new DomainError({
+      status: 422,
+      code: 'workflow_inputs_limit',
+      message: 'the number of input datasets exceeds the limit',
+    });
   let modelVersionId = request.step.task.modelVersionId;
   if (request.step.modelFromStepKey) {
     const source = completedByKey.get(request.step.modelFromStepKey);
     if (!source || source.status !== 'finished' || source.outputModelVersionIds.length !== 1)
-      throw new DomainError(
-        422,
-        'モデルの入力元には出力モデルが一つ必要です',
-        'workflow_model_output_required',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'workflow_model_output_required',
+        message: 'a model source requires exactly one output model',
+      });
     modelVersionId = source.outputModelVersionIds[0]!;
   }
   return {

@@ -82,7 +82,7 @@ Authentikに接続できないあいだは、前回の確認から`OIDC_RECHECK_
 | --- | --- | --- |
 | 401 `invalid_token` | tokenが無効、失効、期限切れ。所有者のユーザーかService Accountが無効 | 新しいtokenを発行する。Service Accountの状態を確かめる |
 | 401 `identity_sync_required` | SSOのユーザーが7日以上ブラウザでログインしていない | ブラウザで一度ログインすれば、同じtokenが使える。長く動く処理はService Accountのtokenにする |
-| 403 `insufficient_scope` | tokenのscopeが足りない | 必要なscopeでtokenを発行し直す |
+| 403 `scope_required` | tokenのscopeが足りない | 必要なscopeでtokenを発行し直す |
 | 403 `project_forbidden` | 所有者のProjectのRoleが足りない、またはtokenを限定したProjectと違う | Roleを確かめる。groupから外れていないかも確かめる |
 | 403 `session_required` | ブラウザでだけ使える操作（自分のパスワード変更、コンピュータの自分の設定、Projectの完全な削除など） | 画面から操作する |
 | 403 `job_token_forbidden` | Job限定tokenで許されていない操作 | 実行コードから行える操作か確かめる（[API tokenとService Account](/admin/tokens)） |
@@ -100,7 +100,7 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" "$MMT_API_URL/api/auth/token"
 
 ## Projectの権限を変えられない（409）
 
-「Project adminがいなくなるため変更できません。」と表示される場合は、最後のAdminを外そうとしています。先に別のメンバーか、誰かがログインしたことのあるgroupへAdminを付けてください。まだ誰もログインしていないgroupのAdminは数えません（「Authentik group」の一覧に「まだ誰もログインしていません」と出ます）。全体管理者を無効化・降格しようとして409 `last_global_admin`になる場合も、先に別の全体管理者を用意します。
+「Project adminがいなくなるため変更できません。」と表示される場合は、最後のAdminを外そうとしています。先に別のメンバーか、誰かがログインしたことのあるgroupへAdminを付けてください。まだ誰もログインしていないgroupのAdminは数えません（「Authentik group」の一覧に「まだ誰もログインしていません」と出ます）。全体管理者を無効化・降格しようとして409 `last_active_admin`になる場合も、先に別の全体管理者を用意します。
 
 ## 「このプロジェクトはアーカイブされています」と出る
 

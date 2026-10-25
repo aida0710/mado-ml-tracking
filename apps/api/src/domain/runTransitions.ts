@@ -8,5 +8,5 @@ export function isTerminalStatus(status: string): status is 'finished' | 'failed
 export function validateRunTransition(current: RunStatus, next: RunStatus): void {
   if (current === next) return;
   if (isTerminalStatus(current) || next === 'queued')
-    conflict(`Runの状態を${current}から${next}へ変更できません`);
+    conflict(`the run status cannot change from ${current} to ${next}`, { from: current, to: next });
 }

@@ -36,6 +36,13 @@ services:
         condition: service_healthy
     volumes:
       - artifacts:/app/var/artifacts
+    # 配布イメージに curl が無いので、Node の fetch で GET /healthz（DB への接続まで確かめる）を叩く。
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:4182/healthz').then((response) => process.exit(response.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 60s
     restart: unless-stopped
   # Generates waveform peaks, spectrograms and video posters with ffmpeg for long audio and video.
   # A separate image so the API carries no ffmpeg; it shares the DB and the Artifact storage.
@@ -62,7 +69,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.web
-    depends_on: [api]
+    # nginx は起動時に api の名前を引くので、API が応答できるようになってから起動する。
+    depends_on:
+      api:
+        condition: service_healthy
     # nginx in the web image runs unprivileged and listens on 8080 (Dockerfile.web).
     ports: ['127.0.0.1:5182:8080']
     restart: unless-stopped

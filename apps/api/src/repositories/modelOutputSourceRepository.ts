@@ -19,14 +19,18 @@ export async function lockOutputSourceRun(
     'SELECT id,kind,status,lifecycle_stage,created_by FROM runs WHERE project_id=$1 AND id=$2 FOR KEY SHARE',
     [reference.projectId, reference.id],
   );
-  if (!run) notFound('Run');
+  if (!run) notFound('run');
   if (!isTrainingRunKind(run.kind))
-    throw new DomainError(
-      422,
-      '出力モデルのsource Runはtrainingまたはfinetuningである必要があります',
-      'output_model_kind',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'output_model_kind',
+      message: 'the source run of an output model must be a training or finetuning run',
+    });
   if (run.lifecycleStage !== 'active')
-    throw new DomainError(422, '削除済みRunには出力モデルを登録できません', 'source_run_deleted');
+    throw new DomainError({
+      status: 422,
+      code: 'source_run_deleted',
+      message: 'output models cannot be registered to a deleted run',
+    });
   return run;
 }

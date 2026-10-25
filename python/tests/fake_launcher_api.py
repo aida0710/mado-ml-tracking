@@ -21,7 +21,7 @@ from mado_tracking.client import Client
 from mado_tracking.security import SecretMasker
 from mado_tracking.site.transport import CommandResult, LocalSiteTransport, SshEndpoint
 
-LAUNCHER_TOKEN = "mmt_launcher-test-token"
+LAUNCHER_TOKEN = "mado_mt_launcher-test-token"
 LAUNCHER_NAME = "gpu-launcher"
 KEYGEN_LOG = "ssh-keygen.jsonl"
 FAKE_SSH_KEYGEN = r"""

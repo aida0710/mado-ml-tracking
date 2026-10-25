@@ -78,15 +78,19 @@ export class CheckpointService {
         projectId: reference.projectId,
         ids: [input.artifactId],
       });
-      if (!artifact) notFound('Artifact');
+      if (!artifact) notFound('artifact');
       if (artifact.runId !== run.id)
-        throw new DomainError(
-          422,
-          'checkpointには同じRunに保存したArtifactを指定してください',
-          'checkpoint_artifact_run',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'checkpoint_artifact_run',
+          message: 'a checkpoint must use an artifact stored in the same run',
+        });
       if (await checkpointStepExists(connection, { runId: run.id, step: input.step }))
-        throw new DomainError(409, 'このstepのcheckpointは登録済みです', 'checkpoint_exists');
+        throw new DomainError({
+          status: 409,
+          code: 'checkpoint_exists',
+          message: 'a checkpoint for this step is already registered',
+        });
       const id = await insertCheckpoint(connection, {
         projectId: reference.projectId,
         runId: run.id,
@@ -140,11 +144,11 @@ export class CheckpointService {
       step: location.step,
     });
     if (existing?.final || (isTerminalStatus(run.status) && !existing))
-      throw new DomainError(
-        409,
-        '終了したRunのcheckpointにはファイルを追加できません',
-        'checkpoint_finalized',
-      );
+      throw new DomainError({
+        status: 409,
+        code: 'checkpoint_finalized',
+        message: 'files cannot be added to a checkpoint of a finished run',
+      });
     if (existing) {
       await this.replaceMlflowCheckpointFile(connection, {
         projectId: saved.projectId,
@@ -231,11 +235,11 @@ async function requireCheckpointWriter(
       [reference.projectId, reference.runId, token.id],
     );
     if (!heldJob)
-      throw new DomainError(
-        403,
-        'worker tokenは実行中のJobのRunにだけcheckpointを登録できます',
-        'checkpoint_forbidden',
-      );
+      throw new DomainError({
+        status: 403,
+        code: 'checkpoint_forbidden',
+        message: 'a worker token can register checkpoints only on the run of a running job',
+      });
     return;
   }
   await requireProject(connection, principal, {

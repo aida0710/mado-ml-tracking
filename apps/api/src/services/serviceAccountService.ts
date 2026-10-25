@@ -103,7 +103,7 @@ export class ServiceAccountService {
       transaction(this.database, async (connection) => {
         await requireProjectAdmin(connection, principal, reference.projectId);
         const before = await lockServiceAccount(connection, reference);
-        if (!before) notFound('Service Account');
+        if (!before) notFound('service account');
         const { serviceAccountId, projectId } = reference;
         if (input.description !== undefined)
           await updateServiceAccountDescription(connection, {
@@ -165,26 +165,27 @@ export class ServiceAccountService {
           ownerIsAdmin: false,
         });
         const account = await lockServiceAccount(connection, reference);
-        if (!account) notFound('Service Account');
+        if (!account) notFound('service account');
         if (account.status !== 'active')
-          throw new DomainError(
-            409,
-            '無効化したService Accountにはtokenを発行できません',
-            'service_account_disabled',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'service_account_disabled',
+            message: 'tokens cannot be issued for a disabled service account',
+          });
         if (!account.role)
-          throw new DomainError(
-            409,
-            'Service AccountにProjectのRoleがありません',
-            'service_account_role_missing',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'service_account_role_missing',
+            message: 'the service account has no role in the project',
+          });
         const excessScopes = scopesBeyondRole(input.scopes, account.role);
         if (excessScopes.length)
-          throw new DomainError(
-            422,
-            `Service AccountのRole（${account.role}）では使えないscopeです: ${excessScopes.join(', ')}`,
-            'scope_exceeds_role',
-          );
+          throw new DomainError({
+            status: 422,
+            code: 'scope_exceeds_role',
+            message: `scopes not allowed for the role of the service account (${account.role}): ${excessScopes.join(', ')}`,
+            details: { role: account.role, scopes: excessScopes },
+          });
         const expiresAt = resolveTokenExpiry({
           expiresAt: input.expiresAt,
           defaultLifetimeDays: this.tokenDefaultLifetimeDays,

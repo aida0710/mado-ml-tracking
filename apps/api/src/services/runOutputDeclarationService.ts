@@ -59,15 +59,15 @@ export class RunOutputDeclarationService {
     for (const declaration of declarations) {
       const previous = stored.get(declaration.index);
       if (previous && previous.kind !== declaration.kind)
-        throw new DomainError(
-          409,
-          '同じindexに別の種類の出力が登録済みです',
-          'output_declaration_mismatch',
-        );
+        throw new DomainError({
+          status: 409,
+          code: 'output_declaration_mismatch',
+          message: 'an output of a different kind is already registered at the same index',
+        });
     }
     const pending = declarations.filter((declaration) => !stored.has(declaration.index));
     if (!pending.length) return declarations.map((declaration) => stored.get(declaration.index)!);
-    if (isTerminalStatus(job.status)) conflict('Jobは既に終了しています');
+    if (isTerminalStatus(job.status)) conflict('the job has already ended');
     const run = await findRun(connection, { projectId: job.projectId, id: job.runId });
     assertModelOutputsAllowed(run, countDeclarations(pending));
     assertDeclarationLimits(countDeclarations([...stored.values(), ...pending]));
@@ -214,18 +214,22 @@ async function resolveTaskModel(
   assertUsableModel(model);
   // A same-named Model may have been created with another family after the Task was saved.
   if (settings.createModel && model.family !== settings.createModel.family)
-    throw new DomainError(
-      422,
-      'Taskが作成するModelと同じ名前のModelが別の系列で存在します',
-      'model_family_mismatch',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'model_family_mismatch',
+      message: 'a model with the same name as the model the task creates exists in another family',
+    });
   return model;
 }
 
 function assertUsableModel(model: OutputModel | undefined): asserts model is OutputModel {
-  if (!model) notFound('Model');
+  if (!model) notFound('model');
   // MLflow soft-deleted Models keep their row; registering would revive a Model the user removed.
-  if (model.deleted) throw new DomainError(422, '削除済みのModelです', 'model_deleted');
+  if (model.deleted) throw new DomainError({
+    status: 422,
+    code: 'model_deleted',
+    message: 'the model has been deleted',
+  });
 }
 
 async function requireOutputArtifact(
@@ -242,11 +246,12 @@ async function requireOutputArtifact(
 }
 
 function outputArtifactNotFound(outputPath: string): never {
-  throw new DomainError(
-    422,
-    `出力${outputPath}はこのJobのArtifactとして保存されていません`,
-    'output_artifact_not_found',
-  );
+  throw new DomainError({
+    status: 422,
+    code: 'output_artifact_not_found',
+    message: `output ${outputPath} is not stored as an artifact of this job`,
+    details: { path: outputPath },
+  });
 }
 
 async function listRunOutputDeclarations(

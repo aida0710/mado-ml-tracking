@@ -33,7 +33,11 @@ export interface LogoutTokenClaims {
 }
 
 function invalidLogoutToken(): DomainError {
-  return new DomainError(400, 'logout tokenが不正です', 'invalid_logout_token');
+  return new DomainError({
+    status: 400,
+    code: 'invalid_logout_token',
+    message: 'invalid logout token',
+  });
 }
 
 // jwtVerify checks the signature, iss, aud and iat; this checks what makes it a logout token.
@@ -83,7 +87,11 @@ export class OidcBackchannelLogout {
         expiresAt: new Date(now.getTime() + LOGOUT_TOKEN_ID_RETENTION_SECONDS * 1000),
       });
       if (!accepted)
-        throw new DomainError(400, 'このlogout tokenは使用済みです', 'logout_token_replayed');
+        throw new DomainError({
+          status: 400,
+          code: 'logout_token_replayed',
+          message: 'this logout token has already been used',
+        });
       const revokedSessions = claims.sid
         ? await revokeOidcSidSessions(connection, {
             issuer,
@@ -108,7 +116,11 @@ export class OidcBackchannelLogout {
     const { settings, clock } = this.options;
     const server = (await this.options.provider()).serverMetadata();
     if (!server.jwks_uri)
-      throw new DomainError(503, 'OIDC providerの署名鍵を取得できません', 'oidc_unavailable');
+      throw new DomainError({
+        status: 503,
+        code: 'oidc_unavailable',
+        message: 'cannot get the signing keys of the OIDC provider',
+      });
     this.signingKeys ??= createRemoteJWKSet(new URL(server.jwks_uri));
     let payload: JWTPayload;
     try {
@@ -123,7 +135,11 @@ export class OidcBackchannelLogout {
     } catch (error) {
       // Failing to fetch the keys says nothing about the token; the IdP retries on a 5xx.
       if (error instanceof errors.JWKSTimeout || !(error instanceof errors.JOSEError))
-        throw new DomainError(503, 'OIDC providerの署名鍵を取得できません', 'oidc_unavailable');
+        throw new DomainError({
+          status: 503,
+          code: 'oidc_unavailable',
+          message: 'cannot get the signing keys of the OIDC provider',
+        });
       throw invalidLogoutToken();
     }
     // Sessions store the configured issuer, which discovery has confirmed equals server.issuer.

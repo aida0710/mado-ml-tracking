@@ -51,11 +51,11 @@ def test_a_404_from_something_other_than_the_api_points_at_mmt_api_url():
 
 
 def test_the_api_s_own_404_keeps_its_message():
-    api_error = {"error": "Projectが見つかりません", "code": "not_found"}
+    api_error = {"error": "project not found", "code": "not_found"}
     client = client_answering(httpx.Response(404, json=api_error))
     with pytest.raises(ApiError) as raised:
         client.find_experiment(PROJECT_ID, name="first")
-    assert str(raised.value) == "Projectが見つかりません"
+    assert str(raised.value) == "project not found"
     assert raised.value.code == "not_found"
 
 

@@ -440,7 +440,7 @@ describe.skipIf(!testDatabaseUrl)('メトリクス系列の間引きとRunグル
       await postGroups({ runIds: [run.id], groupBy }, { token: writeOnly }),
     ]) {
       expect(response.status).toBe(403);
-      expect((await response.json()).code).toBe('insufficient_scope');
+      expect((await response.json()).code).toBe('scope_required');
     }
     const otherProject = await entity<Project>(
       await request(harness.app, '/api/projects', {

@@ -1,3 +1,4 @@
+import type { ApiErrorDetails, SweepSpaceViolation } from '@mmt/contracts';
 import { DomainError } from '../errors.js';
 import type {
   CategoricalParameter,
@@ -39,15 +40,21 @@ export function sortedParameterNames(space: SearchSpace): string[] {
 export function gridValues(definition: ParameterDefinition): ParameterValue[] {
   if (isCategoricalParameter(definition)) return definition.values;
   if (isConstantParameter(definition)) return [definition.value];
-  throw new RangeError('連続分布の parameter は grid で列挙できません');
+  throw new RangeError('a parameter with a continuous distribution cannot be enumerated for grid');
 }
 
 export function countGridCombinations(space: SearchSpace): number {
   return sortedParameterNames(space).reduce((count, name) => count * gridValues(space[name]!).length, 1);
 }
 
-function invalid(message: string): never {
-  throw new DomainError(422, message, 'sweep_space_invalid');
+/** 違反の理由と、文に入る値を横の項目にして 422 sweep_space_invalid を投げる。 */
+function invalid(reason: SweepSpaceViolation, message: string, details: ApiErrorDetails = {}): never {
+  throw new DomainError({
+    status: 422,
+    code: 'sweep_space_invalid',
+    message,
+    details: { reason, ...details },
+  });
 }
 
 function isValidParameterValue(value: unknown): value is ParameterValue {
@@ -57,15 +64,27 @@ function isValidParameterValue(value: unknown): value is ParameterValue {
 
 function validateCategorical(name: string, definition: CategoricalParameter): void {
   if (!Array.isArray(definition.values) || definition.values.length === 0)
-    invalid(`parameter「${name}」の values が空です`);
+    invalid('values_empty', `parameter "${name}" has no values`, { parameter: name });
   if (definition.values.length > MAX_CATEGORICAL_VALUES)
-    invalid(`parameter「${name}」の values は${MAX_CATEGORICAL_VALUES}個までです（${definition.values.length}個）`);
+    invalid(
+      'values_limit',
+      `parameter "${name}" values exceed the limit of ${MAX_CATEGORICAL_VALUES} (received: ${definition.values.length})`,
+      { parameter: name, limit: MAX_CATEGORICAL_VALUES, count: definition.values.length },
+    );
   const seen = new Set<ParameterValue>();
   for (const value of definition.values) {
     if (!isValidParameterValue(value))
-      invalid(`parameter「${name}」の values には文字列・有限の数値・真偽値だけを使えます`);
+      invalid(
+        'values_types',
+        `parameter "${name}" values must be strings, finite numbers, or booleans`,
+        { parameter: name },
+      );
     // 重複があると grid が同じ組を2回試し、bayes の頻度推定も偏る。
-    if (seen.has(value)) invalid(`parameter「${name}」の values に重複した値 ${JSON.stringify(value)} があります`);
+    if (seen.has(value))
+      invalid('values_duplicate', `parameter "${name}" has a duplicate value: ${JSON.stringify(value)}`, {
+        parameter: name,
+        value: JSON.stringify(value),
+      });
     seen.add(value);
   }
 }
@@ -73,48 +92,97 @@ function validateCategorical(name: string, definition: CategoricalParameter): vo
 function validateDistribution(name: string, definition: DistributionParameter): void {
   const { distribution, min, max, q } = definition;
   if (!DISTRIBUTIONS.has(distribution))
-    invalid(`parameter「${name}」の distribution「${String(distribution)}」は使えません`);
+    invalid(
+      'distribution_unsupported',
+      `parameter "${name}" does not support distribution "${String(distribution)}"`,
+      { parameter: name, distribution: String(distribution) },
+    );
   if (!Number.isFinite(min) || !Number.isFinite(max))
-    invalid(`parameter「${name}」の min と max には有限の数値が必要です`);
-  if (!(min < max)) invalid(`parameter「${name}」は min < max である必要があります（min=${min}, max=${max}）`);
+    invalid('range_finite', `parameter "${name}" min and max must be finite numbers`, { parameter: name });
+  if (!(min < max))
+    invalid('range_order', `parameter "${name}" requires min < max (min=${min}, max=${max})`, {
+      parameter: name,
+      min: String(min),
+      max: String(max),
+    });
   if (distribution === 'log_uniform' && min <= 0)
-    invalid(`parameter「${name}」は log_uniform なので min > 0 である必要があります（min=${min}）`);
+    invalid(
+      'log_uniform_positive',
+      `parameter "${name}" uses log_uniform and requires min > 0 (min=${min})`,
+      { parameter: name, min: String(min) },
+    );
   if (distribution === 'int_uniform' && (!Number.isInteger(min) || !Number.isInteger(max)))
-    invalid(`parameter「${name}」は int_uniform なので min と max は整数である必要があります`);
+    invalid(
+      'range_integers',
+      `parameter "${name}" uses int_uniform and requires integer min and max`,
+      { parameter: name },
+    );
   if (q === undefined) return;
-  if (distribution !== 'q_uniform') invalid(`parameter「${name}」の q は q_uniform のときだけ指定できます`);
-  if (!Number.isFinite(q) || q <= 0) invalid(`parameter「${name}」の q は正の数である必要があります（q=${q}）`);
-  if (q > max - min) invalid(`parameter「${name}」の q が min から max までの幅より大きいです（q=${q}）`);
+  if (distribution !== 'q_uniform')
+    invalid('quantum_distribution', `parameter "${name}" q can only be specified for q_uniform`, {
+      parameter: name,
+    });
+  if (!Number.isFinite(q) || q <= 0)
+    invalid('quantum_positive', `parameter "${name}" q must be positive (q=${q})`, {
+      parameter: name,
+      q: String(q),
+    });
+  if (q > max - min)
+    invalid('quantum_width', `parameter "${name}" q exceeds the range from min to max (q=${q})`, {
+      parameter: name,
+      q: String(q),
+    });
 }
 
 function validateParameter(name: string, definition: ParameterDefinition): void {
-  if (name.length === 0) invalid('parameter 名が空です');
-  if (typeof definition !== 'object' || definition === null) invalid(`parameter「${name}」の定義がありません`);
+  if (name.length === 0) invalid('parameter_name_empty', 'parameter names must not be empty');
+  if (typeof definition !== 'object' || definition === null)
+    invalid('definition_missing', `parameter "${name}" has no definition`, { parameter: name });
   const kinds = [isCategoricalParameter, isConstantParameter, isDistributionParameter].filter((is) => is(definition));
   if (kinds.length !== 1)
-    invalid(`parameter「${name}」には values・value・distribution のどれか1つだけを指定してください`);
+    invalid(
+      'definition_ambiguous',
+      `parameter "${name}" must specify exactly one of values, value, or distribution`,
+      { parameter: name },
+    );
   if (isCategoricalParameter(definition)) return validateCategorical(name, definition);
   if (isConstantParameter(definition)) {
     if (!isValidParameterValue(definition.value))
-      invalid(`parameter「${name}」の value には文字列・有限の数値・真偽値だけを使えます`);
+      invalid(
+        'value_types',
+        `parameter "${name}" value must be a string, finite number, or boolean`,
+        { parameter: name },
+      );
     return;
   }
   validateDistribution(name, definition);
 }
 
-/** 探索空間を検証する。違反は DomainError 422 sweep_space_invalid で、message に該当する parameter を書く */
+/** 探索空間を検証する。違反は DomainError 422 sweep_space_invalid で、`reason` と該当する parameter を横に置く */
 export function validateSearchSpace(space: SearchSpace, method: SweepMethod): void {
   const names = sortedParameterNames(space);
-  if (names.length === 0) invalid('parameter が1つもありません');
+  if (names.length === 0) invalid('parameters_empty', 'at least one parameter is required');
   if (names.length > MAX_SWEEP_PARAMETERS)
-    invalid(`parameter は${MAX_SWEEP_PARAMETERS}個までです（${names.length}個）`);
+    invalid(
+      'parameter_limit',
+      `parameters exceed the limit of ${MAX_SWEEP_PARAMETERS} (received: ${names.length})`,
+      { limit: MAX_SWEEP_PARAMETERS, count: names.length },
+    );
   for (const name of names) validateParameter(name, space[name]!);
   if (method !== 'grid') return;
   // W&B と同じく、連続分布は grid で列挙しない。
   const continuous = names.filter((name) => isDistributionParameter(space[name]!));
   if (continuous.length > 0)
-    invalid(`grid では values か value の parameter だけを使えます（連続分布: ${continuous.join(', ')}）`);
+    invalid(
+      'grid_continuous',
+      `grid search supports only values or value parameters (continuous distributions: ${continuous.join(', ')})`,
+      { parameters: continuous },
+    );
   const combinations = countGridCombinations(space);
   if (combinations > MAX_GRID_COMBINATIONS)
-    invalid(`grid の組み合わせ数は${MAX_GRID_COMBINATIONS}までです（${combinations}通り）`);
+    invalid(
+      'grid_limit',
+      `grid combinations exceed the limit of ${MAX_GRID_COMBINATIONS} (requested: ${combinations})`,
+      { limit: MAX_GRID_COMBINATIONS, count: combinations },
+    );
 }

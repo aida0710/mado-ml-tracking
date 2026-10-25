@@ -16,6 +16,11 @@ API_TOKEN_HINT = (
     "with: read -r -s MMT_API_TOKEN && export MMT_API_TOKEN"
 )
 
+# 独自 API の経路の頭。ApiSettings.url はいつもこれで終わる。
+API_PATH = "/api"
+# ヘルスチェックは /api の外にある（コンテナのヘルスチェックと同じ経路）。
+HEALTH_PATH = "/healthz"
+
 
 @dataclass(frozen=True)
 class ApiSettings:
@@ -34,6 +39,11 @@ class ApiSettings:
         if not api_token or any(character in api_token for character in "\r\n"):
             raise ConfigurationError(f"MMT_API_TOKEN is required; {API_TOKEN_HINT}")
         # Both the origin and a full /api base URL are accepted.
-        if not api_url.endswith("/api"):
-            api_url += "/api"
+        if not api_url.endswith(API_PATH):
+            api_url += API_PATH
         return cls(api_url, api_token)
+
+    @property
+    def health_url(self) -> str:
+        """API のヘルスチェック（GET /healthz）の URL。/api の外にあるので、url の /api を外して付ける。"""
+        return self.url.removesuffix(API_PATH) + HEALTH_PATH

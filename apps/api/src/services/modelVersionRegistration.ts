@@ -59,11 +59,11 @@ export async function registerModelVersion(
     : null;
   if (actor.type === 'runCreator') {
     if (!sourceRun)
-      throw new DomainError(
-        422,
-        'Runの作成者として登録するにはsourceRunIdが必要です',
-        'source_run_required',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'source_run_required',
+        message: 'sourceRunId is required to register as the creator of the run',
+      });
     await requireRunCreatorRegistryAccess(connection, { projectId, userId: sourceRun.createdBy });
   }
   const version = await reserveModelVersion(connection, {
@@ -126,5 +126,9 @@ async function requireRunCreatorRegistryAccess(
     [member.projectId, member.userId],
   );
   if (!membership)
-    throw new DomainError(403, 'Runの作成者にProjectの編集権限がありません', 'project_forbidden');
+    throw new DomainError({
+      status: 403,
+      code: 'project_forbidden',
+      message: 'the creator of the run does not have edit permission in the project',
+    });
 }

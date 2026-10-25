@@ -3,10 +3,7 @@ import type { Principal } from '../auth/principal.js';
 import { first, type Connection } from '../db/database.js';
 import { DomainError, notFound } from '../domain/errors.js';
 import { satisfiesProjectRole } from '../domain/projectRoles.js';
-import {
-  insufficientScopeMessage,
-  tokenProjectMismatchMessage,
-} from '../domain/tokenAccessMessages.js';
+import { scopeRequiredError, tokenProjectMismatchError } from '../domain/tokenAccessErrors.js';
 
 /**
  * Whether the principal may act with `scope`. A browser session is limited by roles alone; a token
@@ -20,8 +17,7 @@ export function holdsScope(principal: Principal, scope: string): boolean {
 }
 
 export function requireScope(principal: Principal, scope: string): void {
-  if (!holdsScope(principal, scope))
-    throw new DomainError(403, insufficientScopeMessage(scope), 'insufficient_scope');
+  if (!holdsScope(principal, scope)) throw scopeRequiredError(scope);
 }
 
 export async function requireProject(
@@ -39,11 +35,7 @@ export async function requireProject(
       'SELECT name FROM projects WHERE id=$1',
       [principal.token.projectId],
     );
-    throw new DomainError(
-      403,
-      tokenProjectMismatchMessage(tokenProject?.name ?? null),
-      'project_forbidden',
-    );
+    throw tokenProjectMismatchError(tokenProject?.name ?? null);
   }
   // The effective role is the strongest of the direct grant, the user's group bindings and, on a
   // public Project, editor. An archived Project is gone for everyone, global administrators too.
@@ -59,12 +51,16 @@ export async function requireProject(
   // global administrator's tokens.
   const role = principal.method === 'session' && principal.user.isAdmin ? 'admin' : membership.role;
   if (!role || !satisfiesProjectRole(role, permission.role))
-    throw new DomainError(403, 'Projectの権限が不足しています', 'project_forbidden');
+    throw new DomainError({
+      status: 403,
+      code: 'project_forbidden',
+      message: 'insufficient project permission',
+    });
   return role;
 }
 
 const PROJECT_ARCHIVED_MESSAGE =
-  'このProjectはアーカイブされています。全体管理者が全体管理の「プロジェクト」から元に戻せます';
+  'this project is archived; a global administrator can restore it under Administration > Projects';
 
 /**
  * An archived Project is gone, but those who could open it before (its members and global
@@ -83,14 +79,22 @@ async function refuseMissingProject(
       SELECT 1 FROM project_membership_roles m WHERE m.project_id=p.id AND m.user_id=$2))`,
     [projectId, principal.user.id, principal.method === 'session' && principal.user.isAdmin],
   );
-  if (archived) throw new DomainError(404, PROJECT_ARCHIVED_MESSAGE, 'project_archived');
-  notFound('Project');
+  if (archived) throw new DomainError({
+    status: 404,
+    code: 'project_archived',
+    message: PROJECT_ARCHIVED_MESSAGE,
+  });
+  notFound('project');
 }
 
 export function requireGlobalAdmin(principal: Principal): void {
   requireScope(principal, 'admin');
   if (!principal.user.isAdmin || principal.token?.projectId)
-    throw new DomainError(403, '管理者権限が必要です', 'admin_required');
+    throw new DomainError({
+      status: 403,
+      code: 'admin_required',
+      message: 'administrator permission required',
+    });
 }
 
 export async function requireWorker(
@@ -102,11 +106,11 @@ export async function requireWorker(
     !principal.token?.projectId ||
     !principal.token.scopes.includes('worker:execute')
   ) {
-    throw new DomainError(
-      403,
-      'Projectに限定されたworker tokenが必要です',
-      'worker_token_required',
-    );
+    throw new DomainError({
+      status: 403,
+      code: 'worker_token_required',
+      message: 'a worker token limited to a project is required',
+    });
   }
   await requireProject(connection, principal, {
     projectId: principal.token.projectId,
@@ -119,5 +123,9 @@ export async function requireWorker(
 // Descriptions and comments are human records, so code running inside a Job may not write them.
 export function rejectJobToken(principal: Principal): void {
   if (principal.token?.job)
-    throw new DomainError(403, 'Job限定tokenではこの操作はできません', 'job_token_forbidden');
+    throw new DomainError({
+      status: 403,
+      code: 'job_token_forbidden',
+      message: 'this operation is not allowed with a Job token',
+    });
 }

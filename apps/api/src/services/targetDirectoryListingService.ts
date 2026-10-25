@@ -55,11 +55,11 @@ export class TargetDirectoryListingService {
         const open = await findOpenListings(connection, { targetId, ...request });
         if (open.samePath) return { listing: open.samePath, created: false };
         if (open.count >= MAX_OPEN_DIRECTORY_LISTINGS)
-          throw new DomainError(
-            409,
-            'このコンピュータで待っているディレクトリの読み取りが多すぎます',
-            'directory_listing_limit',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'directory_listing_limit',
+            message: 'too many directory reads are waiting for this computer',
+          });
         const listing = await insertListing(connection, {
           targetId,
           requestedBy: principal.user.id,
@@ -83,7 +83,7 @@ export class TargetDirectoryListingService {
       await findCheckableTarget(connection, principal, location.targetId);
       await expireStaleChecks(connection);
       const listing = await findListing(connection, location);
-      if (!listing) notFound('ディレクトリの読み取り');
+      if (!listing) notFound('directory read');
       return listing;
     });
   }

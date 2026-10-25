@@ -289,7 +289,7 @@ describe.skipIf(!testDatabaseUrl)('全体管理者のユーザー管理（独立
         body,
       });
       expect(response.status).toBe(409);
-      expect(((await response.json()) as { code: string }).code).toBe('last_global_admin');
+      expect(((await response.json()) as { code: string }).code).toBe('last_active_admin');
     }
     // A disabled administrator does not count as a remaining administrator.
     const dormant = await createLocalUser(administrator.cookie, {
@@ -438,11 +438,11 @@ describe.skipIf(!testDatabaseUrl)('全体管理者のユーザー管理（独立
     // SSO users cannot sign in here without an IdP, so a token stands in for their session.
     await harness.database.query(
       `INSERT INTO api_tokens(user_id,name,kind,token_hash,token_prefix,scopes)
-      VALUES($1,'account test','personal',encode(sha256('mmt_account_test'::bytea),'hex'),'mmt_account_','{read}')`,
+      VALUES($1,'account test','personal',encode(sha256('mado_mt_account_test'::bytea),'hex'),'mado_mt_account_','{read}')`,
       [ssoUserId],
     );
     const ssoAccount = await entity<Account>(
-      await request(harness.app, '/api/account', { token: 'mmt_account_test' }),
+      await request(harness.app, '/api/account', { token: 'mado_mt_account_test' }),
       200,
     );
     expect(ssoAccount.groups).toEqual(['mmt-users', 'team-a']);

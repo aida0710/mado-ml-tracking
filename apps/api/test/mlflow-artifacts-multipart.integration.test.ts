@@ -392,7 +392,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow multipart upload（独立PostgreSQL）
     const created = await entity<CreateResponse>(await createMultipart(fixture), 200);
     const small = await putPart(created.credentials[0]!, Buffer.from('too small'));
     expect(small.status).toBe(422);
-    expect(((await small.json()) as { message: string }).message).toContain('最後以外のpart');
+    expect(((await small.json()) as { message: string }).message).toContain('parts other than the last');
 
     const etags = await putAllParts(created);
     expect(

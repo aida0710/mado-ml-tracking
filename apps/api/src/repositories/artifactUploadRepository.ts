@@ -40,7 +40,7 @@ export async function findArtifactUpload(
     ${reference.lock ? 'FOR UPDATE' : ''}`,
     [reference.projectId, reference.id],
   );
-  if (!upload) notFound('Upload session');
+  if (!upload) notFound('upload session');
   return upload;
 }
 

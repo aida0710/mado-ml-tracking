@@ -59,11 +59,11 @@ export function normalizeRegistryHost(host: string): string {
 }
 
 function unavailable(): never {
-  throw new DomainError(
-    503,
-    'imageのregistryに問い合わせられないため、CPUの対応を確認できません',
-    'image_registry_unavailable',
-  );
+  throw new DomainError({
+    status: 503,
+    code: 'image_registry_unavailable',
+    message: 'cannot check the CPU architecture because the image registry cannot be queried',
+  });
 }
 
 // `Bearer realm="https://auth.docker.io/token",service="registry.docker.io",scope="..."`.
@@ -99,11 +99,12 @@ export class RegistryImagePlatformChecker implements ImagePlatformChecker {
     if (runtime.kind !== 'docker') return;
     const platforms = await this.platformsOf(runtime.image);
     if (!platforms.some((platform) => platform.os === 'linux' && platform.architecture === target.cpuArch))
-      throw new DomainError(
-        422,
-        `imageは${target.cpuArch}向けに作られていません（${platforms.map((platform) => `${platform.os}/${platform.architecture}`).join(', ') || '不明'}）`,
-        'image_platform_mismatch',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'image_platform_mismatch',
+        message: `the image is not built for ${target.cpuArch} (${platforms.map((platform) => `${platform.os}/${platform.architecture}`).join(', ') || 'unknown'})`,
+        details: { cpuArch: target.cpuArch, platforms: platforms.map((platform) => `${platform.os}/${platform.architecture}`) },
+      });
   }
 
   async platformsOf(image: string): Promise<ImagePlatform[]> {

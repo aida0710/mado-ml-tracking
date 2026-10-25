@@ -57,11 +57,11 @@ function assertSyncRunOwned(
     ownership.hasJob ||
     ownership.lifecycleStage !== 'active'
   )
-    throw new DomainError(
-      409,
-      'このRun IDは別のRunが使っているため後送りできません',
-      'sync_run_conflict',
-    );
+    throw new DomainError({
+      status: 409,
+      code: 'sync_run_conflict',
+      message: 'this run ID is used by another run, so it cannot be synced',
+    });
 }
 
 function countBatch(batch: SyncBatchInput): SyncBatchCounts {
@@ -188,7 +188,7 @@ export class RunSyncService {
       const ownership = await findSyncRunOwnership(connection, runId, {
         lock: true,
       });
-      if (!ownership || ownership.projectId !== projectId) notFound('Run');
+      if (!ownership || ownership.projectId !== projectId) notFound('run');
       assertSyncRunOwned(ownership, { projectId, userId: principal.user.id });
       const counts = countBatch(batch);
       const claimed = await claimSyncBatch(connection, {
@@ -212,11 +212,12 @@ export class RunSyncService {
         params: batch.params,
       });
       if (changedKeys.length > 0)
-        throw new DomainError(
-          409,
-          `記録済みのparamは別の値に変更できません: ${changedKeys.join(', ')}`,
-          'sync_param_conflict',
-        );
+        throw new DomainError({
+          status: 409,
+          code: 'sync_param_conflict',
+          message: `logged params cannot be changed to different values: ${changedKeys.join(', ')}`,
+          details: { keys: changedKeys },
+        });
       if (counts.params > 0 || counts.tags > 0)
         await mergeSyncRunRecords(connection, {
           runId,
@@ -248,13 +249,18 @@ export class RunSyncService {
     const run = await findRun(connection, { projectId, id: runId });
     if (run.status === end.status) return false;
     if (isTerminalStatus(run.status))
-      throw new DomainError(
-        409,
-        `Runは既に${run.status}で終わっているため${end.status}にできません`,
-        'sync_status_conflict',
-      );
+      throw new DomainError({
+        status: 409,
+        code: 'sync_status_conflict',
+        message: `the run already ended as ${run.status}, so it cannot become ${end.status}`,
+        details: { runStatus: run.status, requestedStatus: end.status },
+      });
     if (run.startedAt !== null && Date.parse(end.endedAt) < Date.parse(run.startedAt))
-      throw new DomainError(422, 'endedAtがRunの開始より前です', 'sync_ended_before_start');
+      throw new DomainError({
+        status: 422,
+        code: 'sync_ended_before_start',
+        message: 'endedAt is before the start of the run',
+      });
     const ended = await markSyncRunEnded(connection, {
       runId,
       status: end.status,

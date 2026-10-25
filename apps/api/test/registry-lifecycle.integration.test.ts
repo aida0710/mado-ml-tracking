@@ -219,7 +219,7 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
       body: { name: fixture.experiment.name },
     });
     expect(duplicate.status).toBe(409);
-    expect(await duplicate.json()).toMatchObject({ code: 'resource_already_exists' });
+    expect(await duplicate.json()).toMatchObject({ code: 'already_exists' });
 
     await fixture.newRun();
     const renamed = await entity<Experiment>(
@@ -480,7 +480,7 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
       expect(refused.status, digest).toBe(422);
       expect(await refused.json()).toMatchObject({
         code: 'dataset_digest_invalid',
-        error: expect.stringContaining('sha256:<64桁の小文字16進数>（sha256:は省略可）'),
+        error: expect.stringContaining('sha256:<64 lowercase hex digits>'),
       });
     }
   });
@@ -509,12 +509,12 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
     expect(parentRefusal.status).toBe(409);
     expect(await parentRefusal.json()).toMatchObject({
       code: 'dataset_version_in_use',
-      error: expect.stringContaining('このバージョンを親にしたバージョン 1件'),
+      usages: { childVersion: 1 },
     });
     await entity<Run>(await runWithInputs(fixture, [child.id]));
     const inputRefusal = await deleteVersion(child.id);
     expect(inputRefusal.status).toBe(409);
-    expect(((await inputRefusal.json()) as { error: string }).error).toContain('Runの入力 1件');
+    expect(await inputRefusal.json()).toMatchObject({ usages: { runInput: 1 } });
 
     expect((await deleteVersion(mistyped.id, fixture.viewer.cookie)).status).toBe(403);
     expect((await deleteVersion(mistyped.id)).status).toBe(204);
@@ -587,9 +587,7 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
       await registration.query('COMMIT');
       const refused = await deletion;
       expect(refused.status).toBe(409);
-      expect(((await refused.json()) as { error: string }).error).toContain(
-        'このバージョンを親にしたバージョン 1件',
-      );
+      expect(await refused.json()).toMatchObject({ usages: { childVersion: 1 } });
     } finally {
       await registration.query('ROLLBACK').catch(() => undefined);
       registration.release();

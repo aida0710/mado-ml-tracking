@@ -47,7 +47,7 @@ export async function findArtifactPath(
     access.owner.id,
     access.path,
   ]);
-  if (!artifact?.artifactId) notFound('Artifact');
+  if (!artifact?.artifactId) notFound('artifact');
   return artifact.artifactId;
 }
 
@@ -62,7 +62,11 @@ export async function requireNonconflictingArtifactPath(
         artifact.path.startsWith(`${access.path}/`) || access.path.startsWith(`${artifact.path}/`),
     )
   )
-    throw new DomainError(409, 'Artifactのファイルとディレクトリが衝突しています', 'conflict');
+    throw new DomainError({
+      status: 409,
+      code: 'conflict',
+      message: 'an artifact file and an artifact directory have the same path',
+    });
 }
 
 export async function replaceArtifactPath(
@@ -75,7 +79,11 @@ export async function replaceArtifactPath(
     upload.artifact.path !== expectedPath ||
     upload.artifact.runId !== upload.runId
   )
-    throw new DomainError(503, 'Artifactの保存参照が一致しません', 'artifact_save_failed');
+    throw new DomainError({
+      status: 503,
+      code: 'artifact_save_failed',
+      message: 'the stored reference of the artifact does not match',
+    });
   await connection.query(
     `INSERT INTO mlflow_artifact_paths(project_id,owner_kind,owner_id,path,artifact_id)
      VALUES($1,$2,$3,$4,$5)

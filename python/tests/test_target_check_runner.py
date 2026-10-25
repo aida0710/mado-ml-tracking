@@ -22,7 +22,7 @@ from mado_tracking.worker.service import Worker
 from mado_tracking.worker.target_check_claims import parse_claimed_target_check
 from mado_tracking.worker.target_probe import failed_result
 
-API_TOKEN = "mmt_test-worker-secret-value"
+API_TOKEN = "mado_mt_test-worker-secret-value"
 WORKER_ID = "probe-worker"
 # A missing completion must fail the test instead of hanging it.
 SCENARIO_TIMEOUT_SECONDS = 20

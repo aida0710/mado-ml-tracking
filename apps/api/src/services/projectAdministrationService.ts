@@ -44,7 +44,7 @@ export class ProjectAdministrationService {
       transaction(this.database, async (connection) => {
         requireGlobalAdmin(principal);
         const project = await lockProjectLifecycle(connection, projectId);
-        if (!project) notFound('Project');
+        if (!project) notFound('project');
         if (project.archivedAt) {
           await unarchiveProject(connection, projectId);
           await writeAuditEvent(connection, {
@@ -72,15 +72,15 @@ export class ProjectAdministrationService {
     await recordDenial(this.database, draft, () =>
       transaction(this.database, async (connection) => {
         requireGlobalAdmin(principal);
-        requireSession(principal, 'Projectの完全な削除');
+        requireSession(principal, 'permanently deleting a project');
         const project = await lockProjectLifecycle(connection, projectId);
-        if (!project) notFound('Project');
+        if (!project) notFound('project');
         if (!project.archivedAt)
-          throw new DomainError(
-            409,
-            'アーカイブしていないProjectは完全に削除できません',
-            'project_not_archived',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'project_not_archived',
+            message: 'a project that is not archived cannot be permanently deleted',
+          });
         // Marked first: the history triggers let only a purged Project's rows be deleted.
         await markProjectPurged(connection, { projectId, purgedBy: principal.user.id });
         const purged = await purgeProjectRows(connection, projectId);

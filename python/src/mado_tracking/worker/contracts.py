@@ -22,7 +22,7 @@ SIF_RUNTIME_KINDS = frozenset({"singularity", "apptainer"})
 INPUT_CHECKPOINT_TAG = "mmt.inputCheckpointId"
 ENVIRONMENT_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 # Job tokens are what the Job's own code authenticates with; the worker token never reaches it.
-JOB_TOKEN = re.compile(r"^mmtj_[A-Za-z0-9_-]+$")
+JOB_TOKEN = re.compile(r"^mado_mtj_[A-Za-z0-9_-]+$")
 SHA256 = re.compile(r"^[a-f0-9]{64}$")
 # An 'artifacts' DatasetVersion's digest is the server-computed manifest digest.
 MANIFEST_DIGEST = re.compile(r"^sha256:[a-f0-9]{64}$")

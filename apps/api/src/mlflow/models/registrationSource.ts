@@ -20,7 +20,7 @@ function decodedName(name: string): string {
   try {
     return decodeURIComponent(name);
   } catch {
-    return invalidParameter('モデルURIのエンコードが不正です');
+    return invalidParameter('invalid model URI encoding');
   }
 }
 
@@ -33,14 +33,14 @@ export async function resolveRegistrationSource(
     /^models:\/(m-[a-f0-9]{32})$/.exec(input.source) ??
     /^mlflow-artifacts:\/models\/(m-[a-f0-9]{32})\/artifacts\/?$/.exec(input.source);
   if (input.model_id && (!loggedSource || loggedSource[1] !== input.model_id))
-    invalidParameter('model_idとsourceのLogged Modelが一致しません');
+    invalidParameter('model_id does not match the logged model of source');
   if (loggedSource) {
     const model = await findLoggedModel(connection, {
       projectId,
       id: loggedSource[1]!,
       lock: true,
     });
-    if (model.status !== 'READY') conflict('READYのLogged Modelだけを登録できます');
+    if (model.status !== 'READY') conflict('only READY logged models can be registered');
     return {
       ...(await loggedModelArtifacts(connection, model)),
       parentModelVersionIds: [],
@@ -52,7 +52,7 @@ export async function resolveRegistrationSource(
     /^mlflow-artifacts:\/runs\/([0-9a-f-]{36})\/artifacts(?:\/(.*))?$/.exec(input.source);
   if (runSource) {
     const runId = uuidSchema.safeParse(runSource[1]);
-    if (!runId.success) invalidParameter('sourceのRun IDが不正です');
+    if (!runId.success) invalidParameter('invalid run ID in source');
     const saved = await runModelArtifacts(connection, {
       projectId,
       runId: runId.data,
@@ -72,7 +72,7 @@ export async function resolveRegistrationSource(
   const registeredSource = /^models:\/(.+)\/([1-9][0-9]*)$/.exec(input.source);
   const aliasSource = /^models:\/(.+)@([A-Za-z0-9_-]+)$/.exec(input.source);
   if (!registeredSource && !aliasSource)
-    invalidParameter('sourceには同じProjectの保存済みモデルURIを指定してください');
+    invalidParameter('source must be a stored model URI of the same project');
   const name = decodedName((registeredSource ?? aliasSource)![1]!);
   let version = registeredSource?.[2];
   if (aliasSource) {
@@ -84,7 +84,7 @@ export async function resolveRegistrationSource(
         [model.id, aliasSource[2]!],
       )
     )?.version;
-    if (!version) invalidParameter('sourceのモデルaliasが見つかりません');
+    if (!version) invalidParameter('the model alias in source was not found');
   }
   const source = await findModelVersion(connection, { projectId, name, version: version! });
   const stored = source.metadata.mlflow;
@@ -95,7 +95,7 @@ export async function resolveRegistrationSource(
     !Array.isArray(stored.artifactManifest) ||
     !source.artifactUri
   )
-    invalidParameter('sourceのモデルバージョンには保存済みMLflowモデル一式がありません');
+    invalidParameter('the model version in source has no stored MLflow model files');
   const manifest: ArtifactManifestEntry[] = [];
   for (const entry of stored.artifactManifest) {
     if (
@@ -105,7 +105,7 @@ export async function resolveRegistrationSource(
       typeof entry.path !== 'string' ||
       typeof entry.artifactId !== 'string'
     )
-      invalidParameter('sourceのArtifact manifestが不正です');
+      invalidParameter('invalid artifact manifest in source');
     const artifact = await findSavedArtifact(connection, {
       projectId,
       artifactId: entry.artifactId,

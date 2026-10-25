@@ -22,18 +22,18 @@ export type DatasetVersionReferenceCounts = Record<DatasetVersionReferenceKind, 
 
 // Names the API error uses for each kind of reference, so the refusal says what to look at.
 const REFERENCE_LABELS: Record<DatasetVersionReferenceKind, string> = {
-  runInput: 'Runの入力',
-  runOutput: 'Runの出力',
-  childVersion: 'このバージョンを親にしたバージョン',
-  parentAddition: '親の追記履歴',
-  lineageRelation: '来歴の補完記録',
-  task: 'Taskの入力',
-  automationRule: '自動実行ルールの入力',
-  hook: 'フックの入力',
-  jobPartition: 'Jobの分割の入力',
-  outputDeclaration: 'Runの出力の宣言',
-  mlflowDataset: 'MLflowの記録',
-  workflowVersion: 'ワークフローの入力',
+  runInput: 'run inputs',
+  runOutput: 'run outputs',
+  childVersion: 'versions with this version as a parent',
+  parentAddition: 'parent addition history',
+  lineageRelation: 'supplemented lineage records',
+  task: 'task inputs',
+  automationRule: 'automation rule inputs',
+  hook: 'hook inputs',
+  jobPartition: 'job partition inputs',
+  outputDeclaration: 'run output declarations',
+  mlflowDataset: 'MLflow records',
+  workflowVersion: 'workflow inputs',
 };
 
 /**
@@ -41,13 +41,15 @@ const REFERENCE_LABELS: Record<DatasetVersionReferenceKind, string> = {
  * descendant version or a launch template that names it would lose what it was made from.
  */
 export function assertDatasetVersionUnused(counts: DatasetVersionReferenceCounts): void {
-  const uses = (Object.keys(REFERENCE_LABELS) as DatasetVersionReferenceKind[])
-    .filter((kind) => counts[kind] > 0)
-    .map((kind) => `${REFERENCE_LABELS[kind]} ${counts[kind]}件`);
-  if (!uses.length) return;
-  throw new DomainError(
-    409,
-    `このバージョンは使われているため削除できません（${uses.join('、')}）`,
-    'dataset_version_in_use',
+  const usedKinds = (Object.keys(REFERENCE_LABELS) as DatasetVersionReferenceKind[]).filter(
+    (kind) => counts[kind] > 0,
   );
+  if (!usedKinds.length) return;
+  const uses = usedKinds.map((kind) => `${REFERENCE_LABELS[kind]}: ${counts[kind]}`);
+  throw new DomainError({
+    status: 409,
+    code: 'dataset_version_in_use',
+    message: `this version is in use and cannot be deleted (${uses.join(', ')})`,
+    details: { usages: Object.fromEntries(usedKinds.map((kind) => [kind, counts[kind]])) },
+  });
 }

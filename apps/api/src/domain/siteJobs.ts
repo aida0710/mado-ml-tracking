@@ -14,11 +14,11 @@ export function validateSiteJobOptions(
 ): void {
   if (target.executor === 'site') return;
   if (options.gpuCount > 0 || options.retryOnFailure || options.retryOnTimeout)
-    throw new DomainError(
-      422,
-      'gpuCount・retryOnFailure・retryOnTimeoutはsiteのJobだけの設定です',
-      'site_only_setting',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'site_only_setting',
+      message: 'gpuCount, retryOnFailure and retryOnTimeout are settings of site jobs only',
+    });
 }
 
 /** A manual site's Jobs wait for `mado-tracking submit`; everything else starts without a phase. */

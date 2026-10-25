@@ -135,13 +135,25 @@ export function authRoutes(auth: AuthService): Hono<ApiEnvironment> {
   routes.post('/oidc/backchannel-logout', async (context) => {
     context.header('Cache-Control', 'no-store');
     if (!context.req.header('Content-Type')?.startsWith('application/x-www-form-urlencoded'))
-      throw new DomainError(400, 'logout_tokenをform形式で送ってください', 'invalid_logout_token');
+      throw new DomainError({
+        status: 400,
+        code: 'invalid_logout_token',
+        message: 'send logout_token as form data',
+      });
     const body = await context.req.text();
     if (Buffer.byteLength(body) > MAX_BACKCHANNEL_LOGOUT_BODY_BYTES)
-      throw new DomainError(413, 'logout tokenの上限サイズを超えています', 'body_too_large');
+      throw new DomainError({
+        status: 413,
+        code: 'body_too_large',
+        message: 'the logout token exceeds the size limit',
+      });
     const logoutToken = new URLSearchParams(body).get('logout_token');
     if (!logoutToken)
-      throw new DomainError(400, 'logout_tokenがありません', 'invalid_logout_token');
+      throw new DomainError({
+        status: 400,
+        code: 'invalid_logout_token',
+        message: 'logout_token is missing',
+      });
     await auth.backchannelLogout(logoutToken, requestMetadata(context));
     return context.body(null, 200);
   });

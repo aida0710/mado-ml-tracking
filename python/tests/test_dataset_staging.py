@@ -308,7 +308,7 @@ class JobTokenArtifactHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler's method name
         self.authorizations.append(self.headers.get("Authorization", ""))
-        if self.headers.get("Authorization") != "Bearer mmtj_test-job-token":
+        if self.headers.get("Authorization") != "Bearer mado_mtj_test-job-token":
             self.send_response(401)
             self.end_headers()
             return
@@ -343,7 +343,7 @@ def test_direct_transfer_downloads_on_the_target_with_the_job_token(job_payload,
 
     assert server.completions[-1]["status"] == "finished", server.completions[-1]
     assert "file=audio/nested/0002.wav:RIFF-second" in server.messages()
-    assert JobTokenArtifactHandler.authorizations == ["Bearer mmtj_test-job-token"] * len(AUDIO_FILES)
+    assert JobTokenArtifactHandler.authorizations == ["Bearer mado_mtj_test-job-token"] * len(AUDIO_FILES)
     # The worker token is never sent there, and the worker did not download anything itself.
     assert "test-api-secret" not in "".join(JobTokenArtifactHandler.authorizations)
 

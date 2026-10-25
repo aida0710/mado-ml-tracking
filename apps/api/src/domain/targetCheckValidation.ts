@@ -219,8 +219,8 @@ export const targetCheckCompleteSchema = z.strictObject({
   result: z.union([targetCheckResultSchema, directoryListingResultSchema]),
 });
 
-// API tokens (mmt_/mmtj_) and PEM blocks must never be stored.
-const SECRET_PATTERNS = [/\bmmtj?_[A-Za-z0-9_-]{8,}/, /-----BEGIN [A-Z ]*PRIVATE KEY-----/];
+// API token（mado_mt_）・Job token（mado_mtj_）と PEM の秘密鍵は保存しない。
+const SECRET_PATTERNS = [/\bmado_mtj?_[A-Za-z0-9_-]{8,}/, /-----BEGIN [A-Z ]*PRIVATE KEY-----/];
 
 function connectionTexts(result: TargetCheckResult): string[] {
   const facts = [
@@ -242,11 +242,11 @@ function rejectSecretTexts(texts: string[], secretPaths: string[]): void {
       secretPaths.some((path) => value.includes(path)),
   );
   if (leaks)
-    throw new DomainError(
-      422,
-      '診断結果に鍵のパスや認証情報が含まれています',
-      'target_check_secret_in_result',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'target_check_secret_in_result',
+      message: 'the check result contains key paths or credentials',
+    });
 }
 
 /** The target's own key files name the worker's credentials; a result must never carry them. */
@@ -268,7 +268,11 @@ export function rejectSecretsInListing(result: TargetDirectoryListingResult): vo
 
 export function rejectOversizedResult(result: unknown, maxBytes: number): void {
   if (Buffer.byteLength(JSON.stringify(result)) > maxBytes)
-    throw new DomainError(422, '診断結果が上限サイズを超えています', 'target_check_result_too_large');
+    throw new DomainError({
+      status: 422,
+      code: 'target_check_result_too_large',
+      message: 'the check result exceeds the size limit',
+    });
 }
 
 export function isDirectoryListingResult(

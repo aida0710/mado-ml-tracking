@@ -123,10 +123,10 @@ docker compose up -d
 docker compose ps
 ```
 
-`STATUS`がすべて`Up`で、`postgres`には`(healthy)`が付いていることを確認します。APIの応答は次のコマンドで確かめます。
+`STATUS`がすべて`Up`で、`postgres`と`api`には`(healthy)`が付いていることを確認します。APIの応答は次のコマンドで確かめます。
 
 ```sh
-curl -fsS http://127.0.0.1:5182/api/health
+curl -fsS http://127.0.0.1:5182/healthz
 ```
 
 `{"status":"ok"}`が返れば、Webの中継とAPIの両方が動いています。起動しない場合は`docker compose logs api`を確認します。設定が足りないときは、足りない変数の名前がログに出ます。
@@ -175,7 +175,7 @@ tracking.example.com {
 | 独自API | `https://tracking.example.com/api/` |
 | Python SDKの`MMT_API_URL` | `https://tracking.example.com`（`/api`を付けても同じ） |
 | MLflowの`MLFLOW_TRACKING_URI` | `https://tracking.example.com/api/mlflow/projects/<ProjectのID>` |
-| APIの稼働確認 | `https://tracking.example.com/api/health` |
+| APIの稼働確認 | `https://tracking.example.com/healthz` |
 
 MLflowの接続先はProjectごとに分かれます。［プロジェクト設定］の「SDK・MLflow 3から接続」の［MLflow 3］に、そのProjectのURLが表示されます。
 

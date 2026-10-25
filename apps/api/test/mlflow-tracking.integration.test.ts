@@ -58,7 +58,7 @@ describe.skipIf(!testDatabaseUrl)('公式MLflow 3 tracking契約（隔離Postgre
     expect((await client.post('/experiments/create', { name: 'SDK experiment' })).status).toBe(409);
     expect(
       await (await client.post('/experiments/create', { name: 'SDK experiment' })).json(),
-    ).toMatchObject({ code: 'resource_already_exists' });
+    ).toMatchObject({ code: 'already_exists' });
     expect(
       (await client.post('/experiments/update', { ...created, new_name: 'renamed' })).status,
     ).toBe(200);

@@ -219,22 +219,31 @@ export class ModelAutomationService {
       id: upstream.ruleId,
       mode: 'share',
     });
-    if (!rule) notFound('ModelAutomationRule');
+    if (!rule) notFound('automation rule');
     if (!rule.enabled)
-      throw new DomainError(422, '上流のルールが無効です', 'upstream_rule_disabled');
+      throw new DomainError({
+        status: 422,
+        code: 'upstream_rule_disabled',
+        message: 'the upstream rule is disabled',
+      });
     const chain = await measureRuleChain(connection, {
       projectId: upstream.projectId,
       ruleId: upstream.ruleId,
       maxDepth: MAX_AUTOMATION_CHAIN_DEPTH,
     });
     if (chain.hasCycle)
-      throw new DomainError(422, 'ルールの連鎖が循環しています', 'automation_chain_cycle');
+      throw new DomainError({
+        status: 422,
+        code: 'automation_chain_cycle',
+        message: 'the rule chain is circular',
+      });
     if (chain.depth + 1 > MAX_AUTOMATION_CHAIN_DEPTH)
-      throw new DomainError(
-        422,
-        `ルールの連鎖は${MAX_AUTOMATION_CHAIN_DEPTH}段までです`,
-        'automation_chain_too_deep',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'automation_chain_too_deep',
+        message: `rules can be chained at most ${MAX_AUTOMATION_CHAIN_DEPTH} levels deep`,
+        details: { limit: MAX_AUTOMATION_CHAIN_DEPTH },
+      });
   }
 
   async toggleRule(
@@ -249,7 +258,7 @@ export class ModelAutomationService {
         'UPDATE model_automation_rules SET enabled=$3 WHERE id=$1 AND project_id=$2 RETURNING id',
         [toggle.ruleId, projectId, toggle.enabled],
       );
-      if (!toggled) notFound('ModelAutomationRule');
+      if (!toggled) notFound('automation rule');
       return (await findAutomationRule(connection, { projectId, id: toggle.ruleId }))!;
     });
   }
@@ -282,15 +291,15 @@ export class ModelAutomationService {
           id: transfer.ruleId,
           mode: 'update',
         });
-        if (!rule) notFound('ModelAutomationRule');
+        if (!rule) notFound('automation rule');
         const serviceAccountId = transfer.input.serviceAccountId;
         const account = await findServiceAccount(connection, { projectId, serviceAccountId });
         if (!account || account.status !== 'active' || account.role !== 'admin')
-          throw new DomainError(
-            422,
-            '移管先は同じプロジェクトの有効なService Account（role admin）にしてください',
-            'invalid_automation_owner',
-          );
+          throw new DomainError({
+            status: 422,
+            code: 'invalid_automation_owner',
+            message: 'the new owner must be an active service account of the same project (role admin)',
+          });
         if (rule.runAsUserId !== serviceAccountId) {
           await updateAutomationRuleOwner(connection, {
             ruleId: rule.id,
@@ -321,7 +330,7 @@ export class ModelAutomationService {
     const after = query.cursor
       ? await findAutomationExecutionBoundary(this.database, { ...filter, id: query.cursor })
       : undefined;
-    if (query.cursor && !after) notFound('ModelAutomationExecution cursor');
+    if (query.cursor && !after) notFound('automation execution cursor');
     const page = await listAutomationExecutions(this.database, {
       ...filter,
       limit: query.limit + 1,
@@ -657,26 +666,31 @@ export class ModelAutomationService {
           id: application.ruleId,
           mode: 'update',
         });
-        if (!rule) notFound('ModelAutomationRule');
+        if (!rule) notFound('automation rule');
         if (!rule.enabled)
-          throw new DomainError(422, '無効なルールは適用できません', 'automation_rule_disabled');
+          throw new DomainError({
+            status: 422,
+            code: 'automation_rule_disabled',
+            message: 'a disabled rule cannot be applied',
+          });
         const target = await this.resolveManualTarget(connection, { rule, input: application.input });
         if (!rule.modelFamilies.includes(target.model.family))
-          throw new DomainError(
-            422,
-            `ルールの対象にモデル系列${target.model.family}が含まれていません`,
-            'incompatible_model_family',
-          );
+          throw new DomainError({
+            status: 422,
+            code: 'incompatible_model_family',
+            message: `the rule does not cover model family ${target.model.family}`,
+            details: { modelFamily: target.model.family },
+          });
         const attempts = await summarizeRuleAttempts(connection, {
           ruleId: rule.id,
           modelVersionId: target.model.id,
         });
         if (attempts.hasActive)
-          throw new DomainError(
-            409,
-            '同じルールとモデルバージョンの実行が待機中または実行中です',
-            'automation_execution_active',
-          );
+          throw new DomainError({
+            status: 409,
+            code: 'automation_execution_active',
+            message: 'an execution of the same rule and model version is waiting or running',
+          });
         const executionId = await this.executeRule(connection, {
           rule,
           model: target.model,
@@ -719,11 +733,11 @@ export class ModelAutomationService {
     const { rule, input } = request;
     if ('modelVersionId' in input) {
       if (rule.trigger !== 'model_registered')
-        throw new DomainError(
-          422,
-          '連鎖するルールには上流RunのID（triggerRunId）を指定します',
-          'automation_trigger_mismatch',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'automation_trigger_mismatch',
+          message: 'a chained rule requires the ID of the upstream run (triggerRunId)',
+        });
       const model = await findModelVersion(connection, {
         projectId: rule.projectId,
         id: input.modelVersionId,
@@ -731,30 +745,34 @@ export class ModelAutomationService {
       return { model, triggerRun: null, pipelineRootExecutionId: null };
     }
     if (rule.trigger !== 'upstream_run_finished')
-      throw new DomainError(
-        422,
-        'モデル登録で起動するルールにはモデルバージョンのID（modelVersionId）を指定します',
-        'automation_trigger_mismatch',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'automation_trigger_mismatch',
+        message: 'a rule started by model registration requires the ID of the model version (modelVersionId)',
+      });
     const run = await findRun(connection, { projectId: rule.projectId, id: input.triggerRunId });
     if (run.status !== 'finished')
-      throw new DomainError(422, '上流Runが成功していません', 'upstream_run_not_finished');
+      throw new DomainError({
+        status: 422,
+        code: 'upstream_run_not_finished',
+        message: 'the upstream run has not succeeded',
+      });
     const upstream = await findExecutionForRun(connection, {
       projectId: rule.projectId,
       runId: run.id,
     });
     if (!upstream || upstream.ruleId !== rule.upstreamRuleId)
-      throw new DomainError(
-        422,
-        '指定したRunはこのルールの上流ルールが作ったRunではありません',
-        'upstream_rule_mismatch',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'upstream_rule_mismatch',
+        message: 'the given run was not created by the upstream rule of this rule',
+      });
     if (run.outputDatasetVersionIds.length === 0)
-      throw new DomainError(
-        422,
-        '上流Runに出力DatasetVersionがありません',
-        'upstream_outputs_missing',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'upstream_outputs_missing',
+        message: 'the upstream run has no output dataset versions',
+      });
     const model = await findModelVersion(connection, {
       projectId: rule.projectId,
       id: upstream.modelVersionId,

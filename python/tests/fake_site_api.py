@@ -16,7 +16,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlsplit
 from uuid import uuid4
 
-JOB_TOKEN = "mmtj_site-runner-test-token"
+JOB_TOKEN = "mado_mtj_site-runner-test-token"
 RUNNER_ROUTE = re.compile(r"^/api/projects/[^/]+/jobs/(?P<job>[^/]+)/runner/(?P<action>[a-z]+)$")
 CONTENT_ROUTE = re.compile(r"^/api/projects/[^/]+/artifacts/(?P<artifact>[^/]+)/content$")
 FILES_ROUTE = re.compile(r"^/api/projects/[^/]+/datasets/[^/]+/versions/(?P<version>[^/]+)/files$")

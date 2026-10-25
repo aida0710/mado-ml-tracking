@@ -67,7 +67,7 @@ async function routeUsers(route) {
     });
   if (!path.startsWith('/admin/users')) return api.route(route);
   if (!signedInUser.isAdmin)
-    return reply({ error: '管理者権限が必要です', code: 'admin_required' }, 403);
+    return reply({ error: 'administrator permission required', code: 'admin_required' }, 403);
   users.requests.push({ method, path, body });
   if (path === '/admin/users' && method === 'GET') {
     const query = new URL(request.url()).searchParams.get('query')?.toLowerCase();
@@ -91,7 +91,7 @@ async function routeUsers(route) {
   }
   const userId = path.split('/')[3];
   const user = users.items.find((item) => item.id === userId);
-  if (!user) return reply({ error: 'Userが見つかりません', code: 'not_found' }, 404);
+  if (!user) return reply({ error: 'user not found', code: 'not_found' }, 404);
   if (path.endsWith('/reset-password')) return reply({ temporaryPassword: RESET_PASSWORD });
   if (body.isAdmin !== undefined && user.authSources.includes('oidc'))
     return reply({ error: 'SSO', code: 'admin_role_managed_by_sso' }, 422);

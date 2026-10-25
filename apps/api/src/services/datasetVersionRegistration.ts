@@ -88,7 +88,7 @@ export async function registerDatasetVersion(
     'SELECT * FROM datasets WHERE id=$1 AND project_id=$2',
     [registration.datasetId, projectId],
   );
-  if (!dataset) notFound('Dataset');
+  if (!dataset) notFound('dataset');
   // The parents must outlive this transaction (a version deletion waits, or has already removed
   // one and this answers 404). A version without a name is numbered after the Dataset's integer
   // versions, which needs the Dataset to itself; it is locked in the same id order as the parents'.
@@ -107,11 +107,11 @@ export async function registerDatasetVersion(
     : null;
   if (actor.type === 'runCreator') {
     if (!sourceRun)
-      throw new DomainError(
-        422,
-        'Runの作成者として登録するにはsourceRunIdが必要です',
-        'source_run_required',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'source_run_required',
+        message: 'sourceRunId is required to register as the creator of the run',
+      });
     await requireRunCreatorRegistryAccess(connection, {
       projectId,
       userId: sourceRun.createdBy,
@@ -129,7 +129,7 @@ export async function registerDatasetVersion(
       reference.name !== dataset.name ||
       reference.namespace !== dataset.namespace
     )
-      conflict('External datasetの参照が登録するバージョンと一致しません');
+      conflict('the reference of the external dataset does not match the version being registered');
   }
   const stored = describeStoredContent(registration);
   const version = registration.version ?? (await nextDatasetVersion(connection, dataset.id));
@@ -195,11 +195,12 @@ function describeStoredContent(registration: DatasetVersionRegistration): Stored
   const { files } = registration.content;
   const digest = datasetManifestDigest(files);
   if (registration.digest !== undefined && registration.digest !== digest)
-    throw new DomainError(
-      422,
-      `digestがファイル一覧から計算した値（${digest}）と一致しません`,
-      'dataset_digest_mismatch',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'dataset_digest_mismatch',
+      message: `the digest does not match the value computed from the file list (${digest})`,
+      details: { expectedDigest: digest },
+    });
   return {
     id,
     uri: `${DATASET_VERSION_URI_SCHEME}${id}`,
@@ -255,5 +256,9 @@ async function requireRunCreatorRegistryAccess(
     [member.projectId, member.userId],
   );
   if (!membership)
-    throw new DomainError(403, 'Runの作成者にProjectの編集権限がありません', 'project_forbidden');
+    throw new DomainError({
+      status: 403,
+      code: 'project_forbidden',
+      message: 'the creator of the run does not have edit permission in the project',
+    });
 }

@@ -137,5 +137,5 @@ export const launcher: Launcher = {
   createdAt,
   lastSeenAt: createdAt,
   revokedAt: null,
-  tokenPrefix: 'mmt_abcdefgh',
+  tokenPrefix: 'mado_mt_abcdefgh',
 };

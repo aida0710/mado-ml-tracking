@@ -1,6 +1,6 @@
 import * as english from './en/serviceAccounts';
 import { localized } from './localized';
-import { TOKEN_PURPOSE_LABELS, type TokenScope } from '@mmt/contracts';
+import type { TokenScope } from '@mmt/contracts';
 import type { TokenPurposeOption } from '../lib/tokenPurposes';
 
 // Service Accounts, the Project token list and the token dialog on the settings page.
@@ -56,22 +56,21 @@ export const serviceAccountsText = localized({
     '設定例にtokenは入っていません。端末に貼り付けて実行すると「API token:」と聞かれるので、［tokenをコピー］でコピーしたtokenを貼り付けます。画面には表示されず、shellの履歴にも残りません。',
 } as const, english.serviceAccountsText);
 
-// The purposes the token dialog offers, each with what the token can then do. The purposes' names
-// are in contracts because the API names them too when a token lacks a scope.
+// 発行の画面の用途と、その token でできること。英語の名前は API も使うので contracts にある。
 export const tokenPurposeLabels: Record<TokenPurposeOption, { label: string; hint: string }> = localized({
   recording: {
-    label: TOKEN_PURPOSE_LABELS.recording,
+    label: 'SDK・MLflow 3から記録する',
     hint: 'Runの記録、モデル・データセットの登録、Artifactの保存。使われていないデータセットのバージョンも削除でき、Project adminのtokenならArtifactも削除できます',
   },
   jobSubmission: {
-    label: TOKEN_PURPOSE_LABELS.jobSubmission,
+    label: 'コマンドからJobを投入する',
     hint: '手動投入のコンピュータで、待っているJobを取り出して投入する',
   },
   worker: {
-    label: TOKEN_PURPOSE_LABELS.worker,
+    label: 'workerとしてJobを実行する',
     hint: 'Jobを受け取って実行し、出力を保存する',
   },
-  readOnly: { label: TOKEN_PURPOSE_LABELS.readOnly, hint: 'Runやモデルを読むだけ。記録はできません' },
+  readOnly: { label: '読み取りだけ', hint: 'Runやモデルを読むだけ。記録はできません' },
   custom: { label: 'scopeを自分で選ぶ', hint: '下のscopeを1つずつ選びます' },
 }, english.tokenPurposeLabels);
 

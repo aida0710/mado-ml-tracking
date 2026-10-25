@@ -2,11 +2,12 @@ import { Transform, type TransformCallback } from 'node:stream';
 import { DomainError } from '../domain/errors.js';
 
 export function artifactTooLargeError(maxBytes: number): DomainError {
-  return new DomainError(
-    413,
-    `Artifactの上限サイズ（${maxBytes} bytes）を超えています`,
-    'artifact_too_large',
-  );
+  return new DomainError({
+    status: 413,
+    code: 'artifact_too_large',
+    message: `the artifact exceeds the size limit (${maxBytes} bytes)`,
+    details: { maxBytes },
+  });
 }
 
 /** Rejects a declared Content-Length before any byte is written to storage. */

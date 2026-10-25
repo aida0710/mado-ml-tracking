@@ -74,9 +74,9 @@ class FakeExperimentApi:
             return httpx.Response(self.create_status, json={"error": "refused", "code": "forbidden"})
         if name in self.rival_names:
             self.experiments.append({"id": "rival-experiment", "name": name})
-            return httpx.Response(409, json={"error": "duplicate", "code": "resource_already_exists"})
+            return httpx.Response(409, json={"error": "duplicate", "code": "already_exists"})
         if name in self.deleted_names or any(item["name"] == name for item in self.experiments):
-            return httpx.Response(409, json={"error": "duplicate", "code": "resource_already_exists"})
+            return httpx.Response(409, json={"error": "duplicate", "code": "already_exists"})
         experiment = {"id": str(uuid4()), "name": name}
         self.experiments.append(experiment)
         return httpx.Response(201, json=experiment)

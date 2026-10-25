@@ -50,32 +50,30 @@ Issuing and revoking API tokens, Service Accounts, the global audit log and user
 
 ## Errors
 
-Errors have this shape. `error` is a human-readable message; `code` is for programs. Use `code` in your checks.
+Errors have this shape. `error` is a human-readable English message; `code` is for programs. Use `code` in your checks. Values that appear in the message (the missing scope, a parameter name, a limit, and so on) are also set as fields next to `error` and `code`. The screens build their Japanese text from `code` and those fields.
 
 ```json
-{"error": "API tokenのscopeが不足しています。この操作にはruns:writeが要ります。［プロジェクト設定］の［API tokenを発行］で用途「SDK・MLflow 3から記録する」を選び、tokenを発行し直してください", "code": "insufficient_scope"}
+{"error": "the API token lacks the scope runs:write required for this operation; issue a new token with the purpose \"Record from SDK or MLflow 3\" from Issue API token in Project settings", "code": "scope_required", "scope": "runs:write", "purpose": "recording"}
 ```
-
-`error` is written in Japanese. The message above means: the API token lacks a scope; this operation needs `runs:write`; choose the purpose **Record from SDK or MLflow 3** with **Issue API token** in **Project settings** and issue a new token.
 
 | Status | Common `code` | Meaning |
 | --- | --- | --- |
-| 400 | `invalid_cursor`, `invalid_parameter_value` | Invalid search condition or cursor |
+| 400 | `invalid_cursor`, `invalid_request` | Invalid search condition or cursor |
 | 401 | `authentication_required`, `invalid_token` | Not signed in; token invalid, revoked, or expired |
 | 401 | `identity_sync_required` | An SSO user has not signed in from a browser for 7 days ([Authentik (SSO)](/en/admin/sso)) |
-| 403 | `insufficient_scope` | The token lacks a scope (`error` names the missing scope and where to issue a new token) |
-| 403 | `project_forbidden` | Insufficient Project role, or a Project other than the token's (`error` names the token's Project) |
+| 403 | `scope_required` | The token lacks a scope (`scope` is the missing scope, `purpose` the purpose to choose when issuing a new token) |
+| 403 | `project_forbidden` | Insufficient Project role, or a Project other than the token's (then `tokenProjectName` names the token's Project) |
 | 403 | `session_required` | Only available with a browser session |
 | 403 | `job_token_forbidden` | Not allowed for Job tokens |
 | 403 | `job_owner_required` | Stopping or retrying a Job someone else created (only its creator or a Project Admin) |
 | 403 | `password_change_required` | The first-login password change is not done |
-| 404 | — | The target does not exist or belongs to another Project |
+| 404 | `not_found` | The target does not exist or belongs to another Project |
 | 409 | `conflict` and others | State conflict (removing the last Admin, acting on a finished Job, archiving a Project with active Jobs (`project_has_active_jobs`), deleting a Project that is not archived (`project_not_archived`), deleting a dataset version that is in use (`dataset_version_in_use`), and so on) |
 | 413 | `artifact_too_large` | The Artifact exceeds the limit (200 GiB by default) |
 | 422 | `invalid_request` and others | Invalid input |
 | 429 | `rate_limited` | Login attempt limit. Wait `Retry-After` seconds |
 | 503 | `oidc_unavailable` | Authentik is unreachable, so the SSO session cannot be checked |
-| 503 | `database_unavailable` | The database is unreachable (`GET /api/health`) |
+| 503 | `database_unavailable` | The database is unreachable (`GET /healthz`) |
 
 ## Feature groups
 
@@ -83,7 +81,7 @@ The OpenAPI document groups the API by tag.
 
 | Tag | Content |
 | --- | --- |
-| `system` | Health check (`GET /api/health`) and the OpenAPI document |
+| `system` | Health check (`GET /healthz`, outside `/api`) and the OpenAPI document |
 | `auth` | Login, sessions, your account |
 | `access` | Project members, group grants |
 | `tokens` | API tokens, Service Accounts |

@@ -3,6 +3,43 @@
 import type { JobStatus, RunStatus } from './index.js';
 
 export type SweepMethod = 'grid' | 'random' | 'bayes';
+
+/**
+ * 探索空間が 422 sweep_space_invalid になった理由（応答の `reason`）。画面はこれと横の項目
+ * （`parameter`、`limit`、`count` など）から文を作る。
+ */
+export const SWEEP_SPACE_VIOLATIONS = [
+  'parameters_empty',
+  'parameter_limit',
+  'parameter_name_empty',
+  'definition_missing',
+  'definition_ambiguous',
+  'values_empty',
+  'values_limit',
+  'values_types',
+  'values_duplicate',
+  'value_types',
+  'distribution_unsupported',
+  'range_finite',
+  'range_order',
+  'log_uniform_positive',
+  'range_integers',
+  'quantum_distribution',
+  'quantum_positive',
+  'quantum_width',
+  'grid_continuous',
+  'grid_limit',
+] as const;
+export type SweepSpaceViolation = (typeof SWEEP_SPACE_VIOLATIONS)[number];
+
+/** early_terminate が 422 sweep_early_terminate_invalid になった理由（応答の `reason`）。 */
+export const SWEEP_EARLY_TERMINATE_VIOLATIONS = [
+  'type_unsupported',
+  'min_iter_positive',
+  'eta_integer',
+  'max_iter_order',
+] as const;
+export type SweepEarlyTerminateViolation = (typeof SWEEP_EARLY_TERMINATE_VIOLATIONS)[number];
 export type SweepParameterValue = string | number | boolean;
 
 /**

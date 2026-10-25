@@ -1,5 +1,3 @@
-import type { ApiError } from '@mmt/contracts';
-
 // Client-side failure codes. They never come from the API and are translated in lib/errorMessage.ts.
 export const NETWORK_ERROR_CODE = 'network_error';
 export const INVALID_RESPONSE_CODE = 'invalid_response';
@@ -15,23 +13,44 @@ export const ARTIFACT_CONTENT_UNAVAILABLE_CODE = 'artifact_content_unavailable';
 export class RequestError extends Error {
   readonly status: number;
   readonly code: string | undefined;
+  /** API の英語の文（本文の `error`）。 */
   readonly serverMessage: string | undefined;
+  /** 本文の error・code の横の項目。文に入る値で、画面はこれを読んで訳す。 */
+  readonly details: Readonly<Record<string, unknown>>;
 
   constructor({
     status,
     code,
     serverMessage,
+    details = {},
   }: {
     status: number;
     code?: string;
     serverMessage?: string;
+    details?: Readonly<Record<string, unknown>>;
   }) {
     super(serverMessage ?? `Request failed: ${code ?? `HTTP ${status}`}`);
     this.name = 'RequestError';
     this.status = status;
     this.code = code;
     this.serverMessage = serverMessage;
+    this.details = details;
   }
+}
+
+/**
+ * API のエラー応答の本文（`{ error, code, ...details }`）から RequestError を作る。API の形でない本文
+ * （手前の proxy の HTML、空の本文）なら status だけを持つ。
+ */
+export function requestErrorFromBody(status: number, body: unknown): RequestError {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) return new RequestError({ status });
+  const { error, code, ...details } = body as Record<string, unknown>;
+  return new RequestError({
+    status,
+    code: typeof code === 'string' ? code : undefined,
+    serverMessage: typeof error === 'string' ? error : undefined,
+    details,
+  });
 }
 
 export function invalidResponseError(status = 200): RequestError {
@@ -55,14 +74,7 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
   }
   if (response.status === 204) return undefined as T;
   const payload: unknown = await response.json().catch(() => null);
-  if (!response.ok) {
-    const apiError = payload as Partial<ApiError> | null;
-    throw new RequestError({
-      status: response.status,
-      code: typeof apiError?.code === 'string' ? apiError.code : undefined,
-      serverMessage: typeof apiError?.error === 'string' ? apiError.error : undefined,
-    });
-  }
+  if (!response.ok) throw requestErrorFromBody(response.status, payload);
   if (payload === null) throw invalidResponseError(response.status);
   return payload as T;
 }

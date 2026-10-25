@@ -252,7 +252,7 @@ describe.skipIf(!testDatabaseUrl)('前処理から学習までのワークフロ
     await fixture.finish(await fixture.claim());
     const failed = await fixture.execution(execution.id);
     expect(failed.status).toBe('failed');
-    expect(failed.error).toContain('出力データセット');
+    expect(failed.error).toContain('output dataset');
     expect(failed.steps[1]!.runId).toBeNull();
     expect(
       (await harness.database.query('SELECT count(*)::int AS count FROM runs')).rows[0].count,

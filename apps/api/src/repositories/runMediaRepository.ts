@@ -70,7 +70,7 @@ function toRecord({ cursorCreatedAt: _cursor, ...row }: RecordRow): RunMediaReco
 }
 
 function invalidCursor(): never {
-  throw new DomainError(400, 'cursorが不正です', 'invalid_cursor');
+  throw new DomainError({ status: 400, code: 'invalid_cursor', message: 'invalid cursor' });
 }
 
 function encodeCursor(row: RecordRow): string {

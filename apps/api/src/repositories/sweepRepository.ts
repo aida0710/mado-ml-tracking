@@ -86,7 +86,7 @@ export async function findSweep(
     `SELECT ${sweepColumns} FROM sweeps WHERE project_id=$1 AND id=$2 ${reference.lock ? 'FOR UPDATE' : ''}`,
     [reference.projectId, reference.id],
   );
-  if (!sweep) notFound('Sweep');
+  if (!sweep) notFound('sweep');
   return sweep;
 }
 
@@ -138,7 +138,7 @@ export async function listSweeps(
         [filter.projectId, filter.cursor],
       )
     : undefined;
-  if (filter.cursor && !boundary) notFound('Sweep cursor');
+  if (filter.cursor && !boundary) notFound('sweep cursor');
   return rows<StoredSweep>(
     connection,
     `SELECT ${sweepColumns} FROM sweeps WHERE project_id=$1 AND ($2::text IS NULL OR status=$2)
@@ -271,7 +271,7 @@ export async function listTrialPage(
       'SELECT id FROM sweep_trials WHERE sweep_id=$1 AND id=$2',
       [page.sweepId, page.cursor],
     );
-    if (!boundary) notFound('SweepTrial cursor');
+    if (!boundary) notFound('sweep trial cursor');
   }
   const sortKey = page.orderBy === 'objective' ? objectiveSortKey : 't.trial_index';
   return rows<SweepTrial>(

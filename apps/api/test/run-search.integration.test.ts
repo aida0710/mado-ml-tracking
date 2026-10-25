@@ -280,7 +280,7 @@ describe.skipIf(!testDatabaseUrl)('全履歴のRun検索（独立PostgreSQL）',
     expect(await names("attributes.status = 'queued'")).toEqual(['waiting']);
     const unknown = await searchRuns({ filter: "attributes.status = 'stopped'" });
     expect(unknown.status).toBe(400);
-    expect(((await unknown.json()) as { code: string }).code).toBe('invalid_parameter_value');
+    expect(((await unknown.json()) as { code: string }).code).toBe('invalid_request');
   });
 
   it('型に合わない比較は400で、使える比較と直した式を返す', async () => {
@@ -290,12 +290,12 @@ describe.skipIf(!testDatabaseUrl)('全履歴のRun検索（独立PostgreSQL）',
       return ((await response.json()) as { error: string }).error;
     };
     const paramsComparison = await messageOf('params.learning_rate > 0.00005');
-    expect(paramsComparison).toContain('params.learning_rateは文字列として比べる');
+    expect(paramsComparison).toContain('params.learning_rate is compared as a string');
     expect(paramsComparison).toContain('= != LIKE ILIKE');
     expect(await messageOf('metrics.train.loss < 0.2 and params.batch_size = 16')).toContain(
       "params.batch_size = '16'",
     );
-    expect(await messageOf("metrics.loss < '0.2'")).toContain('metrics.lossの値は数値で書きます');
+    expect(await messageOf("metrics.loss < '0.2'")).toContain('the value of metrics.loss must be a number');
     expect(await messageOf("metrics.loss LIKE '0.%'")).toContain('= != > >= < <=');
   });
 
@@ -330,7 +330,7 @@ describe.skipIf(!testDatabaseUrl)('全履歴のRun検索（独立PostgreSQL）',
   it('構文エラー・上限超過は400/422、他Projectのexperimentは404を返す', async () => {
     const syntax = await searchRuns({ filter: "tags.a = 'b' OR tags.a = 'c'" });
     expect(syntax.status).toBe(400);
-    expect(((await syntax.json()) as { code: string }).code).toBe('invalid_parameter_value');
+    expect(((await syntax.json()) as { code: string }).code).toBe('invalid_request');
     expect((await searchRuns({ orderBy: ['metrics.loss SIDEWAYS'] })).status).toBe(400);
     expect((await searchRuns({ filter: 'x'.repeat(2001) })).status).toBe(422);
     expect((await searchRuns({ limit: 501 })).status).toBe(422);

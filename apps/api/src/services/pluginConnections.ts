@@ -14,11 +14,11 @@ import type { PluginConnectionRecord } from '../plugins/pluginConnection.js';
 import { requireGlobalAdmin, requireProject } from './accessService.js';
 
 function credentialsRequired(): never {
-  throw new DomainError(
-    422,
-    'Madoのアクセストークンを設定してから有効にしてください',
-    'plugin_credentials_required',
-  );
+  throw new DomainError({
+    status: 422,
+    code: 'plugin_credentials_required',
+    message: 'set the Mado access token before enabling it',
+  });
 }
 
 export class PluginConnections {
@@ -129,7 +129,7 @@ export class PluginConnections {
       );
       const { input } = request;
       if (input.expectedRevision !== undefined && input.expectedRevision !== plugin.configRevision)
-        conflict('連携設定が変更されています。更新してから保存してください');
+        conflict('the integration settings have changed; refresh and then save');
       const config = input.config ?? plugin.config;
       if (input.config)
         await this.assertInstanceUnchanged(connection, plugin, input.config);
@@ -190,10 +190,14 @@ export class PluginConnections {
       `SELECT * FROM plugin_connections WHERE project_id=$1 AND id=$2 ${reference.lock ? `FOR ${reference.lock.toUpperCase()}` : ''}`,
       [reference.projectId, reference.pluginId],
     );
-    if (!plugin) notFound('連携');
+    if (!plugin) notFound('integration');
     if (reference.allowUnconfigured) return plugin;
     if (!reference.allowDisabled && !plugin.enabled)
-      throw new DomainError(422, '連携は無効です', 'plugin_disabled');
+      throw new DomainError({
+        status: 422,
+        code: 'plugin_disabled',
+        message: 'the integration is disabled',
+      });
     return plugin;
   }
 
@@ -217,14 +221,14 @@ export class PluginConnections {
 
   async assertRevision(plugin: PluginConnectionRecord, expectedRevision?: number): Promise<void> {
     if (expectedRevision !== undefined && expectedRevision !== plugin.configRevision)
-      conflict('連携設定が変更されています。再確認してください');
+      conflict('the integration settings have changed; check them again');
     const current = await first<{ configRevision: number }>(
       this.database,
       'SELECT config_revision FROM plugin_connections WHERE id=$1',
       [plugin.id],
     );
     if (!current || current.configRevision !== plugin.configRevision)
-      conflict('連携設定が変更されています。再確認してください');
+      conflict('the integration settings have changed; check them again');
   }
 
   private records(projectId: string) {
@@ -254,7 +258,7 @@ export class PluginConnections {
     );
     if (history?.exists)
       conflict(
-        'この連携には既存のバージョンまたは送信記録があります。別のMadoには新しい連携を設定してください',
+        'this integration already has versions or delivery records; set up a new integration for another Mado',
       );
   }
 }

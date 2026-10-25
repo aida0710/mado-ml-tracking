@@ -59,11 +59,12 @@ function webhookSecretContext(hookId: string): string {
 }
 
 function payloadTooLarge(): never {
-  throw new DomainError(
-    413,
-    `payloadは${HOOK_PAYLOAD_MAX_BYTES} byteまでです`,
-    'body_too_large',
-  );
+  throw new DomainError({
+    status: 413,
+    code: 'body_too_large',
+    message: `payload can be at most ${HOOK_PAYLOAD_MAX_BYTES} bytes`,
+    details: { maxBytes: HOOK_PAYLOAD_MAX_BYTES },
+  });
 }
 
 // A JSON object reaches the Job as it was sent; anything else is kept as text under `body`.
@@ -115,11 +116,11 @@ export class HookService {
     assertNoReservedRunTags(input.template.tags);
     const secretKey = this.config.hookSecretKey;
     if (input.trigger === 'webhook' && !secretKey)
-      throw new DomainError(
-        422,
-        'webhookのフックにはMMT_HOOK_SECRET_KEYの設定が必要です',
-        'hook_secret_key_missing',
-      );
+      throw new DomainError({
+        status: 422,
+        code: 'hook_secret_key_missing',
+        message: 'a webhook hook requires MMT_HOOK_SECRET_KEY to be set',
+      });
     return transaction(this.database, async (connection) => {
       await requireProject(connection, principal, {
         projectId,
@@ -175,7 +176,7 @@ export class HookService {
         'UPDATE hooks SET enabled=$3 WHERE id=$1 AND project_id=$2',
         [toggle.hookId, projectId, toggle.enabled],
       );
-      if (!updated.rowCount) notFound('Hook');
+      if (!updated.rowCount) notFound('hook');
       return (await findHook(connection, { projectId, id: toggle.hookId }))!;
     });
   }
@@ -209,15 +210,15 @@ export class HookService {
           scope: 'admin',
         });
         const hook = await lockHook(connection, { projectId, id: transfer.hookId, mode: 'update' });
-        if (!hook) notFound('Hook');
+        if (!hook) notFound('hook');
         const serviceAccountId = transfer.input.serviceAccountId;
         const account = await findServiceAccount(connection, { projectId, serviceAccountId });
         if (!account || account.status !== 'active' || !HOOK_OWNER_ROLES.includes(account.role ?? ''))
-          throw new DomainError(
-            422,
-            '移管先は同じプロジェクトの有効なService Account（role editorかadmin）にしてください',
-            'invalid_hook_owner',
-          );
+          throw new DomainError({
+            status: 422,
+            code: 'invalid_hook_owner',
+            message: 'the new owner must be an active service account of the same project (role editor or admin)',
+          });
         if (hook.runAsUserId !== serviceAccountId) {
           await updateHookOwner(connection, { hookId: hook.id, runAsUserId: serviceAccountId });
           await writeAuditEvent(connection, {
@@ -245,10 +246,18 @@ export class HookService {
         scope: 'jobs:write',
       });
       const hook = await lockHook(connection, { projectId, id: request.hookId });
-      if (!hook) notFound('Hook');
+      if (!hook) notFound('hook');
       if (hook.trigger !== 'manual')
-        throw new DomainError(422, '手動で起動できるのはtriggerがmanualのフックだけです', 'hook_not_manual');
-      if (!hook.enabled) throw new DomainError(409, 'フックが無効です', 'hook_disabled');
+        throw new DomainError({
+          status: 422,
+          code: 'hook_not_manual',
+          message: 'only hooks whose trigger is manual can be started by hand',
+        });
+      if (!hook.enabled) throw new DomainError({
+        status: 409,
+        code: 'hook_disabled',
+        message: 'the hook is disabled',
+      });
       const id = await this.dispatcher.dispatchRequest(connection, {
         hook,
         subjectKind: 'manual',
@@ -267,7 +276,7 @@ export class HookService {
   ): Promise<HookExecutionPage> {
     await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
     if (query.cursor && !(await hookExecutionExists(this.database, { projectId, id: query.cursor })))
-      notFound('HookExecution cursor');
+      notFound('hook execution cursor');
     const page = await listHookExecutions(this.database, {
       projectId,
       hookId: query.hookId,
@@ -288,10 +297,14 @@ export class HookService {
     body: Buffer;
   }): Promise<{ accepted: true; executionId: string }> {
     const stored = await findWebhookSecret(this.database, delivery.hookId);
-    if (!stored?.signature) notFound('Hook');
+    if (!stored?.signature) notFound('hook');
     const key = this.config.hookSecretKey;
     if (!key)
-      throw new DomainError(503, 'MMT_HOOK_SECRET_KEYが設定されていません', 'hook_secret_key_missing');
+      throw new DomainError({
+        status: 503,
+        code: 'hook_secret_key_missing',
+        message: 'MMT_HOOK_SECRET_KEY is not set',
+      });
     let secret: string;
     try {
       secret = decryptSecret({
@@ -300,7 +313,11 @@ export class HookService {
         context: webhookSecretContext(delivery.hookId),
       });
     } catch {
-      throw new DomainError(503, 'webhookのsecretを読めません（鍵が違います）', 'hook_secret_key_missing');
+      throw new DomainError({
+        status: 503,
+        code: 'hook_secret_key_missing',
+        message: 'cannot read the webhook secret (the key is different)',
+      });
     }
     if (delivery.body.length > HOOK_PAYLOAD_MAX_BYTES) payloadTooLarge();
     const headers = WEBHOOK_HEADERS[stored.signature];
@@ -311,12 +328,20 @@ export class HookService {
       body: delivery.body,
       nowSeconds: Math.floor(this.clock().getTime() / 1000),
     });
-    if (!verified) throw new DomainError(401, '署名が一致しません', 'invalid_signature');
-    if (!stored.enabled) throw new DomainError(409, 'フックが無効です', 'hook_disabled');
+    if (!verified) throw new DomainError({
+      status: 401,
+      code: 'invalid_signature',
+      message: 'the signature does not match',
+    });
+    if (!stored.enabled) throw new DomainError({
+      status: 409,
+      code: 'hook_disabled',
+      message: 'the hook is disabled',
+    });
     const deliveryId = delivery.header(headers.delivery)?.trim().slice(0, 200);
     return transaction(this.database, async (connection) => {
       const hook = await lockHook(connection, { projectId: stored.projectId, id: delivery.hookId });
-      if (!hook) notFound('Hook');
+      if (!hook) notFound('hook');
       const executionId = await this.dispatcher.dispatchRequest(connection, {
         hook,
         subjectKind: 'webhook',
@@ -364,7 +389,11 @@ export class HookService {
       usage: { userId: creation.userId },
     });
     if (template.arraySize !== null && target.executor !== 'site')
-      throw new DomainError(422, 'arrayはsiteでだけ実行できます', 'site_target_required');
+      throw new DomainError({
+        status: 422,
+        code: 'site_target_required',
+        message: 'arrays can run only on sites',
+      });
     if (template.datasetPartitionVersionId)
       await assertPartitionVersion(connection, {
         projectId,

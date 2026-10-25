@@ -93,14 +93,14 @@ export class RunTrackingService {
         [experiment.id],
       );
       if (lockedExperiment?.lifecycleStage !== 'active')
-        invalidParameter('削除済みExperimentにRunを作成できません');
+        invalidParameter('runs cannot be created in a deleted experiment');
       const tags = collectValues(input.tags);
       const name =
         input.run_name ||
         tags['mlflow.runName'] ||
         `run-${randomUUID().slice(0, RUN_NAME_ID_LENGTH)}`;
       if (input.run_name && tags['mlflow.runName'] && input.run_name !== tags['mlflow.runName'])
-        invalidParameter('run_nameとmlflow.runNameが一致しません');
+        invalidParameter('run_name and mlflow.runName do not match');
       tags['mlflow.runName'] = name;
       const parentRunId =
         tags['mlflow.parentRunId'] === undefined
@@ -275,7 +275,7 @@ export class RunTrackingService {
   ): Promise<void> {
     rejectReservedTags([input.key]);
     await this.write({ principal, projectId, runId: input.runId }, async (connection, run) => {
-      if (!Object.hasOwn(run.tags, input.key)) notFound('Run Tag');
+      if (!Object.hasOwn(run.tags, input.key)) notFound('run tag');
       await connection.query(
         "UPDATE runs SET tags=tags-$2::text,parent_run_id=CASE WHEN $2='mlflow.parentRunId' THEN NULL ELSE parent_run_id END WHERE id=$1",
         [run.id, input.key],
@@ -291,13 +291,13 @@ export class RunTrackingService {
       { principal, projectId, runId: input.runId },
       async (connection, run) => {
         if (run.lifecycleStage === input.lifecycleStage)
-          invalidParameter(`Runは既に${input.lifecycleStage}です`);
+          invalidParameter(`the run is already ${input.lifecycleStage}`);
         const job = await first(
           connection,
           "SELECT id FROM jobs WHERE run_id=$1 AND status NOT IN ('finished','failed','canceled')",
           [run.id],
         );
-        if (job && input.lifecycleStage === 'deleted') conflict('実行中のJobのRunは削除できません');
+        if (job && input.lifecycleStage === 'deleted') conflict('a run whose job is running cannot be deleted');
         await connection.query('UPDATE runs SET lifecycle_stage=$2 WHERE id=$1', [
           run.id,
           input.lifecycleStage,
@@ -366,22 +366,22 @@ export class RunTrackingService {
       try {
         const parsed: unknown = JSON.parse(input.modelJson);
         if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
-          invalidParameter('model_jsonにはJSON objectが必要です');
+          invalidParameter('model_json must be a JSON object');
         model = parsed as Record<string, unknown>;
       } catch {
-        invalidParameter('model_jsonが不正です');
+        invalidParameter('invalid model_json');
       }
       if (model.run_id && model.run_id !== run.id)
-        invalidParameter('model_jsonのrun_idが一致しません');
+        invalidParameter('run_id in model_json does not match');
       let history: unknown[];
       try {
         history = run.tags['mlflow.log-model.history']
           ? (JSON.parse(run.tags['mlflow.log-model.history']) as unknown[])
           : [];
       } catch {
-        invalidParameter('既存model履歴が不正です');
+        invalidParameter('the stored model history is invalid');
       }
-      if (!Array.isArray(history)) invalidParameter('既存model履歴が不正です');
+      if (!Array.isArray(history)) invalidParameter('the stored model history is invalid');
       if (!history.some((entry) => JSON.stringify(entry) === JSON.stringify(model)))
         history.push(model);
       await connection.query('UPDATE runs SET tags=tags||$2::jsonb WHERE id=$1', [
@@ -428,7 +428,7 @@ export class RunTrackingService {
         [existingRun.experimentId, projectId],
       );
       if (experiment?.lifecycleStage !== 'active')
-        invalidParameter('削除済みExperimentのRunは変更できません');
+        invalidParameter('runs of a deleted experiment cannot be changed');
       // Parent edits serialize before Run locks so simultaneous opposite edges cannot form a cycle.
       if (options.lockParentage)
         await connection.query('SELECT pg_advisory_xact_lock($1,hashtext($2))', [
@@ -445,9 +445,9 @@ export class RunTrackingService {
         `SELECT * FROM runs WHERE project_id=$1 AND id=$2 ${runLock}`,
         [projectId, runId],
       );
-      if (!run) notFound('Run');
+      if (!run) notFound('run');
       if (!options.allowDeleted && run.lifecycleStage !== 'active')
-        invalidParameter('削除済みRunは変更できません');
+        invalidParameter('a deleted run cannot be changed');
       if (!options.allowFinalizedJobRun) await assertRunRecordsWritable(connection, run);
       const modelIds = [...new Set(options.modelIds ?? [])].sort();
       if (modelIds.length) {
@@ -457,7 +457,7 @@ export class RunTrackingService {
           [projectId, modelIds],
         );
         if (models.length !== modelIds.length)
-          invalidParameter('同じProjectのLogged Modelが必要です');
+          invalidParameter('a logged model of the same project is required');
       }
       return operation(connection, run);
     });
@@ -490,7 +490,7 @@ export class RunTrackingService {
       id: parentRunId,
     })) as TrackingRun;
     if (parent.experimentId !== request.experimentId || parent.lifecycleStage !== 'active')
-      invalidParameter('親Runは同じactive Experimentに属する必要があります');
+      invalidParameter('the parent run must belong to the same active experiment');
     if (!request.runId) return;
     const cycle = await first(
       connection,
@@ -500,6 +500,6 @@ export class RunTrackingService {
       ) SELECT id FROM ancestors WHERE id=$2`,
       [parentRunId, request.runId, request.projectId],
     );
-    if (cycle) invalidParameter('parentRunIdに循環参照は指定できません');
+    if (cycle) invalidParameter('parentRunId cannot form a cycle');
   }
 }

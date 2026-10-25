@@ -53,7 +53,11 @@ export class LineageRelationService {
           const lifecycle = await first<{ lifecycleStage: string }>(connection,
             'SELECT lifecycle_stage FROM runs WHERE project_id=$1 AND id=$2', [projectId, node.id]);
           if (!isTerminalStatus(run.status) || lifecycle?.lifecycleStage !== 'active')
-            throw new DomainError(422, '終了済みの有効なRunだけ補完できます', 'lineage_run_not_terminal');
+            throw new DomainError({
+              status: 422,
+              code: 'lineage_run_not_terminal',
+              message: 'only finished, active runs can be supplemented',
+            });
         }
       }
       const existing = await first<LineageRelationAddition>(connection,
@@ -67,12 +71,20 @@ export class LineageRelationService {
           "SELECT source_id FROM lineage_relation_additions WHERE project_id=$1 AND target_id=$2 AND relation='output'",
           [projectId, input.targetId]);
         if ([version!.sourceRunId, previous?.sourceId].some((id) => id && id !== input.sourceId))
-          throw new DomainError(409, '別の生成元が記録されています', 'lineage_output_conflict');
+          throw new DomainError({
+            status: 409,
+            code: 'lineage_output_conflict',
+            message: 'a different producer is already recorded',
+          });
       }
       // A reference records evidence, not causality, and is excluded from cycle checks.
       if (input.relation !== 'reference' && await hasLineageAncestor(connection, {
         projectId, ancestorId: input.targetId, descendantIds: [input.sourceId],
-      })) throw new DomainError(422, '来歴が循環します', 'lineage_relation_cycle');
+      })) throw new DomainError({
+        status: 422,
+        code: 'lineage_relation_cycle',
+        message: 'the lineage would become circular',
+      });
       const added = await first<LineageRelationAddition>(connection,
         `INSERT INTO lineage_relation_additions
          (project_id,source_id,source_kind,target_id,target_kind,relation,reason,evidence,created_by)

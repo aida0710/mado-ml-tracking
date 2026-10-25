@@ -6,7 +6,7 @@ import { EXECUTION_POLL_MS, useQuery, type QueryState } from './useQuery';
 
 // The API's answer to a filter it cannot run (an unsupported field or comparison).
 const FILTER_REJECTED_STATUS = 400;
-const FILTER_REJECTED_CODE = 'invalid_parameter_value';
+const FILTER_REJECTED_CODE = 'invalid_request';
 
 type RunSearchOutcome = { page: RunSearchPage } | { rejection: RequestError };
 

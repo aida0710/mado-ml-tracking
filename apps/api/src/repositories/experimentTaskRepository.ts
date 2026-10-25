@@ -12,7 +12,7 @@ export async function findTask(
     `SELECT * FROM experiment_tasks WHERE project_id=$1 AND id=$2 ${reference.lock ? 'FOR NO KEY UPDATE' : ''}`,
     [reference.projectId, reference.id],
   );
-  if (!task) notFound('ExperimentTask');
+  if (!task) notFound('experiment task');
   return task;
 }
 

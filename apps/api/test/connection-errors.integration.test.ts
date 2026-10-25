@@ -51,10 +51,11 @@ describe.skipIf(!testDatabaseUrl)('接続先とtokenを間違えたときのエ�
     const native = await createNativeRun(fixture.project.id, token);
     expect(native.status).toBe(403);
     const nativeError = (await native.json()) as { error: string; code: string };
-    expect(nativeError.code).toBe('insufficient_scope');
+    expect(nativeError.code).toBe('scope_required');
     expect(nativeError.error).toContain('runs:write');
-    expect(nativeError.error).toContain('［API tokenを発行］');
-    expect(nativeError.error).toContain('SDK・MLflow 3から記録する');
+    expect(nativeError.error).toContain('Issue API token');
+    expect(nativeError.error).toContain('Record from SDK or MLflow 3');
+    expect(nativeError).toMatchObject({ scope: 'runs:write', purpose: 'recording' });
 
     const mlflow = await mlflowCreateRun(bearer(token));
     expect(mlflow.status).toBe(403);
@@ -76,7 +77,8 @@ describe.skipIf(!testDatabaseUrl)('接続先とtokenを間違えたときのエ�
     expect(response.status).toBe(403);
     const failure = (await response.json()) as { error: string; code: string };
     expect(failure.code).toBe('project_forbidden');
-    expect(failure.error).toContain('Project「Test Project」用');
+    expect(failure.error).toContain('project "Test Project"');
+    expect(failure).toMatchObject({ tokenProjectName: 'Test Project' });
     expect(failure.error).toContain('MLFLOW_TRACKING_URI');
   });
 
@@ -107,10 +109,10 @@ describe.skipIf(!testDatabaseUrl)('接続先とtokenを間違えたときのエ�
         expect(response.status, path).toBe(404);
         const failure = (await response.json()) as { error_code: string; message: string };
         expect(failure.error_code, path).toBe('ENDPOINT_NOT_FOUND');
-        expect(failure.message, path).toContain(`${PUBLIC_URL}/api/mlflow/projects/<ProjectのID>`);
+        expect(failure.message, path).toContain(`${PUBLIC_URL}/api/mlflow/projects/<project ID>`);
       }
     }
     const unknownNative = await request(harness.app, '/api/no-such-endpoint');
-    expect(await unknownNative.json()).toEqual({ error: 'APIが見つかりません', code: 'not_found' });
+    expect(await unknownNative.json()).toEqual({ error: 'API route not found', code: 'not_found' });
   });
 });

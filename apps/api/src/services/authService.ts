@@ -127,13 +127,17 @@ export class AuthService {
       syncedAfter,
     });
     if (!identity)
-      throw new DomainError(401, 'API tokenが無効または失効しています', 'invalid_token');
+      throw new DomainError({
+        status: 401,
+        code: 'invalid_token',
+        message: 'the API token is invalid or revoked',
+      });
     if (identity.isIdentitySyncStale)
-      throw new DomainError(
-        401,
-        'SSOのgroupが長く確認されていないため、このtokenは止まっています。ブラウザで一度ログインしてください',
-        'identity_sync_required',
-      );
+      throw new DomainError({
+        status: 401,
+        code: 'identity_sync_required',
+        message: 'this token is paused because the SSO groups have not been checked for a long time; sign in once in the browser',
+      });
     return { user: identity.user, token: identity.token, method: 'token' };
   }
 
@@ -142,7 +146,11 @@ export class AuthService {
     metadata: RequestMetadata,
   ): Promise<SessionLogin> {
     if (this.config.authMode !== 'development')
-      throw new DomainError(404, 'Development loginは無効です', 'development_login_disabled');
+      throw new DomainError({
+        status: 404,
+        code: 'development_login_disabled',
+        message: 'development login is disabled',
+      });
     const email = identity.email.toLowerCase();
     return transaction(this.database, async (connection) => {
       const user = await upsertIdentity(connection, {
@@ -170,7 +178,11 @@ export class AuthService {
   }
 
   async beginLogin(metadata: RequestMetadata): Promise<{ url: string; binding: string }> {
-    if (!this.config.oidc) throw new DomainError(404, 'OIDC loginは無効です', 'oidc_disabled');
+    if (!this.config.oidc) throw new DomainError({
+      status: 404,
+      code: 'oidc_disabled',
+      message: 'OIDC login is disabled',
+    });
     this.rateLimiter.consumeOrThrow(
       `oidc-start:ip:${metadata.ipAddress ?? 'unknown'}`,
       OIDC_START_IP_LIMIT,
@@ -202,7 +214,11 @@ export class AuthService {
     binding: string | undefined,
     metadata: RequestMetadata,
   ): Promise<SessionLogin> {
-    if (!this.config.oidc) throw new DomainError(404, 'OIDC loginは無効です', 'oidc_disabled');
+    if (!this.config.oidc) throw new DomainError({
+      status: 404,
+      code: 'oidc_disabled',
+      message: 'OIDC login is disabled',
+    });
     try {
       return await this.completeOidcLogin(callbackUrl, binding, metadata);
     } catch (error) {
@@ -224,11 +240,11 @@ export class AuthService {
   ): Promise<SessionLogin> {
     const state = callbackUrl.searchParams.get('state');
     if (!binding || !state || callbackUrl.searchParams.getAll('state').length !== 1)
-      throw new DomainError(
-        401,
-        'Loginのブラウザまたはstateを確認できません',
-        'invalid_oidc_state',
-      );
+      throw new DomainError({
+        status: 401,
+        code: 'invalid_oidc_state',
+        message: 'cannot verify the browser or the state of the login',
+      });
     // Consuming the state is atomic. A mismatch cannot consume another browser's login.
     const pending = await first<{ verifier: string; nonce: string }>(
       this.database,
@@ -236,7 +252,11 @@ export class AuthService {
       [hashSecret(state), hashSecret(binding)],
     );
     if (!pending)
-      throw new DomainError(401, 'Loginが失効したか、ブラウザが一致しません', 'invalid_oidc_state');
+      throw new DomainError({
+        status: 401,
+        code: 'invalid_oidc_state',
+        message: 'the login has expired or the browser does not match',
+      });
     const provider = await this.oidcProvider();
     let login: OidcLoginResult;
     try {
@@ -274,14 +294,22 @@ export class AuthService {
           code: error instanceof oidc.ClientError ? error.code : 'validation_failed',
         }),
       );
-      throw new DomainError(401, 'OIDC認証に失敗しました', 'oidc_authentication_failed');
+      throw new DomainError({
+        status: 401,
+        code: 'oidc_authentication_failed',
+        message: 'OIDC authentication failed',
+      });
     }
     try {
       return await this.provisionSession(login, metadata);
     } catch (error) {
       if (!(error instanceof OidcLoginDeniedError)) throw error;
       await this.recordOidcDenial(error, login.claims, metadata);
-      throw new DomainError(401, 'OIDC認証に失敗しました', 'oidc_authentication_failed');
+      throw new DomainError({
+        status: 401,
+        code: 'oidc_authentication_failed',
+        message: 'OIDC authentication failed',
+      });
     }
   }
 
@@ -357,7 +385,11 @@ export class AuthService {
   }
 
   async backchannelLogout(logoutToken: string, metadata: RequestMetadata): Promise<void> {
-    if (!this.backchannel) throw new DomainError(404, 'OIDC loginは無効です', 'oidc_disabled');
+    if (!this.backchannel) throw new DomainError({
+      status: 404,
+      code: 'oidc_disabled',
+      message: 'OIDC login is disabled',
+    });
     await this.backchannel.logout(logoutToken, metadata);
   }
 
@@ -385,7 +417,11 @@ export class AuthService {
 
   private async oidcProvider(): Promise<oidc.Configuration> {
     const settings = this.config.oidc;
-    if (!settings) throw new DomainError(503, 'OIDCが設定されていません', 'oidc_unavailable');
+    if (!settings) throw new DomainError({
+      status: 503,
+      code: 'oidc_unavailable',
+      message: 'OIDC is not configured',
+    });
     this.provider ??= oidc.discovery(
       new URL(settings.issuer),
       settings.clientId,
@@ -402,7 +438,11 @@ export class AuthService {
       return await this.provider;
     } catch {
       this.provider = undefined;
-      throw new DomainError(503, 'OIDC providerに接続できません', 'oidc_unavailable');
+      throw new DomainError({
+        status: 503,
+        code: 'oidc_unavailable',
+        message: 'cannot connect to the OIDC provider',
+      });
     }
   }
 }

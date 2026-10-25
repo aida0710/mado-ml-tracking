@@ -85,11 +85,11 @@ function assertNoDuplicateItems(items: readonly RunMediaCreateItemInput[]): void
   const ids = items.flatMap((item) => (item.id ? [item.id] : []));
   const triples = items.map((item) => JSON.stringify([item.key, item.step, item.artifactId]));
   if (new Set(ids).size !== ids.length || new Set(triples).size !== triples.length)
-    throw new DomainError(
-      422,
-      '同じidまたは同じkey・step・Artifactの項目が重複しています',
-      'media_duplicate_item',
-    );
+    throw new DomainError({
+      status: 422,
+      code: 'media_duplicate_item',
+      message: 'items with the same id, or with the same key, step and artifact, are duplicated',
+    });
 }
 
 export class RunMediaService {
@@ -119,14 +119,22 @@ export class RunMediaService {
       for (const item of items) {
         const record = stored.get(item.id);
         if (record && !sameItem(record, item, { projectId: reference.projectId, runId: run.id }))
-          throw new DomainError(409, 'このidのmediaは別の内容で登録済みです', 'media_conflict');
+          throw new DomainError({
+            status: 409,
+            code: 'media_conflict',
+            message: 'media with this id is already registered with different content',
+          });
       }
       const newItems = items.filter((item) => !stored.has(item.id));
       if (newItems.length > 0) {
         await assertRunRecordsWritable(connection, run);
         await this.assertArtifactsUsable(connection, { projectId: reference.projectId, runId: run.id, items: newItems });
         if ((await findRunMediaTriples(connection, { runId: run.id, items: newItems })).length > 0)
-          throw new DomainError(409, '同じkey・step・Artifactのmediaは登録済みです', 'media_exists');
+          throw new DomainError({
+            status: 409,
+            code: 'media_exists',
+            message: 'media with the same key, step and artifact is already registered',
+          });
         try {
           await insertRunMedia(
             connection,
@@ -135,7 +143,11 @@ export class RunMediaService {
         } catch (error) {
           // Another Run took the same client-chosen id meanwhile.
           if ((error as { code?: string }).code === UNIQUE_VIOLATION)
-            throw new DomainError(409, 'このidのmediaは別の内容で登録済みです', 'media_conflict');
+            throw new DomainError({
+              status: 409,
+              code: 'media_conflict',
+              message: 'media with this id is already registered with different content',
+            });
           throw error;
         }
       }
@@ -166,15 +178,23 @@ export class RunMediaService {
       const artifact = artifacts.get(item.artifactId);
       // An upload session that has not completed has no Artifact yet.
       if (!artifact)
-        throw new DomainError(
-          422,
-          '保存が完了したArtifactを指定してください',
-          'media_artifact_unavailable',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'media_artifact_unavailable',
+          message: 'specify an artifact whose upload has completed',
+        });
       if (artifact.runId !== request.runId)
-        throw new DomainError(422, '同じRunに保存したArtifactを指定してください', 'media_artifact_run');
+        throw new DomainError({
+          status: 422,
+          code: 'media_artifact_run',
+          message: 'specify an artifact stored in the same run',
+        });
       if (!isMediaKindCompatible(item.kind, artifact.mimeType))
-        throw new DomainError(422, 'mediaの種類とArtifactのMIME typeが一致しません', 'media_kind_mismatch');
+        throw new DomainError({
+          status: 422,
+          code: 'media_kind_mismatch',
+          message: 'the media kind does not match the MIME type of the artifact',
+        });
       if (item.kind === 'table')
         await this.tables.load(connection, { projectId: request.projectId, artifactId: artifact.id });
     }
@@ -218,7 +238,7 @@ export class RunMediaService {
   async compare(principal: Principal, projectId: string, input: MediaCompareInput): Promise<MediaCompareGrid> {
     await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
     const runs = await findRunTags(this.database, { projectId, runIds: input.runIds });
-    if (runs.length !== input.runIds.length) notFound('Run');
+    if (runs.length !== input.runIds.length) notFound('run');
     const stored = await listComparedMedia(this.database, {
       projectId,
       runIds: input.runIds,
@@ -258,7 +278,11 @@ export class RunMediaService {
       );
     if (!media) notFound('media');
     if (media.kind !== 'table')
-      throw new DomainError(422, 'このmediaは表ではありません', 'media_not_table');
+      throw new DomainError({
+        status: 422,
+        code: 'media_not_table',
+        message: 'this media is not a table',
+      });
     return this.tables.page(
       this.database,
       { projectId: reference.projectId, runId: media.runId, artifactId: media.artifactId },

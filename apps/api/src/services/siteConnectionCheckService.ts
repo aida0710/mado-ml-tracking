@@ -29,11 +29,11 @@ export class SiteConnectionCheckService {
       const account = await siteKeyAccount(connection, principal, { target, personal: request.personal });
       const key = await findLiveSiteKey(connection, { targetId, userId: account.userId });
       if (key?.status !== 'ready')
-        throw new DomainError(
-          422,
-          'launcherがまだ鍵を作っていません。launcherが動いているか確かめてください',
-          'site_check_unavailable',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'site_check_unavailable',
+          message: 'the launcher has not created the key yet; check that the launcher is running',
+        });
       await expireStaleConnectionChecks(connection);
       const check = await insertConnectionCheck(connection, {
         targetId,
@@ -41,7 +41,11 @@ export class SiteConnectionCheckService {
         requestedBy: principal.user.id,
       });
       if (!check)
-        throw new DomainError(409, 'このアカウントの接続確認は実行中です', 'site_check_in_progress');
+        throw new DomainError({
+          status: 409,
+          code: 'site_check_in_progress',
+          message: 'a connection check of this account is already running',
+        });
       return check;
     });
   }

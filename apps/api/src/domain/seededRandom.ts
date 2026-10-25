@@ -28,7 +28,7 @@ export function createSeededRandom(seed: number): SeededRandom {
     nextInt(min, max) {
       const low = Math.ceil(min);
       const high = Math.floor(max);
-      if (high < low) throw new RangeError(`nextInt の範囲が空です: ${min}..${max}`);
+      if (high < low) throw new RangeError(`nextInt range is empty: ${min}..${max}`);
       return low + Math.floor(next() * (high - low + 1));
     },
     nextGaussian() {

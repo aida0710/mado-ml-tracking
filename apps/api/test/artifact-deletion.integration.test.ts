@@ -191,17 +191,17 @@ describe.skipIf(!testDatabaseUrl)('Artifactの削除とgarbage collection（独�
       [fixture.project.id, fixture.run.id, checkpointFile.id],
     );
 
-    for (const [artifact, label] of [
-      [weights, '登録モデルバージョン'],
-      [sample, 'DatasetVersion'],
-      [checkpointFile, '保持中のcheckpoint'],
+    for (const [artifact, reference] of [
+      [weights, 'model_version'],
+      [sample, 'dataset_version'],
+      [checkpointFile, 'checkpoint'],
     ] as const) {
-      const refused = await entity<{ code: string; error: string }>(
+      const refused = await entity<{ code: string; references: string[] }>(
         await fixture.deleteArtifact(artifact.id),
         409,
       );
       expect(refused.code).toBe('artifact_in_use');
-      expect(refused.error).toContain(label);
+      expect(refused.references).toContain(reference);
       expect((await fixture.content(artifact.id)).status).toBe(200);
     }
 

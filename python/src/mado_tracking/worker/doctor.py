@@ -70,12 +70,12 @@ def check_api(api: ApiSettings, transport: httpx.BaseTransport | None = None) ->
         follow_redirects=False,
     ) as client:
         try:
-            health = client.get("health")
+            health = client.get(api.health_url)
         except httpx.HTTPError as error:
             # The exception names the URL only; the token is in a header and is never formatted.
             return [DoctorCheck("api", CheckLevel.ERROR, f"Cannot reach {api.url}: {type(error).__name__}")]
         if not health.is_success:
-            return [DoctorCheck("api", CheckLevel.ERROR, f"{api.url}/health returned {health.status_code}")]
+            return [DoctorCheck("api", CheckLevel.ERROR, f"{api.health_url} returned {health.status_code}")]
         checks = [DoctorCheck("api", CheckLevel.OK, f"{api.url} is reachable")]
         try:
             current_token = client.get("auth/token")

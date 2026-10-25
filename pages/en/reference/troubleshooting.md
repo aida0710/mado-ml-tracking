@@ -82,7 +82,7 @@ The login attempt limit was exceeded (429 `rate_limited`). Wait for the `Retry-A
 | --- | --- | --- |
 | 401 `invalid_token` | The token is invalid, revoked, or expired, or the owning user or Service Account is disabled | Issue a new token. Check the Service Account's status |
 | 401 `identity_sync_required` | An SSO user has not signed in from a browser for 7 days | Sign in once in a browser; the same token works again. Use a Service Account token for long-running work |
-| 403 `insufficient_scope` | The token lacks a scope | Issue a token with the needed scopes |
+| 403 `scope_required` | The token lacks a scope | Issue a token with the needed scopes |
 | 403 `project_forbidden` | The owner's Project role is insufficient, or the Project differs from the token's | Check the role, and whether the owner left a group |
 | 403 `session_required` | A browser-only operation (changing your own password, your own settings on a computer, purging a Project, and so on) | Use the screen |
 | 403 `job_token_forbidden` | Not allowed for Job tokens | Check what running code may do ([API tokens and Service Accounts](/en/admin/tokens)) |
@@ -100,7 +100,7 @@ The URL you opened differs from the allowed origins. To use LAN or VPN IP addres
 
 ## Cannot change Project permissions (409)
 
-If the screen says the change would leave the Project without an Admin, you are removing the last Admin. Grant Admin to another member, or to a group someone has signed in with, first. An Admin grant to a group nobody has signed in with yet does not count (the **Authentik group** list marks it **No one has signed in yet**). If disabling or demoting a global administrator returns 409 `last_global_admin`, prepare another global administrator first.
+If the screen says the change would leave the Project without an Admin, you are removing the last Admin. Grant Admin to another member, or to a group someone has signed in with, first. An Admin grant to a group nobody has signed in with yet does not count (the **Authentik group** list marks it **No one has signed in yet**). If disabling or demoting a global administrator returns 409 `last_active_admin`, prepare another global administrator first.
 
 ## "This project is archived" appears
 

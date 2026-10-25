@@ -333,9 +333,10 @@ function rowDefinition(row: SearchSpaceRow): SweepParameterDefinition | string {
 }
 
 /**
- * The row a 422 sweep_space_invalid message is about. The API names the parameter as「name」
- * (apps/api/src/domain/sweeps/searchSpace.ts); a message that names none belongs to the whole space.
+ * 422 sweep_space_invalid が指す行。API は該当する parameter を横の項目 `parameter` に置く
+ * （apps/api/src/domain/sweeps/searchSpace.ts）。parameter の無い違反は探索空間全体のもの。
  */
-export function rowIdForSpaceError(message: string, rows: SearchSpaceRow[]): string | null {
-  return rows.find((row) => row.name.trim() && message.includes(`「${row.name.trim()}」`))?.id ?? null;
+export function rowIdForSpaceError(parameter: unknown, rows: SearchSpaceRow[]): string | null {
+  if (typeof parameter !== 'string') return null;
+  return rows.find((row) => row.name.trim() === parameter)?.id ?? null;
 }

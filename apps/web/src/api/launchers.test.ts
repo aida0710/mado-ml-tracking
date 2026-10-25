@@ -14,7 +14,7 @@ function stubJsonResponse(body: unknown, status = 200) {
   vi.stubGlobal('fetch', fetch);
   return fetch;
 }
-const created = { launcher: { id: 'launcher', name: 'main' }, token: 'mmt_secret' };
+const created = { launcher: { id: 'launcher', name: 'main' }, token: 'mado_mt_secret' };
 
 describe('launcherのAPI呼び出し', () => {
   it('一覧はlaunchersを読み、itemsの無い応答を拒否する', async () => {
@@ -35,7 +35,7 @@ describe('launcherのAPI呼び出し', () => {
   it('tokenかlauncherの無い応答は、tokenを見せられないので契約違反にする', async () => {
     stubJsonResponse({ launcher: { id: 'launcher' } }, 201);
     await expect(launchersApi.create({ name: 'main' })).rejects.toMatchObject({ code: 'invalid_response' });
-    stubJsonResponse({ token: 'mmt_secret' }, 201);
+    stubJsonResponse({ token: 'mado_mt_secret' }, 201);
     await expect(launchersApi.rotateToken('launcher')).rejects.toMatchObject({ code: 'invalid_response' });
   });
 

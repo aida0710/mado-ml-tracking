@@ -1,4 +1,4 @@
-import type { TokenScope } from '@mmt/contracts';
+import { TOKEN_PURPOSE_LABELS, type TokenScope } from '@mmt/contracts';
 import type { TokenPurposeOption } from '../../lib/tokenPurposes';
 
 // Service Accounts, the Project token list and the token dialog on the settings page.
@@ -55,22 +55,21 @@ export const serviceAccountsText = {
     'The example does not include the token. Paste it into a terminal and run it; when asked for “API token:”, paste the token copied with “Copy token”. The token is not shown on screen and is not saved in the shell history.',
 } as const;
 
-// The purposes the token dialog offers, each with what the token can then do. The Japanese labels
-// come from contracts because the API names them in its messages; these are their English forms.
+// 発行の画面の用途と、その token でできること。名前は API の文と同じ contracts の英語を使う。
 export const tokenPurposeLabels: Record<TokenPurposeOption, { label: string; hint: string }> = {
   recording: {
-    label: 'Record from SDK or MLflow 3',
+    label: TOKEN_PURPOSE_LABELS.recording,
     hint: "Record runs, register models and datasets, and store artifacts. Can also delete unused dataset versions; with a project administrator's token, artifacts can be deleted too",
   },
   jobSubmission: {
-    label: 'Submit jobs from the command line',
+    label: TOKEN_PURPOSE_LABELS.jobSubmission,
     hint: 'Claim queued jobs on a manual-submission computer and submit them',
   },
   worker: {
-    label: 'Run jobs as a worker',
+    label: TOKEN_PURPOSE_LABELS.worker,
     hint: 'Receive and run jobs, and store their outputs',
   },
-  readOnly: { label: 'Read only', hint: 'Only read runs and models. Cannot record' },
+  readOnly: { label: TOKEN_PURPOSE_LABELS.readOnly, hint: 'Only read runs and models. Cannot record' },
   custom: { label: 'Choose scopes manually', hint: 'Select scopes one by one below' },
 };
 

@@ -60,7 +60,7 @@ export class ArtifactPreviewService {
       'SELECT id FROM artifacts WHERE id=$1 AND project_id=$2 AND deleted_at IS NULL',
       [target.artifactId, target.projectId],
     );
-    if (!artifact) notFound('Artifact');
+    if (!artifact) notFound('artifact');
     return rows<ArtifactPreview>(
       this.database,
       `SELECT ${ARTIFACT_PREVIEW_COLUMNS} FROM artifact_previews

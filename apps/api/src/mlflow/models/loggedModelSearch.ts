@@ -51,7 +51,7 @@ export function loggedModelSearch(
       if (kind === 'params' || kind === 'tags')
         return { expression: `l.${kind}->>${parameters.add(key)}`, numeric: false };
       const attribute = kind === 'attributes' ? loggedModelAttributes[key] : undefined;
-      if (!attribute) invalidParameter(`検索field ${field} に対応していません`);
+      if (!attribute) invalidParameter(`unsupported search field: ${field}`);
       return attribute;
     },
   });
@@ -62,9 +62,9 @@ export function loggedModelSearch(
   const orders = input.order_by.map((order) => {
     const { kind, key } = splitSearchField(order.field_name);
     if (order.dataset_digest && !order.dataset_name)
-      invalidParameter('metric orderのdataset_digestにはdataset_nameが必要です');
+      invalidParameter('dataset_digest in a metric order requires dataset_name');
     if (kind !== 'metrics' && (order.dataset_name || order.dataset_digest))
-      invalidParameter('datasetによるorderはmetricsで指定してください');
+      invalidParameter('specify ordering by dataset with metrics');
     if (kind === 'metrics')
       return loggedModelMetricOrder(parameters, {
         key,
@@ -74,7 +74,7 @@ export function loggedModelSearch(
         ascending: order.ascending,
       });
     const expression = kind === 'attributes' ? loggedModelAttributes[key]?.expression : undefined;
-    if (!expression) invalidParameter(`order field ${order.field_name} に対応していません`);
+    if (!expression) invalidParameter(`unsupported order field: ${order.field_name}`);
     return `${expression} ${order.ascending ? 'ASC' : 'DESC'} NULLS LAST`;
   });
   return {

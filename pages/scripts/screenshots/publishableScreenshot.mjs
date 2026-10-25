@@ -13,9 +13,9 @@ const MOUSE_SETTLE_MS = 200;
 // The host name of a worker in the docs' examples.
 const EXAMPLE_WORKER_HOST = 'worker-1.example.internal';
 const PRIVATE_ADDRESS = /\b(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)\b/;
-// Token prefixes in the token lists, e.g. mmt_AbC1… or mmtj_…
-const TOKEN_PREFIX = /mmtj?_[A-Za-z0-9_-]{4,}/g;
-const MASKED_TOKEN_PREFIX = 'mmt_••••••••';
+// token の一覧に出る先頭（mado_mt_AbC1… や mado_mtj_…）。
+const TOKEN_PREFIX = /mado_mtj?_[A-Za-z0-9_-]{4,}/g;
+const MASKED_TOKEN_PREFIX = 'mado_mt_••••••••';
 
 export async function outputDirectory(lang) {
   const directory = process.env.MMT_DOCS_OUTPUT_DIR ?? LANGUAGES[lang].imagesDirectory;

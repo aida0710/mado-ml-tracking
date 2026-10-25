@@ -207,7 +207,7 @@ docker compose --profile worker run --rm worker doctor
 
 ## 実行コードにはJob限定tokenを渡す
 
-workerは、自分のtokenを実行コードに渡しません。代わりにAPI serverがJobごとに発行するJob限定token（`mmtj_`で始まる）を、実行コードの`MMT_API_TOKEN`と`MLFLOW_TRACKING_TOKEN`に入れます。実行コードは、Python SDKもMLflow 3 SDKも、そのままこのtokenで記録できます。
+workerは、自分のtokenを実行コードに渡しません。代わりにAPI serverがJobごとに発行するJob限定token（`mado_mtj_`で始まる）を、実行コードの`MMT_API_TOKEN`と`MLFLOW_TRACKING_TOKEN`に入れます。実行コードは、Python SDKもMLflow 3 SDKも、そのままこのtokenで記録できます。
 
 - 権限は、Runを作った人の現在の権限です。その人をProjectから外すと、実行中のコードからの記録も拒否されます。
 - 書き込めるのは、そのJobのRun（メトリクス、パラメータ、タグ、ログ、入力データセット、Artifact）と、そのRunを生成元とするモデル・データセットのバージョンだけです。

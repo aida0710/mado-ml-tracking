@@ -207,7 +207,7 @@ docker compose --profile worker run --rm worker doctor
 
 ## The code receives a Job-scoped token
 
-The worker never gives its own token to the code. Instead, the API server issues a Job-scoped token (starting with `mmtj_`) for each Job, and the worker puts it in the code's `MMT_API_TOKEN` and `MLFLOW_TRACKING_TOKEN`. Both the Python SDK and the MLflow 3 SDK log with it as is.
+The worker never gives its own token to the code. Instead, the API server issues a Job-scoped token (starting with `mado_mtj_`) for each Job, and the worker puts it in the code's `MMT_API_TOKEN` and `MLFLOW_TRACKING_TOKEN`. Both the Python SDK and the MLflow 3 SDK log with it as is.
 
 - It has the current permissions of the person who created the Run. Removing that person from the Project also rejects logging from running code.
 - It can write only to the Job's Run (metrics, parameters, tags, logs, input datasets, Artifacts) and to model and dataset versions whose source is that Run.

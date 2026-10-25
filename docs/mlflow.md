@@ -58,7 +58,7 @@ NaNは保存・読み出し時に保持します。数値検索では`!=`以外�
 
 Runの終わりにSDKが表示する`View run`・`View experiment`のリンクは、MLflow標準UIの形式（`<tracking URI>/#/experiments/<Experiment>/runs/<Run>`、`<tracking URI>/#/experiments/<Experiment>`）です。ブラウザは`#`より後をサーバーへ送らないので、APIは`GET /api/mlflow/projects/<p>/`（末尾の`/`が無い形も）を302でWebの`/projects/<p>/mlflow-ui`へ移し、ブラウザが`#`以降を引き継ぎます（`apps/api/src/mlflow/uiLinkRoutes.ts`）。Webのこの経路が`#/experiments/<e>/runs/<r>`をRunの画面（`/projects/<p>/runs/<r>`）、`#/experiments/<e>`をその実験を選んだExperimentsの画面、`#/models/...`をModelsの一覧へ移し、ほかは Experiments を開きます（`apps/web/src/layout/mlflowUiPaths.ts`）。転送先は相対パスなので、リンクはtracking URIがWebのoriginにあるとき（接続カードが表示するURL）に画面へ届きます。APIのportを直接tracking URIにした場合は、APIのportで`/projects/...`を開くことになり画面は出ません。この転送はProjectの情報を返さないので認証を求めず、ログインと権限は移った先の画面で確かめます。
 
-Runの説明文はMLflowと同じ`mlflow.note.content` tagに保存します。MLflowの`set_tag("mlflow.note.content", ...)`・標準UIのDescriptionと、nativeの`PUT /api/projects/:p/runs/:r/note`は同じ値を読み書きし、別の保存場所はありません。上限はMLflowのtag値と同じ8000文字で、nativeで空文字を保存するとtagを削除します。JobのRunが終わった後は、MLflowのset-tag・delete-tagが`INVALID_STATE`で拒否されます。nativeの説明文APIは説明文を実験結果として扱わないため、終了後もeditorが編集できます。終了後に説明文を直す場合はnative APIを使ってください。Job限定token（`mmtj_`）ではnativeの説明文APIは403 `job_token_forbidden`です。WebではRun詳細の［詳細］タブの「説明」で同じ値を編集できます（`RunDescriptionEditor`）。
+Runの説明文はMLflowと同じ`mlflow.note.content` tagに保存します。MLflowの`set_tag("mlflow.note.content", ...)`・標準UIのDescriptionと、nativeの`PUT /api/projects/:p/runs/:r/note`は同じ値を読み書きし、別の保存場所はありません。上限はMLflowのtag値と同じ8000文字で、nativeで空文字を保存するとtagを削除します。JobのRunが終わった後は、MLflowのset-tag・delete-tagが`INVALID_STATE`で拒否されます。nativeの説明文APIは説明文を実験結果として扱わないため、終了後もeditorが編集できます。終了後に説明文を直す場合はnative APIを使ってください。Job限定token（`mado_mtj_`）ではnativeの説明文APIは403 `job_token_forbidden`です。WebではRun詳細の［詳細］タブの「説明」で同じ値を編集できます（`RunDescriptionEditor`）。
 
 ### 終わったRunに続きを記録する
 
@@ -96,7 +96,7 @@ ArtifactはProjectで選んだS3互換ストレージまたはファイルシス
 - part数の上限は10000です。200GiBのファイルなら、chunkを21MiB以上にします。
 - `complete`は、API側で全体のSHA-256を計算してArtifactを登録し終えるまで待ちます。待つのは`MMT_UPLOAD_FINALIZE_WAIT_MS`（既定100秒）までで、超えると503が返ります。そのときもAPIは検証を続け、終わればArtifactの一覧に表示されます。数十GBのファイルを送るときは、SDKの`MLFLOW_HTTP_REQUEST_TIMEOUT`（既定120秒）と`MMT_UPLOAD_FINALIZE_WAIT_MS`を大きくしてください。
 - partのPUTにはAPI tokenを付けません。`mpu/create`の応答に入るsession限定のupload token（`X-MMT-Upload-Token`）で認可します。tokenの期限はsessionと同じ7日です。
-- Job内のコードからも使えます。Job限定token（`mmtj_`）で作れるのは、そのJobのRunとLogged Modelのsessionだけです。
+- Job内のコードからも使えます。Job限定token（`mado_mtj_`）で作れるのは、そのJobのRunとLogged Modelのsessionだけです。
 - 運用でmultipartを止めるときは`MMT_MLFLOW_MULTIPART_UPLOADS=false`にします。server-infoはfalseを返し、`mpu/create`・`complete`・`abort`は501 `NOT_IMPLEMENTED`を返します。SDKはこの応答を受けて、同じファイルを1回のストリーム転送でアップロードし直します。SDKはエラーmessageの先頭が自身の定数と一致するときだけ通常転送へ戻るので、サーバーはSDKと同じ英語の文言を返します。空のファイルと、multipartに対応しない保存先でも同じ501を返します。
 - multipart download（presigned URLでの直接取得）は作っていません。`MMT_MLFLOW_MULTIPART_DOWNLOADS`は既定のfalseのままにしてください。trueにすると、3.17以降のSDKがpresigned URLの取得に失敗してdownloadが止まります。
 
@@ -239,7 +239,7 @@ export MLFLOW_TRACKING_PASSWORD
 
 - Basic認証が使えるのはMLflow互換API（`/api/mlflow/*`）だけです。native APIは401 `basic_auth_unsupported`。
 - passwordにローカルアカウントのパスワードを入れても通りません（401）。
-- 失効・scope・Projectの権限の確認はBearerと同じです。Job限定token（`mmtj_`）をpasswordにしても、Job tokenの許可表がそのまま効きます。
+- 失効・scope・Projectの権限の確認はBearerと同じです。Job限定token（`mado_mtj_`）をpasswordにしても、Job tokenの許可表がそのまま効きます。
 - tokenを発行した直後の画面に、Bearer／Basicそれぞれの環境変数の設定例が出ます。
 - 「SDK・MLflow 3から接続」の［MLflow 3］の折りたたみにも、Basic認証の設定例があります。
 

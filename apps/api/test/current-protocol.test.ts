@@ -29,7 +29,7 @@ describe('現行のAPI入力契約', () => {
       for (const submit of [
         () => parse(workerOutputsSchema, { ...outputs, leaseId: ID }),
         () => parse(runnerOutputsSchema, { ...outputs, instanceId: ID }),
-      ]) expect(submit).toThrow('version 2が必要です。version 1は処理できません');
+      ]) expect(submit).toThrow('version 2 is required; version 1 is not supported');
     }
   });
 

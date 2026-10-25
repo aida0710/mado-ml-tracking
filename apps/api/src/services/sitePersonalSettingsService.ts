@@ -44,7 +44,7 @@ export class SitePersonalSettingsService {
     targetId: string,
     request: { input: SitePersonalSettingsInput; metadata: RequestMetadata },
   ): Promise<SitePersonalSettings> {
-    requireSession(principal, 'コンピュータの自分の設定');
+    requireSession(principal, 'changing your own computer settings');
     return transaction(this.database, async (connection) => {
       const target = await findSiteTarget(connection, targetId, { lock: true });
       await requireTargetUser(connection, principal, target);
@@ -52,11 +52,11 @@ export class SitePersonalSettingsService {
       const site = (await findSiteSettings(connection, targetId))!;
       // A shared account's work directory and variables are its manager's alone.
       if (target.submissionMode === 'automatic' && site.accountMode === 'shared')
-        throw new DomainError(
-          422,
-          'このコンピュータは共用アカウントで動くので、自分の設定は使いません',
-          'site_settings_invalid',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'site_settings_invalid',
+          message: 'this computer runs with a shared account, so personal settings are not used',
+        });
       const owner = { targetId, userId: principal.user.id };
       const previous = await findPersonalSettings(connection, owner);
       const settings = {
@@ -69,11 +69,11 @@ export class SitePersonalSettingsService {
         variables: request.input.variables ?? previous?.variables ?? {},
       };
       if (target.submissionMode === 'automatic' && site.accountMode === 'personal' && !settings.accountName)
-        throw new DomainError(
-          422,
-          'このコンピュータは本人のアカウントで動くので、アカウント名が必要です',
-          'site_settings_invalid',
-        );
+        throw new DomainError({
+          status: 422,
+          code: 'site_settings_invalid',
+          message: 'this computer runs with personal accounts, so an account name is required',
+        });
       await savePersonalSettings(connection, settings);
       await reconcileSiteKeys(connection, {
         targetId,
@@ -99,7 +99,7 @@ export class SitePersonalSettingsService {
 
   /** Deleting one's settings also revokes one's key for the site. */
   async deleteOwn(principal: Principal, targetId: string, metadata: RequestMetadata): Promise<void> {
-    requireSession(principal, 'コンピュータの自分の設定');
+    requireSession(principal, 'changing your own computer settings');
     await transaction(this.database, async (connection) => {
       const target = await findSiteTarget(connection, targetId, { lock: true });
       await requireTargetUser(connection, principal, target);

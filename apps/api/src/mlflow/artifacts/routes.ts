@@ -73,7 +73,11 @@ function transferLocation(
   const encodedPath = new URL(context.req.url).pathname;
   const rootPosition = encodedPath.indexOf(`${ARTIFACT_TRANSFER_ROOT}/`);
   if (rootPosition < 0)
-    throw new DomainError(422, 'Artifactパスが不正です', 'invalid_parameter_value');
+    throw new DomainError({
+      status: 422,
+      code: 'invalid_request',
+      message: 'invalid artifact path',
+    });
   return decodeArtifactLocation(
     encodedPath.slice(rootPosition + ARTIFACT_TRANSFER_ROOT.length + 1),
     options,
@@ -206,7 +210,11 @@ export function mlflowArtifactRoutes(options: {
     const query = parse(runListQuery, context.req.query());
     const id = query.run_id ?? query.run_uuid;
     if (!id || (query.run_id && query.run_uuid && query.run_id !== query.run_uuid))
-      throw new DomainError(422, 'run_idが必要です', 'invalid_parameter_value');
+      throw new DomainError({
+        status: 422,
+        code: 'invalid_request',
+        message: 'run_id is required',
+      });
     const owner = validateArtifactOwner({ kind: 'run', id });
     const files = await transfers.list(artifactAccess(context, { owner, path: query.path }));
     return context.json({ root_uri: artifactRootUri(owner), files });
@@ -216,7 +224,11 @@ export function mlflowArtifactRoutes(options: {
     const query = parse(modelListQuery, context.req.query());
     const owner = validateArtifactOwner({ kind: 'model', id: context.req.param('model_id') });
     if (query.model_id && query.model_id !== owner.id)
-      throw new DomainError(422, 'model_idが一致しません', 'invalid_parameter_value');
+      throw new DomainError({
+        status: 422,
+        code: 'invalid_request',
+        message: 'model_id does not match',
+      });
     const files = await transfers.list(
       artifactAccess(context, { owner, path: query.artifact_directory_path }),
     );

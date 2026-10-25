@@ -58,7 +58,7 @@ export function artifactPath(path: string): string {
     containsControlCharacter(path) ||
     path.split('/').some((part) => !part || part === '.' || part === '..')
   )
-    invalidParameter('weightsのArtifact相対pathが不正です');
+    invalidParameter('invalid relative artifact path of weights');
   return path;
 }
 
@@ -83,14 +83,14 @@ export function validateFlavorArtifacts(
         (entry) => entry.path === relativePath || entry.path.startsWith(`${relativePath}/`),
       )
     )
-      conflict('MLmodelが参照するモデル本体・環境・コードのArtifactが未保存です');
+      conflict('artifacts of the model, environment or code referenced by MLmodel are not stored');
   }
 }
 
 export function validateModelManifest(manifest: ArtifactManifestEntry[]): void {
   if (!manifest.some((entry) => entry.path === 'MLmodel'))
-    conflict('MLmodel Artifactが保存されていません');
-  if (manifest.length < 2) conflict('モデル本体のArtifactが保存されていません');
+    conflict('the MLmodel artifact is not stored');
+  if (manifest.length < 2) conflict('the model artifact is not stored');
   for (const entry of manifest) artifactPath(entry.path);
 }
 
@@ -111,7 +111,7 @@ export function validateReadyModel(saved: SavedModelArtifacts): void {
     saved.manifest.some((entry) => entry.path === path || entry.path.startsWith(`${path}/`)),
   );
   if (!hasModelBody && !weightCandidates(saved).length)
-    conflict('保存済みモデル本体のArtifactが必要です');
+    conflict('a stored model artifact is required');
 }
 
 export function selectWeightsArtifact(
@@ -122,13 +122,13 @@ export function selectWeightsArtifact(
   if (requestedPath !== undefined) {
     const artifact = saved.manifest.find((entry) => entry.path === artifactPath(requestedPath));
     if (!artifact || artifact.path === 'MLmodel')
-      conflict('mmt.weights_pathのモデル本体Artifactが保存されていません');
+      conflict('the model artifact at mmt.weights_path is not stored');
     return artifact;
   }
   const candidates = weightCandidates(saved);
   if (candidates.length !== 1)
     invalidParameter(
-      'モデル本体を一意に選べません。mmt.weights_pathで保存済みArtifactを指定してください',
+      'the model artifact cannot be chosen uniquely; specify a stored artifact with mmt.weights_path',
     );
   return candidates[0]!;
 }
@@ -144,6 +144,6 @@ export function selectPrimaryModelArtifact(
   if (tags['mmt.weights_path'] !== undefined || candidates.length || !hasModelDirectory)
     return { artifact: selectWeightsArtifact(saved, tags), modelFormat: 'weights' };
   const descriptor = saved.manifest.find((entry) => entry.path === 'MLmodel');
-  if (!descriptor) conflict('MLmodel Artifactが保存されていません');
+  if (!descriptor) conflict('the MLmodel artifact is not stored');
   return { artifact: descriptor, modelFormat: 'mlflow' };
 }

@@ -12,7 +12,7 @@ export async function findSavedArtifact(
     'SELECT * FROM artifacts WHERE id=$1 AND project_id=$2 AND deleted_at IS NULL',
     [reference.artifactId, reference.projectId],
   );
-  if (!artifact) notFound('Artifact');
+  if (!artifact) notFound('artifact');
   return artifact;
 }
 
@@ -35,5 +35,9 @@ export async function validateCodeArtifacts(
     artifactId: code.runtime.artifactId,
   });
   if (artifact.sha256 !== code.runtime.sha256)
-    throw new DomainError(422, 'SIF ArtifactのSHA256が一致しません', 'artifact_hash_mismatch');
+    throw new DomainError({
+      status: 422,
+      code: 'artifact_hash_mismatch',
+      message: 'the SHA256 of the SIF artifact does not match',
+    });
 }

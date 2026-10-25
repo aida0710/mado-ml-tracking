@@ -218,7 +218,7 @@ describe.skipIf(!testDatabaseUrl)('workerの在籍登録とheartbeat途絶（独
       token: fixture.workerToken,
     });
     expect(scopeDenied.status).toBe(403);
-    expect((await scopeDenied.json()).code).toBe('insufficient_scope');
+    expect((await scopeDenied.json()).code).toBe('scope_required');
     expect(
       (
         await request(harness.app, `${fixture.basePath}/workers`, {
