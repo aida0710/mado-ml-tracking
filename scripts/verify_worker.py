@@ -1,4 +1,4 @@
-"""Exercise the real local API, SDK and durable worker without using a GPU host."""
+"""GPUのホストを使わずに、実際のローカルのAPI、SDK、durableなworkerを動かして確かめる。"""
 
 from __future__ import annotations
 
@@ -21,12 +21,12 @@ from mado_tracking.worker.service import Worker
 ROOT = Path(__file__).resolve().parents[1]
 API_URL = os.environ.get("MMT_VERIFY_API_URL", "http://127.0.0.1:4182")
 WEB_ORIGIN = os.environ.get("MMT_VERIFY_WEB_ORIGIN", "http://127.0.0.1:5182")
-# Job setup installs httpx into a real venv; bound integration time without retrying forever.
+# Jobの準備では実際のvenvにhttpxを入れる。際限なく再試行せず、結合の検証の時間に上限を設ける。
 JOB_DEADLINE_SECONDS = 120
-# Match the fixture target's two slots and inspect state often enough to finish promptly.
+# fixtureのtargetの2つの枠に合わせ、すぐ終われるよう状態を頻繁に調べる。
 PARALLEL_JOBS = 2
 STATE_POLL_SECONDS = 0.1
-# Both sides compute the same JSON float loss; tolerate only floating point rounding.
+# 両者は同じJSONの浮動小数点のlossを計算する。許すのは浮動小数点の丸め誤差だけ。
 LOSS_TOLERANCE = 1e-12
 ARTIFACT_DIRECTORY = (
     ROOT
@@ -34,8 +34,8 @@ ARTIFACT_DIRECTORY = (
     / datetime.now(ZoneInfo("Asia/Tokyo")).strftime("%Y-%m-%d")
 )
 WORK_DIRECTORY = ROOT / "var/verification-worker"
-# The fixture's samples live in its code and metadata, not at its urn: URI, so nothing checks this
-# digest; it only takes the form the API accepts (sha256: and 64 lowercase hex digits).
+# fixtureのサンプルはurn:のURIの先でなく、コードとメタデータにあるので、このdigestを確かめる
+# ものは無い。APIが受け付ける形（sha256:と小文字の16進数64桁）にしているだけ。
 FIXTURE_DATASET_DIGEST = "sha256:" + hashlib.sha256(b"linear-y2x1-v1").hexdigest()
 
 
@@ -316,7 +316,7 @@ async def verify_jobs(
                 run_ids=[run.id for run in parallel_runs],
                 status="canceled",
             )
-            # A terminal API status precedes the worker's durable acknowledgement cleanup.
+            # APIの終了状態は、workerが永続化した受領確認を片付けるより先に来る。
             await asyncio.gather(*parallel_worker.tasks.values())
         finally:
             parallel_worker.stopping.set()

@@ -1,8 +1,8 @@
 import { requireDatabaseUrl } from '../apps/api/src/db/databaseSettings.js';
 /**
- * Verify the S3 Artifact store against a real bucket (or a local emulator) inside a dedicated
- * prefix, then remove everything it wrote. Bucket names, endpoints, object keys and credentials
- * never reach the result file or the console.
+ * S3のArtifactの保存先を、実際のバケット（またはローカルのエミュレータ）の専用のprefixの中で
+ * 確かめ、書いたものをすべて消す。バケット名、エンドポイント、オブジェクトのキー、認証情報は、
+ * 結果のファイルにもコンソールにも出さない。
  */
 import assert from 'node:assert/strict';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
@@ -35,39 +35,43 @@ import { decryptSecret, parseSecretKey } from '../apps/api/src/security/secretEn
 import { storageSecretContext } from '../apps/api/src/services/artifactStoreRegistry.js';
 
 const MIB = 1024 * 1024;
-// Above 16 MiB so the store must send at least two multipart parts plus an uneven last part.
+// 16MiBを超える大きさにして、保存先にmultipartのpartを少なくとも2つと、半端な最後の
+// partを送らせる。
 const MULTIPART_OBJECT_BYTES = 17 * MIB + 123;
-// The platform store currently uploads 8 MiB parts; a range around this offset spans two parts.
+// platformの保存先は今のところ8MiBのpartでアップロードする。このオフセットの前後の範囲は
+// 2つのpartにまたがる。
 const PART_BOUNDARY_OFFSET = 8 * MIB;
-// Two full parts guarantee the upload is already a server-side multipart upload when it breaks.
+// 満杯のpartが2つあれば、途切れた時点で、アップロードは確実にサーバー側のmultipart uploadに
+// なっている。
 const INTERRUPTED_UPLOAD_BYTES = 17 * MIB;
 const STREAM_CHUNK_BYTES = MIB;
-// Real endpoints may take a moment to list a started upload or drop an aborted one.
+// 実際のエンドポイントでは、始めたアップロードが一覧に出るまで、または中止したものが消えるまで
+// 少し時間がかかることがある。
 const MULTIPART_LISTING_DEADLINE_MS = 30_000;
 const MULTIPART_POLL_INTERVAL_MS = 200;
-// Running against a real bucket writes and deletes objects, so the operator must opt in.
+// 実際のバケットで動かすとオブジェクトを書いて消すので、運用者が明示的に有効にする必要がある。
 const CONFIRM_VALUE = 'write-and-delete';
 const DEFAULT_OUTSIDE_PREFIX = 'mmt-verification-outside-prefix';
 const INTERRUPTION_MESSAGE = 'verification interrupted the upload stream';
 
-/** Where to verify: the environment S3 backend or a DB-configured backend chosen by name. */
+/** 検証する場所: 環境変数のS3の保存先か、名前で選んだDBで設定した保存先。 */
 interface S3VerificationTarget {
   client: S3Client;
   bucket: string;
-  /** Prefix the application is allowed to use (S3_PREFIX). May be empty. */
+  /** アプリケーションが使ってよいprefix（S3_PREFIX）。空でもよい。 */
   basePrefix: string;
-  /** Prefix outside basePrefix used to check that IAM denies access beyond it. */
+  /** basePrefixの外のprefix。その外へのアクセスをIAMが拒否することを確かめるのに使う。 */
   outsidePrefix: string | null;
-  /** Non-secret facts that are safe to write to the result file. */
+  /** 結果のファイルに書いても安全な、秘密でない情報。 */
   description: Record<string, string | boolean>;
 }
 interface VerificationContext {
   target: S3VerificationTarget;
   date: string;
   runId: string;
-  /** Full object-key prefix of this run; every object this script writes lives below it. */
+  /** この実行のオブジェクトのキーのprefix全体。このスクリプトが書くものはすべてこの下に置く。 */
   runPrefix: string;
-  /** Store rooted at runPrefix, built only through the public platform API. */
+  /** runPrefixを起点とする保存先。platformの公開APIだけで組み立てる。 */
   store: ArtifactStore;
 }
 type StageStatus = 'passed' | 'warning' | 'skipped' | 'failed';
@@ -110,7 +114,7 @@ function chunked(bytes: Buffer): Readable {
   return Readable.from(chunks);
 }
 
-/** SDK messages can echo bucket names, keys or account ARNs, so only these fields are kept. */
+/** SDKのメッセージはバケット名、キー、アカウントのARNを含みうるので、この項目だけを残す。 */
 function describeError(error: unknown): {
   error: string;
   httpStatus: number | null;
@@ -118,7 +122,7 @@ function describeError(error: unknown): {
 } {
   const name = error instanceof Error ? error.name : 'UnknownError';
   const status = (error as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode;
-  // Node network codes such as ECONNREFUSED carry no host or credential information.
+  // ECONNREFUSEDのようなNodeのネットワークのコードは、ホストや認証情報を含まない。
   const code = (error as { code?: unknown })?.code;
   return {
     error: name,
@@ -135,7 +139,7 @@ function isNotFound(error: unknown): boolean {
   return httpStatus === 404 || name === 'NoSuchKey' || name === 'NotFound';
 }
 
-/** Mirrors createArtifactStoresFromEnv so the check exercises the same client settings. */
+/** createArtifactStoresFromEnvと同じ処理にして、同じクライアントの設定で検査する。 */
 function readS3TargetFromEnv(env: NodeJS.ProcessEnv): S3VerificationTarget {
   const bucket = env.S3_BUCKET;
   if (!bucket) throw new Error('S3_BUCKET is not configured');
@@ -182,8 +186,8 @@ function outsidePrefixFromEnv(env: NodeJS.ProcessEnv): string | null {
 }
 
 /**
- * Builds the client the API builds for a DB backend (s3ClientFactory), decrypting the secret with
- * MMT_STORAGE_SECRET_KEY. Only non-secret facts reach the description.
+ * DBの保存先に対してAPIが作るのと同じクライアントを作る（s3ClientFactory）。秘密の値は
+ * MMT_STORAGE_SECRET_KEYで復号する。descriptionに入るのは秘密でない情報だけ。
  */
 async function readS3TargetFromDatabase(
   env: NodeJS.ProcessEnv,
@@ -269,7 +273,7 @@ async function headPartCount(context: VerificationContext, key: string): Promise
   const head = await context.target.client.send(
     new HeadObjectCommand({ Bucket: context.target.bucket, Key: key }),
   );
-  // Multipart objects carry an ETag of the form "<md5>-<part count>" on S3 and compatibles.
+  // S3とその互換サービスでは、multipartのオブジェクトのETagは"<md5>-<part count>"の形になる。
   const match = /-(\d+)"?$/.exec(head.ETag ?? '');
   return match ? Number(match[1]) : null;
 }
@@ -322,7 +326,7 @@ async function verifyRangeReads(context: VerificationContext): Promise<StageOutc
     bytes: bytes.subarray(total - 10),
     contentRange: `bytes ${total - 10}-${total - 1}/${total}`,
   });
-  // An end beyond the object is clamped, as browsers request when seeking media.
+  // ブラウザがメディアをシークするときの要求のように、オブジェクトを超える終端は切り詰める。
   await expectRead(context.store, key, `bytes=${total - 3}-${total + 1000}`, {
     bytes: bytes.subarray(total - 3),
     contentRange: `bytes ${total - 3}-${total - 1}/${total}`,
@@ -363,7 +367,7 @@ async function verifyMultipartObject(context: VerificationContext): Promise<Stag
   });
   const partCount = await headPartCount(context, joinKey(context.runPrefix, key));
   const details = { bytes: bytes.length, sha256Matched: true, partCount };
-  // Some S3-compatible services rewrite ETags, so a missing part count is reported, not failed.
+  // S3互換サービスにはETagを書き換えるものがあるので、partの数が無ければ失敗にせず報告する。
   if (partCount === null)
     return { status: 'warning', details: { ...details, etagHasPartCount: false } };
   assert.ok(partCount >= 2, 'object above 16 MiB must be stored with multipart upload');
@@ -371,7 +375,7 @@ async function verifyMultipartObject(context: VerificationContext): Promise<Stag
 }
 
 type UploadPollResult = { satisfied: boolean; attempts: number; elapsedMs: number } | 'list-denied';
-/** Polls ListMultipartUploads for one key until its pending-upload count satisfies isDone. */
+/** キー1つの未完了のアップロードの数がisDoneを満たすまで、ListMultipartUploadsをポーリングする。 */
 async function pollPendingUploads(
   context: VerificationContext,
   key: string,
@@ -423,8 +427,8 @@ async function verifyInterruptedMultipartCleanup(
     drained !== 'list-denied' && drained.satisfied,
     'aborted upload must not remain in ListMultipartUploads',
   );
-  // A pending upload right after put() rejects means the abort runs in the background; if the
-  // process exits in that window the parts stay billed until a bucket lifecycle rule removes them.
+  // put()がrejectした直後に未完了のアップロードがあるなら、abortはバックグラウンドで動いている。
+  // その間にプロセスが終わると、バケットのライフサイクルルールが消すまでpartに課金され続ける。
   const abortFinishedBeforeReject = drained.attempts === 1;
   const details = {
     sentBytesBeforeAbort: INTERRUPTED_UPLOAD_BYTES,
@@ -438,8 +442,8 @@ async function verifyInterruptedMultipartCleanup(
 }
 
 /**
- * IAM should confine the application to basePrefix. An allowed write outside it is a warning,
- * not a failure: the operator decides whether the broader grant is acceptable.
+ * IAMはアプリケーションをbasePrefixの中に閉じ込めるべき。その外への書き込みが許されたら、
+ * 失敗ではなく警告にする。広い権限を許すかは運用者が決める。
  */
 async function verifyOutsidePrefixDenied(
   context: VerificationContext,
@@ -458,8 +462,8 @@ async function verifyOutsidePrefixDenied(
     if (!isAccessDenied(error)) throw error;
     put = 'denied';
   }
-  // When the write was denied the key is missing; S3 answers 403 for a missing key only when
-  // the caller lacks read or list access there, so 404 means reads are not confined.
+  // 書き込みが拒否されたならキーは存在しない。S3が存在しないキーに403を返すのは、呼び出し元に
+  // そこを読むか一覧する権限が無いときだけなので、404なら読み取りが閉じ込められていない。
   let get: 'denied' | 'allowed' | 'not-found';
   try {
     await readAll(
@@ -477,7 +481,8 @@ async function verifyOutsidePrefixDenied(
     await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: outsideKey }));
     outsideObjectRemoved = true;
   }
-  // A 403 on a missing key may come from a missing list grant alone, so record what Get targeted.
+  // 存在しないキーへの403は一覧の権限が無いだけでも返りうるので、Getが何を対象にしたかを
+  // 記録する。
   const getTarget = put === 'allowed' ? 'written-object' : 'missing-key';
   const details = { put, get, getTarget, outsideObjectRemoved };
   return { status: put === 'denied' && get === 'denied' ? 'passed' : 'warning', details };
@@ -492,12 +497,12 @@ async function verifyRemove(context: VerificationContext): Promise<StageOutcome>
   });
   await context.store.remove(key);
   await expectNotFound(context.store, key);
-  // Deleting a missing object must stay idempotent so retried deletions do not fail.
+  // 削除の再試行が失敗しないよう、存在しないオブジェクトの削除も冪等でなければならない。
   await context.store.remove(key);
   return { status: 'passed', details: { removedObjectReadable: false, repeatRemove: 'ok' } };
 }
 
-/** Removes every object and pending upload below runPrefix, then confirms the prefix is empty. */
+/** runPrefixの下のオブジェクトと未完了のアップロードを全部消し、prefixが空か確かめる。 */
 async function cleanUpRunPrefix(context: VerificationContext): Promise<StageOutcome> {
   const { client, bucket } = context.target;
   const Prefix = `${context.runPrefix}/`;
@@ -537,12 +542,12 @@ async function cleanUpRunPrefix(context: VerificationContext): Promise<StageOutc
     return { status: 'passed', details: { abortedUploads, deletedObjects, remainingObjects: 0 } };
   } catch (error) {
     if (!isAccessDenied(error)) throw error;
-    // Without list permission, each stage already removed its own objects through the store.
+    // 一覧の権限が無くても、各段階が保存先を通して自分のオブジェクトを既に消している。
     return { status: 'warning', details: { listing: 'denied', ...describeError(error) } };
   }
 }
 
-/** Ordered checks. Upload-session resume checks join here once that API lands (W2). */
+/** 順に実行する検査。アップロードセッションの再開はまだ検査していない。 */
 const VERIFICATION_STAGES: VerificationStage[] = [
   { name: 'small-put-get', run: verifySmallObject },
   { name: 'range-and-suffix-range', run: verifyRangeReads },
@@ -562,7 +567,7 @@ async function runStage(
     const outcome = await stage.run(context);
     return { name: stage.name, ...outcome, durationMs: Date.now() - startedAt };
   } catch (error) {
-    // Assertion messages are written by this script; SDK errors are reduced to name and status.
+    // assertionのメッセージはこのスクリプトが書いたもの。SDKのエラーは名前とステータスだけにする。
     const details =
       error instanceof assert.AssertionError
         ? { assertion: error.message }
@@ -603,7 +608,8 @@ async function runS3Verification(target: S3VerificationTarget, now = new Date())
 
 async function main(): Promise<void> {
   const envFile = process.env.MMT_VERIFY_ENV_FILE ?? '.env';
-  // Values already in the environment win over the file, so an emulator run can override .env.
+  // 既に環境変数にある値がファイルより優先されるので、エミュレータで動かすときに.envを
+  // 上書きできる。
   if (envFile !== 'none' && existsSync(envFile)) process.loadEnvFile(envFile);
   if (process.env.MMT_VERIFY_S3_CONFIRM !== CONFIRM_VALUE) {
     console.error(
@@ -613,7 +619,7 @@ async function main(): Promise<void> {
     process.exitCode = 2;
     return;
   }
-  // MMT_VERIFY_S3_BACKEND names a backend stored by an administrator; otherwise S3_* is used.
+  // MMT_VERIFY_S3_BACKENDは管理者が保存した保存先の名前。無ければS3_*を使う。
   const backendName = process.env.MMT_VERIFY_S3_BACKEND;
   const target = backendName
     ? await readS3TargetFromDatabase(process.env, backendName)

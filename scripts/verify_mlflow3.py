@@ -1,4 +1,4 @@
-"""Verify official MLflow 3 clients against the local mado ML Tracking API."""
+"""ローカルのmado ML TrackingのAPIで、公式のMLflow 3のクライアントを確かめる。"""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
-# Keep protocol failures short and avoid unrelated collection during local verification.
+# ローカルでの検証では、プロトコルの失敗を短く済ませ、関係の無い収集をしない。
 os.environ["MLFLOW_HTTP_REQUEST_MAX_RETRIES"] = "0"
 os.environ["MLFLOW_HTTP_REQUEST_TIMEOUT"] = "20"
 os.environ["MLFLOW_DISABLE_AGENT_HINT"] = "1"
@@ -49,13 +49,13 @@ ARTIFACT_DIRECTORY = (
     ROOT / "artifacts/verification" / datetime.now(ZoneInfo("Asia/Tokyo")).strftime("%Y-%m-%d") / "mlflow3"
 )
 WORK_DIRECTORY = ROOT / "var/verification-mlflow3"
-# Exceed the JSON body limit to exercise streamed binary transfer through the Web proxy.
+# JSONの本文の上限を超え、Webのプロキシを通るバイナリのストリーム転送を確かめる。
 LARGE_ARTIFACT_BYTES = 6 * 1024 * 1024
 TOKEN_LIFETIME = timedelta(hours=1)
-# The smallest part S3 accepts, so the same check passes on filesystem and S3 Projects.
+# S3が受け付ける最小のpart。ファイルシステムのProjectでもS3のProjectでも同じ検査が通る。
 MULTIPART_CHUNK_BYTES = 5 * 1024 * 1024
 MULTIPART_MINIMUM_FILE_BYTES = 1024 * 1024
-# Just over 6 MiB: one full chunk and a shorter final part.
+# 6MiBを少し超える大きさ。満杯のchunk 1つと、それより短い最後のpart。
 MULTIPART_ARTIFACT_BYTES = MULTIPART_CHUNK_BYTES + 1024 * 1024 + 7
 SERVER_INFO_PATHS = ("/server-info", "/api/3.0/mlflow/server-info")
 
@@ -133,9 +133,10 @@ def verify_tracking(client: MlflowClient, temporary: Path) -> dict:
 
 @contextmanager
 def multipart_upload_settings() -> Iterator[None]:
-    """Lower the SDK's multipart thresholds so a 6 MiB file uses mpu/create.
+    """SDKのmultipartのしきい値を下げ、6MiBのファイルでmpu/createを使わせる。
 
-    MLflow 3.17+ decides from server-info; 3.0.0 never reads it and needs the explicit switch.
+    MLflow 3.17以降はserver-infoで判断する。3.0.0はserver-infoを読まないので、明示的な
+    切り替えが要る。
     """
     settings = {
         "MLFLOW_MULTIPART_UPLOAD_MINIMUM_FILE_SIZE": str(MULTIPART_MINIMUM_FILE_BYTES),
@@ -156,7 +157,7 @@ def multipart_upload_settings() -> Iterator[None]:
 
 
 def verify_multipart_upload(client: MlflowClient, temporary: Path) -> dict:
-    """Check that log_artifact goes through mpu/create, part PUTs and complete."""
+    """log_artifactがmpu/create、partのPUT、completeを通ることを確かめる。"""
     server_info = {
         path: httpx.get(f"{mlflow.get_tracking_uri()}{path}", headers=tracking_headers(), timeout=30).json()
         for path in SERVER_INFO_PATHS
@@ -253,7 +254,8 @@ def verify_autolog(client: MlflowClient) -> dict:
 
 
 def verify_system_metrics(client: MlflowClient) -> dict:
-    """mlflow.enable_system_metrics_logging() records readable system/ histories (system_metrics.py)."""
+    """mlflow.enable_system_metrics_logging()で、読めるsystem/の履歴が記録される
+    （system_metrics.py）。"""
     result = system_metrics.log_run_with_system_metrics(
         client, run_seconds=system_metrics.DEFAULT_RUN_SECONDS
     )
@@ -263,9 +265,9 @@ def verify_system_metrics(client: MlflowClient) -> dict:
 
 
 def verify_media_steps(session: httpx.Client, *, project_id: str, experiment_id: str) -> dict:
-    """log_image(key=, step=) and log_table appear in the native media API (media_steps.py)."""
+    """log_image(key=, step=)とlog_tableが、nativeのメディアAPIに出る（media_steps.py）。"""
     run_id = media_steps.log_media_run(f"media-steps-{datetime.now(UTC).timestamp()}")
-    # log_media_run switches the active experiment; the later checks log to the main one.
+    # log_media_runはアクティブな実験を切り替える。以降の検査はメインの実験に記録する。
     mlflow.set_experiment(experiment_id=experiment_id)
     media = media_steps.read_media(session, project_id=project_id, run_id=run_id)
     failures = media_steps.failures_of(media)
@@ -274,7 +276,7 @@ def verify_media_steps(session: httpx.Client, *, project_id: str, experiment_id:
 
 
 def verify_resume(client: MlflowClient, session: httpx.Client, *, project_id: str) -> dict:
-    """Reopening a finished Run with start_run(run_id=) leaves an 'mlflow' resume event."""
+    """終わったRunをstart_run(run_id=)で開き直すと、'mlflow'のresumeイベントが残る。"""
     with mlflow.start_run(run_name="Resumed with start_run(run_id=)") as run:
         mlflow.log_metric("loss", 1.0, step=0)
     run_id = run.info.run_id
@@ -303,7 +305,7 @@ def verify_deferred_webhooks(client: MlflowClient) -> dict | str:
 
 
 def verify_deferred_tracing(experiment_id: str) -> dict:
-    """Tracing is deferred: searches fail clearly, and a traced call inside a Run still completes."""
+    """Tracingは未対応: 検索ははっきり失敗し、Runの中でtraceした呼び出しも最後まで終わる。"""
 
     @mlflow.trace
     def traced_double(value: int) -> int:
@@ -315,7 +317,8 @@ def verify_deferred_tracing(experiment_id: str) -> dict:
         )
         with mlflow.start_run(run_name="Traced call while Tracing is deferred") as run:
             assert traced_double(21) == 42
-        # Trace export may run on a background thread; wait for it so its request is recorded.
+        # traceの送信はバックグラウンドのスレッドで動くことがあるので、終わるのを待って、
+        # そのリクエストを記録させる。
         if hasattr(mlflow, "flush_trace_async_logging"):
             mlflow.flush_trace_async_logging()
     assert MlflowClient().get_run(run.info.run_id).info.status == "FINISHED"
@@ -327,7 +330,7 @@ def verify_deferred_tracing(experiment_id: str) -> dict:
 
 
 def verify_deferred_apis(client: MlflowClient, *, experiment_id: str) -> dict:
-    """Record how the SDK reports APIs this server deliberately omits (docs/mlflow.md)."""
+    """このサーバーがあえて実装しないAPIを、SDKがどう報告するかを記録する（docs/mlflow.md）。"""
     return {"webhooks": verify_deferred_webhooks(client), "tracing": verify_deferred_tracing(experiment_id)}
 
 

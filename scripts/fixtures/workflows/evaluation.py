@@ -1,4 +1,4 @@
-"""Verify that evaluation receives the newly registered model."""
+"""評価が新しく登録したモデルを受け取ることを確かめる。"""
 
 import json
 import os

@@ -1,6 +1,6 @@
 #!/bin/sh
-# Succeeds when the CI workflow passed for the commit on main (a push or a manual run there).
-# Usage: main-ci-succeeded.sh <owner/repository> <commit SHA>; needs gh with a token.
+# mainのcommitでCIのworkflowが通っていれば成功する（mainへのpushか、mainでの手動実行）。
+# 使い方: main-ci-succeeded.sh <owner/repository> <commit SHA>。tokenを設定したghが要る。
 set -eu
 
 repository=${1:?repository is required}

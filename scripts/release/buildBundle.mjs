@@ -41,7 +41,7 @@ export async function buildReleaseBundle({
       delete compose.services[service].build;
       compose.services[service].image = references[service];
     }
-    // The release starts with local accounts; users can opt into SSO without editing Compose.
+    // リリース版はローカルのアカウントで始まる。Composeを編集しなくてもSSOに切り替えられる。
     compose.services.api.environment.AUTH_MODE = '${AUTH_MODE:-local}';
     await writeFile(join(bundleDirectory, 'compose.yml'), stringify(compose));
     for (const [source, destination] of [

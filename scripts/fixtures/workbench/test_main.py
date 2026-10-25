@@ -1,4 +1,4 @@
-"""A smoke command that can also exercise a failed test Run."""
+"""失敗するテストのRunも確かめられるsmokeのコマンド。"""
 
 from __future__ import annotations
 

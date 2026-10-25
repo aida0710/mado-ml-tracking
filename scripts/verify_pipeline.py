@@ -1,16 +1,16 @@
-"""End-to-end check of the automated pipeline on an isolated API and a local CPU worker.
+"""自動化したパイプラインを、分離したAPIとローカルのCPUのworkerで端から端まで確かめる。
 
-training Task -> Task output registration -> inference rule (model_registered) -> evaluation rule
-(upstream_run_finished) -> promotion policy decision -> automatic alias switch, then a second
-training compared against the promoted baseline, a new evaluation rule applied by hand to the
-baseline version, the SDK-free path (result.json declarations and a staged reference set), a
-failed training whose downstream is skipped and, when Docker is available, a container inference
-whose 1000 outputs travel in one archive. Rules and the policy belong to a Service Account after
-their creator leaves the Project, and the worker runs with a Service Account token.
+学習のTask → Taskの出力の登録 → 推論ルール（model_registered） → 評価ルール
+（upstream_run_finished） → 昇格policyの判定 → aliasの自動切り替え。続いて、昇格した
+ベースラインと比べる2回目の学習、ベースラインのバージョンに手で適用する新しい評価ルール、
+SDKを使わない経路（result.jsonでの宣言と、配置した参照セット）、下流がskipされる失敗する学習、
+そしてDockerが使えるときは、1000個の出力を1つのアーカイブで運ぶコンテナでの推論。
+ルールとpolicyは、作成者がProjectを抜けたあとはService Accountのものになり、workerは
+Service Accountのtokenで動く。
 
-The API is a fresh test schema in MMT_TEST_DATABASE_URL (scripts/serve_mlflow_verification.ts),
-never the running development API/DB. The schema is dropped when the script stops the API. Each
-stage's result and duration go to artifacts/verification/<JST date>/pipeline/pipeline-integration.json.
+APIはMMT_TEST_DATABASE_URLの新しいテスト用schema（scripts/serve_mlflow_verification.ts）で、
+動いている開発用のAPIやDBは使わない。スクリプトがAPIを止めるときにschemaを削除する。各段階の
+結果と所要時間はartifacts/verification/<JST date>/pipeline/pipeline-integration.jsonに書く。
 """
 
 from __future__ import annotations
@@ -48,15 +48,15 @@ from mado_tracking.worker.runtime import JobExecutor
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES = ROOT / "python/examples"
 JST = ZoneInfo("Asia/Tokyo")
-# Verification servers started by agents use 47000-47009; the running API is 4182.
+# エージェントが起動する検証用サーバーは47000〜47009を使う。動いているAPIは4182。
 DEFAULT_API_PORT = 47001
-# The API checks Origin on cookie requests; this is only a header, nothing connects to the Web.
+# APIはcookieを使うリクエストのOriginを確かめる。これはヘッダーにすぎず、Webには何も接続しない。
 WEB_ORIGIN = "http://127.0.0.1:5182"
-# Migrations on a fresh schema take a few seconds; tsx compiles the API on first start.
+# 新しいschemaへのmigrationには数秒かかり、初回の起動ではtsxがAPIをコンパイルする。
 API_START_SECONDS = 90
-# Each Job creates a venv and installs httpx before running the example.
+# 各Jobは、例を実行する前にvenvを作ってhttpxを入れる。
 JOB_DEADLINE_SECONDS = 180
-# 1000 container outputs are verified and uploaded one Artifact at a time after the archive.
+# コンテナの1000個の出力は、アーカイブのあとで1つずつ検証され、Artifactとしてアップロードされる。
 CONTAINER_JOB_DEADLINE_SECONDS = 600
 WORKER_IDLE_SECONDS = 0.2
 TERMINAL_STATUSES = {"finished", "failed", "canceled"}
@@ -64,21 +64,24 @@ ADMIN_EMAIL = "admin@localhost"
 OWNER_EMAIL = "pipeline-owner@example.test"
 
 SDK_FAMILY = "linear"
-# A second family keeps the result.json pipeline's rules away from the SDK pipeline's versions.
+# 2つ目のモデル系列を使い、result.jsonのパイプラインのルールを、SDKのパイプラインの
+# バージョンから切り離す。
 DECLARED_FAMILY = "linear-declared"
 PROMOTION_ALIAS = "production"
-# inference.py's default inputs and the true line y = 2x + 1 the training data follows.
+# inference.pyの既定の入力と、学習データが従う真の直線y = 2x + 1。
 INFERENCE_VALUES = (0.0, 1.0, 2.0)
 SECONDS_PER_PREDICTION_UNIT = 0.1
 TRAINING_STEPS = 40
-# The second evaluation code version only tightens the length tolerance; it is a different version.
+# 2つ目の評価コードのバージョンは長さの許容差を厳しくするだけだが、別のバージョンになる。
 STRICT_TOLERANCE_SECONDS = "0.001"
 CONTAINER_OUTPUT_FILES = 1000
-# Digest-pinned so the check never pulls; override with an image already in the local Docker cache.
+# digestで固定して、検査がpullしないようにする。差し替えるときは、ローカルのDockerの
+# キャッシュに既にあるイメージを使う。
 DEFAULT_CONTAINER_IMAGE = "alpine@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8"
 
-# Runs the example given as the first argument after recording what the Job's token can do: its kind
-# (GET /auth/token) and, when the parameters name a foreign Run, whether it may write a metric there.
+# Jobのtokenができることを記録してから、最初の引数で渡した例を実行する。記録するのは、
+# tokenの種類（GET /auth/token）と、parameterが他のRunを指すときに、そのRunへ
+# メトリクスを書けるかどうか。
 JOB_ENTRY = '''"""Pipeline check entry: report the token's reach, then run the example unchanged."""
 import json
 import os
@@ -114,8 +117,8 @@ runpy.run_path("training.py", run_name="__main__")
 print("pipeline-training-fails-after-registration", flush=True)
 sys.exit(3)
 '''
-# Audio inference writes one file per utterance: the files are listed in a JSON Lines manifest and
-# the index file is declared as the output DatasetVersion (result.json version 2). BusyBox only.
+# 音声の推論は発話ごとに1ファイルを書く。ファイルはJSON Linesのmanifestに並べ、その索引の
+# ファイルを出力のDatasetVersionとして宣言する（result.jsonのversion 2）。BusyBoxだけで動く。
 CONTAINER_INFERENCE_SCRIPT = r"""
 set -eu
 dataset_id="$1"
@@ -152,7 +155,7 @@ class StageFailure(AssertionError):
 
 
 class StageNotRun(Exception):
-    """The stage's precondition (for example Docker) is missing; recorded as not_run."""
+    """段階の前提（たとえばDocker）が無い。not_runとして記録する。"""
 
 
 def expect(condition: object, message: str) -> None:
@@ -188,7 +191,7 @@ class StageRecorder:
 
     @property
     def passed(self) -> bool:
-        # An optional stage without its environment (Docker) does not fail the check.
+        # 任意の段階は、必要な環境（Docker）が無くても検査を失敗にしない。
         return all(
             stage["status"] == "passed" or (stage["status"] == "not_run" and stage.get("optional"))
             for stage in self.stages
@@ -196,7 +199,7 @@ class StageRecorder:
 
 
 class ProjectApi:
-    """Cookie session of one development login, scoped to one Project."""
+    """開発用ログイン1つのcookieのsession。1つのProjectに限る。"""
 
     def __init__(self, session: httpx.Client, project_id: str):
         self.session = session
@@ -205,13 +208,13 @@ class ProjectApi:
     def request(self, method: str, resource: str, **options: Any) -> Any:
         return api_request(self.session, method, f"projects/{self.project_id}/{resource}", **options)
 
-    # Every resource this check reads or creates answers with a JSON object.
+    # この検査が読んだり作ったりするリソースは、どれもJSONのオブジェクトで応答する。
     def json_object(self, method: str, resource: str, **options: Any) -> dict[str, Any]:
         entity: dict[str, Any] = self.request(method, resource, **options)
         return entity
 
     def status_of(self, method: str, resource: str, **options: Any) -> int:
-        """HTTP status of a request that is expected to be refused."""
+        """拒否されるはずのリクエストのHTTPステータス。"""
         return self.session.request(method, f"projects/{self.project_id}/{resource}", **options).status_code
 
     def get(self, resource: str, **options: Any) -> dict[str, Any]:
@@ -279,7 +282,7 @@ async def run_worker_until(
     *,
     deadline_seconds: float = JOB_DEADLINE_SECONDS,
 ) -> None:
-    """Run the worker with --once semantics (recover or claim one Job) until finished() holds."""
+    """finished()が成り立つまで、workerを--onceの動き（復旧するか、Jobを1つclaimする）で動かす。"""
     deadline = time.monotonic() + deadline_seconds
     while time.monotonic() < deadline:
         await worker_cli.run(settings, once=True)
@@ -305,7 +308,7 @@ async def run_job_of(pipeline: Pipeline, run_id: str, **options: Any) -> dict[st
 
 
 def reference_samples() -> list[dict[str, Any]]:
-    """Expected WAV lengths for inference.py's inputs on the true line y = 2x + 1."""
+    """真の直線y = 2x + 1上での、inference.pyの入力に対するWAVの長さの期待値。"""
     return [
         {
             "audio": f"sample-{index:03d}.wav",
@@ -429,7 +432,8 @@ def register_codes(pipeline: Pipeline) -> None:
 
 
 def register_reference_sets(pipeline: Pipeline, work_directory: Path) -> None:
-    """A descriptor-only reference (samples in metadata) and the same samples uploaded as a file."""
+    """記述子だけの参照（サンプルはメタデータにある）と、
+    同じサンプルをファイルとしてアップロードしたもの。"""
     api, ids = pipeline.admin, pipeline.ids
     samples = reference_samples()
     dataset = api.post("datasets", {"name": "Pipeline reference lengths", "namespace": "verification"})
@@ -443,7 +447,8 @@ def register_reference_sets(pipeline: Pipeline, work_directory: Path) -> None:
             "metadata": {"samples": samples},
         },
     )["id"]
-    # The file version has no samples in its metadata: only the staged reference.json can score.
+    # ファイルのバージョンはメタデータにサンプルを持たない。採点に使えるのは配置した
+    # reference.jsonだけ。
     directory = work_directory / "reference-files"
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "reference.json").write_text(json.dumps({"samples": samples}))
@@ -458,7 +463,7 @@ def register_reference_sets(pipeline: Pipeline, work_directory: Path) -> None:
 def create_rule_chain(
     pipeline: Pipeline, *, family: str, reference_version_id: str, parameters: dict[str, Any]
 ) -> dict[str, str]:
-    """An inference rule on registration and an evaluation rule chained to it, for one family."""
+    """1つのモデル系列について、登録で動く推論ルールと、それに連鎖する評価ルール。"""
     owner = pipeline.owner
     common = {"experimentId": pipeline.experiment_id, "targetId": pipeline.target_id, "maxAttempts": 1}
     output_dataset_id = owner.post(
@@ -473,7 +478,7 @@ def create_rule_chain(
             "kind": "inference",
             "codeVersionId": pipeline.ids["inferenceCodeVersionId"],
             "trigger": "model_registered",
-            # The Job token may add versions to a Dataset but not create one.
+            # Job tokenはデータセットにバージョンを足せるが、データセットを作ることはできない。
             "parameters": {**parameters, "outputDatasetId": output_dataset_id},
         },
     )
@@ -500,7 +505,7 @@ def create_rule_chain(
 
 
 def create_rules_and_policy(pipeline: Pipeline) -> None:
-    """The owner (a Project admin, not a global admin) creates what the Service Account takes over."""
+    """Service Accountが引き継ぐものを、所有者（全体管理者でなくProject admin）が作る。"""
     ids = pipeline.ids
     ids.update(
         create_rule_chain(
@@ -581,7 +586,7 @@ def set_up(pipeline: Pipeline, details: dict[str, Any], work_directory: Path) ->
         "models", {"name": "pipeline-linear-declared", "family": DECLARED_FAMILY, "description": ""}
     )["id"]
     create_rules_and_policy(pipeline)
-    # A Run the training Job's token must not be able to write to.
+    # 学習のJobのtokenでは書き込めてはいけないRun。
     ids["foreignRunId"] = api.post(
         "runs",
         {"experimentId": pipeline.experiment_id, "name": "Job token probe target", "kind": "processing"},
@@ -598,7 +603,7 @@ def set_up(pipeline: Pipeline, details: dict[str, Any], work_directory: Path) ->
         code_version_id=ids["trainingCodeVersionId"],
         model_id=ids["declaredModelId"],
     )
-    # Without an output model the failing training registers its version itself while running.
+    # 出力モデルが無いので、失敗する学習は実行中に自分でバージョンを登録する。
     ids["failingTaskId"] = create_task(
         pipeline,
         name="Pipeline failing training",
@@ -618,7 +623,7 @@ def launch_task(api: ProjectApi, task_id: str) -> str:
 
 
 def log_lines(pipeline: Pipeline, run_id: str, marker: str) -> list[str]:
-    """Log lines of a Run containing marker; the worker forwards output in multi-line chunks."""
+    """Runのログのうちmarkerを含む行。workerは出力を複数行のまとまりで送る。"""
     return [
         line
         for message in pipeline.admin.log_messages(run_id)
@@ -651,7 +656,7 @@ def single_execution(
     return executions[0]
 
 
-# --- stages ---------------------------------------------------------------------------------------
+# --- 段階 -----------------------------------------------------------------------------------------
 
 
 def verify_owner_transfer(pipeline: Pipeline, details: dict[str, Any]) -> None:
@@ -882,9 +887,9 @@ def verify_auto_promotion(
 
 
 async def verify_second_round(pipeline: Pipeline, details: dict[str, Any]) -> None:
-    """A second version is compared with the promoted one; a new evaluation rule also runs on it."""
+    """2つ目のバージョンを昇格済みのものと比べる。新しい評価ルールもそのバージョンで動く。"""
     ids = pipeline.ids
-    # Created now, so it chains from the second inference but not from the first one.
+    # ここで作るので、2回目の推論からは連鎖するが、1回目からは連鎖しない。
     ids["strictEvaluationRuleId"] = pipeline.admin.post(
         "automation-rules",
         {
@@ -943,7 +948,7 @@ async def verify_second_round(pipeline: Pipeline, details: dict[str, Any]) -> No
 
 
 async def verify_manual_apply_comparison(pipeline: Pipeline, details: dict[str, Any]) -> None:
-    """The strict rule did not exist for the baseline: apply it by hand, then compare the versions."""
+    """厳しいルールはベースラインの時点では無かったので、手で適用してからバージョンを比べる。"""
     ids = pipeline.ids
     execution = pipeline.admin.post(
         f"automation-rules/{ids['strictEvaluationRuleId']}/executions",
@@ -987,7 +992,7 @@ async def verify_manual_apply_comparison(pipeline: Pipeline, details: dict[str, 
 
 
 async def verify_declared_outputs(pipeline: Pipeline, details: dict[str, Any]) -> None:
-    """The SDK-free path: result.json declarations and a reference staged by the worker."""
+    """SDKを使わない経路: result.jsonでの宣言と、workerが配置した参照。"""
     ids = pipeline.ids
     training_run_id = launch_task(pipeline.admin, ids["declaredTaskId"])
     training = await run_job_of(pipeline, training_run_id)
@@ -1063,7 +1068,7 @@ async def verify_failed_training(pipeline: Pipeline, details: dict[str, Any]) ->
 
 @contextmanager
 def counting_target_commands() -> Iterator[Counter[str]]:
-    """Count the runner commands the in-process worker sends to the target, by command name."""
+    """同じプロセス内のworkerがtargetに送るrunnerのコマンドを、コマンド名ごとに数える。"""
     counts: Counter[str] = Counter()
     original_command, original_stream = JobExecutor.command, JobExecutor.stream_command
 
@@ -1118,7 +1123,8 @@ async def verify_container_bulk_outputs(pipeline: Pipeline, details: dict[str, A
         families=[SDK_FAMILY],
         runtime={"kind": "docker", "image": image, "workingDirectory": "/tmp"},
     )
-    # A model_registered rule created after every linear training: it starts only when applied.
+    # モデル系列linearの学習がすべて終わってから作るmodel_registeredのルール。
+    # 適用したときだけ動く。
     rule_id = pipeline.admin.post(
         "automation-rules",
         {
@@ -1156,7 +1162,7 @@ async def verify_container_bulk_outputs(pipeline: Pipeline, details: dict[str, A
         len(audio) == CONTAINER_OUTPUT_FILES, f"{len(audio)} of {CONTAINER_OUTPUT_FILES} outputs were saved"
     )
     expect(len(run["outputDatasetVersionIds"]) == 1, "the container's DatasetVersion was not registered")
-    # One archive stream (one SSH connection on a real target) instead of one command per file.
+    # ファイルごとに1コマンドではなく、アーカイブのストリーム1本（実際のtargetならSSH接続1本）。
     expect(
         commands[OUTPUT_ARCHIVE_COMMAND] == 1,
         f"outputs took {commands[OUTPUT_ARCHIVE_COMMAND]} archive streams",
@@ -1164,7 +1170,7 @@ async def verify_container_bulk_outputs(pipeline: Pipeline, details: dict[str, A
     expect(commands["output"] == 0, "outputs were also fetched file by file")
 
 
-# --- orchestration --------------------------------------------------------------------------------
+# --- 全体の進行 -----------------------------------------------------------------------------------
 
 StageCheck = Callable[[Pipeline, dict[str, Any]], Awaitable[Any] | None]
 
@@ -1174,7 +1180,7 @@ class Stage:
     name: str
     description: str
     check: StageCheck
-    # Without its environment (Docker) the stage is not_run and does not fail the check.
+    # 必要な環境（Docker）が無ければ、段階はnot_runになり、検査を失敗にしない。
     optional: bool = False
 
 
@@ -1303,7 +1309,7 @@ async def verify_pipeline(
         try:
             await run_stage(stage, pipeline, recorder)
         except Exception:
-            pass  # The recorder holds the failure; the JSON is the report.
+            pass  # 失敗はrecorderが持ち、JSONがそのまま報告になる。
 
 
 @contextmanager
@@ -1339,7 +1345,7 @@ def isolated_api(log_path: Path, port: int) -> Iterator[str]:
                 time.sleep(0.5)
             yield url
         finally:
-            # SIGTERM lets the harness drop its test schema.
+            # SIGTERMを送れば、harnessがテスト用のschemaを削除できる。
             server.send_signal(signal.SIGTERM)
             try:
                 server.wait(timeout=30)
@@ -1399,8 +1405,8 @@ def prepare_project(
     experiment = admin.post("experiments", {"name": "Pipeline", "description": ""})
     worker_account = create_service_account(admin, "pipeline-worker")
     automation_account = create_service_account(admin, "pipeline-automation")
-    # docs/worker.md: a worker needs read, worker:execute, artifacts:write and, for result.json
-    # declarations, registry:write. The Job's own code gets a Job token instead.
+    # docs/worker.md: workerにはread、worker:execute、artifacts:writeと、result.jsonで宣言するなら
+    # registry:writeが要る。Job自身のコードには、代わりにJob tokenが渡る。
     worker_token = admin.post(
         f"service-accounts/{worker_account['id']}/tokens",
         {
@@ -1409,7 +1415,7 @@ def prepare_project(
             "expiresAt": expires_in_one_day(),
         },
     )
-    # Uploading the reference files goes through the SDK, which authenticates with a token.
+    # 参照ファイルのアップロードはSDKを通し、SDKはtokenで認証する。
     setup_token = api_request(
         admin_session,
         "POST",
@@ -1451,7 +1457,7 @@ def prepare_project(
 
 @dataclass(frozen=True)
 class Profile:
-    """What one invocation checks and where it writes its report."""
+    """1回の起動で何を検査し、報告をどこに書くか。"""
 
     output_name: str
     report_name: str
@@ -1493,7 +1499,7 @@ def main(profile: Profile = FULL_PROFILE) -> int:
                 set_up(pipeline, details, work_directory)
             asyncio.run(verify_pipeline(pipeline, recorder, stage_names=profile.stage_names))
         except Exception:
-            pass  # A failed setup is recorded as its stage; no later stage can run without it.
+            pass  # 失敗した準備はその段階として記録する。準備が無ければ後の段階はどれも動けない。
     summary.update(
         finishedAt=datetime.now(JST).isoformat(timespec="seconds"),
         result="passed" if recorder.passed else "failed",

@@ -31,7 +31,7 @@ for manifest in "$manifest_directory"/*.json; do
     echo "GHCR version lookup failed with HTTP $status" >&2
     exit 1
   fi
-  # Consume the complete output: closing the pipe early makes Buildx fail with SIGPIPE.
+  # 出力を最後まで読む。パイプを途中で閉じると、BuildxがSIGPIPEで失敗する。
   promoted_digest=$(docker buildx imagetools inspect "$image:$RELEASE_TAG" | awk '$1 == "Digest:" && !printed { print $2; printed=1 }')
   [ "$promoted_digest" = "$digest" ]
 done

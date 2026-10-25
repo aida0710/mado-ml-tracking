@@ -1,4 +1,4 @@
-"""Read the exact preprocessing output and record a tiny model on CPU."""
+"""その前処理の出力そのものを読み、CPUで小さなモデルを記録する。"""
 
 import hashlib
 import json
@@ -12,7 +12,7 @@ assert len(usage) == 1 and usage[0]["role"] == "training" and usage[0]["weight"]
 assert usage[0]["selection"] == {"seed": 42}
 directories = json.loads(os.environ["MMT_INPUT_DATASET_DIRS"])
 input_directory = Path(directories[usage[0]["datasetVersionId"]])
-# The preprocessing step declared its shard directory; the version holds the shards at its root.
+# 前処理のstepはshardのディレクトリを宣言した。バージョンはそのshardを直下に持つ。
 records = [
     record
     for shard in sorted(input_directory.glob("part-*.json"))

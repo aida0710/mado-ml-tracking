@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-// The disposable server writes fixture credentials to a private file, never to logs.
+// 使い捨てのサーバーは、fixtureの認証情報を非公開のファイルに書き、ログには決して書かない。
 const settings = JSON.parse(await readFile('var/builtin-mado-verification.json', 'utf8'));
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:6084';
 assert.equal(new URL(base).hostname, '127.0.0.1');
@@ -14,7 +14,7 @@ const verificationDate = new Intl.DateTimeFormat('en-CA', {
   day: '2-digit',
 }).format(new Date());
 const artifacts = process.env.MMT_SCREENSHOT_DIR ?? `artifacts/builtin-mado/${verificationDate}`;
-// Bound the verification of the asynchronous worker, with a short state polling interval.
+// 非同期のworkerの検証に上限時間を設け、状態のポーリング間隔は短くする。
 const DELIVERY_WAIT_MS = 15000;
 const DELIVERY_POLL_MS = 100;
 await mkdir(artifacts, { recursive: true });
@@ -82,7 +82,7 @@ try {
   for (const token of Object.values(settings.credentials))
     assert(!JSON.stringify(connection).includes(token));
   await checkConnection();
-  // The namespaces shown here come from Mado's answer for the access token.
+  // ここに出るnamespaceは、access tokenに対するmado S3 Data Catalogの応答から来る。
   await page.getByText('speech、mado-model-tracking、local', { exact: true }).waitFor();
   await capture('real-mado-checked-ja');
   assert.equal((await api(`${projectPath}/plugins/${connection.id}/outbox`)).pending, 0);
@@ -126,7 +126,7 @@ try {
   for (const status of ['running', 'finished'])
     await api(`${projectPath}/runs/${run.id}`, { method: 'PATCH', body: { status } });
   await page.goto(`${base}${projectPath}/plugins?id=${connection.id}`);
-  // The domain worker's delivery state is the condition; no fixed delay hides a race.
+  // 条件はドメインのworkerの配送状態。固定の待ち時間で競合を隠さない。
   const deliveryDeadline = Date.now() + DELIVERY_WAIT_MS;
   let outbox;
   do {
@@ -155,7 +155,7 @@ try {
   await capture('real-mado-configured-en');
   await switchLanguage('日本語');
   await page.setViewportSize({ width: 320, height: 850 });
-  // Responsive parts re-render after the resize; wait for that layout rather than a fixed delay.
+  // レスポンシブな部品はリサイズのあとに描き直される。固定の待ち時間でなく、その配置を待つ。
   await page.waitForFunction(() => document.documentElement.scrollWidth <= innerWidth);
   await capture('real-mado-mobile-ja');
   assert.deepEqual(pageErrors, []);

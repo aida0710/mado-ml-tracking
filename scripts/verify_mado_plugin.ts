@@ -1,4 +1,7 @@
-/** Connect the built-in Mado client and real host/outbox to Mado's HTTP routes with an isolated Registry fixture. */
+/**
+ * 組み込みのmado S3 Data Catalogのクライアントと本物のhost・outboxを、分離したRegistryの
+ * fixtureを付けたmado S3 Data CatalogのHTTPの経路につなぐ。
+ */
 import assert from 'node:assert/strict';
 import { startMadoVerificationServer } from './fixtures/madoVerificationServer.js';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -60,7 +63,7 @@ try {
     200,
   );
   assert(checked.manifest?.capabilities.includes('storage:metrics'));
-  // Mado reported the namespaces itself; nobody typed them into the connection.
+  // namespaceはmado S3 Data Catalog自身が報告した。誰も接続の設定に入力していない。
   assert.deepEqual(checked.accessTokenGrant?.namespaces, ['speech', 'mado-model-tracking', 'local']);
   assert.equal(checked.accessTokenGrant?.name, 'ML Tracking verification');
   assert.equal(plugin.enabled, false);
