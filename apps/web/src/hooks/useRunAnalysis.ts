@@ -4,8 +4,9 @@ import { resolveAnalysisTarget, tableMetricKeys, type AnalysisTarget } from '../
 import { useQuery } from './useQuery';
 
 /**
- * The params x metrics table and the parameter importance of one Run set. Metric names are
- * sampled first because both endpoints need them; `chosenTarget` falls back to the default when the set does not offer it.
+ * 1つの対象のRunについての、パラメータ×メトリクスの表とパラメータの重要度。どちらの
+ * エンドポイントもメトリクス名が要るので、先にそれをサンプリングする。`chosenTarget`が
+ * 対象のRunに無ければ、既定のものを使う。
  */
 export function useRunAnalysis({
   projectId,
@@ -21,7 +22,7 @@ export function useRunAnalysis({
   const target = metricOptions.value ? resolveAnalysisTarget(chosenTarget, metricOptions.value) : null;
   const metrics = metricOptions.value ? tableMetricKeys(metricOptions.value.metricKeys, target) : [];
   const table = useQuery({
-    // Keyed by the set of metrics so picking another target among them does not reload the table.
+    // メトリクスの集まりをキーにして、その中で別の指標を選んでも表を読み直さないようにする。
     key: metrics.length > 0 ? `${runSetKey}:table:${JSON.stringify([...metrics].sort())}` : null,
     load: (signal) => runAnalysisApi.table(projectId, { runSet, metrics }, signal),
   });

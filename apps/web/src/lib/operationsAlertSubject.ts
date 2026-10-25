@@ -1,9 +1,9 @@
 import type { OperationsAlert } from '@mmt/contracts';
 
-/** What an alert is about, as a short label and the Project page that shows it. */
+/** アラートの対象。短いラベルと、それを表示するProjectのページ。 */
 export interface OperationsAlertSubject {
   label: string;
-  /** Path below /projects/:projectId. */
+  /** /projects/:projectIdより下のパス。 */
   pagePath: string;
 }
 

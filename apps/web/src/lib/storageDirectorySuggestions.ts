@@ -3,8 +3,8 @@ import type { FieldSuggestions } from '../types/form';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
- * The root directory field's candidates and its note. A path that does not exist yet is only
- * noted when nothing completes it either, so typing part of an existing name stays quiet.
+ * ルートディレクトリの欄の候補と注記。まだ無いパスに注記を出すのは補完できる候補も無いときだけで、
+ * 既存の名前を途中まで打っている間は何も出さない。
  */
 export function toDirectoryFieldSuggestions(directories: DirectorySuggestions): FieldSuggestions {
   return { items: directories.items, note: directoryNote(directories) };

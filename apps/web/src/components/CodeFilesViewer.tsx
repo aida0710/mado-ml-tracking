@@ -5,15 +5,16 @@ import { useLocale } from '../i18n/useLocale';
 import { codeSourceText } from '../i18n/codeSource';
 
 /**
- * The files of a saved code version, read-only: the file list beside the file colored by its
- * format, as Artifact previews show text. Anyone who can see the version can read it, viewers
- * included. Monaco (the version form's editor) is not loaded here, so the Code page stays light.
+ * 保存したコードバージョンのファイルを読み取り専用で表示する。ファイルの一覧の横に、Artifactの
+ * プレビューがテキストを表示するのと同じく、形式に合わせて色を付けたファイルを並べる。バージョンを
+ * 見られる人ならViewerも含めてだれでも読める。Monaco（バージョンのフォームのエディタ）はここでは
+ * 読み込まないので、Codeの画面は軽いままになる。
  */
 export function CodeFilesViewer({ files }: { files: Readonly<Record<string, string>> }) {
   useLocale();
   const paths = Object.keys(files).sort();
   const [chosenPath, setChosenPath] = useState('');
-  // A file chosen in another version may not exist here; the first file is shown instead.
+  // 別のバージョンで選んだファイルはここに無いことがある。そのときは先頭のファイルを表示する。
   const activePath = Object.hasOwn(files, chosenPath) ? chosenPath : (paths[0] ?? '');
   if (!paths.length) return <p className="muted">{codeSourceText.noFiles}</p>;
   return (
@@ -21,7 +22,7 @@ export function CodeFilesViewer({ files }: { files: Readonly<Record<string, stri
       <CodeFileTree paths={paths} activePath={activePath} onSelect={setChosenPath} />
       <div className="workspace-editor-pane">
         <div className="editor-file-header mono">{activePath}</div>
-        {/* A new key per file: the format select starts from that file's own format. */}
+        {/* ファイルごとにkeyを変え、形式の選択欄をそのファイルの形式から始める。 */}
         <CodeView key={activePath} content={files[activePath] ?? ''} fileName={activePath} />
       </div>
     </div>

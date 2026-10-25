@@ -9,7 +9,7 @@ import type {
   TargetCheckItemStatus,
 } from '@mmt/contracts';
 
-// Worker presence, Job heartbeat and target connection check labels on the Compute and Jobs pages.
+// ComputeとJobsの画面に出す、workerの接続状態、Jobのハートビート、コンピュータの接続確認の文言。
 export const computeText = localized({
   workers: 'Workers',
   workerId: 'Worker ID',
@@ -32,7 +32,7 @@ export const computeText = localized({
   datasetTransferRelay: 'workerが中継する',
   datasetTransferDirect: 'コンピュータがAPIから直接取得する',
   checkTarget: '接続を確認',
-  // The list only opens the details, where the check is asked for; the label says so.
+  // 一覧からは詳細を開くだけで、接続確認は詳細の中で依頼する。ボタンの文言もそう表す。
   checkTargetOpen: '接続確認を開く',
   targetCheck: '接続確認',
   targetCheckHint:
@@ -65,7 +65,7 @@ export const computeText = localized({
   targetCheckCurrent: '現在',
   saveTargetCandidates: '選んだ候補を保存',
   targetCheckCandidatesSaved: 'コンピュータの設定を保存しました',
-  // Sites: their connection, accounts and job shell are set here; the launcher makes their keys.
+  // site。接続先・アカウント・job shellはここで設定し、鍵はランチャーが作る。
   siteExecutor: 'Site（ランチャーかmado-tracking submitで投入）',
   submissionMode: '投入方式',
   submissionModeAutomatic: '自動（ランチャーが投入）',
@@ -73,7 +73,7 @@ export const computeText = localized({
   cpuArch: 'CPUアーキテクチャ',
   supportsArray: 'job shellがarrayを1回の投入で扱える',
   queueTimeout: '待ち行列の上限時間（HH:MM:SS・任意）',
-  // Three days is a common upper bound of batch queues.
+  // 3日は、バッチの待ち行列の上限時間としてよくある値。
   queueTimeoutPlaceholder: '72:00:00',
   siteRuntimeKinds: '対応Runtime（siteはコンテナだけ）',
   siteTargetNotice:
@@ -86,7 +86,7 @@ export const computeText = localized({
     'siteの対応RuntimeはDocker・Singularity・Apptainerから1つ以上選択してください。',
 }, english.computeText);
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const computeTextTemplates = localized({
   queueTimeoutError: (minMinutes: number, maxDays: number) =>
     `待ち行列の上限時間は${minMinutes}分から${maxDays}日までを、HH:MM:SSの形で指定してください。`,
@@ -129,7 +129,7 @@ export const targetCheckOutcomeLabels = localized({
   skipped: '未確認',
 } satisfies Record<TargetCheckItemStatus, string>, english.targetCheckOutcomeLabels);
 
-// One short fix per reason code; shown next to the failing item.
+// 理由のコードごとの短い直し方。失敗した項目の隣に出す。
 export const targetCheckCodeHints = localized({
   ssh_failed: 'host・port・username、鍵とknown_hostsの登録を確認してください',
   ssh_configuration:

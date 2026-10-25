@@ -8,7 +8,7 @@ import {
   type LogEntry,
 } from '@mmt/contracts';
 
-// Jobs list and Run logs, with the site Job details (phase, scheduler, array, origin).
+// Jobの一覧とRunのログ。siteのJobの詳細（段階、スケジューラ、array、起動元）も含む。
 export const jobsText = {
   jobColumn: 'Job',
   jobRunColumn: 'Run',
@@ -106,7 +106,7 @@ export const jobEndReasonLabels: Record<JobEndReason, string> = {
   submit_failed: 'Submission failed',
 };
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const jobsTextTemplates = {
   gpuCount: (count: number) => `GPU ×${count}`,
   arrayMember: (index: number, size: number) => `${index} / ${size}`,

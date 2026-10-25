@@ -15,15 +15,15 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { automationText } from '../i18n/automation';
 
-/** What was saved, and whether the rule it was copied from should now be disabled. */
+/** 保存したルールと、コピー元のルールをこれから無効にするかどうか。 */
 export interface SavedAutomationRule {
   rule: ModelAutomationRule;
   disableSource: boolean;
 }
 
 /**
- * Creates a rule, from scratch or from `source`'s settings. A copy offers to disable its source,
- * since the two would otherwise both start Jobs for the same versions.
+ * ルールを、最初から、または`source`の設定から作る。2つのルールが同じバージョンに対して
+ * どちらもJobを始めてしまうので、コピーではコピー元を無効にするか尋ねる。
  */
 export function AutomationRuleDialog({
   catalog,

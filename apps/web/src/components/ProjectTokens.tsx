@@ -13,8 +13,8 @@ import { text, textTemplates } from '../i18n/catalog';
 import { formatList } from '../i18n/textJoining';
 
 /**
- * The signed-in user's tokens and, for Project admins, every token limited to the Project.
- * `projectTokens` is shared with the Service Account section so issuing a key shows up here.
+ * ログイン中の利用者のtokenと、Project adminにはこのProjectに限ったすべてのtoken。`projectTokens`は
+ * Service Accountの欄と共有し、そこで発行したtokenがここにも出るようにする。
  */
 export function ProjectTokens({ projectTokens }: { projectTokens: QueryState<TokenSummary[]> }) {
   useLocale();

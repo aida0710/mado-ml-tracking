@@ -1,21 +1,21 @@
 import type { ArtifactPreview, WaveformPeaksPreview } from '@mmt/contracts';
 import type { WaveformPeaks } from './audioAnalysis';
 
-/** The server's whole-file waveform, decoded from a 'waveform-peaks' preview Artifact. */
+/** 'waveform-peaks'のプレビューのArtifactから読み出した、サーバーが作るファイル全体の波形。 */
 export interface ServerWaveform {
   peaks: WaveformPeaks;
   sampleRate: number;
   durationSeconds: number;
 }
 
-/** What the viewer can show for a file too large to analyze in the browser. */
+/** ブラウザで解析するには大きすぎるファイルについて、ビューアが表示できるもの。 */
 export type ServerAudioPreviewSummary =
   | { status: 'none' }
   | { status: 'pending' }
   | { status: 'failed' }
   | { status: 'ready'; peaksArtifactId: string; spectrogramArtifactId: string | null };
 
-// The worker writes at most 8192 peaks; anything far beyond is not a file it produced.
+// プレビューのworkerが書くピークは最大8192個。大きく超えるものはworkerが作ったものではない。
 const MAX_PEAK_COUNT = 65536;
 
 function isPeakArray(value: unknown): value is number[] {
@@ -26,7 +26,7 @@ function isPeakArray(value: unknown): value is number[] {
   );
 }
 
-/** null for anything that is not a version-1 peaks document. */
+/** バージョン1のピークの文書でなければnull。 */
 export function parseWaveformPeaksPreview(text: string): ServerWaveform | null {
   let document: Partial<WaveformPeaksPreview>;
   try {
@@ -47,9 +47,9 @@ export function parseWaveformPeaksPreview(text: string): ServerWaveform | null {
 }
 
 /**
- * The waveform decides the state: without it there is nothing to draw. A missing spectrogram only
- * leaves its row empty. 'skipped' (no ffmpeg on the server, no audio stream) reads as 'none',
- * because there is nothing the user can retry.
+ * 状態は波形で決まる。波形が無ければ描くものが無い。スペクトログラムが無くても、その行が空に
+ * なるだけ。'skipped'（サーバーにffmpegが無い、音声のストリームが無い）は、利用者がやり直せる
+ * ことが無いので'none'とみなす。
  */
 export function summarizeServerAudioPreviews(previews: readonly ArtifactPreview[]): ServerAudioPreviewSummary {
   const peaks = previews.find((preview) => preview.kind === 'waveform-peaks');

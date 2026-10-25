@@ -23,8 +23,8 @@ import { notificationChannelKindLabels } from '../../i18n/notifications';
 import { formatList, joinSentences } from '../../i18n/textJoining';
 
 /**
- * The channels a Project's rules may use. Only global administrators add and change them (as in
- * the API); a Project admin is told whom to ask instead of meeting an empty list.
+ * Projectのルールが使える通知先。追加・変更できるのは全体管理者だけ（APIと同じ）。Project admin
+ * には、空の一覧を見せる代わりに誰に頼めばよいかを伝える。
  */
 export function NotificationChannelSection({
   settings,
@@ -36,7 +36,7 @@ export function NotificationChannelSection({
   useLocale();
   const { user } = useAuth();
   const canEditChannels = isGlobalAdmin(user);
-  // The API refuses the names to anyone else, so only administrators ask for them.
+  // APIはほかの人には名前の一覧を返さないので、管理者だけが取りに行く。
   const environmentNames = useQuery({
     key: canEditChannels ? 'notification-environment-names' : null,
     load: notificationsApi.environmentNames,
@@ -197,7 +197,7 @@ function MissingEnvironmentNotice({ names }: { names: string[] }) {
   );
 }
 
-// An email channel has no variables of its own; it is unconfigured when the server has no SMTP.
+// メールの通知先には自分の変数が無い。サーバーにSMTPの設定が無ければ未設定になる。
 function configuredLabel(channel: NotificationChannel): string {
   if (channel.configured) return text.notificationConfiguredYes;
   return channel.kind === 'email'
@@ -205,7 +205,7 @@ function configuredLabel(channel: NotificationChannel): string {
     : text.notificationConfiguredNo;
 }
 
-// A saved channel keeps its kind; a new one has the kind chosen in the form.
+// 保存した通知先は種類を変えない。新しい通知先はフォームで選んだ種類になる。
 function channelKind(
   values: FormValues,
   editing: NotificationChannel | 'new',
@@ -215,7 +215,7 @@ function channelKind(
     : editing.kind;
 }
 
-/** The server's variable names that start with what is typed, or a note when it has none. */
+/** サーバーの変数名のうち、入力した文字で始まるもの。サーバーに変数が無ければその旨の注記。 */
 function suggestEnvironmentNames(available: string[] | undefined) {
   return async (typed: string): Promise<FieldSuggestions> => {
     if (!available) return { items: [] };

@@ -1,5 +1,5 @@
-// Text files that hold a table (CSV, TSV, JSON Lines): detecting the format and reading the rows.
-// Broken rows are counted with their line, never repaired.
+// 表を持つテキストファイル（CSV、TSV、JSON Lines）の形式の判定と行の読み取り。
+// 壊れた行は行番号とともに数え、決して直さない。
 
 import { readCsvRecords } from './csvRecords';
 import { readTsvRecords } from './tsvRecords';
@@ -8,11 +8,11 @@ export type TabularTextFormat = 'jsonl' | 'csv' | 'tsv';
 export type TabularRowErrorReason = 'invalid_json' | 'not_object' | 'column_count' | 'unterminated_quote';
 
 export interface TabularRecord {
-  /** 1-based line in the file where the row starts. */
+  /** 行が始まる、ファイル内の行番号（1始まり）。 */
   line: number;
   /**
-   * One value per column, in column order. CSV and TSV values are strings; JSON Lines values are
-   * the parsed JSON values, and undefined where the row has no such key.
+   * 列ごとに1つの値（列の順）。CSVとTSVの値は文字列。JSON Linesの値はパースしたJSONの値で、
+   * その行にキーが無ければundefined。
    */
   cells: unknown[];
 }
@@ -37,7 +37,7 @@ export function tabularTextFormat(path: string, mimeType: string): TabularTextFo
   return null;
 }
 
-/** Columns are the keys of every row's object, in the order they first appear. */
+/** 列は各行のオブジェクトのキーで、最初に現れた順に並べる。 */
 function parseJsonLines(content: string): TabularText {
   const columnIndexes = new Map<string, number>();
   const objects: Array<{ line: number; value: Record<string, unknown> }> = [];
@@ -67,14 +67,14 @@ function parseJsonLines(content: string): TabularText {
   return { columns, records, errors };
 }
 
-/** A CSV or TSV record; only a CSV record can end inside an unclosed quote. */
+/** CSVかTSVのレコード。閉じていない引用符の中で終わりうるのはCSVのレコードだけ。 */
 interface DelimitedRecord {
   line: number;
   fields: string[];
   unterminated?: boolean;
 }
 
-/** The first record is the header; rows with a different number of fields are errors. */
+/** 最初のレコードが見出し。項目の数が違う行はエラー。 */
 function parseDelimited(delimitedRecords: readonly DelimitedRecord[]): TabularText {
   const [header, ...rows] = delimitedRecords;
   if (!header) return { columns: [], records: [], errors: [] };

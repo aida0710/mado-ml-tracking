@@ -5,8 +5,8 @@ import { defaultCheckWorker } from '../lib/checkWorkerChoice';
 import { useQuery } from './useQuery';
 
 /**
- * The online workers one may ask to check a computer, and the one chosen: until the person picks
- * one, the worker of the last check if it is online, or the only worker there is.
+ * コンピュータの確認を頼めるオンラインのworkerと、選んだworker。利用者が選ぶまでは、前回の確認の
+ * workerがオンラインならそれ、そうでなければworkerが1つだけのときはそれ。
  */
 export function useCheckWorkerChoice(lastUsed: TargetCheckWorker | null) {
   const workers = useQuery({ key: 'target-check-workers', load: targetChecksApi.workers });

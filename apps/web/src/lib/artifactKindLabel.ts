@@ -1,4 +1,4 @@
-// The catalog's 種類 column in words (音声 · wav) rather than the bare media type.
+// カタログの「種類」の列を、メディアタイプのままでなく言葉で出す（音声 · wav）。
 import { text } from '../i18n/catalog';
 
 const TOP_LEVEL_LABELS: Record<string, string> = {
@@ -8,7 +8,7 @@ const TOP_LEVEL_LABELS: Record<string, string> = {
   get text() { return text.artifactMimeText; },
 };
 
-/** `audio/wav; codecs=1` → `音声 · wav`; types without a word of their own keep the subtype. */
+/** `audio/wav; codecs=1` → `音声 · wav`。専用の言葉が無いタイプはサブタイプのまま。 */
 export function artifactKindLabel(mimeType: string): string {
   const [essence = ''] = mimeType.split(';');
   const [topLevel = '', subtype = ''] = essence.trim().toLowerCase().split('/');

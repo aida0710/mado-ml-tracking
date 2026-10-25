@@ -7,9 +7,9 @@ import type {
 } from '@mmt/contracts';
 import { meetsCodeRequirement } from './executionValidation';
 
-/** Where a code version can run and where it is already chosen. */
+/** コードバージョンを実行できる場所と、既に選ばれている場所。 */
 export interface CodeVersionUsage {
-  /** Models of a family the version supports: their versions can run on it. */
+  /** そのバージョンが対応する系列のモデル。それらのバージョンをこのコードで実行できる。 */
   models: Model[];
   tasks: ExperimentTask[];
   rules: ModelAutomationRule[];
@@ -33,15 +33,15 @@ export function findCodeVersionUsage({
   };
 }
 
-/** A code version that can run a model family, with the name of its code. */
+/** モデル系列を実行できるコードバージョンと、そのコードの名前。 */
 export interface FamilyCodeVersion {
   code: Code;
   version: CodeVersion;
 }
 
 /**
- * The code versions that support `family`, by the same rule that decides which code a Task or an
- * automation rule may choose for the family's models (meetsCodeRequirement).
+ * `family`に対応するコードバージョン。Taskや自動実行ルールがその系列のモデルに選べるコードを
+ * 決めるのと同じ規則（meetsCodeRequirement）で選ぶ。
  */
 export function findFamilyCodeVersions({
   family,

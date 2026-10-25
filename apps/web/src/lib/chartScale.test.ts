@@ -58,7 +58,7 @@ describe('図の軸の範囲', () => {
   });
 
   it('値がすべて0以上なら余白で0未満へ広げず、すべて0以下なら0より上へ広げない', () => {
-    // Values such as an accuracy of 0–1, a loss, or memory in bytes.
+    // 0〜1の正解率、損失、バイト単位のメモリ量のような値。
     expect(paddedDomain([0, 1], 'linear')).toEqual([0, 1.05]);
     expect(paddedDomain([0.01, 10], 'linear')![0]).toBe(0);
     expect(paddedDomain([-10, 0], 'linear')).toEqual([-10.5, 0]);

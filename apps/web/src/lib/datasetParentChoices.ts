@@ -1,5 +1,5 @@
-// The [親のバージョン] choices of a new dataset version: this dataset's versions first, and its
-// latest version already checked, since a new version usually follows the one before it.
+// 新しいデータセットのバージョンの［親のバージョン］の選択肢。このデータセットのバージョンを先にし、
+// 最新のバージョンを最初からチェックしておく。新しいバージョンはたいてい直前のものに続くため。
 import type { DatasetVersion } from '@mmt/contracts';
 import type { SelectOption } from '../types/form';
 import { datasetVersionLabel } from './datasetVersionLabel';

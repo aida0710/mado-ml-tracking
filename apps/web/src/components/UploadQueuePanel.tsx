@@ -5,8 +5,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
- * Every file of an Artifact upload, each with its own row. A single file also shows the stored
- * Artifact's ID to paste elsewhere; with several files the IDs are in each file's details.
+ * Artifactのアップロードの全ファイルを、1ファイル1行で出す。ファイルが1つなら、ほかの場所へ
+ * 貼れるように保存したArtifactのIDも出す。複数のときは、IDは各ファイルの詳細にある。
  */
 export function UploadQueuePanel({
   items,

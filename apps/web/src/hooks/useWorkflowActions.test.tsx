@@ -6,7 +6,7 @@ import { useWorkflowActions } from './useWorkflowActions';
 
 afterEach(() => vi.restoreAllMocks());
 
-/** The actions one rendering of the hook returns; they keep working after the render. */
+/** useWorkflowActionsを1回描画したときに返る操作。描画の後も使える。 */
 function renderWorkflowActions(): ReturnType<typeof useWorkflowActions> {
   let actions: ReturnType<typeof useWorkflowActions> | undefined;
   function Probe() {

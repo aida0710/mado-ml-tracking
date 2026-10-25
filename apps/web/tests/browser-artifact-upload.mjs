@@ -1,5 +1,5 @@
-// Browser check of the Artifact upload manager against an isolated API (port 47080) and Vite (47081).
-// It creates a temporary schema in mmt_test, so the shared development API and DB are untouched.
+// 分離したAPI（port 47080）とVite（47081）を相手にした、Artifactのアップロード管理のブラウザでの確認。
+// mmt_testに一時的なschemaを作るので、共有の開発APIとDBには触れない。
 //
 //   (cd apps/web && MMT_WEB_API_PROXY_TARGET=http://127.0.0.1:47080 npx vite --port 47081 --strictPort --host 127.0.0.1) &
 //   MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55490/mmt_test \
@@ -7,7 +7,7 @@
 //   MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/artifacts-web \
 //   npx tsx apps/web/tests/browser-artifact-upload.mjs
 //
-// tsx is needed because the script starts the API from its TypeScript sources.
+// スクリプトがTypeScriptのソースからAPIを起動するので、tsxが要る。
 import assert from 'node:assert/strict';
 import { createHash, randomBytes } from 'node:crypto';
 import { createReadStream } from 'node:fs';
@@ -28,7 +28,7 @@ const WEB_URL = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:47081';
 const MIB = 1024 * 1024;
 const LARGE_FILE_BYTES = 200 * MIB;
 const MEDIUM_FILE_BYTES = 40 * MIB;
-// Retries back off for about 15 seconds before a part gives up, so failure needs a longer wait.
+// 1つのpartは約15秒かけて間隔を空けながら再試行してから諦めるので、失敗までは長めに待つ。
 const FAILURE_TIMEOUT_MS = 90_000;
 const COMPLETION_TIMEOUT_MS = 180_000;
 
@@ -100,7 +100,7 @@ async function devLogin(page, email, name) {
   return (await response.json()).user;
 }
 
-/** Records the part numbers each session receives from the browser. */
+/** 各アップロードセッションがブラウザから受け取ったpartの番号を記録する。 */
 function watchPartRequests(page) {
   const sent = new Map();
   const responses = [];
@@ -126,15 +126,15 @@ function watchPartRequests(page) {
 }
 
 /**
- * Lets part 1 through and holds the other parts until released, so pause and cancel happen while
- * the server has exactly one part regardless of how fast the loopback transfer is.
+ * part 1は通し、ほかのpartは解放するまで止めておく。loopbackの転送の速さに関係なく、サーバーが
+ * ちょうど1つのpartを持った状態で一時停止と取消が起きるようにする。
  */
 async function holdPartsAfterFirst(page) {
   let release;
   const released = new Promise((resolve) => (release = resolve));
   const handler = async (route) => {
     if (!/\/parts\/1$/.test(new URL(route.request().url()).pathname)) await released;
-    // The browser may have aborted the held request in the meantime.
+    // 止めている間に、ブラウザがその要求を中止しているかもしれない。
     await route.continue().catch(() => undefined);
   };
   await page.route('**/artifact-uploads/*/parts/*', handler);
@@ -180,7 +180,7 @@ try {
     assert.ok(response.ok(), `${endpoint}: ${response.status()}`);
     return response.json();
   };
-  // Private: in a public Project every signed-in person is an editor, and step 6 needs a viewer.
+  // Privateにする。PublicのProjectではログインした人が全員Editorになるが、手順6にはViewerが要る。
   const project = await apiPost('/projects', { name: 'Upload manager browser check', visibility: 'private' });
   const experiment = await apiPost(`/projects/${project.id}/experiments`, { name: 'Uploads' });
   const run = await apiPost(`/projects/${project.id}/runs`, { experimentId: experiment.id, name: 'upload-run', kind: 'training' });
@@ -199,7 +199,7 @@ try {
     await dialog().getByRole('button', { name: 'アップロードを開始' }).click();
   };
 
-  // 1. Network loss in the middle of 200MiB, then reload and choose the same file again.
+  // 1. 200MiBの途中でネットワークが切れ、再読み込みして同じファイルを選び直す。
   await openUploadDialog();
   await startSingle(largeFile);
   await parts.waitForPartResponses(2);
@@ -233,7 +233,7 @@ try {
   assert.equal(createHash('sha256').update(await downloaded.body()).digest('hex'), expectedSha256);
   results.networkLossResume = { partCount: largeSession.partCount, receivedBeforeResume: receivedBeforeResume.length, resent: resentParts.length, sha256Matches: true };
 
-  // 2. Pause and resume in the same page: the parts the server has are not sent again.
+  // 2. 同じページで一時停止と再開。サーバーが持っているpartは送り直さない。
   const releasePausedParts = await holdPartsAfterFirst(page);
   await startSingle(pausedFile);
   await parts.waitForPartResponses(1);
@@ -251,7 +251,7 @@ try {
   assert.equal((await runArtifacts()).find((artifact) => artifact.path === 'paused-40m.bin')?.sha256, await sha256OfFile(pausedFile));
   results.pauseResume = { receivedWhilePaused: receivedWhilePaused.length, sentAfterResume: sentAfterUnpause.length };
 
-  // 3. Cancel: the session is aborted and no Artifact appears.
+  // 3. 取消。アップロードセッションを中止し、Artifactは現れない。
   const artifactCountBeforeCancel = (await runArtifacts()).length;
   const releaseCanceledParts = await holdPartsAfterFirst(page);
   await startSingle(canceledFile);
@@ -270,7 +270,7 @@ try {
   assert.equal((await sessions('open')).some((item) => item.path === 'canceled-40m.bin'), false);
   results.cancel = { status: abortedSession.status, artifactCountUnchanged: true };
 
-  // 4. Folder upload keeps the folder structure below the destination folder.
+  // 4. フォルダのアップロードは、保存先フォルダの下にフォルダの構成を保つ。
   await dialog().getByLabel('フォルダを選ぶ').setInputFiles(folder);
   await dialog().getByLabel('保存先フォルダ').fill('inputs');
   await screenshot(page, 'upload-folder-selected');
@@ -283,14 +283,14 @@ try {
   await screenshot(page, 'upload-queue-completed');
   results.folder = { paths: folderPaths };
 
-  // 5. Leaving during an upload asks first (beforeunload).
+  // 5. アップロード中にページを離れようとすると、先に確かめる（beforeunload）。
   await startSingle(pausedFile);
   await row('paused-40m.bin').last().and(page.locator('[data-status="uploading"]')).waitFor();
   await page.reload();
   assert.ok(beforeUnloadDialogs.includes('beforeunload'), 'reload during an upload shows the leave warning');
   results.beforeUnload = true;
 
-  // 6. A viewer sees no upload button.
+  // 6. Viewerにはアップロードのボタンが出ない。
   const viewerContext = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1000 } });
   const viewerPage = await viewerContext.newPage();
   const viewer = await devLogin(viewerPage, 'viewer@localhost', '閲覧者');

@@ -9,9 +9,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * One version's automation executions: rule, kind, registration outcome, Run and Job state,
- * duration, and why a rule failed or was skipped. The caller polls while work is in progress.
- * Project admins can run a rule again from a row.
+ * 1つのバージョンの自動実行の実行履歴。ルール、種類、登録の結果、RunとJobの状態、所要時間、
+ * ルールが失敗したかスキップされた理由。処理が進んでいる間は呼び出し側がポーリングする。
+ * Project adminは行からルールをもう一度実行できる。
  */
 export function ModelVersionAutomation({
   projectId,

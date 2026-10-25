@@ -20,7 +20,7 @@ class Environment:
 
 
 def load_environment(lang: str, name: str) -> Environment:
-    # The same directory as environmentDirectory() in screenshotEnvironment.mjs.
+    # screenshotEnvironment.mjsのenvironmentDirectory()と同じディレクトリ。
     state_root = Path(os.environ.get("MMT_DOCS_STATE_DIR", REPOSITORY_ROOT / "var/docs-screenshots"))
     directory = state_root / lang / name
     description_file = directory / "environment.json"

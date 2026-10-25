@@ -27,7 +27,7 @@ export const currentJobShell: SiteJobShell = {
   content: '#!/bin/sh\nqsub "$MMT_SPEC_DIR/batch.sh"\n',
 };
 
-// An automatic PBS-like site whose Jobs run as each requester's own account.
+// Jobが依頼した人それぞれのアカウントで動く、自動投入のPBS風のsite。
 export const automaticSiteSettings: SiteSettings = {
   launcherId: 'launcher',
   connection: {
@@ -51,7 +51,7 @@ export const automaticSiteSettings: SiteSettings = {
   jobShell: currentJobShellSummary,
 };
 
-// A public automatic site from before owners, as a global administrator sees it.
+// 所有者の決まりができる前からある、publicで自動投入のsite（所有者なし）。全体管理者から見た形。
 export const globalSiteDetails: ComputeTargetDetails = {
   ...siteTarget,
   submissionMode: 'automatic',
@@ -60,7 +60,7 @@ export const globalSiteDetails: ComputeTargetDetails = {
   siteAccountMode: 'personal',
 };
 
-// A researcher's PC: manual and public, as its owner sees it.
+// 研究者のPC: 手動投入でpublic。所有者から見た形。
 export const ownedSiteDetails: ComputeTargetDetails = {
   ...siteTarget,
   id: 'pc',
@@ -71,7 +71,7 @@ export const ownedSiteDetails: ComputeTargetDetails = {
   runtimeKinds: ['docker'],
   ownerUserId: 'alice',
   ownerName: 'Alice',
-  // Manual sites always run as whoever submits.
+  // 手動のsiteは常に投入した人のアカウントで動く。
   siteAccountMode: 'personal',
   site: {
     ...automaticSiteSettings,
@@ -90,7 +90,7 @@ export const ownedSiteDetails: ComputeTargetDetails = {
   },
 };
 
-// The same PC as someone else who may use it sees it: what it is, not how it is reached.
+// 同じPCを、使ってよいほかの人から見た形: 何であるかは見えるが、接続のしかたは見えない。
 export const publicSiteForUser: ComputeTargetDetails = {
   ...ownedSiteDetails,
   site: null,

@@ -18,7 +18,7 @@ export interface WorkflowStepDraft extends Omit<
   inputs: WorkflowInputDraft[];
 }
 
-/** How a quality condition compares, as the definition and the editor write it. */
+/** 品質条件の比べ方。定義とエディタが書くとおりの記号。 */
 export const QUALITY_GATE_OPERATOR_SYMBOLS: Readonly<
   Record<WorkflowQualityGate['operator'], string>
 > = {
@@ -27,12 +27,12 @@ export const QUALITY_GATE_OPERATOR_SYMBOLS: Readonly<
   eq: '=',
 };
 
-// The share of inputs a preprocessing report kept, the usual condition to continue.
+// 前処理のレポートで残った入力の割合。続けるかどうかを決める、いつもの条件。
 export const RETAINED_INPUT_RATIO_METRIC: PreprocessingSummaryMetricName =
   'preprocessing.retained_input_ratio';
-// A new condition starts at a common threshold; each workflow can change it before saving.
+// 新しい条件はよく使う閾値から始める。ワークフローごとに、保存する前に変えられる。
 const DEFAULT_MIN_RETAINED_INPUT_RATIO = 0.9;
-// A new input counts once in the mix until someone weighs it.
+// 新しい入力は、誰かが重みを付けるまで、混合の中で1回分として数える。
 const DEFAULT_INPUT_WEIGHT = 1;
 const EMPTY_SELECTION_JSON = '{}';
 const SELECTION_JSON_INDENT = 2;
@@ -58,7 +58,7 @@ export function newRetainedInputGate(): WorkflowQualityGate {
   };
 }
 
-/** A pinned dataset version as an input; '' until one is chosen. */
+/** 入力にする、固定したデータセットのバージョン。選ぶまでは''。 */
 export function newDatasetInput(
   datasetVersionId = '',
   role: WorkflowDatasetBinding['role'] = 'input',
@@ -74,14 +74,14 @@ export function newDatasetInput(
   };
 }
 
-/** Training and fine-tuning read their inputs as training data; other kinds as plain input. */
+/** 学習とファインチューニングは入力を学習データとして読み、ほかの種類はただの入力として読む。 */
 export function defaultInputRole(
   task: Pick<ExperimentTask, 'kind'>,
 ): WorkflowDatasetBinding['role'] {
   return task.kind === 'training' || task.kind === 'finetuning' ? 'training' : 'input';
 }
 
-/** The task's own dataset versions as the step's inputs, used when a task is chosen. */
+/** Taskが持つデータセットのバージョンをステップの入力にしたもの。Taskを選んだときに使う。 */
 export function taskInputDrafts(task: ExperimentTask): WorkflowInputDraft[] {
   return task.inputDatasetVersionIds.map((datasetVersionId) =>
     newDatasetInput(datasetVersionId, defaultInputRole(task)),
@@ -99,7 +99,7 @@ export function workflowStepDrafts(steps: WorkflowStep[]): WorkflowStepDraft[] {
   }));
 }
 
-/** The earlier steps a step can take its model or an input from, each key once; '' is no step. */
+/** ステップがモデルや入力を受け取れる前のステップ。キーごとに1つ。''はステップなし。 */
 export function earlierStepChoices(
   steps: WorkflowStepDraft[],
   stepIndex: number,
@@ -129,11 +129,11 @@ function withStepReferencesRenamed(
 }
 
 /**
- * After the key of the step at `stepIndex` changed from `from` to `to`, points the steps after it
- * that took their model or an input from `from` at `to`; a step refers only to earlier steps.
- * Nothing is renamed when the references would not surely mean the renamed step: when another
- * step also has the key `from` or `to`, or the key was cleared. They then show as missing, or the
- * key as taken by an earlier step, for the person to choose again.
+ * `stepIndex`のステップのキーが`from`から`to`に変わったあと、それより後のステップのうち、
+ * モデルか入力を`from`から受け取っていたものを`to`に向ける。ステップは前のステップだけを参照する。
+ * 参照が確かに名前を変えたステップを指すとは言えないとき（ほかのステップもキー`from`か`to`を
+ * 持つとき、キーが空にされたとき）は、何も書き換えない。そのとき参照は無いものとして、または
+ * キーが前のステップで使われているものとして表示され、利用者が選び直す。
  */
 export function renameStepReferences(
   steps: WorkflowStepDraft[],

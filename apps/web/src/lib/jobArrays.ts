@@ -1,6 +1,6 @@
 import type { Job, JobStatus } from '@mmt/contracts';
 
-/** The order the array summary lists states in: what still moves first, then how members ended. */
+/** arrayのまとめで状態を並べる順。まだ動いているものを先に、次にJobの終わり方。 */
 export const JOB_ARRAY_STATE_ORDER: readonly JobStatus[] = [
   'running',
   'claimed',
@@ -10,16 +10,16 @@ export const JOB_ARRAY_STATE_ORDER: readonly JobStatus[] = [
   'canceled',
 ];
 
-/** One Job array as the loaded Jobs list shows it. */
+/** 読み込んだJobの一覧から見た、1つのJob array。 */
 export interface JobArraySummary {
   arrayGroupId: string;
   targetId: string;
   size: number;
   hookId: string | null;
   parentJobId: string | null;
-  /** The first member's creation; members are created together. */
+  /** 最初のJobの作成日時。arrayのJobはまとめて作られる。 */
   createdAt: string;
-  /** Status of the newest attempt of each index present in the list. */
+  /** 一覧にある番号ごとの、最新の試行の状態。 */
   counts: Partial<Record<JobStatus, number>>;
 }
 
@@ -37,8 +37,8 @@ type ArrayMember = Pick<
 >;
 
 /**
- * Groups array members by arrayGroupId. A retried member keeps its index, so each index counts
- * once, by its newest attempt. Groups keep the list's order (the API lists newest Jobs first).
+ * arrayのJobをarrayGroupIdでまとめる。再実行したJobは番号を引き継ぐので、番号ごとに最新の試行で
+ * 1回だけ数える。まとまりは一覧の順を保つ（APIは新しいJobから並べる）。
  */
 export function summarizeJobArrays(jobs: readonly ArrayMember[]): JobArraySummary[] {
   const newestAttempts = new Map<string, Map<number, ArrayMember>>();

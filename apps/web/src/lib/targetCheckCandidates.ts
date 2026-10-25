@@ -5,7 +5,7 @@ export interface TargetCandidates {
   runtimeKinds: ExecutionRuntimeKind[];
 }
 
-// Jobs select GPUs by the nvidia-smi index (CUDA_VISIBLE_DEVICES), the same IDs as target.gpuIds.
+// JobはGPUをnvidia-smiのインデックス（CUDA_VISIBLE_DEVICES）で選ぶ。target.gpuIdsと同じID。
 export function detectedCandidates(check: TargetCheck): TargetCandidates | null {
   if (check.status !== 'finished' || !check.result) return null;
   return {

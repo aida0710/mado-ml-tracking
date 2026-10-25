@@ -6,7 +6,7 @@ import type {
   NotificationEventType,
 } from '@mmt/contracts';
 
-// Notification channels, rules and the delivery history in the Project settings.
+// プロジェクト設定の通知先、ルール、配信の履歴。
 export const notificationsText = localized({
   notifications: '通知',
   notificationsDescription:
@@ -98,7 +98,7 @@ export const notificationDeliveryStatusLabels: Record<NotificationDeliveryStatus
   failed: '失敗',
 }, english.notificationDeliveryStatusLabels);
 
-// Failure codes stored by the API (packages/platform notification senders and the dispatcher).
+// APIが保存する失敗のコード（packages/platformの通知の送信処理と、dispatcher）。
 export const notificationErrorLabels: Record<string, string> = localized({
   notification_channel_unconfigured:
     'API serverに、通知先が参照する環境変数（URLまたは署名の鍵）が設定されていません',

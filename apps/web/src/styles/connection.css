@@ -1,6 +1,6 @@
-/* How to connect from outside the browser with the IDs filled in: the Python SDK and MLflow 3
-   guide (Project settings, Experiments), a computer's worker, and manual submission. */
-/* Full width so each export line fits without breaking after the shell keyword. */
+/* ブラウザの外からつなぐ手順（IDは埋めてある）。Python SDKとMLflow 3の案内（プロジェクト設定、
+   Experiments）、コンピュータのworker、手動の投入。 */
+/* 全幅にして、exportの各行がシェルのキーワードの後で改行されずに収まるようにする。 */
 .recording-connection {
   grid-column: 1 / -1;
 }
@@ -45,7 +45,7 @@
   white-space: pre;
   overflow-x: auto;
 }
-/* Folded extras: Basic authentication, or what to set up before the first command. */
+/* 畳んでおく追加の情報。Basic認証や、最初のコマンドの前に準備すること。 */
 .connection-more {
   margin-top: 12px;
 }
@@ -57,7 +57,7 @@
 .connection-more > p {
   margin: 12px 0 0;
 }
-/* A token just issued: its value and the button that copies it, on one line while they fit. */
+/* 発行したばかりのtoken。値とコピーのボタンを、収まる間は1行に並べる。 */
 .issued-token-value {
   display: flex;
   flex-wrap: wrap;

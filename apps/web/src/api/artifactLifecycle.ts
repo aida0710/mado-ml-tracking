@@ -2,12 +2,12 @@ import type { Artifact, ArtifactReferences, ArtifactUsage } from '@mmt/contracts
 import { encodeId, projectPath, request, requestItems } from './http';
 
 export const artifactLifecycleApi = {
-  /** Project admins only; the blob is removed after the server's grace period. */
+  /** Project adminだけ。実体のファイルは、サーバーの猶予期間が過ぎてから消える。 */
   delete: (projectId: string, artifactId: string): Promise<Artifact> =>
     request<Artifact>(`${projectPath(projectId)}/artifacts/${encodeId(artifactId)}`, {
       method: 'DELETE',
     }),
-  /** Where each Artifact is used; up to ARTIFACT_REFERENCES_BATCH_LIMIT IDs per call. */
+  /** 各Artifactを使っている場所。1回に渡せるIDはARTIFACT_REFERENCES_BATCH_LIMIT個まで。 */
   references: (projectId: string, artifactIds: readonly string[], signal?: AbortSignal) =>
     requestItems<ArtifactReferences>(
       `${projectPath(projectId)}/artifact-references?artifactIds=${artifactIds.map(encodeId).join(',')}`,

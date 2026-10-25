@@ -4,7 +4,7 @@ import { useAuth } from './useAuth';
 import { useQuery } from './useQuery';
 import { isGlobalAdmin } from '../lib/permissions';
 
-/** The admin tab's data: every backend and the default for new Projects. */
+/** 全体管理のタブのデータ。すべての保存先と、新しいProjectの既定の保存先。 */
 export function useStorageBackends() {
   const backends = useQuery({ key: 'admin-storage-backends', load: storageApi.backends });
   const settings = useQuery({ key: 'admin-storage-settings', load: storageApi.settings });
@@ -20,11 +20,11 @@ export function useStorageBackends() {
 
 export interface StorageBackendChoice {
   name: string;
-  /** Only global administrators can read kinds, so other users see names alone. */
+  /** 種類を読めるのは全体管理者だけなので、ほかの利用者には名前だけが見える。 */
   kind?: StorageBackendKind;
 }
 
-/** Backends a Project may pick, with the default a new Project starts from. */
+/** Projectが選べる保存先と、新しいProjectが最初に使う既定の保存先。 */
 export function useStorageBackendChoices() {
   const auth = useAuth();
   const choices = useQuery({ key: 'storage-backend-choices', load: storageApi.choices });

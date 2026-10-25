@@ -42,8 +42,8 @@ import {
 } from '../i18n/hooks';
 
 /**
- * The hook create form: the trigger and its filter, the Job each start creates (with the site
- * resources when the target is a site), and the limits on how often it starts.
+ * フックの作成フォーム。きっかけとその絞り込み、起動ごとに作るJob（実行先がsiteならsiteの資源も）、
+ * 起動の頻度の制限。
  */
 export function HookFields({
   values,
@@ -206,7 +206,7 @@ export function HookFields({
       name: 'gpuIds',
       label: text.launchGpuChoice,
       type: 'checkboxes',
-      // The same choice as the Job launch: a computer's GPUs, or why there are none.
+      // Jobの起動と同じ選び方にする。コンピュータのGPUか、GPUが無い理由を出す。
       visible: () => Boolean(target) && !isSite,
       options: (target?.gpuIds ?? []).map((id) => ({ value: id, label: id })),
       emptyText: text.gpuNoneOnTarget,
@@ -249,7 +249,7 @@ export function HookFields({
     { name: 'tags', label: text.tagsJson, type: 'textarea' },
     {
       name: 'maxAttempts',
-      // A hook's Jobs retry by themselves only on sites; the hint says what the limit covers.
+      // フックのJobが自分で再試行するのはsiteだけ。上限が何に効くかは説明の文が伝える。
       label: text.maxAttempts,
       type: 'number',
       required: true,

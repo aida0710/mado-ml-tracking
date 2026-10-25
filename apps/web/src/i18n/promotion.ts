@@ -11,9 +11,9 @@ import type {
 import type { CriterionThresholdMeaning } from '../lib/promotionPolicyInput';
 import type { KnownAliasSource } from '../lib/aliasChoices';
 
-// Promotion policies (pass/fail criteria for a candidate version) and their evaluation history.
-// Labels shared with the evaluation comparison (baselineAlias, evaluationRule, referenceDatasets,
-// evaluationCodeVersion, baselineVersion) come from i18n/evaluation.ts.
+// 昇格policy（候補のバージョンの合否の基準）と、その判定の履歴。評価の比較と共通の文言は
+// i18n/evaluation.tsのものを使う（baselineAlias、evaluationRule、referenceDatasets、
+// evaluationCodeVersion、baselineVersion）。
 export const promotionText = localized({
   promotionPolicies: '昇格policy',
   newPromotionPolicy: '昇格policyを作成',
@@ -32,7 +32,7 @@ export const promotionText = localized({
   promotionCriterionMode: '比べる値',
   promotionCriterionThreshold: '閾値',
   promotionRelativeDeltaHint: '相対差は比率で入力します（0.05 = 5%）。',
-  // Metric names come from what the rule's evaluation Runs recorded (RuleMetricKeys.source).
+  // メトリクス名の候補は、評価ルールの評価のRunが記録したものから取る（RuleMetricKeys.source）。
   promotionMetricKeysChooseRule: '評価ルールを選ぶと、評価Runに記録済みの指標名が候補に出ます。',
   promotionMetricKeysFromRule: 'この評価ルールの評価Runに記録された指標名を候補に出しています。',
   promotionMetricKeysFromCodeVersion:
@@ -64,7 +64,7 @@ export const promotionText = localized({
   promotionFirstRelease: '初回合格（基準なし）',
   promotionReevaluate: '再判定',
   promotionLoadMore: 'さらに読み込む',
-  // Client-side validation of the create form.
+  // 作成フォームのブラウザ側での検証。
   promotionPolicyNameRequired: '名前を入力してください。',
   promotionModelRequired: 'このプロジェクトのモデルを選択してください。',
   promotionTargetAliasRequired: '対象aliasを入力してください。',
@@ -73,7 +73,7 @@ export const promotionText = localized({
   promotionCriteriaRequired: '合否基準を1つ以上追加してください。',
   promotionCriterionMetricRequired: '合否基準のメトリクス名を入力してください。',
   promotionCriterionThresholdInvalid: '合否基準の閾値は有限の数値で入力してください。',
-  // Owner (run-as user) of a policy and its transfer to a Service Account.
+  // policyの所有者（実行するユーザー）と、Service Accountへの移管。
   promotionPolicyOwner: '実行ユーザー',
   promotionTransferOwner: '所有者を移管',
   promotionTransferOwnerTarget: '移管先のService Account',
@@ -82,7 +82,7 @@ export const promotionText = localized({
   promotionTransferOwnerNoCandidates:
     '移管できるService Accountがありません。先にプロジェクト設定でroleがadminのService Accountを作成してください。',
   promotionTransferOwnerRequired: '移管先のService Accountを選択してください。',
-  // Promotion dialog (assigning an alias with its reason and evidence).
+  // 昇格のダイアログ（理由と根拠を添えてaliasを付ける）。
   promote: '昇格',
   promotionDialogTitle: 'aliasを設定（昇格）',
   promotionEvidence: '根拠となる判定',
@@ -103,7 +103,7 @@ export const promotionText = localized({
   promotionAliasRequired: 'aliasを入力してください。',
   promotionVersionRequired: 'バージョンを選択してください。',
   promotionProtectedAlias: '保護alias',
-  // Promotion check card on the model version page.
+  // モデルバージョンの画面の、昇格の判定のカード。
   promotionCheck: '昇格の判定',
   promotionCheckEmpty: 'このモデルには昇格policyがありません。',
   promotionCheckPending: '判定待ち',
@@ -111,7 +111,7 @@ export const promotionText = localized({
   promotionCheckPromotedAutomatically: '自動昇格済み',
   promotionCheckBaselineChanged: '判定中に基準aliasが変わったため、自動昇格しませんでした。',
   promotionCheckPromotionDenied: 'aliasの変更が拒否されたため、自動昇格しませんでした。',
-  // Alias protections (Models page tab).
+  // aliasの保護（Modelsの画面のタブ）。
   aliasProtections: '保護alias',
   aliasProtectionsEmpty: '保護aliasはありません。',
   aliasProtectionsHint:
@@ -139,7 +139,7 @@ export const promotionDecisionLabels: Record<PromotionDecision, string> = locali
   skipped: '判定せず',
 }, english.promotionDecisionLabels);
 
-// Why a criterion could not compare its values (PromotionCriterionResult.reason).
+// 基準が値を比べられなかった理由（PromotionCriterionResult.reason）。
 export const promotionCriterionReasonLabels: Record<PromotionCriterionReason, string> = localized({
   candidate_metric_missing: '候補に値がありません',
   candidate_metric_not_finite: '候補の値がNaN/∞です',
@@ -172,7 +172,7 @@ export const criterionThresholdMeaningLabels: Record<CriterionThresholdMeaning, 
   regression_allowed: 'この幅までの悪化を許容',
 }, english.criterionThresholdMeaningLabels);
 
-// Where an offered alias name is already used (lib/aliasChoices.ts).
+// 候補に出すalias名が既にどこで使われているか（lib/aliasChoices.ts）。
 export const knownAliasSourceLabels: Record<KnownAliasSource, string> = localized({
   model: 'モデルで使用中',
   policy: '昇格policy',
@@ -184,13 +184,13 @@ export const aliasProtectionRoleLabels: Record<ModelAliasProtectionRole, string>
   admin: 'adminのみ',
 }, english.aliasProtectionRoleLabels);
 
-// How a sentence names the role a change needs (「…にはProject adminの権限が必要です」).
+// 変更に必要なroleを、文の中で呼ぶ形（「…にはProject adminの権限が必要です」）。
 const aliasProtectionRoleNeeded: Record<ModelAliasProtectionRole, string> = {
   editor: 'editor以上',
   admin: 'Project admin',
 };
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const promotionTextTemplates = localized({
   protectedAliasNotice: (role: ModelAliasProtectionRole, requirePassedEvaluation: boolean) =>
     `このaliasは保護されています（${aliasProtectionRoleLabels[role]}${

@@ -1,8 +1,8 @@
-// The whole of a folder upload at a glance: one bar for every file, and the files that need a look.
+// フォルダのアップロード全体をひと目で示す。全ファイルで1本のバーと、目を向けるべきファイル。
 import type { DatasetFolderEntry } from './datasetFolder';
 import { estimateRemainingSeconds } from './uploadPlan';
 
-/** The part of an upload queue row the summary reads. */
+/** アップロードの待ち行列の行のうち、まとめが読む部分。 */
 export interface FolderUploadItemState {
   id: string;
   path: string;
@@ -12,7 +12,7 @@ export interface FolderUploadItemState {
   bytesPerSecond: number | null;
 }
 
-// Rows a person may need to act on or watch; queued and completed ones are only counted.
+// 利用者が対応するか見守る必要があるかもしれない行。待機中と完了した行は数えるだけ。
 const SHOWN_STATUSES: ReadonlySet<string> = new Set([
   'preparing',
   'uploading',
@@ -44,7 +44,7 @@ export function summarizeFolderUpload<Item extends FolderUploadItemState>(
     bytesPerSecond,
     remainingSeconds: estimateRemainingSeconds(totalBytes - sentBytes, bytesPerSecond),
     shownItems: items.filter((item) => SHOWN_STATUSES.has(item.status)),
-    /** The file's path inside the dataset, which is how the person knows it. */
+    /** データセットの中でのファイルのpath。利用者にはこの名前で分かる。 */
     nameOf: (item: Item) => datasetPathByArtifactPath.get(item.path) ?? item.path,
   };
 }

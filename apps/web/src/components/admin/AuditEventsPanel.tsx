@@ -6,8 +6,8 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**
- * The admin "audit log" section: every event, including those of no Project such as logins, user
- * administration and storage changes, which no Project's settings page shows.
+ * 全体管理の「監査ログ」。ログイン、ユーザーの管理、保存先の変更など、どのProjectにも属さない
+ * イベントも含めてすべて出す。これらはどのProjectの設定画面にも出ない。
  */
 export function AuditEventsPanel() {
   useLocale();

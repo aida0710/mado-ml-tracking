@@ -11,11 +11,11 @@ import { text } from '../i18n/catalog';
 import { modelsTextTemplates } from '../i18n/models';
 import { formatList } from '../i18n/textJoining';
 
-// The newest versions shown at first; a Model with hundreds of versions would push its alias
-// history far down the page.
+// 最初は新しいバージョンだけを出す。何百ものバージョンがあるモデルでは、aliasの履歴が
+// ページのずっと下へ押しやられてしまう。
 const INITIAL_VERSION_ROWS = 20;
 
-/** A Model's versions, newest first, with the aliases that point at each one. */
+/** モデルのバージョンを新しい順に並べ、それぞれを指すaliasを添える。 */
 export function ModelVersionsTable({
   projectId,
   versions,
@@ -24,13 +24,13 @@ export function ModelVersionsTable({
 }: {
   projectId: string;
   versions: ModelVersion[];
-  /** The Model's aliases: alias name → version id. */
+  /** モデルのalias。alias名 → バージョンのid。 */
   aliases: Record<string, string>;
   selectedVersionId?: string;
 }) {
   useLocale();
   const [shownCount, setShownCount] = useState(INITIAL_VERSION_ROWS);
-  // A version chosen further down (from a link) stays in the list.
+  // （リンクから）一覧の下の方のバージョンを選んだときも、一覧に残す。
   const selectedIndex = versions.findIndex((version) => version.id === selectedVersionId);
   const visibleCount = Math.max(shownCount, selectedIndex + 1);
   const aliasesOf = (versionId: string) =>

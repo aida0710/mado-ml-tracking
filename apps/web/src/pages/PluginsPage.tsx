@@ -22,7 +22,7 @@ interface PluginSettingsItem {
   kind: string;
 }
 
-// New built-in connections coexist with existing connections and keep a distinct saved UUID.
+// 新しく足す組み込みの接続は既存の接続と並び、保存すると別のUUIDを持つ。
 const NEW_MADO_CONNECTION_SELECTION = 'new:mado';
 
 export function PluginsPage() {

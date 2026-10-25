@@ -6,14 +6,14 @@ import { useQuery } from './useQuery';
 import { useMutation } from './useMutation';
 
 /**
- * A rule being made: from scratch, or as a copy of `source` (rules cannot change once saved, so a
- * fix is a new rule made from the old one's settings).
+ * 作成中のルール。一から作るか、`source`のコピーとして作る（ルールは保存すると変えられないので、
+ * 直すときは古いルールの設定から新しいルールを作る）。
  */
 export interface AutomationRuleDraft {
   source?: ModelAutomationRule;
 }
 
-/** A copy that was saved while the rule it came from could not be disabled: both register Jobs. */
+/** 元のルールを無効にできないまま保存したコピー。両方がJobを登録する。 */
 export interface SourceRuleLeftEnabled {
   copyName: string;
   sourceId: string;
@@ -55,9 +55,9 @@ export function useModelAutomation({
     return true;
   }
   /**
-   * Shows a saved rule and, when the person asked, disables the rule it was copied from. If that
-   * fails, the new rule exists and the old one stays enabled, so both register Jobs: the old rule
-   * is selected, and the notice says so and how to finish.
+   * 保存したルールを出し、利用者が求めていれば、コピー元のルールを無効にする。それに失敗すると、
+   * 新しいルールはできて古いルールは有効なままなので、両方がJobを登録する。そのときは古いルールを
+   * 選んだ状態にし、お知らせでそのことと、残りの操作の方法を伝える。
    */
   async function finishCreating(saved: { rule: ModelAutomationRule; disableSource: boolean }) {
     const source = draft?.source;

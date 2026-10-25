@@ -3,7 +3,7 @@ import { localized } from './localized';
 import type { TokenScope } from '@mmt/contracts';
 import type { TokenPurposeOption } from '../lib/tokenPurposes';
 
-// Service Accounts, the Project token list and the token dialog on the settings page.
+// 設定の画面のService Account、Projectのtokenの一覧、tokenのダイアログ。
 export const serviceAccountsText = localized({
   serviceAccounts: 'Service Accounts',
   serviceAccountsDescription:
@@ -74,7 +74,7 @@ export const tokenPurposeLabels: Record<TokenPurposeOption, { label: string; hin
   custom: { label: 'scopeを自分で選ぶ', hint: '下のscopeを1つずつ選びます' },
 }, english.tokenPurposeLabels);
 
-// One line per scope, shown next to the scope in the token dialog.
+// scopeごとに1行。tokenのダイアログでscopeの隣に出す。
 export const tokenScopeLabels: Record<TokenScope, string> = localized({
   read: 'read — 読み取り',
   'runs:write': 'runs:write — Runの作成と記録',
@@ -88,7 +88,7 @@ export const tokenScopeLabels: Record<TokenScope, string> = localized({
   'users:manage': 'users:manage — ユーザーを管理',
 }, english.tokenScopeLabels);
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const serviceAccountsTextTemplates = localized({
   tokenExpiryDays: (days: number) => `${days}日`,
   tokenExpiryTimezone: (timezone: string) => `時刻は${timezone}で指定します。`,

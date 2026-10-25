@@ -1,10 +1,9 @@
 import { textTemplates } from '../i18n/catalog';
 
 /**
- * Whether a comparison suits what its field holds, checked before the filter is sent so the
- * message can show the corrected comparison under the search box. Same rules as the API compiler
- * (apps/api/src/domain/runSearch/runSearchCompiler.ts): metrics are numbers, params, tags and
- * datasets are strings; attributes are left to the API since they differ by name.
+ * 比較が項目の持つ値に合っているか。絞り込みを送る前に検査し、検索欄の下に直した比較を出せる
+ * ようにする。APIのcompiler（apps/api/src/domain/runSearch/runSearchCompiler.ts）と同じ規則で、
+ * メトリクスは数、パラメータ、タグ、データセットは文字列。属性は名前によって違うのでAPIに任せる。
  */
 type FieldKind = 'number' | 'string';
 
@@ -24,14 +23,14 @@ const NUMBER_ONLY_OPERATORS = new Set(['<', '<=', '>', '>=']);
 const STRING_ONLY_OPERATORS = new Set(['LIKE', 'ILIKE']);
 
 export interface FilterComparison {
-  /** The field as written, split at its dots: `metrics.train.loss` is three parts. */
+  /** 書いたままの項目を点で分けたもの。`metrics.train.loss`は3つの部分になる。 */
   fieldPath: readonly string[];
-  /** Upper case, as the API compares it. */
+  /** APIが比べるときと同じく大文字。 */
   operator: string;
   value: { kind: 'quoted' | 'number'; text: string };
 }
 
-/** The message for a comparison that does not suit its field, or null. */
+/** 項目に合わない比較についてのメッセージ。無ければnull。 */
 export function findComparisonKindError({ fieldPath, operator, value }: FilterComparison): string | null {
   const group = fieldPath.length > 1 ? fieldPath[0]!.toLowerCase() : '';
   const kind = FIELD_KIND_BY_GROUP[group];

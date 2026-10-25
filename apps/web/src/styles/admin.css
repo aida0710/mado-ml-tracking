@@ -1,4 +1,4 @@
-/* Settings sections (with archiving a Project), plugin search, and storage metrics. */
+/* 設定のセクション（Projectのアーカイブを含む）、プラグインの検索、保存先の使用量。 */
 .settings-grid {
   display: grid;
   grid-template-columns: minmax(320px, 2fr) minmax(0, 3fr);
@@ -10,11 +10,11 @@
   border-top: 1px solid var(--border);
   padding-top: 20px;
 }
-/* Archiving ends the Project settings, set apart as the one action that hides the Project. */
+/* アーカイブはプロジェクト設定の最後に置き、Projectを隠す唯一の操作として離しておく。 */
 .project-archive .button {
   margin-top: 4px;
 }
-/* Sections whose tables have many columns take the full width, one below another. */
+/* 列の多い表を持つセクションは、全幅を使って縦に並べる。 */
 .settings-stack {
   display: flex;
   flex-direction: column;
@@ -26,14 +26,14 @@
 }
 .settings-stack .access-actions .button,
 .settings-stack .member-sources li,
-.settings-stack /* Names in the audit log stay on one line; the resource and details columns take the wrapping. */
+.settings-stack /* 監査ログの名前は1行に収め、折り返しは対象と詳細の列で受け持つ。 */
 .audit-label {
   white-space: nowrap;
 }
 .member-name {
   white-space: nowrap;
 }
-/* Free text such as a Service Account description wraps by words, never one letter per line. */
+/* Service Accountの説明のような自由な文は語の単位で折り返し、1行1文字にはしない。 */
 .settings-stack td {
   min-width: 6em;
 }
@@ -101,7 +101,7 @@
   color: var(--muted);
   font-size: var(--font-size-sm);
 }
-/* The two-column settings stack below 1200px, before either column gets too narrow. */
+/* 2列の設定は、どちらかの列が狭くなりすぎる前に、1200px未満で縦に積む。 */
 @media (width < 1200px) {
   .settings-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -109,8 +109,8 @@
   }
 }
 
-/* 全体管理 (/settings/<section>): storage backends, the Project list, and the backend
-   name in the Project backend picker. */
+/* 全体管理（/settings/<section>）。保存先、Projectの一覧、Projectの保存先の選択に出す
+   保存先の名前。 */
 .admin-storage .table-scroll {
   margin-bottom: 16px;
 }
@@ -178,7 +178,7 @@
   color: var(--muted);
   overflow-wrap: anywhere;
 }
-/* After a failed test: how to fix it, next to the button that opens the backend. */
+/* テストに失敗したあとに出す直し方。保存先を開くボタンの隣に置く。 */
 .storage-test-fix {
   display: flex;
   flex-wrap: wrap;
@@ -189,7 +189,7 @@
 .storage-test-fix p {
   margin: 0;
 }
-/* The S3 settings most backends keep, folded under the ones every backend needs. */
+/* たいていの保存先で既定のままにするS3の設定。どの保存先にも要る設定の下に畳んでおく。 */
 .storage-advanced {
   margin-top: 12px;
 }
@@ -206,7 +206,7 @@
   overflow-wrap: anywhere;
 }
 
-/* Admin users tab, the user menu in the top bar, and the /account page. */
+/* 全体管理のユーザーのタブ、上部バーのユーザーメニュー、/accountの画面。 */
 .admin-users-filter {
   display: flex;
   flex-wrap: wrap;
@@ -228,7 +228,7 @@
 .user-admin .muted {
   font-size: var(--font-size-xs);
 }
-/* The signed-in administrator's own row, which the actions affect at once. */
+/* ログイン中の管理者自身の行。操作がすぐ本人に効く。 */
 .user-self-tag {
   margin-left: 8px;
 }

@@ -8,14 +8,14 @@ import { useQuery } from './useQuery';
 export function usePluginConnections(projectId: string) {
   const query = useQuery({ key: `${projectId}:plugins`, load: (signal) => pluginsApi.connections(projectId, signal) });
   const [savedResponses, setSavedResponses] = useState<ReadonlyMap<string, PluginConnection>>(() => new Map());
-  // A response is dropped during render once GET returns the connection it saved.
+  // GETがその保存した接続を返したら、レンダリング中に応答を捨てる。
   const unobservedResponses = query.value
     ? getUnobservedPluginResponses({ savedResponses, observedConnections: query.value })
     : savedResponses;
   if (unobservedResponses !== savedResponses) setSavedResponses(unobservedResponses);
   function onSaved(plugin: PluginConnection) {
     if (plugin.projectId !== projectId) return;
-    // Each connection keeps its response until GET observes it; another save must not replace it.
+    // 各接続は、GETで見えるまで自分の応答を持つ。別の保存がそれを置き換えてはいけない。
     setSavedResponses((previous) => {
       const saved = previous.get(plugin.id);
       if (saved && saved.configRevision > plugin.configRevision) return previous;

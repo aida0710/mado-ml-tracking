@@ -1,9 +1,9 @@
 import type { Experiment } from '@mmt/contracts';
 
 /**
- * The listed Experiment with this name, compared as the API saves names (without the white space
- * at either end, letter case kept). Deleted Experiments are not listed, so the API may still
- * refuse a name this does not find.
+ * 一覧にある、この名前のExperiment。APIが名前を保存するときと同じく、前後の空白を除き、大文字と
+ * 小文字は区別して比べる。削除したExperimentは一覧に出ないので、ここで見つからない名前でも
+ * APIが断ることがある。
  */
 export function findExperimentNamed<T extends Pick<Experiment, 'name'>>(
   experiments: readonly T[],
@@ -15,8 +15,8 @@ export function findExperimentNamed<T extends Pick<Experiment, 'name'>>(
 }
 
 /**
- * Active Runs recorded in the chosen Experiment, or in all of them when none is chosen. Undefined
- * until the Experiments arrive, so nothing is decided from a list still loading.
+ * 選んだExperimentに記録された、削除されていないRunの数。何も選んでいなければ全Experimentの合計。
+ * Experimentの一覧が届くまではundefinedにして、読み込み中の一覧からは何も決めない。
  */
 export function recordedRunCount(
   experiments: readonly Pick<Experiment, 'id' | 'runCount'>[] | undefined,

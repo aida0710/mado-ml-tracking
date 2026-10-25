@@ -7,7 +7,7 @@ import { hasActiveExecution, hasActiveRun } from '../lib/automationActivity';
 import { useQuery } from './useQuery';
 import { useQueryPolledWhileActive } from './useQueryPolledWhileActive';
 
-/** The version, its training Run, the Project's rules, and the version's automation executions. */
+/** バージョン、その学習のRun、Projectのルール、バージョンの自動実行履歴。 */
 export function useModelVersionDetail(projectId: string, versionId: string) {
   const detail = useQuery({ key: `${projectId}:model-version:${versionId}`, load: (signal) =>
     registryApi.modelVersionDetail(projectId, versionId, signal),

@@ -113,13 +113,12 @@ export function RunDetailPage() {
     enabled: tab === 'logs',
     isLive: Boolean(run.value && !isTerminalRun(run.value)),
   });
-  // A Run with code gets a Job when it is launched, so its Job is looked up whatever its status
-  // ([Jobを見る]). A queued one without a Job can be launched; once one exists, launching again
-  // is refused.
+  // コードのあるRunは起動したときにJobができるので、状態にかかわらずJobを探す（[Jobを見る]）。
+  // Jobの無いqueuedのRunは起動でき、Jobができたら再び起動しても拒まれる。
   const runsCode = Boolean(run.value?.codeVersionId);
   const awaitsJob = run.value?.status === 'queued' && runsCode;
   const runJob = useRunJob({ projectId: project.id, runId, enabled: runsCode });
-  // The artifacts tab pages by folder itself; only the execution snapshot needs every file.
+  // Artifactのタブはフォルダごとに自分でページ送りする。全ファイルが要るのは実行snapshotだけ。
   const [artifactRevision, setArtifactRevision] = useState(0);
   const artifacts = useQuery({
     key: tab === 'executionSnapshot' ? `${runId}:artifacts` : null,
@@ -364,7 +363,7 @@ export function RunDetailPage() {
           </>
         )}
       </Resource>
-      {/* Outside Resource: a failed Run poll must not unmount the dialog and stop its uploads. */}
+      {/* Resourceの外に置く。Runのポーリングの失敗で、ダイアログを外してアップロードを止めないため。 */}
       {dialog === 'upload' && (
         <ArtifactUploadDialog
           projectId={project.id}
@@ -382,7 +381,7 @@ export function RunDetailPage() {
   );
 }
 
-/** For a Run that continues from a checkpoint: the step it starts from and the Run that saved it. */
+/** checkpointから続くRunについて、始まるstepと、そのcheckpointを保存したRun。 */
 function ResumedFromCheckpoint({ run }: { run: Run }) {
   useLocale();
   const resume = getResumeCheckpointRecord(run);
@@ -399,19 +398,19 @@ function ResumedFromCheckpoint({ run }: { run: Run }) {
 
 const runLabelsOf = (run: Run) => ({ [run.id]: run.name });
 
-// The description is shown above as Markdown; as a tag it would repeat it as one raw line.
+// 説明は上にMarkdownで出すので、タグとしても出すと加工しない1行で繰り返してしまう。
 function tagsWithoutDescription(tags: Record<string, string>): Record<string, string> {
   const { [RUN_NOTE_TAG]: _description, ...rest } = tags;
   return rest;
 }
 
 /**
- * System metrics are sampled by the worker on a timer, so their step is a sample number, not the
- * training step; elapsed time lines them up with the Run instead.
+ * システムメトリクスはworkerが一定の間隔で取るので、stepは学習のstepではなく取った回の番号。
+ * そのため経過時間でRunとそろえる。
  */
 const SYSTEM_METRIC_X_AXIS: ChartXAxis = { kind: 'relative_time' };
 
-/** Metric panels of one Run, arranged per Project; resumed segments are marked on the x axis. */
+/** 1つのRunのメトリクスのパネル。並びはProjectごとに持ち、再開した区間はx軸に印を付ける。 */
 function RunMetricCharts({
   run,
   resumeEvents,
@@ -448,8 +447,8 @@ function RunMetricCharts({
 }
 
 /**
- * One panel per category, GPU and unit, the same for worker/SDK and MLflow names. The panels
- * follow the Run's metrics; changes last while the tab is open.
+ * 種類、GPU、単位ごとに1つのパネル。worker/SDKの名前でもMLflowの名前でも同じにする。パネルは
+ * Runのメトリクスに従い、変更はタブを開いている間だけ続く。
  */
 function RunSystemMetricCharts({ run }: { run: Run }) {
   useLocale();

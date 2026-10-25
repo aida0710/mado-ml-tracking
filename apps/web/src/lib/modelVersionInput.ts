@@ -3,16 +3,16 @@ import type { CreateModelVersion } from '../api/inputs';
 import { parseJsonObject } from './formValues';
 import { text } from '../i18n/catalog';
 
-/** The Run kinds the API takes as a version's source Run (modelVersionRegistration.ts). */
+/** APIがバージョンの元のRunとして受け付けるRunの種類（modelVersionRegistration.ts）。 */
 export const SOURCE_RUN_KINDS: RunKind[] = ['training', 'finetuning'];
 
-/** What the［バージョンを作成］form holds while it is filled in. */
+/** ［バージョンを作成］のフォームが、入力の途中で持つ内容。 */
 export interface ModelVersionDraft {
-  /** Empty: the API gives the Model's next number. */
+  /** 空なら、APIがモデルの次の番号を付ける。 */
   version: string;
   sourceRunId: string;
   weightsArtifact: Artifact | null;
-  /** The weights picker's search text; with nothing picked, the form refuses to save it. */
+  /** 重みを選ぶ欄の検索の文字列。何も選んでいなければ、フォームは保存を断る。 */
   weightsSearch: string;
   weightsUri: string;
   parentVersionIds: string[];
@@ -32,9 +32,9 @@ export const EMPTY_MODEL_VERSION_DRAFT: ModelVersionDraft = {
 };
 
 /**
- * The draft with another source Run. A weights Artifact picked from the previous Run's files is
- * dropped, since it no longer comes from the source; one without a Run (an upload, a pasted id)
- * stays, and so does any pick when no Run is chosen.
+ * 元のRunを替えた下書き。前のRunのファイルから選んだ重みのArtifactは、もう元のRunのものでは
+ * ないので外す。Runを持たないもの（アップロードしたもの、貼り付けたid）は残し、Runを選んで
+ * いないときはどの選択も残す。
  */
 export function withSourceRun(draft: ModelVersionDraft, sourceRunId: string): ModelVersionDraft {
   const picked = draft.weightsArtifact;
@@ -49,9 +49,9 @@ export function withSourceRun(draft: ModelVersionDraft, sourceRunId: string): Mo
 }
 
 /**
- * The request the draft sends. Throws the message to show when it cannot be sent: metadata that is
- * not a JSON object, or a weights search left without a picked Artifact (saving would quietly
- * drop the weights the person was looking for).
+ * 下書きが送る要求。送れないときは、出すメッセージを投げる。JSONオブジェクトでないmetadataや、
+ * Artifactを選ばずに残した重みの検索がそれに当たる（保存すると、利用者が探していた重みを黙って
+ * 落としてしまう）。
  */
 export function buildModelVersionInput(draft: ModelVersionDraft): CreateModelVersion {
   if (!draft.weightsArtifact && draft.weightsSearch.trim())

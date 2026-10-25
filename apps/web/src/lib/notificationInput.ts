@@ -19,11 +19,11 @@ import { text } from '../i18n/catalog';
 import { notificationsTextTemplates } from '../i18n/notifications';
 import { formatList } from '../i18n/textJoining';
 
-/** The channel scope field: every Project, or only the Project being edited. */
+/** 通知先の対象範囲の欄。すべてのProjectか、編集中のProjectだけか。 */
 export type NotificationChannelScope = 'global' | 'project';
 
-// Same pattern as the API and the notification_channels CHECK. Checked here so the form names the
-// problem in Japanese instead of the API's field path.
+// APIとnotification_channelsのCHECKと同じパターン。APIの項目のパスでなく日本語で問題を
+// 示せるよう、フォームでも検査する。
 const NOTIFICATION_ENVIRONMENT_NAME = /^MMT_NOTIFICATION_[A-Z0-9_]+$/;
 
 function environmentName(values: FormValues, field: 'urlEnv' | 'secretEnv'): string | null {
@@ -33,7 +33,7 @@ function environmentName(values: FormValues, field: 'urlEnv' | 'secretEnv'): str
   return name;
 }
 
-// Mirrors the API rule: Slack needs a URL, a webhook a URL and a signing secret, email recipients.
+// APIの規則に合わせる。SlackにはURL、webhookにはURLと署名用のシークレット、メールには宛先が要る。
 function destinationSettings(kind: NotificationChannelKind, values: FormValues) {
   return {
     urlEnv: kind === 'email' ? null : environmentName(values, 'urlEnv'),
@@ -83,7 +83,7 @@ export function buildRuleCreate(values: FormValues): NotificationRuleCreate {
   return { channelId, eventTypes, filter };
 }
 
-/** One-line summary of a rule filter for the rule table. */
+/** ルールの表に出す、ルールの絞り込み条件の1行の要約。 */
 export function describeRuleFilter(
   filter: NotificationRuleFilter,
   runKindLabel: (kind: RunKind) => string,

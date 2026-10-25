@@ -13,14 +13,14 @@ export function formatUploadFailure(failure: UploadFailure): string {
   return failure.kind === 'cancel' ? `${text.uploadCancelNotSent}: ${reason}` : reason;
 }
 
-/** A dropped connection, as opposed to an answer from the server. */
+/** サーバーからの応答ではなく、接続が切れたこと。 */
 function isNetworkLoss(failure: unknown): boolean {
   return failure instanceof RequestError && failure.code === NETWORK_ERROR_CODE;
 }
 
 /**
- * A refused resume or a lost connection gets the next step for this file; any other failure stays
- * as it is. Both are put into words when shown, so they follow a later change of display language.
+ * 拒否された再開と切れた接続には、このファイルで次にすることを付け、それ以外の失敗は
+ * そのままにする。どちらも表示するときに文にするので、あとで表示言語を変えても追従する。
  */
 export function explainUploadFailure({
   failure,

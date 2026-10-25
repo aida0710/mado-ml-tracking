@@ -4,8 +4,8 @@ import { AuditEventFilters } from './AuditEventFilters';
 import { ErrorNotice, Loading } from './Feedback';
 
 /**
- * A paged audit log with its filters and its loading and error states, for the Project settings
- * and 全体管理 (`showProject`, the global log).
+ * ページ送りする監査ログ。絞り込みと、読み込み中・エラーの表示を含む。Projectの設定と全体管理
+ * （`showProject`、全体のログ）で使う。
  */
 export function AuditEventLog({
   audit,

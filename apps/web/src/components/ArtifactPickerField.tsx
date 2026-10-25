@@ -22,14 +22,16 @@ function ArtifactSummary({ artifact }: { artifact: Artifact }) {
 }
 
 /**
- * Picks one Artifact: from a list of the Project's Artifacts (only `runId`'s when given) searched
- * by saved path, by pasting its id or `artifact://<id>` (taken as soon as it is found), or by
- * uploading a file. The picked Artifact replaces the search with［選び直す］, as UserPicker does.
- * `input` is the search field's text, kept by the form so it can tell an unfinished search apart.
+ * Artifactを1つ選ぶ。保存したパスでProjectのArtifact（`runId`を渡したときはそのRunのものだけ）の
+ * 一覧から検索する、idか`artifact://<id>`を貼り付ける（見つかった時点で選ぶ）、ファイルを
+ * アップロードする、のいずれかで選ぶ。選んだArtifactは、UserPickerと同じく、検索欄の代わりに
+ * ［選び直す］とともに表示する。`input`は検索欄の文字で、フォームが持ち、検索が途中のままかを
+ * 見分けるのに使う。
  *
- * The field sits inside its form, so it only asks for the upload (`onRequestUpload`): the form's
- * dialog renders ArtifactUploadDialog beside itself. Rendered here, the upload dialog's own submit
- * would also reach the outer form (React passes events up the component tree) and save it.
+ * この欄はフォームの中にあるので、アップロードは頼むだけにする（`onRequestUpload`）。
+ * ArtifactUploadDialogはフォームのダイアログが自分の横に描く。ここで描くと、アップロードの
+ * ダイアログ自身の送信が外側のフォームにも届き（Reactはイベントをコンポーネントのツリーの上へ
+ * 伝える）、外側のフォームまで保存してしまう。
  */
 export function ArtifactPickerField({
   label,
@@ -58,7 +60,7 @@ export function ArtifactPickerField({
   const resultsId = useId();
   const choices = useArtifactChoices({ projectId, runId, input });
   const referenced = choices.referenceId ? choices.artifacts[0] : undefined;
-  // A pasted id names one Artifact, so it is taken without another click, once per Artifact.
+  // 貼り付けたidは1つのArtifactを指すので、もう一度クリックさせずに選ぶ。Artifactごとに1回だけ。
   const selectReferenced = useEffectEvent(() => {
     if (referenced && !selected) onSelect(referenced);
   });
@@ -67,13 +69,13 @@ export function ArtifactPickerField({
     if (referencedId) selectReferenced();
   }, [referencedId]);
   const chooseAgain = () => {
-    // Emptied too, or a pasted id would pick the same Artifact again at once.
+    // 入力も空にする。残すと、貼り付けたidですぐ同じArtifactがまた選ばれる。
     onInputChange('');
     onSelect(null);
   };
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (!isEnterOutsideComposition(event)) return;
-    // Inside a dialog form, Enter would submit before an Artifact is picked.
+    // ダイアログのフォームの中では、EnterでArtifactを選ぶ前に送信してしまう。
     event.preventDefault();
     const onlyMatch = choices.artifacts.length === 1 ? choices.artifacts[0] : undefined;
     if (onlyMatch) onSelect(onlyMatch);

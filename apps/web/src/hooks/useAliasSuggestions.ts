@@ -6,9 +6,9 @@ import type { SuggestFieldValues } from '../types/form';
 import { useQuery } from './useQuery';
 
 /**
- * A `suggest` for an alias field: the names already used for `modelId` (null: any Model) by the
- * Models' aliases, promotion policies and protections. Until they load, or if they cannot, the
- * field takes any typed name; `refreshKey` offers them once they arrive.
+ * aliasの欄に渡す`suggest`。`modelId`（null: どのモデルでも）について、モデルのalias・昇格policy・
+ * aliasの保護で既に使われている名前を出す。読み込むまでの間や読み込めないときは、欄は入力した
+ * どの名前も受け付ける。届いたら`refreshKey`が候補を出し直させる。
  */
 export function useAliasSuggestions({
   projectId,
@@ -22,7 +22,7 @@ export function useAliasSuggestions({
   const policies = useQuery({ key: `${projectId}:promotion-policies`, load: (signal) =>
     promotionApi.policies(projectId, signal),
   });
-  // Without a Model the API lists the Project-wide protections only.
+  // モデルを指定しないと、APIはProject全体のaliasの保護だけを返す。
   const protections = useQuery({ key: `${projectId}:alias-protections:${modelId ?? ''}`, load: (signal) =>
     registryApi.aliasProtections(projectId, modelId, signal),
   });

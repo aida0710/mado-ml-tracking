@@ -14,8 +14,8 @@ import { text } from '../i18n/catalog';
 import { serviceAccountsTextTemplates } from '../i18n/serviceAccounts';
 
 /**
- * Service Accounts of the Project: creation, role, disabling and issuing tokens. Only Project
- * admins manage them, so the section is hidden from everyone else.
+ * ProjectのService Account。作成、Role、無効化、tokenの発行。管理できるのはProject adminだけなので、
+ * ほかの人にはこの欄を隠す。
  */
 export function ProjectServiceAccounts({ access }: { access: ServiceAccountsState }) {
   useLocale();
@@ -166,7 +166,7 @@ export function ProjectServiceAccounts({ access }: { access: ServiceAccountsStat
   );
 }
 
-// Enabling restores the account's existing tokens, which is not destructive, so no confirmation.
+// 有効にするとアカウントの既存のtokenが戻るだけで壊すものは無いので、確認しない。
 function EnableButton({
   onEnable,
   onEnabled,

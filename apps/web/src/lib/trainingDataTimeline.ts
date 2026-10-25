@@ -11,7 +11,7 @@ export interface TrainingDataTimelineEntry {
   initial: boolean;
 }
 
-/** Compares full configurations in step order so an inherited dataset is never labelled added. */
+/** 完全な構成をstepの順に比べ、引き継いだデータセットを「追加」と表示しないようにする。 */
 export function trainingDataTimeline(page: TrainingDataStagePage): TrainingDataTimelineEntry[] {
   const entries: TrainingDataTimelineEntry[] = [
     {

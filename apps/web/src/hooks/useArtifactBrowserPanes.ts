@@ -4,9 +4,9 @@ import { narrowerThan } from '@mado/design-system/layout';
 import { useMediaQuery } from '@mado/design-system/react';
 
 /**
- * The panes an Artifact browser shows at the current width, and a ref for its outer element. On
- * a narrow screen switching between the list and the preview replaces one with the other, so
- * `scrollBrowserIntoView` brings the top of the browser back after the switch.
+ * 今の幅でArtifactのブラウザが出すペインと、その外側の要素のref。狭い画面では、一覧とプレビューを
+ * 切り替えると片方がもう片方に置き換わるので、切り替えた後に`scrollBrowserIntoView`でブラウザの
+ * 先頭を画面に戻す。
  */
 export function useArtifactBrowserPanes(hasChosenFile: boolean) {
   const isNarrow = useMediaQuery(narrowerThan('md'));

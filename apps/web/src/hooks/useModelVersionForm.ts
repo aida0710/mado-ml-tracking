@@ -14,8 +14,8 @@ import { useMutation } from './useMutation';
 import { useQuery } from './useQuery';
 
 /**
- * State of the［バージョンを作成］form: the draft, the training Runs it may name as the source, the
- * catalog its parents and default code come from, uploading the weights, and saving.
+ * ［バージョンを作成］フォームの状態。下書き、元として指定できる学習のRun、親と既定のコードを取る
+ * カタログ、重みのアップロード、保存。
  */
 export function useModelVersionForm({ projectId, model }: { projectId: string; model: Model }) {
   const [draft, setDraft] = useState<ModelVersionDraft>(EMPTY_MODEL_VERSION_DRAFT);
@@ -39,7 +39,7 @@ export function useModelVersionForm({ projectId, model }: { projectId: string; m
     setDraft((previous) => withSourceRun(previous, sourceRunId));
     mutation.clearError();
   }
-  /** The uploaded file becomes the weights, as if picked from the list. */
+  /** アップロードしたファイルを、一覧から選んだのと同じように重みにする。 */
   function selectUploadedWeights(weightsArtifact: Artifact) {
     setDraft((previous) => ({ ...previous, weightsArtifact }));
     setIsUploadingWeights(false);

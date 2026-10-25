@@ -3,69 +3,66 @@ import { hslToRgb, parseHexColor, relativeLuminance, toHexColor } from './colorC
 export type ChartTheme = 'light' | 'dark';
 
 /**
- * The background the lines are drawn on (.metrics-chart-canvas uses --background of
- * @mado/design-system). seriesColors.test.ts checks these against tokens.css.
+ * 線を描く背景（.metrics-chart-canvasは@mado/design-systemの--backgroundを使う）。
+ * seriesColors.test.tsが、これらをtokens.cssと照らし合わせて確かめる。
  */
 export const CHART_BACKGROUND_COLORS: Record<ChartTheme, string> = {
   light: '#ffffff',
   dark: '#191b1e',
 };
 
-// Up to eight lines take these in this order (the dataviz reference palette: blue, orange, aqua,
-// yellow, magenta, green, violet, red). The order keeps neighbors apart for protanopia and
-// deuteranopia, and the first three apart from each other, so two or three Runs never need color
-// vision to be told apart. On white, aqua, yellow and magenta use their darker steps (the ones of
-// the dark theme) to keep the 3:1 WCAG asks of graphics.
+// 線が8本まではこの順に色を取る（datavizの参照パレット: 青、オレンジ、アクア、黄、マゼンタ、緑、
+// 紫、赤）。この順は1型・2型の色覚でも隣どうしを見分けやすくし、最初の3色どうしも離すので、
+// Runが2つか3つなら色覚に頼らずに見分けられる。白の上では、アクア、黄、マゼンタは暗い段（暗い
+// テーマのもの）を使い、WCAGがグラフィックに求める3:1を保つ。
 const CATEGORICAL_COLORS: Record<ChartTheme, readonly string[]> = {
   light: ['#2a78d6', '#eb6834', '#199e70', '#c98500', '#d55181', '#008300', '#4a3aa7', '#e34948'],
   dark: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'],
 };
 
-// SVG stroke-dasharray of the lines in the same order: solid, dashed, dotted, dash-dot. A second
-// channel besides color, so lines are told apart in print and with any color vision. Slots 5 to 8
-// repeat them with other colors.
+// 同じ順の線のSVGのstroke-dasharray: 実線、破線、点線、一点鎖線。色とは別の手がかりにし、
+// 印刷でもどの色覚でも線を見分けられるようにする。5〜8本目は、別の色でこれらを繰り返す。
 const SERIES_DASH_PATTERNS: readonly (string | null)[] = [null, '7 4', '2 3', '9 3 2 3'];
 
-// More lines than the palette holds (a Run list of up to 200 Runs): 24 hues 15 degrees apart at two
-// contrast levels. Ids hash onto them; within one chart close hues are moved apart (below).
+// パレットより多い線（Runが最大200あるRunの一覧など）: 15度ずつ離れた24の色相を、2段階の
+// コントラストで使う。idをハッシュで割り当て、1つの図の中では近い色相を離す（下を参照）。
 const SERIES_HUE_COUNT = 24;
 const SERIES_HUE_STEP_DEGREES = 15;
 const SERIES_SATURATION = 0.62;
-// Starts the hue circle at the application teal.
+// 色相の円を、アプリのティールから始める。
 const SERIES_HUE_OFFSET_DEGREES = 177;
-// Each level is a contrast against the background, so a yellow line reads as well as a blue one
-// (one HSL lightness for all hues made yellow pale on white). Both stay above 3:1.
+// 各段は背景に対するコントラストなので、黄の線も青の線と同じくらい読める（全色相に1つのHSLの
+// 明度を使うと、白の上で黄が薄くなった）。どちらの段も3:1を上回る。
 const SERIES_CONTRAST_LEVELS: Record<ChartTheme, readonly number[]> = {
   light: [4.5, 3.2],
   dark: [6.5, 4],
 };
-// Halving the lightness range this many times lands well within 1/255 of a channel.
+// 明度の範囲をこの回数だけ半分にすれば、1チャンネルの1/255より十分小さい誤差に収まる。
 const LIGHTNESS_SEARCH_STEPS = 20;
 
-// Thin lines whose hues are closer than this many steps (45 degrees) read as one color, such as
-// purple next to magenta. A chart moves a line's hue until its neighbors are at least this far.
+// 色相がこの段数（45度）より近い細い線は、マゼンタの隣の紫のように1色に見える。図は、隣の線と
+// 少なくともこれだけ離れるまで線の色相を動かす。
 const DISTINCT_HUE_STEPS = 3;
 
 /**
- * The line pattern of the `index`-th metric key of a panel with several keys, where color tells
- * the Runs apart; the patterns repeat after four keys.
+ * 複数のキーを持つパネルで、`index`番目のメトリクスのキーの線の模様。そこでは色でRunを見分ける。
+ * 模様はキー4つごとに繰り返す。
  */
 export function metricKeyDashPattern(index: number): string | null {
   return SERIES_DASH_PATTERNS[index % SERIES_DASH_PATTERNS.length]!;
 }
 
-/** How one line of a chart is drawn. */
+/** 図の1本の線の描き方。 */
 export interface SeriesStyle {
   color: string;
-  /** stroke-dasharray, or null for a solid line. */
+  /** stroke-dasharray。実線ならnull。 */
   dashPattern: string | null;
 }
 
 /**
- * Styles for the given ids (every Run of a page, or the lines of one chart). They follow the ids
- * sorted, not the order drawn, so a Run keeps its style when the Runs are reordered. Up to eight ids
- * take the palette in order, each with a line pattern; more ids take a hue from their own id
- * (hueWheelColors).
+ * 与えたid（ページのすべてのRun、または1つの図の線）に対するスタイル。描く順ではなく並べ替えた
+ * idの順に従うので、Runを並べ替えてもRunのスタイルは変わらない。idが8つまでならパレットを順に
+ * 取り、それぞれに線の模様を付ける。それより多ければ、各idから色相を決める（hueWheelColors）。
  */
 export function distinctSeriesStyles(
   ids: readonly string[],
@@ -104,11 +101,10 @@ const hueDistance = (left: number, right: number) => {
 };
 
 /**
- * A series' own color comes from its id alone (a Run id, or a group id), so a Run keeps it across
- * charts of many Runs. It keeps that color unless a series before it (by id, so the result does not
- * depend on the order drawn) took a hue too close; then it moves to the nearest hue far enough from
- * all of them. With many series the required distance shrinks step by step, so every series still
- * gets a color.
+ * 系列自身の色はidだけ（Runのid、またはグループのid）で決まるので、多くのRunの図をまたいでも
+ * Runは同じ色を保つ。前の系列（結果が描く順に左右されないよう、idの順）が近すぎる色相を取って
+ * いなければその色のままで、取っていればそのすべてから十分離れたいちばん近い色相へ動く。系列が
+ * 多いときは必要な距離を段階的に縮めるので、どの系列にも色が付く。
  */
 function hueWheelColors(sortedIds: readonly string[], theme: ChartTheme): Map<string, string> {
   const levelCount = SERIES_CONTRAST_LEVELS[theme].length;
@@ -119,7 +115,7 @@ function hueWheelColors(sortedIds: readonly string[], theme: ChartTheme): Map<st
     let hueStep = preferred.hueStep;
     search: for (let required = DISTINCT_HUE_STEPS; required > 0; required -= 1) {
       for (let offset = 0; offset < SERIES_HUE_COUNT; offset += 1) {
-        // Tries the preferred hue, then one step either side, two steps, and so on.
+        // 望ましい色相を試し、次に両側へ1段、2段と順に試す。
         const shift = offset % 2 === 0 ? offset / 2 : -(offset + 1) / 2;
         const candidate = (preferred.hueStep + shift + SERIES_HUE_COUNT) % SERIES_HUE_COUNT;
         if (taken.every((step) => hueDistance(step, candidate) >= required)) {
@@ -136,7 +132,7 @@ function hueWheelColors(sortedIds: readonly string[], theme: ChartTheme): Map<st
 
 const hueWheelColorCache = new Map<string, string>();
 
-/** The color of a hue step whose contrast against the background is the level's. */
+/** 背景に対するコントラストがその段の値になる、色相の段の色。 */
 function hueWheelColor({ hueStep, levelIndex }: ColorSlot, theme: ChartTheme): string {
   const cacheKey = `${theme}:${hueStep}:${levelIndex}`;
   const cached = hueWheelColorCache.get(cacheKey);
@@ -144,12 +140,12 @@ function hueWheelColor({ hueStep, levelIndex }: ColorSlot, theme: ChartTheme): s
   const hue = (SERIES_HUE_OFFSET_DEGREES + hueStep * SERIES_HUE_STEP_DEGREES) % 360;
   const backgroundLuminance = relativeLuminance(parseHexColor(CHART_BACKGROUND_COLORS[theme]));
   const targetContrast = SERIES_CONTRAST_LEVELS[theme][levelIndex]!;
-  // Lighter than the dark background, darker than the light one.
+  // 暗い背景より明るく、明るい背景より暗くする。
   const targetLuminance =
     theme === 'dark'
       ? targetContrast * (backgroundLuminance + 0.05) - 0.05
       : (backgroundLuminance + 0.05) / targetContrast - 0.05;
-  // Luminance grows with HSL lightness at a fixed hue and saturation, so a bisection finds it.
+  // 色相と彩度を固定すると輝度はHSLの明度とともに増えるので、二分法で求められる。
   let [low, high] = [0, 1];
   for (let step = 0; step < LIGHTNESS_SEARCH_STEPS; step += 1) {
     const lightness = (low + high) / 2;
@@ -164,7 +160,7 @@ function hueWheelColor({ hueStep, levelIndex }: ColorSlot, theme: ChartTheme): s
   return color;
 }
 
-/** 32-bit FNV-1a: fast, and spreads similar ids (uuid prefixes, sequential names) apart. */
+/** 32ビットのFNV-1a。速く、似たid（uuidの先頭、連番の名前）もばらけさせる。 */
 function hashId(id: string): number {
   let hash = 0x811c9dc5;
   for (let index = 0; index < id.length; index += 1) {

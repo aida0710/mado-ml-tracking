@@ -5,8 +5,8 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**
- * Why the preview shows only part of the file, or none of it, with the download beside the reason:
- * the Artifacts list has no download column, so the preview must offer it.
+ * プレビューがファイルの一部しか、または何も出さない理由と、その横のダウンロード。
+ * Artifactsの一覧にはダウンロードの列が無いので、プレビューで出さなければならない。
  */
 export function PreviewDownloadNotice({ artifact, message }: { artifact: Artifact; message: string }) {
   useLocale();

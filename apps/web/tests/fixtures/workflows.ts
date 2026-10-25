@@ -6,7 +6,7 @@ import {
   type WorkflowStepDraft,
 } from '../../src/lib/workflowDraft';
 
-// IDs must be GUIDs: saving checks the steps with the API's schema.
+// IDはGUIDでなければならない。保存するときにAPIのschemaでステップを検査するため。
 export const DATASET_VERSION_ID = '00000000-0000-4000-8000-0000000000d1';
 const createdAt = '2026-10-12T00:00:00Z';
 
@@ -39,7 +39,7 @@ export const trainingTask = workflowTask({
   revision: 5,
 });
 
-/** Preprocessing ('prepare'), then training ('train') on its outputs: a draft that can be saved. */
+/** 前処理（'prepare'）と、その出力を使う学習（'train'）: 保存できる下書き。 */
 export function savableWorkflowDraft(): WorkflowStepDraft[] {
   const fromPreprocessing = newDatasetInput('', 'training');
   fromPreprocessing.binding.source = { kind: 'step', stepKey: 'prepare', datasetName: null };

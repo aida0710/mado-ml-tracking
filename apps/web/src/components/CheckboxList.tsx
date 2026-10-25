@@ -2,10 +2,10 @@ import { useId, useState, type ReactNode } from 'react';
 import { filterCheckboxOptions, type CheckboxOption } from '../lib/checkboxOptions';
 import { isEnterOutsideComposition } from '../lib/imeComposition';
 
-// Up to this many checkboxes are read at a glance; a longer list gets a filter box above it.
+// この数までのチェックボックスはひと目で読める。これより長い一覧には上に絞り込みの欄を付ける。
 const FILTERABLE_OPTION_COUNT = 8;
 
-/** Several of a few options as checkboxes under a legend (no browser multi-select). */
+/** 少しの選択肢から複数を選ぶ、legendの下のチェックボックス（ブラウザの複数選択は使わない）。 */
 export function CheckboxList({
   legend,
   options,
@@ -19,11 +19,11 @@ export function CheckboxList({
   options: readonly CheckboxOption[];
   selected: readonly string[];
   onToggle: (value: string) => void;
-  /** Shown instead of the checkboxes when there are no options. */
+  /** 選択肢が無いとき、チェックボックスの代わりに表示する。 */
   empty?: string;
-  /** About the whole list (where the checked values came from), read with the group. */
+  /** 一覧全体についての説明（チェック済みの値の出どころなど）。グループと合わせて読み上げる。 */
   hint?: string;
-  /** Names the filter box offered above a long list; without it every option is always listed. */
+  /** 長い一覧の上に出す絞り込みの欄の名前。渡さなければ、常にすべての選択肢を並べる。 */
   filterLabel?: string;
 }) {
   const hintId = useId();
@@ -43,8 +43,8 @@ export function CheckboxList({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
-            // The list sits in dialog forms (a folder upload, a new rule or hook), where Enter
-            // would submit the form while the person is only narrowing the list.
+            // この一覧はダイアログのフォーム（フォルダのアップロード、新しいルールやフック）の
+            // 中にあり、利用者が一覧を絞り込んでいるだけでもEnterでフォームを送信してしまう。
             if (isEnterOutsideComposition(event)) event.preventDefault();
           }}
         />

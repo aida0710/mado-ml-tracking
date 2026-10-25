@@ -11,7 +11,7 @@ interface BuiltinPluginView {
   DatasetActions: ComponentType<DatasetPluginActionsProps>;
 }
 
-/** UI code is bundled with the app. Server responses select only these known views. */
+/** UIのコードはアプリに同梱する。サーバーの応答で選べるのは、この既知のビューだけ。 */
 export const builtinPluginViews: readonly BuiltinPluginView[] = [
   { kind: 'mado', name: 'Mado', Settings: MadoSettings, DatasetActions: MadoDatasetActions },
 ];

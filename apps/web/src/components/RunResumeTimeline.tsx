@@ -5,8 +5,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
- * The running segments of a resumed Run as bands on one time line, with the start, end, end
- * status and first step of each. A Run that was never resumed has one segment and shows nothing.
+ * 再開したRunの動いていた区間を、1本の時間軸の上の帯で示し、各区間の開始、終了、終了時の状態、
+ * 最初のstepを添える。再開したことの無いRunは区間が1つなので、何も表示しない。
  */
 export function RunResumeTimeline({ segments, now }: { segments: RunSegment[]; now: number }) {
   useLocale();

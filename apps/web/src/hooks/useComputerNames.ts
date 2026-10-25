@@ -8,11 +8,10 @@ import { text } from '../i18n/catalog';
 const NO_KNOWN_COMPUTERS: readonly Pick<ComputeTarget, 'id' | 'name'>[] = [];
 
 /**
- * The name of any computer by its id, for the tables and details of Jobs, arrays, Tasks, hooks and
- * automation rules. `known` are the computers the screen already has (those usable in the
- * Project). A computer that is now someone else's Private one is not among them, but its name is
- * public (全体設定 → コンピュータ), so it comes from GET /targets/overview. Call it once per table
- * and hand the lookup to the rows, so the list is read once and not per row.
+ * Job・array・Task・フック・自動実行ルールの表と詳細で使う、idからのコンピュータ名。`known`は
+ * 画面が既に持っているコンピュータ（Projectで使えるもの）。今はほかの人のPrivateになった
+ * コンピュータはその中に無いが、名前は公開されている（全体設定 → コンピュータ）ので、
+ * GET /targets/overviewから取る。表ごとに1回呼んで引き方を行に渡し、一覧を行ごとでなく1回だけ読む。
  */
 export function useComputerNames(
   known: readonly Pick<ComputeTarget, 'id' | 'name'>[] = NO_KNOWN_COMPUTERS,

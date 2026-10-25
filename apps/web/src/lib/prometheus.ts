@@ -2,7 +2,7 @@ export interface PrometheusSample {
   name: string;
   labels: Record<string, string>;
   value: number;
-  // Mado exports BIGINT as text; retain its exact digits for details and tooltips.
+  // mado S3 Data CatalogはBIGINTを文字列で出す。詳細とツールチップのために正確な桁を保つ。
   rawValue: string;
   timestamp?: string;
 }
@@ -60,8 +60,8 @@ function parseSample(line: string): PrometheusSample | null {
   return { name, labels, value, rawValue, ...(sample[3] ? { timestamp: sample[3] } : {}) };
 }
 
-// Text exposition is line oriented. Invalid samples remain visible in the raw view,
-// while valid samples can still be read; missing or invalid values never become zero.
+// テキスト形式のexpositionは行単位。不正なサンプルは生の表示に残しつつ、正しいサンプルは
+// 読めるようにする。値が無い、または不正なときも0にはしない。
 export function parsePrometheus(source: string): ParsedPrometheus {
   const uniqueSamples = new Map<string, { sample: PrometheusSample; lineNumber: number }>();
   const duplicateSeries = new Set<string>();
@@ -80,7 +80,7 @@ export function parsePrometheus(source: string): ParsedPrometheus {
       .map((name) => [name, sample.labels[name]]);
     const seriesId = JSON.stringify([sample.name, sortedLabels]);
     const previous = uniqueSamples.get(seriesId);
-    // Repeated series have undefined exposition semantics; do not choose an arbitrary value.
+    // 同じ系列が繰り返されたときの意味はexpositionで決まっていない。勝手に値を選ばない。
     if (previous || duplicateSeries.has(seriesId)) {
       if (previous) invalidLineNumbers.push(previous.lineNumber);
       invalidLineNumbers.push(lineNumber);

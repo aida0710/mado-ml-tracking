@@ -8,7 +8,7 @@ import { LocalizedError } from '../lib/localizedError';
 import { useLocale } from '../i18n/useLocale';
 import { automationText } from '../i18n/automation';
 
-/** Applies an execution's rule again to the same version (or upstream Run); Project admin only. */
+/** 実行のルールを同じバージョン（または上流のRun）へもう一度適用する。Project adminだけが使う。 */
 export function AutomationRerunButton({
   execution,
   rule,

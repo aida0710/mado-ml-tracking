@@ -24,10 +24,10 @@ import httpx
 
 from screenshot_environment import REPOSITORY_ROOT, load_environment
 
-# The example values of pages/guide/quickstart.md and pages/en/guide/quickstart.md.
+# pages/guide/quickstart.mdとpages/en/guide/quickstart.mdの例の値。
 PROJECT_NAMES = {"ja": "音声認識の実験", "en": "speech-recognition"}
 EXPERIMENT_NAME = "whisper-small-finetune"
-# Step 4 of the quickstart, unchanged.
+# クイックスタートの手順4をそのまま使う。
 TRAIN_SDK = """\
 import math
 
@@ -40,7 +40,7 @@ with start_run(name="lr-1e-4") as run:
         run.log_metrics({"train.loss": loss}, step=step)
     print("Run:", run.id)
 """
-# Step 5 of the quickstart, unchanged.
+# クイックスタートの手順5をそのまま使う。
 TRAIN_MLFLOW = """\
 import math
 
@@ -75,7 +75,7 @@ def main() -> int:
     arguments = parser.parse_args()
     environment = load_environment(arguments.lang, "sample")
     state_file = environment.directory / "quickstart-state.json"
-    # Saved after each step, so a rerun continues instead of creating a second Project.
+    # 手順ごとに保存し、再実行したときは2つ目のProjectを作らずに続きから進める。
     state = json.loads(state_file.read_text()) if state_file.exists() else {}
 
     def save() -> None:
@@ -122,7 +122,7 @@ def main() -> int:
             inherited = {
                 name: value for name, value in os.environ.items() if not name.startswith(("MMT_", "MLFLOW_"))
             }
-            # The SDK of this checkout, wherever the scripts run from.
+            # スクリプトをどこから実行しても、このチェックアウトのSDKを使う。
             inherited["PYTHONPATH"] = str(REPOSITORY_ROOT / "python/src")
             run_script(
                 TRAIN_SDK,

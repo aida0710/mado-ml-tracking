@@ -7,13 +7,13 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { artifactsTextTemplates } from '../i18n/artifacts';
 
-// The first owners name a file well enough in a table cell; the details list them all.
+// 表のセルでは先頭のいくつかの所属先でファイルを十分に見分けられる。すべては詳細に並べる。
 const SHOWN_OWNER_LIMIT = 2;
 
 /**
- * What a catalog row belongs to, as a link: its Run, or for a file without a Run the dataset,
- * model or code versions that list it. A dataset file whose folder upload never became a version
- * still names its dataset, so it is not a dead end.
+ * カタログの行が何に属するかを示すリンク。Runか、Runの無いファイルなら、そのファイルを含む
+ * データセットのバージョン、モデルバージョン、コードバージョン。フォルダのアップロードがバージョンに
+ * ならなかったデータセットのファイルも、そのデータセットを示すので、行き止まりにならない。
  */
 export function ArtifactOwnerCell({
   artifact,
@@ -25,7 +25,7 @@ export function ArtifactOwnerCell({
   artifact: Artifact;
   runName: string | undefined;
   references: ArtifactReferences | undefined;
-  /** False while the file's references load: it is not yet known to belong to nothing. */
+  /** ファイルの参照を読み込む間はfalse。どこにも属さないとはまだ分からない。 */
   areReferencesChecked: boolean;
   datasets: ReadonlyMap<string, Dataset>;
 }) {
@@ -73,7 +73,7 @@ export function ArtifactOwnerCell({
   return <span className="muted">{text.artifactNoRun}</span>;
 }
 
-/** The dataset whose folder upload stored this file, when the path is one of those uploads. */
+/** パスがフォルダのアップロードのものなら、そのアップロードでこのファイルを保存したデータセット。 */
 function datasetOfUnfinishedUpload(path: string, datasets: ReadonlyMap<string, Dataset>): Dataset | null {
   const [, datasetId] = path.split('/');
   const dataset = datasetId ? datasets.get(datasetId) : undefined;

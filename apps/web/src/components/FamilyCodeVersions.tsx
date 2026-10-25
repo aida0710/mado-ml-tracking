@@ -7,8 +7,8 @@ import { modelsText, modelsTextTemplates } from '../i18n/models';
 import { text } from '../i18n/catalog';
 
 /**
- * On the Models page: the code versions that list the model's family, so which code can run the
- * model is visible before a Task or a rule has to offer it.
+ * Modelsの画面で、モデルのモデル系列を挙げているコードバージョンを並べる。どのコードでモデルを
+ * 動かせるかが、Taskやルールの候補に出るより前に分かるようにする。
  */
 export function FamilyCodeVersions({ projectId, family }: { projectId: string; family: string }) {
   useLocale();

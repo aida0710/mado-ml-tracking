@@ -1,5 +1,5 @@
-// Mounts RunAnalysisPanel alone for tests/browser-analysis.mjs. The list beside it stands in for
-// the Run list that receives the brushed selection; the API is mocked by the browser test.
+// tests/browser-analysis.mjsのために、RunAnalysisPanelだけを載せる。横の一覧は、ブラシで選んだ
+// Runを受け取るRunの一覧の代わり。APIはブラウザテストがモックする。
 import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';

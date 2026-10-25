@@ -1,7 +1,7 @@
-/** The ends of a sideways scrolling box that hide content, as its data attribute writes them. */
+/** 横にスクロールする箱で、中身を隠している端。data属性に書く値の形。 */
 export type HiddenEdges = 'start' | 'end' | 'both' | null;
 
-// Sub-pixel layout can leave scrollLeft a fraction short of either end; that is not hidden content.
+// サブピクセルの配置で、scrollLeftがどちらかの端にわずかに届かないことがある。これは隠れた中身ではない。
 const EDGE_TOLERANCE_PX = 1;
 
 export function hiddenEdges({
@@ -21,10 +21,9 @@ export function hiddenEdges({
 }
 
 /**
- * The scrollLeft that brings an item into view with `margin` to spare from each edge (where a
- * hidden end fades out), moving as little as possible. An item already clear of both edges keeps
- * the current position; one wider than the space between the margins lines up its start.
- * Positions are in the box's content: itemStart is the item's distance from the content's left.
+ * 項目を、各端から`margin`の余白（隠れた端がフェードする所）を残して見える所へ出すscrollLeft。
+ * 動きはできるだけ小さくする。両端から既に離れている項目では今の位置のまま、余白の間より幅の
+ * 広い項目は先頭をそろえる。位置は箱の中身の座標で、itemStartは中身の左端から項目までの距離。
  */
 export function scrollLeftToReveal({
   itemStart,

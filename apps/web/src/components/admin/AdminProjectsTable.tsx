@@ -11,9 +11,9 @@ import { formatList } from '../../i18n/textJoining';
 export type AdminProjectAction = 'archive' | 'restore' | 'purge';
 
 /**
- * Every Project with its visibility, its admins (whom to contact), members, Runs, storage,
- * creation date and state. An active
- * Project opens from its name and can be archived; an archived one can be restored or purged.
+ * すべてのProjectを、公開範囲、Project admin（連絡する相手）、メンバー数、Run数、保存先、
+ * 作成日、状態とともに出す。有効なProjectは名前から開けてアーカイブでき、アーカイブした
+ * Projectは復元か完全な削除ができる。
  */
 export function AdminProjectsTable({
   projects,

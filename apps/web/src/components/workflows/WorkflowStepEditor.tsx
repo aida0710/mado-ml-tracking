@@ -20,8 +20,8 @@ import { joinLabels } from '../../i18n/textJoining';
 import { useLocale } from '../../i18n/useLocale';
 
 /**
- * One step of the definition. A changed key is reported once the field is left
- * (`onKeyRenamed`), so the steps after it can follow the new key instead of each keystroke.
+ * 定義の1つのステップ。キーの変更は欄を離れたときに1回知らせる（`onKeyRenamed`）。後ろの
+ * ステップがキーを打つたびでなく、新しいキーに追従できるようにするため。
  */
 export function WorkflowStepEditor({
   step,
@@ -71,7 +71,7 @@ export function WorkflowStepEditor({
               onChange={(event) => update({ key: event.target.value })}
             />
           </label>
-          {/* References do not follow a key an earlier step already has, so the clash shows here. */}
+          {/* 参照は、前のステップが既に持つキーには追従しないので、重複をここで出す。 */}
           {earlierSteps.some((earlier) => earlier.value === step.key) && (
             <p className="notice error" role="status">
               {workflowsTextTemplates.workflowDraftDuplicateKey(step.key)}

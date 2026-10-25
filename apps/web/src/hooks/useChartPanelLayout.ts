@@ -3,19 +3,19 @@ import type { ChartPanelLayout } from '@mmt/contracts';
 import { useLatestRef } from './useLatestRef';
 import { parseChartPanelLayout } from '../lib/chartPanelLayout';
 
-// The chart panels a user arranged, per Project and page, kept in this browser. Viewers arrange
-// charts too, so the layout is the user's own; it reaches the server only inside a saved view.
+// 利用者が並べた図のパネル。Projectとページごとに、このブラウザに保存する。Viewerも図を並べる
+// ので、配置は利用者自身のもの。サーバーに届くのは保存ビューの中に入れたときだけ。
 const CHART_LAYOUT_STORAGE_PREFIX = 'mmt.chartPanels.v1';
 
-/** The pages with their own panel arrangement. */
+/** パネルの配置をそれぞれ持つページ。 */
 export type ChartLayoutPage = 'runDetail' | 'compare' | 'runList';
 
 const storageKey = (projectId: string, page: ChartLayoutPage) =>
   `${CHART_LAYOUT_STORAGE_PREFIX}:${projectId}:${page}`;
 
 /**
- * A layout the page holds instead of this browser's storage: the open saved view of the Run
- * list, whose changes stay unsaved until the view is saved. `null` shows the default layout.
+ * このブラウザの保存領域の代わりにページが持つ配置。Runの一覧で開いている保存ビューのもので、
+ * 変更はビューを保存するまで未保存のまま。`null`なら既定の配置を出す。
  */
 export interface ChartPanelLayoutSource {
   layout: ChartPanelLayout | null;
@@ -23,14 +23,14 @@ export interface ChartPanelLayoutSource {
 }
 export const ChartPanelLayoutSourceContext = createContext<ChartPanelLayoutSource | null>(null);
 
-/** The arrangement kept in this browser, as the page shows it when no saved view is open. */
+/** このブラウザに保存した配置。保存ビューを開いていないときにページが出すもの。 */
 export const readStoredChartPanelLayout = (projectId: string, page: ChartLayoutPage) =>
   readStoredLayout(storageKey(projectId, page));
 
 function readStoredLayout(key: string): ChartPanelLayout | null {
   try {
     const stored = window.localStorage.getItem(key);
-    // A broken or outdated value falls back to the default instead of failing the page.
+    // 壊れた値や古い形式の値なら、ページを失敗させずに既定の配置を使う。
     return stored ? parseChartPanelLayout(JSON.parse(stored)) : null;
   } catch {
     return null;
@@ -42,14 +42,14 @@ function writeStoredLayout(key: string, layout: ChartPanelLayout | null) {
     if (layout) window.localStorage.setItem(key, JSON.stringify(layout));
     else window.localStorage.removeItem(key);
   } catch {
-    // Without storage (private window, quota) the arrangement lasts until the page is left.
+    // 保存領域が使えない（プライベートウィンドウ、容量の上限）ときは、配置はページを離れるまで続く。
   }
 }
 
 /**
- * The stored layout, or `defaultLayout` until the user changes something. The default follows the
- * metrics the page currently has, so it is not stored until the user arranges the panels.
- * Inside a ChartPanelLayoutSourceContext the source's layout is used and nothing is stored here.
+ * 保存した配置。利用者が何か変えるまでは`defaultLayout`。既定の配置はページが今持っている
+ * メトリクスに合わせて変わるので、利用者がパネルを並べるまで保存しない。
+ * ChartPanelLayoutSourceContextの中では、その配置を使い、ここには何も保存しない。
  */
 export function useChartPanelLayout(
   projectId: string,
@@ -63,7 +63,7 @@ export function useChartPanelLayout(
   const storedLayout = stored.key === key ? stored.layout : null;
   const chosenLayout = source ? source.layout : storedLayout;
   const layout = chosenLayout ?? defaultLayout;
-  // updateLayout also writes the ref, so two changes before the next render build on each other.
+  // updateLayoutはrefにも書くので、次のレンダリングまでに2回変えても、後の変更は前の変更の上に重なる。
   const layoutRef = useLatestRef(layout);
 
   const saveLayout = useCallback(

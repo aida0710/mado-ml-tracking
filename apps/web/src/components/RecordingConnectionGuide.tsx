@@ -16,10 +16,9 @@ import { text } from '../i18n/catalog';
 type RecordingClient = 'sdk' | 'mlflow';
 
 /**
- * How to record into this Project from the Mado Python SDK or the MLflow 3 SDK, with the IDs to
- * copy and the examples filled in with them: the Project's on its settings page, and also the
- * chosen Experiment's on the Experiments page. The URLs come from the address the page was opened
- * with, because the Web server forwards /api to the API.
+ * Python SDK（mado-tracking）かMLflow 3のSDKからこのProjectへ記録する方法。コピーするIDと、
+ * それを入れた例を示す。設定のページではProjectのID、Experimentsの画面では選んだExperimentのIDも
+ * 出す。URLはページを開いたときのアドレスから作る。Webのサーバーが/apiをAPIへ転送するため。
  */
 export function RecordingConnectionGuide({
   experiment,
@@ -127,7 +126,7 @@ function ConnectionValue({
 }: {
   name: string;
   value: string;
-  /** `name` is an environment variable, set in the code font. */
+  /** `name`は環境変数で、コードの書体で表示する。 */
   isVariable?: boolean;
 }) {
   useLocale();

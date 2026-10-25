@@ -1,6 +1,6 @@
 import type { ChartLine } from './metricSeries';
 
-/** What a screen reader hears of one line: its last value and its range. */
+/** スクリーンリーダーが1本の線について読み上げる内容。最後の値と範囲。 */
 export interface ChartLineSummary {
   label: string;
   latest: { x: number; value: number };
@@ -9,8 +9,8 @@ export interface ChartLineSummary {
 }
 
 /**
- * The lines in the order drawn, each with its last finite value (the largest x) and the smallest
- * and largest value. Lines without a finite value are left out, as they draw nothing.
+ * 描いた順の線。それぞれに最後の有限な値（xが最大のもの）と、最小値・最大値を付ける。有限な値の
+ * 無い線は何も描かないので除く。
  */
 export function summarizeChartLines(lines: readonly ChartLine[]): ChartLineSummary[] {
   return lines.flatMap((line) => {

@@ -6,8 +6,8 @@ import { getRunOutputRegistrationState, isTerminalRun } from '../lib/runOutputRe
 import { EXECUTION_POLL_MS, useQuery } from './useQuery';
 
 /**
- * The outcome exists only after the Run ends, so it is fetched from then on and polled until the
- * API records it for a Run that carries a launch-time output setting.
+ * 結果はRunが終わった後にしか無いので、それ以降に取得する。起動時の出力の設定を持つRunでは、
+ * APIが結果を記録するまでポーリングする。
  */
 export function useRunOutputRegistration(run: Run) {
   const [hasOutcome, setHasOutcome] = useState(false);

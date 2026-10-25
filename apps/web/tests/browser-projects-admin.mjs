@@ -1,10 +1,11 @@
-// Browser check of Projects against the isolated mock API (tests/browserApi.mjs): the Project
-// sidebar's 「プロジェクト管理」 group (全体設定 and 全体管理 only on their own pages), the Project switcher (keyboard, filter, staying inside
-// the window, the narrow project bar, both themes, Japanese input in its filter, presses inside it),
-// creating a Private Project with members (Enter in the member search, the focus after a pick),
-// adding a member from the Project settings, 全体管理 → プロジェクト (archive with its 409, archived rows, restore, purge confirmed by name),
-// archiving from the Project settings, and the server directory candidates of a filesystem root.
-// Start Vite on MMT_WEB_URL first; MMT_SCREENSHOT_DIR, when set, receives the screenshots.
+// 分離したモックのAPI（tests/browserApi.mjs）でProjectまわりをブラウザで確かめる: Projectの
+// サイドバーの「プロジェクト管理」の組（全体設定と全体管理の組はそれぞれの画面にだけ出る）、
+// Projectの切り替え（キーボード、絞り込み、ウィンドウ内に収まること、狭い画面のProjectの帯、
+// 両方のテーマ、絞り込みでの日本語入力、中を押したときの動き）、メンバー付きのPrivateなProjectの
+// 作成（メンバー検索でのEnter、選んだあとのフォーカス）、Projectの設定からのメンバーの追加、
+// 全体管理 → プロジェクト（409になるアーカイブ、アーカイブ済みの行、元に戻す、名前を打って確かめる
+// 完全削除）、Projectの設定からのアーカイブ、filesystemのルートで出すサーバーのディレクトリ候補。
+// 先にMMT_WEB_URLでViteを起動しておく。MMT_SCREENSHOT_DIRを設定すると、そこへスクリーンショットを保存する。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -17,18 +18,18 @@ const { chromium } = await import(pathToFileURL(modulePath).href);
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
 if (screenshotDirectory) await mkdir(screenshotDirectory, { recursive: true });
-// The switcher offers its filter from this many Projects (PROJECT_FILTER_THRESHOLD).
+// Projectがこの数以上あると、切り替えに絞り込みが出る（PROJECT_FILTER_THRESHOLD）。
 const PROJECT_FILTER_THRESHOLD = 8;
 const WIDE = { width: 1440, height: 900 };
 const NARROW = { width: 390, height: 844 };
-// What Chrome and Safari report as keyCode for a key handled by an input method.
+// 入力メソッドが処理したキーについて、ChromeとSafariがkeyCodeとして報告する値。
 const IME_PROCESS_KEY_CODE = 229;
 
 const isFocused = (locator) => locator.evaluate((element) => element === document.activeElement);
 
 /**
- * Sends a key as an input method does while converting Japanese text. Playwright cannot drive an
- * input method, so the keydown carries isComposing (or keyCode 229) the way a real one would.
+ * 日本語を変換中の入力メソッドと同じようにキーを送る。Playwrightは入力メソッドを操作できない
+ * ので、本物と同じくkeydownにisComposing（またはkeyCode 229）を持たせる。
  */
 const pressComposingKey = (locator, { key, isComposing = true, keyCode }) =>
   locator.evaluate(
@@ -69,7 +70,7 @@ const addProject = ({ name, visibility = 'public', role = 'editor' }) => {
 const vision = addProject({ name: 'Vision 評価' });
 const tts = addProject({ name: 'TTS 本番', visibility: 'private', role: 'viewer' });
 
-// The storage screen's lists; the directory candidates come from the shared mock.
+// 保存先の画面の一覧。ディレクトリの候補は共有のモックが返す。
 async function routeApi(route) {
   const path = new URL(route.request().url()).pathname.replace(/^\/api/, '');
   const reply = (payload) =>
@@ -102,7 +103,7 @@ try {
   const sidebar = page.locator('.navigation-sidebar');
   await sidebar.getByRole('group', { name: 'プロジェクト管理' }).waitFor();
   await sidebar.getByRole('link', { name: 'プロジェクト設定', exact: true }).waitFor();
-  // 全体設定 opens from the user menu, not from a Project's sidebar.
+  // 全体設定はユーザーメニューから開く。Projectのサイドバーからは開かない。
   assert.equal(await sidebar.getByRole('group', { name: '全体設定', exact: true }).count(), 0);
   assert.equal(await sidebar.getByRole('group', { name: '全体管理', exact: true }).count(), 0);
 
@@ -129,7 +130,7 @@ try {
   await page.keyboard.press('ArrowUp');
   await page.keyboard.press('Home');
   assert.match(await activeOption(), /UI検証用プロジェクト/);
-  // The dropdown stays inside the window, wider than the sidebar.
+  // ドロップダウンはサイドバーより広く、ウィンドウの中に収まる。
   const box = await page.locator('.project-switcher-popover').boundingBox();
   assert.ok(box.x >= 0 && box.x + box.width <= WIDE.width && box.y + box.height <= WIDE.height);
   await screenshot('01-switcher-sidebar-light');
@@ -177,7 +178,7 @@ try {
   assert.equal(await activeFilterOption(), optionWhileComposing, '↓ moves the conversion only');
   await pressComposingKey(filter, { key: 'Enter' });
   await dispatchComposition(filter, 'compositionend', '音声');
-  // Safari sends the confirming Enter after compositionend, with keyCode 229.
+  // Safariは変換を確定するEnterを、compositionendのあとにkeyCode 229で送る。
   await pressComposingKey(filter, {
     key: 'Enter',
     isComposing: false,
@@ -186,13 +187,13 @@ try {
   assert.equal(page.url(), urlBeforeComposition, 'confirming the conversion chooses nothing');
   await listbox.waitFor();
   assert.equal(await filter.inputValue(), '音声');
-  // The same keys outside a conversion do move and choose.
+  // 変換中でなければ、同じキーで実際に移動し、選べる。
   await pressComposingKey(filter, { key: 'ArrowDown', isComposing: false });
   assert.notEqual(await activeFilterOption(), optionWhileComposing);
 
   console.log('Projects: pressing inside the dropdown away from the rows keeps it open');
   const popover = page.locator('.project-switcher-popover');
-  // The padding around the filter, then the line shown when nothing matches.
+  // 絞り込みの周りの余白を押し、次に一致するものが無いときに出る行を押す。
   await popover.click({ position: { x: 3, y: 3 } });
   assert.equal(await popover.isVisible(), true, 'pressing the padding keeps the dropdown open');
   assert.equal(await isFocused(filter), true, 'the focus stays in the filter');
@@ -219,7 +220,7 @@ try {
   await dialog().getByRole('radio', { name: /^Private/ }).check();
   const members = dialog().getByRole('group', { name: 'メンバー（任意）' });
   const memberSearch = members.getByLabel('メンバーを追加');
-  // Enter in the search does not submit the form; with one user found it picks that user.
+  // 検索欄でEnterを押してもフォームは送信しない。見つかった利用者が1人ならその人を選ぶ。
   const createRequestCount = projects.createRequests.length;
   await memberSearch.fill('研究員');
   await members.getByRole('button', { name: /上田 研究員/ }).waitFor();
@@ -233,7 +234,7 @@ try {
   await members.getByLabel('青木 研究員のRole').waitFor();
   assert.equal(await memberSearch.inputValue(), '');
   assert.equal(await isFocused(memberSearch), true, 'the search keeps the focus after a pick');
-  // A candidate chosen with the keyboard hands the focus back to the search.
+  // キーボードで選んだ候補からは、フォーカスが検索欄へ戻る。
   await memberSearch.fill('研究員');
   await members.getByRole('button', { name: /石井 研究員/ }).focus();
   await page.keyboard.press('Enter');
@@ -254,7 +255,7 @@ try {
   await projectSwitcherButton(page).getByText('話者分離 検証').waitFor();
 
   console.log('Projects: 全体管理 → プロジェクト lists, archives, restores and purges');
-  // The old /admin still opens the Project list, now at /settings/projects.
+  // 以前の/adminも引き続きProjectの一覧を開く。今は/settings/projectsにある。
   await page.goto(`${base}/admin`);
   await page.waitForURL(`${base}/settings/projects`);
   await page.getByRole('heading', { name: 'プロジェクト', exact: true }).waitFor();
@@ -295,7 +296,7 @@ try {
   console.log('Projects: archiving from the Project settings says so on the Project list');
   await page.goto(`${base}/projects/${tts.id}/settings`);
   await page.getByRole('heading', { name: 'プロジェクト設定', exact: true }).waitFor();
-  // A viewer neither changes the visibility nor archives.
+  // viewerは公開範囲を変えられず、アーカイブもできない。
   assert.equal(await page.getByRole('radio', { name: /^Private/ }).isDisabled(), true);
   assert.equal(await page.getByRole('heading', { name: 'プロジェクトをアーカイブ' }).count(), 0);
   await page.goto(`${base}/projects/${mainProject.id}/settings`);
@@ -330,10 +331,10 @@ try {
   await memberDialog.getByRole('button', { name: 'キャンセル', exact: true }).click();
   await memberDialog.waitFor({ state: 'detached' });
   await page.getByRole('button', { name: 'アーカイブ', exact: true }).click();
-  // The confirmation says what stops besides the data that stays.
+  // 確認のダイアログでは、残るデータに加えて、止まるものも示す。
   await dialog().getByText(/止まるもの: このプロジェクトに限定したAPI token/).waitFor();
   await dialog().getByRole('button', { name: 'アーカイブ', exact: true }).click();
-  // No other Project opens by itself: the list says what happened.
+  // ほかのProjectが勝手に開くことはなく、一覧で何が起きたかを伝える。
   await page.waitForURL(`${base}/`);
   await page.getByText(`「${mainProject.name}」をアーカイブしました`, { exact: false }).waitFor();
   await page.getByRole('heading', { name: '参加しているプロジェクト' }).waitFor();

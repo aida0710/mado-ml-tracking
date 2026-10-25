@@ -108,7 +108,7 @@ export function App() {
             <Route path={PASSWORD_CHANGE_PATH} element={<PasswordChangePage />} />
             <Route path={settingsSectionPath('computers')} element={<ComputersSettingsPage />} />
             <Route path={settingsSectionPath('about')} element={<AboutPage />} />
-            {/* The 全体管理 sections; AdminPage sends anyone else and unknown names to the account. */}
+            {/* 全体管理の各画面。全体管理者でない人と知らない画面名は、AdminPageがアカウントへ送る。 */}
             <Route path={`${SETTINGS_PATH}/:section`} element={<AdminPage />} />
           </Route>
           <Route path="/projects/:projectId" element={<AppShell />}>

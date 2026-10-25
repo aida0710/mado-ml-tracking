@@ -3,8 +3,8 @@ import { runMediaApi, type RunMediaOfKey } from '../api/runMedia';
 import { useQuery, type QueryState } from './useQuery';
 
 /**
- * The media keys a Run recorded and every item of the selected key in step order. The selected key
- * is the chosen one, or the first key until the user chooses.
+ * Runが記録したメディアのキーと、選んだキーのすべての項目（stepの順）。選んだキーは、利用者が
+ * 選んだもの、選ぶまでは最初のキー。
  */
 export function useRunMedia({
   projectId,

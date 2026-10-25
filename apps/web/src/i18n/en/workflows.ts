@@ -111,7 +111,7 @@ export const workflowsText = {
   preprocessingUsage: 'Dataset usage in this execution',
 } as const;
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const workflowsTextTemplates = {
   workflowVersionLabel: (revision: number) => `v${revision}`,
   workflowStartTarget: (workflowName: string, revision: number) =>

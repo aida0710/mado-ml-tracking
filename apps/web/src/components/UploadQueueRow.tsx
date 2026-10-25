@@ -9,9 +9,9 @@ import { text, textTemplates } from '../i18n/catalog';
 import { uploadStatusLabels } from '../i18n/uploads';
 
 /**
- * One file of an upload queue: progress, rate or retry state, error, and its controls. `name` is
- * what the person recognizes the file by; `showArtifactReference` adds the stored Artifact's ID
- * for pasting elsewhere, which only a single uploaded file needs.
+ * アップロードキューの1ファイル。進み具合、転送速度か再試行の状態、エラー、操作を出す。`name`は
+ * 利用者がファイルを見分ける名前。`showArtifactReference`は、ほかの場所へ貼るための保存した
+ * ArtifactのIDを足す。これが要るのは1ファイルだけをアップロードしたときだけ。
  */
 export function UploadQueueRow({
   item,

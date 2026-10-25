@@ -1,5 +1,5 @@
-// Browser check: Jobs whose computer is now someone else's Private one show its name (names are
-// public in 全体設定 → コンピュータ), not the raw id, and a deleted computer is named as deleted.
+// ブラウザでの確認。コンピュータがほかの人のPrivateのものになったJobでも、idそのものではなく
+// 名前を出し（名前は全体設定 → コンピュータで公開されている）、削除したコンピュータは削除済みと出す。
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { createBrowserApi } from './browserApi.mjs';

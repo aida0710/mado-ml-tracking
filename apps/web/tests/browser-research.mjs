@@ -1,9 +1,9 @@
-// The research features on the integrated pages, with the data scripts/verify_research_features.py
-// recorded through the SDK on an isolated API: the chart panels of Run detail (smoothing, x axis,
-// the resume boundary), the System metrics tab, the media slider and audio, the description and
-// comments, Compare (overlaid lines, listening side by side, Analysis), the Run list opened from a
-// saved view URL (grouping and the view's chart), Sweep detail and the report (live and snapshot).
-// Waits poll the page state; there are no fixed sleeps.
+// 統合済みの画面にある研究向けの機能を、scripts/verify_research_features.pyが分離したAPIへSDKで
+// 記録したデータで確かめる: Runの詳細の図のパネル（平滑化、x軸、再開の境目）、System metricsの
+// タブ、メディアのスライダーと音声、説明文とコメント、比較（線の重ね合わせ、並べての聞き比べ、
+// Analysis）、保存ビューのURLから開くRunの一覧（グループ化とビューの図）、Sweepの詳細、レポート
+// （最新を反映する図とスナップショット）。待ち合わせはページの状態をポーリングし、決まった時間の
+// sleepは使わない。
 import assert from 'node:assert/strict';
 import { mkdir, readFile } from 'node:fs/promises';
 import http from 'node:http';
@@ -17,16 +17,16 @@ if (!fixturePath) throw new Error('Set MMT_RESEARCH_FIXTURE to the browser-fixtu
 const { chromium } = await import(pathToFileURL(modulePath).href);
 const webUrl = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:47011';
 assert.equal(new URL(webUrl).hostname, '127.0.0.1', 'This verification only uses the local isolated API');
-// The isolated API accepts cookie requests from its configured Web Origin only, and Chromium does
-// not let a test rewrite Origin. The browser therefore talks to a loopback relay in front of the
-// Web that sends that Origin instead.
+// 分離したAPIは、設定したWebのOriginからのcookie付きの要求しか受け付けず、Chromiumではテストから
+// Originを書き換えられない。そこでブラウザはWebの手前に置いたループバックの中継と通信し、中継が
+// 代わりにそのOriginを送る。
 const apiOrigin = process.env.MMT_API_ORIGIN ?? 'http://127.0.0.1:5182';
 const relayPort = Number(process.env.MMT_RESEARCH_RELAY_PORT ?? 47014);
 const base = `http://127.0.0.1:${relayPort}`;
 const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
 const fixture = JSON.parse(await readFile(fixturePath, 'utf8'));
 const projectBase = `${base}/projects/${fixture.projectId}`;
-// Mirrors verify_research_features.py: media at steps 9, 19, 29 and 39 (after the resume).
+// verify_research_features.pyに合わせる: メディアはstep 9、19、29と39（再開のあと）。
 const MEDIA_STEPS = [9, 19, 29];
 const RESUMED_LAST_STEP = 39;
 const WAIT_TIMEOUT_MS = 30_000;
@@ -39,7 +39,7 @@ const browser = await chromium.launch({
 });
 const errors = [];
 
-/** Forwards to the Web (and its HMR WebSocket), replacing a request's Origin with apiOrigin. */
+/** Web（とそのHMRのWebSocket）へ転送し、要求のOriginをapiOriginに置き換える。 */
 function startOriginRelay() {
   const target = new URL(webUrl);
   const withApiOrigin = (headers) => ({ ...headers, host: target.host, ...(headers.origin ? { origin: apiOrigin } : {}) });
@@ -77,7 +77,7 @@ async function screenshot(page, name) {
   await page.screenshot({ path: `${screenshotDirectory}/${name}.png`, fullPage: true });
 }
 
-/** Polls condition until it is truthy, like the page's own refresh, instead of a fixed sleep. */
+/** 決まった時間のsleepでなく、ページ自身の更新と同じようにconditionが真になるまでポーリングする。 */
 async function waitUntil(condition, message) {
   const deadline = Date.now() + WAIT_TIMEOUT_MS;
   for (;;) {
@@ -90,7 +90,7 @@ async function waitUntil(condition, message) {
 
 async function signIn() {
   const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1100 } });
-  // The same development user that recorded the data, so the private state matches.
+  // データを記録したのと同じ開発用の利用者にして、本人だけに見える状態も一致させる。
   const login = await context.request.post(`${base}/api/auth/dev-login`, { headers: { Origin: base }, data: {} });
   assert.equal(login.ok(), true, `dev-login: ${login.status()}`);
   const page = await context.newPage();
@@ -106,7 +106,7 @@ async function apiGet(context, path) {
 
 const panel = (page, title) => page.locator('article.chart-panel', { has: page.getByRole('heading', { name: title, exact: true }) });
 const linePaths = (scope) => scope.locator('path.chart-line');
-// A flat line (a constant metric) has a zero-height box that Playwright counts as hidden.
+// 平らな線（値が一定のメトリクス）は箱の高さが0になり、Playwrightはそれを非表示とみなす。
 const waitForLine = (scope) => linePaths(scope).first().waitFor({ state: 'attached' });
 const pathData = (scope) => linePaths(scope).evaluateAll((paths) => paths.map((path) => path.getAttribute('d')).join('|'));
 
@@ -115,7 +115,7 @@ async function openTab(page, name) {
   await page.locator(`#run-tab-panel[aria-label="${name}"]`).waitFor();
 }
 
-// --- Run detail ---------------------------------------------------------------------------------
+// --- Runの詳細 ----------------------------------------------------------------------------------
 async function checkRunCharts(page) {
   step('Run detail: chart panel, resume boundary, smoothing and x axis');
   await page.goto(`${projectBase}/runs/${fixture.onlineRunId}?tab=metrics`);
@@ -139,7 +139,7 @@ async function checkRunCharts(page) {
     const data = await pathData(loss);
     return data && data !== rawLine ? data : null;
   }, 'the loss line to be redrawn smoothed on the elapsed-time axis');
-  // The resume marker follows the axis: on elapsed time it sits at the resume time.
+  // 再開の印は軸に従う。経過時間の軸では、再開した時刻の位置に来る。
   await loss.locator('g.chart-marker', { hasText: '再開' }).first().waitFor({ state: 'attached' });
   await screenshot(page, '02-run-metrics-smoothed-relative-time');
   return { smoothedLineChanged: smoothedLine !== rawLine };
@@ -187,7 +187,7 @@ async function checkDescriptionAndComments(page) {
   await thread.locator('.comment-replies article.comment-item', { hasText: replyBody }).waitFor();
   const newComment = 'ブラウザから: 再開の境界が図に出ている';
   const posted = comments.locator('article.comment-item', { hasText: newComment });
-  // Counted first so that rerunning on held data (--hold) still checks the new comment.
+  // 保持したデータで再実行しても（--hold）新しいコメントを確かめられるよう、先に数えておく。
   const postedBefore = await posted.count();
   await comments.locator('form.comment-editor').getByRole('textbox', { name: 'コメント' }).fill(newComment);
   await comments.locator('form.comment-editor').getByRole('button', { name: '投稿' }).click();
@@ -195,7 +195,7 @@ async function checkDescriptionAndComments(page) {
   await screenshot(page, '06-run-details-comments');
 }
 
-// --- Compare ------------------------------------------------------------------------------------
+// --- 比較 ---------------------------------------------------------------------------------------
 async function checkCompare(page, runNames) {
   const runs = `${fixture.onlineRunId},${fixture.offlineRunId}`;
   step('Compare: overlaid loss of the online and the synced offline Run');
@@ -228,7 +228,7 @@ async function checkCompare(page, runNames) {
   await screenshot(page, '09-compare-analysis');
 }
 
-// --- Run list from a saved view -----------------------------------------------------------------
+// --- 保存ビューから開くRunの一覧 ----------------------------------------------------------------
 async function checkSavedView(page) {
   step('Run list: the saved view URL restores grouping and its chart');
   await page.goto(`${projectBase}/experiments?view=${fixture.savedViewId}`);
@@ -239,9 +239,9 @@ async function checkSavedView(page) {
   }, 'the URL to keep the view and open the charts');
   assert.equal(await page.getByRole('combobox', { name: /^グループ化/ }).first().inputValue(), 'param');
   assert.equal(await page.getByLabel('グループ化するキー').inputValue(), 'batch_size');
-  // The Sweep trials log val_loss: one mean line per batch_size of the grid.
+  // Sweepの試行はval_lossを記録する。gridのbatch_sizeごとに平均の線が1本ずつ出る。
   const viewPanel = panel(page, '研究: val_loss');
-  // Runs without val_loss form the (none) group, which has a legend entry but nothing to draw.
+  // val_lossの無いRunは(none)のグループになり、凡例には出るが描く線が無い。
   const drawnGroupLines = () =>
     viewPanel.locator('path.chart-line.group').evaluateAll((paths) => paths.filter((path) => path.getAttribute('d')?.includes('L')).length);
   await waitUntil(async () => (await drawnGroupLines()) === 2, 'one mean line per batch_size group');
@@ -251,7 +251,7 @@ async function checkSavedView(page) {
   await screenshot(page, '10-run-list-saved-view');
 }
 
-// --- Sweep detail -------------------------------------------------------------------------------
+// --- Sweepの詳細 --------------------------------------------------------------------------------
 async function checkSweep(page, sweep) {
   step('Sweep detail: status, best trial, trials and analysis');
   await page.goto(`${projectBase}/sweeps/${fixture.sweepId}`);
@@ -268,7 +268,7 @@ async function checkSweep(page, sweep) {
   await screenshot(page, '11-sweep-detail');
 }
 
-// --- Report -------------------------------------------------------------------------------------
+// --- レポート -----------------------------------------------------------------------------------
 async function checkReport(page) {
   step('Report: Markdown, live and fixed charts, importance, media, Run list and comments');
   await page.goto(`${projectBase}/reports/${fixture.reportId}`);
@@ -283,7 +283,7 @@ async function checkReport(page) {
   await fixed.locator('[data-testid=report-snapshot-mark]', { hasText: '時点で固定' }).waitFor();
   await waitForLine(live);
   await waitForLine(fixed);
-  // The verification logged a loss point after saving: only the live chart draws it.
+  // 検証は保存のあとでlossの点を1つ記録した。その点を描くのは最新を反映する図だけ。
   assert.notEqual(await pathData(live), await pathData(fixed), 'the live chart should include the point logged after saving');
   await report.locator('figure.report-embed[data-block-type=parameter_importance] .importance-table tr[data-param=lr]').waitFor();
   const media = report.locator('figure.report-embed[data-block-type=media]');

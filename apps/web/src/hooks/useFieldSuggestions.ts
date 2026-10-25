@@ -1,19 +1,19 @@
 import { useEffect, useEffectEvent, useState } from 'react';
 import type { FieldSuggestions, SuggestFieldValues } from '../types/form';
 
-// Waits for typing to pause so each keystroke does not start its own lookup.
+// 入力が止まるのを待ち、キーを押すたびに問い合わせを始めないようにする。
 export const FIELD_SUGGESTION_DELAY_MS = 200;
 
 const NO_SUGGESTIONS: FieldSuggestions = { items: [] };
 
 /**
- * The candidates `suggest` offers for `value`, looked up once typing pauses. A newer value aborts
- * the lookup still running for an older one, so a late answer never replaces a newer one. Until
- * the new answer arrives the previous candidates stay, without their note.
+ * `value`に対して`suggest`が出す候補。入力が止まってから問い合わせる。新しい値は、古い値の実行中の
+ * 問い合わせを中止するので、遅れて届いた答えが新しい答えを置き換えることはない。新しい答えが
+ * 届くまでは前の候補を、注記を外して出したままにする。
  *
- * An empty value is looked up only with `offerWhenEmpty` (a short list worth showing before
- * anything is typed). A change of `refreshKey` looks the same value up again, for candidates that
- * arrive later (a directory a worker has just read).
+ * 空の値は`offerWhenEmpty`のとき（何か入力する前に出す価値のある短い一覧）だけ問い合わせる。
+ * `refreshKey`が変わると同じ値をもう一度問い合わせ、後から届く候補（workerが読んだばかりの
+ * ディレクトリ）を拾う。
  */
 export function useFieldSuggestions(
   value: string,
@@ -23,14 +23,14 @@ export function useFieldSuggestions(
     refreshKey = 0,
   }: { offerWhenEmpty?: boolean; refreshKey?: string | number } = {},
 ): FieldSuggestions {
-  // The field definitions are rebuilt on every render; only the value decides when to look up.
+  // 欄の定義はレンダリングのたびに作り直される。いつ問い合わせるかは値だけで決める。
   const lookUp = useEffectEvent((typed: string, signal: AbortSignal) => suggest!(typed, signal));
   const hasSuggest = suggest !== undefined;
   const isLookingUp = hasSuggest && (value !== '' || offerWhenEmpty);
   const [answer, setAnswer] = useState<{ value: string; suggestions: FieldSuggestions } | null>(
     null,
   );
-  // Forgotten while nothing is looked up, so old candidates do not come back with the next value.
+  // 何も問い合わせていない間は忘れ、次の値で古い候補が戻ってこないようにする。
   if (!isLookingUp && answer !== null) setAnswer(null);
   useEffect(() => {
     if (!isLookingUp) return;
@@ -41,7 +41,7 @@ export function useFieldSuggestions(
           if (!controller.signal.aborted) setAnswer({ value, suggestions });
         },
         () => {
-          // Candidates only help typing; a failed lookup leaves the field usable without them.
+          // 候補は入力の助けにすぎない。問い合わせに失敗しても、候補無しで欄は使える。
           if (!controller.signal.aborted) setAnswer({ value, suggestions: NO_SUGGESTIONS });
         },
       );

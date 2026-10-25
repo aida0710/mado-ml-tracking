@@ -5,12 +5,12 @@ import { resumeMarkers } from '../lib/metricSeries';
 import { useQuery, type QueryState } from './useQuery';
 import { textTemplates } from '../i18n/catalog';
 
-// resume-events is one request per Run, so markers are drawn only for charts of a few Runs.
+// resume-eventsはRunごとに1回の要求なので、目印はRunが少ない図にだけ描く。
 export const MAX_RESUME_MARKER_RUNS = 10;
 
 /**
- * Vertical markers where the Runs were resumed, for MetricsChart. Charts of more Runs than
- * MAX_RESUME_MARKER_RUNS get none instead of one request per Run.
+ * MetricsChartに出す、Runを再開した位置の縦の目印。MAX_RESUME_MARKER_RUNSより多くのRunの図には、
+ * Runごとに1回の要求を送る代わりに、目印を出さない。
  */
 export function useResumeMarkers(
   projectId: string,

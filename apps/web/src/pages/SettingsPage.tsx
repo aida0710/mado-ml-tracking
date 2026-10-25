@@ -24,20 +24,19 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * The open Project's own settings. Creating and listing Projects belong to the Project switcher
- * and 全体管理.
+ * 開いているProject自身の設定。Projectの作成と一覧は、Projectの切り替えと全体管理が受け持つ。
  */
 export function SettingsPage() {
   useLocale();
   const { project, isProjectAdmin } = useProject();
-  // The API refuses non-administrators, so they never request the log.
+  // APIはProject adminでない人を拒むので、その人は監査ログを要求しない。
   const audit = useAuditEvents(isProjectAdmin ? { projectId: project.id } : null);
-  // Shared so a group binding change also refreshes the effective roles in the member list.
+  // groupへの付与を変えたときにメンバー一覧の実効Roleも更新されるよう、共有する。
   const projectMembers = useProjectMembers(project.id);
-  // Shared so a key issued to a Service Account appears in the Project token list.
+  // Service Accountに発行したtokenがProjectのtokenの一覧に出るよう、共有する。
   const serviceAccounts = useServiceAccounts(project.id, isProjectAdmin);
-  // ProjectTokens loads the personal tokens itself; remounting it shows a token issued from the
-  // SDK and MLflow guide.
+  // ProjectTokensは個人のtokenを自分で読むので、マウントし直して、SDKとMLflowのガイドから
+  // 発行したtokenを出す。
   const [tokenListRevision, setTokenListRevision] = useState(0);
   const reloadTokenLists = () => {
     setTokenListRevision((revision) => revision + 1);
@@ -47,7 +46,7 @@ export function SettingsPage() {
     <section className="page management-page">
       <PageHeader title={text.settings} eyebrow={project.name} />
       <ProjectSettingsContents sections={projectSettingsSections(isProjectAdmin)} />
-      {/* Each part is wrapped in its anchor, so the parts need not know the contents. */}
+      {/* 各部分をそれぞれのアンカーで包むので、各部分は目次を知らなくてよい。 */}
       <div className="settings-grid">
         <div id={sectionIds.project} className="settings-anchor">
           <ProjectSettings

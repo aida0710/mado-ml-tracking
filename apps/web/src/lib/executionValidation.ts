@@ -21,8 +21,8 @@ export const RUN_KINDS: RunKind[] = [
   'processing',
 ];
 /**
- * What a Run needs of its code version: to run `taskType`, and to support every family of
- * `families` (the models it runs). An omitted part is not checked.
+ * Runがコードバージョンに求めるもの。`taskType`を実行できることと、`families`（実行するモデル）の
+ * すべてのモデル系列に対応していること。省いた部分は確かめない。
  */
 export interface CodeRequirement {
   taskType?: RunKind;
@@ -30,9 +30,9 @@ export interface CodeRequirement {
 }
 
 /**
- * Whether the code version meets the requirement: the rule of the API's validateCodeCompatibility
- * (apps/api/src/domain/compatibility.ts). Every screen that offers code versions, or explains why
- * it offers none, asks this, so the rule lives only here.
+ * コードバージョンが要件を満たすか。APIのvalidateCodeCompatibility
+ * （apps/api/src/domain/compatibility.ts）と同じ規則。コードバージョンを選ばせる画面も、選べる
+ * ものが無い理由を説明する画面もこれに問い合わせるので、規則はここにだけ置く。
  */
 export function meetsCodeRequirement(
   code: CodeVersion,

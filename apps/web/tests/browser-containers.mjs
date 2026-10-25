@@ -22,8 +22,9 @@ const projectBase = base + '/projects/' + api.state.project.id;
 const dialog = () => page.getByRole('dialog').last();
 const fill = (label, value) => dialog().getByLabel(label).fill(value);
 const select = (label, value) => dialog().getByLabel(label).selectOption(value);
-// getByLabel matches part of a label, and 'バージョン' is also in '編集元のコードバージョン'; the exact accessible
-// name tells the two apart (the label text with its required mark is 'バージョン *', so exact getByLabel fails).
+// getByLabelはラベルの一部にも一致し、'バージョン'は'編集元のコードバージョン'にも含まれる。
+// accessible nameの完全一致なら2つを見分けられる（必須の印を含むラベルの文字は'バージョン *'なので、
+// 完全一致のgetByLabelは失敗する）。
 const versionField = () => dialog().getByRole('textbox', { name: 'バージョン', exact: true });
 const clickSave = async () => {
   const versionSave = dialog().getByTestId('code-version-save');
@@ -31,7 +32,7 @@ const clickSave = async () => {
   else await dialog().getByRole('button', { name: '保存', exact: true }).click();
 };
 const waitClosed = () => page.getByRole('dialog').waitFor({ state: 'hidden' });
-// Checks options of a checkbox list (FormField type 'checkboxes') by their labels.
+// チェックボックスの一覧（FormFieldのtype 'checkboxes'）の項目を、ラベルで選んでチェックする。
 const check = async (legend, labels) => {
   for (const label of labels)
     await dialog()
@@ -144,7 +145,7 @@ try {
   await versionField().fill('apptainer-v1');
   await select('Runtime', 'apptainer');
   await dialog().getByRole('button', { name: 'Artifactをアップロード', exact: true }).click();
-  // The resumable upload dialog: pick the file, check the path it fills in, then start.
+  // 再開できるアップロードのダイアログ。ファイルを選び、自動で入るパスを確かめてから始める。
   await dialog()
     .getByLabel('ファイルを選ぶ', { exact: true })
     .setInputFiles({
@@ -180,11 +181,11 @@ try {
   await page.goto(base + '/settings/computers');
   await page.getByRole('button', { name: 'コンピュータを追加', exact: true }).click();
   await fill('名前', 'Container target');
-  // Step 1「接続」: a local computer has no SSH fields; the only online worker checks it.
+  // 手順1「接続」。localのコンピュータにはSSHの欄が無く、オンラインの唯一のworkerが確認する。
   await dialog().getByRole('radio', { name: /^Local/ }).check();
   assert.equal(await dialog().getByLabel('Host').count(), 0);
   await dialog().getByRole('button', { name: '接続を確認して次へ', exact: true }).click();
-  // Step 2「接続後の設定」is filled in from the check: every runtime that worked, both GPUs.
+  // 手順2「接続後の設定」は確認の結果で埋まる。動いたruntimeすべてと、GPUの2つとも。
   await dialog().getByTestId('computer-setup-step').waitFor();
   await fill('作業ディレクトリ', '/test/container-work');
   assert.deepEqual(await dialog().getByLabel('GPU ID（1行に1件）').inputValue(), '0\n1');
@@ -194,7 +195,7 @@ try {
   assert.deepEqual(containerTarget.runtimeKinds, ['python', 'docker', 'singularity', 'apptainer']);
   assert.deepEqual(containerTarget.gpuIds, ['0', '1']);
   assert.equal(containerTarget.enabled, true);
-  // Whoever adds a computer owns it, private unless chosen otherwise; its owner runs Jobs on it.
+  // コンピュータは追加した人の所有になり、ほかを選ばなければPrivate。所有者はそこでJobを実行できる。
   assert.equal(containerTarget.ownerUserId, api.state.user.id);
   assert.equal(containerTarget.visibility, 'private');
   await page.goto(projectBase + '/compute');
@@ -223,8 +224,8 @@ try {
   await dialog().getByRole('button', { name: '戻る', exact: true }).click();
   await select('コードバージョン', singularityVersion.id);
   await dialog().getByRole('button', { name: '次へ', exact: true }).click();
-  // The container target runs Singularity too, so the computer and its GPU stay chosen; a choice
-  // is dropped (and said so) only when it no longer fits (lib/launchFormChanges).
+  // コンテナ用のコンピュータはSingularityも動かせるので、コンピュータとGPUは選んだまま残る。選択を
+  // 外す（外したことを伝える）のは、合わなくなったときだけ（lib/launchFormChanges）。
   assert.equal(await dialog().getByLabel('コンピュータ').inputValue(), containerTarget.id);
   assert.equal(await gpuOne().isChecked(), true);
   await gpuOne().uncheck();
@@ -298,7 +299,7 @@ try {
 
   console.log('Browser automation: enrollment outcome, current statuses and Run/Job links');
   const job = api.state.jobs.at(-1);
-  // A first-stage automatic execution of the rule, as GET .../automation-executions returns it.
+  // ルールの1段目の自動実行。GET .../automation-executionsが返す形。
   const firstStageExecution = (fields) => ({
     projectId: api.state.project.id,
     ruleId: rule.id,
@@ -355,7 +356,7 @@ try {
   await page.goto(projectBase + '/models');
   await page.getByRole('tab', { name: '自動実行履歴', exact: true }).click();
   await page.getByRole('link', { name: 'Jobを開く', exact: true }).click();
-  // The Job's detail is headed by its Run's name and lists the Job ID.
+  // Jobの詳細は、Runの名前を見出しにして、Job IDを載せる。
   const jobDetail = page.locator('.job-detail');
   await jobDetail.getByRole('heading', { name: manualRun.name, exact: true }).waitFor();
   await jobDetail.getByText(job.id, { exact: true }).waitFor();

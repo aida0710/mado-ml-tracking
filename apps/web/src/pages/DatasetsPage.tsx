@@ -33,10 +33,10 @@ export function DatasetsPage() {
   const [dialog, setDialog] = useState<'dataset' | DatasetVersionSource | null>(null);
   const [versionToDelete, setVersionToDelete] = useState<DatasetVersion | null>(null);
   const [includeArchived, setIncludeArchived] = useState(false);
-  // What the last archive or unarchive did, shown while that dataset stays open.
+  // 直前のアーカイブ・アーカイブ解除の結果。そのデータセットを開いている間だけ見せる。
   const [archiveChange, setArchiveChange] = useState<Dataset | null>(null);
   const registry = useRegistry(`${project.id}:datasets`, {
-    // Archived datasets last, so the one opened by default is still in use.
+    // アーカイブしたデータセットを最後に並べ、既定で開くものが使用中のものになるようにする。
     list: async (signal) =>
       (await registryApi.datasets(project.id, signal)).sort(
         (left, right) => Number(left.archivedAt !== null) - Number(right.archivedAt !== null),
@@ -79,7 +79,7 @@ export function DatasetsPage() {
                   {text.datasetIncludeArchived}
                 </label>
                 <ResponsiveTable
-                  // An archived dataset opened from a link stays listed while it is shown.
+                  // リンクから開いたアーカイブ済みのデータセットは、表示している間は一覧に残す。
                   rows={items.filter(
                     (item) => includeArchived || !item.archivedAt || item.id === registry.selected?.id,
                   )}
@@ -136,8 +136,8 @@ export function DatasetsPage() {
                       <DatasetActionsMenu
                         dataset={registry.selected}
                         onChanged={(updated) => {
-                          // Archiving moves the dataset to the end of the list, which would open
-                          // another one where none was chosen in the URL.
+                          // アーカイブするとデータセットが一覧の最後に移り、URLで何も選んでいないときに
+                          // 別のデータセットを開いてしまう。
                           registry.pinSelectedItem();
                           if ((updated.archivedAt === null) !== (registry.selected?.archivedAt === null))
                             setArchiveChange(updated);
@@ -349,7 +349,7 @@ export function DatasetsPage() {
   );
 }
 
-/** Under the dataset's name: its namespace and description, which the list does not show. */
+/** データセットの名前の下に出す。一覧には出ないNamespaceと説明。 */
 function DatasetSummary({ dataset }: { dataset: Dataset }) {
   useLocale();
   return (
@@ -367,7 +367,7 @@ function DatasetSummary({ dataset }: { dataset: Dataset }) {
   );
 }
 
-/** The parents by version name (with the dataset's name when it is another dataset). */
+/** 親をバージョン名で示す（別のデータセットなら、そのデータセットの名前も付ける）。 */
 function ParentVersionLinks({
   version,
   loadedVersions,

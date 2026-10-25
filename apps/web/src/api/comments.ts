@@ -7,7 +7,7 @@ import type {
 } from '@mmt/contracts';
 import { assertCursorPage, encodeId, jsonRequest, projectPath, request } from './http';
 
-// Matches the API default so each "load more" fetches one server page.
+// 続きを読むたびにサーバーの1ページを取るよう、APIの既定値に合わせる。
 export const COMMENT_PAGE_SIZE = 100;
 
 export interface CommentTarget {

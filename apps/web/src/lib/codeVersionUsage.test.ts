@@ -42,7 +42,7 @@ describe('コードバージョンの使われ方', () => {
       codeVersions: [
         codeVersion({ id: 'match', supportedModelFamilies: ['linear', 'qwen3'] }),
         codeVersion({ id: 'case-only', supportedModelFamilies: ['QWEN3'] }),
-        // A version whose code is not listed (deleted) is not offered.
+        // コードが一覧に無い（削除された）バージョンは候補に出さない。
         codeVersion({ id: 'orphan', codeId: 'gone' }),
       ],
     });

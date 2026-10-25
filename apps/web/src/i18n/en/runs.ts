@@ -1,5 +1,5 @@
 export const runsText = {
-  // Short enough to read whole in the search box; the full grammar is in the error messages.
+  // 検索欄で全体が読める短さにする。文法の全体はエラーメッセージで示す。
   queryHint: 'Name, or metrics.loss < 0.1',
   searchWithSuggestion: 'Search with this expression',
   filterEmpty: 'Enter a search expression.',
@@ -47,7 +47,7 @@ export const runsText = {
   resumeSegmentEnd: 'End',
   resumeSegmentFirstStep: 'First step',
   resumeSegmentEndStatus: 'End status',
-  // Where nothing is recorded yet: the next step instead of "no match".
+  // まだ何も記録されていないところでは、「一致なし」でなく次にやることを示す。
   runsNoneInExperiment:
     'No runs in this experiment yet. Add the “Record with SDK” example to your training code and run it; the run is created and listed here.',
   runsNoneInProject:
@@ -68,7 +68,7 @@ export const runsText = {
     "Runs created here start as “Queued” and do not progress on their own. If you select a code version, you can run it after creation with “Launch job” on the run's details. To record metrics from training code, use the “Record with SDK” example instead of this form (the run is created when recording starts).",
 } as const;
 
-/** Panel titles of the system metrics tab, by category. */
+/** システムメトリクスのタブのパネルの見出し（分類ごと）。 */
 export const systemMetricCategoryLabels = {
   cpu: 'CPU',
   memory: 'Memory',
@@ -78,7 +78,7 @@ export const systemMetricCategoryLabels = {
   other: 'Other',
 } as const;
 
-/** Units of the system metrics panels. MLflow megabytes are drawn in bytes. */
+/** システムメトリクスのパネルの単位。MLflowのメガバイトはバイトにして描く。 */
 export const systemMetricUnitLabels = {
   percent: '%',
   bytes: 'bytes',
@@ -90,12 +90,12 @@ export const systemMetricUnitLabels = {
   value: 'Value',
 } as const;
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const runsTextTemplates = {
   runExecutionMode: (mode: string) => `Execution mode: ${mode}`,
   filterUnexpectedAt: (position: number) =>
     `Check character ${position} in the search expression. Join comparisons of metrics, params, or tags with AND and quote strings (e.g. metrics.loss < 0.1 AND params.lr = '0.01').`,
-  // A comparison that does not suit its field: what the field holds, and the comparison fixed.
+  // 項目に合わない比較。その項目が持つ値の種類と、直した比較を示す。
   filterStringOperator: ({
     field,
     operator,

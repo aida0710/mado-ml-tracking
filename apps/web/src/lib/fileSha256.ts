@@ -1,17 +1,17 @@
-// SHA-256 of a whole file, for telling whether a file on disk is the one an Artifact stores.
+// ファイル全体のSHA-256。ディスク上のファイルがArtifactに保存したものと同じかを見分けるのに使う。
 import { canDigest, sha256Hex } from './blobDigest';
 import { createSha256 } from './sha256';
 
 const MIB = 1024 * 1024;
 /**
- * Web Crypto hashes one buffer only, so the whole file is read into memory; above this the file is
- * read in slices instead, which keeps memory flat at the cost of the slower bundled hash.
+ * Web Cryptoは1つのbufferしかハッシュできないので、ファイル全体をメモリに読み込む。これを超える
+ * ファイルは代わりに切り分けて読む。同梱のハッシュは遅いが、メモリの使用量は一定に保てる。
  */
 const WHOLE_FILE_DIGEST_MAX_BYTES = 256 * MIB;
-// The upload part size: one slice blocks the page for about 0.15 s with the bundled hash.
+// アップロードのpartと同じ大きさ。同梱のハッシュでは、1切れでページが約0.15秒止まる。
 const FILE_SLICE_BYTES = 16 * MIB;
 
-/** Lowercase hex, the form an Artifact's sha256 has. Each slice yields to the page between reads. */
+/** Artifactのsha256と同じ小文字の16進数。読み込みの合間に、1切れごとにページへ処理を譲る。 */
 export async function sha256OfFile(file: Blob, signal?: AbortSignal): Promise<string> {
   if (canDigest() && file.size <= WHOLE_FILE_DIGEST_MAX_BYTES) return sha256Hex(await file.arrayBuffer());
   const hasher = createSha256();

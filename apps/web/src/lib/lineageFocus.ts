@@ -1,14 +1,13 @@
-// A part of the Project's lineage around one node, so "what was made from this data" can be read
-// without searching the whole diagram.
+// 1つのノードの周りに絞ったProjectの来歴。図全体を探さなくても「このデータから何が作られたか」を
+// 読めるようにする。
 import type { LineageGraph } from '@mmt/contracts';
 
-/** The Lineage page's URL parameter naming the node to center on. */
+/** Lineageの画面で、中心に置くノードを指すURLのパラメータ。 */
 export const LINEAGE_FOCUS_PARAMETER = 'focus';
 
 /**
- * Nodes at most `depth` relations (all when omitted) upstream or downstream of `nodeId`, following each direction
- * on its own (a sibling reached through a shared parent is not included), and the relations
- * between them. Null when the node is not in the graph.
+ * `nodeId`から上流か下流へ、多くとも`depth`個（省けばすべて）の関係でたどれるノードと、それらの間の
+ * 関係。向きはそれぞれ別にたどる（共通の親を経て届く兄弟は含めない）。ノードがグラフに無ければnull。
  */
 export function focusLineage(graph: LineageGraph, focus: { nodeId: string; depth?: number }): LineageGraph | null {
   if (!graph.nodes.some((node) => node.id === focus.nodeId)) return null;
@@ -39,7 +38,7 @@ export function lineageFocusPath(projectId: string, nodeId: string): string {
   return `/projects/${encodeURIComponent(projectId)}/lineage?${LINEAGE_FOCUS_PARAMETER}=${encodeURIComponent(nodeId)}`;
 }
 
-/** Runs that took the node (a dataset version) as an input, in the graph's order. */
+/** そのノード（データセットのバージョン）を入力にしたRun。グラフの順に並べる。 */
 export function runsUsingInput(graph: LineageGraph, nodeId: string) {
   const runIds = new Set(
     graph.edges.filter((edge) => edge.relation === 'input' && edge.source === nodeId).map((edge) => edge.target),

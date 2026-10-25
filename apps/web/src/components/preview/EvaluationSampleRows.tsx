@@ -8,7 +8,7 @@ import { text } from '../../i18n/catalog';
 
 const COLUMN_COUNT = 5;
 
-/** A page of evaluation samples as table rows, for screens wide enough to read them side by side. */
+/** 1ページ分の評価サンプルを表の行で出す。横に並べて読める幅のある画面向け。 */
 export function EvaluationSampleRows({
   samples,
   audios,

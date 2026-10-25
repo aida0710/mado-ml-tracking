@@ -11,8 +11,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
- * The ⋯ menu of a dataset for editors: change its description, archive it (new Runs and launch
- * templates can no longer take its versions) or bring it back. The name is not changed here.
+ * Editorに出すデータセットの⋯メニュー。説明の変更、アーカイブ（新しいRunと起動テンプレートが
+ * そのバージョンを使えなくなる）とその解除。名前はここでは変えない。
  */
 export function DatasetActionsMenu({
   dataset,

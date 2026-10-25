@@ -2,21 +2,20 @@ import type { MetricsChartPoint } from '../components/charts/chartProps';
 
 export type ChartScale = 'linear' | 'log';
 
-// Room above and below the lines so the extremes do not touch the frame.
+// 線の上下の余白。極値が枠に触れないようにする。
 const LINEAR_DOMAIN_PADDING_RATIO = 0.05;
-// On a log axis the same room is a factor: about 5% of a decade on each side.
+// 対数軸では同じ余白を比で取る。両側にそれぞれ1桁（10倍）の約5%。
 const LOG_DOMAIN_PADDING_FACTOR = 10 ** 0.05;
 
 export interface PlottablePoints {
   points: MetricsChartPoint[];
-  /** Points left out because a log axis cannot place a value at or below 0. */
+  /** 対数軸が0以下の値を置けないために外した点。 */
   excludedCount: number;
 }
 
 /**
- * Keeps the points a log axis can place. A point whose x (log x) or value (log y) is at or below 0
- * is left out and counted rather than moved to a made-up value; a band whose lower edge is at or
- * below 0 is dropped for that point while its line value stays.
+ * 対数軸が置ける点だけを残す。x（対数のx軸）か値（対数のy軸）が0以下の点は、作った値へ動かさずに
+ * 外して数える。帯の下端が0以下なら、その点の帯は捨て、線の値は残す。
  */
 export function keepPlottablePoints(
   points: readonly MetricsChartPoint[],
@@ -39,33 +38,32 @@ export function keepPlottablePoints(
 }
 
 /**
- * The [min, max] the y axis shows for the given values, padded so lines do not touch the frame
- * except at 0, which the padding never crosses.
- * Non-finite values (and values at or below 0 on a log axis) are ignored; null when none remain.
+ * 与えた値に対してy軸が表示する[min, max]。線が枠に触れないよう余白を付けるが、0は余白で越えない。
+ * 有限でない値（と対数軸での0以下の値）は無視する。何も残らなければnull。
  */
 export function paddedDomain(values: Iterable<number>, scale: ChartScale): [number, number] | null {
   const extent = plottableExtent(values, scale);
   if (!extent) return null;
   const [min, max] = extent;
   if (scale === 'log') return [min / LOG_DOMAIN_PADDING_FACTOR, max * LOG_DOMAIN_PADDING_FACTOR];
-  // A flat line still needs a visible span around it.
+  // 平らな線にも、周りに見える幅が要る。
   const padding =
     max === min
       ? Math.abs(min) * LINEAR_DOMAIN_PADDING_RATIO || 1
       : (max - min) * LINEAR_DOMAIN_PADDING_RATIO;
-  // The padding must not cross 0: an axis below 0 for a loss or a byte count reads as a value.
+  // 余白は0を越えてはいけない。損失やバイト数の軸が0未満まであると、そこに値があるように読める。
   const lower = min >= 0 ? Math.max(0, min - padding) : min - padding;
   const upper = max <= 0 ? Math.min(0, max + padding) : max + padding;
   return lower === upper ? [lower - padding, upper + padding] : [lower, upper];
 }
 
-/** The [min, max] of the x values, unpadded so the lines start and end at the frame. */
+/** xの値の[min, max]。線が枠の端から端まで描かれるよう、余白は付けない。 */
 export function xExtent(values: Iterable<number>, scale: ChartScale): [number, number] | null {
   const extent = plottableExtent(values, scale);
   if (!extent) return null;
   const [min, max] = extent;
   if (min < max) return extent;
-  // A single x still needs a span to draw on.
+  // xが1つだけでも、描くための幅が要る。
   return scale === 'log' ? [min / 10, min * 10] : [min - 1, max + 1];
 }
 
@@ -80,18 +78,18 @@ function plottableExtent(values: Iterable<number>, scale: ChartScale): [number, 
   return min > max ? null : [min, max];
 }
 
-/** Maps a data value to a pixel; undefined when the axis cannot place it. */
+/** データの値をピクセルに対応づける。軸が置けない値はundefined。 */
 export type PixelScale = (value: number) => number | undefined;
 
-// A piece of one point (a metric logged once, or a value between two gaps) has no length to
-// stroke, so lonePointsPath draws it as a filled dot of this radius.
+// 1点だけの区間（1回だけ記録したメトリクスや、2つの欠損に挟まれた値）は線を引く長さが無いので、
+// lonePointsPathがこの半径の塗った点として描く。
 const LONE_POINT_RADIUS_PIXELS = 3.5;
 
 type PixelPoint = [number, number];
 
 /**
- * The (x, value) pairs as pixel points, split into pieces wherever a value cannot be placed (NaN),
- * so a gap shows as a gap instead of a straight line across it.
+ * (x, value)の組をピクセルの点にし、値を置けない（NaN）ところで区間に分ける。欠損が、またいだ
+ * 直線でなく、欠損として見えるようにする。
  */
 function pixelPieces(
   xs: readonly number[],
@@ -111,7 +109,7 @@ function pixelPieces(
   return pieces.filter((piece) => piece.length > 0);
 }
 
-/** SVG path of a line through (x, value) pairs; a one-point piece is left to lonePointsPath. */
+/** (x, value)の組を通る線のSVGのpath。1点だけの区間はlonePointsPathに任せる。 */
 export function linePath(
   xs: readonly number[],
   values: readonly number[],
@@ -126,9 +124,8 @@ export function linePath(
 }
 
 /**
- * SVG path of a dot at every point that has no neighbor to draw a line to, to be filled in the
- * line's color: without it a metric logged once draws nothing at all. A path has no circle
- * command, so two half-circle arcs make each dot.
+ * 線を引く隣の点が無い点ごとに打つ点のSVGのpath。線の色で塗る。これが無いと、1回だけ記録した
+ * メトリクスは何も描かれない。pathには円のコマンドが無いので、半円の弧を2つつないで点を作る。
  */
 export function lonePointsPath(
   xs: readonly number[],
@@ -144,8 +141,8 @@ export function lonePointsPath(
 }
 
 /**
- * SVG path of the min-max band: closed shapes along the upper edge and back along the lower one.
- * A point without a band ends the current shape.
+ * 最小〜最大の帯のSVGのpath。上端に沿って進み、下端に沿って戻る閉じた形。帯を持たない点が
+ * あると、そこで今の形を閉じる。
  */
 export function bandPath(
   points: readonly MetricsChartPoint[],

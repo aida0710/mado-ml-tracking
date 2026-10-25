@@ -1,10 +1,10 @@
-// Browser check that data screens lead somewhere: the Artifact catalog names what each file belongs
-// to and keeps files that something uses from a delete that would fail, a dataset shows its
-// description and can be archived, a version lists the Runs that used it and opens Lineage around
-// it, the upload dialog starts in the open folder and warns about a path already used, a discarded
-// folder upload says which files it kept and why, archiving the dataset open by default keeps it
-// open, and the catalog's next page asks only about its own files. It runs against an isolated
-// API (port 48480) and Vite (48481) on a temporary schema in mmt_test.
+// データの画面が行き止まりにならないことのブラウザでの確認。Artifactのカタログは各ファイルの所属先を
+// 示し、何かが使っているファイルは失敗する削除から守る。データセットは説明を表示し、アーカイブできる。
+// バージョンは使ったRunを並べ、そのバージョンを中心にLineageを開く。アップロードのダイアログは
+// 開いているフォルダから始まり、既に使われているパスを警告する。取りやめたフォルダのアップロードは、
+// 残したファイルとその理由を伝える。既定で開いているデータセットをアーカイブしても開いたまま。
+// カタログの次のページは自分のファイルについてだけ問い合わせる。分離したAPI（port 48480）と
+// Vite（48481）を相手に、mmt_testの一時的なschemaで動かす。
 //
 //   (cd apps/web && MMT_WEB_API_PROXY_TARGET=http://127.0.0.1:48480 npx vite --port 48481 --strictPort --host 127.0.0.1) &
 //   MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55490/mmt_test \
@@ -123,7 +123,7 @@ try {
     body: { experimentId: experiment.id, name: '母音で学習', kind: 'training', inputDatasetVersionIds: [version.id] },
   });
   const notes = await store('samples/2026-10-11/notes.txt', '評価のメモ', run.id);
-  // A stopped folder upload's file: no version lists it yet.
+  // 途中で止まったフォルダのアップロードのファイル。まだどのバージョンにも入っていない。
   await store(`datasets/${dataset.id}/2026-10-11T06-10-44-001Z/vowel-i.wav`, 'RIFF-vowel-i');
 
   console.log('1. Artifacts一覧: Runなしのファイルにも所属が出て、種類は言葉で出る');
@@ -213,7 +213,7 @@ try {
   assert.equal(await page.getByRole('row').filter({ hasText: 'vowel-i.wav' }).count(), 0, 'the unused file was deleted');
 
   console.log('7. 既定で開いているデータセットをアーカイブしても開いたままで、知らせが出る');
-  // The newest dataset opens by default; archiving moves it to the end of the list.
+  // 既定では最も新しいデータセットが開く。アーカイブすると一覧の最後へ移る。
   const newest = await api(`/projects/${project.id}/datasets`, { method: 'post', body: { name: '話者別コーパス' } });
   await page.goto(`${WEB_URL}/projects/${project.id}/datasets`);
   await page.getByRole('heading', { name: '話者別コーパス' }).waitFor();
@@ -245,7 +245,7 @@ try {
   await page.getByRole('button', { name: '合成母音コーパス', exact: true }).waitFor();
 
   console.log('8. ［続きを読み込む］は増えた行の使われている場所だけを取りに行き、表示済みの行はそのまま');
-  // A full first page (100 files) of files without a Run, newer than the files above.
+  // Runの無いファイルで最初のページ（100件）を埋める。上のファイルより新しくする。
   for (let index = 0; index < 100; index += 1)
     await store(`exports/batch/${String(index).padStart(3, '0')}.txt`, `filler ${index}`);
   const referenceRequests = [];

@@ -1,14 +1,14 @@
 import { findComparisonKindError } from './runFilterValueKinds';
 import { text, textTemplates } from '../i18n/catalog';
 
-/** What the Run search box sends: a name substring, or an MLflow search filter. */
+/** Runの検索欄が送るもの。名前の部分文字列か、MLflowの検索の絞り込み。 */
 export type RunSearchConditions = { name: string } | { filter: string } | Record<string, never>;
 
-// A leading `group.` marks a filter; anything else is matched against Run names.
+// 先頭に`group.`があれば絞り込みとみなす。それ以外はRunの名前と照らし合わせる。
 const FILTER_PREFIX =
   /^\s*(?:metrics?|params?|parameters?|tags?|attributes?|attr|run|datasets?|dataset)\s*\./i;
 const PLAIN_KEY = /^[\p{L}_][\p{L}\p{N}_]*$/u;
-// Same token shapes as the API compiler, so the check rejects nothing the API accepts.
+// APIのcompilerと同じトークンの形にし、APIが受け付けるものをこの検査で拒まないようにする。
 const TOKEN_PATTERN =
   /\s+|`(?:[^`]|``)*`|'(?:[^']|'')*'|"(?:[^"]|"")*"|[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?|!=|>=|<=|[=<>(),.]|[\p{L}_][\p{L}\p{N}_]*/uy;
 const COMPARISON_OPERATORS = new Set(['=', '!=', '<', '<=', '>', '>=', 'LIKE', 'ILIKE']);
@@ -51,9 +51,9 @@ function tokenize(filter: string): Token[] {
 }
 
 /**
- * Checks the grammar of a filter before it is sent: `field op value` comparisons joined by AND,
- * each suited to what its field holds (runFilterValueKinds). Whether a field is supported is left
- * to the API, which reports it with a 400.
+ * 送る前に絞り込みの文法を検査する。ANDでつないだ`field op value`の比較で、それぞれが項目の
+ * 持つ値に合っていること（runFilterValueKinds）。項目に対応しているかどうかはAPIに任せ、APIが
+ * 400で知らせる。
  */
 class FilterGrammar {
   private offset = 0;
@@ -128,7 +128,7 @@ class FilterGrammar {
   }
 }
 
-/** Returns the message for a filter the API would reject as malformed, or null. */
+/** APIが形の崩れたものとして拒む絞り込みについてのメッセージを返す。無ければnull。 */
 export function findRunFilterSyntaxError(filter: string): string | null {
   try {
     const tokens = tokenize(filter);
@@ -141,7 +141,7 @@ export function findRunFilterSyntaxError(filter: string): string | null {
   }
 }
 
-/** Run list orders. `metric:<direction>:<key>` sorts by the latest value of that metric. */
+/** Runの一覧の並び順。`metric:<direction>:<key>`は、そのメトリクスの最新の値で並べる。 */
 export type RunSort = 'newest' | 'oldest' | 'name' | `metric:${'asc' | 'desc'}:${string}`;
 
 export function metricRunSort(key: string, direction: 'asc' | 'desc'): RunSort {
@@ -159,7 +159,7 @@ function quoteSearchKey(key: string): string {
   return PLAIN_KEY.test(key) ? key : `\`${key.replaceAll('`', '``')}\``;
 }
 
-/** The API orderBy for a sort. Newest first is the API default and keeps the keyset cursor. */
+/** 並び順に対応するAPIのorderBy。新しい順はAPIの既定で、keysetのcursorを保てる。 */
 export function runSortOrderBy(sort: string): string[] {
   if (sort === 'oldest') return ['attributes.start_time ASC'];
   if (sort === 'name') return ['attributes.run_name ASC'];

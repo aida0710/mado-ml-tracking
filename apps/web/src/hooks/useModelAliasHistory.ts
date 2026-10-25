@@ -4,12 +4,13 @@ import { useCursorPages, type CursorPagesState } from './useCursorPages';
 
 export type ModelAliasHistoryState = CursorPagesState<ModelAliasEvent>;
 
-// Pages through one Model's alias events, newest first. Pass modelId null when no Model is selected.
+// 1つのモデルのaliasのイベントを、新しい順にページごとに読む。モデルを選んでいないときは
+// modelIdにnullを渡す。
 export function useModelAliasHistory(
   projectId: string,
   modelId: string | null,
 ): ModelAliasHistoryState {
-  // The key is null without a Model, so the loader only runs with one.
+  // モデルが無いとキーがnullになるので、読み込み関数はモデルがあるときだけ動く。
   return useCursorPages(
     modelId === null ? null : `${projectId}:alias-events:${modelId}`,
     (cursor, signal) => registryApi.aliasEvents(projectId, modelId!, { cursor, signal }),

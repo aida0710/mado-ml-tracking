@@ -5,7 +5,7 @@ import type {
   TargetDirectoryListingResult,
 } from '@mmt/contracts';
 
-// What a version 2 check of a GPU server reports, as the worker sends it.
+// GPUサーバーの接続確認（version 2）が報告する内容。workerが送る形のまま。
 export const setupCheckResult: TargetCheckResultV2 = {
   version: 2,
   items: [

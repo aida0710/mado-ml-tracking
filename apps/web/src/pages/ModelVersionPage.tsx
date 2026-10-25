@@ -35,9 +35,9 @@ import { text } from '../i18n/catalog';
 import { evaluationTextTemplates } from '../i18n/evaluation';
 
 /**
- * One model version from training to results: where it came from, what automation ran on it,
- * its evaluation metrics against the baseline version, and its promotion decisions. Editors can
- * promote it from the promotion check; everything else is read-only apart from the comments.
+ * 1つのモデルバージョンを学習から結果まで見せる。どこから来たか、何の自動実行が走ったか、基準の
+ * バージョンと比べた評価のメトリクス、昇格の判定。編集できる人は昇格の確認から昇格でき、
+ * コメントを除いてほかは読み取りのみ。
  */
 export function ModelVersionPage() {
   useLocale();
@@ -51,7 +51,7 @@ export function ModelVersionPage() {
         sourceRun.value?.inputDatasetVersionIds.length,
     ),
   );
-  // Every version of the Model: the version numbers to show and the baselines to choose from.
+  // モデルのすべてのバージョン。表示するバージョン番号と、選べる基準のバージョンに使う。
   const versions = useQuery({ key: `${project.id}:model-versions:${modelId}`, load: (signal) =>
     registryApi.modelVersions(project.id, modelId, signal),
   });
@@ -61,8 +61,8 @@ export function ModelVersionPage() {
     versions: versions.value ?? [],
   });
   const evaluations = useModelVersionEvaluations(project.id, detail.value, baseline.versionId);
-  // Loaded here rather than in their panels so that the reload button refreshes them too: an
-  // evaluation that ends after the page opened changes both the comparison and the decisions.
+  // パネルの中ではなくここで読み、再読み込みのボタンでこれらも更新されるようにする。ページを
+  // 開いたあとに終わった評価は、比較と判定の両方を変えるため。
   const evaluationComparison = useEvaluationComparison({
     projectId: project.id,
     modelId,
@@ -82,7 +82,7 @@ export function ModelVersionPage() {
     evaluationComparison.comparison.reload();
     promotionChoices.reload();
   };
-  // A link with the wrong Model id still names the version; send it to the right address.
+  // モデルのidが違うリンクでもバージョンは特定できるので、正しいアドレスへ移す。
   if (detail.value && detail.value.model.id !== modelId)
     return (
       <Navigate
@@ -166,7 +166,7 @@ function ModelVersionContent({
     baselineRuns: baseline.results.value?.items ?? [],
     summaryMetrics: collectSummaryMetrics(evaluationRuns, rules),
   });
-  // Versions are named by number everywhere on the page; a version not loaded yet keeps its id.
+  // ページ中でバージョンは番号で示す。まだ読み込んでいないバージョンはidのまま。
   const versionLabel = (id: string) =>
     evaluationTextTemplates.versionLabel(
       (id === detail.version.id ? detail.version : versions.find((version) => version.id === id))

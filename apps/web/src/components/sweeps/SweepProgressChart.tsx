@@ -22,9 +22,9 @@ const BEST_COLOR = 'var(--chart-best)';
 const CHART_HEIGHT = 280;
 
 /**
- * Objective per trial as dots, with the best so far as a step line (x is the trial index). recharts'
- * keyboard layer makes the plot one focus stop whose arrow keys walk the trials in the tooltip; its
- * title names it for a screen reader.
+ * 試行ごとの目的値を点で、それまでの最良を階段状の線で描く（xは試行の番号）。rechartsの
+ * キーボード操作でプロットはフォーカスの止まる場所1つになり、矢印キーでツールチップの試行を
+ * 順にたどる。titleがスクリーンリーダー向けの名前になる。
  */
 export function SweepProgressChart({ trials, objective }: { trials: SweepTrial[]; objective: SweepObjective }) {
   useLocale();

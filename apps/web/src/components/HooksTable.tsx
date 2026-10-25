@@ -27,7 +27,7 @@ function HookTarget({ hook, targets, computerName }: {
   );
 }
 
-/** The Project's hooks; editors also get the switch that turns a hook on or off. */
+/** Projectのフック。Editorにはフックの有効と無効を切り替えるスイッチも出す。 */
 export function HooksTable({
   hooks,
   targets,

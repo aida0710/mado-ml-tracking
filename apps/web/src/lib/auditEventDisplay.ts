@@ -1,14 +1,14 @@
 import type { AuditEvent } from '@mmt/contracts';
 import { accessText, auditActionLabels } from '../i18n/access';
 
-/** The action in words; an action the Web has no label for yet keeps its raw name. */
+/** 操作を言葉で出す。Webにまだラベルの無い操作は元の名前のまま出す。 */
 export function auditActionLabel(action: string): string {
   return auditActionLabels[action] ?? action;
 }
 
 /**
- * Who acted, by display name. A token actor is marked as such. Users are never deleted, so a
- * missing name means an API that does not send `actorName`; it is still not shown as a bare UUID.
+ * 操作した人を表示名で出す。tokenによる操作はそうと分かるようにする。ユーザーは削除されないので、
+ * 名前が無いのは`actorName`を送らないAPIの場合。それでもUUIDのままでは出さない。
  */
 export function auditActorLabel(
   event: Pick<AuditEvent, 'actorType' | 'actorUserId' | 'actorName'>,
@@ -18,7 +18,7 @@ export function auditActorLabel(
   return event.actorType === 'token' ? `${name} (${accessText.auditActorToken})` : name;
 }
 
-/** The Project of the event in the global log; authentication and user events have none. */
+/** 全体の監査ログでのイベントのProject。認証とユーザーのイベントには無い。 */
 export function auditProjectLabel(event: Pick<AuditEvent, 'projectId' | 'projectName'>): string {
   if (event.projectId === null) return accessText.auditProjectNone;
   return event.projectName ?? event.projectId;

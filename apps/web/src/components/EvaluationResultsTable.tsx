@@ -20,7 +20,7 @@ function formatRunMetric(run: AutomatedRunSummary, metric: string): string {
   return formatMetricValue(value, Number.isFinite(value) ? 'present' : 'not_finite');
 }
 
-// Automatic evaluations are the ones promotion policies judge, so the mark names the rule.
+// 昇格policyが判断するのは自動の評価なので、印にルールの名前を添える。
 function OriginBadge({ run, ruleName }: { run: AutomatedRunSummary; ruleName: string | null }) {
   useLocale();
   return run.automatic ? (
@@ -50,7 +50,7 @@ function MetricSummaryTable({
     ) : (
       '—'
     );
-  // A phone keeps the latest and the baseline value side by side; the sign opens with the row.
+  // スマートフォンでも最新の値と基準の値を並べて残す。差の符号は行を開くと出る。
   const baselineColumns: ResponsiveTableColumn<MetricSummaryRow>[] = baselineLabel
     ? [
         {
@@ -102,9 +102,9 @@ function MetricSummaryTable({
 }
 
 /**
- * The version's evaluation Runs in one table, summary metrics first, each marked as an automatic
- * evaluation (with its rule) or a manual one, above the per-metric latest values and the sign of
- * the difference from the baseline version.
+ * バージョンの評価。先にメトリクスの集約（メトリクスごとの最新の値と、基準のバージョンとの差の
+ * 符号）を出し、その下に評価のRunを1つの表にまとめる。各Runには自動の評価（とそのルール）か
+ * 手動の評価かの印を付ける。
  */
 export function EvaluationResultsTable({
   projectId,

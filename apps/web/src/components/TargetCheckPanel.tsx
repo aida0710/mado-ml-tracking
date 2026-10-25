@@ -31,8 +31,8 @@ import { workerCoverageText } from '../i18n/workerCoverage';
 import { formatList, formatNote } from '../i18n/textJoining';
 
 /**
- * The connection check of an ssh or local target, which a worker runs. A site is reached only by
- * its launcher, which checks the site's login in the site's details (SiteComputerDetails).
+ * workerが行う、sshかlocalのコンピュータの接続の確認。siteに届くのはそのランチャーだけで、
+ * ランチャーはsiteの詳細（SiteComputerDetails）でsiteへのログインを確認する。
  */
 export function TargetCheckPanel({
   target,
@@ -40,14 +40,14 @@ export function TargetCheckPanel({
   onTargetSaved,
 }: {
   target: ComputeTarget;
-  /** Whether a worker names this computer; undefined when the viewer may not list workers. */
+  /** このコンピュータを挙げているworkerがいるか。見ている人がworkerを一覧できなければundefined。 */
   checkCoverage?: WorkerCoverage;
   onTargetSaved: () => void;
 }) {
   useLocale();
   const check = useTargetCheck(target.id);
   const { checks, latest } = check;
-  // The worker chosen for the last check checks again; without one, the worker in charge does.
+  // 前回の確認に選ばれたworkerがもう一度確認する。いなければ、担当のworkerが確認する。
   const requestCheck = () => void check.request({ worker: latest?.assignedWorker ?? undefined });
   return (
     <section className="settings-section" data-testid="target-check-panel">
@@ -65,7 +65,7 @@ export function TargetCheckPanel({
         </button>
       </div>
       <p className="muted">{targetCheckHintFor(target.executor)}</p>
-      {/* Known before asking: a check nobody takes fails only after five minutes. */}
+      {/* 頼む前に分かる。だれも受け取らない確認は、5分たってようやく失敗になる。 */}
       {checkCoverage && isWorkerMissing(checkCoverage) && !check.isInProgress && (
         <p className="notice error" role="status">
           {workerCoverageText.targetCheckWorkerMissing}
@@ -191,7 +191,7 @@ function DetectedGpus({ gpus }: { gpus: TargetCheckGpu[] }) {
   );
 }
 
-// Detected values are only offered; the target changes when the administrator saves.
+// 検出した値は候補に出すだけで、コンピュータの設定は管理者が保存したときに変わる。
 function TargetCandidateEditor({
   target,
   detected,

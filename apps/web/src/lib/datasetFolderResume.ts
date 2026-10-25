@@ -1,5 +1,5 @@
-// Continuing a folder upload that stopped before its version: which attempt a chosen folder
-// continues, and which of its files an earlier attempt already stored.
+// バージョンを作る前に止まったフォルダのアップロードを続ける。選んだフォルダがどの試行の
+// 続きか、そのファイルのうちどれを前の試行が既に保存したか。
 import {
   DATASET_FOLDER_UPLOAD_FOLDER_PATTERN,
   datasetFolderUploadRoot,
@@ -8,7 +8,7 @@ import {
 } from '@mmt/contracts';
 import type { DatasetFolderEntry } from './datasetFolder';
 
-/** A stored file of an earlier attempt: what is compared with the chosen file at the same path. */
+/** 前の試行で保存したファイル。同じパスの選んだファイルと比べるもの。 */
 export interface StoredFolderFile {
   id: string;
   path: string;
@@ -16,28 +16,28 @@ export interface StoredFolderFile {
   sha256: string;
 }
 
-/** A stopped folder upload as the dialog lists it: stored files and this person's open uploads. */
+/** ダイアログに出す止まったフォルダのアップロード。保存済みのファイルと本人の開いているアップロード。 */
 export interface UnfinishedFolderUpload {
   folder: string;
   startedAt: string;
   storedFileCount: number;
   storedBytes: number;
-  /** When the last file was stored; null when only open uploads are known. */
+  /** 最後のファイルを保存した日時。開いているアップロードしか分からないときはnull。 */
   lastStoredAt: string | null;
-  /** Bigger files go up in parts; their sessions stay open until they finish or expire. */
+  /** 大きいファイルは分割して送る。そのセッションは、完了するか期限が切れるまで開いたまま。 */
   openUploads: ArtifactUploadListItem[];
 }
 
 const folderPattern = new RegExp(DATASET_FOLDER_UPLOAD_FOLDER_PATTERN);
 
-/** The folder name is the start time with ':' and '.' replaced: 2026-10-08T14-19-08-955Z. */
+/** フォルダ名は開始時刻の':'と'.'を置き換えたもの（2026-10-08T14-19-08-955Z）。 */
 export function folderUploadStartTime(folder: string): string {
   const [date, time] = folder.split('T');
   const [hours, minutes, seconds, milliseconds] = (time ?? '').replace(/Z$/, '').split('-');
   return `${date}T${hours}:${minutes}:${seconds}.${milliseconds}Z`;
 }
 
-/** The folder of a folder upload an Artifact path belongs to, or null for any other path. */
+/** Artifactのパスが属するフォルダのアップロードのフォルダ。ほかのパスならnull。 */
 export function folderOfUploadPath(path: string, datasetId: string): string | null {
   const root = datasetFolderUploadRoot(datasetId);
   if (!path.startsWith(root)) return null;
@@ -46,9 +46,9 @@ export function folderOfUploadPath(path: string, datasetId: string): string | nu
 }
 
 /**
- * Joins what the API lists (stored files no version uses) with the person's own open uploads
- * below the same folders, newest first. A folder with only open uploads is listed too: a big
- * file may have been the first to stop.
+ * APIの一覧（どのバージョンも使っていない保存済みのファイル）と、同じフォルダの下にある本人の
+ * 開いているアップロードを合わせ、新しい順に並べる。開いているアップロードしか無いフォルダも
+ * 出す。最初に止まったのが大きいファイルかもしれないため。
  */
 export function mergeUnfinishedFolderUploads({
   datasetId,
@@ -91,8 +91,8 @@ export function mergeUnfinishedFolderUploads({
 }
 
 /**
- * Chosen files whose path an earlier attempt stored with the same size. Only these are worth
- * hashing: a different size is a different file, and a missing path was never stored.
+ * 選んだファイルのうち、前の試行が同じパスに同じサイズで保存したもの。ハッシュを計算する価値が
+ * あるのはこれだけ。サイズが違えば別のファイルで、パスが無ければ保存されていない。
  */
 export function pairWithStoredFiles(
   entries: readonly DatasetFolderEntry[],
@@ -106,8 +106,8 @@ export function pairWithStoredFiles(
 }
 
 /**
- * How many chosen files an attempt already holds, stored or partly sent, at the same path and
- * size. It decides which attempt a folder continues; the bytes are compared once it starts.
+ * 選んだファイルのうち、試行が同じパス・同じサイズで既に持っている（保存済みか一部送信済みの）
+ * ファイルの数。フォルダがどの試行の続きかをこれで決め、バイト列は始まってから比べる。
  */
 export function countContinuedFiles({
   entries,
@@ -126,8 +126,8 @@ export function countContinuedFiles({
 }
 
 /**
- * The stopped attempt the chosen folder most likely continues: the one with the most files at the
- * same path and size. None when no attempt shares a single file, so a new folder starts fresh.
+ * 選んだフォルダが続きである見込みが最も高い、止まった試行。同じパス・同じサイズのファイルが
+ * 最も多いもの。ファイルを1つでも共有する試行が無ければnullで、新しいフォルダは最初から始める。
  */
 export function chooseFolderToContinue(
   candidates: ReadonlyArray<{ folder: string; matchedCount: number }>,

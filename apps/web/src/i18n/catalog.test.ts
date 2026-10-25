@@ -11,17 +11,17 @@ const japaneseDomains = import.meta.glob(['./*.ts', '!./*.test.ts'], { eager: tr
 const englishDomains = import.meta.glob('./en/*.ts', { eager: true });
 afterEach(() => setLocale('ja'));
 
-// Japanese letters, and the Japanese punctuation and brackets an English sentence never needs.
+// 日本語の文字と、英語の文には要らない日本語の句読点・括弧。
 const JAPANESE_TEXT = /[ぁ-んァ-ン一-龯、。・「」（）［］：]/;
 
-/** Each string of a catalog entry with where it is, including the labels of nested objects. */
+/** カタログの項目の文字列を、その場所とともにすべて挙げる。入れ子のオブジェクトの文言も含む。 */
 function listStrings(value: unknown, path: string): Array<{ path: string; message: string }> {
   if (typeof value === 'string') return [{ path, message: value }];
   if (typeof value !== 'object' || value === null) return [];
   return Object.entries(value).flatMap(([key, child]) => listStrings(child, `${path}.${key}`));
 }
 
-/** The key paths inside a nested entry such as { recording: { label, hint } }. */
+/** { recording: { label, hint } }のような、入れ子の項目の中のキーのパス。 */
 function listKeyPaths(value: unknown, path = ''): string[] {
   if (typeof value !== 'object' || value === null) return [path];
   return Object.entries(value).flatMap(([key, child]) => listKeyPaths(child, `${path}.${key}`)).sort();

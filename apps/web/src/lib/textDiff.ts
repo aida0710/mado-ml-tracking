@@ -1,16 +1,16 @@
-// Character-level diff between a reference transcript and a prediction (for CER-style review).
-// Characters are Unicode code points, so Japanese text and surrogate pairs compare one by one.
+// 正解の書き起こしと予測の、文字単位の差分（CERのような見直しのため）。
+// 文字はUnicodeのコードポイントなので、日本語の文字もサロゲートペアも1文字ずつ比べる。
 
 export type TextDiffKind = 'equal' | 'delete' | 'insert';
-/** 'delete' exists only in the reference, 'insert' only in the prediction. */
+/** 'delete'は正解にだけ、'insert'は予測にだけある。 */
 export interface TextDiffSegment {
   kind: TextDiffKind;
   text: string;
 }
 
 /**
- * The LCS table holds (reference + 1) x (prediction + 1) cells. 4M cells (16MB of Uint32) covers two
- * 2000-character transcripts; longer pairs are shown without highlighting instead of freezing the tab.
+ * LCSの表のセルは(reference + 1) x (prediction + 1)個。400万セル（Uint32で16MB）で、2000文字の
+ * 書き起こし2つまで収まる。それより長い組は、タブを固まらせる代わりに強調なしで表示する。
  */
 export const TEXT_DIFF_MAX_CELLS = 4_000_000;
 
@@ -20,13 +20,13 @@ function appendSegment(segments: TextDiffSegment[], kind: TextDiffKind, characte
   else segments.push({ kind, text: character });
 }
 
-/** Returns null when the texts are too long to compare within TEXT_DIFF_MAX_CELLS. */
+/** 文字列が長すぎて、TEXT_DIFF_MAX_CELLSの範囲で比べられないときはnullを返す。 */
 export function diffCharacters(reference: string, prediction: string): TextDiffSegment[] | null {
   const left = Array.from(reference);
   const right = Array.from(prediction);
   const width = right.length + 1;
   if ((left.length + 1) * width > TEXT_DIFF_MAX_CELLS) return null;
-  // lengths[i * width + j] = LCS length of left[i..] and right[j..].
+  // lengths[i * width + j] = left[i..]とright[j..]のLCSの長さ。
   const lengths = new Uint32Array((left.length + 1) * width);
   for (let i = left.length - 1; i >= 0; i -= 1)
     for (let j = right.length - 1; j >= 0; j -= 1)

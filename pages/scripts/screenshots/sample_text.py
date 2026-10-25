@@ -48,7 +48,7 @@ class SampleText:
     report_sweep_heading: str
     report_comment: str
     notification_channel_name: str
-    # (text in the file, text shown instead) for the sample code files, applied in order.
+    # 見本のコードのファイルごとに、順に当てる（ファイルの中の文、代わりに出す文）の組。
     source_replacements: dict[str, list[tuple[str, str]]]
 
 
@@ -170,7 +170,7 @@ ENGLISH = SampleText(
         "data": ("Data preparation", "Preparing the audio data"),
     },
     code_description="Sample data",
-    # Differ from the experiment names: the Tasks page lists both side by side.
+    # Experimentの名前とは変える。Tasksの画面に両方が並ぶため。
     code_names={
         "training": "TTS training",
         "inference": "TTS inference",

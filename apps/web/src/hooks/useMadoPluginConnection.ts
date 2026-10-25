@@ -25,7 +25,7 @@ export function useMadoPluginConnection({ projectId, plugin, onSaved, onRetried 
   }
   function check() {
     if (!plugin) return;
-    // The checked connection carries the access token's grant read from Mado.
+    // 確認した接続には、mado S3 Data Catalogから読んだアクセストークンの許可範囲が入っている。
     runConnectionOperation(() => pluginsApi.check(projectId, plugin.id), (checkedPlugin) => {
       setChecked(true);
       setSuccess({ kind: 'checked' });

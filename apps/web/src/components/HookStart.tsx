@@ -15,8 +15,8 @@ import { hooksTextTemplates } from '../i18n/hooks';
 import { useFailureMessage } from '../hooks/useFailureMessage';
 
 /**
- * Starts a 'manual' hook with an optional JSON payload. The request (with its key) is fixed when
- * the confirmation opens, so retrying a failed confirmation cannot start the hook twice.
+ * 'manual'のフックを、任意のJSONのpayloadを付けて起動する。要求（とそのkey）は確認を開いた時点で
+ * 決めるので、失敗した確認をやり直してもフックが2回起動することは無い。
  */
 export function HookStart({
   hook,

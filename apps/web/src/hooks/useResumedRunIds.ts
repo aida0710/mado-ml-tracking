@@ -3,13 +3,13 @@ import { trackingApi } from '../api/tracking';
 import { collectResumedRunIds } from '../lib/checkpointResume';
 import { useQuery, type QueryState } from './useQuery';
 
-// One Run search page at the API maximum. A Job and its Run are created together, so the newest
-// Runs cover the newest Jobs; a Job whose Run is older than this page shows no resume badge.
+// APIの上限の、Runの検索1ページ分。JobとそのRunは一緒に作られるので、最新のRunが最新のJobを
+// カバーする。Runがこのページより古いJobには、再開の印を出さない。
 const RESUMED_RUN_SEARCH_LIMIT = 500;
 
 /**
- * Ids of the Runs that continue from a checkpoint, for marking their Jobs. The Job carries no
- * checkpoint itself, so this reads the Run summaries and searches again only when a Job is added.
+ * checkpointから続けたRunのid。そのJobに印を付けるのに使う。Job自身はcheckpointを持たないので、
+ * Runの要約を読み、Jobが増えたときだけ検索し直す。
  */
 export function useResumedRunIds(
   projectId: string,

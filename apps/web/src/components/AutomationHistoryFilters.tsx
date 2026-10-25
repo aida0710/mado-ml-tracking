@@ -6,7 +6,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { automationText } from '../i18n/automation';
 
-/** Narrows the automation history to one rule and/or one model version. */
+/** 自動実行の履歴を、1つのルールと1つのモデルバージョンの一方または両方で絞り込む。 */
 export function AutomationHistoryFilters({
   filter,
   rules,

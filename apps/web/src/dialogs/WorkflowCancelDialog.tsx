@@ -6,9 +6,9 @@ import { workflowsText as labels, workflowsTextTemplates } from '../i18n/workflo
 import { useLocale } from '../i18n/useLocale';
 
 /**
- * Asks before stopping an execution, naming it, its creator and what happens: the running Job is
- * asked to stop and no later step starts. A Project admin may stop a colleague's execution, so
- * the creator is named rather than assumed.
+ * 実行を止める前に、その実行、作った人、起きること（動いているJobに停止を頼み、後のステップは
+ * 始めない）を示して尋ねる。Project adminは同僚の実行も止められるので、作った人を思い込まずに
+ * 名前で示す。
  */
 export function WorkflowCancelDialog({
   projectId,

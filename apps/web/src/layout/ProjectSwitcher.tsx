@@ -22,20 +22,21 @@ import { projectHomePath } from './navigationLinks';
 import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
-// Wide enough for a Project name, the lock, the "not a member" note and the role on one row even
-// when the sidebar is narrow.
+// サイドバーが狭いときでも、Projectの名前、鍵、「参加していない」の注記、ロールを
+// 1行に収められる幅。
 const SWITCHER_MIN_WIDTH = 340;
-// About ten rows; longer lists scroll inside the dropdown.
+// 10行ほど。それより長い一覧はドロップダウンの中でスクロールする。
 const SWITCHER_MAX_HEIGHT = 420;
 
 type SwitcherEntry = { kind: 'project'; project: Project } | { kind: 'create' };
 
 /**
- * Opens a Project from a dropdown listing every Project with its visibility and the user's role,
- * the open one marked, the user's own Projects before the ones they are not a member of. With many Projects a field narrows the list; the last entry creates a
- * Project for those who may (`onCreateProject`). ↑↓, Home and End move, Enter opens, Esc closes;
- * opening highlights the open Project. The dropdown stays inside the window in the sidebar and in
- * the narrow screen's project bar alike.
+ * ドロップダウンからProjectを開く。一覧にはすべてのProjectを公開範囲と利用者のロール付きで並べ、
+ * 開いているProjectに印を付け、利用者が参加しているProjectを参加していないものより先に出す。
+ * Projectが多いときは絞り込みの欄を出す。Projectを作れる人には、最後の項目でProjectを作れる
+ * （`onCreateProject`）。↑↓・Home・Endで移り、Enterで開き、Escで閉じる。開くと、今開いている
+ * Projectの行を強調する。ドロップダウンは、サイドバーでも狭い画面のProjectのバーでも
+ * ウィンドウの中に収まる。
  */
 export function ProjectSwitcher({
   projects,
@@ -106,7 +107,7 @@ export function ProjectSwitcher({
     else if (entry.project.id !== project?.id) navigate(projectHomePath(entry.project.id));
   };
   const handleListKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    // While Japanese input converts the filter text, Enter and ↑↓ belong to the input method.
+    // 日本語入力で絞り込みの文字を変換している間、Enterと↑↓は入力メソッドのものになる。
     if (isComposingKey(event)) return;
     if (isListNavigationKey(event.key)) {
       event.preventDefault();
@@ -123,14 +124,14 @@ export function ProjectSwitcher({
       closeToTrigger();
     }
   };
-  // Tab or a click elsewhere moves the focus out, which closes the dropdown.
+  // Tabやほかの場所のクリックでフォーカスが外へ出ると、ドロップダウンを閉じる。
   const closeWhenFocusLeaves = (event: FocusEvent<HTMLDivElement>) => {
     if (isOpen && !event.currentTarget.contains(event.relatedTarget as Node | null)) close();
   };
-  // Keeps the focus where the keys are handled when a row, the padding around the filter, the "no
-  // results" line or the border is pressed; otherwise the focus would drop to the page and close
-  // the dropdown. Only the filter itself takes the press, to place the caret. A row's click still
-  // chooses it.
+  // 行、絞り込み欄の周りの余白、「一致する項目がありません」の行、枠が押されたときに、フォーカスを
+  // キー操作を受ける場所に留める。留めないとフォーカスがページへ落ち、ドロップダウンが閉じる。
+  // 絞り込み欄そのものだけは、カーソルを置くために押す操作を受け取る。行のクリックでその行を
+  // 選ぶ動きは変わらない。
   const keepFocusOnPress = (event: MouseEvent<HTMLDivElement>) => {
     if (event.target !== filterRef.current) event.preventDefault();
   };
@@ -211,7 +212,7 @@ export function ProjectSwitcher({
                 className={[
                   'project-switcher-option',
                   entry.kind === 'create' && 'project-switcher-create',
-                  // A line sets the user's own Projects apart from the others below them.
+                  // 線を引いて、利用者が参加しているProjectとその下のほかのProjectを分ける。
                   entry.kind === 'project' &&
                     entry.project.id === firstOtherProjectId &&
                     shownProjects[0]?.isMember &&
@@ -238,9 +239,9 @@ export function ProjectSwitcher({
 }
 
 /**
- * One row: a Project with its visibility and the user's role (checked when open), or creation. A
- * Project the user is not a member of says so; one whose name another shares shows its creation
- * date, so the two can be told apart.
+ * 1行分。公開範囲と利用者のロールを付けたProject（開いていればチェックを付ける）か、新規作成。
+ * 利用者が参加していないProjectはそのことを示す。ほかのProjectと同じ名前のものは作成日を出し、
+ * 見分けられるようにする。
  */
 function SwitcherEntryContent({
   entry,

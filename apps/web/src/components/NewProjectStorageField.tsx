@@ -5,9 +5,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
- * Where a new Project stores Artifacts. The registered names alone do not tell a newcomer which to
- * pick, so the default the global administrator chose is stated and the other backends wait
- * behind a disclosure, opened already when one of them is chosen.
+ * 新しいProjectがArtifactを保存する場所。登録された名前だけでは初めての人がどれを選べばよいか
+ * 分からないので、全体管理者が選んだ既定を明記し、ほかの保存先は開閉できる欄の中に控えさせる。
+ * ほかの保存先を選んでいるときは、最初から開いておく。
  */
 export function NewProjectStorageField({
   choices,
@@ -21,7 +21,7 @@ export function NewProjectStorageField({
   onChange: (backend: string) => void;
 }) {
   useLocale();
-  // Fixed at the first render, so choosing the default again does not fold the list away.
+  // 最初の描画で決めておき、既定を選び直しても一覧が畳まれないようにする。
   const [isOpenAtStart] = useState(value !== defaultBackend);
   const picker = (
     <StorageBackendPicker

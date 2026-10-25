@@ -9,7 +9,7 @@ import {
 } from './manualSubmission';
 
 const waiting = { ...queuedJob, targetId: siteTarget.id, phase: 'waiting_manual' as const };
-// Both computers are owned; viewers may submit their own Jobs.
+// どちらのコンピュータにも所有者がいる。見ている人は自分のJobを投入できる。
 const sharedSite = { ...siteTarget, ownerName: 'Admin' };
 const alicePc = { ...siteTarget, id: 'pc', name: 'Alice PC', ownerUserId: 'alice', ownerName: 'Alice' };
 
@@ -24,7 +24,7 @@ describe('手動投入を待つJob', () => {
     ];
     expect(manualSubmissionGroups(jobs, [sharedSite], { id: 'alice' })).toEqual([
       { targetId: 'site', targetName: 'Supercomputer', waitingJobs: 2, ownership: { kind: 'someoneElse', ownerName: 'Admin' } },
-      // A site that is no longer listed keeps its id so the command can still be run.
+      // 一覧に無くなったsiteもidを残し、コマンドを実行できるようにする。
       {
         targetId: 'removed-site',
         targetName: 'removed-site',
@@ -48,7 +48,7 @@ describe('手動投入を待つJob', () => {
       ['Alice PC', { kind: 'own' }],
       ['Supercomputer', { kind: 'someoneElse', ownerName: 'Admin' }],
     ]);
-    // Another member sees whose computer it is; they still submit their own Jobs on it.
+    // ほかのメンバーには誰のコンピュータかが見える。それでも、そこで投入するのは自分のJob。
     expect(ownership('bob')).toEqual([
       ['Alice PC', { kind: 'someoneElse', ownerName: 'Alice' }],
       ['Supercomputer', { kind: 'someoneElse', ownerName: 'Admin' }],

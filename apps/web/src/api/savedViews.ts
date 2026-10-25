@@ -6,7 +6,7 @@ const savedViewPath = (projectId: string, viewId: string) =>
   `${savedViewsPath(projectId)}/${encodeId(viewId)}`;
 
 export const savedViewsApi = {
-  /** The caller's private views and every shared view of the page. */
+  /** 呼んだ人のprivateのビューと、その画面の共有されたすべてのビュー。 */
   list: (projectId: string, page: SavedViewPage, signal?: AbortSignal) =>
     requestItems<SavedView>(
       `${savedViewsPath(projectId)}?${new URLSearchParams({ page })}`,

@@ -22,8 +22,8 @@ import { text, textTemplates } from '../../i18n/catalog';
 type MenuDialog = 'saveAs' | 'rename' | 'delete' | null;
 
 /**
- * The saved views of the Run list: open one, save the shown list over it or under a new name,
- * rename, delete and copy its URL. The page owns what "the shown list" is (`readCurrentState`).
+ * Runの一覧の保存ビュー。開く、出ている一覧で上書きするか新しい名前で保存する、名前を変える、
+ * 削除する、URLをコピーする。何が「出ている一覧」かはページが決める（`readCurrentState`）。
  */
 export function SavedViewsMenu({
   projectId,
@@ -44,7 +44,7 @@ export function SavedViewsMenu({
   hasUnsavedChanges: boolean;
   readCurrentState: () => SavedViewState;
   viewUrl: (viewId: string) => string;
-  /** null opens the default display. */
+  /** nullなら既定の表示を開く。 */
   onOpen: (viewId: string | null) => void;
   onSaved: (view: SavedView) => void;
   onDeleted: (view: SavedView) => void;

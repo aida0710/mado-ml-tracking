@@ -10,8 +10,8 @@ import { reportBlockProblemLabels, reportBlockTypeLabels } from '../../i18n/repo
 import { text } from '../../i18n/catalog';
 
 /**
- * One block in the editor: its place in the report, Markdown text or the embed settings, and a
- * preview drawn as readers will see it.
+ * 編集画面の1つのブロック。レポートの中の位置、Markdownの本文か埋め込みの設定、読み手に
+ * 見えるとおりに描いたプレビュー。
  */
 export function ReportBlockEditor({
   projectId,
@@ -29,7 +29,7 @@ export function ReportBlockEditor({
   block: ReportBlock;
   isFirst: boolean;
   isLast: boolean;
-  /** The stored snapshot while the block is unchanged since the revision being edited. */
+  /** 保存したスナップショット。編集中のバージョンからブロックを変えていない間だけ渡す。 */
   savedSnapshot: ReportBlockSnapshot | undefined;
   isRefreshRequested: boolean;
   onChange: (block: ReportBlock) => void;
@@ -40,7 +40,7 @@ export function ReportBlockEditor({
   useLocale();
   const [isPicking, setPicking] = useState(false);
   const problem = reportBlockProblem(block);
-  // A refreshed snapshot is captured on save; until then the preview shows the current data.
+  // スナップショットの取り直しは保存時に行う。それまでプレビューは今のデータを出す。
   const previewSnapshot = isRefreshRequested ? undefined : savedSnapshot;
   return (
     <section className="report-block-editor" aria-label={reportBlockTypeLabels[block.type]}>

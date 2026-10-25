@@ -3,7 +3,7 @@ import { executionApi } from './execution';
 
 afterEach(() => vi.unstubAllGlobals());
 function stubJsonResponse(body: unknown, status = 200) {
-  // A Response body can be read once, so each call gets its own.
+  // Responseの本文は1回しか読めないので、呼ぶたびに別のResponseを作る。
   const fetch = vi
     .fn()
     .mockImplementation(() => Promise.resolve(new Response(JSON.stringify(body), { status })));

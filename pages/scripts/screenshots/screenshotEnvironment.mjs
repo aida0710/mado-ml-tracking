@@ -1,27 +1,28 @@
-// Where the documentation screenshots of each language go, and where the environments that the
-// scripts start and seed keep their state. Shared by every script in this directory.
+// 言語ごとのドキュメントのスクリーンショットの置き場所と、スクリプトが起動してデータを入れる環境の
+// 状態の置き場所。このディレクトリのすべてのスクリプトが使う。
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 export const REPOSITORY_ROOT = path.resolve(import.meta.dirname, '../../..');
 
-// locale: what the browser reports (navigator.language), which the UI also uses for dates.
-// imagesDirectory: where pages/ reads the images of that language from.
+// locale: ブラウザが伝える言語（navigator.language）。UIは日付の表記にもこれを使う。
+// imagesDirectory: pages/がその言語の画像を読み込む場所。
 export const LANGUAGES = {
   ja: { locale: 'ja-JP', imagesDirectory: path.join(REPOSITORY_ROOT, 'pages/public/images') },
   en: { locale: 'en-US', imagesDirectory: path.join(REPOSITORY_ROOT, 'pages/public/images/en') },
 };
 const DEFAULT_LANGUAGE = 'ja';
 
-// The two servers the screenshots need. sample: development login, the sample Project seeded by
-// seed_sample_project.py and the quickstart Project. accounts: local login with several users.
+// スクリーンショットに要る2つのサーバー。sample: 開発用のログインで、seed_sample_project.pyが
+// データを入れた見本のProjectとクイックスタートのProjectを持つ。accounts: 複数のユーザーが
+// いるローカルのログイン。
 export const ENVIRONMENTS = {
   sample: { authMode: 'development', apiPort: 4682, webPort: 5682 },
   accounts: { authMode: 'local', apiPort: 4782, webPort: 5782 },
 };
 
 /**
- * Reads `--lang <ja|en>` and `--name value` options; other arguments are returned in order.
+ * `--lang <ja|en>`と`--name value`のオプションを読む。ほかの引数は順に返す。
  * @param {string[]} argv
  */
 export function parseArguments(argv) {
@@ -42,7 +43,7 @@ export function parseArguments(argv) {
   return { options, positional };
 }
 
-// var/ is ignored by git; MMT_DOCS_STATE_DIR moves it elsewhere.
+// var/はgitが無視する。MMT_DOCS_STATE_DIRで別の場所へ移せる。
 export function stateRoot() {
   return process.env.MMT_DOCS_STATE_DIR ?? path.join(REPOSITORY_ROOT, 'var/docs-screenshots');
 }
@@ -52,7 +53,7 @@ export function environmentDirectory(lang, environment) {
   return path.join(stateRoot(), lang, environment);
 }
 
-/** The URLs serve-environment.mjs wrote when it started the environment. */
+/** serve-environment.mjsが環境を起動したときに書いたURL。 */
 export async function readEnvironment(lang, environment) {
   const file = path.join(environmentDirectory(lang, environment), 'environment.json');
   try {
@@ -64,7 +65,7 @@ export async function readEnvironment(lang, environment) {
   }
 }
 
-/** The state a seed script saved (IDs and the names it used) in the environment directory. */
+/** seedのスクリプトが環境のディレクトリに保存した状態（IDと使った名前）。 */
 export async function readSeedState(lang, environment, fileName) {
   const file = path.join(environmentDirectory(lang, environment), fileName);
   try {

@@ -7,8 +7,8 @@ import { accessApi } from '../api/access';
 import { useQuery } from './useQuery';
 
 /**
- * Service Accounts of a Project and the Project token list that shows their tokens. Both are
- * Project admin views, so nothing is requested when `isProjectAdmin` is false.
+ * ProjectのService Accountと、そのtokenを出すProjectのtokenの一覧。どちらもProject adminの画面
+ * なので、`isProjectAdmin`がfalseなら何も要求しない。
  */
 export function useServiceAccounts(projectId: string, isProjectAdmin: boolean) {
   const serviceAccounts = useQuery({

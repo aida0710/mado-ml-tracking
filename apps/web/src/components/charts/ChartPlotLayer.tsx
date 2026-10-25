@@ -11,12 +11,12 @@ import type { MetricsChartMarker } from './chartProps';
 import { bandPath, linePath, lonePointsPath, type PixelScale } from '../../lib/chartScale';
 import type { ChartLine } from '../../lib/metricSeries';
 
-// A shorter drag is a click, not a zoom.
+// これより短いドラッグはズームでなくクリック。
 const MIN_ZOOM_DRAG_PIXELS = 6;
-// The tooltip of the keyboard cursor sits this far below the top of the plot.
+// キーボードのカーソルのツールチップを、プロットの上端からこれだけ下に置く。
 const KEYBOARD_TOOLTIP_TOP_PIXELS = 8;
 
-/** Where the values are shown: the x in data units and the pixel the tooltip is placed by. */
+/** 値を出す位置。データの単位のxと、ツールチップを置く基準のピクセル。 */
 export interface ChartHoverPosition {
   x: number;
   pixelX: number;
@@ -25,8 +25,8 @@ export interface ChartHoverPosition {
 }
 
 /**
- * Draws inside recharts' plot area with its scales: bands, faint raw lines, the lines, resume
- * markers, the hover cursor and the zoom selection. A transparent rect on top takes the pointer.
+ * rechartsのプロット領域の中に、その軸のスケールで描く。範囲の帯、平滑化前の薄い線、線、再開の
+ * マーカー、ホバーのカーソル、ズームの選択範囲。一番上の透明なrectがポインタを受ける。
  */
 export function ChartPlotLayer({
   lines,
@@ -45,7 +45,7 @@ export function ChartPlotLayer({
   showRaw: boolean;
   markers: readonly MetricsChartMarker[];
   hoverPixelX: number | null;
-  /** The x the keyboard cursor is on; its pixel position is known here, inside recharts. */
+  /** キーボードのカーソルがあるx。そのピクセルの位置は、rechartsの中にあるここで分かる。 */
   keyboardX: number | null;
   onHover: (hover: ChartHoverPosition | null) => void;
   onZoom: (range: MetricXRange) => void;
@@ -77,12 +77,12 @@ export function ChartPlotLayer({
         : [],
     [lines, scales, showRange, showRaw],
   );
-  // The keyboard cursor shows its values like a hover at the same x. The effect depends on numbers
-  // only: recharts hands out new scale functions on every render, which the hover itself causes.
+  // キーボードのカーソルは、同じxでホバーしたときのように値を出す。このeffectは数値だけに
+  // 依存させる。rechartsは描画のたびに新しいスケールの関数を渡し、その描画はホバー自体が起こす。
   const keyboardPixelX = keyboardX === null || !scales ? undefined : scales.x(keyboardX);
   const plotTop = plotArea?.y;
   const chartWidth = useChartWidth();
-  // onHover is the parent's state setter; a new one does not move the cursor.
+  // onHoverは親のstateのsetter。新しいものになってもカーソルは動かさない。
   const showHover = useEffectEvent((hover: ChartHoverPosition) => onHover(hover));
   useEffect(() => {
     if (keyboardX === null || keyboardPixelX === undefined || !Number.isFinite(keyboardPixelX)) return;
@@ -116,7 +116,7 @@ export function ChartPlotLayer({
   }
 
   const isDimmed = (line: ChartLine) => highlightedId !== null && line.id !== highlightedId;
-  // The highlighted line is drawn last so it lies on top.
+  // 強調した線が上に来るよう最後に描く。
   const ordered = [...paths].sort(
     (left, right) => Number(left.line.id === highlightedId) - Number(right.line.id === highlightedId),
   );
@@ -159,7 +159,7 @@ export function ChartPlotLayer({
             }`}
           />
         ))}
-        {/* Values logged once (a final evaluation) have no line to draw, so they show as dots. */}
+        {/* 1回だけ記録した値（最後の評価など）は描く線が無いので、点で出す。 */}
         {ordered.map(({ line, lonePoints }) =>
           lonePoints ? (
             <path
@@ -213,7 +213,7 @@ export function ChartPlotLayer({
         }}
         onPointerLeave={(event) => {
           setDragStartPixelX(null);
-          // A finger lifts off right after a tap; the values it asked for stay until the next tap.
+          // 指はタップの直後に離れる。そのタップで出した値は、次のタップまで残す。
           if (event.pointerType !== 'touch') onHover(null);
         }}
         onPointerDown={(event) => {

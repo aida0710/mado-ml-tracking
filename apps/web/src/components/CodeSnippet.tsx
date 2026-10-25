@@ -1,6 +1,6 @@
 import { CopyButton } from './CopyButton';
 
-/** Lines to run or paste (shell settings, an example program) under a label, copied whole. */
+/** ラベルの下に置く、実行するか貼り付ける行（シェルの設定、例のプログラム）。まとめてコピーする。 */
 export function CodeSnippet({
   label,
   code,
@@ -8,7 +8,7 @@ export function CodeSnippet({
 }: {
   label: string;
   code: string;
-  /** What the copy button says, where another copy button sits nearby. */
+  /** 近くに別のコピーボタンがあるときの、コピーボタンの文言。 */
   copyLabel?: string;
 }) {
   return (
@@ -17,7 +17,7 @@ export function CodeSnippet({
         <span>{label}</span>
         <CopyButton value={code} label={copyLabel} />
       </div>
-      {/* tabIndex: a long line scrolls sideways, which the keyboard reaches only with focus. */}
+      {/* tabIndexで、横にスクロールする長い行にキーボードからも届くようにする。 */}
       <pre className="json-view" tabIndex={0}>
         {code}
       </pre>

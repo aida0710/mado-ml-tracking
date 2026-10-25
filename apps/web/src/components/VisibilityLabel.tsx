@@ -4,9 +4,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * Public or Private, as Projects and computers have it: Private carries a lock. `iconOnly` keeps
- * just the lock (Public then shows nothing) and leaves the name to screen readers and the tooltip,
- * for tight rows like the Project switcher.
+ * ProjectやコンピュータのPublic・Privateの表示。Privateには鍵が付く。`iconOnly`は鍵だけを残し
+ * （Publicなら何も出さない）、名前はスクリーンリーダーとツールチップに任せる。Projectの
+ * 切り替えメニューのような詰まった行で使う。
  */
 export function VisibilityLabel({
   visibility,

@@ -8,17 +8,17 @@ import {
 } from '../lib/datasetFolderResume';
 import { useQuery } from './useQuery';
 
-/** A discard that left files because something else uses them, so its folder stays listed. */
+/** ほかで使われているファイルを残した破棄。そのフォルダは一覧に残る。 */
 export interface FolderUploadDiscardWithKeptFiles {
   upload: UnfinishedFolderUpload;
   keptFileCount: number;
 }
 
 /**
- * Folder uploads of the dataset that stopped before their version, with what is needed to
- * continue one (its stored files) or discard it. Stored files go only with a Project admin, who
- * may delete Artifacts; anyone discards their own open uploads. Files a model version, code
- * version or checkpoint uses are kept by the server; the last discard that kept some is reported.
+ * バージョンを作る前に止まったデータセットのフォルダのアップロードと、その続きを送る（保存済みの
+ * ファイル）か破棄するのに要るもの。保存済みのファイルを消せるのは、Artifactを削除できる
+ * Project adminのときだけ。開いているアップロードは誰でも自分の分を破棄できる。モデルバージョン・
+ * コードバージョン・checkpointが使うファイルはサーバーが残し、ファイルを残した最後の破棄を知らせる。
  */
 export function useDatasetFolderUploads({
   projectId,
@@ -29,7 +29,7 @@ export function useDatasetFolderUploads({
 }: {
   projectId: string;
   datasetId: string;
-  /** This person's open uploads without a Run, as the upload queue lists them. */
+  /** この利用者のRunの無い開いているアップロード。アップロードのキューが一覧に出すもの。 */
   openUploads: ArtifactUploadListItem[];
   discardOpenUpload: (uploadId: string) => Promise<void>;
   canDeleteStoredFiles: boolean;
@@ -37,7 +37,7 @@ export function useDatasetFolderUploads({
   const stored = useQuery({ key: `${projectId}:dataset-folder-uploads:${datasetId}`, load: (signal) =>
     datasetFolderUploadsApi.list(projectId, datasetId, signal),
   });
-  // Choosing a folder compares it with every attempt; each attempt's file list is read once.
+  // フォルダを選ぶと、止まったアップロードのすべてと比べる。それぞれのファイルの一覧は1回だけ読む。
   const storedFilesRef = useRef(new Map<string, Promise<StoredFolderFile[]>>());
   const [discardWithKeptFiles, setDiscardWithKeptFiles] = useState<FolderUploadDiscardWithKeptFiles | null>(null);
   const reloadStored = stored.reload;
@@ -52,7 +52,7 @@ export function useDatasetFolderUploads({
       let files = storedFilesRef.current.get(folder);
       if (!files) {
         files = datasetFolderUploadsApi.storedFiles(projectId, { datasetId, folder });
-        // A failed read is tried again the next time instead of being remembered.
+        // 読み込みに失敗したら覚えておかず、次のときにもう一度読む。
         files.catch(() => storedFilesRef.current.delete(folder));
         storedFilesRef.current.set(folder, files);
       }

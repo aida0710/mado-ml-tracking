@@ -4,14 +4,14 @@ import { previousArtifactVersions } from '../lib/artifactTree';
 import { useCursorPages } from './useCursorPages';
 import { useQuery } from './useQuery';
 
-// One screenful of a directory; a Run with thousands of files shows its first page quickly.
+// ディレクトリの1画面分。数千のファイルを持つRunでも、最初のページがすぐ出る。
 export const RUN_ARTIFACT_PAGE_SIZE = 200;
-// Re-saves of one path are few; older uploads beyond this stay reachable through the API.
+// 同じパスへの保存し直しは少ない。これを超える古いアップロードもAPIからはたどれる。
 const ARTIFACT_VERSION_LIMIT = 100;
 
 /**
- * One directory level of a Run: its subdirectories with counts, and its files page by page.
- * `revision` reloads both after an upload.
+ * Runのディレクトリの1階層。件数付きのサブディレクトリと、ページごとのファイル。`revision`で、
+ * アップロードの後に両方を読み直す。
  */
 export function useRunArtifacts(
   location: { projectId: string; runId: string; prefix: string },
@@ -33,7 +33,7 @@ export function useRunArtifacts(
   return { tree, files };
 }
 
-/** Earlier uploads to the path of `artifact`, newest first. */
+/** `artifact`のパスへの以前のアップロード。新しい順。 */
 export function useArtifactVersions(artifact: Artifact | undefined) {
   const versions = useQuery({
     key: artifact?.runId ? `${artifact.runId}:artifact-versions:${artifact.id}` : null,

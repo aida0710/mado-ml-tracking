@@ -4,8 +4,8 @@ import { executionApi } from '../api/execution';
 import { useMutation } from './useMutation';
 
 /**
- * Starts a Job: for an existing queued Run (the Run's page), only its Job; otherwise a new Run
- * and its Job at once, so a refused Job leaves no queued Run behind and trying again is safe.
+ * Jobを始める。キューに入っている既存のRun（Runのページ）ならJobだけを、それ以外は新しいRunと
+ * そのJobを一度に作る。こうするとJobが断られてもキューに入ったRunが残らず、やり直しても安全。
  */
 export function useLaunch(projectId: string, existingRun?: Run) {
   const mutation = useMutation();

@@ -29,12 +29,12 @@ export function RunOutputRegistrationStatus({ projectId, state }: {
   }
 }
 
-// Run.outputModelVersionIds is derived by the API in registration order.
+// Run.outputModelVersionIdsはAPIが登録の順に導き出す。
 export function RunOutputModels({ run }: { run: Run }) {
   useLocale();
   const registration = useRunOutputRegistration(run);
   const { state } = registration;
-  // The registration line already links its version, so the plain list leaves it out.
+  // 登録の行がすでにそのバージョンへリンクしているので、ただの一覧からは省く。
   const otherVersionIds = run.outputModelVersionIds.filter((id) => !('modelVersionId' in state) || id !== state.modelVersionId);
   if (!run.outputModelVersionIds.length && state.kind === 'none' && !registration.error) return '—';
   return <>

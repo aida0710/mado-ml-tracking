@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { adminProjectsApi } from '../api/adminProjects';
 import { useQuery } from './useQuery';
 
-/** The admin Project list, and whether it also shows archived Projects. */
+/** 全体管理のProjectの一覧と、アーカイブしたProjectも出すかどうか。 */
 export function useAdminProjects() {
   const [includeArchived, setIncludeArchived] = useState(false);
   const projects = useQuery({ key: `admin-projects:${includeArchived}`, load: (signal) =>

@@ -29,7 +29,7 @@ export const savedViewsText = {
   runColumnMove: 'Move column (Alt+←/→)',
 } as const;
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const savedViewsTextTemplates = {
   savedViewDeleteMessage: (name: string) =>
     `Delete view “${name}”? Its URL will show the default view afterward.`,

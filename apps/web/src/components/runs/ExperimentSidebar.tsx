@@ -76,8 +76,8 @@ export function ExperimentSidebar({
 }
 
 /**
- * The list's own short line when it shows no Experiment, rather than the page's large empty state:
- * on a phone the list is a short scrolling box that would cut a tall message at its bottom edge.
+ * Experimentが1つも出ないときは、ページの大きな空の表示ではなく一覧自身の短い1行を出す。
+ * スマートフォンでは一覧は短いスクロールの箱で、背の高いメッセージは下端で切れてしまう。
  */
 function sidebarEmptyMessage(state: {
   hasExperiments: boolean;

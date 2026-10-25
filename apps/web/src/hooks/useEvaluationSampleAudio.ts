@@ -4,7 +4,7 @@ import { resolveArtifactReference, type EvaluationSample } from '../lib/evaluati
 import { lookupSampleAudio, type RunArtifactIndex, type SampleAudio } from '../lib/evaluationSampleAudio';
 import { useQuery } from './useQuery';
 
-/** Artifacts of the Runs referenced on the current page, keyed by Run and then by path. */
+/** 今のページで参照しているRunのArtifact。Run、次にパスをキーにする。 */
 function useRunArtifactIndex(projectId: string, runIds: string[]) {
   const key = runIds.length ? `${projectId}:evaluation-audio:${runIds.join(',')}` : null;
   return useQuery({ key, load: async (signal) => {
@@ -15,7 +15,7 @@ function useRunArtifactIndex(projectId: string, runIds: string[]) {
           return [runId, new Map(artifacts.map((artifact) => [artifact.path, artifact]))];
         } catch (error) {
           if (signal.aborted) throw error;
-          // A Run outside this Project (or deleted) answers 404; its rows show an error instead.
+          // このProjectの外の（または削除された）Runは404を返す。その行には代わりにエラーを出す。
           return [runId, 'unavailable'];
         }
       }),
@@ -25,8 +25,8 @@ function useRunArtifactIndex(projectId: string, runIds: string[]) {
 }
 
 /**
- * The audio Artifact of each shown sample, in the same order. Relative paths are read from the Run
- * that holds the table; only the Runs on this page are listed.
+ * 表示している各サンプルの音声のArtifact（同じ順）。相対パスは表を持つRunから読む。一覧に
+ * するのはこのページのRunだけ。
  */
 export function useEvaluationSampleAudio(table: Artifact, samples: readonly EvaluationSample[]) {
   const references = samples.map((sample) =>

@@ -64,7 +64,7 @@ export const projectsText = {
   projectSettingsContents: 'Project settings sections',
 } as const;
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const projectsTextTemplates = {
   projectArchiveConfirm: (name: string) =>
     `Archive “${name}”? Run, model, and artifact data is retained, and the project can be restored from Administration → Projects.`,

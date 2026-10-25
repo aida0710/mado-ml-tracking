@@ -35,7 +35,7 @@ import { submissionModeBadgeLabels } from '../i18n/compute';
 
 type Entry = [string, ReactNode];
 
-/** How a start is triggered: the trigger, its checkpoint rule or webhook, and its filter. */
+/** 起動のしかた。きっかけ、checkpointの条件かwebhook、きっかけの絞り込み。 */
 function triggerEntries(hook: Hook, catalog: HookCatalog | undefined): Entry[] {
   const entries: Entry[] = [[text.hookTrigger, hookTriggerLabels[hook.trigger]]];
   if (hook.trigger === 'checkpoint_saved')
@@ -63,7 +63,7 @@ function triggerEntries(hook: Hook, catalog: HookCatalog | undefined): Entry[] {
   return entries;
 }
 
-/** The Job each start creates, with names in place of ids where the catalog has them. */
+/** 起動のたびに作るJob。カタログにあるものはidの代わりに名前で示す。 */
 function templateEntries({ hook, catalog, base, computerName }: {
   hook: Hook;
   catalog: HookCatalog | undefined;
@@ -132,8 +132,8 @@ function templateEntries({ hook, catalog, base, computerName }: {
 }
 
 /**
- * A hook's fixed settings, its manual start (trigger 'manual'), the move of its owner to a Service
- * Account and the way to its executions.
+ * フックの固定された設定、手動の起動（triggerが'manual'）、所有者のService Accountへの移管、
+ * 実行履歴を開く入口。
  */
 export function HookDetails({
   hook,
@@ -152,7 +152,7 @@ export function HookDetails({
   canStart: boolean;
   canTransferOwner: boolean;
   onShowExecutions: () => void;
-  /** Opens the create dialog with this hook's settings; absent for those who may not create. */
+  /** このフックの設定を入れて作成のダイアログを開く。作成できない人には渡さない。 */
   onCopy?: () => void;
   onStarted: () => void;
   onOwnerTransferred: () => void;

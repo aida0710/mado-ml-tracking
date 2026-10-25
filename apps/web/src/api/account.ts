@@ -1,7 +1,7 @@
 import type { Account } from '@mmt/contracts';
 import { invalidResponseError, request } from './http';
 
-/** The signed-in user's own profile (/account). */
+/** ログインしている本人のプロフィール（/account）。 */
 export const accountApi = {
   get: async (signal?: AbortSignal) => {
     const payload = await request<Account>('/account', { signal });

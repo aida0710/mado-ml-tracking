@@ -5,7 +5,7 @@ const ACTIVE_STATUSES: readonly (RunStatus | JobStatus)[] = ['queued', 'claimed'
 const isActiveStatus = (status: RunStatus | JobStatus | null) =>
   status !== null && ACTIVE_STATUSES.includes(status);
 
-// Polling continues while a pending registration waits or a started Run or Job has not ended.
+// 保留中の登録が待っているか、開始したRunやJobが終わっていない間は、ポーリングを続ける。
 export function hasActiveExecution(
   executions: readonly Pick<ModelAutomationExecution, 'status' | 'runStatus' | 'jobStatus'>[],
 ): boolean {

@@ -1,7 +1,7 @@
-/* Artifact previews: the download notice, tables of CSV / TSV / jsonl, evaluation sample cards on
-   phones, the image size toggle, and the audio viewer's time ruler. */
+/* Artifactのプレビュー。ダウンロードの注記、CSV / TSV / jsonlの表、スマートフォンでの
+   評価サンプルのカード、画像の大きさの切り替え、音声ビューアの時間の目盛り。 */
 
-/* A select or button pushed to the right end of a preview toolbar. */
+/* プレビューの帯の右端に寄せる選択欄やボタン。 */
 .preview-toolbar-end {
   margin-left: auto;
 }
@@ -12,8 +12,8 @@
   flex: none;
 }
 
-/* Tables of CSV / TSV / jsonl: the header row and the line column stay in view while the rows
-   scroll inside the frame, so a wide file never widens the page. */
+/* CSV / TSV / jsonlの表。行は枠の中でスクロールし、見出しの行と行番号の列は見えたままにする。
+   幅の広いファイルでもページを広げない。 */
 .tabular-preview {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -85,7 +85,7 @@
   outline-offset: 2px;
 }
 
-/* Evaluation samples: a message in the audio column reads on one or two lines, not one word per line. */
+/* 評価サンプル。音声の列のメッセージは、1行1語ではなく1〜2行で読めるようにする。 */
 .evaluation-samples-table .sample-audio-cell {
   min-width: 12em;
 }
@@ -131,7 +131,7 @@
   margin: 0 0 6px;
 }
 
-/* Images: fitted to the preview, or at the actual size inside a scrolling frame. */
+/* 画像。プレビューの枠に合わせるか、原寸でスクロールする枠の中に出す。 */
 .image-preview {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -167,7 +167,7 @@
   cursor: zoom-out;
 }
 
-/* The audio viewer's time ruler, tucked under the timeline (the viewer's grid gap is 10px). */
+/* 音声ビューアの時間の目盛り。タイムラインの下に詰めて置く（ビューアのグリッドの間隔は10px）。 */
 .audio-time-axis {
   position: relative;
   height: 16px;

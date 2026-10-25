@@ -3,13 +3,13 @@ import { pythonString } from './pythonSnippet';
 import { clientApiUrl } from './clientApiUrl';
 
 /**
- * Shell settings that point the MLflow SDK and the Mado SDK at a Project with a new token.
- * Bearer is what both SDKs send by default; Basic is for tools that only accept a user name and
- * a password, where the password is the token and the user name is not checked.
+ * MLflowのSDKとPython SDK（mado-tracking）を、新しいtokenでProjectへ向けるシェルの設定。
+ * Bearerは両方のSDKが既定で送る方式。Basicはユーザー名とパスワードしか受け付けないツール向けで、
+ * パスワードがtokenになり、ユーザー名は確かめない。
  */
 export type TokenAuthentication = 'bearer' | 'basic';
 
-// MLFLOW_TRACKING_USERNAME must be non-empty for the SDK to send Basic; the API ignores it.
+// SDKがBasicを送るにはMLFLOW_TRACKING_USERNAMEが空でない必要がある。APIはこの値を無視する。
 const BASIC_USERNAME_PLACEHOLDER = 'mado';
 
 export function mlflowTrackingUri(origin: string, projectId: string): string {
@@ -17,9 +17,9 @@ export function mlflowTrackingUri(origin: string, projectId: string): string {
 }
 
 /**
- * The settings shown right after a token is issued, for both SDKs at once. Like every other
- * example on the screen, it holds no token: the token is pasted at the `read -s` prompt, so it
- * stays out of the snippet and the shell history, and MLflow takes it from MMT_API_TOKEN.
+ * tokenを発行した直後に出す、両方のSDK向けの設定。画面のほかの例と同じくtokenは含めない。
+ * tokenは`read -s`のプロンプトに貼り付けるので、例の文にもシェルの履歴にも残らず、MLflowは
+ * MMT_API_TOKENからtokenを受け取る。
  */
 export function buildTokenUsageSnippet(settings: {
   origin: string;
@@ -43,24 +43,23 @@ export function buildTokenUsageSnippet(settings: {
   ]);
 }
 
-/** What the MLflow 3 tab of the SDK and MLflow guide offers to copy. */
+/** SDKとMLflowのガイドのMLflow 3のタブで、コピーできるようにするもの。 */
 export interface MlflowConnectionSnippets {
   trackingUri: string;
-  // The Model Registry lives under the same Project URL as tracking.
+  // Model Registryは、trackingと同じProjectのURLの下にある。
   registryUri: string;
   bearerEnvironment: string;
   basicEnvironment: string;
   python: string;
 }
 
-// The experiment the examples record into when the page has none chosen; MLflow's set_experiment
-// and the Mado SDK's experiment_name create it when it does not exist yet.
+// 画面で選ばれたExperimentが無いときに例が記録する先。MLflowのset_experimentと
+// Python SDK（mado-tracking）のexperiment_nameは、まだ無ければこれを作る。
 export const EXAMPLE_EXPERIMENT_NAME = 'my-experiment';
 
 /**
- * Settings shown before any token exists, so the token is read from the terminal with `read -s`
- * instead of being written into the snippet, the shell history or the page. The Python example
- * records into `experimentName`.
+ * tokenがまだ無いときに出す設定。そのためtokenは、例の文やシェルの履歴、画面に書かず、
+ * ターミナルから`read -s`で読む。Pythonの例は`experimentName`へ記録する。
  */
 export function buildMlflowConnectionSnippets(settings: {
   origin: string;
@@ -85,7 +84,7 @@ export function buildMlflowConnectionSnippets(settings: {
   };
 }
 
-// The SDK reads the URI and the token from the environment, so the code itself has no settings.
+// SDKはURIとtokenを環境変数から読むので、コード自体には設定が無い。
 function mlflowPythonExample(experimentName: string): string {
   return `import mlflow
 

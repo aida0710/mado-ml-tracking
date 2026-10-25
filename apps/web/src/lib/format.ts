@@ -7,24 +7,24 @@ const getDateTimeFormat = memoizePerIntlLocale(
 );
 export const formatDate = (value: string | null) =>
   value ? getDateTimeFormat().format(new Date(value)) : '—';
-// Log lines and last answers within the same minute need the seconds to tell them apart.
+// 同じ1分の間のログの行や最後の応答は、秒まで出さないと見分けられない。
 const getDateTimeSecondsFormat = memoizePerIntlLocale(
   (intlLocale) => new Intl.DateTimeFormat(intlLocale, { dateStyle: 'short', timeStyle: 'medium' }),
 );
-/** An ISO time, or epoch milliseconds such as a chart's wall-clock x value. */
+/** ISO形式の時刻か、図の実時間のxの値のような、epochからのミリ秒。 */
 export const formatDateTimeSeconds = (value: string | number | null) =>
   value === null || value === '' ? '—' : getDateTimeSecondsFormat().format(new Date(value));
-// Enough digits for a metric or parameter value shown on its own, such as in a tooltip.
+// ツールチップのように単独で出すメトリクスやパラメータの値に足りる桁数。
 const NUMBER_SIGNIFICANT_DIGITS = 6;
 const getNumberFormat = memoizePerIntlLocale(
   (intlLocale) => new Intl.NumberFormat(intlLocale, { maximumSignificantDigits: NUMBER_SIGNIFICANT_DIGITS }),
 );
 export const formatNumber = (value: number) => getNumberFormat().format(value);
-// Table cells use four significant digits; their tooltip retains the original value.
+// 表のセルは有効数字4桁で出す。ツールチップには元の値を残す。
 const TABLE_SIGNIFICANT_DIGITS = 4;
-// Scientific notation keeps very small parameters within a table cell.
+// とても小さいパラメータは指数表記にして、表のセルに収める。
 const SCIENTIFIC_NOTATION_THRESHOLD = 0.0001;
-// 1.2M in English and 120万 in Japanese, the display language's own way of writing large numbers.
+// 英語なら1.2M、日本語なら120万のように、大きな数を表示言語の書き方で出す。
 const getCompactNumberFormat = memoizePerIntlLocale(
   (intlLocale) =>
     new Intl.NumberFormat(intlLocale, { maximumSignificantDigits: TABLE_SIGNIFICANT_DIGITS, notation: 'compact' }),
@@ -57,6 +57,6 @@ export function formatValue(value: unknown): string {
       : String(value);
 }
 
-// Run ids are UUIDs; their first block names a Run whose name is not loaded (yet).
+// RunのidはUUID。名前を（まだ）読み込んでいないRunは、その最初の区切りで示す。
 const SHORT_RUN_ID_LENGTH = 8;
 export const shortRunId = (runId: string) => runId.slice(0, SHORT_RUN_ID_LENGTH);

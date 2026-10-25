@@ -1,6 +1,6 @@
 import * as english from './en/comparison';
 import { localized } from './localized';
-// Run comparison page and CSV exports. run-comparison-csv-export owns the entries.
+// Runの比較の画面とCSVの書き出し。項目はrun-comparison-csv-exportが受け持つ。
 export const comparisonText = localized({
   comparisonBaselineRun: '基準Run',
   comparisonNoBaseline: 'なし',
@@ -16,7 +16,7 @@ export const comparisonText = localized({
     '一致したRunが出力の上限を超えたため、途中で打ち切りました。CSVの末尾にも記載しています。',
 } as const, english.comparisonText);
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const comparisonTextTemplates = localized({
   comparisonRunCountOutOfRange: (minimum: number, maximum: number) =>
     `比較するRunを${minimum}〜${maximum}件選んでください。`,

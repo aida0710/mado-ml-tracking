@@ -5,7 +5,7 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 import { sweepTrialColumns, type SweepTrialTableInput } from './sweepTrialColumns';
 
-/** One row per trial: its parameters, objective, state and the Run/Job it ran as. */
+/** 試行ごとに1行。パラメータ、目的値、状態、実行したRun/Job。 */
 export function SweepTrialsTable({
   projectId,
   trials,

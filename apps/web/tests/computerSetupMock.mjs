@@ -1,8 +1,8 @@
-// Adding an ssh or local computer in two steps, following docs/api-contract.md「targetの接続確認」:
-// the workers one may choose, a connection check its worker finishes by the next read, directories
-// the worker reads, and saving the computer's changes (PATCH /targets/:id).
+// sshとlocalのコンピュータを2段階で足す流れ。docs/api-contract.mdの「targetの接続確認」に従う:
+// 選べるworker、workerが次の読み出しまでに終える接続確認、workerが読むディレクトリ、コンピュータの
+// 変更の保存（PATCH /targets/:id）。
 
-// The worker every check goes to unless a test replaces `checkWorkers`.
+// テストが`checkWorkers`を差し替えない限り、すべての接続確認が向かうworker。
 const SETUP_WORKER = {
   tokenId: '00000000-0000-4000-8000-00000000c001',
   tokenName: 'UI検証worker',
@@ -15,7 +15,7 @@ const SETUP_WORKER = {
   },
 };
 
-// What a version 2 check of the mock computer reports (a two-GPU server with every runtime).
+// モックのコンピュータでversion 2の接続確認が報告する内容（全runtime対応でGPU 2枚のサーバー）。
 const SETUP_CHECK_RESULT = {
   version: 2,
   items: [
@@ -51,7 +51,7 @@ const SETUP_CHECK_RESULT = {
   ],
 };
 
-// The directories the worker can read, by the path as typed up to its last /.
+// workerが読めるディレクトリ。打ったパスの最後の/までをキーにする。
 const READABLE_DIRECTORIES = {
   '/home/mmt/': [
     { name: 'container-work', kind: 'directory', executable: true },
@@ -65,10 +65,10 @@ const READABLE_DIRECTORIES = {
 export function createComputerSetup({ id, now, projectId, targets }) {
   const state = {
     checkWorkers: [{ ...SETUP_WORKER, projectId, lastSeenAt: now }],
-    // TargetCheck rows of every computer, newest first.
+    // すべてのコンピュータのTargetCheckの行。新しい順。
     checks: [],
     listings: [],
-    // Reported by the next check a worker finishes; null leaves it unclaimed (no_worker).
+    // workerが次に終える接続確認が報告する結果。nullなら受け取るworkerが無いままになる（no_worker）。
     nextCheckResult: SETUP_CHECK_RESULT,
   };
   const finishWaitingChecks = () => {
@@ -101,7 +101,7 @@ export function createComputerSetup({ id, now, projectId, targets }) {
     });
   };
 
-  /** Answers the request when it is one of these routes; returns undefined otherwise. */
+  /** これらの経路の要求なら答え、そうでなければundefinedを返す。 */
   function handle({ path: requestPath, method, body, reply, list }) {
     if (requestPath === '/targets/check-workers' && method === 'GET')
       return list(state.checkWorkers);
@@ -135,7 +135,7 @@ export function createComputerSetup({ id, now, projectId, targets }) {
     }
     if (resource === 'checks' && method === 'GET') {
       const answered = list(state.checks.filter((check) => check.targetId === targetId));
-      // The worker finishes a check between two reads, as a real one does within seconds.
+      // workerは2回の読み出しの間に接続確認を終える。本物も数秒で終える。
       finishWaitingChecks();
       return answered;
     }

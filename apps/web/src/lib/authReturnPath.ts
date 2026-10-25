@@ -1,4 +1,4 @@
-// Keep an SSO round trip in this tab from losing the bookmarked project/Run URL.
+// SSOの往復で、このタブのブックマークしたProjectやRunのURLが失われないようにする。
 const AUTH_RETURN_PATH_KEY = 'mmt.auth-return-path';
 
 export function rememberAuthReturnPath(path: string) {
@@ -6,7 +6,7 @@ export function rememberAuthReturnPath(path: string) {
   try {
     sessionStorage.setItem(AUTH_RETURN_PATH_KEY, path);
   } catch {
-    /* Login also works without session storage. */
+    /* セッションストレージが使えなくてもログインはできる。 */
   }
 }
 

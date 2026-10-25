@@ -4,7 +4,7 @@ import { isNotFoundError } from '../api/http';
 import { parseSavedViewState } from '../lib/savedViewState';
 import { useQuery } from './useQuery';
 
-/** Why a view in the URL cannot be shown; the list then opens with its default display. */
+/** URLのビューを出せない理由。そのときの一覧は既定の表示で開く。 */
 export type SavedViewUnavailableReason = 'not_found' | 'unsupported_version' | 'invalid';
 
 export type OpenedSavedView =
@@ -28,14 +28,14 @@ async function openSavedView(
       ? { status: 'ready', view, state: parsed.state }
       : { status: 'unavailable', reason: parsed.reason };
   } catch (failure) {
-    // Another user's private view answers 404 like a deleted one, so the two read the same.
+    // ほかの人の「自分だけ」のビューは、削除されたビューと同じく404を返すので、両者は同じ扱いになる。
     if (isNotFoundError(failure))
       return { status: 'unavailable', reason: 'not_found' };
     throw failure;
   }
 }
 
-/** The views listed for a page, and the view named in the URL (`viewId`, empty for none). */
+/** ページに出すビューの一覧と、URLで指定したビュー（`viewId`。無ければ空）。 */
 export function useSavedViews(projectId: string, page: SavedViewPage, viewId: string) {
   const views = useQuery({ key: `${projectId}:saved-views:${page}`, load: (signal) =>
     savedViewsApi.list(projectId, page, signal),

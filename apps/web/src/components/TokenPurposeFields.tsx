@@ -13,9 +13,9 @@ import { text } from '../i18n/catalog';
 import { tokenPurposeLabels, tokenScopeLabels } from '../i18n/serviceAccounts';
 
 /**
- * The token's purpose as a list of choices, and the scopes it selects as checkboxes beneath:
- * choosing a purpose checks its scopes, and changing a checkbox moves the purpose to the one those
- * scopes now match, or to choosing the scopes oneself.
+ * tokenの用途を選択肢の一覧で示し、その下に用途が選ぶscopeをチェックボックスで並べる。用途を選ぶと
+ * そのscopeにチェックが入り、チェックボックスを変えると、用途はそのscopeに今一致するものか、
+ * scopeを自分で選ぶ選択肢に移る。
  */
 export function TokenPurposeFields({
   purposes,
@@ -24,7 +24,7 @@ export function TokenPurposeFields({
   onChange,
 }: {
   purposes: readonly TokenPurposeOption[];
-  /** The scopes the owner's role can hold; no others are offered. */
+  /** 所有者のRoleが持てるscope。これ以外は候補に出さない。 */
   allowedScopes: readonly TokenScope[];
   value: TokenScopeChoice;
   onChange: (value: TokenScopeChoice) => void;

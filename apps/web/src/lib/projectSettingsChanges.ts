@@ -1,6 +1,6 @@
 import type { ArtifactBackend, Project, ProjectPatch, ProjectVisibility } from '@mmt/contracts';
 
-/** What the Project settings form holds before saving. */
+/** 保存する前のProjectの設定フォームの値。 */
 export interface ProjectSettingsDraft {
   description: string;
   visibility: ProjectVisibility;
@@ -8,8 +8,8 @@ export interface ProjectSettingsDraft {
 }
 
 /**
- * The PATCH body. Visibility and storage are sent only when changed: a disabled backend stays
- * valid for the Projects that already use it.
+ * PATCHの本文。公開範囲と保存先は、変えたときだけ送る。無効にした保存先も、すでに使っている
+ * Projectにとっては有効なままだから。
  */
 export function buildProjectPatch(project: Project, draft: ProjectSettingsDraft): ProjectPatch {
   return {
@@ -22,8 +22,8 @@ export function buildProjectPatch(project: Project, draft: ProjectSettingsDraft)
 }
 
 /**
- * Changes that reach beyond this form and are asked about before saving: who may open the
- * Project, and where new Artifacts go while existing ones stay put. Null when there are none.
+ * このフォームの外まで影響し、保存の前に確かめる変更。Projectを誰が開けるかと、新しいArtifactを
+ * どこへ置くか（既存のものは動かない）。無ければnull。
  */
 export interface ProjectSettingsImpact {
   visibility?: ProjectVisibility;

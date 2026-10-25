@@ -15,12 +15,12 @@ import { formatList } from '../i18n/textJoining';
 
 export { hookWebhookPath };
 
-/** The address a sender posts a webhook to: this page's address (it forwards /api) and the path. */
+/** 送信元がwebhookを送るアドレス。このページのアドレス（/apiを転送する）にpathを付けたもの。 */
 export function hookWebhookUrl(hookId: string, origin: string): string {
   return `${clientApiUrl(origin)}${hookWebhookPath(hookId)}`;
 }
 
-/** What came of one start: queued, failed, waiting for a Run, or skipped with its reason. */
+/** 1回の起動の結果。待機中、失敗、Run待ち、または理由付きの見送り。 */
 export function hookExecutionOutcome(execution: Pick<HookExecution, 'status' | 'reason'>): string {
   if (execution.status === 'skipped' && execution.reason)
     return hooksTextTemplates.hookSkipped(hookSkipReasonLabels[execution.reason]);
@@ -28,7 +28,7 @@ export function hookExecutionOutcome(execution: Pick<HookExecution, 'status' | '
 }
 
 
-/** The filter of a hook as label and value pairs; names stand in for ids where they are known. */
+/** フックの絞り込みを、見出しと値の組にしたもの。名前が分かるものはidの代わりに名前を出す。 */
 export function hookFilterEntries(
   filter: HookFilter,
   catalog: Pick<ExecutionCatalog, 'experiments'> | undefined,
@@ -55,7 +55,7 @@ export function hookFilterEntries(
   return entries;
 }
 
-/** The resources a hook's Jobs ask for: GPU IDs, or a site's count, time limit and array. */
+/** フックのJobが求める資源。GPU ID、またはsiteならGPUの数、制限時間、array。 */
 export function hookResourceSummary(template: Hook['template'], isSite: boolean): string {
   if (!isSite) return jobGpuSummary(template);
   const parts = [

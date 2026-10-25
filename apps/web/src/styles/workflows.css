@@ -59,14 +59,13 @@
 .workflow-step h3 {
   margin-block: 8px;
 }
-/* A dataset on one line and how the step uses it on the next, in a definition and an execution. */
+/* 定義と実行の両方で、データセットを1行に、ステップでの使い方を次の行に出す。 */
 .workflow-usage li {
   display: grid;
   gap: 6px;
   margin-block: 12px;
 }
-/* Resuming or stopping the shown execution: the button, and under it the note on what resuming
-   reuses, read before pressing it. */
+/* 表示中の実行の再開・停止。ボタンと、その下に、押す前に読む「再開で何を使い回すか」の注記。 */
 .workflow-execution-controls {
   display: grid;
   gap: 8px;
@@ -79,7 +78,7 @@
 .preprocessing-report {
   margin-block-start: 16px;
 }
-/* A Run's workflow and preprocessing details span the whole details grid of its page. */
+/* Runのワークフローと前処理の詳細は、Runの画面の詳細のグリッド全体に広げる。 */
 .workflow-run-context {
   grid-column: 1 / -1;
   min-width: 0;

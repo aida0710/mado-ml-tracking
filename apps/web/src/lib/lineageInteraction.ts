@@ -21,7 +21,7 @@ export function traceLineagePath({
     incoming.get(edge.target)!.push(edge);
     outgoing.get(edge.source)!.push(edge);
   }
-  // Walk each direction independently; a shared ancestor must not bring in a sibling branch.
+  // 向きごとに別々にたどる。共通の祖先を経て、兄弟の枝を取り込んではいけない。
   for (const traversal of ['upstream', 'downstream'] as const) {
     if (direction !== 'both' && direction !== traversal) continue;
     const visited = new Set([selectedId]);

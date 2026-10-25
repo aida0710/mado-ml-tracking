@@ -13,8 +13,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * The computers one may run this Project's Jobs on, read only, and the Project's workers. Adding
- * and managing computers is in 全体設定 → コンピュータ, which this page links to.
+ * このProjectのJobを動かせるコンピュータ（読み取りのみ）と、Projectのworker。コンピュータの
+ * 追加と管理は全体設定 → コンピュータで行い、このページからリンクする。
  */
 export function ComputePage() {
   useLocale();

@@ -19,7 +19,7 @@ export function CodeWorkspaceEditor({ editor, isGit, disabled, sampleId, onSampl
   onApplySample: () => void;
 }) {
   useLocale();
-  // Below 900px the file list folds away so that Monaco keeps the dialog's full width.
+  // 900px未満ではファイルの一覧を畳み、Monacoがダイアログの幅をすべて使えるようにする。
   const isNarrow = useMediaQuery(narrowerThan('md'));
   const [isFileListOpen, setFileListOpen] = useState(false);
   const fileTree = <CodeFileTree paths={editor.paths} activePath={editor.activePath}

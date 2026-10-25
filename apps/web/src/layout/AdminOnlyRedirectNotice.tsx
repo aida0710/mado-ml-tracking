@@ -2,7 +2,7 @@ import { useLocation } from 'react-router-dom';
 import { useLocale } from '../i18n/useLocale';
 import { settingsShellText } from '../i18n/settingsShell';
 
-/** The navigation state AdminPage leaves when it sends someone who is not a global admin away. */
+/** 全体管理者でない人をAdminPageがほかの画面へ送るときに、遷移に残すstate。 */
 export interface AdminOnlyRedirectState {
   redirectedFromAdminSection: true;
 }
@@ -12,8 +12,8 @@ function isAdminOnlyRedirect(state: unknown): state is AdminOnlyRedirectState {
 }
 
 /**
- * Says why a link to a 全体管理 screen (sent by a colleague) showed the account instead. The
- * state belongs to that one navigation, so the notice is gone once the user moves on.
+ * 同僚から送られた全体管理の画面へのリンクで、代わりにアカウントが開いた理由を伝える。stateは
+ * その1回の遷移に付いたものなので、利用者がほかへ移れば表示は消える。
  */
 export function AdminOnlyRedirectNotice() {
   useLocale();

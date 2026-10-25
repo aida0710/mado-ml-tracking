@@ -3,10 +3,10 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 import { artifactsTextTemplates, evaluationSampleErrorLabels } from '../../i18n/artifacts';
 
-// Only the first errors are listed; the count beside the table still covers every broken row.
+// 列挙するのは最初のエラーだけ。表の横の件数は、読めない行をすべて数える。
 const LISTED_ERROR_LIMIT = 20;
 
-/** The rows a table preview could not read, by line and reason, folded under 「読み取れない行」. */
+/** 表のプレビューが読めなかった行を、行番号と理由で並べ、「読み取れない行」の下に畳む。 */
 export function BrokenRowsDetails({ errors }: { errors: readonly EvaluationSampleError[] }) {
   useLocale();
   if (errors.length === 0) return null;
@@ -24,7 +24,7 @@ export function BrokenRowsDetails({ errors }: { errors: readonly EvaluationSampl
   );
 }
 
-/** 「読み取れない行 N件」 for a table toolbar; nothing when every row was read. */
+/** 表の帯に出す「読み取れない行 N件」。全行を読めたときは何も出さない。 */
 export function BrokenRowCount({ errors }: { errors: readonly EvaluationSampleError[] }) {
   useLocale();
   if (errors.length === 0) return null;

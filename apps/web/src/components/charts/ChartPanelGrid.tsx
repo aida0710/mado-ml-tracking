@@ -18,18 +18,18 @@ import {
 import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
-/** Unique within a layout; crypto.randomUUID is missing on plain-http origins. */
+/** レイアウトの中で一意。crypto.randomUUIDは素のhttpのオリジンには無い。 */
 function createPanelId(): string {
   return `panel-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/** Applies a change to the layout; the page decides where the result is kept. */
+/** レイアウトに変更を当てる。結果をどこに保存するかはページが決める。 */
 export type ChartLayoutChange = (change: (layout: ChartPanelLayout) => ChartPanelLayout) => void;
 
 /**
- * Panels on the 12-column grid. Every panel of the page is fetched with one request per x axis
- * and grouping, then each panel draws its keys. Without `onLayoutChange` the panels are fixed but
- * their charts can still be zoomed.
+ * 12列のグリッドに並べたパネル。ページの全パネルを、x軸とグループ化の組ごとに1回の要求で
+ * 取得し、各パネルが自分のキーを描く。`onLayoutChange`が無ければパネルは固定だが、図の
+ * ズームはできる。
  */
 export function ChartPanelGrid({
   projectId,
@@ -53,17 +53,17 @@ export function ChartPanelGrid({
   runLabels: Readonly<Record<string, string>>;
   live: boolean;
   metricKeys: readonly string[];
-  /** Offered in the panel editor, so each panel can group Runs its own way. */
+  /** パネルの編集画面に出す。パネルごとに別のグループ化ができる。 */
   grouping?: ChartGroupingOptions;
-  /** Draws stored groupings even without per-panel choices (the Run list sets one for all). */
+  /** パネルごとの選択が無くても、保存したグループ化を描く（Runの一覧は全パネルに1つを設定する）。 */
   groupingEnabled?: boolean;
   markersFor?: (xAxis: ChartXAxis) => MetricsChartMarker[];
   valueScale?: (key: string) => number;
   onLayoutChange?: ChartLayoutChange;
-  /** Shown only when the user has changed the default. */
+  /** 利用者が既定を変えたときだけ出す。 */
   onResetLayout?: () => void;
   toolbar?: ReactNode;
-  /** Shown without panels; by default it tells whether the Runs have metrics at all. */
+  /** パネルが無いときに出す。既定では、Runにメトリクスがそもそもあるかどうかを伝える。 */
   emptyMessage?: string;
 }) {
   useLocale();
@@ -79,7 +79,7 @@ export function ChartPanelGrid({
 
   return (
     <section className="chart-panel-area" aria-labelledby={headingId}>
-      {/* The panels' titles are h3: this keeps the outline from jumping from the page's h1. */}
+      {/* パネルの見出しはh3。これでページのh1から見出しの階層が飛ばない。 */}
       <h2 id={headingId} className="sr-only">
         {text.charts}
       </h2>

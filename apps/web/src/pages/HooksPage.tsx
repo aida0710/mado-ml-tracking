@@ -25,8 +25,8 @@ import { hooksTextTemplates } from '../i18n/hooks';
 type HooksView = 'hooks' | 'executions';
 
 /**
- * The Project's hooks: the list with the chosen hook's settings and manual start, and the
- * executions of every hook or of one. `hook` in the URL is the chosen hook in both views.
+ * Projectのフック。一覧と選んだフックの設定・手動の起動、すべてのフックまたは1つのフックの実行。
+ * URLの`hook`は、どちらの表示でも選んだフックを表す。
  */
 export function HooksPage() {
   useLocale();
@@ -42,7 +42,7 @@ export function HooksPage() {
     hookId: selectedHookId,
     enabled: view === 'executions',
   });
-  // 'new' starts from the defaults; a hook starts the form from its settings (a copy).
+  // 'new'なら既定値から、フックならその設定からフォームを始める（コピー）。
   const [creating, setCreating] = useState<'new' | Hook | null>(null);
   const [toggling, setToggling] = useState<Hook | null>(null);
   const canManage = canManageHooks(project.role);

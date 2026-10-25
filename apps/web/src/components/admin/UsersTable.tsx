@@ -9,7 +9,7 @@ import { text, textTemplates } from '../../i18n/catalog';
 
 export type UserAction = 'makeAdmin' | 'removeAdmin' | 'resetPassword' | 'disable' | 'enable';
 
-/** Which actions the API would accept for this user; SSO roles and names come from the IdP. */
+/** このユーザーに対してAPIが受け付ける操作。SSOのロールと名前はIdPから来る。 */
 function availableActions(user: AdminUser): UserAction[] {
   const actions: UserAction[] = [];
   if (!isSsoUser(user) && user.kind === 'human')
@@ -27,13 +27,13 @@ const actionLabels: Record<UserAction, string> = {
   get enable() { return text.userEnable; },
 };
 
-// What the API refuses for the last active global administrator (409).
+// 最後の有効な全体管理者に対してAPIが拒む操作（409）。
 const LAST_ADMIN_LOCKED_ACTIONS: readonly UserAction[] = ['disable', 'removeAdmin'];
 
 /**
- * Users with their sign-in methods, state and actions. The signed-in administrator's own row says
- * so, the last active global administrator's disabling and demoting are locked with the reason,
- * and a Service Account names the Project it works for.
+ * ユーザーをログイン方法、状態、操作とともに出す。ログイン中の管理者自身の行にはその旨を出し、
+ * 最後の有効な全体管理者の無効化と管理者を外す操作は理由とともにロックする。Service Accountには
+ * それが働くProjectを出す。
  */
 export function UsersTable({
   users,
@@ -43,7 +43,7 @@ export function UsersTable({
 }: {
   users: AdminUser[];
   currentUserId: string;
-  /** Null when there are several, or while that is unknown. */
+  /** 複数いるとき、またはまだ分からない間はnull。 */
   lastActiveAdminId: string | null;
   onAction: (user: AdminUser, action: UserAction) => void;
 }) {
@@ -141,7 +141,7 @@ export function UsersTable({
   );
 }
 
-/** Which Project a Service Account works for, leading to that Project's Service Accounts. */
+/** Service Accountが働くProject。そのProjectのService Accountの一覧へリンクする。 */
 function ServiceAccountOrigin({ user }: { user: AdminUser }) {
   useLocale();
   const project = user.serviceAccountProject;

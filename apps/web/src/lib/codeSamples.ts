@@ -106,7 +106,7 @@ class InferenceTest(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 `;
-// The comments are written in the display language when the sample is added.
+// サンプルのコード中のコメントは、サンプルを追加するときの表示言語で書く。
 const trainingMain = () => `${calculation}
 
 def train(steps=12):
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     unittest.main()
 `;
 
-// Keep smoke commands offline so checking code never needs tracking credentials.
+// スモークテストのコマンドはオフラインで動かし、コードの確認にmado ML Trackingの認証情報が要らないようにする。
 const testEntrypoint = ['python', '-m', 'unittest', 'discover', '-s', '.', '-p', 'test_*.py'];
 const sampleDefaults = {
   entrypoint: ['python', 'main.py'], testEntrypoint, families: ['linear'],

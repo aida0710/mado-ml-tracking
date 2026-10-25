@@ -1,5 +1,5 @@
-// Resume decisions of the upload dialog: finds the unfinished upload of a newly chosen file so its
-// path is filled in, and continues or restarts the unfinished upload a person picked a file for.
+// アップロードのダイアログの再開の判断。新しく選んだファイルの未完了のアップロードを見つけて
+// パスを埋め、利用者がファイルを選んだ未完了のアップロードを続けるか、やり直す。
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { ArtifactUploadListItem } from '@mmt/contracts';
 import { artifactUploadsApi } from '../api/artifactUploads';
@@ -14,7 +14,7 @@ import {
 import { findUploadIdsRecordedForFile } from '../lib/uploadResumeStore';
 import type { UploadEntry } from './useArtifactUploadQueue';
 
-/** The unfinished upload of the chosen file, with what the server holds of it now. */
+/** 選んだファイルの未完了のアップロードと、今サーバーがそれについて持っている分。 */
 export interface ResumeMatch {
   uploadId: string;
   path: string;
@@ -41,26 +41,26 @@ export function useUploadResume({
 }: {
   projectId: string;
   runId: string | null;
-  /** Unfinished uploads of this Run (or of no Run) that are not already in the queue. */
+  /** このRun（Runが無ければRunに属さないもの）の未完了のアップロードのうち、まだキューに無いもの。 */
   sessions: ArtifactUploadListItem[];
-  /** The one file chosen with the file picker, or null for none or several. */
+  /** ファイルの選択で選んだ1つのファイル。選んでいないか複数ならnull。 */
   selectedFile: File | null;
-  /** Called once per match, to fill in the session's path. */
+  /** 一致したものごとに1回呼び、セッションのパスを埋める。 */
   onMatched: (match: ResumeMatch) => void;
   enqueue: (entries: UploadEntry[]) => void;
   discardSession: (uploadId: string) => Promise<void>;
 }) {
-  // A list reload compares the file again; the path is filled only for a new match, so a path the
-  // person edited afterwards stays.
+  // 一覧を読み直すとファイルをもう一度比べる。パスを埋めるのは新しく一致したときだけなので、
+  // 利用者が後から編集したパスは残る。
   const filledMatchRef = useRef<{ file: File; uploadId: string } | null>(null);
-  // The list loads after the dialog opens, so a file chosen early is compared again once it arrives.
+  // 一覧はダイアログを開いた後に読み込まれるので、早く選んだファイルは一覧が届いたらもう一度比べる。
   const comparedSessionsKey = `${projectId}:${runId}:${sessions.map((session) => session.id).join(',')}`;
   const [comparison, setComparison] = useState<{
     file: File;
     comparedSessionsKey: string;
     resume: SelectedFileResume;
   } | null>(null);
-  // Only a session of the same size can hold the file; without one there is nothing to compare.
+  // ファイルを持てるのは同じサイズのセッションだけ。それが無ければ比べるものが無い。
   const hasSessionOfFileSize =
     selectedFile !== null && sessions.some((session) => session.expectedSize === selectedFile.size);
   const selectedFileResume: SelectedFileResume = !hasSessionOfFileSize
@@ -95,7 +95,7 @@ export function useUploadResume({
     if (!selectedFile || !hasSessionOfFileSize) return;
     const controller = new AbortController();
     void findSelectedFileMatch(selectedFile, controller.signal)
-      // Without an answer from the server the file simply goes up as a new upload.
+      // サーバーから答えが無ければ、ファイルはそのまま新しいアップロードとして送る。
       .catch(() => null)
       .then((match) => {
         if (controller.signal.aborted) return;
@@ -109,7 +109,7 @@ export function useUploadResume({
     return () => controller.abort();
   }, [selectedFile, hasSessionOfFileSize, comparedSessionsKey]);
 
-  /** Compares the file with the session and continues it, or tells why it cannot continue. */
+  /** ファイルをセッションと比べて続きを送るか、続けられない理由を伝える。 */
   const continueSession = useCallback(
     async (session: ArtifactUploadListItem, source: UploadSource): Promise<ResumeBlocker | null> => {
       const inspection = await inspectSessionForFile({
@@ -126,11 +126,12 @@ export function useUploadResume({
     [enqueue, projectId],
   );
 
-  /** Sends the file from the first byte to the session's path and discards what the session kept. */
+  /** ファイルを最初のバイトからセッションのパスへ送り、セッションが持っていた分を破棄する。 */
   const startOver = useCallback(
     (session: ArtifactUploadListItem, source: UploadSource) => {
       enqueue([{ source, path: session.path }]);
-      // An expired session still holds storage until the sweeper runs; a gone one has nothing left.
+      // 期限切れのセッションも、sweeperが動くまでは保存領域を使っている。無くなったセッションには
+      // 何も残っていない。
       void discardSession(session.id).catch(() => undefined);
     },
     [discardSession, enqueue],
@@ -139,7 +140,7 @@ export function useUploadResume({
   return { selectedFileResume, continueSession, startOver };
 }
 
-// The first candidate session that holds this file's bytes, or null (at once with no candidates).
+// このファイルのバイト列を持つ最初の候補のセッション。無ければnull（候補が無ければすぐに）。
 async function findMatchingSession({
   projectId,
   file,
@@ -164,7 +165,7 @@ async function findMatchingSession({
     });
     if (signal.aborted) return null;
     if (inspection.blocker !== null) continue;
-    // With nothing stored yet, only this browser's own record ties the file to the session.
+    // まだ何も保存されていなければ、ファイルとセッションを結び付けるのは、このブラウザ自身の記録だけ。
     if (inspection.nothingSent && !recordedUploadIds.has(candidate.id)) continue;
     const { session } = inspection;
     return {

@@ -9,7 +9,7 @@ import { MAX_PANEL_METRIC_KEYS, type NewChartPanel } from '../../lib/chartPanelL
 import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
-/** Display settings of a panel that are not part of the stored panel config. */
+/** 保存するパネルの設定に含まれない、パネルの表示設定。 */
 export type ChartPanelViewSettings = Pick<ChartDisplaySettings, 'xScale' | 'showRaw'>;
 
 export interface ChartPanelDraft {
@@ -17,13 +17,13 @@ export interface ChartPanelDraft {
   view: ChartPanelViewSettings;
 }
 
-/** Suggestions for the grouping keys; absent where Runs cannot be grouped (a single Run). */
+/** グループ化のキーの候補。Runをグループ化できない場所（単一のRun）では無い。 */
 export interface ChartGroupingOptions {
   tagKeys: readonly string[];
   paramKeys: readonly string[];
 }
 
-/** Picks the metrics of one panel and its axes, smoothing and grouping. */
+/** 1つのパネルのメトリクスと、その軸、平滑化、グループ化を選ぶ。 */
 export function ChartPanelEditor({
   dialogTitle,
   initial,
@@ -47,7 +47,7 @@ export function ChartPanelEditor({
   const selected = panel.metricKeys;
   const isFull = selected.length >= MAX_PANEL_METRIC_KEYS;
   const normalizedQuery = query.trim().toLowerCase();
-  // Selected keys stay listed so they can be cleared even when the search hides them.
+  // 選んだキーは、検索で隠れても選択を外せるよう一覧に残す。
   const listed = metricKeys.filter(
     (key) => selected.includes(key) || key.toLowerCase().includes(normalizedQuery),
   );

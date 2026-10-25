@@ -1,4 +1,4 @@
-// Browser-only stand-in for the built-in Plugin API; production uses the authorized service.
+// 組み込みのPlugin APIのブラウザ専用の代役。本番では認可されたサービスを使う。
 export async function routeBuiltinPlugins({state, request, reply, id, now, project, user, datasetVersion, manifest}) {
   const {method, key, subresource, parts, body} = request;
   const list = (items) => reply({items});
@@ -36,7 +36,8 @@ export async function routeBuiltinPlugins({state, request, reply, id, now, proje
     return reply(plugin);
   }
   if (subresource === 'check') {
-    // The fixture Mado's answer for the saved token; a test changes state.madoAccessTokenGrant to vary it.
+    // 保存済みのtokenについて、フィクスチャのmado S3 Data Catalogが返す答え。テストは
+    // state.madoAccessTokenGrantを変えて答えを変える。
     const grant = state.madoAccessTokenGrant;
     plugin.accessTokenGrant = grant;
     plugin.manifest = {...manifest, capabilities: ['datasets:search', 'lineage:publish', ...(grant.scopes.includes('metrics:read') ? ['storage:metrics'] : [])]};

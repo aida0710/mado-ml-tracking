@@ -20,9 +20,9 @@ function SortIcon({ sort, column }: { sort: TabularSort | null; column: number }
 }
 
 /**
- * A CSV / TSV / jsonl file as a table: the header stays in view while the rows scroll inside the
- * frame, and a column header sorts every row by that column (again to reverse, a third time for
- * the file's order). Only the first TABULAR_TABLE_MAX_ROWS rows are drawn.
+ * CSV / TSV / jsonlのファイルを表で出す。行は枠の中でスクロールし、見出しは見えたまま残る。
+ * 列の見出しで全行をその列で並べ替える（もう一度で逆順、3回目でファイルの順）。描くのは
+ * 先頭のTABULAR_TABLE_MAX_ROWS行だけ。
  */
 export function TabularTextTable({
   table,
@@ -30,9 +30,9 @@ export function TabularTextTable({
   formatSelect,
 }: {
   table: TabularText;
-  /** Names the scrolling frame for screen readers, usually the file's path. */
+  /** スクロールする枠の、スクリーンリーダー向けの名前。たいていはファイルのパス。 */
   label: string;
-  /** The ［表示形式］ select, to switch this file to text. */
+  /** ［表示形式］のselect。このファイルをテキストに切り替える。 */
   formatSelect: ReactNode;
 }) {
   useLocale();
@@ -53,7 +53,7 @@ export function TabularTextTable({
         <p className="muted tabular-preview-note">{textTemplates.tabularTableTruncated(shown.length, rows.length)}</p>
       )}
       <BrokenRowsDetails errors={table.errors} />
-      {/* Focusable so a keyboard can scroll the frame sideways and down. */}
+      {/* フォーカスできるようにし、キーボードで枠を横にも下にもスクロールできるようにする。 */}
       <div className="tabular-table-scroll" role="region" aria-label={label} tabIndex={0}>
         <table className="tabular-table">
           <thead>

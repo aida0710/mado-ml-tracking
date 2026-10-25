@@ -1,4 +1,4 @@
-/* Operations alert badge in the header and the plugin delivery status. */
+/* 上部バーの運用アラートのバッジと、プラグインへのイベントの送信状況。 */
 .operations-alerts {
   position: relative;
 }
@@ -74,7 +74,7 @@
   background: var(--surface-hover);
   text-decoration: none;
 }
-/* Alerts of every Project share the list, so each names its Project above the kind. */
+/* すべてのProjectのアラートが同じ一覧に並ぶので、それぞれ種類の上にProjectの名前を出す。 */
 .operations-alert-project {
   color: var(--muted);
   font-size: var(--font-size-xs);
@@ -91,8 +91,8 @@
   margin: 16px 0;
 }
 
-/* On a phone the list hangs from the bell's right edge with too little room on its left for 320px:
-   it spans the screen inside a 16px margin instead, just below the header. */
+/* スマートフォンでは一覧がベルの右端から下がり、左に320px分の余地が無い。代わりに上部バーの
+   すぐ下で、16pxの余白を残して画面の幅いっぱいに広げる。 */
 @media (width < 640px) {
   .operations-alert-popover {
     position: fixed;

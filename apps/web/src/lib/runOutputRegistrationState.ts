@@ -9,7 +9,7 @@ export type RunOutputRegistrationState =
   | { kind: 'registered' | 'skipped'; modelVersionId: string }
   | { kind: 'failed'; error: string };
 
-/** What the Run page shows for the Task-side registration; the API decides once the Run ends. */
+/** Task側の登録についてRunのページに出すもの。Runが終わった時点でAPIが決める。 */
 export function getRunOutputRegistrationState(
   run: Pick<Run, 'status' | 'outputModelRegistration'>,
   registration: RunOutputRegistration | null | undefined,

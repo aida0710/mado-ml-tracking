@@ -1,11 +1,11 @@
 import type { ComputeTarget, WorkerPresence } from '@mmt/contracts';
 
 /**
- * Whether a worker is there to take a computer's work, from the workers the screen may list:
- * - `notNeeded`: a site, whose Jobs a launcher or `mado-tracking submit` sends instead.
- * - `online`: at least one worker in charge answered within the last two minutes.
- * - `offline`: the workers in charge stopped answering; `lastSeenAt` is the latest answer.
- * - `none`: no worker has ever said it takes this computer.
+ * コンピュータの作業を受け取るworkerがいるかどうか。画面が一覧にできるworkerから判断する。
+ * - `notNeeded`: site。Jobは代わりにランチャーか`mado-tracking submit`が投入する。
+ * - `online`: 担当のworkerのうち少なくとも1つが、直近2分以内に応答した。
+ * - `offline`: 担当のworkerが応答しなくなった。`lastSeenAt`は最後の応答の時刻。
+ * - `none`: このコンピュータを受け持つと言ったworkerが一度も無い。
  */
 export type WorkerCoverage =
   | { state: 'notNeeded' }
@@ -17,15 +17,15 @@ type CoveredTarget = Pick<ComputeTarget, 'id' | 'executor'>;
 type CoveringWorker = Pick<WorkerPresence, 'targetIds' | 'status' | 'lastSeenAt'>;
 
 /**
- * A worker claims the Jobs of its token's Project on the computers in MMT_WORKER_TARGET_IDS, or on
- * every computer when it names none (WorkerService.claim).
+ * workerは、tokenのProjectのJobを、MMT_WORKER_TARGET_IDSにあるコンピュータで受け取る。
+ * 何も指定しなければ、すべてのコンピュータで受け取る（WorkerService.claim）。
  */
 export const takesJobsOn = (worker: Pick<WorkerPresence, 'targetIds'>, targetId: string): boolean =>
   worker.targetIds === null || worker.targetIds.includes(targetId);
 
 /**
- * A connection check nobody chose a worker for goes to a worker that names the computer in
- * MMT_WORKER_TARGET_IDS (TargetCheckService); one that names none does not take it.
+ * workerを誰も選ばなかった接続確認は、MMT_WORKER_TARGET_IDSでそのコンピュータを指定した
+ * workerへ行く。何も指定しないworkerは受け取らない（TargetCheckService）。
  */
 export const takesChecksOf = (
   worker: Pick<WorkerPresence, 'targetIds'>,
@@ -43,8 +43,8 @@ function coverageOf(workers: readonly CoveringWorker[]): WorkerCoverage {
 }
 
 /**
- * Who takes the computer's Jobs among the Project's workers (GET /projects/:p/workers): a Job of
- * the Project is claimed only by a worker of the same Project.
+ * ProjectのworkerのうちコンピュータのJobを受け取るもの（GET /projects/:p/workers）。Projectの
+ * Jobを受け取るのは、同じProjectのworkerだけ。
  */
 export function jobWorkerCoverage(
   target: CoveredTarget,
@@ -54,7 +54,7 @@ export function jobWorkerCoverage(
   return coverageOf(workers.filter((worker) => takesJobsOn(worker, target.id)));
 }
 
-/** Who takes the computer's connection check among every Project's workers (GET /workers). */
+/** すべてのProjectのworkerのうち、コンピュータの接続確認を受け取るもの（GET /workers）。 */
 export function checkWorkerCoverage(
   target: CoveredTarget,
   workers: readonly CoveringWorker[],
@@ -63,6 +63,6 @@ export function checkWorkerCoverage(
   return coverageOf(workers.filter((worker) => takesChecksOf(worker, target.id)));
 }
 
-/** Jobs or checks sent to the computer now wait until a worker starts. */
+/** 今コンピュータに送ったJobや接続確認は、workerが起動するまで待つことになる。 */
 export const isWorkerMissing = (coverage: WorkerCoverage): boolean =>
   coverage.state === 'offline' || coverage.state === 'none';

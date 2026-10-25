@@ -19,15 +19,15 @@ import { shownRunColumns } from './runTableColumns';
 import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
-// One arrow key press widens or narrows a column by this much, like a coarse mouse drag.
+// 矢印キーを1回押すと列をこれだけ広げるか狭める。大まかなマウスのドラッグに近い。
 const KEYBOARD_RESIZE_STEP = 16;
 
 const widthStyle = (width: number | undefined): CSSProperties | undefined =>
   width === undefined ? undefined : { width, minWidth: width, maxWidth: width };
 
 /**
- * The Run list at 640px and wider: every chosen column in the row, each one movable by dragging
- * its header (or Alt+arrow keys) and resizable by its border (or arrow keys on the border).
+ * 640px以上のRunの一覧。選んだ列をすべて行に出す。各列は見出しをドラッグして（Alt+矢印キーでも）
+ * 移動でき、境界をドラッグして（境界で矢印キーを押しても）幅を変えられる。
  */
 export function WideRunTable({
   projectId,
@@ -47,7 +47,7 @@ export function WideRunTable({
   const tableRef = useRef<HTMLTableElement>(null);
   const headerWidths = useColumnHeaderWidths(tableRef);
   const moveHintId = useId();
-  // While the pointer drags a border the width lives here, so the list commits one change.
+  // ポインタで境界をドラッグする間は幅をここに持ち、一覧には変更を1回だけ確定する。
   const [resizing, setResizing] = useState<{ key: string; startX: number; startWidth: number; width: number } | null>(null);
   const shownColumns = shownRunColumns(columns).map((column) =>
     resizing?.key === column.key ? { ...column, width: resizing.width } : column,
@@ -88,7 +88,7 @@ export function WideRunTable({
 
   return (
     <div className="table-scroll">
-      {/* Read with each column name: the name is a focus stop only for this key. */}
+      {/* 各列の名前と一緒に読ませる。名前がフォーカスの止まる場所になるのは、このキーのためだけ。 */}
       <span id={moveHintId} hidden>
         {text.runColumnMove}
       </span>
@@ -136,7 +136,7 @@ export function WideRunTable({
                   role="separator"
                   aria-orientation="vertical"
                   aria-label={text.runColumnResize}
-                  // A focusable separator is a splitter, whose value assistive technology reads.
+                  // フォーカスできるseparatorはスプリッターになり、支援技術がその値を読む。
                   aria-valuenow={column.width ?? headerWidths[column.key] ?? MIN_COLUMN_WIDTH}
                   aria-valuemin={MIN_COLUMN_WIDTH}
                   aria-valuemax={MAX_COLUMN_WIDTH}

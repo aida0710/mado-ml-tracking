@@ -14,17 +14,17 @@ const channelPath = (channelId?: string) =>
 const rulePath = (projectId: string, ruleId?: string) =>
   `${projectPath(projectId)}/notification-rules${ruleId === undefined ? '' : `/${encodeId(ruleId)}`}`;
 
-// Recent history only; the API caps a page at 200.
+// 最近の履歴だけ。APIは1ページを200件までに抑える。
 const DELIVERY_HISTORY_LIMIT = 50;
 
-/** Channels (global administrators edit), Project rules and the delivery history. */
+/** 通知先（全体管理者が編集する）、Projectのルールと送信の履歴。 */
 export const notificationsApi = {
-  /** Channels a Project's rules may use: global ones and the Project's own. */
+  /** Projectのルールが使える通知先（全体のものと、そのProject自身のもの）。 */
   projectChannels: (projectId: string, signal?: AbortSignal) =>
     requestItems<NotificationChannel>(`${projectPath(projectId)}/notification-channels`, signal),
   /**
-   * Names of the API server's MMT_NOTIFICATION_* variables that hold a value (never the values).
-   * Global administrators only.
+   * APIサーバーのMMT_NOTIFICATION_*の環境変数のうち、値が入っているものの名前（値は返さない）。
+   * 全体管理者だけ。
    */
   environmentNames: (signal?: AbortSignal) =>
     requestItems<string>(`${channelPath()}/environment-names`, signal),

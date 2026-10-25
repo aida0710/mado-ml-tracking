@@ -4,7 +4,7 @@ import { formatDate } from '../../lib/format';
 import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
-/** The launchers with their last answer and token prefix; revoked ones keep no actions. */
+/** ランチャーの一覧。最後の応答とtokenの先頭を出す。失効したものには操作を残さない。 */
 export function LaunchersTable({
   launchers,
   onRotateToken,

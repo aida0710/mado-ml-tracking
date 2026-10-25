@@ -17,8 +17,8 @@ import { useLocale } from '../../i18n/useLocale';
 import { textTemplates } from '../../i18n/catalog';
 
 /**
- * Evaluation results with thousands of rows are a few MB of jsonl. 16MiB keeps parsing on the main
- * thread under about a second; larger files show their head as text instead.
+ * 何千行もある評価結果は、jsonlで数MBになる。16MiBならメインスレッドでのパースが約1秒に
+ * 収まる。それより大きいファイルは、代わりに先頭をテキストで出す。
  */
 export const TABULAR_TEXT_MAX_BYTES = 16 * 1024 * 1024;
 
@@ -39,10 +39,10 @@ function LoadedTabularText({
     () => (isEvaluationSampleTable(parsed.columns) ? toEvaluationSamples(parsed) : null),
     [parsed],
   );
-  // The text view, like any text preview, colors at most the first TEXT_PREVIEW_MAX_BYTES.
+  // テキストの表示も、ほかのプレビューと同じく色を付けるのは先頭のTEXT_PREVIEW_MAX_BYTESまで。
   const leadingText = useMemo(() => leadingTextWithinBytes(content, TEXT_PREVIEW_MAX_BYTES), [content]);
   const code = useCodeLanguage({ fileName: artifact.path, mimeType: artifact.mimeType, text: leadingText });
-  // A file with no readable row opens as text, where the broken lines can be read.
+  // 読める行が1つも無いファイルはテキストで開き、壊れた行を読めるようにする。
   const hasRows = evaluation ? evaluation.samples.length > 0 : parsed.records.length > 0;
   const [view, setView] = useState<TabularView>(hasRows ? 'table' : 'text');
 
@@ -70,9 +70,8 @@ function LoadedTabularText({
 }
 
 /**
- * A CSV / TSV / jsonl file as a table: the evaluation sample table when it has the audio,
- * reference and prediction columns, a general sortable table otherwise. ［表示形式］ switches to
- * the text and back.
+ * CSV / TSV / jsonlのファイルを表で出す。音声、reference、predictionの列があれば評価サンプルの
+ * 表、無ければ一般の並べ替えできる表。［表示形式］でテキストとの間を切り替える。
  */
 export function TabularTextPreview({ artifact, format }: { artifact: Artifact; format: TabularTextFormat }) {
   useLocale();

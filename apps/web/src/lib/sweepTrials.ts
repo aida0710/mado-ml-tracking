@@ -1,19 +1,19 @@
 import type { Sweep, SweepObjective, SweepStatus, SweepTrial } from '@mmt/contracts';
 import { countGridCombinations } from './sweepConfig';
 
-// Values the Sweep detail derives from its trials: the progress chart, the trial order and
-// whether the page still needs polling. Kept apart from the components so they can be tested.
+// Sweepの詳細が試行から求める値（進み具合の図、試行の並び順、画面にまだポーリングが要るか）。
+// テストできるよう、コンポーネントから分けておく。
 
 const ENDED_STATUSES: readonly SweepStatus[] = ['finished', 'canceled', 'failed'];
 
-/** finished, canceled and failed sweeps accept no pause/resume/cancel/limits change (409 sweep_finished). */
+/** finished・canceled・failedのSweepは、一時停止・再開・取消・上限の変更を受け付けない（409 sweep_finished）。 */
 export function isSweepEnded(sweep: Pick<Sweep, 'status'>): boolean {
   return ENDED_STATUSES.includes(sweep.status);
 }
 
 /**
- * How many trials the sweep starts: maxTrials, or the number of combinations when a grid has
- * fewer (it ends once every combination ran).
+ * Sweepが始める試行の数。maxTrials、またはgridの組み合わせのほうが少なければその数
+ * （組み合わせをすべて実行したら終わる）。
  */
 export function plannedTrialCount(
   sweep: Pick<Sweep, 'method' | 'maxTrials' | 'searchSpace'>,
@@ -23,7 +23,7 @@ export function plannedTrialCount(
   return combinations === null ? sweep.maxTrials : Math.min(sweep.maxTrials, combinations);
 }
 
-/** A sweep keeps changing while it may queue trials or still has trials in flight. */
+/** 試行をキューに入れる可能性があるか、まだ実行中の試行がある間は、Sweepは変わり続ける。 */
 export function isSweepActive(sweep: Pick<Sweep, 'status' | 'trialCounts'>): boolean {
   return sweep.status === 'running' || sweep.trialCounts.queued + sweep.trialCounts.running > 0;
 }
@@ -34,13 +34,13 @@ const isBetter = (goal: SweepObjective['goal'], candidate: number, current: numb
 export interface ObjectiveProgressPoint {
   trialIndex: number;
   objective: number;
-  /** The best objective among this and earlier trials; null until a trial can count as best. */
+  /** この試行とそれより前の試行の中で最良の目的値。最良に数えられる試行が出るまではnull。 */
   bestSoFar: number | null;
 }
 
 /**
- * Trials with an objective in trial order. Only finished and early_stopped trials count toward
- * the best, matching the API's bestTrial; failed or canceled values were cut off midway.
+ * 目的値を持つ試行を試行の順に並べたもの。最良に数えるのはfinishedとearly_stoppedの試行だけで、
+ * APIのbestTrialに合わせる。failedやcanceledの値は途中で打ち切られたもの。
  */
 export function objectiveProgress(trials: SweepTrial[], goal: SweepObjective['goal']): ObjectiveProgressPoint[] {
   const points: ObjectiveProgressPoint[] = [];
@@ -56,7 +56,7 @@ export function objectiveProgress(trials: SweepTrial[], goal: SweepObjective['go
 
 export type SweepTrialOrder = 'trial_index' | 'objective';
 
-/** The API's orderBy rules: objective is best first by the goal, trials without one last. */
+/** APIのorderByの規則。objectiveはgoalに沿って最良のものから並べ、目的値の無い試行は最後。 */
 export function sortTrials(trials: SweepTrial[], order: SweepTrialOrder, goal: SweepObjective['goal']): SweepTrial[] {
   return [...trials].sort((left, right) => {
     if (order === 'objective') {
@@ -70,7 +70,7 @@ export function sortTrials(trials: SweepTrial[], order: SweepTrialOrder, goal: S
   });
 }
 
-/** Parameter names across trials in name order, for the trial table's columns. */
+/** 試行の表の列にする、全試行のパラメータ名（名前順）。 */
 export function trialParameterNames(trials: SweepTrial[]): string[] {
   return [...new Set(trials.flatMap((trial) => Object.keys(trial.parameters)))].sort();
 }

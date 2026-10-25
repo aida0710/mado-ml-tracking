@@ -1,15 +1,15 @@
 import type { ModelVersion } from '@mmt/contracts';
 import { defaultBaselineAlias } from './evaluationComparisonDisplay';
 
-/** The version a model version is compared with: the one an alias points to, or a chosen one. */
+/** モデルバージョンを比べる相手のバージョン。aliasが指すものか、選んだもの。 */
 export type BaselineChoice = { kind: 'alias'; alias: string } | { kind: 'version'; versionId: string };
 
 type VersionOrder = Pick<ModelVersion, 'id' | 'createdAt'>;
 
 /**
- * The default alias (production first), unless it points at the candidate itself, as it does once
- * the candidate has been promoted: comparing a version with itself shows only zeros, so the
- * version registered just before the candidate is taken instead. Null when there is nothing else.
+ * 既定のalias（productionを優先）。ただし、それが候補自身を指すとき（候補を昇格させた後は
+ * そうなる）は、自分自身と比べても差がすべて0になるだけなので、候補の直前に登録された
+ * バージョンを代わりに使う。ほかに比べるものが無ければnull。
  */
 export function defaultBaselineChoice(input: {
   aliases: Record<string, string>;
@@ -27,7 +27,7 @@ export function defaultBaselineChoice(input: {
   return alias ? { kind: 'alias', alias } : null;
 }
 
-/** Whether a choice made earlier still names an alias or version of the Model. */
+/** 前に選んだものが、今もこのモデルのaliasかバージョンを指しているか。 */
 export function isBaselineChoiceAvailable(
   choice: BaselineChoice,
   model: { aliases: Record<string, string>; versions: readonly Pick<ModelVersion, 'id'>[] },
@@ -45,7 +45,7 @@ export function baselineVersionIdOf(
   return choice.kind === 'alias' ? (aliases[choice.alias] ?? null) : choice.versionId;
 }
 
-// The value of the baseline <select>: aliases and versions share one list.
+// 基準の<select>の値。aliasとバージョンを同じ一覧に並べる。
 export function encodeBaselineChoice(choice: BaselineChoice | null): string {
   if (!choice) return '';
   return choice.kind === 'alias' ? `alias:${choice.alias}` : `version:${choice.versionId}`;

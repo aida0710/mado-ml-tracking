@@ -31,10 +31,10 @@ function cpuArchHint(result: TargetCheckResult | null | undefined): string | und
 }
 
 /**
- * Step 2「接続後の設定」of an ssh or local computer: where its Jobs work and with which Python,
- * its CPU, runtimes and GPUs, how many Jobs at once, how datasets arrive, and whether it is on.
- * Paths complete from the check and from directories the worker reads; the check's GPUs are
- * offered as checkboxes and any ID may be typed (a login node submits to other machines).
+ * sshかlocalのコンピュータの手順2「接続後の設定」。JobがどこでどのPythonで動くか、CPU、ランタイム、
+ * GPU、同時に動かすJobの数、データセットの届け方、有効かどうか。パスは確認の結果とworkerが読んだ
+ * ディレクトリから補完する。確認で見つかったGPUはチェックボックスで出し、どのIDでも入力できる
+ * （ログインノードはほかのマシンへ投入するため）。
  */
 export function ComputerSetupFields({
   values,
@@ -48,12 +48,12 @@ export function ComputerSetupFields({
 }: {
   values: FormValues;
   onChange: (values: FormValues) => void;
-  /** The latest finished check, which the candidates come from; none before a check. */
+  /** 候補の元になる、最後に終わった確認。確認する前は無い。 */
   result: TargetCheckResult | null | undefined;
   suggestWorkDirectory: SuggestFieldValues;
   suggestPython: SuggestFieldValues;
   suggestionsRefreshKey: string;
-  /** The number of Jobs at once still follows the chosen GPUs (nobody typed one yet). */
+  /** 同時に動かすJobの数が、まだ選んだGPUに連動している（まだだれも数を入力していない）。 */
   concurrencyFollowsGpus: boolean;
   onConcurrencyEdited: () => void;
 }) {

@@ -2,10 +2,10 @@ import type { Artifact, RunMedia } from '@mmt/contracts';
 import type { ResolvedMediaCell } from './mediaTableCells';
 
 /**
- * The previews in components/preview/ take an Artifact but read only its id, projectId, runId,
- * path, mimeType and size. Run media and table cells carry exactly those, so the preview gets
- * them without one GET /artifacts/:id per cell; the storage fields are left blank because no
- * preview reads them.
+ * components/preview/のプレビューはArtifactを受け取るが、読むのはid、projectId、runId、path、
+ * mimeType、sizeだけ。Runのメディアと表のセルはちょうどそれを持っているので、セルごとに
+ * GET /artifacts/:idをしなくてもプレビューに渡せる。保存先の項目は、どのプレビューも
+ * 読まないので空にする。
  */
 function previewArtifact(fields: Pick<Artifact, 'id' | 'projectId' | 'runId' | 'path' | 'mimeType' | 'size'>): Artifact {
   return { ...fields, backend: 'filesystem', storageKey: '', sha256: '', createdAt: '' };
@@ -22,7 +22,7 @@ export function runMediaArtifact(projectId: string, media: RunMedia): Artifact {
   });
 }
 
-// Table cells name no MIME type, so the preview is chosen by the cell's kind.
+// 表のセルはMIME typeを持たないので、セルの種類でプレビューを選ぶ。
 const DEFAULT_MIME_TYPES: Record<ResolvedMediaCell['type'], string> = {
   audio: 'audio/wav',
   image: 'image/png',
@@ -35,9 +35,9 @@ export function tableCellArtifact(projectId: string, cell: ResolvedMediaCell): A
     projectId,
     runId: cell.runId,
     path: cell.path,
-    // Table cells carry no MIME type or size; the previews decode from the content itself.
+    // 表のセルはMIME typeも大きさも持たない。プレビューは中身そのものからデコードする。
     mimeType: DEFAULT_MIME_TYPES[cell.type],
-    // 0 keeps the browser analysis, so a cell over 64MiB is fetched whole until cells carry a size.
+    // 0ならブラウザでの解析のままになるので、セルが大きさを持つまでは64MiBを超えるセルも丸ごと取得する。
     size: 0,
   });
 }

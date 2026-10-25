@@ -3,8 +3,8 @@ import { executionApi } from '../api/execution';
 import { useQuery, type QueryState } from './useQuery';
 
 /**
- * The Job that ran a Run (its newest, when the Run was enqueued again), or null for a Run that has
- * none. `enabled` keeps the lookup off until it is needed.
+ * Runを実行したJob（Runをもう一度キューに入れたときは最新のもの）。Jobの無いRunならnull。
+ * `enabled`で、必要になるまで問い合わせない。
  */
 export function useRunJob({
   projectId,

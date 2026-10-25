@@ -7,9 +7,9 @@ import { useQuery } from './useQuery';
 import { useQueryPolledWhileActive } from './useQueryPolledWhileActive';
 
 /**
- * The Runs that used a version, the baseline version's evaluations to compare them with, and the
- * promotion decisions made for the version. Pass detail undefined until the version is loaded;
- * baselineVersionId is the page's chosen baseline (useEvaluationBaseline).
+ * バージョンを使ったRun、それと比べる基準バージョンの評価、バージョンについて行われた昇格の判定。
+ * バージョンを読み込むまでdetailはundefinedを渡す。baselineVersionIdは、ページで選んだ
+ * 基準バージョン（useEvaluationBaseline）。
  */
 export function useModelVersionEvaluations(
   projectId: string,
@@ -22,7 +22,7 @@ export function useModelVersionEvaluations(
     (signal) => registryApi.modelVersionEvaluations(projectId, versionId!, { signal }),
     (page) => hasActiveRun(page.items),
   );
-  // The version compared with itself has no difference to show.
+  // バージョンをそれ自身と比べても、出す差が無い。
   const comparedVersionId = baselineVersionId !== versionId ? baselineVersionId : null;
   const baselineResults = useQuery({
     key: comparedVersionId ? `${projectId}:model-version:${comparedVersionId}:evaluations` : null,

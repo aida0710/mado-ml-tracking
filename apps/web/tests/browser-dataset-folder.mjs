@@ -1,6 +1,5 @@
-// Browser check of "フォルダから作る" on the Datasets page against an isolated API (port 47030)
-// and Vite (47031). It creates a temporary schema in mmt_test, so the shared development API and
-// DB are untouched.
+// 分離したAPI（port 47030）とVite（47031）を相手にした、Datasetsの画面の「フォルダから作る」の
+// ブラウザでの確認。mmt_testに一時的なschemaを作るので、共有の開発APIとDBには触れない。
 //
 //   (cd apps/web && MMT_WEB_API_PROXY_TARGET=http://127.0.0.1:47030 npx vite --port 47031 --strictPort --host 127.0.0.1) &
 //   MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55490/mmt_test \
@@ -8,7 +7,7 @@
 //   MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/dataset-folder \
 //   npx tsx apps/web/tests/browser-dataset-folder.mjs
 //
-// tsx is needed because the script starts the API from its TypeScript sources.
+// スクリプトがTypeScriptのソースからAPIを起動するので、tsxが要る。
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
@@ -25,11 +24,11 @@ import { serverTimeouts } from '../../api/src/http/serverTimeouts.ts';
 
 const API_PORT = 47030;
 const WEB_URL = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:47031';
-// One second of a 440 Hz tone keeps the spectrogram visible while the file stays small.
+// 440 Hzの音を1秒にして、ファイルを小さく保ちながらスペクトログラムが見えるようにする。
 const SAMPLE_RATE = 16000;
 const TONE_HZ = 440;
 const VERSION_TIMEOUT_MS = 60_000;
-// Above the 8 MiB single-PUT limit, so the file is sent in parts that can be held back and canceled.
+// 1回のPUTの上限8 MiBを超えるので、ファイルはpartに分けて送られ、partを止めたり取り消したりできる。
 const LARGE_FILE_BYTES = 24 * 1024 * 1024;
 const PART_DELAY_MS = 3000;
 
@@ -99,7 +98,7 @@ try {
     port: API_PORT,
     serverOptions: serverTimeouts(config).serverOptions,
   });
-  // Multipart uploads are verified by the finalizer, which the API process runs in the background.
+  // multipartのアップロードはfinalizerが検証する。finalizerはAPIのプロセスが裏で動かす。
   application.artifactUploadFinalizer.start();
   const folder = path.join(fileDirectory, 'speech-corpus');
   await mkdir(path.join(folder, 'train'), { recursive: true });
@@ -153,15 +152,15 @@ try {
   await page.getByRole('button', { name: '再生' }).waitFor();
   await screenshot(page, 'dataset-version-files-audio');
 
-  // A file canceled midway holds the version back; the dialog offers to leave it out or resend it.
+  // 途中で取り消したファイルがあるとバージョンを作らない。ダイアログは除くか送り直すかを選ばせる。
   const largeFolder = path.join(fileDirectory, 'with-large');
   await mkdir(path.join(largeFolder, 'sub'), { recursive: true });
   await writeFile(path.join(largeFolder, 'tone.wav'), sineWave());
   await writeFile(path.join(largeFolder, 'sub', 'big.bin'), Buffer.alloc(LARGE_FILE_BYTES, 7));
-  // Parts are held back so the large file is still sending when 取消 is pressed.
+  // partを遅らせ、取消を押すときにも大きなファイルがまだ送信中であるようにする。
   await page.route('**/artifact-uploads/*/parts/*', async (route) => {
     await new Promise((resolve) => setTimeout(resolve, PART_DELAY_MS));
-    // A canceled part's request is gone by the time the delay ends.
+    // 取り消したpartの要求は、遅らせている間に無くなっている。
     await route.continue().catch(() => undefined);
   });
   async function uploadAndCancelLarge() {
@@ -172,7 +171,7 @@ try {
     await folderDialog.getByRole('button', { name: 'アップロードしてバージョンを作成' }).click();
     const largeRow = folderDialog.locator('[data-testid="upload-queue-row"]', { hasText: 'big.bin' });
     await folderDialog.locator('[data-testid="upload-queue-row"][data-status="uploading"]', { hasText: 'big.bin' }).waitFor();
-    // Finished files are counted in the folder's summary rather than listed.
+    // 終わったファイルは一覧に並べず、フォルダのまとめの件数に数える。
     await folderDialog.getByText('1 / 2 件完了').waitFor({ timeout: VERSION_TIMEOUT_MS });
     await largeRow.getByRole('button', { name: '取消' }).click();
     await folderDialog.getByText('1件のファイルがアップロードされていないため').waitFor();

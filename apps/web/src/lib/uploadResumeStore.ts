@@ -1,9 +1,10 @@
-// Remembers open upload sessions in localStorage so a reload can resume the same file.
-// Storage can be missing or full (private windows, quota); then uploads still work, only without resume.
+// 開いているアップロードセッションをlocalStorageに覚え、再読み込みしても同じファイルを
+// 再開できるようにする。ストレージが無いか一杯のとき（プライベートウィンドウ、容量の上限）も、
+// 再開ができないだけでアップロードは動く。
 
 const STORAGE_KEY = 'mmt.artifactUploads.v1';
 
-/** What identifies "the same file" again after a reload: the browser gives no stable file handle. */
+/** 再読み込み後に「同じファイル」を見分ける材料。ブラウザからは固定のファイルハンドルが得られない。 */
 export interface UploadResumeRecord {
   uploadId: string;
   projectId: string;
@@ -27,7 +28,7 @@ function writeRecords(records: UploadResumeRecord[]) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
   } catch {
-    // Without storage the session can still be resumed from the server's open list.
+    // ストレージが無くても、サーバーにある開いたセッションの一覧から再開できる。
   }
 }
 
@@ -59,7 +60,7 @@ export function findResumeRecord(target: Omit<UploadResumeRecord, 'uploadId'>): 
   );
 }
 
-/** Sessions this browser started for a file with the same name, size and time, under any path. */
+/** このブラウザが、名前・大きさ・時刻が同じファイルで始めたセッション（パスは問わない）。 */
 export function findUploadIdsRecordedForFile(
   target: Pick<UploadResumeRecord, 'projectId' | 'runId' | 'name' | 'size' | 'lastModified'>,
 ): Set<string> {
@@ -77,7 +78,7 @@ export function findUploadIdsRecordedForFile(
   );
 }
 
-/** The file this browser was sending in the session, to tell the person which file to choose. */
+/** このブラウザがそのセッションで送っていたファイル。どのファイルを選べばよいかを利用者に伝えるため。 */
 export function findResumeRecordByUploadId(uploadId: string): UploadResumeRecord | null {
   return readRecords().find((record) => record.uploadId === uploadId) ?? null;
 }

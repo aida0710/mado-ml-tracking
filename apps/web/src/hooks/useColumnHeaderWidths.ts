@@ -1,9 +1,9 @@
 import { useLayoutEffect, useState, type RefObject } from 'react';
 
 /**
- * The drawn width of each column header (th[data-column]) of the table, by column key, kept current
- * as the table resizes. A column without a width the user set is as wide as its content, and its
- * resize handle still has to tell assistive technology how wide it is (aria-valuenow).
+ * 表の各列見出し（th[data-column]）の描画された幅を、列のキーごとに持ち、表の大きさが変わるたびに
+ * 更新する。利用者が幅を決めていない列は内容の幅になるが、そのリサイズのハンドルも支援技術に幅を
+ * 伝える必要がある（aria-valuenow）。
  */
 export function useColumnHeaderWidths(tableRef: RefObject<HTMLTableElement | null>): Record<string, number> {
   const [widths, setWidths] = useState<Record<string, number>>({});

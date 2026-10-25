@@ -1,7 +1,7 @@
 import { formatEnglishCount } from '../formatEnglishCount';
 import type { RunCheckpointSource } from '@mmt/contracts';
 
-// Run checkpoints and resuming training from one: the Run tab, the resume dialog and the Jobs page.
+// Runのcheckpointと、そこからの学習の再開。Runのタブ、再開のダイアログ、Jobsの画面。
 export const checkpointsText = {
   checkpoints: 'Checkpoint',
   checkpointEmpty:
@@ -28,7 +28,7 @@ export const checkpointsText = {
   checkpointSourceRun: 'Original run',
 } as const;
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const checkpointsTextTemplates = {
   checkpointResumedFromStep: (step: number) => `Resumed from checkpoint at step ${step}`,
   checkpointResumeMessage: (step: number) =>

@@ -8,8 +8,8 @@ import { trackingApi } from '../api/tracking';
 import { useQuery } from './useQuery';
 
 /**
- * Channels, rules, recent deliveries and experiments (for rule filters) of a Project's
- * notification settings. Pass null when the user is not a Project admin: the API refuses them.
+ * Projectの通知設定の通知先・ルール・最近の配信・Experiment（ルールの絞り込み用）。利用者が
+ * Project adminでなければnullを渡す。APIが断るため。
  */
 export function useNotificationSettings(projectId: string | null) {
   const channels = useQuery({ key: projectId && `${projectId}:notification-channels`, load: (signal) =>

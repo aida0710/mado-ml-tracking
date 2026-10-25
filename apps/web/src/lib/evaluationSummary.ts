@@ -24,9 +24,9 @@ export interface MetricValueAt {
 export interface MetricSummaryRow {
   metric: string;
   candidate: MetricValueAt | null;
-  // The baseline version's value under the same evaluation conditions as the candidate's value.
+  // 基準バージョンの値。候補の値と同じ評価条件のもの。
   baseline: MetricValueAt | null;
-  // Sign of candidate − baseline. Whether higher is better is left to promotion policies.
+  // 候補 − 基準の符号。大きい方がよいかどうかは昇格policyに任せる。
   deltaSign: DeltaSign | null;
 }
 
@@ -35,7 +35,7 @@ export interface EvaluationSummary {
   rows: MetricSummaryRow[];
 }
 
-// Only finished evaluation Runs count: a running Run's latest metrics are still partial.
+// 完了した評価Runだけを対象にする（実行中のRunの最新のメトリクスは、まだ途中の値）。
 export function finishedEvaluationRuns<T extends EvaluationRun>(runs: readonly T[]): T[] {
   return runs
     .filter((run) => run.kind === 'evaluation' && run.status === 'finished')
@@ -50,21 +50,21 @@ function compareNewestFirst(left: EvaluationRun, right: EvaluationRun): number {
   );
 }
 
-// Two evaluations are comparable when they used the same evaluation code and reference set,
-// the same conditions the API's baseline comparison matches on.
+// 同じ評価コードと正解セットを使った評価どうしを、比べられるものとする。APIの基準との比較で
+// 一致を求める条件と同じ。
 export function evaluationConditionKey(
   run: Pick<EvaluationRun, 'codeVersionId' | 'referenceDatasetVersionIds'>,
 ): string {
   return JSON.stringify([run.codeVersionId, [...run.referenceDatasetVersionIds].sort()]);
 }
 
-// NaN and infinities cannot be compared, so they are treated as missing rather than replaced.
+// NaNと無限大は比べられないので、別の値に置き換えず、値が無いものとして扱う。
 function metricValue(run: EvaluationRun, metric: string): number | null {
   const value: unknown = run.latestMetrics[metric];
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
-/** The summary metrics of the rules behind the Runs, in rule order, without duplicates. */
+/** Runを作った自動実行ルールの要約メトリクス。ルールの順に、重複を除いて並べる。 */
 export function collectSummaryMetrics(
   runs: readonly Pick<EvaluationRun, 'ruleId'>[],
   rules: readonly Pick<ModelAutomationRule, 'id' | 'summaryMetrics'>[],
@@ -78,9 +78,9 @@ export function collectSummaryMetrics(
 }
 
 /**
- * Summary metrics first in their given order, then every other metric name alphabetically. The
- * worker's system metrics (system.cpu.percent, …) describe the machine, not the evaluation, so they
- * are left out unless a rule names them as summary metrics.
+ * 要約メトリクスを指定の順で先に並べ、ほかのメトリクス名をアルファベット順で続ける。workerの
+ * システムメトリクス（system.cpu.percentなど）は評価ではなくマシンを表すので、ルールが
+ * 要約メトリクスに挙げていない限り外す。
  */
 export function orderMetricKeys(
   runs: readonly Pick<EvaluationRun, 'latestMetrics'>[],
@@ -115,9 +115,9 @@ export function deltaSign(candidate: number, baseline: number): DeltaSign {
 }
 
 /**
- * For each metric, the newest finished evaluation of the candidate that recorded it, and the
- * newest finished evaluation of the baseline under the same conditions. A metric with no value on
- * one side stays empty; nothing is taken from other conditions or filled in.
+ * メトリクスごとに、それを記録した候補の完了した評価のうち最も新しいものと、同じ条件での基準の
+ * 完了した評価のうち最も新しいもの。片方に値の無いメトリクスは空のままにし、ほかの条件から
+ * 持ってきたり埋めたりしない。
  */
 export function summarizeEvaluations(input: {
   candidateRuns: readonly EvaluationRun[];

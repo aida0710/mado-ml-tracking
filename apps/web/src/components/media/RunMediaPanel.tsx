@@ -32,7 +32,7 @@ function KeyList({
           key: 'key',
           header: text.mediaKey,
           priority: 'primary',
-          // A long key wraps, so the step range and count stay in the narrow left column.
+          // 長いキーは折り返し、stepの範囲と数を狭い左の列に収める。
           className: 'media-key-cell',
           render: (summary) => (
             <button type="button" className="link-button" onClick={() => onSelect(summary.key)}>
@@ -61,9 +61,9 @@ function KeyList({
 }
 
 /**
- * The Run's media tab: choose a key, then move through its recorded steps with the slider. The
- * step is kept when switching keys, snapped to the nearest step the new key recorded. The key and
- * step stay in the URL, so a link or a reload opens the same media.
+ * Runのメディアのタブ。キーを選び、スライダーで記録のあるstepを順に移動する。キーを替えても
+ * stepは保ち、新しいキーが記録した一番近いstepに合わせる。キーとstepはURLに残すので、リンクや
+ * 再読み込みで同じメディアが開く。
  */
 export function RunMediaPanel({ projectId, runId }: RunMediaPanelProps) {
   useLocale();
@@ -71,7 +71,7 @@ export function RunMediaPanel({ projectId, runId }: RunMediaPanelProps) {
   const { keys: keysQuery, selectedKey, items } = useRunMedia({ projectId, runId, chosenKey });
   const groups = useMemo(() => (items.value ? groupMediaByStep(items.value.items) : null), [items.value]);
   const steps = useMemo(() => (groups ? [...groups.keys()] : []), [groups]);
-  // The latest step by default: the most recent media is usually what one opens the tab for.
+  // 既定は最新のstep。タブを開くのは、たいてい一番新しいメディアを見るためである。
   const step = requestedStep === null ? (steps.at(-1) ?? null) : nearestStep(steps, requestedStep);
 
   return (
@@ -95,7 +95,7 @@ export function RunMediaPanel({ projectId, runId }: RunMediaPanelProps) {
                       <MediaStepSlider steps={steps} step={step} onStepChange={setStep} />
                       <p className="muted media-hint">{text.mediaStepHint}</p>
                       {list.truncated && <p className="notice">{text.mediaTruncated}</p>}
-                      {/* Keyed by step so the previous step's players unmount (and stop) on every move. */}
+                      {/* stepをkeyにして、動かすたびに前のstepのプレイヤーをアンマウントする（止める）。 */}
                       <MediaGallery key={`${selectedKey}:${step}`} projectId={projectId} items={groups!.get(step) ?? []} />
                     </>
                   )

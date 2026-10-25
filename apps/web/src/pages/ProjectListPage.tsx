@@ -51,10 +51,10 @@ function ProjectTable({ projects, empty }: { projects: Project[]; empty?: string
 }
 
 /**
- * What "/" shows when no Project opens by itself (lib/lastOpenedProject), right after archiving a
- * Project, or when the URL names a Project the user cannot open (saying whether it was archived):
- * their own Projects, the public ones they may enter, and creation. Nothing here is entered
- * without a click, so a first login does not land in someone else's work.
+ * 「/」が出す画面。Projectが自動で開かないとき（lib/lastOpenedProject）、Projectを
+ * アーカイブした直後、URLが利用者の開けないProjectを指すとき（アーカイブされたかどうかも
+ * 伝える）に出す。本人のProject、入れるpublicのProject、作成を並べる。クリックしない限り
+ * どこにも入らないので、初めてのログインで他人の作業の中に入ってしまうことはない。
  */
 export function ProjectListPage({
   projects,
@@ -63,9 +63,9 @@ export function ProjectListPage({
   onCreateProject,
 }: {
   projects: Project[];
-  /** The Project the URL named but the user cannot open. */
+  /** URLが指したが、利用者が開けないProject。 */
   unreachableProjectId?: string;
-  /** The Project the user has just archived from its settings. */
+  /** 利用者が設定からアーカイブしたばかりのProject。 */
   archivedProjectName: string | null;
   onCreateProject?: () => void;
 }) {

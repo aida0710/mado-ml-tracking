@@ -21,7 +21,7 @@ describe('自分の設定', () => {
     expect(personalSettingsScope(globalSiteDetails)).toBe('withAccount');
     expect(personalSettingsScope({ ...globalSiteDetails, siteAccountMode: 'shared' })).toBe('none');
     expect(personalSettingsScope(ownedSiteDetails)).toBe('withoutAccount');
-    // Everyone who may use a site knows its account mode, even without its settings.
+    // siteを使える人なら、そのsiteの設定が見えなくても、アカウント方式は分かる。
     expect(personalSettingsScope({ ...publicSiteForUser, submissionMode: 'automatic' })).toBe(
       'withAccount',
     );

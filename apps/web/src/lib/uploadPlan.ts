@@ -1,28 +1,28 @@
-// Pure planning for resumable Artifact uploads: part layout, resume diff, retry timing, and rate.
-// The limits mirror the /artifact-uploads contract in docs/api-contract.md.
+// 再開できるArtifactのアップロードを計画する純粋な処理（partの割り付け、再開の差分、再試行の
+// 間隔、転送速度）。上限はdocs/api-contract.mdの/artifact-uploadsの契約に合わせる。
 
 const MIB = 1024 * 1024;
-/** Files below this go through the single PUT: a session costs three extra requests. */
+/** これ未満のファイルは1回のPUTで送る。アップロードセッションを使うと要求が3回増えるため。 */
 export const SINGLE_PUT_MAX_BYTES = 8 * MIB;
-/** Same as the API default, so a session created without partSize would have the same layout. */
+/** APIの既定と同じ。partSizeなしで作ったアップロードセッションも同じ割り付けになる。 */
 export const DEFAULT_PART_SIZE_BYTES = 16 * MIB;
-/** The API rejects sessions with more parts (422 too_many_parts). */
+/** これより多いpartのアップロードセッションは、APIが拒否する（422 too_many_parts）。 */
 export const MAX_PART_COUNT = 10_000;
-/** One failed part is retried this many times in total before the file stops as failed. */
+/** 失敗した1つのpartを合計でこの回数まで試す。それでも駄目ならファイルを失敗として止める。 */
 export const MAX_PART_ATTEMPTS = 5;
 const RETRY_BASE_DELAY_MS = 1000;
-// A dropped network usually returns within seconds; waiting longer only delays the failure notice.
+// 切れたネットワークはたいてい数秒で戻る。それより長く待っても、失敗の知らせが遅れるだけ。
 const RETRY_MAX_DELAY_MS = 30_000;
-/** Rate is averaged over this window so one slow progress event does not swing the estimate. */
+/** 転送速度はこの時間の範囲で平均し、1回の遅い進捗のイベントで見積もりが振れないようにする。 */
 export const TRANSFER_RATE_WINDOW_MS = 5000;
 
 export type UploadMethod = 'single' | 'multipart';
 
 export interface PartRange {
   partNumber: number;
-  /** Inclusive byte offset. */
+  /** 始点のバイト位置（含む）。 */
   start: number;
-  /** Exclusive byte offset. */
+  /** 終点のバイト位置（含まない）。 */
   end: number;
 }
 
@@ -30,13 +30,13 @@ export function chooseUploadMethod(fileSize: number): UploadMethod {
   return fileSize < SINGLE_PUT_MAX_BYTES ? 'single' : 'multipart';
 }
 
-/** Grows the part size in whole MiB only when the default would exceed MAX_PART_COUNT parts. */
+/** partの大きさは、既定のままではMAX_PART_COUNTを超えるときだけ、MiB単位で大きくする。 */
 export function choosePartSize(fileSize: number): number {
   const smallestAllowed = Math.ceil(Math.ceil(fileSize / MAX_PART_COUNT) / MIB) * MIB;
   return Math.max(DEFAULT_PART_SIZE_BYTES, smallestAllowed);
 }
 
-/** Every part has partSize bytes except the last, which holds the remainder. */
+/** どのpartもpartSizeバイトで、最後のpartだけが残りを持つ。 */
 export function planParts(fileSize: number, partSize: number): PartRange[] {
   if (partSize <= 0) throw new RangeError('partSize must be positive');
   const parts: PartRange[] = [];
@@ -55,23 +55,23 @@ export function sumPartBytes(parts: PartRange[]): number {
 }
 
 /**
- * Network loss (status 0), timeouts, throttling, and server errors are worth another attempt.
- * A part checksum mismatch means the bytes changed on the way, so sending them again can succeed.
- * Other 4xx answers (closed or expired session, size mismatch) will not change by retrying.
+ * ネットワークの切断（status 0）、タイムアウト、スロットリング、サーバーのエラーは試し直す価値がある。
+ * partのチェックサムの不一致は途中でバイトが変わったことを表すので、送り直せば成功しうる。
+ * ほかの4xxの応答（閉じた・期限切れのセッション、大きさの不一致）は、試し直しても変わらない。
  */
 export function isRetryableFailure({ status, code }: { status: number; code?: string }): boolean {
   if (status === 0 || status === 408 || status === 429 || status >= 500) return true;
   return code === 'part_checksum_mismatch';
 }
 
-/** `attempt` is the number of attempts already made, starting at 1. */
+/** `attempt`はすでに試した回数で、1から始まる。 */
 export function canRetry(attempt: number): boolean {
   return attempt < MAX_PART_ATTEMPTS;
 }
 
 /**
- * Exponential backoff with equal jitter: half the delay is fixed and half is random, so parallel
- * parts that failed together do not all come back at the same instant.
+ * equal jitterを付けた指数バックオフ。待ち時間の半分は固定、半分はランダムにして、一緒に失敗した
+ * 並列のpartが同じ瞬間に一斉に戻ってこないようにする。
  */
 export function retryDelayMs(attempt: number, random: () => number = Math.random): number {
   const exponential = Math.min(RETRY_MAX_DELAY_MS, RETRY_BASE_DELAY_MS * 2 ** (attempt - 1));
@@ -80,11 +80,11 @@ export function retryDelayMs(attempt: number, random: () => number = Math.random
 
 export interface TransferSample {
   at: number;
-  /** Total bytes confirmed or in flight for the file at `at`. */
+  /** `at`の時点で、そのファイルについて確定したか送信中のバイトの合計。 */
   bytes: number;
 }
 
-/** Keeps the samples inside the rate window plus the one just before it, as the window's base. */
+/** 速度の時間の範囲に入るサンプルと、その直前の1つ（範囲の起点）を残す。 */
 export function recordTransferSample(samples: TransferSample[], sample: TransferSample): TransferSample[] {
   const windowStart = sample.at - TRANSFER_RATE_WINDOW_MS;
   const firstInside = samples.findIndex((item) => item.at >= windowStart);
@@ -92,7 +92,7 @@ export function recordTransferSample(samples: TransferSample[], sample: Transfer
   return [...kept, sample];
 }
 
-/** Bytes per second across the samples, or null until two samples are apart in time. */
+/** サンプル全体での毎秒のバイト数。時刻の違う2つのサンプルがそろうまではnull。 */
 export function estimateTransferRate(samples: TransferSample[]): number | null {
   const first = samples[0];
   const last = samples.at(-1);
@@ -105,7 +105,7 @@ export function estimateRemainingSeconds(remainingBytes: number, bytesPerSecond:
   return Math.ceil(remainingBytes / bytesPerSecond);
 }
 
-/** Joins the destination folder and the file's path inside the chosen folder with single slashes. */
+/** 送り先のフォルダと、選んだフォルダの中でのファイルのパスを、1つのスラッシュでつなぐ。 */
 export function joinArtifactPath(prefix: string, relativePath: string): string {
   return [prefix, relativePath]
     .flatMap((segment) => segment.split('/'))

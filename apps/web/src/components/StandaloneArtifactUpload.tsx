@@ -4,7 +4,7 @@ import { ArtifactUploadDialog } from '../dialogs/ArtifactUploadDialog';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-/** Uploads Artifacts without a Run; each finished file shows its artifact:// URI to copy. */
+/** Runの無いArtifactをアップロードする。終わったファイルにはコピー用のartifact:// URIを出す。 */
 export function StandaloneArtifactUpload({ projectId }: { projectId: string }) {
   useLocale();
   const [isOpen, setIsOpen] = useState(false);

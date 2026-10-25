@@ -1,24 +1,24 @@
 import type { Comment, ProjectRole } from '@mmt/contracts';
 import { canEditProject, canManageProject } from './permissions';
 
-// Mirrors commentService on the API so the thread hides actions it would reject.
+// APIのcommentServiceと同じ判定にし、APIが拒む操作をスレッドに出さない。
 
 export interface CommentViewer {
   userId: string;
   role: ProjectRole;
 }
 
-/** Posting and replying need the editor role; a viewer only reads. */
+/** 投稿と返信にはeditorのロールが要る。viewerは読むだけ。 */
 export function canPostComment(viewer: CommentViewer): boolean {
   return canEditProject(viewer.role);
 }
 
-/** Only the author edits, and only while they can still post in the Project. */
+/** 編集できるのは書いた本人だけで、そのProjectにまだ投稿できる間に限る。 */
 export function canEditComment(comment: Comment, viewer: CommentViewer): boolean {
   return !comment.deleted && comment.author.id === viewer.userId && canEditProject(viewer.role);
 }
 
-/** The author (editor or above) or a Project admin may delete. */
+/** 削除できるのは書いた本人（editor以上）かProject admin。 */
 export function canDeleteComment(comment: Comment, viewer: CommentViewer): boolean {
   if (comment.deleted) return false;
   if (canManageProject(viewer.role)) return true;

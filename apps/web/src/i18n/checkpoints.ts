@@ -2,7 +2,7 @@ import * as english from './en/checkpoints';
 import { localized } from './localized';
 import type { RunCheckpointSource } from '@mmt/contracts';
 
-// Run checkpoints and resuming training from one: the Run tab, the resume dialog and the Jobs page.
+// Runのcheckpointと、そこからの学習の再開。Runのタブ、再開のダイアログ、Jobsの画面。
 export const checkpointsText = localized({
   checkpoints: 'Checkpoint',
   checkpointEmpty:
@@ -28,7 +28,7 @@ export const checkpointsText = localized({
   checkpointSourceRun: '元のRun',
 } as const, english.checkpointsText);
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const checkpointsTextTemplates = localized({
   checkpointResumedFromStep: (step: number) => `step ${step} のcheckpointから再開`,
   checkpointResumeMessage: (step: number) =>

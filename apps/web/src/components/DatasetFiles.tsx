@@ -14,8 +14,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * The files of an 'artifacts' DatasetVersion as a folder tree, with the chosen file's preview
- * below it; on a narrow screen the preview takes the tree's place until going back.
+ * 'artifacts'のDatasetVersionのファイルをフォルダのツリーで示し、その下に選んだファイルの
+ * プレビューを出す。狭い画面では、戻るまでプレビューがツリーの場所を占める。
  */
 export function DatasetFiles({ version }: { version: DatasetVersion }) {
   useLocale();
@@ -68,7 +68,7 @@ export function DatasetFiles({ version }: { version: DatasetVersion }) {
   );
 }
 
-/** The tree entry carries the dataset path; the preview needs the stored Artifact itself. */
+/** ツリーの項目はデータセットのパスを持つが、プレビューには保存されたArtifactそのものが要る。 */
 function DatasetFilePreview({ entry }: { entry: Artifact }) {
   useLocale();
   const artifact = useQuery({ key: `${entry.projectId}:artifact:${entry.id}`, load: (signal) =>

@@ -9,7 +9,8 @@ const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'],
   ...(process.env.MMT_CHROMIUM_PATH ? { executablePath: process.env.MMT_CHROMIUM_PATH } : {}) });
 const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 960 } });
 const api = createBrowserApi();
-// Repeat quick switches to catch model events arriving with the previous file's listener.
+// ファイルの素早い切り替えを繰り返し、前のファイルのリスナーにMonacoのmodelのイベントが
+// 届く不具合を捕まえる。
 const RAPID_FILE_SWITCH_COUNT = 3;
 api.state.loggedIn = true;
 const commit = 'a'.repeat(40);
@@ -101,8 +102,9 @@ page.on('worker', (worker) => workerUrls.push(worker.url()));
 const projectBase = `${process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182'}/projects/${api.state.project.id}`;
 const dialog = () => page.getByRole('dialog').last();
 const fill = (label, value) => dialog().getByLabel(label).fill(value);
-// getByLabel matches part of a label, and 'バージョン' is also in '編集元のコードバージョン'; the exact accessible
-// name tells the two apart (the label text with its required mark is 'バージョン *', so exact getByLabel fails).
+// getByLabelはラベルの一部でも一致し、'バージョン'は'編集元のコードバージョン'にも含まれる。
+// アクセシブルネームの完全一致で2つを区別する（必須の印を含むラベルの文字は'バージョン *'なので、
+// getByLabelの完全一致では見つからない）。
 const versionField = () => dialog().getByRole('textbox', { name: 'バージョン', exact: true });
 const clickSave = () => dialog().getByTestId('code-version-save').click();
 try {
@@ -223,7 +225,7 @@ try {
   await fill('名前', 'Browser Task');
   await dialog().getByLabel('コードバージョン').selectOption(smoke.id);
   await dialog().getByLabel('コンピュータ').selectOption(api.state.targets[0].id);
-  // No GPU is checked until one is chosen: the Task runs on the CPU.
+  // 選ぶまではどのGPUにもチェックが入らない。そのままならTaskはCPUで動く。
   assert.equal(
     await dialog().getByRole('group', { name: 'GPU ID' }).getByRole('checkbox', { checked: true }).count(),
     0,
@@ -270,7 +272,7 @@ try {
   console.log('Workbench: computer edit/toggle with failure, built-in Mado settings/check/toggle');
   await page.goto(new URL('/settings/computers', projectBase).href);
   await page.getByRole('button', { name: 'コンピュータを編集', exact: true }).click();
-  // An ssh computer is edited in two tabs, 接続 and 接続後の設定, saved together.
+  // sshのコンピュータは「接続」と「接続後の設定」の2つのタブで編集し、まとめて保存する。
   await page.getByRole('tab', { name: '接続後の設定', exact: true }).click();
   assert.equal(await dialog().getByLabel('GPU ID（1行に1件）').inputValue(), '0\n1');
   await page.getByRole('tab', { name: '接続', exact: true }).click();

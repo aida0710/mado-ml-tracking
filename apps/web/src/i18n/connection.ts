@@ -1,7 +1,7 @@
 import * as english from './en/connection';
 import { localized } from './localized';
-// The guide to recording from the Mado Python SDK and the MLflow 3 SDK, on the Project settings
-// page and the Experiments page.
+// Python SDK（mado-tracking）とMLflow 3のSDKから記録する手順の案内。プロジェクト設定と
+// Experimentsの画面に出す。
 export const connectionText = localized({
   recordingConnection: 'SDK・MLflow 3から接続',
   recordingConnectionIssueToken: 'このProject用のAPI tokenを発行',

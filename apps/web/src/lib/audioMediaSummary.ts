@@ -1,15 +1,15 @@
 import type { ArtifactMediaInfo } from '@mmt/contracts';
 
-/** The audio properties the viewer lists, from decoding or, before that, from the stored header. */
+/** ビューアが一覧に出す音声の属性。デコードした値か、デコード前は保存されたヘッダーの値。 */
 export interface AudioMediaSummary {
   sampleRate: number;
-  /** False when the decoder could not read the file's rate and reports its own output rate. */
+  /** デコーダーがファイルのレートを読めず、自分の出力のレートを返したときはfalse。 */
   sampleRateFromFile: boolean;
   channelCount: number;
   durationSeconds: number;
 }
 
-/** Decoded values win: they describe what is actually played even if the header disagrees. */
+/** デコードした値を優先する。ヘッダーと食い違っても、実際に再生されるものを表しているため。 */
 export function summarizeAudioMedia(
   decoded: AudioMediaSummary | null,
   header: ArtifactMediaInfo | null,

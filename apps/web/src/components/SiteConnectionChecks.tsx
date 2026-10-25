@@ -11,7 +11,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { siteConnectionCheckStatusLabels } from '../i18n/siteComputers';
 
-// Reuses the Job status colors: succeeded is green, failed red, a waiting check neutral.
+// Jobの状態の色を使い回す。成功は緑、失敗は赤、待っている確認は中立の色。
 const checkBadgeClass: Record<SiteConnectionCheckStatus, string> = {
   queued: 'status-neutral',
   succeeded: 'status-success',
@@ -19,9 +19,9 @@ const checkBadgeClass: Record<SiteConnectionCheckStatus, string> = {
 };
 
 /**
- * Asks the launcher to log in once with the key and account (one's own, or the shared account's)
- * and lists the newest results, polling while the newest one waits for the launcher. A check
- * needs the key the launcher made, so it waits for that key.
+ * 鍵とアカウント（自分のもの、または共有アカウントのもの）で1回ログインするようランチャーに頼み、
+ * 最新の結果を並べる。最新の結果がランチャーを待っている間はポーリングする。確認にはランチャーが
+ * 作った鍵が要るので、その鍵ができるのを待つ。
  */
 export function SiteConnectionChecks({
   targetId,
@@ -32,12 +32,12 @@ export function SiteConnectionChecks({
   targetId: string;
   personal: boolean;
   userId: string;
-  /** The launcher has made the account's key; until then the API refuses a check. */
+  /** ランチャーがアカウントの鍵を作った。それまではAPIが確認を断る。 */
   isKeyReady: boolean;
 }) {
   useLocale();
   const mutation = useMutation();
-  // A global administrator may be sent other people's checks too; only this account's are shown.
+  // 全体管理者にはほかの人の確認も届くことがあるので、このアカウントのものだけを表示する。
   const accountChecks = (checks: SiteConnectionCheck[]) =>
     checks.filter((check) => check.userId === (personal ? userId : null));
   const checks = useQueryPolledWhileActive(

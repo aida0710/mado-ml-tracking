@@ -18,7 +18,7 @@ const serviceAccountPath = (projectId: string, serviceAccountId?: string) =>
 const groupBindingPath = (projectId: string, group?: string) =>
   `${projectPath(projectId)}/group-bindings${group ? `/${encodeId(group)}` : ''}`;
 
-/** Who may use a Project: direct members, Authentik group bindings, and the lookups behind them. */
+/** Projectを使える人（直接のメンバー、Authentikのgroupへの付与）と、その裏で使う検索。 */
 export const accessApi = {
   members: (projectId: string, signal?: AbortSignal) =>
     requestItems<ProjectMember>(memberPath(projectId), signal),
@@ -34,7 +34,7 @@ export const accessApi = {
     request<unknown>(groupBindingPath(projectId, group), { method: 'DELETE' }),
   searchUsers: (query: string, signal?: AbortSignal) =>
     requestItems<UserSearchResult>(`/users?${new URLSearchParams({ query })}`, signal),
-  /** Group names already seen on users, offered as candidates when adding a binding. */
+  /** ユーザーにこれまで付いたことのあるgroup名。groupへの付与を足すときの候補に出す。 */
   groups: (signal?: AbortSignal) => requestItems<string>('/auth/groups', signal),
   serviceAccounts: (projectId: string, signal?: AbortSignal) =>
     requestItems<ServiceAccount>(serviceAccountPath(projectId), signal),
@@ -54,7 +54,7 @@ export const accessApi = {
       `${serviceAccountPath(projectId, serviceAccountId)}/tokens`,
       jsonRequest('POST', body),
     ),
-  /** Every token limited to the Project, whoever owns it. Values are never returned. */
+  /** Projectに限定したすべてのtoken（持ち主を問わない）。値は返さない。 */
   projectTokens: (projectId: string, signal?: AbortSignal) =>
     requestItems<TokenSummary>(`${projectPath(projectId)}/tokens`, signal),
 };

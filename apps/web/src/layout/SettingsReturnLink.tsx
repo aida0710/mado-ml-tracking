@@ -6,13 +6,13 @@ import { useLocale } from '../i18n/useLocale';
 import { settingsShellTextTemplates } from '../i18n/settingsShell';
 
 /**
- * Above every 全体設定 screen: back to the Project screen 全体設定 was opened from (the Jobs a
- * user was on, not only the Project's start page the app name leads to). Hidden when 全体設定 was
- * opened directly.
+ * 全体設定のどの画面にも上に出す、全体設定を開く前のProjectの画面へ戻るリンク（アプリ名から
+ * 行けるProjectの最初の画面に限らず、利用者が見ていたJobsなどへ戻る）。全体設定を直接開いた
+ * ときは出さない。
  */
 export function SettingsReturnLink() {
   useLocale();
-  // Read once: moving between 全体設定 sections keeps the same way back.
+  // 1回だけ読む。全体設定の中で画面を移っても、戻り先は変わらない。
   const [screen] = useState(readSettingsReturnScreen);
   if (!screen) return null;
   return (

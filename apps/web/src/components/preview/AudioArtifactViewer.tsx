@@ -29,9 +29,9 @@ import { artifactsTextTemplates } from '../../i18n/artifacts';
 
 const WAVEFORM_HEIGHT = 88;
 const SPECTROGRAM_HEIGHT = 140;
-// The Nyquist label sits just inside the spectrogram's top edge.
+// ナイキスト周波数のラベルは、スペクトログラムの上端のすぐ内側に置く。
 const FREQUENCY_LABEL_OFFSET = 6;
-// Pointer travel below this is a click (seek); more is a drag that sets the loop range.
+// ポインタの移動がこれ未満ならクリック（シーク）、それ以上ならループの範囲を決めるドラッグ。
 const DRAG_THRESHOLD_PX = 4;
 const KEYBOARD_SEEK_SECONDS = 1;
 
@@ -79,7 +79,7 @@ export function AudioArtifactViewer({
   onAudioElement,
 }: {
   artifact: Artifact;
-  /** Called when this player starts, so a comparison can pause the others. */
+  /** このプレイヤーが再生を始めたときに呼ぶ。比較の画面でほかのプレイヤーを止められるようにする。 */
   onPlay?: () => void;
   onAudioElement?: (element: HTMLAudioElement | null) => void;
 }) {
@@ -102,7 +102,7 @@ export function AudioArtifactViewer({
     view: columns > 0 ? { channel, range: visibleRange, columns, scale } : null,
   });
   const headerMediaInfo = useArtifactMediaInfo(artifact);
-  // Files over the browser's analysis limit use the waveform the preview worker generated.
+  // ブラウザで解析できる上限を超えたファイルは、プレビューのworkerが作った波形を使う。
   const serverPreview = useServerAudioPreview(artifact, analysis.status === 'too_large');
 
   useEffect(() => {
@@ -115,8 +115,8 @@ export function AudioArtifactViewer({
     setMediaRevision((value) => value + 1);
     analysis.retry();
   };
-  // The browser's own controls show whole seconds and would disagree with the toolbar's time, so
-  // they appear only where the viewer has no toolbar (files too large to analyze).
+  // ブラウザ自身の操作部は秒単位でしか時間を出さず、ツールバーの時刻と食い違うので、
+  // ツールバーの無いビューア（解析するには大きすぎるファイル）でだけ出す。
   const audioElement = (withControls: boolean) => (
     <audio
       key={mediaRevision}
@@ -152,7 +152,7 @@ export function AudioArtifactViewer({
 
   const info = analysis.status === 'ready' ? analysis.info : null;
   const duration = info?.durationSeconds ?? 0;
-  // Until decoding finishes, the stored header values fill the listed properties and total time.
+  // デコードが終わるまでは、保存してあるヘッダーの値で、並べる項目と全体の長さを埋める。
   const summary = summarizeAudioMedia(info, headerMediaInfo);
   const range = visibleRange ?? { startSeconds: 0, endSeconds: duration };
   const timeAtPointer = (event: PointerEvent<HTMLDivElement>) => {
@@ -288,7 +288,7 @@ export function AudioArtifactViewer({
         )}
         {info && <div className="audio-playhead" style={{ left: percent(playback.currentTime) }} />}
       </div>
-      {/* Outside the timeline, so the ruler adds nothing to what a touch on the waveform does. */}
+      {/* タイムラインの外に置き、波形に触れたときの動作に目盛りが何も加えないようにする。 */}
       {info && <AudioTimeAxis range={range} />}
       {analysis.status === 'error' && (
         <ErrorNotice

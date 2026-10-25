@@ -10,7 +10,7 @@ const kindHints: Record<ComputeTargetExecutor, string> = {
   get site() { return text.computerKindSiteHint; },
 };
 
-/** SSH, Local or Site: how Jobs reach the computer. `kinds` are those one may choose here. */
+/** SSH、Local、Site。Jobがコンピュータへ届く経路。`kinds`はここで選べる種類。 */
 export function ComputerKindPicker({
   kinds,
   value,

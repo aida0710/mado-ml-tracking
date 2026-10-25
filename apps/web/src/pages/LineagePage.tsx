@@ -11,7 +11,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { lineageText, lineageTextTemplates } from '../i18n/lineage';
 
-// Two relations each way reach from data through its Runs to the models they made.
+// 前後それぞれ2つの関係をたどれば、データからそのRunを経て、Runが作ったモデルまで届く。
 const FOCUS_DEPTH = 2;
 
 export function LineagePage() {

@@ -9,9 +9,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
- * A folder upload as one bar for the whole folder, then only the files to watch or act on
- * (sending, paused, failed). Waiting and finished files are counted, not listed, so a failure
- * is not lost among hundreds of rows.
+ * フォルダのアップロードを、フォルダ全体で1本のバーと、見守るか操作が要るファイル（送信中、
+ * 一時停止、失敗）だけで示す。待機中と完了したファイルは並べずに数だけを出し、失敗が何百行に
+ * 埋もれないようにする。
  */
 export function FolderUploadProgress({
   entries,

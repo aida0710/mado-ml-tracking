@@ -1,21 +1,21 @@
 import { text } from '../i18n/catalog';
 import { launchersTextTemplates } from '../i18n/launchers';
 
-// Example paths; the launcher's host decides the real ones.
+// 例のパス。実際のパスはランチャーのホストが決める。
 const EXAMPLE_TOKEN_FILE = '/run/secrets/mado-tracking-launcher/launcher.token';
 const EXAMPLE_STATE_DIRECTORY = '/var/lib/mado-tracking-launcher';
 const EXAMPLE_REGISTRY_SECRET_FILE = '/run/secrets/mado-tracking-launcher/registry.json';
-// How often the launcher reads its configuration and claims submissions, as in deploy/sites.
+// ランチャーが設定を読み、投入を引き受ける間隔。deploy/sitesと同じ。
 const EXAMPLE_POLL_SECONDS = 10;
-// Replaced in the comment line and escaped in TOML strings, where they would break the file.
-// eslint-disable-next-line no-control-regex -- matching control characters is the point here
+// コメントの行では置き換え、TOMLの文字列ではエスケープする。そのままだとファイルが壊れる。
+// eslint-disable-next-line no-control-regex -- 制御文字に一致させるのがここの目的
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/g;
 const UNICODE_ESCAPE_DIGITS = 4;
 const HEXADECIMAL = 16;
 
 /**
- * launcher.toml for a new launcher. It holds only what the launcher needs to start; its sites,
- * keys and job shells come from the Web. The token is not written here but into token_file.
+ * 新しいランチャーのlauncher.toml。ランチャーが起動に必要なものだけを持ち、site・鍵・job shellは
+ * Webから受け取る。tokenはここには書かず、token_fileに書く。
  */
 export function buildLauncherConfigExample({
   apiUrl,
@@ -40,7 +40,7 @@ export function buildLauncherConfigExample({
   return `${lines.join('\n')}\n`;
 }
 
-// A TOML basic string: backslashes and quotes escaped, control characters as \uXXXX.
+// TOMLの基本文字列。バックスラッシュと引用符はエスケープし、制御文字は\uXXXXにする。
 function tomlString(value: string): string {
   const escaped = value
     .replace(/[\\"]/g, (character) => `\\${character}`)

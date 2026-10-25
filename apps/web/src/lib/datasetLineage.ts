@@ -1,6 +1,6 @@
 import type { LineageGraph } from '@mmt/contracts';
 
-/** Follows confirmed parents once, including shared ancestors, without inferring missing stages. */
+/** 確定した親を1回ずつたどる。共通の祖先も含め、欠けた段階は推測しない。 */
 export function buildDatasetAncestors(input: {
   versionIds: readonly string[];
   parents: ReadonlyMap<string, readonly string[]>;

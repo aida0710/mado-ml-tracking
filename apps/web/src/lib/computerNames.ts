@@ -3,10 +3,10 @@ import type { ComputeTargetOverview } from '@mmt/contracts';
 type NamedComputer = Pick<ComputeTargetOverview, 'id' | 'name'>;
 
 /**
- * The name of the computer `targetId`: from `known` (the computers a screen already has, such as
- * the ones usable in the Project) first, then from the list of every computer (GET
- * /targets/overview). '' while that list has not arrived, so a table does not flash the raw id,
- * and `deletedLabel` when the computer is in neither, as it was deleted.
+ * コンピュータ`targetId`の名前。まず`known`（画面が既に持っているコンピュータ。たとえばProjectで
+ * 使えるもの）から探し、次に全コンピュータの一覧（GET /targets/overview）から探す。その一覧が
+ * 届くまでは''を返し、表に生のidが一瞬出ないようにする。どちらにも無ければ削除されたものとして
+ * `deletedLabel`を返す。
  */
 export function computerNameOf({ known, computers, targetId, deletedLabel }: {
   known: readonly NamedComputer[];

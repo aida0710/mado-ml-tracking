@@ -3,8 +3,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * Links at the top of the long Project settings page to each of its parts, so the archive or the
- * audit log is one tap away instead of several screens of scrolling (on a phone above all).
+ * 長いProjectの設定のページの先頭に置く、各部分へのリンク。アーカイブや監査ログへ、何画面もの
+ * スクロールでなく1回のタップで行けるようにする（とくにスマートフォンで）。
  */
 export function ProjectSettingsContents({ sections }: { sections: ProjectSettingsSection[] }) {
   useLocale();

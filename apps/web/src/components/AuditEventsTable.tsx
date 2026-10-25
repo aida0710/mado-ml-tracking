@@ -12,7 +12,7 @@ const outcomeLabels: Record<AuditEvent['outcome'], string> = {
   get failure() { return accessText.auditOutcomeFailure; },
 };
 
-/** Audit events, newest first. `showProject` adds the Project column for the global log. */
+/** 監査ログの記録を新しい順に並べる。全体のログでは`showProject`でProjectの列を足す。 */
 export function AuditEventsTable({
   events,
   hasMore,
@@ -65,8 +65,8 @@ export function AuditEventsTable({
             priority: 'primary',
             header: accessText.auditAction,
             className: 'audit-label',
-            // A refusal or failure is marked beside the action, so it shows in the row on a phone
-            // too, where the outcome column moves into the opened row.
+            // 拒否と失敗は操作の横に印を付ける。スマートフォンでは結果の列が開いた行の中へ移るので、
+            // こうすれば閉じた行にも出る。
             render: (event) => (
               <span title={event.action}>
                 {auditActionLabel(event.action)}

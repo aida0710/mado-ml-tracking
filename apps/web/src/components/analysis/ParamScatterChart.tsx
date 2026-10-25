@@ -16,7 +16,7 @@ import { text } from '../../i18n/catalog';
 
 export interface ParamScatterChartProps {
   rows: ChartRunRow[];
-  /** Params and metrics that can be plotted; x and y take numeric ones. */
+  /** 描けるパラメータとメトリクス。xとyには数値のものを使う。 */
   fields: AxisDefinition[];
   defaultX?: string;
   defaultY?: string;
@@ -35,10 +35,10 @@ interface ScatterPoint {
 }
 
 const DEFAULT_HEIGHT = 380;
-// Large enough to hit with a pointer while 5000 points still leave gaps between them.
+// ポインタで当てられる大きさで、5000個の点でも点どうしの間に隙間が残る。
 const POINT_RADIUS = 4;
 const AXIS_WIDTH = 72;
-// Without a color field every point takes one mid step of the ramp.
+// 色の項目が無いときは、どの点もカラースケールの中ほどの1色にする。
 const UNCOLORED_RAMP_POSITION = 0.6;
 
 function FieldSelect({
@@ -70,7 +70,7 @@ function FieldSelect({
   );
 }
 
-/** Two params or metrics of every Run against each other, colored by a third value. */
+/** すべてのRunの2つのパラメータまたはメトリクスを互いに比べて描き、3つ目の値で色を付ける。 */
 export function ParamScatterChart({
   rows,
   fields,
@@ -150,7 +150,7 @@ export function ParamScatterChart({
       ) : (
         <div className="scatter-chart-canvas" style={{ height }}>
           <ResponsiveContainer width="100%" height="100%">
-            {/* recharts' keyboard layer: one focus stop whose arrow keys walk the points in the tooltip. */}
+            {/* rechartsのキーボード操作。フォーカスは1か所に止まり、矢印キーでツールチップに出す点を順にたどる。 */}
             <ScatterChart margin={{ top: 12, right: 24, bottom: 24, left: 12 }} title={`${labelOf(x)} × ${labelOf(y)}`}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis

@@ -7,13 +7,12 @@ import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 import { joinSentences } from '../../i18n/textJoining';
 
-// A Run list draws up to 200 lines; a screen reader hears this many and the count of the rest.
+// Runの一覧は最大200本を描く。スクリーンリーダーにはこの本数までを読ませ、残りは本数だけ伝える。
 const SUMMARIZED_LINE_COUNT = 5;
 
 /**
- * What a screen reader hears after the chart's name (its aria-describedby): each drawn line's last
- * value and range, then the keys the chart answers. Hidden on screen, where the lines and the
- * footer's hint say the same.
+ * スクリーンリーダーが図の名前の後に読む説明（aria-describedby）。描いた各線の最後の値と範囲、
+ * 続いて図が反応するキー。画面では隠す。画面では線とフッターのヒントが同じことを伝える。
  */
 export function ChartDescription({
   lines,

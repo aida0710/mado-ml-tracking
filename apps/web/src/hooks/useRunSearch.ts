@@ -4,16 +4,16 @@ import { RequestError } from '../api/http';
 import { formatErrorMessage } from '../lib/errorMessage';
 import { EXECUTION_POLL_MS, useQuery, type QueryState } from './useQuery';
 
-// The API's answer to a filter it cannot run (an unsupported field or comparison).
+// APIが実行できない絞り込み（対応していない項目や比較）に返す応答。
 const FILTER_REJECTED_STATUS = 400;
 const FILTER_REJECTED_CODE = 'invalid_request';
 
 type RunSearchOutcome = { page: RunSearchPage } | { rejection: RequestError };
 
 /**
- * One page of the server-side Run search, refreshed while Runs are executing. A filter the API
- * refuses comes back as `filterRejection` instead of an error of `runs`: searching again cannot fix
- * it, so it is shown where the filter is typed rather than with a retry button.
+ * サーバー側でのRunの検索の1ページ。Runが実行中の間は更新する。APIが断った絞り込みは、`runs`の
+ * エラーではなく`filterRejection`として返す。検索し直しても直らないので、再試行のボタンと一緒に
+ * ではなく、絞り込みを入力する場所に出す。
  */
 export function useRunSearch(
   projectId: string,
@@ -39,7 +39,7 @@ export function useRunSearch(
   const result = outcome.value;
   return {
     runs: { ...outcome, value: result && 'page' in result ? result.page : undefined },
-    // Put into words on each render (useQuery follows the display language), not when it arrived.
+    // 届いたときではなく、レンダリングのたびに文にする（useQueryは表示言語に従う）。
     filterRejection: result && 'rejection' in result ? formatErrorMessage(result.rejection) : null,
   };
 }

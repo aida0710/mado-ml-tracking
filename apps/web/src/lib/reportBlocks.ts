@@ -18,27 +18,27 @@ import { groupChartSeries, runChartSeries, seriesForMetricKeys } from './metricS
 import { metricFieldKey, paramFieldKey } from './runAnalysisFields';
 import type { MetricsChartSeries } from '../components/charts/chartProps';
 
-// Block list edits and the requests that draw a live embed. Pure functions: the editor keeps the
-// list in state and the block view hands these requests to the API clients.
+// ブロックの一覧の編集と、ライブの埋め込みを描くための要求。純粋な関数で、エディタは一覧を
+// stateに持ち、ブロックの表示がこれらの要求をAPIクライアントへ渡す。
 
 export type RunSearchConditions = Omit<RunSearchRequest, 'limit' | 'cursor'>;
 
-/** Upper bound of POST /runs/search `filter` (docs/api-contract.md). */
+/** POST /runs/searchの`filter`の上限（docs/api-contract.md）。 */
 export const RUN_SEARCH_FILTER_MAX_LENGTH = 2000;
-/** Page limit of POST /runs/search. */
+/** POST /runs/searchの1ページの上限。 */
 export const RUN_SEARCH_MAX_LIMIT = 500;
 
 export function isEmbedBlock(block: ReportBlock): block is ReportEmbedBlock {
   return block.type !== 'markdown';
 }
 
-/** Inserts the block at `index` (clamped), or at the end. */
+/** ブロックを`index`（範囲内に丸める）か末尾に挿入する。 */
 export function insertBlock(blocks: readonly ReportBlock[], block: ReportBlock, index = blocks.length): ReportBlock[] {
   const at = Math.max(0, Math.min(index, blocks.length));
   return [...blocks.slice(0, at), block, ...blocks.slice(at)];
 }
 
-/** Moves the block by `offset` places; a move past either end leaves the list unchanged. */
+/** ブロックを`offset`だけ動かす。どちらかの端を越えるときは一覧を変えない。 */
 export function moveBlock(blocks: readonly ReportBlock[], blockId: string, offset: number): ReportBlock[] {
   const from = blocks.findIndex((block) => block.id === blockId);
   const to = from + offset;
@@ -53,14 +53,14 @@ export function removeBlock(blocks: readonly ReportBlock[], blockId: string): Re
   return blocks.filter((block) => block.id !== blockId);
 }
 
-/** Replaces the block with the same id. */
+/** 同じidのブロックを置き換える。 */
 export function replaceBlock(blocks: readonly ReportBlock[], replacement: ReportBlock): ReportBlock[] {
   return blocks.map((block) => (block.id === replacement.id ? replacement : block));
 }
 
 /**
- * A new block with the settings the picker starts from. Embeds start live: a snapshot is chosen
- * on purpose, because it stops following the Runs.
+ * 選ぶ画面が最初に使う設定での新しいブロック。埋め込みはライブで始める。スナップショットはRunを
+ * 追わなくなるので、わざわざ選んだときだけにする。
  */
 export function createBlock(type: ReportBlockType, id: string, runSet: ReportRunSet = { runIds: [] }): ReportBlock {
   switch (type) {
@@ -70,7 +70,7 @@ export function createBlock(type: ReportBlockType, id: string, runSet: ReportRun
       return {
         id,
         type,
-        // A report draws one chart per block across the page, so the grid cell is fixed.
+        // レポートは1ブロックに1つの図をページ幅いっぱいに描くので、グリッドのセルは固定する。
         panel: { ...createPanelConfig([]), id, layout: { x: 0, y: 0, w: PANEL_WIDTHS.full, h: PANEL_HEIGHTS.normal } },
         runSet,
         mode: 'live',
@@ -90,12 +90,12 @@ export function createBlock(type: ReportBlockType, id: string, runSet: ReportRun
   }
 }
 
-/** The API takes no empty step list: without steps a media embed compares each Run's latest step. */
+/** APIは空のstepの一覧を受け付けない。stepが無ければ、メディアの埋め込みは各Runの最新のstepを比べる。 */
 export function mediaStepsOrLatest(steps: number[]): number[] | undefined {
   return steps.length ? steps : undefined;
 }
 
-/** The search a saved Run list view stands for: its conditions without columns and charts. */
+/** Runの一覧の保存ビューが表す検索。列と図を除いた条件。 */
 export function savedViewSearch(state: SavedViewState): RunSearchConditions {
   return {
     ...(state.experimentIds.length ? { experimentIds: state.experimentIds } : {}),
@@ -107,8 +107,8 @@ export function savedViewSearch(state: SavedViewState): RunSearchConditions {
 }
 
 /**
- * The Run set the analysis endpoints take. A saved view becomes its search, so it follows later
- * changes to the view; `savedView` is the view's state, read beforehand.
+ * 分析のエンドポイントが受け取るRunの集合。保存ビューはその検索に置き換えるので、ビューを後で
+ * 変えると追従する。`savedView`は、前もって読んだビューの状態。
  */
 export function toAnalysisRunSet(runSet: ReportRunSet, savedView?: SavedViewState): RunSet {
   if (!('savedViewId' in runSet)) return runSet;
@@ -119,8 +119,8 @@ export function toAnalysisRunSet(runSet: ReportRunSet, savedView?: SavedViewStat
 const quoteFilterValue = (value: string) => `'${value.replaceAll("'", "''")}'`;
 
 /**
- * Run id filters (`attributes.run_id IN (...)`) that each fit RUN_SEARCH_FILTER_MAX_LENGTH, so a
- * listed Run set can be read through the search, which returns the same summaries as the Run list.
+ * それぞれRUN_SEARCH_FILTER_MAX_LENGTHに収まるRunのidの絞り込み（`attributes.run_id IN (...)`）。
+ * 列挙したRunの集合を、Runの一覧と同じ概要を返す検索で読めるようにする。
  */
 export function runIdFilters(runIds: readonly string[]): string[] {
   const prefix = 'attributes.run_id IN (';
@@ -139,10 +139,10 @@ export function runIdFilters(runIds: readonly string[]): string[] {
   return filters;
 }
 
-/** Series are requested by Run id; the API takes at most this many Runs per request. */
+/** 系列はRunのidで要求する。APIが1回の要求で受け付けるRunはこの数まで。 */
 export const CHART_MAX_RUNS = REPORT_RUN_SET_MAX_RUN_IDS;
 
-/** Params and metrics of the analysis table behind a scatter plot or parallel coordinates. */
+/** 散布図か平行座標の裏にある分析の表の、パラメータとメトリクス。 */
 export function analysisTableRequest(
   block: Extract<ReportEmbedBlock, { type: 'scatter' | 'parallel_coordinates' }>,
   runSet: RunSet,
@@ -160,7 +160,7 @@ function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
 
-/** Why an embed cannot be saved yet, or null when it is complete. Keys of i18n/reports.ts. */
+/** 埋め込みをまだ保存できない理由。完成していればnull。i18n/reports.tsのキー。 */
 export type ReportBlockProblem =
   | 'runSetEmpty'
   | 'chartMetricsEmpty'
@@ -189,13 +189,13 @@ export function reportBlockProblem(block: ReportBlock): ReportBlockProblem | nul
       return block.panel.metricKeys.length ? null : 'chartMetricsEmpty';
     case 'parallel_coordinates':
       if (!block.metric) return 'parallelMetricEmpty';
-      // Omitted params let the analysis table choose; an empty list is not a valid block.
+      // パラメータを省けば分析の表が選ぶ。空の一覧のブロックは正しくない。
       return block.params?.length !== 0 ? null : 'parallelParamsEmpty';
     case 'parameter_importance':
       return block.targetMetric || 'sweepId' in block.runSet ? null : 'importanceTargetEmpty';
     case 'scatter':
       if (!block.x || !block.y) return 'scatterAxesEmpty';
-      // The analysis table needs at least one metric.
+      // 分析の表には少なくとも1つのメトリクスが要る。
       return [block.x, block.y, block.color].some((key) => key?.startsWith('metrics.')) ? null : 'scatterMetricMissing';
     case 'run_table':
       return null;
@@ -212,14 +212,14 @@ export function snapshotsByBlockId(snapshots: readonly ReportBlockSnapshot[]): M
 }
 
 /**
- * Snapshot blocks to capture again on save: the ones the editor asked to refresh that are still
- * snapshot blocks. A block that changed is captured anyway, so it need not be listed.
+ * 保存のときに取り直すスナップショットのブロック。エディタで更新を求めたもののうち、まだ
+ * スナップショットのブロックであるもの。変えたブロックはどのみち取り直すので、挙げなくてよい。
  */
 export function refreshableSnapshotIds(blocks: readonly ReportBlock[], requested: ReadonlySet<string>): string[] {
   return blocks.filter((block) => isEmbedBlock(block) && block.mode === 'snapshot' && requested.has(block.id)).map((block) => block.id);
 }
 
-/** Lines of a chart embed, named as the chart grid names them (seriesForMetricKeys). */
+/** 図の埋め込みの線。図のグリッドと同じ名前を付ける（seriesForMetricKeys）。 */
 export function reportChartSeries(
   chart: Extract<ReportSnapshotData, { type: 'chart' }>,
   keys: readonly string[],
@@ -230,7 +230,7 @@ export function reportChartSeries(
   );
 }
 
-/** Run names by id, as the chart legend and the media grid label Runs. */
+/** idごとのRunの名前。図の凡例とメディアのグリッドがRunに付けるラベルと同じ。 */
 export function snapshotRunLabels(runs: readonly ReportSnapshotRun[]): Record<string, string> {
   return Object.fromEntries(runs.map((run) => [run.runId, run.name]));
 }

@@ -6,6 +6,6 @@ export type AutomationTrigger = ModelAutomationRule['trigger'];
 export interface AutomationCatalog {
   registry: ExecutionCatalog;
   targets: ComputeTarget[];
-  // Rules of the same Project, offered as the upstream stage of a chained rule.
+  // 同じProjectのルール。つないだルールの上流の段として選べるようにする。
   rules: ModelAutomationRule[];
 }

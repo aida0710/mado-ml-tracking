@@ -136,9 +136,9 @@ try {
   await fill('モデル系列', 'ui-linear');
   await submit();
   await page.getByRole('button', { name: 'バージョンを作成', exact: true }).click();
-  // 'バージョン' is also part of '既定のコードバージョン'; the exact accessible name picks the field.
+  // 'バージョン'は'既定のコードバージョン'の一部でもあるので、accessible nameの完全一致で欄を選ぶ。
   await page.getByRole('dialog').getByRole('textbox', { name: 'バージョン', exact: true }).fill('v1');
-  // The weights Artifact is taken by pasting its id; the picked file replaces the search.
+  // 重みのArtifactはidを貼り付けて選ぶ。選んだファイルが検索欄に置き換わる。
   await page.getByRole('dialog').getByRole('searchbox', { name: '重みのArtifact' }).fill(weightsArtifact.id);
   await page.getByRole('dialog').getByRole('button', { name: '選び直す', exact: true }).waitFor();
   await submit();

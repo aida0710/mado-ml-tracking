@@ -2,7 +2,7 @@ import { evaluationApi } from '../api/evaluation';
 import { encodeBaselineChoice, type BaselineChoice } from '../lib/evaluationBaseline';
 import { useQuery } from './useQuery';
 
-/** The comparison of a version with the chosen baseline. A null choice lets the API use production. */
+/** バージョンと、選んだ基準バージョンとの比較。選択がnullなら、APIがproductionを使う。 */
 export function useEvaluationComparison(target: {
   projectId: string;
   modelId: string;

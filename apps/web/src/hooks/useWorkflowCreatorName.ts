@@ -5,9 +5,9 @@ import { useAuth } from './useAuth';
 import { useQuery } from './useQuery';
 
 /**
- * Who started an execution, by name: the signed-in user's own name, else the Project member's.
- * Someone who is not a member (an editor of a Public Project through no grant) shows as the first
- * block of their id, as Jobs do for a creator whose name is unknown.
+ * 実行を始めた人の名前。ログイン中の利用者なら本人の名前、そうでなければProjectのメンバーの名前。
+ * メンバーでない人（権限の付与なしでPublicなProjectを編集する人）は、Jobで名前の分からない作成者と
+ * 同じく、idの先頭の区切りまでを出す。
  */
 export function useWorkflowCreatorName(
   projectId: string,

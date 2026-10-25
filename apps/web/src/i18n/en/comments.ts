@@ -27,7 +27,7 @@ export const commentsText = {
   commentActions: 'Comment actions',
 } as const;
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const commentsTextTemplates = {
   markdownRemaining: (remaining: number) =>
     remaining >= 0

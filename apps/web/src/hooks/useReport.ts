@@ -6,8 +6,8 @@ import { useQuery } from './useQuery';
 import { useFailureMessage } from './useFailureMessage';
 
 /**
- * One revision of a report (the current one when `revision` is undefined) and the snapshots stored
- * with it. Snapshots are read only when a block needs them.
+ * レポートの1つのバージョン（`revision`がundefinedなら現在のもの）と、それと一緒に保存した
+ * スナップショット。スナップショットは、ブロックが必要とするときだけ読む。
  */
 export function useReportDetail(projectId: string, reportId: string, revision: number | undefined) {
   const document = useQuery({ key: `${projectId}:report:${reportId}:${revision ?? 'current'}`, load: (signal) =>
@@ -23,13 +23,13 @@ export function useReportDetail(projectId: string, reportId: string, revision: n
 }
 
 export function useReportRevisions(projectId: string, reportId: string, currentRevision: number | undefined) {
-  // Keyed by the current revision so a save or restore lists the new revision.
+  // 現在のバージョンをキーにして、保存や復元をしたら新しいバージョンが一覧に出るようにする。
   return useQuery({ key: currentRevision === undefined ? null : `${projectId}:report-revisions:${reportId}:${currentRevision}`, load: (signal) =>
     reportsApi.revisions(projectId, reportId, signal),
   });
 }
 
-/** What `revision` changed from the revision before it; null reads nothing. */
+/** `revision`がその前のバージョンから変えた内容。nullなら何も読まない。 */
 export function useReportRevisionChanges(projectId: string, reportId: string, revision: number | null) {
   return useQuery({ key: revision === null ? null : `${projectId}:report-revision-changes:${reportId}:${revision}`, load: async (signal) => {
     const [previous, current] = await Promise.all([
@@ -46,8 +46,8 @@ export type ReportSaveOutcome =
   | { kind: 'failed' };
 
 /**
- * Saves an edit on top of the revision it started from. A 409 report_revision_conflict is kept
- * apart from other failures: someone else saved first, and the edit must not overwrite it.
+ * 編集を、それを始めたバージョンの上に保存する。409 report_revision_conflictはほかの失敗と分けて
+ * 持つ。これはほかの人が先に保存したことを表し、編集でそれを上書きしてはいけない。
  */
 export function useReportSave(projectId: string, reportId: string) {
   const [pending, setPending] = useState(false);

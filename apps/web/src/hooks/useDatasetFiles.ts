@@ -2,10 +2,10 @@ import { datasetContentApi, type DatasetVersionLocation } from '../api/datasetCo
 import { useCursorPages } from './useCursorPages';
 import { useQuery } from './useQuery';
 
-// One screenful of a directory, as in a Run's Artifact browser.
+// ディレクトリの1画面分。RunのArtifactのブラウザと同じ。
 export const DATASET_FILE_PAGE_SIZE = 200;
 
-/** One directory level of a DatasetVersion: its subdirectories with counts, and its files page by page. */
+/** DatasetVersionのディレクトリの1階層。件数付きのサブディレクトリと、ページごとのファイル。 */
 export function useDatasetFiles(location: DatasetVersionLocation, prefix: string) {
   const key = `${location.projectId}:dataset-files:${location.versionId}:${prefix}`;
   const tree = useQuery({ key: `${key}:tree`, load: (signal) => datasetContentApi.fileTree(location, prefix, signal) });

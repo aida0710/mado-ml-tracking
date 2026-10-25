@@ -3,7 +3,7 @@ import type { CodeVersion } from '@mmt/contracts';
 import { changeLaunchValues, initialLaunchValues, launchChoices } from './launchFormValues';
 import { computeTarget, dockerCodeVersion } from '../../tests/fixtures/execution';
 
-// A Python code for training only, beside the fixture's Docker code for inference and evaluation.
+// 学習専用のPythonのコード。フィクスチャにある推論・評価用のDockerのコードと並べる。
 const pythonTrainingCode: CodeVersion = {
   ...dockerCodeVersion,
   id: 'python-train',

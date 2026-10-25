@@ -15,10 +15,10 @@ import { useTargetCheck } from './useTargetCheck';
 export type NewComputerStep = 'connection' | 'setup';
 
 /**
- * Adding an ssh or local computer in two steps. Step 1 saves its connection (disabled) and asks the
- * chosen worker to check it; once the worker reaches it, the setup is filled in from the check and
- * step 2 opens. A failed check stays on step 1 with its reason, and the setup can always be typed
- * by hand instead. Step 2 saves the setup, enabling the computer when 有効 is checked.
+ * sshまたはlocalのコンピュータを2つの手順で追加する。手順1では接続を（無効のまま）保存し、選んだ
+ * workerに確認を頼む。workerがつながったら確認の結果から設定を埋め、手順2を開く。確認に失敗したら
+ * 理由を出して手順1にとどまり、設定はいつでも代わりに手で入力できる。手順2では設定を保存し、
+ * 有効にチェックがあればコンピュータを有効にする。
  */
 export function useNewComputerSteps({
   values,
@@ -31,14 +31,14 @@ export function useNewComputerSteps({
 }) {
   const [step, setStep] = useState<NewComputerStep>('connection');
   const [saved, setSaved] = useState<ComputeTargetDetails | null>(null);
-  // The check asked for in step 1, whose end decides whether step 2 opens by itself.
+  // 手順1で頼んだ確認。それが終わったときに、手順2を自動で開くかが決まる。
   const [awaitedCheckId, setAwaitedCheckId] = useState<string | null>(null);
   const [isFilledFromCheck, setFilledFromCheck] = useState(false);
   const check = useTargetCheck(saved?.id ?? null);
   const mutation = useMutation();
 
-  // Applied during the render that sees the awaited check end; the values are read as they stand
-  // then, and since the check is no longer awaited afterwards, typing does not apply it again.
+  // 待っている確認が終わったのを見たレンダリングの中で当てる。値はその時点のものを読み、その後は
+  // もう確認を待っていないので、入力しても再び当てることはない。
   const latest = check.latest;
   if (awaitedCheckId !== null && latest?.id === awaitedCheckId && !isCheckInProgress(latest)) {
     setAwaitedCheckId(null);
@@ -74,7 +74,7 @@ export function useNewComputerSteps({
     setStep('setup');
   }
 
-  /** A new check from step 2: its candidates replace the old ones, the values stay as typed. */
+  /** 手順2からの新しい確認。候補は古いものと入れ替え、値は入力したまま残す。 */
   function recheck() {
     if (worker) void check.request({ worker });
   }
@@ -90,7 +90,7 @@ export function useNewComputerSteps({
     saved,
     check,
     isFilledFromCheck,
-    // Derived from the check itself, so its end shows at once instead of after the effect runs.
+    // 確認そのものから導くので、終わったことがeffectの実行を待たずにすぐ表示に出る。
     isWaitingForCheck:
       awaitedCheckId !== null &&
       (check.latest?.id !== awaitedCheckId || isCheckInProgress(check.latest)),

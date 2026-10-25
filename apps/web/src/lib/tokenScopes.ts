@@ -6,12 +6,12 @@ import {
   type TokenScope,
 } from '@mmt/contracts';
 
-// Same ranking as the API's domain/projectRoles.ts.
+// APIのdomain/projectRoles.tsと同じ順位付け。
 const PROJECT_ROLE_RANK: Record<ProjectRole, number> = { viewer: 1, editor: 2, admin: 3 };
 
 /**
- * Scopes a token owner with this role may receive on a Project token; the API refuses the others.
- * Global scopes are left out: only a global administrator's token without a Project holds them.
+ * このロールのtokenの持ち主が、Projectのtokenで受け取れるscope。それ以外はAPIが拒否する。
+ * 全体のscopeは除く。それを持てるのは、全体管理者の、Projectを持たないtokenだけ。
  */
 export function scopesAllowedForRole(role: ProjectRole): TokenScope[] {
   return TOKEN_SCOPES.filter(

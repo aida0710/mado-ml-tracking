@@ -1,7 +1,7 @@
 import dagre from '@dagrejs/dagre';
 import type { LineageFlowElements, LineageFlowLayout, LineagePoint } from '../types/lineage';
 
-// Match Data Catalog's fixed cards, spacing and left-to-right layout.
+// mado S3 Data Catalogの固定の大きさのカード、間隔、左から右への配置に合わせる。
 export const GRAPH_NODE_WIDTH = 224;
 export const GRAPH_NODE_HEIGHT = 78;
 const GRAPH_NODE_GAP = 30;
@@ -10,7 +10,7 @@ const GRAPH_PADDING = 24;
 
 export function layoutLineage(elements: LineageFlowElements): LineageFlowLayout {
   if (!elements.nodes.length) return { nodes: [], edges: [], width: 0, height: 0 };
-  // A dataset can have several relations to one Run; never collapse parallel edges.
+  // データセットは1つのRunと複数の関係を持てるので、並行する辺を決して1本にまとめない。
   const graph = new dagre.graphlib.Graph({ multigraph: true });
   graph.setDefaultEdgeLabel(() => ({}));
   graph.setGraph({

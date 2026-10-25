@@ -1,4 +1,4 @@
-/* Audio viewer (waveform, spectrogram, loop), evaluation sample tables, and Artifact comparison. */
+/* 音声ビューア（波形、スペクトログラム、ループ）、評価サンプルの表、Artifactの比較。 */
 .audio-viewer {
   display: grid;
   gap: 10px;
@@ -43,8 +43,8 @@
   border-radius: var(--radius-sm);
   background: var(--surface);
   cursor: crosshair;
-  /* A vertical swipe scrolls the page (and pinching zooms) as anywhere else; only a sideways drag
-     reaches the viewer, which seeks or selects the loop range. */
+  /* 縦のスワイプはほかの場所と同じくページをスクロールし（ピンチは拡大）、横のドラッグだけが
+     ビューアに届いて、再生位置の移動かループの範囲の選択になる。 */
   touch-action: pan-y pinch-zoom;
   user-select: none;
 }
@@ -144,7 +144,7 @@
   flex: 1;
   min-width: 0;
   height: 32px;
-  /* artifacts.css gives previewed audio a 16px margin, which would make every row tall. */
+  /* artifacts.cssはプレビューの音声に16pxの余白を付けるが、それでは行がどれも高くなる。 */
   margin: 0;
 }
 .sample-audio .button {
@@ -165,8 +165,8 @@
 .evaluation-pagination {
   align-items: center;
 }
-/* The single column is as wide as the preview, not as its widest line: a long line of JSON or a
-   log scrolls inside its own view instead of widening the page. */
+/* 1列の幅は、いちばん長い行ではなくプレビューの幅に合わせる。JSONやログの長い行は、
+   ページを広げずにその表示の中でスクロールする。 */
 .artifact-compare-stack {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

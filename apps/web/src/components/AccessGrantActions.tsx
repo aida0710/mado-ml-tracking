@@ -2,8 +2,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * The 変更 and 外す buttons of a member's direct grant or a group binding. The last admin grant
- * keeps them disabled with the reason beside them, so nobody presses them only to be refused.
+ * メンバーへの直接付与か、groupへの付与の「変更」と「外す」のボタン。最後のAdminの付与では理由を
+ * 横に添えて無効のままにし、押してから断られることが無いようにする。
  */
 export function AccessGrantActions({
   isLastAdmin,

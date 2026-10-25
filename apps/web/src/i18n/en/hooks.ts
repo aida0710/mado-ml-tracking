@@ -13,7 +13,7 @@ import {
 
 const SECONDS_PER_MINUTE = 60;
 
-// The Hooks screen: the list, the create dialog, a hook's settings, manual starts and executions.
+// Hooksの画面。一覧、作成のダイアログ、フックの設定、手動の起動、実行。
 export const hooksText = {
   hooks: 'Hooks',
   hookList: 'Hooks',
@@ -117,7 +117,7 @@ export const hookWebhookSignatureLabels: Record<HookWebhookSignature, string> = 
   mmt: 'MMT (X-MMT-Signature)',
 };
 
-// How the sender signs each delivery, shown next to the secret right after creation.
+// 送信側が配信ごとにどう署名するか。作成した直後に、署名の秘密鍵の隣に出す。
 export const hookWebhookSignatureHints: Record<HookWebhookSignature, string> = {
   github:
     'For GitHub webhooks, set Content type to application/json and this signing secret as Secret. Redeliveries with the same X-GitHub-Delivery are treated as one event.',
@@ -152,7 +152,7 @@ export const hookExecutionSubjectLabels: Record<HookExecutionSubject, string> = 
   webhook: 'webhook',
 };
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const hooksTextTemplates = {
   hookSkipped: (reason: string) => `Not launched (${reason})`,
   hookTransferConfirm: (hookName: string, accountName: string) =>

@@ -53,8 +53,8 @@ function DevelopmentLoginForm({ onLogin }: { onLogin: () => void }) {
   );
 }
 
-// The same card as Mado's login: the app name, what it is, then the ways to sign in. hybrid shows
-// SSO first and the local account form below the separator.
+// mado S3 Data Catalogのログインと同じカード。アプリ名、何のアプリか、ログインの方法の順に
+// 並べる。hybridではSSOを先に、ローカルアカウントのフォームを区切りの下に出す。
 export function LoginPage({ config, onLogin }: { config: AuthConfig; onLogin: () => void }) {
   useLocale();
   const methods = loginMethods(config);

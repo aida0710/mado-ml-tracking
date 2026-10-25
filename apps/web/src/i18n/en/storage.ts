@@ -61,7 +61,7 @@ export const storageText = {
     'A connection test runs first, and the backend does not become the default if it fails.',
   storageMakeDefaultTestFailed:
     'The connection test failed, so the default storage backend was not changed. Fix the settings using the results below, then try again.',
-  // The storage choice of a new Project: the default first, the others folded away.
+  // 新しいProjectの保存先の選択。既定の保存先を先に出し、ほかは畳んでおく。
   newProjectStorageOthers: 'Choose another storage backend',
   newProjectStorageHint:
     'Storage backends are set up by global administrators. Ask a global administrator where data is stored. You can change the backend later in “Project settings” (artifacts saved until then stay in the original backend).',

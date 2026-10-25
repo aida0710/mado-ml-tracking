@@ -7,7 +7,7 @@ import type {
 } from '@mmt/contracts';
 import { encodeId, invalidResponseError, jsonRequest, projectPath, request } from './http';
 
-/** Sampled metric series for charts, and the resume events a chart marks on its x axis. */
+/** 図のために間引いたメトリクスの系列と、図がx軸に印を付ける再開のイベント。 */
 export const metricSeriesApi = {
   series: async (projectId: string, body: MetricSeriesRequest, signal?: AbortSignal) => {
     const response = await request<MetricSeriesResponse>(

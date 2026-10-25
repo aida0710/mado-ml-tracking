@@ -26,25 +26,25 @@ import {
   requestItems,
 } from './http';
 
-// Matches the API limit so the form stops input the server would reject.
+// サーバーが拒む入力をフォームで止めるため、APIの上限に合わせる。
 export const MAX_MODEL_ALIAS_REASON_LENGTH = 2000;
-// Matches the API default so each "load more" fetches one server page.
+// 続きを読むたびにサーバーの1ページを取るよう、APIの既定値に合わせる。
 export const MODEL_ALIAS_EVENT_PAGE_SIZE = 50;
-// The API maximum: the version page shows a version's results in one polled page.
+// APIの最大値。バージョンの画面は、バージョンの結果をポーリングで読む1ページで見せる。
 export const MODEL_VERSION_RUN_PAGE_SIZE = 200;
-// Matches the API default for the Runs a Run started.
+// Runから始まったRunを読むときの、APIの既定値に合わせる。
 export const RUN_DOWNSTREAM_PAGE_SIZE = 50;
 
 export interface ModelAliasAssignment {
   alias: string;
   versionId: string;
-  /** Empty means no reason; the API stores it as ''. */
+  /** 空は理由なしを表す。APIは''として保存する。 */
   reason: string;
-  /** A passed promotion decision for this alias and version, sent as the change's evidence. */
+  /** このaliasとバージョンについて合格した昇格の判定。変更の根拠として送る。 */
   evaluationId?: string;
 }
 
-/** One protection: modelId null covers the alias on every Model of the Project. */
+/** 1つの保護。modelIdがnullなら、Projectのすべてのモデルのそのaliasを保護する。 */
 export interface ModelAliasProtectionTarget {
   alias: string;
   modelId: string | null;
@@ -62,7 +62,7 @@ export const registryApi = {
     requestItems<Model>(registryPath(projectId, 'models'), signal),
   createModel: (projectId: string, body: { name: string; family: string; description?: string }) =>
     request<Model>(registryPath(projectId, 'models'), jsonRequest('POST', body)),
-  // Families the Project's Models and code versions use, sorted with letter-case variants together.
+  // Projectのモデルとコードバージョンが使うモデル系列。大文字・小文字だけが違うものは隣に並べる。
   modelFamilies: (projectId: string, signal?: AbortSignal) =>
     requestItems<ModelFamilySummary>(registryPath(projectId, 'model-families'), signal),
   modelVersions: (projectId: string, id: string, signal?: AbortSignal) =>
@@ -81,7 +81,7 @@ export const registryApi = {
         ...(assignment.evaluationId ? { evaluationId: assignment.evaluationId } : {}),
       }),
     ),
-  // Without modelId only the Project-wide protections; with it, also that Model's own.
+  // modelIdなしならProject全体の保護だけ、ありならそのモデル自身の保護も返す。
   aliasProtections: (projectId: string, modelId: string | null, signal?: AbortSignal) =>
     requestItems<ModelAliasProtection>(
       `${projectPath(projectId)}/alias-protections${
@@ -159,7 +159,7 @@ export const registryApi = {
     request<Code>(registryPath(projectId, 'codes'), jsonRequest('POST', body)),
   codeVersions: (projectId: string, id: string, signal?: AbortSignal) =>
     requestItems<CodeVersion>(`${registryPath(projectId, 'codes', id)}/versions`, signal),
-  /** The Project's codes and every version of them, read one code at a time in parallel. */
+  /** Projectのコードとそのすべてのバージョン。コードごとに並行して読む。 */
   codesWithVersions: async (projectId: string, signal?: AbortSignal) => {
     const codes = await registryApi.codes(projectId, signal);
     const versions = await Promise.all(
@@ -180,7 +180,7 @@ export const registryApi = {
     projectId: string,
     body: { name: string; namespace?: string; description?: string },
   ) => request<Dataset>(registryPath(projectId, 'datasets'), jsonRequest('POST', body)),
-  /** Description and archiving; the name stays fixed (SDKs and MLflow find a dataset by it). */
+  /** 説明とアーカイブ。名前は変えられない（SDKやMLflowは名前でデータセットを探す）。 */
   updateDataset: (projectId: string, id: string, body: DatasetUpdate) =>
     request<Dataset>(registryPath(projectId, 'datasets', id), jsonRequest('PATCH', body)),
   datasetVersions: (projectId: string, id: string, signal?: AbortSignal) =>
@@ -190,7 +190,7 @@ export const registryApi = {
       `${registryPath(projectId, 'datasets', id)}/versions`,
       jsonRequest('POST', body),
     ),
-  /** Refused with 409 dataset_version_in_use while anything refers to the version. */
+  /** 何かがそのバージョンを参照している間は、409 dataset_version_in_useで拒まれる。 */
   deleteDatasetVersion: (projectId: string, version: { datasetId: string; versionId: string }) =>
     request<unknown>(
       `${registryPath(projectId, 'datasets', version.datasetId)}/versions/${encodeId(version.versionId)}`,

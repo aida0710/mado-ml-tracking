@@ -1,7 +1,7 @@
-// Run descriptions and comment threads against a development API (AUTH_MODE=development):
-// the description saved on the Run page is what MLflow's get-run returns as mlflow.note.content,
-// raw HTML and javascript: links in Markdown never run, comments can be posted, replied to,
-// edited and deleted, a viewer sees no input, and the model version page has its own thread.
+// 開発モードのAPI（AUTH_MODE=development）を相手にした、Runの説明とコメントのスレッドの確認。
+// Runの画面で保存した説明は、MLflowのget-runがmlflow.note.contentとして返すものと同じ。Markdownの
+// 生のHTMLとjavascript:のリンクは決して実行されない。コメントは投稿、返信、編集、削除ができ、
+// Viewerには入力欄が出ず、モデルバージョンの画面には専用のスレッドがある。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -27,7 +27,7 @@ async function signIn(email, displayName) {
   const context = await browser.newContext({ locale: 'ja-JP', viewport: { width: 1440, height: 1100 } });
   const page = await context.newPage();
   page.on('pageerror', (error) => errors.push(error.message));
-  // A dialog would mean injected script ran (alert/confirm from the Markdown below).
+  // ダイアログが出たら、差し込まれたスクリプトが実行されたことになる（下のMarkdownのalert/confirm）。
   page.on('dialog', async (dialog) => {
     errors.push(`unexpected dialog: ${dialog.message()}`);
     await dialog.dismiss();
@@ -37,7 +37,7 @@ async function signIn(email, displayName) {
   await page.getByLabel('表示名').fill(displayName);
   const loginButton = page.getByRole('button', { name: '開発モードでログイン' });
   await loginButton.click();
-  // A new user has no Project yet, so the app shell may not show navigation.
+  // 新しいユーザーにはまだProjectが無いので、アプリの枠にナビゲーションが出ないことがある。
   await loginButton.waitFor({ state: 'detached' });
   return page;
 }
@@ -236,7 +236,7 @@ try {
   assert.deepEqual(errors, []);
   console.log('Run description and comment thread verification passed');
 } catch (failure) {
-  // Keep what each open page showed when a step failed.
+  // 手順が失敗したときに、開いていた各ページが何を表示していたかを残す。
   for (const [index, page] of browser.contexts().flatMap((context) => context.pages()).entries())
     await screenshot(page, `failure-${index}`);
   console.error('page errors:', errors);

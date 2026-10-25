@@ -70,7 +70,7 @@ export const automationText = localized({
   disableSourceRule: (name: string) => `作成したら「${name}」を無効にする`,
   disableSourceRuleHint:
     '両方が有効のままだと、同じバージョンに両方のルールがJobを登録します。',
-  // The copy was created; disabling the rule it came from failed afterwards.
+  // 複製は作成できたが、そのあと元のルールを無効にするのに失敗したとき。
   sourceRuleLeftEnabled: (rules: { copyName: string; sourceName: string }) =>
     `「${rules.copyName}」は作成しましたが、元の「${rules.sourceName}」を無効にできませんでした。今は両方が有効で、同じバージョンに両方のルールがJobを登録します。一覧で「${rules.sourceName}」の［無効にする］を押してください。`,
   downstreamFollowsSource: (names: readonly string[]) =>

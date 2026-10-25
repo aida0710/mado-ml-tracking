@@ -10,8 +10,9 @@ import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 /**
- * A media table (MLflow log_table or a native table) read a page at a time from the API, which
- * resolves media cells to Artifacts. MLflow and native tables share the format, so they look the same.
+ * メディアの表（MLflowのlog_tableまたはネイティブの表）を、APIから1ページずつ読んで出す。
+ * メディアのセルはAPIがArtifactに解決する。MLflowとネイティブの表は形式が同じなので、
+ * 見た目も同じになる。
  */
 export function MediaTableView({ projectId, runId, mediaId }: { projectId: string; runId: string; mediaId: string }) {
   useLocale();

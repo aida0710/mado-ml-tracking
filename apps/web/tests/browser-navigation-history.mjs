@@ -15,7 +15,7 @@ api.state.codeVersions[0].taskTypes = ['inference', 'processing'];
 const projectBase = `${process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182'}/projects/${api.state.project.id}`;
 const taskPath = `/api/projects/${api.state.project.id}/tasks`;
 const taskCount = 2;
-// More than one page ensures older records remain accessible.
+// 1ページより多くして、古い記録にもたどり着けることを確かめる。
 const historyRunCount = 55;
 const tasks = Array.from({ length: taskCount }, (_, index) => ({
   id: `00000000-0000-4000-8000-00000000900${index}`,
@@ -66,7 +66,7 @@ page.on('console', (message) => {
   if (message.type() === 'error' || message.text().includes('only supports one blocker')) errors.push(message.text());
 });
 const dialog = () => page.getByRole('dialog').last();
-// The new version's name; the editor's 編集元のコードバージョン select also contains 「バージョン」.
+// 新しいバージョンの名前の欄。エディタの「編集元のコードバージョン」の選択欄にも「バージョン」が含まれる。
 const versionInput = () => dialog().getByRole('textbox', { name: 'バージョン', exact: true });
 const keepEditing = () => page.getByRole('button', { name: '編集を続ける', exact: true });
 const discard = () => page.getByRole('button', { name: '変更を破棄', exact: true });
@@ -82,12 +82,12 @@ async function openCodeEditor(version) {
   await page.keyboard.insertText('# kept navigation\n');
 }
 async function historyMove(method) {
-  // Native back/forward events, without touching application state.
+  // アプリの状態に触れずに、ブラウザ自身の戻る・進むのイベントを起こす。
   await page.evaluate((action) => window.history[action](), method);
   await keepEditing().waitFor();
 }
 async function activateModelsLink() {
-  // A modal makes the sidebar inert to pointer input; activate its real React link handler.
+  // モーダルがあるとサイドバーはポインタの入力を受けないので、Reactのリンクのハンドラを直接動かす。
   await page.getByRole('link', { name: 'Models', exact: true }).evaluate((link) => link.click());
   await keepEditing().waitFor();
 }

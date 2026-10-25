@@ -80,7 +80,7 @@ export const artifactsText = {
   artifactOwner: 'Belongs to',
   artifactUnfinishedFolderUpload: 'Incomplete upload',
   artifactBackToList: 'Back to files',
-  // Picking one Artifact in a form (ArtifactPickerField): search by path or paste its id.
+  // フォームでArtifactを1つ選ぶ欄（ArtifactPickerField）。保存パスで検索するか、idを貼り付ける。
   artifactPickerPlaceholder: 'Search by storage path, or paste an ID or artifact://…',
   artifactPickerEmpty: 'No artifacts yet.',
   artifactPickerEmptyRun: 'This run has no artifacts.',

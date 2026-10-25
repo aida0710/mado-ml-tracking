@@ -1,4 +1,4 @@
-/* Artifact browser, previews, and upload results. */
+/* Artifactブラウザ、プレビュー、アップロードの結果。 */
 .artifact-layout {
   display: grid;
   grid-template-columns: minmax(220px, 36%) minmax(0, 1fr);
@@ -31,7 +31,7 @@
   font-size: var(--font-size-xs);
   line-height: 1.6;
 }
-/* Text previews: the format select above the colored text (@mado/design-system/code.css). */
+/* テキストのプレビュー。色分けした本文（@mado/design-system/code.css）の上に表示形式の選択欄を置く。 */
 .code-preview-toolbar {
   display: flex;
   justify-content: flex-end;
@@ -67,7 +67,7 @@
 .artifact-usage .table-scroll + p {
   margin-top: 10px;
 }
-/* Download and the ⋯ menu side by side at the right of the file name. */
+/* ファイル名の右に、ダウンロードと⋯のメニューを並べる。 */
 .artifact-preview-tools {
   display: flex;
   flex: none;

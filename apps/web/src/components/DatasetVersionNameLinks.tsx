@@ -4,12 +4,12 @@ import { useQuery } from '../hooks/useQuery';
 import { useDatasetVersionsById } from '../hooks/useDatasetVersionsById';
 import { datasetVersionLabel } from '../lib/datasetVersionLabel';
 
-// No dataset is "the shown one" here, so every version is named with its dataset.
+// ここでは「表示中のデータセット」が無いので、どのバージョンにもデータセット名を添える。
 const NO_SHOWN_DATASET = '';
 
 /**
- * Links to dataset versions by "namespace/name / version". The API has no lookup by version id,
- * so the Project's datasets are read and their versions searched; the id stays until then.
+ * データセットのバージョンへの「namespace/name / version」のリンク。APIにはバージョンのidで
+ * 引く手段が無いので、Projectのデータセットを読んでそのバージョンを探す。それまではidを表示する。
  */
 export function DatasetVersionNameLinks({
   projectId,
@@ -21,7 +21,7 @@ export function DatasetVersionNameLinks({
   const datasets = useQuery({ key: versionIds.length ? `${projectId}:datasets` : null, load: (signal) =>
     registryApi.datasets(projectId, signal),
   });
-  // The versions are looked up once the datasets are known; before that the ids are shown.
+  // データセットが分かってからバージョンを探す。それまではidを表示する。
   const versions = useDatasetVersionsById({
     projectId,
     ids: datasets.value ? versionIds : [],

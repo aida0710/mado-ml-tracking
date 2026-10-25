@@ -8,7 +8,7 @@ import type {
 
 export interface DecodedAudioInfo {
   sampleRate: number;
-  /** False when the container header was unreadable and the rate is the decoder's output rate. */
+  /** コンテナのヘッダーを読めず、サンプリングレートがデコーダーの出力のレートのときはfalse。 */
   sampleRateFromFile: boolean;
   channelCount: number;
   durationSeconds: number;
@@ -23,7 +23,7 @@ export type AudioAnalysisState =
       analysis: { peaks: WaveformPeaks; spectrogram: Spectrogram; view: AudioAnalysisView } | null;
     };
 
-// OfflineAudioContext accepts 3kHz to 768kHz; other header values are treated as unreadable.
+// OfflineAudioContextは3kHz〜768kHzを受け付ける。ヘッダーのそれ以外の値は読めなかったものとする。
 const MIN_DECODE_SAMPLE_RATE = 3000;
 const MAX_DECODE_SAMPLE_RATE = 768000;
 
@@ -37,7 +37,7 @@ async function decodeAudio(bytes: ArrayBuffer): Promise<{ buffer: AudioBuffer; s
   const headerRate = readAudioSampleRate(bytes);
   const usable =
     headerRate !== null && headerRate >= MIN_DECODE_SAMPLE_RATE && headerRate <= MAX_DECODE_SAMPLE_RATE;
-  // A context at the file's own rate makes decodeAudioData return the samples without resampling.
+  // ファイル自身のレートのcontextにすると、decodeAudioDataはリサンプリングせずにサンプルを返す。
   const context = usable ? new OfflineAudioContext(1, 1, headerRate) : new AudioContext();
   try {
     return { buffer: await context.decodeAudioData(bytes), sampleRateFromFile: usable };
@@ -53,10 +53,10 @@ class StageError extends Error {
 }
 
 /**
- * Fetches, decodes, and analyzes an audio Artifact for the visible view. Files over
- * AUDIO_ANALYSIS_MAX_BYTES are never fetched here (see lib/audioAnalysis.ts); the viewer streams
- * them through <audio> and draws the server's previews (useServerAudioPreview) instead. `view` null
- * waits until the drawn width is known.
+ * 表示中の範囲のために、音声のArtifactを取得・デコード・解析する。AUDIO_ANALYSIS_MAX_BYTESを
+ * 超えるファイルはここでは取得しない（lib/audioAnalysis.tsを参照）。ビューアはそれを<audio>で
+ * ストリーミングし、代わりにサーバーのプレビュー（useServerAudioPreview）を描く。`view`がnullの
+ * 間は、描く幅が分かるまで待つ。
  */
 export function useAudioAnalysis({
   url,
@@ -72,7 +72,7 @@ export function useAudioAnalysis({
   const [state, setState] = useState<AudioAnalysisState>({ status: 'loading' });
   const workerRef = useRef<Worker | null>(null);
   const requestIdRef = useRef(0);
-  // Another file or a retry starts over from loading, during render.
+  // 別のファイルや再試行のときは、レンダリング中に読み込みからやり直す。
   const [analyzedFor, setAnalyzedFor] = useState({ url, analyzable, revision });
   if (analyzedFor.url !== url || analyzedFor.analyzable !== analyzable || analyzedFor.revision !== revision) {
     setAnalyzedFor({ url, analyzable, revision });
@@ -125,12 +125,12 @@ export function useAudioAnalysis({
   }, [url, analyzable, revision]);
 
   const ready = state.status === 'ready';
-  // viewKey stands for `view`, whose object identity changes on every render.
+  // viewKeyは`view`を表す値。`view`のオブジェクトはレンダリングのたびに別物になる。
   const viewKey = view ? JSON.stringify(view) : null;
   const requestAnalysis = useEffectEvent((worker: Worker) => {
     if (!view) return;
     const requestedView = view;
-    // Only the newest request is drawn; answers to superseded views are dropped.
+    // 描くのは最新の要求の結果だけ。古くなった範囲への応答は捨てる。
     const requestId = ++requestIdRef.current;
     const listener = (event: MessageEvent<AudioAnalysisResponse>) => {
       const response = event.data;

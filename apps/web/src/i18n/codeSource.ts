@@ -1,6 +1,6 @@
 import * as english from './en/codeSource';
 import { localized } from './localized';
-// The read-only view of a saved code version's files on the Code page.
+// Codeの画面の、保存したコードバージョンのファイルを読むだけの表示。
 export const codeSourceText = localized({
   sourceHeading: 'ファイル',
   editedFiles: 'リポジトリの上で変更したファイル',

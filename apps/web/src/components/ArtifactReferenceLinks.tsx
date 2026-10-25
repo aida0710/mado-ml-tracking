@@ -7,8 +7,9 @@ import { artifactsTextTemplates } from '../i18n/artifacts';
 import { workflowsText } from '../i18n/workflows';
 
 /**
- * Every record that uses the Artifact, each a link to where it can be changed: model, dataset and
- * code versions, and Run checkpoints. The same list says why a file cannot be deleted.
+ * Artifactを使っているすべての記録。モデルバージョン、データセットのバージョン、コードバージョン、
+ * Runのcheckpointを、それぞれ変更できる場所へのリンクで示す。同じ一覧が、ファイルを削除できない
+ * 理由の説明にもなる。
  */
 export function ArtifactReferenceLinks({
   projectId,

@@ -1,7 +1,7 @@
 import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
-/** Cursor paging: the total is unknown, so it shows the page number and the way back. */
+/** カーソルによるページ送り。総数が分からないので、ページ番号と戻る手段を出す。 */
 export function RunPagination({
   pageNumber,
   shownCount,

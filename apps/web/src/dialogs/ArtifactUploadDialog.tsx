@@ -15,14 +15,14 @@ import { joinArtifactPath } from '../lib/uploadPlan';
 import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
-// Saved paths listed before the start, so a folder's layout can be checked without reading all.
+// 開始前に並べる保存先のパスの数。全部を読まなくても、フォルダの構成を確かめられるようにする。
 const PLANNED_PATH_EXAMPLE_COUNT = 3;
 
 /**
- * Uploads Artifacts with progress, pause, cancel, and resume. `multiple` adds several files,
- * folders, and a destination folder; without it the dialog takes one file and closes on its
- * Artifact, as the code version form expects. `initialFolder` is the folder open behind the
- * dialog, where new files go unless the path is changed.
+ * 進み具合を見せ、一時停止・キャンセル・再開ができるArtifactのアップロード。`multiple`を付けると
+ * 複数のファイルとフォルダ、保存先のフォルダを選べる。付けなければ1つのファイルだけを受け取り、
+ * コードバージョンのフォームが期待するとおり、そのArtifactができたら閉じる。`initialFolder`は
+ * ダイアログの後ろで開いているフォルダで、パスを変えなければ新しいファイルはそこに入る。
  */
 export function ArtifactUploadDialog({
   projectId,
@@ -36,7 +36,7 @@ export function ArtifactUploadDialog({
   projectId: string;
   runId: string | null;
   onClose: () => void;
-  /** Called once per completed Artifact. */
+  /** 完了したArtifactごとに1回呼ぶ。 */
   onSaved: (artifact: Artifact) => void;
   accept?: string;
   multiple?: boolean;
@@ -91,7 +91,7 @@ export function ArtifactUploadDialog({
     setSources([]);
   }
   const totalSize = sources.reduce((total, source) => total + source.file.size, 0);
-  // Starting while the comparison runs would miss the path it is about to fill in.
+  // 比較の途中で始めると、比較がこれから埋めるパスを取りこぼす。
   const canStart =
     sources.length > 0 &&
     selectedFileResume.status !== 'checking' &&
@@ -199,7 +199,7 @@ export function ArtifactUploadDialog({
   );
 }
 
-/** Under the path field: whether the chosen file continues an unfinished upload. */
+/** パスの欄の下に出す。選んだファイルが途中のアップロードの続きかどうか。 */
 function SelectedFileResumeNotice({
   resume,
   path,
@@ -230,7 +230,7 @@ function SelectedFileResumeNotice({
   );
 }
 
-/** Under the path field: a file is already stored there, so this upload becomes its new version. */
+/** パスの欄の下に出す。そこにはもうファイルがあるので、このアップロードはその新しいバージョンになる。 */
 function ArtifactAtPathNotice({ found }: { found: ArtifactAtPath }) {
   useLocale();
   return (

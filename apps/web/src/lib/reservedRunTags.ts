@@ -2,11 +2,11 @@ import { parseStringMap } from './formValues';
 import { LocalizedError } from './localizedError';
 import { automationText } from '../i18n/automation';
 
-// Mirrors RESERVED_RUN_TAG_PREFIXES in the API (domain/reservedRunTags.ts): the server sets these
-// tags on the Runs it starts (automation rules, hooks, arrays), so a request may not carry them.
+// APIのRESERVED_RUN_TAG_PREFIXES（domain/reservedRunTags.ts）に合わせる。サーバーが自分で
+// 始めるRun（自動実行ルール、フック、array）にこれらのタグを付けるので、要求には含められない。
 const RESERVED_TAG_PREFIXES = ['automation.', 'mmt.'] as const;
 
-/** Tags a person gives the Runs a rule or hook starts, as a JSON object of strings. */
+/** ルールやフックが始めるRunに利用者が付けるタグ。文字列のJSONオブジェクト。 */
 export function parseUserRunTags(value: string): Record<string, string> {
   const tags = parseStringMap(value);
   const reserved = Object.keys(tags).find((key) =>

@@ -40,14 +40,14 @@ export const computeTarget: ComputeTarget = {
   ownerUserId: 'admin',
   visibility: 'public',
 };
-// The ssh target as GET /targets lists it: one from before owners, public to every Project.
+// GET /targetsが返す形のssh target。全体管理者（admin）が持ち、すべてのProjectに公開している。
 export const computeTargetDetails: ComputeTargetDetails = {
   ...computeTarget,
   ownerName: 'Admin',
   site: null,
   siteAccountMode: null,
 };
-// A site as the API stores it: connection settings empty, containers only.
+// APIが保存する形のsite: 接続設定は空で、コンテナだけ。
 export const siteTarget: ComputeTarget = {
   ...computeTarget,
   id: 'site',
@@ -67,7 +67,7 @@ export const siteTarget: ComputeTarget = {
   supportsArray: true,
   queueTimeoutSeconds: 3600,
 };
-// An ssh Job without site fields; site tests override phase, array and scheduler fields.
+// siteの項目を持たないsshのJob。siteのテストはphase・array・schedulerの項目を上書きする。
 export const queuedJob: Job = {
   id: 'job',
   projectId: 'project',

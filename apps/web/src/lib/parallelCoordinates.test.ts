@@ -137,7 +137,7 @@ describe('狭い幅での平行座標の描画幅', () => {
     expect(parallelPlotWidth({ ...sizes, availableWidth: 1200, axisCount: 4 })).toBe(1200);
   });
   it('スマートフォン幅では軸の最小間隔を保つ幅まで広げ、図の中で横スクロールさせる', () => {
-    // 6 axes on a 358px panel: 120 + 5 * 148, scrolled inside the chart instead of overlapping.
+    // 358pxのパネルに軸が6本: 120 + 5 * 148。軸を重ねずに、図の中で横スクロールさせる。
     expect(parallelPlotWidth({ ...sizes, availableWidth: 358, axisCount: 6 })).toBe(860);
   });
   it('軸が1本なら与えられた幅のまま', () => {

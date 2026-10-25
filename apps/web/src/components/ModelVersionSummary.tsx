@@ -15,7 +15,7 @@ import { text } from '../i18n/catalog';
 import { lineageText } from '../i18n/lineage';
 import { lineageFocusPath } from '../lib/lineageFocus';
 
-/** The version's identity and where it came from, with the training → version → results band. */
+/** バージョンの素性と出どころに、学習 → バージョン → 結果の帯を添える。 */
 export function ModelVersionSummary({
   projectId,
   detail,

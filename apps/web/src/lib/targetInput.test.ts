@@ -16,7 +16,7 @@ import {
   updateTargetValues,
 } from './targetInput';
 
-// The manual site of the fixtures as its owner edits it.
+// フィクスチャの手動投入のsiteを、所有者が編集するときの形。
 const manualSite: ComputeTargetDetails = {
   ...siteTarget,
   ownerUserId: 'alice',
@@ -26,7 +26,7 @@ const manualSite: ComputeTargetDetails = {
 };
 const siteValues = {
   ...targetFormValues(manualSite),
-  // What a person might leave in the SSH fields before switching the executor to site.
+  // executorをsiteに切り替える前に、利用者がSSHの欄に残していそうな値。
   host: 'login.example.invalid',
   username: 'someone',
   sshKeyPath: '/keys/id',
@@ -108,7 +108,7 @@ describe('Compute targetの入力', () => {
 describe('siteの全体設定', () => {
   it('保存済みの自動投入のsiteは、編集しなければ同じ全体設定を送る', () => {
     const values = targetFormValues(globalSiteDetails);
-    // The job shell is not a setting the dialog saves; it gets a new version on its own.
+    // job shellはダイアログが保存する設定ではなく、別に新しいバージョンになる。
     expect(buildTargetInput(values, globalSiteDetails).site).toEqual({
       ...automaticSiteSettings,
       jobShell: undefined,

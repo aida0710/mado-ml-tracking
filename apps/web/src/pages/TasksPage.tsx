@@ -73,7 +73,7 @@ export function TasksPage() {
                 onClick={() => setDialog({ kind: 'launch', task: selected, mode: 'test' })}>{text.launchTest}</button>
             </div>}
           </div>
-          {/* Said in the page, not only in a tooltip that a touch screen never shows. */}
+          {/* タッチスクリーンでは出ないツールチップだけでなく、ページの中にも書く。 */}
           {canEdit && !hasTestCommand(selected) && <p id={testCommandNoteId} className="muted">{text.testCommandRequired}</p>}
           <TaskDetails task={selected} catalog={entries} targets={computeTargets} />
           <h3>{text.taskHistory}</h3>

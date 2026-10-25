@@ -1,13 +1,13 @@
 import type { AuditEvent, AuditEventPage } from '@mmt/contracts';
 import { invalidResponseError, projectPath, request } from './http';
 
-// Matches the API default so each "load more" fetches one server page.
+// 続きを読むたびにサーバーの1ページを取るよう、APIの既定値に合わせる。
 export const AUDIT_EVENT_PAGE_SIZE = 50;
 
-/** What the log is narrowed to; the API applies it, so paging stays over the narrowed log. */
+/** ログの絞り込み条件。APIが絞り込むので、ページ送りも絞り込んだログの中で進む。 */
 export interface AuditEventFilter {
   outcome?: AuditEvent['outcome'];
-  /** Leaves out sign-ins, sign-outs and the identity provider's syncs. */
+  /** ログイン・ログアウトと、IdPとの同期を除く。 */
   hideSignIns?: boolean;
 }
 
@@ -37,6 +37,6 @@ async function fetchAuditPage(
 export const auditApi = {
   projectEvents: (projectId: string, page: AuditPageRequest = {}) =>
     fetchAuditPage(`${projectPath(projectId)}/audit-events`, page),
-  // Global administrators only; includes events of no Project (logins, users, storage).
+  // 全体管理者だけ。どのProjectにも属さない記録（ログイン、ユーザー、保存先）も含む。
   globalEvents: (page: AuditPageRequest = {}) => fetchAuditPage('/audit-events', page),
 };

@@ -4,9 +4,8 @@ import { TokenDialog } from '../dialogs/TokenDialog';
 import { useProject } from '../hooks/useProject';
 
 /**
- * Opens the dialog that issues one's own token for this Project, with the scopes a guide needs
- * already selected. Viewers cannot hold write scopes, so the token would be refused and they get
- * no button.
+ * このProjectで使う自分のtokenを発行するダイアログを、案内に要るscopeを選んだ状態で開く。Viewerは
+ * 書き込みのscopeを持てず、tokenが断られるので、ボタンを出さない。
  */
 export function ProjectTokenButton({
   label,

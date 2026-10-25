@@ -9,9 +9,9 @@ import type {
 } from '@mmt/contracts';
 import { encodeId, invalidResponseError, jsonRequest, projectPath, request, requestItems } from './http';
 
-// One page of a key's media. The slider needs every step of a key, so pages are followed.
+// 1つのキーのメディアの1ページ。スライダーにはキーのすべてのstepが要るので、ページをたどる。
 export const RUN_MEDIA_PAGE_LIMIT = 200;
-// Stops following pages here so a key logged at every step of a very long Run cannot stall the tab.
+// とても長いRunの全stepで記録されたキーでタブが固まらないよう、ここでページをたどるのをやめる。
 export const RUN_MEDIA_MAX_ITEMS = 10_000;
 
 export interface RunMediaQuery {
@@ -23,7 +23,7 @@ export interface RunMediaQuery {
 
 export interface RunMediaOfKey {
   items: RunMedia[];
-  /** True when the Run has more media for the key than RUN_MEDIA_MAX_ITEMS. */
+  /** そのキーのRunのメディアがRUN_MEDIA_MAX_ITEMS件より多いときtrue。 */
   truncated: boolean;
 }
 
@@ -45,7 +45,7 @@ async function mediaPage(
   signal?: AbortSignal,
 ): Promise<RunMediaPage> {
   const page = await request<RunMediaPage>(`${runMediaPath(projectId, runId)}?${mediaQueryString(query)}`, { signal });
-  // The last page omits nextCursor.
+  // 最後のページにはnextCursorが無い。
   if (!Array.isArray(page.items) || (page.nextCursor !== undefined && typeof page.nextCursor !== 'string'))
     throw invalidResponseError();
   return page;
@@ -55,7 +55,7 @@ export const runMediaApi = {
   keys: (projectId: string, runId: string, signal?: AbortSignal): Promise<RunMediaKeySummary[]> =>
     requestItems<RunMediaKeySummary>(`${runMediaPath(projectId, runId)}/keys`, signal),
   page: mediaPage,
-  /** Every media item of a key in step order, following cursors up to RUN_MEDIA_MAX_ITEMS. */
+  /** キーのすべてのメディアをstepの順に返す。cursorはRUN_MEDIA_MAX_ITEMS件までたどる。 */
   list: async (projectId: string, runId: string, query: RunMediaQuery, signal?: AbortSignal): Promise<RunMediaOfKey> => {
     const items: RunMedia[] = [];
     let cursor: string | undefined;
@@ -71,7 +71,7 @@ export const runMediaApi = {
       ...jsonRequest('POST', body),
       signal,
     });
-    // Each row has one cell per requested step, or a single cell (the latest step) without steps.
+    // 各行は求めたstepごとに1つのセルを持つ。stepを指定しなければ1つのセル（最新のstep）だけ。
     const cellsPerRow = Array.isArray(grid.steps) ? grid.steps.length : 1;
     if (
       (grid.steps !== null && !Array.isArray(grid.steps)) ||
@@ -81,7 +81,7 @@ export const runMediaApi = {
       throw invalidResponseError();
     return grid;
   },
-  /** The table media stored as this Artifact, or null when the file is not a logged table. */
+  /** このArtifactとして保存した表のメディア。ファイルが記録された表でなければnull。 */
   tableOfArtifact: async (
     projectId: string,
     target: { runId: string; artifactId: string },

@@ -18,7 +18,7 @@ import { LocalizedError } from '../lib/localizedError';
 import { useLocale } from '../i18n/useLocale';
 import { automationText } from '../i18n/automation';
 
-/** Lets a Project admin run a rule on a version (or upstream Run) registered before the rule. */
+/** ルールより前に登録されたバージョン（または上流のRun）へ、Project adminがルールを実行する。 */
 export function AutomationManualApply({
   rule,
   projectId,
@@ -32,7 +32,7 @@ export function AutomationManualApply({
 }) {
   useLocale();
   const isChained = rule.trigger === 'upstream_run_finished';
-  // Only the upstream rule's executions can offer a Run, so the API is asked for those alone.
+  // Runの候補を出せるのは上流のルールの実行だけなので、APIにはそれだけを問い合わせる。
   const upstreamRuleId = isChained ? rule.upstreamRuleId : null;
   const upstreamExecutions = useQuery({
     key: upstreamRuleId ? `${projectId}:automation-executions:${upstreamRuleId}:manual-apply` : null,

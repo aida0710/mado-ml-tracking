@@ -7,11 +7,11 @@ import { useQuery, type QueryState } from './useQuery';
 
 export interface MediaCompareChoices {
   runs: Run[];
-  /** Keys recorded by at least one compared Run, by name. */
+  /** 比べるRunの少なくとも1つが記録したキー。名前ごと。 */
   keys: RunMediaKeySummary[];
 }
 
-/** Merges each Run's key summaries into one entry per key (counts summed, step range widened). */
+/** 各Runのキーの要約をキーごとに1つにまとめる（件数は足し、stepの範囲は広げる）。 */
 function mergeKeySummaries(summariesByRun: RunMediaKeySummary[][]): RunMediaKeySummary[] {
   const merged = new Map<string, RunMediaKeySummary>();
   for (const summary of summariesByRun.flat()) {
@@ -38,8 +38,8 @@ interface MediaCompareTarget {
 }
 
 /**
- * What a media comparison can be made of: the Runs, the keys any of them recorded, and the steps
- * each Run recorded for the selected key (the chosen one, or the first), in the order of runIds.
+ * メディアの比較の材料。Run、そのどれかが記録したキー、選んだキー（選ばれたもの、無ければ最初の
+ * もの）について各Runが記録したstep。runIdsの順。
  */
 export function useMediaCompareChoices({ projectId, runIds, chosenKey }: MediaCompareTarget): {
   choices: QueryState<MediaCompareChoices>;
@@ -63,9 +63,9 @@ export function useMediaCompareChoices({ projectId, runIds, chosenKey }: MediaCo
 }
 
 /**
- * The choices and the Run × step grid from POST /media/compare. `steps` null asks for the default
- * columns, so the grid waits for the recorded steps to choose them; [] asks for each Run's latest
- * step. `shownSteps` is what the grid was asked for, null until it is known.
+ * 選択肢と、POST /media/compareによるRun × stepの格子。`steps`がnullなら既定の列を求めるので、
+ * 格子は列を選ぶのに記録済みのstepを待つ。[]なら各Runの最新のstepを求める。`shownSteps`は格子に
+ * 求めたもので、分かるまではnull。
  */
 export function useMediaCompare({ steps, ...target }: MediaCompareTarget & { steps: number[] | null }): ReturnType<
   typeof useMediaCompareChoices

@@ -13,7 +13,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { hookWebhookSignatureHints, hooksTextTemplates } from '../i18n/hooks';
 
-/** One value of the new webhook, with a copy button. */
+/** 新しいwebhookの値の1つ。コピーのボタンつき。 */
 function WebhookValue({ label, value }: { label: string; value: string }) {
   useLocale();
   return (
@@ -25,8 +25,8 @@ function WebhookValue({ label, value }: { label: string; value: string }) {
 }
 
 /**
- * The secret of a new webhook hook. The API keeps it encrypted and never returns it again, so it
- * is shown here once, next to the path the sender posts to.
+ * 新しいwebhookのフックの署名の秘密鍵。APIは暗号化して持ち、二度と返さないので、ここで、
+ * 送り手がpostするパスと並べて一度だけ見せる。
  */
 function WebhookCreated({ created, onClose }: { created: HookCreated; onClose: () => void }) {
   useLocale();
@@ -57,9 +57,9 @@ function WebhookCreated({ created, onClose }: { created: HookCreated; onClose: (
 }
 
 /**
- * Creates a hook, from the defaults or as a copy of `source`. onCreated runs as soon as the API
- * has it (the list can refresh behind the secret); onClose ends the dialog, after the secret of a
- * webhook hook has been shown.
+ * 既定値から、または`source`のコピーとしてフックを作る。onCreatedはAPIがフックを受け取った
+ * 時点で呼ぶ（秘密鍵の後ろで一覧を更新できる）。onCloseはダイアログを終えるときに呼ぶ。
+ * webhookのフックなら、秘密鍵を見せたあとになる。
  */
 export function HookDialog({
   catalog,
@@ -68,7 +68,7 @@ export function HookDialog({
   onClose,
 }: {
   catalog: HookCatalog;
-  /** The hook whose settings the form starts from ([複製して新しく作る]). */
+  /** フォームの初期値にする設定を持つフック（[複製して新しく作る]）。 */
   source?: Hook;
   onCreated: (hook: Hook) => void;
   onClose: () => void;

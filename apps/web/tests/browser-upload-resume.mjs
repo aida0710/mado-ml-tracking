@@ -1,6 +1,6 @@
-// Browser check of continuing an unfinished Artifact upload ("途中のアップロード") against an
-// isolated API (port 47480) and Vite (47481). It creates a temporary schema in mmt_test, so the
-// shared development API and DB are untouched.
+// 分離したAPI（ポート47480）とVite（47481）で、途中で止まったArtifactのアップロード
+// （「途中のアップロード」）を続きから送れることをブラウザで確かめる。mmt_testに一時的なschemaを
+// 作るので、共有の開発APIとDBには触れない。
 //
 //   (cd apps/web && MMT_WEB_API_PROXY_TARGET=http://127.0.0.1:47480 npx vite --port 47481 --strictPort --host 127.0.0.1) &
 //   MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55490/mmt_test \
@@ -8,7 +8,7 @@
 //   MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/<担当>/after \
 //   npx tsx apps/web/tests/browser-upload-resume.mjs
 //
-// tsx is needed because the script starts the API from its TypeScript sources.
+// スクリプトがAPIをTypeScriptのソースから起動するので、tsxが要る。
 import assert from 'node:assert/strict';
 import { createHash, randomBytes } from 'node:crypto';
 import { createReadStream } from 'node:fs';
@@ -27,11 +27,11 @@ import { serverTimeouts } from '../../api/src/http/serverTimeouts.ts';
 const API_PORT = 47480;
 const WEB_URL = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:47481';
 const MIB = 1024 * 1024;
-// The audit's case: a 150 MiB checkpoint is 10 parts of 16 MiB (the last one 6 MiB).
+// 点検で挙がった例: 150 MiBのcheckpointは16 MiBずつ10個のpartになる（最後のpartは6 MiB）。
 const CHECKPOINT_BYTES = 150 * MIB;
 const PART_BYTES = 16 * MIB;
 const PART_COUNT = Math.ceil(CHECKPOINT_BYTES / PART_BYTES);
-// Parts that reach the server before the page is reloaded.
+// ページを再読み込みする前にサーバーへ届くpartの数。
 const PARTS_BEFORE_INTERRUPTION = 3;
 const COMPLETION_TIMEOUT_MS = 180_000;
 const DESKTOP = { width: 1440, height: 900 };
@@ -88,7 +88,7 @@ async function sha256OfFile(filePath) {
   return hash.digest('hex');
 }
 
-/** Viewport shots at 1440 and 390 wide; `focus` is scrolled into view first. */
+/** 幅1440と390でのビューポートのスクリーンショット。先に`focus`が見えるまでスクロールする。 */
 async function screenshotBoth(page, name, focus) {
   if (!screenshotDirectory) return;
   await mkdir(screenshotDirectory, { recursive: true });
@@ -111,7 +111,7 @@ async function devLogin(page, email, name) {
   return (await response.json()).user;
 }
 
-/** Records, in order, the parts the page sends to each session. */
+/** ページが各アップロードセッションへ送るpartを、送った順に記録する。 */
 function watchPartRequests(page) {
   const requests = [];
   let okResponses = 0;
@@ -124,9 +124,9 @@ function watchPartRequests(page) {
       okResponses += 1;
   });
   return {
-    /** A position to count from with partsSentSince. */
+    /** partsSentSinceで数え始める位置。 */
     mark: () => requests.length,
-    /** Distinct part numbers sent to the session after `mark`, in ascending order. */
+    /** `mark`のあとでそのセッションへ送ったpart番号を、重複を除いて昇順に並べたもの。 */
     partsSentSince: (uploadId, mark = 0) =>
       [...new Set(requests.slice(mark).filter((item) => item.uploadId === uploadId).map((item) => item.partNumber))].sort(
         (left, right) => left - right,
@@ -136,9 +136,9 @@ function watchPartRequests(page) {
 }
 
 /**
- * Holds part requests above PARTS_BEFORE_INTERRUPTION in front of the API while `isHolding`. The
- * hold is on the server side because Playwright's request interception, once removed, left later
- * font requests of the page pending and the screenshots waiting for fonts.
+ * `isHolding`の間、PARTS_BEFORE_INTERRUPTIONを超える番号のpartの要求をAPIの手前で止めておく。
+ * 止めるのをサーバー側にしたのは、Playwrightの要求の横取りを外したあと、ページのその後のフォントの
+ * 要求が保留のまま残り、スクリーンショットがフォントを待ち続けたため。
  */
 const partGate = { isHolding: false, release: () => undefined, released: Promise.resolve() };
 function holdLaterParts() {
@@ -153,13 +153,13 @@ async function fetchThroughPartGate(request, ...rest) {
   const match = request.method === 'PUT' && new URL(request.url).pathname.match(/\/artifact-uploads\/[^/]+\/parts\/(\d+)$/);
   if (match && partGate.isHolding && Number(match[1]) > PARTS_BEFORE_INTERRUPTION) {
     await partGate.released;
-    // The page that sent it has been reloaded by now, so nobody reads this answer.
+    // 送ったページはもう再読み込みされているので、この応答を読むものはいない。
     return new Response(null, { status: 503 });
   }
   return application.app.fetch(request, ...rest);
 }
 
-/** Starts an upload of `filePath` to `artifactPath` and reloads once the first parts are stored. */
+/** `filePath`を`artifactPath`へアップロードし始め、最初のpartが保存されたら再読み込みする。 */
 async function interruptUpload(page, parts, { openDialog, filePath, artifactPath }) {
   const okBefore = parts.okResponses();
   holdLaterParts();
@@ -181,12 +181,12 @@ try {
 
   const checkpoint = await writeRandomFile(path.join(fileDirectory, 'run', 'model-checkpoint-step-12000.bin'), CHECKPOINT_BYTES);
   const checkpointSha256 = await sha256OfFile(checkpoint);
-  // Same size, same name pattern, one stored part different: the next checkpoint of the same model.
+  // 大きさも名前の付け方も同じで、保存済みのpartが1つだけ違う: 同じモデルの次のcheckpoint。
   const nextCheckpointBytes = await readFile(checkpoint);
   nextCheckpointBytes.set(randomBytes(PART_BYTES), PART_BYTES);
   const nextCheckpoint = path.join(fileDirectory, 'run', 'model-checkpoint-step-13000.bin');
   await writeFile(nextCheckpoint, nextCheckpointBytes);
-  // The same bytes copied elsewhere under another name and time, as another computer would have it.
+  // 同じバイト列を、名前と時刻を変えて別の場所へコピーしたもの。別のコンピュータにあるファイルにあたる。
   const copiedCheckpoint = path.join(fileDirectory, 'copy', 'step12000-copy.bin');
   await mkdir(path.dirname(copiedCheckpoint), { recursive: true });
   await copyFile(checkpoint, copiedCheckpoint);
@@ -207,7 +207,7 @@ try {
     assert.ok(response.ok(), `${method} ${endpoint}: ${response.status()} ${await response.text()}`);
     return response.json();
   };
-  // Private, so the member role alone decides who may upload (a public Project gives everyone editor).
+  // Privateにして、アップロードできるかをメンバーのroleだけで決める（publicなProjectでは全員がeditorになる）。
   const project = await api('/projects', { method: 'post', body: { name: '続きを送るの確認', visibility: 'private' } });
   const experiment = await api(`/projects/${project.id}/experiments`, { method: 'post', body: { name: 'Checkpoints' } });
   const run = await api(`/projects/${project.id}/runs`, {
@@ -233,7 +233,7 @@ try {
   const missingPartNumbers = allPartNumbers.slice(PARTS_BEFORE_INTERRUPTION);
   const sentBeforeInterruption = `${PARTS_BEFORE_INTERRUPTION * PART_BYTES / MIB}.0 MiB / 150.0 MiB 送信済み`;
 
-  // 1. The audit's case: choosing the same file again fills in the earlier path and continues.
+  // 1. 点検で挙がった例: 同じファイルを選び直すと、前回の保存パスが入り、続きから送る。
   const auditPath = 'checkpoints/step-12000/model.bin';
   await interruptUpload(page, parts, { openDialog: openUploadDialog, filePath: checkpoint, artifactPath: auditPath });
   await page.getByRole('button', { name: 'Artifactをアップロード' }).click();
@@ -249,7 +249,7 @@ try {
   await dialog.getByTestId('upload-resume-matched').waitFor();
   assert.equal(await dialog.getByLabel('保存パス').inputValue(), auditPath, 'the earlier path is filled in');
   await screenshotBoth(page, '02-same-file-path-filled', dialog.getByTestId('upload-resume-matched'));
-  // Editing the path away says the upload starts over, and the path can be put back.
+  // 保存パスを書き換えると最初からになると伝え、保存パスは元に戻せる。
   await dialog.getByLabel('保存パス').fill('checkpoints/other.bin');
   await dialog.getByTestId('upload-resume-path-changed').waitFor();
   await screenshotBoth(page, '03-path-changed', dialog.getByTestId('upload-resume-path-changed'));
@@ -266,7 +266,7 @@ try {
   await screenshotBoth(page, '04-resumed-completed', queueRow(auditPath));
   results.sameFileFillsPath = { path: auditPath, resumedFromBytes: auditSession.receivedBytes, sha256Matches: true };
 
-  // 2. A different file of the same size is never continued: not filled in, refused on the row.
+  // 2. 大きさが同じ別のファイルは続きにしない: パスは入らず、行で断られる。
   const guardPath = 'checkpoints/step-14000/model.bin';
   await interruptUpload(page, parts, { openDialog: openUploadDialog, filePath: checkpoint, artifactPath: guardPath });
   await page.getByRole('button', { name: 'Artifactをアップロード' }).click();
@@ -289,8 +289,8 @@ try {
   assert.equal((await runArtifact(guardPath)).sha256, checkpointSha256);
   results.otherFileRefused = { path: guardPath, partsSentBeforeRefusal: 3, continuedWithRightFile: true };
 
-  // 3. Another browser on a plain http origin: no local record, no Web Crypto. The copied file
-  //    (other name, other time) is matched by its bytes alone.
+  // 3. 素のhttpのoriginで開いた別のブラウザ: 手元の記録もWeb Cryptoも無い。コピーしたファイル
+  //    （名前も時刻も違う）は、バイト列だけで一致を判定する。
   const copyPath = 'checkpoints/step-15000/model.bin';
   await interruptUpload(page, parts, { openDialog: openUploadDialog, filePath: checkpoint, artifactPath: copyPath });
   const copySession = await sessionAt(copyPath);
@@ -315,7 +315,7 @@ try {
   await otherContext.close();
   results.copyWithoutWebCrypto = { path: copyPath, partsSent: missingPartNumbers.length };
 
-  // 4. Past the deadline: the row says so and starts over to the same path.
+  // 4. 期限切れ: 行にそう出て、同じパスへ最初から送り直す。
   const expiredPath = 'checkpoints/step-16000/model.bin';
   await interruptUpload(page, parts, { openDialog: openUploadDialog, filePath: checkpoint, artifactPath: expiredPath });
   const expiredSession = await sessionAt(expiredPath);
@@ -335,7 +335,7 @@ try {
   assert.ok(discarded, 'the expired session was discarded');
   results.expiredStartsOver = { path: expiredPath, oldSession: 'aborted' };
 
-  // 5. Gone on the server while the dialog was open (discarded from another tab).
+  // 5. ダイアログを開いている間にサーバーから消えた（別のタブで破棄した）。
   const gonePath = 'checkpoints/step-17000/model.bin';
   await interruptUpload(page, parts, { openDialog: openUploadDialog, filePath: checkpoint, artifactPath: gonePath });
   await page.getByRole('button', { name: 'Artifactをアップロード' }).click();
@@ -351,7 +351,7 @@ try {
   assert.equal((await runArtifact(gonePath)).sha256, checkpointSha256);
   results.goneStartsOver = { path: gonePath };
 
-  // 6. The editor's role is lowered to viewer while the dialog is open.
+  // 6. ダイアログを開いている間に、editorのroleがviewerへ下がる。
   const editorContext = await browser.newContext({ locale: 'ja-JP', viewport: DESKTOP });
   const editorPage = await editorContext.newPage();
   editorPage.on('pageerror', (error) => pageErrors.push(error.message));

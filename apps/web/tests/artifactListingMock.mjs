@@ -1,5 +1,5 @@
-// The Artifact list rules of docs/api-contract.md for browser checks: latest per path, byte-order
-// paths, prefix/delimiter, directory tree, and cursors. Cursors are plain offsets here.
+// ブラウザでの確認に使う、docs/api-contract.mdのArtifactの一覧の決まり。パスごとの最新、
+// バイト順のパス、prefix/delimiter、ディレクトリのツリー、cursor。ここではcursorは単なるoffset。
 
 const byPathThenNewest = (left, right) =>
   left.path === right.path

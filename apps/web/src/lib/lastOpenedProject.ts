@@ -1,14 +1,14 @@
 import type { Project } from '@mmt/contracts';
 
-// The Project opened last in this browser, so "/" (the app name, or leaving 全体設定) opens it
-// again instead of the newest Project. This app's keys start with "mmt.".
+// このブラウザで最後に開いたProject。"/"（アプリ名を押すか、全体設定を出るとき）で、最新の
+// Projectではなくこれを開き直す。このアプリのキーは"mmt."で始める。
 const LAST_PROJECT_STORAGE_KEY = 'mmt.lastProject';
 
 export function readLastProjectId(): string | null {
   try {
     return localStorage.getItem(LAST_PROJECT_STORAGE_KEY);
   } catch {
-    // Storage may be blocked; "/" then opens the first Project the user is a member of.
+    // ストレージが使えないことがある。そのときの"/"は、利用者がメンバーである最初のProjectを開く。
     return null;
   }
 }
@@ -17,16 +17,15 @@ export function rememberLastProjectId(projectId: string): void {
   try {
     localStorage.setItem(LAST_PROJECT_STORAGE_KEY, projectId);
   } catch {
-    /* Remembering is a convenience; the app works without it. */
+    /* 覚えておくのは便利のためで、無くてもアプリは動く。 */
   }
 }
 
 /**
- * The Project "/" opens: the one opened last while the user can still open it, else the newest one
- * the user is a member of (directly or through a group). A Project the user only reaches because
- * it is public, or because they are a global administrator, is never entered by itself: someone
- * signing in for the first time would land in a stranger's Project. Undefined leaves "/" on the
- * Project list.
+ * "/"が開くProject。最後に開いたものを利用者がまだ開けるならそれ、無ければ利用者が（直接かgroup
+ * 経由で）メンバーである最新のもの。公開されているから、または全体管理者だからというだけで届く
+ * Projectには自分からは入らない。初めてログインした人が、知らない人のProjectに着いてしまうため。
+ * undefinedなら"/"はProjectの一覧のまま。
  */
 export function projectToOpen(projects: Project[], lastProjectId: string | null): Project | undefined {
   return (

@@ -19,8 +19,8 @@ import { text } from '../../i18n/catalog';
 import { artifactsTextTemplates } from '../../i18n/artifacts';
 
 /**
- * Evaluation samples (audio, reference, prediction, score) with sorting, diff highlighting, and
- * pages of 50. Phones (below 640px) get one card per sample instead of the five-column table.
+ * 評価サンプル（音声、reference、prediction、score）を、並べ替え、差分の強調、50件ずつの
+ * ページ付きで出す。スマートフォン（640px未満）では5列の表の代わりに1件1枚のカードを出す。
  */
 export function EvaluationSamplesTable({
   artifact,
@@ -29,7 +29,7 @@ export function EvaluationSamplesTable({
 }: {
   artifact: Artifact;
   table: EvaluationSampleTable;
-  /** The ［表示形式］ select, to switch this file to text. */
+  /** ［表示形式］のselect。このファイルをテキストに切り替える。 */
   formatSelect: ReactNode;
 }) {
   useLocale();

@@ -3,7 +3,7 @@ import { encodeId, invalidResponseError, jsonRequest, request, requestItems } fr
 
 const launcherPath = (launcherId: string) => `/launchers/${encodeId(launcherId)}`;
 
-/** A launcher's new token. It is shown once, so an answer without it is a contract break. */
+/** ランチャーの新しいtoken。一度しか見せないので、tokenの無い応答は契約違反とする。 */
 async function issueToken(path: string, init: RequestInit): Promise<LauncherCreated> {
   const created = await request<LauncherCreated>(path, init);
   if (typeof created.token !== 'string' || typeof created.launcher?.id !== 'string')
@@ -11,14 +11,14 @@ async function issueToken(path: string, init: RequestInit): Promise<LauncherCrea
   return created;
 }
 
-// Launchers are registered by global administrators; anyone signed in may list the live ones to
-// choose the launcher of a computer.
+// ランチャーは全体管理者が登録する。コンピュータのランチャーを選ぶため、ログインしている人なら
+// 誰でも有効なランチャーを一覧できる。
 export const launchersApi = {
   list: (signal?: AbortSignal) => requestItems<Launcher>('/launchers', signal),
   create: (body: LauncherCreate) => issueToken('/launchers', jsonRequest('POST', body)),
-  /** Replaces the token; the old one stops working at once. */
+  /** tokenを作り直す。古いtokenはすぐに使えなくなる。 */
   rotateToken: (launcherId: string) =>
     issueToken(`${launcherPath(launcherId)}/token`, { method: 'POST' }),
-  /** Revokes the launcher and its token. */
+  /** ランチャーとそのtokenを失効させる。 */
   revoke: (launcherId: string) => request<void>(launcherPath(launcherId), { method: 'DELETE' }),
 };

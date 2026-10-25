@@ -12,9 +12,9 @@ import { text, textTemplates } from '../../i18n/catalog';
 import { formatList } from '../../i18n/textJoining';
 
 /**
- * The settings of a media comparison embed: its Runs, the key and the steps. Choosing a key (or
- * other Runs) starts the steps at the latest one every Run recorded, as the Compare page opens.
- * Only media logged with a step can be compared here, and the fields say so when the Runs have none.
+ * メディアの比較の埋め込みの設定。Run、キー、step。キー（または別のRun）を選ぶと、Compareの
+ * 画面が開くときと同じく、全Runが記録した最新のstepからstepを始める。ここで比べられるのは
+ * stepを付けて記録したメディアだけで、Runにそれが無いときは項目がその旨を伝える。
  */
 export function MediaEmbedFields({
   projectId,
@@ -31,13 +31,13 @@ export function MediaEmbedFields({
     runIds: block.runIds,
     chosenKey: block.key || null,
   });
-  // Whether the Runs or the key changed and their default steps are still to be chosen.
+  // Runかキーが変わり、その既定のstepをまだ選んでいないかどうか。
   const isAwaitingDefaultStepsRef = useRef(false);
   const recordedSteps = block.key && selectedKey === block.key ? stepsByRun.value : undefined;
 
-  // The default steps come from the recorded steps, which load after the key or the Runs change.
-  // A layout effect applies them before the browser paints, so the step checklist is never shown
-  // without them and a tick cannot be overwritten.
+  // 既定のstepは記録のあるstepから決まり、記録のあるstepはキーかRunが変わった後に読み込まれる。
+  // layout effectでブラウザが描画する前に当てるので、stepのチェックリストが既定のstep無しで
+  // 出ることはなく、付けたチェックが上書きされることも無い。
   useLayoutEffect(() => {
     if (!isAwaitingDefaultStepsRef.current || !recordedSteps) return;
     isAwaitingDefaultStepsRef.current = false;
@@ -45,7 +45,7 @@ export function MediaEmbedFields({
   }, [recordedSteps, block, onChange]);
 
   function changeTarget(target: Pick<ReportMediaBlock, 'runIds' | 'key'>) {
-    // Steps recorded for the previous Runs or key may not exist for the new ones.
+    // 前のRunやキーで記録されたstepは、新しいものには無いかもしれない。
     isAwaitingDefaultStepsRef.current = target.key !== '';
     onChange({ ...block, ...target, steps: undefined });
   }

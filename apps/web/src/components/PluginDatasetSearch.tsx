@@ -7,7 +7,7 @@ import { text } from '../i18n/catalog';
 import { pluginsText } from '../i18n/plugins';
 
 /**
- * The parent remounts on configuration changes, discarding earlier requests and their results.
+ * 設定が変わると親がこの部品をマウントし直し、それまでの要求とその結果を捨てる。
  */
 export function PluginDatasetSearch({
   projectId,

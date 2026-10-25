@@ -1,7 +1,7 @@
-// Browser check for 全体設定 → ユーザー (/settings/users) and アカウント (/settings/account): create a
-// local user and see its initial password once, disable a user after the confirmation, reset a
-// password, keep SSO roles read-only, and send non-administrators from /settings/users to their
-// account. The users API is mocked here until it is integrated.
+// 全体設定 → ユーザー（/settings/users）とアカウント（/settings/account）のブラウザでの確認。
+// ローカルユーザーを作って初期パスワードを1回だけ見る、確認のうえでユーザーを無効にする、
+// パスワードを再設定する、SSOのロールは読み取り専用のままにする、管理者でない人を
+// /settings/usersから本人のアカウントへ送る。ユーザーのAPIは、このファイルの中のモックで答える。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -112,7 +112,7 @@ try {
   const page = await context.newPage();
   page.on('pageerror', (error) => pageErrors.push(error.message));
 
-  // The user menu opens 全体設定 on the account; the sidebar's 全体管理 group switches to Users.
+  // ユーザーメニューの全体設定はアカウントを開く。サイドバーの全体管理のまとまりからユーザーへ移る。
   await page.goto(`${webUrl}/projects/${api.state.project.id}/experiments`);
   await page.getByRole('button', { name: 'ユーザーメニュー', exact: true }).click();
   assert.equal(await page.getByRole('menuitem', { name: '全体管理', exact: true }).count(), 0);
@@ -130,14 +130,14 @@ try {
   );
   await page.getByRole('cell', { name: '退職予定者' }).waitFor();
 
-  // SSO users' administrator role is read-only: no button, only the source of truth.
+  // SSOのユーザーの管理者ロールは読み取り専用。ボタンは無く、正本がどこかだけを出す。
   const ssoRow = page.getByRole('row', { name: /SSO管理者/ });
   await ssoRow.getByText('Authentikのgroupが正本').waitFor();
   assert.equal(await ssoRow.getByRole('button', { name: /管理者/ }).count(), 0);
   assert.equal(await ssoRow.getByRole('button', { name: 'パスワード再設定' }).count(), 0);
   await page.screenshot({ path: `${outputDirectory}/01-admin-users.png`, fullPage: true });
 
-  // Create a local user; the initial password is shown once after saving.
+  // ローカルユーザーを作る。初期パスワードは保存の後に1回だけ表示する。
   await page.getByRole('button', { name: 'ローカルユーザーを作成' }).click();
   const dialog = page.getByRole('dialog', { name: 'ローカルユーザーを作成' });
   await dialog.getByLabel('ユーザー名').fill('new.member');
@@ -166,7 +166,7 @@ try {
   await page.getByRole('cell', { name: /新しいメンバー/ }).waitFor();
   assert.ok(!(await page.content()).includes(initialPassword), 'the password is not shown again');
 
-  // Disabling asks first and says the sessions end.
+  // 無効にする前に確かめ、sessionが終わることを伝える。
   const leaverRow = page.getByRole('row', { name: /退職予定者/ });
   await leaverRow.getByRole('button', { name: '無効化' }).click();
   const confirm = page.getByRole('dialog', { name: 'ユーザーを無効化' });
@@ -181,7 +181,7 @@ try {
     ),
   );
 
-  // A password reset shows the temporary password once.
+  // パスワードを再設定すると、仮のパスワードを1回だけ表示する。
   await leaverRow.getByRole('button', { name: 'パスワード再設定' }).click();
   await page
     .getByRole('dialog', { name: 'パスワードを再設定' })
@@ -196,7 +196,7 @@ try {
     .click();
   assert.ok(!(await page.content()).includes(RESET_PASSWORD));
 
-  // The avatar opens the user menu; the account shows the profile, password form and tokens.
+  // アバターでユーザーメニューが開く。アカウントにはプロフィール、パスワードのフォーム、tokenが出る。
   await page.getByRole('button', { name: 'ユーザーメニュー' }).click();
   await page.getByRole('menuitem', { name: 'パスワードの変更', exact: true }).waitFor();
   await page.screenshot({ path: `${outputDirectory}/05-user-menu.png` });
@@ -208,8 +208,8 @@ try {
   assert.equal(await page.getByRole('heading', { name: '所属group' }).count(), 0);
   await page.screenshot({ path: `${outputDirectory}/06-account-local.png`, fullPage: true });
 
-  // An SSO user sees their groups read-only and no password form. The URL from before 全体設定
-  // still opens the account.
+  // SSOのユーザーには所属groupが読み取り専用で出て、パスワードのフォームは出ない。全体設定が
+  // できる前のURLでも、アカウントが開く。
   signedInUser.authSources = ['oidc'];
   account.groups = ['mmt-users', 'team-a'];
   account.groupsSyncedAt = now;
@@ -221,8 +221,8 @@ try {
   assert.equal(await page.getByLabel('現在のパスワード').count(), 0);
   await page.screenshot({ path: `${outputDirectory}/07-account-sso.png`, fullPage: true });
 
-  // Someone who is not a global administrator gets 全体設定 but no 全体管理 links, and the users
-  // section, by its old or new URL, sends them to their account.
+  // 全体管理者でない人には、全体設定は出るが全体管理のリンクは出ない。ユーザーの画面は、古いURLでも
+  // 新しいURLでも本人のアカウントへ送る。
   signedInUser.isAdmin = false;
   for (const usersPath of ['/admin/users', '/settings/users']) {
     await page.goto(`${webUrl}${usersPath}`);

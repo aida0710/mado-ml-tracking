@@ -7,14 +7,14 @@ export function isSameWorker(
   return Boolean(left && right && left.tokenId === right.tokenId && left.workerId === right.workerId);
 }
 
-/** The worker part of a presence, as requests name it. */
+/** presenceのうち、要求でworkerを指すのに使う部分。 */
 export function checkWorkerOf(presence: TargetCheckWorkerPresence): TargetCheckWorker {
   return { tokenId: presence.tokenId, workerId: presence.workerId };
 }
 
 /**
- * The worker a dialog starts with: the one that checked the computer last if it is still online,
- * otherwise the only online worker. With several and no history, the person chooses.
+ * ダイアログで最初に選ぶworker。最後にコンピュータを確認したworkerがまだオンラインならそれ、
+ * そうでなければオンラインのただ1つのworker。複数あって履歴が無ければ、利用者が選ぶ。
  */
 export function defaultCheckWorker(
   workers: readonly TargetCheckWorkerPresence[],

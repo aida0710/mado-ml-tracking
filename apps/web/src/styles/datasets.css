@@ -1,4 +1,4 @@
-/* Datasets page: the selected dataset's heading and its version actions. */
+/* Datasetsの画面。選んだデータセットの見出しと、バージョンの操作。 */
 .version-detail-actions {
   display: flex;
   flex-wrap: wrap;
@@ -17,7 +17,7 @@
     flex-wrap: wrap;
   }
 }
-/* The dataset's namespace, description and archive state under its name. */
+/* データセット名の下に出す、Namespace・説明・アーカイブの状態。 */
 .dataset-summary {
   display: grid;
   gap: 4px;
@@ -43,7 +43,7 @@
   margin-left: 8px;
   vertical-align: middle;
 }
-/* The Runs that used a version, under its details. */
+/* バージョンの詳細の下に出す、そのバージョンを使ったRun。 */
 .dataset-version-usage .section-heading {
   margin-top: 16px;
 }

@@ -1,9 +1,9 @@
 import type { ProjectGroupBinding } from '@mmt/contracts';
 
 /**
- * The binding a newly typed group name would replace. PUT /group-bindings/:group both adds and
- * changes, so the add dialog checks this first instead of silently overwriting the role.
- * Authentik group names are compared as-is, the same way the API stores them.
+ * 新しく入力したgroup名が置き換えることになる付与。PUT /group-bindings/:groupは追加と変更を
+ * 兼ねるので、追加のダイアログはまずこれを確かめ、黙ってロールを上書きしないようにする。
+ * Authentikのgroup名は、APIが保存するのと同じく、そのまま比べる。
  */
 export function findExistingGroupBinding(
   bindings: readonly ProjectGroupBinding[],

@@ -1,10 +1,9 @@
-// Browser check of the Workflows screens (PR #20 review): starting, resuming and stopping only
-// after a confirmation and on a plain-http page (no crypto.randomUUID), one execution per
-// confirmation even when an answer is lost, what viewers and editors who did not start an
-// execution see, the history keeping the shown execution, older versions, the English screen,
-// the definition dialog's Escape, unsaved-changes guard and key renames, the 390px dialog,
-// execution and Run details, a confirmation closing when its execution ends, and the Jobs page's
-// way back to the workflow.
+// Workflowsの画面をブラウザで確かめる（PR #20のレビュー）: 開始・再開・停止が確認のあとにだけ動き、
+// 素のhttpのページ（crypto.randomUUIDが無い）でも動くこと、応答が失われても確認1回につき実行が
+// 1つであること、実行を始めていないviewerとeditorに見えるもの、履歴が表示中の実行を保つこと、
+// 古いバージョン、英語の画面、定義のダイアログのEscape・未保存の変更の確認・キーの名前の変更、
+// 390pxのダイアログ、実行とRunの詳細、実行が終わると確認のダイアログが閉じること、Jobsの画面から
+// ワークフローへ戻る道。
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { createBrowserApi } from './browserApi.mjs';
@@ -24,10 +23,10 @@ const DESKTOP = { width: 1440, height: 900 };
 const NARROW = { width: 390, height: 844 };
 const SHORT_ID_LENGTH = 8;
 
-/** A signed-in browser on the mock API, in `locale`, with `role` in the Project. */
+/** モックのAPIにログインしたブラウザ。表示言語は`locale`、Projectでのroleは`role`。 */
 async function openSession({ locale = 'ja-JP', role = 'admin', viewport = DESKTOP } = {}) {
   const context = await browser.newContext({ locale, viewport });
-  // The test origin 127.0.0.1 counts as secure, so take away what a plain-http origin lacks.
+  // テストのorigin 127.0.0.1は安全なものとして扱われるので、素のhttpのoriginに無いものを取り除く。
   await context.addInitScript(() => {
     delete Crypto.prototype.randomUUID;
   });
@@ -52,7 +51,7 @@ const workflowPath = (session, executionId) =>
   (executionId ? `?execution=${executionId}` : '');
 const shortId = (id) => id.slice(0, SHORT_ID_LENGTH);
 
-/** Picks the option whose label is `option`, or contains it (an execution's short id). */
+/** ラベルが`option`の、またはそれを含む（実行の短いid）選択肢を選ぶ。 */
 async function choose(container, label, option, { exact = true } = {}) {
   await container.getByRole('combobox', { name: label, exact: true }).click();
   await container.getByRole('option', { name: option, exact }).click();
@@ -71,12 +70,12 @@ async function startResumeAndStop() {
   const { page, workflows } = session;
   const [running, failed] = workflows.state.executions;
   try {
-    // Without ?execution= the newest execution is shown and written into the address.
+    // ?execution=が無ければ最新の実行を表示し、アドレスに書き込む。
     await page.goto(workflowPath(session));
     await page.waitForURL(`**?execution=${running.id}`);
     await page.locator('.workflow-execution h2 .status-badge', { hasText: '実行中' }).waitFor();
 
-    // Older versions come on request.
+    // 古いバージョンは求めたときに読む。
     const versionChoice = page.getByRole('combobox', { name: 'ワークフローのバージョン', exact: true });
     await versionChoice.click();
     assert.equal(await page.getByRole('option', { name: 'v1', exact: true }).count(), 0);
@@ -86,7 +85,7 @@ async function startResumeAndStop() {
     assert.equal((await versionChoice.textContent()).trim(), 'v1');
     await choose(page, 'ワークフローのバージョン', 'v25');
 
-    // Turning the history page keeps the shown execution chosen.
+    // 履歴のページをめくっても、表示中の実行が選ばれたまま残る。
     const executionChoice = page.getByRole('combobox', { name: '実行', exact: true });
     const shownLabel = (await executionChoice.textContent()).trim();
     assert.ok(shownLabel.includes(shortId(running.id)), shownLabel);
@@ -96,8 +95,8 @@ async function startResumeAndStop() {
     assert.ok(page.url().endsWith(`?execution=${running.id}`));
     await page.getByRole('button', { name: '最新の実行', exact: true }).click();
 
-    // Start: nothing is sent before the confirmation; a lost answer, then a second confirmation,
-    // sends the same key, and the API's first execution is the one shown.
+    // 開始: 確認より前には何も送らない。応答が失われたあと2回目の確認をすると同じキーを送り、
+    // APIが最初に作った実行が表示される。
     await page.getByRole('button', { name: 'ワークフローを実行', exact: true }).click();
     const startDialog = page.getByRole('dialog', { name: 'ワークフローを実行' });
     await startDialog.getByText('バージョン v25 を実行します', { exact: false }).waitFor();
@@ -116,12 +115,12 @@ async function startResumeAndStop() {
     await page.getByRole('status').filter({ hasText: `実行 ${shortId(started.id)}（バージョン v25）を開始しました。` }).waitFor();
     await page.waitForURL(`**?execution=${started.id}`);
 
-    // A new confirmation is a new start with a new key.
+    // 新しく確認すれば、新しいキーで新しく開始する。
     await page.getByRole('button', { name: 'ワークフローを実行', exact: true }).click();
     await startDialog.getByRole('button', { name: 'キャンセル', exact: true }).click();
     assert.equal(workflows.state.launches.length, 2);
 
-    // Resume the failed execution: the confirmation names it and its version.
+    // 失敗した実行を再開する: 確認にはその実行とバージョンが出る。
     await choose(page, '実行', shortId(failed.id), { exact: false });
     await page.getByText('成功したステップのRunと出力を再利用し、未完了のステップから再実行します。').waitFor();
     await page.getByRole('button', { name: '新しい実行として再開', exact: true }).click();
@@ -135,7 +134,7 @@ async function startResumeAndStop() {
     assert.equal(resumed.revision, 24);
     assert.notEqual(resumed.idempotencyKey, lost.idempotencyKey);
 
-    // Stop the colleague's running execution as a Project admin: the creator is named.
+    // Project adminとして、同僚の実行（実行中）を止める: 確認に作成者の名前が出る。
     await choose(page, '実行', shortId(running.id), { exact: false });
     await page.getByRole('button', { name: 'ワークフローを停止', exact: true }).click();
     const stopDialog = page.getByRole('dialog', { name: 'ワークフローを停止' });
@@ -164,7 +163,7 @@ async function whatViewersAndOtherEditorsSee() {
     await editor.page.getByText('停止・再開は、実行の作成者かProject adminだけができます').waitFor();
     assert.equal(await editor.page.getByRole('button', { name: 'ワークフローを停止' }).count(), 0);
     assert.equal(await editor.page.getByRole('button', { name: 'ワークフローを実行' }).count(), 1);
-    // Their own failed execution can be resumed.
+    // 自分の失敗した実行は再開できる。
     await editor.page.goto(workflowPath(editor, failed.id));
     await editor.page.getByRole('button', { name: '新しい実行として再開', exact: true }).waitFor();
     assert.deepEqual(editor.pageErrors, []);
@@ -223,14 +222,14 @@ async function definitionDialog() {
     assert.ok(await hasNoHorizontalScroll(page), 'the definition dialog scrolls sideways at 390px');
     await shot(page, 'workflow-definition-390');
 
-    // Escape closes an open list only; the dialog stays.
+    // Escapeは開いている一覧だけを閉じ、ダイアログは残る。
     await first.getByRole('combobox', { name: 'Task', exact: true }).click();
     await page.getByRole('listbox').waitFor();
     await page.keyboard.press('Escape');
     await page.getByRole('listbox').waitFor({ state: 'detached' });
     assert.ok(await dialog.isVisible(), 'Escape on the list closed the dialog');
 
-    // Build two steps; the second trains on the first's output.
+    // ステップを2つ作る。2つ目は1つ目の出力で学習する。
     await dialog.getByLabel('名前', { exact: true }).fill('画面から作った前処理と学習');
     await choose(first, 'Task', '音声の前処理', { exact: false });
     await dialog.getByRole('button', { name: 'ステップを追加', exact: true }).click();
@@ -241,13 +240,13 @@ async function definitionDialog() {
     await choose(input, '入力元', '前のステップの出力');
     await choose(input, '出力元のステップ', '音声の前処理');
 
-    // Renaming the first step's key keeps the second step's source.
+    // 1つ目のステップのキーの名前を変えても、2つ目のステップの出力元はそのまま。
     const key = first.getByLabel('ステップのキー', { exact: true });
     await key.fill('clean');
     await key.blur();
     assert.equal((await input.getByRole('combobox', { name: '出力元のステップ', exact: true }).textContent()).trim(), '音声の前処理');
 
-    // A key an earlier step has is shown as taken, and the references do not follow it.
+    // 前のステップが持つキーは使用済みと出て、参照はそのキーの変更に付いていかない。
     const secondKey = second.getByLabel('ステップのキー', { exact: true });
     const originalSecondKey = await secondKey.inputValue();
     await secondKey.fill('clean');
@@ -258,8 +257,8 @@ async function definitionDialog() {
     assert.equal(await second.getByText('前のステップで使われています', { exact: false }).count(), 0);
     assert.equal((await input.getByRole('combobox', { name: '出力元のステップ', exact: true }).textContent()).trim(), '音声の前処理');
 
-    // A refusal names the step and input and the reason; a weight of 0 gets there too, instead of
-    // the browser's own check on the field.
+    // 断られたときは、ステップと入力と理由を示す。重み0も、ブラウザ自身の入力欄の検査でなく、
+    // ここに出る。
     const weight = input.getByLabel('混合比率の重み', { exact: true });
     await weight.fill('0');
     await dialog.getByRole('button', { name: '保存', exact: true }).click();
@@ -269,15 +268,15 @@ async function definitionDialog() {
     await dialog.getByRole('button', { name: '保存', exact: true }).click();
     await dialog.getByText('ステップ2の入力1: 抽出条件は、{ } で囲んだ JSON のオブジェクトにしてください（条件が無ければ {}）。').waitFor();
 
-    // Removing the first step asks, then the second step says its source is gone.
+    // 1つ目のステップを削除するときは確認を求め、そのあと2つ目のステップに出力元が無くなったと出る。
     await first.getByRole('button', { name: 'ステップを削除', exact: true }).click();
     const removal = page.getByRole('dialog', { name: 'ステップを削除' });
-    // The step took its name from the task chosen for it.
+    // ステップの名前は、そのステップに選んだTaskから付いた。
     await removal.getByText('ステップ「音声の前処理」を削除します', { exact: false }).waitFor();
     await removal.getByRole('button', { name: '削除する', exact: true }).click();
     await dialog.getByText('前のステップ「clean」が見つかりません。選び直してください。').waitFor();
 
-    // Escape with unsaved edits asks before throwing them away.
+    // 未保存の編集があるときのEscapeは、捨てる前に確かめる。
     await page.keyboard.press('Escape');
     const unsaved = page.getByRole('dialog', { name: '未保存の変更があります' });
     await unsaved.waitFor();
@@ -287,7 +286,7 @@ async function definitionDialog() {
     await unsaved.getByRole('button', { name: '変更を破棄', exact: true }).click();
     await dialog.waitFor({ state: 'detached' });
 
-    // A saved workflow opens its page: the unsaved-changes guard does not hold the navigation.
+    // 保存したワークフローはそのページを開く。未保存の変更の確認が画面の移動を止めることはない。
     await page.getByRole('button', { name: 'ワークフローを作成', exact: true }).click();
     await dialog.getByLabel('名前', { exact: true }).fill('前処理だけ');
     await choose(dialog.locator('.workflow-step-editor').first(), 'Task', '音声の前処理', { exact: false });
@@ -314,13 +313,13 @@ async function runDetailsAndJobs() {
     await page.getByRole('heading', { name: '前処理レポート', exact: true }).waitFor();
     assert.ok(await hasNoHorizontalScroll(page), 'the Run details scroll sideways at 390px');
     await shot(page, 'run-workflow-context-390');
-    // A Run outside workflows gets no empty section in its details grid.
+    // ワークフローに属さないRunでは、詳細の欄に空の区分を出さない。
     await page.goto(`${base}/projects/${api.state.project.id}/runs/${api.state.runs[0].id}?tab=details`);
     await page.locator('.details-grid').waitFor();
     assert.equal(await page.locator('.workflow-run-context').count(), 0);
 
-    // Jobs: a workflow step's Job points to its execution instead of a retry the API refuses,
-    // and a queued one that only an older worker could take says the worker needs updating.
+    // Jobs: ワークフローのステップのJobは、APIが断るretryでなく、その実行へ案内する。古いworkerしか
+    // 受け取れない待機中のJobには、workerの更新が要ると出る。
     const [, failed, finished] = workflows.state.executions;
     const job = (fields) => ({
       projectId: api.state.project.id,
@@ -402,7 +401,7 @@ async function runDetailsAndJobs() {
     await resumeLink.waitFor();
     assert.equal(await page.getByRole('button', { name: '新しいRunで再実行' }).count(), 0);
     assert.ok((await resumeLink.getAttribute('href')).endsWith(`?execution=${failed.id}`));
-    // A finished step has nothing to resume: its Job only opens the execution.
+    // 終わったステップには再開するものが無い。そのJobは実行を開くだけ。
     const openLink = page.getByRole('link', { name: 'ワークフローを開く', exact: true });
     assert.equal(await openLink.count(), 1);
     assert.ok((await openLink.getAttribute('href')).endsWith(`?execution=${finished.id}`));
@@ -421,19 +420,19 @@ async function confirmationsFollowTheExecution() {
   const session = await openSession();
   const { page, workflows } = session;
   const [running, , other] = workflows.state.executions;
-  // Another running execution to show after the first one ends.
+  // 最初の実行が終わったあとで表示する、実行中のもう1つの実行。
   other.status = 'running';
   try {
     await page.goto(workflowPath(session, running.id));
     await page.getByRole('button', { name: 'ワークフローを停止', exact: true }).click();
     const stopDialog = page.getByRole('dialog', { name: 'ワークフローを停止' });
     await stopDialog.waitFor();
-    // The execution fails while the confirmation is open: the page's polling closes it, and the
-    // failed execution offers a resume instead.
+    // 確認を開いている間に実行が失敗する: ページのポーリングが確認を閉じ、失敗した実行には代わりに
+    // 再開が出る。
     running.status = 'failed';
     await stopDialog.waitFor({ state: 'detached' });
     await page.getByRole('button', { name: '新しい実行として再開', exact: true }).waitFor();
-    // Showing another running execution does not bring the closed confirmation back.
+    // 実行中の別の実行を表示しても、閉じた確認は戻ってこない。
     await choose(page, '実行', shortId(other.id), { exact: false });
     await page.waitForURL(`**?execution=${other.id}`);
     await page.getByRole('button', { name: 'ワークフローを停止', exact: true }).waitFor();
@@ -456,7 +455,7 @@ async function narrowExecutionDetails() {
     await page.locator('.workflow-execution h2 .status-badge', { hasText: '実行中' }).waitFor();
     assert.ok(await hasNoHorizontalScroll(page), 'the execution details scroll sideways at 390px');
 
-    // Choosing from the history, then the resume note reads under its button.
+    // 履歴から選んだあと、再開の説明がボタンの下に読める形で出る。
     await choose(page, '実行', shortId(failed.id), { exact: false });
     await page.waitForURL(`**?execution=${failed.id}`);
     const resume = page.getByRole('button', { name: '新しい実行として再開', exact: true });
@@ -470,7 +469,7 @@ async function narrowExecutionDetails() {
     assert.ok(await hasNoHorizontalScroll(page), 'the failed execution scrolls sideways at 390px');
     await shot(page, 'workflow-execution-390');
 
-    // Resume, then stop the new execution; each says what happened, still within 390px.
+    // 再開し、続けて新しい実行を止める。どちらも何が起きたかを示し、390pxに収まる。
     await resume.click();
     const resumeDialog = page.getByRole('dialog', { name: '新しい実行として再開' });
     await resumeDialog.getByRole('button', { name: '再開する', exact: true }).click();
@@ -494,7 +493,7 @@ async function narrowExecutionDetails() {
   }
 }
 
-// Each check runs even when one before it fails, so a run tells every behavior that broke.
+// 1つの確認が失敗しても後の確認を実行し、1回の実行で壊れた動きをすべて知らせる。
 const failedChecks = [];
 try {
   for (const check of [

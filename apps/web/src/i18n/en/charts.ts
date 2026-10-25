@@ -27,7 +27,7 @@ export const chartsText = {
   chartGroupSuffix: '(average)',
 } as const;
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const chartsTextTemplates = {
   chartLogExcluded: (count: number) =>
     `${formatEnglishCount(count, 'non-positive point')} ${count === 1 ? 'is' : 'are'} omitted from the logarithmic axis.`,

@@ -6,7 +6,7 @@ import { useLocale } from '../i18n/useLocale';
 import { lineageNodeKindLabels } from '../i18n/catalog';
 import { lineageText, lineageTextTemplates } from '../i18n/lineage';
 
-// Same bounded result list as Data Catalog; the full graph remains available below it.
+// 結果の一覧の上限はmado S3 Data Catalogと同じ。グラフ全体はその下で引き続き見られる。
 const SEARCH_RESULT_LIMIT = 8;
 
 export function LineageGraphTools({

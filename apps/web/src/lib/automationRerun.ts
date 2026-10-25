@@ -16,15 +16,15 @@ type RerunRule = Pick<
 >;
 
 /**
- * Whether the row can be applied again by hand: a stored execution of an enabled rule that is no
- * longer running. A chained rule needs the upstream Run it was started from. The API rechecks.
+ * 行を手動でもう一度適用できるか。有効なルールの、保存済みで実行中でない実行であること。
+ * 上流につないだルールには、開始元の上流のRunが要る。APIも確かめ直す。
  */
 export function canRerunExecution(execution: RerunExecution, rule: RerunRule | undefined): boolean {
   if (!rule?.enabled || hasActiveExecution([execution])) return false;
   return rule.trigger === 'model_registered' || execution.triggerRunId !== null;
 }
 
-/** The manual application that runs the same rule for the same version (or upstream Run). */
+/** 同じルールを同じバージョン（または上流のRun）に対して実行する手動の適用。 */
 export function rerunRequest(
   execution: RerunExecution,
   rule: RerunRule,

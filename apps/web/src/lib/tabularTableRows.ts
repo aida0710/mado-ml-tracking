@@ -1,11 +1,11 @@
-// The rows of a CSV / TSV / JSON Lines file as shown in the preview table: each cell as text,
-// sorted by a column, and cut to a number of rows a browser table stays responsive with.
+// プレビューの表に出す、CSV / TSV / JSON Linesのファイルの行。各セルを文字列にし、列で並べ替え、
+// ブラウザの表が重くならない行数で切る。
 
 import type { TabularText } from './tabularText';
 
 /**
- * Rows drawn in the preview table. A thousand rows show the shape of a result file; past that the
- * table takes seconds to draw, and the whole file is one download away.
+ * プレビューの表に描く行数。千行あれば結果のファイルの形は分かる。それを超えると表の描画に
+ * 数秒かかり、ファイル全体はダウンロードすればすぐ見られる。
  */
 export const TABULAR_TABLE_MAX_ROWS = 1000;
 
@@ -19,7 +19,7 @@ export interface TabularSort {
   direction: TabularSortDirection;
 }
 
-/** Strings as they are, numbers and booleans as written, nested values as JSON, missing as empty. */
+/** 文字列はそのまま、数値と真偽値は書かれたとおり、入れ子の値はJSON、無い値は空にする。 */
 export function tabularCellText(value: unknown): string {
   if (value === undefined || value === null) return '';
   if (typeof value === 'string') return value;
@@ -38,7 +38,7 @@ function numberOfCell(cell: string): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
-/** A column whose every filled cell is a number; the table right-aligns it. */
+/** 埋まったセルがすべて数値の列。表はこれを右寄せにする。 */
 export function isNumericColumn(rows: readonly TabularRow[], column: number): boolean {
   let filled = 0;
   for (const row of rows) {
@@ -50,12 +50,12 @@ export function isNumericColumn(rows: readonly TabularRow[], column: number): bo
   return filled > 0;
 }
 
-// Text compares like a person reads it: "item2" before "item10", Japanese in dictionary order.
+// 人が読むように文字列を比べる。"item2"は"item10"より前、日本語は辞書順。
 const textCollator = new Intl.Collator('ja', { numeric: true });
 
 /**
- * Two numbers compare as numbers, anything else as text. Empty cells stay after filled ones in
- * both directions, and equal cells keep the file's order.
+ * 2つの数値は数値として、それ以外は文字列として比べる。空のセルは昇順でも降順でも埋まった
+ * セルの後ろに置き、等しいセルはファイルの順を保つ。
  */
 export function sortTabularRows(rows: readonly TabularRow[], sort: TabularSort | null): TabularRow[] {
   if (!sort) return [...rows];
@@ -78,7 +78,7 @@ export function sortTabularRows(rows: readonly TabularRow[], sort: TabularSort |
   return keyed.map((item) => item.row);
 }
 
-/** Header clicks cycle ascending → descending → the file's order. */
+/** 見出しを押すたびに、昇順 → 降順 → ファイルの順と切り替わる。 */
 export function nextTabularSort(current: TabularSort | null, column: number): TabularSort | null {
   if (current?.column !== column) return { column, direction: 'ascending' };
   return current.direction === 'ascending' ? { column, direction: 'descending' } : null;

@@ -18,13 +18,13 @@ import { joinSentences } from '../../i18n/textJoining';
 type BackendDialog = { mode: 'create' } | { mode: 'edit'; backend: StorageBackend };
 
 /**
- * The admin "storage" section: backends, their connection tests and the default for new Projects.
- * Saving a backend tests it, and a backend becomes the default only after passing a test.
+ * 全体管理の「ストレージ」。保存先、その接続テスト、新しいProjectの既定の保存先を扱う。
+ * 保存先は保存するとテストし、テストに通ってはじめて既定にできる。
  */
 export function StorageBackendsPanel() {
   useLocale();
   const storage = useStorageBackends();
-  // Only a backend saved from the screen can be edited there (not one defined by variables).
+  // 画面から編集できるのは、画面で保存した保存先だけ（環境変数で定義したものは除く）。
   const editableBackend = (name: string, edit: (backend: StorageBackend) => void) => {
     const backend = storage.backends.value?.find((candidate) => candidate.name === name);
     return backend && backend.source !== 'environment' ? () => edit(backend) : undefined;
@@ -39,7 +39,7 @@ export function StorageBackendsPanel() {
     setTestResult(null);
     void test.run(async () => setTestResult(await storageApi.testBackend(backend.name)));
   };
-  // A backend becomes the default only after it passes a fresh test, which is shown either way.
+  // 保存先を既定にするのは、新たにテストして通ったときだけ。結果は通っても落ちても出す。
   const makeDefaultAfterTest = async (backend: StorageBackend) => {
     setTestedBackend(backend.name);
     setTestResult(null);
@@ -95,7 +95,7 @@ export function StorageBackendsPanel() {
           onSaved={(saved) => {
             setDialog(null);
             storage.backends.reload();
-            // Saving tests the connection at once, so a typo shows before anything is stored.
+            // 保存すると直ちに接続をテストするので、データを置く前に打ち間違いに気付ける。
             runTest(saved);
           }}
         />

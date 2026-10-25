@@ -4,23 +4,24 @@ import { trackingApi } from '../api/tracking';
 import { sha256OfFile } from '../lib/fileSha256';
 import { useSettledValue } from './useSettledValue';
 
-// Waits for a pause in typing the path before asking the API.
+// パスの入力が止まるのを待ってからAPIに問い合わせる。
 const PATH_SETTLE_MS = 400;
-// A few matches are enough: the path is searched as text and the exact one is picked out.
+// 候補は少しあれば足りる。パスを文字列として検索し、完全に一致するものを選び出す。
 const PATH_MATCH_LIMIT = 20;
-/** Larger files are not hashed just to say "the same content"; the warning stands without it. */
+/** これより大きいファイルは「同じ内容」と言うためだけにハッシュを取らない。警告はそれ無しでも出る。 */
 const SAME_CONTENT_CHECK_MAX_BYTES = 64 * 1024 * 1024;
 
-/** What is already stored at the path the chosen file is about to take. */
+/** 選んだファイルが入ろうとしているパスに、既に保存されているもの。 */
 export interface ArtifactAtPath {
   existing: Artifact;
-  /** null when the content was not compared (different size, or too large to hash quickly). */
+  /** 内容を比べなかった（サイズが違う、または大きすぎてすぐにはハッシュを取れない）ときはnull。 */
   isSameContent: boolean | null;
 }
 
 /**
- * The latest Artifact stored at `path` in the Run (or among Runless files), so the dialog can say
- * that uploading adds a new version there, and whether the chosen file has the same bytes.
+ * Runの`path`（Runが無ければ、Runに属さないファイルの中の`path`）に保存された最新のArtifact。
+ * アップロードするとそこに新しいバージョンが加わることと、選んだファイルが同じバイト列かどうかを
+ * ダイアログで伝えるのに使う。
  */
 export function useArtifactAtPath({
   projectId,
@@ -34,7 +35,7 @@ export function useArtifactAtPath({
   file: File | null;
 }): ArtifactAtPath | null {
   const { settled } = useSettledValue(path, PATH_SETTLE_MS);
-  // Tagged with what was looked up, so an answer for another file or path is never shown.
+  // 何を調べた答えかを付けておき、別のファイルやパスの答えを出さないようにする。
   const [found, setFound] = useState<{
     file: File;
     path: string;
@@ -63,7 +64,7 @@ export function useArtifactAtPath({
       const digest = await sha256OfFile(file, controller.signal);
       if (!controller.signal.aborted)
         setFound({ ...lookup, artifactAtPath: { existing, isSameContent: digest === existing.sha256 } });
-      // Without an answer the dialog only goes without the warning; the upload itself is unaffected.
+      // 答えが無くてもダイアログが警告を出さないだけで、アップロードそのものには影響しない。
     })().catch(() => undefined);
     return () => controller.abort();
   }, [file, projectId, runId, settled]);

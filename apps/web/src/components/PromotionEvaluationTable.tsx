@@ -23,7 +23,7 @@ import {
 } from '../i18n/promotion';
 import { text } from '../i18n/catalog';
 
-// Decisions reuse the Run status colors: passed reads as finished, failed as failed.
+// 判定にはRunの状態の色を使い回す。合格は完了、不合格は失敗と同じ色で読める。
 const decisionBadgeClass: Record<PromotionDecision, string> = {
   passed: 'status-success',
   failed: 'status-danger',
@@ -62,8 +62,8 @@ const criterionOutcomeLabel: Record<PromotionCriterionOutcome, string> = {
   get insufficient() { return text.promotionCriterionInsufficient; },
 };
 
-// A criterion that passed without comparing (no baseline version on a first release) is not shown
-// in the passed color: nothing was measured against its threshold.
+// 比べずに合格した基準（初回のリリースで基準のバージョンが無い）は合格の色で出さない。
+// しきい値に対して何も測っていないため。
 function CriterionOutcome({ result }: { result: PromotionCriterionResult }) {
   useLocale();
   if (result.outcome === 'passed' && result.observed === null)
@@ -147,7 +147,7 @@ function RunLink({
   );
 }
 
-/** Append-only decisions of one promotion policy, newest first. */
+/** 1つの昇格policyの判定（追記のみ）を新しい順に並べる。 */
 export function PromotionEvaluationTable({
   evaluations,
   projectId,

@@ -5,8 +5,8 @@ import { sweepTrialStateLabels } from '../i18n/sweeps';
 import { text } from '../i18n/catalog';
 
 /**
- * earlyStopped shows a canceled Run or Job that a Sweep stopped early in the Sweep's own words and
- * color, so it is not read as a cancel by a person.
+ * earlyStoppedのとき、Sweepが早期に止めた取り消し済みのRunやJobを、Sweep自身の言葉と色で表示し、
+ * 人による取り消しと読まれないようにする。
  */
 export function StatusBadge({ status, earlyStopped = false }: { status: JobStatus; earlyStopped?: boolean }) {
   useLocale();

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { readAudioSampleRate } from './audioSampleRate';
 
-// Generated with ffmpeg; see apps/web/tests/browser-artifacts.mjs for the commands.
+// ffmpegで生成した。コマンドはapps/web/tests/browser-artifacts.mjsを参照。
 const fixture = (name: string) => {
   const bytes = readFileSync(new URL(`../../tests/fixtures/audio/${name}`, import.meta.url));
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);

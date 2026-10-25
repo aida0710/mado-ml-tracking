@@ -19,16 +19,16 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { projectAccessTextTemplates } from '../i18n/projectAccess';
 
-// Public Projects let everyone in as editors without listing them, so the list says who is not
-// shown.
+// PublicのProjectは全員をEditorとして入れるが一覧には載せないので、載っていない人を
+// 一覧の側で伝える。
 const VISIBILITY_NOTES: Record<ProjectVisibility, string> = {
   get public() { return text.projectMembersPublicNote; },
   get private() { return text.projectMembersPrivateNote; },
 };
 
 /**
- * Everyone with a Project role, where that role comes from, and direct grants for admins. Service
- * Accounts are listed too but changed in their own section, where their tokens are.
+ * ProjectのRoleを持つ全員と、そのRoleの付与元、Project adminに向けた直接付与の操作。
+ * Service Accountも並べるが、変更はtokenと同じそれ専用の欄で行う。
  */
 export function ProjectMembers({
   projectMembers,
@@ -42,12 +42,12 @@ export function ProjectMembers({
   const lastAdminGrant = findLastProjectAdminGrant(members.value ?? []);
   const isLastAdmin = (member: ProjectMember) =>
     lastAdminGrant?.kind === 'member' && lastAdminGrant.userId === member.user.id;
-  // A public Project lets every person in as editor, so a weaker grant is not what they get.
+  // PublicのProjectでは人はだれでもEditorとして入れるので、それより弱い付与は実際のRoleにならない。
   const isPublicEditor = (member: ProjectMember) =>
     project.visibility === 'public' && member.user.kind === 'human' && member.role === 'viewer';
   const [editing, setEditing] = useState<ProjectMember | 'new' | null>(null);
   const [removing, setRemoving] = useState<ProjectMember | null>(null);
-  // The signed-in user's own role may have changed, which decides what the shell shows.
+  // ログイン中の利用者自身のRoleが変わったかもしれず、それでアプリの枠が出すものが決まる。
   const reloadAfterChange = () => {
     members.reload();
     reloadProjects();

@@ -1,90 +1,90 @@
 import type { ComputeTarget, ProjectRole, User } from '@mmt/contracts';
 
-// Mirrors the API's checks (accessService.requireProject / requireGlobalAdmin) so screens hide
-// actions the API would reject. The API stays the authority; these only decide what to show.
+// APIの検査（accessService.requireProject / requireGlobalAdmin）に合わせ、APIが拒む操作を
+// 画面に出さない。判断の正本はAPIのままで、ここは何を表示するかを決めるだけ。
 
 export function isGlobalAdmin(user: Pick<User, 'isAdmin'>): boolean {
   return user.isAdmin;
 }
 
-/** Registering runs, versions, tasks and jobs needs at least the editor role. */
+/** Run、バージョン、Task、Jobの登録には、少なくともeditorのロールが要る。 */
 export function canEditProject(role: ProjectRole): boolean {
   return role !== 'viewer';
 }
 
 /**
- * Project settings (description, visibility, storage), members, service tokens and archiving the
- * Project need the Project admin role. A global administrator's session resolves to admin.
+ * Projectの設定（説明、公開範囲、保存先）、メンバー、サービス用のtoken、Projectのアーカイブには
+ * Project adminのロールが要る。全体管理者のセッションはadminになる。
  */
 export function canManageProject(role: ProjectRole): boolean {
   return role === 'admin';
 }
 
-/** Plugin connections can be managed by the Project admin or a global administrator. */
+/** プラグインの接続は、Project adminか全体管理者が管理できる。 */
 export function canManagePlugins(role: ProjectRole | undefined, globalAdmin: boolean): boolean {
   return globalAdmin || (role !== undefined && canManageProject(role));
 }
 
-/** Model automation rules follow the same rule as plugins (modelAutomationService). */
+/** モデルの自動実行ルールは、プラグインと同じ規則に従う（modelAutomationService）。 */
 export function canManageAutomationRules(role: ProjectRole, globalAdmin: boolean): boolean {
   return globalAdmin || canManageProject(role);
 }
 
-/** Promotion policies are created and switched by the Project admin or a global administrator. */
+/** 昇格policyは、Project adminか全体管理者が作成し、切り替える。 */
 export function canManagePromotionPolicies(role: ProjectRole, globalAdmin: boolean): boolean {
   return globalAdmin || canManageProject(role);
 }
 
 /**
- * Re-evaluating a promotion decision needs the Project admin role itself; editors could otherwise
- * retry until a pass. A global administrator who is not a member resolves to admin in `role`.
+ * 昇格の判定をやり直すには、Project adminのロールそのものが要る。editorにも許すと、通るまで
+ * やり直せてしまう。メンバーでない全体管理者は、`role`がadminになる。
  */
 export function canReevaluatePromotion(role: ProjectRole): boolean {
   return canManageProject(role);
 }
 
 /**
- * Any signed-in user who is not disabled may create a Project (projectService.create).
- * Checks for "not disabled" so a session from an API that does not send status yet still works.
+ * 無効にされていない、サインイン済みの利用者なら誰でもProjectを作れる（projectService.create）。
+ * 「無効でない」で判定するのは、まだstatusを送らないAPIからのセッションでも動くようにするため。
  */
 export function canCreateProject(user: Pick<User, 'status'>): boolean {
   return user.status !== 'disabled';
 }
 
-/** Only users with a local credential have a password here; SSO users change theirs in the IdP. */
+/** ここでパスワードを持つのはローカルの認証情報を持つ利用者だけ。SSOの利用者はIdPで変える。 */
 export function canChangeOwnPassword(user: Pick<User, 'authSources'>): boolean {
   return user.authSources.includes('local');
 }
 
-/** Alias protections follow the promotion policy rule (aliasProtectionService). */
+/** aliasの保護は、昇格policyと同じ規則に従う（aliasProtectionService）。 */
 export function canManageAliasProtections(role: ProjectRole, globalAdmin: boolean): boolean {
   return globalAdmin || canManageProject(role);
 }
 
-// Work one person started: its creator while still an editor, or a Project admin.
+// 本人が始めた作業。editorのままでいる作成者か、Project adminが操作できる。
 function controlsStartedWork(role: ProjectRole, userId: string, work: { createdBy: string }) {
   return canManageProject(role) || (canEditProject(role) && work.createdBy === userId);
 }
 
 /**
- * Pausing, resuming, canceling or resizing a sweep (sweepService; other editors get 403
- * sweep_owner_required).
+ * Sweepの一時停止、再開、中止、規模の変更（sweepService。ほかのeditorには403
+ * sweep_owner_requiredが返る）。
  */
 export function canControlSweep(role: ProjectRole, userId: string, sweep: { createdBy: string }): boolean {
   return controlsStartedWork(role, userId, sweep);
 }
 
 /**
- * Stopping or retrying a Job, also from a checkpoint; `createdBy` is its creator, the creator of
- * its Run (jobService; other editors get 403 job_owner_required).
+ * Jobの停止と再試行（checkpointからのものも含む）。`createdBy`はJobの作成者、つまりそのRunの
+ * 作成者（jobService。ほかのeditorには403 job_owner_requiredが返る）。
  */
 export function canControlJob(role: ProjectRole, userId: string, job: { createdBy: string }): boolean {
   return controlsStartedWork(role, userId, job);
 }
 
 /**
- * Stopping a workflow execution, or resuming it in a new one (workflowExecutionService; other
- * editors get 403 workflow_control_forbidden).
+ * ワークフローの実行の停止と、新しい実行での再開（workflowExecutionService。ほかのeditorには
+ * 403 workflow_control_forbiddenが返る）。
  */
 export function canControlWorkflowExecution(
   role: ProjectRole,
@@ -95,35 +95,35 @@ export function canControlWorkflowExecution(
 }
 
 /**
- * Hooks: every researcher (editor) may create one, switch one on or off and start a 'manual' one
- * (hookService checks the editor role with jobs:write); a hook runs with its owner's authority.
+ * フック: 研究者（editor）なら誰でも作成、有効・無効の切り替え、'manual'のフックの開始ができる
+ * （hookServiceがjobs:writeとともにeditorのロールを検査する）。フックは所有者の権限で動く。
  */
 export function canManageHooks(role: ProjectRole): boolean {
   return canEditProject(role);
 }
 
 /**
- * Moving a hook to a Service Account changes whose authority it runs with, so it follows the
- * automation rule rule: a Project admin or a global administrator (hookService.transferOwner).
+ * フックをService Accountへ移すと、誰の権限で動くかが変わる。そのため自動実行ルールと同じ規則で、
+ * Project adminか全体管理者だけが行える（hookService.transferOwner）。
  */
 export function canTransferHookOwners(role: ProjectRole, globalAdmin: boolean): boolean {
   return globalAdmin || canManageProject(role);
 }
 
 /**
- * Adding a computer: anyone signed in may add a site (POST /targets from a session), and becomes
- * its owner; global administrators also add ssh and local targets.
+ * コンピュータの追加: サインインしていれば誰でもsiteを追加でき（セッションからのPOST /targets）、
+ * その所有者になる。全体管理者はsshとlocalのコンピュータも追加できる。
  */
 export function canAddTarget(user: Pick<User, 'status'>): boolean {
   return user.status !== 'disabled';
 }
 
-/** ssh and local targets run through the workers' own SSH keys, so only global administrators add them. */
+/** sshとlocalのコンピュータはworker自身のSSH鍵で動くので、追加できるのは全体管理者だけ。 */
 export function canAddSshOrLocalTarget(user: Pick<User, 'isAdmin'>): boolean {
   return isGlobalAdmin(user);
 }
 
-/** Whoever added a computer owns it. */
+/** コンピュータを追加した人が、その所有者になる。 */
 export function isTargetOwner(
   user: Pick<User, 'id'>,
   target: Pick<ComputeTarget, 'ownerUserId'>,
@@ -132,9 +132,9 @@ export function isTargetOwner(
 }
 
 /**
- * Editing a computer (its visibility too), saving its job shell, its shared account key and
- * everyone's settings on it: a global administrator or its owner (targetService). Everyone who may
- * use it reads its job shell and keeps their own settings and key.
+ * コンピュータの編集（公開範囲も含む）、そのjob shellと共有アカウントの鍵の保存、そこでの全員の
+ * 設定の保存は、全体管理者か所有者が行う（targetService）。使える人は誰でもjob shellを読め、
+ * 自分の設定と鍵を持てる。
  */
 export function canManageTarget(
   user: Pick<User, 'id' | 'isAdmin'>,

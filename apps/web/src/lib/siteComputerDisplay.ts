@@ -3,12 +3,12 @@ import type { SelectOption } from '../types/form';
 import { text } from '../i18n/catalog';
 import { formatNote } from '../i18n/textJoining';
 
-// Enough of a SHA-256 to tell versions apart in a table; the full value is in the title.
+// 表でバージョンを見分けるのに足りるSHA-256の長さ。完全な値はtitleにある。
 const SHORT_SHA256_LENGTH = 12;
 
 /**
- * Whose a computer is, for the lists: one's own, or its
- * owner's name (their ID when the name is unknown).
+ * 一覧に出す、コンピュータの持ち主。自分のものか、
+ * 所有者の名前（名前が分からなければそのID）。
  */
 export function targetOwnerLabel(
   target: Pick<ComputeTarget, 'ownerUserId'> & { ownerName: string | null },
@@ -19,8 +19,8 @@ export function targetOwnerLabel(
 }
 
 /**
- * The launchers a site may be given: the live ones, and the one it has even when that was revoked
- * (global administrators see it by name, others by its id), so the form shows it until changed.
+ * siteに割り当てられるランチャー。有効なものと、取り消されていても今割り当てているもの
+ * （全体管理者には名前で、ほかの人にはidで見える）。変えるまでフォームに出し続けるため。
  */
 export function launcherOptions(
   launchers: readonly Launcher[],
@@ -38,22 +38,22 @@ export function launcherOptions(
   return [...options, { value: selectedId, label: revoked(selectedId) }];
 }
 
-/** The shared account's key among a site's live keys; personal keys belong to one person each. */
+/** siteの有効な鍵のうち、共有アカウントの鍵。個人の鍵はそれぞれ1人のもの。 */
 export function sharedAccountKey(keys: readonly SiteKey[]): SiteKey | null {
   return keys.find((key) => key.userId === null) ?? null;
 }
 
-/** The launcher has not published the key's public half yet. */
+/** ランチャーが、その鍵の公開鍵をまだ公開していない。 */
 export const isKeyRequested = (key: SiteKey | null | undefined): boolean =>
   key?.status === 'requested';
 
 /**
- * The launcher has made the key, so it can log in with it; the API refuses a login check before
- * that (site_check_unavailable).
+ * ランチャーが鍵を作り終えたので、その鍵でログインできる。それより前のログインの確認はAPIが
+ * 拒む（site_check_unavailable）。
  */
 export const isKeyReady = (key: SiteKey | null | undefined): boolean => key?.status === 'ready';
 
-/** The newest check (the API lists them newest first) still waits for the launcher. */
+/** 最新の確認（APIは新しい順に返す）が、まだランチャーを待っている。 */
 export const isConnectionCheckInProgress = (checks: readonly SiteConnectionCheck[]): boolean =>
   checks[0]?.status === 'queued';
 

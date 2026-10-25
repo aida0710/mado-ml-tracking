@@ -1,6 +1,7 @@
 import * as english from './en/media';
 import { localized } from './localized';
-// Media recorded per step: the Run media tab, the step comparison, and media tables. run-media-web owns the entries.
+// stepごとに記録したメディア。Runのメディアのタブ、stepの比較、メディアの表。
+// 項目はrun-media-webが受け持つ。
 import type { RunMediaKind } from '@mmt/contracts';
 import type { MediaTableCellFailure } from '../lib/mediaTableCells';
 import { artifactReferenceErrorLabels, artifactsText } from './artifacts';
@@ -47,7 +48,7 @@ export const mediaKindLabels: Record<RunMediaKind, string> = localized({
   table: '表',
 }, english.mediaKindLabels);
 
-// The reference rules are the evaluation sample tables' (lib/evaluationSamples.ts), so their wording is reused.
+// 参照の決まりは評価サンプルの表（lib/evaluationSamples.ts）と同じなので、その文言を使い回す。
 export const mediaCellErrorLabels: Record<MediaTableCellFailure, string> = localized({
   get empty() { return artifactReferenceErrorLabels.empty; },
   get absolute_path() { return artifactReferenceErrorLabels.absolute_path; },
@@ -59,11 +60,11 @@ export const mediaCellErrorLabels: Record<MediaTableCellFailure, string> = local
   unresolved: 'Artifactに解決できませんでした',
 }, english.mediaCellErrorLabels);
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const mediaTextTemplates = localized({
   mediaStepPosition: (step: number, index: number, count: number) => `step ${step}（${index} / ${count}）`,
   mediaStepLabel: (step: number) => `step ${step}`,
-  /** Beside a step that not every compared Run recorded. */
+  /** 比較するRunのすべてが記録しているわけではないstepの横に出す。 */
   mediaStepRunCoverage: (runCount: number, totalRuns: number) => `${runCount}/${totalRuns} Run`,
   mediaStepRangeValue: (minStep: number, maxStep: number) => (minStep === maxStep ? `${minStep}` : `${minStep}〜${maxStep}`),
   mediaItemCount: (count: number) => `${count}件`,

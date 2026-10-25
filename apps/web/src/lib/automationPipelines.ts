@@ -1,17 +1,17 @@
 import type { ModelAutomationExecution, ModelAutomationRule } from '@mmt/contracts';
 
-// The API caps chains at MAX_AUTOMATION_CHAIN_DEPTH=5. The Web stops a little later so a rule list
-// that is out of date (or a broken cycle) still ends instead of looping.
+// APIはチェーンをMAX_AUTOMATION_CHAIN_DEPTH=5段までに抑える。Webはそれより少し後で止め、ルールの
+// 一覧が古い場合や循環ができてしまった場合も、回り続けずに終わるようにする。
 const MAX_DISPLAYED_STAGE = 10;
 
 export interface AutomationPipelineRow {
   execution: ModelAutomationExecution;
-  // 1 for the rule that reacts to model registration, +1 for each upstream rule hop.
+  // モデルの登録に反応するルールが1で、上流のルールを1段たどるごとに+1。
   stage: number;
   isPipelineStart: boolean;
 }
 
-/** Counts upstream hops, so a stage keeps its position even when earlier rows fell off the list. */
+/** 上流をたどる段数を数えるので、前の行が一覧から外れても段の位置は変わらない。 */
 export function automationRuleStage(
   ruleId: string,
   rulesById: ReadonlyMap<string, Pick<ModelAutomationRule, 'upstreamRuleId'>>,
@@ -30,8 +30,8 @@ function pipelineKey(execution: ModelAutomationExecution): string {
 }
 
 /**
- * Orders executions so each pipeline reads top to bottom: pipelines with the newest activity
- * first, and within one pipeline by stage, then by creation time (so retries follow the original).
+ * 各パイプラインが上から下へ読めるように実行を並べる。最新の動きがあったパイプラインを先にし、
+ * 1つのパイプラインの中は段の順、次に作成時刻の順にする（再試行が元の実行の後ろに続くように）。
  */
 export function groupAutomationPipelines(
   executions: ModelAutomationExecution[],

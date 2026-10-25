@@ -1,16 +1,16 @@
 import { madoTrackingInstallLines } from './madoTrackingPackage';
 import { shellQuote } from './shellSnippet';
 
-// The launcher's own environment, beside the worker's (workerSetupSnippets.ts), so updating one
-// does not touch the other.
+// ランチャー専用の環境。workerの環境（workerSetupSnippets.ts）とは別に置き、片方を更新しても
+// もう片方に触れないようにする。
 const LAUNCHER_VENV_DIRECTORY = '~/.local/share/mado-tracking-launcher/venv';
 const LAUNCHER_COMMAND = `${LAUNCHER_VENV_DIRECTORY}/bin/mado-tracking-launcher`;
-// Where the example puts launcher.toml; the token file and state directory are in the file itself.
+// 例でlauncher.tomlを置く場所。tokenのファイルと状態のディレクトリは、このファイルの中に書く。
 export const EXAMPLE_LAUNCHER_CONFIG_PATH = '/etc/mado-tracking-launcher/launcher.toml';
 
 /**
- * Commands that install the launcher (the `mado-tracking-launcher` command of the mado-tracking
- * package, deploy/sites/README.md) and start it with the launcher.toml shown above them.
+ * ランチャー（mado-trackingパッケージの`mado-tracking-launcher`コマンド。deploy/sites/README.md）を
+ * インストールし、上に示したlauncher.tomlで起動するコマンド。
  */
 export function buildLauncherStartCommands(): string {
   return [

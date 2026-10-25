@@ -3,8 +3,8 @@ import { getRunParameters } from './runParameters';
 import { isSystemMetricKey } from './systemMetricKeys';
 
 /**
- * What the charts of several Runs can offer: their metrics (system metrics have their own tab)
- * and the tags and params to group by. The Run description tag is long Markdown, never a group.
+ * 複数のRunの図に出せるもの。メトリクス（システムメトリクスには専用のタブがある）と、グループ
+ * 分けに使うタグとパラメータ。Runの説明のタグは長いMarkdownなので、グループにはしない。
  */
 export function getRunChartKeys(runs: readonly Run[]) {
   const collect = (keysOf: (run: Run) => string[]) =>

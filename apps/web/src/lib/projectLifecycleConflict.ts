@@ -1,14 +1,14 @@
 import { RequestError } from '../api/http';
 import { text } from '../i18n/catalog';
 
-// The 409 codes of archiving and purging a Project, shown as what to do next instead of the
-// server text.
+// Projectのアーカイブと完全な削除で返る409のコード。サーバーの文でなく、次に何をすればよいかを
+// 示す。
 const conflictText: Record<string, string> = {
   get project_has_active_jobs() { return text.projectHasActiveJobs; },
   get project_not_archived() { return text.projectNotArchived; },
 };
 
-/** Runs an archive or purge request and explains its known conflicts in the screen's words. */
+/** アーカイブか完全な削除の要求を実行し、既知の競合を画面の言葉で説明する。 */
 export async function explainProjectLifecycleConflict<T>(change: Promise<T>): Promise<T> {
   try {
     return await change;

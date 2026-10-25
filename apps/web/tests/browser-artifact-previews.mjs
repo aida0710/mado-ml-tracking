@@ -1,8 +1,7 @@
-// Browser check of the Artifact previews against an isolated API (port 48483) and Vite (48482):
-// the head of a large text with its download, CSV / TSV / jsonl as tables, evaluation samples
-// whose reference and prediction are numbers, evaluation sample cards on a phone, the image's
-// actual size, and the audio viewer's time ruler. It creates a temporary schema in mmt_test, so
-// the shared development API and DB are untouched.
+// 分離したAPI（port 48483）とVite（48482）を相手にした、Artifactのプレビューのブラウザでの確認。
+// 大きなテキストの先頭とそのダウンロード、表として出すCSV / TSV / jsonl、referenceとpredictionが
+// 数値の評価サンプル、スマートフォンでの評価サンプルのカード、画像の原寸、音声ビューアの時間の
+// 目盛り。mmt_testに一時的なschemaを作るので、共有の開発APIとDBには触れない。
 //
 //   (cd apps/web && MMT_WEB_API_PROXY_TARGET=http://127.0.0.1:48483 npx vite --port 48482 --strictPort --host 127.0.0.1) &
 //   MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55490/mmt_test \
@@ -10,7 +9,7 @@
 //   MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/<担当>/after \
 //   npx tsx apps/web/tests/browser-artifact-previews.mjs
 //
-// tsx is needed because the script starts the API from its TypeScript sources.
+// スクリプトがTypeScriptのソースからAPIを起動するので、tsxが要る。
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { mkdir, mkdtemp, rm } from 'node:fs/promises';
@@ -29,9 +28,9 @@ const API_PORT = 48483;
 const WEB_URL = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:48482';
 const DESKTOP = { width: 1440, height: 900 };
 const MOBILE = { width: 390, height: 844 };
-// The audit's training log: 2.3 MiB of text, over the 1 MiB text preview.
+// 監査で使った学習ログ。2.3 MiBのテキストで、1 MiBのテキストのプレビューを超える。
 const BIG_LOG_BYTES = Math.round(2.3 * 1024 * 1024);
-// Over the 1,000 rows the table draws, so the note about the rest appears.
+// 表が描く1,000行を超えるので、残りの行についての注記が出る。
 const CSV_ROW_COUNT = 1200;
 const EVALUATION_SAMPLE_COUNT = 120;
 const PANORAMA = { width: 2400, height: 300 };
@@ -100,7 +99,7 @@ function resultsCsv() {
   return [header, ...rows].map((row) => row.map(quoteCsv).join(',')).join('\n');
 }
 
-/** A horizontal gradient with a scale every 100px, so the actual size is visibly different. */
+/** 100pxごとに目盛りのある横向きのグラデーション。原寸で表示したときの違いが目で分かる。 */
 function panoramaPng({ width, height }) {
   const raw = Buffer.alloc((width * 3 + 1) * height);
   for (let y = 0; y < height; y += 1) {
@@ -134,7 +133,7 @@ function panoramaPng({ width, height }) {
   ]);
 }
 
-/** A 440 Hz tone that fades in and out every second, so the waveform has visible structure. */
+/** 1秒ごとに大きくなって小さくなる440 Hzの音。波形に目に見える形ができる。 */
 function toneWav(seconds) {
   const samples = seconds * SAMPLE_RATE;
   const wave = Buffer.alloc(44 + samples * 2);
@@ -171,7 +170,7 @@ async function screenshot(page, name) {
   await page.screenshot({ path: path.join(screenshotDirectory, `${name}.png`) });
 }
 
-/** Scrolls `locator` to the upper part of the viewport, below the sticky top bar, before a screenshot. */
+/** スクリーンショットの前に、`locator`を表示領域の上の方、固定された上部バーのすぐ下へスクロールする。 */
 async function scrollNearTop(locator) {
   await locator.evaluate((element) => {
     element.scrollIntoView({ block: 'start' });
@@ -248,7 +247,7 @@ try {
     Buffer.from(
       Array.from({ length: EVALUATION_SAMPLE_COUNT }, (_, index) =>
         JSON.stringify({
-          // Relative paths start at the Run's artifact root, not at the table's folder.
+          // 相対パスは表のフォルダからではなく、RunのArtifactのルートから始まる。
           audio: index === 0 ? 'eval/audio/tone.wav' : `eval/audio/missing-${index}.wav`,
           reference: 'あいうえおかきくけこ',
           prediction: index % 3 === 0 ? 'あいうえおかきくけこ' : 'あいうえおかきけこさ',
@@ -270,7 +269,7 @@ try {
     return page.locator('.artifact-preview');
   };
 
-  // 13: the head of a 2.3 MiB log, read with a Range request, with the download beside the note.
+  // 13: 2.3 MiBのログの先頭をRangeの要求で読み、注記の横にダウンロードを置く。
   {
     const contentStatuses = [];
     desktop.on('response', (response) => {
@@ -297,7 +296,7 @@ try {
     results.textHead = { notice: noticeText.trim(), request: headRequest };
   }
 
-  // 14: a general CSV as a sortable table with a fixed header, cut at 1,000 rows; TSV and jsonl too.
+  // 14: 一般のCSVを、見出しを固定した並べ替えのできる表で出し、1,000行で切る。TSVとjsonlも同じ。
   {
     const preview = await openPreview(desktop, 'samples', 'table.csv');
     const table = preview.locator('.tabular-table');
@@ -315,7 +314,7 @@ try {
     await cerHeader.getByRole('button').click();
     assert.equal(await cerHeader.getAttribute('aria-sort'), 'descending');
     assert.equal(await firstCer(), '0.999');
-    // The header row stays at the top of the frame while the rows scroll.
+    // 行をスクロールしても、見出しの行は枠の上端に残る。
     const frame = preview.locator('.tabular-table-scroll');
     await frame.evaluate((element) => element.scrollTo(400, 2000));
     const [frameTop, headerTop] = await Promise.all([
@@ -325,7 +324,7 @@ try {
     assert.ok(Math.abs(frameTop + 1 - headerTop) <= 1, `header ${headerTop} frame ${frameTop}`);
     await frame.evaluate((element) => element.scrollTo(0, 0));
     assert.ok(await hasNoSidewaysPageScroll(desktop));
-    // Show the sorted column with its arrow.
+    // 並べ替えた列を矢印つきで見せる。
     await frame.evaluate((element) => element.scrollTo(element.scrollWidth, 0));
     await screenshot(desktop, 'preview-14-csv-table-desktop');
     await frame.evaluate((element) => element.scrollTo(0, 0));
@@ -351,7 +350,7 @@ try {
     results.csvTable = { rows: 1000, sortedBy: 'cer', tsv: true, jsonl: true };
   }
 
-  // 15: numeric and boolean reference / prediction are shown, not dropped; a broken row still allows text.
+  // 15: 数値・真偽値のreference / predictionも捨てずに出す。壊れた行があってもテキストに切り替えられる。
   {
     const preview = await openPreview(desktop, 'eval', 'results.jsonl');
     await preview.locator('.evaluation-samples-table').waitFor();
@@ -376,7 +375,7 @@ try {
     results.numericSamples = { samples: 3, brokenRowsCanSwitchToText: true };
   }
 
-  // 22: one card per sample on a phone, score beside the line, and the missing audio on one line.
+  // 22: スマートフォンではサンプルごとに1枚のカードで、scoreを行番号の横に置き、見つからない音声は1行で出す。
   {
     const preview = await openPreview(mobile, 'eval', 'eval-samples.jsonl');
     const cards = preview.locator('.evaluation-sample-card');
@@ -399,7 +398,7 @@ try {
     results.evaluationCards = { cards: 50, missingAudioHeight: missingHeight };
   }
 
-  // 27: the image at its actual size inside a scrolling frame, and back to fitted.
+  // 27: 画像を原寸でスクロールする枠の中に出し、枠に合わせた表示へ戻す。
   {
     const preview = await openPreview(desktop, 'samples', 'wide-panorama.png');
     await preview.getByText('2,400 × 300 px').waitFor();
@@ -427,7 +426,7 @@ try {
     results.imageActualSize = sizes;
   }
 
-  // 27: the time ruler follows the zoom, and the waveform still leaves vertical swipes to the page.
+  // 27: 時間の目盛りは拡大に従い、波形は縦のスワイプを引き続きページに任せる。
   {
     const preview = await openPreview(desktop, 'samples', 'tone-20s.wav');
     const ticks = preview.locator('.audio-time-axis .audio-time-tick');
@@ -443,7 +442,7 @@ try {
     assert.notDeepEqual(zoomedLabels, wholeLabels);
     assert.ok(zoomedLabels.every((label) => /^0:0[0-2]\.\d$/.test(label)), zoomedLabels.join(' '));
     assert.equal(await preview.locator('.audio-timeline').evaluate((element) => getComputedStyle(element).touchAction), 'pan-y pinch-zoom');
-    // The zoomed range is analyzed again; wait for its waveform before the screenshot.
+    // 拡大した範囲は解析し直すので、その波形を待ってからスクリーンショットを撮る。
     await preview.locator('.audio-timeline-placeholder').waitFor({ state: 'detached', timeout: 30_000 });
     await screenshot(desktop, 'preview-27-audio-axis-desktop');
     const mobilePreview = await openPreview(mobile, 'samples', 'tone-20s.wav');

@@ -1,7 +1,7 @@
 /*
- * Narrow and touch layouts of the settings, global administration, Compute and Plugins screens:
- * controls grow to the tap size and header actions wrap instead of leaving the screen. Up to
- * 1200px covers tablets in landscape; a coarse pointer covers touch screens wider than that.
+ * 設定・全体管理・Compute・連携の画面の、狭い画面とタッチ画面での配置。操作の部品を
+ * タップできる大きさにし、見出しの操作は画面からはみ出さずに折り返す。1200px未満で横向きの
+ * タブレットを、coarseのポインタでそれより広いタッチ画面を受け持つ。
  */
 @media (width < 1200px), (pointer: coarse) {
   :is(.management-page, .admin-users, .admin-storage, .admin-launchers, .admin-audit)
@@ -16,13 +16,13 @@
     flex-wrap: wrap;
     gap: 8px;
   }
-  /* A row of tap-sized buttons needs room between them. */
+  /* タップできる大きさのボタンを並べるときは間を空ける。 */
   :is(.management-page, .admin-users, .admin-storage, .admin-launchers, .admin-audit)
     :is(.access-actions, .user-actions, .storage-row-actions) {
     gap: 8px;
   }
 }
-/* A checkbox in a table cell gets a tap-sized hit area through its label. */
+/* 表のセルのチェックボックスは、ラベルを通してタップできる大きさの当たり判定を持つ。 */
 .table-checkbox {
   display: inline-flex;
   align-items: center;

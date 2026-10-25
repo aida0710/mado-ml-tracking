@@ -1,17 +1,17 @@
-// Turns a file picker selection or a drag-and-drop into files with their path inside the chosen folder.
+// ファイルの選択やドラッグ＆ドロップを、選んだフォルダの中でのパス付きのファイルにする。
 
 export interface UploadSource {
   file: File;
-  /** Path below the dropped or chosen folder, including the folder name; the bare name for loose files. */
+  /** ドロップしたか選んだフォルダより下のパス（フォルダ名を含む）。ばらのファイルは名前だけ。 */
   relativePath: string;
 }
 
-/** `webkitdirectory` pickers fill webkitRelativePath; plain pickers leave it empty. */
+/** `webkitdirectory`の選択はwebkitRelativePathを埋める。ふつうの選択では空。 */
 export function sourcesFromFileList(files: FileList | null): UploadSource[] {
   return Array.from(files ?? [], (file) => ({ file, relativePath: file.webkitRelativePath || file.name }));
 }
 
-/** Dropped folders are only reachable through the entry API; DataTransfer.files lists them as empty files. */
+/** ドロップしたフォルダにはentry APIからしか届かない。DataTransfer.filesでは空のファイルとして並ぶ。 */
 export async function sourcesFromDataTransfer(dataTransfer: DataTransfer): Promise<UploadSource[]> {
   const entries = Array.from(dataTransfer.items, (item) => item.webkitGetAsEntry?.() ?? null);
   if (entries.some((entry) => entry === null)) return sourcesFromFileList(dataTransfer.files);
@@ -31,7 +31,7 @@ async function collectEntry(entry: FileSystemEntry, parentPath: string): Promise
   return nested.flat();
 }
 
-/** readEntries returns the directory in batches (about 100 in Chromium) until it returns none. */
+/** readEntriesはディレクトリを何回かに分けて返し（Chromiumでは約100件ずつ）、最後に空を返す。 */
 async function readAllEntries(reader: FileSystemDirectoryReader): Promise<FileSystemEntry[]> {
   const entries: FileSystemEntry[] = [];
   for (;;) {

@@ -3,8 +3,8 @@ import { registryApi } from '../api/registry';
 import { trackingApi } from '../api/tracking';
 import { useQuery } from './useQuery';
 
-// Selectors offer the newest Runs, one search page at the API maximum; older Runs are reached
-// through the Run search on the Experiments page.
+// 選択欄には新しいRunを、APIの上限の検索1ページ分だけ出す。古いRunにはExperimentsのページの
+// Runの検索でたどり着く。
 export const SELECTABLE_RUN_LIMIT = 500;
 export function useExecutionCatalog(projectId: string) {
   return useQuery<ExecutionCatalog>({ key: `${projectId}:execution-catalog`, load: async (signal) => {

@@ -21,13 +21,13 @@ const SECONDS_PER_MINUTE = 60;
 const SECONDS_PER_DAY = 24 * 60 * 60;
 
 /**
- * Sites take a GPU count and a time limit that their job shell passes to the scheduler; ssh and
- * local targets take the GPU IDs the worker reserves on the host.
+ * siteはGPU数と制限時間を受け取り、job shellがそれをスケジューラへ渡す。sshとlocalの
+ * コンピュータは、workerがホストで確保するGPU IDを受け取る。
  */
 export const isSiteTarget = (target: Pick<ComputeTarget, 'executor'> | undefined): boolean =>
   target?.executor === 'site';
 
-/** GPUs a site Job asks for; empty or 0 runs on CPU only. */
+/** siteのJobが求めるGPU数。空か0ならCPUだけで動く。 */
 export function parseGpuCount(value: string): number {
   const trimmed = value.trim();
   const count = trimmed ? Number(trimmed) : 0;
@@ -36,7 +36,7 @@ export function parseGpuCount(value: string): number {
   return count;
 }
 
-/** A site Job's time limit in seconds; empty leaves the limit to the site's job shell. */
+/** siteのJobの制限時間（秒）。空なら制限をsiteのjob shellに任せる。 */
 export function parseWalltime(value: string): number | null {
   const seconds = parseClockDuration(value);
   if (seconds !== null && (seconds <= 0 || seconds > MAX_JOB_WALLTIME_SECONDS))
@@ -44,7 +44,7 @@ export function parseWalltime(value: string): number | null {
   return seconds;
 }
 
-/** How long a site Job may wait in the scheduler queue before it fails; empty has no limit. */
+/** siteのJobがスケジューラのキューで待てる時間。過ぎると失敗する。空なら制限しない。 */
 export function parseQueueTimeout(value: string): number | null {
   const seconds = parseClockDuration(value);
   if (
@@ -60,7 +60,7 @@ export function parseQueueTimeout(value: string): number | null {
   return seconds;
 }
 
-/** Members of a Job array; empty starts a single Job. */
+/** Jobのarrayの個数。空なら単独のJobを1つ始める。 */
 export function parseArraySize(value: string): number | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
@@ -70,15 +70,15 @@ export function parseArraySize(value: string): number | null {
   return size;
 }
 
-/** What a Job asks of its target: GPU IDs on ssh/local targets, a count and a limit on sites. */
+/** Jobがコンピュータに求めるもの。ssh/localのコンピュータではGPU ID、siteではGPU数と制限時間。 */
 export type JobResourceInput =
   | { gpuIds: string[] }
   | { gpuCount: number; walltimeSeconds: number | null };
 
 /**
- * The resource fields of a Job request from the form fields gpuIds, gpuCount and walltime. The
- * API refuses GPU IDs on a site (site_gpu_ids) and a GPU count elsewhere (site_only_setting), so
- * only the fields of the target's own kind are sent.
+ * フォームの欄gpuIds・gpuCount・walltimeから作る、Jobの要求の資源の項目。APIはsiteでのGPU ID
+ * （site_gpu_ids）と、site以外でのGPU数（site_only_setting）を拒否するので、そのコンピュータの
+ * 種類に合う項目だけを送る。
  */
 export function buildJobResources(target: ComputeTarget, values: FormValues): JobResourceInput {
   const gpuIds = getSelectedValues(values, 'gpuIds');
@@ -96,8 +96,8 @@ export function buildJobResources(target: ComputeTarget, values: FormValues): Jo
 const isChecked = (values: FormValues, name: string) => getFieldValue(values, name) === 'true';
 
 /**
- * A Job request for a Run from the launch form. The automatic retries exist on sites only, and the
- * opt-in flags are sent only when set, so an ssh Job is requested exactly as before sites existed.
+ * 起動フォームから作るRunのJobの要求。自動の再試行はsiteにだけあり、任意で有効にするフラグは
+ * 有効なときだけ送るので、sshのJobはsiteができる前とまったく同じ要求になる。
  */
 export function buildJobRequest(target: ComputeTarget, values: FormValues): Omit<CreateJob, 'runId'> {
   const isSite = isSiteTarget(target);

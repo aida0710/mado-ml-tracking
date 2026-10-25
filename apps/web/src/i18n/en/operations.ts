@@ -1,6 +1,6 @@
 import { formatEnglishCount } from '../formatEnglishCount';
 
-// The operations alert badge in the header and the plugin delivery status.
+// 上部バーの運用アラートのバッジと、プラグインへのイベントの送信状況。
 export const operationsText = {
   operationsAlerts: 'Operations alerts',
   operationsAlertsNone: 'No open operations alerts',

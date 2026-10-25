@@ -1,6 +1,6 @@
 import * as english from './en/artifactLifecycle';
 import { localized } from './localized';
-// Artifact deletion (the file menu in the Run browser) and the usage table in Project settings.
+// Artifactの削除（RunのArtifactブラウザのファイルのメニュー）と、プロジェクト設定の使用量の表。
 export const artifactLifecycleText = localized({
   artifactActions: 'ファイルの操作',
   artifactDelete: '削除',

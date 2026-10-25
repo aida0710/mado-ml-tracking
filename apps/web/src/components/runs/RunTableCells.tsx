@@ -1,7 +1,7 @@
 /**
- * How the Run list draws its cells, shared by the wide table (WideRunTable) and the narrow one
- * (NarrowRunTable): the selection checkboxes, the name and the description. runTableColumns.tsx
- * picks the cell of each column the saved view chose.
+ * Runの一覧のセルの描き方。広い表（WideRunTable）と狭い表（NarrowRunTable）で共有する。
+ * 選択のチェックボックス、名前、説明。各列にどのセルを使うかは、保存ビューが選んだ列に応じて
+ * runTableColumns.tsxが決める。
  */
 import { useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
@@ -11,7 +11,7 @@ import { descriptionSummary } from '../../lib/runColumns';
 import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
-/** The selection the Run list shows and changes (RunTable builds it from the selected ids). */
+/** Runの一覧が出して変える選択（選んだidからRunTableが作る）。 */
 export interface RunListSelection {
   isSelected: (runId: string) => boolean;
   areAllShownSelected: boolean;
@@ -20,8 +20,8 @@ export interface RunListSelection {
 }
 
 /**
- * The first line of the description; the whole Markdown opens while hovered or focused. The
- * popover is fixed to the viewport because the table's scroll area would clip it.
+ * 説明の1行目。ホバーかフォーカスの間、Markdownの全文を開く。表のスクロール領域に切り取られる
+ * ので、ポップオーバーはビューポートに固定する。
  */
 export function RunDescriptionCell({ description }: { description: string }) {
   useLocale();
@@ -50,7 +50,7 @@ export function RunDescriptionCell({ description }: { description: string }) {
   );
 }
 
-/** The header checkbox: selects or clears every Run shown on this page. */
+/** 見出しのチェックボックス。このページに出ている全Runを選ぶか外す。 */
 export function ShownRunsCheckbox({ selection }: { selection: RunListSelection }) {
   useLocale();
   return (

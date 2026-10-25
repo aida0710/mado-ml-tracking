@@ -25,11 +25,11 @@ const runCheckpointsPath = (projectId: string, runId: string) =>
   `${projectPath(projectId)}/runs/${encodeId(runId)}/checkpoints`;
 
 export interface RunCheckpointQuery {
-  /** Also list checkpoints beyond the keep count (retained=false); they can still be resumed. */
+  /** 保持数を超えたcheckpoint（retained=false）も一覧に出す。それらからも再開できる。 */
   includeHidden?: boolean;
 }
 
-/** A Run's checkpoints, largest step first. */
+/** Runのcheckpointを、stepの大きい順に返す。 */
 async function listRunCheckpoints(
   projectId: string,
   runId: string,
@@ -45,14 +45,14 @@ async function listRunCheckpoints(
 
 export const executionApi = {
   /**
-   * Every computer, someone else's private one too, with what anyone may know: no connection or
-   * settings. Whether the signed-in person may use or manage each comes with it.
+   * すべてのコンピュータ（他人のprivateのものも）を、誰に見せてもよい範囲で返す。接続先や設定は
+   * 含まない。ログインしている本人がそれぞれを使えるか・管理できるかも付く。
    */
   targetOverview: (signal?: AbortSignal) =>
     requestItems<ComputeTargetOverview>('/targets/overview', signal),
-  /** The computers the signed-in person may use or manage, in full as far as they may see. */
+  /** ログインしている本人が使える・管理できるコンピュータを、見てよい範囲の全項目つきで返す。 */
   targets: (signal?: AbortSignal) => requestItems<ComputeTargetDetails>('/targets', signal),
-  /** The computers the signed-in person may run Jobs on: public ones and their own. */
+  /** ログインしている本人がJobを動かせるコンピュータ（publicのものと自分のもの）。 */
   projectTargets: (projectId: string, signal?: AbortSignal) =>
     requestItems<ComputeTargetDetails>(`/targets?${new URLSearchParams({ projectId })}`, signal),
   createTarget: (body: CreateTarget) =>
@@ -60,22 +60,22 @@ export const executionApi = {
   updateTarget: (id: string, body: UpdateTarget) =>
     request<ComputeTargetDetails>(`/targets/${encodeId(id)}`, jsonRequest('PATCH', body)),
   jobs: (projectId: string, signal?: AbortSignal) => requestItems<JobListItem>(jobPath(projectId), signal),
-  /** One Run's Jobs, newest first: a re-enqueued Run has more than one. */
+  /** 1つのRunのJob（新しい順）。キューに入れ直したRunには複数ある。 */
   runJobs: (projectId: string, runId: string, signal?: AbortSignal) =>
     requestItems<JobListItem>(`${jobPath(projectId)}?${new URLSearchParams({ runId })}`, signal),
   createJob: (projectId: string, body: CreateJob) =>
     request<Job>(jobPath(projectId), jsonRequest('POST', body)),
-  /** A new Run and its Job at once; a refused Job leaves no Run behind. */
+  /** 新しいRunとそのJobを一度に作る。Jobが拒まれたらRunも残らない。 */
   launchJob: (projectId: string, body: LaunchJob) =>
     request<TaskExecution>(`${jobPath(projectId)}/launch`, jsonRequest('POST', body)),
   cancelJob: (projectId: string, id: string) =>
     request<unknown>(`${jobPath(projectId, id)}/cancel`, { method: 'POST' }),
-  /** An empty request starts the new Run from scratch; see JobRetryRequest for a checkpoint. */
+  /** 空の要求なら新しいRunを最初から始める。checkpointから始めるときはJobRetryRequestを参照。 */
   retryJob: (projectId: string, id: string, body: JobRetryRequest) =>
     request<{ run: Run; job: Job }>(`${jobPath(projectId, id)}/retry`, jsonRequest('POST', body)),
   listRunCheckpoints,
   workers: (projectId: string, signal?: AbortSignal) =>
     requestItems<WorkerPresence>(`${projectPath(projectId)}/workers`, signal),
-  /** Every Project's workers; global administrators only (GET /workers). */
+  /** すべてのProjectのworker。全体管理者だけ（GET /workers）。 */
   allWorkers: (signal?: AbortSignal) => requestItems<WorkerPresence>('/workers', signal),
 };

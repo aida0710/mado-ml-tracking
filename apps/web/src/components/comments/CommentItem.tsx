@@ -9,8 +9,8 @@ import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 
 /**
- * One comment with its author, time and the actions the viewer may take. Omitting a callback
- * hides that action. A deleted comment keeps its place and reads "削除されました".
+ * 1つのコメントと、その投稿者、時刻、閲覧者が行える操作。コールバックを省くとその操作を隠す。
+ * 削除したコメントは場所を残し、"削除されました"と出す。
  */
 export function CommentItem({
   comment,

@@ -1,9 +1,8 @@
 import { useId, type ReactNode } from 'react';
 
 /**
- * A labelled control in a hand-built form (one FormFields cannot describe, such as a field that
- * depends on another). `children` renders the control with the id the label points at, and the id
- * of the hint to read with it when there is one.
+ * 手で組んだフォームの、ラベル付きの入力（別の欄に依存する欄など、FormFieldsで表せないもの）。
+ * `children`は、ラベルが指すidと、説明があればそれを一緒に読み上げるためのidで入力を描く。
  */
 export function LabeledField({
   label,

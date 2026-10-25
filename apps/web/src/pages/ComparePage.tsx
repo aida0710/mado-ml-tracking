@@ -35,7 +35,7 @@ import {
 import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
-// URL parameters, so a comparison with its baseline can be shared as a link.
+// URLのパラメータ。基準を含む比較をリンクで共有できるようにする。
 const RUNS_PARAM = 'runs';
 const BASELINE_PARAM = 'baseline';
 const TAB_PARAM = 'tab';
@@ -241,7 +241,7 @@ function StatusRow({ runs }: { runs: Run[] }) {
   );
 }
 
-/** Every compared Run drawn over each other, panel by panel; Runs can be grouped per panel. */
+/** 比べるすべてのRunをパネルごとに重ねて描く。パネルごとにRunをグループにできる。 */
 function ComparisonCharts({ projectId, runs }: { projectId: string; runs: Run[] }) {
   useLocale();
   const keys = useMemo(() => getRunChartKeys(runs), [runs]);

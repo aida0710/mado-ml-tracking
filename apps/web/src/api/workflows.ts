@@ -28,7 +28,7 @@ const cursorQuery = (cursor: string | undefined) =>
 export const workflowsApi = {
   list: (projectId: string, signal?: AbortSignal) =>
     requestItems<Workflow>(`${projectPath(projectId)}/workflows`, signal),
-  /** The workflow with its newest versions; `olderVersionsCursor` reaches the rest. */
+  /** ワークフローと、その新しいほうのバージョン。残りは`olderVersionsCursor`でたどる。 */
   get: (projectId: string, id: string, signal?: AbortSignal) =>
     request<WorkflowDetail>(workflowPath(projectId, id), { signal }),
   olderVersions: async (projectId: string, id: string, cursor: string) => {

@@ -19,7 +19,7 @@ import { jobEndReasonLabels } from '../i18n/jobs';
 
 type Entry = [string, ReactNode];
 
-/** The site fields of a Job; ssh/local Jobs have none of them. */
+/** Jobのsiteの項目。ssh/localのJobにはどれも無い。 */
 function siteEntries(job: JobListItem): Entry[] {
   return [
     [text.jobPhase, jobPhaseText(job, true)],
@@ -37,7 +37,7 @@ function siteEntries(job: JobListItem): Entry[] {
   ];
 }
 
-/** Where the Job came from: an array, a driver Job, a hook, and how deep in a chain it is. */
+/** Jobの出どころ。array、親Job（ドライバー）、フック、連鎖の深さ。 */
 function originEntries({
   job,
   hooks,
@@ -80,7 +80,7 @@ function originEntries({
   return entries;
 }
 
-/** The selected Job's fields on the Jobs page. */
+/** Jobsの画面で選んだJobの項目。 */
 export function JobDetailsList({
   job,
   target,
@@ -106,7 +106,7 @@ export function JobDetailsList({
           ? ([[text.jobEndReason, jobEndReasonLabels[job.endReason]]] satisfies Entry[])
           : []),
         [text.gpuIds, <span className="mono">{jobGpuSummary(job)}</span>],
-        // A phase marks a site Job even before the targets are read.
+        // コンピュータを読み込む前でも、phaseがあればsiteのJobだと分かる。
         ...(isSiteTarget(target) || Boolean(job.phase) ? siteEntries(job) : []),
         ...originEntries({ job, hooks, projectId, onSelectJob, onSelectArray }),
         [text.heartbeat, formatDateTimeSeconds(job.heartbeatAt)],

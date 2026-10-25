@@ -3,7 +3,7 @@ import { accessApi } from '../api/access';
 import { explainLastProjectAdminConflict } from '../lib/lastProjectAdminConflict';
 import { useQuery } from './useQuery';
 
-/** Project members with their effective role, and the changes a Project admin can make. */
+/** Projectのメンバーと実効Role、Project adminができる変更。 */
 export function useProjectMembers(projectId: string) {
   const members = useQuery({ key: `${projectId}:members`, load: (signal) =>
     accessApi.members(projectId, signal),

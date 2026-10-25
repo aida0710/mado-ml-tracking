@@ -1,4 +1,4 @@
-/* Chart panels on the Run detail, Compare and Run list pages, and the resumed-segment timeline. */
+/* Runの詳細・比較・Runの一覧の画面の図のパネルと、再開した区間のタイムライン。 */
 .chart-panel-area {
   margin-bottom: 20px;
 }
@@ -14,11 +14,11 @@
   gap: 8px;
   margin-left: auto;
 }
-/* Rows are set from CHART_ROW_HEIGHT_PX in ChartPanel.tsx through --chart-row-height. */
+/* 行の高さは、ChartPanel.tsxのCHART_ROW_HEIGHT_PXから--chart-row-heightで渡す。 */
 .chart-panel-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  /* A long legend may wrap; the row then grows instead of clipping the chart. */
+  /* 長い凡例は折り返すことがある。そのときは図を切らずに行を高くする。 */
   grid-auto-rows: minmax(var(--chart-row-height), auto);
   gap: 12px;
 }
@@ -94,7 +94,7 @@
   flex: 1;
 }
 
-/* Editor dialog */
+/* 編集のダイアログ */
 .chart-panel-editor form {
   display: grid;
   gap: 14px;
@@ -134,7 +134,7 @@
   max-width: 180px;
 }
 
-/* Run list: charts with the analysis beside them; the analysis column closes when empty. */
+/* Runの一覧。図の横に分析を置く。分析の列は空なら閉じる。 */
 .run-chart-toggle {
   margin-bottom: 8px;
 }
@@ -156,7 +156,7 @@
   display: none;
 }
 
-/* Resumed segments */
+/* 再開した区間 */
 .run-resume-timeline {
   margin: 4px 0 16px;
 }
@@ -178,7 +178,7 @@
   border-radius: var(--radius-pill);
 }
 
-/* One panel per row on narrow screens; the stored placement is kept for wider ones. */
+/* 狭い画面では1行に1パネル。保存した配置は広い画面のために残しておく。 */
 @media (width < 900px) {
   .chart-panel-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -187,7 +187,7 @@
   .chart-panel-cell {
     grid-column: 1 / -1 !important;
     grid-row: auto !important;
-    /* A legend that wraps to more lines grows the panel instead of spilling onto the next one. */
+    /* 凡例が何行にも折り返したら、次のパネルにはみ出さずにパネルを高くする。 */
     min-height: calc(var(--chart-row-height) * 2);
   }
 }

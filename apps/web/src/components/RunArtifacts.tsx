@@ -11,12 +11,13 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { artifactsTextTemplates } from '../i18n/artifacts';
 
-// Kept in the URL so reloading or going back returns to the same folder; the upload dialog starts there.
+// URLに残し、再読み込みや戻る操作で同じフォルダに戻れるようにする。アップロードの
+// ダイアログもそのフォルダから始まる。
 export const RUN_ARTIFACT_PREFIX_PARAMETER = 'artifactPrefix';
 
 /**
- * A Run's Artifacts as a folder tree on the left and the chosen file's preview on the right; on a
- * narrow screen, the tree until a file is chosen and then that file's preview.
+ * RunのArtifactを、左にフォルダのツリー、右に選んだファイルのプレビューで示す。狭い画面では、
+ * ファイルを選ぶまではツリーを、選んだらそのファイルのプレビューを出す。
  */
 export function RunArtifacts({
   projectId,
@@ -25,23 +26,23 @@ export function RunArtifacts({
 }: {
   projectId: string;
   runId: string;
-  /** Increment to reload after an upload. */
+  /** アップロードの後に増やすと読み直す。 */
   revision: number;
 }) {
   useLocale();
   const [params, setParams] = useSearchParams();
   const prefix = params.get(RUN_ARTIFACT_PREFIX_PARAMETER) ?? '';
-  // Counts deletions made here, so the folder and the open file reload after each one.
+  // ここでの削除を数え、削除のたびにフォルダと開いているファイルを読み直す。
   const [deletions, setDeletions] = useState(0);
   const { tree, files } = useRunArtifacts({ projectId, runId, prefix }, revision + deletions);
   const [chosen, setChosen] = useState<Artifact>();
-  // The file just deleted, named until another file is chosen.
+  // 削除したばかりのファイル。別のファイルを選ぶまで名前を出しておく。
   const [deleted, setDeleted] = useState<Artifact | null>(null);
   const { isNarrow, panes, containerRef, scrollBrowserIntoView } = useArtifactBrowserPanes(chosen !== undefined);
-  // Like the earlier flat list, the first file of the open folder previews until one is chosen;
-  // after a deletion the preview stays empty rather than jumping to another file.
+  // 以前の平らな一覧と同じく、ファイルを選ぶまでは開いているフォルダの先頭の
+  // ファイルをプレビューする。削除の後は、別のファイルへ飛ばずにプレビューを空にしておく。
   const selected = chosen ?? (isNarrow || deleted ? undefined : files.items[0]);
-  // Nothing at the root and no folders: there is nothing to choose, so say how files get here.
+  // ルートに何も無く、フォルダも無い。選ぶものが無いので、ファイルがここに入る方法を伝える。
   const isRunEmpty =
     prefix === '' && tree.value?.directories.length === 0 && !files.loading && files.items.length === 0;
   function showFile(artifact: Artifact | undefined) {
@@ -60,7 +61,7 @@ export function RunArtifacts({
   return (
     <>
       {deleted && (
-        // Above both panes, so it is seen on a narrow screen too, where the list returns at once.
+        // 両方のペインの上に置き、すぐ一覧に戻る狭い画面でも目に入るようにする。
         <p className="notice artifact-deleted-notice" role="status" data-testid="artifact-deleted-notice">
           {artifactsTextTemplates.artifactDeleted(deleted.path)}
         </p>

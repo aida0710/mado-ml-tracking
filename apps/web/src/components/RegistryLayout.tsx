@@ -3,9 +3,9 @@ import { narrowerThan } from '@mado/design-system/layout';
 import { useMediaQuery } from '@mado/design-system/react';
 
 /**
- * A list beside the chosen item's detail; below 900px the detail sits under the list. There a
- * new choice (a different `selectedKey`) scrolls the detail into view, or the tap would seem to do
- * nothing. The first choice made while the page loads does not scroll.
+ * 選んだ項目の詳細を一覧の横に置く。900px未満では詳細を一覧の下に置く。そこでは選び直したとき
+ * （`selectedKey`が変わったとき）に詳細までスクロールする。そうしないとタップしても何も起きない
+ * ように見える。ページを読み込む間の最初の選択ではスクロールしない。
  */
 export function RegistryLayout({
   list,

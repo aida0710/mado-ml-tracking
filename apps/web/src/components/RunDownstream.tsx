@@ -8,7 +8,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { automationText } from '../i18n/automation';
 
-/** The Runs a Run started, such as the inference and evaluation that followed a training Run. */
+/** Runが始めたRun。学習のRunに続く推論や評価など。 */
 export function RunDownstream({ projectId, runId }: { projectId: string; runId: string }) {
   useLocale();
   const downstream = useRunDownstream(projectId, runId);

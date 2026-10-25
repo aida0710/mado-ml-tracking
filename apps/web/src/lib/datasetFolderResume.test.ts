@@ -48,7 +48,7 @@ describe('mergeUnfinishedFolderUploads', () => {
       openUploads: [
         session(`datasets/${DATASET}/${EARLIER}/big.bin`, 50),
         session(`datasets/${DATASET}/${LATER}/only-open.bin`, 70),
-        // A Run's upload and another path are not folder uploads of this dataset.
+        // Runのアップロードや別のパスは、このデータセットのフォルダのアップロードではない。
         session(`datasets/${DATASET}/${LATER}/run.bin`, 70, 'run-1'),
         session('checkpoints/model.bin', 90),
       ],

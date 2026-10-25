@@ -26,17 +26,18 @@ import { text, textTemplates } from '../../i18n/catalog';
 const DEFAULT_CHART_HEIGHT = 320;
 const CHART_MARGIN = { top: 16, right: 24, left: 8, bottom: 8 };
 const Y_AXIS_WIDTH = 70;
-// About the rows that fit beside the pointer without covering the chart.
+// ポインタの横に、図を覆わずに入るおよその行数。
 const TOOLTIP_MAX_ROWS = 10;
-// Gap between the pointer and the tooltip box.
+// ポインタとツールチップの箱の間隔。
 const TOOLTIP_OFFSET_PIXELS = 14;
 
 /**
- * Metric lines of Runs and Run groups, drawn from the data it is given (it fetches nothing, so a
- * report can pass saved data). Lines and bands are single SVG paths per series so 200 Runs stay
- * light; recharts draws the axes and grid. Hover shows the values at x, dragging zooms into x.
- * With the keyboard the plot is one focus stop: arrow keys move the cursor whose values the tooltip
- * shows, + and - zoom around it. A screen reader hears each line's last value and range.
+ * RunとRunのグループのメトリクスの線を、渡されたデータから描く（自分では何も取得しないので、
+ * レポートは保存したデータを渡せる）。線と範囲の帯は系列ごとに1本のSVGのpathにし、200のRunでも
+ * 軽く保つ。軸とグリッドはrechartsが描く。ホバーでxの値を出し、ドラッグでxをズームする。
+ * キーボードではプロットはフォーカスの止まる場所1つで、矢印キーでカーソルを動かしてその値を
+ * ツールチップに出し、+と-でカーソルを中心にズームする。スクリーンリーダーは各線の最後の値と
+ * 範囲を読む。
  */
 export function MetricsChart({
   series,
@@ -100,8 +101,8 @@ export function MetricsChart({
     onZoom?.(range);
   }
 
-  // A drag or the reset button leaves the pointer elsewhere, so the values it showed go away. The
-  // keyboard zooms around its cursor, which stays at the same pixel, so its values stay.
+  // ドラッグやリセットのボタンの後はポインタが別の場所にあるので、出していた値を消す。
+  // キーボードはカーソルを中心にズームし、カーソルは同じピクセルに留まるので、値は残す。
   function changeZoomFromPointer(range: MetricXRange | null) {
     changeZoom(range);
     setHover(null);
@@ -120,7 +121,7 @@ export function MetricsChart({
         zoomedChartRange({ shown: xDomain, extent: fullXExtent, center: keyboardX, key: zoomKey, scale: xScale }),
       );
     } else if (event.key === 'Escape' && keyboardX !== null) {
-      // Only while the cursor shows, so Escape still reaches a dialog the chart sits in.
+      // カーソルが出ている間だけ。図を含むダイアログにもEscapeが届くようにするため。
       event.preventDefault();
       event.stopPropagation();
       hideKeyboardCursor();
@@ -159,7 +160,7 @@ export function MetricsChart({
 
   const tooltip =
     hover && valuesAtX(visibleLines, hover.x, { highlightedId, maxRows: TOOLTIP_MAX_ROWS });
-  // Two corners of the domain give recharts' axes data to measure; the series draw themselves.
+  // 定義域の2つの角を渡し、rechartsの軸に測るデータを与える。系列は自分で描く。
   const domainCorners = [
     { x: xDomain[0], y: yDomain[0] },
     { x: xDomain[1], y: yDomain[1] },
@@ -167,7 +168,7 @@ export function MetricsChart({
   return (
     <div className="metrics-chart">
       {legend}
-      {/* role="application": a screen reader passes the arrow keys on instead of reading by line. */}
+      {/* role="application"にすると、スクリーンリーダーは行単位で読まずに矢印キーを図へ渡す。 */}
       <div
         className="metrics-chart-canvas"
         style={{ height }}
@@ -184,7 +185,7 @@ export function MetricsChart({
         }}
       >
         <ResponsiveContainer width="100%" height="100%">
-          {/* recharts' own keyboard layer moves a tooltip this chart does not use. */}
+          {/* recharts自身のキーボード操作は、この図が使わないツールチップを動かす。 */}
           <ComposedChart data={domainCorners} margin={CHART_MARGIN} accessibilityLayer={false}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis
@@ -197,7 +198,7 @@ export function MetricsChart({
               tickFormatter={(value: number) => formatXTick(xAxis, value)}
               tick={{ fontSize: 11 }}
             />
-            {/* 'auto' rounds the corners' y span out to round ticks; the lines use the same scale. */}
+            {/* 'auto'は角のyの幅を切りのよい目盛りまで広げる。線も同じスケールを使う。 */}
             <YAxis
               type="number"
               dataKey="y"
@@ -207,7 +208,7 @@ export function MetricsChart({
               tickFormatter={(value: number) => formatChartTick(value, valueUnit)}
               tick={{ fontSize: 11 }}
             />
-            {/* Invisible: gives recharts a graphical item that reads the corners for the axes. */}
+            {/* 見えない線。軸のために角を読むグラフィックの要素をrechartsに与える。 */}
             <Line
               dataKey="y"
               stroke="none"
@@ -269,7 +270,7 @@ export function MetricsChart({
   );
 }
 
-/** The values the y axis must show: drawn lines inside the x domain, and bands when shown. */
+/** y軸に出すべき値。xの定義域の中で描いた線と、出しているときは範囲の帯。 */
 function* visibleLineValuesIn(
   lines: readonly ChartLine[],
   [minX, maxX]: [number, number],

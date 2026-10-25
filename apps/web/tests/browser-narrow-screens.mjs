@@ -1,7 +1,7 @@
-// Browser check for phones: at 320px the header and the bell's list stay on screen; the Run list
-// keeps the selection, the name and the status in the row and opens the rest; a tab opened from the
-// URL is scrolled into view and the hidden end fades; a compared long line of JSON scrolls inside
-// its own view; and a vertical swipe on a waveform scrolls the page instead of setting a loop.
+// スマートフォンのブラウザでの確認。320pxでも上部バーとベルの一覧が画面に収まる。Runの一覧は選択、
+// 名前、状態を行に残し、残りは開いて見る。URLから開いたタブは見える位置までスクロールし、隠れた端は
+// 薄く消える。比べるJSONの長い1行は専用の表示の中でスクロールする。波形の上の縦のスワイプは、
+// ループを設定せずにページをスクロールする。
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -16,11 +16,11 @@ const browser = await chromium.launch({
   args: ['--no-sandbox'],
 });
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
-// The narrowest phone in use (iPhone SE 1st generation; 1280px zoomed to 400%).
+// 使われている中で最も幅の狭いスマートフォン（第1世代のiPhone SE。1280pxを400%に拡大したときと同じ）。
 const NARROWEST_PHONE = { width: 320, height: 640 };
 const PHONE = { width: 390, height: 844 };
 const DESKTOP = { width: 1440, height: 900 };
-// One line of JSON as wide as the source manifest the comparison opens first (several thousand px).
+// 比較が最初に開くソースのmanifestと同じ幅（数千px）のJSONの1行。
 const MANIFEST_FILE_COUNT = 7;
 
 const api = createBrowserApi();
@@ -78,10 +78,10 @@ async function routeApi(route) {
   const content = path.match(/\/artifacts\/([^/]+)\/content$/);
   const file = content && contents.get(content[1]);
   if (file) return route.fulfill({ status: 200, contentType: file.mimeType, body: file.body });
-  // The real API has no stored media info for these files; the viewer decodes them itself.
+  // 実際のAPIにはこれらのファイルの保存済みのメディア情報が無いので、ビューアが自分でデコードする。
   if (path.endsWith('/media-info')) return json({ error: 'Not found', code: 'not_found' }, 404);
   if (path.endsWith('/operations-alerts')) return json({ items: [openAlert] });
-  // A previewed file is looked up among the Run's logged media; these Runs logged none.
+  // プレビューするファイルはRunが記録したメディアの中から探す。これらのRunは何も記録していない。
   if (/\/runs\/[^/]+\/media$/.test(path) && request.method() === 'GET') return json({ items: [] });
   return api.route(route);
 }
@@ -117,7 +117,7 @@ try {
   assert.equal(await documentOverflow(page), 0, 'the page scrolls sideways');
   const brand = page.locator('.topbar .brand');
   assert.equal(await brand.getAttribute('href'), '/');
-  // Only the mark shows; the name stays as the link's name for screen readers.
+  // 見えるのはマークだけ。名前はスクリーンリーダー向けにリンクの名前として残る。
   const hiddenName = brand.locator('.sr-only');
   assert.equal(await hiddenName.textContent(), 'mado ML Tracking');
   assert.ok((await hiddenName.boundingBox()).width <= 1, 'the app name is still drawn');

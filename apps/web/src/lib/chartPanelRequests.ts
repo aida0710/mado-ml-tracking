@@ -6,18 +6,18 @@ import {
   type RunGroupBy,
 } from '@mmt/contracts';
 
-// Which /metrics/series and /metrics/groups requests a page of panels needs. Panels that share an
-// x axis (and grouping) share one request, so a page usually fetches every panel at once.
+// パネルの1ページに要る/metrics/seriesと/metrics/groupsの要求。x軸（とグループ化）が同じパネルは
+// 1つの要求を共有するので、1ページの全パネルはたいてい一度に取得できる。
 
-/** Points the browser receives for one page of panels; keeps 50 Runs x 24 panels responsive. */
+/** パネル1ページでブラウザが受け取る点の数。50個のRun×24個のパネルでも応答よく動く。 */
 export const CHART_PAGE_POINT_BUDGET = 200_000;
-/** Fewer points than this make a long training curve look jagged. */
+/** 点がこれより少ないと、長い学習曲線がギザギザに見える。 */
 export const MIN_POINTS_PER_SERIES = 100;
-/** Groups are not known before the response; a page rarely shows more lines than this. */
+/** グループは応答の前には分からない。1ページに出る線がこれを超えることはまれ。 */
 const EXPECTED_GROUP_COUNT = 10;
 
 export interface ChartRequestPlan {
-  /** Same for panels that can share the response. */
+  /** 応答を共有できるパネルでは同じ値。 */
   id: string;
   kind: 'series' | 'groups';
   xAxis: ChartXAxis;
@@ -37,8 +37,8 @@ export function chartRequestPlanId(panel: ChartPanelConfig, groupingEnabled: boo
 }
 
 /**
- * One plan per x axis and grouping. Without `groupingEnabled` (a single Run) the grouping of a
- * stored panel is ignored and the Runs are drawn one by one.
+ * x軸とグループ化の組ごとに1つの計画。`groupingEnabled`が無いとき（Runが1つ）は、保存された
+ * パネルのグループ化を無視し、Runを1つずつ描く。
  */
 export function planChartRequests(
   panels: readonly ChartPanelConfig[],
@@ -61,7 +61,7 @@ export function planChartRequests(
   return [...plans.values()];
 }
 
-/** The API takes at most MAX_SERIES_KEYS keys per request. */
+/** APIが1回の要求で受けるキーはMAX_SERIES_KEYS個まで。 */
 export function chunkMetricKeys(keys: readonly string[]): string[][] {
   const chunks: string[][] = [];
   for (let index = 0; index < keys.length; index += MAX_SERIES_KEYS)
@@ -69,7 +69,7 @@ export function chunkMetricKeys(keys: readonly string[]): string[][] {
   return chunks;
 }
 
-/** Points per series so that every line of the page fits in CHART_PAGE_POINT_BUDGET. */
+/** ページのすべての線がCHART_PAGE_POINT_BUDGETに収まる、系列あたりの点の数。 */
 export function pointsPerSeries(lineCount: number): number {
   const share = Math.floor(CHART_PAGE_POINT_BUDGET / Math.max(1, lineCount));
   return Math.max(MIN_POINTS_PER_SERIES, Math.min(DEFAULT_SERIES_POINTS, share));

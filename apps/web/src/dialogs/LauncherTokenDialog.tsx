@@ -10,9 +10,9 @@ import { text } from '../i18n/catalog';
 import { launchersTextTemplates } from '../i18n/launchers';
 
 /**
- * A launcher's new token, shown once: the API returns it only in this answer. launcher.toml names
- * the file the token goes into, so the example itself never contains the token; the commands
- * below it install and start the launcher with that file.
+ * ランチャーの新しいtokenを一度だけ見せる。APIはこの応答でしか返さない。launcher.tomlはtokenを
+ * 置くファイルを指すので、例そのものにはtokenを書かない。その下のコマンドで、そのファイルを使う
+ * ランチャーをインストールして起動する。
  */
 export function LauncherTokenDialog({
   issued,

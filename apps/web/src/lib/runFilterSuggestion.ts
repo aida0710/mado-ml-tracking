@@ -1,15 +1,15 @@
 import { toRunSearchConditions } from './runFilter';
 
-// `loss < 0.2` or `batch_size = 16`: a comparison written without metrics. or params. in front.
-// The key may hold dots (train.loss), as metric names often do.
+// `loss < 0.2`や`batch_size = 16`のように、前にmetrics.やparams.を付けずに書いた比較。
+// キーには、メトリクスの名前によくあるように点を含んでもよい（train.loss）。
 const UNPREFIXED_COMPARISON =
   /^\s*([\p{L}_][\p{L}\p{N}_./-]*)\s*(<=|>=|!=|<|>|=)\s*(.+?)\s*$/u;
 const NUMBER = /^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?$/;
 const QUOTED = /^(['"])(.*)\1$/s;
 
 /**
- * The filter someone most likely meant when a comparison without a group was searched as a Run
- * name: a number compares a metric, any other value equals a param. Null for anything else.
+ * グループの無い比較をRunの名前として検索したときに、利用者がおそらく意図した絞り込み。数なら
+ * メトリクスと比べ、ほかの値ならパラメータと等しいかを見る。それ以外はnull。
  */
 export function suggestRunFilter(searchText: string): string | null {
   if (!('name' in toRunSearchConditions(searchText))) return null;

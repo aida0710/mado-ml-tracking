@@ -10,9 +10,9 @@ import type { CriterionThresholdMeaning } from '../../lib/promotionPolicyInput';
 import type { KnownAliasSource } from '../../lib/aliasChoices';
 import { formatEnglishQuotedList } from '../formatEnglishQuotedList';
 
-// Promotion policies (pass/fail criteria for a candidate version) and their evaluation history.
-// Labels shared with the evaluation comparison (baselineAlias, evaluationRule, referenceDatasets,
-// evaluationCodeVersion, baselineVersion) come from i18n/evaluation.ts.
+// 昇格policy（候補のバージョンの合否の基準）と、その判定の履歴。評価の比較と共通の文言は
+// i18n/evaluation.tsのものを使う（baselineAlias、evaluationRule、referenceDatasets、
+// evaluationCodeVersion、baselineVersion）。
 export const promotionText = {
   promotionPolicies: 'Promotion policies',
   newPromotionPolicy: 'Create promotion policy',
@@ -31,7 +31,7 @@ export const promotionText = {
   promotionCriterionMode: 'Value to compare',
   promotionCriterionThreshold: 'Threshold',
   promotionRelativeDeltaHint: 'Enter relative differences as ratios (0.05 = 5%).',
-  // Metric names come from what the rule's evaluation Runs recorded (RuleMetricKeys.source).
+  // メトリクス名の候補は、評価ルールの評価のRunが記録したものから取る（RuleMetricKeys.source）。
   promotionMetricKeysChooseRule: 'Select an evaluation rule to see the metric names its evaluation runs recorded.',
   promotionMetricKeysFromRule: "Suggesting metric names recorded by this evaluation rule's evaluation runs.",
   promotionMetricKeysFromCodeVersion:
@@ -63,7 +63,7 @@ export const promotionText = {
   promotionFirstRelease: 'First pass (no baseline)',
   promotionReevaluate: 'Re-evaluate',
   promotionLoadMore: 'Load more',
-  // Client-side validation of the create form.
+  // 作成フォームのブラウザ側での検証。
   promotionPolicyNameRequired: 'Enter a name.',
   promotionModelRequired: 'Select a model from this project.',
   promotionTargetAliasRequired: 'Enter a target alias.',
@@ -72,7 +72,7 @@ export const promotionText = {
   promotionCriteriaRequired: 'Add at least one pass criterion.',
   promotionCriterionMetricRequired: 'Enter a metric name for each pass criterion.',
   promotionCriterionThresholdInvalid: 'Thresholds must be finite numbers.',
-  // Owner (run-as user) of a policy and its transfer to a Service Account.
+  // policyの所有者（実行するユーザー）と、Service Accountへの移管。
   promotionPolicyOwner: 'Execution user',
   promotionTransferOwner: 'Transfer ownership',
   promotionTransferOwnerTarget: 'Destination service account',
@@ -81,7 +81,7 @@ export const promotionText = {
   promotionTransferOwnerNoCandidates:
     'No service accounts are available for transfer. Create one with the Admin role in project settings first.',
   promotionTransferOwnerRequired: 'Select a destination service account.',
-  // Promotion dialog (assigning an alias with its reason and evidence).
+  // 昇格のダイアログ（理由と根拠を添えてaliasを付ける）。
   promote: 'Promote',
   promotionDialogTitle: 'Assign alias (promote)',
   promotionEvidence: 'Supporting decision',
@@ -103,7 +103,7 @@ export const promotionText = {
   promotionAliasRequired: 'Enter an alias.',
   promotionVersionRequired: 'Select a version.',
   promotionProtectedAlias: 'Protected aliases',
-  // Promotion check card on the model version page.
+  // モデルバージョンの画面の、昇格の判定のカード。
   promotionCheck: 'Promotion decision',
   promotionCheckEmpty: 'This model has no promotion policy.',
   promotionCheckPending: 'Awaiting decision',
@@ -111,7 +111,7 @@ export const promotionText = {
   promotionCheckPromotedAutomatically: 'Automatically promoted',
   promotionCheckBaselineChanged: 'Automatic promotion was skipped because the baseline alias changed during evaluation.',
   promotionCheckPromotionDenied: 'Automatic promotion was skipped because the alias change was rejected.',
-  // Alias protections (Models page tab).
+  // aliasの保護（Modelsの画面のタブ）。
   aliasProtections: 'Protected aliases',
   aliasProtectionsEmpty: 'No protected aliases.',
   aliasProtectionsHint:
@@ -139,7 +139,7 @@ export const promotionDecisionLabels: Record<PromotionDecision, string> = {
   skipped: 'Skipped',
 };
 
-// Why a criterion could not compare its values (PromotionCriterionResult.reason).
+// 基準が値を比べられなかった理由（PromotionCriterionResult.reason）。
 export const promotionCriterionReasonLabels: Record<PromotionCriterionReason, string> = {
   candidate_metric_missing: 'Candidate value is missing',
   candidate_metric_not_finite: 'Candidate value is NaN or infinite',
@@ -172,7 +172,7 @@ export const criterionThresholdMeaningLabels: Record<CriterionThresholdMeaning, 
   regression_allowed: 'Allow degradation up to this amount',
 };
 
-// Where an offered alias name is already used (lib/aliasChoices.ts).
+// 候補に出すalias名が既にどこで使われているか（lib/aliasChoices.ts）。
 export const knownAliasSourceLabels: Record<KnownAliasSource, string> = {
   model: 'In use by a model',
   policy: 'Promotion policy',
@@ -184,13 +184,13 @@ export const aliasProtectionRoleLabels: Record<ModelAliasProtectionRole, string>
   admin: 'Admin only',
 };
 
-// Who may change a protected alias, as a sentence names them («Only project administrators can …»).
+// 保護したaliasを変更できる人を、文の中で呼ぶ形（«Only project administrators can …»）。
 const aliasProtectionAllowedChangers: Record<ModelAliasProtectionRole, string> = {
   editor: 'editors and above',
   admin: 'project administrators',
 };
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const promotionTextTemplates = {
   protectedAliasNotice: (role: ModelAliasProtectionRole, requirePassedEvaluation: boolean) =>
     `This alias is protected (${aliasProtectionRoleLabels[role]}${requirePassedEvaluation ? '; passing decision required' : ''}).`,

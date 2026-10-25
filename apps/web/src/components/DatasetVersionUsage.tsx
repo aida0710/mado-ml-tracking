@@ -9,8 +9,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
 /**
- * Where a dataset version went: the Runs that took it as an input, and the Lineage around it.
- * Read from the Project's lineage, the same relations the Lineage page draws.
+ * データセットのバージョンの行き先。入力として使ったRunと、その周りの来歴。Lineageの画面が描くのと
+ * 同じ関係を、Projectの来歴から読む。
  */
 export function DatasetVersionUsage({ version }: { version: DatasetVersion }) {
   useLocale();
@@ -34,7 +34,7 @@ export function DatasetVersionUsage({ version }: { version: DatasetVersion }) {
               {runs.map((run) => (
                 <li key={run.id}>
                   <Link to={`${base}/runs/${encodeURIComponent(run.id)}`}>{run.label}</Link>
-                  {/* Run nodes carry the Run's status. */}
+                  {/* RunのノードはRunの状態を持つ。 */}
                   {run.status && <StatusBadge status={run.status as JobStatus} />}
                 </li>
               ))}

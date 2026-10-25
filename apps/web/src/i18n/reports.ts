@@ -3,7 +3,7 @@ import { localized } from './localized';
 import type { ReportBlockType, ReportEmbedMode } from '@mmt/contracts';
 import type { ReportBlockProblem } from '../lib/reportBlocks';
 
-// Shared reports: the list, the report page with its embeds, the editor and the revision history.
+// 共有のレポート。一覧、埋め込みを含むレポートの画面、編集画面、バージョンの履歴。
 export const reportsText = localized({
   reports: 'Reports',
   reportNew: 'レポートを作成',
@@ -128,7 +128,7 @@ export const reportBlockProblemLabels: Record<ReportBlockProblem, string> = loca
   mediaTableEmpty: 'Runと表を選んでください',
 }, english.reportBlockProblemLabels);
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const reportsTextTemplates = localized({
   reportRevisionLabel: (revision: number) => `バージョン ${revision}`,
   reportInsertBelow: (position: number) => `ここに追加（${position}番目のブロックの下）`,

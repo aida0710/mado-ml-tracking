@@ -5,7 +5,7 @@ import { useMutation } from '../hooks/useMutation';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-/** Asks before an operation that has no form, such as revoking a token. */
+/** tokenの失効のような、フォームの無い操作の前に確かめる。 */
 export function ConfirmDialog({
   title,
   message,

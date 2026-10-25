@@ -5,8 +5,8 @@ import { useLocale } from '../i18n/useLocale';
 import { lineageNodeKindLabels, lineageRelationLabels, text } from '../i18n/catalog';
 
 /**
- * Every relation of the graph as source → relation → target rows, folded under a summary. Each
- * end names its kind and links to its page, so the table works without the diagram.
+ * グラフのすべての関係を「元 → 関係 → 先」の行で示し、summaryの下に畳む。両端には種類を書き、
+ * そのページへリンクするので、図が無くても表だけで使える。
  */
 export function LineageRelationsTable({
   graph,

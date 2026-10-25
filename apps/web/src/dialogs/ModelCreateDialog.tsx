@@ -6,7 +6,7 @@ import { getFieldValue } from '../lib/formValues';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-/** Registers a Model; its family is chosen from the families the Project uses, or typed anew. */
+/** モデルを登録する。モデル系列は、Projectが使っている系列から選ぶか、新しく入力する。 */
 export function ModelCreateDialog({
   projectId,
   onClose,

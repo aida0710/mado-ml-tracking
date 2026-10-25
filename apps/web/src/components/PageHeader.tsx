@@ -1,7 +1,7 @@
 import { useRef, type ReactNode } from 'react';
 import { usePageDocumentTitle } from '../hooks/usePageDocumentTitle';
 
-/** A screen's heading. It also names the browser tab: the title, then the line above it. */
+/** 画面の見出し。ブラウザのタブの名前にもなり、見出し、その上の行の順に並べる。 */
 export function PageHeader({
   title,
   eyebrow,

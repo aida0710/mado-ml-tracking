@@ -27,8 +27,8 @@ import { workflowsText as labels, workflowsTextTemplates } from '../i18n/workflo
 import { useLocale } from '../i18n/useLocale';
 
 /**
- * What a confirmed start, resume or stop did, said next to the button that did it: the version
- * toolbar for a start, the shown execution for a resume or a stop.
+ * 確認した開始・再開・停止の結果を、それを行ったボタンの隣に出す。開始ならバージョンの帯、
+ * 再開と停止なら表示中の実行。
  */
 interface ActionOutcome {
   place: 'version' | 'execution';
@@ -36,7 +36,7 @@ interface ActionOutcome {
   describe: () => string;
 }
 
-/** The versions the workflow came with, then the older ones loaded on request, newest first. */
+/** ワークフローに付いてきたバージョンと、求めに応じて読んだ古いバージョンを新しい順に並べる。 */
 function mergeVersions(newest: WorkflowVersion[], older: WorkflowVersion[]): WorkflowVersion[] {
   const known = new Set(newest.map((version) => version.revision));
   return [...newest, ...older.filter((version) => !known.has(version.revision))];
@@ -62,8 +62,8 @@ export function WorkflowDetailPage() {
   const history = useWorkflowHistory(project.id, workflowId);
   const shownId = params.get(WORKFLOW_EXECUTION_PARAM) ?? '';
   const newestId = history.cursor === undefined ? history.value?.items[0]?.id : undefined;
-  // Without ?execution= the newest execution is shown. Writing it into the address keeps it shown
-  // while the history pages turn and new executions arrive.
+  // ?execution=が無ければ最新の実行を見せる。それをアドレスに書き込んでおくと、履歴のページを
+  // めくっても新しい実行が来ても、同じ実行を見せ続けられる。
   useEffect(() => {
     if (!shownId && newestId) setParams({ [WORKFLOW_EXECUTION_PARAM]: newestId }, { replace: true });
   }, [shownId, newestId, setParams]);

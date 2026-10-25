@@ -15,11 +15,11 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**
- * The Run list of a page of Runs, with a checkbox per Run. On phones (below 640px) it keeps the
- * main columns in the row and opens the rest beneath it (NarrowRunTable), like the other lists.
- * Wider screens show every column, movable and resizable (WideRunTable): from a tablet up, reading
- * metrics across Runs side by side is worth scrolling the table sideways, which the other lists,
- * switching at 900px, do not need.
+ * 1ページ分のRunの一覧と、Runごとのチェックボックス。スマートフォン（640px未満）では主な列を
+ * 行に残し、残りはほかの一覧と同じく行の下に開く（NarrowRunTable）。それより広い画面では
+ * すべての列を出し、移動も幅の変更もできる（WideRunTable）。タブレット以上では、Runどうしの
+ * メトリクスを横に並べて読めることが、表を横にスクロールする手間に見合う。900pxで切り替える
+ * ほかの一覧には、その必要が無い。
  */
 export function RunTable({
   projectId,
@@ -32,12 +32,12 @@ export function RunTable({
 }: {
   projectId: string;
   runs: Run[];
-  /** Shown after the selection and name columns, in this order and width. */
+  /** 選択と名前の列の後に、この順と幅で出す。 */
   columns: SavedViewColumn[];
   onColumnsChange: (columns: SavedViewColumn[]) => void;
   selectedIds: string[];
   onSelectedIdsChange: (ids: string[]) => void;
-  /** Shown instead of the table when the page has no Runs: why, and what to do next. */
+  /** ページにRunが無いとき、表の代わりに出す。理由と、次に何をすればよいか。 */
   empty?: ReactNode;
 }) {
   useLocale();

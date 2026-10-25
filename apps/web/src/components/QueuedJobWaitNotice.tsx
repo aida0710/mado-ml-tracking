@@ -10,9 +10,9 @@ import {
 } from '../i18n/workerCoverage';
 
 /**
- * Why the selected queued Job has not started: no worker for its computer (and where to set one
- * up), a worker too old for what the Job needs, or a busy computer. A site Job tells its phase in
- * the details instead.
+ * 選んだ待機中のJobが始まっていない理由。そのコンピュータのworkerが無い（とその設定の場所）、Jobに
+ * 必要な機能に対してworkerが古い、コンピュータが混んでいる、のいずれか。siteのJobは代わりに詳細で
+ * phaseを伝える。
  */
 export function QueuedJobWaitNotice({
   wait,
@@ -56,8 +56,8 @@ export function QueuedJobWaitNotice({
 }
 
 /**
- * Above the Jobs list: computers whose queued Jobs wait for a worker that is not there, so nobody
- * waits for Jobs that cannot start. Each links to the computer's details.
+ * Jobsの一覧の上に、workerがいないのに待機中のJobがあるコンピュータを示し、始まりようのないJobを
+ * だれも待ち続けないようにする。それぞれコンピュータの詳細へリンクする。
  */
 export function WorkerlessJobsNotice({ groups }: { groups: WorkerlessJobGroup[] }) {
   useLocale();

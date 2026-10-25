@@ -31,7 +31,7 @@ export function SweepsPage() {
   const [isCreating, setCreating] = useState(false);
   const sweeps = useSweepList(project.id, status);
   const tasks = useQuery({ key: `${project.id}:sweep-tasks`, load: (signal) => tasksApi.list(project.id, undefined, signal) });
-  // Names for the list; a failed lookup only falls back to ids, so these do not block the page.
+  // 一覧に出す名前。読めなくてもidを出すだけなので、ページの表示を止めない。
   const members = useQuery({ key: `${project.id}:sweep-members`, load: (signal) => accessApi.members(project.id, signal) });
   const taskName = (sweep: Sweep) => tasks.value?.find((task) => task.id === sweep.taskId)?.name ?? sweep.taskId;
   const creatorName = (sweep: Sweep) =>
@@ -117,7 +117,7 @@ export function SweepsPage() {
   );
 }
 
-/** Reads the Experiments and targets the dialog shows before opening it. */
+/** ダイアログが出すExperimentとコンピュータを、開く前に読む。 */
 function CreateSweepDialogLoader({
   projectId,
   tasks,

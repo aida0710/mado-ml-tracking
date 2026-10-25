@@ -1,7 +1,7 @@
-/* Media recorded per step: the Run media tab, the Run × step comparison, and media tables. */
+/* stepごとに記録したメディア。Runのメディアのタブ、Run × stepの比較、メディアの表。 */
 .run-media-panel {
   display: grid;
-  /* Wide enough for the kind, step range and count columns beside a key of about 20 characters. */
+  /* 20文字ほどのキーの横に、種類・stepの範囲・件数の列が並ぶ幅。 */
   grid-template-columns: minmax(280px, 400px) minmax(0, 1fr);
   gap: 24px;
   align-items: start;
@@ -76,7 +76,7 @@
 .media-compare-toolbar .media-hint {
   margin: 0;
 }
-/* The recorded steps as checkboxes (MediaStepChecklist); a long Run scrolls inside the box. */
+/* 記録したstepのチェックボックス（MediaStepChecklist）。長いRunでは枠の中でスクロールする。 */
 .media-step-checklist {
   display: flex;
   flex-direction: column;
@@ -115,7 +115,7 @@
 .media-compare-grid table td {
   padding: 4px;
 }
-/* Header cells align to the bottom by default, which puts a Run's name next to the row below. */
+/* 見出しのセルは既定で下に揃うので、Runの名前が1つ下の行の隣に見えてしまう。 */
 .media-compare-grid tbody th {
   vertical-align: middle;
 }
@@ -192,7 +192,7 @@
   max-height: 90px;
 }
 .media-cell-text {
-  /* An open waveform widens its own column; text columns keep room for a short phrase. */
+  /* 開いた波形は自分の列を広げる。テキストの列は短い句が入る幅を保つ。 */
   display: block;
   min-width: 10em;
   overflow-wrap: anywhere;
@@ -203,7 +203,7 @@
   white-space: pre-wrap;
   word-break: break-all;
 }
-/* Below 900px the comparison stacks the Runs: each Run's steps wrap under its name. */
+/* 900px未満では比較のRunを縦に積み、各Runのstepはその名前の下で折り返す。 */
 .media-compare-runs {
   display: grid;
   gap: 14px;
@@ -265,7 +265,7 @@
   .media-step-checklist-options .checkbox-field {
     min-height: 40px;
   }
-  /* The detail of a media cell is a waveform; it fits the screen instead of forcing 480px. */
+  /* メディアのセルの詳細は波形なので、480pxを強いずに画面に合わせる。 */
   .media-cell-detail {
     min-width: min(480px, 80vw);
   }

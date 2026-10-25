@@ -10,14 +10,13 @@ import { shownRunColumns } from './runTableColumns';
 import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
-// The saved view's columns that stay in a narrow row next to the selection and the name; the
-// others open beneath the row, like every other list (ResponsiveTable).
+// 狭い行で選択と名前の隣に残す、保存ビューの列。ほかの列は、ほかの一覧と同じく行の下に
+// 開く（ResponsiveTable）。
 const ROW_COLUMN_KEYS: ReadonlySet<string> = new Set(['status']);
 
 /**
- * The Run list below 640px: the selection, the name and the status in the row, and the rest of
- * the chosen columns behind the row's open button. Moving and resizing columns is left to wide
- * screens, where the chosen order and widths are drawn.
+ * 640px未満のRunの一覧。選択、名前、状態を行に出し、選んだ列の残りは行を開くボタンの奥に
+ * 置く。列の移動と幅の変更は、選んだ順と幅で描く広い画面に任せる。
  */
 export function NarrowRunTable({
   projectId,

@@ -4,7 +4,7 @@ import { encodeId, request, requestItems } from './http';
 const adminProjectPath = (projectId?: string) =>
   `/admin/projects${projectId === undefined ? '' : `/${encodeId(projectId)}`}`;
 
-/** The global administrator's Project list, with restoring and purging archived Projects. */
+/** 全体管理者のProjectの一覧と、アーカイブしたProjectを元に戻す・完全に削除する操作。 */
 export const adminProjectsApi = {
   list: ({ includeArchived }: AdminProjectQuery, signal?: AbortSignal) =>
     requestItems<AdminProject>(
@@ -13,7 +13,7 @@ export const adminProjectsApi = {
     ),
   restore: (projectId: string) =>
     request<AdminProject>(`${adminProjectPath(projectId)}/restore`, { method: 'POST' }),
-  /** Removes an archived Project and all its data, Artifact files included. */
+  /** アーカイブしたProjectを、Artifactのファイルを含むすべてのデータごと消す。 */
   purge: (projectId: string) =>
     request<void>(adminProjectPath(projectId), { method: 'DELETE' }),
 };

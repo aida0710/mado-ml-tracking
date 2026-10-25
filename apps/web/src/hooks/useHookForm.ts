@@ -13,7 +13,7 @@ export function useHookForm({
 }: {
   projectId: string;
   catalog: HookCatalog;
-  /** A copied hook's settings; a new hook starts from the defaults. */
+  /** コピーしたフックの設定。新しいフックは既定値から始める。 */
   initialValues?: FormValues;
 }) {
   const [values, setValues] = useState(() => initialValues ?? createHookValues());

@@ -1,4 +1,4 @@
-// Must stay the first import: it configures Zod before any schema is built.
+// 必ず最初のimportにしておく。どのschemaよりも先にZodを設定する。
 import './zodConfig';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -8,14 +8,15 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { NavigationGuardProvider } from './components/NavigationGuardProvider';
 import { initialTheme } from '@mado/design-system/theme';
 import { THEME_STORAGE_KEY } from './lib/theme';
-// Fonts and theme tokens shared with Mado. Noto Sans JP covers the Japanese text IBM Plex lacks.
+// mado S3 Data Catalogと共有するフォントとテーマのトークン。IBM Plexに無い日本語の文字は
+// Noto Sans JPで補う。
 import '@fontsource/noto-sans-jp/japanese-400.css';
 import '@fontsource/noto-sans-jp/japanese-500.css';
 import '@fontsource/noto-sans-jp/japanese-700.css';
 import '@mado/design-system/fonts.css';
 import '@mado/design-system/tokens.css';
-// Element defaults, components, the app frame and the code view shared with Mado, before this
-// app's area files.
+// mado S3 Data Catalogと共有する要素の既定のスタイル、部品、アプリの枠、コードの表示。このアプリの
+// 区域ごとのファイルより先に読み込む。
 import '@mado/design-system/base.css';
 import '@mado/design-system/components.css';
 import '@mado/design-system/shell.css';
@@ -67,11 +68,11 @@ import './styles/computerSetup.css';
 import './styles/tabs.css';
 import { localeStore } from './i18n/locale';
 
-// The login screen and everything else start in the stored theme, or the operating system's.
+// ログイン画面もほかの画面も、保存したテーマか、OSのテーマで始める。
 document.documentElement.dataset.theme = initialTheme(THEME_STORAGE_KEY);
 localeStore.applyToDocument();
 
-// Keep the existing route tree while enabling blocked SPA navigation.
+// 今のルートの構成を保ったまま、SPAの画面遷移を止められるようにする。
 const router = createBrowserRouter([{
   path: '*',
   element: <ErrorBoundary><NavigationGuardProvider><App /></NavigationGuardProvider></ErrorBoundary>,

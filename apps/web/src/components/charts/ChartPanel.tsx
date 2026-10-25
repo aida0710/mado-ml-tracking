@@ -34,9 +34,9 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 import { formatList } from '../../i18n/textJoining';
 
-/** Height of one grid row; a panel spans PANEL_HEIGHTS rows. */
+/** グリッドの1行の高さ。パネルはPANEL_HEIGHTSの行数にまたがる。 */
 export const CHART_ROW_HEIGHT_PX = 150;
-/** Header, padding, and the chart's legend and footer line around its plot area. */
+/** プロット領域の周りの、見出し、余白、図の凡例とフッターの行。 */
 const PANEL_CHROME_PX = 110;
 const DEFAULT_VIEW_SETTINGS: ChartPanelViewSettings = { xScale: 'linear', showRaw: true };
 
@@ -52,29 +52,29 @@ const getMoveButtons = (): Array<[PanelMoveDirection, string, typeof ArrowUp]> =
   ['right', text.moveChartRight, ArrowRight],
 ];
 
-/** Placement controls; absent where the page fixes the panels (system metrics). */
+/** 配置の操作。ページがパネルを固定する場所（システムメトリクス）では無い。 */
 export interface ChartPanelPlacement {
   onMove: (direction: PanelMoveDirection) => void;
   onResize: (size: { width?: PanelWidth; height?: PanelHeight }) => void;
 }
 
 export interface ChartPanelViewProps extends ChartPanelProps {
-  /** The grid's shared response; without it (or while zoomed) the panel fetches its own. */
+  /** グリッドで共有する応答。無いとき（またはズーム中）は、パネルが自分で取得する。 */
   shared?: QueryState<Record<string, ChartPlanData>>;
   search?: Parameters<typeof useChartPanelData>[0]['source']['search'];
-  /** Metric keys offered by the editor and the metric x axis. */
+  /** パネルの編集画面とメトリクスのx軸に選択肢として出すメトリクスのキー。 */
   metricKeys: readonly string[];
-  /** Offered in the editor; implies groupingEnabled. */
+  /** 編集画面に出す。これがあればgroupingEnabledも真とみなす。 */
   grouping?: ChartGroupingOptions;
-  /** Whether the stored grouping is drawn; false draws each Run (a single Run). */
+  /** 保存したグループ化を描くかどうか。falseならRunごとに描く（単一のRun）。 */
   groupingEnabled?: boolean;
   markersFor?: (xAxis: ChartXAxis) => MetricsChartMarker[];
-  /** Multiplier per metric key, such as MLflow megabytes to bytes. */
+  /** メトリクスのキーごとの倍率。MLflowのメガバイトをバイトにするなど。 */
   valueScale?: (key: string) => number;
   placement?: ChartPanelPlacement;
 }
 
-/** One chart of the grid: its header with the panel actions, and the chart of its metrics. */
+/** グリッドの1つの図。パネルの操作を持つ見出しと、そのメトリクスの図。 */
 export function ChartPanel({
   projectId,
   config,
@@ -106,8 +106,8 @@ export function ChartPanel({
     live,
   });
   const query = ownFetch ? own : shared!;
-  // While a zoomed range loads, the chart keeps drawing the lines it had: in place of a loading
-  // line it would be unmounted and forget its zoom, with no way to reset it.
+  // ズームした範囲を読み込む間も、図は描いていた線を描き続ける。読み込み中の表示に替えると
+  // 図がアンマウントされてズームを忘れ、リセットする手段も無くなる。
   const [lastDrawn, setLastDrawn] = useState<{ planId: string; data: ChartPlanData } | null>(null);
   const fetched = query.value?.[planId];
   if (fetched && (lastDrawn?.planId !== planId || lastDrawn.data !== fetched))
@@ -233,7 +233,7 @@ export function ChartPanel({
   );
 }
 
-/** Lines of one panel (lib/metricSeries seriesForMetricKeys), scaled to the unit of the panel. */
+/** 1つのパネルの線（lib/metricSeriesのseriesForMetricKeys）。パネルの単位に換算する。 */
 function toChartSeries(
   data: ChartPlanData,
   keys: readonly string[],

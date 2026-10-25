@@ -33,7 +33,7 @@ const EMBED_TYPES: EmbedType[] = [
   'media',
   'media_table',
 ];
-// Run list columns besides metrics and params; the name is always shown (components/runs/RunTable).
+// メトリクスとパラメータ以外のRunの一覧の列。名前は常に出す（components/runs/RunTable）。
 const getRunTableBaseColumns = (): Array<[string, string]> => [
   ['status', text.status],
   ['created', text.created],
@@ -41,10 +41,10 @@ const getRunTableBaseColumns = (): Array<[string, string]> => [
   ['user', text.user],
   ['kind', text.kind],
 ];
-// The chart editor's view-only settings are not stored in a report; it draws them by default.
+// 図の編集画面の表示だけの設定はレポートに保存しない。レポートでは既定の値で描く。
 const CHART_VIEW_SETTINGS = { xScale: 'linear', showRaw: true } as const;
 
-/** Configures one embed: its kind, its Runs, what it draws, and whether its data is fixed. */
+/** 1つの埋め込みを設定する。種類、Run、何を描くか、データを固定するかどうか。 */
 export function EmbedPicker({
   projectId,
   initial,
@@ -64,7 +64,7 @@ export function EmbedPicker({
   const problem = reportBlockProblem(block);
 
   function changeType(type: EmbedType) {
-    // Keep the chosen Runs and mode; the rest belongs to the previous kind.
+    // 選んだRunとモードは残す。それ以外は前の種類のもの。
     const runSet = 'runSet' in block ? block.runSet : undefined;
     const next = createBlock(type, block.id, runSet) as ReportEmbedBlock;
     setBlock({ ...next, mode: block.mode });
@@ -80,8 +80,8 @@ export function EmbedPicker({
       size="wide"
       className="report-embed-picker"
     >
-      {/* Not a form: the chart editor opened from here has its own form, and nested forms submit
-          the page natively. */}
+      {/* フォームにしない。ここから開く図の編集画面にもフォームがあり、入れ子のフォームは
+          ブラウザがページごと送信する。 */}
       <div className="report-embed-picker-body">
         <label className="field">
           <span>{text.reportEmbedType}</span>
@@ -129,7 +129,7 @@ export function EmbedPicker({
   );
 }
 
-/** The settings of the chosen kind. */
+/** 選んだ種類の設定。 */
 function EmbedFields({
   projectId,
   block,
@@ -147,7 +147,7 @@ function EmbedFields({
 
 type RunSetBlock = Exclude<ReportEmbedBlock, { type: 'media' | 'media_table' }>;
 
-/** Fields chosen from the metric, param and tag names the Run set uses. */
+/** Runの集合が使うメトリクス・パラメータ・タグの名前から選ぶ項目。 */
 function RunSetFields({
   projectId,
   block,

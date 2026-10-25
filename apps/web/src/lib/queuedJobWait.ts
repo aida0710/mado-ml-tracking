@@ -7,16 +7,16 @@ import {
 } from './workerCoverage';
 
 /**
- * Why a queued ssh or local Job has not started:
- * - `worker`: no worker of the Project takes its computer, or they stopped answering; it starts
- *   only once one runs.
- * - `workerUpdate`: workers answer, but none of the online ones taking its computer names every
- *   feature the Job needs (an older worker, such as one before workflow steps); the API gives it
- *   only to a worker that does, so it starts once the worker is updated.
- * - `notTaken`: a worker answers but has not taken the Job. The screen cannot tell which of the
- *   worker's reasons holds (the computer is busy or disabled, its GPUs are held, it lacks the
- *   code's runtime, or the API's local executor is off), so it lists them.
- * null for every other Job: a site Job says where it is through its phase.
+ * 待機中のsshまたはlocalのJobが始まっていない理由:
+ * - `worker`: そのコンピュータを受け持つProjectのworkerが無いか、応答しなくなった。workerが
+ *   動き出すまで始まらない。
+ * - `workerUpdate`: workerは応答しているが、そのコンピュータを受け持つオンラインのworkerの
+ *   どれも、Jobに要る機能のすべてには対応していない（ワークフローのステップより前のものなど、
+ *   古いworker）。APIは対応するworkerにだけJobを渡すので、workerを更新すれば始まる。
+ * - `notTaken`: workerは応答しているが、Jobを受け取っていない。worker側のどの理由に当たるか
+ *   （コンピュータが埋まっているか無効、GPUが使われている、コードのRuntimeを扱えない、APIの
+ *   local executorが無効）は画面からは分からないので、それらを並べる。
+ * ほかのJobはすべてnull。siteのJobは、どこにいるかをphaseで示す。
  */
 export type QueuedJobWait =
   | { kind: 'worker'; coverage: WorkerCoverage }
@@ -28,8 +28,8 @@ type JobTarget = Pick<ComputeTarget, 'id' | 'name' | 'executor'>;
 type ProjectWorker = Pick<WorkerPresence, 'targetIds' | 'status' | 'lastSeenAt' | 'capabilities'>;
 
 /**
- * The features the Job needs that keep every online worker on its computer from taking it, or
- * none when one of them names them all.
+ * Jobに要る機能のうち、そのコンピュータのオンラインのworkerのどれもがJobを受け取れない原因に
+ * なっているもの。どれか1つのworkerがすべてに対応していれば空。
  */
 function capabilitiesWorkersLack(
   job: WaitingJob,
@@ -61,7 +61,7 @@ export function queuedJobWait(
   return missingCapabilities.length ? { kind: 'workerUpdate', missingCapabilities } : { kind: 'notTaken' };
 }
 
-/** Queued Jobs that wait for a worker, per computer, in the order the computers first appear. */
+/** workerを待つ待機中のJobを、コンピュータごとに、コンピュータが最初に現れた順でまとめる。 */
 export interface WorkerlessJobGroup {
   target: JobTarget;
   coverage: WorkerCoverage;

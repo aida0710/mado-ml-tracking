@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 
 /**
- * `value` once it has stayed the same for `delayMs`, so a search starts when typing pauses
- * instead of on every keystroke. `isSettling` is true while a newer value is still waiting.
+ * `delayMs`の間変わらなかった`value`。キーを押すたびでなく、入力が止まってから検索を始めるのに
+ * 使う。`isSettling`は、新しい値がまだ待っている間true。
  */
 export function useSettledValue<T>(value: T, delayMs: number): { settled: T; isSettling: boolean } {
   const [settled, setSettled] = useState(value);

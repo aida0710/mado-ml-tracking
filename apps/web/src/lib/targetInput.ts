@@ -27,21 +27,21 @@ import { findJobShellTemplate, type JobShellTemplate } from './jobShellTemplates
 import { parseJobShellContent } from './jobShellContent';
 import { text } from '../i18n/catalog';
 
-// The dialog edits the dataset cache bound in GiB; the API stores bytes.
+// ダイアログはデータセットのcacheの上限をGiBで編集し、APIはバイトで保存する。
 export const BYTES_PER_GIB = 1024 ** 3;
-// Sites run containers only (the API refuses python with site_target_settings).
+// siteはコンテナだけを動かす（APIはpythonをsite_target_settingsで拒否する）。
 export const SITE_RUNTIME_KINDS: readonly ExecutionRuntimeKind[] = [
   'docker',
   'singularity',
   'apptainer',
 ];
-// Supercomputers commonly offer Apptainer; a new site starts with it selected.
+// スパコンではApptainerが使えることが多いので、新しいsiteはApptainerを選んだ状態で始める。
 export const DEFAULT_SITE_RUNTIME_KINDS: ExecutionRuntimeKind[] = ['apptainer'];
 const SSH_DEFAULT_PORT = 22;
 const DEFAULT_MAX_CONCURRENT_JOBS = 1;
 /**
- * The ComputeTarget fields a site keeps empty: its settings hold the connection and accounts, and
- * its runner downloads inputs itself with the Job token.
+ * siteが空のままにするComputeTargetの項目。接続先とアカウントはsiteの設定が持ち、入力は
+ * runnerがJob tokenで自らダウンロードする。
  */
 const SITE_STORED_CONNECTION = {
   host: '',
@@ -53,17 +53,17 @@ const SITE_STORED_CONNECTION = {
   pythonExecutable: '',
   datasetTransfer: 'direct',
 } as const satisfies Partial<CreateTarget>;
-// Settings only a site may change from these values (the API answers site_only_setting).
+// siteだけがこの値から変えられる設定（site以外ではAPIがsite_only_settingを返す）。
 const NON_SITE_SETTINGS = {
   submissionMode: 'automatic',
   supportsArray: false,
   queueTimeoutSeconds: null,
 } as const satisfies Partial<CreateTarget>;
 
-// A new computer serves its owner until they open it to everyone (the API's default too).
+// 新しいコンピュータは、所有者が全員に公開するまで所有者だけが使う（APIの既定も同じ）。
 const DEFAULT_TARGET_VISIBILITY: ComputeTargetVisibility = 'private';
 
-/** A target's own fields with a site's global settings, as both POST and PATCH take them. */
+/** コンピュータ自身の項目とsiteの全体設定。POSTとPATCHのどちらもこの形で受け取る。 */
 export type TargetInput = Omit<CreateTarget, 'jobShell'>;
 
 export function datasetCacheGiB(target: Pick<ComputeTarget, 'datasetCacheMaxBytes'>): string {
@@ -77,8 +77,8 @@ function parseSiteRuntimeKinds(values: string[]): ExecutionRuntimeKind[] {
 }
 
 /**
- * The target as the API takes it. `previous` is the target being edited: a cache bound set
- * through the API in bytes is kept unless the GiB field was changed.
+ * APIが受け取る形のコンピュータ。`previous`は編集中のコンピュータで、APIからバイト単位で設定した
+ * cacheの上限は、GiBの欄を変えない限りそのまま残す。
  */
 export function buildTargetInput(values: FormValues, previous?: ComputeTarget): TargetInput {
   const executor = parseChoice(getFieldValue(values, 'executor'), ['ssh', 'local', 'site'] as const);
@@ -128,14 +128,14 @@ export function buildTargetInput(values: FormValues, previous?: ComputeTarget): 
   };
 }
 
-/** POST /targets: whoever adds the computer owns it; a new site also takes its first job shell. */
+/** POST /targets: コンピュータを追加した人が所有者になる。新しいsiteは最初のjob shellも受け取る。 */
 export function buildTargetCreate(values: FormValues): CreateTarget {
   const target = buildTargetInput(values);
   if (target.executor !== 'site') return target;
   return { ...target, jobShell: parseJobShellContent(getFieldValue(values, 'jobShell')) };
 }
 
-/** The form with a template's job shell and the settings that go with it. */
+/** 雛形のjob shellと、それに伴う設定を入れたフォーム。 */
 export function applyJobShellTemplate(values: FormValues, template: JobShellTemplate): FormValues {
   return {
     ...values,
@@ -147,7 +147,7 @@ export function applyJobShellTemplate(values: FormValues, template: JobShellTemp
   };
 }
 
-/** Choosing a job shell template fills in its content and defaults; other changes stay as typed. */
+/** job shellの雛形を選ぶと、その内容と既定値を入れる。ほかの変更は打ったとおりに残す。 */
 export function updateTargetValues(previous: FormValues, next: FormValues): FormValues {
   const templateKey = getFieldValue(next, 'jobShellTemplate');
   if (templateKey === getFieldValue(previous, 'jobShellTemplate')) return next;
@@ -156,8 +156,8 @@ export function updateTargetValues(previous: FormValues, next: FormValues): Form
 }
 
 /**
- * The form values of a new target, private until chosen otherwise. A researcher adds only sites; a
- * global administrator starts from an ssh target and may choose any executor.
+ * 新しいコンピュータのフォームの値。別の公開範囲を選ぶまではPrivate。研究者はsiteだけを追加でき、
+ * 全体管理者はsshのコンピュータから始めて、どのexecutorも選べる。
  */
 export function newTargetFormValues({ canAddSshOrLocal }: { canAddSshOrLocal: boolean }): FormValues {
   return {
@@ -170,7 +170,7 @@ export function newTargetFormValues({ canAddSshOrLocal }: { canAddSshOrLocal: bo
     sshKeyPath: '',
     knownHostsPath: '',
     workDirectory: '',
-    // Filled in from the connection check (a Python it found), or typed after it.
+    // 接続確認（見つかったPython）から埋めるか、その後に打ち込む。
     pythonExecutable: '',
     runtimeKinds: ['python'],
     siteRuntimeKinds: DEFAULT_SITE_RUNTIME_KINDS,
@@ -190,8 +190,8 @@ export function newTargetFormValues({ canAddSshOrLocal }: { canAddSshOrLocal: bo
 }
 
 /**
- * The form values of a saved target. The runtime selections of both kinds are filled, so switching
- * the executor keeps the container runtimes the target already has.
+ * 保存済みのコンピュータのフォームの値。両方の種類のRuntimeの選択を埋めておくので、executorを
+ * 切り替えても、そのコンピュータが持つコンテナのRuntimeが残る。
  */
 export function targetFormValues(target: ComputeTargetDetails): FormValues {
   const containerKinds = target.runtimeKinds.filter((kind) => SITE_RUNTIME_KINDS.includes(kind));

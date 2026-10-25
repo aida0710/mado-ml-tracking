@@ -4,7 +4,7 @@ import { encodeId, projectPath, request } from './http';
 export interface EvaluationComparisonQuery {
   baselineAlias?: string;
   baselineVersionId?: string;
-  // Omitted conditions are taken by the API from the candidate's latest evaluation Run.
+  // 省いた条件は、APIが候補の最新の評価Runから取る。
   referenceDatasetVersionIds?: string[];
   codeVersionId?: string;
   evaluationRuleId?: string;
@@ -15,7 +15,7 @@ function comparisonSearch(query: EvaluationComparisonQuery): string {
   const search = new URLSearchParams();
   for (const [name, value] of Object.entries(query)) {
     if (value === undefined) continue;
-    // An empty list is sent as an empty parameter: it means "no reference datasets", not "any".
+    // 空の配列は空のパラメータとして送る。「参照データセットなし」の意味で、「何でもよい」ではない。
     search.set(name, Array.isArray(value) ? value.join(',') : value);
   }
   const encoded = search.toString();

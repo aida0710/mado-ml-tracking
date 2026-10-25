@@ -1,16 +1,16 @@
-/** Which halves of an Artifact browser (the file list and the preview) are on screen. */
+/** Artifactのブラウザの2つの部分（ファイルの一覧とプレビュー）のうち、画面に出ている方。 */
 export interface ArtifactBrowserPanes {
   showList: boolean;
   showPreview: boolean;
-  /** The preview offers a way back to the list, because the list is hidden behind it. */
+  /** 一覧がプレビューの後ろに隠れているので、プレビューに一覧へ戻る手段を出す。 */
   showBackToList: boolean;
 }
 
 /**
- * A wide screen shows the list and the preview side by side. A narrow one shows one at a time:
- * the list (breadcrumbs and the folder's entries) until a file is chosen, then that file's
- * preview with a way back. Nothing previews on its own there, so opening a folder does not fetch
- * a large file nobody asked to see.
+ * 広い画面では一覧とプレビューを横に並べる。狭い画面では1つずつ出す。ファイルを選ぶまでは
+ * 一覧（パンくずとフォルダの中身）を出し、選んだらそのファイルのプレビューと戻る手段を出す。
+ * 狭い画面では何も自動ではプレビューしないので、フォルダを開いても、誰も見たいと言っていない
+ * 大きなファイルを取得しない。
  */
 export function artifactBrowserPanes({
   isNarrow,

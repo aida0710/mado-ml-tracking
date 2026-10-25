@@ -4,9 +4,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * Which Project is open and the user's role in it. On wide screens it heads the navigation sidebar
- * ("sidebar"); on narrow ones it is the one-line bar under the header ("bar"), where the switcher
- * shrinks and truncates the Project name.
+ * 開いているProjectと、その中での利用者のロール。広い画面ではナビゲーションのサイドバーの先頭に
+ * 置き（"sidebar"）、狭い画面では上部バーの下の1行のバーになる（"bar"）。バーでは切り替えが
+ * 縮み、Projectの名前を省略して出す。
  */
 export function ProjectBar({
   projects,
@@ -17,7 +17,7 @@ export function ProjectBar({
   projects: Project[];
   project?: Project;
   placement: 'bar' | 'sidebar';
-  /** Offered at the end of the switcher to those who may create a Project. */
+  /** Projectを作れる人には、切り替えの最後に出す。 */
   onCreateProject?: () => void;
 }) {
   useLocale();

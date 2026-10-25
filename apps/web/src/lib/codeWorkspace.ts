@@ -124,7 +124,7 @@ export function getFileLanguage(path: string): string {
 
 export function getWorkspaceSignature(values: FormValues, workspace: CodeWorkspace): string {
   const { artifactSearch: _artifactSearch, ...savedValues } = values;
-  // Incomplete edits must remain trackable until save reports their validation error.
+  // 未完成の編集も、保存で検証エラーが返るまでは変更として追えなければならない。
   const source = values.sourceKind === 'git' ? getGitOverlay(workspace) : { files: workspace.files, deletedFiles: [] };
   return JSON.stringify({ values: savedValues, files: Object.entries(source.files).sort(([left], [right]) => left.localeCompare(right)),
     deletedFiles: source.deletedFiles });

@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import type { NavigationScreen } from './navigationLinks';
 
-/** The icon each screen shows in the sidebar, the rail and the drawer. */
+/** サイドバー・レール・ドロワーで各画面に付けるアイコン。 */
 export const NAVIGATION_ICONS: Record<NavigationScreen, LucideIcon> = {
   experiments: FlaskConical,
   sweeps: SlidersHorizontal,
@@ -44,7 +44,7 @@ export const NAVIGATION_ICONS: Record<NavigationScreen, LucideIcon> = {
   plugins: Puzzle,
   settings: Settings,
   account: CircleUser,
-  // 全体設定 lists every computer; the Project's Compute (Server) shows the ones it can use.
+  // 全体設定はすべてのコンピュータを、ProjectのCompute（Server）は使えるものだけを並べる。
   computers: Computer,
   about: Info,
   projects: FolderKanban,

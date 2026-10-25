@@ -1,9 +1,9 @@
 import type { Project } from '@mmt/contracts';
 
 /**
- * The Project list "/" shows when no Project opens by itself: the user's own Projects, and the
- * public ones they may enter without being a member. A global administrator's other private
- * Projects are left to 全体管理, so the list stays about the user's own work.
+ * Projectが自動で開かないときに"/"が表示するProjectの一覧。利用者自身のProjectと、メンバーで
+ * なくても入れる公開のProject。全体管理者のそれ以外の非公開のProjectは全体管理に任せ、一覧は
+ * 利用者自身の仕事のものだけにする。
  */
 export function splitProjectList(projects: readonly Project[]): {
   memberProjects: Project[];
@@ -18,8 +18,8 @@ export function splitProjectList(projects: readonly Project[]): {
 }
 
 /**
- * The Project switcher's order: the user's own Projects first, then those reached only because
- * they are public or the user is a global administrator, each group in the API's order.
+ * Projectの切り替えの並び順。利用者自身のProjectを先に、公開されているか利用者が全体管理者で
+ * あるために見えるだけのProjectを後に並べる。どちらもAPIの順を保つ。
  */
 export function memberProjectsFirst(projects: readonly Project[]): Project[] {
   return [

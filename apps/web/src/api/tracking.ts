@@ -37,7 +37,7 @@ const runPath = (projectId: string, runId: string) =>
 
 export interface RunArtifactPageQuery {
   prefix?: string;
-  /** Only files directly under prefix (the API's `delimiter=/`). */
+  /** prefixの直下のファイルだけ（APIの`delimiter=/`）。 */
   directFilesOnly?: boolean;
   versions?: ArtifactListVersions;
   limit?: number;
@@ -47,17 +47,17 @@ export interface RunArtifactPageQuery {
 export interface ProjectArtifactPageQuery {
   limit: number;
   query?: string;
-  /** `type/subtype` or `type/*`. */
+  /** `type/subtype`か`type/*`。 */
   mimeType?: string;
   runId?: string;
   modelVersionId?: string;
-  /** Every version of the Model; with modelVersionId as well, that version only. */
+  /** モデルのすべてのバージョン。modelVersionIdも指定すると、そのバージョンだけ。 */
   modelId?: string;
   versions?: ArtifactListVersions;
   cursor?: string;
 }
 
-/** Drops unset values so the API applies its own defaults. */
+/** 指定の無い値を落とし、APIに自分の既定値を使わせる。 */
 function searchParams(values: Record<string, string | number | boolean | undefined>): string {
   const entries = Object.entries(values).filter(
     (entry): entry is [string, string | number | true] =>
@@ -101,11 +101,11 @@ function projectArtifactPage(
 export interface RunSearchCsv {
   blob: Blob;
   fileName: string;
-  /** More Runs matched than the export limit; the file ends with a notice line. */
+  /** 一致したRunが書き出しの上限より多い。ファイルの最後に、それを知らせる行が付く。 */
   truncated: boolean;
 }
 
-// Used when Content-Disposition is missing or unreadable.
+// Content-Dispositionが無いか読めないときに使う。
 const FALLBACK_EXPORT_FILE_NAME = 'runs.csv';
 
 function attachmentFileName(disposition: string | null): string {
@@ -114,13 +114,13 @@ function attachmentFileName(disposition: string | null): string {
     try {
       return decodeURIComponent(encoded);
     } catch {
-      // A malformed escape falls through to the ASCII name.
+      // エスケープが壊れていれば、ASCIIの名前を読む処理へ進む。
     }
   }
   return disposition?.match(/filename="([^"]+)"/)?.[1] ?? FALLBACK_EXPORT_FILE_NAME;
 }
 
-/** The search CSV is a POST, so it is read as a blob instead of followed as a link. */
+/** 検索結果のCSVはPOSTなので、リンクとしてたどらずにblobとして読む。 */
 async function exportRunSearchCsv(
   projectId: string,
   search: RunSearchRequest,
@@ -170,7 +170,7 @@ export const trackingApi = {
       throw invalidResponseError();
     return comparison;
   },
-  /** A GET link the browser downloads with the session cookie. */
+  /** ブラウザがsessionのcookieを付けてダウンロードするGETのリンク。 */
   runComparisonCsvUrl: (
     projectId: string,
     comparison: { runIds: string[]; baselineRunId: string | null },
@@ -187,7 +187,7 @@ export const trackingApi = {
     request<Run>(runPath(projectId, runId), jsonRequest('PATCH', body)),
   metrics: (projectId: string, runId: string, signal?: AbortSignal) =>
     requestItems<MetricPoint>(`${runPath(projectId, runId)}/metrics`, signal),
-  /** The Run's lines, oldest first; with `tail` only that many of the latest (RunLogList). */
+  /** Runのログの行を古い順に返す。`tail`を付けると最新のその行数だけ（RunLogList）。 */
   logs: async (
     projectId: string,
     runId: string,
@@ -201,9 +201,9 @@ export const trackingApi = {
       throw invalidResponseError();
     return page;
   },
-  /** A GET link the browser downloads with the session cookie: every line, as `<Run name>.log`. */
+  /** ブラウザがsessionのcookieを付けてダウンロードするGETのリンク。全行を`<Run name>.log`として落とす。 */
   runLogFileUrl: (projectId: string, runId: string) => `/api${runPath(projectId, runId)}/logs/download`,
-  /** Every latest Artifact of a Run, following all pages. Browsers page with runArtifactPage. */
+  /** Runの最新のArtifactを、全ページたどってすべて返す。一覧の画面はrunArtifactPageでページ送りする。 */
   artifacts: async (projectId: string, runId: string, signal?: AbortSignal) => {
     const items: Artifact[] = [];
     let cursor: string | undefined;
@@ -247,7 +247,7 @@ export const trackingApi = {
   },
   artifact: (projectId: string, artifactId: string, signal?: AbortSignal) =>
     request<Artifact>(`${projectPath(projectId)}/artifacts/${encodeId(artifactId)}`, { signal }),
-  /** null when the Project has no Artifact with the id (deleted, another Project's, mistyped). */
+  /** ProjectにそのidのArtifactが無ければnull（削除済み、別のProjectのもの、打ち間違い）。 */
   findArtifact: async (projectId: string, artifactId: string, signal?: AbortSignal) => {
     try {
       return await trackingApi.artifact(projectId, artifactId, signal);

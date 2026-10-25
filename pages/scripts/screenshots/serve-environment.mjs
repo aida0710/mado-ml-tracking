@@ -1,11 +1,12 @@
-// Starts, stops and removes the API and Web dev servers that the documentation screenshots are
-// taken from, each on its own database.
+// ドキュメントのスクリーンショットを撮るAPIとWebの開発サーバーを、それぞれ専用のデータベースで
+// 起動・停止・削除する。
 //   node pages/scripts/screenshots/serve-environment.mjs start <sample|accounts> [--lang en]
 //       [--api-port 4682] [--web-port 5682] [--database mmt_docs_en_sample]
 //   node pages/scripts/screenshots/serve-environment.mjs stop <sample|accounts> [--lang en]
 //   node pages/scripts/screenshots/serve-environment.mjs drop <sample|accounts> [--lang en]
-// MMT_DOCS_POSTGRES_URL names the PostgreSQL server (any database on it, e.g. .../postgres); the
-// environment's database is created there. Passwords are generated into 600 files, never printed.
+// MMT_DOCS_POSTGRES_URLでPostgreSQLのサーバーを指定する（そのサーバーのどのデータベースでも
+// よい。例: .../postgres）。環境のデータベースはそこに作る。パスワードは生成してmode 600の
+// ファイルに書き、出力はしない。
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { createWriteStream } from 'node:fs';
@@ -19,15 +20,15 @@ import { ENVIRONMENTS, REPOSITORY_ROOT, environmentDirectory, parseArguments } f
 const TSX = path.join(REPOSITORY_ROOT, 'node_modules/.bin/tsx');
 const VITE = path.join(REPOSITORY_ROOT, 'node_modules/.bin/vite');
 const LOOPBACK = '127.0.0.1';
-// The API answers health within seconds; Vite's first start also bundles dependencies.
+// APIは数秒でヘルスチェックに応答するが、Viteは最初の起動で依存関係のバンドルもする。
 const STARTUP_TIMEOUT_MS = 120_000;
 const POLL_MS = 500;
-// How long a stopped server gets to exit after SIGTERM before it is killed.
+// 止めるサーバーに、SIGTERMを送ってからkillするまでに与える終了の猶予。
 const STOP_GRACE_MS = 10_000;
-// PostgreSQL identifiers the script creates and drops; no quoting tricks are needed for these.
+// このスクリプトが作成・削除するPostgreSQLの識別子。これらは引用符で囲む工夫をしなくてよい。
 const DATABASE_NAME_PATTERN = /^[a-z][a-z0-9_]{0,62}$/;
-// Settings of the parent shell that would change the servers (a developer's .env exported, SSO,
-// S3) are dropped so every environment starts from the same configuration.
+// 親のシェルの設定のうちサーバーの動きを変えるもの（開発者がexportした.env、SSO、S3）は外し、
+// どの環境も同じ設定から始める。
 const INHERITED_SETTING_PATTERN = /^(MMT_|AUTH_|OIDC_|S3_|ARTIFACT_|DEVELOPMENT_ADMIN|DATABASE_URL$|HOST$|PORT$)/;
 
 const { options, positional } = parseArguments(process.argv.slice(2));
@@ -85,7 +86,7 @@ async function readOrCreateSecret(name) {
     return (await readFile(environmentFile(name), 'utf8')).trim();
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
-    // base64 of 32 bytes is the format the API expects for its encryption keys.
+    // 32バイトのbase64が、APIが暗号鍵に求める形式。
     const value = randomBytes(32).toString('base64');
     await writeSecretFile(name, value);
     return value;
@@ -109,7 +110,7 @@ async function runToCompletion(executable, args, { cwd, env, logName }) {
 async function startDetached(name, executable, args, { cwd, env }) {
   const log = createWriteStream(environmentFile(`${name}.log`), { flags: 'a' });
   await new Promise((resolve) => log.once('open', resolve));
-  // A new process group, so stop can end the server together with its children.
+  // stopがサーバーとその子プロセスをまとめて終わらせられるよう、新しいプロセスグループにする。
   const child = spawn(executable, args, { cwd, env, detached: true, stdio: ['ignore', log, log] });
   child.unref();
   await writeFile(environmentFile(`${name}.pid`), `${child.pid}\n`);
@@ -122,7 +123,7 @@ async function waitUntilAnswering(url) {
       const response = await fetch(url);
       if (response.ok) return;
     } catch {
-      // Not listening yet.
+      // まだ待ち受けていない。
     }
     await delay(POLL_MS);
   }
@@ -130,7 +131,7 @@ async function waitUntilAnswering(url) {
 }
 
 async function createFirstAdministrator(env) {
-  // The first local administrator, as `npm run bootstrap-admin` makes it, without a terminal.
+  // 最初のローカルの全体管理者を、`npm run bootstrap-admin`と同じように、ターミナル無しで作る。
   const passwordFile = environmentFile('admin-initial-password');
   try {
     await readFile(passwordFile);
@@ -164,10 +165,11 @@ async function start() {
     MMT_DATABASE_URL: databaseUrl(),
     MMT_PUBLIC_URL: webUrl,
     MMT_WEB_ORIGIN: webUrl,
-    // The sample Project runs its training Jobs with the Local executor on this machine.
+    // 見本のProjectは、学習のJobをこのマシンでLocalのexecutorを使って動かす。
     MMT_ALLOW_LOCAL_EXECUTOR: 'true',
     ARTIFACT_FILESYSTEM_ROOT: environmentFile('artifacts'),
-    // Lets the seed add an S3 storage with a secret, as on the Storage page of the docs.
+    // ドキュメントに載せるストレージの画面のとおり、seedが秘密の値を持つS3の保存先を
+    // 足せるようにする。
     MMT_STORAGE_SECRET_KEY: await readOrCreateSecret('storage-secret-key'),
   });
   await mkdir(environmentFile('artifacts'), { recursive: true });
@@ -187,7 +189,7 @@ async function start() {
     apiUrl,
     webUrl,
     database: databaseName,
-    // Shown on the Storage page as the default storage's directory.
+    // ストレージの画面に、既定の保存先のディレクトリとして出る。
     artifactsDirectory: environmentFile('artifacts'),
   };
   await writeFile(environmentFile('environment.json'), `${JSON.stringify(description, null, 2)}\n`);
@@ -203,7 +205,8 @@ function isRunning(pid) {
   }
 }
 
-// A PID file can outlive its process (a reboot); a reused PID of another program is left alone.
+// PIDファイルはプロセスより長く残ることがある（再起動など）。同じPIDがほかのプログラムに
+// 再利用されていれば、手を出さない。
 async function isStartedFromThisCheckout(pid) {
   try {
     return (await readFile(`/proc/${pid}/cmdline`, 'utf8')).includes(REPOSITORY_ROOT);
@@ -227,7 +230,7 @@ async function stop() {
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
   }
-  // api.pid, web.pid, and worker.pid that seed_sample_project.py writes for its worker.
+  // api.pid、web.pid、seed_sample_project.pyがworkerのために書くworker.pid。
   for (const entry of entries.filter((name) => name.endsWith('.pid'))) {
     const pid = Number((await readFile(environmentFile(entry), 'utf8')).trim());
     if (Number.isInteger(pid) && pid > 0) await stopProcessGroup(pid);

@@ -19,7 +19,7 @@ import { ErrorNotice, Resource } from './Feedback';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-/** The "昇格policy" tab of the Models page: policies and the decision history of the selected one. */
+/** Modelsの画面の「昇格policy」タブ。policyの一覧と、選んだpolicyの判定の履歴。 */
 export function PromotionPolicyPanel({ initialModelId }: { initialModelId: string }) {
   useLocale();
   const { project } = useProject();
@@ -30,12 +30,12 @@ export function PromotionPolicyPanel({ initialModelId }: { initialModelId: strin
     automationApi.rules(project.id, signal),
   });
   const catalog = useExecutionCatalog(project.id);
-  // Only managers transfer owners, and listing Service Accounts is theirs too.
+  // 所有者を移管するのは管理する人だけで、Service Accountの一覧を取るのもその人たちだけ。
   const serviceAccounts = useQuery({ key: canManage ? `${project.id}:service-accounts` : null, load: (signal) =>
     accessApi.serviceAccounts(project.id, signal),
   });
   const [transferring, setTransferring] = useState<PromotionPolicy | null>(null);
-  // Without an explicit choice the history follows the first (newest) policy.
+  // 明示して選ばなければ、履歴は先頭の（最新の）policyのものを出す。
   const policyId = promotion.selectedPolicyId || promotion.policies.value?.[0]?.id || null;
   const evaluations = usePromotionEvaluations(project.id, policyId);
   const versionLabel = (versionId: string) =>

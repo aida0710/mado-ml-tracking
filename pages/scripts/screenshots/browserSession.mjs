@@ -1,9 +1,8 @@
-// The browser the documentation screenshots are taken in: its language, theme and size, and the
-// sign-in to the environment being photographed.
+// ドキュメントのスクリーンショットを撮るブラウザ。言語、テーマ、大きさと、撮る環境へのログイン。
 import { pathToFileURL } from 'node:url';
 import { LANGUAGES } from './screenshotEnvironment.mjs';
 
-// The size the images in pages/ have (CSS px, device scale 1).
+// pages/の画像の大きさ（CSSのpx、デバイスの倍率1）。
 export const DOCS_VIEWPORT = { width: 1440, height: 900 };
 
 export async function launchBrowser() {
@@ -18,8 +17,8 @@ export async function launchBrowser() {
 }
 
 /**
- * A browser context in the language of the screenshots: the browser reports the locale, and the
- * UI language is stored as if chosen in the language menu. The theme is always light.
+ * スクリーンショットの言語に合わせたブラウザのcontext。ブラウザが伝えるlocaleをその言語にし、
+ * UIの言語は言語メニューで選んだのと同じように保存しておく。テーマはいつもライト。
  */
 export async function newDocsContext(browser, { lang, viewport = DOCS_VIEWPORT }) {
   const context = await browser.newContext({
@@ -46,12 +45,12 @@ async function addSessionCookie(context, webUrl, signInPath, body) {
   await context.addCookies([{ name, value, url: webUrl }]);
 }
 
-/** Signs the context in as the development administrator (AUTH_MODE=development). */
+/** contextを開発用の全体管理者としてログインさせる（AUTH_MODE=development）。 */
 export function signInForDevelopment(context, webUrl) {
   return addSessionCookie(context, webUrl, 'dev-login', {});
 }
 
-/** Signs the context in with a local account (AUTH_MODE=local). */
+/** contextをローカルアカウントでログインさせる（AUTH_MODE=local）。 */
 export function signInLocally(context, webUrl, { username, password }) {
   return addSessionCookie(context, webUrl, 'local-login', { username, password });
 }

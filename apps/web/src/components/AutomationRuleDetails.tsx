@@ -40,11 +40,11 @@ export function AutomationRuleDetails({
   catalog?: AutomationCatalog;
   projectId: string;
   canManage: boolean;
-  /** An enable or disable request is in flight. */
+  /** 有効化か無効化の要求を送っている途中。 */
   pending: boolean;
   onSelectRule: (id: string) => void;
   onEnable: () => void;
-  /** Opens a new rule's form filled with this rule's settings. */
+  /** このルールの設定を入れた、新しいルールのフォームを開く。 */
   onCopy: () => void;
   onShowHistory: () => void;
   onApplied: () => void;

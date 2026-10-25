@@ -12,9 +12,9 @@ import type {
 } from '@mmt/contracts';
 import { assertCursorPage, encodeId, invalidResponseError, jsonRequest, projectPath, request } from './http';
 
-// The API's page limit for trials (docs/api-contract.md Sweeps); the detail reads every trial.
+// 試行のページのAPIの上限（docs/api-contract.mdのSweeps）。Sweepの詳細はすべての試行を読む。
 const TRIAL_PAGE_SIZE = 500;
-// Guards against a cursor that never ends, which would otherwise loop forever.
+// 終わらないcursorで、いつまでも繰り返さないための上限。
 const MAX_TRIAL_PAGES = 100;
 
 const sweepPath = (projectId: string, sweepId?: string) =>
@@ -52,7 +52,7 @@ export const sweepsApi = {
     assertCursorPage(page);
     return page;
   },
-  /** Every trial in trial order, following nextCursor. */
+  /** すべての試行を試行の順に返す。nextCursorをたどる。 */
   allTrials: async (projectId: string, sweepId: string, signal?: AbortSignal) => {
     const trials: SweepTrial[] = [];
     let cursor: string | undefined;
@@ -74,7 +74,7 @@ export const sweepsApi = {
     request<Sweep>(`${sweepPath(projectId, sweepId)}/cancel`, jsonRequest('POST', input)),
   update: (projectId: string, sweepId: string, input: SweepPatch) =>
     request<Sweep>(sweepPath(projectId, sweepId), jsonRequest('PATCH', input)),
-  /** The objective metric of trial Runs by step, for overlaying them (POST /metrics/series). */
+  /** 重ねて描くための、試行のRunの目的関数のstepごとの値（POST /metrics/series）。 */
   objectiveSeries: async (
     projectId: string,
     { runIds, metric, signal }: { runIds: string[]; metric: string; signal?: AbortSignal },

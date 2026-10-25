@@ -21,7 +21,7 @@ async function login(context, email) {
   await page.getByLabel('メールアドレス').fill(email);
   await page.getByLabel('表示名').fill('Web追加検証担当');
   await page.getByRole('button', { name: '開発モードでログイン' }).click();
-  // A new user has no projects and the empty navigation has no visible box yet.
+  // 新しいユーザーにはProjectが無く、空のナビゲーションにはまだ見える枠が無い。
   await page.getByRole('button', { name: 'ユーザーメニュー', exact: true }).waitFor();
   return page;
 }

@@ -7,8 +7,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * Where a connection check of the computer being set up stands: waiting for its worker, reached
- * (with the machine it found), or why it could not tell. The items fold away under 確認の詳細.
+ * 設定中のコンピュータの接続の確認がどこまで進んだか。workerを待っている、届いた（見つかった
+ * マシンも示す）、または判断できなかった理由。項目は「確認の詳細」の下に畳む。
  */
 export function TargetCheckStatus({
   check,

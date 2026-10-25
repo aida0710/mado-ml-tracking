@@ -5,7 +5,7 @@ import type { CreateRun } from '../api/inputs';
 import { initialLaunchValues } from './launchFormValues';
 import { trainingTextTemplates } from '../i18n/training';
 
-// These tags identify server-owned automation; a new independent Run must not inherit them.
+// これらのタグはサーバーが管理する自動実行を表す。独立した新しいRunに引き継いではいけない。
 const SERVER_RUN_TAG_PREFIXES = ['automation.', 'mmt.'];
 
 export function canContinueTraining(run: Pick<Run, 'kind' | 'codeVersionId'>): boolean {

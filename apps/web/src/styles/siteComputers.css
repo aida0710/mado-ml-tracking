@@ -1,4 +1,4 @@
-/* Computers added on the Web: a site's details below the Compute list and its job shell editor. */
+/* Webで追加したコンピュータ。Computeの一覧の下のsiteの詳細と、job shellの編集。 */
 .site-computer-section {
   margin-top: 20px;
   padding-top: 16px;
@@ -19,7 +19,7 @@
 .site-computer-section > .section-heading h3 {
   margin: 0;
 }
-/* Buttons under a block (save, rotate, check) keep the distance of a field. */
+/* かたまりの下のボタン（保存、鍵の作り直し、確認）は、入力欄と同じ間隔を空ける。 */
 .site-computer-actions {
   display: flex;
   flex-wrap: wrap;
@@ -32,7 +32,7 @@
 .site-personal-key {
   margin-top: 12px;
 }
-/* The `mado-tracking submit` commands of a manual site, each under what it does. */
+/* 手動のsiteの`mado-tracking submit`のコマンド。それぞれ何をするかの説明の下に置く。 */
 .site-command-list {
   margin: 0 0 12px;
   padding: 0;
@@ -45,7 +45,7 @@
   color: var(--muted);
   font-size: var(--font-size-sm);
 }
-/* A job shell is a script: whole lines, monospaced, scrolled inside its own box. */
+/* job shellはスクリプトなので、行を折り返さず等幅で出し、自分の枠の中でスクロールする。 */
 .job-shell-content {
   max-height: 480px;
   margin: 0 0 16px;
@@ -65,7 +65,7 @@
 .job-shell-history {
   margin-top: 16px;
 }
-/* NAME=VALUE lines of a person's variables, one per line in the cell. */
+/* 個人の変数のNAME=VALUEの行。セルの中で1行に1つずつ出す。 */
 .site-variables-cell {
   white-space: pre-line;
 }

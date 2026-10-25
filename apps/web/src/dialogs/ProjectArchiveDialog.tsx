@@ -11,8 +11,8 @@ import { text, textTemplates } from '../i18n/catalog';
 import { joinSentences } from '../i18n/textJoining';
 
 /**
- * Confirms archiving a Project, from its settings or from 全体管理. Besides that the data stays,
- * it says what stops: the Project's tokens (a running worker's among them) and its automation.
+ * Projectのアーカイブを確かめる。Projectの設定と全体管理から開く。データが残ることに加えて、
+ * 止まるもの、つまりProjectのtoken（動いているworkerのものも含む）と自動実行を伝える。
  */
 export function ProjectArchiveDialog({
   project,
@@ -24,7 +24,7 @@ export function ProjectArchiveDialog({
   onClose: () => void;
 }) {
   useLocale();
-  // Read when the dialog opens, so the count is the one the click acts on.
+  // ダイアログを開いたときに読む。見せる件数を、クリックで実際に止まる件数と同じにするため。
   const tokens = useQuery({ key: `${project.id}:archive-tokens`, load: (signal) =>
     accessApi.projectTokens(project.id, signal),
   });

@@ -2,7 +2,7 @@ import type { RunCheckpointPage } from '@mmt/contracts';
 import { executionApi } from '../api/execution';
 import { EXECUTION_POLL_MS, useQuery, type QueryState } from './useQuery';
 
-/** A Run's checkpoints, refreshed while training may still be saving new ones. */
+/** Runのcheckpoint。学習がまだ新しいものを保存しているかもしれない間は更新する。 */
 export function useRunCheckpoints({
   projectId,
   runId,

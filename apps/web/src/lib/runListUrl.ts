@@ -1,24 +1,24 @@
 import type { RunKind } from '@mmt/contracts';
 import type { RunListDisplay } from './savedViewState';
 
-// URL parameters of the Run list. Conditions live in the URL so a reload or a link keeps them;
-// a saved view adds only its id, never its state, which is too long for a link.
+// Runの一覧のURLパラメータ。再読み込みやリンクで保てるよう、条件はURLに置く。保存ビューはidだけ
+// を足し、状態は入れない。状態はリンクには長すぎる。
 
 export const RUN_LIST_PARAMS = {
   experiment: 'experiment',
   searchText: 'q',
   status: 'status',
-  /** Run kinds, comma separated; a saved view may keep more than one. */
+  /** Runの種類をカンマ区切りで。保存ビューは2つ以上を持つことがある。 */
   kinds: 'kinds',
   sort: 'sort',
-  /** Keeps the chart area open across reloads and shared links. */
+  /** 再読み込みや共有したリンクでも、図の領域を開いたままにする。 */
   charts: 'charts',
   view: 'view',
 } as const;
 export const CHARTS_OPEN = '1';
 export const DEFAULT_RUN_SORT = 'newest';
 const KIND_SEPARATOR = ',';
-/** Every Run kind, in the order the list offers them. */
+/** すべてのRunの種類。一覧が選択肢に出す順。 */
 export const RUN_KINDS: readonly RunKind[] = ['training', 'finetuning', 'inference', 'evaluation', 'processing'];
 const isRunKind = (value: string): value is RunKind => (RUN_KINDS as readonly string[]).includes(value);
 
@@ -27,7 +27,7 @@ export type RunListConditions = Pick<
   'experimentId' | 'searchText' | 'status' | 'kinds' | 'sort'
 >;
 
-/** The kinds a URL value names; unknown names (an edited link) are dropped, not sent to the API. */
+/** URLの値が指す種類。知らない名前（書き換えたリンク）は捨て、APIへ送らない。 */
 export function parseRunKinds(value: string | null): RunKind[] {
   return [...new Set((value ?? '').split(KIND_SEPARATOR).filter(isRunKind))];
 }
@@ -43,7 +43,7 @@ export function readRunListConditions(params: URLSearchParams): RunListCondition
   };
 }
 
-/** The URL of an opened view: its id and the conditions it shows, with charts open if it has any. */
+/** 開いたビューのURL。そのidと表示する条件を含み、図があれば図を開いた状態にする。 */
 export function runListParamsForView(viewId: string, display: RunListDisplay): URLSearchParams {
   const params = new URLSearchParams({ [RUN_LIST_PARAMS.view]: viewId });
   if (display.experimentId) params.set(RUN_LIST_PARAMS.experiment, display.experimentId);
@@ -55,7 +55,7 @@ export function runListParamsForView(viewId: string, display: RunListDisplay): U
   return params;
 }
 
-/** The shareable link of a view: only `?view=<id>`. */
+/** ビューの共有用のリンク。`?view=<id>`だけを持つ。 */
 export function savedViewUrl(origin: string, projectId: string, viewId: string): string {
   const query = new URLSearchParams({ [RUN_LIST_PARAMS.view]: viewId });
   return new URL(`/projects/${encodeURIComponent(projectId)}/experiments?${query}`, origin).href;

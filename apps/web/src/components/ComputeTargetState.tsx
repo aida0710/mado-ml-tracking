@@ -2,8 +2,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * Whether a computer takes new Jobs, with how its launcher stands when it is an automatic site
- * (lib/computeTargetOverview.launcherStatusLabel).
+ * コンピュータが新しいJobを受け付けるか。自動投入のsiteなら、ランチャーの状態も添える
+ * （lib/computeTargetOverview.launcherStatusLabel）。
  */
 export function ComputeTargetState({
   enabled,

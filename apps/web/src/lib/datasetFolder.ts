@@ -1,29 +1,29 @@
-// Paths for turning a chosen folder into an 'artifacts' DatasetVersion, and the tree rows of its files.
+// 選んだフォルダを'artifacts'のDatasetVersionにするときのパスと、そのファイルのツリーの行。
 import { datasetFolderUploadPrefix, type Artifact, type DatasetVersionFile } from '@mmt/contracts';
 import type { UploadSource } from './droppedFiles';
 import { joinArtifactPath } from './uploadPlan';
 
-/** A chosen file, its path inside the dataset, and the Artifact path it is uploaded to. */
+/** 選んだファイルと、データセットの中でのパスと、アップロード先のArtifactのパス。 */
 export interface DatasetFolderEntry {
   source: UploadSource;
   datasetPath: string;
   artifactPath: string;
-  /** An earlier attempt of this folder upload already stored the same bytes; it is not sent again. */
+  /** このフォルダのアップロードの前回の試行で、同じバイト列を既に保存した。もう一度は送らない。 */
   storedArtifactId?: string;
 }
 
 /**
- * The folder of a new folder upload: its start time, so attempts never share a folder. The name
- * has the form DATASET_FOLDER_UPLOAD_FOLDER_PATTERN describes, which is how the API finds attempts
- * that stopped. A timestamp needs no crypto.randomUUID, which browsers offer on HTTPS origins only.
+ * 新しいフォルダのアップロードのフォルダ。開始時刻を名前にし、試行どうしがフォルダを共有しない
+ * ようにする。名前はDATASET_FOLDER_UPLOAD_FOLDER_PATTERNが表す形で、APIはそれで止まった試行を
+ * 見つける。時刻ならcrypto.randomUUIDが要らない。ブラウザはそれをHTTPSのoriginでしか提供しない。
  */
 export function createDatasetFolderUploadFolder(now: Date): string {
   return now.toISOString().replace(/[:.]/g, '-');
 }
 
 /**
- * A folder picker names every file `<folder>/<path>`; the folder name is not part of the dataset,
- * so a first segment shared by every file is dropped. Loose files keep their names.
+ * フォルダの選択ではどのファイルも`<folder>/<path>`という名前になる。フォルダ名はデータセットの
+ * 一部ではないので、全ファイルに共通する最初の段は落とす。ばらのファイルは名前のまま。
  */
 export function datasetPathsOf(sources: UploadSource[]): string[] {
   const segments = sources.map((source) => joinArtifactPath('', source.relativePath).split('/'));
@@ -34,8 +34,9 @@ export function datasetPathsOf(sources: UploadSource[]): string[] {
 }
 
 /**
- * Each folder upload goes to its own Artifact directory under the dataset, so uploads of the same
- * file names for different versions never replace one another in the Project catalog.
+ * フォルダのアップロードは、それぞれデータセットの下の専用のArtifactのディレクトリに入れる。
+ * 別のバージョンのために同じファイル名をアップロードしても、ProjectのカタログでArtifactが
+ * 互いに置き換わらない。
  */
 export function planDatasetFolder(
   sources: UploadSource[],
@@ -50,8 +51,8 @@ export function planDatasetFolder(
 }
 
 /**
- * ArtifactTree shows Artifacts; a dataset file is shown under its dataset path with the Artifact's
- * ID, size, and type. Fields the tree does not read are left empty.
+ * ArtifactTreeはArtifactを表示する。データセットのファイルは、データセットの中のパスの下に、
+ * ArtifactのID、サイズ、種類と一緒に出す。ツリーが読まない欄は空にする。
  */
 export function datasetFileTreeEntry(file: DatasetVersionFile, projectId: string): Artifact {
   return {
@@ -68,7 +69,7 @@ export function datasetFileTreeEntry(file: DatasetVersionFile, projectId: string
   };
 }
 
-/** The part of an upload queue row that tells whether a folder file is stored. */
+/** アップロードのキューの行のうち、フォルダのファイルが保存されたかを表す部分。 */
 export interface DatasetFolderUploadState {
   id: string;
   path: string;
@@ -77,9 +78,9 @@ export interface DatasetFolderUploadState {
 }
 
 /**
- * Which planned files are stored (their Artifact IDs by Artifact path: files an earlier attempt
- * stored, and files the queue finished) and which queue rows still stand between the folder and
- * its version: failed, paused, canceled, or still running.
+ * 計画したファイルのうち保存済みのもの（Artifactのパスごとのid。前の試行が保存したものと、キューが
+ * 完了したもの）と、バージョンを作る前にまだ片付いていないキューの行（失敗、一時停止、キャンセル、
+ * 実行中）。
  */
 export function datasetFolderProgress(entries: readonly DatasetFolderEntry[], items: readonly DatasetFolderUploadState[]) {
   const itemsByPath = new Map(items.map((item) => [item.path, item]));

@@ -7,7 +7,7 @@ import { useLocale } from '../i18n/useLocale';
 import { workerCoverageText, workerCoverageTextTemplates } from '../i18n/workerCoverage';
 import { joinSentences } from '../i18n/textJoining';
 
-// Online is the green Job badge, a missing worker the red one; a site needs no worker.
+// オンラインはJobの緑のバッジ、workerがいないときは赤のバッジ。siteにworkerは要らない。
 const coverageBadgeClass: Record<WorkerCoverage['state'], string> = {
   online: 'status-success',
   offline: 'status-danger',
@@ -15,7 +15,7 @@ const coverageBadgeClass: Record<WorkerCoverage['state'], string> = {
   notNeeded: 'status-neutral',
 };
 
-/** A computer's worker state in a list, with the last answer of workers that went quiet. */
+/** 一覧に出すコンピュータのworkerの状態。応答が途絶えたworkerには最後の応答を添える。 */
 export function WorkerCoverageBadge({ coverage }: { coverage: WorkerCoverage }) {
   useLocale();
   return (
@@ -35,10 +35,10 @@ export function WorkerCoverageBadge({ coverage }: { coverage: WorkerCoverage }) 
 }
 
 /**
- * Why work on a computer does not start: no worker takes it, or its workers stopped answering.
- * `consequence` says what that means where it is shown (a waiting Job, a launch, a Sweep). The
- * link opens the computer's details, where its managers find how to run the worker and everyone
- * else reads who runs it.
+ * コンピュータで処理が始まらない理由。どのworkerも引き受けないか、workerの応答が途絶えている。
+ * `consequence`は、表示する場所でそれが何を意味するか（待っているJob、起動、Sweep）を書く。
+ * リンクはコンピュータの詳細を開く。そこで管理者はworkerの動かし方を、ほかの人は誰が動かして
+ * いるかを読める。
  */
 export function WorkerMissingNotice({
   target,

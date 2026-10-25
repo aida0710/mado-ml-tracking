@@ -11,13 +11,13 @@ import {
 } from '../lib/targetInput';
 import { useMutation } from './useMutation';
 
-/** The target dialog's values and save: POST for a new computer, PATCH for an edited one. */
+/** コンピュータのダイアログの値と保存。新しいコンピュータはPOST、編集したものはPATCH。 */
 export function useTargetForm({
   target,
   canAddSshOrLocal,
 }: {
   target?: ComputeTargetDetails;
-  /** Whether a new computer starts as an ssh target (global administrators) or a site. */
+  /** 新しいコンピュータをsshのコンピュータとして始めるか（全体管理者）、siteとして始めるか。 */
   canAddSshOrLocal: boolean;
 }) {
   const [values, setValues] = useState(() =>

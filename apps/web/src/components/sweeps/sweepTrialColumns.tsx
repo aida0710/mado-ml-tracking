@@ -1,4 +1,4 @@
-/** The columns of a Sweep's trial table: parameters, objective, state and the Run/Job of each trial. */
+/** Sweepの試行の表の列。各試行のパラメータ、目的値、状態、Run/Job。 */
 import { Link } from 'react-router-dom';
 import type { SweepObjective, SweepTrial } from '@mmt/contracts';
 import { formatNumber, formatValue } from '../../lib/format';
@@ -8,7 +8,7 @@ import { SweepTrialStateBadge } from './SweepTrialStateBadge';
 import { text, textTemplates } from '../../i18n/catalog';
 import { formatNote } from '../../i18n/textJoining';
 
-// Sampled values carry every float digit; six significant digits keep the columns readable.
+// サンプルした値は浮動小数点の桁をすべて持つ。有効数字6桁にして列を読みやすくする。
 const formatParameter = (value: unknown) => (typeof value === 'number' ? formatNumber(value) : formatValue(value));
 
 export interface SweepTrialTableInput {
@@ -19,8 +19,8 @@ export interface SweepTrialTableInput {
 }
 
 /**
- * The trial table's columns. On narrow screens a row keeps the trial index, objective and state;
- * parameters and the Run/Job links open beneath it.
+ * 試行の表の列。狭い画面では、行に試行の番号、目的値、状態を残し、パラメータとRun/Jobの
+ * リンクは行の下に開く。
  */
 export function sweepTrialColumns({
   projectId,

@@ -5,8 +5,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * How to run a worker that takes this computer's Jobs (and its connection checks), with the
- * computer's ID filled in, so nobody looks the ID up in /api/targets.
+ * このコンピュータのJob（と接続確認）を引き受けるworkerの動かし方。コンピュータのIDを埋めて
+ * 出すので、/api/targetsでIDを調べなくて済む。
  */
 export function WorkerSetupGuide({ targetId }: { targetId: string }) {
   useLocale();

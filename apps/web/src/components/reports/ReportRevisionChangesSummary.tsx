@@ -9,7 +9,7 @@ import { formatList } from '../../i18n/textJoining';
 const blockCountsLabel = (counts: readonly BlockTypeCount[]) =>
   formatList(counts.map(({ type, count }) => textTemplates.reportBlockCount(reportBlockTypeLabels[type], count)));
 
-/** What a revision changed from the one before it: the title, and blocks added, removed, edited or moved. */
+/** 1つ前のバージョンからの変更。タイトルと、追加・削除・編集・移動したブロック。 */
 export function ReportRevisionChangesSummary({
   projectId,
   reportId,
@@ -19,7 +19,7 @@ export function ReportRevisionChangesSummary({
   projectId: string;
   reportId: string;
   revision: number;
-  /** Lets the button that opens the summary point at it (aria-controls). */
+  /** 要約を開くボタンがここを指せるようにする（aria-controls）。 */
   id: string;
 }) {
   useLocale();

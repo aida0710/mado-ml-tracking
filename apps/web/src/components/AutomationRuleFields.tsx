@@ -43,7 +43,8 @@ export function AutomationRuleFields({
     (target) => code && isTargetCompatible(target, code),
   );
   const target = compatibleTargets.find((item) => item.id === getFieldValue(values, 'targetId'));
-  // Families already chosen stay listed (a copied rule's family no model uses any more).
+  // 選択済みのモデル系列は一覧に残す（コピーしたルールの系列は、もうどのモデルも
+  // 使っていないことがある）。
   const families = [
     ...new Set([
       ...choices.models.map((model) => model.family),
@@ -51,7 +52,7 @@ export function AutomationRuleFields({
       ...modelFamilies,
     ]),
   ].sort();
-  // Said under the code version list when it offers nothing, so an empty list is not a dead end.
+  // コードバージョンの一覧に候補が無いときに一覧の下で伝える文。空の一覧を行き止まりにしない。
   const missingCode = AUTOMATION_KINDS.includes(kind)
     ? explainMissingCodeCandidates({
         codeVersions: choices.codeVersions,

@@ -1,9 +1,9 @@
-// What the audio cell of an evaluation sample shows: the Artifact its path names, or why there is none.
+// 評価サンプルのaudioのセルに出すもの。pathが指すArtifactか、それが無い理由。
 
 import type { Artifact } from '@mmt/contracts';
 import type { ArtifactReferenceError, ArtifactReferenceResult } from './evaluationSamples';
 
-/** Artifacts of the Runs a page of samples refers to, by Run and then by path; 'unavailable' when the Run could not be listed. */
+/** 1ページ分のサンプルが参照するRunのArtifactを、Run、pathの順に引けるようにしたもの。Artifactの一覧を取れなかったRunは'unavailable'。 */
 export type RunArtifactIndex = Map<string, Map<string, Artifact> | 'unavailable'>;
 
 export type SampleAudio =

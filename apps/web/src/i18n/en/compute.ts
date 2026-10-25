@@ -8,7 +8,7 @@ import type {
 } from '@mmt/contracts';
 import { formatEnglishCount } from '../formatEnglishCount';
 
-// Worker presence, Job heartbeat and target connection check labels on the Compute and Jobs pages.
+// ComputeとJobsの画面に出す、workerの接続状態、Jobのハートビート、コンピュータの接続確認の文言。
 export const computeText = {
   workers: 'Workers',
   workerId: 'Worker ID',
@@ -63,7 +63,7 @@ export const computeText = {
   targetCheckCurrent: 'Current',
   saveTargetCandidates: 'Save selected settings',
   targetCheckCandidatesSaved: 'Computer settings saved',
-  // Sites: their connection, accounts and job shell are set here; the launcher makes their keys.
+  // site。接続先・アカウント・job shellはここで設定し、鍵はランチャーが作る。
   siteExecutor: 'Site (launcher or mado-tracking submit)',
   submissionMode: 'Submission mode',
   submissionModeAutomatic: 'Automatic (launcher submits)',
@@ -71,7 +71,7 @@ export const computeText = {
   cpuArch: 'CPU architecture',
   supportsArray: 'Job shell supports arrays in a single submission',
   queueTimeout: 'Queue timeout (HH:MM:SS, optional)',
-  // Three days is a common upper bound of batch queues.
+  // 3日は、バッチの待ち行列の上限時間としてよくある値。
   queueTimeoutPlaceholder: '72:00:00',
   siteRuntimeKinds: 'Supported runtimes (containers only for sites)',
   siteTargetNotice:
@@ -84,7 +84,7 @@ export const computeText = {
     'Select at least one site runtime: Docker, Singularity, or Apptainer.',
 };
 
-// Text that embeds values.
+// 値を埋め込む文言。
 export const computeTextTemplates = {
   queueTimeoutError: (minMinutes: number, maxDays: number) =>
     `Specify a queue timeout between ${formatEnglishCount(minMinutes, 'minute')} and ${formatEnglishCount(maxDays, 'day')} in HH:MM:SS format.`,
@@ -127,7 +127,7 @@ export const targetCheckOutcomeLabels = {
   skipped: 'Not checked',
 } satisfies Record<TargetCheckItemStatus, string>;
 
-// One short fix per reason code; shown next to the failing item.
+// 理由のコードごとの短い直し方。失敗した項目の隣に出す。
 export const targetCheckCodeHints = {
   ssh_failed: 'Check the host, port, username, SSH key, and known_hosts configuration.',
   ssh_configuration:

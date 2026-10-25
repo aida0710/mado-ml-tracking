@@ -8,7 +8,7 @@ import { encodeId, jsonRequest, projectPath, request } from './http';
 const reportPath = (projectId: string, runId: string) =>
   `${projectPath(projectId)}/runs/${encodeId(runId)}/preprocessing-report`;
 
-/** The preprocessing report of a processing Run: counts, reasons, quality values and samples. */
+/** データ処理のRunの前処理レポート（件数、理由、品質値、サンプル）。 */
 export const preprocessingReportsApi = {
   get: async (projectId: string, runId: string, signal?: AbortSignal) =>
     (await request<PreprocessingReportResponse>(reportPath(projectId, runId), { signal })).report,

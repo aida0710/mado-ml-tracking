@@ -1,9 +1,8 @@
-// Browser check of the guards against slips that change who may do what (fix plan 2026-10-11,
-// 誤操作・権限), against the isolated mock API (tests/browserApi.mjs): adding a member who is
-// already one, the last Project admin and a group nobody has logged in with, confirming a change of
-// visibility or storage, the Project "/" opens, stopping and retrying a Job, a protected alias for
-// an editor, and the digest hint and deletion of a dataset version.
-// Start Vite on MMT_WEB_URL first; MMT_SCREENSHOT_DIR, when set, receives the screenshots.
+// だれが何をできるかを変えてしまう誤操作を防ぐ仕組みのブラウザでの確認（2026-10-11の修正計画、
+// 誤操作・権限）。分離したモックのAPI（tests/browserApi.mjs）を相手にする。既にメンバーの人の追加、
+// 最後のProject adminとだれもログインしていないgroup、公開範囲や保存先の変更の確認、「/」で開く
+// Project、Jobの停止と再試行、Editorから見た保護alias、データセットのバージョンのdigestの手がかりと削除。
+// 先にMMT_WEB_URLでViteを起動しておく。MMT_SCREENSHOT_DIRを設定すると、そこにスクリーンショットを保存する。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -18,15 +17,15 @@ if (screenshotDirectory) await mkdir(screenshotDirectory, { recursive: true });
 const WIDE = { width: 1440, height: 900 };
 const NARROW = { width: 390, height: 844 };
 const now = '2026-10-11T00:00:00Z';
-// A bound group whose name was mistyped: nobody has logged in with it.
+// 名前を打ち間違えて割り当てたgroup。このgroupでログインした人はいない。
 const EMPTY_ADMIN_GROUP = 'ml-admins-typo';
 const COLLEAGUE = { id: '00000000-0000-4000-8000-00000000c001', displayName: '研究者B' };
 const DATASET_VERSION_IN_USE =
   'このバージョンは使われているため削除できません（Runの入力 1件）';
 
 /**
- * The shared mock API with what these screens need on top: the member list and an empty admin
- * group, an alias protection, and Jobs started by the signed-in user and by a colleague.
+ * 共通のモックのAPIに、これらの画面に要るものを足したもの。メンバーの一覧とだれもいない管理者の
+ * group、aliasの保護、ログイン中のユーザーと同僚が起動したJob。
  */
 function createGuardApi() {
   const api = createBrowserApi();
@@ -198,7 +197,7 @@ try {
     await existing.waitFor();
     assert.equal(await existing.isDisabled(), true);
     await memberDialog.getByText('既にAdminです。Roleは一覧の［変更］で変えます').waitFor();
-    // Enter picks only a user who can be picked, so the existing member is not chosen.
+    // Enterは選べるユーザーだけを選ぶので、既にいるメンバーは選ばれない。
     await search.press('Enter');
     assert.equal(await memberDialog.getByRole('button', { name: '選び直す', exact: true }).count(), 0);
     await screenshot('02-member-add-existing-member');
@@ -238,7 +237,7 @@ try {
     console.log('Home: "/" never enters a Project the user is not a member of');
     const guard = createGuardApi();
     const { project } = guard.api.state;
-    // Someone else's Public Project, the only one this user sees.
+    // ほかの人のPublicのProject。このユーザーに見えるのはこれだけ。
     Object.assign(project, { isMember: false, visibility: 'public', role: 'editor' });
     const { context, page, screenshot } = await openPage({ guard });
     await page.goto(`${base}/`);
@@ -249,8 +248,8 @@ try {
     await screenshot('05-home-project-list');
     await page.getByRole('link', { name: project.name, exact: true }).click();
     await page.waitForURL(`${base}/projects/${project.id}/experiments`);
-    // Once opened, it is the one "/" reopens. The URL changes before the opened page renders and
-    // remembers it, so wait for the remembered id rather than racing the reload.
+    // 一度開くと、「/」でまたそのProjectが開く。開いた画面が描かれてそれを覚えるより前にURLが変わるので、
+    // 再読み込みと競争せず、覚えたidを待つ。
     await page.waitForFunction(
       (projectId) => localStorage.getItem('mmt.lastProject') === projectId,
       project.id,

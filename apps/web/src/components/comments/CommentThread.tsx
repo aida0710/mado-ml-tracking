@@ -17,8 +17,8 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 
 /**
- * Threaded comments on a Run, model version or report. Replies are one level deep; a viewer
- * reads only. Placed by the pages (RunDetailPage, ModelVersionPage, ReportPage).
+ * Run、モデルバージョン、レポートへのスレッド形式のコメント。返信は1段まで。Viewerは読むだけ。
+ * 置くのはページ（RunDetailPage、ModelVersionPage、ReportPage）。
  */
 export function CommentThread({ projectId, targetType, targetId }: CommentThreadProps) {
   useLocale();
@@ -54,7 +54,7 @@ export function CommentThread({ projectId, targetType, targetId }: CommentThread
       ) : (
         <ol className="comment-thread-list">
           {comments.threads.map(({ root, replies }) => {
-            // A reply shown alone (its root not loaded) still answers in its own thread.
+            // 単独で出た返信（ルートを読み込んでいない）も、自分のスレッドに返信する。
             const threadRootId = root.parentCommentId ?? root.id;
             return (
               <li key={root.id} className="comment-thread-group">

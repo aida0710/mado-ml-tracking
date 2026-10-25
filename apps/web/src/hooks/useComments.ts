@@ -11,22 +11,22 @@ export interface CommentsState {
   error: string | null;
   loadMore: () => void;
   reload: () => void;
-  /** parentCommentId null starts a new thread. Rejects with the API error. */
+  /** parentCommentIdがnullなら新しいスレッドを始める。失敗したらAPIのエラーでrejectする。 */
   post: (input: { body: string; parentCommentId: string | null }) => Promise<Comment>;
   edit: (commentId: string, body: string) => Promise<Comment>;
   remove: (comment: Comment) => Promise<void>;
 }
 
 /**
- * Reads one target's comment threads page by page and keeps comments posted, edited or deleted
- * here visible without reading every loaded page again.
+ * 1つの対象のコメントのスレッドをページごとに読み、ここで投稿・編集・削除したコメントを、
+ * 読み込んだページをすべて読み直さずに表示に反映する。
  */
 export function useComments(projectId: string, target: CommentTarget): CommentsState {
   const key = `${projectId}:${target.targetType}:${target.targetId}`;
   const pages = useCursorPages(key, (cursor, signal) =>
     commentsApi.list(projectId, target, { cursor, signal }),
   );
-  // Tied to the key so another target, or a reload, starts again from the API's answer.
+  // キーに結び付けておき、別の対象や読み直しのときはAPIの応答からやり直す。
   const [localChanges, setLocalChanges] = useState<{ key: string; comments: Comment[] }>({
     key,
     comments: [],
@@ -68,7 +68,7 @@ export function useComments(projectId: string, target: CommentTarget): CommentsS
     },
     remove: async (comment) => {
       await commentsApi.remove(projectId, comment.id);
-      // DELETE answers 204, so the deleted state is written the way the API would return it.
+      // DELETEは204を返すので、削除後の状態は、APIが返すはずの形でここで書く。
       keepLocally({ ...comment, body: null, deleted: true });
     },
   };

@@ -10,7 +10,7 @@ export function subscribePluginAvailability(listener: () => void): () => void {
   return () => { listeners.delete(listener); };
 }
 
-/** Every mounted dataset action refreshes after a connection is saved or toggled. */
+/** 接続の保存や有効・無効の切り替えの後、表示中のデータセットの操作をすべて更新する。 */
 export function refreshPluginAvailability(projectId: string): void {
   revisions.set(projectId, getPluginAvailabilityRevision(projectId) + 1);
   for (const listener of listeners) listener();

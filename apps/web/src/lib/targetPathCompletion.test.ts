@@ -27,7 +27,7 @@ describe('コンピュータのパスの補完', () => {
     const paths = ['/home/mmt', '/home/mmt/projects', '/data'];
     expect(completeFromKnownPaths(paths, '/home')).toEqual(['/home/mmt', '/home/mmt/projects']);
     expect(completeFromKnownPaths(paths, '')).toEqual(paths);
-    // What is already typed adds nothing.
+    // すでに打ったものと同じパスは、何も足さないので候補にしない。
     expect(completeFromKnownPaths(paths, '/data')).toEqual([]);
   });
 

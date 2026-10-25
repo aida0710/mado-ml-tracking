@@ -1,10 +1,10 @@
 import type { Run } from '@mmt/contracts';
 import { getRunParameters } from '../../lib/runParameters';
 
-// Experiment metrics come before system metrics so the initial columns show training results.
+// 最初の列に学習の結果が出るよう、実験のメトリクスをシステムメトリクスより前に置く。
 const SYSTEM_METRIC_PREFIX = 'system.';
 
-/** Metric and parameter names present on the shown Runs, in column order. */
+/** 出ているRunにあるメトリクスとパラメータの名前。列の順に並べる。 */
 export function getRunColumnNames(runs: Run[]): {
   metricNames: string[];
   parameterNames: string[];

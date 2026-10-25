@@ -21,8 +21,8 @@ import { text } from '../i18n/catalog';
 import { workflowsText as labels, workflowsTextTemplates } from '../i18n/workflows';
 
 /**
- * Creates a workflow, or (with `previous`) its next version from the shown version's steps.
- * Closing with unsaved edits asks first, as the Task editor does.
+ * ワークフローを作る。`previous`があれば、見せているバージョンのステップから次のバージョンを
+ * 作る。保存していない編集があるまま閉じるときは、Taskのエディタと同じく先に尋ねる。
  */
 export function WorkflowDialog({
   projectId,

@@ -46,7 +46,7 @@ export const mediaKindLabels: Record<RunMediaKind, string> = {
   table: 'Table',
 };
 
-// The reference rules are the evaluation sample tables' (lib/evaluationSamples.ts), so their wording is reused.
+// 参照の決まりは評価サンプルの表（lib/evaluationSamples.ts）と同じなので、その文言を使い回す。
 export const mediaCellErrorLabels: Record<MediaTableCellFailure, string> = {
   empty: artifactReferenceErrorLabels.empty,
   absolute_path: artifactReferenceErrorLabels.absolute_path,
@@ -58,11 +58,11 @@ export const mediaCellErrorLabels: Record<MediaTableCellFailure, string> = {
   unresolved: 'Could not resolve artifact',
 };
 
-// Text that embeds values; merged into catalog's textTemplates.
+// 値を埋め込む文言。catalogのtextTemplatesにまとめる。
 export const mediaTextTemplates = {
   mediaStepPosition: (step: number, index: number, count: number) => `step ${step} (${index} / ${count})`,
   mediaStepLabel: (step: number) => `step ${step}`,
-  /** Beside a step that not every compared Run recorded. */
+  /** 比較するRunのすべてが記録しているわけではないstepの横に出す。 */
   mediaStepRunCoverage: (runCount: number, totalRuns: number) => `${runCount}/${formatEnglishCount(totalRuns, 'run')}`,
   mediaStepRangeValue: (minStep: number, maxStep: number) => (minStep === maxStep ? `${minStep}` : `${minStep}–${maxStep}`),
   mediaItemCount: (count: number) => formatEnglishCount(count, 'item'),

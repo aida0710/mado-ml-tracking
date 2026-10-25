@@ -14,14 +14,14 @@ import { text } from '../i18n/catalog';
 import { automationText } from '../i18n/automation';
 
 export const AUTOMATION_KINDS: AutomationKind[] = ['inference', 'evaluation', 'processing'];
-// Matches the API default: a rule retries automatically only when more attempts are chosen.
+// APIの既定と同じ。ルールは試行回数を増やしたときだけ自動で再試行する。
 const DEFAULT_AUTOMATION_ATTEMPTS = 1;
 export const AUTOMATION_TRIGGERS: AutomationTrigger[] = [
   'model_registered',
   'upstream_run_finished',
 ];
 
-/** Enabled rules of the Project that may start this rule; a rule never follows itself. */
+/** このルールを起動できる、Projectの有効なルール。ルールが自分自身の後に続くことはない。 */
 export function upstreamRuleCandidates(
   rules: ModelAutomationRule[],
   currentRuleId?: string,
@@ -58,8 +58,8 @@ export function createAutomationValues(modelFamilies: string[] = []): FormValues
   };
 }
 /**
- * The form values of a new rule that starts from `rule`'s settings. The name is marked as a copy
- * so the two rules can be told apart in the list until the user renames it.
+ * `rule`の設定から始める新しいルールのフォームの値。名前には複製と分かる印を付け、利用者が名前を
+ * 変えるまで、一覧で2つのルールを見分けられるようにする。
  */
 export function createAutomationValuesFromRule(rule: ModelAutomationRule): FormValues {
   return {
@@ -80,7 +80,7 @@ export function createAutomationValuesFromRule(rule: ModelAutomationRule): FormV
   };
 }
 
-/** Rules that start when `rule`'s Run succeeds; they stop following it once it is disabled. */
+/** `rule`のRunが成功したときに起動するルール。`rule`を無効にすると、これらは続いて起動しなくなる。 */
 export function downstreamRules(
   rules: readonly ModelAutomationRule[],
   rule: Pick<ModelAutomationRule, 'id'>,
@@ -100,11 +100,11 @@ export function updateAutomationValues({
   const updated = { ...next };
   if (getFieldValue(next, 'trigger') !== 'upstream_run_finished') updated.upstreamRuleId = '';
   const upstream = catalog.rules.find((rule) => rule.id === updated.upstreamRuleId);
-  // A downstream stage normally runs on the same model families as its upstream stage.
+  // 下流の段階は、ふつう上流の段階と同じモデル系列で実行する。
   const isNewUpstream = upstream !== undefined && updated.upstreamRuleId !== previous.upstreamRuleId;
   if (isNewUpstream && !getSelectedValues(next, 'modelFamilies').length)
     updated.modelFamilies = upstream.modelFamilies;
-  // The stage after inference is usually its evaluation; a kind the user changed is kept.
+  // 推論の次の段階はたいていその評価。利用者が変えた種類はそのまま残す。
   if (
     isNewUpstream &&
     upstream.kind === 'inference' &&

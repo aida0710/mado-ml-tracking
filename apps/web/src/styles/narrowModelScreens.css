@@ -1,6 +1,6 @@
 /*
- * Models, model version, Tasks, Jobs, Lineage and Codes on narrow windows, and the folded file list of the
- * code workspace. Breakpoints: styles/breakpoints.css.
+ * 狭いウィンドウでのModels・モデルバージョン・Tasks・Jobs・Lineage・Codeの画面と、コードの
+ * ワークスペースの畳んだファイル一覧。切り替え幅は@mado/design-system/layoutのBREAKPOINT_PX。
  */
 .file-list-toggle {
   display: flex;
@@ -28,7 +28,8 @@
   max-height: 40vh;
 }
 
-/* Buttons, inputs and selects already reach --tap-target in base.css; these screens add the rest. */
+/* ボタンは@mado/design-system/components.css、入力欄と選択欄はデザインシステムのbase.cssで、
+   既に--tap-targetに届く。これらの画面ではそれ以外を足す。 */
 @media (width < 900px) {
   :is(.models-page, .model-version-page, .tasks-page, .jobs-page, .lineage-page, .codes-page, .dialog.fullscreen-on-narrow)
     :is(summary, .checkbox-field) {
@@ -50,14 +51,14 @@
   .code-file-tree button {
     min-height: 40px;
   }
-  /* The wide-table minimum would push the Job list past a phone width. */
+  /* 広い表の最小幅のままだと、Jobの一覧がスマートフォンの幅からはみ出す。 */
   .job-run-cell {
     min-width: 0;
   }
 }
 
 @media (width < 640px) {
-  /* Time and level on one line, the message below with the full width. */
+  /* 時刻とレベルを1行に置き、メッセージはその下に全幅で出す。 */
   .log-entry {
     grid-template-columns: auto minmax(0, 1fr);
     gap: 2px 10px;

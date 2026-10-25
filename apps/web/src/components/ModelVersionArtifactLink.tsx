@@ -6,8 +6,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * The version's weights Artifact by its saved path, with a download link and a link to the
- * Artifacts page narrowed to the version. The id is shown while the Artifact loads.
+ * バージョンの重みのArtifactを保存したパスで示し、ダウンロードのリンクと、そのバージョンで絞り込んだ
+ * Artifactsの画面へのリンクを添える。Artifactを読み込む間はidを表示する。
  */
 export function ModelVersionArtifactLink({
   projectId,

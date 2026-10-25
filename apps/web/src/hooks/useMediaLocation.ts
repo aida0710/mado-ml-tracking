@@ -2,15 +2,15 @@ import { useSearchParams } from 'react-router-dom';
 import { parseStepParam } from '../lib/mediaSteps';
 import { parseStepsParam, stepsParamOf } from '../lib/mediaCompareSteps';
 
-// URL parameters of the media tabs, so a link opens the same key and step.
+// メディアのタブのURLのパラメータ。リンクを開くと同じキーとstepが出る。
 const KEY_PARAM = 'mediaKey';
 const STEP_PARAM = 'mediaStep';
 const STEPS_PARAM = 'mediaSteps';
 
 /**
- * The media key and steps shown by the Run's media tab (one step) and the comparison (a list),
- * kept in the URL like the Artifact tree's folder. Changes replace the history entry, so moving the
- * slider does not fill the back button.
+ * Runのメディアのタブ（1つのstep）と比較（stepの一覧）が出すメディアのキーとstep。Artifactの
+ * ツリーのフォルダと同じくURLに持つ。変更は履歴の項目を置き換えるので、スライダーを動かしても
+ * 戻るボタンの履歴が埋まらない。
  */
 export function useMediaLocation() {
   const [params, setParams] = useSearchParams();
@@ -29,12 +29,12 @@ export function useMediaLocation() {
   return {
     chosenKey: params.get(KEY_PARAM),
     requestedStep: parseStepParam(params.get(STEP_PARAM)),
-    /** null: the default columns; []: each Run's latest step. */
+    /** null: 既定の列。[]: 各Runの最新のstep。 */
     steps: parseStepsParam(params.get(STEPS_PARAM)),
-    /** A new key keeps the step; the panel snaps it to the nearest step the key recorded. */
+    /** キーを変えてもstepは保つ。パネルが、そのキーで記録された最も近いstepに合わせる。 */
     setKey: (key: string) => update({ [KEY_PARAM]: key }),
     setStep: (step: number) => update({ [STEP_PARAM]: String(step) }),
-    /** The comparison goes back to the default columns with a new key, since the old steps may not exist for it. */
+    /** 新しいキーでは前のstepが無いかもしれないので、比較は既定の列に戻る。 */
     setComparedKey: (key: string) => update({ [KEY_PARAM]: key, [STEPS_PARAM]: null }),
     setSteps: (steps: number[] | null) => update({ [STEPS_PARAM]: stepsParamOf(steps) }),
   };

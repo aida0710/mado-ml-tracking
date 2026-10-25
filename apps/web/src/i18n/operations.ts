@@ -1,7 +1,7 @@
 import * as english from './en/operations';
 import { localized } from './localized';
 
-// The operations alert badge in the header and the plugin delivery status.
+// 上部バーの運用アラートのバッジと、プラグインへのイベントの送信状況。
 export const operationsText = localized({
   operationsAlerts: '運用アラート',
   operationsAlertsNone: '開いている運用アラートはありません',
@@ -23,7 +23,7 @@ export const operationsText = localized({
 
 export const operationsTextTemplates = localized({
   operationsAlertCount: (count: number) => `運用アラート ${count}件`,
-  // The bell got as many alerts as one request returns, so more may be open.
+  // ベルは1回の要求で返る上限の件数を受け取ったので、未解決のものがほかにもありうる。
   operationsAlertCountAtLeast: (count: number) => `運用アラート ${count}件以上`,
   operationsAlertBadgeAtLeast: (count: number) => `${count}+`,
 }, english.operationsTextTemplates);

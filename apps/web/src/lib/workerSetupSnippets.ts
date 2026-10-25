@@ -2,17 +2,17 @@ import { clientApiUrl } from './clientApiUrl';
 import { madoTrackingInstallLines } from './madoTrackingPackage';
 import { exportLine, joinLines, promptedSecretLines, shellQuote } from './shellSnippet';
 
-// pages/compute/worker.md: the worker's own virtual environment, which `upgrade` reinstalls into,
-// with telemetry for the GPU and memory metrics of each Job.
+// pages/compute/worker.md: worker専用の仮想環境。`upgrade`はここへ入れ直す。Jobごとの
+// GPUとメモリのメトリクスのためにtelemetryを付ける。
 const WORKER_VENV_DIRECTORY = '~/.local/share/mado-tracking-worker/venv';
 const WORKER_COMMAND = `${WORKER_VENV_DIRECTORY}/bin/mado-tracking-worker`;
 const WORKER_INSTALL_EXTRAS = ['telemetry'];
-// The worker ID must stay the same across restarts and upgrades. The worker machine's short host
-// name does, is usually made of the allowed characters (letters, digits, . _ -), and is filled in
-// by the shell, so the commands run as they are copied.
+// worker IDは再起動やアップグレードをまたいで変わってはいけない。workerのマシンの短いホスト名は
+// 変わらず、たいていworker IDに使える文字（英字、数字、. _ -）でできていて、シェルが
+// 埋めるので、コマンドをコピーしたまま実行できる。
 const WORKER_ID_FROM_HOST_NAME = '"$(hostname -s)"';
 
-/** How a worker that takes this computer's Jobs is installed, as commands with its ID filled in. */
+/** このコンピュータのJobを受け取るworkerの入れ方。IDを埋めたコマンドで表す。 */
 export interface WorkerSetupSnippets {
   install: string;
   service: string;
@@ -31,7 +31,7 @@ export function buildWorkerSetupSnippets(settings: {
         extras: WORKER_INSTALL_EXTRAS,
       }),
     ),
-    // `install` asks for the token itself and writes it into a file only the user can read.
+    // `install`はtokenを自分で尋ね、実行したユーザーだけが読めるファイルに書く。
     service: joinLines([
       `${WORKER_COMMAND} install \\`,
       `  --api-url ${shellQuote(apiUrl)} \\`,

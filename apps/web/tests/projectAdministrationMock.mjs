@@ -1,9 +1,9 @@
-// Projects for browser checks, following docs/api-contract.md: the list with visibility, creation
-// with members, archiving, the admin list with archived Projects, restoring and purging, the user
-// search behind member pickers, and the server directories offered for a filesystem root path.
+// docs/api-contract.mdに従った、ブラウザでの確認用のProject: 公開範囲付きの一覧、メンバー付きの作成、
+// アーカイブ、アーカイブ済みを含む管理用の一覧、元に戻すことと完全削除、メンバーを選ぶ欄が使う
+// 利用者の検索、filesystemのルートのパスに出すサーバーのディレクトリ。
 import path from 'node:path';
 
-// The mock API server's working directory; relative root paths resolve from here like the API's.
+// モックのAPIサーバーの作業ディレクトリ。相対のルートのパスは、APIと同じくここから解決する。
 const SERVER_WORKING_DIRECTORY = '/srv/mmt';
 const SERVER_DIRECTORIES = [
   '/data',
@@ -20,9 +20,9 @@ const SERVER_DIRECTORIES = [
   '/var/lib/mmt/artifacts',
 ];
 const SERVER_FILES = ['/srv/mmt/README.md'];
-// The API's cap on suggested directories (DIRECTORY_SUGGESTION_LIMIT).
+// 候補に出すディレクトリの数のAPIの上限（DIRECTORY_SUGGESTION_LIMIT）。
 const DIRECTORY_SUGGESTION_LIMIT = 50;
-// Users the member pickers find besides the signed-in one.
+// ログイン中の利用者のほかに、メンバーを選ぶ欄で見つかる利用者。
 const SEARCHABLE_USERS = [
   { id: '00000000-0000-4000-8000-00000000a001', email: 'aoki@example.invalid', displayName: '青木 研究員' },
   { id: '00000000-0000-4000-8000-00000000a002', email: 'ishii@example.invalid', displayName: '石井 研究員' },
@@ -34,7 +34,7 @@ function directoryStatus(resolvedPath) {
   return SERVER_FILES.includes(resolvedPath) ? 'not_directory' : 'missing';
 }
 
-/** GET /admin/storage-directories?path=: the directories that complete `typed`. */
+/** GET /admin/storage-directories?path=: `typed`を補完するディレクトリ。 */
 export function suggestDirectories(typed) {
   const resolvedPath = path.posix.resolve(SERVER_WORKING_DIRECTORY, typed);
   const listsChildren = typed.endsWith('/');
@@ -63,8 +63,8 @@ const toProject = ({
 const toAdminProject = ({ role: _role, isMember: _isMember, ...project }) => project;
 
 /**
- * The Projects of a mock API. `mainProject` is the one the other mock routes serve; it stays the
- * same object, so PATCH and the other screens see each other's changes.
+ * モックのAPIのProject。`mainProject`はほかのモックの経路が返すProjectで、同じオブジェクトのまま
+ * 使うので、PATCHとほかの画面がお互いの変更を見られる。
  */
 export function createProjectAdministration({ id, now, user, mainProject }) {
   const state = {
@@ -77,12 +77,12 @@ export function createProjectAdministration({ id, now, user, mainProject }) {
       }),
     ],
     createRequests: [],
-    // Set to answer the next archive with 409 project_has_active_jobs.
+    // 次のアーカイブに409 project_has_active_jobsで答えるときに設定する。
     activeJobsBlockArchive: false,
   };
   const find = (projectId) => state.projects.find((project) => project.id === projectId);
 
-  /** Answers the request when it is one of these routes; returns undefined otherwise. */
+  /** これらの経路の要求なら答え、そうでなければundefinedを返す。 */
   function handle({ path: requestPath, method, url, body, reply, list, fulfillEmpty }) {
     if (requestPath === '/projects' && method === 'GET')
       return list(state.projects.filter((project) => !project.archivedAt).map(toProject));
@@ -128,7 +128,7 @@ export function createProjectAdministration({ id, now, user, mainProject }) {
       );
     }
     const projectMatch = requestPath.match(/^\/projects\/([^/]+)(\/archive)?$/);
-    // GET /projects/:p: an archived Project tells its members why it cannot be opened.
+    // GET /projects/:p: アーカイブしたProjectは、開けない理由をメンバーに伝える。
     if (projectMatch && !projectMatch[2] && method === 'GET') {
       const project = find(projectMatch[1]);
       if (!project) return reply({ error: 'project not found', code: 'not_found' }, 404);

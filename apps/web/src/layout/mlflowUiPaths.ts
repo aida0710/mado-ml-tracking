@@ -1,11 +1,11 @@
 /**
- * The route under /projects/:projectId that reads an MLflow UI address. The API redirects the
- * tracking URI here (apps/api/src/mlflow/uiLinkRoutes.ts), and the browser keeps the link's
- * #... part.
+ * /projects/:projectIdの下で、MLflow UIのアドレスを読む経路。APIはtracking URIへの要求をここへ
+ * リダイレクトし（apps/api/src/mlflow/uiLinkRoutes.ts）、ブラウザはリンクの#...の部分を
+ * そのまま保つ。
  */
 export const MLFLOW_UI_ROUTE = 'mlflow-ui';
 
-// Where an MLflow UI page without a counterpart in this app opens.
+// このアプリに対応する画面が無いMLflow UIのページを開いたときの行き先。
 const FALLBACK_PROJECT_PATH = 'experiments';
 
 function decodeSegment(segment: string): string {
@@ -17,12 +17,12 @@ function decodeSegment(segment: string): string {
 }
 
 /**
- * Where an MLflow UI address opens in this app, as a path under /projects/<project>/.
- * MLflow clients print "View run" and "View experiment" links as
- * <tracking URI>/#/experiments/<experiment>/runs/<run> and
- * <tracking URI>/#/experiments/<experiment>.
- * Anything after the Run (an Artifact tab, a query such as ?workspace=) is dropped. Registered
- * model links name the model, which this route cannot look up, so they open the Models list.
+ * MLflow UIのアドレスがこのアプリで開く場所を、/projects/<project>/の下のパスで返す。
+ * MLflowのクライアントは"View run"と"View experiment"のリンクを次の形で出す。
+ * <tracking URI>/#/experiments/<experiment>/runs/<run>と
+ * <tracking URI>/#/experiments/<experiment>。
+ * Runより後ろ（Artifactのタブ、?workspace=のようなクエリ）は捨てる。登録モデルへのリンクは
+ * モデル名を指すが、この経路ではそれを引けないので、Modelsの一覧を開く。
  */
 export function projectPathForMlflowUiHash(hash: string): string {
   const [route = ''] = hash.replace(/^#\/?/, '').split('?');

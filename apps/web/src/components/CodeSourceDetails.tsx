@@ -8,8 +8,8 @@ import { text } from '../i18n/catalog';
 import { codeSourceText } from '../i18n/codeSource';
 
 /**
- * Where a code version's files come from, readable without opening the version form: the files of
- * an inline version, the repository and the files edited on top of it for git, or the Artifact.
+ * コードバージョンのファイルの出どころを、バージョンのフォームを開かずに読めるようにする。inlineの
+ * バージョンならそのファイル、gitならリポジトリとその上で編集したファイル、またはArtifact。
  */
 export function CodeSourceDetails({
   projectId,

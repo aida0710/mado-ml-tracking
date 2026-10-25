@@ -1,14 +1,14 @@
-// The report page's address: the report shows its current revision, and `?revision=` a past one.
+// レポートのページのアドレス。現在のバージョンを表示し、`?revision=`で過去のバージョンを表示する。
 
 export const REPORT_REVISION_PARAM = 'revision';
 
-/** The revision a `?revision=` value names, or undefined (the current revision) when it is not one. */
+/** `?revision=`の値が指すバージョン。バージョンを指していなければundefined（現在のバージョン）。 */
 export function parseRevisionParam(value: string | null): number | undefined {
   const revision = Number(value);
   return value && Number.isInteger(revision) && revision > 0 ? revision : undefined;
 }
 
-/** A link that opens one revision of a report; it keeps pointing there after later saves. */
+/** レポートの1つのバージョンを開くリンク。後で保存しても同じバージョンを指し続ける。 */
 export function reportRevisionUrl({
   origin,
   projectId,

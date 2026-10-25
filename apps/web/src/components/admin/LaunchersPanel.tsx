@@ -14,14 +14,14 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 import { launchersTextTemplates } from '../../i18n/launchers';
 
-// Matches the API's limit on a launcher's name.
+// APIのランチャー名の長さの上限に合わせる。
 const MAX_LAUNCHER_NAME_LENGTH = 200;
 
 type LauncherAction = { kind: 'rotate' | 'revoke'; launcher: Launcher };
 
 /**
- * The admin "launchers" section: registering launchers, replacing their tokens and revoking
- * them. A new token is shown once, with an example launcher.toml.
+ * 全体管理の「ランチャー」。ランチャーの登録、tokenの作り直し、失効を行う。新しいtokenは
+ * 一度だけ、launcher.tomlの例とともに出す。
  */
 export function LaunchersPanel() {
   useLocale();

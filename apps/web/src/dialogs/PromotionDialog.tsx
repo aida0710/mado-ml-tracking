@@ -22,9 +22,8 @@ import { promotionTextTemplates } from '../i18n/promotion';
 import { text } from '../i18n/catalog';
 
 /**
- * Points an alias at a version with a reason and, when there is one, the passed promotion decision
- * it rests on. A protected alias asks for what its protection requires, and promoting a version
- * that failed its check asks for a reason.
+ * aliasを、理由と、あればその根拠になる合格した昇格の判定とともに、バージョンへ向ける。保護された
+ * aliasは保護が求めるものを求め、確認に落ちたバージョンを昇格するときは理由を求める。
  */
 export function PromotionDialog({
   model,
@@ -63,7 +62,7 @@ export function PromotionDialog({
     versionId,
   });
   const passedDecisions = decisions.filter((decision) => decision.decision === 'passed');
-  // A choice made for another alias or version no longer counts as evidence.
+  // 別のaliasやバージョンについて選んだ判定は、もう根拠として数えない。
   const selectedEvaluationId = getFieldValue(values, 'evaluation');
   const evaluationId = passedDecisions.some((decision) => decision.id === selectedEvaluationId)
     ? selectedEvaluationId
@@ -72,8 +71,8 @@ export function PromotionDialog({
   const roleMissing = !meetsProtectionRole(project.role, protection);
   const policyName = (policyId: string) =>
     policies.find((policy: PromotionPolicy) => policy.id === policyId)?.name ?? policyId;
-  // The Model's aliases and the ones its policies and protections name, so a slip such as
-  // `producton` shows as a new alias before it is created.
+  // モデルのaliasと、そのモデルの昇格policyや保護が挙げるalias。`producton`のような打ち間違いを、
+  // 作る前に新しいaliasとして見せるため。
   const knownAliases = collectKnownAliases({
     models: [model],
     modelId: model.id,

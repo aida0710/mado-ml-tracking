@@ -93,7 +93,7 @@ function ComparisonConditions({
             '—'
           ),
         ],
-        // A rule removed since keeps its id: the name cannot be looked up any more.
+        // 削除されたルールもidは残るが、名前はもう引けない。
         [text.evaluationRule, rule?.name ?? comparison.evaluationRuleId ?? text.none],
         [
           text.candidateEvaluationRun,
@@ -115,8 +115,8 @@ function describeSources(source: MetricComparison['source']): string {
   return labels[0] === labels[1] ? labels[0]! : `${labels[0]} / ${labels[1]}`;
 }
 
-// Differences are shown without good/bad colouring: whether higher is better is defined by
-// promotion policies, not by this panel.
+// 差は良し悪しの色を付けずに出す。高い方が良いかどうかは昇格policyが決めるもので、
+// このパネルではない。
 function MetricComparisonTable({ metrics }: { metrics: MetricComparison[] }) {
   useLocale();
   return (
@@ -125,7 +125,7 @@ function MetricComparisonTable({ metrics }: { metrics: MetricComparison[] }) {
       rowKey={(metric) => metric.key}
       empty={text.noComparedMetrics}
       columns={[
-        // Long metric names wrap, so a phone still shows the delta and the row's toggle.
+        // 長いメトリクス名は折り返し、スマートフォンでも差と行の開閉ボタンが見えるようにする。
         {
           key: 'name',
           priority: 'primary',
@@ -168,9 +168,9 @@ function MetricComparisonTable({ metrics }: { metrics: MetricComparison[] }) {
 }
 
 /**
- * Compares a model version's latest evaluation with the evaluation of a baseline version, chosen
- * by an alias or directly, under the same reference set and evaluation code. Placed on a page by
- * its owner, which also owns the baseline choice so that the metric summary uses the same one.
+ * モデルバージョンの最新の評価を、aliasか直接の指定で選んだ基準のバージョンの評価と比べる。
+ * 正解セットと評価コードが同じものどうしで比べる。置くのはこれを持つページで、基準の選択もその
+ * ページが持ち、メトリクスの集約が同じ基準を使うようにする。
  */
 export function EvaluationComparisonPanel({
   projectId,
@@ -188,9 +188,9 @@ export function EvaluationComparisonPanel({
   versions: readonly ModelVersion[];
   versionLabel: (versionId: string) => string;
   baseline: EvaluationBaseline;
-  // From useEvaluationComparison on the page, so that the page's reload refreshes it.
+  // ページのuseEvaluationComparisonから受け取り、ページの再読み込みでこちらも新しくなるようにする。
   evaluationComparison: ReturnType<typeof useEvaluationComparison>;
-  /** Names the evaluation rule of the comparison. */
+  /** 比較に使った評価ルールの名前を引く。 */
   rules: readonly ModelAutomationRule[];
 }) {
   useLocale();

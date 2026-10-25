@@ -11,9 +11,9 @@ import { jobsTextTemplates } from '../i18n/jobs';
 export type JobConfirmAction = 'cancel' | 'retry';
 
 /**
- * Asks before stopping a Job or retrying it in a new Run, naming the Job (its Run, its creator,
- * where it runs) and what will happen, so nobody stops a colleague's training by a guess.
- * `onDone` gets the new Run of a retry, or null after a stop.
+ * Jobを止める、または新しいRunで再実行する前に、Job（そのRun、作った人、動く場所）と起きることを
+ * 示して尋ねる。同僚の学習を推測で止めないようにするため。
+ * `onDone`は再実行なら新しいRunを、停止のあとならnullを受け取る。
  */
 export function JobActionDialog({
   projectId,
@@ -25,7 +25,7 @@ export function JobActionDialog({
 }: {
   projectId: string;
   job: JobListItem;
-  /** The computer's name, or its id when the Project cannot see it. */
+  /** コンピュータの名前。Projectから見えなければそのid。 */
   targetName: string;
   action: JobConfirmAction;
   onClose: () => void;

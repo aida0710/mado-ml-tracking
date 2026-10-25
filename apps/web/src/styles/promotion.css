@@ -1,4 +1,4 @@
-/* Promotion policies: criteria rows in the create dialog and per-criterion results in the history. */
+/* 昇格policy。作成のダイアログの基準の行と、履歴の基準ごとの結果。 */
 .promotion-criteria {
   display: grid;
   gap: 8px;
@@ -13,7 +13,7 @@
   gap: 8px;
   align-items: end;
 }
-/* On a phone the five parts of a criterion take three lines: the metric alone, then two per line. */
+/* スマートフォンでは基準の5つの部分を3行に置く。メトリクスだけで1行、残りは1行に2つずつ。 */
 @media (width < 640px) {
   .promotion-criterion-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -42,7 +42,7 @@
   margin: -8px 0 4px;
   font-size: var(--font-size-sm);
 }
-/* Promotion check card on the model version page: one bordered block per policy. */
+/* モデルバージョンの画面の、昇格の判定のカード。policyごとに枠付きのかたまりを1つ置く。 */
 .promotion-check-list {
   margin: 0;
   padding: 0;

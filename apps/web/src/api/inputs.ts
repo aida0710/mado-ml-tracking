@@ -28,7 +28,7 @@ export interface CreateRun {
   environment?: JsonObject;
 }
 export interface CreateModelVersion {
-  /** Omitted: the API gives the Model's next number (Model.nextVersion). */
+  /** 省くと、APIがモデルの次の番号（Model.nextVersion）を付ける。 */
   version?: string;
   parentModelVersionIds?: string[];
   sourceRunId?: string;
@@ -48,7 +48,7 @@ export interface CreateCodeVersion {
   supportedModelFamilies: string[];
   taskTypes: RunKind[];
 }
-// summaryMetrics defaults to [] on the server; the rule form does not set it yet.
+// summaryMetricsはサーバーで[]になる。ルールのフォームはまだ設定しない。
 export type CreateAutomationRule = Omit<
   ModelAutomationRule,
   | 'id'
@@ -61,7 +61,7 @@ export type CreateAutomationRule = Omit<
   | 'runAsKind'
   | 'runAsName'
 > & { summaryMetrics?: string[] };
-/** Without content: a reference version (version, uri, digest). With content: the server sets uri and digest. */
+/** contentなしなら参照するバージョン（version、uri、digest）。contentありならサーバーがuriとdigestを決める。 */
 export interface CreateDatasetVersion {
   version?: string;
   uri?: string;
@@ -79,13 +79,13 @@ export interface CreateToken {
   expiresAt?: string | null;
 }
 /**
- * POST /targets: the target's own fields with its visibility and, for a site, its global settings
- * and first job shell (ComputeTargetSiteFields). Whoever adds it becomes its owner.
+ * POST /targetsの本文。コンピュータ自身の項目と公開範囲で、siteなら全体設定と最初のjob shell
+ * （ComputeTargetSiteFields）も含む。足した人が所有者になる。
  */
 export type CreateTarget = Omit<ComputeTarget, 'id' | 'ownerUserId'> & ComputeTargetSiteFields;
 /**
- * PATCH /targets/:id: some of the target's fields (its visibility too) and its site settings. The
- * owner never changes, and a job shell edit saves a new version (siteComputersApi).
+ * PATCH /targets/:idの本文。コンピュータの項目の一部（公開範囲も）とsiteの設定。所有者は変わらず、
+ * job shellを編集すると新しいバージョンを保存する（siteComputersApi）。
  */
 export type UpdateTarget = Partial<Omit<CreateTarget, 'jobShell'>>;
 export type CreateTask = Omit<ExperimentTask, 'id' | 'projectId' | 'revision' | 'createdAt' | 'updatedAt'>;
@@ -95,19 +95,19 @@ export interface LaunchTask {
   executionMode: ExecutionMode;
   targetId?: string;
   gpuIds?: string[];
-  /** Sites only: replaces the Task's GPU count or time limit for this launch. */
+  /** siteだけ。この起動に限り、TaskのGPU数や制限時間を置き換える。 */
   gpuCount?: number;
   walltimeSeconds?: number | null;
   name?: string;
   parameters?: JsonObject;
   modelVersionId?: string | null;
   inputDatasetVersionIds?: string[];
-  /** Starts the new Run from this checkpoint; the API checks it matches the Task's code. */
+  /** 新しいRunをこのcheckpointから始める。Taskのコードに合うかはAPIが確かめる。 */
   resumeCheckpointId?: string;
 }
 /**
- * POST /projects/:p/jobs. ssh/local targets take gpuIds; sites take gpuCount, walltimeSeconds and
- * the retry flags (the API answers site_gpu_ids and site_only_setting otherwise).
+ * POST /projects/:p/jobsの本文。ssh・localのコンピュータはgpuIdsを受け取り、siteはgpuCount、
+ * walltimeSecondsと再実行のフラグを受け取る（違えばAPIはsite_gpu_idsやsite_only_settingを返す）。
  */
 export interface CreateJob {
   runId: string;
@@ -120,7 +120,7 @@ export interface CreateJob {
   retryOnTimeout?: boolean;
   allowChildJobs?: boolean;
 }
-/** POST /projects/:p/jobs/launch: a new Run and its Job, both kept only if the Job is accepted. */
+/** POST /projects/:p/jobs/launchの本文。新しいRunとそのJobで、Jobが受け付けられたときだけ両方が残る。 */
 export interface LaunchJob {
   run: CreateRun;
   job: Omit<CreateJob, 'runId'>;

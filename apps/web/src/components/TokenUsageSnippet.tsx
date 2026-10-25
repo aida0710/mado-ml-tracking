@@ -5,8 +5,8 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * Environment variables for the MLflow and Mado SDKs, shown right after a token is issued. The
- * example holds no token; running it asks for one, which is pasted from the dialog.
+ * tokenを発行した直後に出す、MLflowとPython SDK（mado-tracking）のための環境変数。例にはtokenを
+ * 含めない。実行するとtokenを尋ねるので、ダイアログから貼り付ける。
  */
 export function TokenUsageSnippet({ projectId }: { projectId: string }) {
   useLocale();

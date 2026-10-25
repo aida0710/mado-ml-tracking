@@ -25,7 +25,7 @@ export function TaskFields({ values, catalog, targets, onChange, isEditing = fal
   const code = catalog.codeVersions.find((item) => item.id === values.codeVersionId);
   const target = targets.find((item) => item.id === values.targetId);
   const compatibleCodes = catalog.codeVersions.filter((item) => isCodeCompatible(item, kind, model));
-  // A site takes a GPU count and a time limit; ssh/local targets offer their GPU IDs.
+  // siteはGPUの数と時間の上限を受け取り、ssh/localのコンピュータはGPUのIDを選択肢に出す。
   const isSite = isSiteTarget(target);
   const hasGpus = !isSite && (target?.gpuIds.length ?? 0) > 0;
   const fields: FormField[] = [
@@ -42,7 +42,7 @@ export function TaskFields({ values, catalog, targets, onChange, isEditing = fal
     { name: 'inputDatasetVersionIds', label: text.inputDatasets, type: 'checkboxes', options: options.datasets },
     { name: 'targetId', label: text.target, type: 'select', required: launchOnly,
       options: withEmptyOption(targets.filter((item) => code && isTargetCompatible(item, code)).map((item) => ({ value: item.id, label: item.name }))) },
-    // A target without GPUs gets a note in place of an empty list (rendered between the field groups).
+    // GPUの無いコンピュータには、空の一覧の代わりに注記を出す（欄のまとまりの間に描く）。
     { name: 'gpuIds', label: text.gpuIds, type: 'checkboxes',
       options: target?.gpuIds.map((id) => ({ value: id, label: id })) ?? [], visible: () => hasGpus },
     { name: 'gpuCount', label: text.gpuCount, type: 'number', min: 0, max: MAX_JOB_GPU_COUNT,
@@ -51,7 +51,7 @@ export function TaskFields({ values, catalog, targets, onChange, isEditing = fal
     { name: 'parameters', label: launchOnly ? text.taskParameterOverrides : text.parametersJson, type: 'textarea' },
     { name: 'tags', label: text.tagsJson, type: 'textarea', visible: () => !launchOnly },
   ];
-  // Said under the code version list when it offers nothing, so an empty list is not a dead end.
+  // コードバージョンの一覧に候補が無いときに一覧の下で伝える文。空の一覧を行き止まりにしない。
   const missingCode = !launchOnly && !compatibleCodes.length
     ? explainMissingCodeCandidates({ codeVersions: catalog.codeVersions, taskType: kind || undefined, families: model ? [model.family] : [] })
     : null;

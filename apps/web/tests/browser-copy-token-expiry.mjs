@@ -11,7 +11,7 @@ const httpBase = process.env.MMT_WEB_HTTP_URL;
 if (!httpBase) throw new Error('Set MMT_WEB_HTTP_URL to a non-loopback HTTP URL of the same test server');
 const screenshots = process.env.MMT_SCREENSHOT_DIR;
 if (screenshots) await mkdir(screenshots, { recursive: true });
-// Two years exercises the former 365-day cap; browser timestamps are compared in milliseconds.
+// 2年にして、以前の365日の上限を試す。ブラウザの時刻はミリ秒で比べる。
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 const CUSTOM_DURATION_DAYS = 730;
 const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'],
@@ -70,10 +70,10 @@ try {
   await page.bringToFront();
   await guide.getByRole('heading', { name: 'SDK・MLflow 3から接続' }).waitFor();
 
-  // Native copying remains available on a secure origin.
+  // 安全なoriginでは、ブラウザ標準のコピーを引き続き使える。
   await copyProjectId();
 
-  // A refusal by the native API uses the same fallback, preserving the exact value.
+  // ブラウザ標準のAPIが断ったときも同じ代わりのコピー手段を使い、値をそのまま保つ。
   await page.evaluate(() => {
     navigator.clipboard.writeText = async () => { throw new DOMException('Denied', 'NotAllowedError'); };
   });
@@ -87,7 +87,7 @@ try {
   await copyProjectId();
   assert.equal(await page.locator('textarea[aria-hidden=true]').count(), 0);
 
-  // Both rows have identical dimensions with either language selected, including narrow screens.
+  // どちらの言語を選んでいても、狭い画面を含め、2つの行は同じ大きさになる。
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: 960 });
     for (const language of ['English', '日本語']) {

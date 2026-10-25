@@ -7,9 +7,9 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * Shown by AuthGate before any other screen until the initial password is replaced; onChanged
- * reloads the session. It replaces the app, so it also offers the only way out besides changing.
- * A voluntary change is PasswordChangePage in 全体設定.
+ * 初期パスワードを変えるまで、AuthGateがほかのどの画面よりも先に出す。onChangedはsessionを
+ * 読み直す。アプリの代わりに出るので、パスワードを変える以外の唯一の出口も置く。
+ * 自分の意思での変更は、全体設定のPasswordChangePage。
  */
 export function RequiredPasswordChangePage({ onChanged }: { onChanged: () => void }) {
   useLocale();

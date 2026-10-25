@@ -10,16 +10,16 @@ export type ServerAudioPreviewState =
   | { status: 'ready'; waveform: ServerWaveform; spectrogramUrl: string | null };
 
 /**
- * The server-generated waveform and spectrogram of an audio Artifact the browser does not analyze.
- * Polls while the preview worker is still generating them. A failed request reads as 'none':
- * playback works without a preview, so the error is not shown.
+ * ブラウザが解析しない音声のArtifactについて、サーバーが作った波形とスペクトログラム。プレビューの
+ * workerがまだ作っている間はポーリングする。要求が失敗したら'none'として扱う。プレビューが無くても
+ * 再生はできるので、エラーは出さない。
  */
 export function useServerAudioPreview(
   artifact: Pick<Artifact, 'projectId' | 'id'>,
   enabled: boolean,
 ): ServerAudioPreviewState {
   const listKey = enabled ? `${artifact.projectId}/${artifact.id}` : null;
-  // The key whose previews have settled; polling stops for it and restarts for another Artifact.
+  // プレビューが出そろったキー。そのキーではポーリングを止め、別のArtifactでは再び始める。
   const [settledKey, setSettledKey] = useState<string | null>(null);
   const previews = useQuery({
     key: listKey,
@@ -27,7 +27,7 @@ export function useServerAudioPreview(
     pollMs: settledKey === listKey ? undefined : EXECUTION_POLL_MS,
   });
   const summary = previews.value ? summarizeServerAudioPreviews(previews.value) : null;
-  // A failed request also stops polling: the viewer then plays the file without a preview.
+  // 要求が失敗してもポーリングを止める。そのときビューアはプレビュー無しでファイルを再生する。
   const isSettled = (summary !== null && summary.status !== 'pending') || previews.error !== null;
   if (isSettled && settledKey !== listKey) setSettledKey(listKey);
 

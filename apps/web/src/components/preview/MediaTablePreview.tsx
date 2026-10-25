@@ -6,8 +6,8 @@ import { MediaTableView } from '../media/MediaTableView';
 import { TextPreview } from './TextPreview';
 
 /**
- * A Run's JSON file drawn as the media table it was logged as (MLflow log_table or a native table),
- * with the same audio and image cells as the Media tab. Other JSON files stay plain text.
+ * RunのJSONファイルを、記録したときのメディアの表（MLflowのlog_tableまたはネイティブの表）
+ * として描く。音声と画像のセルはメディアのタブと同じ。ほかのJSONファイルは普通のテキストのまま。
  */
 export function MediaTablePreview({ artifact, runId }: { artifact: Artifact; runId: string }) {
   const table = useQuery({ key: `${artifact.projectId}:artifact-media-table:${artifact.id}`, load: (signal) =>

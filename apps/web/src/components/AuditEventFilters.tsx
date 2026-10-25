@@ -11,8 +11,8 @@ const outcomeLabels: Record<AuditEvent['outcome'], string> = {
 };
 
 /**
- * Narrows the audit log by outcome (to find refusals at once) and, in the global log, shows or
- * hides the sign-ins that make up most of it.
+ * 監査ログを結果で絞り込む（拒否をすぐ見つけるため）。全体のログでは、大半を占めるログインの記録の
+ * 表示と非表示も切り替える。
  */
 export function AuditEventFilters({
   filter,
@@ -21,7 +21,7 @@ export function AuditEventFilters({
 }: {
   filter: AuditEventFilter;
   onChange: (filter: AuditEventFilter) => void;
-  /** Sign-ins belong to no Project, so only the global log has them to hide. */
+  /** ログインはどのProjectにも属さないので、隠す対象があるのは全体のログだけ。 */
   offersSignIns: boolean;
 }) {
   useLocale();

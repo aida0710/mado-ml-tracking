@@ -24,7 +24,7 @@ mado_storage_capacity_tracking_interval_seconds{connection_id="c1"} 300
     expect(first?.buckets[0]?.bytes?.value).toBe(4096);
     expect(second?.buckets[0]?.bytes?.value).toBe(8192);
     expect(first?.buckets[0]?.prefixes[0]?.objects?.value).toBe(1);
-    // A partial prefix listing must not replace or be added to a bucket's measured total.
+    // 一部だけのprefixの一覧で、bucketの計測済みの合計を置き換えたり、そこへ足したりしない。
     expect(first?.buckets[0]?.prefixes[0]?.bytes?.value).toBe(1024);
   });
 

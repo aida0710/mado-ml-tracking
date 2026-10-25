@@ -8,9 +8,9 @@ import { modelsTextTemplates } from '../i18n/models';
 import { text } from '../i18n/catalog';
 
 /**
- * Under a code version's family list (one per line): the Project's families not listed yet, added
- * with a click, and a warning for a line that differs from an existing family only in letter case,
- * which would keep this code from matching that family's Models.
+ * コードバージョンのモデル系列の一覧（1行に1つ）の下に置く。まだ挙げていないProjectのモデル系列を
+ * クリックで足せるようにし、既存のモデル系列と大文字・小文字だけが違う行には警告を出す。そのままでは
+ * このコードがそのモデル系列のモデルに一致しなくなるため。
  */
 export function ModelFamilyListHints({
   value,

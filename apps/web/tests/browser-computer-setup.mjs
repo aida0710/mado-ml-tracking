@@ -1,10 +1,10 @@
-// Browser check of adding and editing an ssh or local computer in two steps (全体設定 → コンピュータ)
-// against the isolated mock API (tests/browserApi.mjs, tests/computerSetupMock.mjs): step 1「接続」
-// with the SSH key and known_hosts paths offered from the chosen worker's host, the check by that
-// worker, step 2「接続後の設定」filled in from the check with the work directory completed from a
-// directory the worker reads, a computer set up by hand when the check fails, the dialog without
-// workers, and the edit dialog's two tabs and re-check. Also at 390px without horizontal scrolling.
-// Start Vite on MMT_WEB_URL first; MMT_SCREENSHOT_DIR, when set, receives the screenshots.
+// sshまたはlocalのコンピュータを2段階で追加・変更する操作（全体設定 → コンピュータ）のブラウザでの
+// 確認。分離したモックのAPI（tests/browserApi.mjs、tests/computerSetupMock.mjs）を相手にする。
+// 選んだworkerのホストからSSH鍵とknown_hostsのパスを候補に出す手順1「接続」、そのworkerによる確認、
+// 確認の結果で埋まり、workerが読んだディレクトリから作業ディレクトリを補完する手順2「接続後の設定」、
+// 確認に失敗したときに手で設定するコンピュータ、workerがいないときのダイアログ、変更のダイアログの
+// 2つのタブと再確認。390pxで横にスクロールしないことも確かめる。
+// 先にMMT_WEB_URLでViteを起動しておく。MMT_SCREENSHOT_DIRを設定すると、そこにスクリーンショットを保存する。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -16,7 +16,7 @@ const { chromium } = await import(pathToFileURL(modulePath).href);
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
 if (screenshotDirectory) await mkdir(screenshotDirectory, { recursive: true });
-// A check finishes on the mock's next read; the dialog reads again every three seconds.
+// 確認はモックを次に読んだときに終わる。ダイアログは3秒ごとに読み直す。
 const CHECK_WAIT_MS = 15_000;
 
 const api = createBrowserApi();
@@ -35,7 +35,7 @@ const pageErrors = [];
 page.on('pageerror', (error) => pageErrors.push(error.message));
 
 const dialog = () => page.getByRole('dialog').last();
-// Required fields carry " *" after their label; the rest of the label must match whole.
+// 必須の欄はラベルの後ろに" *"が付く。それ以外の部分はラベル全体と一致しなければならない。
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const field = (label) => dialog().getByLabel(new RegExp(`^${escapeRegExp(label)}(?: \\*)?$`));
 const button = (name) => dialog().getByRole('button', { name, exact: true });
@@ -46,7 +46,7 @@ const screenshot = async (name) => {
   if (screenshotDirectory)
     await page.screenshot({ path: `${screenshotDirectory}/${name}.png`, fullPage: true });
 };
-// The re-check's request reaches the mock, then its progress gives way to the result.
+// 再確認の要求がモックに届き、その後で進み具合の表示が結果に替わる。
 const waitForNewCheck = async (checksBefore) => {
   while (setup.checks.length === checksBefore) await page.waitForTimeout(100);
   await dialog().getByText('接続を確認しました').waitFor({ timeout: CHECK_WAIT_MS });
@@ -63,7 +63,7 @@ try {
   await field('名前').fill('GPU server');
   assert.equal(await dialog().getByRole('radio', { name: /^SSH/ }).isChecked(), true);
   assert.equal(await dialog().getByRole('radio', { name: /^Private/ }).isChecked(), true);
-  // The only online worker is chosen by itself.
+  // オンラインのworkerが1つだけなら、それが最初から選ばれている。
   assert.equal(await dialog().getByRole('radio', { name: /^ui-worker/ }).isChecked(), true);
   await field('Host').fill('gpu.example.invalid');
   await field('SSHユーザー').fill('mmt');
@@ -77,7 +77,7 @@ try {
   await button('接続を確認して次へ').click();
   await dialog().getByTestId('computer-setup-step').waitFor({ timeout: CHECK_WAIT_MS });
   const created = lastCall('POST', /^\/targets$/).body;
-  // Saved disabled with the connection only; the setup comes from the check.
+  // 接続の設定だけを、無効の状態で保存する。接続後の設定は確認の結果から入る。
   assert.equal(created.enabled, false);
   assert.equal(created.workDirectory, '');
   assert.equal(created.pythonExecutable, '');
@@ -99,13 +99,13 @@ try {
   const gpuOne = dialog().getByRole('checkbox', { name: /^1: NVIDIA H100/ });
   assert.equal(await gpuOne.isChecked(), true);
   assert.equal(await field('同時実行数').inputValue(), '2');
-  // A login node submits to other machines: one GPU found here, one typed for the compute node.
+  // ログインノードはほかのマシンへ投入する。GPUは1つをここで見つけ、もう1つは計算ノードの分を入力する。
   await gpuOne.uncheck();
   assert.equal(await field('GPU ID（1行に1件）').inputValue(), '0');
   assert.equal(await field('同時実行数').inputValue(), '1');
   await field('GPU ID（1行に1件）').fill('0\nnode2:0');
   assert.equal(await field('同時実行数').inputValue(), '2');
-  // Typed up to a /, the worker reads the directory; hidden entries wait for a typed dot.
+  // /まで入力するとworkerがそのディレクトリを読む。隠しファイルはドット（.）を入力するまで出さない。
   await field('作業ディレクトリ').fill('/home/mmt/');
   await option('/home/mmt/projects/').waitFor({ timeout: CHECK_WAIT_MS });
   await screenshot('computer-setup-03-directory-completion');
@@ -145,7 +145,7 @@ try {
   await waitForNewCheck(checksBefore);
   assert.equal(setup.checks.length, checksBefore + 1);
   await screenshot('computer-setup-04-edit');
-  // A changed connection is saved before the worker checks it again.
+  // 変えた接続の設定は、workerが確認し直す前に保存する。
   await page.getByRole('tab', { name: '接続', exact: true }).click();
   await field('Port').fill('2222');
   await dialog().getByText('保存していない接続の変更は、確認の前に保存します。').waitFor();
@@ -169,7 +169,7 @@ try {
     .getByText('選んだworkerが確認を受け取りませんでした', { exact: false })
     .waitFor({ timeout: CHECK_WAIT_MS });
   await screenshot('computer-setup-05-no-answer');
-  // The failed check may be asked again once the connection is fixed.
+  // 失敗した確認は、接続を直した後でもう一度頼める。
   await dialog().locator('button[data-intent="check"]:not([disabled])').waitFor();
   await button('確認せずに次へ').click();
   await dialog().getByTestId('computer-setup-step').waitFor();

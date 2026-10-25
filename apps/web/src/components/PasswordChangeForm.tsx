@@ -7,7 +7,7 @@ import { LocalizedError } from '../lib/localizedError';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-/** Changes the signed-in local user's password; the API keeps this session and ends the others. */
+/** ログイン中のローカルアカウントのパスワードを変える。APIはこのセッションを残し、ほかを終える。 */
 export function PasswordChangeForm({
   isRequired = false,
   onChanged = () => undefined,

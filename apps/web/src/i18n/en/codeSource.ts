@@ -1,4 +1,4 @@
-// The read-only view of a saved code version's files on the Code page.
+// Codeの画面の、保存したコードバージョンのファイルを読むだけの表示。
 export const codeSourceText = {
   sourceHeading: 'Files',
   editedFiles: 'Files changed on top of the repository',

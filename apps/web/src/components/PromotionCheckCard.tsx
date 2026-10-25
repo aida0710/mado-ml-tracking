@@ -9,7 +9,7 @@ import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 import { promotionTextTemplates } from '../i18n/promotion';
 
-// Notes on a pass that an autoPromote policy did not turn into an alias change.
+// 合格したが、autoPromoteのpolicyがaliasの変更にしなかったときの注記。
 const automaticPromotionNotes: Partial<Record<NonNullable<PromotionEvaluation['reason']>, string>> =
   {
     get baseline_changed() { return text.promotionCheckBaselineChanged; },
@@ -29,10 +29,9 @@ function latestDecision(
 }
 
 /**
- * Where the version stands against each promotion policy of its Model: passed, failed or still
- * waiting for an evaluation, the criteria behind it, and a button to promote by hand with that
- * decision as evidence. Shown to editors and admins only; the API decides what is allowed.
- * The page owns `choices` so that its reload also refreshes the decisions shown here.
+ * モデルの昇格policyごとの、バージョンの状況。合格、不合格、まだ評価待ちのどれかと、その根拠の基準、
+ * その判定を根拠に手で昇格するボタン。EditorとAdminにだけ出し、何が許されるかはAPIが決める。
+ * ページが`choices`を持ち、ページの再読み込みでここに出す判定も新しくなるようにする。
  */
 export function PromotionCheckCard({
   detail,

@@ -1,24 +1,24 @@
 import { memoizePerIntlLocale } from '../i18n/intlFormatterCache';
 
-// Tick labels of the chart value axis. The axis is narrow, so a label stays within about ten
-// characters: very large or small numbers switch to exponent notation, bytes to binary units.
+// 図の値の軸の目盛りのラベル。軸は幅が狭いので、ラベルは10文字ほどに収める。非常に大きい数や
+// 小さい数は指数表記に、バイトは2進の単位に切り替える。
 
-/** What the values of a chart measure; system metric panels know their unit, others do not. */
+/** 図の値が測るもの。システムメトリクスのパネルは単位を知っているが、ほかは知らない。 */
 export type ChartValueUnit = 'number' | 'bytes' | 'bytes_per_second';
 
-// Enough to tell neighboring ticks apart (0.0575 next to 0.105) without widening the axis.
+// 軸を広げずに、隣の目盛り（0.105の隣の0.0575）を見分けるのに足りる桁数。
 const TICK_SIGNIFICANT_DIGITS = 4;
-// Outside this range plain digits (100000, 0.000001) no longer fit the axis width.
+// この範囲の外では、ふつうの数字（100000、0.000001）が軸の幅に収まらない。
 const EXPONENT_ABOVE = 1e5;
 const EXPONENT_BELOW = 1e-3;
-// A unit already says the magnitude, so three digits are enough and keep `1.14 MiB/s` short.
+// 単位が桁の大きさを表すので3桁で足り、`1.14 MiB/s`を短く保てる。
 const BYTE_TICK_SIGNIFICANT_DIGITS = 3;
-// recharts wraps tick labels at spaces; a no-break space keeps the number and its unit together.
+// rechartsは目盛りのラベルを空白で折り返す。ノーブレークスペースなら数値と単位が離れない。
 const UNIT_SEPARATOR = '\u00a0';
 const BYTES_PER_BINARY_UNIT = 1024;
 const BINARY_BYTE_UNITS = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];
 
-// Digits without grouping separators, which would widen the axis.
+// 桁区切りを入れない数字。桁区切りは軸を広げてしまう。
 const memoizePlainNumberFormat = (significantDigits: number) =>
   memoizePerIntlLocale(
     (intlLocale) =>
@@ -27,7 +27,7 @@ const memoizePlainNumberFormat = (significantDigits: number) =>
 const getTickNumberFormat = memoizePlainNumberFormat(TICK_SIGNIFICANT_DIGITS);
 const getByteTickNumberFormat = memoizePlainNumberFormat(BYTE_TICK_SIGNIFICANT_DIGITS);
 
-/** `1e-15`, `2.5e+7`: the mantissa keeps the significant digits, trailing zeros dropped. */
+/** `1e-15`、`2.5e+7`。仮数部は有効桁数を保ち、末尾の0は落とす。 */
 function exponentNumber(value: number): string {
   const [mantissa = '', exponent = ''] = value.toExponential(TICK_SIGNIFICANT_DIGITS - 1).split('e');
   const trimmed = mantissa.includes('.') ? mantissa.replace(/\.?0+$/, '') : mantissa;

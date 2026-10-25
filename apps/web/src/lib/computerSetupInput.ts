@@ -4,7 +4,7 @@ import type { FormValues } from '../types/form';
 import { getFieldValue } from './formValues';
 import { buildTargetInput, type TargetInput } from './targetInput';
 
-/** Step 1「接続」of an ssh or local computer: what it is called and how a worker reaches it. */
+/** sshやlocalのコンピュータの手順1「接続」。呼び名と、workerがどうつなぐか。 */
 const CONNECTION_FIELDS = [
   'name',
   'executor',
@@ -16,7 +16,7 @@ const CONNECTION_FIELDS = [
   'knownHostsPath',
 ] as const satisfies readonly (keyof TargetInput)[];
 
-/** Step 2「接続後の設定」: what its Jobs use once a worker reaches it. */
+/** 手順2「接続後の設定」。workerがつないだ後に、そのJobが使うもの。 */
 const SETUP_FIELDS = [
   'workDirectory',
   'pythonExecutable',
@@ -37,26 +37,26 @@ function pickFields<K extends keyof TargetInput>(
 }
 
 /**
- * POST /targets at the end of step 1: the computer is saved disabled, so it takes no Jobs until
- * its setup is saved (the API needs the work directory and Python only to enable it).
+ * 手順1の最後のPOST /targets。コンピュータは無効のまま保存し、設定を保存するまでJobを受けない
+ * ようにする（APIが作業ディレクトリとPythonを求めるのは、有効にするときだけ）。
  */
 export function buildNewComputerCreate(values: FormValues): CreateTarget {
   return { ...buildTargetInput(values), enabled: false };
 }
 
-/** PATCH of step 1 when the computer exists (step 1 again, or a re-check after editing it). */
+/** コンピュータが既にあるときの手順1のPATCH（手順1をやり直したときや、編集後の再確認）。 */
 export function buildConnectionPatch(values: FormValues, target: ComputeTarget): UpdateTarget {
   return pickFields(buildTargetInput(values, target), CONNECTION_FIELDS);
 }
 
-/** PATCH of step 2, which also enables the computer when 有効 is checked. */
+/** 手順2のPATCH。「有効」にチェックがあれば、コンピュータを有効にもする。 */
 export function buildSetupPatch(values: FormValues, target: ComputeTarget): UpdateTarget {
   return pickFields(buildTargetInput(values, target), SETUP_FIELDS);
 }
 
 /**
- * The connection typed differs from the saved one, so a check must save it first. Compared as
- * typed, so a half-typed form (shown while it is edited) never fails to parse here.
+ * 入力した接続が保存済みのものと違うので、確認の前に保存しなければならない。入力のままの文字で
+ * 比べるので、入力途中のフォーム（編集中に表示される）でもここで解析に失敗しない。
  */
 export function hasConnectionChanges(values: FormValues, target: ComputeTarget): boolean {
   return CONNECTION_FIELDS.some((field) => getFieldValue(values, field) !== String(target[field]));

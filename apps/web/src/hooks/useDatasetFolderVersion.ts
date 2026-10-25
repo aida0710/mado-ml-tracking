@@ -14,33 +14,33 @@ import { useArtifactUploadQueue } from './useArtifactUploadQueue';
 import { useMutation } from './useMutation';
 import { useLatestRef } from './useLatestRef';
 
-/** Version fields sent with the file list once every upload has finished. */
+/** すべてのアップロードが終わったときに、ファイルの一覧と一緒に送るバージョンの項目。 */
 export interface DatasetFolderVersionFields {
-  /** undefined takes the next integer version. */
+  /** undefinedなら、次の整数のバージョンになる。 */
   version?: string;
   metadata: JsonObject;
   parentDatasetVersionIds: string[];
 }
 
-/** An attempt of this folder upload that stopped before its version, and the files it stored. */
+/** このフォルダのアップロードのうちバージョンを作る前に止まったものと、それが保存したファイル。 */
 export interface DatasetFolderContinuation {
   folder: string;
   storedFiles: StoredFolderFile[];
 }
 
-/** How far the comparison of the chosen files with an earlier attempt's stored files is. */
+/** 選んだファイルと、前のアップロードが保存したファイルとの比較が、どこまで進んだか。 */
 export interface DatasetFolderMatching {
   checked: number;
   total: number;
 }
 
 /**
- * Uploads a folder as standalone Artifacts with the resumable queue, then creates an 'artifacts'
- * DatasetVersion from the completed Artifact IDs. Creation starts by itself once every file is
- * stored; a failed creation is retried by hand, the uploads are not repeated. Files that stopped
- * (failed, paused, or canceled) hold the version back until they are sent again or left out.
- * Continuing an earlier attempt uploads into its folder, so its stored files whose bytes match are
- * listed as they are and its open uploads continue from the parts the server holds.
+ * フォルダを再開できるキューでRunに属さないArtifactとしてアップロードし、完了したArtifactのIDから
+ * 'artifacts'のDatasetVersionを作る。すべてのファイルを保存したら作成は自動で始まる。作成に
+ * 失敗したら手でやり直し、アップロードは繰り返さない。止まったファイル（失敗・一時停止・取り消し）が
+ * あると、送り直すか外すまでバージョンは作らない。前のアップロードの続きを送るときはそのフォルダへ
+ * アップロードするので、保存済みでバイト列が一致するファイルはそのまま一覧に入れ、開いている
+ * アップロードはサーバーが持つpartの続きから送る。
  */
 export function useDatasetFolderVersion({
   projectId,
@@ -58,7 +58,7 @@ export function useDatasetFolderVersion({
   const fieldsRef = useRef<DatasetFolderVersionFields | null>(null);
   const attemptedRef = useRef(false);
   const matchingControllerRef = useRef<AbortController | null>(null);
-  // Read after the request: the dialog may have re-rendered with a new callback meanwhile.
+  // 要求の後で読む。その間にダイアログが新しいコールバックで描画し直されているかもしれない。
   const onCreatedRef = useLatestRef(onCreated);
 
   const { storedArtifactIds, unfinishedItemIds, isUploaded } = datasetFolderProgress(entries, queue.items);
@@ -120,8 +120,8 @@ export function useDatasetFolderVersion({
   }
 
   /**
-   * Stops reading the chosen files for the comparison and goes back to before the start: nothing
-   * was sent yet, so the folder can be started again or sent anew.
+   * 比較のための選んだファイルの読み込みを止め、始める前に戻る。まだ何も送っていないので、
+   * フォルダをもう一度始めることも、新しく送ることもできる。
    */
   function cancelMatching() {
     matchingControllerRef.current?.abort();
@@ -130,18 +130,18 @@ export function useDatasetFolderVersion({
     setMatching(null);
   }
 
-  /** Sends every stopped file again; canceled ones start from the beginning. */
+  /** 止まったファイルをすべて送り直す。取り消したものは最初から送る。 */
   function resendUnfinished() {
     for (const id of unfinishedItemIds) queue.resume(id);
   }
 
-  /** Creates the version from the stored files only; open sessions of the rest are discarded. */
+  /** 保存済みのファイルだけでバージョンを作る。残りの開いているセッションは破棄する。 */
   function createWithoutUnfinished() {
     for (const id of unfinishedItemIds) void queue.cancel(id);
     setEntries((previous) => previous.filter((entry) => storedArtifactIds.has(entry.artifactPath)));
   }
 
-  // Reads the latest entries and queue state; it runs once when the uploads finish.
+  // 最新のentriesとキューの状態を読む。アップロードが終わったときに1回だけ動く。
   const createOnceUploaded = useEffectEvent(() => {
     if (!attemptedRef.current) void create();
   });
@@ -149,7 +149,7 @@ export function useDatasetFolderVersion({
     if (isUploaded) createOnceUploaded();
   }, [isUploaded]);
 
-  // Closing the dialog stops reading files for the comparison.
+  // ダイアログを閉じたら、比較のためのファイルの読み込みを止める。
   useEffect(() => () => matchingControllerRef.current?.abort(), []);
 
   return {
@@ -159,7 +159,7 @@ export function useDatasetFolderVersion({
     matching,
     cancelMatching,
     isUploaded,
-    /** Uploads stopped short of the whole folder; the dialog asks to resend or leave them out. */
+    /** アップロードがフォルダ全体に届かずに止まった。ダイアログが、送り直すか外すかを尋ねる。 */
     isWaitingForChoice,
     unfinishedCount: unfinishedItemIds.length,
     storedCount: storedArtifactIds.size,
@@ -179,9 +179,8 @@ export function useDatasetFolderVersion({
 }
 
 /**
- * Hashes each chosen file that has a stored file at the same path and size, one at a time, and
- * returns the stored Artifact of those whose bytes are the same. A file that cannot be read is
- * simply uploaded again.
+ * 同じパスとサイズの保存済みのファイルがある選んだファイルを1つずつハッシュし、バイト列が同じ
+ * ものについて保存済みのArtifactを返す。読めないファイルは、そのままアップロードし直す。
  */
 async function findStoredCopies({
   pairs,
@@ -195,7 +194,7 @@ async function findStoredCopies({
   const reused = new Map<DatasetFolderEntry, string>();
   onProgress({ checked: 0, total: pairs.length });
   for (const [index, { entry, stored }] of pairs.entries()) {
-    // Web Crypto reads a file whole without the signal, so the stop is checked between files.
+    // Web Cryptoはsignalを使わずにファイル全体を読むので、止めたかどうかはファイルの間で確かめる。
     if (signal.aborted) break;
     try {
       if ((await sha256OfFile(entry.source.file, signal)) === stored.sha256) reused.set(entry, stored.id);

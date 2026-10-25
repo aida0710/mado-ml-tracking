@@ -1,14 +1,14 @@
-// Runs a script's list of captures: all of them, or only the ones named on the command line.
+// スクリプトの撮影の一覧を実行する。全部か、コマンドラインで名前を指定したものだけ。
 
-/** Fails before anything runs when a name on the command line is not one of the captures. */
+/** コマンドラインの名前に撮影の一覧に無いものがあれば、何かを実行する前に失敗する。 */
 export function assertKnownCaptures(captures, names) {
   const unknown = names.filter((name) => !Object.hasOwn(captures, name));
   if (unknown.length) throw new Error(`unknown screenshot: ${unknown.join(', ')}`);
 }
 
 /**
- * Runs the named captures (all when `only` is empty) one after another. A failed capture is
- * reported and the rest still run; the exit code is 1 when any failed.
+ * 名前を指定した撮影（`only`が空なら全部）を1つずつ順に実行する。失敗した撮影は報告して残りを
+ * 続け、1つでも失敗すれば終了コードを1にする。
  */
 export async function runCaptures(captures, only, capture) {
   assertKnownCaptures(captures, only);

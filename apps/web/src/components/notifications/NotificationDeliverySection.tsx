@@ -8,7 +8,7 @@ import { useLocale } from '../../i18n/useLocale';
 import { text } from '../../i18n/catalog';
 import { notificationDeliveryStatusLabels } from '../../i18n/notifications';
 
-/** The Project's recent notification deliveries, with the reason of each failure. */
+/** Projectの最近の通知の送信と、失敗したものはその理由。 */
 export function NotificationDeliverySection({
   settings,
 }: {

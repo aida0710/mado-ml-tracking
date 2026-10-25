@@ -1,6 +1,6 @@
 import type { PluginConnection } from '@mmt/contracts';
 
-// Saved configuration and enabled state delimit results that may still be acted on.
+// 保存した設定と有効・無効の状態で、まだ操作してよい結果の範囲を区切る。
 export function getPluginConnectionKey(
   plugin: Pick<PluginConnection, 'id' | 'projectId' | 'configRevision' | 'enabled'>,
 ): string {

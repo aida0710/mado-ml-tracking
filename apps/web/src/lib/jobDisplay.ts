@@ -3,7 +3,7 @@ import { text } from '../i18n/catalog';
 import { jobEndReasonLabels, jobPhaseLabels, jobsTextTemplates } from '../i18n/jobs';
 
 const ACTIVE_JOB_STATUSES: readonly JobStatus[] = ['queued', 'claimed', 'running'];
-// The full id stays in the title; eight characters tell Jobs, hooks and arrays apart in a Project.
+// 完全なidはtitleに残す。1つのProjectの中なら、8文字でJob・フック・arrayを見分けられる。
 const SHORT_ID_LENGTH = 8;
 
 export const shortId = (id: string): string => id.slice(0, SHORT_ID_LENGTH);
@@ -14,7 +14,7 @@ export interface JobBadge {
   className: string;
 }
 
-// waiting_manual waits for a person; the other phases are on their way like a claimed Job.
+// waiting_manualは人の操作を待つ。ほかの段階は、claimedのJobと同じく進んでいる途中。
 const phaseBadgeClass: Record<Exclude<JobPhase, 'running'>, string> = {
   waiting_manual: 'status-attention',
   submitting: 'status-info',
@@ -26,9 +26,9 @@ export const isActiveJob = (job: Pick<Job, 'status'>): boolean =>
   ACTIVE_JOB_STATUSES.includes(job.status);
 
 /**
- * The badge beside a Job's status: where an active site Job is between queued and running, or why
- * an ended site Job stopped. null when it would only repeat the status (a running container), for
- * ssh/local Jobs, which have no phase, and for an ended Job without a site reason.
+ * Jobの状態の横に付けるバッジ。動いているsiteのJobなら待機中から実行中までのどこにいるか、終わった
+ * siteのJobなら止まった理由。状態を繰り返すだけのとき（実行中のコンテナ）や、段階の無い
+ * ssh・localのJob、siteの理由の無い終わったJobではnull。
  */
 export function jobDetailBadge(job: Pick<Job, 'status' | 'phase' | 'endReason'>): JobBadge | null {
   if (!isActiveJob(job))
@@ -40,8 +40,8 @@ export function jobDetailBadge(job: Pick<Job, 'status' | 'phase' | 'endReason'>)
 }
 
 /**
- * The phase of a site Job for its details. A queued site Job without a phase waits for the
- * launcher; an ended Job keeps the last phase it reached.
+ * 詳細に出すsiteのJobの段階。段階の無い待機中のsiteのJobは、ランチャーを待っている。終わったJobは
+ * 最後に達した段階を残す。
  */
 export function jobPhaseText(job: Pick<Job, 'status' | 'phase'>, isSite: boolean): string | null {
   if (job.phase) return jobPhaseLabels[job.phase];
@@ -49,21 +49,21 @@ export function jobPhaseText(job: Pick<Job, 'status' | 'phase'>, isSite: boolean
 }
 
 /**
- * The GPUs of a Job: the IDs it holds, or the count a site Job asked for before its runner
- * reported the IDs (ssh/local Jobs always hold as many IDs as their count).
+ * JobのGPU。持っているGPUのIDか、runnerがIDを知らせる前ならsiteのJobが求めた数
+ * （ssh・localのJobは、常に数と同じだけのIDを持つ）。
  */
 export function jobGpuSummary(job: Pick<Job, 'gpuIds' | 'gpuCount'>): string {
   if (job.gpuIds.length) return job.gpuIds.join(', ');
   return job.gpuCount > 0 ? jobsTextTemplates.gpuCount(job.gpuCount) : text.cpuOnly;
 }
 
-/** "index / size" of an array member; null for a Job outside an array. */
+/** arrayのJobの"index / size"。arrayに入っていないJobではnull。 */
 export function jobArrayMemberLabel(job: Pick<Job, 'arrayIndex' | 'arraySize'>): string | null {
   if (job.arrayIndex === null || job.arraySize === null) return null;
   return jobsTextTemplates.arrayMember(job.arrayIndex, job.arraySize);
 }
 
-/** The automatic retries a site Job (or a hook's Jobs) asked for, or "none". */
+/** siteのJob（またはフックのJob）が求めた自動の再実行。無ければ"none"。 */
 export function formatAutoRetries(flags: Pick<Job, 'retryOnFailure' | 'retryOnTimeout'>): string {
   const retries = [
     flags.retryOnFailure && text.jobRetryOnFailure,
@@ -73,8 +73,8 @@ export function formatAutoRetries(flags: Pick<Job, 'retryOnFailure' | 'retryOnTi
 }
 
 /**
- * "attempt / maxAttempts". maxAttempts bounds the automatic retries only, so a Job a person
- * retried past it says so instead of showing more attempts than the limit.
+ * "attempt / maxAttempts"。maxAttemptsは自動の再実行だけの上限なので、人がそれを超えて再実行した
+ * Jobでは、上限より多い試行回数を出す代わりにそのことを伝える。
  */
 export function jobAttemptLabel(job: Pick<Job, 'attempt' | 'maxAttempts'>): string {
   return job.attempt <= job.maxAttempts

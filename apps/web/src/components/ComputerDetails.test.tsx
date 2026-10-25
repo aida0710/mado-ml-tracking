@@ -4,7 +4,7 @@ import type { ComputeTargetDetails } from '@mmt/contracts';
 import { ComputerDetails } from './ComputerDetails';
 import { computeTargetDetails } from '../../tests/fixtures/execution';
 
-// The worker setup fills in the address the page was opened with.
+// workerの設定には、ページを開いたときのアドレスが入る。
 const PAGE_ORIGIN = 'https://mmt.example.test';
 const WORKER_SETUP_TITLE = 'workerの設定</h2>';
 const aliceComputer: ComputeTargetDetails = {

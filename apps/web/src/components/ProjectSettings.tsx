@@ -33,10 +33,10 @@ function describeImpact(impact: ProjectSettingsImpact): string {
 }
 
 /**
- * The Project's description, visibility and storage; only a Project admin changes them, and
- * everyone else is told whom to ask (`adminNames`, unknown while the members load). Changing
- * who may open the Project or where new Artifacts go is confirmed first, since one click on
- * 保存 for the description would otherwise carry it along unnoticed.
+ * Projectの説明、公開範囲、保存先。変えられるのはProject adminだけで、ほかの人にはだれに頼めばよいか
+ * を伝える（`adminNames`。メンバーを読み込む間は分からない）。Projectを開ける人と新しいArtifactの
+ * 保存先の変更は先に確かめる。そうしないと、説明のために「保存」を1回押しただけで、気づかないうちに
+ * 一緒に変わってしまう。
  */
 export function ProjectSettings({ adminNames }: { adminNames: readonly string[] | undefined }) {
   useLocale();

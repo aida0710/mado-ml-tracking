@@ -26,7 +26,7 @@ function ArrayStates({ counts }: { counts: JobArraySummary['counts'] }) {
   );
 }
 
-/** Job arrays among the listed Jobs, with how many members are in each state. */
+/** 一覧のJobに含まれるarrayと、それぞれの状態ごとの要素の数。 */
 export function JobArraysTable({
   arrays,
   targets,

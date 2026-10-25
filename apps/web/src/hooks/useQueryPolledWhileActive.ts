@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { EXECUTION_POLL_MS, useQuery, type QueryState } from './useQuery';
 
 /**
- * useQuery that polls only while the latest value still has work in progress, so a page left
- * open on finished results stops sending requests. A reload that brings new work resumes polling.
+ * 最新の値にまだ進行中の処理があるときだけポーリングするuseQuery。終わった結果を開いたままの
+ * ページは要求を送らなくなる。読み直しで新しい処理が届けば、ポーリングを再開する。
  */
 export function useQueryPolledWhileActive<T>(
   key: string | null,
@@ -12,7 +12,7 @@ export function useQueryPolledWhileActive<T>(
 ): QueryState<T> {
   const [isPolling, setPolling] = useState(true);
   const query = useQuery({ key, load: loader, pollMs: isPolling ? EXECUTION_POLL_MS : undefined });
-  // While the key has no value yet, keep the previous decision.
+  // キーにまだ値が無い間は、前の判断を保つ。
   const shouldPoll = query.value === undefined ? isPolling : isActive(query.value);
   if (shouldPoll !== isPolling) setPolling(shouldPoll);
   return query;
