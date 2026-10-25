@@ -1,6 +1,6 @@
-// The preview worker process: generates waveform peaks, spectrograms and video posters with
-// ffmpeg. It runs apart from the API (compose service `preview`, Dockerfile.preview) so the API
-// image carries no ffmpeg and a long decode never competes with request handling.
+// プレビューのworkerのプロセス。ffmpegで波形のピーク、スペクトログラム、動画のポスター画像を作る。
+// APIとは別に動かし（composeのサービス`preview`、Dockerfile.preview）、APIのイメージにffmpegを
+// 入れず、長いデコードがリクエストの処理と競合しないようにする。
 import { setTimeout as sleep } from 'node:timers/promises';
 import { createArtifactStoresFromEnv } from '@mmt/platform';
 import { createDatabase } from './db/database.js';
@@ -31,9 +31,9 @@ const processor = new ArtifactPreviewProcessor({
 const shutdownSignal = new AbortController();
 
 /**
- * Drains the queue, then waits for the poll interval. Unlike PollingLoop (whose timer is unref'd
- * because the API's HTTP server keeps that process alive), this loop is what keeps this process
- * running. A stop request lets the Artifact in progress finish first.
+ * キューを空になるまで処理してから、ポーリングの間隔だけ待つ。PollingLoop（APIのHTTPサーバーが
+ * プロセスを生かしているのでタイマーをunrefしている）と違い、このプロセスを動かし続けているのは
+ * このループ。停止を求められても、処理中のArtifactは終わらせてから止まる。
  */
 async function runUntilStopped(): Promise<void> {
   while (!shutdownSignal.signal.aborted) {

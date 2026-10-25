@@ -1,12 +1,12 @@
-// Decides from the IdP groups whether an SSO user may log in and which global role they hold.
-// Project roles are not decided here: they come from direct grants and project group bindings.
+// IdPのグループから、SSOの利用者がログインできるかと、どの全体のroleを持つかを決める。
+// Projectのroleはここでは決めない。直接の付与とProjectのグループの割り当てから決まる。
 
-// Ordered from weakest to strongest; a user in several mapped groups gets the strongest role.
-// 'admin' is the global administrator (users.is_admin). 'user' may only log in.
+// 弱い順に並べる。対応付けた複数のグループに入っている利用者は、最も強いroleになる。
+// 'admin'は全体管理者（users.is_admin）。'user'はログインだけできる。
 export const GLOBAL_ROLES = ['user', 'admin'] as const;
 export type GlobalRole = (typeof GLOBAL_ROLES)[number];
 
-// Matches user_groups.group_name; longer or empty claim values are ignored rather than stored.
+// user_groups.group_nameと合わせる。これより長いか空のclaimの値は、保存せずに無視する。
 export const MAX_GROUP_NAME_LENGTH = 256;
 
 export interface OidcRolePolicy {
@@ -27,7 +27,7 @@ function strongerRole(left: GlobalRole, right: GlobalRole): GlobalRole {
   return GLOBAL_ROLES.indexOf(left) >= GLOBAL_ROLES.indexOf(right) ? left : right;
 }
 
-// Deduplicated and sorted so stored groups and audit diffs do not depend on claim order.
+// 重複を除いて並べ替え、保存するグループと監査の差分がclaimの順に左右されないようにする。
 export function normalizeGroups(groups: readonly unknown[]): string[] {
   const names = groups.filter(
     (group): group is string =>
@@ -53,7 +53,7 @@ export function resolveOidcAccess(
 }
 
 export interface OidcRolePolicySettings {
-  // Comma-separated OIDC_ALLOWED_GROUPS.
+  // カンマ区切りのOIDC_ALLOWED_GROUPS。
   allowedGroups: string | undefined;
   // OIDC_ROLE_MAPPING_JSON: {"<group>": "<global role>"}.
   roleMappingJson: string | undefined;
@@ -73,7 +73,7 @@ function parseRoleMapping(json: string): Record<string, GlobalRole> {
   for (const [group, role] of Object.entries(parsed)) {
     if (group.length === 0 || group.length > MAX_GROUP_NAME_LENGTH)
       throw new Error('OIDC_ROLE_MAPPING_JSON has an invalid group name');
-    // Unknown roles stop startup: a role added later must not be silently treated as 'user'.
+    // 知らないroleがあれば起動を止める。あとで足したroleを黙って'user'として扱ってはならない。
     if (!isGlobalRole(role))
       throw new Error(`OIDC_ROLE_MAPPING_JSON roles must be one of ${GLOBAL_ROLES.join(', ')}`);
     mapping[group] = role;
@@ -81,7 +81,7 @@ function parseRoleMapping(json: string): Record<string, GlobalRole> {
   return mapping;
 }
 
-// Builds the policy from environment settings. Errors name the setting, never its value.
+// 環境変数の設定からポリシーを組み立てる。エラーには設定名だけを出し、値は出さない。
 export function createOidcRolePolicy(settings: OidcRolePolicySettings): OidcRolePolicy {
   const allowedGroups = normalizeGroups(
     (settings.allowedGroups ?? '').split(',').map((group) => group.trim()),

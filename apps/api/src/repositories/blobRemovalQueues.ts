@@ -1,22 +1,22 @@
 import type { ArtifactBackend } from '@mmt/contracts';
 import { rows, type Connection } from '../db/database.js';
 
-/** A blob that only a deleted row named, waiting for the ArtifactGarbageCollector. */
+/** 削除した行だけが指していて、ArtifactGarbageCollectorを待っているblob。 */
 export interface QueuedBlob {
-  /** Identifies the blob within its queue. */
+  /** キューの中でblobを識別する。 */
   id: string;
   backend: ArtifactBackend;
   storageKey: string;
 }
 
 /**
- * Where removable blobs are recorded and how their removal is written back. Both queues keep the
- * row after removal (removed_at / blob_removed_at), so a run cut short is finished by the next.
+ * 消してよいblobを記録する場所と、消したことを書き戻す方法。どちらのキューも消した後に行を残す
+ * （removed_at / blob_removed_at）ので、途中で打ち切られた回の処理は次の回が終わらせる。
  */
 export interface BlobRemovalQueue {
-  /** The id field name used in logs, next to the error name only (storage keys are not logged). */
+  /** ログに出すidのフィールド名。エラー名と並べて出すだけ（ストレージのキーはログに出さない）。 */
   logIdField: string;
-  /** Blobs queued at or before `queuedBefore`, oldest first, without those listed in `excluded`. */
+  /** `queuedBefore`以前にキューに入ったblobを古い順に返す。`excluded`にあるものは除く。 */
   due(
     connection: Connection,
     filter: { queuedBefore: Date; excluded: readonly string[]; limit: number },
@@ -28,7 +28,7 @@ export interface BlobRemovalQueue {
   ): Promise<void>;
 }
 
-/** Blobs of Artifacts deleted through the Artifact API or MLflow (migration 049). */
+/** ArtifactのAPIかMLflowから削除したArtifactのblob（migration 049）。 */
 export const deletedArtifactBlobs: BlobRemovalQueue = {
   logIdField: 'artifactId',
   due: (connection, filter) =>
@@ -56,7 +56,7 @@ export const deletedArtifactBlobs: BlobRemovalQueue = {
   },
 };
 
-/** Blobs of purged Projects (migration 055); their Artifact rows are gone. */
+/** 完全に削除（purge）したProjectのblob（migration 055）。Artifactの行はもう無い。 */
 export const purgedProjectBlobs: BlobRemovalQueue = {
   logIdField: 'purgedProjectBlobId',
   due: (connection, filter) =>

@@ -30,7 +30,7 @@ export class ArtifactTransferService {
   constructor(options: {
     database: Database;
     artifacts: ArtifactService;
-    // Registers files under checkpoints/step-<N>/ as Run checkpoints; absent in tests that skip it.
+    // checkpoints/step-<N>/の下のファイルをRunのcheckpointとして登録する。省くテストには無い。
     checkpoints?: CheckpointService;
     deletions: ArtifactDeletionService;
   }) {
@@ -52,7 +52,8 @@ export class ArtifactTransferService {
 
   async upload(upload: ArtifactUpload): Promise<void> {
     let capture: MlmodelCapture | null = null;
-    // The incoming stream can fail while authorization awaits the DB. Pipeline still observes errored streams.
+    // 認可がDBを待つ間に、受信中のストリームが失敗しうる。それでもpipelineはエラーになった
+    // ストリームを検知する。
     upload.body.on('error', () => undefined);
     try {
       upload = { ...upload, owner: validateArtifactOwner(upload.owner) };
@@ -73,7 +74,7 @@ export class ArtifactTransferService {
         await requireNonconflictingArtifactPath(connection, upload);
         return { identity, runId: owner.runId };
       });
-      // A destroyed source cannot emit a second error/end to a newly attached capture stream.
+      // 破棄した元のストリームは、新しくつないだcaptureのストリームに2度目のerror・endを送れない。
       if (upload.body.errored || (upload.body.destroyed && !upload.body.readableEnded))
         throw new DomainError({
           status: 503,
@@ -84,7 +85,7 @@ export class ArtifactTransferService {
         upload.owner.kind === 'model' && upload.path === 'MLmodel' ? new MlmodelCapture() : null;
       if (capture) {
         const metadataStream = capture;
-        // Match the incoming stream's early-error handling before ArtifactService starts its pipeline.
+        // ArtifactServiceがpipelineを始める前の、受信中のストリームの早いエラーの扱いに合わせる。
         metadataStream.on('error', () => undefined);
         upload.body.on('error', (error) => metadataStream.destroy(error)).pipe(metadataStream);
       }
@@ -134,7 +135,7 @@ export class ArtifactTransferService {
         message: 'the stored reference of the artifact cannot be updated',
       });
     } finally {
-      // Destroying a failed stream also cancels the incoming request instead of reading its remainder.
+      // 失敗したストリームを破棄すると、残りを読む代わりに受信中のリクエストも取り消す。
       capture?.destroy();
       upload.body.destroy();
     }
@@ -159,10 +160,10 @@ export class ArtifactTransferService {
   }
 
   /**
-   * MLflow delete_artifacts: a file, a directory or ('' path) everything of a Run or Logged Model.
-   * Project admins only, like native deletion. Artifacts a registered model version or another
-   * record references stay stored and only disappear from this owner; a missing path succeeds,
-   * as it does on the MLflow server, so a retried request is harmless.
+   * MLflowのdelete_artifacts。RunかLogged Modelの、ファイル1つ、ディレクトリ1つ、または
+   * （パスが''なら）すべてを消す。ネイティブの削除と同じくProject adminだけ。登録済みのモデル
+   * バージョンやほかの記録が参照するArtifactは保存したまま残し、この所有者から消えるだけ。無い
+   * パスはMLflowのサーバーと同じく成功にするので、リクエストを再試行しても害は無い。
    */
   async delete(access: ArtifactAccess & { path: string }): Promise<void> {
     access = { ...access, owner: validateArtifactOwner(access.owner) };

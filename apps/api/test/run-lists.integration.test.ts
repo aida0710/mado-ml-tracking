@@ -11,7 +11,7 @@ import type {
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 import { workbenchFixture } from './workbenchFixtures.js';
 
-// Repeated snapshots must not grow polling responses by several MiB.
+// 繰り返し入るスナップショットで、ポーリングの応答が数MiBも膨らんではいけない。
 const SOURCE_PADDING_BYTES = 1024 * 1024;
 const MAX_RUN_LIST_RESPONSE_BYTES = 64 * 1024;
 const SOURCE_CONTENT_MARKER = 'snapshot-only-source';

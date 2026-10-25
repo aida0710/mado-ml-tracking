@@ -142,7 +142,7 @@ export class PluginConnections {
         enabled: input.enabled ?? plugin.enabled,
         configRevision: plugin.configRevision + 1,
       };
-      // A checked result describes the previous destination and token; check the new ones again.
+      // 確認済みの結果は前の送り先とtokenについてのもの。新しいものはもう一度確認する。
       const isCheckStillValid = !input.config && !input.credentials?.accessToken;
       if (updated.enabled && updated.config && !this.credentials.hasAccessToken(updated))
         credentialsRequired();

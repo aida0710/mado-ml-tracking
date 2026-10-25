@@ -1,8 +1,8 @@
 import { DomainError } from './errors.js';
 
 /**
- * What can point at a DatasetVersion and would break or lose its lineage without it. Report and
- * saved-view filters are left out: they only narrow a search and still work without the version.
+ * DatasetVersionを指すことができ、それが無くなると壊れるかlineageを失うもの。レポートと
+ * 保存ビューのフィルタは含めない。検索を絞るだけで、バージョンが無くても動く。
  */
 export type DatasetVersionReferenceKind =
   | 'runInput'
@@ -20,7 +20,7 @@ export type DatasetVersionReferenceKind =
 
 export type DatasetVersionReferenceCounts = Record<DatasetVersionReferenceKind, number>;
 
-// Names the API error uses for each kind of reference, so the refusal says what to look at.
+// 参照の種類ごとにAPIのエラーで使う名前。拒否のときに何を見ればよいかが分かるようにする。
 const REFERENCE_LABELS: Record<DatasetVersionReferenceKind, string> = {
   runInput: 'run inputs',
   runOutput: 'run outputs',
@@ -37,8 +37,8 @@ const REFERENCE_LABELS: Record<DatasetVersionReferenceKind, string> = {
 };
 
 /**
- * A version is deleted only while nothing refers to it: versions are immutable, and a Run, a
- * descendant version or a launch template that names it would lose what it was made from.
+ * バージョンを削除できるのは、何からも参照されていないあいだだけ。バージョンは変更できず、
+ * それを指すRun・子孫のバージョン・起動のテンプレートは、何から作られたかを失ってしまう。
  */
 export function assertDatasetVersionUnused(counts: DatasetVersionReferenceCounts): void {
   const usedKinds = (Object.keys(REFERENCE_LABELS) as DatasetVersionReferenceKind[]).filter(

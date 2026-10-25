@@ -11,18 +11,18 @@ import { createHarness, entity, request, testDatabaseUrl, type Harness } from '.
 import { projectFixture } from './fixtures.js';
 import { mlflowSdkPythonPath } from './mlflow-sdk-fixtures.js';
 
-// 0 lets the OS choose; set it to keep the SDK test on an allowed port range.
+// 0ならOSが選ぶ。SDKのテストを許された範囲のポートで動かすときは設定する。
 const SDK_TEST_HTTP_PORT = Number(process.env.MMT_TEST_HTTP_PORT ?? 0);
-// The official-library check also needs scikit-learn in the same Python environment.
+// 公式ライブラリでの確認には、同じPython環境にscikit-learnも要る。
 const hasSdkWithSklearn =
   existsSync(mlflowSdkPythonPath) &&
   spawnSync(mlflowSdkPythonPath, ['-c', 'import mlflow.sklearn, sklearn']).status === 0;
-// Starting Python with mlflow and scikit-learn alone takes several seconds.
+// mlflowとscikit-learnを読み込んでPythonを起動するだけで数秒かかる。
 const SDK_TEST_TIMEOUT_MS = 60_000;
-// MAX_MLMODEL_METADATA_BYTES (64 KiB) plus margin: an MLmodel this large is not parsed.
+// MAX_MLMODEL_METADATA_BYTES（64 KiB）に余裕を足した大きさ。これほど大きいMLmodelは解析しない。
 const OVERSIZED_MLMODEL_PADDING = 70 * 1024;
 
-// What mlflow.sklearn.save_model() writes in MLflow 3.17.0 (skops is the default format).
+// MLflow 3.17.0でmlflow.sklearn.save_model()が書くもの（既定の形式はskops）。
 const SKLEARN_SAVED_MODEL = {
   MLmodel: [
     'flavors:',
@@ -49,7 +49,7 @@ const SKLEARN_SAVED_MODEL = {
   'python_env.yaml': 'python: 3.12.14\n',
   'requirements.txt': 'scikit-learn==1.9.1\n',
 };
-// What mlflow.pytorch.save_model() writes in MLflow 3.17.0: model_data names a directory.
+// MLflow 3.17.0でmlflow.pytorch.save_model()が書くもの。model_dataはディレクトリを指す。
 const PYTORCH_SAVED_MODEL = {
   MLmodel: [
     'flavors:',
@@ -117,7 +117,10 @@ describe.skipIf(!testDatabaseUrl)(
       return minted.token;
     }
 
-    /** mlflow.start_run() + mlflow.log_artifacts(directory, artifactPath), as the client sends them. */
+    /**
+     * mlflow.start_run() + mlflow.log_artifacts(directory, artifactPath)を、クライアントと同じ形で
+     * 送る。
+     */
     async function runWithSavedModel(
       files: Record<string, string>,
       options: { artifactPath?: string; apiBase?: string; token?: string } = {},
@@ -146,7 +149,10 @@ describe.skipIf(!testDatabaseUrl)(
       return runId;
     }
 
-    /** mlflow.register_model("runs:/<run>/model", name) after the client found MLmodel there. */
+    /**
+     * クライアントがそこにMLmodelを見つけたあとの、
+     * mlflow.register_model("runs:/<run>/model", name)。
+     */
     async function registerRunDirectory(options: {
       runId: string;
       source?: string;
@@ -156,7 +162,7 @@ describe.skipIf(!testDatabaseUrl)(
     }): Promise<Response> {
       const name = options.name ?? 'saved-classifier';
       const auth = options.cookie ? { cookie: options.cookie } : { token: options.token ?? token };
-      // register_model creates the registered model first and goes on when it already exists.
+      // register_modelは先に登録モデルを作り、既にあればそのまま進む。
       const created = await request(harness.app, `${base}/mlflow/registered-models/create`, {
         method: 'POST',
         token,
@@ -219,7 +225,7 @@ describe.skipIf(!testDatabaseUrl)(
       expect(stored?.metadata.mlflow.artifactManifest.map((entry) => entry.path)).toEqual(
         Object.keys(SKLEARN_SAVED_MODEL).sort(),
       );
-      // The Models page reads the version detail, then the weights Artifact by its id.
+      // Modelsの画面は、バージョンの詳細を読み、次に重みのArtifactをidで読む。
       const detail = await entity<ModelVersionDetail>(
         await request(
           harness.app,

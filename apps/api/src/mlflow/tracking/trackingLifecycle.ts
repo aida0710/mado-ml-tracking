@@ -11,7 +11,7 @@ export function resolveTrackingLifecycle(
   if (input.hasJob) {
     if (input.status === 'SCHEDULED' && run.status !== 'queued')
       conflict('a run managed by a job cannot be returned to the queue');
-    // SDK start/end only changes its local context; the worker owns a Job's lifecycle.
+    // SDKのstart/endはSDK側の文脈を変えるだけ。Jobのライフサイクルはworkerが持つ。
     return { status: run.status, startedAt: run.startedAt, endedAt: run.endedAt };
   }
   const status = input.status ? nativeRunStatus[input.status] : run.status;
@@ -25,9 +25,9 @@ export function resolveTrackingLifecycle(
 }
 
 /**
- * MLflow's start_run(run_id=) sends update-run RUNNING with the previous end_time (verified with
- * SDK 3.0.0 and 3.17.0). For a Run without a Job this reopens an ended Run and is recorded as a
- * resume like the native API; a Job-owned Run keeps its status and so never resumes.
+ * MLflowのstart_run(run_id=)は、前のend_timeを付けたままupdate-runでRUNNINGを送る（SDK 3.0.0と
+ * 3.17.0で確認）。Jobの無いRunでは終了したRunを開き直し、ネイティブAPIと同じく再開として記録する。
+ * Jobに属するRunは状態を保つので、再開しない。
  */
 export function isTrackingResume(
   run: TrackingRun,

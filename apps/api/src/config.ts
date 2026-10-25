@@ -14,7 +14,7 @@ const optionalSetting = z.preprocess(
   (value) => (value === '' ? undefined : value),
   z.string().optional(),
 );
-// Operator-owned SSH paths are never accepted from repository request bodies.
+// 運用者が管理するSSHのパスは、リポジトリのリクエストの本文からは受け付けない。
 const optionalSshPath = z.preprocess(
   (value) => (value === '' ? undefined : value),
   z
@@ -25,45 +25,45 @@ const optionalSshPath = z.preprocess(
     .optional(),
 );
 
-// offline_access lets an SSO session refresh short-lived access tokens without another login.
+// offline_accessがあると、SSOのsessionは再ログインなしで有効期間の短いaccess tokenを更新できる。
 const DEFAULT_OIDC_SCOPES = 'openid profile email offline_access';
 
-// Keep a login for one week, including time away from the browser.
+// ブラウザから離れていた時間も含めて、ログインを1週間保つ。
 const DEFAULT_SESSION_LIFETIME_SECONDS = 7 * 24 * 60 * 60;
-// Shorter sessions than these would expire while an operator is still reading a run.
+// これより短いsessionだと、運用者がRunを読んでいる途中で切れてしまう。
 const MIN_SESSION_IDLE_SECONDS = 5 * 60;
 const MIN_SESSION_ABSOLUTE_SECONDS = 60 * 60;
 
-// One artifact may hold a full checkpoint set; operators can lower or raise this limit.
+// 1つのArtifactにcheckpointの一式が入ることがある。運用者はこの上限を上げ下げできる。
 const DEFAULT_ARTIFACT_MAX_BYTES = 200 * 1024 ** 3;
-// A week lets an administrator notice a mistaken deletion before the bytes are gone (decisions.md).
+// 1週間あれば、実データが消える前に管理者が誤った削除に気づける（decisions.md）。
 const DEFAULT_ARTIFACT_DELETE_GRACE_DAYS = 7;
-// 0 disables the whole-request deadline so multi-hour uploads are bounded only by idle time.
+// 0でリクエスト全体の期限を無くし、数時間かかるアップロードを無通信の時間だけで区切る。
 const DEFAULT_UPLOAD_REQUEST_TIMEOUT_MS = 0;
-// A stalled client releases its socket after two minutes without received bytes.
+// 止まったクライアントのソケットは、2分間何も受け取らなければ解放する。
 const DEFAULT_UPLOAD_IDLE_TIMEOUT_MS = 120_000;
-// MLflow's mpu/complete is synchronous. The wait stays below the SDK's default 120-second request
-// timeout so a slow verification answers 503 instead of the SDK giving up and aborting.
+// MLflowのmpu/completeは同期で応答する。待ち時間をSDKの既定のリクエストタイムアウト（120秒）
+// より短くし、検証が遅いときはSDKが諦めて中断する前に503を返す。
 const DEFAULT_UPLOAD_FINALIZE_WAIT_MS = 100_000;
-// Preserve the previous one-year default when an API request omits its expiry.
+// APIのリクエストが有効期限を省いたときは、以前の既定の1年を保つ。
 const DEFAULT_TOKEN_LIFETIME_DAYS = 365;
-// Keep the existing ten-year bound on operator defaults; explicit expiries have no lifetime cap.
+// 運用者が決める既定値には従来の10年の上限を残す。明示した有効期限には長さの上限が無い。
 const MAX_TOKEN_DEFAULT_LIFETIME_DAYS = 3650;
 const tokenDefaultLifetimeDaysSchema = z.coerce.number().int().min(1)
   .max(MAX_TOKEN_DEFAULT_LIFETIME_DAYS).default(DEFAULT_TOKEN_LIFETIME_DAYS);
-// An edge proxy plus the web nginx is 2; more than a few is a misconfiguration.
+// 前段のプロキシとWebのnginxで2つ。数個を超えるなら設定の誤り。
 const MAX_TRUSTED_PROXY_HOPS = 5;
-// Rows of one CSV export (decisions.md); beyond this Excel use gets slow and the filter should narrow.
+// 1回のCSV出力の行数（decisions.md）。これを超えるとExcelで扱うのが遅くなるので、絞り込みで減らす。
 const DEFAULT_CSV_EXPORT_MAX_ROWS = 50_000;
-// Snapshot data of one report revision (50 MiB): a few full-size chart and table blocks fit, while
-// a report that fixes everything should keep some blocks live instead.
+// レポートの1つのバージョンのスナップショットデータ（50MiB）。原寸のグラフや表のブロックが数個入る。
+// すべてを固定するレポートは、代わりに一部のブロックを固定せずliveのまま残す。
 const DEFAULT_REPORT_SNAPSHOT_MAX_BYTES = 50 * 1024 * 1024;
-// An SSO session asks UserInfo for the current groups at most this often (decisions.md: 60 seconds),
-// so a user removed from a group loses access within about a minute even while active.
+// SSOのsessionは、この間隔に1回までUserInfoに今のグループを問い合わせる（decisions.md: 60秒）。
+// これで、グループから外された利用者は、使っている最中でも1分ほどでアクセスを失う。
 const DEFAULT_OIDC_RECHECK_SECONDS = 60;
-// API tokens of SSO users stop when the last group sync is older than this (decisions.md: 7 days).
+// SSOの利用者のAPI tokenは、最後のグループ同期がこれより古いと使えなくなる（decisions.md: 7日）。
 const DEFAULT_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
-// Shorter than a minute would sync on nearly every token request and gain nothing.
+// 1分より短いと、tokenのリクエストのたびにほぼ同期することになり、得るものが無い。
 const MIN_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS = 60;
 
 const environmentSchema = z.object({
@@ -71,7 +71,7 @@ const environmentSchema = z.object({
   MMT_DATABASE_URL: optionalSetting,
   HOST: z.string().default('127.0.0.1'),
   PORT: z.coerce.number().int().min(1).max(65535).default(4182),
-  // hybrid keeps a local administrator as the recovery path while SSO is introduced.
+  // hybridは、SSOを導入するあいだ、ローカルの管理者を復旧の経路として残す。
   AUTH_MODE: z.enum(['local', 'oidc', 'hybrid', 'development']).default('hybrid'),
   AUTH_SESSION_IDLE_SECONDS: z.coerce
     .number()
@@ -86,21 +86,22 @@ const environmentSchema = z.object({
   MMT_PUBLIC_URL: z.url().default('http://127.0.0.1:4182'),
   MMT_WEB_ORIGIN: z.url().default('http://127.0.0.1:5182'),
   MMT_ALLOW_PRIVATE_ORIGINS: z.enum(['true', 'false']).default('false'),
-  // Reverse proxies in front of the API that append to X-Forwarded-For (compose: the web nginx).
+  // APIの前にあり、X-Forwarded-Forに追記するリバースプロキシの数（composeではWebのnginx）。
   MMT_TRUSTED_PROXY_HOPS: z.coerce.number().int().min(0).max(MAX_TRUSTED_PROXY_HOPS).default(0),
-  // Validated only when OIDC is enabled, so local mode ignores a leftover value.
+  // OIDCが有効なときだけ検証するので、localモードでは残っている値を無視する。
   OIDC_ISSUER_URL: optionalSetting,
   OIDC_CLIENT_ID: optionalSetting,
   OIDC_CLIENT_SECRET: optionalSetting,
   OIDC_ALLOWED_GROUPS: optionalSetting,
   OIDC_ROLE_MAPPING_JSON: optionalSetting,
   OIDC_DEFAULT_ROLE: optionalSetting,
-  // Off by default: linking by email would let an IdP account take over a same-email local account.
+  // 既定は無効。メールアドレスで結び付けると、IdPのアカウントが同じメールアドレスの
+  // ローカルアカウントを乗っ取れてしまう。
   OIDC_AUTO_LINK_VERIFIED_EMAIL: z.enum(['true', 'false']).default('false'),
   OIDC_SCOPES: z.string().default(DEFAULT_OIDC_SCOPES),
   OIDC_LABEL: z.string().min(1).max(100).default('Authentik'),
   OIDC_ALLOW_INSECURE_HTTP: z.enum(['true', 'false']).default('false'),
-  // base64 of 32 bytes. Encrypts the IdP tokens kept in SSO sessions; required for oidc and hybrid.
+  // 32バイトのbase64。SSOのsessionに持つIdPのtokenを暗号化する。oidcとhybridでは必須。
   MMT_SESSION_ENCRYPTION_KEY: optionalSetting,
   OIDC_RECHECK_SECONDS: z.coerce.number().int().min(1).default(DEFAULT_OIDC_RECHECK_SECONDS),
   OIDC_TOKEN_SYNC_MAX_AGE_SECONDS: z.coerce
@@ -139,22 +140,25 @@ const environmentSchema = z.object({
     .min(0)
     .default(DEFAULT_UPLOAD_IDLE_TIMEOUT_MS),
   MMT_MLFLOW_MULTIPART_UPLOADS: z.enum(['true', 'false']).default('true'),
-  // Presigned downloads are not implemented; true makes MLflow 3.17+ SDK downloads fail.
+  // 署名付きURLでのダウンロードは実装していない。trueにするとMLflow 3.17以降のSDKの
+  // ダウンロードが失敗する。
   MMT_MLFLOW_MULTIPART_DOWNLOADS: z.enum(['true', 'false']).default('false'),
   MMT_UPLOAD_FINALIZE_WAIT_MS: z.coerce
     .number()
     .int()
     .min(0)
     .default(DEFAULT_UPLOAD_FINALIZE_WAIT_MS),
-  // base64 of 32 bytes. Without it, storage backends that need a secret cannot be created.
+  // 32バイトのbase64。無いと、秘密情報が要る保存先を作れない。
   MMT_STORAGE_SECRET_KEY: optionalSetting,
-  // A separate key isolates integration credentials from storage secrets.
+  // 鍵を分けて、連携の認証情報を保存先の秘密情報から切り離す。
   MMT_PLUGIN_SECRET_KEY: optionalSetting,
-  // base64 of 32 bytes. Without it, webhook hooks cannot be created (their secrets are encrypted).
+  // 32バイトのbase64。無いとwebhookのフックを作れない（そのsecretは暗号化して持つ）。
   MMT_HOOK_SECRET_KEY: optionalSetting,
-  // enforce: a site Job's docker image must be built for the site's CPU (registry manifest).
+  // enforce: siteのJobのdockerイメージは、siteのCPU向けにビルドされている必要がある
+  // （レジストリのmanifestで見る）。
   MMT_IMAGE_PLATFORM_CHECK: z.enum(['off', 'enforce']).default('off'),
-  // Read access to private images for that check, sent only to MMT_REGISTRY_HOST; all three or none.
+  // その検査でprivateのイメージを読むための認証情報。MMT_REGISTRY_HOSTにだけ送る。
+  // 3つすべてを設定するか、どれも設定しない。
   MMT_REGISTRY_HOST: optionalSetting,
   MMT_REGISTRY_USERNAME: optionalSetting,
   MMT_REGISTRY_PASSWORD: optionalSetting,
@@ -166,7 +170,7 @@ const environmentSchema = z.object({
     .int()
     .positive()
     .default(DEFAULT_REPORT_SNAPSHOT_MAX_BYTES),
-  // Email notifications are sent only when both are set; the URL may hold the SMTP password.
+  // メールの通知は両方を設定したときだけ送る。URLにSMTPのパスワードが入ることがある。
   MMT_SMTP_URL: optionalSetting,
   MMT_SMTP_FROM: optionalSetting,
 });
@@ -176,7 +180,8 @@ export interface ApiConfig {
   host: string;
   port: number;
   authMode: AuthMode;
-  // True for local and hybrid: username/password login and bootstrap administrators are accepted.
+  // localとhybridでtrue。ユーザー名とパスワードでのログインと、初期の管理者（bootstrap）を
+  // 受け付ける。
   localLoginEnabled: boolean;
   session: { idleSeconds: number; absoluteSeconds: number };
   publicUrl: string;
@@ -193,9 +198,9 @@ export interface ApiConfig {
     scopes: string;
     label: string;
     allowInsecureHttp: boolean;
-    // Encrypts the access and refresh tokens stored with each SSO session.
+    // SSOのsessionごとに保存するaccess tokenとrefresh tokenを暗号化する。
     sessionEncryptionKey: SecretKey;
-    // An SSO session older than this since its last UserInfo check is checked again.
+    // 最後のUserInfoの確認からこれより時間がたったSSOのsessionは、もう一度確認する。
     recheckSeconds: number;
   } | null;
   developmentAdminEmail: string;
@@ -203,34 +208,35 @@ export interface ApiConfig {
   allowSeed: boolean;
   repositorySsh: { keyPath: string; knownHostsPath: string } | null;
   artifactMaxBytes: number;
-  // Days between deleting an Artifact and the garbage collector removing its blob.
+  // Artifactを削除してから、ガベージコレクタがその実データ（blob）を消すまでの日数。
   artifactDeleteGraceDays: number;
-  // 0 means the timeout is disabled.
+  // 0はタイムアウトを無効にする。
   uploadRequestTimeoutMs: number;
   uploadIdleTimeoutMs: number;
-  // Advertised by MLflow server-info; uploads=false answers mpu/* with the SDK's fallback 501.
+  // MLflowのserver-infoで知らせる。uploads=falseならmpu/*に、SDKが別の方法へ切り替える501を返す。
   mlflowMultipart: { uploadsEnabled: boolean; downloadsEnabled: boolean };
-  // How long MLflow's mpu/complete waits for the upload finalizer before answering 503.
+  // MLflowのmpu/completeが、503を返す前にアップロードの確定処理（finalizer）を待つ時間。
   uploadFinalizeWaitMs: number;
-  // Encrypts storage backend secrets in the DB; null when MMT_STORAGE_SECRET_KEY is unset.
+  // DBにある保存先の秘密情報を暗号化する。MMT_STORAGE_SECRET_KEYが無ければnull。
   storageSecretKey: SecretKey | null;
   pluginSecretKey: SecretKey | null;
-  // Encrypts webhook hook secrets; null when MMT_HOOK_SECRET_KEY is unset.
+  // webhookのフックのsecretを暗号化する。MMT_HOOK_SECRET_KEYが無ければnull。
   hookSecretKey: SecretKey | null;
-  // Whether a site Job's image is checked against the site's CPU before it is queued.
+  // siteのJobを待ち行列に入れる前に、イメージがsiteのCPUに合うかを確かめるか。
   imagePlatformCheck: 'off' | 'enforce';
   registryCredentials: RegistryCredentials | null;
-  // Lifetime when token creation omits expiresAt; explicit null means no expiry.
+  // tokenの作成でexpiresAtを省いたときの有効期間。明示したnullは期限なし。
   tokenDefaultLifetimeDays: number;
-  // Checkpoints per Run shown by default; older ones get retained=false (their files are kept).
+  // Runごとに既定で見せるcheckpointの数。それより古いものはretained=falseになる（ファイルは残す）。
   checkpointKeepCount: number;
-  // Rows of POST /runs/search/export.csv; further matches are cut and marked at the end.
+  // POST /runs/search/export.csvの行数。超えた分は切り、末尾にその旨を書く。
   csvExportMaxRows: number;
-  // Snapshot data of one report revision; a larger save is 413 report_snapshot_too_large.
+  // レポートの1つのバージョンのスナップショットデータ。これより大きい保存は
+  // 413 report_snapshot_too_large。
   reportSnapshotMaxBytes: number;
-  // API tokens of users with an SSO identity need a group sync within this many seconds.
+  // SSOのIDを持つ利用者のAPI tokenは、この秒数以内にグループを同期している必要がある。
   oidcTokenSyncMaxAgeSeconds: number;
-  // null leaves email channels saved but undeliverable (email_sender_unavailable).
+  // nullだと、メールの通知先は保存できるが送れない（email_sender_unavailable）。
   smtp: SmtpSettings | null;
 }
 
@@ -239,7 +245,7 @@ function parseOptionalSecretKey(base64: string | undefined, settingName: string)
   try {
     return parseSecretKey(base64);
   } catch {
-    // Configuration errors identify the setting without exposing the supplied credential.
+    // 設定のエラーは、渡された認証情報を見せずに、どの設定かだけを示す。
     throw new Error(`${settingName} must be base64 of 32 bytes`);
   }
 }
@@ -247,7 +253,7 @@ function parseOptionalSecretKey(base64: string | undefined, settingName: string)
 export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiConfig {
   if (environment.OIDC_ADMIN_GROUP !== undefined)
     throw new Error('OIDC_ADMIN_GROUP is not supported; use OIDC_ROLE_MAPPING_JSON');
-  // Report field names only: environment values can contain credentials.
+  // 項目名だけを伝える。環境変数の値には認証情報が入りうる。
   const parsed = environmentSchema.safeParse(environment);
   if (!parsed.success)
     throw new Error(
@@ -292,7 +298,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
       'MMT_REGISTRY_HOST, MMT_REGISTRY_USERNAME and MMT_REGISTRY_PASSWORD must be set together',
     );
   let oidc: ApiConfig['oidc'] = null;
-  // local mode ignores OIDC_* so a leftover SSO setting cannot open a second login path.
+  // localモードはOIDC_*を無視し、残ったSSOの設定が2つ目のログイン経路を開かないようにする。
   if (settings.AUTH_MODE === 'oidc' || settings.AUTH_MODE === 'hybrid') {
     if (!settings.OIDC_ISSUER_URL || !settings.OIDC_CLIENT_ID)
       throw new Error(

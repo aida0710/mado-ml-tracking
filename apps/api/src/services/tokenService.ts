@@ -31,7 +31,7 @@ export interface IssuedToken {
   item: TokenSummary;
 }
 
-/** Generates a token value and stores only its hash and prefix. The value is returned once. */
+/** tokenの値を作り、そのハッシュと前置きだけを保存する。値は1回だけ返す。 */
 export async function issueApiToken(
   connection: Connection,
   token: Omit<TokenInsert, 'tokenHash' | 'tokenPrefix'>,
@@ -45,7 +45,7 @@ export async function issueApiToken(
   return { token: secret.token, item };
 }
 
-/** Audit details of an issued token. The value and its hash never enter the audit log. */
+/** 発行したtokenの監査の詳細。値とそのハッシュは監査ログに入れない。 */
 export function tokenCreateAuditDetails(item: TokenSummary) {
   return {
     name: item.name,
@@ -74,7 +74,7 @@ export class TokenService {
     });
   }
 
-  // Values are never returned; administrators see who owns each token and can revoke it.
+  // 値は決して返さない。管理者は各tokenの所有者を見て、失効させられる。
   async listProject(principal: Principal, projectId: string): Promise<TokenSummary[]> {
     await requireProject(this.database, principal, { projectId, role: 'admin', scope: 'admin' });
     return listProjectTokens(this.database, projectId);
@@ -151,7 +151,7 @@ export class TokenService {
     const target = await findActiveTokenOwnership(this.database, tokenId);
     if (!target) notFound('token');
     const ownerType = target.ownerKind === 'service' ? 'service_account' : 'user';
-    // Recorded under the token's Project so its administrators see refused revocations too.
+    // tokenのProjectの下に記録し、そのProjectの管理者が拒まれた失効も見られるようにする。
     const projectDraft: AuditEventDraft = {
       ...draft,
       projectId: target.projectId,
@@ -174,7 +174,7 @@ export class TokenService {
         }
         requireGrantWithinIssuer(principal, target);
         const revoked = await revokeToken(connection, tokenId);
-        // A concurrent revocation won the race; report it the same way as an unknown token.
+        // 並行した失効が先に済んだ。知らないtokenと同じように報告する。
         if (!revoked) notFound('token');
         await writeAuditEvent(connection, {
           ...projectDraft,
@@ -190,7 +190,8 @@ export class TokenService {
     principal: Principal,
     input: z.infer<typeof tokenCreateSchema>,
   ): Promise<void> {
-    // A token issues only within its own grant (requireGrantWithinIssuer, once the expiry is known).
+    // tokenは自分に許された範囲の中でだけ発行できる（有効期限が決まってから
+    // requireGrantWithinIssuerで確かめる）。
     requireScope(principal, 'tokens:manage');
     const projectId = input.projectId ?? null;
     requireGlobalScopesUnrestricted({ scopes: input.scopes, projectId, ownerIsAdmin: principal.user.isAdmin });
@@ -214,7 +215,7 @@ export class TokenService {
       role: requiredProjectRoleForScopes(input.scopes),
       scope: 'tokens:manage',
     });
-    // Unlike session administration, token membership (direct or through a group) is mandatory.
+    // sessionでの管理と違い、tokenではmembership（直接かグループを通したもの）が必須。
     const membership = await first(
       connection,
       'SELECT role FROM effective_project_roles WHERE project_id=$1 AND user_id=$2',
@@ -229,7 +230,7 @@ export class TokenService {
   }
 }
 
-/** A token one issues for oneself is of one's own kind: a person's is personal, a Service Account's is service. */
+/** 自分のために発行するtokenは自分の種類に合わせる。人ならpersonal、Service Accountならservice。 */
 function ownTokenKind(principal: Principal): TokenSummary['kind'] {
   return principal.user.kind === 'service' ? 'service' : 'personal';
 }

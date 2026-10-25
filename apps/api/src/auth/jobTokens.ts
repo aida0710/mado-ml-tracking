@@ -4,7 +4,7 @@ import { hashSecret, randomSecret } from './secrets.js';
 // 漏れた値が Job 限定のものだと分かる。API token の mado_mt_ は mado_mtj_ に一致しない。
 export const JOB_TOKEN_PREFIX = 'mado_mtj_';
 
-// What a Job's code may do with its token; the write guard narrows it further to one Run.
+// Jobのコードがそのtokenでできること。書き込みのガードがさらに1つのRunに絞る。
 export const JOB_TOKEN_SCOPES = ['read', 'runs:write', 'artifacts:write', 'registry:write'];
 
 export function isJobToken(bearer: string): boolean {

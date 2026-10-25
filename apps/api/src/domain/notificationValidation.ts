@@ -2,12 +2,13 @@ import { z } from 'zod';
 import { NOTIFICATION_EVENT_TYPES, NOTIFICATION_RECIPIENTS_MAX } from '@mmt/contracts';
 import { runKindSchema, uuidSchema } from './validation.js';
 
-// Matches the notification_channels CHECK; the prefix keeps channels away from unrelated secrets.
+// notification_channelsのCHECKと合わせる。前置きを付けて、通知先が無関係な秘密情報を
+// 読めないようにする。
 export const NOTIFICATION_ENVIRONMENT_NAME_PATTERN = /^MMT_NOTIFICATION_[A-Z0-9_]+$/;
 const environmentNameSchema = z.string().regex(NOTIFICATION_ENVIRONMENT_NAME_PATTERN).max(200);
-// A rule may narrow to many experiments, but a filter is not a listing.
+// ルールは多くの実験に絞り込めるが、フィルタは一覧ではない。
 const MAX_FILTER_EXPERIMENTS = 100;
-// Deliveries are a recent-history view, not an export.
+// 送信の記録は最近の履歴を見るためのもので、書き出しではない。
 const MAX_DELIVERY_PAGE_SIZE = 200;
 const DEFAULT_DELIVERY_PAGE_SIZE = 50;
 

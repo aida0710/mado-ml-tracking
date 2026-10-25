@@ -6,7 +6,7 @@ import { createHarness, entity, request, testDatabaseUrl, type Harness } from '.
 
 type Fixture = Awaited<ReturnType<typeof artifactFixture>>;
 
-// Names as MLflow 3.17.0 (+) and 3.0.0 (%) write them for log_image(key=, step=).
+// log_image(key=, step=)でMLflow 3.17.0（+）と3.0.0（%）が付ける名前。
 function imagePath(options: { key: string; step: number; separator?: '+' | '%'; id?: string }): string {
   const separator = options.separator ?? '+';
   const key = options.key.replaceAll('/', separator === '+' ? '~' : '#');

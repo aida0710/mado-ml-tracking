@@ -11,11 +11,11 @@ import {
   uuidSchema,
 } from './validation.js';
 
-// Matches the CHECK in migration 034; a summary wider than this no longer fits one table row.
+// migration 034のCHECKと合わせる。これより多い項目の要約は、表の1行に収まらない。
 export const MAX_SUMMARY_METRICS = 20;
-// The model version page asks for executions in pages; the default keeps the former fixed size.
+// モデルバージョンの画面は実行をページ単位で求める。既定値は以前の固定の件数のまま。
 export const DEFAULT_AUTOMATION_EXECUTION_LIMIT = 100;
-// Automatic retries spend GPU time, so a rule retries only when maxAttempts is given explicitly.
+// 自動の再試行はGPUの時間を使うので、ルールが再試行するのはmaxAttemptsを明示したときだけ。
 export const DEFAULT_AUTOMATION_MAX_ATTEMPTS = 1;
 export const MAX_AUTOMATION_EXECUTION_LIMIT = 200;
 
@@ -64,7 +64,8 @@ export const automationExecutionQuerySchema = z.strictObject({
     .min(1)
     .max(MAX_AUTOMATION_EXECUTION_LIMIT)
     .default(DEFAULT_AUTOMATION_EXECUTION_LIMIT),
-  // Pending rows have md5-derived ids that are not RFC 4122 versions, so any GUID is accepted.
+  // 保留中の行はmd5から作ったidを持ち、RFC 4122のどのバージョンにも当たらないので、
+  // どんなGUIDも受け付ける。
   cursor: z.guid().optional(),
 });
 
@@ -72,7 +73,7 @@ export type ModelAutomationRuleCreate = z.infer<typeof modelAutomationRuleSchema
 export type AutomationExecutionCreate = z.infer<typeof automationExecutionCreateSchema>;
 export type AutomationExecutionQuery = z.infer<typeof automationExecutionQuerySchema>;
 
-// A chained rule needs the rule it follows; a registration rule must not name one.
+// 連鎖するルールには前段のルールが要る。登録をきっかけにするルールは前段のルールを指定しない。
 export function assertRuleTrigger(
   rule: Pick<ModelAutomationRuleCreate, 'trigger' | 'upstreamRuleId'>,
 ): void {

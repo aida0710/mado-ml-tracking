@@ -7,7 +7,7 @@ import { prepareMadoDelivery } from '../plugins/mado/deliveryPayload.js';
 
 export async function enqueueRunEvent(connection: Connection, run: Run): Promise<void> {
   if (run.status === 'queued') return;
-  // Code text and CodeVersion environment belong to the execution API, not external lineage consumers.
+  // コードの本文とCodeVersionの環境は実行のAPIのためのもので、外部のlineageの利用者には渡さない。
   const { executionSnapshot: _executionSnapshot, ...eventRun } = run;
   const event: PluginEvent = {
     id: randomUUID(),
@@ -24,7 +24,7 @@ export async function enqueueRunEvent(connection: Connection, run: Run): Promise
       ids: run.outputDatasetVersionIds,
     }),
   };
-  // Share the connection lock with imports: edits cannot redirect this transition's delivery.
+  // 取り込みと同じく接続を共有ロックし、編集でこの遷移の配信先が変わらないようにする。
   const plugins = await rows<PluginConnectionRecord>(
     connection,
     `SELECT * FROM plugin_connections WHERE project_id=$1 AND enabled

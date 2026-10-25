@@ -66,7 +66,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの定義とバージョン
     expect(older.items.map((version) => version.revision)).toEqual([5, 4, 3, 2, 1]);
     expect(older.nextCursor).toBeNull();
 
-    // A cursor that is not a version of this workflow is refused, not read as "from the start".
+    // このワークフローのバージョンではないカーソルは拒む。「最初から」とは読まない。
     const otherWorkflow = await fixture.createWorkflow();
     for (const cursor of [otherWorkflow.versions[0]!.id, crypto.randomUUID()])
       expect(
@@ -95,7 +95,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの定義とバージョン
     expect(await errorCode(await saveVersion(workflowId, 1, misspelled), 422)).toBe(
       'workflow_quality_metric_unknown',
     );
-    // Summary metrics and the step's own metrics are accepted.
+    // サマリーのメトリクスと、ステップ自身のメトリクスは受け付ける。
     misspelled[0]!.qualityGates = [
       { metric: 'preprocessing.retained_input_ratio', operator: 'gte', threshold: 0.9 },
       { metric: 'snr_db', operator: 'gte', threshold: 10 },
@@ -146,14 +146,14 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの定義とバージョン
       await expect(harness.database.query(statement, values)).rejects.toMatchObject({
         code: '23514',
       });
-    // A version nothing else refers to is kept as well.
+    // どこからも参照されていないバージョンも残す。
     const unused = await entity<WorkflowDetail>(
       await createWorkflow([{ ...fixture.steps[0]!, inputs: [] }]),
     );
     await expect(
       harness.database.query('DELETE FROM workflow_versions WHERE id=$1', [unused.versions[0]!.id]),
     ).rejects.toMatchObject({ code: '23514' });
-    // The execution's revision and workflow are those of its version.
+    // 実行のrevisionとワークフローは、その実行のバージョンのものに限る。
     for (const [statement, values] of [
       ['UPDATE workflow_executions SET revision=2 WHERE id=$1', [execution.id]],
       [

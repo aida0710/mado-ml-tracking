@@ -6,8 +6,8 @@ import { findOriginStepExecutionOfRun } from '../repositories/workflowExecutionR
 import { requireProject } from './accessService.js';
 
 /**
- * How a Run used its input dataset versions (role, weight, selection), as the workflow step that
- * started it resolved them. A Run no workflow started has none.
+ * Runが入力のデータセットバージョンをどう使ったか（役割、重み、選び方）。Runを始めた
+ * ワークフローのstepが解決したとおりに返す。ワークフローが始めたのでないRunには無い。
  */
 export class RunDatasetUsageService {
   constructor(private readonly database: Database) {}

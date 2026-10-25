@@ -10,7 +10,8 @@ export function artifactContentResponse(download: {
   artifact: Artifact;
   content: ArtifactContent;
 }): Response {
-  // MLflow clients download files; inline rendering is reserved for the native preview URL.
+  // MLflowのクライアントはファイルをダウンロードする。インラインの表示はネイティブの
+  // プレビューのURLだけに使う。
   const headers = artifactContentHeaders({
     ...download,
     disposition: 'attachment',

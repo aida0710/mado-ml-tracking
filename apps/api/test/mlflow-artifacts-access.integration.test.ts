@@ -263,7 +263,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow Artifactの権限とowner検証（隔�
       'a\0b',
     ];
     for (const path of unsafePaths) {
-      // Encoding the full path preserves dot segments until the server validates them.
+      // パス全体をエンコードすると、サーバーが検証するまでドットのセグメントが保たれる。
       const url = `${fixture.mlflowPath}/api/2.0/mlflow-artifacts/artifacts/${fixture.runRoot}/${encodeURIComponent(path)}`;
       const upload = await request(fixture.app, url, {
         method: 'PUT',

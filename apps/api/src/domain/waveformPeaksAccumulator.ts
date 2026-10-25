@@ -1,8 +1,8 @@
 import type { WaveformPeaksPreview } from '@mmt/contracts';
 
-// Far more than a canvas is wide, so the viewer can zoom into an overview without refetching.
+// canvasの幅よりはるかに多い。ビューアは取り直さずに全体表示から拡大できる。
 export const WAVEFORM_PEAKS_MAX_COUNT = 8192;
-// Four decimals keep the JSON small; a pixel column cannot show finer amplitude steps.
+// 小数4桁でJSONを小さく保つ。1ピクセルの列ではそれより細かい振幅の差は出せない。
 const PEAK_DECIMALS = 4;
 
 function roundPeak(value: number): number {
@@ -14,10 +14,10 @@ function clampSample(value: number): number {
 }
 
 /**
- * Streams mono samples into min/max peaks without knowing the length in advance. Each peak starts
- * at one sample; when the count reaches `maxCount`, neighbouring peaks are merged and the samples
- * per peak double, so memory stays constant and the result has between maxCount/2 and maxCount
- * peaks (fewer only for very short audio).
+ * モノラルのサンプルを、長さを前もって知らずにmin/maxのピークへ流し込む。各ピークは1サンプル
+ * から始まり、数が`maxCount`に達すると隣どうしのピークをまとめ、ピークあたりのサンプル数を倍に
+ * する。こうしてメモリは一定に保たれ、結果のピークの数はmaxCount/2からmaxCountの間になる
+ * （ごく短い音声のときだけそれより少ない）。
  */
 export class WaveformPeaksAccumulator {
   private readonly min: number[] = [];
@@ -56,7 +56,7 @@ export class WaveformPeaksAccumulator {
   }
 
   private closeCurrentPeak(): void {
-    // NaN samples never update the extremes; such a slice reads as silence.
+    // NaNのサンプルは最大・最小を更新しない。そうした区間は無音として読む。
     this.min.push(Number.isFinite(this.currentMin) ? clampSample(this.currentMin) : 0);
     this.max.push(Number.isFinite(this.currentMax) ? clampSample(this.currentMax) : 0);
     this.currentCount = 0;

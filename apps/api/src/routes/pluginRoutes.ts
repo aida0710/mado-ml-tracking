@@ -4,7 +4,7 @@ import type { PluginService } from '../services/pluginService.js';
 import { pluginCreateSchema, pluginPatchSchema } from '../domain/validation.js';
 import { jsonBody, principal, uuidParam, type ApiEnvironment } from '../http/request.js';
 
-// Keep validation aligned with Mado's service catalog rather than failing downstream.
+// 検証をmado S3 Data Catalogのサービスカタログに合わせ、下流で失敗させない。
 const MAX_MADO_QUERY_LENGTH = 512;
 export const pluginDatasetSearchSchema = z.strictObject({
   query: z.string().trim().max(MAX_MADO_QUERY_LENGTH),

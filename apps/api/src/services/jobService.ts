@@ -54,7 +54,9 @@ import {
 } from './checkpointResume.js';
 import { findTriggerPayload } from '../repositories/hookExecutionRepository.js';
 
-/** The Job fields a caller chooses: a JobCreate request, or a Task, rule, hook or driver launch. */
+/**
+ * 呼び出し元が決めるJobの項目。JobCreateのリクエストか、Task・ルール・フック・ドライバーの起動。
+ */
 export type JobInsert = Pick<JobCreate, 'runId' | 'targetId' | 'gpuIds' | 'maxAttempts'> &
   Partial<
     Pick<
@@ -63,7 +65,7 @@ export type JobInsert = Pick<JobCreate, 'runId' | 'targetId' | 'gpuIds' | 'maxAt
     >
   >;
 
-/** Where a Job stands among others. Only the server sets these (arrays, hooks, drivers). */
+/** ほかのJobとの関係でのJobの位置。サーバーだけが設定する（array、フック、ドライバー）。 */
 export interface JobPlacement {
   arrayGroupId?: string;
   arrayIndex?: number;
@@ -76,9 +78,9 @@ export interface JobPlacement {
 }
 
 /**
- * maxAttempts bounds the automatic retries only (their callers check it); a person may retry a
- * Job past it, as the hooks and automation rules promise. The chain stays bounded so the lookup
- * that follows retries back to their automation execution ends.
+ * maxAttemptsが制限するのは自動の再試行だけ（呼び出し元が確かめる）。フックと自動実行ルールが
+ * 約束しているとおり、人はそれを超えてJobを再試行できる。それでも連鎖には上限を置き、再試行を
+ * 元の自動実行までたどる検索が終わるようにする。
  */
 function assertRetryable(job: Job): void {
   if (!isTerminalStatus(job.status)) conflict('a running job or a job of unknown status cannot be retried');
@@ -87,9 +89,9 @@ function assertRetryable(job: Job): void {
 }
 
 /**
- * The parent of a retry Run. An automated Run's parent is its upstream (the training Run or the
- * upstream stage, or none), which the worker hands to the container, so its retries keep that
- * parent; other retries hang under the Run they retry.
+ * 再試行のRunの親。自動実行のRunの親はその上流（学習Run、上流の段、または無し）で、workerが
+ * コンテナに渡すので、その再試行も同じ親を保つ。それ以外の再試行は、再試行するRunの下に
+ * ぶら下がる。
  */
 async function retryParentRunId(connection: Connection, previousRun: Run): Promise<string | null> {
   const execution = await findExecutionForRun(connection, {
@@ -122,16 +124,16 @@ export class JobService {
     this.imagePlatforms = options.imagePlatforms ?? NO_IMAGE_PLATFORM_CHECK;
   }
 
-  /** The Project's Jobs, newest first; with `runId` only that Run's. */
+  /** ProjectのJob。新しい順。`runId`を指定するとそのRunのものだけ。 */
   async list(
     principal: Principal,
     projectId: string,
     filter: { runId?: string } = {},
   ): Promise<JobListItem[]> {
     await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
-    // Every Job has a Run of the same Project; the Task is optional. A Sweep trial, an automation
-    // execution and a workflow step name the Job they started, so a person's retry of one has no
-    // origin. A workflow step that reuses an earlier execution's Run did not start its Job.
+    // どのJobにも同じProjectのRunがある。Taskは無いこともある。Sweepのtrial、自動実行の実行、
+    // ワークフローのstepは自分が始めたJobを指しているので、それを人が再試行したJobには起点が無い。
+    // 前の実行のRunを使い回すワークフローのstepは、そのJobを始めていない。
     return rows(
       this.database,
       `SELECT ${jobColumns('j')},r.name AS run_name,r.kind AS run_kind,r.task_id,t.name AS task_name,
@@ -182,9 +184,9 @@ export class JobService {
   }
 
   /**
-   * Creates a Run and its Job together, as a Task launch does: when the Job is refused (a computer
-   * that takes no Jobs, say), the Run is not kept either, so no queued Run waits for a Job that
-   * never comes. Tokens need runs:write and jobs:write.
+   * Taskの起動と同じく、RunとそのJobを一緒に作る。Jobが拒まれたら（たとえばJobを受け付けない
+   * コンピュータ）Runも残さないので、来ないJobを待ち続けるqueuedのRunはできない。tokenには
+   * runs:writeとjobs:writeが要る。
    */
   async launch(principal: Principal, projectId: string, input: JobLaunch): Promise<TaskExecution> {
     assertNoReservedRunTags(input.run.tags);
@@ -221,8 +223,8 @@ export class JobService {
   ): Promise<Job> {
     const { run, input, attempt } = registration;
     const placement = registration.placement ?? {};
-    // Every Job, whether a person, a hook, automation or a sweep starts it, passes here; an
-    // archived Project gets none, and an archive waiting on this lock then sees the new Job.
+    // 人、フック、自動実行、Sweepのどれが始めるJobも、すべてここを通る。アーカイブ済みのProjectには
+    // 作らず、このロックを待っていたアーカイブは、そのあとで新しいJobを見る。
     if (!(await shareLiveProject(connection, run.projectId))) notFound('project');
     const activeRun = await first(
       connection,
@@ -231,7 +233,8 @@ export class JobService {
     );
     if (!activeRun) conflict('jobs cannot be created for a deleted run');
     if (run.status !== 'queued') conflict('jobs can be created only for queued runs');
-    // Reject duplicates before taking a target lock: a worker locks target before this existing Run.
+    // 重複はコンピュータをロックする前に拒む。workerは、この既存のRunより先に
+    // コンピュータをロックする。
     const existing = await first(connection, 'SELECT id FROM jobs WHERE run_id=$1', [run.id]);
     if (existing) conflict('the run already has a job');
     if (!run.codeVersionId)
@@ -264,7 +267,7 @@ export class JobService {
       runtime: code.runtime,
       usage: { userId: run.createdBy },
     });
-    // ssh and local Jobs name their GPUs; a site Job asks only for a number.
+    // sshとlocalのJobはGPUを指定する。siteのJobは数だけを求める。
     const gpuCount = target.executor === 'site' ? (input.gpuCount ?? 0) : input.gpuIds.length;
     return (await first<Job>(
       connection,
@@ -298,8 +301,8 @@ export class JobService {
   }
 
   /**
-   * `usage` is whom the Jobs will run as: the Run's creator (a rule's, hook's, Task's or Sweep's
-   * owner), who must be allowed to use the computer.
+   * `usage`は、Jobを誰として動かすか。Runの作成者（ルール・フック・Task・Sweepの所有者）で、
+   * そのユーザーがコンピュータを使える必要がある。
    */
   async validateTarget(
     connection: Connection,
@@ -329,7 +332,7 @@ export class JobService {
       retryOnFailure: execution.retryOnFailure ?? false,
       retryOnTimeout: execution.retryOnTimeout ?? false,
     });
-    // An image for another CPU would fail only on the compute node, after the queue wait.
+    // 別のCPU向けのイメージは、キューで待ったあとに計算ノードで初めて失敗する。
     await this.imagePlatforms.assertRunsOn(execution.runtime, target);
     await assertTargetReadyForJobs(connection, { target, ...execution.usage });
     return target;
@@ -350,9 +353,9 @@ export class JobService {
   }
 
   /**
-   * Shared by the cancel API and server-side cancellation (sweeps); authorization is the caller's.
-   * A driver's unfinished child Jobs are canceled with it, so nothing keeps running for a parent
-   * that was stopped.
+   * 取り消しのAPIとサーバー側の取り消し（Sweep）で共有する。権限の確認は呼び出し元が行う。
+   * ドライバーの終わっていない子のJobも一緒に取り消し、止めた親のために動き続けるものが
+   * 残らないようにする。
    */
   async requestCancelInTransaction(
     connection: Connection,
@@ -380,11 +383,12 @@ export class JobService {
     const { projectId } = reference;
     const job = await findJob(connection, { projectId, id: reference.jobId, lock: true });
     if (isTerminalStatus(job.status)) return job;
-    // A site Job that is being submitted or waits in the scheduler queue runs nothing yet, so it
-    // ends now; the launcher removes the queued scheduler job (scheduler_cancel_state).
+    // 投入中か、スケジューラのキューで待っているsiteのJobはまだ何も動かしていないので、ここで
+    // 終える。キューに入ったスケジューラのジョブはlauncherが消す（scheduler_cancel_state）。
     const waitsInSchedulerQueue = !!job.phase && JOB_SUBMISSION_PHASES.includes(job.phase);
     if (job.status !== 'queued' && !waitsInSchedulerQueue) {
-      // Even a silent worker may still own a live remote process. Only completion releases its reservation.
+      // 応答の無いworkerでも、リモートで動くプロセスをまだ持っていることがある。
+      // 予約を解くのは完了したときだけ。
       return (await first<Job>(
         connection,
         `UPDATE jobs SET cancel_requested=true WHERE id=$1 RETURNING ${jobColumns()}`,
@@ -411,7 +415,7 @@ export class JobService {
     return canceled;
   }
 
-  /** A retry is a new Run; with a checkpoint it continues from that step instead of step 0. */
+  /** 再試行は新しいRun。checkpointを指定すると、step 0からではなくそのstepから続ける。 */
   async retry(
     principal: Principal,
     projectId: string,
@@ -464,10 +468,9 @@ export class JobService {
   }
 
   /**
-   * Creates the next attempt of a finished Job as a new Run and Job, linked by retry_of_job_id.
-   * Shared by the retry API and automatic retries; authorization, the duplicate check, the
-   * checkpoint choice and, for automatic retries, maxAttempts are the caller's. The unique
-   * retry_of_job_id still refuses a second retry.
+   * 終わったJobの次の試行を、新しいRunとJobとして作り、retry_of_job_idでつなぐ。再試行のAPIと
+   * 自動の再試行で共有する。権限、重複の確認、checkpointの選択、自動の再試行ならmaxAttemptsの
+   * 確認は呼び出し元が行う。それでも2回目の再試行は、一意のretry_of_job_idが拒む。
    */
   async insertRetry(
     connection: Connection,
@@ -495,8 +498,8 @@ export class JobService {
         parentRunId: await retryParentRunId(connection, previousRun),
         environment: previousRun.environment,
       },
-      // A retried chained evaluation keeps the reference set apart from the upstream outputs,
-      // so promotion and baseline comparison still match it against the rule's inputs.
+      // 再試行した連鎖の評価でも、参照用のセットを上流の出力と分けて持つ。昇格とベースラインとの
+      // 比較が、引き続きルールの入力と照らし合わせられるようにするため。
       upstreamDatasetVersionIds: previousRun.upstreamDatasetVersionIds,
     });
     const run = checkpointId
@@ -513,7 +516,7 @@ export class JobService {
       input: {
         runId: run.id,
         targetId: previousJob.targetId,
-        // A site Job's gpuIds are what its runner was given, not what the Job asked for.
+        // siteのJobのgpuIdsは、Jobが求めたものではなくrunnerに割り当てられたもの。
         gpuIds: isSiteJob ? [] : previousJob.gpuIds,
         maxAttempts: previousJob.maxAttempts,
         ...(isSiteJob
@@ -527,7 +530,7 @@ export class JobService {
         allowChildJobs: previousJob.allowChildJobs,
       },
       attempt: previousJob.attempt + 1,
-      // A retry keeps its array index, hook and driver, so the group and the chain still see it.
+      // 再試行はarrayのindex、フック、ドライバーを保ち、グループと連鎖から見えるままにする。
       placement: {
         ...(previousJob.arrayGroupId !== null && previousJob.arrayIndex !== null
           ? { arrayGroupId: previousJob.arrayGroupId, arrayIndex: previousJob.arrayIndex }
@@ -546,7 +549,7 @@ export class JobService {
     return { run, job };
   }
 
-  // Resending the same retry returns the Run it created; asking for another checkpoint is refused.
+  // 同じ再試行を送り直すと、作ったRunを返す。別のcheckpointを求めるものは拒む。
   private async assertSameRetryCheckpoint(
     connection: Connection,
     retry: { projectId: string; previousRun: Run; retryRun: Run; request: JobRetryInput },

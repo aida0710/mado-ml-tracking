@@ -22,7 +22,7 @@ import { auditActor, NO_REQUEST_METADATA } from './auditService.js';
 import { assertInputDatasetVersionsUsable } from './datasetVersionReferences.js';
 import { assertRunRecordsWritable } from './runService.js';
 
-/** Records the data a training loader used from a step, without changing the loader itself. */
+/** 学習のローダーがあるstepから使ったデータを、ローダー自体を変えずに記録する。 */
 export class TrainingDataStageService {
   constructor(private readonly database: Database) {}
 

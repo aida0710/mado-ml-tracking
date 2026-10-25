@@ -3,7 +3,7 @@ import { DomainError } from '../../domain/errors.js';
 import { uuidSchema } from '../../domain/validation.js';
 import { serializeInt64 } from './trackingNumbers.js';
 
-// These limits follow MLflow 3.17's entity and batch validators.
+// これらの上限はMLflow 3.17のエンティティとバッチの検証に合わせている。
 const MAX_KEY_LENGTH = 250;
 const MAX_PARAMETER_VALUE_LENGTH = 6000;
 const MAX_TAG_VALUE_LENGTH = 8000;
@@ -23,9 +23,9 @@ const MAX_DATASET_SOURCE_LENGTH = 65535;
 const MAX_DATASET_PROFILE_LENGTH = 16777215;
 const MAX_INPUT_TAG_KEY_LENGTH = 255;
 const MAX_INPUT_TAG_VALUE_LENGTH = 500;
-// PostgreSQL and JavaScript Date both retain the millisecond timestamps used by the SDK.
+// SDKが使うミリ秒のタイムスタンプは、PostgreSQLでもJavaScriptのDateでもそのまま保てる。
 const MAX_TIMESTAMP = 8640000000000000;
-// Metric and ModelOutput steps are signed int64 in the official service descriptor.
+// 公式のサービス記述子では、MetricとModelOutputのstepは符号付きint64。
 const INT64_MAX = (1n << 63n) - 1n;
 const INT64_MIN = -(1n << 63n);
 
@@ -53,7 +53,8 @@ export const int64Schema = z
   }, 'out of the int64 range')
   .transform(serializeInt64);
 export const experimentIdSchema = z.union([uuidSchema, z.literal('0')]);
-// MLflow keys allow paths, spaces and Unicode, but paths cannot escape or normalize differently.
+// MLflowのキーにはパス、空白、Unicodeを使えるが、パスが外へ抜けるものや正規化で形が変わるものは
+// 認めない。
 export const trackingKeySchema = z
   .string()
   .min(1)

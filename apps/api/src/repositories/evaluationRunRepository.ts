@@ -12,15 +12,15 @@ export type EvaluationRunRecord = Pick<
   | 'endedAt'
 >;
 
-// The reference set (see domain/evaluationInputs.ts) computed in SQL so it can be matched in the WHERE.
+// 参照セット（domain/evaluationInputs.tsを参照）。WHEREで照合できるようSQLで計算する。
 const referenceSetExpression = `ARRAY(
   SELECT unnest(r.input_dataset_version_ids) EXCEPT SELECT unnest(r.upstream_dataset_version_ids))`;
 
 /**
- * SQL that holds when the Run aliased `r` was produced by the rule whose id is the parameter
- * `parameters.ruleId` (for example '$6'): the rule's execution points at the Run or at the Run of
- * the original Job it retried (the same rule as findExecutionForRun in automationExecutionLookup.ts).
- * `parameters.maxChainLength` bounds the retry chain (pass MAX_JOB_ATTEMPTS).
+ * 別名`r`のRunを、idをプレースホルダ`parameters.ruleId`（例えば'$6'）で渡すルールが作ったときに
+ * 成り立つSQL。ルールの実行記録がそのRun、または再試行した元のJobのRunを指していれば成り立つ
+ * （automationExecutionLookup.tsのfindExecutionForRunと同じ決まり）。再試行の連なりの長さは
+ * `parameters.maxChainLength`までに限る（MAX_JOB_ATTEMPTSを渡す）。
  */
 export function runProducedByRuleCondition(parameters: {
   ruleId: string;
@@ -41,12 +41,12 @@ export function runProducedByRuleCondition(parameters: {
 const producedByRuleExpression = runProducedByRuleCondition({ ruleId: '$6', maxChainLength: '$8' });
 
 /**
- * The latest comparable evaluation of a model version: same Project, kind=evaluation, finished,
- * active, and — when given — the same reference set (as a set), the same evaluation CodeVersion
- * (null matches Runs without code), and created by the given automation rule (manual retries of
- * its Jobs included). The rule filter lets promotion policies ignore manually created evaluation
- * Runs. runId narrows the search to that one Run, so a decision judges exactly the Run it names.
- * Newest ended_at wins; id breaks ties.
+ * モデルバージョンの比べられる評価のうち最新のもの。同じProject、kind=evaluation、終了済み、
+ * 削除されていないもので、指定があれば同じ参照セット（集合として比べる）、同じ評価のCodeVersion
+ * （nullはコードの無いRunに一致）、指定した自動実行ルールが作ったもの（そのJobの手動の再試行も
+ * 含む）に限る。ルールで絞ると、昇格のポリシーが手で作った評価のRunを無視できる。runIdを渡すと
+ * そのRun1つに絞るので、判定は名指ししたRunそのものを評価する。ended_atの新しいものを選び、
+ * 同じならidで決める。
  */
 export async function findLatestEvaluationRun(
   connection: Connection,
@@ -85,7 +85,7 @@ export async function findLatestEvaluationRun(
   );
 }
 
-// PostgreSQL turns non-finite doubles into JSON strings when building latest_metrics.
+// PostgreSQLはlatest_metricsを組み立てるとき、有限でないdoubleをJSONの文字列にする。
 function parseLatestMetricValue(value: unknown): number | undefined {
   if (typeof value === 'number') return value;
   if (value === 'NaN' || value === 'Infinity' || value === '-Infinity') return Number(value);
@@ -93,9 +93,9 @@ function parseLatestMetricValue(value: unknown): number | undefined {
 }
 
 /**
- * Prefers, per metric key, the latest MLflow point logged with the digest of a reference
- * DatasetVersion (step, then timestamp, as latest_metrics orders them). Keys without such a point
- * fall back to the Run's latest_metrics, which mixes every dataset context.
+ * メトリクスのキーごとに、参照するDatasetVersionのdigestを付けて記録した最新のMLflowの点を
+ * 優先する（latest_metricsと同じく、step、次にtimestampで順序を決める）。そうした点の無いキーは、
+ * すべてのデータセットの文脈が混ざったRunのlatest_metricsを使う。
  */
 export async function loadEvaluationMetrics(
   connection: Connection,

@@ -10,12 +10,12 @@ import { WorkflowScheduler } from '../src/services/workflowScheduler.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 import { workflowFixture, type WorkflowFixture } from './workflowFixtures.js';
 
-/** What the scheduler logged, one parsed JSON event per console.error call. */
+/** schedulerが出したログ。console.errorの呼び出し1回ごとに、JSONを解析したイベントを1つ返す。 */
 function loggedEvents(logged: { mock: { calls: unknown[][] } }): Record<string, unknown>[] {
   return logged.mock.calls.map(([line]) => JSON.parse(String(line)) as Record<string, unknown>);
 }
 
-// PostgreSQL's answer when an administrator stops the server; its message names the query.
+// 管理者がサーバーを止めたときのPostgreSQLの応答。メッセージにはクエリが入る。
 const ADMINISTRATOR_SHUTDOWN = '57P01';
 function databaseShutdownError(): Error {
   return Object.assign(
@@ -48,14 +48,14 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの停止と起動の失敗
     });
   }
 
-  /** The next step's launch fails once with an error that is not a refusal. */
+  /** 次のステップの起動を、拒否ではないエラーで1回だけ失敗させる。 */
   function failNextLaunchWithDatabaseError() {
     return vi
       .spyOn(harness.services.tasks, 'launchTaskInTransaction')
       .mockRejectedValueOnce(databaseShutdownError());
   }
 
-  /** Time passes until a step whose launch failed is due to be launched again. */
+  /** 起動に失敗したステップをもう一度起動する時刻まで、時間を進める。 */
   async function passLaunchRetryDelay() {
     await harness.database.query(
       `UPDATE workflow_step_runs SET launch_failed_at=launch_failed_at-make_interval(secs=>$1)
@@ -69,7 +69,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの停止と起動の失敗
     const execution = await fixture.launch(definition);
     const processing = await fixture.claim();
     const output = await fixture.output(processing.run.id);
-    // The Job ends before the scheduler looks, and the person stops the execution in between.
+    // schedulerが見る前にJobが終わり、その間に人が実行を止める。
     await fixture.complete(processing);
     const canceled = await entity<WorkflowExecution>(await cancel(execution.id), 200);
     expect(canceled.status).toBe('canceled');
@@ -100,7 +100,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの停止と起動の失敗
     const launches = failNextLaunchWithDatabaseError();
     await fixture.finish(processing);
 
-    // The first step's end is kept; only the launch of the next one is undone.
+    // 最初のステップの終了は残し、次のステップの起動だけを取り消す。
     const waiting = await fixture.execution(execution.id);
     expect(waiting).toMatchObject({ status: 'running', error: null });
     expect(waiting.steps.map((step) => step.status)).toEqual(['finished', 'pending']);
@@ -115,10 +115,10 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの停止と起動の失敗
       failures: 1,
       retrying: true,
     });
-    // The message of the database error is not logged; it can hold SQL text.
+    // データベースのエラーのメッセージはログに出さない。SQLの文が入ることがあるため。
     expect(JSON.stringify(logged.mock.calls)).not.toContain('secret_value');
 
-    // The next pass comes within seconds, which a passing outage would not survive.
+    // 次の巡回は数秒以内に来る。その間隔で起動し直すと、一時的な障害でも実行が終わってしまう。
     await harness.workflowScheduler.tick();
     expect(launches).toHaveBeenCalledTimes(1);
     await passLaunchRetryDelay();
@@ -132,10 +132,10 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの停止と起動の失敗
     const launches = vi
       .spyOn(harness.services.tasks, 'launchTaskInTransaction')
       .mockImplementation(() => Promise.reject(databaseShutdownError()));
-    // The launch request makes the first attempt; the execution waits for the scheduler.
+    // 起動のリクエストが最初の試行をする。実行はその後schedulerを待つ。
     const execution = await fixture.launch(await fixture.createWorkflow());
     expect(execution).toMatchObject({ status: 'running', error: null });
-    // Another API process, or this one after a restart, picks up the count from the database.
+    // 別のAPIのプロセスや、再起動したあとのこのプロセスも、回数をデータベースから引き継ぐ。
     const otherProcess = new WorkflowScheduler(
       harness.database,
       new WorkflowExecutor(harness.services.tasks),
@@ -208,7 +208,8 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの停止と起動の失敗
     const definition = await fixture.createWorkflow();
     const first = await fixture.launch(definition, { idempotencyKey: 'first' });
     const second = await fixture.launch(definition, { idempotencyKey: 'second' });
-    // One worker takes one Job at a time, so each first step ends before the next is claimed.
+    // 1つのworkerは一度に1つのJobしか取らないので、それぞれの最初のステップは、次のJobを
+    // claimする前に終わる。
     for (const name of ['Processed first', 'Processed second']) {
       const job = await fixture.claim();
       await fixture.output(job.run.id, name);
@@ -218,7 +219,7 @@ describe.skipIf(!testDatabaseUrl)('ワークフローの停止と起動の失敗
     vi.spyOn(WorkflowExecutor.prototype, 'advance').mockRejectedValueOnce(
       new Error('Connection terminated unexpectedly'),
     );
-    // The older execution comes first and fails; the other still advances in the same pass.
+    // 古い実行が先に処理されて失敗する。もう一方も同じ巡回の中で進む。
     expect(await harness.workflowScheduler.tick()).toBe(1);
     expect((await fixture.execution(first.id)).steps[1]!.status).toBe('pending');
     expect((await fixture.execution(second.id)).steps[1]!.status).toBe('queued');

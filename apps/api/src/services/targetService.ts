@@ -50,7 +50,8 @@ type TargetRow = ComputeTarget & { ownerName: string | null };
 const targetSelect =
   'SELECT t.*,o.display_name AS owner_name FROM compute_targets t LEFT JOIN users o ON o.id=t.owner_user_id';
 
-// Host and SSH file paths are infrastructure details; workers receive full targets only after claim.
+// ホストとSSHのファイルのパスは基盤の詳細。workerはclaimしたあとでだけ、コンピュータの
+// 全体を受け取る。
 function withoutConnection(target: TargetRow): TargetRow {
   return {
     ...target,
@@ -67,8 +68,8 @@ function siteOnly(message: string): never {
   throw new DomainError({ status: 422, code: 'site_only_setting', message });
 }
 
-// ssh and local targets reach hosts through the workers' own SSH keys, so only global
-// administrators add or keep them; everyone else adds sites.
+// sshとlocalのコンピュータは、worker自身のSSHの鍵でホストに入るので、追加・管理できるのは
+// 全体管理者だけ。ほかの人はsiteを追加する。
 function targetAdminRequired(): never {
   throw new DomainError({
     status: 403,
@@ -98,9 +99,9 @@ export class TargetService {
   ) {}
 
   /**
-   * The computers one may use (public ones, one's own, and one's creator's for a Service Account)
-   * and those one manages (one's own; every computer for a global administrator). With
-   * `projectId`, only those one may use, for the screens that create Jobs in that Project.
+   * 使えるコンピュータ（公開のもの、自分のもの、Service Accountなら作成者のもの）と、管理する
+   * コンピュータ（自分のもの。全体管理者ならすべて）。`projectId`を指定したら、使えるものだけを
+   * 返す。そのProjectでJobを作る画面のため。
    */
   async list(principal: Principal, query: { projectId?: string } = {}): Promise<ComputeTargetDetails[]> {
     requireScope(principal, 'read');
@@ -121,8 +122,8 @@ export class TargetService {
   }
 
   /**
-   * GET /targets/overview: every computer with whether one may use and manage it, and nothing of
-   * how it is reached, so someone else's private computer is seen but not described.
+   * GET /targets/overview。すべてのコンピュータを、使えるか・管理できるかとともに返し、どう接続
+   * するかは何も返さない。そのため、ほかの人の非公開のコンピュータは、見えるが中身は分からない。
    */
   async overview(principal: Principal): Promise<ComputeTargetOverview[]> {
     requireScope(principal, 'read');
@@ -147,7 +148,7 @@ export class TargetService {
       requireSession(principal, 'adding a computer');
       if (fields.executor !== 'site') targetAdminRequired();
     }
-    // A site's runner downloads inputs itself with the Job token; ssh/local relay through the worker.
+    // siteのrunnerはJob tokenで入力を自分でダウンロードする。ssh・localはworkerが中継する。
     const input = {
       ...fields,
       datasetTransfer: fields.datasetTransfer ?? (fields.executor === 'site' ? 'direct' : 'relay'),
@@ -184,7 +185,8 @@ export class TargetService {
           input.cpuArch,
           input.supportsArray,
           input.queueTimeoutSeconds,
-          // Whoever adds a computer owns it, a global administrator's ssh or local target too.
+          // コンピュータを追加した人が所有者になる。全体管理者が追加したsshやlocalのコンピュータも
+          // 同じ。
           principal.user.id,
           input.visibility,
         ],
@@ -293,7 +295,8 @@ export class TargetService {
           await this.updateSite(connection, principal, {
             target: updated, site, creating: target.executor !== 'site',
           });
-        // Who opened a private computer to everyone, or closed a public one, is worth finding.
+        // 誰が非公開のコンピュータを全員に公開したか、公開のものを閉じたかは、あとで探せるように
+        // しておく価値がある。
         await writeAuditEvent(connection, {
           ...draft,
           outcome: 'success',
@@ -355,8 +358,8 @@ export class TargetService {
     return (await this.details(connection, principal, [target]))[0]!;
   }
 
-  // Settings are their manager's; everyone else who may use a computer sees what it is and whose
-  // account its Jobs run as. How an ssh or local target is reached is shown in a browser session.
+  // 設定はその管理者のもの。コンピュータを使えるほかの人には、それが何か、Jobが誰のアカウントで
+  // 動くかを見せる。sshやlocalのコンピュータへの接続方法は、ブラウザのsessionでだけ見せる。
   private async details(
     connection: Connection,
     principal: Principal,

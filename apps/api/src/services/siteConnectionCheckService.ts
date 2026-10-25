@@ -13,8 +13,8 @@ import { findSiteTarget } from './siteAccess.js';
 import { siteKeyAccount } from './siteKeyService.js';
 
 /**
- * The launcher logs in once with an account's key and runs `true`, so the owner of the account
- * knows the public key was authorized before any Job is submitted.
+ * launcherがアカウントの鍵で一度ログインして`true`を実行する。これでアカウントの持ち主は、Jobを
+ * 投入する前に、公開鍵が受け入れられたことを確かめられる。
  */
 export class SiteConnectionCheckService {
   constructor(private readonly database: Database) {}

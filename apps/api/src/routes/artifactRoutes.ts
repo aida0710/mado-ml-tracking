@@ -24,15 +24,17 @@ import {
   type ApiContext,
 } from '../http/request.js';
 
-// Bound project catalogs while leaving room for uploaded SIF files and model weights.
+// Projectのカタログに上限を設けつつ、アップロードしたSIFファイルやモデルの重みが入る余裕は残す。
 const DEFAULT_CATALOG_LIMIT = 100;
 const MAX_CATALOG_LIMIT = 500;
-// A Run page holds one browser directory level; clients that need every file follow nextCursor.
+// Runの1ページにはファイルブラウザの1階層分が入る。全ファイルが要るクライアントは
+// nextCursorをたどる。
 const DEFAULT_RUN_ARTIFACT_LIMIT = 1000;
 const MAX_RUN_ARTIFACT_LIMIT = 1000;
-// Same bound as stored Artifact paths (artifactRegistration), so any stored directory can be a prefix.
+// 保存するArtifactのパスと同じ上限（artifactRegistration）にし、保存されたどのディレクトリも
+// prefixにできるようにする。
 const MAX_PREFIX_LENGTH = 1024;
-// Cursors are base64url JSON holding one path, so they stay below a few kilobytes.
+// cursorはパスを1つ持つJSONをbase64urlにしたものなので、数KBを超えない。
 const MAX_CURSOR_LENGTH = 4096;
 const versionsSchema = z.enum(['latest', 'all']);
 const cursorSchema = z.string().max(MAX_CURSOR_LENGTH).optional();
@@ -48,7 +50,7 @@ export const artifactCatalogQuerySchema = z.strictObject({
   runId: uuidSchema.optional(),
   modelVersionId: uuidSchema.optional(),
   modelId: uuidSchema.optional(),
-  // Every version by default: the Web's search across Runs (useProjectArtifacts) omits `versions`.
+  // 既定は全バージョン。画面のRun横断の検索（useProjectArtifacts）は`versions`を付けない。
   versions: versionsSchema.default('all'),
 });
 export const runArtifactQuerySchema = z.strictObject({
@@ -67,7 +69,7 @@ export const artifactTreeQuerySchema = z.strictObject({
   prefix: z.string().max(MAX_PREFIX_LENGTH).default(''),
 });
 
-// artifactIds is one comma-separated value so a catalog page asks for all its rows in one URL.
+// artifactIdsはカンマ区切りの1つの値で、カタログの1ページ分の行を1つのURLで求められる。
 export const artifactReferencesQuerySchema = z.strictObject({
   artifactIds: z
     .string()
@@ -82,8 +84,8 @@ function declaredContentLength(context: ApiContext): number | undefined {
 }
 
 /**
- * Earlier middleware has already materialized the response (CORS) and set the API-wide no-store,
- * and Hono copies those headers over a returned Response. Setting them on the context wins.
+ * 前のmiddlewareが既に応答を作り（CORS）、API全体のno-storeを設定している。Honoは返された
+ * Responseのヘッダーをそれらで上書きする。contextに設定すれば、こちらが優先される。
  */
 function setResponseHeaders(context: ApiContext, headers: Record<string, string>) {
   for (const [name, value] of Object.entries(headers)) context.header(name, value);

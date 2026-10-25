@@ -6,7 +6,7 @@ export interface LockedRunForNote {
   lifecycleStage: 'active' | 'deleted';
 }
 
-// Locks the Run row so a concurrent tag write through MLflow cannot overwrite the description.
+// Runの行をロックし、MLflowから同時にタグを書いても説明を上書きできないようにする。
 export async function lockRunForNote(
   connection: Connection,
   run: { projectId: string; runId: string },
@@ -18,7 +18,7 @@ export async function lockRunForNote(
   );
 }
 
-// Writes only the description key so other tags changed since the Run was read are kept.
+// 説明のキーだけを書き、Runを読んだ後に変わったほかのタグを残す。
 export async function writeRunNote(
   connection: Connection,
   note: { runId: string; content: string | null },

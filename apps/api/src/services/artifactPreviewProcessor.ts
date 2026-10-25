@@ -22,7 +22,7 @@ import { renderAudioPreviews, renderVideoPoster } from './previewRenderer.js';
 export interface PreviewTools {
   ffmpegPath: string;
   ffprobePath: string;
-  /** Upper bound for each ffprobe/ffmpeg run. */
+  /** ffprobe・ffmpegの1回の実行にかけられる時間の上限。 */
   timeoutMs: number;
 }
 
@@ -32,7 +32,7 @@ interface PreviewFile {
   body: Buffer;
 }
 
-/** Why a preview ended without a file; stored in artifact_previews.error. */
+/** プレビューがファイルを作らずに終わった理由。artifact_previews.errorに保存する。 */
 type PreviewFailure =
   | {
       status: 'skipped';
@@ -40,7 +40,7 @@ type PreviewFailure =
     }
   | { status: 'failed'; error: 'probe_failed' | 'render_failed' | 'render_timeout' };
 
-/** Lost claims are not errors: the newer claim owns the row, so this result is discarded. */
+/** claimを失ったのはエラーではない。新しいclaimが行を持つので、この結果は捨てる。 */
 class PreviewClaimLostError extends Error {
   override readonly name = 'PreviewClaimLostError';
 }
@@ -57,14 +57,14 @@ function toolFailure(error: unknown, stage: 'probe' | 'render'): PreviewFailure 
 }
 
 function logPreviewEvent(event: string, details: Record<string, unknown>): void {
-  // Tool output and storage locations are not logged; the Artifact id identifies the file.
+  // ツールの出力と保存場所はログに出さない。ファイルはArtifactのidで特定できる。
   console.error(JSON.stringify({ event, ...details }));
 }
 
 /**
- * Generates the claimed previews of one Artifact: downloads it to a private temp directory,
- * probes it with ffprobe, records media info the header probe could not read, renders each kind
- * and stores the result as an Artifact without a Run. The source Artifact is never modified.
+ * 1つのArtifactについて、claimしたプレビューを作る。専用の一時ディレクトリにダウンロードし、
+ * ffprobeで調べ、ヘッダーの読み取りでは分からなかったメディア情報を記録し、種類ごとに描画して、
+ * 結果をRunの無いArtifactとして保存する。元のArtifactは決して変えない。
  */
 export class ArtifactPreviewProcessor {
   constructor(
@@ -72,16 +72,16 @@ export class ArtifactPreviewProcessor {
       database: Database;
       stores: ArtifactStores;
       tools: PreviewTools;
-      /** Parent of the per-job temp directories; it needs room for the largest source file. */
+      /** 処理ごとの一時ディレクトリの親。最大の元ファイルが入る空きが要る。 */
       workDirectory: string;
-      /** Larger sources are skipped without being downloaded into workDirectory. */
+      /** これより大きい元ファイルは、workDirectoryにダウンロードせずに飛ばす。 */
       maxSourceBytes: number;
     },
   ) {}
 
-  /** Processes one Artifact's previews; false when the queue is empty. */
+  /** 1つのArtifactのプレビューを処理する。キューが空ならfalse。 */
   async processNext(): Promise<boolean> {
-    // Created before claiming, so an unusable work directory leaves no row stuck in 'running'.
+    // claimの前に作り、作業ディレクトリが使えなくても'running'のまま止まる行を残さない。
     const directory = await mkdtemp(path.join(this.options.workDirectory, 'mmt-preview-'));
     try {
       const job = await claimNextPreviewJob(this.options.database);
@@ -176,8 +176,8 @@ export class ArtifactPreviewProcessor {
   }
 
   /**
-   * Fills media info for formats the registration-time header probe does not read. A header row
-   * already present is kept: ON CONFLICT DO NOTHING never overwrites it.
+   * 登録時のヘッダーの読み取りでは読めない形式について、メディア情報を埋める。ヘッダーから作った
+   * 行が既にあればそれを残す。ON CONFLICT DO NOTHINGは上書きしない。
    */
   private async recordMediaInfo(artifact: Artifact, probe: MediaProbe): Promise<void> {
     if (!probe.audio || probe.durationSeconds === null) return;
@@ -201,7 +201,7 @@ export class ArtifactPreviewProcessor {
     }
   }
 
-  /** Writes the file, then registers it and marks the preview ready in one transaction. */
+  /** ファイルを書いてから、1つのトランザクションでそれを登録し、プレビューをreadyにする。 */
   private async storePreview(job: PreviewJob, kind: ArtifactPreviewKind, file: PreviewFile): Promise<void> {
     const { database, stores } = this.options;
     const source = job.artifact;
@@ -209,7 +209,8 @@ export class ArtifactPreviewProcessor {
     const id = randomUUID();
     let reference: { backend: Artifact['backend']; key: string } | null = null;
     try {
-      // The Project's current backend, like any new Artifact; a disabled one fails and retries.
+      // ほかの新しいArtifactと同じく、Projectの今の保存先に置く。無効な保存先なら失敗して
+      // 再試行する。
       const backend = await projectArtifactBackend(database, source.projectId, stores);
       reference = { backend, key: `${source.projectId}/${id}/content` };
       const stored = await stores.put({ ...reference, body: Readable.from(file.body), mimeType: file.mimeType });

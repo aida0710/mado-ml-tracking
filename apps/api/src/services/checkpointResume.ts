@@ -16,12 +16,12 @@ import {
 import { findRun } from '../repositories/registryRepository.js';
 import { INPUT_CHECKPOINT_TAG } from '../domain/serverRunTags.js';
 
-// Continuing a new Run from a saved checkpoint. Callers run these inside the transaction that
-// creates the Run, after their own authorization and before the Run's Job is inserted.
+// 保存したcheckpointから新しいRunを続けるための処理。呼び出し側は、自分の認可を済ませたあと、
+// RunのJobを挿入する前に、Runを作るトランザクションの中でこれらを呼ぶ。
 
 /**
- * The checkpoint a Job retry continues from: the requested one, or the largest step of the
- * retried Run. A retried Run that saved none continues from the checkpoint it resumed from.
+ * Jobの再試行が続きから始めるcheckpoint。指定されたものか、再試行するRunのstepが最大のもの。
+ * 再試行するRunが1つも保存していなければ、そのRunが再開に使ったcheckpointから続ける。
  */
 export async function selectRetryCheckpoint(
   connection: Connection,
@@ -45,8 +45,9 @@ export async function selectRetryCheckpoint(
 }
 
 /**
- * Pins a Run created in this transaction (before its Job) to a checkpoint: resume_checkpoint_id,
- * environment.resume and, unless the caller chose one, parentRunId = the checkpoint's Run.
+ * このトランザクションで（Jobより前に）作ったRunをcheckpointに固定する。設定するのは
+ * resume_checkpoint_id、environment.resume、それに呼び出し側が選んでいなければ
+ * parentRunId = checkpointのRun。
  */
 export async function pinResumeCheckpoint(
   connection: Connection,
@@ -76,7 +77,7 @@ export async function pinResumeCheckpoint(
   return findRun(connection, { projectId: run.projectId, id: run.id });
 }
 
-/** WorkerJob.resumeCheckpoint for a pinned Run, or null when the Run starts from scratch. */
+/** 固定したRunのWorkerJob.resumeCheckpoint。Runが最初から始まるならnull。 */
 export async function findWorkerResumeCheckpoint(
   connection: Connection,
   run: Run,
@@ -86,8 +87,8 @@ export async function findWorkerResumeCheckpoint(
 }
 
 /**
- * WorkerJob.inputCheckpoint: the checkpoint a checkpoint_saved hook started this Run for (the
- * reserved tag), handed to the container as an input rather than a state to resume.
+ * WorkerJob.inputCheckpoint。checkpoint_savedのフックがこのRunを始めるもとになったcheckpoint
+ * （予約済みのtag）で、再開する状態ではなく入力としてコンテナに渡す。
  */
 export async function findWorkerInputCheckpoint(
   connection: Connection,
@@ -115,7 +116,7 @@ async function workerCheckpoint(
   };
 }
 
-// Artifact rows are only written after their content is stored, so a missing row is a lost file.
+// Artifactの行は中身を保存してから書くので、行が無ければファイルが失われている。
 function assertCheckpointArtifactsSaved(checkpoint: RunCheckpoint): void {
   if (checkpoint.artifacts.length !== checkpoint.artifactIds.length)
     throw new DomainError({

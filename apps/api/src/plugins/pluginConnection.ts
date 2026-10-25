@@ -5,7 +5,7 @@ import type {
   PluginManifest,
 } from '@mmt/contracts';
 
-/** Persisted fields only; the DTO is assembled explicitly so ciphertext can never leak. */
+/** 保存するフィールドだけ。暗号文が決して漏れないよう、DTOは明示的に組み立てる。 */
 export interface PluginConnectionRecord {
   id: string;
   projectId: string;

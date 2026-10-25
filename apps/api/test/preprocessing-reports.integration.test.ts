@@ -13,7 +13,7 @@ import {
   type WorkflowFixture,
 } from './workflowFixtures.js';
 
-// Far beyond the accepted depth, including runtimes where JSON.stringify itself exhausts the stack.
+// 受け付ける深さをはるかに超える深さ。実行環境によってはJSON.stringify自体がスタックを使い果たす。
 const EXCESSIVE_METADATA_DEPTH = 10_000;
 
 describe.skipIf(!testDatabaseUrl)('前処理レポートの品質と固定（独立PostgreSQL）', () => {
@@ -85,7 +85,7 @@ describe.skipIf(!testDatabaseUrl)('前処理レポートの品質と固定（独
       expect(refused.status).toBe(422);
       expect(((await refused.json()) as { code: string }).code).toBe('invalid_request');
     }
-    // Send raw JSON so the API's depth check runs before any client-side recursive serialization.
+    // クライアント側で再帰的に直列化する前にAPIの深さの検査が動くよう、生のJSONを送る。
     const serializedReport = JSON.stringify(createPreprocessingReportInput());
     const serializedMetadata = '{"level":'.repeat(EXCESSIVE_METADATA_DEPTH)
       + '{}' + '}'.repeat(EXCESSIVE_METADATA_DEPTH);

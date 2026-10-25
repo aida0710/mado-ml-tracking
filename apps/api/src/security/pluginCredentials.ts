@@ -36,7 +36,7 @@ export class PluginCredentials {
         message: 'the stored integration credentials cannot be decrypted; check the storage key',
       });
     }
-    // Per-purpose keys saved before migration 067 are ignored; the access token is entered again.
+    // migration 067より前に保存した用途別の鍵は無視する。access tokenは入力し直してもらう。
     return saved.accessToken ? { accessToken: saved.accessToken } : {};
   }
 
@@ -67,7 +67,7 @@ export class PluginCredentials {
         code: 'plugin_secret_key_unavailable',
         message: 'set MMT_PLUGIN_SECRET_KEY on the API server',
       });
-    // A new token replaces the saved value, which also recovers from loss of the old encryption key.
+    // 新しいtokenで保存した値を置き換える。これで古い暗号鍵を失った場合も元に戻せる。
     const credentials: MadoCredentials = { accessToken: input.accessToken };
     const encrypted = encryptSecret({
       key: this.key,

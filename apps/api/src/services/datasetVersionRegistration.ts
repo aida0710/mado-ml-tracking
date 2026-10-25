@@ -11,14 +11,14 @@ import { lockDatasetsOfVersions } from './datasetVersionReferences.js';
 import type { ModelVersionRegistrationActor } from './modelVersionRegistration.js';
 import { enqueueRunEvent } from './outboxEvents.js';
 
-// Dataset versions are registered by the same two kinds of actor as model versions, plus callers
-// that already checked the principal with their own rule (plugin imports need Project admin,
-// MLflow log_inputs checks scopes per dataset).
+// データセットバージョンを登録するのは、モデルバージョンと同じ2種類のactorと、principalを独自の
+// 規則で確認済みの呼び出し元（pluginの取り込みはProject adminが要り、MLflowのlog_inputsは
+// データセットごとにscopeを確かめる）。
 export type DatasetVersionRegistrationActor =
   | ModelVersionRegistrationActor
   | { type: 'callerAuthorized' };
 
-/** A file of an 'artifacts' version, with the Artifact's size and sha256 already looked up. */
+/** 'artifacts'のバージョンの1ファイル。Artifactのsizeとsha256は調べ済み。 */
 export interface DatasetManifestFile {
   path: string;
   artifactId: string;
@@ -29,7 +29,7 @@ export interface DatasetManifestFile {
 interface DatasetVersionRegistrationBase {
   projectId: string;
   datasetId: string;
-  // Omitted versions take the next integer after the dataset's integer versions.
+  // 省略したときは、データセットの整数のバージョンの次の整数になる。
   version?: string;
   schema: JsonObject;
   metadata: JsonObject;
@@ -38,7 +38,7 @@ interface DatasetVersionRegistrationBase {
   actor: DatasetVersionRegistrationActor;
 }
 
-/** Data stored elsewhere: the client's uri and digest are kept as given. */
+/** ほかの場所に置いたデータ。クライアントが送ったuriとdigestをそのまま持つ。 */
 interface ReferenceContentRegistration {
   uri: string;
   digest: string;
@@ -47,8 +47,8 @@ interface ReferenceContentRegistration {
 }
 
 /**
- * The version is these Artifacts. The server sets uri to `mmt-dataset://<versionId>` and computes
- * the manifest digest; a digest the client sent must equal it.
+ * バージョンの中身はこれらのArtifact。サーバーがuriを`mmt-dataset://<versionId>`にし、manifestの
+ * digestを計算する。クライアントがdigestを送ったなら、それと一致する必要がある。
  */
 interface ArtifactContentRegistration {
   content: { files: DatasetManifestFile[] };
@@ -60,17 +60,17 @@ interface ArtifactContentRegistration {
 export type DatasetVersionRegistration = DatasetVersionRegistrationBase &
   (ReferenceContentRegistration | ArtifactContentRegistration);
 
-// Resolved by the API itself (GET .../versions/:v/files); W5 workers fetch the files through it.
+// API自身が解決する（GET .../versions/:v/files）。W5のworkerはここを通してファイルを取る。
 const DATASET_VERSION_URI_SCHEME = 'mmt-dataset://';
 
-// Non-integer versions ("2026-10", "v1") stay as they are and do not take part in numbering.
-// 18 digits keeps the value inside bigint.
+// 整数でないバージョン（"2026-10"、"v1"）はそのまま残し、番号付けに加わらない。
+// 18桁ならbigintに収まる。
 const INTEGER_VERSION_PATTERN = '^[1-9][0-9]{0,17}$';
 
 /**
- * Inserts an immutable DatasetVersion, and for Artifact content its file list, in the caller's
- * transaction and lists it in the source Run's outputs. A registration that arrives after the Run
- * ended resends the Run's outbox event so external lineage sees the new output.
+ * 呼び出し元のトランザクションの中で、変更できないDatasetVersionと、中身がArtifactならその
+ * ファイル一覧を挿入し、元のRunの出力に並べる。Runが終わったあとに届いた登録は、外部の
+ * lineageが新しい出力を見られるよう、Runのoutboxのイベントを送り直す。
  */
 export async function registerDatasetVersion(
   connection: Connection,
@@ -89,10 +89,10 @@ export async function registerDatasetVersion(
     [registration.datasetId, projectId],
   );
   if (!dataset) notFound('dataset');
-  // The parents must outlive this transaction (a version deletion waits, or has already removed
-  // one and this answers 404). A version without a name is numbered after the Dataset's integer
-  // versions, which needs the Dataset to itself; it is locked in the same id order as the parents'.
-  // A named version needs no lock of its own: deleting another version does not touch it.
+  // 親はこのトランザクションより長く残る必要がある（バージョンの削除は待つか、既に1つ消していて
+  // こちらが404を返す）。バージョンの名前を省いたものはDatasetの整数のバージョンの次の番号になり、
+  // そのDatasetを独占する必要がある。親と同じidの順でロックする。名前を指定したバージョンには
+  // 自分のロックは要らない。別のバージョンを削除しても、それには触れない。
   await lockDatasetsOfVersions(connection, {
     projectId,
     versionIds: registration.parentDatasetVersionIds,
@@ -181,7 +181,7 @@ interface StoredDatasetContent {
 }
 
 function describeStoredContent(registration: DatasetVersionRegistration): StoredDatasetContent {
-  // The id is chosen here because the immutable row must carry its own uri from the INSERT.
+  // 変更できない行はINSERTの時点で自分のuriを持つ必要があるので、idをここで決める。
   const id = randomUUID();
   if (!registration.content)
     return {
@@ -211,7 +211,7 @@ function describeStoredContent(registration: DatasetVersionRegistration): Stored
   };
 }
 
-// One statement with array parameters inserts up to MAX_DATASET_VERSION_FILES rows.
+// 配列を引数に渡す1つの文で、MAX_DATASET_VERSION_FILES行まで挿入する。
 async function insertDatasetVersionFiles(
   connection: Connection,
   manifest: { projectId: string; datasetVersionId: string; files: DatasetManifestFile[] },
@@ -232,7 +232,7 @@ async function insertDatasetVersionFiles(
   );
 }
 
-// The caller holds the dataset row FOR UPDATE, so concurrent registrations take distinct numbers.
+// 呼び出し元がデータセットの行をFOR UPDATEで持っているので、同時の登録は別々の番号を取る。
 async function nextDatasetVersion(connection: Connection, datasetId: string): Promise<string> {
   const next = (await first<{ version: string }>(
     connection,
@@ -243,9 +243,9 @@ async function nextDatasetVersion(connection: Connection, datasetId: string): Pr
   return next.version;
 }
 
-// Same rule as modelVersionRegistration.ts: the system actor needs the editor or admin role by
-// its effective grants (direct, group binding or public visibility) and does not inherit a global
-// administrator's session-only access.
+// modelVersionRegistration.tsと同じ規則。システムのactorは、実際に効いている権限（直接付与、
+// group binding、公開設定）でeditorかadminのroleを持つ必要があり、全体管理者がsessionでだけ
+// 持つアクセスは引き継がない。
 async function requireRunCreatorRegistryAccess(
   connection: Connection,
   member: { projectId: string; userId: string },

@@ -4,11 +4,11 @@ import type { PoolClient, QueryResultRow } from 'pg';
 export type Database = pg.Pool;
 export type Connection = Database | PoolClient;
 
-// Leave room for the web API and outbox while bounding connections on the development DB.
+// Web APIとoutboxの余地を残しつつ、開発用DBへの接続数を抑える。
 const DATABASE_POOL_SIZE = 12;
-// Return a visible failure promptly when PostgreSQL is unavailable.
+// PostgreSQLが使えないときは、すぐに目に見える失敗を返す。
 const DATABASE_CONNECTION_TIMEOUT_MS = 5000;
-// Release idle API connections instead of occupying the DB pool indefinitely.
+// 使っていないAPIの接続は、DBのpoolを占め続けずに解放する。
 const DATABASE_IDLE_TIMEOUT_MS = 30000;
 
 export function createDatabase(databaseUrl: string): Database {
@@ -42,8 +42,8 @@ function mapColumns<T>(row: QueryResultRow): T {
   const entity: Record<string, unknown> = {};
   for (const [column, value] of Object.entries(row)) {
     const property = column.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
-    // JSON values keep their original keys; only SQL columns are mapped. bigint columns arrive
-    // as strings; a NULL one (total_size of a reference DatasetVersion) stays null.
+    // JSONの値は元のキーのまま。名前を変換するのはSQLの列だけ。bigintの列は文字列で届く。
+    // NULLのもの（参照型のDatasetVersionのtotal_size）はnullのまま。
     entity[property] =
       value instanceof Date
         ? value.toISOString()

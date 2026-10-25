@@ -12,16 +12,17 @@ import {
 } from '../repositories/sessionRepository.js';
 
 /**
- * OpenID Connect Back-Channel Logout 1.0: the IdP posts a signed logout token when a user signs
- * out there or is disabled, and the matching browser sessions end here. Same checks as Mado.
+ * OpenID Connect Back-Channel Logout 1.0。ユーザーがIdPでサインアウトするか無効にされると、IdPが
+ * 署名つきのlogout tokenをPOSTし、対応するブラウザのsessionをここで終える。mado S3 Data Catalogと
+ * 同じ検査を行う。
  */
 
 const BACKCHANNEL_LOGOUT_EVENT = 'http://schemas.openid.net/event/backchannel-logout';
-// The IdP sends the token right after the logout; an older one is treated as captured and replayed.
+// IdPはログアウトの直後にtokenを送る。それより古いものは、盗まれて再送されたものとして扱う。
 const LOGOUT_TOKEN_MAX_AGE_SECONDS = 10 * 60;
-// Tolerates a small clock difference between the IdP and this server.
+// IdPとこのサーバーの時計の小さなずれを許す。
 const LOGOUT_TOKEN_CLOCK_TOLERANCE_SECONDS = 60;
-// The jti store needs a row only while the token would still pass the age check.
+// jtiの記録は、そのtokenがまだ古さの検査を通る間だけ行を持てば足りる。
 const LOGOUT_TOKEN_ID_RETENTION_SECONDS =
   LOGOUT_TOKEN_MAX_AGE_SECONDS + LOGOUT_TOKEN_CLOCK_TOLERANCE_SECONDS;
 const MAX_LOGOUT_TOKEN_ID_LENGTH = 512;
@@ -40,7 +41,7 @@ function invalidLogoutToken(): DomainError {
   });
 }
 
-// jwtVerify checks the signature, iss, aud and iat; this checks what makes it a logout token.
+// jwtVerifyは署名、iss、aud、iatを確かめる。ここではlogout tokenであることを確かめる。
 export function logoutTokenClaims(payload: JWTPayload): LogoutTokenClaims {
   const events = payload.events;
   if (
@@ -48,7 +49,7 @@ export function logoutTokenClaims(payload: JWTPayload): LogoutTokenClaims {
     typeof events !== 'object' ||
     Array.isArray(events) ||
     typeof (events as Record<string, unknown>)[BACKCHANNEL_LOGOUT_EVENT] !== 'object' ||
-    // A nonce would make it an ID token; the spec forbids it so one cannot pass for the other.
+    // nonceがあるとID tokenになる。片方がもう片方になりすませないよう、仕様がnonceを禁じている。
     payload.nonce !== undefined
   )
     throw invalidLogoutToken();
@@ -133,7 +134,7 @@ export class OidcBackchannelLogout {
         currentDate: clock(),
       }));
     } catch (error) {
-      // Failing to fetch the keys says nothing about the token; the IdP retries on a 5xx.
+      // 鍵を取れなかったことはtokenについて何も示さない。5xxならIdPが再試行する。
       if (error instanceof errors.JWKSTimeout || !(error instanceof errors.JOSEError))
         throw new DomainError({
           status: 503,
@@ -142,7 +143,8 @@ export class OidcBackchannelLogout {
         });
       throw invalidLogoutToken();
     }
-    // Sessions store the configured issuer, which discovery has confirmed equals server.issuer.
+    // sessionには設定したissuerを保存している。それがserver.issuerと等しいことは、
+    // discoveryで確かめてある。
     return { issuer: settings.issuer, claims: logoutTokenClaims(payload) };
   }
 }

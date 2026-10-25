@@ -25,11 +25,11 @@ import { executionFixture } from './fixtures.js';
 import { artifactFixture, transferUrl } from './mlflow-artifacts-fixtures.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 
-// Copied from mlflow.exceptions._UnsupportedMultipartUploadException.MESSAGE on purpose: the SDK
-// falls back to a plain PUT only when the message starts with this exact text.
+// あえてmlflow.exceptions._UnsupportedMultipartUploadException.MESSAGEから写している。
+// SDKは、メッセージがちょうどこの文で始まるときだけ通常のPUTに切り替える。
 const SDK_FALLBACK_MESSAGE =
   'Multipart upload is not supported for the current artifact repository';
-// One full part and a short final part, as the SDK splits a file just over one chunk.
+// 満杯のpartを1つと、短い最後のpart。chunk 1つ分を少し超えるファイルをSDKが分けるときの形。
 const CONTENT = Buffer.concat([Buffer.alloc(MULTIPART_MIN_PART_BYTES, 'w'), Buffer.from('tail')]);
 
 function partBytes(partNumber: number): Buffer {
@@ -92,7 +92,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow multipart upload（独立PostgreSQL）
     );
   }
 
-  /** Sends a part the way MLflow's _upload_part does: the credential headers only, no cookie. */
+  /** MLflowの_upload_partと同じようにpartを送る。認証情報のヘッダーだけで、cookieは付けない。 */
   function putPart(
     credential: CreateResponse['credentials'][number],
     body: Buffer,
@@ -101,7 +101,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow multipart upload（独立PostgreSQL）
     const url = new URL(credential.url);
     return (options.app ?? harness.app).request(`${url.pathname}${url.search}`, {
       method: 'PUT',
-      // requests sets Content-Length for bytes bodies; Request in the test does not.
+      // requestsはbytesの本文にContent-Lengthを付けるが、テストのRequestは付けない。
       headers: {
         ...(options.headers ?? credential.headers),
         'Content-Length': String(body.length),
@@ -120,7 +120,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow multipart upload（独立PostgreSQL）
     return etags;
   }
 
-  /** Runs the finalizer while complete waits for it, as the background loop does in the server. */
+  /** サーバーのバックグラウンドのループと同じく、completeが待っている間にfinalizerを動かす。 */
   async function completeWhileFinalizing(
     complete: Promise<Response>,
     finalizer = harness.artifactUploadFinalizer,
@@ -220,7 +220,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow multipart upload（独立PostgreSQL）
 
     const etags = await putAllParts(created);
     expect(etags[1]).toBe(`"${createHash('sha256').update(partBytes(2)).digest('hex')}"`);
-    // A session is reachable only through the protocol that opened it.
+    // sessionには、それを開いたプロトコルからしか届かない。
     const native = await request(
       harness.app,
       `${fixture.basePath}/artifact-uploads/${created.upload_id}`,
@@ -251,15 +251,15 @@ describe.skipIf(!testDatabaseUrl)('MLflow multipart upload（独立PostgreSQL）
     );
     expect(download.status).toBe(200);
     expect(Buffer.from(await download.arrayBuffer()).equals(CONTENT)).toBe(true);
-    // The part token stops working once the session left open.
+    // sessionが開いた状態でなくなると、partのtokenは使えなくなる。
     expect((await putPart(second, partBytes(2))).status).toBe(409);
-    // A retried complete after a lost response reports success again.
+    // 応答が失われたあとでcompleteを再試行しても、再び成功を返す。
     expect((await completeMultipart(fixture, created, etags)).status).toBe(200);
   });
 
   it('mpuで保存したlog_imageの画像は、通常のPUTと同じくその場でRunのmediaに索引される', async () => {
     const fixture = await artifactFixture(harness);
-    // MLflow 3.17.0's log_image(key=, step=) name; the SDK sends the local file path.
+    // MLflow 3.17.0のlog_image(key=, step=)が付ける名前。SDKは手元のファイルのパスを送る。
     const fileName = 'sample+step+3+timestamp+1728370000123+b1b2c3d4-0000-4000-8000-000000000001.png';
     const options = { directory: 'images', localPath: `/tmp/mlflow/${fileName}` };
     const created = await entity<CreateResponse>(await createMultipart(fixture, options), 200);
@@ -370,7 +370,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow multipart upload（独立PostgreSQL）
       );
       expect(response.status, action).toBe(403);
     }
-    // complete must name the session's own Artifact path.
+    // completeには、そのsession自身のArtifactのパスを指定しなければならない。
     const elsewhere = await request(
       harness.app,
       mpuUrl(fixture, 'complete', fixture.runRoot, 'other'),
@@ -539,7 +539,7 @@ describe.skipIf(!testDatabaseUrl)('MLflow multipart upload（独立PostgreSQL）
         endpoint: s3Endpoint,
         region: 'us-east-1',
         forcePathStyle: true,
-        // These values authenticate only to the isolated emulator, never to real storage.
+        // この値で認証できるのは隔離したエミュレータだけで、本物のストレージには使えない。
         credentials: { accessKeyId: 'testing', secretAccessKey: 'testing' },
       });
       const bucket = `mmt-mlflow-mpu-test-${Date.now()}`;

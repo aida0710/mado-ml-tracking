@@ -1,8 +1,8 @@
 import { DomainError } from './errors.js';
 
-// Automation and the server record provenance under these prefixes; automation and evaluation
-// trust them, so user input on any route must not set or remove them. mlflow.* stays writable
-// because MLflow clients set system tags such as mlflow.runName themselves.
+// 自動実行とサーバーは、これらの前置きの下に来歴を記録する。自動実行と評価はこれを信用するので、
+// どの経路でも利用者の入力で付けたり外したりさせない。mlflow.*は書き込めるままにする。MLflowの
+// クライアントはmlflow.runNameのようなシステムのtagを自分で付けるため。
 export const RESERVED_RUN_TAG_PREFIXES = ['automation.', 'mmt.'] as const;
 
 export function findReservedRunTag(keys: Iterable<string>): string | undefined {

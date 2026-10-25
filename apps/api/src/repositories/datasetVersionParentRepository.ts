@@ -8,7 +8,7 @@ export interface DatasetVersionParentLocation {
   versionId: string;
 }
 
-// Registration order is preserved; additions follow in a deterministic order without duplicates.
+// 登録時の順序を保ち、後から足したものは重複なく決まった順で後ろに続ける。
 export const datasetVersionParentIdsColumn = `v.parent_dataset_version_ids || ARRAY(
   SELECT a.parent_dataset_version_id FROM dataset_version_parent_additions a
   WHERE a.project_id=v.project_id AND a.dataset_version_id=v.id

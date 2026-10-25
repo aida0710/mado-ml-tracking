@@ -3,7 +3,7 @@ import type { ApiConfig } from '../config.js';
 
 export type OriginPolicy = Pick<ApiConfig, 'webOrigin' | 'publicUrl' | 'allowPrivateOrigins'>;
 
-// Include local/link-local access and VPN CGNAT addresses alongside RFC 1918 and IPv6 ULA.
+// RFC 1918とIPv6 ULAに加えて、ローカル・リンクローカルのアクセスとVPNのCGNATのアドレスも含める。
 const PRIVATE_IPV4_SUBNETS = [
   ['10.0.0.0', 8],
   ['172.16.0.0', 12],
@@ -37,13 +37,13 @@ export function isAllowedOrigin(origin: string | undefined, policy: OriginPolicy
   } catch {
     return false;
   }
-  // Browser Origin headers contain only scheme/host/port, never credentials or a resource path.
+  // ブラウザのOriginヘッダーはscheme/host/portだけを持ち、認証情報やリソースのパスは含まない。
   if (!['http:', 'https:'].includes(url.protocol) || origin !== url.origin) return false;
   if ([policy.webOrigin, policy.publicUrl].includes(origin)) return true;
   if (!policy.allowPrivateOrigins) return false;
   const hostname = url.hostname.replace(/^\[|\]$/g, '');
   if (hostname === 'localhost' || hostname.endsWith('.localhost')) return true;
-  // Classify IP literals without DNS: a hostname may resolve differently on a later request.
+  // IPのリテラルはDNSを使わずに分類する。ホスト名は後のリクエストで別のアドレスに解決されうる。
   const family = isIP(hostname);
   if (family === 0) return false;
   return privateAddresses.check(hostname, family === 4 ? 'ipv4' : 'ipv6');

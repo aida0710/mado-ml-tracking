@@ -1,9 +1,9 @@
 import type { ComputeTarget, ExecutionRuntime } from '@mmt/contracts';
 import { DomainError } from '../domain/errors.js';
 
-// Docker Hub serves images named without a registry (ubuntu, pytorch/pytorch).
+// レジストリを書かないイメージ名（ubuntu、pytorch/pytorch）はDocker Hubが配る。
 const DOCKER_HUB_REGISTRY = 'registry-1.docker.io';
-// Names people write for Docker Hub; requests go to DOCKER_HUB_REGISTRY.
+// Docker Hubを指して書かれる名前。リクエストはDOCKER_HUB_REGISTRYへ送る。
 const DOCKER_HUB_ALIASES = new Set(['docker.io', 'index.docker.io', DOCKER_HUB_REGISTRY]);
 const MANIFEST_MEDIA_TYPES = [
   'application/vnd.oci.image.index.v1+json',
@@ -12,9 +12,9 @@ const MANIFEST_MEDIA_TYPES = [
   'application/vnd.docker.distribution.manifest.v2+json',
 ];
 const INDEX_MEDIA_TYPES = new Set(MANIFEST_MEDIA_TYPES.slice(0, 2));
-// A registry that does not answer within this time is reported as unavailable.
+// この時間内に応答しないレジストリは、使えないと報告する。
 const REGISTRY_TIMEOUT_MS = 10_000;
-// Images are pinned to a digest, so a result never changes; this bounds the memory it takes.
+// イメージはdigestで固定されているので結果は変わらない。この値でキャッシュが使うメモリを抑える。
 const CACHE_LIMIT = 1000;
 
 export interface ImagePlatform {
@@ -23,14 +23,14 @@ export interface ImagePlatform {
 }
 
 export interface ImagePlatformChecker {
-  /** Refuses a docker image that is not built for the target's CPU (no-op when the check is off). */
+  /** コンピュータのCPU向けにビルドされていないdockerイメージを拒む（検査が無効なら何もしない）。 */
   assertRunsOn(runtime: ExecutionRuntime, target: Pick<ComputeTarget, 'cpuArch'>): Promise<void>;
 }
 
-/** MMT_IMAGE_PLATFORM_CHECK=off: images are not looked up. */
+/** MMT_IMAGE_PLATFORM_CHECK=off: イメージを調べない。 */
 export const NO_IMAGE_PLATFORM_CHECK: ImagePlatformChecker = { assertRunsOn: async () => undefined };
 
-/** MMT_REGISTRY_*: a read-only login that is sent only to its own registry. */
+/** MMT_REGISTRY_*: 読み取り専用のログイン情報。そのレジストリにだけ送る。 */
 export interface RegistryCredentials {
   registry: string;
   username: string;
@@ -75,10 +75,10 @@ function bearerChallenge(header: string | null): Record<string, string> | null {
 }
 
 /**
- * Reads an image's platforms from its registry (Docker Registry HTTP API v2): the platforms of an
- * index, or the os and architecture of a single manifest's config. Registries that ask for a
- * token (Docker Hub, Forgejo, GHCR) get one. The image name, and so the registry, is chosen by
- * project editors, so MMT_REGISTRY_USERNAME/PASSWORD go only to MMT_REGISTRY_HOST.
+ * イメージのplatformをレジストリから読む（Docker Registry HTTP API v2）。indexならそのplatform、
+ * 単一のmanifestならそのconfigのosとarchitecture。tokenを求めるレジストリ（Docker Hub、Forgejo、
+ * GHCR）にはtokenを取って渡す。イメージ名、つまりレジストリはProjectのeditorが選ぶので、
+ * MMT_REGISTRY_USERNAME/PASSWORDはMMT_REGISTRY_HOSTにだけ送る。
  */
 export class RegistryImagePlatformChecker implements ImagePlatformChecker {
   private readonly cache = new Map<string, ImagePlatform[]>();
@@ -144,14 +144,14 @@ export class RegistryImagePlatformChecker implements ImagePlatformChecker {
     }
   }
 
-  /** The login for this registry, or null for every other one (they are asked anonymously). */
+  /** このレジストリ用のログイン情報。ほかのレジストリにはnull（匿名で問い合わせる）。 */
   private basicFor(reference: ImageReference): string | null {
     if (!this.credentials || this.credentials.registry !== reference.registry) return null;
     const { username, password } = this.credentials;
     return `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
   }
 
-  // Basic for registries that ask for it; otherwise the token service the challenge names.
+  // Basicを求めるレジストリにはBasicで、それ以外はchallengeが指すtokenサービスで認証する。
   private async authorize(response: Response, reference: ImageReference): Promise<string | null> {
     const challenge = response.headers.get('www-authenticate');
     const basic = this.basicFor(reference);
@@ -164,7 +164,7 @@ export class RegistryImagePlatformChecker implements ImagePlatformChecker {
     } catch {
       unavailable();
     }
-    // Registries are read over https only; a token service must not downgrade that.
+    // レジストリはhttpsだけで読む。tokenサービスへの接続もhttpsより弱くしない。
     if (tokenUrl.protocol !== 'https:') unavailable();
     if (bearer.service) tokenUrl.searchParams.set('service', bearer.service);
     tokenUrl.searchParams.set('scope', bearer.scope ?? `repository:${reference.repository}:pull`);

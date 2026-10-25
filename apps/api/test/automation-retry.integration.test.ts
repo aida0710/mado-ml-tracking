@@ -66,7 +66,7 @@ describe.skipIf(!testDatabaseUrl)(
       );
     }
 
-    // Stored executions of one rule, oldest first.
+    // 1つのルールについて保存された実行。古い順。
     async function storedExecutions(
       fixture: ContainerFixture,
       ruleId: string,
@@ -177,7 +177,7 @@ describe.skipIf(!testDatabaseUrl)(
       });
     }
 
-    // A Project admin who is not a global administrator, so removing them revokes the rule owner.
+    // 全体管理者ではないProject admin。外すとルールの所有者の権限が失われる。
     async function projectAdmin(
       fixture: ContainerFixture,
     ): Promise<{ cookie: string; userId: string }> {
@@ -232,7 +232,7 @@ describe.skipIf(!testDatabaseUrl)(
       );
       expect(jobs.rows[0]).toEqual({ retry_of_job_id: first!.jobId, attempt: 2 });
       const retryRun = await getRun(fixture, retry.runId!);
-      // The retry keeps the automated Run's upstream instead of hanging under the failed Run.
+      // 再試行のRunは、失敗したRunの下にぶら下がらず、自動実行のRunの上流を引き継ぐ。
       expect(retryRun).toMatchObject({
         parentRunId: firstRun.parentRunId,
         createdBy: rule.runAsUserId,
@@ -256,8 +256,8 @@ describe.skipIf(!testDatabaseUrl)(
 
       expect(await storedExecutions(fixture, rule.id)).toHaveLength(1);
       expect(await countRows('jobs')).toBe(jobsBefore);
-      // The rule owner (here also the Project admin) can still retry the automated Job by hand;
-      // another editor cannot, since the Job is not theirs.
+      // ルールの所有者（ここではProject adminも兼ねる）は、自動実行のJobを手動で再試行できる。
+      // ほかのeditorは、自分のJobではないのでできない。
       const retryAs = (cookie: string) =>
         request(harness.app, `${fixture.basePath}/jobs/${first!.jobId}/retry`, {
           method: 'POST',
@@ -294,7 +294,7 @@ describe.skipIf(!testDatabaseUrl)(
 
       await entity(await completeJob(fixture, claimed, 'failed'), 200);
       const failedRun = await getRun(fixture, first!.runId!);
-      // An MLflow reopen/finish cycle reaches the terminal handlers again for the same Run.
+      // MLflowで開き直して終えると、同じRunについて終了時のハンドラがもう一度呼ばれる。
       await transaction(harness.database, (connection) =>
         harness.services.runCompletion.recordStatusChange(connection, {
           previousStatus: 'running',
@@ -326,7 +326,7 @@ describe.skipIf(!testDatabaseUrl)(
           },
         }),
       );
-      // Tags written before reserved tags were enforced; the API refuses them today.
+      // 予約済みのタグを強制する前に書かれたタグ。今のAPIはこれを拒む。
       await harness.database.query(
         `UPDATE runs SET tags=tags||jsonb_build_object('automation.ruleId',$2::text) WHERE id=$1`,
         [run.id, rule.id],
@@ -416,7 +416,8 @@ describe.skipIf(!testDatabaseUrl)(
         }),
       );
 
-      // The person who retried creates the new Run; only the rule owner or a Project admin may.
+      // 新しいRunの作成者は再試行した人になる。再試行できるのはルールの所有者か
+      // Project adminだけ。
       expect(retried.run).toMatchObject({
         parentRunId: upstream!.runId,
         createdBy: fixture.administrator.userId,
@@ -444,7 +445,7 @@ describe.skipIf(!testDatabaseUrl)(
         }),
       );
       const rule = await createRule(fixture);
-      // A version without weights cannot start inference.
+      // 重みの無いバージョンでは推論を始められない。
       const model = await registerModel(fixture, 'no-weights', {});
 
       const [execution] = await storedExecutions(fixture, rule.id);
@@ -488,13 +489,13 @@ describe.skipIf(!testDatabaseUrl)(
         runAsKind: 'service',
         runAsName: 'automation-bot',
       });
-      // The creator is named for the rule detail, not only by id.
+      // ルールの詳細には、作成者をidだけでなく名前でも出す。
       const creator = await harness.database.query<{ display_name: string }>(
         'SELECT display_name FROM users WHERE id=$1',
         [owner.userId],
       );
       expect(transferred.createdByName).toBe(creator.rows[0]!.display_name);
-      // Setting the same owner again is a no-op and is not audited twice.
+      // 同じ所有者をもう一度設定しても何も起きず、監査にも2回は残らない。
       await entity(
         await transferOwner(fixture, { ruleId: rule.id, serviceAccountId: account.id }),
         200,
@@ -598,7 +599,7 @@ describe.skipIf(!testDatabaseUrl)(
         expect(response.status).toBe(422);
         expect(((await response.json()) as { code: string }).code).toBe('invalid_automation_owner');
       }
-      // A person is not a Service Account either.
+      // 人のアカウントもService Accountではない。
       const person = await transferOwner(fixture, {
         ruleId: rule.id,
         serviceAccountId: fixture.editor.userId,

@@ -1,13 +1,13 @@
-// PostgreSQL's SQLSTATE (40001, 57P01) or a Node system error code (ECONNRESET): fixed tokens that
-// never carry the query or its values.
+// PostgreSQLのSQLSTATE（40001、57P01）か、Nodeのシステムエラーのコード（ECONNRESET）。
+// 決まった文字列で、クエリやその値を含まない。
 const ERROR_CODE_PATTERN = /^[0-9A-Z_]{1,40}$/;
-// A class name is an identifier; a name made from data is not logged.
+// クラス名は識別子。データから作られた名前はログに出さない。
 const ERROR_NAME_PATTERN = /^[A-Za-z0-9_.]{1,100}$/;
 
 /**
- * What a log may say about an unexpected error: its class name and code, never its message, which
- * can hold SQL text and the values in it. A DomainError's own code (lowercase) is not an error
- * code here; logs give it separately.
+ * 想定外のエラーについてログに書いてよいこと。クラス名とコードだけで、メッセージは書かない
+ * （SQLの文とその値が入りうる）。DomainError自身のコード（小文字）はここではエラーコードとして
+ * 扱わず、ログには別に出す。
  */
 export function errorClue(error: unknown): { errorName: string; errorCode: string | null } {
   const errorName =

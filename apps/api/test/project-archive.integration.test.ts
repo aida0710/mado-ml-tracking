@@ -106,8 +106,8 @@ describe.skipIf(!testDatabaseUrl)('Projectのアーカイブと全体管理（�
       expect(listed.items.map((item) => item.id)).not.toContain(project.id);
       expect((await experiments(project.id, { cookie: identity.cookie })).status).toBe(404);
     }
-    // Its members and global administrators learn that it was archived; anyone else cannot tell
-    // it from a Project that never existed.
+    // メンバーと全体管理者にはアーカイブされたことが分かる。それ以外の人には、初めから無かった
+    // Projectと見分けがつかない。
     for (const identity of [owner, member, administrator]) {
       for (const path of [`/api/projects/${project.id}`, `/api/projects/${project.id}/experiments`])
         expect(await errorCode(await request(harness.app, path, { cookie: identity.cookie }))).toBe(
@@ -120,7 +120,7 @@ describe.skipIf(!testDatabaseUrl)('Projectのアーカイブと全体管理（�
         await request(harness.app, `/api/projects/${project.id}`, { cookie: passerby.cookie }),
       ),
     ).toBe('not_found');
-    // A token limited to the Project no longer authenticates at all.
+    // そのProjectに限定したtokenでは、もう認証自体が通らない。
     expect((await experiments(project.id, { token: token.token })).status).toBe(401);
     expect(await adminProjects()).toEqual([]);
     expect(await adminProjects('?includeArchived=true')).toEqual([
@@ -137,7 +137,7 @@ describe.skipIf(!testDatabaseUrl)('Projectのアーカイブと全体管理（�
     ).toMatchObject({ id: project.id, role: 'editor', isMember: true });
     expect((await experiments(project.id, { cookie: member.cookie })).status).toBe(200);
     expect((await experiments(project.id, { token: token.token })).status).toBe(200);
-    // Restoring a live Project changes nothing and is not audited again.
+    // アーカイブされていないProjectを戻しても何も変わらず、監査にも再び残らない。
     expect((await restore(project.id)).status).toBe(200);
     expect(await auditActions(project.id)).toEqual([
       { action: 'project.archive', outcome: 'success' },
@@ -169,8 +169,8 @@ describe.skipIf(!testDatabaseUrl)('Projectのアーカイブと全体管理（�
       }),
       200,
     );
-    // A Job canceled while in a site's scheduler queue stays there until the launcher removes it,
-    // which it does through the Job's row; until then the Project cannot be archived.
+    // siteのスケジューラのキューにある間に止めたJobは、launcherが取り除くまでそこに残る。
+    // launcherはJobの行を通して取り除く。それまではProjectをアーカイブできない。
     const setSchedulerCancel = (state: 'pending' | 'done') =>
       harness.database.query('UPDATE jobs SET scheduler_cancel_state=$2 WHERE id=$1', [
         job.id,
@@ -230,11 +230,11 @@ describe.skipIf(!testDatabaseUrl)('Projectのアーカイブと全体管理（�
         expect(response.status).toBe(403);
         expect(await errorCode(response)).toBe(code);
       }
-    // A global administrator's unrestricted admin token is enough, as for storage backends.
+    // 保存先と同じく、全体管理者の制限の無いadminのtokenで足りる。
     expect(
       (await request(harness.app, '/api/admin/projects', { token: adminToken.token })).status,
     ).toBe(200);
-    // Purging cannot be undone, so it takes a browser session even from a global administrator.
+    // 完全削除は取り消せないので、全体管理者でもブラウザのsessionが要る。
     const tokenPurge = await request(harness.app, `/api/admin/projects/${project.id}`, {
       method: 'DELETE',
       token: adminToken.token,
@@ -293,7 +293,7 @@ describe.skipIf(!testDatabaseUrl)('Projectのアーカイブと全体管理（�
     await harness.database.query("UPDATE runs SET lifecycle_stage='deleted' WHERE id=$1", [
       runIds[1],
     ]);
-    // Someone using the public Project without being a member is not counted.
+    // メンバーにならずに公開Projectを使っている人は数えない。
     await login(harness, 'passerby@localhost');
     const ownerName = (
       await harness.database.query<{ display_name: string }>(
@@ -307,7 +307,7 @@ describe.skipIf(!testDatabaseUrl)('Projectのアーカイブと全体管理（�
         id: project.id,
         visibility: 'public',
         memberCount: 3,
-        // Only people who are admin: the editor and the viewers through the group are left out.
+        // adminである人だけ。editorと、グループ経由のviewerは除く。
         adminNames: [ownerName],
         runCount: 1,
         archivedAt: null,
@@ -360,7 +360,7 @@ describe.skipIf(!testDatabaseUrl)('Projectのアーカイブと全体管理（�
     expect(await listSchedulableSweepIds(harness.database)).toEqual([]);
     const jobsBefore = await harness.database.query('SELECT count(*)::int AS count FROM jobs');
     await harness.sweepScheduler.tickAll();
-    // Every Job passes JobService.insertJob, which refuses an archived Project.
+    // どのJobもJobService.insertJobを通り、そこでアーカイブしたProjectを拒む。
     await expect(
       transaction(harness.database, (connection) =>
         harness.services.jobs.insertJob(connection, {

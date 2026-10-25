@@ -28,7 +28,7 @@ export async function findServiceAccount(
   );
 }
 
-/** Locks the account's user row so status changes and token issuance serialize. */
+/** アカウントのusersの行をロックし、状態の変更とtokenの発行を1つずつ順に行わせる。 */
 export async function lockServiceAccount(
   connection: Connection,
   account: { projectId: string; serviceAccountId: string },
@@ -42,7 +42,7 @@ export async function lockServiceAccount(
   return locked ? findServiceAccount(connection, account) : undefined;
 }
 
-// A users row without email or login method; the name is its display name.
+// メールアドレスもログイン方法も無いusersの行。名前をそのまま表示名にする。
 export async function insertServiceAccount(
   connection: Connection,
   account: {
@@ -84,7 +84,7 @@ export async function updateServiceAccountDescription(
   ]);
 }
 
-// users.status is what authentication reads, so disabling takes effect on the next request.
+// 認証はusers.statusを読むので、無効にすると次のリクエストから効く。
 export async function setServiceAccountStatus(
   connection: Connection,
   account: { serviceAccountId: string; status: ServiceAccount['status'] },

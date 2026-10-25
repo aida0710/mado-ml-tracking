@@ -7,7 +7,8 @@ export async function migrate(database: Database): Promise<void> {
   const directory = fileURLToPath(new URL('./migrations/', import.meta.url));
   const files = (await readdir(directory)).filter((file) => file.endsWith('.sql')).sort();
   await transaction(database, async (connection) => {
-    // Processes applying one schema serialize; isolated test schemas can migrate independently.
+    // 同じスキーマに適用するプロセスは1つずつ順に動く。分離したテスト用のスキーマは、
+    // 別々にmigrationできる。
     await connection.query('SELECT pg_advisory_xact_lock(4182, hashtext(current_schema()))');
     await connection.query(
       'CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, sha256 text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())',

@@ -15,7 +15,7 @@ function chunk(type: string, data: Buffer): Buffer {
   return Buffer.concat([length, typeAndData, checksum]);
 }
 
-/** Encodes 8-bit RGB pixels (row-major, top row first) as a PNG without a native image library. */
+/** 8ビットのRGBの画素（行優先、上の行から）を、ネイティブの画像ライブラリを使わずにPNGにする。 */
 export function encodeRgbPng(image: { width: number; height: number; pixels: Uint8Array }): Buffer {
   const { width, height, pixels } = image;
   if (width < 1 || height < 1 || pixels.length !== width * height * BYTES_PER_PIXEL)

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { ProjectVisibility } from '@mmt/contracts';
 import { artifactBackendSchema, nameSchema, roleSchema, uuidSchema } from './validation.js';
 
-// The create dialog adds members one person at a time; a larger audience is a group binding.
+// 作成のダイアログはメンバーを1人ずつ足す。もっと多くの人にはグループの割り当てを使う。
 export const PROJECT_CREATE_MAX_MEMBERS = 100;
 
 const PROJECT_VISIBILITIES = ['public', 'private'] as const satisfies readonly ProjectVisibility[];
@@ -21,7 +21,7 @@ export const projectCreateSchema = z.strictObject({
 });
 export type ProjectCreateInput = z.infer<typeof projectCreateSchema>;
 
-// No defaults here: an omitted field keeps its value (zod applies defaults even to partial fields).
+// ここでは既定値を置かない。省いた項目は値を保つ（zodはpartialの項目にも既定値を当てる）。
 export const projectPatchSchema = z.strictObject({
   description: projectDescriptionSchema.optional(),
   artifactBackend: artifactBackendSchema.optional(),
@@ -29,7 +29,7 @@ export const projectPatchSchema = z.strictObject({
 });
 export type ProjectPatchInput = z.infer<typeof projectPatchSchema>;
 
-// Query values are strings; only the literal "true" includes archived Projects.
+// クエリの値は文字列。文字どおり"true"のときだけ、アーカイブしたProjectを含める。
 export const adminProjectQuerySchema = z.object({
   includeArchived: z
     .enum(['true', 'false'])

@@ -15,7 +15,7 @@ import { lockDatasetsOfVersions } from './datasetVersionReferences.js';
 
 const TABLES = { run: 'runs', modelVersion: 'model_versions', datasetVersion: 'dataset_versions' } as const;
 
-/** Adds verified historical relationships without rerunning work or changing recorded recipes. */
+/** 作業をやり直したり記録済みのレシピを変えたりせずに、確かめた過去の関係を足す。 */
 export class LineageRelationService {
   constructor(private readonly database: Database) {}
 
@@ -77,7 +77,7 @@ export class LineageRelationService {
             message: 'a different producer is already recorded',
           });
       }
-      // A reference records evidence, not causality, and is excluded from cycle checks.
+      // referenceは因果ではなく根拠を記録するもので、循環の検査から外す。
       if (input.relation !== 'reference' && await hasLineageAncestor(connection, {
         projectId, ancestorId: input.targetId, descendantIds: [input.sourceId],
       })) throw new DomainError({

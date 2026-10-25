@@ -11,9 +11,9 @@ import {
 import { requireProject } from './accessService.js';
 
 /**
- * Read-only lookups the registry screens use to offer values instead of having them typed, and to
- * show a stored id by name. Every lookup is open to viewers with the `read` scope; creating
- * anything with the offered values keeps its own editor (or admin) check.
+ * レジストリの画面が、値を入力させる代わりに選択肢として出したり、保存されたidを名前で表示
+ * したりするための読み取り専用の参照。どの参照も`read` scopeを持つviewerに開いている。出した
+ * 値を使って何かを作るときは、それぞれのeditor（またはadmin）の確認がそのまま効く。
  */
 export class RegistryLookupService {
   constructor(private readonly database: Database) {}
@@ -32,8 +32,8 @@ export class RegistryLookupService {
   }
 
   /**
-   * The metric keys the rule's Runs recorded. Before the rule has produced a Run with metrics, the
-   * Runs of the same kind that used its code version stand in, since they run the same code.
+   * ルールのRunが記録したメトリクスのキー。ルールがメトリクスを持つRunをまだ作っていない間は、
+   * 同じ種類でそのコードバージョンを使ったRunで代える。同じコードを動かしているため。
    */
   async ruleMetricKeys(
     principal: Principal,

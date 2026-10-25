@@ -16,8 +16,8 @@ import { requestMetadata } from '../http/requestMetadata.js';
 import type { TargetCheckService } from '../services/targetCheckService.js';
 import type { TargetDirectoryListingService } from '../services/targetDirectoryListingService.js';
 
-// Mounted at /api: administrators ask workers to check computers and read their directories;
-// workers claim and report both.
+// /apiに置く。管理者がworkerにコンピュータの確認とディレクトリの読み取りを頼み、workerが
+// どちらもclaimして報告する。
 export function targetCheckRoutes(
   checks: TargetCheckService,
   listings: TargetDirectoryListingService,
@@ -31,7 +31,7 @@ export function targetCheckRoutes(
       await checks.request(
         principal(context),
         uuidParam(context, 'id'),
-        // Clients from before chosen workers send no body.
+        // workerを選べるようになる前のクライアントは本文を送らない。
         await optionalJsonBody(context, targetCheckRequestSchema),
         requestMetadata(context),
       ),

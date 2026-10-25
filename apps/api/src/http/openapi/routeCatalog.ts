@@ -247,11 +247,10 @@ import {
 } from './nativeRoute.js';
 
 /**
- * Every native route of the API, one element per route. docs/api-contract.md is the source of
- * truth for behaviour; this catalog states the same routes in a machine-readable form and
- * openapi-coverage.test.ts fails when it and the app (or the document) disagree. A route added
- * to app.ts is added here in the same change. MLflow-compatible routes (/api/mlflow/*) follow
- * the official MLflow REST API and are not listed.
+ * APIのすべてのネイティブの経路。1経路に1要素。振る舞いの正本はdocs/api-contract.mdで、この
+ * カタログは同じ経路を機械で読める形で述べる。カタログとアプリ（またはドキュメント）が食い違うと
+ * openapi-coverage.test.tsが失敗する。app.tsに足した経路は、同じ変更でここにも足す。
+ * MLflow互換の経路（/api/mlflow/*）は公式のMLflow REST APIに従い、ここには挙げない。
  */
 
 const health = z.strictObject({ status: z.literal('ok') });
@@ -280,10 +279,10 @@ const artifactUploadBody: NonJsonContent = {
   contentType: 'application/octet-stream',
   description: 'Artifactの本体（任意のMIME type）。Content-Typeがそのまま保存される',
 };
-// GET /projects/:p/tasks and GET /projects/:p/models read single optional query values.
+// GET /projects/:p/tasksとGET /projects/:p/modelsは、省略できる単一のクエリの値を読む。
 const taskListQuery = z.object({ experimentId: uuidSchema.optional() });
 const modelListQuery = z.object({ name: nameSchema.optional() });
-// evaluationRoutes parses each value on its own; lists accept repetition or commas.
+// evaluationRoutesは値をそれぞれ別に解析する。リストは繰り返しかカンマ区切りを受け付ける。
 const evaluationComparisonQuery = z.object({
   baselineAlias: nameSchema.optional(),
   baselineVersionId: uuidSchema.optional(),
@@ -303,14 +302,14 @@ const partHeaders = z.object({ [PART_SHA256_HEADER]: z.string().optional() });
 const RUNS_WRITE = projectEditor('runs:write');
 const REGISTRY_WRITE = projectEditor('registry:write');
 const ARTIFACTS_WRITE = projectEditor('artifacts:write');
-// Deleting is for Project admins (decisions.md); a token needs artifacts:write (or admin).
+// 削除はProject adminだけ（decisions.md）。tokenにはartifacts:write（かadmin）が要る。
 const ARTIFACTS_DELETE: RouteAccess = { kind: 'project', role: 'admin', scope: 'artifacts:write' };
 const JOBS_WRITE = projectEditor('jobs:write');
-// What a site Job asks of its target (gpuCount, retries), how it maps to the target's runtime,
-// and (MMT_IMAGE_PLATFORM_CHECK=enforce) whether its image is built for the target's CPU.
-// The Run's creator must be allowed to use the computer (public, or private and theirs), and a
-// site needs a job shell, a live launcher (automatic) and, on personal-account sites, the
-// creator's account.
+// siteのJobがコンピュータに求めること（gpuCount、再試行）、それがコンピュータのruntimeに
+// どう対応するか、（MMT_IMAGE_PLATFORM_CHECK=enforceのとき）イメージがコンピュータのCPU向けに
+// ビルドされているか。Runの作成者はそのコンピュータを使えなければならない
+// （publicか、privateで自分のもの）。siteにはjob shell、生きているlauncher（automatic）、
+// 個人アカウントのsiteでは作成者のアカウントが要る。
 const SITE_JOB_ERRORS = [
   ...routeError(
     422,
@@ -336,34 +335,35 @@ const TARGET_SETTING_ERRORS = routeError(
   'site_settings_invalid',
   'site_launcher_invalid',
 );
-// A computer's settings are its owner's or a global administrator's (siteAccess.ts). Changes
-// need an administrator's admin token or a browser session.
+// コンピュータの設定は所有者か全体管理者のもの（siteAccess.ts）。変更には管理者の
+// admin tokenかブラウザのsessionが要る。
 const TARGET_MANAGER: RouteAccess = { kind: 'signedIn', scope: 'admin' };
 const TARGET_MANAGER_ERRORS = [
   ...routeError(403, 'target_owner_required', 'session_required'),
   ...routeError(404, 'not_found'),
 ];
-// A site's job shell, keys and one's own settings are for those who may use or manage it; anyone
-// else is refused, though GET /targets/overview shows them the computer.
+// siteのjob shell、鍵、自分の設定は、そのsiteを使える人・管理できる人のためのもの。ほかの人は
+// 拒むが、GET /targets/overviewではその人にもコンピュータを見せる。
 const SITE_READER: RouteAccess = { kind: 'signedIn', scope: 'read' };
 const SITE_USER_ERRORS = [
   ...routeError(403, 'target_not_available'),
   ...routeError(404, 'not_found'),
 ];
-// Runner reports name the instance that started the Job (RunnerService).
+// runnerの報告は、Jobを始めたインスタンスを名指しする（RunnerService）。
 const RUNNER_ERRORS = [
   ...routeError(403, 'runner_token_required'),
   ...routeError(409, 'runner_conflict', 'conflict'),
 ];
-// Project admins manage Service Accounts; a token also needs the explicit tokens:manage.
+// Service AccountはProject adminが管理する。tokenには明示的なtokens:manageも要る。
 const SERVICE_ACCOUNT_ADMIN: RouteAccess = { kind: 'project', role: 'admin', scope: 'tokens:manage' };
-// A token issues or revokes only within its own scopes, Project and expiry (tokenIssuerAuthority.ts).
-// Changing accounts can create an administrator login, so a token also needs every scope
-// (UserAdministrationService); a missing one is scope_required like any other.
+// tokenが発行・失効できるのは、自分のscope・Project・有効期限の範囲だけ
+// （tokenIssuerAuthority.ts）。アカウントを変えると管理者のログインを作れるので、tokenには
+// すべてのscopeも要る（UserAdministrationService）。足りなければほかと同じくscope_required。
 const USER_ADMINISTRATION: RouteAccess = { kind: 'globalAdmin', scope: 'users:manage' };
 const TOKEN_ISSUER_ERRORS = [...routeError(403, 'token_authority_exceeded', 'token_outlives_issuer')];
 
-// Saving a revision captures its snapshot blocks through the series, analysis and media services.
+// バージョンを保存すると、系列・分析・メディアのサービスを通して、スナップショットの
+// ブロックを取り込む。
 const REPORT_SNAPSHOT_ERRORS = [
   ...routeError(413, 'report_snapshot_too_large'),
   ...routeError(422, 'too_many_runs'),
@@ -554,7 +554,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     responses: { 200: contract.auditEventPageSchema },
   },
 
-  // projects and access
+  // projectsとaccess
   {
     method: 'get',
     path: '/api/projects',
@@ -2102,7 +2102,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     summary: 'コンピュータの接続確認を依頼（workerを指定できる）',
     access: GLOBAL_ADMIN,
     body: targetCheckRequestSchema,
-    // Clients from before chosen workers send no body.
+    // workerを選べるようになる前のクライアントは本文を送らない。
     bodyOptional: true,
     responses: { 201: contract.targetCheckSchema },
     errors: [
@@ -2161,7 +2161,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     responses: { 200: contract.itemsOf(contract.workerPresenceSchema) },
   },
 
-  // worker protocol
+  // workerのプロトコル
   {
     method: 'post',
     path: '/api/worker/claim',
@@ -2945,7 +2945,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     errors: routeError(403, 'report_owner_required'),
   },
 
-  // sync (offline Runs)
+  // sync（オフラインのRun）
   {
     method: 'put',
     path: '/api/projects/:p/sync/runs/:r',
@@ -3096,7 +3096,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     errors: [...routeError(403, 'sweep_owner_required'), ...routeError(409, 'sweep_finished')],
   },
 
-  // administration
+  // 全体管理
   {
     method: 'get',
     path: '/api/admin/storage-backends',
@@ -3205,7 +3205,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     path: '/api/admin/projects/:p',
     tag: 'admin',
     summary: 'アーカイブしたProjectをデータごと完全に削除',
-    // It cannot be undone, so it takes a global administrator's browser session (ProjectAdministrationService).
+    // 元に戻せないので、全体管理者のブラウザのsessionが要る（ProjectAdministrationService）。
     access: { kind: 'globalAdmin', sessionOnly: true },
     responses: { 204: null },
     errors: [...routeError(404, 'not_found'), ...routeError(409, 'project_not_archived')],

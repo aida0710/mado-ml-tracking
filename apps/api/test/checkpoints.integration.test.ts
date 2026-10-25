@@ -170,7 +170,7 @@ describe.skipIf(!testDatabaseUrl)('学習の途中再開（独立PostgreSQL）',
     return ((await response.json()) as { code?: string }).code;
   }
 
-  // A running training Run that saved checkpoints, then failed.
+  // 実行中にcheckpointを保存し、そのあと失敗した学習のRun。
   async function failedTrainingWithCheckpoints(steps: number[]) {
     const run = await trainingRun();
     const { workerJob } = await startJob(run);
@@ -315,13 +315,13 @@ describe.skipIf(!testDatabaseUrl)('学習の途中再開（独立PostgreSQL）',
       parentRunId: run.id,
       environment: { resume: { checkpointId: chosen.id, sourceRunId: run.id, step: 10 } },
     });
-    // The original Run is evidence and stays unchanged.
+    // 元のRunは証拠なので、変わらずに残る。
     const original = await entity<Run>(
       await request(harness.app, `${fixture.basePath}/runs/${run.id}`, { cookie: fixture.viewer.cookie }),
       200,
     );
     expect(original).toMatchObject({ status: 'failed', resumeCheckpointId: null });
-    // While queued an environment edit cannot drop or forge environment.resume.
+    // キューにある間、environmentを編集してもenvironment.resumeを消したり偽ったりできない。
     const patched = await entity<Run>(
       await request(harness.app, `${fixture.basePath}/runs/${retried.run.id}`, {
         method: 'PATCH',
@@ -373,7 +373,7 @@ describe.skipIf(!testDatabaseUrl)('学習の途中再開（独立PostgreSQL）',
     const different = await retry(job.id, { checkpointId: checkpoints[1]!.id });
     expect(different.status).toBe(409);
     expect(await errorCode(different)).toBe('job_already_retried');
-    // A body-less retry (older clients) still returns the existing retry.
+    // 本文の無いretry（古いクライアント）でも、既にある再試行を返す。
     expect((await entity<{ run: Run }>(await retry(job.id))).run.id).toBe(latest.run.id);
   });
 
@@ -381,7 +381,7 @@ describe.skipIf(!testDatabaseUrl)('学習の途中再開（独立PostgreSQL）',
     const run = await trainingRun();
     const { workerJob } = await startJob(run);
     await failJob(workerJob);
-    // The Jobs list tells the screen there is nothing to resume from, so it offers no resume.
+    // Jobの一覧が再開元の無いことを画面に伝えるので、画面は再開を出さない。
     expect(await listedJob(workerJob.job.id)).toMatchObject({ hasResumeCheckpoint: false });
     const missing = await retry(workerJob.job.id, { resumeFromLatestCheckpoint: true });
     expect(missing.status).toBe(422);
@@ -467,7 +467,7 @@ describe.skipIf(!testDatabaseUrl)('学習の途中再開（独立PostgreSQL）',
     });
     expect(otherCodeRun.status).toBe(422);
     expect(await errorCode(otherCodeRun)).toBe('checkpoint_code_mismatch');
-    // Another version of the same Code may continue the training.
+    // 同じCodeの別のバージョンなら学習を続けられる。
     const nextVersion = await entity<CodeVersion>(
       await request(harness.app, `${fixture.basePath}/codes/${fixture.code.id}/versions`, {
         method: 'POST',
@@ -487,7 +487,7 @@ describe.skipIf(!testDatabaseUrl)('学習の途中再開（独立PostgreSQL）',
       resumeCheckpointId: checkpointId,
     });
     expect(continued.resumeCheckpointId).toBe(checkpointId);
-    // Another Project cannot see the checkpoint at all.
+    // 別のProjectからはcheckpointがまったく見えない。
     const other = await projectFixture(harness);
     const foreign = await request(harness.app, `${other.basePath}/runs`, {
       method: 'POST',
@@ -532,7 +532,7 @@ describe.skipIf(!testDatabaseUrl)('学習の途中再開（独立PostgreSQL）',
   });
 
   it('MLflowのcheckpoints/step-N/は自動でcheckpointになり、Run終了後の追加は409', async () => {
-    // A Run without a Job, as an MLflow script reports it; it stays writable after it ends.
+    // MLflowのスクリプトが報告するような、Jobの無いRun。終わったあとも書き込める。
     const run = await trainingRun();
     const setStatus = async (status: string) =>
       entity<Run>(
@@ -573,7 +573,7 @@ describe.skipIf(!testDatabaseUrl)('学習の途中再開（独立PostgreSQL）',
     await setStatus('finished');
     expect((await mlflowPut('checkpoints/step-3/extra.pt', 'late')).status).toBe(409);
     expect((await mlflowPut('checkpoints/step-4/model.pt', 'late')).status).toBe(409);
-    // Other paths of the ended Run are still writable, as in MLflow.
+    // MLflowと同じく、終わったRunのほかのパスには引き続き書き込める。
     expect((await mlflowPut('notes/after.txt', 'note')).status).toBe(200);
     expect((await listCheckpoints(run.id))[0]!.manifest.files).toHaveLength(2);
   });

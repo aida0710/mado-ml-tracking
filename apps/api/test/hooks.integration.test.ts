@@ -38,7 +38,7 @@ describe.skipIf(!testDatabaseUrl)('フック・webhook・ドライバー（独�
     await harness?.close();
   });
 
-  // A Job on the local target running the fixture's Python Code.
+  // localのコンピュータで、fixtureのPythonのCodeを動かすJob。
   function template(overrides: Record<string, unknown> = {}) {
     return {
       experimentId: fixture.experiment.id,
@@ -229,7 +229,7 @@ describe.skipIf(!testDatabaseUrl)('フック・webhook・ドライバー（独�
       runAsKind: 'service',
       createdBy: fixture.editor.userId,
     });
-    // The same owner again changes nothing and is not audited again.
+    // 同じ所有者をもう一度指定しても何も変わらず、監査にも再び残らない。
     await entity<Hook>(await transfer(owner.id), 200);
     const audits = await harness.database.query<{ outcome: string }>(
       "SELECT outcome FROM audit_events WHERE action='hook.owner.transfer' ORDER BY occurred_at,id",
@@ -247,7 +247,7 @@ describe.skipIf(!testDatabaseUrl)('フック・webhook・ドライバー（独�
       [execution.runId],
     );
     expect(rows[0]!.created_by).toBe(owner.id);
-    // Only enabled and the owner can change; the rest of the hook stays as it was created.
+    // 変えられるのはenabledと所有者だけ。フックのほかの部分は作成時のまま。
     await expect(
       harness.database.query("UPDATE hooks SET name='Renamed' WHERE id=$1", [hook.id]),
     ).rejects.toThrow('immutable');
@@ -255,8 +255,8 @@ describe.skipIf(!testDatabaseUrl)('フック・webhook・ドライバー（独�
 
   it('SSOのgroup同期が古い所有者のフックも起動し、そのJob tokenも使える', async () => {
     const { hook } = await createHook({ trigger: 'manual' });
-    // The owner last signed in by SSO a month ago: their own API token is stopped by the sync
-    // expiry, but a hook keeps running for as long as its owner is an editor.
+    // 所有者が最後にSSOでサインインしたのは1か月前。本人のAPI tokenは同期の期限切れで止まるが、
+    // フックは所有者がeditorである限り動き続ける。
     await harness.database.query(
       `INSERT INTO user_oidc_identities(issuer,subject,user_id,email_at_login,email_verified,groups_synced_at)
       VALUES ('https://sso.example.org','hook-owner',$1,'owner@example.org',true,now()-interval '30 days')`,
@@ -298,14 +298,14 @@ describe.skipIf(!testDatabaseUrl)('フック・webhook・ドライバー（独�
     await completeLocal(hookJob);
     const [loop] = await executions(hook.id);
     expect(loop).toMatchObject({ status: 'skipped', reason: 'loop_detected', subjectId: hookJob.run.id });
-    // A failed Run is outside the filter and leaves no execution.
+    // 失敗したRunは絞り込みの条件に合わないので、実行の記録を残さない。
     const failed = await startLocalJob(await fixture.newRun('Failing run'));
     await completeLocal(failed, 'failed');
     expect(await executions(hook.id)).toHaveLength(2);
   });
 
   it('学習中に登録されたバージョンは学習Runの成功を待ってから起動する', async () => {
-    // A registration has no end status, so this condition could never match.
+    // 登録には終了の状態が無いので、この条件には決して合わない。
     const unusable = await request(harness.app, `${fixture.basePath}/hooks`, {
       method: 'POST',
       cookie: fixture.editor.cookie,

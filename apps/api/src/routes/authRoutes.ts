@@ -10,10 +10,11 @@ import { LOGIN_BINDING_COOKIE, SESSION_COOKIE, validateOrigin } from '../http/au
 import { jsonBody, principal, type ApiContext, type ApiEnvironment } from '../http/request.js';
 import { requestMetadata } from '../http/requestMetadata.js';
 
-// Generous bounds: the hasher enforces the real password rules, these only cap request size.
+// 上限は緩めにする。実際のパスワードの規則はハッシュ化の側で検査し、ここではリクエストの
+// 大きさを抑えるだけ。
 const MAX_USERNAME_LENGTH = 256;
 const MAX_PASSWORD_INPUT_LENGTH = 4096;
-// A signed logout token is a few KB; the form body is read whole, so it is capped well above that.
+// 署名付きのlogout tokenは数KB。フォームの本文はまとめて読むので、それより十分大きい上限にする。
 const MAX_BACKCHANNEL_LOGOUT_BODY_BYTES = 20_000;
 
 export const localLoginSchema = z.strictObject({
@@ -25,7 +26,7 @@ export const changePasswordSchema = z.strictObject({
   newPassword: z.string().min(1).max(MAX_PASSWORD_INPUT_LENGTH),
 });
 
-// The email defaults to the configured development administrator.
+// メールアドレスの既定値は、設定した開発用の管理者のもの。
 export function developmentLoginSchema(defaultEmail: string) {
   return z.strictObject({
     email: z
@@ -37,7 +38,7 @@ export function developmentLoginSchema(defaultEmail: string) {
   });
 }
 
-// The shared error handler builds the 429 body; Retry-After has to be set on the context first.
+// 429の本文は共通のエラーハンドラが作るので、先にcontextへRetry-Afterを設定しておく。
 async function withRetryAfter<T>(context: ApiContext, operation: () => Promise<T>): Promise<T> {
   try {
     return await operation();
@@ -130,8 +131,8 @@ export function authRoutes(auth: AuthService): Hono<ApiEnvironment> {
     setSessionCookie(context, login.session);
     return context.redirect(auth.config.webOrigin);
   });
-  // Called by the IdP, not a browser: no cookie and no Origin, so it is authenticated by the
-  // logout token's signature alone (see OidcBackchannelLogout).
+  // ブラウザではなくIdPが呼ぶ。cookieもOriginも無いので、logout tokenの署名だけで認証する
+  // （OidcBackchannelLogoutを参照）。
   routes.post('/oidc/backchannel-logout', async (context) => {
     context.header('Cache-Control', 'no-store');
     if (!context.req.header('Content-Type')?.startsWith('application/x-www-form-urlencoded'))

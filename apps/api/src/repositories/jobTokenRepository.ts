@@ -10,8 +10,8 @@ export interface JobTokenIdentity {
   job: JobTokenBinding;
 }
 
-// A token stays usable only while its Job holds the same lease and has not reached a terminal
-// state: completion, cancellation, or a lease change ends it without touching job_tokens.
+// tokenを使えるのは、そのJobが同じleaseを持ち、終了状態に達していない間だけ。完了、取り消し、
+// leaseの変更で、job_tokensに触れずに使えなくなる。
 const ACTIVE_JOB_TOKEN = `t.revoked_at IS NULL AND j.lease_id=t.lease_id AND j.status IN ('claimed','running')
   AND u.status='active'`;
 
@@ -33,7 +33,7 @@ export async function jobTokenIdentity(
   return { user, tokenId, projectId, job: { jobId, runId, leaseId } };
 }
 
-// Re-checks a token inside a write transaction; FOR SHARE on the Job blocks a concurrent completion.
+// 書き込みのトランザクションの中でtokenを確かめ直す。JobへのFOR SHAREで、同時の完了を待たせる。
 export async function isJobTokenActive(
   connection: Connection,
   token: { id: string; userId: string; lock?: boolean },
@@ -83,7 +83,7 @@ export async function findLoggedModelSourceRunId(
   return found?.sourceRunId ?? null;
 }
 
-// artifact_uploads is created by the artifact upload sessions migration (018).
+// artifact_uploadsは、Artifactのアップロードセッションのmigration（018）で作る。
 export async function findArtifactUploadRunId(
   connection: Connection,
   upload: { projectId: string; id: string },

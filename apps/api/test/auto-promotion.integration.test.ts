@@ -16,7 +16,7 @@ import { assignModelAlias } from '../src/repositories/modelAliasRepository.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 import { promotionFixture, type PromotionFixture } from './promotionFixtures.js';
 
-// How long the concurrency test waits for the judgement to block on the Model lock.
+// 並行実行のテストで、判定がModelのロック待ちになるまで待つ時間。
 const LOCK_WAIT_DEADLINE_MILLISECONDS = 10_000;
 
 describe.skipIf(!testDatabaseUrl)('合格時のalias自動切替と保護alias（独立PostgreSQL）', () => {
@@ -46,7 +46,7 @@ describe.skipIf(!testDatabaseUrl)('合格時のalias自動切替と保護alias�
     ).items;
   }
 
-  // Alias name -> version label ("1", "2", ...) of the fixture's Model.
+  // alias名から、fixtureのModelのバージョンの表示名（"1"、"2"など）への対応。
   async function currentAliases(fixture: PromotionFixture): Promise<Record<string, string>> {
     const read = async <T>(path: string) =>
       (
@@ -99,7 +99,7 @@ describe.skipIf(!testDatabaseUrl)('合格時のalias自動切替と保護alias�
     );
   }
 
-  // Registers a version whose automatic evaluation Job finishes with the given accuracy.
+  // 自動評価のJobが指定のaccuracyで終わるバージョンを登録する。
   async function evaluatedVersion(
     fixture: PromotionFixture,
     evaluation: { rule: ModelAutomationRule; version: string; accuracy: number },
@@ -226,7 +226,7 @@ describe.skipIf(!testDatabaseUrl)('合格時のalias自動切替と保護alias�
     });
     expect((await currentAliases(fixture)).production).toBe('1');
 
-    // The fixture's first version was never evaluated by the rule, so the deltas cannot be judged.
+    // fixtureの最初のバージョンはルールで評価されていないので、差分を判定できない。
     await entity(
       await putAlias(fixture, {
         cookie: fixture.administrator.cookie,
@@ -278,7 +278,7 @@ describe.skipIf(!testDatabaseUrl)('合格時のalias自動切替と保護alias�
       await manualMayCommit;
     });
     await manualHoldsLock;
-    // The judgement reads the committed baseline (version 1), then waits for the Model lock.
+    // 判定はコミット済みの基準（バージョン1）を読み、それからModelのロックを待つ。
     const completion = fixture.completeJob(candidateJob.jobId, {
       status: 'finished',
       metrics: { accuracy: 0.9 },
@@ -363,7 +363,7 @@ describe.skipIf(!testDatabaseUrl)('合格時のalias自動切替と保護alias�
       200,
     );
     expect((await currentAliases(fixture)).production).toBe('1');
-    // Other aliases stay unprotected.
+    // ほかのaliasは保護されないまま。
     await entity(
       await putAlias(fixture, {
         alias: 'staging',
@@ -373,7 +373,7 @@ describe.skipIf(!testDatabaseUrl)('合格時のalias自動切替と保護alias�
       200,
     );
 
-    // A Model-level row can only tighten the Project-wide one.
+    // Model単位の行は、Project全体の行より厳しくすることしかできない。
     await entity(
       await putProtection(fixture, {
         modelId: fixture.model.id,
@@ -454,7 +454,7 @@ describe.skipIf(!testDatabaseUrl)('合格時のalias自動切替と保護alias�
       expect(response.status).toBe(status);
       expect(await errorCode(response)).toBe(code);
     }
-    // A decision for another alias does not justify this one.
+    // 別のaliasへの判定は、このaliasの根拠にならない。
     const staging = await putAlias(fixture, {
       alias: 'staging',
       cookie: fixture.editor.cookie,
@@ -462,7 +462,7 @@ describe.skipIf(!testDatabaseUrl)('合格時のalias自動切替と保護alias�
     });
     expect(await errorCode(staging)).toBe('alias_evaluation_mismatch');
 
-    // The Python SDK sends the same evidence as promotionEvaluationId.
+    // Python SDKは同じ根拠をpromotionEvaluationIdとして送る。
     await entity(
       await putAlias(fixture, {
         cookie: fixture.editor.cookie,
@@ -476,7 +476,7 @@ describe.skipIf(!testDatabaseUrl)('合格時のalias自動切替と保護alias�
       promotionEvaluationId: passing.decision!.id,
       actor: { userId: fixture.editor.userId },
     });
-    // No decision justifies a removal, so it takes Project admin.
+    // 削除の根拠になる判定は無いので、Project adminが要る。
     const removal = await request(
       harness.app,
       `${fixture.basePath}/models/${fixture.model.id}/aliases/production`,
@@ -531,7 +531,7 @@ describe.skipIf(!testDatabaseUrl)('合格時のalias自動切替と保護alias�
       runAsUserId: releaseBot.id,
       createdBy: fixture.editor.userId,
     });
-    // Naming the same owner again changes nothing and records no second transfer.
+    // 同じ所有者をもう一度指定しても何も変わらず、2回目の移譲は記録されない。
     await entity(
       await transferOwner(fixture, { policyId: policy.id, serviceAccountId: releaseBot.id }),
       200,

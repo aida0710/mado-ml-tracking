@@ -1,20 +1,20 @@
 /**
- * CSV text for spreadsheet users (RFC 4180): CRLF line ends, fields quoted when they hold a
- * comma, quote, CR or LF, and a UTF-8 BOM so Excel reads Japanese text without mojibake.
+ * 表計算ソフトの利用者向けのCSV（RFC 4180）。改行はCRLF、カンマ・引用符・CR・LFを含む項目は
+ * 引用符で囲み、Excelが日本語を文字化けせずに読めるようUTF-8のBOMを付ける。
  */
 
-// decisions.md adopted the BOM for Excel. Set to '' to emit plain UTF-8 instead.
+// decisions.mdでExcelのためにBOMを採用した。BOMなしのUTF-8で出すには''にする。
 export const CSV_BYTE_ORDER_MARK = '\uFEFF';
 export const CSV_LINE_END = '\r\n';
 export const CSV_CONTENT_TYPE = 'text/csv; charset=utf-8';
 
-// A spreadsheet evaluates text starting with these as a formula (CSV injection, OWASP).
+// 表計算ソフトは、これらで始まるテキストを数式として評価する（CSV injection、OWASP）。
 const FORMULA_TRIGGER = /^[=+\-@\t\r]/;
 const NEEDS_QUOTING = /[",\r\n]/;
 
 /**
- * A number is written as is, including NaN and ±Infinity, so numeric metrics such as -0.5 keep
- * their value. Only text gets the formula guard; null and undefined are empty cells.
+ * 数値はNaNと±Infinityも含めてそのまま書き、-0.5のような数値のメトリクスが値を保つようにする。
+ * 数式への対策をするのはテキストだけ。nullとundefinedは空のセル。
  */
 export type CsvCell = string | number | boolean | null | undefined;
 

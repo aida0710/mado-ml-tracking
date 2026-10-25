@@ -17,7 +17,7 @@ import { assertProjectReference } from '../repositories/registryRepository.js';
 import { requireProject } from './accessService.js';
 import { auditActor, NO_REQUEST_METADATA, recordDenial } from './auditService.js';
 
-/** Who may delete: Project admins (decisions.md), with a token that may write Artifacts. */
+/** 削除できる人。Project admin（decisions.md）で、tokenならArtifactを書けるもの。 */
 export const ARTIFACT_DELETE_PERMISSION = { role: 'admin', scope: 'artifacts:write' } as const;
 
 const referenceLabels: Record<ArtifactReferenceKind, string> = {
@@ -40,8 +40,8 @@ function artifactInUse(kinds: ArtifactReferenceKind[]): never {
 type DeletionOrigin = 'native' | 'mlflow' | 'derived';
 
 /**
- * Locks the Artifacts against new references before their references are checked: the triggers of
- * migration 049 take FOR KEY SHARE, which waits for this lock. Ordered by id to avoid deadlocks.
+ * 参照を確かめる前に、新しい参照が付かないようArtifactをロックする。migration 049のtriggerは
+ * FOR KEY SHAREを取るので、このロックを待つ。デッドロックを避けるためidの順に並べる。
  */
 async function lockLiveArtifacts(
   connection: Connection,
@@ -56,9 +56,9 @@ async function lockLiveArtifacts(
 }
 
 /**
- * Marks locked, unreferenced Artifacts deleted and removes what only describes them: media info,
- * Run media rows, MLflow path mappings and server-side previews (whose generated files are deleted
- * with them). Blobs stay until the garbage collector's grace period ends.
+ * ロックした、参照の無いArtifactを削除済みにし、それを説明するだけのものを消す。メディア情報、
+ * Runのメディアの行、MLflowのパスの対応付け、サーバー側のプレビュー（生成したファイルも一緒に
+ * 消す）。blobはgarbage collectorの猶予期間が終わるまで残る。
  */
 async function markArtifactsDeleted(
   connection: Connection,
@@ -111,8 +111,8 @@ async function markArtifactsDeleted(
 }
 
 /**
- * Deletes Artifacts on behalf of a Project admin. Deletion is soft: content answers 404 at once and
- * the blob is removed after MMT_ARTIFACT_DELETE_GRACE_DAYS by the ArtifactGarbageCollector.
+ * Project adminの代わりにArtifactを削除する。削除は論理削除で、中身はすぐ404を返し、blobは
+ * MMT_ARTIFACT_DELETE_GRACE_DAYSのあとArtifactGarbageCollectorが消す。
  */
 export class ArtifactDeletionService {
   constructor(private readonly database: Database) {}
@@ -169,9 +169,10 @@ export class ArtifactDeletionService {
   }
 
   /**
-   * Discards a folder upload that stopped before its version: every stored file below its prefix
-   * that nothing references. A file a version (or anything else) started to use is kept, so a
-   * person still uploading the same folder loses no file a version already lists.
+   * データセットバージョンを作る前に止まったフォルダのアップロードを捨てる。捨てるのは、
+   * そのprefixの下に保存された、何からも参照されていないファイルすべて。
+   * バージョン（やほかの何か）が使い始めたファイルは残すので、同じフォルダをまだアップロード
+   * している人は、バージョンに載ったファイルを失わない。
    */
   async deleteDatasetFolderUpload(
     principal: Principal,
@@ -227,10 +228,10 @@ export class ArtifactDeletionService {
   }
 
   /**
-   * MLflow delete_artifacts for a Run path or directory ('' is the whole Run), inside the caller's
-   * transaction that already authorized and locked the Run. Every version stored at the affected
-   * paths is deleted unless something references it; kept versions stay hidden behind a mapping
-   * without an Artifact, so neither API shows the path again until it is uploaded anew.
+   * Runのパスかディレクトリ（''はRun全体）に対するMLflowのdelete_artifacts。Runの認可とロックを
+   * 済ませた呼び出し側のトランザクションの中で動く。対象のパスに保存されたバージョンは、何かが
+   * 参照していない限りすべて削除する。残したバージョンはArtifactを持たない対応付けの後ろに
+   * 隠れるので、新たにアップロードされるまで、どちらのAPIもそのパスを再び表示しない。
    */
   async deleteMlflowRunPath(
     connection: Connection,
@@ -249,7 +250,8 @@ export class ArtifactDeletionService {
     const keptPaths = [
       ...new Set(stored.filter((artifact) => result.kept.has(artifact.id)).map(({ path }) => path)),
     ];
-    // Deleted versions lost their mappings above; paths with a kept version get an empty mapping.
+    // 削除したバージョンの対応付けは上で消えた。残したバージョンのあるパスには、空の対応付けを
+    // 入れる。
     await connection.query(
       `INSERT INTO mlflow_artifact_paths(project_id,owner_kind,owner_id,path,artifact_id)
        SELECT $1,'run',$2,path,NULL FROM unnest($3::text[]) AS path
@@ -264,9 +266,9 @@ export class ArtifactDeletionService {
   }
 
   /**
-   * MLflow delete_artifacts for a Logged Model path, inside the caller's transaction. A Logged
-   * Model lists only its mappings, so they are removed; mapped Artifacts nothing references are
-   * deleted.
+   * Logged Modelのパスに対するMLflowのdelete_artifacts。呼び出し側のトランザクションの中で動く。
+   * Logged Modelは対応付けだけを一覧にするので、対応付けを消す。対応付けていたArtifactのうち、
+   * 何からも参照されていないものは削除する。
    */
   async deleteMlflowModelPath(
     connection: Connection,

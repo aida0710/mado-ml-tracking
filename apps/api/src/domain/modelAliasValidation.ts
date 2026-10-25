@@ -3,10 +3,10 @@ import type { ModelAliasProtection, ModelAliasProtectionRole } from '@mmt/contra
 import { satisfiesProjectRole } from './projectRoles.js';
 import { uuidSchema } from './validation.js';
 
-// Matches the model_alias_events.reason CHECK so the API rejects before the database does.
+// model_alias_events.reasonのCHECKと合わせ、DBより先にAPIで拒む。
 export const MAX_MODEL_ALIAS_REASON_LENGTH = 2000;
 const DEFAULT_MODEL_ALIAS_EVENT_LIMIT = 50;
-// Bounds one page of history; the Web table and SDK page through longer histories.
+// 履歴の1ページの上限。画面の表とSDKは、長い履歴をページ送りでたどる。
 const MAX_MODEL_ALIAS_EVENT_LIMIT = 200;
 
 const reasonSchema = z.string().max(MAX_MODEL_ALIAS_REASON_LENGTH);
@@ -16,8 +16,8 @@ export const modelAliasAssignmentSchema = z
     versionId: uuidSchema,
     reason: reasonSchema.optional(),
     evaluationId: uuidSchema.optional(),
-    // The Python SDK (set_model_alias(evaluation_id=)) sends the evidence under the alias event's
-    // field name; both names mean the same promotion decision.
+    // Python SDK（set_model_alias(evaluation_id=)）は、根拠をaliasのイベントの項目名で送る。
+    // どちらの名前も同じ昇格の判定を指す。
     promotionEvaluationId: uuidSchema.optional(),
   })
   .refine(
@@ -59,16 +59,16 @@ export const modelAliasProtectionQuerySchema = z.strictObject({
 export type ModelAliasAssignment = z.infer<typeof modelAliasAssignmentSchema>;
 export type ModelAliasProtectionInput = z.infer<typeof modelAliasProtectionInputSchema>;
 
-/** What a manual change of one alias must satisfy once every matching protection is combined. */
+/** 当てはまる保護をすべて合わせたうえで、1つのaliasを手で変えるときに満たすべき条件。 */
 export interface EffectiveAliasProtection {
   requiredRole: ModelAliasProtectionRole;
   requirePassedEvaluation: boolean;
 }
 
 /**
- * Combines the Project-wide and the Model protection of an alias into the stricter of each
- * setting, so a Model-level row can tighten but never loosen the Project-wide rule.
- * Returns null when the alias is not protected.
+ * aliasのProject全体の保護と登録モデルの保護を、設定ごとに厳しい方をとって1つにまとめる。
+ * 登録モデル単位の行はProject全体の規則を厳しくできるが、緩めることはできない。
+ * aliasが保護されていなければnullを返す。
  */
 export function combineAliasProtections(
   protections: readonly Pick<ModelAliasProtection, 'requiredRole' | 'requirePassedEvaluation'>[],

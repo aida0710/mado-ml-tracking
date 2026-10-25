@@ -9,7 +9,7 @@ import { invalidParameter } from './trackingValidation.js';
 
 export type { CompiledSearch } from '../../domain/runSearch/runSearchCompiler.js';
 
-// MLflow request fields use snake_case; the shared compiler takes the domain expression.
+// MLflowのリクエストのフィールドはsnake_caseで、共通のコンパイラはドメインの式を受け取る。
 export function compileSearch(
   entity: SearchEntity,
   search: TrackingSearch,

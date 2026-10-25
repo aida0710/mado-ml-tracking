@@ -35,7 +35,7 @@ interface JobReference {
 }
 
 const RETRY_SAVEPOINT = 'runner_retry';
-// Phases a runner moves through, in order; a report never moves a Job back.
+// runnerが進むphaseの順。報告でJobを前のphaseに戻すことはない。
 const RUNNER_PHASE_ORDER: readonly JobPhase[] = ['waiting_resources', 'running'];
 
 function sameId(left: string, right: string): boolean {
@@ -51,10 +51,10 @@ function laterPhase(current: JobPhase | null, requested: JobPhase | undefined): 
 }
 
 /**
- * Reports from the runner on a site's compute node (docs/sites.md). The runner authenticates with
- * its Job's token and names the instance ID it chose at start, so a second copy of the runner
- * (a requeued scheduler job) cannot write into a Job another runner holds. The runner never hands
- * the instance ID to the container, which holds the same Job token.
+ * siteの計算ノードで動くrunnerからの報告（docs/sites.md）。runnerはJobのtokenで認証し、開始時に
+ * 選んだインスタンスIDを示す。そのため、runnerの2つ目の複製（スケジューラに再投入された
+ * ジョブ）が、別のrunnerの持つJobに書き込むことはできない。runnerはインスタンスIDをコンテナに
+ * 渡さない。コンテナも同じJob tokenを持っているため。
  */
 export class RunnerService {
   private readonly database: Database;
@@ -170,9 +170,9 @@ export class RunnerService {
   }
 
   /**
-   * Ends the Job and its Run. A Job asked to cancel ends as canceled unless it finished. A timed
-   * out Job with retryOnTimeout continues from its latest checkpoint; a failed one with
-   * retryOnFailure starts again from where this attempt started, both up to maxAttempts.
+   * JobとそのRunを終える。取り消しを求められたJobは、正常に完了していなければcanceledで終わる。
+   * retryOnTimeoutのあるJobがタイムアウトしたら最新のcheckpointから続け、retryOnFailureのある
+   * Jobが失敗したらこの試行を始めた地点から始め直す。どちらもmaxAttemptsまで。
    */
   async finish(
     principal: Principal,
@@ -212,7 +212,7 @@ export class RunnerService {
         WHERE id=$1 RETURNING ${jobColumns()}`,
         [job.id, status, request.exitCode ?? null, request.error ?? null, endReason],
       ))!;
-      // The retry exists before the Run ends, so completion handlers (arrays, hooks) see it.
+      // Runが終わる前に再試行を作っておくので、完了時のハンドラ（array、フック）がそれを見られる。
       const retryJobId = await this.retryAutomatically(connection, {
         job: completed,
         previousRun,
@@ -258,7 +258,7 @@ export class RunnerService {
     } catch (error) {
       await connection.query(`ROLLBACK TO SAVEPOINT ${RETRY_SAVEPOINT}`);
       if (!(error instanceof DomainError)) throw error;
-      // The Job still ends; a retry that cannot start (for example an archived input) is skipped.
+      // Jobはそのまま終える。始められない再試行（アーカイブされた入力など）は見送る。
       console.error(
         JSON.stringify({ event: 'site_job_retry_skipped', jobId: job.id, code: error.code }),
       );
@@ -275,7 +275,7 @@ export class RunnerService {
     return retry?.id ?? null;
   }
 
-  // The container started: the Job and its Run run from now on (claim alone left the Run queued).
+  // コンテナが始まった。ここからJobとそのRunは実行中になる（claimだけではRunは順番待ちのまま）。
   private async markRunning(connection: Connection, job: Job): Promise<Job> {
     if (job.phase !== 'running' || job.status === 'running') return job;
     const previousRun = await findRun(connection, {
@@ -302,7 +302,7 @@ export class RunnerService {
     return running;
   }
 
-  /** Only the Job's own token may report for it, and only for a site Job (one with a phase). */
+  /** Jobについて報告できるのはそのJob自身のtokenだけで、siteのJob（phaseのあるもの）に限る。 */
   private async lockJob(
     connection: Connection,
     principal: Principal,

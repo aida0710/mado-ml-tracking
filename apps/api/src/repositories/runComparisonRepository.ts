@@ -2,7 +2,7 @@ import type { ComparedDatasetVersion, ComparedModelVersion, Run } from '@mmt/con
 import { rows, type Connection } from '../db/database.js';
 import { runSummarySelect } from './runListProjection.js';
 
-// JSON keys are written in camelCase because rows() maps only SQL column names.
+// rows()が対応付けるのはSQLの列名だけなので、JSONのキーはcamelCaseで書く。
 const comparedModelVersionJson = `jsonb_build_object('id',v.id,'modelId',v.model_id,
   'modelName',m.name,'version',v.version)`;
 const comparedDatasetVersionJson = `jsonb_build_object('id',v.id,'datasetId',v.dataset_id,
@@ -11,7 +11,7 @@ const comparedDatasetVersionJson = `jsonb_build_object('id',v.id,'datasetId',v.d
 export interface ComparedRun {
   run: Run;
   modelVersion: ComparedModelVersion | null;
-  /** Input DatasetVersions in Run.inputDatasetVersionIds order. */
+  /** 入力のDatasetVersionを、Run.inputDatasetVersionIdsの順で持つ。 */
   datasetVersions: ComparedDatasetVersion[];
 }
 
@@ -21,8 +21,8 @@ type ComparedRunRow = Run & {
 };
 
 /**
- * Reads the polling summaries of the Runs of one Project together with their ModelVersion and
- * input DatasetVersions in a single statement. Runs of other Projects are simply absent.
+ * 1つのProjectのRunのポーリング用の概要を、そのModelVersionと入力のDatasetVersionと一緒に1つの
+ * 文で読む。ほかのProjectのRunは単に含まれない。
  */
 export async function readComparedRuns(
   connection: Connection,
@@ -47,7 +47,7 @@ export async function readComparedRuns(
   }));
 }
 
-/** The same descriptions as readComparedRuns, for Runs read elsewhere (search pages). */
+/** readComparedRunsと同じ形のバージョンの情報を、別の所で読んだRun（検索のページ）のために返す。 */
 export async function readComparedVersions(
   connection: Connection,
   selection: {

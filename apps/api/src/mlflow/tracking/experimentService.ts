@@ -28,9 +28,9 @@ export async function findTrackingExperiment(
 }
 
 /**
- * get_experiment("0") before anything was recorded in the Default: MLflow always has it, so the
- * answer is an empty Default under the id the client asked for, dated with the Project. A read
- * does not create it; the first Run or Logged Model in "0" does.
+ * Defaultにまだ何も記録していないときのget_experiment("0")。MLflowには常にDefaultがあるので、
+ * クライアントが指定したidで、Projectの日時を付けた空のDefaultを返す。読み取りでは作らず、
+ * "0"に最初のRunかLogged Modelを記録したときに作る。
  */
 async function unrecordedDefaultExperiment(
   connection: Connection,
@@ -70,7 +70,7 @@ export class ExperimentService {
         role: 'editor',
         scope: 'runs:write',
       });
-      // The project's configured Artifact store is the sole writer for SDK artifacts.
+      // SDKのArtifactを書き込むのは、Projectに設定したArtifactの保存先だけ。
       if (input.artifact_location !== undefined)
         unsupported('artifact_location is not supported');
       const experiment = await first<TrackingExperiment>(
@@ -142,7 +142,7 @@ export class ExperimentService {
     input: { experiment_id: string; new_name: string },
   ): Promise<void> {
     await this.write(principal, projectId, async (connection) => {
-      // Artifact PUT locks Project before Experiment; renames must follow the same order.
+      // ArtifactのPUTはProject、実験の順にロックするので、名前の変更も同じ順にする。
       await connection.query('SELECT id FROM projects WHERE id=$1 FOR UPDATE', [projectId]);
       const experiment = await findTrackingExperiment(connection, {
         projectId,
@@ -169,7 +169,7 @@ export class ExperimentService {
     input: { experiment_id: string; lifecycleStage: 'active' | 'deleted' },
   ): Promise<void> {
     await this.write(principal, projectId, async (connection) => {
-      // Lock the experiment before its runs; creation and input writes acquire this same order.
+      // 実験をそのRunより先にロックする。作成と入力の書き込みも同じ順にロックを取る。
       const experiment = await findTrackingExperiment(connection, {
         projectId,
         id: input.experiment_id,

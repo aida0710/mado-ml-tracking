@@ -23,12 +23,12 @@ import {
 import { enqueueNotificationEvent, type NotificationSubject } from './notificationEvents.js';
 import { PollingLoop } from './pollingLoop.js';
 
-// Half the Job heartbeat threshold, so a stale Job is reported within 90 seconds of its last beat.
+// Jobのheartbeatのしきい値の半分。止まったJobを、最後のheartbeatから90秒以内に報告する。
 export const OPERATIONS_MONITOR_INTERVAL_MS = 30_000;
-// Shared by every API process on the same schema so only one of them checks at a time.
+// 同じスキーマのすべてのAPIプロセスで共有し、一度に1つだけが確認するようにする。
 const MONITOR_LOCK_NAME = 'operations_monitor';
 
-/** A watched subject with what its notifications need besides the stored detail. */
+/** 監視対象と、保存したdetailのほかに通知に要る情報。 */
 interface WatchedSubject extends MonitoredSubject {
   name: string;
   webPath: string;
@@ -36,7 +36,7 @@ interface WatchedSubject extends MonitoredSubject {
 }
 
 export interface OperationsMonitorTick {
-  /** false when another process held the monitor lock and this tick did nothing. */
+  /** 別のプロセスが監視のロックを持っていて、この回は何もしなかったときはfalse。 */
   acquired: boolean;
   opened: number;
   resolved: number;
@@ -108,10 +108,10 @@ function pluginSubject(backlog: PluginBacklog): WatchedSubject {
 }
 
 /**
- * Watches Job heartbeats, worker presence and plugin event delivery every 30 seconds, keeps one
- * operations_alerts row per occurrence, and queues notifications only when an alert opens (and
- * when a stale Job's heartbeat comes back). Each tick is one transaction under an advisory lock,
- * so notifications commit together with the alert rows and API processes do not double-report.
+ * Jobのheartbeat、workerのpresence、pluginのイベントの配信を30秒ごとに監視し、出来事1つにつき
+ * operations_alertsの行を1つ持ち、アラートが始まったとき（と、止まっていたJobのheartbeatが
+ * 戻ったとき）だけ通知をキューに入れる。各回はadvisory lockの下の1つのトランザクションなので、
+ * 通知はアラートの行と一緒にコミットされ、APIプロセスが二重に報告することはない。
  */
 export class OperationsMonitor {
   private readonly loop: PollingLoop;
@@ -159,7 +159,7 @@ export class OperationsMonitor {
         });
         if (!alert) continue;
         resolved++;
-        // Only Jobs have a recovery event; a Job that ended reports through its Run instead.
+        // 回復のイベントがあるのはJobだけ。終わったJobは、代わりにそのRunを通して報告する。
         if (alert.kind === 'job.heartbeat_stale' && change.subject)
           await this.notify(connection, {
             alert,
@@ -182,7 +182,7 @@ export class OperationsMonitor {
     ];
   }
 
-  // The dedupe key carries the alert id, so a subject that fails again later notifies again.
+  // 重複除去のキーにアラートのidを含めるので、後で再び失敗した対象はもう一度通知する。
   private async notify(
     connection: PoolClient,
     event: {

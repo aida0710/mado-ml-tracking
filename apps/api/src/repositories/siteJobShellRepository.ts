@@ -10,7 +10,7 @@ export function jobShellSha256(content: string): string {
   return createHash('sha256').update(content).digest('hex');
 }
 
-/** Newest first. */
+/** 新しい順。 */
 export async function listJobShells(
   connection: Connection,
   targetId: string,
@@ -45,7 +45,7 @@ export async function findCurrentJobShell(
   );
 }
 
-/** Adds the next version and makes it the site's current one; the caller holds the site lock. */
+/** 次のバージョンを足し、siteで使うバージョンにする。siteのロックは呼び出し側が持つ。 */
 export async function insertJobShell(
   connection: Connection,
   shell: { targetId: string; content: string; createdBy: string },

@@ -9,13 +9,13 @@ import { z } from 'zod';
 import { runSearchSchema } from '../../routes/runSearchRoutes.js';
 import { uuidSchema } from '../validation.js';
 
-// MLflow accepts metric keys up to 250 characters, longer than native metric names.
+// MLflowはメトリクスのkeyを250文字まで受け付け、ネイティブのメトリクス名より長い。
 const MAX_METRIC_KEY_LENGTH = 250;
-// Equal to the native tag and parameter key limit.
+// ネイティブのtagとparameterのkeyの上限と同じ。
 const MAX_GROUP_KEY_LENGTH = 200;
 /**
- * Bounds runs (or groups) x keys x maxPoints. A million points is a JSON body of tens of MB; a
- * client that needs more Runs or keys lowers maxPoints, which a chart of normal width allows.
+ * Run（またはグループ）×key×maxPointsの上限。100万点はJSONの本文で数十MBになる。より多くの
+ * Runやkeyが要るクライアントはmaxPointsを下げる。通常の幅のグラフならそれで足りる。
  */
 export const MAX_RESPONSE_POINTS = 1_000_000;
 
@@ -78,7 +78,7 @@ export const metricSeriesRequestSchema = z
 export const metricGroupsRequestSchema = z
   .strictObject({
     runIds: uniqueRunIds(MAX_GROUPED_RUNS).optional(),
-    // Groups read every matching Run, so paging conditions do not apply.
+    // グループ化では条件に合うRunをすべて読むので、ページ送りの条件は使わない。
     search: runSearchSchema.omit({ limit: true, cursor: true }).optional(),
     groupBy: groupBySchema,
     keys: keysSchema,

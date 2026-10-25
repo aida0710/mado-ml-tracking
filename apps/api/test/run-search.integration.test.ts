@@ -4,7 +4,7 @@ import { createHarness, entity, request, testDatabaseUrl, type Harness } from '.
 import { projectFixture } from './fixtures.js';
 import { trackingClient, trackingTestApp, type WireRun } from './mlflow-tracking-fixtures.js';
 
-// More than the 500 Runs the previous browser-side list could hold.
+// 以前のブラウザ側の一覧が持てた500件より多いRunの数。
 const HISTORY_RUN_COUNT = 650;
 
 type Fixture = Awaited<ReturnType<typeof projectFixture>>;
@@ -55,7 +55,7 @@ describe.skipIf(!testDatabaseUrl)('全履歴のRun検索（独立PostgreSQL）',
       }),
     );
   }
-  // Bulk history goes straight to SQL; creating hundreds of Runs over HTTP adds no coverage.
+  // 大量の履歴はSQLで直接入れる。HTTPで数百のRunを作っても確かめる範囲は広がらない。
   async function insertHistory(
     count: number,
     options: { firstSecond: number; prefix: string },
@@ -98,13 +98,13 @@ describe.skipIf(!testDatabaseUrl)('全履歴のRun検索（独立PostgreSQL）',
     });
     expect(page.items.map((run) => run.name)).toEqual(['oldest-run']);
     expect(page.nextCursor).toBeNull();
-    // Polling summaries keep execution identity without the snapshot body.
+    // ポーリング用の要約は、スナップショットの本体を持たずに実行を識別する情報を残す。
     expect(page.items[0]).not.toHaveProperty('executionSnapshot');
     expect(page.items[0]!.parameters).toEqual({ optimizer: 'lion' });
 
     const byName = await searchPage({ name: 'OLDEST' });
     expect(byName.items.map((run) => run.id)).toEqual([oldest.id]);
-    // LIKE wildcards in the name are matched literally.
+    // 名前にあるLIKEのワイルドカードは文字どおりに照合する。
     expect((await searchPage({ name: '%' })).items).toEqual([]);
   });
 
@@ -112,7 +112,7 @@ describe.skipIf(!testDatabaseUrl)('全履歴のRun検索（独立PostgreSQL）',
     await insertHistory(HISTORY_RUN_COUNT, { firstSecond: 0, prefix: 'history-' });
     let pagesRead = 0;
     const names = await collectAllPages({ limit: 100 }, async () => {
-      // A Run created while paging belongs before page one and must not shift later pages.
+      // ページ送りの途中で作ったRunは1ページ目より前に入り、後のページをずらしてはいけない。
       if (pagesRead++ === 2) await createRun({ name: 'created-while-paging' });
     });
     expect(names).toHaveLength(HISTORY_RUN_COUNT);
@@ -141,7 +141,7 @@ describe.skipIf(!testDatabaseUrl)('全履歴のRun検索（独立PostgreSQL）',
       Array.from({ length: 120 }, (_, index) => `history-${String(index + 1).padStart(4, '0')}`),
     );
     const first = await searchPage(ordered);
-    // A different page size starts the next page at the same place.
+    // ページの大きさを変えても、次のページは同じ位置から始まる。
     const resized = await searchPage({ ...ordered, limit: 10, cursor: first.nextCursor! });
     expect(resized.items[0]!.name).toBe('history-0051');
 
@@ -150,7 +150,7 @@ describe.skipIf(!testDatabaseUrl)('全履歴のRun検索（独立PostgreSQL）',
       { ...ordered, orderBy: ['metrics.loss DESC'], cursor: first.nextCursor! },
       { ...ordered, filter: 'metrics.loss > 3', cursor: first.nextCursor! },
       { ...ordered, statuses: ['failed' as const], cursor: first.nextCursor! },
-      // A keyset cursor cannot continue an ordered search and vice versa.
+      // keysetのcursorでは並べ替えた検索を続けられず、その逆もできない。
       { ...ordered, cursor: keysetFirst.nextCursor! },
       { limit: 10, cursor: first.nextCursor! },
       { limit: 10, cursor: 'not-a-cursor' },
@@ -159,7 +159,7 @@ describe.skipIf(!testDatabaseUrl)('全履歴のRun検索（独立PostgreSQL）',
       expect(response.status).toBe(400);
       expect(((await response.json()) as { code: string }).code).toBe('invalid_cursor');
     }
-    // Reordering set-like conditions keeps the cursor valid.
+    // 集合のような条件の並びを変えても、cursorは有効なまま。
     const both = { statuses: ['queued', 'running'] as Run['status'][], limit: 10 };
     const bothFirst = await searchPage(both);
     expect(

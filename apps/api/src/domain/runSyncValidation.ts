@@ -19,7 +19,7 @@ import {
 } from './validation.js';
 
 const timestampSchema = z.iso.datetime({ offset: true });
-// Same bound as the error a worker reports when a Job ends.
+// Jobが終わったときにworkerが報告するエラーと同じ上限。
 const SYNC_ERROR_MAX_LENGTH = 20000;
 
 export const syncRunCreateSchema = z.strictObject({
@@ -53,7 +53,7 @@ export const artifactPresenceCheckSchema = z.strictObject({
   items: z
     .array(
       z.strictObject({
-        // Same bound as a stored Artifact path, so a longer path can never be present.
+        // 保存するArtifactのパスと同じ上限。これより長いパスが存在することは無い。
         path: z.string().max(1024).refine(isRelativeFilePath, 'Artifact path must be relative'),
         sha256: z.string().regex(/^[0-9a-f]{64}$/),
         size: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
@@ -67,8 +67,8 @@ export type SyncBatchInput = z.infer<typeof syncBatchSchema>;
 export type ArtifactPresenceCheckInput = z.infer<typeof artifactPresenceCheckSchema>;
 
 /**
- * Client clocks drift, so a time slightly ahead of the server is accepted; anything further is a
- * wrong clock whose records would sort after everything logged online.
+ * クライアントの時計はずれるので、サーバーより少し先の時刻は受け付ける。それより先は時計の誤りで、
+ * その記録はオンラインで記録したすべてのものより後ろに並んでしまう。
  */
 export function assertNotFutureTimestamp(
   timestamp: string,

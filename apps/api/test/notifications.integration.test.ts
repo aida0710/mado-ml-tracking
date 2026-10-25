@@ -36,7 +36,7 @@ interface SentNotification {
   event: NotificationEvent;
 }
 
-/** Records sends; `failWith` makes every send fail with that code. */
+/** 送信を記録する。`failWith`を渡すと、すべての送信がそのコードで失敗する。 */
 function recordingSenders(options: { failWith?: string } = {}) {
   const sent: SentNotification[] = [];
   const sender = {
@@ -118,7 +118,7 @@ describe.skipIf(!testDatabaseUrl)('通知チャネル・ルール・送信outbox
     );
   }
 
-  /** Starts a Job for a new Run and returns the worker's completion for it. */
+  /** 新しいRunのJobを始め、そのJobのworkerによる完了処理を返す。 */
   async function claimedJob(fixture: Setup, name = 'Train', kind: Run['kind'] = 'training') {
     const run = await fixture.newRun(name, kind);
     const job = await harness.services.jobs.create(
@@ -130,7 +130,7 @@ describe.skipIf(!testDatabaseUrl)('通知チャネル・ルール・送信outbox
       workerInfo,
       workerId: 'notification-worker',
     });
-    // Only failed is used: the worker reports it with a non-zero exit code.
+    // 使うのはfailedだけ。workerは0以外の終了コードとともに報告する。
     const completeFailed = () =>
       harness.services.worker.complete(fixture.workerPrincipal, job.id, {
         leaseId: claimed!.job.leaseId!,
@@ -341,7 +341,7 @@ describe.skipIf(!testDatabaseUrl)('通知チャネル・ルール・送信outbox
     );
     expect(afterFirst.rows[0]!.status).toBe('pending');
     expect(afterFirst.rows[0]!.wait).toBeGreaterThan(3);
-    // Not due yet: the backoff keeps the next dispatch from retrying immediately.
+    // まだ送る時刻ではない。バックオフがあるので、次の送信処理はすぐには再試行しない。
     expect(await failing.dispatchBatch()).toBe(0);
     expect((await outboxRows())[0]!.attempts).toBe(1);
 
@@ -377,7 +377,7 @@ describe.skipIf(!testDatabaseUrl)('通知チャネル・ルール・送信outbox
     expect(await dispatcher(senders).dispatchBatch()).toBe(1);
     expect(sent).toHaveLength(1);
     expect(await outboxRows()).toMatchObject([{ status: 'delivered', attempts: 2 }]);
-    // The dispatcher that lost the lease reports a failure late; the delivered row stays.
+    // leaseを失った送信処理が遅れて失敗を報告しても、配信済みの行はそのまま残る。
     await harness.database.query(
       "UPDATE notification_outbox SET status='pending',last_error='late' WHERE delivery_id=$1",
       [staleDeliveryId],
@@ -512,7 +512,7 @@ describe.skipIf(!testDatabaseUrl)('通知チャネル・ルール・送信outbox
       secretEnv: 'MMT_NOTIFICATION_OPS_SECRET',
       projectId: fixture.project.id,
     });
-    // The harness environment does not define these variables.
+    // harnessの環境ではこれらの変数を定義していない。
     expect(webhook).toMatchObject({ projectId: fixture.project.id, configured: false });
     const duplicate = await request(harness.app, '/api/notification-channels', {
       method: 'POST',
@@ -620,7 +620,7 @@ describe.skipIf(!testDatabaseUrl)('通知チャネル・ルール・送信outbox
     );
     expect(result.delivered).toBe(true);
     expect(sent[0]!.event).toMatchObject({ type: 'notification.test', project: null, run: null });
-    // The harness application has no MMT_NOTIFICATION_* variables, so the URL is unresolved.
+    // harnessのアプリにはMMT_NOTIFICATION_*の変数が無いので、URLが決まらない。
     const unconfigured = await entity<NotificationTestResult>(
       await request(harness.app, `/api/notification-channels/${channel.id}/test`, {
         method: 'POST',

@@ -17,7 +17,7 @@ import { workbenchFixture } from './workbenchFixtures.js';
 
 const UPLOAD_CONTENT = new TextEncoder().encode('openapi conformance\n');
 
-/** The response schema the document publishes for a route template and status. */
+/** 経路のテンプレートとステータスについて、文書が公開している応答のスキーマ。 */
 function publishedSchema(method: string, path: string, status: SuccessStatus): z.ZodType {
   const route = NATIVE_ROUTES.find(
     (candidate) => candidate.method === method && candidate.path === path,
@@ -29,8 +29,8 @@ function publishedSchema(method: string, path: string, status: SuccessStatus): z
 }
 
 /**
- * Asserts the status and that the body parses with the published (strict) schema, so a field
- * the API returns but the document lacks, or a type mismatch, fails here.
+ * ステータスを確かめ、本文が公開した（strictな）スキーマで解析できることを確かめる。APIは返すが
+ * 文書に無い項目や、型の食い違いはここで失敗する。
  */
 async function conforms<T>(
   response: Response,
@@ -222,7 +222,7 @@ describe.skipIf(!testDatabaseUrl)('OpenAPIの応答schemaと実応答（独立Po
       }),
       { method: 'post', path: '/api/projects/:p/automation-rules', status: 201 },
     );
-    // Registering a version of the rule's family starts the rule, so the history has an entry.
+    // ルールのfamilyのバージョンを登録するとルールが動くので、履歴に1件入る。
     await request(harness.app, `${basePath}/models/${fixture.model.id}/versions`, {
       method: 'POST',
       cookie: fixture.editor.cookie,

@@ -21,7 +21,7 @@ export async function findPersonalSettings(
   return { ...found, key: (await findLiveSiteKey(connection, owner)) ?? null };
 }
 
-/** Everyone's settings for the site, for its owner and global administrators. */
+/** siteの全員分の設定。siteの所有者と全体管理者向け。 */
 export async function listPersonalSettings(
   connection: Connection,
   targetId: string,

@@ -36,7 +36,10 @@ import { resolveWorkflowInputs } from './workflowInputs.js';
 
 const LAUNCH_SAVEPOINT = 'workflow_step_launch';
 
-/** Advances one locked execution; durable polling also recovers completions across API restarts. */
+/**
+ * ロックした実行を1つ進める。永続化した状態をポーリングするので、APIを再起動しても
+ * その間の完了を拾える。
+ */
 export class WorkflowExecutor {
   constructor(private readonly tasks: TaskService) {}
 
@@ -87,8 +90,8 @@ export class WorkflowExecutor {
   }
 
   /**
-   * Records the step's Run as it is now: its status, metrics and outputs, failed when it finished
-   * short of its quality gates or output model. Returns whether the Run has ended.
+   * stepのRunを今の状態のまま記録する。状態、メトリクス、出力を残し、品質ゲートか出力モデルを
+   * 満たさずに終わったときは失敗にする。Runが終わったかどうかを返す。
    */
   async recordRunState(
     connection: Connection,
@@ -108,7 +111,8 @@ export class WorkflowExecutor {
           })
         : [],
     );
-    // Removed report metrics and an undefined zero-input ratio must not survive older reports.
+    // レポートから消えたメトリクスや、入力が0件で定まらない比率が、古いレポートの値のまま
+    // 残らないようにする。
     const runMetrics = report
       ? Object.fromEntries(
           Object.entries(run.latestMetrics).filter(
@@ -214,10 +218,10 @@ export class WorkflowExecutor {
   }
 
   /**
-   * A lasting refusal fails the step and its execution at once. A failure that may pass leaves the
-   * step pending, for the scheduler to launch again after a wait, until its launch has failed
-   * WORKFLOW_STEP_LAUNCH_MAX_FAILURES times in a row. The count is kept with the step in this
-   * transaction, so a restart or another API process carries it on.
+   * 続けても通らない拒否は、stepとその実行をすぐに失敗にする。通るかもしれない失敗はstepを
+   * 保留のままにし、待ってからスケジューラがもう一度起動する。起動の失敗が
+   * WORKFLOW_STEP_LAUNCH_MAX_FAILURES回続くまでそうする。回数はこのトランザクションでstepと
+   * 一緒に保存するので、再起動しても、別のAPIプロセスでも引き継がれる。
    */
   private async recordLaunchFailure(
     connection: Connection,
@@ -227,8 +231,8 @@ export class WorkflowExecutor {
     const failures = await recordWorkflowStepLaunchFailure(connection, step.id);
     const retrying =
       isTemporaryLaunchFailure(error) && failures < WORKFLOW_STEP_LAUNCH_MAX_FAILURES;
-    // Error details can include SQL text; the execution, step, and the error's name and code
-    // (SQLSTATE) are enough to find it.
+    // エラーの詳細にはSQL文が入ることがある。原因を探すには、実行、step、エラーの名前とコード
+    // （SQLSTATE）があれば足りる。
     console.error(
       JSON.stringify({
         event: 'workflow_step_launch_failed',

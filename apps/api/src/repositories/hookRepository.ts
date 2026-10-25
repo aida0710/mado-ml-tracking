@@ -11,7 +11,7 @@ import { first, rows, type Connection } from '../db/database.js';
 import type { EncryptedSecret } from '../security/secretEncryption.js';
 import { INPUT_CHECKPOINT_TAG } from '../domain/serverRunTags.js';
 
-// API responses name the owner and the creator so the page need not show bare user IDs.
+// 画面が利用者のIDをそのまま出さずに済むよう、APIの応答に所有者と作成者の名前を含める。
 const hookSelect = `SELECT h.id,h.project_id,h.name,h.enabled,h.trigger,h.filter,h.template,h.checkpoint_mode,
   h.checkpoint_every,h.concurrency,h.max_starts_per_hour,h.webhook_signature,h.created_by,h.run_as_user_id,
   h.created_at,u.kind AS run_as_kind,u.display_name AS run_as_name,c.display_name AS created_by_name
@@ -38,7 +38,7 @@ export async function findHook(
   ]);
 }
 
-/** Enabled hooks of one trigger, locked against a concurrent toggle while they start. */
+/** 1つのトリガーの有効なフック。起動中に有効・無効を同時に切り替えられないようロックする。 */
 export async function lockEnabledHooks(
   connection: Connection,
   reference: { projectId: string; trigger: HookTrigger },
@@ -51,7 +51,7 @@ export async function lockEnabledHooks(
   );
 }
 
-// share: a start reads the hook; update: an owner transfer reads the owner it replaces.
+// share: 起動がフックを読む。update: 所有者の移譲が、置き換える前の所有者を読む。
 export async function lockHook(
   connection: Connection,
   reference: { projectId: string; id: string; mode?: 'share' | 'update' },
@@ -115,7 +115,7 @@ export async function findWebhookSecret(
     webhookSecretPayload: Buffer | null;
   }>(
     connection,
-    // A hook of an archived Project is not found, so a delivery cannot start a Job there.
+    // アーカイブしたProjectのフックは見つからないので、配信がそこでJobを起動できない。
     `SELECT h.project_id,h.enabled,h.webhook_signature,h.webhook_secret_key_id,h.webhook_secret_payload
     FROM hooks h JOIN projects p ON p.id=h.project_id AND p.archived_at IS NULL
     WHERE h.id=$1 AND h.trigger='webhook'`,
@@ -130,7 +130,7 @@ export async function findWebhookSecret(
   };
 }
 
-/** Whether the user a hook runs as may still start Jobs in its Project (an active editor). */
+/** フックを動かす名義の利用者が、今もそのProjectでJobを起動できるか（有効なeditorか）。 */
 export async function hasHookOwnerAccess(
   connection: Connection,
   hook: Pick<Hook, 'projectId' | 'runAsUserId'>,
@@ -159,7 +159,7 @@ export interface HookExecutionWrite {
   requestedBy: string | null;
 }
 
-/** Records an event once; null when the event already has an execution (a resend). */
+/** イベントを1回だけ記録する。既に実行記録があるイベント（再送）ならnull。 */
 export async function insertHookExecution(
   connection: Connection,
   execution: HookExecutionWrite,
@@ -277,7 +277,7 @@ export interface PendingHookExecution {
 const pendingColumns =
   'id,project_id,hook_id,subject_kind,subject_id,checkpoint_id,payload,requested_by,created_at';
 
-/** Pending executions released by the end of this Run, oldest first. */
+/** このRunの終了で待ちが解ける保留中の実行を、古い順に返す。 */
 export async function lockPendingExecutions(
   connection: Connection,
   waitingRunId: string,
@@ -303,7 +303,7 @@ export async function lockExpiredPendingExecutions(
   );
 }
 
-/** Starts of the hook within the last hour that created Jobs, for max_starts_per_hour. */
+/** 直近1時間にJobを作ったフックの起動の回数。max_starts_per_hourに使う。 */
 export async function countRecentStarts(connection: Connection, hookId: string): Promise<number> {
   const counted = (await first<{ count: number }>(
     connection,
@@ -315,9 +315,9 @@ export async function countRecentStarts(connection: Connection, hookId: string):
 }
 
 /**
- * The Run of a Job this hook started (or its retry) that has not ended; with a source Run, only
- * Jobs started for that Run's checkpoints, found through the reserved input checkpoint tag that
- * retries copy.
+ * このフックが起動したJob（またはその再試行）のRunのうち、終わっていないもの。元のRunを渡した
+ * ときは、そのRunのcheckpointのために起動したJobに限る。それは、再試行が引き継ぐ入力checkpointの
+ * 予約タグで見つける。
  */
 export async function findActiveHookRun(
   connection: Connection,

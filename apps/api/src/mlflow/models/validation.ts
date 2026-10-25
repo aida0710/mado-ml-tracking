@@ -24,10 +24,10 @@ import {
   FAILED_LOGGED_MODEL_STATUS,
 } from './limits.js';
 
-// Native registry names have the same 200 character limit.
+// ネイティブのレジストリの名前にも同じ200文字の上限がある。
 export const modelNameSchema = z.string().min(1).max(MAX_MODEL_NAME_LENGTH);
 export const loggedModelIdSchema = z.string().regex(/^m-[a-f0-9]{32}$/);
-// MLflow accepts tag/parameter keys with paths and dots; do not restrict them to identifiers.
+// MLflowはパスやドットを含むタグやparameterのキーを受け付けるので、識別子の形に制限しない。
 export const keySchema = z.string().min(1).max(MAX_MODEL_KEY_LENGTH);
 const keyValueSchema = z.strictObject({
   key: keySchema,
@@ -62,8 +62,9 @@ export const loggedModelParamsSchema = z.strictObject({
 export const deleteLoggedModelSchema = z.strictObject({ model_id: loggedModelIdSchema.optional() });
 
 /**
- * max_results as MLflow's server validates it for one search: values MLflow rejects stay errors,
- * and accepted values above the page size are served page by page (searchPagination.ts).
+ * 1回の検索についてMLflowのサーバーが検証するとおりのmax_results。MLflowが拒む値はエラーの
+ * ままにし、受け付ける値のうちページサイズを超えるものはページに分けて返す
+ * （searchPagination.ts）。
  */
 function maxResultsSchema(mlflowMaximum: number) {
   return z.coerce.number().int().min(1).max(mlflowMaximum).default(DEFAULT_MODEL_PAGE_SIZE);

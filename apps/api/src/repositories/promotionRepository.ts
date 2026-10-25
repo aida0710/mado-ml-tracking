@@ -31,7 +31,7 @@ export async function findEvaluationRule(
   );
 }
 
-// A Model deleted through MLflow keeps its row, so it is excluded here like a missing one.
+// MLflowから削除したModelは行が残るので、ここで存在しないものと同じく除く。
 export async function findActiveModelFamily(
   connection: Connection,
   reference: { projectId: string; id: string },
@@ -88,7 +88,7 @@ export async function listPromotionPolicies(
   connection: Connection,
   filter: { projectId: string; modelId?: string },
 ): Promise<PromotionPolicy[]> {
-  // The list names the run-as user, so the page tells a person from a Service Account by name.
+  // 一覧に実行名義の利用者の名前を含め、画面が名前で人とService Accountを見分けられるようにする。
   return rows<PromotionPolicy>(
     connection,
     `SELECT p.*,u.kind AS run_as_kind,u.display_name AS run_as_name
@@ -121,7 +121,7 @@ export async function setPromotionPolicyEnabled(
   );
 }
 
-/** Locks the policy row so concurrent owner changes serialize; undefined when it is not in the Project. */
+/** ポリシーの行をロックし、同時の所有者の変更を直列にする。そのProjectに無ければundefined。 */
 export async function lockPromotionPolicyForUpdate(
   connection: Connection,
   reference: { projectId: string; id: string },
@@ -144,7 +144,7 @@ export async function setPromotionPolicyRunAsUser(
   ))!;
 }
 
-// FOR SHARE makes a concurrent enable/disable wait, so the policy set is the one at this moment.
+// FOR SHAREで同時の有効化・無効化を待たせ、この時点のポリシーの組を使う。
 export async function lockEnabledPoliciesForRule(
   connection: Connection,
   filter: { projectId: string; evaluationRuleId: string; modelId: string },
@@ -159,9 +159,9 @@ export async function lockEnabledPoliciesForRule(
 }
 
 /**
- * Whether the policy's run-as user may still have it act for them: an active user who is a global
- * administrator or a Project admin through a direct grant or a group binding, while the Project
- * is not archived.
+ * ポリシーの実行名義の利用者が、今もポリシーに自分の名義で動かせるか。Projectがアーカイブ
+ * されていない間で、全体管理者か、直接の付与かグループの割り当てでProject adminである有効な
+ * 利用者なら動かせる。
  */
 export async function hasPromotionRunAsAccess(
   connection: Connection,
@@ -190,13 +190,13 @@ export interface PromotionEvaluationRecord {
   sequence: number;
   requestedBy: string | null;
   /**
-   * Set together by an automatic promotion: the id was chosen before the alias event that points
-   * at it (the event's foreign key is deferred), and aliasEventId is that event.
+   * 自動の昇格がまとめて設定する。idはそれを指すaliasのイベントより先に決めたもので（イベントの
+   * 外部キーは遅延検査）、aliasEventIdはそのイベント。
    */
   promotion?: { id: string; aliasEventId: string };
 }
 
-/** Returns the new decision's id, or null when that (policy, Run, sequence) is already recorded. */
+/** 新しい判定のidを返す。その(policy, Run, sequence)が既に記録済みならnull。 */
 export async function insertPromotionEvaluation(
   connection: Connection,
   record: PromotionEvaluationRecord,
@@ -228,13 +228,13 @@ export async function insertPromotionEvaluation(
   return inserted?.id ?? null;
 }
 
-/** A promotion decision named as the evidence of a manual alias change. */
+/** 手動のaliasの変更の根拠として示した昇格の判定。 */
 export interface PromotionEvidence {
   decision: PromotionDecision;
   modelId: string;
   candidateVersionId: string;
   targetAlias: string;
-  /** false when a later re-evaluation of the same candidate Run under the same policy exists. */
+  /** 同じポリシーで同じ候補のRunを後から評価し直したものがあればfalse。 */
   isLatest: boolean;
 }
 
@@ -268,8 +268,8 @@ export async function hasPromotionEvaluation(
 }
 
 /**
- * Locks every decision about one candidate Run under one policy and returns the next sequence.
- * Rows are append-only, so FOR UPDATE only serializes concurrent re-evaluations.
+ * 1つのポリシーでの1つの候補のRunについての判定をすべてロックし、次のsequenceを返す。行は
+ * 追記だけなので、FOR UPDATEは同時の再評価を直列にするだけ。
  */
 export async function lockNextEvaluationSequence(
   connection: Connection,
@@ -302,12 +302,12 @@ export interface PromotionEvaluationFilter {
   modelId?: string;
   policyId?: string;
   candidateVersionId?: string;
-  // ID of the last decision on the previous page; the page continues strictly after it.
+  // 前のページの最後の判定のID。ページはその判定を含めず、その次から続く。
   cursor?: string;
   limit: number;
 }
 
-// Keyset pagination on (created_at,id) stays stable while new decisions are appended.
+// (created_at,id)によるキーセットのページ分けは、新しい判定が追加されてもずれない。
 export async function listPromotionEvaluations(
   connection: Connection,
   filter: PromotionEvaluationFilter,
@@ -332,7 +332,8 @@ export async function listPromotionEvaluations(
   );
 }
 
-// A Project listing accepts only its own decisions as a cursor so IDs from other Projects are not probed.
+// Projectの一覧はそのProjectの判定だけをcursorとして受け付け、ほかのProjectのIDを探られない
+// ようにする。
 export async function promotionEvaluationCursorExists(
   connection: Connection,
   cursor: { projectId: string; id: string },

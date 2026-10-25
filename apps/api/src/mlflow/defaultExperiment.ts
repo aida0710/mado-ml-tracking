@@ -1,13 +1,13 @@
 import { first, type Connection } from '../db/database.js';
 import { notFound } from '../domain/errors.js';
 
-/** The id MLflow clients use for the Default Experiment until set_experiment() is called. */
+/** set_experiment()を呼ぶまで、MLflowのクライアントがDefault Experimentに使うid。 */
 export const DEFAULT_EXPERIMENT_ID = '0';
 export const DEFAULT_EXPERIMENT_NAME = 'Default';
 
 /**
- * The Project's Default Experiment, or null before anything was recorded in it. MLflow always
- * has its Default; here the first Run or Logged Model that names "0" creates it.
+ * ProjectのDefault Experiment。中に何も記録していなければnull。MLflowには常にDefaultがあるが、
+ * ここでは"0"を指定した最初のRunかLogged Modelがそれを作る。
  */
 export async function findDefaultExperimentId(
   connection: Connection,
@@ -21,7 +21,7 @@ export async function findDefaultExperimentId(
   return experiment?.id ?? null;
 }
 
-/** An Experiment id from an MLflow request, with "0" read as the Project's Default. */
+/** MLflowのリクエストにある実験のid。"0"はProjectのDefaultとして読む。 */
 export async function resolveExperimentId(
   connection: Connection,
   reference: { projectId: string; id: string },
@@ -32,7 +32,7 @@ export async function resolveExperimentId(
   return id;
 }
 
-/** Called by writers that record into "0"; concurrent first writers create a single Default. */
+/** "0"に記録する書き手が呼ぶ。最初の書き手が同時に来ても、作るDefaultは1つだけ。 */
 export async function createDefaultExperiment(
   connection: Connection,
   projectId: string,
@@ -44,9 +44,9 @@ export async function createDefaultExperiment(
 }
 
 /**
- * Experiment ids for a search, with "0" resolved. A Default that does not exist yet holds no
- * Runs or Logged Models, so it is left out and the search answers with nothing instead of an
- * error (mlflow.search_runs() in a new Project, before its first Run).
+ * 検索に使う実験のid。"0"は解決する。まだ無いDefaultにはRunもLogged Modelも無いので除き、
+ * 検索はエラーでなく空の結果を返す（新しいProjectで最初のRunより前にmlflow.search_runs()を
+ * 呼んだとき）。
  */
 export async function searchableExperimentIds(
   connection: Connection,

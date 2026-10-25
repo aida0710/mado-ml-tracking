@@ -4,9 +4,9 @@ import { isMlflowPercentImagePath } from '../../domain/mlflowMediaPaths.js';
 import { uuidSchema } from '../../domain/validation.js';
 import type { ArtifactLocation, ArtifactOwner } from './artifactTypes.js';
 
-// Bound the composite PostgreSQL path index even when each character is multibyte.
+// 1文字がマルチバイトでも、PostgreSQLの複合のパスのインデックスに収まるよう上限を設ける。
 const MAX_ARTIFACT_PATH_BYTES = 1024;
-// Model IDs appear in URLs and in the native Artifact path prefix.
+// モデルのIDはURLとネイティブのArtifactのパスの前置きに現れる。
 const MAX_MODEL_ID_LENGTH = 200;
 export const ARTIFACT_TRANSFER_ROOT = '/api/2.0/mlflow-artifacts/artifacts';
 const ownerCollections: Record<ArtifactOwner['kind'], string> = {
@@ -38,7 +38,7 @@ export function isSafeArtifactPath(path: string): boolean {
     !/^[a-z]:/i.test(path) &&
     !path.includes('\\') &&
     !containsControlCharacter(path) &&
-    // MLflow 3.0 log_image(key=, step=) names files with literal '%' before digits.
+    // MLflow 3.0のlog_image(key=, step=)は、数字の前にそのままの'%'を置いた名前でファイルを作る。
     (!/%[a-f0-9]{2}/i.test(path) || isMlflowPercentImagePath(path)) &&
     path.split('/').every((segment) => !!segment && segment !== '.' && segment !== '..')
   );

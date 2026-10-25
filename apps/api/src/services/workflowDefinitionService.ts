@@ -51,7 +51,7 @@ export class WorkflowDefinitionService {
     return { workflow, versions: newest.items, olderVersionsCursor: newest.nextCursor };
   }
 
-  /** Versions older than the cursor (the last version of the previous page), newest first. */
+  /** cursor（前のページの最後のバージョン）より古いバージョン。新しい順。 */
   async listVersions(
     principal: Principal,
     projectId: string,
@@ -160,7 +160,7 @@ export class WorkflowDefinitionService {
       [request.projectId, ids],
     );
     if (candidates.length !== ids.length) notFound('task');
-    // Task edits lock Experiment before Task; definitions use the same order.
+    // Taskの編集はExperimentをTaskより先にロックする。ワークフローの定義も同じ順にする。
     for (const experimentId of [...new Set(candidates.map((task) => task.experimentId))].sort())
       await lockActiveExperiment(connection, { projectId: request.projectId, id: experimentId });
     const pinnedTasks = await rows<ExperimentTask>(

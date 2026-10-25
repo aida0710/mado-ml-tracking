@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { MAX_MODEL_PAGE_SIZE } from './limits.js';
 import { invalidParameter } from './validation.js';
 
-/** One page of a model search: where it starts, how many rows it serves, and its query. */
+/** モデルの検索の1ページ。どこから始まり、何行を返し、どのクエリのものか。 */
 export interface SearchPage {
   offset: number;
   size: number;
@@ -28,17 +28,17 @@ function pageOffset(token: string | undefined, fingerprint: string): number {
     )
       return page.offset;
   } catch {
-    /* Invalid input is translated to the same public validation error. */
+    /* 不正な入力は、同じ公開の検証エラーに変換する。 */
   }
   return invalidParameter('page_token does not match the search conditions');
 }
 
 /**
- * The page a search request asks for. `query` must not contain max_results: like MLflow's offset
- * tokens, a token stays valid when the next request asks for a different page size, which
- * mlflow.search_model_versions() does when it fetches the remainder of max_results.
- * A max_results above MAX_MODEL_PAGE_SIZE is served one page at a time with next_page_token
- * instead of being rejected, so SDK defaults such as search_model_versions' 10000 work.
+ * 検索のリクエストが求めるページ。`query`にmax_resultsを含めてはならない。MLflowのoffsetの
+ * tokenと同じく、次のリクエストが別のページの大きさを求めてもtokenを有効なままにするため。
+ * mlflow.search_model_versions()は、max_resultsの残りを取るときにそうする。
+ * MAX_MODEL_PAGE_SIZEを超えるmax_resultsは拒まず、next_page_tokenで1ページずつ返すので、
+ * search_model_versionsの10000のようなSDKの既定値も動く。
  */
 export function requestedPage(request: {
   query: unknown;
@@ -54,8 +54,8 @@ export function requestedPage(request: {
 }
 
 /**
- * Cuts rows fetched with LIMIT size+1 down to the page. The extra row only tells that a next page
- * exists; `continuation` is spread into the response as MLflow's next_page_token.
+ * LIMIT size+1で取った行をページの大きさに切る。余分な1行は次のページがあることを示すだけ。
+ * `continuation`はMLflowのnext_page_tokenとして応答に展開する。
  */
 export function cutPage<T>(
   rows: T[],

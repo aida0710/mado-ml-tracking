@@ -10,15 +10,15 @@ import { notFound } from '../domain/errors.js';
 import { runProducedByRuleCondition } from './evaluationRunRepository.js';
 import { codeSelect, findCodeVersion } from './registryRepository.js';
 
-// Metric keys come from this many of the newest Runs: a key the newest Runs no longer record is
-// unlikely to be what a new promotion criterion wants, and the scan stays bounded.
+// メトリクスのキーは新しい順にこの数のRunから集める。新しいRunがもう記録していないキーを新しい
+// 昇格の条件が求めることはまず無く、走査の量も抑えられる。
 export const METRIC_KEY_RUN_SAMPLE = 200;
-// The keys only help typing a criterion; past this many, the first ones by name are offered.
+// キーは条件の入力を助けるだけ。この数を超えたら、名前順で先頭のものを候補に出す。
 export const MAX_METRIC_KEYS = 500;
 
 /**
- * Every family the Project uses, with how many Models have it and how many code versions list it.
- * Sorted case-insensitively, so `Qwen3` and `qwen3` sit next to each other (capitals first).
+ * Projectで使うすべてのfamilyと、それを持つModelの数、それを載せたコードバージョンの数。大文字と
+ * 小文字を区別せずに並べるので、`Qwen3`と`qwen3`が隣り合う（大文字が先）。
  */
 export function listModelFamilies(
   connection: Connection,
@@ -74,8 +74,8 @@ export async function findMetricKeyRule(
   return rule;
 }
 
-// The keys of the newest active Runs of a kind that satisfy `runCondition` (on Run `r`, with its
-// own parameters from $5 on), sorted by name.
+// ある種類のRunのうち`runCondition`（Run `r`に対する条件で、独自のプレースホルダは$5から）を
+// 満たす、新しい削除されていないRunのキーを名前順に返す。
 function recentRunMetricKeysSql(runCondition: string): string {
   return `SELECT DISTINCT key FROM (
     SELECT r.latest_metrics FROM runs r
@@ -88,7 +88,7 @@ function recentRunMetricKeysSql(runCondition: string): string {
   LIMIT $4`;
 }
 
-/** Metric keys of the Runs the rule's automation produced, manual retries of their Jobs included. */
+/** ルールの自動実行が作ったRunのメトリクスのキー。そのJobの手動の再試行も含む。 */
 export async function listRuleRunMetricKeys(
   connection: Connection,
   rule: { projectId: string } & MetricKeyRule,
@@ -108,7 +108,10 @@ export async function listRuleRunMetricKeys(
   return found.map((row) => row.key);
 }
 
-/** Metric keys of the Runs of the rule's kind that used its code version, by hand or otherwise. */
+/**
+ * ルールの種類のRunのうち、そのコードバージョンを使ったもののメトリクスのキー。手動かどうかは
+ * 問わない。
+ */
 export async function listCodeVersionRunMetricKeys(
   connection: Connection,
   rule: { projectId: string } & MetricKeyRule,

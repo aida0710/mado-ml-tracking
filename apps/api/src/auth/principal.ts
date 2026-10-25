@@ -2,7 +2,7 @@ import type { User } from '@mmt/contracts';
 
 export type SessionAuthMethod = 'local' | 'oidc' | 'development';
 
-// The Job a Job token was issued for; its writes are limited to this Run.
+// Job tokenの発行先のJob。そのtokenでの書き込みはこのRunに限る。
 export interface JobTokenBinding {
   jobId: string;
   runId: string;
@@ -17,10 +17,11 @@ export interface Principal {
     id: string;
     projectId: string | null;
     scopes: string[];
-    // An API token's own expiry (ISO 8601); tokens it issues may not outlive it. Null never expires.
+    // API token自身の有効期限（ISO 8601）。このtokenが発行するtokenは、これより長く有効に
+    // できない。nullは期限なし。
     expiresAt: string | null;
     job?: JobTokenBinding;
   } | null;
-  // Browser sessions only; absent for API tokens and for principals built inside the server (seed).
+  // ブラウザのsessionだけが持つ。API tokenと、サーバーの中で作るprincipal（seed）には無い。
   session?: { tokenHash: string; authMethod: SessionAuthMethod; mustChangePassword: boolean };
 }

@@ -1,8 +1,8 @@
 import { DomainError } from './errors.js';
 
 /**
- * An Experiment's name is unique in its Project, deleted Experiments included: MLflow can restore
- * one, and it must come back under its own name. Shared by the native and MLflow APIs.
+ * 実験の名前はProjectの中で一意で、削除した実験も含む。MLflowは削除した実験を復元でき、
+ * そのときは元の名前で戻る必要がある。ネイティブAPIとMLflow APIで共有する。
  */
 export function duplicateExperimentName(): never {
   throw new DomainError({

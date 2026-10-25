@@ -13,7 +13,7 @@ import { createHarness, entity, request, testDatabaseUrl, type Harness } from '.
 import { projectFixture } from './fixtures.js';
 import { sweepFixture } from './sweepFixtures.js';
 
-// Enough Runs for the forest to separate a strong, a weak and an irrelevant parameter.
+// フォレストが強い・弱い・無関係なparameterを見分けるのに足りるRunの数。
 const SYNTHETIC_RUN_COUNT = 30;
 
 type Fixture = Awaited<ReturnType<typeof projectFixture>>;
@@ -64,7 +64,7 @@ describe.skipIf(!testDatabaseUrl)('探索結果の分析API（独立PostgreSQL�
   const readImportance = async (body: ParameterImportanceRequest) =>
     entity<ParameterImportanceResult>(await postImportance(body), 200);
 
-  /** Inserts finished Runs through SQL, oldest first; returns their IDs in the same order. */
+  /** 終わったRunをSQLで古い順に入れ、そのIDを同じ順で返す。 */
   async function seedRuns(runs: SeededRun[]): Promise<string[]> {
     const inserted = await harness.database.query<{ id: string }>(
       `INSERT INTO runs(project_id,experiment_id,name,kind,status,parameters,recorded_parameters,
@@ -94,8 +94,8 @@ describe.skipIf(!testDatabaseUrl)('探索結果の分析API（独立PostgreSQL�
   }
 
   /**
-   * loss depends strongly on lr, weakly on optimizer and not at all on noise. lr arrives as an
-   * SDK-recorded string, as MLflow logs params.
+   * lossはlrに強く、optimizerに弱く依存し、noiseにはまったく依存しない。MLflowがparamsを
+   * 記録するのと同じく、lrはSDKが記録した文字列で届く。
    */
   function syntheticRuns(): SeededRun[] {
     return Array.from({ length: SYNTHETIC_RUN_COUNT }, (_, index) => {
@@ -134,12 +134,12 @@ describe.skipIf(!testDatabaseUrl)('探索結果の分析API（独立PostgreSQL�
     });
     expect(result.entries.map((entry) => entry.param)).toEqual(['lr', 'optimizer', 'noise']);
     const lr = result.entries[0]!;
-    // The recorded string wins over the execution value 999, and is read as a number.
+    // 実行時の値999より記録された文字列が優先され、数値として読まれる。
     expect(lr).toMatchObject({ kind: 'numeric', coverage: 1 });
     expect(lr.correlation).toBeGreaterThan(0.8);
     expect(lr.importance).toBeGreaterThan(0.5);
     expect(result.entries[1]).toMatchObject({ param: 'optimizer', kind: 'categorical' });
-    // A fixed seed gives the same answer twice.
+    // seedを固定しているので、2回とも同じ結果になる。
     expect(await readImportance({ runSet: { runIds }, targetMetric: 'loss' })).toEqual(result);
   });
 
@@ -185,7 +185,7 @@ describe.skipIf(!testDatabaseUrl)('探索結果の分析API（独立PostgreSQL�
       metrics: ['loss', 'accuracy', 'missing'],
     });
 
-    // Newest first, as the Run list orders them.
+    // Runの一覧と同じく新しい順。
     expect(table.runs.map((run) => run.name)).toEqual(['c', 'b', 'a']);
     expect(table.runs[2]).toEqual({
       runId: first,
@@ -197,7 +197,7 @@ describe.skipIf(!testDatabaseUrl)('探索結果の分析API（独立PostgreSQL�
     });
     expect(table.runs[1]!.metrics).toEqual({ loss: null, accuracy: 0.9 });
     expect(table.runs[0]!.metrics).toEqual({});
-    // A null param is no value, so it is neither shown nor selected.
+    // nullのparameterは値が無いものとして扱い、表示も選択もしない。
     expect(table.runs[0]!.params).toEqual({ optimizer: 'adamw', layers: 8 });
     expect(table.params).toEqual([
       { key: 'flags', kind: 'categorical', values: ['{"dropout":true}'], coverage: 1 / 3 },
@@ -224,7 +224,8 @@ describe.skipIf(!testDatabaseUrl)('探索結果の分析API（独立PostgreSQL�
   });
 
   it('params省略時、101個以上あればcoverageの高い順に100個を名前順で返す', async () => {
-    // p000 has a value in both Runs, p001-p100 only in the first: 101 params, one must go.
+    // p000とp100は両方のRunに値があり、p001-p099は最初のRunにだけある。parameterは101個なので、
+    // 1つ落ちる。
     const many = Object.fromEntries(
       Array.from({ length: 101 }, (_, index) => [`p${String(index).padStart(3, '0')}`, index]),
     );
@@ -235,7 +236,7 @@ describe.skipIf(!testDatabaseUrl)('探索結果の分析API（独立PostgreSQL�
     const table = await readTable({ runSet: { runIds }, metrics: ['loss'] });
     const keys = table.params.map((param) => param.key);
     expect(keys).toHaveLength(100);
-    // p000 and p100 are covered by both; of the rest the last name in order (p099) drops out.
+    // p000とp100は両方のRunにある。残りのうち名前順で最後のもの（p099）が落ちる。
     expect(keys).toContain('p100');
     expect(keys).not.toContain('p099');
     expect(keys).toEqual([...keys].sort());
@@ -350,7 +351,7 @@ describe.skipIf(!testDatabaseUrl)('Sweepの分析（独立PostgreSQL）', () => 
     for (const job of claimed) {
       const trial = trials.find((candidate) => candidate.runId === job.run.id)!;
       const lr = trial.parameters.lr as number;
-      // The minimum (the objective) comes before the last value (the latest metric).
+      // 最小値（目的メトリクス）は、最後の値（最新のメトリクス）より前に来る。
       await fixture.logMetric(job, [
         { name: 'loss', value: lr, step: 1 },
         { name: 'loss', value: lr + 1, step: 2 },
@@ -397,12 +398,12 @@ describe.skipIf(!testDatabaseUrl)('Sweepの分析（独立PostgreSQL）', () => 
       targetMetric: 'loss',
       targetSource: 'sweep_objective',
       runCount: 4,
-      // Four trials are below the minimum for the forest; correlations are still returned.
+      // trialが4つではフォレストに要る最小数に届かないが、相関は返す。
       importanceUnavailableReason: 'too_few_runs',
     });
     expect(importance.entries[0]).toMatchObject({ param: 'lr', correlation: 1 });
 
-    // A Run of the sweep through runIds carries its trial index but no objective.
+    // runIdsで指定したSweepのRunは、trialの番号を持つが目的メトリクスは持たない。
     const byIds = await entity<RunAnalysisTableResponse>(
       await request(harness.app, `${fixture.basePath}/runs/analysis/table`, {
         method: 'POST',

@@ -13,7 +13,7 @@ import {
   parseMetricValue,
 } from './runTableCells.js';
 
-/** Looks up the descriptions a Run row refers to; unknown IDs are written as the raw ID. */
+/** Runの行が参照する説明を引く。知らないIDはIDのまま書く。 */
 export interface RunReferenceLabels {
   experimentNames: ReadonlyMap<string, string>;
   modelVersions: ReadonlyMap<string, ComparedModelVersion>;
@@ -34,11 +34,11 @@ const datasetVersionsCell = (run: Run, labels: RunReferenceLabels) =>
     })
     .join(DATASET_VERSION_SEPARATOR);
 
-// ---- Comparison CSV: one row per field, one column per Run ----
+// ---- 比較のCSV: 項目ごとに1行、Runごとに1列 ----
 
 /**
- * The comparison as rows of `field, run1, run2, ...`: Run attributes first, then params,
- * metrics and tags as `namespace.key`. With a baseline each metric is followed by its delta row.
+ * 比較を`field, run1, run2, ...`の行で表す。Runの属性が先で、続いてparameter、メトリクス、tagを
+ * `namespace.key`の形で並べる。ベースラインがあれば、各メトリクスの次にdeltaの行を置く。
  */
 export function comparisonCsvLines(
   comparison: RunComparison,
@@ -75,7 +75,7 @@ export function comparisonCsvLines(
   return lines;
 }
 
-// ---- Search export CSV: one row per Run ----
+// ---- 検索結果の書き出しのCSV: Runごとに1行 ----
 
 export interface RunExportKeys {
   parameterKeys: string[];
@@ -95,7 +95,7 @@ const RUN_ATTRIBUTE_COLUMNS = [
   'datasetVersions',
 ] as const;
 
-/** Collects the keys of every namespace while the search pages are read once. */
+/** 検索のページを1度読むあいだに、すべてのnamespaceのkeyを集める。 */
 export class RunExportKeyCollector {
   private readonly parameterKeys = new Set<string>();
   private readonly metricKeys = new Set<string>();
@@ -149,7 +149,7 @@ export function searchExportLine(
   ];
 }
 
-/** The last line of an export cut at the row limit, so a reader cannot mistake it for complete. */
+/** 行数の上限で切った書き出しの最後の行。読む人が全件だと誤解しないようにする。 */
 export function truncationNoticeLine(maxRows: number): CsvCell[] {
   return [`# truncated: ${maxRows}行を超えたため以降のRunを省略しました。検索条件を絞ってください`];
 }

@@ -1,10 +1,10 @@
 import { RUN_GROUP_NONE } from '@mmt/contracts';
 
-/** The grouping value of one Run: a tag or param value, or its Experiment ID and name. */
+/** 1つのRunのグループ分けの値。tagかparameterの値、または実験のIDと名前。 */
 export interface RunGroupValue {
   runId: string;
   value: string | null;
-  /** Shown instead of the value, such as the Experiment name; the value itself when absent. */
+  /** 値の代わりに表示するもの（実験名など）。無ければ値そのものを出す。 */
   label?: string | null;
 }
 export interface RunGroupAssignment {
@@ -15,7 +15,7 @@ export interface RunGroupAssignment {
 
 const labelCollator = new Intl.Collator(undefined, { numeric: true });
 
-// Param values such as learning rates are decimals, which a numeric collator orders digit-wise.
+// 学習率のようなparameterの値は小数で、numericのcollatorでは桁ごとに並んでしまう。
 function asNumber(label: string): number | null {
   const number = label.trim() === '' ? NaN : Number(label);
   return Number.isFinite(number) ? number : null;
@@ -30,9 +30,9 @@ function compareLabels(left: string, right: string): number {
 }
 
 /**
- * Groups Runs in request order. Groups are sorted by label, numbers by value (lr 0.001, 0.01,
- * 0.1), and Runs without a value form the last group, `(none)`. A value that is literally
- * `(none)` joins that group, so groupKey stays unique.
+ * Runをリクエストの順にグループに分ける。グループはラベル順で、数値は値の順に並べ
+ * （lrなら0.001、0.01、0.1）、値の無いRunは最後のグループ`(none)`になる。値が文字どおり
+ * `(none)`のものもそのグループに入れ、groupKeyが一意になるようにする。
  */
 export function groupRuns(values: RunGroupValue[]): RunGroupAssignment[] {
   const groups = new Map<string, RunGroupAssignment>();

@@ -19,19 +19,20 @@ const domainErrorCodes: Partial<Record<ApiErrorCode, string>> = {
   conflict: 'INVALID_STATE',
   body_too_large: 'REQUEST_LIMIT_EXCEEDED',
   artifact_too_large: 'RESOURCE_EXHAUSTED',
-  // A protected alias cannot be changed through MLflow (it carries no reason or promotion decision).
+  // 保護されたaliasはMLflowからは変えられない（理由も昇格の判断も持たないため）。
   alias_protected: 'PERMISSION_DENIED',
 };
 
-// The native API's text speaks of signing in; an MLflow client is told which MLflow setting to fix.
+// ネイティブAPIの文はサインインについて述べる。MLflowのクライアントには、直すべきMLflowの設定を
+// 伝える。
 const mlflowClientMessages: Partial<Record<ApiErrorCode, string>> = {
   authentication_required:
     'no API token was sent; set MLFLOW_TRACKING_TOKEN (MLFLOW_TRACKING_PASSWORD for Basic authentication) to an API token of this project. Issue one under "Connect from SDK or MLflow 3" in Project settings',
 };
 
-// The MLflow client appends /api/2.0/mlflow/... (or /api/3.0/..., .../mlflow-artifacts/...) to
-// MLFLOW_TRACKING_URI. These paths arrive when the URI stops at the site, at /api or at
-// /api/mlflow instead of a Project's /api/mlflow/projects/<id>.
+// MLflowのクライアントはMLFLOW_TRACKING_URIに/api/2.0/mlflow/...（または/api/3.0/...、
+// .../mlflow-artifacts/...）を足す。URIがProjectの/api/mlflow/projects/<id>でなく、ホストの
+// ルート・/api・/api/mlflowで終わっていると、これらのパスで届く。
 const MLFLOW_PATH_WITHOUT_PROJECT =
   /^\/api\/(?:mlflow\/)?(?:api\/)?[0-9]+\.[0-9]+\/mlflow(?:-artifacts)?(?:\/|$)/;
 
@@ -39,7 +40,7 @@ export function isMlflowRequestWithoutProject(requestPath: string): boolean {
   return MLFLOW_PATH_WITHOUT_PROJECT.test(requestPath);
 }
 
-/** The answer to an MLflow call whose tracking URI has no Project, with the URI it should be. */
+/** tracking URIにProjectが無いMLflowの呼び出しへの応答。本来のURIを添える。 */
 export function mlflowProjectMissingError(publicUrl: string): MlflowErrorResponse {
   return {
     status: 404,
@@ -54,7 +55,7 @@ export function isMlflowRequest(requestPath: string): boolean {
   return /^\/api\/mlflow\/projects\/[^/]+(?:\/|$)/.test(requestPath);
 }
 
-/** Raw Artifact bytes: single-PUT transfers and multipart part PUTs. */
+/** Artifactの生のバイト列。1回のPUTでの転送と、マルチパートのpartのPUT。 */
 export function isMlflowArtifactUpload(request: { method: string; path: string }): boolean {
   return (
     request.method === 'PUT' &&
@@ -65,7 +66,8 @@ export function isMlflowArtifactUpload(request: { method: string; path: string }
 }
 
 export function formatMlflowError(error: Error): MlflowErrorResponse {
-  // DomainError has no 501 status; the SDK needs exactly this status and message to fall back.
+  // DomainErrorには501のステータスが無い。SDKが切り替えるには、ちょうどこのステータスと
+  // メッセージが要る。
   if (error instanceof MultipartUploadUnsupportedError)
     return { status: 501, body: { error_code: 'NOT_IMPLEMENTED', message: error.message } };
   if (error instanceof DomainError) {

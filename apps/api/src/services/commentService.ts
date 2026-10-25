@@ -30,7 +30,7 @@ interface CommentReference {
   commentId: string;
 }
 
-/** Threaded comments on Runs, ModelVersions and reports. Audit details never include the body. */
+/** Run・ModelVersion・レポートへのスレッド形式のコメント。監査のdetailsに本文は入れない。 */
 export class CommentService {
   constructor(
     private readonly database: Database,
@@ -54,7 +54,7 @@ export class CommentService {
       !(await commentCursorExists(this.database, { ...target, commentId: query.cursor }))
     )
       notFound('comment cursor');
-    // Fetch one extra row to know whether another page exists without a count query.
+    // 1行多く取り、件数を数えるクエリなしで次のページがあるかを知る。
     const stored = await listThreadComments(this.database, {
       ...target,
       cursor: query.cursor ?? null,
@@ -167,7 +167,7 @@ export class CommentService {
             code: 'comment_delete_forbidden',
             message: 'only the author or a project admin can delete a comment',
           });
-        // Deleting twice is a no-op so a retried request does not add a second audit row.
+        // 2回目の削除は何もしない。再試行されたリクエストが2つ目の監査の行を足さないようにする。
         if (comment.deletedAt) return;
         await markCommentDeleted(connection, {
           commentId: comment.id,
@@ -201,7 +201,8 @@ export class CommentService {
     };
   }
 
-  // Editing and deleting need write access for the comment's target kind, checked after loading it.
+  // 編集と削除には、コメントの対象の種類に応じた書き込み権限が要る。
+  // 権限はコメントを読み込んでから確かめる。
   private async lockForChange(
     connection: Connection,
     principal: Principal,
@@ -227,7 +228,7 @@ export class CommentService {
     return state;
   }
 
-  // Replies stay one level deep: a reply to a reply joins the thread of the original root.
+  // 返信は1段だけにする。返信への返信は、元のルートのスレッドに加わる。
   private async threadRootId(
     connection: Connection,
     parent: CommentTarget & { commentId: string },

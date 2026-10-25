@@ -44,8 +44,8 @@ export interface SyncRunResult {
 }
 
 /**
- * Sync writes only to Runs the same user created without a Job. A Job's Run is reported by the
- * worker online, and another user's Run with the same ID is a collision, not a resend.
+ * 同期は、同じ利用者がJobなしで作ったRunにだけ書く。JobのRunはworkerがオンラインで報告する。
+ * また、別の利用者の同じIDのRunは再送ではなく衝突。
  */
 function assertSyncRunOwned(
   ownership: SyncRunOwnership,
@@ -74,8 +74,8 @@ function countBatch(batch: SyncBatchInput): SyncBatchCounts {
 }
 
 /**
- * Receives Runs recorded where the API was unreachable. The client chooses the Run ID and every
- * batch ID, so a send that failed midway can be repeated from the start without duplicates.
+ * APIに届かない場所で記録したRunを受け取る。RunのIDとすべてのbatchのIDはクライアントが選ぶ
+ * ので、途中で失敗した送信を最初からやり直しても重複しない。
  */
 export class RunSyncService {
   constructor(
@@ -108,7 +108,7 @@ export class RunSyncService {
     };
     return recordDenial(this.database, draft, () =>
       transaction(this.database, async (connection) => {
-        // Offline recording is for manual Runs; a Job's Run is written by its worker online.
+        // オフラインの記録は手で動かすRun用。JobのRunはそのworkerがオンラインで書く。
         rejectJobToken(principal);
         await requireProject(connection, principal, {
           projectId,
@@ -184,7 +184,8 @@ export class RunSyncService {
         role: 'editor',
         scope: 'runs:write',
       });
-      // The row lock orders batches of one Run, so a status batch and an older one never interleave.
+      // 行のロックで1つのRunのbatchを順に並べるので、状態のbatchとそれより古いbatchが
+      // 入り混じらない。
       const ownership = await findSyncRunOwnership(connection, runId, {
         lock: true,
       });
@@ -224,7 +225,7 @@ export class RunSyncService {
           params: batch.params,
           tags: batch.tags,
         });
-      // Client timestamps and steps are kept, so the series reads as if it had been logged live.
+      // クライアントの時刻とstepを保つので、系列はその場で記録したように読める。
       if (counts.metrics > 0) await appendMetrics(connection, runId, batch.metrics);
       if (counts.logs > 0) await appendLogs(connection, runId, batch.logs);
       if (batch.status && (await this.endRun(connection, { projectId, runId, end: batch.status })))
@@ -238,8 +239,8 @@ export class RunSyncService {
   }
 
   /**
-   * Ends the Run with the client's end. Returns false when it already has that status (the end
-   * was sent again in a new batch); a different end is refused rather than overwritten.
+   * クライアントの示した終わり方でRunを終える。既にその状態ならfalseを返す（終了が新しいbatchで
+   * 送り直された場合）。違う終わり方は上書きせずに拒む。
    */
   private async endRun(
     connection: Connection,
@@ -284,7 +285,8 @@ export class RunSyncService {
   ): Promise<ArtifactPresence> {
     const { projectId, runId, check } = target;
     rejectJobToken(principal);
-    // Only a client about to upload asks, so the same access as uploading is required.
+    // これを尋ねるのはアップロードしようとしているクライアントだけなので、アップロードと
+    // 同じ権限を求める。
     await requireProject(this.database, principal, {
       projectId,
       role: 'editor',

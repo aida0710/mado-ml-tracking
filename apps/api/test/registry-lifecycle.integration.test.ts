@@ -17,9 +17,9 @@ import { executionFixture, referenceDigest } from './fixtures.js';
 
 type Fixture = Awaited<ReturnType<typeof executionFixture>>;
 
-// How long a request may take to reach the lock it waits for; the requests run a few queries first.
+// リクエストが待つロックに着くまでにかけてよい時間。リクエストは先にいくつかクエリを実行する。
 const LOCK_WAIT_TIMEOUT = 5000;
-// Six creations, each waiting for a deletion in turn.
+// 6回の作成が、それぞれ順に削除を待つ。
 const SERIALIZATION_TEST_TIMEOUT = 60_000;
 
 describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立PostgreSQL）', () => {
@@ -82,7 +82,7 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
     });
   }
 
-  // A Project the fixture's editor cannot see, holding the same kinds of entities.
+  // fixtureのeditorからは見えず、同じ種類のものを持つProject。
   async function otherProject(fixture: Fixture) {
     const project = await entity<Project>(
       await request(harness.app, '/api/projects', {
@@ -235,7 +235,7 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
       description: '評価用',
       runCount: 1,
     });
-    // Sending the current name again is not a conflict with itself.
+    // 今の名前をもう一度送っても、自分自身との競合にはならない。
     await entity(
       await patch(`${fixture.basePath}/experiments/${fixture.experiment.id}`, {
         cookie: fixture.editor.cookie,
@@ -316,7 +316,7 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
       }),
     );
     expect(job.runId).toBe(existing.id);
-    // The version itself stays readable and unchanged.
+    // バージョン自体は変わらず、読み取りもできる。
     const versions = await entity<{ items: DatasetVersion[] }>(
       await request(harness.app, `${fixture.basePath}/datasets/${dataset.id}/versions`, {
         cookie: fixture.viewer.cookie,
@@ -443,8 +443,8 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
     expect(await entity<DatasetVersion>(await createVersion('v2', prefixed))).toMatchObject({
       digest: prefixed,
     });
-    // The worker checks both forms; the bare one is kept without a prefix, so registering the
-    // same version again compares the text the SDK sent.
+    // workerはどちらの形も検査する。前置きの無い形は前置きを付けずに保存するので、同じバージョンを
+    // もう一度登録するときは、SDKが送った文字列で比べる。
     expect(await entity<DatasetVersion>(await createVersion('v3', bare))).toMatchObject({
       digest: bare,
     });
@@ -531,7 +531,7 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
       'denied',
       'success',
     ]);
-    // The audit log cannot be cleaned up, so it keeps no URI (it may carry a signed query).
+    // 監査ログは後から消せないので、URIは残さない（署名付きのクエリを含むことがある）。
     expect(deletionEvents.at(-1)!.details).toEqual({
       datasetId: dataset.id,
       version: 'v3-typo',
@@ -539,7 +539,7 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
     });
   });
 
-  // Sessions waiting for a lock that the session `holderPid` holds.
+  // session `holderPid`が持つロックを待っているsession。
   async function sessionsWaitingFor(holderPid: number): Promise<number[]> {
     const waiting = await harness.database.query<{ pid: number }>(
       'SELECT pid FROM pg_stat_activity WHERE $1=ANY(pg_blocking_pids(pid))',
@@ -611,8 +611,8 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
         targetId: fixture.target.id,
       };
       const { dataset: derived } = await datasetWithVersion(fixture, 'Derived');
-      // The API numbers a version only for Artifact content, which needs uploaded files; the same
-      // registration with a uri shows the numbering lock taken together with the parents'.
+      // APIが番号を振るのはArtifactの中身のバージョンだけで、それにはアップロードしたファイルが
+      // 要る。uriで同じ登録をして、番号付けのロックが親のロックと一緒に取られることを示す。
       async function registerNumberedChild(parentId: string): Promise<Response> {
         const registration = await harness.database.connect();
         try {
@@ -637,7 +637,7 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
           registration.release();
         }
       }
-      // Each one saves a reference to `versionId` in its own way.
+      // どれも、それぞれのやり方で`versionId`への参照を保存する。
       const creations: Record<string, (versionId: string) => Promise<Response>> = {
         Run: (versionId) => runWithInputs(fixture, [versionId]),
         Task: (versionId) =>
@@ -673,7 +673,7 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
       };
       for (const [label, create] of Object.entries(creations)) {
         const { dataset, version } = await datasetWithVersion(fixture, `Corpus for ${label}`);
-        // Holding the version row stops the deletion after it has locked the Dataset.
+        // バージョンの行を押さえておくと、削除はDatasetをロックしたところで止まる。
         const versionHolder = await harness.database.connect();
         try {
           await versionHolder.query('BEGIN');
@@ -715,7 +715,7 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
     const reads = [
       `${fixture.basePath}/models/${other.model.id}`,
       `${fixture.basePath}/models/${other.model.id}/versions/${other.version.id}`,
-      // A version of another Model in the same Project is not found under this Model either.
+      // 同じProjectの別のModelのバージョンも、このModelの下では見つからない。
       `${fixture.basePath}/models/${fixture.model.id}/versions/${other.version.id}`,
       `${fixture.basePath}/experiments/${other.experiment.id}`,
       `${fixture.basePath}/datasets/${other.dataset.id}`,

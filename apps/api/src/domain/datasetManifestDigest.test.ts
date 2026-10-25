@@ -24,7 +24,8 @@ describe('datasetManifestDigest', () => {
   });
 
   it('pathをUTF-8のbyte順に並べた正規化JSONのsha256をsha256:付きで返す', () => {
-    // UTF-16 code units put U+1F600 (a surrogate pair) first; UTF-8 bytes put U+FF21 first.
+    // UTF-16のコード単位で比べるとU+1F600（サロゲートペア）が先、UTF-8のバイトで比べると
+    // U+FF21が先になる。
     const manifest = [
       { path: '\u{1F600}.wav', sha256: 'e'.repeat(64), size: 1 },
       { path: 'Ａ.wav', sha256: 'f'.repeat(64), size: 2 },
@@ -36,7 +37,7 @@ describe('datasetManifestDigest', () => {
     expect(datasetManifestDigest(manifest)).toBe(
       `sha256:${createHash('sha256').update(expected, 'utf8').digest('hex')}`,
     );
-    // python/tests/test_dataset_upload.py checks the SDK against the same value.
+    // python/tests/test_dataset_upload.pyでも、SDKを同じ値で確かめている。
     expect(datasetManifestDigest(manifest)).toBe(
       'sha256:710944fa3af4b732ca1b3b5f64a70e3bfcffd96c6ddddd094caf21c8d2e71157',
     );

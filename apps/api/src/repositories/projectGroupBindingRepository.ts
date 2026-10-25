@@ -25,7 +25,7 @@ export async function findGroupBinding(
   );
 }
 
-// A role change keeps the original creator; the audit log holds who changed it.
+// roleを変えても作成者は元のまま。誰が変えたかは監査ログに残る。
 export async function upsertGroupBinding(
   connection: Connection,
   binding: { projectId: string; group: string; role: ProjectRole; createdBy: string },

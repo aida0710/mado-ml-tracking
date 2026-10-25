@@ -15,7 +15,7 @@ import { referenceDigest } from './fixtures.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 import { siteFixture, type SiteFixture } from './siteFixtures.js';
 
-/** A one-step workflow whose preprocessing Task runs on the fixture's site, started once. */
+/** 前処理のTaskをfixtureのsiteで動かす、stepが1つのワークフロー。1回だけ起動する。 */
 async function launchSiteWorkflow(
   harness: Harness,
   fixture: SiteFixture,
@@ -113,8 +113,8 @@ describe.skipIf(!testDatabaseUrl)('siteのワークフローのJobとrunnerの�
     const execution = await launchSiteWorkflow(harness, fixture);
     const plainJob = await fixture.newSiteJob();
 
-    // The workflow's Job is older, but a launcher whose runner does not pass dataset usage to it
-    // skips it.
+    // ワークフローのJobの方が古いが、runnerがデータセットの使い方をJobに渡さないlauncherは、
+    // そのJobを飛ばす。
     const plain = await launcherClaim(fixture, []);
     expect(plain.flatMap((submission) => submission.jobs.map((item) => item.job.id))).toEqual([
       plainJob.id,

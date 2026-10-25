@@ -1,21 +1,21 @@
-// Liveness is judged against the database clock so API hosts with skewed clocks agree.
+// 生存はデータベースの時計で判定し、時計がずれたAPIのホストどうしでも結果がそろうようにする。
 
-// Workers send a Job heartbeat every 5 seconds; 12 missed heartbeats mark the Job as stale.
+// workerはJobのheartbeatを5秒ごとに送る。12回続けて届かなければJobをstaleとみなす。
 export const JOB_HEARTBEAT_STALE_SECONDS = 60;
-// Idle workers claim about once per second, so two minutes of silence means the process is gone.
+// 待機中のworkerはおよそ1秒に1回claimするので、2分間何も届かなければプロセスはもう無い。
 export const WORKER_OFFLINE_SECONDS = 120;
-// Claims arrive every second; refresh presence less often to avoid a row write per claim.
+// claimは毎秒届く。claimのたびに行を書かないよう、presenceの更新はそれより間隔を空ける。
 export const WORKER_PRESENCE_WRITE_INTERVAL_SECONDS = 15;
 
 function qualified(alias: string, column: string): string {
   return alias ? `${alias}.${column}` : column;
 }
 
-// Site Jobs waiting for submission or in a scheduler queue have no runner yet, so no heartbeat.
+// 投入待ちやスケジューラのキューにいるsiteのJobにはまだrunnerが無いので、heartbeatも無い。
 const PHASES_WITHOUT_HEARTBEAT = ['waiting_manual', 'submitting', 'submitted'];
 
-// Staleness is only reported. Jobs are not failed, re-queued, or released from their GPUs,
-// because a silent worker may still be running the process (docs/worker.md).
+// staleは報告するだけ。Jobを失敗にしたり、キューに戻したり、GPUから解放したりはしない。
+// 黙っているworkerがまだプロセスを動かしているかもしれないため（docs/worker.md）。
 export function jobHeartbeatStaleSql(alias = ''): string {
   const waitingPhases = PHASES_WITHOUT_HEARTBEAT.map((phase) => `'${phase}'`).join(',');
   return `(${qualified(alias, 'status')} IN ('claimed','running') AND ${qualified(alias, 'heartbeat_at')} < now() - interval '${JOB_HEARTBEAT_STALE_SECONDS} seconds'

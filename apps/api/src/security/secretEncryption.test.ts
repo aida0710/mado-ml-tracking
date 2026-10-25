@@ -49,7 +49,7 @@ describe('secretEncryption', () => {
     expect(() => decryptSecret({ key: otherKey, encrypted, context })).toThrow(
       SecretKeyMismatchError,
     );
-    // Even with a forged key id, GCM authentication rejects the wrong key material.
+    // 鍵のidを偽っても、GCMの認証が違う鍵の中身を拒む。
     expect(() =>
       decryptSecret({ key: otherKey, encrypted: { ...encrypted, keyId: otherKey.id }, context }),
     ).toThrow(SecretDecryptionError);

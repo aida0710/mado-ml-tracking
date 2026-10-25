@@ -25,7 +25,7 @@ import type { RunService } from './runService.js';
 import { assertNoReservedRunTags } from '../domain/reservedRunTags.js';
 import { matchesHistoricalTrainingRun } from '../domain/historicalTrainingRun.js';
 
-/** Appends historical provenance without registering weights again or launching automation. */
+/** 重みを登録し直したり自動実行を起動したりせずに、過去の由来の記録を足す。 */
 export class ModelTrainingSourceService {
   constructor(
     private readonly database: Database,
@@ -60,7 +60,7 @@ export class ModelTrainingSourceService {
       resourceType: 'model_version',
       resourceId: location.versionId,
       projectId: location.projectId,
-      // Evidence can contain private recipe URLs; the audit records only the relationship.
+      // evidenceには非公開のレシピのURLが含まれることがある。監査には関係だけを記録する。
       details: { modelId: location.modelId, ...(existingRunId ? { runId: existingRunId } : {}) },
     };
     return recordDenial(this.database, draft, () =>
@@ -107,7 +107,7 @@ export class ModelTrainingSourceService {
             createdBy: principal.user.id,
             input: historicalInput,
           });
-          // Backfilled history is already complete. Completion hooks belong to newly executed Runs.
+          // 後から埋めた履歴は既に完了している。完了時のフックは新しく実行したRunのためのもの。
           await connection.query(
             "UPDATE runs SET status='finished',started_at=$2,ended_at=$3 WHERE id=$1",
             [historical.id, historicalInput.startedAt, historicalInput.endedAt],

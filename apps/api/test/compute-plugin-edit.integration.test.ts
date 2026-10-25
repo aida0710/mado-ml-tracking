@@ -13,7 +13,8 @@ import { executionFixture } from './fixtures.js';
 import { deferred } from './workbenchFixtures.js';
 import { MADO_ACCESS_TOKEN_GRANT_FIXTURE, madoClientStub, madoPluginInput } from './pluginFixtures.js';
 
-// Wait on PostgreSQL's actual lock waiter, rather than delaying a competing request by a guessed timeout.
+// 競合するリクエストを当て推量の時間だけ遅らせず、PostgreSQLで実際にロック待ちに
+// なったことを確かめる。
 const MAX_LOCK_OBSERVATIONS = 1000;
 
 describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立PostgreSQL）', () => {

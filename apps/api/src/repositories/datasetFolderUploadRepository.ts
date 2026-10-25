@@ -7,9 +7,10 @@ import {
 import { rows, type Connection } from '../db/database.js';
 
 /**
- * Folder uploads of the dataset that stopped before their version: folders below the dataset's
- * upload root whose stored Runless Artifacts no DatasetVersion lists. A folder that became a
- * version is left out even when a late file of it is not listed; that file is deleted on its own.
+ * バージョンになる前に止まったデータセットのフォルダのアップロード。データセットのアップロード先の
+ * 下にあり、保存済みのRunに属さないArtifactをどのDatasetVersionも載せていないフォルダ。
+ * バージョンになったフォルダは、遅れて届いたファイルが載っていなくても除く。そのファイルは個別に
+ * 削除する。
  */
 export async function listUnfinishedFolderUploads(
   connection: Connection,
@@ -38,7 +39,7 @@ export async function listUnfinishedFolderUploads(
   }));
 }
 
-/** IDs of the live Runless Artifacts stored below a path prefix. */
+/** パスの前置きの下に保存した、削除されていない、Runに属さないArtifactのID。 */
 export async function findRunlessArtifactIdsBelow(
   connection: Connection,
   location: { projectId: string; prefix: string },

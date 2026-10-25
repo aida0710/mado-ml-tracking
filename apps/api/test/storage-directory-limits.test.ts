@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Principal } from '../src/auth/principal.js';
 import { StorageDirectoryService } from '../src/services/storageDirectoryService.js';
 
-// Only what requireGlobalAdmin reads: a global administrator's browser session.
+// requireGlobalAdminが読む部分だけを持つ。全体管理者のブラウザのsession。
 const administrator = {
   user: { id: '00000000-0000-4000-8000-000000000001', isAdmin: true },
   method: 'session',

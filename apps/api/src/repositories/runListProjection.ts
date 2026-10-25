@@ -1,7 +1,7 @@
 import { trainingDatasetVersionIdsColumn } from './trainingDataStageRepository.js';
 
-// Output models include appended training sources; deleting a version needs no second write.
-// MLflow soft-deleted versions (including deleted registered models) are excluded.
+// 出力のモデルには後から足した学習元も含める。バージョンを消しても、ほかを書き直す必要は無い。
+// MLflowで論理削除したバージョン（削除した登録モデルのものを含む）は除く。
 export const outputModelVersionIdsColumn = `ARRAY(
   SELECT v.id FROM model_versions v
   LEFT JOIN mlflow_model_version_metadata vm ON vm.version_id=v.id
@@ -10,7 +10,7 @@ export const outputModelVersionIdsColumn = `ARRAY(
     AND vm.deleted_at IS NULL
   ORDER BY v.created_at,v.id) AS output_model_version_ids`;
 
-// The screens show who created a Run by name; the id alone means nothing to a reader.
+// 画面ではRunの作成者を名前で見せる。idだけでは読む人に何も伝わらない。
 export const createdByNameColumn = `(SELECT u.display_name FROM users u WHERE u.id=runs.created_by)
   AS created_by_name`;
 
@@ -21,10 +21,10 @@ export const outputDatasetVersionIdsColumn = `(runs.output_dataset_version_ids |
     ORDER BY created_at,id
 )) AS output_dataset_version_ids`;
 
-// Every statement that returns a whole Run (SELECT or RETURNING) uses this so the field is never missing.
+// Run全体を返す文（SELECTかRETURNING）はどれもこれを使い、フィールドが欠けないようにする。
 export const runColumns = `*,${outputModelVersionIdsColumn},${outputDatasetVersionIdsColumn},${trainingDatasetVersionIdsColumn},${createdByNameColumn}`;
 
-// Polling lists retain execution identity; code text and code environment belong to detail reads.
+// ポーリングの一覧は実行を見分ける情報を残す。コードの本文とコードの環境は詳細の読み取りで返す。
 export const runSummarySelect = `SELECT
   id,project_id,experiment_id,name,kind,status,parameters,tags,latest_metrics,
   model_version_id,code_version_id,input_dataset_version_ids,upstream_dataset_version_ids,

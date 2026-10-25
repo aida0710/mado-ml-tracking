@@ -6,7 +6,8 @@ import {
   workerPresenceWriteDueSql,
 } from '../domain/workerLiveness.js';
 
-// Worker ids are configured per host, so a project rarely has more; bound the response anyway.
+// worker idはホストごとに設定するので、1つのProjectでこれより多くなることはまずない。
+// それでも応答の大きさに上限を設ける。
 const WORKER_LIST_LIMIT = 1000;
 
 export interface WorkerPresenceTouch {
@@ -21,8 +22,8 @@ export interface WorkerPresenceTouch {
   capabilities: WorkerCapability[];
 }
 
-// Upserts on claim/resume. An unchanged worker is rewritten only after the write interval, and
-// started_at restarts when the worker comes back from offline so it shows the current uptime.
+// claim・resumeのときにupsertする。変わっていないworkerは書き込み間隔が過ぎてから書き直す。
+// workerがオフラインから戻ったらstarted_atを付け直し、今の稼働時間を示すようにする。
 export async function touchWorker(
   connection: Connection,
   presence: WorkerPresenceTouch,
@@ -60,7 +61,7 @@ export async function touchWorker(
   );
 }
 
-// Heartbeats carry no worker description, so they only extend last_seen_at of the Job's worker.
+// heartbeatはworkerの情報を持たないので、Jobのworkerのlast_seen_atを延ばすだけにする。
 export async function touchWorkerLastSeen(
   connection: Connection,
   lease: { jobId: string },
@@ -74,7 +75,7 @@ export async function touchWorkerLastSeen(
   );
 }
 
-// projectId null lists every project's workers (global administrators only).
+// projectIdがnullなら、全Projectのworkerを返す（全体管理者だけ）。
 export async function listWorkerPresence(
   connection: Connection,
   filter: { projectId: string | null },

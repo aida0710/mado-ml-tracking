@@ -3,11 +3,11 @@ import type { Principal } from '../auth/principal.js';
 import { DomainError } from '../domain/errors.js';
 import { holdsScope } from './accessService.js';
 
-/** What a token holds: the token being issued, or the one being revoked. */
+/** tokenが持つもの。対象は、発行しようとしているtokenか、失効させようとしているtoken。 */
 export interface TokenGrant {
   scopes: readonly string[];
   projectId: string | null;
-  // ISO 8601, as tokens are stored and returned; null never expires.
+  // tokenの保存・応答と同じくISO 8601。nullなら期限切れにならない。
   expiresAt: string | null;
 }
 
@@ -16,9 +16,9 @@ function expiryTime(expiresAt: string | null): number {
 }
 
 /**
- * A token that issues or revokes tokens stays within its own grant: no scope it does not hold, no
- * Project it is not bound to and no lifetime beyond its own, so a leaked token cannot outgrow
- * itself. A browser session is limited by its owner's roles instead.
+ * tokenを発行・失効させるtokenは、自分に許された範囲を超えない。自分が持たないscope、自分が
+ * 結びついていないProject、自分より長い有効期間は扱えないので、漏れたtokenが自分より強いものを
+ * 作ることはできない。ブラウザのsessionは、代わりにその持ち主のroleで制限される。
  */
 export function requireGrantWithinIssuer(principal: Principal, grant: TokenGrant): void {
   const issuer = principal.method === 'token' ? principal.token : null;
@@ -46,8 +46,8 @@ export function requireGrantWithinIssuer(principal: Principal, grant: TokenGrant
 }
 
 /**
- * Global scopes act on the whole server, so only a global administrator's token without a Project
- * restriction may hold them.
+ * 全体のscopeはサーバー全体に作用するので、それを持てるのは、Projectの制限が無い全体管理者の
+ * tokenだけ。
  */
 export function requireGlobalScopesUnrestricted(grant: {
   scopes: readonly string[];

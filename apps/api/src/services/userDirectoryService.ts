@@ -9,15 +9,15 @@ import {
 } from '../repositories/identityRepository.js';
 import { requireScope } from './accessService.js';
 
-// Enough candidates to pick from while typing, without letting admins page through every user.
+// 入力しながら選ぶには足りるが、adminが全ユーザーをページ送りで見られるほどではない候補数。
 const USER_SEARCH_LIMIT = 20;
 
-// Lookups behind the Project access settings: users to grant a role and known SSO groups.
+// Projectのアクセス設定で使う検索。roleを与えるユーザーと、既知のSSOグループ。
 export class UserDirectoryService {
   constructor(private readonly database: Database) {}
 
-  // Whoever may create a Project (POST /projects) picks its first members here, so the same check
-  // applies. A Project-scoped token cannot create Projects and still needs the admin role there.
+  // Projectを作れる人（POST /projects）がここで最初のメンバーを選ぶので、同じ検査をかける。
+  // Project限定のtokenはProjectを作れないうえ、そのProjectでのadminのroleも要る。
   async searchUsers(principal: Principal, query: string): Promise<UserSearchResult[]> {
     requireScope(principal, 'admin');
     if (principal.token?.projectId) await this.requireAccessAdministrator(principal);
@@ -29,8 +29,8 @@ export class UserDirectoryService {
     return listKnownGroupNames(this.database);
   }
 
-  // Global administrators (as in requireGlobalAdmin) and admins of any Project. A
-  // Project-scoped token only counts the admin role of its own Project.
+  // 全体管理者（requireGlobalAdminと同じ）と、いずれかのProjectのadmin。Project限定のtokenは、
+  // そのProject自身のadminのroleだけを数える。
   private async requireAccessAdministrator(principal: Principal): Promise<void> {
     requireScope(principal, 'admin');
     if (principal.user.isAdmin && !principal.token?.projectId) return;

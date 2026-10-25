@@ -139,7 +139,7 @@ describe.skipIf(!testDatabaseUrl)('モデルバージョンの評価集約とexe
     expect(summary.modelVersionId).toBe(version.id);
     expect(summary.items.map((run) => run.id)).toEqual([second.id, first.id]);
     expect(summary.items.map((run) => run.latestMetrics)).toEqual([{ wer: 0.2 }, { wer: 0.25 }]);
-    // Runs a person created are never automatic, whatever their tags say.
+    // 人が作ったRunは、タグに何が書かれていても自動実行のものにはならない。
     expect(summary.items.every((run) => !run.automatic && run.ruleId === null)).toBe(true);
     expect(summary.nextCursor).toBeNull();
 
@@ -278,7 +278,7 @@ describe.skipIf(!testDatabaseUrl)('モデルバージョンの評価集約とexe
     const rules: ModelAutomationRule[] = [];
     for (const name of ['first', 'second', 'third'])
       rules.push(await entity<ModelAutomationRule>(await createRule(fixture, { name })));
-    // All executions of one registration are inserted in one transaction, so they share now().
+    // 1回の登録による実行はすべて1つのトランザクションで入るので、now()が同じになる。
     const target = await registerVersion(fixture, 'target');
     const other = await registerVersion(fixture, 'other');
 
@@ -316,7 +316,7 @@ describe.skipIf(!testDatabaseUrl)('モデルバージョンの評価集約とexe
     expect(byRule.items.map((execution) => [execution.ruleId, execution.modelVersionId])).toEqual([
       [rules[1]!.id, other.id],
     ]);
-    // A cursor outside the filtered list is rejected rather than silently restarting.
+    // 絞り込んだ一覧に無いcursorは、黙って最初からやり直さずに拒む。
     expect(
       (await executionPage(fixture, { modelVersionId: other.id, cursor: seen[0]!.id })).status,
     ).toBe(404);
@@ -406,8 +406,7 @@ describe.skipIf(!testDatabaseUrl)('モデルバージョンの評価集約とexe
       modelVersionId: version.id,
       parentRunId: training.id,
     });
-    // Finishing the training Run releases the pending registration, which starts the rule's Run
-    // under the training Run.
+    // 学習のRunが終わると保留中の登録が解放され、学習のRunの下でルールのRunが始まる。
     for (const status of ['running', 'finished'])
       await entity(
         await request(harness.app, `${fixture.basePath}/runs/${training.id}`, {

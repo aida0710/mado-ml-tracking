@@ -69,14 +69,14 @@ export async function requireArtifactOwner(
     [access.owner.id, access.projectId],
   );
   if (!reference) notFound(access.owner.kind === 'run' ? 'run' : 'logged model');
-  // Experiments are locked before owners to serialize with experiment deletion.
+  // 実験の削除と直列化するため、所有者より先に実験をロックする。
   const experiment = await first<{ lifecycleStage: string }>(
     connection,
     `SELECT lifecycle_stage FROM experiments WHERE id=$1 AND project_id=$2 ${options.lock ? 'FOR SHARE' : ''}`,
     [reference.experimentId, access.projectId],
   );
   if (!experiment || experiment.lifecycleStage !== 'active') notFound('experiment');
-  // Run outputs lock the source Run before the model. Uploads must follow that same order.
+  // Runの出力は、モデルより先に元のRunをロックする。アップロードも同じ順序に従わなければならない。
   if (options.write && access.owner.kind === 'model' && reference.sourceRunId) {
     const sourceRun = await first<{ lifecycleStage: string }>(
       connection,
@@ -85,7 +85,8 @@ export async function requireArtifactOwner(
     );
     if (!sourceRun || sourceRun.lifecycleStage !== 'active') notFound('run');
   }
-  // Run FK inserts hold KEY SHARE; NO KEY UPDATE avoids an upgrade deadlock between uploads.
+  // RunへのFKを持つ行のINSERTはKEY SHAREを取る。NO KEY UPDATEなら、アップロードどうしで
+  // ロックを格上げするときのデッドロックを避けられる。
   const ownerLock = options.lock
     ? access.owner.kind === 'run'
       ? 'FOR NO KEY UPDATE'

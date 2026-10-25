@@ -422,7 +422,7 @@ describe.skipIf(!testDatabaseUrl)('Runのmedia（独立PostgreSQL）', () => {
         { key: 'big', step: 0, kind: 'table', artifactId: table.id },
         { key: 'audio', step: 0, kind: 'audio', artifactId: audio.id },
       ]);
-      // Writing 50MiB in a test is slow; the limit is decided from the recorded size alone.
+      // テストで50MiBを書くのは遅い。上限は記録された大きさだけで判定する。
       await harness.database.query('UPDATE artifacts SET size=$2 WHERE id=$1', [table.id, 50 * 1024 * 1024 + 1]);
       const tooLarge = await request(harness.app, `${fixture.basePath}/runs/${run.id}/media/${tableMedia!.id}/table`, {
         cookie: fixture.viewer.cookie,

@@ -15,7 +15,7 @@ export async function importPluginDataset(
   },
 ): Promise<DatasetVersion> {
   const { projectId, pluginId, dataset: imported } = request;
-  // Serialize first-time creation and imports across versions of the same remote dataset.
+  // 同じリモートのデータセットについて、初回の作成とバージョンをまたいだ取り込みを順に並べる。
   await connection.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
     JSON.stringify([projectId, imported.namespace, imported.name]),
   ]);

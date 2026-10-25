@@ -10,7 +10,7 @@ import type { TrackingDataset, TrackingDatasetInput } from './trackingTypes.js';
 import { invalidParameter } from './trackingValidation.js';
 import { runColumns } from '../../repositories/runListProjection.js';
 
-// Dataset identity locks use a namespace separate from schema migration and parent Run locks.
+// データセットの同一性のロックは、スキーマのmigrationや親Runのロックとは別の名前空間を使う。
 const DATASET_REGISTRATION_LOCK_NAMESPACE = 4183;
 
 function datasetIdentity(dataset: TrackingDataset): string {
@@ -24,7 +24,7 @@ function datasetUri(dataset: TrackingDataset, identity: string): string {
     const uri = source.uri ?? source.path;
     if (typeof uri === 'string') return uri;
   } catch {
-    /* The source field is opaque in the protocol and is retained without fetching it. */
+    /* sourceフィールドはプロトコル上中身の決まっていない値なので、取りに行かずにそのまま残す。 */
   }
   return `mlflow-dataset:/${identity}`;
 }
@@ -34,7 +34,7 @@ function nativeSchema(dataset: TrackingDataset): JsonObject {
     const schema: unknown = JSON.parse(dataset.schema);
     if (schema && typeof schema === 'object' && !Array.isArray(schema)) return schema as JsonObject;
   } catch {
-    /* Some dataset sources provide a schema string rather than a JSON object. */
+    /* データセットのsourceによっては、schemaがJSONのオブジェクトでなく文字列で届く。 */
   }
   return { mlflowSchema: dataset.schema };
 }
@@ -46,7 +46,7 @@ async function registerDataset(
 ): Promise<string> {
   const { projectId, dataset } = request;
   const identity = datasetIdentity(dataset);
-  // Concurrent runs must resolve the same native immutable version before linking their inputs.
+  // 並行するRunは、入力を結び付ける前に同じネイティブの不変なバージョンを解決する必要がある。
   await connection.query('SELECT pg_advisory_xact_lock($1,hashtext($2))', [
     DATASET_REGISTRATION_LOCK_NAMESPACE,
     `${projectId}:${identity}`,
@@ -98,7 +98,7 @@ export async function logDatasetInputs(
   registry: RegistryService,
   request: { principal: Principal; run: Run; datasets: TrackingDatasetInput[] },
 ): Promise<void> {
-  // Stable ordering avoids deadlocks when two runs log the same group of datasets in reverse order.
+  // 順序を固定し、2つのRunが同じデータセットの組を逆の順で記録したときのデッドロックを避ける。
   const inputs = [...request.datasets].sort(
     (left, right) =>
       left.dataset.name.localeCompare(right.dataset.name) ||
@@ -125,7 +125,7 @@ export async function logDatasetInputs(
     `UPDATE runs SET input_dataset_version_ids=$2::uuid[] WHERE id=$1 RETURNING ${runColumns}`,
     [request.run.id, [...versionIds]],
   ))!;
-  // Only Job-less Runs reach here after ending; Job-owned Runs are rejected as run_finalized.
+  // 終了後にここへ来るのはJobの無いRunだけ。Jobに属するRunはrun_finalizedとして拒否済み。
   if (
     isTerminalStatus(updated.status) &&
     versionIds.size !== request.run.inputDatasetVersionIds.length

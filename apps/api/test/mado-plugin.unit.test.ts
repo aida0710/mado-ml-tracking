@@ -12,14 +12,17 @@ const READ_AND_SEND: MadoAccessTokenGrant = {
   expiresAt: '2027-01-01T00:00:00.000Z',
 };
 
-/** A Mado that grants `grant` to the token and holds one dataset version in every namespace. */
+/**
+ * tokenに`grant`を与え、どのnamespaceにもデータセットバージョンを1つ持つ
+ * mado S3 Data Catalog。
+ */
 function madoFixture(grant: MadoAccessTokenGrant) {
   const version = {
     id: VERSION_ID, datasetId: DATASET_ID, version: 'v1', contentHash: `sha256:${'a'.repeat(64)}`,
     manifestHash: null, manifestUri: null, schemaUri: null,
     locations: [{ uri: 's3://fixture/corpus', storageKind: 's3', status: 'available', isPrimary: true }],
   };
-  // The dataset belongs to whichever namespace was searched last; an all-namespace search finds `speech`.
+  // データセットは最後に検索したnamespaceに属する。全namespaceの検索では`speech`で見つかる。
   let searchedNamespace = 'speech';
   const fetcher = vi.fn<typeof fetch>(async (input) => {
     const url = new URL(String(input));

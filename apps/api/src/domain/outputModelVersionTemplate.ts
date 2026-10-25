@@ -1,5 +1,5 @@
-// Values a Task's versionTemplate may refer to. Each Run renders a different version only if
-// the template uses at least one of them; a fixed label would collide from the second Run on.
+// TaskのversionTemplateが参照できる値。テンプレートがこのうち1つ以上を使うときだけ、Runごとに
+// 違うバージョンになる。固定のラベルだと2つ目のRunから衝突する。
 export interface VersionTemplateValues {
   runId: string;
   runName: string;

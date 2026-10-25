@@ -22,9 +22,9 @@ const executeFile = promisify(execFile);
 const directories: string[] = [];
 const URL = 'https://example.test/fixture.git';
 const OBJECT_ID = 'a'.repeat(40);
-// Enough for a Node child and descendant to start even on a busy test machine.
+// 混んでいるテストマシンでも、Nodeの子プロセスとその子孫が起動できるだけの時間。
 const CHILD_START_DEADLINE_MS = 1000;
-// These fixtures never need more than 4 MiB or 3 seconds.
+// このfixtureが4 MiBや3秒を超えて必要とすることは無い。
 const FIXTURE_DIRECTORY_BYTES = 4 * 1024 * 1024;
 const FIXTURE_TIMEOUT_MS = 3000;
 
@@ -66,7 +66,8 @@ function localRepositoryRunner(directory: string, observed: RepositoryCommand[] 
     observed.push(command);
     const fetchIndex = command.arguments.indexOf('fetch');
     if (fetchIndex === -1) return runRepositoryCommand(command);
-    // Only the test transport is replaced. All object reads and process limits are production code.
+    // 置き換えるのはテスト用の転送だけ。オブジェクトの読み取りとプロセスの制限は、すべて
+    // 本番のコード。
     const arguments_ = [...command.arguments];
     const urlIndex = arguments_.indexOf('--', fetchIndex) + 1;
     arguments_[urlIndex] = directory;
@@ -301,7 +302,8 @@ describe('repository child processの停止と上限', () => {
     const pids = JSON.parse(await readFile(pidPath, 'utf8')) as { parent: number; child: number };
     expect(() => process.kill(pids.parent, 0)).toThrow();
     try {
-      // An orphan can briefly be a reaped-pending zombie; it cannot execute or retain the workspace.
+      // 孤児プロセスは、回収待ちのゾンビとしてしばらく残ることがある。ゾンビは何も実行できず、
+      // workspaceも保持しない。
       expect((await readFile(`/proc/${pids.child}/stat`, 'utf8')).split(' ')[2]).toBe('Z');
     } catch (error) {
       expect((error as NodeJS.ErrnoException).code).toBe('ENOENT');

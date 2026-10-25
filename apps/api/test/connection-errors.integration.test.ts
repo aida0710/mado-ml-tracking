@@ -6,8 +6,8 @@ import { projectFixture } from './fixtures.js';
 type ProjectFixture = Awaited<ReturnType<typeof projectFixture>>;
 const PUBLIC_URL = 'https://tracking.example.test';
 
-// The mistakes people make when they first connect the SDKs (audit A-04, A-07): the error has to
-// say what to change, not only that something is wrong.
+// SDKを初めてつなぐときにありがちな間違い（監査のA-04、A-07）。エラーは、おかしいことを
+// 伝えるだけでなく、何を直せばよいかを示さなければならない。
 describe.skipIf(!testDatabaseUrl)('接続先とtokenを間違えたときのエラー文（独立PostgreSQL）', () => {
   let harness: Harness;
   let fixture: ProjectFixture;
@@ -88,7 +88,7 @@ describe.skipIf(!testDatabaseUrl)('接続先とtokenを間違えたときのエ�
     const failure = (await response.json()) as { error_code: string; message: string };
     expect(failure.error_code).toBe('UNAUTHENTICATED');
     expect(failure.message).toContain('MLFLOW_TRACKING_TOKEN');
-    // The native API keeps its own wording for people signing in.
+    // ネイティブAPIは、サインインする人向けの独自の文言のままにする。
     const native = await request(harness.app, `/api/projects/${fixture.project.id}/runs`, {
       method: 'POST',
       body: {},

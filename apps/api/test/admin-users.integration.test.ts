@@ -17,7 +17,7 @@ const TEMPORARY_PASSWORD = 'first temporary passphrase';
 
 describe.skipIf(!testDatabaseUrl)('全体管理者のユーザー管理（独立PostgreSQL）', () => {
   let harness: Harness;
-  // Local logins are refused in the harness's development mode, so they go through this app.
+  // harnessのdevelopmentモードではローカルのログインが拒まれるので、このアプリを通す。
   let localApp: Hono<ApiEnvironment>;
 
   function adminRequest(
@@ -118,7 +118,7 @@ describe.skipIf(!testDatabaseUrl)('全体管理者のユーザー管理（独立
     });
     const readToken = await mintToken(fixture.administrator.cookie, { scopes: ['read'] });
     const adminToken = await mintToken(fixture.administrator.cookie, { scopes: ['admin'] });
-    // The fixture's editor is promoted to Project admin to cover that role too.
+    // そのroleも確かめるため、fixtureのeditorをProject adminに上げる。
     await entity(
       await request(
         harness.app,
@@ -291,7 +291,7 @@ describe.skipIf(!testDatabaseUrl)('全体管理者のユーザー管理（独立
       expect(response.status).toBe(409);
       expect(((await response.json()) as { code: string }).code).toBe('last_active_admin');
     }
-    // A disabled administrator does not count as a remaining administrator.
+    // 無効にした管理者は、残っている管理者に数えない。
     const dormant = await createLocalUser(administrator.cookie, {
       username: 'dormant-admin',
       isAdmin: true,
@@ -373,7 +373,7 @@ describe.skipIf(!testDatabaseUrl)('全体管理者のユーザー管理（独立
       }),
       200,
     );
-    // The Project is named so administrators can tell what disabling the account stops.
+    // アカウントを無効にすると何が止まるか管理者が分かるよう、Projectの名前を返す。
     expect(disabled).toMatchObject({
       kind: 'service',
       status: 'disabled',
@@ -435,7 +435,7 @@ describe.skipIf(!testDatabaseUrl)('全体管理者のユーザー管理（独立
     });
 
     const ssoUserId = await createSsoUser('member@example.invalid');
-    // SSO users cannot sign in here without an IdP, so a token stands in for their session.
+    // IdPが無いとSSOユーザーはここでサインインできないので、sessionの代わりにtokenを使う。
     await harness.database.query(
       `INSERT INTO api_tokens(user_id,name,kind,token_hash,token_prefix,scopes)
       VALUES($1,'account test','personal',encode(sha256('mado_mt_account_test'::bytea),'hex'),'mado_mt_account_','{read}')`,

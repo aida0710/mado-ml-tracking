@@ -5,17 +5,17 @@ import { PollingLoop } from './pollingLoop.js';
 import type { RunCompletionService } from './runCompletionService.js';
 import { failUnstartedJob } from './siteJobEnding.js';
 
-// Queue limits are minutes to days, so checking twice a minute is precise enough.
+// キューの上限は数分から数日なので、1分に2回確かめれば十分に正確。
 const MONITOR_INTERVAL_MS = 30 * 1000;
 const MONITOR_BATCH_SIZE = 100;
-// Shared by every API process on the same schema so only one of them ends a Job.
+// 同じスキーマのすべてのAPIのプロセスで共有し、Jobを終えるのが1つのプロセスだけになるようにする。
 const MONITOR_LOCK_NAME = 'site_job_monitor';
 
 /**
- * Ends site Jobs that cannot start anymore: those that waited in a scheduler queue beyond the
- * site's queueTimeoutSeconds (the launcher then removes them from the queue), and those whose
- * launcher or `mado-tracking submit` claimed them and never reported what the job shell did.
- * A Job whose runner started is never ended here; its runner reports for itself.
+ * もう始められないsiteのJobを終える。スケジューラのキューでsiteのqueueTimeoutSecondsを超えて
+ * 待ったもの（そのあとlauncherがキューから取り除く）と、launcherや`mado-tracking submit`が
+ * claimしたまま、job shellの結果を報告してこないもの。runnerが始まったJobはここでは終えない。
+ * runnerが自分で報告する。
  */
 export class SiteJobMonitor {
   private readonly loop: PollingLoop;
@@ -40,7 +40,7 @@ export class SiteJobMonitor {
     await this.loop.stop();
   }
 
-  /** Returns the number of Jobs ended; 0 also when another process holds the monitor lock. */
+  /** 終えたJobの数を返す。別のプロセスが監視のロックを持っているときも0。 */
   async check(): Promise<number> {
     let ended = 0;
     for (;;) {

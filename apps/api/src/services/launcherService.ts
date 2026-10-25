@@ -34,7 +34,7 @@ import { auditActor } from './auditService.js';
 import { isGlobalAdministrator } from './siteAccess.js';
 import { resolveSubmissionAccount } from './siteReadiness.js';
 
-/** The launcher a request comes from, by its token. */
+/** リクエストを送ってきたlauncher。tokenから決める。 */
 export interface LauncherIdentity {
   launcherId: string;
   launcherName: string;
@@ -42,8 +42,8 @@ export interface LauncherIdentity {
 }
 
 /**
- * Only a live launcher's own token reaches the launcher endpoints. Its user is no Project's
- * member, so the same token reaches nothing else.
+ * launcherのエンドポイントに届くのは、失効していないlauncher自身のtokenだけ。そのユーザーは
+ * どのProjectのメンバーでもないので、同じtokenでほかのものには届かない。
  */
 export async function requireLauncher(
   connection: Connection,
@@ -71,7 +71,7 @@ export async function requireLauncher(
 export class LauncherService {
   constructor(private readonly database: Database) {}
 
-  /** Everyone may pick a launcher for their site; tokens and revoked ones are administrators'. */
+  /** 誰でも自分のsiteにlauncherを選べる。tokenと失効したlauncherは全体管理者だけが見る。 */
   async list(principal: Principal): Promise<Launcher[]> {
     requireScope(principal, 'read');
     const administrator = isGlobalAdministrator(principal);
@@ -114,7 +114,7 @@ export class LauncherService {
     });
   }
 
-  /** A new token for a launcher whose token was lost or leaked; the old one stops at once. */
+  /** tokenをなくしたか漏れたlauncherの新しいtoken。古いtokenはすぐ止まる。 */
   async replaceToken(
     principal: Principal,
     launcherId: string,
@@ -141,7 +141,7 @@ export class LauncherService {
     });
   }
 
-  /** What the launcher needs for its next poll: its sites, keys to make and checks to run. */
+  /** launcherが次のポーリングに要るもの。自分のsite、作る鍵、行う確認。 */
   async configuration(principal: Principal): Promise<LauncherConfiguration> {
     return transaction(this.database, async (connection) => {
       const launcher = await requireLauncher(connection, principal);
@@ -173,7 +173,7 @@ export class LauncherService {
           checks.push({ id: check.id, targetId: check.targetId, account });
         } catch (error) {
           if (!(error instanceof DomainError)) throw error;
-          // The account changed since the check was asked for; report why instead of trying.
+          // 確認を頼まれたあとでアカウントが変わった。試さずに理由を報告する。
           await finishConnectionCheck(connection, {
             checkId: check.id,
             launcherId: launcher.launcherId,
@@ -191,7 +191,7 @@ export class LauncherService {
     });
   }
 
-  /** The public half of a key the launcher made; the private half never leaves its host. */
+  /** launcherが作った鍵の公開鍵。秘密鍵はそのホストから出ない。 */
   async publishKey(
     principal: Principal,
     keyId: string,

@@ -21,16 +21,16 @@ import {
 } from '../repositories/storageBackendRepository.js';
 import { decryptSecret, type SecretKey } from '../security/secretEncryption.js';
 
-// Without a stored setting, new Projects keep using the environment filesystem backend.
+// 設定が保存されていなければ、新しいProjectは環境変数で決まるfilesystemの保存先を使い続ける。
 export const FALLBACK_DEFAULT_BACKEND = 'filesystem';
 
-/** Associated data that binds an encrypted secret to its backend row. */
+/** 暗号化した秘密を、その保存先の行に結び付ける関連データ。 */
 export function storageSecretContext(backend: string): string {
   return `storage-backend:${backend}`;
 }
 
 export type StorageBackendUnavailableReason = 'secret_key_missing' | 'secret_unreadable';
-/** A DB backend whose secret cannot be decrypted with the configured key. */
+/** DBで設定した保存先のうち、設定した鍵で秘密を復号できないもの。 */
 export class StorageBackendUnavailableError extends Error {
   constructor(readonly reason: StorageBackendUnavailableReason) {
     super(`Storage backend is unavailable: ${reason}`);
@@ -38,7 +38,9 @@ export class StorageBackendUnavailableError extends Error {
   }
 }
 
-/** Artifact services pass DomainErrors through, so a disabled backend reaches the client as 409. */
+/**
+ * ArtifactのサービスはDomainErrorをそのまま通すので、無効な保存先はクライアントに409として届く。
+ */
 async function translateDisabled<T>(operation: () => Promise<T>): Promise<T> {
   try {
     return await operation();
@@ -53,7 +55,7 @@ async function translateDisabled<T>(operation: () => Promise<T>): Promise<T> {
   }
 }
 
-/** One environment backend seen as a standalone store, so it fits the replaceable mapping. */
+/** 環境変数で決まる保存先の1つを単独のstoreに見せ、差し替えのできる対応表に入るようにする。 */
 function environmentStore(stores: ArtifactStores, backend: ArtifactBackend): ArtifactStore {
   const multipart = stores.multipart(backend);
   return {
@@ -65,9 +67,9 @@ function environmentStore(stores: ArtifactStores, backend: ArtifactBackend): Art
 }
 
 /**
- * The ArtifactStores the application uses: environment backends plus backends stored in the DB.
- * DB backends are loaded once at startup and replaced after every administrator change in this
- * process; another API process sees a change when it next misses an unknown backend name.
+ * アプリが使うArtifactStores。環境変数で決まる保存先と、DBで設定した保存先からなる。
+ * DBの保存先は起動時に1回読み込み、このプロセスで管理者が変更するたびに差し替える。ほかの
+ * APIのプロセスは、次に知らない保存先の名前に出会ったときに変更を知る。
  */
 export class ArtifactStoreRegistry implements ArtifactStores {
   private readonly stores: ReplaceableArtifactStores;
@@ -102,7 +104,7 @@ export class ArtifactStoreRegistry implements ArtifactStores {
     return this.stores.backends();
   }
 
-  /** Backends a Project may choose: configured and not disabled. */
+  /** Projectが選べる保存先。設定済みで、無効にされていないもの。 */
   writableBackends(): ArtifactBackend[] {
     return this.stores.writableBackends();
   }
@@ -120,7 +122,7 @@ export class ArtifactStoreRegistry implements ArtifactStores {
 
   async remove(reference: { backend: ArtifactBackend; key: string }): Promise<void> {
     await this.ensureLoaded();
-    // The garbage collector removes blobs of backends another API process may have added.
+    // garbage collectorは、ほかのAPIのプロセスが足したかもしれない保存先のblobも消す。
     if (!this.stores.backends().includes(reference.backend)) await this.reload();
     return this.stores.remove(reference);
   }
@@ -134,15 +136,15 @@ export class ArtifactStoreRegistry implements ArtifactStores {
     };
   }
 
-  /** Falls back to 'filesystem' when nothing is stored or the stored backend stopped taking writes. */
+  /** 設定が無いか、設定した保存先が書き込みを受け付けなくなったときは'filesystem'を使う。 */
   async getDefaultBackend(connection: Connection = this.options.database): Promise<string> {
     const stored = await readDefaultBackend(connection);
     return stored && this.writableBackends().includes(stored) ? stored : FALLBACK_DEFAULT_BACKEND;
   }
 
   /**
-   * Loads DB backends once. A failure (for example before migrations ran) is logged and retried
-   * on the next call; environment backends keep working meanwhile.
+   * DBの保存先を1回だけ読み込む。失敗したら（migrationを実行する前など）ログに残し、次に
+   * 呼ばれたときに再試行する。その間も環境変数で決まる保存先は動き続ける。
    */
   ensureLoaded(): Promise<void> {
     this.loading ??= this.reload().catch((error: unknown) => {
@@ -154,7 +156,7 @@ export class ArtifactStoreRegistry implements ArtifactStores {
     return this.loading;
   }
 
-  /** Re-reads every DB backend, replacing changed ones and dropping rows that disappeared. */
+  /** DBの保存先をすべて読み直し、変わったものは差し替え、無くなった行のものは外す。 */
   async reload(): Promise<void> {
     const backendRows = await listStorageBackendRows(this.options.database);
     const present = new Set(backendRows.map((row) => row.name));
@@ -167,8 +169,8 @@ export class ArtifactStoreRegistry implements ArtifactStores {
   }
 
   /**
-   * Swaps in a store built from the row unless a newer revision is already applied. Operations
-   * that already looked up the previous store finish on it.
+   * より新しいrevisionを既に適用していなければ、行から作ったstoreに差し替える。前のstoreを既に
+   * 引いた操作は、そのstoreで最後まで進む。
    */
   apply(row: StorageBackendRow): void {
     if (this.isEnvironmentBackend(row.name)) return;
@@ -178,7 +180,7 @@ export class ArtifactStoreRegistry implements ArtifactStores {
       this.stores.replace(row.name, { store: this.buildStore(row), acceptsWrites: row.enabled });
     } catch (error) {
       if (!(error instanceof StorageBackendUnavailableError)) throw error;
-      // Artifacts on this backend answer backend_unavailable until the key is fixed.
+      // 鍵が直るまで、この保存先のArtifactはbackend_unavailableを返す。
       this.stores.delete(row.name);
       console.error(
         JSON.stringify({
@@ -190,7 +192,7 @@ export class ArtifactStoreRegistry implements ArtifactStores {
     }
   }
 
-  /** Builds a fresh store from a row; the connection test uses it for disabled backends too. */
+  /** 行から新しいstoreを作る。接続テストは無効な保存先にもこれを使う。 */
   buildStore(row: StorageBackendRow): ArtifactStore {
     return createArtifactStoreFromConfig({
       config: row.config,
@@ -199,7 +201,7 @@ export class ArtifactStoreRegistry implements ArtifactStores {
     });
   }
 
-  /** The store an environment backend uses, for the connection test. */
+  /** 環境変数で決まる保存先が使うstore。接続テスト用。 */
   environmentStore(backend: ArtifactBackend): ArtifactStore {
     return environmentStore(this.options.environmentStores, backend);
   }

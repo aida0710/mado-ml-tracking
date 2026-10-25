@@ -25,13 +25,13 @@ import type { DatasetManifestFile } from './datasetVersionRegistration.js';
 
 export interface ResolvedDatasetContent {
   files: DatasetManifestFile[];
-  /** The Run whose Artifacts became the version; it is recorded as the version's sourceRunId. */
+  /** そのArtifactがバージョンの中身になったRun。バージョンのsourceRunIdとして記録する。 */
   sourceRunId: string | null;
 }
 
 /**
- * Looks up the Artifacts a creation request names. Artifacts are matched in the request's Project
- * only, so another Project's Artifact ID is reported exactly like an unknown one.
+ * 作成リクエストが指定したArtifactを探す。ArtifactはリクエストのProjectの中だけで探すので、
+ * 別のProjectのArtifact IDは、存在しないIDとまったく同じに報告する。
  */
 export async function resolveDatasetContent(
   connection: Connection,
@@ -71,7 +71,7 @@ async function resolveRunArtifacts(
 ): Promise<ResolvedDatasetContent> {
   await findRun(connection, { projectId: source.projectId, id: source.runId });
   const prefix = directoryPrefix(source.prefix);
-  // Older uploads at a path are superseded; the version takes what the Run shows now.
+  // 同じパスへの古いアップロードは置き換わっている。バージョンには今のRunに見えているものを取る。
   const page = await listRunArtifacts(connection, {
     projectId: source.projectId,
     runId: source.runId,
@@ -113,7 +113,7 @@ interface DatasetVersionLocation {
   versionId: string;
 }
 
-/** File lists are in path order; the cursor is the last path of the previous page. */
+/** ファイルの一覧はパスの順。カーソルは前のページの最後のパス。 */
 function encodeFileCursor(path: string): string {
   return Buffer.from(JSON.stringify({ path })).toString('base64url');
 }
@@ -126,12 +126,12 @@ function decodeFileCursor(token: string): string {
       if (typeof path === 'string') return path;
     }
   } catch {
-    // Reported below like any other malformed cursor.
+    // 下で、ほかの不正なカーソルと同じように報告する。
   }
   throw new DomainError({ status: 400, code: 'invalid_cursor', message: 'invalid cursor' });
 }
 
-/** Reads the files of DatasetVersions and finds stored Artifacts by content. */
+/** DatasetVersionのファイルを読み、保存済みのArtifactを中身から探す。 */
 export class DatasetContentService {
   constructor(private readonly database: Database) {}
 
@@ -160,7 +160,7 @@ export class DatasetContentService {
       : { items };
   }
 
-  /** One directory level of the version's files, in the same shape as a Run's Artifact tree. */
+  /** バージョンのファイルのうち1階層分。RunのArtifactツリーと同じ形で返す。 */
   async fileTree(
     principal: Principal,
     request: DatasetVersionLocation & { prefix: string },
@@ -181,9 +181,9 @@ export class DatasetContentService {
   }
 
   /**
-   * The newest stored Artifact of the Project with this content, so a client can list it in a
-   * DatasetVersion instead of uploading the same bytes again. Bytes are not shared between
-   * Artifacts; a match is reused only by reference.
+   * 同じ中身を持つ、Projectで最も新しい保存済みのArtifact。クライアントは同じバイト列をもう一度
+   * アップロードする代わりに、それをDatasetVersionに並べられる。バイト列はArtifact間で共有しない。
+   * 一致したものは参照として使い回すだけ。
    */
   async findArtifactByDigest(
     principal: Principal,

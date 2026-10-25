@@ -21,12 +21,12 @@ export interface EvaluationComparisonRequest {
   candidateVersionId: string;
   baselineAlias?: string;
   baselineVersionId?: string;
-  // Omitted conditions are taken from the candidate's latest matching evaluation Run.
+  // 省いた条件は、候補の、条件に合う最新の評価Runから取る。
   referenceDatasetVersionIds?: readonly string[];
   codeVersionId?: string | null;
   evaluationRuleId?: string;
   metrics?: readonly string[];
-  // Internal callers only (not an HTTP parameter): judge this candidate Run instead of the latest.
+  // 内部の呼び出し元だけが使う（HTTPのパラメーターではない）。最新ではなくこの候補Runを判定する。
   candidateRunId?: string;
 }
 
@@ -131,11 +131,11 @@ function comparisonStatus(runs: {
 }
 
 /**
- * Compares the candidate version's latest evaluation with the baseline version's latest evaluation
- * under the same conditions. Missing baselines or evaluations are reported in status, not as errors,
- * so automated callers can decide (for example, promotion treats a missing baseline as a first
- * release). Callers must authorize first: promotion-policy-gate calls this inside the evaluation
- * Run's terminal transaction without a principal.
+ * 候補のバージョンの最新の評価と、ベースラインのバージョンの最新の評価を、同じ条件で比べる。
+ * ベースラインや評価が無いことはエラーにせずstatusで知らせ、自動の呼び出し元が判断できるように
+ * する（たとえば昇格は、ベースラインが無ければ初回のリリースとして扱う）。権限は呼び出し元が
+ * 先に確かめること。promotion-policy-gateは、評価Runが終了状態へ移るトランザクションの中で、
+ * principalなしでこれを呼ぶ。
  */
 export async function compareToBaselineInternal(
   connection: Connection,
@@ -168,7 +168,7 @@ export async function compareToBaselineInternal(
       : null;
   const codeVersionId =
     request.codeVersionId !== undefined ? request.codeVersionId : candidateRun?.codeVersionId;
-  // Without a candidate evaluation the conditions are only known when the caller gave all of them.
+  // 候補の評価が無いときは、呼び出し元がすべての条件を渡したときだけ条件が決まる。
   const conditionsDecided = references !== null && codeVersionId !== undefined;
   const baselineRun =
     baselineVersionId && conditionsDecided

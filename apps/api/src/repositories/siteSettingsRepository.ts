@@ -80,7 +80,7 @@ function toSiteSettings(row: SiteSettingsRow): SiteSettings {
   };
 }
 
-/** The settings of these sites, by target ID; a site without a row (not a site) is absent. */
+/** 指定したsiteの設定（target IDごと）。行が無いもの（siteでないもの）は含まない。 */
 export async function listSiteSettings(
   connection: Connection,
   targetIds: readonly string[],
@@ -101,7 +101,7 @@ export async function findSiteSettings(
   return (await listSiteSettings(connection, [targetId])).get(targetId);
 }
 
-/** Every automatic site this launcher submits to, with its settings. */
+/** このlauncherが投入する自動投入のsiteすべてと、その設定。 */
 export async function listLauncherSiteSettings(
   connection: Connection,
   launcherId: string,
@@ -155,7 +155,7 @@ export async function saveSiteSettings(
   );
 }
 
-/** Serializes job shell versions and settings changes of one site. */
+/** 同じsiteのjob shellのバージョン追加と設定の変更を、1つずつ順に行わせる。 */
 export async function lockSiteSettings(connection: Connection, targetId: string): Promise<void> {
   await connection.query('SELECT 1 FROM site_settings WHERE target_id=$1 FOR UPDATE', [targetId]);
 }

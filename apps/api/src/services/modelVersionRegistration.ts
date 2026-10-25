@@ -19,13 +19,13 @@ import { enqueueRunEvent } from './outboxEvents.js';
 
 export type ModelVersionRegistrationActor =
   | { type: 'principal'; principal: Principal }
-  // Run completion handlers and worker output declarations act as the source Run's creator.
+  // Runの完了ハンドラとworkerの出力の宣言は、元のRunの作成者として動く。
   | { type: 'runCreator' };
 
 export interface ModelVersionRegistration {
   projectId: string;
   modelId: string;
-  // Omitted versions are numbered from models.next_version.
+  // 省略したときは、models.next_versionから番号を振る。
   version?: string;
   sourceRunId?: string | null;
   parentVersionIds: string[];
@@ -37,10 +37,10 @@ export interface ModelVersionRegistration {
 }
 
 /**
- * Inserts an immutable ModelVersion and starts model automation in the caller's transaction.
- * The source Run takes FOR KEY SHARE, the same lock as the model_versions FK: MLflow
- * registration already holds the Logged Model lock here, and a stronger Run lock would
- * deadlock with runs/outputs, which locks Run before Logged Model.
+ * 呼び出し元のトランザクションで、変更できないModelVersionを挿入し、モデルの自動実行を始める。
+ * 元のRunにはmodel_versionsの外部キーと同じFOR KEY SHAREのロックをかける。MLflowの登録はここで
+ * 既にLogged Modelのロックを持っており、Runにより強いロックをかけると、RunをLogged Modelより
+ * 先にロックするruns/outputsとデッドロックするため。
  */
 export async function registerModelVersion(
   connection: PoolClient,
@@ -106,8 +106,9 @@ export async function registerModelVersion(
   ))!;
   await automation.processRegistration(connection, { projectId, modelVersionId: inserted.id });
   if (sourceRun) {
-    // Terminal transitions lock the Run FOR UPDATE, so they either wait for this transaction and
-    // list the version themselves, or committed before it; only then does the event need resending.
+    // 終了状態への遷移はRunをFOR UPDATEでロックするので、このトランザクションを待って自分で
+    // バージョンを並べるか、これより前にコミットしているかのどちらかになる。イベントを送り直す
+    // 必要があるのは後者だけ。
     const currentRun = await findRun(connection, { projectId, id: sourceRun.id });
     if (isTerminalStatus(currentRun.status)) await enqueueRunEvent(connection, currentRun);
   }
@@ -118,8 +119,8 @@ async function requireRunCreatorRegistryAccess(
   connection: Connection,
   member: { projectId: string; userId: string },
 ): Promise<void> {
-  // The system actor does not inherit a global administrator's session-only access. Group
-  // bindings count like direct grants, as they do for every other authorization decision.
+  // システムのactorは、全体管理者がsessionでだけ持つアクセスを引き継がない。group bindingは、
+  // ほかのすべての権限の判断と同じく、直接付与と同じに数える。
   const membership = await first(
     connection,
     "SELECT 1 FROM effective_project_roles WHERE project_id=$1 AND user_id=$2 AND role IN ('editor','admin')",

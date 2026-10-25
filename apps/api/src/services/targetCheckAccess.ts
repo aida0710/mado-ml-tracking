@@ -16,8 +16,8 @@ export async function findTarget(connection: Connection, targetId: string): Prom
 }
 
 /**
- * The computer someone asks a worker to check or read. Workers reach ssh and local computers with
- * their own SSH keys, so those who may add and keep them ask: global administrators.
+ * workerに確認や読み取りを頼む対象のコンピュータ。workerはsshとlocalのコンピュータに自分の
+ * SSHの鍵で入るので、頼めるのはそれらを追加・管理できる人、つまり全体管理者。
  */
 export async function findCheckableTarget(
   connection: Connection,
@@ -26,7 +26,7 @@ export async function findCheckableTarget(
 ): Promise<ComputeTarget> {
   requireGlobalAdmin(principal);
   const target = await findTarget(connection, targetId);
-  // No worker connects to a site, so a request would only wait and fail as no_worker.
+  // siteにはどのworkerもつながらないので、頼んでも待ったあとにno_workerで失敗するだけ。
   if (target.executor === 'site')
     throw new DomainError({
       status: 422,
@@ -36,7 +36,10 @@ export async function findCheckableTarget(
   return target;
 }
 
-/** A chosen worker must be online and claim what is assigned to it, or the request waits in vain. */
+/**
+ * 選んだworkerは、オンラインで、割り当てたものをclaimするものでなければならない。そうでなければ
+ * リクエストはむだに待つだけになる。
+ */
 export async function requireCheckWorker(
   connection: Connection,
   worker: TargetCheckWorker,

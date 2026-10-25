@@ -143,7 +143,7 @@ describe.skipIf(!testDatabaseUrl)('Run一覧の保存ビュー（独立PostgreSQ
     expect(
       await errorCode(await postView({ visibility: 'project', name: '共有' }, fixture.viewer), 403),
     ).toBe('saved_view_share_forbidden');
-    // A private view stays readable after a reload: GET returns the stored state as saved.
+    // 自分用のビューは再読み込みしても読める。GETは保存したとおりの状態を返す。
     expect(await entity<SavedView>(await getView(view.id, fixture.viewer), 200)).toEqual(view);
   });
 
@@ -190,7 +190,7 @@ describe.skipIf(!testDatabaseUrl)('Run一覧の保存ビュー（独立PostgreSQ
       state: { filter: 'metrics.loss < 0.1' },
     });
     expect(Date.parse(renamed.updatedAt)).toBeGreaterThanOrEqual(Date.parse(shared.updatedAt));
-    // Only the owner may make a shared view private; otherwise it would vanish for its owner too.
+    // 共有ビューを自分用にできるのは所有者だけ。ほかの人がすると、所有者からも見えなくなる。
     expect(
       await errorCode(await patchView(shared.id, { visibility: 'private' }, projectAdmin), 403),
     ).toBe('saved_view_owner_required');
@@ -240,7 +240,7 @@ describe.skipIf(!testDatabaseUrl)('Run一覧の保存ビュー（独立PostgreSQ
   });
 
   it('64KiBを超える状態・未知のversion・検索できないfilterは422で保存しない', async () => {
-    // Columns alone stay below the limit (200 x 300 characters), so wide chart panels exceed it.
+    // 列だけでは上限（200 x 300文字）に届かないので、幅の広いグラフのパネルで超えさせる。
     const basePanel = viewState().chartPanels.panels[0]!;
     const oversized = viewState({
       chartPanels: {

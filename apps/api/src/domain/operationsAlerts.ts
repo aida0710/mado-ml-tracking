@@ -6,15 +6,15 @@ import {
 } from '@mmt/contracts';
 import { JOB_HEARTBEAT_STALE_SECONDS, WORKER_OFFLINE_SECONDS } from './workerLiveness.js';
 
-// Agreed thresholds (decisions.md): a plugin is stalled when an event stays undelivered for
-// 15 minutes, or when one event has been attempted 5 times without success.
+// 合意した閾値（decisions.md）。イベントが15分届かないままか、1つのイベントを5回試行しても
+// 成功しないとき、pluginが止まっているとみなす。
 export const PLUGIN_STALL_SECONDS = 900;
 export const PLUGIN_STALL_ATTEMPTS = 5;
-// A worker silent for a week is treated as retired (renamed or removed host), so it neither
-// opens a new alert nor keeps an old one open forever.
+// 1週間応答の無いworkerは引退した（ホストの名前が変わったか、外された）とみなし、新しい
+// アラートを開かず、古いアラートもいつまでも開いたままにしない。
 export const WORKER_RETIRED_SECONDS = 7 * 24 * 60 * 60;
 
-// A history view pages through the newest 50 unless it asks for more.
+// 履歴の表示は、多くを求めない限り新しい50件ずつページを送る。
 const DEFAULT_ALERT_PAGE_SIZE = 50;
 
 export const operationsAlertQuerySchema = z.strictObject({
@@ -29,7 +29,7 @@ export const operationsAlertQuerySchema = z.strictObject({
 
 export type OperationsAlertDetail = Record<string, string | number | boolean | null>;
 
-/** A subject the monitor watches this tick. isAlerting tells whether it should have an open alert. */
+/** 今回の周期で監視が見る対象。isAlertingは、開いたアラートを持つべきかを表す。 */
 export interface MonitoredSubject {
   kind: OperationsAlertKind;
   subjectId: string;
@@ -47,7 +47,7 @@ export interface OpenAlertReference {
 export interface AlertResolution<Subject extends MonitoredSubject> {
   alert: OpenAlertReference;
   resolution: OperationsAlertResolution;
-  /** The subject as read this tick; absent when it is no longer watched. */
+  /** 今回の周期で読んだ対象。もう監視していなければ無い。 */
   subject?: Subject;
 }
 
@@ -69,8 +69,8 @@ export function isWorkerRetired(silentSeconds: number): boolean {
 }
 
 /**
- * Undelivered includes events being sent: a retry in flight is still part of the backlog, so an
- * alert does not resolve and reopen each time the dispatcher claims the event.
+ * 未送信には送信中のイベントも含む。送っている途中の再試行もまだ滞留の一部なので、dispatcherが
+ * イベントを取るたびにアラートが解消して開き直すことはない。
  */
 export function isPluginDeliveryStalled(backlog: {
   oldestUndeliveredAgeSeconds: number | null;
@@ -88,9 +88,9 @@ function subjectKey(reference: { kind: OperationsAlertKind; subjectId: string })
 }
 
 /**
- * Compares the open alerts with the subjects read this tick. An alerting subject without an open
- * alert opens one; an open alert whose subject stopped alerting resolves as recovered, and one
- * whose subject is no longer watched resolves as inactive.
+ * 開いているアラートと今回の周期で読んだ対象を比べる。アラート状態なのに開いたアラートが無い
+ * 対象には、アラートを開く。開いたアラートのうち、対象がアラート状態でなくなったものは
+ * recovered、対象をもう監視していないものはinactiveとして解消する。
  */
 export function planAlertChanges<Subject extends MonitoredSubject>(
   openAlerts: readonly OpenAlertReference[],

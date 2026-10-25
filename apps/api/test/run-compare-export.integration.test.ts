@@ -18,14 +18,14 @@ import { projectFixture, referenceDigest } from './fixtures.js';
 type Fixture = Awaited<ReturnType<typeof projectFixture>>;
 type Credentials = { cookie?: string; token?: string };
 
-// Larger than one search page (500), so the export reads several pages while streaming.
+// 検索の1ページ（500）より多くし、エクスポートがstreamしながら複数のページを読むようにする。
 const MULTI_PAGE_RUN_COUNT = 1200;
 
-// Response.text() drops a leading BOM, so the bytes are decoded with it kept.
+// Response.text()は先頭のBOMを落とすので、BOMを残してバイト列をデコードする。
 const csvDecoder = () => new TextDecoder('utf-8', { ignoreBOM: true });
 const responseCsv = async (response: Response) => csvDecoder().decode(await response.arrayBuffer());
 
-/** Splits CSV text without quoted line breaks into lines; enough for these fixtures. */
+/** 引用符内の改行が無いCSVの文字列を行に分ける。このfixtureにはこれで足りる。 */
 function csvLines(csv: string): string[] {
   expect(csv.startsWith(CSV_BYTE_ORDER_MARK)).toBe(true);
   const lines = csv.slice(CSV_BYTE_ORDER_MARK.length).split('\r\n');
@@ -195,7 +195,7 @@ describe.skipIf(!testDatabaseUrl)('Runの一括比較とCSV出力（独立Postgr
     const unlogged = await createRun({ name: 'unlogged' });
     await logMetrics(baseline.id, { wer: 0.2, cer: 0.1 });
     await logMetrics(candidate.id, { wer: 0.15 });
-    // A later step leaves wer NaN as the latest value of this Run.
+    // 後のstepで、このRunのwerの最新値がNaNになる。
     await harness.database.query(
       `UPDATE runs SET latest_metrics=latest_metrics || jsonb_build_object('wer','NaN'::float8) WHERE id=$1`,
       [unlogged.id],
@@ -208,7 +208,7 @@ describe.skipIf(!testDatabaseUrl)('Runの一括比較とCSV出力（独立Postgr
     );
     expect(comparison.runs.map((run) => run.id)).toEqual(runIds);
     expect(comparison.baselineRunId).toBe(baseline.id);
-    // Comparison rows are polling summaries; the snapshot body stays on the detail endpoint.
+    // 比較の行はポーリング用の要約。スナップショットの本体は詳細のエンドポイントでだけ返す。
     for (const run of comparison.runs) expect(run).not.toHaveProperty('executionSnapshot');
     expect(comparison.modelVersions).toEqual([
       expect.objectContaining({
@@ -306,7 +306,7 @@ describe.skipIf(!testDatabaseUrl)('Runの一括比較とCSV出力（独立Postgr
     expect(lines[1]).toBe(`id,${candidate.id},${baseline.id}`);
     expect(lines).toContain('experiment,Test Experiment,Test Experiment');
     expect(lines).toContain('baseline,false,true');
-    // String parameters get the formula guard; numeric metrics such as -0.25 do not.
+    // 文字列のparameterには数式対策の印を付け、-0.25のような数値のメトリクスには付けない。
     expect(lines).toContain("params.note,plain,'=1+1");
     expect(lines).toContain('metrics.loss,-0.25,0.5');
     expect(lines).toContain('metrics.loss (delta),-0.75,0');
@@ -340,7 +340,7 @@ describe.skipIf(!testDatabaseUrl)('Runの一括比較とCSV出力（独立Postgr
       'id,name,experiment,kind,status,created,ended,modelVersion,datasetVersions,' +
         'params.lr,params.optimizer,metrics.wer,tags.team',
     );
-    // limit is a paging field of /runs/search and does not shorten an export.
+    // limitは/runs/searchのページ送りの項目で、エクスポートを短くはしない。
     expect(lines).toHaveLength(3);
     expect(lines[1]).toBe(
       `${newer.id},newer,Test Experiment,training,queued,${newer.createdAt},,,,,adam,0.2,`,
@@ -408,7 +408,7 @@ describe.skipIf(!testDatabaseUrl)('Runの一括比較とCSV出力（独立Postgr
     const decoder = csvDecoder();
     let csv = decoder.decode((await reader.read()).value, { stream: true });
     csv += decoder.decode((await reader.read()).value, { stream: true });
-    // Between chunks the export waits for the client without a checked-out connection.
+    // chunkの合間、エクスポートは接続を借りたままにせずにクライアントを待つ。
     expect(harness.database.totalCount - harness.database.idleCount).toBe(0);
     for (let chunk = await reader.read(); !chunk.done; chunk = await reader.read())
       csv += decoder.decode(chunk.value, { stream: true });

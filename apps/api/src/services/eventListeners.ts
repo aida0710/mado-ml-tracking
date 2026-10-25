@@ -3,9 +3,9 @@ import type { Connection } from '../db/database.js';
 const LISTENER_SAVEPOINT = 'event_listener';
 
 /**
- * Runs a listener inside the transaction of the event it listens to (a registration, a saved
- * checkpoint). A failing listener is rolled back to a savepoint and logged, so the event itself
- * is still stored, as RunCompletionService does for its handlers.
+ * listenerを、それが受け取るイベント（登録、checkpointの保存）のトランザクションの中で動かす。
+ * 失敗したlistenerはsavepointまで巻き戻してログに残すので、イベント自体は保存される。
+ * RunCompletionServiceがハンドラに対して行うのと同じ。
  */
 export async function notifyListener(
   connection: Connection,

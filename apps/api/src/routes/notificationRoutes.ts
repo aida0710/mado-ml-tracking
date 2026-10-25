@@ -10,7 +10,7 @@ import { jsonBody, parse, principal, uuidParam, type ApiEnvironment } from '../h
 import { requestMetadata } from '../http/requestMetadata.js';
 import type { NotificationService } from '../services/notificationService.js';
 
-/** Mounted at /api: channels are global (/notification-channels), rules belong to a Project. */
+/** /apiに置く。通知先は全体のもの（/notification-channels）で、通知ルールはProjectに属する。 */
 export function notificationRoutes(notifications: NotificationService): Hono<ApiEnvironment> {
   const routes = new Hono<ApiEnvironment>();
   routes.get('/notification-channels', async (context) =>

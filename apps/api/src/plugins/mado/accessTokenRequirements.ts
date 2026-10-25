@@ -6,13 +6,13 @@ import {
 } from '@mmt/contracts';
 import { DomainError } from '../../domain/errors.js';
 
-// Searching datasets and sending run records are the integration itself; capacity is optional.
+// データセットの検索とRunの記録の送信が連携そのもので、capacityは任意。
 const REQUIRED_SCOPES = [
   { scope: MADO_SCOPES.lineageRead, label: 'DataLineage read' },
   { scope: MADO_SCOPES.lineageWrite, label: 'DataLineage send' },
 ] as const;
 
-/** Rejects a token that cannot search or cannot record this connection's runs in Mado. */
+/** 検索できないtoken、またはこの接続のRunをmado S3 Data Catalogに記録できないtokenを拒否する。 */
 export function assertAccessTokenCoversConnection(
   grant: MadoAccessTokenGrant,
   config: Pick<MadoPluginConfig, 'jobNamespace'>,

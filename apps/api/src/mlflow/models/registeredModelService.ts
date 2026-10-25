@@ -218,7 +218,7 @@ export class RegisteredModelService {
           name: reference.name,
           version: reference.version,
         });
-        // The native FK also binds the alias to a version of this same Model.
+        // ネイティブのFKも、aliasを同じModelのバージョンに結びつける。
         await assignModelAlias(connection, {
           modelId: model.id,
           alias: reference.alias,

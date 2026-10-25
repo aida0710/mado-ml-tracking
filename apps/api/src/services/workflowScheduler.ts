@@ -5,9 +5,9 @@ import { findWorkflowExecutionSummary } from '../repositories/workflowExecutionR
 import type { WorkflowExecutor } from './workflowExecutor.js';
 import { PollingLoop } from './pollingLoop.js';
 
-// A completed step should hand its output to the next without a noticeable wait in the UI.
+// 完了したstepは、画面で待たされたと感じさせずに次のstepへ出力を渡したい。
 const WORKFLOW_POLL_INTERVAL_MS = 2000;
-// Executions advanced per pass, oldest first, so one pass stays short; the rest wait two seconds.
+// 1回の巡回で進める実行の数。古い順に進め、1回を短く保つ。残りは2秒待つ。
 const WORKFLOW_SCHEDULER_BATCH_SIZE = 50;
 
 export class WorkflowScheduler {
@@ -30,9 +30,9 @@ export class WorkflowScheduler {
   }
 
   /**
-   * One pass over the executions whose step Runs changed or that have a step to start. A step whose
-   * launch failed waits WORKFLOW_STEP_LAUNCH_RETRY_DELAY_SECONDS before it is launched again. A
-   * failing execution is logged and does not stop the others.
+   * stepのRunが変わった実行と、始めるstepがある実行を1回巡回する。起動に失敗したstepは、
+   * WORKFLOW_STEP_LAUNCH_RETRY_DELAY_SECONDS待ってから再び起動する。失敗した実行はログに
+   * 残し、ほかの実行は止めない。
    */
   async tick(): Promise<number> {
     const candidates = await rows<{ id: string; projectId: string }>(
@@ -54,7 +54,7 @@ export class WorkflowScheduler {
     for (const candidate of candidates) {
       try {
         await transaction(this.database, async (connection) => {
-          // Multiple API processes may observe the same completion, but only one advances it.
+          // 複数のAPIプロセスが同じ完了を見ることがあるが、進めるのは1つだけ。
           const locked = await rows<{ id: string }>(
             connection,
             "SELECT id FROM workflow_executions WHERE id=$1 AND status IN ('running','canceling') FOR UPDATE SKIP LOCKED",
@@ -69,9 +69,9 @@ export class WorkflowScheduler {
           advanced += 1;
         });
       } catch (error) {
-        // Error details can include SQL text; the execution id and the error's name and code
-        // (SQLSTATE) are enough to find it. Nothing of the pass was kept, so the next pass tries
-        // the execution again.
+        // エラーの詳細にはSQL文が入ることがある。原因を探すには、実行のidとエラーの名前とコード
+        // （SQLSTATE）があれば足りる。この巡回の結果は何も残らないので、次の巡回でその実行を
+        // もう一度試す。
         console.error(
           JSON.stringify({
             event: 'workflow_advance_failed',

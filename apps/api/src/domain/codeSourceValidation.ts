@@ -2,9 +2,9 @@ import { z } from 'zod';
 import { containsControlCharacter } from '@mmt/contracts';
 import { hasAncestorPathConflict } from './codePathConflicts.js';
 
-// Registry JSON is limited to 4 MiB; leave space for commands and metadata.
+// レジストリのJSONは4MiBまで。コマンドとmetadataの余地を残す。
 export const MAX_CODE_TEXT_BYTES = 3 * 1024 * 1024;
-// Bound individual editor files and the number of paths sent to workers.
+// エディタの1ファイルの大きさと、workerへ送るパスの数を抑える。
 export const MAX_CODE_FILE_BYTES = 2_000_000;
 export const MAX_CODE_FILES = 1000;
 

@@ -9,32 +9,31 @@ import {
 import { PollingLoop } from './pollingLoop.js';
 import type { ArtifactUploadSweep, ArtifactUploadSweeper } from './artifactUploadSweeper.js';
 
-// The upload sweeper ran on this cadence before the collector took it over; blob removal after a
-// grace period of days is not sensitive to minutes either.
+// collectorが引き継ぐ前、アップロードのsweeperはこの間隔で動いていた。何日もの猶予期間のあとの
+// blobの削除も、分単位の差は気にしない。
 const COLLECT_INTERVAL_MS = 10 * 60 * 1000;
-// One query's worth of blobs; a run keeps taking batches until no due blob is left.
+// 1回のクエリで扱うblobの数。1回の実行の中で、期限の来たblobが無くなるまで続けて取る。
 const REMOVAL_BATCH_SIZE = 200;
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
-// Matches last_removal_error of artifact_deletions and purged_project_blobs.
+// artifact_deletionsとpurged_project_blobsのlast_removal_errorに合わせる。
 const MAX_ERROR_NAME_LENGTH = 64;
 
 export interface ArtifactGarbageCollection {
-  /** Blobs of deleted Artifacts and purged Projects removed in this run. */
+  /** この実行で消した、削除済みArtifactと完全に削除したProjectのblob。 */
   removedBlobs: number;
-  /** Blobs whose removal failed; they are retried on the next run. */
+  /** 削除に失敗したblob。次の実行で再試行する。 */
   failedBlobs: number;
   uploads: ArtifactUploadSweep;
 }
 
-// Deleted Artifacts first: they are the usual case and their grace period started earlier.
+// 削除済みArtifactを先にする。よくあるのはこちらで、猶予期間も先に始まっている。
 const BLOB_REMOVAL_QUEUES: readonly BlobRemovalQueue[] = [deletedArtifactBlobs, purgedProjectBlobs];
 
 /**
- * Removes storage nothing points to any more: blobs of Artifacts deleted, or of Projects purged,
- * longer ago than the grace period, and (through ArtifactUploadSweeper) expired upload sessions,
- * orphaned multipart uploads and abandoned staging files. The deletion is already committed in the
- * DB before a blob is touched, and removing a missing blob succeeds, so a run cut short is
- * finished by the next one.
+ * もう何からも指されていない保存領域を消す。猶予期間より前に削除したArtifactや完全に削除した
+ * Projectのblobと、（ArtifactUploadSweeperを通して）期限切れのアップロードセッション、宙に浮いた
+ * multipartアップロード、放置されたstagingのファイル。blobに触る前に削除はDBでコミット済みで、
+ * 無いblobの削除も成功するので、途中で切れた実行は次の実行が終わらせる。
  */
 export class ArtifactGarbageCollector {
   private readonly loop = new PollingLoop({
@@ -96,12 +95,12 @@ export class ArtifactGarbageCollector {
 
   private async removeBlob(queue: BlobRemovalQueue, blob: QueuedBlob): Promise<boolean> {
     try {
-      // The blob's own backend, which stays readable (and removable) after it is disabled.
+      // blob自身の保存先。保存先を無効にしたあとも読める（消せる）。
       await this.options.stores.remove({ backend: blob.backend, key: blob.storageKey });
     } catch (error) {
       const errorName = ((error as Error)?.name ?? 'Error').slice(0, MAX_ERROR_NAME_LENGTH);
       await queue.markFailed(this.options.database, { blob, errorName });
-      // Only the immutable id and the error name: storage keys can reveal bucket layout.
+      // 変わらないidとエラー名だけを出す。保存キーからバケットの構成が分かることがある。
       console.error(
         JSON.stringify({
           event: 'artifact_blob_removal_failed',

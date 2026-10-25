@@ -2,7 +2,7 @@ import type { Launcher } from '@mmt/contracts';
 import { createApiTokenSecret } from '../auth/apiTokens.js';
 import { first, rows, type Connection } from '../db/database.js';
 
-// The scope only launcher tokens carry; personal and Service Account tokens cannot ask for it.
+// launcherのtokenだけが持つscope。個人とService Accountのtokenでは求められない。
 export const LAUNCHER_SCOPE = 'launcher:execute';
 
 const launcherColumns = `l.id,l.name,l.created_by,l.created_at,l.last_seen_at,l.revoked_at,
@@ -38,7 +38,7 @@ export async function isLiveLauncher(connection: Connection, launcherId: string)
   ]));
 }
 
-/** The launcher's own user owns its token, so the token survives the administrator leaving. */
+/** tokenはlauncher自身の利用者が所有するので、管理者がいなくなってもtokenは残る。 */
 export async function insertLauncher(
   connection: Connection,
   launcher: { name: string; createdBy: string },
@@ -55,7 +55,7 @@ export async function insertLauncher(
   ))!.id;
 }
 
-/** Revokes the launcher's tokens and issues a new one; the value is returned once. */
+/** launcherのtokenを失効させて新しいものを発行する。値を返すのはこの1回だけ。 */
 export async function replaceLauncherToken(
   connection: Connection,
   launcher: { userId: string; createdBy: string },
@@ -93,7 +93,7 @@ export async function revokeLauncher(connection: Connection, launcherId: string)
   await connection.query("UPDATE users SET status='disabled' WHERE id=$1", [launcher.userId]);
 }
 
-/** The live launcher a token's user is. */
+/** tokenの利用者に当たる、失効していないlauncher。 */
 export async function findLauncherByUser(
   connection: Connection,
   userId: string,
