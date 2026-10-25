@@ -1,0 +1,43 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    # / はnpm workspaces（apps/*・packages/*）をまとめたlockfile、/pages はドキュメントサイト。
+    directories: [/, /pages]
+    schedule: { interval: weekly, day: monday, time: "09:00", timezone: Asia/Tokyo }
+    # Reactと残りの更新をまとめ、通常のnpm更新PRは同時に2件までにする。
+    open-pull-requests-limit: 2
+    # 通常更新はminor・patchに限定する。allowのupdate-typesはセキュリティ更新を制限しない。
+    allow:
+      - dependency-name: "*"
+        update-types: [version-update:semver-minor, version-update:semver-patch]
+    groups:
+      react:
+        patterns: [react, react-dom, "@types/react", "@types/react-dom"]
+      compatible:
+        patterns: ["*"]
+        update-types: [minor, patch]
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
+  - package-ecosystem: docker
+    # ルートのDockerfile.{api,web,preview,worker,launcher}。digestで固定したベースイメージを追う。
+    directories: [/]
+    schedule: { interval: weekly, day: monday, time: "09:00", timezone: Asia/Tokyo }
+    open-pull-requests-limit: 1
+    groups:
+      images:
+        patterns: ["*"]
+    ignore:
+      # Node.jsのLTS移行はCI・全イメージ・開発手順をそろえて行う。
+      - dependency-name: node
+        update-types: [version-update:semver-major]
+      # Pythonの版はSDKのrequires-pythonとCIにそろえて上げる。
+      - dependency-name: python
+        update-types: [version-update:semver-major, version-update:semver-minor]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly, day: monday, time: "09:00", timezone: Asia/Tokyo }
+    open-pull-requests-limit: 1
+    groups:
+      actions:
+        patterns: ["*"]
