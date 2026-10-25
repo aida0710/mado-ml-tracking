@@ -40,7 +40,7 @@ export function PromotionOwnerDialog({
   const [validationError, setValidationError] = useState<string | null>(null);
   const mutation = useMutation();
   return (
-    <Dialog title={text.promotionTransferOwner} onClose={onClose} busy={mutation.pending}>
+    <Dialog title={text.promotionTransferOwner} onClose={onClose} dismissible={!mutation.pending}>
       <form
         onSubmit={(event) => {
           event.preventDefault();

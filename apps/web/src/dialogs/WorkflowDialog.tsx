@@ -54,9 +54,9 @@ export function WorkflowDialog({
   return (
     <>
       <Dialog
-        wide
+        size="wide"
         title={previous ? labels.workflowNewVersion : labels.workflowNew}
-        busy={mutation.pending}
+        dismissible={!mutation.pending}
         onClose={close}
       >
         <Resource query={options}>

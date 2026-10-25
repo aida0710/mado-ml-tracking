@@ -16,7 +16,7 @@ export function MadoSettingsDialog({ plugin, onClose, onSaved }: {
   useLocale();
   const { project } = useProject();
   const form = useMadoPluginForm({ projectId: project.id, plugin });
-  return <Dialog title={pluginsText.madoSettings} onClose={onClose} busy={form.pending}>
+  return <Dialog title={pluginsText.madoSettings} onClose={onClose} dismissible={!form.pending}>
     <form onSubmit={(event) => {
       event.preventDefault();
       void form.save().then((saved) => { if (saved) onSaved(saved); });

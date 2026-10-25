@@ -140,7 +140,7 @@ export function CreateSweepDialog({
   }
 
   return (
-    <Dialog title={text.sweepNew} onClose={onClose} busy={mutation.pending} wide>
+    <Dialog title={text.sweepNew} onClose={onClose} dismissible={!mutation.pending} size="wide">
       <form className="sweep-create-form" data-testid="sweep-create-form" onSubmit={(event) => {
         event.preventDefault();
         void submit();

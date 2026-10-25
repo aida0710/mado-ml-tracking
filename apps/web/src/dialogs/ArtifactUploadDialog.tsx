@@ -97,7 +97,7 @@ export function ArtifactUploadDialog({
     selectedFileResume.status !== 'checking' &&
     (sources.length > 1 || singleArtifactPath !== '');
   return (
-    <Dialog title={text.uploadArtifact} onClose={onClose} busy={queue.isActive} wide>
+    <Dialog title={text.uploadArtifact} onClose={onClose} dismissible={!queue.isActive} size="wide">
       <form
         className="artifact-upload-form touch-targets"
         onSubmit={(event) => {

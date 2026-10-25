@@ -126,8 +126,8 @@ function TrainingSourceForm({
       <Dialog
         title={trainingText.associateTrainingSource}
         onClose={onClose}
-        busy={form.pending}
-        wide
+        dismissible={!form.pending}
+        size="wide"
       >
         <form
           onSubmit={(event) => {

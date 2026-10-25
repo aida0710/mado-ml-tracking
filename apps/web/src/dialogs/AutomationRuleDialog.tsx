@@ -52,8 +52,8 @@ export function AutomationRuleDialog({
     <Dialog
       title={source ? automationText.copyRuleTitle(source.name) : text.newAutomationRule}
       onClose={onClose}
-      busy={form.pending}
-      wide
+      dismissible={!form.pending}
+      size="wide"
     >
       <form
         onSubmit={(event) => {

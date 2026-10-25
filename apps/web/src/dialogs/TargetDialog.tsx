@@ -91,7 +91,7 @@ function TargetForm({
   const canAddSshOrLocal = canAddSshOrLocalTarget(user);
   const form = useTargetForm({ target, canAddSshOrLocal });
   return (
-    <Dialog title={title} onClose={onClose} busy={form.pending} wide>
+    <Dialog title={title} onClose={onClose} dismissible={!form.pending} size="wide">
       <form
         onSubmit={(event) => {
           event.preventDefault();

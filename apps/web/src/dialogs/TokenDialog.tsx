@@ -112,7 +112,7 @@ function TokenIssueForm({
     });
   }
   return (
-    <Dialog title={title} onClose={onClose} busy={mutation.pending}>
+    <Dialog title={title} onClose={onClose} dismissible={!mutation.pending}>
       <form
         onSubmit={(event) => {
           event.preventDefault();

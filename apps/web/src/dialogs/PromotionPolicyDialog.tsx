@@ -104,7 +104,7 @@ export function PromotionPolicyDialog({
         ? describeMetricKeySource(recordedMetrics.value)
         : text.loading;
   return (
-    <Dialog title={text.newPromotionPolicy} onClose={onClose} busy={form.pending} wide>
+    <Dialog title={text.newPromotionPolicy} onClose={onClose} dismissible={!form.pending} size="wide">
       <form
         onSubmit={(event) => {
           event.preventDefault();

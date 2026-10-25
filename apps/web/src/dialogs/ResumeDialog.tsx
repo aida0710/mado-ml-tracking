@@ -32,7 +32,7 @@ export function ResumeDialog({
     <Dialog
       title={checkpoint ? text.checkpointResumeTitle : text.checkpointResumeLatest}
       onClose={onClose}
-      busy={mutation.pending}
+      dismissible={!mutation.pending}
     >
       <form
         onSubmit={(event) => {

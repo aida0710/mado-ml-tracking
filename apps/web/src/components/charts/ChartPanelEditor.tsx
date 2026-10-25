@@ -73,7 +73,7 @@ export function ChartPanelEditor({
   }
 
   return (
-    <Dialog title={dialogTitle} onClose={onClose} wide className="chart-panel-editor">
+    <Dialog title={dialogTitle} onClose={onClose} size="wide" className="chart-panel-editor">
       <form
         onSubmit={(event) => {
           event.preventDefault();

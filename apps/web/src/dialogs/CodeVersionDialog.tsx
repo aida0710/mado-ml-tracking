@@ -21,8 +21,8 @@ export function CodeVersionDialog({ code, initialVersion, versions = [], onClose
     unsaved, repositoryMode, changeValues, selectBaseVersion, changeRepositoryMode, applySample } = workspace;
   const editorVisible = sourceKind === 'git' || sourceKind === 'inline';
   return <>
-    <Dialog title={`${code.name} · ${text.workspace}`} onClose={() => unsaved.requestAction(onClose)} busy={busy}
-      wide className="workspace-dialog">
+    <Dialog title={`${code.name} · ${text.workspace}`} onClose={() => unsaved.requestAction(onClose)} dismissible={!busy}
+      size="wide" className="workspace-dialog">
       <form onSubmit={(event) => {
         event.preventDefault();
         void form.save(editorVisible ? editor.workspace : undefined).then((version) => {

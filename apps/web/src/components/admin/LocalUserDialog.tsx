@@ -46,7 +46,7 @@ export function LocalUserDialog({
       </Dialog>
     );
   return (
-    <Dialog title={text.newLocalUser} onClose={onClose} busy={mutation.pending}>
+    <Dialog title={text.newLocalUser} onClose={onClose} dismissible={!mutation.pending}>
       <form
         onSubmit={(event) => {
           event.preventDefault();
