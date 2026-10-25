@@ -184,7 +184,7 @@
 .notice.warning {
   border-left-color: var(--warning);
 }
-/* A notice with a button: below --bp-sm the button goes under the text, so the explanation keeps
+/* A notice with a button: below 640px the button goes under the text, so the explanation keeps
    the full width instead of a narrow column beside a long label (English labels are longer). */
 @media (width < 640px) {
   .notice.action-notice {

@@ -329,7 +329,7 @@
   margin-top: 32px;
   max-width: 1100px;
 }
-/* Below --bp-sm the picker's fields stack, and its choices grow to finger-sized rows. */
+/* Below 640px the picker's fields stack, and its choices grow to finger-sized rows. */
 @media (width < 640px) {
   .report-field-grid {
     grid-template-columns: minmax(0, 1fr);

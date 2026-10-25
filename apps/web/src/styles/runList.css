@@ -8,7 +8,7 @@
   justify-content: center;
 }
 
-/* The Run list below --bp-sm (NarrowRunTable): the name wraps instead of keeping the wide table's
+/* The Run list below 640px (NarrowRunTable): the name wraps instead of keeping the wide table's
    180px column, so the selection, the name, the status and the open button fit a 320px phone. */
 .narrow-run-table .responsive-table :is(th, td):is(.run-select-cell, .run-name-cell) {
   min-width: 0;

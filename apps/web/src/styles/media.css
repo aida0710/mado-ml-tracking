@@ -203,7 +203,7 @@
   white-space: pre-wrap;
   word-break: break-all;
 }
-/* Below --bp-md the comparison stacks the Runs: each Run's steps wrap under its name. */
+/* Below 900px the comparison stacks the Runs: each Run's steps wrap under its name. */
 .media-compare-runs {
   display: grid;
   gap: 14px;

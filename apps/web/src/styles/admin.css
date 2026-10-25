@@ -101,7 +101,7 @@
   color: var(--muted);
   font-size: 12px;
 }
-/* The two-column settings stack below --bp-lg, before either column gets too narrow. */
+/* The two-column settings stack below 1200px, before either column gets too narrow. */
 @media (width < 1200px) {
   .settings-grid {
     grid-template-columns: minmax(0, 1fr);

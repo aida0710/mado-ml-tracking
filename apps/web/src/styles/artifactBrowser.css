@@ -69,7 +69,7 @@
 .artifact-catalog-toolbar .toolbar-select input[type='checkbox'] {
   margin: 0;
 }
-/* Below --bp-sm each filter takes a full row, so long Run and model names stay readable. */
+/* Below 640px each filter takes a full row, so long Run and model names stay readable. */
 @media (width < 640px) {
   .artifact-catalog-toolbar .toolbar-select {
     flex-basis: 100%;
@@ -92,7 +92,7 @@
   .artifact-catalog .artifact-layout {
     grid-template-columns: minmax(0, 1fr);
   }
-  /* One pane at a time below --bp-md: the list scrolls with the page instead of inside itself. */
+  /* One pane at a time below 900px: the list scrolls with the page instead of inside itself. */
   .artifact-tree .table-scroll,
   .artifact-catalog .artifact-layout .table-scroll {
     max-height: none;

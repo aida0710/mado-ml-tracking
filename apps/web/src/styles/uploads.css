@@ -160,7 +160,7 @@ p.upload-resume-notice.muted {
 .dataset-folder-choice p {
   margin: 0;
 }
-/* Below --bp-sm a long path wraps instead of hiding the part that tells files apart. */
+/* Below 640px a long path wraps instead of hiding the part that tells files apart. */
 @media (width < 640px) {
   .upload-queue-title {
     flex-wrap: wrap;

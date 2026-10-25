@@ -15,7 +15,7 @@ const { chromium } = await import(pathToFileURL(modulePath).href);
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const screenshotDirectory = process.env.MMT_SCREENSHOT_DIR;
 if (screenshotDirectory) await mkdir(screenshotDirectory, { recursive: true });
-// The full sidebar from --bp-lg, the rail between --bp-md and --bp-lg, the drawer below --bp-md.
+// The full sidebar from 1200px, the rail between 900px and 1200px, the drawer below 900px.
 const WIDE = { width: 1440, height: 1250 };
 const RAIL = { width: 1100, height: 800 };
 const NARROW = { width: 390, height: 844 };

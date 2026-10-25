@@ -1,5 +1,7 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { narrowerThan } from '@mado/design-system/layout';
+import { useDocumentTheme, useMediaQuery } from '@mado/design-system/react';
 import {
   canUseLogScale,
   computePositions,
@@ -14,10 +16,7 @@ import {
   type AxisScale,
   type ChartRunRow,
 } from '../../lib/parallelCoordinates';
-import { useDocumentTheme } from '../../hooks/useDocumentTheme';
 import { useElementWidth } from '../../hooks/useElementWidth';
-import { narrowerThan } from '../../lib/breakpoints';
-import { useMediaQuery } from '../../lib/useMediaQuery';
 import { useLocale } from '../../i18n/useLocale';
 import { text, textTemplates } from '../../i18n/catalog';
 

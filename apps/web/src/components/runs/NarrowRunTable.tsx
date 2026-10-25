@@ -15,7 +15,7 @@ import { text } from '../../i18n/catalog';
 const ROW_COLUMN_KEYS: ReadonlySet<string> = new Set(['status']);
 
 /**
- * The Run list below --bp-sm: the selection, the name and the status in the row, and the rest of
+ * The Run list below 640px: the selection, the name and the status in the row, and the rest of
  * the chosen columns behind the row's open button. Moving and resizing columns is left to wide
  * screens, where the chosen order and widths are drawn.
  */

@@ -2,42 +2,47 @@ import { Link } from 'react-router-dom';
 import { LogOut, Moon, Sun } from 'lucide-react';
 import { authApi } from '../api/auth';
 import { useAuth } from '../hooks/useAuth';
-import { useTheme } from '../hooks/useTheme';
+import { narrowerThan } from '@mado/design-system/layout';
+import { NavigationDrawer, useMediaQuery, useTheme } from '@mado/design-system/react';
 import { useMutation } from '../hooks/useMutation';
 import type { Navigation } from '../hooks/useNavigation';
-import { narrowerThan } from '../lib/breakpoints';
-import { useMediaQuery } from '../lib/useMediaQuery';
+import { THEME_STORAGE_KEY } from '../lib/theme';
 import { ErrorNotice } from '../components/Feedback';
 import { LanguagePicker } from '../components/LanguagePicker';
 import { UserMenu } from '../components/UserMenu';
 import { ProductLogo } from '../components/ProductLogo';
 import { OperationsAlertBadge } from '../components/OperationsAlertBadge';
-import { NavigationDrawer } from './NavigationDrawer';
+import { NavigationLinkList } from './NavigationLinkList';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
 /**
- * The header: the app name, display language, theme, the signed-in user and logout. The screen
- * navigation sits in the sidebar or the rail; below --bp-md this header opens it in the drawer.
- * Below --bp-xs the buttons leave no room for the app name, so only its mark shows.
+ * 上部バー: アプリ名、表示言語、テーマ、ログイン中の利用者とログアウト。画面の切り替えはサイドバーか
+ * レールにあり、900px未満ではこのバーのメニューボタンからドロワーで開く。640px未満ではボタンに場所を
+ * 譲り、アプリ名は印だけを見せる（mado S3 Data Catalogと同じ幅）。
  */
 export function TopBar({ projectId, navigation }: { projectId?: string; navigation: Navigation }) {
   useLocale();
   const auth = useAuth();
-  const theme = useTheme();
+  const theme = useTheme({ storageKey: THEME_STORAGE_KEY });
   const mutation = useMutation();
-  const isAppNameVisuallyHidden = useMediaQuery(narrowerThan('xs'));
+  const isAppNameVisuallyHidden = useMediaQuery(narrowerThan('sm'));
   return (
     <>
       <a className="skip-link" href="#content">
         {text.skipContent}
       </a>
       <header className="topbar">
-        {navigation.mode === 'drawer' && navigation.groups.length > 0 && (
-          <NavigationDrawer groups={navigation.groups} />
+        {navigation.layout.mode === 'drawer' && navigation.groups.length > 0 && (
+          <NavigationDrawer
+            labels={{ open: text.openNavigation, close: text.closeNavigation, navigation: text.navigation }}
+            header={<ProductLogo />}
+          >
+            <NavigationLinkList groups={navigation.groups} />
+          </NavigationDrawer>
         )}
         <Link to="/" className="brand">
-          <ProductLogo isNameVisuallyHidden={isAppNameVisuallyHidden} />
+          <ProductLogo compact={isAppNameVisuallyHidden} />
         </Link>
         <div className="topbar-actions">
           <LanguagePicker />

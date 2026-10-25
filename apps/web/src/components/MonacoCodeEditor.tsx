@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import Editor, { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import EditorWorker from 'monaco-editor/editor/editor.worker?worker';
@@ -6,6 +6,8 @@ import JsonWorker from 'monaco-editor/language/json/json.worker?worker';
 import CssWorker from 'monaco-editor/language/css/css.worker?worker';
 import HtmlWorker from 'monaco-editor/language/html/html.worker?worker';
 import TypeScriptWorker from 'monaco-editor/language/typescript/ts.worker?worker';
+import { defineMonacoTheme, MONACO_THEME_NAMES, monacoFontFamily } from '@mado/design-system/monaco';
+import { useDocumentTheme } from '@mado/design-system/react';
 import { getFileLanguage } from '../lib/codeWorkspace';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
@@ -25,7 +27,7 @@ export default function MonacoCodeEditor({ path, value, onChange, readOnly = fal
   path: string; value: string; onChange: (path: string, content: string) => void; readOnly?: boolean;
 }) {
   useLocale();
-  const [theme, setTheme] = useState(document.documentElement.dataset.theme);
+  const theme = useDocumentTheme();
   const [failure, setFailure] = useState(false);
   const editorId = useId();
   // Keep Undo inside each file, then release every model owned by this dialog.
@@ -39,19 +41,21 @@ export default function MonacoCodeEditor({ path, value, onChange, readOnly = fal
       monaco.editor.getModel(monaco.Uri.parse(visitedPath))?.dispose();
   }, []);
   useEffect(() => {
-    const observer = new MutationObserver(() => setTheme(document.documentElement.dataset.theme));
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     void loader.init().catch(() => setFailure(true));
-    return () => observer.disconnect();
   }, []);
+  // テーマが変わるたびに、その時点のtokens.cssの値でMonacoの配色を定義し直す。layout effectはEditorの
+  // effectより先に動くので、Editorがテーマを切り替える前に定義が済む。
+  useLayoutEffect(() => {
+    defineMonacoTheme(monaco.editor, theme);
+  }, [theme]);
   return failure ? <p className="notice error" role="alert">{text.editorUnavailable}</p> : (
     // A model switch can notify the previous onChange listener; keep each Editor bound to one path.
     <Editor key={modelPath} height="100%" path={modelPath} keepCurrentModel saveViewState={false}
       language={getFileLanguage(path)} value={value}
-      theme={theme === 'dark' ? 'vs-dark' : 'light'} loading={text.loading}
+      theme={MONACO_THEME_NAMES[theme]} loading={text.loading}
       onChange={(content) => onChange(path, content ?? '')}
       options={{ readOnly, automaticLayout: true, minimap: { enabled: false },
-        fontSize: 13, scrollBeyondLastLine: false, wordWrap: 'on',
+        fontFamily: monacoFontFamily(), fontSize: 13, scrollBeyondLastLine: false, wordWrap: 'on',
         ariaLabel: `${text.codeEditor}: ${path}` }} />
   );
 }

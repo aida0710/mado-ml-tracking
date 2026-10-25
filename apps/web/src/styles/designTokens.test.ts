@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
-import { BREAKPOINT_PX } from '../lib/breakpoints';
+import { BREAKPOINT_PX } from '@mado/design-system/layout';
 import { contrastRatio, parseHexColor } from '../lib/colorContrast';
 
 const stylesDirectory = new URL('./', import.meta.url);
@@ -90,12 +90,15 @@ describe('design tokens', () => {
     expect(undefinedReferences).toEqual([]);
   });
 
-  it('共通の部品のメディアクエリもこのアプリと同じ切り替え点だけを使う', () => {
+  it('どのスタイルシートのメディアクエリもデザインシステムの切り替え幅だけを使う', () => {
     const allowed = new Set(Object.values(BREAKPOINT_PX).map((px) => `(width < ${px}px)`));
-    const offending = sharedStylesheets.flatMap(({ name, css }) =>
+    // 切り替え幅より広いタッチ画面は `(width < …), (pointer: coarse)` で同じ指定に加えてよい。
+    const isAllowedCondition = (condition: string) =>
+      condition.startsWith('(prefers-') || condition === '(pointer: coarse)' || allowed.has(condition);
+    const offending = allStylesheets.flatMap(({ name, css }) =>
       [...css.matchAll(/@media\s+([^{]*?)\s*\{/g)]
         .map((match) => match[1]!)
-        .filter((query) => !query.startsWith('(prefers-') && !allowed.has(query))
+        .filter((query) => !query.split(/\s*,\s*/).every(isAllowedCondition))
         .map((query) => `${name}: ${query}`),
     );
     expect(offending).toEqual([]);

@@ -28,6 +28,14 @@ export default defineConfig({
           name: 'web',
           include: webTestFiles,
           setupFiles: ['apps/web/src/i18n/japaneseTestLocale.ts'],
+          server: {
+            deps: {
+              // @mado/design-system 0.6.0 の dist は相対の import に拡張子が無く（`from './storage'`）、
+              // Node の ESM では解決できない。テストでだけ Vite の解決を通す（アプリのコードとビルドは
+              // 変えない。mado S3 Data Catalog も同じ指定）。拡張子を付けた版が出たら、この指定を消す。
+              inline: ['@mado/design-system'],
+            },
+          },
           sequence: { groupOrder: 0 },
         },
       },

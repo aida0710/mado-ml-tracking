@@ -26,7 +26,7 @@ const widthStyle = (width: number | undefined): CSSProperties | undefined =>
   width === undefined ? undefined : { width, minWidth: width, maxWidth: width };
 
 /**
- * The Run list at --bp-sm and wider: every chosen column in the row, each one movable by dragging
+ * The Run list at 640px and wider: every chosen column in the row, each one movable by dragging
  * its header (or Alt+arrow keys) and resizable by its border (or arrow keys on the border).
  */
 export function WideRunTable({
