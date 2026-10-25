@@ -58,7 +58,8 @@ services:
       context: .
       dockerfile: Dockerfile.web
     depends_on: [api]
-    ports: ['127.0.0.1:5182:80']
+    # nginx in the web image runs unprivileged and listens on 8080 (Dockerfile.web).
+    ports: ['127.0.0.1:5182:8080']
     restart: unless-stopped
   # Optional: `docker compose --profile worker up -d worker`. The systemd unit (deploy/worker/) is the
   # primary way to run a worker; see docs/operations.md.
