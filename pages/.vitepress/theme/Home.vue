@@ -11,7 +11,7 @@ const imagePath = (name: string) => `${content.value.imageDirectory}/${name}.png
 </script>
 
 <template>
-  <div class="tracking-home">
+  <div class="docs-home">
     <section class="home-hero">
       <div class="home-hero-copy">
         <p class="home-eyebrow">{{ content.eyebrow }}</p>

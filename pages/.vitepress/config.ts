@@ -222,8 +222,8 @@ export default defineConfig({
     },
   },
   markdown: {
-    // コードの色はアプリと同じデザインシステムの --code-* で塗る。色そのものは theme/style.css で
-    // --shiki-* の変数に割り当てる (暗い地に対して、どの色も 4.5:1 以上)。
+    // コードの色はアプリと同じデザインシステムの--code-*で塗る。色そのものはデザインシステムのdocs.cssが
+    // --shiki-*の変数に割り当てる（暗い地に対して、どの色も4.5:1以上）。
     theme: createCssVariablesTheme({ name: "mado-code", variablePrefix: "--shiki-", fontStyle: true }),
     config(md) {
       // 表は、はみ出すときだけ表の枠の中で横にスクロールさせる (スマホで本文全体が横にずれないように)。
