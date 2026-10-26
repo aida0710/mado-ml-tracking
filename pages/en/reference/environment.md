@@ -14,21 +14,23 @@ chmod 600 .env
 
 Restart the API after changing values. If a value is malformed or a setting is missing, the API prints only the setting's name and does not start.
 
+In v0.5.0, every setting the application reads was renamed to start with `MMT_` (for example `AUTH_MODE` → `MMT_AUTH_MODE`, `S3_BUCKET` → `MMT_S3_BUCKET`). If only an old name is set, the API, the preview worker, and commands such as `db:migrate` print the old and new names, for example "`AUTH_MODE` was replaced by `MMT_AUTH_MODE`", and do not start. The full list is in the [v0.5.0 release notes](https://github.com/aida0710/mado-ml-tracking/blob/main/docs/releases/v0.5.0.md).
+
 ## API server: basics
 
 | Variable | Default | Content |
 | --- | --- | --- |
 | `MMT_DATABASE_URL` | None (required) | PostgreSQL connection URL |
 | `NODE_ENV` | `development` | `production` in production. HTTPS URLs become mandatory and development features are disabled |
-| `HOST` | `127.0.0.1` | Address the API listens on |
-| `PORT` | `4182` | Port the API listens on |
+| `MMT_HOST` | `127.0.0.1` | Address the API listens on |
+| `MMT_PORT` | `4182` | Port the API listens on |
 | `MMT_PUBLIC_URL` | `http://127.0.0.1:4182` | The URL users open. The SSO callback is built from it |
 | `MMT_WEB_ORIGIN` | `http://127.0.0.1:5182` | Origin of the web UI. Also used for links in notifications |
 | `MMT_ALLOW_PRIVATE_ORIGINS` | `false` | `true` also allows origins with LAN/VPN private IPs and localhost. For development; keep `false` on a server |
 | `MMT_TRUSTED_PROXY_HOPS` | `0` (`1` in compose) | Proxies in front of the API that append the client to `X-Forwarded-For`. Used for login rate limits and the client address in audit events. `2` when another proxy sits in front of compose's `web` |
-| `MMT_ALLOW_SEED` | `false` | Allows loading sample data. Only with `AUTH_MODE=development` |
-| `MMT_ALLOW_LOCAL_EXECUTOR` | `false` | Allows the local executor. Only with `AUTH_MODE=development` |
-| `DEVELOPMENT_ADMIN_EMAIL` | `admin@localhost` | Email that becomes a global administrator with the development login |
+| `MMT_ALLOW_SEED` | `false` | Allows loading sample data. Only with `MMT_AUTH_MODE=development` |
+| `MMT_ALLOW_LOCAL_EXECUTOR` | `false` | Allows the local executor. Only with `MMT_AUTH_MODE=development` |
+| `MMT_DEVELOPMENT_ADMIN_EMAIL` | `admin@localhost` | Email that becomes a global administrator with the development login |
 
 ## Authentication and SSO
 
@@ -36,22 +38,22 @@ See [Authentication and local accounts](/en/admin/auth) and [Authentik (SSO)](/e
 
 | Variable | Default | Content |
 | --- | --- | --- |
-| `AUTH_MODE` | `hybrid` | `local`, `oidc`, `hybrid`, `development` |
-| `AUTH_SESSION_IDLE_SECONDS` | `604800` (7 days) | Seconds without activity until a session ends. At least 300 |
-| `AUTH_SESSION_ABSOLUTE_SECONDS` | `604800` (7 days) | Seconds from login until a session ends. At least 3600, and not less than the idle limit |
-| `OIDC_ISSUER_URL` | None | Issuer of the Authentik application. Required for `oidc` and `hybrid`. HTTPS |
-| `OIDC_CLIENT_ID` | None | Provider client ID. Required for `oidc` and `hybrid` |
-| `OIDC_CLIENT_SECRET` | None | Provider client secret |
-| `OIDC_ALLOWED_GROUPS` | None | Groups allowed to sign in (comma-separated). Required for `oidc` and `hybrid` |
-| `OIDC_ROLE_MAPPING_JSON` | None | Group → global role mapping. Example: `{"mmt-admins":"admin","mmt-users":"user"}` |
-| `OIDC_DEFAULT_ROLE` | `user` | Role of users in no mapped group |
-| `OIDC_SCOPES` | `openid profile email offline_access` | Requested scopes. `openid` is required. Refresh tokens also require the Provider's `offline_access` mapping |
-| `OIDC_LABEL` | `Authentik` | Label of the SSO button on the login screen |
-| `OIDC_AUTO_LINK_VERIFIED_EMAIL` | `false` | Whether to link to a local account with the same email automatically |
-| `OIDC_ALLOW_INSECURE_HTTP` | `false` | Allows a loopback HTTP issuer (for tests). Not allowed in production |
+| `MMT_AUTH_MODE` | `hybrid` | `local`, `oidc`, `hybrid`, `development` |
+| `MMT_AUTH_SESSION_IDLE_SECONDS` | `604800` (7 days) | Seconds without activity until a session ends. At least 300 |
+| `MMT_AUTH_SESSION_ABSOLUTE_SECONDS` | `604800` (7 days) | Seconds from login until a session ends. At least 3600, and not less than the idle limit |
+| `MMT_OIDC_ISSUER_URL` | None | Issuer of the Authentik application. Required for `oidc` and `hybrid`. HTTPS |
+| `MMT_OIDC_CLIENT_ID` | None | Provider client ID. Required for `oidc` and `hybrid` |
+| `MMT_OIDC_CLIENT_SECRET` | None | Provider client secret |
+| `MMT_OIDC_ALLOWED_GROUPS` | None | Groups allowed to sign in (comma-separated). Required for `oidc` and `hybrid` |
+| `MMT_OIDC_ROLE_MAPPING_JSON` | None | Group → global role mapping. Example: `{"mmt-admins":"admin","mmt-users":"user"}` |
+| `MMT_OIDC_DEFAULT_ROLE` | `user` | Role of users in no mapped group |
+| `MMT_OIDC_SCOPES` | `openid profile email offline_access` | Requested scopes. `openid` is required. Refresh tokens also require the Provider's `offline_access` mapping |
+| `MMT_OIDC_LABEL` | `Authentik` | Label of the SSO button on the login screen |
+| `MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL` | `false` | Whether to link to a local account with the same email automatically |
+| `MMT_OIDC_ALLOW_INSECURE_HTTP` | `false` | Allows a loopback HTTP issuer (for tests). Not allowed in production |
 | `MMT_SESSION_ENCRYPTION_KEY` | None | Key that encrypts Authentik tokens stored with sessions (base64 of 32 bytes). Required for `oidc` and `hybrid` |
-| `OIDC_RECHECK_SECONDS` | `60` | Interval (seconds) for rechecking an SSO session's groups |
-| `OIDC_TOKEN_SYNC_MAX_AGE_SECONDS` | `604800` (7 days) | Seconds after the last group sync during which SSO users' API tokens work. At least 60 |
+| `MMT_OIDC_RECHECK_SECONDS` | `60` | Interval (seconds) for rechecking an SSO session's groups |
+| `MMT_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS` | `604800` (7 days) | Seconds after the last group sync during which SSO users' API tokens work. At least 60 |
 | `MMT_TOKEN_DEFAULT_LIFETIME_DAYS` | `365` | Default lifetime in days when token creation omits its expiry. 1 to 3650. `expiresAt: null` never expires; explicit future timestamps have no lifetime cap. |
 
 Generate keys in a terminal. Use different values for `MMT_SESSION_ENCRYPTION_KEY` and `MMT_STORAGE_SECRET_KEY`.
@@ -66,13 +68,13 @@ Storage settings are described in [Storage](/en/data/storage).
 
 | Variable | Default | Content |
 | --- | --- | --- |
-| `ARTIFACT_FILESYSTEM_ROOT` | `var/artifacts` under the API's working directory | Location of the filesystem storage. A relative path is resolved from the API's working directory, so use an absolute path in production |
-| `S3_BUCKET` | None | When set, the S3 storage from environment variables can be selected |
-| `S3_ENDPOINT` | None (AWS S3) | Endpoint of an S3-compatible storage |
-| `S3_REGION` | `us-east-1` | Region |
-| `S3_PREFIX` | None (bucket root) | Prefix in the bucket. `.env.example` uses `mado-model-tracking` |
-| `S3_FORCE_PATH_STYLE` | `false` | Use path-style URLs |
-| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | None | S3 credentials. Without them, the AWS SDK's default provider chain is used |
+| `MMT_ARTIFACT_FILESYSTEM_ROOT` | `var/artifacts` under the API's working directory | Location of the filesystem storage. A relative path is resolved from the API's working directory, so use an absolute path in production |
+| `MMT_S3_BUCKET` | None | When set, the S3 storage from environment variables can be selected |
+| `MMT_S3_ENDPOINT` | None (AWS S3) | Endpoint of an S3-compatible storage |
+| `MMT_S3_REGION` | `us-east-1` | Region |
+| `MMT_S3_PREFIX` | None (bucket root) | Prefix in the bucket. `.env.example` uses `mado-model-tracking` |
+| `MMT_S3_FORCE_PATH_STYLE` | `false` | Use path-style URLs |
+| `MMT_S3_ACCESS_KEY_ID`, `MMT_S3_SECRET_ACCESS_KEY` | None | S3 credentials. Without them, the AWS SDK's default provider chain is used |
 | `MMT_STORAGE_SECRET_KEY` | None | Key that encrypts in the database the secrets of S3 backends added on the screen (base64 of 32 bytes) |
 | `MMT_HOOK_SECRET_KEY` | None | Key that encrypts in the database the secrets of webhook hooks (base64 of 32 bytes). Without it, webhook hooks cannot be created and stored ones cannot be verified |
 | `MMT_ARTIFACT_MAX_BYTES` | `214748364800` (200 GiB) | Limit per Artifact |

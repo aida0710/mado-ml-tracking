@@ -162,4 +162,4 @@ Run these in the API server's repository. With Docker Compose, prefix them with 
 | `npm run bootstrap-admin -w @mmt/api` | Creates the initial administrator or recovers an administrator ([Authentication and local accounts](/en/admin/auth)) |
 | `npm run preview-worker -w @mmt/api` | Runs the worker that renders previews of long audio and video. Needs ffmpeg and ffprobe |
 | `npm run openapi:generate` | Regenerates `docs/openapi.json` (for development) |
-| `npm run db:seed` | Loads sample data for checking. Only with `AUTH_MODE=development` and `MMT_ALLOW_SEED=true` |
+| `npm run db:seed` | Loads sample data for checking. Only with `MMT_AUTH_MODE=development` and `MMT_ALLOW_SEED=true` |

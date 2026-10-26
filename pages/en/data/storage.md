@@ -22,12 +22,12 @@ Each Project chooses which storage to use. Changing the storage does not move ex
 
 | Kind | Where files go | Configured by |
 | --- | --- | --- |
-| Filesystem | A directory on the API server | `ARTIFACT_FILESYSTEM_ROOT`, or the UI |
-| S3 | A bucket on S3-compatible storage | `S3_*` environment variables, or the UI |
+| Filesystem | A directory on the API server | `MMT_ARTIFACT_FILESYSTEM_ROOT`, or the UI |
+| S3 | A bucket on S3-compatible storage | `MMT_S3_*` environment variables, or the UI |
 
 Each storage is identified by a name: lowercase letters, digits, and hyphens, up to 63 characters. The name cannot be changed later.
 
-Storage defined by environment variables appears as `filesystem` (always present) and `s3` (when `S3_BUCKET` is set). Rows whose **Defined by** column shows **Environment variables** are read-only in the UI; edit `.env` and restart the API instead. See [Environment variables](/en/reference/environment).
+Storage defined by environment variables appears as `filesystem` (always present) and `s3` (when `MMT_S3_BUCKET` is set). Rows whose **Defined by** column shows **Environment variables** are read-only in the UI; edit `.env` and restart the API instead. See [Environment variables](/en/reference/environment).
 
 ## Add storage
 

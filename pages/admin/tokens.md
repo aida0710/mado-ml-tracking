@@ -105,7 +105,7 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" "$MMT_API_URL/api/auth/token"
 
 ### SSOのユーザーのtokenは7日で止まる
 
-SSOでログインするユーザーのtokenは、最後にブラウザでログインしてから7日（`OIDC_TOKEN_SYNC_MAX_AGE_SECONDS`）を過ぎると、401 `identity_sync_required`で止まります。Authentikでgroupから外したことを確かめるためです。ブラウザで一度ログインすれば、同じtokenがまた使えます（[Authentik（SSO）](/admin/sso)）。
+SSOでログインするユーザーのtokenは、最後にブラウザでログインしてから7日（`MMT_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS`）を過ぎると、401 `identity_sync_required`で止まります。Authentikでgroupから外したことを確かめるためです。ブラウザで一度ログインすれば、同じtokenがまた使えます（[Authentik（SSO）](/admin/sso)）。
 
 ## Service Account
 

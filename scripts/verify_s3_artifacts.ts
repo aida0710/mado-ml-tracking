@@ -619,7 +619,7 @@ async function main(): Promise<void> {
     process.exitCode = 2;
     return;
   }
-  // MMT_VERIFY_S3_BACKENDは管理者が保存した保存先の名前。無ければS3_*を使う。
+  // MMT_VERIFY_S3_BACKENDは管理者が保存した保存先の名前。無ければMMT_S3_*を使う。
   const backendName = process.env.MMT_VERIFY_S3_BACKEND;
   const target = backendName
     ? await readS3TargetFromDatabase(process.env, backendName)

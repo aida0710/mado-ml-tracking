@@ -19,14 +19,14 @@ npm run db:migrate -w @mmt/api
 npm run start -w @mmt/api
 ```
 
-既定は`HOST=127.0.0.1`、`PORT=4182`、`AUTH_MODE=oidc`。開発ログインを使う場合は`AUTH_MODE=development`を明示する。productionではdevelopment modeを拒否する。
+既定は`MMT_HOST=127.0.0.1`、`MMT_PORT=4182`、`MMT_AUTH_MODE=hybrid`（composeの`api`は`oidc`）。開発ログインを使う場合は`MMT_AUTH_MODE=development`を明示する。productionではdevelopment modeを拒否する。
 
 - `MMT_PUBLIC_URL`: ブラウザからAPIに届くURL。Vite proxyを使う開発環境では`http://127.0.0.1:5182`にする。
 - `MMT_WEB_ORIGIN`: Cookieで変更要求を送れるWebのOrigin。既定は`http://127.0.0.1:5182`。
-- `OIDC_ISSUER_URL`、`OIDC_CLIENT_ID`、`OIDC_CLIENT_SECRET`: Authentikの設定。callbackは`{MMT_PUBLIC_URL}/api/auth/callback`。client secretがない場合はpublic clientとしてPKCEを使う。
-- `OIDC_ROLE_MAPPING_JSON`: OIDC groups claimから全体roleへの対応表（例: `{"mmt-admins":"admin","mmt-users":"user"}`）。対応表に無いgroupは全体管理者にならない。OIDC identityはissuerとsubjectで結び、verified emailが必要。
-- `OIDC_ALLOW_INSECURE_HTTP=true`: 非productionのloopback mock providerに限りHTTPを許可する。
-- `DEVELOPMENT_ADMIN_EMAIL`: 開発管理者のemail。既定は`admin@localhost`。開発ログインbodyは`{email?,displayName?}`。
+- `MMT_OIDC_ISSUER_URL`、`MMT_OIDC_CLIENT_ID`、`MMT_OIDC_CLIENT_SECRET`: Authentikの設定。callbackは`{MMT_PUBLIC_URL}/api/auth/callback`。client secretがない場合はpublic clientとしてPKCEを使う。
+- `MMT_OIDC_ROLE_MAPPING_JSON`: OIDC groups claimから全体roleへの対応表（例: `{"mmt-admins":"admin","mmt-users":"user"}`）。対応表に無いgroupは全体管理者にならない。OIDC identityはissuerとsubjectで結び、verified emailが必要。
+- `MMT_OIDC_ALLOW_INSECURE_HTTP=true`: 非productionのloopback mock providerに限りHTTPを許可する。
+- `MMT_DEVELOPMENT_ADMIN_EMAIL`: 開発管理者のemail。既定は`admin@localhost`。開発ログインbodyは`{email?,displayName?}`。
 - `MMT_ALLOW_LOCAL_EXECUTOR=true`: developmentでlocal targetの実行を許可する。SSH targetの実行には不要。
 - Artifactとpluginの環境変数はAPI契約を参照。Artifactの保存先は絶対パスを推奨する。相対パスはAPIの起動ディレクトリを基準にする。
 
@@ -35,7 +35,7 @@ Migrationは起動時に自動適用しない。適用済みSQLのdigestを確�
 ## Seed
 
 ```bash
-AUTH_MODE=development MMT_ALLOW_SEED=true MMT_ALLOW_LOCAL_EXECUTOR=true npm run db:seed -w @mmt/api
+MMT_AUTH_MODE=development MMT_ALLOW_SEED=true MMT_ALLOW_LOCAL_EXECUTOR=true npm run db:seed -w @mmt/api
 ```
 
 Seedは明示許可でのみ動く。CPU線形回帰を実際に計算し、metricsとweightsを保存する。生成音声も`ArtifactStores.put`で保存する。Qwen2/Qwen3は公開モデルの参照と未実行のRunを登録する。実行可能なinline Pythonの学習・fine-tuning・推論code、local CPU target、admin/editor/viewerを用意する。
@@ -51,7 +51,7 @@ MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55483/mmt_test npm test -w @mmt
 npm run typecheck -w @mmt/api
 ```
 
-`MMT_DATABASE_URL_TEST`も受け付ける。どちらもない場合、DB統合テストはskipする。suiteは`app.request`でHTTP認可・入力検証を通す。OIDCは実HTTPのmock providerでPKCE、state、nonce、署名、ブラウザbindingを検証する。
+`MMT_TEST_DATABASE_URL`が無い場合、DB統合テストはskipする。suiteは`app.request`でHTTP認可・入力検証を通す。OIDCは実HTTPのmock providerでPKCE、state、nonce、署名、ブラウザbindingを検証する。
 
 ## 実行と配送の整合性
 
