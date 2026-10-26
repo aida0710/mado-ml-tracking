@@ -1,3 +1,4 @@
+import { rejectReplacedEnvironmentVariables } from '@mmt/platform';
 import { requireDatabaseUrl } from '../db/databaseSettings.js';
 import { stdin, stdout } from 'node:process';
 import { pathToFileURL } from 'node:url';
@@ -126,6 +127,7 @@ export async function bootstrapAdministrator(options: {
 async function main(): Promise<void> {
   if (!stdin.isTTY)
     throw new Error('Password input requires a TTY; run this command in an interactive terminal');
+  rejectReplacedEnvironmentVariables(process.env);
   const database = createDatabase(requireDatabaseUrl(process.env));
   try {
     await bootstrapAdministrator({ database, terminal: { input: stdin, output: stdout } });

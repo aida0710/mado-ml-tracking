@@ -50,7 +50,7 @@ export const adminText = localized({
   userLastAdminLocked:
     '最後の全体管理者なので、無効化も管理者を外すこともできません。先にほかの人を全体管理者にしてください。',
   localLoginDisabledNotice:
-    '今のAPI serverの設定（AUTH_MODE）では、ローカルアカウントでログインできません。作成はできますが、ログインできるのはAUTH_MODEをlocalかhybridにしたときです。',
+    '今のAPI serverの設定（MMT_AUTH_MODE）では、ローカルアカウントでログインできません。作成はできますが、ログインできるのはMMT_AUTH_MODEをlocalかhybridにしたときです。',
   initialPassword: '初回パスワード',
   initialPasswordHint: 'UTF-8で12〜1024バイト。初回ログイン時に変更が必要です。',
   generatePassword: '生成',

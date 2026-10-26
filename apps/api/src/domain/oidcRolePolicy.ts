@@ -53,9 +53,9 @@ export function resolveOidcAccess(
 }
 
 export interface OidcRolePolicySettings {
-  // カンマ区切りのOIDC_ALLOWED_GROUPS。
+  // カンマ区切りのMMT_OIDC_ALLOWED_GROUPS。
   allowedGroups: string | undefined;
-  // OIDC_ROLE_MAPPING_JSON: {"<group>": "<global role>"}.
+  // MMT_OIDC_ROLE_MAPPING_JSON: {"<group>": "<global role>"}.
   roleMappingJson: string | undefined;
   defaultRole: string | undefined;
 }
@@ -65,17 +65,17 @@ function parseRoleMapping(json: string): Record<string, GlobalRole> {
   try {
     parsed = JSON.parse(json);
   } catch {
-    throw new Error('OIDC_ROLE_MAPPING_JSON must be a JSON object');
+    throw new Error('MMT_OIDC_ROLE_MAPPING_JSON must be a JSON object');
   }
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed))
-    throw new Error('OIDC_ROLE_MAPPING_JSON must be a JSON object');
+    throw new Error('MMT_OIDC_ROLE_MAPPING_JSON must be a JSON object');
   const mapping: Record<string, GlobalRole> = {};
   for (const [group, role] of Object.entries(parsed)) {
     if (group.length === 0 || group.length > MAX_GROUP_NAME_LENGTH)
-      throw new Error('OIDC_ROLE_MAPPING_JSON has an invalid group name');
+      throw new Error('MMT_OIDC_ROLE_MAPPING_JSON has an invalid group name');
     // 知らないroleがあれば起動を止める。あとで足したroleを黙って'user'として扱ってはならない。
     if (!isGlobalRole(role))
-      throw new Error(`OIDC_ROLE_MAPPING_JSON roles must be one of ${GLOBAL_ROLES.join(', ')}`);
+      throw new Error(`MMT_OIDC_ROLE_MAPPING_JSON roles must be one of ${GLOBAL_ROLES.join(', ')}`);
     mapping[group] = role;
   }
   return mapping;
@@ -86,10 +86,10 @@ export function createOidcRolePolicy(settings: OidcRolePolicySettings): OidcRole
   const allowedGroups = normalizeGroups(
     (settings.allowedGroups ?? '').split(',').map((group) => group.trim()),
   );
-  if (allowedGroups.length === 0) throw new Error('OIDC_ALLOWED_GROUPS is required');
+  if (allowedGroups.length === 0) throw new Error('MMT_OIDC_ALLOWED_GROUPS is required');
   const defaultRole = settings.defaultRole ?? 'user';
   if (!isGlobalRole(defaultRole))
-    throw new Error(`OIDC_DEFAULT_ROLE must be one of ${GLOBAL_ROLES.join(', ')}`);
+    throw new Error(`MMT_OIDC_DEFAULT_ROLE must be one of ${GLOBAL_ROLES.join(', ')}`);
   const roleMapping = parseRoleMapping(settings.roleMappingJson ?? '{}');
   return { allowedGroups, roleMapping, defaultRole };
 }

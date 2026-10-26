@@ -97,7 +97,7 @@ describe.skipIf(!testDatabaseUrl)('全体管理者のユーザー管理（独立
   beforeAll(async () => {
     harness = await createHarness();
     localApp = createApplication({
-      config: loadConfig({ MMT_DATABASE_URL: testDatabaseUrl, AUTH_MODE: 'local' }),
+      config: loadConfig({ MMT_DATABASE_URL: testDatabaseUrl, MMT_AUTH_MODE: 'local' }),
       database: harness.database,
       stores: harness.stores,
     }).app;

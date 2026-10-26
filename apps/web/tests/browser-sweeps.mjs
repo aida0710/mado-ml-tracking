@@ -55,8 +55,8 @@ const artifactDirectory = await mkdtemp(path.join(tmpdir(), 'mmt-sweeps-browser-
 const workerDirectory = await mkdtemp(path.join(tmpdir(), 'mmt-sweeps-browser-worker-'));
 const config = loadConfig({
   MMT_DATABASE_URL: databaseUrl,
-  AUTH_MODE: 'development',
-  PORT: String(API_PORT),
+  MMT_AUTH_MODE: 'development',
+  MMT_PORT: String(API_PORT),
   MMT_WEB_ORIGIN: WEB_URL,
   // local executorはこのマシンで試行を実行する。APIがそれを受け付けるのは開発モードだけ。
   MMT_ALLOW_LOCAL_EXECUTOR: 'true',
@@ -64,7 +64,7 @@ const config = loadConfig({
 const application = createApplication({
   config,
   database,
-  stores: createArtifactStoresFromEnv({ ARTIFACT_FILESYSTEM_ROOT: artifactDirectory }),
+  stores: createArtifactStoresFromEnv({ MMT_ARTIFACT_FILESYSTEM_ROOT: artifactDirectory }),
 });
 let server;
 let worker;

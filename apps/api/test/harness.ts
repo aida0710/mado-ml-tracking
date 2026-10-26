@@ -10,8 +10,7 @@ import { loadConfig, type ApiConfig } from '../src/config.js';
 import { migrate } from '../src/db/migrate.js';
 import type { ApiEnvironment } from '../src/http/request.js';
 
-export const testDatabaseUrl =
-  process.env.MMT_TEST_DATABASE_URL ?? process.env.MMT_DATABASE_URL_TEST;
+export const testDatabaseUrl = process.env.MMT_TEST_DATABASE_URL;
 
 export async function createHarness(
   options: {
@@ -41,13 +40,13 @@ export async function createHarness(
     MMT_DATABASE_URL: testDatabaseUrl,
     // 暗号化した結合テストのfixtureのための架空の鍵。マシンや本番の秘密は読まない。
     MMT_PLUGIN_SECRET_KEY: Buffer.alloc(32, 1).toString('base64'),
-    AUTH_MODE: 'development',
+    MMT_AUTH_MODE: 'development',
     MMT_ALLOW_LOCAL_EXECUTOR: 'true',
     MMT_ALLOW_SEED: 'true',
     ...options.environment,
   });
   const config = options.configure ? options.configure(loadedConfig) : loadedConfig;
-  const stores = createArtifactStoresFromEnv({ ARTIFACT_FILESYSTEM_ROOT: artifactDirectory });
+  const stores = createArtifactStoresFromEnv({ MMT_ARTIFACT_FILESYSTEM_ROOT: artifactDirectory });
   try {
     if (options.applyMigrations !== false) await migrate(database);
   } catch (error) {

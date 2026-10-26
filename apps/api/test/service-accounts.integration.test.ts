@@ -315,7 +315,7 @@ describe.skipIf(!testDatabaseUrl)('Service AccountとProjectのtoken一覧（独
       [account.id, await argon2idPasswordHasher.hash(password)],
     );
     const localApp = createApplication({
-      config: loadConfig({ MMT_DATABASE_URL: testDatabaseUrl, AUTH_MODE: 'local' }),
+      config: loadConfig({ MMT_DATABASE_URL: testDatabaseUrl, MMT_AUTH_MODE: 'local' }),
       database: harness.database,
       stores: harness.stores,
     }).app;

@@ -1,6 +1,7 @@
 import { tmpdir } from 'node:os';
 import { requireDatabaseUrl } from './db/databaseSettings.js';
 import { z } from 'zod';
+import { rejectReplacedEnvironmentVariables } from '@mmt/platform';
 import { parseSecretKey, type SecretKey } from './security/secretEncryption.js';
 
 const optionalSetting = z.preprocess(
@@ -49,6 +50,7 @@ export interface PreviewWorkerConfig {
 export function loadPreviewWorkerConfig(
   environment: NodeJS.ProcessEnv = process.env,
 ): PreviewWorkerConfig {
+  rejectReplacedEnvironmentVariables(environment);
   // 環境変数の値には認証情報が含まれうるので、フィールド名だけを報告する。
   const parsed = environmentSchema.safeParse(environment);
   if (!parsed.success)

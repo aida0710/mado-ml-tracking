@@ -76,7 +76,7 @@ describe.skipIf(!testDatabaseUrl)('メール通知（テスト用SMTPサーバ�
   function smtpApplication() {
     const config = loadConfig({
       MMT_DATABASE_URL: testDatabaseUrl,
-      AUTH_MODE: 'development',
+      MMT_AUTH_MODE: 'development',
       MMT_ALLOW_LOCAL_EXECUTOR: 'true',
       MMT_ALLOW_SEED: 'true',
       MMT_SMTP_URL: smtpServer.url,
@@ -201,7 +201,7 @@ describe.skipIf(!testDatabaseUrl)('メール通知（テスト用SMTPサーバ�
       try {
         loadConfig({
           MMT_DATABASE_URL: testDatabaseUrl,
-          AUTH_MODE: 'development',
+          MMT_AUTH_MODE: 'development',
           ...smtpSettings,
         });
       } catch (error) {

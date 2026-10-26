@@ -21,14 +21,14 @@ describe.skipIf(!testDatabaseUrl)('SSO groupの許可判定と全体roleの同�
   function application(settings: Record<string, string> = {}): Hono<ApiEnvironment> {
     const config = loadConfig({
       MMT_DATABASE_URL: testDatabaseUrl,
-      AUTH_MODE: 'hybrid',
-      OIDC_ISSUER_URL: provider.issuer,
-      OIDC_CLIENT_ID: 'mmt-test',
-      OIDC_CLIENT_SECRET: 'mock-client-secret',
-      OIDC_ALLOW_INSECURE_HTTP: 'true',
+      MMT_AUTH_MODE: 'hybrid',
+      MMT_OIDC_ISSUER_URL: provider.issuer,
+      MMT_OIDC_CLIENT_ID: 'mmt-test',
+      MMT_OIDC_CLIENT_SECRET: 'mock-client-secret',
+      MMT_OIDC_ALLOW_INSECURE_HTTP: 'true',
       MMT_SESSION_ENCRYPTION_KEY: TEST_SESSION_ENCRYPTION_KEY,
-      OIDC_ALLOWED_GROUPS: 'mmt-users,mmt-admins',
-      OIDC_ROLE_MAPPING_JSON: ROLE_MAPPING,
+      MMT_OIDC_ALLOWED_GROUPS: 'mmt-users,mmt-admins',
+      MMT_OIDC_ROLE_MAPPING_JSON: ROLE_MAPPING,
       ...settings,
     });
     return createApplication({ config, database: harness.database, stores: harness.stores }).app;
@@ -140,12 +140,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupの許可判定と全体roleの同�
     ]);
   });
 
-  it('OIDC_ADMIN_GROUPを指定すると設定エラーになる', () => {
-    expect(() => application({ OIDC_ADMIN_GROUP: 'mmt-admins' }))
-      .toThrow('OIDC_ADMIN_GROUP is not supported; use OIDC_ROLE_MAPPING_JSON');
-  });
-
-  describe('OIDC_ROLE_MAPPING_JSON', () => {
+  describe('MMT_OIDC_ROLE_MAPPING_JSON', () => {
     it('admin groupを持てば全体管理者になり、外れると次回ログインで外れる', async () => {
       const app = application();
       await createLocalUser({ username: 'recovery', email: 'recovery@localhost', isAdmin: true });
@@ -201,7 +196,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupの許可判定と全体roleの同�
   });
 
   it('自動連携が有効なら、特権の無いローカルユーザーに検証済みemailで連携する', async () => {
-    const app = application({ OIDC_AUTO_LINK_VERIFIED_EMAIL: 'true' });
+    const app = application({ MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL: 'true' });
     const localUserId = await createLocalUser({ username: 'alice', email: 'Alice@example.test' });
     expect(
       (await ssoLogin(app, { email: 'alice@example.test', groups: ['mmt-users'] })).status,
@@ -215,7 +210,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupの許可判定と全体roleの同�
   });
 
   it('自動連携が有効でも、全体管理者やProject adminのローカルユーザーには401(privileged_link_required)', async () => {
-    const app = application({ OIDC_AUTO_LINK_VERIFIED_EMAIL: 'true' });
+    const app = application({ MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL: 'true' });
     await createLocalUser({ username: 'root', email: 'root@example.test', isAdmin: true });
     const projectAdmin = await createLocalUser({ username: 'lead', email: 'lead@example.test' });
     const project = await harness.database.query<{ id: string }>(
@@ -235,7 +230,7 @@ describe.skipIf(!testDatabaseUrl)('SSO groupの許可判定と全体roleの同�
   });
 
   it('email_verified=falseは自動連携が有効でも拒否する', async () => {
-    const app = application({ OIDC_AUTO_LINK_VERIFIED_EMAIL: 'true' });
+    const app = application({ MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL: 'true' });
     await createLocalUser({ username: 'alice', email: 'alice@example.test' });
     expect(
       (
@@ -266,12 +261,12 @@ describe.skipIf(!testDatabaseUrl)('SSO groupの許可判定と全体roleの同�
     const user = (await oidcUser())!;
     const config = loadConfig({
       MMT_DATABASE_URL: testDatabaseUrl,
-      AUTH_MODE: 'oidc',
-      OIDC_ISSUER_URL: provider.issuer,
-      OIDC_CLIENT_ID: 'mmt-test',
-      OIDC_ALLOW_INSECURE_HTTP: 'true',
-      OIDC_ALLOWED_GROUPS: 'mmt-users,mmt-admins',
-      OIDC_ROLE_MAPPING_JSON: ROLE_MAPPING,
+      MMT_AUTH_MODE: 'oidc',
+      MMT_OIDC_ISSUER_URL: provider.issuer,
+      MMT_OIDC_CLIENT_ID: 'mmt-test',
+      MMT_OIDC_ALLOW_INSECURE_HTTP: 'true',
+      MMT_OIDC_ALLOWED_GROUPS: 'mmt-users,mmt-admins',
+      MMT_OIDC_ROLE_MAPPING_JSON: ROLE_MAPPING,
       MMT_SESSION_ENCRYPTION_KEY: TEST_SESSION_ENCRYPTION_KEY,
     });
     const claims = {

@@ -58,7 +58,7 @@ const INTERRUPTION_MESSAGE = 'verification interrupted the upload stream';
 interface S3VerificationTarget {
   client: S3Client;
   bucket: string;
-  /** アプリケーションが使ってよいprefix（S3_PREFIX）。空でもよい。 */
+  /** アプリケーションが使ってよいprefix（MMT_S3_PREFIX）。空でもよい。 */
   basePrefix: string;
   /** basePrefixの外のprefix。その外へのアクセスをIAMが拒否することを確かめるのに使う。 */
   outsidePrefix: string | null;
@@ -141,22 +141,22 @@ function isNotFound(error: unknown): boolean {
 
 /** createArtifactStoresFromEnvと同じ処理にして、同じクライアントの設定で検査する。 */
 function readS3TargetFromEnv(env: NodeJS.ProcessEnv): S3VerificationTarget {
-  const bucket = env.S3_BUCKET;
-  if (!bucket) throw new Error('S3_BUCKET is not configured');
-  if (Boolean(env.S3_ACCESS_KEY_ID) !== Boolean(env.S3_SECRET_ACCESS_KEY))
+  const bucket = env.MMT_S3_BUCKET;
+  if (!bucket) throw new Error('MMT_S3_BUCKET is not configured');
+  if (Boolean(env.MMT_S3_ACCESS_KEY_ID) !== Boolean(env.MMT_S3_SECRET_ACCESS_KEY))
     throw new Error('S3 credential fields must be configured together');
-  const basePrefix = joinKey(env.S3_PREFIX ?? '');
-  const region = env.S3_REGION ?? 'us-east-1';
-  const forcePathStyle = env.S3_FORCE_PATH_STYLE === 'true';
+  const basePrefix = joinKey(env.MMT_S3_PREFIX ?? '');
+  const region = env.MMT_S3_REGION ?? 'us-east-1';
+  const forcePathStyle = env.MMT_S3_FORCE_PATH_STYLE === 'true';
   const client = new S3Client({
     region,
-    ...(env.S3_ENDPOINT ? { endpoint: env.S3_ENDPOINT } : {}),
+    ...(env.MMT_S3_ENDPOINT ? { endpoint: env.MMT_S3_ENDPOINT } : {}),
     forcePathStyle,
-    ...(env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY
+    ...(env.MMT_S3_ACCESS_KEY_ID && env.MMT_S3_SECRET_ACCESS_KEY
       ? {
           credentials: {
-            accessKeyId: env.S3_ACCESS_KEY_ID,
-            secretAccessKey: env.S3_SECRET_ACCESS_KEY,
+            accessKeyId: env.MMT_S3_ACCESS_KEY_ID,
+            secretAccessKey: env.MMT_S3_SECRET_ACCESS_KEY,
           },
         }
       : {}),
@@ -169,11 +169,11 @@ function readS3TargetFromEnv(env: NodeJS.ProcessEnv): S3VerificationTarget {
     outsidePrefix,
     description: {
       source: 'env',
-      endpoint: env.S3_ENDPOINT ? 'custom' : 'aws-default',
+      endpoint: env.MMT_S3_ENDPOINT ? 'custom' : 'aws-default',
       region,
       forcePathStyle,
       basePrefixConfigured: Boolean(basePrefix),
-      staticCredentials: Boolean(env.S3_ACCESS_KEY_ID),
+      staticCredentials: Boolean(env.MMT_S3_ACCESS_KEY_ID),
       outsidePrefixCheck: outsidePrefix !== null,
     },
   };
@@ -450,9 +450,9 @@ async function verifyOutsidePrefixDenied(
 ): Promise<StageOutcome> {
   const { client, bucket, basePrefix, outsidePrefix } = context.target;
   if (outsidePrefix === null) return { status: 'skipped', details: { reason: 'disabled' } };
-  if (!basePrefix) return { status: 'skipped', details: { reason: 'S3_PREFIX is empty' } };
+  if (!basePrefix) return { status: 'skipped', details: { reason: 'MMT_S3_PREFIX is empty' } };
   if (outsidePrefix === basePrefix || outsidePrefix.startsWith(`${basePrefix}/`))
-    throw new Error('Outside prefix must not be inside S3_PREFIX');
+    throw new Error('Outside prefix must not be inside MMT_S3_PREFIX');
   const outsideKey = joinKey(outsidePrefix, context.date, context.runId, 'outside.bin');
   let put: 'denied' | 'allowed';
   try {
