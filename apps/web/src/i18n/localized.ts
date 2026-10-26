@@ -1,5 +1,4 @@
 import { getLocale } from './locale';
-import { registerMessage } from './messageTranslations';
 
 export type TranslationShape<T> = {
   [Key in keyof T]: T[Key] extends string ? string : T[Key];
@@ -11,13 +10,6 @@ const catalogs = new WeakMap<object, CatalogPair>();
 /** 文字列とテンプレートを読んだ時点で解決する。Reactの外から呼ぶ場合も同じ。 */
 export function localized<T extends object>(japanese: T, english: TranslationShape<T>): TranslationShape<T> {
   const pair = { ja: japanese, en: english } as CatalogPair;
-  for (const key of Object.keys(japanese)) {
-    const original = Object.getOwnPropertyDescriptor(japanese, key)?.value;
-    const translation = Object.getOwnPropertyDescriptor(english, key)?.value;
-    if (typeof original === 'string' && typeof translation === 'string') {
-      registerMessage(original, translation);
-    }
-  }
   const translated = new Proxy(japanese, {
     get(_target, key) {
       return Reflect.get(pair[getLocale()], key);

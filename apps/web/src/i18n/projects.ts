@@ -26,10 +26,6 @@ export const projectsText = localized({
   projectArchiveTitle: 'プロジェクトをアーカイブ',
   projectArchiveDescription:
     'アーカイブすると、このプロジェクトは一覧から消え、誰も開けなくなります。Run・モデル・Artifactのデータは残り、全体管理者が全体管理の「プロジェクト」から元に戻せます。待機中・実行中のJobがあるときはアーカイブできません。',
-  projectHasActiveJobs:
-    '待機中または実行中のJobがあるため、アーカイブできません。Jobsの画面でJobが終わるのを待つか停止してから、もう一度アーカイブしてください。',
-  projectNotArchived:
-    'アーカイブしていないプロジェクトは完全に削除できません。先にアーカイブしてください。',
   adminProjectsDescription:
     'すべてのプロジェクトです。メンバー数は、メンバーに追加した人・groupで加わった人・Service Accountの数で、Publicで見られる人は数えません。',
   projectAdmins: 'Admin',

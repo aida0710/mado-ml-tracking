@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { authApi } from '../api/auth';
 import { useMutation } from '../hooks/useMutation';
 import { ErrorNotice } from './Feedback';
-import { localLoginErrorMessage } from '../lib/authErrorMessages';
-import { LocalizedError } from '../lib/localizedError';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
@@ -21,7 +19,7 @@ export function LocalLoginForm({ onLogin }: { onLogin: () => void }) {
             await authApi.localLogin({ username, password });
           } catch (error) {
             setPassword('');
-            throw new LocalizedError(() => localLoginErrorMessage(error));
+            throw error;
           }
           onLogin();
         });

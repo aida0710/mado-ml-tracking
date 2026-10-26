@@ -25,10 +25,6 @@ export const projectsText = {
   projectArchiveTitle: 'Archive project',
   projectArchiveDescription:
     'Archiving hides this project from lists and prevents access. Run, model, and artifact data is retained. A global administrator can restore it from Administration → Projects. Projects with queued or running jobs cannot be archived.',
-  projectHasActiveJobs:
-    'This project has queued or running jobs and cannot be archived. Wait for them to finish or stop them on the Jobs screen, then try again.',
-  projectNotArchived:
-    'Only archived projects can be permanently deleted. Archive this project first.',
   adminProjectsDescription:
     'All projects. Member counts include direct members, group members, and service accounts, but exclude users with public access only.',
   projectAdmins: 'Admins',

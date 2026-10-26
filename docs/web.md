@@ -10,7 +10,7 @@
 
 文言や日付を描画するコンポーネントは`useLocale()`で変更を購読します。翻訳を含む`useMemo`は`useLocalizedMemo`にします。値だけの計算やAPI取得は言語に依存させません。日付・数値には`getIntlLocale()`の書き方を使います（大きな数は日本語で「120万」、英語で“1.2M”）。`Intl`の部品は作るのが重く、ログの1行ごとに呼ばれるものもあるので、`i18n/intlFormatterCache.ts`の`memoizePerIntlLocale`で言語ごとに1つ作って使い回します。名前の列挙・ラベルの並び・文のつなぎ・括弧の注記は`i18n/textJoining.ts`、英語の辞書で名前を引用して並べるときは`i18n/formatEnglishQuotedList.ts`を使います。利用者が入力した名前・説明・ログの内容は翻訳しません。
 
-通知は、件数・バージョン・結果などを保持して描画時に翻訳します。エラーは元の`RequestError`や`LocalizedError`を保持し、`formatErrorMessage`を描画時に呼びます。翻訳した文字列を状態に保存すると、後から言語を変えても元の表示が残ります。英語の件数には`formatEnglishCount`を使い、1件のときの名詞・動詞・代名詞も合わせます。
+通知は、件数・バージョン・結果などを保持して描画時に翻訳します。エラーは元の`ApiError`や`LocalizedError`を保持し、`formatErrorMessage`を描画時に呼びます。翻訳した文字列を状態に保存すると、後から言語を変えても元の表示が残ります（画面の検証で`new Error(文言)`として投げたものは、投げたときの言語のまま残ります。言語に追従させたいときは`LocalizedError`にします）。英語の件数には`formatEnglishCount`を使い、1件のときの名詞・動詞・代名詞も合わせます。
 
 `i18n/locale.ts`がデザインシステムの`createLocaleStore`で、`mmt.locale`に選択を保存します。辞書と初期言語は`i18n/*.test.ts`、切り替え中の入力保持・別タブ同期・モバイル表示は`tests/browser-i18n.mjs`で確認します。
 
@@ -42,18 +42,16 @@
 - 画面幅による上書き（`@media`）は、対象の領域ファイルの末尾にまとめます。切り替え点は下の「画面幅への対応」の3つだけを使います。
 - 詳細度が同じルールは読み込み順で勝ち負けが決まります。新しい領域ファイルを作るときは`main.tsx`の末尾に足し、既存の順番を入れ替えません。
 
-## エラー文言の層
+## APIの呼び出しとエラーの文
 
-- `api/*.ts`（APIクライアント）は`i18n`を読み込みません。失敗は`RequestError`（status、code、APIの英語の文`serverMessage`、`error`・`code`の横の項目`details`）で返します。エラー本文の読み取りは`api/http.ts`の`requestErrorFromBody`にまとめています。`api/i18nIndependence.test.ts`がAPIクライアントのi18n importを検出します。
-- 画面に出す文言への変換は`lib/errorMessage.ts`の`formatErrorMessage`が行い、`useMutation`と`useQuery`が描画時にこれを使います。APIのエラー文（`serverMessage`）は英語で、文に入る値は`details`にもあります。codeは次のように扱います。
-  - Webが文言を持つcode: どちらの言語でもWebの文言を現在の言語で出します。
-    - `network_error`: APIへ接続できなかった
-    - `invalid_response`: 応答の形が契約と違う（`invalidResponseError()`で投げる）
-    - `artifact_too_large`: uploadの413。前段proxyがHTMLで拒否した場合も同じ文言にする
-    - `artifact_content_unavailable`: Artifactの中身を取得できなかった（raw bytesの取得でAPIのエラー本文が無い）
-    - `dataset_parent_cycle`: 親の追加で来歴が循環する
-    - `sweep_space_invalid`: `lib/sweepSpaceError.ts`が`details.reason`（contractsの`SWEEP_SPACE_VIOLATIONS`）と`parameter`・`limit`などから`i18n/errors.ts`の日英の文を作ります。parameter名・値は原文のまま埋め込みます。
-  - そのほかのAPIのcode（`lib/apiErrorMessage.ts`）: 英語の画面はAPIの文をそのまま出します。日本語の画面は`i18n/apiErrors.ts`の`japaneseApiErrorMessages`でcodeから訳し（文に入る値は`details`から読む）、辞書に無いcodeはAPIの英語の文を出します。`invalid_request`・`conflict`・`not_found`のように理由の幅が広いcodeは、`japaneseApiErrorLeads`の日本語の文のあとにAPIの英語の文を括弧で添えます（例:「入力内容を確認してください。（invalid request: name）」）。
+- `api/*.ts`（APIクライアント）は、デザインシステムの`@mado/design-system/http`の`requestJson`でAPIを呼び、応答の本文を`@mmt/contracts/schemas`のスキーマ（APIのrouteCatalogが同じ経路に公開しているもの）で確かめます。応答の型を`as`で決めつけたり、手で形を確かめたりしません。経路のヘルパー（`api/http.ts`の`projectPath`など）は`/api`から始まる完全なURLを返します。
+- 本文をJSONとして読まない取得（Artifactの中身、検索結果のCSV）は`api/http.ts`の`fetchApiResponse`で生の応答を受け取り、失敗だけを`ApiError`にします。進み具合の要るアップロード（`api/artifactUploads.ts`）はXMLHttpRequestで送り、応答をスキーマで確かめます。
+- 失敗は`ApiError`（status、code、`message`＝APIの文、`error`・`code`の横の項目`details`）です。`api/*.ts`は`i18n`を読み込みません（`api/i18nIndependence.test.ts`が検出します）。
+- 画面に出す文は`lib/errorMessage.ts`の`formatErrorMessage`が作り、`useMutation`と`useQuery`が描画時に使います。APIの失敗は、どちらの言語の画面でもAPIの文をそのまま出します。codeから文を訳す辞書は持ちません。APIの文が無い、画面の側で起きた失敗だけを表示言語の文にします。
+  - `network_error`: APIへ接続できなかった
+  - `invalid_response`: 応答の形が契約と違う
+  - `artifact_too_large`: アップロードの413を、手前のプロキシがAPIより先にHTMLで返した（APIが返した413はAPIの文を出す）
+- codeは文を選ぶためでなく、画面の振る舞いを決めるために読みます（例: `sweep_space_invalid`の`details.parameter`でエラーを出す行を選ぶ、`report_revision_conflict`で編集の衝突を見分ける、アップロードの再開を断った理由で次にできることを決める）。
 
 ## 権限判定
 

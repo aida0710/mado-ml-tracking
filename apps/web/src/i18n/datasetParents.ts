@@ -16,7 +16,6 @@ export const datasetParentsText = localized(
     createdAt: '追加日時',
     addParentsHint:
       'この版と学習との紐付けを保って、確認できた生成元を追加します。一度追加した親と根拠は上書きできません。',
-    parentCycle: '親の追加によってデータの来歴が循環します。',
   },
   english.datasetParentsText,
 );

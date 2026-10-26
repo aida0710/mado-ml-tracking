@@ -30,20 +30,12 @@ describe('retained failures follow the display language', () => {
     expect(formatErrorMessage(failure)).not.toBe(japanese);
   });
 
-  it('known API codes are translated from the code in Japanese and keep the API sentence in English', () => {
+  it('an API failure keeps the API sentence in either language', () => {
     const failure = new ApiError({ status: 503, code: 'artifact_save_failed', message: 'failed to save the part' });
     setLocale('ja');
-    expect(formatErrorMessage(failure)).toBe('Artifactを保存できませんでした');
+    expect(formatErrorMessage(failure)).toBe('failed to save the part');
     setLocale('en');
     expect(formatErrorMessage(failure)).toBe('failed to save the part');
-  });
-
-  it('a code missing from the dictionary shows the API sentence in either language', () => {
-    const failure = new ApiError({ status: 422, code: 'future_service_code', message: 'the new reason' });
-    setLocale('en');
-    expect(formatErrorMessage(failure)).toBe('the new reason');
-    setLocale('ja');
-    expect(formatErrorMessage(failure)).toBe('the new reason');
   });
 
   it('a captured conversion error updates its explanation and retains the parameter name', () => {
@@ -95,20 +87,22 @@ describe('retained failures follow the display language', () => {
     }
   });
 
-  it('a captured API search-space error retains its row name and both limits', () => {
+  it('a captured API search-space error shows the API sentence with its row name in either language', () => {
     const name = '日本語.[x]';
+    const sentence = `parameter "${name}" values exceed the limit of 1000 (received: 1001)`;
     const failure = apiErrorFromResponse(422, 'Unprocessable Entity', {
-      error: `parameter "${name}" values exceed the limit of 1000 (received: 1001)`,
+      error: sentence,
       code: 'sweep_space_invalid',
       reason: 'values_limit',
       parameter: name,
       limit: 1000,
       count: 1001,
     });
+    expect(failure.details.parameter).toBe(name);
     setLocale('ja');
-    expect(formatErrorMessage(failure)).toContain('1000個までです');
+    expect(formatErrorMessage(failure)).toBe(sentence);
     setLocale('en');
-    expect(formatErrorMessage(failure)).toBe(`Parameter “${name}” values exceed the limit of 1000 (received: 1001)`);
+    expect(formatErrorMessage(failure)).toBe(sentence);
   });
 
   it('a refused form value keeps its argument and is described in the language shown now', () => {
@@ -139,9 +133,4 @@ describe('retained failures follow the display language', () => {
     expect(formatErrorMessage(failure)).toBe(siteComputersTextTemplates.siteNumberRangeError(text.sitePort, 1, 65535));
   });
 
-  it('a new API search-space explanation is preserved instead of guessed', () => {
-    const failure = new ApiError({ status: 422, code: 'sweep_space_invalid', message: 'new constraint: 日本語の値' });
-    setLocale('en');
-    expect(formatErrorMessage(failure)).toBe('new constraint: 日本語の値');
-  });
 });

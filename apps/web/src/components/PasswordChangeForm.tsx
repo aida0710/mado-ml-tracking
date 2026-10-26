@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { authApi } from '../api/auth';
 import { useMutation } from '../hooks/useMutation';
 import { ErrorNotice } from './Feedback';
-import { changePasswordErrorMessage } from '../lib/authErrorMessages';
-import { LocalizedError } from '../lib/localizedError';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
@@ -27,11 +25,7 @@ export function PasswordChangeForm({
         event.preventDefault();
         void mutation.run(async () => {
           if (newPassword !== confirmation) throw new Error(text.newPasswordMismatch);
-          try {
-            await authApi.changePassword({ currentPassword, newPassword });
-          } catch (error) {
-            throw new LocalizedError(() => changePasswordErrorMessage(error));
-          }
+          await authApi.changePassword({ currentPassword, newPassword });
           setCurrentPassword('');
           setNewPassword('');
           setConfirmation('');

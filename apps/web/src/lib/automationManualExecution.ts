@@ -3,14 +3,10 @@ import type {
   ModelAutomationExecution,
   ModelAutomationRule,
 } from '@mmt/contracts';
-import { isApiError } from '@mado/design-system/http';
 import type { ExecutionCatalog } from '../types/executionCatalog';
 import type { SelectOption } from '../types/form';
-import { apiErrorMessage } from './apiErrorMessage';
 import { buildCatalogOptions } from './catalogOptions';
-import { formatErrorMessage } from './errorMessage';
 import { formatDate } from './format';
-import { automationText } from '../i18n/automation';
 
 type ManualRule = Pick<ModelAutomationRule, 'trigger' | 'upstreamRuleId' | 'modelFamilies'>;
 
@@ -65,11 +61,4 @@ export function manualExecutionRequest(
   return rule.trigger === 'upstream_run_finished'
     ? { triggerRunId: selectedId }
     : { modelVersionId: selectedId };
-}
-
-/** 409は同じルールとバージョンの実行が進行中、422はそのルールを今は実行できないことを表す。 */
-export function manualExecutionErrorMessage(failure: unknown): string {
-  if (isApiError(failure) && failure.status === 409) return automationText.applyRunning;
-  if (isApiError(failure) && failure.status === 422) return apiErrorMessage(failure);
-  return formatErrorMessage(failure);
 }

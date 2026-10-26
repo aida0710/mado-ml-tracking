@@ -152,7 +152,7 @@ export function createProjectAdministration({ id, now, user, mainProject }) {
       if (projectMatch[2] && method === 'POST') {
         if (state.activeJobsBlockArchive) {
           state.activeJobsBlockArchive = false;
-          return reply({ error: 'Project has active jobs', code: 'project_has_active_jobs' }, 409);
+          return reply({ error: 'a project with waiting or running jobs cannot be archived', code: 'project_has_active_jobs' }, 409);
         }
         project.archivedAt = now;
         return fulfillEmpty();
