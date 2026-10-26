@@ -195,6 +195,7 @@ try {
     knownHostsPath: '',
     workDirectory: path.join(workerDirectory, 'jobs'),
     pythonExecutable: workerEnvironment.python,
+    runtimeKinds: ['python'],
     gpuIds: [],
     maxConcurrentJobs: PARALLELISM,
     enabled: true,
@@ -222,7 +223,7 @@ try {
   await page.getByRole('link', { name: 'Sweeps', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Sweepを作成' }).click();
   const dialog = page.getByRole('dialog');
-  await dialog.getByText(`Task revision ${task.revision}`).waitFor();
+  await dialog.getByText(`Taskの改訂番号 ${task.revision}`).waitFor();
   await dialog.getByLabel('名前', { exact: true }).fill('lr-grid');
   await dialog.getByLabel('目的メトリクス').fill('val_loss');
 
@@ -242,7 +243,8 @@ try {
   await dialog.getByRole('button', { name: '作成' }).click();
   const rowError = rows.nth(0).getByRole('alert');
   await rowError.waitFor({ timeout: UI_TIMEOUT_MS });
-  assert.match(await rowError.innerText(), /「lr」.*min < max/);
+  // APIのエラーの文は、画面の言語によらずそのまま出す（コードから訳さない）。
+  assert.match(await rowError.innerText(), /parameter "lr" requires min < max/);
   await screenshot(page, 'sweep-create-row-error');
 
   await dialog.getByLabel('探索方法').selectOption('grid');
