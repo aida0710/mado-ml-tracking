@@ -12,12 +12,12 @@ export const metricSeriesApi = {
   series: (projectId: string, body: MetricSeriesRequest, signal?: AbortSignal) =>
     requestJson(`${projectPath(projectId)}/metrics/series`, {
       schema: metricSeriesResponseSchema,
-      init: { ...jsonRequestInit('POST', body), signal },
+      init: jsonRequestInit('POST', body, { signal }),
     }),
   groups: (projectId: string, body: MetricGroupsRequest, signal?: AbortSignal) =>
     requestJson(`${projectPath(projectId)}/metrics/groups`, {
       schema: metricGroupsResponseSchema,
-      init: { ...jsonRequestInit('POST', body), signal },
+      init: jsonRequestInit('POST', body, { signal }),
     }),
   resumeEvents: (projectId: string, runId: string, signal?: AbortSignal) =>
     requestJson(`${projectPath(projectId)}/runs/${encodeId(runId)}/resume-events`, {

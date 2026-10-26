@@ -1,12 +1,4 @@
-import {
-  ApiError,
-  ApiErrorBodySchema,
-  apiErrorFromResponse,
-  INVALID_RESPONSE_CODE,
-  jsonRequestInit,
-  NETWORK_ERROR_CODE,
-  requestJson,
-} from '@mado/design-system/http';
+import { ApiError, jsonRequestInit, requestJson, uploadWithProgress } from '@mado/design-system/http';
 import type { ArtifactUploadCreate, ArtifactUploadStatus } from '@mmt/contracts';
 import {
   artifactSchema,
@@ -34,68 +26,20 @@ export interface TransferOptions {
 }
 
 /**
- * fetch()はアップロードの進み具合を知らせられないので、要求の本文はXMLHttpRequestで送る。
- * 応答はrequestJsonと同じくスキーマで確かめ、失敗はApiErrorにする。
+ * 進み具合を知らせながら送る（デザインシステムのuploadWithProgress）。手前のプロキシがAPIより先に
+ * HTMLで413を返すとAPIの文が無いので、画面の言語の文で出すためのcodeを付ける。
  */
-function sendWithProgress<Schema extends z.ZodType>(
-  {
-    url,
-    body,
-    headers,
-    schema,
-  }: { url: string; body: Blob | ArrayBuffer; headers: Record<string, string>; schema: Schema },
+async function sendWithProgress<Schema extends z.ZodType>(
+  { url, body, headers, schema }: { url: string; body: Blob | ArrayBuffer; headers: Record<string, string>; schema: Schema },
   { signal, onProgress }: TransferOptions,
 ): Promise<z.infer<Schema>> {
-  return new Promise((resolve, reject) => {
-    if (signal.aborted) {
-      reject(new DOMException('Upload aborted', 'AbortError'));
-      return;
-    }
-    const xhr = new XMLHttpRequest();
-    const abort = () => xhr.abort();
-    signal.addEventListener('abort', abort, { once: true });
-    const settle = (finish: () => void) => {
-      signal.removeEventListener('abort', abort);
-      finish();
-    };
-    xhr.open('PUT', url);
-    xhr.withCredentials = true;
-    for (const [name, value] of Object.entries(headers)) xhr.setRequestHeader(name, value);
-    xhr.upload.onprogress = (event) => onProgress(event.loaded);
-    xhr.onabort = () => settle(() => reject(new DOMException('Upload aborted', 'AbortError')));
-    xhr.onerror = () =>
-      settle(() => reject(new ApiError({ status: 0, code: NETWORK_ERROR_CODE, message: 'Upload request failed' })));
-    xhr.onload = () =>
-      settle(() => {
-        const payload = parseJson(xhr.responseText);
-        if (xhr.status < 200 || xhr.status >= 300) {
-          reject(failedUploadError(xhr, payload));
-          return;
-        }
-        const parsed = schema.safeParse(payload);
-        if (parsed.success) resolve(parsed.data);
-        else
-          reject(
-            new ApiError({ status: xhr.status, code: INVALID_RESPONSE_CODE, message: z.prettifyError(parsed.error) }),
-          );
-      });
-    xhr.send(body);
-  });
-}
-
-function parseJson(body: string): unknown {
   try {
-    return JSON.parse(body);
-  } catch {
-    return undefined;
+    return await uploadWithProgress({ url, body, headers, schema, signal, onProgress });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === HTTP_PAYLOAD_TOO_LARGE && error.code === undefined)
+      throw new ApiError({ status: error.status, code: ARTIFACT_TOO_LARGE_CODE, message: error.message });
+    throw error;
   }
-}
-
-function failedUploadError(xhr: XMLHttpRequest, payload: unknown): ApiError {
-  const failure = apiErrorFromResponse(xhr.status, xhr.statusText, payload);
-  if (xhr.status !== HTTP_PAYLOAD_TOO_LARGE || ApiErrorBodySchema.safeParse(payload).success) return failure;
-  // 手前のプロキシがAPIより先にHTMLで断ると、APIの文が無い。画面の言語の文で出すためcodeを付ける。
-  return new ApiError({ status: failure.status, code: ARTIFACT_TOO_LARGE_CODE, message: failure.message });
 }
 
 export const artifactUploadsApi = {
@@ -111,7 +55,7 @@ export const artifactUploadsApi = {
   create: (projectId: string, body: ArtifactUploadCreate, signal?: AbortSignal) =>
     requestJson(uploadsPath(projectId), {
       schema: artifactUploadSchema,
-      init: { ...jsonRequestInit('POST', body), signal },
+      init: jsonRequestInit('POST', body, { signal }),
     }),
   putPart: (
     { projectId, uploadId, partNumber, body, sha256 }: {
