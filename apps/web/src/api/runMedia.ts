@@ -74,7 +74,7 @@ export const runMediaApi = {
   compare: (projectId: string, body: MediaCompareRequest, signal?: AbortSignal) =>
     requestJson(`${projectPath(projectId)}/media/compare`, {
       schema: mediaCompareGridSchema,
-      init: { ...jsonRequestInit('POST', body), signal },
+      init: jsonRequestInit('POST', body, { signal }),
     }),
   /** このArtifactとして保存した表のメディア。ファイルが記録された表でなければnull。 */
   tableOfArtifact: async (

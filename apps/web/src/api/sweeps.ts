@@ -78,7 +78,7 @@ export const sweepsApi = {
     (
       await requestJson(`${projectPath(projectId)}/metrics/series`, {
         schema: metricSeriesResponseSchema,
-        init: { ...jsonRequestInit('POST', { runIds, keys: [metric], xAxis: { kind: 'step' } }), signal },
+        init: jsonRequestInit('POST', { runIds, keys: [metric], xAxis: { kind: 'step' } }, { signal }),
       })
     ).series,
 };
