@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
-import { createBrowserApi } from './browserApi.mjs';
+import { createBrowserApi, ISSUED_TOKEN_VALUE } from './browserApi.mjs';
 import { waitForNoHorizontalOverflow } from './viewportOverflow.mjs';
 
 const modulePath = process.env.MMT_PLAYWRIGHT_MODULE;
@@ -135,7 +135,7 @@ try {
   await selectOption(unlimited, '有効期限', '無期限');
   assert.equal((await saveToken(unlimited)).expiresAt, null);
   await unlimited.getByRole('button', { name: 'tokenをコピー', exact: true }).click();
-  assert.equal(await clipboardText(), 'browser-test-value-only', 'HTTP copy must work inside modal dialogs');
+  assert.equal(await clipboardText(), ISSUED_TOKEN_VALUE, 'HTTP copy must work inside modal dialogs');
   assert.equal(await unlimited.getByRole('alert').count(), 0);
   await closeTokenDialog();
 
