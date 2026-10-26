@@ -178,7 +178,7 @@ describe('コード編集・workbench入力検証', () => {
 
   it('repository SSH鍵とknown_hostsはoperatorの両方の絶対パスを要求する', () => {
     const environment = {
-      AUTH_MODE: 'development',
+      MMT_AUTH_MODE: 'development',
       MMT_DATABASE_URL: 'postgresql://test@localhost/mmt_test',
     };
     expect(loadConfig(environment).repositorySsh).toBeNull();

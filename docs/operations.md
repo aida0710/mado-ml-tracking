@@ -1,19 +1,19 @@
 # 運用と接続設定
 
-## 認証方式（AUTH_MODE）
+## 認証方式（MMT_AUTH_MODE）
 
-`AUTH_MODE`でログイン方法を選びます。既定は`hybrid`です。
+`MMT_AUTH_MODE`でログイン方法を選びます。既定は`hybrid`です。
 
-| AUTH_MODE | 使えるログイン | 必須の設定 | 向いている場面 |
+| MMT_AUTH_MODE | 使えるログイン | 必須の設定 | 向いている場面 |
 |---|---|---|---|
-| `local` | ローカルアカウント | なし（`OIDC_*`は読まない） | SSOが無い環境、閉じたLAN |
-| `oidc` | Authentik（SSO）だけ | `OIDC_ISSUER_URL`、`OIDC_CLIENT_ID`、`OIDC_ALLOWED_GROUPS` | SSOへ移行し終えた本番 |
-| `hybrid` | SSOとローカルアカウント | `OIDC_ISSUER_URL`、`OIDC_CLIENT_ID`、`OIDC_ALLOWED_GROUPS` | SSOの導入中。Local Adminを緊急経路に残す |
+| `local` | ローカルアカウント | なし（`MMT_OIDC_*`は読まない） | SSOが無い環境、閉じたLAN |
+| `oidc` | Authentik（SSO）だけ | `MMT_OIDC_ISSUER_URL`、`MMT_OIDC_CLIENT_ID`、`MMT_OIDC_ALLOWED_GROUPS` | SSOへ移行し終えた本番 |
+| `hybrid` | SSOとローカルアカウント | `MMT_OIDC_ISSUER_URL`、`MMT_OIDC_CLIENT_ID`、`MMT_OIDC_ALLOWED_GROUPS` | SSOの導入中。Local Adminを緊急経路に残す |
 | `development` | 開発用ログイン | なし | ローカル開発。`NODE_ENV=production`では起動しない |
 
 必須の設定が欠けると、APIは設定名だけを示して起動しません。無効なmodeの経路は404を返します（`local`のOIDC開始・callback、`oidc`の`POST /api/auth/local-login`）。
 
-Web sessionはidle期限`AUTH_SESSION_IDLE_SECONDS`とabsolute期限`AUTH_SESSION_ABSOLUTE_SECONDS`の早い方で切れます。どちらも既定604800秒（7日）なので、操作しない期間を含め、ログインから7日保持します。idleがabsoluteを超える設定は起動時に拒否します。SSOボタンの表示名は`OIDC_LABEL`（既定`Authentik`）です。
+Web sessionはidle期限`MMT_AUTH_SESSION_IDLE_SECONDS`とabsolute期限`MMT_AUTH_SESSION_ABSOLUTE_SECONDS`の早い方で切れます。どちらも既定604800秒（7日）なので、操作しない期間を含め、ログインから7日保持します。idleがabsoluteを超える設定は起動時に拒否します。SSOボタンの表示名は`MMT_OIDC_LABEL`（既定`Authentik`）です。
 
 ローカルアカウントのパスワードはArgon2id（memory 19456KiB、time 2、parallelism 1）で保存し、12〜1024 byteを受け付けます。ログインは接続元ごとに1分30回、同じユーザー名への失敗は15分10回、パスワード変更時の現在のパスワード確認はユーザーごとに15分10回までで、超えると429と`Retry-After`を返します。回数はAPIプロセスのメモリにあり、再起動で戻ります。Argon2の同時計算は4件までです。存在しないユーザー名、誤ったパスワード、無効化したユーザーは同じ401を返します。ログイン・ログアウト・パスワード変更・初期管理者の作成は監査ログ（`audit_events`の`auth.login`、`auth.logout`、`auth.password.change`、`auth.bootstrap_admin`）に残り、パスワードやOIDCのcode・stateは記録しません。回数制限で429になった試行は記録しません。
 
@@ -29,9 +29,9 @@ npm run bootstrap-admin -w @mmt/api
 
 ### SSOへの移行手順
 
-1. `AUTH_MODE=hybrid`とAuthentikの設定（下記）を入れて`npm run db:migrate`の後にAPIを再起動し、`bootstrap-admin`でLocal Adminを作ってパスワードを変更します。
+1. `MMT_AUTH_MODE=hybrid`とAuthentikの設定（下記）を入れて`npm run db:migrate`の後にAPIを再起動し、`bootstrap-admin`でLocal Adminを作ってパスワードを変更します。
 2. 管理者と一般メンバーがSSOでログインし、全体管理者の判定とProject権限が正しいことを確認します。migration 010で既存のSSOユーザーは`user_oidc_identities`へ移り、同じユーザーIDのままログインできます。
-3. 確認できたら`AUTH_MODE=oidc`へ変えて再起動します。Local Adminのログインは404になります。SSOが止まったときは`hybrid`へ戻すとLocal Adminでログインできます。
+3. 確認できたら`MMT_AUTH_MODE=oidc`へ変えて再起動します。Local Adminのログインは404になります。SSOが止まったときは`hybrid`へ戻すとLocal Adminでログインできます。
 
 migration 010はsessionに`auth_method`を必須で追加します。migration後は新しいAPIへ入れ替えてください（古いAPIはsessionを作れません）。
 
@@ -64,14 +64,14 @@ Project adminは「プロジェクト設定」の「監査ログ」で自分のP
 |---|---|
 | Redirect URI | `https://tracking.example.com/api/auth/callback`（完全一致） |
 | Issuer | application単位のURL（例: `https://sso.example.com/application/o/ml-tracking/`） |
-| Scope | `openid profile email offline_access`（`OIDC_SCOPES`と同じにする。`offline_access`は下の「sessionの再確認」） |
+| Scope | `openid profile email offline_access`（`MMT_OIDC_SCOPES`と同じにする。`offline_access`は下の「sessionの再確認」） |
 | Back-channel logout URI | `https://tracking.example.com/api/auth/oidc/backchannel-logout` |
 
 AuthentikではApplicationとOAuth2/OpenID Providerを作ります。client secretはAPI serverにだけ設定します。ID tokenと**UserInfo**に`email`、`email_verified`、`name`、`groups`（group名の配列）を出すscope mappingが必要です。UserInfoに`groups`が無いと、次の再確認でどのgroupにも入っていないと判定され、全員のsessionが切れます。Providerの設定方法は[Authentik公式資料](https://docs.goauthentik.io/add-secure-apps/providers/oauth2/)を参照してください。
 
-refresh tokenを発行させるため、Providerのscope mappingに`offline_access`（Authentik標準の「authentik default OAuth Mapping: OpenID 'offline_access'」）を加え、`OIDC_SCOPES`にも`offline_access`を入れます。Authentikで有効にできない場合は`offline_access`を外したままでも動きますが、access tokenの期限（Authentikの既定は5分。Providerの「Access token validity」）ごとに再ログインが必要になります。
+refresh tokenを発行させるため、Providerのscope mappingに`offline_access`（Authentik標準の「authentik default OAuth Mapping: OpenID 'offline_access'」）を加え、`MMT_OIDC_SCOPES`にも`offline_access`を入れます。Authentikで有効にできない場合は`offline_access`を外したままでも動きますが、access tokenの期限（Authentikの既定は5分。Providerの「Access token validity」）ごとに再ログインが必要になります。
 
-7日保持するには、Authentikの［Applications］→［Providers］でこのアプリのProviderを編集し、［Advanced protocol settings］の［Scopes］に上のmappingを追加します。［Refresh Token Validity］は`days=7`以上にします。既に`days=30`なら変更不要です。［Access Token Validity］は`minutes=5`のままで更新できます。アプリの既存`.env`にも`AUTH_SESSION_IDLE_SECONDS=604800`、`AUTH_SESSION_ABSOLUTE_SECONDS=604800`、`OIDC_SCOPES=openid profile email offline_access`を設定し、APIを再起動してください。設定例や既定値を変えても、既存`.env`の値は自動で変わりません。反映後、一度ログインし直してrefresh tokenを取得します。
+7日保持するには、Authentikの［Applications］→［Providers］でこのアプリのProviderを編集し、［Advanced protocol settings］の［Scopes］に上のmappingを追加します。［Refresh Token Validity］は`days=7`以上にします。既に`days=30`なら変更不要です。［Access Token Validity］は`minutes=5`のままで更新できます。アプリの既存`.env`にも`MMT_AUTH_SESSION_IDLE_SECONDS=604800`、`MMT_AUTH_SESSION_ABSOLUTE_SECONDS=604800`、`MMT_OIDC_SCOPES=openid profile email offline_access`を設定し、APIを再起動してください。設定例や既定値を変えても、既存`.env`の値は自動で変わりません。反映後、一度ログインし直してrefresh tokenを取得します。
 
 アプリはstate、nonce、PKCE、ID tokenの署名・issuer・audienceを検証します。OIDC開始時に短命のHttpOnly cookieを発行し、callbackは同じbrowserからだけ受け付けます。
 
@@ -81,38 +81,38 @@ refresh tokenを発行させるため、Providerのscope mappingに`offline_acce
 
 ```dotenv
 NODE_ENV=production
-AUTH_MODE=hybrid
-AUTH_SESSION_IDLE_SECONDS=604800
-AUTH_SESSION_ABSOLUTE_SECONDS=604800
+MMT_AUTH_MODE=hybrid
+MMT_AUTH_SESSION_IDLE_SECONDS=604800
+MMT_AUTH_SESSION_ABSOLUTE_SECONDS=604800
 MMT_PUBLIC_URL=https://tracking.example.com
 MMT_WEB_ORIGIN=https://tracking.example.com
-OIDC_ISSUER_URL=https://sso.example.com/application/o/ml-tracking/
-OIDC_CLIENT_ID=<providerのclient ID>
-OIDC_CLIENT_SECRET=<secret>
-OIDC_LABEL=Authentik
-OIDC_SCOPES=openid profile email offline_access
-OIDC_AUTO_LINK_VERIFIED_EMAIL=false
-OIDC_ALLOWED_GROUPS=mmt-users,mmt-admins
-OIDC_ROLE_MAPPING_JSON={"mmt-admins":"admin","mmt-users":"user"}
-OIDC_DEFAULT_ROLE=user
+MMT_OIDC_ISSUER_URL=https://sso.example.com/application/o/ml-tracking/
+MMT_OIDC_CLIENT_ID=<providerのclient ID>
+MMT_OIDC_CLIENT_SECRET=<secret>
+MMT_OIDC_LABEL=Authentik
+MMT_OIDC_SCOPES=openid profile email offline_access
+MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL=false
+MMT_OIDC_ALLOWED_GROUPS=mmt-users,mmt-admins
+MMT_OIDC_ROLE_MAPPING_JSON={"mmt-admins":"admin","mmt-users":"user"}
+MMT_OIDC_DEFAULT_ROLE=user
 # openssl rand -base64 32 で作る。MMT_STORAGE_SECRET_KEYとは別の値にする
 MMT_SESSION_ENCRYPTION_KEY=<base64の32 byte>
-OIDC_RECHECK_SECONDS=60
-OIDC_TOKEN_SYNC_MAX_AGE_SECONDS=604800
+MMT_OIDC_RECHECK_SECONDS=60
+MMT_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS=604800
 ```
 
 | 設定 | 意味 |
 |---|---|
-| `OIDC_ALLOWED_GROUPS` | loginを許すgroup（カンマ区切り）。`oidc`/`hybrid`で必須で、空なら起動しません |
-| `OIDC_ROLE_MAPPING_JSON` | group→全体roleの対応表。roleは`admin`（全体管理者）と`user`（loginのみ）。ほかの値は起動時エラー。設定しなければ、OIDCで入る人は誰も全体管理者になりません |
-| `OIDC_DEFAULT_ROLE` | 対応表のどのgroupにも入っていない許可ユーザーの全体role。既定`user` |
-| `OIDC_AUTO_LINK_VERIFIED_EMAIL` | 同じemailのLocal Userへ自動連携するか。既定`false` |
-| `OIDC_SCOPES` | 要求するscope。既定`openid profile email offline_access`。`openid`が無いと起動しません。refresh tokenにはProvider側の`offline_access` mappingも必要です |
+| `MMT_OIDC_ALLOWED_GROUPS` | loginを許すgroup（カンマ区切り）。`oidc`/`hybrid`で必須で、空なら起動しません |
+| `MMT_OIDC_ROLE_MAPPING_JSON` | group→全体roleの対応表。roleは`admin`（全体管理者）と`user`（loginのみ）。ほかの値は起動時エラー。設定しなければ、OIDCで入る人は誰も全体管理者になりません |
+| `MMT_OIDC_DEFAULT_ROLE` | 対応表のどのgroupにも入っていない許可ユーザーの全体role。既定`user` |
+| `MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL` | 同じemailのLocal Userへ自動連携するか。既定`false` |
+| `MMT_OIDC_SCOPES` | 要求するscope。既定`openid profile email offline_access`。`openid`が無いと起動しません。refresh tokenにはProvider側の`offline_access` mappingも必要です |
 | `MMT_SESSION_ENCRYPTION_KEY` | SSO sessionに保存するaccess/refresh tokenの暗号鍵（base64の32 byte、AES-256-GCM）。`oidc`/`hybrid`で必須で、無いか形式が違うと起動しません |
-| `OIDC_RECHECK_SECONDS` | SSO sessionをUserInfoで確かめ直す間隔（秒）。既定`60` |
-| `OIDC_TOKEN_SYNC_MAX_AGE_SECONDS` | SSOユーザーのAPI tokenを使える、最後のgroup同期からの期限（秒）。既定`604800`（7日）。60未満は起動時エラー |
+| `MMT_OIDC_RECHECK_SECONDS` | SSO sessionをUserInfoで確かめ直す間隔（秒）。既定`60` |
+| `MMT_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS` | SSOユーザーのAPI tokenを使える、最後のgroup同期からの期限（秒）。既定`604800`（7日）。60未満は起動時エラー |
 
-対応表に書いたgroupも`OIDC_ALLOWED_GROUPS`に入れてください。許可groupに無いgroupだけを持つ人は、対応表に関係なくloginできません。
+対応表に書いたgroupも`MMT_OIDC_ALLOWED_GROUPS`に入れてください。許可groupに無いgroupだけを持つ人は、対応表に関係なくloginできません。
 
 
 migration 042を含むバージョンへ更新するときは、先に`MMT_SESSION_ENCRYPTION_KEY`を`.env`へ足します（無いとAPIが起動しません）。042はtokenを持たない既存のSSO sessionを失効させるので、SSOの利用者は更新後に一度ログインし直します。Local sessionはそのまま使えます。鍵を変えると、保存済みのtokenを復号できないSSO sessionは次の再確認で失効し、再ログインになります。
@@ -120,7 +120,7 @@ migration 042を含むバージョンへ更新するときは、先に`MMT_SESSI
 ### Userと全体roleの同期規則
 
 - 初回SSOでUserをJIT作成します。self-signupの画面はありません。
-- `OIDC_ALLOWED_GROUPS`のどのgroupにも入っていない人は拒否し、Userも作りません。
+- `MMT_OIDC_ALLOWED_GROUPS`のどのgroupにも入っていない人は拒否し、Userも作りません。
 - loginとsessionの再確認のたびに、全体管理者かどうか（`users.is_admin`）を対応表から同期します。複数groupに該当すれば強い方（`admin`）になります。
 - loginとsessionの再確認のたびに、その人のgroupを`user_groups`へ保存し直します。ProjectのSSO group bindingはこの表を使います。
 - 同期で有効な全体管理者（Local Adminを含む）が0人になる場合は、そのloginを拒否し、`is_admin`を残します。
@@ -131,14 +131,14 @@ migration 042を含むバージョンへ更新するときは、先に`MMT_SESSI
 
 Role同期を使う環境では、SSO Userの全体roleを画面から一時的に変えても次回ログインでAuthentik側の状態へ戻ります。恒久変更はAuthentik groupで行います。
 
-Web sessionはHttpOnly/SameSite=Lax cookieで、期限は上の`AUTH_SESSION_*`に従います。変更操作はOriginを検証します。アプリからのlogoutはアプリsessionを失効させます。Authentik全体のsession logoutとSCIMは提供しません。
+Web sessionはHttpOnly/SameSite=Lax cookieで、期限は上の`MMT_AUTH_SESSION_*`に従います。変更操作はOriginを検証します。アプリからのlogoutはアプリsessionを失効させます。Authentik全体のsession logoutとSCIMは提供しません。
 
 ### sessionの再確認とback-channel logout
 
 Authentikでgroupから外した人の権限を、loginを待たずに止める仕組みです（Madoと同じ構成）。
 
 - SSOのlogin時に、Authentikのaccess tokenとrefresh tokenを`MMT_SESSION_ENCRYPTION_KEY`で暗号化してsessionへ保存します（`sessions.access_token_enc`・`refresh_token_enc`）。平文では保存しません。sessionを失効させるとtokenも消します。
-- SSO sessionの要求ごとに、最後の確認から`OIDC_RECHECK_SECONDS`（既定60秒）が過ぎているか、access tokenの期限が切れていれば、UserInfoで現在のgroupを確かめます。access tokenが切れていればrefresh tokenで更新してから聞きます。同じsessionへ同時に来た要求は1回の確認を待ち合わせます。
+- SSO sessionの要求ごとに、最後の確認から`MMT_OIDC_RECHECK_SECONDS`（既定60秒）が過ぎているか、access tokenの期限が切れていれば、UserInfoで現在のgroupを確かめます。access tokenが切れていればrefresh tokenで更新してから聞きます。同じsessionへ同時に来た要求は1回の確認を待ち合わせます。
 - 結果はloginと同じ規則で反映します（上の「Userと全体roleの同期規則」）。
   - 許可groupに入ったまま: `user_groups`と`is_admin`を更新して続けます。全体roleやProject roleの変化ではsessionを切りません（Project権限は`effective_project_roles`で次の要求から変わります）。
   - 許可groupから外れた（ほかの拒否理由も同じ）: その人のSSO identityの**全session**を失効させ、`user_groups`を空にし、API tokenも止めます（下の「SSOユーザーのAPI token」）。
@@ -155,18 +155,18 @@ Authentikでgroupから外した人の権限を、loginを待たずに止める�
 | `reauthentication_required` | refresh tokenが無いままaccess tokenが切れた、tokenを持たない旧session、鍵の変更でtokenを復号できない |
 | `last_admin`・`user_disabled`ほか | loginの拒否理由と同じ（上の切り分け表） |
 
-Back-channel logout: AuthentikのProviderに上の「Back-channel logout URI」を登録すると、AuthentikでUserやsessionを終了した時点で、アプリのsessionも失効します。アプリはlogout tokenの署名（ProviderのJWKS）・issuer・audience（`OIDC_CLIENT_ID`）・発行時刻（10分以内）・`events`・`jti`を検証し、`nonce`を含むものは拒否します。`sub`があればそのidentityの全session、`sid`だけならそのAuthentik sessionで作ったsessionを失効させます。同じ`jti`の再送は400 `logout_token_replayed`です。記録は監査ログの`auth.oidc.backchannel_logout`（`details.subject`・`details.sid`・`details.revokedSessions`）です。
+Back-channel logout: AuthentikのProviderに上の「Back-channel logout URI」を登録すると、AuthentikでUserやsessionを終了した時点で、アプリのsessionも失効します。アプリはlogout tokenの署名（ProviderのJWKS）・issuer・audience（`MMT_OIDC_CLIENT_ID`）・発行時刻（10分以内）・`events`・`jti`を検証し、`nonce`を含むものは拒否します。`sub`があればそのidentityの全session、`sid`だけならそのAuthentik sessionで作ったsessionを失効させます。同じ`jti`の再送は400 `logout_token_replayed`です。記録は監査ログの`auth.oidc.backchannel_logout`（`details.subject`・`details.sid`・`details.revokedSessions`）です。
 
 ### SSOユーザーのAPI tokenの同期期限
 
-group同期はブラウザのloginかsessionの再確認でしか起きません。API tokenだけを使い続けると、Authentikでgroupから外しても気付けないため、SSO identityを持つUserのAPI tokenは**最後のgroup同期から`OIDC_TOKEN_SYNC_MAX_AGE_SECONDS`（既定7日）まで**しか使えません。期限を過ぎたtokenは401 `identity_sync_required`になります（tokenは失効させません）。
+group同期はブラウザのloginかsessionの再確認でしか起きません。API tokenだけを使い続けると、Authentikでgroupから外しても気付けないため、SSO identityを持つUserのAPI tokenは**最後のgroup同期から`MMT_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS`（既定7日）まで**しか使えません。期限を過ぎたtokenは401 `identity_sync_required`になります（tokenは失効させません）。
 
 - SDKだけを使う研究者のtokenは、ブラウザで7日間ログインしないと止まります。**ブラウザで一度ログインすれば、同じtokenがそのまま使えるようになります。**
 - 長期に動くworker・自動実行・CIは、人のtokenではなくService Account（上の「workerホストへworkerを導入する」の1.）のtokenを使います。Service Accountはこの期限の対象外です。
 - 自動実行のrule・自動昇格のpolicy・フックの所有者（実行するUser）には、この期限を掛けません。どれもサーバーの中で所有者の権限を確かめて動き、Jobに渡すJob tokenも期限を見ません。所有者がProjectの権限を失う（Projectから外れる・無効化される）と止まるので、長く使うものはProjectの設定でService Accountへ移します（所有者の移管。Project adminが行い、移管先は同じProjectの有効なService Accountで、ruleとpolicyはRoleがadmin、フックはeditorかadmin）。APIではruleが`PUT /api/projects/:p/automation-rules/:id/owner`、policyが`PUT /api/projects/:p/promotion-policies/:id/owner`、フックが`PUT /api/projects/:p/hooks/:id/owner`で、bodyはどれも`{serviceAccountId}`。移管先が条件に合わなければ422（ruleは`invalid_automation_owner`、policyは`promotion_owner_invalid`、フックは`invalid_hook_owner`）です。
 - 期限が無い代わりに、Authentikでgroupから外した人が所有するrule・policy・フックは、次にgroupが同期される（その人のログインか、使用中のsessionの再確認）までgroup由来の権限で動き続けます。すぐ止めるときは、全体管理者がユーザーを無効化する（上の「ユーザーを止める・戻す」）か、所有者をService Accountへ移します。
 - emailで自動連携したLocal UserもSSO identityを持つので対象です。ローカルアカウントでログインしてもgroupは同期されないため、SSOで一度ログインします。
-- `AUTH_MODE=local`へ切り替えた後も、SSO identityを持つUserのtokenは期限で止まります。
+- `MMT_AUTH_MODE=local`へ切り替えた後も、SSO identityを持つUserのtokenは期限で止まります。
 
 ### SSOで入れないときの切り分け
 
@@ -174,7 +174,7 @@ callbackで断ったときは、利用者には理由を区別せず401を返し
 
 | `reason` | 意味 | 直し方 |
 |---|---|---|
-| `group_not_allowed` | `OIDC_ALLOWED_GROUPS`のどのgroupにも入っていない | Authentikでgroupに入れる。ID tokenに`groups`が出ているかも確認する |
+| `group_not_allowed` | `MMT_OIDC_ALLOWED_GROUPS`のどのgroupにも入っていない | Authentikでgroupに入れる。ID tokenに`groups`が出ているかも確認する |
 | `email_not_verified` | ID tokenの`email`が無いか、`email_verified`がtrueでない | Authentikでemailを検証済みにし、scope mappingで`email_verified`を出す |
 | `user_disabled` | アプリでそのUserが無効になっている | 全体管理者がUserを有効に戻す |
 | `last_admin` | groupの同期で、最後の有効な全体管理者を外そうとした | 別の全体管理者（Local Adminでもよい）を先に用意する |
@@ -190,7 +190,7 @@ callbackで断ったときは、利用者には理由を区別せず401を返し
 
 開発Webはport5182でLANから接続できます。`/api`はloopbackのAPI4182へproxyします。Authentikのcallbackは`MMT_PUBLIC_URL`の固定URLを使うので、SSOで使うURLはProviderにも完全一致で登録します。
 
-初回に管理者がloginしProjectを作成します。メンバー（`OIDC_ALLOWED_GROUPS`のgroupに入っている人）は一度SSOでloginするとユーザーIDが作られ、「プロジェクト設定」からviewer/editor/adminを付けられます（Privateの場合。PublicのProjectは、ログインできる全員がメンバーへの追加なしにeditorとして使えます）。人ごとに付ける代わりに、AuthentikのgroupへProjectのroleを付けることもできます（次の節）。API tokenは発行時のscopeに加え、その所有者の現在のProject権限を確認します。
+初回に管理者がloginしProjectを作成します。メンバー（`MMT_OIDC_ALLOWED_GROUPS`のgroupに入っている人）は一度SSOでloginするとユーザーIDが作られ、「プロジェクト設定」からviewer/editor/adminを付けられます（Privateの場合。PublicのProjectは、ログインできる全員がメンバーへの追加なしにeditorとして使えます）。人ごとに付ける代わりに、AuthentikのgroupへProjectのroleを付けることもできます（次の節）。API tokenは発行時のscopeに加え、その所有者の現在のProject権限を確認します。
 
 ### 権限の決まり方
 
@@ -198,7 +198,7 @@ callbackで断ったときは、利用者には理由を区別せず401を返し
 
 | 段 | 決め方 | 変える場所 |
 |---|---|---|
-| 全体role（全体管理者か否か） | `OIDC_ROLE_MAPPING_JSON`の対応表。loginとsessionの再確認のたびに同期 | API serverの環境変数とAuthentikのgroup |
+| 全体role（全体管理者か否か） | `MMT_OIDC_ROLE_MAPPING_JSON`の対応表。loginとsessionの再確認のたびに同期 | API serverの環境変数とAuthentikのgroup |
 | Project role（viewer/editor/admin） | 直接付与とgroup bindingのうち強い方 | 「プロジェクト設定」（Project admin） |
 
 - 直接付与はユーザー1人に付けるrole（`project_members`）、group bindingはAuthentikのgroup名に付けるrole（`project_group_bindings`）です。どちらもProject adminが設定し、監査ログに`project.member.set`・`project.member.delete`・`project.group_binding.set`・`project.group_binding.delete`として残ります。
@@ -210,15 +210,15 @@ callbackで断ったときは、利用者には理由を区別せず401を返し
 ### Authentik側のgroupの運用
 
 - ProjectごとにAuthentikのgroupを作り（例: `mmt-proj-asr-editors`）、Projectの設定でそのgroupにroleを付けます。group名は大文字小文字・空白も含めて完全一致です。
-- ID tokenの`groups`はすべて`user_groups`へ保存するので、bindingに使うgroupを`OIDC_ALLOWED_GROUPS`に入れる必要はありません。ただし、そのgroupの人も許可groupのどれかに入っていないとloginできません。
+- ID tokenの`groups`はすべて`user_groups`へ保存するので、bindingに使うgroupを`MMT_OIDC_ALLOWED_GROUPS`に入れる必要はありません。ただし、そのgroupの人も許可groupのどれかに入っていないとloginできません。
 - groupの所属はloginとsessionの再確認（既定60秒ごと）で`user_groups`へ同期します。Authentikでgroupに入れた人は、使用中のsessionでも1分ほどで権限が付きます。外した人は1分ほどで権限が外れ、そのgroupの権限だけで使っていたProject限定API tokenも401になります（tokenは失効させないので、groupに戻せば再び使えます）。ブラウザを使わずAPI tokenだけを使っている人は、次の同期まで元のgroupのままです（同期が7日より古いtokenは止まります。上の「SSOユーザーのAPI tokenの同期期限」）。すぐ止めたい場合はProjectの設定で直接付与・bindingを外すか、tokenを失効させます。
 - 「プロジェクト設定」のgroup候補（`GET /auth/groups`）には、一度でも誰かのloginで同期されたgroup名だけが出ます。まだ誰もloginしていないgroupは名前を直接入力します。
 
 ## Artifacts
 
-ファイルシステムは`ARTIFACT_FILESYSTEM_ROOT`配下に、API serverだけが読める権限で保存します。サーバー生成IDを保存キーにし、利用者のファイル名は表示用metadataとして扱います。API server間で共有する場合は同じ永続volumeが必要です。
+ファイルシステムは`MMT_ARTIFACT_FILESYSTEM_ROOT`配下に、API serverだけが読める権限で保存します。サーバー生成IDを保存キーにし、利用者のファイル名は表示用metadataとして扱います。API server間で共有する場合は同じ永続volumeが必要です。
 
-S3は`S3_BUCKET`を設定するとProjectの保存先に選べます。`S3_ENDPOINT`未指定ならAWS S3です。互換サービスでは`S3_ENDPOINT`と必要に応じて`S3_FORCE_PATH_STYLE=true`を設定します。AWS SDKの標準credential provider、または対になった`S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`を使います。必要権限は対象prefix内のPut/Get/Delete、multipart uploadとabortです。
+S3は`MMT_S3_BUCKET`を設定するとProjectの保存先に選べます。`MMT_S3_ENDPOINT`未指定ならAWS S3です。互換サービスでは`MMT_S3_ENDPOINT`と必要に応じて`MMT_S3_FORCE_PATH_STYLE=true`を設定します。AWS SDKの標準credential provider、または対になった`MMT_S3_ACCESS_KEY_ID`/`MMT_S3_SECRET_ACCESS_KEY`を使います。必要権限は対象prefix内のPut/Get/Delete、multipart uploadとabortです。
 
 S3では、upload中に送信元が失敗するとmultipart uploadを中断しますが、中断の完了を待たずに失敗を返します。その間にAPIが止まるとpartが残るため、実bucketにはAbortIncompleteMultipartUploadのlifecycle ruleを設定してください。実bucketでの保存・取得の確認手順は[検証手順](verification.md)の「実S3の保存・取得を確認する」にあります。
 
@@ -247,7 +247,7 @@ DBとArtifactsは同時点でバックアップします。DBだけのrestoreで
 ### Artifact保存先の全体設定
 
 - 保存先は全体管理者が `/admin/storage-backends`（画面は「全体管理」→「ストレージ」、`/settings/storage`）で追加する。種類は filesystem と S3。S3 は endpoint、region、bucket、prefix、path-style、署名（v4／v2）、TLS 検証と CA、checksum の扱い（既定 WHEN_REQUIRED）、単一PUTの part size（5MiB〜512MiB、既定8MiB）を設定する。
-- 環境変数（`ARTIFACT_FILESYSTEM_ROOT`、`S3_*`）由来の `filesystem` と `s3` は従来どおり使え、画面では読み取り専用で表示される。DB へは写さない。
+- 環境変数（`MMT_ARTIFACT_FILESYSTEM_ROOT`、`MMT_S3_*`）由来の `filesystem` と `s3` は従来どおり使え、画面では読み取り専用で表示される。DB へは写さない。
 - secret を持つ S3 保存先を作るには `MMT_STORAGE_SECRET_KEY`（base64 の 32 byte）を API の環境に設定する。生成例: `openssl rand -base64 32`。値は `.env` だけに置き、worklog やチケットへ書かない。
 - **鍵を変えると、保存済みの secret は復号できなくなる。** 起動時に `storage_backend_unavailable`（名前と理由だけ）がログに出て、その保存先の Artifact は 503 になる。鍵を変えたら、各 S3 保存先の secret を PATCH で入れ直す（鍵の自動ローテーションは未実装）。
 - 新しい保存先は、作成後に「接続テスト」（put/get/range/delete を `mmt-connection-test/<uuid>/` で実施）で確かめてから既定にする。v2 の保存先も同じ。

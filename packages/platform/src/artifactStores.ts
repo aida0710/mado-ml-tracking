@@ -38,27 +38,27 @@ interface EnvironmentS3Settings {
   credentials?: S3Credentials;
 }
 function readEnvironmentS3Settings(env: NodeJS.ProcessEnv): EnvironmentS3Settings | null {
-  if (!env.S3_BUCKET) return null;
-  if (Boolean(env.S3_ACCESS_KEY_ID) !== Boolean(env.S3_SECRET_ACCESS_KEY))
+  if (!env.MMT_S3_BUCKET) return null;
+  if (Boolean(env.MMT_S3_ACCESS_KEY_ID) !== Boolean(env.MMT_S3_SECRET_ACCESS_KEY))
     throw new Error('S3 credential fields must be configured together');
   return {
-    bucket: env.S3_BUCKET,
-    prefix: env.S3_PREFIX ?? '',
-    region: env.S3_REGION ?? 'us-east-1',
-    ...(env.S3_ENDPOINT ? { endpoint: env.S3_ENDPOINT } : {}),
-    forcePathStyle: env.S3_FORCE_PATH_STYLE === 'true',
-    ...(env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY
+    bucket: env.MMT_S3_BUCKET,
+    prefix: env.MMT_S3_PREFIX ?? '',
+    region: env.MMT_S3_REGION ?? 'us-east-1',
+    ...(env.MMT_S3_ENDPOINT ? { endpoint: env.MMT_S3_ENDPOINT } : {}),
+    forcePathStyle: env.MMT_S3_FORCE_PATH_STYLE === 'true',
+    ...(env.MMT_S3_ACCESS_KEY_ID && env.MMT_S3_SECRET_ACCESS_KEY
       ? {
           credentials: {
-            accessKeyId: env.S3_ACCESS_KEY_ID,
-            secretAccessKey: env.S3_SECRET_ACCESS_KEY,
+            accessKeyId: env.MMT_S3_ACCESS_KEY_ID,
+            secretAccessKey: env.MMT_S3_SECRET_ACCESS_KEY,
           },
         }
       : {}),
   };
 }
 function environmentFilesystemRoot(env: NodeJS.ProcessEnv): string {
-  return env.ARTIFACT_FILESYSTEM_ROOT ?? path.resolve('var/artifacts');
+  return env.MMT_ARTIFACT_FILESYSTEM_ROOT ?? path.resolve('var/artifacts');
 }
 
 export function createArtifactStoresFromEnv(env: NodeJS.ProcessEnv = process.env): ArtifactStores {

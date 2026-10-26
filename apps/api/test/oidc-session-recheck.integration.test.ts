@@ -37,15 +37,15 @@ describe.skipIf(!testDatabaseUrl)(
       provider = await startMockOidcProvider();
       const config = loadConfig({
         MMT_DATABASE_URL: testDatabaseUrl,
-        AUTH_MODE: 'hybrid',
-        OIDC_ISSUER_URL: provider.issuer,
-        OIDC_CLIENT_ID: 'mmt-test',
-        OIDC_CLIENT_SECRET: 'mock-client-secret',
-        OIDC_ALLOW_INSECURE_HTTP: 'true',
-        OIDC_ALLOWED_GROUPS: 'mmt-users,mmt-admins',
-        OIDC_ROLE_MAPPING_JSON: '{"mmt-admins":"admin","mmt-users":"user"}',
+        MMT_AUTH_MODE: 'hybrid',
+        MMT_OIDC_ISSUER_URL: provider.issuer,
+        MMT_OIDC_CLIENT_ID: 'mmt-test',
+        MMT_OIDC_CLIENT_SECRET: 'mock-client-secret',
+        MMT_OIDC_ALLOW_INSECURE_HTTP: 'true',
+        MMT_OIDC_ALLOWED_GROUPS: 'mmt-users,mmt-admins',
+        MMT_OIDC_ROLE_MAPPING_JSON: '{"mmt-admins":"admin","mmt-users":"user"}',
         MMT_SESSION_ENCRYPTION_KEY: TEST_SESSION_ENCRYPTION_KEY,
-        OIDC_RECHECK_SECONDS: String(RECHECK_SECONDS),
+        MMT_OIDC_RECHECK_SECONDS: String(RECHECK_SECONDS),
       });
       app = createApplication({
         config,

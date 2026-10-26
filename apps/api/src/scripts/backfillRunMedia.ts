@@ -1,3 +1,4 @@
+import { rejectReplacedEnvironmentVariables } from '@mmt/platform';
 import { requireDatabaseUrl } from '../db/databaseSettings.js';
 import { pathToFileURL } from 'node:url';
 import { createDatabase, transaction, type Database } from '../db/database.js';
@@ -34,6 +35,7 @@ export async function backfillRunMedia(database: Database): Promise<number> {
 }
 
 async function main(): Promise<void> {
+  rejectReplacedEnvironmentVariables(process.env);
   const database = createDatabase(requireDatabaseUrl(process.env));
   try {
     const examined = await backfillRunMedia(database);

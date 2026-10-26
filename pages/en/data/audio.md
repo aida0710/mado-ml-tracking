@@ -80,7 +80,7 @@ The preview worker runs as a separate process from the API. It needs ffmpeg and 
 docker compose up -d preview
 ```
 
-Give the preview worker the same database URL as the API (`MMT_DATABASE_URL`), the storage environment variables (`ARTIFACT_FILESYSTEM_ROOT`, `S3_*`), and `MMT_STORAGE_SECRET_KEY`. The whole file is copied into its temporary directory (`MMT_PREVIEW_WORK_DIR`), which needs room for `MMT_PREVIEW_MAX_SOURCE_BYTES` (10 GiB by default); larger Artifacts get no preview. One ffmpeg run is stopped after 30 minutes by default (`MMT_PREVIEW_TOOL_TIMEOUT_MS`).
+Give the preview worker the same database URL as the API (`MMT_DATABASE_URL`), the storage environment variables (`MMT_ARTIFACT_FILESYSTEM_ROOT`, `MMT_S3_*`), and `MMT_STORAGE_SECRET_KEY`. The whole file is copied into its temporary directory (`MMT_PREVIEW_WORK_DIR`), which needs room for `MMT_PREVIEW_MAX_SOURCE_BYTES` (10 GiB by default); larger Artifacts get no preview. One ffmpeg run is stopped after 30 minutes by default (`MMT_PREVIEW_TOOL_TIMEOUT_MS`).
 
 ## Related pages
 

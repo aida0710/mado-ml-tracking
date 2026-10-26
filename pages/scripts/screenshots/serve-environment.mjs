@@ -27,9 +27,9 @@ const POLL_MS = 500;
 const STOP_GRACE_MS = 10_000;
 // このスクリプトが作成・削除するPostgreSQLの識別子。これらは引用符で囲む工夫をしなくてよい。
 const DATABASE_NAME_PATTERN = /^[a-z][a-z0-9_]{0,62}$/;
-// 親のシェルの設定のうちサーバーの動きを変えるもの（開発者がexportした.env、SSO、S3）は外し、
-// どの環境も同じ設定から始める。
-const INHERITED_SETTING_PATTERN = /^(MMT_|AUTH_|OIDC_|S3_|ARTIFACT_|DEVELOPMENT_ADMIN|DATABASE_URL$|HOST$|PORT$)/;
+// 親のシェルの設定のうちサーバーの動きを変えるもの（開発者がexportした.env、SSO、S3。どれもMMT_で始まる）
+// は外し、どの環境も同じ設定から始める。
+const INHERITED_SETTING_PATTERN = /^MMT_/;
 
 const { options, positional } = parseArguments(process.argv.slice(2));
 const [command, environmentName] = positional;
@@ -158,16 +158,16 @@ async function start() {
   const webUrl = `http://${LOOPBACK}:${webPort}`;
   const apiUrl = `http://${LOOPBACK}:${apiPort}`;
   const apiEnvironment = serverEnvironment({
-    HOST: LOOPBACK,
-    PORT: String(apiPort),
-    AUTH_MODE: environment.authMode,
-    DEVELOPMENT_ADMIN_EMAIL: 'admin@localhost',
+    MMT_HOST: LOOPBACK,
+    MMT_PORT: String(apiPort),
+    MMT_AUTH_MODE: environment.authMode,
+    MMT_DEVELOPMENT_ADMIN_EMAIL: 'admin@localhost',
     MMT_DATABASE_URL: databaseUrl(),
     MMT_PUBLIC_URL: webUrl,
     MMT_WEB_ORIGIN: webUrl,
     // 見本のProjectは、学習のJobをこのマシンでLocalのexecutorを使って動かす。
     MMT_ALLOW_LOCAL_EXECUTOR: 'true',
-    ARTIFACT_FILESYSTEM_ROOT: environmentFile('artifacts'),
+    MMT_ARTIFACT_FILESYSTEM_ROOT: environmentFile('artifacts'),
     // ドキュメントに載せるストレージの画面のとおり、seedが秘密の値を持つS3の保存先を
     // 足せるようにする。
     MMT_STORAGE_SECRET_KEY: await readOrCreateSecret('storage-secret-key'),

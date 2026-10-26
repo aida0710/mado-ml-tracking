@@ -17,13 +17,13 @@ describe.skipIf(!testDatabaseUrl)(
       provider = await startMockOidcProvider();
       const config = loadConfig({
         MMT_DATABASE_URL: testDatabaseUrl,
-        AUTH_MODE: 'oidc',
-        OIDC_ISSUER_URL: provider.issuer,
-        OIDC_CLIENT_ID: 'mmt-test',
-        OIDC_ALLOWED_GROUPS: 'mmt-users,mmt-admins',
-        OIDC_ROLE_MAPPING_JSON: '{"mmt-admins":"admin","mmt-users":"user"}',
-        OIDC_CLIENT_SECRET: 'mock-client-secret',
-        OIDC_ALLOW_INSECURE_HTTP: 'true',
+        MMT_AUTH_MODE: 'oidc',
+        MMT_OIDC_ISSUER_URL: provider.issuer,
+        MMT_OIDC_CLIENT_ID: 'mmt-test',
+        MMT_OIDC_ALLOWED_GROUPS: 'mmt-users,mmt-admins',
+        MMT_OIDC_ROLE_MAPPING_JSON: '{"mmt-admins":"admin","mmt-users":"user"}',
+        MMT_OIDC_CLIENT_SECRET: 'mock-client-secret',
+        MMT_OIDC_ALLOW_INSECURE_HTTP: 'true',
         MMT_SESSION_ENCRYPTION_KEY: TEST_SESSION_ENCRYPTION_KEY,
       });
       app = createApplication({ config, database: harness.database, stores: harness.stores }).app;
@@ -157,10 +157,10 @@ describe.skipIf(!testDatabaseUrl)(
     it('開発の.envに空のOIDC設定があってもMMT_DATABASE_URLで起動できる', () => {
       const config = loadConfig({
         MMT_DATABASE_URL: testDatabaseUrl,
-        AUTH_MODE: 'development',
-        OIDC_ISSUER_URL: '',
-        OIDC_CLIENT_ID: '',
-        OIDC_CLIENT_SECRET: '',
+        MMT_AUTH_MODE: 'development',
+        MMT_OIDC_ISSUER_URL: '',
+        MMT_OIDC_CLIENT_ID: '',
+        MMT_OIDC_CLIENT_SECRET: '',
       });
       expect(config.databaseUrl).toBe(testDatabaseUrl);
       expect(config.oidc).toBeNull();

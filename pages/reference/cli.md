@@ -162,4 +162,4 @@ API serverのリポジトリで実行します。Docker Composeでは`docker com
 | `npm run bootstrap-admin -w @mmt/api` | 初期管理者を作る、または管理者を復旧する（[認証方式とローカルアカウント](/admin/auth)） |
 | `npm run preview-worker -w @mmt/api` | 長い音声・動画のプレビューを作るworkerを動かす。ffmpegとffprobeが要る |
 | `npm run openapi:generate` | `docs/openapi.json`を作り直す（開発用） |
-| `npm run db:seed` | 確認用の見本データを入れる。`AUTH_MODE=development`と`MMT_ALLOW_SEED=true`のときだけ |
+| `npm run db:seed` | 確認用の見本データを入れる。`MMT_AUTH_MODE=development`と`MMT_ALLOW_SEED=true`のときだけ |

@@ -1,4 +1,4 @@
-// 実行の画面の確認。MMT_WEB_URLのWebの裏に開発モードのAPI（AUTH_MODE=development）を置き、
+// 実行の画面の確認。MMT_WEB_URLのWebの裏に開発モードのAPI（MMT_AUTH_MODE=development）を置き、
 // workerは動かさない。
 // - どのworkerも受け持たないコンピュータに、Compute、起動のダイアログ、Jobsの一覧の上、待っている
 //   Jobで印を付け、（リンクから開く）その詳細は接続の確認の前に警告する。
@@ -89,7 +89,7 @@ function logEntry(index) {
 try {
   console.log('Setup: a Project, an ssh computer no worker takes, a waiting Job with a long log');
   const admin = await signIn(adminEmail, '全体管理者');
-  assert.equal(admin.user.isAdmin, true, `${adminEmail} must be DEVELOPMENT_ADMIN_EMAIL`);
+  assert.equal(admin.user.isAdmin, true, `${adminEmail} must be MMT_DEVELOPMENT_ADMIN_EMAIL`);
   const editor = await signIn(`exec-editor-${runKey}@localhost`, '研究者A');
   const project = await admin.post('/projects', { name: `実行の確認 ${runKey}`, visibility: 'private' });
   await admin.put(`/projects/${project.id}/members/${editor.user.id}`, { role: 'editor' });

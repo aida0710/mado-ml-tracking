@@ -52,14 +52,14 @@ const database = new pg.Pool({ connectionString: databaseUrl, options: `-c searc
 const artifactDirectory = await mkdtemp(path.join(tmpdir(), 'mmt-artifact-previews-'));
 const config = loadConfig({
   MMT_DATABASE_URL: databaseUrl,
-  AUTH_MODE: 'development',
-  PORT: String(API_PORT),
+  MMT_AUTH_MODE: 'development',
+  MMT_PORT: String(API_PORT),
   MMT_WEB_ORIGIN: WEB_URL,
 });
 const application = createApplication({
   config,
   database,
-  stores: createArtifactStoresFromEnv({ ARTIFACT_FILESYSTEM_ROOT: artifactDirectory }),
+  stores: createArtifactStoresFromEnv({ MMT_ARTIFACT_FILESYSTEM_ROOT: artifactDirectory }),
 });
 let server;
 const browser = await chromium.launch({

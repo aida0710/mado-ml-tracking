@@ -31,7 +31,7 @@ export function LocalUserDialog({
   const [isAdmin, setIsAdmin] = useState(false);
   const [createdPassword, setCreatedPassword] = useState<string | null>(null);
   const mutation = useMutation();
-  // ローカルアカウントは、サーバーがローカルログインを受け付ける間（AUTH_MODE）だけログインできる。
+  // ローカルアカウントは、サーバーがローカルログインを受け付ける間（MMT_AUTH_MODE）だけログインできる。
   const authConfig = useQuery({ key: 'auth-config', load: authApi.config });
   const isLocalLoginOff = authConfig.value !== undefined && !loginMethods(authConfig.value).local;
   if (createdPassword)

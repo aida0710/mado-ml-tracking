@@ -17,7 +17,7 @@ import { decryptSecret, encryptSecret, type SecretKey } from '../security/secret
 import { OidcLoginDeniedError, syncOidcIdentity, type OidcClaims } from './oidcProvisioning.js';
 
 /**
- * SSOのブラウザのsessionをIdPと合わせ続ける。最後の確認がOIDC_RECHECK_SECONDSより古いsessionや、
+ * SSOのブラウザのsessionをIdPと合わせ続ける。最後の確認がMMT_OIDC_RECHECK_SECONDSより古いsessionや、
  * access tokenが切れたsessionは、UserInfoに今のグループを問い合わせ（必要ならaccess tokenを
  * 更新する）、ログインと同じように当てはめる。許可されたグループから外れたら、そのidentityの
  * すべてのsessionを終える。IdPがtokenを拒んだら、このsessionを終える。IdPに届かなければ503を

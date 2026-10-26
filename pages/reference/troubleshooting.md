@@ -10,24 +10,24 @@ description: APIが起動しない、SSOでログインできない、tokenが40
 APIは、設定に問題があると、足りない設定や形式の違う設定の名前だけを表示して止まります。値は表示しません。
 
 ```text
-Invalid configuration: OIDC_RECHECK_SECONDS
-MMT_SESSION_ENCRYPTION_KEY is required when AUTH_MODE=hybrid
+Invalid configuration: MMT_OIDC_RECHECK_SECONDS
+MMT_SESSION_ENCRYPTION_KEY is required when MMT_AUTH_MODE=hybrid
 ```
 
 | 表示 | 直し方 |
 | --- | --- |
 | `MMT_DATABASE_URL is required` | `.env`にDBの接続URLを入れる |
-| `OIDC_ISSUER_URL and OIDC_CLIENT_ID are required when AUTH_MODE=...` | Authentikの設定を入れるか、`AUTH_MODE=local`にする |
+| `MMT_OIDC_ISSUER_URL and MMT_OIDC_CLIENT_ID are required when MMT_AUTH_MODE=...` | Authentikの設定を入れるか、`MMT_AUTH_MODE=local`にする |
 | `MMT_SESSION_ENCRYPTION_KEY is required ...`、`... must be base64 of 32 bytes` | `openssl rand -base64 32`で作った値を入れる |
 | `OIDC issuer requires HTTPS ...` | IssuerをHTTPSのURLにする |
 | `Production URLs require HTTPS` | `NODE_ENV=production`では`MMT_PUBLIC_URL`と`MMT_WEB_ORIGIN`をHTTPSにする |
-| `Development authentication is forbidden in production` | 本番では`AUTH_MODE`を`local`、`oidc`、`hybrid`のどれかにする |
-| `AUTH_SESSION_IDLE_SECONDS must not exceed AUTH_SESSION_ABSOLUTE_SECONDS` | idleをabsolute以下にする |
+| `Development authentication is forbidden in production` | 本番では`MMT_AUTH_MODE`を`local`、`oidc`、`hybrid`のどれかにする |
+| `MMT_AUTH_SESSION_IDLE_SECONDS must not exceed MMT_AUTH_SESSION_ABSOLUTE_SECONDS` | idleをabsolute以下にする |
 | `MMT_GIT_SSH_KEY_PATH and MMT_GIT_KNOWN_HOSTS_PATH must be set together` | 両方を設定するか、両方を消す |
 
-`OIDC_ALLOWED_GROUPS`が空のとき、`OIDC_ROLE_MAPPING_JSON`に`admin`・`user`以外のroleを書いたときも起動しません。SMTPの設定は、`MMT_SMTP_URL`と`MMT_SMTP_FROM`の片方だけでは起動しません。
+`MMT_OIDC_ALLOWED_GROUPS`が空のとき、`MMT_OIDC_ROLE_MAPPING_JSON`に`admin`・`user`以外のroleを書いたときも起動しません。SMTPの設定は、`MMT_SMTP_URL`と`MMT_SMTP_FROM`の片方だけでは起動しません。
 
-更新したあとに起動しない場合は、新しく必須になった設定が無いかを確かめてください。SSOの再確認を含むバージョンからは`MMT_SESSION_ENCRYPTION_KEY`が、groupで許可を決めるバージョンからは`OIDC_ALLOWED_GROUPS`が必須です。
+更新したあとに起動しない場合は、新しく必須になった設定が無いかを確かめてください。SSOの再確認を含むバージョンからは`MMT_SESSION_ENCRYPTION_KEY`が、groupで許可を決めるバージョンからは`MMT_OIDC_ALLOWED_GROUPS`が必須です。
 
 ## SSOでログインできない
 
@@ -39,7 +39,7 @@ https://tracking.example.com/api/audit-events?action=auth.oidc.denied
 
 | `reason` | 意味 | 直し方 |
 | --- | --- | --- |
-| `group_not_allowed` | `OIDC_ALLOWED_GROUPS`のどのgroupにも入っていない | Authentikでgroupに入れる。ID tokenに`groups`が出ているかも確かめる |
+| `group_not_allowed` | `MMT_OIDC_ALLOWED_GROUPS`のどのgroupにも入っていない | Authentikでgroupに入れる。ID tokenに`groups`が出ているかも確かめる |
 | `email_not_verified` | `email`が無いか、`email_verified`がtrueでない | Authentikでメールアドレスを検証済みにし、scope mappingで`email_verified`を出す |
 | `user_disabled` | このアプリでユーザーが無効になっている | 全体管理者が「全体管理」→［ユーザー］で有効化する |
 | `last_admin` | 同期すると有効な全体管理者が0人になる | 別の全体管理者（ローカルの管理者でもよい）を先に用意する |
@@ -56,15 +56,15 @@ SSOのsessionの再確認で、sessionが終了した可能性があります。
 | --- | --- | --- |
 | `group_not_allowed` | 許可されたgroupから外れた | groupの所属を確かめる。UserInfoに`groups`が出ていないと全員がこれになる |
 | `idp_session_revoked` | Authentikがtokenを拒否した（Authentikでログアウトした、など） | もう一度ログインする |
-| `reauthentication_required` | refresh tokenが無いままaccess tokenが切れた | `OIDC_SCOPES`とProviderに`offline_access`を入れる |
+| `reauthentication_required` | refresh tokenが無いままaccess tokenが切れた | `MMT_OIDC_SCOPES`とProviderに`offline_access`を入れる |
 
 ## 「Authentikに接続できない」（503 `oidc_unavailable`）
 
 API serverからAuthentikに接続できないため、SSOのsessionの権限を確かめられない状態です。sessionは残っているので、Authentikが復旧すれば同じsessionで続けられます。API serverからAuthentikのIssuerのURLへ接続できるかを確かめてください。
 
-Authentikが長く止まる場合は、`AUTH_MODE=hybrid`にしてローカルの管理者でログインできます。
+Authentikが長く止まる場合は、`MMT_AUTH_MODE=hybrid`にしてローカルの管理者でログインできます。
 
-Authentikに接続できないあいだは、前回の確認から`OIDC_RECHECK_SECONDS`を過ぎたSSOのsessionでは、ログアウトの操作も503になります。ログアウトできなくても、操作は受け付けられません。Authentikが復旧するか、sessionの期限が切れるのを待ってください。
+Authentikに接続できないあいだは、前回の確認から`MMT_OIDC_RECHECK_SECONDS`を過ぎたSSOのsessionでは、ログアウトの操作も503になります。ログアウトできなくても、操作は受け付けられません。Authentikが復旧するか、sessionの期限が切れるのを待ってください。
 
 ## 「パスワードを変更」の画面から進めない
 

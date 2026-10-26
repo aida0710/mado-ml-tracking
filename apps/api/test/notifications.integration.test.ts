@@ -607,7 +607,7 @@ describe.skipIf(!testDatabaseUrl)('通知チャネル・ルール・送信outbox
       config: harness.config,
       database: harness.database,
       stores: harness.stores,
-      environment: { ...environment, ARTIFACT_FILESYSTEM_ROOT: harness.artifactDirectory },
+      environment: { ...environment, MMT_ARTIFACT_FILESYSTEM_ROOT: harness.artifactDirectory },
       notificationSenders: senders,
     });
     const channel = await createChannel(fixture);

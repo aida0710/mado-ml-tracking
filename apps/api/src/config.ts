@@ -8,7 +8,11 @@ import {
   type RegistryCredentials,
 } from './services/imagePlatformChecker.js';
 import { containsControlCharacter, DEFAULT_CHECKPOINT_KEEP_COUNT } from '@mmt/contracts';
-import { parseSmtpSettings, type SmtpSettings } from '@mmt/platform';
+import {
+  parseSmtpSettings,
+  rejectReplacedEnvironmentVariables,
+  type SmtpSettings,
+} from '@mmt/platform';
 
 const optionalSetting = z.preprocess(
   (value) => (value === '' ? undefined : value),
@@ -69,16 +73,16 @@ const MIN_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS = 60;
 const environmentSchema = z.object({
   NODE_ENV: z.string().default('development'),
   MMT_DATABASE_URL: optionalSetting,
-  HOST: z.string().default('127.0.0.1'),
-  PORT: z.coerce.number().int().min(1).max(65535).default(4182),
+  MMT_HOST: z.string().default('127.0.0.1'),
+  MMT_PORT: z.coerce.number().int().min(1).max(65535).default(4182),
   // hybridは、SSOを導入するあいだ、ローカルの管理者を復旧の経路として残す。
-  AUTH_MODE: z.enum(['local', 'oidc', 'hybrid', 'development']).default('hybrid'),
-  AUTH_SESSION_IDLE_SECONDS: z.coerce
+  MMT_AUTH_MODE: z.enum(['local', 'oidc', 'hybrid', 'development']).default('hybrid'),
+  MMT_AUTH_SESSION_IDLE_SECONDS: z.coerce
     .number()
     .int()
     .min(MIN_SESSION_IDLE_SECONDS)
     .default(DEFAULT_SESSION_LIFETIME_SECONDS),
-  AUTH_SESSION_ABSOLUTE_SECONDS: z.coerce
+  MMT_AUTH_SESSION_ABSOLUTE_SECONDS: z.coerce
     .number()
     .int()
     .min(MIN_SESSION_ABSOLUTE_SECONDS)
@@ -89,27 +93,27 @@ const environmentSchema = z.object({
   // APIの前にあり、X-Forwarded-Forに追記するリバースプロキシの数（composeではWebのnginx）。
   MMT_TRUSTED_PROXY_HOPS: z.coerce.number().int().min(0).max(MAX_TRUSTED_PROXY_HOPS).default(0),
   // OIDCが有効なときだけ検証するので、localモードでは残っている値を無視する。
-  OIDC_ISSUER_URL: optionalSetting,
-  OIDC_CLIENT_ID: optionalSetting,
-  OIDC_CLIENT_SECRET: optionalSetting,
-  OIDC_ALLOWED_GROUPS: optionalSetting,
-  OIDC_ROLE_MAPPING_JSON: optionalSetting,
-  OIDC_DEFAULT_ROLE: optionalSetting,
+  MMT_OIDC_ISSUER_URL: optionalSetting,
+  MMT_OIDC_CLIENT_ID: optionalSetting,
+  MMT_OIDC_CLIENT_SECRET: optionalSetting,
+  MMT_OIDC_ALLOWED_GROUPS: optionalSetting,
+  MMT_OIDC_ROLE_MAPPING_JSON: optionalSetting,
+  MMT_OIDC_DEFAULT_ROLE: optionalSetting,
   // 既定は無効。メールアドレスで結び付けると、IdPのアカウントが同じメールアドレスの
   // ローカルアカウントを乗っ取れてしまう。
-  OIDC_AUTO_LINK_VERIFIED_EMAIL: z.enum(['true', 'false']).default('false'),
-  OIDC_SCOPES: z.string().default(DEFAULT_OIDC_SCOPES),
-  OIDC_LABEL: z.string().min(1).max(100).default('Authentik'),
-  OIDC_ALLOW_INSECURE_HTTP: z.enum(['true', 'false']).default('false'),
+  MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL: z.enum(['true', 'false']).default('false'),
+  MMT_OIDC_SCOPES: z.string().default(DEFAULT_OIDC_SCOPES),
+  MMT_OIDC_LABEL: z.string().min(1).max(100).default('Authentik'),
+  MMT_OIDC_ALLOW_INSECURE_HTTP: z.enum(['true', 'false']).default('false'),
   // 32バイトのbase64。SSOのsessionに持つIdPのtokenを暗号化する。oidcとhybridでは必須。
   MMT_SESSION_ENCRYPTION_KEY: optionalSetting,
-  OIDC_RECHECK_SECONDS: z.coerce.number().int().min(1).default(DEFAULT_OIDC_RECHECK_SECONDS),
-  OIDC_TOKEN_SYNC_MAX_AGE_SECONDS: z.coerce
+  MMT_OIDC_RECHECK_SECONDS: z.coerce.number().int().min(1).default(DEFAULT_OIDC_RECHECK_SECONDS),
+  MMT_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS: z.coerce
     .number()
     .int()
     .min(MIN_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS)
     .default(DEFAULT_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS),
-  DEVELOPMENT_ADMIN_EMAIL: z
+  MMT_DEVELOPMENT_ADMIN_EMAIL: z
     .string()
     .regex(/^[^\s@]+@[^\s@]+$/)
     .default('admin@localhost'),
@@ -251,8 +255,7 @@ function parseOptionalSecretKey(base64: string | undefined, settingName: string)
 }
 
 export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiConfig {
-  if (environment.OIDC_ADMIN_GROUP !== undefined)
-    throw new Error('OIDC_ADMIN_GROUP is not supported; use OIDC_ROLE_MAPPING_JSON');
+  rejectReplacedEnvironmentVariables(environment);
   // 項目名だけを伝える。環境変数の値には認証情報が入りうる。
   const parsed = environmentSchema.safeParse(environment);
   if (!parsed.success)
@@ -264,7 +267,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
     throw new Error('MMT_GIT_SSH_KEY_PATH and MMT_GIT_KNOWN_HOSTS_PATH must be set together');
   const databaseUrl = requireDatabaseUrl(environment);
   const isProduction = settings.NODE_ENV === 'production';
-  if (isProduction && settings.AUTH_MODE === 'development')
+  if (isProduction && settings.MMT_AUTH_MODE === 'development')
     throw new Error('Development authentication is forbidden in production');
   const publicUrl = new URL(settings.MMT_PUBLIC_URL);
   const webUrl = new URL(settings.MMT_WEB_ORIGIN);
@@ -274,11 +277,13 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
     throw new Error('Public URLs must not contain credentials');
   if (isProduction && (publicUrl.protocol !== 'https:' || webUrl.protocol !== 'https:'))
     throw new Error('Production URLs require HTTPS');
-  const allowInsecureHttp = settings.OIDC_ALLOW_INSECURE_HTTP === 'true';
+  const allowInsecureHttp = settings.MMT_OIDC_ALLOW_INSECURE_HTTP === 'true';
   if (isProduction && allowInsecureHttp)
     throw new Error('Insecure OIDC transport is forbidden in production');
-  if (settings.AUTH_SESSION_IDLE_SECONDS > settings.AUTH_SESSION_ABSOLUTE_SECONDS)
-    throw new Error('AUTH_SESSION_IDLE_SECONDS must not exceed AUTH_SESSION_ABSOLUTE_SECONDS');
+  if (settings.MMT_AUTH_SESSION_IDLE_SECONDS > settings.MMT_AUTH_SESSION_ABSOLUTE_SECONDS)
+    throw new Error(
+      'MMT_AUTH_SESSION_IDLE_SECONDS must not exceed MMT_AUTH_SESSION_ABSOLUTE_SECONDS',
+    );
   const storageSecretKey = parseOptionalSecretKey(
     settings.MMT_STORAGE_SECRET_KEY,
     'MMT_STORAGE_SECRET_KEY',
@@ -298,14 +303,15 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
       'MMT_REGISTRY_HOST, MMT_REGISTRY_USERNAME and MMT_REGISTRY_PASSWORD must be set together',
     );
   let oidc: ApiConfig['oidc'] = null;
-  // localモードはOIDC_*を無視し、残ったSSOの設定が2つ目のログイン経路を開かないようにする。
-  if (settings.AUTH_MODE === 'oidc' || settings.AUTH_MODE === 'hybrid') {
-    if (!settings.OIDC_ISSUER_URL || !settings.OIDC_CLIENT_ID)
+  // localモードはMMT_OIDC_*を無視し、残ったSSOの設定が2つ目のログイン経路を開かないようにする。
+  if (settings.MMT_AUTH_MODE === 'oidc' || settings.MMT_AUTH_MODE === 'hybrid') {
+    if (!settings.MMT_OIDC_ISSUER_URL || !settings.MMT_OIDC_CLIENT_ID)
       throw new Error(
-        `OIDC_ISSUER_URL and OIDC_CLIENT_ID are required when AUTH_MODE=${settings.AUTH_MODE}`,
+        `MMT_OIDC_ISSUER_URL and MMT_OIDC_CLIENT_ID are required when MMT_AUTH_MODE=${settings.MMT_AUTH_MODE}`,
       );
-    if (!URL.canParse(settings.OIDC_ISSUER_URL)) throw new Error('OIDC_ISSUER_URL must be a URL');
-    const issuerUrl = new URL(settings.OIDC_ISSUER_URL);
+    if (!URL.canParse(settings.MMT_OIDC_ISSUER_URL))
+      throw new Error('MMT_OIDC_ISSUER_URL must be a URL');
+    const issuerUrl = new URL(settings.MMT_OIDC_ISSUER_URL);
     if (issuerUrl.username || issuerUrl.password)
       throw new Error('OIDC issuer must not contain credentials');
     if (
@@ -320,11 +326,11 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
         'OIDC issuer requires HTTPS; insecure HTTP is permitted only for an explicit loopback test provider',
       );
     }
-    const scopes = settings.OIDC_SCOPES.split(/\s+/).filter(Boolean);
-    if (!scopes.includes('openid')) throw new Error('OIDC_SCOPES must include openid');
+    const scopes = settings.MMT_OIDC_SCOPES.split(/\s+/).filter(Boolean);
+    if (!scopes.includes('openid')) throw new Error('MMT_OIDC_SCOPES must include openid');
     if (!settings.MMT_SESSION_ENCRYPTION_KEY)
       throw new Error(
-        `MMT_SESSION_ENCRYPTION_KEY is required when AUTH_MODE=${settings.AUTH_MODE}`,
+        `MMT_SESSION_ENCRYPTION_KEY is required when MMT_AUTH_MODE=${settings.MMT_AUTH_MODE}`,
       );
     let sessionEncryptionKey: SecretKey;
     try {
@@ -333,31 +339,31 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
       throw new Error('MMT_SESSION_ENCRYPTION_KEY must be base64 of 32 bytes');
     }
     oidc = {
-      issuer: settings.OIDC_ISSUER_URL,
-      clientId: settings.OIDC_CLIENT_ID,
-      clientSecret: settings.OIDC_CLIENT_SECRET,
+      issuer: settings.MMT_OIDC_ISSUER_URL,
+      clientId: settings.MMT_OIDC_CLIENT_ID,
+      clientSecret: settings.MMT_OIDC_CLIENT_SECRET,
       rolePolicy: createOidcRolePolicy({
-        allowedGroups: settings.OIDC_ALLOWED_GROUPS,
-        roleMappingJson: settings.OIDC_ROLE_MAPPING_JSON,
-        defaultRole: settings.OIDC_DEFAULT_ROLE,
+        allowedGroups: settings.MMT_OIDC_ALLOWED_GROUPS,
+        roleMappingJson: settings.MMT_OIDC_ROLE_MAPPING_JSON,
+        defaultRole: settings.MMT_OIDC_DEFAULT_ROLE,
       }),
-      autoLinkVerifiedEmail: settings.OIDC_AUTO_LINK_VERIFIED_EMAIL === 'true',
+      autoLinkVerifiedEmail: settings.MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL === 'true',
       scopes: scopes.join(' '),
-      label: settings.OIDC_LABEL,
+      label: settings.MMT_OIDC_LABEL,
       allowInsecureHttp,
       sessionEncryptionKey,
-      recheckSeconds: settings.OIDC_RECHECK_SECONDS,
+      recheckSeconds: settings.MMT_OIDC_RECHECK_SECONDS,
     };
   }
   return {
     databaseUrl,
-    host: settings.HOST,
-    port: settings.PORT,
-    authMode: settings.AUTH_MODE,
-    localLoginEnabled: settings.AUTH_MODE === 'local' || settings.AUTH_MODE === 'hybrid',
+    host: settings.MMT_HOST,
+    port: settings.MMT_PORT,
+    authMode: settings.MMT_AUTH_MODE,
+    localLoginEnabled: settings.MMT_AUTH_MODE === 'local' || settings.MMT_AUTH_MODE === 'hybrid',
     session: {
-      idleSeconds: settings.AUTH_SESSION_IDLE_SECONDS,
-      absoluteSeconds: settings.AUTH_SESSION_ABSOLUTE_SECONDS,
+      idleSeconds: settings.MMT_AUTH_SESSION_IDLE_SECONDS,
+      absoluteSeconds: settings.MMT_AUTH_SESSION_ABSOLUTE_SECONDS,
     },
     publicUrl: publicUrl.origin,
     webOrigin: webUrl.origin,
@@ -365,10 +371,10 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
     trustedProxyHops: settings.MMT_TRUSTED_PROXY_HOPS,
     secureCookies: publicUrl.protocol === 'https:',
     oidc,
-    developmentAdminEmail: settings.DEVELOPMENT_ADMIN_EMAIL.toLowerCase(),
+    developmentAdminEmail: settings.MMT_DEVELOPMENT_ADMIN_EMAIL.toLowerCase(),
     allowLocalExecutor:
-      settings.AUTH_MODE === 'development' && settings.MMT_ALLOW_LOCAL_EXECUTOR === 'true',
-    allowSeed: settings.AUTH_MODE === 'development' && settings.MMT_ALLOW_SEED === 'true',
+      settings.MMT_AUTH_MODE === 'development' && settings.MMT_ALLOW_LOCAL_EXECUTOR === 'true',
+    allowSeed: settings.MMT_AUTH_MODE === 'development' && settings.MMT_ALLOW_SEED === 'true',
     repositorySsh:
       settings.MMT_GIT_SSH_KEY_PATH && settings.MMT_GIT_KNOWN_HOSTS_PATH
         ? {
@@ -401,7 +407,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): ApiCon
     checkpointKeepCount: settings.MMT_CHECKPOINT_KEEP_COUNT,
     csvExportMaxRows: settings.MMT_CSV_EXPORT_MAX_ROWS,
     reportSnapshotMaxBytes: settings.MMT_REPORT_SNAPSHOT_MAX_BYTES,
-    oidcTokenSyncMaxAgeSeconds: settings.OIDC_TOKEN_SYNC_MAX_AGE_SECONDS,
+    oidcTokenSyncMaxAgeSeconds: settings.MMT_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS,
     smtp: parseSmtpSettings({ url: settings.MMT_SMTP_URL, from: settings.MMT_SMTP_FROM }),
   };
 }

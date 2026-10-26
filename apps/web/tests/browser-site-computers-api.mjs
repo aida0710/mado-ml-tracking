@@ -36,7 +36,7 @@ const DESKTOP = { width: 1440, height: 1000 };
 const PHONE_WIDTH = 390;
 // ランチャーを待っている鍵と接続確認は、数秒ごとに読み直される（EXECUTION_POLL_MS）。
 const LAUNCHER_ANSWER_TIMEOUT_MS = 20_000;
-// 開発モードの全体管理者（DEVELOPMENT_ADMIN_EMAILの既定値）。
+// 開発モードの全体管理者（MMT_DEVELOPMENT_ADMIN_EMAILの既定値）。
 const ADMIN_EMAIL = 'admin@localhost';
 // digestで固定した任意のimage。ここではJobを実行しないので、pullされることはない。
 const DOCKER_IMAGE = `registry.example.invalid/mmt/site-job@sha256:${'a'.repeat(64)}`;
@@ -67,10 +67,10 @@ const database = new pg.Pool({ connectionString: databaseUrl, options: `-c searc
 const artifactDirectory = await mkdtemp(path.join(tmpdir(), 'mmt-sites-browser-artifacts-'));
 const config = loadConfig({
   MMT_DATABASE_URL: databaseUrl,
-  AUTH_MODE: 'development',
-  PORT: String(API_PORT),
+  MMT_AUTH_MODE: 'development',
+  MMT_PORT: String(API_PORT),
   MMT_WEB_ORIGIN: WEB_URL,
-  DEVELOPMENT_ADMIN_EMAIL: ADMIN_EMAIL,
+  MMT_DEVELOPMENT_ADMIN_EMAIL: ADMIN_EMAIL,
 });
 let application;
 let server;
@@ -235,7 +235,7 @@ try {
   application = createApplication({
     config,
     database,
-    stores: createArtifactStoresFromEnv({ ARTIFACT_FILESYSTEM_ROOT: artifactDirectory }),
+    stores: createArtifactStoresFromEnv({ MMT_ARTIFACT_FILESYSTEM_ROOT: artifactDirectory }),
   });
   server = serve({
     fetch: application.app.fetch,

@@ -29,7 +29,7 @@ describe('resolveOidcAccess', () => {
     });
   });
 
-  it('対応表に無い許可ユーザーはOIDC_DEFAULT_ROLEになる', () => {
+  it('対応表に無い許可ユーザーはMMT_OIDC_DEFAULT_ROLEになる', () => {
     const withoutUserMapping = { ...policy, roleMapping: { 'mmt-admins': 'admin' as const } };
     expect(resolveOidcAccess(withoutUserMapping, ['mmt-users'])).toMatchObject({
       globalRole: 'user',
@@ -56,12 +56,12 @@ describe('createOidcRolePolicy', () => {
 
   };
 
-  it('OIDC_ALLOWED_GROUPSが空なら作れない', () => {
+  it('MMT_OIDC_ALLOWED_GROUPSが空なら作れない', () => {
     expect(() => createOidcRolePolicy({ ...base, allowedGroups: undefined })).toThrow(
-      /OIDC_ALLOWED_GROUPS/,
+      /MMT_OIDC_ALLOWED_GROUPS/,
     );
     expect(() => createOidcRolePolicy({ ...base, allowedGroups: ' , ' })).toThrow(
-      /OIDC_ALLOWED_GROUPS/,
+      /MMT_OIDC_ALLOWED_GROUPS/,
     );
   });
 
@@ -79,14 +79,14 @@ describe('createOidcRolePolicy', () => {
 
   it('未知のroleや壊れたJSONは作れない', () => {
     expect(() => createOidcRolePolicy({ ...base, roleMappingJson: '{"ops":"owner"}' })).toThrow(
-      /OIDC_ROLE_MAPPING_JSON roles/,
+      /MMT_OIDC_ROLE_MAPPING_JSON roles/,
     );
     for (const roleMappingJson of ['not json', '[]', '"admin"', 'null'])
       expect(() => createOidcRolePolicy({ ...base, roleMappingJson })).toThrow(
-        /OIDC_ROLE_MAPPING_JSON/,
+        /MMT_OIDC_ROLE_MAPPING_JSON/,
       );
     expect(() => createOidcRolePolicy({ ...base, defaultRole: 'viewer' })).toThrow(
-      /OIDC_DEFAULT_ROLE/,
+      /MMT_OIDC_DEFAULT_ROLE/,
     );
   });
 });
@@ -105,31 +105,21 @@ describe('removesLastGlobalAdmin', () => {
 describe('OIDCの起動設定', () => {
   const oidcEnvironment = {
     MMT_DATABASE_URL: 'postgresql://mmt@127.0.0.1:1/mmt_test',
-    AUTH_MODE: 'oidc',
-    OIDC_ISSUER_URL: 'https://sso.example.test/application/o/mmt/',
-    OIDC_CLIENT_ID: 'mmt',
-    OIDC_ALLOWED_GROUPS: 'mmt-users,mmt-admins',
+    MMT_AUTH_MODE: 'oidc',
+    MMT_OIDC_ISSUER_URL: 'https://sso.example.test/application/o/mmt/',
+    MMT_OIDC_CLIENT_ID: 'mmt',
+    MMT_OIDC_ALLOWED_GROUPS: 'mmt-users,mmt-admins',
     MMT_SESSION_ENCRYPTION_KEY: TEST_SESSION_ENCRYPTION_KEY,
   };
 
-  it('oidcとhybridはOIDC_ALLOWED_GROUPSが無いと起動しない。localは読まない', () => {
-    for (const AUTH_MODE of ['oidc', 'hybrid'])
-      expect(() => loadConfig({ ...oidcEnvironment, AUTH_MODE, OIDC_ALLOWED_GROUPS: '' })).toThrow(
-        /OIDC_ALLOWED_GROUPS/,
-      );
+  it('oidcとhybridはMMT_OIDC_ALLOWED_GROUPSが無いと起動しない。localは読まない', () => {
+    for (const MMT_AUTH_MODE of ['oidc', 'hybrid'])
+      expect(() =>
+        loadConfig({ ...oidcEnvironment, MMT_AUTH_MODE, MMT_OIDC_ALLOWED_GROUPS: '' }),
+      ).toThrow(/MMT_OIDC_ALLOWED_GROUPS/);
     expect(
-      loadConfig({ ...oidcEnvironment, AUTH_MODE: 'local', OIDC_ALLOWED_GROUPS: '' }).oidc,
+      loadConfig({ ...oidcEnvironment, MMT_AUTH_MODE: 'local', MMT_OIDC_ALLOWED_GROUPS: '' }).oidc,
     ).toBeNull();
-  });
-
-  it('OIDC_ADMIN_GROUPを指定すると設定エラーになる', () => {
-    expect(() =>
-      loadConfig({
-        ...oidcEnvironment,
-        OIDC_ADMIN_GROUP: 'mmt-admins',
-        OIDC_ROLE_MAPPING_JSON: '{"ops":"admin"}',
-      }),
-    ).toThrow(/OIDC_ADMIN_GROUP/);
   });
 
   it('自動連携は既定で無効、refresh tokenを要求し、openidの無いscopeは拒否する', () => {
@@ -139,8 +129,8 @@ describe('OIDCの起動設定', () => {
       scopes: 'openid profile email offline_access',
       rolePolicy: { roleMapping: {}, defaultRole: 'user' },
     });
-    expect(() => loadConfig({ ...oidcEnvironment, OIDC_SCOPES: 'profile email' })).toThrow(
-      /OIDC_SCOPES/,
+    expect(() => loadConfig({ ...oidcEnvironment, MMT_OIDC_SCOPES: 'profile email' })).toThrow(
+      /MMT_OIDC_SCOPES/,
     );
   });
 });

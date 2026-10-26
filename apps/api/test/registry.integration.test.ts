@@ -136,7 +136,7 @@ describe.skipIf(!testDatabaseUrl)('Project認可と不変なRegistry（独立Pos
     expect(() =>
       loadConfig({
         MMT_DATABASE_URL: testDatabaseUrl,
-        AUTH_MODE: 'development',
+        MMT_AUTH_MODE: 'development',
         NODE_ENV: 'production',
       }),
     ).toThrow('forbidden');

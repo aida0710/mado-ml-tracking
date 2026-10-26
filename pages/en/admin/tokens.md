@@ -105,7 +105,7 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" "$MMT_API_URL/api/auth/token"
 
 ### SSO users' tokens stop after 7 days
 
-Tokens of users who sign in with SSO stop with 401 `identity_sync_required` when 7 days (`OIDC_TOKEN_SYNC_MAX_AGE_SECONDS`) have passed since the last browser login. This is how removal from an Authentik group is noticed. Signing in once in a browser makes the same tokens work again ([Authentik (SSO)](/en/admin/sso)).
+Tokens of users who sign in with SSO stop with 401 `identity_sync_required` when 7 days (`MMT_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS`) have passed since the last browser login. This is how removal from an Authentik group is noticed. Signing in once in a browser makes the same tokens work again ([Authentik (SSO)](/en/admin/sso)).
 
 ## Service Accounts
 

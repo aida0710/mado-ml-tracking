@@ -24,13 +24,13 @@ services:
     env_file: .env
     environment:
       NODE_ENV: production
-      HOST: 0.0.0.0
-      PORT: 4182
-      AUTH_MODE: oidc
+      MMT_HOST: 0.0.0.0
+      MMT_PORT: 4182
+      MMT_AUTH_MODE: oidc
       # webのnginxがX-Forwarded-Forにクライアントを追記する。その前にproxyを置くなら1つにつき1を足す。
       MMT_TRUSTED_PROXY_HOPS: ${MMT_TRUSTED_PROXY_HOPS:-1}
       MMT_DATABASE_URL: postgresql://mmt:${MMT_POSTGRES_PASSWORD:?Set MMT_POSTGRES_PASSWORD}@postgres:5432/mmt
-      ARTIFACT_FILESYSTEM_ROOT: /app/var/artifacts
+      MMT_ARTIFACT_FILESYSTEM_ROOT: /app/var/artifacts
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,7 +54,7 @@ services:
     environment:
       NODE_ENV: production
       MMT_DATABASE_URL: postgresql://mmt:${MMT_POSTGRES_PASSWORD:?Set MMT_POSTGRES_PASSWORD}@postgres:5432/mmt
-      ARTIFACT_FILESYSTEM_ROOT: /app/var/artifacts
+      MMT_ARTIFACT_FILESYSTEM_ROOT: /app/var/artifacts
     depends_on:
       postgres:
         condition: service_healthy

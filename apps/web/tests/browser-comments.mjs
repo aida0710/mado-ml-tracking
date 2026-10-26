@@ -1,4 +1,4 @@
-// 開発モードのAPI（AUTH_MODE=development）を相手にした、Runの説明とコメントのスレッドの確認。
+// 開発モードのAPI（MMT_AUTH_MODE=development）を相手にした、Runの説明とコメントのスレッドの確認。
 // Runの画面で保存した説明は、MLflowのget-runがmlflow.note.contentとして返すものと同じ。Markdownの
 // 生のHTMLとjavascript:のリンクは決して実行されない。コメントは投稿、返信、編集、削除ができ、
 // Viewerには入力欄が出ず、モデルバージョンの画面には専用のスレッドがある。

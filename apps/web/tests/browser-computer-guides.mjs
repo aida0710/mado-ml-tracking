@@ -1,5 +1,5 @@
 // コンピュータのIDを埋めたコマンドの確認。MMT_WEB_URLのWebの裏に開発モードのAPI
-// （AUTH_MODE=development）を置いて行う。sshのコンピュータの詳細は、管理する人にはIDと、そのIDを
+// （MMT_AUTH_MODE=development）を置いて行う。sshのコンピュータの詳細は、管理する人にはIDと、そのIDを
 // 入れたworkerのインストールと環境を、使うだけの人にはIDとworkerを設定する人を示す。手動の
 // siteの詳細、Jobsの知らせ、起動前の確認は、接続先のURLを入れたsubmitコマンド、そのコマンドの
 // インストール方法、tokenをどこでどのscopeで発行するか（token自体は出さない）を示す。Jobsの画面の
@@ -96,7 +96,7 @@ async function assertSubmitSetup(page, scope) {
 try {
   console.log('Setup: users, a Project with an Experiment, an ssh computer and a manual site with a waiting Job');
   const admin = await signIn(adminEmail, '全体管理者');
-  assert.equal(admin.user.isAdmin, true, `${adminEmail} must be DEVELOPMENT_ADMIN_EMAIL`);
+  assert.equal(admin.user.isAdmin, true, `${adminEmail} must be MMT_DEVELOPMENT_ADMIN_EMAIL`);
   const editor = await signIn(`guide-editor-${runKey}@localhost`, '研究者A');
   const viewer = await signIn(`guide-viewer-${runKey}@localhost`, '閲覧者B');
   const project = await admin.post('/projects', { name: `案内の確認 ${runKey}`, visibility: 'private' });

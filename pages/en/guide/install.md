@@ -75,35 +75,35 @@ With SSO (Authentik), also set the following. For the Authentik side, see [SSO w
 
 | Variable | Example value |
 | --- | --- |
-| `OIDC_ISSUER_URL` | `https://sso.example.com/application/o/ml-tracking/` |
-| `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | The values shown on the Authentik provider |
-| `OIDC_ALLOWED_GROUPS` | `mmt-users,mmt-admins` (groups allowed to sign in) |
-| `OIDC_ROLE_MAPPING_JSON` | `{"mmt-admins":"admin","mmt-users":"user"}` (groups that become global administrators) |
+| `MMT_OIDC_ISSUER_URL` | `https://sso.example.com/application/o/ml-tracking/` |
+| `MMT_OIDC_CLIENT_ID`, `MMT_OIDC_CLIENT_SECRET` | The values shown on the Authentik provider |
+| `MMT_OIDC_ALLOWED_GROUPS` | `mmt-users,mmt-admins` (groups allowed to sign in) |
+| `MMT_OIDC_ROLE_MAPPING_JSON` | `{"mmt-admins":"admin","mmt-users":"user"}` (groups that become global administrators) |
 | `MMT_SESSION_ENCRYPTION_KEY` | The value generated above |
 
-For the compose `api` service, the values in `compose.yml` take precedence over `MMT_DATABASE_URL`, `HOST`, `PORT`, `ARTIFACT_FILESYSTEM_ROOT`, and `AUTH_MODE` in `.env.example`. You do not need to change them. All variables are listed in [Environment variables](/en/reference/environment).
+For the compose `api` service, the values in `compose.yml` take precedence over `MMT_DATABASE_URL`, `MMT_HOST`, `MMT_PORT`, `MMT_ARTIFACT_FILESYSTEM_ROOT`, and `MMT_AUTH_MODE` in `.env.example`. You do not need to change them. All variables are listed in [Environment variables](/en/reference/environment).
 
 ## 3. Choose the authentication mode
 
-`compose.yml` sets the `api` `AUTH_MODE` to `oidc` (SSO only). For a first installation, `hybrid`, which also allows an emergency local administrator to sign in, is the safer choice. Create `compose.override.yml` at the top of the repository and override `AUTH_MODE`.
+`compose.yml` sets the `api` `MMT_AUTH_MODE` to `oidc` (SSO only). For a first installation, `hybrid`, which also allows an emergency local administrator to sign in, is the safer choice. Create `compose.override.yml` at the top of the repository and override `MMT_AUTH_MODE`.
 
 ```yaml
 services:
   api:
     environment:
-      AUTH_MODE: hybrid
+      MMT_AUTH_MODE: hybrid
 ```
 
-| `AUTH_MODE` | Sign-in | Required settings |
+| `MMT_AUTH_MODE` | Sign-in | Required settings |
 | --- | --- | --- |
-| `hybrid` | SSO and local accounts | `OIDC_*` and `MMT_SESSION_ENCRYPTION_KEY` |
-| `oidc` | SSO only | `OIDC_*` and `MMT_SESSION_ENCRYPTION_KEY` |
+| `hybrid` | SSO and local accounts | `MMT_OIDC_*` and `MMT_SESSION_ENCRYPTION_KEY` |
+| `oidc` | SSO only | `MMT_OIDC_*` and `MMT_SESSION_ENCRYPTION_KEY` |
 | `local` | Local accounts only | None (for environments without SSO) |
 
-`docker compose` reads `compose.override.yml` automatically. Check that `AUTH_MODE` is replaced with the following command.
+`docker compose` reads `compose.override.yml` automatically. Check that `MMT_AUTH_MODE` is replaced with the following command.
 
 ```sh
-docker compose config | grep AUTH_MODE
+docker compose config | grep MMT_AUTH_MODE
 ```
 
 ## 4. Start and apply migrations
@@ -141,7 +141,7 @@ docker compose exec api npm run bootstrap-admin -w @mmt/api
 
 The account is ready when `Admin ready: <username> ...` appears. The first sign-in asks for a new password. Running the command again with the same username replaces the password and restores global administrator rights, which also serves as recovery for a forgotten password.
 
-With `oidc` only, members of the groups mapped to `admin` in `OIDC_ROLE_MAPPING_JSON` become global administrators.
+With `oidc` only, members of the groups mapped to `admin` in `MMT_OIDC_ROLE_MAPPING_JSON` become global administrators.
 
 ## 6. Publish over HTTPS
 
