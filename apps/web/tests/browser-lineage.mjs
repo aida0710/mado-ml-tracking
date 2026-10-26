@@ -111,8 +111,8 @@ await context.route(
       });
     if (path === `${projectPath}/model-versions/${model.id}/evaluations`)
       return reply({ modelVersionId: model.id, items: [], nextCursor: null });
-    if (path.endsWith('/saved-views') || path === `${projectPath}/comments`)
-      return reply({ items: [], nextCursor: null });
+    if (path.endsWith('/saved-views')) return reply({ items: [] });
+    if (path === `${projectPath}/comments`) return reply({ items: [], nextCursor: null });
     return api.route(route);
   },
 );

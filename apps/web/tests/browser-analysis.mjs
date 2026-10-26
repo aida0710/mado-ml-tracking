@@ -23,6 +23,14 @@ const LARGE_RUN_COUNT = 5000;
 const DRAG_STEP_BUDGET_MS = 200;
 const DRAG_STEPS = 12;
 
+// 応答に入るid。画面は応答を契約のスキーマで確かめるので、どれもUUIDにする（URLのexp-300などはそのまま）。
+const PROJECT_ID = '00000000-0000-4000-8000-0000000a0001';
+const EXPERIMENT_ID = '00000000-0000-4000-8000-0000000a0002';
+const SWEEP_ID = '00000000-0000-4000-8000-0000000a0003';
+const TASK_ID = '00000000-0000-4000-8000-0000000a0004';
+const USER_ID = '00000000-0000-4000-8000-0000000a0005';
+const CREATED_AT = '2026-10-08T00:00:00.000Z';
+
 // 決まった値を返す疑似乱数。確認を何度実行しても同じRunになる。
 function random(seed) {
   let state = seed;
@@ -44,7 +52,7 @@ function syntheticRuns(count) {
     return {
       runId: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
       name: `trial-${String(index).padStart(4, '0')}`,
-      experimentId: 'experiment',
+      experimentId: EXPERIMENT_ID,
       status: 'finished',
       // 7件ごとにdropoutの無いRunを置き、値の無い帯を試す。
       params: { lr, batch_size: batchSize, optimizer, ...(index % 7 === 0 ? {} : { dropout }) },
@@ -113,6 +121,100 @@ function parameterImportance(body) {
   };
 }
 
+/** メトリクスの名前の候補を集める検索が読む、契約どおりのRun。 */
+function searchedRun(latestMetrics) {
+  return {
+    id: '00000000-0000-4000-8000-0000000a0100',
+    projectId: PROJECT_ID,
+    experimentId: EXPERIMENT_ID,
+    name: 'trial-sample',
+    kind: 'training',
+    status: 'finished',
+    parameters: {},
+    tags: {},
+    latestMetrics,
+    modelVersionId: null,
+    codeVersionId: null,
+    inputDatasetVersionIds: [],
+    upstreamDatasetVersionIds: [],
+    outputDatasetVersionIds: [],
+    outputModelVersionIds: [],
+    parentRunId: null,
+    environment: {},
+    createdBy: USER_ID,
+    createdByName: null,
+    createdAt: CREATED_AT,
+    startedAt: null,
+    endedAt: null,
+    error: null,
+  };
+}
+
+const sweep = {
+  id: SWEEP_ID,
+  projectId: PROJECT_ID,
+  name: 'sweep-300',
+  taskId: TASK_ID,
+  taskRevision: 1,
+  experimentId: EXPERIMENT_ID,
+  method: 'random',
+  searchSpace: { lr: { distribution: 'log_uniform', min: 0.00001, max: 0.1 } },
+  objective: { metric: 'loss', goal: 'minimize', aggregation: 'last' },
+  maxTrials: SMALL_RUN_COUNT,
+  parallelism: 4,
+  earlyStopping: null,
+  seed: 0,
+  targetId: null,
+  gpuIds: null,
+  status: 'finished',
+  statusReason: null,
+  createdBy: USER_ID,
+  createdAt: CREATED_AT,
+  updatedAt: CREATED_AT,
+  finishedAt: CREATED_AT,
+  trialCounts: {
+    queued: 0,
+    running: 0,
+    finished: SMALL_RUN_COUNT,
+    failed: 0,
+    canceled: 0,
+    early_stopped: 0,
+    total: SMALL_RUN_COUNT,
+  },
+  bestTrial: null,
+};
+
+function sweepTrial(run, index) {
+  return {
+    id: `00000000-0000-4000-8000-${String(200000 + index).padStart(12, '0')}`,
+    sweepId: SWEEP_ID,
+    trialIndex: run.sweepTrialIndex,
+    parameters: run.params,
+    runId: run.runId,
+    jobId: `00000000-0000-4000-8000-${String(300000 + index).padStart(12, '0')}`,
+    state: 'finished',
+    objectiveValue: run.objective,
+    objectiveStep: null,
+    stopReason: null,
+    runStatus: 'finished',
+    jobStatus: 'finished',
+    jobCancelRequested: false,
+    createdAt: CREATED_AT,
+    endedAt: CREATED_AT,
+  };
+}
+
+const metricComparison = {
+  runs: [],
+  baselineRunId: null,
+  datasetVersions: [],
+  modelVersions: [],
+  rows: [
+    { namespace: 'metrics', key: 'accuracy', values: [] },
+    { namespace: 'metrics', key: 'loss', values: [] },
+  ],
+};
+
 const apiRequests = [];
 async function routeApi(page) {
   await page.route(
@@ -126,13 +228,11 @@ async function routeApi(page) {
       if (url.pathname.endsWith('/runs/analysis/table')) return json(analysisTable(body));
       if (url.pathname.endsWith('/runs/analysis/parameter-importance')) return json(parameterImportance(body));
       if (url.pathname.endsWith('/runs/search'))
-        return json({ items: [{ latestMetrics: { loss: 1, accuracy: 0.5 } }], nextCursor: null });
-      if (url.pathname.endsWith('/sweeps/sweep-300'))
-        return json({ id: 'sweep-300', objective: { metric: 'loss', goal: 'minimize', aggregation: 'last' } });
+        return json({ items: [searchedRun({ loss: 1, accuracy: 0.5 })], nextCursor: null });
+      if (url.pathname.endsWith('/sweeps/sweep-300')) return json(sweep);
       if (url.pathname.endsWith('/sweeps/sweep-300/trials'))
-        return json({ items: runSets['sweep-300'].slice(0, 50).map((run) => ({ runId: run.runId })), nextCursor: null });
-      if (url.pathname.endsWith('/runs/compare'))
-        return json({ runs: [], rows: [{ namespace: 'metrics', key: 'accuracy' }, { namespace: 'metrics', key: 'loss' }] });
+        return json({ items: runSets['sweep-300'].slice(0, 50).map(sweepTrial), nextCursor: null });
+      if (url.pathname.endsWith('/runs/compare')) return json(metricComparison);
       return route.fulfill({ status: 404, contentType: 'application/json', body: '{"error":"not mocked","code":"not_found"}' });
     },
   );

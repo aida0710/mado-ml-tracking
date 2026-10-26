@@ -80,8 +80,7 @@ async function openPage({ viewport = DESKTOP, theme = 'light', isMobile = false 
       }
       if (/\/runs\/[^/]+\/resume-events$/.test(url.pathname)) return reply({ items: [], segments: [] });
       if (url.pathname.endsWith('/operations-alerts') && request.method() === 'GET') return reply({ items: [openAlert] });
-      if (url.pathname.endsWith('/saved-views') && request.method() === 'GET')
-        return reply({ items: [], nextCursor: null });
+      if (url.pathname.endsWith('/saved-views') && request.method() === 'GET') return reply({ items: [] });
       return api.route(route);
     },
   );

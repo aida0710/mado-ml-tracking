@@ -119,7 +119,7 @@ function createGuardApi() {
       return reply({
         items: [
           {
-            id: 'protection-production',
+            id: '00000000-0000-4000-8000-00000000c001',
             projectId: project.id,
             modelId: null,
             alias: 'production',

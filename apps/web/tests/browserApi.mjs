@@ -8,6 +8,8 @@ import { findCodeVersionDetail, listModelFamilies, ruleMetricKeys } from './regi
 import { pageAutomationExecutions } from './automationExecutionMock.mjs';
 // MMT_ARTIFACT_DELETE_GRACE_DAYSのAPIの既定値（apps/api/src/config.ts）。
 const DEFAULT_ARTIFACT_DELETE_GRACE_DAYS = 7;
+// 最初からあるpublicのコンピュータの所有者。idの連番をずらさないよう、固定のidにする。
+const SHARED_TARGET_OWNER = { id: '00000000-0000-4000-8000-0000000000aa', displayName: '共用コンピュータの管理者' };
 // TokenSummary.tokenPrefix: tokenの値の先頭の文字。
 const TOKEN_PREFIX_LENGTH = 12;
 // コンピュータと設定の画面が開くときに読む一覧。モックはどれも持たない。
@@ -191,12 +193,15 @@ export function createBrowserApi() {
     siteJobShellId: null,
     ...body,
     status: 'queued',
+    workerId: null,
+    leaseId: null,
     cancelRequested: false,
     attempt: 0,
     createdAt: now,
     startedAt: null,
     endedAt: null,
     heartbeatAt: null,
+    heartbeatStale: false,
     error: null,
     exitCode: null,
   });
@@ -213,11 +218,13 @@ export function createBrowserApi() {
     modelVersionId: null,
     codeVersionId: null,
     inputDatasetVersionIds: [],
+    upstreamDatasetVersionIds: [],
     outputDatasetVersionIds: [],
     outputModelVersionIds: [],
     parentRunId: null,
     environment: {},
     createdBy: user.id,
+    createdByName: user.displayName,
     createdAt: now,
     startedAt: null,
     endedAt: null,
@@ -283,9 +290,9 @@ export function createBrowserApi() {
     cpuArch: 'amd64',
     supportsArray: false,
     queueTimeoutSeconds: null,
-    // migration 057: 所有者ができる前からあるtargetはpublicで、GET /targetsは全員に返す。
-    ownerUserId: null,
-    ownerName: null,
+    // publicのtargetは全員に返す。所有者はログイン中の利用者とは別の管理者（migration 070で所有者は必須）。
+    ownerUserId: SHARED_TARGET_OWNER.id,
+    ownerName: SHARED_TARGET_OWNER.displayName,
     visibility: 'public',
     site: null,
     siteAccountMode: null,
@@ -325,6 +332,7 @@ export function createBrowserApi() {
   const computerSetup = createComputerSetup({
     id,
     now,
+    userId: user.id,
     projectId: project.id,
     targets: () => state.targets,
   });
@@ -415,13 +423,13 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
         : reply({ error: 'Unauthorized' }, 401);
     if (path === '/auth/dev-login') {
       state.loggedIn = true;
-      return reply({ user, mustChangePassword: false });
+      return reply({ user });
     }
     if (path === '/auth/change-password' && method === 'POST')
       return route.fulfill({ status: 204, body: '' });
     if (path === '/auth/logout') {
       state.loggedIn = false;
-      return reply({ ok: true });
+      return route.fulfill({ status: 204, body: '' });
     }
     if (!state.loggedIn) return reply({ error: 'Unauthorized' }, 401);
     if (path === '/storage/backends')
@@ -477,7 +485,7 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
     // 全体設定 → アカウント（/settings/account）。ユーザーメニューとリダイレクトの行き先。
     if (path === '/account' && method === 'GET')
       return reply({
-        user: { ...user, lastLoginAt: now, createdAt: now },
+        user: { ...user, lastLoginAt: now, createdAt: now, serviceAccountProject: null },
         groups: [],
         groupsSyncedAt: null,
         sessionAuthMethod: 'local',
@@ -488,23 +496,24 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       const value = 'browser-test-value-only';
       const token = {
         id: id(),
-        ...body,
+        name: body.name,
+        kind: 'personal',
         projectId: body.projectId ?? null,
-        lastUsedAt: null,
+        scopes: body.scopes,
         expiresAt: body.expiresAt ?? null,
+        lastUsedAt: null,
         createdAt: now,
         ownerType: 'user',
         ownerId: user.id,
         ownerName: user.displayName,
         tokenPrefix: value.slice(0, TOKEN_PREFIX_LENGTH),
-        legacy: false,
       };
       state.tokens.push(token);
       return reply({ token: value, item: token });
     }
     if (path.startsWith('/tokens/') && method === 'DELETE') {
       state.tokens = state.tokens.filter((token) => token.id !== path.split('/')[2]);
-      return reply({ ok: true });
+      return route.fulfill({ status: 204, body: '' });
     }
     const parts = path.split('/').filter(Boolean).slice(2);
     const [resource, key, subresource] = parts;
@@ -520,10 +529,16 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
           state.failNextAutomation = false;
           return reply({ error: 'UI verification: automation storage unavailable' }, 503);
         }
+        // ルールは作った人として動く（APIの既定）。summaryMetricsを送らなければ空。
         const rule = {
           id: id(),
           projectId: project.id,
+          summaryMetrics: [],
           createdBy: user.id,
+          createdByName: user.displayName,
+          runAsUserId: user.id,
+          runAsKind: 'human',
+          runAsName: user.displayName,
           createdAt: now,
           ...body,
         };
@@ -600,7 +615,7 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       const isRunList = (key === 'search' && method === 'POST') || (!key && method === 'GET');
       // Runの画面はネイティブの検索で一覧を出す。どちらの一覧の取り方も一緒に失敗させる。
       if (state.failRunList && isRunList)
-        return reply({ error: 'UI verification: database unavailable' }, 503);
+        return reply({ error: 'UI verification: database unavailable', code: 'database_unavailable' }, 503);
       // フィルタを解釈しないネイティブの検索。最近のRunを並べる画面にはこれで足りる。
       if (key === 'search' && method === 'POST')
         return reply({
@@ -720,41 +735,76 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       const parentKey = { models: 'modelId', codes: 'codeId', datasets: 'datasetId' }[resource];
       if (!key && method === 'GET') return list(collection);
       if (!key && method === 'POST') {
+        // 種類ごとの契約の項目（Model・Code・Dataset）。
+        const fieldsOfKind = {
+          models: { aliases: {} },
+          codes: {},
+          datasets: { namespace: '', archivedAt: null },
+        }[resource];
         const entity = {
           id: id(),
           projectId: project.id,
           latestVersion: null,
-          aliases: {},
-          namespace: '',
           description: '',
+          ...fieldsOfKind,
           ...body,
           createdAt: now,
         };
         collection.push(entity);
         return reply(entity);
       }
+      // モデルのバージョンの学習元（GET …/versions/:v/training-source）。モックは関連付けを持たない。
+      if (resource === 'models' && subresource === 'versions' && parts[4] === 'training-source' && method === 'GET')
+        return reply({ source: null });
+      // データセットのバージョンの親（GET …/versions/:v/parents）。モックは追加の記録を持たない。
+      if (resource === 'datasets' && subresource === 'versions' && parts[4] === 'parents' && method === 'GET') {
+        const version = item(versionCollection, parts[3]);
+        return reply({
+          registeredParentDatasetVersionIds: version.parentDatasetVersionIds,
+          parentDatasetVersionIds: version.parentDatasetVersionIds,
+          items: [],
+        });
+      }
       if (subresource === 'versions' && method === 'GET')
         return list(versionCollection.filter((version) => version[parentKey] === key));
       if (subresource === 'versions' && method === 'POST') {
         const parent = item(collection, key);
         parent.latestVersion = body.version;
+        // 種類ごとの契約の項目（ModelVersion・CodeVersion・DatasetVersion）。中身つきのデータセットの
+        // バージョンは、要求のcontentからファイルの数を決める。
+        const { content, ...fields } = body;
+        const fieldsOfKind = {
+          models: {
+            family: parent.family,
+            sourceRunId: null,
+            parentModelVersionIds: [],
+            weightsUri: null,
+            artifactId: null,
+            defaultCodeVersionId: null,
+            metadata: {},
+          },
+          codes: { requirements: [], environment: {} },
+          datasets: {
+            name: parent.name,
+            namespace: parent.namespace,
+            uri: '',
+            digest: '',
+            schema: {},
+            metadata: {},
+            sourceRunId: null,
+            parentDatasetVersionIds: [],
+            externalRef: null,
+            contentKind: content ? 'artifacts' : 'reference',
+            fileCount: content?.files?.length ?? null,
+            totalSize: null,
+          },
+        }[resource];
         const version = {
           id: id(),
           projectId: project.id,
           [parentKey]: key,
-          sourceRunId: null,
-          parentModelVersionIds: [],
-          parentDatasetVersionIds: [],
-          defaultCodeVersionId: null,
-          artifactId: null,
-          weightsUri: null,
-          schema: {},
-          metadata: {},
-          externalRef: null,
-          family: parent.family,
-          name: parent.name,
-          namespace: parent.namespace,
-          ...body,
+          ...fieldsOfKind,
+          ...fields,
           createdAt: now,
         };
         versionCollection.push(version);
@@ -836,5 +886,6 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
     console.warn(`[browserApi] 501 Unhandled test API: ${method} ${path}`);
     return reply({ error: `Unhandled test API: ${method} ${path}` }, 501);
   }
-  return { state, route };
+  // makeJob: 自前の経路でJobを返すテストが、APIと同じ形のJobを作るのに使う。
+  return { state, route, makeJob };
 }

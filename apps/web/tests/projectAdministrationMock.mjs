@@ -108,13 +108,16 @@ export function createProjectAdministration({ id, now, user, mainProject }) {
     }
     if (requestPath === '/users' && method === 'GET') {
       const query = (url.searchParams.get('query') ?? '').toLowerCase();
+      // UserSearchResultはid・email・表示名だけを返す。
       return list(
-        [user, ...SEARCHABLE_USERS].filter(
-          (candidate) =>
-            query &&
-            (candidate.displayName.toLowerCase().includes(query) ||
-              candidate.email.toLowerCase().startsWith(query)),
-        ),
+        [user, ...SEARCHABLE_USERS]
+          .filter(
+            (candidate) =>
+              query &&
+              (candidate.displayName.toLowerCase().includes(query) ||
+                candidate.email.toLowerCase().startsWith(query)),
+          )
+          .map(({ id: userId, email, displayName }) => ({ id: userId, email, displayName })),
       );
     }
     if (requestPath === '/admin/storage-directories' && method === 'GET')

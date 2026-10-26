@@ -50,6 +50,8 @@ const rule = (overrides) => ({
   maxAttempts: 1,
   summaryMetrics: [],
   createdBy: api.state.user.id,
+  createdByName: api.state.user.displayName,
+  runAsUserId: api.state.user.id,
   createdAt: now,
   ...overrides,
 });
@@ -98,6 +100,7 @@ function executions() {
     attempt: 1,
     source: 'automatic',
     requestedBy: null,
+    retryOfExecutionId: null,
     createdAt: now,
     ...overrides,
   });
