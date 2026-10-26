@@ -112,8 +112,10 @@ const ownerLayout = {
 try {
   const owner = await signIn('views-owner@localhost', 'ビュー作成者');
   const ownerApi = apiClient(owner);
+  // publicのProjectでは全員がeditorとして働けるので、viewerの画面を確かめるにはprivateにする。
   const project = await ownerApi.post('/projects', {
     name: `Saved views verification ${new Date().toISOString()}`,
+    visibility: 'private',
   });
   const projectBase = `${base}/projects/${project.id}`;
   const experiment = await ownerApi.post(`/projects/${project.id}/experiments`, { name: 'ビュー検証' });

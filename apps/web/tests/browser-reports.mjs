@@ -92,7 +92,11 @@ async function saveEdit(page, message) {
 
 try {
   const admin = await signIn('reports-admin@localhost', 'レポート管理者');
-  const project = await admin.api.post('/projects', { name: `Reports verification ${new Date().toISOString()}` });
+  // publicのProjectでは全員がeditorとして働けるので、viewerの画面を確かめるにはprivateにする。
+  const project = await admin.api.post('/projects', {
+    name: `Reports verification ${new Date().toISOString()}`,
+    visibility: 'private',
+  });
   const projectBase = `${base}/projects/${project.id}`;
   const experiment = await admin.api.post(`/projects/${project.id}/experiments`, { name: 'レポート検証' });
 
