@@ -209,26 +209,22 @@ try {
   assert.equal(await page.getByRole('heading', { name: '所属group' }).count(), 0);
   await page.screenshot({ path: `${outputDirectory}/06-account-local.png`, fullPage: true });
 
-  // SSOのユーザーには所属groupが読み取り専用で出て、パスワードのフォームは出ない。全体設定が
-  // できる前のURLでも、アカウントが開く。
+  // SSOのユーザーには所属groupが読み取り専用で出て、パスワードのフォームは出ない。
   signedInUser.authSources = ['oidc'];
   account.groups = ['mmt-users', 'team-a'];
   account.groupsSyncedAt = now;
-  await page.goto(`${webUrl}/account`);
-  await page.waitForURL(/\/settings\/account$/);
+  await page.goto(`${webUrl}/settings/account`);
   await page.getByRole('heading', { name: '所属group' }).waitFor();
   await page.getByText('team-a', { exact: true }).waitFor();
   await page.getByText(/Authentikのgroupが正本です/).waitFor();
   assert.equal(await page.getByLabel('現在のパスワード').count(), 0);
   await page.screenshot({ path: `${outputDirectory}/07-account-sso.png`, fullPage: true });
 
-  // 全体管理者でない人には、全体設定は出るが全体管理のリンクは出ない。ユーザーの画面は、古いURLでも
-  // 新しいURLでも本人のアカウントへ送る。
+  // 全体管理者でない人には、全体設定は出るが全体管理のリンクは出ない。ユーザーの画面は本人の
+  // アカウントへ送る。
   signedInUser.isAdmin = false;
-  for (const usersPath of ['/admin/users', '/settings/users']) {
-    await page.goto(`${webUrl}${usersPath}`);
-    await page.waitForURL(/\/settings\/account$/);
-  }
+  await page.goto(`${webUrl}/settings/users`);
+  await page.waitForURL(/\/settings\/account$/);
   await page.getByRole('group', { name: '全体設定', exact: true }).waitFor();
   assert.equal(await page.getByRole('group', { name: '全体管理', exact: true }).count(), 0);
   assert.equal(await page.getByRole('link', { name: 'ユーザー', exact: true }).count(), 0);
