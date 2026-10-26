@@ -38,3 +38,9 @@ gh workflow run release.yml --ref v0.1.0 -f tag=v0.1.0
 ```
 
 タグが指すcommitは変更せず、公開済みのReleaseを更新して再公開しません。修正には次のバージョンを使います。
+
+## 環境へ入れる
+
+公開の処理はGitHubとGHCRだけを操作し、動いている環境には接続しません。環境へは公開した配布物（イメージをdigestで固定したCompose）を入れ、サーバーではソースをビルドしません。配布物の中身を運用のディレクトリへ写し、`.env`と`compose.override.yml`はその環境のものをそのまま使います。DBの更新は新しいイメージで`db:migrate`を実行して当てます。
+
+手順は配布物の[README](../deploy/release/README.md)にあります。「更新する」でバックアップ・イメージの取得・切り替え・確認を行い、入れた版・commit・イメージ・最新のmigration・バックアップの場所をサーバーの`deploy/current-release.json`に書きます。「戻す」はそのバックアップから前の版へ戻します。ソースのcheckoutからビルドして動かしている環境は、同じREADMEの「ソースのcheckoutから配布物へ移す」で一度だけ移します。
