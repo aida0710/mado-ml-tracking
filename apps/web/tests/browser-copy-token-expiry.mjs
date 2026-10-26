@@ -7,8 +7,10 @@ const modulePath = process.env.MMT_PLAYWRIGHT_MODULE;
 if (!modulePath) throw new Error('Set MMT_PLAYWRIGHT_MODULE to an installed Playwright index.mjs');
 const { chromium } = await import(pathToFileURL(modulePath).href);
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5982';
-const httpBase = process.env.MMT_WEB_HTTP_URL;
-if (!httpBase) throw new Error('Set MMT_WEB_HTTP_URL to a non-loopback HTTP URL of the same test server');
+// LANのIPをHTTPで開いたときと同じく安全でないorigin（isSecureContextがfalseでClipboard APIが無い）。
+// ブラウザにはこのoriginとして見せ、中身は同じWebサーバ（MMT_WEB_URL）からPlaywrightが取ってくるので、
+// サーバを127.0.0.1の外へ開かずに確かめられる。.testは名前解決されない検証用の名前（RFC 6761）。
+const insecureOrigin = 'http://mmt-web.test';
 const screenshots = process.env.MMT_SCREENSHOT_DIR;
 if (screenshots) await mkdir(screenshots, { recursive: true });
 // 2年にして、以前の365日の上限を試す。ブラウザの時刻はミリ秒で比べる。
@@ -22,6 +24,13 @@ const api = createBrowserApi();
 api.state.loggedIn = true;
 api.state.user.isAdmin = false;
 await context.route(url => url.pathname.startsWith('/api/'), api.route);
+await context.route(
+  url => url.origin === insecureOrigin && !url.pathname.startsWith('/api/'),
+  async route => {
+    const url = route.request().url().replace(insecureOrigin, new URL(base).origin);
+    await route.fulfill({ response: await route.fetch({ url }) });
+  },
+);
 const page = await context.newPage();
 const reader = await context.newPage();
 const pageErrors = [];
@@ -80,7 +89,7 @@ try {
   await copyProjectId();
   assert.equal(await projectValue().getByRole('alert').count(), 0);
 
-  await page.goto(`${httpBase}${projectPath}`);
+  await page.goto(`${insecureOrigin}${projectPath}`);
   await guide.getByRole('heading', { name: 'SDK・MLflow 3から接続' }).waitFor();
   assert.deepEqual(await page.evaluate(() => ({ secure: isSecureContext, clipboard: Boolean(navigator.clipboard) })),
     { secure: false, clipboard: false });
