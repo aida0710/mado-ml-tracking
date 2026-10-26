@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChartLine, Plus, RefreshCw, Terminal } from 'lucide-react';
-import type { RunSearchRequest, RunStatus } from '@mmt/contracts';
+import type { Experiment, RunSearchRequest, RunStatus } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
 import { useProject } from '../hooks/useProject';
 import { useQuery } from '../hooks/useQuery';
@@ -28,7 +28,7 @@ import { ExperimentDialog } from '../dialogs/ExperimentDialog';
 import { getFieldValue } from '../lib/formValues';
 import { downloadBlob } from '../lib/fileDownload';
 import { runSortOrderBy, toRunSearchConditions } from '../lib/runFilter';
-import { recordedRunCount } from '../lib/experimentList';
+import { recordedRunCount, withCreatedExperiment } from '../lib/experimentList';
 import { runListEmptyMessage } from '../lib/runListEmptyMessage';
 import { getRunChartKeys } from '../lib/runChartKeys';
 import {
@@ -74,6 +74,8 @@ export function ExperimentsPage() {
   const [dialog, setDialog] = useState<'experiment' | 'run' | 'tag' | null>(null);
   // ガイドのボタンが押されるまではnull。それまで、ガイドはRunがあるかどうかに従う。
   const [recordingGuideChoice, setRecordingGuideChoice] = useState<boolean | null>(null);
+  // 作ったばかりの実験。一覧の読み直しが届く前に選ばれるので、それまでRunの数（0件）をここから読む。
+  const [createdExperiment, setCreatedExperiment] = useState<Experiment | null>(null);
   const mutation = useMutation();
   const csvExport = useMutation();
   const [isExportTruncated, setIsExportTruncated] = useState(false);
@@ -112,7 +114,8 @@ export function ExperimentsPage() {
   const experiment = experiments.value?.find((item) => item.id === experimentId);
   // まだ何も記録していなければ、次にやることはSDKからの記録なので、ガイドを開いた状態で始める。
   const isRecordingGuideOpen =
-    recordingGuideChoice ?? recordedRunCount(experiments.value, experimentId) === 0;
+    recordingGuideChoice ??
+    recordedRunCount(withCreatedExperiment(experiments.value, createdExperiment), experimentId) === 0;
   const hasNoExperiments = experiments.value?.length === 0;
   const shownRuns = runs.value?.items ?? [];
   const { metricNames, parameterNames } = getRunColumnNames(shownRuns);
@@ -326,6 +329,7 @@ export function ExperimentsPage() {
           onClose={() => setDialog(null)}
           onCreated={(created) => {
             setDialog(null);
+            setCreatedExperiment(created);
             reload();
             updateParams({ experiment: created.id });
           }}

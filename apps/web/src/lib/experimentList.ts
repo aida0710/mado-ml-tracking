@@ -27,3 +27,16 @@ export function recordedRunCount(
     return experiments.find((experiment) => experiment.id === experimentId)?.runCount;
   return experiments.reduce((total, experiment) => total + experiment.runCount, 0);
 }
+
+/**
+ * 作ったばかりの実験を、読み直した一覧が届くまで一覧に加えて扱う。一覧に入ったら一覧の値を使う。
+ * 作った直後に選ばれた実験のRunの数が分からず、0件なのに無い扱いになるのを防ぐ。
+ */
+export function withCreatedExperiment<Item extends Pick<Experiment, 'id'>>(
+  experiments: readonly Item[] | undefined,
+  created: Item | null,
+): readonly Item[] | undefined {
+  if (!experiments || !created || experiments.some((experiment) => experiment.id === created.id))
+    return experiments;
+  return [...experiments, created];
+}
