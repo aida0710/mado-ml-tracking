@@ -148,8 +148,9 @@ class WorkerJob:
         if not set(gpu_ids).issubset(self.target["gpuIds"]):
             raise ConfigurationError("Job requests GPUs outside the compute target")
         snapshot = self.execution_snapshot
-        if self.run.get("runtime") != snapshot["runtime"]:
-            raise ConfigurationError("Run.runtime does not match its immutable executionSnapshot")
+        # APIはRunを作るときにコードバージョンのruntimeをRunのenvironmentへ固定し、その変更はDBが拒む。
+        if self.run["environment"].get("runtime") != snapshot["runtime"]:
+            raise ConfigurationError("Run.environment.runtime does not match its immutable executionSnapshot")
         if self.target["executor"] not in executors:
             raise ConfigurationError("Unknown compute executor")
         validate_target_dataset_settings(self.target)

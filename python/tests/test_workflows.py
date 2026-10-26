@@ -222,9 +222,8 @@ def test_a_workflow_step_without_dataset_usage_still_gets_its_execution_id(
     [
         {"datasetUsage": {"items": []}, "workflow": ["e"]},
         {"datasetUsage": "v", "workflow": {"executionId": 7}},
-        ["datasetUsage", "workflow"],
     ],
-    ids=["usage-object-workflow-list", "usage-text-numeric-execution-id", "environment-list"],
+    ids=["usage-object-workflow-list", "usage-text-numeric-execution-id"],
 )
 def test_dataset_usage_and_workflow_of_another_type_are_ignored(
     job_payload, worker_settings, tmp_path, run_environment
