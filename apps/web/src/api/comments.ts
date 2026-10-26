@@ -1,11 +1,8 @@
-import type {
-  Comment,
-  CommentCreate,
-  CommentPage,
-  CommentTargetType,
-  CommentUpdate,
-} from '@mmt/contracts';
-import { assertCursorPage, encodeId, jsonRequest, projectPath, request } from './http';
+import { jsonRequestInit, requestJson } from '@mado/design-system/http';
+import type { CommentCreate, CommentTargetType, CommentUpdate } from '@mmt/contracts';
+import { commentPageSchema, commentSchema } from '@mmt/contracts/schemas';
+import { z } from 'zod';
+import { encodeId, projectPath } from './http';
 
 // 続きを読むたびにサーバーの1ページを取るよう、APIの既定値に合わせる。
 export const COMMENT_PAGE_SIZE = 100;
@@ -20,7 +17,7 @@ const commentPath = (projectId: string, commentId: string) =>
   `${commentsPath(projectId)}/${encodeId(commentId)}`;
 
 export const commentsApi = {
-  list: async (
+  list: (
     projectId: string,
     target: CommentTarget,
     { cursor, signal }: { cursor?: string; signal?: AbortSignal } = {},
@@ -31,14 +28,12 @@ export const commentsApi = {
       limit: String(COMMENT_PAGE_SIZE),
     });
     if (cursor) query.set('cursor', cursor);
-    const page = await request<CommentPage>(`${commentsPath(projectId)}?${query}`, { signal });
-    assertCursorPage(page);
-    return page;
+    return requestJson(`${commentsPath(projectId)}?${query}`, { schema: commentPageSchema, init: { signal } });
   },
   create: (projectId: string, body: CommentCreate) =>
-    request<Comment>(commentsPath(projectId), jsonRequest('POST', body)),
+    requestJson(commentsPath(projectId), { schema: commentSchema, init: jsonRequestInit('POST', body) }),
   update: (projectId: string, commentId: string, body: CommentUpdate) =>
-    request<Comment>(commentPath(projectId, commentId), jsonRequest('PATCH', body)),
+    requestJson(commentPath(projectId, commentId), { schema: commentSchema, init: jsonRequestInit('PATCH', body) }),
   remove: (projectId: string, commentId: string) =>
-    request<void>(commentPath(projectId, commentId), { method: 'DELETE' }),
+    requestJson(commentPath(projectId, commentId), { schema: z.undefined(), init: { method: 'DELETE' } }),
 };

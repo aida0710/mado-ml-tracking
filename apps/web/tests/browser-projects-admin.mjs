@@ -265,7 +265,8 @@ try {
   projects.activeJobsBlockArchive = true;
   await dialog().getByText(/Run・モデル・Artifactのデータは残り/).waitFor();
   await dialog().getByRole('button', { name: 'アーカイブ', exact: true }).click();
-  await dialog().getByRole('alert').getByText(/待機中または実行中のJobがある/).waitFor();
+  // APIの文をそのまま出す（apps/api/src/services/projectService.tsの409）。
+  await dialog().getByRole('alert').getByText('a project with waiting or running jobs cannot be archived').waitFor();
   await screenshot('05-archive-blocked-by-jobs');
   await dialog().getByRole('button', { name: 'アーカイブ', exact: true }).click();
   await dialog().waitFor({ state: 'detached' });

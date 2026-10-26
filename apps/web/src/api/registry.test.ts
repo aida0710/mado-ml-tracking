@@ -1,10 +1,22 @@
+import type { Model } from '@mmt/contracts';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { registryApi } from './registry';
 
 afterEach(() => vi.unstubAllGlobals());
+const model = {
+  id: '00000000-0000-4000-8000-000000000001',
+  projectId: '00000000-0000-4000-8000-000000000002',
+  name: 'asr',
+  family: 'Qwen3',
+  description: '',
+  latestVersion: 'v2',
+  aliases: { production: '00000000-0000-4000-8000-000000000003' },
+  createdAt: '2026-10-08T00:00:00.000Z',
+} satisfies Model;
+
 describe('Model aliasの設定・解除・履歴', () => {
   it('理由が空なら送らず、入力があればバージョンと一緒に送る', async () => {
-    const fetch = vi.fn().mockImplementation(async () => new Response('{}', { status: 200 }));
+    const fetch = vi.fn().mockImplementation(async () => new Response(JSON.stringify(model), { status: 200 }));
     vi.stubGlobal('fetch', fetch);
     await registryApi.assignAlias('project', 'model', {
       alias: 'production',
@@ -44,6 +56,6 @@ describe('Model aliasの設定・解除・履歴', () => {
     expect(fetch.mock.calls[0]?.[0]).toBe(
       '/api/projects/project/models/model/alias-events?limit=50&cursor=last',
     );
-    await expect(registryApi.aliasEvents('project', 'model')).rejects.toThrow();
+    await expect(registryApi.aliasEvents('project', 'model')).rejects.toMatchObject({ code: 'invalid_response' });
   });
 });

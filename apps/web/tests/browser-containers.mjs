@@ -321,15 +321,15 @@ try {
   });
   api.state.automationExecutions.push(
     firstStageExecution({
-      id: 'execution-queued',
+      id: '00000000-0000-4000-8000-00000000e001',
       runId: manualRun.id,
       jobId: job.id,
       status: 'queued',
       runStatus: 'finished',
       jobStatus: 'finished',
     }),
-    firstStageExecution({ id: 'execution-failed', status: 'failed', error: 'Target disabled' }),
-    firstStageExecution({ id: 'execution-skipped', status: 'skipped', error: 'No model weights' }),
+    firstStageExecution({ id: '00000000-0000-4000-8000-00000000e002', status: 'failed', error: 'Target disabled' }),
+    firstStageExecution({ id: '00000000-0000-4000-8000-00000000e003', status: 'skipped', error: 'No model weights' }),
   );
   await page.getByRole('tab', { name: '自動実行履歴', exact: true }).click();
   await page.getByRole('button', { name: '再読み込み', exact: true }).last().click();

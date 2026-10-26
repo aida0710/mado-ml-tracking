@@ -2,7 +2,6 @@ import { useId, useState } from 'react';
 import type { AdminProject } from '@mmt/contracts';
 import { adminProjectsApi } from '../../api/adminProjects';
 import { useMutation } from '../../hooks/useMutation';
-import { explainProjectLifecycleConflict } from '../../lib/projectLifecycleConflict';
 import { formatDate } from '../../lib/format';
 import { Dialog } from '../Dialog';
 import { ErrorNotice } from '../Feedback';
@@ -40,7 +39,7 @@ export function ProjectPurgeDialog({
           if (!isNameConfirmed) return;
           void mutation
             .run(async () => {
-              await explainProjectLifecycleConflict(adminProjectsApi.purge(project.id));
+              await adminProjectsApi.purge(project.id);
               return true;
             })
             .then((purged) => {

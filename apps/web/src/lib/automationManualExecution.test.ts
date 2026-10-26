@@ -1,14 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { ModelAutomationExecution, ModelAutomationRule, ModelVersion } from '@mmt/contracts';
 import { executionCatalog } from '../../tests/fixtures/execution';
-import { RequestError } from '../api/http';
 import {
-  manualExecutionErrorMessage,
   manualExecutionRequest,
   manualUpstreamRunOptions,
   manualVersionOptions,
 } from './automationManualExecution';
-import { automationText } from '../i18n/automation';
 
 const version = (id: string, family: string): ModelVersion => ({
   id,
@@ -88,22 +85,5 @@ describe('既存のバージョンへの手動適用', () => {
   it('トリガーに合わせてバージョンまたは上流Runを送る', () => {
     expect(manualExecutionRequest(registered, 'v1')).toEqual({ modelVersionId: 'v1' });
     expect(manualExecutionRequest(chained, 'run-1')).toEqual({ triggerRunId: 'run-1' });
-  });
-  it('実行中の409と無効ruleの422をそれぞれの理由で表示する', () => {
-    expect(manualExecutionErrorMessage(new RequestError({ status: 409, code: 'conflict' }))).toBe(
-      automationText.applyRunning,
-    );
-    expect(
-      manualExecutionErrorMessage(
-        new RequestError({
-          status: 422,
-          code: 'automation_rule_disabled',
-          serverMessage: 'a disabled rule cannot be applied',
-        }),
-      ),
-    ).toBe('無効なルールは適用できません');
-    expect(manualExecutionErrorMessage(new RequestError({ status: 422 }))).toBe(
-      automationText.applyInvalidRule,
-    );
   });
 });

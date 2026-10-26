@@ -1,5 +1,6 @@
-import type { ArtifactTree, DatasetVersionFilePage } from '@mmt/contracts';
-import { encodeId, projectPath, request } from './http';
+import { requestJson } from '@mado/design-system/http';
+import { artifactTreeSchema, datasetVersionFilePageSchema } from '@mmt/contracts/schemas';
+import { encodeId, projectPath } from './http';
 
 const versionPath = (location: DatasetVersionLocation) =>
   `${projectPath(location.projectId)}/datasets/${encodeId(location.datasetId)}/versions/${encodeId(location.versionId)}`;
@@ -19,8 +20,14 @@ export const datasetContentApi = {
   ) => {
     const query = new URLSearchParams({ prefix: page.prefix, delimiter: '/', limit: String(page.limit) });
     if (page.cursor) query.set('cursor', page.cursor);
-    return request<DatasetVersionFilePage>(`${versionPath(location)}/files?${query}`, { signal });
+    return requestJson(`${versionPath(location)}/files?${query}`, {
+      schema: datasetVersionFilePageSchema,
+      init: { signal },
+    });
   },
   fileTree: (location: DatasetVersionLocation, prefix: string, signal?: AbortSignal) =>
-    request<ArtifactTree>(`${versionPath(location)}/files/tree?${new URLSearchParams({ prefix })}`, { signal }),
+    requestJson(`${versionPath(location)}/files/tree?${new URLSearchParams({ prefix })}`, {
+      schema: artifactTreeSchema,
+      init: { signal },
+    }),
 };

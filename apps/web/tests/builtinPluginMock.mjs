@@ -55,7 +55,9 @@ export async function routeBuiltinPlugins({state, request, reply, id, now, proje
   if (subresource === 'datasets' && parts[3] === 'search') return list([external]);
   if (subresource === 'datasets' && parts[3] === 'import') {
     if (body.externalId !== external.externalId || body.expectedRevision !== plugin.configRevision) return reply({error: 'Version or configuration changed'}, 409);
-    const imported = {...datasetVersion, ...external, id: id(), externalRef: {pluginId: plugin.id, externalId: external.externalId, namespace: external.namespace, name: external.name, version: external.version}};
+    // PluginDatasetのexternalIdはDatasetVersionの項目ではなく、externalRefに入る。
+    const {externalId, ...externalFields} = external;
+    const imported = {...datasetVersion, ...externalFields, id: id(), externalRef: {pluginId: plugin.id, externalId, namespace: external.namespace, name: external.name, version: external.version}};
     state.datasetVersions.push(imported);
     return reply(imported, 201);
   }

@@ -63,8 +63,8 @@ await context.route((url) => url.pathname.startsWith('/api/'), async (route) => 
         executionSnapshot: { codeVersionId: code.id, version: code.version, mode: body.executionMode,
           source: code.source, runtime: code.runtime, requirements: code.requirements, environment: code.environment,
           entrypoint: body.executionMode === 'test' ? code.testEntrypoint : code.entrypoint } };
-      const job = { id: identifier(), projectId: api.state.project.id, runId: run.id, targetId: body.targetId,
-        gpuIds: body.gpuIds, status: 'queued', maxAttempts: 3, attempt: 0, cancelRequested: false, createdAt: now };
+      const job = { ...api.makeJob({ runId: run.id, targetId: body.targetId, gpuIds: body.gpuIds, maxAttempts: 3 }),
+        id: identifier() };
       api.state.runs.push(run);
       api.state.jobs.push(job);
       api.state.artifacts.push(...['.mmt/source.zip', '.mmt/source-manifest.json'].map((artifactPath) => ({

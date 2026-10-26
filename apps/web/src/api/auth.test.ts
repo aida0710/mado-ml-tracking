@@ -1,7 +1,8 @@
+import { ApiError } from '@mado/design-system/http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { AuthMe } from '@mmt/contracts';
 import { authApi } from './auth';
-import { RequestError } from './http';
-import { changePasswordErrorMessage, localLoginErrorMessage } from '../lib/authErrorMessages';
+import { formatErrorMessage } from '../lib/errorMessage';
 import { text } from '../i18n/catalog';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -29,7 +30,19 @@ async function failure(operation: () => Promise<unknown>): Promise<unknown> {
 
 describe('authApi.localLogin', () => {
   it('cookieを受け取れるようにcredentials付きでJSONを送り、AuthMeを返す', async () => {
-    const me = { user: { id: 'user' }, mustChangePassword: true };
+    const me = {
+      user: {
+        id: '00000000-0000-4000-8000-000000000001',
+        email: 'admin@example.invalid',
+        displayName: '管理者',
+        isAdmin: true,
+        username: 'admin',
+        status: 'active',
+        authSources: ['local'],
+        kind: 'human',
+      },
+      mustChangePassword: true,
+    } satisfies AuthMe;
     const fetch = respond(200, me);
     expect(await authApi.localLogin({ username: 'admin', password: 'secret value' })).toEqual(me);
     expect(fetch).toHaveBeenCalledWith('/api/auth/local-login', {
@@ -40,21 +53,21 @@ describe('authApi.localLogin', () => {
     });
   });
 
-  it('401は認証情報の誤り、429は待つよう促す文言に分ける', async () => {
-    respond(401, { error: 'server text', code: 'invalid_credentials' });
+  it('認証情報の誤りと回数の上限は、APIの文をそのまま出す', async () => {
+    respond(401, { error: 'incorrect username or password', code: 'invalid_credentials' });
     const invalid = await failure(() => authApi.localLogin({ username: 'a', password: 'b' }));
-    expect(invalid).toBeInstanceOf(RequestError);
-    expect(localLoginErrorMessage(invalid)).toBe(text.localLoginInvalid);
-    respond(429, { error: 'server text', code: 'rate_limited' });
+    expect(invalid).toBeInstanceOf(ApiError);
+    expect(formatErrorMessage(invalid)).toBe('incorrect username or password');
+    respond(429, { error: 'too many attempts; wait and try again', code: 'rate_limited' });
     const limited = await failure(() => authApi.localLogin({ username: 'a', password: 'b' }));
-    expect(localLoginErrorMessage(limited)).toBe(text.loginRateLimited);
+    expect(formatErrorMessage(limited)).toBe('too many attempts; wait and try again');
   });
 
-  it('通信できないときも、ほかの画面と同じ表示言語の文にする', async () => {
+  it('通信できないときは、ほかの画面と同じ表示言語の文にする', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
     const offline = await failure(() => authApi.localLogin({ username: 'a', password: 'b' }));
-    expect(offline).toBeInstanceOf(RequestError);
-    expect(localLoginErrorMessage(offline)).toBe(text.requestError);
+    expect(offline).toBeInstanceOf(ApiError);
+    expect(formatErrorMessage(offline)).toBe(text.requestError);
   });
 });
 
@@ -67,19 +80,12 @@ describe('authApi.changePassword', () => {
     expect(fetch.mock.calls[0]![0]).toBe('/api/auth/change-password');
   });
 
-  it('現在のpasswordの誤り・弱いpassword・回数制限を区別する', async () => {
-    const cases = [
-      [400, 'incorrect_password', text.currentPasswordInvalid],
-      [422, 'weak_password', text.weakPassword],
-      [403, 'local_credential_unavailable', text.localAccountRequired],
-      [429, 'rate_limited', text.loginRateLimited],
-    ] as const;
-    for (const [status, code, message] of cases) {
-      respond(status, { error: 'server text', code });
-      const error = await failure(() =>
-        authApi.changePassword({ currentPassword: 'old value', newPassword: 'new value' }),
-      );
-      expect(changePasswordErrorMessage(error)).toBe(message);
-    }
+  it('断られた理由は、APIの文とcodeを持つApiErrorで返す', async () => {
+    respond(400, { error: 'current password is incorrect', code: 'incorrect_password' });
+    const error = await failure(() =>
+      authApi.changePassword({ currentPassword: 'old value', newPassword: 'new value' }),
+    );
+    expect(error).toMatchObject({ status: 400, code: 'incorrect_password' });
+    expect(formatErrorMessage(error)).toBe('current password is incorrect');
   });
 });

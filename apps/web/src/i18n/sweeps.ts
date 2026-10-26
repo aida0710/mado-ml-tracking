@@ -95,6 +95,7 @@ export const sweepsText = localized({
   sweepDefinition: '定義',
   sweepSeedValue: 'Seed',
   sweepTaskRevision: 'Taskの改訂番号',
+  sweepConfigRangeFields: 'min・max',
 } as const, english.sweepsText);
 
 // 値を埋め込む文言。catalogのtextTemplatesにまとめる。
@@ -114,6 +115,7 @@ export const sweepsTextTemplates = localized({
   sweepEarlyStoppedReason: (stopReason: string) => `打ち切り: ${stopReason}`,
   sweepSeriesLimited: (shown: number, total: number) =>
     `新しい${shown}件の試行だけを表示しています（全${total}件）。`,
+  sweepConfigParameterLocation: (name: string) => `parameter「${name}」`,
   sweepConfigNotObject: (where: string) => `${where}はJSONオブジェクトで指定してください`,
   sweepConfigUnsupportedKeys: (where: string, keys: string[], allowed: string[]) =>
     `${where}の未対応のキー: ${keys.join(', ')}（使えるキー: ${allowed.join(', ')}）`,

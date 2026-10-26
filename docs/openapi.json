@@ -27788,23 +27788,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "item": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/components/schemas/SitePersonalSettings"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "required": [
-                    "item"
-                  ],
-                  "additionalProperties": false
+                  "$ref": "#/components/schemas/SitePersonalSettingsLookup"
                 }
               }
             }
@@ -56052,7 +56036,19 @@
               "type": "string"
             },
             "additionalProperties": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "NaN",
+                    "Infinity",
+                    "-Infinity"
+                  ]
+                }
+              ]
             }
           },
           "parameters": {
@@ -64219,7 +64215,19 @@
               "type": "string"
             },
             "additionalProperties": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "NaN",
+                    "Infinity",
+                    "-Infinity"
+                  ]
+                }
+              ]
             }
           },
           "modelVersionId": {
@@ -66040,6 +66048,25 @@
           "variables",
           "key",
           "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "SitePersonalSettingsLookup": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SitePersonalSettings"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "item"
         ],
         "additionalProperties": false
       },

@@ -1,4 +1,4 @@
-import type { JsonObject, Model, ModelVersion, RunKind, RunStatus } from './index.js';
+import type { JsonObject, LatestMetricValue, Model, ModelVersion, RunKind, RunStatus } from './index.js';
 
 /** GET /projects/:p/model-versions/:id: 1つのバージョンと、その登録モデル・alias。 */
 export interface ModelVersionDetail {
@@ -20,7 +20,7 @@ export interface AutomatedRunSummary {
   modelVersionId: string | null;
   codeVersionId: string | null;
   parentRunId: string | null;
-  latestMetrics: Record<string, number>;
+  latestMetrics: Record<string, LatestMetricValue>;
   parameters: JsonObject;
   // 固定の評価データ（正解）。inputDatasetVersionIdsから上流の出力を除いたもの。
   referenceDatasetVersionIds: string[];

@@ -84,6 +84,10 @@ export const pluginDatasetSchema = namedContractSchema(
     metadata: jsonObjectSchema,
   }),
 );
+/** GET /projects/:p/plugins/:id/metrics: pluginのmetricsをPrometheusのテキスト形式で表したもの。 */
+export const pluginMetricsResponseSchema = z.strictObject({ prometheus: z.string() });
+/** POST /projects/:p/plugins/:id/events/retry: 送れなかったeventのうち、再送に戻した数。 */
+export const pluginEventRetryResultSchema = z.strictObject({ queued: z.number().int() });
 export const lineageGraphSchema = namedContractSchema(
   'LineageGraph',
   z.strictObject({

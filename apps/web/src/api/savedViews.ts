@@ -1,5 +1,8 @@
-import type { SavedView, SavedViewCreate, SavedViewPage, SavedViewPatch } from '@mmt/contracts';
-import { encodeId, jsonRequest, projectPath, request, requestItems } from './http';
+import { jsonRequestInit, requestJson } from '@mado/design-system/http';
+import type { SavedViewCreate, SavedViewPage, SavedViewPatch } from '@mmt/contracts';
+import { itemsOf, savedViewSchema } from '@mmt/contracts/schemas';
+import { z } from 'zod';
+import { encodeId, projectPath } from './http';
 
 const savedViewsPath = (projectId: string) => `${projectPath(projectId)}/saved-views`;
 const savedViewPath = (projectId: string, viewId: string) =>
@@ -7,17 +10,19 @@ const savedViewPath = (projectId: string, viewId: string) =>
 
 export const savedViewsApi = {
   /** 呼んだ人のprivateのビューと、その画面の共有されたすべてのビュー。 */
-  list: (projectId: string, page: SavedViewPage, signal?: AbortSignal) =>
-    requestItems<SavedView>(
-      `${savedViewsPath(projectId)}?${new URLSearchParams({ page })}`,
-      signal,
-    ),
+  list: async (projectId: string, page: SavedViewPage, signal?: AbortSignal) =>
+    (
+      await requestJson(`${savedViewsPath(projectId)}?${new URLSearchParams({ page })}`, {
+        schema: itemsOf(savedViewSchema),
+        init: { signal },
+      })
+    ).items,
   get: (projectId: string, viewId: string, signal?: AbortSignal) =>
-    request<SavedView>(savedViewPath(projectId, viewId), { signal }),
+    requestJson(savedViewPath(projectId, viewId), { schema: savedViewSchema, init: { signal } }),
   create: (projectId: string, body: SavedViewCreate) =>
-    request<SavedView>(savedViewsPath(projectId), jsonRequest('POST', body)),
+    requestJson(savedViewsPath(projectId), { schema: savedViewSchema, init: jsonRequestInit('POST', body) }),
   update: (projectId: string, viewId: string, body: SavedViewPatch) =>
-    request<SavedView>(savedViewPath(projectId, viewId), jsonRequest('PATCH', body)),
+    requestJson(savedViewPath(projectId, viewId), { schema: savedViewSchema, init: jsonRequestInit('PATCH', body) }),
   remove: (projectId: string, viewId: string) =>
-    request<void>(savedViewPath(projectId, viewId), { method: 'DELETE' }),
+    requestJson(savedViewPath(projectId, viewId), { schema: z.undefined(), init: { method: 'DELETE' } }),
 };

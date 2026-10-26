@@ -1,7 +1,7 @@
+import { isNotFoundError, requestJson } from '@mado/design-system/http';
 import { ARTIFACT_MEDIA_INFO_BATCH_LIMIT, type ArtifactMediaInfo } from '@mmt/contracts';
-import { encodeId, projectPath, request, RequestError, requestItems } from './http';
-
-const HTTP_NOT_FOUND = 404;
+import { artifactMediaInfoSchema, itemsOf } from '@mmt/contracts/schemas';
+import { encodeId, projectPath } from './http';
 
 function chunksOf<T>(items: T[], size: number): T[][] {
   const chunks: T[][] = [];
@@ -13,12 +13,12 @@ export const artifactMediaInfoApi = {
   /** サーバーにmedia情報が無いとき（ヘッダーを読まない形式など）はnull。 */
   get: async (projectId: string, artifactId: string, signal?: AbortSignal): Promise<ArtifactMediaInfo | null> => {
     try {
-      return await request<ArtifactMediaInfo>(
-        `${projectPath(projectId)}/artifacts/${encodeId(artifactId)}/media-info`,
-        { signal },
-      );
+      return await requestJson(`${projectPath(projectId)}/artifacts/${encodeId(artifactId)}/media-info`, {
+        schema: artifactMediaInfoSchema,
+        init: { signal },
+      });
     } catch (error) {
-      if (error instanceof RequestError && error.status === HTTP_NOT_FOUND) return null;
+      if (isNotFoundError(error)) return null;
       throw error;
     }
   },
@@ -26,12 +26,12 @@ export const artifactMediaInfoApi = {
   list: async (projectId: string, artifactIds: string[], signal?: AbortSignal): Promise<ArtifactMediaInfo[]> => {
     const pages = await Promise.all(
       chunksOf([...new Set(artifactIds)], ARTIFACT_MEDIA_INFO_BATCH_LIMIT).map((chunk) =>
-        requestItems<ArtifactMediaInfo>(
-          `${projectPath(projectId)}/artifact-media-info?artifactIds=${chunk.map(encodeId).join(',')}`,
-          signal,
-        ),
+        requestJson(`${projectPath(projectId)}/artifact-media-info?artifactIds=${chunk.map(encodeId).join(',')}`, {
+          schema: itemsOf(artifactMediaInfoSchema),
+          init: { signal },
+        }),
       ),
     );
-    return pages.flat();
+    return pages.flatMap((page) => page.items);
   },
 };

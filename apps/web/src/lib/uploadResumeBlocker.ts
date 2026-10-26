@@ -1,7 +1,7 @@
 // 途中のアップロードを続けられない理由。セッションの状態かAPIの拒否から読み取り、画面が生の
 // エラーではなく、何が起きて次に何をすればよいかを言えるようにする。
 import type { ArtifactUpload } from '@mmt/contracts';
-import { RequestError } from '../api/http';
+import { isApiError } from '@mado/design-system/http';
 
 export type ResumeBlocker =
   /** 7日の期限を過ぎた。受け取ったpartは捨てられる。 */
@@ -44,7 +44,7 @@ export function blockerFromSession(
 
 /** ネットワークの切断のように、セッションについて何も表さない失敗にはnull。 */
 export function blockerFromFailure(failure: unknown): ResumeBlocker | null {
-  if (!(failure instanceof RequestError) || !failure.code) return null;
+  if (!isApiError(failure) || !failure.code) return null;
   return BLOCKER_BY_CODE[failure.code] ?? null;
 }
 

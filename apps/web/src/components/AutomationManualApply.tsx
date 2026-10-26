@@ -9,12 +9,10 @@ import { ErrorNotice } from './Feedback';
 import { buildCatalogOptions, withEmptyOption } from '../lib/catalogOptions';
 import { getFieldValue } from '../lib/formValues';
 import {
-  manualExecutionErrorMessage,
   manualExecutionRequest,
   manualUpstreamRunOptions,
   manualVersionOptions,
 } from '../lib/automationManualExecution';
-import { LocalizedError } from '../lib/localizedError';
 import { useLocale } from '../i18n/useLocale';
 import { automationText } from '../i18n/automation';
 
@@ -95,13 +93,7 @@ export function AutomationManualApply({
           title={automationText.applyToVersion}
           message={automationText.applyConfirmMessage(rule.name, selectedLabel)}
           confirmLabel={automationText.applyConfirm}
-          onConfirm={() =>
-            automationApi
-              .createExecution(projectId, rule.id, manualExecutionRequest(rule, selectedId))
-              .catch((failure: unknown) => {
-                throw new LocalizedError(() => manualExecutionErrorMessage(failure));
-              })
-          }
+          onConfirm={() => automationApi.createExecution(projectId, rule.id, manualExecutionRequest(rule, selectedId))}
           onConfirmed={() => {
             setIsConfirming(false);
             setIsApplied(true);

@@ -41,8 +41,9 @@ import {
   type AuditEventDraft,
 } from './auditService.js';
 
-const experimentSelect =
-  "SELECT e.*, (SELECT count(*) FROM runs r WHERE r.experiment_id=e.id AND r.lifecycle_stage='active') AS run_count FROM experiments e";
+// 契約のExperimentの列。MLflowだけが使う列（lifecycle_stage・tags・artifact_location・updated_at）は返さない。
+const experimentColumns = ['id', 'project_id', 'name', 'description', 'created_at'];
+const experimentSelect = `SELECT ${experimentColumns.map((column) => `e.${column}`).join(',')}, (SELECT count(*) FROM runs r WHERE r.experiment_id=e.id AND r.lifecycle_stage='active') AS run_count FROM experiments e`;
 
 export class ProjectService {
   constructor(
@@ -411,7 +412,7 @@ export class ProjectService {
       if (duplicate) duplicateExperimentName();
       return (await first<Experiment>(
         connection,
-        'INSERT INTO experiments(project_id,name,description) VALUES($1,$2,$3) RETURNING *,0 AS run_count',
+        `INSERT INTO experiments(project_id,name,description) VALUES($1,$2,$3) RETURNING ${experimentColumns.join(',')},0 AS run_count`,
         [projectId, input.name, input.description],
       ))!;
     });

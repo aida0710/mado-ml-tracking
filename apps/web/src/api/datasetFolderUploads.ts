@@ -1,10 +1,8 @@
-import {
-  datasetFolderUploadPrefix,
-  type DatasetFolderUpload,
-  type DatasetFolderUploadDiscard,
-} from '@mmt/contracts';
+import { requestJson } from '@mado/design-system/http';
+import { datasetFolderUploadPrefix } from '@mmt/contracts';
+import { datasetFolderUploadDiscardSchema, datasetFolderUploadSchema, itemsOf } from '@mmt/contracts/schemas';
 import type { StoredFolderFile } from '../lib/datasetFolderResume';
-import { encodeId, projectPath, request, requestItems } from './http';
+import { encodeId, projectPath } from './http';
 import { trackingApi } from './tracking';
 
 const folderUploadsPath = (projectId: string, datasetId: string) =>
@@ -14,14 +12,19 @@ const STORED_FILE_PAGE_SIZE = 500;
 
 /** バージョンを作る前に止まった、データセットのフォルダのアップロード（GET/DELETE …/folder-uploads）。 */
 export const datasetFolderUploadsApi = {
-  list: (projectId: string, datasetId: string, signal?: AbortSignal) =>
-    requestItems<DatasetFolderUpload>(folderUploadsPath(projectId, datasetId), signal),
+  list: async (projectId: string, datasetId: string, signal?: AbortSignal) =>
+    (
+      await requestJson(folderUploadsPath(projectId, datasetId), {
+        schema: itemsOf(datasetFolderUploadSchema),
+        init: { signal },
+      })
+    ).items,
   /** Project adminだけ。何かが使っているファイルは残し、その数を数える。 */
   discard: (projectId: string, upload: { datasetId: string; folder: string }) =>
-    request<DatasetFolderUploadDiscard>(
-      `${folderUploadsPath(projectId, upload.datasetId)}/${encodeId(upload.folder)}`,
-      { method: 'DELETE' },
-    ),
+    requestJson(`${folderUploadsPath(projectId, upload.datasetId)}/${encodeId(upload.folder)}`, {
+      schema: datasetFolderUploadDiscardSchema,
+      init: { method: 'DELETE' },
+    }),
   /** そのアップロードで保存したすべてのファイル。ProjectのArtifactカタログから1ページずつ読む。 */
   storedFiles: async (
     projectId: string,

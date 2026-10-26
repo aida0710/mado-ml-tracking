@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { fetchResponse } from '@mado/design-system/http';
 import { canAnalyzeAudio, type Spectrogram, type WaveformPeaks } from '../lib/audioAnalysis';
 import { readAudioSampleRate } from '../lib/audioSampleRate';
 import type {
@@ -28,9 +29,7 @@ const MIN_DECODE_SAMPLE_RATE = 3000;
 const MAX_DECODE_SAMPLE_RATE = 768000;
 
 async function fetchArtifactBytes(url: string, signal: AbortSignal): Promise<ArrayBuffer> {
-  const response = await fetch(url, { credentials: 'include', signal });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return response.arrayBuffer();
+  return (await fetchResponse(url, { init: { signal } })).arrayBuffer();
 }
 
 async function decodeAudio(bytes: ArrayBuffer): Promise<{ buffer: AudioBuffer; sampleRateFromFile: boolean }> {

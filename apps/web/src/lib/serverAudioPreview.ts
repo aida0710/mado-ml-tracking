@@ -1,4 +1,5 @@
-import type { ArtifactPreview, WaveformPeaksPreview } from '@mmt/contracts';
+import type { ArtifactPreview } from '@mmt/contracts';
+import { waveformPeaksPreviewSchema } from '@mmt/contracts/schemas';
 import type { WaveformPeaks } from './audioAnalysis';
 
 /** 'waveform-peaks'のプレビューのArtifactから読み出した、サーバーが作るファイル全体の波形。 */
@@ -15,35 +16,18 @@ export type ServerAudioPreviewSummary =
   | { status: 'failed' }
   | { status: 'ready'; peaksArtifactId: string; spectrogramArtifactId: string | null };
 
-// プレビューのworkerが書くピークは最大8192個。大きく超えるものはworkerが作ったものではない。
-const MAX_PEAK_COUNT = 65536;
-
-function isPeakArray(value: unknown): value is number[] {
-  return (
-    Array.isArray(value) &&
-    value.length <= MAX_PEAK_COUNT &&
-    value.every((peak) => typeof peak === 'number' && peak >= -1 && peak <= 1)
-  );
-}
-
 /** バージョン1のピークの文書でなければnull。 */
 export function parseWaveformPeaksPreview(text: string): ServerWaveform | null {
-  let document: Partial<WaveformPeaksPreview>;
+  let document: unknown;
   try {
-    document = JSON.parse(text) as Partial<WaveformPeaksPreview>;
+    document = JSON.parse(text);
   } catch {
     return null;
   }
-  if (typeof document !== 'object' || document === null || document.version !== 1) return null;
-  const { sampleRate, durationSeconds, min, max } = document;
-  if (!Number.isInteger(sampleRate) || sampleRate! <= 0) return null;
-  if (typeof durationSeconds !== 'number' || !Number.isFinite(durationSeconds) || durationSeconds < 0) return null;
-  if (!isPeakArray(min) || !isPeakArray(max) || min.length !== max.length || min.length === 0) return null;
-  return {
-    peaks: { min: Float32Array.from(min), max: Float32Array.from(max) },
-    sampleRate: sampleRate!,
-    durationSeconds,
-  };
+  const parsed = waveformPeaksPreviewSchema.safeParse(document);
+  if (!parsed.success) return null;
+  const { min, max, sampleRate, durationSeconds } = parsed.data;
+  return { peaks: { min: Float32Array.from(min), max: Float32Array.from(max) }, sampleRate, durationSeconds };
 }
 
 /**

@@ -1,6 +1,6 @@
 import type { SavedView, SavedViewPage, SavedViewState } from '@mmt/contracts';
+import { isNotFoundError } from '@mado/design-system/http';
 import { savedViewsApi } from '../api/savedViews';
-import { isNotFoundError } from '../api/http';
 import { parseSavedViewState } from '../lib/savedViewState';
 import { useQuery } from './useQuery';
 

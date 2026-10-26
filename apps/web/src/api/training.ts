@@ -1,11 +1,12 @@
-import type {
-  ModelVersionTrainingSource,
-  ModelVersionTrainingSourceCreate,
-  TrainingDataStage,
-  TrainingDataStageCreate,
-  TrainingDataStagePage,
-} from '@mmt/contracts';
-import { encodeId, jsonRequest, projectPath, request } from './http';
+import { jsonRequestInit, requestJson } from '@mado/design-system/http';
+import type { ModelVersionTrainingSourceCreate, TrainingDataStageCreate } from '@mmt/contracts';
+import {
+  modelVersionTrainingSourceResponseSchema,
+  modelVersionTrainingSourceSchema,
+  trainingDataStagePageSchema,
+  trainingDataStageSchema,
+} from '@mmt/contracts/schemas';
+import { encodeId, projectPath } from './http';
 
 export interface ModelTrainingSourceLocation {
   projectId: string;
@@ -20,14 +21,15 @@ const stagesPath = (projectId: string, runId: string) =>
 
 export const trainingApi = {
   source: async (location: ModelTrainingSourceLocation, signal?: AbortSignal) =>
-    (await request<{ source: ModelVersionTrainingSource | null }>(sourcePath(location), { signal }))
+    (await requestJson(sourcePath(location), { schema: modelVersionTrainingSourceResponseSchema, init: { signal } }))
       .source,
-  associateSource: (
-    location: ModelTrainingSourceLocation,
-    input: ModelVersionTrainingSourceCreate,
-  ) => request<ModelVersionTrainingSource>(sourcePath(location), jsonRequest('POST', input)),
+  associateSource: (location: ModelTrainingSourceLocation, input: ModelVersionTrainingSourceCreate) =>
+    requestJson(sourcePath(location), {
+      schema: modelVersionTrainingSourceSchema,
+      init: jsonRequestInit('POST', input),
+    }),
   stages: (projectId: string, runId: string, signal?: AbortSignal) =>
-    request<TrainingDataStagePage>(stagesPath(projectId, runId), { signal }),
+    requestJson(stagesPath(projectId, runId), { schema: trainingDataStagePageSchema, init: { signal } }),
   appendStage: (projectId: string, runId: string, input: TrainingDataStageCreate) =>
-    request<TrainingDataStage>(stagesPath(projectId, runId), jsonRequest('POST', input)),
+    requestJson(stagesPath(projectId, runId), { schema: trainingDataStageSchema, init: jsonRequestInit('POST', input) }),
 };

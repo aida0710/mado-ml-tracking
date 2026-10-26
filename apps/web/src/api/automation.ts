@@ -1,20 +1,14 @@
-import type {
-  AutomationRuleOwnerTransfer,
-  CreateAutomationExecution,
-  ModelAutomationExecution,
-  ModelAutomationExecutionPage,
-  ModelAutomationRule,
-  RuleMetricKeys,
-} from '@mmt/contracts';
-import type { CreateAutomationRule } from './inputs';
+import { jsonRequestInit, requestJson } from '@mado/design-system/http';
+import type { AutomationRuleOwnerTransfer, CreateAutomationExecution } from '@mmt/contracts';
 import {
-  assertCursorPage,
-  encodeId,
-  jsonRequest,
-  projectPath,
-  request,
-  requestItems,
-} from './http';
+  itemsOf,
+  modelAutomationExecutionPageSchema,
+  modelAutomationExecutionSchema,
+  modelAutomationRuleSchema,
+  ruleMetricKeysSchema,
+} from '@mmt/contracts/schemas';
+import type { CreateAutomationRule } from './inputs';
+import { encodeId, projectPath } from './http';
 
 // APIの最大値。バージョンの実行や、選択欄に出すルールの実行を、ポーリングの1ページで読み切る。
 export const AUTOMATION_EXECUTION_PAGE_MAX = 200;
@@ -29,32 +23,36 @@ export interface AutomationExecutionFilter {
 
 const rulesPath = (projectId: string) => `${projectPath(projectId)}/automation-rules`;
 export const automationApi = {
-  rules: (projectId: string, signal?: AbortSignal) =>
-    requestItems<ModelAutomationRule>(rulesPath(projectId), signal),
+  rules: async (projectId: string, signal?: AbortSignal) =>
+    (await requestJson(rulesPath(projectId), { schema: itemsOf(modelAutomationRuleSchema), init: { signal } }))
+      .items,
   createRule: (projectId: string, body: CreateAutomationRule) =>
-    request<ModelAutomationRule>(rulesPath(projectId), jsonRequest('POST', body)),
+    requestJson(rulesPath(projectId), { schema: modelAutomationRuleSchema, init: jsonRequestInit('POST', body) }),
   setRuleEnabled: (projectId: string, ruleId: string, enabled: boolean) =>
-    request<ModelAutomationRule>(
-      `${rulesPath(projectId)}/${encodeId(ruleId)}`,
-      jsonRequest('PATCH', { enabled }),
-    ),
+    requestJson(`${rulesPath(projectId)}/${encodeId(ruleId)}`, {
+      schema: modelAutomationRuleSchema,
+      init: jsonRequestInit('PATCH', { enabled }),
+    }),
   // ルールのRun（まだ1つも無ければ、そのコードバージョンのRun）が記録したメトリクスのキー。
   ruleMetricKeys: (projectId: string, ruleId: string, signal?: AbortSignal) =>
-    request<RuleMetricKeys>(`${rulesPath(projectId)}/${encodeId(ruleId)}/metric-keys`, { signal }),
+    requestJson(`${rulesPath(projectId)}/${encodeId(ruleId)}/metric-keys`, {
+      schema: ruleMetricKeysSchema,
+      init: { signal },
+    }),
   // 既存のバージョン（または上流のRun）にルールを手動で適用する。Project adminだけ。
   createExecution: (projectId: string, ruleId: string, body: CreateAutomationExecution) =>
-    request<ModelAutomationExecution>(
-      `${rulesPath(projectId)}/${encodeId(ruleId)}/executions`,
-      jsonRequest('POST', body),
-    ),
+    requestJson(`${rulesPath(projectId)}/${encodeId(ruleId)}/executions`, {
+      schema: modelAutomationExecutionSchema,
+      init: jsonRequestInit('POST', body),
+    }),
   // ルールをProjectのService Accountとして動かす。Project adminだけ。
   transferOwner: (projectId: string, ruleId: string, body: AutomationRuleOwnerTransfer) =>
-    request<ModelAutomationRule>(
-      `${rulesPath(projectId)}/${encodeId(ruleId)}/owner`,
-      jsonRequest('PUT', body),
-    ),
+    requestJson(`${rulesPath(projectId)}/${encodeId(ruleId)}/owner`, {
+      schema: modelAutomationRuleSchema,
+      init: jsonRequestInit('PUT', body),
+    }),
   // Projectの実行の1ページ（新しい順）。nextCursorで次の古いページを読む。
-  executionPage: async (
+  executionPage: (
     projectId: string,
     {
       filter = {},
@@ -62,16 +60,14 @@ export const automationApi = {
       cursor,
     }: { filter?: AutomationExecutionFilter; limit: number; cursor?: string },
     signal?: AbortSignal,
-  ): Promise<ModelAutomationExecutionPage> => {
+  ) => {
     const query = new URLSearchParams({ limit: String(limit) });
     if (filter.ruleId) query.set('ruleId', filter.ruleId);
     if (filter.modelVersionId) query.set('modelVersionId', filter.modelVersionId);
     if (cursor) query.set('cursor', cursor);
-    const page = await request<ModelAutomationExecutionPage>(
-      `${projectPath(projectId)}/automation-executions?${query}`,
-      { signal },
-    );
-    assertCursorPage(page);
-    return page;
+    return requestJson(`${projectPath(projectId)}/automation-executions?${query}`, {
+      schema: modelAutomationExecutionPageSchema,
+      init: { signal },
+    });
   },
 };

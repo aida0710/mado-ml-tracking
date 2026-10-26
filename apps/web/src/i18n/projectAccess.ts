@@ -28,8 +28,6 @@ export const projectAccessText = localized({
   userSearchNoResults: '一致するユーザーがいません',
   userSearchRequired: '追加するユーザーを選択してください',
   changeSelectedUser: '選び直す',
-  lastProjectAdminConflict:
-    'Project adminがいなくなるため変更できません。先に別のメンバーか、誰かがログインしたことのあるgroupへAdminを付与してください。',
   lastProjectAdminLocked:
     '最後のAdminなので変更・削除できません。先に別のメンバーか、誰かがログインしたことのあるgroupへAdminを付けてください。',
   groupWithoutMembers: 'まだ誰もログインしていません',

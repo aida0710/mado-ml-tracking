@@ -1,14 +1,10 @@
-import type {
-  AdminUser,
-  AdminUserCreate,
-  AdminUserPasswordReset,
-  AdminUserPatch,
-  AdminUserQuery,
-} from '@mmt/contracts';
-import { encodeId, invalidResponseError, jsonRequest, request, requestItems } from './http';
+import { jsonRequestInit, requestJson } from '@mado/design-system/http';
+import type { AdminUserCreate, AdminUserPatch, AdminUserQuery } from '@mmt/contracts';
+import { adminUserPasswordResetSchema, adminUserSchema, itemsOf } from '@mmt/contracts/schemas';
+import { encodeId } from './http';
 
 const userPath = (userId?: string) =>
-  `/admin/users${userId === undefined ? '' : `/${encodeId(userId)}`}`;
+  `/api/admin/users${userId === undefined ? '' : `/${encodeId(userId)}`}`;
 
 function searchParameters(query: AdminUserQuery): string {
   const parameters = new URLSearchParams();
@@ -19,16 +15,20 @@ function searchParameters(query: AdminUserQuery): string {
 
 /** 全体管理者のユーザー管理（/admin/users）。 */
 export const adminUsersApi = {
-  list: (query: AdminUserQuery, signal?: AbortSignal) =>
-    requestItems<AdminUser>(`${userPath()}${searchParameters(query)}`, signal),
-  create: (body: AdminUserCreate) => request<AdminUser>(userPath(), jsonRequest('POST', body)),
+  list: async (query: AdminUserQuery, signal?: AbortSignal) =>
+    (
+      await requestJson(`${userPath()}${searchParameters(query)}`, {
+        schema: itemsOf(adminUserSchema),
+        init: { signal },
+      })
+    ).items,
+  create: (body: AdminUserCreate) =>
+    requestJson(userPath(), { schema: adminUserSchema, init: jsonRequestInit('POST', body) }),
   update: (userId: string, body: AdminUserPatch) =>
-    request<AdminUser>(userPath(userId), jsonRequest('PATCH', body)),
-  resetPassword: async (userId: string) => {
-    const payload = await request<AdminUserPasswordReset>(`${userPath(userId)}/reset-password`, {
-      method: 'POST',
-    });
-    if (typeof payload.temporaryPassword !== 'string') throw invalidResponseError();
-    return payload;
-  },
+    requestJson(userPath(userId), { schema: adminUserSchema, init: jsonRequestInit('PATCH', body) }),
+  resetPassword: (userId: string) =>
+    requestJson(`${userPath(userId)}/reset-password`, {
+      schema: adminUserPasswordResetSchema,
+      init: { method: 'POST' },
+    }),
 };
