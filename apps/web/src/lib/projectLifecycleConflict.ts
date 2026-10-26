@@ -1,4 +1,4 @@
-import { RequestError } from '../api/http';
+import { isApiError } from '@mado/design-system/http';
 import { text } from '../i18n/catalog';
 
 // Projectのアーカイブと完全な削除で返る409のコード。サーバーの文でなく、次に何をすればよいかを
@@ -14,7 +14,7 @@ export async function explainProjectLifecycleConflict<T>(change: Promise<T>): Pr
     return await change;
   } catch (failure) {
     const known =
-      failure instanceof RequestError && failure.status === 409 && failure.code
+      isApiError(failure) && failure.status === 409 && failure.code
         ? conflictText[failure.code]
         : undefined;
     if (known) throw new Error(known, { cause: failure });

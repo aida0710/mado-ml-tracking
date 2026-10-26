@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { RequestError } from '../api/http';
+import { ApiError } from '@mado/design-system/http';
 import { explainProjectLifecycleConflict } from './projectLifecycleConflict';
 import { text } from '../i18n/catalog';
 
-const conflict = (code: string) => new RequestError({ status: 409, code, serverMessage: 'raw' });
+const conflict = (code: string) => new ApiError({ status: 409, code, message: 'raw' });
 
 describe('プロジェクトのアーカイブと完全な削除の409', () => {
   it('待機中・実行中のJobがあるアーカイブは、Jobを終えるよう案内する', async () => {
@@ -21,7 +21,7 @@ describe('プロジェクトのアーカイブと完全な削除の409', () => {
   it('知らない409とほかの失敗はそのまま返す', async () => {
     const other = conflict('something_else');
     await expect(explainProjectLifecycleConflict(Promise.reject(other))).rejects.toBe(other);
-    const forbidden = new RequestError({ status: 403, code: 'forbidden' });
+    const forbidden = new ApiError({ status: 403, code: 'forbidden', message: 'forbidden' });
     await expect(explainProjectLifecycleConflict(Promise.reject(forbidden))).rejects.toBe(forbidden);
   });
 

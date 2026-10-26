@@ -1,33 +1,27 @@
+import { isNotFoundError, jsonRequestInit, requestJson } from '@mado/design-system/http';
 import type {
   Artifact,
   ArtifactListVersions,
-  ArtifactPage,
-  ArtifactTree,
-  Experiment,
-  LineageGraph,
-  MetricPoint,
-  Run,
-  RunComparison,
   RunComparisonRequest,
   RunLogList,
-  RunSearchPage,
   RunSearchRequest,
 } from '@mmt/contracts';
 import { RUN_EXPORT_TRUNCATED_HEADER } from '@mmt/contracts';
-import type { CreateRun, UpdateRun } from './inputs';
 import {
-  ARTIFACT_CONTENT_UNAVAILABLE_CODE,
-  encodeId,
-  invalidResponseError,
-  isNotFoundError,
-  NETWORK_ERROR_CODE,
-  jsonRequest,
-  projectPath,
-  request,
-  RequestError,
-  requestErrorFromBody,
-  requestItems,
-} from './http';
+  artifactPageSchema,
+  artifactSchema,
+  artifactTreeSchema,
+  experimentSchema,
+  itemsOf,
+  lineageGraphSchema,
+  metricPointSchema,
+  runComparisonSchema,
+  runLogListSchema,
+  runSchema,
+  runSearchPageSchema,
+} from '@mmt/contracts/schemas';
+import type { CreateRun, UpdateRun } from './inputs';
+import { encodeId, fetchApiResponse, projectPath } from './http';
 
 const artifactContentPath = (projectId: string, artifactId: string) =>
   `${projectPath(projectId)}/artifacts/${encodeId(artifactId)}/content`;
@@ -66,37 +60,22 @@ function searchParams(values: Record<string, string | number | boolean | undefin
   return new URLSearchParams(entries.map(([key, value]) => [key, String(value)])).toString();
 }
 
-async function requestArtifactPage(path: string, signal?: AbortSignal): Promise<ArtifactPage> {
-  const page = await request<ArtifactPage>(path, { signal });
-  if (!Array.isArray(page.items)) throw invalidResponseError();
-  return page;
-}
-
-function runArtifactPage(
-  projectId: string,
-  runId: string,
-  query: RunArtifactPageQuery,
-  signal?: AbortSignal,
-): Promise<ArtifactPage> {
+function runArtifactPage(projectId: string, runId: string, query: RunArtifactPageQuery, signal?: AbortSignal) {
   const { directFilesOnly, ...rest } = query;
-  return requestArtifactPage(
+  return requestJson(
     `${runPath(projectId, runId)}/artifacts?${searchParams({
       ...rest,
       delimiter: directFilesOnly ? '/' : undefined,
     })}`,
-    signal,
+    { schema: artifactPageSchema, init: { signal } },
   );
 }
 
-function projectArtifactPage(
-  projectId: string,
-  query: ProjectArtifactPageQuery,
-  signal?: AbortSignal,
-): Promise<ArtifactPage> {
-  return requestArtifactPage(
-    `${projectPath(projectId)}/artifacts?${searchParams({ ...query })}`,
-    signal,
-  );
+function projectArtifactPage(projectId: string, query: ProjectArtifactPageQuery, signal?: AbortSignal) {
+  return requestJson(`${projectPath(projectId)}/artifacts?${searchParams({ ...query })}`, {
+    schema: artifactPageSchema,
+    init: { signal },
+  });
 }
 export interface RunSearchCsv {
   blob: Blob;
@@ -126,20 +105,10 @@ async function exportRunSearchCsv(
   search: RunSearchRequest,
   signal?: AbortSignal,
 ): Promise<RunSearchCsv> {
-  let response: Response;
-  try {
-    response = await fetch(`/api${projectPath(projectId)}/runs/search/export.csv`, {
-      ...jsonRequest('POST', search),
-      credentials: 'include',
-      signal,
-    });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') throw error;
-    throw new RequestError({ status: 0, code: NETWORK_ERROR_CODE });
-  }
-  // 失敗は JSON のエラー本文なので、request()（http.ts）と同じく読む。
-  if (!response.ok)
-    throw requestErrorFromBody(response.status, await response.json().catch(() => null));
+  const response = await fetchApiResponse(`${projectPath(projectId)}/runs/search/export.csv`, {
+    ...jsonRequestInit('POST', search),
+    signal,
+  });
   return {
     blob: await response.blob(),
     fileName: attachmentFileName(response.headers.get('Content-Disposition')),
@@ -148,61 +117,65 @@ async function exportRunSearchCsv(
 }
 
 export const trackingApi = {
-  experiments: (projectId: string, signal?: AbortSignal) =>
-    requestItems<Experiment>(`${projectPath(projectId)}/experiments`, signal),
+  experiments: async (projectId: string, signal?: AbortSignal) =>
+    (
+      await requestJson(`${projectPath(projectId)}/experiments`, {
+        schema: itemsOf(experimentSchema),
+        init: { signal },
+      })
+    ).items,
   createExperiment: (projectId: string, body: { name: string; description?: string }) =>
-    request<Experiment>(`${projectPath(projectId)}/experiments`, jsonRequest('POST', body)),
-  searchRuns: async (projectId: string, body: RunSearchRequest, signal?: AbortSignal) => {
-    const page = await request<RunSearchPage>(`${projectPath(projectId)}/runs/search`, {
-      ...jsonRequest('POST', body),
-      signal,
-    });
-    if (!Array.isArray(page.items)) throw invalidResponseError();
-    return page;
-  },
+    requestJson(`${projectPath(projectId)}/experiments`, {
+      schema: experimentSchema,
+      init: jsonRequestInit('POST', body),
+    }),
+  searchRuns: (projectId: string, body: RunSearchRequest, signal?: AbortSignal) =>
+    requestJson(`${projectPath(projectId)}/runs/search`, {
+      schema: runSearchPageSchema,
+      init: { ...jsonRequestInit('POST', body), signal },
+    }),
   exportRunSearchCsv,
-  compareRuns: async (projectId: string, body: RunComparisonRequest, signal?: AbortSignal) => {
-    const comparison = await request<RunComparison>(`${projectPath(projectId)}/runs/compare`, {
-      ...jsonRequest('POST', body),
-      signal,
-    });
-    if (!Array.isArray(comparison.runs) || !Array.isArray(comparison.rows))
-      throw invalidResponseError();
-    return comparison;
-  },
+  compareRuns: (projectId: string, body: RunComparisonRequest, signal?: AbortSignal) =>
+    requestJson(`${projectPath(projectId)}/runs/compare`, {
+      schema: runComparisonSchema,
+      init: { ...jsonRequestInit('POST', body), signal },
+    }),
   /** ブラウザがsessionのcookieを付けてダウンロードするGETのリンク。 */
   runComparisonCsvUrl: (
     projectId: string,
     comparison: { runIds: string[]; baselineRunId: string | null },
   ) =>
-    `/api${projectPath(projectId)}/runs/compare.csv?${searchParams({
+    `${projectPath(projectId)}/runs/compare.csv?${searchParams({
       runIds: comparison.runIds.join(','),
       baselineRunId: comparison.baselineRunId ?? undefined,
     })}`,
   run: (projectId: string, runId: string, signal?: AbortSignal) =>
-    request<Run>(runPath(projectId, runId), { signal }),
+    requestJson(runPath(projectId, runId), { schema: runSchema, init: { signal } }),
   createRun: (projectId: string, body: CreateRun) =>
-    request<Run>(`${projectPath(projectId)}/runs`, jsonRequest('POST', body)),
+    requestJson(`${projectPath(projectId)}/runs`, { schema: runSchema, init: jsonRequestInit('POST', body) }),
   updateRun: (projectId: string, runId: string, body: UpdateRun) =>
-    request<Run>(runPath(projectId, runId), jsonRequest('PATCH', body)),
-  metrics: (projectId: string, runId: string, signal?: AbortSignal) =>
-    requestItems<MetricPoint>(`${runPath(projectId, runId)}/metrics`, signal),
+    requestJson(runPath(projectId, runId), { schema: runSchema, init: jsonRequestInit('PATCH', body) }),
+  metrics: async (projectId: string, runId: string, signal?: AbortSignal) =>
+    (
+      await requestJson(`${runPath(projectId, runId)}/metrics`, {
+        schema: itemsOf(metricPointSchema),
+        init: { signal },
+      })
+    ).items,
   /** Runのログの行を古い順に返す。`tail`を付けると最新のその行数だけ（RunLogList）。 */
-  logs: async (
+  logs: (
     projectId: string,
     runId: string,
     query: { tail?: number; signal?: AbortSignal } = {},
   ): Promise<RunLogList> => {
     const search = query.tail ? `?${new URLSearchParams({ tail: String(query.tail) })}` : '';
-    const page = await request<RunLogList>(`${runPath(projectId, runId)}/logs${search}`, {
-      signal: query.signal,
+    return requestJson(`${runPath(projectId, runId)}/logs${search}`, {
+      schema: runLogListSchema,
+      init: { signal: query.signal },
     });
-    if (!Array.isArray(page.items) || typeof page.totalCount !== 'number')
-      throw invalidResponseError();
-    return page;
   },
   /** ブラウザがsessionのcookieを付けてダウンロードするGETのリンク。全行を`<Run name>.log`として落とす。 */
-  runLogFileUrl: (projectId: string, runId: string) => `/api${runPath(projectId, runId)}/logs/download`,
+  runLogFileUrl: (projectId: string, runId: string) => `${runPath(projectId, runId)}/logs/download`,
   /** Runの最新のArtifactを、全ページたどってすべて返す。一覧の画面はrunArtifactPageでページ送りする。 */
   artifacts: async (projectId: string, runId: string, signal?: AbortSignal) => {
     const items: Artifact[] = [];
@@ -215,38 +188,25 @@ export const trackingApi = {
     return items;
   },
   runArtifactPage,
-  runArtifactTree: async (
-    projectId: string,
-    runId: string,
-    prefix: string,
-    signal?: AbortSignal,
-  ) => {
-    const tree = await request<ArtifactTree>(
-      `${runPath(projectId, runId)}/artifacts/tree?${searchParams({ prefix })}`,
-      { signal },
-    );
-    if (!Array.isArray(tree.directories)) throw invalidResponseError();
-    return tree;
-  },
+  runArtifactTree: (projectId: string, runId: string, prefix: string, signal?: AbortSignal) =>
+    requestJson(`${runPath(projectId, runId)}/artifacts/tree?${searchParams({ prefix })}`, {
+      schema: artifactTreeSchema,
+      init: { signal },
+    }),
   projectArtifacts: async (
     projectId: string,
     query: Pick<ProjectArtifactPageQuery, 'limit' | 'query' | 'runId' | 'versions'>,
     signal?: AbortSignal,
   ) => (await projectArtifactPage(projectId, query, signal)).items,
   projectArtifactPage,
-  artifactUrl: (projectId: string, artifactId: string) =>
-    `/api${artifactContentPath(projectId, artifactId)}`,
-  artifactText: async (projectId: string, artifactId: string, signal?: AbortSignal) => {
-    const response = await fetch(`/api${artifactContentPath(projectId, artifactId)}`, {
-      credentials: 'include',
-      signal,
-    });
-    if (!response.ok)
-      throw new RequestError({ status: response.status, code: ARTIFACT_CONTENT_UNAVAILABLE_CODE });
-    return response.text();
-  },
+  artifactUrl: (projectId: string, artifactId: string) => artifactContentPath(projectId, artifactId),
+  artifactText: async (projectId: string, artifactId: string, signal?: AbortSignal) =>
+    (await fetchApiResponse(artifactContentPath(projectId, artifactId), { signal })).text(),
   artifact: (projectId: string, artifactId: string, signal?: AbortSignal) =>
-    request<Artifact>(`${projectPath(projectId)}/artifacts/${encodeId(artifactId)}`, { signal }),
+    requestJson(`${projectPath(projectId)}/artifacts/${encodeId(artifactId)}`, {
+      schema: artifactSchema,
+      init: { signal },
+    }),
   /** ProjectにそのidのArtifactが無ければnull（削除済み、別のProjectのもの、打ち間違い）。 */
   findArtifact: async (projectId: string, artifactId: string, signal?: AbortSignal) => {
     try {
@@ -257,5 +217,5 @@ export const trackingApi = {
     }
   },
   lineage: (projectId: string, signal?: AbortSignal) =>
-    request<LineageGraph>(`${projectPath(projectId)}/lineage`, { signal }),
+    requestJson(`${projectPath(projectId)}/lineage`, { schema: lineageGraphSchema, init: { signal } }),
 };

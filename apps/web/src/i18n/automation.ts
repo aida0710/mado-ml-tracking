@@ -47,7 +47,6 @@ export const automationText = localized({
   applyNoVersions: '対象モデル系列のバージョンがありません。',
   applyNoUpstreamRuns: '上流ruleが作ったRunがありません。',
   applyRunning: 'このruleとバージョンの実行が進行中です。終わってから適用してください。',
-  applyInvalidRule: 'このruleは適用できません。',
   applied: 'Jobを登録しました。自動実行履歴で状態を確認できます。',
   automaticRun: '自動',
   maxAttempts: '最大試行回数（2以上で失敗時に自動で再試行）',

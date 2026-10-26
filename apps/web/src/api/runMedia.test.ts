@@ -1,8 +1,30 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { MediaCompareGrid, MediaTablePage, RunMedia } from '@mmt/contracts';
 import { RUN_MEDIA_MAX_ITEMS, RUN_MEDIA_PAGE_LIMIT, runMediaApi } from './runMedia';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
-const item = (step: number) => ({ id: `m${step}`, runId: 'run', key: 'samples', step });
+const RUN_ID = '00000000-0000-4000-8000-000000000001';
+const OTHER_RUN_ID = '00000000-0000-4000-8000-000000000002';
+const ARTIFACT_ID = '00000000-0000-4000-8000-000000000003';
+// stepごとに別のidを付ける（末尾の12桁がstep）。
+const item = (step: number): RunMedia => ({
+  id: `00000000-0000-4000-9000-${String(step).padStart(12, '0')}`,
+  runId: RUN_ID,
+  key: 'samples',
+  step,
+  kind: 'audio',
+  artifactId: ARTIFACT_ID,
+  thumbnailArtifactId: null,
+  caption: null,
+  metadata: {},
+  source: 'native',
+  path: `media/samples/${step}.wav`,
+  mimeType: 'audio/wav',
+  size: 1024,
+  contentUrl: `/api/projects/project/artifacts/${ARTIFACT_ID}/content`,
+  thumbnailContentUrl: null,
+  createdAt: '2026-10-08T00:00:00.000Z',
+});
 
 afterEach(() => vi.unstubAllGlobals());
 describe('Runのメディア', () => {
@@ -36,25 +58,33 @@ describe('Runのメディア', () => {
   });
 
   it('比較の格子はRun×stepの形でなければ契約違反として扱う', async () => {
-    const valid = { key: 'k', steps: [0, 1], rows: [{ runId: 'a', cells: [null, null] }, { runId: 'b', cells: [null, null] }] };
-    const latest = { key: 'k', steps: null, rows: [{ runId: 'a', cells: [null] }] };
+    const valid: MediaCompareGrid = {
+      key: 'k',
+      steps: [0, 1],
+      rows: [
+        { runId: RUN_ID, cells: [null, null] },
+        { runId: OTHER_RUN_ID, cells: [null, null] },
+      ],
+    };
+    const latest: MediaCompareGrid = { key: 'k', steps: null, rows: [{ runId: RUN_ID, cells: [null] }] };
     const fetch = vi
       .fn()
       .mockResolvedValueOnce(json(valid))
-      .mockResolvedValueOnce(json({ ...valid, rows: [{ runId: 'a', cells: [null] }] }))
+      .mockResolvedValueOnce(json({ ...valid, rows: [{ runId: RUN_ID, cells: [null] }] }))
       .mockResolvedValueOnce(json(latest));
     vi.stubGlobal('fetch', fetch);
-    await expect(runMediaApi.compare('project', { runIds: ['a', 'b'], key: 'k' })).resolves.toEqual(valid);
+    const runIds = [RUN_ID, OTHER_RUN_ID];
+    await expect(runMediaApi.compare('project', { runIds, key: 'k' })).resolves.toEqual(valid);
     expect(fetch.mock.calls[0]?.[0]).toBe('/api/projects/project/media/compare');
-    expect(JSON.parse(fetch.mock.calls[0]?.[1]?.body as string)).toEqual({ runIds: ['a', 'b'], key: 'k' });
-    await expect(runMediaApi.compare('project', { runIds: ['a', 'b'], key: 'k' })).rejects.toMatchObject({
+    expect(JSON.parse(fetch.mock.calls[0]?.[1]?.body as string)).toEqual({ runIds, key: 'k' });
+    await expect(runMediaApi.compare('project', { runIds, key: 'k' })).rejects.toMatchObject({
       code: 'invalid_response',
     });
-    await expect(runMediaApi.compare('project', { runIds: ['a'], key: 'k' })).resolves.toEqual(latest);
+    await expect(runMediaApi.compare('project', { runIds: [RUN_ID], key: 'k' })).resolves.toEqual(latest);
   });
 
   it('表は行の範囲を指定して取得し、権限エラーはそのまま投げる', async () => {
-    const page = { columns: [{ name: 'image', type: 'image' }], rows: [[null]], totalRows: 1, offset: 50 };
+    const page: MediaTablePage = { columns: [{ name: 'image', type: 'image' }], rows: [[null]], totalRows: 1, offset: 50 };
     const fetch = vi
       .fn()
       .mockResolvedValueOnce(json(page))

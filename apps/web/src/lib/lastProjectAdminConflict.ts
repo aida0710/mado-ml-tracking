@@ -1,4 +1,4 @@
-import { RequestError } from '../api/http';
+import { isApiError } from '@mado/design-system/http';
 import { text } from '../i18n/catalog';
 
 /**
@@ -9,7 +9,7 @@ export async function explainLastProjectAdminConflict<T>(change: Promise<T>): Pr
   try {
     return await change;
   } catch (failure) {
-    if (failure instanceof RequestError && failure.status === 409)
+    if (isApiError(failure) && failure.status === 409)
       throw new Error(text.lastProjectAdminConflict, { cause: failure });
     throw failure;
   }

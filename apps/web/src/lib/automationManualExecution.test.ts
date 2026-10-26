@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ModelAutomationExecution, ModelAutomationRule, ModelVersion } from '@mmt/contracts';
 import { executionCatalog } from '../../tests/fixtures/execution';
-import { RequestError } from '../api/http';
+import { ApiError } from '@mado/design-system/http';
 import {
   manualExecutionErrorMessage,
   manualExecutionRequest,
@@ -90,20 +90,18 @@ describe('既存のバージョンへの手動適用', () => {
     expect(manualExecutionRequest(chained, 'run-1')).toEqual({ triggerRunId: 'run-1' });
   });
   it('実行中の409と無効ruleの422をそれぞれの理由で表示する', () => {
-    expect(manualExecutionErrorMessage(new RequestError({ status: 409, code: 'conflict' }))).toBe(
+    expect(manualExecutionErrorMessage(new ApiError({ status: 409, code: 'conflict', message: 'conflict' }))).toBe(
       automationText.applyRunning,
     );
     expect(
       manualExecutionErrorMessage(
-        new RequestError({
+        new ApiError({
           status: 422,
           code: 'automation_rule_disabled',
-          serverMessage: 'a disabled rule cannot be applied',
+          message: 'a disabled rule cannot be applied',
         }),
       ),
     ).toBe('無効なルールは適用できません');
-    expect(manualExecutionErrorMessage(new RequestError({ status: 422 }))).toBe(
-      automationText.applyInvalidRule,
-    );
+    expect(manualExecutionErrorMessage(new ApiError({ status: 422, message: 'HTTP 422' }))).toBe('HTTP 422');
   });
 });

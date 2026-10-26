@@ -1,5 +1,5 @@
 import { GLOBAL_TOKEN_SCOPES, type ApiErrorCode, type TokenPurpose, type TokenScope } from '@mmt/contracts';
-import type { RequestError } from '../api/http';
+import type { ApiError } from '@mado/design-system/http';
 import { formatBytes } from '../lib/format';
 import { tokenPurposeLabels } from './serviceAccounts';
 
@@ -10,7 +10,7 @@ import { tokenPurposeLabels } from './serviceAccounts';
  */
 
 /** 応答の error・code の横の項目（受け取ったまま。値の型は code ごとに確かめて読む）。 */
-type ErrorDetails = RequestError['details'];
+type ErrorDetails = ApiError['details'];
 export type JapaneseApiErrorText = string | ((details: ErrorDetails) => string);
 
 /** 横の項目の値を文に入れる形にする。配列は「、」でつなぐ。 */

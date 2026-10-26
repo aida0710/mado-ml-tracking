@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import type { ArtifactUploadDetail, ArtifactUploadListItem, ArtifactUploadPart } from '@mmt/contracts';
 import { describe, expect, it, vi } from 'vitest';
-import { RequestError } from '../api/http';
+import { ApiError } from '@mado/design-system/http';
 import {
   COMPARED_PART_LIMIT,
   choosePartsToCompare,
@@ -161,18 +161,18 @@ describe('inspectSessionForFile', () => {
   });
 
   it('サーバーが消えた・権限が無い・別の認証情報と答えたら、その理由を返す', async () => {
-    const refusals: [RequestError, string][] = [
-      [new RequestError({ status: 404, code: 'not_found' }), 'gone'],
-      [new RequestError({ status: 409, code: 'upload_expired' }), 'expired'],
-      [new RequestError({ status: 403, code: 'project_forbidden' }), 'permissionLost'],
-      [new RequestError({ status: 403, code: 'upload_forbidden' }), 'otherCredential'],
+    const refusals: [ApiError, string][] = [
+      [new ApiError({ status: 404, code: 'not_found', message: 'upload not found' }), 'gone'],
+      [new ApiError({ status: 409, code: 'upload_expired', message: 'the upload session expired' }), 'expired'],
+      [new ApiError({ status: 403, code: 'project_forbidden', message: 'project access denied' }), 'permissionLost'],
+      [new ApiError({ status: 403, code: 'upload_forbidden', message: 'the upload belongs to another credential' }), 'otherCredential'],
     ];
     for (const [failure, blocker] of refusals)
       expect(await inspect(() => Promise.reject(failure))).toEqual({ blocker, session: null });
   });
 
   it('通信が切れたときは、sessionについて何も分からないので例外のまま返す', async () => {
-    const lost = new RequestError({ status: 0, code: 'network_error' });
+    const lost = new ApiError({ status: 0, code: 'network_error', message: 'Failed to fetch' });
     await expect(inspect(() => Promise.reject(lost))).rejects.toBe(lost);
   });
 

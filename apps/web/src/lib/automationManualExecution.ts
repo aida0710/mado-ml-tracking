@@ -3,9 +3,9 @@ import type {
   ModelAutomationExecution,
   ModelAutomationRule,
 } from '@mmt/contracts';
+import { isApiError } from '@mado/design-system/http';
 import type { ExecutionCatalog } from '../types/executionCatalog';
 import type { SelectOption } from '../types/form';
-import { RequestError } from '../api/http';
 import { apiErrorMessage } from './apiErrorMessage';
 import { buildCatalogOptions } from './catalogOptions';
 import { formatErrorMessage } from './errorMessage';
@@ -69,8 +69,7 @@ export function manualExecutionRequest(
 
 /** 409は同じルールとバージョンの実行が進行中、422はそのルールを今は実行できないことを表す。 */
 export function manualExecutionErrorMessage(failure: unknown): string {
-  if (failure instanceof RequestError && failure.status === 409) return automationText.applyRunning;
-  if (failure instanceof RequestError && failure.status === 422)
-    return apiErrorMessage(failure) ?? automationText.applyInvalidRule;
+  if (isApiError(failure) && failure.status === 409) return automationText.applyRunning;
+  if (isApiError(failure) && failure.status === 422) return apiErrorMessage(failure);
   return formatErrorMessage(failure);
 }

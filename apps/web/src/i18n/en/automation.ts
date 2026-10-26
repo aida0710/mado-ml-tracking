@@ -47,7 +47,6 @@ export const automationText = {
   applyNoVersions: 'No versions in the target model family.',
   applyNoUpstreamRuns: 'No runs created by the upstream rule.',
   applyRunning: 'This rule is already running for this version. Wait until it finishes before applying it.',
-  applyInvalidRule: 'This rule cannot be applied.',
   applied: 'Job created. Check its status in automation history.',
   automaticRun: 'Automatic',
   maxAttempts: 'Maximum attempts (2 or more enables automatic retries on failure)',

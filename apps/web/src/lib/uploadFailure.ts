@@ -1,4 +1,4 @@
-import { NETWORK_ERROR_CODE, RequestError } from '../api/http';
+import { isApiError, NETWORK_ERROR_CODE } from '@mado/design-system/http';
 import type { UploadFailure } from '../types/uploadFailure';
 import { formatErrorMessage } from './errorMessage';
 import { LocalizedError } from './localizedError';
@@ -15,7 +15,7 @@ export function formatUploadFailure(failure: UploadFailure): string {
 
 /** サーバーからの応答ではなく、接続が切れたこと。 */
 function isNetworkLoss(failure: unknown): boolean {
-  return failure instanceof RequestError && failure.code === NETWORK_ERROR_CODE;
+  return isApiError(failure) && failure.code === NETWORK_ERROR_CODE;
 }
 
 /**

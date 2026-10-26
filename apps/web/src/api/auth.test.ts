@@ -1,6 +1,7 @@
+import { ApiError } from '@mado/design-system/http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { AuthMe } from '@mmt/contracts';
 import { authApi } from './auth';
-import { RequestError } from './http';
 import { changePasswordErrorMessage, localLoginErrorMessage } from '../lib/authErrorMessages';
 import { text } from '../i18n/catalog';
 
@@ -29,7 +30,19 @@ async function failure(operation: () => Promise<unknown>): Promise<unknown> {
 
 describe('authApi.localLogin', () => {
   it('cookieを受け取れるようにcredentials付きでJSONを送り、AuthMeを返す', async () => {
-    const me = { user: { id: 'user' }, mustChangePassword: true };
+    const me = {
+      user: {
+        id: '00000000-0000-4000-8000-000000000001',
+        email: 'admin@example.invalid',
+        displayName: '管理者',
+        isAdmin: true,
+        username: 'admin',
+        status: 'active',
+        authSources: ['local'],
+        kind: 'human',
+      },
+      mustChangePassword: true,
+    } satisfies AuthMe;
     const fetch = respond(200, me);
     expect(await authApi.localLogin({ username: 'admin', password: 'secret value' })).toEqual(me);
     expect(fetch).toHaveBeenCalledWith('/api/auth/local-login', {
@@ -43,7 +56,7 @@ describe('authApi.localLogin', () => {
   it('401は認証情報の誤り、429は待つよう促す文言に分ける', async () => {
     respond(401, { error: 'server text', code: 'invalid_credentials' });
     const invalid = await failure(() => authApi.localLogin({ username: 'a', password: 'b' }));
-    expect(invalid).toBeInstanceOf(RequestError);
+    expect(invalid).toBeInstanceOf(ApiError);
     expect(localLoginErrorMessage(invalid)).toBe(text.localLoginInvalid);
     respond(429, { error: 'server text', code: 'rate_limited' });
     const limited = await failure(() => authApi.localLogin({ username: 'a', password: 'b' }));
@@ -53,7 +66,7 @@ describe('authApi.localLogin', () => {
   it('通信できないときも、ほかの画面と同じ表示言語の文にする', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
     const offline = await failure(() => authApi.localLogin({ username: 'a', password: 'b' }));
-    expect(offline).toBeInstanceOf(RequestError);
+    expect(offline).toBeInstanceOf(ApiError);
     expect(localLoginErrorMessage(offline)).toBe(text.requestError);
   });
 });

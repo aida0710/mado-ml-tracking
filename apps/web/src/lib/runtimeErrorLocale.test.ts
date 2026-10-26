@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { ARTIFACT_CONTENT_UNAVAILABLE_CODE, RequestError, requestErrorFromBody } from '../api/http';
+import { ApiError, apiErrorFromResponse, NETWORK_ERROR_CODE } from '@mado/design-system/http';
 import { formatErrorMessage } from './errorMessage';
 import { convertWandbSweepConfig, SweepConfigError } from './sweepConfig';
 import { formatUploadFailure } from './uploadFailure';
@@ -21,17 +21,17 @@ const minimalConfig = {
 };
 
 describe('retained failures follow the display language', () => {
-  it('the original HTTP failure keeps its status when the language changes', () => {
-    const failure = new RequestError({ status: 404, code: ARTIFACT_CONTENT_UNAVAILABLE_CODE });
+  it('a retained network failure follows the display language', () => {
+    const failure = new ApiError({ status: 0, code: NETWORK_ERROR_CODE, message: 'Failed to fetch' });
     setLocale('ja');
     const japanese = formatErrorMessage(failure);
     setLocale('en');
-    expect(formatErrorMessage(failure)).toBe(`${text.contentError} (404)`);
+    expect(formatErrorMessage(failure)).toBe(text.requestError);
     expect(formatErrorMessage(failure)).not.toBe(japanese);
   });
 
   it('known API codes are translated from the code in Japanese and keep the API sentence in English', () => {
-    const failure = new RequestError({ status: 503, code: 'artifact_save_failed', serverMessage: 'failed to save the part' });
+    const failure = new ApiError({ status: 503, code: 'artifact_save_failed', message: 'failed to save the part' });
     setLocale('ja');
     expect(formatErrorMessage(failure)).toBe('Artifactを保存できませんでした');
     setLocale('en');
@@ -39,7 +39,7 @@ describe('retained failures follow the display language', () => {
   });
 
   it('a code missing from the dictionary shows the API sentence in either language', () => {
-    const failure = new RequestError({ status: 422, code: 'future_service_code', serverMessage: 'the new reason' });
+    const failure = new ApiError({ status: 422, code: 'future_service_code', message: 'the new reason' });
     setLocale('en');
     expect(formatErrorMessage(failure)).toBe('the new reason');
     setLocale('ja');
@@ -65,13 +65,13 @@ describe('retained failures follow the display language', () => {
   });
 
   it('a retained upload failure and cancellation prefix update without altering details', () => {
-    const cause = new RequestError({ status: 404, code: ARTIFACT_CONTENT_UNAVAILABLE_CODE });
+    const cause = new ApiError({ status: 0, code: NETWORK_ERROR_CODE, message: 'Failed to fetch' });
     const failure: UploadFailure = { kind: 'request', cause };
     const cancellation: UploadFailure = { kind: 'cancel', cause: new Error('研究チームの接続詳細') };
     setLocale('ja');
     const japanese = formatUploadFailure(failure);
     setLocale('en');
-    expect(formatUploadFailure(failure)).toBe(`${text.contentError} (404)`);
+    expect(formatUploadFailure(failure)).toBe(text.requestError);
     expect(formatUploadFailure(failure)).not.toBe(japanese);
     expect(formatUploadFailure(cancellation)).toBe(`${text.uploadCancelNotSent}: 研究チームの接続詳細`);
   });
@@ -97,7 +97,7 @@ describe('retained failures follow the display language', () => {
 
   it('a captured API search-space error retains its row name and both limits', () => {
     const name = '日本語.[x]';
-    const failure = requestErrorFromBody(422, {
+    const failure = apiErrorFromResponse(422, 'Unprocessable Entity', {
       error: `parameter "${name}" values exceed the limit of 1000 (received: 1001)`,
       code: 'sweep_space_invalid',
       reason: 'values_limit',
@@ -140,7 +140,7 @@ describe('retained failures follow the display language', () => {
   });
 
   it('a new API search-space explanation is preserved instead of guessed', () => {
-    const failure = new RequestError({ status: 422, code: 'sweep_space_invalid', serverMessage: 'new constraint: 日本語の値' });
+    const failure = new ApiError({ status: 422, code: 'sweep_space_invalid', message: 'new constraint: 日本語の値' });
     setLocale('en');
     expect(formatErrorMessage(failure)).toBe('new constraint: 日本語の値');
   });

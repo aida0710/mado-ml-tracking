@@ -1,9 +1,23 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { Comment, RunNote } from '@mmt/contracts';
 import { commentsApi } from './comments';
 import { runNotesApi } from './runNotes';
 
 const jsonResponse = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status });
+const RUN_ID = '00000000-0000-4000-8000-000000000020';
+const comment = {
+  id: '00000000-0000-4000-8000-000000000021',
+  projectId: '00000000-0000-4000-8000-000000000001',
+  targetType: 'run',
+  targetId: RUN_ID,
+  parentCommentId: null,
+  body: '再現しました',
+  author: { id: '00000000-0000-4000-8000-000000000002', displayName: '検証担当' },
+  createdAt: '2026-10-08T00:00:00.000Z',
+  editedAt: null,
+  deleted: false,
+} satisfies Comment;
 
 afterEach(() => vi.unstubAllGlobals());
 describe('コメントAPI', () => {
@@ -26,11 +40,11 @@ describe('コメントAPI', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ items: [] })));
     await expect(
       commentsApi.list('p', { targetType: 'run', targetId: 'r' }),
-    ).rejects.toThrow();
+    ).rejects.toMatchObject({ code: 'invalid_response' });
   });
 
   it('投稿はPOSTで対象・返信先・本文を送る', async () => {
-    const fetch = vi.fn().mockResolvedValue(jsonResponse({ id: 'c1' }, 201));
+    const fetch = vi.fn().mockResolvedValue(jsonResponse(comment, 201));
     vi.stubGlobal('fetch', fetch);
     await commentsApi.create('p', {
       targetType: 'run',
@@ -51,7 +65,7 @@ describe('コメントAPI', () => {
   it('編集はPATCHで本文だけを送り、削除はDELETEの204を成功として扱う', async () => {
     const fetch = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse({ id: 'c1' }))
+      .mockResolvedValueOnce(jsonResponse({ ...comment, body: '直しました', editedAt: comment.createdAt }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
     vi.stubGlobal('fetch', fetch);
     await commentsApi.update('p', 'c1', { body: '直しました' });
@@ -66,13 +80,11 @@ describe('コメントAPI', () => {
 
 describe('Runの説明文API', () => {
   it('PUT /runs/:r/note に説明文を送る', async () => {
-    const fetch = vi.fn().mockResolvedValue(jsonResponse({ runId: 'r1', content: '# 結果' }));
+    const note = { runId: RUN_ID, content: '# 結果' } satisfies RunNote;
+    const fetch = vi.fn().mockResolvedValue(jsonResponse(note));
     vi.stubGlobal('fetch', fetch);
-    expect(await runNotesApi.update('p', 'r1', { content: '# 結果' })).toEqual({
-      runId: 'r1',
-      content: '# 結果',
-    });
-    expect(fetch.mock.calls[0]?.[0]).toBe('/api/projects/p/runs/r1/note');
+    expect(await runNotesApi.update('p', RUN_ID, { content: '# 結果' })).toEqual(note);
+    expect(fetch.mock.calls[0]?.[0]).toBe(`/api/projects/p/runs/${RUN_ID}/note`);
     expect(fetch.mock.calls[0]?.[1].method).toBe('PUT');
     expect(JSON.parse(fetch.mock.calls[0]?.[1].body)).toEqual({ content: '# 結果' });
   });
