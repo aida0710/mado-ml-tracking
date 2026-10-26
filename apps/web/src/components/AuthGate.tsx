@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { isApiError } from '@mado/design-system/http';
+import { isUnauthorizedError } from '@mado/design-system/http';
 import { authApi } from '../api/auth';
 import { useQuery } from '../hooks/useQuery';
 import { AuthContext } from '../hooks/useAuth';
@@ -15,7 +15,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
       const { user, mustChangePassword } = await authApi.me(signal);
       return { config, user, mustChangePassword };
     } catch (error) {
-      if (isApiError(error) && error.status === 401)
+      if (isUnauthorizedError(error))
         return { config, user: null, mustChangePassword: false };
       throw error;
     }
