@@ -905,7 +905,8 @@ export interface AuthConfig {
   mode: AuthMode;
   methods: {
     local: boolean;
-    oidc: { label: string; loginUrl: string } | null;
+    /** managesGlobalRoleはIdPのグループが全体のroleを決めるか。falseならroleは全体管理で変える。 */
+    oidc: { label: string; loginUrl: string; managesGlobalRole: boolean } | null;
   };
 }
 export interface AuthMe {

@@ -95,7 +95,12 @@ async function syncAccount(
   if (account.status !== 'active') throw new OidcLoginDeniedError('user_disabled', userId);
   const access = resolveOidcAccess(input.rolePolicy, claims.groups);
   if (!access.allowed) throw new OidcLoginDeniedError('group_not_allowed', userId);
-  if (account.isAdmin && !access.isAdmin) {
+  const globalRoleBefore = globalRoleOf(account.isAdmin);
+  // roleをこのアプリで管理するときは、最初に作ったときだけ既定のroleを与え、以後は変えない。
+  const globalRoleAfter =
+    access.managedRole ?? (origin.created ? input.rolePolicy.defaultRole : globalRoleBefore);
+  const isAdminAfter = globalRoleAfter === 'admin';
+  if (account.isAdmin && !isAdminAfter) {
     const activeAdminIds = await lockActiveGlobalAdminIds(connection);
     if (removesLastGlobalAdmin(activeAdminIds, { userId, isAdmin: false }))
       throw new OidcLoginDeniedError('last_admin', userId);
@@ -104,18 +109,17 @@ async function syncAccount(
     userId,
     email: claims.email,
     displayName: claims.displayName,
-    isAdmin: access.isAdmin,
+    isAdmin: isAdminAfter,
   });
   const groupsBefore = await listUserGroups(connection, userId);
   await replaceUserGroups(connection, userId, access.groups);
   await recordOidcGroupSync(connection, claims);
   const groupsAdded = difference(access.groups, groupsBefore);
   const groupsRemoved = difference(groupsBefore, access.groups);
-  const globalRoleBefore = globalRoleOf(account.isAdmin);
   const changed =
     origin.created ||
     origin.linkedExisting ||
-    globalRoleBefore !== access.globalRole ||
+    globalRoleBefore !== globalRoleAfter ||
     groupsAdded.length > 0 ||
     groupsRemoved.length > 0;
   // roleの変更には権限の引き上げも含まれるので、同期と同じトランザクションで記録する。
@@ -130,7 +134,7 @@ async function syncAccount(
       details: {
         ...origin,
         globalRoleBefore,
-        globalRoleAfter: access.globalRole,
+        globalRoleAfter,
         groupsAdded,
         groupsRemoved,
       },

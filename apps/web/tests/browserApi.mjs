@@ -401,7 +401,7 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
           local: state.authMode === 'local' || state.authMode === 'hybrid',
           oidc:
             state.authMode === 'oidc' || state.authMode === 'hybrid'
-              ? { label: 'Authentik', loginUrl: '/api/auth/login' }
+              ? { label: 'Authentik', loginUrl: '/api/auth/login', managesGlobalRole: true }
               : null,
         },
       });
