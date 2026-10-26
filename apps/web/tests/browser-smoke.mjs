@@ -3,6 +3,7 @@ import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { createBrowserApi } from './browserApi.mjs';
 import { openProjectSwitcher } from './projectSwitcher.mjs';
+import { waitForNoHorizontalOverflow } from './viewportOverflow.mjs';
 
 // 共有のworkspaceの依存関係を変えずに、インストール済みのPlaywrightを使い回す。
 const modulePath = process.env.MMT_PLAYWRIGHT_MODULE;
@@ -400,11 +401,7 @@ try {
   if (artifactsDirectory)
     await page.screenshot({ path: `${artifactsDirectory}/runs-dark.png`, fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
-  assert.equal(
-    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
-    true,
-    'mobile viewport overflows',
-  );
+  await waitForNoHorizontalOverflow(page, 'mobile viewport overflows');
   if (artifactsDirectory)
     await page.screenshot({ path: `${artifactsDirectory}/runs-mobile.png`, fullPage: true });
   api.state.loggedIn = false;

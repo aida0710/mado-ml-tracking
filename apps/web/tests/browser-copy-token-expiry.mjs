@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { createBrowserApi } from './browserApi.mjs';
+import { waitForNoHorizontalOverflow } from './viewportOverflow.mjs';
 
 const modulePath = process.env.MMT_PLAYWRIGHT_MODULE;
 if (!modulePath) throw new Error('Set MMT_PLAYWRIGHT_MODULE to an installed Playwright index.mjs');
@@ -150,7 +151,7 @@ try {
     } });
   }
   await page.setViewportSize({ width: 320, height: 768 });
-  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'custom fields must fit a phone');
+  await waitForNoHorizontalOverflow(page, 'custom fields must fit a phone');
   const beforeIssue = Date.now();
   const customExpiresAt = Date.parse((await saveToken(custom)).expiresAt);
   assert.ok(customExpiresAt >= beforeIssue + CUSTOM_DURATION_DAYS * DAY_MILLISECONDS);
@@ -194,7 +195,7 @@ try {
   assert.equal(api.state.tokens.length, beforeCalendarIssue, 'an empty calendar must not issue a token');
   await dateTimeInput.fill('2027-12-31T23:59');
   await page.setViewportSize({ width: 320, height: 768 });
-  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'the calendar must fit a phone');
+  await waitForNoHorizontalOverflow(page, 'the calendar must fit a phone');
   await page.setViewportSize({ width: 1440, height: 960 });
   await dateTimeInput.scrollIntoViewIfNeeded();
   if (screenshots) {
