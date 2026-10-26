@@ -46,6 +46,12 @@ SYS_BLOCK_ROOT = Path("/sys/block")
 CUDA_NO_DEVICE_VALUES = frozenset({"", "-1", "NoDevFiles"})
 # 仮想・集約のブロックデバイス。その転送量は、構成するディスクで既に数えている。
 AGGREGATE_DISK_PREFIXES = ("loop", "ram", "zram", "dm-", "md")
+# CPU時間のうちidleに数える欄。iowaitはCPUが何もせずI/Oを待っている時間。
+IDLE_CPU_TIME_FIELDS = ("idle", "iowait")
+# guestの時間はuser・niceに既に含まれているので、busyに足すと二重に数える。
+GUEST_CPU_TIME_FIELDS = ("guest", "guest_nice")
+# /proc/statの"cpu"の行の先頭8列（それより後ろはguestの列）。
+PROC_STAT_CPU_FIELDS = ("user", "nice", "system", "idle", "iowait", "irq", "softirq", "steal")
 NVIDIA_SMI_QUERY = "index,uuid,utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw"
 
 Metric = dict[str, Any]
@@ -198,12 +204,9 @@ def _collect_cpu(builder: MetricBuilder, state: SystemMetricsState, psutil: Modu
 
 
 def _read_cpu_times(psutil: ModuleType | None) -> CounterSample | None:
-    """CPU時間の(busy, total)。iowaitはidleに数え、guestの時間は既にuserの時間に含まれている。"""
+    """CPU時間の(busy, total)。psutilが無ければ/proc/statを読む。"""
     if psutil is not None:
-        times = psutil.cpu_times()
-        idle = times.idle + getattr(times, "iowait", 0.0)
-        total = sum(times) - getattr(times, "guest", 0.0) - getattr(times, "guest_nice", 0.0)
-        return CounterSample((total - idle, total), time.time())
+        return _cpu_counter_sample(psutil.cpu_times()._asdict())
     try:
         first_line = (PROC_ROOT / "stat").read_text().splitlines()[0]
     except (OSError, IndexError):
@@ -211,13 +214,25 @@ def _read_cpu_times(psutil: ModuleType | None) -> CounterSample | None:
     fields = first_line.split()
     if not fields or fields[0] != "cpu":
         return None
-    # user nice system idle iowait irq softirq steal。guestの列はuser/niceに含まれている。
-    values = [float(value) for value in fields[1:9]]
-    if len(values) < 4:
+    times = dict(zip(PROC_STAT_CPU_FIELDS, (float(value) for value in fields[1:]), strict=False))
+    if "idle" not in times:
         return None
-    idle = values[3] + (values[4] if len(values) > 4 else 0.0)
-    total = sum(values)
-    return CounterSample((total - idle, total), time.time())
+    return _cpu_counter_sample(times)
+
+
+def _cpu_counter_sample(times: dict[str, float]) -> CounterSample:
+    """CPU時間の欄から(busy, total)を作る。
+
+    busyはbusyの欄を直接足す。totalからidleを引いて出すと、psutilがtickを秒にした浮動小数の丸めで、
+    CPUがまったく働かなかった区間のbusyの差がわずかに負になり、その測定のCPU使用率が欠ける。
+    """
+    busy = sum(
+        value
+        for name, value in times.items()
+        if name not in IDLE_CPU_TIME_FIELDS and name not in GUEST_CPU_TIME_FIELDS
+    )
+    idle = sum(times.get(name, 0.0) for name in IDLE_CPU_TIME_FIELDS)
+    return CounterSample((busy, busy + idle), time.time())
 
 
 def _collect_load_average(builder: MetricBuilder) -> None:
