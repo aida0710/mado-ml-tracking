@@ -6,6 +6,6 @@ export const repositoryApi = {
   files: (projectId: string, source: { url: string; commit: string }, signal?: AbortSignal) =>
     requestJson(`${projectPath(projectId)}/repository-files`, {
       schema: repositoryFilesSchema,
-      init: { ...jsonRequestInit('POST', source), signal },
+      init: jsonRequestInit('POST', source, { signal }),
     }),
 };

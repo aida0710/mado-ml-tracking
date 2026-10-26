@@ -106,7 +106,7 @@ async function exportRunSearchCsv(
   signal?: AbortSignal,
 ): Promise<RunSearchCsv> {
   const response = await fetchResponse(`${projectPath(projectId)}/runs/search/export.csv`, {
-    init: { ...jsonRequestInit('POST', search), signal },
+    init: jsonRequestInit('POST', search, { signal }),
   });
   return {
     blob: await response.blob(),
@@ -131,13 +131,13 @@ export const trackingApi = {
   searchRuns: (projectId: string, body: RunSearchRequest, signal?: AbortSignal) =>
     requestJson(`${projectPath(projectId)}/runs/search`, {
       schema: runSearchPageSchema,
-      init: { ...jsonRequestInit('POST', body), signal },
+      init: jsonRequestInit('POST', body, { signal }),
     }),
   exportRunSearchCsv,
   compareRuns: (projectId: string, body: RunComparisonRequest, signal?: AbortSignal) =>
     requestJson(`${projectPath(projectId)}/runs/compare`, {
       schema: runComparisonSchema,
-      init: { ...jsonRequestInit('POST', body), signal },
+      init: jsonRequestInit('POST', body, { signal }),
     }),
   /** ブラウザがsessionのcookieを付けてダウンロードするGETのリンク。 */
   runComparisonCsvUrl: (

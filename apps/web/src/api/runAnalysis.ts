@@ -44,7 +44,7 @@ async function comparedKeys(projectId: string, runIds: string[], signal?: AbortS
   if (sample.length < RUN_COMPARISON_MIN_RUNS) return { metricKeys: [], sweepId: null };
   const comparison = await requestJson(`${projectPath(projectId)}/runs/compare`, {
     schema: runComparisonSchema,
-    init: { ...jsonRequestInit('POST', { runIds: sample }), signal },
+    init: jsonRequestInit('POST', { runIds: sample }, { signal }),
   });
   const sweepIds = new Set(
     comparison.rows.find((row) => row.namespace === 'tags' && row.key === SWEEP_ID_TAG)?.values ?? [null],
@@ -66,7 +66,7 @@ async function searchedMetricKeys(
 ): Promise<string[]> {
   const page = await requestJson(`${projectPath(projectId)}/runs/search`, {
     schema: runSearchPageSchema,
-    init: { ...jsonRequestInit('POST', { ...search, limit: METRIC_KEY_SAMPLE_RUNS }), signal },
+    init: jsonRequestInit('POST', { ...search, limit: METRIC_KEY_SAMPLE_RUNS }, { signal }),
   });
   return page.items.flatMap((run) => Object.keys(run.latestMetrics));
 }
@@ -108,12 +108,12 @@ export const runAnalysisApi = {
   table: (projectId: string, body: RunAnalysisTableRequest, signal?: AbortSignal) =>
     requestJson(`${projectPath(projectId)}/runs/analysis/table`, {
       schema: runAnalysisTableResponseSchema,
-      init: { ...jsonRequestInit('POST', body), signal },
+      init: jsonRequestInit('POST', body, { signal }),
     }),
   parameterImportance: (projectId: string, body: ParameterImportanceRequest, signal?: AbortSignal) =>
     requestJson(`${projectPath(projectId)}/runs/analysis/parameter-importance`, {
       schema: parameterImportanceResultSchema,
-      init: { ...jsonRequestInit('POST', body), signal },
+      init: jsonRequestInit('POST', body, { signal }),
     }),
   /**
    * 分析のエンドポイントは最初にメトリクスの名前が要るので、Runから抜き出す。検索なら最初の
