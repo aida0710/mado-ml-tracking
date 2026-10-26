@@ -3,6 +3,8 @@ import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { createBrowserApi } from './browserApi.mjs';
 import { openProjectSwitcher } from './projectSwitcher.mjs';
+import { closeUploadDialog, uploadOneFile } from './uploadDialog.mjs';
+import { waitForNoHorizontalOverflow } from './viewportOverflow.mjs';
 
 // 共有のworkspaceの依存関係を変えずに、インストール済みのPlaywrightを使い回す。
 const modulePath = process.env.MMT_PLAYWRIGHT_MODULE;
@@ -22,17 +24,6 @@ page.on('pageerror', (error) => pageErrors.push(error.message));
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
 const projectBase = `${base}/projects/${api.state.project.id}`;
 const artifactsDirectory = process.env.MMT_SCREENSHOT_DIR;
-// 開いているアップロードのダイアログでファイルを1つアップロードし、完了したらキューのその行を返す。
-async function uploadOneFile(uploadDialog, file) {
-  await uploadDialog.getByLabel('ファイルを選ぶ', { exact: true }).setInputFiles(file);
-  await uploadDialog.getByRole('button', { name: 'アップロードを開始', exact: true }).click();
-  const row = uploadDialog.getByTestId('upload-queue-row').filter({ hasText: file.name });
-  await row.and(page.locator('[data-status="completed"]')).waitFor();
-  return row;
-}
-// 複数のファイルを受け付けるダイアログは、アップロードが終わっても閉じるまで開いたまま。
-const closeUploadDialog = (uploadDialog) =>
-  uploadDialog.locator('footer').getByRole('button', { name: '閉じる', exact: true }).click();
 try {
   console.log('Browser check: authentication');
   await page.goto(base);
@@ -120,7 +111,6 @@ try {
     buffer: Buffer.from('test upload'),
   });
   await closeUploadDialog(runUploadDialog);
-  await runUploadDialog.waitFor({ state: 'hidden' });
   await page.getByRole('button', { name: 'test-upload.txt', exact: true }).waitFor();
   await page.getByRole('tab', { name: 'Logs', exact: true }).click();
   await page.getByText('Browser test log', { exact: true }).waitFor();
@@ -400,11 +390,7 @@ try {
   if (artifactsDirectory)
     await page.screenshot({ path: `${artifactsDirectory}/runs-dark.png`, fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
-  assert.equal(
-    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
-    true,
-    'mobile viewport overflows',
-  );
+  await waitForNoHorizontalOverflow(page, 'mobile viewport overflows');
   if (artifactsDirectory)
     await page.screenshot({ path: `${artifactsDirectory}/runs-mobile.png`, fullPage: true });
   api.state.loggedIn = false;

@@ -21,6 +21,7 @@ MMT_TEST_DATABASE_URL=postgresql://<user>:<password>@127.0.0.1:<port>/mmt_test n
 node --test scripts/release/bundle.node-test.mjs
 npm audit --omit=dev
 python3 -m pytest python/tests   # python/ を変えたとき（SDKを[test,telemetry]付きで入れた環境で）
+MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs scripts/ci/run-mock-browser-checks.sh <ログのディレクトリ>   # 模擬APIのブラウザ検査
 ```
 
 - `npm test`はvitestの3つのproject（`unit`・`web`・`database`）。`database`はPostgreSQLが要る。開発用DBとは別の使い捨てのコンテナを127.0.0.1にだけ開いて使い、終わったら消す。

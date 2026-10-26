@@ -1,14 +1,17 @@
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
-import { createBrowserApi } from './browserApi.mjs';
+import { createBrowserApi, ISSUED_TOKEN_VALUE } from './browserApi.mjs';
+import { waitForNoHorizontalOverflow } from './viewportOverflow.mjs';
 
 const modulePath = process.env.MMT_PLAYWRIGHT_MODULE;
 if (!modulePath) throw new Error('Set MMT_PLAYWRIGHT_MODULE to an installed Playwright index.mjs');
 const { chromium } = await import(pathToFileURL(modulePath).href);
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5982';
-const httpBase = process.env.MMT_WEB_HTTP_URL;
-if (!httpBase) throw new Error('Set MMT_WEB_HTTP_URL to a non-loopback HTTP URL of the same test server');
+// LANのIPをHTTPで開いたときと同じく安全でないorigin（isSecureContextがfalseでClipboard APIが無い）。
+// ブラウザにはこのoriginとして見せ、中身は同じWebサーバ（MMT_WEB_URL）からPlaywrightが取ってくるので、
+// サーバを127.0.0.1の外へ開かずに確かめられる。.testは名前解決されない検証用の名前（RFC 6761）。
+const insecureOrigin = 'http://mmt-web.test';
 const screenshots = process.env.MMT_SCREENSHOT_DIR;
 if (screenshots) await mkdir(screenshots, { recursive: true });
 // 2年にして、以前の365日の上限を試す。ブラウザの時刻はミリ秒で比べる。
@@ -22,6 +25,13 @@ const api = createBrowserApi();
 api.state.loggedIn = true;
 api.state.user.isAdmin = false;
 await context.route(url => url.pathname.startsWith('/api/'), api.route);
+await context.route(
+  url => url.origin === insecureOrigin && !url.pathname.startsWith('/api/'),
+  async route => {
+    const url = route.request().url().replace(insecureOrigin, new URL(base).origin);
+    await route.fulfill({ response: await route.fetch({ url }) });
+  },
+);
 const page = await context.newPage();
 const reader = await context.newPage();
 const pageErrors = [];
@@ -80,7 +90,7 @@ try {
   await copyProjectId();
   assert.equal(await projectValue().getByRole('alert').count(), 0);
 
-  await page.goto(`${httpBase}${projectPath}`);
+  await page.goto(`${insecureOrigin}${projectPath}`);
   await guide.getByRole('heading', { name: 'SDK・MLflow 3から接続' }).waitFor();
   assert.deepEqual(await page.evaluate(() => ({ secure: isSecureContext, clipboard: Boolean(navigator.clipboard) })),
     { secure: false, clipboard: false });
@@ -125,7 +135,7 @@ try {
   await selectOption(unlimited, '有効期限', '無期限');
   assert.equal((await saveToken(unlimited)).expiresAt, null);
   await unlimited.getByRole('button', { name: 'tokenをコピー', exact: true }).click();
-  assert.equal(await clipboardText(), 'browser-test-value-only', 'HTTP copy must work inside modal dialogs');
+  assert.equal(await clipboardText(), ISSUED_TOKEN_VALUE, 'HTTP copy must work inside modal dialogs');
   assert.equal(await unlimited.getByRole('alert').count(), 0);
   await closeTokenDialog();
 
@@ -141,7 +151,7 @@ try {
     } });
   }
   await page.setViewportSize({ width: 320, height: 768 });
-  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'custom fields must fit a phone');
+  await waitForNoHorizontalOverflow(page, 'custom fields must fit a phone');
   const beforeIssue = Date.now();
   const customExpiresAt = Date.parse((await saveToken(custom)).expiresAt);
   assert.ok(customExpiresAt >= beforeIssue + CUSTOM_DURATION_DAYS * DAY_MILLISECONDS);
@@ -185,7 +195,7 @@ try {
   assert.equal(api.state.tokens.length, beforeCalendarIssue, 'an empty calendar must not issue a token');
   await dateTimeInput.fill('2027-12-31T23:59');
   await page.setViewportSize({ width: 320, height: 768 });
-  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'the calendar must fit a phone');
+  await waitForNoHorizontalOverflow(page, 'the calendar must fit a phone');
   await page.setViewportSize({ width: 1440, height: 960 });
   await dateTimeInput.scrollIntoViewIfNeeded();
   if (screenshots) {

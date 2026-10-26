@@ -179,6 +179,30 @@ def test_counter_reset_skips_rates_instead_of_reporting_negative_throughput(monk
     )
 
 
+@pytest.mark.parametrize(
+    "idle_change",
+    [
+        # idleだけが0.4秒進む。
+        {"idle": 789.47},
+        # iowaitは減ることがある（I/Oを待っていたタスクが起きると、その時間はidleへ移る）。
+        {"idle": 790.47, "iowait": 11.34},
+    ],
+    ids=["idle-advances", "iowait-moves-into-idle"],
+)
+def test_cpu_that_did_no_work_between_readings_reports_zero_percent(
+    monkeypatch, clock, tmp_path, idle_change
+):
+    # psutilは/proc/statのtickを秒（1/100）にして返す。最初の測定の2回の読み取りの間にCPUがまったく
+    # 働かないと、idle・iowaitだけが変わりbusyの欄は同じ値のまま。どちらの組も、totalからidleと
+    # iowaitを引いてbusyを出すと、浮動小数の丸めで差が負になる（4 vCPU・起動から数分のCIのrunnerの桁）。
+    psutil = install_fake_psutil(monkeypatch, base_counters())
+    before = CpuTimes(312.34, 0.12, 87.65, 789.07, 12.34, 0.0, 3.21, 0.45, 0.0, 0.0)
+    readings = iter([before, before._replace(**idle_change)])
+    psutil.cpu_times = lambda: next(readings)
+    metrics = by_name(collect(SystemMetricsState(), gpu_ids=[], disk_path=tmp_path))
+    assert metrics["system.cpu.percent"] == 0.0
+
+
 def test_nvml_is_preferred_and_unsupported_fields_are_omitted(monkeypatch, clock, tmp_path):
     install_fake_psutil(monkeypatch, base_counters())
     monkeypatch.setitem(sys.modules, "pynvml", fake_nvml())

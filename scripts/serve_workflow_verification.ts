@@ -70,6 +70,7 @@ for (const kind of ['processing', 'training', 'evaluation'] as const) {
           kind: 'inline',
           files: { 'main.py': await readFile(`scripts/fixtures/workflows/${filename}.py`, 'utf8') },
         },
+        runtime: { kind: 'python' },
         entrypoint: ['python', 'main.py'],
         supportedModelFamilies: ['qwen2'],
         taskTypes: [kind],

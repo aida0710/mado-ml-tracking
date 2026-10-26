@@ -9,7 +9,7 @@
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
-import { createBrowserApi } from './browserApi.mjs';
+import { createBrowserApi, ISSUED_TOKEN_VALUE } from './browserApi.mjs';
 import { openProjectSwitcher } from './projectSwitcher.mjs';
 
 const modulePath = process.env.MMT_PLAYWRIGHT_MODULE;
@@ -230,10 +230,10 @@ try {
     ['artifacts:write', 'read', 'registry:write', 'runs:write'],
   );
   await tokenDialog.getByRole('button', { name: 'tokenをコピー' }).click();
-  assert.equal(await clipboard(settings.page), 'browser-test-value-only');
+  assert.equal(await clipboard(settings.page), ISSUED_TOKEN_VALUE);
   await tokenDialog.getByRole('button', { name: '設定例をコピー' }).click();
   const example = await clipboard(settings.page);
-  assert.doesNotMatch(example, /browser-test-value-only/);
+  assert.equal(example.includes(ISSUED_TOKEN_VALUE), false);
   assert.match(example, /^printf 'API token: '; read -r -s MMT_API_TOKEN; echo$/m);
   assert.match(example, /^export MLFLOW_REGISTRY_URI=.*\/api\/mlflow\/projects\//m);
   assert.match(example, /^export MLFLOW_TRACKING_TOKEN="\$MMT_API_TOKEN"$/m);
