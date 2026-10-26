@@ -172,13 +172,15 @@ try {
   const api = apiClient(page);
 
   // フィクスチャ: ローカルのCPUのtargetでSDKのSweepの例を実行するTask。
-  const project = await api.post('/projects', { name: 'Sweeps browser check' });
+  // publicのProjectでは全員がeditorとして働けるので、viewerの画面を確かめるにはprivateにする。
+  const project = await api.post('/projects', { name: 'Sweeps browser check', visibility: 'private' });
   const projectPath = `/projects/${project.id}`;
   const experiment = await api.post(`${projectPath}/experiments`, { name: 'lr search' });
   const code = await api.post(`${projectPath}/codes`, { name: 'Sweep training' });
   const codeVersion = await api.post(`${projectPath}/codes/${code.id}/versions`, {
     version: 'v1',
     source: { kind: 'inline', files: { 'sweep_training.py': await readFile(path.join(REPOSITORY, 'python/examples/sweep_training.py'), 'utf8') } },
+    runtime: { kind: 'python' },
     entrypoint: ['python', 'sweep_training.py'],
     supportedModelFamilies: ['linear'],
     taskTypes: ['training'],

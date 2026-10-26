@@ -24,6 +24,15 @@ const json = async (path) => {
   assert.equal(response.ok(), true, `${path}: ${response.status()}`);
   return response.json();
 };
+// ProjectのRunを新しい順に返す（POST /runs/searchの最初のページ）。
+const searchRuns = async (projectId) => {
+  const response = await page.request.post(`${base}/api/projects/${projectId}/runs/search`, {
+    headers: { Origin: new URL(base).origin },
+    data: {},
+  });
+  assert.equal(response.ok(), true, `runs/search: ${response.status()}`);
+  return (await response.json()).items;
+};
 const fill = (name, value) =>
   page.getByRole('dialog').getByLabel(name, { exact: false }).fill(value);
 const select = (name, value) =>
@@ -52,7 +61,7 @@ try {
     await page.goto(`${base}/projects/${demo.id}/experiments`);
     await page.getByRole('link', { name: 'CPU linear regression', exact: true }).waitFor();
     await screenshot('runs-real-light');
-    const demoRuns = (await json(`/projects/${demo.id}/runs`)).items;
+    const demoRuns = await searchRuns(demo.id);
     const training = demoRuns.find((run) => run.name === 'CPU linear regression');
     await page.goto(`${base}/projects/${demo.id}/runs/${training.id}`);
     await page.getByLabel('メトリクス名', { exact: true }).waitFor();
@@ -85,7 +94,7 @@ try {
   await select('実行種別', 'processing');
   await submit('作成');
   await page.getByRole('heading', { name: 'UI artifact registration', exact: true }).waitFor();
-  const preparationRun = (await json(`/projects/${projectId}/runs`)).items[0];
+  const [preparationRun] = await searchRuns(projectId);
   await page.getByRole('tab', { name: 'Artifacts', exact: true }).click();
   for (const [name, mimeType, content] of [
     ['points.csv', 'text/csv', 'x,y\n0,1\n1,3\n2,5\n'],
