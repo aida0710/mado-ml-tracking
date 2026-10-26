@@ -202,7 +202,7 @@ grep -E '/mado-ml-tracking-(api|web|preview)@' "$backup/images.txt" | xargs dock
 
 ## 戻す
 
-更新の前の状態は、`deploy/current-release.json`の`backupDirectory`にあります。
+更新の前の状態は、`deploy/current-release.json`の`backupDirectory`にあります。ソースのcheckoutから移した直後は、[checkoutへ戻す](#checkoutへ戻す)を使います。
 
 ```sh
 cd ~/mado-model-tracking
@@ -224,4 +224,141 @@ docker compose exec -T postgres pg_restore -U mmt -d mmt --exit-on-error < "$bac
 cp -p "$backup/compose.yml" "$backup/compose.filesystem-storage.yml" "$backup/VERSION" "$backup/images.txt" .
 if [ -f "$backup/current-release.json" ]; then cp -p "$backup/current-release.json" deploy/; fi
 docker compose up -d --wait
+```
+
+## ソースのcheckoutから配布物へ移す
+
+リポジトリのcheckoutで`docker compose build`してから動かしている環境を、一度だけ配布物の形へ移します。checkoutのディレクトリ（例: `~/mado-model-tracking`）の場所はそのまま運用のディレクトリとして使い、中身を配布物に入れ替えます。checkoutは横へ退け、戻すときに使います。DBの更新を挟まないよう、今動いている版と同じ版の配布物で移し、版を上げるのは移した後に[更新する](#更新する)の手順で行います。
+
+DBのvolume（`mado-model-tracking_postgres`など）はproject名で決まるので、そのまま引き継ぎます。`.env`の`MMT_FILESYSTEM_STORAGE_DIR`が指すホストのディレクトリも、checkoutの外にあるのでそのまま使います。止まるのは手順6の作り直しの間（十数秒）です。
+
+### 0. 確かめる
+
+checkoutの版、Composeが読んでいるファイル、checkoutの下をmountしているコンテナや、checkoutのパスを参照している定期実行が無いことを確かめます。`.env`は名前だけを表示します。
+
+```sh
+cd ~/mado-model-tracking
+git describe --tags --exact-match
+git status --short
+docker compose ls
+grep -oE '^[A-Za-z_][A-Za-z0-9_]*=' .env
+grep '^COMPOSE_FILE=' .env
+docker inspect --format '{{.Name}}{{range .Mounts}} {{.Source}}{{end}}' $(docker compose ps -q) \
+  | grep -F "$PWD" || echo 'checkoutの下をmountしているコンテナは無い'
+crontab -l 2>/dev/null | grep -F "$PWD" || echo 'crontabからの参照は無い'
+grep -rlF "$PWD" /etc/systemd/system ~/.config/systemd 2>/dev/null || echo 'systemdからの参照は無い'
+df -h /
+```
+
+`git describe`が入れる配布物と同じタグを出し、`git status`に出るのが運用側のファイル（`compose.override.yml`など）だけなら進めます（ソースを手で直していると、その変更は配布イメージに入っていません）。mountや参照が見つかったら、移した後のパスでも動くかを先に確かめます。イメージの取得にapi・web・previewで2GBほどの空きが要ります。
+
+### 1. 配布物を確かめる
+
+[更新する](#1-配布物を受け取って確かめる)の1と同じように配布物を受け取り、2つのファイルをホームディレクトリに置いて確かめます。
+
+```sh
+cd ~
+tag=v0.5.1
+sha256sum -c "mado-ml-tracking-$tag.tar.gz.sha256"
+```
+
+### 2. 新しいディレクトリを用意する
+
+```sh
+mkdir mado-model-tracking.next
+tar -xzf "mado-ml-tracking-$tag.tar.gz" --strip-components=1 -C mado-model-tracking.next
+cp -p mado-model-tracking/.env mado-model-tracking/compose.override.yml mado-model-tracking.next/
+```
+
+`compose.override.yml`が無い環境では、`.env`だけを写します。
+
+### 3. 解決後の設定を比べる
+
+今のComposeと新しいディレクトリのComposeを解決した結果を比べます。値は表示せず、違う項目の名前だけを出します。
+
+```sh
+resolved_config() { (cd "$1" && docker compose config --format json) | sed "s#$1#<dir>#g"; }
+diff <(resolved_config ~/mado-model-tracking) <(resolved_config ~/mado-model-tracking.next) \
+  | sed -E 's/^([<>][[:space:]]*"[^"]*").*/\1/'
+for directory in ~/mado-model-tracking ~/mado-model-tracking.next; do
+  (cd "$directory" && docker compose config --hash=postgres)
+done
+```
+
+違いがapi・preview・webの`build`（`context`、`dockerfile`）が無くなり`image`が付くことだけで、`postgres`のhashが2つとも同じなら進めます（PostgreSQLは作り直されません）。`MMT_AUTH_MODE`などほかの項目が出たら、`compose.override.yml`か`.env`で今の値を指定します。
+
+### 4. イメージを先に取得する
+
+```sh
+cd ~/mado-model-tracking.next
+docker compose pull --quiet api preview web
+for service in api web preview; do
+  docker image inspect --format "$service {{index .Config.Labels \"org.opencontainers.image.version\"}} {{index .Config.Labels \"org.opencontainers.image.revision\"}}" \
+    "$(grep "/mado-ml-tracking-$service@" images.txt)"
+done
+```
+
+3行とも入れる版と、そのタグのcommitを出せば進めます。
+
+### 5. バックアップを取る
+
+```sh
+cd ~/mado-model-tracking
+umask 077
+backup="var/backups/release-$tag-from-source-$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$backup"
+docker compose exec -T postgres pg_dump -U mmt -Fc mmt > "$backup/mmt.dump" < /dev/null
+docker compose exec -T postgres pg_restore --list < "$backup/mmt.dump" | grep -c 'TABLE DATA'
+cp -p .env compose.override.yml compose.yml compose.filesystem-storage.yml "$backup/"
+git rev-parse HEAD > "$backup/source-commit"
+docker compose ps -a --format '{{.Service}} {{.ID}} {{.Image}} {{.Status}}' > "$backup/containers.txt"
+```
+
+### 6. 切り替える
+
+`.env`と`compose.override.yml`を直前の内容で写し直してから、ディレクトリを入れ替えます。`var/`（バックアップ、初期管理者のパスワードなど）は新しいディレクトリへ移します。DBの更新は当てるものが無いので、`db:migrate`は`Migration complete`だけを出します。適用済みのmigrationのファイルが配布イメージと違えば、ここで`Applied migration changed`と出て止まります。
+
+```sh
+cd ~
+cp -p mado-model-tracking/.env mado-model-tracking/compose.override.yml mado-model-tracking.next/
+mv mado-model-tracking "mado-model-tracking-source-$tag"
+mv mado-model-tracking.next mado-model-tracking
+mv "mado-model-tracking-source-$tag/var" mado-model-tracking/
+mkdir -p "mado-model-tracking/var/releases/$tag"
+mv "mado-ml-tracking-$tag.tar.gz" "mado-ml-tracking-$tag.tar.gz.sha256" "mado-model-tracking/var/releases/$tag/"
+cd ~/mado-model-tracking
+docker compose run --rm -T --no-deps api npm run db:migrate -w @mmt/api
+docker compose up -d --wait
+```
+
+### 7. 確かめて記録する
+
+[更新する](#5-確かめる)の5と6を実行します。`postgres`のコンテナIDが`$backup/containers.txt`と同じ（作り直されていない）ことも確かめます。
+
+```sh
+docker compose ps -q postgres
+grep '^postgres ' "$backup/containers.txt"
+```
+
+### checkoutへ戻す
+
+checkoutへ戻すときは、ディレクトリを入れ替え直し、ソースからビルドしたイメージで作り直します。DBは変えていないので、そのまま戻せます。切り替えた後に`.env`や`compose.override.yml`を書き換えたなら、先にcheckoutへ写します。
+
+```sh
+cd ~
+mv mado-model-tracking/var "mado-model-tracking-source-$tag/"
+mv mado-model-tracking "mado-model-tracking.bundle-$tag"
+mv "mado-model-tracking-source-$tag" mado-model-tracking
+cd ~/mado-model-tracking
+docker compose up -d --no-build --wait
+```
+
+### 片付ける
+
+戻す必要が無くなったら、退けたcheckout、ソースからビルドしたイメージ（`docker image ls`で`mado-model-tracking-api`などの名前）、ビルドのキャッシュを消します。
+
+```sh
+rm -rf "$HOME/mado-model-tracking-source-${tag:?}"
+docker image rm mado-model-tracking-api mado-model-tracking-web mado-model-tracking-preview
+docker builder prune
 ```
