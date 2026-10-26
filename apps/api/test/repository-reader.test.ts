@@ -1,9 +1,11 @@
 import { execFile } from 'node:child_process';
-import { chmod, mkdtemp, readFile, rm, stat, symlink, writeFile } from 'node:fs/promises';
+import { once } from 'node:events';
+import { chmod, mkdtemp, rm, stat, symlink, writeFile } from 'node:fs/promises';
+import { createServer, type Server, type Socket } from 'node:net';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GitRepositoryReader } from '../src/services/repositoryReader.js';
 import { runRepositoryCommand, type RepositoryCommand } from '../src/services/repositoryProcess.js';
 import {
@@ -20,10 +22,9 @@ import { DomainError } from '../src/domain/errors.js';
 
 const executeFile = promisify(execFile);
 const directories: string[] = [];
+const fixtureServers: Server[] = [];
 const URL = 'https://example.test/fixture.git';
 const OBJECT_ID = 'a'.repeat(40);
-// 混んでいるテストマシンでも、Nodeの子プロセスとその子孫が起動できるだけの時間。
-const CHILD_START_DEADLINE_MS = 1000;
 // このfixtureが4 MiBや3秒を超えて必要とすることは無い。
 const FIXTURE_DIRECTORY_BYTES = 4 * 1024 * 1024;
 const FIXTURE_TIMEOUT_MS = 3000;
@@ -92,7 +93,35 @@ function nodeCommand(
   };
 }
 
+/**
+ * fixtureのprocessが準備を終えたことと、終了したことを、時間に頼らず知るためのUnix socket。
+ * processは準備を終えると`socketPath`へ接続し、自分からは閉じない。接続が閉じるのは、
+ * そのprocessが終了してkernelがfdを閉じたときだけ。
+ */
+async function listenForFixtureProcess(directory: string) {
+  const socketPath = path.join(directory, 'fixture.sock');
+  const server = createServer();
+  fixtureServers.push(server);
+  server.listen(socketPath);
+  await once(server, 'listening');
+  const connection = (once(server, 'connection') as Promise<[Socket]>).then(([socket]) => socket);
+  // 'close'を取りこぼさないよう、接続を受けたその場で待ち始める。読み流さないと、相手が
+  // 閉じたことを'close'として受け取れない。
+  const disconnected = connection.then(async (socket) => {
+    const closed = once(socket, 'close');
+    socket.resume();
+    await closed;
+  });
+  return { socketPath, connected: connection.then(() => undefined), disconnected };
+}
+
+// fixtureの`node -e`のscriptの部品。argv[1]のsocketへ接続し、接続を開いたままにする。
+const CONNECT_TO_FIXTURE_SOCKET = 'require("node:net").connect(process.argv[1]);';
+// 停止されるまで終わらない。
+const KEEP_RUNNING = 'setInterval(()=>{},1000);';
+
 afterEach(async () => {
+  for (const server of fixtureServers.splice(0)) server.close();
   for (const directory of directories.splice(0))
     await rm(directory, { recursive: true, force: true });
 });
@@ -286,28 +315,38 @@ describe('固定commitのrepository preview', () => {
 });
 
 describe('repository child processの停止と上限', () => {
+  // timeoutと監視の周期はテストが進める。混んだマシンでfixtureの起動が遅れても、timeoutや
+  // 監視が準備より先に来ることは無い。
+  beforeEach(() => {
+    vi.useFakeTimers({
+      toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'],
+    });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('timeoutでgit相当のprocess groupと子processを停止する', async () => {
     const directory = await temporaryDirectory();
-    const pidPath = path.join(directory, 'pids.json');
-    const command = nodeCommand(
-      directory,
-      `const {spawn}=require('node:child_process'); const fs=require('node:fs');
-      const child=spawn(process.execPath,['-e','setInterval(()=>{},1000)'],{stdio:'ignore'});
-      fs.writeFileSync(process.argv[1],JSON.stringify({parent:process.pid,child:child.pid})); setInterval(()=>{},1000);`,
-      [pidPath],
+    const fixture = await listenForFixtureProcess(directory);
+    // 親processはgit、孫processはgitが起動するSSHやHTTPのhelperに当たる。接続するのは孫だけ。
+    const running = runRepositoryCommand(
+      nodeCommand(
+        directory,
+        `require('node:child_process').spawn(process.execPath,
+          ['-e', '${CONNECT_TO_FIXTURE_SOCKET}${KEEP_RUNNING}', process.argv[1]], { stdio: 'ignore' });
+        ${KEEP_RUNNING}`,
+        [fixture.socketPath],
+      ),
     );
-    await expect(
-      runRepositoryCommand({ ...command, timeoutMs: CHILD_START_DEADLINE_MS }),
-    ).rejects.toMatchObject({ code: 'repository_timeout' });
-    const pids = JSON.parse(await readFile(pidPath, 'utf8')) as { parent: number; child: number };
-    expect(() => process.kill(pids.parent, 0)).toThrow();
-    try {
-      // 孤児プロセスは、回収待ちのゾンビとしてしばらく残ることがある。ゾンビは何も実行できず、
-      // workspaceも保持しない。
-      expect((await readFile(`/proc/${pids.child}/stat`, 'utf8')).split(' ')[2]).toBe('Z');
-    } catch (error) {
-      expect((error as NodeJS.ErrnoException).code).toBe('ENOENT');
-    }
+    const timedOut = expect(running).rejects.toMatchObject({ code: 'repository_timeout' });
+    // 孫processが接続した時点で、親processは孫を起動し終えている。
+    await fixture.connected;
+    await vi.advanceTimersByTimeAsync(FIXTURE_TIMEOUT_MS);
+    // runRepositoryCommandは親processの'close'で終わるので、親processは回収済み。
+    await timedOut;
+    // 孫processは自分から接続を閉じない。閉じたのは、process groupごと停止されたから。
+    await fixture.disconnected;
   });
 
   it('stdout上限を超えたprocessを停止する', async () => {
@@ -316,7 +355,7 @@ describe('repository child processの停止と上限', () => {
       runRepositoryCommand({
         ...nodeCommand(
           directory,
-          'process.stdout.write("a".repeat(8192));setInterval(()=>{},1000)',
+          `process.stdout.write("a".repeat(8192));${KEEP_RUNNING}`,
         ),
         maxOutputBytes: 1024,
       }),
@@ -325,15 +364,25 @@ describe('repository child processの停止と上限', () => {
 
   it('増加中のdownloadサイズを監視し、上限を超えたprocessを停止する', async () => {
     const directory = await temporaryDirectory();
-    await expect(
-      runRepositoryCommand({
-        ...nodeCommand(
-          directory,
-          'require("node:fs").writeFileSync("pack",Buffer.alloc(8192));setInterval(()=>{},1000)',
-        ),
-        maxDirectoryBytes: 1024,
-      }),
-    ).rejects.toMatchObject({ code: 'repository_too_large', status: 413 });
+    const fixture = await listenForFixtureProcess(directory);
+    const running = runRepositoryCommand({
+      ...nodeCommand(
+        directory,
+        `require("node:fs").writeFileSync("pack",Buffer.alloc(8192));${CONNECT_TO_FIXTURE_SOCKET}${KEEP_RUNNING}`,
+        [fixture.socketPath],
+      ),
+      maxDirectoryBytes: 1024,
+    });
+    const stopped = expect(running).rejects.toMatchObject({
+      code: 'repository_too_large',
+      status: 413,
+    });
+    // 接続した時点で、packは書き終えている。
+    await fixture.connected;
+    // 監視の周期は何度も進めるが、timeoutの時刻には届かせない。
+    await vi.advanceTimersByTimeAsync(FIXTURE_TIMEOUT_MS - 1);
+    await stopped;
+    await fixture.disconnected;
   });
 
   it('stderr内のURL/secretを公開せず、nonzeroと起動失敗を安全なエラーにする', async () => {
