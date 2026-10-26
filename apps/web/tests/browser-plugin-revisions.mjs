@@ -17,7 +17,15 @@ const context = await browser.newContext({
 });
 const api = createBrowserApi();
 api.state.loggedIn = true;
-const projectA = { ...api.state.project, name: 'Revision review A' };
+// 全体管理の一覧だけが持つ項目（アーカイブ、メンバー数など）は、GET /projectsのProjectに含めない。
+const {
+  archivedAt: _archivedAt,
+  memberCount: _memberCount,
+  adminNames: _adminNames,
+  runCount: _runCount,
+  ...mainProject
+} = api.state.project;
+const projectA = { ...mainProject, name: 'Revision review A' };
 const projectB = {
   ...projectA, id: '40000000-0000-4000-8000-000000000001', name: 'Revision review B',
 };
@@ -53,6 +61,8 @@ await context.route(url => url.pathname.startsWith('/api/'), async route => {
       configRevision: 0, webUrl: null, canImport: false,
     }],
   });
+  // Project Bのほかの一覧は空。Runの検索はcursorのページで答える。
+  if (path === `/projects/${projectB.id}/runs/search`) return reply({ items: [], nextCursor: null });
   if (path.startsWith(`/projects/${projectB.id}/`)) return reply({ items: [] });
   if (path === listPath && request.method() === 'GET') {
     if (listGate) await listGate;

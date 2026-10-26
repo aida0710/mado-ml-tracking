@@ -31,6 +31,34 @@ const TABLE_ROW_COUNT = 60;
 const projectId = '00000000-0000-4000-8000-000000000001';
 const runA = { id: '00000000-0000-4000-8000-0000000000a1', name: 'run-a（lr=1e-3）' };
 const runB = { id: '00000000-0000-4000-8000-0000000000b1', name: 'run-b（lr=3e-4）' };
+const experimentId = '00000000-0000-4000-8000-000000000002';
+const userId = '00000000-0000-4000-8000-000000000003';
+const createdAt = '2026-10-08T00:00:00.000Z';
+/** 画面が契約のスキーマで確かめる、完全な形のRun。 */
+const contractRun = (run) => ({
+  ...run,
+  projectId,
+  experimentId,
+  kind: 'training',
+  status: 'finished',
+  parameters: {},
+  tags: {},
+  latestMetrics: {},
+  modelVersionId: null,
+  codeVersionId: null,
+  inputDatasetVersionIds: [],
+  upstreamDatasetVersionIds: [],
+  outputDatasetVersionIds: [],
+  outputModelVersionIds: [],
+  parentRunId: null,
+  environment: {},
+  createdBy: userId,
+  createdByName: null,
+  createdAt,
+  startedAt: createdAt,
+  endedAt: createdAt,
+  error: null,
+});
 let sequence = 1000;
 const identifier = () => `00000000-0000-4000-8000-${String(sequence++).padStart(12, '0')}`;
 
@@ -195,7 +223,7 @@ await context.route(
     if ((match = rest.match(/^\/artifacts\/([^/]+)\/previews$/))) return json({ items: [] });
     if ((match = rest.match(/^\/runs\/([^/]+)$/))) {
       const run = [runA, runB].find((candidate) => candidate.id === match[1]);
-      return run ? json({ ...run, projectId, status: 'finished' }) : json({ error: 'not found', code: 'not_found' }, 404);
+      return run ? json(contractRun(run)) : json({ error: 'not found', code: 'not_found' }, 404);
     }
     if ((match = rest.match(/^\/runs\/([^/]+)\/media\/keys$/))) return json({ items: keySummaries(match[1]) });
     if ((match = rest.match(/^\/runs\/([^/]+)\/media\/([^/]+)\/table$/))) {

@@ -15,7 +15,7 @@ const plugin = {
   ...api.state.plugins[0], name: 'Mado', kind: 'mado',
   configRevision: 1, config: null, enabled: false,
   credentialsConfigured: { accessToken: false }, accessTokenGrant: null,
-  secretStorageAvailable: true, tokenConfigured: false, baseUrl: '', tokenEnv: '',
+  secretStorageAvailable: true, tokenConfigured: false,
 };
 // 接続確認のたびにフィクスチャのmado S3 Data Catalogが返す、保存済みのアクセストークンの内容。
 const accessTokenGrant = {
@@ -122,9 +122,10 @@ await context.route(url => url.pathname.startsWith('/api/'), async route => {
     assert.deepEqual(Object.keys(body).sort(), ['expectedRevision', 'externalId']);
     assert.equal(body.expectedRevision, plugin.configRevision);
     imported.push(body.externalId);
-    const dataset = createDataset(plugin.configRevision);
+    // PluginDatasetのexternalIdはDatasetVersionの項目ではなく、externalRefに入る。
+    const { externalId, ...dataset } = createDataset(plugin.configRevision);
     const version = Object.assign(api.state.datasetVersions[0], dataset, {
-      externalRef: { pluginId: plugin.id, externalId: dataset.externalId,
+      externalRef: { pluginId: plugin.id, externalId,
         namespace: dataset.namespace, name: dataset.name, version: dataset.version },
     });
     return reply(version);

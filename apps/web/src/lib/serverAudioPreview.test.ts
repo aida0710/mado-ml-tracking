@@ -17,15 +17,15 @@ function preview(overrides: Partial<ArtifactPreview>): ArtifactPreview {
 
 describe('サーバー側の音声preview', () => {
   it('peaks JSONを波形に変換し、形の違う文書はnullにする', () => {
-    const parsed = parseWaveformPeaksPreview(
-      JSON.stringify({ version: 1, sampleRate: 48000, durationSeconds: 3600, samplesPerPeak: 1, min: [-0.5, 0], max: [0.5, 0.25] }),
-    );
+    const peaksDocument = { version: 1, sampleRate: 48000, durationSeconds: 3600, samplesPerPeak: 1, min: [-0.5, 0], max: [0.5, 0.25] };
+    const parsed = parseWaveformPeaksPreview(JSON.stringify(peaksDocument));
     expect(parsed?.sampleRate).toBe(48000);
     expect(Array.from(parsed!.peaks.max)).toEqual([0.5, 0.25]);
     expect(parseWaveformPeaksPreview('not json')).toBeNull();
-    expect(parseWaveformPeaksPreview(JSON.stringify({ version: 2, sampleRate: 1, durationSeconds: 1, min: [0], max: [0] }))).toBeNull();
-    expect(parseWaveformPeaksPreview(JSON.stringify({ version: 1, sampleRate: 1, durationSeconds: 1, min: [0], max: [0, 1] }))).toBeNull();
-    expect(parseWaveformPeaksPreview(JSON.stringify({ version: 1, sampleRate: 1, durationSeconds: 1, min: [-2], max: [0] }))).toBeNull();
+    expect(parseWaveformPeaksPreview(JSON.stringify({ ...peaksDocument, version: 2 }))).toBeNull();
+    expect(parseWaveformPeaksPreview(JSON.stringify({ ...peaksDocument, min: [0], max: [0, 1] }))).toBeNull();
+    expect(parseWaveformPeaksPreview(JSON.stringify({ ...peaksDocument, min: [-2, 0] }))).toBeNull();
+    expect(parseWaveformPeaksPreview(JSON.stringify({ ...peaksDocument, sampleRate: 0 }))).toBeNull();
   });
 
   it('波形の状態で表示を決め、スペクトログラムが無くても波形は出す', () => {

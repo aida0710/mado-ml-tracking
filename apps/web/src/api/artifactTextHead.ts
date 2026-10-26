@@ -1,5 +1,5 @@
+import { fetchResponse } from '@mado/design-system/http';
 import { decodeUtf8Prefix } from '../lib/textPrefix';
-import { ARTIFACT_CONTENT_UNAVAILABLE_CODE, NETWORK_ERROR_CODE, RequestError } from './http';
 import { trackingApi } from './tracking';
 
 /**
@@ -27,17 +27,8 @@ export async function fetchArtifactTextHead(
   artifact: { projectId: string; artifactId: string; maxBytes: number },
   signal?: AbortSignal,
 ): Promise<string> {
-  let response: Response;
-  try {
-    response = await fetch(trackingApi.artifactUrl(artifact.projectId, artifact.artifactId), {
-      credentials: 'include',
-      headers: { Range: `bytes=0-${artifact.maxBytes - 1}` },
-      signal,
-    });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') throw error;
-    throw new RequestError({ status: 0, code: NETWORK_ERROR_CODE });
-  }
-  if (!response.ok) throw new RequestError({ status: response.status, code: ARTIFACT_CONTENT_UNAVAILABLE_CODE });
+  const response = await fetchResponse(trackingApi.artifactUrl(artifact.projectId, artifact.artifactId), {
+    init: { headers: { Range: `bytes=0-${artifact.maxBytes - 1}` }, signal },
+  });
   return decodeUtf8Prefix(await readLeadingBytes(response, artifact.maxBytes));
 }

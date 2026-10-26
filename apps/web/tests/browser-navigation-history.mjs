@@ -24,7 +24,7 @@ const tasks = Array.from({ length: taskCount }, (_, index) => ({
   name: `History Task ${index + 1}`,
   description: '', kind: 'inference', codeVersionId: api.state.codeVersions[0].id,
   modelVersionId: null, inputDatasetVersionIds: [], parameters: {}, tags: {},
-  targetId: api.state.targets[0].id, gpuIds: [], revision: 1,
+  targetId: api.state.targets[0].id, gpuIds: [], gpuCount: 0, walltimeSeconds: null, revision: 1,
   createdAt: '2026-10-08T00:00:00Z', updatedAt: '2026-10-08T00:00:00Z',
 }));
 const histories = new Map(tasks.map((task, taskIndex) => [task.id,

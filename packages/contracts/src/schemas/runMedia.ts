@@ -54,16 +54,21 @@ export const runMediaKeySummarySchema = namedContractSchema(
 );
 export const mediaCompareGridSchema = namedContractSchema(
   'MediaCompareGrid',
-  z.strictObject({
-    key: z.string(),
-    steps: z.array(z.number().int()).nullable(),
-    rows: z.array(
-      z.strictObject({
-        runId: idSchema,
-        cells: z.array(z.array(runMediaSchema).nullable()),
-      }),
-    ),
-  }),
+  z
+    .strictObject({
+      key: z.string(),
+      steps: z.array(z.number().int()).nullable(),
+      rows: z.array(
+        z.strictObject({
+          runId: idSchema,
+          cells: z.array(z.array(runMediaSchema).nullable()),
+        }),
+      ),
+    })
+    // 各行は求めたstepごとに1つのセルを持つ。stepを指定しなければ1つのセル（最新のstep）だけ。
+    .refine((grid) => grid.rows.every((row) => row.cells.length === (grid.steps?.length ?? 1)), {
+      message: 'Each row must have one cell per requested step',
+    }),
 );
 export const mediaTableMediaCellSchema = namedContractSchema(
   'MediaTableMediaCell',

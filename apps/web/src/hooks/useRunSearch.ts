@@ -1,6 +1,6 @@
 import type { RunSearchPage, RunSearchRequest } from '@mmt/contracts';
+import { isApiError, type ApiError } from '@mado/design-system/http';
 import { trackingApi } from '../api/tracking';
-import { RequestError } from '../api/http';
 import { formatErrorMessage } from '../lib/errorMessage';
 import { EXECUTION_POLL_MS, useQuery, type QueryState } from './useQuery';
 
@@ -8,7 +8,7 @@ import { EXECUTION_POLL_MS, useQuery, type QueryState } from './useQuery';
 const FILTER_REJECTED_STATUS = 400;
 const FILTER_REJECTED_CODE = 'invalid_request';
 
-type RunSearchOutcome = { page: RunSearchPage } | { rejection: RequestError };
+type RunSearchOutcome = { page: RunSearchPage } | { rejection: ApiError };
 
 /**
  * サーバー側でのRunの検索の1ページ。Runが実行中の間は更新する。APIが断った絞り込みは、`runs`の
@@ -26,7 +26,7 @@ export function useRunSearch(
         return { page: await trackingApi.searchRuns(projectId, search, signal) };
       } catch (failure) {
         if (
-          failure instanceof RequestError &&
+          isApiError(failure) &&
           failure.status === FILTER_REJECTED_STATUS &&
           failure.code === FILTER_REJECTED_CODE
         )

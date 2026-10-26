@@ -26,6 +26,7 @@ const adminUser = (user) => ({
   kind: 'human',
   lastLoginAt: now,
   createdAt: now,
+  serviceAccountProject: null,
   ...user,
 });
 const users = {

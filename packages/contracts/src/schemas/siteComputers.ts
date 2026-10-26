@@ -10,6 +10,7 @@ import type {
   SiteJobShellSummary,
   SiteKey,
   SitePersonalSettings,
+  SitePersonalSettingsLookup,
   SiteSettings,
   SiteSubmissionAccount,
 } from '../index.js';
@@ -106,6 +107,10 @@ export const sitePersonalSettingsSchema = namedContractSchema(
     updatedAt: timestampSchema,
   }),
 );
+export const sitePersonalSettingsLookupSchema = namedContractSchema(
+  'SitePersonalSettingsLookup',
+  z.strictObject({ item: sitePersonalSettingsSchema.nullable() }),
+);
 export const siteConnectionCheckSchema = namedContractSchema(
   'SiteConnectionCheck',
   z.strictObject({
@@ -191,6 +196,9 @@ type _ComputeTargetDetails = Expect<
 type _SiteKey = Expect<MutuallyAssignable<z.infer<typeof siteKeySchema>, SiteKey>>;
 type _SitePersonalSettings = Expect<
   MutuallyAssignable<z.infer<typeof sitePersonalSettingsSchema>, SitePersonalSettings>
+>;
+type _SitePersonalSettingsLookup = Expect<
+  MutuallyAssignable<z.infer<typeof sitePersonalSettingsLookupSchema>, SitePersonalSettingsLookup>
 >;
 type _SiteConnectionCheck = Expect<
   MutuallyAssignable<z.infer<typeof siteConnectionCheckSchema>, SiteConnectionCheck>

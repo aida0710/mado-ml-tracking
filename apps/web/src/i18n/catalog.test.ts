@@ -3,7 +3,6 @@ import { setLocale } from './locale';
 import { text, textTemplates } from './catalog';
 import { computeTextTemplates } from './compute';
 import { projectAccessTextTemplates } from './projectAccess';
-import { localizeMessage } from './messageTranslations';
 import { formatDate, formatCompactNumber } from '../lib/format';
 import { formatRelativeTime } from '../lib/relativeTime';
 
@@ -59,14 +58,6 @@ describe('英語と日本語の辞書', () => {
     expect(text.name).toBe('Name');
     expect(textTemplates.revokeTokenConfirm('日本語のトークン')).toContain('日本語のトークン');
     expect(textTemplates.revokeTokenConfirm('sample')).not.toMatch(/[ぁ-んァ-ン一-龯]/);
-  });
-
-  it('保持したアプリのエラー文は切り替えた言語で出し、知らないサーバーの文はそのまま残す', () => {
-    setLocale('ja');
-    const captured = text.unexpectedError;
-    setLocale('en');
-    expect(localizeMessage(captured)).toBe(text.unexpectedError);
-    expect(localizeMessage('custom service detail')).toBe('custom service detail');
   });
 
   it('英語で1件のときは単数の名詞と、それに合う動詞にする', () => {

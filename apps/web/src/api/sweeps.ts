@@ -1,16 +1,12 @@
-import type {
-  MetricSeries,
-  MetricSeriesResponse,
-  Sweep,
-  SweepCancel,
-  SweepCreate,
-  SweepPage,
-  SweepPatch,
-  SweepStatus,
-  SweepTrial,
-  SweepTrialPage,
-} from '@mmt/contracts';
-import { assertCursorPage, encodeId, invalidResponseError, jsonRequest, projectPath, request } from './http';
+import { ApiError, INVALID_RESPONSE_CODE, jsonRequestInit, requestJson } from '@mado/design-system/http';
+import type { SweepCancel, SweepCreate, SweepPatch, SweepStatus, SweepTrial } from '@mmt/contracts';
+import {
+  metricSeriesResponseSchema,
+  sweepPageSchema,
+  sweepSchema,
+  sweepTrialPageSchema,
+} from '@mmt/contracts/schemas';
+import { encodeId, projectPath } from './http';
 
 // 試行のページのAPIの上限（docs/api-contract.mdのSweeps）。Sweepの詳細はすべての試行を読む。
 const TRIAL_PAGE_SIZE = 500;
@@ -20,14 +16,8 @@ const MAX_TRIAL_PAGES = 100;
 const sweepPath = (projectId: string, sweepId?: string) =>
   `${projectPath(projectId)}/sweeps${sweepId ? `/${encodeId(sweepId)}` : ''}`;
 
-function assertSweep(sweep: Sweep): Sweep {
-  if (typeof sweep.id !== 'string' || typeof sweep.trialCounts !== 'object' || sweep.trialCounts === null)
-    throw invalidResponseError();
-  return sweep;
-}
-
 export const sweepsApi = {
-  list: async (
+  list: (
     projectId: string,
     { status, cursor, signal }: { status?: SweepStatus; cursor?: string; signal?: AbortSignal } = {},
   ) => {
@@ -35,22 +25,24 @@ export const sweepsApi = {
     if (status) query.set('status', status);
     if (cursor) query.set('cursor', cursor);
     const search = query.toString();
-    const page = await request<SweepPage>(`${sweepPath(projectId)}${search ? `?${search}` : ''}`, { signal });
-    assertCursorPage(page);
-    return page;
+    return requestJson(`${sweepPath(projectId)}${search ? `?${search}` : ''}`, {
+      schema: sweepPageSchema,
+      init: { signal },
+    });
   },
-  get: async (projectId: string, sweepId: string, signal?: AbortSignal) =>
-    assertSweep(await request<Sweep>(sweepPath(projectId, sweepId), { signal })),
-  trialPage: async (
+  get: (projectId: string, sweepId: string, signal?: AbortSignal) =>
+    requestJson(sweepPath(projectId, sweepId), { schema: sweepSchema, init: { signal } }),
+  trialPage: (
     projectId: string,
     sweepId: string,
     { cursor, signal }: { cursor?: string; signal?: AbortSignal } = {},
   ) => {
     const query = new URLSearchParams({ orderBy: 'trial_index', limit: String(TRIAL_PAGE_SIZE) });
     if (cursor) query.set('cursor', cursor);
-    const page = await request<SweepTrialPage>(`${sweepPath(projectId, sweepId)}/trials?${query}`, { signal });
-    assertCursorPage(page);
-    return page;
+    return requestJson(`${sweepPath(projectId, sweepId)}/trials?${query}`, {
+      schema: sweepTrialPageSchema,
+      init: { signal },
+    });
   },
   /** すべての試行を試行の順に返す。nextCursorをたどる。 */
   allTrials: async (projectId: string, sweepId: string, signal?: AbortSignal) => {
@@ -62,28 +54,31 @@ export const sweepsApi = {
       if (!page.nextCursor || page.nextCursor === cursor) return trials;
       cursor = page.nextCursor;
     }
-    throw invalidResponseError();
+    throw new ApiError({
+      status: 200,
+      code: INVALID_RESPONSE_CODE,
+      message: `The trials of sweep ${sweepId} did not end within ${MAX_TRIAL_PAGES} pages`,
+    });
   },
-  create: async (projectId: string, input: SweepCreate) =>
-    assertSweep(await request<Sweep>(sweepPath(projectId), jsonRequest('POST', input))),
+  create: (projectId: string, input: SweepCreate) =>
+    requestJson(sweepPath(projectId), { schema: sweepSchema, init: jsonRequestInit('POST', input) }),
   pause: (projectId: string, sweepId: string) =>
-    request<Sweep>(`${sweepPath(projectId, sweepId)}/pause`, { method: 'POST' }),
+    requestJson(`${sweepPath(projectId, sweepId)}/pause`, { schema: sweepSchema, init: { method: 'POST' } }),
   resume: (projectId: string, sweepId: string) =>
-    request<Sweep>(`${sweepPath(projectId, sweepId)}/resume`, { method: 'POST' }),
+    requestJson(`${sweepPath(projectId, sweepId)}/resume`, { schema: sweepSchema, init: { method: 'POST' } }),
   cancel: (projectId: string, sweepId: string, input: SweepCancel) =>
-    request<Sweep>(`${sweepPath(projectId, sweepId)}/cancel`, jsonRequest('POST', input)),
+    requestJson(`${sweepPath(projectId, sweepId)}/cancel`, { schema: sweepSchema, init: jsonRequestInit('POST', input) }),
   update: (projectId: string, sweepId: string, input: SweepPatch) =>
-    request<Sweep>(sweepPath(projectId, sweepId), jsonRequest('PATCH', input)),
+    requestJson(sweepPath(projectId, sweepId), { schema: sweepSchema, init: jsonRequestInit('PATCH', input) }),
   /** 重ねて描くための、試行のRunの目的関数のstepごとの値（POST /metrics/series）。 */
   objectiveSeries: async (
     projectId: string,
     { runIds, metric, signal }: { runIds: string[]; metric: string; signal?: AbortSignal },
-  ): Promise<MetricSeries[]> => {
-    const response = await request<MetricSeriesResponse>(
-      `${projectPath(projectId)}/metrics/series`,
-      { ...jsonRequest('POST', { runIds, keys: [metric], xAxis: { kind: 'step' } }), signal },
-    );
-    if (!Array.isArray(response.series)) throw invalidResponseError();
-    return response.series;
-  },
+  ) =>
+    (
+      await requestJson(`${projectPath(projectId)}/metrics/series`, {
+        schema: metricSeriesResponseSchema,
+        init: { ...jsonRequestInit('POST', { runIds, keys: [metric], xAxis: { kind: 'step' } }), signal },
+      })
+    ).series,
 };

@@ -7,7 +7,6 @@ import type {
 } from '@mmt/contracts';
 import { LocalizedError } from './localizedError';
 import { text, textTemplates } from '../i18n/catalog';
-import { errorText, errorTextTemplates } from '../i18n/errors';
 
 /**
  * Sweepの探索設定の3つの形。JSONで貼り付けるW&Bのsweep config、作成ダイアログのエディタの行、
@@ -62,7 +61,7 @@ function rejectUnknownKeys(where: SweepConfigLocation, record: JsonRecord, allow
   const unknown = Object.keys(record).filter((key) => !allowed.includes(key)).sort();
   if (unknown.length)
     throw new SweepConfigError(() => textTemplates.sweepConfigUnsupportedKeys(
-      typeof where === 'string' ? where : errorTextTemplates.sweepParameterLocation(where.parameterName),
+      typeof where === 'string' ? where : textTemplates.sweepConfigParameterLocation(where.parameterName),
       unknown,
       allowed,
     ));
@@ -121,7 +120,7 @@ function convertParameters(parameters: unknown): Record<string, SweepParameterDe
 }
 
 function convertParameter(name: string, definition: unknown): SweepParameterDefinition {
-  if (!isRecord(definition)) throw new SweepConfigError(() => textTemplates.sweepConfigNotObject(errorTextTemplates.sweepParameterLocation(name)));
+  if (!isRecord(definition)) throw new SweepConfigError(() => textTemplates.sweepConfigNotObject(textTemplates.sweepConfigParameterLocation(name)));
   if ('parameters' in definition) throw new SweepConfigError(() => textTemplates.sweepConfigParameterNested(name));
   const where = { parameterName: name };
   const distribution = definition.distribution;
@@ -147,7 +146,7 @@ function convertParameter(name: string, definition: unknown): SweepParameterDefi
   rejectUnknownKeys(where, definition, ['distribution', 'max', 'min', ...(apiDistribution === 'q_uniform' ? ['q'] : [])]);
   const { min, max } = definition;
   if (!isNumber(min) || !isNumber(max))
-    throw new SweepConfigError(() => textTemplates.sweepConfigParameterNumbers(name, errorText.sweepRangeFields));
+    throw new SweepConfigError(() => textTemplates.sweepConfigParameterNumbers(name, text.sweepConfigRangeFields));
   if (!('q' in definition)) return { distribution: apiDistribution, min, max };
   if (!isNumber(definition.q)) throw new SweepConfigError(() => textTemplates.sweepConfigParameterNumbers(name, 'q'));
   return { distribution: apiDistribution, min, max, q: definition.q };

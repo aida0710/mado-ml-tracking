@@ -88,6 +88,7 @@ function createChoicesApi() {
     maxAttempts: 3,
     summaryMetrics: [],
     createdBy: user.id,
+    createdByName: user.displayName,
     runAsUserId: user.id,
     createdAt: now,
   };

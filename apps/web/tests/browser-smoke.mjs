@@ -386,10 +386,12 @@ try {
   console.log('Browser check: errors/theme/mobile');
   api.state.failRunList = true;
   await page.goto(`${projectBase}/experiments`);
+  // codeの付いたAPIの失敗も、日本語の画面でAPIの文をそのまま出す（codeから訳さない）。
   await page
     .getByRole('alert')
     .filter({ hasText: 'UI verification: database unavailable' })
     .waitFor();
+  assert.equal(await page.getByText('データベースに接続できません').count(), 0);
   assert.equal(await page.getByRole('link', { name: 'training-test-02', exact: true }).count(), 0);
   api.state.failRunList = false;
   await page.getByRole('alert').getByRole('button', { name: '再試行', exact: true }).click();

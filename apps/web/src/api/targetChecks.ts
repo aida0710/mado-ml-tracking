@@ -1,37 +1,42 @@
-import type {
-  TargetCheck,
-  TargetCheckWorker,
-  TargetCheckWorkerPresence,
-  TargetDirectoryListing,
-} from '@mmt/contracts';
-import { encodeId, jsonRequest, request, requestItems } from './http';
+import { jsonRequestInit, requestJson } from '@mado/design-system/http';
+import type { TargetCheckWorker } from '@mmt/contracts';
+import {
+  itemsOf,
+  targetCheckSchema,
+  targetCheckWorkerPresenceSchema,
+  targetDirectoryListingSchema,
+} from '@mmt/contracts/schemas';
+import { encodeId } from './http';
 
-const targetPath = (targetId: string) => `/targets/${encodeId(targetId)}`;
+const targetPath = (targetId: string) => `/api/targets/${encodeId(targetId)}`;
 
 // 接続確認とディレクトリの読み取りは全体管理者の操作。ほかの人にはAPIが403を返す。
 export const targetChecksApi = {
-  list: (targetId: string, signal?: AbortSignal) =>
-    requestItems<TargetCheck>(`${targetPath(targetId)}/checks`, signal),
+  list: async (targetId: string, signal?: AbortSignal) =>
+    (await requestJson(`${targetPath(targetId)}/checks`, { schema: itemsOf(targetCheckSchema), init: { signal } }))
+      .items,
   /** `worker`を省くと、MMT_WORKER_TARGET_IDSにそのコンピュータがあるworkerが確認する。 */
   request: (targetId: string, worker?: TargetCheckWorker) =>
-    request<TargetCheck>(
-      `${targetPath(targetId)}/checks`,
-      worker ? jsonRequest('POST', { worker }) : { method: 'POST' },
-    ),
+    requestJson(`${targetPath(targetId)}/checks`, {
+      schema: targetCheckSchema,
+      init: worker ? jsonRequestInit('POST', { worker }) : { method: 'POST' },
+    }),
   /** 依頼できるオンラインのworkerと、それぞれがホストで見つけたSSHのファイル。 */
-  workers: (signal?: AbortSignal) =>
-    requestItems<TargetCheckWorkerPresence>('/targets/check-workers', signal),
-  requestDirectoryListing: (
-    targetId: string,
-    listing: { path: string; worker: TargetCheckWorker },
-  ) =>
-    request<TargetDirectoryListing>(
-      `${targetPath(targetId)}/directory-listings`,
-      jsonRequest('POST', listing),
-    ),
+  workers: async (signal?: AbortSignal) =>
+    (
+      await requestJson('/api/targets/check-workers', {
+        schema: itemsOf(targetCheckWorkerPresenceSchema),
+        init: { signal },
+      })
+    ).items,
+  requestDirectoryListing: (targetId: string, listing: { path: string; worker: TargetCheckWorker }) =>
+    requestJson(`${targetPath(targetId)}/directory-listings`, {
+      schema: targetDirectoryListingSchema,
+      init: jsonRequestInit('POST', listing),
+    }),
   directoryListing: (targetId: string, listingId: string, signal?: AbortSignal) =>
-    request<TargetDirectoryListing>(
-      `${targetPath(targetId)}/directory-listings/${encodeId(listingId)}`,
-      { signal },
-    ),
+    requestJson(`${targetPath(targetId)}/directory-listings/${encodeId(listingId)}`, {
+      schema: targetDirectoryListingSchema,
+      init: { signal },
+    }),
 };

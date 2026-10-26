@@ -1,10 +1,54 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { SweepCreate } from '@mmt/contracts';
+import { ApiError } from '@mado/design-system/http';
+import type { Sweep, SweepCreate, SweepTrial } from '@mmt/contracts';
 import { sweepsApi } from './sweeps';
-import { RequestError } from './http';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
-const sweep = { id: 'sweep', trialCounts: { total: 0 } };
+const createdAt = '2026-10-08T00:00:00.000Z';
+const SWEEP_ID = '00000000-0000-4000-8000-000000000001';
+const sweep: Sweep = {
+  id: SWEEP_ID,
+  projectId: '00000000-0000-4000-8000-000000000002',
+  name: 'lr-search',
+  taskId: '00000000-0000-4000-8000-000000000003',
+  taskRevision: 1,
+  experimentId: '00000000-0000-4000-8000-000000000004',
+  method: 'grid',
+  searchSpace: { lr: { values: [0.1, 0.01] } },
+  objective: { metric: 'val_loss', goal: 'minimize', aggregation: 'last' },
+  maxTrials: 4,
+  parallelism: 2,
+  earlyStopping: null,
+  seed: 0,
+  targetId: null,
+  gpuIds: null,
+  status: 'running',
+  statusReason: null,
+  createdBy: '00000000-0000-4000-8000-000000000005',
+  createdAt,
+  updatedAt: createdAt,
+  finishedAt: null,
+  trialCounts: { queued: 0, running: 0, finished: 0, failed: 0, canceled: 0, early_stopped: 0, total: 0 },
+  bestTrial: null,
+};
+// 試行番号ごとに別のidを付ける（末尾の12桁が試行番号）。
+const trial = (trialIndex: number): SweepTrial => ({
+  id: `00000000-0000-4000-9000-${String(trialIndex).padStart(12, '0')}`,
+  sweepId: SWEEP_ID,
+  trialIndex,
+  parameters: { lr: 0.1 },
+  runId: `00000000-0000-4000-a000-${String(trialIndex).padStart(12, '0')}`,
+  jobId: `00000000-0000-4000-b000-${String(trialIndex).padStart(12, '0')}`,
+  state: 'finished',
+  objectiveValue: 0.5,
+  objectiveStep: 10,
+  stopReason: null,
+  runStatus: 'finished',
+  jobStatus: 'finished',
+  jobCancelRequested: false,
+  createdAt,
+  endedAt: createdAt,
+});
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -57,8 +101,8 @@ describe('Sweep APIのpathとbody', () => {
 
   it('全試行の取得はnextCursorを辿って試行番号順の全ページをつなぐ', async () => {
     const fetch = vi.fn()
-      .mockResolvedValueOnce(json({ items: [{ trialIndex: 0 }], nextCursor: 'page-2' }))
-      .mockResolvedValueOnce(json({ items: [{ trialIndex: 1 }], nextCursor: null }));
+      .mockResolvedValueOnce(json({ items: [trial(0)], nextCursor: 'page-2' }))
+      .mockResolvedValueOnce(json({ items: [trial(1)], nextCursor: null }));
     vi.stubGlobal('fetch', fetch);
     const trials = await sweepsApi.allTrials('project', 'sweep');
     expect(trials.map((trial) => trial.trialIndex)).toEqual([0, 1]);
@@ -75,7 +119,7 @@ describe('Sweep APIのpathとbody', () => {
 
   it('nextCursorの欠けたページは契約違反として扱う', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ items: [] })));
-    await expect(sweepsApi.list('project')).rejects.toBeInstanceOf(RequestError);
+    await expect(sweepsApi.list('project')).rejects.toMatchObject({ code: 'invalid_response' });
   });
 
   it('探索空間の422はcodeとサーバーのmessage、横の項目を保って返す', async () => {
@@ -88,10 +132,10 @@ describe('Sweep APIのpathとbody', () => {
       max: '0',
     }, 422)));
     const failure = await sweepsApi.create('project', {} as SweepCreate).catch((error: unknown) => error);
-    expect(failure).toBeInstanceOf(RequestError);
-    expect((failure as RequestError).code).toBe('sweep_space_invalid');
-    expect((failure as RequestError).serverMessage).toContain('"lr"');
-    expect((failure as RequestError).details).toEqual({ reason: 'range_order', parameter: 'lr', min: '1', max: '0' });
+    expect(failure).toBeInstanceOf(ApiError);
+    expect((failure as ApiError).code).toBe('sweep_space_invalid');
+    expect((failure as ApiError).message).toContain('"lr"');
+    expect((failure as ApiError).details).toEqual({ reason: 'range_order', parameter: 'lr', min: '1', max: '0' });
   });
 
   it('目的メトリクスの重ね描きは試行RunのstepをPOST /metrics/seriesで読む', async () => {

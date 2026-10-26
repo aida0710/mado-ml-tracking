@@ -1,5 +1,6 @@
-import type { EvaluationComparison } from '@mmt/contracts';
-import { encodeId, projectPath, request } from './http';
+import { requestJson } from '@mado/design-system/http';
+import { evaluationComparisonSchema } from '@mmt/contracts/schemas';
+import { encodeId, projectPath } from './http';
 
 export interface EvaluationComparisonQuery {
   baselineAlias?: string;
@@ -28,10 +29,10 @@ export const evaluationApi = {
     query: EvaluationComparisonQuery,
     signal?: AbortSignal,
   ) =>
-    request<EvaluationComparison>(
+    requestJson(
       `${projectPath(target.projectId)}/models/${encodeId(target.modelId)}/versions/${encodeId(
         target.candidateVersionId,
       )}/evaluation-comparison${comparisonSearch(query)}`,
-      { signal },
+      { schema: evaluationComparisonSchema, init: { signal } },
     ),
 };

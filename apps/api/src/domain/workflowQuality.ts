@@ -1,4 +1,4 @@
-import type { WorkflowQualityGate } from '@mmt/contracts';
+import type { LatestMetricValue, WorkflowQualityGate } from '@mmt/contracts';
 
 export function workflowQualityFailure(
   gates: WorkflowQualityGate[],
@@ -20,10 +20,12 @@ export function workflowQualityFailure(
   return null;
 }
 
-export function finiteWorkflowMetrics(metrics: Record<string, number>): Record<string, number> {
+export function finiteWorkflowMetrics(
+  metrics: Record<string, LatestMetricValue>,
+): Record<string, number> {
   return Object.fromEntries(
     Object.entries(metrics).filter(
-      ([, value]) => typeof value === 'number' && Number.isFinite(value),
+      (entry): entry is [string, number] => typeof entry[1] === 'number' && Number.isFinite(entry[1]),
     ),
   );
 }

@@ -1,12 +1,38 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { ModelAutomationRule } from '@mmt/contracts';
 import { automationApi } from './automation';
+
+const USER_ID = '00000000-0000-4000-8000-000000000002';
+const disabledRule = {
+  id: '00000000-0000-4000-8000-000000000010',
+  projectId: '00000000-0000-4000-8000-000000000001',
+  name: '自動評価',
+  enabled: false,
+  modelFamilies: ['Qwen3'],
+  kind: 'evaluation',
+  trigger: 'model_registered',
+  upstreamRuleId: null,
+  experimentId: '00000000-0000-4000-8000-000000000011',
+  codeVersionId: '00000000-0000-4000-8000-000000000012',
+  targetId: '00000000-0000-4000-8000-000000000013',
+  gpuIds: [],
+  inputDatasetVersionIds: [],
+  parameters: {},
+  tags: {},
+  maxAttempts: 1,
+  summaryMetrics: [],
+  createdBy: USER_ID,
+  runAsUserId: USER_ID,
+  createdByName: '管理者',
+  createdAt: '2026-10-08T00:00:00.000Z',
+} satisfies ModelAutomationRule;
 
 afterEach(() => vi.unstubAllGlobals());
 describe('自動実行API', () => {
   it('有効無効のPATCHにはenabledだけを送り不変の設定を変更しない', async () => {
     const fetch = vi
       .fn()
-      .mockResolvedValue(new Response(JSON.stringify({ id: 'rule', enabled: false })));
+      .mockResolvedValue(new Response(JSON.stringify(disabledRule)));
     vi.stubGlobal('fetch', fetch);
     await automationApi.setRuleEnabled('project', 'rule', false);
     expect(fetch).toHaveBeenCalledWith(

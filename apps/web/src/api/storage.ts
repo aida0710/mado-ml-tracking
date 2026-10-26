@@ -1,49 +1,38 @@
-import type {
-  DirectorySuggestions,
-  StorageBackend,
-  StorageBackendChoices,
-  StorageBackendCreate,
-  StorageBackendPatch,
-  StorageSettings,
-  StorageTestResult,
-} from '@mmt/contracts';
-import { encodeId, invalidResponseError, jsonRequest, request, requestItems } from './http';
+import { jsonRequestInit, requestJson } from '@mado/design-system/http';
+import type { StorageBackendCreate, StorageBackendPatch, StorageSettings } from '@mmt/contracts';
+import {
+  directorySuggestionsSchema,
+  itemsOf,
+  storageBackendChoicesSchema,
+  storageBackendSchema,
+  storageSettingsSchema,
+  storageTestResultSchema,
+} from '@mmt/contracts/schemas';
+import { encodeId } from './http';
 
 const backendPath = (name?: string) =>
-  `/admin/storage-backends${name === undefined ? '' : `/${encodeId(name)}`}`;
+  `/api/admin/storage-backends${name === undefined ? '' : `/${encodeId(name)}`}`;
 
 export const storageApi = {
   /** Projectが使える保存先の名前。ログインしている人なら誰でも読める。 */
-  choices: async (signal?: AbortSignal) => {
-    const payload = await request<StorageBackendChoices>('/storage/backends', { signal });
-    if (!Array.isArray(payload.items) || typeof payload.defaultBackend !== 'string')
-      throw invalidResponseError();
-    return payload;
-  },
-  backends: (signal?: AbortSignal) => requestItems<StorageBackend>(backendPath(), signal),
+  choices: (signal?: AbortSignal) =>
+    requestJson('/api/storage/backends', { schema: storageBackendChoicesSchema, init: { signal } }),
+  backends: async (signal?: AbortSignal) =>
+    (await requestJson(backendPath(), { schema: itemsOf(storageBackendSchema), init: { signal } })).items,
   createBackend: (body: StorageBackendCreate) =>
-    request<StorageBackend>(backendPath(), jsonRequest('POST', body)),
+    requestJson(backendPath(), { schema: storageBackendSchema, init: jsonRequestInit('POST', body) }),
   updateBackend: (name: string, body: StorageBackendPatch) =>
-    request<StorageBackend>(backendPath(name), jsonRequest('PATCH', body)),
-  testBackend: async (name: string) => {
-    const payload = await request<StorageTestResult>(`${backendPath(name)}/test`, {
-      method: 'POST',
-    });
-    if (!Array.isArray(payload.steps)) throw invalidResponseError();
-    return payload;
-  },
+    requestJson(backendPath(name), { schema: storageBackendSchema, init: jsonRequestInit('PATCH', body) }),
+  testBackend: (name: string) =>
+    requestJson(`${backendPath(name)}/test`, { schema: storageTestResultSchema, init: { method: 'POST' } }),
   settings: (signal?: AbortSignal) =>
-    request<StorageSettings>('/admin/storage-settings', { signal }),
+    requestJson('/api/admin/storage-settings', { schema: storageSettingsSchema, init: { signal } }),
   updateSettings: (body: StorageSettings) =>
-    request<StorageSettings>('/admin/storage-settings', jsonRequest('PUT', body)),
+    requestJson('/api/admin/storage-settings', { schema: storageSettingsSchema, init: jsonRequestInit('PUT', body) }),
   /** filesystemの保存先のルートのパスを、入力に続けて補完するAPIサーバー上のディレクトリ。 */
-  directorySuggestions: async (path: string, signal?: AbortSignal) => {
-    const payload = await request<DirectorySuggestions>(
-      `/admin/storage-directories?${new URLSearchParams({ path })}`,
-      { signal },
-    );
-    if (!Array.isArray(payload.items) || typeof payload.resolvedPath !== 'string')
-      throw invalidResponseError();
-    return payload;
-  },
+  directorySuggestions: (path: string, signal?: AbortSignal) =>
+    requestJson(`/api/admin/storage-directories?${new URLSearchParams({ path })}`, {
+      schema: directorySuggestionsSchema,
+      init: { signal },
+    }),
 };

@@ -1,7 +1,7 @@
 import { useId, useRef, useState, type ReactNode } from 'react';
 import type { ComputeTarget, Experiment, ExperimentTask, Sweep, SweepMethod, SweepObjective } from '@mmt/contracts';
 import { sweepsApi } from '../../api/sweeps';
-import { RequestError } from '../../api/http';
+import { isApiError, type ApiError } from '@mado/design-system/http';
 import { useMutation } from '../../hooks/useMutation';
 import { useTaskMetricNames } from '../../hooks/useSweeps';
 import { useCodeVersionDetail } from '../../hooks/useCodeVersionDetail';
@@ -42,7 +42,7 @@ const INITIAL_SEARCH_SPACE_ROW_ID = 'row-initial';
 /** 探索空間についての422。それが指す行に出すか、行の上に出す。 */
 interface SpaceError {
   rowId: string | null;
-  failure: RequestError;
+  failure: ApiError;
 }
 
 export function CreateSweepDialog({
@@ -130,7 +130,7 @@ export function CreateSweepDialog({
       try {
         return await sweepsApi.create(projectId, input);
       } catch (error) {
-        if (!(error instanceof RequestError) || error.code !== SPACE_INVALID_CODE) throw error;
+        if (!isApiError(error) || error.code !== SPACE_INVALID_CODE) throw error;
         const rowId = rowIdForSpaceError(error.details.parameter, form.rows);
         setSpaceError({ rowId, failure: error });
         return undefined;

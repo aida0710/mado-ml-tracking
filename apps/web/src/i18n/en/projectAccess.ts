@@ -25,8 +25,6 @@ export const projectAccessText = {
   userSearchNoResults: 'No matching users',
   userSearchRequired: 'Select a user to add',
   changeSelectedUser: 'Choose again',
-  lastProjectAdminConflict:
-    'This would leave the project without an administrator. First grant the Admin role to another member, or to a group that someone has signed in with.',
   lastProjectAdminLocked:
     'This is the last admin, so it cannot be changed or removed. First grant the Admin role to another member, or to a group that someone has signed in with.',
   groupWithoutMembers: 'No one has signed in yet',

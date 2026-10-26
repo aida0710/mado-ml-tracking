@@ -1,10 +1,11 @@
-import type { RepositoryFiles } from '@mmt/contracts';
-import { jsonRequest, projectPath, request } from './http';
+import { jsonRequestInit, requestJson } from '@mado/design-system/http';
+import { repositoryFilesSchema } from '@mmt/contracts/schemas';
+import { projectPath } from './http';
 
 export const repositoryApi = {
   files: (projectId: string, source: { url: string; commit: string }, signal?: AbortSignal) =>
-    request<RepositoryFiles>(`${projectPath(projectId)}/repository-files`, {
-      ...jsonRequest('POST', source),
-      signal,
+    requestJson(`${projectPath(projectId)}/repository-files`, {
+      schema: repositoryFilesSchema,
+      init: { ...jsonRequestInit('POST', source), signal },
     }),
 };

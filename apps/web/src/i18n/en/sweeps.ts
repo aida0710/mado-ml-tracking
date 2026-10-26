@@ -94,6 +94,7 @@ export const sweepsText = {
   sweepDefinition: 'Definition',
   sweepSeedValue: 'Seed',
   sweepTaskRevision: 'Task revision',
+  sweepConfigRangeFields: 'min and max',
 } as const;
 
 // 値を埋め込む文言。catalogのtextTemplatesにまとめる。
@@ -113,6 +114,7 @@ export const sweepsTextTemplates = {
   sweepEarlyStoppedReason: (stopReason: string) => `Stopped: ${stopReason}`,
   sweepSeriesLimited: (shown: number, total: number) =>
     `Showing the ${shown} newest trials (total: ${total}).`,
+  sweepConfigParameterLocation: (name: string) => `parameter “${name}”`,
   sweepConfigNotObject: (where: string) => `Specify ${where} as a JSON object`,
   sweepConfigUnsupportedKeys: (where: string, keys: string[], allowed: string[]) =>
     `Unsupported keys in ${where}: ${keys.join(', ')} (allowed: ${allowed.join(', ')})`,

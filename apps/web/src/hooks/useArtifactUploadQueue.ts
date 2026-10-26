@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Artifact, ArtifactUpload, ArtifactUploadDetail } from '@mmt/contracts';
+import { isApiError } from '@mado/design-system/http';
 import { artifactUploadsApi } from '../api/artifactUploads';
-import { RequestError } from '../api/http';
 import { trackingApi } from '../api/tracking';
 import { canDigest, sha256Hex } from '../lib/blobDigest';
 import type { UploadSource } from '../lib/droppedFiles';
@@ -469,7 +469,7 @@ export function useArtifactUploadQueue({
         await artifactUploadsApi.abort(projectId, session.id);
       } catch (failure) {
         // 既に閉じたセッションは何も残さない。それ以外は、セッションと一緒に期限が切れて消える。
-        if (!(failure instanceof RequestError && failure.code === 'upload_not_open')) {
+        if (!(isApiError(failure) && failure.code === 'upload_not_open')) {
           job.error = { kind: 'cancel', cause: failure };
           render();
         }
@@ -629,7 +629,7 @@ async function retrying<T>(
     try {
       return await send();
     } catch (failure) {
-      const isRetryable = failure instanceof RequestError && isRetryableFailure(failure) && canRetry(attempt);
+      const isRetryable = isApiError(failure) && isRetryableFailure(failure) && canRetry(attempt);
       if (signal.aborted || !isRetryable) throw failure;
       onRetry({ attempt: attempt + 1, maxAttempts: MAX_PART_ATTEMPTS });
       await waitFor(retryDelayMs(attempt), signal);

@@ -1,19 +1,24 @@
-import type { AdminProject, AdminProjectQuery } from '@mmt/contracts';
-import { encodeId, request, requestItems } from './http';
+import { requestJson } from '@mado/design-system/http';
+import type { AdminProjectQuery } from '@mmt/contracts';
+import { adminProjectSchema, itemsOf } from '@mmt/contracts/schemas';
+import { z } from 'zod';
+import { encodeId } from './http';
 
 const adminProjectPath = (projectId?: string) =>
-  `/admin/projects${projectId === undefined ? '' : `/${encodeId(projectId)}`}`;
+  `/api/admin/projects${projectId === undefined ? '' : `/${encodeId(projectId)}`}`;
 
 /** 全体管理者のProjectの一覧と、アーカイブしたProjectを元に戻す・完全に削除する操作。 */
 export const adminProjectsApi = {
-  list: ({ includeArchived }: AdminProjectQuery, signal?: AbortSignal) =>
-    requestItems<AdminProject>(
-      `${adminProjectPath()}${includeArchived ? '?includeArchived=true' : ''}`,
-      signal,
-    ),
+  list: async ({ includeArchived }: AdminProjectQuery, signal?: AbortSignal) =>
+    (
+      await requestJson(`${adminProjectPath()}${includeArchived ? '?includeArchived=true' : ''}`, {
+        schema: itemsOf(adminProjectSchema),
+        init: { signal },
+      })
+    ).items,
   restore: (projectId: string) =>
-    request<AdminProject>(`${adminProjectPath(projectId)}/restore`, { method: 'POST' }),
+    requestJson(`${adminProjectPath(projectId)}/restore`, { schema: adminProjectSchema, init: { method: 'POST' } }),
   /** アーカイブしたProjectを、Artifactのファイルを含むすべてのデータごと消す。 */
   purge: (projectId: string) =>
-    request<void>(adminProjectPath(projectId), { method: 'DELETE' }),
+    requestJson(adminProjectPath(projectId), { schema: z.undefined(), init: { method: 'DELETE' } }),
 };

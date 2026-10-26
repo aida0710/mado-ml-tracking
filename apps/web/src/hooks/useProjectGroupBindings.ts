@@ -1,6 +1,5 @@
 import type { ProjectRole } from '@mmt/contracts';
 import { accessApi } from '../api/access';
-import { explainLastProjectAdminConflict } from '../lib/lastProjectAdminConflict';
 import { useQuery } from './useQuery';
 
 /** ProjectのAuthentik groupの割り当てと、Project adminができる変更。 */
@@ -11,9 +10,9 @@ export function useProjectGroupBindings(projectId: string) {
   return {
     bindings,
     saveGroupBinding: (group: string, role: ProjectRole) =>
-      explainLastProjectAdminConflict(accessApi.saveGroupBinding(projectId, group, role)),
+      accessApi.saveGroupBinding(projectId, group, role),
     removeGroupBinding: (group: string) =>
-      explainLastProjectAdminConflict(accessApi.removeGroupBinding(projectId, group)),
+      accessApi.removeGroupBinding(projectId, group),
   };
 }
 

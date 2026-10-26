@@ -62,7 +62,7 @@ const READABLE_DIRECTORIES = {
   '/large/': [{ name: 'mmt', kind: 'directory', executable: true }],
 };
 
-export function createComputerSetup({ id, now, projectId, targets }) {
+export function createComputerSetup({ id, now, userId, projectId, targets }) {
   const state = {
     checkWorkers: [{ ...SETUP_WORKER, projectId, lastSeenAt: now }],
     // すべてのコンピュータのTargetCheckの行。新しい順。
@@ -120,7 +120,7 @@ export function createComputerSetup({ id, now, projectId, targets }) {
       const check = {
         id: id(),
         targetId,
-        requestedBy: 'browser-test',
+        requestedBy: userId,
         status: 'queued',
         workerId: null,
         assignedWorker: body.worker ?? null,

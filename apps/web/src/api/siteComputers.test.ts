@@ -1,5 +1,58 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type {
+  SiteConnectionCheck,
+  SiteJobShell,
+  SiteJobShellSummary,
+  SiteKey,
+  SitePersonalSettings,
+} from '@mmt/contracts';
 import { siteComputersApi } from './siteComputers';
+
+const createdAt = '2026-10-08T00:00:00.000Z';
+const TARGET_ID = '00000000-0000-4000-8000-000000000001';
+const USER_ID = '00000000-0000-4000-8000-000000000002';
+const jobShellSummary: SiteJobShellSummary = {
+  id: '00000000-0000-4000-8000-000000000003',
+  targetId: TARGET_ID,
+  version: 2,
+  sha256: 'a'.repeat(64),
+  sizeBytes: 10,
+  createdBy: USER_ID,
+  createdByName: null,
+  createdAt,
+};
+const jobShell: SiteJobShell = { ...jobShellSummary, content: '#!/bin/sh\n' };
+const siteKey: SiteKey = {
+  id: '00000000-0000-4000-8000-000000000004',
+  targetId: TARGET_ID,
+  userId: USER_ID,
+  launcherId: '00000000-0000-4000-8000-000000000005',
+  status: 'ready',
+  publicKey: 'ssh-ed25519 AAAA',
+  fingerprint: 'SHA256:test',
+  requestedAt: createdAt,
+  readyAt: createdAt,
+};
+const personalSettings: SitePersonalSettings = {
+  targetId: TARGET_ID,
+  userId: USER_ID,
+  userName: null,
+  accountName: 'alice',
+  workDirectory: null,
+  variables: {},
+  key: null,
+  updatedAt: createdAt,
+};
+const queuedCheck: SiteConnectionCheck = {
+  id: '00000000-0000-4000-8000-000000000006',
+  targetId: TARGET_ID,
+  userId: null,
+  requestedBy: USER_ID,
+  status: 'queued',
+  message: null,
+  createdAt,
+  finishedAt: null,
+};
 
 afterEach(() => vi.unstubAllGlobals());
 function stubJsonResponse(body: unknown, status = 200) {
@@ -14,6 +67,13 @@ function stubJsonResponse(body: unknown, status = 200) {
   vi.stubGlobal('fetch', fetch);
   return fetch;
 }
+/** 呼ぶ順に、本文を1つずつ返す（どれも200）。 */
+function stubJsonResponses(...bodies: unknown[]) {
+  const fetch = vi.fn();
+  for (const body of bodies) fetch.mockResolvedValueOnce(new Response(JSON.stringify(body), { status: 200 }));
+  vi.stubGlobal('fetch', fetch);
+  return fetch;
+}
 const call = (fetch: ReturnType<typeof stubJsonResponse>, index = 0) => ({
   path: fetch.mock.calls[index]?.[0] as string,
   method: (fetch.mock.calls[index]?.[1]?.method as string | undefined) ?? 'GET',
@@ -24,9 +84,9 @@ const call = (fetch: ReturnType<typeof stubJsonResponse>, index = 0) => ({
 
 describe('siteのjob shellのAPI呼び出し', () => {
   it('バージョンの一覧・1つのバージョン・新しいバージョンの保存はtargetのjob-shellsを使う', async () => {
-    const fetch = stubJsonResponse({ items: [] });
-    await expect(siteComputersApi.jobShells('site')).resolves.toEqual([]);
-    await siteComputersApi.jobShell('site', 'shell/2');
+    const fetch = stubJsonResponses({ items: [jobShellSummary] }, jobShell, jobShell);
+    await expect(siteComputersApi.jobShells('site')).resolves.toEqual([jobShellSummary]);
+    await expect(siteComputersApi.jobShell('site', 'shell/2')).resolves.toEqual(jobShell);
     await siteComputersApi.createJobShell('site', { content: '#!/bin/sh\n' });
     expect(call(fetch, 0).path).toBe('/api/targets/site/job-shells');
     expect(call(fetch, 1).path).toBe('/api/targets/site/job-shells/shell%2F2');
@@ -45,8 +105,9 @@ describe('siteのjob shellのAPI呼び出し', () => {
 
 describe('個人設定のAPI呼び出し', () => {
   it('自分の設定はまだ無ければnullで、itemの無い応答は契約違反にする', async () => {
-    const fetch = stubJsonResponse({ item: null });
+    const fetch = stubJsonResponses({ item: null }, { item: personalSettings });
     await expect(siteComputersApi.myPersonalSettings('site')).resolves.toBeNull();
+    await expect(siteComputersApi.myPersonalSettings('site')).resolves.toEqual(personalSettings);
     expect(call(fetch).path).toBe('/api/targets/site/personal-settings/me');
     stubJsonResponse({});
     await expect(siteComputersApi.myPersonalSettings('site')).rejects.toMatchObject({
@@ -55,8 +116,10 @@ describe('個人設定のAPI呼び出し', () => {
   });
 
   it('保存はPUT、削除はDELETE（204）で、共用アカウントのsiteの拒否をcodeつきで返す', async () => {
-    const fetch = stubJsonResponse({ targetId: 'site', accountName: 'alice' });
-    await siteComputersApi.saveMyPersonalSettings('site', { accountName: 'alice', variables: {} });
+    const fetch = stubJsonResponse(personalSettings);
+    await expect(
+      siteComputersApi.saveMyPersonalSettings('site', { accountName: 'alice', variables: {} }),
+    ).resolves.toEqual(personalSettings);
     expect(call(fetch)).toEqual({
       path: '/api/targets/site/personal-settings/me',
       method: 'PUT',
@@ -72,17 +135,17 @@ describe('個人設定のAPI呼び出し', () => {
   });
 
   it('全員の設定はpersonal-settingsを読む', async () => {
-    const fetch = stubJsonResponse({ items: [] });
-    await siteComputersApi.personalSettings('site');
+    const fetch = stubJsonResponse({ items: [personalSettings] });
+    await expect(siteComputersApi.personalSettings('site')).resolves.toEqual([personalSettings]);
     expect(call(fetch).path).toBe('/api/targets/site/personal-settings');
   });
 });
 
 describe('鍵と接続確認のAPI呼び出し', () => {
   it('鍵の作り直しは共用か本人かをPOSTする', async () => {
-    const fetch = stubJsonResponse({ items: [] });
-    await siteComputersApi.keys('site');
-    await siteComputersApi.rotateKey('site', { personal: true });
+    const fetch = stubJsonResponses({ items: [siteKey] }, siteKey);
+    await expect(siteComputersApi.keys('site')).resolves.toEqual([siteKey]);
+    await expect(siteComputersApi.rotateKey('site', { personal: true })).resolves.toEqual(siteKey);
     expect(call(fetch, 0).path).toBe('/api/targets/site/keys');
     expect(call(fetch, 1)).toEqual({
       path: '/api/targets/site/keys/rotate',
@@ -97,8 +160,10 @@ describe('鍵と接続確認のAPI呼び出し', () => {
     await siteComputersApi.connectionChecks('site', true);
     expect(call(fetch, 0).path).toBe('/api/targets/site/connection-checks?personal=false');
     expect(call(fetch, 1).path).toBe('/api/targets/site/connection-checks?personal=true');
-    const requested = stubJsonResponse({ id: 'check', status: 'queued' }, 201);
-    await siteComputersApi.requestConnectionCheck('site', { personal: false });
+    const requested = stubJsonResponse(queuedCheck, 201);
+    await expect(siteComputersApi.requestConnectionCheck('site', { personal: false })).resolves.toEqual(
+      queuedCheck,
+    );
     expect(call(requested)).toEqual({
       path: '/api/targets/site/connection-checks',
       method: 'POST',
@@ -107,6 +172,6 @@ describe('鍵と接続確認のAPI呼び出し', () => {
     stubJsonResponse({ error: '確認中です', code: 'site_check_in_progress' }, 409);
     await expect(
       siteComputersApi.requestConnectionCheck('site', { personal: false }),
-    ).rejects.toMatchObject({ status: 409, code: 'site_check_in_progress', serverMessage: '確認中です' });
+    ).rejects.toMatchObject({ status: 409, code: 'site_check_in_progress', message: '確認中です' });
   });
 });

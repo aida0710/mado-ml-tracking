@@ -1,30 +1,24 @@
-import type {
-  Code,
-  CodeVersion,
-  CodeVersionDetail,
-  Dataset,
-  DatasetUpdate,
-  DatasetVersion,
-  Model,
-  ModelAliasEventPage,
-  ModelAliasProtection,
-  ModelAliasProtectionRole,
-  ModelFamilySummary,
-  ModelVersion,
-  ModelVersionDetail,
-  ModelVersionEvaluationSummary,
-  ModelVersionResultRunKind,
-  RunDownstreamPage,
-} from '@mmt/contracts';
-import type { CreateCodeVersion, CreateDatasetVersion, CreateModelVersion } from './inputs';
+import { jsonRequestInit, requestJson } from '@mado/design-system/http';
+import type { DatasetUpdate, ModelAliasProtectionRole, ModelVersionResultRunKind } from '@mmt/contracts';
 import {
-  assertCursorPage,
-  encodeId,
-  jsonRequest,
-  projectPath,
-  request,
-  requestItems,
-} from './http';
+  codeSchema,
+  codeVersionDetailSchema,
+  codeVersionSchema,
+  datasetSchema,
+  datasetVersionSchema,
+  itemsOf,
+  modelAliasEventPageSchema,
+  modelAliasProtectionSchema,
+  modelFamilySummarySchema,
+  modelSchema,
+  modelVersionDetailSchema,
+  modelVersionEvaluationSummarySchema,
+  modelVersionSchema,
+  runDownstreamPageSchema,
+} from '@mmt/contracts/schemas';
+import { z } from 'zod';
+import type { CreateCodeVersion, CreateDatasetVersion, CreateModelVersion } from './inputs';
+import { encodeId, projectPath } from './http';
 
 // サーバーが拒む入力をフォームで止めるため、APIの上限に合わせる。
 export const MAX_MODEL_ALIAS_REASON_LENGTH = 2000;
@@ -58,37 +52,47 @@ const aliasProtectionPath = (projectId: string, target: ModelAliasProtectionTarg
 const registryPath = (projectId: string, registry: string, id?: string) =>
   `${projectPath(projectId)}/${registry}${id ? `/${encodeId(id)}` : ''}`;
 export const registryApi = {
-  models: (projectId: string, signal?: AbortSignal) =>
-    requestItems<Model>(registryPath(projectId, 'models'), signal),
+  models: async (projectId: string, signal?: AbortSignal) =>
+    (await requestJson(registryPath(projectId, 'models'), { schema: itemsOf(modelSchema), init: { signal } })).items,
   createModel: (projectId: string, body: { name: string; family: string; description?: string }) =>
-    request<Model>(registryPath(projectId, 'models'), jsonRequest('POST', body)),
+    requestJson(registryPath(projectId, 'models'), { schema: modelSchema, init: jsonRequestInit('POST', body) }),
   // Projectのモデルとコードバージョンが使うモデル系列。大文字・小文字だけが違うものは隣に並べる。
-  modelFamilies: (projectId: string, signal?: AbortSignal) =>
-    requestItems<ModelFamilySummary>(registryPath(projectId, 'model-families'), signal),
-  modelVersions: (projectId: string, id: string, signal?: AbortSignal) =>
-    requestItems<ModelVersion>(`${registryPath(projectId, 'models', id)}/versions`, signal),
+  modelFamilies: async (projectId: string, signal?: AbortSignal) =>
+    (
+      await requestJson(registryPath(projectId, 'model-families'), {
+        schema: itemsOf(modelFamilySummarySchema),
+        init: { signal },
+      })
+    ).items,
+  modelVersions: async (projectId: string, id: string, signal?: AbortSignal) =>
+    (
+      await requestJson(`${registryPath(projectId, 'models', id)}/versions`, {
+        schema: itemsOf(modelVersionSchema),
+        init: { signal },
+      })
+    ).items,
   createModelVersion: (projectId: string, id: string, body: CreateModelVersion) =>
-    request<ModelVersion>(
-      `${registryPath(projectId, 'models', id)}/versions`,
-      jsonRequest('POST', body),
-    ),
+    requestJson(`${registryPath(projectId, 'models', id)}/versions`, {
+      schema: modelVersionSchema,
+      init: jsonRequestInit('POST', body),
+    }),
   assignAlias: (projectId: string, id: string, assignment: ModelAliasAssignment) =>
-    request<Model>(
-      `${registryPath(projectId, 'models', id)}/aliases/${encodeId(assignment.alias)}`,
-      jsonRequest('PUT', {
+    requestJson(`${registryPath(projectId, 'models', id)}/aliases/${encodeId(assignment.alias)}`, {
+      schema: modelSchema,
+      init: jsonRequestInit('PUT', {
         versionId: assignment.versionId,
         ...(assignment.reason ? { reason: assignment.reason } : {}),
         ...(assignment.evaluationId ? { evaluationId: assignment.evaluationId } : {}),
       }),
-    ),
+    }),
   // modelIdなしならProject全体の保護だけ、ありならそのモデル自身の保護も返す。
-  aliasProtections: (projectId: string, modelId: string | null, signal?: AbortSignal) =>
-    requestItems<ModelAliasProtection>(
-      `${projectPath(projectId)}/alias-protections${
-        modelId ? `?${new URLSearchParams({ modelId })}` : ''
-      }`,
-      signal,
-    ),
+  aliasProtections: async (projectId: string, modelId: string | null, signal?: AbortSignal) =>
+    (
+      await requestJson(
+        `${projectPath(projectId)}/alias-protections${modelId ? `?${new URLSearchParams({ modelId })}` : ''}`,
+        { schema: itemsOf(modelAliasProtectionSchema), init: { signal } },
+      )
+    ).items,
   setAliasProtection: (
     projectId: string,
     protection: ModelAliasProtectionTarget & {
@@ -96,69 +100,72 @@ export const registryApi = {
       requirePassedEvaluation: boolean;
     },
   ) =>
-    request<ModelAliasProtection>(
-      aliasProtectionPath(projectId, protection),
-      jsonRequest('PUT', {
+    requestJson(aliasProtectionPath(projectId, protection), {
+      schema: modelAliasProtectionSchema,
+      init: jsonRequestInit('PUT', {
         requiredRole: protection.requiredRole,
         requirePassedEvaluation: protection.requirePassedEvaluation,
       }),
-    ),
-  removeAliasProtection: (projectId: string, target: ModelAliasProtectionTarget) =>
-    request<void>(aliasProtectionPath(projectId, target), { method: 'DELETE' }),
-  removeAlias: (projectId: string, id: string, alias: string) =>
-    request<void>(`${registryPath(projectId, 'models', id)}/aliases/${encodeId(alias)}`, {
-      method: 'DELETE',
     }),
-  aliasEvents: async (
+  removeAliasProtection: (projectId: string, target: ModelAliasProtectionTarget) =>
+    requestJson(aliasProtectionPath(projectId, target), { schema: z.undefined(), init: { method: 'DELETE' } }),
+  removeAlias: (projectId: string, id: string, alias: string) =>
+    requestJson(`${registryPath(projectId, 'models', id)}/aliases/${encodeId(alias)}`, {
+      schema: z.undefined(),
+      init: { method: 'DELETE' },
+    }),
+  aliasEvents: (
     projectId: string,
     id: string,
     { cursor, signal }: { cursor?: string; signal?: AbortSignal } = {},
-  ): Promise<ModelAliasEventPage> => {
+  ) => {
     const query = new URLSearchParams({ limit: String(MODEL_ALIAS_EVENT_PAGE_SIZE) });
     if (cursor) query.set('cursor', cursor);
-    const page = await request<ModelAliasEventPage>(
-      `${registryPath(projectId, 'models', id)}/alias-events?${query}`,
-      { signal },
-    );
-    assertCursorPage(page);
-    return page;
+    return requestJson(`${registryPath(projectId, 'models', id)}/alias-events?${query}`, {
+      schema: modelAliasEventPageSchema,
+      init: { signal },
+    });
   },
   modelVersionDetail: (projectId: string, versionId: string, signal?: AbortSignal) =>
-    request<ModelVersionDetail>(registryPath(projectId, 'model-versions', versionId), { signal }),
-  modelVersionEvaluations: async (
+    requestJson(registryPath(projectId, 'model-versions', versionId), {
+      schema: modelVersionDetailSchema,
+      init: { signal },
+    }),
+  modelVersionEvaluations: (
     projectId: string,
     versionId: string,
     { kind, signal }: { kind?: ModelVersionResultRunKind; signal?: AbortSignal } = {},
-  ): Promise<ModelVersionEvaluationSummary> => {
+  ) => {
     const query = new URLSearchParams({ limit: String(MODEL_VERSION_RUN_PAGE_SIZE) });
     if (kind) query.set('kind', kind);
-    const page = await request<ModelVersionEvaluationSummary>(
-      `${registryPath(projectId, 'model-versions', versionId)}/evaluations?${query}`,
-      { signal },
-    );
-    assertCursorPage(page);
-    return page;
+    return requestJson(`${registryPath(projectId, 'model-versions', versionId)}/evaluations?${query}`, {
+      schema: modelVersionEvaluationSummarySchema,
+      init: { signal },
+    });
   },
-  runDownstream: async (
+  runDownstream: (
     projectId: string,
     runId: string,
     { cursor, signal }: { cursor?: string; signal?: AbortSignal } = {},
-  ): Promise<RunDownstreamPage> => {
+  ) => {
     const query = new URLSearchParams({ limit: String(RUN_DOWNSTREAM_PAGE_SIZE) });
     if (cursor) query.set('cursor', cursor);
-    const page = await request<RunDownstreamPage>(
-      `${projectPath(projectId)}/runs/${encodeId(runId)}/downstream?${query}`,
-      { signal },
-    );
-    assertCursorPage(page);
-    return page;
+    return requestJson(`${projectPath(projectId)}/runs/${encodeId(runId)}/downstream?${query}`, {
+      schema: runDownstreamPageSchema,
+      init: { signal },
+    });
   },
-  codes: (projectId: string, signal?: AbortSignal) =>
-    requestItems<Code>(registryPath(projectId, 'codes'), signal),
+  codes: async (projectId: string, signal?: AbortSignal) =>
+    (await requestJson(registryPath(projectId, 'codes'), { schema: itemsOf(codeSchema), init: { signal } })).items,
   createCode: (projectId: string, body: { name: string; description?: string }) =>
-    request<Code>(registryPath(projectId, 'codes'), jsonRequest('POST', body)),
-  codeVersions: (projectId: string, id: string, signal?: AbortSignal) =>
-    requestItems<CodeVersion>(`${registryPath(projectId, 'codes', id)}/versions`, signal),
+    requestJson(registryPath(projectId, 'codes'), { schema: codeSchema, init: jsonRequestInit('POST', body) }),
+  codeVersions: async (projectId: string, id: string, signal?: AbortSignal) =>
+    (
+      await requestJson(`${registryPath(projectId, 'codes', id)}/versions`, {
+        schema: itemsOf(codeVersionSchema),
+        init: { signal },
+      })
+    ).items,
   /** Projectのコードとそのすべてのバージョン。コードごとに並行して読む。 */
   codesWithVersions: async (projectId: string, signal?: AbortSignal) => {
     const codes = await registryApi.codes(projectId, signal);
@@ -168,32 +175,41 @@ export const registryApi = {
     return { codes, codeVersions: versions.flat() };
   },
   codeVersionDetail: (projectId: string, versionId: string, signal?: AbortSignal) =>
-    request<CodeVersionDetail>(registryPath(projectId, 'code-versions', versionId), { signal }),
+    requestJson(registryPath(projectId, 'code-versions', versionId), {
+      schema: codeVersionDetailSchema,
+      init: { signal },
+    }),
   createCodeVersion: (projectId: string, id: string, body: CreateCodeVersion) =>
-    request<CodeVersion>(
-      `${registryPath(projectId, 'codes', id)}/versions`,
-      jsonRequest('POST', body),
-    ),
-  datasets: (projectId: string, signal?: AbortSignal) =>
-    requestItems<Dataset>(registryPath(projectId, 'datasets'), signal),
+    requestJson(`${registryPath(projectId, 'codes', id)}/versions`, {
+      schema: codeVersionSchema,
+      init: jsonRequestInit('POST', body),
+    }),
+  datasets: async (projectId: string, signal?: AbortSignal) =>
+    (await requestJson(registryPath(projectId, 'datasets'), { schema: itemsOf(datasetSchema), init: { signal } }))
+      .items,
   createDataset: (
     projectId: string,
     body: { name: string; namespace?: string; description?: string },
-  ) => request<Dataset>(registryPath(projectId, 'datasets'), jsonRequest('POST', body)),
+  ) => requestJson(registryPath(projectId, 'datasets'), { schema: datasetSchema, init: jsonRequestInit('POST', body) }),
   /** 説明とアーカイブ。名前は変えられない（SDKやMLflowは名前でデータセットを探す）。 */
   updateDataset: (projectId: string, id: string, body: DatasetUpdate) =>
-    request<Dataset>(registryPath(projectId, 'datasets', id), jsonRequest('PATCH', body)),
-  datasetVersions: (projectId: string, id: string, signal?: AbortSignal) =>
-    requestItems<DatasetVersion>(`${registryPath(projectId, 'datasets', id)}/versions`, signal),
+    requestJson(registryPath(projectId, 'datasets', id), { schema: datasetSchema, init: jsonRequestInit('PATCH', body) }),
+  datasetVersions: async (projectId: string, id: string, signal?: AbortSignal) =>
+    (
+      await requestJson(`${registryPath(projectId, 'datasets', id)}/versions`, {
+        schema: itemsOf(datasetVersionSchema),
+        init: { signal },
+      })
+    ).items,
   createDatasetVersion: (projectId: string, id: string, body: CreateDatasetVersion) =>
-    request<DatasetVersion>(
-      `${registryPath(projectId, 'datasets', id)}/versions`,
-      jsonRequest('POST', body),
-    ),
+    requestJson(`${registryPath(projectId, 'datasets', id)}/versions`, {
+      schema: datasetVersionSchema,
+      init: jsonRequestInit('POST', body),
+    }),
   /** 何かがそのバージョンを参照している間は、409 dataset_version_in_useで拒まれる。 */
   deleteDatasetVersion: (projectId: string, version: { datasetId: string; versionId: string }) =>
-    request<unknown>(
+    requestJson(
       `${registryPath(projectId, 'datasets', version.datasetId)}/versions/${encodeId(version.versionId)}`,
-      { method: 'DELETE' },
+      { schema: z.undefined(), init: { method: 'DELETE' } },
     ),
 };

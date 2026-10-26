@@ -1,17 +1,12 @@
-import type {
-  PromotionEvaluation,
-  PromotionEvaluationPage,
-  PromotionPolicy,
-  PromotionPolicyCreate,
-} from '@mmt/contracts';
+import { jsonRequestInit, requestJson } from '@mado/design-system/http';
+import type { PromotionPolicyCreate } from '@mmt/contracts';
 import {
-  encodeId,
-  invalidResponseError,
-  jsonRequest,
-  projectPath,
-  request,
-  requestItems,
-} from './http';
+  itemsOf,
+  promotionEvaluationPageSchema,
+  promotionEvaluationSchema,
+  promotionPolicySchema,
+} from '@mmt/contracts/schemas';
+import { encodeId, projectPath } from './http';
 
 // 続きを読むたびにサーバーの1ページを取る。APIはlimitを200までに抑える。
 export const PROMOTION_EVALUATION_PAGE_SIZE = 50;
@@ -20,17 +15,17 @@ const policiesPath = (projectId: string) => `${projectPath(projectId)}/promotion
 const evaluationsPath = (projectId: string) => `${projectPath(projectId)}/promotion-evaluations`;
 
 export const promotionApi = {
-  policies: (projectId: string, signal?: AbortSignal) =>
-    requestItems<PromotionPolicy>(policiesPath(projectId), signal),
+  policies: async (projectId: string, signal?: AbortSignal) =>
+    (await requestJson(policiesPath(projectId), { schema: itemsOf(promotionPolicySchema), init: { signal } })).items,
   createPolicy: (projectId: string, body: PromotionPolicyCreate) =>
-    request<PromotionPolicy>(policiesPath(projectId), jsonRequest('POST', body)),
+    requestJson(policiesPath(projectId), { schema: promotionPolicySchema, init: jsonRequestInit('POST', body) }),
   setPolicyEnabled: (projectId: string, policyId: string, enabled: boolean) =>
-    request<PromotionPolicy>(
-      `${policiesPath(projectId)}/${encodeId(policyId)}`,
-      jsonRequest('PATCH', { enabled }),
-    ),
+    requestJson(`${policiesPath(projectId)}/${encodeId(policyId)}`, {
+      schema: promotionPolicySchema,
+      init: jsonRequestInit('PATCH', { enabled }),
+    }),
   // 昇格policy、候補のバージョン（バージョンの画面）、またはその両方で絞り込む。
-  evaluations: async (
+  evaluations: (
     projectId: string,
     {
       policyId,
@@ -38,29 +33,24 @@ export const promotionApi = {
       cursor,
       signal,
     }: { policyId?: string; candidateVersionId?: string; cursor?: string; signal?: AbortSignal },
-  ): Promise<PromotionEvaluationPage> => {
+  ) => {
     const query = new URLSearchParams({ limit: String(PROMOTION_EVALUATION_PAGE_SIZE) });
     if (policyId) query.set('policyId', policyId);
     if (candidateVersionId) query.set('candidateVersionId', candidateVersionId);
     if (cursor) query.set('cursor', cursor);
-    const page = await request<PromotionEvaluationPage>(`${evaluationsPath(projectId)}?${query}`, {
-      signal,
+    return requestJson(`${evaluationsPath(projectId)}?${query}`, {
+      schema: promotionEvaluationPageSchema,
+      init: { signal },
     });
-    if (
-      !Array.isArray(page.items) ||
-      (page.nextCursor !== null && typeof page.nextCursor !== 'string')
-    )
-      throw invalidResponseError();
-    return page;
   },
   transferPolicyOwner: (projectId: string, policyId: string, serviceAccountId: string) =>
-    request<PromotionPolicy>(
-      `${policiesPath(projectId)}/${encodeId(policyId)}/owner`,
-      jsonRequest('PUT', { serviceAccountId }),
-    ),
+    requestJson(`${policiesPath(projectId)}/${encodeId(policyId)}/owner`, {
+      schema: promotionPolicySchema,
+      init: jsonRequestInit('PUT', { serviceAccountId }),
+    }),
   reevaluate: (projectId: string, evaluationId: string) =>
-    request<PromotionEvaluation>(
-      `${evaluationsPath(projectId)}/${encodeId(evaluationId)}/reevaluate`,
-      { method: 'POST' },
-    ),
+    requestJson(`${evaluationsPath(projectId)}/${encodeId(evaluationId)}/reevaluate`, {
+      schema: promotionEvaluationSchema,
+      init: { method: 'POST' },
+    }),
 };

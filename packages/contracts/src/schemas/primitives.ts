@@ -3,6 +3,7 @@ import type {
   JobStatus,
   JsonObject,
   JsonValue,
+  LatestMetricValue,
   ProjectRole,
   ProjectVisibility,
   RunKind,
@@ -21,6 +22,7 @@ export const jsonObjectSchema = namedContractSchema(
   z.record(z.string(), jsonValueSchema),
 );
 export const stringMapSchema = z.record(z.string(), z.string());
+export const latestMetricValueSchema = z.union([z.number(), z.enum(['NaN', 'Infinity', '-Infinity'])]);
 export const projectRoleSchema = z.enum(['viewer', 'editor', 'admin']);
 export const projectVisibilitySchema = z.enum(['public', 'private']);
 export const runKindSchema = z.enum([
@@ -45,6 +47,9 @@ export function cursorPageOf<T extends z.ZodType>(item: T) {
 
 type _JsonValue = Expect<MutuallyAssignable<z.infer<typeof jsonValueSchema>, JsonValue>>;
 type _JsonObject = Expect<MutuallyAssignable<z.infer<typeof jsonObjectSchema>, JsonObject>>;
+type _LatestMetricValue = Expect<
+  MutuallyAssignable<z.infer<typeof latestMetricValueSchema>, LatestMetricValue>
+>;
 type _ProjectRole = Expect<MutuallyAssignable<z.infer<typeof projectRoleSchema>, ProjectRole>>;
 type _ProjectVisibility = Expect<
   MutuallyAssignable<z.infer<typeof projectVisibilitySchema>, ProjectVisibility>

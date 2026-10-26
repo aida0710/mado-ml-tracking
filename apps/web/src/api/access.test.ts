@@ -1,5 +1,32 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { ProjectGroupBinding, ProjectMember } from '@mmt/contracts';
 import { accessApi } from './access';
+
+const PROJECT_ID = '00000000-0000-4000-8000-000000000001';
+const USER_ID = '00000000-0000-4000-8000-000000000002';
+const createdAt = '2026-10-08T00:00:00.000Z';
+const member = {
+  user: {
+    id: USER_ID,
+    email: 'member@example.invalid',
+    displayName: 'メンバー',
+    isAdmin: false,
+    username: null,
+    status: 'active',
+    authSources: ['oidc'],
+    kind: 'human',
+  },
+  role: 'editor',
+  directRole: 'editor',
+  groups: [],
+} satisfies ProjectMember;
+const groupBinding = {
+  projectId: PROJECT_ID,
+  group: 'ml/team a',
+  role: 'admin',
+  createdBy: USER_ID,
+  createdAt,
+} satisfies ProjectGroupBinding;
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -23,7 +50,7 @@ describe('メンバーのAPI', () => {
   });
 
   it('直接付与の保存はユーザーIDをencodeしてPUTでroleを送る', async () => {
-    const fetch = stubFetch({});
+    const fetch = stubFetch(member);
     await accessApi.saveMember('project', 'user/1', 'editor');
     expect(fetch).toHaveBeenCalledWith('/api/projects/project/members/user%2F1', {
       method: 'PUT',
@@ -45,7 +72,7 @@ describe('メンバーのAPI', () => {
 
 describe('group bindingのAPI', () => {
   it('group名の/や空白をencodeしてPUTでroleを送る', async () => {
-    const fetch = stubFetch({ group: 'ml/team a', role: 'admin' });
+    const fetch = stubFetch(groupBinding);
     await accessApi.saveGroupBinding('project', 'ml/team a', 'admin');
     expect(fetch).toHaveBeenCalledWith('/api/projects/project/group-bindings/ml%2Fteam%20a', {
       method: 'PUT',
@@ -66,7 +93,7 @@ describe('group bindingのAPI', () => {
 
   it('一覧のitemsが配列でなければ空一覧へ補完せずエラーにする', async () => {
     stubFetch({});
-    await expect(accessApi.groupBindings('project')).rejects.toThrow();
+    await expect(accessApi.groupBindings('project')).rejects.toMatchObject({ code: 'invalid_response' });
   });
 
   it('group名の候補はauth/groupsから読む', async () => {

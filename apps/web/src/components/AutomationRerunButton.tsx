@@ -2,9 +2,7 @@ import { useState } from 'react';
 import type { ModelAutomationExecution, ModelAutomationRule } from '@mmt/contracts';
 import { automationApi } from '../api/automation';
 import { ConfirmDialog } from './ConfirmDialog';
-import { manualExecutionErrorMessage } from '../lib/automationManualExecution';
 import { rerunRequest } from '../lib/automationRerun';
-import { LocalizedError } from '../lib/localizedError';
 import { useLocale } from '../i18n/useLocale';
 import { automationText } from '../i18n/automation';
 
@@ -32,13 +30,7 @@ export function AutomationRerunButton({
           title={automationText.rerun}
           message={automationText.rerunConfirmMessage(rule.name)}
           confirmLabel={automationText.rerun}
-          onConfirm={() =>
-            automationApi
-              .createExecution(projectId, rule.id, rerunRequest(execution, rule))
-              .catch((failure: unknown) => {
-                throw new LocalizedError(() => manualExecutionErrorMessage(failure));
-              })
-          }
+          onConfirm={() => automationApi.createExecution(projectId, rule.id, rerunRequest(execution, rule))}
           onConfirmed={() => {
             setIsConfirming(false);
             onRerun();

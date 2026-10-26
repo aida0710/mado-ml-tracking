@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
+import { isApiError } from '@mado/design-system/http';
 import { administrationApi } from '../api/administration';
-import { RequestError } from '../api/http';
 
 /** archived: メンバー（または全体管理者）が開けるはずのProjectがアーカイブされている。 */
 export type UnreachableProjectReason = 'archived' | 'unavailable';
@@ -28,7 +28,7 @@ export function useUnreachableProjectReason(
       (failure: unknown) => {
         if (controller.signal.aborted) return;
         const isArchived =
-          failure instanceof RequestError && failure.code === PROJECT_ARCHIVED_CODE;
+          isApiError(failure) && failure.code === PROJECT_ARCHIVED_CODE;
         setAnswer({ projectId, reason: isArchived ? 'archived' : 'unavailable' });
       },
     );

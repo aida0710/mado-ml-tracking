@@ -410,6 +410,11 @@ export interface Experiment {
   runCount: number;
   createdAt: string;
 }
+/**
+ * RunのlatestMetricsの値。PostgreSQLはlatest_metricsを組み立てるとき、有限でないdoubleをJSONの
+ * 文字列（'NaN'・'Infinity'・'-Infinity'）にする。
+ */
+export type LatestMetricValue = number | 'NaN' | 'Infinity' | '-Infinity';
 export interface MetricPoint {
   name: string;
   value: number;
@@ -441,7 +446,7 @@ export interface Run {
   parameters: JsonObject;
   recordedParameters?: JsonObject;
   tags: Record<string, string>;
-  latestMetrics: Record<string, number>;
+  latestMetrics: Record<string, LatestMetricValue>;
   modelVersionId: string | null;
   codeVersionId: string | null;
   taskId?: string | null;

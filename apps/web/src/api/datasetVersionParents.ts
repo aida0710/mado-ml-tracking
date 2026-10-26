@@ -1,5 +1,7 @@
-import type { DatasetVersionParentCreate, DatasetVersionParentPage } from '@mmt/contracts';
-import { encodeId, jsonRequest, projectPath, request } from './http';
+import { jsonRequestInit, requestJson } from '@mado/design-system/http';
+import type { DatasetVersionParentCreate } from '@mmt/contracts';
+import { datasetVersionParentPageSchema } from '@mmt/contracts/schemas';
+import { encodeId, projectPath } from './http';
 
 export interface DatasetVersionParentLocation {
   projectId: string;
@@ -12,7 +14,10 @@ const parentPath = (location: DatasetVersionParentLocation) =>
 
 export const datasetVersionParentsApi = {
   get: (location: DatasetVersionParentLocation, signal?: AbortSignal) =>
-    request<DatasetVersionParentPage>(parentPath(location), { signal }),
+    requestJson(parentPath(location), { schema: datasetVersionParentPageSchema, init: { signal } }),
   append: (location: DatasetVersionParentLocation, input: DatasetVersionParentCreate) =>
-    request<DatasetVersionParentPage>(parentPath(location), jsonRequest('POST', input)),
+    requestJson(parentPath(location), {
+      schema: datasetVersionParentPageSchema,
+      init: jsonRequestInit('POST', input),
+    }),
 };

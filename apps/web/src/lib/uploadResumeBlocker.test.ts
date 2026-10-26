@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RequestError } from '../api/http';
+import { ApiError } from '@mado/design-system/http';
 import {
   blockerFromFailure,
   blockerFromSession,
@@ -24,9 +24,9 @@ describe('blockerFromSession', () => {
 
 describe('blockerFromFailure', () => {
   it('Runの削除はRunの理由、一時的な失敗や知らないコードは理由なしにする', () => {
-    expect(blockerFromFailure(new RequestError({ status: 409, code: 'run_deleted' }))).toBe('runDeleted');
-    expect(blockerFromFailure(new RequestError({ status: 503, code: 'artifact_save_failed' }))).toBeNull();
-    expect(blockerFromFailure(new RequestError({ status: 500 }))).toBeNull();
+    expect(blockerFromFailure(new ApiError({ status: 409, code: 'run_deleted', message: 'the run was deleted' }))).toBe('runDeleted');
+    expect(blockerFromFailure(new ApiError({ status: 503, code: 'artifact_save_failed', message: 'failed to save the artifact' }))).toBeNull();
+    expect(blockerFromFailure(new ApiError({ status: 500, message: 'HTTP 500' }))).toBeNull();
     expect(blockerFromFailure(new Error('boom'))).toBeNull();
   });
 });

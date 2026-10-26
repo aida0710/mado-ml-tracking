@@ -11,6 +11,7 @@ import type { ExecutionSnapshot, TaskOutputModel } from '../experimentTasks.js';
 import {
   idSchema,
   jsonObjectSchema,
+  latestMetricValueSchema,
   runKindSchema,
   runStatusSchema,
   stringMapSchema,
@@ -108,7 +109,7 @@ export const runSchema = namedContractSchema(
     parameters: jsonObjectSchema,
     recordedParameters: jsonObjectSchema.optional(),
     tags: stringMapSchema,
-    latestMetrics: z.record(z.string(), z.number()),
+    latestMetrics: z.record(z.string(), latestMetricValueSchema),
     modelVersionId: idSchema.nullable(),
     codeVersionId: idSchema.nullable(),
     taskId: idSchema.nullable().optional(),

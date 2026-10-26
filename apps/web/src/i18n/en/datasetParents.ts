@@ -12,5 +12,4 @@ export const datasetParentsText = {
   createdAt: 'Added at',
   addParentsHint:
     'Add verified sources while keeping this version and existing training references. Recorded parents and evidence cannot be replaced.',
-  parentCycle: 'Adding these parents would create a cycle in the data lineage.',
 } as const;

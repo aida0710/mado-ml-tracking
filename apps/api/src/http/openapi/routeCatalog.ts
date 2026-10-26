@@ -421,7 +421,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     summary: '開発用login（development modeだけ）',
     access: { kind: 'public' },
     body: developmentLoginSchema('admin@localhost'),
-    responses: { 200: z.strictObject({ user: contract.userSchema }) },
+    responses: { 200: contract.devLoginResultSchema },
     errors: routeError(403, 'invalid_origin'),
   },
   {
@@ -514,7 +514,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     tag: 'access',
     summary: '既知のSSO group名',
     access: { kind: 'signedIn', scope: 'admin' },
-    responses: { 200: contract.itemsOf(z.string()) },
+    responses: { 200: contract.authGroupListSchema },
   },
   {
     method: 'get',
@@ -1975,9 +1975,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     tag: 'sites',
     summary: '自分の個人設定（無ければitemがnull）',
     access: SITE_READER,
-    responses: {
-      200: z.strictObject({ item: contract.sitePersonalSettingsSchema.nullable() }),
-    },
+    responses: { 200: contract.sitePersonalSettingsLookupSchema },
     errors: SITE_USER_ERRORS,
   },
   {
@@ -2643,7 +2641,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     tag: 'plugins',
     summary: 'pluginのPrometheus metrics',
     access: PROJECT_ADMIN,
-    responses: { 200: z.strictObject({ prometheus: z.string() }) },
+    responses: { 200: contract.pluginMetricsResponseSchema },
     errors: [
       ...routeError(422, 'plugin_capability_unsupported'),
       ...routeError(503, 'plugin_token_unavailable'),
@@ -2682,7 +2680,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     tag: 'plugins',
     summary: '送れなかったeventを再送',
     access: PROJECT_ADMIN,
-    responses: { 200: z.strictObject({ queued: z.number().int() }) },
+    responses: { 200: contract.pluginEventRetryResultSchema },
   },
 
   // promotion
@@ -3273,7 +3271,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     summary:
       '通知先が参照できるAPI serverの環境変数名（MMT_NOTIFICATION_で始まり値があるもの。値は返さない）',
     access: GLOBAL_ADMIN,
-    responses: { 200: contract.itemsOf(z.string()) },
+    responses: { 200: contract.notificationEnvironmentNameListSchema },
   },
   {
     method: 'post',

@@ -381,13 +381,13 @@ async function runDetailsAndJobs() {
     api.state.workers = [
       {
         projectId: api.state.project.id,
-        tokenId: 'token',
+        tokenId: '00000000-0000-4000-8000-00000000c101',
         tokenName: 'worker token',
         workerId: 'old-worker',
-        version: null,
-        hostname: null,
+        version: '0.4.0',
+        hostname: 'old-worker.invalid',
         targetIds: [api.state.targets[0].id],
-        parallelJobs: null,
+        parallelJobs: 1,
         startedAt: '2026-10-12T00:00:00.000Z',
         lastSeenAt: new Date().toISOString(),
         status: 'online',

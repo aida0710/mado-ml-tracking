@@ -1,17 +1,20 @@
+import { jsonRequestInit, requestJson } from '@mado/design-system/http';
 import {
   RUN_COMPARISON_MAX_RUNS,
   RUN_COMPARISON_MIN_RUNS,
   type ParameterImportanceRequest,
-  type ParameterImportanceResult,
   type RunAnalysisTableRequest,
-  type RunAnalysisTableResponse,
-  type RunComparison,
-  type RunSearchPage,
   type RunSet,
-  type Sweep,
-  type SweepTrial,
 } from '@mmt/contracts';
-import { encodeId, invalidResponseError, jsonRequest, projectPath, request } from './http';
+import {
+  parameterImportanceResultSchema,
+  runAnalysisTableResponseSchema,
+  runComparisonSchema,
+  runSearchPageSchema,
+  sweepSchema,
+  sweepTrialPageSchema,
+} from '@mmt/contracts/schemas';
+import { encodeId, projectPath } from './http';
 import { orderAnalysisMetricKeys } from '../lib/runAnalysisFields';
 import { SWEEP_ID_TAG } from '../lib/sweepRunTags';
 
@@ -30,10 +33,6 @@ export interface RunAnalysisMetricOptions {
   preferredMetric?: string | null;
 }
 
-function postAnalysis<T>(projectId: string, path: string, body: unknown, signal?: AbortSignal) {
-  return request<T>(`${projectPath(projectId)}/runs/analysis/${path}`, { ...jsonRequest('POST', body), signal });
-}
-
 interface ComparedKeys {
   metricKeys: string[];
   /** 比べるRunがすべて同じSweepの試行なら、そのSweep。 */
@@ -43,11 +42,10 @@ interface ComparedKeys {
 async function comparedKeys(projectId: string, runIds: string[], signal?: AbortSignal): Promise<ComparedKeys> {
   const sample = runIds.slice(0, RUN_COMPARISON_MAX_RUNS);
   if (sample.length < RUN_COMPARISON_MIN_RUNS) return { metricKeys: [], sweepId: null };
-  const comparison = await request<RunComparison>(`${projectPath(projectId)}/runs/compare`, {
-    ...jsonRequest('POST', { runIds: sample }),
-    signal,
+  const comparison = await requestJson(`${projectPath(projectId)}/runs/compare`, {
+    schema: runComparisonSchema,
+    init: { ...jsonRequestInit('POST', { runIds: sample }), signal },
   });
-  if (!Array.isArray(comparison.rows)) throw invalidResponseError();
   const sweepIds = new Set(
     comparison.rows.find((row) => row.namespace === 'tags' && row.key === SWEEP_ID_TAG)?.values ?? [null],
   );
@@ -66,21 +64,19 @@ async function searchedMetricKeys(
   search: Extract<RunSet, { search: unknown }>['search'],
   signal?: AbortSignal,
 ): Promise<string[]> {
-  const page = await request<RunSearchPage>(`${projectPath(projectId)}/runs/search`, {
-    ...jsonRequest('POST', { ...search, limit: METRIC_KEY_SAMPLE_RUNS }),
-    signal,
+  const page = await requestJson(`${projectPath(projectId)}/runs/search`, {
+    schema: runSearchPageSchema,
+    init: { ...jsonRequestInit('POST', { ...search, limit: METRIC_KEY_SAMPLE_RUNS }), signal },
   });
-  if (!Array.isArray(page.items)) throw invalidResponseError();
-  return page.items.flatMap((run) => Object.keys(run.latestMetrics ?? {}));
+  return page.items.flatMap((run) => Object.keys(run.latestMetrics));
 }
 
 async function sweepMetricOptions(projectId: string, sweepId: string, signal?: AbortSignal) {
   const path = sweepPath(projectId, sweepId);
   const [sweep, trials] = await Promise.all([
-    request<Sweep>(path, { signal }),
-    request<{ items: SweepTrial[] }>(`${path}/trials?limit=${RUN_COMPARISON_MAX_RUNS}`, { signal }),
+    requestJson(path, { schema: sweepSchema, init: { signal } }),
+    requestJson(`${path}/trials?limit=${RUN_COMPARISON_MAX_RUNS}`, { schema: sweepTrialPageSchema, init: { signal } }),
   ]);
-  if (!Array.isArray(trials.items)) throw invalidResponseError();
   const { metricKeys } = await comparedKeys(
     projectId,
     trials.items.map((trial) => trial.runId),
@@ -99,7 +95,7 @@ async function listedRunMetricOptions(
   if (!compared.sweepId) return { metricKeys, objectiveMetric: null };
   // Sweepで変わるのは最初の選択だけ。読めない（削除された）Sweepのせいで、Runの分析を
   // 止めてはいけない。
-  const sweep = await request<Sweep>(sweepPath(projectId, compared.sweepId), { signal }).catch(
+  const sweep = await requestJson(sweepPath(projectId, compared.sweepId), { schema: sweepSchema, init: { signal } }).catch(
     (error: unknown) => {
       if (signal?.aborted) throw error;
       return null;
@@ -109,17 +105,16 @@ async function listedRunMetricOptions(
 }
 
 export const runAnalysisApi = {
-  table: async (projectId: string, body: RunAnalysisTableRequest, signal?: AbortSignal) => {
-    const table = await postAnalysis<RunAnalysisTableResponse>(projectId, 'table', body, signal);
-    if (!Array.isArray(table.runs) || !Array.isArray(table.params) || !Array.isArray(table.metrics))
-      throw invalidResponseError();
-    return table;
-  },
-  parameterImportance: async (projectId: string, body: ParameterImportanceRequest, signal?: AbortSignal) => {
-    const result = await postAnalysis<ParameterImportanceResult>(projectId, 'parameter-importance', body, signal);
-    if (!Array.isArray(result.entries) || !Array.isArray(result.excluded)) throw invalidResponseError();
-    return result;
-  },
+  table: (projectId: string, body: RunAnalysisTableRequest, signal?: AbortSignal) =>
+    requestJson(`${projectPath(projectId)}/runs/analysis/table`, {
+      schema: runAnalysisTableResponseSchema,
+      init: { ...jsonRequestInit('POST', body), signal },
+    }),
+  parameterImportance: (projectId: string, body: ParameterImportanceRequest, signal?: AbortSignal) =>
+    requestJson(`${projectPath(projectId)}/runs/analysis/parameter-importance`, {
+      schema: parameterImportanceResultSchema,
+      init: { ...jsonRequestInit('POST', body), signal },
+    }),
   /**
    * 分析のエンドポイントは最初にメトリクスの名前が要るので、Runから抜き出す。検索なら最初の
    * ページ、並べたRunなら最大50件（compareで）、SweepならSweepの目的関数と最初の試行から取る。
