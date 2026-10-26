@@ -170,6 +170,37 @@ describe.skipIf(!testDatabaseUrl)('SSO groupの許可判定と全体roleの同�
     });
   });
 
+  describe('MMT_OIDC_ROLE_MAPPING_JSONが空', () => {
+    it('初めての人はMMT_OIDC_DEFAULT_ROLEで作り、以後のログインと再確認で全体管理者を変えない', async () => {
+      const app = application({ MMT_OIDC_ROLE_MAPPING_JSON: '{}' });
+      expect((await ssoLogin(app, { groups: ['mmt-admins'] })).status).toBe(302);
+      const user = (await oidcUser())!;
+      // mmt-adminsという名前でも、対応表が無ければ管理者にしない。
+      expect(user.is_admin).toBe(false);
+
+      // 全体管理で管理者にしたあとは、ログインしても外れない。
+      await harness.database.query('UPDATE users SET is_admin=true WHERE id=$1', [user.id]);
+      expect((await ssoLogin(app, { groups: ['mmt-users'] })).status).toBe(302);
+      expect((await oidcUser())!.is_admin).toBe(true);
+      expect(await userGroups(user.id)).toEqual(['mmt-users']);
+    });
+
+    it('許可groupから外れた人は、全体管理者でもログインできない', async () => {
+      const app = application({ MMT_OIDC_ROLE_MAPPING_JSON: '{}' });
+      expect((await ssoLogin(app, { groups: ['mmt-users'] })).status).toBe(302);
+      expect((await ssoLogin(app, { groups: ['other-team'] })).code).toBe(
+        'oidc_authentication_failed',
+      );
+      expect(await deniedReasons()).toEqual(['group_not_allowed']);
+    });
+
+    it('MMT_OIDC_DEFAULT_ROLE=adminなら初めての人を全体管理者で作る', async () => {
+      const app = application({ MMT_OIDC_ROLE_MAPPING_JSON: '{}', MMT_OIDC_DEFAULT_ROLE: 'admin' });
+      expect((await ssoLogin(app, { groups: ['mmt-users'] })).status).toBe(302);
+      expect((await oidcUser())!.is_admin).toBe(true);
+    });
+  });
+
   it('無効化したローカル管理者は残る全体管理者に数えない', async () => {
     const app = application();
     const localAdmin = await createLocalUser({

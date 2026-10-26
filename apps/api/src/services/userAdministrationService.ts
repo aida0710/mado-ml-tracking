@@ -64,7 +64,12 @@ function isSsoUser(user: AdminUser): boolean {
 /** 全体管理者が行う利用者の管理。ローカルアカウント、無効化、パスワードの再設定。 */
 export class UserAdministrationService {
   constructor(
-    private readonly options: { database: Database; passwordHasher: PasswordHasher },
+    private readonly options: {
+      database: Database;
+      passwordHasher: PasswordHasher;
+      // trueならSSOの利用者の全体管理者権限はログインのたびにIdPのグループから上書きされる。
+      idpManagesGlobalRole: boolean;
+    },
   ) {}
 
   async list(principal: Principal, query: AdminUserQuery): Promise<AdminUser[]> {
@@ -188,7 +193,8 @@ export class UserAdministrationService {
     current: AdminUser,
     next: Pick<AdminUser, 'status' | 'displayName' | 'isAdmin'>,
   ): void {
-    if (isSsoUser(current) && next.isAdmin !== current.isAdmin)
+    const isAdminFromIdp = this.options.idpManagesGlobalRole && isSsoUser(current);
+    if (isAdminFromIdp && next.isAdmin !== current.isAdmin)
       throw new DomainError({
         status: 422,
         code: 'admin_role_managed_by_sso',
