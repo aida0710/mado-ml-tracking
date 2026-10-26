@@ -512,7 +512,7 @@ SSHリポジトリを読み込む場合は、API serverに`MMT_GIT_SSH_KEY_PATH`
 
 ## Docker Compose
 
-`compose.yml`は本番構成の雛形です。ここでは外部環境へdeployしません。`.env`に上記のOIDC/HTTPS設定と`MMT_POSTGRES_PASSWORD`を入れます。DB URLにも使うためpasswordはURLでそのまま使える十分長いhex文字列にしてください。
+`compose.yml`は本番構成の雛形です。ここでは外部環境へdeployしません。本番の環境へは、リリースの配布物（イメージをdigestで固定したCompose）を入れます（[配布物のREADME](../deploy/release/README.md)）。以下はソースからビルドして動かすときの手順です。`.env`に上記のOIDC/HTTPS設定と`MMT_POSTGRES_PASSWORD`を入れます。DB URLにも使うためpasswordはURLでそのまま使える十分長いhex文字列にしてください。
 
 ```bash
 docker compose build
