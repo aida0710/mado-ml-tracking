@@ -2,7 +2,7 @@
 // 全体設定の組（アカウント、コンピュータ、このアプリについて）は全員に、全体管理は全体管理者だけに、
 // 全体設定自身のサイドバー・レール・ドロワーに出て、Projectのサイドバーにはどちらも出ないこと。
 // ユーザーメニュー（アカウント、ローカルアカウントのときのパスワードの変更、全体設定）。各画面の
-// 見出しが組の下に出ること。全体設定より前のURL（/account、/admin/<section>）が新しいURLへ移ること。
+// 見出しが組の下に出ること。/settingsと知らない項目・権限の無い全体管理の画面がアカウントへ移ること。
 // 先にMMT_WEB_URLでViteを起動しておく。MMT_SCREENSHOT_DIRを設定すると、そこへスクリーンショットを保存する。
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
@@ -102,20 +102,16 @@ try {
   await waitForCurrentLink(sidebar, 'アカウント');
   await screenshot(page, '03-user-password-change');
 
-  console.log('Settings: URLs from before 全体設定 move, and 全体管理 sends a user to the account');
+  console.log('Settings: /settings and 全体管理 send a user to the account');
   for (const [path, expectedPath] of [
     ['/settings', '/settings/account'],
-    ['/account', '/settings/account'],
-    ['/account/password', '/settings/account/password'],
-    ['/admin', '/settings/account'],
-    ['/admin/users', '/settings/account'],
     ['/settings/users', '/settings/account'],
     ['/settings/unknown', '/settings/account'],
   ])
     await settle(page, path, expectedPath);
-  // リダイレクトは古い履歴の項目を置き換えるので、ブラウザで戻るとそこは飛ばされる。
+  // リダイレクトは履歴の項目を置き換えるので、ブラウザで戻るとそこは飛ばされる。
   await settle(page, '/settings/computers', '/settings/computers');
-  await settle(page, '/account', '/settings/account');
+  await settle(page, '/settings', '/settings/account');
   await page.goBack();
   await page.waitForURL(`${base}/settings/computers`);
   await page.context().close();
@@ -139,7 +135,7 @@ try {
   assert.deepEqual(await openUserMenu(page), ['アカウント', 'パスワードの変更', '全体設定', 'ログアウト']);
   await screenshot(page, '04-admin-project-sidebar-menu');
   await page.keyboard.press('Escape');
-  await settle(page, '/admin', '/settings/projects');
+  await settle(page, '/settings/projects', '/settings/projects');
   await waitForHeading(page, { eyebrow: '全体管理', title: 'プロジェクト' });
   assert.deepEqual(await groupLabels(adminSidebar), ['全体設定', '全体管理']);
   assert.deepEqual(await groupLinks(adminSidebar, '全体管理'), [
@@ -150,9 +146,8 @@ try {
     '監査ログ',
   ]);
   await screenshot(page, '05-admin-settings-projects');
-  await settle(page, '/admin/launchers?from=bookmark', '/settings/launchers?from=bookmark');
+  await settle(page, '/settings/launchers?from=bookmark', '/settings/launchers?from=bookmark');
   await waitForHeading(page, { eyebrow: '全体管理', title: 'ランチャー' });
-  await settle(page, '/admin/unknown', '/settings/projects');
   await settle(page, '/settings/unknown', '/settings/account');
   await page.context().close();
 
@@ -166,6 +161,7 @@ try {
   assert.deepEqual(railTitles, [
     'アカウント',
     'コンピュータ',
+    'このアプリについて',
     'プロジェクト',
     'ユーザー',
     'ストレージ',

@@ -7,6 +7,7 @@ import json
 import os
 import platform
 import shutil
+import subprocess
 import sys
 import threading
 from collections.abc import Iterator, Sequence
@@ -592,8 +593,13 @@ def test_local_computer_being_set_up_is_checked_with_a_python_found_on_it(
     items = items_by_name(result)
     path_python = shutil.which("python3")
     assert path_python is not None
+    # 診断はそのPythonが自分で報告するsys.executableを出す。symlinkの先を名乗るPython（linuxbrewなど）
+    # もあるので、PATHのパスではなく、そのPythonに尋ねた値と比べる。
+    path_python_executable = subprocess.check_output(
+        [path_python, "-c", "import sys; print(sys.executable)"], text=True
+    ).strip()
     assert items["python"]["status"] == "ok"
-    assert items["python"]["detail"].endswith(path_python)
+    assert items["python"]["detail"].endswith(f" {path_python_executable}")
     assert items["work_directory"]["code"] == "work_directory_not_set"
     home_candidate, *other_candidates = result["directories"]
     assert home_candidate["path"] == str(home) and home_candidate["source"] == "home"

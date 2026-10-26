@@ -8,7 +8,8 @@ def pin_execution(payload, mode=None):
         mode = payload["run"].get("executionMode", "run")
     code = payload["codeVersion"]
     payload["run"].update(
-        runtime=copy.deepcopy(code["runtime"]),
+        # APIはRunの作成時に、コードバージョンのruntimeをenvironmentへ固定する。
+        environment={**payload["run"].get("environment", {}), "runtime": copy.deepcopy(code["runtime"])},
         executionMode=mode,
         executionSnapshot=copy.deepcopy(
             {

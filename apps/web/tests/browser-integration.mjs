@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { openProjectCreation } from './projectCreation.mjs';
+import { closeUploadDialog, uploadOneFile } from './uploadDialog.mjs';
 
 const { chromium } = await import(pathToFileURL(process.env.MMT_PLAYWRIGHT_MODULE).href);
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:5182';
@@ -23,6 +24,15 @@ const json = async (path) => {
   const response = await page.request.get(`${base}/api${path}`);
   assert.equal(response.ok(), true, `${path}: ${response.status()}`);
   return response.json();
+};
+// ProjectのRunを新しい順に返す（POST /runs/searchの最初のページ）。
+const searchRuns = async (projectId) => {
+  const response = await page.request.post(`${base}/api/projects/${projectId}/runs/search`, {
+    headers: { Origin: new URL(base).origin },
+    data: {},
+  });
+  assert.equal(response.ok(), true, `runs/search: ${response.status()}`);
+  return (await response.json()).items;
 };
 const fill = (name, value) =>
   page.getByRole('dialog').getByLabel(name, { exact: false }).fill(value);
@@ -52,7 +62,7 @@ try {
     await page.goto(`${base}/projects/${demo.id}/experiments`);
     await page.getByRole('link', { name: 'CPU linear regression', exact: true }).waitFor();
     await screenshot('runs-real-light');
-    const demoRuns = (await json(`/projects/${demo.id}/runs`)).items;
+    const demoRuns = await searchRuns(demo.id);
     const training = demoRuns.find((run) => run.name === 'CPU linear regression');
     await page.goto(`${base}/projects/${demo.id}/runs/${training.id}`);
     await page.getByLabel('メトリクス名', { exact: true }).waitFor();
@@ -85,18 +95,16 @@ try {
   await select('実行種別', 'processing');
   await submit('作成');
   await page.getByRole('heading', { name: 'UI artifact registration', exact: true }).waitFor();
-  const preparationRun = (await json(`/projects/${projectId}/runs`)).items[0];
+  const [preparationRun] = await searchRuns(projectId);
   await page.getByRole('tab', { name: 'Artifacts', exact: true }).click();
   for (const [name, mimeType, content] of [
     ['points.csv', 'text/csv', 'x,y\n0,1\n1,3\n2,5\n'],
     ['weights.json', 'application/json', '{"slope":2,"intercept":1}'],
   ]) {
     await page.getByRole('button', { name: 'Artifactをアップロード', exact: true }).click();
-    await page
-      .getByRole('dialog')
-      .getByLabel('ファイル', { exact: true })
-      .setInputFiles({ name, mimeType, buffer: Buffer.from(content) });
-    await submit('アップロード');
+    const uploadDialog = page.getByRole('dialog');
+    await uploadOneFile(uploadDialog, { name, mimeType, buffer: Buffer.from(content) });
+    await closeUploadDialog(uploadDialog);
     await page.getByRole('button', { name, exact: true }).waitFor();
   }
   const artifacts = (await json(`/projects/${projectId}/runs/${preparationRun.id}/artifacts`))
@@ -142,11 +150,13 @@ try {
   await page.getByRole('dialog').getByRole('searchbox', { name: '重みのArtifact' }).fill(weightsArtifact.id);
   await page.getByRole('dialog').getByRole('button', { name: '選び直す', exact: true }).waitFor();
   await submit();
-  await page.getByRole('button', { name: 'v1', exact: true }).waitFor();
+  // モデルの各バージョンは、それぞれのページへのリンクになっている。
+  await page.getByRole('link', { name: 'v1', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Aliasを設定', exact: true }).click();
   await fill('Alias', 'verification');
   await submit();
-  await page.getByText('verification', { exact: true }).waitFor();
+  // aliasは、モデルの一覧のAlias列と、選んだモデルのaliasの両方に出る。
+  await page.getByRole('cell', { name: 'verification', exact: true }).first().waitFor();
   const model = (await json(`/projects/${projectId}/models`)).items[0];
   const modelVersion = (await json(`/projects/${projectId}/models/${model.id}/versions`)).items[0];
 
@@ -177,23 +187,34 @@ try {
   await select('実行種別', 'training');
   await select('モデルバージョン', modelVersion.id);
   await select('コードバージョン', codeVersion.id);
-  await select('入力データセットバージョン', [datasetVersion.id]);
+  // 入力データセットバージョンはチェックボックスで選ぶ（名前は「namespace/データセット / バージョン」）。
+  await page
+    .getByRole('dialog')
+    .getByRole('group', { name: /入力データセットバージョン/ })
+    .getByRole('checkbox', { name: 'verification/UI linear points / v1', exact: true })
+    .check();
   await page.getByRole('dialog').getByRole('button', { name: '次へ', exact: true }).click();
   await select('コンピュータ', localTarget.id);
   await page.getByRole('dialog').getByRole('button', { name: '次へ', exact: true }).click();
   await submit('ジョブを起動');
   await page.getByRole('button', { name: '停止を要求', exact: true }).click();
-  await submit();
+  await submit('停止する');
   await page.getByRole('button', { name: '新しいRunで再実行', exact: true }).waitFor();
   await page.getByRole('button', { name: '新しいRunで再実行', exact: true }).click();
-  await submit();
+  await submit('再実行する');
   await page.getByRole('heading', { name: /UI training enqueue \(retry 2\)/ }).waitFor();
   const jobs = (await json(`/projects/${projectId}/jobs`)).items;
   assert.equal(jobs.length, 2);
   assert.notEqual(jobs[0].runId, jobs[1].runId);
+  // チェックした入力データセットバージョンが、起動したRunとその再実行の入力になる。
+  for (const job of jobs)
+    assert.deepEqual(
+      (await json(`/projects/${projectId}/runs/${job.runId}`)).inputDatasetVersionIds,
+      [datasetVersion.id],
+    );
   await page.goto(`${projectBase}/jobs`);
   await page.getByRole('button', { name: '停止を要求', exact: true }).click();
-  await submit();
+  await submit('停止する');
 
   for (const [route, heading] of [
     ['lineage', 'Lineage'],
@@ -208,19 +229,26 @@ try {
   await page.getByRole('button', { name: '保存', exact: true }).first().click();
   await page.getByText('プロジェクト設定を保存しました', { exact: true }).waitFor();
   await page.getByRole('button', { name: 'API tokenを発行', exact: true }).click();
-  await fill('名前', 'UI verification personal token');
+  // 開発用のアプリには前の実行のtokenが残るので、この実行のtokenを名前で見分ける。
+  const tokenName = `UI verification token ${new Date().toISOString()}`;
+  await fill('名前', tokenName);
   await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click();
-  await page.getByText(/トークンは一度だけ表示/).waitFor();
+  await page.getByText(/API tokenは一度だけ表示/).waitFor();
   await page
     .getByRole('dialog')
     .getByRole('button', { name: '閉じる', exact: true })
     .last()
     .click();
-  await page.getByRole('button', { name: '失効', exact: true }).click();
-  await submit('失効');
+  // 発行したtokenは、このProjectのtokenと自分のtokenの両方の一覧に出る。どちらで失効しても同じ。
   await page
-    .getByText('UI verification personal token', { exact: true })
-    .waitFor({ state: 'hidden' });
+    .getByRole('row')
+    .filter({ hasText: tokenName })
+    .getByRole('button', { name: '失効', exact: true })
+    .first()
+    .click();
+  await submit('失効');
+  // どちらの一覧からも消えるまで待つ（first()は、残りが1つでもあればそれを指す）。
+  await page.getByText(tokenName, { exact: true }).first().waitFor({ state: 'hidden' });
   await page.reload();
   await page.getByLabel('説明', { exact: true }).waitFor();
   assert.equal(

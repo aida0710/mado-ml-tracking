@@ -172,13 +172,15 @@ try {
   const api = apiClient(page);
 
   // フィクスチャ: ローカルのCPUのtargetでSDKのSweepの例を実行するTask。
-  const project = await api.post('/projects', { name: 'Sweeps browser check' });
+  // publicのProjectでは全員がeditorとして働けるので、viewerの画面を確かめるにはprivateにする。
+  const project = await api.post('/projects', { name: 'Sweeps browser check', visibility: 'private' });
   const projectPath = `/projects/${project.id}`;
   const experiment = await api.post(`${projectPath}/experiments`, { name: 'lr search' });
   const code = await api.post(`${projectPath}/codes`, { name: 'Sweep training' });
   const codeVersion = await api.post(`${projectPath}/codes/${code.id}/versions`, {
     version: 'v1',
     source: { kind: 'inline', files: { 'sweep_training.py': await readFile(path.join(REPOSITORY, 'python/examples/sweep_training.py'), 'utf8') } },
+    runtime: { kind: 'python' },
     entrypoint: ['python', 'sweep_training.py'],
     supportedModelFamilies: ['linear'],
     taskTypes: ['training'],
@@ -193,6 +195,7 @@ try {
     knownHostsPath: '',
     workDirectory: path.join(workerDirectory, 'jobs'),
     pythonExecutable: workerEnvironment.python,
+    runtimeKinds: ['python'],
     gpuIds: [],
     maxConcurrentJobs: PARALLELISM,
     enabled: true,
@@ -220,7 +223,7 @@ try {
   await page.getByRole('link', { name: 'Sweeps', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Sweepを作成' }).click();
   const dialog = page.getByRole('dialog');
-  await dialog.getByText(`Task revision ${task.revision}`).waitFor();
+  await dialog.getByText(`Taskの改訂番号 ${task.revision}`).waitFor();
   await dialog.getByLabel('名前', { exact: true }).fill('lr-grid');
   await dialog.getByLabel('目的メトリクス').fill('val_loss');
 
@@ -240,7 +243,8 @@ try {
   await dialog.getByRole('button', { name: '作成' }).click();
   const rowError = rows.nth(0).getByRole('alert');
   await rowError.waitFor({ timeout: UI_TIMEOUT_MS });
-  assert.match(await rowError.innerText(), /「lr」.*min < max/);
+  // APIのエラーの文は、画面の言語によらずそのまま出す（コードから訳さない）。
+  assert.match(await rowError.innerText(), /parameter "lr" requires min < max/);
   await screenshot(page, 'sweep-create-row-error');
 
   await dialog.getByLabel('探索方法').selectOption('grid');

@@ -115,6 +115,7 @@ try {
   const codeVersion = await editor.post(`/projects/${project.id}/codes/${code.id}/versions`, {
     version: 'v1',
     source: { kind: 'inline', files: { 'train.py': 'print("train")\n' } },
+    runtime: { kind: 'python' },
     entrypoint: ['python', 'train.py'],
     supportedModelFamilies: ['asr'],
     taskTypes: ['training'],
@@ -247,9 +248,9 @@ try {
   await launch.getByRole('button', { name: 'ジョブを起動', exact: true }).click();
   await launch.getByRole('alert').waitFor();
   const runNames = async () =>
-    (await editor.get(`/projects/${project.id}/runs?experimentId=${experiment.id}`)).items.map(
-      (item) => item.name,
-    );
+    (
+      await editor.post(`/projects/${project.id}/runs/search`, { experimentIds: [experiment.id] })
+    ).items.map((item) => item.name);
   assert.equal((await runNames()).includes('refused-launch'), false, 'a refused Job left a Run');
   await admin.patch(`/targets/${gpuHost.id}`, { enabled: true });
   await launch.getByRole('button', { name: 'ジョブを起動', exact: true }).click();

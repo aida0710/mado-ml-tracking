@@ -322,6 +322,8 @@ try {
   await stage('project_creation', 'Projectが無い画面の「プロジェクトを作成」からProjectを作成する', async () => {
     await openProjectCreation(page, { base: BASE, projects: [] });
     await dialog().getByLabel('名前', { exact: false }).fill('Browser pipeline');
+    // publicのProjectでは全員がeditorとして働けるので、groupのviewerを確かめるにはprivateにする。
+    await dialog().getByRole('radio', { name: /^Private/ }).check();
     await dialog().getByRole('button', { name: '作成', exact: true }).click();
     await page.waitForURL(/\/projects\/[0-9a-f-]+\/experiments/);
     projectId = new URL(page.url()).pathname.split('/')[2];
@@ -339,6 +341,7 @@ try {
       knownHostsPath: '',
       workDirectory: path.join(workDirectory, 'jobs'),
       pythonExecutable: PYTHON,
+      runtimeKinds: ['python'],
       gpuIds: [],
       maxConcurrentJobs: 1,
       enabled: true,
@@ -370,12 +373,17 @@ try {
     await dialog().waitFor({ state: 'hidden' });
     await page.getByRole('row').filter({ hasText: 'browser-worker' }).getByRole('button', { name: 'API tokenを発行' }).click();
     await dialog().getByLabel('名前', { exact: false }).fill('browser worker');
-    await dialog().getByLabel('Scope', { exact: false }).selectOption(['read', 'worker:execute', 'artifacts:write', 'registry:write']);
+    // 用途「workerとしてJobを実行する」のscopeに、出力のモデルを登録するregistry:writeを足す。
+    await dialog().getByRole('radio', { name: 'workerとしてJobを実行する', exact: true }).check();
+    await dialog()
+      .getByRole('group', { name: 'Scope', exact: true })
+      .getByRole('checkbox', { name: 'registry:write — モデル・データセットの登録', exact: true })
+      .check();
     await dialog().getByRole('button', { name: '保存', exact: true }).click();
-    const tokenField = dialog().getByLabel('API tokens');
+    const tokenField = dialog().getByLabel('API tokenの値', { exact: true });
     await tokenField.waitFor();
     const token = await tokenField.inputValue();
-    assert.match(token, /^mmt/);
+    assert.match(token, /^mado_mt_/);
     await dialog().getByRole('button', { name: '閉じる' }).last().click();
     worker = startProcess(WORKER, ['run'], {
       env: {
@@ -425,7 +433,7 @@ try {
     await page.getByRole('button', { name: '自動実行ルールを作成' }).click();
     await dialog().getByLabel('名前', { exact: false }).fill('Browser evaluation');
     await dialog().getByLabel('トリガー', { exact: false }).selectOption('upstream_run_finished');
-    await dialog().getByLabel('上流rule', { exact: false }).selectOption({ label: 'Browser inference · Inference' });
+    await dialog().getByLabel('上流rule', { exact: false }).selectOption({ label: 'Browser inference · 推論' });
     await dialog().getByRole('group', { name: /対象モデル系列/ }).getByRole('checkbox', { name: MODEL_FAMILY, exact: true }).check();
     await dialog().getByLabel('実行種別', { exact: false }).selectOption('evaluation');
     await dialog().getByLabel('Experiments', { exact: false }).selectOption(ids.experimentId);
@@ -541,9 +549,12 @@ try {
     await openVersionPage(ids.secondVersionId);
     await page.getByRole('region', { name: '評価結果' }).getByText('evaluation.duration_match_rate').first().waitFor();
     assert.equal(await page.getByRole('region', { name: '昇格の判定' }).count(), 0, 'a viewer sees the promotion card');
-    // 残る操作は再読み込みのボタンだけ。アイコンとaccessible nameを持つ。
+    // 残る操作は再読み込みのボタンだけ。アイコンとaccessible nameを持つ。Lineageの図の向きの切り替えと
+    // 拡大・縮小は見るための操作なので数えない。
     const versionPage = page.locator('.model-version-page');
-    const buttons = await versionPage.getByRole('button').count();
+    const buttons = await versionPage
+      .getByRole('button')
+      .evaluateAll((items) => items.filter((item) => !item.closest('.model-version-lineage')).length);
     assert.equal(buttons, 1, 'a viewer has controls besides reload on the version page');
     await versionPage.getByRole('button', { name: '再読み込み' }).waitFor();
     await screenshot('06-viewer-version-page');

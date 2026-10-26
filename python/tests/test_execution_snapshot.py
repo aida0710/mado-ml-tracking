@@ -61,8 +61,8 @@ def test_test_mode_without_a_saved_test_command_cannot_execute_the_regular_entry
 
 def test_run_runtime_must_match_the_immutable_execution_snapshot(job_payload):
     pin_execution(job_payload)
-    job_payload["run"]["runtime"] = {"kind": "docker", "image": "other@sha256:" + "1" * 64}
-    with pytest.raises(ConfigurationError, match="Run.runtime"):
+    job_payload["run"]["environment"]["runtime"] = {"kind": "docker", "image": "other@sha256:" + "1" * 64}
+    with pytest.raises(ConfigurationError, match="Run.environment.runtime"):
         WorkerJob.parse(job_payload)
 
 

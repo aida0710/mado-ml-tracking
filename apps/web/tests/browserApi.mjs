@@ -10,8 +10,10 @@ import { pageAutomationExecutions } from './automationExecutionMock.mjs';
 const DEFAULT_ARTIFACT_DELETE_GRACE_DAYS = 7;
 // 最初からあるpublicのコンピュータの所有者。idの連番をずらさないよう、固定のidにする。
 const SHARED_TARGET_OWNER = { id: '00000000-0000-4000-8000-0000000000aa', displayName: '共用コンピュータの管理者' };
-// TokenSummary.tokenPrefix: tokenの値の先頭の文字。
-const TOKEN_PREFIX_LENGTH = 12;
+// TokenSummary.tokenPrefix: APIと同じく、tokenの前置きmado_mt_と乱数の8文字（apps/api/src/auth/apiTokens.ts）。
+const TOKEN_PREFIX_LENGTH = 16;
+// 発行したtokenの値。発行の応答で一度だけ返す。
+export const ISSUED_TOKEN_VALUE = 'mado_mt_browser-test-value-only';
 // コンピュータと設定の画面が開くときに読む一覧。モックはどれも持たない。
 // tasks: コードの画面は、コードバージョンを使うTaskを並べる（Taskを使う確認は自前でrouteする）。
 const EMPTY_PROJECT_LISTS = [
@@ -493,7 +495,6 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
     if (path === '/tokens') {
       if (method === 'GET') return list(state.tokens);
       // ログイン中の利用者が自分用に発行したtokenのTokenSummary。
-      const value = 'browser-test-value-only';
       const token = {
         id: id(),
         name: body.name,
@@ -506,10 +507,10 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
         ownerType: 'user',
         ownerId: user.id,
         ownerName: user.displayName,
-        tokenPrefix: value.slice(0, TOKEN_PREFIX_LENGTH),
+        tokenPrefix: ISSUED_TOKEN_VALUE.slice(0, TOKEN_PREFIX_LENGTH),
       };
       state.tokens.push(token);
-      return reply({ token: value, item: token });
+      return reply({ token: ISSUED_TOKEN_VALUE, item: token });
     }
     if (path.startsWith('/tokens/') && method === 'DELETE') {
       state.tokens = state.tokens.filter((token) => token.id !== path.split('/')[2]);
@@ -612,9 +613,8 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       return reply(experiment);
     }
     if (resource === 'runs') {
-      const isRunList = (key === 'search' && method === 'POST') || (!key && method === 'GET');
-      // Runの画面はネイティブの検索で一覧を出す。どちらの一覧の取り方も一緒に失敗させる。
-      if (state.failRunList && isRunList)
+      // Runの一覧はネイティブの検索（POST /runs/search）で出す。
+      if (state.failRunList && key === 'search' && method === 'POST')
         return reply({ error: 'UI verification: database unavailable', code: 'database_unavailable' }, 503);
       // フィルタを解釈しないネイティブの検索。最近のRunを並べる画面にはこれで足りる。
       if (key === 'search' && method === 'POST')
@@ -627,15 +627,6 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
           ),
           nextCursor: null,
         });
-      if (!key && method === 'GET')
-        return list(
-          state.runs.filter(
-            (run) =>
-              (!url.searchParams.get('status') || run.status === url.searchParams.get('status')) &&
-              (!url.searchParams.get('experimentId') ||
-                run.experimentId === url.searchParams.get('experimentId')),
-          ),
-        );
       if (!key && method === 'POST') {
         const run = makeRun(body);
         state.runs.push(run);

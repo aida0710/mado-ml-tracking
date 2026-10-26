@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findExperimentNamed, recordedRunCount } from './experimentList';
+import { findExperimentNamed, recordedRunCount, withCreatedExperiment } from './experimentList';
 
 const experiments = [
   { id: 'a', name: 'whisper-small', runCount: 0 },
@@ -18,5 +18,24 @@ describe('実験の一覧から読むこと', () => {
     expect(recordedRunCount(experiments, '')).toBe(3);
     expect(recordedRunCount([], '')).toBe(0);
     expect(recordedRunCount(undefined, '')).toBeUndefined();
+  });
+});
+
+describe('withCreatedExperiment', () => {
+  const listed = [{ id: 'a', runCount: 3 }];
+  const created = { id: 'new', runCount: 0 };
+
+  it('一覧に無い作ったばかりの実験を加え、Runの数を0件と読める', () => {
+    const experiments = withCreatedExperiment(listed, created);
+    expect(recordedRunCount(experiments, 'new')).toBe(0);
+  });
+
+  it('一覧に入った後は一覧の値を使う', () => {
+    const reloaded = [...listed, { id: 'new', runCount: 2 }];
+    expect(withCreatedExperiment(reloaded, created)).toBe(reloaded);
+  });
+
+  it('一覧がまだ無いときは無いまま', () => {
+    expect(withCreatedExperiment(undefined, created)).toBeUndefined();
   });
 });

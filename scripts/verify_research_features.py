@@ -33,7 +33,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 import httpx
-from verify_pipeline_smoke import ProjectApi, StageFailure, StageRecorder, api_request, expect
+from verify_pipeline import ProjectApi, StageFailure, StageRecorder, api_request, expect
 
 from mado_tracking import Client, SweepsClient
 from mado_tracking.code_version import build_code_version_payload

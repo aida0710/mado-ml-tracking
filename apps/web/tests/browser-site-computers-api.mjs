@@ -23,8 +23,10 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import pg from 'pg';
 import { serve } from '@hono/node-server';
+import { WORKER_CAPABILITIES } from '@mmt/contracts';
 import { createArtifactStoresFromEnv } from '@mmt/platform';
 import { createApplication } from '../../api/src/app.ts';
+import { STORED_TOKEN_PREFIX_LENGTH } from '../../api/src/auth/apiTokens.ts';
 import { loadConfig } from '../../api/src/config.ts';
 import { migrate } from '../../api/src/db/migrate.ts';
 import { serverTimeouts } from '../../api/src/http/serverTimeouts.ts';
@@ -280,7 +282,7 @@ try {
   const firstToken = await readIssuedToken(adminPage);
   const launcherRow = adminPage.getByRole('row').filter({ hasText: 'main' });
   await launcherRow.getByText('有効', { exact: true }).waitFor();
-  await launcherRow.getByText(`${firstToken.slice(0, 12)}…`).waitFor();
+  await launcherRow.getByText(`${firstToken.slice(0, STORED_TOKEN_PREFIX_LENGTH)}…`).waitFor();
   const [launcher] = (await admin.api.get('/launchers')).items;
   assert.equal(JSON.stringify(launcher).includes(firstToken), false, 'the list never returns the token');
   assert.equal((await withToken(firstToken, 'GET', '/launcher/config')).status, 200);
@@ -291,7 +293,7 @@ try {
   await openDialog(adminPage).getByRole('button', { name: 'tokenを作り直す', exact: true }).click();
   const launcherToken = await readIssuedToken(adminPage);
   assert.notEqual(launcherToken, firstToken);
-  await launcherRow.getByText(`${launcherToken.slice(0, 12)}…`).waitFor();
+  await launcherRow.getByText(`${launcherToken.slice(0, STORED_TOKEN_PREFIX_LENGTH)}…`).waitFor();
   assert.equal((await withToken(firstToken, 'GET', '/launcher/config')).status, 401);
   assert.equal((await withToken(launcherToken, 'GET', '/launcher/config')).status, 200);
 
@@ -604,15 +606,18 @@ try {
     projectId: sharedProject.project.id,
     scopes: ['read', 'jobs:write'],
   });
+  // `mado-tracking submit`と同じく、siteに置くrunnerの機能を送る。
   const bobsOnly = await withToken(aliceToken, 'POST', '/manual-submissions/claim', {
     targetId: pc.id,
     submitterId: 'alice-pc',
+    capabilities: [...WORKER_CAPABILITIES],
   });
   assert.deepEqual(bobsOnly.body.items, [], 'without --all the owner takes only their own Jobs');
   const claimed = await withToken(aliceToken, 'POST', '/manual-submissions/claim', {
     targetId: pc.id,
     submitterId: 'alice-pc',
     all: true,
+    capabilities: [...WORKER_CAPABILITIES],
   });
   assert.equal(claimed.status, 200, JSON.stringify(claimed.body));
   const [submission] = claimed.body.items;

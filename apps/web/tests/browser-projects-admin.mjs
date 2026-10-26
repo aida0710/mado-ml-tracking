@@ -255,9 +255,7 @@ try {
   await projectSwitcherButton(page).getByText('話者分離 検証').waitFor();
 
   console.log('Projects: 全体管理 → プロジェクト lists, archives, restores and purges');
-  // 以前の/adminも引き続きProjectの一覧を開く。今は/settings/projectsにある。
-  await page.goto(`${base}/admin`);
-  await page.waitForURL(`${base}/settings/projects`);
+  await page.goto(`${base}/settings/projects`);
   await page.getByRole('heading', { name: 'プロジェクト', exact: true }).waitFor();
   await page.locator('.page-header .eyebrow').getByText('全体管理').waitFor();
   const visionRow = () => page.getByRole('row', { name: /Vision 評価/ });

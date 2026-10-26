@@ -22,6 +22,17 @@ MMT_TEST_S3_ENDPOINT=http://127.0.0.1:4569 npm test -- packages/platform/src
 
 S3テストは専用bucketを作り、multipart upload、保存byte数とSHA-256、Range取得、失敗upload、削除を確認してbucketを消します。emulatorの結果は実際のS3権限やネットワークの確認を含みません。
 
+## 模擬APIのブラウザ検査をまとめて流す
+
+`scripts/ci/run-mock-browser-checks.sh`は、模擬API（`apps/web/tests/browserApi.mjs`）だけで動くブラウザ検査（`apps/web/tests/browser-*.mjs`のうち、実際のAPIやworkerを使わないもの）を順に流します。Viteの開発サーバーを127.0.0.1の別のport（既定47310、`MMT_MOCK_WEB_PORT`）で起動し、APIへのproxyは届かないport 9へ向けるので、開発用・確認用のAPIとDBには触れません。1本でも失敗すれば、全部を流したあとに失敗で終わり、失敗した検査のログの末尾を出します。CIの`Browser checks with the mock API`も同じスクリプトを使い、Playwrightとその版に合うChromiumをジョブの中で入れます。
+
+```bash
+MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
+scripts/ci/run-mock-browser-checks.sh <ログのディレクトリ>
+```
+
+開発モードのAPIや分離したAPI（`MMT_TEST_DATABASE_URL`）、local executorを使う検査は、この一覧に入れていません。それぞれの節の手順で流します。
+
 ## 実S3の保存・取得を確認する
 
 `scripts/verify_s3_artifacts.ts`は、`.env`のS3設定（`MMT_S3_BUCKET`、`MMT_S3_ENDPOINT`、`MMT_S3_REGION`、`MMT_S3_PREFIX`、`MMT_S3_FORCE_PATH_STYLE`、`MMT_S3_ACCESS_KEY_ID`、`MMT_S3_SECRET_ACCESS_KEY`）を使い、APIと同じ`createS3ArtifactStore`で既存bucketを検証します。bucketは作成しません。書き込みは`<MMT_S3_PREFIX>/verification/<JSTの日付>/<uuid>/`の下に限り、最後にそのprefixのobjectと未完了のmultipart uploadを消します。
@@ -355,7 +366,7 @@ node apps/web/tests/browser-admin-storage.mjs
 
 | 場面 | 確かめること |
 |---|---|
-| サイドバー | プロジェクトの組の最後が「プロジェクト管理」（Plugins、プロジェクト設定）で、その下に「全体設定」の組（アカウント、コンピュータ）、全体管理者にはさらに「全体管理」の組（プロジェクト、ユーザー、ストレージ、ランチャー、監査ログ）が続く |
+| サイドバー | プロジェクトの組の最後が「プロジェクト管理」（Plugins、プロジェクト設定）で、「全体設定」と「全体管理」の組は出ない（全体設定はユーザーメニューから開く） |
 | プロジェクト切替 | ボタンにフォーカスして↓で開くと、今のProjectが選ばれた状態で一覧へフォーカスが移る。↑↓・Home・Endで移り、Endは最後の「プロジェクトを作成」。Escで閉じてボタンへ戻り、Enterで開いて別のProjectを開ける。PrivateのProjectに鍵が付く。ドロップダウンが画面の内側に収まる。ライト・ダークの両方で撮影する |
 | 絞り込み | Projectが8件以上になると絞り込みの入力が出てフォーカスが入り、入力した語で一覧が絞られ、Enterで開ける |
 | 作成 | 切替の「プロジェクトを作成」から、Privateを選ぶと「メンバー（任意）」が出る。ユーザーを検索して2人足し、Roleを変え、1人を外して作成すると、`POST /projects`に`visibility: private`と残した1人の`members`が送られ、作ったProjectが開く |
@@ -381,11 +392,11 @@ node apps/web/tests/browser-projects-admin.mjs
 
 | 場面 | 確かめること |
 |---|---|
-| 全体管理者でない利用者 | プロジェクトの画面のサイドバーはプロジェクトの組だけで、「全体設定」と「全体管理」の組は無い。ユーザーメニューは「アカウント」「パスワードの変更」「全体設定」の3つ。「全体設定」で`/settings/account`が開き、見出しの上に「全体設定」、サイドバーは「全体設定」の組（アカウント、コンピュータ）だけ。「パスワードの変更」（`/settings/account/password`）の間もサイドバーは「アカウント」に印が付く |
+| 全体管理者でない利用者 | プロジェクトの画面のサイドバーはプロジェクトの組だけで、「全体設定」と「全体管理」の組は無い。ユーザーメニューは「アカウント」「パスワードの変更」「全体設定」の3つ。「全体設定」で`/settings/account`が開き、見出しの上に「全体設定」、サイドバーは「全体設定」の組（アカウント、コンピュータ、このアプリについて）だけ。「パスワードの変更」（`/settings/account/password`）の間もサイドバーは「アカウント」に印が付く |
 | 全体管理の拒否 | 非管理者が`/settings/users`を開くと`/settings/account`へ移り、管理者限定の案内を表示する |
 | SSOの利用者 | ユーザーメニューに「パスワードの変更」が無く、`/settings/account/password`は`/settings/account`へ移る |
-| 全体管理者 | プロジェクトの画面のサイドバーにも全体設定・全体管理の組は出ない。全体設定の画面では「全体設定」の下に「全体管理」の組（プロジェクト、ユーザー、ストレージ、ランチャー、監査ログ）が続く。`/admin`は`/settings/projects`へ、`/admin/launchers?…`は問い合わせ文字列ごと`/settings/launchers?…`へ、知らない`/admin/<項目>`は`/settings/projects`へ移る。全体管理の見出しの上は「全体管理」 |
-| アイコンだけの列・ドロワー | 1100px幅のアイコンだけの列に全体設定と全体管理の7項目が名前のツールチップつきで並ぶ。390px幅のドロワーでは、プロジェクトの画面に全体設定の組が出ず、全体設定の画面では「全体設定」の組が出る |
+| 全体管理者 | プロジェクトの画面のサイドバーにも全体設定・全体管理の組は出ない。全体設定の画面では「全体設定」の下に「全体管理」の組（プロジェクト、ユーザー、ストレージ、ランチャー、監査ログ）が続く。`/settings/launchers?…`は問い合わせ文字列を保ったまま開き、知らない`/settings/<項目>`は`/settings/account`へ移る。全体管理の見出しの上は「全体管理」 |
+| アイコンだけの列・ドロワー | 1100px幅のアイコンだけの列に全体設定と全体管理の8項目が名前のツールチップつきで並ぶ。390px幅のドロワーでは、プロジェクトの画面に全体設定の組が出ず、全体設定の画面では「全体設定」の組が出る |
 
 ```bash
 (cd apps/web && MMT_WEB_API_PROXY_TARGET=http://127.0.0.1:9 npx vite --port 47310 --strictPort --host 127.0.0.1) &
@@ -474,13 +485,12 @@ node apps/web/tests/browser-computer-setup.mjs
 
 `apps/web/tests/browser-recording-connection.mjs`は、mockのAPIで「SDK・MLflow 3から接続」を確かめます。プロジェクト設定ではプロジェクトIDだけ、Experimentsで実験を選んで［SDKで記録］を開くと実験IDも入ること（`MMT_EXPERIMENT_ID`、MLflowの`set_experiment`に実験の名前）、［コピー］が値をそのまま写すこと、tokenの発行画面が記録用のscope（read・runs:write・registry:write・artifacts:write）を選んだ状態で開くこと、viewerには発行のボタンが出ないことを見ます。
 
-`apps/web/tests/browser-copy-token-expiry.mjs`は、同じWebサーバをloopbackとLANのHTTPの両方から開きます。Clipboard APIのある場合・拒否された場合・HTTPで使えない場合に、値と複数行の設定例を実際のクリップボードへ写せることを確かめます。失敗時にボタンが動かないこと、modal内のコピー、日英の言語ボタンの高さ、320pxでの表示、無期限・730日・小数の時間のtoken発行、0の有効期間の拒否も確認します。カレンダーの日時指定では、Asia/Tokyoの2027-12-31 23:59がUTCの14:59になること、選択肢を切り替えても日時が残ること、空欄・過去の日時の拒否、320pxの表示を確認します。APIの期限・認証・失効・権限は`service-accounts.integration.test.ts`で検証します。
+`apps/web/tests/browser-copy-token-expiry.mjs`は、同じWebサーバをloopbackと、安全でないHTTPのorigin（LANのIPで開いたときと同じくClipboard APIが無い）の両方から開きます。後者はブラウザに`http://mmt-web.test`として見せ、中身はPlaywrightが127.0.0.1のWebサーバから取ってくるので、サーバを127.0.0.1の外へ開く必要はありません。Clipboard APIのある場合・拒否された場合・HTTPで使えない場合に、値と複数行の設定例を実際のクリップボードへ写せることを確かめます。失敗時にボタンが動かないこと、modal内のコピー、日英の言語ボタンの高さ、320pxでの表示、無期限・730日・小数の時間のtoken発行、0の有効期間の拒否も確認します。カレンダーの日時指定では、Asia/Tokyoの2027-12-31 23:59がUTCの14:59になること、選択肢を切り替えても日時が残ること、空欄・過去の日時の拒否、320pxの表示を確認します。APIの期限・認証・失効・権限は`service-accounts.integration.test.ts`で検証します。
 
 ```bash
 MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
 MMT_CHROMIUM_PATH=/path/to/chromium \
 MMT_WEB_URL=http://127.0.0.1:<Webのport> \
-MMT_WEB_HTTP_URL=http://<LANのIP>:<Webのport> \
 MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/copy-token-expiry \
 node apps/web/tests/browser-copy-token-expiry.mjs
 ```

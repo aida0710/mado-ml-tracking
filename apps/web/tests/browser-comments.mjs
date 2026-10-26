@@ -90,8 +90,10 @@ const DESCRIPTION = [
 try {
   const admin = await signIn('comments-admin@localhost', 'コメント管理者');
   const adminApi = apiClient(admin);
+  // publicのProjectでは全員がeditorとして働けるので、viewerの画面を確かめるにはprivateにする。
   const project = await adminApi.post('/projects', {
     name: `Comments verification ${new Date().toISOString()}`,
+    visibility: 'private',
   });
   const projectBase = `${base}/projects/${project.id}`;
   const experiment = await adminApi.post(`/projects/${project.id}/experiments`, {

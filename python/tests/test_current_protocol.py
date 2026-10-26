@@ -16,7 +16,7 @@ from mado_tracking.worker.runtime import execution_specification
 @pytest.mark.parametrize(
     "section,field",
     [
-        ("run", "runtime"),
+        ("run", "environment"),
         ("codeVersion", "runtime"),
         ("target", "runtimeKinds"),
         ("target", "datasetCacheMaxBytes"),
