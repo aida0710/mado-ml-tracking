@@ -57,7 +57,9 @@ export const authConfigSchema = namedContractSchema(
     mode: z.enum(['local', 'oidc', 'hybrid', 'development']),
     methods: z.strictObject({
       local: z.boolean(),
-      oidc: z.strictObject({ label: z.string(), loginUrl: z.string() }).nullable(),
+      oidc: z
+        .strictObject({ label: z.string(), loginUrl: z.string(), managesGlobalRole: z.boolean() })
+        .nullable(),
     }),
   }),
 );

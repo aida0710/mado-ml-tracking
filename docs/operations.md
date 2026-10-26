@@ -104,8 +104,8 @@ MMT_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS=604800
 | 設定 | 意味 |
 |---|---|
 | `MMT_OIDC_ALLOWED_GROUPS` | loginを許すgroup（カンマ区切り）。`oidc`/`hybrid`で必須で、空なら起動しません |
-| `MMT_OIDC_ROLE_MAPPING_JSON` | group→全体roleの対応表。roleは`admin`（全体管理者）と`user`（loginのみ）。ほかの値は起動時エラー。設定しなければ、OIDCで入る人は誰も全体管理者になりません |
-| `MMT_OIDC_DEFAULT_ROLE` | 対応表のどのgroupにも入っていない許可ユーザーの全体role。既定`user` |
+| `MMT_OIDC_ROLE_MAPPING_JSON` | group→全体roleの対応表。roleは`admin`（全体管理者）と`user`（loginのみ）。ほかの値は起動時エラー。空（未設定か`{}`）なら、Authentikはloginできるかどうかだけを決め、全体管理者は「全体管理」→「ユーザー」で決めます |
+| `MMT_OIDC_DEFAULT_ROLE` | 対応表のどのgroupにも入っていない許可ユーザーの全体role。対応表が空なら、初回SSOで作るUserの全体role。既定`user` |
 | `MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL` | 同じemailのLocal Userへ自動連携するか。既定`false` |
 | `MMT_OIDC_SCOPES` | 要求するscope。既定`openid profile email offline_access`。`openid`が無いと起動しません。refresh tokenにはProvider側の`offline_access` mappingも必要です |
 | `MMT_SESSION_ENCRYPTION_KEY` | SSO sessionに保存するaccess/refresh tokenの暗号鍵（base64の32 byte、AES-256-GCM）。`oidc`/`hybrid`で必須で、無いか形式が違うと起動しません |
@@ -121,7 +121,8 @@ migration 042を含むバージョンへ更新するときは、先に`MMT_SESSI
 
 - 初回SSOでUserをJIT作成します。self-signupの画面はありません。
 - `MMT_OIDC_ALLOWED_GROUPS`のどのgroupにも入っていない人は拒否し、Userも作りません。
-- loginとsessionの再確認のたびに、全体管理者かどうか（`users.is_admin`）を対応表から同期します。複数groupに該当すれば強い方（`admin`）になります。
+- 対応表があれば、loginとsessionの再確認のたびに、全体管理者かどうか（`users.is_admin`）を対応表から同期します。複数groupに該当すれば強い方（`admin`）になります。
+- 対応表が空なら、`is_admin`は初回SSOで`MMT_OIDC_DEFAULT_ROLE`から決め、以後のloginと再確認では変えません。全体管理者は「全体管理」→「ユーザー」で付け外しします。社内の全員が入るgroupを1つだけ`MMT_OIDC_ALLOWED_GROUPS`に入れる運用に向きます。
 - loginとsessionの再確認のたびに、その人のgroupを`user_groups`へ保存し直します。ProjectのSSO group bindingはこの表を使います。
 - 同期で有効な全体管理者（Local Adminを含む）が0人になる場合は、そのloginを拒否し、`is_admin`を残します。
 - 既存Local Userへのemail自動連携は既定で無効で、同じemailでも別のUserになります。有効にした場合も`email_verified=true`かつemail一致（大文字小文字を区別しない）で、まだSSOと結び付いていないLocal Userが1人だけのときに限ります。全体管理者やどこかのProject adminであるLocal Userは自動連携しません。
@@ -129,7 +130,7 @@ migration 042を含むバージョンへ更新するときは、先に`MMT_SESSI
 - SSO由来の表示名とemailはloginのたびに更新します。Local UserのユーザーIDは連携後も維持します。
 - 作成・連携、全体roleやgroupの変化は監査ログの`auth.oidc.sync`に残ります。
 
-Role同期を使う環境では、SSO Userの全体roleを画面から一時的に変えても次回ログインでAuthentik側の状態へ戻ります。恒久変更はAuthentik groupで行います。
+対応表を使う環境では、SSO Userの全体管理者を画面から変えられません（422 `admin_role_managed_by_sso`）。変えるときはAuthentikのgroupを変えます。
 
 Web sessionはHttpOnly/SameSite=Lax cookieで、期限は上の`MMT_AUTH_SESSION_*`に従います。変更操作はOriginを検証します。アプリからのlogoutはアプリsessionを失効させます。Authentik全体のsession logoutとSCIMは提供しません。
 
@@ -198,7 +199,7 @@ callbackで断ったときは、利用者には理由を区別せず401を返し
 
 | 段 | 決め方 | 変える場所 |
 |---|---|---|
-| 全体role（全体管理者か否か） | `MMT_OIDC_ROLE_MAPPING_JSON`の対応表。loginとsessionの再確認のたびに同期 | API serverの環境変数とAuthentikのgroup |
+| 全体role（全体管理者か否か） | `MMT_OIDC_ROLE_MAPPING_JSON`の対応表があれば、loginとsessionの再確認のたびに同期。空ならアプリで管理 | 対応表があればAuthentikのgroup、空なら「全体管理」→「ユーザー」 |
 | Project role（viewer/editor/admin） | 直接付与とgroup bindingのうち強い方 | 「プロジェクト設定」（Project admin） |
 
 - 直接付与はユーザー1人に付けるrole（`project_members`）、group bindingはAuthentikのgroup名に付けるrole（`project_group_bindings`）です。どちらもProject adminが設定し、監査ログに`project.member.set`・`project.member.delete`・`project.group_binding.set`・`project.group_binding.delete`として残ります。

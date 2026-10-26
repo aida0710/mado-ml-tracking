@@ -1,5 +1,7 @@
 // IdPのグループから、SSOの利用者がログインできるかと、どの全体のroleを持つかを決める。
 // Projectのroleはここでは決めない。直接の付与とProjectのグループの割り当てから決まる。
+// 対応表（MMT_OIDC_ROLE_MAPPING_JSON）が空なら、IdPはログインの可否だけを決め、全体のroleは
+// このアプリの全体管理で決める（mado S3 Data Catalogと同じ決まり）。
 
 // 弱い順に並べる。対応付けた複数のグループに入っている利用者は、最も強いroleになる。
 // 'admin'は全体管理者（users.is_admin）。'user'はログインだけできる。
@@ -15,12 +17,17 @@ export interface OidcRolePolicy {
   defaultRole: GlobalRole;
 }
 
+// managedRoleは、IdPが全体のroleを決めるときだけ入る。無ければroleはこのアプリで管理する。
 export type OidcAccess =
   | { allowed: false; groups: string[] }
-  | { allowed: true; globalRole: GlobalRole; isAdmin: boolean; groups: string[] };
+  | { allowed: true; managedRole?: GlobalRole; groups: string[] };
 
 export function isGlobalRole(value: unknown): value is GlobalRole {
   return GLOBAL_ROLES.includes(value as GlobalRole);
+}
+
+export function idpManagesGlobalRole(policy: Pick<OidcRolePolicy, 'roleMapping'>): boolean {
+  return Object.keys(policy.roleMapping).length > 0;
 }
 
 function strongerRole(left: GlobalRole, right: GlobalRole): GlobalRole {
@@ -43,13 +50,14 @@ export function resolveOidcAccess(
   const groups = normalizeGroups(claimGroups);
   if (!groups.some((group) => policy.allowedGroups.includes(group)))
     return { allowed: false, groups };
+  if (!idpManagesGlobalRole(policy)) return { allowed: true, groups };
   const mappedRoles = groups.flatMap((group) => {
     const role = policy.roleMapping[group];
     return role ? [role] : [];
   });
-  const globalRole =
+  const managedRole =
     mappedRoles.length === 0 ? policy.defaultRole : mappedRoles.reduce(strongerRole);
-  return { allowed: true, globalRole, isAdmin: globalRole === 'admin', groups };
+  return { allowed: true, managedRole, groups };
 }
 
 export interface OidcRolePolicySettings {

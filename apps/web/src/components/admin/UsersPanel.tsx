@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { AdminUser, AdminUserQuery } from '@mmt/contracts';
 import { Plus, RefreshCw } from 'lucide-react';
 import { adminUsersApi } from '../../api/adminUsers';
+import { authApi } from '../../api/auth';
 import { useAdminUsers } from '../../hooks/useAdminUsers';
 import { useAuth } from '../../hooks/useAuth';
 import { useQuery } from '../../hooks/useQuery';
@@ -82,6 +83,9 @@ export function UsersPanel() {
   const activePeople = useQuery({ key: 'admin-users:active-people', load: (signal) =>
     adminUsersApi.list({ status: 'active', kind: 'human' }, signal),
   });
+  const authConfig = useQuery({ key: 'auth-config', load: authApi.config });
+  // 設定を読むまでは、IdPが決める側として扱う。APIが422で拒む操作を一瞬でも出さないため。
+  const ssoManagesGlobalRole = authConfig.value?.methods.oidc?.managesGlobalRole ?? true;
   const [searchText, setSearchText] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
@@ -141,6 +145,7 @@ export function UsersPanel() {
             users={items}
             currentUserId={signedInUser.id}
             lastActiveAdminId={findLastActiveGlobalAdminId(activePeople.value)}
+            ssoManagesGlobalRole={ssoManagesGlobalRole}
             onAction={(user, action) => setPendingAction({ user, action })}
           />
         )}

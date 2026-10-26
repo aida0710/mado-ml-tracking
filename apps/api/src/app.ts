@@ -12,6 +12,7 @@ import {
 import type { ApiConfig } from './config.js';
 import type { Database } from './db/database.js';
 import { DomainError } from './domain/errors.js';
+import { idpManagesGlobalRole } from './domain/oidcRolePolicy.js';
 import { authentication } from './http/authMiddleware.js';
 import { jobTokenGuard } from './http/jobTokenGuard.js';
 import {
@@ -620,7 +621,11 @@ export function createApplication(options: ApplicationOptions) {
   app.route(
     '/api/admin',
     adminUserRoutes(
-      new UserAdministrationService({ database, passwordHasher: argon2idPasswordHasher }),
+      new UserAdministrationService({
+        database,
+        passwordHasher: argon2idPasswordHasher,
+        idpManagesGlobalRole: config.oidc ? idpManagesGlobalRole(config.oidc.rolePolicy) : false,
+      }),
     ),
   );
   app.route('/api/account', accountRoutes(new AccountService(database)));

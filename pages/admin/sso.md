@@ -85,8 +85,10 @@ openssl rand -base64 32
 ### ログインを許すgroupと全体管理者のgroup
 
 - `MMT_OIDC_ALLOWED_GROUPS`: ログインを許すgroup（カンマ区切り）。`oidc`と`hybrid`では必須で、空ならAPIが起動しません。どのgroupにも入っていない人はログインできず、ユーザーも作られません。
-- `MMT_OIDC_ROLE_MAPPING_JSON`: group→全体のroleの対応表。roleは`admin`（全体管理者）と`user`（ログインだけ）の2つです。ほかの値はAPIの起動時にエラーになります。設定しなければ、SSOで入る人は誰も全体管理者になりません。
+- `MMT_OIDC_ROLE_MAPPING_JSON`: group→全体のroleの対応表。roleは`admin`（全体管理者）と`user`（ログインだけ）の2つです。ほかの値はAPIの起動時にエラーになります。
 - `MMT_OIDC_DEFAULT_ROLE`: 対応表のどのgroupにも入っていない、許可された人のrole。既定は`user`です。
+
+対応表を空（`{}`）にすると、Authentikはログインできるかどうかだけを決め、全体管理者は［全体設定］→［ユーザー］で付け外しします。初めてSSOで入った人は`MMT_OIDC_DEFAULT_ROLE`になり、以後のログインでは変わりません。社内の全員が入るgroupを1つだけ`MMT_OIDC_ALLOWED_GROUPS`に入れておけば、人が増えるたびにAuthentikを開かずに済みます。
 
 複数のgroupに入っている人は、強い方（`admin`）になります。対応表に書いたgroupも`MMT_OIDC_ALLOWED_GROUPS`に入れてください。許可されていないgroupだけの人は、対応表に関係なくログインできません。
 

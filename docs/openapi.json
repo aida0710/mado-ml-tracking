@@ -50478,6 +50478,7 @@
             "description": "入力が不正",
             "x-mmt-error-codes": [
               "admin_role_managed_by_sso",
+              "profile_managed_by_sso",
               "service_account_admin_forbidden",
               "invalid_request",
               "invalid_reference"
@@ -55935,11 +55936,15 @@
                       },
                       "loginUrl": {
                         "type": "string"
+                      },
+                      "managesGlobalRole": {
+                        "type": "boolean"
                       }
                     },
                     "required": [
                       "label",
-                      "loginUrl"
+                      "loginUrl",
+                      "managesGlobalRole"
                     ],
                     "additionalProperties": false
                   },

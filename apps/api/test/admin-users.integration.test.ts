@@ -4,6 +4,7 @@ import type {
   Account,
   AdminUser,
   AdminUserPasswordReset,
+  AuthConfig,
   AuthMe,
   ServiceAccount,
 } from '@mmt/contracts';
@@ -12,6 +13,7 @@ import { loadConfig } from '../src/config.js';
 import type { ApiEnvironment } from '../src/http/request.js';
 import { projectFixture } from './fixtures.js';
 import { createHarness, entity, login, request, testDatabaseUrl, type Harness } from './harness.js';
+import { TEST_SESSION_ENCRYPTION_KEY } from './mockOidcProvider.js';
 
 const TEMPORARY_PASSWORD = 'first temporary passphrase';
 
@@ -44,6 +46,24 @@ describe.skipIf(!testDatabaseUrl)('全体管理者のユーザー管理（独立
         },
       }),
     );
+  }
+
+  // harnessと同じDBとsessionのまま、SSOの全体roleの決め方（MMT_OIDC_ROLE_MAPPING_JSON）だけを変えたアプリ。
+  function appWithRoleMapping(roleMappingJson: string): Hono<ApiEnvironment> {
+    const { oidc } = loadConfig({
+      MMT_DATABASE_URL: testDatabaseUrl,
+      MMT_AUTH_MODE: 'hybrid',
+      MMT_OIDC_ISSUER_URL: 'https://idp.example.invalid',
+      MMT_OIDC_CLIENT_ID: 'mmt-test',
+      MMT_OIDC_ALLOWED_GROUPS: 'mmt-users',
+      MMT_OIDC_ROLE_MAPPING_JSON: roleMappingJson,
+      MMT_SESSION_ENCRYPTION_KEY: TEST_SESSION_ENCRYPTION_KEY,
+    });
+    return createApplication({
+      config: { ...harness.config, oidc },
+      database: harness.database,
+      stores: harness.stores,
+    }).app;
   }
 
   function localLogin(username: string, password: string) {
@@ -333,11 +353,13 @@ describe.skipIf(!testDatabaseUrl)('全体管理者のユーザー管理（独立
     ]);
   });
 
-  it('SSOユーザーの全体管理者権限と表示名は422で、無効化はできる', async () => {
+  it('対応表があるとSSOユーザーの全体管理者権限と表示名は422で、無効化はできる', async () => {
     const administrator = await login(harness);
     const ssoUserId = await createSsoUser('sso.user@example.invalid');
+    const app = appWithRoleMapping('{"mmt-admins":"admin"}');
     for (const body of [{ isAdmin: true }, { displayName: '別名' }]) {
-      const response = await adminRequest(administrator.cookie, `/users/${ssoUserId}`, {
+      const response = await request(app, `/api/admin/users/${ssoUserId}`, {
+        cookie: administrator.cookie,
         method: 'PATCH',
         body,
       });
@@ -355,6 +377,29 @@ describe.skipIf(!testDatabaseUrl)('全体管理者のユーザー管理（独立
       method: 'POST',
     });
     expect(reset.status).toBe(422);
+  });
+
+  it('対応表が空ならSSOユーザーも全体管理者にでき、表示名は422のまま', async () => {
+    const administrator = await login(harness);
+    const ssoUserId = await createSsoUser('sso.member@example.invalid');
+    const app = appWithRoleMapping('{}');
+    const config = await entity<AuthConfig>(await request(app, '/api/auth/config'), 200);
+    expect(config.methods.oidc?.managesGlobalRole).toBe(false);
+    const promoted = await entity<AdminUser>(
+      await request(app, `/api/admin/users/${ssoUserId}`, {
+        cookie: administrator.cookie,
+        method: 'PATCH',
+        body: { isAdmin: true },
+      }),
+      200,
+    );
+    expect(promoted).toMatchObject({ isAdmin: true, authSources: ['oidc'] });
+    const renamed = await request(app, `/api/admin/users/${ssoUserId}`, {
+      cookie: administrator.cookie,
+      method: 'PATCH',
+      body: { displayName: '別名' },
+    });
+    expect(renamed.status).toBe(422);
   });
 
   it('Service Accountを全体管理から無効化すると、Projectの一覧でも無効になり無効化日時が残る', async () => {

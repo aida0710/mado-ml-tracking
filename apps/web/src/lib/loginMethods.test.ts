@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { AuthConfig } from '@mmt/contracts';
 import { loginMethods } from './loginMethods';
 
-const sso = { label: 'Authentik', loginUrl: '/api/auth/login' };
+const sso = { label: 'Authentik', loginUrl: '/api/auth/login', managesGlobalRole: true };
 const config = (mode: AuthConfig['mode'], local: boolean, oidc: typeof sso | null): AuthConfig => ({
   mode,
   methods: { local, oidc },

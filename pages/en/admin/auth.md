@@ -97,7 +97,7 @@ The counters live in the API process memory and reset when the API restarts. An 
 When someone leaves or changes teams, a global administrator uses **Administration** → **Users**.
 
 1. Click **Disable** on the row and confirm. The user's sessions end immediately, and the user's API tokens (including the MLflow-compatible API) return 401 from the next request.
-2. For SSO users, also remove the user from the Authentik groups. If you re-enable the user without doing so, the next login restores the global role derived from the groups.
+2. For SSO users, also remove the user from the Authentik groups. When `MMT_OIDC_ROLE_MAPPING_JSON` has a mapping and you re-enable the user without doing so, the next login restores the global role derived from the groups.
 3. To restore the user, click **Enable** on the same row. API tokens work again, but ended sessions do not come back; the user signs in again.
 
 Users cannot be deleted, so that the creators of Runs and model versions stay on record. The last active global administrator cannot be disabled or demoted (409 `last_active_admin`); on the screen, that row's **Disable** and **Remove administrator** are disabled with the reason. Prepare another global administrator first.

@@ -4,6 +4,7 @@ import { TEST_SESSION_ENCRYPTION_KEY } from './mockOidcProvider.js';
 import { removesLastGlobalAdmin } from '../src/domain/globalAdminInvariant.js';
 import {
   createOidcRolePolicy,
+  idpManagesGlobalRole,
   resolveOidcAccess,
   type OidcRolePolicy,
 } from '../src/domain/oidcRolePolicy.js';
@@ -23,8 +24,7 @@ describe('resolveOidcAccess', () => {
   it('複数groupに該当すると強い方のroleになり、groupは重複を除いて並べ替える', () => {
     expect(resolveOidcAccess(policy, ['mmt-users', 'mmt-admins', 'mmt-users'])).toEqual({
       allowed: true,
-      globalRole: 'admin',
-      isAdmin: true,
+      managedRole: 'admin',
       groups: ['mmt-admins', 'mmt-users'],
     });
   });
@@ -32,12 +32,22 @@ describe('resolveOidcAccess', () => {
   it('対応表に無い許可ユーザーはMMT_OIDC_DEFAULT_ROLEになる', () => {
     const withoutUserMapping = { ...policy, roleMapping: { 'mmt-admins': 'admin' as const } };
     expect(resolveOidcAccess(withoutUserMapping, ['mmt-users'])).toMatchObject({
-      globalRole: 'user',
-      isAdmin: false,
+      managedRole: 'user',
     });
     expect(
       resolveOidcAccess({ ...withoutUserMapping, defaultRole: 'admin' }, ['mmt-users']),
-    ).toMatchObject({ globalRole: 'admin', isAdmin: true });
+    ).toMatchObject({ managedRole: 'admin' });
+  });
+
+  it('対応表が空ならログインの可否だけを決め、roleは決めない', () => {
+    const appManaged = { ...policy, roleMapping: {} };
+    expect(idpManagesGlobalRole(appManaged)).toBe(false);
+    expect(idpManagesGlobalRole(policy)).toBe(true);
+    expect(resolveOidcAccess(appManaged, ['mmt-admins'])).toEqual({
+      allowed: true,
+      groups: ['mmt-admins'],
+    });
+    expect(resolveOidcAccess(appManaged, ['other']).allowed).toBe(false);
   });
 
   it('文字列でない・空・長すぎるgroupは判定にも保存にも使わない', () => {
@@ -65,16 +75,18 @@ describe('createOidcRolePolicy', () => {
     );
   });
 
-  it('対応表が無いとmmt-adminsも一般ユーザーになる', () => {
+  it('対応表が無いとグループの名前からroleを決めない（mmt-adminsでも管理者にならない）', () => {
     const configured = createOidcRolePolicy(base);
     expect(configured.roleMapping).toEqual({});
-    expect(resolveOidcAccess(configured, ['mmt-admins'])).toMatchObject({ isAdmin: false });
+    expect(resolveOidcAccess(configured, ['mmt-admins'])).not.toHaveProperty('managedRole');
   });
 
   it('対応表で明示したgroupだけが管理者になる', () => {
     const configured = createOidcRolePolicy({ ...base, roleMappingJson: '{"ops":"admin"}' });
-    expect(resolveOidcAccess(configured, ['mmt-users', 'ops'])).toMatchObject({ isAdmin: true });
-    expect(resolveOidcAccess(configured, ['mmt-admins'])).toMatchObject({ isAdmin: false });
+    expect(resolveOidcAccess(configured, ['mmt-users', 'ops'])).toMatchObject({
+      managedRole: 'admin',
+    });
+    expect(resolveOidcAccess(configured, ['mmt-admins'])).toMatchObject({ managedRole: 'user' });
   });
 
   it('未知のroleや壊れたJSONは作れない', () => {

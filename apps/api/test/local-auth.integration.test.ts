@@ -135,7 +135,7 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとMMT_AUTH_MODE�
       const oidc = application('oidc');
       expect(await entity(await request(oidc, '/api/auth/config'), 200)).toEqual({
         mode: 'oidc',
-        methods: { local: false, oidc: { label: 'Authentik', loginUrl: '/api/auth/login' } },
+        methods: { local: false, oidc: { label: 'Authentik', loginUrl: '/api/auth/login', managesGlobalRole: false } },
       });
       await createLocalUser('alice');
       const disabled = await localLogin(oidc, 'alice');
@@ -146,7 +146,7 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとMMT_AUTH_MODE�
       expect(
         (await entity<{ methods: unknown }>(await request(hybrid, '/api/auth/config'), 200))
           .methods,
-      ).toEqual({ local: true, oidc: { label: 'Authentik', loginUrl: '/api/auth/login' } });
+      ).toEqual({ local: true, oidc: { label: 'Authentik', loginUrl: '/api/auth/login', managesGlobalRole: false } });
       expect((await localLogin(hybrid, 'alice')).status).toBe(200);
       expect((await request(hybrid, '/api/auth/login')).status).toBe(302);
     });

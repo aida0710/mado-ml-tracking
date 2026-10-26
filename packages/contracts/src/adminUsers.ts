@@ -28,7 +28,10 @@ export interface AdminUserCreate {
   isAdmin: boolean;
 }
 
-/** PATCH /admin/users/:id。SSOのユーザーのisAdminとdisplayNameはIdPから来るので、変更を拒む。 */
+/**
+ * PATCH /admin/users/:id。SSOのユーザーのdisplayNameはIdPから来るので、変更を拒む。isAdminも、
+ * MMT_OIDC_ROLE_MAPPING_JSONに対応表があるときはIdPから来るので拒む。
+ */
 export interface AdminUserPatch {
   status?: User['status'];
   displayName?: string;

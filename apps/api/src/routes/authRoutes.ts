@@ -6,6 +6,7 @@ import type { AuthService } from '../services/authService.js';
 import { LOGIN_LIFETIME_SECONDS } from '../services/authService.js';
 import { RateLimitedError } from '../auth/authRateLimiter.js';
 import { DomainError } from '../domain/errors.js';
+import { idpManagesGlobalRole } from '../domain/oidcRolePolicy.js';
 import { LOGIN_BINDING_COOKIE, SESSION_COOKIE, validateOrigin } from '../http/authMiddleware.js';
 import { jsonBody, principal, type ApiContext, type ApiEnvironment } from '../http/request.js';
 import { requestMetadata } from '../http/requestMetadata.js';
@@ -68,7 +69,11 @@ export function authRoutes(auth: AuthService): Hono<ApiEnvironment> {
       methods: {
         local: auth.config.localLoginEnabled,
         oidc: auth.config.oidc
-          ? { label: auth.config.oidc.label, loginUrl: '/api/auth/login' }
+          ? {
+              label: auth.config.oidc.label,
+              loginUrl: '/api/auth/login',
+              managesGlobalRole: idpManagesGlobalRole(auth.config.oidc.rolePolicy),
+            }
           : null,
       },
     }),

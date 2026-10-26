@@ -9,10 +9,14 @@ import { text, textTemplates } from '../../i18n/catalog';
 
 export type UserAction = 'makeAdmin' | 'removeAdmin' | 'resetPassword' | 'disable' | 'enable';
 
-/** このユーザーに対してAPIが受け付ける操作。SSOのロールと名前はIdPから来る。 */
-function availableActions(user: AdminUser): UserAction[] {
+/**
+ * このユーザーに対してAPIが受け付ける操作。SSOの名前はIdPから来る。SSOの全体管理者権限は、
+ * IdPのグループが決める設定（ssoManagesGlobalRole）のときだけIdPから来る。
+ */
+function availableActions(user: AdminUser, ssoManagesGlobalRole: boolean): UserAction[] {
   const actions: UserAction[] = [];
-  if (!isSsoUser(user) && user.kind === 'human')
+  const isAdminFromSso = ssoManagesGlobalRole && isSsoUser(user);
+  if (!isAdminFromSso && user.kind === 'human')
     actions.push(user.isAdmin ? 'removeAdmin' : 'makeAdmin');
   if (user.authSources.includes('local')) actions.push('resetPassword');
   actions.push(user.status === 'active' ? 'disable' : 'enable');
@@ -39,12 +43,15 @@ export function UsersTable({
   users,
   currentUserId,
   lastActiveAdminId,
+  ssoManagesGlobalRole,
   onAction,
 }: {
   users: AdminUser[];
   currentUserId: string;
   /** 複数いるとき、またはまだ分からない間はnull。 */
   lastActiveAdminId: string | null;
+  /** IdPのグループがSSOの利用者の全体管理者権限を決めるか（GET /auth/config）。 */
+  ssoManagesGlobalRole: boolean;
   onAction: (user: AdminUser, action: UserAction) => void;
 }) {
   useLocale();
@@ -102,7 +109,9 @@ export function UsersTable({
           render: (user) => (
             <div className="user-admin">
               <span>{user.isAdmin ? text.userIsAdmin : text.userIsNotAdmin}</span>
-              {isSsoUser(user) && <span className="muted">{text.userAdminFromSso}</span>}
+              {ssoManagesGlobalRole && isSsoUser(user) && (
+                <span className="muted">{text.userAdminFromSso}</span>
+              )}
             </div>
           ),
         },
@@ -118,7 +127,7 @@ export function UsersTable({
           header: text.actions,
           render: (user) => (
             <div className="user-actions">
-              {availableActions(user).map((action) => (
+              {availableActions(user, ssoManagesGlobalRole).map((action) => (
                 <button
                   key={action}
                   type="button"

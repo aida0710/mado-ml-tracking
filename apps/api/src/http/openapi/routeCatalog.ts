@@ -3239,7 +3239,12 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     responses: { 200: contract.adminUserSchema },
     errors: [
       ...routeError(409, 'last_active_admin'),
-      ...routeError(422, 'admin_role_managed_by_sso', 'service_account_admin_forbidden'),
+      ...routeError(
+        422,
+        'admin_role_managed_by_sso',
+        'profile_managed_by_sso',
+        'service_account_admin_forbidden',
+      ),
     ],
   },
   {

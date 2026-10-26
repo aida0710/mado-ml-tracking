@@ -85,8 +85,10 @@ These settings keep a login for seven days, including inactivity. Update an exis
 ### Allowed groups and the administrator group
 
 - `MMT_OIDC_ALLOWED_GROUPS`: groups allowed to sign in (comma-separated). Required in `oidc` and `hybrid`; the API does not start if it is empty. People in none of these groups cannot sign in, and no user is created for them.
-- `MMT_OIDC_ROLE_MAPPING_JSON`: a group → global role mapping. The roles are `admin` (global administrator) and `user` (sign-in only). Any other value is a startup error. Without it, no one who signs in through SSO is a global administrator.
+- `MMT_OIDC_ROLE_MAPPING_JSON`: a group → global role mapping. The roles are `admin` (global administrator) and `user` (sign-in only). Any other value is a startup error.
 - `MMT_OIDC_DEFAULT_ROLE`: the role of allowed users who match no group in the mapping. Default `user`.
+
+With an empty mapping (`{}`), Authentik only decides who can sign in, and you grant or remove global administrator in **Global settings** → **Users**. People signing in through SSO for the first time get `MMT_OIDC_DEFAULT_ROLE`, and later sign-ins do not change it. Put a single group that everyone belongs to in `MMT_OIDC_ALLOWED_GROUPS`, and you no longer need to open Authentik each time someone joins.
 
 A user in several groups gets the stronger role (`admin`). Include the groups in the mapping in `MMT_OIDC_ALLOWED_GROUPS` too. People whose groups are all outside the allowed list cannot sign in, whatever the mapping says.
 
