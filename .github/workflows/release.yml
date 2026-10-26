@@ -86,8 +86,8 @@ jobs:
           tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:${{ env.RELEASE_TAG }}-staging-${{ needs.source.outputs.commit }}
           # Webの「このアプリについて」に出すコミット（Dockerfile.webだけが使う）。
           build-args: |
-            VITE_GIT_COMMIT=${{ needs.source.outputs.commit }}
-            VITE_GIT_DATE=${{ needs.source.outputs.commit-date }}
+            MMT_GIT_COMMIT=${{ needs.source.outputs.commit }}
+            MMT_GIT_DATE=${{ needs.source.outputs.commit-date }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.version=${{ env.RELEASE_TAG }}

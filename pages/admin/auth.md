@@ -5,12 +5,12 @@ description: ログイン方法をlocal・oidc・hybridから選ぶ方法と、�
 
 # 認証方式とローカルアカウント
 
-mado ML Trackingのログイン方法は、API serverの環境変数`AUTH_MODE`で選びます。Authentik（SSO）だけ、ローカルアカウントだけ、両方の3つから選べます。Madoと同じ構成です。
+mado ML Trackingのログイン方法は、API serverの環境変数`MMT_AUTH_MODE`で選びます。Authentik（SSO）だけ、ローカルアカウントだけ、両方の3つから選べます。Madoと同じ構成です。
 
-| `AUTH_MODE` | 使えるログイン | 必須の設定 | こんなときに向いています |
+| `MMT_AUTH_MODE` | 使えるログイン | 必須の設定 | こんなときに向いています |
 | --- | --- | --- | --- |
-| `local` | ローカルアカウント | なし（`OIDC_*`は読みません） | SSOが無い環境、閉じたLANで使う |
-| `oidc` | Authentik（SSO）だけ | `OIDC_ISSUER_URL`、`OIDC_CLIENT_ID`、`OIDC_ALLOWED_GROUPS`、`MMT_SESSION_ENCRYPTION_KEY` | SSOへの移行を終えた本番 |
+| `local` | ローカルアカウント | なし（`MMT_OIDC_*`は読みません） | SSOが無い環境、閉じたLANで使う |
+| `oidc` | Authentik（SSO）だけ | `MMT_OIDC_ISSUER_URL`、`MMT_OIDC_CLIENT_ID`、`MMT_OIDC_ALLOWED_GROUPS`、`MMT_SESSION_ENCRYPTION_KEY` | SSOへの移行を終えた本番 |
 | `hybrid`（既定） | SSOとローカルアカウント | `oidc`と同じ | SSOの導入中。ローカルの管理者を緊急用のログイン経路として残す |
 | `development` | 開発用ログイン | なし | ローカル開発。`NODE_ENV=production`では起動しません |
 
@@ -20,13 +20,13 @@ Authentik側の設定と、groupで権限を決める方法は[Authentik（SSO�
 
 ## ログイン画面
 
-ログイン画面には、`AUTH_MODE`で有効な方式だけが表示されます。
+ログイン画面には、`MMT_AUTH_MODE`で有効な方式だけが表示されます。
 
-- `oidc`: SSOのボタンだけ。ボタンの表示名は`OIDC_LABEL`（既定は`Authentik`）
+- `oidc`: SSOのボタンだけ。ボタンの表示名は`MMT_OIDC_LABEL`（既定は`Authentik`）
 - `hybrid`: SSOのボタンと、その下に「またはローカルアカウント」のユーザー名・パスワード欄
 - `local`: ユーザー名・パスワード欄だけ
 
-ログインのsessionは、操作しないまま`AUTH_SESSION_IDLE_SECONDS`が過ぎるか、ログインから`AUTH_SESSION_ABSOLUTE_SECONDS`が過ぎた時点の早い方で切れます。どちらも既定604800秒（7日）なので、操作しない期間を含め、ログインから7日保持します。idleがabsoluteより長い設定では、APIが起動しません。
+ログインのsessionは、操作しないまま`MMT_AUTH_SESSION_IDLE_SECONDS`が過ぎるか、ログインから`MMT_AUTH_SESSION_ABSOLUTE_SECONDS`が過ぎた時点の早い方で切れます。どちらも既定604800秒（7日）なので、操作しない期間を含め、ログインから7日保持します。idleがabsoluteより長い設定では、APIが起動しません。
 
 ## 初期管理者を作る
 
@@ -54,12 +54,12 @@ docker compose run --rm api npm run bootstrap-admin -w @mmt/api
 
 ## ローカルアカウントを作る
 
-全体管理者が画面から作ります。`AUTH_MODE`に関係なく作成できますが、`oidc`ではローカルアカウントでログインできません。
+全体管理者が画面から作ります。`MMT_AUTH_MODE`に関係なく作成できますが、`oidc`ではローカルアカウントでログインできません。
 
 ![「全体管理」の「ユーザー」の画面](/images/admin-users.png)
 
 1. 右上のユーザーメニューの［全体設定］を開き、サイドバーの「全体管理」で［ユーザー］を開きます（`/settings/users`）。
-2. ［ローカルユーザーを作成］を押します。`AUTH_MODE`が`development`か`oidc`でローカルログインが無効なときは、ダイアログに「今のAPI serverの設定（AUTH_MODE）では、ローカルアカウントでログインできません」と出ます。作成はできますが、ログインできるのは`AUTH_MODE`を`local`か`hybrid`にしたときです。
+2. ［ローカルユーザーを作成］を押します。`MMT_AUTH_MODE`が`development`か`oidc`でローカルログインが無効なときは、ダイアログに「今のAPI serverの設定（MMT_AUTH_MODE）では、ローカルアカウントでログインできません」と出ます。作成はできますが、ログインできるのは`MMT_AUTH_MODE`を`local`か`hybrid`にしたときです。
 3. 次の値を入力して保存します。
 
 | 項目 | 入力値 |
@@ -111,12 +111,12 @@ SSOのユーザーの全体管理者の判定と表示名はAuthentikが正本�
 
 ローカルアカウントで運用していた環境をSSOへ移すときは、`hybrid`を経由します。
 
-1. `AUTH_MODE=hybrid`と[Authentikの設定](/admin/sso)を`.env`に入れ、`npm run db:migrate`を実行してからAPIを再起動します。
+1. `MMT_AUTH_MODE=hybrid`と[Authentikの設定](/admin/sso)を`.env`に入れ、`npm run db:migrate`を実行してからAPIを再起動します。
 2. `bootstrap-admin`でローカルの管理者を作り、パスワードを変更しておきます。
 3. 管理者と一般のメンバーがSSOでログインし、全体管理者の判定とProjectの権限が正しいことを確かめます。
-4. 確かめられたら`AUTH_MODE=oidc`に変えて再起動します。ローカルアカウントのログインは404になります。
+4. 確かめられたら`MMT_AUTH_MODE=oidc`に変えて再起動します。ローカルアカウントのログインは404になります。
 
-Authentikが止まってログインできなくなったときは、`AUTH_MODE=hybrid`へ戻して再起動すると、ローカルの管理者でログインできます。
+Authentikが止まってログインできなくなったときは、`MMT_AUTH_MODE=hybrid`へ戻して再起動すると、ローカルの管理者でログインできます。
 
 ## 自分のアカウントを確認する {#check-your-account}
 

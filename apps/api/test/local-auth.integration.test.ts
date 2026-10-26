@@ -15,7 +15,7 @@ const NEW_PASSWORD = 'a different long passphrase';
 // 既定の有効期間（7日）を待たず、保存したsessionの時刻をずらす。
 const DAY_SECONDS = 24 * 60 * 60;
 
-describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独立PostgreSQL）', () => {
+describe.skipIf(!testDatabaseUrl)('ローカルアカウントとMMT_AUTH_MODE（独立PostgreSQL）', () => {
   let harness: Harness;
   let provider: Awaited<ReturnType<typeof startMockOidcProvider>>;
 
@@ -23,12 +23,12 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独
   function application(mode: 'local' | 'oidc' | 'hybrid'): Hono<ApiEnvironment> {
     const config = loadConfig({
       MMT_DATABASE_URL: testDatabaseUrl,
-      AUTH_MODE: mode,
-      OIDC_ISSUER_URL: provider.issuer,
-      OIDC_CLIENT_ID: 'mmt-test',
-      OIDC_ALLOWED_GROUPS: 'mmt-users,mmt-admins',
-      OIDC_CLIENT_SECRET: 'mock-client-secret',
-      OIDC_ALLOW_INSECURE_HTTP: 'true',
+      MMT_AUTH_MODE: mode,
+      MMT_OIDC_ISSUER_URL: provider.issuer,
+      MMT_OIDC_CLIENT_ID: 'mmt-test',
+      MMT_OIDC_ALLOWED_GROUPS: 'mmt-users,mmt-admins',
+      MMT_OIDC_CLIENT_SECRET: 'mock-client-secret',
+      MMT_OIDC_ALLOW_INSECURE_HTTP: 'true',
       MMT_SESSION_ENCRYPTION_KEY: TEST_SESSION_ENCRYPTION_KEY,
     });
     return createApplication({ config, database: harness.database, stores: harness.stores }).app;
@@ -90,14 +90,14 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独
   describe('設定', () => {
     it('modeごとに必須の設定が欠けると起動を拒否し、productionのdevelopmentも拒否する', () => {
       const base = { MMT_DATABASE_URL: testDatabaseUrl };
-      expect(() => loadConfig({ ...base, AUTH_MODE: 'oidc' })).toThrow(/OIDC_ISSUER_URL/);
-      expect(() => loadConfig({ ...base, AUTH_MODE: 'hybrid' })).toThrow(/OIDC_ISSUER_URL/);
-      expect(() => loadConfig({ AUTH_MODE: 'local' })).toThrow(/DATABASE_URL/);
+      expect(() => loadConfig({ ...base, MMT_AUTH_MODE: 'oidc' })).toThrow(/MMT_OIDC_ISSUER_URL/);
+      expect(() => loadConfig({ ...base, MMT_AUTH_MODE: 'hybrid' })).toThrow(/MMT_OIDC_ISSUER_URL/);
+      expect(() => loadConfig({ MMT_AUTH_MODE: 'local' })).toThrow(/MMT_DATABASE_URL/);
       expect(() =>
         loadConfig({
           ...base,
           NODE_ENV: 'production',
-          AUTH_MODE: 'development',
+          MMT_AUTH_MODE: 'development',
           MMT_PUBLIC_URL: 'https://mmt.example',
           MMT_WEB_ORIGIN: 'https://mmt.example',
         }),
@@ -105,13 +105,17 @@ describe.skipIf(!testDatabaseUrl)('ローカルアカウントとAUTH_MODE（独
       expect(() =>
         loadConfig({
           ...base,
-          AUTH_MODE: 'local',
-          AUTH_SESSION_IDLE_SECONDS: '50000',
-          AUTH_SESSION_ABSOLUTE_SECONDS: '43200',
+          MMT_AUTH_MODE: 'local',
+          MMT_AUTH_SESSION_IDLE_SECONDS: '50000',
+          MMT_AUTH_SESSION_ABSOLUTE_SECONDS: '43200',
         }),
-      ).toThrow(/AUTH_SESSION_IDLE_SECONDS/);
+      ).toThrow(/MMT_AUTH_SESSION_IDLE_SECONDS/);
       // localモードは、残っているOIDCの設定でSSOの経路を開かず、無視する。
-      const local = loadConfig({ ...base, AUTH_MODE: 'local', OIDC_ISSUER_URL: 'not a url' });
+      const local = loadConfig({
+        ...base,
+        MMT_AUTH_MODE: 'local',
+        MMT_OIDC_ISSUER_URL: 'not a url',
+      });
       expect(local.oidc).toBeNull();
       expect(local.session).toEqual({ idleSeconds: 604800, absoluteSeconds: 604800 });
     });

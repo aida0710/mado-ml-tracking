@@ -10,24 +10,24 @@ description: What to check when the API does not start, SSO login fails, tokens 
 If a setting is wrong, the API prints only the names of missing or malformed settings and stops. Values are never printed.
 
 ```text
-Invalid configuration: OIDC_RECHECK_SECONDS
-MMT_SESSION_ENCRYPTION_KEY is required when AUTH_MODE=hybrid
+Invalid configuration: MMT_OIDC_RECHECK_SECONDS
+MMT_SESSION_ENCRYPTION_KEY is required when MMT_AUTH_MODE=hybrid
 ```
 
 | Message | Fix |
 | --- | --- |
 | `MMT_DATABASE_URL is required` | Put the database URL in `.env` |
-| `OIDC_ISSUER_URL and OIDC_CLIENT_ID are required when AUTH_MODE=...` | Add the Authentik settings, or use `AUTH_MODE=local` |
+| `MMT_OIDC_ISSUER_URL and MMT_OIDC_CLIENT_ID are required when MMT_AUTH_MODE=...` | Add the Authentik settings, or use `MMT_AUTH_MODE=local` |
 | `MMT_SESSION_ENCRYPTION_KEY is required ...`, `... must be base64 of 32 bytes` | Set a value generated with `openssl rand -base64 32` |
 | `OIDC issuer requires HTTPS ...` | Use an HTTPS issuer URL |
 | `Production URLs require HTTPS` | With `NODE_ENV=production`, make `MMT_PUBLIC_URL` and `MMT_WEB_ORIGIN` HTTPS |
-| `Development authentication is forbidden in production` | In production, set `AUTH_MODE` to `local`, `oidc`, or `hybrid` |
-| `AUTH_SESSION_IDLE_SECONDS must not exceed AUTH_SESSION_ABSOLUTE_SECONDS` | Make the idle limit no longer than the absolute limit |
+| `Development authentication is forbidden in production` | In production, set `MMT_AUTH_MODE` to `local`, `oidc`, or `hybrid` |
+| `MMT_AUTH_SESSION_IDLE_SECONDS must not exceed MMT_AUTH_SESSION_ABSOLUTE_SECONDS` | Make the idle limit no longer than the absolute limit |
 | `MMT_GIT_SSH_KEY_PATH and MMT_GIT_KNOWN_HOSTS_PATH must be set together` | Set both or remove both |
 
-The API also refuses to start when `OIDC_ALLOWED_GROUPS` is empty, when `OIDC_ROLE_MAPPING_JSON` contains a role other than `admin` and `user`. Setting only one of `MMT_SMTP_URL` and `MMT_SMTP_FROM` also stops it.
+The API also refuses to start when `MMT_OIDC_ALLOWED_GROUPS` is empty, when `MMT_OIDC_ROLE_MAPPING_JSON` contains a role other than `admin` and `user`. Setting only one of `MMT_SMTP_URL` and `MMT_SMTP_FROM` also stops it.
 
-If it stops after an update, check for newly required settings. `MMT_SESSION_ENCRYPTION_KEY` is required from the version with SSO session rechecks, and `OIDC_ALLOWED_GROUPS` from the version with group-based login.
+If it stops after an update, check for newly required settings. `MMT_SESSION_ENCRYPTION_KEY` is required from the version with SSO session rechecks, and `MMT_OIDC_ALLOWED_GROUPS` from the version with group-based login.
 
 ## Cannot sign in with SSO
 
@@ -39,7 +39,7 @@ https://tracking.example.com/api/audit-events?action=auth.oidc.denied
 
 | `reason` | Meaning | Fix |
 | --- | --- | --- |
-| `group_not_allowed` | Not in any group of `OIDC_ALLOWED_GROUPS` | Add the user to a group in Authentik. Also check that the ID token contains `groups` |
+| `group_not_allowed` | Not in any group of `MMT_OIDC_ALLOWED_GROUPS` | Add the user to a group in Authentik. Also check that the ID token contains `groups` |
 | `email_not_verified` | `email` is missing or `email_verified` is not true | Mark the email as verified in Authentik and emit `email_verified` in the scope mapping |
 | `user_disabled` | The user is disabled in this application | A global administrator enables the user in **Administration** → **Users** |
 | `last_admin` | The sync would leave no active global administrator | Prepare another global administrator first (a local administrator is fine) |
@@ -56,15 +56,15 @@ The SSO session recheck may have ended the session. Check the `reason` of the au
 | --- | --- | --- |
 | `group_not_allowed` | Removed from the allowed groups | Check group membership. If UserInfo has no `groups`, everyone gets this |
 | `idp_session_revoked` | Authentik refused the tokens (signed out of Authentik, and so on) | Sign in again |
-| `reauthentication_required` | The access token expired without a refresh token | Add `offline_access` to `OIDC_SCOPES` and the provider |
+| `reauthentication_required` | The access token expired without a refresh token | Add `offline_access` to `MMT_OIDC_SCOPES` and the provider |
 
 ## Authentik unreachable (503 `oidc_unavailable`)
 
 The API server cannot reach Authentik, so the SSO session's permissions cannot be checked. The session is kept; once Authentik is back, the same session continues. Check that the API server can connect to the issuer URL.
 
-If Authentik will be down for a long time, switch to `AUTH_MODE=hybrid` and sign in with the local administrator.
+If Authentik will be down for a long time, switch to `MMT_AUTH_MODE=hybrid` and sign in with the local administrator.
 
-While Authentik is unreachable, signing out also returns 503 for SSO sessions whose last check is older than `OIDC_RECHECK_SECONDS`. Even if you cannot sign out, the session cannot be used for any operation. Wait until Authentik is back or the session expires.
+While Authentik is unreachable, signing out also returns 503 for SSO sessions whose last check is older than `MMT_OIDC_RECHECK_SECONDS`. Even if you cannot sign out, the session cannot be used for any operation. Wait until Authentik is back or the session expires.
 
 ## Stuck on the password change screen
 

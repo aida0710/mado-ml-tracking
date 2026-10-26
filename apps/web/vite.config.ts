@@ -21,9 +21,9 @@ function readGit(args: string[]): string {
 }
 
 // 「このアプリについて」に出すビルドしたコミットとその日時。Dockerのビルドでは.gitを持ち込まないので
-// ビルド引数（Dockerfile.webのVITE_GIT_COMMIT・VITE_GIT_DATE）で受け取り、ホストでのビルドではgitから読む。
-const gitCommit = process.env.VITE_GIT_COMMIT?.trim() || readGit(['rev-parse', 'HEAD']);
-const gitCommitDate = process.env.VITE_GIT_DATE?.trim() || readGit(['log', '-1', '--format=%cI']);
+// ビルド引数（Dockerfile.webのMMT_GIT_COMMIT・MMT_GIT_DATE）で受け取り、ホストでのビルドではgitから読む。
+const gitCommit = process.env.MMT_GIT_COMMIT?.trim() || readGit(['rev-parse', 'HEAD']);
+const gitCommitDate = process.env.MMT_GIT_DATE?.trim() || readGit(['log', '-1', '--format=%cI']);
 
 /**
  * MLflowのクライアントはこの開発サーバーを通してアップロードする（MLFLOW_TRACKING_URIはWebの

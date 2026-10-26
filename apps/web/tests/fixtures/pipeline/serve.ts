@@ -2,7 +2,7 @@
  * browser-pipeline.mjsの検証用サーバー: 新しいテスト用schemaでローカルログインのモードのAPIを
  * 動かし、ビルドしたWebアプリを同じoriginで配信する。動いている開発用のAPI・DBは使わない。
  *
- * - AUTH_MODE=local。local executorはここでだけ許可し、このマシンのCPU workerがJobを実行
+ * - MMT_AUTH_MODE=local。local executorはここでだけ許可し、このマシンのCPU workerがJobを実行
  *   できるようにする。APIは通常、開発モードでしかこれを許さない。
  * - 全体管理者（初回ログインでパスワードの変更が必要）と、全体管理者でない利用者を用意する。
  *   後者のグループの所属はAuthentikのグループ同期の代わりで、Projectのgroup bindingが効く。
@@ -44,7 +44,7 @@ const origin = `http://127.0.0.1:${port}`;
 
 const harness = await createHarness({
   environment: {
-    AUTH_MODE: 'local',
+    MMT_AUTH_MODE: 'local',
     MMT_PUBLIC_URL: origin,
     MMT_WEB_ORIGIN: origin,
     // 全体管理の画面で足した保存先の秘密の値を暗号化する。このschemaは一時的なもの。

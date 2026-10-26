@@ -24,9 +24,9 @@ S3テストは専用bucketを作り、multipart upload、保存byte数とSHA-256
 
 ## 実S3の保存・取得を確認する
 
-`scripts/verify_s3_artifacts.ts`は、`.env`のS3設定（`S3_BUCKET`、`S3_ENDPOINT`、`S3_REGION`、`S3_PREFIX`、`S3_FORCE_PATH_STYLE`、`S3_ACCESS_KEY_ID`、`S3_SECRET_ACCESS_KEY`）を使い、APIと同じ`createS3ArtifactStore`で既存bucketを検証します。bucketは作成しません。書き込みは`<S3_PREFIX>/verification/<JSTの日付>/<uuid>/`の下に限り、最後にそのprefixのobjectと未完了のmultipart uploadを消します。
+`scripts/verify_s3_artifacts.ts`は、`.env`のS3設定（`MMT_S3_BUCKET`、`MMT_S3_ENDPOINT`、`MMT_S3_REGION`、`MMT_S3_PREFIX`、`MMT_S3_FORCE_PATH_STYLE`、`MMT_S3_ACCESS_KEY_ID`、`MMT_S3_SECRET_ACCESS_KEY`）を使い、APIと同じ`createS3ArtifactStore`で既存bucketを検証します。bucketは作成しません。書き込みは`<MMT_S3_PREFIX>/verification/<JSTの日付>/<uuid>/`の下に限り、最後にそのprefixのobjectと未完了のmultipart uploadを消します。
 
-実bucketで実行する前に、利用者がbucket、`S3_PREFIX`、認証情報を置く.envの変数名、書き込み・削除してよい範囲を決めます。決まったら、確認の印として`MMT_VERIFY_S3_CONFIRM=write-and-delete`を付けて実行します。付けない場合は何もせず終了コード2で止まります。
+実bucketで実行する前に、利用者がbucket、`MMT_S3_PREFIX`、認証情報を置く.envの変数名、書き込み・削除してよい範囲を決めます。決まったら、確認の印として`MMT_VERIFY_S3_CONFIRM=write-and-delete`を付けて実行します。付けない場合は何もせず終了コード2で止まります。
 
 ```bash
 MMT_VERIFY_S3_CONFIRM=write-and-delete MMT_VERIFY_S3_LABEL=<検証対象の呼び名> \
@@ -39,7 +39,7 @@ node_modules/.bin/tsx scripts/verify_s3_artifacts.ts
 | `range-and-suffix-range` | 明示Range、suffix range（`bytes=-500`）、末尾指定なし、範囲外の終端の切り詰め、満たせないRangeの拒否 |
 | `multipart-over-16mib` | 17MiB超をmultipartで保存し、digest、partの境界をまたぐRange、ETagのpart数を照合 |
 | `interrupted-multipart-cleanup` | 2 part送った後に送信元を中断し、objectが見えないことと、ListMultipartUploadsから消えることを確認 |
-| `outside-prefix-denied` | `S3_PREFIX`の外へのPut/Getが拒否されるか（IAMの範囲確認） |
+| `outside-prefix-denied` | `MMT_S3_PREFIX`の外へのPut/Getが拒否されるか（IAMの範囲確認） |
 | `remove` | 削除後に読めないことと、2回目の削除が成功すること |
 | `cleanup-run-prefix` | 検証prefixの残りを消し、空になったことを確認 |
 
@@ -47,7 +47,7 @@ node_modules/.bin/tsx scripts/verify_s3_artifacts.ts
 
 warningは「失敗ではないが、利用者が判断すること」を示します。
 
-- `outside-prefix-denied`: prefixの外へ書けた・読めた。書けた場合はすぐ削除し、`outsideObjectRemoved`に記録します。外側のprefixは`MMT_VERIFY_S3_OUTSIDE_PREFIX`（既定`mmt-verification-outside-prefix`）で、不要なら`MMT_VERIFY_S3_SKIP_OUTSIDE_PREFIX=true`で省きます。書き込みを拒否された場合、Getは存在しないkeyへ送ります（`getTarget=missing-key`）。存在しないkeyへのGetは、読み取りと一覧の両方の権限があると404、どちらかが無いと403になります。404ならprefixの外を読めます。403は一覧の権限が無いだけでも返るので、読み取りの拒否を厳密には示しません。`S3_PREFIX`が空なら比較できないのでskipします。
+- `outside-prefix-denied`: prefixの外へ書けた・読めた。書けた場合はすぐ削除し、`outsideObjectRemoved`に記録します。外側のprefixは`MMT_VERIFY_S3_OUTSIDE_PREFIX`（既定`mmt-verification-outside-prefix`）で、不要なら`MMT_VERIFY_S3_SKIP_OUTSIDE_PREFIX=true`で省きます。書き込みを拒否された場合、Getは存在しないkeyへ送ります（`getTarget=missing-key`）。存在しないkeyへのGetは、読み取りと一覧の両方の権限があると404、どちらかが無いと403になります。404ならprefixの外を読めます。403は一覧の権限が無いだけでも返るので、読み取りの拒否を厳密には示しません。`MMT_S3_PREFIX`が空なら比較できないのでskipします。
 - `interrupted-multipart-cleanup`: `abortFinishedBeforeReject=false`は、保存の失敗が返った時点ではAbortMultipartUploadが終わっておらず、後から消えたことを示します（`pendingUploadGoneAfterMs`）。その間にprocessが落ちると未完了のpartが残るので、実bucketにはAbortIncompleteMultipartUploadのlifecycle ruleを設定してください。ListMultipartUploadsの権限が無い場合もwarningです。
 - `multipart-over-16mib`: ETagにpart数が無いS3互換サービスではwarningにします。
 
@@ -57,8 +57,8 @@ Motoで試す場合は、別terminalで起動したemulatorにbucketを作って
 uv tool run --from 'moto[server]==5.2.1' moto_server -H 127.0.0.1 -p 4569
 MMT_VERIFY_ENV_FILE=none MMT_VERIFY_S3_CONFIRM=write-and-delete MMT_VERIFY_S3_LABEL=moto \
 MMT_VERIFY_S3_OUTPUT=s3-integration-moto.json \
-S3_BUCKET=<作成したbucket> S3_ENDPOINT=http://127.0.0.1:4569 S3_FORCE_PATH_STYLE=true \
-S3_PREFIX=mado-model-tracking S3_ACCESS_KEY_ID=testing S3_SECRET_ACCESS_KEY=testing \
+MMT_S3_BUCKET=<作成したbucket> MMT_S3_ENDPOINT=http://127.0.0.1:4569 MMT_S3_FORCE_PATH_STYLE=true \
+MMT_S3_PREFIX=mado-model-tracking MMT_S3_ACCESS_KEY_ID=testing MMT_S3_SECRET_ACCESS_KEY=testing \
 node_modules/.bin/tsx scripts/verify_s3_artifacts.ts
 ```
 
@@ -149,7 +149,7 @@ MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/pipeline/screenshots \
 node apps/web/tests/browser-pipeline.mjs
 ```
 
-`apps/web/tests/fixtures/pipeline/serve.ts`が、`AUTH_MODE=local`のAPIとビルド済みのWebを同じport（47002、`MMT_PIPELINE_PORT`）で配信します。この検証サーバーだけはlocal executorを許可します（通常のAPIはdevelopment modeでしか許可しない）。全体管理者（初回にパスワード変更が必要）と、group `mmt-pipeline-viewers`に入ったユーザーを作ります。groupの所属はAuthentikの同期の代わりにDBへ直接入れます。パスワードは実行ごとに生成し、表示しません。workerは`mado-tracking-worker run`を別processで起動し、終了時に止めます。待ち合わせは画面の状態（`Finished`、`合格`など）を条件にし、自動で更新しない画面では再読み込みボタンを押して見直します。固定のsleepは使いません。
+`apps/web/tests/fixtures/pipeline/serve.ts`が、`MMT_AUTH_MODE=local`のAPIとビルド済みのWebを同じport（47002、`MMT_PIPELINE_PORT`）で配信します。この検証サーバーだけはlocal executorを許可します（通常のAPIはdevelopment modeでしか許可しない）。全体管理者（初回にパスワード変更が必要）と、group `mmt-pipeline-viewers`に入ったユーザーを作ります。groupの所属はAuthentikの同期の代わりにDBへ直接入れます。パスワードは実行ごとに生成し、表示しません。workerは`mado-tracking-worker run`を別processで起動し、終了時に止めます。待ち合わせは画面の状態（`Finished`、`合格`など）を条件にし、自動で更新しない画面では再読み込みボタンを押して見直します。固定のsleepは使いません。
 
 | 段階 | 画面で行うこと |
 |---|---|
@@ -485,7 +485,7 @@ MMT_SCREENSHOT_DIR=artifacts/verification/<日付>/copy-token-expiry \
 node apps/web/tests/browser-copy-token-expiry.mjs
 ```
 
-`apps/web/tests/browser-computer-guides.mjs`は、開発モード（`AUTH_MODE=development`）のAPIに、実行ごとに別の利用者・Project・コンピュータ・手動投入待ちのJobを作って確かめます。sshのコンピュータの詳細に、管理する人（全体管理者）にはコンピュータIDと、そのIDを入れたworkerの`install`・環境変数の例が出て、使うだけの人にはコンピュータIDと、概要の「workerの設定」の行に誰が設定するかだけが出ること、手動投入のsiteの詳細・Jobsの案内・［ジョブを起動］の確認の段に投入コマンドと準備（`mado-tracking`の入れ方、このページのURLを入れた`MMT_API_URL`、tokenを発行する場所とscope）が出てtokenの値は出ないこと、Jobsの［投入用のAPI tokenを発行］がread・jobs:writeのtokenを作ること、viewerにはそのボタンが出ないこと、390pxで横にずれないことを見ます。管理者は`DEVELOPMENT_ADMIN_EMAIL`（既定`admin@localhost`、違うときは`MMT_DEVELOPMENT_ADMIN_EMAIL`で渡す）です。
+`apps/web/tests/browser-computer-guides.mjs`は、開発モード（`MMT_AUTH_MODE=development`）のAPIに、実行ごとに別の利用者・Project・コンピュータ・手動投入待ちのJobを作って確かめます。sshのコンピュータの詳細に、管理する人（全体管理者）にはコンピュータIDと、そのIDを入れたworkerの`install`・環境変数の例が出て、使うだけの人にはコンピュータIDと、概要の「workerの設定」の行に誰が設定するかだけが出ること、手動投入のsiteの詳細・Jobsの案内・［ジョブを起動］の確認の段に投入コマンドと準備（`mado-tracking`の入れ方、このページのURLを入れた`MMT_API_URL`、tokenを発行する場所とscope）が出てtokenの値は出ないこと、Jobsの［投入用のAPI tokenを発行］がread・jobs:writeのtokenを作ること、viewerにはそのボタンが出ないこと、390pxで横にずれないことを見ます。管理者は`MMT_DEVELOPMENT_ADMIN_EMAIL`（既定`admin@localhost`、違うときは`MMT_DEVELOPMENT_ADMIN_EMAIL`で渡す）です。
 
 ```bash
 MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
@@ -497,7 +497,7 @@ node apps/web/tests/browser-computer-guides.mjs
 
 ## 実行の画面（workerの有無、Jobの詳細とログ、再実行、フックの複製）をブラウザで確認する
 
-`apps/web/tests/browser-job-execution.mjs`は、開発モード（`AUTH_MODE=development`）のAPIに、実行ごとに別の利用者・Project・workerのいないsshのコンピュータ・3,000行のログを持つ待機中のJobを作って確かめます（workerは動かさない）。Computeの一覧・Jobsの一覧の上・待機中のJobの詳細・［ジョブを起動］の実行先に「workerなし」が出ること、全体設定 → コンピュータの詳細を`?computer=`で開け、接続確認の前に警告が出ること、Jobを選ぶと詳細が画面に入り見出しにフォーカスが移ること、ログが最新の2,000行（全3,000行と表示）を最新の位置で開き、時刻が秒まで、検索・並び順・全行の読み込み・ダウンロード（3,000行のタブ区切り）が動くこと、Runの画面にJobがあれば［ジョブを起動］の代わりに［Jobを見る］が出ること、最大試行回数1のJobを作成者が再実行できること、Jobを断られた起動がRunを残さないこと、フックを［複製して新しく作る］で設定ごと写せること、390pxで横にずれないことを見ます。
+`apps/web/tests/browser-job-execution.mjs`は、開発モード（`MMT_AUTH_MODE=development`）のAPIに、実行ごとに別の利用者・Project・workerのいないsshのコンピュータ・3,000行のログを持つ待機中のJobを作って確かめます（workerは動かさない）。Computeの一覧・Jobsの一覧の上・待機中のJobの詳細・［ジョブを起動］の実行先に「workerなし」が出ること、全体設定 → コンピュータの詳細を`?computer=`で開け、接続確認の前に警告が出ること、Jobを選ぶと詳細が画面に入り見出しにフォーカスが移ること、ログが最新の2,000行（全3,000行と表示）を最新の位置で開き、時刻が秒まで、検索・並び順・全行の読み込み・ダウンロード（3,000行のタブ区切り）が動くこと、Runの画面にJobがあれば［ジョブを起動］の代わりに［Jobを見る］が出ること、最大試行回数1のJobを作成者が再実行できること、Jobを断られた起動がRunを残さないこと、フックを［複製して新しく作る］で設定ごと写せること、390pxで横にずれないことを見ます。
 
 ```bash
 MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
@@ -509,7 +509,7 @@ node apps/web/tests/browser-job-execution.mjs
 
 ## Webで足すコンピュータ（site）を実APIでブラウザ確認する
 
-`apps/web/tests/browser-site-computers-api.mjs`は、`mmt_test`の一時schemaを使う開発モード（`AUTH_MODE=development`）のAPI（47140）を自分で起動し、実際の記録を作って全体設定の「コンピュータ」（`/settings/computers`）・Jobs画面・全体管理の「ランチャー」（`/settings/launchers`）を確かめます。終わるとschemaを消します。WebはViteを47141で起動しておきます。APIをTypeScriptのソースから起動するので`tsx`で実行します。
+`apps/web/tests/browser-site-computers-api.mjs`は、`mmt_test`の一時schemaを使う開発モード（`MMT_AUTH_MODE=development`）のAPI（47140）を自分で起動し、実際の記録を作って全体設定の「コンピュータ」（`/settings/computers`）・Jobs画面・全体管理の「ランチャー」（`/settings/launchers`）を確かめます。終わるとschemaを消します。WebはViteを47141で起動しておきます。APIをTypeScriptのソースから起動するので`tsx`で実行します。
 
 ```bash
 (cd apps/web && MMT_WEB_API_PROXY_TARGET=http://127.0.0.1:47140 npx vite --port 47141 --strictPort --host 127.0.0.1) &
@@ -562,7 +562,7 @@ node apps/web/tests/browser-analysis.mjs
 
 ## 共有レポートをブラウザで確認する
 
-`apps/web/tests/browser-reports.mjs` は、開発モード（`AUTH_MODE=development`）のAPIに実際のRun・metrics・音声・保存ビューを作り、レポートの作成から閲覧までを確かめます。稼働中の開発用API・Webとは別のportで起動してください。
+`apps/web/tests/browser-reports.mjs` は、開発モード（`MMT_AUTH_MODE=development`）のAPIに実際のRun・metrics・音声・保存ビューを作り、レポートの作成から閲覧までを確かめます。稼働中の開発用API・Webとは別のportで起動してください。
 
 ```bash
 MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
@@ -575,7 +575,7 @@ Markdown・グループの平均と範囲の図（固定と最新）・平行座
 
 ## Runの説明文とコメントをブラウザで確認する
 
-`apps/web/tests/browser-comments.mjs`は、開発モード（`AUTH_MODE=development`）のAPIに対して、実際に記録を作って確かめます。稼働中の開発用API・Webとは別のportで起動してください。
+`apps/web/tests/browser-comments.mjs`は、開発モード（`MMT_AUTH_MODE=development`）のAPIに対して、実際に記録を作って確かめます。稼働中の開発用API・Webとは別のportで起動してください。
 
 ```bash
 MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \

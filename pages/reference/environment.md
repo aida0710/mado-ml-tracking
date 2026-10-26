@@ -14,21 +14,23 @@ chmod 600 .env
 
 値を変えたら、APIを再起動します。形式の違う値や、足りない設定があると、APIは設定の名前だけを表示して起動しません。
 
+v0.5.0で、アプリが読む設定の名前をすべて`MMT_`で始まる形に変えました（例: `AUTH_MODE`→`MMT_AUTH_MODE`、`S3_BUCKET`→`MMT_S3_BUCKET`）。旧い名前だけが残っていると、API・preview worker・`db:migrate`などのコマンドは「`AUTH_MODE` was replaced by `MMT_AUTH_MODE`」のように旧名と新しい名前を表示して起動しません。対応の全体は[v0.5.0のリリースノート](https://github.com/aida0710/mado-ml-tracking/blob/main/docs/releases/v0.5.0.md)にあります。
+
 ## API server: 基本
 
 | 変数 | 既定 | 内容 |
 | --- | --- | --- |
 | `MMT_DATABASE_URL` | なし（必須） | PostgreSQLの接続URL |
 | `NODE_ENV` | `development` | 本番では`production`。HTTPSのURLが必須になり、開発用の機能が使えなくなる |
-| `HOST` | `127.0.0.1` | APIが待ち受けるアドレス |
-| `PORT` | `4182` | APIが待ち受けるポート |
+| `MMT_HOST` | `127.0.0.1` | APIが待ち受けるアドレス |
+| `MMT_PORT` | `4182` | APIが待ち受けるポート |
 | `MMT_PUBLIC_URL` | `http://127.0.0.1:4182` | 利用者が開くURL。SSOのcallbackもこのURLから作る |
 | `MMT_WEB_ORIGIN` | `http://127.0.0.1:5182` | 画面のorigin。通知のリンクにも使う |
 | `MMT_ALLOW_PRIVATE_ORIGINS` | `false` | `true`にすると、LAN・VPNのprivate IPとlocalhostのoriginも許可する。開発用。サーバでは`false`のままにする |
 | `MMT_TRUSTED_PROXY_HOPS` | `0`（composeでは`1`） | APIの前にあり、`X-Forwarded-For`に接続元を足すproxyの数。ログインの回数制限と監査の接続元に使う。composeの`web`の前にもう1段proxyを置くなら`2` |
-| `MMT_ALLOW_SEED` | `false` | 見本データの投入を許す。`AUTH_MODE=development`のときだけ効く |
-| `MMT_ALLOW_LOCAL_EXECUTOR` | `false` | local executorを許す。`AUTH_MODE=development`のときだけ効く |
-| `DEVELOPMENT_ADMIN_EMAIL` | `admin@localhost` | 開発用ログインで全体管理者になるメールアドレス |
+| `MMT_ALLOW_SEED` | `false` | 見本データの投入を許す。`MMT_AUTH_MODE=development`のときだけ効く |
+| `MMT_ALLOW_LOCAL_EXECUTOR` | `false` | local executorを許す。`MMT_AUTH_MODE=development`のときだけ効く |
+| `MMT_DEVELOPMENT_ADMIN_EMAIL` | `admin@localhost` | 開発用ログインで全体管理者になるメールアドレス |
 
 ## 認証とSSO
 
@@ -36,22 +38,22 @@ chmod 600 .env
 
 | 変数 | 既定 | 内容 |
 | --- | --- | --- |
-| `AUTH_MODE` | `hybrid` | `local`、`oidc`、`hybrid`、`development` |
-| `AUTH_SESSION_IDLE_SECONDS` | `604800`（7日） | 操作しないままsessionが切れるまでの秒数。300以上 |
-| `AUTH_SESSION_ABSOLUTE_SECONDS` | `604800`（7日） | ログインからsessionが切れるまでの秒数。3600以上で、idle以上 |
-| `OIDC_ISSUER_URL` | なし | AuthentikのApplicationのIssuer。`oidc`・`hybrid`で必須。HTTPSのURL |
-| `OIDC_CLIENT_ID` | なし | ProviderのClient ID。`oidc`・`hybrid`で必須 |
-| `OIDC_CLIENT_SECRET` | なし | ProviderのClient Secret |
-| `OIDC_ALLOWED_GROUPS` | なし | ログインを許すgroup（カンマ区切り）。`oidc`・`hybrid`で必須 |
-| `OIDC_ROLE_MAPPING_JSON` | なし | group→全体のroleの対応表。例: `{"mmt-admins":"admin","mmt-users":"user"}` |
-| `OIDC_DEFAULT_ROLE` | `user` | 対応表のどのgroupにも入っていない人のrole |
-| `OIDC_SCOPES` | `openid profile email offline_access` | 要求するscope。`openid`は必須。refresh tokenにはProvider側の`offline_access` mappingも必要 |
-| `OIDC_LABEL` | `Authentik` | ログイン画面のSSOボタンの表示名 |
-| `OIDC_AUTO_LINK_VERIFIED_EMAIL` | `false` | 同じメールアドレスのローカルアカウントへ自動で結び付けるか |
-| `OIDC_ALLOW_INSECURE_HTTP` | `false` | loopbackのHTTPのIssuerを許す（試験用）。本番では使えない |
+| `MMT_AUTH_MODE` | `hybrid` | `local`、`oidc`、`hybrid`、`development` |
+| `MMT_AUTH_SESSION_IDLE_SECONDS` | `604800`（7日） | 操作しないままsessionが切れるまでの秒数。300以上 |
+| `MMT_AUTH_SESSION_ABSOLUTE_SECONDS` | `604800`（7日） | ログインからsessionが切れるまでの秒数。3600以上で、idle以上 |
+| `MMT_OIDC_ISSUER_URL` | なし | AuthentikのApplicationのIssuer。`oidc`・`hybrid`で必須。HTTPSのURL |
+| `MMT_OIDC_CLIENT_ID` | なし | ProviderのClient ID。`oidc`・`hybrid`で必須 |
+| `MMT_OIDC_CLIENT_SECRET` | なし | ProviderのClient Secret |
+| `MMT_OIDC_ALLOWED_GROUPS` | なし | ログインを許すgroup（カンマ区切り）。`oidc`・`hybrid`で必須 |
+| `MMT_OIDC_ROLE_MAPPING_JSON` | なし | group→全体のroleの対応表。例: `{"mmt-admins":"admin","mmt-users":"user"}` |
+| `MMT_OIDC_DEFAULT_ROLE` | `user` | 対応表のどのgroupにも入っていない人のrole |
+| `MMT_OIDC_SCOPES` | `openid profile email offline_access` | 要求するscope。`openid`は必須。refresh tokenにはProvider側の`offline_access` mappingも必要 |
+| `MMT_OIDC_LABEL` | `Authentik` | ログイン画面のSSOボタンの表示名 |
+| `MMT_OIDC_AUTO_LINK_VERIFIED_EMAIL` | `false` | 同じメールアドレスのローカルアカウントへ自動で結び付けるか |
+| `MMT_OIDC_ALLOW_INSECURE_HTTP` | `false` | loopbackのHTTPのIssuerを許す（試験用）。本番では使えない |
 | `MMT_SESSION_ENCRYPTION_KEY` | なし | sessionに保存するAuthentikのtokenの暗号鍵（base64の32 byte）。`oidc`・`hybrid`で必須 |
-| `OIDC_RECHECK_SECONDS` | `60` | SSOのsessionのgroupを確かめ直す間隔（秒） |
-| `OIDC_TOKEN_SYNC_MAX_AGE_SECONDS` | `604800`（7日） | SSOのユーザーのAPI tokenを使える、最後のgroupの同期からの秒数。60以上 |
+| `MMT_OIDC_RECHECK_SECONDS` | `60` | SSOのsessionのgroupを確かめ直す間隔（秒） |
+| `MMT_OIDC_TOKEN_SYNC_MAX_AGE_SECONDS` | `604800`（7日） | SSOのユーザーのAPI tokenを使える、最後のgroupの同期からの秒数。60以上 |
 | `MMT_TOKEN_DEFAULT_LIFETIME_DAYS` | `365` | API token発行で期限を省略したときの既定日数。1〜3650。`expiresAt: null`は無期限、明示する未来の日時には上限なし。 |
 
 暗号鍵はターミナルで作ります。`MMT_SESSION_ENCRYPTION_KEY`と`MMT_STORAGE_SECRET_KEY`には別の値を使ってください。
@@ -66,13 +68,13 @@ openssl rand -base64 32
 
 | 変数 | 既定 | 内容 |
 | --- | --- | --- |
-| `ARTIFACT_FILESYSTEM_ROOT` | APIの作業ディレクトリの`var/artifacts` | ファイルシステムの保存先の場所。相対パスはAPIの作業ディレクトリから数えるので、本番では絶対パスにする |
-| `S3_BUCKET` | なし | 設定すると、環境変数のS3を保存先として選べる |
-| `S3_ENDPOINT` | なし（AWS S3） | S3互換ストレージのendpoint |
-| `S3_REGION` | `us-east-1` | region |
-| `S3_PREFIX` | なし（bucketの直下） | bucketの中のprefix。`.env.example`では`mado-model-tracking` |
-| `S3_FORCE_PATH_STYLE` | `false` | path-styleのURLを使う |
-| `S3_ACCESS_KEY_ID`、`S3_SECRET_ACCESS_KEY` | なし | S3の認証情報。無ければAWS SDKの標準の方法で探す |
+| `MMT_ARTIFACT_FILESYSTEM_ROOT` | APIの作業ディレクトリの`var/artifacts` | ファイルシステムの保存先の場所。相対パスはAPIの作業ディレクトリから数えるので、本番では絶対パスにする |
+| `MMT_S3_BUCKET` | なし | 設定すると、環境変数のS3を保存先として選べる |
+| `MMT_S3_ENDPOINT` | なし（AWS S3） | S3互換ストレージのendpoint |
+| `MMT_S3_REGION` | `us-east-1` | region |
+| `MMT_S3_PREFIX` | なし（bucketの直下） | bucketの中のprefix。`.env.example`では`mado-model-tracking` |
+| `MMT_S3_FORCE_PATH_STYLE` | `false` | path-styleのURLを使う |
+| `MMT_S3_ACCESS_KEY_ID`、`MMT_S3_SECRET_ACCESS_KEY` | なし | S3の認証情報。無ければAWS SDKの標準の方法で探す |
 | `MMT_STORAGE_SECRET_KEY` | なし | 画面で追加したS3の保存先のシークレットをDBで暗号化する鍵（base64の32 byte） |
 | `MMT_HOOK_SECRET_KEY` | なし | Webhook のフックのシークレットをDBで暗号化する鍵（base64の32 byte）。無いと、Webhook のフックを作れず、保存済みのフックの署名も確かめられない |
 | `MMT_ARTIFACT_MAX_BYTES` | `214748364800`（200GiB） | Artifact 1件の上限 |

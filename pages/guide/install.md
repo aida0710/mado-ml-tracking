@@ -75,35 +75,35 @@ SSO（Authentik）を使う場合は、次も設定します。Authentik側の�
 
 | 変数 | 入力する値の例 |
 | --- | --- |
-| `OIDC_ISSUER_URL` | `https://sso.example.com/application/o/ml-tracking/` |
-| `OIDC_CLIENT_ID`、`OIDC_CLIENT_SECRET` | AuthentikのProviderに表示される値 |
-| `OIDC_ALLOWED_GROUPS` | `mmt-users,mmt-admins`（ログインを許すgroup） |
-| `OIDC_ROLE_MAPPING_JSON` | `{"mmt-admins":"admin","mmt-users":"user"}`（全体管理者にするgroup） |
+| `MMT_OIDC_ISSUER_URL` | `https://sso.example.com/application/o/ml-tracking/` |
+| `MMT_OIDC_CLIENT_ID`、`MMT_OIDC_CLIENT_SECRET` | AuthentikのProviderに表示される値 |
+| `MMT_OIDC_ALLOWED_GROUPS` | `mmt-users,mmt-admins`（ログインを許すgroup） |
+| `MMT_OIDC_ROLE_MAPPING_JSON` | `{"mmt-admins":"admin","mmt-users":"user"}`（全体管理者にするgroup） |
 | `MMT_SESSION_ENCRYPTION_KEY` | 上で作った値 |
 
-`.env.example`の`MMT_DATABASE_URL`、`HOST`、`PORT`、`ARTIFACT_FILESYSTEM_ROOT`、`AUTH_MODE`は、composeの`api`では`compose.yml`の値が優先されます。書き換える必要はありません。変数の一覧は[環境変数](/reference/environment)にあります。
+`.env.example`の`MMT_DATABASE_URL`、`MMT_HOST`、`MMT_PORT`、`MMT_ARTIFACT_FILESYSTEM_ROOT`、`MMT_AUTH_MODE`は、composeの`api`では`compose.yml`の値が優先されます。書き換える必要はありません。変数の一覧は[環境変数](/reference/environment)にあります。
 
 ## 3. 認証方式を選ぶ
 
-`compose.yml`は`api`の`AUTH_MODE`を`oidc`（SSOだけ）にしています。初めて導入するときは、緊急用のローカル管理者でもログインできる`hybrid`にしておくと安全です。リポジトリの直下に`compose.override.yml`を作り、`AUTH_MODE`を上書きします。
+`compose.yml`は`api`の`MMT_AUTH_MODE`を`oidc`（SSOだけ）にしています。初めて導入するときは、緊急用のローカル管理者でもログインできる`hybrid`にしておくと安全です。リポジトリの直下に`compose.override.yml`を作り、`MMT_AUTH_MODE`を上書きします。
 
 ```yaml
 services:
   api:
     environment:
-      AUTH_MODE: hybrid
+      MMT_AUTH_MODE: hybrid
 ```
 
-| `AUTH_MODE` | ログイン方法 | 必要な設定 |
+| `MMT_AUTH_MODE` | ログイン方法 | 必要な設定 |
 | --- | --- | --- |
-| `hybrid` | SSOとローカルアカウント | `OIDC_*`と`MMT_SESSION_ENCRYPTION_KEY` |
-| `oidc` | SSOだけ | `OIDC_*`と`MMT_SESSION_ENCRYPTION_KEY` |
+| `hybrid` | SSOとローカルアカウント | `MMT_OIDC_*`と`MMT_SESSION_ENCRYPTION_KEY` |
+| `oidc` | SSOだけ | `MMT_OIDC_*`と`MMT_SESSION_ENCRYPTION_KEY` |
 | `local` | ローカルアカウントだけ | なし（SSOが無い環境） |
 
-`docker compose`は`compose.override.yml`を自動で読みます。次のコマンドで`AUTH_MODE`が置き換わっていることを確認します。
+`docker compose`は`compose.override.yml`を自動で読みます。次のコマンドで`MMT_AUTH_MODE`が置き換わっていることを確認します。
 
 ```sh
-docker compose config | grep AUTH_MODE
+docker compose config | grep MMT_AUTH_MODE
 ```
 
 ## 4. 起動してmigrationを適用する
@@ -141,7 +141,7 @@ docker compose exec api npm run bootstrap-admin -w @mmt/api
 
 `Admin ready: <ユーザー名> ...`と表示されれば作成できています。最初のログインでパスワードの変更を求められます。同じユーザー名でもう一度実行すると、パスワードを置き換えて全体管理者に戻せます。パスワードを忘れたときの復旧にも使います。
 
-`oidc`だけで運用する場合は、`OIDC_ROLE_MAPPING_JSON`で`admin`にしたgroupの人が全体管理者になります。
+`oidc`だけで運用する場合は、`MMT_OIDC_ROLE_MAPPING_JSON`で`admin`にしたgroupの人が全体管理者になります。
 
 ## 6. HTTPSで公開する
 

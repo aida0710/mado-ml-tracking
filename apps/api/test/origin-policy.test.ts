@@ -68,7 +68,7 @@ describe('プライベートネットワークのOrigin許可', () => {
   it('設定を省略すると無効になり、trueの明示で有効になる', () => {
     const environment = {
       MMT_DATABASE_URL: 'postgresql://localhost/mmt_test',
-      AUTH_MODE: 'development',
+      MMT_AUTH_MODE: 'development',
     };
     expect(loadConfig(environment).allowPrivateOrigins).toBe(false);
     expect(loadConfig({ ...environment, MMT_ALLOW_PRIVATE_ORIGINS: 'true' }).allowPrivateOrigins)

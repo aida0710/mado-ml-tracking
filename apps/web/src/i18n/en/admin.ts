@@ -46,7 +46,7 @@ export const adminText = {
   userLastAdminLocked:
     'This is the last global administrator, so this user cannot be disabled or lose administrator permissions. Make someone else a global administrator first.',
   localLoginDisabledNotice:
-    'With the current API server setting (AUTH_MODE), local accounts cannot sign in. You can still create the account, but it can sign in only when AUTH_MODE is local or hybrid.',
+    'With the current API server setting (MMT_AUTH_MODE), local accounts cannot sign in. You can still create the account, but it can sign in only when MMT_AUTH_MODE is local or hybrid.',
   initialPassword: 'Initial password',
   initialPasswordHint: '12–1024 UTF-8 bytes. Must be changed on first sign-in.',
   generatePassword: 'Generate',

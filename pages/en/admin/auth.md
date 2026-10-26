@@ -5,12 +5,12 @@ description: Choose the login method (local, oidc, or hybrid) and manage local a
 
 # Authentication and local accounts
 
-The login method is set with the `AUTH_MODE` environment variable of the API server. You can use Authentik (SSO) only, local accounts only, or both. The layout is the same as Mado.
+The login method is set with the `MMT_AUTH_MODE` environment variable of the API server. You can use Authentik (SSO) only, local accounts only, or both. The layout is the same as Mado.
 
-| `AUTH_MODE` | Login methods | Required settings | Good for |
+| `MMT_AUTH_MODE` | Login methods | Required settings | Good for |
 | --- | --- | --- | --- |
-| `local` | Local accounts | None (`OIDC_*` is ignored) | Environments without SSO, closed LANs |
-| `oidc` | Authentik (SSO) only | `OIDC_ISSUER_URL`, `OIDC_CLIENT_ID`, `OIDC_ALLOWED_GROUPS`, `MMT_SESSION_ENCRYPTION_KEY` | Production after the move to SSO |
+| `local` | Local accounts | None (`MMT_OIDC_*` is ignored) | Environments without SSO, closed LANs |
+| `oidc` | Authentik (SSO) only | `MMT_OIDC_ISSUER_URL`, `MMT_OIDC_CLIENT_ID`, `MMT_OIDC_ALLOWED_GROUPS`, `MMT_SESSION_ENCRYPTION_KEY` | Production after the move to SSO |
 | `hybrid` (default) | SSO and local accounts | Same as `oidc` | Introducing SSO while keeping a local administrator as an emergency login |
 | `development` | Development login | None | Local development. Refused when `NODE_ENV=production` |
 
@@ -20,13 +20,13 @@ The Authentik side and group-based permissions are described in [Authentik (SSO)
 
 ## Login screen
 
-The login screen shows only the methods enabled by `AUTH_MODE`.
+The login screen shows only the methods enabled by `MMT_AUTH_MODE`.
 
-- `oidc`: the SSO button only. Its label is `OIDC_LABEL` (default `Authentik`)
+- `oidc`: the SSO button only. Its label is `MMT_OIDC_LABEL` (default `Authentik`)
 - `hybrid`: the SSO button, then the username and password fields for local accounts
 - `local`: the username and password fields only
 
-A session ends after `AUTH_SESSION_IDLE_SECONDS` without activity or `AUTH_SESSION_ABSOLUTE_SECONDS` after login, whichever comes first. Both default to 604800 seconds (7 days), so a login lasts for up to seven days, including inactivity. The API does not start if the idle limit is longer than the absolute limit.
+A session ends after `MMT_AUTH_SESSION_IDLE_SECONDS` without activity or `MMT_AUTH_SESSION_ABSOLUTE_SECONDS` after login, whichever comes first. Both default to 604800 seconds (7 days), so a login lasts for up to seven days, including inactivity. The API does not start if the idle limit is longer than the absolute limit.
 
 ## Create the initial administrator
 
@@ -54,12 +54,12 @@ If the username already exists, the command makes that user an active global adm
 
 ## Create a local account
 
-A global administrator creates local accounts on the screen. You can create them in any `AUTH_MODE`, but they cannot sign in when the mode is `oidc`.
+A global administrator creates local accounts on the screen. You can create them in any `MMT_AUTH_MODE`, but they cannot sign in when the mode is `oidc`.
 
 ![The Users page under Administration](/images/en/admin-users.png)
 
 1. Open **Global settings** from the user menu, then **Users** under **Administration** in the sidebar (`/settings/users`).
-2. Click **Create local user**. When local login is off (`AUTH_MODE` is `development` or `oidc`), the dialog says that local accounts cannot sign in with the current server settings. You can still create the account; it can sign in once `AUTH_MODE` is `local` or `hybrid`.
+2. Click **Create local user**. When local login is off (`MMT_AUTH_MODE` is `development` or `oidc`), the dialog says that local accounts cannot sign in with the current server settings. You can still create the account; it can sign in once `MMT_AUTH_MODE` is `local` or `hybrid`.
 3. Enter the following and save.
 
 | Field | Value |
@@ -111,12 +111,12 @@ For SSO users, Authentik is the source of truth for the global administrator fla
 
 To move an environment that used local accounts to SSO, go through `hybrid`.
 
-1. Put `AUTH_MODE=hybrid` and the [Authentik settings](/en/admin/sso) in `.env`, run `npm run db:migrate`, and restart the API.
+1. Put `MMT_AUTH_MODE=hybrid` and the [Authentik settings](/en/admin/sso) in `.env`, run `npm run db:migrate`, and restart the API.
 2. Create a local administrator with `bootstrap-admin` and change its password.
 3. Have an administrator and regular members sign in with SSO, and check the global administrator flag and Project permissions.
-4. When everything is correct, change to `AUTH_MODE=oidc` and restart. Local account logins return 404.
+4. When everything is correct, change to `MMT_AUTH_MODE=oidc` and restart. Local account logins return 404.
 
-If Authentik stops and nobody can sign in, change back to `AUTH_MODE=hybrid` and restart; the local administrator can sign in again.
+If Authentik stops and nobody can sign in, change back to `MMT_AUTH_MODE=hybrid` and restart; the local administrator can sign in again.
 
 ## Check your account {#check-your-account}
 

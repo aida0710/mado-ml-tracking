@@ -41,7 +41,7 @@ function applicationRoutes(): Set<string> {
   const database = new pg.Pool({ connectionString: UNREACHABLE_DATABASE_URL });
   const config = loadConfig({
     MMT_DATABASE_URL: UNREACHABLE_DATABASE_URL,
-    AUTH_MODE: 'development',
+    MMT_AUTH_MODE: 'development',
   });
   const { app } = createApplication({ config, database, environment: {} });
   return new Set(

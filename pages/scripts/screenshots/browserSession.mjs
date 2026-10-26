@@ -45,12 +45,12 @@ async function addSessionCookie(context, webUrl, signInPath, body) {
   await context.addCookies([{ name, value, url: webUrl }]);
 }
 
-/** contextを開発用の全体管理者としてログインさせる（AUTH_MODE=development）。 */
+/** contextを開発用の全体管理者としてログインさせる（MMT_AUTH_MODE=development）。 */
 export function signInForDevelopment(context, webUrl) {
   return addSessionCookie(context, webUrl, 'dev-login', {});
 }
 
-/** contextをローカルアカウントでログインさせる（AUTH_MODE=local）。 */
+/** contextをローカルアカウントでログインさせる（MMT_AUTH_MODE=local）。 */
 export function signInLocally(context, webUrl, { username, password }) {
   return addSessionCookie(context, webUrl, 'local-login', { username, password });
 }
