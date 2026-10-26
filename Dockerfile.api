@@ -22,7 +22,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps ./apps
 COPY --from=build /app/packages ./packages
 RUN mkdir -p /app/var/artifacts && chown -R node:node /app/var
-ENV NODE_ENV=production HOST=0.0.0.0 PORT=4182
+ENV NODE_ENV=production MMT_HOST=0.0.0.0 MMT_PORT=4182
 USER node
 # 相対パスが前提とする、`npm start --workspace @mmt/api`と同じ作業ディレクトリ。
 WORKDIR /app/apps/api

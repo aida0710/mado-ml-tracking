@@ -49,7 +49,7 @@ try {
   await writeFile(composeFile, stringify(composeSettings));
   await writeFile(join(composeDirectory, '.env'), [
     `MMT_POSTGRES_PASSWORD=${fixturePassword}`, `MMT_STORAGE_SECRET_KEY=${fixtureStorageKey}`,
-    'AUTH_MODE=local', 'MMT_PUBLIC_URL=https://tracking.example.test',
+    'MMT_AUTH_MODE=local', 'MMT_PUBLIC_URL=https://tracking.example.test',
     'MMT_WEB_ORIGIN=https://tracking.example.test', 'MMT_ALLOW_PRIVATE_ORIGINS=false', '',
   ].join('\n'), { mode: 0o600 });
   runCompose(['config', '--quiet']);

@@ -60,7 +60,7 @@ test('配布物は固定イメージから起動し、任意の実行サービ�
     }
     assert.deepEqual(compose.services.worker.profiles, ['worker']);
     assert.deepEqual(compose.services.launcher.profiles, ['launcher']);
-    assert.equal(compose.services.api.environment.AUTH_MODE, '${AUTH_MODE:-local}');
+    assert.equal(compose.services.api.environment.MMT_AUTH_MODE, '${MMT_AUTH_MODE:-local}');
     assert.equal(compose.services.forgejo.image, 'codeberg.org/forgejo/forgejo:16.0.5-rootless');
     execFileSync('sha256sum', ['-c', bundle.checksum], { cwd: fixture.outputDirectory });
   } finally { await rm(fixture.repositoryRoot, { recursive: true, force: true }); }

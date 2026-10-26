@@ -42,7 +42,7 @@ export async function buildReleaseBundle({
       compose.services[service].image = references[service];
     }
     // リリース版はローカルのアカウントで始まる。Composeを編集しなくてもSSOに切り替えられる。
-    compose.services.api.environment.AUTH_MODE = '${AUTH_MODE:-local}';
+    compose.services.api.environment.MMT_AUTH_MODE = '${MMT_AUTH_MODE:-local}';
     await writeFile(join(bundleDirectory, 'compose.yml'), stringify(compose));
     for (const [source, destination] of [
       ['deploy/release/README.md', 'README.md'],
