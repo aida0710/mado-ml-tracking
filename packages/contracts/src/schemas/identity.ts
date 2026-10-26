@@ -10,7 +10,7 @@ import type {
   TokenSummary,
   User,
 } from '../index.js';
-import { idSchema, projectRoleSchema, projectVisibilitySchema, timestampSchema } from './primitives.js';
+import { idSchema, itemsOf, projectRoleSchema, projectVisibilitySchema, timestampSchema } from './primitives.js';
 import { namedContractSchema } from './schemaRegistry.js';
 import type { Expect, MutuallyAssignable } from './typeAssertions.js';
 
@@ -67,6 +67,10 @@ export const authMeSchema = namedContractSchema(
   'AuthMe',
   z.strictObject({ user: userSchema, mustChangePassword: z.boolean() }),
 );
+/** POST /auth/dev-login（開発モードのログイン）の応答。 */
+export const devLoginResultSchema = z.strictObject({ user: userSchema });
+/** GET /auth/groups: ユーザーにこれまで付いたことのあるgroup名。 */
+export const authGroupListSchema = itemsOf(z.string());
 export const tokenSummarySchema = namedContractSchema(
   'TokenSummary',
   z.strictObject({

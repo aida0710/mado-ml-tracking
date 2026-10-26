@@ -1,5 +1,5 @@
-// 契約の型のZodスキーマ。OpenAPIの文書と、応答が契約に合うかのテストに使う。Webのバンドルは
-// 型しか使わないので、zodを含めずに済むよう'@mmt/contracts/schemas'としてimportする。
+// 契約の型のZodスキーマ。OpenAPIの文書、応答が契約に合うかのテスト、画面が受け取った応答の確かめに使う。
+// 型だけを使う所がzodを読み込まずに済むよう、'@mmt/contracts'と分けて'@mmt/contracts/schemas'から読む。
 export * from './adminUsers.js';
 export * from './artifactMediaInfo.js';
 export * from './artifactPreviews.js';

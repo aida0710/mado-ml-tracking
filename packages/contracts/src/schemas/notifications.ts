@@ -9,7 +9,7 @@ import {
   type NotificationRunSummary,
   type NotificationTestResult,
 } from '../notifications.js';
-import { idSchema, runKindSchema, runStatusSchema, timestampSchema } from './primitives.js';
+import { idSchema, itemsOf, runKindSchema, runStatusSchema, timestampSchema } from './primitives.js';
 import { namedContractSchema } from './schemaRegistry.js';
 import type { Expect, MutuallyAssignable } from './typeAssertions.js';
 
@@ -104,6 +104,8 @@ export const notificationDeliverySchema = namedContractSchema(
     deliveredAt: timestampSchema.nullable(),
   }),
 );
+/** GET /notification-channels/environment-names: 通知先の設定で参照できる環境変数の名前。 */
+export const notificationEnvironmentNameListSchema = itemsOf(z.string());
 export const notificationTestResultSchema = namedContractSchema(
   'NotificationTestResult',
   z.strictObject({

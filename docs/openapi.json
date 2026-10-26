@@ -27788,23 +27788,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "item": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/components/schemas/SitePersonalSettings"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "required": [
-                    "item"
-                  ],
-                  "additionalProperties": false
+                  "$ref": "#/components/schemas/SitePersonalSettingsLookup"
                 }
               }
             }
@@ -66064,6 +66048,25 @@
           "variables",
           "key",
           "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "SitePersonalSettingsLookup": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SitePersonalSettings"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "item"
         ],
         "additionalProperties": false
       },
