@@ -56052,7 +56052,19 @@
               "type": "string"
             },
             "additionalProperties": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "NaN",
+                    "Infinity",
+                    "-Infinity"
+                  ]
+                }
+              ]
             }
           },
           "parameters": {
@@ -64219,7 +64231,19 @@
               "type": "string"
             },
             "additionalProperties": {
-              "type": "number"
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "NaN",
+                    "Infinity",
+                    "-Infinity"
+                  ]
+                }
+              ]
             }
           },
           "modelVersionId": {

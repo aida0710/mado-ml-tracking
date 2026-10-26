@@ -8,6 +8,7 @@ import type {
 import {
   idSchema,
   jsonObjectSchema,
+  latestMetricValueSchema,
   runKindSchema,
   runStatusSchema,
   timestampSchema,
@@ -34,7 +35,7 @@ export const automatedRunSummarySchema = namedContractSchema(
     modelVersionId: idSchema.nullable(),
     codeVersionId: idSchema.nullable(),
     parentRunId: idSchema.nullable(),
-    latestMetrics: z.record(z.string(), z.number()),
+    latestMetrics: z.record(z.string(), latestMetricValueSchema),
     parameters: jsonObjectSchema,
     referenceDatasetVersionIds: z.array(idSchema),
     upstreamDatasetVersionIds: z.array(idSchema),
