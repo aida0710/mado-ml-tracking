@@ -239,6 +239,7 @@ checkoutの版、Composeが読んでいるファイル、checkoutの下をmount�
 ```sh
 cd ~/mado-model-tracking
 git describe --tags --exact-match
+git rev-parse HEAD
 git status --short
 docker compose ls
 grep -oE '^[A-Za-z_][A-Za-z0-9_]*=' .env
@@ -298,7 +299,7 @@ for service in api web preview; do
 done
 ```
 
-3行とも入れる版と、そのタグのcommitを出せば進めます。
+3行とも入れる版と、手順0の`git rev-parse HEAD`と同じcommitを出せば進めます。
 
 ### 5. バックアップを取る
 
