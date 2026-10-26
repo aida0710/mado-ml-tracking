@@ -61,6 +61,34 @@ jobs:
           printf '%s\n' "$PWD/.venv/bin" >> "$GITHUB_PATH"
       - run: .venv/bin/python -m pytest python/tests
 
+  browser:
+    name: Browser checks with the mock API
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      TZ: Asia/Tokyo
+      # Playwrightはアプリの依存に入れていない（手元ではインストール済みのものをMMT_PLAYWRIGHT_MODULEで
+      # 指す）。CIでは、この版とその版に合うChromiumをジョブの中で入れる。
+      PLAYWRIGHT_VERSION: 1.62.1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --prefix "$RUNNER_TEMP/playwright" "playwright@$PLAYWRIGHT_VERSION"
+          "$RUNNER_TEMP/playwright/node_modules/.bin/playwright" install --with-deps chromium
+          printf 'MMT_PLAYWRIGHT_MODULE=%s\n' "$RUNNER_TEMP/playwright/node_modules/playwright/index.mjs" >> "$GITHUB_ENV"
+      - run: scripts/ci/run-mock-browser-checks.sh "$RUNNER_TEMP/browser-checks"
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-check-logs
+          path: ${{ runner.temp }}/browser-checks
+
   images:
     name: Release images
     runs-on: ubuntu-24.04

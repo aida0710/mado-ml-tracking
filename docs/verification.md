@@ -22,6 +22,17 @@ MMT_TEST_S3_ENDPOINT=http://127.0.0.1:4569 npm test -- packages/platform/src
 
 S3テストは専用bucketを作り、multipart upload、保存byte数とSHA-256、Range取得、失敗upload、削除を確認してbucketを消します。emulatorの結果は実際のS3権限やネットワークの確認を含みません。
 
+## 模擬APIのブラウザ検査をまとめて流す
+
+`scripts/ci/run-mock-browser-checks.sh`は、模擬API（`apps/web/tests/browserApi.mjs`）だけで動くブラウザ検査（`apps/web/tests/browser-*.mjs`のうち、実際のAPIやworkerを使わないもの）を順に流します。Viteの開発サーバーを127.0.0.1の別のport（既定47310、`MMT_MOCK_WEB_PORT`）で起動し、APIへのproxyは届かないport 9へ向けるので、開発用・確認用のAPIとDBには触れません。1本でも失敗すれば、全部を流したあとに失敗で終わり、失敗した検査のログの末尾を出します。CIの`Browser checks with the mock API`も同じスクリプトを使い、Playwrightとその版に合うChromiumをジョブの中で入れます。
+
+```bash
+MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
+scripts/ci/run-mock-browser-checks.sh <ログのディレクトリ>
+```
+
+開発モードのAPIや分離したAPI（`MMT_TEST_DATABASE_URL`）、local executorを使う検査は、この一覧に入れていません。それぞれの節の手順で流します。
+
 ## 実S3の保存・取得を確認する
 
 `scripts/verify_s3_artifacts.ts`は、`.env`のS3設定（`MMT_S3_BUCKET`、`MMT_S3_ENDPOINT`、`MMT_S3_REGION`、`MMT_S3_PREFIX`、`MMT_S3_FORCE_PATH_STYLE`、`MMT_S3_ACCESS_KEY_ID`、`MMT_S3_SECRET_ACCESS_KEY`）を使い、APIと同じ`createS3ArtifactStore`で既存bucketを検証します。bucketは作成しません。書き込みは`<MMT_S3_PREFIX>/verification/<JSTの日付>/<uuid>/`の下に限り、最後にそのprefixのobjectと未完了のmultipart uploadを消します。
