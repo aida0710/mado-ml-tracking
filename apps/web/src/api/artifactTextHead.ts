@@ -1,5 +1,5 @@
+import { fetchResponse } from '@mado/design-system/http';
 import { decodeUtf8Prefix } from '../lib/textPrefix';
-import { fetchApiResponse } from './http';
 import { trackingApi } from './tracking';
 
 /**
@@ -27,9 +27,8 @@ export async function fetchArtifactTextHead(
   artifact: { projectId: string; artifactId: string; maxBytes: number },
   signal?: AbortSignal,
 ): Promise<string> {
-  const response = await fetchApiResponse(trackingApi.artifactUrl(artifact.projectId, artifact.artifactId), {
-    headers: { Range: `bytes=0-${artifact.maxBytes - 1}` },
-    signal,
+  const response = await fetchResponse(trackingApi.artifactUrl(artifact.projectId, artifact.artifactId), {
+    init: { headers: { Range: `bytes=0-${artifact.maxBytes - 1}` }, signal },
   });
   return decodeUtf8Prefix(await readLeadingBytes(response, artifact.maxBytes));
 }

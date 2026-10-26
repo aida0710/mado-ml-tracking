@@ -45,7 +45,7 @@
 ## APIの呼び出しとエラーの文
 
 - `api/*.ts`（APIクライアント）は、デザインシステムの`@mado/design-system/http`の`requestJson`でAPIを呼び、応答の本文を`@mmt/contracts/schemas`のスキーマ（APIのrouteCatalogが同じ経路に公開しているもの）で確かめます。応答の型を`as`で決めつけたり、手で形を確かめたりしません。経路のヘルパー（`api/http.ts`の`projectPath`など）は`/api`から始まる完全なURLを返します。
-- 本文をJSONとして読まない取得（Artifactの中身、検索結果のCSV）は`api/http.ts`の`fetchApiResponse`で生の応答を受け取り、失敗だけを`ApiError`にします。進み具合の要るアップロード（`api/artifactUploads.ts`）はXMLHttpRequestで送り、応答をスキーマで確かめます。
+- 本文をJSONとして読まない取得（Artifactの中身、検索結果のCSV、音声のバイト列）は、同じデザインシステムの`fetchResponse`で生の応答を受け取ります。失敗の応答と通信の失敗は`requestJson`と同じ`ApiError`になります。進み具合の要るアップロード（`api/artifactUploads.ts`）はXMLHttpRequestで送り、応答をスキーマで確かめます。
 - 失敗は`ApiError`（status、code、`message`＝APIの文、`error`・`code`の横の項目`details`）です。`api/*.ts`は`i18n`を読み込みません（`api/i18nIndependence.test.ts`が検出します）。
 - 画面に出す文は`lib/errorMessage.ts`の`formatErrorMessage`が作り、`useMutation`と`useQuery`が描画時に使います。APIの失敗は、どちらの言語の画面でもAPIの文をそのまま出します。codeから文を訳す辞書は持ちません。APIの文が無い、画面の側で起きた失敗だけを表示言語の文にします。
   - `network_error`: APIへ接続できなかった

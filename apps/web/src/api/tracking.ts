@@ -1,4 +1,4 @@
-import { isNotFoundError, jsonRequestInit, requestJson } from '@mado/design-system/http';
+import { fetchResponse, isNotFoundError, jsonRequestInit, requestJson } from '@mado/design-system/http';
 import type {
   Artifact,
   ArtifactListVersions,
@@ -21,7 +21,7 @@ import {
   runSearchPageSchema,
 } from '@mmt/contracts/schemas';
 import type { CreateRun, UpdateRun } from './inputs';
-import { encodeId, fetchApiResponse, projectPath } from './http';
+import { encodeId, projectPath } from './http';
 
 const artifactContentPath = (projectId: string, artifactId: string) =>
   `${projectPath(projectId)}/artifacts/${encodeId(artifactId)}/content`;
@@ -105,9 +105,8 @@ async function exportRunSearchCsv(
   search: RunSearchRequest,
   signal?: AbortSignal,
 ): Promise<RunSearchCsv> {
-  const response = await fetchApiResponse(`${projectPath(projectId)}/runs/search/export.csv`, {
-    ...jsonRequestInit('POST', search),
-    signal,
+  const response = await fetchResponse(`${projectPath(projectId)}/runs/search/export.csv`, {
+    init: { ...jsonRequestInit('POST', search), signal },
   });
   return {
     blob: await response.blob(),
@@ -201,7 +200,7 @@ export const trackingApi = {
   projectArtifactPage,
   artifactUrl: (projectId: string, artifactId: string) => artifactContentPath(projectId, artifactId),
   artifactText: async (projectId: string, artifactId: string, signal?: AbortSignal) =>
-    (await fetchApiResponse(artifactContentPath(projectId, artifactId), { signal })).text(),
+    (await fetchResponse(artifactContentPath(projectId, artifactId), { init: { signal } })).text(),
   artifact: (projectId: string, artifactId: string, signal?: AbortSignal) =>
     requestJson(`${projectPath(projectId)}/artifacts/${encodeId(artifactId)}`, {
       schema: artifactSchema,
