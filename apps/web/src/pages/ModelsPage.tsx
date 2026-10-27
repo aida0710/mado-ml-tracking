@@ -4,10 +4,10 @@ import { registryApi } from '../api/registry';
 import type { AutomationExecutionFilter } from '../api/automation';
 import { useProject } from '../hooks/useProject';
 import { useRegistry } from '../hooks/useRegistry';
+import { useShowsExecutionScreens } from '../hooks/useShowsExecutionScreens';
 import { useModelAliasHistory } from '../hooks/useModelAliasHistory';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PageHeader } from '../components/PageHeader';
-import { StandaloneArtifactUpload } from '../components/StandaloneArtifactUpload';
 import { ModelCreateDialog } from '../dialogs/ModelCreateDialog';
 import { ModelVersionDialog } from '../dialogs/ModelVersionDialog';
 import { ModelAutomationPanel } from '../components/ModelAutomationPanel';
@@ -23,10 +23,13 @@ import { modelsTextTemplates } from '../i18n/models';
 export function ModelsPage() {
   useLocale();
   const { project, canEdit } = useProject();
+  const showsExecutionScreens = useShowsExecutionScreens(project.id);
   const [dialog, setDialog] = useState<'model' | 'version' | 'alias' | null>(null);
   const [view, setView] = useState<
     'registry' | 'rules' | 'history' | 'promotion' | 'protections'
   >('registry');
+  // タブを出さないProjectでは、モデルとバージョンだけを出す。
+  const shownView = showsExecutionScreens ? view : 'registry';
   const [aliasToRemove, setAliasToRemove] = useState<{ alias: string; version: string } | null>(
     null,
   );
@@ -48,7 +51,6 @@ export function ModelsPage() {
         eyebrow={project.name}
         actions={
           <>
-            {canEdit && <StandaloneArtifactUpload projectId={project.id} />}
             {canEdit && (
               <button className="button primary" onClick={() => setDialog('model')}>
                 <Plus size={15} />
@@ -65,26 +67,29 @@ export function ModelsPage() {
           </>
         }
       />
-      <Tabs
-        tabs={[
-          { key: 'registry', label: text.modelRegistry },
-          { key: 'rules', label: text.automationRules },
-          { key: 'history', label: text.automationHistory },
-          { key: 'promotion', label: text.promotionPolicies },
-          { key: 'protections', label: text.aliasProtections },
-        ]}
-        selected={view}
-        onSelect={(key) => setView(key as typeof view)}
-        panelId="model-tab-panel"
-      />
-      <div id="model-tab-panel" role="tabpanel">
-        {view === 'promotion' ? (
+      {/* 自動実行・昇格・Aliasの保護は、Jobを動かせるコンピュータがあるProjectだけで使う。 */}
+      {showsExecutionScreens && (
+        <Tabs
+          tabs={[
+            { key: 'registry', label: text.modelRegistry },
+            { key: 'rules', label: text.automationRules },
+            { key: 'history', label: text.automationHistory },
+            { key: 'promotion', label: text.promotionPolicies },
+            { key: 'protections', label: text.aliasProtections },
+          ]}
+          selected={view}
+          onSelect={(key) => setView(key as typeof view)}
+          panelId="model-tab-panel"
+        />
+      )}
+      <div id="model-tab-panel" role={showsExecutionScreens ? 'tabpanel' : undefined}>
+        {shownView === 'promotion' ? (
           <PromotionPolicyPanel initialModelId={registry.selected?.id ?? ''} />
-        ) : view === 'protections' ? (
+        ) : shownView === 'protections' ? (
           <AliasProtectionSettings models={registry.list.value ?? []} />
-        ) : view !== 'registry' ? (
+        ) : shownView !== 'registry' ? (
           <ModelAutomationPanel
-            view={view}
+            view={shownView}
             initialFamily={registry.selected?.family}
             historyFilter={historyFilter}
             onHistoryFilterChange={setHistoryFilter}

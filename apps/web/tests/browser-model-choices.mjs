@@ -426,12 +426,12 @@ try {
     const { api, model } = choices;
     const { context, page, screenshot } = await openPage({ choices, viewport });
     await page.goto(`${base}/projects/${api.state.project.id}/models?id=${model.id}`);
-    await page.getByRole('tab', { name: '昇格policy' }).click();
-    await page.getByRole('button', { name: '昇格policyを作成' }).click();
-    const dialog = page.getByRole('dialog', { name: '昇格policyを作成' });
+    await page.getByRole('tab', { name: '昇格ポリシー' }).click();
+    await page.getByRole('button', { name: '昇格ポリシーを作成' }).click();
+    const dialog = page.getByRole('dialog', { name: '昇格ポリシーを作成' });
     await dialog.getByRole('textbox', { name: '名前', exact: true }).fill('WERゲート');
     await dialog.getByRole('combobox', { name: '対象モデル' }).selectOption(model.id);
-    const target = dialog.getByRole('combobox', { name: '対象alias' });
+    const target = dialog.getByRole('combobox', { name: '対象Alias' });
     await target.fill('');
     await target.click();
     await dialog.getByRole('option', { name: /production.*モデルで使用中/ }).waitFor();

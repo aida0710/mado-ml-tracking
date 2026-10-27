@@ -70,6 +70,7 @@ export const sweepStatusReasonSchema = z.enum([
   'max_trials_reached',
   'search_space_exhausted',
   'suggestion_failed',
+  'all_trials_failed',
 ]);
 export const sweepTrialStateSchema = z.enum([
   'queued',

@@ -132,9 +132,9 @@ The details of a queued Job show why it has not started above the fields.
 
 Site Jobs need no worker. The phase next to the status (waiting for manual submission, in the scheduler queue, and so on) tells where they wait. For a manual-submission site, **Jobs waiting for manual submission** and the submit command appear above the list ([External computers (sites)](/en/compute/sites)).
 
-### Check on the Compute page
+### Check on the Available computers page
 
-The computer list on the **Compute** page also has a **Worker** column, so you can check before launching.
+The computer list on the **Available computers** page also has a **Worker** column, so you can check before launching.
 
 | Shown | Meaning |
 | --- | --- |
@@ -143,7 +143,7 @@ The computer list on the **Compute** page also has a **Worker** column, so you c
 | **No worker** | No worker takes this computer |
 | **Not needed (site)** | A site needs no worker |
 
-Global administrators also see **Worker (any project)** in a computer's details under **Global settings** → **Computers**. It counts the workers of every Project, so an online worker there does not mean one takes this Project's Jobs. Check on the **Compute** page whether they start in this Project.
+Global administrators also see **Worker (any project)** in a computer's details under **Global settings** → **Computers**. It counts the workers of every Project, so an online worker there does not mean one takes this Project's Jobs. Check on the **Available computers** page whether they start in this Project.
 
 ## Job details {#job-details}
 

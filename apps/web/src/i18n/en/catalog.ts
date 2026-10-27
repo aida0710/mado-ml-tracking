@@ -135,7 +135,7 @@ export const text = {
   datasets: 'Datasets',
   lineage: 'Lineage',
   jobs: 'Jobs',
-  compute: 'Compute',
+  compute: 'Available computers',
   plugins: 'Integrations',
   settings: "Project settings",
   allExperiments: "All experiments",

@@ -21,7 +21,12 @@ const ADMIN_PATHS = [
 describe('navigationLinks', () => {
   it('Project を開いた viewer には Plugins を出さず、全体設定と全体管理も出さない', () => {
     const links = paths(
-      navigationLinks({ projectId: 'p1', projectRole: 'viewer', isGlobalAdmin: false }),
+      navigationLinks({
+        projectId: 'p1',
+        projectRole: 'viewer',
+        isGlobalAdmin: false,
+        showsExecutionScreens: true,
+      }),
     );
     expect(links[0]).toBe('/projects/p1/experiments');
     expect(links).toContain('/projects/p1/settings');
@@ -57,7 +62,12 @@ describe('navigationLinks', () => {
   });
 
   it('Project の組は 記録・モデル・データ・実行・プロジェクト管理 の順で、全体管理者にも全体設定と全体管理は付かない', () => {
-    const groups = navigationGroups({ projectId: 'p1', projectRole: 'admin', isGlobalAdmin: true });
+    const groups = navigationGroups({
+      projectId: 'p1',
+      projectRole: 'admin',
+      isGlobalAdmin: true,
+      showsExecutionScreens: true,
+    });
     expect(groups.map((group) => group.label)).toEqual([
       text.navigationGroupTracking,
       text.navigationGroupModels,
@@ -76,6 +86,26 @@ describe('navigationLinks', () => {
     ]);
     // Projectの画面は、どれも組全体を通してちょうど1回ずつ出る。
     expect(new Set(paths(groups.flatMap((group) => group.links))).size).toBe(15);
+  });
+
+  it('Jobを動かせるコンピュータが無いProjectには、実行の画面と実行の組を出さない', () => {
+    const groups = navigationGroups({ projectId: 'p1', projectRole: 'admin', isGlobalAdmin: false });
+    expect(groups.map((group) => group.label)).toEqual([
+      text.navigationGroupTracking,
+      text.navigationGroupModels,
+      text.navigationGroupData,
+      text.navigationGroupProjectManagement,
+    ]);
+    expect(paths(groups.flatMap((group) => group.links))).toEqual([
+      '/projects/p1/experiments',
+      '/projects/p1/reports',
+      '/projects/p1/models',
+      '/projects/p1/datasets',
+      '/projects/p1/artifacts',
+      '/projects/p1/lineage',
+      '/projects/p1/plugins',
+      '/projects/p1/settings',
+    ]);
   });
 
   it('全体管理の項目名は ユーザー・ストレージ・ランチャー・監査ログ など各画面の見出しと同じ', () => {

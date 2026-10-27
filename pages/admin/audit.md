@@ -64,9 +64,9 @@ description: ログイン、権限、token、ユーザー、保存先、通知�
 | 通知先の作成・変更・テスト送信 | `notification.channel.create`、`update`、`test` | 名前、種類、環境変数名、宛先の件数 |
 | 通知ルールの作成・変更 | `notification.rule.create`、`update` | |
 | Artifactの削除 | `artifact.delete`、`artifact.mlflow_delete` | path、サイズ、保存先 |
-| 自動実行ルール・昇格policyの所有者の変更 | `automation_rule.owner.transfer`、`promotion_policy.owner.transfer` | |
+| 自動実行ルール・昇格ポリシーの所有者の変更 | `automation_rule.owner.transfer`、`promotion_policy.owner.transfer` | |
 
-このほか、実験・モデル・データセットの変更、Runの説明文、コメント、保存ビュー、レポート、Sweep、aliasの保護なども記録します。画面に名前の無い新しい操作は、操作名のまま表示します。
+このほか、実験・モデル・データセットの変更、Runの説明文、コメント、保存ビュー、レポート、Sweep、Aliasの保護なども記録します。画面に名前の無い新しい操作は、操作名のまま表示します。
 
 ## APIで読む
 

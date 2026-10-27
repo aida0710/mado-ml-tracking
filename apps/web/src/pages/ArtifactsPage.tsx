@@ -11,6 +11,7 @@ import {
   type ProjectArtifactFilter,
 } from '../hooks/useProjectArtifacts';
 import { PageHeader } from '../components/PageHeader';
+import { StandaloneArtifactUpload } from '../components/StandaloneArtifactUpload';
 import { ResponsiveTable } from '../components/ResponsiveTable';
 import { ArtifactBackToListButton } from '../components/ArtifactBackToListButton';
 import { useArtifactBrowserPanes } from '../hooks/useArtifactBrowserPanes';
@@ -42,7 +43,7 @@ const getMimeTypeOptions = () => [
  */
 export function ArtifactsPage() {
   useLocale();
-  const { project } = useProject();
+  const { project, canEdit } = useProject();
   const [params, setParams] = useSearchParams();
   const filter: ProjectArtifactFilter = {
     query: params.get('query') ?? '',
@@ -80,6 +81,11 @@ export function ArtifactsPage() {
     catalog.items.filter((item) => item.runId === null).map((item) => item.id),
   );
 
+  function reloadCatalog() {
+    catalog.reload();
+    references.reload();
+  }
+
   function showArtifact(artifact: Artifact | undefined) {
     setSelected(artifact);
     if (artifact) setDeleted(null);
@@ -103,16 +109,12 @@ export function ArtifactsPage() {
         eyebrow={project.name}
         description={text.artifactCatalogDescription}
         actions={
-          <button
-            className="icon-button"
-            aria-label={text.refresh}
-            onClick={() => {
-              catalog.reload();
-              references.reload();
-            }}
-          >
-            <RefreshCw size={17} />
-          </button>
+          <>
+            {canEdit && <StandaloneArtifactUpload projectId={project.id} onUploaded={reloadCatalog} />}
+            <button className="icon-button" aria-label={text.refresh} onClick={reloadCatalog}>
+              <RefreshCw size={17} />
+            </button>
+          </>
         }
       />
       <div className="toolbar artifact-catalog-toolbar">

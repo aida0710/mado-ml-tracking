@@ -42,6 +42,8 @@ const TRIAL_LAUNCH_SAVEPOINT = 'sweep_trial_launch';
 const SWEEP_LOCK_PREFIX = 'sweep';
 
 const COMPLETED_TRIAL_STATES = new Set(['finished', 'failed', 'early_stopped']);
+// 目的メトリクスの値を最後まで出したtrial（findBestTrialsが最良の候補にするもの）。
+const SUCCESSFUL_TRIAL_STATES = new Set(['finished', 'early_stopped']);
 
 /**
  * Sweepの状態機械。parallelismとmax_trialsまでtrialを起動し、hyperbandがrungの足切りより下に
@@ -221,14 +223,15 @@ export class SweepController {
       nextIndex += 1;
     }
     if (activeCount > 0) return;
-    if (nextIndex >= sweep.maxTrials)
-      return this.setStatus(connection, { sweep, status: 'finished', reason: 'max_trials_reached' });
-    if (isExhausted())
-      return this.setStatus(connection, {
-        sweep,
-        status: 'finished',
-        reason: 'search_space_exhausted',
-      });
+    if (nextIndex < sweep.maxTrials && !isExhausted()) return;
+    // 全trialが失敗・中止で終わったSweepを「完了」と見せない。結果を出したtrialが1つも無い。
+    if (!trials.some((trial) => SUCCESSFUL_TRIAL_STATES.has(trial.state)))
+      return this.setStatus(connection, { sweep, status: 'failed', reason: 'all_trials_failed' });
+    return this.setStatus(connection, {
+      sweep,
+      status: 'finished',
+      reason: nextIndex >= sweep.maxTrials ? 'max_trials_reached' : 'search_space_exhausted',
+    });
   }
 
   private suggest(

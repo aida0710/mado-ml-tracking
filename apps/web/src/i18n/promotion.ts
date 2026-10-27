@@ -15,11 +15,11 @@ import type { KnownAliasSource } from '../lib/aliasChoices';
 // i18n/evaluation.tsのものを使う（baselineAlias、evaluationRule、referenceDatasets、
 // evaluationCodeVersion、baselineVersion）。
 export const promotionText = localized({
-  promotionPolicies: '昇格policy',
-  newPromotionPolicy: '昇格policyを作成',
-  promotionPoliciesEmpty: '昇格policyはまだありません',
+  promotionPolicies: '昇格ポリシー',
+  newPromotionPolicy: '昇格ポリシーを作成',
+  promotionPoliciesEmpty: '昇格ポリシーはまだありません',
   promotionModel: '対象モデル',
-  promotionTargetAlias: '対象alias',
+  promotionTargetAlias: '対象Alias',
   promotionEvaluationRuleHint:
     '対象モデルの系列を扱える、有効な評価（Evaluation）の自動実行ルールから選びます。判定には、このルールが作った評価Runだけを使います。',
   promotionEvaluationRulesEmpty:
@@ -43,16 +43,16 @@ export const promotionText = localized({
   aliasChoicesLoadFailed: '既存のAliasを読み込めませんでした。Alias名はそのまま入力できます。',
   promotionAddCriterion: '基準を追加',
   promotionRemoveCriterion: '基準を削除',
-  promotionMissingBaseline: '基準aliasが未設定のとき',
-  promotionAutoPromote: '合格したら対象aliasを自動で切り替える',
+  promotionMissingBaseline: '基準Aliasが未設定のとき',
+  promotionAutoPromote: '合格したら対象Aliasを自動で切り替える',
   promotionAutoPromoteColumn: '自動昇格',
   promotionAutoPromoteOn: 'する',
   promotionAutoPromoteOff: 'しない',
   promotionPolicyEnabled: '作成後すぐに有効にする',
   promotionPolicyFixedSettings:
-    '作成後は有効・無効のみ変更できます。設定を変える場合は新しいpolicyを作成してください。',
+    '作成後は有効・無効のみ変更できます。設定を変える場合は新しいポリシーを作成してください。',
   promotionEvaluations: '判定履歴',
-  promotionEvaluationsEmpty: 'このpolicyの判定はまだありません',
+  promotionEvaluationsEmpty: 'このポリシーの判定はまだありません',
   promotionEvaluatedAt: '日時',
   promotionDecision: '判定',
   promotionCandidateVersion: '候補バージョン',
@@ -67,8 +67,8 @@ export const promotionText = localized({
   // 作成フォームのブラウザ側での検証。
   promotionPolicyNameRequired: '名前を入力してください。',
   promotionModelRequired: 'このプロジェクトのモデルを選択してください。',
-  promotionTargetAliasRequired: '対象aliasを入力してください。',
-  promotionBaselineAliasRequired: '基準aliasを入力してください。',
+  promotionTargetAliasRequired: '対象Aliasを入力してください。',
+  promotionBaselineAliasRequired: '基準Aliasを入力してください。',
   promotionEvaluationRuleRequired: '対象モデルを扱える有効な評価ルールを選択してください。',
   promotionCriteriaRequired: '合否基準を1つ以上追加してください。',
   promotionCriterionMetricRequired: '合否基準のメトリクス名を入力してください。',
@@ -84,40 +84,40 @@ export const promotionText = localized({
   promotionTransferOwnerRequired: '移管先のService Accountを選択してください。',
   // 昇格のダイアログ（理由と根拠を添えてaliasを付ける）。
   promote: '昇格',
-  promotionDialogTitle: 'aliasを設定（昇格）',
+  promotionDialogTitle: 'Aliasを設定（昇格）',
   promotionEvidence: '根拠となる判定',
   promotionEvidenceNone: '指定しない',
   promotionEvidenceChoose: '判定を選択',
-  promotionEvidenceRequired: 'このaliasを変更するには、このバージョンの合格判定を選択してください。',
+  promotionEvidenceRequired: 'このAliasを変更するには、このバージョンの合格判定を選択してください。',
   promotionEvidenceEmpty:
-    'このバージョンには、このaliasを対象にした合格判定がありません。このaliasを対象にした昇格policyがあれば、その評価ルールがこのバージョンを評価すると判定されます（policyはModelsの［昇格policy］で確認できます）。',
+    'このバージョンには、このAliasを対象にした合格判定がありません。このAliasを対象にした昇格ポリシーがあれば、その評価ルールがこのバージョンを評価すると判定されます（ポリシーはModelsの［昇格ポリシー］で確認できます）。',
   promotionPoliciesAdminOnly:
-    '昇格policyの作成・有効化・所有者の移管は、Project adminと全体管理者が行います。',
-  aliasProtectionsAdminOnly: '保護aliasの追加・解除は、Project adminと全体管理者が行います。',
+    '昇格ポリシーの作成・有効化・所有者の移管は、Project adminと全体管理者が行います。',
+  aliasProtectionsAdminOnly: '保護Aliasの追加・解除は、Project adminと全体管理者が行います。',
   promotionEvaluationRulesDisabled:
     'このモデルの系列を対象にした評価ルールはありますが、無効になっています。Modelsの［自動実行ルール］で有効にすると選べます。',
   promotionReasonRequired: '理由を入力してください。',
   promotionReasonRequiredForFailed:
-    'このバージョンはこのaliasの昇格判定で不合格です。昇格させる場合は理由を入力してください。',
-  promotionReasonRequiredForProtected: '保護aliasを合格判定なしで変更するには理由を入力してください。',
-  promotionAliasRequired: 'aliasを入力してください。',
+    'このバージョンはこのAliasの昇格判定で不合格です。昇格させる場合は理由を入力してください。',
+  promotionReasonRequiredForProtected: '保護Aliasを合格判定なしで変更するには理由を入力してください。',
+  promotionAliasRequired: 'Aliasを入力してください。',
   promotionVersionRequired: 'バージョンを選択してください。',
-  promotionProtectedAlias: '保護alias',
+  promotionProtectedAlias: '保護Alias',
   // モデルバージョンの画面の、昇格の判定のカード。
   promotionCheck: '昇格の判定',
-  promotionCheckEmpty: 'このモデルには昇格policyがありません。',
+  promotionCheckEmpty: 'このモデルには昇格ポリシーがありません。',
   promotionCheckPending: '判定待ち',
   promotionCheckCurrentAlias: '現在このバージョンを指しています',
   promotionCheckPromotedAutomatically: '自動昇格済み',
-  promotionCheckBaselineChanged: '判定中に基準aliasが変わったため、自動昇格しませんでした。',
-  promotionCheckPromotionDenied: 'aliasの変更が拒否されたため、自動昇格しませんでした。',
+  promotionCheckBaselineChanged: '判定中に基準Aliasが変わったため、自動昇格しませんでした。',
+  promotionCheckPromotionDenied: 'Aliasの変更が拒否されたため、自動昇格しませんでした。',
   // aliasの保護（Modelsの画面のタブ）。
-  aliasProtections: '保護alias',
-  aliasProtectionsEmpty: '保護aliasはありません。',
+  aliasProtections: 'Aliasの保護',
+  aliasProtectionsEmpty: '保護Aliasはありません。',
   aliasProtectionsHint:
-    '保護aliasは、必要なrole以上の利用者だけが変更できます。合格判定を必須にすると、そのバージョンの合格判定を根拠に指定したときだけ変更できます。MLflow互換APIからは変更できません。',
-  aliasProtectionAdd: '保護aliasを追加',
-  aliasProtectionEdit: '保護aliasを編集',
+    '保護Aliasは、必要なrole以上の利用者だけが変更できます。合格判定を必須にすると、そのバージョンの合格判定を根拠に指定したときだけ変更できます。MLflow互換APIからは変更できません。',
+  aliasProtectionAdd: '保護Aliasを追加',
+  aliasProtectionEdit: '保護Aliasを編集',
   aliasProtectionRemove: '保護を解除',
   aliasProtectionScope: '対象',
   aliasProtectionScopeProject: 'プロジェクト全体',
@@ -129,7 +129,7 @@ export const promotionText = localized({
   aliasProtectionUpdatedAt: '更新日時',
   promotionCriterionNotCompared: '比較なし',
   promotionCheckBaselineMoved:
-    'この判定のあと、基準aliasが別のバージョンへ移りました。今の基準バージョンとは比べていないため、根拠には選んでいません。',
+    'この判定のあと、基準Aliasが別のバージョンへ移りました。今の基準バージョンとは比べていないため、根拠には選んでいません。',
 } as const, english.promotionText);
 
 export const promotionDecisionLabels: Record<PromotionDecision, string> = localized({
@@ -175,8 +175,8 @@ export const criterionThresholdMeaningLabels: Record<CriterionThresholdMeaning, 
 // 候補に出すalias名が既にどこで使われているか（lib/aliasChoices.ts）。
 export const knownAliasSourceLabels: Record<KnownAliasSource, string> = localized({
   model: 'モデルで使用中',
-  policy: '昇格policy',
-  protection: '保護alias',
+  policy: '昇格ポリシー',
+  protection: '保護Alias',
 }, english.knownAliasSourceLabels);
 
 export const aliasProtectionRoleLabels: Record<ModelAliasProtectionRole, string> = localized({
@@ -193,20 +193,20 @@ const aliasProtectionRoleNeeded: Record<ModelAliasProtectionRole, string> = {
 // 値を埋め込む文言。
 export const promotionTextTemplates = localized({
   protectedAliasNotice: (role: ModelAliasProtectionRole, requirePassedEvaluation: boolean) =>
-    `このaliasは保護されています（${aliasProtectionRoleLabels[role]}${
+    `このAliasは保護されています（${aliasProtectionRoleLabels[role]}${
       requirePassedEvaluation ? '・合格判定が必須' : ''
     }）。`,
   protectedAliasRoleMissing: (role: ModelAliasProtectionRole) =>
-    `このaliasの変更には${aliasProtectionRoleNeeded[role]}の権限が必要です。`,
+    `このAliasの変更には${aliasProtectionRoleNeeded[role]}の権限が必要です。`,
   protectedAliasLabel: (role: ModelAliasProtectionRole) =>
-    `保護alias（${aliasProtectionRoleLabels[role]}）`,
+    `保護Alias（${aliasProtectionRoleLabels[role]}）`,
   aliasRemovalRoleMissing: (role: ModelAliasProtectionRole) =>
     `解除には${aliasProtectionRoleNeeded[role]}の権限が必要です`,
   evidenceOption: (policyName: string, createdAt: string) => `${policyName}（${createdAt}）`,
   transferOwnerConfirm: (policyName: string) =>
     `「${policyName}」の判定と自動昇格を、選んだService Accountの権限で実行するように切り替えます。`,
   removeAliasProtectionConfirm: (alias: string, scope: string) =>
-    `${scope}のalias「${alias}」の保護を解除します。解除後はeditor以上の利用者が理由なしで変更できます。`,
+    `${scope}のAlias「${alias}」の保護を解除します。解除後はeditor以上の利用者が理由なしで変更できます。`,
   criteriaTooMany: (max: number) => `合否基準は${max}件までです。`,
   criterionSubject: (metric: string, mode: PromotionCriterionMode) =>
     mode === 'absolute' ? metric : `${metric}の${promotionModeLabels[mode]}`,

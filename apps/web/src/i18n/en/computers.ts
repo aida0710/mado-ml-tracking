@@ -29,6 +29,8 @@ export const computersText = {
   projectComputersHint:
     'Computers you can use in this project. Add computers and manage their settings, job shells, and keys in Global settings → Computers.',
   openComputerSettings: 'Open Computers in global settings',
+  executionScreensHiddenHint:
+    'Features that run jobs (Sweeps, Tasks, Code, Workflows, Jobs, Hooks, and model automation and promotion) appear in the sidebar once a computer this project can use is added.',
   computerId: 'Computer ID',
   workerSetupTitle: 'Worker setup',
   workerSetupHint:

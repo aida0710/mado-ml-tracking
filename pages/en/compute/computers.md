@@ -1,6 +1,6 @@
 ---
 title: Computers and visibility
-description: Add the computers that run Jobs (SSH, Local, sites) under Computers in Global settings, and decide who can use each one with its visibility (Public or Private). Owners, hooks and automation, and how this relates to a Project's Compute page.
+description: Add the computers that run Jobs (SSH, Local, sites) under Computers in Global settings, and decide who can use each one with its visibility (Public or Private). Owners, hooks and automation, and how this relates to a Project's Available computers page.
 ---
 
 # Computers and visibility
@@ -25,7 +25,7 @@ Computers do not belong to a Project. You add them under **Computers** in **Glob
 
 ## Open Computers in Global settings
 
-Click **Global settings** in the user menu at the top right, then open **Computers** under **Global settings** in the sidebar (`/settings/computers`). Anyone can open **Global settings**, not only global administrators. You can also get there from **Open Computers in global settings** on a Project's **Compute** page.
+Click **Global settings** in the user menu at the top right, then open **Computers** under **Global settings** in the sidebar (`/settings/computers`). Anyone can open **Global settings**, not only global administrators. You can also get there from **Open Computers in global settings** on a Project's **Available computers** page.
 
 The list shows every computer, including other people's Private ones.
 
@@ -96,11 +96,13 @@ Computers that existed before visibility was introduced became:
 
 Sharing with Projects no longer exists. To let others use a computer you used to share, its owner makes it Public.
 
-## A Project's Compute page
+## A Project's Available computers page
 
-![A Project's Compute page: the computers you can use, and the workers](/images/en/compute-targets.png)
+![A Project's Available computers page: the computers you can use, and the workers](/images/en/compute-targets.png)
 
-A Project's **Compute** page shows the computers you can use (read only) and the state of the workers connected to the Project (**Workers**). To add or configure computers, use **Open Computers in global settings** at the top right to go to **Global settings**.
+A Project's **Available computers** page shows the computers you can use (read only) and the state of the workers connected to the Project (**Workers**). To add or configure computers, use **Open Computers in global settings** at the top right to go to **Global settings**.
+
+Until the Project has a computer you can use, the features that run Jobs (Sweeps, Tasks, Code, Workflows, Jobs, Hooks, Available computers, and the **Automation rules**, **Automation history**, **Promotion policies**, and **Protected aliases** tabs in Models) are left out of the sidebar and the Models page. They appear once a usable computer is added. Project settings also says so at the top, with a link to **Computers** in **Global settings**.
 
 The target list on the Job screens also shows only the computers you can use.
 

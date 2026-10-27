@@ -446,12 +446,12 @@ try {
     ids.evaluationRuleId = rules.find((rule) => rule.name === 'Browser evaluation').id;
     assert.equal(rules.find((rule) => rule.name === 'Browser evaluation').upstreamRuleId, rules.find((rule) => rule.name === 'Browser inference').id);
 
-    await openModelsTab('昇格policy');
-    await page.getByRole('button', { name: '昇格policyを作成' }).click();
+    await openModelsTab('昇格ポリシー');
+    await page.getByRole('button', { name: '昇格ポリシーを作成' }).click();
     await dialog().getByLabel('名前', { exact: false }).fill('Browser promotion gate');
     await dialog().getByLabel('対象モデル', { exact: false }).selectOption(modelId);
-    await dialog().getByLabel(/^対象alias\s*\*?$/).fill(PROMOTION_ALIAS);
-    await dialog().getByLabel(/^基準alias\s*\*?$/).fill(PROMOTION_ALIAS);
+    await dialog().getByLabel(/^対象Alias\s*\*?$/).fill(PROMOTION_ALIAS);
+    await dialog().getByLabel(/^基準Alias\s*\*?$/).fill(PROMOTION_ALIAS);
     await dialog().getByLabel('評価ルール', { exact: false }).selectOption(ids.evaluationRuleId);
     await dialog().getByLabel('メトリクス', { exact: false }).fill('evaluation.duration_match_rate');
     await dialog().getByLabel('良い方向', { exact: false }).selectOption({ label: '大きいほど良い' });
@@ -560,8 +560,8 @@ try {
     await screenshot('06-viewer-version-page');
     await openModelsTab('自動実行ルール');
     assert.equal(await page.getByRole('button', { name: '自動実行ルールを作成' }).count(), 0);
-    await openModelsTab('昇格policy');
-    assert.equal(await page.getByRole('button', { name: '昇格policyを作成' }).count(), 0);
+    await openModelsTab('昇格ポリシー');
+    assert.equal(await page.getByRole('button', { name: '昇格ポリシーを作成' }).count(), 0);
     // 画面が隠した操作は、APIも断る。
     const refused = await page.request.put(`${BASE}/api/projects/${projectId}/models/${modelId}/aliases/${PROMOTION_ALIAS}`, {
       headers: { Origin: BASE, 'Content-Type': 'application/json' },

@@ -79,7 +79,8 @@ export type SweepStatus = 'running' | 'paused' | 'finished' | 'canceled' | 'fail
  * Sweepが今のstatusになった理由。paused: user_requested、task_revision_changed（Sweepの作成後に
  * Taskが編集された）、owner_forbidden（作成者がもうProjectのeditorではない）、launch_failed
  * （trialをキューに入れられなかった）。finished: max_trials_reached、search_space_exhausted
- * （grid）。canceled: user_requested。failed: suggestion_failed。
+ * （grid）。canceled: user_requested。failed: suggestion_failed、
+ * all_trials_failed（最後まで走ったが、結果を出したtrialが1つも無い）。
  */
 export type SweepStatusReason =
   | 'user_requested'
@@ -88,7 +89,8 @@ export type SweepStatusReason =
   | 'launch_failed'
   | 'max_trials_reached'
   | 'search_space_exhausted'
-  | 'suggestion_failed';
+  | 'suggestion_failed'
+  | 'all_trials_failed';
 
 export type SweepTrialState =
   | 'queued'

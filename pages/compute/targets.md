@@ -5,7 +5,7 @@ description: Jobを実行するGPUマシンをコンピュータとして登録�
 
 # SSH・Localのコンピュータ
 
-![プロジェクトのCompute。自分が使えるコンピュータの一覧とWorkers](/images/compute-targets.png)
+![プロジェクトの使えるコンピュータ。自分が使えるコンピュータの一覧とWorkers](/images/compute-targets.png)
 
 コンピュータは、Jobを実行するマシンの登録です。コンピュータのうち、SSHとLocalのものを指します。SSHの接続先、使えるGPU、対応するRuntime（Python、Docker、Singularity、Apptainer）、作業ディレクトリを登録します。コンピュータへの接続とJobの実行はworkerが行い、API serverはコンピュータへ接続しません。
 
@@ -265,7 +265,7 @@ Localのコンピュータでは、最初の項目が「SSH接続」の代わり
 
 | 表示 | 原因と対処 |
 | --- | --- |
-| 選んだworkerが確認を受け取りませんでした、5分以内にclaimしたworkerがありません | 確認を頼んだworkerが動いていません。プロジェクトのComputeの［Workers］で、workerが「オンライン」かを確かめます。workerを選んでいない確認では、workerの`MMT_WORKER_TARGET_IDS`（`install`の`--target-ids`）にコンピュータのIDが入っているかも確かめます |
+| 選んだworkerが確認を受け取りませんでした、5分以内にclaimしたworkerがありません | 確認を頼んだworkerが動いていません。プロジェクトの使えるコンピュータの［Workers］で、workerが「オンライン」かを確かめます。workerを選んでいない確認では、workerの`MMT_WORKER_TARGET_IDS`（`install`の`--target-ids`）にコンピュータのIDが入っているかも確かめます |
 | workerから結果が届きませんでした | workerが確認の途中で止まりました。workerのログを確かめます |
 | SSH接続がNG（鍵の権限） | workerのマシンに鍵かknown_hostsが無いか、鍵の権限が600ではありません。workerのマシンで`mado-tracking-worker doctor`を実行して確かめます |
 | SSH接続がNG（接続できない） | Host・Port・SSHユーザーが合っているか、鍵の公開鍵がコンピュータの`~/.ssh/authorized_keys`にあるか、known_hostsにコンピュータのホスト鍵があるかを確かめます |
@@ -275,14 +275,14 @@ Localのコンピュータでは、最初の項目が「SSH接続」の代わり
 
 ## Workersを見る
 
-プロジェクトの［Compute］には、このProjectで自分が使えるコンピュータの一覧（読むだけ）と［Workers］が出ます。［Workers］には、このProjectに接続しているworkerの接続状態、バージョン、ホスト名、最終応答、担当Job数を表示します。120秒以上応答が無いworkerは「オフライン」になります。workerの導入は[workerの導入と常駐](/compute/worker)を参照してください。
+プロジェクトの［使えるコンピュータ］には、このProjectで自分が使えるコンピュータの一覧（読むだけ）と［Workers］が出ます。［Workers］には、このProjectに接続しているworkerの接続状態、バージョン、ホスト名、最終応答、担当Job数を表示します。120秒以上応答が無いworkerは「オフライン」になります。workerの導入は[workerの導入と常駐](/compute/worker)を参照してください。
 
 ## 権限
 
 | 操作 | 必要な権限 |
 | --- | --- |
 | 全体設定の「コンピュータ」ですべてのコンピュータを見る | ログインしている人（使えないものは名前・種類・所有者・公開範囲・状態だけ） |
-| プロジェクトのComputeとWorkersを見る | viewer以上 |
+| プロジェクトの使えるコンピュータとWorkersを見る | viewer以上 |
 | SSH・Localのコンピュータを足す | 全体管理者 |
 | コンピュータの変更・公開範囲の変更・有効と無効の切り替え、接続確認 | 所有者か全体管理者 |
 | 追加・編集の［接続に使うworker］でworkerを選ぶ（SSH鍵の候補とディレクトリの読み取りを含む） | 全体管理者 |

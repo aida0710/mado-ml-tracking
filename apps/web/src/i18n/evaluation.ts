@@ -3,10 +3,10 @@ import { localized } from './localized';
 // 評価の比較のパネル。項目はevaluation-baseline-comparisonが受け持つ。
 export const evaluationText = localized({
   evaluationComparison: '基準バージョンとの評価比較',
-  baselineAlias: '基準alias',
+  baselineAlias: '基準Alias',
   baselineVersion: '基準バージョン',
-  noModelAliases: 'aliasが未設定です',
-  comparisonBaselineMissing: '基準aliasが設定されていないため比較できません。',
+  noModelAliases: 'Aliasが未設定です',
+  comparisonBaselineMissing: '基準Aliasが設定されていないため比較できません。',
   comparisonBaselineNotEvaluated:
     '基準バージョンに、同じ正解セットと評価コードバージョンで完了した評価Runがありません。',
   comparisonCandidateNotEvaluated: 'このバージョンの完了した評価Runがありません。',
@@ -27,7 +27,7 @@ export const evaluationText = localized({
   metricNotFinite: 'NaN/∞',
   noComparedMetrics: '比較できるメトリクスがありません',
   baselineChoice: '基準にするバージョン',
-  baselineChoiceAliasGroup: 'aliasで選ぶ',
+  baselineChoiceAliasGroup: 'Aliasで選ぶ',
   baselineChoiceVersionGroup: 'バージョンを直接選ぶ',
   baselineIsCandidate: '基準がこのバージョン自身なので、差はすべて0になります。別のバージョンを選んでください。',
 } as const, english.evaluationText);

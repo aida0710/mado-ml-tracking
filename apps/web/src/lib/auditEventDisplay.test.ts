@@ -25,7 +25,7 @@ describe('監査ログの表示', () => {
   it('操作名は内部codeではなく日本語にし、未知のcodeはそのまま残す', () => {
     expect(auditActionLabel('report.create')).toBe('レポートの作成');
     expect(auditActionLabel('sweep.create')).toBe('Sweepの作成');
-    expect(auditActionLabel('promotion_policy.owner.transfer')).toBe('昇格policyの所有者の変更');
+    expect(auditActionLabel('promotion_policy.owner.transfer')).toBe('昇格ポリシーの所有者の変更');
     expect(auditActionLabel('project.group_binding.set')).toBe('groupへの権限付与');
     expect(auditActionLabel('future.action')).toBe('future.action');
   });

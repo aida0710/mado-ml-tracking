@@ -5,7 +5,7 @@ description: Register GPU machines that run Jobs as Compute targets. Adding them
 
 # Compute targets
 
-![A Project's Compute page: the computers you can use, and the workers](/images/en/compute-targets.png)
+![A Project's Available computers page: the computers you can use, and the workers](/images/en/compute-targets.png)
 
 A Compute target is a machine that runs Jobs: the SSH and Local kinds of computer. It registers the SSH destination, available GPUs, supported runtimes (Python, Docker, Singularity, Apptainer), and a working directory. The worker connects to the target and runs Jobs; the API server never connects to targets.
 
@@ -263,7 +263,7 @@ The check leaves nothing on the target, not even the working directory.
 
 | Message | Cause and fix |
 | --- | --- |
-| The chosen worker did not pick up the check, or no worker claimed the check within 5 minutes | The worker asked to check is not running. Check that it is online under **Workers** on a Project's **Compute** page. For a check that named no worker, also check that the target ID is in the worker's `MMT_WORKER_TARGET_IDS` (`--target-ids` of `install`) |
+| The chosen worker did not pick up the check, or no worker claimed the check within 5 minutes | The worker asked to check is not running. Check that it is online under **Workers** on a Project's **Available computers** page. For a check that named no worker, also check that the target ID is in the worker's `MMT_WORKER_TARGET_IDS` (`--target-ids` of `install`) |
 | No result arrived from the worker | The worker stopped during the check. Check the worker log |
 | **SSH connection** is **Failed** (key permissions) | The key or known_hosts is missing on the worker machine, or the key is not mode 600. Run `mado-tracking-worker doctor` on the worker machine |
 | **SSH connection** is **Failed** (cannot connect) | Check the host, port, and SSH user, that the public key is in the target's `~/.ssh/authorized_keys`, and that known_hosts has the target's host key |
@@ -273,14 +273,14 @@ A worker without `MMT_WORKER_TARGET_IDS` still picks up checks and directory rea
 
 ## Workers
 
-A Project's **Compute** page shows the computers you can use in the Project (read only) and **Workers**. **Workers** shows each worker connected to the Project with its status, version, host name, last response, and number of Jobs. A worker without a response for 120 seconds is shown as **Offline**. See [Install and run the worker](/en/compute/worker).
+A Project's **Available computers** page shows the computers you can use in the Project (read only) and **Workers**. **Workers** shows each worker connected to the Project with its status, version, host name, last response, and number of Jobs. A worker without a response for 120 seconds is shown as **Offline**. See [Install and run the worker](/en/compute/worker).
 
 ## Permissions
 
 | Action | Required role |
 | --- | --- |
 | See every target under **Computers** in **Global settings** | Anyone signed in (for ones you cannot use, only the name, kind, owner, visibility, and state) |
-| View a Project's Compute page and its workers | viewer or higher |
+| View a Project's Available computers page and its workers | viewer or higher |
 | Add SSH and Local targets | Global administrator |
 | Change a target or its visibility, enable or disable it, run connection checks | Owner or global administrator |
 | Choose a worker in **Worker for this connection** when adding or editing (including key candidates and directory reads) | Global administrator |

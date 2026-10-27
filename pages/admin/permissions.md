@@ -48,7 +48,7 @@ SSOのユーザーが全体管理者かどうかは、Authentikのgroupで決ま
 | Role | できること |
 | --- | --- |
 | Viewer | 実験、Run、モデル、データセット、Artifactを見る |
-| Editor | Viewerに加えて、実験の記録、モデル・データセットの登録（使われていないデータセットのバージョンの削除を含む）、Jobの実行と自分が起動したJobの停止・再実行、aliasの変更（保護aliasは、合格した昇格判定がある場合だけ） |
+| Editor | Viewerに加えて、実験の記録、モデル・データセットの登録（使われていないデータセットのバージョンの削除を含む）、Jobの実行と自分が起動したJobの停止・再実行、Aliasの変更（保護Aliasは、合格した昇格判定がある場合だけ） |
 | Admin | Editorに加えて、ほかの人が起動したJobの停止・再実行、Projectの設定（説明、公開範囲、保存先）、メンバーとgroupへの付与、Service Account、Projectのtoken一覧、通知ルール、自動実行の所有者の移管、Artifactの削除、Mado連携の利用（接続確認、データセットの取り込み、再送）、Projectの監査ログ、Projectのアーカイブ |
 
 Projectは、無効化されていないユーザーなら誰でも作成できます。Projectの切り替えの一番下にある［＋ プロジェクトを作成］を押します。作成した人がそのProjectのAdminになります。手順は[Projectの作成と管理](/admin/projects)を参照してください。

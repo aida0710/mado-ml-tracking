@@ -31,7 +31,7 @@ try {
   await page.getByLabel('表示名').fill('UI検証担当');
   assert.equal(api.state.calls.filter((call) => call.path === '/auth/dev-login').length, 0);
   await page.getByRole('button', { name: '開発モードでログイン' }).click();
-  await page.getByRole('heading', { name: 'Runs', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'すべての実験', exact: true }).waitFor();
   await page.getByRole('link', { name: 'training-test-01', exact: true }).waitFor();
   console.log('Browser check: compact default columns');
   const runTable = page.locator('.runs-page table');
@@ -126,7 +126,7 @@ try {
     ['codes', 'Code'],
     ['datasets', 'Datasets'],
     ['lineage', 'Lineage'],
-    ['compute', 'Compute'],
+    ['compute', '使えるコンピュータ'],
     ['plugins', '連携'],
     ['settings', 'プロジェクト設定'],
   ]) {
@@ -136,7 +136,7 @@ try {
     assert.equal(await page.getByRole('alert').count(), 0, `${route} has an error`);
   }
   console.log('Browser check: model version');
-  await page.goto(`${projectBase}/codes`);
+  await page.goto(`${projectBase}/artifacts`);
   // Runに属さないArtifact: 完了したファイルには、コピーできるartifact:// URIが出る。
   await page.getByRole('button', { name: 'Artifactをアップロード', exact: true }).click();
   const standaloneUploadDialog = page.getByRole('dialog');
