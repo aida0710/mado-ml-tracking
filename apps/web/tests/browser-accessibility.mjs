@@ -242,7 +242,7 @@ try {
   {
     const { context, page } = await openPage();
     for (const [path, expected] of [
-      [`${projectBase}/experiments`, /^Runs · .*UI検証用プロジェクト · mado ML Tracking$/],
+      [`${projectBase}/experiments`, /^すべての実験 · UI検証用プロジェクト · mado ML Tracking$/],
       [`${projectBase}/runs/${firstRun.id}`, /^training-test-01 · .* · mado ML Tracking$/],
       [`${projectBase}/models`, /^Models · UI検証用プロジェクト · mado ML Tracking$/],
       [`${base}/settings/account`, /^アカウント · 全体設定 · mado ML Tracking$/],

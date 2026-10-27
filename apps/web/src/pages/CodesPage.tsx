@@ -4,7 +4,6 @@ import { registryApi } from '../api/registry';
 import { useProject } from '../hooks/useProject';
 import { useRegistry } from '../hooks/useRegistry';
 import { PageHeader } from '../components/PageHeader';
-import { StandaloneArtifactUpload } from '../components/StandaloneArtifactUpload';
 import { ResponsiveTable } from '../components/ResponsiveTable';
 import { RegistryLayout } from '../components/RegistryLayout';
 import { Empty, ErrorNotice, Resource } from '../components/Feedback';
@@ -37,7 +36,6 @@ export function CodesPage() {
         eyebrow={project.name}
         actions={
           <>
-            {canEdit && <StandaloneArtifactUpload projectId={project.id} />}
             {canEdit && (
               <button className="button primary" onClick={() => setDialog('code')}>
                 <Plus size={15} />

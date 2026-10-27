@@ -14,7 +14,7 @@ export const operationsText = localized({
   pluginOutboxPending: '未送信',
   pluginOutboxSending: '送信中',
   pluginOutboxOldestPending: '最古の未送信',
-  pluginOutboxMaxAttempts: '最多の試行回数',
+  pluginOutboxMaxAttempts: '最多の送信回数',
   pluginOutboxLastError: '最終エラー',
   pluginOutboxLastDelivered: '最終送信',
   pluginOutboxStalled:

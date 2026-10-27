@@ -49,7 +49,7 @@ describe('既存のAliasの候補', () => {
     const known = collectKnownAliases({ ...sources, modelId: 'voice' });
     const suggestions = suggestAliasNames('PRO', known);
     expect(suggestions.items).toEqual(['production']);
-    expect(suggestions.details).toEqual({ production: 'モデルで使用中・昇格policy' });
+    expect(suggestions.details).toEqual({ production: 'モデルで使用中・昇格ポリシー' });
     expect(suggestAliasNames('production', known).note).toBeUndefined();
   });
 

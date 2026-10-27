@@ -256,7 +256,7 @@ try {
   assert.equal(run.executionMode, 'test');
   assert.equal(run.codeVersionId, taskCode.id);
   await page.getByRole('link', { name: 'Browser Task', exact: true }).click();
-  await page.getByRole('tab', { name: '実行snapshot', exact: true }).click();
+  await page.getByRole('tab', { name: '実行スナップショット', exact: true }).click();
   await page.getByTestId('snapshot-command').waitFor();
   assert.ok((await page.getByTestId('snapshot-command').textContent()).includes('unittest'));
   await page.getByRole('link', { name: '.mmt/source.zip', exact: true }).waitFor();

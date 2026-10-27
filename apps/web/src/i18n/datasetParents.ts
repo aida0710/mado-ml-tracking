@@ -3,12 +3,12 @@ import { localized } from './localized';
 
 export const datasetParentsText = localized(
   {
-    addParents: '親データ版を追加',
+    addParents: '親のバージョンを追加',
     parentHistory: '親の追記履歴',
     parentHistoryHint: '生成元を後から補った記録です。学習中のデータ変更とは別の履歴です。',
     parentHistoryEmpty: '登録後に追加した親はありません。',
-    parentVersion: '親データ版',
-    selectedParents: '照合済みの親データ版',
+    parentVersion: '親のバージョン',
+    selectedParents: '照合済みの親のバージョン',
     reason: '親を追加する理由',
     evidence: '照合根拠（JSON）',
     evidenceColumn: '照合根拠',

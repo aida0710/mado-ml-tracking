@@ -92,7 +92,7 @@ export const modelAliasSourceLabels: Record<ModelAliasEventSource, string> = loc
   web: 'Web',
   api: 'API',
   mlflow: 'MLflow',
-  promotion_policy: '昇格policy',
+  promotion_policy: '昇格ポリシー',
   version_deleted: 'バージョンの削除',
   model_deleted: 'モデルの削除',
 }, english.modelAliasSourceLabels);

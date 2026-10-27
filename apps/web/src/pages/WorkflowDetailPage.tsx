@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import type { WorkflowExecution, WorkflowVersion } from '@mmt/contracts';
 import { useProject } from '../hooks/useProject';
 import { useAuth } from '../hooks/useAuth';
@@ -11,6 +11,7 @@ import {
 } from '../hooks/useWorkflows';
 import { useWorkflowActions } from '../hooks/useWorkflowActions';
 import { PageHeader } from '../components/PageHeader';
+import { ProjectBreadcrumb } from '../components/ProjectBreadcrumb';
 import { Resource, ErrorNotice } from '../components/Feedback';
 import { ChoiceField } from '../components/ChoiceField';
 import { WorkflowDialog } from '../dialogs/WorkflowDialog';
@@ -92,7 +93,7 @@ export function WorkflowDetailPage() {
             <>
               <PageHeader
                 title={workflow.name}
-                eyebrow={<Link to={`/projects/${project.id}/workflows`}>{labels.workflows}</Link>}
+                eyebrow={<ProjectBreadcrumb parents={[{ to: `/projects/${project.id}/workflows`, label: labels.workflows }]} />}
                 description={workflow.description}
                 actions={
                   canEdit && (

@@ -3,6 +3,7 @@ import { useNavigationLayout, type NavigationLayout } from '@mado/design-system/
 import { navigationGroups, type NavigationGroup } from '../layout/navigationLinks';
 import { isGlobalAdmin } from '../lib/permissions';
 import { useAuth } from './useAuth';
+import { useShowsExecutionScreens } from './useShowsExecutionScreens';
 
 // サイドバーの幅と畳んだ状態の保存キーの頭（<頭>.width・<頭>.collapsed）。mado S3 Data Catalogの設定と分ける。
 const NAVIGATION_STORAGE_KEY_PREFIX = 'mmt.navigation';
@@ -17,6 +18,12 @@ export interface Navigation {
 export function useNavigation(projectId?: string, projectRole?: ProjectRole): Navigation {
   const auth = useAuth();
   const layout = useNavigationLayout({ storageKeyPrefix: NAVIGATION_STORAGE_KEY_PREFIX });
-  const groups = navigationGroups({ projectId, projectRole, isGlobalAdmin: isGlobalAdmin(auth.user) });
+  const showsExecutionScreens = useShowsExecutionScreens(projectId);
+  const groups = navigationGroups({
+    projectId,
+    projectRole,
+    isGlobalAdmin: isGlobalAdmin(auth.user),
+    showsExecutionScreens,
+  });
   return { layout, groups };
 }

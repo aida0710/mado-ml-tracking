@@ -10,7 +10,7 @@ mado ML TrackingのAPIは2つあります。
 | API | 接続先 | こんなときに向いています |
 | --- | --- | --- |
 | MLflow 3互換API | `/api/mlflow/projects/<Project ID>` | 公式のMLflow 3 SDKや、MLflowに対応したツールから記録する（[MLflow 3から記録する](/tracking/mlflow)） |
-| 独自API（native API） | `/api` | Python SDK（`mado-tracking`）、worker、画面、MLflowに無い機能（Job、自動実行、昇格policy、監査ログなど）を使う |
+| 独自API（native API） | `/api` | Python SDK（`mado-tracking`）、worker、画面、MLflowに無い機能（Job、自動実行、昇格ポリシー、監査ログなど）を使う |
 
 このページでは独自APIを説明します。Pythonから使う場合は、APIを直接呼ぶより[Python SDK](/tracking/sdk)が便利です。
 
@@ -96,7 +96,7 @@ OpenAPIでは、APIを次の分類（tag）に分けています。
 | `sweeps` | ハイパーパラメータの探索 |
 | `registry` | Model、Code、Datasetとそのバージョン |
 | `automation` | モデル登録後の自動実行と連鎖 |
-| `evaluation`、`promotion` | 評価結果の比較、昇格policyと判定 |
+| `evaluation`、`promotion` | 評価結果の比較、昇格ポリシーと判定 |
 | `tasks` | Taskと起動 |
 | `artifacts`、`artifact-uploads` | Artifactの保存・一覧・取得、再開可能なupload |
 | `execution` | Job、Compute target、worker |

@@ -5907,7 +5907,7 @@
         "tags": [
           "registry"
         ],
-        "summary": "データ版の親と後から補った来歴の履歴を取得",
+        "summary": "データセットバージョンの親と後から補った来歴の履歴を取得",
         "security": [
           {
             "sessionCookie": []
@@ -6046,7 +6046,7 @@
         "tags": [
           "registry"
         ],
-        "summary": "既存データ版を保って確認済みの親と根拠を追記",
+        "summary": "既存のデータセットバージョンを保って確認済みの親と根拠を追記",
         "security": [
           {
             "sessionCookie": []
@@ -66632,7 +66632,8 @@
                   "launch_failed",
                   "max_trials_reached",
                   "search_space_exhausted",
-                  "suggestion_failed"
+                  "suggestion_failed",
+                  "all_trials_failed"
                 ]
               },
               {

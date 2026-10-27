@@ -372,7 +372,7 @@ try {
     {
       const automation = createAutomationApi();
       const { page, context, screenshot } = await openPage({ automation, viewport });
-      await openModelsTab(page, { projectId: projectOf(automation), tab: '昇格policy' });
+      await openModelsTab(page, { projectId: projectOf(automation), tab: '昇格ポリシー' });
       const table = page.locator('.automation-panel table.responsive-table').first();
       if (viewport === WIDE) {
         await table.getByRole('button', { name: /所有者を移管/ }).waitFor();

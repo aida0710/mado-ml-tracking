@@ -4,8 +4,17 @@ import { ArtifactUploadDialog } from '../dialogs/ArtifactUploadDialog';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
 
-/** Runの無いArtifactをアップロードする。終わったファイルにはコピー用のartifact:// URIを出す。 */
-export function StandaloneArtifactUpload({ projectId }: { projectId: string }) {
+/**
+ * Runの無いArtifactをアップロードする。終わったファイルにはコピー用のartifact:// URIを出す。
+ * `onUploaded`はファイルが1つ終わるたびに呼ぶ。
+ */
+export function StandaloneArtifactUpload({
+  projectId,
+  onUploaded,
+}: {
+  projectId: string;
+  onUploaded: () => void;
+}) {
   useLocale();
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -20,7 +29,7 @@ export function StandaloneArtifactUpload({ projectId }: { projectId: string }) {
           runId={null}
           multiple
           onClose={() => setIsOpen(false)}
-          onSaved={() => undefined}
+          onSaved={onUploaded}
         />
       )}
     </>

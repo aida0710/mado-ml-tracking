@@ -169,6 +169,32 @@ describe.skipIf(!testDatabaseUrl)('Sweep（独立PostgreSQL）', () => {
     expect(new Set(trials.map((trial) => trial.parameters.lr)).size).toBe(3);
   });
 
+  it('全試行が失敗で終わると、完了ではなくfailed(all_trials_failed)になり、最良試行は無い', async () => {
+    const fixture = await sweepFixture(harness);
+    const sweep = await fixture.createSweep({
+      name: 'all-failed',
+      method: 'random',
+      searchSpace: { lr: { distribution: 'log_uniform', min: 0.0001, max: 0.1 } },
+      objective: { metric: 'loss', goal: 'minimize', aggregation: 'last' },
+      maxTrials: 2,
+      parallelism: 2,
+      seed: 3,
+    });
+    const claimed = await fixture.claimAll();
+    expect(claimed).toHaveLength(2);
+    // 失敗する前に目的メトリクスを記録していても、失敗した試行は結果に数えない。
+    for (const item of claimed) {
+      await fixture.logMetric(item, [{ name: 'loss', value: 0.3, step: 1 }]);
+      await fixture.complete(item, 'failed');
+    }
+    expect(await fixture.getSweep(sweep.id)).toMatchObject({
+      status: 'failed',
+      statusReason: 'all_trials_failed',
+      trialCounts: { total: 2, failed: 2 },
+      bestTrial: null,
+    });
+  });
+
   it('pauseで投入が止まり、resumeで再開する。作成者以外のeditorは操作できない', async () => {
     const fixture = await sweepFixture(harness);
     const sweep = await fixture.createSweep({

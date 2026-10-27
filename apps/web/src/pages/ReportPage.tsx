@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Archive, ArchiveRestore, History, Pencil, RefreshCw } from 'lucide-react';
 import type { ReportRevisionSummary } from '@mmt/contracts';
 import { reportsApi } from '../api/reports';
@@ -8,6 +8,7 @@ import { useMutation } from '../hooks/useMutation';
 import { useProject } from '../hooks/useProject';
 import { useReportDetail } from '../hooks/useReport';
 import { PageHeader } from '../components/PageHeader';
+import { ProjectBreadcrumb } from '../components/ProjectBreadcrumb';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Empty, ErrorNotice, Resource } from '../components/Feedback';
 import { CommentThread } from '../components/comments/CommentThread';
@@ -68,7 +69,7 @@ export function ReportPage() {
           return (
             <>
               <PageHeader
-                eyebrow={<Link to={`/projects/${project.id}/reports`}>{text.reports}</Link>}
+                eyebrow={<ProjectBreadcrumb parents={[{ to: `/projects/${project.id}/reports`, label: text.reports }]} />}
                 title={revision.title}
                 description={textTemplates.reportUpdatedSummary(
                   revision.revision,

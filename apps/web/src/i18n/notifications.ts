@@ -69,7 +69,7 @@ export const notificationsText = localized({
   notificationDeliveries: '直近の送信履歴',
   notificationDeliveriesEmpty: '送信履歴はまだありません',
   notificationDeliveryEvent: 'イベント',
-  notificationDeliveryAttempts: '試行回数',
+  notificationDeliveryAttempts: '送信回数',
   notificationDeliveryError: '失敗の理由',
   notificationDeliveryCreatedAt: '発生日時',
 } as const, english.notificationsText);

@@ -137,7 +137,7 @@ ProjectのAdminが操作します。APIでは、`tokens:manage`を付けたtoken
 | 用途 | Role | scope |
 | --- | --- | --- |
 | worker | Admin | `read`、`worker:execute`、`artifacts:write`。出力のモデル・データセットを登録するなら`registry:write`も |
-| 自動実行ルール・昇格policyの所有者 | Admin | tokenは不要（所有者として移管するだけ） |
+| 自動実行ルール・昇格ポリシーの所有者 | Admin | tokenは不要（所有者として移管するだけ） |
 | CIからRunを記録 | Editor | `read`、`runs:write`、`artifacts:write` |
 
 workerの導入手順は[worker](/compute/worker)、自動実行ルールの所有者をService Accountへ移す手順は[自動実行](/models/automation)を参照してください。

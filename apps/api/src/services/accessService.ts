@@ -17,7 +17,8 @@ export function holdsScope(principal: Principal, scope: string): boolean {
 }
 
 export function requireScope(principal: Principal, scope: string): void {
-  if (!holdsScope(principal, scope)) throw scopeRequiredError(scope);
+  if (!holdsScope(principal, scope))
+    throw scopeRequiredError(scope, principal.token?.scopes ?? []);
 }
 
 export async function requireProject(

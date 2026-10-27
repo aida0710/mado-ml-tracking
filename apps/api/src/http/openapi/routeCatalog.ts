@@ -793,12 +793,12 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
   },
   {
     method: 'get', path: '/api/projects/:p/datasets/:id/versions/:v/parents', tag: 'registry',
-    summary: 'データ版の親と後から補った来歴の履歴を取得', access: PROJECT_VIEWER,
+    summary: 'データセットバージョンの親と後から補った来歴の履歴を取得', access: PROJECT_VIEWER,
     responses: { 200: contract.datasetVersionParentPageSchema },
   },
   {
     method: 'post', path: '/api/projects/:p/datasets/:id/versions/:v/parents', tag: 'registry',
-    summary: '既存データ版を保って確認済みの親と根拠を追記', access: REGISTRY_WRITE,
+    summary: '既存のデータセットバージョンを保って確認済みの親と根拠を追記', access: REGISTRY_WRITE,
     body: datasetVersionParentCreateSchema,
     responses: { 200: contract.datasetVersionParentPageSchema },
     errors: routeError(422, 'dataset_parent_cycle'),

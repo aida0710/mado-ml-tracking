@@ -7,6 +7,7 @@ import { useSweepDetail, useTrialObjectiveSeries, type SweepDetail } from '../ho
 import { canControlSweep } from '../lib/permissions';
 import { formatDate } from '../lib/format';
 import { PageHeader } from '../components/PageHeader';
+import { ProjectBreadcrumb } from '../components/ProjectBreadcrumb';
 import { Empty, Resource } from '../components/Feedback';
 import { DetailsList, JsonDetails } from '../components/JsonDetails';
 import { SweepSummary } from '../components/sweeps/SweepSummary';
@@ -34,7 +35,7 @@ export function SweepDetailPage() {
           <>
             <PageHeader
               title={sweep.name}
-              eyebrow={<Link to={`/projects/${project.id}/sweeps`}>{text.sweeps}</Link>}
+              eyebrow={<ProjectBreadcrumb parents={[{ to: `/projects/${project.id}/sweeps`, label: text.sweeps }]} />}
               actions={<button className="icon-button" aria-label={text.refresh} onClick={detail.reload}><RefreshCw size={17} /></button>}
             />
             <SweepWorkerNotice projectId={project.id} sweep={sweep} />

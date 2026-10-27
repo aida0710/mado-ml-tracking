@@ -32,6 +32,8 @@ export const computersText = localized({
   projectComputersHint:
     'このプロジェクトで自分が使えるコンピュータです。追加・設定・job shell・鍵は、全体設定の「コンピュータ」で扱います。',
   openComputerSettings: '全体設定の「コンピュータ」を開く',
+  executionScreensHiddenHint:
+    'Jobを動かす機能（Sweeps・Tasks・Code・Workflows・Jobs・Hooksと、Modelsの自動実行・昇格）は、このプロジェクトで使えるコンピュータを追加するとサイドバーに出ます。',
   computerId: 'コンピュータID',
   // コンピュータの詳細。そのJobを受け取るworkerの設定を、コンピュータのIDを埋めて出す。
   workerSetupTitle: 'workerの設定',

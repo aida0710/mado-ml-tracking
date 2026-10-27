@@ -38,7 +38,7 @@ try {
   await switchLanguage(page, 'English');
   await screenshot('tracking-login-en');
   await page.getByRole('button', { name: 'Sign in (development mode)' }).click();
-  await page.getByRole('heading', { name: 'Runs', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'All experiments', exact: true }).waitFor();
   await page.getByRole('link', { name: 'training-test-01', exact: true }).waitFor();
   assert.equal(await page.locator('html').getAttribute('lang'), 'en');
   await screenshot('tracking-en');
@@ -58,7 +58,7 @@ try {
   await page.locator('#new-project-description').fill('日本語のプロジェクト説明');
   const otherTab = await context.newPage();
   await otherTab.goto(base);
-  await otherTab.getByRole('heading', { name: 'Runs', exact: true }).waitFor();
+  await otherTab.getByRole('heading', { name: 'すべての実験', exact: true }).waitFor();
   await switchLanguage(otherTab, 'English');
   await page.getByRole('dialog', { name: 'Create project', exact: true }).waitFor();
   assert.equal(await page.locator('#new-project-name').inputValue(), 'Draft project');

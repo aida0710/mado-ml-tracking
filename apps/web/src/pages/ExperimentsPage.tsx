@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChartLine, Plus, RefreshCw, Terminal } from 'lucide-react';
 import type { Experiment, RunSearchRequest, RunStatus } from '@mmt/contracts';
 import { trackingApi } from '../api/tracking';
@@ -168,14 +168,8 @@ export function ExperimentsPage() {
       />
       <section className="page runs-page">
         <PageHeader
-          title={experiment?.name ?? text.runs}
-          eyebrow={
-            <>
-              {text.experiments}
-              <span className="breadcrumb-separator">/</span>
-              {project.name}
-            </>
-          }
+          title={experiment?.name ?? text.allExperiments}
+          eyebrow={project.name}
           description={
             experiment ? (
               <CopyableValue label={text.experimentId} value={experiment.id} />
@@ -214,12 +208,6 @@ export function ExperimentsPage() {
           }
         />
         {isRecordingGuideOpen && <RecordingConnectionGuide experiment={experiment} />}
-        <div className="tabs">
-          <span className="tab active">{text.runs}</span>
-          <Link className="tab" to={`/projects/${project.id}/lineage`}>
-            {text.lineage}
-          </Link>
-        </div>
         <SavedViewsMenu
           projectId={project.id}
           actor={{ userId: user.id, role: project.role }}

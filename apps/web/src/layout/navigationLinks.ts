@@ -36,6 +36,18 @@ const SCREEN_GROUPS: { label: string; screens: ProjectScreen[] }[] = [
   { get label() { return text.navigationGroupProjectManagement }, screens: ['plugins', 'settings'] },
 ];
 
+// Jobを動かす機能の画面。Jobを動かせるコンピュータが無いProjectでは使えないので、
+// サイドバーに出さない（URLで開けば今までどおり表示する）。
+const EXECUTION_SCREENS: readonly ProjectScreen[] = [
+  'sweeps',
+  'tasks',
+  'codes',
+  'workflows',
+  'jobs',
+  'hooks',
+  'compute',
+];
+
 /** Projectの画面か、全体設定の画面（全体管理の画面を含む）。 */
 export type NavigationScreen = ProjectScreen | SettingsSection;
 
@@ -54,6 +66,8 @@ interface NavigationAccess {
   projectId?: string;
   projectRole?: ProjectRole;
   isGlobalAdmin: boolean;
+  /** Projectで実行の画面を出すか（useShowsExecutionScreens）。Projectを開いていないときは使わない。 */
+  showsExecutionScreens?: boolean;
 }
 
 /** Projectを開いたときの最初の画面。そのProjectのExperiments。 */
@@ -71,7 +85,8 @@ function settingsLinks(sections: readonly SettingsSection[]): NavigationLink[] {
 
 /**
  * メインのナビゲーションに出す画面を組に分けて返す。Projectを開いているときはその画面
- * （Pluginsは管理できる人だけ）で、全体設定にはユーザーメニューから行く。開いていないとき
+ * （Pluginsは管理できる人だけ、実行の画面はJobを動かせるコンピュータがあるときだけ）で、全体設定には
+ * ユーザーメニューから行く。開いていないとき
  * （全体設定の画面や、開くProjectが無いとき）は、全員に全体設定を、全体管理者には全体管理も出す。
  * リンクが1つも無い組は出さない。
  */
@@ -79,12 +94,14 @@ export function navigationGroups({
   projectId,
   projectRole,
   isGlobalAdmin,
+  showsExecutionScreens = false,
 }: NavigationAccess): NavigationGroup[] {
   if (!projectId) return settingsGroups(isGlobalAdmin);
   return SCREEN_GROUPS.map(({ label, screens }) => ({
     label,
     links: screens
       .filter((screen) => screen !== 'plugins' || canManagePlugins(projectRole, isGlobalAdmin))
+      .filter((screen) => showsExecutionScreens || !EXECUTION_SCREENS.includes(screen))
       .map((screen) => ({ screen, to: `/projects/${projectId}/${screen}`, label: text[screen] })),
   })).filter((group) => group.links.length > 0);
 }
