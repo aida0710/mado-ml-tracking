@@ -119,7 +119,7 @@ journalctl --user -u mado-tracking-worker@gpu-host-1 -f
 | `status` | Unit state, worker lock, and retained Jobs. Exit code 3 when stopped |
 | `journalctl` | Worker log |
 
-Finally, check that **Workers** in **Compute** shows the worker as **Online** with its version and host name. Global administrators can also open **Add computer** under **Computers** in **Global settings** and check that the worker is offered in **Worker for this connection**.
+Finally, check that **Workers** in **Available computers** shows the worker as **Online** with its version and host name. Global administrators can also open **Add computer** under **Computers** in **Global settings** and check that the worker is offered in **Worker for this connection**.
 
 ## 4. Upgrade {#upgrade}
 
@@ -271,4 +271,4 @@ A container without the SDK writes outputs to `/mmt/outputs` and finally writes 
 - A restarted worker takes over running Jobs from the records in its state directory. Do not delete the state directory.
 - Jobs are stopped only with **Request stop** in **Jobs**. The confirmation names the Run, the Job's creator, and where it runs, and says what will happen; check it and click **Stop**. Only the Job's creator (the person who created its Run) and Project Admins can stop it (see the **Created by** column; for other people's Jobs, the **Actions** column says why instead of showing buttons). The worker sends SIGTERM to the running processes, SIGKILL after 10 seconds, and ends the Job as canceled.
 - When a Job's heartbeat stops for 60 seconds, **Jobs** shows **No response**. The Job's state and GPU reservation are not changed; check the worker machine before stopping or retrying by hand.
-- When a worker does not respond for 120 seconds, **Workers** in **Compute** shows it as **Offline**. To be notified, select `worker.offline` in a Project notification rule ([Notifications](/en/admin/notifications)).
+- When a worker does not respond for 120 seconds, **Workers** in **Available computers** shows it as **Offline**. To be notified, select `worker.offline` in a Project notification rule ([Notifications](/en/admin/notifications)).

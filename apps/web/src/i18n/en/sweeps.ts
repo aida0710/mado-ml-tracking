@@ -71,7 +71,7 @@ export const sweepsText = {
   sweepStatusReason: 'Reason',
   sweepProgress: 'Progress',
   sweepBestTrial: 'Best trial',
-  sweepNoBestTrial: 'No completed trials with objective values yet',
+  sweepNoBestTrial: 'No trial has completed with an objective value. Failed and canceled trials do not count as best',
   sweepPause: 'Pause',
   sweepResume: 'Resume',
   sweepCancel: 'Cancel sweep',
@@ -155,6 +155,7 @@ export const sweepStatusReasonLabels: Record<SweepStatusReason, string> = {
   max_trials_reached: 'Maximum trials reached',
   search_space_exhausted: 'All grid combinations exhausted',
   suggestion_failed: 'Could not suggest the next trial',
+  all_trials_failed: 'Every trial failed or was canceled',
 };
 
 export const sweepTrialStateLabels: Record<SweepTrialState, string> = {

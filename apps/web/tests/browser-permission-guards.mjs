@@ -322,7 +322,7 @@ try {
     const { context, page, screenshot } = await openPage({ guard });
     await page.goto(`${base}/projects/${api.state.project.id}/models?id=${api.state.models[0].id}`);
     const production = page.getByRole('row', { name: /production/ });
-    await production.getByText('保護alias（adminのみ）').waitFor();
+    await production.getByText('保護Alias（adminのみ）').waitFor();
     await production.getByText('解除にはProject adminの権限が必要です').waitFor();
     assert.equal(await production.getByRole('button', { name: 'Aliasを解除' }).count(), 0);
     await page.getByRole('row', { name: /staging/ }).getByRole('button', { name: 'Aliasを解除' }).waitFor();

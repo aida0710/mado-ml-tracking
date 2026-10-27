@@ -204,4 +204,4 @@ print("version", version.version)
 
 ![学習Run、モデルバージョン、推論Run、評価Runのつながりと自動実行の一覧](/images/guide-model-version-automation.png)
 
-起動に失敗した場合は、「起動結果」と「ジョブエラー」に理由が表示されます。評価の結果で`production`などのaliasを移す設定は[評価と昇格](/models/promotion)、自動実行の詳しい設定は[推論・評価の自動実行](/models/automation)を参照してください。
+起動に失敗した場合は、「起動結果」と「ジョブエラー」に理由が表示されます。評価の結果で`production`などのAliasを移す設定は[評価と昇格](/models/promotion)、自動実行の詳しい設定は[推論・評価の自動実行](/models/automation)を参照してください。

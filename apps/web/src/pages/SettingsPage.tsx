@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useProject } from '../hooks/useProject';
 import { useAuditEvents } from '../hooks/useAuditEvents';
 import { useProjectMembers } from '../hooks/useProjectMembers';
 import { useServiceAccounts } from '../hooks/useServiceAccounts';
+import { useShowsExecutionScreens } from '../hooks/useShowsExecutionScreens';
 import { PageHeader } from '../components/PageHeader';
 import { ProjectSettings } from '../components/ProjectSettings';
 import { ArtifactUsageSummary } from '../components/ArtifactUsageSummary';
@@ -16,6 +18,7 @@ import { ProjectArchiveSection } from '../components/ProjectArchiveSection';
 import { AuditEventLog } from '../components/AuditEventLog';
 import { ProjectSettingsContents } from '../components/ProjectSettingsContents';
 import { projectAdminNames } from '../lib/projectAdminGrants';
+import { settingsSectionPath } from '../layout/settingsSections';
 import {
   PROJECT_SETTINGS_SECTION_IDS as sectionIds,
   projectSettingsSections,
@@ -29,6 +32,7 @@ import { text } from '../i18n/catalog';
 export function SettingsPage() {
   useLocale();
   const { project, isProjectAdmin } = useProject();
+  const showsExecutionScreens = useShowsExecutionScreens(project.id);
   // APIはProject adminでない人を拒むので、その人は監査ログを要求しない。
   const audit = useAuditEvents(isProjectAdmin ? { projectId: project.id } : null);
   // groupへの付与を変えたときにメンバー一覧の実効Roleも更新されるよう、共有する。
@@ -45,6 +49,12 @@ export function SettingsPage() {
   return (
     <section className="page management-page">
       <PageHeader title={text.settings} eyebrow={project.name} />
+      {!showsExecutionScreens && (
+        <p className="muted">
+          {text.executionScreensHiddenHint}{' '}
+          <Link to={settingsSectionPath('computers')}>{text.openComputerSettings}</Link>
+        </p>
+      )}
       <ProjectSettingsContents sections={projectSettingsSections(isProjectAdmin)} />
       {/* 各部分をそれぞれのアンカーで包むので、各部分は目次を知らなくてよい。 */}
       <div className="settings-grid">

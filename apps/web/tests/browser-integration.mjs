@@ -80,7 +80,7 @@ try {
   await fill('名前', projectName);
   await fill('説明', 'ブラウザからの登録・保存・再読み込みを確認するローカル検証記録');
   await submit('作成');
-  await page.getByRole('heading', { name: 'Runs', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'すべての実験', exact: true }).waitFor();
   const projectId = (await json('/projects')).items.find(
     (project) => project.name === projectName,
   ).id;
@@ -218,7 +218,7 @@ try {
 
   for (const [route, heading] of [
     ['lineage', 'Lineage'],
-    ['compute', 'Compute'],
+    ['compute', '使えるコンピュータ'],
     ['plugins', '連携'],
     ['settings', 'プロジェクト設定'],
   ]) {

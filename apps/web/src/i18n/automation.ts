@@ -48,8 +48,8 @@ export const automationText = localized({
   applyNoUpstreamRuns: '上流ruleが作ったRunがありません。',
   applied: 'Jobを登録しました。自動実行履歴で状態を確認できます。',
   automaticRun: '自動',
-  maxAttempts: '最大試行回数（2以上で失敗時に自動で再試行）',
-  retryOf: (attempt: number) => `${attempt}回目の失敗を自動で再試行`,
+  maxAttempts: '最大実行回数（2以上で失敗時に自動で再実行）',
+  retryOf: (attempt: number) => `${attempt}回目の失敗を自動で再実行`,
   rerun: '再実行',
   rerunConfirmMessage: (ruleName: string) =>
     `「${ruleName}」を同じバージョンにもう一度適用し、新しいJobを登録します。`,

@@ -12,6 +12,7 @@ import { useRunComparison } from '../hooks/useRunComparison';
 import { trackingApi } from '../api/tracking';
 import { Empty, Resource } from '../components/Feedback';
 import { PageHeader } from '../components/PageHeader';
+import { ProjectBreadcrumb } from '../components/ProjectBreadcrumb';
 import { ChartPanelGrid } from '../components/charts/ChartPanelGrid';
 import { MediaCompare } from '../components/media/MediaCompare';
 import { RunAnalysisPanel } from '../components/analysis/RunAnalysisPanel';
@@ -84,7 +85,7 @@ export function ComparePage() {
     <section className="page">
       <PageHeader
         title={text.compare}
-        eyebrow={<Link to={`/projects/${project.id}/experiments`}>{text.experiments}</Link>}
+        eyebrow={<ProjectBreadcrumb parents={[{ to: `/projects/${project.id}/experiments`, label: text.experiments }]} />}
         actions={
           isComparableRunCount(runIds.length) && (
             <a

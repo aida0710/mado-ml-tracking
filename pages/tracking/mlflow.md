@@ -39,7 +39,7 @@ export MLFLOW_TRACKING_TOKEN
 | Experiment・Run・params・metrics・tagsの記録 | `runs:write` |
 | 入力Datasetの新規登録 | `runs:write`と`registry:write` |
 | Artifactのアップロード | `artifacts:write` |
-| Logged Model・モデルバージョン・aliasの登録や変更 | `registry:write` |
+| Logged Model・モデルバージョン・Aliasの登録や変更 | `registry:write` |
 
 記録するユーザーには、そのProjectのeditor以上の役割が必要です。Workerや自動処理のように長く動かすものには、人ではなくService Accountのtokenを使ってください。SSOでログインするユーザーのtokenは、グループの確認から7日を過ぎると止まります（[API token](/admin/tokens)）。
 
@@ -181,7 +181,7 @@ MLflow 3.0.0（scikit-learn 1.6.1）と3.17.0（scikit-learn 1.9.1）で動作�
 | --- | --- |
 | Run・nested Run・params・metrics・tags、検索、削除と復元 | 対応 |
 | Artifactのアップロード・ダウンロード、multipart upload | 対応 |
-| Logged Model、Model Registry、alias | 対応 |
+| Logged Model、Model Registry、Alias | 対応 |
 | scikit-learnのautolog | 対応 |
 | `mlflow.models.evaluate`（結果はRunとLogged Modelに記録） | 対応 |
 | `log_table`・`log_image`・`log_dict`・`log_text`・`log_figure` | 対応 |

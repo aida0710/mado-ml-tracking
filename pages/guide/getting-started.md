@@ -21,21 +21,21 @@ mado ML Trackingは、機械学習の実験とモデルを管理するWebアプ�
 
 ## 学習から昇格までの流れ
 
-学習Runが出力したモデルを登録してから、推論と評価を経て`production`などのaliasを移すまでを、次の流れで自動化できます。
+学習Runが出力したモデルを登録してから、推論と評価を経て`production`などのAliasを移すまでを、次の流れで自動化できます。
 
 <ol class="mmt-flow">
   <li><strong>学習Run</strong><span>params・メトリクス・Artifactを記録</span></li>
   <li><strong>モデルバージョン</strong><span>学習の出力を登録</span></li>
   <li><strong>推論Run</strong><span>自動実行ルールが起動</span></li>
   <li><strong>評価Run</strong><span>推論の出力を受け取る</span></li>
-  <li><strong>昇格</strong><span>判定に合格したらaliasを移す</span></li>
+  <li><strong>昇格</strong><span>判定に合格したらAliasを移す</span></li>
 </ol>
 
 1. **学習**: Python SDKやMLflow 3 SDKから、params、メトリクス、ログ、Artifactを記録します。workerで実行したJobの学習Runは、出力を宣言しておくと、成功時にモデルバージョンとして登録されます。
 2. **自動登録**: バージョンの番号はMLflowと同じく整数で自動採番します。登録したバージョンの中身は後から変わりません。
 3. **自動推論**: モデル系列に合う自動実行ルールが、推論のJobを登録します。workerがSSH先やコンテナでコードを実行します。
 4. **自動評価**: 上流に推論ルールを指定した評価ルールが、推論Runの出力を受け取って評価します。
-5. **昇格**: 昇格policyが評価の指標を基準のバージョン（既定はalias `production`のバージョン）と比べ、合格なら判定を残します。自動昇格を有効にしたpolicyでは、aliasも新しいバージョンへ移します。
+5. **昇格**: 昇格ポリシーが評価の指標を基準のバージョン（既定はAlias `production`のバージョン）と比べ、合格なら判定を残します。自動昇格を有効にしたポリシーでは、Aliasも新しいバージョンへ移します。
 
 モデルバージョンの画面では、学習Runからバージョン、推論・評価Runまでのつながりと、自動実行の結果を確認できます。
 
@@ -47,7 +47,7 @@ mado ML Trackingは、機械学習の実験とモデルを管理するWebアプ�
 | --- | --- |
 | Project | 記録と権限の単位。メンバー、Authentikのgroup、Service Accountを設定します |
 | Experiment・Run | 1回の学習・推論・評価の記録。params、メトリクス、ログ、system metrics、Artifact |
-| モデルとバージョン | モデル系列、alias、生成元Run、重みのArtifact。バージョンは不変です |
+| モデルとバージョン | モデル系列、Alias、生成元Run、重みのArtifact。バージョンは不変です |
 | Taskとコードバージョン | 実行するコード（Gitのcommit、単体のコード、コンテナ）と起動コマンド |
 | Job・コンピュータ | workerが実行する要求と、その実行先（SSH、GPU、Docker、Singularity/Apptainer） |
 | データセットバージョン | 推論・評価の入力や、Runの出力として登録するデータ |

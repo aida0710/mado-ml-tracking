@@ -72,7 +72,7 @@ export const sweepsText = localized({
   sweepStatusReason: '理由',
   sweepProgress: '進み具合',
   sweepBestTrial: '最良試行',
-  sweepNoBestTrial: '目的値のある完了した試行はまだありません',
+  sweepNoBestTrial: '目的値を出して完了した試行がありません。失敗・中止した試行は最良に数えません',
   sweepPause: '一時停止',
   sweepResume: '再開',
   sweepCancel: 'Sweepを中止',
@@ -156,6 +156,7 @@ export const sweepStatusReasonLabels: Record<SweepStatusReason, string> = locali
   max_trials_reached: '最大試行数に達した',
   search_space_exhausted: 'gridの組み合わせを使い切った',
   suggestion_failed: '次の試行を提案できなかった',
+  all_trials_failed: 'すべての試行が失敗・中止で終わった',
 }, english.sweepStatusReasonLabels);
 
 export const sweepTrialStateLabels: Record<SweepTrialState, string> = localized({

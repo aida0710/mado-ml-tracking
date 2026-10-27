@@ -19,6 +19,7 @@ import { useQuery } from '../hooks/useQuery';
 import { registryApi } from '../api/registry';
 import { usePromotionChoices } from '../hooks/usePromotionChoices';
 import { PageHeader } from '../components/PageHeader';
+import { ProjectBreadcrumb } from '../components/ProjectBreadcrumb';
 import { ErrorNotice, Resource } from '../components/Feedback';
 import { ModelTrainingSourcePanel } from '../components/ModelTrainingSourcePanel';
 import { ModelVersionSummary } from '../components/ModelVersionSummary';
@@ -98,7 +99,7 @@ export function ModelVersionPage() {
             ? `${detail.value.model.name} / ${detail.value.version.version}`
             : text.modelVersion
         }
-        eyebrow={`${project.name} · ${text.modelVersion}`}
+        eyebrow={<ProjectBreadcrumb parents={[{ to: `/projects/${project.id}/models`, label: text.models }]} />}
         actions={
           <button className="icon-button" aria-label={text.refresh} onClick={reloadAll}>
             <RefreshCw size={17} />

@@ -25,6 +25,7 @@ export function WorkflowsPage() {
     <section className="page workflows-page">
       <PageHeader
         title={labels.workflows}
+        eyebrow={project.name}
         description={labels.workflowDescription}
         actions={
           canEdit && (
