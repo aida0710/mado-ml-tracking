@@ -2,7 +2,7 @@
 # job shellをSSHで実行する（deploy/sites/README.md）。Jobとの接続は持ち続けない。計算ノードの
 # runnerが自分で報告する。鍵の作成にもOpenSSHを使う。
 # python:3.12-slim-bookworm
-FROM python:3.12-slim-bookworm@sha256:6a0e06f5ba0b373d051aabd3fffb9b873f27f9a2a3a14bcbe37dee6f0e3bbc70
+FROM python:3.12-slim-bookworm@sha256:e697c81897302a4c4333bade000d98038fbb21eb064f8ee1fd42d02ebcd9d337
 RUN apt-get update && apt-get install -y --no-install-recommends openssh-client ca-certificates tini \
   && rm -rf /var/lib/apt/lists/*
 # マウントするtokenファイルの、ホスト側の所有者に合わせる。ファイルはmode 600で、launcherの
