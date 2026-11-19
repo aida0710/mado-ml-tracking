@@ -800,56 +800,27 @@ export interface CurrentApiToken {
   scopes: string[];
   job: boolean;
 }
-export interface PluginManifest {
-  id: string;
-  name: string;
-  version: string;
-  protocolVersion: '1.0';
-  capabilities: string[];
-}
-export type PluginKind = 'mado';
-/** apiUrlはAPIサーバーが呼ぶ接続先。webUrlは利用者がブラウザで開く画面で、設定の表示にだけ使う。 */
-export interface MadoPluginConfig {
-  apiUrl: string;
-  webUrl: string;
-}
-/** シークレットは書き込みのリクエストでだけ受け付ける。tokenを省くと保存済みのものを残す。 */
-export interface MadoPluginCredentialsInput {
+import type { DataCatalogAccessTokenGrant } from './dataCatalogAccessTokenGrant.js';
+export type { DataCatalogAccessTokenGrant } from './dataCatalogAccessTokenGrant.js';
+export { DATA_CATALOG_SCOPES } from './dataCatalogAccessTokenGrant.js';
+/** PUT /admin/plugins/data-catalog。accessTokenを省くと、同じURLの保存済みのtokenで確かめ直す。 */
+export interface DataCatalogConnectionInput {
+  url: string;
   accessToken?: string;
 }
-import type { MadoAccessTokenGrant } from './madoAccessTokenGrant.js';
-export type { MadoAccessTokenGrant } from './madoAccessTokenGrant.js';
-export { MADO_SCOPES } from './madoAccessTokenGrant.js';
-export interface PluginCreate {
-  kind: 'mado';
-  name?: string;
-  config: MadoPluginConfig;
-  credentials?: MadoPluginCredentialsInput;
-  enabled?: boolean;
+/** 全体で1つの、mado S3 Data Catalogへの接続。保存できるのは、接続を確かめられたものだけ。 */
+export interface DataCatalogConnection {
+  /** mado S3 Data Catalogの画面のURL。APIも同じURLの下（/api/mado/）にある。 */
+  url: string;
+  /** 最後に接続を確かめたときの、access tokenの権限。 */
+  accessTokenGrant: DataCatalogAccessTokenGrant;
+  checkedAt: string;
 }
-export interface PluginPatch {
-  name?: string;
-  config?: MadoPluginConfig;
-  credentials?: MadoPluginCredentialsInput;
-  enabled?: boolean;
-  expectedRevision?: number;
-}
-export interface PluginConnection {
-  id: string;
-  projectId: string;
-  name: string;
-  kind: PluginKind;
-  config: MadoPluginConfig;
-  configRevision: number;
-  credentialsConfigured: { accessToken: boolean };
+/** GET /admin/plugins/data-catalog */
+export interface DataCatalogPlugin {
+  connection: DataCatalogConnection | null;
+  /** access tokenを暗号化して保存するための鍵（MMT_PLUGIN_SECRET_KEY）が、このAPIサーバーにある。 */
   secretStorageAvailable: boolean;
-  /** mado S3 Data Catalogのaccess tokenを、このAPIサーバーで復号できる。 */
-  tokenConfigured: boolean;
-  enabled: boolean;
-  manifest: PluginManifest | null;
-  /** 最後の接続確認で入り、接続先かaccess tokenが変わると消える。 */
-  accessTokenGrant: MadoAccessTokenGrant | null;
-  createdAt: string;
 }
 export type { LineageRelationAddition } from './lineageRelations.js';
 

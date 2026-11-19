@@ -1,9 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ComputeTargetDetails, ExperimentTask, PluginConnection, RunOutputRegistration } from '@mmt/contracts';
+import type { ComputeTargetDetails, ExperimentTask, RunOutputRegistration } from '@mmt/contracts';
 import { computeTargetDetails } from '../../tests/fixtures/execution';
 import { tasksApi } from './tasks';
 import { executionApi } from './execution';
-import { pluginsApi } from './plugins';
 
 const createdAt = '2026-10-08T00:00:00.000Z';
 const PROJECT_ID = '00000000-0000-4000-8000-000000000001';
@@ -33,24 +32,6 @@ const disabledTarget: ComputeTargetDetails = {
   id: '00000000-0000-4000-8000-000000000005',
   ownerUserId: '00000000-0000-4000-8000-000000000006',
   enabled: false,
-};
-const enabledPlugin: PluginConnection = {
-  id: '00000000-0000-4000-8000-000000000007',
-  projectId: PROJECT_ID,
-  name: 'mado',
-  kind: 'mado',
-  config: {
-    apiUrl: 'https://mado.example.invalid/api',
-    webUrl: 'https://mado.example.invalid',
-  },
-  configRevision: 1,
-  credentialsConfigured: { accessToken: true },
-  secretStorageAvailable: true,
-  tokenConfigured: true,
-  enabled: true,
-  manifest: null,
-  accessTokenGrant: null,
-  createdAt,
 };
 
 afterEach(() => vi.unstubAllGlobals());
@@ -100,14 +81,11 @@ describe('Taskと管理設定の変更', () => {
   });
   it('有効無効の変更はenabledだけをPATCHし接続設定を書き戻さない', async () => {
     const fetch = vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify(disabledTarget), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify(enabledPlugin), { status: 200 }));
+      .mockResolvedValueOnce(new Response(JSON.stringify(disabledTarget), { status: 200 }));
     vi.stubGlobal('fetch', fetch);
     await expect(executionApi.updateTarget('target', { enabled: false })).resolves.toEqual(disabledTarget);
-    await expect(pluginsApi.update('project', 'plugin', { enabled: true })).resolves.toEqual(enabledPlugin);
     expect(fetch.mock.calls.map(([path, options]) => [path, options.method, JSON.parse(options.body)])).toEqual([
       ['/api/targets/target', 'PATCH', { enabled: false }],
-      ['/api/projects/project/plugins/plugin', 'PATCH', { enabled: true }],
     ]);
   });
 });

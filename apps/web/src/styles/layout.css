@@ -223,3 +223,25 @@
 .project-switcher-others {
   border-top: 1px solid var(--border);
 }
+
+/* 全体設定への入口は、Projectの画面の並びから離してサイドバーの下端に置く。並びが短いときも
+   下端に付くよう、スクロールする領域いっぱいにnavを伸ばす。 */
+.navigation-sidebar-scroll {
+  display: flex;
+  flex-direction: column;
+}
+.navigation-sidebar nav {
+  flex: 1 0 auto;
+}
+/* ドロワーではnav自身がスクロールするので、縮められるままにして、余ったときだけ伸ばす。 */
+.navigation-drawer nav {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.navigation-footer-link {
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+  padding-top: 6px;
+  border-top: 1px solid var(--header-border);
+}

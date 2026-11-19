@@ -491,15 +491,13 @@ export class RegistryService {
         actor: { type: 'callerAuthorized' as const },
       };
       if (!input.content) {
-        // contentが無いとき、リクエストのスキーマはuriとdigestを必須にしている。外部の参照は、
-        // 元のシステムが与えたdigestをそのまま持つ。
-        if (!input.externalRef) assertReferenceDigest(input.digest!);
+        // contentが無いとき、リクエストのスキーマはuriとdigestを必須にしている。
+        assertReferenceDigest(input.digest!);
         return registerDatasetVersion(connection, {
           ...common,
           uri: input.uri!,
           digest: input.digest!,
           sourceRunId: input.sourceRunId,
-          externalRef: input.externalRef,
         });
       }
       const resolved = await resolveDatasetContent(connection, {
@@ -541,7 +539,6 @@ export class RegistryService {
       metadata: input.metadata,
       sourceRunId: input.sourceRunId,
       parentDatasetVersionIds: input.parentDatasetVersionIds,
-      externalRef: input.externalRef,
       actor: { type: 'callerAuthorized' },
     });
   }

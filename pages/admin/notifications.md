@@ -27,7 +27,7 @@ Runの失敗、自動実行の失敗、Jobのheartbeatの途絶、workerの停�
 | Jobのheartbeat途絶 | 実行中のJobのheartbeatが60秒より古くなった |
 | Jobのheartbeat復旧 | 途絶したJobのheartbeatが戻った |
 | workerの停止 | workerの最後の応答が120秒より古くなった |
-| Plugin送信の滞留 | 今は発生しません。Mado連携がRunの記録を送っていた版（v0.5.4まで）のイベントで、選んでも通知は届きません |
+| Plugin送信の滞留 | 今は発生しません。Runの記録をmado S3 Data Catalogへ送っていた版（v0.5.4まで）のイベントで、選んでも通知は届きません |
 
 ## 1. URLとシークレットを環境変数に置く
 

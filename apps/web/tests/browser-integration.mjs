@@ -219,7 +219,6 @@ try {
   for (const [route, heading] of [
     ['lineage', 'Lineage'],
     ['compute', '使えるコンピュータ'],
-    ['plugins', '連携'],
     ['settings', 'プロジェクト設定'],
   ]) {
     await page.goto(`${projectBase}/${route}`);

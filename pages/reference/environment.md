@@ -1,6 +1,6 @@
 ---
 title: 環境変数
-description: API server（標準搭載のMado連携を含む）、preview worker、worker、Python SDKの環境変数の一覧と既定値。
+description: API server（標準搭載のmado S3 Data Catalogへの接続を含む）、preview worker、worker、Python SDKの環境変数の一覧と既定値。
 ---
 
 # 環境変数
@@ -96,16 +96,16 @@ openssl rand -base64 32
 | `MMT_SMTP_FROM` | なし | 送信元のアドレス。例: `mado ML Tracking <mmt@example.com>` |
 | `NODE_EXTRA_CA_CERTS` | なし | 社内CAの証明書（PEM）のパス。SMTPやWebhookの送信先の検証に使う |
 
-## Mado連携 {#mado-plugin}
+## mado S3 Data Catalogへの接続 {#mado-plugin}
 
-Mado連携はAPI serverに標準搭載されています。別のサービスや、連携だけの`.env`はありません。連携のためにAPI serverの`.env`に置くのは、Madoのアクセストークンを暗号化する鍵だけです。MadoのURLとアクセストークンは環境変数ではなく、全体管理者がProjectの［連携］で保存します（[Mado連携](/admin/plugins)）。
+mado S3 Data Catalogへの接続はAPI serverに標準搭載されています。別のサービスや、専用の`.env`はありません。API serverの`.env`に置くのは、mado S3 Data Catalogのアクセストークンを暗号化する鍵だけです。URLとアクセストークンは環境変数ではなく、全体管理者が全体設定の「全体管理」→［Plugins］で保存します（[Plugins](/admin/plugins)）。
 
 | 変数 | 既定 | 内容 |
 | --- | --- | --- |
-| `MMT_PLUGIN_SECRET_KEY` | なし | Madoのアクセストークンを、DBで暗号化する鍵（base64の32 byte）。Mado連携を使わないなら不要。無いとアクセストークンを保存できず、連携を有効にできない |
+| `MMT_PLUGIN_SECRET_KEY` | なし | mado S3 Data Catalogのアクセストークンを、DBで暗号化する鍵（base64の32 byte）。mado S3 Data Catalogに接続しないなら不要。無いとアクセストークンを保存できず、接続できない |
 
 - 鍵は`openssl rand -base64 32`で作り、ほかの暗号鍵（`MMT_SESSION_ENCRYPTION_KEY`、`MMT_STORAGE_SECRET_KEY`、`MMT_HOOK_SECRET_KEY`）とは別の値にします。
-- アクセストークンを保存したあとは、鍵を変えたり消したりしないでください。保存済みのトークンを復号できなくなります。鍵を失ったときは、元の鍵を戻すか、保存済みのアクセストークンをすべて入れ直します。DBを復元するときにも要るので、鍵も安全な場所に保管してください。
+- アクセストークンを保存したあとは、鍵を変えたり消したりしないでください。保存済みのトークンを復号できなくなります。鍵を失ったときは、元の鍵を戻すか、アクセストークンを入力して接続し直します。DBを復元するときにも要るので、鍵も安全な場所に保管してください。
 
 ## そのほかのAPI serverの設定
 

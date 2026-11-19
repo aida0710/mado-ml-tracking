@@ -143,6 +143,7 @@ try {
     'ユーザー',
     'ストレージ',
     'ランチャー',
+    'Plugins',
     '監査ログ',
   ]);
   await screenshot(page, '05-admin-settings-projects');
@@ -166,6 +167,7 @@ try {
     'ユーザー',
     'ストレージ',
     'ランチャー',
+    'Plugins',
     '監査ログ',
   ]);
   await screenshot(page, '06-admin-rail');

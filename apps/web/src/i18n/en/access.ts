@@ -68,6 +68,8 @@ export const auditActionLabels = {
   'storage.backend.create': 'Add storage backend',
   'storage.backend.update': 'Update storage backend',
   'storage.backend.test': 'Test storage connection',
+  'plugin.data_catalog.connect': 'Connect to mado S3 Data Catalog',
+  'plugin.data_catalog.disconnect': 'Disconnect from mado S3 Data Catalog',
   'storage.settings.update': 'Change default storage backend',
   'notification.channel.create': 'Create notification channel',
   'notification.channel.update': 'Update notification channel',

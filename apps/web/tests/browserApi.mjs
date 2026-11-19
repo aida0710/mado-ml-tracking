@@ -1,6 +1,6 @@
 // ブラウザテスト用の分離したAPI。このモジュールを本番のコードがimportすることはない。
 import { createHash } from 'node:crypto';
-import { routeBuiltinPlugins } from './builtinPluginMock.mjs';
+import { createDataCatalogState, routeDataCatalogPlugin } from './dataCatalogPluginMock.mjs';
 import { listProjectArtifacts, listRunArtifacts, runArtifactTree } from './artifactListingMock.mjs';
 import { createProjectAdministration } from './projectAdministrationMock.mjs';
 import { createComputerSetup } from './computerSetupMock.mjs';
@@ -299,25 +299,6 @@ export function createBrowserApi() {
     site: null,
     siteAccountMode: null,
   };
-  const plugin = {
-    id: id(),
-    projectId: project.id,
-    name: 'Mado',
-    kind: 'mado',
-    config: {apiUrl: 'http://test.invalid', webUrl: 'https://mado.example.invalid'},
-    configRevision: 1,
-    credentialsConfigured: {accessToken: true},
-    secretStorageAvailable: true,
-    tokenConfigured: true, enabled: true, manifest: null, accessTokenGrant: null,
-    createdAt: now,
-  };
-  const manifest = {
-    id: 'mado',
-    name: plugin.name,
-    version: '1.0.0',
-    protocolVersion: '1.0',
-    capabilities: ['storage:metrics'],
-  };
   const artifact = {
     id: id(),
     projectId: project.id,
@@ -360,11 +341,7 @@ export function createBrowserApi() {
     jobs: [],
     automationRules: [],
     automationExecutions: [],
-    plugins: [plugin],
-    // 接続確認のとき、フィクスチャのmado S3 Data Catalogが保存済みのアクセストークンについて返す内容。
-    madoAccessTokenGrant: {
-      name: 'ML Tracking', scopes: ['metrics:read'], expiresAt: null,
-    },
+    dataCatalog: createDataCatalogState(),
     tokens: [],
     artifacts: [artifact],
     calls: [],
@@ -373,8 +350,6 @@ export function createBrowserApi() {
     failNextAutomation: false,
     failNextAutomationToggle: false,
     failProjectArtifacts: false,
-    failPluginMetrics: false,
-    metricsGate: null,
     prometheus: `# HELP mado_storage_bucket_bytes Latest measured bucket size in bytes.
 # TYPE mado_storage_bucket_bytes gauge
 mado_storage_connection_info{connection_id="ui-c1",connection_name="UI検証ストレージ"} 1
@@ -434,6 +409,14 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       return route.fulfill({ status: 204, body: '' });
     }
     if (!state.loggedIn) return reply({ error: 'Unauthorized' }, 401);
+    const dataCatalogAnswer = routeDataCatalogPlugin({
+      state,
+      request: { path, method, body },
+      reply,
+      user,
+      now: () => new Date().toISOString(),
+    });
+    if (dataCatalogAnswer) return dataCatalogAnswer;
     if (path === '/storage/backends')
       return reply({ items: ['filesystem', 's3'], defaultBackend: 'filesystem' });
     const projectAnswer = projectAdministration.handle({
@@ -870,8 +853,6 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
         return reply({ run, job });
       }
     }
-    if (resource === 'plugins')
-      return routeBuiltinPlugins({state, request: {method, key, subresource, body}, reply, id, now, project, user, manifest});
     // テスト自身の出力にも出す。モックに無いAPIを画面が呼んでも、失敗するのはコンソールを見ている
     // 確認だけなので、足りないrouteはここで見つけるほうが早い。
     console.warn(`[browserApi] 501 Unhandled test API: ${method} ${path}`);

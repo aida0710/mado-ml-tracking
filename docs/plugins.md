@@ -1,40 +1,48 @@
-# 内蔵Mado連携
+# mado S3 Data Catalogへの接続
 
-Mado連携は本体に標準搭載され、本体と同時にビルド・更新します。新しいProjectでは未設定・無効です。設定なしでも実験管理を利用でき、Madoへ通信しません。画面では「連携」、内部の型・テーブル・ルートでは既存のPlugin名を使います。
+mado S3 Data Catalogへの接続は本体に標準搭載され、全体で1つ持ちます。最初は未接続です。接続しなくても実験管理を利用でき、mado S3 Data Catalogへ通信しません。
 
-連携がMadoから使うのは、アクセストークン自身の情報（`/api/mado/access-token`）と、容量メトリクス（`/api/mado/metrics/capacity`）の2つです。有効にすると、「連携」の画面でMadoが計測したストレージの容量を確認できます。データセットの検索・取り込みと、Runの記録の送信（OpenLineage）はありません。MadoがDataLineageを外した（Mado v0.6.0）ので、この2つを本体から外しました。
+接続すると、mado S3 Data Catalogが測ったストレージの容量を、全体設定 → 全体管理 → 「Plugins」で確認できます。使うのは、アクセストークン自身の情報（`/api/mado/access-token`）と容量メトリクス（`/api/mado/metrics/capacity`）の2つだけです。扱えるのは全体管理者だけで、Projectの画面には出しません（容量はmado S3 Data Catalogの接続とバケットの単位で、Projectとは対応しないため）。
 
-## 設定する
+## 接続する
 
 1. API serverに`MMT_PLUGIN_SECRET_KEY`を設定します。`openssl rand -base64 32`で専用の鍵を作り、`.env`へ保存します。ストレージ用・通知用の鍵とは分け、DBと一緒に安全に保管します。再起動ごとに作り直さないでください。
-2. MadoのSettings → Access → Access Tokensで、Capacityの「読み取り」と、容量を見る接続を許可したアクセストークンを発行します。
-3. Projectの「連携」で全体管理者がMadoのAPI URL、Web URLとアクセストークンを保存します。API URLはAPI serverが呼ぶ接続先、Web URLは設定の表示にだけ使います。保存後も初期無効です。
-4. 「接続を確認」で、Madoの`/api/mado/access-token`からトークンの許可範囲（名前・scope・有効期限）を取得して保存し、`metrics:read`があれば容量APIを確認します。
-5. 「連携を有効にする」で有効にし、もう一度「接続を確認」を押すと、容量を表示します。
+2. mado S3 Data CatalogのSettings → Access → Access Tokensで、Capacityの読み取りと、容量を見る接続を許可したアクセストークンを発行します。
+3. 全体設定 → 全体管理 → 「Plugins」で「mado S3 Data Catalogに接続」を押し、URLとアクセストークンを入れて「接続」を押します。URLは、ブラウザでmado S3 Data Catalogを開くときのもの（例: `https://catalog.example.test`）です。APIは同じURLの下を呼ぶので、別に入力するものはありません。
 
-画面に出す許可範囲は前回の接続確認で保存した値です。Madoの側でトークンの許可を変えたら、接続を確認し直します。
+「接続」を押すと接続を確かめ、通ったときだけ保存します。確かめるのは、アクセストークンの許可範囲（名前・scope・有効期限）を読めることと、`metrics:read`があれば容量を読めることです。通ればすぐ容量が出ます。有効・無効の切り替えはありません。
 
-Madoには`/api/mado/access-token`と`/api/mado/metrics/capacity`が必要です。前者の無いMadoへの接続確認は502 `plugin_mado_access_token_unsupported`で止まります。Mado側の`docs/model-tracking-api.md`を参照してください。
-
-Mado v0.5.3までは`/api/mado/access-token`の応答に`namespaces`が付き、v0.6.0からは付きません。本体はどちらの応答も受け付け、名前・scope・有効期限だけを保存します。
-
-| 操作 | 権限 |
+| 操作 | 何をするか |
 | --- | --- |
-| 接続設定・アクセストークンの保存、有効切替 | 全体管理者 |
-| 接続確認、容量 | Project admin |
+| 接続を確認 | 保存済みのアクセストークンで確かめ直し、許可範囲を読み直す。mado S3 Data Catalogでトークンの権限や期限を変えたあとに押す |
+| 接続を変更 | URLかアクセストークンを入れ替える。アクセストークンを空欄にすると保存済みのものを使う。URLを変えるときは入力が要る（保存済みのトークンを別のURLへ送らない） |
+| 接続を解除 | 保存したアクセストークンを消す |
 
-アクセストークンはAES-256-GCMで暗号化保存し、画面やAPIには設定の有無だけを返します。編集時に入力を空にすると保存済みのトークンを維持します。保存用の鍵を失った場合、旧値を復号できません。保存用の鍵を復旧するか、アクセストークンを再入力して保存します。
+容量を読めないアクセストークンでも接続は保存します。そのときは容量の代わりに、Capacityの読み取りを許可するよう求める注意を出します。
 
-アクセストークンの入れ替えや接続設定の変更はrevisionを進め、前回の接続確認の結果を破棄します。無効中は容量を取得しません。接続確認は無効中でもできます。
+アクセストークンはAES-256-GCMで暗号化して保存し、画面にもAPIにも返しません。`MMT_PLUGIN_SECRET_KEY`を失うと保存済みのトークンを復号できないので、鍵を戻すか、「接続を変更」でアクセストークンを入力し直します。
+
+## 接続できないとき
+
+APIは理由を`code`で返し、画面はその文をそのまま出します。
+
+| code | 文 | 直し方 |
+| --- | --- | --- |
+| `data_catalog_access_token_rejected` | mado S3 Data Catalog rejected the access token; check that it is correct and has not expired | アクセストークンが正しいか、無効化・期限切れでないかを確かめる |
+| `data_catalog_access_token_required` | enter the access token of this mado S3 Data Catalog | アクセストークンを入力する（初めての接続と、URLを変えるとき） |
+| `data_catalog_access_token_unsupported` | no mado S3 Data Catalog API was found at this URL (/api/mado/access-token); check the URL | URLがmado S3 Data Catalogのものかを確かめる |
+| `data_catalog_request_failed` | failed to communicate with mado S3 Data Catalog; check the URL | API serverからそのURLに届くかを確かめる |
+| `data_catalog_capacity_not_permitted` | the access token does not allow reading capacity; allow it in mado S3 Data Catalog and check the connection again | mado S3 Data CatalogでトークンにCapacityの読み取りを許可し、「接続を確認」を押す |
+| `data_catalog_secret_key_unavailable` | set MMT_PLUGIN_SECRET_KEY on the API server to store the access token | API serverに`MMT_PLUGIN_SECRET_KEY`を設定して再起動する |
+| `data_catalog_secret_decryption_failed` | the stored access token cannot be decrypted; check MMT_PLUGIN_SECRET_KEY or enter the access token again | 鍵を戻すか、アクセストークンを入力し直す |
+
+mado S3 Data Catalog v0.5.3までは`/api/mado/access-token`の応答に`namespaces`が付き、v0.6.0からは付きません。本体はどちらの応答も受け付け、名前・scope・有効期限だけを保存します。APIの詳細は[API契約](api-contract.md)にあります。
 
 ## 以前のバージョンのデータ
 
-v0.5.4まではMadoのデータセットの固定バージョンを取り込み、Runの記録をMadoへ送っていました。そのデータは次のように残ります。
+v0.5.4までは接続をProjectごとに持ち、mado S3 Data Catalogのデータセットを取り込み、Runの記録を送っていました。
 
-- 取り込んだデータセットバージョン: そのまま残り、Runの入力に使えます。外部参照（`externalRef`）と、metadataの`madoDatasetId`・`madoVersionId`は値を表示するだけで、Madoの画面へのリンクにはしません。
-- 外部参照を持つ接続: データセットバージョンが外部参照で指している接続は、API URLとWeb URLを変更できません（409）。別のMadoには新しい名前の接続を作ります。
-- 送ったRunの記録: `plugin_outbox`の行は送信済みのものも未送信のものも残ります。新しい行は足さず、未送信の行も送りません。このテーブルを読む画面とAPIはありません。
-- 接続の設定: migration 073が接続の設定からOpenLineage URL・RunのNamespace・ストレージの識別名を、保存済みの確認結果からNamespaceを外します。API URL・Web URL・アクセストークン・有効／無効はそのままです。
-- 送信の滞留のアラート: 開いていたもの（`plugin.delivery_stalled`）はmigration 073が閉じます。過去のアラートは運用アラートの履歴に残ります。この種別を選んだ通知ルールも残りますが、通知は届きません。
-
-APIの`POST /projects/:p/datasets/:id/versions`は今も`externalRef`付きの登録を受け付けます（[API契約](api-contract.md)）。
+- Projectごとの接続: 引き継ぎません。全体管理者が「Plugins」で接続し直します。行（`plugin_connections`）は残りますが、migration 074がアクセストークンと確認の結果を消します。
+- 取り込んだデータセットバージョン: そのまま残り、Runの入力に使えます。外部参照（`externalRef`）と、metadataの`madoDatasetId`・`madoVersionId`は値を表示するだけです。`externalRef`付きの新しい登録は受け付けません。
+- 送ったRunの記録: `plugin_outbox`の行は残ります。読む画面とAPIはありません。
+- 送信の滞留のアラート（`plugin.delivery_stalled`）: 過去のものが運用アラートの履歴に残ります。今は発生しません。

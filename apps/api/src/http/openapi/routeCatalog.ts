@@ -3,6 +3,7 @@ import { datasetVersionParentCreateSchema } from '../../domain/datasetVersionPar
 import { lineageRelationCreateSchema } from '../../domain/lineageRelationValidation.js';
 import { trainingDataStageCreateSchema } from '../../domain/trainingDataStageValidation.js';
 import { modelTrainingSourceCreateSchema } from '../../domain/modelTrainingSourceValidation.js';
+import { dataCatalogConnectionInputSchema } from '../../domain/dataCatalogConnectionValidation.js';
 import { WORKFLOW_ROUTES } from './workflowRouteCatalog.js';
 import { RUN_EXPORT_TRUNCATED_HEADER } from '@mmt/contracts';
 import * as contract from '@mmt/contracts/schemas';
@@ -177,8 +178,6 @@ import {
   modelVersionSchema as modelVersionCreateSchema,
   nameSchema,
   namedEntitySchema,
-  pluginCreateSchema,
-  pluginPatchSchema,
   roleAssignmentSchema,
   runCreateSchema,
   runPatchSchema,
@@ -2583,58 +2582,6 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     responses: { 200: contract.childJobWaitSchema },
   },
 
-  // plugins
-  {
-    method: 'get',
-    path: '/api/projects/:p/plugins',
-    tag: 'plugins',
-    summary: '内蔵連携の接続設定',
-    access: PROJECT_ADMIN,
-    responses: { 200: contract.itemsOf(contract.pluginConnectionSchema) },
-  },
-  {
-    method: 'post',
-    path: '/api/projects/:p/plugins',
-    tag: 'plugins',
-    summary: 'plugin接続を登録（全体管理者）',
-    access: GLOBAL_ADMIN,
-    body: pluginCreateSchema,
-    responses: { 201: contract.pluginConnectionSchema },
-  },
-  {
-    method: 'patch',
-    path: '/api/projects/:p/plugins/:id',
-    tag: 'plugins',
-    summary: 'plugin接続を変更（全体管理者）',
-    access: GLOBAL_ADMIN,
-    body: pluginPatchSchema,
-    responses: { 200: contract.pluginConnectionSchema },
-  },
-  {
-    method: 'post',
-    path: '/api/projects/:p/plugins/:id/check',
-    tag: 'plugins',
-    summary: 'Madoのアクセストークンの許可範囲を取得して接続を確認（無効中も実行可能）',
-    access: PROJECT_ADMIN,
-    responses: { 200: contract.pluginConnectionSchema },
-    errors: [
-      ...routeError(502, 'plugin_mado_access_token_unsupported'),
-      ...routeError(503, 'plugin_token_unavailable'),
-    ],
-  },
-  {
-    method: 'get',
-    path: '/api/projects/:p/plugins/:id/metrics',
-    tag: 'plugins',
-    summary: 'pluginのPrometheus metrics',
-    access: PROJECT_ADMIN,
-    responses: { 200: contract.pluginMetricsResponseSchema },
-    errors: [
-      ...routeError(422, 'plugin_capability_unsupported'),
-      ...routeError(503, 'plugin_token_unavailable'),
-    ],
-  },
-
   // promotion
   {
     method: 'get',
@@ -3104,6 +3051,65 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     summary: '保存先の接続テスト',
     access: GLOBAL_ADMIN,
     responses: { 200: contract.storageTestResultSchema },
+  },
+  {
+    method: 'get',
+    path: '/api/admin/plugins/data-catalog',
+    tag: 'admin',
+    summary: 'mado S3 Data Catalogへの接続（未接続ならconnectionはnull）',
+    access: GLOBAL_ADMIN,
+    responses: { 200: contract.dataCatalogPluginSchema },
+  },
+  {
+    method: 'put',
+    path: '/api/admin/plugins/data-catalog',
+    tag: 'admin',
+    summary: 'mado S3 Data Catalogに接続を確かめ、通ったら保存する（access tokenは画面へ返さない）',
+    access: GLOBAL_ADMIN,
+    body: dataCatalogConnectionInputSchema,
+    responses: { 200: contract.dataCatalogPluginSchema },
+    errors: [
+      ...routeError(
+        422,
+        'data_catalog_access_token_rejected',
+        'data_catalog_access_token_required',
+      ),
+      ...routeError(502, 'data_catalog_access_token_unsupported', 'data_catalog_request_failed'),
+      ...routeError(
+        503,
+        'data_catalog_secret_decryption_failed',
+        'data_catalog_secret_key_unavailable',
+      ),
+    ],
+  },
+  {
+    method: 'delete',
+    path: '/api/admin/plugins/data-catalog',
+    tag: 'admin',
+    summary: 'mado S3 Data Catalogへの接続を解除する（保存したaccess tokenを消す）',
+    access: GLOBAL_ADMIN,
+    responses: { 204: null },
+  },
+  {
+    method: 'get',
+    path: '/api/admin/plugins/data-catalog/capacity',
+    tag: 'admin',
+    summary: 'mado S3 Data Catalogが測った容量（Prometheusのテキスト形式）',
+    access: GLOBAL_ADMIN,
+    responses: { 200: contract.dataCatalogCapacityResponseSchema },
+    errors: [
+      ...routeError(
+        422,
+        'data_catalog_access_token_rejected',
+        'data_catalog_capacity_not_permitted',
+      ),
+      ...routeError(502, 'data_catalog_request_failed'),
+      ...routeError(
+        503,
+        'data_catalog_secret_decryption_failed',
+        'data_catalog_secret_key_unavailable',
+      ),
+    ],
   },
   {
     method: 'get',

@@ -38,7 +38,7 @@ export function TopBar({ projectId, navigation }: { projectId?: string; navigati
             labels={{ open: text.openNavigation, close: text.closeNavigation, navigation: text.navigation }}
             header={<ProductLogo />}
           >
-            <NavigationLinkList groups={navigation.groups} />
+            <NavigationLinkList groups={navigation.groups} footerLink={navigation.footerLink} />
           </NavigationDrawer>
         )}
         <Link to="/" className="brand">

@@ -100,7 +100,7 @@ with Client() as client:
 
 SDKは、ファイルごとにSHA-256とサイズで同じ中身の保存済みArtifactを探し、見つかればアップロードせずにそれを使います。前のバージョンと大半のファイルが同じなら、変わったファイルだけを送ります。途中で止まった場合も、もう一度実行すると保存していないファイルだけを送ります。
 
-`files`を使うときは、`uri`、`digest`、`source_run_id`、`parent_dataset_version_ids`、`external_ref`を指定しません。
+`files`を使うときは、`uri`、`digest`、`source_run_id`、`parent_dataset_version_ids`を指定しません。
 
 ## URIを参照するバージョンを作る
 
@@ -168,9 +168,9 @@ DockerやSingularity、Apptainerで動かす場合、本体は`/mmt/datasets/<�
 
 コンピュータの設定は[SSH・Localのコンピュータ](/compute/targets)を参照してください。
 
-## 以前のバージョンでMadoから取り込んだデータ
+## 以前のバージョンでmado S3 Data Catalogから取り込んだデータ
 
-v0.5.4まではMado連携でMadoのデータセットのバージョンを取り込めました。取り込んだバージョンは参照のバージョンとしてそのまま残り、Runの入力に使えます。バージョンを選ぶと、「外部参照」にMadoでの識別子、Namespace、名前、バージョンが出ます。Madoの画面へのリンクは出しません。新しく取り込むことはできず、RunをMadoへ送ることもありません（[Mado連携](/admin/plugins)）。
+v0.5.4まではmado S3 Data Catalogのデータセットのバージョンを取り込めました。取り込んだバージョンは参照のバージョンとしてそのまま残り、Runの入力に使えます。バージョンを選ぶと、「外部参照」にmado S3 Data Catalogでの識別子、Namespace、名前、バージョンが出ます。mado S3 Data Catalogの画面へのリンクは出しません。新しく取り込むことはできず、Runをmado S3 Data Catalogへ送ることもありません（[Plugins](/admin/plugins)）。
 
 ## 使わなくなったデータセット
 

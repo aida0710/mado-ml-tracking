@@ -4,8 +4,6 @@ import type {
   Artifact,
   Dataset,
   DatasetVersion,
-  PluginConnection,
-  Project,
   Run,
 } from '@mmt/contracts';
 import type { ArtifactStores } from '@mmt/platform';
@@ -13,12 +11,8 @@ import { createApplication } from '../src/app.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
 import { executionFixture, referenceDigest } from './fixtures.js';
 import { seedDemo } from '../src/seed/demoSeed.js';
-import type { BuiltinPluginClient } from '../src/plugins/mado/madoPlugin.js';
-import {
-  MADO_ACCESS_TOKEN_GRANT_FIXTURE, MADO_CREDENTIALS_FIXTURE, madoClientStub, madoPluginInput,
-} from './pluginFixtures.js';
 
-describe.skipIf(!testDatabaseUrl)('Artifactの保存とMado接続の認可（独立PostgreSQL）', () => {
+describe.skipIf(!testDatabaseUrl)('Artifactの保存の認可（独立PostgreSQL）', () => {
   let harness: Harness;
   beforeAll(async () => {
     harness = await createHarness();
@@ -192,52 +186,6 @@ describe.skipIf(!testDatabaseUrl)('Artifactの保存とMado接続の認可（独
     }
   });
 
-  it('Project管理者はMado接続を登録できず、全体管理者が登録した接続を確認できる', async () => {
-    const fixture = await executionFixture(harness);
-    const project = await entity<Project>(
-      await request(harness.app, '/api/projects', {
-        method: 'POST',
-        cookie: fixture.outsider.cookie,
-        body: { name: 'Member-owned Project' },
-      }),
-    );
-    const clientFactory = vi.fn((): BuiltinPluginClient => madoClientStub());
-    const { app } = createApplication({
-      config: harness.config,
-      database: harness.database,
-      stores: harness.stores,
-      pluginClientFactory: clientFactory,
-    });
-    const basePath = `/api/projects/${project.id}/plugins`;
-    const rejected = await request(app, basePath, {
-      method: 'POST',
-      cookie: fixture.outsider.cookie,
-      body: madoPluginInput({ name: 'Unapproved destination' }),
-    });
-    expect(rejected.status).toBe(403);
-    expect((await rejected.json()).code).toBe('admin_required');
-    expect(clientFactory).not.toHaveBeenCalled();
-    const approved = await entity<PluginConnection>(
-      await request(app, basePath, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: madoPluginInput({ name: 'Approved destination' }),
-      }),
-    );
-    await entity(
-      await request(app, `${basePath}/${approved.id}/check`, {
-        method: 'POST',
-        cookie: fixture.outsider.cookie,
-      }),
-      200,
-    );
-    expect(clientFactory).toHaveBeenCalledOnce();
-    expect(clientFactory).toHaveBeenCalledWith(expect.objectContaining({
-      config: madoPluginInput().config,
-      credentials: MADO_CREDENTIALS_FIXTURE,
-    }));
-  });
-
   it('完了後に登録した出力DatasetVersionも、Runの出力に並ぶ', async () => {
     const fixture = await executionFixture(harness);
     const run = await fixture.newRun();
@@ -277,36 +225,6 @@ describe.skipIf(!testDatabaseUrl)('Artifactの保存とMado接続の認可（独
       200,
     );
     expect(stored.outputDatasetVersionIds).toEqual([version.id]);
-  });
-
-  it('容量の読み取りを許可したトークンで確認したMadoだけmetricsを返し、editorには公開しない', async () => {
-    const fixture = await executionFixture(harness);
-    const grant = { ...MADO_ACCESS_TOKEN_GRANT_FIXTURE, scopes: [...MADO_ACCESS_TOKEN_GRANT_FIXTURE.scopes, 'metrics:read'] };
-    const application = createApplication({
-      config: harness.config, database: harness.database, stores: harness.stores,
-      pluginClientFactory: () => madoClientStub({ grant, metrics: async () => ({ prometheus: 'storage_bytes 12\n' }) }),
-    });
-    const plugin = await entity<PluginConnection>(
-      await request(application.app, `${fixture.basePath}/plugins`, {
-        method: 'POST', cookie: fixture.administrator.cookie, body: madoPluginInput({ name: 'Storage' }),
-      }),
-    );
-    const checked = await entity<PluginConnection>(
-      await request(application.app, `${fixture.basePath}/plugins/${plugin.id}/check`, {
-        method: 'POST', cookie: fixture.administrator.cookie,
-      }), 200,
-    );
-    const endpoint = `${fixture.basePath}/plugins/${plugin.id}/metrics`;
-    expect((await request(application.app, endpoint, { cookie: fixture.editor.cookie })).status).toBe(403);
-    expect(await entity(await request(application.app, endpoint, { cookie: fixture.administrator.cookie }), 200))
-      .toEqual({ prometheus: 'storage_bytes 12\n' });
-    await entity(
-      await request(application.app, `${fixture.basePath}/plugins/${plugin.id}`, {
-        method: 'PATCH', cookie: fixture.administrator.cookie,
-        body: { credentials: { accessToken: 'replaced-fixture-token' }, expectedRevision: checked.configRevision },
-      }), 200,
-    );
-    expect((await request(application.app, endpoint, { cookie: fixture.administrator.cookie })).status).toBe(422);
   });
 
   it('opt-in seedは実際のCPU metricsと音声をstore.putで保存し、二回目は重複しない', async () => {

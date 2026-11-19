@@ -552,22 +552,21 @@ class Client(ExperimentTasksClient):
         metadata: Mapping[str, Any] | None = None,
         source_run_id: str | None = None,
         parent_dataset_version_ids: Sequence[str] = (),
-        external_ref: Mapping[str, str] | None = None,
     ) -> dict[str, Any]:
         """``uri``を指すDatasetVersionを登録するか、ディレクトリ``files``をアップロードする。
 
         ``files``を渡すと、ディレクトリをArtifactとしてアップロードし、APIがuriとdigestを計算する。
         Projectに既にある変わっていないファイルは送り直さない。``files``を渡さないときは
-        ``version``、``uri``、``digest``が必須で、``external_ref``を渡さない限り、``digest``は
+        ``version``、``uri``、``digest``が必須で、``digest``は
         64桁の小文字の16進数のSHA-256（``sha256:``の前置きは有っても無くてもよい）にする（APIは
         ほかの形を拒み、digestを渡されたとおりに保存する）。
         """
         if files is not None:
             if uri is not None or digest is not None:
                 raise ConfigurationError("files replaces uri and digest; do not give them together")
-            if source_run_id is not None or parent_dataset_version_ids or external_ref:
+            if source_run_id is not None or parent_dataset_version_ids:
                 raise ConfigurationError(
-                    "files does not support source_run_id, parent_dataset_version_ids or external_ref"
+                    "files does not support source_run_id or parent_dataset_version_ids"
                 )
         elif version is None or uri is None or digest is None:
             raise ConfigurationError("version, uri and digest are required without files")
@@ -589,7 +588,6 @@ class Client(ExperimentTasksClient):
                 "metadata": dict(metadata or {}),
                 "sourceRunId": source_run_id,
                 "parentDatasetVersionIds": list(parent_dataset_version_ids),
-                "externalRef": dict(external_ref) if external_ref else None,
             },
         )
 

@@ -32,8 +32,7 @@ type ReferenceTable =
   | 'model_versions'
   | 'code_versions'
   | 'dataset_versions'
-  | 'artifacts'
-  | 'plugin_connections';
+  | 'artifacts';
 
 // 参照先が見つからないときの文で使う、表の行の呼び名。
 const REFERENCE_RESOURCE_NAMES: Record<ReferenceTable, string> = {
@@ -46,7 +45,6 @@ const REFERENCE_RESOURCE_NAMES: Record<ReferenceTable, string> = {
   code_versions: 'code version',
   dataset_versions: 'dataset version',
   artifacts: 'artifact',
-  plugin_connections: 'integration',
 };
 
 export async function lockActiveExperiment(

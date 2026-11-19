@@ -277,7 +277,7 @@ MLflowの`log_image(key=, step=)`と`log_table`で記録したものも、同じ
 
 ### ディレクトリからデータセットバージョンを作る
 
-`register_dataset(..., files="data/speech")`はディレクトリの中身をArtifactsとして送り、APIがuriとdigestを決める。`files`を使うときは`uri`、`digest`、`source_run_id`、`parent_dataset_version_ids`、`external_ref`を指定しない。既存のDatasetへバージョンを足すだけなら、同じ処理を`upload_dataset_directory`で直接呼べる。
+`register_dataset(..., files="data/speech")`はディレクトリの中身をArtifactsとして送り、APIがuriとdigestを決める。`files`を使うときは`uri`、`digest`、`source_run_id`、`parent_dataset_version_ids`を指定しない。既存のDatasetへバージョンを足すだけなら、同じ処理を`upload_dataset_directory`で直接呼べる。
 
 ```python
 from mado_tracking import Client

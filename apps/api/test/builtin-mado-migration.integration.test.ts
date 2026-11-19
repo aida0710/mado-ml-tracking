@@ -3,8 +3,17 @@ import { describe, expect, it } from 'vitest';
 import { migrate } from '../src/db/migrate.js';
 import { createHarness, request, testDatabaseUrl } from './harness.js';
 import { projectFixture } from './fixtures.js';
-import { applyRowShapeMigrationsAhead, applyMigrationsBefore } from './migrationFixtures.js';
-import { MADO_CONFIG_FIXTURE } from './pluginFixtures.js';
+import {
+  applyMigrationFile,
+  applyMigrationsBefore,
+  applyRowShapeMigrationsAhead,
+} from './migrationFixtures.js';
+
+/** 069の時点の接続の設定。 */
+const MADO_CONFIG_FIXTURE = {
+  apiUrl: 'https://mado-api.example.test',
+  webUrl: 'https://mado.example.test',
+};
 
 describe.skipIf(!testDatabaseUrl)('Madoの現行形式への移行（独立PostgreSQL）', () => {
   it('接続先が不明の行と未固定イベントを削除し067の未使用暗号文を消去する', async () => {
@@ -43,12 +52,14 @@ describe.skipIf(!testDatabaseUrl)('Madoの現行形式への移行（独立Postg
           ($1,$4,'{}',NULL,NULL,NULL,NULL),($5,$6,'{}',NULL,NULL,NULL,NULL)`,
         [configured, eventId, 'a'.repeat(64), randomUUID(), oldPlugin, randomUUID()],
       );
-      await migrate(harness.database);
+      await applyMigrationFile(harness.database, '069_require_current_protocol.sql');
+      // 074がProjectごとの接続の暗号文をすべて消すので、069が残すものはその前に確かめる。
       const connections = await harness.database.query('SELECT id,encrypted_credentials,secret_key_id FROM plugin_connections ORDER BY name');
       expect(connections.rows).toEqual([
         { id: configured, encrypted_credentials: Buffer.from('current-ciphertext'), secret_key_id: 'test-key' },
         { id: unconfigured, encrypted_credentials: null, secret_key_id: null },
       ]);
+      await migrate(harness.database);
       expect((await harness.database.query('SELECT event_id FROM plugin_outbox')).rows).toEqual([{ event_id: eventId }]);
       expect((await harness.database.query('SELECT uri,digest,external_ref FROM dataset_versions WHERE id=$1', [versionId])).rows[0])
         .toEqual({ uri: 's3://bucket/data', digest: 'sha256:data', external_ref: null });

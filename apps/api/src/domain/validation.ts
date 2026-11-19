@@ -132,13 +132,6 @@ export const modelVersionSchema = z.strictObject({
   defaultCodeVersionId: uuidSchema.nullish(),
   metadata: jsonObjectSchema.default({}),
 });
-export const externalDatasetRefSchema = z.strictObject({
-  pluginId: uuidSchema,
-  externalId: nameSchema,
-  namespace: nameSchema,
-  name: nameSchema,
-  version: nameSchema,
-});
 export const datasetVersionSchema = z.strictObject({
   version: nameSchema,
   uri: z.string().min(1).max(4000),
@@ -147,7 +140,8 @@ export const datasetVersionSchema = z.strictObject({
   metadata: jsonObjectSchema.default({}),
   sourceRunId: uuidSchema.nullish(),
   parentDatasetVersionIds: uniqueIdsSchema.default([]),
-  externalRef: externalDatasetRefSchema.nullish(),
+  // v0.5.4までのPython SDKは、外部参照が無くても`externalRef: null`を送る。nullだけ受け付ける。
+  externalRef: z.null().optional(),
 });
 export const runCreateSchema = z.strictObject({
   experimentId: uuidSchema,
@@ -279,8 +273,6 @@ export const tokenCreateSchema = z.strictObject({
   expiresAt: z.iso.datetime({ offset: true }).nullish()
     .describe('未来の日時。nullは無期限。省略時は設定された既定の日数（既定365日）。'),
 });
-export { pluginCreateSchema, pluginPatchSchema } from './pluginValidation.js';
-import { pluginPatchSchema } from './pluginValidation.js';
 // workerが報告する並列のJob数はこれが上限。これより大きい値は設定の誤り。
 const MAX_WORKER_PARALLEL_JOBS = 1000;
 // workerのホストの~/.sshにこれより多いことはまず無い。候補として出すだけ。
@@ -339,4 +331,3 @@ export type JobCreate = z.infer<typeof jobCreateSchema>;
 export type JobLaunch = z.infer<typeof jobLaunchSchema>;
 export type TargetCreate = z.infer<typeof targetSchema>;
 export type TargetPatch = z.infer<typeof targetPatchSchema>;
-export type PluginPatch = z.infer<typeof pluginPatchSchema>;

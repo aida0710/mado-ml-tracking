@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { containsControlCharacter, MAX_DATASET_VERSION_FILES } from '@mmt/contracts';
 import {
-  externalDatasetRefSchema,
   isRelativeFilePath,
   jsonObjectSchema,
   nameSchema,
@@ -74,7 +73,8 @@ export const datasetVersionRequestSchema = z
     metadata: jsonObjectSchema.default({}),
     sourceRunId: uuidSchema.nullish(),
     parentDatasetVersionIds: uniqueIdsSchema.default([]),
-    externalRef: externalDatasetRefSchema.nullish(),
+    // v0.5.4までのPython SDKは、外部参照が無くても`externalRef: null`を送る。nullだけ受け付ける。
+    externalRef: z.null().optional(),
     content: datasetVersionContentSchema.optional(),
   })
   .superRefine((request, context) => {
@@ -82,11 +82,9 @@ export const datasetVersionRequestSchema = z
     for (const key of required)
       if (request[key] === undefined)
         context.addIssue({ code: 'custom', path: [key], message: `${key} is required` });
-    // Artifactのバージョンのuriはサーバーが決める。外部参照を持てるのは参照型のバージョンだけ。
-    const forbidden = request.content ? (['uri', 'externalRef'] as const) : [];
-    for (const key of forbidden)
-      if (request[key] != null)
-        context.addIssue({ code: 'custom', path: [key], message: `${key} is set by the server` });
+    // Artifactのバージョンのuriはサーバーが決める。
+    if (request.content && request.uri != null)
+      context.addIssue({ code: 'custom', path: ['uri'], message: 'uri is set by the server' });
   });
 export type DatasetVersionRequest = z.infer<typeof datasetVersionRequestSchema>;
 

@@ -1,6 +1,6 @@
 ---
 title: mado ML Trackingとは
-description: MLflowに代わる内製の仕組みとして、学習の記録、モデルの登録、推論・評価の自動実行、昇格を1つのアプリで扱う。Madoとの関係も説明する。
+description: MLflowに代わる内製の仕組みとして、学習の記録、モデルの登録、推論・評価の自動実行、昇格を1つのアプリで扱う。mado S3 Data Catalogとの関係も説明する。
 ---
 
 # mado ML Trackingとは
@@ -53,13 +53,13 @@ mado ML Trackingは、機械学習の実験とモデルを管理するWebアプ�
 | データセットバージョン | 推論・評価の入力や、Runの出力として登録するデータ |
 | Artifact | 重み、音声、画像、表などのファイル。ファイルシステムかS3互換ストレージに保存します |
 
-## Madoとの関係
+## mado S3 Data Catalogとの関係
 
-mado ML TrackingはMadoとは別のアプリとして動き、データベースも分かれています。Madoとは、本体に組み込まれたMado連携でつながります（最初は無効で、全体管理者が設定して有効にします）。連携を有効にすると、Madoの容量のメトリクスを画面に表示します。
+mado ML Trackingはmado S3 Data Catalogとは別のアプリとして動き、データベースも分かれています。全体管理者が全体設定の「全体管理」→［Plugins］でmado S3 Data Catalogに接続すると、mado S3 Data Catalogが測ったストレージの容量をその画面に表示します（最初は未接続です。[Plugins](/admin/plugins)）。
 
-データセットのバージョンと処理の来歴は、mado ML Trackingが記録します。MadoはS3のストレージの閲覧と容量の計測を受け持ち、データセットの来歴は持ちません。
+データセットのバージョンと処理の来歴は、mado ML Trackingが記録します。mado S3 Data CatalogはS3のストレージの閲覧と容量の計測を受け持ち、データセットの来歴は持ちません。
 
-ログイン方式はMadoと同じ構成です。Authentikのgroupでログインできる人と全体管理者を決め、ローカルアカウントとの併用や切り替えもできます。
+ログイン方式はmado S3 Data Catalogと同じ構成です。Authentikのgroupでログインできる人と全体管理者を決め、ローカルアカウントとの併用や切り替えもできます。
 
 ## 表示言語
 

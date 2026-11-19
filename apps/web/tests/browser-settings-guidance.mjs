@@ -121,39 +121,6 @@ try {
   }
 
   {
-    console.log('Mado: missing credential storage is explained and stops connection calls');
-    const guidance = createGuidanceApi();
-    const [plugin] = guidance.api.state.plugins;
-    plugin.tokenConfigured = false;
-    plugin.secretStorageAvailable = false;
-    const { context, page, screenshot } = await openPage({ guidance });
-    await page.goto(`${base}/projects/${guidance.api.state.project.id}/plugins`);
-    await page
-      .getByText('APIサーバーにMMT_PLUGIN_SECRET_KEYの設定が必要です', { exact: false })
-      .waitFor();
-    assert.equal(await page.getByRole('button', { name: '接続を確認', exact: true }).isDisabled(), true);
-    const storageMetrics = page.getByRole('region', { name: 'Storage metrics', exact: true });
-    assert.equal(await storageMetrics.count(), 0);
-    await screenshot('03-mado-secret-storage-missing');
-    // 認証情報を保存できるようになると、容量を見る前に、改めて明示的な接続確認ができる。
-    plugin.tokenConfigured = true;
-    plugin.secretStorageAvailable = true;
-    plugin.configRevision++;
-    await page.getByRole('button', { name: '再読み込み', exact: true }).click();
-    const check = page.getByRole('button', { name: '接続を確認', exact: true });
-    await page.waitForFunction(
-      () => Array.from(document.querySelectorAll('button')).some(
-        (button) => button.textContent.trim() === '接続を確認' && !button.disabled,
-      ),
-    );
-    assert.equal(await storageMetrics.count(), 0, 'Capacity is not read before the connection is checked');
-    await check.click();
-    await page.getByRole('status').getByText('接続を確認しました').waitFor();
-    await storageMetrics.waitFor();
-    await context.close();
-  }
-
-  {
     console.log('全体設定: the bell counts every Project, and leads back to the Jobs it came from');
     const guidance = createGuidanceApi();
     const projectId = guidance.api.state.project.id;

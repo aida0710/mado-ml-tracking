@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import type { Dataset, DatasetVersion, ExternalDatasetRef, JsonObject } from '@mmt/contracts';
+import type { Dataset, DatasetVersion, JsonObject } from '@mmt/contracts';
 import { first, type Connection } from '../db/database.js';
 import { datasetManifestDigest } from '../domain/datasetManifestDigest.js';
-import { conflict, DomainError, notFound } from '../domain/errors.js';
-import { assertProjectReference, findRun } from '../repositories/registryRepository.js';
+import { DomainError, notFound } from '../domain/errors.js';
+import { findRun } from '../repositories/registryRepository.js';
 import { requireProject } from './accessService.js';
 import { lockDatasetsOfVersions } from './datasetVersionReferences.js';
 import type { ModelVersionRegistrationActor } from './modelVersionRegistration.js';
@@ -38,7 +38,6 @@ interface DatasetVersionRegistrationBase {
 interface ReferenceContentRegistration {
   uri: string;
   digest: string;
-  externalRef?: ExternalDatasetRef | null;
   content?: undefined;
 }
 
@@ -50,7 +49,6 @@ interface ArtifactContentRegistration {
   content: { files: DatasetManifestFile[] };
   digest?: string;
   uri?: undefined;
-  externalRef?: undefined;
 }
 
 export type DatasetVersionRegistration = DatasetVersionRegistrationBase &
@@ -112,26 +110,12 @@ export async function registerDatasetVersion(
       userId: sourceRun.createdBy,
     });
   }
-  if (registration.externalRef) {
-    const reference = registration.externalRef;
-    await assertProjectReference(connection, {
-      table: 'plugin_connections',
-      projectId,
-      id: reference.pluginId,
-    });
-    if (
-      reference.version !== registration.version ||
-      reference.name !== dataset.name ||
-      reference.namespace !== dataset.namespace
-    )
-      conflict('the reference of the external dataset does not match the version being registered');
-  }
   const stored = describeStoredContent(registration);
   const version = registration.version ?? (await nextDatasetVersion(connection, dataset.id));
   const inserted = (await first<Omit<DatasetVersion, 'name' | 'namespace'>>(
     connection,
-    `INSERT INTO dataset_versions(id,dataset_id,project_id,version,uri,digest,schema,metadata,source_run_id,parent_dataset_version_ids,external_ref,content_kind,file_count,total_size)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+    `INSERT INTO dataset_versions(id,dataset_id,project_id,version,uri,digest,schema,metadata,source_run_id,parent_dataset_version_ids,content_kind,file_count,total_size)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
     [
       stored.id,
       dataset.id,
@@ -143,7 +127,6 @@ export async function registerDatasetVersion(
       JSON.stringify(registration.metadata),
       sourceRun?.id ?? null,
       registration.parentDatasetVersionIds,
-      registration.externalRef ? JSON.stringify(registration.externalRef) : null,
       stored.contentKind,
       stored.fileCount,
       stored.totalSize,

@@ -13,7 +13,6 @@ import {
   canCreateProject,
   canEditProject,
   canManageAutomationRules,
-  canManagePlugins,
   canManageProject,
   isGlobalAdmin,
   isTargetOwner,
@@ -31,8 +30,7 @@ describe('Projectの権限判定', () => {
     expect(canManageProject(role)).toBe(canManage);
   });
 
-  it.each(roles)('全体管理者は%sでもpluginと自動実行ルールを管理できる', (role) => {
-    expect(canManagePlugins(role, true)).toBe(true);
+  it.each(roles)('全体管理者は%sでも自動実行ルールを管理できる', (role) => {
     expect(canManageAutomationRules(role, true)).toBe(true);
   });
 
@@ -40,14 +38,8 @@ describe('Projectの権限判定', () => {
     ['viewer', false],
     ['editor', false],
     ['admin', true],
-  ] as const)('全体管理者でない%sのplugin・ルール管理は%sになる', (role, expected) => {
-    expect(canManagePlugins(role, false)).toBe(expected);
+  ] as const)('全体管理者でない%sのルール管理は%sになる', (role, expected) => {
     expect(canManageAutomationRules(role, false)).toBe(expected);
-  });
-
-  it('参加していないProjectのpluginは全体管理者だけが管理できる', () => {
-    expect(canManagePlugins(undefined, false)).toBe(false);
-    expect(canManagePlugins(undefined, true)).toBe(true);
   });
 
   it('全体管理者でもProject roleの編集・管理判定は変わらない', () => {

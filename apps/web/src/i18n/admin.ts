@@ -15,6 +15,7 @@ export const adminText = localized({
   adminSectionUsers: 'ユーザー',
   adminSectionStorage: 'ストレージ',
   adminSectionLaunchers: 'ランチャー',
+  adminSectionPlugins: 'Plugins',
   adminSectionAudit: '監査ログ',
   adminAuditDescription:
     'すべてのProjectと、Projectに属さない記録（ログイン、ユーザーの管理、保存先、通知先など）を新しい順に表示します。',

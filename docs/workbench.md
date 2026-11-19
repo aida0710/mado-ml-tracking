@@ -47,10 +47,8 @@ training/finetuningのTaskでは「成功時に出力モデルを登録」を設
 
 設定は起動時にRunへ複写します。起動後にTaskを編集しても、そのRunの登録先は変わりません。結果はRun詳細の出力モデルで確認します。
 
-## Computeとpluginの設定を変える
+## Computeの設定を変える
 
 全体管理者はComputeの追加・設定編集・有効切替を行えます。Jobが参照している接続先やGPUを変更するときは、そのJobが終わってから保存します。無効化は新しい実行を止め、実行中のJobはworkerが引き続き管理します。
 
-Mado連携は標準搭載で初期無効です。全体管理者が「連携」でMadoのAPI/Web URLとアクセストークンを保存し、有効にします。無効中でも接続を確認できます。設定変更後は古い確認結果を破棄します。
-
-内蔵連携の認証設定は[Mado連携の仕様](plugins.md)を参照してください。
+mado S3 Data Catalogへの接続は、全体設定 → 全体管理 → 「Plugins」で全体管理者が扱います（[mado S3 Data Catalogへの接続](plugins.md)）。

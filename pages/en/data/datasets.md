@@ -100,7 +100,7 @@ with Client() as client:
 
 For each file, the SDK looks for a saved Artifact with the same SHA-256 and size and reuses it instead of uploading. If most files match the previous version, only the changed files are sent. After an interruption, running it again sends only the files not yet saved.
 
-When you use `files`, do not pass `uri`, `digest`, `source_run_id`, `parent_dataset_version_ids`, or `external_ref`.
+When you use `files`, do not pass `uri`, `digest`, `source_run_id`, or `parent_dataset_version_ids`.
 
 ## Create a version that references a URI
 
@@ -168,9 +168,9 @@ Fetched contents are cached in `<work directory>/.mmt-cache/datasets/` on the ma
 
 See [Compute targets](/en/compute/targets).
 
-## Data imported from Mado by earlier versions
+## Data imported from mado S3 Data Catalog by earlier versions
 
-Up to v0.5.4, the Mado integration could import dataset versions from Mado. Those versions remain as reference versions and can be used as Run inputs. Selecting one shows its identifier in Mado, namespace, name, and version under **External references**. There is no link to Mado. New versions cannot be imported, and Runs are not sent to Mado ([Mado integration](/en/admin/plugins)).
+Up to v0.5.4, dataset versions could be imported from mado S3 Data Catalog. Those versions remain as reference versions and can be used as Run inputs. Selecting one shows its identifier in mado S3 Data Catalog, namespace, name, and version under **External references**. There is no link to mado S3 Data Catalog. New versions cannot be imported, and Runs are not sent to mado S3 Data Catalog ([Plugins](/en/admin/plugins)).
 
 ## Datasets you no longer use
 

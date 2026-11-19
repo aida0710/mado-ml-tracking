@@ -1,6 +1,6 @@
 ---
 title: トラブルシューティング
-description: APIが起動しない、SSOでログインできない、tokenが401・403になる、通知が届かない、Mado連携やworkerが止まったときの確認項目。
+description: APIが起動しない、SSOでログインできない、tokenが401・403になる、通知が届かない、mado S3 Data Catalogにつながらない、workerが止まったときの確認項目。
 ---
 
 # トラブルシューティング
@@ -113,16 +113,20 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" "$MMT_API_URL/api/auth/token"
 3. 「直近の送信履歴」で、状態と失敗の理由を確かめます。理由ごとの確認項目は[通知と運用アラート](/admin/notifications)の「送信の流れと失敗したとき」にあります。
 4. 通知ルールが有効で、イベントと条件が合っているかを確かめます。workerの停止は、実行種別や実験の条件を付けたルールには届きません。
 
-## Mado連携につながらない {#plugin-unreachable-or-deliveries-stalled}
+## mado S3 Data Catalogにつながらない {#plugin-unreachable-or-deliveries-stalled}
 
-Mado連携の状態は、Projectの［連携］で確かめます。接続設定とキーを直せるのは全体管理者です（[Mado連携](/admin/plugins)）。
+mado S3 Data Catalogへの接続は、全体設定の「全体管理」→［Plugins］で確かめます。扱えるのは全体管理者です（[Plugins](/admin/plugins)）。画面は、APIが返した文をそのまま出します。
 
 | 表示 | 直し方 |
 | --- | --- |
-| 「連携キーを保存・利用するには、APIサーバーにMMT_PLUGIN_SECRET_KEYの設定が必要です。」、または`plugin_secret_key_unavailable` | API serverの`.env`に`MMT_PLUGIN_SECRET_KEY`を設定し、APIを再起動する（[環境変数](/reference/environment#mado-plugin)） |
-| 「Madoのアクセストークンを設定してください。」、または`plugin_token_unavailable`・`plugin_secret_decryption_failed` | 「アクセストークン」が「未設定」なら、［Madoの接続設定］でアクセストークンを入れて［保存］を押す。以前の版で用途別のキーを保存した接続も「未設定」になるので、同じく入れ直す。「設定済み」なのに出るなら、`MMT_PLUGIN_SECRET_KEY`がトークンを保存したときと同じ値かを確かめる。元の値に戻せないときは、アクセストークンを入れ直して保存する |
-| ［接続を確認］で「このMadoはアクセストークンの許可範囲の取得（/api/mado/access-token）に対応していません」（`plugin_mado_access_token_unsupported`） | Madoを、アクセストークン自身の許可範囲を返す版へ更新する |
-| ［接続を確認］で「Madoとの通信に失敗しました」（`plugin_request_failed`） | API serverから「Mado API URL」に届くか、アクセストークンが有効（無効化・期限切れでない）かを確かめる。容量の読み取りを許可しているなら、容量も取得できるかを確かめる（確認では容量も取得する） |
+| 「アクセストークンを保存するには、APIサーバーにMMT_PLUGIN_SECRET_KEYの設定が必要です。」、または「set MMT_PLUGIN_SECRET_KEY on the API server to store the access token」（`data_catalog_secret_key_unavailable`） | API serverの`.env`に`MMT_PLUGIN_SECRET_KEY`を設定し、APIを再起動する（[環境変数](/reference/environment#mado-plugin)） |
+| 「the stored access token cannot be decrypted; check MMT_PLUGIN_SECRET_KEY or enter the access token again」（`data_catalog_secret_decryption_failed`） | `MMT_PLUGIN_SECRET_KEY`がアクセストークンを保存したときと同じ値かを確かめる。元の値に戻せないときは、［接続を変更］でアクセストークンを入力し直す |
+| 「mado S3 Data Catalog rejected the access token; check that it is correct and has not expired」（`data_catalog_access_token_rejected`） | アクセストークンが正しいか、mado S3 Data Catalogで無効化・期限切れになっていないかを確かめる |
+| 「enter the access token of this mado S3 Data Catalog」（`data_catalog_access_token_required`） | アクセストークンを入力する。URLを変えるときは、保存済みのトークンを使わないので入力が要る |
+| 「no mado S3 Data Catalog API was found at this URL (/api/mado/access-token); check the URL」（`data_catalog_access_token_unsupported`） | 「URL」が、ブラウザでmado S3 Data Catalogを開くときのURLかを確かめる |
+| 「failed to communicate with mado S3 Data Catalog; check the URL」（`data_catalog_request_failed`） | API serverから「URL」に届くかを確かめる。容量の読み取りを許可しているなら、容量も取得できるかを確かめる（確認では容量も取得する） |
+| 「このアクセストークンでは容量を読めません。」、または「the access token does not allow reading capacity; allow it in mado S3 Data Catalog and check the connection again」（`data_catalog_capacity_not_permitted`） | mado S3 Data CatalogでアクセストークンにCapacityの読み取りを許可してから、［接続を確認］を押す |
+| 以前の版で設定した接続が「未接続」になった | 接続をProjectごとに持っていた版（v0.5.4まで）の設定は引き継がない。［mado S3 Data Catalogに接続］で接続し直す |
 
 ## workerがJobを受け取らない・停止と表示される
 

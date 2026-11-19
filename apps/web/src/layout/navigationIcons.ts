@@ -21,6 +21,7 @@ import {
   SlidersHorizontal,
   Users,
   Webhook,
+  Wrench,
   Workflow,
   type LucideIcon,
 } from 'lucide-react';
@@ -41,8 +42,9 @@ export const NAVIGATION_ICONS: Record<NavigationScreen, LucideIcon> = {
   hooks: Webhook,
   workflows: Workflow,
   compute: Server,
-  plugins: Puzzle,
   settings: Settings,
+  // Projectの設定（Settings）と見分けられる形にする。
+  globalSettings: Wrench,
   account: CircleUser,
   // 全体設定はすべてのコンピュータを、ProjectのCompute（Server）は使えるものだけを並べる。
   computers: Computer,
@@ -51,5 +53,6 @@ export const NAVIGATION_ICONS: Record<NavigationScreen, LucideIcon> = {
   users: Users,
   storage: HardDrive,
   launchers: Rocket,
+  plugins: Puzzle,
   audit: ScrollText,
 };

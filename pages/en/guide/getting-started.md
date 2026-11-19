@@ -1,6 +1,6 @@
 ---
 title: What is mado ML Tracking?
-description: An in-house take on MLflow that records training, registers models, runs inference and evaluation automatically, and promotes models in one app. Also explains how it relates to Mado.
+description: An in-house take on MLflow that records training, registers models, runs inference and evaluation automatically, and promotes models in one app. Also explains how it relates to mado S3 Data Catalog.
 ---
 
 # What is mado ML Tracking?
@@ -53,13 +53,13 @@ The model version page shows the chain from the training Run to the version and 
 | Dataset version | Data used as inference or evaluation input, or registered as a Run output |
 | Artifact | Files such as weights, audio, images, and tables, kept on a filesystem or S3-compatible storage |
 
-## How it relates to Mado
+## How it relates to mado S3 Data Catalog
 
-mado ML Tracking runs as an app separate from Mado, with its own database. The two connect through the built-in Mado integration (disabled at first; a global administrator configures and enables it). When enabled, it shows Mado's storage capacity metrics on screen.
+mado ML Tracking runs as an app separate from mado S3 Data Catalog, with its own database. When a global administrator connects to mado S3 Data Catalog under **Administration** → **Plugins** in the global settings, that page shows the storage capacity mado S3 Data Catalog measures (not connected at first; see [Plugins](/en/admin/plugins)).
 
-mado ML Tracking records dataset versions and the lineage of processing. Mado browses S3 storage and measures its capacity; it does not hold dataset lineage.
+mado ML Tracking records dataset versions and the lineage of processing. mado S3 Data Catalog browses S3 storage and measures its capacity; it does not hold dataset lineage.
 
-Sign-in works the same way as in Mado. Authentik groups decide who can sign in and who is a global administrator, and local accounts can be used alongside SSO or instead of it.
+Sign-in works the same way as in mado S3 Data Catalog. Authentik groups decide who can sign in and who is a global administrator, and local accounts can be used alongside SSO or instead of it.
 
 ## Display language
 

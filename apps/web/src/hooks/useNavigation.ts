@@ -1,6 +1,10 @@
-import type { ProjectRole } from '@mmt/contracts';
 import { useNavigationLayout, type NavigationLayout } from '@mado/design-system/react';
-import { navigationGroups, type NavigationGroup } from '../layout/navigationLinks';
+import {
+  globalSettingsLink,
+  navigationGroups,
+  type NavigationGroup,
+  type NavigationLink,
+} from '../layout/navigationLinks';
 import { isGlobalAdmin } from '../lib/permissions';
 import { useAuth } from './useAuth';
 import { useShowsExecutionScreens } from './useShowsExecutionScreens';
@@ -13,17 +17,18 @@ export interface Navigation {
   layout: NavigationLayout;
   /** ログイン中の利用者が開ける画面のリンクのまとまり。 */
   groups: NavigationGroup[];
+  /** 並びの下端に置くリンク。Projectの画面では全体設定への入口、ほかではnull。 */
+  footerLink: NavigationLink | null;
 }
 
-export function useNavigation(projectId?: string, projectRole?: ProjectRole): Navigation {
+export function useNavigation(projectId?: string): Navigation {
   const auth = useAuth();
   const layout = useNavigationLayout({ storageKeyPrefix: NAVIGATION_STORAGE_KEY_PREFIX });
   const showsExecutionScreens = useShowsExecutionScreens(projectId);
   const groups = navigationGroups({
     projectId,
-    projectRole,
     isGlobalAdmin: isGlobalAdmin(auth.user),
     showsExecutionScreens,
   });
-  return { layout, groups };
+  return { layout, groups, footerLink: globalSettingsLink(projectId) };
 }

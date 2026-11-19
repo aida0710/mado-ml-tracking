@@ -180,16 +180,16 @@ node apps/web/tests/browser-pipeline.mjs
 
 結果は`artifacts/verification/<日付>/pipeline/browser-pipeline.json`（段階ごとの結果と所要秒数）と、同じディレクトリの`browser-pipeline-server.log`・`browser-pipeline-worker.log`です。2026-10-08に全13段階が成功しました（約1分）。
 
-## 内蔵Mado連携のAPIを確認する
+## mado S3 Data Catalogへの接続のAPIを確認する
 
-Madoのcheckoutを指定すると、本体の内蔵処理→実Mado routes（`/api/mado/access-token`と`/api/mado/metrics/capacity`）の接続を確認できます。認証と容量の値はfixtureで、本番へは接続しません。`namespaces`を返すMado v0.5.3までのcheckoutでも、返さないv0.6.0以降のcheckoutでも通ります。
+mado S3 Data Catalogのcheckoutを指定すると、本体の処理→mado S3 Data Catalogの実際のroutes（`/api/mado/access-token`と`/api/mado/metrics/capacity`）の接続を確認できます。認証と容量の値はfixtureで、本番へは接続しません。`namespaces`を返すmado S3 Data Catalog v0.5.3までのcheckoutでも、返さないv0.6.0以降のcheckoutでも通ります。
 
 ```bash
 MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55483/mmt_test \
-MMT_VERIFY_MADO_ROOT=/path/to/mado node_modules/.bin/tsx scripts/verify_mado_plugin.ts
+MMT_VERIFY_DATA_CATALOG_ROOT=/path/to/mado node_modules/.bin/tsx scripts/verify_data_catalog_connection.ts
 ```
 
-`MMT_VERIFY_MADO_ROOT`を省くと`../mado`を使います。Madoのcheckoutには`api/`の依存（`npm ci`）が入っている必要があります。こちらのテストは専用schemaを最後に削除します。
+`MMT_VERIFY_DATA_CATALOG_ROOT`を省くと`../mado`を使います。mado S3 Data Catalogのcheckoutには`api/`の依存（`npm ci`）が入っている必要があります。こちらのテストは専用schemaを最後に削除します。
 
 ## 公式MLflow 3 SDKを確認する
 
@@ -239,11 +239,7 @@ PYTHONPATH=python/src python/.venv/bin/python scripts/verify_workbench.py
 
 公開Gitリポジトリの固定commitを読み込み、編集・削除したファイルを実CPU workerで実行します。通常とテストのコマンド、Taskの新しいバージョンを保存したあとも固定されるqueued Job、古いrevisionの409、失敗テストと再実行、実行前のsource ZIPとmanifest、履歴を確認します。コード自身がmain.pyを書き換えた場合も、ZIPが実行前の内容を保つことを照合します。検証用tokenは最後に失効し、targetを無効にします。結果は`artifacts/verification/<日付>/workbench/task-integration.json`です。
 
-ブラウザからCompute、Monacoでの編集と新しいバージョンの保存、Task作成・テスト・学習・推論を確認する場合は、開発APIとworkerのlocal executorを許可します。内蔵Mado連携の検証は上の「内蔵Mado連携のAPIを確認する」で行います。旧HTTP fixtureの起動手順は現在の接続登録には使いません。
-
-```bash
-# 旧HTTP fixtureは内蔵連携では起動しません。
-```
+ブラウザからCompute、Monacoでの編集と新しいバージョンの保存、Task作成・テスト・学習・推論を確認する場合は、開発APIとworkerのlocal executorを許可します。mado S3 Data Catalogへの接続の検証は上の「mado S3 Data Catalogへの接続のAPIを確認する」で行います。
 
 ```bash
 PYTHONPATH=python/src python/.venv/bin/python scripts/setup_workbench_playground.py
@@ -255,7 +251,7 @@ node scripts/verify_workbench_browser.mjs
 
 この操作はPlaygroundを残し、そのProjectとCPU targetだけを扱うworkerを起動します。Service Account tokenは7日で失効し、`var/playground/worker-settings.json`へmode600で保存します。ブラウザの確認後もTaskを編集・実行できます。再起動は`PYTHONPATH=python/src python/.venv/bin/python scripts/serve_workbench_worker.py`。workerの停止には`var/playground/worker.pid`のprocessを確認してSIGTERMを送り、設定画面で当該tokenを失効してください。
 
-Madoの接続確認と容量の確認は「内蔵Mado連携のAPIを確認する」を使います。PlaygroundのIDと実行結果、閲覧用画像は`artifacts/verification/<日付>/workbench/`へ保存し、tokenの値を含めません。
+mado S3 Data Catalogへの接続と容量の確認は「mado S3 Data Catalogへの接続のAPIを確認する」を使います。PlaygroundのIDと実行結果、閲覧用画像は`artifacts/verification/<日付>/workbench/`へ保存し、tokenの値を含めません。
 
 2026-10-08の追加機能では、API・ストレージ366件、Web98件、Python316件、実Docker20件が成功しました。S3接続fixtureの2件はskipです。型検査・build・ruff・strict mypy、wheel/sdistの45ファイルと現ソースの一致も確認しました。
 
@@ -366,7 +362,7 @@ node apps/web/tests/browser-admin-storage.mjs
 
 | 場面 | 確かめること |
 |---|---|
-| サイドバー | プロジェクトの組の最後が「プロジェクト管理」（Plugins、プロジェクト設定）で、「全体設定」と「全体管理」の組は出ない（全体設定はユーザーメニューから開く） |
+| サイドバー | プロジェクトの組の最後が「プロジェクト管理」（プロジェクト設定）で、「全体設定」と「全体管理」の組は出ない。下端に「全体設定」への入口が1つ出る（ユーザーメニューからも開ける） |
 | プロジェクト切替 | ボタンにフォーカスして↓で開くと、今のProjectが選ばれた状態で一覧へフォーカスが移る。↑↓・Home・Endで移り、Endは最後の「プロジェクトを作成」。Escで閉じてボタンへ戻り、Enterで開いて別のProjectを開ける。PrivateのProjectに鍵が付く。ドロップダウンが画面の内側に収まる。ライト・ダークの両方で撮影する |
 | 絞り込み | Projectが8件以上になると絞り込みの入力が出てフォーカスが入り、入力した語で一覧が絞られ、Enterで開ける |
 | 作成 | 切替の「プロジェクトを作成」から、Privateを選ぶと「メンバー（任意）」が出る。ユーザーを検索して2人足し、Roleを変え、1人を外して作成すると、`POST /projects`に`visibility: private`と残した1人の`members`が送られ、作ったProjectが開く |
@@ -600,14 +596,14 @@ node apps/web/tests/browser-comments.mjs
 `apps/api/test/harness.ts`はWebのOriginを`http://127.0.0.1:5182`に固定するため、別portのWebから使うときはOriginを付け替える検証用の小さなserverが要ります（2026-10-08の検証では`/tmp`に置いて使い、リポジトリには入れていない）。
 
 
-## 内蔵Madoの実APIブラウザ確認
+## mado S3 Data Catalogへの接続を実APIとブラウザで確認する
 
-専用のPostgreSQLテストDBと、Madoのcheckoutを使います。MadoのHTTPルートは実装を使い、認証と容量の値だけをfixtureに置き換えます。本番の接続先は使いません。
+専用のPostgreSQLテストDBと、mado S3 Data Catalogのcheckoutを使います。mado S3 Data CatalogのHTTPルートは実装を使い、認証と容量の値だけをfixtureに置き換えます。本番の接続先は使いません。
 
 ```sh
 MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55490/mmt_test \
-MMT_VERIFY_MADO_ROOT=/path/to/mado \
-node_modules/.bin/tsx scripts/serve_mado_verification.ts
+MMT_VERIFY_DATA_CATALOG_ROOT=/path/to/mado \
+node_modules/.bin/tsx scripts/serve_data_catalog_verification.ts
 
 # 別terminal: 専用Web6084を起動
 MMT_WEB_API_PROXY_TARGET=http://127.0.0.1:6083 \
@@ -616,12 +612,12 @@ node_modules/.bin/vite --config apps/web/vite.config.ts --host 127.0.0.1 --port 
 # PlaywrightとChromiumの場所を設定して実行
 MMT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs \
 MMT_CHROMIUM_PATH=/path/to/chrome \
-node scripts/verify_builtin_mado_browser.mjs
+node scripts/verify_data_catalog_browser.mjs
 ```
 
-APIは独立schemaを作り、終了時に削除します。fixtureの一時キーはgitignore済みの`var/builtin-mado-verification.json`（mode 600）だけに保存し、終了時に削除します。結果とキー入力を含まない画像は`artifacts/builtin-mado/<JSTの日付>/`に保存します。
+APIは独立schemaを作り、終了時に削除します。fixtureのアクセストークンはgitignore済みの`var/data-catalog-verification.json`（mode 600）だけに保存し、終了時に削除します。結果と、アクセストークンの入力欄を含まない画像は`artifacts/data-catalog/<JSTの日付>/`に保存します。
 
-ブラウザは初期無効、キー保存と接続確認、有効化後の容量の表示、無効化で容量を取得しなくなること、日英と幅320pxを確認します。
+ブラウザは、Projectのサイドバーから全体設定のPluginsへ進めること、未接続で始まること、URLとアクセストークンで接続するとすぐ容量が出ること、接続の確認、日英と幅320px、接続の解除を確認します。
 
 ## Lineageの画面操作を確認する
 

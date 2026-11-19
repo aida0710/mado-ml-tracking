@@ -8,7 +8,7 @@ export const GENERAL_SETTINGS_SECTIONS = ['account', 'computers', 'about'] as co
 export type GeneralSettingsSection = (typeof GENERAL_SETTINGS_SECTIONS)[number];
 
 /** 全体管理の組。全体管理者だけが開ける。並びはサイドバーの順。 */
-export const ADMIN_SECTIONS = ['projects', 'users', 'storage', 'launchers', 'audit'] as const;
+export const ADMIN_SECTIONS = ['projects', 'users', 'storage', 'launchers', 'plugins', 'audit'] as const;
 export type AdminSection = (typeof ADMIN_SECTIONS)[number];
 
 export type SettingsSection = GeneralSettingsSection | AdminSection;
@@ -24,6 +24,7 @@ export const SETTINGS_SECTION_LABELS: Record<SettingsSection, string> = {
   get users() { return text.adminSectionUsers; },
   get storage() { return text.adminSectionStorage; },
   get launchers() { return text.adminSectionLaunchers; },
+  get plugins() { return text.adminSectionPlugins; },
   get audit() { return text.adminSectionAudit; },
 };
 

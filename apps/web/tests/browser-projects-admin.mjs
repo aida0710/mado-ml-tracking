@@ -98,12 +98,12 @@ try {
   const dialog = () => page.getByRole('dialog');
   const mainProject = api.state.project;
 
-  console.log('Projects: a Project sidebar ends with Project management, without 全体設定 or 全体管理');
+  console.log('Projects: a Project sidebar lists Project screens only, without the 全体設定 or 全体管理 groups');
   await page.goto(`${base}/projects/${mainProject.id}/experiments`);
   const sidebar = page.locator('.navigation-sidebar');
   await sidebar.getByRole('group', { name: 'プロジェクト管理' }).waitFor();
   await sidebar.getByRole('link', { name: 'プロジェクト設定', exact: true }).waitFor();
-  // 全体設定はユーザーメニューから開く。Projectのサイドバーからは開かない。
+  // 全体設定の画面は並べない。並びの下端の入口とユーザーメニューから開く。
   assert.equal(await sidebar.getByRole('group', { name: '全体設定', exact: true }).count(), 0);
   assert.equal(await sidebar.getByRole('group', { name: '全体管理', exact: true }).count(), 0);
 

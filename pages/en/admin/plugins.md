@@ -1,40 +1,41 @@
 ---
-title: Mado integration
-description: Configure the built-in Mado integration and see the storage capacity that Mado measures.
+title: Plugins (connecting to mado S3 Data Catalog)
+description: Set up the single, site-wide connection to mado S3 Data Catalog and see the storage capacity it measures.
 ---
 
-# Mado integration
+# Plugins (connecting to mado S3 Data Catalog)
 
-Mado is built into mado ML Tracking and updated with the application. New Projects start unconfigured and disabled. The application works without Mado settings and makes no Mado requests until you configure it and choose an operation.
+"Plugins" is the page for connections to other services. The only one today is the connection to mado S3 Data Catalog. There is one connection for the whole site, shared by every project. It starts out not connected; experiment tracking works without it, and nothing is sent to mado S3 Data Catalog.
 
-When enabled, **Integrations** shows the storage capacity that Mado measures. The integration uses only two things from Mado: the access token's own information and the capacity metrics. It does not search or import datasets and does not send Run records (both were removed because Mado removed DataLineage).
+Once connected, this page shows the storage capacity that mado S3 Data Catalog measures. Only global administrators can open the page.
 
-## Configure a Project
+## Connect
 
-1. Set `MMT_PLUGIN_SECRET_KEY` on the API server. Generate a dedicated key with `openssl rand -base64 32`, save it in the private `.env`, and retain it across restarts. Use a value different from the other encryption keys (`MMT_SESSION_ENCRYPTION_KEY`, `MMT_STORAGE_SECRET_KEY`, `MMT_HOOK_SECRET_KEY`), and back it up with the DB ([Environment variables](/en/reference/environment#mado-plugin)).
-2. In Mado **Settings → Access → Access Tokens**, issue an access token that allows Capacity **Read** and the connections whose capacity you want to see.
-3. A global administrator opens **Integrations** in the Project, clicks **Mado connection settings**, enters **Mado API URL**, **Mado Web URL**, and **Access token**, and clicks **Save**. **Mado API URL** is the address the API server calls; **Mado Web URL** is only shown in the settings. Saving a new connection leaves it disabled.
-4. Click **Check connection**. The check gets what the access token allows (allowed operations and expiration) from Mado and shows it, then reads the capacity metrics if Capacity Read is allowed.
-5. Click **Enable integration**, then click **Check connection** again. With a token that allows Capacity Read, Storage metrics shows the capacity per connection, bucket, and prefix.
+1. Set `MMT_PLUGIN_SECRET_KEY` on the API server. Create a dedicated key with `openssl rand -base64 32` and save it in `.env`. Use a different value from the other encryption keys (`MMT_SESSION_ENCRYPTION_KEY`, `MMT_STORAGE_SECRET_KEY`, `MMT_HOOK_SECRET_KEY`) and keep it safe together with the database. Do not regenerate it on every restart ([Environment variables](/en/reference/environment#mado-plugin)).
+2. In mado S3 Data Catalog, under **Settings → Access → Access Tokens**, issue an access token that allows Capacity **read** and the connections whose capacity you want to see.
+3. Open [Global settings] from the user menu or from the bottom of the project sidebar, then open [Plugins] under "Administration" in the sidebar (`/settings/plugins`).
+4. Press [Connect to mado S3 Data Catalog], enter "URL" and "Access token", and press [Connect]. "URL" is the URL you open mado S3 Data Catalog at in a browser (for example `https://catalog.example.test`).
 
-The displayed permissions are the values saved by the last check. After changing the token's permissions in Mado, click **Check connection** to update them.
+Pressing [Connect] checks the connection and saves it only if the check passes. The page then shows "Connected", the access token name, allowed operations, access token expiry, when the connection was last checked, and "Storage capacity" per connection, bucket and prefix.
 
-Mado must provide `/api/mado/access-token`, which returns the calling token's own permissions, and `/api/mado/metrics/capacity`. With a Mado that lacks `/api/mado/access-token`, the check stops with "this Mado cannot report the permissions of its access token (/api/mado/access-token); update Mado". See its `docs/model-tracking-api.md`. Both Mado v0.5.3 and earlier, and v0.6.0 and later, are supported.
+## Check, change or remove the connection
 
-| Operation | Permission |
+| Button | What it does |
 | --- | --- |
-| Save connection settings and the access token, enable/disable | Global administrator |
-| Check, read capacity | Project admin |
+| [Check connection] | Checks again with the stored access token and re-reads the allowed operations and expiry. Press it after you change the token's permissions or expiry in mado S3 Data Catalog |
+| [Change connection] | Replaces the URL or the access token. Leave the access token blank to keep using the stored one. Enter it when you change the URL |
+| [Disconnect] | Deletes the stored access token. To use the connection again, enter an access token and connect |
 
-The access token is encrypted with AES-256-GCM. Responses contain only whether it is configured. Leaving the field blank preserves the saved token. If the encryption key is lost, restore it or enter the access token again.
+If you see "This access token cannot read capacity.", allow Capacity read for the access token in mado S3 Data Catalog, then press [Check connection].
 
-Replacing the access token or changing the connection settings advances the revision and discards the result of the last check. Capacity is not read while the integration is disabled. The check works while disabled.
+The access token is stored encrypted and is never returned to the page or the API. If `MMT_PLUGIN_SECRET_KEY` is lost, the stored token cannot be decrypted; restore the key, or enter the access token again with [Change connection].
 
-## Datasets imported and Runs sent by earlier versions
+If the connection fails, see [Troubleshooting](/en/reference/troubleshooting#plugin-unreachable-or-deliveries-stalled).
 
-Up to v0.5.4, the integration imported fixed dataset versions from Mado and sent Run records to Mado.
+## After updating from an earlier version
 
-- Imported dataset versions remain and can be used as Run inputs. The dataset page shows the values of the external reference (the connection, the version's identifier in Mado, and its namespace, name, and version). It does not link to Mado.
-- **Mado API URL** and **Mado Web URL** cannot be changed for a connection that dataset versions refer to. For another Mado instance, create a separately named connection with **Add Mado connection**.
-- Sent Run records remain in the DB but are not shown. Records that were not yet sent are not sent.
-- **OpenLineage URL**, **Run namespace**, and **Storage system identifier** are removed from the connection settings during the update. **Mado API URL**, **Mado Web URL**, the access token, and the enabled state are kept.
+Up to v0.5.4, each project had its own connection, datasets were imported from mado S3 Data Catalog, and run records were sent to it.
+
+- Per-project connections are not carried over. Their stored access tokens are deleted by the update, so a global administrator connects again on [Plugins].
+- Imported dataset versions remain and can still be used as run inputs. The dataset page shows the values of their external reference. New imports are not possible.
+- Run records that were sent remain in the database but are not shown.

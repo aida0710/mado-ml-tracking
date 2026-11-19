@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { AuditEventsPanel } from '../components/admin/AuditEventsPanel';
 import { LaunchersPanel } from '../components/admin/LaunchersPanel';
+import { PluginsPanel } from '../components/admin/PluginsPanel';
 import { ProjectsPanel } from '../components/admin/ProjectsPanel';
 import { StorageBackendsPanel } from '../components/admin/StorageBackendsPanel';
 import { UsersPanel } from '../components/admin/UsersPanel';
@@ -21,6 +22,7 @@ const ADMIN_SECTION_PANELS: Record<AdminSection, ComponentType> = {
   users: UsersPanel,
   storage: StorageBackendsPanel,
   launchers: LaunchersPanel,
+  plugins: PluginsPanel,
   audit: AuditEventsPanel,
 };
 

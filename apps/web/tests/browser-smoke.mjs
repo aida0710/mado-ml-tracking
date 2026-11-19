@@ -127,7 +127,6 @@ try {
     ['datasets', 'Datasets'],
     ['lineage', 'Lineage'],
     ['compute', '使えるコンピュータ'],
-    ['plugins', '連携'],
     ['settings', 'プロジェクト設定'],
   ]) {
     await page.goto(`${projectBase}/${route}`);
@@ -163,136 +162,6 @@ try {
   const aliasCells = page.getByRole('cell', { name: 'candidate', exact: true });
   await aliasCells.nth(0).waitFor();
   await aliasCells.nth(1).waitFor();
-
-  console.log('Browser check: built-in Mado connections');
-  await page.goto(`${projectBase}/plugins`);
-  assert.equal(
-    await page.getByRole('heading', { name: 'Storage metrics', exact: true }).count(),
-    0,
-  );
-  assert.equal(
-    api.state.calls.filter(
-      (call) => call.path.endsWith('/metrics') && call.path.includes('/plugins/'),
-    ).length,
-    0,
-  );
-  await page.getByRole('button', { name: 'Madoの接続を追加', exact: true }).click();
-  await page.getByRole('button', { name: 'Madoの接続設定', exact: true }).click();
-  await page.getByRole('dialog').getByLabel('名前').fill('UI登録Mado');
-  await page.getByRole('dialog').getByLabel('Mado API URL').fill('http://mado-api.invalid');
-  await page.getByRole('dialog').getByLabel('Mado Web URL').fill('http://mado-web.invalid');
-  await page.getByRole('dialog').getByRole('button', { name: '保存', exact: true }).click();
-  await page.getByRole('heading', { name: 'UI登録Mado', exact: true }).waitFor();
-  assert.equal(api.state.plugins.length, 2, 'global admin registration did not reach the API');
-  assert.equal(api.state.plugins[1].enabled, false, 'a newly configured integration must stay disabled');
-  assert.equal(api.state.plugins[1].kind, 'mado');
-  await page.getByRole('button', { name: 'Mado', exact: true }).click();
-  let releaseMetrics;
-  api.state.metricsGate = new Promise((resolve) => {
-    releaseMetrics = resolve;
-  });
-  await page.getByRole('button', { name: '接続を確認' }).click();
-  await page.getByText('接続を確認しました', { exact: true }).waitFor();
-  const storageMetrics = page.getByRole('region', { name: 'Storage metrics', exact: true });
-  await storageMetrics.getByRole('status').waitFor();
-  releaseMetrics();
-  api.state.metricsGate = null;
-  await storageMetrics.getByRole('heading', { name: 'UI検証ストレージ', exact: true }).waitFor();
-  // formatBytesは小数1桁で表す（lib/format.ts）。3221225472バイトは'3.0 GiB'になる。
-  await storageMetrics.getByText('3.0 GiB', { exact: true }).waitFor();
-  assert.equal(await storageMetrics.getByText('120万', { exact: true }).count(), 1);
-  assert.deepEqual(
-    await storageMetrics
-      .locator('tr')
-      .filter({ hasText: 'unmeasured' })
-      .locator('td')
-      .allTextContents(),
-    ['unmeasured', '—', '—', '—', '2'],
-  );
-  assert.equal(await storageMetrics.locator('.raw-metrics').getAttribute('open'), null);
-  if (artifactsDirectory)
-    await page.screenshot({
-      path: `${artifactsDirectory}/plugin-metrics-light.png`,
-      fullPage: true,
-    });
-  await storageMetrics.locator('.raw-metrics summary').click();
-  assert.ok(
-    (await storageMetrics.locator('pre').textContent()).includes('mado_storage_prefix_bytes'),
-  );
-  api.state.failPluginMetrics = true;
-  await storageMetrics.getByRole('button', { name: 'メトリクスを更新' }).click();
-  await storageMetrics.getByRole('alert').filter({ hasText: 'metrics unavailable' }).waitFor();
-  assert.equal(
-    await storageMetrics.locator('table').count(),
-    0,
-    'failed metrics kept displaying values',
-  );
-  api.state.failPluginMetrics = false;
-  await storageMetrics.getByRole('button', { name: '再試行', exact: true }).click();
-  await storageMetrics.getByText('3.0 GiB', { exact: true }).waitFor();
-  const measuredPrometheus = api.state.prometheus;
-  api.state.prometheus = '';
-  await storageMetrics.getByRole('button', { name: 'メトリクスを更新' }).click();
-  await storageMetrics.getByText('容量メトリクスはまだありません', { exact: true }).waitFor();
-  assert.equal(await storageMetrics.locator('table').count(), 0);
-  api.state.prometheus = measuredPrometheus;
-  await storageMetrics.getByRole('button', { name: 'メトリクスを更新' }).click();
-  await storageMetrics.getByText('3.0 GiB', { exact: true }).waitFor();
-
-  console.log('Browser check: project admin plugin permissions');
-  api.state.user.isAdmin = false;
-  await page.reload();
-  await page.getByRole('button', { name: '接続を確認' }).waitFor();
-  assert.equal(await page.getByRole('button', { name: 'Madoの接続を追加', exact: true }).count(), 0);
-  assert.equal(await page.getByRole('dialog').count(), 0);
-  assert.equal(await page.getByRole('button', { name: 'Madoの接続設定', exact: true }).count(), 0);
-  const forbiddenStatus = await page.evaluate(async (url) => {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        kind: 'mado',
-        name: 'Forbidden',
-        config: {
-          apiUrl: 'http://mado-api.invalid', webUrl: 'http://mado-web.invalid',
-        },
-        enabled: false,
-      }),
-    });
-    return response.status;
-  }, `/api/projects/${api.state.project.id}/plugins`);
-  assert.equal(forbiddenStatus, 403);
-  assert.equal(api.state.plugins.length, 2);
-  await page.getByRole('button', { name: '接続を確認' }).click();
-  await page.getByText('接続を確認しました', { exact: true }).waitFor();
-  await storageMetrics.getByRole('button', { name: 'メトリクスを更新' }).click();
-  await storageMetrics.getByText('3.0 GiB', { exact: true }).waitFor();
-  // 取り込み・検索・イベントの再送の操作は無い。
-  assert.equal(await page.getByLabel('データセットを検索').count(), 0);
-  assert.equal(await page.getByRole('button', { name: 'イベントを再送' }).count(), 0);
-  // mado S3 Data Catalog側でtokenからCapacity Readを外す。次の接続確認からメトリクスは出なくなる。
-  api.state.madoAccessTokenGrant = { ...api.state.madoAccessTokenGrant, scopes: [] };
-  api.state.plugins[0].configRevision++;
-  api.state.plugins[0].manifest = null;
-  api.state.plugins[0].accessTokenGrant = null;
-  const metricsCalls = api.state.calls.filter(
-    (call) => call.path.endsWith('/metrics') && call.path.includes('/plugins/'),
-  ).length;
-  await page.reload();
-  await page.getByRole('button', { name: '接続を確認' }).waitFor();
-  await page.getByRole('button', { name: '接続を確認' }).click();
-  await page.getByText('接続を確認しました', { exact: true }).waitFor();
-  assert.equal(
-    await page.getByRole('heading', { name: 'Storage metrics', exact: true }).count(),
-    0,
-  );
-  assert.equal(
-    api.state.calls.filter(
-      (call) => call.path.endsWith('/metrics') && call.path.includes('/plugins/'),
-    ).length,
-    metricsCalls,
-  );
-  api.state.user.isAdmin = true;
 
   console.log('Browser check: tokens');
   await page.goto(`${projectBase}/settings`);
@@ -406,7 +275,7 @@ try {
     false,
   );
   console.log(
-    'Browser smoke passed: authentication, all screens, compact columns, filtering, comparison, previews, upload, version/alias, built-in Mado configuration permissions/metrics/import, tokens, CPU launch, enqueue retry, cancellation, API errors, theme, mobile.',
+    'Browser smoke passed: authentication, all screens, compact columns, filtering, comparison, previews, upload, version/alias, tokens, CPU launch, enqueue retry, cancellation, API errors, theme, mobile.',
   );
 } finally {
   await browser.close();

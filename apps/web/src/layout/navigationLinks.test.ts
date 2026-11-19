@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { navigationGroups, navigationLinks, projectHomePath } from './navigationLinks';
+import {
+  globalSettingsLink,
+  navigationGroups,
+  navigationLinks,
+  projectHomePath,
+} from './navigationLinks';
 import {
   isAdminSection,
   PASSWORD_CHANGE_PATH,
@@ -15,15 +20,15 @@ const ADMIN_PATHS = [
   '/settings/users',
   '/settings/storage',
   '/settings/launchers',
+  '/settings/plugins',
   '/settings/audit',
 ];
 
 describe('navigationLinks', () => {
-  it('Project を開いた viewer には Plugins を出さず、全体設定と全体管理も出さない', () => {
+  it('Project を開いた利用者の組には、全体設定と全体管理の画面を並べない', () => {
     const links = paths(
       navigationLinks({
         projectId: 'p1',
-        projectRole: 'viewer',
         isGlobalAdmin: false,
         showsExecutionScreens: true,
       }),
@@ -32,16 +37,20 @@ describe('navigationLinks', () => {
     expect(links).toContain('/projects/p1/settings');
     // Hooksはどのメンバーも見られる。作成と切り替えの権限はページの側で確かめる。
     expect(links).toContain('/projects/p1/hooks');
-    expect(links).not.toContain('/projects/p1/plugins');
-    // 全体設定はユーザーメニューから開き、Projectのサイドバーからは開かない。
+    // 全体設定の画面は並べず、下端の入口（globalSettingsLink）からまとめて開く。
     expect(links.filter((link) => link.startsWith('/settings/'))).toEqual([]);
   });
 
-  it('Project admin には Plugins を出す', () => {
-    const links = paths(
-      navigationLinks({ projectId: 'p1', projectRole: 'admin', isGlobalAdmin: false }),
-    );
-    expect(links).toContain('/projects/p1/plugins');
+  it('Project を開いている間は、並びの下端に全体設定への入口を1つ出す', () => {
+    expect(globalSettingsLink('p1')).toEqual({
+      screen: 'globalSettings',
+      to: '/settings/account',
+      label: '全体設定',
+    });
+  });
+
+  it('Project を開いていないときは全体設定の画面が並ぶので、入口は出さない', () => {
+    expect(globalSettingsLink(undefined)).toBeNull();
   });
 
   it('Project を開いていない一般利用者には全体設定の組（アカウント・コンピュータ・このアプリについて）だけを出す', () => {
@@ -64,7 +73,6 @@ describe('navigationLinks', () => {
   it('Project の組は 記録・モデル・データ・実行・プロジェクト管理 の順で、全体管理者にも全体設定と全体管理は付かない', () => {
     const groups = navigationGroups({
       projectId: 'p1',
-      projectRole: 'admin',
       isGlobalAdmin: true,
       showsExecutionScreens: true,
     });
@@ -81,15 +89,14 @@ describe('navigationLinks', () => {
       '/projects/p1/reports',
     ]);
     expect(groups[4]!.links).toEqual([
-      { screen: 'plugins', to: '/projects/p1/plugins', label: text.plugins },
       { screen: 'settings', to: '/projects/p1/settings', label: text.settings },
     ]);
     // Projectの画面は、どれも組全体を通してちょうど1回ずつ出る。
-    expect(new Set(paths(groups.flatMap((group) => group.links))).size).toBe(15);
+    expect(new Set(paths(groups.flatMap((group) => group.links))).size).toBe(14);
   });
 
   it('Jobを動かせるコンピュータが無いProjectには、実行の画面と実行の組を出さない', () => {
-    const groups = navigationGroups({ projectId: 'p1', projectRole: 'admin', isGlobalAdmin: false });
+    const groups = navigationGroups({ projectId: 'p1', isGlobalAdmin: false });
     expect(groups.map((group) => group.label)).toEqual([
       text.navigationGroupTracking,
       text.navigationGroupModels,
@@ -103,12 +110,11 @@ describe('navigationLinks', () => {
       '/projects/p1/datasets',
       '/projects/p1/artifacts',
       '/projects/p1/lineage',
-      '/projects/p1/plugins',
       '/projects/p1/settings',
     ]);
   });
 
-  it('全体管理の項目名は ユーザー・ストレージ・ランチャー・監査ログ など各画面の見出しと同じ', () => {
+  it('全体管理の項目名は ユーザー・ストレージ・ランチャー・Plugins・監査ログ など各画面の見出しと同じ', () => {
     const [, group] = navigationGroups({ isGlobalAdmin: true });
     expect(group!.label).toBe('全体管理');
     expect(group!.links.map((link) => link.label)).toEqual([
@@ -116,6 +122,7 @@ describe('navigationLinks', () => {
       'ユーザー',
       'ストレージ',
       'ランチャー',
+      'Plugins',
       '監査ログ',
     ]);
     const labels = navigationLinks({ isGlobalAdmin: true }).map((link) => link.label);
@@ -123,7 +130,7 @@ describe('navigationLinks', () => {
   });
 
   it('プロジェクト設定の項目名は「プロジェクト設定」', () => {
-    const links = navigationLinks({ projectId: 'p1', projectRole: 'viewer', isGlobalAdmin: false });
+    const links = navigationLinks({ projectId: 'p1', isGlobalAdmin: false });
     expect(links.find((link) => link.screen === 'settings')?.label).toBe('プロジェクト設定');
   });
 });

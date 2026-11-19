@@ -1,8 +1,7 @@
-import type { ProjectRole } from '@mmt/contracts';
-import { canManagePlugins } from '../lib/permissions';
 import { text } from '../i18n/catalog';
 import {
   ADMIN_SECTIONS,
+  DEFAULT_SETTINGS_SECTION,
   GENERAL_SETTINGS_SECTIONS,
   SETTINGS_SECTION_LABELS,
   settingsSectionPath,
@@ -23,17 +22,17 @@ type ProjectScreen =
   | 'hooks'
   | 'workflows'
   | 'compute'
-  | 'plugins'
   | 'settings';
 
 // サイドバーとドロワーに出すProjectの画面の組。表示の順に並べる。
-// 全体設定の画面は別の組を持ち、Projectを開いていないときだけ出す。
+// 全体設定の画面は別の組を持ち、Projectを開いていないときだけ出す。Projectを開いている間は、
+// 全体設定への入口を1つだけ、並びの下端に置く（globalSettingsLink）。
 const SCREEN_GROUPS: { label: string; screens: ProjectScreen[] }[] = [
   { get label() { return text.navigationGroupTracking }, screens: ['experiments', 'sweeps', 'reports'] },
   { get label() { return text.navigationGroupModels }, screens: ['models', 'tasks', 'codes'] },
   { get label() { return text.navigationGroupData }, screens: ['datasets', 'artifacts', 'lineage'] },
   { get label() { return text.navigationGroupExecution }, screens: ['workflows', 'jobs', 'hooks', 'compute'] },
-  { get label() { return text.navigationGroupProjectManagement }, screens: ['plugins', 'settings'] },
+  { get label() { return text.navigationGroupProjectManagement }, screens: ['settings'] },
 ];
 
 // Jobを動かす機能の画面。Jobを動かせるコンピュータが無いProjectでは使えないので、
@@ -48,8 +47,11 @@ const EXECUTION_SCREENS: readonly ProjectScreen[] = [
   'compute',
 ];
 
-/** Projectの画面か、全体設定の画面（全体管理の画面を含む）。 */
-export type NavigationScreen = ProjectScreen | SettingsSection;
+/** Projectの画面から全体設定へ移る入口。全体設定のどの画面でもなく、全体設定そのものを指す。 */
+type GlobalSettingsEntry = 'globalSettings';
+
+/** Projectの画面か、全体設定の画面（全体管理の画面を含む）か、全体設定への入口。 */
+export type NavigationScreen = ProjectScreen | SettingsSection | GlobalSettingsEntry;
 
 export interface NavigationLink {
   screen: NavigationScreen;
@@ -64,7 +66,6 @@ export interface NavigationGroup {
 
 interface NavigationAccess {
   projectId?: string;
-  projectRole?: ProjectRole;
   isGlobalAdmin: boolean;
   /** Projectで実行の画面を出すか（useShowsExecutionScreens）。Projectを開いていないときは使わない。 */
   showsExecutionScreens?: boolean;
@@ -85,14 +86,13 @@ function settingsLinks(sections: readonly SettingsSection[]): NavigationLink[] {
 
 /**
  * メインのナビゲーションに出す画面を組に分けて返す。Projectを開いているときはその画面
- * （Pluginsは管理できる人だけ、実行の画面はJobを動かせるコンピュータがあるときだけ）で、全体設定には
- * ユーザーメニューから行く。開いていないとき
+ * （実行の画面はJobを動かせるコンピュータがあるときだけ）で、全体設定には並びの下端の入口
+ * （globalSettingsLink）かユーザーメニューから行く。開いていないとき
  * （全体設定の画面や、開くProjectが無いとき）は、全員に全体設定を、全体管理者には全体管理も出す。
  * リンクが1つも無い組は出さない。
  */
 export function navigationGroups({
   projectId,
-  projectRole,
   isGlobalAdmin,
   showsExecutionScreens = false,
 }: NavigationAccess): NavigationGroup[] {
@@ -100,7 +100,6 @@ export function navigationGroups({
   return SCREEN_GROUPS.map(({ label, screens }) => ({
     label,
     links: screens
-      .filter((screen) => screen !== 'plugins' || canManagePlugins(projectRole, isGlobalAdmin))
       .filter((screen) => showsExecutionScreens || !EXECUTION_SCREENS.includes(screen))
       .map((screen) => ({ screen, to: `/projects/${projectId}/${screen}`, label: text[screen] })),
   })).filter((group) => group.links.length > 0);
@@ -113,6 +112,20 @@ function settingsGroups(isGlobalAdmin: boolean): NavigationGroup[] {
   if (isGlobalAdmin)
     groups.push({ label: text.administration, links: settingsLinks(ADMIN_SECTIONS) });
   return groups;
+}
+
+/**
+ * Projectの画面の並びの下端に置く、全体設定への入口。全体設定はアカウントの画面で開き、その
+ * サイドバーからほかの画面へ進む。Projectを開いていないときは全体設定の画面がもう並んでいるので
+ * 出さない。
+ */
+export function globalSettingsLink(projectId: string | undefined): NavigationLink | null {
+  if (!projectId) return null;
+  return {
+    screen: 'globalSettings',
+    to: settingsSectionPath(DEFAULT_SETTINGS_SECTION),
+    label: text.globalSettings,
+  };
 }
 
 /** navigationGroupsと同じ画面を、1つの一覧にして返す。 */
