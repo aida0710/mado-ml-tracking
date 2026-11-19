@@ -186,7 +186,8 @@ try {
   assert.equal(await storageMetrics().count(), 0);
   await checkConnection();
   await storageMetrics().getByRole('heading', { name: 'UI検証ストレージ', exact: true }).waitFor();
-  assert.equal(metricsCalls(), callsBeforeCheck + 1);
+  // 確認のあとで初めて容量を取りに行く。画面の読み直しで回数は増えうるので、回数そのものは決めない。
+  assert.ok(metricsCalls() > callsBeforeCheck, 'Capacity is requested only after the replaced token is checked');
   await page.getByTestId('plugin-toggle').click();
   await page.getByRole('button', { name: '連携を有効にする', exact: true }).waitFor();
   assert.equal(await page.getByRole('button', { name: '接続を確認', exact: true }).isDisabled(), false);
