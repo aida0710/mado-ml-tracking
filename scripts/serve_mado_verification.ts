@@ -1,12 +1,12 @@
 /**
- * 使い捨ての本物のmado ML TrackingのAPIとDB。Registryのfixtureを付けた本物の
+ * 使い捨ての本物のmado ML TrackingのAPIとDB。fixtureの認証と容量の値を付けた本物の
  * mado S3 Data Catalogの経路と並べて動かす。
  */
 import { randomBytes } from 'node:crypto';
 import { mkdir, writeFile, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { serve } from '@hono/node-server';
-import type { Experiment, Project } from '@mmt/contracts';
+import type { Project } from '@mmt/contracts';
 import { createHarness, entity, request } from '../apps/api/test/harness.js';
 import { startMadoVerificationServer } from './fixtures/madoVerificationServer.js';
 
@@ -59,14 +59,6 @@ try {
       body: { name: 'Mado内蔵連携の確認' },
     }),
   );
-  const experiment = await entity<Experiment>(
-    await request(harness.app, `/api/projects/${project.id}/experiments`, {
-      method: 'POST',
-      cookie: administrator.cookie,
-      headers: originHeaders,
-      body: { name: 'MadoへのRun送信' },
-    }),
-  );
   // ローカルのブラウザでの検証が、この短期間だけ有効なfixtureの認証情報を読む。コンソールへの
   // 出力やスクリーンショットには決して出さない。
   await mkdir(path.dirname(settingsFile), { recursive: true, mode: 0o700 });
@@ -74,14 +66,11 @@ try {
     settingsFile,
     JSON.stringify({
       projectId: project.id,
-      experimentId: experiment.id,
       madoUrl: mado.url,
       credentials: { accessToken: mado.accessToken },
-      madoVersionId: mado.versionId,
     }),
     { mode: 0o600 },
   );
-  harness.outbox.start();
   server = serve({ hostname: '127.0.0.1', port, fetch: harness.app.fetch });
   console.log(JSON.stringify({ event: 'mado_verification_ready', port, projectId: project.id }));
   process.once('SIGINT', () => {

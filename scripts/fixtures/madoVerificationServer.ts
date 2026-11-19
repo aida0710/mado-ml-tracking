@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Hono } from 'hono';
@@ -20,18 +20,15 @@ async function listen(app: Hono) {
   };
 }
 
+/** 容量の応答に入る、fixtureのバケットの大きさ。検証する側が応答の中身をこの値で確かめる。 */
+export const MADO_VERIFICATION_BUCKET_BYTES = '1048576';
+
 /**
- * 本物のmado S3 Data CatalogのHTTPの経路と、分離したRegistryの応答。本番のAPIやDBには
- * 接続しない。
+ * 本物のmado S3 Data CatalogのHTTPの経路（アクセストークン自身の情報と容量メトリクス）に、
+ * fixtureの認証と容量の値を付けたもの。本番のAPIやDBには接続しない。
  */
 export async function startMadoVerificationServer() {
   const madoRoot = process.env.MMT_VERIFY_MADO_ROOT ?? path.resolve('../mado');
-  const { mountServiceLineageRoutes } = await import(
-    pathToFileURL(path.join(madoRoot, 'api/routes/service-lineage.ts')).href
-  );
-  const { mountOpenLineageRoutes } = await import(
-    pathToFileURL(path.join(madoRoot, 'api/routes/openlineage.ts')).href
-  );
   const { mountMetricsRoutes } = await import(
     pathToFileURL(path.join(madoRoot, 'api/routes/metrics.ts')).href
   );
@@ -39,75 +36,22 @@ export async function startMadoVerificationServer() {
     pathToFileURL(path.join(madoRoot, 'api/routes/service-access-token.ts')).href
   );
 
-  const datasetId = randomUUID(),
-    versionId = randomUUID();
-  const version = {
-    id: versionId,
-    datasetId,
-    version: 'v1',
-    contentHash: `sha256:${createHash('sha256').update('mado-verification-fixture').digest('hex')}`,
-    manifestUri: null,
-    manifestHash: null,
-    schemaUri: null,
-    createdAt: new Date().toISOString(),
-    metadata: { secret: 'private-fixture' },
-    locations: [
-      {
-        id: randomUUID(),
-        uri: 's3://fixtures/corpus/v1',
-        status: 'available',
-        storageKind: 's3',
-        isPrimary: true,
-      },
-    ],
-  };
-  const dataset = {
-    datasetId,
-    namespace: 'speech',
-    name: 'fixture-corpus',
-    displayName: 'Fixture Corpus',
-    description: '',
-    mediaType: 'audio',
-    currentVersionId: versionId,
-    versionCount: 1,
-    createdAt: version.createdAt,
-    versions: [version],
-  };
-  // mado S3 Data CatalogのML Trackingプリセットと同じく、1つのaccess tokenでデータセットを読み、
-  // Runの記録を送り、容量を読む。
+  // 容量の読み取りを許したアクセストークン。
   const accessToken = randomBytes(24).toString('hex');
   const principal = {
     serviceAccountId: randomUUID(),
     keyId: randomUUID(),
     keyName: 'ML Tracking verification',
-    scopes: ['lineage:read', 'lineage:write', 'metrics:read'],
-    namespaces: ['speech', 'mado-model-tracking', 'local'],
+    scopes: ['metrics:read'],
     // 容量のメトリクスはtokenに載っている接続だけを読む。このtokenはすべての接続を持つ。
     connections: ['*'],
+    // mado S3 Data Catalog v0.5.3までの経路は、これを応答に載せる。v0.6.0以降の経路は読まない。
+    namespaces: ['*'],
     expiresAt: null,
   };
   const authenticate = async (token: string) => (token === accessToken ? principal : null);
-  const events: Array<{
-    eventType: string;
-    inputs: Array<{ name: string; namespace: string; facets: unknown }>;
-    outputs: Array<{ name: string; namespace: string; facets: unknown }>;
-  }> = [];
-  const registry = {
-    searchDatasets: async (query: { namespace?: string }) =>
-      !query.namespace || query.namespace === dataset.namespace
-        ? { results: [dataset], totalCount: 1 }
-        : { results: [], totalCount: 0 },
-    getDataset: async () => dataset,
-    getVersion: async () => version,
-    ingestOpenLineage: async (event: (typeof events)[number]) => {
-      events.push(event);
-      return { accepted: true, duplicate: false };
-    },
-  };
-  const mado = new Hono(),
-    madoPrivate = new Hono();
+  const madoPrivate = new Hono();
   mountServiceAccessTokenRoutes(madoPrivate, { authenticate });
-  mountServiceLineageRoutes(madoPrivate, { registry, authenticate });
   mountMetricsRoutes(madoPrivate, {
     authenticate,
     collectors: [
@@ -121,7 +65,7 @@ export async function startMadoVerificationServer() {
             samples: [
               {
                 labels: { connection_id: 'fixture', bucket: 'corpus' },
-                value: '1048576',
+                value: MADO_VERIFICATION_BUCKET_BYTES,
               },
             ],
           },
@@ -129,10 +73,8 @@ export async function startMadoVerificationServer() {
       },
     ],
   });
+  const mado = new Hono();
   mado.route('/api/mado', madoPrivate);
-  const lineage = new Hono();
-  mountOpenLineageRoutes(lineage, { registry, auth: { authenticate } });
-  mado.route('/api', lineage);
   const server = await listen(mado);
-  return { ...server, events, accessToken, datasetId, versionId };
+  return { ...server, accessToken, tokenName: principal.keyName };
 }
