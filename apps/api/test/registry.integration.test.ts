@@ -6,8 +6,6 @@ import type {
   LineageGraph,
   Model,
   ModelVersion,
-  PluginConnection,
-  PluginEvent,
   Project,
   Run,
   RunKind,
@@ -16,7 +14,6 @@ import { transaction } from '../src/db/database.js';
 import { migrate } from '../src/db/migrate.js';
 import { reserveModelVersion } from '../src/repositories/modelVersionNumbering.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
-import { madoPluginInput } from './pluginFixtures.js';
 import { applyMigrationsBefore } from './migrationFixtures.js';
 import { executionFixture, projectFixture, referenceDigest } from './fixtures.js';
 import { modelFixture, type VersionResponse } from './mlflow-models-fixtures.js';
@@ -905,15 +902,8 @@ describe.skipIf(!testDatabaseUrl)('出力モデル登録とバージョンの自
     expect(next.version).toBe('1');
   });
 
-  it('終端Runへの遅れた登録はoutboxへRun eventを再送し、outputModelVersionIdsを含める', async () => {
+  it('終端Runへの遅れた登録も、RunのoutputModelVersionIdsに入る', async () => {
     const fixture = await executionFixture(harness);
-    await entity<PluginConnection>(
-      await request(harness.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: madoPluginInput({ name: 'Lineage' }),
-      }),
-    );
     const run = await createRun(fixture, 'finetuning');
     for (const status of ['running', 'finished'])
       await entity(
@@ -927,12 +917,6 @@ describe.skipIf(!testDatabaseUrl)('出力モデル登録とバージョンの自
     const version = await entity<ModelVersion>(
       await registerVersion(fixture, fixture.model.id, { sourceRunId: run.id }),
     );
-    const refreshed = await harness.database.query<{ event: PluginEvent }>(
-      "SELECT event FROM plugin_outbox WHERE event->'run'->'outputModelVersionIds' @> $1::jsonb",
-      [JSON.stringify([version.id])],
-    );
-    expect(refreshed.rows).toHaveLength(1);
-    expect(refreshed.rows[0]!.event.type).toBe('run.finished');
     expect((await readRun(fixture, run.id)).outputModelVersionIds).toEqual([version.id]);
   });
 

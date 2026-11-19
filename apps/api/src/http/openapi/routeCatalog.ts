@@ -222,10 +222,6 @@ import {
   localLoginSchema,
 } from '../../routes/authRoutes.js';
 import {
-  pluginDatasetImportSchema,
-  pluginDatasetSearchSchema,
-} from '../../routes/pluginRoutes.js';
-import {
   runComparisonCsvQuerySchema,
   runComparisonSchema as runComparisonRequestSchema,
   runLogQuerySchema,
@@ -2590,14 +2586,6 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
   // plugins
   {
     method: 'get',
-    path: '/api/projects/:p/plugins/availability',
-    tag: 'plugins',
-    summary: '内蔵連携の表示用状態（資格情報を含まない）',
-    access: PROJECT_VIEWER,
-    responses: { 200: contract.itemsOf(contract.pluginAvailabilitySchema) },
-  },
-  {
-    method: 'get',
     path: '/api/projects/:p/plugins',
     tag: 'plugins',
     summary: '内蔵連携の接続設定',
@@ -2630,7 +2618,6 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     access: PROJECT_ADMIN,
     responses: { 200: contract.pluginConnectionSchema },
     errors: [
-      ...routeError(422, 'plugin_token_scope_missing', 'plugin_job_namespace_not_allowed'),
       ...routeError(502, 'plugin_mado_access_token_unsupported'),
       ...routeError(503, 'plugin_token_unavailable'),
     ],
@@ -2646,41 +2633,6 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
       ...routeError(422, 'plugin_capability_unsupported'),
       ...routeError(503, 'plugin_token_unavailable'),
     ],
-  },
-  {
-    method: 'get',
-    path: '/api/projects/:p/plugins/:id/outbox',
-    tag: 'plugins',
-    summary: 'pluginのevent送信状況',
-    access: PROJECT_ADMIN,
-    responses: { 200: contract.pluginOutboxSummarySchema },
-  },
-  {
-    method: 'post',
-    path: '/api/projects/:p/plugins/:id/datasets/search',
-    tag: 'plugins',
-    summary: 'plugin側のDatasetを検索',
-    access: PROJECT_ADMIN,
-    body: pluginDatasetSearchSchema,
-    responses: { 200: contract.itemsOf(contract.pluginDatasetSchema) },
-    errors: routeError(503, 'plugin_token_unavailable'),
-  },
-  {
-    method: 'post',
-    path: '/api/projects/:p/plugins/:id/datasets/import',
-    tag: 'plugins',
-    summary: 'plugin側のDatasetを参照として取り込む',
-    access: PROJECT_ADMIN,
-    body: pluginDatasetImportSchema,
-    responses: { 201: contract.datasetVersionSchema },
-  },
-  {
-    method: 'post',
-    path: '/api/projects/:p/plugins/:id/events/retry',
-    tag: 'plugins',
-    summary: '送れなかったeventを再送',
-    access: PROJECT_ADMIN,
-    responses: { 200: contract.pluginEventRetryResultSchema },
   },
 
   // promotion
@@ -3365,7 +3317,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     method: 'get',
     path: '/api/projects/:p/operations-alerts',
     tag: 'operations',
-    summary: '運用アラート（Jobのheartbeat途絶・worker停止・plugin送信滞留）',
+    summary: '運用アラート（Jobのheartbeat途絶・worker停止）',
     access: PROJECT_VIEWER,
     query: operationsAlertQuerySchema,
     responses: { 200: contract.itemsOf(contract.operationsAlertSchema) },

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type { PluginConnection } from '@mmt/contracts';
 import { pluginsApi } from '../api/plugins';
-import { refreshPluginAvailability } from '../lib/pluginAvailabilityRevision';
 import { getPluginConnectionsWithSavedResponses, getUnobservedPluginResponses } from '../lib/pluginConnectionResponses';
 import { useQuery } from './useQuery';
 
@@ -21,7 +20,6 @@ export function usePluginConnections(projectId: string) {
       if (saved && saved.configRevision > plugin.configRevision) return previous;
       return new Map(previous).set(plugin.id, plugin);
     });
-    refreshPluginAvailability(projectId);
     query.reload();
   }
   return {

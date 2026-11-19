@@ -98,7 +98,7 @@ See [Notifications and operations alerts](/en/admin/notifications).
 
 ## Mado integration {#mado-plugin}
 
-The Mado integration is built into the API server. There is no separate service and no `.env` of its own. The only variable it needs in the API server's `.env` is the key that encrypts Mado access tokens. Mado URLs and access tokens are not environment variables: a global administrator saves them in **Integrations** in the Project. Namespaces are not configured anywhere; Mado reports them for the access token ([Mado integration](/en/admin/plugins)).
+The Mado integration is built into the API server. There is no separate service and no `.env` of its own. The only variable it needs in the API server's `.env` is the key that encrypts Mado access tokens. Mado URLs and access tokens are not environment variables: a global administrator saves them in **Integrations** in the Project ([Mado integration](/en/admin/plugins)).
 
 | Variable | Default | Content |
 | --- | --- | --- |

@@ -53,7 +53,7 @@ Model Registryの自動実行ルールはProject admin/global adminが作成・�
 
 `storage:metrics`対応Pluginの詳細には、Prometheusから読み取ったconnection/bucket/prefix別の容量・件数・計測時間・失敗回数を表示する。未計測値は補完せず、元の値はtooltipと折りたたみraw表示に残す。Parserは[Prometheus text exposition](https://prometheus.io/docs/instrumenting/exposition_formats/)のsample形式を扱う。Plugin登録は全体管理者、登録済みPluginの利用はProject adminに限る。
 
-`browser-followup-integration.mjs`は実APIのデモでRuns既定列を確認し、ローカルの`Web followup permissions`プロジェクトで全体管理者による登録・Project adminのAPI403・既存Pluginの検査/searchのエラー表示・再送を検証する。未設定のlocalhost接続を検証記録として残し、実Mado collectorへの接続成功とは扱わない。繰り返し実行時は同じ検証プロジェクトと接続を使う。
+`browser-followup-integration.mjs`は実APIのデモでRuns既定列を確認し、ローカルの`Web followup permissions`プロジェクトで全体管理者による登録・Project adminのAPI403・既存Pluginの接続確認・容量取得のエラーを検証する。未設定のlocalhost接続を検証記録として残し、実Mado collectorへの接続成功とは扱わない。繰り返し実行時は同じ検証プロジェクトと接続を使う。
 
 `browser-integration.mjs`はlocalhostの実APIに検証用プロジェクトを作り、登録・Artifacts・trainingジョブのenqueue/cancel/retry・token失効・設定の保存を確認する。root担当が用意したdevelopment API、明示投入したデモ、Local CPU targetを前提にする。実行後も検証記録をDBに残す。SSH接続や外部のモデル取得は行わない。
 

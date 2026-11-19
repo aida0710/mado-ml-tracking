@@ -20,7 +20,6 @@ import { DatasetFiles } from '../components/DatasetFiles';
 import { DatasetActionsMenu } from '../components/DatasetActionsMenu';
 import { DatasetVersionParentsPanel } from '../components/DatasetVersionParentsPanel';
 import { DatasetVersionUsage } from '../components/DatasetVersionUsage';
-import { DatasetPluginActions } from '../components/DatasetPluginActions';
 import { datasetVersionLabel } from '../lib/datasetVersionLabel';
 import { formatBytes, shortRunId } from '../lib/format';
 import { getFieldValue } from '../lib/formValues';
@@ -51,7 +50,6 @@ export function DatasetsPage() {
         eyebrow={project.name}
         actions={
           <>
-            <DatasetPluginActions projectId={project.id} />
             {canEdit && (
               <button className="button primary" onClick={() => setDialog('dataset')}>
                 <Plus size={15} />
@@ -216,7 +214,6 @@ export function DatasetsPage() {
                       {registry.selectedVersion && (
                         <div className="version-detail">
                           <div className="version-detail-actions">
-                            <DatasetPluginActions projectId={project.id} version={registry.selectedVersion} />
                             {canEdit && (
                               <button
                                 className="button small danger"

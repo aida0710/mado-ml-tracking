@@ -11,29 +11,20 @@ import {
 export const MADO_CONFIG_FIXTURE: MadoPluginConfig = {
   apiUrl: 'https://mado-api.example.test',
   webUrl: 'https://mado.example.test',
-  lineageUrl: 'https://mado-lineage.example.test',
-  jobNamespace: 'mado-model-tracking',
-  storageSystemKey: 'mado-model-tracking',
 };
 
 export const MADO_CREDENTIALS_FIXTURE: MadoPluginCredentialsInput = {
   accessToken: 'fixture-mado-access-token',
 };
 
-/**
- * fixtureのtokenについてmado S3 Data Catalogが返す内容。2つのnamespaceで読み取りと送信ができ、
- * capacityは無し。
- */
+/** fixtureのtokenについてmado S3 Data Catalogが返す内容。capacityの読み取りは無し。 */
 export const MADO_ACCESS_TOKEN_GRANT_FIXTURE: MadoAccessTokenGrant = {
   name: 'ML Tracking',
-  scopes: ['lineage:read', 'lineage:write'],
-  namespaces: ['mado-model-tracking', 'remote'],
+  scopes: [],
   expiresAt: null,
 };
 
-/**
- * 既存のRunのテストは配信を明示的に有効にする。公開APIでは、省略すれば今も無効の意味になる。
- */
+/** 既定で有効な接続を作る。公開APIでは、enabledを省略すれば無効の意味になる。 */
 export function madoPluginInput({
   name = 'Mado',
   enabled = true,
@@ -60,15 +51,7 @@ export function madoClientStub(
   const { grant = MADO_ACCESS_TOKEN_GRANT_FIXTURE, ...clientOverrides } = overrides;
   return {
     checkConnection: async () => ({ manifest: madoManifest(grant), accessTokenGrant: grant }),
-    accessTokenGrant: async () => grant,
-    manifest: async () => madoManifest(grant),
     metrics: async () => ({ prometheus: '' }),
-    searchDatasets: async () => ({ items: [] }),
-    datasetVersion: async () => {
-      throw new Error('A fixed Mado version fixture is required');
-    },
-    sendEvent: async () => undefined,
-    sendPayload: async () => undefined,
     ...clientOverrides,
   };
 }

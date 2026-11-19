@@ -1,7 +1,6 @@
 import type { Run, RunStatus } from '@mmt/contracts';
 import type { Connection } from '../db/database.js';
 import { isTerminalStatus } from '../domain/runTransitions.js';
-import { enqueueRunEvent } from './outboxEvents.js';
 
 export interface RunStatusChange {
   readonly previousStatus: RunStatus;
@@ -23,10 +22,9 @@ const HANDLER_SAVEPOINT = 'run_completion_handler';
 export class RunCompletionService {
   constructor(private readonly handlers: readonly RunCompletionHandler[]) {}
 
-  // Runの状態の変更はすべてここを通る。pluginのoutboxのイベントは変更ごとに出す（run.startedを
-  // 含む）が、終了時のハンドラは、終了していない状態から終了状態への遷移でだけ動く。
+  // Runの状態の変更はすべてここを通る。終了時のハンドラは、終了していない状態から終了状態への
+  // 遷移でだけ動く。
   async recordStatusChange(connection: Connection, change: RunStatusChange): Promise<void> {
-    await enqueueRunEvent(connection, change.run);
     if (isTerminalStatus(change.previousStatus) || !isTerminalStatus(change.run.status)) return;
     for (const handler of this.handlers) await this.runHandler(connection, { handler, change });
   }

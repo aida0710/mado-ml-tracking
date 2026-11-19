@@ -304,7 +304,7 @@ export function createBrowserApi() {
     projectId: project.id,
     name: 'Mado',
     kind: 'mado',
-    config: {apiUrl: 'http://test.invalid', webUrl: 'https://mado.example.invalid', lineageUrl: 'http://test.invalid', jobNamespace: 'mado-model-tracking', storageSystemKey: 'mado-model-tracking'},
+    config: {apiUrl: 'http://test.invalid', webUrl: 'https://mado.example.invalid'},
     configRevision: 1,
     credentialsConfigured: {accessToken: true},
     secretStorageAvailable: true,
@@ -316,7 +316,7 @@ export function createBrowserApi() {
     name: plugin.name,
     version: '1.0.0',
     protocolVersion: '1.0',
-    capabilities: ['datasets:search', 'lineage:publish', 'storage:metrics'],
+    capabilities: ['storage:metrics'],
   };
   const artifact = {
     id: id(),
@@ -363,7 +363,7 @@ export function createBrowserApi() {
     plugins: [plugin],
     // 接続確認のとき、フィクスチャのmado S3 Data Catalogが保存済みのアクセストークンについて返す内容。
     madoAccessTokenGrant: {
-      name: 'ML Tracking', scopes: ['lineage:read', 'lineage:write', 'metrics:read'], namespaces: ['test'], expiresAt: null,
+      name: 'ML Tracking', scopes: ['metrics:read'], expiresAt: null,
     },
     tokens: [],
     artifacts: [artifact],
@@ -871,7 +871,7 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       }
     }
     if (resource === 'plugins')
-      return routeBuiltinPlugins({state, request: {method, key, subresource, parts, body}, reply, id, now, project, user, datasetVersion, manifest});
+      return routeBuiltinPlugins({state, request: {method, key, subresource, body}, reply, id, now, project, user, manifest});
     // テスト自身の出力にも出す。モックに無いAPIを画面が呼んでも、失敗するのはコンソールを見ている
     // 確認だけなので、足りないrouteはここで見つけるほうが早い。
     console.warn(`[browserApi] 501 Unhandled test API: ${method} ${path}`);

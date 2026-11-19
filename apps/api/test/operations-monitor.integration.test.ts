@@ -5,26 +5,16 @@ import type {
   NotificationEvent,
   NotificationEventType,
   OperationsAlert,
-  PluginConnection,
-  PluginOutboxSummary,
 } from '@mmt/contracts';
-import { createApplication } from '../src/app.js';
 import { jobCreateSchema } from '../src/domain/validation.js';
-import { PLUGIN_STALL_ATTEMPTS } from '../src/domain/operationsAlerts.js';
 import { OperationsMonitor } from '../src/services/operationsMonitor.js';
 import { createHarness, entity, login, request, testDatabaseUrl, type Harness } from './harness.js';
 import { executionFixture } from './fixtures.js';
-import { MADO_CREDENTIALS_FIXTURE, madoClientStub, madoPluginInput } from './pluginFixtures.js';
-
-const environment = {
-  MMT_NOTIFICATION_OPS_URL: 'https://hooks.slack.example/services/T/B/OPS',
-};
 
 const OPERATIONS_EVENT_TYPES: NotificationEventType[] = [
   'job.heartbeat_stale',
   'job.heartbeat_recovered',
   'worker.offline',
-  'plugin.delivery_stalled',
 ];
 
 describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（独立PostgreSQL）', () => {
@@ -38,25 +28,6 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
   afterAll(async () => {
     await harness?.close();
   });
-
-  /** `plugin.isUnavailable`がtrueの間、pluginのクライアントが失敗するアプリ。 */
-  function applicationWithPlugin() {
-    const plugin = { isUnavailable: true, delivered: [] as string[] };
-    const client = madoClientStub({
-      sendPayload: async (payload) => {
-        if (plugin.isUnavailable) throw new Error('Unavailable');
-        plugin.delivered.push(payload);
-      },
-    });
-    const application = createApplication({
-      config: harness.config,
-      database: harness.database,
-      stores: harness.stores,
-      environment,
-      pluginClientFactory: () => client,
-    });
-    return { application, plugin };
-  }
 
   async function setup() {
     const fixture = await executionFixture(harness);
@@ -333,196 +304,8 @@ describe.skipIf(!testDatabaseUrl)('運用監視ループと運用アラート（
     ]);
   });
 
-  it('plugin送信が5回失敗するとstalled通知が1件出て、送信できるとアラートが閉じる', async () => {
+  it('アラート一覧はviewerが読めて、Projectの部外者は読めない', async () => {
     const fixture = await setup();
-    const { application, plugin } = applicationWithPlugin();
-    const connection = await entity<PluginConnection>(
-      await request(application.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: madoPluginInput(),
-      }),
-    );
-    const run = await fixture.newRun();
-    await entity(
-      await request(application.app, `${fixture.basePath}/runs/${run.id}`, {
-        method: 'PATCH',
-        cookie: fixture.editor.cookie,
-        body: { status: 'running' },
-      }),
-      200,
-    );
-    const makeDue = () =>
-      harness.database.query("UPDATE plugin_outbox SET next_attempt_at=now() WHERE status='pending'");
-
-    for (let attempt = 1; attempt < PLUGIN_STALL_ATTEMPTS; attempt++) {
-      await makeDue();
-      await application.outbox.dispatchBatch();
-    }
-    expect(await monitor().tick()).toMatchObject({ opened: 0 });
-    await makeDue();
-    await application.outbox.dispatchBatch();
-    expect(await monitor().tick()).toMatchObject({ opened: 1 });
-    expect(await monitor().tick()).toMatchObject({ opened: 0 });
-
-    const summaryPath = `${fixture.basePath}/plugins/${connection.id}/outbox`;
-    const stalled = await entity<PluginOutboxSummary>(
-      await request(application.app, summaryPath, { cookie: fixture.projectAdmin.cookie }),
-      200,
-    );
-    expect(stalled).toMatchObject({
-      pending: 1,
-      sending: 0,
-      maxAttempts: PLUGIN_STALL_ATTEMPTS,
-      lastError: 'plugin_delivery_failed',
-      lastDeliveredAt: null,
-      stalled: true,
-    });
-    expect(stalled.oldestPendingAt).toEqual(expect.any(String));
-
-    const queued = await queuedNotifications();
-    expect(queued).toHaveLength(1);
-    expect(queued[0]!.event).toMatchObject({
-      type: 'plugin.delivery_stalled',
-      details: { pluginId: connection.id, pluginName: 'Mado', undelivered: 1, maxAttempts: 5 },
-    });
-    expect(JSON.stringify(queued[0]!.event)).not.toContain(MADO_CREDENTIALS_FIXTURE.accessToken!);
-
-    plugin.isUnavailable = false;
-    await makeDue();
-    expect(await application.outbox.dispatchBatch()).toBe(1);
-    expect(await monitor().tick()).toMatchObject({ resolved: 1 });
-    expect(await listAlerts(fixture, '?state=all')).toEqual([
-      expect.objectContaining({ kind: 'plugin.delivery_stalled', resolution: 'recovered' }),
-    ]);
-    const recovered = await entity<PluginOutboxSummary>(
-      await request(application.app, summaryPath, { cookie: fixture.projectAdmin.cookie }),
-      200,
-    );
-    expect(recovered).toMatchObject({
-      pending: 0,
-      oldestPendingAt: null,
-      maxAttempts: 0,
-      lastError: null,
-      stalled: false,
-    });
-    expect(recovered.lastDeliveredAt).toEqual(expect.any(String));
-  });
-
-  it('15分以上未送信のeventはplugin滞留になり、pluginを無効にするとinactiveで閉じる', async () => {
-    const fixture = await setup();
-    const { application } = applicationWithPlugin();
-    const connection = await entity<PluginConnection>(
-      await request(application.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: madoPluginInput(),
-      }),
-    );
-    const run = await fixture.newRun();
-    await entity(
-      await request(application.app, `${fixture.basePath}/runs/${run.id}`, {
-        method: 'PATCH',
-        cookie: fixture.editor.cookie,
-        body: { status: 'running' },
-      }),
-      200,
-    );
-    expect(await monitor().tick()).toMatchObject({ opened: 0 });
-    await harness.database.query(
-      "UPDATE plugin_outbox SET created_at=now()-interval '901 seconds' WHERE plugin_id=$1",
-      [connection.id],
-    );
-    expect(await monitor().tick()).toMatchObject({ opened: 1 });
-
-    await entity(
-      await request(application.app, `${fixture.basePath}/plugins/${connection.id}`, {
-        method: 'PATCH',
-        cookie: fixture.administrator.cookie,
-        body: { enabled: false },
-      }),
-      200,
-    );
-    expect(await monitor().tick()).toMatchObject({ resolved: 1 });
-    expect(await listAlerts(fixture, '?state=all')).toEqual([
-      expect.objectContaining({ kind: 'plugin.delivery_stalled', resolution: 'inactive' }),
-    ]);
-    // 無効にしたpluginも未送信の件数は報告するが、滞っているとは数えない。
-    expect(
-      await entity<PluginOutboxSummary>(
-        await request(application.app, `${fixture.basePath}/plugins/${connection.id}/outbox`, {
-          cookie: fixture.administrator.cookie,
-        }),
-        200,
-      ),
-    ).toMatchObject({ pending: 1, stalled: false });
-  });
-
-  it('2つのmonitorを同時に動かしてもアラートと通知は重複しない', async () => {
-    const fixture = await setup();
-    const { job } = await claimedJob(fixture);
-    await ageJobHeartbeat(job.id);
-
-    const ticks = await Promise.all([monitor().tick(), monitor().tick(), monitor().tick()]);
-    expect(ticks.reduce((sum, tick) => sum + tick.opened, 0)).toBe(1);
-    expect(await queuedNotifications()).toHaveLength(1);
-    const open = await harness.database.query(
-      'SELECT count(*)::int AS count FROM operations_alerts WHERE resolved_at IS NULL',
-    );
-    expect(open.rows[0].count).toBe(1);
-  });
-
-  it('outbox summaryはProject admin以外に403、別Projectのpluginは404。アラート一覧はviewerが読めて部外者は読めない', async () => {
-    const fixture = await setup();
-    const { application } = applicationWithPlugin();
-    const connection = await entity<PluginConnection>(
-      await request(application.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: madoPluginInput(),
-      }),
-    );
-    // 公開する応答には認証情報が保存されているかどうかだけを出し、値は出さない。
-    expect(connection.tokenConfigured).toBe(true);
-    expect(JSON.stringify(connection)).not.toContain(MADO_CREDENTIALS_FIXTURE.accessToken!);
-    const unconfigured = await entity<PluginConnection>(
-      await request(application.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: madoPluginInput({ name: 'Unconfigured', enabled: false, credentials: {} }),
-      }),
-    );
-    expect(unconfigured.tokenConfigured).toBe(false);
-    const check = await request(
-      application.app,
-      `${fixture.basePath}/plugins/${unconfigured.id}/check`,
-      { method: 'POST', cookie: fixture.administrator.cookie },
-    );
-    expect(check.status).toBe(503);
-    expect(await check.text()).not.toContain(MADO_CREDENTIALS_FIXTURE.accessToken!);
-    const summaryPath = `${fixture.basePath}/plugins/${connection.id}/outbox`;
-    for (const identity of [fixture.editor, fixture.viewer])
-      expect((await request(application.app, summaryPath, { cookie: identity.cookie })).status).toBe(
-        403,
-      );
-    expect(
-      (await request(application.app, summaryPath, { cookie: fixture.projectAdmin.cookie })).status,
-    ).toBe(200);
-
-    const otherProject = await entity<{ id: string }>(
-      await request(application.app, '/api/projects', {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: { name: 'Other Project' },
-      }),
-    );
-    const crossProject = await request(
-      application.app,
-      `/api/projects/${otherProject.id}/plugins/${connection.id}/outbox`,
-      { cookie: fixture.administrator.cookie },
-    );
-    expect(crossProject.status).toBe(404);
-
     expect(await listAlerts(fixture)).toEqual([]);
     const outsider = await request(harness.app, `${fixture.basePath}/operations-alerts`, {
       cookie: fixture.outsider.cookie,

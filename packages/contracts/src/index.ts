@@ -808,13 +808,10 @@ export interface PluginManifest {
   capabilities: string[];
 }
 export type PluginKind = 'mado';
-/** namespaceは、mado S3 Data Catalogがaccess tokenに与えたgrantから来る。ここでは入力しない。 */
+/** apiUrlはAPIサーバーが呼ぶ接続先。webUrlは利用者がブラウザで開く画面で、設定の表示にだけ使う。 */
 export interface MadoPluginConfig {
   apiUrl: string;
   webUrl: string;
-  lineageUrl: string;
-  jobNamespace: string;
-  storageSystemKey: string;
 }
 /** シークレットは書き込みのリクエストでだけ受け付ける。tokenを省くと保存済みのものを残す。 */
 export interface MadoPluginCredentialsInput {
@@ -822,12 +819,7 @@ export interface MadoPluginCredentialsInput {
 }
 import type { MadoAccessTokenGrant } from './madoAccessTokenGrant.js';
 export type { MadoAccessTokenGrant } from './madoAccessTokenGrant.js';
-export {
-  ALL_MADO_NAMESPACES,
-  MADO_SCOPES,
-  allowsAllMadoNamespaces,
-  allowsMadoNamespace,
-} from './madoAccessTokenGrant.js';
+export { MADO_SCOPES } from './madoAccessTokenGrant.js';
 export interface PluginCreate {
   kind: 'mado';
   name?: string;
@@ -858,35 +850,6 @@ export interface PluginConnection {
   /** 最後の接続確認で入り、接続先かaccess tokenが変わると消える。 */
   accessTokenGrant: MadoAccessTokenGrant | null;
   createdAt: string;
-}
-/** Projectのviewerに見せてよい情報。認証情報・tokenの参照・サーバー側のAPIの接続先は含まない。 */
-export interface PluginAvailability {
-  kind: 'mado';
-  id: string | null;
-  enabled: boolean;
-  configured: boolean;
-  configRevision: number;
-  webUrl: string | null;
-  canImport: boolean;
-}
-export interface PluginDataset {
-  externalId: string;
-  namespace: string;
-  name: string;
-  version: string;
-  uri: string;
-  digest: string;
-  schema: JsonObject;
-  metadata: JsonObject;
-}
-export interface PluginEvent {
-  id: string;
-  type: 'run.started' | 'run.finished' | 'run.failed' | 'run.canceled';
-  timestamp: string;
-  projectId: string;
-  run: Run;
-  inputDatasets: DatasetVersion[];
-  outputDatasets: DatasetVersion[];
 }
 export type { LineageRelationAddition } from './lineageRelations.js';
 
@@ -939,7 +902,6 @@ export type {
   OperationsAlertKind,
   OperationsAlertResolution,
   OperationsAlertState,
-  PluginOutboxSummary,
 } from './operations.js';
 export { OPERATIONS_ALERT_KINDS, OPERATIONS_ALERT_MAX_PAGE_SIZE } from './operations.js';
 export { DEFAULT_JOB_ATTEMPTS, MAX_JOB_ATTEMPTS } from './jobAttempts.js';

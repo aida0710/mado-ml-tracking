@@ -9,7 +9,6 @@ const database = createDatabase(config.databaseUrl);
 database.on('error', () => console.error(JSON.stringify({ event: 'database_pool_error' })));
 const {
   app,
-  outbox,
   automationSweeper,
   artifactUploadFinalizer,
   artifactGarbageCollector,
@@ -26,7 +25,6 @@ const {
 // バックグラウンドの処理はサーバーと同じ期間動く。stop()は実行中の1回を待つ。
 // garbage collectorは、毎回の回収の一部としてArtifactのアップロードのsweeperを動かす。
 const backgroundTasks = [
-  outbox,
   automationSweeper,
   artifactUploadFinalizer,
   artifactGarbageCollector,

@@ -404,7 +404,6 @@ describe.skipIf(!testDatabaseUrl)('固定runtimeとtarget互換性（独立Postg
         .status,
     ).toBe('queued');
     expect((await harness.database.query('SELECT * FROM gpu_reservations')).rows).toHaveLength(0);
-    expect((await harness.database.query('SELECT * FROM plugin_outbox')).rows).toHaveLength(0);
   });
 
   it.each([[[]], [['docker', 'docker']], [['podman']]])(

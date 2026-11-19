@@ -255,8 +255,6 @@ try {
         name: 'Forbidden',
         config: {
           apiUrl: 'http://mado-api.invalid', webUrl: 'http://mado-web.invalid',
-          lineageUrl: 'http://mado-api.invalid',
-          jobNamespace: 'test', storageSystemKey: 'test',
         },
         enabled: false,
       }),
@@ -269,14 +267,11 @@ try {
   await page.getByText('接続を確認しました', { exact: true }).waitFor();
   await storageMetrics.getByRole('button', { name: 'メトリクスを更新' }).click();
   await storageMetrics.getByText('3.0 GiB', { exact: true }).waitFor();
-  await page.getByLabel('データセットを検索').fill('test');
-  await page.getByRole('button', { name: '検索', exact: true }).click();
-  await page.getByRole('button', { name: 'インポート', exact: true }).click();
-  await page.getByText(/保存しました: UI検索データ/).waitFor();
-  await page.getByRole('button', { name: 'イベントを再送' }).click();
-  await page.getByText(/イベントをキューに追加しました: 2/).waitFor();
+  // 取り込み・検索・イベントの再送の操作は無い。
+  assert.equal(await page.getByLabel('データセットを検索').count(), 0);
+  assert.equal(await page.getByRole('button', { name: 'イベントを再送' }).count(), 0);
   // mado S3 Data Catalog側でtokenからCapacity Readを外す。次の接続確認からメトリクスは出なくなる。
-  api.state.madoAccessTokenGrant = { ...api.state.madoAccessTokenGrant, scopes: ['lineage:read', 'lineage:write'] };
+  api.state.madoAccessTokenGrant = { ...api.state.madoAccessTokenGrant, scopes: [] };
   api.state.plugins[0].configRevision++;
   api.state.plugins[0].manifest = null;
   api.state.plugins[0].accessTokenGrant = null;

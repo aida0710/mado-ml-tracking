@@ -351,7 +351,6 @@ try {
     await exited;
   }
   await browser.close();
-  await application.outbox.stop();
   await new Promise((resolve) => (server ? server.close(() => resolve()) : resolve()));
   await database.end();
   await administrator.query(`DROP SCHEMA ${schema} CASCADE`);

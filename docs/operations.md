@@ -412,7 +412,7 @@ Runが終端（finished/failed/canceled）になったときの後処理（出�
 
 MLflowのRunは終端から`RUNNING`へ戻して再び終端にできるため、同じRunでhandlerが2回以上呼ばれることがあります。handlerは二重に処理しないように作ります。
 
-plugin outboxへのイベント投入はhandlerではありません。状態が変わるたび（run.startedを含む）と、終端Runへの出力・Dataset追加の再送で積まれ、失敗するとRunの変更ごと戻ります。終端への遷移はRunを`FOR UPDATE`でlockするので、同じRunへの出力モデル登録と直列になり、終端イベントの`run.outputModelVersionIds`には確定済みのバージョンが入ります。
+終端への遷移はRunを`FOR UPDATE`でlockするので、同じRunへの出力モデル登録と直列になり、handlerに渡るRunの`outputModelVersionIds`には確定済みのバージョンが入ります。
 
 ## 通知（Slack・Webhook・メール）
 
@@ -467,7 +467,7 @@ MMT_SMTP_FROM=mado ML Tracking <mmt@example.com>
 - Project adminは「プロジェクト設定」の「直近の送信履歴」（`GET /api/projects/:p/notification-deliveries`）で状態・試行回数・失敗のcodeを確認できます。codeは`notification_http_<status>`、`notification_timeout`、`notification_destination_unavailable`、`notification_channel_unconfigured`（環境変数が無い）、`notification_url_invalid`などで、送信先のURLや応答本文は残しません。メールのcodeは上の「メール（SMTP）を有効にする」を参照。
 - 通知先の作成・変更・テスト送信、ruleの作成・有効切替は監査ログ（`notification.channel.create`／`update`／`test`、`notification.rule.create`／`update`）に残ります。環境変数の値と宛先のメールアドレスは記録しません（宛先は件数だけ）。
 
-## 運用監視（heartbeat途絶・worker停止・plugin送信滞留）
+## 運用監視（heartbeat途絶・worker停止）
 
 API serverは30秒ごとに次を確かめ、見つけたらProjectの「運用アラート」（ヘッダのベル）に出し、通知ruleで選んだ通知先へ送ります。複数のAPI processを動かしても判定は1つだけが行います。
 
@@ -475,12 +475,11 @@ API serverは30秒ごとに次を確かめ、見つけたらProjectの「運用�
 |---|---|---|
 | Jobのheartbeat途絶（`job.heartbeat_stale`） | claimed/runningのJobのheartbeatが60秒より古い | heartbeatが戻る（`job.heartbeat_recovered`を通知）／Jobが終わる |
 | workerの停止（`worker.offline`） | workerの最終応答が120秒より古い | workerが再びclaim・heartbeatする／tokenの失効・期限切れ／7日以上応答なし（引退扱い） |
-| Plugin送信の滞留（`plugin.delivery_stalled`） | 有効なpluginの未送信eventのうち最古が15分より古い、または1件でも5回以上試行した | 未送信が条件を下回る／pluginを無効にする |
 
 - 通知はアラートを開いたときに1回だけ（Jobは復旧時にも1回）。同じ対象が再び途絶したら、新しいアラートとして再び通知します。
-- 通知を受けるには、Project設定の「通知」でruleを作り、上の種別を選びます。worker・pluginの通知は、Runの条件（実行種別・実験）を付けたruleには届きません。
+- 通知を受けるには、Project設定の「通知」でruleを作り、上の種別を選びます。workerの通知は、Runの条件（実行種別・実験）を付けたruleには届きません。
 - Jobは途絶しても失敗にしません（workerがまだ処理を続けている可能性があるため）。止まったJobはJobs画面から停止を要求するか、workerホストを確認します。
-- Pluginの送信状況は「連携」画面の「イベントの送信状況」（Project admin）で見られます。pluginを直したら「イベントを再送」で待ち時間を飛ばして再送します。
+- 「Plugin送信の滞留」（`plugin.delivery_stalled`）は、連携がRunの記録をMadoへ送っていた版（v0.5.4まで）のアラートです。今は発生しません。過去のアラートは履歴に残り、通知ruleの種別にも残っていますが、選んでも通知は届きません。
 - 閾値はコードの定数（`apps/api/src/domain/workerLiveness.ts`、`apps/api/src/domain/operationsAlerts.ts`）で、環境変数では変えません。
 
 ## API serverの上限と保持数
@@ -542,4 +541,4 @@ MMT_FILESYSTEM_STORAGE_DIR=/srv/mmt/storage
 1. Authentikで管理者と一般メンバーがloginし、管理者group・Project権限が正しく反映されることを確認します。
 2. SSH targetで小さいinference Jobを実行し、指定GPU・ログ・メトリクス・停止・再実行を確認します。
 3. 実際のS3 bucketで小さいuploadとRange取得を行い、prefix権限・永続化・multipart cleanupを確認します。
-4. Mado pluginからNamespaceを限定したDatasetVersionを取り込み、入力と出力のlineageを送信します。
+4. Mado連携で接続を確認し、Madoが計測した容量が「連携」の画面に出ることを確認します。

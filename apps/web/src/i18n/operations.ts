@@ -1,7 +1,7 @@
 import * as english from './en/operations';
 import { localized } from './localized';
 
-// 上部バーの運用アラートのバッジと、プラグインへのイベントの送信状況。
+// 上部バーの運用アラートのバッジ。
 export const operationsText = localized({
   operationsAlerts: '運用アラート',
   operationsAlertsNone: '開いている運用アラートはありません',
@@ -10,15 +10,6 @@ export const operationsText = localized({
   operationsAlertsScope:
     'メンバーになっているプロジェクトのアラートです（全体管理者はすべてのプロジェクト）。',
   operationsAlertUnknownProject: '（読み込み中のプロジェクト）',
-  pluginOutbox: 'イベントの送信状況',
-  pluginOutboxPending: '未送信',
-  pluginOutboxSending: '送信中',
-  pluginOutboxOldestPending: '最古の未送信',
-  pluginOutboxMaxAttempts: '最多の送信回数',
-  pluginOutboxLastError: '最終エラー',
-  pluginOutboxLastDelivered: '最終送信',
-  pluginOutboxStalled:
-    '送信が滞留しています（15分以上未送信、または5回以上失敗）。連携の状態を確認し、復旧後に「イベントを再送」を押してください。',
 } as const, english.operationsText);
 
 export const operationsTextTemplates = localized({

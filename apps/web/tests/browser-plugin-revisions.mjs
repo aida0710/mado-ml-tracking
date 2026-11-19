@@ -55,12 +55,6 @@ await context.route(url => url.pathname.startsWith('/api/'), async route => {
   if (path === '/projects') return reply({ items: [projectA, projectB] });
   if (path === `/projects/${projectB.id}`) return reply(projectB);
   if (path === `/projects/${projectB.id}/plugins`) return reply({ items: [] });
-  if (path === `/projects/${projectB.id}/plugins/availability`) return reply({
-    items: [{
-      kind: 'mado', id: null, enabled: false, configured: false,
-      configRevision: 0, webUrl: null, canImport: false,
-    }],
-  });
   // Project Bのほかの一覧は空。Runの検索はcursorのページで答える。
   if (path === `/projects/${projectB.id}/runs/search`) return reply({ items: [], nextCursor: null });
   if (path.startsWith(`/projects/${projectB.id}/`)) return reply({ items: [] });

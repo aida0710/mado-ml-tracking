@@ -1,6 +1,6 @@
 # mado ML Tracking
 
-実験、モデル、実行コード、データセットを同じRunに結び付ける実験管理アプリです。mado S3 Data Catalogとは別に動作し、[Mado連携](docs/plugins.md)を標準搭載しています。連携は初期状態では無効です。
+実験、モデル、実行コード、データセットを同じRunに結び付ける実験管理アプリです。mado S3 Data Catalogとは別に動作し、[Mado連携](docs/plugins.md)（Madoの容量の参照）を標準搭載しています。連携は初期状態では無効です。
 
 利用者向けのドキュメント（インストール、使い方、管理）は[https://aida0710.github.io/mado-ml-tracking/](https://aida0710.github.io/mado-ml-tracking/)にあります。ソースは`pages/`です。
 
@@ -48,7 +48,7 @@ CPUだけで実行を試す場合は`MMT_ALLOW_LOCAL_EXECUTOR=true`にし、loca
 - **Job**: SSH接続先、GPU予約、キュー、ログ、停止、再実行。再実行は新しいRunを作り、元の記録を保持。
 - **モデルの自動実行**: モデルバージョンの登録完了後、系列に合うルールで推論・評価をキューへ登録。コード・データセット・コンテナのバージョンを固定し、同じ登録イベントの重複を防止。
 - **認証**: Authentik OIDC、Projectのviewer/editor/admin、期限・scope・失効を持つ個人tokenとService Account token。
-- **Plugin**: 別サービスのHTTP契約。データセット検索・取り込み、Run lifecycleのlineage送信、Mado容量metricsの参照。
+- **Plugin**: 別サービスのHTTP契約。Madoのアクセストークンの確認と、Mado容量metricsの参照。
 
 モデル系列とCodeVersionの対応はAPIとworkerで検証します。モデルバージョンとデータセットバージョンは不変です。ジョブは起動時のコード・モデル・データセットをsnapshotとして使います。
 

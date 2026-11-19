@@ -8,7 +8,6 @@ import type {
   ExperimentTask,
   JsonObject,
   ModelAutomationRule,
-  PluginDataset,
   RunKind,
   RunStatus,
 } from '@mmt/contracts';
@@ -130,7 +129,4 @@ export interface UpdateRun {
   tags?: Record<string, string>;
   status?: RunStatus;
   environment?: JsonObject;
-}
-export interface ImportPluginDataset {
-  dataset: PluginDataset;
 }

@@ -1,24 +1,11 @@
-import { z } from 'zod';
-import {
-  allowsAllMadoNamespaces,
-  allowsMadoNamespace,
-  isSameUuid,
-  type MadoAccessTokenGrant,
-  type MadoPluginConfig,
-} from '@mmt/contracts';
-import {
-  madoAccessTokenGrantSchema,
-  madoCatalogSchema,
-  madoDatasetSchema,
-  madoVersionDetailSchema,
-  type MadoCredentials,
-} from './madoTypes.js';
+import type { z } from 'zod';
+import type { MadoAccessTokenGrant, MadoPluginConfig } from '@mmt/contracts';
+import { madoAccessTokenGrantSchema, type MadoCredentials } from './madoTypes.js';
 
-// 転送時間と応答のサイズの両方を制限する。使えないカタログがworkerをいつまでも占有できない
-// ようにする。
+// 転送時間と応答のサイズの両方を制限する。応答しないmado S3 Data Catalogがリクエストを
+// いつまでも占有できないようにする。
 const MADO_REQUEST_DEADLINE_MS = 8000;
 const MADO_RESPONSE_LIMIT_BYTES = 4 * 1024 * 1024;
-const SEARCH_PAGE_SIZE = 50;
 export class MadoApiError extends Error {
   constructor(readonly status: number) {
     super(`Mado API returned HTTP ${status}`);
@@ -46,21 +33,17 @@ export function createMadoClient({
       throw new MadoApiError(502);
     return parsed;
   }
-  const readOrigin = baseUrl(config.apiUrl);
-  const lineageOrigin = baseUrl(config.lineageUrl);
-  async function requestText(url: URL, payload?: string): Promise<string> {
+  const apiOrigin = baseUrl(config.apiUrl);
+  async function requestText(url: URL): Promise<string> {
     const token = credentials.accessToken;
     if (!token) throw new MadoApiError(503);
     let response: Response;
     try {
       response = await fetcher(url, {
-        method: payload === undefined ? 'GET' : 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: url.pathname.endsWith('/metrics/capacity') ? 'text/plain' : 'application/json',
-          ...(payload === undefined ? {} : { 'Content-Type': 'application/json' }),
         },
-        ...(payload === undefined ? {} : { body: payload }),
         redirect: 'error',
         signal: AbortSignal.timeout(MADO_REQUEST_DEADLINE_MS),
       });
@@ -99,81 +82,10 @@ export function createMadoClient({
       throw new MadoApiError(502);
     }
   }
-  // 1つのclientは1つの操作に使うので、mado S3 Data Catalogで変えた権限は次の操作から効く。
-  let grantRequest: Promise<MadoAccessTokenGrant> | null = null;
-  function accessTokenGrant(): Promise<MadoAccessTokenGrant> {
-    grantRequest ??= readJson(
-      new URL('api/mado/access-token', readOrigin),
-      madoAccessTokenGrantSchema,
-    );
-    return grantRequest;
-  }
-  async function assertNamespace(namespace: string): Promise<void> {
-    if (!allowsMadoNamespace(await accessTokenGrant(), namespace)) throw new MadoApiError(403);
-  }
   return {
-    accessTokenGrant,
-    /** `namespace: null`はすべてのnamespaceを検索し、そのすべてを許すtokenが要る。 */
-    async catalog(namespace: string | null, query: string) {
-      const grant = await accessTokenGrant();
-      const isAllowed =
-        namespace === null ? allowsAllMadoNamespaces(grant) : allowsMadoNamespace(grant, namespace);
-      if (!isAllowed) throw new MadoApiError(403);
-      // mado S3 Data Catalogは、指定したnamespaceの中か、すべてを検索するときは権限の範囲の中で
-      // 答える。
-      const isRequested = (candidate: string) =>
-        namespace === null ? allowsMadoNamespace(grant, candidate) : candidate === namespace;
-      const url = new URL('api/mado/lineage/catalog', readOrigin);
-      url.search = new URLSearchParams({
-        ...(namespace === null ? {} : { namespace }),
-        q: query,
-        limit: String(SEARCH_PAGE_SIZE),
-        offset: '0',
-      }).toString();
-      const catalog = await readJson(url, madoCatalogSchema);
-      if (catalog.results.some((dataset) => !isRequested(dataset.namespace)))
-        throw new MadoApiError(502);
-      return catalog;
-    },
-    async dataset(id: string) {
-      if (!z.uuid().safeParse(id).success) throw new MadoApiError(400);
-      const dataset = await readJson(
-        new URL(`api/mado/lineage/datasets/${id}`, readOrigin),
-        madoDatasetSchema,
-      );
-      await assertNamespace(dataset.namespace);
-      if (
-        !isSameUuid(id, dataset.datasetId) ||
-        dataset.versions.some((version) => !isSameUuid(id, version.datasetId))
-      )
-        throw new MadoApiError(502);
-      return dataset;
-    },
-    async version(id: string) {
-      if (!z.uuid().safeParse(id).success) throw new MadoApiError(400);
-      const version = await readJson(
-        new URL(`api/mado/lineage/versions/${id}`, readOrigin),
-        madoVersionDetailSchema,
-      );
-      await assertNamespace(version.namespace);
-      if (!isSameUuid(id, version.id)) throw new MadoApiError(502);
-      return version;
-    },
-    async sendLineage(payload: string): Promise<void> {
-      let acknowledgment: unknown;
-      try {
-        acknowledgment = JSON.parse(
-          await requestText(new URL('api/openlineage/v1/lineage', lineageOrigin), payload),
-        );
-      } catch (error) {
-        if (error instanceof MadoApiError) throw error;
-        throw new MadoApiError(502);
-      }
-      if (!z.object({ accepted: z.literal(true) }).safeParse(acknowledgment).success)
-        throw new MadoApiError(502);
-    },
-    capacityMetrics: () => requestText(new URL('api/mado/metrics/capacity', readOrigin)),
+    accessTokenGrant: (): Promise<MadoAccessTokenGrant> =>
+      readJson(new URL('api/mado/access-token', apiOrigin), madoAccessTokenGrantSchema),
+    capacityMetrics: () => requestText(new URL('api/mado/metrics/capacity', apiOrigin)),
   };
 }
-export type MadoClient = ReturnType<typeof createMadoClient>;
-export type { MadoCredentials, MadoVersion, MadoDataset, MadoVersionDetail } from './madoTypes.js';
+export type { MadoCredentials } from './madoTypes.js';

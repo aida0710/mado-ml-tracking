@@ -14,9 +14,6 @@ const verificationDate = new Intl.DateTimeFormat('en-CA', {
   day: '2-digit',
 }).format(new Date());
 const artifacts = process.env.MMT_SCREENSHOT_DIR ?? `artifacts/builtin-mado/${verificationDate}`;
-// 非同期のworkerの検証に上限時間を設け、状態のポーリング間隔は短くする。
-const DELIVERY_WAIT_MS = 15000;
-const DELIVERY_POLL_MS = 100;
 await mkdir(artifacts, { recursive: true });
 const { chromium } = await import(pathToFileURL(process.env.MMT_PLAYWRIGHT_MODULE).href);
 const browser = await chromium.launch({
@@ -60,8 +57,12 @@ try {
   await page.goto(base);
   await page.getByLabel('メールアドレス').fill('admin@localhost');
   await page.getByLabel('表示名').fill('開発管理者');
+  // ログインの画面は同じURLのまま出るので、URLではなくログインの応答を待つ。
+  const signedIn = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === '/api/auth/dev-login',
+  );
   await page.getByRole('button', { name: '開発モードでログイン' }).click();
-  await page.getByRole('button', { name: 'ログアウト', exact: true }).waitFor();
+  assert.equal((await signedIn).status(), 200);
   await page.goto(`${base}${projectPath}/plugins`);
   await page.getByText('Mado連携は未設定・無効です。', { exact: false }).waitFor();
   assert.deepEqual((await api(`${projectPath}/plugins`)).items, []);
@@ -82,72 +83,24 @@ try {
   for (const token of Object.values(settings.credentials))
     assert(!JSON.stringify(connection).includes(token));
   await checkConnection();
-  // ここに出るnamespaceは、access tokenに対するmado S3 Data Catalogの応答から来る。
-  await page.getByText('speech、mado-model-tracking、local', { exact: true }).waitFor();
+  // ここに出る許可は、access tokenに対するmado S3 Data Catalogの応答から来る。
+  await page.getByText('Capacityの読み取り', { exact: true }).waitFor();
+  const storageMetrics = page.getByRole('region', { name: 'Storage metrics', exact: true });
+  assert.equal(await storageMetrics.count(), 0, 'A disabled connection must not read capacity');
   await capture('real-mado-checked-ja');
-  assert.equal((await api(`${projectPath}/plugins/${connection.id}/outbox`)).pending, 0);
   await page.getByRole('button', { name: '連携を有効にする', exact: true }).click();
   await page.getByRole('button', { name: '連携を無効にする', exact: true }).waitFor();
   await checkConnection();
-  await page.getByLabel('データセットを検索', { exact: true }).fill('corpus');
-  await page.getByRole('button', { name: '検索', exact: true }).click();
-  await page.getByText('speech/fixture-corpus', { exact: true }).waitFor();
-  await page.getByRole('button', { name: 'インポート', exact: true }).click();
-  await page.getByRole('status').filter({ hasText: 'fixture-corpus / v1' }).waitFor();
+  // fixtureのバケットは1048576バイト。formatBytesは小数1桁で表す。
+  await storageMetrics.getByText('1.0 MiB', { exact: true }).waitFor();
   await capture('real-mado-enabled-ja');
-  const dataset = (await api(`${projectPath}/datasets`)).items.find(
-    (item) => item.name === 'fixture-corpus',
-  );
-  assert(dataset);
-  const version = (await api(`${projectPath}/datasets/${dataset.id}/versions`)).items[0];
-  assert.equal(version.externalRef.pluginId, connection.id);
-  assert.equal(version.externalRef.externalId, settings.madoVersionId);
-  assert.equal(version.uri, 's3://fixtures/corpus/v1');
-  await page.goto(`${base}${projectPath}/datasets?version=${version.id}`);
-  const madoLink = page.getByRole('link', { name: 'Madoで見る', exact: true });
-  await madoLink.waitFor();
-  const destination = new URL(await madoLink.getAttribute('href'));
-  assert.equal(destination.origin, settings.madoUrl);
-  assert.equal(destination.pathname, '/lineage');
-  assert.equal(destination.searchParams.get('versionId'), settings.madoVersionId);
-  assert.equal(destination.searchParams.get('node'), settings.madoVersionId);
-  await capture('real-mado-dataset-ja');
-
-  const run = await api(`${projectPath}/runs`, {
-    method: 'POST',
-    status: 201,
-    body: {
-      experimentId: settings.experimentId,
-      name: 'Mado送信を確認',
-      kind: 'processing',
-      inputDatasetVersionIds: [version.id],
-    },
-  });
-  for (const status of ['running', 'finished'])
-    await api(`${projectPath}/runs/${run.id}`, { method: 'PATCH', body: { status } });
-  await page.goto(`${base}${projectPath}/plugins?id=${connection.id}`);
-  // 条件はドメインのworkerの配送状態。固定の待ち時間で競合を隠さない。
-  const deliveryDeadline = Date.now() + DELIVERY_WAIT_MS;
-  let outbox;
-  do {
-    outbox = await api(`${projectPath}/plugins/${connection.id}/outbox`);
-    if (outbox.pending === 0 && outbox.sending === 0 && outbox.lastDeliveredAt) break;
-    await new Promise((resolve) => setTimeout(resolve, DELIVERY_POLL_MS));
-  } while (Date.now() < deliveryDeadline);
-  assert.equal(outbox.pending, 0);
-  assert.equal(outbox.sending, 0);
-  assert(outbox.lastDeliveredAt);
+  const metrics = await api(`${projectPath}/plugins/${connection.id}/metrics`);
+  assert(metrics.prometheus.includes('mado_storage_bucket_bytes'));
 
   await page.getByRole('button', { name: '連携を無効にする', exact: true }).click();
   await page.getByRole('button', { name: '連携を有効にする', exact: true }).waitFor();
-  await page.goto(`${base}${projectPath}/datasets?version=${version.id}`);
-  await page.getByRole('heading', { name: 'Datasets', exact: true }).waitFor();
-  assert.equal(await page.getByRole('link', { name: 'Madoで見る', exact: true }).count(), 0);
-  assert.equal(
-    await page.getByRole('link', { name: 'Madoからインポート', exact: true }).count(),
-    0,
-  );
-  await page.goto(`${base}${projectPath}/plugins?id=${connection.id}`);
+  assert.equal(await storageMetrics.count(), 0);
+  await api(`${projectPath}/plugins/${connection.id}/metrics`, { status: 422 });
   await page.getByRole('button', { name: '連携を有効にする', exact: true }).click();
   await page.getByRole('button', { name: '連携を無効にする', exact: true }).waitFor();
   await switchLanguage('English');
@@ -166,13 +119,11 @@ try {
     checks: [
       'initially disabled with no connection row',
       'encrypted credential save and read-only check',
-      'explicit enable, catalog search, immutable version import',
-      'Mado version link from actual connection',
-      'real outbox delivery of START/COMPLETE',
-      'disable hides Dataset actions',
+      'explicit enable, then capacity read through the real Mado metrics route',
+      'disable stops reading capacity',
       'Japanese, English and 320px layout',
     ],
-    registry: 'Mado HTTP routes with isolated Registry fixture; external Registry DB not contacted',
+    mado: 'Mado HTTP routes with fixture authentication and capacity; production was not contacted',
   };
   await writeFile(
     path.join(artifacts, 'real-browser-result.json'),

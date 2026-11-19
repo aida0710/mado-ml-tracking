@@ -118,7 +118,7 @@ editor は評価 Run を自由に作れるため、条件の一致だけで対�
 - 基準 alias（既定 `production`）が未設定の初回は、`missingBaseline`（既定 `pass`）に従う。`pass` なら差・相対差の基準を合格扱いにし、判定の `reason` に `baseline_missing_first_promotion` を残す。`absolute` の基準は初回でも判定する。`fail` なら `failed`（`baseline_missing`）である。
 - 基準 alias はあるが、そのバージョンに同じ rule の評価が無い場合、差・相対差の基準は `insufficient`（`baseline_not_evaluated`）になる。基準バージョンにも rule を適用して評価してから再判定する。
 - policy の実行ユーザー（`runAsUserId`。作成時は作成者）が Project admin（直接付与または group binding）でも全体管理者でもなくなっていれば、判定せずに `skipped`（`creator_access_revoked`）を残す。
-- 判定中のエラーは `skipped`（`evaluation_error`）として残す。エラーでも評価 Run の終端と plugin への通知は確定する。
+- 判定中のエラーは `skipped`（`evaluation_error`）として残す。エラーでも評価 Run の終端は確定する。
 
 判定履歴は追記だけで、変更・削除できない。Project admin が再判定すると、同じ候補 Run について `sequence` を1つ増やした行を追加する（`requestedBy` に実行者を残す）。editor は再判定できない。
 

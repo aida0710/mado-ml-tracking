@@ -132,9 +132,10 @@ try {
       .getByText('APIサーバーにMMT_PLUGIN_SECRET_KEYの設定が必要です', { exact: false })
       .waitFor();
     assert.equal(await page.getByRole('button', { name: '接続を確認', exact: true }).isDisabled(), true);
-    assert.equal(await page.getByLabel('データセットを検索', { exact: true }).count(), 0);
+    const storageMetrics = page.getByRole('region', { name: 'Storage metrics', exact: true });
+    assert.equal(await storageMetrics.count(), 0);
     await screenshot('03-mado-secret-storage-missing');
-    // 認証情報を保存できるようになると、検索の前に、改めて明示的な接続確認ができる。
+    // 認証情報を保存できるようになると、容量を見る前に、改めて明示的な接続確認ができる。
     plugin.tokenConfigured = true;
     plugin.secretStorageAvailable = true;
     plugin.configRevision++;
@@ -145,11 +146,10 @@ try {
         (button) => button.textContent.trim() === '接続を確認' && !button.disabled,
       ),
     );
-    assert.equal(await page.getByLabel('データセットを検索', { exact: true }).isDisabled(), true);
-    await page.getByText('［接続を確認］が成功すると、データセットを検索できます。').waitFor();
+    assert.equal(await storageMetrics.count(), 0, 'Capacity is not read before the connection is checked');
     await check.click();
     await page.getByRole('status').getByText('接続を確認しました').waitFor();
-    assert.equal(await page.getByLabel('データセットを検索', { exact: true }).isDisabled(), false);
+    await storageMetrics.waitFor();
     await context.close();
   }
 

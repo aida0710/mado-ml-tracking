@@ -24,6 +24,7 @@ export const PROJECT_PURGE_STEPS: readonly ProjectPurgeStep[] = [
   { table: 'run_logs', rowsOfProject: byParent('run_id', 'runs') },
   { table: 'model_aliases', rowsOfProject: byParent('model_id', 'models') },
   { table: 'gpu_reservations', rowsOfProject: byParent('job_id', 'jobs') },
+  // plugin_outboxには以前の版が送ったRunの記録が残る。今は行を足さないが、接続を参照している。
   { table: 'plugin_outbox', rowsOfProject: byParent('plugin_id', 'plugin_connections') },
   { table: 'report_block_snapshots', rowsOfProject: byParent('report_id', 'reports') },
   { table: 'report_revisions', rowsOfProject: byParent('report_id', 'reports') },

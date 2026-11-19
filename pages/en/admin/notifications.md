@@ -5,7 +5,7 @@ description: Send Run failures, automation failures, stopped workers, and more t
 
 # Notifications and operations alerts
 
-Run failures, automation failures, stale Job heartbeats, stopped workers, and stalled plugin deliveries can be sent to Slack, webhooks, and email.
+Run failures, automation failures, stale Job heartbeats, and stopped workers can be sent to Slack, webhooks, and email.
 
 There are two roles.
 
@@ -27,7 +27,7 @@ There are two roles.
 | **Job heartbeat lost** | A running Job's heartbeat is older than 60 seconds |
 | **Job heartbeat recovered** | A stale Job's heartbeat came back |
 | **Worker stopped** | A worker's last response is older than 120 seconds |
-| **Plugin delivery backlog** | An undelivered plugin event is older than 15 minutes, or one event failed 5 or more times |
+| **Plugin delivery backlog** | No longer occurs. It belonged to the versions in which the Mado integration sent Run records (up to v0.5.4); selecting it delivers nothing |
 
 ## 1. Put URLs and secrets in environment variables
 
@@ -97,7 +97,7 @@ Without any channel, **Create notification rule** is disabled and the screen ask
 
 The conditions of a rule cannot be changed after creation. To change them, create a new rule and stop the old one with **Disable**.
 
-Rules with Run kind or experiment conditions do not receive **Worker stopped** and **Plugin delivery backlog**, because those events have no Run. Use a rule without conditions for operations notifications.
+Rules with Run kind or experiment conditions do not receive **Worker stopped**, because that event has no Run. Use a rule without conditions for operations notifications.
 
 ## What is sent
 
@@ -131,7 +131,7 @@ Project Admins can check the **Status**, **Attempts**, and **Failure reason** in
 
 ## Operations alerts
 
-Every 30 seconds the API server checks for stale Job heartbeats, stopped workers, and stalled plugin deliveries. When it finds one, it shows the count as **Operations alerts** under the bell in the top bar and notifies the channels selected by rules, once.
+Every 30 seconds the API server checks for stale Job heartbeats and stopped workers. When it finds one, it shows the count as **Operations alerts** under the bell in the top bar and notifies the channels selected by rules, once.
 
 The bell counts the alerts of every Project you are a member of (every Project for a global administrator). Anyone can open a public Project, but its alerts are not on your bell unless you are a member. Each alert names its Project, and the open Project's alerts come first. The bell is on the **Global settings** screens too, so a worker that stopped in another Project shows before you open that Project. The bell reads up to 200 alerts at a time and shows "200+" beyond that.
 
@@ -139,8 +139,7 @@ The bell counts the alerts of every Project you are a member of (every Project f
 | --- | --- | --- |
 | **Job heartbeat lost** | A running Job's heartbeat is older than 60 seconds | The heartbeat returns (**Job heartbeat recovered** is sent) or the Job ends |
 | **Worker stopped** | A worker's last response is older than 120 seconds | The worker responds again, its token is revoked or expired, or it has not responded for 7 days |
-| **Plugin delivery backlog** | The oldest undelivered event is older than 15 minutes, or one failed 5 or more times | Undelivered events fall below the condition, or the integration is disabled |
 
 - A stale heartbeat does not fail the Job, because the worker may still be working. Request a stop for a stuck Job in **Jobs**, or check the worker host.
-- Mado delivery status is under **Event delivery status** in **Integrations**. After fixing Mado or the connection settings, click **Resend event** ([Mado integration](/en/admin/plugins)).
+- **Plugin delivery backlog** alerts were opened by versions up to v0.5.4. They no longer occur; only past alerts remain in the history.
 - The thresholds are constants in the code and cannot be changed with environment variables.

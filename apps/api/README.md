@@ -63,6 +63,5 @@ npm run typecheck -w @mmt/api
 - worker tokenには`worker:execute`、project、editor以上の現在のmembershipが必要。SDKからArtifactやRegistryを登録する場合は、用途に合わせ`read`、`runs:write`、`artifacts:write`、`registry:write`を追加する。
 - claimはJobの`SKIP LOCKED`とtargetのrow lockを使う。CPU Jobもtargetの同時実行数に含める。GPUは同一transactionで予約する。
 - leaseは同じtokenとworkerIdに結びつける。claim再送とresumeは同じleaseを返す。並行監視するworkerはclaimの`activeJobIds`に監視済みのJobを指定すると、次のJobを取得できる。heartbeatが途絶えても自動再queueしない。状態不明のremote processを二重起動しないため、cancel要求だけではGPUを解放しない。
-- 完了はleaseを検証し、Run/Job更新、GPU解放、plugin outbox保存を同じtransactionで行う。同じ完了の再送はeventを増やさない。
-- API serverのoutbox workerが配送を再試行する。plugin障害でも完了したRunは維持する。eventのIDは再送時も同じ。配送中にserverが停止した場合は配送leaseの期限後に回収するため、plugin側もevent IDで重複を防ぐ必要がある。
+- 完了はleaseを検証し、Run/Job更新とGPU解放を同じtransactionで行う。同じ完了の再送は終了時のhandlerをもう一度動かさない。
 - Artifactはstreamingで保存する。blob保存後にDB登録が失敗した場合はblobを削除する。cleanup自体が失敗した場合はArtifact IDを構造化ログに残す。

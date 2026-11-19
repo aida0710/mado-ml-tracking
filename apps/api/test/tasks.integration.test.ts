@@ -7,14 +7,12 @@ import type {
   Dataset,
   DatasetVersion,
   ExperimentTask,
-  PluginConnection,
   Run,
   TaskExecution,
   WorkerJob,
 } from '@mmt/contracts';
 import { workbenchFixture } from './workbenchFixtures.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
-import { madoPluginInput } from './pluginFixtures.js';
 import { executionFixture, projectFixture, referenceDigest } from './fixtures.js';
 
 describe.skipIf(!testDatabaseUrl)('タスク・固定実行snapshot（独立PostgreSQL）', () => {
@@ -452,15 +450,8 @@ describe.skipIf(!testDatabaseUrl)('タスク・固定実行snapshot（独立Post
     ).rejects.toMatchObject({ code: '23514' });
   });
 
-  it('JobへのMLflow paramsは実行parametersを変えず、pluginイベントにはsource全文とENVを送らない', async () => {
+  it('JobへのMLflow paramsは実行parametersを変えず、記録したparametersとして別に返す', async () => {
     const fixture = await workbenchFixture(harness);
-    await entity<PluginConnection>(
-      await request(harness.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: madoPluginInput({ name: 'Lineage' }),
-      }),
-    );
     const launch = await entity<TaskExecution>(
       await request(harness.app, `${fixture.taskPath}/launch`, {
         method: 'POST',
@@ -494,25 +485,6 @@ describe.skipIf(!testDatabaseUrl)('タスク・固定実行snapshot（独立Post
     );
     expect(run.parameters).toEqual(fixture.task.parameters);
     expect(run.recordedParameters).toEqual({ recorded: 'sdk-value' });
-    await entity(
-      await request(harness.app, '/api/worker/claim', {
-        method: 'POST',
-        token: fixture.workerToken,
-        body: { workerInfo, workerId: 'safe-event-worker' },
-      }),
-      200,
-    );
-    const events = (await harness.database.query('SELECT event FROM plugin_outbox')).rows;
-    expect(events).toHaveLength(1);
-    expect(events[0]!.event.run).toMatchObject({
-      codeVersionId: fixture.codeVersion.id,
-      taskId: fixture.task.id,
-      taskRevision: 1,
-      executionMode: 'run',
-    });
-    expect(events[0]!.event.run).not.toHaveProperty('executionSnapshot');
-    expect(JSON.stringify(events)).not.toContain('fixture-only-setting');
-    expect(JSON.stringify(events)).not.toContain('overlay');
   });
 
   it('出力モデル設定はtraining/finetuningだけに許し、系列・参照・パス・予約tagを検証する', async () => {

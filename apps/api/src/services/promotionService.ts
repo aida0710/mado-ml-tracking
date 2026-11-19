@@ -361,9 +361,9 @@ export class PromotionService {
   /**
    * 評価Runをfinishedへ移したトランザクションの中で呼ばれる。判定するのは自動実行ルールが作った
    * Run（そのJobを手で再試行したものを含む）だけで、そのルールとRunの登録モデルの有効なpolicyで
-   * 判定する。policyごとの失敗はskippedとして記録し、例外にしない。そのため、Runの終了状態と
-   * outboxのイベントは失敗にかかわらずコミットされる。あるpolicyで判定済みのRun（開き直して
-   * もう一度終えたMLflowのRun）は判定し直さない。再評価は明示的に行う。autoPromoteのpolicyで
+   * 判定する。policyごとの失敗はskippedとして記録し、例外にしない。そのため、Runの終了状態は
+   * 失敗にかかわらずコミットされる。あるpolicyで判定済みのRun（開き直してもう一度終えた
+   * MLflowのRun）は判定し直さない。再評価は明示的に行う。autoPromoteのpolicyで
    * 合格すると、そのtargetAliasも動かす（recordWithAutomaticPromotion）。
    */
   async processFinishedRun(connection: Connection, run: Run): Promise<void> {

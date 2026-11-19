@@ -18,44 +18,27 @@ const plugin = {
   secretStorageAvailable: true, tokenConfigured: false,
 };
 // 接続確認のたびにフィクスチャのmado S3 Data Catalogが返す、保存済みのアクセストークンの内容。
-const accessTokenGrant = {
-  name: 'ML Tracking', scopes: ['lineage:read', 'lineage:write', 'metrics:read'],
-  namespaces: ['mado-model-tracking', 'review'], expiresAt: null,
-};
+const accessTokenGrant = { name: 'ML Tracking', scopes: ['metrics:read'], expiresAt: null };
 api.state.plugins = [];
 const projectId = api.state.project.id;
 const pluginListPath = `/projects/${projectId}/plugins`;
 const pluginPath = `${pluginListPath}/${plugin.id}`;
 const base = process.env.MMT_WEB_URL ?? 'http://127.0.0.1:6082';
 const screenshots = process.env.MMT_SCREENSHOT_DIR;
-const imported = [];
 const calls = [];
 const pageErrors = [];
 let pluginListGate;
-let searchGate;
 let releasePluginList;
-let releaseSearch;
 let closing = false;
+// 以前の版がmado S3 Data Catalogから取り込んだバージョン。外部参照はこの接続を指す。
+const importedExternalId = '10000000-0000-4000-8000-000000000001';
+Object.assign(api.state.datasetVersions[0], {
+  externalRef: { pluginId: plugin.id, externalId: importedExternalId, namespace: 'review', name: 'dataset-1', version: 'v1' },
+});
 
-function createDataset(revision) {
-  return {
-    externalId: `10000000-0000-4000-8000-${String(revision).padStart(12, '0')}`,
-    namespace: 'review', name: `dataset-${revision}`, version: 'v1',
-    uri: `file:///review/${revision}`, digest: `digest-${revision}`, schema: {}, metadata: {},
-  };
-}
 function manifest() {
   return { id: 'mado', name: 'Mado', version: 'builtin', protocolVersion: '1.0',
-    capabilities: ['datasets:search', 'lineage:publish', ...(accessTokenGrant.scopes.includes('metrics:read') ? ['storage:metrics'] : [])] };
-}
-function availability() {
-  const connections = api.state.plugins.filter(connection => connection.kind === 'mado');
-  return connections.length ? connections.map(connection => ({ kind: 'mado', id: connection.id, enabled: connection.enabled,
-    configured: connection.tokenConfigured, configRevision: connection.configRevision,
-    webUrl: connection.config?.webUrl ?? null,
-    canImport: api.state.project.role === 'admin' || api.state.user.isAdmin,
-  })) : [{ kind: 'mado', id: null, enabled: false, configured: false,
-    configRevision: 0, webUrl: null, canImport: false }];
+    capabilities: accessTokenGrant.scopes.includes('metrics:read') ? ['storage:metrics'] : [] };
 }
 function saveCredentials(credentials) {
   if (!credentials?.accessToken) return;
@@ -71,7 +54,6 @@ await context.route(url => url.pathname.startsWith('/api/'), async route => {
   calls.push({ pathname, method });
   const reply = payload => route.fulfill({ contentType: 'application/json', body: JSON.stringify(payload) })
     .catch(error => { if (!closing) throw error; });
-  if (pathname === `${pluginListPath}/availability`) return reply({ items: availability() });
   if (pathname === pluginListPath && method === 'GET') {
     if (pluginListGate) await pluginListGate;
     return reply({ items: api.state.plugins });
@@ -94,7 +76,8 @@ await context.route(url => url.pathname.startsWith('/api/'), async route => {
   if (pathname === pluginPath && method === 'PATCH') {
     assert.equal(Object.hasOwn(body, 'baseUrl'), false);
     assert.equal(Object.hasOwn(body, 'tokenEnv'), false);
-    assert.equal(Object.hasOwn(body.config ?? {}, 'namespaces'), false, 'Namespaces come from the access token');
+    if (body.config)
+      assert.deepEqual(Object.keys(body.config).sort(), ['apiUrl', 'webUrl'], 'Only the API and Web URLs are configured');
     if (body.config || body.credentials) {
       assert.equal(body.expectedRevision, plugin.configRevision);
       plugin.configRevision++;
@@ -112,32 +95,14 @@ await context.route(url => url.pathname.startsWith('/api/'), async route => {
     plugin.accessTokenGrant = accessTokenGrant;
     return reply(plugin);
   }
-  if (pathname === `${pluginPath}/datasets/search`) {
-    assert.equal(body.expectedRevision, plugin.configRevision);
-    const dataset = createDataset(plugin.configRevision);
-    if (searchGate) await searchGate;
-    return reply({ items: [dataset] });
-  }
-  if (pathname === `${pluginPath}/datasets/import`) {
-    assert.deepEqual(Object.keys(body).sort(), ['expectedRevision', 'externalId']);
-    assert.equal(body.expectedRevision, plugin.configRevision);
-    imported.push(body.externalId);
-    // PluginDatasetのexternalIdはDatasetVersionの項目ではなく、externalRefに入る。
-    const { externalId, ...dataset } = createDataset(plugin.configRevision);
-    const version = Object.assign(api.state.datasetVersions[0], dataset, {
-      externalRef: { pluginId: plugin.id, externalId,
-        namespace: dataset.namespace, name: dataset.name, version: dataset.version },
-    });
-    return reply(version);
-  }
   return api.route(route);
 });
 
 const page = await context.newPage();
 page.on('pageerror', error => pageErrors.push(error.message));
 const dialog = () => page.getByRole('dialog').last();
-const result = revision => page.getByText(`review/dataset-${revision}`, { exact: true });
-const importButtons = () => page.getByRole('button', { name: 'インポート', exact: true });
+const storageMetrics = () => page.locator('.storage-metrics');
+const metricsCalls = () => calls.filter(call => call.pathname.endsWith('/metrics')).length;
 async function switchLanguage(name, target = page) {
   await target.getByRole('button', { name: /^(Language|表示言語):/ }).click();
   await target.getByRole('menuitemradio', { name, exact: true }).click();
@@ -151,20 +116,13 @@ async function checkConnection() {
   await page.getByRole('button', { name: '接続を確認', exact: true }).click();
   await page.getByRole('status').filter({ hasText: '接続を確認しました' }).waitFor();
 }
-async function searchConnection() {
-  await page.getByLabel('データセットを検索', { exact: true }).fill(`query-${plugin.configRevision}`);
-  await page.getByRole('button', { name: '検索', exact: true }).click();
-  await result(plugin.configRevision).waitFor();
-}
 async function editConnection(field, value) {
   await page.getByRole('button', { name: 'Madoの接続設定', exact: true }).click();
   await dialog().getByLabel(field).fill(value);
   pluginListGate = new Promise(resolve => { releasePluginList = resolve; });
   await dialog().getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
-  assert.equal(await importButtons().count(), 0, 'Saved settings must discard earlier import actions before the GET finishes');
-  assert.equal(await page.locator('.storage-metrics').count(), 0);
-  assert.equal(await page.getByLabel('データセットを検索', { exact: true }).inputValue(), '');
+  assert.equal(await storageMetrics().count(), 0, 'Saved settings must discard the earlier capacity before the GET finishes');
   pluginListGate = undefined;
   releasePluginList();
   await page.getByRole('button', { name: '再読み込み', exact: true }).waitFor();
@@ -174,10 +132,11 @@ try {
   console.log('Built-in Mado: unconfigured card, disabled registration and explicit connection check');
   await page.goto(`${base}/projects/${projectId}/plugins`);
   await page.getByText('Mado連携は未設定・無効です。', { exact: false }).waitFor();
-  assert.equal(calls.some(call => /\/(check|metrics|datasets\/search)$/.test(call.pathname)), false);
+  assert.equal(calls.some(call => /\/(check|metrics)$/.test(call.pathname)), false);
   await screenshot('mado-unconfigured-ja');
   await page.getByRole('button', { name: 'Madoの接続設定', exact: true }).click();
-  assert.equal(await dialog().getByLabel('許可Namespace').count(), 0, 'Namespaces come from the access token, not from input');
+  for (const removed of ['OpenLineage URL', 'RunのNamespace', 'ストレージの識別名'])
+    assert.equal(await dialog().getByLabel(removed).count(), 0, `${removed} is no longer configured`);
   await dialog().getByLabel('Mado API URL').fill('http://mado-api.invalid');
   await dialog().getByLabel('Mado Web URL').fill('https://mado-web.invalid');
   await dialog().getByLabel('アクセストークン').fill('browser-access-fixture');
@@ -193,92 +152,75 @@ try {
   await dialog().getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
   assert.equal(plugin.enabled, false);
-  assert.equal(await page.getByLabel('データセットを検索', { exact: true }).count(), 0);
-  assert.equal(await page.getByText('接続を確認すると表示します', { exact: true }).count(), 3,
-    'Permissions, namespaces and expiration are unknown until the connection is checked');
+  assert.equal(await page.getByText('接続を確認すると表示します', { exact: true }).count(), 2,
+    'Permissions and expiration are unknown until the connection is checked');
   await checkConnection();
-  await page.getByText('mado-model-tracking、review', { exact: true }).waitFor();
-  await page.getByText('DataLineageの読み取り、DataLineageの送信、Capacityの読み取り', { exact: true }).waitFor();
-  assert.equal(await page.locator('.storage-metrics').count(), 0, 'Disabled integration must not fetch metrics automatically');
+  await page.getByText('Capacityの読み取り', { exact: true }).waitFor();
+  await page.getByText('無期限', { exact: true }).waitFor();
+  assert.equal(await storageMetrics().count(), 0, 'Disabled integration must not fetch metrics automatically');
+  assert.equal(metricsCalls(), 0);
   await screenshot('mado-checked-ja');
   await page.getByRole('button', { name: 'Madoの接続設定', exact: true }).click();
   assert.equal(await dialog().getByLabel('アクセストークン').inputValue(), '', 'Saved tokens must not be returned to the browser');
   await dialog().getByRole('button', { name: 'キャンセル', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
-  const initialRevision = plugin.configRevision;
   await page.getByTestId('plugin-toggle').click();
-  await page.getByLabel('データセットを検索', { exact: true }).waitFor();
+  await page.getByRole('button', { name: '連携を無効にする', exact: true }).waitFor();
+  assert.equal(await storageMetrics().count(), 0, 'Capacity is shown only after the enabled connection is checked');
   await checkConnection();
-  await searchConnection();
-  await page.locator('.storage-metrics').waitFor();
-  const searchedCalls = calls.filter(call => call.pathname.endsWith('/datasets/search')).length;
+  await storageMetrics().getByRole('heading', { name: 'UI検証ストレージ', exact: true }).waitFor();
+  assert.equal(await page.getByLabel('データセットを検索', { exact: true }).count(), 0);
+  assert.equal(await page.getByRole('button', { name: 'イベントを再送', exact: true }).count(), 0);
+  assert.equal(await page.getByText('イベントの送信状況', { exact: true }).count(), 0);
   await switchLanguage('English');
-  assert.equal(await page.getByLabel('Search datasets', { exact: true }).inputValue(), `query-${initialRevision}`);
-  await result(initialRevision).waitFor();
-  assert.equal(calls.filter(call => call.pathname.endsWith('/datasets/search')).length, searchedCalls);
+  await storageMetrics().getByRole('heading', { name: 'UI検証ストレージ', exact: true }).waitFor();
+  await page.getByText('Capacity Read', { exact: true }).waitFor();
   await screenshot('mado-configured-en');
   await switchLanguage('日本語');
 
-  console.log('Built-in Mado: credential revision invalidation, fixed-version import and disable');
+  console.log('Built-in Mado: a replaced token is checked again before its capacity is shown');
   await editConnection('アクセストークン', 'browser-replacement-fixture');
-  assert.equal(await page.getByText('接続を確認すると表示します', { exact: true }).count(), 3,
-    'A replaced token must be checked again before its namespaces are shown');
-  const importedRevision = plugin.configRevision;
+  assert.equal(await page.getByText('接続を確認すると表示します', { exact: true }).count(), 2,
+    'A replaced token must be checked again before its permissions are shown');
+  const callsBeforeCheck = metricsCalls();
+  assert.equal(await storageMetrics().count(), 0);
   await checkConnection();
-  await searchConnection();
-  await importButtons().click();
-  await page.getByRole('status').filter({ hasText: `dataset-${importedRevision}` }).waitFor();
-  assert.equal(imported.at(-1), createDataset(importedRevision).externalId);
+  await storageMetrics().getByRole('heading', { name: 'UI検証ストレージ', exact: true }).waitFor();
+  // 確認のあとで初めて容量を取りに行く。画面の読み直しで回数は増えうるので、回数そのものは決めない。
+  assert.ok(metricsCalls() > callsBeforeCheck, 'Capacity is requested only after the replaced token is checked');
   await page.getByTestId('plugin-toggle').click();
   await page.getByRole('button', { name: '連携を有効にする', exact: true }).waitFor();
   assert.equal(await page.getByRole('button', { name: '接続を確認', exact: true }).isDisabled(), false);
-  assert.equal(await importButtons().count(), 0);
+  assert.equal(await storageMetrics().count(), 0, 'A disabled integration must not show capacity');
   await page.getByTestId('plugin-toggle').click();
-  await page.getByLabel('データセットを検索', { exact: true }).waitFor();
+  await page.getByRole('button', { name: '連携を無効にする', exact: true }).waitFor();
   await checkConnection();
-  await searchConnection();
+  await storageMetrics().getByRole('heading', { name: 'UI検証ストレージ', exact: true }).waitFor();
 
-  console.log('Built-in Mado: an external settings change discards a late search response');
-  searchGate = new Promise(resolve => { releaseSearch = resolve; });
-  const requested = page.waitForRequest(request => new URL(request.url()).pathname.endsWith('/datasets/search'));
-  await page.getByRole('button', { name: '検索', exact: true }).click();
-  await requested;
+  console.log('Built-in Mado: an external settings change discards the checked capacity');
   plugin.configRevision++;
   plugin.manifest = null;
+  plugin.accessTokenGrant = null;
   await page.getByRole('button', { name: '再読み込み', exact: true }).click();
-  await page.getByLabel('データセットを検索', { exact: true }).waitFor();
-  await page.waitForFunction(() => document.querySelector('.plugin-search input')?.value === '');
-  const responded = page.waitForResponse(response => new URL(response.url()).pathname.endsWith('/datasets/search'));
-  searchGate = undefined;
-  releaseSearch();
-  await (await responded).finished();
-  assert.equal(await importButtons().count(), 0);
-  assert.equal(await result(importedRevision).count(), 0);
+  await page.getByText('接続を確認すると表示します', { exact: true }).first().waitFor();
+  assert.equal(await storageMetrics().count(), 0);
   await checkConnection();
-  await searchConnection();
+  await storageMetrics().getByRole('heading', { name: 'UI検証ストレージ', exact: true }).waitFor();
 
-  console.log('Built-in Mado: viewer navigation checks connection identity and disabled availability');
+  console.log('Built-in Mado: an imported version shows its external reference without a link to Mado');
   api.state.user.isAdmin = false;
   api.state.project.role = 'viewer';
   await page.goto(`${base}/projects/${projectId}/datasets?version=${api.state.datasetVersions[0].id}`);
-  const viewLink = page.getByRole('link', { name: 'Madoで見る', exact: true });
-  await viewLink.waitFor();
-  const destination = new URL(await viewLink.getAttribute('href'));
-  assert.equal(destination.origin, 'https://mado-web.invalid');
-  assert.equal(destination.pathname, '/lineage');
-  assert.equal(destination.searchParams.get('versionId'), createDataset(importedRevision).externalId);
-  assert.equal(destination.searchParams.get('node'), createDataset(importedRevision).externalId);
+  await page.getByRole('heading', { name: '外部参照', exact: true }).waitFor();
+  await page.getByText(importedExternalId, { exact: false }).first().waitFor();
+  assert.equal(await page.getByRole('link', { name: 'Madoで見る', exact: true }).count(), 0);
   assert.equal(await page.getByRole('link', { name: 'Madoからインポート', exact: true }).count(), 0);
+  assert.equal(await page.locator('a[href*="mado-web.invalid"]').count(), 0);
+  assert.equal(calls.some(call => call.pathname.endsWith('/plugins/availability')), false);
   await screenshot('mado-viewer-version-ja');
-  plugin.enabled = false;
-  await page.reload();
-  await page.getByRole('heading', { name: 'Datasets', exact: true }).waitFor();
-  assert.equal(await viewLink.count(), 0);
 
-  console.log('Built-in Mado: migration remains paused until explicitly completed and mobile fits');
   api.state.user.isAdmin = true;
   api.state.project.role = 'admin';
-  plugin.enabled = true;
   await page.goto(`${base}/projects/${projectId}/plugins`);
 
   console.log('Built-in Mado: adding a disabled connection preserves earlier connections and references');
@@ -310,6 +252,5 @@ try {
 } finally {
   closing = true;
   releasePluginList?.();
-  releaseSearch?.();
   await browser.close();
 }

@@ -3,7 +3,7 @@ import type { PoolClient } from 'pg';
 import { transaction, type Database } from '../db/database.js';
 
 /** claim・lease・backoffの列を共有するoutboxのテーブル。 */
-export type LeasedOutboxTable = 'plugin_outbox' | 'notification_outbox';
+export type LeasedOutboxTable = 'notification_outbox';
 
 export interface LeasedOutboxPolicy {
   table: LeasedOutboxTable;
@@ -65,10 +65,9 @@ export function retryDelaySeconds(policy: LeasedOutboxPolicy, attempt: number): 
 }
 
 /**
- * outboxのテーブルのclaim → 送信 → 記録。pluginのイベントと通知で共有する。claimは、
- * FOR UPDATE SKIP LOCKEDで行を選んだトランザクションの中で、新しい配信IDを付けて行を'sending'に
- * する。結果はその配信IDがまだ有効な間だけ書くので、leaseが切れたdispatcherが、引き継いだ試行を
- * 上書きすることはない。
+ * outboxのテーブルのclaim → 送信 → 記録。claimは、FOR UPDATE SKIP LOCKEDで行を選んだ
+ * トランザクションの中で、新しい配信IDを付けて行を'sending'にする。結果はその配信IDがまだ有効な
+ * 間だけ書くので、leaseが切れたdispatcherが、引き継いだ試行を上書きすることはない。
  */
 export class LeasedOutbox {
   constructor(

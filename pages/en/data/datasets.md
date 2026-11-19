@@ -17,14 +17,13 @@ The contents of a version are either files saved in mado ML Tracking as Artifact
 - You want to keep inference outputs as a version that the next evaluation can use as input.
 - You want to trace in Lineage which data a model version was trained on.
 - You want to send training data to a GPU machine that cannot reach the API directly.
-- You want to use dataset versions managed in Mado as experiment inputs.
 
 ## Kinds of versions
 
 | Kind | Contents | Created by |
 | --- | --- | --- |
 | Artifact-backed version | A list of saved Artifacts. The version list shows N artifacts · size | Folder upload, Python SDK, Run outputs |
-| Reference version | A URI (`s3://`, `https://`, `file://`, and so on) and a digest. The version list shows **Reference (URI)** | **Create version**, MLflow `log_input`, import from Mado |
+| Reference version | A URI (`s3://`, `https://`, `file://`, and so on) and a digest. The version list shows **Reference (URI)** | **Create version**, MLflow `log_input` |
 
 An Artifact-backed version has a digest (`sha256:<hex>`) computed from the path, SHA-256, and size of each file. Uploading the same contents again gives the same digest. Its URI is `mmt-dataset://<version ID>`.
 
@@ -169,18 +168,9 @@ Fetched contents are cached in `<work directory>/.mmt-cache/datasets/` on the ma
 
 See [Compute targets](/en/compute/targets).
 
-## Use datasets from Mado
+## Data imported from Mado by earlier versions
 
-Once a global administrator has configured and enabled the Mado integration for the Project, you can import dataset versions managed in Mado. The integration starts disabled; while it is disabled, **Import from Mado** and **View in Mado** are not shown.
-
-1. Click **Import from Mado** on the **Datasets** page. The **Integrations** page opens.
-2. Click **Check connection**. Searching becomes available once the check succeeds.
-3. Enter a name in **Search datasets** and click **Search**.
-4. Click **Import** in the row of the version to import.
-
-An imported version is a reference version that keeps its name, namespace, and version from Mado. Importing the same version again does not add a new version. **Import from Mado** is shown to Project admins. Selecting an imported version shows **View in Mado**, which opens that version in Mado. Mado applies the person's own login and permissions.
-
-While the integration is enabled, a Run's input and output versions are sent to Mado when the Run starts and finishes, so Mado's dataset lineage shows which experiments used them. To configure and enable the integration, see [Mado integration](/en/admin/plugins).
+Up to v0.5.4, the Mado integration could import dataset versions from Mado. Those versions remain as reference versions and can be used as Run inputs. Selecting one shows its identifier in Mado, namespace, name, and version under **External references**. There is no link to Mado. New versions cannot be imported, and Runs are not sent to Mado ([Mado integration](/en/admin/plugins)).
 
 ## Datasets you no longer use
 

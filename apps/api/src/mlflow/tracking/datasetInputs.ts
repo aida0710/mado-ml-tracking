@@ -3,12 +3,9 @@ import type { JsonObject, Run } from '@mmt/contracts';
 import type { Principal } from '../../auth/principal.js';
 import { first, type Connection } from '../../db/database.js';
 import type { RegistryService } from '../../services/registryService.js';
-import { enqueueRunEvent } from '../../services/outboxEvents.js';
 import { requireScope } from '../../services/accessService.js';
-import { isTerminalStatus } from '../../domain/runTransitions.js';
 import type { TrackingDataset, TrackingDatasetInput } from './trackingTypes.js';
 import { invalidParameter } from './trackingValidation.js';
-import { runColumns } from '../../repositories/runListProjection.js';
 
 // データセットの同一性のロックは、スキーマのmigrationや親Runのロックとは別の名前空間を使う。
 const DATASET_REGISTRATION_LOCK_NAMESPACE = 4183;
@@ -120,15 +117,8 @@ export async function logDatasetInputs(
     );
     versionIds.add(versionId);
   }
-  const updated = (await first<Run>(
-    connection,
-    `UPDATE runs SET input_dataset_version_ids=$2::uuid[] WHERE id=$1 RETURNING ${runColumns}`,
-    [request.run.id, [...versionIds]],
-  ))!;
-  // 終了後にここへ来るのはJobの無いRunだけ。Jobに属するRunはrun_finalizedとして拒否済み。
-  if (
-    isTerminalStatus(updated.status) &&
-    versionIds.size !== request.run.inputDatasetVersionIds.length
-  )
-    await enqueueRunEvent(connection, updated);
+  await connection.query('UPDATE runs SET input_dataset_version_ids=$2::uuid[] WHERE id=$1', [
+    request.run.id,
+    [...versionIds],
+  ]);
 }

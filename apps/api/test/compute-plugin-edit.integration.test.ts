@@ -1,5 +1,5 @@
 import { workerInfo } from './workerFixtures.js';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type {
   ComputeTarget,
   Job,
@@ -340,12 +340,11 @@ describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立P
       }),
       200,
     );
-    const sendPayload = vi.fn(async () => undefined);
     const application = createApplication({
       config: harness.config,
       database: harness.database,
       stores: harness.stores,
-      pluginClientFactory: () => madoClientStub({ sendPayload }),
+      pluginClientFactory: () => madoClientStub(),
     });
     const input = madoPluginInput({ name: 'Plugin' });
     const plugin = await entity<PluginConnection>(
@@ -393,15 +392,10 @@ describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立P
         method: 'POST', cookie: fixture.editor.cookie,
       }), 200,
     );
-    expect(sendPayload).not.toHaveBeenCalled();
-    for (const [path, method, body] of [
-      ['/metrics', 'GET', undefined],
-      ['/datasets/search', 'POST', { query: '' }],
-      ['/events/retry', 'POST', undefined],
-    ] as const)
-      expect((await request(application.app, endpoint + path, {
-        method, cookie: fixture.administrator.cookie, body,
-      })).status).toBe(422);
+    // 無効にした連携は、接続の確認だけができる。
+    expect((await request(application.app, endpoint + '/metrics', {
+      cookie: fixture.administrator.cookie,
+    })).status).toBe(422);
     const bad = await request(application.app, endpoint, {
       method: 'PATCH', cookie: fixture.administrator.cookie,
       body: {
@@ -448,55 +442,5 @@ describe.skipIf(!testDatabaseUrl)('Compute/plugin編集と有効切替（独立P
     expect(
       (await harness.database.query('SELECT manifest,access_token_grant FROM plugin_connections WHERE id=$1', [plugin.id])).rows[0],
     ).toEqual({ manifest: null, access_token_grant: null });
-  });
-
-  it('無効中は送信と新規記録を止め、再有効化で既存の同じイベントだけを送る', async () => {
-    const fixture = await executionFixture(harness);
-    const sendPayload = vi.fn(async (_payload: string) => undefined);
-    const application = createApplication({
-      config: harness.config, database: harness.database, stores: harness.stores,
-      pluginClientFactory: () => madoClientStub({ sendPayload }),
-    });
-    const plugin = await entity<PluginConnection>(
-      await request(application.app, `${fixture.basePath}/plugins`, {
-        method: 'POST', cookie: fixture.administrator.cookie,
-        body: madoPluginInput({ name: 'Paused Mado' }),
-      }),
-    );
-    const run = await fixture.newRun();
-    await entity(
-      await request(application.app, `${fixture.basePath}/runs/${run.id}`, {
-        method: 'PATCH', cookie: fixture.editor.cookie, body: { status: 'finished' },
-      }), 200,
-    );
-    const endpoint = `${fixture.basePath}/plugins/${plugin.id}`;
-    await entity(
-      await request(application.app, endpoint, {
-        method: 'PATCH', cookie: fixture.administrator.cookie, body: { enabled: false },
-      }), 200,
-    );
-    const skippedRun = await fixture.newRun('Run while disabled');
-    await entity(
-      await request(application.app, `${fixture.basePath}/runs/${skippedRun.id}`, {
-        method: 'PATCH', cookie: fixture.editor.cookie, body: { status: 'finished' },
-      }), 200,
-    );
-    expect(await application.outbox.dispatchBatch()).toBe(0);
-    expect(sendPayload).not.toHaveBeenCalled();
-    const pending = await harness.database.query('SELECT event_id,status,attempts,payload,destination_url FROM plugin_outbox');
-    expect(pending.rows).toHaveLength(1);
-    expect(pending.rows[0]).toMatchObject({ status: 'pending', attempts: 0 });
-    await entity(
-      await request(application.app, endpoint, {
-        method: 'PATCH', cookie: fixture.administrator.cookie, body: { enabled: true },
-      }), 200,
-    );
-    expect(await application.outbox.dispatchBatch()).toBe(1);
-    expect(await application.outbox.dispatchBatch()).toBe(0);
-    expect(sendPayload).toHaveBeenCalledExactlyOnceWith(pending.rows[0].payload);
-    expect(JSON.parse(sendPayload.mock.calls[0]![0]).run.runId).toBe(run.id);
-    expect((await harness.database.query('SELECT event_id FROM plugin_outbox')).rows).toEqual([
-      { event_id: pending.rows[0].event_id },
-    ]);
   });
 });
