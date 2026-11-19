@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
-  PluginConnection,
   PromotionEvaluation,
   PromotionEvaluationPage,
   PromotionPolicy,
@@ -8,7 +7,6 @@ import type {
 } from '@mmt/contracts';
 import type { Connection } from '../src/db/database.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
-import { madoPluginInput } from './pluginFixtures.js';
 import { promotionFixture, type PromotionFixture } from './promotionFixtures.js';
 
 // 1つのテストで、実行名義のユーザーの権限の確認を、ポリシーのsavepointの中でデータベースの
@@ -303,15 +301,8 @@ describe.skipIf(!testDatabaseUrl)('昇格policyと評価Run終端での自動判
     ]);
   });
 
-  it('判定中のエラーはskipped(evaluation_error)として残り、記録自体が失敗してもRun終端とoutboxは確定する', async () => {
+  it('判定中のエラーはskipped(evaluation_error)として残り、記録自体が失敗してもRun終端は確定する', async () => {
     const fixture = await promotionFixture(harness);
-    await entity<PluginConnection>(
-      await request(harness.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: madoPluginInput({ name: 'Lineage' }),
-      }),
-    );
     const rule = await fixture.registerEvaluationRule('Evaluation A');
     await fixture.createPolicy(rule);
     const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -338,11 +329,6 @@ describe.skipIf(!testDatabaseUrl)('昇格policyと評価Run終端での自動判
           [unrecorded.runId],
         );
         expect(state.rows).toEqual([{ run_status: 'finished', job_status: 'finished' }]);
-        const outbox = await harness.database.query<{ type: string }>(
-          "SELECT event->>'type' AS type FROM plugin_outbox WHERE event->'run'->>'id'=$1 ORDER BY created_at",
-          [unrecorded.runId],
-        );
-        expect(outbox.rows.map((row) => row.type)).toContain('run.finished');
         expect(await fixture.evaluations()).toHaveLength(1);
       } finally {
         await harness.database.query(

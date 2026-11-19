@@ -45,17 +45,6 @@
 .member-name .user-status {
   font-size: var(--font-size-xs);
 }
-.plugin-search {
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
-  margin-top: 24px;
-  margin-bottom: 16px;
-}
-.plugin-search .field {
-  flex: 1;
-  margin-bottom: 0;
-}
 .mado-settings-actions {
   flex-wrap: wrap;
   gap: 8px;

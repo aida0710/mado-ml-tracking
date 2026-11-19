@@ -4,7 +4,7 @@ import type { PoolClient, QueryResultRow } from 'pg';
 export type Database = pg.Pool;
 export type Connection = Database | PoolClient;
 
-// Web APIとoutboxの余地を残しつつ、開発用DBへの接続数を抑える。
+// Web APIと通知のoutboxの余地を残しつつ、開発用DBへの接続数を抑える。
 const DATABASE_POOL_SIZE = 12;
 // PostgreSQLが使えないときは、すぐに目に見える失敗を返す。
 const DATABASE_CONNECTION_TIMEOUT_MS = 5000;

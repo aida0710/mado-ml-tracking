@@ -1,6 +1,6 @@
 import { workerInfo } from './workerFixtures.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Dataset, ModelVersion, PluginConnection, Run, RunStatus } from '@mmt/contracts';
+import type { Dataset, ModelVersion, Run, RunStatus } from '@mmt/contracts';
 import type { Principal } from '../src/auth/principal.js';
 import { jobCreateSchema } from '../src/domain/validation.js';
 import { RunTrackingService } from '../src/mlflow/tracking/runTrackingService.js';
@@ -13,7 +13,6 @@ import { RunService } from '../src/services/runService.js';
 import { RunOutputDeclarationService } from '../src/services/runOutputDeclarationService.js';
 import { WorkerService } from '../src/services/workerService.js';
 import { createHarness, entity, request, testDatabaseUrl, type Harness } from './harness.js';
-import { madoPluginInput } from './pluginFixtures.js';
 import { executionFixture, referenceDigest } from './fixtures.js';
 
 interface RecordedCompletion {
@@ -84,26 +83,11 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
 
   async function setup() {
     const fixture = await executionFixture(harness);
-    await entity<PluginConnection>(
-      await request(harness.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: madoPluginInput({ name: 'Lineage' }),
-      }),
-    );
     const editor = await sessionPrincipal(fixture.editor.cookie);
     const worker = (await harness.services.auth.authenticate({
       bearer: fixture.workerToken,
     }))!;
     return { ...fixture, editorPrincipal: editor, workerPrincipal: worker };
-  }
-
-  async function outboxEventTypes(runId: string): Promise<string[]> {
-    const stored = await harness.database.query<{ type: string }>(
-      "SELECT event->>'type' AS type FROM plugin_outbox WHERE event->'run'->>'id'=$1 ORDER BY created_at",
-      [runId],
-    );
-    return stored.rows.map((row) => row.type);
   }
 
   it('worker completeでhandlerを1回だけ呼び、同じleaseの再送では呼ばず、claimのrunningでも呼ばない', async () => {
@@ -126,7 +110,6 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
     });
     expect(claimed?.job.id).toBe(job.id);
     expect(handler.calls).toEqual([]);
-    expect(await outboxEventTypes(run.id)).toEqual(['run.started']);
 
     const completion = {
       leaseId: claimed!.job.leaseId!,
@@ -139,7 +122,6 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
     expect(handler.calls).toEqual([
       { runId: run.id, previousStatus: 'running', status: 'finished' },
     ]);
-    expect(await outboxEventTypes(run.id)).toEqual(['run.started', 'run.finished']);
   });
 
   it('queued Jobのcancelでhandlerを1回呼ぶ', async () => {
@@ -158,10 +140,9 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
     expect(handler.calls).toEqual([
       { runId: run.id, previousStatus: 'queued', status: 'canceled' },
     ]);
-    expect(await outboxEventTypes(run.id)).toEqual(['run.canceled']);
   });
 
-  it('native PATCHはfinishedへの変化でだけhandlerを呼び、runningへの変化はoutboxにだけ積む', async () => {
+  it('native PATCHはfinishedへの変化でだけhandlerを呼び、runningへの変化では呼ばない', async () => {
     const fixture = await setup();
     const handler = recordingHandler();
     const services = servicesWith([handler]);
@@ -175,10 +156,9 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
     expect(handler.calls).toEqual([
       { runId: run.id, previousStatus: 'running', status: 'finished' },
     ]);
-    expect(await outboxEventTypes(run.id)).toEqual(['run.started', 'run.finished']);
   });
 
-  it('MLflow UpdateRun FINISHEDでhandlerを1回呼び、CreateRunでは呼ばない。終端後のDataset追加と出力登録は再送だけ積む', async () => {
+  it('MLflow UpdateRun FINISHEDでhandlerを1回呼び、CreateRunでは呼ばない。終端後のDataset追加と出力登録でも呼ばない', async () => {
     const fixture = await setup();
     const handler = recordingHandler();
     const services = servicesWith([handler]);
@@ -188,7 +168,6 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
     });
     const runId = created.info.run_id;
     expect(handler.calls).toEqual([]);
-    expect(await outboxEventTypes(runId)).toEqual(['run.started']);
 
     for (let attempt = 0; attempt < 2; attempt++)
       await services.tracking.update(fixture.editorPrincipal, fixture.project.id, {
@@ -196,7 +175,6 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
         status: 'FINISHED',
       });
     expect(handler.calls).toEqual([{ runId, previousStatus: 'running', status: 'finished' }]);
-    expect(await outboxEventTypes(runId)).toEqual(['run.started', 'run.finished']);
 
     await services.tracking.inputs(fixture.editorPrincipal, fixture.project.id, {
       runId,
@@ -224,12 +202,6 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
     );
 
     expect(handler.calls).toHaveLength(1);
-    expect(await outboxEventTypes(runId)).toEqual([
-      'run.started',
-      'run.finished',
-      'run.finished',
-      'run.finished',
-    ]);
   });
 
   it('MLflowで終端から別の終端へ変えてもhandlerは呼ばず、RUNNINGへ戻してから終端にすると再び呼ぶ', async () => {
@@ -250,13 +222,6 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
     expect(handler.calls).toEqual([
       { runId, previousStatus: 'running', status: 'finished' },
       { runId, previousStatus: 'running', status: 'finished' },
-    ]);
-    expect(await outboxEventTypes(runId)).toEqual([
-      'run.started',
-      'run.finished',
-      'run.failed',
-      'run.started',
-      'run.finished',
     ]);
   });
 
@@ -309,7 +274,6 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
       expect(following.calls).toEqual([
         { runId: run.id, previousStatus: 'running', status: 'failed' },
       ]);
-      expect(await outboxEventTypes(run.id)).toEqual(['run.started', 'run.failed']);
       expect(JSON.parse(consoleError.mock.calls[0]![0] as string)).toEqual({
         event: 'run_completion_handler_failed',
         handler: 'failing',
@@ -320,15 +284,6 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
       consoleError.mockRestore();
     }
   });
-
-  async function finishedEventOutputModels(runId: string): Promise<unknown[]> {
-    const stored = await harness.database.query<{ ids: unknown }>(
-      `SELECT event->'run'->'outputModelVersionIds' AS ids FROM plugin_outbox
-      WHERE event->'run'->>'id'=$1 AND event->>'type'='run.finished' ORDER BY created_at`,
-      [runId],
-    );
-    return stored.rows.map((row) => row.ids);
-  }
 
   function outputModelRecorder(): RunCompletionHandler & { outputs: string[][] } {
     const outputs: string[][] = [];
@@ -372,7 +327,6 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
       runId: run.id,
       input: { tags: { note: 'after' } },
     });
-    expect(await finishedEventOutputModels(run.id)).toEqual([[version.id]]);
     expect(handler.outputs).toEqual([]);
 
     const second = await fixture.newRun('Training 2', 'training');
@@ -430,8 +384,6 @@ describe.skipIf(!testDatabaseUrl)('Run終端handlerの共通入口（独立Postg
       await registration.query('COMMIT');
       await finishing;
       expect(handler.outputs).toEqual([[version.id]]);
-      // 登録時にはRunが実行中だったので、run.finishedを書いたのは終了状態への遷移だけ。
-      expect(await finishedEventOutputModels(runId)).toEqual([[version.id]]);
     } finally {
       await registration.query('ROLLBACK').catch(() => undefined);
       registration.release();

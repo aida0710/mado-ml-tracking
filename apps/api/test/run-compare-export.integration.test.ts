@@ -360,16 +360,12 @@ describe.skipIf(!testDatabaseUrl)('Runの一括比較とCSV出力（独立Postgr
       database: harness.database,
       stores: harness.stores,
     });
-    try {
-      const response = await exportCsv({}, { app: limited.app });
-      expect(response.headers.get(RUN_EXPORT_TRUNCATED_HEADER)).toBe('true');
-      const lines = csvLines(await responseCsv(response));
-      expect(lines).toHaveLength(1 + 3 + 1);
-      expect(lines.slice(1, 4).map((line) => line.split(',')[1])).toEqual(['d', 'c', 'b']);
-      expect(lines.at(-1)).toMatch(/^# truncated: 3行/);
-    } finally {
-      await limited.outbox.stop();
-    }
+    const response = await exportCsv({}, { app: limited.app });
+    expect(response.headers.get(RUN_EXPORT_TRUNCATED_HEADER)).toBe('true');
+    const lines = csvLines(await responseCsv(response));
+    expect(lines).toHaveLength(1 + 3 + 1);
+    expect(lines.slice(1, 4).map((line) => line.split(',')[1])).toEqual(['d', 'c', 'b']);
+    expect(lines.at(-1)).toMatch(/^# truncated: 3行/);
   });
 
   it('viewerとread tokenは出力でき、非メンバーと他Project限定tokenは403', async () => {

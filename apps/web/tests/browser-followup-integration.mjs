@@ -116,9 +116,6 @@ try {
       config: {
         apiUrl: 'http://127.0.0.1:9',
         webUrl: 'http://127.0.0.1:9',
-        lineageUrl: 'http://127.0.0.1:9',
-        jobNamespace: 'mado-model-tracking',
-        storageSystemKey: 'mado-model-tracking',
       },
       enabled: false,
     },
@@ -156,25 +153,16 @@ try {
     await projectAdminPage.getByRole('button', { name: 'Madoの接続設定', exact: true }).count(),
     0,
   );
-  assert.equal(await projectAdminPage.getByLabel('データセットを検索').count(), 0);
   const checkResponse = await projectAdminPage.request.post(
     base + '/api' + pluginPath + '/' + plugin.id + '/check',
   );
   assert.equal(checkResponse.status(), 503);
   assert.equal((await checkResponse.json()).code, 'plugin_token_unavailable');
-  const searchResponse = await projectAdminPage.request.post(
-    base + '/api' + pluginPath + '/' + plugin.id + '/datasets/search',
-    {
-      data: { query: 'verification', expectedRevision: plugin.configRevision },
-    },
+  const metricsResponse = await projectAdminPage.request.get(
+    base + '/api' + pluginPath + '/' + plugin.id + '/metrics',
   );
-  assert.equal(searchResponse.status(), 422);
-  assert.equal((await searchResponse.json()).code, 'plugin_disabled');
-  const retryResponse = await projectAdminPage.request.post(
-    base + '/api' + pluginPath + '/' + plugin.id + '/events/retry',
-  );
-  assert.equal(retryResponse.status(), 422);
-  assert.equal((await retryResponse.json()).code, 'plugin_disabled');
+  assert.equal(metricsResponse.status(), 422);
+  assert.equal((await metricsResponse.json()).code, 'plugin_disabled');
   assert.equal(
     await projectAdminPage.getByRole('heading', { name: 'Storage metrics', exact: true }).count(),
     0,
@@ -188,8 +176,7 @@ try {
       pluginId: plugin.id,
       projectAdminRegistrationStatus: forbidden.status(),
       unconfiguredCheckStatus: checkResponse.status(),
-      disabledSearchStatus: searchResponse.status(),
-      disabledRetryStatus: retryResponse.status(),
+      disabledMetricsStatus: metricsResponse.status(),
       realCollector: 'not connected; error path only',
     }),
   );

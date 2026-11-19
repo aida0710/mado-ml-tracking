@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import type {
-  PluginAvailability,
   PluginConnection,
   PluginCreate,
   PluginPatch,
@@ -33,42 +32,6 @@ export class PluginConnections {
   async list(principal: Principal, projectId: string): Promise<PluginConnection[]> {
     await requireProject(this.database, principal, { projectId, role: 'admin', scope: 'admin' });
     return (await this.records(projectId)).map((plugin) => this.present(plugin));
-  }
-
-  async availability(principal: Principal, projectId: string): Promise<PluginAvailability[]> {
-    const role = await requireProject(this.database, principal, {
-      projectId,
-      role: 'viewer',
-      scope: 'read',
-    });
-    const canManage =
-      role === 'admin' &&
-      (principal.method === 'session' || principal.token?.scopes.includes('admin') === true);
-    const records = (await this.records(projectId)).filter((plugin) => plugin.kind === 'mado');
-    if (!records.length)
-      return [
-        {
-          kind: 'mado',
-          id: null,
-          enabled: false,
-          configured: false,
-          configRevision: 0,
-          webUrl: null,
-          canImport: false,
-        },
-      ];
-    return records.map((plugin) => {
-      const configured = this.credentials.hasAccessToken(plugin);
-      return {
-        kind: 'mado',
-        id: plugin.id,
-        enabled: plugin.enabled,
-        configured,
-        configRevision: plugin.configRevision,
-        webUrl: plugin.config?.webUrl ?? null,
-        canImport: canManage && configured && plugin.enabled,
-      };
-    });
   }
 
   async create(
@@ -174,7 +137,7 @@ export class PluginConnections {
     reference: {
       projectId: string;
       pluginId: string;
-      lock?: 'share' | 'update';
+      lock?: 'update';
       allowDisabled?: boolean;
       allowUnconfigured?: boolean;
     },
@@ -219,9 +182,8 @@ export class PluginConnections {
     };
   }
 
-  async assertRevision(plugin: PluginConnectionRecord, expectedRevision?: number): Promise<void> {
-    if (expectedRevision !== undefined && expectedRevision !== plugin.configRevision)
-      conflict('the integration settings have changed; check them again');
+  /** 相手の応答を待つ間に設定が変わっていたら、その応答を古い設定のものとして捨てる。 */
+  async assertRevision(plugin: PluginConnectionRecord): Promise<void> {
     const current = await first<{ configRevision: number }>(
       this.database,
       'SELECT config_revision FROM plugin_connections WHERE id=$1',
@@ -244,21 +206,16 @@ export class PluginConnections {
     plugin: PluginConnectionRecord,
     config: NonNullable<PluginConnectionRecord['config']>,
   ): Promise<void> {
-    if (
-      (['apiUrl', 'webUrl', 'lineageUrl'] as const).every(
-        (key) => plugin.config[key] === config[key],
-      )
-    )
-      return;
-    const history = await first<{ exists: boolean }>(
+    if ((['apiUrl', 'webUrl'] as const).every((key) => plugin.config[key] === config[key])) return;
+    // 取り込み済みのバージョンの外部参照は、この接続が指すmado S3 Data Catalogのもの。
+    const imported = await first<{ exists: boolean }>(
       connection,
-      `SELECT EXISTS(SELECT 1 FROM plugin_outbox WHERE plugin_id=$1)
-        OR EXISTS(SELECT 1 FROM dataset_versions WHERE lower(external_ref->>'pluginId')=lower($1::text)) AS exists`,
+      `SELECT EXISTS(SELECT 1 FROM dataset_versions WHERE lower(external_ref->>'pluginId')=lower($1::text)) AS exists`,
       [plugin.id],
     );
-    if (history?.exists)
+    if (imported?.exists)
       conflict(
-        'this integration already has versions or delivery records; set up a new integration for another Mado',
+        'dataset versions refer to this integration; set up a new integration for another Mado',
       );
   }
 }

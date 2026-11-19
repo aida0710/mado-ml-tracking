@@ -319,17 +319,11 @@ export const API_ERROR_CODES = [
   // mado S3 Data Catalog連携
   'plugin_capability_unsupported',
   'plugin_credentials_required',
-  'plugin_dataset_identity_mismatch',
-  'plugin_dataset_not_found',
-  'plugin_dataset_unavailable',
-  'plugin_delivery_identity_mismatch',
   'plugin_disabled',
-  'plugin_job_namespace_not_allowed',
   'plugin_mado_access_token_unsupported',
   'plugin_request_failed',
   'plugin_secret_decryption_failed',
   'plugin_secret_key_unavailable',
-  'plugin_token_scope_missing',
   'plugin_token_unavailable',
   // リポジトリ
   'invalid_repository',

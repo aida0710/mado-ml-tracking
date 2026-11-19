@@ -3,21 +3,19 @@ import type { PoolClient } from 'pg';
 import { transaction, type Database } from '../db/database.js';
 import {
   isJobHeartbeatStale,
-  isPluginDeliveryStalled,
   isWorkerOffline,
   isWorkerRetired,
   planAlertChanges,
+  type MonitoredAlertKind,
   type MonitoredSubject,
 } from '../domain/operationsAlerts.js';
 import {
   insertOpenAlert,
   listActiveJobHeartbeats,
-  listEnabledPluginBacklogs,
   listOpenAlerts,
   listWorkerSilences,
   resolveAlert,
   type ActiveJobHeartbeat,
-  type PluginBacklog,
   type WorkerSilence,
 } from '../repositories/operationsAlertRepository.js';
 import { enqueueNotificationEvent, type NotificationSubject } from './notificationEvents.js';
@@ -45,7 +43,6 @@ export interface OperationsMonitorTick {
 const OPENED_TITLES: Record<MonitoredSubject['kind'], string> = {
   'job.heartbeat_stale': 'Jobのheartbeatが途絶えました',
   'worker.offline': 'workerが応答しません',
-  'plugin.delivery_stalled': 'Pluginへのイベント送信が滞留しています',
 };
 const JOB_RECOVERED_TITLE = 'Jobのheartbeatが戻りました';
 
@@ -87,28 +84,8 @@ function workerSubject(worker: WorkerSilence): WatchedSubject {
   };
 }
 
-function pluginSubject(backlog: PluginBacklog): WatchedSubject {
-  return {
-    kind: 'plugin.delivery_stalled',
-    subjectId: backlog.pluginId,
-    projectId: backlog.projectId,
-    isAlerting: isPluginDeliveryStalled(backlog),
-    detail: {
-      pluginId: backlog.pluginId,
-      pluginName: backlog.pluginName,
-      undelivered: backlog.pending + backlog.sending,
-      oldestPendingAt: backlog.oldestPendingAt,
-      maxAttempts: backlog.maxAttempts,
-      lastError: backlog.lastError,
-    },
-    name: backlog.pluginName,
-    webPath: 'plugins',
-    notificationSubject: {},
-  };
-}
-
 /**
- * Jobのheartbeat、workerのpresence、pluginのイベントの配信を30秒ごとに監視し、出来事1つにつき
+ * Jobのheartbeatとworkerのpresenceを30秒ごとに監視し、出来事1つにつき
  * operations_alertsの行を1つ持ち、アラートが始まったとき（と、止まっていたJobのheartbeatが
  * 戻ったとき）だけ通知をキューに入れる。各回はadvisory lockの下の1つのトランザクションなので、
  * 通知はアラートの行と一緒にコミットされ、APIプロセスが二重に報告することはない。
@@ -174,11 +151,9 @@ export class OperationsMonitor {
   private async readSubjects(connection: PoolClient): Promise<WatchedSubject[]> {
     const jobs = await listActiveJobHeartbeats(connection);
     const workers = await listWorkerSilences(connection);
-    const plugins = await listEnabledPluginBacklogs(connection);
     return [
       ...jobs.map(jobSubject),
       ...workers.filter((worker) => !isWorkerRetired(worker.silentSeconds)).map(workerSubject),
-      ...plugins.map(pluginSubject),
     ];
   }
 
@@ -188,7 +163,7 @@ export class OperationsMonitor {
     event: {
       alert: OperationsAlert;
       subject: WatchedSubject;
-      type: OperationsAlert['kind'] | 'job.heartbeat_recovered';
+      type: MonitoredAlertKind | 'job.heartbeat_recovered';
     },
   ): Promise<void> {
     const { alert, subject } = event;

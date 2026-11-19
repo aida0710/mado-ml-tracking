@@ -1,9 +1,8 @@
 import { requestJson } from '@mado/design-system/http';
 import { OPERATIONS_ALERT_MAX_PAGE_SIZE } from '@mmt/contracts';
-import { itemsOf, operationsAlertSchema, pluginOutboxSummarySchema } from '@mmt/contracts/schemas';
-import { encodeId, projectPath } from './http';
+import { itemsOf, operationsAlertSchema } from '@mmt/contracts/schemas';
 
-/** APIの運用監視が残したアラートと、pluginのイベントの送信状況。 */
+/** APIの運用監視が残したアラート。 */
 export const operationsApi = {
   /**
    * 利用者がメンバーであるすべてのProject（全体管理者のsessionならすべて）の未解決のアラートを、
@@ -16,10 +15,4 @@ export const operationsApi = {
         init: { signal },
       })
     ).items,
-  /** Project adminだけ。 */
-  pluginOutbox: (projectId: string, pluginId: string, signal?: AbortSignal) =>
-    requestJson(`${projectPath(projectId)}/plugins/${encodeId(pluginId)}/outbox`, {
-      schema: pluginOutboxSummarySchema,
-      init: { signal },
-    }),
 };

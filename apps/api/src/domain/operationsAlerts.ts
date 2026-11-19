@@ -6,10 +6,6 @@ import {
 } from '@mmt/contracts';
 import { JOB_HEARTBEAT_STALE_SECONDS, WORKER_OFFLINE_SECONDS } from './workerLiveness.js';
 
-// 合意した閾値。イベントが15分届かないままか、1つのイベントを5回試行しても
-// 成功しないとき、pluginが止まっているとみなす。
-export const PLUGIN_STALL_SECONDS = 900;
-export const PLUGIN_STALL_ATTEMPTS = 5;
 // 1週間応答の無いworkerは引退した（ホストの名前が変わったか、外された）とみなし、新しい
 // アラートを開かず、古いアラートもいつまでも開いたままにしない。
 export const WORKER_RETIRED_SECONDS = 7 * 24 * 60 * 60;
@@ -29,9 +25,12 @@ export const operationsAlertQuerySchema = z.strictObject({
 
 export type OperationsAlertDetail = Record<string, string | number | boolean | null>;
 
+/** 監視が今も開くアラートの種別。plugin.delivery_stalledは過去のアラートにだけ残る。 */
+export type MonitoredAlertKind = Exclude<OperationsAlertKind, 'plugin.delivery_stalled'>;
+
 /** 今回の周期で監視が見る対象。isAlertingは、開いたアラートを持つべきかを表す。 */
 export interface MonitoredSubject {
-  kind: OperationsAlertKind;
+  kind: MonitoredAlertKind;
   subjectId: string;
   projectId: string;
   isAlerting: boolean;
@@ -66,21 +65,6 @@ export function isWorkerOffline(silentSeconds: number): boolean {
 
 export function isWorkerRetired(silentSeconds: number): boolean {
   return silentSeconds > WORKER_RETIRED_SECONDS;
-}
-
-/**
- * 未送信には送信中のイベントも含む。送っている途中の再試行もまだ滞留の一部なので、dispatcherが
- * イベントを取るたびにアラートが解消して開き直すことはない。
- */
-export function isPluginDeliveryStalled(backlog: {
-  oldestUndeliveredAgeSeconds: number | null;
-  maxAttempts: number;
-}): boolean {
-  if (backlog.oldestUndeliveredAgeSeconds === null) return false;
-  return (
-    backlog.oldestUndeliveredAgeSeconds > PLUGIN_STALL_SECONDS ||
-    backlog.maxAttempts >= PLUGIN_STALL_ATTEMPTS
-  );
 }
 
 function subjectKey(reference: { kind: OperationsAlertKind; subjectId: string }): string {

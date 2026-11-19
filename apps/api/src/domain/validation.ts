@@ -281,16 +281,6 @@ export const tokenCreateSchema = z.strictObject({
 });
 export { pluginCreateSchema, pluginPatchSchema } from './pluginValidation.js';
 import { pluginPatchSchema } from './pluginValidation.js';
-export const pluginDatasetSchema = z.strictObject({
-  externalId: nameSchema,
-  namespace: nameSchema,
-  name: nameSchema,
-  version: nameSchema,
-  uri: z.string().min(1).max(4000),
-  digest: z.string().min(1).max(1000),
-  schema: jsonObjectSchema,
-  metadata: jsonObjectSchema,
-});
 // workerが報告する並列のJob数はこれが上限。これより大きい値は設定の誤り。
 const MAX_WORKER_PARALLEL_JOBS = 1000;
 // workerのホストの~/.sshにこれより多いことはまず無い。候補として出すだけ。

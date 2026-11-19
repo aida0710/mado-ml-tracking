@@ -47,7 +47,7 @@ const TAGS: { name: string; description: string }[] = [
   { name: 'sites', description: 'site（外部のコンピュータ）の設定・job shell・個人設定・鍵・array・手動投入・runnerの報告' },
   { name: 'launcher', description: 'launcher専用のprotocol（Webで登録したlauncherのtoken）' },
   { name: 'hooks', description: 'フック（任意のタイミングの自動実行）・webhook・ドライバーの子Job' },
-  { name: 'plugins', description: 'Mado plugin接続' },
+  { name: 'plugins', description: 'Mado plugin接続（接続確認と容量メトリクス）' },
   { name: 'evaluation', description: '評価結果の集約と比較' },
   { name: 'promotion', description: '昇格policyと判定履歴' },
   { name: 'collaboration', description: 'Runの説明文・コメント' },

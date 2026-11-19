@@ -4,23 +4,22 @@ import { pluginsApi } from '../api/plugins';
 import { useMutation } from './useMutation';
 import { useMountedRef } from './useMountedRef';
 
-type ConnectionSuccess = { kind: 'checked' } | { kind: 'queued'; count: number };
-
-export function useMadoPluginConnection({ projectId, plugin, onSaved, onRetried }: {
+export function useMadoPluginConnection({ projectId, plugin, onSaved }: {
   projectId: string;
   plugin: PluginConnection | null;
   onSaved: (plugin: PluginConnection) => void;
-  onRetried: () => void;
 }) {
+  // この画面を開いてから接続を確認したか。確認した接続にだけ容量を問い合わせる。
   const [checked, setChecked] = useState(false);
-  const [success, setSuccess] = useState<ConnectionSuccess | null>(null);
+  // 直前の操作が接続の確認で、成功したか。次の操作を始めると消える。
+  const [showsCheckSuccess, setShowsCheckSuccess] = useState(false);
   const mounted = useMountedRef();
   const mutation = useMutation();
-  function runConnectionOperation<T>(operation: () => Promise<T>, onSucceeded: (operationValue: T) => void) {
-    setSuccess(null);
+  function runConnectionOperation(operation: () => Promise<PluginConnection>, onSucceeded: (saved: PluginConnection) => void) {
+    setShowsCheckSuccess(false);
     void mutation.run(async () => {
-      const operationValue = await operation();
-      if (mounted.current) onSucceeded(operationValue);
+      const saved = await operation();
+      if (mounted.current) onSucceeded(saved);
     });
   }
   function check() {
@@ -28,7 +27,7 @@ export function useMadoPluginConnection({ projectId, plugin, onSaved, onRetried 
     // 確認した接続には、mado S3 Data Catalogから読んだアクセストークンの許可範囲が入っている。
     runConnectionOperation(() => pluginsApi.check(projectId, plugin.id), (checkedPlugin) => {
       setChecked(true);
-      setSuccess({ kind: 'checked' });
+      setShowsCheckSuccess(true);
       onSaved(checkedPlugin);
     });
   }
@@ -36,12 +35,5 @@ export function useMadoPluginConnection({ projectId, plugin, onSaved, onRetried 
     if (!plugin) return;
     runConnectionOperation(() => pluginsApi.update(projectId, plugin.id, { enabled: !plugin.enabled }), onSaved);
   }
-  function retry() {
-    if (!plugin) return;
-    runConnectionOperation(() => pluginsApi.retryEvents(projectId, plugin.id), (retried) => {
-      setSuccess({ kind: 'queued', count: retried.queued });
-      onRetried();
-    });
-  }
-  return { checked, success, pending: mutation.pending, error: mutation.error, check, toggle, retry };
+  return { checked, showsCheckSuccess, pending: mutation.pending, error: mutation.error, check, toggle };
 }

@@ -82,7 +82,7 @@ export const datasetVersionRequestSchema = z
     for (const key of required)
       if (request[key] === undefined)
         context.addIssue({ code: 'custom', path: [key], message: `${key} is required` });
-    // Artifactのバージョンのuriはサーバーが決め、pluginからの取り込みは参照型のバージョンになる。
+    // Artifactのバージョンのuriはサーバーが決める。外部参照を持てるのは参照型のバージョンだけ。
     const forbidden = request.content ? (['uri', 'externalRef'] as const) : [];
     for (const key of forbidden)
       if (request[key] != null)

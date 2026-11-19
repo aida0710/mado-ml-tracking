@@ -67,7 +67,6 @@ export async function createHarness(
       await database.query('TRUNCATE users,projects,compute_targets CASCADE');
     },
     async close() {
-      await application.outbox.stop();
       await database.end();
       await administrator.query(`DROP SCHEMA ${schema} CASCADE`);
       await administrator.end();

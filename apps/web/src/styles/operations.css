@@ -87,9 +87,6 @@
 .operations-alert-time {
   font-size: var(--font-size-xs);
 }
-.plugin-outbox {
-  margin: 16px 0;
-}
 
 /* スマートフォンでは一覧がベルの右端から下がり、左に320px分の余地が無い。代わりに上部バーの
    すぐ下で、16pxの余白を残して画面の幅いっぱいに広げる。 */

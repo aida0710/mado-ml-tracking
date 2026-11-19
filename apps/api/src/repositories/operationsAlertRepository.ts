@@ -39,20 +39,6 @@ export interface WorkerSilence {
   activeJobCount: number;
 }
 
-/** 1つのPlugin接続の未配信のイベント（pendingとsending）。 */
-export interface PluginBacklog {
-  pluginId: string;
-  projectId: string;
-  pluginName: string;
-  enabled: boolean;
-  pending: number;
-  sending: number;
-  oldestPendingAt: string | null;
-  oldestUndeliveredAgeSeconds: number | null;
-  maxAttempts: number;
-  lastError: string | null;
-}
-
 export async function listOpenAlerts(connection: Connection): Promise<OpenAlertReference[]> {
   return rows<OpenAlertReference>(
     connection,
@@ -164,37 +150,5 @@ export async function listWorkerSilences(connection: Connection): Promise<Worker
         AND j.status IN ('claimed','running')) AS active_job_count
     FROM workers w JOIN api_tokens t ON t.id=w.token_id
     WHERE t.revoked_at IS NULL AND (t.expires_at IS NULL OR t.expires_at>now())`,
-  );
-}
-
-// LEFT JOINで未配信の無いPluginも残し、その未解決のアラートを回復として解決できるようにする。
-const PLUGIN_BACKLOG_SELECT = `SELECT p.id AS plugin_id,p.project_id,p.name AS plugin_name,(p.enabled) AS enabled,
-    count(o.id) FILTER (WHERE o.status='pending')::int AS pending,
-    count(o.id) FILTER (WHERE o.status='sending')::int AS sending,
-    min(o.created_at) FILTER (WHERE o.status='pending') AS oldest_pending_at,
-    extract(epoch FROM now()-min(o.created_at))::float8 AS oldest_undelivered_age_seconds,
-    COALESCE(max(o.attempts),0)::int AS max_attempts,
-    (array_agg(o.last_error ORDER BY o.attempts DESC,o.created_at)
-      FILTER (WHERE o.last_error IS NOT NULL))[1] AS last_error
-  FROM plugin_connections p LEFT JOIN plugin_outbox o ON o.plugin_id=p.id AND o.status<>'delivered'`;
-
-export async function listEnabledPluginBacklogs(connection: Connection): Promise<PluginBacklog[]> {
-  return rows<PluginBacklog>(
-    connection,
-    `${PLUGIN_BACKLOG_SELECT} WHERE p.enabled GROUP BY p.id`,
-  );
-}
-
-/** PluginがそのProjectのものでなければundefined。 */
-export async function findPluginBacklog(
-  connection: Connection,
-  reference: { projectId: string; pluginId: string },
-): Promise<(PluginBacklog & { lastDeliveredAt: string | null }) | undefined> {
-  return first(
-    connection,
-    `SELECT b.*,(SELECT max(d.delivered_at) FROM plugin_outbox d
-        WHERE d.plugin_id=b.plugin_id AND d.status='delivered') AS last_delivered_at
-    FROM (${PLUGIN_BACKLOG_SELECT} WHERE p.project_id=$1 AND p.id=$2 GROUP BY p.id) b`,
-    [reference.projectId, reference.pluginId],
   );
 }

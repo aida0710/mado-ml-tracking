@@ -1,19 +1,15 @@
 import { randomUUID } from 'node:crypto';
-import type { Dataset, DatasetVersion, ExternalDatasetRef, JsonObject, Run } from '@mmt/contracts';
+import type { Dataset, DatasetVersion, ExternalDatasetRef, JsonObject } from '@mmt/contracts';
 import { first, type Connection } from '../db/database.js';
 import { datasetManifestDigest } from '../domain/datasetManifestDigest.js';
 import { conflict, DomainError, notFound } from '../domain/errors.js';
-import { isTerminalStatus } from '../domain/runTransitions.js';
 import { assertProjectReference, findRun } from '../repositories/registryRepository.js';
-import { runColumns } from '../repositories/runListProjection.js';
 import { requireProject } from './accessService.js';
 import { lockDatasetsOfVersions } from './datasetVersionReferences.js';
 import type { ModelVersionRegistrationActor } from './modelVersionRegistration.js';
-import { enqueueRunEvent } from './outboxEvents.js';
 
 // データセットバージョンを登録するのは、モデルバージョンと同じ2種類のactorと、principalを独自の
-// 規則で確認済みの呼び出し元（pluginの取り込みはProject adminが要り、MLflowのlog_inputsは
-// データセットごとにscopeを確かめる）。
+// 規則で確認済みの呼び出し元（MLflowのlog_inputsは、データセットごとにscopeを確かめる）。
 export type DatasetVersionRegistrationActor =
   | ModelVersionRegistrationActor
   | { type: 'callerAuthorized' };
@@ -69,8 +65,7 @@ const INTEGER_VERSION_PATTERN = '^[1-9][0-9]{0,17}$';
 
 /**
  * 呼び出し元のトランザクションの中で、変更できないDatasetVersionと、中身がArtifactならその
- * ファイル一覧を挿入し、元のRunの出力に並べる。Runが終わったあとに届いた登録は、外部の
- * lineageが新しい出力を見られるよう、Runのoutboxのイベントを送り直す。
+ * ファイル一覧を挿入し、元のRunの出力に並べる。
  */
 export async function registerDatasetVersion(
   connection: Connection,
@@ -160,14 +155,11 @@ export async function registerDatasetVersion(
       datasetVersionId: inserted.id,
       files: registration.content.files,
     });
-  if (sourceRun) {
-    const updatedRun = (await first<Run>(
-      connection,
-      `UPDATE runs SET output_dataset_version_ids=array_append(output_dataset_version_ids,$2::uuid) WHERE id=$1 RETURNING ${runColumns}`,
+  if (sourceRun)
+    await connection.query(
+      'UPDATE runs SET output_dataset_version_ids=array_append(output_dataset_version_ids,$2::uuid) WHERE id=$1',
       [sourceRun.id, inserted.id],
-    ))!;
-    if (isTerminalStatus(updatedRun.status)) await enqueueRunEvent(connection, updatedRun);
-  }
+    );
   return { ...inserted, name: dataset.name, namespace: dataset.namespace };
 }
 

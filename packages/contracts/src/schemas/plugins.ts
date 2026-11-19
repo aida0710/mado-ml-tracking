@@ -2,13 +2,11 @@ import { z } from 'zod';
 import type {
   LineageGraph,
   PluginConnection,
-  PluginDataset,
   PluginManifest,
   MadoAccessTokenGrant,
   MadoPluginConfig,
-  PluginAvailability,
 } from '../index.js';
-import { idSchema, jsonObjectSchema, timestampSchema } from './primitives.js';
+import { idSchema, timestampSchema } from './primitives.js';
 import { namedContractSchema } from './schemaRegistry.js';
 import type { Expect, MutuallyAssignable } from './typeAssertions.js';
 
@@ -27,9 +25,6 @@ export const madoPluginConfigSchema = namedContractSchema(
   z.strictObject({
     apiUrl: z.string(),
     webUrl: z.string(),
-    lineageUrl: z.string(),
-    jobNamespace: z.string(),
-    storageSystemKey: z.string(),
   }),
 );
 export const madoAccessTokenGrantSchema = namedContractSchema(
@@ -37,20 +32,7 @@ export const madoAccessTokenGrantSchema = namedContractSchema(
   z.strictObject({
     name: z.string(),
     scopes: z.array(z.string()),
-    namespaces: z.array(z.string()),
     expiresAt: timestampSchema.nullable(),
-  }),
-);
-export const pluginAvailabilitySchema = namedContractSchema(
-  'PluginAvailability',
-  z.strictObject({
-    kind: z.literal('mado'),
-    id: idSchema.nullable(),
-    enabled: z.boolean(),
-    configured: z.boolean(),
-    configRevision: z.number().int(),
-    webUrl: z.string().nullable(),
-    canImport: z.boolean(),
   }),
 );
 export const pluginConnectionSchema = namedContractSchema(
@@ -71,23 +53,8 @@ export const pluginConnectionSchema = namedContractSchema(
     createdAt: timestampSchema,
   }),
 );
-export const pluginDatasetSchema = namedContractSchema(
-  'PluginDataset',
-  z.strictObject({
-    externalId: z.string(),
-    namespace: z.string(),
-    name: z.string(),
-    version: z.string(),
-    uri: z.string(),
-    digest: z.string(),
-    schema: jsonObjectSchema,
-    metadata: jsonObjectSchema,
-  }),
-);
 /** GET /projects/:p/plugins/:id/metrics: pluginのmetricsをPrometheusのテキスト形式で表したもの。 */
 export const pluginMetricsResponseSchema = z.strictObject({ prometheus: z.string() });
-/** POST /projects/:p/plugins/:id/events/retry: 送れなかったeventのうち、再送に戻した数。 */
-export const pluginEventRetryResultSchema = z.strictObject({ queued: z.number().int() });
 export const lineageGraphSchema = namedContractSchema(
   'LineageGraph',
   z.strictObject({
@@ -112,9 +79,6 @@ type _PluginManifest = Expect<
 type _PluginConnection = Expect<
   MutuallyAssignable<z.infer<typeof pluginConnectionSchema>, PluginConnection>
 >;
-type _PluginDataset = Expect<
-  MutuallyAssignable<z.infer<typeof pluginDatasetSchema>, PluginDataset>
->;
 type _LineageGraph = Expect<MutuallyAssignable<z.infer<typeof lineageGraphSchema>, LineageGraph>>;
 
 type _MadoConfig = Expect<
@@ -122,7 +86,4 @@ type _MadoConfig = Expect<
 >;
 type _MadoAccessTokenGrant = Expect<
   MutuallyAssignable<z.infer<typeof madoAccessTokenGrantSchema>, MadoAccessTokenGrant>
->;
-type _PluginAvailability = Expect<
-  MutuallyAssignable<z.infer<typeof pluginAvailabilitySchema>, PluginAvailability>
 >;

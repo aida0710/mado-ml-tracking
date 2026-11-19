@@ -125,7 +125,6 @@ import { ModelEvaluationService } from './services/modelEvaluationService.js';
 import { PromotionService } from './services/promotionService.js';
 import { PromotionRunHandler } from './services/promotionRunHandler.js';
 import { PluginService, type PluginClientFactory } from './services/pluginService.js';
-import { OutboxDispatcher } from './services/outboxDispatcher.js';
 import { AutomationSourceRunHandler } from './services/automationSourceRunHandler.js';
 import { AutomationChainHandler } from './services/automationChainHandler.js';
 import { AutomationRetryHandler } from './services/automationRetryHandler.js';
@@ -261,7 +260,6 @@ export function createApplication(options: ApplicationOptions) {
   const projects = new ProjectService(database, () => stores.writableBackends());
   // ハンドラは、終了状態へ移るトランザクションの中でこの順に動く。出力の登録は保留中の
   // 自動実行より前に置き、そこで作られたバージョンが同じ完了処理で始まるようにする。
-  // Pluginのoutboxのイベントはハンドラではない。RunCompletionServiceが状態が変わるたびに積む。
   // ハンドラはrunCompletionから作るサービスに依存するので、そのサービスができてから
   // この配列（RunCompletionServiceが参照で持つ）に足す。
   const terminalHandlers: RunCompletionHandler[] = [];
@@ -392,11 +390,9 @@ export function createApplication(options: ApplicationOptions) {
   const evaluation = new EvaluationService(database);
   const plugins = new PluginService({
     database,
-    registry,
     secretKey: config.pluginSecretKey,
     clientFactory: options.pluginClientFactory,
   });
-  const outbox = new OutboxDispatcher(database, plugins);
   const notificationSenders =
     options.notificationSenders ?? createNotificationSenders({ smtp: config.smtp });
   const notificationEnvironment = options.environment ?? process.env;
@@ -641,7 +637,6 @@ export function createApplication(options: ApplicationOptions) {
   });
   return {
     app,
-    outbox,
     automationSweeper,
     artifactUploadFinalizer,
     artifactUploadSweeper,

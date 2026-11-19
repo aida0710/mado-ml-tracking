@@ -42,9 +42,6 @@ const enabledPlugin: PluginConnection = {
   config: {
     apiUrl: 'https://mado.example.invalid/api',
     webUrl: 'https://mado.example.invalid',
-    lineageUrl: 'https://mado.example.invalid/lineage',
-    jobNamespace: 'mmt',
-    storageSystemKey: 'filesystem',
   },
   configRevision: 1,
   credentialsConfigured: { accessToken: true },

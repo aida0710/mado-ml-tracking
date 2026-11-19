@@ -1,7 +1,8 @@
 /**
- * 運用の監視が見張る状態。各kindは、アラートが開いたときにキューに入れる
+ * 運用のアラートの種別。各kindは、アラートが開いたときにキューに入れる
  * NotificationEventTypeでもある。job.heartbeat_staleは、回復したときに
- * job.heartbeat_recoveredもキューに入れる。
+ * job.heartbeat_recoveredもキューに入れる。plugin.delivery_stalledを開く監視はもう無く、
+ * 過去に開いたアラートを一覧で読むためだけに残している。
  */
 export type OperationsAlertKind = 'job.heartbeat_stale' | 'worker.offline' | 'plugin.delivery_stalled';
 
@@ -12,9 +13,9 @@ export const OPERATIONS_ALERT_KINDS: readonly OperationsAlertKind[] = [
 ];
 
 /**
- * recovered: 状態が解消した（heartbeatが戻った、workerが応答した、イベントが配信された）。
+ * recovered: 状態が解消した（heartbeatが戻った、workerが応答した）。
  * inactive: 対象をもう見張らない（Jobが終わった、worker tokenが取り消されたか期限が切れた、
- * workerが引退したとみなせるほど長く応答しない、連携が無効になった）。
+ * workerが引退したとみなせるほど長く応答しない、連携のイベントの送信を見張らなくなった）。
  */
 export type OperationsAlertResolution = 'recovered' | 'inactive';
 
@@ -37,20 +38,4 @@ export interface OperationsAlert {
   resolvedAt: string | null;
   resolution: OperationsAlertResolution | null;
   detail: Record<string, string | number | boolean | null>;
-}
-
-/** 1つの連携のイベントのoutboxの配信状況。時刻はISO形式のUTCで、無ければnull。 */
-export interface PluginOutboxSummary {
-  /** 次の試行を待っているイベントの数。 */
-  pending: number;
-  /** dispatcherが今送っているイベントの数。 */
-  sending: number;
-  oldestPendingAt: string | null;
-  /** 未配信のイベント1件に対する試行回数の最大値。待っているものが無ければ0。 */
-  maxAttempts: number;
-  /** 試行回数が最も多い未配信のイベントの失敗のコード。相手の応答は入れない。 */
-  lastError: string | null;
-  lastDeliveredAt: string | null;
-  /** 監視が、その連携が止まっていると判断したか（有効で、時間か試行回数の上限を超えている）。 */
-  stalled: boolean;
 }

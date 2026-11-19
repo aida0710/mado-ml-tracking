@@ -4,18 +4,15 @@ import type { Principal } from '../auth/principal.js';
 import { first, type Connection } from '../db/database.js';
 import { validateCodeCompatibility } from '../domain/compatibility.js';
 import { DomainError } from '../domain/errors.js';
-import { isTerminalStatus } from '../domain/runTransitions.js';
 import { lockOutputSourceRun } from '../repositories/modelOutputSourceRepository.js';
 import { reserveModelVersion } from '../repositories/modelVersionNumbering.js';
 import {
   assertProjectReferences,
   findCodeVersion,
-  findRun,
 } from '../repositories/registryRepository.js';
 import { findSavedArtifact } from '../repositories/runtimeArtifactRepository.js';
 import { requireProject } from './accessService.js';
 import type { ModelAutomationService } from './modelAutomationService.js';
-import { enqueueRunEvent } from './outboxEvents.js';
 
 export type ModelVersionRegistrationActor =
   | { type: 'principal'; principal: Principal }
@@ -105,13 +102,6 @@ export async function registerModelVersion(
     ],
   ))!;
   await automation.processRegistration(connection, { projectId, modelVersionId: inserted.id });
-  if (sourceRun) {
-    // 終了状態への遷移はRunをFOR UPDATEでロックするので、このトランザクションを待って自分で
-    // バージョンを並べるか、これより前にコミットしているかのどちらかになる。イベントを送り直す
-    // 必要があるのは後者だけ。
-    const currentRun = await findRun(connection, { projectId, id: sourceRun.id });
-    if (isTerminalStatus(currentRun.status)) await enqueueRunEvent(connection, currentRun);
-  }
   return { ...inserted, family: model.family, trainingSourceRunId: inserted.sourceRunId };
 }
 

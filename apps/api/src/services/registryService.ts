@@ -492,7 +492,7 @@ export class RegistryService {
       };
       if (!input.content) {
         // contentが無いとき、リクエストのスキーマはuriとdigestを必須にしている。外部の参照は、
-        // 元のシステムが与えたdigestをそのまま持つ（docs/plugins.md）。
+        // 元のシステムが与えたdigestをそのまま持つ。
         if (!input.externalRef) assertReferenceDigest(input.digest!);
         return registerDatasetVersion(connection, {
           ...common,
@@ -522,8 +522,8 @@ export class RegistryService {
   }
 
   /**
-   * 参照のバージョンを作る。principalの権限を自分で確かめた呼び出し元（MLflowのlog_inputsと
-   * pluginの取り込み）が使う。
+   * 参照のバージョンを作る。principalの権限を自分で確かめた呼び出し元（MLflowのlog_inputs）が
+   * 使う。
    */
   insertDatasetVersion(
     connection: Connection,

@@ -85,7 +85,7 @@
     },
     {
       "name": "plugins",
-      "description": "Mado plugin接続"
+      "description": "Mado plugin接続（接続確認と容量メトリクス）"
     },
     {
       "name": "evaluation",
@@ -38330,139 +38330,6 @@
         }
       }
     },
-    "/api/projects/{p}/plugins/availability": {
-      "get": {
-        "operationId": "getProjectsByPPluginsAvailability",
-        "tags": [
-          "plugins"
-        ],
-        "summary": "内蔵連携の表示用状態（資格情報を含まない）",
-        "security": [
-          {
-            "sessionCookie": []
-          },
-          {
-            "bearerToken": [
-              "read"
-            ]
-          }
-        ],
-        "x-mmt-access": {
-          "kind": "project",
-          "role": "viewer",
-          "scope": "read"
-        },
-        "x-mmt-job-token": "read",
-        "parameters": [
-          {
-            "name": "p",
-            "in": "path",
-            "required": true,
-            "description": "Project ID",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/PluginAvailability"
-                      }
-                    }
-                  },
-                  "required": [
-                    "items"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "認証されていない",
-            "x-mmt-error-codes": [
-              "authentication_required",
-              "invalid_token",
-              "basic_auth_unsupported",
-              "identity_sync_required"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "権限がない",
-            "x-mmt-error-codes": [
-              "password_change_required",
-              "scope_required",
-              "project_forbidden"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "見つからない（他Projectのものを含む）",
-            "x-mmt-error-codes": [
-              "not_found",
-              "project_archived"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "入力が不正",
-            "x-mmt-error-codes": [
-              "invalid_request"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "一時的に処理できない",
-            "x-mmt-error-codes": [
-              "oidc_unavailable",
-              "internal_error"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/projects/{p}/plugins": {
       "get": {
         "operationId": "getProjectsByPPlugins",
@@ -38656,29 +38523,11 @@
                         "type": "string",
                         "maxLength": 2000,
                         "format": "uri"
-                      },
-                      "lineageUrl": {
-                        "type": "string",
-                        "maxLength": 2000,
-                        "format": "uri"
-                      },
-                      "jobNamespace": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 512
-                      },
-                      "storageSystemKey": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 512
                       }
                     },
                     "required": [
                       "apiUrl",
-                      "webUrl",
-                      "lineageUrl",
-                      "jobNamespace",
-                      "storageSystemKey"
+                      "webUrl"
                     ],
                     "additionalProperties": false
                   },
@@ -38888,29 +38737,11 @@
                         "type": "string",
                         "maxLength": 2000,
                         "format": "uri"
-                      },
-                      "lineageUrl": {
-                        "type": "string",
-                        "maxLength": 2000,
-                        "format": "uri"
-                      },
-                      "jobNamespace": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 512
-                      },
-                      "storageSystemKey": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 512
                       }
                     },
                     "required": [
                       "apiUrl",
-                      "webUrl",
-                      "lineageUrl",
-                      "jobNamespace",
-                      "storageSystemKey"
+                      "webUrl"
                     ],
                     "additionalProperties": false
                   },
@@ -39172,8 +39003,6 @@
           "422": {
             "description": "入力が不正",
             "x-mmt-error-codes": [
-              "plugin_token_scope_missing",
-              "plugin_job_namespace_not_allowed",
               "invalid_request",
               "invalid_reference"
             ],
@@ -39344,705 +39173,6 @@
             "description": "一時的に処理できない",
             "x-mmt-error-codes": [
               "plugin_token_unavailable",
-              "oidc_unavailable",
-              "internal_error"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/projects/{p}/plugins/{id}/outbox": {
-      "get": {
-        "operationId": "getProjectsByPPluginsByIdOutbox",
-        "tags": [
-          "plugins"
-        ],
-        "summary": "pluginのevent送信状況",
-        "security": [
-          {
-            "sessionCookie": []
-          },
-          {
-            "bearerToken": [
-              "admin"
-            ]
-          }
-        ],
-        "x-mmt-access": {
-          "kind": "project",
-          "role": "admin",
-          "scope": "admin"
-        },
-        "x-mmt-job-token": "read",
-        "parameters": [
-          {
-            "name": "p",
-            "in": "path",
-            "required": true,
-            "description": "Project ID",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "対象のID",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PluginOutboxSummary"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "認証されていない",
-            "x-mmt-error-codes": [
-              "authentication_required",
-              "invalid_token",
-              "basic_auth_unsupported",
-              "identity_sync_required"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "権限がない",
-            "x-mmt-error-codes": [
-              "password_change_required",
-              "scope_required",
-              "project_forbidden"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "見つからない（他Projectのものを含む）",
-            "x-mmt-error-codes": [
-              "not_found",
-              "project_archived"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "入力が不正",
-            "x-mmt-error-codes": [
-              "invalid_request"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "一時的に処理できない",
-            "x-mmt-error-codes": [
-              "oidc_unavailable",
-              "internal_error"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/projects/{p}/plugins/{id}/datasets/search": {
-      "post": {
-        "operationId": "postProjectsByPPluginsByIdDatasetsSearch",
-        "tags": [
-          "plugins"
-        ],
-        "summary": "plugin側のDatasetを検索",
-        "security": [
-          {
-            "sessionCookie": []
-          },
-          {
-            "bearerToken": [
-              "admin"
-            ]
-          }
-        ],
-        "x-mmt-access": {
-          "kind": "project",
-          "role": "admin",
-          "scope": "admin"
-        },
-        "x-mmt-job-token": "forbidden",
-        "parameters": [
-          {
-            "name": "p",
-            "in": "path",
-            "required": true,
-            "description": "Project ID",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "対象のID",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "query": {
-                    "type": "string",
-                    "maxLength": 512
-                  },
-                  "expectedRevision": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 9007199254740991
-                  }
-                },
-                "required": [
-                  "query"
-                ],
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/PluginDataset"
-                      }
-                    }
-                  },
-                  "required": [
-                    "items"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "要求を読めない",
-            "x-mmt-error-codes": [
-              "invalid_json"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "認証されていない",
-            "x-mmt-error-codes": [
-              "authentication_required",
-              "invalid_token",
-              "basic_auth_unsupported",
-              "identity_sync_required"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "権限がない",
-            "x-mmt-error-codes": [
-              "password_change_required",
-              "invalid_origin",
-              "scope_required",
-              "project_forbidden",
-              "job_token_forbidden"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "見つからない（他Projectのものを含む）",
-            "x-mmt-error-codes": [
-              "not_found",
-              "project_archived"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "現在の状態と衝突する",
-            "x-mmt-error-codes": [
-              "already_exists"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "413": {
-            "description": "大きすぎる",
-            "x-mmt-error-codes": [
-              "body_too_large"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "入力が不正",
-            "x-mmt-error-codes": [
-              "invalid_request",
-              "invalid_reference"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "一時的に処理できない",
-            "x-mmt-error-codes": [
-              "plugin_token_unavailable",
-              "oidc_unavailable",
-              "internal_error"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/projects/{p}/plugins/{id}/datasets/import": {
-      "post": {
-        "operationId": "postProjectsByPPluginsByIdDatasetsImport",
-        "tags": [
-          "plugins"
-        ],
-        "summary": "plugin側のDatasetを参照として取り込む",
-        "security": [
-          {
-            "sessionCookie": []
-          },
-          {
-            "bearerToken": [
-              "admin"
-            ]
-          }
-        ],
-        "x-mmt-access": {
-          "kind": "project",
-          "role": "admin",
-          "scope": "admin"
-        },
-        "x-mmt-job-token": "forbidden",
-        "parameters": [
-          {
-            "name": "p",
-            "in": "path",
-            "required": true,
-            "description": "Project ID",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "対象のID",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "externalId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "expectedRevision": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 9007199254740991
-                  }
-                },
-                "required": [
-                  "externalId",
-                  "expectedRevision"
-                ],
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "作成した",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DatasetVersion"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "要求を読めない",
-            "x-mmt-error-codes": [
-              "invalid_json"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "認証されていない",
-            "x-mmt-error-codes": [
-              "authentication_required",
-              "invalid_token",
-              "basic_auth_unsupported",
-              "identity_sync_required"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "権限がない",
-            "x-mmt-error-codes": [
-              "password_change_required",
-              "invalid_origin",
-              "scope_required",
-              "project_forbidden",
-              "job_token_forbidden"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "見つからない（他Projectのものを含む）",
-            "x-mmt-error-codes": [
-              "not_found",
-              "project_archived"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "現在の状態と衝突する",
-            "x-mmt-error-codes": [
-              "already_exists"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "413": {
-            "description": "大きすぎる",
-            "x-mmt-error-codes": [
-              "body_too_large"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "入力が不正",
-            "x-mmt-error-codes": [
-              "invalid_request",
-              "invalid_reference"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "一時的に処理できない",
-            "x-mmt-error-codes": [
-              "oidc_unavailable",
-              "internal_error"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/projects/{p}/plugins/{id}/events/retry": {
-      "post": {
-        "operationId": "postProjectsByPPluginsByIdEventsRetry",
-        "tags": [
-          "plugins"
-        ],
-        "summary": "送れなかったeventを再送",
-        "security": [
-          {
-            "sessionCookie": []
-          },
-          {
-            "bearerToken": [
-              "admin"
-            ]
-          }
-        ],
-        "x-mmt-access": {
-          "kind": "project",
-          "role": "admin",
-          "scope": "admin"
-        },
-        "x-mmt-job-token": "forbidden",
-        "parameters": [
-          {
-            "name": "p",
-            "in": "path",
-            "required": true,
-            "description": "Project ID",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "対象のID",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "queued": {
-                      "type": "integer",
-                      "minimum": -9007199254740991,
-                      "maximum": 9007199254740991
-                    }
-                  },
-                  "required": [
-                    "queued"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "認証されていない",
-            "x-mmt-error-codes": [
-              "authentication_required",
-              "invalid_token",
-              "basic_auth_unsupported",
-              "identity_sync_required"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "権限がない",
-            "x-mmt-error-codes": [
-              "password_change_required",
-              "invalid_origin",
-              "scope_required",
-              "project_forbidden",
-              "job_token_forbidden"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "見つからない（他Projectのものを含む）",
-            "x-mmt-error-codes": [
-              "not_found",
-              "project_archived"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "現在の状態と衝突する",
-            "x-mmt-error-codes": [
-              "already_exists"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "入力が不正",
-            "x-mmt-error-codes": [
-              "invalid_request",
-              "invalid_reference"
-            ],
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorBody"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "一時的に処理できない",
-            "x-mmt-error-codes": [
               "oidc_unavailable",
               "internal_error"
             ],
@@ -52317,7 +51447,7 @@
         "tags": [
           "operations"
         ],
-        "summary": "運用アラート（Jobのheartbeat途絶・worker停止・plugin送信滞留）",
+        "summary": "運用アラート（Jobのheartbeat途絶・worker停止）",
         "security": [
           {
             "sessionCookie": []
@@ -54828,17 +53958,11 @@
               "notification_channel_invalid",
               "plugin_capability_unsupported",
               "plugin_credentials_required",
-              "plugin_dataset_identity_mismatch",
-              "plugin_dataset_not_found",
-              "plugin_dataset_unavailable",
-              "plugin_delivery_identity_mismatch",
               "plugin_disabled",
-              "plugin_job_namespace_not_allowed",
               "plugin_mado_access_token_unsupported",
               "plugin_request_failed",
               "plugin_secret_decryption_failed",
               "plugin_secret_key_unavailable",
-              "plugin_token_scope_missing",
               "plugin_token_unavailable",
               "invalid_repository",
               "unsafe_repository",
@@ -60060,12 +59184,6 @@
               "type": "string"
             }
           },
-          "namespaces": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
           "expiresAt": {
             "anyOf": [
               {
@@ -60081,7 +59199,6 @@
         "required": [
           "name",
           "scopes",
-          "namespaces",
           "expiresAt"
         ],
         "additionalProperties": false
@@ -60094,23 +59211,11 @@
           },
           "webUrl": {
             "type": "string"
-          },
-          "lineageUrl": {
-            "type": "string"
-          },
-          "jobNamespace": {
-            "type": "string"
-          },
-          "storageSystemKey": {
-            "type": "string"
           }
         },
         "required": [
           "apiUrl",
-          "webUrl",
-          "lineageUrl",
-          "jobNamespace",
-          "storageSystemKey"
+          "webUrl"
         ],
         "additionalProperties": false
       },
@@ -62143,56 +61248,6 @@
         ],
         "additionalProperties": false
       },
-      "PluginAvailability": {
-        "type": "object",
-        "properties": {
-          "kind": {
-            "type": "string",
-            "const": "mado"
-          },
-          "id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "configured": {
-            "type": "boolean"
-          },
-          "configRevision": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "webUrl": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "canImport": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "kind",
-          "id",
-          "enabled",
-          "configured",
-          "configRevision",
-          "webUrl",
-          "canImport"
-        ],
-        "additionalProperties": false
-      },
       "PluginConnection": {
         "type": "object",
         "properties": {
@@ -62282,46 +61337,6 @@
         ],
         "additionalProperties": false
       },
-      "PluginDataset": {
-        "type": "object",
-        "properties": {
-          "externalId": {
-            "type": "string"
-          },
-          "namespace": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "version": {
-            "type": "string"
-          },
-          "uri": {
-            "type": "string"
-          },
-          "digest": {
-            "type": "string"
-          },
-          "schema": {
-            "$ref": "#/components/schemas/JsonObject"
-          },
-          "metadata": {
-            "$ref": "#/components/schemas/JsonObject"
-          }
-        },
-        "required": [
-          "externalId",
-          "namespace",
-          "name",
-          "version",
-          "uri",
-          "digest",
-          "schema",
-          "metadata"
-        ],
-        "additionalProperties": false
-      },
       "PluginManifest": {
         "type": "object",
         "properties": {
@@ -62351,67 +61366,6 @@
           "version",
           "protocolVersion",
           "capabilities"
-        ],
-        "additionalProperties": false
-      },
-      "PluginOutboxSummary": {
-        "type": "object",
-        "properties": {
-          "pending": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "sending": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "oldestPendingAt": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "maxAttempts": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "lastError": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "lastDeliveredAt": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "stalled": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "pending",
-          "sending",
-          "oldestPendingAt",
-          "maxAttempts",
-          "lastError",
-          "lastDeliveredAt",
-          "stalled"
         ],
         "additionalProperties": false
       },

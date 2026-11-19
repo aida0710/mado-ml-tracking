@@ -169,7 +169,6 @@ describe.skipIf(!testDatabaseUrl)('既存モデル版の学習元（独立Postgr
       },
       evidence: { note: 'Recipe confirmed' },
     };
-    const eventsBefore = await harness.database.query('SELECT * FROM plugin_outbox');
     const source = await entity<ModelVersionTrainingSource>(
       await request(harness.app, sourcePath(), {
         method: 'POST',
@@ -192,9 +191,6 @@ describe.skipIf(!testDatabaseUrl)('既存モデル版の学習元（独立Postgr
       inputDatasetVersionIds: [data.id],
     });
     expect(run.outputModelVersionIds).toEqual([fixture.modelVersion.id]);
-    expect((await harness.database.query('SELECT * FROM plugin_outbox')).rows).toEqual(
-      eventsBefore.rows,
-    );
     const repeated = await entity<ModelVersionTrainingSource>(
       await request(harness.app, sourcePath(), {
         method: 'POST',

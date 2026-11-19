@@ -1,15 +1,12 @@
-import { workerInfo } from './workerFixtures.js';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   Artifact,
   Dataset,
   DatasetVersion,
   PluginConnection,
-  PluginEvent,
   Project,
   Run,
-  WorkerJob,
 } from '@mmt/contracts';
 import type { ArtifactStores } from '@mmt/platform';
 import { createApplication } from '../src/app.js';
@@ -21,7 +18,7 @@ import {
   MADO_ACCESS_TOKEN_GRANT_FIXTURE, MADO_CREDENTIALS_FIXTURE, madoClientStub, madoPluginInput,
 } from './pluginFixtures.js';
 
-describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL）', () => {
+describe.skipIf(!testDatabaseUrl)('Artifactの保存とMado接続の認可（独立PostgreSQL）', () => {
   let harness: Harness;
   beforeAll(async () => {
     harness = await createHarness();
@@ -238,19 +235,11 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
     expect(clientFactory).toHaveBeenCalledWith(expect.objectContaining({
       config: madoPluginInput().config,
       credentials: MADO_CREDENTIALS_FIXTURE,
-      pluginId: approved.id,
     }));
   });
 
-  it('完了後に登録した出力DatasetVersionもoutboxへ保存し、保存失敗ならバージョンとRunの変更を戻す', async () => {
+  it('完了後に登録した出力DatasetVersionも、Runの出力に並ぶ', async () => {
     const fixture = await executionFixture(harness);
-    await entity<PluginConnection>(
-      await request(harness.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: madoPluginInput({ name: 'Lineage' }),
-      }),
-    );
     const run = await fixture.newRun();
     for (const status of ['running', 'finished'])
       await entity(
@@ -281,248 +270,13 @@ describe.skipIf(!testDatabaseUrl)('Artifactとplugin outbox（独立PostgreSQL�
         },
       }),
     );
-    const refreshed = await harness.database.query<{ event: PluginEvent }>(
-      "SELECT event FROM plugin_outbox WHERE event->'outputDatasets' @> $1::jsonb",
-      [JSON.stringify([{ id: version.id }])],
-    );
-    expect(refreshed.rows).toHaveLength(1);
-    expect(refreshed.rows[0]!.event.type).toBe('run.finished');
-    expect(refreshed.rows[0]!.event.run.outputDatasetVersionIds).toEqual([version.id]);
-    expect(refreshed.rows[0]!.event.outputDatasets[0]?.id).toBe(version.id);
-    await harness.database.query(
-      "CREATE FUNCTION fail_late_output() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'test failure'; END; $$",
-    );
-    await harness.database.query(
-      'CREATE TRIGGER fail_late_output BEFORE INSERT ON plugin_outbox FOR EACH ROW EXECUTE FUNCTION fail_late_output()',
-    );
-    try {
-      const rejected = await request(harness.app, versionPath, {
-        method: 'POST',
-        cookie: fixture.editor.cookie,
-        body: {
-          version: 'v2',
-          uri: 's3://fixture/next',
-          digest: referenceDigest('next'),
-          sourceRunId: run.id,
-        },
-      });
-      expect(rejected.status).toBe(503);
-      const stored = await entity<Run>(
-        await request(harness.app, `${fixture.basePath}/runs/${run.id}`, {
-          cookie: fixture.viewer.cookie,
-        }),
-        200,
-      );
-      expect(stored.outputDatasetVersionIds).toEqual([version.id]);
-      expect(
-        (
-          await harness.database.query('SELECT id FROM dataset_versions WHERE dataset_id=$1', [
-            dataset.id,
-          ])
-        ).rows,
-      ).toHaveLength(1);
-    } finally {
-      await harness.database.query('DROP TRIGGER fail_late_output ON plugin_outbox');
-      await harness.database.query('DROP FUNCTION fail_late_output()');
-    }
-  });
-
-  it('plugin障害でもRunは完了し、DB outboxから同じeventを再送できる', async () => {
-    const fixture = await executionFixture(harness);
-    const delivered: string[] = [];
-    let isUnavailable = true;
-    const client = madoClientStub({
-      sendPayload: async (payload) => {
-        if (isUnavailable) throw new Error('Unavailable');
-        delivered.push(payload);
-      },
-    });
-    const application = createApplication({
-      config: harness.config,
-      database: harness.database,
-      stores: harness.stores,
-      pluginClientFactory: () => client,
-    });
-    const plugin = await entity<PluginConnection>(
-      await request(application.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: madoPluginInput({ name: 'Test plugin' }),
-      }),
-    );
-    expect(
-      (
-        await request(application.app, `${fixture.basePath}/plugins/${plugin.id}/check`, {
-          method: 'POST',
-          cookie: fixture.editor.cookie,
-        })
-      ).status,
-    ).toBe(403);
-    await entity(
-      await request(application.app, `${fixture.basePath}/plugins/${plugin.id}/check`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-      }),
-      200,
-    );
-    const run = await fixture.newRun();
-    await entity(
-      await request(application.app, `${fixture.basePath}/runs/${run.id}`, {
-        method: 'PATCH',
-        cookie: fixture.editor.cookie,
-        body: { status: 'running' },
-      }),
-      200,
-    );
-    await entity(
-      await request(application.app, `${fixture.basePath}/runs/${run.id}`, {
-        method: 'PATCH',
-        cookie: fixture.editor.cookie,
-        body: { status: 'finished' },
-      }),
-      200,
-    );
-    expect(await application.outbox.dispatchBatch()).toBe(0);
     const stored = await entity<Run>(
-      await request(application.app, `${fixture.basePath}/runs/${run.id}`, {
+      await request(harness.app, `${fixture.basePath}/runs/${run.id}`, {
         cookie: fixture.viewer.cookie,
       }),
       200,
     );
-    expect(stored.status).toBe('finished');
-    const pending = await harness.database.query(
-      'SELECT event_id,status,attempts,last_error,payload FROM plugin_outbox ORDER BY created_at',
-    );
-    expect(pending.rows).toHaveLength(2);
-    expect(
-      pending.rows.every((record) => record.status === 'pending' && record.attempts === 1),
-    ).toBe(true);
-    isUnavailable = false;
-    const retry = await entity<{ queued: number }>(
-      await request(application.app, `${fixture.basePath}/plugins/${plugin.id}/events/retry`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-      }),
-      200,
-    );
-    expect(retry.queued).toBe(2);
-    const sent = await Promise.all([
-      application.outbox.dispatchBatch(),
-      application.outbox.dispatchBatch(),
-    ]);
-    expect(sent.reduce((sum, count) => sum + count, 0)).toBe(2);
-    expect(new Set(delivered).size).toBe(2);
-    expect(delivered.map((payload) => JSON.parse(payload).eventType).sort()).toEqual(['COMPLETE', 'START']);
-    expect(delivered.sort()).toEqual(pending.rows.map((record) => record.payload).sort());
-    expect(delivered.every((payload) => JSON.parse(payload).run.runId === run.id)).toBe(true);
-  });
-
-  it('outbox保存が失敗したらRun完了とGPU解放もrollbackし、再送完了はeventを重複させない', async () => {
-    const fixture = await executionFixture(harness);
-    await entity(
-      await request(harness.app, `${fixture.basePath}/plugins`, {
-        method: 'POST',
-        cookie: fixture.administrator.cookie,
-        body: madoPluginInput({ name: 'Atomic plugin' }),
-      }),
-    );
-    const run = await fixture.newRun();
-    await entity(
-      await request(harness.app, `${fixture.basePath}/jobs`, {
-        method: 'POST',
-        cookie: fixture.editor.cookie,
-        body: { runId: run.id, targetId: fixture.target.id, gpuIds: ['0'] },
-      }),
-    );
-    const claimed = (
-      await entity<{ item: WorkerJob }>(
-        await request(harness.app, '/api/worker/claim', {
-          method: 'POST',
-          token: fixture.workerToken,
-          body: { workerInfo, workerId: 'atomic-worker' },
-        }),
-        200,
-      )
-    ).item;
-    await harness.database.query(
-      "CREATE FUNCTION fail_outbox_insert() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'test failure'; END; $$",
-    );
-    await harness.database.query(
-      'CREATE TRIGGER fail_outbox_insert BEFORE INSERT ON plugin_outbox FOR EACH ROW EXECUTE FUNCTION fail_outbox_insert()',
-    );
-    const finish = () =>
-      request(harness.app, `/api/worker/jobs/${claimed.job.id}/complete`, {
-        method: 'POST',
-        token: fixture.workerToken,
-        body: {
-          leaseId: claimed.job.leaseId,
-          status: 'finished',
-          exitCode: 0,
-        },
-      });
-    try {
-      expect((await finish()).status).toBe(503);
-      expect(
-        (await harness.database.query('SELECT status FROM runs WHERE id=$1', [run.id])).rows[0]
-          .status,
-      ).toBe('running');
-      expect(
-        (
-          await harness.database.query('SELECT * FROM gpu_reservations WHERE job_id=$1', [
-            claimed.job.id,
-          ])
-        ).rows,
-      ).toHaveLength(1);
-    } finally {
-      await harness.database.query('DROP TRIGGER fail_outbox_insert ON plugin_outbox');
-      await harness.database.query('DROP FUNCTION fail_outbox_insert()');
-    }
-    await entity(await finish(), 200);
-    await entity(await finish(), 200);
-    expect(
-      (await harness.database.query('SELECT count(*)::int AS count FROM plugin_outbox')).rows[0]
-        .count,
-    ).toBe(2);
-    expect(
-      (
-        await harness.database.query('SELECT * FROM gpu_reservations WHERE job_id=$1', [
-          claimed.job.id,
-        ])
-      ).rows,
-    ).toHaveLength(0);
-  });
-
-  it('固定Madoバージョンを再取得して並行取り込みを1件にし、変更されたdigestを拒否する', async () => {
-    const fixture = await executionFixture(harness);
-    const dataset = {
-      externalId: randomUUID(), namespace: 'remote', name: 'Corpus', version: 'v1',
-      uri: 's3://example/corpus', digest: referenceDigest('original'), schema: {}, metadata: {},
-    };
-    let externalDataset = dataset;
-    const datasetVersion = vi.fn(async (_externalId: string) => externalDataset);
-    const application = createApplication({
-      config: harness.config, database: harness.database, stores: harness.stores,
-      pluginClientFactory: () => madoClientStub({ datasetVersion }),
-    });
-    const plugin = await entity<PluginConnection>(
-      await request(application.app, `${fixture.basePath}/plugins`, {
-        method: 'POST', cookie: fixture.administrator.cookie,
-        body: madoPluginInput({ name: 'Import Mado' }),
-      }),
-    );
-    const importDataset = () => request(application.app, `${fixture.basePath}/plugins/${plugin.id}/datasets/import`, {
-      method: 'POST', cookie: fixture.administrator.cookie,
-      body: { externalId: dataset.externalId, expectedRevision: plugin.configRevision },
-    });
-    const imports = await Promise.all(
-      [importDataset(), importDataset()].map(async (response) => entity<DatasetVersion>(await response)),
-    );
-    expect(imports[0]!.id).toBe(imports[1]!.id);
-    expect(imports[0]!.externalRef?.pluginId).toBe(plugin.id);
-    expect(datasetVersion).toHaveBeenCalledWith(dataset.externalId);
-    externalDataset = { ...dataset, digest: referenceDigest('changed') };
-    expect((await importDataset()).status).toBe(409);
-    expect((await harness.database.query('SELECT count(*)::int AS count FROM dataset_versions')).rows[0].count).toBe(1);
+    expect(stored.outputDatasetVersionIds).toEqual([version.id]);
   });
 
   it('容量の読み取りを許可したトークンで確認したMadoだけmetricsを返し、editorには公開しない', async () => {

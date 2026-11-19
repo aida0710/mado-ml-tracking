@@ -28,9 +28,6 @@ export function MadoSettingsDialog({ plugin, onClose, onSaved }: {
           { name: 'name', label: text.name, required: true },
           { name: 'apiUrl', label: pluginsText.madoApiUrl, type: 'url', required: true },
           { name: 'webUrl', label: pluginsText.madoWebUrl, type: 'url', required: true },
-          { name: 'lineageUrl', label: pluginsText.madoLineageUrl, type: 'url', hint: pluginsText.madoLineageUrlHint },
-          { name: 'jobNamespace', label: pluginsText.madoJobNamespace, required: true, hint: pluginsText.madoJobNamespaceHint },
-          { name: 'storageSystemKey', label: pluginsText.madoStorageSystemKey, required: true },
           { name: 'accessToken', label: pluginsText.madoAccessToken, type: 'password',
             hint: plugin?.credentialsConfigured.accessToken ? pluginsText.madoSavedAccessTokenHint : pluginsText.madoAccessTokenHint },
         ]} values={form.values} onChange={form.changeValues} />

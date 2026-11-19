@@ -367,6 +367,5 @@ describe.skipIf(!testDatabaseUrl)('レポートの作成時点での固定（独
     );
     expect(response.status).toBe(413);
     expect(((await response.json()) as { code: string }).code).toBe('report_snapshot_too_large');
-    await limited.outbox.stop();
   });
 });

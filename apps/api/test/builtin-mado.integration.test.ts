@@ -1,6 +1,5 @@
-import { createHash, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Dataset, DatasetVersion, PluginAvailability, PluginConnection, Run } from '@mmt/contracts';
+import type { Dataset, DatasetVersion, PluginConnection } from '@mmt/contracts';
 import { createApplication } from '../src/app.js';
 import type { PluginClientFactory } from '../src/services/pluginService.js';
 import { parseSecretKey } from '../src/security/secretEncryption.js';
@@ -10,55 +9,16 @@ import {
   MADO_ACCESS_TOKEN_GRANT_FIXTURE, MADO_CONFIG_FIXTURE, MADO_CREDENTIALS_FIXTURE, madoClientStub, madoPluginInput,
 } from './pluginFixtures.js';
 
-// 16進の英字を含めて、大文字にすると必ずリクエスト上の表記が変わるようにする。
+// 以前の版が取り込んだバージョンの、mado S3 Data Catalogでの識別子。
 const MADO_VERSION_ID_FIXTURE = 'e5aab0f8-acdc-40a4-8177-107b7ca5dba7';
-const MADO_PLUGIN_ID_FIXTURE = 'bdbd6443-ac2c-43b4-8071-a8b7efe83cc1';
 
-describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送（独立PostgreSQL）', () => {
+describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と接続確認（独立PostgreSQL）', () => {
   let harness: Harness;
   beforeAll(async () => { harness = await createHarness(); });
   beforeEach(async () => { await harness.reset(); });
   afterAll(async () => { await harness?.close(); });
 
-  async function seedUppercaseMadoDataset() {
-    const fixture = await projectFixture(harness);
-    const externalVersion = {
-      externalId: MADO_VERSION_ID_FIXTURE, namespace: 'remote', name: 'Corpus', version: 'v1',
-      uri: 's3://fixture/corpus', digest: referenceDigest('uppercase-external-reference'), schema: {}, metadata: {},
-    };
-    const deliveredPayloads: { pluginId: string | undefined; payload: string }[] = [];
-    const application = createApplication({
-      config: harness.config, database: harness.database, stores: harness.stores,
-      pluginClientFactory: (options) => madoClientStub({
-        datasetVersion: async () => externalVersion,
-        sendPayload: async (payload) => { deliveredPayloads.push({ pluginId: options.pluginId, payload }); },
-      }),
-    });
-    // 暗号化で認証情報がそのIDに結び付けられる前に、固定のUUIDで空の接続を入れておく。
-    await harness.database.query(`INSERT INTO plugin_connections(id,project_id,name,kind,config,config_revision)
-      VALUES($1,$2,'Mado','mado',$3::jsonb,1)`,
-      [MADO_PLUGIN_ID_FIXTURE, fixture.project.id, JSON.stringify(MADO_CONFIG_FIXTURE)]);
-    const connection = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins/${MADO_PLUGIN_ID_FIXTURE}`, {
-      method: 'PATCH', cookie: fixture.administrator.cookie,
-      body: { credentials: MADO_CREDENTIALS_FIXTURE, enabled: true, expectedRevision: 1 },
-    }), 200);
-    const dataset = await entity<Dataset>(await request(application.app, `${fixture.basePath}/datasets`, {
-      method: 'POST', cookie: fixture.editor.cookie,
-      body: { namespace: externalVersion.namespace, name: externalVersion.name },
-    }));
-    const versionPath = `${fixture.basePath}/datasets/${dataset.id}/versions`;
-    const externalRef = {
-      pluginId: MADO_PLUGIN_ID_FIXTURE.toUpperCase(), externalId: externalVersion.externalId.toUpperCase(),
-      namespace: externalVersion.namespace, name: externalVersion.name, version: externalVersion.version,
-    };
-    const existing = await entity<DatasetVersion>(await request(application.app, versionPath, {
-      method: 'POST', cookie: fixture.editor.cookie,
-      body: { version: externalVersion.version, uri: externalVersion.uri, digest: externalVersion.digest, externalRef },
-    }));
-    return { fixture, application, connection, externalVersion, externalRef, existing, versionPath, deliveredPayloads };
-  }
-
-  it('設定と保存用キーなしで起動し、Madoの表示用GETは接続を作成も通信もしない', async () => {
+  it('設定と保存用キーなしで起動し、接続の一覧のGETは接続を作成も通信もしない', async () => {
     const unconfiguredHarness = await createHarness({ environment: { MMT_PLUGIN_SECRET_KEY: undefined } });
     try {
       const fixture = await projectFixture(unconfiguredHarness);
@@ -69,13 +29,6 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
       });
       expect(unconfiguredHarness.config.pluginSecretKey).toBeNull();
       for (let repeat = 0; repeat < 2; repeat++) {
-        const available = await entity<{ items: PluginAvailability[] }>(
-          await request(application.app, `${fixture.basePath}/plugins/availability`, { cookie: fixture.viewer.cookie }), 200,
-        );
-        expect(available.items).toEqual([{
-          kind: 'mado', id: null, enabled: false, configured: false,
-          configRevision: 0, webUrl: null, canImport: false,
-        }]);
         expect(await entity(
           await request(application.app, `${fixture.basePath}/plugins`, { cookie: fixture.administrator.cookie }), 200,
         )).toEqual({ items: [] });
@@ -114,7 +67,7 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
       .toEqual({ encrypted_credentials: null, enabled: false });
   });
 
-  it('認証キーを暗号化し、閲覧者向けの状態に送信先・環境変数名・キーを含めない', async () => {
+  it('認証キーを暗号化し、Project admin以外には接続の設定を返さない', async () => {
     const fixture = await projectFixture(harness);
     const input = madoPluginInput({ enabled: false });
     const connection = await entity<PluginConnection>(
@@ -128,31 +81,8 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
     expect(row.secret_key_id).toBe(harness.config.pluginSecretKey!.id);
     expect(row.encrypted_credentials.includes(Buffer.from(input.credentials.accessToken!))).toBe(false);
     expect(JSON.stringify(connection)).not.toContain(input.credentials.accessToken);
-    const availabilityPath = `${fixture.basePath}/plugins/availability`;
-    for (const identity of [fixture.viewer, fixture.editor]) {
+    for (const identity of [fixture.viewer, fixture.editor, fixture.outsider])
       expect((await request(harness.app, `${fixture.basePath}/plugins`, { cookie: identity.cookie })).status).toBe(403);
-      const reply = await entity<{ items: PluginAvailability[] }>(
-        await request(harness.app, availabilityPath, { cookie: identity.cookie }), 200,
-      );
-      expect(reply.items).toEqual([{
-        kind: 'mado', id: connection.id, enabled: false, configured: true,
-        configRevision: connection.configRevision, webUrl: input.config.webUrl, canImport: false,
-      }]);
-      const publicReply = JSON.stringify(reply);
-      for (const excluded of ['apiUrl', 'lineageUrl', 'tokenEnv', 'credentials', 'encrypted', input.credentials.accessToken!])
-        expect(publicReply).not.toContain(excluded);
-    }
-    expect((await request(harness.app, availabilityPath, { cookie: fixture.outsider.cookie })).status).toBe(403);
-    await entity(await request(harness.app, `${fixture.basePath}/plugins/${connection.id}`, {
-      method: 'PATCH', cookie: fixture.administrator.cookie, body: { enabled: true },
-    }), 200);
-    await entity(await request(harness.app, `${fixture.basePath}/members/${fixture.editor.userId}`, {
-      method: 'PUT', cookie: fixture.administrator.cookie, body: { role: 'admin' },
-    }), 200);
-    const availableToAdmin = await entity<{ items: PluginAvailability[] }>(
-      await request(harness.app, availabilityPath, { cookie: fixture.editor.cookie }), 200,
-    );
-    expect(availableToAdmin.items[0]).toMatchObject({ enabled: true, canImport: true });
   });
 
   it('キーを別接続へコピーしても復号できず、Madoへ送信しない', async () => {
@@ -177,11 +107,10 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
     expect(clientFactory).not.toHaveBeenCalled();
   });
 
-  it('無効なMadoでも接続確認でトークンの許可範囲を保存し、送信も送信待ちの作成も行わない', async () => {
+  it('無効なMadoでも接続確認でトークンの許可範囲を保存し、トークンを入れ替えると確認結果を消す', async () => {
     const fixture = await projectFixture(harness);
-    const sendPayload = vi.fn(async (_payload: string) => undefined);
     const checkConnection = vi.fn(madoClientStub().checkConnection);
-    const clientFactory = vi.fn<PluginClientFactory>(() => madoClientStub({ checkConnection, sendPayload }));
+    const clientFactory = vi.fn<PluginClientFactory>(() => madoClientStub({ checkConnection }));
     const application = createApplication({ config: harness.config, database: harness.database, stores: harness.stores, pluginClientFactory: clientFactory });
     const connection = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins`, {
       method: 'POST', cookie: fixture.administrator.cookie, body: madoPluginInput({ enabled: false }),
@@ -193,12 +122,10 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
     expect(checked).toMatchObject({
       id: connection.id, enabled: false, configRevision: connection.configRevision,
       accessTokenGrant: MADO_ACCESS_TOKEN_GRANT_FIXTURE,
-      manifest: { capabilities: ['datasets:search', 'lineage:publish'] },
+      manifest: { capabilities: [] },
     });
     expect(checkConnection).toHaveBeenCalledOnce();
     expect(clientFactory).toHaveBeenCalledWith(expect.objectContaining({ credentials: MADO_CREDENTIALS_FIXTURE }));
-    expect(sendPayload).not.toHaveBeenCalled();
-    expect((await harness.database.query('SELECT id FROM plugin_outbox')).rows).toHaveLength(0);
     // tokenを保存し直したら確認し直す必要がある。保存済みのgrantは置き換えた前のtokenのもの。
     const replaced = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins/${connection.id}`, {
       method: 'PATCH', cookie: fixture.administrator.cookie,
@@ -228,7 +155,7 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
     expect(metrics).not.toHaveBeenCalled();
     grant = { ...MADO_ACCESS_TOKEN_GRANT_FIXTURE, scopes: [...MADO_ACCESS_TOKEN_GRANT_FIXTURE.scopes, 'metrics:read'] };
     expect(await entity<PluginConnection>(await check(), 200)).toMatchObject({
-      manifest: { capabilities: ['datasets:search', 'lineage:publish', 'storage:metrics'] },
+      manifest: { capabilities: ['storage:metrics'] },
     });
     expect(await entity(await request(application.app, metricsPath, { cookie: fixture.administrator.cookie }), 200))
       .toEqual({ prometheus: 'mado_storage_bucket_bytes 1\n' });
@@ -266,220 +193,83 @@ describe.skipIf(!testDatabaseUrl)('内蔵Madoの設定・秘匿と固定配送�
     expect(clientFactory).toHaveBeenCalledWith(expect.objectContaining({ credentials: { accessToken: 'new-fixture-token' } }));
   });
 
-  it('Namespace外の固定バージョンと古い設定での取り込みを拒否し、既存Datasetを作らない', async () => {
+  it('アクセストークンが未設定の接続は、接続確認を503で断ってMadoへ通信しない', async () => {
     const fixture = await projectFixture(harness);
-    const externalId = randomUUID();
-    const datasetVersion = vi.fn(async () => ({
-      externalId, namespace: 'forbidden', name: 'Corpus', version: 'v1',
-      uri: 's3://fixture/forbidden', digest: referenceDigest('forbidden'), schema: {}, metadata: {},
-    }));
-    const application = createApplication({ config: harness.config, database: harness.database, stores: harness.stores, pluginClientFactory: () => madoClientStub({ datasetVersion }) });
-    const connection = await entity<PluginConnection>(
-      await request(application.app, `${fixture.basePath}/plugins`, {
-        method: 'POST', cookie: fixture.administrator.cookie, body: madoPluginInput(),
-      }),
-    );
-    const endpoint = `${fixture.basePath}/plugins/${connection.id}/datasets/import`;
-    expect((await request(application.app, endpoint, {
-      method: 'POST', cookie: fixture.administrator.cookie, body: { externalId, expectedRevision: connection.configRevision },
-    })).status).toBe(422);
-    expect((await harness.database.query('SELECT id FROM datasets')).rows).toHaveLength(0);
-    await entity(await request(application.app, `${fixture.basePath}/plugins/${connection.id}`, {
-      method: 'PATCH', cookie: fixture.administrator.cookie,
-      body: { credentials: { accessToken: 'rotated-fixture' }, expectedRevision: connection.configRevision },
-    }), 200);
-    datasetVersion.mockClear();
-    expect((await request(application.app, endpoint, {
-      method: 'POST', cookie: fixture.administrator.cookie, body: { externalId, expectedRevision: connection.configRevision },
-    })).status).toBe(409);
-    expect(datasetVersion).not.toHaveBeenCalled();
-    expect((await request(application.app, endpoint, {
-      method: 'POST', cookie: fixture.administrator.cookie,
-      body: { dataset: { externalId, namespace: 'remote', name: 'Spoof', version: 'v1', uri: 's3://fixture/spoof', digest: referenceDigest('spoof'), schema: {}, metadata: {} } },
-    })).status).toBe(422);
-  });
-
-  it('大文字で指定した固定バージョンを取り込み、Madoの応答表記で1件だけ保存する', async () => {
-    const fixture = await projectFixture(harness);
-    const externalVersion = {
-      externalId: MADO_VERSION_ID_FIXTURE, namespace: 'remote', name: 'Corpus', version: 'v1',
-      uri: 's3://fixture/corpus', digest: referenceDigest('case-insensitive-import'), schema: {}, metadata: {},
-    };
-    const datasetVersion = vi.fn(async (_externalId: string) => externalVersion);
-    const application = createApplication({
-      config: harness.config, database: harness.database, stores: harness.stores,
-      pluginClientFactory: () => madoClientStub({ datasetVersion }),
-    });
-    const connection = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins`, {
-      method: 'POST', cookie: fixture.administrator.cookie, body: madoPluginInput(),
-    }));
-    const importVersion = (externalId: string) => request(application.app, `${fixture.basePath}/plugins/${connection.id}/datasets/import`, {
-      method: 'POST', cookie: fixture.administrator.cookie,
-      body: { externalId, expectedRevision: connection.configRevision },
-    });
-    const imported = await entity<DatasetVersion>(await importVersion(externalVersion.externalId.toUpperCase()));
-    expect(imported.externalRef?.externalId).toBe(externalVersion.externalId);
-    expect(datasetVersion).toHaveBeenCalledWith(externalVersion.externalId.toUpperCase());
-    expect(await entity<DatasetVersion>(await importVersion(externalVersion.externalId))).toEqual(imported);
-    expect((await harness.database.query('SELECT id FROM dataset_versions')).rows).toEqual([{ id: imported.id }]);
-  });
-
-  it('既存の大文字externalRefを小文字IDで再取り込みしても同じバージョンと元の表記を保つ', async () => {
-    const { fixture, application, connection, externalVersion, externalRef, existing, versionPath } = await seedUppercaseMadoDataset();
-    const imported = await entity<DatasetVersion>(await request(application.app, `${fixture.basePath}/plugins/${connection.id}/datasets/import`, {
-      method: 'POST', cookie: fixture.administrator.cookie,
-      body: { externalId: externalVersion.externalId, expectedRevision: connection.configRevision },
-    }));
-    expect(imported).toEqual(existing);
-    expect(imported.externalRef).toEqual(externalRef);
-    expect(await entity(await request(application.app, versionPath, { cookie: fixture.viewer.cookie }), 200))
-      .toEqual({ items: [existing] });
-    expect((await harness.database.query('SELECT id FROM plugin_outbox')).rows).toHaveLength(0);
-    expect((await request(application.app, `${fixture.basePath}/plugins/${connection.id}`, {
-      method: 'PATCH', cookie: fixture.administrator.cookie,
-      body: { config: { ...MADO_CONFIG_FIXTURE, apiUrl: 'https://different-mado.example.test' }, expectedRevision: connection.configRevision },
-    })).status).toBe(409);
-    expect((await harness.database.query('SELECT config FROM plugin_connections WHERE id=$1', [connection.id])).rows[0].config)
-      .toEqual(MADO_CONFIG_FIXTURE);
-  });
-
-  it('大文字の接続UUIDが残る外部参照は元のMadoの識別を維持し、別接続へ流用しない', async () => {
-    const { fixture, application, connection, externalVersion, existing, deliveredPayloads } = await seedUppercaseMadoDataset();
-    const otherConnection = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins`, {
-      method: 'POST', cookie: fixture.administrator.cookie,
-      body: madoPluginInput({ name: 'Other Mado', config: {
-        apiUrl: 'https://other-api.mado.example.test', webUrl: 'https://other.mado.example.test',
-        lineageUrl: 'https://other-ingest.mado.example.test',
-      } }),
-    }));
-    const run = await entity<Run>(await request(application.app, `${fixture.basePath}/runs`, {
-      method: 'POST', cookie: fixture.editor.cookie,
-      body: { experimentId: fixture.experiment.id, name: 'Uppercase external reference', kind: 'inference', inputDatasetVersionIds: [existing.id] },
-    }));
-    await entity(await request(application.app, `${fixture.basePath}/runs/${run.id}`, {
-      method: 'PATCH', cookie: fixture.editor.cookie, body: { status: 'finished' },
-    }), 200);
-    expect(await application.outbox.dispatchBatch()).toBe(2);
-    const originalEvent = JSON.parse(deliveredPayloads.find((delivery) => delivery.pluginId === connection.id)!.payload);
-    expect(originalEvent.inputs[0]).toEqual({
-      namespace: externalVersion.namespace, name: externalVersion.name,
-      facets: { version: { datasetVersion: externalVersion.version } },
-    });
-    const otherEvent = JSON.parse(deliveredPayloads.find((delivery) => delivery.pluginId === otherConnection.id)!.payload);
-    expect(otherEvent.inputs[0]).toMatchObject({
-      namespace: MADO_CONFIG_FIXTURE.jobNamespace,
-      name: `${fixture.project.id}/${externalVersion.namespace}/${externalVersion.name}`,
-      facets: { version: { datasetVersion: externalVersion.version }, datasetRegistry: { contentHash: externalVersion.digest } },
-    });
-    expect(originalEvent.run.runId).toBe(run.id);
-    expect(otherEvent.run.runId).toBe(run.id);
-  });
-
-  it('既存の相対URIを持つDatasetがあってもRun開始と完了を記録し、versionとhashを配送する', async () => {
-    const fixture = await executionFixture(harness);
-    const sendPayload = vi.fn(async (_payload: string) => undefined);
-    const application = createApplication({
-      config: harness.config, database: harness.database, stores: harness.stores,
-      pluginClientFactory: () => madoClientStub({ sendPayload }),
-    });
-    await entity(await request(application.app, `${fixture.basePath}/plugins`, {
-      method: 'POST', cookie: fixture.administrator.cookie, body: madoPluginInput(),
-    }));
-    const inputDigest = referenceDigest('relative-input');
-    const inputDataset = await entity<Dataset>(await request(application.app, `${fixture.basePath}/datasets`, {
-      method: 'POST', cookie: fixture.editor.cookie, body: { namespace: 'local', name: 'Relative input' },
-    }));
-    const inputVersion = await entity<DatasetVersion>(await request(application.app, `${fixture.basePath}/datasets/${inputDataset.id}/versions`, {
-      method: 'POST', cookie: fixture.editor.cookie,
-      body: { version: 'v1', uri: '/mnt/corpus', digest: inputDigest },
-    }));
-    const run = await entity<Run>(await request(application.app, `${fixture.basePath}/runs`, {
-      method: 'POST', cookie: fixture.editor.cookie,
-      body: { experimentId: fixture.experiment.id, name: 'Relative URI Run', kind: 'inference', modelVersionId: fixture.modelVersion.id, inputDatasetVersionIds: [inputVersion.id] },
-    }));
-    const runPath = `${fixture.basePath}/runs/${run.id}`;
-    await entity(await request(application.app, runPath, {
-      method: 'PATCH', cookie: fixture.editor.cookie, body: { status: 'running' },
-    }), 200);
-    const outputDigest = referenceDigest('relative-output');
-    const outputDataset = await entity<Dataset>(await request(application.app, `${fixture.basePath}/datasets`, {
-      method: 'POST', cookie: fixture.editor.cookie, body: { namespace: 'local', name: 'Relative output' },
-    }));
-    await entity(await request(application.app, `${fixture.basePath}/datasets/${outputDataset.id}/versions`, {
-      method: 'POST', cookie: fixture.editor.cookie,
-      body: { version: 'v2', uri: '/mnt/predictions', digest: outputDigest, sourceRunId: run.id },
-    }));
-    const finished = await entity<Run>(await request(application.app, runPath, {
-      method: 'PATCH', cookie: fixture.editor.cookie, body: { status: 'finished' },
-    }), 200);
-    expect(finished.status).toBe('finished');
-    expect(await application.outbox.dispatchBatch()).toBe(2);
-    const payloads = sendPayload.mock.calls.map(([payload]) => JSON.parse(payload));
-    expect(payloads.map((payload) => payload.eventType).sort()).toEqual(['COMPLETE', 'START']);
-    const completed = payloads.find((payload) => payload.eventType === 'COMPLETE');
-    expect(completed.inputs[0].facets).toEqual({
-      version: { datasetVersion: 'v1' }, datasetRegistry: { contentHash: inputDigest },
-    });
-    expect(completed.outputs[0].facets).toEqual({
-      version: { datasetVersion: 'v2' }, datasetRegistry: { contentHash: outputDigest },
-    });
-    expect(payloads.every((payload) => payload.run.runId === run.id)).toBe(true);
-  });
-
-  it('送信後に応答を失って再送しても同じ内容・Run IDを保ち、履歴の接続先を変更しない', async () => {
-    const fixture = await executionFixture(harness);
-    const attemptedPayloads: string[] = [];
-    const sendPayload = vi.fn(async (payload: string) => {
-      attemptedPayloads.push(payload);
-      if (attemptedPayloads.length === 1) throw new Error('Fixture lost the acknowledgement after accepting the event');
-    });
-    const clientFactory = vi.fn<PluginClientFactory>(() => madoClientStub({ sendPayload }));
+    const clientFactory = vi.fn<PluginClientFactory>(() => madoClientStub());
     const application = createApplication({ config: harness.config, database: harness.database, stores: harness.stores, pluginClientFactory: clientFactory });
-    const connection = await entity<PluginConnection>(
-      await request(application.app, `${fixture.basePath}/plugins`, {
-        method: 'POST', cookie: fixture.administrator.cookie, body: madoPluginInput(),
-      }),
-    );
-    const run = await fixture.newRun();
-    await entity(await request(application.app, `${fixture.basePath}/runs/${run.id}`, {
-      method: 'PATCH', cookie: fixture.editor.cookie, body: { status: 'finished' },
-    }), 200);
-    const snapshot = (await harness.database.query('SELECT event_id,payload,payload_hash,config_revision,destination_url FROM plugin_outbox')).rows[0];
-    expect(snapshot.payload_hash).toBe(createHash('sha256').update(snapshot.payload).digest('hex'));
-    expect(snapshot.config_revision).toBe(connection.configRevision);
-    expect(snapshot.destination_url).toBe(MADO_CONFIG_FIXTURE.lineageUrl);
-    for (const change of [
-      'payload=payload||chr(32)',
-      "payload_hash=repeat('0',64)",
-      "destination_url='https://other-mado.example.test'",
-      'config_revision=config_revision+1',
-      "event='{}'::jsonb",
-      'event_id=gen_random_uuid()',
-    ])
-      await expect(harness.database.query(`UPDATE plugin_outbox SET ${change} WHERE event_id=$1`, [snapshot.event_id]))
-        .rejects.toThrow(/immutable/);
-    expect(await application.outbox.dispatchBatch()).toBe(0);
-    const updated = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins/${connection.id}`, {
-      method: 'PATCH', cookie: fixture.administrator.cookie,
-      body: { credentials: { accessToken: 'rotated-fixture-access-token' }, expectedRevision: connection.configRevision },
-    }), 200);
-    const changedDestination = await request(application.app, `${fixture.basePath}/plugins/${connection.id}`, {
-      method: 'PATCH', cookie: fixture.administrator.cookie,
-      body: { config: { ...MADO_CONFIG_FIXTURE, lineageUrl: 'https://other-mado.example.test' }, expectedRevision: updated.configRevision },
-    });
-    expect(changedDestination.status).toBe(409);
-    await entity(await request(application.app, `${fixture.basePath}/plugins/${connection.id}/events/retry`, {
+    const unconfigured = await entity<PluginConnection>(await request(application.app, `${fixture.basePath}/plugins`, {
       method: 'POST', cookie: fixture.administrator.cookie,
+      body: madoPluginInput({ enabled: false, credentials: {} }),
+    }));
+    expect(unconfigured.tokenConfigured).toBe(false);
+    expect((await request(application.app, `${fixture.basePath}/plugins/${unconfigured.id}/check`, {
+      method: 'POST', cookie: fixture.administrator.cookie,
+    })).status).toBe(503);
+    expect(clientFactory).not.toHaveBeenCalled();
+  });
+
+  it('データセットバージョンが外部参照で指す接続は、名前は変えられるが接続先は変えられない', async () => {
+    const fixture = await projectFixture(harness);
+    const connection = await entity<PluginConnection>(await request(harness.app, `${fixture.basePath}/plugins`, {
+      method: 'POST', cookie: fixture.administrator.cookie, body: madoPluginInput(),
+    }));
+    const dataset = await entity<Dataset>(await request(harness.app, `${fixture.basePath}/datasets`, {
+      method: 'POST', cookie: fixture.editor.cookie, body: { namespace: 'remote', name: 'Corpus' },
+    }));
+    // 以前の版がmado S3 Data Catalogから取り込んだバージョンと同じ形。接続のUUIDは大文字でも同じ接続を指す。
+    const externalRef = {
+      pluginId: connection.id.toUpperCase(), externalId: MADO_VERSION_ID_FIXTURE,
+      namespace: 'remote', name: 'Corpus', version: 'v1',
+    };
+    const imported = await entity<DatasetVersion>(await request(harness.app, `${fixture.basePath}/datasets/${dataset.id}/versions`, {
+      method: 'POST', cookie: fixture.editor.cookie,
+      body: { version: 'v1', uri: 's3://fixture/corpus', digest: referenceDigest('external-reference'), externalRef },
+    }));
+    expect(imported.externalRef).toEqual(externalRef);
+    const endpoint = `${fixture.basePath}/plugins/${connection.id}`;
+    for (const changed of [{ apiUrl: 'https://different-mado-api.example.test' }, { webUrl: 'https://different-mado.example.test' }])
+      expect((await request(harness.app, endpoint, {
+        method: 'PATCH', cookie: fixture.administrator.cookie,
+        body: { config: { ...MADO_CONFIG_FIXTURE, ...changed }, expectedRevision: connection.configRevision },
+      })).status).toBe(409);
+    const renamed = await entity<PluginConnection>(await request(harness.app, endpoint, {
+      method: 'PATCH', cookie: fixture.administrator.cookie,
+      body: { name: 'Renamed', config: MADO_CONFIG_FIXTURE, expectedRevision: connection.configRevision },
     }), 200);
-    expect(await application.outbox.dispatchBatch()).toBe(1);
-    expect(attemptedPayloads).toEqual([snapshot.payload, snapshot.payload]);
-    expect(attemptedPayloads.map((payload) => JSON.parse(payload).run.runId)).toEqual([run.id, run.id]);
-    expect(clientFactory.mock.calls.at(-1)?.[0]).toMatchObject({
-      credentials: { accessToken: 'rotated-fixture-access-token' },
-      config: { lineageUrl: MADO_CONFIG_FIXTURE.lineageUrl },
-    });
-    expect((await harness.database.query('SELECT event_id,payload,payload_hash,status FROM plugin_outbox')).rows).toEqual([{
-      event_id: snapshot.event_id, payload: snapshot.payload, payload_hash: snapshot.payload_hash, status: 'delivered',
-    }]);
+    expect(renamed).toMatchObject({ name: 'Renamed', config: MADO_CONFIG_FIXTURE });
+  });
+
+  it('Runを終えても連携へ送るイベントを積まない', async () => {
+    const fixture = await executionFixture(harness);
+    await entity(await request(harness.app, `${fixture.basePath}/plugins`, {
+      method: 'POST', cookie: fixture.administrator.cookie, body: madoPluginInput(),
+    }));
+    const run = await fixture.newRun();
+    for (const status of ['running', 'finished'])
+      await entity(await request(harness.app, `${fixture.basePath}/runs/${run.id}`, {
+        method: 'PATCH', cookie: fixture.editor.cookie, body: { status },
+      }), 200);
+    expect((await harness.database.query('SELECT id FROM plugin_outbox')).rows).toEqual([]);
+  });
+
+  it('DataLineageのための設定項目と、取り込み・検索・送信状況・再送のAPIは受け付けない', async () => {
+    const fixture = await projectFixture(harness);
+    expect((await request(harness.app, `${fixture.basePath}/plugins`, {
+      method: 'POST', cookie: fixture.administrator.cookie,
+      body: madoPluginInput({ config: { lineageUrl: 'https://mado-lineage.example.test' } as object }),
+    })).status).toBe(422);
+    const connection = await entity<PluginConnection>(await request(harness.app, `${fixture.basePath}/plugins`, {
+      method: 'POST', cookie: fixture.administrator.cookie, body: madoPluginInput(),
+    }));
+    for (const [method, path] of [
+      ['GET', 'availability'],
+      ['GET', `${connection.id}/outbox`],
+      ['POST', `${connection.id}/datasets/search`],
+      ['POST', `${connection.id}/datasets/import`],
+      ['POST', `${connection.id}/events/retry`],
+    ] as const)
+      expect((await request(harness.app, `${fixture.basePath}/plugins/${path}`, {
+        method, cookie: fixture.administrator.cookie, ...(method === 'POST' ? { body: {} } : {}),
+      })).status).toBe(404);
   });
 });

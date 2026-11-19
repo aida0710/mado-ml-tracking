@@ -9,13 +9,10 @@ describe('Madoの接続設定入力', () => {
     expect(getMadoPluginCredentials({ ...values, accessToken: 'entered-token' })).toEqual({ accessToken: 'entered-token' });
   });
 
-  it('送信先の省略はAPI URLに合わせ、Namespaceは入力させずトークンの許可範囲に任せる', () => {
-    const values = { ...getMadoPluginFormValues(null), apiUrl: ' https://api.example ' };
-    const config = getMadoPluginConfig(values);
-    expect(config).toEqual({
-      apiUrl: 'https://api.example', webUrl: '', lineageUrl: 'https://api.example',
-      jobNamespace: 'mado-model-tracking', storageSystemKey: 'mado-model-tracking',
-    });
-    expect(config).not.toHaveProperty('namespaces');
+  it('接続先のURLは前後の空白を除いて送る', () => {
+    const values = {
+      ...getMadoPluginFormValues(null), apiUrl: ' https://api.example ', webUrl: ' https://mado.example ',
+    };
+    expect(getMadoPluginConfig(values)).toEqual({ apiUrl: 'https://api.example', webUrl: 'https://mado.example' });
   });
 });

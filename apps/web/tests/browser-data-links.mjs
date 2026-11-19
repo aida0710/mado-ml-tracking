@@ -274,7 +274,6 @@ try {
   console.log('data links: passed');
 } finally {
   await browser.close();
-  await application.outbox.stop();
   await application.artifactUploadFinalizer.stop();
   await new Promise((resolve) => (server ? server.close(() => resolve()) : resolve()));
   await database.end();
