@@ -98,7 +98,7 @@ openssl rand -base64 32
 
 ## Mado連携 {#mado-plugin}
 
-Mado連携はAPI serverに標準搭載されています。別のサービスや、連携だけの`.env`はありません。連携のためにAPI serverの`.env`に置くのは、Madoのアクセストークンを暗号化する鍵だけです。MadoのURLとアクセストークンは環境変数ではなく、全体管理者がProjectの［連携］で保存します。NamespaceはアクセストークンからMadoが返すので、どこにも設定しません（[Mado連携](/admin/plugins)）。
+Mado連携はAPI serverに標準搭載されています。別のサービスや、連携だけの`.env`はありません。連携のためにAPI serverの`.env`に置くのは、Madoのアクセストークンを暗号化する鍵だけです。MadoのURLとアクセストークンは環境変数ではなく、全体管理者がProjectの［連携］で保存します（[Mado連携](/admin/plugins)）。
 
 | 変数 | 既定 | 内容 |
 | --- | --- | --- |

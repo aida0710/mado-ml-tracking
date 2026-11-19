@@ -224,7 +224,7 @@ workerは実行コードを起動する前に、入力DatasetVersionごとに本
 |---|---|---|
 | `contentKind=artifacts` | files API（`GET /projects/:p/datasets/:d/versions/:v/files`）の一覧のArtifact | 一覧からmanifest digestを計算し直してバージョンの`digest`と一致させ、各ファイルのsha256・sizeを照合する |
 | `reference`の`file://` | target上の既存path。copyしない | 存在と読み取り権限だけ確かめる |
-| `reference`の`https://` | 認証無しのGET。redirectは追わない。保存名はURLの最後のpath区間 | `digest`が`sha256:<64桁hex>`か`<64桁hex>`（小文字）ならsha256を照合する。ネイティブAPIで登録した参照のバージョンは必ずこのどちらかの形（APIがほかの形を422 `dataset_digest_invalid`で断る）。MLflowの`log_inputs`とpluginの取り込みは元のシステムの値のままなので、ほかの形なら照合しない |
+| `reference`の`https://` | 認証無しのGET。redirectは追わない。保存名はURLの最後のpath区間 | `digest`が`sha256:<64桁hex>`か`<64桁hex>`（小文字）ならsha256を照合する。ネイティブAPIで登録した参照のバージョンは必ずこのどちらかの形（APIがほかの形を422 `dataset_digest_invalid`で断る）。MLflowの`log_inputs`と外部参照（`externalRef`）付きの登録は元のシステムの値のままなので、ほかの形なら照合しない |
 | `reference`の`s3://bucket/key` | target上の`AWS_ACCESS_KEY_ID`・`AWS_SECRET_ACCESS_KEY`・`AWS_SESSION_TOKEN`・`AWS_REGION`（無ければ`us-east-1`）・`AWS_ENDPOINT_URL_S3`/`AWS_ENDPOINT_URL`・`AWS_CA_BUNDLE`で署名v4。keyがobjectそのものならその1つ、それ以外は`key/`配下の全object | sizeを照合する（S3のETagはsha256ではない） |
 | `reference`の`urn:`・`mmt-artifact:` | 取得しない（記述子だけ。上流RunのArtifactはSDKで読む） | Runのログにinfoで残す |
 | それ以外のscheme（`gs:`、`hf:`、schemeなしのpathなど） | 取得できないのでJobを開始前に失敗させる | — |

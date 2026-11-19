@@ -55,11 +55,9 @@ The model version page shows the chain from the training Run to the version and 
 
 ## How it relates to Mado
 
-mado ML Tracking runs as an app separate from Mado, with its own database. The two connect through the built-in Mado integration (disabled at first; a global administrator configures and enables it).
+mado ML Tracking runs as an app separate from Mado, with its own database. The two connect through the built-in Mado integration (disabled at first; a global administrator configures and enables it). When enabled, it shows Mado's storage capacity metrics on screen.
 
-- Search dataset versions managed in Mado and import them as dataset versions
-- Send the start and end of Runs, with their input and output dataset versions, to Mado's lineage
-- Show Mado's storage capacity metrics on screen
+mado ML Tracking records dataset versions and the lineage of processing. Mado browses S3 storage and measures its capacity; it does not hold dataset lineage.
 
 Sign-in works the same way as in Mado. Authentik groups decide who can sign in and who is a global administrator, and local accounts can be used alongside SSO or instead of it.
 

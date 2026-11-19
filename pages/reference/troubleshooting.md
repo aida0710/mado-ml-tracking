@@ -111,9 +111,9 @@ curl -sS -H "Authorization: Bearer $MMT_API_TOKEN" "$MMT_API_URL/api/auth/token"
 1. ［プロジェクト設定］の「通知」の通知先で、［送信設定］が「設定済み」かを確かめます。「未設定」なら、API serverの`.env`に環境変数が無いか、APIを再起動していません。
 2. ［テスト送信］で、その場で送れるかを確かめます。
 3. 「直近の送信履歴」で、状態と失敗の理由を確かめます。理由ごとの確認項目は[通知と運用アラート](/admin/notifications)の「送信の流れと失敗したとき」にあります。
-4. 通知ルールが有効で、イベントと条件が合っているかを確かめます。workerの停止とPlugin送信の滞留は、実行種別や実験の条件を付けたルールには届きません。
+4. 通知ルールが有効で、イベントと条件が合っているかを確かめます。workerの停止は、実行種別や実験の条件を付けたルールには届きません。
 
-## Mado連携につながらない・送信が滞る {#plugin-unreachable-or-deliveries-stalled}
+## Mado連携につながらない {#plugin-unreachable-or-deliveries-stalled}
 
 Mado連携の状態は、Projectの［連携］で確かめます。接続設定とキーを直せるのは全体管理者です（[Mado連携](/admin/plugins)）。
 
@@ -121,10 +121,8 @@ Mado連携の状態は、Projectの［連携］で確かめます。接続設定
 | --- | --- |
 | 「連携キーを保存・利用するには、APIサーバーにMMT_PLUGIN_SECRET_KEYの設定が必要です。」、または`plugin_secret_key_unavailable` | API serverの`.env`に`MMT_PLUGIN_SECRET_KEY`を設定し、APIを再起動する（[環境変数](/reference/environment#mado-plugin)） |
 | 「Madoのアクセストークンを設定してください。」、または`plugin_token_unavailable`・`plugin_secret_decryption_failed` | 「アクセストークン」が「未設定」なら、［Madoの接続設定］でアクセストークンを入れて［保存］を押す。以前の版で用途別のキーを保存した接続も「未設定」になるので、同じく入れ直す。「設定済み」なのに出るなら、`MMT_PLUGIN_SECRET_KEY`がトークンを保存したときと同じ値かを確かめる。元の値に戻せないときは、アクセストークンを入れ直して保存する |
-| ［接続を確認］で「Madoのアクセストークンに…を許可してください」（`plugin_token_scope_missing`）、または「RunのNamespace「…」をMadoのアクセストークンで許可してください」（`plugin_job_namespace_not_allowed`） | MadoのSettings → Access → Access Tokensで、そのトークンにDataLineageの読み取りと送信、「RunのNamespace」を許可してから、もう一度［接続を確認］を押す |
 | ［接続を確認］で「このMadoはアクセストークンの許可範囲の取得（/api/mado/access-token）に対応していません」（`plugin_mado_access_token_unsupported`） | Madoを、アクセストークン自身の許可範囲を返す版へ更新する |
 | ［接続を確認］で「Madoとの通信に失敗しました」（`plugin_request_failed`） | API serverから「Mado API URL」に届くか、アクセストークンが有効（無効化・期限切れでない）かを確かめる。容量の読み取りを許可しているなら、容量も取得できるかを確かめる（確認では容量も取得する） |
-| 運用アラート「Plugin送信の滞留」 | ［連携］の「イベントの送信状況」で「最終エラー」を確かめ、Madoの状態や接続設定（「OpenLineage URL」、アクセストークン）を直してから［イベントを再送］を押す |
 
 ## workerがJobを受け取らない・停止と表示される
 

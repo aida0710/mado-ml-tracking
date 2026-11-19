@@ -182,14 +182,14 @@ node apps/web/tests/browser-pipeline.mjs
 
 ## 内蔵Mado連携のAPIを確認する
 
-参照APIを追加したMado checkoutを指定すると、本体の内蔵処理→実Mado routesの接続を確認できます。Registryは隔離fixtureを使い、本番へは接続しません。
+Madoのcheckoutを指定すると、本体の内蔵処理→実Mado routes（`/api/mado/access-token`と`/api/mado/metrics/capacity`）の接続を確認できます。認証と容量の値はfixtureで、本番へは接続しません。`namespaces`を返すMado v0.5.3までのcheckoutでも、返さないv0.6.0以降のcheckoutでも通ります。
 
 ```bash
 MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55483/mmt_test \
 MMT_VERIFY_MADO_ROOT=/path/to/mado node_modules/.bin/tsx scripts/verify_mado_plugin.ts
 ```
 
-配置が違う場合は`MMT_VERIFY_MADO_ROOT`に参照APIを含むMadoのcheckoutを指定します。こちらのテストは専用schemaを最後に削除します。
+`MMT_VERIFY_MADO_ROOT`を省くと`../mado`を使います。Madoのcheckoutには`api/`の依存（`npm ci`）が入っている必要があります。こちらのテストは専用schemaを最後に削除します。
 
 ## 公式MLflow 3 SDKを確認する
 
@@ -239,7 +239,7 @@ PYTHONPATH=python/src python/.venv/bin/python scripts/verify_workbench.py
 
 公開Gitリポジトリの固定commitを読み込み、編集・削除したファイルを実CPU workerで実行します。通常とテストのコマンド、Taskの新しいバージョンを保存したあとも固定されるqueued Job、古いrevisionの409、失敗テストと再実行、実行前のsource ZIPとmanifest、履歴を確認します。コード自身がmain.pyを書き換えた場合も、ZIPが実行前の内容を保つことを照合します。検証用tokenは最後に失効し、targetを無効にします。結果は`artifacts/verification/<日付>/workbench/task-integration.json`です。
 
-ブラウザからCompute、Monacoでの編集と新しいバージョンの保存、Task作成・テスト・学習・推論を確認する場合は、開発APIとworkerのlocal executorを許可します。内蔵Mado連携の検証は上のMado参照APIを持つ隔離fixtureで行います。旧HTTP fixtureの起動手順は現在の接続登録には使いません。
+ブラウザからCompute、Monacoでの編集と新しいバージョンの保存、Task作成・テスト・学習・推論を確認する場合は、開発APIとworkerのlocal executorを許可します。内蔵Mado連携の検証は上の「内蔵Mado連携のAPIを確認する」で行います。旧HTTP fixtureの起動手順は現在の接続登録には使いません。
 
 ```bash
 # 旧HTTP fixtureは内蔵連携では起動しません。
@@ -255,7 +255,7 @@ node scripts/verify_workbench_browser.mjs
 
 この操作はPlaygroundを残し、そのProjectとCPU targetだけを扱うworkerを起動します。Service Account tokenは7日で失効し、`var/playground/worker-settings.json`へmode600で保存します。ブラウザの確認後もTaskを編集・実行できます。再起動は`PYTHONPATH=python/src python/.venv/bin/python scripts/serve_workbench_worker.py`。workerの停止には`var/playground/worker.pid`のprocessを確認してSIGTERMを送り、設定画面で当該tokenを失効してください。
 
-Madoの参照・容量・取り込み・配送の確認は前節の内蔵連携検証を使います。PlaygroundのIDと実行結果、閲覧用画像は`artifacts/verification/<日付>/workbench/`へ保存し、tokenの値を含めません。
+Madoの接続確認と容量の確認は「内蔵Mado連携のAPIを確認する」を使います。PlaygroundのIDと実行結果、閲覧用画像は`artifacts/verification/<日付>/workbench/`へ保存し、tokenの値を含めません。
 
 2026-10-08の追加機能では、API・ストレージ366件、Web98件、Python316件、実Docker20件が成功しました。S3接続fixtureの2件はskipです。型検査・build・ruff・strict mypy、wheel/sdistの45ファイルと現ソースの一致も確認しました。
 
@@ -602,7 +602,7 @@ node apps/web/tests/browser-comments.mjs
 
 ## 内蔵Madoの実APIブラウザ確認
 
-専用のPostgreSQLテストDBと、参照APIを含むMado checkoutを使います。MadoのHTTPルートは実装を使い、Registryの応答だけをfixtureに置き換えます。本番の接続先は使いません。
+専用のPostgreSQLテストDBと、Madoのcheckoutを使います。MadoのHTTPルートは実装を使い、認証と容量の値だけをfixtureに置き換えます。本番の接続先は使いません。
 
 ```sh
 MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55490/mmt_test \
@@ -621,7 +621,7 @@ node scripts/verify_builtin_mado_browser.mjs
 
 APIは独立schemaを作り、終了時に削除します。fixtureの一時キーはgitignore済みの`var/builtin-mado-verification.json`（mode 600）だけに保存し、終了時に削除します。結果とキー入力を含まない画像は`artifacts/builtin-mado/<JSTの日付>/`に保存します。
 
-ブラウザは初期無効、キー保存と接続確認、有効化、固定バージョンの取り込み、Madoへのリンク、START/COMPLETEの配送、無効化時の操作非表示、日英と幅320pxを確認します。運用者が用意する実RegistryのDBで同じRunやDatasetVersionが増えないことは、このfixtureでは確認しません。
+ブラウザは初期無効、キー保存と接続確認、有効化後の容量の表示、無効化で容量を取得しなくなること、日英と幅320pxを確認します。
 
 ## Lineageの画面操作を確認する
 
