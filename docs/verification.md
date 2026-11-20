@@ -182,7 +182,7 @@ node apps/web/tests/browser-pipeline.mjs
 
 ## mado S3 Data Catalogへの接続のAPIを確認する
 
-mado S3 Data Catalogのcheckoutを指定すると、本体の処理→mado S3 Data Catalogの実際のroutes（`/api/mado/access-token`、`/api/mado/connections`、`/api/mado/metrics/capacity`）の接続と、ストレージ接続を指定した`s3://`の登録を確認できます。認証・ストレージ接続・容量の値はfixtureで、本番へは接続しません。`/api/mado/connections`のあるmado S3 Data Catalog v0.6.0以降のcheckoutが要ります。
+mado S3 Data Catalogのcheckoutを指定すると、本体の処理→mado S3 Data Catalogの実際のroutes（`/api/mado/access-token`、`/api/mado/connections`、`/api/mado/metrics/capacity`）の接続と、ストレージ接続を指定した`s3://`の登録を確認できます。認証・ストレージ接続・容量の値はfixtureで、本番へは接続しません。`/api/mado/connections`のあるmado S3 Data Catalog v0.6.1以降のcheckoutが要ります。
 
 ```bash
 MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55483/mmt_test \

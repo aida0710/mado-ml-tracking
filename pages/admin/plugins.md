@@ -15,7 +15,7 @@ description: 全体で1つのmado S3 Data Catalogへの接続の設定と、mado
 
 **ストレージ接続**は、mado S3 Data Catalogに登録したS3の接続先（オンプレミスのS3、AWSなど）の1つです。接続すると、`s3://`の場所を登録するときに、その場所があるストレージ接続を選ぶようになります。
 
-この画面を開けるのは全体管理者だけです。mado S3 Data Catalog v0.6.0以降が要ります。
+この画面を開けるのは全体管理者だけです。mado S3 Data Catalog v0.6.1以降が要ります。
 
 ## 接続する
 

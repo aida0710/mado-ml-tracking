@@ -10,7 +10,7 @@ mado S3 Data Catalogへの接続は本体に標準搭載され、全体で1つ�
 | mado S3 Data Catalogの画面のURLを、`s3://`のURIとストレージ接続に直す | データセットとモデルのバージョンを作る画面のURIの欄 | Projectを編集できる人 |
 | mado S3 Data Catalogが測ったストレージの容量を見る | 全体設定 → 全体管理 → 「Plugins」 | 全体管理者 |
 
-mado S3 Data Catalogから読むのは、アクセストークン自身の情報（`/api/mado/access-token`）、ストレージ接続の一覧（`/api/mado/connections`）、容量メトリクス（`/api/mado/metrics/capacity`）の3つです。mado S3 Data Catalog v0.6.0以降が要ります。接続の設定と容量は全体管理者だけが扱います。Projectのメンバーに見せるのは、画面のURLとストレージ接続の名前・種類だけです。
+mado S3 Data Catalogから読むのは、アクセストークン自身の情報（`/api/mado/access-token`）、ストレージ接続の一覧（`/api/mado/connections`）、容量メトリクス（`/api/mado/metrics/capacity`）の3つです。mado S3 Data Catalog v0.6.1以降が要ります。接続の設定と容量は全体管理者だけが扱います。Projectのメンバーに見せるのは、画面のURLとストレージ接続の名前・種類だけです。
 
 **ストレージ接続**は、mado S3 Data Catalogに登録したS3の接続先（オンプレミスのS3、AWSなど）の1つです。mado S3 Data Catalogでは「接続（Connection）」と呼びます。
 
@@ -68,7 +68,7 @@ APIは理由を`code`で返し、画面はその文をそのまま出します�
 | `data_catalog_access_token_rejected` | mado S3 Data Catalog rejected the access token; check that it is correct and has not expired | アクセストークンが正しいか、無効化・期限切れでないかを確かめる |
 | `data_catalog_access_token_required` | enter the access token of this mado S3 Data Catalog | アクセストークンを入力する（初めての接続と、URLを変えるとき） |
 | `data_catalog_access_token_unsupported` | no mado S3 Data Catalog API was found at this URL (/api/mado/access-token); check the URL | URLがmado S3 Data Catalogのものかを確かめる |
-| `data_catalog_storage_connections_unsupported` | this mado S3 Data Catalog cannot list connections (/api/mado/connections); update it to v0.6.0 or later | mado S3 Data Catalogをv0.6.0以降へ更新する |
+| `data_catalog_storage_connections_unsupported` | this mado S3 Data Catalog cannot list connections (/api/mado/connections); update it to v0.6.1 or later | mado S3 Data Catalogをv0.6.1以降へ更新する |
 | `data_catalog_request_failed` | failed to communicate with mado S3 Data Catalog; check the URL | API serverからそのURLに届くかを確かめる |
 | `data_catalog_capacity_not_permitted` | the access token does not allow reading capacity; allow it in mado S3 Data Catalog and check the connection again | mado S3 Data CatalogでトークンにCapacityの読み取りを許可し、「接続を確認」を押す |
 | `data_catalog_secret_key_unavailable` | set MMT_PLUGIN_SECRET_KEY on the API server to store the access token | API serverに`MMT_PLUGIN_SECRET_KEY`を設定して再起動する |
