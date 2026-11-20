@@ -12,6 +12,7 @@ import {
 import { SELECTABLE_RUN_LIMIT, useExecutionCatalog } from './useExecutionCatalog';
 import { useMutation } from './useMutation';
 import { useQuery } from './useQuery';
+import { useDataCatalogReference } from './useDataCatalogReference';
 
 /**
  * ［バージョンを作成］フォームの状態。下書き、元として指定できる学習のRun、親と既定のコードを取る
@@ -21,6 +22,8 @@ export function useModelVersionForm({ projectId, model }: { projectId: string; m
   const [draft, setDraft] = useState<ModelVersionDraft>(EMPTY_MODEL_VERSION_DRAFT);
   const [isUploadingWeights, setIsUploadingWeights] = useState(false);
   const catalog = useExecutionCatalog(projectId);
+  const dataCatalogQuery = useDataCatalogReference(projectId);
+  const dataCatalog = dataCatalogQuery.reference;
   const sourceRuns = useQuery({ key: `${projectId}:source-runs`, load: async (signal) =>
     (
       await trackingApi.searchRuns(
@@ -47,10 +50,13 @@ export function useModelVersionForm({ projectId, model }: { projectId: string; m
   }
   function save(): Promise<ModelVersion | undefined> {
     return mutation.run(() =>
-      registryApi.createModelVersion(projectId, model.id, buildModelVersionInput(draft)),
+      registryApi.createModelVersion(projectId, model.id, buildModelVersionInput(draft, dataCatalog)),
     );
   }
   return {
+    dataCatalog,
+    dataCatalogError: dataCatalogQuery.error,
+    reloadDataCatalog: dataCatalogQuery.reload,
     draft,
     change,
     chooseSourceRun,

@@ -10,6 +10,7 @@ import {
 const version = (id: string, family: string): ModelVersion => ({
   id,
   modelId: 'model',
+  dataCatalogStorageConnectionId: null,
   projectId: 'project',
   version: id,
   family,

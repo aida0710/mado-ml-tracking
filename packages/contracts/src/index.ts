@@ -499,6 +499,8 @@ export interface ModelVersion {
   trainingSourceRunId?: string | null;
   parentModelVersionIds: string[];
   weightsUri: string | null;
+  /** `weightsUri`が`s3://`のとき、それがあるmado S3 Data Catalogのストレージ接続。無ければnull。 */
+  dataCatalogStorageConnectionId: string | null;
   artifactId: string | null;
   defaultCodeVersionId: string | null;
   metadata: JsonObject;
@@ -510,6 +512,8 @@ export interface ModelVersionCreate {
   parentModelVersionIds?: string[];
   sourceRunId?: string | null;
   weightsUri?: string | null;
+  /** mado S3 Data Catalogに接続済みで`weightsUri`が`s3://`なら必須。それ以外では指定できない。 */
+  dataCatalogStorageConnectionId?: string | null;
   artifactId?: string | null;
   defaultCodeVersionId?: string | null;
   metadata?: JsonObject;
@@ -581,6 +585,8 @@ export interface DatasetVersion {
   namespace: string;
   version: string;
   uri: string;
+  /** `uri`が`s3://`のとき、それがあるmado S3 Data Catalogのストレージ接続。無ければnull。 */
+  dataCatalogStorageConnectionId: string | null;
   digest: string;
   schema: JsonObject;
   metadata: JsonObject;
@@ -803,6 +809,30 @@ export interface CurrentApiToken {
 import type { DataCatalogAccessTokenGrant } from './dataCatalogAccessTokenGrant.js';
 export type { DataCatalogAccessTokenGrant } from './dataCatalogAccessTokenGrant.js';
 export { DATA_CATALOG_SCOPES } from './dataCatalogAccessTokenGrant.js';
+export type { S3Location } from './dataCatalogStorageUrl.js';
+export {
+  dataCatalogStorageUrl,
+  parseS3Uri,
+  parseDataCatalogStorageUrl,
+} from './dataCatalogStorageUrl.js';
+/**
+ * mado S3 Data Catalogのストレージ接続（S3の接続先の1つ）。`s3://`のURIがどのストレージのものかを
+ * 表し、mado S3 Data Catalogの画面のURLを作るのに使う。実行先がどのS3から読むかは変えない。
+ */
+export interface DataCatalogStorageConnection {
+  id: string;
+  name: string;
+  /** ストレージの種類（mado S3 Data Catalogの`provider`。aws、onpremなど）。 */
+  provider: string;
+}
+/**
+ * GET /projects/:p/data-catalog: Projectのメンバーに見せるmado S3 Data Catalog。`url`は画面のURLで、
+ * 未接続ならnull。`storageConnections`は、access tokenに許可されたストレージ接続。
+ */
+export interface DataCatalogReference {
+  url: string | null;
+  storageConnections: DataCatalogStorageConnection[];
+}
 /** PUT /admin/plugins/data-catalog。accessTokenを省くと、同じURLの保存済みのtokenで確かめ直す。 */
 export interface DataCatalogConnectionInput {
   url: string;
@@ -814,6 +844,8 @@ export interface DataCatalogConnection {
   url: string;
   /** 最後に接続を確かめたときの、access tokenの権限。 */
   accessTokenGrant: DataCatalogAccessTokenGrant;
+  /** 最後に接続を確かめたときの、access tokenに許可されたストレージ接続。 */
+  storageConnections: DataCatalogStorageConnection[];
   checkedAt: string;
 }
 /** GET /admin/plugins/data-catalog */

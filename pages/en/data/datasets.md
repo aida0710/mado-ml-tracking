@@ -110,6 +110,7 @@ To create a version that points to an external location without saving files, se
 | --- | --- | --- |
 | **Version** | Version name (required) | `2026-10` |
 | **URI** | Location of the data (required): `s3://` (a bucket and key, or a folder), `https://` (one file), or `file://` (a path on the computer the Job runs on) | `s3://corpus/speech/2026-10/` |
+| **Storage connection** | Shown only when the URI is `s3://` and the site is connected to mado S3 Data Catalog (required). The mado S3 Data Catalog storage connection that holds the location ([Plugins](/en/admin/plugins#choose-a-storage-connection-when-registering)) | `on-premises (onprem)` |
 | **Digest** | SHA-256 of the contents (required), written as `sha256:` and 64 lowercase hex digits. `sha256:` may be left out, so the 64 digits `sha256sum` prints can be pasted as they are. The digest is stored as entered. Uppercase, a different length, or another algorithm (such as `sha512:`) is refused with "digestは sha256:<64桁の小文字16進数>（sha256:は省略可）の形で指定してください" (specify the digest as sha256: and 64 lowercase hex digits; sha256: may be left out) | `sha256:<64 hex digits>`, or the 64 digits from `sha256sum` |
 | **Parent versions** | The version this one was derived from | |
 | **Source run** | The Run that produced this version | |

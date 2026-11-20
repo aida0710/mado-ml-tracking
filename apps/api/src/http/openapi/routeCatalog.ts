@@ -372,6 +372,13 @@ const REPORT_CONTENT_ERRORS = routeError(
   'report_block_id_duplicate',
 );
 
+// 人・API・SDKによるバージョンの登録で、ストレージ接続の指定を断る理由。
+const STORAGE_CONNECTION_ERROR_CODES = [
+  'data_catalog_storage_connection_not_applicable',
+  'data_catalog_storage_connection_required',
+  'data_catalog_storage_connection_unknown',
+] as const;
+
 export const NATIVE_ROUTES: readonly NativeRoute[] = [
   // system
   {
@@ -871,7 +878,12 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
     access: REGISTRY_WRITE,
     body: modelVersionCreateSchema,
     responses: { 201: contract.modelVersionSchema },
-    errors: routeError(422, 'output_model_kind', 'source_run_deleted'),
+    errors: routeError(
+      422,
+      'output_model_kind',
+      'source_run_deleted',
+      ...STORAGE_CONNECTION_ERROR_CODES,
+    ),
   },
   {
     method: 'get',
@@ -1116,6 +1128,7 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
         'dataset_content_empty',
         'dataset_too_many_files',
         'dataset_source_run_mismatch',
+        ...STORAGE_CONNECTION_ERROR_CODES,
       ),
     ],
   },
@@ -3054,6 +3067,14 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
   },
   {
     method: 'get',
+    path: '/api/projects/:p/data-catalog',
+    tag: 'registry',
+    summary: 'mado S3 Data Catalogの画面のURLとストレージ接続（未接続ならurlはnull）',
+    access: PROJECT_VIEWER,
+    responses: { 200: contract.dataCatalogReferenceSchema },
+  },
+  {
+    method: 'get',
     path: '/api/admin/plugins/data-catalog',
     tag: 'admin',
     summary: 'mado S3 Data Catalogへの接続（未接続ならconnectionはnull）',
@@ -3074,7 +3095,12 @@ export const NATIVE_ROUTES: readonly NativeRoute[] = [
         'data_catalog_access_token_rejected',
         'data_catalog_access_token_required',
       ),
-      ...routeError(502, 'data_catalog_access_token_unsupported', 'data_catalog_request_failed'),
+      ...routeError(
+        502,
+        'data_catalog_access_token_unsupported',
+        'data_catalog_request_failed',
+        'data_catalog_storage_connections_unsupported',
+      ),
       ...routeError(
         503,
         'data_catalog_secret_decryption_failed',

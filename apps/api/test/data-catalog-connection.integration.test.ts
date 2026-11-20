@@ -9,6 +9,7 @@ import { createHarness, entity, request, testDatabaseUrl, type Harness } from '.
 import {
   DATA_CATALOG_ACCESS_TOKEN_FIXTURE,
   DATA_CATALOG_GRANT_FIXTURE,
+  DATA_CATALOG_STORAGE_CONNECTIONS_FIXTURE,
   DATA_CATALOG_URL_FIXTURE,
   dataCatalogClientStub,
 } from './dataCatalogFixtures.js';
@@ -61,6 +62,7 @@ describe.skipIf(!testDatabaseUrl)('mado S3 Data Catalogへの接続（独立Post
       connection: {
         url: DATA_CATALOG_URL_FIXTURE,
         accessTokenGrant: DATA_CATALOG_GRANT_FIXTURE,
+        storageConnections: DATA_CATALOG_STORAGE_CONNECTIONS_FIXTURE,
         checkedAt: expect.any(String),
       },
       secretStorageAvailable: true,

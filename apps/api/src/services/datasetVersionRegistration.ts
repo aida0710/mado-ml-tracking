@@ -38,6 +38,8 @@ interface DatasetVersionRegistrationBase {
 interface ReferenceContentRegistration {
   uri: string;
   digest: string;
+  /** 確かめ済みの、mado S3 Data Catalogのストレージ接続のID。 */
+  dataCatalogStorageConnectionId?: string | null;
   content?: undefined;
 }
 
@@ -49,6 +51,7 @@ interface ArtifactContentRegistration {
   content: { files: DatasetManifestFile[] };
   digest?: string;
   uri?: undefined;
+  dataCatalogStorageConnectionId?: undefined;
 }
 
 export type DatasetVersionRegistration = DatasetVersionRegistrationBase &
@@ -114,8 +117,8 @@ export async function registerDatasetVersion(
   const version = registration.version ?? (await nextDatasetVersion(connection, dataset.id));
   const inserted = (await first<Omit<DatasetVersion, 'name' | 'namespace'>>(
     connection,
-    `INSERT INTO dataset_versions(id,dataset_id,project_id,version,uri,digest,schema,metadata,source_run_id,parent_dataset_version_ids,content_kind,file_count,total_size)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+    `INSERT INTO dataset_versions(id,dataset_id,project_id,version,uri,digest,schema,metadata,source_run_id,parent_dataset_version_ids,content_kind,file_count,total_size,data_catalog_storage_connection_id)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
     [
       stored.id,
       dataset.id,
@@ -130,6 +133,7 @@ export async function registerDatasetVersion(
       stored.contentKind,
       stored.fileCount,
       stored.totalSize,
+      registration.dataCatalogStorageConnectionId ?? null,
     ],
   ))!;
   if (registration.content)

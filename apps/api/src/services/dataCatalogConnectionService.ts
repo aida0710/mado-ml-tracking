@@ -3,6 +3,9 @@ import {
   type DataCatalogAccessTokenGrant,
   type DataCatalogConnectionInput,
   type DataCatalogPlugin,
+  type DataCatalogReference,
+  type DataCatalogStorageConnection,
+  parseS3Uri,
 } from '@mmt/contracts';
 import {
   createDataCatalogClient,
@@ -17,11 +20,12 @@ import { writeAuditEvent } from '../repositories/auditRepository.js';
 import {
   deleteDataCatalogConnection,
   findDataCatalogConnection,
+  replaceDataCatalogStorageConnections,
   saveDataCatalogConnection,
   type DataCatalogConnectionRow,
 } from '../repositories/dataCatalogConnectionRepository.js';
 import { decryptSecret, encryptSecret, type SecretKey } from '../security/secretEncryption.js';
-import { requireGlobalAdmin } from './accessService.js';
+import { requireGlobalAdmin, requireProject } from './accessService.js';
 import {
   auditActor,
   NO_REQUEST_METADATA,
@@ -39,7 +43,7 @@ const ACCESS_TOKEN_SECRET_CONTEXT = 'data-catalog-connection';
 const UNAUTHENTICATED_STATUSES: ReadonlySet<number> = new Set([401, 403]);
 
 /**
- * 全体で1つの、mado S3 Data Catalogへの接続。全体管理者だけが扱う。保存するのは接続を
+ * 全体で1つの、mado S3 Data Catalogへの接続。設定は全体管理者だけが扱う。保存するのは接続を
  * 確かめられたものだけなので、「保存したが使えない」状態は残らない。
  */
 export class DataCatalogConnectionService {
@@ -79,6 +83,7 @@ export class DataCatalogConnectionService {
         this.savedAccessTokenFor(await findDataCatalogConnection(this.database), input.url);
       const client = this.clientFactory({ url: input.url, accessToken });
       const accessTokenGrant = await this.readAccessTokenGrant(client);
+      const storageConnections = await this.readStorageConnections(client);
       // 容量を読める権限があるなら、実際に読めることまで確かめる。
       if (canReadCapacity(accessTokenGrant))
         await this.callDataCatalog(() => client.capacityMetrics());
@@ -93,6 +98,7 @@ export class DataCatalogConnectionService {
           secretKeyId: encrypted.keyId,
           encryptedAccessToken: encrypted.payload,
           accessTokenGrant,
+          storageConnections,
         });
         await writeAuditEvent(connection, {
           ...draft,
@@ -141,11 +147,81 @@ export class DataCatalogConnectionService {
         message:
           'the access token does not allow reading capacity; allow it in mado S3 Data Catalog and check the connection again',
       });
-    const client = this.clientFactory({
-      url: saved.url,
-      accessToken: this.decryptAccessToken(saved),
-    });
+    const client = this.savedClient(saved);
     return { prometheus: await this.callDataCatalog(() => client.capacityMetrics()) };
+  }
+
+  /**
+   * Projectを読める人に見せる内容。画面のURLとストレージ接続の名前だけで、access tokenの権限と
+   * 容量は含めない。
+   */
+  async reference(principal: Principal, projectId: string): Promise<DataCatalogReference> {
+    await requireProject(this.database, principal, { projectId, role: 'viewer', scope: 'read' });
+    const saved = await findDataCatalogConnection(this.database);
+    return { url: saved?.url ?? null, storageConnections: saved?.storageConnections ?? [] };
+  }
+
+  /**
+   * 人やSDKが登録するバージョンの、ストレージ接続の指定を確かめる。接続済みで`uri`が`s3://`なら
+   * 必須で、それ以外では指定できない。保存してよいID（指定が要らなければnull）を返す。
+   */
+  async resolveStorageConnectionId(registration: {
+    uri: string | null | undefined;
+    storageConnectionId: string | null | undefined;
+  }): Promise<string | null> {
+    const { storageConnectionId } = registration;
+    const isS3Uri = !!registration.uri && parseS3Uri(registration.uri) !== null;
+    // ほとんどの登録は`s3://`でも指定つきでもない。そのときは接続を読まずに済ませる。
+    if (!isS3Uri && !storageConnectionId) return null;
+    const saved = await findDataCatalogConnection(this.database);
+    if (!saved || !isS3Uri) {
+      if (storageConnectionId)
+        throw new DomainError({
+          status: 422,
+          code: 'data_catalog_storage_connection_not_applicable',
+          message: saved
+            ? 'dataCatalogStorageConnectionId applies only to an s3:// URI'
+            : 'dataCatalogStorageConnectionId cannot be set because this site is not connected to mado S3 Data Catalog',
+        });
+      return null;
+    }
+    if (!storageConnectionId)
+      throw new DomainError({
+        status: 422,
+        code: 'data_catalog_storage_connection_required',
+        message:
+          'dataCatalogStorageConnectionId is required for an s3:// URI; choose the storage connection that holds it (GET /api/projects/{projectId}/data-catalog lists them)',
+      });
+    const isKnown = (storageConnections: DataCatalogStorageConnection[]) =>
+      storageConnections.some((storageConnection) => storageConnection.id === storageConnectionId);
+    // 接続を確かめたあとにmado S3 Data Catalogで足されたストレージ接続かもしれない。知らないIDの
+    // ときだけ読み直す。
+    if (isKnown(saved.storageConnections) || isKnown(await this.reloadStorageConnections(saved)))
+      return storageConnectionId;
+    throw new DomainError({
+      status: 422,
+      code: 'data_catalog_storage_connection_unknown',
+      message:
+        'dataCatalogStorageConnectionId is not a storage connection the mado S3 Data Catalog access token allows (GET /api/projects/{projectId}/data-catalog lists them)',
+    });
+  }
+
+  // 読み直せなければ、覚えている一覧のままにする。登録の成否をmado S3 Data Catalogの稼働に
+  // 左右させない。
+  private async reloadStorageConnections(
+    saved: DataCatalogConnectionRow,
+  ): Promise<DataCatalogStorageConnection[]> {
+    try {
+      const storageConnections = await this.savedClient(saved).storageConnections();
+      await replaceDataCatalogStorageConnections(this.database, storageConnections);
+      return storageConnections;
+    } catch {
+      return saved.storageConnections;
+    }
+  }
+
+  private savedClient(saved: DataCatalogConnectionRow): DataCatalogClient {
+    return this.clientFactory({ url: saved.url, accessToken: this.decryptAccessToken(saved) });
   }
 
   private present(saved: DataCatalogConnectionRow | undefined): DataCatalogPlugin {
@@ -154,6 +230,7 @@ export class DataCatalogConnectionService {
         ? {
             url: saved.url,
             accessTokenGrant: saved.accessTokenGrant,
+            storageConnections: saved.storageConnections,
             checkedAt: saved.checkedAt,
           }
         : null,
@@ -213,6 +290,24 @@ export class DataCatalogConnectionService {
           code: 'data_catalog_access_token_unsupported',
           message:
             'no mado S3 Data Catalog API was found at this URL (/api/mado/access-token); check the URL',
+        });
+      throw error;
+    }
+  }
+
+  // ストレージ接続を読めない接続は保存しない。保存すると、`s3://`を登録できないサイトになる。
+  private async readStorageConnections(
+    client: DataCatalogClient,
+  ): Promise<DataCatalogStorageConnection[]> {
+    try {
+      return await this.callDataCatalog(() => client.storageConnections());
+    } catch (error) {
+      if (error instanceof DataCatalogApiError && error.status === 404)
+        throw new DomainError({
+          status: 502,
+          code: 'data_catalog_storage_connections_unsupported',
+          message:
+            'this mado S3 Data Catalog cannot list connections (/api/mado/connections); update it to v0.6.0 or later',
         });
       throw error;
     }

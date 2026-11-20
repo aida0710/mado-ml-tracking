@@ -32,6 +32,8 @@ export interface CreateModelVersion {
   parentModelVersionIds?: string[];
   sourceRunId?: string;
   weightsUri?: string;
+  /** mado S3 Data Catalogに接続済みで、weightsUriがs3://のときに要る。 */
+  dataCatalogStorageConnectionId?: string;
   artifactId?: string;
   defaultCodeVersionId?: string;
   metadata?: JsonObject;
@@ -64,6 +66,8 @@ export type CreateAutomationRule = Omit<
 export interface CreateDatasetVersion {
   version?: string;
   uri?: string;
+  /** mado S3 Data Catalogに接続済みで、uriがs3://のときに要る。 */
+  dataCatalogStorageConnectionId?: string;
   digest?: string;
   schema?: JsonObject;
   metadata?: JsonObject;

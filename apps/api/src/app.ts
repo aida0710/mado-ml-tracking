@@ -184,6 +184,7 @@ import { launcherAdminRoutes, launcherRuntimeRoutes } from './routes/launcherRou
 import { tokenRoutes } from './routes/tokenRoutes.js';
 import { serviceAccountRoutes } from './routes/serviceAccountRoutes.js';
 import { dataCatalogPluginRoutes } from './routes/dataCatalogPluginRoutes.js';
+import { dataCatalogStorageRoutes } from './routes/dataCatalogStorageRoutes.js';
 import { evaluationRoutes } from './routes/evaluationRoutes.js';
 import { modelEvaluationRoutes } from './routes/modelEvaluationRoutes.js';
 import { promotionRoutes } from './routes/promotionRoutes.js';
@@ -361,7 +362,12 @@ export function createApplication(options: ApplicationOptions) {
   const hooks = new HookService({ database, dispatcher: hookDispatcher, jobs, config, clock: options.clock });
   const childJobs = new ChildJobService({ database, runs, jobs, jobArrays });
   const automationSweeper = new AutomationPendingSweeper(database, automation);
-  const registry = new RegistryService(database, automation);
+  const dataCatalogConnection = new DataCatalogConnectionService({
+    database,
+    secretKey: config.pluginSecretKey,
+    clientFactory: options.dataCatalogClientFactory,
+  });
+  const registry = new RegistryService(database, automation, dataCatalogConnection);
   // 出力の登録は、元Runのハンドラが保留中の自動実行を解放するより前に動かす。
   terminalHandlers.push(new OutputRegistrationHandler(registry));
   terminalHandlers.push(new AutomationSourceRunHandler(automation));
@@ -391,11 +397,6 @@ export function createApplication(options: ApplicationOptions) {
   const siteJobMonitor = new SiteJobMonitor(database, runCompletion);
   const tokens = new TokenService({ database, tokenDefaultLifetimeDays: config.tokenDefaultLifetimeDays });
   const evaluation = new EvaluationService(database);
-  const dataCatalogConnection = new DataCatalogConnectionService({
-    database,
-    secretKey: config.pluginSecretKey,
-    clientFactory: options.dataCatalogClientFactory,
-  });
   const notificationSenders =
     options.notificationSenders ?? createNotificationSenders({ smtp: config.smtp });
   const notificationEnvironment = options.environment ?? process.env;
@@ -526,6 +527,7 @@ export function createApplication(options: ApplicationOptions) {
     ),
   );
   app.route('/api/projects', modelAutomationRoutes(automation));
+  app.route('/api/projects', dataCatalogStorageRoutes(dataCatalogConnection));
   app.route('/api/projects', datasetVersionParentRoutes(new DatasetVersionParentService(database)));
   app.route('/api/projects', lineageRelationRoutes(new LineageRelationService(database)));
   app.route('/api/projects', trainingDataStageRoutes(new TrainingDataStageService(database)));

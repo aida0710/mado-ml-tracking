@@ -1,5 +1,6 @@
-import type { Artifact, RunKind } from '@mmt/contracts';
+import type { Artifact, DataCatalogReference, RunKind } from '@mmt/contracts';
 import type { CreateModelVersion } from '../api/inputs';
+import { needsStorageConnection } from './dataCatalogStorage';
 import { parseJsonObject } from './formValues';
 import { text } from '../i18n/catalog';
 
@@ -15,6 +16,8 @@ export interface ModelVersionDraft {
   /** 重みを選ぶ欄の検索の文字列。何も選んでいなければ、フォームは保存を断る。 */
   weightsSearch: string;
   weightsUri: string;
+  /** weightsUriがあるmado S3 Data Catalogのストレージ接続。選んでいなければ空。 */
+  storageConnectionId: string;
   parentVersionIds: string[];
   defaultCodeVersionId: string;
   metadata: string;
@@ -26,6 +29,7 @@ export const EMPTY_MODEL_VERSION_DRAFT: ModelVersionDraft = {
   weightsArtifact: null,
   weightsSearch: '',
   weightsUri: '',
+  storageConnectionId: '',
   parentVersionIds: [],
   defaultCodeVersionId: '',
   metadata: '{}',
@@ -53,7 +57,10 @@ export function withSourceRun(draft: ModelVersionDraft, sourceRunId: string): Mo
  * Artifactを選ばずに残した重みの検索がそれに当たる（保存すると、利用者が探していた重みを黙って
  * 落としてしまう）。
  */
-export function buildModelVersionInput(draft: ModelVersionDraft): CreateModelVersion {
+export function buildModelVersionInput(
+  draft: ModelVersionDraft,
+  dataCatalog: DataCatalogReference,
+): CreateModelVersion {
   if (!draft.weightsArtifact && draft.weightsSearch.trim())
     throw new Error(text.weightsArtifactUnchosen);
   const version = draft.version.trim();
@@ -64,6 +71,10 @@ export function buildModelVersionInput(draft: ModelVersionDraft): CreateModelVer
     ...(draft.sourceRunId ? { sourceRunId: draft.sourceRunId } : {}),
     ...(draft.weightsArtifact ? { artifactId: draft.weightsArtifact.id } : {}),
     ...(weightsUri ? { weightsUri } : {}),
+    // URIをs3://でないものに変えたあとに残った選択は送らない。
+    ...(needsStorageConnection(dataCatalog, weightsUri)
+      ? { dataCatalogStorageConnectionId: draft.storageConnectionId }
+      : {}),
     ...(draft.defaultCodeVersionId ? { defaultCodeVersionId: draft.defaultCodeVersionId } : {}),
     metadata: parseJsonObject(draft.metadata),
   };

@@ -182,7 +182,7 @@ node apps/web/tests/browser-pipeline.mjs
 
 ## mado S3 Data Catalogへの接続のAPIを確認する
 
-mado S3 Data Catalogのcheckoutを指定すると、本体の処理→mado S3 Data Catalogの実際のroutes（`/api/mado/access-token`と`/api/mado/metrics/capacity`）の接続を確認できます。認証と容量の値はfixtureで、本番へは接続しません。`namespaces`を返すmado S3 Data Catalog v0.5.3までのcheckoutでも、返さないv0.6.0以降のcheckoutでも通ります。
+mado S3 Data Catalogのcheckoutを指定すると、本体の処理→mado S3 Data Catalogの実際のroutes（`/api/mado/access-token`、`/api/mado/connections`、`/api/mado/metrics/capacity`）の接続と、ストレージ接続を指定した`s3://`の登録を確認できます。認証・ストレージ接続・容量の値はfixtureで、本番へは接続しません。`/api/mado/connections`のあるmado S3 Data Catalog v0.6.0以降のcheckoutが要ります。
 
 ```bash
 MMT_TEST_DATABASE_URL=postgresql://mmt@127.0.0.1:55483/mmt_test \
@@ -617,7 +617,7 @@ node scripts/verify_data_catalog_browser.mjs
 
 APIは独立schemaを作り、終了時に削除します。fixtureのアクセストークンはgitignore済みの`var/data-catalog-verification.json`（mode 600）だけに保存し、終了時に削除します。結果と、アクセストークンの入力欄を含まない画像は`artifacts/data-catalog/<JSTの日付>/`に保存します。
 
-ブラウザは、Projectのサイドバーから全体設定のPluginsへ進めること、未接続で始まること、URLとアクセストークンで接続するとすぐ容量が出ること、接続の確認、日英と幅320px、接続の解除を確認します。
+ブラウザは、Projectのサイドバーから全体設定のPluginsへ進めること、未接続で始まること、URLとアクセストークンで接続するとすぐ容量が出ること、接続の確認、日英と幅320px、mado S3 Data Catalogの画面のURLを貼ってストレージ接続つきのデータセットのバージョンを登録できること、データセットとモデルのバージョンにmado S3 Data Catalogへのリンクが出ること、ストレージ接続の無い`s3://`をAPIが断ること、接続の解除を確認します。
 
 ## Lineageの画面操作を確認する
 

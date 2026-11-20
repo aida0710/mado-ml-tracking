@@ -128,6 +128,8 @@ export const modelVersionSchema = z.strictObject({
   parentModelVersionIds: uniqueIdsSchema.default([]),
   sourceRunId: uuidSchema.nullish(),
   weightsUri: z.string().min(1).max(4000).nullish(),
+  // mado S3 Data Catalogのストレージ接続のID。保存済みの接続の一覧と照合するのはサービス。
+  dataCatalogStorageConnectionId: z.string().min(1).max(512).nullish(),
   artifactId: uuidSchema.nullish(),
   defaultCodeVersionId: uuidSchema.nullish(),
   metadata: jsonObjectSchema.default({}),

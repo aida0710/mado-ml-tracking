@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { DataCatalogAccessTokenGrant } from '@mmt/contracts';
+import type { DataCatalogAccessTokenGrant, DataCatalogStorageConnection } from '@mmt/contracts';
 
 // 転送時間と応答のサイズの両方を制限する。応答しないmado S3 Data Catalogがリクエストを
 // いつまでも占有できないようにする。
@@ -20,6 +20,15 @@ const accessTokenGrantSchema: z.ZodType<DataCatalogAccessTokenGrant> = z.object(
   name: z.string().max(MAX_IDENTITY_LENGTH),
   scopes: z.array(identitySchema).max(MAX_TOKEN_SCOPE_COUNT),
   expiresAt: z.iso.datetime({ offset: true }).nullable(),
+});
+
+// 1つのmado S3 Data Catalogに登録するストレージ接続は数個。信頼できない応答の上限として置く。
+const MAX_STORAGE_CONNECTION_COUNT = 500;
+/** `GET /api/mado/connections`: tokenに許可されたストレージ接続。挙げたフィールドだけを保存する。 */
+const storageConnectionsSchema = z.object({
+  items: z
+    .array(z.object({ id: identitySchema, name: identitySchema, provider: identitySchema }))
+    .max(MAX_STORAGE_CONNECTION_COUNT),
 });
 
 /** statusは、mado S3 Data Catalogが返したもの。届かなければ503、応答を読めなければ502。 */
@@ -101,6 +110,14 @@ export function createDataCatalogClient({
       const body = await requestText(new URL('api/mado/access-token', base));
       try {
         return accessTokenGrantSchema.parse(JSON.parse(body));
+      } catch {
+        throw new DataCatalogApiError(502);
+      }
+    },
+    storageConnections: async (): Promise<DataCatalogStorageConnection[]> => {
+      const body = await requestText(new URL('api/mado/connections', base));
+      try {
+        return storageConnectionsSchema.parse(JSON.parse(body)).items;
       } catch {
         throw new DataCatalogApiError(502);
       }

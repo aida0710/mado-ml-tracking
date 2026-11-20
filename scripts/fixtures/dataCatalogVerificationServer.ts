@@ -20,38 +20,50 @@ async function listen(app: Hono) {
   };
 }
 
+/** fixtureのmado S3 Data Catalogが持つストレージ接続。 */
+export const DATA_CATALOG_VERIFICATION_STORAGE_CONNECTION = {
+  id: 'fixture',
+  name: 'fixture storage',
+  provider: 'onprem',
+};
+
 /** 容量の応答に入る、fixtureのバケットの大きさ。検証する側が応答の中身をこの値で確かめる。 */
 export const DATA_CATALOG_VERIFICATION_BUCKET_BYTES = '1048576';
 
 /**
- * 本物のmado S3 Data CatalogのHTTPの経路（アクセストークン自身の情報と容量メトリクス）に、
- * fixtureの認証と容量の値を付けたもの。本番のAPIやDBには接続しない。
+ * 本物のmado S3 Data CatalogのHTTPの経路（アクセストークン自身の情報、ストレージ接続の一覧、
+ * 容量メトリクス）に、fixtureの認証・ストレージ接続・容量の値を付けたもの。本番のAPIやDBには接続しない。
  */
 export async function startDataCatalogVerificationServer() {
   const dataCatalogRoot = process.env.MMT_VERIFY_DATA_CATALOG_ROOT ?? path.resolve('../mado');
   const { mountMetricsRoutes } = await import(
     pathToFileURL(path.join(dataCatalogRoot, 'api/routes/metrics.ts')).href
   );
+  const { mountServiceConnectionsRoutes } = await import(
+    pathToFileURL(path.join(dataCatalogRoot, 'api/routes/service-connections.ts')).href
+  );
   const { mountServiceAccessTokenRoutes } = await import(
     pathToFileURL(path.join(dataCatalogRoot, 'api/routes/service-access-token.ts')).href
   );
 
-  // 容量の読み取りを許したアクセストークン。
+  // ストレージ接続と容量の読み取りを許したアクセストークン。
   const accessToken = randomBytes(24).toString('hex');
   const principal = {
     serviceAccountId: randomUUID(),
     keyId: randomUUID(),
     keyName: 'ML Tracking verification',
     scopes: ['metrics:read'],
-    // 容量のメトリクスはtokenに載っている接続だけを読む。このtokenはすべての接続を持つ。
+    // 一覧と容量は、tokenに載っている接続だけを読む。このtokenはすべての接続を持つ。
     connections: ['*'],
-    // mado S3 Data Catalog v0.5.3までの経路は、これを応答に載せる。v0.6.0以降の経路は読まない。
-    namespaces: ['*'],
     expiresAt: null,
   };
   const authenticate = async (token: string) => (token === accessToken ? principal : null);
   const serviceRoutes = new Hono();
   mountServiceAccessTokenRoutes(serviceRoutes, { authenticate });
+  mountServiceConnectionsRoutes(serviceRoutes, {
+    authenticate,
+    connections: { list: async () => [DATA_CATALOG_VERIFICATION_STORAGE_CONNECTION] },
+  });
   mountMetricsRoutes(serviceRoutes, {
     authenticate,
     collectors: [
@@ -64,7 +76,10 @@ export async function startDataCatalogVerificationServer() {
             type: 'gauge',
             samples: [
               {
-                labels: { connection_id: 'fixture', bucket: 'corpus' },
+                labels: {
+                  connection_id: DATA_CATALOG_VERIFICATION_STORAGE_CONNECTION.id,
+                  bucket: 'corpus',
+                },
                 value: DATA_CATALOG_VERIFICATION_BUCKET_BYTES,
               },
             ],

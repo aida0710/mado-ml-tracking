@@ -3,6 +3,8 @@ import { useProject } from '../hooks/useProject';
 import { useExecutionCatalog } from '../hooks/useExecutionCatalog';
 import { registryApi } from '../api/registry';
 import { QueryDialog } from '../components/QueryDialog';
+import { DataCatalogUrlSuggestion } from '../components/DataCatalogUrlSuggestion';
+import { ErrorNotice } from '../components/Feedback';
 import { FormDialog } from '../components/FormDialog';
 import { DatasetFolderVersionDialog } from './DatasetFolderVersionDialog';
 import { buildCatalogOptions, withEmptyOption } from '../lib/catalogOptions';
@@ -13,7 +15,10 @@ import {
   getOptionalValue,
   getSelectedValues,
 } from '../lib/formValues';
+import { needsStorageConnection, storageConnectionLabel } from '../lib/dataCatalogStorage';
+import { useDataCatalogReference } from '../hooks/useDataCatalogReference';
 import { useLocale } from '../i18n/useLocale';
+import { pluginsText } from '../i18n/plugins';
 import { text } from '../i18n/catalog';
 
 /** 'reference'はuriとdigestを登録し、'folder'はフォルダをアップロードしてそのArtifactを並べる。 */
@@ -33,6 +38,8 @@ export function DatasetVersionDialog({
   useLocale();
   const { project } = useProject();
   const catalog = useExecutionCatalog(project.id);
+  const dataCatalogQuery = useDataCatalogReference(project.id);
+  const dataCatalog = dataCatalogQuery.reference;
   const title = `${dataset.name} · ${source === 'folder' ? text.datasetVersionFromFolder : text.newVersion}`;
   return (
     <QueryDialog title={title} onClose={onClose} query={catalog}>
@@ -60,6 +67,36 @@ export function DatasetVersionDialog({
                 required: true,
                 placeholder: text.datasetVersionUriPlaceholder,
                 hint: text.datasetVersionUriHint,
+                notice: (values, onChange) => (
+                  <>
+                    <ErrorNotice
+                      message={dataCatalogQuery.error}
+                      retry={dataCatalogQuery.reload}
+                    />
+                    <DataCatalogUrlSuggestion
+                      dataCatalog={dataCatalog}
+                      value={getFieldValue(values, 'uri')}
+                      onAccept={({ uri, storageConnectionId }) =>
+                        onChange({ ...values, uri, storageConnectionId })
+                      }
+                    />
+                  </>
+                ),
+              },
+              {
+                name: 'storageConnectionId',
+                label: pluginsText.storageConnection,
+                type: 'select',
+                required: true,
+                options: [
+                  { value: '', label: pluginsText.chooseStorageConnection },
+                  ...dataCatalog.storageConnections.map((storageConnection) => ({
+                    value: storageConnection.id,
+                    label: storageConnectionLabel(storageConnection),
+                  })),
+                ],
+                hint: pluginsText.storageConnectionHint,
+                visible: (values) => needsStorageConnection(dataCatalog, getFieldValue(values, 'uri')),
               },
               {
                 name: 'digest',
@@ -90,6 +127,10 @@ export function DatasetVersionDialog({
               registryApi.createDatasetVersion(project.id, dataset.id, {
                 version: getFieldValue(values, 'version'),
                 uri: getFieldValue(values, 'uri'),
+                // URIをs3://でないものに変えたあとに残った選択は送らない。
+                ...(needsStorageConnection(dataCatalog, getFieldValue(values, 'uri'))
+                  ? { dataCatalogStorageConnectionId: getFieldValue(values, 'storageConnectionId') }
+                  : {}),
                 digest: getFieldValue(values, 'digest'),
                 parentDatasetVersionIds: getSelectedValues(values, 'parents'),
                 sourceRunId: getOptionalValue(values, 'sourceRunId'),

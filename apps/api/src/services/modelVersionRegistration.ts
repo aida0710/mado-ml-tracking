@@ -28,6 +28,8 @@ export interface ModelVersionRegistration {
   parentVersionIds: string[];
   artifactId?: string | null;
   weightsUri?: string | null;
+  /** 確かめ済みの、mado S3 Data Catalogのストレージ接続のID。 */
+  dataCatalogStorageConnectionId?: string | null;
   defaultCodeVersionId?: string | null;
   metadata: JsonObject;
   actor: ModelVersionRegistrationActor;
@@ -87,8 +89,8 @@ export async function registerModelVersion(
     );
   const inserted = (await first<Omit<ModelVersion, 'family'>>(
     connection,
-    `INSERT INTO model_versions(model_id,project_id,version,source_run_id,parent_model_version_ids,weights_uri,artifact_id,default_code_version_id,metadata)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+    `INSERT INTO model_versions(model_id,project_id,version,source_run_id,parent_model_version_ids,weights_uri,artifact_id,default_code_version_id,metadata,data_catalog_storage_connection_id)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
     [
       model.id,
       projectId,
@@ -99,6 +101,7 @@ export async function registerModelVersion(
       registration.artifactId ?? null,
       registration.defaultCodeVersionId ?? null,
       JSON.stringify(registration.metadata),
+      registration.dataCatalogStorageConnectionId ?? null,
     ],
   ))!;
   await automation.processRegistration(connection, { projectId, modelVersionId: inserted.id });

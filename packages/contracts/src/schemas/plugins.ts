@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { DataCatalogPlugin, LineageGraph } from '../index.js';
+import type { DataCatalogPlugin, DataCatalogReference, LineageGraph } from '../index.js';
 import { timestampSchema } from './primitives.js';
 import { namedContractSchema } from './schemaRegistry.js';
 import type { Expect, MutuallyAssignable } from './typeAssertions.js';
@@ -12,11 +12,23 @@ export const dataCatalogAccessTokenGrantSchema = namedContractSchema(
     expiresAt: timestampSchema.nullable(),
   }),
 );
+export const dataCatalogStorageConnectionSchema = namedContractSchema(
+  'DataCatalogStorageConnection',
+  z.strictObject({ id: z.string(), name: z.string(), provider: z.string() }),
+);
+export const dataCatalogReferenceSchema = namedContractSchema(
+  'DataCatalogReference',
+  z.strictObject({
+    url: z.string().nullable(),
+    storageConnections: z.array(dataCatalogStorageConnectionSchema),
+  }),
+);
 export const dataCatalogConnectionSchema = namedContractSchema(
   'DataCatalogConnection',
   z.strictObject({
     url: z.string(),
     accessTokenGrant: dataCatalogAccessTokenGrantSchema,
+    storageConnections: z.array(dataCatalogStorageConnectionSchema),
     checkedAt: timestampSchema,
   }),
 );
@@ -49,5 +61,8 @@ export const lineageGraphSchema = namedContractSchema(
 
 type _DataCatalogPlugin = Expect<
   MutuallyAssignable<z.infer<typeof dataCatalogPluginSchema>, DataCatalogPlugin>
+>;
+type _DataCatalogReference = Expect<
+  MutuallyAssignable<z.infer<typeof dataCatalogReferenceSchema>, DataCatalogReference>
 >;
 type _LineageGraph = Expect<MutuallyAssignable<z.infer<typeof lineageGraphSchema>, LineageGraph>>;

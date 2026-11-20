@@ -10,9 +10,16 @@ export function createDataCatalogState() {
     secretStorageAvailable: true,
     /** フィクスチャのmado S3 Data Catalogが、アクセストークンについて返す内容。 */
     accessTokenGrant: { name: 'ML Tracking', scopes: ['metrics:read'], expiresAt: null },
+    /** フィクスチャのmado S3 Data Catalogが、アクセストークンに許可しているストレージ接続。 */
+    storageConnections: [
+      { id: 'onprem01', name: 'on-premises', provider: 'onprem' },
+      { id: 'aws01', name: 'AWS', provider: 'aws' },
+    ],
     /** 入っていれば、接続の確認をこの{status,code,error}で失敗させる。 */
     connectFailure: null,
     failCapacity: false,
+    /** trueなら、メンバー向けの画面のURLとストレージ接続の読み取りを失敗させる。 */
+    failReference: false,
     capacityGate: null,
   };
 }
@@ -51,6 +58,7 @@ export function routeDataCatalogPlugin({ state, request, reply, user, now }) {
   dataCatalog.connection = {
     url: body.url,
     accessTokenGrant: dataCatalog.accessTokenGrant,
+    storageConnections: dataCatalog.storageConnections,
     checkedAt: now(),
   };
   return reply(plugin());
@@ -69,4 +77,17 @@ async function replyCapacity({ state, reply }) {
   if (dataCatalog.failCapacity)
     return reply({ error: 'UI verification: capacity unavailable', code: 'data_catalog_request_failed' }, 502);
   return reply({ prometheus: state.prometheus });
+}
+
+const REFERENCE_PATH_PATTERN = /^\/projects\/[^/]+\/data-catalog$/;
+
+/** Projectのメンバーが読む、画面のURLとストレージ接続。この経路でなければundefinedを返す。 */
+export function routeDataCatalogReference({ state, request, reply }) {
+  if (!REFERENCE_PATH_PATTERN.test(request.path) || request.method !== 'GET') return undefined;
+  const { connection, failReference } = state.dataCatalog;
+  if (failReference) return reply({ error: 'UI verification: reference unavailable' }, 503);
+  return reply({
+    url: connection?.url ?? null,
+    storageConnections: connection?.storageConnections ?? [],
+  });
 }

@@ -12,6 +12,8 @@ import { formatDate } from '../lib/format';
 import { buildModelVersionLineage, LINEAGE_RESULT_RUN_LIMIT } from '../lib/modelVersionLineage';
 import { useLocale } from '../i18n/useLocale';
 import { text } from '../i18n/catalog';
+import { StorageUri } from './StorageUri';
+import { useDataCatalogReference } from '../hooks/useDataCatalogReference';
 import { lineageText } from '../i18n/lineage';
 import { lineageFocusPath } from '../lib/lineageFocus';
 
@@ -31,6 +33,7 @@ export function ModelVersionSummary({
 }) {
   useLocale();
   const { model, version, aliases } = detail;
+  const { reference: dataCatalog } = useDataCatalogReference(projectId);
   const sourceRunId = getModelTrainingSourceRunId(version);
   const base = `/projects/${projectId}`;
   const lineage = buildModelVersionLineage({
@@ -93,7 +96,11 @@ export function ModelVersionSummary({
             [
               text.weightsUri,
               version.weightsUri ? (
-                <span className="mono break-word">{version.weightsUri}</span>
+                <StorageUri
+                  uri={version.weightsUri}
+                  storageConnectionId={version.dataCatalogStorageConnectionId}
+                  dataCatalog={dataCatalog}
+                />
               ) : (
                 '—'
               ),

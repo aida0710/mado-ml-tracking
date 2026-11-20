@@ -7651,6 +7651,18 @@
                       }
                     ]
                   },
+                  "dataCatalogStorageConnectionId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "artifactId": {
                     "anyOf": [
                       {
@@ -7792,6 +7804,9 @@
             "x-mmt-error-codes": [
               "output_model_kind",
               "source_run_deleted",
+              "data_catalog_storage_connection_not_applicable",
+              "data_catalog_storage_connection_required",
+              "data_catalog_storage_connection_unknown",
               "invalid_request",
               "invalid_reference"
             ],
@@ -12238,6 +12253,18 @@
                     "minLength": 1,
                     "maxLength": 4000
                   },
+                  "dataCatalogStorageConnectionId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "digest": {
                     "type": "string",
                     "minLength": 1,
@@ -12472,6 +12499,9 @@
               "dataset_content_empty",
               "dataset_too_many_files",
               "dataset_source_run_mismatch",
+              "data_catalog_storage_connection_not_applicable",
+              "data_catalog_storage_connection_required",
+              "data_catalog_storage_connection_unknown",
               "invalid_request",
               "invalid_reference"
             ],
@@ -47495,6 +47525,127 @@
         }
       }
     },
+    "/api/projects/{p}/data-catalog": {
+      "get": {
+        "operationId": "getProjectsByPDataCatalog",
+        "tags": [
+          "registry"
+        ],
+        "summary": "mado S3 Data Catalogの画面のURLとストレージ接続（未接続ならurlはnull）",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": [
+              "read"
+            ]
+          }
+        ],
+        "x-mmt-access": {
+          "kind": "project",
+          "role": "viewer",
+          "scope": "read"
+        },
+        "x-mmt-job-token": "read",
+        "parameters": [
+          {
+            "name": "p",
+            "in": "path",
+            "required": true,
+            "description": "Project ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataCatalogReference"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証されていない",
+            "x-mmt-error-codes": [
+              "authentication_required",
+              "invalid_token",
+              "basic_auth_unsupported",
+              "identity_sync_required"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限がない",
+            "x-mmt-error-codes": [
+              "password_change_required",
+              "scope_required",
+              "project_forbidden"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "見つからない（他Projectのものを含む）",
+            "x-mmt-error-codes": [
+              "not_found",
+              "project_archived"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力が不正",
+            "x-mmt-error-codes": [
+              "invalid_request"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "一時的に処理できない",
+            "x-mmt-error-codes": [
+              "oidc_unavailable",
+              "internal_error"
+            ],
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/plugins/data-catalog": {
       "get": {
         "operationId": "getAdminPluginsDataCatalog",
@@ -47726,7 +47877,8 @@
             "description": "連携先から使える応答を得られない",
             "x-mmt-error-codes": [
               "data_catalog_access_token_unsupported",
-              "data_catalog_request_failed"
+              "data_catalog_request_failed",
+              "data_catalog_storage_connections_unsupported"
             ],
             "content": {
               "application/json": {
@@ -53541,6 +53693,10 @@
               "data_catalog_request_failed",
               "data_catalog_secret_decryption_failed",
               "data_catalog_secret_key_unavailable",
+              "data_catalog_storage_connection_not_applicable",
+              "data_catalog_storage_connection_required",
+              "data_catalog_storage_connection_unknown",
+              "data_catalog_storage_connections_unsupported",
               "invalid_repository",
               "unsafe_repository",
               "repository_commit_mismatch",
@@ -55962,6 +56118,12 @@
           "accessTokenGrant": {
             "$ref": "#/components/schemas/DataCatalogAccessTokenGrant"
           },
+          "storageConnections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataCatalogStorageConnection"
+            }
+          },
           "checkedAt": {
             "type": "string",
             "format": "date-time"
@@ -55970,6 +56132,7 @@
         "required": [
           "url",
           "accessTokenGrant",
+          "storageConnections",
           "checkedAt"
         ],
         "additionalProperties": false
@@ -55994,6 +56157,48 @@
         "required": [
           "connection",
           "secretStorageAvailable"
+        ],
+        "additionalProperties": false
+      },
+      "DataCatalogReference": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "storageConnections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataCatalogStorageConnection"
+            }
+          }
+        },
+        "required": [
+          "url",
+          "storageConnections"
+        ],
+        "additionalProperties": false
+      },
+      "DataCatalogStorageConnection": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "provider"
         ],
         "additionalProperties": false
       },
@@ -56166,6 +56371,12 @@
           "uri": {
             "type": "string"
           },
+          "dataCatalogStorageConnectionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "digest": {
             "type": "string"
           },
@@ -56247,6 +56458,7 @@
           "namespace",
           "version",
           "uri",
+          "dataCatalogStorageConnectionId",
           "digest",
           "schema",
           "metadata",
@@ -60146,6 +60358,12 @@
               "null"
             ]
           },
+          "dataCatalogStorageConnectionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "artifactId": {
             "anyOf": [
               {
@@ -60185,6 +60403,7 @@
           "sourceRunId",
           "parentModelVersionIds",
           "weightsUri",
+          "dataCatalogStorageConnectionId",
           "artifactId",
           "defaultCodeVersionId",
           "metadata",

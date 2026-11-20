@@ -41,6 +41,7 @@ import {
   modelVersionSelect,
 } from '../repositories/registryRepository.js';
 import { requireProject } from './accessService.js';
+import type { DataCatalogConnectionService } from './dataCatalogConnectionService.js';
 import { resolveDatasetContent } from './datasetContentService.js';
 import { registerDatasetVersion } from './datasetVersionRegistration.js';
 import type { ModelAutomationService } from './modelAutomationService.js';
@@ -66,6 +67,7 @@ export class RegistryService {
   constructor(
     private readonly database: Database,
     private readonly automation: ModelAutomationService,
+    private readonly dataCatalog: Pick<DataCatalogConnectionService, 'resolveStorageConnectionId'>,
   ) {}
 
   async models(
@@ -175,6 +177,12 @@ export class RegistryService {
     registration: { modelId: string; input: ModelVersionCreate },
   ): Promise<ModelVersion> {
     const { input } = registration;
+    // 権限の無い呼び出し元には、ストレージ接続の指定の誤りより先に403を返す。
+    await this.requireWriteAccess(this.database, principal, projectId);
+    const dataCatalogStorageConnectionId = await this.dataCatalog.resolveStorageConnectionId({
+      uri: input.weightsUri,
+      storageConnectionId: input.dataCatalogStorageConnectionId,
+    });
     return transaction(this.database, (connection) =>
       this.registerModelVersion(connection, {
         projectId,
@@ -184,6 +192,7 @@ export class RegistryService {
         parentVersionIds: input.parentModelVersionIds,
         artifactId: input.artifactId,
         weightsUri: input.weightsUri,
+        dataCatalogStorageConnectionId,
         defaultCodeVersionId: input.defaultCodeVersionId,
         metadata: input.metadata,
         actor: { type: 'principal', principal },
@@ -478,9 +487,17 @@ export class RegistryService {
     projectId: string,
     registration: { datasetId: string; input: DatasetVersionRequest },
   ): Promise<DatasetVersion> {
+    const { input } = registration;
+    // 権限の無い呼び出し元には、ストレージ接続の指定の誤りより先に403を返す。知らないIDのときは
+    // mado S3 Data Catalogへ読み直すので、トランザクションを開く前に確かめる。
+    await this.requireWriteAccess(this.database, principal, projectId);
+    const dataCatalogStorageConnectionId = await this.dataCatalog.resolveStorageConnectionId({
+      // Artifactを中身にするバージョンのuriはサーバーが決め、`s3://`にはならない。
+      uri: input.content ? null : input.uri,
+      storageConnectionId: input.dataCatalogStorageConnectionId,
+    });
     return transaction(this.database, async (connection) => {
       await this.requireWriteAccess(connection, principal, projectId);
-      const { input } = registration;
       const common = {
         projectId,
         datasetId: registration.datasetId,
@@ -497,6 +514,7 @@ export class RegistryService {
           ...common,
           uri: input.uri!,
           digest: input.digest!,
+          dataCatalogStorageConnectionId,
           sourceRunId: input.sourceRunId,
         });
       }

@@ -275,9 +275,31 @@ MLflowの`log_image(key=, step=)`と`log_table`で記録したものも、同じ
 - Sweepの作成・一覧・最良試行・pause/resume/cancel: `SweepsClient(Client())`。configはW&B形式（変換規則は`docs/sweeps.md`の「W&B 形式の config の変換規則」）。
 - 例: `examples/sweep_training.py`（`--offline`でAPIなしに試せる）。
 
+### S3の場所をストレージ接続つきで登録する
+
+サイトがmado S3 Data Catalogに接続済みなら、`s3://`のURIを登録するときに、その場所があるストレージ接続（mado S3 Data Catalogの接続）のIDが要る。無いとAPIが422 `data_catalog_storage_connection_required`で断る。IDは`data_catalog`で引く。未接続のサイトでは渡さない。
+
+```python
+from mado_tracking import Client
+
+with Client() as client:
+    catalog = client.data_catalog(project_id)  # {"url": ..., "storageConnections": [{"id", "name", "provider"}]}
+    storage = next(c for c in catalog["storageConnections"] if c["name"] == "on-premises")
+    client.register_dataset(
+        project_id,
+        name="speech",
+        version="v1",
+        uri="s3://corpus/ja/",
+        digest="sha256:...",
+        data_catalog_storage_connection_id=storage["id"],
+    )
+```
+
+`register_model`も、`weights_uri`が`s3://`なら同じ引数を取る。IDは画面のリンク（mado S3 Data Catalogで開く）の行き先を決めるだけで、実行先がどのS3から読むかは変えない。
+
 ### ディレクトリからデータセットバージョンを作る
 
-`register_dataset(..., files="data/speech")`はディレクトリの中身をArtifactsとして送り、APIがuriとdigestを決める。`files`を使うときは`uri`、`digest`、`source_run_id`、`parent_dataset_version_ids`を指定しない。既存のDatasetへバージョンを足すだけなら、同じ処理を`upload_dataset_directory`で直接呼べる。
+`register_dataset(..., files="data/speech")`はディレクトリの中身をArtifactsとして送り、APIがuriとdigestを決める。`files`を使うときは`uri`、`digest`、`data_catalog_storage_connection_id`、`source_run_id`、`parent_dataset_version_ids`を指定しない。既存のDatasetへバージョンを足すだけなら、同じ処理を`upload_dataset_directory`で直接呼べる。
 
 ```python
 from mado_tracking import Client

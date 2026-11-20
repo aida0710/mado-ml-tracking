@@ -158,6 +158,7 @@ export const executionCatalog: ExecutionCatalog = {
   datasetVersions: [
     {
       id: 'dataset-v1',
+      dataCatalogStorageConnectionId: null,
       datasetId: 'dataset',
       projectId: 'project',
       name: 'samples',

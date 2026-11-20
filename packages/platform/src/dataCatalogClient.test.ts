@@ -40,6 +40,30 @@ describe('mado S3 Data CatalogとのHTTP通信と応答の検証', () => {
     expect(requests.every(({ init }) => init!.redirect === 'error' && init!.signal instanceof AbortSignal)).toBe(true);
   });
 
+  it('ストレージ接続は画面のURLの下の/api/mado/connectionsから読み、ID・名前・種類だけを残す', async () => {
+    const requested: URL[] = [];
+    const client = createDataCatalogClient({
+      ...CONNECTION,
+      fetcher: async (input) => {
+        requested.push(new URL(String(input)));
+        return Response.json({
+          items: [{ id: 'onprem01', name: 'on-premises', provider: 'onprem', endpoint: 'https://s3.example.test' }],
+        });
+      },
+    });
+    expect(await client.storageConnections()).toEqual([
+      { id: 'onprem01', name: 'on-premises', provider: 'onprem' },
+    ]);
+    expect(requested.map((url) => url.pathname)).toEqual(['/catalog-prefix/api/mado/connections']);
+  });
+
+  it('ストレージ接続の応答が決まった形でなければ502にする', async () => {
+    const client = createDataCatalogClient({
+      ...CONNECTION, fetcher: async () => Response.json({ items: [{ id: 'onprem01' }] }),
+    });
+    await expect(client.storageConnections()).rejects.toMatchObject({ status: 502 });
+  });
+
   it('トークンの許可範囲は名前・scope・有効期限だけを残し、IDは残さない', async () => {
     const client = createDataCatalogClient({
       ...CONNECTION, fetcher: async () => Response.json(ACCESS_TOKEN_RESPONSE),

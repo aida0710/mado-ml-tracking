@@ -472,6 +472,36 @@ def test_dataset_with_files_creates_the_dataset_and_delegates_the_directory_uplo
     assert delegated == [(PROJECT, "dataset-1", tmp_path, "v1", {"lang": "ja"}, None)]
 
 
+def test_dataset_and_model_send_the_storage_connection_only_when_given():
+    client, requests = recording_client(lambda _request: httpx.Response(201, json={"id": "version"}))
+    with client:
+        client.register_dataset(
+            PROJECT, dataset_id="d", version="v1", uri="s3://corpus/ja/", digest="sha256:0",
+            data_catalog_storage_connection_id="onprem01",
+        )
+        client.register_dataset(PROJECT, dataset_id="d", version="v2", uri="file:///data", digest="sha256:0")
+        client.register_model(
+            PROJECT, model_id="m", weights_uri="s3://models/v1.bin",
+            data_catalog_storage_connection_id="onprem01",
+        )
+        client.register_model(PROJECT, model_id="m")
+    bodies = [body for _method, _path, _params, body in requests]
+    assert [body.get("dataCatalogStorageConnectionId") for body in bodies] == [
+        "onprem01", None, "onprem01", None,
+    ]
+    # 指定しないときは項目ごと送らず、この項目を知らない版のAPIにも登録できる。
+    assert "dataCatalogStorageConnectionId" not in bodies[1]
+    assert "dataCatalogStorageConnectionId" not in bodies[3]
+
+
+def test_data_catalog_reads_the_storage_connections_of_the_project():
+    reference = {"url": "https://catalog.example.test", "storageConnections": []}
+    client, requests = recording_client(lambda _request: httpx.Response(200, json=reference))
+    with client:
+        assert client.data_catalog(PROJECT) == reference
+    assert requests == [("GET", f"{PROJECT_PATH}/data-catalog", {}, None)]
+
+
 def test_dataset_files_cannot_be_combined_with_a_reference_uri(tmp_path):
     client, requests = recording_client()
     with client:

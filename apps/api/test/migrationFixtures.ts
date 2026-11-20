@@ -38,13 +38,17 @@ export async function applyMigrationsBefore(
 }
 
 // 今のアプリケーションが書く行の形を決める migration。071 は監査ログの `failure` と `ip_address`、
-// 072 は token の前置き mado_mt_ と、一覧に残す先頭の長さ。
-const ROW_SHAPE_MIGRATIONS = ['071_audit_failure_and_ip_address.sql', '072_token_prefix.sql'];
+// 072 は token の前置き mado_mt_ と、一覧に残す先頭の長さ、076 はバージョンのストレージ接続の列。
+const ROW_SHAPE_MIGRATIONS = [
+  '071_audit_failure_and_ip_address.sql',
+  '072_token_prefix.sql',
+  '076_version_storage_connection.sql',
+];
 
 /**
- * 071 と 072 を、それより前の未適用の migration より先に当てる。068〜070 のテストは行を今の
- * アプリケーションで作り、アプリケーションは監査ログを 071 の形で、token を 072 の形で書くため。
- * 068〜070 は 071・072 が変えるものを読まない。migrate() は当てた分を飛ばす。
+ * 071・072・076 を、それより前の未適用の migration より先に当てる。068〜070 のテストは行を今の
+ * アプリケーションで作り、アプリケーションは監査ログを 071 の形で、token を 072 の形で、
+ * バージョンを 076 の形で書くため。068〜070 は 071・072・076 が変えるものを読まない。migrate() は当てた分を飛ばす。
  */
 export async function applyRowShapeMigrationsAhead(database: pg.Pool): Promise<void> {
   for (const name of ROW_SHAPE_MIGRATIONS) await applyMigrationFile(database, name);

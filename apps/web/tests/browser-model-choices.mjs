@@ -138,6 +138,7 @@ function createChoicesApi() {
         family: parent.family,
         sourceRunId: null,
         weightsUri: null,
+        dataCatalogStorageConnectionId: null,
         artifactId: null,
         defaultCodeVersionId: null,
         parentModelVersionIds: [],

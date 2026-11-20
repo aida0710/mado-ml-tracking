@@ -92,6 +92,7 @@ try {
   await dataCatalogSection().getByText('接続済み', { exact: true }).waitFor();
   await dataCatalogSection().getByRole('link', { name: DATA_CATALOG_URL, exact: true }).waitFor();
   await page.getByText('Capacityの読み取り', { exact: true }).waitFor();
+  await page.getByText('on-premises (onprem)、AWS (aws)', { exact: true }).waitFor();
   await page.getByText('無期限', { exact: true }).waitFor();
   // 保存と同時に確かめてあるので、もう一度確認しなくても容量が出る。
   await capacity().getByRole('heading', { name: 'UI検証ストレージ', exact: true }).waitFor();
@@ -182,6 +183,113 @@ try {
   assert.equal(await page.getByRole('button', { name: 'mado S3 Data Catalogに接続', exact: true }).isDisabled(), true);
   await screenshot('plugins-secret-storage-missing-ja');
   dataCatalog.secretStorageAvailable = true;
+
+  console.log('Storage links: a version with a storage connection opens in mado S3 Data Catalog');
+  dataCatalog.connection = {
+    url: DATA_CATALOG_URL,
+    accessTokenGrant: dataCatalog.accessTokenGrant,
+    storageConnections: dataCatalog.storageConnections,
+    checkedAt: new Date().toISOString(),
+  };
+  const [datasetVersion] = api.state.datasetVersions;
+  datasetVersion.uri = 's3://corpus/ja/train 1/';
+  datasetVersion.dataCatalogStorageConnectionId = 'onprem01';
+  await page.goto(`${base}/projects/${projectId}/datasets`);
+  const openInDataCatalog = page.getByRole('link', { name: 'mado S3 Data Catalogで開く', exact: true });
+  await page.getByText('s3://corpus/ja/train 1/', { exact: true }).first().waitFor();
+  await openInDataCatalog.first().waitFor();
+  assert.equal(
+    await openInDataCatalog.first().getAttribute('href'),
+    `${DATA_CATALOG_URL}/storage/onprem01/corpus/ja/train%201/`,
+  );
+  assert.equal(await openInDataCatalog.first().getAttribute('target'), '_blank');
+  await screenshot('dataset-storage-link-ja');
+
+  console.log('Storage links: versions without a storage connection, or with one that is gone, stay plain text');
+  for (const storageConnectionId of [null, 'removed01']) {
+    datasetVersion.dataCatalogStorageConnectionId = storageConnectionId;
+    await page.reload();
+    await page.getByText('s3://corpus/ja/train 1/', { exact: true }).first().waitFor();
+    // リンクは接続の一覧を読んでから出る。読み終えても出ないことを確かめる。
+    await page.waitForLoadState('networkidle');
+    assert.equal(await openInDataCatalog.count(), 0);
+  }
+
+  console.log('Registration: an s3:// URI requires choosing a storage connection');
+  await page.getByRole('button', { name: 'バージョンを作成', exact: true }).click();
+  const uriField = dialog().getByLabel('URI', { exact: false }).first();
+  const storageConnectionField = dialog().getByLabel('ストレージ接続', { exact: false });
+  await uriField.fill('file:///data/corpus');
+  assert.equal(await storageConnectionField.count(), 0, 'Other schemes do not ask for a storage connection');
+  await uriField.fill('s3://corpus/ja/');
+  await storageConnectionField.waitFor();
+  assert.equal(await storageConnectionField.evaluate((select) => select.required), true);
+  assert.deepEqual(await storageConnectionField.locator('option').allTextContents(),
+    ['選んでください', 'on-premises (onprem)', 'AWS (aws)']);
+  await screenshot('dataset-storage-connection-ja');
+
+  console.log('Registration: a pasted mado S3 Data Catalog page URL fills the S3 URI and the storage connection');
+  const pastedUrl = `${DATA_CATALOG_URL}/storage/aws01/corpus/ja/?preview=ja%2Fa%20b.wav`;
+  await uriField.fill(pastedUrl);
+  const suggestion = dialog().getByRole('status').filter({ hasText: 'mado S3 Data Catalogの画面のURLです' });
+  await suggestion.waitFor();
+  assert.equal(await uriField.inputValue(), pastedUrl, 'The URL is not rewritten silently');
+  await screenshot('dataset-url-suggestion-ja');
+  await suggestion.getByRole('button', { name: 'S3のURIに直す', exact: true }).click();
+  assert.equal(await uriField.inputValue(), 's3://corpus/ja/a b.wav');
+  assert.equal(await storageConnectionField.inputValue(), 'aws01');
+  assert.equal(await suggestion.count(), 0);
+  await dialog().getByLabel('バージョン', { exact: false }).first().fill('v2');
+  await dialog().getByLabel('Digest', { exact: false }).fill(`sha256:${'0'.repeat(64)}`);
+  await dialog().getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  const created = api.state.calls.filter((call) => call.method === 'POST' && call.path.endsWith('/versions')).at(-1);
+  assert.equal(created.body.uri, 's3://corpus/ja/a b.wav');
+  assert.equal(created.body.dataCatalogStorageConnectionId, 'aws01');
+
+  console.log('Registration: a model version with s3:// weights also requires a storage connection');
+  await page.goto(`${base}/projects/${projectId}/models`);
+  await page.getByRole('button', { name: 'バージョンを作成', exact: true }).click();
+  await dialog().getByLabel('バージョン', { exact: false }).first().fill('v2');
+  const weightsUriField = dialog().getByLabel('重みのURI', { exact: false });
+  const weightsStorageConnection = dialog().getByLabel('ストレージ接続', { exact: false });
+  await weightsUriField.fill('s3://models/v2.bin');
+  await weightsStorageConnection.waitFor();
+  const modelVersionCalls = () =>
+    api.state.calls.filter((call) => call.method === 'POST' && /\/models\/[^/]+\/versions$/.test(call.path));
+  const callsBeforeSave = modelVersionCalls().length;
+  await dialog().getByRole('button', { name: '保存', exact: true }).click();
+  assert.equal(await weightsStorageConnection.evaluate((select) => select.validity.valueMissing), true);
+  assert.equal(modelVersionCalls().length, callsBeforeSave, 'Nothing is sent until a storage connection is chosen');
+  // 一覧に無いストレージ接続のURLを貼ったときは、URIだけを入れて選び直してもらう。
+  await weightsUriField.fill(`${DATA_CATALOG_URL}/storage/removed01/models/v2.bin`);
+  await dialog().getByRole('button', { name: 'S3のURIに直す', exact: true }).click();
+  assert.equal(await weightsUriField.inputValue(), 's3://models/v2.bin');
+  assert.equal(await weightsStorageConnection.inputValue(), '');
+  await weightsUriField.fill(`${DATA_CATALOG_URL}/storage/onprem01/models/?preview=v2.bin`);
+  await dialog().getByRole('button', { name: 'S3のURIに直す', exact: true }).click();
+  assert.equal(await weightsStorageConnection.inputValue(), 'onprem01');
+  await screenshot('model-storage-connection-ja');
+  await dialog().getByRole('button', { name: '保存', exact: true }).click();
+  await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  assert.deepEqual(
+    (({ weightsUri, dataCatalogStorageConnectionId }) => ({ weightsUri, dataCatalogStorageConnectionId }))(
+      modelVersionCalls().at(-1).body,
+    ),
+    { weightsUri: 's3://models/v2.bin', dataCatalogStorageConnectionId: 'onprem01' },
+  );
+
+  console.log('Registration: when the storage connections cannot be read, the form says so and can retry');
+  dataCatalog.failReference = true;
+  await page.goto(`${base}/projects/${projectId}/datasets`);
+  await page.getByRole('button', { name: 'バージョンを作成', exact: true }).click();
+  await dialog().getByRole('button', { name: '再試行', exact: true }).waitFor();
+  dataCatalog.failReference = false;
+  await dialog().getByRole('button', { name: '再試行', exact: true }).click();
+  await dialog().getByLabel('URI', { exact: false }).first().fill('s3://corpus/ja/');
+  await dialog().getByLabel('ストレージ接続', { exact: false }).waitFor();
+  await dialog().getByRole('button', { name: 'キャンセル', exact: true }).click();
+  dataCatalog.connection = null;
 
   console.log('Plugins: only global administrators reach the screen');
   api.state.user.isAdmin = false;

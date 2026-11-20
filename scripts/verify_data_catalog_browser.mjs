@@ -106,6 +106,72 @@ try {
   await capture('real-mobile-ja');
   await page.setViewportSize({ width: 1440, height: 960 });
 
+  // 本物のAPIの応答（バージョンのストレージ接続）を、画面の契約の検査を通して読む。
+  await page.getByText('fixture storage (onprem)', { exact: true }).waitFor();
+  const projectPath = `/projects/${settings.projectId}`;
+  const { storageConnections } = await api(`${projectPath}/data-catalog`);
+  assert.deepEqual(storageConnections.map((storageConnection) => storageConnection.name), [
+    'fixture storage',
+  ]);
+  const storageConnectionId = storageConnections[0].id;
+  const dataset = await api(`${projectPath}/datasets`, {
+    method: 'POST',
+    body: { name: 'corpus' },
+    status: 201,
+  });
+  await page.goto(`${base}${projectPath}/datasets`);
+  await page.getByRole('button', { name: 'バージョンを作成', exact: true }).click();
+  await dialog.getByLabel('バージョン', { exact: false }).first().fill('v1');
+  // mado S3 Data Catalogの「Web URLをコピー」の形を貼り、URIとストレージ接続に直す。
+  await dialog
+    .getByLabel('URI', { exact: false })
+    .first()
+    .fill(`${settings.dataCatalogUrl}/storage/${storageConnectionId}/corpus/ja/train/`);
+  await dialog.getByRole('button', { name: 'S3のURIに直す', exact: true }).click();
+  assert.equal(await dialog.getByLabel('ストレージ接続', { exact: false }).inputValue(), storageConnectionId);
+  await dialog.getByLabel('Digest', { exact: false }).fill(`sha256:${'0'.repeat(64)}`);
+  await capture('real-dataset-version-dialog-ja');
+  await dialog.getByRole('button', { name: '保存', exact: true }).click();
+  await dialog.waitFor({ state: 'hidden' });
+  const expectedLink = `${settings.dataCatalogUrl}/storage/${storageConnectionId}/corpus/ja/train/`;
+  const openInDataCatalog = page.getByRole('link', { name: 'mado S3 Data Catalogで開く', exact: true });
+  await openInDataCatalog.first().waitFor();
+  assert.equal(await openInDataCatalog.first().getAttribute('href'), expectedLink);
+  await capture('real-dataset-storage-link-ja');
+  const [datasetVersion] = (await api(`${projectPath}/datasets/${dataset.id}/versions`)).items;
+  assert.equal(datasetVersion.dataCatalogStorageConnectionId, storageConnectionId);
+  // ストレージ接続の無いs3://は、APIが断る。
+  const refused = await page.request.fetch(`${base}/api${projectPath}/datasets/${dataset.id}/versions`, {
+    method: 'POST',
+    data: { version: 'v2', uri: 's3://corpus/ja/', digest: `sha256:${'0'.repeat(64)}` },
+  });
+  assert.equal(refused.status(), 422);
+  assert.equal((await refused.json()).code, 'data_catalog_storage_connection_required');
+
+  // モデルの重みのURIも同じ。登録はAPIで行い、画面が本物の応答を読めることを確かめる。
+  const model = await api(`${projectPath}/models`, {
+    method: 'POST',
+    body: { name: 'speech', family: 'qwen2' },
+    status: 201,
+  });
+  await api(`${projectPath}/models/${model.id}/versions`, {
+    method: 'POST',
+    body: {
+      version: 'v1',
+      weightsUri: 's3://models/v1.bin',
+      dataCatalogStorageConnectionId: storageConnectionId,
+    },
+    status: 201,
+  });
+  await page.goto(`${base}${projectPath}/models`);
+  await openInDataCatalog.first().waitFor();
+  assert.equal(
+    await openInDataCatalog.first().getAttribute('href'),
+    `${settings.dataCatalogUrl}/storage/${storageConnectionId}/models/v1.bin`,
+  );
+  await capture('real-model-storage-link-ja');
+
+  await page.goto(`${base}/settings/plugins`);
   await page.getByRole('button', { name: '接続を解除', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: '接続を解除', exact: true }).click();
   await dataCatalogSection.getByText('未接続', { exact: true }).waitFor();
@@ -120,6 +186,8 @@ try {
       'the stored access token never returns to the browser',
       'checking again keeps the capacity',
       'Japanese, English and 320px layout',
+      'a pasted mado S3 Data Catalog URL registers a dataset version with its storage connection, read back through the real API',
+      'dataset and model versions link to their mado S3 Data Catalog page; s3:// without a storage connection is refused',
       'disconnecting removes the connection and stops capacity reads',
     ],
     dataCatalog:

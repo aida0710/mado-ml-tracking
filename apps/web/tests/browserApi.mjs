@@ -1,6 +1,10 @@
 // ブラウザテスト用の分離したAPI。このモジュールを本番のコードがimportすることはない。
 import { createHash } from 'node:crypto';
-import { createDataCatalogState, routeDataCatalogPlugin } from './dataCatalogPluginMock.mjs';
+import {
+  createDataCatalogState,
+  routeDataCatalogPlugin,
+  routeDataCatalogReference,
+} from './dataCatalogPluginMock.mjs';
 import { listProjectArtifacts, listRunArtifacts, runArtifactTree } from './artifactListingMock.mjs';
 import { createProjectAdministration } from './projectAdministrationMock.mjs';
 import { createComputerSetup } from './computerSetupMock.mjs';
@@ -146,6 +150,7 @@ export function createBrowserApi() {
     sourceRunId: null,
     parentModelVersionIds: [],
     weightsUri: 'file:///test/weights',
+    dataCatalogStorageConnectionId: null,
     artifactId: null,
     defaultCodeVersionId: codeVersion.id,
     metadata: {},
@@ -159,6 +164,7 @@ export function createBrowserApi() {
     namespace: dataset.namespace,
     version: 'v1',
     uri: 'file:///test/data',
+    dataCatalogStorageConnectionId: null,
     digest: 'test-digest',
     schema: {},
     metadata: {},
@@ -417,6 +423,8 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
       now: () => new Date().toISOString(),
     });
     if (dataCatalogAnswer) return dataCatalogAnswer;
+    const dataCatalogReferenceAnswer = routeDataCatalogReference({ state, request: { path, method }, reply });
+    if (dataCatalogReferenceAnswer) return dataCatalogReferenceAnswer;
     if (path === '/storage/backends')
       return reply({ items: ['filesystem', 's3'], defaultBackend: 'filesystem' });
     const projectAnswer = projectAdministration.handle({
@@ -753,6 +761,7 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
             sourceRunId: null,
             parentModelVersionIds: [],
             weightsUri: null,
+            dataCatalogStorageConnectionId: null,
             artifactId: null,
             defaultCodeVersionId: null,
             metadata: {},
@@ -762,6 +771,7 @@ mado_storage_capacity_collection_failures{connection_id="ui-c1",bucket="unmeasur
             name: parent.name,
             namespace: parent.namespace,
             uri: '',
+            dataCatalogStorageConnectionId: null,
             digest: '',
             schema: {},
             metadata: {},

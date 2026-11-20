@@ -5,11 +5,12 @@
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { DataCatalogPlugin } from '@mmt/contracts';
+import type { DataCatalogPlugin, DataCatalogReference, DatasetVersion } from '@mmt/contracts';
 import { createApplication } from '../apps/api/src/app.js';
 import { createHarness, entity, login, request } from '../apps/api/test/harness.js';
 import {
   DATA_CATALOG_VERIFICATION_BUCKET_BYTES,
+  DATA_CATALOG_VERIFICATION_STORAGE_CONNECTION,
   startDataCatalogVerificationServer,
 } from './fixtures/dataCatalogVerificationServer.js';
 
@@ -73,6 +74,55 @@ try {
   );
   assert.deepEqual(rechecked.connection?.accessTokenGrant, connected.connection?.accessTokenGrant);
 
+  // 実物の経路から読んだストレージ接続を、Projectのメンバーに見せ、登録で照合する。
+  assert.deepEqual(connected.connection?.storageConnections, [
+    DATA_CATALOG_VERIFICATION_STORAGE_CONNECTION,
+  ]);
+  const project = await entity<{ id: string }>(
+    await request(host.app, '/api/projects', {
+      method: 'POST',
+      cookie: administrator.cookie,
+      body: { name: 'data-catalog-verification', visibility: 'private' },
+    }),
+  );
+  const reference = await entity<DataCatalogReference>(
+    await request(host.app, `/api/projects/${project.id}/data-catalog`, {
+      cookie: administrator.cookie,
+    }),
+    200,
+  );
+  assert.deepEqual(reference, {
+    url: dataCatalogServer.url,
+    storageConnections: [DATA_CATALOG_VERIFICATION_STORAGE_CONNECTION],
+  });
+  const dataset = await entity<{ id: string }>(
+    await request(host.app, `/api/projects/${project.id}/datasets`, {
+      method: 'POST',
+      cookie: administrator.cookie,
+      body: { name: 'corpus' },
+    }),
+  );
+  const registerVersion = (dataCatalogStorageConnectionId?: string) =>
+    request(host.app, `/api/projects/${project.id}/datasets/${dataset.id}/versions`, {
+      method: 'POST',
+      cookie: administrator.cookie,
+      body: {
+        version: dataCatalogStorageConnectionId ?? 'none',
+        uri: 's3://corpus/ja/train/',
+        digest: `sha256:${'0'.repeat(64)}`,
+        ...(dataCatalogStorageConnectionId ? { dataCatalogStorageConnectionId } : {}),
+      },
+    });
+  assert.equal((await registerVersion()).status, 422);
+  assert.equal((await registerVersion('unknown')).status, 422);
+  const registered = await entity<DatasetVersion>(
+    await registerVersion(DATA_CATALOG_VERIFICATION_STORAGE_CONNECTION.id),
+  );
+  assert.equal(
+    registered.dataCatalogStorageConnectionId,
+    DATA_CATALOG_VERIFICATION_STORAGE_CONNECTION.id,
+  );
+
   const summary = {
     checks: [
       'a token unknown to mado S3 Data Catalog is rejected without being saved or leaked',
@@ -80,6 +130,8 @@ try {
       'token ID returned by mado S3 Data Catalog is not stored',
       'capacity read through the built-in client and host API right after connecting',
       'the stored token checks the connection again',
+      'storage connections read from /api/mado/connections are shown to project members',
+      'an s3:// URI is registered only with a storage connection that mado S3 Data Catalog lists',
     ],
     dataCatalog:
       'real mado S3 Data Catalog routes with fixture authentication and capacity; production was not contacted',

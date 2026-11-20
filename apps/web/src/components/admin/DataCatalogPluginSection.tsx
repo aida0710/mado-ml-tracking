@@ -8,7 +8,9 @@ import {
   formatAccessTokenExpiry,
   formatAccessTokenPermissions,
 } from '../../lib/dataCatalogAccessTokenGrantText';
+import { storageConnectionLabel } from '../../lib/dataCatalogStorage';
 import { formatDate } from '../../lib/format';
+import { formatList } from '../../i18n/textJoining';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { ErrorNotice } from '../Feedback';
 import { DetailsList } from '../JsonDetails';
@@ -83,6 +85,12 @@ export function DataCatalogPluginSection({
               [
                 pluginsText.accessTokenExpiresAt,
                 formatAccessTokenExpiry(connection.accessTokenGrant),
+              ],
+              [
+                pluginsText.storageConnections,
+                connection.storageConnections.length
+                  ? formatList(connection.storageConnections.map(storageConnectionLabel))
+                  : pluginsText.noStorageConnections,
               ],
               [pluginsText.checkedAt, formatDate(connection.checkedAt)],
             ]}

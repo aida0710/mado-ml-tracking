@@ -68,6 +68,8 @@ export const datasetVersionRequestSchema = z
   .strictObject({
     version: nameSchema.optional(),
     uri: z.string().min(1).max(4000).optional(),
+    // mado S3 Data Catalogのストレージ接続のID。保存済みの接続の一覧と照合するのはサービス。
+    dataCatalogStorageConnectionId: z.string().min(1).max(512).nullish(),
     digest: z.string().min(1).max(1000).optional(),
     schema: jsonObjectSchema.default({}),
     metadata: jsonObjectSchema.default({}),

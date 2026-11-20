@@ -25,6 +25,8 @@ import { text } from '../i18n/catalog';
 import { promotionTextTemplates } from '../i18n/promotion';
 import { formatList } from '../i18n/textJoining';
 import { lineageText } from '../i18n/lineage';
+import { StorageUri } from './StorageUri';
+import { useDataCatalogReference } from '../hooks/useDataCatalogReference';
 import { lineageFocusPath } from '../lib/lineageFocus';
 
 export function ModelRegistryPanel({
@@ -48,6 +50,7 @@ export function ModelRegistryPanel({
 }) {
   useLocale();
   // パネルを開くたびに取り直し、保護aliasのタブで足した保護がここにも出るようにする。
+  const { reference: dataCatalog } = useDataCatalogReference(projectId);
   const protections = useModelAliasProtections(projectId, registry.selected?.id ?? null);
   const protectionOf = (alias: string) =>
     registry.selected
@@ -225,9 +228,13 @@ export function ModelRegistryPanel({
                             [
                               text.weightsUri,
                               registry.selectedVersion.weightsUri ? (
-                                <span className="mono break-word">
-                                  {registry.selectedVersion.weightsUri}
-                                </span>
+                                <StorageUri
+                                  uri={registry.selectedVersion.weightsUri}
+                                  storageConnectionId={
+                                    registry.selectedVersion.dataCatalogStorageConnectionId
+                                  }
+                                  dataCatalog={dataCatalog}
+                                />
                               ) : null,
                             ],
                             [

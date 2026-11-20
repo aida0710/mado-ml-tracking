@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 export type FormValues = Record<string, string | string[]>;
 
 export interface SelectOption {
@@ -55,6 +57,8 @@ export interface FormField {
   suggestionsRefreshKey?: string | number;
   /** 欄の下に出す、何を入力するかの説明の1行。欄と一緒に読み上げる。 */
   hint?: string;
+  /** 入力に応じて、欄のすぐ下に出す注記。`onChange`でフォームの値を置き換えられる。 */
+  notice?: (values: FormValues, onChange: (values: FormValues) => void) => ReactNode;
   /** 'checkboxes'の欄に選択肢が無いとき、空の一覧の代わりに出す。 */
   emptyText?: string;
 }
