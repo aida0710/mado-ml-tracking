@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mado-tracking"
-version = "0.5.4"
+version = "0.6.0"
 description = "mado ML Tracking Python SDK and durable compute worker"
 readme = "README.md"
 license = "Apache-2.0"
