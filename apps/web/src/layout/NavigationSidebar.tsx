@@ -23,7 +23,13 @@ export function NavigationSidebar({ navigation, header }: { navigation: Navigati
       }}
       header={header}
       renderLinks={({ showsTitles }) =>
-        navigation.groups.length > 0 && <NavigationLinkList groups={navigation.groups} showsTitles={showsTitles} />
+        navigation.groups.length > 0 && (
+          <NavigationLinkList
+            groups={navigation.groups}
+            footerLink={navigation.footerLink}
+            showsTitles={showsTitles}
+          />
+        )
       }
     />
   );

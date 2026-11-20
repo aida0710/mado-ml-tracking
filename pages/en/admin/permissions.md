@@ -14,9 +14,9 @@ Permissions have two levels: whether a user is a global administrator, and the r
 | Group | Items | Who sees it |
 | --- | --- | --- |
 | **Global settings** | **Account**, **Computers**, **About** | Everyone |
-| **Administration** | **Projects**, **Users**, **Storage**, **Launchers**, **Audit log** | Global administrators only |
+| **Administration** | **Projects**, **Users**, **Storage**, **Launchers**, **Plugins**, **Audit log** | Global administrators only |
 
-These groups appear only in the sidebar of the **Global settings** pages, not on Project pages. People who are not global administrators do not see **Administration**, and opening one of its URLs directly takes them to **Account** with a note that the page is for global administrators only.
+These groups appear only in the sidebar of the **Global settings** pages, not on Project pages. The bottom of the Project sidebar has a single **Global settings** link that opens them. People who are not global administrators do not see **Administration**, and opening one of its URLs directly takes them to **Account** with a note that the page is for global administrators only.
 
 When **Global settings** is opened from a Project page, **Back to “…”** (with the Project's name) appears at the top; it returns to the page you came from (Jobs, for example).
 
@@ -28,7 +28,7 @@ The user menu at the top right has **Account**, **Change password** (local accou
 
 ## Global administrators
 
-Global administrators manage application-wide settings. Most of their pages open from the **Administration** group in the sidebar of the pages opened from **Global settings** in the user menu.
+Global administrators manage application-wide settings. Most of their pages open from the **Administration** group in the sidebar of the pages opened from **Global settings** in the user menu or at the bottom of the Project sidebar.
 
 - Listing every Project, and restoring or permanently deleting archived Projects (**Administration** → **Projects**; see [Create and manage Projects](/en/admin/projects))
 - Creating, disabling, and resetting passwords of users (**Administration** → **Users**)
@@ -37,7 +37,7 @@ Global administrators manage application-wide settings. Most of their pages open
 - The global audit log (**Administration** → **Audit log**)
 - Adding SSH and Local computers, and changing the settings and visibility of every computer (**Computers** in **Global settings**; see [Computers and visibility](/en/compute/computers)). They still cannot run Jobs on other people's Private computers. Researchers can add sites too
 - Creating, changing, and testing notification channels ([Notifications and operations alerts](/en/admin/notifications))
-- Configuring and enabling built-in Mado connections ([Mado integration](/en/admin/plugins))
+- Connecting to mado S3 Data Catalog, checking and removing the connection, and seeing capacity (**Administration** → **Plugins**; see [Plugins](/en/admin/plugins))
 
 Whether an SSO user is a global administrator is decided by Authentik groups ([Authentik (SSO)](/en/admin/sso)). For local accounts, use **Make administrator** and **Remove administrator** in **Administration** → **Users**.
 
@@ -49,7 +49,7 @@ A global administrator signed in from a browser can operate any Project as an Ad
 | --- | --- |
 | Viewer | View experiments, Runs, models, datasets, and Artifacts |
 | Editor | Everything Viewer can, plus recording experiments, registering models and datasets (including deleting dataset versions nothing uses), running Jobs and stopping or retrying the Jobs they started, and changing aliases (a protected alias only with a passing promotion check) |
-| Admin | Everything Editor can, plus stopping or retrying Jobs started by others, Project settings (description, visibility, storage), members and group grants, Service Accounts, the Project token list, notification rules, transferring automation owners, deleting Artifacts, using the Mado integration (checking the connection, reading capacity), the Project audit log, and archiving the Project |
+| Admin | Everything Editor can, plus stopping or retrying Jobs started by others, Project settings (description, visibility, storage), members and group grants, Service Accounts, the Project token list, notification rules, transferring automation owners, deleting Artifacts, the Project audit log, and archiving the Project |
 
 Any user who is not disabled can create a Project: click **Create project** at the bottom of the Project switcher. The creator becomes an Admin of the new Project. See [Create and manage Projects](/en/admin/projects) for the steps.
 

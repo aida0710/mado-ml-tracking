@@ -11,6 +11,7 @@ export const adminText = {
   adminSectionUsers: 'Users',
   adminSectionStorage: 'Storage',
   adminSectionLaunchers: 'Launchers',
+  adminSectionPlugins: 'Plugins',
   adminSectionAudit: 'Audit log',
   adminAuditDescription:
     'Shows records from all projects and records outside projects (sign-in, user management, storage, notification channels, etc.), newest first.',

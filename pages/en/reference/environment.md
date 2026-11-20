@@ -1,6 +1,6 @@
 ---
 title: Environment variables
-description: Environment variables and defaults of the API server (including the built-in Mado integration), the preview worker, the worker, and the Python SDK.
+description: Environment variables and defaults of the API server (including the built-in connection to mado S3 Data Catalog), the preview worker, the worker, and the Python SDK.
 ---
 
 # Environment variables
@@ -96,16 +96,16 @@ See [Notifications and operations alerts](/en/admin/notifications).
 | `MMT_SMTP_FROM` | None | Sender address. Example: `mado ML Tracking <mmt@example.com>` |
 | `NODE_EXTRA_CA_CERTS` | None | Path of an internal CA certificate (PEM), used to verify SMTP servers and webhook destinations |
 
-## Mado integration {#mado-plugin}
+## Connection to mado S3 Data Catalog {#mado-plugin}
 
-The Mado integration is built into the API server. There is no separate service and no `.env` of its own. The only variable it needs in the API server's `.env` is the key that encrypts Mado access tokens. Mado URLs and access tokens are not environment variables: a global administrator saves them in **Integrations** in the Project ([Mado integration](/en/admin/plugins)).
+The connection to mado S3 Data Catalog is built into the API server. There is no separate service and no `.env` of its own. The only variable it needs in the API server's `.env` is the key that encrypts the mado S3 Data Catalog access token. The URL and access token are not environment variables: a global administrator saves them under **Administration** → **Plugins** in the global settings ([Plugins](/en/admin/plugins)).
 
 | Variable | Default | Content |
 | --- | --- | --- |
-| `MMT_PLUGIN_SECRET_KEY` | None | Key that encrypts Mado access tokens in the database (base64 of 32 bytes). Not needed if you do not use the Mado integration. Without it, access tokens cannot be saved and the integration cannot be enabled |
+| `MMT_PLUGIN_SECRET_KEY` | None | Key that encrypts the mado S3 Data Catalog access token in the database (base64 of 32 bytes). Not needed if you do not connect to mado S3 Data Catalog. Without it, the access token cannot be saved and you cannot connect |
 
 - Generate the key with `openssl rand -base64 32`, and use a value different from the other encryption keys (`MMT_SESSION_ENCRYPTION_KEY`, `MMT_STORAGE_SECRET_KEY`, `MMT_HOOK_SECRET_KEY`).
-- Once access tokens are saved, do not change or remove the key: the saved tokens could no longer be decrypted. If the key is lost, restore it or re-enter every saved access token. Restoring the database needs it too, so keep the key somewhere safe.
+- Once the access token is saved, do not change or remove the key: the saved token could no longer be decrypted. If the key is lost, restore it, or enter the access token and connect again. Restoring the database needs it too, so keep the key somewhere safe.
 
 ## Other API server settings
 

@@ -1,6 +1,6 @@
 # mado ML Tracking
 
-実験、モデル、実行コード、データセットを同じRunに結び付ける実験管理アプリです。mado S3 Data Catalogとは別に動作し、[Mado連携](docs/plugins.md)（Madoの容量の参照）を標準搭載しています。連携は初期状態では無効です。
+実験、モデル、実行コード、データセットを同じRunに結び付ける実験管理アプリです。mado S3 Data Catalogとは別に動作し、[mado S3 Data Catalogへの接続](docs/plugins.md)（容量の参照）を標準搭載しています。最初は未接続です。
 
 利用者向けのドキュメント（インストール、使い方、管理）は[https://aida0710.github.io/mado-ml-tracking/](https://aida0710.github.io/mado-ml-tracking/)にあります。ソースは`pages/`です。
 
@@ -8,7 +8,7 @@
 
 React/Viteの画面、TypeScript/HonoのAPI、PostgreSQL、Python SDKとSSH workerで構成します。学習・fine-tuning・推論・評価・データ加工を扱います。ArtifactsはファイルシステムまたはS3互換ストレージをProjectごとに選びます。[公式MLflow 3 SDK](docs/mlflow.md)からも記録できます。
 
-[タスクとコード編集](docs/workbench.md)では、リポジトリまたは単体コードをMonaco Editorで編集し、通常実行・テストのコマンドを登録できます。Taskのrevisionと実行内容を固定し、Jobごとのコードsnapshotと結果を追跡します。Computeとpluginも画面から追加・編集できます。
+[タスクとコード編集](docs/workbench.md)では、リポジトリまたは単体コードをMonaco Editorで編集し、通常実行・テストのコマンドを登録できます。Taskのrevisionと実行内容を固定し、Jobごとのコードsnapshotと結果を追跡します。Computeも画面から追加・編集できます。
 
 ## ローカルで起動する
 
@@ -48,13 +48,13 @@ CPUだけで実行を試す場合は`MMT_ALLOW_LOCAL_EXECUTOR=true`にし、loca
 - **Job**: SSH接続先、GPU予約、キュー、ログ、停止、再実行。再実行は新しいRunを作り、元の記録を保持。
 - **モデルの自動実行**: モデルバージョンの登録完了後、系列に合うルールで推論・評価をキューへ登録。コード・データセット・コンテナのバージョンを固定し、同じ登録イベントの重複を防止。
 - **認証**: Authentik OIDC、Projectのviewer/editor/admin、期限・scope・失効を持つ個人tokenとService Account token。
-- **Plugin**: 別サービスのHTTP契約。Madoのアクセストークンの確認と、Mado容量metricsの参照。
+- **Plugins**: ほかのサービスとの接続。全体で1つのmado S3 Data Catalogへの接続で、アクセストークンの確認と容量metricsの参照をする。
 
 モデル系列とCodeVersionの対応はAPIとworkerで検証します。モデルバージョンとデータセットバージョンは不変です。ジョブは起動時のコード・モデル・データセットをsnapshotとして使います。
 
 ## 設定と検証
 
-[運用・Authentik・保存先](docs/operations.md)、[コンテナ・モデルの自動実行](docs/containers-automation.md)、[API契約](docs/api-contract.md)、[Mado連携の仕様](docs/plugins.md)、[検証手順](docs/verification.md)、[Webの実装規約](docs/web.md)、[Sweepの探索アルゴリズム](docs/sweeps.md)を参照してください。Python SDKの使用例は`python/examples/`にあります。
+[運用・Authentik・保存先](docs/operations.md)、[コンテナ・モデルの自動実行](docs/containers-automation.md)、[API契約](docs/api-contract.md)、[mado S3 Data Catalogへの接続](docs/plugins.md)、[検証手順](docs/verification.md)、[Webの実装規約](docs/web.md)、[Sweepの探索アルゴリズム](docs/sweeps.md)を参照してください。Python SDKの使用例は`python/examples/`にあります。
 
 MLflow 3の接続先・API token・Runとモデルの記録・autolog・workerでの使用方法は[MLflow 3の手順](docs/mlflow.md)を参照してください。
 

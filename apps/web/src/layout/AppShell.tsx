@@ -42,7 +42,7 @@ export function AppShell() {
     if (openProject) rememberLastProjectId(openProject.id);
   }, [openProject]);
   useRememberSettingsReturnScreen(openProject);
-  const navigation = useNavigation(openProject?.id, openProject?.role);
+  const navigation = useNavigation(openProject?.id);
   // Projectの切り替えは、サイドバーではその先頭に置く。レールやドロワーのときは上部バーの
   // 下のバーになる。
   const inSidebar = navigation.layout.mode === 'sidebar';

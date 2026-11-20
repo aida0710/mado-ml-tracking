@@ -485,6 +485,25 @@ describe.skipIf(!testDatabaseUrl)('Registryのライフサイクル（独立Post
     }
   });
 
+  it('外部参照つきの登録は受け付けないが、以前のSDKが送るnullの外部参照は受け付ける', async () => {
+    const fixture = await executionFixture(harness);
+    const { dataset } = await datasetWithVersion(fixture);
+    const register = (version: string, externalRef: unknown) =>
+      request(harness.app, `${fixture.basePath}/datasets/${dataset.id}/versions`, {
+        method: 'POST',
+        cookie: fixture.editor.cookie,
+        body: { version, uri: `s3://bucket/${version}/`, digest: referenceDigest(version), externalRef },
+      });
+    const refused = await register('external', {
+      pluginId: '00000000-0000-4000-8000-000000000001',
+      externalId: 'corpus', namespace: 'speech', name: 'Corpus', version: 'external',
+    });
+    expect(refused.status).toBe(422);
+    expect(await refused.json()).toMatchObject({ code: 'invalid_request' });
+    const registered = await entity<DatasetVersion>(await register('from-older-sdk', null));
+    expect(registered.externalRef).toBeNull();
+  });
+
   it('どこからも使われていないバージョンだけを削除でき、使われていれば何が使っているかを409で返す', async () => {
     const fixture = await executionFixture(harness);
     const { dataset, version: parent } = await datasetWithVersion(fixture);

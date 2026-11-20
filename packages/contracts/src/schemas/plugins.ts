@@ -1,60 +1,46 @@
 import { z } from 'zod';
-import type {
-  LineageGraph,
-  PluginConnection,
-  PluginManifest,
-  MadoAccessTokenGrant,
-  MadoPluginConfig,
-} from '../index.js';
-import { idSchema, timestampSchema } from './primitives.js';
+import type { DataCatalogPlugin, DataCatalogReference, LineageGraph } from '../index.js';
+import { timestampSchema } from './primitives.js';
 import { namedContractSchema } from './schemaRegistry.js';
 import type { Expect, MutuallyAssignable } from './typeAssertions.js';
 
-export const pluginManifestSchema = namedContractSchema(
-  'PluginManifest',
-  z.strictObject({
-    id: z.string(),
-    name: z.string(),
-    version: z.string(),
-    protocolVersion: z.literal('1.0'),
-    capabilities: z.array(z.string()),
-  }),
-);
-export const madoPluginConfigSchema = namedContractSchema(
-  'MadoPluginConfig',
-  z.strictObject({
-    apiUrl: z.string(),
-    webUrl: z.string(),
-  }),
-);
-export const madoAccessTokenGrantSchema = namedContractSchema(
-  'MadoAccessTokenGrant',
+export const dataCatalogAccessTokenGrantSchema = namedContractSchema(
+  'DataCatalogAccessTokenGrant',
   z.strictObject({
     name: z.string(),
     scopes: z.array(z.string()),
     expiresAt: timestampSchema.nullable(),
   }),
 );
-export const pluginConnectionSchema = namedContractSchema(
-  'PluginConnection',
+export const dataCatalogStorageConnectionSchema = namedContractSchema(
+  'DataCatalogStorageConnection',
+  z.strictObject({ id: z.string(), name: z.string(), provider: z.string() }),
+);
+export const dataCatalogReferenceSchema = namedContractSchema(
+  'DataCatalogReference',
   z.strictObject({
-    id: idSchema,
-    projectId: idSchema,
-    name: z.string(),
-    kind: z.literal('mado'),
-    config: madoPluginConfigSchema,
-    configRevision: z.number().int(),
-    credentialsConfigured: z.strictObject({ accessToken: z.boolean() }),
-    secretStorageAvailable: z.boolean(),
-    tokenConfigured: z.boolean(),
-    enabled: z.boolean(),
-    manifest: pluginManifestSchema.nullable(),
-    accessTokenGrant: madoAccessTokenGrantSchema.nullable(),
-    createdAt: timestampSchema,
+    url: z.string().nullable(),
+    storageConnections: z.array(dataCatalogStorageConnectionSchema),
   }),
 );
-/** GET /projects/:p/plugins/:id/metrics: pluginのmetricsをPrometheusのテキスト形式で表したもの。 */
-export const pluginMetricsResponseSchema = z.strictObject({ prometheus: z.string() });
+export const dataCatalogConnectionSchema = namedContractSchema(
+  'DataCatalogConnection',
+  z.strictObject({
+    url: z.string(),
+    accessTokenGrant: dataCatalogAccessTokenGrantSchema,
+    storageConnections: z.array(dataCatalogStorageConnectionSchema),
+    checkedAt: timestampSchema,
+  }),
+);
+export const dataCatalogPluginSchema = namedContractSchema(
+  'DataCatalogPlugin',
+  z.strictObject({
+    connection: dataCatalogConnectionSchema.nullable(),
+    secretStorageAvailable: z.boolean(),
+  }),
+);
+/** GET /admin/plugins/data-catalog/capacity: 容量のmetricsをPrometheusのテキスト形式で表したもの。 */
+export const dataCatalogCapacityResponseSchema = z.strictObject({ prometheus: z.string() });
 export const lineageGraphSchema = namedContractSchema(
   'LineageGraph',
   z.strictObject({
@@ -73,17 +59,10 @@ export const lineageGraphSchema = namedContractSchema(
   }),
 );
 
-type _PluginManifest = Expect<
-  MutuallyAssignable<z.infer<typeof pluginManifestSchema>, PluginManifest>
+type _DataCatalogPlugin = Expect<
+  MutuallyAssignable<z.infer<typeof dataCatalogPluginSchema>, DataCatalogPlugin>
 >;
-type _PluginConnection = Expect<
-  MutuallyAssignable<z.infer<typeof pluginConnectionSchema>, PluginConnection>
+type _DataCatalogReference = Expect<
+  MutuallyAssignable<z.infer<typeof dataCatalogReferenceSchema>, DataCatalogReference>
 >;
 type _LineageGraph = Expect<MutuallyAssignable<z.infer<typeof lineageGraphSchema>, LineageGraph>>;
-
-type _MadoConfig = Expect<
-  MutuallyAssignable<z.infer<typeof madoPluginConfigSchema>, MadoPluginConfig>
->;
-type _MadoAccessTokenGrant = Expect<
-  MutuallyAssignable<z.infer<typeof madoAccessTokenGrantSchema>, MadoAccessTokenGrant>
->;

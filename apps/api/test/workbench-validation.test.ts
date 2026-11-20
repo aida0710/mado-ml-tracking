@@ -7,7 +7,6 @@ import {
 } from '../src/domain/codeSourceValidation.js';
 import {
   codeVersionSchema,
-  pluginPatchSchema,
   runCreateSchema,
   targetPatchSchema,
 } from '../src/domain/validation.js';
@@ -159,7 +158,6 @@ describe('コード編集・workbench入力検証', () => {
 
   it('PATCHに省略した既定値を補わず、固定参照の変更fieldを拒否する', () => {
     expect(targetPatchSchema.parse({ name: 'Renamed' })).toEqual({ name: 'Renamed' });
-    expect(pluginPatchSchema.parse({ name: 'Renamed' })).toEqual({ name: 'Renamed' });
     expect(
       taskPatchSchema.safeParse({
         expectedRevision: 1,

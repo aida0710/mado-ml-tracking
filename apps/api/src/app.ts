@@ -124,7 +124,10 @@ import { EvaluationService } from './services/evaluationService.js';
 import { ModelEvaluationService } from './services/modelEvaluationService.js';
 import { PromotionService } from './services/promotionService.js';
 import { PromotionRunHandler } from './services/promotionRunHandler.js';
-import { PluginService, type PluginClientFactory } from './services/pluginService.js';
+import {
+  DataCatalogConnectionService,
+  type DataCatalogClientFactory,
+} from './services/dataCatalogConnectionService.js';
 import { AutomationSourceRunHandler } from './services/automationSourceRunHandler.js';
 import { AutomationChainHandler } from './services/automationChainHandler.js';
 import { AutomationRetryHandler } from './services/automationRetryHandler.js';
@@ -180,7 +183,8 @@ import { siteComputerRoutes } from './routes/siteComputerRoutes.js';
 import { launcherAdminRoutes, launcherRuntimeRoutes } from './routes/launcherRoutes.js';
 import { tokenRoutes } from './routes/tokenRoutes.js';
 import { serviceAccountRoutes } from './routes/serviceAccountRoutes.js';
-import { pluginRoutes } from './routes/pluginRoutes.js';
+import { dataCatalogPluginRoutes } from './routes/dataCatalogPluginRoutes.js';
+import { dataCatalogStorageRoutes } from './routes/dataCatalogStorageRoutes.js';
 import { evaluationRoutes } from './routes/evaluationRoutes.js';
 import { modelEvaluationRoutes } from './routes/modelEvaluationRoutes.js';
 import { promotionRoutes } from './routes/promotionRoutes.js';
@@ -226,7 +230,7 @@ export interface ApplicationOptions {
   /** 環境変数で決まる保存先。DBで設定した保存先はArtifactStoreRegistryが加える。 */
   stores?: ArtifactStores;
   environment?: NodeJS.ProcessEnv;
-  pluginClientFactory?: PluginClientFactory;
+  dataCatalogClientFactory?: DataCatalogClientFactory;
   repositoryReader?: RepositoryReader;
   /** 通知先の種類ごとの送信処理。既定はHTTPのSlackとwebhookで、SMTPがあればメールも加わる。 */
   notificationSenders?: NotificationSenders;
@@ -358,7 +362,12 @@ export function createApplication(options: ApplicationOptions) {
   const hooks = new HookService({ database, dispatcher: hookDispatcher, jobs, config, clock: options.clock });
   const childJobs = new ChildJobService({ database, runs, jobs, jobArrays });
   const automationSweeper = new AutomationPendingSweeper(database, automation);
-  const registry = new RegistryService(database, automation);
+  const dataCatalogConnection = new DataCatalogConnectionService({
+    database,
+    secretKey: config.pluginSecretKey,
+    clientFactory: options.dataCatalogClientFactory,
+  });
+  const registry = new RegistryService(database, automation, dataCatalogConnection);
   // 出力の登録は、元Runのハンドラが保留中の自動実行を解放するより前に動かす。
   terminalHandlers.push(new OutputRegistrationHandler(registry));
   terminalHandlers.push(new AutomationSourceRunHandler(automation));
@@ -388,11 +397,6 @@ export function createApplication(options: ApplicationOptions) {
   const siteJobMonitor = new SiteJobMonitor(database, runCompletion);
   const tokens = new TokenService({ database, tokenDefaultLifetimeDays: config.tokenDefaultLifetimeDays });
   const evaluation = new EvaluationService(database);
-  const plugins = new PluginService({
-    database,
-    secretKey: config.pluginSecretKey,
-    clientFactory: options.pluginClientFactory,
-  });
   const notificationSenders =
     options.notificationSenders ?? createNotificationSenders({ smtp: config.smtp });
   const notificationEnvironment = options.environment ?? process.env;
@@ -523,6 +527,7 @@ export function createApplication(options: ApplicationOptions) {
     ),
   );
   app.route('/api/projects', modelAutomationRoutes(automation));
+  app.route('/api/projects', dataCatalogStorageRoutes(dataCatalogConnection));
   app.route('/api/projects', datasetVersionParentRoutes(new DatasetVersionParentService(database)));
   app.route('/api/projects', lineageRelationRoutes(new LineageRelationService(database)));
   app.route('/api/projects', trainingDataStageRoutes(new TrainingDataStageService(database)));
@@ -565,7 +570,6 @@ export function createApplication(options: ApplicationOptions) {
   app.route('/api/projects', hookRoutes(hooks));
   app.route('/api/projects', childJobRoutes(childJobs));
   app.route('/api', webhookRoutes(hooks));
-  app.route('/api/projects', pluginRoutes(plugins));
   app.route('/api/projects', evaluationRoutes(evaluation));
   app.route('/api/projects', modelEvaluationRoutes(new ModelEvaluationService(database)));
   app.route('/api/projects', promotionRoutes(promotion));
@@ -613,6 +617,7 @@ export function createApplication(options: ApplicationOptions) {
     }),
   );
   app.route('/api/admin', storageBackendRoutes(storageBackends, new StorageDirectoryService()));
+  app.route('/api/admin', dataCatalogPluginRoutes(dataCatalogConnection));
   app.route('/api/admin', adminProjectRoutes(new ProjectAdministrationService(database)));
   app.route(
     '/api/admin',
@@ -683,7 +688,7 @@ export function createApplication(options: ApplicationOptions) {
       childJobs,
       tokens,
       jobTokens,
-      plugins,
+      dataCatalogConnection,
       evaluation,
       promotion,
       runNotes,

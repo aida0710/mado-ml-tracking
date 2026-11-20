@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import type { OperationsAlert, PluginConnection } from '@mmt/contracts';
+import type { OperationsAlert } from '@mmt/contracts';
 import { migrate } from '../src/db/migrate.js';
 import { createHarness, entity, request, testDatabaseUrl } from './harness.js';
 import { projectFixture } from './fixtures.js';
-import { applyMigrationsBefore } from './migrationFixtures.js';
+import { applyMigrationFile, applyMigrationsBefore } from './migrationFixtures.js';
 
 /** 072までの版が保存していた接続の設定。 */
 const CONFIG_WITH_LINEAGE = {
@@ -80,36 +80,43 @@ describe.skipIf(!testDatabaseUrl)('Data CatalogのDataLineage連携を外す移�
           { pluginId: checked, pluginName: 'Checked', undelivered: 2, maxAttempts: 5 }],
       );
 
-      await migrate(harness.database);
+      await applyMigrationFile(harness.database, '073_remove_data_catalog_lineage.sql');
 
-      const connections = await entity<{ items: PluginConnection[] }>(
-        await request(harness.app, `${fixture.basePath}/plugins`, { cookie: fixture.administrator.cookie }),
-        200,
-      );
+      // 074がProjectごとの接続から確認の結果を消すので、073の結果はその前に行で確かめる。
+      const connections = (await harness.database.query<{
+        id: string;
+        config: Record<string, string>;
+        config_revision: number;
+        enabled: boolean;
+        manifest: { capabilities: string[] } | null;
+        access_token_grant: Record<string, unknown> | null;
+      }>('SELECT id,config,config_revision,enabled,manifest,access_token_grant FROM plugin_connections')).rows;
       const config = { apiUrl: CONFIG_WITH_LINEAGE.apiUrl, webUrl: CONFIG_WITH_LINEAGE.webUrl };
-      const stored = (id: string) => connections.items.find((connection) => connection.id === id);
+      const stored = (id: string) => connections.find((connection) => connection.id === id);
       expect(stored(checked)).toMatchObject({
-        config, configRevision: 3, enabled: true,
+        config, config_revision: 3, enabled: true,
         manifest: { capabilities: ['storage:metrics'] },
-        accessTokenGrant: {
+        access_token_grant: {
           name: 'ML Tracking', scopes: ['lineage:read', 'lineage:write', 'metrics:read'], expiresAt: null,
         },
       });
       expect(stored(lineageOnly)).toMatchObject({
-        config, configRevision: 2, enabled: true,
+        config, config_revision: 2, enabled: true,
         manifest: { capabilities: [] },
-        accessTokenGrant: {
+        access_token_grant: {
           name: 'Lineage', scopes: ['lineage:read', 'lineage:write'], expiresAt: '2027-01-01T00:00:00.000Z',
         },
       });
       expect(stored(unchecked)).toMatchObject({
-        config, configRevision: 1, enabled: false, manifest: null, accessTokenGrant: null,
+        config, config_revision: 1, enabled: false, manifest: null, access_token_grant: null,
       });
-      for (const connection of connections.items) {
+      for (const connection of connections) {
         expect(Object.keys(connection.config).sort()).toEqual(['apiUrl', 'webUrl']);
-        if (connection.accessTokenGrant)
-          expect(Object.keys(connection.accessTokenGrant).sort()).toEqual(['expiresAt', 'name', 'scopes']);
+        if (connection.access_token_grant)
+          expect(Object.keys(connection.access_token_grant).sort()).toEqual(['expiresAt', 'name', 'scopes']);
       }
+
+      await migrate(harness.database);
 
       expect((await harness.database.query(
         'SELECT uri,digest,metadata,external_ref FROM dataset_versions WHERE id=$1', [versionId],

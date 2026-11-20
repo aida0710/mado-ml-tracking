@@ -45,7 +45,10 @@
 .member-name .user-status {
   font-size: var(--font-size-xs);
 }
-.mado-settings-actions {
+.plugin-section {
+  max-width: 960px;
+}
+.plugin-actions {
   flex-wrap: wrap;
   gap: 8px;
 }
@@ -57,7 +60,7 @@
 .storage-connection {
   margin-top: 20px;
 }
-.storage-connection h3 {
+.storage-connection h4 {
   margin-bottom: 4px;
   overflow-wrap: anywhere;
 }
@@ -81,7 +84,7 @@
 .storage-prefixes {
   margin: 12px 0 20px;
 }
-.storage-prefixes h4 {
+.storage-prefixes h5 {
   margin: 10px 0;
   font-weight: 500;
 }

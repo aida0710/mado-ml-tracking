@@ -1,0 +1,167 @@
+import { RefreshCw } from 'lucide-react';
+import { dataCatalogPluginApi } from '../../api/dataCatalogPlugin';
+import { useQuery } from '../../hooks/useQuery';
+import { parsePrometheus } from '../../lib/prometheus';
+import {
+  buildStorageMetrics,
+  type StorageBucketMetrics,
+  type StorageConnectionMetrics,
+} from '../../lib/storageMetrics';
+import { ResponsiveTable, type ResponsiveTableColumn } from '../ResponsiveTable';
+import { Empty, ErrorNotice, Resource } from '../Feedback';
+import { StorageMetricValue } from '../StorageMetricValue';
+import { useLocale } from '../../i18n/useLocale';
+import { text } from '../../i18n/catalog';
+import { pluginsText } from '../../i18n/plugins';
+import { formatList } from '../../i18n/textJoining';
+
+type StorageMeasurementFields = Pick<
+  StorageBucketMetrics,
+  'bytes' | 'objects' | 'ageSeconds' | 'failures'
+>;
+const metricColumnDefinitions = {
+  bytes: { get label() { return text.capacity; }, unit: 'bytes' },
+  objects: { get label() { return text.objects; }, unit: 'count' },
+  ageSeconds: { get label() { return text.collectionAge; }, unit: 'seconds' },
+  failures: { get label() { return text.collectionFailures; }, unit: 'count' },
+} as const;
+
+function createStorageMetricColumns<T extends StorageMeasurementFields>(
+  fields: Array<keyof StorageMeasurementFields>,
+): ResponsiveTableColumn<T>[] {
+  return fields.map((field) => ({
+    key: field,
+    // このパネルの目的は容量なので、ほかの測定値は行を開くまで出さない。
+    priority: field === 'bytes' ? 'primary' : 'secondary',
+    header: metricColumnDefinitions[field].label,
+    className: 'mono numeric nowrap',
+    render: (item) => (
+      <StorageMetricValue sample={item[field]} unit={metricColumnDefinitions[field].unit} />
+    ),
+  }));
+}
+
+function ConnectionStorageMetrics({ connection }: { connection: StorageConnectionMetrics }) {
+  useLocale();
+  const prefixes = connection.buckets.flatMap((bucket) =>
+    bucket.prefixes.map((prefix) => ({ ...prefix, bucket: bucket.bucket })),
+  );
+  const tracking = connection.trackingEnabled?.value;
+  return (
+    <section className="storage-connection">
+      <h4 title={connection.connectionId}>
+        {connection.connectionName ?? connection.connectionId}
+      </h4>
+      {connection.connectionName && <p className="muted mono">{connection.connectionId}</p>}
+      <div className="storage-tracking">
+        <span>
+          {text.capacityTracking}:{' '}
+          {tracking === 1 ? text.enabled : tracking === 0 ? text.disabled : text.unknownMetric}
+        </span>
+        <span>
+          {text.collectionInterval}:{' '}
+          <StorageMetricValue sample={connection.intervalSeconds} unit="seconds" />
+        </span>
+      </div>
+      {!!connection.buckets.length && (
+        <ResponsiveTable
+          rows={connection.buckets}
+          rowKey={(bucket) => bucket.bucket}
+          columns={[
+            {
+              key: 'bucket',
+              priority: 'primary',
+              header: text.bucket,
+              className: 'mono storage-label',
+              render: (bucket) => bucket.bucket,
+            },
+            ...createStorageMetricColumns<StorageBucketMetrics>([
+              'bytes',
+              'objects',
+              'ageSeconds',
+              'failures',
+            ]),
+          ]}
+        />
+      )}
+      {!!prefixes.length && (
+        <div className="storage-prefixes">
+          <h5>{text.prefix}</h5>
+          <ResponsiveTable
+            rows={prefixes}
+            rowKey={(prefix) => JSON.stringify([prefix.bucket, prefix.prefix])}
+            columns={[
+              {
+                key: 'bucket',
+                priority: 'primary',
+                header: text.bucket,
+                className: 'mono storage-label',
+                render: (prefix) => prefix.bucket,
+              },
+              {
+                key: 'prefix',
+                priority: 'primary',
+                header: text.prefix,
+                className: 'mono storage-label',
+                render: (prefix) => prefix.prefix,
+              },
+              ...createStorageMetricColumns<(typeof prefixes)[number]>(['bytes', 'objects']),
+            ]}
+          />
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** mado S3 Data Catalogが測った容量を、接続（S3）とバケットごとに出す。 */
+export function DataCatalogCapacity() {
+  useLocale();
+  const metrics = useQuery({
+    key: 'admin:plugins:data-catalog:capacity',
+    load: (signal) => dataCatalogPluginApi.capacity(signal),
+  });
+  return (
+    <section className="storage-metrics" aria-label={pluginsText.capacity}>
+      <div className="section-heading">
+        <h3>{pluginsText.capacity}</h3>
+        <button
+          className="icon-button"
+          aria-label={pluginsText.refreshCapacity}
+          disabled={metrics.loading}
+          onClick={metrics.reload}
+        >
+          <RefreshCw size={16} />
+        </button>
+      </div>
+      <Resource query={metrics}>
+        {(prometheus) => {
+          const parsed = parsePrometheus(prometheus);
+          const connections = buildStorageMetrics(parsed.samples);
+          return (
+            <>
+              <ErrorNotice
+                message={
+                  parsed.invalidLineNumbers.length
+                    ? `${text.metricsParseErrors}: ${formatList(parsed.invalidLineNumbers.map(String))}`
+                    : null
+                }
+              />
+              {connections.length ? (
+                connections.map((connection) => (
+                  <ConnectionStorageMetrics key={connection.connectionId} connection={connection} />
+                ))
+              ) : (
+                <Empty>{text.noStorageMetrics}</Empty>
+              )}
+              <details className="raw-metrics">
+                <summary>{text.rawPrometheus}</summary>
+                <pre className="artifact-text">{prometheus || text.empty}</pre>
+              </details>
+            </>
+          );
+        }}
+      </Resource>
+    </section>
+  );
+}

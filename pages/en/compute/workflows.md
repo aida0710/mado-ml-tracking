@@ -7,7 +7,7 @@ description: The Workflows page, which runs preprocessing, training and evaluati
 
 Workflows run a sequence of tasks with pinned settings and dataset versions. Their history records which data was processed, under which conditions, and which outputs were used for training.
 
-Mado Data Catalog manages data origins, processing history and storage locations. ML Tracking records execution conditions, quality and training usage. Both refer to the same dataset versions.
+mado S3 Data Catalog browses S3 storage and measures its capacity. ML Tracking records dataset versions, processing lineage, preprocessing conditions and quality, and training usage.
 
 ## Open the page
 

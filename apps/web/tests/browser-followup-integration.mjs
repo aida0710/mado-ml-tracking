@@ -89,7 +89,7 @@ try {
     await projectAdminPage
       .getByRole('dialog')
       .getByLabel('説明')
-      .fill('Plugin登録のglobal admin制限を確認するローカル検証記録');
+      .fill('Pluginsの全体管理者の制限を確認するローカル検証記録');
     await projectAdminPage
       .getByRole('dialog')
       .getByRole('button', { name: '作成', exact: true })
@@ -100,84 +100,39 @@ try {
     );
   }
   assert.equal(project.role, 'admin');
-  const pluginPath = `/projects/${project.id}/plugins`;
-  await projectAdminPage.goto(base + pluginPath);
-  await projectAdminPage.getByRole('heading', { name: '連携', exact: true }).waitFor();
-  assert.equal(
-    await projectAdminPage.getByRole('button', { name: 'Madoの接続設定', exact: true }).count(),
-    0,
-  );
-  assert.equal(await projectAdminPage.getByRole('dialog').count(), 0);
-  const pluginsBefore = (await getJson(projectAdminPage, pluginPath)).items;
-  const forbidden = await projectAdminPage.request.post(base + '/api' + pluginPath, {
-    data: {
-      kind: 'mado',
-      name: 'Web forbidden Mado connection',
-      config: {
-        apiUrl: 'http://127.0.0.1:9',
-        webUrl: 'http://127.0.0.1:9',
-      },
-      enabled: false,
-    },
+  const dataCatalogPluginPath = '/admin/plugins/data-catalog';
+  // 相手に届かないURL。接続を確かめられないので、保存されない。
+  const unreachableConnection = { url: 'http://127.0.0.1:9', accessToken: 'web-followup-fixture' };
+  await projectAdminPage.goto(base + '/settings/plugins');
+  await projectAdminPage.waitForURL(base + '/settings/account');
+  await projectAdminPage
+    .getByText('開こうとした画面は全体管理者だけが使えます。', { exact: false })
+    .waitFor();
+  const forbidden = await projectAdminPage.request.put(base + '/api' + dataCatalogPluginPath, {
+    data: unreachableConnection,
   });
   assert.equal(forbidden.status(), 403, 'Project admin must not register server secrets');
-  assert.equal((await getJson(projectAdminPage, pluginPath)).items.length, pluginsBefore.length);
+  assert.equal((await projectAdminPage.request.get(base + '/api' + dataCatalogPluginPath)).status(), 403);
 
-  console.log('Real API: global admin saves a disabled Mado connection without credentials');
-  await adminPage.goto(base + pluginPath);
-  const pluginName = 'Web followup Mado (unconfigured)';
-  let plugin = (await getJson(adminPage, pluginPath)).items.find(
-    (item) => item.name === pluginName,
-  );
-  if (!plugin) {
-    await adminPage.getByRole('button', { name: 'Madoの接続設定', exact: true }).click();
-    const dialog = adminPage.getByRole('dialog');
-    await dialog.getByLabel('名前').fill(pluginName);
-    await dialog.getByLabel('Mado API URL').fill('http://127.0.0.1:9');
-    await dialog.getByLabel('Mado Web URL').fill('http://127.0.0.1:9');
-    await dialog.getByRole('button', { name: '保存', exact: true }).click();
-    await dialog.waitFor({ state: 'hidden' });
-    plugin = (await getJson(adminPage, pluginPath)).items.find((item) => item.name === pluginName);
-  }
-  assert.ok(plugin);
-  assert.equal(plugin.enabled, false);
-  await projectAdminPage.goto(base + pluginPath + '?id=' + plugin.id);
-  console.log('Real API: project admin sees missing credentials and cannot start a request');
-  const check = projectAdminPage.getByRole('button', { name: '接続を確認', exact: true });
-  await check.waitFor();
-  assert.equal(await check.isDisabled(), true);
-  await projectAdminPage
-    .getByText('Madoのアクセストークンを設定してください。', { exact: false })
-    .waitFor();
-  assert.equal(
-    await projectAdminPage.getByRole('button', { name: 'Madoの接続設定', exact: true }).count(),
-    0,
-  );
-  const checkResponse = await projectAdminPage.request.post(
-    base + '/api' + pluginPath + '/' + plugin.id + '/check',
-  );
-  assert.equal(checkResponse.status(), 503);
-  assert.equal((await checkResponse.json()).code, 'plugin_token_unavailable');
-  const metricsResponse = await projectAdminPage.request.get(
-    base + '/api' + pluginPath + '/' + plugin.id + '/metrics',
-  );
-  assert.equal(metricsResponse.status(), 422);
-  assert.equal((await metricsResponse.json()).code, 'plugin_disabled');
-  assert.equal(
-    await projectAdminPage.getByRole('heading', { name: 'Storage metrics', exact: true }).count(),
-    0,
-  );
-  await takeScreenshot(projectAdminPage, 'plugins-real-project-admin');
+  console.log('Real API: a connection that cannot be checked is not saved');
+  await adminPage.goto(base + '/settings/plugins');
+  await adminPage.getByRole('heading', { name: 'Plugins', exact: true, level: 1 }).waitFor();
+  const before = await getJson(adminPage, dataCatalogPluginPath);
+  const unreachable = await adminPage.request.put(base + '/api' + dataCatalogPluginPath, {
+    data: unreachableConnection,
+  });
+  assert.equal(unreachable.status(), 502);
+  assert.equal((await unreachable.json()).code, 'data_catalog_request_failed');
+  assert.deepEqual(await getJson(adminPage, dataCatalogPluginPath), before);
+  await takeScreenshot(adminPage, 'plugins-real-global-admin');
   assert.deepEqual(errors, []);
   console.log(
     JSON.stringify({
       result: 'passed',
       projectId: project.id,
-      pluginId: plugin.id,
-      projectAdminRegistrationStatus: forbidden.status(),
-      unconfiguredCheckStatus: checkResponse.status(),
-      disabledMetricsStatus: metricsResponse.status(),
-      realCollector: 'not connected; error path only',
+      projectAdminConnectStatus: forbidden.status(),
+      unreachableConnectStatus: unreachable.status(),
+      realDataCatalog: 'not connected; error path only',
     }),
   );
 } finally {

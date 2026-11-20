@@ -20,12 +20,7 @@ export function canManageProject(role: ProjectRole): boolean {
   return role === 'admin';
 }
 
-/** プラグインの接続は、Project adminか全体管理者が管理できる。 */
-export function canManagePlugins(role: ProjectRole | undefined, globalAdmin: boolean): boolean {
-  return globalAdmin || (role !== undefined && canManageProject(role));
-}
-
-/** モデルの自動実行ルールは、プラグインと同じ規則に従う（modelAutomationService）。 */
+/** モデルの自動実行ルールは、Project adminか全体管理者が管理できる（modelAutomationService）。 */
 export function canManageAutomationRules(role: ProjectRole, globalAdmin: boolean): boolean {
   return globalAdmin || canManageProject(role);
 }

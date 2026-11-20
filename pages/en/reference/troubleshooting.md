@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: What to check when the API does not start, SSO login fails, tokens return 401 or 403, notifications do not arrive, or the Mado integration and workers stop.
+description: What to check when the API does not start, SSO login fails, tokens return 401 or 403, notifications do not arrive, mado S3 Data Catalog cannot be reached, or workers stop.
 ---
 
 # Troubleshooting
@@ -113,16 +113,20 @@ A Project Admin or a global administrator archived the Project (404 `project_arc
 3. Check the status and failure reason in **Recent delivery history**. What to check for each reason is under "Delivery and failures" in [Notifications and operations alerts](/en/admin/notifications).
 4. Check that the rule is enabled and its events and conditions match. **Worker stopped** does not reach rules with Run kind or experiment conditions.
 
-## Mado integration unreachable {#plugin-unreachable-or-deliveries-stalled}
+## Cannot connect to mado S3 Data Catalog {#plugin-unreachable-or-deliveries-stalled}
 
-Check the state of the Mado integration under **Integrations** in the Project. Only global administrators can fix its connection settings and keys ([Mado integration](/en/admin/plugins)).
+Check the connection to mado S3 Data Catalog under **Administration** → **Plugins** in the global settings. Only global administrators can use it ([Plugins](/en/admin/plugins)). The page shows the message the API returned as is.
 
 | Symptom | Fix |
 | --- | --- |
-| "The API server needs MMT_PLUGIN_SECRET_KEY to save and use integration keys.", or `plugin_secret_key_unavailable` | Set `MMT_PLUGIN_SECRET_KEY` in the API server's `.env` and restart the API ([Environment variables](/en/reference/environment#mado-plugin)) |
-| "Configure the Mado access token.", or `plugin_token_unavailable` or `plugin_secret_decryption_failed` | If **Access token** shows **Not configured**, enter it in **Mado connection settings** and click **Save**. Connections saved by earlier versions with separate keys also show **Not configured**; enter an access token for them too. If it shows **Configured**, check that `MMT_PLUGIN_SECRET_KEY` has the value it had when the token was saved. If that value cannot be restored, enter the access token again and save |
-| **Check connection** fails with "This Mado cannot report the access token’s permissions (/api/mado/access-token). Update Mado" (`plugin_mado_access_token_unsupported`) | Update Mado to a version that reports the access token's own permissions |
-| **Check connection** fails with "Could not communicate with the integration" (`plugin_request_failed`) | Check that the API server can reach **Mado API URL**, and that the access token is valid (not disabled or expired). If Capacity Read is allowed, check that capacity metrics can be read too: the check also reads them |
+| "Storing the access token requires MMT_PLUGIN_SECRET_KEY on the API server.", or "set MMT_PLUGIN_SECRET_KEY on the API server to store the access token" (`data_catalog_secret_key_unavailable`) | Set `MMT_PLUGIN_SECRET_KEY` in the API server's `.env` and restart the API ([Environment variables](/en/reference/environment#mado-plugin)) |
+| "the stored access token cannot be decrypted; check MMT_PLUGIN_SECRET_KEY or enter the access token again" (`data_catalog_secret_decryption_failed`) | Check that `MMT_PLUGIN_SECRET_KEY` has the value it had when the access token was saved. If that value cannot be restored, enter the access token again with **Change connection** |
+| "mado S3 Data Catalog rejected the access token; check that it is correct and has not expired" (`data_catalog_access_token_rejected`) | Check that the access token is correct and has not been disabled or expired in mado S3 Data Catalog |
+| "enter the access token of this mado S3 Data Catalog" (`data_catalog_access_token_required`) | Enter the access token. Changing the URL needs it, because the stored token is not sent to another URL |
+| "no mado S3 Data Catalog API was found at this URL (/api/mado/access-token); check the URL" (`data_catalog_access_token_unsupported`) | Check that **URL** is the URL you open mado S3 Data Catalog at in a browser |
+| "failed to communicate with mado S3 Data Catalog; check the URL" (`data_catalog_request_failed`) | Check that the API server can reach **URL**. If Capacity read is allowed, check that capacity can be read too: the check also reads it |
+| "This access token cannot read capacity.", or "the access token does not allow reading capacity; allow it in mado S3 Data Catalog and check the connection again" (`data_catalog_capacity_not_permitted`) | Allow Capacity read for the access token in mado S3 Data Catalog, then press **Check connection** |
+| A connection set up in an earlier version shows **Not connected** | Settings from the versions that kept one connection per project (up to v0.5.4) are not carried over. Connect again with **Connect to mado S3 Data Catalog** |
 
 ## The worker does not take Jobs or shows as offline
 

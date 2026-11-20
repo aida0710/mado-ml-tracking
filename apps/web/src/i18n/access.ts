@@ -71,6 +71,8 @@ export const auditActionLabels: Record<string, string> = localized({
   'storage.backend.create': '保存先の追加',
   'storage.backend.update': '保存先の変更',
   'storage.backend.test': '保存先の接続テスト',
+  'plugin.data_catalog.connect': 'mado S3 Data Catalogへの接続',
+  'plugin.data_catalog.disconnect': 'mado S3 Data Catalogとの接続の解除',
   'storage.settings.update': '既定の保存先の変更',
   'notification.channel.create': '通知先の作成',
   'notification.channel.update': '通知先の変更',

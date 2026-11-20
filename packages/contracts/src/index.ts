@@ -499,6 +499,8 @@ export interface ModelVersion {
   trainingSourceRunId?: string | null;
   parentModelVersionIds: string[];
   weightsUri: string | null;
+  /** `weightsUri`が`s3://`のとき、それがあるmado S3 Data Catalogのストレージ接続。無ければnull。 */
+  dataCatalogStorageConnectionId: string | null;
   artifactId: string | null;
   defaultCodeVersionId: string | null;
   metadata: JsonObject;
@@ -510,6 +512,8 @@ export interface ModelVersionCreate {
   parentModelVersionIds?: string[];
   sourceRunId?: string | null;
   weightsUri?: string | null;
+  /** mado S3 Data Catalogに接続済みで`weightsUri`が`s3://`なら必須。それ以外では指定できない。 */
+  dataCatalogStorageConnectionId?: string | null;
   artifactId?: string | null;
   defaultCodeVersionId?: string | null;
   metadata?: JsonObject;
@@ -581,6 +585,8 @@ export interface DatasetVersion {
   namespace: string;
   version: string;
   uri: string;
+  /** `uri`が`s3://`のとき、それがあるmado S3 Data Catalogのストレージ接続。無ければnull。 */
+  dataCatalogStorageConnectionId: string | null;
   digest: string;
   schema: JsonObject;
   metadata: JsonObject;
@@ -800,56 +806,53 @@ export interface CurrentApiToken {
   scopes: string[];
   job: boolean;
 }
-export interface PluginManifest {
+import type { DataCatalogAccessTokenGrant } from './dataCatalogAccessTokenGrant.js';
+export type { DataCatalogAccessTokenGrant } from './dataCatalogAccessTokenGrant.js';
+export { DATA_CATALOG_SCOPES } from './dataCatalogAccessTokenGrant.js';
+export type { S3Location } from './dataCatalogStorageUrl.js';
+export {
+  dataCatalogStorageUrl,
+  parseS3Uri,
+  parseDataCatalogStorageUrl,
+} from './dataCatalogStorageUrl.js';
+/**
+ * mado S3 Data Catalogのストレージ接続（S3の接続先の1つ）。`s3://`のURIがどのストレージのものかを
+ * 表し、mado S3 Data Catalogの画面のURLを作るのに使う。実行先がどのS3から読むかは変えない。
+ */
+export interface DataCatalogStorageConnection {
   id: string;
   name: string;
-  version: string;
-  protocolVersion: '1.0';
-  capabilities: string[];
+  /** ストレージの種類（mado S3 Data Catalogの`provider`。aws、onpremなど）。 */
+  provider: string;
 }
-export type PluginKind = 'mado';
-/** apiUrlはAPIサーバーが呼ぶ接続先。webUrlは利用者がブラウザで開く画面で、設定の表示にだけ使う。 */
-export interface MadoPluginConfig {
-  apiUrl: string;
-  webUrl: string;
+/**
+ * GET /projects/:p/data-catalog: Projectのメンバーに見せるmado S3 Data Catalog。`url`は画面のURLで、
+ * 未接続ならnull。`storageConnections`は、access tokenに許可されたストレージ接続。
+ */
+export interface DataCatalogReference {
+  url: string | null;
+  storageConnections: DataCatalogStorageConnection[];
 }
-/** シークレットは書き込みのリクエストでだけ受け付ける。tokenを省くと保存済みのものを残す。 */
-export interface MadoPluginCredentialsInput {
+/** PUT /admin/plugins/data-catalog。accessTokenを省くと、同じURLの保存済みのtokenで確かめ直す。 */
+export interface DataCatalogConnectionInput {
+  url: string;
   accessToken?: string;
 }
-import type { MadoAccessTokenGrant } from './madoAccessTokenGrant.js';
-export type { MadoAccessTokenGrant } from './madoAccessTokenGrant.js';
-export { MADO_SCOPES } from './madoAccessTokenGrant.js';
-export interface PluginCreate {
-  kind: 'mado';
-  name?: string;
-  config: MadoPluginConfig;
-  credentials?: MadoPluginCredentialsInput;
-  enabled?: boolean;
+/** 全体で1つの、mado S3 Data Catalogへの接続。保存できるのは、接続を確かめられたものだけ。 */
+export interface DataCatalogConnection {
+  /** mado S3 Data Catalogの画面のURL。APIも同じURLの下（/api/mado/）にある。 */
+  url: string;
+  /** 最後に接続を確かめたときの、access tokenの権限。 */
+  accessTokenGrant: DataCatalogAccessTokenGrant;
+  /** 最後に接続を確かめたときの、access tokenに許可されたストレージ接続。 */
+  storageConnections: DataCatalogStorageConnection[];
+  checkedAt: string;
 }
-export interface PluginPatch {
-  name?: string;
-  config?: MadoPluginConfig;
-  credentials?: MadoPluginCredentialsInput;
-  enabled?: boolean;
-  expectedRevision?: number;
-}
-export interface PluginConnection {
-  id: string;
-  projectId: string;
-  name: string;
-  kind: PluginKind;
-  config: MadoPluginConfig;
-  configRevision: number;
-  credentialsConfigured: { accessToken: boolean };
+/** GET /admin/plugins/data-catalog */
+export interface DataCatalogPlugin {
+  connection: DataCatalogConnection | null;
+  /** access tokenを暗号化して保存するための鍵（MMT_PLUGIN_SECRET_KEY）が、このAPIサーバーにある。 */
   secretStorageAvailable: boolean;
-  /** mado S3 Data Catalogのaccess tokenを、このAPIサーバーで復号できる。 */
-  tokenConfigured: boolean;
-  enabled: boolean;
-  manifest: PluginManifest | null;
-  /** 最後の接続確認で入り、接続先かaccess tokenが変わると消える。 */
-  accessTokenGrant: MadoAccessTokenGrant | null;
-  createdAt: string;
 }
 export type { LineageRelationAddition } from './lineageRelations.js';
 

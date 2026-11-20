@@ -316,15 +316,18 @@ export const API_ERROR_CODES = [
   // 通知
   'notification_channel_exists',
   'notification_channel_invalid',
-  // mado S3 Data Catalog連携
-  'plugin_capability_unsupported',
-  'plugin_credentials_required',
-  'plugin_disabled',
-  'plugin_mado_access_token_unsupported',
-  'plugin_request_failed',
-  'plugin_secret_decryption_failed',
-  'plugin_secret_key_unavailable',
-  'plugin_token_unavailable',
+  // mado S3 Data Catalogへの接続
+  'data_catalog_access_token_rejected',
+  'data_catalog_access_token_required',
+  'data_catalog_access_token_unsupported',
+  'data_catalog_capacity_not_permitted',
+  'data_catalog_request_failed',
+  'data_catalog_secret_decryption_failed',
+  'data_catalog_secret_key_unavailable',
+  'data_catalog_storage_connection_not_applicable',
+  'data_catalog_storage_connection_required',
+  'data_catalog_storage_connection_unknown',
+  'data_catalog_storage_connections_unsupported',
   // リポジトリ
   'invalid_repository',
   'unsafe_repository',

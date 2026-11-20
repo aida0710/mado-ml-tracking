@@ -100,7 +100,7 @@ with Client() as client:
 
 SDKは、ファイルごとにSHA-256とサイズで同じ中身の保存済みArtifactを探し、見つかればアップロードせずにそれを使います。前のバージョンと大半のファイルが同じなら、変わったファイルだけを送ります。途中で止まった場合も、もう一度実行すると保存していないファイルだけを送ります。
 
-`files`を使うときは、`uri`、`digest`、`source_run_id`、`parent_dataset_version_ids`、`external_ref`を指定しません。
+`files`を使うときは、`uri`、`digest`、`source_run_id`、`parent_dataset_version_ids`を指定しません。
 
 ## URIを参照するバージョンを作る
 
@@ -110,6 +110,7 @@ SDKは、ファイルごとにSHA-256とサイズで同じ中身の保存済みA
 | --- | --- | --- |
 | バージョン | バージョンの名前（必須） | `2026-10` |
 | URI | データの場所（必須）。`s3://`（バケットとキー、またはフォルダ）、`https://`（1つのファイル）、`file://`（実行先のコンピュータ上のパス） | `s3://corpus/speech/2026-10/` |
+| ストレージ接続 | URIが`s3://`で、サイトがmado S3 Data Catalogに接続済みのときだけ出ます（必須）。その場所があるmado S3 Data Catalogのストレージ接続です（[Plugins](/admin/plugins#ストレージ接続を選んで登録する)） | `on-premises (onprem)` |
 | Digest | 中身のSHA-256（必須）。`sha256:`と64桁の小文字の16進数で書きます。`sha256:`は省けるので、`sha256sum`の結果の64桁をそのまま貼っても構いません。入力した形のまま保存します。大文字や桁数の違うもの、ほかの算法（`sha512:`など）は「digestは sha256:<64桁の小文字16進数>（sha256:は省略可）の形で指定してください」と断られます | `sha256:<64桁の16進数>`、または`sha256sum`の結果の64桁 |
 | 親のバージョン | 元になったバージョン | |
 | 生成元Run | このバージョンを作ったRun | |
@@ -168,9 +169,9 @@ DockerやSingularity、Apptainerで動かす場合、本体は`/mmt/datasets/<�
 
 コンピュータの設定は[SSH・Localのコンピュータ](/compute/targets)を参照してください。
 
-## 以前のバージョンでMadoから取り込んだデータ
+## 以前のバージョンでmado S3 Data Catalogから取り込んだデータ
 
-v0.5.4まではMado連携でMadoのデータセットのバージョンを取り込めました。取り込んだバージョンは参照のバージョンとしてそのまま残り、Runの入力に使えます。バージョンを選ぶと、「外部参照」にMadoでの識別子、Namespace、名前、バージョンが出ます。Madoの画面へのリンクは出しません。新しく取り込むことはできず、RunをMadoへ送ることもありません（[Mado連携](/admin/plugins)）。
+v0.5.4まではmado S3 Data Catalogのデータセットのバージョンを取り込めました。取り込んだバージョンは参照のバージョンとしてそのまま残り、Runの入力に使えます。バージョンを選ぶと、「外部参照」にmado S3 Data Catalogでの識別子、Namespace、名前、バージョンが出ます。mado S3 Data Catalogの画面へのリンクは出しません。新しく取り込むことはできず、Runをmado S3 Data Catalogへ送ることもありません（[Plugins](/admin/plugins)）。
 
 ## 使わなくなったデータセット
 

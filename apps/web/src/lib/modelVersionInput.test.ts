@@ -1,12 +1,17 @@
-import type { Artifact } from '@mmt/contracts';
+import type { Artifact, DataCatalogReference } from '@mmt/contracts';
 import { describe, expect, it } from 'vitest';
 import { buildModelVersionInput, EMPTY_MODEL_VERSION_DRAFT, withSourceRun } from './modelVersionInput';
 
+const NOT_CONNECTED: DataCatalogReference = { url: null, storageConnections: [] };
+const CONNECTED: DataCatalogReference = {
+  url: 'https://catalog.example.test',
+  storageConnections: [{ id: 'onprem01', name: 'on-premises', provider: 'onprem' }],
+};
 const weights = { id: 'e45e89c3-9dca-4571-956e-bea81eb292e9', path: 'model/weights.bin' } as Artifact;
 
 describe('バージョンの作成の入力', () => {
   it('バージョンが空欄なら送らず、APIの自動採番に任せる', () => {
-    expect(buildModelVersionInput({ ...EMPTY_MODEL_VERSION_DRAFT, version: '  ' })).toEqual({
+    expect(buildModelVersionInput({ ...EMPTY_MODEL_VERSION_DRAFT, version: '  ' }, NOT_CONNECTED)).toEqual({
       parentModelVersionIds: [],
       metadata: {},
     });
@@ -24,7 +29,7 @@ describe('バージョンの作成の入力', () => {
         parentVersionIds: ['parent-1'],
         defaultCodeVersionId: 'code-1',
         metadata: '{"note":"手動"}',
-      }),
+      }, NOT_CONNECTED),
     ).toEqual({
       version: '3',
       parentModelVersionIds: ['parent-1'],
@@ -36,14 +41,30 @@ describe('バージョンの作成の入力', () => {
     });
   });
 
+  it('接続済みでweightsUriがs3://のときだけ、選んだストレージ接続を送る', () => {
+    const draft = { ...EMPTY_MODEL_VERSION_DRAFT, storageConnectionId: 'onprem01' };
+    expect(
+      buildModelVersionInput({ ...draft, weightsUri: 's3://bucket/weights.bin' }, CONNECTED),
+    ).toMatchObject({ dataCatalogStorageConnectionId: 'onprem01' });
+    // s3://でないURIに変えたあとに残った選択は送らない。
+    expect(
+      buildModelVersionInput({ ...draft, weightsUri: 'file:///weights.bin' }, CONNECTED),
+    ).not.toHaveProperty('dataCatalogStorageConnectionId');
+    expect(
+      buildModelVersionInput({ ...draft, weightsUri: 's3://bucket/weights.bin' }, NOT_CONNECTED),
+    ).not.toHaveProperty('dataCatalogStorageConnectionId');
+  });
+
   it('重みを検索したまま選んでいなければ、保存せずに選ぶよう求める', () => {
     expect(() =>
-      buildModelVersionInput({ ...EMPTY_MODEL_VERSION_DRAFT, weightsSearch: 'weights' }),
+      buildModelVersionInput({ ...EMPTY_MODEL_VERSION_DRAFT, weightsSearch: 'weights' }, NOT_CONNECTED),
     ).toThrow('一覧から選んでください');
   });
 
   it('MetadataがJSONのオブジェクトでなければ止める', () => {
-    expect(() => buildModelVersionInput({ ...EMPTY_MODEL_VERSION_DRAFT, metadata: '[1]' })).toThrow();
+    expect(() =>
+      buildModelVersionInput({ ...EMPTY_MODEL_VERSION_DRAFT, metadata: '[1]' }, NOT_CONNECTED),
+    ).toThrow();
   });
 });
 

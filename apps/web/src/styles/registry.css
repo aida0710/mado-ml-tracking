@@ -309,3 +309,21 @@ th.alias-version-change {
 .field-hint.missing-code-notice {
   margin: -6px 0 14px;
 }
+
+/* 置き場所のURIと、mado S3 Data Catalogの画面へのリンク。長いURIが折り返しても、リンクは
+   途中で切れずに次の行へ送られる。 */
+.storage-uri {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+  min-width: 0;
+}
+
+.storage-uri-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}

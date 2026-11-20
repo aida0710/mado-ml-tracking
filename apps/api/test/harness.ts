@@ -64,7 +64,7 @@ export async function createHarness(
     stores,
     artifactDirectory,
     async reset() {
-      await database.query('TRUNCATE users,projects,compute_targets CASCADE');
+      await database.query('TRUNCATE users,projects,compute_targets,data_catalog_connection CASCADE');
     },
     async close() {
       await database.end();

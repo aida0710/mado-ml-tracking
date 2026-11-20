@@ -142,6 +142,7 @@ export function FormFields({
                   {field.hint}
                 </p>
               )}
+              {field.notice?.(values, onChange)}
             </div>
           );
         })}

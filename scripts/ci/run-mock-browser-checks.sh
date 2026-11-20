@@ -37,8 +37,7 @@ model-pipeline
 narrow-screens
 navigation-history
 permission-guards
-plugin-connections
-plugin-revisions
+data-catalog-plugin
 projects-admin
 recording-connection
 settings-guidance

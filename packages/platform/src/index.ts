@@ -9,5 +9,5 @@ export * from './storageBackendConfig.js';
 export * from './s3ClientFactory.js';
 export * from './notificationSenders.js';
 export * from './emailNotificationSender.js';
-export * from './madoClient.js';
+export * from './dataCatalogClient.js';
 export * from './replacedEnvironmentVariables.js';

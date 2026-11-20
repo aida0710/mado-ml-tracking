@@ -100,7 +100,7 @@ with Client() as client:
 
 For each file, the SDK looks for a saved Artifact with the same SHA-256 and size and reuses it instead of uploading. If most files match the previous version, only the changed files are sent. After an interruption, running it again sends only the files not yet saved.
 
-When you use `files`, do not pass `uri`, `digest`, `source_run_id`, `parent_dataset_version_ids`, or `external_ref`.
+When you use `files`, do not pass `uri`, `digest`, `source_run_id`, or `parent_dataset_version_ids`.
 
 ## Create a version that references a URI
 
@@ -110,6 +110,7 @@ To create a version that points to an external location without saving files, se
 | --- | --- | --- |
 | **Version** | Version name (required) | `2026-10` |
 | **URI** | Location of the data (required): `s3://` (a bucket and key, or a folder), `https://` (one file), or `file://` (a path on the computer the Job runs on) | `s3://corpus/speech/2026-10/` |
+| **Storage connection** | Shown only when the URI is `s3://` and the site is connected to mado S3 Data Catalog (required). The mado S3 Data Catalog storage connection that holds the location ([Plugins](/en/admin/plugins#choose-a-storage-connection-when-registering)) | `on-premises (onprem)` |
 | **Digest** | SHA-256 of the contents (required), written as `sha256:` and 64 lowercase hex digits. `sha256:` may be left out, so the 64 digits `sha256sum` prints can be pasted as they are. The digest is stored as entered. Uppercase, a different length, or another algorithm (such as `sha512:`) is refused with "digestは sha256:<64桁の小文字16進数>（sha256:は省略可）の形で指定してください" (specify the digest as sha256: and 64 lowercase hex digits; sha256: may be left out) | `sha256:<64 hex digits>`, or the 64 digits from `sha256sum` |
 | **Parent versions** | The version this one was derived from | |
 | **Source run** | The Run that produced this version | |
@@ -168,9 +169,9 @@ Fetched contents are cached in `<work directory>/.mmt-cache/datasets/` on the ma
 
 See [Compute targets](/en/compute/targets).
 
-## Data imported from Mado by earlier versions
+## Data imported from mado S3 Data Catalog by earlier versions
 
-Up to v0.5.4, the Mado integration could import dataset versions from Mado. Those versions remain as reference versions and can be used as Run inputs. Selecting one shows its identifier in Mado, namespace, name, and version under **External references**. There is no link to Mado. New versions cannot be imported, and Runs are not sent to Mado ([Mado integration](/en/admin/plugins)).
+Up to v0.5.4, dataset versions could be imported from mado S3 Data Catalog. Those versions remain as reference versions and can be used as Run inputs. Selecting one shows its identifier in mado S3 Data Catalog, namespace, name, and version under **External references**. There is no link to mado S3 Data Catalog. New versions cannot be imported, and Runs are not sent to mado S3 Data Catalog ([Plugins](/en/admin/plugins)).
 
 ## Datasets you no longer use
 

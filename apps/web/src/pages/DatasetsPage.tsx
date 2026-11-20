@@ -23,6 +23,8 @@ import { DatasetVersionUsage } from '../components/DatasetVersionUsage';
 import { datasetVersionLabel } from '../lib/datasetVersionLabel';
 import { formatBytes, shortRunId } from '../lib/format';
 import { getFieldValue } from '../lib/formValues';
+import { StorageUri } from '../components/StorageUri';
+import { useDataCatalogReference } from '../hooks/useDataCatalogReference';
 import { useLocale } from '../i18n/useLocale';
 import { text, textTemplates } from '../i18n/catalog';
 
@@ -43,6 +45,7 @@ export function DatasetsPage() {
     versions: (id, signal) => registryApi.datasetVersions(project.id, id, signal),
     parentId: (version) => version.datasetId,
   });
+  const { reference: dataCatalog } = useDataCatalogReference(project.id);
   return (
     <section className="page datasets-page">
       <PageHeader
@@ -197,7 +200,11 @@ export function DatasetsPage() {
                               header: text.uri,
                               priority: 'secondary',
                               render: (version) => (
-                                <span className="mono break-word">{version.uri}</span>
+                                <StorageUri
+                                  uri={version.uri}
+                                  storageConnectionId={version.dataCatalogStorageConnectionId}
+                                  dataCatalog={dataCatalog}
+                                />
                               ),
                             },
                             {

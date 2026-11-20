@@ -69,9 +69,6 @@ const WorkflowDetailPage = lazy(() =>
 const ComputePage = lazy(() =>
   import('./pages/ComputePage').then((module) => ({ default: module.ComputePage })),
 );
-const PluginsPage = lazy(() =>
-  import('./pages/PluginsPage').then((module) => ({ default: module.PluginsPage })),
-);
 const SettingsPage = lazy(() =>
   import('./pages/SettingsPage').then((module) => ({ default: module.SettingsPage })),
 );
@@ -132,7 +129,6 @@ export function App() {
             <Route path="workflows/:workflowId" element={<WorkflowDetailPage />} />
             <Route path="tasks" element={<TasksPage />} />
             <Route path="compute" element={<ComputePage />} />
-            <Route path="plugins" element={<PluginsPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path={MLFLOW_UI_ROUTE} element={<MlflowUiRedirect />} />
             <Route path="*" element={<Navigate replace to="experiments" />} />

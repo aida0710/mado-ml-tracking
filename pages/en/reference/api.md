@@ -101,10 +101,9 @@ The OpenAPI document groups the API by tag.
 | `artifacts`, `artifact-uploads` | Saving, listing, and reading Artifacts; resumable uploads |
 | `execution` | Jobs, Compute targets, workers |
 | `worker` | API used only by workers (`worker:execute` tokens) |
-| `plugins` | Plugin connections |
 | `notifications`, `operations` | Notifications, operations alerts |
 | `audit` | Audit log |
-| `admin` | Global administration (Projects, storage and directory suggestions, users) |
+| `admin` | Global administration (Projects, storage and directory suggestions, users, Plugins) |
 
 ## OpenAPI (openapi.json)
 

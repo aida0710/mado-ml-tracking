@@ -3,12 +3,15 @@ import { useProject } from '../hooks/useProject';
 import { useModelVersionForm } from '../hooks/useModelVersionForm';
 import { ArtifactPickerField } from '../components/ArtifactPickerField';
 import { CheckboxList } from '../components/CheckboxList';
+import { DataCatalogUrlSuggestion } from '../components/DataCatalogUrlSuggestion';
 import { Dialog } from '../components/Dialog';
 import { ErrorNotice } from '../components/Feedback';
 import { LabeledField } from '../components/LabeledField';
 import { MissingCodeNotice } from '../components/MissingCodeNotice';
 import { ArtifactUploadDialog } from './ArtifactUploadDialog';
+import { StorageConnectionField } from '../components/StorageConnectionField';
 import { parseArtifactReference } from '../lib/artifactReference';
+import { needsStorageConnection } from '../lib/dataCatalogStorage';
 import { buildCatalogOptions, withEmptyOption } from '../lib/catalogOptions';
 import { explainMissingCodeCandidates } from '../lib/codeCandidateReason';
 import { toggleValue } from '../lib/formValues';
@@ -142,6 +145,21 @@ export function ModelVersionDialog({
                 />
               )}
             </LabeledField>
+            <ErrorNotice message={form.dataCatalogError} retry={form.reloadDataCatalog} />
+            <DataCatalogUrlSuggestion
+              dataCatalog={form.dataCatalog}
+              value={draft.weightsUri}
+              onAccept={({ uri, storageConnectionId }) =>
+                form.change({ weightsUri: uri, storageConnectionId })
+              }
+            />
+            {needsStorageConnection(form.dataCatalog, draft.weightsUri) && (
+              <StorageConnectionField
+                storageConnections={form.dataCatalog.storageConnections}
+                value={draft.storageConnectionId}
+                onChange={(storageConnectionId) => form.change({ storageConnectionId })}
+              />
+            )}
             {pastedWeightsUri && !draft.weightsArtifact && (
               <p className="notice action-notice" role="status">
                 <span>{text.weightsUriIsArtifact}</span>

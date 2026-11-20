@@ -111,7 +111,7 @@ try {
   page.on('pageerror', (error) => pageErrors.push(error.message));
 
   await page.goto(`${webUrl}/projects/${api.state.project.id}/experiments`);
-  // Projectのサイドバーには、そのProject自身の画面だけがある。全体設定はユーザーメニューから開き、
+  // Projectのサイドバーには、そのProject自身の画面だけがある。全体設定はユーザーメニュー（または並びの下端の入口）から開き、
   // そのサイドバーは全体管理の各画面を「全体管理」の下に並べる。
   await page.getByRole('button', { name: 'ユーザーメニュー', exact: true }).click();
   await page.getByRole('menuitem', { name: '全体設定', exact: true }).click();

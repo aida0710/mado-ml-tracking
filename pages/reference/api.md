@@ -101,10 +101,9 @@ OpenAPIでは、APIを次の分類（tag）に分けています。
 | `artifacts`、`artifact-uploads` | Artifactの保存・一覧・取得、再開可能なupload |
 | `execution` | Job、Compute target、worker |
 | `worker` | workerだけが使うAPI（`worker:execute`のtoken） |
-| `plugins` | Pluginの接続 |
 | `notifications`、`operations` | 通知、運用アラート |
 | `audit` | 監査ログ |
-| `admin` | 全体管理（プロジェクト、保存先とディレクトリ候補、ユーザー） |
+| `admin` | 全体管理（プロジェクト、保存先とディレクトリ候補、ユーザー、Plugins） |
 
 ## OpenAPI（openapi.json）
 

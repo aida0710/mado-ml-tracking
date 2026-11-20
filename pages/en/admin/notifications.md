@@ -27,7 +27,7 @@ There are two roles.
 | **Job heartbeat lost** | A running Job's heartbeat is older than 60 seconds |
 | **Job heartbeat recovered** | A stale Job's heartbeat came back |
 | **Worker stopped** | A worker's last response is older than 120 seconds |
-| **Plugin delivery backlog** | No longer occurs. It belonged to the versions in which the Mado integration sent Run records (up to v0.5.4); selecting it delivers nothing |
+| **Plugin delivery backlog** | No longer occurs. It belonged to the versions that sent Run records to mado S3 Data Catalog (up to v0.5.4); selecting it delivers nothing |
 
 ## 1. Put URLs and secrets in environment variables
 

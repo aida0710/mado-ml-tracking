@@ -470,6 +470,7 @@ class Client(ExperimentTasksClient):
         parent_model_version_ids: Sequence[str] = (),
         source_run_id: str | None = None,
         weights_uri: str | None = None,
+        data_catalog_storage_connection_id: str | None = None,
         artifact_id: str | None = None,
         default_code_version_id: str | None = None,
         metadata: Mapping[str, Any] | None = None,
@@ -477,6 +478,8 @@ class Client(ExperimentTasksClient):
         """ModelVersionを登録する。versionを省くと、APIが番号を振る（1、2、3、...）。
 
         ``model_name``は、その名前の登録モデルを使い回し、まだ無いときだけ作る。
+        サイトがmado S3 Data Catalogに接続済みで``weights_uri``が``s3://``なら、
+        ``data_catalog_storage_connection_id``が必須（``data_catalog``で一覧を引ける）。
         """
         if model_id is None:
             if not model_name:
@@ -493,6 +496,8 @@ class Client(ExperimentTasksClient):
         }
         if version is not None:
             payload["version"] = version
+        if data_catalog_storage_connection_id is not None:
+            payload["dataCatalogStorageConnectionId"] = data_catalog_storage_connection_id
         return self.request(
             "POST",
             self.project_path(project_id, f"models/{path_id(model_id)}/versions"),
@@ -543,6 +548,7 @@ class Client(ExperimentTasksClient):
         version: str | None = None,
         uri: str | None = None,
         digest: str | None = None,
+        data_catalog_storage_connection_id: str | None = None,
         files: str | os.PathLike[str] | None = None,
         dataset_id: str | None = None,
         name: str | None = None,
@@ -552,22 +558,26 @@ class Client(ExperimentTasksClient):
         metadata: Mapping[str, Any] | None = None,
         source_run_id: str | None = None,
         parent_dataset_version_ids: Sequence[str] = (),
-        external_ref: Mapping[str, str] | None = None,
     ) -> dict[str, Any]:
         """``uri``を指すDatasetVersionを登録するか、ディレクトリ``files``をアップロードする。
 
         ``files``を渡すと、ディレクトリをArtifactとしてアップロードし、APIがuriとdigestを計算する。
         Projectに既にある変わっていないファイルは送り直さない。``files``を渡さないときは
-        ``version``、``uri``、``digest``が必須で、``external_ref``を渡さない限り、``digest``は
+        ``version``、``uri``、``digest``が必須で、``digest``は
         64桁の小文字の16進数のSHA-256（``sha256:``の前置きは有っても無くてもよい）にする（APIは
-        ほかの形を拒み、digestを渡されたとおりに保存する）。
+        ほかの形を拒み、digestを渡されたとおりに保存する）。サイトがmado S3 Data Catalogに
+        接続済みで``uri``が``s3://``なら、``data_catalog_storage_connection_id``が必須
+        （``data_catalog``で一覧を引ける）。
         """
         if files is not None:
-            if uri is not None or digest is not None:
-                raise ConfigurationError("files replaces uri and digest; do not give them together")
-            if source_run_id is not None or parent_dataset_version_ids or external_ref:
+            if uri is not None or digest is not None or data_catalog_storage_connection_id is not None:
                 raise ConfigurationError(
-                    "files does not support source_run_id, parent_dataset_version_ids or external_ref"
+                    "files replaces uri, digest and data_catalog_storage_connection_id; "
+                    "do not give them together"
+                )
+            if source_run_id is not None or parent_dataset_version_ids:
+                raise ConfigurationError(
+                    "files does not support source_run_id or parent_dataset_version_ids"
                 )
         elif version is None or uri is None or digest is None:
             raise ConfigurationError("version, uri and digest are required without files")
@@ -578,20 +588,26 @@ class Client(ExperimentTasksClient):
             return upload_dataset_directory(
                 self, project_id, dataset_id, files, version=version, metadata=metadata, schema=schema
             )
+        payload: dict[str, Any] = {
+            "version": version,
+            "uri": uri,
+            "digest": digest,
+            "schema": dict(schema or {}),
+            "metadata": dict(metadata or {}),
+            "sourceRunId": source_run_id,
+            "parentDatasetVersionIds": list(parent_dataset_version_ids),
+        }
+        if data_catalog_storage_connection_id is not None:
+            payload["dataCatalogStorageConnectionId"] = data_catalog_storage_connection_id
         return self.request(
             "POST",
             self.project_path(project_id, f"datasets/{path_id(dataset_id)}/versions"),
-            json={
-                "version": version,
-                "uri": uri,
-                "digest": digest,
-                "schema": dict(schema or {}),
-                "metadata": dict(metadata or {}),
-                "sourceRunId": source_run_id,
-                "parentDatasetVersionIds": list(parent_dataset_version_ids),
-                "externalRef": dict(external_ref) if external_ref else None,
-            },
+            json=payload,
         )
+
+    def data_catalog(self, project_id: str) -> dict[str, Any]:
+        """mado S3 Data Catalogの画面のURL（未接続ならNone）と、選べるストレージ接続の一覧。"""
+        return self.request("GET", self.project_path(project_id, "data-catalog"))
 
     def _create_dataset(self, project_id: str, *, name: str | None, namespace: str, description: str) -> str:
         if not name:

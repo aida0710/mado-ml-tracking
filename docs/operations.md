@@ -420,7 +420,7 @@ Runの失敗などを外部へ知らせます。通知先（channel）は全体�
 
 ### 通知先の環境変数を置く
 
-Webhookの URL と署名の鍵はDBにも画面にも保存しません。API serverの環境変数に値を置き、通知先には変数名だけを登録します（Mado連携のキーは別の仕組みで暗号化保存します）。変数名は`MMT_NOTIFICATION_`で始まる英大文字・数字・`_`に限ります。ほかの設定（DBのURLなど）を通知先に指定できないようにするためです。
+Webhookの URL と署名の鍵はDBにも画面にも保存しません。API serverの環境変数に値を置き、通知先には変数名だけを登録します（mado S3 Data Catalogのアクセストークンは別の仕組みで暗号化保存します）。変数名は`MMT_NOTIFICATION_`で始まる英大文字・数字・`_`に限ります。ほかの設定（DBのURLなど）を通知先に指定できないようにするためです。
 
 ```sh
 # API serverの.env（値はリポジトリやチャットに貼らない）
@@ -479,7 +479,7 @@ API serverは30秒ごとに次を確かめ、見つけたらProjectの「運用�
 - 通知はアラートを開いたときに1回だけ（Jobは復旧時にも1回）。同じ対象が再び途絶したら、新しいアラートとして再び通知します。
 - 通知を受けるには、Project設定の「通知」でruleを作り、上の種別を選びます。workerの通知は、Runの条件（実行種別・実験）を付けたruleには届きません。
 - Jobは途絶しても失敗にしません（workerがまだ処理を続けている可能性があるため）。止まったJobはJobs画面から停止を要求するか、workerホストを確認します。
-- 「Plugin送信の滞留」（`plugin.delivery_stalled`）は、連携がRunの記録をMadoへ送っていた版（v0.5.4まで）のアラートです。今は発生しません。過去のアラートは履歴に残り、通知ruleの種別にも残っていますが、選んでも通知は届きません。
+- 「Plugin送信の滞留」（`plugin.delivery_stalled`）は、Runの記録をmado S3 Data Catalogへ送っていた版（v0.5.4まで）のアラートです。今は発生しません。過去のアラートは履歴に残り、通知ruleの種別にも残っていますが、選んでも通知は届きません。
 - 閾値はコードの定数（`apps/api/src/domain/workerLiveness.ts`、`apps/api/src/domain/operationsAlerts.ts`）で、環境変数では変えません。
 
 ## API serverの上限と保持数
@@ -520,7 +520,7 @@ docker compose run --rm api npm run db:migrate --workspace @mmt/api
 docker compose up -d api web
 ```
 
-Webはlocalhost:5182で待ち受けます。外側のTLS reverse proxyからこのportへ接続します。API/DBは外部portを公開しません。Artifact volumeはAPIの実行ユーザーに書き込み権限を持たせます。workerは別に起動します。Mado連携はAPIに標準搭載されています。
+Webはlocalhost:5182で待ち受けます。外側のTLS reverse proxyからこのportへ接続します。API/DBは外部portを公開しません。Artifact volumeはAPIの実行ユーザーに書き込み権限を持たせます。workerは別に起動します。mado S3 Data Catalogへの接続はAPIに標準搭載されています。
 
 Webの画面（全体設定 → 全体管理 → ストレージ）からファイルシステムの保存先を足すときは、そのディレクトリがAPIとpreviewのコンテナから見えている必要があります。`compose.filesystem-storage.yml`を使うと、`.env`の`MMT_FILESYSTEM_STORAGE_DIR`のホストのディレクトリを、コンテナの中にも同じパスで見せます。保存先の［ルートディレクトリ］には、その下のパスを指定します。
 
@@ -541,4 +541,4 @@ MMT_FILESYSTEM_STORAGE_DIR=/srv/mmt/storage
 1. Authentikで管理者と一般メンバーがloginし、管理者group・Project権限が正しく反映されることを確認します。
 2. SSH targetで小さいinference Jobを実行し、指定GPU・ログ・メトリクス・停止・再実行を確認します。
 3. 実際のS3 bucketで小さいuploadとRange取得を行い、prefix権限・永続化・multipart cleanupを確認します。
-4. Mado連携で接続を確認し、Madoが計測した容量が「連携」の画面に出ることを確認します。
+4. 全体設定 → 全体管理 → 「Plugins」でmado S3 Data Catalogに接続し、mado S3 Data Catalogが測った容量が出ることを確認します。

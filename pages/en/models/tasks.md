@@ -145,9 +145,9 @@ The output model setting is copied to the Run at launch; editing the Task afterw
 | Finished, but the Artifact is missing or the creator lost access | Registration fails with a reason. The Run stays finished |
 | Failed, canceled, or a test run | Not registered |
 
-## Change Compute targets and the Mado integration {#change-compute-targets-and-plugins}
+## Change Compute targets {#change-compute-targets-and-plugins}
 
-Compute targets are added under **Computers** in the global settings, and their owner and global administrators change their settings. Only global administrators add SSH and Local targets; anyone can add a site ([Computers and visibility](/en/compute/computers)). The Mado integration is built in, so there is nothing to add. Only global administrators save its connection settings and enable or disable it under **Integrations** in the Project ([Mado integration](/en/admin/plugins)).
+Compute targets are added under **Computers** in the global settings, and their owner and global administrators change their settings. Only global administrators add SSH and Local targets; anyone can add a site ([Computers and visibility](/en/compute/computers)). Global administrators manage the connection to mado S3 Data Catalog under **Administration** → **Plugins** in the global settings ([Plugins](/en/admin/plugins)).
 
 ## Next steps
 
