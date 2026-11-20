@@ -4,7 +4,7 @@ Workflowsは、Taskを順番に実行し、各ステップの条件と実際の�
 
 ## Data Catalogとの役割分担
 
-mado S3 Data CatalogはS3のストレージの閲覧と容量の計測を受け持ち、データセットと処理の来歴は持ちません（v0.6.0でDataLineageを外しました）。データセットのバージョン、処理の来歴、モデルまでのつながりは、ML Trackingが記録します。
+mado S3 Data CatalogはS3のストレージの閲覧と容量の計測を受け持ち、データセットと処理の来歴は持ちません（v0.6.1でDataLineageを外しました）。データセットのバージョン、処理の来歴、モデルまでのつながりは、ML Trackingが記録します。
 
 | 管理する内容 | mado S3 Data Catalog | ML Tracking |
 | --- | --- | --- |

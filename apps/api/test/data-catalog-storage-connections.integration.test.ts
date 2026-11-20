@@ -75,7 +75,7 @@ describe.skipIf(!testDatabaseUrl)('mado S3 Data Catalogのストレージ接続�
       expect(response.status).toBe(502);
       expect(await response.json()).toMatchObject({
         code: 'data_catalog_storage_connections_unsupported',
-        error: expect.stringContaining('v0.6.0'),
+        error: expect.stringContaining('v0.6.1'),
       });
       expect((await harness.database.query('SELECT 1 FROM data_catalog_connection')).rowCount).toBe(0);
     });

@@ -6,7 +6,7 @@ const CONNECTION = {
   accessToken: 'fixture-access-token',
 };
 const TOKEN_ID = 'a30d9e65-190d-443f-8023-4a0105d14dc9';
-/** mado S3 Data Catalog v0.6.0以降の`GET /api/mado/access-token`の応答。 */
+/** mado S3 Data Catalog v0.6.1以降の`GET /api/mado/access-token`の応答。 */
 const ACCESS_TOKEN_RESPONSE = {
   id: TOKEN_ID, name: 'ML Tracking', scopes: ['metrics:read'], expiresAt: '2027-01-01T00:00:00.000Z',
 };

@@ -15,7 +15,7 @@ Once connected, you can:
 
 A **storage connection** is one of the S3 endpoints registered in mado S3 Data Catalog (on-premises S3, AWS, and so on). Once connected, registering an `s3://` location asks which storage connection holds it.
 
-Only global administrators can open this page. mado S3 Data Catalog v0.6.0 or later is required.
+Only global administrators can open this page. mado S3 Data Catalog v0.6.1 or later is required.
 
 ## Connect
 

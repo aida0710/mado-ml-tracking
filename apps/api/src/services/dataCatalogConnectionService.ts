@@ -307,7 +307,7 @@ export class DataCatalogConnectionService {
           status: 502,
           code: 'data_catalog_storage_connections_unsupported',
           message:
-            'this mado S3 Data Catalog cannot list connections (/api/mado/connections); update it to v0.6.0 or later',
+            'this mado S3 Data Catalog cannot list connections (/api/mado/connections); update it to v0.6.1 or later',
         });
       throw error;
     }
